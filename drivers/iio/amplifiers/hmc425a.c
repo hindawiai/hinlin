@@ -1,243 +1,244 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * HMC425A and similar Gain Amplifiers
+ * HMC425A and similar Gain Amplअगरiers
  *
  * Copyright 2020 Analog Devices Inc.
  */
 
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/gpio/consumer.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/regulator/consumer.h>
-#include <linux/sysfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/sysfs.h>
 
-enum hmc425a_type {
+क्रमागत hmc425a_type अणु
 	ID_HMC425A,
-};
+पूर्ण;
 
-struct hmc425a_chip_info {
-	const char			*name;
-	const struct iio_chan_spec	*channels;
-	unsigned int			num_channels;
-	unsigned int			num_gpios;
-	int				gain_min;
-	int				gain_max;
-	int				default_gain;
-};
+काष्ठा hmc425a_chip_info अणु
+	स्थिर अक्षर			*name;
+	स्थिर काष्ठा iio_chan_spec	*channels;
+	अचिन्हित पूर्णांक			num_channels;
+	अचिन्हित पूर्णांक			num_gpios;
+	पूर्णांक				gain_min;
+	पूर्णांक				gain_max;
+	पूर्णांक				शेष_gain;
+पूर्ण;
 
-struct hmc425a_state {
-	struct	regulator *reg;
-	struct	mutex lock; /* protect sensor state */
-	struct	hmc425a_chip_info *chip_info;
-	struct	gpio_descs *gpios;
-	enum	hmc425a_type type;
+काष्ठा hmc425a_state अणु
+	काष्ठा	regulator *reg;
+	काष्ठा	mutex lock; /* protect sensor state */
+	काष्ठा	hmc425a_chip_info *chip_info;
+	काष्ठा	gpio_descs *gpios;
+	क्रमागत	hmc425a_type type;
 	u32	gain;
-};
+पूर्ण;
 
-static int hmc425a_write(struct iio_dev *indio_dev, u32 value)
-{
-	struct hmc425a_state *st = iio_priv(indio_dev);
+अटल पूर्णांक hmc425a_ग_लिखो(काष्ठा iio_dev *indio_dev, u32 value)
+अणु
+	काष्ठा hmc425a_state *st = iio_priv(indio_dev);
 	DECLARE_BITMAP(values, BITS_PER_TYPE(value));
 
 	values[0] = value;
 
 	gpiod_set_array_value_cansleep(st->gpios->ndescs, st->gpios->desc,
-				       NULL, values);
-	return 0;
-}
+				       शून्य, values);
+	वापस 0;
+पूर्ण
 
-static int hmc425a_read_raw(struct iio_dev *indio_dev,
-			    struct iio_chan_spec const *chan, int *val,
-			    int *val2, long m)
-{
-	struct hmc425a_state *st = iio_priv(indio_dev);
-	int code, gain = 0;
-	int ret;
+अटल पूर्णांक hmc425a_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			    पूर्णांक *val2, दीर्घ m)
+अणु
+	काष्ठा hmc425a_state *st = iio_priv(indio_dev);
+	पूर्णांक code, gain = 0;
+	पूर्णांक ret;
 
 	mutex_lock(&st->lock);
-	switch (m) {
-	case IIO_CHAN_INFO_HARDWAREGAIN:
+	चयन (m) अणु
+	हाल IIO_CHAN_INFO_HARDWAREGAIN:
 		code = st->gain;
 
-		switch (st->type) {
-		case ID_HMC425A:
+		चयन (st->type) अणु
+		हाल ID_HMC425A:
 			gain = ~code * -500;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*val = gain / 1000;
 		*val2 = (gain % 1000) * 1000;
 
 		ret = IIO_VAL_INT_PLUS_MICRO_DB;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&st->lock);
 
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 
-static int hmc425a_write_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan, int val,
-			     int val2, long mask)
-{
-	struct hmc425a_state *st = iio_priv(indio_dev);
-	struct hmc425a_chip_info *inf = st->chip_info;
-	int code = 0, gain;
-	int ret;
+अटल पूर्णांक hmc425a_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			     पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा hmc425a_state *st = iio_priv(indio_dev);
+	काष्ठा hmc425a_chip_info *inf = st->chip_info;
+	पूर्णांक code = 0, gain;
+	पूर्णांक ret;
 
-	if (val < 0)
+	अगर (val < 0)
 		gain = (val * 1000) - (val2 / 1000);
-	else
+	अन्यथा
 		gain = (val * 1000) + (val2 / 1000);
 
-	if (gain > inf->gain_max || gain < inf->gain_min)
-		return -EINVAL;
+	अगर (gain > inf->gain_max || gain < inf->gain_min)
+		वापस -EINVAL;
 
-	switch (st->type) {
-	case ID_HMC425A:
-		code = ~((abs(gain) / 500) & 0x3F);
-		break;
-	}
+	चयन (st->type) अणु
+	हाल ID_HMC425A:
+		code = ~((असल(gain) / 500) & 0x3F);
+		अवरोध;
+	पूर्ण
 
 	mutex_lock(&st->lock);
-	switch (mask) {
-	case IIO_CHAN_INFO_HARDWAREGAIN:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_HARDWAREGAIN:
 		st->gain = code;
 
-		ret = hmc425a_write(indio_dev, st->gain);
-		break;
-	default:
+		ret = hmc425a_ग_लिखो(indio_dev, st->gain);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 	mutex_unlock(&st->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hmc425a_write_raw_get_fmt(struct iio_dev *indio_dev,
-				     struct iio_chan_spec const *chan,
-				     long mask)
-{
-	switch (mask) {
-	case IIO_CHAN_INFO_HARDWAREGAIN:
-		return IIO_VAL_INT_PLUS_MICRO_DB;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक hmc425a_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+				     काष्ठा iio_chan_spec स्थिर *chan,
+				     दीर्घ mask)
+अणु
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_HARDWAREGAIN:
+		वापस IIO_VAL_INT_PLUS_MICRO_DB;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct iio_info hmc425a_info = {
-	.read_raw = &hmc425a_read_raw,
-	.write_raw = &hmc425a_write_raw,
-	.write_raw_get_fmt = &hmc425a_write_raw_get_fmt,
-};
+अटल स्थिर काष्ठा iio_info hmc425a_info = अणु
+	.पढ़ो_raw = &hmc425a_पढ़ो_raw,
+	.ग_लिखो_raw = &hmc425a_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = &hmc425a_ग_लिखो_raw_get_fmt,
+पूर्ण;
 
-#define HMC425A_CHAN(_channel)						\
-{									\
+#घोषणा HMC425A_CHAN(_channel)						\
+अणु									\
 	.type = IIO_VOLTAGE,						\
 	.output = 1,							\
 	.indexed = 1,							\
 	.channel = _channel,						\
 	.info_mask_separate = BIT(IIO_CHAN_INFO_HARDWAREGAIN),		\
-}
+पूर्ण
 
-static const struct iio_chan_spec hmc425a_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec hmc425a_channels[] = अणु
 	HMC425A_CHAN(0),
-};
+पूर्ण;
 
-/* Match table for of_platform binding */
-static const struct of_device_id hmc425a_of_match[] = {
-	{ .compatible = "adi,hmc425a", .data = (void *)ID_HMC425A },
-	{},
-};
+/* Match table क्रम of_platक्रमm binding */
+अटल स्थिर काष्ठा of_device_id hmc425a_of_match[] = अणु
+	अणु .compatible = "adi,hmc425a", .data = (व्योम *)ID_HMC425A पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hmc425a_of_match);
 
-static void hmc425a_reg_disable(void *data)
-{
-	struct hmc425a_state *st = data;
+अटल व्योम hmc425a_reg_disable(व्योम *data)
+अणु
+	काष्ठा hmc425a_state *st = data;
 
 	regulator_disable(st->reg);
-}
+पूर्ण
 
-static struct hmc425a_chip_info hmc425a_chip_info_tbl[] = {
-	[ID_HMC425A] = {
+अटल काष्ठा hmc425a_chip_info hmc425a_chip_info_tbl[] = अणु
+	[ID_HMC425A] = अणु
 		.name = "hmc425a",
 		.channels = hmc425a_channels,
 		.num_channels = ARRAY_SIZE(hmc425a_channels),
 		.num_gpios = 6,
 		.gain_min = -31500,
 		.gain_max = 0,
-		.default_gain = -0x40, /* set default gain -31.5db*/
-	},
-};
+		.शेष_gain = -0x40, /* set शेष gain -31.5db*/
+	पूर्ण,
+पूर्ण;
 
-static int hmc425a_probe(struct platform_device *pdev)
-{
-	struct iio_dev *indio_dev;
-	struct hmc425a_state *st;
-	int ret;
+अटल पूर्णांक hmc425a_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा hmc425a_state *st;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&pdev->dev, sizeof(*st));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&pdev->dev, माप(*st));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	st = iio_priv(indio_dev);
-	st->type = (enum hmc425a_type)of_device_get_match_data(&pdev->dev);
+	st->type = (क्रमागत hmc425a_type)of_device_get_match_data(&pdev->dev);
 
 	st->chip_info = &hmc425a_chip_info_tbl[st->type];
 	indio_dev->num_channels = st->chip_info->num_channels;
 	indio_dev->channels = st->chip_info->channels;
 	indio_dev->name = st->chip_info->name;
-	st->gain = st->chip_info->default_gain;
+	st->gain = st->chip_info->शेष_gain;
 
 	st->gpios = devm_gpiod_get_array(&pdev->dev, "ctrl", GPIOD_OUT_LOW);
-	if (IS_ERR(st->gpios))
-		return dev_err_probe(&pdev->dev, PTR_ERR(st->gpios),
+	अगर (IS_ERR(st->gpios))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(st->gpios),
 				     "failed to get gpios\n");
 
-	if (st->gpios->ndescs != st->chip_info->num_gpios) {
+	अगर (st->gpios->ndescs != st->chip_info->num_gpios) अणु
 		dev_err(&pdev->dev, "%d GPIOs needed to operate\n",
 			st->chip_info->num_gpios);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	st->reg = devm_regulator_get(&pdev->dev, "vcc-supply");
-	if (IS_ERR(st->reg))
-		return PTR_ERR(st->reg);
+	अगर (IS_ERR(st->reg))
+		वापस PTR_ERR(st->reg);
 
 	ret = regulator_enable(st->reg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = devm_add_action_or_reset(&pdev->dev, hmc425a_reg_disable, st);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_init(&st->lock);
 
 	indio_dev->info = &hmc425a_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	return devm_iio_device_register(&pdev->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&pdev->dev, indio_dev);
+पूर्ण
 
-static struct platform_driver hmc425a_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver hmc425a_driver = अणु
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.of_match_table = hmc425a_of_match,
-	},
+	पूर्ण,
 	.probe = hmc425a_probe,
-};
-module_platform_driver(hmc425a_driver);
+पूर्ण;
+module_platक्रमm_driver(hmc425a_driver);
 
 MODULE_AUTHOR("Michael Hennerich <michael.hennerich@analog.com>");
 MODULE_DESCRIPTION("Analog Devices HMC425A and similar GPIO control Gain Amplifiers");

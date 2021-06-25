@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * PPC EDAC common defs
  *
@@ -8,33 +9,33 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#ifndef ASM_EDAC_H
-#define ASM_EDAC_H
+#अगर_अघोषित ASM_EDAC_H
+#घोषणा ASM_EDAC_H
 /*
- * ECC atomic, DMA, SMP and interrupt safe scrub function.
- * Implements the per arch edac_atomic_scrub() that EDAC use for software
- * ECC scrubbing.  It reads memory and then writes back the original
+ * ECC atomic, DMA, SMP and पूर्णांकerrupt safe scrub function.
+ * Implements the per arch edac_atomic_scrub() that EDAC use क्रम software
+ * ECC scrubbing.  It पढ़ोs memory and then ग_लिखोs back the original
  * value, allowing the hardware to detect and correct memory errors.
  */
-static __inline__ void edac_atomic_scrub(void *va, u32 size)
-{
-	unsigned int *virt_addr = va;
-	unsigned int temp;
-	unsigned int i;
+अटल __अंतरभूत__ व्योम edac_atomic_scrub(व्योम *va, u32 size)
+अणु
+	अचिन्हित पूर्णांक *virt_addr = va;
+	अचिन्हित पूर्णांक temp;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < size / sizeof(*virt_addr); i++, virt_addr++) {
-		/* Very carefully read and write to memory atomically
-		 * so we are interrupt, DMA and SMP safe.
+	क्रम (i = 0; i < size / माप(*virt_addr); i++, virt_addr++) अणु
+		/* Very carefully पढ़ो and ग_लिखो to memory atomically
+		 * so we are पूर्णांकerrupt, DMA and SMP safe.
 		 */
-		__asm__ __volatile__ ("\n\
-				1:	lwarx	%0,0,%1\n\
-					stwcx.	%0,0,%1\n\
-					bne-	1b\n\
+		__यंत्र__ __अस्थिर__ ("\न\
+				1:	lwarx	%0,0,%1\न\
+					stwcx.	%0,0,%1\न\
+					bne-	1b\न\
 					isync"
 					: "=&r"(temp)
 					: "r"(virt_addr)
 					: "cr0", "memory");
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

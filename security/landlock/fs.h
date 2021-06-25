@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Landlock LSM - Filesystem management and hooks
+ * Landlock LSM - Fileप्रणाली management and hooks
  *
- * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2017-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_FS_H
-#define _SECURITY_LANDLOCK_FS_H
+#अगर_अघोषित _SECURITY_LANDLOCK_FS_H
+#घोषणा _SECURITY_LANDLOCK_FS_H
 
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rcupdate.h>
 
-#include "ruleset.h"
-#include "setup.h"
+#समावेश "ruleset.h"
+#समावेश "setup.h"
 
 /**
- * struct landlock_inode_security - Inode security blob
+ * काष्ठा landlock_inode_security - Inode security blob
  *
- * Enable to reference a &struct landlock_object tied to an inode (i.e.
+ * Enable to reference a &काष्ठा landlock_object tied to an inode (i.e.
  * underlying object).
  */
-struct landlock_inode_security {
+काष्ठा landlock_inode_security अणु
 	/**
-	 * @object: Weak pointer to an allocated object.  All assignments of a
-	 * new object are protected by the underlying inode->i_lock.  However,
-	 * atomically disassociating @object from the inode is only protected
-	 * by @object->lock, from the time @object's usage refcount drops to
-	 * zero to the time this pointer is nulled out (cf. release_inode() and
-	 * hook_sb_delete()).  Indeed, such disassociation doesn't require
-	 * inode->i_lock thanks to the careful rcu_access_pointer() check
-	 * performed by get_inode_object().
+	 * @object: Weak poपूर्णांकer to an allocated object.  All assignments of a
+	 * new object are रक्षित by the underlying inode->i_lock.  However,
+	 * atomically disassociating @object from the inode is only रक्षित
+	 * by @object->lock, from the समय @object's usage refcount drops to
+	 * zero to the समय this poपूर्णांकer is nulled out (cf. release_inode() and
+	 * hook_sb_delete()).  Indeed, such disassociation करोesn't require
+	 * inode->i_lock thanks to the careful rcu_access_poपूर्णांकer() check
+	 * perक्रमmed by get_inode_object().
 	 */
-	struct landlock_object __rcu *object;
-};
+	काष्ठा landlock_object __rcu *object;
+पूर्ण;
 
 /**
- * struct landlock_superblock_security - Superblock security blob
+ * काष्ठा landlock_superblock_security - Superblock security blob
  *
- * Enable hook_sb_delete() to wait for concurrent calls to release_inode().
+ * Enable hook_sb_delete() to रुको क्रम concurrent calls to release_inode().
  */
-struct landlock_superblock_security {
+काष्ठा landlock_superblock_security अणु
 	/**
 	 * @inode_refs: Number of pending inodes (from this superblock) that
 	 * are being released by release_inode().
-	 * Cf. struct super_block->s_fsnotify_inode_refs .
+	 * Cf. काष्ठा super_block->s_fsnotअगरy_inode_refs .
 	 */
-	atomic_long_t inode_refs;
-};
+	atomic_दीर्घ_t inode_refs;
+पूर्ण;
 
-static inline struct landlock_inode_security *landlock_inode(
-		const struct inode *const inode)
-{
-	return inode->i_security + landlock_blob_sizes.lbs_inode;
-}
+अटल अंतरभूत काष्ठा landlock_inode_security *landlock_inode(
+		स्थिर काष्ठा inode *स्थिर inode)
+अणु
+	वापस inode->i_security + landlock_blob_sizes.lbs_inode;
+पूर्ण
 
-static inline struct landlock_superblock_security *landlock_superblock(
-		const struct super_block *const superblock)
-{
-	return superblock->s_security + landlock_blob_sizes.lbs_superblock;
-}
+अटल अंतरभूत काष्ठा landlock_superblock_security *landlock_superblock(
+		स्थिर काष्ठा super_block *स्थिर superblock)
+अणु
+	वापस superblock->s_security + landlock_blob_sizes.lbs_superblock;
+पूर्ण
 
-__init void landlock_add_fs_hooks(void);
+__init व्योम landlock_add_fs_hooks(व्योम);
 
-int landlock_append_fs_rule(struct landlock_ruleset *const ruleset,
-		const struct path *const path, u32 access_hierarchy);
+पूर्णांक landlock_append_fs_rule(काष्ठा landlock_ruleset *स्थिर ruleset,
+		स्थिर काष्ठा path *स्थिर path, u32 access_hierarchy);
 
-#endif /* _SECURITY_LANDLOCK_FS_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_FS_H */

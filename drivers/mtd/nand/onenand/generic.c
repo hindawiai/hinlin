@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (c) 2005 Samsung Electronics
  *  Kyungmin Park <kyungmin.park@samsung.com>
  *
  *  Overview:
- *   This is a device driver for the OneNAND flash for generic boards.
+ *   This is a device driver क्रम the Oneन_अंकD flash क्रम generic boards.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/onenand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/onenand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/पन.स>
 
 /*
- * Note: Driver name and platform data format have been updated!
+ * Note: Driver name and platक्रमm data क्रमmat have been updated!
  *
- * This version of the driver is named "onenand-flash" and takes struct
- * onenand_platform_data as platform data. The old ARM-specific version
- * with the name "onenand" used to take struct flash_platform_data.
+ * This version of the driver is named "onenand-flash" and takes काष्ठा
+ * onenand_platक्रमm_data as platक्रमm data. The old ARM-specअगरic version
+ * with the name "onenand" used to take काष्ठा flash_platक्रमm_data.
  */
-#define DRIVER_NAME	"onenand-flash"
+#घोषणा DRIVER_NAME	"onenand-flash"
 
-struct onenand_info {
-	struct mtd_info		mtd;
-	struct onenand_chip	onenand;
-};
+काष्ठा onenand_info अणु
+	काष्ठा mtd_info		mtd;
+	काष्ठा onenand_chip	onenand;
+पूर्ण;
 
-static int generic_onenand_probe(struct platform_device *pdev)
-{
-	struct onenand_info *info;
-	struct onenand_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct resource *res = pdev->resource;
-	unsigned long size = resource_size(res);
-	int err;
+अटल पूर्णांक generic_onenand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा onenand_info *info;
+	काष्ठा onenand_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा resource *res = pdev->resource;
+	अचिन्हित दीर्घ size = resource_size(res);
+	पूर्णांक err;
 
-	info = kzalloc(sizeof(struct onenand_info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(काष्ठा onenand_info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	if (!request_mem_region(res->start, size, dev_name(&pdev->dev))) {
+	अगर (!request_mem_region(res->start, size, dev_name(&pdev->dev))) अणु
 		err = -EBUSY;
-		goto out_free_info;
-	}
+		जाओ out_मुक्त_info;
+	पूर्ण
 
 	info->onenand.base = ioremap(res->start, size);
-	if (!info->onenand.base) {
+	अगर (!info->onenand.base) अणु
 		err = -ENOMEM;
-		goto out_release_mem_region;
-	}
+		जाओ out_release_mem_region;
+	पूर्ण
 
-	info->onenand.mmcontrol = pdata ? pdata->mmcontrol : NULL;
-	info->onenand.irq = platform_get_irq(pdev, 0);
+	info->onenand.mmcontrol = pdata ? pdata->mmcontrol : शून्य;
+	info->onenand.irq = platक्रमm_get_irq(pdev, 0);
 
 	info->mtd.dev.parent = &pdev->dev;
 	info->mtd.priv = &info->onenand;
 
-	if (onenand_scan(&info->mtd, 1)) {
+	अगर (onenand_scan(&info->mtd, 1)) अणु
 		err = -ENXIO;
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
-	err = mtd_device_register(&info->mtd, pdata ? pdata->parts : NULL,
+	err = mtd_device_रेजिस्टर(&info->mtd, pdata ? pdata->parts : शून्य,
 				  pdata ? pdata->nr_parts : 0);
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 
-	return 0;
+	वापस 0;
 
 out_iounmap:
 	iounmap(info->onenand.base);
 out_release_mem_region:
 	release_mem_region(res->start, size);
-out_free_info:
-	kfree(info);
+out_मुक्त_info:
+	kमुक्त(info);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int generic_onenand_remove(struct platform_device *pdev)
-{
-	struct onenand_info *info = platform_get_drvdata(pdev);
-	struct resource *res = pdev->resource;
-	unsigned long size = resource_size(res);
+अटल पूर्णांक generic_onenand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा onenand_info *info = platक्रमm_get_drvdata(pdev);
+	काष्ठा resource *res = pdev->resource;
+	अचिन्हित दीर्घ size = resource_size(res);
 
-	if (info) {
+	अगर (info) अणु
 		onenand_release(&info->mtd);
 		release_mem_region(res->start, size);
 		iounmap(info->onenand.base);
-		kfree(info);
-	}
+		kमुक्त(info);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver generic_onenand_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver generic_onenand_driver = अणु
+	.driver = अणु
 		.name		= DRIVER_NAME,
-	},
+	पूर्ण,
 	.probe		= generic_onenand_probe,
-	.remove		= generic_onenand_remove,
-};
+	.हटाओ		= generic_onenand_हटाओ,
+पूर्ण;
 
-module_platform_driver(generic_onenand_driver);
+module_platक्रमm_driver(generic_onenand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kyungmin Park <kyungmin.park@samsung.com>");

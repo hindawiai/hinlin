@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * IEEE754 floating point
- * common internal header file
+ * IEEE754 भग्नing poपूर्णांक
+ * common पूर्णांकernal header file
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
-#ifndef __IEEE754INT_H
-#define __IEEE754INT_H
+#अगर_अघोषित __IEEE754INT_H
+#घोषणा __IEEE754INT_H
 
-#include "ieee754.h"
+#समावेश "ieee754.h"
 
-#define CLPAIR(x, y)	((x)*6+(y))
+#घोषणा CLPAIR(x, y)	((x)*6+(y))
 
-enum maddf_flags {
+क्रमागत maddf_flags अणु
 	MADDF_NEGATE_PRODUCT	= 1 << 0,
 	MADDF_NEGATE_ADDITION	= 1 << 1,
-};
+पूर्ण;
 
-static inline void ieee754_clearcx(void)
-{
+अटल अंतरभूत व्योम ieee754_clearcx(व्योम)
+अणु
 	ieee754_csr.cx = 0;
-}
+पूर्ण
 
-static inline void ieee754_setcx(const unsigned int flags)
-{
+अटल अंतरभूत व्योम ieee754_setcx(स्थिर अचिन्हित पूर्णांक flags)
+अणु
 	ieee754_csr.cx |= flags;
 	ieee754_csr.sx |= flags;
-}
+पूर्ण
 
-static inline int ieee754_setandtestcx(const unsigned int x)
-{
+अटल अंतरभूत पूर्णांक ieee754_setandtestcx(स्थिर अचिन्हित पूर्णांक x)
+अणु
 	ieee754_setcx(x);
 
-	return ieee754_csr.mx & x;
-}
+	वापस ieee754_csr.mx & x;
+पूर्ण
 
-static inline int ieee754_class_nan(int xc)
-{
-	return xc >= IEEE754_CLASS_SNAN;
-}
+अटल अंतरभूत पूर्णांक ieee754_class_nan(पूर्णांक xc)
+अणु
+	वापस xc >= IEEE754_CLASS_Sन_अंक;
+पूर्ण
 
-#define COMPXSP \
-	unsigned int xm; int xe; int xs __maybe_unused; int xc
+#घोषणा COMPXSP \
+	अचिन्हित पूर्णांक xm; पूर्णांक xe; पूर्णांक xs __maybe_unused; पूर्णांक xc
 
-#define COMPYSP \
-	unsigned int ym; int ye; int ys; int yc
+#घोषणा COMPYSP \
+	अचिन्हित पूर्णांक ym; पूर्णांक ye; पूर्णांक ys; पूर्णांक yc
 
-#define COMPZSP \
-	unsigned int zm; int ze; int zs; int zc
+#घोषणा COMPZSP \
+	अचिन्हित पूर्णांक zm; पूर्णांक ze; पूर्णांक zs; पूर्णांक zc
 
-#define EXPLODESP(v, vc, vs, ve, vm)					\
-{									\
+#घोषणा EXPLODESP(v, vc, vs, ve, vm)					\
+अणु									\
 	vs = SPSIGN(v);							\
 	ve = SPBEXP(v);							\
 	vm = SPMANT(v);							\
-	if (ve == SP_EMAX+1+SP_EBIAS) {					\
-		if (vm == 0)						\
+	अगर (ve == SP_EMAX+1+SP_EBIAS) अणु					\
+		अगर (vm == 0)						\
 			vc = IEEE754_CLASS_INF;				\
-		else if (ieee754_csr.nan2008 ^ !(vm & SP_MBIT(SP_FBITS - 1))) \
-			vc = IEEE754_CLASS_QNAN;			\
-		else							\
-			vc = IEEE754_CLASS_SNAN;			\
-	} else if (ve == SP_EMIN-1+SP_EBIAS) {				\
-		if (vm) {						\
+		अन्यथा अगर (ieee754_csr.nan2008 ^ !(vm & SP_MBIT(SP_FBITS - 1))) \
+			vc = IEEE754_CLASS_Qन_अंक;			\
+		अन्यथा							\
+			vc = IEEE754_CLASS_Sन_अंक;			\
+	पूर्ण अन्यथा अगर (ve == SP_EMIN-1+SP_EBIAS) अणु				\
+		अगर (vm) अणु						\
 			ve = SP_EMIN;					\
 			vc = IEEE754_CLASS_DNORM;			\
-		} else							\
+		पूर्ण अन्यथा							\
 			vc = IEEE754_CLASS_ZERO;			\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		ve -= SP_EBIAS;						\
 		vm |= SP_HIDDEN_BIT;					\
 		vc = IEEE754_CLASS_NORM;				\
-	}								\
-}
-#define EXPLODEXSP EXPLODESP(x, xc, xs, xe, xm)
-#define EXPLODEYSP EXPLODESP(y, yc, ys, ye, ym)
-#define EXPLODEZSP EXPLODESP(z, zc, zs, ze, zm)
+	पूर्ण								\
+पूर्ण
+#घोषणा EXPLODEXSP EXPLODESP(x, xc, xs, xe, xm)
+#घोषणा EXPLODEYSP EXPLODESP(y, yc, ys, ye, ym)
+#घोषणा EXPLODEZSP EXPLODESP(z, zc, zs, ze, zm)
 
 
-#define COMPXDP \
-	u64 xm; int xe; int xs __maybe_unused; int xc
+#घोषणा COMPXDP \
+	u64 xm; पूर्णांक xe; पूर्णांक xs __maybe_unused; पूर्णांक xc
 
-#define COMPYDP \
-	u64 ym; int ye; int ys; int yc
+#घोषणा COMPYDP \
+	u64 ym; पूर्णांक ye; पूर्णांक ys; पूर्णांक yc
 
-#define COMPZDP \
-	u64 zm; int ze; int zs; int zc
+#घोषणा COMPZDP \
+	u64 zm; पूर्णांक ze; पूर्णांक zs; पूर्णांक zc
 
-#define EXPLODEDP(v, vc, vs, ve, vm)					\
-{									\
+#घोषणा EXPLODEDP(v, vc, vs, ve, vm)					\
+अणु									\
 	vm = DPMANT(v);							\
 	vs = DPSIGN(v);							\
 	ve = DPBEXP(v);							\
-	if (ve == DP_EMAX+1+DP_EBIAS) {					\
-		if (vm == 0)						\
+	अगर (ve == DP_EMAX+1+DP_EBIAS) अणु					\
+		अगर (vm == 0)						\
 			vc = IEEE754_CLASS_INF;				\
-		else if (ieee754_csr.nan2008 ^ !(vm & DP_MBIT(DP_FBITS - 1))) \
-			vc = IEEE754_CLASS_QNAN;			\
-		else							\
-			vc = IEEE754_CLASS_SNAN;			\
-	} else if (ve == DP_EMIN-1+DP_EBIAS) {				\
-		if (vm) {						\
+		अन्यथा अगर (ieee754_csr.nan2008 ^ !(vm & DP_MBIT(DP_FBITS - 1))) \
+			vc = IEEE754_CLASS_Qन_अंक;			\
+		अन्यथा							\
+			vc = IEEE754_CLASS_Sन_अंक;			\
+	पूर्ण अन्यथा अगर (ve == DP_EMIN-1+DP_EBIAS) अणु				\
+		अगर (vm) अणु						\
 			ve = DP_EMIN;					\
 			vc = IEEE754_CLASS_DNORM;			\
-		} else							\
+		पूर्ण अन्यथा							\
 			vc = IEEE754_CLASS_ZERO;			\
-	} else {							\
+	पूर्ण अन्यथा अणु							\
 		ve -= DP_EBIAS;						\
 		vm |= DP_HIDDEN_BIT;					\
 		vc = IEEE754_CLASS_NORM;				\
-	}								\
-}
-#define EXPLODEXDP EXPLODEDP(x, xc, xs, xe, xm)
-#define EXPLODEYDP EXPLODEDP(y, yc, ys, ye, ym)
-#define EXPLODEZDP EXPLODEDP(z, zc, zs, ze, zm)
+	पूर्ण								\
+पूर्ण
+#घोषणा EXPLODEXDP EXPLODEDP(x, xc, xs, xe, xm)
+#घोषणा EXPLODEYDP EXPLODEDP(y, yc, ys, ye, ym)
+#घोषणा EXPLODEZDP EXPLODEDP(z, zc, zs, ze, zm)
 
-#define FLUSHDP(v, vc, vs, ve, vm)					\
-	if (vc==IEEE754_CLASS_DNORM) {					\
-		if (ieee754_csr.nod) {					\
+#घोषणा FLUSHDP(v, vc, vs, ve, vm)					\
+	अगर (vc==IEEE754_CLASS_DNORM) अणु					\
+		अगर (ieee754_csr.nod) अणु					\
 			ieee754_setcx(IEEE754_INEXACT);			\
 			vc = IEEE754_CLASS_ZERO;			\
 			ve = DP_EMIN-1+DP_EBIAS;			\
 			vm = 0;						\
 			v = ieee754dp_zero(vs);				\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define FLUSHSP(v, vc, vs, ve, vm)					\
-	if (vc==IEEE754_CLASS_DNORM) {					\
-		if (ieee754_csr.nod) {					\
+#घोषणा FLUSHSP(v, vc, vs, ve, vm)					\
+	अगर (vc==IEEE754_CLASS_DNORM) अणु					\
+		अगर (ieee754_csr.nod) अणु					\
 			ieee754_setcx(IEEE754_INEXACT);			\
 			vc = IEEE754_CLASS_ZERO;			\
 			ve = SP_EMIN-1+SP_EBIAS;			\
 			vm = 0;						\
 			v = ieee754sp_zero(vs);				\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-#define FLUSHXDP FLUSHDP(x, xc, xs, xe, xm)
-#define FLUSHYDP FLUSHDP(y, yc, ys, ye, ym)
-#define FLUSHZDP FLUSHDP(z, zc, zs, ze, zm)
-#define FLUSHXSP FLUSHSP(x, xc, xs, xe, xm)
-#define FLUSHYSP FLUSHSP(y, yc, ys, ye, ym)
-#define FLUSHZSP FLUSHSP(z, zc, zs, ze, zm)
+#घोषणा FLUSHXDP FLUSHDP(x, xc, xs, xe, xm)
+#घोषणा FLUSHYDP FLUSHDP(y, yc, ys, ye, ym)
+#घोषणा FLUSHZDP FLUSHDP(z, zc, zs, ze, zm)
+#घोषणा FLUSHXSP FLUSHSP(x, xc, xs, xe, xm)
+#घोषणा FLUSHYSP FLUSHSP(y, yc, ys, ye, ym)
+#घोषणा FLUSHZSP FLUSHSP(z, zc, zs, ze, zm)
 
-#endif /* __IEEE754INT_H  */
+#पूर्ण_अगर /* __IEEE754INT_H  */

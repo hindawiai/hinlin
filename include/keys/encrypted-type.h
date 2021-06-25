@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2010 IBM Corporation
  * Copyright (C) 2010 Politecnico di Torino, Italy
@@ -9,27 +10,27 @@
  * Roberto Sassu <roberto.sassu@polito.it>
  */
 
-#ifndef _KEYS_ENCRYPTED_TYPE_H
-#define _KEYS_ENCRYPTED_TYPE_H
+#अगर_अघोषित _KEYS_ENCRYPTED_TYPE_H
+#घोषणा _KEYS_ENCRYPTED_TYPE_H
 
-#include <linux/key.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/key.h>
+#समावेश <linux/rcupdate.h>
 
-struct encrypted_key_payload {
-	struct rcu_head rcu;
-	char *format;		/* datablob: format */
-	char *master_desc;	/* datablob: master key name */
-	char *datalen;		/* datablob: decrypted key length */
+काष्ठा encrypted_key_payload अणु
+	काष्ठा rcu_head rcu;
+	अक्षर *क्रमmat;		/* datablob: क्रमmat */
+	अक्षर *master_desc;	/* datablob: master key name */
+	अक्षर *datalen;		/* datablob: decrypted key length */
 	u8 *iv;			/* datablob: iv */
 	u8 *encrypted_data;	/* datablob: encrypted data */
-	unsigned short datablob_len;	/* length of datablob */
-	unsigned short decrypted_datalen;	/* decrypted data length */
-	unsigned short payload_datalen;		/* payload data length */
-	unsigned short encrypted_key_format;	/* encrypted key format */
+	अचिन्हित लघु datablob_len;	/* length of datablob */
+	अचिन्हित लघु decrypted_datalen;	/* decrypted data length */
+	अचिन्हित लघु payload_datalen;		/* payload data length */
+	अचिन्हित लघु encrypted_key_क्रमmat;	/* encrypted key क्रमmat */
 	u8 *decrypted_data;	/* decrypted data */
 	u8 payload_data[];	/* payload data + datablob + hmac */
-};
+पूर्ण;
 
-extern struct key_type key_type_encrypted;
+बाह्य काष्ठा key_type key_type_encrypted;
 
-#endif /* _KEYS_ENCRYPTED_TYPE_H */
+#पूर्ण_अगर /* _KEYS_ENCRYPTED_TYPE_H */

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/atomic.h>
-#include <linux/debugfs.h>
-#include <linux/notifier.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/atomic.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/notअगरier.h>
 
-struct notifier_err_inject_action {
-	unsigned long val;
-	int error;
-	const char *name;
-};
+काष्ठा notअगरier_err_inject_action अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक error;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-#define NOTIFIER_ERR_INJECT_ACTION(action)	\
+#घोषणा NOTIFIER_ERR_INJECT_ACTION(action)	\
 	.name = #action, .val = (action),
 
-struct notifier_err_inject {
-	struct notifier_block nb;
-	struct notifier_err_inject_action actions[];
+काष्ठा notअगरier_err_inject अणु
+	काष्ठा notअगरier_block nb;
+	काष्ठा notअगरier_err_inject_action actions[];
 	/* The last slot must be terminated with zero sentinel */
-};
+पूर्ण;
 
-extern struct dentry *notifier_err_inject_dir;
+बाह्य काष्ठा dentry *notअगरier_err_inject_dir;
 
-extern struct dentry *notifier_err_inject_init(const char *name,
-		struct dentry *parent, struct notifier_err_inject *err_inject,
-		int priority);
+बाह्य काष्ठा dentry *notअगरier_err_inject_init(स्थिर अक्षर *name,
+		काष्ठा dentry *parent, काष्ठा notअगरier_err_inject *err_inject,
+		पूर्णांक priority);

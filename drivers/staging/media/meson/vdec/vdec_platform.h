@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Maxime Jourdan <mjourdan@baylibre.com>
  */
 
-#ifndef __MESON_VDEC_PLATFORM_H_
-#define __MESON_VDEC_PLATFORM_H_
+#अगर_अघोषित __MESON_VDEC_PLATFORM_H_
+#घोषणा __MESON_VDEC_PLATFORM_H_
 
-#include "vdec.h"
+#समावेश "vdec.h"
 
-struct amvdec_format;
+काष्ठा amvdec_क्रमmat;
 
-enum vdec_revision {
+क्रमागत vdec_revision अणु
 	VDEC_REVISION_GXBB,
 	VDEC_REVISION_GXL,
 	VDEC_REVISION_GXM,
 	VDEC_REVISION_G12A,
 	VDEC_REVISION_SM1,
-};
+पूर्ण;
 
-struct vdec_platform {
-	const struct amvdec_format *formats;
-	const u32 num_formats;
-	enum vdec_revision revision;
-};
+काष्ठा vdec_platक्रमm अणु
+	स्थिर काष्ठा amvdec_क्रमmat *क्रमmats;
+	स्थिर u32 num_क्रमmats;
+	क्रमागत vdec_revision revision;
+पूर्ण;
 
-extern const struct vdec_platform vdec_platform_gxbb;
-extern const struct vdec_platform vdec_platform_gxm;
-extern const struct vdec_platform vdec_platform_gxl;
-extern const struct vdec_platform vdec_platform_g12a;
-extern const struct vdec_platform vdec_platform_sm1;
+बाह्य स्थिर काष्ठा vdec_platक्रमm vdec_platक्रमm_gxbb;
+बाह्य स्थिर काष्ठा vdec_platक्रमm vdec_platक्रमm_gxm;
+बाह्य स्थिर काष्ठा vdec_platक्रमm vdec_platक्रमm_gxl;
+बाह्य स्थिर काष्ठा vdec_platक्रमm vdec_platक्रमm_g12a;
+बाह्य स्थिर काष्ठा vdec_platक्रमm vdec_platक्रमm_sm1;
 
-#endif
+#पूर्ण_अगर

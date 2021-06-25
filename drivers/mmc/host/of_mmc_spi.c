@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * OpenFirmware bindings for the MMC-over-SPI driver
+ * OpenFirmware bindings क्रम the MMC-over-SPI driver
  *
  * Copyright (c) MontaVista Software, Inc. 2008.
  *
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/mmc_spi.h>
-#include <linux/mmc/core.h>
-#include <linux/mmc/host.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/mmc_spi.h>
+#समावेश <linux/mmc/core.h>
+#समावेश <linux/mmc/host.h>
 
 MODULE_LICENSE("GPL");
 
-struct of_mmc_spi {
-	int detect_irq;
-	struct mmc_spi_platform_data pdata;
-};
+काष्ठा of_mmc_spi अणु
+	पूर्णांक detect_irq;
+	काष्ठा mmc_spi_platक्रमm_data pdata;
+पूर्ण;
 
-static struct of_mmc_spi *to_of_mmc_spi(struct device *dev)
-{
-	return container_of(dev->platform_data, struct of_mmc_spi, pdata);
-}
+अटल काष्ठा of_mmc_spi *to_of_mmc_spi(काष्ठा device *dev)
+अणु
+	वापस container_of(dev->platक्रमm_data, काष्ठा of_mmc_spi, pdata);
+पूर्ण
 
-static int of_mmc_spi_init(struct device *dev,
-			   irqreturn_t (*irqhandler)(int, void *), void *mmc)
-{
-	struct of_mmc_spi *oms = to_of_mmc_spi(dev);
+अटल पूर्णांक of_mmc_spi_init(काष्ठा device *dev,
+			   irqवापस_t (*irqhandler)(पूर्णांक, व्योम *), व्योम *mmc)
+अणु
+	काष्ठा of_mmc_spi *oms = to_of_mmc_spi(dev);
 
-	return request_threaded_irq(oms->detect_irq, NULL, irqhandler,
+	वापस request_thपढ़ोed_irq(oms->detect_irq, शून्य, irqhandler,
 					IRQF_ONESHOT, dev_name(dev), mmc);
-}
+पूर्ण
 
-static void of_mmc_spi_exit(struct device *dev, void *mmc)
-{
-	struct of_mmc_spi *oms = to_of_mmc_spi(dev);
+अटल व्योम of_mmc_spi_निकास(काष्ठा device *dev, व्योम *mmc)
+अणु
+	काष्ठा of_mmc_spi *oms = to_of_mmc_spi(dev);
 
-	free_irq(oms->detect_irq, mmc);
-}
+	मुक्त_irq(oms->detect_irq, mmc);
+पूर्ण
 
-struct mmc_spi_platform_data *mmc_spi_get_pdata(struct spi_device *spi)
-{
-	struct mmc_host *mmc = dev_get_drvdata(&spi->dev);
-	struct device *dev = &spi->dev;
-	struct of_mmc_spi *oms;
+काष्ठा mmc_spi_platक्रमm_data *mmc_spi_get_pdata(काष्ठा spi_device *spi)
+अणु
+	काष्ठा mmc_host *mmc = dev_get_drvdata(&spi->dev);
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा of_mmc_spi *oms;
 
-	if (dev->platform_data || !dev_fwnode(dev))
-		return dev->platform_data;
+	अगर (dev->platक्रमm_data || !dev_fwnode(dev))
+		वापस dev->platक्रमm_data;
 
-	oms = kzalloc(sizeof(*oms), GFP_KERNEL);
-	if (!oms)
-		return NULL;
+	oms = kzalloc(माप(*oms), GFP_KERNEL);
+	अगर (!oms)
+		वापस शून्य;
 
-	if (mmc_of_parse_voltage(mmc, &oms->pdata.ocr_mask) < 0)
-		goto err_ocr;
+	अगर (mmc_of_parse_voltage(mmc, &oms->pdata.ocr_mask) < 0)
+		जाओ err_ocr;
 
 	oms->detect_irq = spi->irq;
-	if (oms->detect_irq > 0) {
+	अगर (oms->detect_irq > 0) अणु
 		oms->pdata.init = of_mmc_spi_init;
-		oms->pdata.exit = of_mmc_spi_exit;
-	} else {
+		oms->pdata.निकास = of_mmc_spi_निकास;
+	पूर्ण अन्यथा अणु
 		oms->pdata.caps |= MMC_CAP_NEEDS_POLL;
-	}
+	पूर्ण
 
-	dev->platform_data = &oms->pdata;
-	return dev->platform_data;
+	dev->platक्रमm_data = &oms->pdata;
+	वापस dev->platक्रमm_data;
 err_ocr:
-	kfree(oms);
-	return NULL;
-}
+	kमुक्त(oms);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(mmc_spi_get_pdata);
 
-void mmc_spi_put_pdata(struct spi_device *spi)
-{
-	struct device *dev = &spi->dev;
-	struct of_mmc_spi *oms = to_of_mmc_spi(dev);
+व्योम mmc_spi_put_pdata(काष्ठा spi_device *spi)
+अणु
+	काष्ठा device *dev = &spi->dev;
+	काष्ठा of_mmc_spi *oms = to_of_mmc_spi(dev);
 
-	if (!dev->platform_data || !dev_fwnode(dev))
-		return;
+	अगर (!dev->platक्रमm_data || !dev_fwnode(dev))
+		वापस;
 
-	kfree(oms);
-	dev->platform_data = NULL;
-}
+	kमुक्त(oms);
+	dev->platक्रमm_data = शून्य;
+पूर्ण
 EXPORT_SYMBOL(mmc_spi_put_pdata);

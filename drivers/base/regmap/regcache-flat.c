@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Register cache access API - flat caching support
 //
 // Copyright 2012 Wolfson Microelectronics plc
 //
-// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
 
-#include <linux/device.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static inline unsigned int regcache_flat_get_index(const struct regmap *map,
-						   unsigned int reg)
-{
-	return regcache_get_index_by_order(map, reg);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक regcache_flat_get_index(स्थिर काष्ठा regmap *map,
+						   अचिन्हित पूर्णांक reg)
+अणु
+	वापस regcache_get_index_by_order(map, reg);
+पूर्ण
 
-static int regcache_flat_init(struct regmap *map)
-{
-	int i;
-	unsigned int *cache;
+अटल पूर्णांक regcache_flat_init(काष्ठा regmap *map)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *cache;
 
-	if (!map || map->reg_stride_order < 0 || !map->max_register)
-		return -EINVAL;
+	अगर (!map || map->reg_stride_order < 0 || !map->max_रेजिस्टर)
+		वापस -EINVAL;
 
-	map->cache = kcalloc(regcache_flat_get_index(map, map->max_register)
-			     + 1, sizeof(unsigned int), GFP_KERNEL);
-	if (!map->cache)
-		return -ENOMEM;
+	map->cache = kसुस्मृति(regcache_flat_get_index(map, map->max_रेजिस्टर)
+			     + 1, माप(अचिन्हित पूर्णांक), GFP_KERNEL);
+	अगर (!map->cache)
+		वापस -ENOMEM;
 
 	cache = map->cache;
 
-	for (i = 0; i < map->num_reg_defaults; i++) {
-		unsigned int reg = map->reg_defaults[i].reg;
-		unsigned int index = regcache_flat_get_index(map, reg);
+	क्रम (i = 0; i < map->num_reg_शेषs; i++) अणु
+		अचिन्हित पूर्णांक reg = map->reg_शेषs[i].reg;
+		अचिन्हित पूर्णांक index = regcache_flat_get_index(map, reg);
 
-		cache[index] = map->reg_defaults[i].def;
-	}
+		cache[index] = map->reg_शेषs[i].def;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regcache_flat_exit(struct regmap *map)
-{
-	kfree(map->cache);
-	map->cache = NULL;
+अटल पूर्णांक regcache_flat_निकास(काष्ठा regmap *map)
+अणु
+	kमुक्त(map->cache);
+	map->cache = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regcache_flat_read(struct regmap *map,
-			      unsigned int reg, unsigned int *value)
-{
-	unsigned int *cache = map->cache;
-	unsigned int index = regcache_flat_get_index(map, reg);
+अटल पूर्णांक regcache_flat_पढ़ो(काष्ठा regmap *map,
+			      अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value)
+अणु
+	अचिन्हित पूर्णांक *cache = map->cache;
+	अचिन्हित पूर्णांक index = regcache_flat_get_index(map, reg);
 
 	*value = cache[index];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int regcache_flat_write(struct regmap *map, unsigned int reg,
-			       unsigned int value)
-{
-	unsigned int *cache = map->cache;
-	unsigned int index = regcache_flat_get_index(map, reg);
+अटल पूर्णांक regcache_flat_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
+			       अचिन्हित पूर्णांक value)
+अणु
+	अचिन्हित पूर्णांक *cache = map->cache;
+	अचिन्हित पूर्णांक index = regcache_flat_get_index(map, reg);
 
 	cache[index] = value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct regcache_ops regcache_flat_ops = {
+काष्ठा regcache_ops regcache_flat_ops = अणु
 	.type = REGCACHE_FLAT,
 	.name = "flat",
 	.init = regcache_flat_init,
-	.exit = regcache_flat_exit,
-	.read = regcache_flat_read,
-	.write = regcache_flat_write,
-};
+	.निकास = regcache_flat_निकास,
+	.पढ़ो = regcache_flat_पढ़ो,
+	.ग_लिखो = regcache_flat_ग_लिखो,
+पूर्ण;

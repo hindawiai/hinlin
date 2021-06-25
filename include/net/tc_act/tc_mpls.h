@@ -1,105 +1,106 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2019 Netronome Systems, Inc. */
 
-#ifndef __NET_TC_MPLS_H
-#define __NET_TC_MPLS_H
+#अगर_अघोषित __NET_TC_MPLS_H
+#घोषणा __NET_TC_MPLS_H
 
-#include <linux/tc_act/tc_mpls.h>
-#include <net/act_api.h>
+#समावेश <linux/tc_act/tc_mpls.h>
+#समावेश <net/act_api.h>
 
-struct tcf_mpls_params {
-	int tcfm_action;
+काष्ठा tcf_mpls_params अणु
+	पूर्णांक tcfm_action;
 	u32 tcfm_label;
 	u8 tcfm_tc;
 	u8 tcfm_ttl;
 	u8 tcfm_bos;
 	__be16 tcfm_proto;
-	struct rcu_head	rcu;
-};
+	काष्ठा rcu_head	rcu;
+पूर्ण;
 
-#define ACT_MPLS_TC_NOT_SET	0xff
-#define ACT_MPLS_BOS_NOT_SET	0xff
-#define ACT_MPLS_LABEL_NOT_SET	0xffffffff
+#घोषणा ACT_MPLS_TC_NOT_SET	0xff
+#घोषणा ACT_MPLS_BOS_NOT_SET	0xff
+#घोषणा ACT_MPLS_LABEL_NOT_SET	0xffffffff
 
-struct tcf_mpls {
-	struct tc_action common;
-	struct tcf_mpls_params __rcu *mpls_p;
-};
-#define to_mpls(a) ((struct tcf_mpls *)a)
+काष्ठा tcf_mpls अणु
+	काष्ठा tc_action common;
+	काष्ठा tcf_mpls_params __rcu *mpls_p;
+पूर्ण;
+#घोषणा to_mpls(a) ((काष्ठा tcf_mpls *)a)
 
-static inline bool is_tcf_mpls(const struct tc_action *a)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	if (a->ops && a->ops->id == TCA_ID_MPLS)
-		return true;
-#endif
-	return false;
-}
+अटल अंतरभूत bool is_tcf_mpls(स्थिर काष्ठा tc_action *a)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (a->ops && a->ops->id == TCA_ID_MPLS)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static inline u32 tcf_mpls_action(const struct tc_action *a)
-{
+अटल अंतरभूत u32 tcf_mpls_action(स्थिर काष्ठा tc_action *a)
+अणु
 	u32 tcfm_action;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_action = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_action;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_action;
-}
+	वापस tcfm_action;
+पूर्ण
 
-static inline __be16 tcf_mpls_proto(const struct tc_action *a)
-{
+अटल अंतरभूत __be16 tcf_mpls_proto(स्थिर काष्ठा tc_action *a)
+अणु
 	__be16 tcfm_proto;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_proto = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_proto;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_proto;
-}
+	वापस tcfm_proto;
+पूर्ण
 
-static inline u32 tcf_mpls_label(const struct tc_action *a)
-{
+अटल अंतरभूत u32 tcf_mpls_label(स्थिर काष्ठा tc_action *a)
+अणु
 	u32 tcfm_label;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_label = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_label;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_label;
-}
+	वापस tcfm_label;
+पूर्ण
 
-static inline u8 tcf_mpls_tc(const struct tc_action *a)
-{
+अटल अंतरभूत u8 tcf_mpls_tc(स्थिर काष्ठा tc_action *a)
+अणु
 	u8 tcfm_tc;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_tc = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_tc;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_tc;
-}
+	वापस tcfm_tc;
+पूर्ण
 
-static inline u8 tcf_mpls_bos(const struct tc_action *a)
-{
+अटल अंतरभूत u8 tcf_mpls_bos(स्थिर काष्ठा tc_action *a)
+अणु
 	u8 tcfm_bos;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_bos = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_bos;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_bos;
-}
+	वापस tcfm_bos;
+पूर्ण
 
-static inline u8 tcf_mpls_ttl(const struct tc_action *a)
-{
+अटल अंतरभूत u8 tcf_mpls_ttl(स्थिर काष्ठा tc_action *a)
+अणु
 	u8 tcfm_ttl;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfm_ttl = rcu_dereference(to_mpls(a)->mpls_p)->tcfm_ttl;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfm_ttl;
-}
+	वापस tcfm_ttl;
+पूर्ण
 
-#endif /* __NET_TC_MPLS_H */
+#पूर्ण_अगर /* __NET_TC_MPLS_H */

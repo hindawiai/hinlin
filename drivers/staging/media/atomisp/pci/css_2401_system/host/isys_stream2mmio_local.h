@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__
-#define __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__
+#अगर_अघोषित __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__
+#घोषणा __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__
 
-#include "isys_stream2mmio_global.h"
+#समावेश "isys_stream2mmio_global.h"
 
-typedef struct stream2mmio_state_s		stream2mmio_state_t;
-typedef struct stream2mmio_sid_state_s	stream2mmio_sid_state_t;
+प्रकार काष्ठा stream2mmio_state_s		stream2mmio_state_t;
+प्रकार काष्ठा stream2mmio_sid_state_s	stream2mmio_sid_state_t;
 
-struct stream2mmio_sid_state_s {
+काष्ठा stream2mmio_sid_state_s अणु
 	hrt_data rcv_ack;
 	hrt_data pix_width_id;
 	hrt_data start_addr;
@@ -29,9 +30,9 @@ struct stream2mmio_sid_state_s {
 	hrt_data strides;
 	hrt_data num_items;
 	hrt_data block_when_no_cmd;
-};
+पूर्ण;
 
-struct stream2mmio_state_s {
+काष्ठा stream2mmio_state_s अणु
 	stream2mmio_sid_state_t	sid_state[N_STREAM2MMIO_SID_ID];
-};
-#endif /* __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__ */
+पूर्ण;
+#पूर्ण_अगर /* __ISYS_STREAM2MMIO_LOCAL_H_INCLUDED__ */

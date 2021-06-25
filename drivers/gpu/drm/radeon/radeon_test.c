@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright 2009 VMware, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,207 +21,207 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Michel Dänzer
+ * Authors: Michel Dथअnzer
  */
 
-#include <drm/radeon_drm.h>
-#include "radeon_reg.h"
-#include "radeon.h"
+#समावेश <drm/radeon_drm.h>
+#समावेश "radeon_reg.h"
+#समावेश "radeon.h"
 
-#define RADEON_TEST_COPY_BLIT 1
-#define RADEON_TEST_COPY_DMA  0
+#घोषणा RADEON_TEST_COPY_BLIT 1
+#घोषणा RADEON_TEST_COPY_DMA  0
 
 
 /* Test BO GTT->VRAM and VRAM->GTT GPU copies across the whole GTT aperture */
-static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
-{
-	struct radeon_bo *vram_obj = NULL;
-	struct radeon_bo **gtt_obj = NULL;
-	uint64_t gtt_addr, vram_addr;
-	unsigned n, size;
-	int i, r, ring;
+अटल व्योम radeon_करो_test_moves(काष्ठा radeon_device *rdev, पूर्णांक flag)
+अणु
+	काष्ठा radeon_bo *vram_obj = शून्य;
+	काष्ठा radeon_bo **gtt_obj = शून्य;
+	uपूर्णांक64_t gtt_addr, vram_addr;
+	अचिन्हित n, size;
+	पूर्णांक i, r, ring;
 
-	switch (flag) {
-	case RADEON_TEST_COPY_DMA:
+	चयन (flag) अणु
+	हाल RADEON_TEST_COPY_DMA:
 		ring = radeon_copy_dma_ring_index(rdev);
-		break;
-	case RADEON_TEST_COPY_BLIT:
+		अवरोध;
+	हाल RADEON_TEST_COPY_BLIT:
 		ring = radeon_copy_blit_ring_index(rdev);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Unknown copy method\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	size = 1024 * 1024;
 
 	/* Number of tests =
-	 * (Total GTT - IB pool - writeback page - ring buffers) / test size
+	 * (Total GTT - IB pool - ग_लिखोback page - ring buffers) / test size
 	 */
 	n = rdev->mc.gtt_size - rdev->gart_pin_size;
 	n /= size;
 
-	gtt_obj = kcalloc(n, sizeof(*gtt_obj), GFP_KERNEL);
-	if (!gtt_obj) {
+	gtt_obj = kसुस्मृति(n, माप(*gtt_obj), GFP_KERNEL);
+	अगर (!gtt_obj) अणु
 		DRM_ERROR("Failed to allocate %d pointers\n", n);
 		r = 1;
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_bo_create(rdev, size, PAGE_SIZE, true, RADEON_GEM_DOMAIN_VRAM,
-			     0, NULL, NULL, &vram_obj);
-	if (r) {
+			     0, शून्य, शून्य, &vram_obj);
+	अगर (r) अणु
 		DRM_ERROR("Failed to create VRAM object\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 	r = radeon_bo_reserve(vram_obj, false);
-	if (unlikely(r != 0))
-		goto out_unref;
+	अगर (unlikely(r != 0))
+		जाओ out_unref;
 	r = radeon_bo_pin(vram_obj, RADEON_GEM_DOMAIN_VRAM, &vram_addr);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to pin VRAM object\n");
-		goto out_unres;
-	}
-	for (i = 0; i < n; i++) {
-		void *gtt_map, *vram_map;
-		void **gtt_start, **gtt_end;
-		void **vram_start, **vram_end;
-		struct radeon_fence *fence = NULL;
+		जाओ out_unres;
+	पूर्ण
+	क्रम (i = 0; i < n; i++) अणु
+		व्योम *gtt_map, *vram_map;
+		व्योम **gtt_start, **gtt_end;
+		व्योम **vram_start, **vram_end;
+		काष्ठा radeon_fence *fence = शून्य;
 
 		r = radeon_bo_create(rdev, size, PAGE_SIZE, true,
-				     RADEON_GEM_DOMAIN_GTT, 0, NULL, NULL,
+				     RADEON_GEM_DOMAIN_GTT, 0, शून्य, शून्य,
 				     gtt_obj + i);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to create GTT object %d\n", i);
-			goto out_lclean;
-		}
+			जाओ out_lclean;
+		पूर्ण
 
 		r = radeon_bo_reserve(gtt_obj[i], false);
-		if (unlikely(r != 0))
-			goto out_lclean_unref;
+		अगर (unlikely(r != 0))
+			जाओ out_lclean_unref;
 		r = radeon_bo_pin(gtt_obj[i], RADEON_GEM_DOMAIN_GTT, &gtt_addr);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to pin GTT object %d\n", i);
-			goto out_lclean_unres;
-		}
+			जाओ out_lclean_unres;
+		पूर्ण
 
 		r = radeon_bo_kmap(gtt_obj[i], &gtt_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map GTT object %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size;
+		क्रम (gtt_start = gtt_map, gtt_end = gtt_map + size;
 		     gtt_start < gtt_end;
 		     gtt_start++)
 			*gtt_start = gtt_start;
 
 		radeon_bo_kunmap(gtt_obj[i]);
 
-		if (ring == R600_RING_TYPE_DMA_INDEX)
+		अगर (ring == R600_RING_TYPE_DMA_INDEX)
 			fence = radeon_copy_dma(rdev, gtt_addr, vram_addr,
 						size / RADEON_GPU_PAGE_SIZE,
 						vram_obj->tbo.base.resv);
-		else
+		अन्यथा
 			fence = radeon_copy_blit(rdev, gtt_addr, vram_addr,
 						 size / RADEON_GPU_PAGE_SIZE,
 						 vram_obj->tbo.base.resv);
-		if (IS_ERR(fence)) {
+		अगर (IS_ERR(fence)) अणु
 			DRM_ERROR("Failed GTT->VRAM copy %d\n", i);
 			r = PTR_ERR(fence);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		r = radeon_fence_wait(fence, false);
-		if (r) {
+		r = radeon_fence_रुको(fence, false);
+		अगर (r) अणु
 			DRM_ERROR("Failed to wait for GTT->VRAM fence %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
 		radeon_fence_unref(&fence);
 
 		r = radeon_bo_kmap(vram_obj, &vram_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map VRAM object after copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
+		क्रम (gtt_start = gtt_map, gtt_end = gtt_map + size,
 		     vram_start = vram_map, vram_end = vram_map + size;
 		     vram_start < vram_end;
-		     gtt_start++, vram_start++) {
-			if (*vram_start != gtt_start) {
+		     gtt_start++, vram_start++) अणु
+			अगर (*vram_start != gtt_start) अणु
 				DRM_ERROR("Incorrect GTT->VRAM copy %d: Got 0x%p, "
 					  "expected 0x%p (GTT/VRAM offset "
 					  "0x%16llx/0x%16llx)\n",
 					  i, *vram_start, gtt_start,
-					  (unsigned long long)
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (gtt_addr - rdev->mc.gtt_start +
-					   (void*)gtt_start - gtt_map),
-					  (unsigned long long)
+					   (व्योम*)gtt_start - gtt_map),
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (vram_addr - rdev->mc.vram_start +
-					   (void*)gtt_start - gtt_map));
+					   (व्योम*)gtt_start - gtt_map));
 				radeon_bo_kunmap(vram_obj);
-				goto out_lclean_unpin;
-			}
+				जाओ out_lclean_unpin;
+			पूर्ण
 			*vram_start = vram_start;
-		}
+		पूर्ण
 
 		radeon_bo_kunmap(vram_obj);
 
-		if (ring == R600_RING_TYPE_DMA_INDEX)
+		अगर (ring == R600_RING_TYPE_DMA_INDEX)
 			fence = radeon_copy_dma(rdev, vram_addr, gtt_addr,
 						size / RADEON_GPU_PAGE_SIZE,
 						vram_obj->tbo.base.resv);
-		else
+		अन्यथा
 			fence = radeon_copy_blit(rdev, vram_addr, gtt_addr,
 						 size / RADEON_GPU_PAGE_SIZE,
 						 vram_obj->tbo.base.resv);
-		if (IS_ERR(fence)) {
+		अगर (IS_ERR(fence)) अणु
 			DRM_ERROR("Failed VRAM->GTT copy %d\n", i);
 			r = PTR_ERR(fence);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		r = radeon_fence_wait(fence, false);
-		if (r) {
+		r = radeon_fence_रुको(fence, false);
+		अगर (r) अणु
 			DRM_ERROR("Failed to wait for VRAM->GTT fence %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
 		radeon_fence_unref(&fence);
 
 		r = radeon_bo_kmap(gtt_obj[i], &gtt_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map GTT object after copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
+		क्रम (gtt_start = gtt_map, gtt_end = gtt_map + size,
 		     vram_start = vram_map, vram_end = vram_map + size;
 		     gtt_start < gtt_end;
-		     gtt_start++, vram_start++) {
-			if (*gtt_start != vram_start) {
+		     gtt_start++, vram_start++) अणु
+			अगर (*gtt_start != vram_start) अणु
 				DRM_ERROR("Incorrect VRAM->GTT copy %d: Got 0x%p, "
 					  "expected 0x%p (VRAM/GTT offset "
 					  "0x%16llx/0x%16llx)\n",
 					  i, *gtt_start, vram_start,
-					  (unsigned long long)
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (vram_addr - rdev->mc.vram_start +
-					   (void*)vram_start - vram_map),
-					  (unsigned long long)
+					   (व्योम*)vram_start - vram_map),
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (gtt_addr - rdev->mc.gtt_start +
-					   (void*)vram_start - vram_map));
+					   (व्योम*)vram_start - vram_map));
 				radeon_bo_kunmap(gtt_obj[i]);
-				goto out_lclean_unpin;
-			}
-		}
+				जाओ out_lclean_unpin;
+			पूर्ण
+		पूर्ण
 
 		radeon_bo_kunmap(gtt_obj[i]);
 
 		DRM_INFO("Tested GTT->VRAM and VRAM->GTT copy for GTT offset 0x%llx\n",
 			 gtt_addr - rdev->mc.gtt_start);
-		continue;
+		जारी;
 
 out_lclean_unpin:
 		radeon_bo_unpin(gtt_obj[i]);
@@ -229,15 +230,15 @@ out_lclean_unres:
 out_lclean_unref:
 		radeon_bo_unref(&gtt_obj[i]);
 out_lclean:
-		for (--i; i >= 0; --i) {
+		क्रम (--i; i >= 0; --i) अणु
 			radeon_bo_unpin(gtt_obj[i]);
 			radeon_bo_unreserve(gtt_obj[i]);
 			radeon_bo_unref(&gtt_obj[i]);
-		}
-		if (fence && !IS_ERR(fence))
+		पूर्ण
+		अगर (fence && !IS_ERR(fence))
 			radeon_fence_unref(&fence);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	radeon_bo_unpin(vram_obj);
 out_unres:
@@ -245,300 +246,300 @@ out_unres:
 out_unref:
 	radeon_bo_unref(&vram_obj);
 out_cleanup:
-	kfree(gtt_obj);
-	if (r) {
+	kमुक्त(gtt_obj);
+	अगर (r) अणु
 		pr_warn("Error while testing BO move\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void radeon_test_moves(struct radeon_device *rdev)
-{
-	if (rdev->asic->copy.dma)
-		radeon_do_test_moves(rdev, RADEON_TEST_COPY_DMA);
-	if (rdev->asic->copy.blit)
-		radeon_do_test_moves(rdev, RADEON_TEST_COPY_BLIT);
-}
+व्योम radeon_test_moves(काष्ठा radeon_device *rdev)
+अणु
+	अगर (rdev->asic->copy.dma)
+		radeon_करो_test_moves(rdev, RADEON_TEST_COPY_DMA);
+	अगर (rdev->asic->copy.blit)
+		radeon_करो_test_moves(rdev, RADEON_TEST_COPY_BLIT);
+पूर्ण
 
-static int radeon_test_create_and_emit_fence(struct radeon_device *rdev,
-					     struct radeon_ring *ring,
-					     struct radeon_fence **fence)
-{
-	uint32_t handle = ring->idx ^ 0xdeafbeef;
-	int r;
+अटल पूर्णांक radeon_test_create_and_emit_fence(काष्ठा radeon_device *rdev,
+					     काष्ठा radeon_ring *ring,
+					     काष्ठा radeon_fence **fence)
+अणु
+	uपूर्णांक32_t handle = ring->idx ^ 0xdeafbeef;
+	पूर्णांक r;
 
-	if (ring->idx == R600_RING_TYPE_UVD_INDEX) {
-		r = radeon_uvd_get_create_msg(rdev, ring->idx, handle, NULL);
-		if (r) {
+	अगर (ring->idx == R600_RING_TYPE_UVD_INDEX) अणु
+		r = radeon_uvd_get_create_msg(rdev, ring->idx, handle, शून्य);
+		अगर (r) अणु
 			DRM_ERROR("Failed to get dummy create msg\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		r = radeon_uvd_get_destroy_msg(rdev, ring->idx, handle, fence);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to get dummy destroy msg\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-	} else if (ring->idx == TN_RING_TYPE_VCE1_INDEX ||
-		   ring->idx == TN_RING_TYPE_VCE2_INDEX) {
-		r = radeon_vce_get_create_msg(rdev, ring->idx, handle, NULL);
-		if (r) {
+	पूर्ण अन्यथा अगर (ring->idx == TN_RING_TYPE_VCE1_INDEX ||
+		   ring->idx == TN_RING_TYPE_VCE2_INDEX) अणु
+		r = radeon_vce_get_create_msg(rdev, ring->idx, handle, शून्य);
+		अगर (r) अणु
 			DRM_ERROR("Failed to get dummy create msg\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		r = radeon_vce_get_destroy_msg(rdev, ring->idx, handle, fence);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to get dummy destroy msg\n");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		r = radeon_ring_lock(rdev, ring, 64);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to lock ring A %d\n", ring->idx);
-			return r;
-		}
+			वापस r;
+		पूर्ण
 		r = radeon_fence_emit(rdev, fence, ring->idx);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to emit fence\n");
-			radeon_ring_unlock_undo(rdev, ring);
-			return r;
-		}
+			radeon_ring_unlock_unकरो(rdev, ring);
+			वापस r;
+		पूर्ण
 		radeon_ring_unlock_commit(rdev, ring, false);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void radeon_test_ring_sync(struct radeon_device *rdev,
-			   struct radeon_ring *ringA,
-			   struct radeon_ring *ringB)
-{
-	struct radeon_fence *fence1 = NULL, *fence2 = NULL;
-	struct radeon_semaphore *semaphore = NULL;
-	int r;
+व्योम radeon_test_ring_sync(काष्ठा radeon_device *rdev,
+			   काष्ठा radeon_ring *ringA,
+			   काष्ठा radeon_ring *ringB)
+अणु
+	काष्ठा radeon_fence *fence1 = शून्य, *fence2 = शून्य;
+	काष्ठा radeon_semaphore *semaphore = शून्य;
+	पूर्णांक r;
 
 	r = radeon_semaphore_create(rdev, &semaphore);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to create semaphore\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_ring_lock(rdev, ringA, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring A %d\n", ringA->idx);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_रुको(rdev, ringA->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence1);
-	if (r)
-		goto out_cleanup;
+	अगर (r)
+		जाओ out_cleanup;
 
 	r = radeon_ring_lock(rdev, ringA, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring A %d\n", ringA->idx);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_रुको(rdev, ringA->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fence2);
-	if (r)
-		goto out_cleanup;
+	अगर (r)
+		जाओ out_cleanup;
 
 	msleep(1000);
 
-	if (radeon_fence_signaled(fence1)) {
+	अगर (radeon_fence_संकेतed(fence1)) अणु
 		DRM_ERROR("Fence 1 signaled without waiting for semaphore.\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_ring_lock(rdev, ringB, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring B %p\n", ringB);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_signal(rdev, ringB->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_संकेत(rdev, ringB->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringB, false);
 
-	r = radeon_fence_wait(fence1, false);
-	if (r) {
+	r = radeon_fence_रुको(fence1, false);
+	अगर (r) अणु
 		DRM_ERROR("Failed to wait for sync fence 1\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	msleep(1000);
 
-	if (radeon_fence_signaled(fence2)) {
+	अगर (radeon_fence_संकेतed(fence2)) अणु
 		DRM_ERROR("Fence 2 signaled without waiting for semaphore.\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_ring_lock(rdev, ringB, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring B %p\n", ringB);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_signal(rdev, ringB->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_संकेत(rdev, ringB->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringB, false);
 
-	r = radeon_fence_wait(fence2, false);
-	if (r) {
+	r = radeon_fence_रुको(fence2, false);
+	अगर (r) अणु
 		DRM_ERROR("Failed to wait for sync fence 1\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 out_cleanup:
-	radeon_semaphore_free(rdev, &semaphore, NULL);
+	radeon_semaphore_मुक्त(rdev, &semaphore, शून्य);
 
-	if (fence1)
+	अगर (fence1)
 		radeon_fence_unref(&fence1);
 
-	if (fence2)
+	अगर (fence2)
 		radeon_fence_unref(&fence2);
 
-	if (r)
+	अगर (r)
 		pr_warn("Error while testing ring sync (%d)\n", r);
-}
+पूर्ण
 
-static void radeon_test_ring_sync2(struct radeon_device *rdev,
-			    struct radeon_ring *ringA,
-			    struct radeon_ring *ringB,
-			    struct radeon_ring *ringC)
-{
-	struct radeon_fence *fenceA = NULL, *fenceB = NULL;
-	struct radeon_semaphore *semaphore = NULL;
+अटल व्योम radeon_test_ring_sync2(काष्ठा radeon_device *rdev,
+			    काष्ठा radeon_ring *ringA,
+			    काष्ठा radeon_ring *ringB,
+			    काष्ठा radeon_ring *ringC)
+अणु
+	काष्ठा radeon_fence *fenceA = शून्य, *fenceB = शून्य;
+	काष्ठा radeon_semaphore *semaphore = शून्य;
 	bool sigA, sigB;
-	int i, r;
+	पूर्णांक i, r;
 
 	r = radeon_semaphore_create(rdev, &semaphore);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to create semaphore\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_ring_lock(rdev, ringA, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring A %d\n", ringA->idx);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_wait(rdev, ringA->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_रुको(rdev, ringA->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringA, false);
 
 	r = radeon_test_create_and_emit_fence(rdev, ringA, &fenceA);
-	if (r)
-		goto out_cleanup;
+	अगर (r)
+		जाओ out_cleanup;
 
 	r = radeon_ring_lock(rdev, ringB, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring B %d\n", ringB->idx);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_wait(rdev, ringB->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_रुको(rdev, ringB->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringB, false);
 	r = radeon_test_create_and_emit_fence(rdev, ringB, &fenceB);
-	if (r)
-		goto out_cleanup;
+	अगर (r)
+		जाओ out_cleanup;
 
 	msleep(1000);
 
-	if (radeon_fence_signaled(fenceA)) {
+	अगर (radeon_fence_संकेतed(fenceA)) अणु
 		DRM_ERROR("Fence A signaled without waiting for semaphore.\n");
-		goto out_cleanup;
-	}
-	if (radeon_fence_signaled(fenceB)) {
+		जाओ out_cleanup;
+	पूर्ण
+	अगर (radeon_fence_संकेतed(fenceB)) अणु
 		DRM_ERROR("Fence B signaled without waiting for semaphore.\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	r = radeon_ring_lock(rdev, ringC, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring B %p\n", ringC);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_signal(rdev, ringC->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_संकेत(rdev, ringC->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringC, false);
 
-	for (i = 0; i < 30; ++i) {
+	क्रम (i = 0; i < 30; ++i) अणु
 		msleep(100);
-		sigA = radeon_fence_signaled(fenceA);
-		sigB = radeon_fence_signaled(fenceB);
-		if (sigA || sigB)
-			break;
-	}
+		sigA = radeon_fence_संकेतed(fenceA);
+		sigB = radeon_fence_संकेतed(fenceB);
+		अगर (sigA || sigB)
+			अवरोध;
+	पूर्ण
 
-	if (!sigA && !sigB) {
+	अगर (!sigA && !sigB) अणु
 		DRM_ERROR("Neither fence A nor B has been signaled\n");
-		goto out_cleanup;
-	} else if (sigA && sigB) {
+		जाओ out_cleanup;
+	पूर्ण अन्यथा अगर (sigA && sigB) अणु
 		DRM_ERROR("Both fence A and B has been signaled\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 	DRM_INFO("Fence %c was first signaled\n", sigA ? 'A' : 'B');
 
 	r = radeon_ring_lock(rdev, ringC, 64);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to lock ring B %p\n", ringC);
-		goto out_cleanup;
-	}
-	radeon_semaphore_emit_signal(rdev, ringC->idx, semaphore);
+		जाओ out_cleanup;
+	पूर्ण
+	radeon_semaphore_emit_संकेत(rdev, ringC->idx, semaphore);
 	radeon_ring_unlock_commit(rdev, ringC, false);
 
 	msleep(1000);
 
-	r = radeon_fence_wait(fenceA, false);
-	if (r) {
+	r = radeon_fence_रुको(fenceA, false);
+	अगर (r) अणु
 		DRM_ERROR("Failed to wait for sync fence A\n");
-		goto out_cleanup;
-	}
-	r = radeon_fence_wait(fenceB, false);
-	if (r) {
+		जाओ out_cleanup;
+	पूर्ण
+	r = radeon_fence_रुको(fenceB, false);
+	अगर (r) अणु
 		DRM_ERROR("Failed to wait for sync fence B\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 
 out_cleanup:
-	radeon_semaphore_free(rdev, &semaphore, NULL);
+	radeon_semaphore_मुक्त(rdev, &semaphore, शून्य);
 
-	if (fenceA)
+	अगर (fenceA)
 		radeon_fence_unref(&fenceA);
 
-	if (fenceB)
+	अगर (fenceB)
 		radeon_fence_unref(&fenceB);
 
-	if (r)
+	अगर (r)
 		pr_warn("Error while testing ring sync (%d)\n", r);
-}
+पूर्ण
 
-static bool radeon_test_sync_possible(struct radeon_ring *ringA,
-				      struct radeon_ring *ringB)
-{
-	if (ringA->idx == TN_RING_TYPE_VCE2_INDEX &&
+अटल bool radeon_test_sync_possible(काष्ठा radeon_ring *ringA,
+				      काष्ठा radeon_ring *ringB)
+अणु
+	अगर (ringA->idx == TN_RING_TYPE_VCE2_INDEX &&
 	    ringB->idx == TN_RING_TYPE_VCE1_INDEX)
-		return false;
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void radeon_test_syncing(struct radeon_device *rdev)
-{
-	int i, j, k;
+व्योम radeon_test_syncing(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i, j, k;
 
-	for (i = 1; i < RADEON_NUM_RINGS; ++i) {
-		struct radeon_ring *ringA = &rdev->ring[i];
-		if (!ringA->ready)
-			continue;
+	क्रम (i = 1; i < RADEON_NUM_RINGS; ++i) अणु
+		काष्ठा radeon_ring *ringA = &rdev->ring[i];
+		अगर (!ringA->पढ़ोy)
+			जारी;
 
-		for (j = 0; j < i; ++j) {
-			struct radeon_ring *ringB = &rdev->ring[j];
-			if (!ringB->ready)
-				continue;
+		क्रम (j = 0; j < i; ++j) अणु
+			काष्ठा radeon_ring *ringB = &rdev->ring[j];
+			अगर (!ringB->पढ़ोy)
+				जारी;
 
-			if (!radeon_test_sync_possible(ringA, ringB))
-				continue;
+			अगर (!radeon_test_sync_possible(ringA, ringB))
+				जारी;
 
 			DRM_INFO("Testing syncing between rings %d and %d...\n", i, j);
 			radeon_test_ring_sync(rdev, ringA, ringB);
@@ -546,16 +547,16 @@ void radeon_test_syncing(struct radeon_device *rdev)
 			DRM_INFO("Testing syncing between rings %d and %d...\n", j, i);
 			radeon_test_ring_sync(rdev, ringB, ringA);
 
-			for (k = 0; k < j; ++k) {
-				struct radeon_ring *ringC = &rdev->ring[k];
-				if (!ringC->ready)
-					continue;
+			क्रम (k = 0; k < j; ++k) अणु
+				काष्ठा radeon_ring *ringC = &rdev->ring[k];
+				अगर (!ringC->पढ़ोy)
+					जारी;
 
-				if (!radeon_test_sync_possible(ringA, ringC))
-					continue;
+				अगर (!radeon_test_sync_possible(ringA, ringC))
+					जारी;
 
-				if (!radeon_test_sync_possible(ringB, ringC))
-					continue;
+				अगर (!radeon_test_sync_possible(ringB, ringC))
+					जारी;
 
 				DRM_INFO("Testing syncing between rings %d, %d and %d...\n", i, j, k);
 				radeon_test_ring_sync2(rdev, ringA, ringB, ringC);
@@ -574,7 +575,7 @@ void radeon_test_syncing(struct radeon_device *rdev)
 
 				DRM_INFO("Testing syncing between rings %d, %d and %d...\n", k, j, i);
 				radeon_test_ring_sync2(rdev, ringC, ringB, ringA);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण

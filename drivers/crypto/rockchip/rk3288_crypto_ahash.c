@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Crypto acceleration support for Rockchip RK3288
+ * Crypto acceleration support क्रम Rockchip RK3288
  *
  * Copyright (c) 2015, Fuzhou Rockchip Electronics Co., Ltd
  *
@@ -8,47 +9,47 @@
  *
  * Some ideas are from marvell/cesa.c and s5p-sss.c driver.
  */
-#include <linux/device.h>
-#include "rk3288_crypto.h"
+#समावेश <linux/device.h>
+#समावेश "rk3288_crypto.h"
 
 /*
  * IC can not process zero message hash,
  * so we put the fixed hash out when met zero message.
  */
 
-static int zero_message_process(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	int rk_digest_size = crypto_ahash_digestsize(tfm);
+अटल पूर्णांक zero_message_process(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	पूर्णांक rk_digest_size = crypto_ahash_digestsize(tfm);
 
-	switch (rk_digest_size) {
-	case SHA1_DIGEST_SIZE:
-		memcpy(req->result, sha1_zero_message_hash, rk_digest_size);
-		break;
-	case SHA256_DIGEST_SIZE:
-		memcpy(req->result, sha256_zero_message_hash, rk_digest_size);
-		break;
-	case MD5_DIGEST_SIZE:
-		memcpy(req->result, md5_zero_message_hash, rk_digest_size);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (rk_digest_size) अणु
+	हाल SHA1_DIGEST_SIZE:
+		स_नकल(req->result, sha1_zero_message_hash, rk_digest_size);
+		अवरोध;
+	हाल SHA256_DIGEST_SIZE:
+		स_नकल(req->result, sha256_zero_message_hash, rk_digest_size);
+		अवरोध;
+	हाल MD5_DIGEST_SIZE:
+		स_नकल(req->result, md5_zero_message_hash, rk_digest_size);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rk_ahash_crypto_complete(struct crypto_async_request *base, int err)
-{
-	if (base->complete)
+अटल व्योम rk_ahash_crypto_complete(काष्ठा crypto_async_request *base, पूर्णांक err)
+अणु
+	अगर (base->complete)
 		base->complete(base, err);
-}
+पूर्ण
 
-static void rk_ahash_reg_init(struct rk_crypto_info *dev)
-{
-	struct ahash_request *req = ahash_request_cast(dev->async_req);
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	int reg_status;
+अटल व्योम rk_ahash_reg_init(काष्ठा rk_crypto_info *dev)
+अणु
+	काष्ठा ahash_request *req = ahash_request_cast(dev->async_req);
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	पूर्णांक reg_status;
 
 	reg_status = CRYPTO_READ(dev, RK_CRYPTO_CTRL) |
 		     RK_CRYPTO_HASH_FLUSH | _SBF(0xffff, 16);
@@ -59,7 +60,7 @@ static void rk_ahash_reg_init(struct rk_crypto_info *dev)
 	reg_status |= _SBF(0xffff, 16);
 	CRYPTO_WRITE(dev, RK_CRYPTO_CTRL, reg_status);
 
-	memset_io(dev->reg + RK_CRYPTO_HASH_DOUT_0, 0, 32);
+	स_रखो_io(dev->reg + RK_CRYPTO_HASH_DOUT_0, 0, 32);
 
 	CRYPTO_WRITE(dev, RK_CRYPTO_INTENA, RK_CRYPTO_HRDMA_ERR_ENA |
 					    RK_CRYPTO_HRDMA_DONE_ENA);
@@ -75,26 +76,26 @@ static void rk_ahash_reg_init(struct rk_crypto_info *dev)
 					  RK_CRYPTO_BYTESWAP_BTFIFO);
 
 	CRYPTO_WRITE(dev, RK_CRYPTO_HASH_MSG_LEN, dev->total);
-}
+पूर्ण
 
-static int rk_ahash_init(struct ahash_request *req)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक rk_ahash_init(काष्ठा ahash_request *req)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags &
 					CRYPTO_TFM_REQ_MAY_SLEEP;
 
-	return crypto_ahash_init(&rctx->fallback_req);
-}
+	वापस crypto_ahash_init(&rctx->fallback_req);
+पूर्ण
 
-static int rk_ahash_update(struct ahash_request *req)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक rk_ahash_update(काष्ठा ahash_request *req)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags &
@@ -102,28 +103,28 @@ static int rk_ahash_update(struct ahash_request *req)
 	rctx->fallback_req.nbytes = req->nbytes;
 	rctx->fallback_req.src = req->src;
 
-	return crypto_ahash_update(&rctx->fallback_req);
-}
+	वापस crypto_ahash_update(&rctx->fallback_req);
+पूर्ण
 
-static int rk_ahash_final(struct ahash_request *req)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक rk_ahash_final(काष्ठा ahash_request *req)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags &
 					CRYPTO_TFM_REQ_MAY_SLEEP;
 	rctx->fallback_req.result = req->result;
 
-	return crypto_ahash_final(&rctx->fallback_req);
-}
+	वापस crypto_ahash_final(&rctx->fallback_req);
+पूर्ण
 
-static int rk_ahash_finup(struct ahash_request *req)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक rk_ahash_finup(काष्ठा ahash_request *req)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags &
@@ -133,75 +134,75 @@ static int rk_ahash_finup(struct ahash_request *req)
 	rctx->fallback_req.src = req->src;
 	rctx->fallback_req.result = req->result;
 
-	return crypto_ahash_finup(&rctx->fallback_req);
-}
+	वापस crypto_ahash_finup(&rctx->fallback_req);
+पूर्ण
 
-static int rk_ahash_import(struct ahash_request *req, const void *in)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-
-	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
-	rctx->fallback_req.base.flags = req->base.flags &
-					CRYPTO_TFM_REQ_MAY_SLEEP;
-
-	return crypto_ahash_import(&rctx->fallback_req, in);
-}
-
-static int rk_ahash_export(struct ahash_request *req, void *out)
-{
-	struct rk_ahash_rctx *rctx = ahash_request_ctx(req);
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक rk_ahash_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
 	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
 	rctx->fallback_req.base.flags = req->base.flags &
 					CRYPTO_TFM_REQ_MAY_SLEEP;
 
-	return crypto_ahash_export(&rctx->fallback_req, out);
-}
+	वापस crypto_ahash_import(&rctx->fallback_req, in);
+पूर्ण
 
-static int rk_ahash_digest(struct ahash_request *req)
-{
-	struct rk_ahash_ctx *tctx = crypto_tfm_ctx(req->base.tfm);
-	struct rk_crypto_info *dev = tctx->dev;
+अटल पूर्णांक rk_ahash_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	काष्ठा rk_ahash_rctx *rctx = ahash_request_ctx(req);
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा rk_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	if (!req->nbytes)
-		return zero_message_process(req);
-	else
-		return dev->enqueue(dev, &req->base);
-}
+	ahash_request_set_tfm(&rctx->fallback_req, ctx->fallback_tfm);
+	rctx->fallback_req.base.flags = req->base.flags &
+					CRYPTO_TFM_REQ_MAY_SLEEP;
 
-static void crypto_ahash_dma_start(struct rk_crypto_info *dev)
-{
+	वापस crypto_ahash_export(&rctx->fallback_req, out);
+पूर्ण
+
+अटल पूर्णांक rk_ahash_digest(काष्ठा ahash_request *req)
+अणु
+	काष्ठा rk_ahash_ctx *tctx = crypto_tfm_ctx(req->base.tfm);
+	काष्ठा rk_crypto_info *dev = tctx->dev;
+
+	अगर (!req->nbytes)
+		वापस zero_message_process(req);
+	अन्यथा
+		वापस dev->enqueue(dev, &req->base);
+पूर्ण
+
+अटल व्योम crypto_ahash_dma_start(काष्ठा rk_crypto_info *dev)
+अणु
 	CRYPTO_WRITE(dev, RK_CRYPTO_HRDMAS, dev->addr_in);
 	CRYPTO_WRITE(dev, RK_CRYPTO_HRDMAL, (dev->count + 3) / 4);
 	CRYPTO_WRITE(dev, RK_CRYPTO_CTRL, RK_CRYPTO_HASH_START |
 					  (RK_CRYPTO_HASH_START << 16));
-}
+पूर्ण
 
-static int rk_ahash_set_data_start(struct rk_crypto_info *dev)
-{
-	int err;
+अटल पूर्णांक rk_ahash_set_data_start(काष्ठा rk_crypto_info *dev)
+अणु
+	पूर्णांक err;
 
-	err = dev->load_data(dev, dev->sg_src, NULL);
-	if (!err)
+	err = dev->load_data(dev, dev->sg_src, शून्य);
+	अगर (!err)
 		crypto_ahash_dma_start(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rk_ahash_start(struct rk_crypto_info *dev)
-{
-	struct ahash_request *req = ahash_request_cast(dev->async_req);
-	struct crypto_ahash *tfm;
-	struct rk_ahash_rctx *rctx;
+अटल पूर्णांक rk_ahash_start(काष्ठा rk_crypto_info *dev)
+अणु
+	काष्ठा ahash_request *req = ahash_request_cast(dev->async_req);
+	काष्ठा crypto_ahash *tfm;
+	काष्ठा rk_ahash_rctx *rctx;
 
 	dev->total = req->nbytes;
 	dev->left_bytes = req->nbytes;
 	dev->aligned = 0;
 	dev->align_size = 4;
-	dev->sg_dst = NULL;
+	dev->sg_dst = शून्य;
 	dev->sg_src = req->src;
 	dev->first = req->src;
 	dev->src_nents = sg_nents(req->src);
@@ -209,112 +210,112 @@ static int rk_ahash_start(struct rk_crypto_info *dev)
 	rctx->mode = 0;
 
 	tfm = crypto_ahash_reqtfm(req);
-	switch (crypto_ahash_digestsize(tfm)) {
-	case SHA1_DIGEST_SIZE:
+	चयन (crypto_ahash_digestsize(tfm)) अणु
+	हाल SHA1_DIGEST_SIZE:
 		rctx->mode = RK_CRYPTO_HASH_SHA1;
-		break;
-	case SHA256_DIGEST_SIZE:
+		अवरोध;
+	हाल SHA256_DIGEST_SIZE:
 		rctx->mode = RK_CRYPTO_HASH_SHA256;
-		break;
-	case MD5_DIGEST_SIZE:
+		अवरोध;
+	हाल MD5_DIGEST_SIZE:
 		rctx->mode = RK_CRYPTO_HASH_MD5;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	rk_ahash_reg_init(dev);
-	return rk_ahash_set_data_start(dev);
-}
+	वापस rk_ahash_set_data_start(dev);
+पूर्ण
 
-static int rk_ahash_crypto_rx(struct rk_crypto_info *dev)
-{
-	int err = 0;
-	struct ahash_request *req = ahash_request_cast(dev->async_req);
-	struct crypto_ahash *tfm;
+अटल पूर्णांक rk_ahash_crypto_rx(काष्ठा rk_crypto_info *dev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ahash_request *req = ahash_request_cast(dev->async_req);
+	काष्ठा crypto_ahash *tfm;
 
 	dev->unload_data(dev);
-	if (dev->left_bytes) {
-		if (dev->aligned) {
-			if (sg_is_last(dev->sg_src)) {
+	अगर (dev->left_bytes) अणु
+		अगर (dev->aligned) अणु
+			अगर (sg_is_last(dev->sg_src)) अणु
 				dev_warn(dev->dev, "[%s:%d], Lack of data\n",
 					 __func__, __LINE__);
 				err = -ENOMEM;
-				goto out_rx;
-			}
+				जाओ out_rx;
+			पूर्ण
 			dev->sg_src = sg_next(dev->sg_src);
-		}
+		पूर्ण
 		err = rk_ahash_set_data_start(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * it will take some time to process date after last dma
+		 * it will take some समय to process date after last dma
 		 * transmission.
 		 *
-		 * waiting time is relative with the last date len,
-		 * so cannot set a fixed time here.
-		 * 10us makes system not call here frequently wasting
+		 * रुकोing समय is relative with the last date len,
+		 * so cannot set a fixed समय here.
+		 * 10us makes प्रणाली not call here frequently wasting
 		 * efficiency, and make it response quickly when dma
 		 * complete.
 		 */
-		while (!CRYPTO_READ(dev, RK_CRYPTO_HASH_STS))
+		जबतक (!CRYPTO_READ(dev, RK_CRYPTO_HASH_STS))
 			udelay(10);
 
 		tfm = crypto_ahash_reqtfm(req);
-		memcpy_fromio(req->result, dev->reg + RK_CRYPTO_HASH_DOUT_0,
+		स_नकल_fromio(req->result, dev->reg + RK_CRYPTO_HASH_DOUT_0,
 			      crypto_ahash_digestsize(tfm));
 		dev->complete(dev->async_req, 0);
 		tasklet_schedule(&dev->queue_task);
-	}
+	पूर्ण
 
 out_rx:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rk_cra_hash_init(struct crypto_tfm *tfm)
-{
-	struct rk_ahash_ctx *tctx = crypto_tfm_ctx(tfm);
-	struct rk_crypto_tmp *algt;
-	struct ahash_alg *alg = __crypto_ahash_alg(tfm->__crt_alg);
+अटल पूर्णांक rk_cra_hash_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा rk_ahash_ctx *tctx = crypto_tfm_ctx(tfm);
+	काष्ठा rk_crypto_पंचांगp *algt;
+	काष्ठा ahash_alg *alg = __crypto_ahash_alg(tfm->__crt_alg);
 
-	const char *alg_name = crypto_tfm_alg_name(tfm);
+	स्थिर अक्षर *alg_name = crypto_tfm_alg_name(tfm);
 
-	algt = container_of(alg, struct rk_crypto_tmp, alg.hash);
+	algt = container_of(alg, काष्ठा rk_crypto_पंचांगp, alg.hash);
 
 	tctx->dev = algt->dev;
-	tctx->dev->addr_vir = (void *)__get_free_page(GFP_KERNEL);
-	if (!tctx->dev->addr_vir) {
+	tctx->dev->addr_vir = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (!tctx->dev->addr_vir) अणु
 		dev_err(tctx->dev->dev, "failed to kmalloc for addr_vir\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	tctx->dev->start = rk_ahash_start;
 	tctx->dev->update = rk_ahash_crypto_rx;
 	tctx->dev->complete = rk_ahash_crypto_complete;
 
-	/* for fallback */
+	/* क्रम fallback */
 	tctx->fallback_tfm = crypto_alloc_ahash(alg_name, 0,
 					       CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(tctx->fallback_tfm)) {
+	अगर (IS_ERR(tctx->fallback_tfm)) अणु
 		dev_err(tctx->dev->dev, "Could not load fallback driver.\n");
-		return PTR_ERR(tctx->fallback_tfm);
-	}
+		वापस PTR_ERR(tctx->fallback_tfm);
+	पूर्ण
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 sizeof(struct rk_ahash_rctx) +
+				 माप(काष्ठा rk_ahash_rctx) +
 				 crypto_ahash_reqsize(tctx->fallback_tfm));
 
-	return tctx->dev->enable_clk(tctx->dev);
-}
+	वापस tctx->dev->enable_clk(tctx->dev);
+पूर्ण
 
-static void rk_cra_hash_exit(struct crypto_tfm *tfm)
-{
-	struct rk_ahash_ctx *tctx = crypto_tfm_ctx(tfm);
+अटल व्योम rk_cra_hash_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा rk_ahash_ctx *tctx = crypto_tfm_ctx(tfm);
 
-	free_page((unsigned long)tctx->dev->addr_vir);
-	return tctx->dev->disable_clk(tctx->dev);
-}
+	मुक्त_page((अचिन्हित दीर्घ)tctx->dev->addr_vir);
+	वापस tctx->dev->disable_clk(tctx->dev);
+पूर्ण
 
-struct rk_crypto_tmp rk_ahash_sha1 = {
+काष्ठा rk_crypto_पंचांगp rk_ahash_sha1 = अणु
 	.type = ALG_TYPE_HASH,
-	.alg.hash = {
+	.alg.hash = अणु
 		.init = rk_ahash_init,
 		.update = rk_ahash_update,
 		.final = rk_ahash_final,
@@ -322,29 +323,29 @@ struct rk_crypto_tmp rk_ahash_sha1 = {
 		.export = rk_ahash_export,
 		.import = rk_ahash_import,
 		.digest = rk_ahash_digest,
-		.halg = {
+		.halg = अणु
 			 .digestsize = SHA1_DIGEST_SIZE,
-			 .statesize = sizeof(struct sha1_state),
-			 .base = {
+			 .statesize = माप(काष्ठा sha1_state),
+			 .base = अणु
 				  .cra_name = "sha1",
 				  .cra_driver_name = "rk-sha1",
 				  .cra_priority = 300,
 				  .cra_flags = CRYPTO_ALG_ASYNC |
 					       CRYPTO_ALG_NEED_FALLBACK,
 				  .cra_blocksize = SHA1_BLOCK_SIZE,
-				  .cra_ctxsize = sizeof(struct rk_ahash_ctx),
+				  .cra_ctxsize = माप(काष्ठा rk_ahash_ctx),
 				  .cra_alignmask = 3,
 				  .cra_init = rk_cra_hash_init,
-				  .cra_exit = rk_cra_hash_exit,
+				  .cra_निकास = rk_cra_hash_निकास,
 				  .cra_module = THIS_MODULE,
-				  }
-			 }
-	}
-};
+				  पूर्ण
+			 पूर्ण
+	पूर्ण
+पूर्ण;
 
-struct rk_crypto_tmp rk_ahash_sha256 = {
+काष्ठा rk_crypto_पंचांगp rk_ahash_sha256 = अणु
 	.type = ALG_TYPE_HASH,
-	.alg.hash = {
+	.alg.hash = अणु
 		.init = rk_ahash_init,
 		.update = rk_ahash_update,
 		.final = rk_ahash_final,
@@ -352,29 +353,29 @@ struct rk_crypto_tmp rk_ahash_sha256 = {
 		.export = rk_ahash_export,
 		.import = rk_ahash_import,
 		.digest = rk_ahash_digest,
-		.halg = {
+		.halg = अणु
 			 .digestsize = SHA256_DIGEST_SIZE,
-			 .statesize = sizeof(struct sha256_state),
-			 .base = {
+			 .statesize = माप(काष्ठा sha256_state),
+			 .base = अणु
 				  .cra_name = "sha256",
 				  .cra_driver_name = "rk-sha256",
 				  .cra_priority = 300,
 				  .cra_flags = CRYPTO_ALG_ASYNC |
 					       CRYPTO_ALG_NEED_FALLBACK,
 				  .cra_blocksize = SHA256_BLOCK_SIZE,
-				  .cra_ctxsize = sizeof(struct rk_ahash_ctx),
+				  .cra_ctxsize = माप(काष्ठा rk_ahash_ctx),
 				  .cra_alignmask = 3,
 				  .cra_init = rk_cra_hash_init,
-				  .cra_exit = rk_cra_hash_exit,
+				  .cra_निकास = rk_cra_hash_निकास,
 				  .cra_module = THIS_MODULE,
-				  }
-			 }
-	}
-};
+				  पूर्ण
+			 पूर्ण
+	पूर्ण
+पूर्ण;
 
-struct rk_crypto_tmp rk_ahash_md5 = {
+काष्ठा rk_crypto_पंचांगp rk_ahash_md5 = अणु
 	.type = ALG_TYPE_HASH,
-	.alg.hash = {
+	.alg.hash = अणु
 		.init = rk_ahash_init,
 		.update = rk_ahash_update,
 		.final = rk_ahash_final,
@@ -382,22 +383,22 @@ struct rk_crypto_tmp rk_ahash_md5 = {
 		.export = rk_ahash_export,
 		.import = rk_ahash_import,
 		.digest = rk_ahash_digest,
-		.halg = {
+		.halg = अणु
 			 .digestsize = MD5_DIGEST_SIZE,
-			 .statesize = sizeof(struct md5_state),
-			 .base = {
+			 .statesize = माप(काष्ठा md5_state),
+			 .base = अणु
 				  .cra_name = "md5",
 				  .cra_driver_name = "rk-md5",
 				  .cra_priority = 300,
 				  .cra_flags = CRYPTO_ALG_ASYNC |
 					       CRYPTO_ALG_NEED_FALLBACK,
 				  .cra_blocksize = SHA1_BLOCK_SIZE,
-				  .cra_ctxsize = sizeof(struct rk_ahash_ctx),
+				  .cra_ctxsize = माप(काष्ठा rk_ahash_ctx),
 				  .cra_alignmask = 3,
 				  .cra_init = rk_cra_hash_init,
-				  .cra_exit = rk_cra_hash_exit,
+				  .cra_निकास = rk_cra_hash_निकास,
 				  .cra_module = THIS_MODULE,
-				  }
-			}
-	}
-};
+				  पूर्ण
+			पूर्ण
+	पूर्ण
+पूर्ण;

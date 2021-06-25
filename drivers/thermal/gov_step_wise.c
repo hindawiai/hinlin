@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  step_wise.c - A step-by-step Thermal throttling governor
  *
  *  Copyright (C) 2012 Intel Corp
- *  Copyright (C) 2012 Durgadoss R <durgadoss.r@intel.com>
+ *  Copyright (C) 2012 Durgaकरोss R <durgaकरोss.r@पूर्णांकel.com>
  *
  *  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 
-#include <linux/thermal.h>
-#include <trace/events/thermal.h>
+#समावेश <linux/thermal.h>
+#समावेश <trace/events/thermal.h>
 
-#include "thermal_core.h"
+#समावेश "thermal_core.h"
 
 /*
- * If the temperature is higher than a trip point,
- *    a. if the trend is THERMAL_TREND_RAISING, use higher cooling
- *       state for this trip point
- *    b. if the trend is THERMAL_TREND_DROPPING, do nothing
- *    c. if the trend is THERMAL_TREND_RAISE_FULL, use upper limit
- *       for this trip point
- *    d. if the trend is THERMAL_TREND_DROP_FULL, use lower limit
- *       for this trip point
- * If the temperature is lower than a trip point,
- *    a. if the trend is THERMAL_TREND_RAISING, do nothing
- *    b. if the trend is THERMAL_TREND_DROPPING, use lower cooling
- *       state for this trip point, if the cooling state already
+ * If the temperature is higher than a trip poपूर्णांक,
+ *    a. अगर the trend is THERMAL_TREND_RAISING, use higher cooling
+ *       state क्रम this trip poपूर्णांक
+ *    b. अगर the trend is THERMAL_TREND_DROPPING, करो nothing
+ *    c. अगर the trend is THERMAL_TREND_RAISE_FULL, use upper limit
+ *       क्रम this trip poपूर्णांक
+ *    d. अगर the trend is THERMAL_TREND_DROP_FULL, use lower limit
+ *       क्रम this trip poपूर्णांक
+ * If the temperature is lower than a trip poपूर्णांक,
+ *    a. अगर the trend is THERMAL_TREND_RAISING, करो nothing
+ *    b. अगर the trend is THERMAL_TREND_DROPPING, use lower cooling
+ *       state क्रम this trip poपूर्णांक, अगर the cooling state alपढ़ोy
  *       equals lower limit, deactivate the thermal instance
- *    c. if the trend is THERMAL_TREND_RAISE_FULL, do nothing
- *    d. if the trend is THERMAL_TREND_DROP_FULL, use lower limit,
- *       if the cooling state already equals lower limit,
+ *    c. अगर the trend is THERMAL_TREND_RAISE_FULL, करो nothing
+ *    d. अगर the trend is THERMAL_TREND_DROP_FULL, use lower limit,
+ *       अगर the cooling state alपढ़ोy equals lower limit,
  *       deactivate the thermal instance
  */
-static unsigned long get_target_state(struct thermal_instance *instance,
-				enum thermal_trend trend, bool throttle)
-{
-	struct thermal_cooling_device *cdev = instance->cdev;
-	unsigned long cur_state;
-	unsigned long next_target;
+अटल अचिन्हित दीर्घ get_target_state(काष्ठा thermal_instance *instance,
+				क्रमागत thermal_trend trend, bool throttle)
+अणु
+	काष्ठा thermal_cooling_device *cdev = instance->cdev;
+	अचिन्हित दीर्घ cur_state;
+	अचिन्हित दीर्घ next_target;
 
 	/*
-	 * We keep this instance the way it is by default.
+	 * We keep this instance the way it is by शेष.
 	 * Otherwise, we use the current state of the
 	 * cdev in use to determine the next_target.
 	 */
@@ -50,111 +51,111 @@ static unsigned long get_target_state(struct thermal_instance *instance,
 	next_target = instance->target;
 	dev_dbg(&cdev->device, "cur_state=%ld\n", cur_state);
 
-	if (!instance->initialized) {
-		if (throttle) {
+	अगर (!instance->initialized) अणु
+		अगर (throttle) अणु
 			next_target = (cur_state + 1) >= instance->upper ?
 					instance->upper :
 					((cur_state + 1) < instance->lower ?
 					instance->lower : (cur_state + 1));
-		} else {
+		पूर्ण अन्यथा अणु
 			next_target = THERMAL_NO_TARGET;
-		}
+		पूर्ण
 
-		return next_target;
-	}
+		वापस next_target;
+	पूर्ण
 
-	switch (trend) {
-	case THERMAL_TREND_RAISING:
-		if (throttle) {
+	चयन (trend) अणु
+	हाल THERMAL_TREND_RAISING:
+		अगर (throttle) अणु
 			next_target = cur_state < instance->upper ?
 				    (cur_state + 1) : instance->upper;
-			if (next_target < instance->lower)
+			अगर (next_target < instance->lower)
 				next_target = instance->lower;
-		}
-		break;
-	case THERMAL_TREND_RAISE_FULL:
-		if (throttle)
+		पूर्ण
+		अवरोध;
+	हाल THERMAL_TREND_RAISE_FULL:
+		अगर (throttle)
 			next_target = instance->upper;
-		break;
-	case THERMAL_TREND_DROPPING:
-		if (cur_state <= instance->lower) {
-			if (!throttle)
+		अवरोध;
+	हाल THERMAL_TREND_DROPPING:
+		अगर (cur_state <= instance->lower) अणु
+			अगर (!throttle)
 				next_target = THERMAL_NO_TARGET;
-		} else {
-			if (!throttle) {
+		पूर्ण अन्यथा अणु
+			अगर (!throttle) अणु
 				next_target = cur_state - 1;
-				if (next_target > instance->upper)
+				अगर (next_target > instance->upper)
 					next_target = instance->upper;
-			}
-		}
-		break;
-	case THERMAL_TREND_DROP_FULL:
-		if (cur_state == instance->lower) {
-			if (!throttle)
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल THERMAL_TREND_DROP_FULL:
+		अगर (cur_state == instance->lower) अणु
+			अगर (!throttle)
 				next_target = THERMAL_NO_TARGET;
-		} else
+		पूर्ण अन्यथा
 			next_target = instance->lower;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return next_target;
-}
+	वापस next_target;
+पूर्ण
 
-static void update_passive_instance(struct thermal_zone_device *tz,
-				enum thermal_trip_type type, int value)
-{
+अटल व्योम update_passive_instance(काष्ठा thermal_zone_device *tz,
+				क्रमागत thermal_trip_type type, पूर्णांक value)
+अणु
 	/*
 	 * If value is +1, activate a passive instance.
 	 * If value is -1, deactivate a passive instance.
 	 */
-	if (type == THERMAL_TRIP_PASSIVE)
+	अगर (type == THERMAL_TRIP_PASSIVE)
 		tz->passive += value;
-}
+पूर्ण
 
-static void thermal_zone_trip_update(struct thermal_zone_device *tz, int trip)
-{
-	int trip_temp;
-	enum thermal_trip_type trip_type;
-	enum thermal_trend trend;
-	struct thermal_instance *instance;
+अटल व्योम thermal_zone_trip_update(काष्ठा thermal_zone_device *tz, पूर्णांक trip)
+अणु
+	पूर्णांक trip_temp;
+	क्रमागत thermal_trip_type trip_type;
+	क्रमागत thermal_trend trend;
+	काष्ठा thermal_instance *instance;
 	bool throttle = false;
-	int old_target;
+	पूर्णांक old_target;
 
 	tz->ops->get_trip_temp(tz, trip, &trip_temp);
 	tz->ops->get_trip_type(tz, trip, &trip_type);
 
 	trend = get_tz_trend(tz, trip);
 
-	if (tz->temperature >= trip_temp) {
+	अगर (tz->temperature >= trip_temp) अणु
 		throttle = true;
 		trace_thermal_zone_trip(tz, trip, trip_type);
-	}
+	पूर्ण
 
 	dev_dbg(&tz->device, "Trip%d[type=%d,temp=%d]:trend=%d,throttle=%d\n",
 				trip, trip_type, trip_temp, trend, throttle);
 
 	mutex_lock(&tz->lock);
 
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node) {
-		if (instance->trip != trip)
-			continue;
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node) अणु
+		अगर (instance->trip != trip)
+			जारी;
 
 		old_target = instance->target;
 		instance->target = get_target_state(instance, trend, throttle);
 		dev_dbg(&instance->cdev->device, "old_target=%d, target=%d\n",
-					old_target, (int)instance->target);
+					old_target, (पूर्णांक)instance->target);
 
-		if (instance->initialized && old_target == instance->target)
-			continue;
+		अगर (instance->initialized && old_target == instance->target)
+			जारी;
 
 		/* Activate a passive thermal instance */
-		if (old_target == THERMAL_NO_TARGET &&
+		अगर (old_target == THERMAL_NO_TARGET &&
 			instance->target != THERMAL_NO_TARGET)
 			update_passive_instance(tz, trip_type, 1);
 		/* Deactivate a passive thermal instance */
-		else if (old_target != THERMAL_NO_TARGET &&
+		अन्यथा अगर (old_target != THERMAL_NO_TARGET &&
 			instance->target == THERMAL_NO_TARGET)
 			update_passive_instance(tz, trip_type, -1);
 
@@ -162,40 +163,40 @@ static void thermal_zone_trip_update(struct thermal_zone_device *tz, int trip)
 		mutex_lock(&instance->cdev->lock);
 		instance->cdev->updated = false; /* cdev needs update */
 		mutex_unlock(&instance->cdev->lock);
-	}
+	पूर्ण
 
 	mutex_unlock(&tz->lock);
-}
+पूर्ण
 
 /**
  * step_wise_throttle - throttles devices associated with the given zone
  * @tz: thermal_zone_device
- * @trip: trip point index
+ * @trip: trip poपूर्णांक index
  *
  * Throttling Logic: This uses the trend of the thermal zone to throttle.
  * If the thermal zone is 'heating up' this throttles all the cooling
- * devices associated with the zone and its particular trip point, by one
- * step. If the zone is 'cooling down' it brings back the performance of
+ * devices associated with the zone and its particular trip poपूर्णांक, by one
+ * step. If the zone is 'cooling down' it brings back the perक्रमmance of
  * the devices by one step.
  */
-static int step_wise_throttle(struct thermal_zone_device *tz, int trip)
-{
-	struct thermal_instance *instance;
+अटल पूर्णांक step_wise_throttle(काष्ठा thermal_zone_device *tz, पूर्णांक trip)
+अणु
+	काष्ठा thermal_instance *instance;
 
 	thermal_zone_trip_update(tz, trip);
 
 	mutex_lock(&tz->lock);
 
-	list_for_each_entry(instance, &tz->thermal_instances, tz_node)
+	list_क्रम_each_entry(instance, &tz->thermal_instances, tz_node)
 		thermal_cdev_update(instance->cdev);
 
 	mutex_unlock(&tz->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct thermal_governor thermal_gov_step_wise = {
+अटल काष्ठा thermal_governor thermal_gov_step_wise = अणु
 	.name		= "step_wise",
 	.throttle	= step_wise_throttle,
-};
+पूर्ण;
 THERMAL_GOVERNOR_DECLARE(thermal_gov_step_wise);

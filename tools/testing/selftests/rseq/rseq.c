@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * rseq.c
  *
  * Copyright (C) 2016 Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
  *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public
+ * This library is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU Lesser General Public
  * License as published by the Free Software Foundation; only
  * version 2.1 of the License.
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * Lesser General Public License for more details.
+ * Lesser General Public License क्रम more details.
  */
 
-#define _GNU_SOURCE
-#include <errno.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <syscall.h>
-#include <assert.h>
-#include <signal.h>
-#include <limits.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <syscall.h>
+#समावेश <निश्चित.स>
+#समावेश <संकेत.स>
+#समावेश <सीमा.स>
 
-#include "rseq.h"
+#समावेश "rseq.h"
 
-#define ARRAY_SIZE(arr)	(sizeof(arr) / sizeof((arr)[0]))
+#घोषणा ARRAY_SIZE(arr)	(माप(arr) / माप((arr)[0]))
 
-__thread volatile struct rseq __rseq_abi = {
+__thपढ़ो अस्थिर काष्ठा rseq __rseq_abi = अणु
 	.cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
-};
+पूर्ण;
 
 /*
- * Shared with other libraries. This library may take rseq ownership if it is
- * still 0 when executing the library constructor. Set to 1 by library
- * constructor when handling rseq. Set to 0 in destructor if handling rseq.
+ * Shared with other libraries. This library may take rseq ownership अगर it is
+ * still 0 when executing the library स्थिरructor. Set to 1 by library
+ * स्थिरructor when handling rseq. Set to 0 in deकाष्ठाor अगर handling rseq.
  */
-int __rseq_handled;
+पूर्णांक __rseq_handled;
 
 /* Whether this library have ownership of rseq registration. */
-static int rseq_ownership;
+अटल पूर्णांक rseq_ownership;
 
-static __thread volatile uint32_t __rseq_refcount;
+अटल __thपढ़ो अस्थिर uपूर्णांक32_t __rseq_refcount;
 
-static void signal_off_save(sigset_t *oldset)
-{
+अटल व्योम संकेत_off_save(sigset_t *oldset)
+अणु
 	sigset_t set;
-	int ret;
+	पूर्णांक ret;
 
 	sigfillset(&set);
-	ret = pthread_sigmask(SIG_BLOCK, &set, oldset);
-	if (ret)
-		abort();
-}
+	ret = pthपढ़ो_sigmask(SIG_BLOCK, &set, oldset);
+	अगर (ret)
+		पात();
+पूर्ण
 
-static void signal_restore(sigset_t oldset)
-{
-	int ret;
+अटल व्योम संकेत_restore(sigset_t oldset)
+अणु
+	पूर्णांक ret;
 
-	ret = pthread_sigmask(SIG_SETMASK, &oldset, NULL);
-	if (ret)
-		abort();
-}
+	ret = pthपढ़ो_sigmask(SIG_SETMASK, &oldset, शून्य);
+	अगर (ret)
+		पात();
+पूर्ण
 
-static int sys_rseq(volatile struct rseq *rseq_abi, uint32_t rseq_len,
-		    int flags, uint32_t sig)
-{
-	return syscall(__NR_rseq, rseq_abi, rseq_len, flags, sig);
-}
+अटल पूर्णांक sys_rseq(अस्थिर काष्ठा rseq *rseq_abi, uपूर्णांक32_t rseq_len,
+		    पूर्णांक flags, uपूर्णांक32_t sig)
+अणु
+	वापस syscall(__NR_rseq, rseq_abi, rseq_len, flags, sig);
+पूर्ण
 
-int rseq_register_current_thread(void)
-{
-	int rc, ret = 0;
+पूर्णांक rseq_रेजिस्टर_current_thपढ़ो(व्योम)
+अणु
+	पूर्णांक rc, ret = 0;
 	sigset_t oldset;
 
-	if (!rseq_ownership)
-		return 0;
-	signal_off_save(&oldset);
-	if (__rseq_refcount == UINT_MAX) {
+	अगर (!rseq_ownership)
+		वापस 0;
+	संकेत_off_save(&oldset);
+	अगर (__rseq_refcount == अच_पूर्णांक_उच्च) अणु
 		ret = -1;
-		goto end;
-	}
-	if (__rseq_refcount++)
-		goto end;
-	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq), 0, RSEQ_SIG);
-	if (!rc) {
-		assert(rseq_current_cpu_raw() >= 0);
-		goto end;
-	}
-	if (errno != EBUSY)
+		जाओ end;
+	पूर्ण
+	अगर (__rseq_refcount++)
+		जाओ end;
+	rc = sys_rseq(&__rseq_abi, माप(काष्ठा rseq), 0, RSEQ_SIG);
+	अगर (!rc) अणु
+		निश्चित(rseq_current_cpu_raw() >= 0);
+		जाओ end;
+	पूर्ण
+	अगर (त्रुटि_सं != EBUSY)
 		__rseq_abi.cpu_id = RSEQ_CPU_ID_REGISTRATION_FAILED;
 	ret = -1;
 	__rseq_refcount--;
 end:
-	signal_restore(oldset);
-	return ret;
-}
+	संकेत_restore(oldset);
+	वापस ret;
+पूर्ण
 
-int rseq_unregister_current_thread(void)
-{
-	int rc, ret = 0;
+पूर्णांक rseq_unरेजिस्टर_current_thपढ़ो(व्योम)
+अणु
+	पूर्णांक rc, ret = 0;
 	sigset_t oldset;
 
-	if (!rseq_ownership)
-		return 0;
-	signal_off_save(&oldset);
-	if (!__rseq_refcount) {
+	अगर (!rseq_ownership)
+		वापस 0;
+	संकेत_off_save(&oldset);
+	अगर (!__rseq_refcount) अणु
 		ret = -1;
-		goto end;
-	}
-	if (--__rseq_refcount)
-		goto end;
-	rc = sys_rseq(&__rseq_abi, sizeof(struct rseq),
+		जाओ end;
+	पूर्ण
+	अगर (--__rseq_refcount)
+		जाओ end;
+	rc = sys_rseq(&__rseq_abi, माप(काष्ठा rseq),
 		      RSEQ_FLAG_UNREGISTER, RSEQ_SIG);
-	if (!rc)
-		goto end;
+	अगर (!rc)
+		जाओ end;
 	__rseq_refcount = 1;
 	ret = -1;
 end:
-	signal_restore(oldset);
-	return ret;
-}
+	संकेत_restore(oldset);
+	वापस ret;
+पूर्ण
 
-int32_t rseq_fallback_current_cpu(void)
-{
-	int32_t cpu;
+पूर्णांक32_t rseq_fallback_current_cpu(व्योम)
+अणु
+	पूर्णांक32_t cpu;
 
-	cpu = sched_getcpu();
-	if (cpu < 0) {
-		perror("sched_getcpu()");
-		abort();
-	}
-	return cpu;
-}
+	cpu = sched_अ_लोpu();
+	अगर (cpu < 0) अणु
+		लिखो_त्रुटि("sched_getcpu()");
+		पात();
+	पूर्ण
+	वापस cpu;
+पूर्ण
 
-void __attribute__((constructor)) rseq_init(void)
-{
+व्योम __attribute__((स्थिरructor)) rseq_init(व्योम)
+अणु
 	/* Check whether rseq is handled by another library. */
-	if (__rseq_handled)
-		return;
+	अगर (__rseq_handled)
+		वापस;
 	__rseq_handled = 1;
 	rseq_ownership = 1;
-}
+पूर्ण
 
-void __attribute__((destructor)) rseq_fini(void)
-{
-	if (!rseq_ownership)
-		return;
+व्योम __attribute__((deकाष्ठाor)) rseq_fini(व्योम)
+अणु
+	अगर (!rseq_ownership)
+		वापस;
 	__rseq_handled = 0;
 	rseq_ownership = 0;
-}
+पूर्ण

@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/prefetch.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/prefetch.h>
 
 /**
- * iommu_fill_pdir - Insert coalesced scatter/gather chunks into the I/O Pdir.
+ * iommu_fill_pdir - Insert coalesced scatter/gather chunks पूर्णांकo the I/O Pdir.
  * @ioc: The I/O Controller.
  * @startsg: The scatter/gather list of coalesced chunks.
  * @nents: The number of entries in the scatter/gather list.
- * @hint: The DMA Hint.
+ * @hपूर्णांक: The DMA Hपूर्णांक.
  *
- * This function inserts the coalesced scatter/gather list chunks into the
+ * This function inserts the coalesced scatter/gather list chunks पूर्णांकo the
  * I/O Controller's I/O Pdir.
  */ 
-static inline unsigned int
-iommu_fill_pdir(struct ioc *ioc, struct scatterlist *startsg, int nents, 
-		unsigned long hint,
-		void (*iommu_io_pdir_entry)(u64 *, space_t, unsigned long,
-					    unsigned long))
-{
-	struct scatterlist *dma_sg = startsg;	/* pointer to current DMA */
-	unsigned int n_mappings = 0;
-	unsigned long dma_offset = 0, dma_len = 0;
-	u64 *pdirp = NULL;
+अटल अंतरभूत अचिन्हित पूर्णांक
+iommu_fill_pdir(काष्ठा ioc *ioc, काष्ठा scatterlist *startsg, पूर्णांक nents, 
+		अचिन्हित दीर्घ hपूर्णांक,
+		व्योम (*iommu_io_pdir_entry)(u64 *, space_t, अचिन्हित दीर्घ,
+					    अचिन्हित दीर्घ))
+अणु
+	काष्ठा scatterlist *dma_sg = startsg;	/* poपूर्णांकer to current DMA */
+	अचिन्हित पूर्णांक n_mappings = 0;
+	अचिन्हित दीर्घ dma_offset = 0, dma_len = 0;
+	u64 *pdirp = शून्य;
 
 	/* Horrible hack.  For efficiency's sake, dma_sg starts one 
 	 * entry below the true start (it is immediately incremented
 	 * in the loop) */
 	 dma_sg--;
 
-	while (nents-- > 0) {
-		unsigned long vaddr;
-		long size;
+	जबतक (nents-- > 0) अणु
+		अचिन्हित दीर्घ vaddr;
+		दीर्घ size;
 
 		DBG_RUN_SG(" %d : %08lx/%05x %p/%05x\n", nents,
-			   (unsigned long)sg_dma_address(startsg), cnt,
+			   (अचिन्हित दीर्घ)sg_dma_address(startsg), cnt,
 			   sg_virt(startsg), startsg->length
 		);
 
 
 		/*
-		** Look for the start of a new DMA stream
+		** Look क्रम the start of a new DMA stream
 		*/
 		
-		if (sg_dma_address(startsg) & PIDE_FLAG) {
+		अगर (sg_dma_address(startsg) & PIDE_FLAG) अणु
 			u32 pide = sg_dma_address(startsg) & ~PIDE_FLAG;
 
 			BUG_ON(pdirp && (dma_len != sg_dma_len(dma_sg)));
@@ -50,71 +51,71 @@ iommu_fill_pdir(struct ioc *ioc, struct scatterlist *startsg, int nents,
 
 			dma_len = sg_dma_len(startsg);
 			sg_dma_len(startsg) = 0;
-			dma_offset = (unsigned long) pide & ~IOVP_MASK;
+			dma_offset = (अचिन्हित दीर्घ) pide & ~IOVP_MASK;
 			n_mappings++;
-#if defined(ZX1_SUPPORT)
+#अगर defined(ZX1_SUPPORT)
 			/* Pluto IOMMU IO Virt Address is not zero based */
 			sg_dma_address(dma_sg) = pide | ioc->ibase;
-#else
+#अन्यथा
 			/* SBA, ccio, and dino are zero based.
-			 * Trying to save a few CPU cycles for most users.
+			 * Trying to save a few CPU cycles क्रम most users.
 			 */
 			sg_dma_address(dma_sg) = pide;
-#endif
+#पूर्ण_अगर
 			pdirp = &(ioc->pdir_base[pide >> IOVP_SHIFT]);
 			prefetchw(pdirp);
-		}
+		पूर्ण
 		
-		BUG_ON(pdirp == NULL);
+		BUG_ON(pdirp == शून्य);
 		
-		vaddr = (unsigned long)sg_virt(startsg);
+		vaddr = (अचिन्हित दीर्घ)sg_virt(startsg);
 		sg_dma_len(dma_sg) += startsg->length;
 		size = startsg->length + dma_offset;
 		dma_offset = 0;
-#ifdef IOMMU_MAP_STATS
+#अगर_घोषित IOMMU_MAP_STATS
 		ioc->msg_pages += startsg->length >> IOVP_SHIFT;
-#endif
-		do {
+#पूर्ण_अगर
+		करो अणु
 			iommu_io_pdir_entry(pdirp, KERNEL_SPACE, 
-					    vaddr, hint);
+					    vaddr, hपूर्णांक);
 			vaddr += IOVP_SIZE;
 			size -= IOVP_SIZE;
 			pdirp++;
-		} while(unlikely(size > 0));
+		पूर्ण जबतक(unlikely(size > 0));
 		startsg++;
-	}
-	return(n_mappings);
-}
+	पूर्ण
+	वापस(n_mappings);
+पूर्ण
 
 
 /*
-** First pass is to walk the SG list and determine where the breaks are
-** in the DMA stream. Allocates PDIR entries but does not fill them.
+** First pass is to walk the SG list and determine where the अवरोधs are
+** in the DMA stream. Allocates Pसूची entries but करोes not fill them.
 ** Returns the number of DMA chunks.
 **
 ** Doing the fill separate from the coalescing/allocation keeps the
 ** code simpler. Future enhancement could make one pass through
-** the sglist do both.
+** the sglist करो both.
 */
 
-static inline unsigned int
-iommu_coalesce_chunks(struct ioc *ioc, struct device *dev,
-		struct scatterlist *startsg, int nents,
-		int (*iommu_alloc_range)(struct ioc *, struct device *, size_t))
-{
-	struct scatterlist *contig_sg;	   /* contig chunk head */
-	unsigned long dma_offset, dma_len; /* start/len of DMA stream */
-	unsigned int n_mappings = 0;
-	unsigned int max_seg_size = min(dma_get_max_seg_size(dev),
-					(unsigned)DMA_CHUNK_SIZE);
-	unsigned int max_seg_boundary = dma_get_seg_boundary(dev) + 1;
-	if (max_seg_boundary)	/* check if the addition above didn't overflow */
+अटल अंतरभूत अचिन्हित पूर्णांक
+iommu_coalesce_chunks(काष्ठा ioc *ioc, काष्ठा device *dev,
+		काष्ठा scatterlist *startsg, पूर्णांक nents,
+		पूर्णांक (*iommu_alloc_range)(काष्ठा ioc *, काष्ठा device *, माप_प्रकार))
+अणु
+	काष्ठा scatterlist *contig_sg;	   /* contig chunk head */
+	अचिन्हित दीर्घ dma_offset, dma_len; /* start/len of DMA stream */
+	अचिन्हित पूर्णांक n_mappings = 0;
+	अचिन्हित पूर्णांक max_seg_size = min(dma_get_max_seg_size(dev),
+					(अचिन्हित)DMA_CHUNK_SIZE);
+	अचिन्हित पूर्णांक max_seg_boundary = dma_get_seg_boundary(dev) + 1;
+	अगर (max_seg_boundary)	/* check अगर the addition above didn't overflow */
 		max_seg_size = min(max_seg_size, max_seg_boundary);
 
-	while (nents > 0) {
+	जबतक (nents > 0) अणु
 
 		/*
-		** Prepare for first/next DMA stream
+		** Prepare क्रम first/next DMA stream
 		*/
 		contig_sg = startsg;
 		dma_len = startsg->length;
@@ -128,14 +129,14 @@ iommu_coalesce_chunks(struct ioc *ioc, struct device *dev,
 		** This loop terminates one iteration "early" since
 		** it's always looking one "ahead".
 		*/
-		while(--nents > 0) {
-			unsigned long prev_end, sg_start;
+		जबतक(--nents > 0) अणु
+			अचिन्हित दीर्घ prev_end, sg_start;
 
-			prev_end = (unsigned long)sg_virt(startsg) +
+			prev_end = (अचिन्हित दीर्घ)sg_virt(startsg) +
 							startsg->length;
 
 			startsg++;
-			sg_start = (unsigned long)sg_virt(startsg);
+			sg_start = (अचिन्हित दीर्घ)sg_virt(startsg);
 
 			/* PARANOID: clear entries */
 			sg_dma_address(startsg) = 0;
@@ -143,30 +144,30 @@ iommu_coalesce_chunks(struct ioc *ioc, struct device *dev,
 
 			/*
 			** First make sure current dma stream won't
-			** exceed max_seg_size if we coalesce the
+			** exceed max_seg_size अगर we coalesce the
 			** next entry.
 			*/   
-			if (unlikely(ALIGN(dma_len + dma_offset + startsg->length, IOVP_SIZE) >
+			अगर (unlikely(ALIGN(dma_len + dma_offset + startsg->length, IOVP_SIZE) >
 				     max_seg_size))
-				break;
+				अवरोध;
 
 			/*
-			* Next see if we can append the next chunk (i.e.
+			* Next see अगर we can append the next chunk (i.e.
 			* it must end on one page and begin on another, or
 			* it must start on the same address as the previous
 			* entry ended.
 			*/
-			if (unlikely((prev_end != sg_start) ||
+			अगर (unlikely((prev_end != sg_start) ||
 				((prev_end | sg_start) & ~PAGE_MASK)))
-				break;
+				अवरोध;
 			
 			dma_len += startsg->length;
-		}
+		पूर्ण
 
 		/*
 		** End of DMA Stream
 		** Terminate last VCONTIG block.
-		** Allocate space for DMA stream.
+		** Allocate space क्रम DMA stream.
 		*/
 		sg_dma_len(contig_sg) = dma_len;
 		dma_len = ALIGN(dma_len + dma_offset, IOVP_SIZE);
@@ -175,8 +176,8 @@ iommu_coalesce_chunks(struct ioc *ioc, struct device *dev,
 			| (iommu_alloc_range(ioc, dev, dma_len) << IOVP_SHIFT)
 			| dma_offset;
 		n_mappings++;
-	}
+	पूर्ण
 
-	return n_mappings;
-}
+	वापस n_mappings;
+पूर्ण
 

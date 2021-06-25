@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  * Xen event channels (FIFO-based ABI)
  *
  * Copyright (C) 2013 Citrix Systems R&D ltd.
  *
- * This source code is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This source code is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation; either version 2 of the
  * License, or (at your option) any later version.
  *
  * Or, when distributed separately from the Linux kernel or
- * incorporated into other software packages, subject to the following
+ * incorporated पूर्णांकo other software packages, subject to the following
  * license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,266 +32,266 @@
  * IN THE SOFTWARE.
  */
 
-#define pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "xen:" KBUILD_MODNAME ": " fmt
 
-#include <linux/linkage.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/smp.h>
-#include <linux/percpu.h>
-#include <linux/cpu.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/cpu.h>
 
-#include <asm/barrier.h>
-#include <asm/sync_bitops.h>
-#include <asm/xen/hypercall.h>
-#include <asm/xen/hypervisor.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/sync_bitops.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/hypervisor.h>
 
-#include <xen/xen.h>
-#include <xen/xen-ops.h>
-#include <xen/events.h>
-#include <xen/interface/xen.h>
-#include <xen/interface/event_channel.h>
-#include <xen/page.h>
+#समावेश <xen/xen.h>
+#समावेश <xen/xen-ops.h>
+#समावेश <xen/events.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/event_channel.h>
+#समावेश <xen/page.h>
 
-#include "events_internal.h"
+#समावेश "events_internal.h"
 
-#define EVENT_WORDS_PER_PAGE (XEN_PAGE_SIZE / sizeof(event_word_t))
-#define MAX_EVENT_ARRAY_PAGES (EVTCHN_FIFO_NR_CHANNELS / EVENT_WORDS_PER_PAGE)
+#घोषणा EVENT_WORDS_PER_PAGE (XEN_PAGE_SIZE / माप(event_word_t))
+#घोषणा MAX_EVENT_ARRAY_PAGES (EVTCHN_FIFO_NR_CHANNELS / EVENT_WORDS_PER_PAGE)
 
-struct evtchn_fifo_queue {
-	uint32_t head[EVTCHN_FIFO_MAX_QUEUES];
-};
+काष्ठा evtchn_fअगरo_queue अणु
+	uपूर्णांक32_t head[EVTCHN_FIFO_MAX_QUEUES];
+पूर्ण;
 
-static DEFINE_PER_CPU(struct evtchn_fifo_control_block *, cpu_control_block);
-static DEFINE_PER_CPU(struct evtchn_fifo_queue, cpu_queue);
-static event_word_t *event_array[MAX_EVENT_ARRAY_PAGES] __read_mostly;
-static unsigned event_array_pages __read_mostly;
+अटल DEFINE_PER_CPU(काष्ठा evtchn_fअगरo_control_block *, cpu_control_block);
+अटल DEFINE_PER_CPU(काष्ठा evtchn_fअगरo_queue, cpu_queue);
+अटल event_word_t *event_array[MAX_EVENT_ARRAY_PAGES] __पढ़ो_mostly;
+अटल अचिन्हित event_array_pages __पढ़ो_mostly;
 
 /*
- * sync_set_bit() and friends must be unsigned long aligned.
+ * sync_set_bit() and मित्रs must be अचिन्हित दीर्घ aligned.
  */
-#if BITS_PER_LONG > 32
+#अगर BITS_PER_LONG > 32
 
-#define BM(w) (unsigned long *)((unsigned long)w & ~0x7UL)
-#define EVTCHN_FIFO_BIT(b, w) \
-    (((unsigned long)w & 0x4UL) ? (EVTCHN_FIFO_ ##b + 32) : EVTCHN_FIFO_ ##b)
+#घोषणा BM(w) (अचिन्हित दीर्घ *)((अचिन्हित दीर्घ)w & ~0x7UL)
+#घोषणा EVTCHN_FIFO_BIT(b, w) \
+    (((अचिन्हित दीर्घ)w & 0x4UL) ? (EVTCHN_FIFO_ ##b + 32) : EVTCHN_FIFO_ ##b)
 
-#else
+#अन्यथा
 
-#define BM(w) ((unsigned long *)(w))
-#define EVTCHN_FIFO_BIT(b, w) EVTCHN_FIFO_ ##b
+#घोषणा BM(w) ((अचिन्हित दीर्घ *)(w))
+#घोषणा EVTCHN_FIFO_BIT(b, w) EVTCHN_FIFO_ ##b
 
-#endif
+#पूर्ण_अगर
 
-static inline event_word_t *event_word_from_port(evtchn_port_t port)
-{
-	unsigned i = port / EVENT_WORDS_PER_PAGE;
+अटल अंतरभूत event_word_t *event_word_from_port(evtchn_port_t port)
+अणु
+	अचिन्हित i = port / EVENT_WORDS_PER_PAGE;
 
-	return event_array[i] + port % EVENT_WORDS_PER_PAGE;
-}
+	वापस event_array[i] + port % EVENT_WORDS_PER_PAGE;
+पूर्ण
 
-static unsigned evtchn_fifo_max_channels(void)
-{
-	return EVTCHN_FIFO_NR_CHANNELS;
-}
+अटल अचिन्हित evtchn_fअगरo_max_channels(व्योम)
+अणु
+	वापस EVTCHN_FIFO_NR_CHANNELS;
+पूर्ण
 
-static unsigned evtchn_fifo_nr_channels(void)
-{
-	return event_array_pages * EVENT_WORDS_PER_PAGE;
-}
+अटल अचिन्हित evtchn_fअगरo_nr_channels(व्योम)
+अणु
+	वापस event_array_pages * EVENT_WORDS_PER_PAGE;
+पूर्ण
 
-static int init_control_block(int cpu,
-                              struct evtchn_fifo_control_block *control_block)
-{
-	struct evtchn_fifo_queue *q = &per_cpu(cpu_queue, cpu);
-	struct evtchn_init_control init_control;
-	unsigned int i;
+अटल पूर्णांक init_control_block(पूर्णांक cpu,
+                              काष्ठा evtchn_fअगरo_control_block *control_block)
+अणु
+	काष्ठा evtchn_fअगरo_queue *q = &per_cpu(cpu_queue, cpu);
+	काष्ठा evtchn_init_control init_control;
+	अचिन्हित पूर्णांक i;
 
 	/* Reset the control block and the local HEADs. */
 	clear_page(control_block);
-	for (i = 0; i < EVTCHN_FIFO_MAX_QUEUES; i++)
+	क्रम (i = 0; i < EVTCHN_FIFO_MAX_QUEUES; i++)
 		q->head[i] = 0;
 
 	init_control.control_gfn = virt_to_gfn(control_block);
 	init_control.offset      = 0;
 	init_control.vcpu        = xen_vcpu_nr(cpu);
 
-	return HYPERVISOR_event_channel_op(EVTCHNOP_init_control, &init_control);
-}
+	वापस HYPERVISOR_event_channel_op(EVTCHNOP_init_control, &init_control);
+पूर्ण
 
-static void free_unused_array_pages(void)
-{
-	unsigned i;
+अटल व्योम मुक्त_unused_array_pages(व्योम)
+अणु
+	अचिन्हित i;
 
-	for (i = event_array_pages; i < MAX_EVENT_ARRAY_PAGES; i++) {
-		if (!event_array[i])
-			break;
-		free_page((unsigned long)event_array[i]);
-		event_array[i] = NULL;
-	}
-}
+	क्रम (i = event_array_pages; i < MAX_EVENT_ARRAY_PAGES; i++) अणु
+		अगर (!event_array[i])
+			अवरोध;
+		मुक्त_page((अचिन्हित दीर्घ)event_array[i]);
+		event_array[i] = शून्य;
+	पूर्ण
+पूर्ण
 
-static void init_array_page(event_word_t *array_page)
-{
-	unsigned i;
+अटल व्योम init_array_page(event_word_t *array_page)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < EVENT_WORDS_PER_PAGE; i++)
+	क्रम (i = 0; i < EVENT_WORDS_PER_PAGE; i++)
 		array_page[i] = 1 << EVTCHN_FIFO_MASKED;
-}
+पूर्ण
 
-static int evtchn_fifo_setup(evtchn_port_t port)
-{
-	unsigned new_array_pages;
-	int ret;
+अटल पूर्णांक evtchn_fअगरo_setup(evtchn_port_t port)
+अणु
+	अचिन्हित new_array_pages;
+	पूर्णांक ret;
 
 	new_array_pages = port / EVENT_WORDS_PER_PAGE + 1;
 
-	if (new_array_pages > MAX_EVENT_ARRAY_PAGES)
-		return -EINVAL;
+	अगर (new_array_pages > MAX_EVENT_ARRAY_PAGES)
+		वापस -EINVAL;
 
-	while (event_array_pages < new_array_pages) {
-		void *array_page;
-		struct evtchn_expand_array expand_array;
+	जबतक (event_array_pages < new_array_pages) अणु
+		व्योम *array_page;
+		काष्ठा evtchn_expand_array expand_array;
 
-		/* Might already have a page if we've resumed. */
+		/* Might alपढ़ोy have a page अगर we've resumed. */
 		array_page = event_array[event_array_pages];
-		if (!array_page) {
-			array_page = (void *)__get_free_page(GFP_KERNEL);
-			if (array_page == NULL) {
+		अगर (!array_page) अणु
+			array_page = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+			अगर (array_page == शून्य) अणु
 				ret = -ENOMEM;
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 			event_array[event_array_pages] = array_page;
-		}
+		पूर्ण
 
-		/* Mask all events in this page before adding it. */
+		/* Mask all events in this page beक्रमe adding it. */
 		init_array_page(array_page);
 
 		expand_array.array_gfn = virt_to_gfn(array_page);
 
 		ret = HYPERVISOR_event_channel_op(EVTCHNOP_expand_array, &expand_array);
-		if (ret < 0)
-			goto error;
+		अगर (ret < 0)
+			जाओ error;
 
 		event_array_pages++;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
   error:
-	if (event_array_pages == 0)
+	अगर (event_array_pages == 0)
 		panic("xen: unable to expand event array with initial page (%d)\n", ret);
-	else
+	अन्यथा
 		pr_err("unable to expand event array (%d)\n", ret);
-	free_unused_array_pages();
-	return ret;
-}
+	मुक्त_unused_array_pages();
+	वापस ret;
+पूर्ण
 
-static void evtchn_fifo_bind_to_cpu(evtchn_port_t evtchn, unsigned int cpu, 
-				    unsigned int old_cpu)
-{
+अटल व्योम evtchn_fअगरo_bind_to_cpu(evtchn_port_t evtchn, अचिन्हित पूर्णांक cpu, 
+				    अचिन्हित पूर्णांक old_cpu)
+अणु
 	/* no-op */
-}
+पूर्ण
 
-static void evtchn_fifo_clear_pending(evtchn_port_t port)
-{
+अटल व्योम evtchn_fअगरo_clear_pending(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
 	sync_clear_bit(EVTCHN_FIFO_BIT(PENDING, word), BM(word));
-}
+पूर्ण
 
-static void evtchn_fifo_set_pending(evtchn_port_t port)
-{
+अटल व्योम evtchn_fअगरo_set_pending(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
 	sync_set_bit(EVTCHN_FIFO_BIT(PENDING, word), BM(word));
-}
+पूर्ण
 
-static bool evtchn_fifo_is_pending(evtchn_port_t port)
-{
+अटल bool evtchn_fअगरo_is_pending(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
-	return sync_test_bit(EVTCHN_FIFO_BIT(PENDING, word), BM(word));
-}
+	वापस sync_test_bit(EVTCHN_FIFO_BIT(PENDING, word), BM(word));
+पूर्ण
 
-static void evtchn_fifo_mask(evtchn_port_t port)
-{
+अटल व्योम evtchn_fअगरo_mask(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
 	sync_set_bit(EVTCHN_FIFO_BIT(MASKED, word), BM(word));
-}
+पूर्ण
 
-static bool evtchn_fifo_is_masked(evtchn_port_t port)
-{
+अटल bool evtchn_fअगरo_is_masked(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
-	return sync_test_bit(EVTCHN_FIFO_BIT(MASKED, word), BM(word));
-}
+	वापस sync_test_bit(EVTCHN_FIFO_BIT(MASKED, word), BM(word));
+पूर्ण
 /*
- * Clear MASKED if not PENDING, spinning if BUSY is set.
- * Return true if mask was cleared.
+ * Clear MASKED अगर not PENDING, spinning अगर BUSY is set.
+ * Return true अगर mask was cleared.
  */
-static bool clear_masked_cond(volatile event_word_t *word)
-{
+अटल bool clear_masked_cond(अस्थिर event_word_t *word)
+अणु
 	event_word_t new, old, w;
 
 	w = *word;
 
-	do {
-		if (!(w & (1 << EVTCHN_FIFO_MASKED)))
-			return true;
+	करो अणु
+		अगर (!(w & (1 << EVTCHN_FIFO_MASKED)))
+			वापस true;
 
-		if (w & (1 << EVTCHN_FIFO_PENDING))
-			return false;
+		अगर (w & (1 << EVTCHN_FIFO_PENDING))
+			वापस false;
 
 		old = w & ~(1 << EVTCHN_FIFO_BUSY);
 		new = old & ~(1 << EVTCHN_FIFO_MASKED);
 		w = sync_cmpxchg(word, old, new);
-	} while (w != old);
+	पूर्ण जबतक (w != old);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void evtchn_fifo_unmask(evtchn_port_t port)
-{
+अटल व्योम evtchn_fअगरo_unmask(evtchn_port_t port)
+अणु
 	event_word_t *word = event_word_from_port(port);
 
 	BUG_ON(!irqs_disabled());
 
-	if (!clear_masked_cond(word)) {
-		struct evtchn_unmask unmask = { .port = port };
-		(void)HYPERVISOR_event_channel_op(EVTCHNOP_unmask, &unmask);
-	}
-}
+	अगर (!clear_masked_cond(word)) अणु
+		काष्ठा evtchn_unmask unmask = अणु .port = port पूर्ण;
+		(व्योम)HYPERVISOR_event_channel_op(EVTCHNOP_unmask, &unmask);
+	पूर्ण
+पूर्ण
 
-static uint32_t clear_linked(volatile event_word_t *word)
-{
+अटल uपूर्णांक32_t clear_linked(अस्थिर event_word_t *word)
+अणु
 	event_word_t new, old, w;
 
 	w = *word;
 
-	do {
+	करो अणु
 		old = w;
 		new = (w & ~((1 << EVTCHN_FIFO_LINKED)
 			     | EVTCHN_FIFO_LINK_MASK));
-	} while ((w = sync_cmpxchg(word, old, new)) != old);
+	पूर्ण जबतक ((w = sync_cmpxchg(word, old, new)) != old);
 
-	return w & EVTCHN_FIFO_LINK_MASK;
-}
+	वापस w & EVTCHN_FIFO_LINK_MASK;
+पूर्ण
 
-static void consume_one_event(unsigned cpu, struct evtchn_loop_ctrl *ctrl,
-			      struct evtchn_fifo_control_block *control_block,
-			      unsigned priority, unsigned long *ready)
-{
-	struct evtchn_fifo_queue *q = &per_cpu(cpu_queue, cpu);
-	uint32_t head;
+अटल व्योम consume_one_event(अचिन्हित cpu, काष्ठा evtchn_loop_ctrl *ctrl,
+			      काष्ठा evtchn_fअगरo_control_block *control_block,
+			      अचिन्हित priority, अचिन्हित दीर्घ *पढ़ोy)
+अणु
+	काष्ठा evtchn_fअगरo_queue *q = &per_cpu(cpu_queue, cpu);
+	uपूर्णांक32_t head;
 	evtchn_port_t port;
 	event_word_t *word;
 
 	head = q->head[priority];
 
 	/*
-	 * Reached the tail last time?  Read the new HEAD from the
+	 * Reached the tail last समय?  Read the new HEAD from the
 	 * control block.
 	 */
-	if (head == 0) {
-		virt_rmb(); /* Ensure word is up-to-date before reading head. */
+	अगर (head == 0) अणु
+		virt_rmb(); /* Ensure word is up-to-date beक्रमe पढ़ोing head. */
 		head = control_block->head[priority];
-	}
+	पूर्ण
 
 	port = head;
 	word = event_word_from_port(port);
@@ -301,70 +302,70 @@ static void consume_one_event(unsigned cpu, struct evtchn_loop_ctrl *ctrl,
 	 * queue, otherwise the queue is empty.
 	 *
 	 * If the queue is empty, clear this priority from our local
-	 * copy of the ready word.
+	 * copy of the पढ़ोy word.
 	 */
-	if (head == 0)
-		clear_bit(priority, ready);
+	अगर (head == 0)
+		clear_bit(priority, पढ़ोy);
 
-	if (evtchn_fifo_is_pending(port) && !evtchn_fifo_is_masked(port)) {
-		if (unlikely(!ctrl))
+	अगर (evtchn_fअगरo_is_pending(port) && !evtchn_fअगरo_is_masked(port)) अणु
+		अगर (unlikely(!ctrl))
 			pr_warn("Dropping pending event for port %u\n", port);
-		else
-			handle_irq_for_port(port, ctrl);
-	}
+		अन्यथा
+			handle_irq_क्रम_port(port, ctrl);
+	पूर्ण
 
 	q->head[priority] = head;
-}
+पूर्ण
 
-static void __evtchn_fifo_handle_events(unsigned cpu,
-					struct evtchn_loop_ctrl *ctrl)
-{
-	struct evtchn_fifo_control_block *control_block;
-	unsigned long ready;
-	unsigned q;
+अटल व्योम __evtchn_fअगरo_handle_events(अचिन्हित cpu,
+					काष्ठा evtchn_loop_ctrl *ctrl)
+अणु
+	काष्ठा evtchn_fअगरo_control_block *control_block;
+	अचिन्हित दीर्घ पढ़ोy;
+	अचिन्हित q;
 
 	control_block = per_cpu(cpu_control_block, cpu);
 
-	ready = xchg(&control_block->ready, 0);
+	पढ़ोy = xchg(&control_block->पढ़ोy, 0);
 
-	while (ready) {
-		q = find_first_bit(&ready, EVTCHN_FIFO_MAX_QUEUES);
-		consume_one_event(cpu, ctrl, control_block, q, &ready);
-		ready |= xchg(&control_block->ready, 0);
-	}
-}
+	जबतक (पढ़ोy) अणु
+		q = find_first_bit(&पढ़ोy, EVTCHN_FIFO_MAX_QUEUES);
+		consume_one_event(cpu, ctrl, control_block, q, &पढ़ोy);
+		पढ़ोy |= xchg(&control_block->पढ़ोy, 0);
+	पूर्ण
+पूर्ण
 
-static void evtchn_fifo_handle_events(unsigned cpu,
-				      struct evtchn_loop_ctrl *ctrl)
-{
-	__evtchn_fifo_handle_events(cpu, ctrl);
-}
+अटल व्योम evtchn_fअगरo_handle_events(अचिन्हित cpu,
+				      काष्ठा evtchn_loop_ctrl *ctrl)
+अणु
+	__evtchn_fअगरo_handle_events(cpu, ctrl);
+पूर्ण
 
-static void evtchn_fifo_resume(void)
-{
-	unsigned cpu;
+अटल व्योम evtchn_fअगरo_resume(व्योम)
+अणु
+	अचिन्हित cpu;
 
-	for_each_possible_cpu(cpu) {
-		void *control_block = per_cpu(cpu_control_block, cpu);
-		int ret;
+	क्रम_each_possible_cpu(cpu) अणु
+		व्योम *control_block = per_cpu(cpu_control_block, cpu);
+		पूर्णांक ret;
 
-		if (!control_block)
-			continue;
+		अगर (!control_block)
+			जारी;
 
 		/*
 		 * If this CPU is offline, take the opportunity to
-		 * free the control block while it is not being
+		 * मुक्त the control block जबतक it is not being
 		 * used.
 		 */
-		if (!cpu_online(cpu)) {
-			free_page((unsigned long)control_block);
-			per_cpu(cpu_control_block, cpu) = NULL;
-			continue;
-		}
+		अगर (!cpu_online(cpu)) अणु
+			मुक्त_page((अचिन्हित दीर्घ)control_block);
+			per_cpu(cpu_control_block, cpu) = शून्य;
+			जारी;
+		पूर्ण
 
 		ret = init_control_block(cpu, control_block);
 		BUG_ON(ret < 0);
-	}
+	पूर्ण
 
 	/*
 	 * The event array starts out as empty again and is extended
@@ -372,71 +373,71 @@ static void evtchn_fifo_resume(void)
 	 * be reused.
 	 */
 	event_array_pages = 0;
-}
+पूर्ण
 
-static int evtchn_fifo_alloc_control_block(unsigned cpu)
-{
-	void *control_block = NULL;
-	int ret = -ENOMEM;
+अटल पूर्णांक evtchn_fअगरo_alloc_control_block(अचिन्हित cpu)
+अणु
+	व्योम *control_block = शून्य;
+	पूर्णांक ret = -ENOMEM;
 
-	control_block = (void *)__get_free_page(GFP_KERNEL);
-	if (control_block == NULL)
-		goto error;
+	control_block = (व्योम *)__get_मुक्त_page(GFP_KERNEL);
+	अगर (control_block == शून्य)
+		जाओ error;
 
 	ret = init_control_block(cpu, control_block);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	per_cpu(cpu_control_block, cpu) = control_block;
 
-	return 0;
+	वापस 0;
 
   error:
-	free_page((unsigned long)control_block);
-	return ret;
-}
+	मुक्त_page((अचिन्हित दीर्घ)control_block);
+	वापस ret;
+पूर्ण
 
-static int evtchn_fifo_percpu_init(unsigned int cpu)
-{
-	if (!per_cpu(cpu_control_block, cpu))
-		return evtchn_fifo_alloc_control_block(cpu);
-	return 0;
-}
+अटल पूर्णांक evtchn_fअगरo_percpu_init(अचिन्हित पूर्णांक cpu)
+अणु
+	अगर (!per_cpu(cpu_control_block, cpu))
+		वापस evtchn_fअगरo_alloc_control_block(cpu);
+	वापस 0;
+पूर्ण
 
-static int evtchn_fifo_percpu_deinit(unsigned int cpu)
-{
-	__evtchn_fifo_handle_events(cpu, NULL);
-	return 0;
-}
+अटल पूर्णांक evtchn_fअगरo_percpu_deinit(अचिन्हित पूर्णांक cpu)
+अणु
+	__evtchn_fअगरo_handle_events(cpu, शून्य);
+	वापस 0;
+पूर्ण
 
-static const struct evtchn_ops evtchn_ops_fifo = {
-	.max_channels      = evtchn_fifo_max_channels,
-	.nr_channels       = evtchn_fifo_nr_channels,
-	.setup             = evtchn_fifo_setup,
-	.bind_to_cpu       = evtchn_fifo_bind_to_cpu,
-	.clear_pending     = evtchn_fifo_clear_pending,
-	.set_pending       = evtchn_fifo_set_pending,
-	.is_pending        = evtchn_fifo_is_pending,
-	.mask              = evtchn_fifo_mask,
-	.unmask            = evtchn_fifo_unmask,
-	.handle_events     = evtchn_fifo_handle_events,
-	.resume            = evtchn_fifo_resume,
-	.percpu_init       = evtchn_fifo_percpu_init,
-	.percpu_deinit     = evtchn_fifo_percpu_deinit,
-};
+अटल स्थिर काष्ठा evtchn_ops evtchn_ops_fअगरo = अणु
+	.max_channels      = evtchn_fअगरo_max_channels,
+	.nr_channels       = evtchn_fअगरo_nr_channels,
+	.setup             = evtchn_fअगरo_setup,
+	.bind_to_cpu       = evtchn_fअगरo_bind_to_cpu,
+	.clear_pending     = evtchn_fअगरo_clear_pending,
+	.set_pending       = evtchn_fअगरo_set_pending,
+	.is_pending        = evtchn_fअगरo_is_pending,
+	.mask              = evtchn_fअगरo_mask,
+	.unmask            = evtchn_fअगरo_unmask,
+	.handle_events     = evtchn_fअगरo_handle_events,
+	.resume            = evtchn_fअगरo_resume,
+	.percpu_init       = evtchn_fअगरo_percpu_init,
+	.percpu_deinit     = evtchn_fअगरo_percpu_deinit,
+पूर्ण;
 
-int __init xen_evtchn_fifo_init(void)
-{
-	int cpu = smp_processor_id();
-	int ret;
+पूर्णांक __init xen_evtchn_fअगरo_init(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	पूर्णांक ret;
 
-	ret = evtchn_fifo_alloc_control_block(cpu);
-	if (ret < 0)
-		return ret;
+	ret = evtchn_fअगरo_alloc_control_block(cpu);
+	अगर (ret < 0)
+		वापस ret;
 
 	pr_info("Using FIFO-based ABI\n");
 
-	evtchn_ops = &evtchn_ops_fifo;
+	evtchn_ops = &evtchn_ops_fअगरo;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

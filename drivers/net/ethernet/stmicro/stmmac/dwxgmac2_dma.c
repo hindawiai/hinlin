@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /*
  * Copyright (c) 2018 Synopsys, Inc. and/or its affiliates.
- * stmmac XGMAC support.
+ * sपंचांगmac XGMAC support.
  */
 
-#include <linux/iopoll.h>
-#include "stmmac.h"
-#include "dwxgmac2.h"
+#समावेश <linux/iopoll.h>
+#समावेश "stmmac.h"
+#समावेश "dwxgmac2.h"
 
-static int dwxgmac2_dma_reset(void __iomem *ioaddr)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_MODE);
+अटल पूर्णांक dwxgmac2_dma_reset(व्योम __iomem *ioaddr)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_MODE);
 
 	/* DMA SW reset */
-	writel(value | XGMAC_SWR, ioaddr + XGMAC_DMA_MODE);
+	ग_लिखोl(value | XGMAC_SWR, ioaddr + XGMAC_DMA_MODE);
 
-	return readl_poll_timeout(ioaddr + XGMAC_DMA_MODE, value,
+	वापस पढ़ोl_poll_समयout(ioaddr + XGMAC_DMA_MODE, value,
 				  !(value & XGMAC_SWR), 0, 100000);
-}
+पूर्ण
 
-static void dwxgmac2_dma_init(void __iomem *ioaddr,
-			      struct stmmac_dma_cfg *dma_cfg, int atds)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_SYSBUS_MODE);
+अटल व्योम dwxgmac2_dma_init(व्योम __iomem *ioaddr,
+			      काष्ठा sपंचांगmac_dma_cfg *dma_cfg, पूर्णांक atds)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_SYSBUS_MODE);
 
-	if (dma_cfg->aal)
+	अगर (dma_cfg->aal)
 		value |= XGMAC_AAL;
 
-	if (dma_cfg->eame)
+	अगर (dma_cfg->eame)
 		value |= XGMAC_EAME;
 
-	writel(value, ioaddr + XGMAC_DMA_SYSBUS_MODE);
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_SYSBUS_MODE);
+पूर्ण
 
-static void dwxgmac2_dma_init_chan(void __iomem *ioaddr,
-				   struct stmmac_dma_cfg *dma_cfg, u32 chan)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+अटल व्योम dwxgmac2_dma_init_chan(व्योम __iomem *ioaddr,
+				   काष्ठा sपंचांगmac_dma_cfg *dma_cfg, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
 
-	if (dma_cfg->pblx8)
+	अगर (dma_cfg->pblx8)
 		value |= XGMAC_PBLx8;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
-	writel(XGMAC_DMA_INT_DEFAULT_EN, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+	ग_लिखोl(XGMAC_DMA_INT_DEFAULT_EN, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+पूर्ण
 
-static void dwxgmac2_dma_init_rx_chan(void __iomem *ioaddr,
-				      struct stmmac_dma_cfg *dma_cfg,
+अटल व्योम dwxgmac2_dma_init_rx_chan(व्योम __iomem *ioaddr,
+				      काष्ठा sपंचांगmac_dma_cfg *dma_cfg,
 				      dma_addr_t phy, u32 chan)
-{
+अणु
 	u32 rxpbl = dma_cfg->rxpbl ?: dma_cfg->pbl;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 	value &= ~XGMAC_RxPBL;
 	value |= (rxpbl << XGMAC_RxPBL_SHIFT) & XGMAC_RxPBL;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 
-	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_HADDR(chan));
-	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_LADDR(chan));
-}
+	ग_लिखोl(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_HADDR(chan));
+	ग_लिखोl(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_RxDESC_LADDR(chan));
+पूर्ण
 
-static void dwxgmac2_dma_init_tx_chan(void __iomem *ioaddr,
-				      struct stmmac_dma_cfg *dma_cfg,
+अटल व्योम dwxgmac2_dma_init_tx_chan(व्योम __iomem *ioaddr,
+				      काष्ठा sपंचांगmac_dma_cfg *dma_cfg,
 				      dma_addr_t phy, u32 chan)
-{
+अणु
 	u32 txpbl = dma_cfg->txpbl ?: dma_cfg->pbl;
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 	value &= ~XGMAC_TxPBL;
 	value |= (txpbl << XGMAC_TxPBL_SHIFT) & XGMAC_TxPBL;
 	value |= XGMAC_OSP;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	writel(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_HADDR(chan));
-	writel(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_LADDR(chan));
-}
+	ग_लिखोl(upper_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_HADDR(chan));
+	ग_लिखोl(lower_32_bits(phy), ioaddr + XGMAC_DMA_CH_TxDESC_LADDR(chan));
+पूर्ण
 
-static void dwxgmac2_dma_axi(void __iomem *ioaddr, struct stmmac_axi *axi)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_SYSBUS_MODE);
-	int i;
+अटल व्योम dwxgmac2_dma_axi(व्योम __iomem *ioaddr, काष्ठा sपंचांगmac_axi *axi)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_SYSBUS_MODE);
+	पूर्णांक i;
 
-	if (axi->axi_lpi_en)
+	अगर (axi->axi_lpi_en)
 		value |= XGMAC_EN_LPI;
-	if (axi->axi_xit_frm)
+	अगर (axi->axi_xit_frm)
 		value |= XGMAC_LPI_XIT_PKT;
 
 	value &= ~XGMAC_WR_OSR_LMT;
@@ -96,98 +97,98 @@ static void dwxgmac2_dma_axi(void __iomem *ioaddr, struct stmmac_axi *axi)
 	value |= (axi->axi_rd_osr_lmt << XGMAC_RD_OSR_LMT_SHIFT) &
 		XGMAC_RD_OSR_LMT;
 
-	if (!axi->axi_fb)
+	अगर (!axi->axi_fb)
 		value |= XGMAC_UNDEF;
 
 	value &= ~XGMAC_BLEN;
-	for (i = 0; i < AXI_BLEN; i++) {
-		switch (axi->axi_blen[i]) {
-		case 256:
+	क्रम (i = 0; i < AXI_BLEN; i++) अणु
+		चयन (axi->axi_blen[i]) अणु
+		हाल 256:
 			value |= XGMAC_BLEN256;
-			break;
-		case 128:
+			अवरोध;
+		हाल 128:
 			value |= XGMAC_BLEN128;
-			break;
-		case 64:
+			अवरोध;
+		हाल 64:
 			value |= XGMAC_BLEN64;
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			value |= XGMAC_BLEN32;
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			value |= XGMAC_BLEN16;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			value |= XGMAC_BLEN8;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			value |= XGMAC_BLEN4;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	writel(value, ioaddr + XGMAC_DMA_SYSBUS_MODE);
-	writel(XGMAC_TDPS, ioaddr + XGMAC_TX_EDMA_CTRL);
-	writel(XGMAC_RDPS, ioaddr + XGMAC_RX_EDMA_CTRL);
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_SYSBUS_MODE);
+	ग_लिखोl(XGMAC_TDPS, ioaddr + XGMAC_TX_EDMA_CTRL);
+	ग_लिखोl(XGMAC_RDPS, ioaddr + XGMAC_RX_EDMA_CTRL);
+पूर्ण
 
-static void dwxgmac2_dma_dump_regs(void __iomem *ioaddr, u32 *reg_space)
-{
-	int i;
+अटल व्योम dwxgmac2_dma_dump_regs(व्योम __iomem *ioaddr, u32 *reg_space)
+अणु
+	पूर्णांक i;
 
-	for (i = (XGMAC_DMA_MODE / 4); i < XGMAC_REGSIZE; i++)
-		reg_space[i] = readl(ioaddr + i * 4);
-}
+	क्रम (i = (XGMAC_DMA_MODE / 4); i < XGMAC_REGSIZE; i++)
+		reg_space[i] = पढ़ोl(ioaddr + i * 4);
+पूर्ण
 
-static void dwxgmac2_dma_rx_mode(void __iomem *ioaddr, int mode,
-				 u32 channel, int fifosz, u8 qmode)
-{
-	u32 value = readl(ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
-	unsigned int rqs = fifosz / 256 - 1;
+अटल व्योम dwxgmac2_dma_rx_mode(व्योम __iomem *ioaddr, पूर्णांक mode,
+				 u32 channel, पूर्णांक fअगरosz, u8 qmode)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
+	अचिन्हित पूर्णांक rqs = fअगरosz / 256 - 1;
 
-	if (mode == SF_DMA_MODE) {
+	अगर (mode == SF_DMA_MODE) अणु
 		value |= XGMAC_RSF;
-	} else {
+	पूर्ण अन्यथा अणु
 		value &= ~XGMAC_RSF;
 		value &= ~XGMAC_RTC;
 
-		if (mode <= 64)
+		अगर (mode <= 64)
 			value |= 0x0 << XGMAC_RTC_SHIFT;
-		else if (mode <= 96)
+		अन्यथा अगर (mode <= 96)
 			value |= 0x2 << XGMAC_RTC_SHIFT;
-		else
+		अन्यथा
 			value |= 0x3 << XGMAC_RTC_SHIFT;
-	}
+	पूर्ण
 
 	value &= ~XGMAC_RQS;
 	value |= (rqs << XGMAC_RQS_SHIFT) & XGMAC_RQS;
 
-	if ((fifosz >= 4096) && (qmode != MTL_QUEUE_AVB)) {
-		u32 flow = readl(ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
-		unsigned int rfd, rfa;
+	अगर ((fअगरosz >= 4096) && (qmode != MTL_QUEUE_AVB)) अणु
+		u32 flow = पढ़ोl(ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
+		अचिन्हित पूर्णांक rfd, rfa;
 
 		value |= XGMAC_EHFC;
 
-		/* Set Threshold for Activating Flow Control to min 2 frames,
+		/* Set Threshold क्रम Activating Flow Control to min 2 frames,
 		 * i.e. 1500 * 2 = 3000 bytes.
 		 *
-		 * Set Threshold for Deactivating Flow Control to min 1 frame,
+		 * Set Threshold क्रम Deactivating Flow Control to min 1 frame,
 		 * i.e. 1500 bytes.
 		 */
-		switch (fifosz) {
-		case 4096:
-			/* This violates the above formula because of FIFO size
-			 * limit therefore overflow may occur in spite of this.
+		चयन (fअगरosz) अणु
+		हाल 4096:
+			/* This violates the above क्रमmula because of FIFO size
+			 * limit thereक्रमe overflow may occur in spite of this.
 			 */
 			rfd = 0x03; /* Full-2.5K */
 			rfa = 0x01; /* Full-1.5K */
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			rfd = 0x07; /* Full-4.5K */
 			rfa = 0x04; /* Full-3K */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		flow &= ~XGMAC_RFD;
 		flow |= rfd << XGMAC_RFD_SHIFT;
@@ -195,194 +196,194 @@ static void dwxgmac2_dma_rx_mode(void __iomem *ioaddr, int mode,
 		flow &= ~XGMAC_RFA;
 		flow |= rfa << XGMAC_RFA_SHIFT;
 
-		writel(flow, ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
-	}
+		ग_लिखोl(flow, ioaddr + XGMAC_MTL_RXQ_FLOW_CONTROL(channel));
+	पूर्ण
 
-	writel(value, ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
+	ग_लिखोl(value, ioaddr + XGMAC_MTL_RXQ_OPMODE(channel));
 
 	/* Enable MTL RX overflow */
-	value = readl(ioaddr + XGMAC_MTL_QINTEN(channel));
-	writel(value | XGMAC_RXOIE, ioaddr + XGMAC_MTL_QINTEN(channel));
-}
+	value = पढ़ोl(ioaddr + XGMAC_MTL_QINTEN(channel));
+	ग_लिखोl(value | XGMAC_RXOIE, ioaddr + XGMAC_MTL_QINTEN(channel));
+पूर्ण
 
-static void dwxgmac2_dma_tx_mode(void __iomem *ioaddr, int mode,
-				 u32 channel, int fifosz, u8 qmode)
-{
-	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
-	unsigned int tqs = fifosz / 256 - 1;
+अटल व्योम dwxgmac2_dma_tx_mode(व्योम __iomem *ioaddr, पूर्णांक mode,
+				 u32 channel, पूर्णांक fअगरosz, u8 qmode)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
+	अचिन्हित पूर्णांक tqs = fअगरosz / 256 - 1;
 
-	if (mode == SF_DMA_MODE) {
+	अगर (mode == SF_DMA_MODE) अणु
 		value |= XGMAC_TSF;
-	} else {
+	पूर्ण अन्यथा अणु
 		value &= ~XGMAC_TSF;
 		value &= ~XGMAC_TTC;
 
-		if (mode <= 64)
+		अगर (mode <= 64)
 			value |= 0x0 << XGMAC_TTC_SHIFT;
-		else if (mode <= 96)
+		अन्यथा अगर (mode <= 96)
 			value |= 0x2 << XGMAC_TTC_SHIFT;
-		else if (mode <= 128)
+		अन्यथा अगर (mode <= 128)
 			value |= 0x3 << XGMAC_TTC_SHIFT;
-		else if (mode <= 192)
+		अन्यथा अगर (mode <= 192)
 			value |= 0x4 << XGMAC_TTC_SHIFT;
-		else if (mode <= 256)
+		अन्यथा अगर (mode <= 256)
 			value |= 0x5 << XGMAC_TTC_SHIFT;
-		else if (mode <= 384)
+		अन्यथा अगर (mode <= 384)
 			value |= 0x6 << XGMAC_TTC_SHIFT;
-		else
+		अन्यथा
 			value |= 0x7 << XGMAC_TTC_SHIFT;
-	}
+	पूर्ण
 
-	/* Use static TC to Queue mapping */
+	/* Use अटल TC to Queue mapping */
 	value |= (channel << XGMAC_Q2TCMAP_SHIFT) & XGMAC_Q2TCMAP;
 
 	value &= ~XGMAC_TXQEN;
-	if (qmode != MTL_QUEUE_AVB)
+	अगर (qmode != MTL_QUEUE_AVB)
 		value |= 0x2 << XGMAC_TXQEN_SHIFT;
-	else
+	अन्यथा
 		value |= 0x1 << XGMAC_TXQEN_SHIFT;
 
 	value &= ~XGMAC_TQS;
 	value |= (tqs << XGMAC_TQS_SHIFT) & XGMAC_TQS;
 
-	writel(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
-}
+	ग_लिखोl(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
+पूर्ण
 
-static void dwxgmac2_enable_dma_irq(void __iomem *ioaddr, u32 chan,
+अटल व्योम dwxgmac2_enable_dma_irq(व्योम __iomem *ioaddr, u32 chan,
 				    bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
 
-	if (rx)
+	अगर (rx)
 		value |= XGMAC_DMA_INT_DEFAULT_RX;
-	if (tx)
+	अगर (tx)
 		value |= XGMAC_DMA_INT_DEFAULT_TX;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+पूर्ण
 
-static void dwxgmac2_disable_dma_irq(void __iomem *ioaddr, u32 chan,
+अटल व्योम dwxgmac2_disable_dma_irq(व्योम __iomem *ioaddr, u32 chan,
 				     bool rx, bool tx)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
 
-	if (rx)
+	अगर (rx)
 		value &= ~XGMAC_DMA_INT_DEFAULT_RX;
-	if (tx)
+	अगर (tx)
 		value &= ~XGMAC_DMA_INT_DEFAULT_TX;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+पूर्ण
 
-static void dwxgmac2_dma_start_tx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम dwxgmac2_dma_start_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 	value |= XGMAC_TXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	value = readl(ioaddr + XGMAC_TX_CONFIG);
+	value = पढ़ोl(ioaddr + XGMAC_TX_CONFIG);
 	value |= XGMAC_CONFIG_TE;
-	writel(value, ioaddr + XGMAC_TX_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + XGMAC_TX_CONFIG);
+पूर्ण
 
-static void dwxgmac2_dma_stop_tx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम dwxgmac2_dma_stop_tx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 	value &= ~XGMAC_TXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	value = readl(ioaddr + XGMAC_TX_CONFIG);
+	value = पढ़ोl(ioaddr + XGMAC_TX_CONFIG);
 	value &= ~XGMAC_CONFIG_TE;
-	writel(value, ioaddr + XGMAC_TX_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + XGMAC_TX_CONFIG);
+पूर्ण
 
-static void dwxgmac2_dma_start_rx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम dwxgmac2_dma_start_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 	value |= XGMAC_RXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 
-	value = readl(ioaddr + XGMAC_RX_CONFIG);
+	value = पढ़ोl(ioaddr + XGMAC_RX_CONFIG);
 	value |= XGMAC_CONFIG_RE;
-	writel(value, ioaddr + XGMAC_RX_CONFIG);
-}
+	ग_लिखोl(value, ioaddr + XGMAC_RX_CONFIG);
+पूर्ण
 
-static void dwxgmac2_dma_stop_rx(void __iomem *ioaddr, u32 chan)
-{
+अटल व्योम dwxgmac2_dma_stop_rx(व्योम __iomem *ioaddr, u32 chan)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 	value &= ~XGMAC_RXST;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+पूर्ण
 
-static int dwxgmac2_dma_interrupt(void __iomem *ioaddr,
-				  struct stmmac_extra_stats *x, u32 chan,
+अटल पूर्णांक dwxgmac2_dma_पूर्णांकerrupt(व्योम __iomem *ioaddr,
+				  काष्ठा sपंचांगmac_extra_stats *x, u32 chan,
 				  u32 dir)
-{
-	u32 intr_status = readl(ioaddr + XGMAC_DMA_CH_STATUS(chan));
-	u32 intr_en = readl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
-	int ret = 0;
+अणु
+	u32 पूर्णांकr_status = पढ़ोl(ioaddr + XGMAC_DMA_CH_STATUS(chan));
+	u32 पूर्णांकr_en = पढ़ोl(ioaddr + XGMAC_DMA_CH_INT_EN(chan));
+	पूर्णांक ret = 0;
 
-	if (dir == DMA_DIR_RX)
-		intr_status &= XGMAC_DMA_STATUS_MSK_RX;
-	else if (dir == DMA_DIR_TX)
-		intr_status &= XGMAC_DMA_STATUS_MSK_TX;
+	अगर (dir == DMA_सूची_RX)
+		पूर्णांकr_status &= XGMAC_DMA_STATUS_MSK_RX;
+	अन्यथा अगर (dir == DMA_सूची_TX)
+		पूर्णांकr_status &= XGMAC_DMA_STATUS_MSK_TX;
 
-	/* ABNORMAL interrupts */
-	if (unlikely(intr_status & XGMAC_AIS)) {
-		if (unlikely(intr_status & XGMAC_RBU)) {
+	/* ABNORMAL पूर्णांकerrupts */
+	अगर (unlikely(पूर्णांकr_status & XGMAC_AIS)) अणु
+		अगर (unlikely(पूर्णांकr_status & XGMAC_RBU)) अणु
 			x->rx_buf_unav_irq++;
 			ret |= handle_rx;
-		}
-		if (unlikely(intr_status & XGMAC_TPS)) {
+		पूर्ण
+		अगर (unlikely(पूर्णांकr_status & XGMAC_TPS)) अणु
 			x->tx_process_stopped_irq++;
 			ret |= tx_hard_error;
-		}
-		if (unlikely(intr_status & XGMAC_FBE)) {
+		पूर्ण
+		अगर (unlikely(पूर्णांकr_status & XGMAC_FBE)) अणु
 			x->fatal_bus_error_irq++;
 			ret |= tx_hard_error;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* TX/RX NORMAL interrupts */
-	if (likely(intr_status & XGMAC_NIS)) {
+	/* TX/RX NORMAL पूर्णांकerrupts */
+	अगर (likely(पूर्णांकr_status & XGMAC_NIS)) अणु
 		x->normal_irq_n++;
 
-		if (likely(intr_status & XGMAC_RI)) {
+		अगर (likely(पूर्णांकr_status & XGMAC_RI)) अणु
 			x->rx_normal_irq_n++;
 			ret |= handle_rx;
-		}
-		if (likely(intr_status & (XGMAC_TI | XGMAC_TBU))) {
+		पूर्ण
+		अगर (likely(पूर्णांकr_status & (XGMAC_TI | XGMAC_TBU))) अणु
 			x->tx_normal_irq_n++;
 			ret |= handle_tx;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Clear interrupts */
-	writel(intr_en & intr_status, ioaddr + XGMAC_DMA_CH_STATUS(chan));
+	/* Clear पूर्णांकerrupts */
+	ग_लिखोl(पूर्णांकr_en & पूर्णांकr_status, ioaddr + XGMAC_DMA_CH_STATUS(chan));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dwxgmac2_get_hw_feature(void __iomem *ioaddr,
-				    struct dma_features *dma_cap)
-{
+अटल व्योम dwxgmac2_get_hw_feature(व्योम __iomem *ioaddr,
+				    काष्ठा dma_features *dma_cap)
+अणु
 	u32 hw_cap;
 
 	/*  MAC HW feature 0 */
-	hw_cap = readl(ioaddr + XGMAC_HW_FEATURE0);
+	hw_cap = पढ़ोl(ioaddr + XGMAC_HW_FEATURE0);
 	dma_cap->vlins = (hw_cap & XGMAC_HWFEAT_SAVLANINS) >> 27;
 	dma_cap->rx_coe = (hw_cap & XGMAC_HWFEAT_RXCOESEL) >> 16;
 	dma_cap->tx_coe = (hw_cap & XGMAC_HWFEAT_TXCOESEL) >> 14;
 	dma_cap->eee = (hw_cap & XGMAC_HWFEAT_EEESEL) >> 13;
-	dma_cap->atime_stamp = (hw_cap & XGMAC_HWFEAT_TSSEL) >> 12;
+	dma_cap->aसमय_stamp = (hw_cap & XGMAC_HWFEAT_TSSEL) >> 12;
 	dma_cap->av = (hw_cap & XGMAC_HWFEAT_AVSEL) >> 11;
 	dma_cap->av &= !((hw_cap & XGMAC_HWFEAT_RAVSEL) >> 10);
 	dma_cap->arpoffsel = (hw_cap & XGMAC_HWFEAT_ARPOFFSEL) >> 9;
@@ -393,7 +394,7 @@ static void dwxgmac2_get_hw_feature(void __iomem *ioaddr,
 	dma_cap->mbps_1000 = (hw_cap & XGMAC_HWFEAT_GMIISEL) >> 1;
 
 	/* MAC HW feature 1 */
-	hw_cap = readl(ioaddr + XGMAC_HW_FEATURE1);
+	hw_cap = पढ़ोl(ioaddr + XGMAC_HW_FEATURE1);
 	dma_cap->l3l4fnum = (hw_cap & XGMAC_HWFEAT_L3L4FNUM) >> 27;
 	dma_cap->hash_tb_sz = (hw_cap & XGMAC_HWFEAT_HASHTBLSZ) >> 24;
 	dma_cap->rssen = (hw_cap & XGMAC_HWFEAT_RSSEN) >> 20;
@@ -401,28 +402,28 @@ static void dwxgmac2_get_hw_feature(void __iomem *ioaddr,
 	dma_cap->sphen = (hw_cap & XGMAC_HWFEAT_SPHEN) >> 17;
 
 	dma_cap->addr64 = (hw_cap & XGMAC_HWFEAT_ADDR64) >> 14;
-	switch (dma_cap->addr64) {
-	case 0:
+	चयन (dma_cap->addr64) अणु
+	हाल 0:
 		dma_cap->addr64 = 32;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		dma_cap->addr64 = 40;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		dma_cap->addr64 = 48;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dma_cap->addr64 = 32;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	dma_cap->tx_fifo_size =
+	dma_cap->tx_fअगरo_size =
 		128 << ((hw_cap & XGMAC_HWFEAT_TXFIFOSIZE) >> 6);
-	dma_cap->rx_fifo_size =
+	dma_cap->rx_fअगरo_size =
 		128 << ((hw_cap & XGMAC_HWFEAT_RXFIFOSIZE) >> 0);
 
 	/* MAC HW feature 2 */
-	hw_cap = readl(ioaddr + XGMAC_HW_FEATURE2);
+	hw_cap = पढ़ोl(ioaddr + XGMAC_HW_FEATURE2);
 	dma_cap->pps_out_num = (hw_cap & XGMAC_HWFEAT_PPSOUTNUM) >> 24;
 	dma_cap->number_tx_channel =
 		((hw_cap & XGMAC_HWFEAT_TXCHCNT) >> 18) + 1;
@@ -434,7 +435,7 @@ static void dwxgmac2_get_hw_feature(void __iomem *ioaddr,
 		((hw_cap & XGMAC_HWFEAT_RXQCNT) >> 0) + 1;
 
 	/* MAC HW feature 3 */
-	hw_cap = readl(ioaddr + XGMAC_HW_FEATURE3);
+	hw_cap = पढ़ोl(ioaddr + XGMAC_HW_FEATURE3);
 	dma_cap->tbssel = (hw_cap & XGMAC_HWFEAT_TBSSEL) >> 27;
 	dma_cap->fpesel = (hw_cap & XGMAC_HWFEAT_FPESEL) >> 26;
 	dma_cap->estwid = (hw_cap & XGMAC_HWFEAT_ESTWID) >> 23;
@@ -445,111 +446,111 @@ static void dwxgmac2_get_hw_feature(void __iomem *ioaddr,
 	dma_cap->frpes = (hw_cap & XGMAC_HWFEAT_FRPES) >> 11;
 	dma_cap->frpbs = (hw_cap & XGMAC_HWFEAT_FRPPB) >> 9;
 	dma_cap->frpsel = (hw_cap & XGMAC_HWFEAT_FRPSEL) >> 3;
-}
+पूर्ण
 
-static void dwxgmac2_rx_watchdog(void __iomem *ioaddr, u32 riwt, u32 queue)
-{
-	writel(riwt & XGMAC_RWT, ioaddr + XGMAC_DMA_CH_Rx_WATCHDOG(queue));
-}
+अटल व्योम dwxgmac2_rx_watchकरोg(व्योम __iomem *ioaddr, u32 riwt, u32 queue)
+अणु
+	ग_लिखोl(riwt & XGMAC_RWT, ioaddr + XGMAC_DMA_CH_Rx_WATCHDOG(queue));
+पूर्ण
 
-static void dwxgmac2_set_rx_ring_len(void __iomem *ioaddr, u32 len, u32 chan)
-{
-	writel(len, ioaddr + XGMAC_DMA_CH_RxDESC_RING_LEN(chan));
-}
+अटल व्योम dwxgmac2_set_rx_ring_len(व्योम __iomem *ioaddr, u32 len, u32 chan)
+अणु
+	ग_लिखोl(len, ioaddr + XGMAC_DMA_CH_RxDESC_RING_LEN(chan));
+पूर्ण
 
-static void dwxgmac2_set_tx_ring_len(void __iomem *ioaddr, u32 len, u32 chan)
-{
-	writel(len, ioaddr + XGMAC_DMA_CH_TxDESC_RING_LEN(chan));
-}
+अटल व्योम dwxgmac2_set_tx_ring_len(व्योम __iomem *ioaddr, u32 len, u32 chan)
+अणु
+	ग_लिखोl(len, ioaddr + XGMAC_DMA_CH_TxDESC_RING_LEN(chan));
+पूर्ण
 
-static void dwxgmac2_set_rx_tail_ptr(void __iomem *ioaddr, u32 ptr, u32 chan)
-{
-	writel(ptr, ioaddr + XGMAC_DMA_CH_RxDESC_TAIL_LPTR(chan));
-}
+अटल व्योम dwxgmac2_set_rx_tail_ptr(व्योम __iomem *ioaddr, u32 ptr, u32 chan)
+अणु
+	ग_लिखोl(ptr, ioaddr + XGMAC_DMA_CH_RxDESC_TAIL_LPTR(chan));
+पूर्ण
 
-static void dwxgmac2_set_tx_tail_ptr(void __iomem *ioaddr, u32 ptr, u32 chan)
-{
-	writel(ptr, ioaddr + XGMAC_DMA_CH_TxDESC_TAIL_LPTR(chan));
-}
+अटल व्योम dwxgmac2_set_tx_tail_ptr(व्योम __iomem *ioaddr, u32 ptr, u32 chan)
+अणु
+	ग_लिखोl(ptr, ioaddr + XGMAC_DMA_CH_TxDESC_TAIL_LPTR(chan));
+पूर्ण
 
-static void dwxgmac2_enable_tso(void __iomem *ioaddr, bool en, u32 chan)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+अटल व्योम dwxgmac2_enable_tso(व्योम __iomem *ioaddr, bool en, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	if (en)
+	अगर (en)
 		value |= XGMAC_TSE;
-	else
+	अन्यथा
 		value &= ~XGMAC_TSE;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+पूर्ण
 
-static void dwxgmac2_qmode(void __iomem *ioaddr, u32 channel, u8 qmode)
-{
-	u32 value = readl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
-	u32 flow = readl(ioaddr + XGMAC_RX_FLOW_CTRL);
+अटल व्योम dwxgmac2_qmode(व्योम __iomem *ioaddr, u32 channel, u8 qmode)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_MTL_TXQ_OPMODE(channel));
+	u32 flow = पढ़ोl(ioaddr + XGMAC_RX_FLOW_CTRL);
 
 	value &= ~XGMAC_TXQEN;
-	if (qmode != MTL_QUEUE_AVB) {
+	अगर (qmode != MTL_QUEUE_AVB) अणु
 		value |= 0x2 << XGMAC_TXQEN_SHIFT;
-		writel(0, ioaddr + XGMAC_MTL_TCx_ETS_CONTROL(channel));
-	} else {
+		ग_लिखोl(0, ioaddr + XGMAC_MTL_TCx_ETS_CONTROL(channel));
+	पूर्ण अन्यथा अणु
 		value |= 0x1 << XGMAC_TXQEN_SHIFT;
-		writel(flow & (~XGMAC_RFE), ioaddr + XGMAC_RX_FLOW_CTRL);
-	}
+		ग_लिखोl(flow & (~XGMAC_RFE), ioaddr + XGMAC_RX_FLOW_CTRL);
+	पूर्ण
 
-	writel(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
-}
+	ग_लिखोl(value, ioaddr +  XGMAC_MTL_TXQ_OPMODE(channel));
+पूर्ण
 
-static void dwxgmac2_set_bfsize(void __iomem *ioaddr, int bfsize, u32 chan)
-{
+अटल व्योम dwxgmac2_set_bfsize(व्योम __iomem *ioaddr, पूर्णांक bfsize, u32 chan)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
 	value &= ~XGMAC_RBSZ;
 	value |= bfsize << XGMAC_RBSZ_SHIFT;
-	writel(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_RX_CONTROL(chan));
+पूर्ण
 
-static void dwxgmac2_enable_sph(void __iomem *ioaddr, bool en, u32 chan)
-{
-	u32 value = readl(ioaddr + XGMAC_RX_CONFIG);
+अटल व्योम dwxgmac2_enable_sph(व्योम __iomem *ioaddr, bool en, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_RX_CONFIG);
 
 	value &= ~XGMAC_CONFIG_HDSMS;
 	value |= XGMAC_CONFIG_HDSMS_256; /* Segment max 256 bytes */
-	writel(value, ioaddr + XGMAC_RX_CONFIG);
+	ग_लिखोl(value, ioaddr + XGMAC_RX_CONFIG);
 
-	value = readl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
-	if (en)
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+	अगर (en)
 		value |= XGMAC_SPH;
-	else
+	अन्यथा
 		value &= ~XGMAC_SPH;
-	writel(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
-}
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_CONTROL(chan));
+पूर्ण
 
-static int dwxgmac2_enable_tbs(void __iomem *ioaddr, bool en, u32 chan)
-{
-	u32 value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+अटल पूर्णांक dwxgmac2_enable_tbs(व्योम __iomem *ioaddr, bool en, u32 chan)
+अणु
+	u32 value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	if (en)
+	अगर (en)
 		value |= XGMAC_EDSE;
-	else
+	अन्यथा
 		value &= ~XGMAC_EDSE;
 
-	writel(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
+	ग_लिखोl(value, ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan));
 
-	value = readl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan)) & XGMAC_EDSE;
-	if (en && !value)
-		return -EIO;
+	value = पढ़ोl(ioaddr + XGMAC_DMA_CH_TX_CONTROL(chan)) & XGMAC_EDSE;
+	अगर (en && !value)
+		वापस -EIO;
 
-	writel(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL0);
-	writel(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL1);
-	writel(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL2);
-	writel(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL3);
-	return 0;
-}
+	ग_लिखोl(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL0);
+	ग_लिखोl(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL1);
+	ग_लिखोl(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL2);
+	ग_लिखोl(XGMAC_DEF_FTOS, ioaddr + XGMAC_DMA_TBS_CTRL3);
+	वापस 0;
+पूर्ण
 
-const struct stmmac_dma_ops dwxgmac210_dma_ops = {
+स्थिर काष्ठा sपंचांगmac_dma_ops dwxgmac210_dma_ops = अणु
 	.reset = dwxgmac2_dma_reset,
 	.init = dwxgmac2_dma_init,
 	.init_chan = dwxgmac2_dma_init_chan,
@@ -565,9 +566,9 @@ const struct stmmac_dma_ops dwxgmac210_dma_ops = {
 	.stop_tx = dwxgmac2_dma_stop_tx,
 	.start_rx = dwxgmac2_dma_start_rx,
 	.stop_rx = dwxgmac2_dma_stop_rx,
-	.dma_interrupt = dwxgmac2_dma_interrupt,
+	.dma_पूर्णांकerrupt = dwxgmac2_dma_पूर्णांकerrupt,
 	.get_hw_feature = dwxgmac2_get_hw_feature,
-	.rx_watchdog = dwxgmac2_rx_watchdog,
+	.rx_watchकरोg = dwxgmac2_rx_watchकरोg,
 	.set_rx_ring_len = dwxgmac2_set_rx_ring_len,
 	.set_tx_ring_len = dwxgmac2_set_tx_ring_len,
 	.set_rx_tail_ptr = dwxgmac2_set_rx_tail_ptr,
@@ -577,4 +578,4 @@ const struct stmmac_dma_ops dwxgmac210_dma_ops = {
 	.set_bfsize = dwxgmac2_set_bfsize,
 	.enable_sph = dwxgmac2_enable_sph,
 	.enable_tbs = dwxgmac2_enable_tbs,
-};
+पूर्ण;

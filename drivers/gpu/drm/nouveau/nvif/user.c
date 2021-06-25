@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,47 +20,47 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <nvif/user.h>
-#include <nvif/device.h>
+#समावेश <nvअगर/user.h>
+#समावेश <nvअगर/device.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-void
-nvif_user_dtor(struct nvif_device *device)
-{
-	if (device->user.func) {
-		nvif_object_dtor(&device->user.object);
-		device->user.func = NULL;
-	}
-}
+व्योम
+nvअगर_user_dtor(काष्ठा nvअगर_device *device)
+अणु
+	अगर (device->user.func) अणु
+		nvअगर_object_dtor(&device->user.object);
+		device->user.func = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvif_user_ctor(struct nvif_device *device, const char *name)
-{
-	struct {
+पूर्णांक
+nvअगर_user_ctor(काष्ठा nvअगर_device *device, स्थिर अक्षर *name)
+अणु
+	काष्ठा अणु
 		s32 oclass;
-		int version;
-		const struct nvif_user_func *func;
-	} users[] = {
-		{ VOLTA_USERMODE_A, -1, &nvif_userc361 },
-		{}
-	};
-	int cid, ret;
+		पूर्णांक version;
+		स्थिर काष्ठा nvअगर_user_func *func;
+	पूर्ण users[] = अणु
+		अणु VOLTA_USERMODE_A, -1, &nvअगर_userc361 पूर्ण,
+		अणुपूर्ण
+	पूर्ण;
+	पूर्णांक cid, ret;
 
-	if (device->user.func)
-		return 0;
+	अगर (device->user.func)
+		वापस 0;
 
-	cid = nvif_mclass(&device->object, users);
-	if (cid < 0)
-		return cid;
+	cid = nvअगर_mclass(&device->object, users);
+	अगर (cid < 0)
+		वापस cid;
 
-	ret = nvif_object_ctor(&device->object, name ? name : "nvifUsermode",
-			       0, users[cid].oclass, NULL, 0,
+	ret = nvअगर_object_ctor(&device->object, name ? name : "nvifUsermode",
+			       0, users[cid].oclass, शून्य, 0,
 			       &device->user.object);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	nvif_object_map(&device->user.object, NULL, 0);
+	nvअगर_object_map(&device->user.object, शून्य, 0);
 	device->user.func = users[cid].func;
-	return 0;
-}
+	वापस 0;
+पूर्ण

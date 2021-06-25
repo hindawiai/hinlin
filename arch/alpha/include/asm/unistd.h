@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_UNISTD_H
-#define _ALPHA_UNISTD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_UNISTD_H
+#घोषणा _ALPHA_UNISTD_H
 
-#include <uapi/asm/unistd.h>
+#समावेश <uapi/यंत्र/unistd.h>
 
-#define NR_SYSCALLS	__NR_syscalls
+#घोषणा NR_SYSCALLS	__NR_syscalls
 
-#define __ARCH_WANT_NEW_STAT
-#define __ARCH_WANT_OLD_READDIR
-#define __ARCH_WANT_STAT64
-#define __ARCH_WANT_SYS_GETHOSTNAME
-#define __ARCH_WANT_SYS_FADVISE64
-#define __ARCH_WANT_SYS_GETPGRP
-#define __ARCH_WANT_SYS_OLDUMOUNT
-#define __ARCH_WANT_SYS_SIGPENDING
-#define __ARCH_WANT_SYS_UTIME
-#define __ARCH_WANT_SYS_FORK
-#define __ARCH_WANT_SYS_VFORK
-#define __ARCH_WANT_SYS_CLONE
+#घोषणा __ARCH_WANT_NEW_STAT
+#घोषणा __ARCH_WANT_OLD_READसूची
+#घोषणा __ARCH_WANT_STAT64
+#घोषणा __ARCH_WANT_SYS_GETHOSTNAME
+#घोषणा __ARCH_WANT_SYS_FADVISE64
+#घोषणा __ARCH_WANT_SYS_GETPGRP
+#घोषणा __ARCH_WANT_SYS_OLDUMOUNT
+#घोषणा __ARCH_WANT_SYS_SIGPENDING
+#घोषणा __ARCH_WANT_SYS_UTIME
+#घोषणा __ARCH_WANT_SYS_FORK
+#घोषणा __ARCH_WANT_SYS_VFORK
+#घोषणा __ARCH_WANT_SYS_CLONE
 
-#endif /* _ALPHA_UNISTD_H */
+#पूर्ण_अगर /* _ALPHA_UNISTD_H */

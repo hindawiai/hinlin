@@ -1,227 +1,228 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_HIGHMEM_INTERNAL_H
-#define _LINUX_HIGHMEM_INTERNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_HIGHMEM_INTERNAL_H
+#घोषणा _LINUX_HIGHMEM_INTERNAL_H
 
 /*
  * Outside of CONFIG_HIGHMEM to support X86 32bit iomap_atomic() cruft.
  */
-#ifdef CONFIG_KMAP_LOCAL
-void *__kmap_local_pfn_prot(unsigned long pfn, pgprot_t prot);
-void *__kmap_local_page_prot(struct page *page, pgprot_t prot);
-void kunmap_local_indexed(void *vaddr);
-void kmap_local_fork(struct task_struct *tsk);
-void __kmap_local_sched_out(void);
-void __kmap_local_sched_in(void);
-static inline void kmap_assert_nomap(void)
-{
+#अगर_घोषित CONFIG_KMAP_LOCAL
+व्योम *__kmap_local_pfn_prot(अचिन्हित दीर्घ pfn, pgprot_t prot);
+व्योम *__kmap_local_page_prot(काष्ठा page *page, pgprot_t prot);
+व्योम kunmap_local_indexed(व्योम *vaddr);
+व्योम kmap_local_विभाजन(काष्ठा task_काष्ठा *tsk);
+व्योम __kmap_local_sched_out(व्योम);
+व्योम __kmap_local_sched_in(व्योम);
+अटल अंतरभूत व्योम kmap_निश्चित_nomap(व्योम)
+अणु
 	DEBUG_LOCKS_WARN_ON(current->kmap_ctrl.idx);
-}
-#else
-static inline void kmap_local_fork(struct task_struct *tsk) { }
-static inline void kmap_assert_nomap(void) { }
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम kmap_local_विभाजन(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम kmap_निश्चित_nomap(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HIGHMEM
-#include <asm/highmem.h>
+#अगर_घोषित CONFIG_HIGHMEM
+#समावेश <यंत्र/highस्मृति.स>
 
-#ifndef ARCH_HAS_KMAP_FLUSH_TLB
-static inline void kmap_flush_tlb(unsigned long addr) { }
-#endif
+#अगर_अघोषित ARCH_HAS_KMAP_FLUSH_TLB
+अटल अंतरभूत व्योम kmap_flush_tlb(अचिन्हित दीर्घ addr) अणु पूर्ण
+#पूर्ण_अगर
 
-#ifndef kmap_prot
-#define kmap_prot PAGE_KERNEL
-#endif
+#अगर_अघोषित kmap_prot
+#घोषणा kmap_prot PAGE_KERNEL
+#पूर्ण_अगर
 
-void *kmap_high(struct page *page);
-void kunmap_high(struct page *page);
-void __kmap_flush_unused(void);
-struct page *__kmap_to_page(void *addr);
+व्योम *kmap_high(काष्ठा page *page);
+व्योम kunmap_high(काष्ठा page *page);
+व्योम __kmap_flush_unused(व्योम);
+काष्ठा page *__kmap_to_page(व्योम *addr);
 
-static inline void *kmap(struct page *page)
-{
-	void *addr;
+अटल अंतरभूत व्योम *kmap(काष्ठा page *page)
+अणु
+	व्योम *addr;
 
 	might_sleep();
-	if (!PageHighMem(page))
+	अगर (!PageHighMem(page))
 		addr = page_address(page);
-	else
+	अन्यथा
 		addr = kmap_high(page);
-	kmap_flush_tlb((unsigned long)addr);
-	return addr;
-}
+	kmap_flush_tlb((अचिन्हित दीर्घ)addr);
+	वापस addr;
+पूर्ण
 
-static inline void kunmap(struct page *page)
-{
+अटल अंतरभूत व्योम kunmap(काष्ठा page *page)
+अणु
 	might_sleep();
-	if (!PageHighMem(page))
-		return;
+	अगर (!PageHighMem(page))
+		वापस;
 	kunmap_high(page);
-}
+पूर्ण
 
-static inline struct page *kmap_to_page(void *addr)
-{
-	return __kmap_to_page(addr);
-}
+अटल अंतरभूत काष्ठा page *kmap_to_page(व्योम *addr)
+अणु
+	वापस __kmap_to_page(addr);
+पूर्ण
 
-static inline void kmap_flush_unused(void)
-{
+अटल अंतरभूत व्योम kmap_flush_unused(व्योम)
+अणु
 	__kmap_flush_unused();
-}
+पूर्ण
 
-static inline void *kmap_local_page(struct page *page)
-{
-	return __kmap_local_page_prot(page, kmap_prot);
-}
+अटल अंतरभूत व्योम *kmap_local_page(काष्ठा page *page)
+अणु
+	वापस __kmap_local_page_prot(page, kmap_prot);
+पूर्ण
 
-static inline void *kmap_local_page_prot(struct page *page, pgprot_t prot)
-{
-	return __kmap_local_page_prot(page, prot);
-}
+अटल अंतरभूत व्योम *kmap_local_page_prot(काष्ठा page *page, pgprot_t prot)
+अणु
+	वापस __kmap_local_page_prot(page, prot);
+पूर्ण
 
-static inline void *kmap_local_pfn(unsigned long pfn)
-{
-	return __kmap_local_pfn_prot(pfn, kmap_prot);
-}
+अटल अंतरभूत व्योम *kmap_local_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस __kmap_local_pfn_prot(pfn, kmap_prot);
+पूर्ण
 
-static inline void __kunmap_local(void *vaddr)
-{
+अटल अंतरभूत व्योम __kunmap_local(व्योम *vaddr)
+अणु
 	kunmap_local_indexed(vaddr);
-}
+पूर्ण
 
-static inline void *kmap_atomic_prot(struct page *page, pgprot_t prot)
-{
+अटल अंतरभूत व्योम *kmap_atomic_prot(काष्ठा page *page, pgprot_t prot)
+अणु
 	preempt_disable();
 	pagefault_disable();
-	return __kmap_local_page_prot(page, prot);
-}
+	वापस __kmap_local_page_prot(page, prot);
+पूर्ण
 
-static inline void *kmap_atomic(struct page *page)
-{
-	return kmap_atomic_prot(page, kmap_prot);
-}
+अटल अंतरभूत व्योम *kmap_atomic(काष्ठा page *page)
+अणु
+	वापस kmap_atomic_prot(page, kmap_prot);
+पूर्ण
 
-static inline void *kmap_atomic_pfn(unsigned long pfn)
-{
+अटल अंतरभूत व्योम *kmap_atomic_pfn(अचिन्हित दीर्घ pfn)
+अणु
 	preempt_disable();
 	pagefault_disable();
-	return __kmap_local_pfn_prot(pfn, kmap_prot);
-}
+	वापस __kmap_local_pfn_prot(pfn, kmap_prot);
+पूर्ण
 
-static inline void __kunmap_atomic(void *addr)
-{
+अटल अंतरभूत व्योम __kunmap_atomic(व्योम *addr)
+अणु
 	kunmap_local_indexed(addr);
 	pagefault_enable();
 	preempt_enable();
-}
+पूर्ण
 
-unsigned int __nr_free_highpages(void);
-extern atomic_long_t _totalhigh_pages;
+अचिन्हित पूर्णांक __nr_मुक्त_highpages(व्योम);
+बाह्य atomic_दीर्घ_t _totalhigh_pages;
 
-static inline unsigned int nr_free_highpages(void)
-{
-	return __nr_free_highpages();
-}
+अटल अंतरभूत अचिन्हित पूर्णांक nr_मुक्त_highpages(व्योम)
+अणु
+	वापस __nr_मुक्त_highpages();
+पूर्ण
 
-static inline unsigned long totalhigh_pages(void)
-{
-	return (unsigned long)atomic_long_read(&_totalhigh_pages);
-}
+अटल अंतरभूत अचिन्हित दीर्घ totalhigh_pages(व्योम)
+अणु
+	वापस (अचिन्हित दीर्घ)atomic_दीर्घ_पढ़ो(&_totalhigh_pages);
+पूर्ण
 
-static inline void totalhigh_pages_add(long count)
-{
-	atomic_long_add(count, &_totalhigh_pages);
-}
+अटल अंतरभूत व्योम totalhigh_pages_add(दीर्घ count)
+अणु
+	atomic_दीर्घ_add(count, &_totalhigh_pages);
+पूर्ण
 
-#else /* CONFIG_HIGHMEM */
+#अन्यथा /* CONFIG_HIGHMEM */
 
-static inline struct page *kmap_to_page(void *addr)
-{
-	return virt_to_page(addr);
-}
+अटल अंतरभूत काष्ठा page *kmap_to_page(व्योम *addr)
+अणु
+	वापस virt_to_page(addr);
+पूर्ण
 
-static inline void *kmap(struct page *page)
-{
+अटल अंतरभूत व्योम *kmap(काष्ठा page *page)
+अणु
 	might_sleep();
-	return page_address(page);
-}
+	वापस page_address(page);
+पूर्ण
 
-static inline void kunmap_high(struct page *page) { }
-static inline void kmap_flush_unused(void) { }
+अटल अंतरभूत व्योम kunmap_high(काष्ठा page *page) अणु पूर्ण
+अटल अंतरभूत व्योम kmap_flush_unused(व्योम) अणु पूर्ण
 
-static inline void kunmap(struct page *page)
-{
-#ifdef ARCH_HAS_FLUSH_ON_KUNMAP
+अटल अंतरभूत व्योम kunmap(काष्ठा page *page)
+अणु
+#अगर_घोषित ARCH_HAS_FLUSH_ON_KUNMAP
 	kunmap_flush_on_unmap(page_address(page));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void *kmap_local_page(struct page *page)
-{
-	return page_address(page);
-}
+अटल अंतरभूत व्योम *kmap_local_page(काष्ठा page *page)
+अणु
+	वापस page_address(page);
+पूर्ण
 
-static inline void *kmap_local_page_prot(struct page *page, pgprot_t prot)
-{
-	return kmap_local_page(page);
-}
+अटल अंतरभूत व्योम *kmap_local_page_prot(काष्ठा page *page, pgprot_t prot)
+अणु
+	वापस kmap_local_page(page);
+पूर्ण
 
-static inline void *kmap_local_pfn(unsigned long pfn)
-{
-	return kmap_local_page(pfn_to_page(pfn));
-}
+अटल अंतरभूत व्योम *kmap_local_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस kmap_local_page(pfn_to_page(pfn));
+पूर्ण
 
-static inline void __kunmap_local(void *addr)
-{
-#ifdef ARCH_HAS_FLUSH_ON_KUNMAP
+अटल अंतरभूत व्योम __kunmap_local(व्योम *addr)
+अणु
+#अगर_घोषित ARCH_HAS_FLUSH_ON_KUNMAP
 	kunmap_flush_on_unmap(addr);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void *kmap_atomic(struct page *page)
-{
+अटल अंतरभूत व्योम *kmap_atomic(काष्ठा page *page)
+अणु
 	preempt_disable();
 	pagefault_disable();
-	return page_address(page);
-}
+	वापस page_address(page);
+पूर्ण
 
-static inline void *kmap_atomic_prot(struct page *page, pgprot_t prot)
-{
-	return kmap_atomic(page);
-}
+अटल अंतरभूत व्योम *kmap_atomic_prot(काष्ठा page *page, pgprot_t prot)
+अणु
+	वापस kmap_atomic(page);
+पूर्ण
 
-static inline void *kmap_atomic_pfn(unsigned long pfn)
-{
-	return kmap_atomic(pfn_to_page(pfn));
-}
+अटल अंतरभूत व्योम *kmap_atomic_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस kmap_atomic(pfn_to_page(pfn));
+पूर्ण
 
-static inline void __kunmap_atomic(void *addr)
-{
-#ifdef ARCH_HAS_FLUSH_ON_KUNMAP
+अटल अंतरभूत व्योम __kunmap_atomic(व्योम *addr)
+अणु
+#अगर_घोषित ARCH_HAS_FLUSH_ON_KUNMAP
 	kunmap_flush_on_unmap(addr);
-#endif
+#पूर्ण_अगर
 	pagefault_enable();
 	preempt_enable();
-}
+पूर्ण
 
-static inline unsigned int nr_free_highpages(void) { return 0; }
-static inline unsigned long totalhigh_pages(void) { return 0UL; }
+अटल अंतरभूत अचिन्हित पूर्णांक nr_मुक्त_highpages(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत अचिन्हित दीर्घ totalhigh_pages(व्योम) अणु वापस 0UL; पूर्ण
 
-#endif /* CONFIG_HIGHMEM */
+#पूर्ण_अगर /* CONFIG_HIGHMEM */
 
 /*
- * Prevent people trying to call kunmap_atomic() as if it were kunmap()
- * kunmap_atomic() should get the return value of kmap_atomic, not the page.
+ * Prevent people trying to call kunmap_atomic() as अगर it were kunmap()
+ * kunmap_atomic() should get the वापस value of kmap_atomic, not the page.
  */
-#define kunmap_atomic(__addr)					\
-do {								\
-	BUILD_BUG_ON(__same_type((__addr), struct page *));	\
+#घोषणा kunmap_atomic(__addr)					\
+करो अणु								\
+	BUILD_BUG_ON(__same_type((__addr), काष्ठा page *));	\
 	__kunmap_atomic(__addr);				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define kunmap_local(__addr)					\
-do {								\
-	BUILD_BUG_ON(__same_type((__addr), struct page *));	\
+#घोषणा kunmap_local(__addr)					\
+करो अणु								\
+	BUILD_BUG_ON(__same_type((__addr), काष्ठा page *));	\
 	__kunmap_local(__addr);					\
-} while (0)
+पूर्ण जबतक (0)
 
-#endif
+#पूर्ण_अगर

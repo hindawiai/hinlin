@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Force feedback support for Linux input subsystem
+ *  Force feedback support क्रम Linux input subप्रणाली
  *
  *  Copyright (c) 2006 Anssi Hannula <anssi.hannula@gmail.com>
  *  Copyright (c) 2006 Dmitry Torokhov <dtor@mail.ru>
@@ -9,53 +10,53 @@
 /*
  */
 
-/* #define DEBUG */
+/* #घोषणा DEBUG */
 
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
 /*
  * Check that the effect_id is a valid effect and whether the user
  * is the owner
  */
-static int check_effect_access(struct ff_device *ff, int effect_id,
-				struct file *file)
-{
-	if (effect_id < 0 || effect_id >= ff->max_effects ||
+अटल पूर्णांक check_effect_access(काष्ठा ff_device *ff, पूर्णांक effect_id,
+				काष्ठा file *file)
+अणु
+	अगर (effect_id < 0 || effect_id >= ff->max_effects ||
 	    !ff->effect_owners[effect_id])
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (file && ff->effect_owners[effect_id] != file)
-		return -EACCES;
+	अगर (file && ff->effect_owners[effect_id] != file)
+		वापस -EACCES;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Checks whether 2 effects can be combined together
  */
-static inline int check_effects_compatible(struct ff_effect *e1,
-					   struct ff_effect *e2)
-{
-	return e1->type == e2->type &&
+अटल अंतरभूत पूर्णांक check_effects_compatible(काष्ठा ff_effect *e1,
+					   काष्ठा ff_effect *e2)
+अणु
+	वापस e1->type == e2->type &&
 	       (e1->type != FF_PERIODIC ||
-		e1->u.periodic.waveform == e2->u.periodic.waveform);
-}
+		e1->u.periodic.waveक्रमm == e2->u.periodic.waveक्रमm);
+पूर्ण
 
 /*
- * Convert an effect into compatible one
+ * Convert an effect पूर्णांकo compatible one
  */
-static int compat_effect(struct ff_device *ff, struct ff_effect *effect)
-{
-	int magnitude;
+अटल पूर्णांक compat_effect(काष्ठा ff_device *ff, काष्ठा ff_effect *effect)
+अणु
+	पूर्णांक magnitude;
 
-	switch (effect->type) {
-	case FF_RUMBLE:
-		if (!test_bit(FF_PERIODIC, ff->ffbit))
-			return -EINVAL;
+	चयन (effect->type) अणु
+	हाल FF_RUMBLE:
+		अगर (!test_bit(FF_PERIODIC, ff->ffbit))
+			वापस -EINVAL;
 
 		/*
 		 * calculate magnitude of sine wave as average of rumble's
@@ -65,7 +66,7 @@ static int compat_effect(struct ff_device *ff, struct ff_effect *effect)
 			    effect->u.rumble.weak_magnitude / 6;
 
 		effect->type = FF_PERIODIC;
-		effect->u.periodic.waveform = FF_SINE;
+		effect->u.periodic.waveक्रमm = FF_SINE;
 		effect->u.periodic.period = 50;
 		effect->u.periodic.magnitude = max(magnitude, 0x7fff);
 		effect->u.periodic.offset = 0;
@@ -75,84 +76,84 @@ static int compat_effect(struct ff_device *ff, struct ff_effect *effect)
 		effect->u.periodic.envelope.fade_length = 0;
 		effect->u.periodic.envelope.fade_level = 0;
 
-		return 0;
+		वापस 0;
 
-	default:
+	शेष:
 		/* Let driver handle conversion */
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * input_ff_upload() - upload effect into force-feedback device
+ * input_ff_upload() - upload effect पूर्णांकo क्रमce-feedback device
  * @dev: input device
  * @effect: effect to be uploaded
  * @file: owner of the effect
  */
-int input_ff_upload(struct input_dev *dev, struct ff_effect *effect,
-		    struct file *file)
-{
-	struct ff_device *ff = dev->ff;
-	struct ff_effect *old;
-	int ret = 0;
-	int id;
+पूर्णांक input_ff_upload(काष्ठा input_dev *dev, काष्ठा ff_effect *effect,
+		    काष्ठा file *file)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
+	काष्ठा ff_effect *old;
+	पूर्णांक ret = 0;
+	पूर्णांक id;
 
-	if (!test_bit(EV_FF, dev->evbit))
-		return -ENOSYS;
+	अगर (!test_bit(EV_FF, dev->evbit))
+		वापस -ENOSYS;
 
-	if (effect->type < FF_EFFECT_MIN || effect->type > FF_EFFECT_MAX ||
-	    !test_bit(effect->type, dev->ffbit)) {
+	अगर (effect->type < FF_EFFECT_MIN || effect->type > FF_EFFECT_MAX ||
+	    !test_bit(effect->type, dev->ffbit)) अणु
 		dev_dbg(&dev->dev, "invalid or not supported effect type in upload\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (effect->type == FF_PERIODIC &&
-	    (effect->u.periodic.waveform < FF_WAVEFORM_MIN ||
-	     effect->u.periodic.waveform > FF_WAVEFORM_MAX ||
-	     !test_bit(effect->u.periodic.waveform, dev->ffbit))) {
+	अगर (effect->type == FF_PERIODIC &&
+	    (effect->u.periodic.waveक्रमm < FF_WAVEFORM_MIN ||
+	     effect->u.periodic.waveक्रमm > FF_WAVEFORM_MAX ||
+	     !test_bit(effect->u.periodic.waveक्रमm, dev->ffbit))) अणु
 		dev_dbg(&dev->dev, "invalid or not supported wave form in upload\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!test_bit(effect->type, ff->ffbit)) {
+	अगर (!test_bit(effect->type, ff->ffbit)) अणु
 		ret = compat_effect(ff, effect);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	mutex_lock(&ff->mutex);
 
-	if (effect->id == -1) {
-		for (id = 0; id < ff->max_effects; id++)
-			if (!ff->effect_owners[id])
-				break;
+	अगर (effect->id == -1) अणु
+		क्रम (id = 0; id < ff->max_effects; id++)
+			अगर (!ff->effect_owners[id])
+				अवरोध;
 
-		if (id >= ff->max_effects) {
+		अगर (id >= ff->max_effects) अणु
 			ret = -ENOSPC;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		effect->id = id;
-		old = NULL;
+		old = शून्य;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		id = effect->id;
 
 		ret = check_effect_access(ff, id, file);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		old = &ff->effects[id];
 
-		if (!check_effects_compatible(effect, old)) {
+		अगर (!check_effects_compatible(effect, old)) अणु
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = ff->upload(dev, effect, old);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	spin_lock_irq(&dev->event_lock);
 	ff->effects[id] = *effect;
@@ -161,67 +162,67 @@ int input_ff_upload(struct input_dev *dev, struct ff_effect *effect,
 
  out:
 	mutex_unlock(&ff->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_upload);
 
 /*
- * Erases the effect if the requester is also the effect owner. The mutex
- * should already be locked before calling this function.
+ * Erases the effect अगर the requester is also the effect owner. The mutex
+ * should alपढ़ोy be locked beक्रमe calling this function.
  */
-static int erase_effect(struct input_dev *dev, int effect_id,
-			struct file *file)
-{
-	struct ff_device *ff = dev->ff;
-	int error;
+अटल पूर्णांक erase_effect(काष्ठा input_dev *dev, पूर्णांक effect_id,
+			काष्ठा file *file)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
+	पूर्णांक error;
 
 	error = check_effect_access(ff, effect_id, file);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	spin_lock_irq(&dev->event_lock);
 	ff->playback(dev, effect_id, 0);
-	ff->effect_owners[effect_id] = NULL;
+	ff->effect_owners[effect_id] = शून्य;
 	spin_unlock_irq(&dev->event_lock);
 
-	if (ff->erase) {
+	अगर (ff->erase) अणु
 		error = ff->erase(dev, effect_id);
-		if (error) {
+		अगर (error) अणु
 			spin_lock_irq(&dev->event_lock);
 			ff->effect_owners[effect_id] = file;
 			spin_unlock_irq(&dev->event_lock);
 
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * input_ff_erase - erase a force-feedback effect from device
+ * input_ff_erase - erase a क्रमce-feedback effect from device
  * @dev: input device to erase effect from
  * @effect_id: id of the effect to be erased
  * @file: purported owner of the request
  *
- * This function erases a force-feedback effect from specified device.
- * The effect will only be erased if it was uploaded through the same
+ * This function erases a क्रमce-feedback effect from specअगरied device.
+ * The effect will only be erased अगर it was uploaded through the same
  * file handle that is requesting erase.
  */
-int input_ff_erase(struct input_dev *dev, int effect_id, struct file *file)
-{
-	struct ff_device *ff = dev->ff;
-	int ret;
+पूर्णांक input_ff_erase(काष्ठा input_dev *dev, पूर्णांक effect_id, काष्ठा file *file)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
+	पूर्णांक ret;
 
-	if (!test_bit(EV_FF, dev->evbit))
-		return -ENOSYS;
+	अगर (!test_bit(EV_FF, dev->evbit))
+		वापस -ENOSYS;
 
 	mutex_lock(&ff->mutex);
 	ret = erase_effect(dev, effect_id, file);
 	mutex_unlock(&ff->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_erase);
 
 /*
@@ -229,110 +230,110 @@ EXPORT_SYMBOL_GPL(input_ff_erase);
  * @dev: input device to erase effect from
  * @file: purported owner of the effects
  *
- * This function erases all force-feedback effects associated with
- * the given owner from specified device. Note that @file may be %NULL,
- * in which case all effects will be erased.
+ * This function erases all क्रमce-feedback effects associated with
+ * the given owner from specअगरied device. Note that @file may be %शून्य,
+ * in which हाल all effects will be erased.
  */
-int input_ff_flush(struct input_dev *dev, struct file *file)
-{
-	struct ff_device *ff = dev->ff;
-	int i;
+पूर्णांक input_ff_flush(काष्ठा input_dev *dev, काष्ठा file *file)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
+	पूर्णांक i;
 
 	dev_dbg(&dev->dev, "flushing now\n");
 
 	mutex_lock(&ff->mutex);
 
-	for (i = 0; i < ff->max_effects; i++)
+	क्रम (i = 0; i < ff->max_effects; i++)
 		erase_effect(dev, i, file);
 
 	mutex_unlock(&ff->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_flush);
 
 /**
- * input_ff_event() - generic handler for force-feedback events
+ * input_ff_event() - generic handler क्रम क्रमce-feedback events
  * @dev: input device to send the effect to
  * @type: event type (anything but EV_FF is ignored)
  * @code: event code
  * @value: event value
  */
-int input_ff_event(struct input_dev *dev, unsigned int type,
-		   unsigned int code, int value)
-{
-	struct ff_device *ff = dev->ff;
+पूर्णांक input_ff_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
+		   अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
 
-	if (type != EV_FF)
-		return 0;
+	अगर (type != EV_FF)
+		वापस 0;
 
-	switch (code) {
-	case FF_GAIN:
-		if (!test_bit(FF_GAIN, dev->ffbit) || value > 0xffffU)
-			break;
+	चयन (code) अणु
+	हाल FF_GAIN:
+		अगर (!test_bit(FF_GAIN, dev->ffbit) || value > 0xffffU)
+			अवरोध;
 
 		ff->set_gain(dev, value);
-		break;
+		अवरोध;
 
-	case FF_AUTOCENTER:
-		if (!test_bit(FF_AUTOCENTER, dev->ffbit) || value > 0xffffU)
-			break;
+	हाल FF_AUTOCENTER:
+		अगर (!test_bit(FF_AUTOCENTER, dev->ffbit) || value > 0xffffU)
+			अवरोध;
 
-		ff->set_autocenter(dev, value);
-		break;
+		ff->set_स्वतःcenter(dev, value);
+		अवरोध;
 
-	default:
-		if (check_effect_access(ff, code, NULL) == 0)
+	शेष:
+		अगर (check_effect_access(ff, code, शून्य) == 0)
 			ff->playback(dev, code, value);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_event);
 
 /**
- * input_ff_create() - create force-feedback device
- * @dev: input device supporting force-feedback
+ * input_ff_create() - create क्रमce-feedback device
+ * @dev: input device supporting क्रमce-feedback
  * @max_effects: maximum number of effects supported by the device
  *
- * This function allocates all necessary memory for a force feedback
- * portion of an input device and installs all default handlers.
- * @dev->ffbit should be already set up before calling this function.
+ * This function allocates all necessary memory क्रम a क्रमce feedback
+ * portion of an input device and installs all शेष handlers.
+ * @dev->ffbit should be alपढ़ोy set up beक्रमe calling this function.
  * Once ff device is created you need to setup its upload, erase,
- * playback and other handlers before registering input device
+ * playback and other handlers beक्रमe रेजिस्टरing input device
  */
-int input_ff_create(struct input_dev *dev, unsigned int max_effects)
-{
-	struct ff_device *ff;
-	size_t ff_dev_size;
-	int i;
+पूर्णांक input_ff_create(काष्ठा input_dev *dev, अचिन्हित पूर्णांक max_effects)
+अणु
+	काष्ठा ff_device *ff;
+	माप_प्रकार ff_dev_size;
+	पूर्णांक i;
 
-	if (!max_effects) {
+	अगर (!max_effects) अणु
 		dev_err(&dev->dev, "cannot allocate device without any effects\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (max_effects > FF_MAX_EFFECTS) {
+	अगर (max_effects > FF_MAX_EFFECTS) अणु
 		dev_err(&dev->dev, "cannot allocate more than FF_MAX_EFFECTS effects\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ff_dev_size = sizeof(struct ff_device) +
-				max_effects * sizeof(struct file *);
-	if (ff_dev_size < max_effects) /* overflow */
-		return -EINVAL;
+	ff_dev_size = माप(काष्ठा ff_device) +
+				max_effects * माप(काष्ठा file *);
+	अगर (ff_dev_size < max_effects) /* overflow */
+		वापस -EINVAL;
 
 	ff = kzalloc(ff_dev_size, GFP_KERNEL);
-	if (!ff)
-		return -ENOMEM;
+	अगर (!ff)
+		वापस -ENOMEM;
 
-	ff->effects = kcalloc(max_effects, sizeof(struct ff_effect),
+	ff->effects = kसुस्मृति(max_effects, माप(काष्ठा ff_effect),
 			      GFP_KERNEL);
-	if (!ff->effects) {
-		kfree(ff);
-		return -ENOMEM;
-	}
+	अगर (!ff->effects) अणु
+		kमुक्त(ff);
+		वापस -ENOMEM;
+	पूर्ण
 
 	ff->max_effects = max_effects;
 	mutex_init(&ff->mutex);
@@ -342,38 +343,38 @@ int input_ff_create(struct input_dev *dev, unsigned int max_effects)
 	dev->event = input_ff_event;
 	__set_bit(EV_FF, dev->evbit);
 
-	/* Copy "true" bits into ff device bitmap */
-	for_each_set_bit(i, dev->ffbit, FF_CNT)
+	/* Copy "true" bits पूर्णांकo ff device biपंचांगap */
+	क्रम_each_set_bit(i, dev->ffbit, FF_CNT)
 		__set_bit(i, ff->ffbit);
 
 	/* we can emulate RUMBLE with periodic effects */
-	if (test_bit(FF_PERIODIC, ff->ffbit))
+	अगर (test_bit(FF_PERIODIC, ff->ffbit))
 		__set_bit(FF_RUMBLE, dev->ffbit);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_create);
 
 /**
- * input_ff_destroy() - frees force feedback portion of input device
- * @dev: input device supporting force feedback
+ * input_ff_destroy() - मुक्तs क्रमce feedback portion of input device
+ * @dev: input device supporting क्रमce feedback
  *
  * This function is only needed in error path as input core will
- * automatically free force feedback structures when device is
+ * स्वतःmatically मुक्त क्रमce feedback काष्ठाures when device is
  * destroyed.
  */
-void input_ff_destroy(struct input_dev *dev)
-{
-	struct ff_device *ff = dev->ff;
+व्योम input_ff_destroy(काष्ठा input_dev *dev)
+अणु
+	काष्ठा ff_device *ff = dev->ff;
 
 	__clear_bit(EV_FF, dev->evbit);
-	if (ff) {
-		if (ff->destroy)
+	अगर (ff) अणु
+		अगर (ff->destroy)
 			ff->destroy(ff);
-		kfree(ff->private);
-		kfree(ff->effects);
-		kfree(ff);
-		dev->ff = NULL;
-	}
-}
+		kमुक्त(ff->निजी);
+		kमुक्त(ff->effects);
+		kमुक्त(ff);
+		dev->ff = शून्य;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(input_ff_destroy);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,38 +22,38 @@
  *
  * Authors: Lyude Paul
  */
-#include <core/device.h>
+#समावेश <core/device.h>
 
-#include "priv.h"
+#समावेश "priv.h"
 
-#define pack_for_each_init(init, pack, head)                          \
-	for (pack = head; pack && pack->init; pack++)                 \
-		  for (init = pack->init; init && init->count; init++)
-void
-gf100_clkgate_init(struct nvkm_therm *therm,
-		   const struct nvkm_therm_clkgate_pack *p)
-{
-	struct nvkm_device *device = therm->subdev.device;
-	const struct nvkm_therm_clkgate_pack *pack;
-	const struct nvkm_therm_clkgate_init *init;
+#घोषणा pack_क्रम_each_init(init, pack, head)                          \
+	क्रम (pack = head; pack && pack->init; pack++)                 \
+		  क्रम (init = pack->init; init && init->count; init++)
+व्योम
+gf100_clkgate_init(काष्ठा nvkm_therm *therm,
+		   स्थिर काष्ठा nvkm_therm_clkgate_pack *p)
+अणु
+	काष्ठा nvkm_device *device = therm->subdev.device;
+	स्थिर काष्ठा nvkm_therm_clkgate_pack *pack;
+	स्थिर काष्ठा nvkm_therm_clkgate_init *init;
 	u32 next, addr;
 
-	pack_for_each_init(init, pack, p) {
+	pack_क्रम_each_init(init, pack, p) अणु
 		next = init->addr + init->count * 8;
 		addr = init->addr;
 
 		nvkm_trace(&therm->subdev, "{ 0x%06x, %d, 0x%08x }\n",
 			   init->addr, init->count, init->data);
-		while (addr < next) {
+		जबतक (addr < next) अणु
 			nvkm_trace(&therm->subdev, "\t0x%06x = 0x%08x\n",
 				   addr, init->data);
 			nvkm_wr32(device, addr, init->data);
 			addr += 8;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * TODO: Fermi clockgating isn't understood fully yet, so we don't specify any
- * clockgate functions to use
+ * TODO: Fermi घड़ीgating isn't understood fully yet, so we don't specअगरy any
+ * घड़ीgate functions to use
  */

@@ -1,174 +1,175 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
  */
-#ifndef __A5XX_GPU_H__
-#define __A5XX_GPU_H__
+#अगर_अघोषित __A5XX_GPU_H__
+#घोषणा __A5XX_GPU_H__
 
-#include "adreno_gpu.h"
+#समावेश "adreno_gpu.h"
 
-/* Bringing over the hack from the previous targets */
-#undef ROP_COPY
-#undef ROP_XOR
+/* Bringing over the hack from the previous tarमाला_लो */
+#अघोषित ROP_COPY
+#अघोषित ROP_XOR
 
-#include "a5xx.xml.h"
+#समावेश "a5xx.xml.h"
 
-struct a5xx_gpu {
-	struct adreno_gpu base;
+काष्ठा a5xx_gpu अणु
+	काष्ठा adreno_gpu base;
 
-	struct drm_gem_object *pm4_bo;
-	uint64_t pm4_iova;
+	काष्ठा drm_gem_object *pm4_bo;
+	uपूर्णांक64_t pm4_iova;
 
-	struct drm_gem_object *pfp_bo;
-	uint64_t pfp_iova;
+	काष्ठा drm_gem_object *pfp_bo;
+	uपूर्णांक64_t pfp_iova;
 
-	struct drm_gem_object *gpmu_bo;
-	uint64_t gpmu_iova;
-	uint32_t gpmu_dwords;
+	काष्ठा drm_gem_object *gpmu_bo;
+	uपूर्णांक64_t gpmu_iova;
+	uपूर्णांक32_t gpmu_dwords;
 
-	uint32_t lm_leakage;
+	uपूर्णांक32_t lm_leakage;
 
-	struct msm_ringbuffer *cur_ring;
-	struct msm_ringbuffer *next_ring;
+	काष्ठा msm_ringbuffer *cur_ring;
+	काष्ठा msm_ringbuffer *next_ring;
 
-	struct drm_gem_object *preempt_bo[MSM_GPU_MAX_RINGS];
-	struct drm_gem_object *preempt_counters_bo[MSM_GPU_MAX_RINGS];
-	struct a5xx_preempt_record *preempt[MSM_GPU_MAX_RINGS];
-	uint64_t preempt_iova[MSM_GPU_MAX_RINGS];
+	काष्ठा drm_gem_object *preempt_bo[MSM_GPU_MAX_RINGS];
+	काष्ठा drm_gem_object *preempt_counters_bo[MSM_GPU_MAX_RINGS];
+	काष्ठा a5xx_preempt_record *preempt[MSM_GPU_MAX_RINGS];
+	uपूर्णांक64_t preempt_iova[MSM_GPU_MAX_RINGS];
 
 	atomic_t preempt_state;
-	struct timer_list preempt_timer;
+	काष्ठा समयr_list preempt_समयr;
 
-	struct drm_gem_object *shadow_bo;
-	uint64_t shadow_iova;
-	uint32_t *shadow;
+	काष्ठा drm_gem_object *shaकरोw_bo;
+	uपूर्णांक64_t shaकरोw_iova;
+	uपूर्णांक32_t *shaकरोw;
 
-	/* True if the microcode supports the WHERE_AM_I opcode */
+	/* True अगर the microcode supports the WHERE_AM_I opcode */
 	bool has_whereami;
-};
+पूर्ण;
 
-#define to_a5xx_gpu(x) container_of(x, struct a5xx_gpu, base)
+#घोषणा to_a5xx_gpu(x) container_of(x, काष्ठा a5xx_gpu, base)
 
-#ifdef CONFIG_DEBUG_FS
-void a5xx_debugfs_init(struct msm_gpu *gpu, struct drm_minor *minor);
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम a5xx_debugfs_init(काष्ठा msm_gpu *gpu, काष्ठा drm_minor *minor);
+#पूर्ण_अगर
 
 /*
- * In order to do lockless preemption we use a simple state machine to progress
+ * In order to करो lockless preemption we use a simple state machine to progress
  * through the process.
  *
  * PREEMPT_NONE - no preemption in progress.  Next state START.
- * PREEMPT_START - The trigger is evaulating if preemption is possible. Next
+ * PREEMPT_START - The trigger is evaulating अगर preemption is possible. Next
  * states: TRIGGERED, NONE
- * PREEMPT_ABORT - An intermediate state before moving back to NONE. Next
+ * PREEMPT_ABORT - An पूर्णांकermediate state beक्रमe moving back to NONE. Next
  * state: NONE.
  * PREEMPT_TRIGGERED: A preemption has been executed on the hardware. Next
  * states: FAULTED, PENDING
- * PREEMPT_FAULTED: A preemption timed out (never completed). This will trigger
+ * PREEMPT_FAULTED: A preemption समयd out (never completed). This will trigger
  * recovery.  Next state: N/A
- * PREEMPT_PENDING: Preemption complete interrupt fired - the callback is
+ * PREEMPT_PENDING: Preemption complete पूर्णांकerrupt fired - the callback is
  * checking the success of the operation. Next state: FAULTED, NONE.
  */
 
-enum preempt_state {
+क्रमागत preempt_state अणु
 	PREEMPT_NONE = 0,
 	PREEMPT_START,
 	PREEMPT_ABORT,
 	PREEMPT_TRIGGERED,
 	PREEMPT_FAULTED,
 	PREEMPT_PENDING,
-};
+पूर्ण;
 
 /*
- * struct a5xx_preempt_record is a shared buffer between the microcode and the
- * CPU to store the state for preemption. The record itself is much larger
- * (64k) but most of that is used by the CP for storage.
+ * काष्ठा a5xx_preempt_record is a shared buffer between the microcode and the
+ * CPU to store the state क्रम preemption. The record itself is much larger
+ * (64k) but most of that is used by the CP क्रम storage.
  *
- * There is a preemption record assigned per ringbuffer. When the CPU triggers a
- * preemption, it fills out the record with the useful information (wptr, ring
- * base, etc) and the microcode uses that information to set up the CP following
- * the preemption.  When a ring is switched out, the CP will save the ringbuffer
+ * There is a preemption record asचिन्हित per ringbuffer. When the CPU triggers a
+ * preemption, it fills out the record with the useful inक्रमmation (wptr, ring
+ * base, etc) and the microcode uses that inक्रमmation to set up the CP following
+ * the preemption.  When a ring is चयनed out, the CP will save the ringbuffer
  * state back to the record. In this way, once the records are properly set up
- * the CPU can quickly switch back and forth between ringbuffers by only
- * updating a few registers (often only the wptr).
+ * the CPU can quickly चयन back and क्रमth between ringbuffers by only
+ * updating a few रेजिस्टरs (often only the wptr).
  *
- * These are the CPU aware registers in the record:
+ * These are the CPU aware रेजिस्टरs in the record:
  * @magic: Must always be 0x27C4BAFC
  * @info: Type of the record - written 0 by the CPU, updated by the CP
- * @data: Data field from SET_RENDER_MODE or a checkpoint. Written and used by
+ * @data: Data field from SET_RENDER_MODE or a checkpoपूर्णांक. Written and used by
  * the CP
  * @cntl: Value of RB_CNTL written by CPU, save/restored by CP
  * @rptr: Value of RB_RPTR written by CPU, save/restored by CP
  * @wptr: Value of RB_WPTR written by CPU, save/restored by CP
  * @rptr_addr: Value of RB_RPTR_ADDR written by CPU, save/restored by CP
  * @rbase: Value of RB_BASE written by CPU, save/restored by CP
- * @counter: GPU address of the storage area for the performance counters
+ * @counter: GPU address of the storage area क्रम the perक्रमmance counters
  */
-struct a5xx_preempt_record {
-	uint32_t magic;
-	uint32_t info;
-	uint32_t data;
-	uint32_t cntl;
-	uint32_t rptr;
-	uint32_t wptr;
-	uint64_t rptr_addr;
-	uint64_t rbase;
-	uint64_t counter;
-};
+काष्ठा a5xx_preempt_record अणु
+	uपूर्णांक32_t magic;
+	uपूर्णांक32_t info;
+	uपूर्णांक32_t data;
+	uपूर्णांक32_t cntl;
+	uपूर्णांक32_t rptr;
+	uपूर्णांक32_t wptr;
+	uपूर्णांक64_t rptr_addr;
+	uपूर्णांक64_t rbase;
+	uपूर्णांक64_t counter;
+पूर्ण;
 
-/* Magic identifier for the preemption record */
-#define A5XX_PREEMPT_RECORD_MAGIC 0x27C4BAFCUL
+/* Magic identअगरier क्रम the preemption record */
+#घोषणा A5XX_PREEMPT_RECORD_MAGIC 0x27C4BAFCUL
 
 /*
- * Even though the structure above is only a few bytes, we need a full 64k to
+ * Even though the काष्ठाure above is only a few bytes, we need a full 64k to
  * store the entire preemption record from the CP
  */
-#define A5XX_PREEMPT_RECORD_SIZE (64 * 1024)
+#घोषणा A5XX_PREEMPT_RECORD_SIZE (64 * 1024)
 
 /*
- * The preemption counter block is a storage area for the value of the
- * preemption counters that are saved immediately before context switch. We
- * append it on to the end of the allocation for the preemption record.
+ * The preemption counter block is a storage area क्रम the value of the
+ * preemption counters that are saved immediately beक्रमe context चयन. We
+ * append it on to the end of the allocation क्रम the preemption record.
  */
-#define A5XX_PREEMPT_COUNTER_SIZE (16 * 4)
+#घोषणा A5XX_PREEMPT_COUNTER_SIZE (16 * 4)
 
 
-int a5xx_power_init(struct msm_gpu *gpu);
-void a5xx_gpmu_ucode_init(struct msm_gpu *gpu);
+पूर्णांक a5xx_घातer_init(काष्ठा msm_gpu *gpu);
+व्योम a5xx_gpmu_ucode_init(काष्ठा msm_gpu *gpu);
 
-static inline int spin_usecs(struct msm_gpu *gpu, uint32_t usecs,
-		uint32_t reg, uint32_t mask, uint32_t value)
-{
-	while (usecs--) {
+अटल अंतरभूत पूर्णांक spin_usecs(काष्ठा msm_gpu *gpu, uपूर्णांक32_t usecs,
+		uपूर्णांक32_t reg, uपूर्णांक32_t mask, uपूर्णांक32_t value)
+अणु
+	जबतक (usecs--) अणु
 		udelay(1);
-		if ((gpu_read(gpu, reg) & mask) == value)
-			return 0;
+		अगर ((gpu_पढ़ो(gpu, reg) & mask) == value)
+			वापस 0;
 		cpu_relax();
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-#define shadowptr(a5xx_gpu, ring) ((a5xx_gpu)->shadow_iova + \
-		((ring)->id * sizeof(uint32_t)))
+#घोषणा shaकरोwptr(a5xx_gpu, ring) ((a5xx_gpu)->shaकरोw_iova + \
+		((ring)->id * माप(uपूर्णांक32_t)))
 
-bool a5xx_idle(struct msm_gpu *gpu, struct msm_ringbuffer *ring);
-void a5xx_set_hwcg(struct msm_gpu *gpu, bool state);
+bool a5xx_idle(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring);
+व्योम a5xx_set_hwcg(काष्ठा msm_gpu *gpu, bool state);
 
-void a5xx_preempt_init(struct msm_gpu *gpu);
-void a5xx_preempt_hw_init(struct msm_gpu *gpu);
-void a5xx_preempt_trigger(struct msm_gpu *gpu);
-void a5xx_preempt_irq(struct msm_gpu *gpu);
-void a5xx_preempt_fini(struct msm_gpu *gpu);
+व्योम a5xx_preempt_init(काष्ठा msm_gpu *gpu);
+व्योम a5xx_preempt_hw_init(काष्ठा msm_gpu *gpu);
+व्योम a5xx_preempt_trigger(काष्ठा msm_gpu *gpu);
+व्योम a5xx_preempt_irq(काष्ठा msm_gpu *gpu);
+व्योम a5xx_preempt_fini(काष्ठा msm_gpu *gpu);
 
-void a5xx_flush(struct msm_gpu *gpu, struct msm_ringbuffer *ring, bool sync);
+व्योम a5xx_flush(काष्ठा msm_gpu *gpu, काष्ठा msm_ringbuffer *ring, bool sync);
 
-/* Return true if we are in a preempt state */
-static inline bool a5xx_in_preempt(struct a5xx_gpu *a5xx_gpu)
-{
-	int preempt_state = atomic_read(&a5xx_gpu->preempt_state);
+/* Return true अगर we are in a preempt state */
+अटल अंतरभूत bool a5xx_in_preempt(काष्ठा a5xx_gpu *a5xx_gpu)
+अणु
+	पूर्णांक preempt_state = atomic_पढ़ो(&a5xx_gpu->preempt_state);
 
-	return !(preempt_state == PREEMPT_NONE ||
+	वापस !(preempt_state == PREEMPT_NONE ||
 			preempt_state == PREEMPT_ABORT);
-}
+पूर्ण
 
-#endif /* __A5XX_GPU_H__ */
+#पूर्ण_अगर /* __A5XX_GPU_H__ */

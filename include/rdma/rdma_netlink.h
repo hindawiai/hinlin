@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _RDMA_NETLINK_H
-#define _RDMA_NETLINK_H
+#अगर_अघोषित _RDMA_NETLINK_H
+#घोषणा _RDMA_NETLINK_H
 
-#include <linux/netlink.h>
-#include <uapi/rdma/rdma_netlink.h>
+#समावेश <linux/netlink.h>
+#समावेश <uapi/rdma/rdma_netlink.h>
 
-enum {
+क्रमागत अणु
 	RDMA_NLDEV_ATTR_EMPTY_STRING = 1,
 	RDMA_NLDEV_ATTR_ENTRY_STRLEN = 16,
 	RDMA_NLDEV_ATTR_CHARDEV_TYPE_SIZE = 32,
-};
+पूर्ण;
 
-struct rdma_nl_cbs {
-	int (*doit)(struct sk_buff *skb, struct nlmsghdr *nlh,
-		    struct netlink_ext_ack *extack);
-	int (*dump)(struct sk_buff *skb, struct netlink_callback *nlcb);
+काष्ठा rdma_nl_cbs अणु
+	पूर्णांक (*करोit)(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		    काष्ठा netlink_ext_ack *extack);
+	पूर्णांक (*dump)(काष्ठा sk_buff *skb, काष्ठा netlink_callback *nlcb);
 	u8 flags;
-};
+पूर्ण;
 
-enum rdma_nl_flags {
+क्रमागत rdma_nl_flags अणु
 	/* Require CAP_NET_ADMIN */
 	RDMA_NL_ADMIN_PERM	= 1 << 0,
-};
+पूर्ण;
 
-/* Define this module as providing netlink services for NETLINK_RDMA, with
+/* Define this module as providing netlink services क्रम NETLINK_RDMA, with
  * index _index.  Since the client indexes were setup in a uapi header as an
- * enum and we do no want to change that, the user must supply the expanded
- * constant as well and the compiler checks they are the same.
+ * क्रमागत and we करो no want to change that, the user must supply the expanded
+ * स्थिरant as well and the compiler checks they are the same.
  */
-#define MODULE_ALIAS_RDMA_NETLINK(_index, _val)                                \
-	static inline void __chk_##_index(void)                                \
-	{                                                                      \
+#घोषणा MODULE_ALIAS_RDMA_NETLINK(_index, _val)                                \
+	अटल अंतरभूत व्योम __chk_##_index(व्योम)                                \
+	अणु                                                                      \
 		BUILD_BUG_ON(_index != _val);                                  \
-	}                                                                      \
-	MODULE_ALIAS("rdma-netlink-subsys-" __stringify(_val))
+	पूर्ण                                                                      \
+	MODULE_ALIAS("rdma-netlink-subsys-" __stringअगरy(_val))
 
 /**
  * Register client in RDMA netlink.
  * @index: Index of the added client
- * @cb_table: A table for op->callback
+ * @cb_table: A table क्रम op->callback
  */
-void rdma_nl_register(unsigned int index,
-		      const struct rdma_nl_cbs cb_table[]);
+व्योम rdma_nl_रेजिस्टर(अचिन्हित पूर्णांक index,
+		      स्थिर काष्ठा rdma_nl_cbs cb_table[]);
 
 /**
  * Remove a client from IB netlink.
- * @index: Index of the removed IB client.
+ * @index: Index of the हटाओd IB client.
  */
-void rdma_nl_unregister(unsigned int index);
+व्योम rdma_nl_unरेजिस्टर(अचिन्हित पूर्णांक index);
 
 /**
  * Put a new message in a supplied skb.
  * @skb: The netlink skb.
- * @nlh: Pointer to put the header of the new netlink message.
+ * @nlh: Poपूर्णांकer to put the header of the new netlink message.
  * @seq: The message sequence number.
  * @len: The requested message length to allocate.
  * @client: Calling IB netlink client.
  * @op: message content op.
- * Returns the allocated buffer on success and NULL on failure.
+ * Returns the allocated buffer on success and शून्य on failure.
  */
-void *ibnl_put_msg(struct sk_buff *skb, struct nlmsghdr **nlh, int seq,
-		   int len, int client, int op, int flags);
+व्योम *ibnl_put_msg(काष्ठा sk_buff *skb, काष्ठा nlmsghdr **nlh, पूर्णांक seq,
+		   पूर्णांक len, पूर्णांक client, पूर्णांक op, पूर्णांक flags);
 /**
  * Put a new attribute in a supplied skb.
  * @skb: The netlink skb.
@@ -71,26 +72,26 @@ void *ibnl_put_msg(struct sk_buff *skb, struct nlmsghdr **nlh, int seq,
  * @type: The attribute type.
  * Returns the 0 and a negative error code on failure.
  */
-int ibnl_put_attr(struct sk_buff *skb, struct nlmsghdr *nlh,
-		  int len, void *data, int type);
+पूर्णांक ibnl_put_attr(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+		  पूर्णांक len, व्योम *data, पूर्णांक type);
 
 /**
- * Send the supplied skb to a specific userspace PID.
+ * Send the supplied skb to a specअगरic userspace PID.
  * @net: Net namespace in which to send the skb
  * @skb: The netlink skb
  * @pid: Userspace netlink process ID
  * Returns 0 on success or a negative error code.
  */
-int rdma_nl_unicast(struct net *net, struct sk_buff *skb, u32 pid);
+पूर्णांक rdma_nl_unicast(काष्ठा net *net, काष्ठा sk_buff *skb, u32 pid);
 
 /**
- * Send, with wait/1 retry, the supplied skb to a specific userspace PID.
+ * Send, with रुको/1 retry, the supplied skb to a specअगरic userspace PID.
  * @net: Net namespace in which to send the skb
  * @skb: The netlink skb
  * @pid: Userspace netlink process ID
  * Returns 0 on success or a negative error code.
  */
-int rdma_nl_unicast_wait(struct net *net, struct sk_buff *skb, __u32 pid);
+पूर्णांक rdma_nl_unicast_रुको(काष्ठा net *net, काष्ठा sk_buff *skb, __u32 pid);
 
 /**
  * Send the supplied skb to a netlink group.
@@ -100,26 +101,26 @@ int rdma_nl_unicast_wait(struct net *net, struct sk_buff *skb, __u32 pid);
  * @flags: allocation flags
  * Returns 0 on success or a negative error code.
  */
-int rdma_nl_multicast(struct net *net, struct sk_buff *skb,
-		      unsigned int group, gfp_t flags);
+पूर्णांक rdma_nl_multicast(काष्ठा net *net, काष्ठा sk_buff *skb,
+		      अचिन्हित पूर्णांक group, gfp_t flags);
 
 /**
- * Check if there are any listeners to the netlink group
+ * Check अगर there are any listeners to the netlink group
  * @group: the netlink group ID
- * Returns true on success or false if no listeners.
+ * Returns true on success or false अगर no listeners.
  */
-bool rdma_nl_chk_listeners(unsigned int group);
+bool rdma_nl_chk_listeners(अचिन्हित पूर्णांक group);
 
-struct rdma_link_ops {
-	struct list_head list;
-	const char *type;
-	int (*newlink)(const char *ibdev_name, struct net_device *ndev);
-};
+काष्ठा rdma_link_ops अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *type;
+	पूर्णांक (*newlink)(स्थिर अक्षर *ibdev_name, काष्ठा net_device *ndev);
+पूर्ण;
 
-void rdma_link_register(struct rdma_link_ops *ops);
-void rdma_link_unregister(struct rdma_link_ops *ops);
+व्योम rdma_link_रेजिस्टर(काष्ठा rdma_link_ops *ops);
+व्योम rdma_link_unरेजिस्टर(काष्ठा rdma_link_ops *ops);
 
-#define MODULE_ALIAS_RDMA_LINK(type) MODULE_ALIAS("rdma-link-" type)
-#define MODULE_ALIAS_RDMA_CLIENT(type) MODULE_ALIAS("rdma-client-" type)
+#घोषणा MODULE_ALIAS_RDMA_LINK(type) MODULE_ALIAS("rdma-link-" type)
+#घोषणा MODULE_ALIAS_RDMA_CLIENT(type) MODULE_ALIAS("rdma-client-" type)
 
-#endif /* _RDMA_NETLINK_H */
+#पूर्ण_अगर /* _RDMA_NETLINK_H */

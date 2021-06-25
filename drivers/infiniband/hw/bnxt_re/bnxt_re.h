@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Broadcom NetXtreme-E RoCE driver.
  *
@@ -7,25 +8,25 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -37,141 +38,141 @@
  *
  */
 
-#ifndef __BNXT_RE_H__
-#define __BNXT_RE_H__
-#define ROCE_DRV_MODULE_NAME		"bnxt_re"
+#अगर_अघोषित __BNXT_RE_H__
+#घोषणा __BNXT_RE_H__
+#घोषणा ROCE_DRV_MODULE_NAME		"bnxt_re"
 
-#define BNXT_RE_DESC	"Broadcom NetXtreme-C/E RoCE Driver"
-#define BNXT_RE_PAGE_SHIFT_4K		(12)
-#define BNXT_RE_PAGE_SHIFT_8K		(13)
-#define BNXT_RE_PAGE_SHIFT_64K		(16)
-#define BNXT_RE_PAGE_SHIFT_2M		(21)
-#define BNXT_RE_PAGE_SHIFT_8M		(23)
-#define BNXT_RE_PAGE_SHIFT_1G		(30)
+#घोषणा BNXT_RE_DESC	"Broadcom NetXtreme-C/E RoCE Driver"
+#घोषणा BNXT_RE_PAGE_SHIFT_4K		(12)
+#घोषणा BNXT_RE_PAGE_SHIFT_8K		(13)
+#घोषणा BNXT_RE_PAGE_SHIFT_64K		(16)
+#घोषणा BNXT_RE_PAGE_SHIFT_2M		(21)
+#घोषणा BNXT_RE_PAGE_SHIFT_8M		(23)
+#घोषणा BNXT_RE_PAGE_SHIFT_1G		(30)
 
-#define BNXT_RE_PAGE_SIZE_4K		BIT(BNXT_RE_PAGE_SHIFT_4K)
-#define BNXT_RE_PAGE_SIZE_8K		BIT(BNXT_RE_PAGE_SHIFT_8K)
-#define BNXT_RE_PAGE_SIZE_64K		BIT(BNXT_RE_PAGE_SHIFT_64K)
-#define BNXT_RE_PAGE_SIZE_2M		BIT(BNXT_RE_PAGE_SHIFT_2M)
-#define BNXT_RE_PAGE_SIZE_8M		BIT(BNXT_RE_PAGE_SHIFT_8M)
-#define BNXT_RE_PAGE_SIZE_1G		BIT(BNXT_RE_PAGE_SHIFT_1G)
+#घोषणा BNXT_RE_PAGE_SIZE_4K		BIT(BNXT_RE_PAGE_SHIFT_4K)
+#घोषणा BNXT_RE_PAGE_SIZE_8K		BIT(BNXT_RE_PAGE_SHIFT_8K)
+#घोषणा BNXT_RE_PAGE_SIZE_64K		BIT(BNXT_RE_PAGE_SHIFT_64K)
+#घोषणा BNXT_RE_PAGE_SIZE_2M		BIT(BNXT_RE_PAGE_SHIFT_2M)
+#घोषणा BNXT_RE_PAGE_SIZE_8M		BIT(BNXT_RE_PAGE_SHIFT_8M)
+#घोषणा BNXT_RE_PAGE_SIZE_1G		BIT(BNXT_RE_PAGE_SHIFT_1G)
 
-#define BNXT_RE_MAX_MR_SIZE_LOW		BIT_ULL(BNXT_RE_PAGE_SHIFT_1G)
-#define BNXT_RE_MAX_MR_SIZE_HIGH	BIT_ULL(39)
-#define BNXT_RE_MAX_MR_SIZE		BNXT_RE_MAX_MR_SIZE_HIGH
+#घोषणा BNXT_RE_MAX_MR_SIZE_LOW		BIT_ULL(BNXT_RE_PAGE_SHIFT_1G)
+#घोषणा BNXT_RE_MAX_MR_SIZE_HIGH	BIT_ULL(39)
+#घोषणा BNXT_RE_MAX_MR_SIZE		BNXT_RE_MAX_MR_SIZE_HIGH
 
-#define BNXT_RE_MAX_QPC_COUNT		(64 * 1024)
-#define BNXT_RE_MAX_MRW_COUNT		(64 * 1024)
-#define BNXT_RE_MAX_SRQC_COUNT		(64 * 1024)
-#define BNXT_RE_MAX_CQ_COUNT		(64 * 1024)
-#define BNXT_RE_MAX_MRW_COUNT_64K	(64 * 1024)
-#define BNXT_RE_MAX_MRW_COUNT_256K	(256 * 1024)
+#घोषणा BNXT_RE_MAX_QPC_COUNT		(64 * 1024)
+#घोषणा BNXT_RE_MAX_MRW_COUNT		(64 * 1024)
+#घोषणा BNXT_RE_MAX_SRQC_COUNT		(64 * 1024)
+#घोषणा BNXT_RE_MAX_CQ_COUNT		(64 * 1024)
+#घोषणा BNXT_RE_MAX_MRW_COUNT_64K	(64 * 1024)
+#घोषणा BNXT_RE_MAX_MRW_COUNT_256K	(256 * 1024)
 
-/* Number of MRs to reserve for PF, leaving remainder for VFs */
-#define BNXT_RE_RESVD_MR_FOR_PF         (32 * 1024)
-#define BNXT_RE_MAX_GID_PER_VF          128
+/* Number of MRs to reserve क्रम PF, leaving reमुख्यder क्रम VFs */
+#घोषणा BNXT_RE_RESVD_MR_FOR_PF         (32 * 1024)
+#घोषणा BNXT_RE_MAX_GID_PER_VF          128
 
 /*
- * Percentage of resources of each type reserved for PF.
- * Remaining resources are divided equally among VFs.
+ * Percentage of resources of each type reserved क्रम PF.
+ * Reमुख्यing resources are भागided equally among VFs.
  * [0, 100]
  */
-#define BNXT_RE_PCT_RSVD_FOR_PF         50
+#घोषणा BNXT_RE_PCT_RSVD_FOR_PF         50
 
-#define BNXT_RE_UD_QP_HW_STALL		0x400000
+#घोषणा BNXT_RE_UD_QP_HW_STALL		0x400000
 
-#define BNXT_RE_RQ_WQE_THRESHOLD	32
+#घोषणा BNXT_RE_RQ_WQE_THRESHOLD	32
 
 /*
- * Setting the default ack delay value to 16, which means
- * the default timeout is approx. 260ms(4 usec * 2 ^(timeout))
+ * Setting the शेष ack delay value to 16, which means
+ * the शेष समयout is approx. 260ms(4 usec * 2 ^(समयout))
  */
 
-#define BNXT_RE_DEFAULT_ACK_DELAY	16
+#घोषणा BNXT_RE_DEFAULT_ACK_DELAY	16
 
-struct bnxt_re_ring_attr {
+काष्ठा bnxt_re_ring_attr अणु
 	dma_addr_t	*dma_arr;
-	int		pages;
-	int		type;
+	पूर्णांक		pages;
+	पूर्णांक		type;
 	u32		depth;
 	u32		lrid; /* Logical ring id */
 	u8		mode;
-};
+पूर्ण;
 
-struct bnxt_re_work {
-	struct work_struct	work;
-	unsigned long		event;
-	struct bnxt_re_dev      *rdev;
-	struct net_device	*vlan_dev;
-};
+काष्ठा bnxt_re_work अणु
+	काष्ठा work_काष्ठा	work;
+	अचिन्हित दीर्घ		event;
+	काष्ठा bnxt_re_dev      *rdev;
+	काष्ठा net_device	*vlan_dev;
+पूर्ण;
 
-struct bnxt_re_sqp_entries {
-	struct bnxt_qplib_sge sge;
+काष्ठा bnxt_re_sqp_entries अणु
+	काष्ठा bnxt_qplib_sge sge;
 	u64 wrid;
 	/* For storing the actual qp1 cqe */
-	struct bnxt_qplib_cqe cqe;
-	struct bnxt_re_qp *qp1_qp;
-};
+	काष्ठा bnxt_qplib_cqe cqe;
+	काष्ठा bnxt_re_qp *qp1_qp;
+पूर्ण;
 
-#define BNXT_RE_MAX_GSI_SQP_ENTRIES	1024
-struct bnxt_re_gsi_context {
-	struct	bnxt_re_qp *gsi_qp;
-	struct	bnxt_re_qp *gsi_sqp;
-	struct	bnxt_re_ah *gsi_sah;
-	struct	bnxt_re_sqp_entries *sqp_tbl;
-};
+#घोषणा BNXT_RE_MAX_GSI_SQP_ENTRIES	1024
+काष्ठा bnxt_re_gsi_context अणु
+	काष्ठा	bnxt_re_qp *gsi_qp;
+	काष्ठा	bnxt_re_qp *gsi_sqp;
+	काष्ठा	bnxt_re_ah *gsi_sah;
+	काष्ठा	bnxt_re_sqp_entries *sqp_tbl;
+पूर्ण;
 
-#define BNXT_RE_MIN_MSIX		2
-#define BNXT_RE_MAX_MSIX		9
-#define BNXT_RE_AEQ_IDX			0
-#define BNXT_RE_NQ_IDX			1
-#define BNXT_RE_GEN_P5_MAX_VF		64
+#घोषणा BNXT_RE_MIN_MSIX		2
+#घोषणा BNXT_RE_MAX_MSIX		9
+#घोषणा BNXT_RE_AEQ_IDX			0
+#घोषणा BNXT_RE_NQ_IDX			1
+#घोषणा BNXT_RE_GEN_P5_MAX_VF		64
 
-struct bnxt_re_dev {
-	struct ib_device		ibdev;
-	struct list_head		list;
-	unsigned long			flags;
-#define BNXT_RE_FLAG_NETDEV_REGISTERED		0
-#define BNXT_RE_FLAG_GOT_MSIX			2
-#define BNXT_RE_FLAG_HAVE_L2_REF		3
-#define BNXT_RE_FLAG_RCFW_CHANNEL_EN		4
-#define BNXT_RE_FLAG_QOS_WORK_REG		5
-#define BNXT_RE_FLAG_RESOURCES_ALLOCATED	7
-#define BNXT_RE_FLAG_RESOURCES_INITIALIZED	8
-#define BNXT_RE_FLAG_ERR_DEVICE_DETACHED       17
-#define BNXT_RE_FLAG_ISSUE_ROCE_STATS          29
-	struct net_device		*netdev;
-	unsigned int			version, major, minor;
-	struct bnxt_qplib_chip_ctx	*chip_ctx;
-	struct bnxt_en_dev		*en_dev;
-	struct bnxt_msix_entry		msix_entries[BNXT_RE_MAX_MSIX];
-	int				num_msix;
+काष्ठा bnxt_re_dev अणु
+	काष्ठा ib_device		ibdev;
+	काष्ठा list_head		list;
+	अचिन्हित दीर्घ			flags;
+#घोषणा BNXT_RE_FLAG_NETDEV_REGISTERED		0
+#घोषणा BNXT_RE_FLAG_GOT_MSIX			2
+#घोषणा BNXT_RE_FLAG_HAVE_L2_REF		3
+#घोषणा BNXT_RE_FLAG_RCFW_CHANNEL_EN		4
+#घोषणा BNXT_RE_FLAG_QOS_WORK_REG		5
+#घोषणा BNXT_RE_FLAG_RESOURCES_ALLOCATED	7
+#घोषणा BNXT_RE_FLAG_RESOURCES_INITIALIZED	8
+#घोषणा BNXT_RE_FLAG_ERR_DEVICE_DETACHED       17
+#घोषणा BNXT_RE_FLAG_ISSUE_ROCE_STATS          29
+	काष्ठा net_device		*netdev;
+	अचिन्हित पूर्णांक			version, major, minor;
+	काष्ठा bnxt_qplib_chip_ctx	*chip_ctx;
+	काष्ठा bnxt_en_dev		*en_dev;
+	काष्ठा bnxt_msix_entry		msix_entries[BNXT_RE_MAX_MSIX];
+	पूर्णांक				num_msix;
 
-	int				id;
+	पूर्णांक				id;
 
-	struct delayed_work		worker;
+	काष्ठा delayed_work		worker;
 	u8				cur_prio_map;
 	u16				active_speed;
 	u8				active_width;
 
-	/* FP Notification Queue (CQ & SRQ) */
-	struct tasklet_struct		nq_task;
+	/* FP Notअगरication Queue (CQ & SRQ) */
+	काष्ठा tasklet_काष्ठा		nq_task;
 
 	/* RCFW Channel */
-	struct bnxt_qplib_rcfw		rcfw;
+	काष्ठा bnxt_qplib_rcfw		rcfw;
 
 	/* NQ */
-	struct bnxt_qplib_nq		nq[BNXT_RE_MAX_MSIX];
+	काष्ठा bnxt_qplib_nq		nq[BNXT_RE_MAX_MSIX];
 
 	/* Device Resources */
-	struct bnxt_qplib_dev_attr	dev_attr;
-	struct bnxt_qplib_ctx		qplib_ctx;
-	struct bnxt_qplib_res		qplib_res;
-	struct bnxt_qplib_dpi		dpi_privileged;
+	काष्ठा bnxt_qplib_dev_attr	dev_attr;
+	काष्ठा bnxt_qplib_ctx		qplib_ctx;
+	काष्ठा bnxt_qplib_res		qplib_res;
+	काष्ठा bnxt_qplib_dpi		dpi_privileged;
 
 	atomic_t			qp_count;
-	struct mutex			qp_lock;	/* protect qp list */
-	struct list_head		qp_list;
+	काष्ठा mutex			qp_lock;	/* protect qp list */
+	काष्ठा list_head		qp_list;
 
 	atomic_t			cq_count;
 	atomic_t			srq_count;
@@ -180,26 +181,26 @@ struct bnxt_re_dev {
 	/* Max of 2 lossless traffic class supported per port */
 	u16				cosq[2];
 
-	/* QP for for handling QP1 packets */
-	struct bnxt_re_gsi_context	gsi_ctx;
+	/* QP क्रम क्रम handling QP1 packets */
+	काष्ठा bnxt_re_gsi_context	gsi_ctx;
 	atomic_t nq_alloc_cnt;
 	u32 is_virtfn;
 	u32 num_vfs;
-	struct bnxt_qplib_roce_stats	stats;
-};
+	काष्ठा bnxt_qplib_roce_stats	stats;
+पूर्ण;
 
-#define to_bnxt_re_dev(ptr, member)	\
-	container_of((ptr), struct bnxt_re_dev, member)
+#घोषणा to_bnxt_re_dev(ptr, member)	\
+	container_of((ptr), काष्ठा bnxt_re_dev, member)
 
-#define BNXT_RE_ROCE_V1_PACKET		0
-#define BNXT_RE_ROCEV2_IPV4_PACKET	2
-#define BNXT_RE_ROCEV2_IPV6_PACKET	3
+#घोषणा BNXT_RE_ROCE_V1_PACKET		0
+#घोषणा BNXT_RE_ROCEV2_IPV4_PACKET	2
+#घोषणा BNXT_RE_ROCEV2_IPV6_PACKET	3
 
-static inline struct device *rdev_to_dev(struct bnxt_re_dev *rdev)
-{
-	if (rdev)
-		return  &rdev->ibdev.dev;
-	return NULL;
-}
+अटल अंतरभूत काष्ठा device *rdev_to_dev(काष्ठा bnxt_re_dev *rdev)
+अणु
+	अगर (rdev)
+		वापस  &rdev->ibdev.dev;
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

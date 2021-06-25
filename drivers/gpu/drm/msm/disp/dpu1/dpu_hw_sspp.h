@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _DPU_HW_SSPP_H
-#define _DPU_HW_SSPP_H
+#अगर_अघोषित _DPU_HW_SSPP_H
+#घोषणा _DPU_HW_SSPP_H
 
-#include "dpu_hw_catalog.h"
-#include "dpu_hw_mdss.h"
-#include "dpu_hw_util.h"
-#include "dpu_hw_blk.h"
-#include "dpu_formats.h"
+#समावेश "dpu_hw_catalog.h"
+#समावेश "dpu_hw_mdss.h"
+#समावेश "dpu_hw_util.h"
+#समावेश "dpu_hw_blk.h"
+#समावेश "dpu_formats.h"
 
-struct dpu_hw_pipe;
+काष्ठा dpu_hw_pipe;
 
 /**
  * Flags
  */
-#define DPU_SSPP_FLIP_LR		BIT(0)
-#define DPU_SSPP_FLIP_UD		BIT(1)
-#define DPU_SSPP_SOURCE_ROTATED_90	BIT(2)
-#define DPU_SSPP_ROT_90			BIT(3)
-#define DPU_SSPP_SOLID_FILL		BIT(4)
+#घोषणा DPU_SSPP_FLIP_LR		BIT(0)
+#घोषणा DPU_SSPP_FLIP_UD		BIT(1)
+#घोषणा DPU_SSPP_SOURCE_ROTATED_90	BIT(2)
+#घोषणा DPU_SSPP_ROT_90			BIT(3)
+#घोषणा DPU_SSPP_SOLID_FILL		BIT(4)
 
 /**
  * Define all scaler feature bits in catalog
  */
-#define DPU_SSPP_SCALER ((1UL << DPU_SSPP_SCALER_RGB) | \
+#घोषणा DPU_SSPP_SCALER ((1UL << DPU_SSPP_SCALER_RGB) | \
 	(1UL << DPU_SSPP_SCALER_QSEED2) | \
 	 (1UL << DPU_SSPP_SCALER_QSEED3) | \
 	 (1UL << DPU_SSPP_SCALER_QSEED3LITE) | \
@@ -34,14 +35,14 @@ struct dpu_hw_pipe;
 /**
  * Component indices
  */
-enum {
+क्रमागत अणु
 	DPU_SSPP_COMP_0,
 	DPU_SSPP_COMP_1_2,
 	DPU_SSPP_COMP_2,
 	DPU_SSPP_COMP_3,
 
 	DPU_SSPP_COMP_MAX
-};
+पूर्ण;
 
 /**
  * DPU_SSPP_RECT_SOLO - multirect disabled
@@ -51,130 +52,130 @@ enum {
  * Note: HW supports multirect with either RECT0 or
  * RECT1. Considering no benefit of such configs over
  * SOLO mode and to keep the plane management simple,
- * we dont support single rect multirect configs.
+ * we करोnt support single rect multirect configs.
  */
-enum dpu_sspp_multirect_index {
+क्रमागत dpu_sspp_multirect_index अणु
 	DPU_SSPP_RECT_SOLO = 0,
 	DPU_SSPP_RECT_0,
 	DPU_SSPP_RECT_1,
-};
+पूर्ण;
 
-enum dpu_sspp_multirect_mode {
+क्रमागत dpu_sspp_multirect_mode अणु
 	DPU_SSPP_MULTIRECT_NONE = 0,
 	DPU_SSPP_MULTIRECT_PARALLEL,
 	DPU_SSPP_MULTIRECT_TIME_MX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	DPU_FRAME_LINEAR,
 	DPU_FRAME_TILE_A4X,
 	DPU_FRAME_TILE_A5X,
-};
+पूर्ण;
 
-enum dpu_hw_filter {
+क्रमागत dpu_hw_filter अणु
 	DPU_SCALE_FILTER_NEAREST = 0,
 	DPU_SCALE_FILTER_BIL,
 	DPU_SCALE_FILTER_PCMN,
 	DPU_SCALE_FILTER_CA,
 	DPU_SCALE_FILTER_MAX
-};
+पूर्ण;
 
-enum dpu_hw_filter_alpa {
+क्रमागत dpu_hw_filter_alpa अणु
 	DPU_SCALE_ALPHA_PIXEL_REP,
 	DPU_SCALE_ALPHA_BIL
-};
+पूर्ण;
 
-enum dpu_hw_filter_yuv {
+क्रमागत dpu_hw_filter_yuv अणु
 	DPU_SCALE_2D_4X4,
 	DPU_SCALE_2D_CIR,
 	DPU_SCALE_1D_SEP,
 	DPU_SCALE_BIL
-};
+पूर्ण;
 
-struct dpu_hw_sharp_cfg {
+काष्ठा dpu_hw_sharp_cfg अणु
 	u32 strength;
 	u32 edge_thr;
 	u32 smooth_thr;
 	u32 noise_thr;
-};
+पूर्ण;
 
-struct dpu_hw_pixel_ext {
-	/* scaling factors are enabled for this input layer */
-	uint8_t enable_pxl_ext;
+काष्ठा dpu_hw_pixel_ext अणु
+	/* scaling factors are enabled क्रम this input layer */
+	uपूर्णांक8_t enable_pxl_ext;
 
-	int init_phase_x[DPU_MAX_PLANES];
-	int phase_step_x[DPU_MAX_PLANES];
-	int init_phase_y[DPU_MAX_PLANES];
-	int phase_step_y[DPU_MAX_PLANES];
+	पूर्णांक init_phase_x[DPU_MAX_PLANES];
+	पूर्णांक phase_step_x[DPU_MAX_PLANES];
+	पूर्णांक init_phase_y[DPU_MAX_PLANES];
+	पूर्णांक phase_step_y[DPU_MAX_PLANES];
 
 	/*
 	 * Number of pixels extension in left, right, top and bottom direction
-	 * for all color components. This pixel value for each color component
+	 * क्रम all color components. This pixel value क्रम each color component
 	 * should be sum of fetch + repeat pixels.
 	 */
-	int num_ext_pxls_left[DPU_MAX_PLANES];
-	int num_ext_pxls_right[DPU_MAX_PLANES];
-	int num_ext_pxls_top[DPU_MAX_PLANES];
-	int num_ext_pxls_btm[DPU_MAX_PLANES];
+	पूर्णांक num_ext_pxls_left[DPU_MAX_PLANES];
+	पूर्णांक num_ext_pxls_right[DPU_MAX_PLANES];
+	पूर्णांक num_ext_pxls_top[DPU_MAX_PLANES];
+	पूर्णांक num_ext_pxls_bपंचांग[DPU_MAX_PLANES];
 
 	/*
 	 * Number of pixels needs to be overfetched in left, right, top and
-	 * bottom directions from source image for scaling.
+	 * bottom directions from source image क्रम scaling.
 	 */
-	int left_ftch[DPU_MAX_PLANES];
-	int right_ftch[DPU_MAX_PLANES];
-	int top_ftch[DPU_MAX_PLANES];
-	int btm_ftch[DPU_MAX_PLANES];
+	पूर्णांक left_ftch[DPU_MAX_PLANES];
+	पूर्णांक right_ftch[DPU_MAX_PLANES];
+	पूर्णांक top_ftch[DPU_MAX_PLANES];
+	पूर्णांक bपंचांग_ftch[DPU_MAX_PLANES];
 
 	/*
 	 * Number of pixels needs to be repeated in left, right, top and
-	 * bottom directions for scaling.
+	 * bottom directions क्रम scaling.
 	 */
-	int left_rpt[DPU_MAX_PLANES];
-	int right_rpt[DPU_MAX_PLANES];
-	int top_rpt[DPU_MAX_PLANES];
-	int btm_rpt[DPU_MAX_PLANES];
+	पूर्णांक left_rpt[DPU_MAX_PLANES];
+	पूर्णांक right_rpt[DPU_MAX_PLANES];
+	पूर्णांक top_rpt[DPU_MAX_PLANES];
+	पूर्णांक bपंचांग_rpt[DPU_MAX_PLANES];
 
-	uint32_t roi_w[DPU_MAX_PLANES];
-	uint32_t roi_h[DPU_MAX_PLANES];
+	uपूर्णांक32_t roi_w[DPU_MAX_PLANES];
+	uपूर्णांक32_t roi_h[DPU_MAX_PLANES];
 
 	/*
-	 * Filter type to be used for scaling in horizontal and vertical
+	 * Filter type to be used क्रम scaling in horizontal and vertical
 	 * directions
 	 */
-	enum dpu_hw_filter horz_filter[DPU_MAX_PLANES];
-	enum dpu_hw_filter vert_filter[DPU_MAX_PLANES];
+	क्रमागत dpu_hw_filter horz_filter[DPU_MAX_PLANES];
+	क्रमागत dpu_hw_filter vert_filter[DPU_MAX_PLANES];
 
-};
+पूर्ण;
 
 /**
- * struct dpu_hw_pipe_cfg : Pipe description
- * @layout:    format layout information for programming buffer to hardware
- * @src_rect:  src ROI, caller takes into account the different operations
+ * काष्ठा dpu_hw_pipe_cfg : Pipe description
+ * @layout:    क्रमmat layout inक्रमmation क्रम programming buffer to hardware
+ * @src_rect:  src ROI, caller takes पूर्णांकo account the dअगरferent operations
  *             such as decimation, flip etc to program this field
  * @dest_rect: destination ROI.
  * @index:     index of the rectangle of SSPP
- * @mode:      parallel or time multiplex multirect mode
+ * @mode:      parallel or समय multiplex multirect mode
  */
-struct dpu_hw_pipe_cfg {
-	struct dpu_hw_fmt_layout layout;
-	struct drm_rect src_rect;
-	struct drm_rect dst_rect;
-	enum dpu_sspp_multirect_index index;
-	enum dpu_sspp_multirect_mode mode;
-};
+काष्ठा dpu_hw_pipe_cfg अणु
+	काष्ठा dpu_hw_fmt_layout layout;
+	काष्ठा drm_rect src_rect;
+	काष्ठा drm_rect dst_rect;
+	क्रमागत dpu_sspp_multirect_index index;
+	क्रमागत dpu_sspp_multirect_mode mode;
+पूर्ण;
 
 /**
- * struct dpu_hw_pipe_qos_cfg : Source pipe QoS configuration
- * @danger_lut: LUT for generate danger level based on fill level
- * @safe_lut: LUT for generate safe level based on fill level
- * @creq_lut: LUT for generate creq level based on fill level
- * @creq_vblank: creq value generated to vbif during vertical blanking
+ * काष्ठा dpu_hw_pipe_qos_cfg : Source pipe QoS configuration
+ * @danger_lut: LUT क्रम generate danger level based on fill level
+ * @safe_lut: LUT क्रम generate safe level based on fill level
+ * @creq_lut: LUT क्रम generate creq level based on fill level
+ * @creq_vblank: creq value generated to vbअगर during vertical blanking
  * @danger_vblank: danger value generated during vertical blanking
  * @vblank_en: enable creq_vblank and danger_vblank during vblank
  * @danger_safe_en: enable danger safe generation
  */
-struct dpu_hw_pipe_qos_cfg {
+काष्ठा dpu_hw_pipe_qos_cfg अणु
 	u32 danger_lut;
 	u32 safe_lut;
 	u64 creq_lut;
@@ -182,227 +183,227 @@ struct dpu_hw_pipe_qos_cfg {
 	u32 danger_vblank;
 	bool vblank_en;
 	bool danger_safe_en;
-};
+पूर्ण;
 
 /**
- * enum CDP preload ahead address size
+ * क्रमागत CDP preload ahead address size
  */
-enum {
+क्रमागत अणु
 	DPU_SSPP_CDP_PRELOAD_AHEAD_32,
 	DPU_SSPP_CDP_PRELOAD_AHEAD_64
-};
+पूर्ण;
 
 /**
- * struct dpu_hw_pipe_cdp_cfg : CDP configuration
+ * काष्ठा dpu_hw_pipe_cdp_cfg : CDP configuration
  * @enable: true to enable CDP
  * @ubwc_meta_enable: true to enable ubwc metadata preload
- * @tile_amortize_enable: true to enable amortization control for tile format
+ * @tile_amortize_enable: true to enable amortization control क्रम tile क्रमmat
  * @preload_ahead: number of request to preload ahead
  *	DPU_SSPP_CDP_PRELOAD_AHEAD_32,
  *	DPU_SSPP_CDP_PRELOAD_AHEAD_64
  */
-struct dpu_hw_pipe_cdp_cfg {
+काष्ठा dpu_hw_pipe_cdp_cfg अणु
 	bool enable;
 	bool ubwc_meta_enable;
 	bool tile_amortize_enable;
 	u32 preload_ahead;
-};
+पूर्ण;
 
 /**
- * struct dpu_hw_pipe_ts_cfg - traffic shaper configuration
+ * काष्ठा dpu_hw_pipe_ts_cfg - traffic shaper configuration
  * @size: size to prefill in bytes, or zero to disable
- * @time: time to prefill in usec, or zero to disable
+ * @समय: समय to prefill in usec, or zero to disable
  */
-struct dpu_hw_pipe_ts_cfg {
+काष्ठा dpu_hw_pipe_ts_cfg अणु
 	u64 size;
-	u64 time;
-};
+	u64 समय;
+पूर्ण;
 
 /**
- * struct dpu_hw_sspp_ops - interface to the SSPP Hw driver functions
- * Caller must call the init function to get the pipe context for each pipe
- * Assumption is these functions will be called after clocks are enabled
+ * काष्ठा dpu_hw_sspp_ops - पूर्णांकerface to the SSPP Hw driver functions
+ * Caller must call the init function to get the pipe context क्रम each pipe
+ * Assumption is these functions will be called after घड़ीs are enabled
  */
-struct dpu_hw_sspp_ops {
+काष्ठा dpu_hw_sspp_ops अणु
 	/**
-	 * setup_format - setup pixel format cropping rectangle, flip
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe config structure
-	 * @flags: Extra flags for format config
+	 * setup_क्रमmat - setup pixel क्रमmat cropping rectangle, flip
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe config काष्ठाure
+	 * @flags: Extra flags क्रम क्रमmat config
 	 * @index: rectangle index in multirect
 	 */
-	void (*setup_format)(struct dpu_hw_pipe *ctx,
-			const struct dpu_format *fmt, u32 flags,
-			enum dpu_sspp_multirect_index index);
+	व्योम (*setup_क्रमmat)(काष्ठा dpu_hw_pipe *ctx,
+			स्थिर काष्ठा dpu_क्रमmat *fmt, u32 flags,
+			क्रमागत dpu_sspp_multirect_index index);
 
 	/**
 	 * setup_rects - setup pipe ROI rectangles
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe config structure
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe config काष्ठाure
 	 * @index: rectangle index in multirect
 	 */
-	void (*setup_rects)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_cfg *cfg,
-			enum dpu_sspp_multirect_index index);
+	व्योम (*setup_rects)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_cfg *cfg,
+			क्रमागत dpu_sspp_multirect_index index);
 
 	/**
 	 * setup_pe - setup pipe pixel extension
-	 * @ctx: Pointer to pipe context
-	 * @pe_ext: Pointer to pixel ext settings
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @pe_ext: Poपूर्णांकer to pixel ext settings
 	 */
-	void (*setup_pe)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pixel_ext *pe_ext);
+	व्योम (*setup_pe)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pixel_ext *pe_ext);
 
 	/**
 	 * setup_sourceaddress - setup pipe source addresses
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe config structure
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe config काष्ठाure
 	 * @index: rectangle index in multirect
 	 */
-	void (*setup_sourceaddress)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_cfg *cfg,
-			enum dpu_sspp_multirect_index index);
+	व्योम (*setup_sourceaddress)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_cfg *cfg,
+			क्रमागत dpu_sspp_multirect_index index);
 
 	/**
 	 * setup_csc - setup color space coversion
-	 * @ctx: Pointer to pipe context
-	 * @data: Pointer to config structure
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @data: Poपूर्णांकer to config काष्ठाure
 	 */
-	void (*setup_csc)(struct dpu_hw_pipe *ctx, struct dpu_csc_cfg *data);
+	व्योम (*setup_csc)(काष्ठा dpu_hw_pipe *ctx, काष्ठा dpu_csc_cfg *data);
 
 	/**
 	 * setup_solidfill - enable/disable colorfill
-	 * @ctx: Pointer to pipe context
-	 * @const_color: Fill color value
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @स्थिर_color: Fill color value
 	 * @flags: Pipe flags
 	 * @index: rectangle index in multirect
 	 */
-	void (*setup_solidfill)(struct dpu_hw_pipe *ctx, u32 color,
-			enum dpu_sspp_multirect_index index);
+	व्योम (*setup_solidfill)(काष्ठा dpu_hw_pipe *ctx, u32 color,
+			क्रमागत dpu_sspp_multirect_index index);
 
 	/**
 	 * setup_multirect - setup multirect configuration
-	 * @ctx: Pointer to pipe context
+	 * @ctx: Poपूर्णांकer to pipe context
 	 * @index: rectangle index in multirect
-	 * @mode: parallel fetch / time multiplex multirect mode
+	 * @mode: parallel fetch / समय multiplex multirect mode
 	 */
 
-	void (*setup_multirect)(struct dpu_hw_pipe *ctx,
-			enum dpu_sspp_multirect_index index,
-			enum dpu_sspp_multirect_mode mode);
+	व्योम (*setup_multirect)(काष्ठा dpu_hw_pipe *ctx,
+			क्रमागत dpu_sspp_multirect_index index,
+			क्रमागत dpu_sspp_multirect_mode mode);
 
 	/**
 	 * setup_sharpening - setup sharpening
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to config structure
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to config काष्ठाure
 	 */
-	void (*setup_sharpening)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_sharp_cfg *cfg);
+	व्योम (*setup_sharpening)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_sharp_cfg *cfg);
 
 	/**
 	 * setup_danger_safe_lut - setup danger safe LUTs
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe QoS configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe QoS configuration
 	 *
 	 */
-	void (*setup_danger_safe_lut)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_qos_cfg *cfg);
+	व्योम (*setup_danger_safe_lut)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_qos_cfg *cfg);
 
 	/**
 	 * setup_creq_lut - setup CREQ LUT
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe QoS configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe QoS configuration
 	 *
 	 */
-	void (*setup_creq_lut)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_qos_cfg *cfg);
+	व्योम (*setup_creq_lut)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_qos_cfg *cfg);
 
 	/**
 	 * setup_qos_ctrl - setup QoS control
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe QoS configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to pipe QoS configuration
 	 *
 	 */
-	void (*setup_qos_ctrl)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_qos_cfg *cfg);
+	व्योम (*setup_qos_ctrl)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_qos_cfg *cfg);
 
 	/**
 	 * setup_histogram - setup histograms
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to histogram configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to histogram configuration
 	 */
-	void (*setup_histogram)(struct dpu_hw_pipe *ctx,
-			void *cfg);
+	व्योम (*setup_histogram)(काष्ठा dpu_hw_pipe *ctx,
+			व्योम *cfg);
 
 	/**
 	 * setup_scaler - setup scaler
-	 * @ctx: Pointer to pipe context
-	 * @pipe_cfg: Pointer to pipe configuration
-	 * @pe_cfg: Pointer to pixel extension configuration
-	 * @scaler_cfg: Pointer to scaler configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @pipe_cfg: Poपूर्णांकer to pipe configuration
+	 * @pe_cfg: Poपूर्णांकer to pixel extension configuration
+	 * @scaler_cfg: Poपूर्णांकer to scaler configuration
 	 */
-	void (*setup_scaler)(struct dpu_hw_pipe *ctx,
-		struct dpu_hw_pipe_cfg *pipe_cfg,
-		struct dpu_hw_pixel_ext *pe_cfg,
-		void *scaler_cfg);
+	व्योम (*setup_scaler)(काष्ठा dpu_hw_pipe *ctx,
+		काष्ठा dpu_hw_pipe_cfg *pipe_cfg,
+		काष्ठा dpu_hw_pixel_ext *pe_cfg,
+		व्योम *scaler_cfg);
 
 	/**
 	 * get_scaler_ver - get scaler h/w version
-	 * @ctx: Pointer to pipe context
+	 * @ctx: Poपूर्णांकer to pipe context
 	 */
-	u32 (*get_scaler_ver)(struct dpu_hw_pipe *ctx);
+	u32 (*get_scaler_ver)(काष्ठा dpu_hw_pipe *ctx);
 
 	/**
 	 * setup_cdp - setup client driven prefetch
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to cdp configuration
+	 * @ctx: Poपूर्णांकer to pipe context
+	 * @cfg: Poपूर्णांकer to cdp configuration
 	 */
-	void (*setup_cdp)(struct dpu_hw_pipe *ctx,
-			struct dpu_hw_pipe_cdp_cfg *cfg);
-};
+	व्योम (*setup_cdp)(काष्ठा dpu_hw_pipe *ctx,
+			काष्ठा dpu_hw_pipe_cdp_cfg *cfg);
+पूर्ण;
 
 /**
- * struct dpu_hw_pipe - pipe description
- * @base: hardware block base structure
+ * काष्ठा dpu_hw_pipe - pipe description
+ * @base: hardware block base काष्ठाure
  * @hw: block hardware details
- * @catalog: back pointer to catalog
- * @mdp: pointer to associated mdp portion of the catalog
+ * @catalog: back poपूर्णांकer to catalog
+ * @mdp: poपूर्णांकer to associated mdp portion of the catalog
  * @idx: pipe index
- * @cap: pointer to layer_cfg
- * @ops: pointer to operations possible for this pipe
+ * @cap: poपूर्णांकer to layer_cfg
+ * @ops: poपूर्णांकer to operations possible क्रम this pipe
  */
-struct dpu_hw_pipe {
-	struct dpu_hw_blk base;
-	struct dpu_hw_blk_reg_map hw;
-	struct dpu_mdss_cfg *catalog;
-	const struct dpu_mdp_cfg *mdp;
+काष्ठा dpu_hw_pipe अणु
+	काष्ठा dpu_hw_blk base;
+	काष्ठा dpu_hw_blk_reg_map hw;
+	काष्ठा dpu_mdss_cfg *catalog;
+	स्थिर काष्ठा dpu_mdp_cfg *mdp;
 
 	/* Pipe */
-	enum dpu_sspp idx;
-	const struct dpu_sspp_cfg *cap;
+	क्रमागत dpu_sspp idx;
+	स्थिर काष्ठा dpu_sspp_cfg *cap;
 
 	/* Ops */
-	struct dpu_hw_sspp_ops ops;
-};
+	काष्ठा dpu_hw_sspp_ops ops;
+पूर्ण;
 
 /**
  * dpu_hw_sspp_init - initializes the sspp hw driver object.
- * Should be called once before accessing every pipe.
- * @idx:  Pipe index for which driver object is required
- * @addr: Mapped register io address of MDP
- * @catalog : Pointer to mdss catalog data
- * @is_virtual_pipe: is this pipe virtual pipe
+ * Should be called once beक्रमe accessing every pipe.
+ * @idx:  Pipe index क्रम which driver object is required
+ * @addr: Mapped रेजिस्टर io address of MDP
+ * @catalog : Poपूर्णांकer to mdss catalog data
+ * @is_भव_pipe: is this pipe भव pipe
  */
-struct dpu_hw_pipe *dpu_hw_sspp_init(enum dpu_sspp idx,
-		void __iomem *addr, struct dpu_mdss_cfg *catalog,
-		bool is_virtual_pipe);
+काष्ठा dpu_hw_pipe *dpu_hw_sspp_init(क्रमागत dpu_sspp idx,
+		व्योम __iomem *addr, काष्ठा dpu_mdss_cfg *catalog,
+		bool is_भव_pipe);
 
 /**
  * dpu_hw_sspp_destroy(): Destroys SSPP driver context
  * should be called during Hw pipe cleanup.
- * @ctx:  Pointer to SSPP driver context returned by dpu_hw_sspp_init
+ * @ctx:  Poपूर्णांकer to SSPP driver context वापसed by dpu_hw_sspp_init
  */
-void dpu_hw_sspp_destroy(struct dpu_hw_pipe *ctx);
+व्योम dpu_hw_sspp_destroy(काष्ठा dpu_hw_pipe *ctx);
 
-#endif /*_DPU_HW_SSPP_H */
+#पूर्ण_अगर /*_DPU_HW_SSPP_H */
 

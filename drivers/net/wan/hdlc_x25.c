@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic HDLC support routines for Linux
+ * Generic HDLC support routines क्रम Linux
  * X.25 support
  *
  * Copyright (C) 1999 - 2006 Krzysztof Halasa <khc@pm.waw.pl>
  */
 
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/hdlc.h>
-#include <linux/if_arp.h>
-#include <linux/inetdevice.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/lapb.h>
-#include <linux/module.h>
-#include <linux/pkt_sched.h>
-#include <linux/poll.h>
-#include <linux/rtnetlink.h>
-#include <linux/skbuff.h>
-#include <net/x25device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/hdlc.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/lapb.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/x25device.h>
 
-struct x25_state {
+काष्ठा x25_state अणु
 	x25_hdlc_proto settings;
 	bool up;
 	spinlock_t up_lock; /* Protects "up" */
-	struct sk_buff_head rx_queue;
-	struct tasklet_struct rx_tasklet;
-};
+	काष्ठा sk_buff_head rx_queue;
+	काष्ठा tasklet_काष्ठा rx_tasklet;
+पूर्ण;
 
-static int x25_ioctl(struct net_device *dev, struct ifreq *ifr);
+अटल पूर्णांक x25_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr);
 
-static struct x25_state *state(hdlc_device *hdlc)
-{
-	return hdlc->state;
-}
+अटल काष्ठा x25_state *state(hdlc_device *hdlc)
+अणु
+	वापस hdlc->state;
+पूर्ण
 
-static void x25_rx_queue_kick(struct tasklet_struct *t)
-{
-	struct x25_state *x25st = from_tasklet(x25st, t, rx_tasklet);
-	struct sk_buff *skb = skb_dequeue(&x25st->rx_queue);
+अटल व्योम x25_rx_queue_kick(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा x25_state *x25st = from_tasklet(x25st, t, rx_tasklet);
+	काष्ठा sk_buff *skb = skb_dequeue(&x25st->rx_queue);
 
-	while (skb) {
-		netif_receive_skb_core(skb);
+	जबतक (skb) अणु
+		netअगर_receive_skb_core(skb);
 		skb = skb_dequeue(&x25st->rx_queue);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* These functions are callbacks called by LAPB layer */
 
-static void x25_connect_disconnect(struct net_device *dev, int reason, int code)
-{
-	struct x25_state *x25st = state(dev_to_hdlc(dev));
-	struct sk_buff *skb;
-	unsigned char *ptr;
+अटल व्योम x25_connect_disconnect(काष्ठा net_device *dev, पूर्णांक reason, पूर्णांक code)
+अणु
+	काष्ठा x25_state *x25st = state(dev_to_hdlc(dev));
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर *ptr;
 
 	skb = __dev_alloc_skb(1, GFP_ATOMIC | __GFP_NOMEMALLOC);
-	if (!skb) {
+	अगर (!skb) अणु
 		netdev_err(dev, "out of memory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ptr = skb_put(skb, 1);
 	*ptr = code;
@@ -68,33 +69,33 @@ static void x25_connect_disconnect(struct net_device *dev, int reason, int code)
 
 	skb_queue_tail(&x25st->rx_queue, skb);
 	tasklet_schedule(&x25st->rx_tasklet);
-}
+पूर्ण
 
 
 
-static void x25_connected(struct net_device *dev, int reason)
-{
+अटल व्योम x25_connected(काष्ठा net_device *dev, पूर्णांक reason)
+अणु
 	x25_connect_disconnect(dev, reason, X25_IFACE_CONNECT);
-}
+पूर्ण
 
 
 
-static void x25_disconnected(struct net_device *dev, int reason)
-{
+अटल व्योम x25_disconnected(काष्ठा net_device *dev, पूर्णांक reason)
+अणु
 	x25_connect_disconnect(dev, reason, X25_IFACE_DISCONNECT);
-}
+पूर्ण
 
 
 
-static int x25_data_indication(struct net_device *dev, struct sk_buff *skb)
-{
-	struct x25_state *x25st = state(dev_to_hdlc(dev));
-	unsigned char *ptr;
+अटल पूर्णांक x25_data_indication(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा x25_state *x25st = state(dev_to_hdlc(dev));
+	अचिन्हित अक्षर *ptr;
 
-	if (skb_cow(skb, 1)) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (skb_cow(skb, 1)) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
 	skb_push(skb, 1);
 
@@ -105,259 +106,259 @@ static int x25_data_indication(struct net_device *dev, struct sk_buff *skb)
 
 	skb_queue_tail(&x25st->rx_queue, skb);
 	tasklet_schedule(&x25st->rx_tasklet);
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 
 
-static void x25_data_transmit(struct net_device *dev, struct sk_buff *skb)
-{
+अटल व्योम x25_data_transmit(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
 
 	skb_reset_network_header(skb);
 	skb->protocol = hdlc_type_trans(skb, dev);
 
-	if (dev_nit_active(dev))
+	अगर (dev_nit_active(dev))
 		dev_queue_xmit_nit(skb, dev);
 
-	hdlc->xmit(skb, dev); /* Ignore return value :-( */
-}
+	hdlc->xmit(skb, dev); /* Ignore वापस value :-( */
+पूर्ण
 
 
 
-static netdev_tx_t x25_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+अटल netdev_tx_t x25_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct x25_state *x25st = state(hdlc);
-	int result;
+	काष्ठा x25_state *x25st = state(hdlc);
+	पूर्णांक result;
 
-	/* There should be a pseudo header of 1 byte added by upper layers.
-	 * Check to make sure it is there before reading it.
+	/* There should be a pseuकरो header of 1 byte added by upper layers.
+	 * Check to make sure it is there beक्रमe पढ़ोing it.
 	 */
-	if (skb->len < 1) {
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+	अगर (skb->len < 1) अणु
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
 	spin_lock_bh(&x25st->up_lock);
-	if (!x25st->up) {
+	अगर (!x25st->up) अणु
 		spin_unlock_bh(&x25st->up_lock);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	switch (skb->data[0]) {
-	case X25_IFACE_DATA:	/* Data to be transmitted */
+	चयन (skb->data[0]) अणु
+	हाल X25_IFACE_DATA:	/* Data to be transmitted */
 		skb_pull(skb, 1);
-		if ((result = lapb_data_request(dev, skb)) != LAPB_OK)
-			dev_kfree_skb(skb);
+		अगर ((result = lapb_data_request(dev, skb)) != LAPB_OK)
+			dev_kमुक्त_skb(skb);
 		spin_unlock_bh(&x25st->up_lock);
-		return NETDEV_TX_OK;
+		वापस NETDEV_TX_OK;
 
-	case X25_IFACE_CONNECT:
-		if ((result = lapb_connect_request(dev))!= LAPB_OK) {
-			if (result == LAPB_CONNECTED)
+	हाल X25_IFACE_CONNECT:
+		अगर ((result = lapb_connect_request(dev))!= LAPB_OK) अणु
+			अगर (result == LAPB_CONNECTED)
 				/* Send connect confirm. msg to level 3 */
 				x25_connected(dev, 0);
-			else
+			अन्यथा
 				netdev_err(dev, "LAPB connect request failed, error code = %i\n",
 					   result);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case X25_IFACE_DISCONNECT:
-		if ((result = lapb_disconnect_request(dev)) != LAPB_OK) {
-			if (result == LAPB_NOTCONNECTED)
+	हाल X25_IFACE_DISCONNECT:
+		अगर ((result = lapb_disconnect_request(dev)) != LAPB_OK) अणु
+			अगर (result == LAPB_NOTCONNECTED)
 				/* Send disconnect confirm. msg to level 3 */
 				x25_disconnected(dev, 0);
-			else
+			अन्यथा
 				netdev_err(dev, "LAPB disconnect request failed, error code = %i\n",
 					   result);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:		/* to be defined */
-		break;
-	}
+	शेष:		/* to be defined */
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_bh(&x25st->up_lock);
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 
 
-static int x25_open(struct net_device *dev)
-{
-	static const struct lapb_register_struct cb = {
+अटल पूर्णांक x25_खोलो(काष्ठा net_device *dev)
+अणु
+	अटल स्थिर काष्ठा lapb_रेजिस्टर_काष्ठा cb = अणु
 		.connect_confirmation = x25_connected,
 		.connect_indication = x25_connected,
 		.disconnect_confirmation = x25_disconnected,
 		.disconnect_indication = x25_disconnected,
 		.data_indication = x25_data_indication,
 		.data_transmit = x25_data_transmit,
-	};
+	पूर्ण;
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct x25_state *x25st = state(hdlc);
-	struct lapb_parms_struct params;
-	int result;
+	काष्ठा x25_state *x25st = state(hdlc);
+	काष्ठा lapb_parms_काष्ठा params;
+	पूर्णांक result;
 
-	result = lapb_register(dev, &cb);
-	if (result != LAPB_OK)
-		return -ENOMEM;
+	result = lapb_रेजिस्टर(dev, &cb);
+	अगर (result != LAPB_OK)
+		वापस -ENOMEM;
 
 	result = lapb_getparms(dev, &params);
-	if (result != LAPB_OK)
-		return -EINVAL;
+	अगर (result != LAPB_OK)
+		वापस -EINVAL;
 
-	if (state(hdlc)->settings.dce)
+	अगर (state(hdlc)->settings.dce)
 		params.mode = params.mode | LAPB_DCE;
 
-	if (state(hdlc)->settings.modulo == 128)
+	अगर (state(hdlc)->settings.modulo == 128)
 		params.mode = params.mode | LAPB_EXTENDED;
 
-	params.window = state(hdlc)->settings.window;
+	params.winकरोw = state(hdlc)->settings.winकरोw;
 	params.t1 = state(hdlc)->settings.t1;
 	params.t2 = state(hdlc)->settings.t2;
 	params.n2 = state(hdlc)->settings.n2;
 
 	result = lapb_setparms(dev, &params);
-	if (result != LAPB_OK)
-		return -EINVAL;
+	अगर (result != LAPB_OK)
+		वापस -EINVAL;
 
 	spin_lock_bh(&x25st->up_lock);
 	x25st->up = true;
 	spin_unlock_bh(&x25st->up_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-static void x25_close(struct net_device *dev)
-{
+अटल व्योम x25_बंद(काष्ठा net_device *dev)
+अणु
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct x25_state *x25st = state(hdlc);
+	काष्ठा x25_state *x25st = state(hdlc);
 
 	spin_lock_bh(&x25st->up_lock);
 	x25st->up = false;
 	spin_unlock_bh(&x25st->up_lock);
 
-	lapb_unregister(dev);
-	tasklet_kill(&x25st->rx_tasklet);
-}
+	lapb_unरेजिस्टर(dev);
+	tasklet_समाप्त(&x25st->rx_tasklet);
+पूर्ण
 
 
 
-static int x25_rx(struct sk_buff *skb)
-{
-	struct net_device *dev = skb->dev;
+अटल पूर्णांक x25_rx(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = skb->dev;
 	hdlc_device *hdlc = dev_to_hdlc(dev);
-	struct x25_state *x25st = state(hdlc);
+	काष्ठा x25_state *x25st = state(hdlc);
 
-	if ((skb = skb_share_check(skb, GFP_ATOMIC)) == NULL) {
+	अगर ((skb = skb_share_check(skb, GFP_ATOMIC)) == शून्य) अणु
 		dev->stats.rx_dropped++;
-		return NET_RX_DROP;
-	}
+		वापस NET_RX_DROP;
+	पूर्ण
 
 	spin_lock_bh(&x25st->up_lock);
-	if (!x25st->up) {
+	अगर (!x25st->up) अणु
 		spin_unlock_bh(&x25st->up_lock);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		dev->stats.rx_dropped++;
-		return NET_RX_DROP;
-	}
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	if (lapb_data_received(dev, skb) == LAPB_OK) {
+	अगर (lapb_data_received(dev, skb) == LAPB_OK) अणु
 		spin_unlock_bh(&x25st->up_lock);
-		return NET_RX_SUCCESS;
-	}
+		वापस NET_RX_SUCCESS;
+	पूर्ण
 
 	spin_unlock_bh(&x25st->up_lock);
 	dev->stats.rx_errors++;
-	dev_kfree_skb_any(skb);
-	return NET_RX_DROP;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
 
-static struct hdlc_proto proto = {
-	.open		= x25_open,
-	.close		= x25_close,
+अटल काष्ठा hdlc_proto proto = अणु
+	.खोलो		= x25_खोलो,
+	.बंद		= x25_बंद,
 	.ioctl		= x25_ioctl,
-	.netif_rx	= x25_rx,
+	.netअगर_rx	= x25_rx,
 	.xmit		= x25_xmit,
 	.module		= THIS_MODULE,
-};
+पूर्ण;
 
 
-static int x25_ioctl(struct net_device *dev, struct ifreq *ifr)
-{
-	x25_hdlc_proto __user *x25_s = ifr->ifr_settings.ifs_ifsu.x25;
-	const size_t size = sizeof(x25_hdlc_proto);
+अटल पूर्णांक x25_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr)
+अणु
+	x25_hdlc_proto __user *x25_s = अगरr->अगरr_settings.अगरs_अगरsu.x25;
+	स्थिर माप_प्रकार size = माप(x25_hdlc_proto);
 	hdlc_device *hdlc = dev_to_hdlc(dev);
 	x25_hdlc_proto new_settings;
-	int result;
+	पूर्णांक result;
 
-	switch (ifr->ifr_settings.type) {
-	case IF_GET_PROTO:
-		if (dev_to_hdlc(dev)->proto != &proto)
-			return -EINVAL;
-		ifr->ifr_settings.type = IF_PROTO_X25;
-		if (ifr->ifr_settings.size < size) {
-			ifr->ifr_settings.size = size; /* data size wanted */
-			return -ENOBUFS;
-		}
-		if (copy_to_user(x25_s, &state(hdlc)->settings, size))
-			return -EFAULT;
-		return 0;
+	चयन (अगरr->अगरr_settings.type) अणु
+	हाल IF_GET_PROTO:
+		अगर (dev_to_hdlc(dev)->proto != &proto)
+			वापस -EINVAL;
+		अगरr->अगरr_settings.type = IF_PROTO_X25;
+		अगर (अगरr->अगरr_settings.size < size) अणु
+			अगरr->अगरr_settings.size = size; /* data size wanted */
+			वापस -ENOBUFS;
+		पूर्ण
+		अगर (copy_to_user(x25_s, &state(hdlc)->settings, size))
+			वापस -EFAULT;
+		वापस 0;
 
-	case IF_PROTO_X25:
-		if (!capable(CAP_NET_ADMIN))
-			return -EPERM;
+	हाल IF_PROTO_X25:
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (dev->flags & IFF_UP)
-			return -EBUSY;
+		अगर (dev->flags & IFF_UP)
+			वापस -EBUSY;
 
 		/* backward compatibility */
-		if (ifr->ifr_settings.size == 0) {
+		अगर (अगरr->अगरr_settings.size == 0) अणु
 			new_settings.dce = 0;
 			new_settings.modulo = 8;
-			new_settings.window = 7;
+			new_settings.winकरोw = 7;
 			new_settings.t1 = 3;
 			new_settings.t2 = 1;
 			new_settings.n2 = 10;
-		}
-		else {
-			if (copy_from_user(&new_settings, x25_s, size))
-				return -EFAULT;
+		पूर्ण
+		अन्यथा अणु
+			अगर (copy_from_user(&new_settings, x25_s, size))
+				वापस -EFAULT;
 
-			if ((new_settings.dce != 0 &&
+			अगर ((new_settings.dce != 0 &&
 			new_settings.dce != 1) ||
 			(new_settings.modulo != 8 &&
 			new_settings.modulo != 128) ||
-			new_settings.window < 1 ||
+			new_settings.winकरोw < 1 ||
 			(new_settings.modulo == 8 &&
-			new_settings.window > 7) ||
+			new_settings.winकरोw > 7) ||
 			(new_settings.modulo == 128 &&
-			new_settings.window > 127) ||
+			new_settings.winकरोw > 127) ||
 			new_settings.t1 < 1 ||
 			new_settings.t1 > 255 ||
 			new_settings.t2 < 1 ||
 			new_settings.t2 > 255 ||
 			new_settings.n2 < 1 ||
 			new_settings.n2 > 255)
-				return -EINVAL;
-		}
+				वापस -EINVAL;
+		पूर्ण
 
 		result=hdlc->attach(dev, ENCODING_NRZ,PARITY_CRC16_PR1_CCITT);
-		if (result)
-			return result;
+		अगर (result)
+			वापस result;
 
-		if ((result = attach_hdlc_protocol(dev, &proto,
-						   sizeof(struct x25_state))))
-			return result;
+		अगर ((result = attach_hdlc_protocol(dev, &proto,
+						   माप(काष्ठा x25_state))))
+			वापस result;
 
-		memcpy(&state(hdlc)->settings, &new_settings, size);
+		स_नकल(&state(hdlc)->settings, &new_settings, size);
 		state(hdlc)->up = false;
 		spin_lock_init(&state(hdlc)->up_lock);
 		skb_queue_head_init(&state(hdlc)->rx_queue);
@@ -366,37 +367,37 @@ static int x25_ioctl(struct net_device *dev, struct ifreq *ifr)
 		/* There's no header_ops so hard_header_len should be 0. */
 		dev->hard_header_len = 0;
 		/* When transmitting data:
-		 * first we'll remove a pseudo header of 1 byte,
+		 * first we'll हटाओ a pseuकरो header of 1 byte,
 		 * then we'll prepend an LAPB header of at most 3 bytes.
 		 */
 		dev->needed_headroom = 3 - 1;
 
 		dev->type = ARPHRD_X25;
-		call_netdevice_notifiers(NETDEV_POST_TYPE_CHANGE, dev);
-		netif_dormant_off(dev);
-		return 0;
-	}
+		call_netdevice_notअगरiers(NETDEV_POST_TYPE_CHANGE, dev);
+		netअगर_करोrmant_off(dev);
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
-
-
-static int __init mod_init(void)
-{
-	register_hdlc_protocol(&proto);
-	return 0;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
+अटल पूर्णांक __init mod_init(व्योम)
+अणु
+	रेजिस्टर_hdlc_protocol(&proto);
+	वापस 0;
+पूर्ण
 
-static void __exit mod_exit(void)
-{
-	unregister_hdlc_protocol(&proto);
-}
+
+
+अटल व्योम __निकास mod_निकास(व्योम)
+अणु
+	unरेजिस्टर_hdlc_protocol(&proto);
+पूर्ण
 
 
 module_init(mod_init);
-module_exit(mod_exit);
+module_निकास(mod_निकास);
 
 MODULE_AUTHOR("Krzysztof Halasa <khc@pm.waw.pl>");
 MODULE_DESCRIPTION("X.25 protocol support for generic HDLC");

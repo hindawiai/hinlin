@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/completion.h>
-#include <linux/buffer_head.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/gfs2_ondisk.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/gfs2_ondisk.h>
 
-#include "gfs2.h"
-#include "incore.h"
-#include "acl.h"
-#include "xattr.h"
-#include "glock.h"
-#include "inode.h"
-#include "meta_io.h"
-#include "quota.h"
-#include "rgrp.h"
-#include "trans.h"
-#include "util.h"
+#समावेश "gfs2.h"
+#समावेश "incore.h"
+#समावेश "acl.h"
+#समावेश "xattr.h"
+#समावेश "glock.h"
+#समावेश "inode.h"
+#समावेश "meta_io.h"
+#समावेश "quota.h"
+#समावेश "rgrp.h"
+#समावेश "trans.h"
+#समावेश "util.h"
 
-static const char *gfs2_acl_name(int type)
-{
-	switch (type) {
-	case ACL_TYPE_ACCESS:
-		return XATTR_POSIX_ACL_ACCESS;
-	case ACL_TYPE_DEFAULT:
-		return XATTR_POSIX_ACL_DEFAULT;
-	}
-	return NULL;
-}
+अटल स्थिर अक्षर *gfs2_acl_name(पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल ACL_TYPE_ACCESS:
+		वापस XATTR_POSIX_ACL_ACCESS;
+	हाल ACL_TYPE_DEFAULT:
+		वापस XATTR_POSIX_ACL_DEFAULT;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct posix_acl *__gfs2_get_acl(struct inode *inode, int type)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct posix_acl *acl;
-	const char *name;
-	char *data;
-	int len;
+अटल काष्ठा posix_acl *__gfs2_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा posix_acl *acl;
+	स्थिर अक्षर *name;
+	अक्षर *data;
+	पूर्णांक len;
 
-	if (!ip->i_eattr)
-		return NULL;
+	अगर (!ip->i_eattr)
+		वापस शून्य;
 
 	name = gfs2_acl_name(type);
 	len = gfs2_xattr_acl_get(ip, name, &data);
-	if (len <= 0)
-		return ERR_PTR(len);
+	अगर (len <= 0)
+		वापस ERR_PTR(len);
 	acl = posix_acl_from_xattr(&init_user_ns, data, len);
-	kfree(data);
-	return acl;
-}
+	kमुक्त(data);
+	वापस acl;
+पूर्ण
 
-struct posix_acl *gfs2_get_acl(struct inode *inode, int type)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
+काष्ठा posix_acl *gfs2_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
 	bool need_unlock = false;
-	struct posix_acl *acl;
+	काष्ठा posix_acl *acl;
 
-	if (!gfs2_glock_is_locked_by_me(ip->i_gl)) {
-		int ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED,
+	अगर (!gfs2_glock_is_locked_by_me(ip->i_gl)) अणु
+		पूर्णांक ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_SHARED,
 					     LM_FLAG_ANY, &gh);
-		if (ret)
-			return ERR_PTR(ret);
+		अगर (ret)
+			वापस ERR_PTR(ret);
 		need_unlock = true;
-	}
+	पूर्ण
 	acl = __gfs2_get_acl(inode, type);
-	if (need_unlock)
+	अगर (need_unlock)
 		gfs2_glock_dq_uninit(&gh);
-	return acl;
-}
+	वापस acl;
+पूर्ण
 
-int __gfs2_set_acl(struct inode *inode, struct posix_acl *acl, int type)
-{
-	int error;
-	size_t len;
-	char *data;
-	const char *name = gfs2_acl_name(type);
+पूर्णांक __gfs2_set_acl(काष्ठा inode *inode, काष्ठा posix_acl *acl, पूर्णांक type)
+अणु
+	पूर्णांक error;
+	माप_प्रकार len;
+	अक्षर *data;
+	स्थिर अक्षर *name = gfs2_acl_name(type);
 
-	if (acl) {
+	अगर (acl) अणु
 		len = posix_acl_xattr_size(acl->a_count);
-		data = kmalloc(len, GFP_NOFS);
-		if (data == NULL)
-			return -ENOMEM;
+		data = kदो_स्मृति(len, GFP_NOFS);
+		अगर (data == शून्य)
+			वापस -ENOMEM;
 		error = posix_acl_to_xattr(&init_user_ns, acl, data, len);
-		if (error < 0)
-			goto out;
-	} else {
-		data = NULL;
+		अगर (error < 0)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		data = शून्य;
 		len = 0;
-	}
+	पूर्ण
 
 	error = __gfs2_xattr_set(inode, name, data, len, 0, GFS2_EATYPE_SYS);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 	set_cached_acl(inode, type, acl);
 out:
-	kfree(data);
-	return error;
-}
+	kमुक्त(data);
+	वापस error;
+पूर्ण
 
-int gfs2_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		 struct posix_acl *acl, int type)
-{
-	struct gfs2_inode *ip = GFS2_I(inode);
-	struct gfs2_holder gh;
+पूर्णांक gfs2_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		 काष्ठा posix_acl *acl, पूर्णांक type)
+अणु
+	काष्ठा gfs2_inode *ip = GFS2_I(inode);
+	काष्ठा gfs2_holder gh;
 	bool need_unlock = false;
-	int ret;
+	पूर्णांक ret;
 	umode_t mode;
 
-	if (acl && acl->a_count > GFS2_ACL_MAX_ENTRIES(GFS2_SB(inode)))
-		return -E2BIG;
+	अगर (acl && acl->a_count > GFS2_ACL_MAX_ENTRIES(GFS2_SB(inode)))
+		वापस -E2BIG;
 
 	ret = gfs2_qa_get(ip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!gfs2_glock_is_locked_by_me(ip->i_gl)) {
+	अगर (!gfs2_glock_is_locked_by_me(ip->i_gl)) अणु
 		ret = gfs2_glock_nq_init(ip->i_gl, LM_ST_EXCLUSIVE, 0, &gh);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 		need_unlock = true;
-	}
+	पूर्ण
 
 	mode = inode->i_mode;
-	if (type == ACL_TYPE_ACCESS && acl) {
+	अगर (type == ACL_TYPE_ACCESS && acl) अणु
 		ret = posix_acl_update_mode(&init_user_ns, inode, &mode, &acl);
-		if (ret)
-			goto unlock;
-	}
+		अगर (ret)
+			जाओ unlock;
+	पूर्ण
 
 	ret = __gfs2_set_acl(inode, acl, type);
-	if (!ret && mode != inode->i_mode) {
-		inode->i_ctime = current_time(inode);
+	अगर (!ret && mode != inode->i_mode) अणु
+		inode->i_स_समय = current_समय(inode);
 		inode->i_mode = mode;
 		mark_inode_dirty(inode);
-	}
+	पूर्ण
 unlock:
-	if (need_unlock)
+	अगर (need_unlock)
 		gfs2_glock_dq_uninit(&gh);
 out:
 	gfs2_qa_put(ip);
-	return ret;
-}
+	वापस ret;
+पूर्ण

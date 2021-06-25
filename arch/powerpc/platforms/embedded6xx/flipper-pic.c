@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/powerpc/platforms/embedded6xx/flipper-pic.c
+ * arch/घातerpc/platक्रमms/embedded6xx/flipper-pic.c
  *
- * Nintendo GameCube/Wii "Flipper" interrupt controller support.
+ * Nपूर्णांकenकरो GameCube/Wii "Flipper" पूर्णांकerrupt controller support.
  * Copyright (C) 2004-2009 The GameCube Linux Team
  * Copyright (C) 2007,2008,2009 Albert Herranz
  */
-#define DRV_MODULE_NAME "flipper-pic"
-#define pr_fmt(fmt) DRV_MODULE_NAME ": " fmt
+#घोषणा DRV_MODULE_NAME "flipper-pic"
+#घोषणा pr_fmt(fmt) DRV_MODULE_NAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <asm/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <यंत्र/पन.स>
 
-#include "flipper-pic.h"
+#समावेश "flipper-pic.h"
 
-#define FLIPPER_NR_IRQS		32
+#घोषणा FLIPPER_NR_IRQS		32
 
 /*
- * Each interrupt has a corresponding bit in both
- * the Interrupt Cause (ICR) and Interrupt Mask (IMR) registers.
+ * Each पूर्णांकerrupt has a corresponding bit in both
+ * the Interrupt Cause (ICR) and Interrupt Mask (IMR) रेजिस्टरs.
  *
- * Enabling/disabling an interrupt line involves setting/clearing
+ * Enabling/disabling an पूर्णांकerrupt line involves setting/clearing
  * the corresponding bit in IMR.
- * Except for the RSW interrupt, all interrupts get deasserted automatically
- * when the source deasserts the interrupt.
+ * Except क्रम the RSW पूर्णांकerrupt, all पूर्णांकerrupts get deनिश्चितed स्वतःmatically
+ * when the source deनिश्चितs the पूर्णांकerrupt.
  */
-#define FLIPPER_ICR		0x00
-#define FLIPPER_ICR_RSS		(1<<16) /* reset switch state */
+#घोषणा FLIPPER_ICR		0x00
+#घोषणा FLIPPER_ICR_RSS		(1<<16) /* reset चयन state */
 
-#define FLIPPER_IMR		0x04
+#घोषणा FLIPPER_IMR		0x04
 
-#define FLIPPER_RESET		0x24
+#घोषणा FLIPPER_RESET		0x24
 
 
 /*
@@ -42,157 +43,157 @@
  *
  */
 
-static void flipper_pic_mask_and_ack(struct irq_data *d)
-{
-	int irq = irqd_to_hwirq(d);
-	void __iomem *io_base = irq_data_get_irq_chip_data(d);
+अटल व्योम flipper_pic_mask_and_ack(काष्ठा irq_data *d)
+अणु
+	पूर्णांक irq = irqd_to_hwirq(d);
+	व्योम __iomem *io_base = irq_data_get_irq_chip_data(d);
 	u32 mask = 1 << irq;
 
 	clrbits32(io_base + FLIPPER_IMR, mask);
-	/* this is at least needed for RSW */
+	/* this is at least needed क्रम RSW */
 	out_be32(io_base + FLIPPER_ICR, mask);
-}
+पूर्ण
 
-static void flipper_pic_ack(struct irq_data *d)
-{
-	int irq = irqd_to_hwirq(d);
-	void __iomem *io_base = irq_data_get_irq_chip_data(d);
+अटल व्योम flipper_pic_ack(काष्ठा irq_data *d)
+अणु
+	पूर्णांक irq = irqd_to_hwirq(d);
+	व्योम __iomem *io_base = irq_data_get_irq_chip_data(d);
 
-	/* this is at least needed for RSW */
+	/* this is at least needed क्रम RSW */
 	out_be32(io_base + FLIPPER_ICR, 1 << irq);
-}
+पूर्ण
 
-static void flipper_pic_mask(struct irq_data *d)
-{
-	int irq = irqd_to_hwirq(d);
-	void __iomem *io_base = irq_data_get_irq_chip_data(d);
+अटल व्योम flipper_pic_mask(काष्ठा irq_data *d)
+अणु
+	पूर्णांक irq = irqd_to_hwirq(d);
+	व्योम __iomem *io_base = irq_data_get_irq_chip_data(d);
 
 	clrbits32(io_base + FLIPPER_IMR, 1 << irq);
-}
+पूर्ण
 
-static void flipper_pic_unmask(struct irq_data *d)
-{
-	int irq = irqd_to_hwirq(d);
-	void __iomem *io_base = irq_data_get_irq_chip_data(d);
+अटल व्योम flipper_pic_unmask(काष्ठा irq_data *d)
+अणु
+	पूर्णांक irq = irqd_to_hwirq(d);
+	व्योम __iomem *io_base = irq_data_get_irq_chip_data(d);
 
 	setbits32(io_base + FLIPPER_IMR, 1 << irq);
-}
+पूर्ण
 
 
-static struct irq_chip flipper_pic = {
+अटल काष्ठा irq_chip flipper_pic = अणु
 	.name		= "flipper-pic",
 	.irq_ack	= flipper_pic_ack,
 	.irq_mask_ack	= flipper_pic_mask_and_ack,
 	.irq_mask	= flipper_pic_mask,
 	.irq_unmask	= flipper_pic_unmask,
-};
+पूर्ण;
 
 /*
  * IRQ host hooks.
  *
  */
 
-static struct irq_domain *flipper_irq_host;
+अटल काष्ठा irq_करोमुख्य *flipper_irq_host;
 
-static int flipper_pic_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक flipper_pic_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			   irq_hw_number_t hwirq)
-{
+अणु
 	irq_set_chip_data(virq, h->host_data);
 	irq_set_status_flags(virq, IRQ_LEVEL);
 	irq_set_chip_and_handler(virq, &flipper_pic, handle_level_irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops flipper_irq_domain_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops flipper_irq_करोमुख्य_ops = अणु
 	.map = flipper_pic_map,
-};
+पूर्ण;
 
 /*
- * Platform hooks.
+ * Platक्रमm hooks.
  *
  */
 
-static void __flipper_quiesce(void __iomem *io_base)
-{
+अटल व्योम __flipper_quiesce(व्योम __iomem *io_base)
+अणु
 	/* mask and ack all IRQs */
 	out_be32(io_base + FLIPPER_IMR, 0x00000000);
 	out_be32(io_base + FLIPPER_ICR, 0xffffffff);
-}
+पूर्ण
 
-static struct irq_domain * __init flipper_pic_init(struct device_node *np)
-{
-	struct device_node *pi;
-	struct irq_domain *irq_domain = NULL;
-	struct resource res;
-	void __iomem *io_base;
-	int retval;
+अटल काष्ठा irq_करोमुख्य * __init flipper_pic_init(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *pi;
+	काष्ठा irq_करोमुख्य *irq_करोमुख्य = शून्य;
+	काष्ठा resource res;
+	व्योम __iomem *io_base;
+	पूर्णांक retval;
 
 	pi = of_get_parent(np);
-	if (!pi) {
+	अगर (!pi) अणु
 		pr_err("no parent found\n");
-		goto out;
-	}
-	if (!of_device_is_compatible(pi, "nintendo,flipper-pi")) {
+		जाओ out;
+	पूर्ण
+	अगर (!of_device_is_compatible(pi, "nintendo,flipper-pi")) अणु
 		pr_err("unexpected parent compatible\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = of_address_to_resource(pi, 0, &res);
-	if (retval) {
+	अगर (retval) अणु
 		pr_err("no io memory range found\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	io_base = ioremap(res.start, resource_size(&res));
 
 	pr_info("controller at 0x%08x mapped to 0x%p\n", res.start, io_base);
 
 	__flipper_quiesce(io_base);
 
-	irq_domain = irq_domain_add_linear(np, FLIPPER_NR_IRQS,
-				  &flipper_irq_domain_ops, io_base);
-	if (!irq_domain) {
+	irq_करोमुख्य = irq_करोमुख्य_add_linear(np, FLIPPER_NR_IRQS,
+				  &flipper_irq_करोमुख्य_ops, io_base);
+	अगर (!irq_करोमुख्य) अणु
 		pr_err("failed to allocate irq_domain\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 out:
-	return irq_domain;
-}
+	वापस irq_करोमुख्य;
+पूर्ण
 
-unsigned int flipper_pic_get_irq(void)
-{
-	void __iomem *io_base = flipper_irq_host->host_data;
-	int irq;
+अचिन्हित पूर्णांक flipper_pic_get_irq(व्योम)
+अणु
+	व्योम __iomem *io_base = flipper_irq_host->host_data;
+	पूर्णांक irq;
 	u32 irq_status;
 
 	irq_status = in_be32(io_base + FLIPPER_ICR) &
 		     in_be32(io_base + FLIPPER_IMR);
-	if (irq_status == 0)
-		return 0;	/* no more IRQs pending */
+	अगर (irq_status == 0)
+		वापस 0;	/* no more IRQs pending */
 
 	irq = __ffs(irq_status);
-	return irq_linear_revmap(flipper_irq_host, irq);
-}
+	वापस irq_linear_revmap(flipper_irq_host, irq);
+पूर्ण
 
 /*
  * Probe function.
  *
  */
 
-void __init flipper_pic_probe(void)
-{
-	struct device_node *np;
+व्योम __init flipper_pic_probe(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "nintendo,flipper-pic");
+	np = of_find_compatible_node(शून्य, शून्य, "nintendo,flipper-pic");
 	BUG_ON(!np);
 
 	flipper_irq_host = flipper_pic_init(np);
 	BUG_ON(!flipper_irq_host);
 
-	irq_set_default_host(flipper_irq_host);
+	irq_set_शेष_host(flipper_irq_host);
 
 	of_node_put(np);
-}
+पूर्ण
 
 /*
  * Misc functions related to the flipper chipset.
@@ -202,42 +203,42 @@ void __init flipper_pic_probe(void)
 /**
  * flipper_quiesce() - quiesce flipper irq controller
  *
- * Mask and ack all interrupt sources.
+ * Mask and ack all पूर्णांकerrupt sources.
  *
  */
-void flipper_quiesce(void)
-{
-	void __iomem *io_base = flipper_irq_host->host_data;
+व्योम flipper_quiesce(व्योम)
+अणु
+	व्योम __iomem *io_base = flipper_irq_host->host_data;
 
 	__flipper_quiesce(io_base);
-}
+पूर्ण
 
 /*
- * Resets the platform.
+ * Resets the platक्रमm.
  */
-void flipper_platform_reset(void)
-{
-	void __iomem *io_base;
+व्योम flipper_platक्रमm_reset(व्योम)
+अणु
+	व्योम __iomem *io_base;
 
-	if (flipper_irq_host && flipper_irq_host->host_data) {
+	अगर (flipper_irq_host && flipper_irq_host->host_data) अणु
 		io_base = flipper_irq_host->host_data;
 		out_8(io_base + FLIPPER_RESET, 0x00);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Returns non-zero if the reset button is pressed.
+ * Returns non-zero अगर the reset button is pressed.
  */
-int flipper_is_reset_button_pressed(void)
-{
-	void __iomem *io_base;
+पूर्णांक flipper_is_reset_button_pressed(व्योम)
+अणु
+	व्योम __iomem *io_base;
 	u32 icr;
 
-	if (flipper_irq_host && flipper_irq_host->host_data) {
+	अगर (flipper_irq_host && flipper_irq_host->host_data) अणु
 		io_base = flipper_irq_host->host_data;
 		icr = in_be32(io_base + FLIPPER_ICR);
-		return !(icr & FLIPPER_ICR_RSS);
-	}
-	return 0;
-}
+		वापस !(icr & FLIPPER_ICR_RSS);
+	पूर्ण
+	वापस 0;
+पूर्ण
 

@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008 IBM Corporation
  *
  * Author: Mimi Zohar <zohar@us.ibm.com>
  *
  * File: ima_api.c
- *	Implements must_appraise_or_measure, collect_measurement,
- *	appraise_measurement, store_measurement and store_template.
+ *	Implements must_appउठाओ_or_measure, collect_measurement,
+ *	appउठाओ_measurement, store_measurement and store_ढाँचा.
  */
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/xattr.h>
-#include <linux/evm.h>
-#include <linux/iversion.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/evm.h>
+#समावेश <linux/iversion.h>
 
-#include "ima.h"
+#समावेश "ima.h"
 
 /*
- * ima_free_template_entry - free an existing template entry
+ * ima_मुक्त_ढाँचा_entry - मुक्त an existing ढाँचा entry
  */
-void ima_free_template_entry(struct ima_template_entry *entry)
-{
-	int i;
+व्योम ima_मुक्त_ढाँचा_entry(काष्ठा ima_ढाँचा_entry *entry)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < entry->template_desc->num_fields; i++)
-		kfree(entry->template_data[i].data);
+	क्रम (i = 0; i < entry->ढाँचा_desc->num_fields; i++)
+		kमुक्त(entry->ढाँचा_data[i].data);
 
-	kfree(entry->digests);
-	kfree(entry);
-}
+	kमुक्त(entry->digests);
+	kमुक्त(entry);
+पूर्ण
 
 /*
- * ima_alloc_init_template - create and initialize a new template entry
+ * ima_alloc_init_ढाँचा - create and initialize a new ढाँचा entry
  */
-int ima_alloc_init_template(struct ima_event_data *event_data,
-			    struct ima_template_entry **entry,
-			    struct ima_template_desc *desc)
-{
-	struct ima_template_desc *template_desc;
-	struct tpm_digest *digests;
-	int i, result = 0;
+पूर्णांक ima_alloc_init_ढाँचा(काष्ठा ima_event_data *event_data,
+			    काष्ठा ima_ढाँचा_entry **entry,
+			    काष्ठा ima_ढाँचा_desc *desc)
+अणु
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc;
+	काष्ठा tpm_digest *digests;
+	पूर्णांक i, result = 0;
 
-	if (desc)
-		template_desc = desc;
-	else
-		template_desc = ima_template_desc_current();
+	अगर (desc)
+		ढाँचा_desc = desc;
+	अन्यथा
+		ढाँचा_desc = ima_ढाँचा_desc_current();
 
-	*entry = kzalloc(struct_size(*entry, template_data,
-				     template_desc->num_fields), GFP_NOFS);
-	if (!*entry)
-		return -ENOMEM;
+	*entry = kzalloc(काष्ठा_size(*entry, ढाँचा_data,
+				     ढाँचा_desc->num_fields), GFP_NOFS);
+	अगर (!*entry)
+		वापस -ENOMEM;
 
-	digests = kcalloc(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
-			  sizeof(*digests), GFP_NOFS);
-	if (!digests) {
-		kfree(*entry);
-		*entry = NULL;
-		return -ENOMEM;
-	}
+	digests = kसुस्मृति(NR_BANKS(ima_tpm_chip) + ima_extra_slots,
+			  माप(*digests), GFP_NOFS);
+	अगर (!digests) अणु
+		kमुक्त(*entry);
+		*entry = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
 	(*entry)->digests = digests;
-	(*entry)->template_desc = template_desc;
-	for (i = 0; i < template_desc->num_fields; i++) {
-		const struct ima_template_field *field =
-			template_desc->fields[i];
+	(*entry)->ढाँचा_desc = ढाँचा_desc;
+	क्रम (i = 0; i < ढाँचा_desc->num_fields; i++) अणु
+		स्थिर काष्ठा ima_ढाँचा_field *field =
+			ढाँचा_desc->fields[i];
 		u32 len;
 
 		result = field->field_init(event_data,
-					   &((*entry)->template_data[i]));
-		if (result != 0)
-			goto out;
+					   &((*entry)->ढाँचा_data[i]));
+		अगर (result != 0)
+			जाओ out;
 
-		len = (*entry)->template_data[i].len;
-		(*entry)->template_data_len += sizeof(len);
-		(*entry)->template_data_len += len;
-	}
-	return 0;
+		len = (*entry)->ढाँचा_data[i].len;
+		(*entry)->ढाँचा_data_len += माप(len);
+		(*entry)->ढाँचा_data_len += len;
+	पूर्ण
+	वापस 0;
 out:
-	ima_free_template_entry(*entry);
-	*entry = NULL;
-	return result;
-}
+	ima_मुक्त_ढाँचा_entry(*entry);
+	*entry = शून्य;
+	वापस result;
+पूर्ण
 
 /*
- * ima_store_template - store ima template measurements
+ * ima_store_ढाँचा - store ima ढाँचा measurements
  *
- * Calculate the hash of a template entry, add the template entry
- * to an ordered list of measurement entries maintained inside the kernel,
- * and also update the aggregate integrity value (maintained inside the
+ * Calculate the hash of a ढाँचा entry, add the ढाँचा entry
+ * to an ordered list of measurement entries मुख्यtained inside the kernel,
+ * and also update the aggregate पूर्णांकegrity value (मुख्यtained inside the
  * configured TPM PCR) over the hashes of the current list of measurement
  * entries.
  *
  * Applications retrieve the current kernel-held measurement list through
- * the securityfs entries in /sys/kernel/security/ima. The signed aggregate
+ * the securityfs entries in /sys/kernel/security/ima. The चिन्हित aggregate
  * TPM PCR (called quote) can be retrieved using a TPM user space library
  * and is used to validate the measurement list.
  *
  * Returns 0 on success, error code otherwise
  */
-int ima_store_template(struct ima_template_entry *entry,
-		       int violation, struct inode *inode,
-		       const unsigned char *filename, int pcr)
-{
-	static const char op[] = "add_template_measure";
-	static const char audit_cause[] = "hashing_error";
-	char *template_name = entry->template_desc->name;
-	int result;
+पूर्णांक ima_store_ढाँचा(काष्ठा ima_ढाँचा_entry *entry,
+		       पूर्णांक violation, काष्ठा inode *inode,
+		       स्थिर अचिन्हित अक्षर *filename, पूर्णांक pcr)
+अणु
+	अटल स्थिर अक्षर op[] = "add_template_measure";
+	अटल स्थिर अक्षर audit_cause[] = "hashing_error";
+	अक्षर *ढाँचा_name = entry->ढाँचा_desc->name;
+	पूर्णांक result;
 
-	if (!violation) {
-		result = ima_calc_field_array_hash(&entry->template_data[0],
+	अगर (!violation) अणु
+		result = ima_calc_field_array_hash(&entry->ढाँचा_data[0],
 						   entry);
-		if (result < 0) {
-			integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode,
-					    template_name, op,
+		अगर (result < 0) अणु
+			पूर्णांकegrity_audit_msg(AUDIT_INTEGRITY_PCR, inode,
+					    ढाँचा_name, op,
 					    audit_cause, result, 0);
-			return result;
-		}
-	}
+			वापस result;
+		पूर्ण
+	पूर्ण
 	entry->pcr = pcr;
-	result = ima_add_template_entry(entry, violation, op, inode, filename);
-	return result;
-}
+	result = ima_add_ढाँचा_entry(entry, violation, op, inode, filename);
+	वापस result;
+पूर्ण
 
 /*
  * ima_add_violation - add violation to measurement list.
@@ -130,53 +131,53 @@ int ima_store_template(struct ima_template_entry *entry,
  * By extending the PCR with 0xFF's instead of with zeroes, the PCR
  * value is invalidated.
  */
-void ima_add_violation(struct file *file, const unsigned char *filename,
-		       struct integrity_iint_cache *iint,
-		       const char *op, const char *cause)
-{
-	struct ima_template_entry *entry;
-	struct inode *inode = file_inode(file);
-	struct ima_event_data event_data = { .iint = iint,
+व्योम ima_add_violation(काष्ठा file *file, स्थिर अचिन्हित अक्षर *filename,
+		       काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+		       स्थिर अक्षर *op, स्थिर अक्षर *cause)
+अणु
+	काष्ठा ima_ढाँचा_entry *entry;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ima_event_data event_data = अणु .iपूर्णांक = iपूर्णांक,
 					     .file = file,
 					     .filename = filename,
-					     .violation = cause };
-	int violation = 1;
-	int result;
+					     .violation = cause पूर्ण;
+	पूर्णांक violation = 1;
+	पूर्णांक result;
 
 	/* can overflow, only indicator */
-	atomic_long_inc(&ima_htable.violations);
+	atomic_दीर्घ_inc(&ima_htable.violations);
 
-	result = ima_alloc_init_template(&event_data, &entry, NULL);
-	if (result < 0) {
+	result = ima_alloc_init_ढाँचा(&event_data, &entry, शून्य);
+	अगर (result < 0) अणु
 		result = -ENOMEM;
-		goto err_out;
-	}
-	result = ima_store_template(entry, violation, inode,
+		जाओ err_out;
+	पूर्ण
+	result = ima_store_ढाँचा(entry, violation, inode,
 				    filename, CONFIG_IMA_MEASURE_PCR_IDX);
-	if (result < 0)
-		ima_free_template_entry(entry);
+	अगर (result < 0)
+		ima_मुक्त_ढाँचा_entry(entry);
 err_out:
-	integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
+	पूर्णांकegrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
 			    op, cause, result, 0);
-}
+पूर्ण
 
 /**
- * ima_get_action - appraise & measure decision based on policy.
+ * ima_get_action - appउठाओ & measure decision based on policy.
  * @mnt_userns:	user namespace of the mount the inode was found from
- * @inode: pointer to the inode associated with the object being validated
- * @cred: pointer to credentials structure to validate
+ * @inode: poपूर्णांकer to the inode associated with the object being validated
+ * @cred: poपूर्णांकer to credentials काष्ठाure to validate
  * @secid: secid of the task being validated
  * @mask: contains the permission mask (MAY_READ, MAY_WRITE, MAY_EXEC,
  *        MAY_APPEND)
- * @func: caller identifier
- * @pcr: pointer filled in if matched measure policy sets pcr=
- * @template_desc: pointer filled in if matched measure policy sets template=
- * @func_data: func specific data, may be NULL
+ * @func: caller identअगरier
+ * @pcr: poपूर्णांकer filled in अगर matched measure policy sets pcr=
+ * @ढाँचा_desc: poपूर्णांकer filled in अगर matched measure policy sets ढाँचा=
+ * @func_data: func specअगरic data, may be शून्य
  *
  * The policy is defined in terms of keypairs:
  *		subj=, obj=, type=, func=, mask=, fsmagic=
- *	subj,obj, and type: are LSM specific.
- *	func: FILE_CHECK | BPRM_CHECK | CREDS_CHECK | MMAP_CHECK | MODULE_CHECK
+ *	subj,obj, and type: are LSM specअगरic.
+ *	func: खाता_CHECK | BPRM_CHECK | CREDS_CHECK | MMAP_CHECK | MODULE_CHECK
  *	| KEXEC_CMDLINE | KEY_CHECK | CRITICAL_DATA
  *	mask: contains the permission mask
  *	fsmagic: hex value
@@ -184,226 +185,226 @@ err_out:
  * Returns IMA_MEASURE, IMA_APPRAISE mask.
  *
  */
-int ima_get_action(struct user_namespace *mnt_userns, struct inode *inode,
-		   const struct cred *cred, u32 secid, int mask,
-		   enum ima_hooks func, int *pcr,
-		   struct ima_template_desc **template_desc,
-		   const char *func_data)
-{
-	int flags = IMA_MEASURE | IMA_AUDIT | IMA_APPRAISE | IMA_HASH;
+पूर्णांक ima_get_action(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		   स्थिर काष्ठा cred *cred, u32 secid, पूर्णांक mask,
+		   क्रमागत ima_hooks func, पूर्णांक *pcr,
+		   काष्ठा ima_ढाँचा_desc **ढाँचा_desc,
+		   स्थिर अक्षर *func_data)
+अणु
+	पूर्णांक flags = IMA_MEASURE | IMA_AUDIT | IMA_APPRAISE | IMA_HASH;
 
 	flags &= ima_policy_flag;
 
-	return ima_match_policy(mnt_userns, inode, cred, secid, func, mask,
-				flags, pcr, template_desc, func_data);
-}
+	वापस ima_match_policy(mnt_userns, inode, cred, secid, func, mask,
+				flags, pcr, ढाँचा_desc, func_data);
+पूर्ण
 
 /*
  * ima_collect_measurement - collect file measurement
  *
- * Calculate the file hash, if it doesn't already exist,
- * storing the measurement and i_version in the iint.
+ * Calculate the file hash, अगर it करोesn't alपढ़ोy exist,
+ * storing the measurement and i_version in the iपूर्णांक.
  *
- * Must be called with iint->mutex held.
+ * Must be called with iपूर्णांक->mutex held.
  *
  * Return 0 on success, error code otherwise
  */
-int ima_collect_measurement(struct integrity_iint_cache *iint,
-			    struct file *file, void *buf, loff_t size,
-			    enum hash_algo algo, struct modsig *modsig)
-{
-	const char *audit_cause = "failed";
-	struct inode *inode = file_inode(file);
-	const char *filename = file->f_path.dentry->d_name.name;
-	int result = 0;
-	int length;
-	void *tmpbuf;
+पूर्णांक ima_collect_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			    काष्ठा file *file, व्योम *buf, loff_t size,
+			    क्रमागत hash_algo algo, काष्ठा modsig *modsig)
+अणु
+	स्थिर अक्षर *audit_cause = "failed";
+	काष्ठा inode *inode = file_inode(file);
+	स्थिर अक्षर *filename = file->f_path.dentry->d_name.name;
+	पूर्णांक result = 0;
+	पूर्णांक length;
+	व्योम *पंचांगpbuf;
 	u64 i_version;
-	struct {
-		struct ima_digest_data hdr;
-		char digest[IMA_MAX_DIGEST_SIZE];
-	} hash;
+	काष्ठा अणु
+		काष्ठा ima_digest_data hdr;
+		अक्षर digest[IMA_MAX_DIGEST_SIZE];
+	पूर्ण hash;
 
 	/*
-	 * Always collect the modsig, because IMA might have already collected
+	 * Always collect the modsig, because IMA might have alपढ़ोy collected
 	 * the file digest without collecting the modsig in a previous
 	 * measurement rule.
 	 */
-	if (modsig)
+	अगर (modsig)
 		ima_collect_modsig(modsig, buf, size);
 
-	if (iint->flags & IMA_COLLECTED)
-		goto out;
+	अगर (iपूर्णांक->flags & IMA_COLLECTED)
+		जाओ out;
 
 	/*
-	 * Dectecting file change is based on i_version. On filesystems
-	 * which do not support i_version, support is limited to an initial
+	 * Dectecting file change is based on i_version. On fileप्रणालीs
+	 * which करो not support i_version, support is limited to an initial
 	 * measurement/appraisal/audit.
 	 */
 	i_version = inode_query_iversion(inode);
 	hash.hdr.algo = algo;
 
-	/* Initialize hash digest to 0's in case of failure */
-	memset(&hash.digest, 0, sizeof(hash.digest));
+	/* Initialize hash digest to 0's in हाल of failure */
+	स_रखो(&hash.digest, 0, माप(hash.digest));
 
-	if (buf)
+	अगर (buf)
 		result = ima_calc_buffer_hash(buf, size, &hash.hdr);
-	else
+	अन्यथा
 		result = ima_calc_file_hash(file, &hash.hdr);
 
-	if (result && result != -EBADF && result != -EINVAL)
-		goto out;
+	अगर (result && result != -EBADF && result != -EINVAL)
+		जाओ out;
 
-	length = sizeof(hash.hdr) + hash.hdr.length;
-	tmpbuf = krealloc(iint->ima_hash, length, GFP_NOFS);
-	if (!tmpbuf) {
+	length = माप(hash.hdr) + hash.hdr.length;
+	पंचांगpbuf = kपुनः_स्मृति(iपूर्णांक->ima_hash, length, GFP_NOFS);
+	अगर (!पंचांगpbuf) अणु
 		result = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	iint->ima_hash = tmpbuf;
-	memcpy(iint->ima_hash, &hash, length);
-	iint->version = i_version;
+	iपूर्णांक->ima_hash = पंचांगpbuf;
+	स_नकल(iपूर्णांक->ima_hash, &hash, length);
+	iपूर्णांक->version = i_version;
 
-	/* Possibly temporary failure due to type of read (eg. O_DIRECT) */
-	if (!result)
-		iint->flags |= IMA_COLLECTED;
+	/* Possibly temporary failure due to type of पढ़ो (eg. O_सूचीECT) */
+	अगर (!result)
+		iपूर्णांक->flags |= IMA_COLLECTED;
 out:
-	if (result) {
-		if (file->f_flags & O_DIRECT)
+	अगर (result) अणु
+		अगर (file->f_flags & O_सूचीECT)
 			audit_cause = "failed(directio)";
 
-		integrity_audit_msg(AUDIT_INTEGRITY_DATA, inode,
+		पूर्णांकegrity_audit_msg(AUDIT_INTEGRITY_DATA, inode,
 				    filename, "collect_data", audit_cause,
 				    result, 0);
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /*
  * ima_store_measurement - store file measurement
  *
- * Create an "ima" template and then store the template by calling
- * ima_store_template.
+ * Create an "ima" ढाँचा and then store the ढाँचा by calling
+ * ima_store_ढाँचा.
  *
- * We only get here if the inode has not already been measured,
- * but the measurement could already exist:
+ * We only get here अगर the inode has not alपढ़ोy been measured,
+ * but the measurement could alपढ़ोy exist:
  *	- multiple copies of the same file on either the same or
- *	  different filesystems.
- *	- the inode was previously flushed as well as the iint info,
+ *	  dअगरferent fileप्रणालीs.
+ *	- the inode was previously flushed as well as the iपूर्णांक info,
  *	  containing the hashing info.
  *
- * Must be called with iint->mutex held.
+ * Must be called with iपूर्णांक->mutex held.
  */
-void ima_store_measurement(struct integrity_iint_cache *iint,
-			   struct file *file, const unsigned char *filename,
-			   struct evm_ima_xattr_data *xattr_value,
-			   int xattr_len, const struct modsig *modsig, int pcr,
-			   struct ima_template_desc *template_desc)
-{
-	static const char op[] = "add_template_measure";
-	static const char audit_cause[] = "ENOMEM";
-	int result = -ENOMEM;
-	struct inode *inode = file_inode(file);
-	struct ima_template_entry *entry;
-	struct ima_event_data event_data = { .iint = iint,
+व्योम ima_store_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			   काष्ठा file *file, स्थिर अचिन्हित अक्षर *filename,
+			   काष्ठा evm_ima_xattr_data *xattr_value,
+			   पूर्णांक xattr_len, स्थिर काष्ठा modsig *modsig, पूर्णांक pcr,
+			   काष्ठा ima_ढाँचा_desc *ढाँचा_desc)
+अणु
+	अटल स्थिर अक्षर op[] = "add_template_measure";
+	अटल स्थिर अक्षर audit_cause[] = "ENOMEM";
+	पूर्णांक result = -ENOMEM;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ima_ढाँचा_entry *entry;
+	काष्ठा ima_event_data event_data = अणु .iपूर्णांक = iपूर्णांक,
 					     .file = file,
 					     .filename = filename,
 					     .xattr_value = xattr_value,
 					     .xattr_len = xattr_len,
-					     .modsig = modsig };
-	int violation = 0;
+					     .modsig = modsig पूर्ण;
+	पूर्णांक violation = 0;
 
 	/*
-	 * We still need to store the measurement in the case of MODSIG because
-	 * we only have its contents to put in the list at the time of
-	 * appraisal, but a file measurement from earlier might already exist in
+	 * We still need to store the measurement in the हाल of MODSIG because
+	 * we only have its contents to put in the list at the समय of
+	 * appraisal, but a file measurement from earlier might alपढ़ोy exist in
 	 * the measurement list.
 	 */
-	if (iint->measured_pcrs & (0x1 << pcr) && !modsig)
-		return;
+	अगर (iपूर्णांक->measured_pcrs & (0x1 << pcr) && !modsig)
+		वापस;
 
-	result = ima_alloc_init_template(&event_data, &entry, template_desc);
-	if (result < 0) {
-		integrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
+	result = ima_alloc_init_ढाँचा(&event_data, &entry, ढाँचा_desc);
+	अगर (result < 0) अणु
+		पूर्णांकegrity_audit_msg(AUDIT_INTEGRITY_PCR, inode, filename,
 				    op, audit_cause, result, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	result = ima_store_template(entry, violation, inode, filename, pcr);
-	if ((!result || result == -EEXIST) && !(file->f_flags & O_DIRECT)) {
-		iint->flags |= IMA_MEASURED;
-		iint->measured_pcrs |= (0x1 << pcr);
-	}
-	if (result < 0)
-		ima_free_template_entry(entry);
-}
+	result = ima_store_ढाँचा(entry, violation, inode, filename, pcr);
+	अगर ((!result || result == -EEXIST) && !(file->f_flags & O_सूचीECT)) अणु
+		iपूर्णांक->flags |= IMA_MEASURED;
+		iपूर्णांक->measured_pcrs |= (0x1 << pcr);
+	पूर्ण
+	अगर (result < 0)
+		ima_मुक्त_ढाँचा_entry(entry);
+पूर्ण
 
-void ima_audit_measurement(struct integrity_iint_cache *iint,
-			   const unsigned char *filename)
-{
-	struct audit_buffer *ab;
-	char *hash;
-	const char *algo_name = hash_algo_name[iint->ima_hash->algo];
-	int i;
+व्योम ima_audit_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			   स्थिर अचिन्हित अक्षर *filename)
+अणु
+	काष्ठा audit_buffer *ab;
+	अक्षर *hash;
+	स्थिर अक्षर *algo_name = hash_algo_name[iपूर्णांक->ima_hash->algo];
+	पूर्णांक i;
 
-	if (iint->flags & IMA_AUDITED)
-		return;
+	अगर (iपूर्णांक->flags & IMA_AUDITED)
+		वापस;
 
-	hash = kzalloc((iint->ima_hash->length * 2) + 1, GFP_KERNEL);
-	if (!hash)
-		return;
+	hash = kzalloc((iपूर्णांक->ima_hash->length * 2) + 1, GFP_KERNEL);
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < iint->ima_hash->length; i++)
-		hex_byte_pack(hash + (i * 2), iint->ima_hash->digest[i]);
+	क्रम (i = 0; i < iपूर्णांक->ima_hash->length; i++)
+		hex_byte_pack(hash + (i * 2), iपूर्णांक->ima_hash->digest[i]);
 	hash[i * 2] = '\0';
 
 	ab = audit_log_start(audit_context(), GFP_KERNEL,
 			     AUDIT_INTEGRITY_RULE);
-	if (!ab)
-		goto out;
+	अगर (!ab)
+		जाओ out;
 
-	audit_log_format(ab, "file=");
+	audit_log_क्रमmat(ab, "file=");
 	audit_log_untrustedstring(ab, filename);
-	audit_log_format(ab, " hash=\"%s:%s\"", algo_name, hash);
+	audit_log_क्रमmat(ab, " hash=\"%s:%s\"", algo_name, hash);
 
 	audit_log_task_info(ab);
 	audit_log_end(ab);
 
-	iint->flags |= IMA_AUDITED;
+	iपूर्णांक->flags |= IMA_AUDITED;
 out:
-	kfree(hash);
-	return;
-}
+	kमुक्त(hash);
+	वापस;
+पूर्ण
 
 /*
- * ima_d_path - return a pointer to the full pathname
+ * ima_d_path - वापस a poपूर्णांकer to the full pathname
  *
- * Attempt to return a pointer to the full pathname for use in the
+ * Attempt to वापस a poपूर्णांकer to the full pathname क्रम use in the
  * IMA measurement list, IMA audit records, and auditing logs.
  *
- * On failure, return a pointer to a copy of the filename, not dname.
- * Returning a pointer to dname, could result in using the pointer
- * after the memory has been freed.
+ * On failure, वापस a poपूर्णांकer to a copy of the filename, not dname.
+ * Returning a poपूर्णांकer to dname, could result in using the poपूर्णांकer
+ * after the memory has been मुक्तd.
  */
-const char *ima_d_path(const struct path *path, char **pathbuf, char *namebuf)
-{
-	char *pathname = NULL;
+स्थिर अक्षर *ima_d_path(स्थिर काष्ठा path *path, अक्षर **pathbuf, अक्षर *namebuf)
+अणु
+	अक्षर *pathname = शून्य;
 
 	*pathbuf = __getname();
-	if (*pathbuf) {
-		pathname = d_absolute_path(path, *pathbuf, PATH_MAX);
-		if (IS_ERR(pathname)) {
+	अगर (*pathbuf) अणु
+		pathname = d_असलolute_path(path, *pathbuf, PATH_MAX);
+		अगर (IS_ERR(pathname)) अणु
 			__putname(*pathbuf);
-			*pathbuf = NULL;
-			pathname = NULL;
-		}
-	}
+			*pathbuf = शून्य;
+			pathname = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!pathname) {
+	अगर (!pathname) अणु
 		strlcpy(namebuf, path->dentry->d_name.name, NAME_MAX);
 		pathname = namebuf;
-	}
+	पूर्ण
 
-	return pathname;
-}
+	वापस pathname;
+पूर्ण

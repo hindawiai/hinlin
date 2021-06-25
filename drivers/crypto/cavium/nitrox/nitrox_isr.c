@@ -1,298 +1,299 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/pci.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/pci.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
 
-#include "nitrox_dev.h"
-#include "nitrox_csr.h"
-#include "nitrox_common.h"
-#include "nitrox_hal.h"
-#include "nitrox_isr.h"
-#include "nitrox_mbx.h"
+#समावेश "nitrox_dev.h"
+#समावेश "nitrox_csr.h"
+#समावेश "nitrox_common.h"
+#समावेश "nitrox_hal.h"
+#समावेश "nitrox_isr.h"
+#समावेश "nitrox_mbx.h"
 
 /*
- * One vector for each type of ring
+ * One vector क्रम each type of ring
  *  - NPS packet ring, AQMQ ring and ZQMQ ring
  */
-#define NR_RING_VECTORS 3
-#define NR_NON_RING_VECTORS 1
-/* base entry for packet ring/port */
-#define PKT_RING_MSIX_BASE 0
-#define NON_RING_MSIX_BASE 192
+#घोषणा NR_RING_VECTORS 3
+#घोषणा NR_NON_RING_VECTORS 1
+/* base entry क्रम packet ring/port */
+#घोषणा PKT_RING_MSIX_BASE 0
+#घोषणा NON_RING_MSIX_BASE 192
 
 /**
- * nps_pkt_slc_isr - IRQ handler for NPS solicit port
+ * nps_pkt_slc_isr - IRQ handler क्रम NPS solicit port
  * @irq: irq number
  * @data: argument
  */
-static irqreturn_t nps_pkt_slc_isr(int irq, void *data)
-{
-	struct nitrox_q_vector *qvec = data;
-	union nps_pkt_slc_cnts slc_cnts;
-	struct nitrox_cmdq *cmdq = qvec->cmdq;
+अटल irqवापस_t nps_pkt_slc_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा nitrox_q_vector *qvec = data;
+	जोड़ nps_pkt_slc_cnts slc_cnts;
+	काष्ठा nitrox_cmdq *cmdq = qvec->cmdq;
 
-	slc_cnts.value = readq(cmdq->compl_cnt_csr_addr);
+	slc_cnts.value = पढ़ोq(cmdq->compl_cnt_csr_addr);
 	/* New packet on SLC output port */
-	if (slc_cnts.s.slc_int)
+	अगर (slc_cnts.s.slc_पूर्णांक)
 		tasklet_hi_schedule(&qvec->resp_tasklet);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void clear_nps_core_err_intr(struct nitrox_device *ndev)
-{
+अटल व्योम clear_nps_core_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
 	u64 value;
 
 	/* Write 1 to clear */
-	value = nitrox_read_csr(ndev, NPS_CORE_INT);
-	nitrox_write_csr(ndev, NPS_CORE_INT, value);
+	value = nitrox_पढ़ो_csr(ndev, NPS_CORE_INT);
+	nitrox_ग_लिखो_csr(ndev, NPS_CORE_INT, value);
 
 	dev_err_ratelimited(DEV(ndev), "NSP_CORE_INT  0x%016llx\n", value);
-}
+पूर्ण
 
-static void clear_nps_pkt_err_intr(struct nitrox_device *ndev)
-{
-	union nps_pkt_int pkt_int;
-	unsigned long value, offset;
-	int i;
+अटल व्योम clear_nps_pkt_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
+	जोड़ nps_pkt_पूर्णांक pkt_पूर्णांक;
+	अचिन्हित दीर्घ value, offset;
+	पूर्णांक i;
 
-	pkt_int.value = nitrox_read_csr(ndev, NPS_PKT_INT);
+	pkt_पूर्णांक.value = nitrox_पढ़ो_csr(ndev, NPS_PKT_INT);
 	dev_err_ratelimited(DEV(ndev), "NPS_PKT_INT  0x%016llx\n",
-			    pkt_int.value);
+			    pkt_पूर्णांक.value);
 
-	if (pkt_int.s.slc_err) {
+	अगर (pkt_पूर्णांक.s.slc_err) अणु
 		offset = NPS_PKT_SLC_ERR_TYPE;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_SLC_ERR_TYPE  0x%016lx\n", value);
 
 		offset = NPS_PKT_SLC_RERR_LO;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		/* enable the solicit ports */
-		for_each_set_bit(i, &value, BITS_PER_LONG)
+		क्रम_each_set_bit(i, &value, BITS_PER_LONG)
 			enable_pkt_solicit_port(ndev, i);
 
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_SLC_RERR_LO  0x%016lx\n", value);
 
 		offset = NPS_PKT_SLC_RERR_HI;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_SLC_RERR_HI  0x%016lx\n", value);
-	}
+	पूर्ण
 
-	if (pkt_int.s.in_err) {
+	अगर (pkt_पूर्णांक.s.in_err) अणु
 		offset = NPS_PKT_IN_ERR_TYPE;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_IN_ERR_TYPE  0x%016lx\n", value);
 		offset = NPS_PKT_IN_RERR_LO;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		/* enable the input ring */
-		for_each_set_bit(i, &value, BITS_PER_LONG)
+		क्रम_each_set_bit(i, &value, BITS_PER_LONG)
 			enable_pkt_input_ring(ndev, i);
 
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_IN_RERR_LO  0x%016lx\n", value);
 
 		offset = NPS_PKT_IN_RERR_HI;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		dev_err_ratelimited(DEV(ndev),
 				    "NPS_PKT_IN_RERR_HI  0x%016lx\n", value);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void clear_pom_err_intr(struct nitrox_device *ndev)
-{
+अटल व्योम clear_pom_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
 	u64 value;
 
-	value = nitrox_read_csr(ndev, POM_INT);
-	nitrox_write_csr(ndev, POM_INT, value);
+	value = nitrox_पढ़ो_csr(ndev, POM_INT);
+	nitrox_ग_लिखो_csr(ndev, POM_INT, value);
 	dev_err_ratelimited(DEV(ndev), "POM_INT  0x%016llx\n", value);
-}
+पूर्ण
 
-static void clear_pem_err_intr(struct nitrox_device *ndev)
-{
+अटल व्योम clear_pem_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
 	u64 value;
 
-	value = nitrox_read_csr(ndev, PEM0_INT);
-	nitrox_write_csr(ndev, PEM0_INT, value);
+	value = nitrox_पढ़ो_csr(ndev, PEM0_INT);
+	nitrox_ग_लिखो_csr(ndev, PEM0_INT, value);
 	dev_err_ratelimited(DEV(ndev), "PEM(0)_INT  0x%016llx\n", value);
-}
+पूर्ण
 
-static void clear_lbc_err_intr(struct nitrox_device *ndev)
-{
-	union lbc_int lbc_int;
+अटल व्योम clear_lbc_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
+	जोड़ lbc_पूर्णांक lbc_पूर्णांक;
 	u64 value, offset;
-	int i;
+	पूर्णांक i;
 
-	lbc_int.value = nitrox_read_csr(ndev, LBC_INT);
-	dev_err_ratelimited(DEV(ndev), "LBC_INT  0x%016llx\n", lbc_int.value);
+	lbc_पूर्णांक.value = nitrox_पढ़ो_csr(ndev, LBC_INT);
+	dev_err_ratelimited(DEV(ndev), "LBC_INT  0x%016llx\n", lbc_पूर्णांक.value);
 
-	if (lbc_int.s.dma_rd_err) {
-		for (i = 0; i < NR_CLUSTERS; i++) {
+	अगर (lbc_पूर्णांक.s.dma_rd_err) अणु
+		क्रम (i = 0; i < NR_CLUSTERS; i++) अणु
 			offset = EFL_CORE_VF_ERR_INT0X(i);
-			value = nitrox_read_csr(ndev, offset);
-			nitrox_write_csr(ndev, offset, value);
+			value = nitrox_पढ़ो_csr(ndev, offset);
+			nitrox_ग_लिखो_csr(ndev, offset, value);
 			offset = EFL_CORE_VF_ERR_INT1X(i);
-			value = nitrox_read_csr(ndev, offset);
-			nitrox_write_csr(ndev, offset, value);
-		}
-	}
+			value = nitrox_पढ़ो_csr(ndev, offset);
+			nitrox_ग_लिखो_csr(ndev, offset, value);
+		पूर्ण
+	पूर्ण
 
-	if (lbc_int.s.cam_soft_err) {
+	अगर (lbc_पूर्णांक.s.cam_soft_err) अणु
 		dev_err_ratelimited(DEV(ndev), "CAM_SOFT_ERR, invalidating LBC\n");
 		invalidate_lbc(ndev);
-	}
+	पूर्ण
 
-	if (lbc_int.s.pref_dat_len_mismatch_err) {
+	अगर (lbc_पूर्णांक.s.pref_dat_len_mismatch_err) अणु
 		offset = LBC_PLM_VF1_64_INT;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		offset = LBC_PLM_VF65_128_INT;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
-	}
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
+	पूर्ण
 
-	if (lbc_int.s.rd_dat_len_mismatch_err) {
+	अगर (lbc_पूर्णांक.s.rd_dat_len_mismatch_err) अणु
 		offset = LBC_ELM_VF1_64_INT;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
 		offset = LBC_ELM_VF65_128_INT;
-		value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, value);
-	}
-	nitrox_write_csr(ndev, LBC_INT, lbc_int.value);
-}
+		value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, value);
+	पूर्ण
+	nitrox_ग_लिखो_csr(ndev, LBC_INT, lbc_पूर्णांक.value);
+पूर्ण
 
-static void clear_efl_err_intr(struct nitrox_device *ndev)
-{
-	int i;
+अटल व्योम clear_efl_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NR_CLUSTERS; i++) {
-		union efl_core_int core_int;
+	क्रम (i = 0; i < NR_CLUSTERS; i++) अणु
+		जोड़ efl_core_पूर्णांक core_पूर्णांक;
 		u64 value, offset;
 
 		offset = EFL_CORE_INTX(i);
-		core_int.value = nitrox_read_csr(ndev, offset);
-		nitrox_write_csr(ndev, offset, core_int.value);
+		core_पूर्णांक.value = nitrox_पढ़ो_csr(ndev, offset);
+		nitrox_ग_लिखो_csr(ndev, offset, core_पूर्णांक.value);
 		dev_err_ratelimited(DEV(ndev), "ELF_CORE(%d)_INT  0x%016llx\n",
-				    i, core_int.value);
-		if (core_int.s.se_err) {
+				    i, core_पूर्णांक.value);
+		अगर (core_पूर्णांक.s.se_err) अणु
 			offset = EFL_CORE_SE_ERR_INTX(i);
-			value = nitrox_read_csr(ndev, offset);
-			nitrox_write_csr(ndev, offset, value);
-		}
-	}
-}
+			value = nitrox_पढ़ो_csr(ndev, offset);
+			nitrox_ग_लिखो_csr(ndev, offset, value);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void clear_bmi_err_intr(struct nitrox_device *ndev)
-{
+अटल व्योम clear_bmi_err_पूर्णांकr(काष्ठा nitrox_device *ndev)
+अणु
 	u64 value;
 
-	value = nitrox_read_csr(ndev, BMI_INT);
-	nitrox_write_csr(ndev, BMI_INT, value);
+	value = nitrox_पढ़ो_csr(ndev, BMI_INT);
+	nitrox_ग_लिखो_csr(ndev, BMI_INT, value);
 	dev_err_ratelimited(DEV(ndev), "BMI_INT  0x%016llx\n", value);
-}
+पूर्ण
 
-static void nps_core_int_tasklet(unsigned long data)
-{
-	struct nitrox_q_vector *qvec = (void *)(uintptr_t)(data);
-	struct nitrox_device *ndev = qvec->ndev;
+अटल व्योम nps_core_पूर्णांक_tasklet(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा nitrox_q_vector *qvec = (व्योम *)(uपूर्णांकptr_t)(data);
+	काष्ठा nitrox_device *ndev = qvec->ndev;
 
-	/* if pf mode do queue recovery */
-	if (ndev->mode == __NDEV_MODE_PF) {
-	} else {
+	/* अगर pf mode करो queue recovery */
+	अगर (ndev->mode == __NDEV_MODE_PF) अणु
+	पूर्ण अन्यथा अणु
 		/**
-		 * if VF(s) enabled communicate the error information
+		 * अगर VF(s) enabled communicate the error inक्रमmation
 		 * to VF(s)
 		 */
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * nps_core_int_isr - interrupt handler for NITROX errors and
+ * nps_core_पूर्णांक_isr - पूर्णांकerrupt handler क्रम NITROX errors and
  *   mailbox communication
  */
-static irqreturn_t nps_core_int_isr(int irq, void *data)
-{
-	struct nitrox_q_vector *qvec = data;
-	struct nitrox_device *ndev = qvec->ndev;
-	union nps_core_int_active core_int;
+अटल irqवापस_t nps_core_पूर्णांक_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा nitrox_q_vector *qvec = data;
+	काष्ठा nitrox_device *ndev = qvec->ndev;
+	जोड़ nps_core_पूर्णांक_active core_पूर्णांक;
 
-	core_int.value = nitrox_read_csr(ndev, NPS_CORE_INT_ACTIVE);
+	core_पूर्णांक.value = nitrox_पढ़ो_csr(ndev, NPS_CORE_INT_ACTIVE);
 
-	if (core_int.s.nps_core)
-		clear_nps_core_err_intr(ndev);
+	अगर (core_पूर्णांक.s.nps_core)
+		clear_nps_core_err_पूर्णांकr(ndev);
 
-	if (core_int.s.nps_pkt)
-		clear_nps_pkt_err_intr(ndev);
+	अगर (core_पूर्णांक.s.nps_pkt)
+		clear_nps_pkt_err_पूर्णांकr(ndev);
 
-	if (core_int.s.pom)
-		clear_pom_err_intr(ndev);
+	अगर (core_पूर्णांक.s.pom)
+		clear_pom_err_पूर्णांकr(ndev);
 
-	if (core_int.s.pem)
-		clear_pem_err_intr(ndev);
+	अगर (core_पूर्णांक.s.pem)
+		clear_pem_err_पूर्णांकr(ndev);
 
-	if (core_int.s.lbc)
-		clear_lbc_err_intr(ndev);
+	अगर (core_पूर्णांक.s.lbc)
+		clear_lbc_err_पूर्णांकr(ndev);
 
-	if (core_int.s.efl)
-		clear_efl_err_intr(ndev);
+	अगर (core_पूर्णांक.s.efl)
+		clear_efl_err_पूर्णांकr(ndev);
 
-	if (core_int.s.bmi)
-		clear_bmi_err_intr(ndev);
+	अगर (core_पूर्णांक.s.bmi)
+		clear_bmi_err_पूर्णांकr(ndev);
 
-	/* Mailbox interrupt */
-	if (core_int.s.mbox)
+	/* Mailbox पूर्णांकerrupt */
+	अगर (core_पूर्णांक.s.mbox)
 		nitrox_pf2vf_mbox_handler(ndev);
 
 	/* If more work callback the ISR, set resend */
-	core_int.s.resend = 1;
-	nitrox_write_csr(ndev, NPS_CORE_INT_ACTIVE, core_int.value);
+	core_पूर्णांक.s.resend = 1;
+	nitrox_ग_लिखो_csr(ndev, NPS_CORE_INT_ACTIVE, core_पूर्णांक.value);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void nitrox_unregister_interrupts(struct nitrox_device *ndev)
-{
-	struct pci_dev *pdev = ndev->pdev;
-	int i;
+व्योम nitrox_unरेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev)
+अणु
+	काष्ठा pci_dev *pdev = ndev->pdev;
+	पूर्णांक i;
 
-	for (i = 0; i < ndev->num_vecs; i++) {
-		struct nitrox_q_vector *qvec;
-		int vec;
+	क्रम (i = 0; i < ndev->num_vecs; i++) अणु
+		काष्ठा nitrox_q_vector *qvec;
+		पूर्णांक vec;
 
 		qvec = ndev->qvec + i;
-		if (!qvec->valid)
-			continue;
+		अगर (!qvec->valid)
+			जारी;
 
 		/* get the vector number */
 		vec = pci_irq_vector(pdev, i);
-		irq_set_affinity_hint(vec, NULL);
-		free_irq(vec, qvec);
+		irq_set_affinity_hपूर्णांक(vec, शून्य);
+		मुक्त_irq(vec, qvec);
 
 		tasklet_disable(&qvec->resp_tasklet);
-		tasklet_kill(&qvec->resp_tasklet);
+		tasklet_समाप्त(&qvec->resp_tasklet);
 		qvec->valid = false;
-	}
-	kfree(ndev->qvec);
-	ndev->qvec = NULL;
-	pci_free_irq_vectors(pdev);
-}
+	पूर्ण
+	kमुक्त(ndev->qvec);
+	ndev->qvec = शून्य;
+	pci_मुक्त_irq_vectors(pdev);
+पूर्ण
 
-int nitrox_register_interrupts(struct nitrox_device *ndev)
-{
-	struct pci_dev *pdev = ndev->pdev;
-	struct nitrox_q_vector *qvec;
-	int nr_vecs, vec, cpu;
-	int ret, i;
+पूर्णांक nitrox_रेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev)
+अणु
+	काष्ठा pci_dev *pdev = ndev->pdev;
+	काष्ठा nitrox_q_vector *qvec;
+	पूर्णांक nr_vecs, vec, cpu;
+	पूर्णांक ret, i;
 
 	/*
 	 * PF MSI-X vectors
@@ -310,145 +311,145 @@ int nitrox_register_interrupts(struct nitrox_device *ndev)
 
 	/* Enable MSI-X */
 	ret = pci_alloc_irq_vectors(pdev, nr_vecs, nr_vecs, PCI_IRQ_MSIX);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(DEV(ndev), "msix vectors %d alloc failed\n", nr_vecs);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ndev->num_vecs = nr_vecs;
 
-	ndev->qvec = kcalloc(nr_vecs, sizeof(*qvec), GFP_KERNEL);
-	if (!ndev->qvec) {
-		pci_free_irq_vectors(pdev);
-		return -ENOMEM;
-	}
+	ndev->qvec = kसुस्मृति(nr_vecs, माप(*qvec), GFP_KERNEL);
+	अगर (!ndev->qvec) अणु
+		pci_मुक्त_irq_vectors(pdev);
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* request irqs for packet rings/ports */
-	for (i = PKT_RING_MSIX_BASE; i < (nr_vecs - 1); i += NR_RING_VECTORS) {
+	/* request irqs क्रम packet rings/ports */
+	क्रम (i = PKT_RING_MSIX_BASE; i < (nr_vecs - 1); i += NR_RING_VECTORS) अणु
 		qvec = &ndev->qvec[i];
 
 		qvec->ring = i / NR_RING_VECTORS;
-		if (qvec->ring >= ndev->nr_queues)
-			break;
+		अगर (qvec->ring >= ndev->nr_queues)
+			अवरोध;
 
 		qvec->cmdq = &ndev->pkt_inq[qvec->ring];
-		snprintf(qvec->name, IRQ_NAMESZ, "nitrox-pkt%d", qvec->ring);
+		snम_लिखो(qvec->name, IRQ_NAMESZ, "nitrox-pkt%d", qvec->ring);
 		/* get the vector number */
 		vec = pci_irq_vector(pdev, i);
 		ret = request_irq(vec, nps_pkt_slc_isr, 0, qvec->name, qvec);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(DEV(ndev), "irq failed for pkt ring/port%d\n",
 				qvec->ring);
-			goto irq_fail;
-		}
+			जाओ irq_fail;
+		पूर्ण
 		cpu = qvec->ring % num_online_cpus();
-		irq_set_affinity_hint(vec, get_cpu_mask(cpu));
+		irq_set_affinity_hपूर्णांक(vec, get_cpu_mask(cpu));
 
 		tasklet_init(&qvec->resp_tasklet, pkt_slc_resp_tasklet,
-			     (unsigned long)qvec);
+			     (अचिन्हित दीर्घ)qvec);
 		qvec->valid = true;
-	}
+	पूर्ण
 
-	/* request irqs for non ring vectors */
+	/* request irqs क्रम non ring vectors */
 	i = NON_RING_MSIX_BASE;
 	qvec = &ndev->qvec[i];
 	qvec->ndev = ndev;
 
-	snprintf(qvec->name, IRQ_NAMESZ, "nitrox-core-int%d", i);
+	snम_लिखो(qvec->name, IRQ_NAMESZ, "nitrox-core-int%d", i);
 	/* get the vector number */
 	vec = pci_irq_vector(pdev, i);
-	ret = request_irq(vec, nps_core_int_isr, 0, qvec->name, qvec);
-	if (ret) {
+	ret = request_irq(vec, nps_core_पूर्णांक_isr, 0, qvec->name, qvec);
+	अगर (ret) अणु
 		dev_err(DEV(ndev), "irq failed for nitrox-core-int%d\n", i);
-		goto irq_fail;
-	}
+		जाओ irq_fail;
+	पूर्ण
 	cpu = num_online_cpus();
-	irq_set_affinity_hint(vec, get_cpu_mask(cpu));
+	irq_set_affinity_hपूर्णांक(vec, get_cpu_mask(cpu));
 
-	tasklet_init(&qvec->resp_tasklet, nps_core_int_tasklet,
-		     (unsigned long)qvec);
+	tasklet_init(&qvec->resp_tasklet, nps_core_पूर्णांक_tasklet,
+		     (अचिन्हित दीर्घ)qvec);
 	qvec->valid = true;
 
-	return 0;
+	वापस 0;
 
 irq_fail:
-	nitrox_unregister_interrupts(ndev);
-	return ret;
-}
+	nitrox_unरेजिस्टर_पूर्णांकerrupts(ndev);
+	वापस ret;
+पूर्ण
 
-void nitrox_sriov_unregister_interrupts(struct nitrox_device *ndev)
-{
-	struct pci_dev *pdev = ndev->pdev;
-	int i;
+व्योम nitrox_sriov_unरेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev)
+अणु
+	काष्ठा pci_dev *pdev = ndev->pdev;
+	पूर्णांक i;
 
-	for (i = 0; i < ndev->num_vecs; i++) {
-		struct nitrox_q_vector *qvec;
-		int vec;
+	क्रम (i = 0; i < ndev->num_vecs; i++) अणु
+		काष्ठा nitrox_q_vector *qvec;
+		पूर्णांक vec;
 
 		qvec = ndev->qvec + i;
-		if (!qvec->valid)
-			continue;
+		अगर (!qvec->valid)
+			जारी;
 
 		vec = ndev->iov.msix.vector;
-		irq_set_affinity_hint(vec, NULL);
-		free_irq(vec, qvec);
+		irq_set_affinity_hपूर्णांक(vec, शून्य);
+		मुक्त_irq(vec, qvec);
 
 		tasklet_disable(&qvec->resp_tasklet);
-		tasklet_kill(&qvec->resp_tasklet);
+		tasklet_समाप्त(&qvec->resp_tasklet);
 		qvec->valid = false;
-	}
-	kfree(ndev->qvec);
-	ndev->qvec = NULL;
+	पूर्ण
+	kमुक्त(ndev->qvec);
+	ndev->qvec = शून्य;
 	pci_disable_msix(pdev);
-}
+पूर्ण
 
-int nitrox_sriov_register_interupts(struct nitrox_device *ndev)
-{
-	struct pci_dev *pdev = ndev->pdev;
-	struct nitrox_q_vector *qvec;
-	int vec, cpu;
-	int ret;
+पूर्णांक nitrox_sriov_रेजिस्टर_पूर्णांकerupts(काष्ठा nitrox_device *ndev)
+अणु
+	काष्ठा pci_dev *pdev = ndev->pdev;
+	काष्ठा nitrox_q_vector *qvec;
+	पूर्णांक vec, cpu;
+	पूर्णांक ret;
 
 	/**
 	 * only non ring vectors i.e Entry 192 is available
-	 * for PF in SR-IOV mode.
+	 * क्रम PF in SR-IOV mode.
 	 */
 	ndev->iov.msix.entry = NON_RING_MSIX_BASE;
 	ret = pci_enable_msix_exact(pdev, &ndev->iov.msix, NR_NON_RING_VECTORS);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(DEV(ndev), "failed to allocate nps-core-int%d\n",
 			NON_RING_MSIX_BASE);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	qvec = kcalloc(NR_NON_RING_VECTORS, sizeof(*qvec), GFP_KERNEL);
-	if (!qvec) {
+	qvec = kसुस्मृति(NR_NON_RING_VECTORS, माप(*qvec), GFP_KERNEL);
+	अगर (!qvec) अणु
 		pci_disable_msix(pdev);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	qvec->ndev = ndev;
 
 	ndev->qvec = qvec;
 	ndev->num_vecs = NR_NON_RING_VECTORS;
-	snprintf(qvec->name, IRQ_NAMESZ, "nitrox-core-int%d",
+	snम_लिखो(qvec->name, IRQ_NAMESZ, "nitrox-core-int%d",
 		 NON_RING_MSIX_BASE);
 
 	vec = ndev->iov.msix.vector;
-	ret = request_irq(vec, nps_core_int_isr, 0, qvec->name, qvec);
-	if (ret) {
+	ret = request_irq(vec, nps_core_पूर्णांक_isr, 0, qvec->name, qvec);
+	अगर (ret) अणु
 		dev_err(DEV(ndev), "irq failed for nitrox-core-int%d\n",
 			NON_RING_MSIX_BASE);
-		goto iov_irq_fail;
-	}
+		जाओ iov_irq_fail;
+	पूर्ण
 	cpu = num_online_cpus();
-	irq_set_affinity_hint(vec, get_cpu_mask(cpu));
+	irq_set_affinity_hपूर्णांक(vec, get_cpu_mask(cpu));
 
-	tasklet_init(&qvec->resp_tasklet, nps_core_int_tasklet,
-		     (unsigned long)qvec);
+	tasklet_init(&qvec->resp_tasklet, nps_core_पूर्णांक_tasklet,
+		     (अचिन्हित दीर्घ)qvec);
 	qvec->valid = true;
 
-	return 0;
+	वापस 0;
 
 iov_irq_fail:
-	nitrox_sriov_unregister_interrupts(ndev);
-	return ret;
-}
+	nitrox_sriov_unरेजिस्टर_पूर्णांकerrupts(ndev);
+	वापस ret;
+पूर्ण

@@ -1,52 +1,53 @@
+<शैली गुरु>
 /*
  *
- *  A driver for Nokia Connectivity Card DTL-1 devices
+ *  A driver क्रम Nokia Connectivity Card DTL-1 devices
  *
- *  Copyright (C) 2001-2002  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2001-2002  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  *
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License version 2 as
  *  published by the Free Software Foundation;
  *
  *  Software distributed under the License is distributed on an "AS
  *  IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *  implied. See the License for the specific language governing
+ *  implied. See the License क्रम the specअगरic language governing
  *  rights and limitations under the License.
  *
  *  The initial developer of the original code is David A. Hinds
- *  <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ *  <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  *  are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  *
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/ptrace.h>
-#include <linux/ioport.h>
-#include <linux/spinlock.h>
-#include <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/moduleparam.h>
 
-#include <linux/skbuff.h>
-#include <linux/string.h>
-#include <linux/serial.h>
-#include <linux/serial_reg.h>
-#include <linux/bitops.h>
-#include <asm/io.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/पन.स>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/cisreg.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/cisreg.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
 
 
@@ -59,384 +60,384 @@ MODULE_LICENSE("GPL");
 
 
 
-/* ======================== Local structures ======================== */
+/* ======================== Local काष्ठाures ======================== */
 
 
-struct dtl1_info {
-	struct pcmcia_device *p_dev;
+काष्ठा dtl1_info अणु
+	काष्ठा pcmcia_device *p_dev;
 
-	struct hci_dev *hdev;
+	काष्ठा hci_dev *hdev;
 
 	spinlock_t lock;		/* For serializing operations */
 
-	unsigned long flowmask;		/* HCI flow mask */
-	int ri_latch;
+	अचिन्हित दीर्घ flowmask;		/* HCI flow mask */
+	पूर्णांक ri_latch;
 
-	struct sk_buff_head txq;
-	unsigned long tx_state;
+	काष्ठा sk_buff_head txq;
+	अचिन्हित दीर्घ tx_state;
 
-	unsigned long rx_state;
-	unsigned long rx_count;
-	struct sk_buff *rx_skb;
-};
+	अचिन्हित दीर्घ rx_state;
+	अचिन्हित दीर्घ rx_count;
+	काष्ठा sk_buff *rx_skb;
+पूर्ण;
 
 
-static int dtl1_config(struct pcmcia_device *link);
+अटल पूर्णांक dtl1_config(काष्ठा pcmcia_device *link);
 
 
 /* Transmit states  */
-#define XMIT_SENDING  1
-#define XMIT_WAKEUP   2
-#define XMIT_WAITING  8
+#घोषणा XMIT_SENDING  1
+#घोषणा XMIT_WAKEUP   2
+#घोषणा XMIT_WAITING  8
 
 /* Receiver States */
-#define RECV_WAIT_NSH   0
-#define RECV_WAIT_DATA  1
+#घोषणा RECV_WAIT_NSH   0
+#घोषणा RECV_WAIT_DATA  1
 
 
-struct nsh {
+काष्ठा nsh अणु
 	u8 type;
 	u8 zero;
 	u16 len;
-} __packed;	/* Nokia Specific Header */
+पूर्ण __packed;	/* Nokia Specअगरic Header */
 
-#define NSHL  4				/* Nokia Specific Header Length */
+#घोषणा NSHL  4				/* Nokia Specअगरic Header Length */
 
 
 
 /* ======================== Interrupt handling ======================== */
 
 
-static int dtl1_write(unsigned int iobase, int fifo_size, __u8 *buf, int len)
-{
-	int actual = 0;
+अटल पूर्णांक dtl1_ग_लिखो(अचिन्हित पूर्णांक iobase, पूर्णांक fअगरo_size, __u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक actual = 0;
 
 	/* Tx FIFO should be empty */
-	if (!(inb(iobase + UART_LSR) & UART_LSR_THRE))
-		return 0;
+	अगर (!(inb(iobase + UART_LSR) & UART_LSR_THRE))
+		वापस 0;
 
 	/* Fill FIFO with current frame */
-	while ((fifo_size-- > 0) && (actual < len)) {
+	जबतक ((fअगरo_size-- > 0) && (actual < len)) अणु
 		/* Transmit next byte */
 		outb(buf[actual], iobase + UART_TX);
 		actual++;
-	}
+	पूर्ण
 
-	return actual;
-}
+	वापस actual;
+पूर्ण
 
 
-static void dtl1_write_wakeup(struct dtl1_info *info)
-{
-	if (!info) {
+अटल व्योम dtl1_ग_लिखो_wakeup(काष्ठा dtl1_info *info)
+अणु
+	अगर (!info) अणु
 		BT_ERR("Unknown device");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_bit(XMIT_WAITING, &(info->tx_state))) {
+	अगर (test_bit(XMIT_WAITING, &(info->tx_state))) अणु
 		set_bit(XMIT_WAKEUP, &(info->tx_state));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_and_set_bit(XMIT_SENDING, &(info->tx_state))) {
+	अगर (test_and_set_bit(XMIT_SENDING, &(info->tx_state))) अणु
 		set_bit(XMIT_WAKEUP, &(info->tx_state));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
-		unsigned int iobase = info->p_dev->resource[0]->start;
-		register struct sk_buff *skb;
-		int len;
+	करो अणु
+		अचिन्हित पूर्णांक iobase = info->p_dev->resource[0]->start;
+		रेजिस्टर काष्ठा sk_buff *skb;
+		पूर्णांक len;
 
 		clear_bit(XMIT_WAKEUP, &(info->tx_state));
 
-		if (!pcmcia_dev_present(info->p_dev))
-			return;
+		अगर (!pcmcia_dev_present(info->p_dev))
+			वापस;
 
 		skb = skb_dequeue(&(info->txq));
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
 		/* Send frame */
-		len = dtl1_write(iobase, 32, skb->data, skb->len);
+		len = dtl1_ग_लिखो(iobase, 32, skb->data, skb->len);
 
-		if (len == skb->len) {
+		अगर (len == skb->len) अणु
 			set_bit(XMIT_WAITING, &(info->tx_state));
-			kfree_skb(skb);
-		} else {
+			kमुक्त_skb(skb);
+		पूर्ण अन्यथा अणु
 			skb_pull(skb, len);
 			skb_queue_head(&(info->txq), skb);
-		}
+		पूर्ण
 
 		info->hdev->stat.byte_tx += len;
 
-	} while (test_bit(XMIT_WAKEUP, &(info->tx_state)));
+	पूर्ण जबतक (test_bit(XMIT_WAKEUP, &(info->tx_state)));
 
 	clear_bit(XMIT_SENDING, &(info->tx_state));
-}
+पूर्ण
 
 
-static void dtl1_control(struct dtl1_info *info, struct sk_buff *skb)
-{
+अटल व्योम dtl1_control(काष्ठा dtl1_info *info, काष्ठा sk_buff *skb)
+अणु
 	u8 flowmask = *(u8 *)skb->data;
-	int i;
+	पूर्णांक i;
 
-	printk(KERN_INFO "Bluetooth: Nokia control data =");
-	for (i = 0; i < skb->len; i++)
-		printk(" %02x", skb->data[i]);
+	prपूर्णांकk(KERN_INFO "Bluetooth: Nokia control data =");
+	क्रम (i = 0; i < skb->len; i++)
+		prपूर्णांकk(" %02x", skb->data[i]);
 
-	printk("\n");
+	prपूर्णांकk("\n");
 
 	/* transition to active state */
-	if (((info->flowmask & 0x07) == 0) && ((flowmask & 0x07) != 0)) {
+	अगर (((info->flowmask & 0x07) == 0) && ((flowmask & 0x07) != 0)) अणु
 		clear_bit(XMIT_WAITING, &(info->tx_state));
-		dtl1_write_wakeup(info);
-	}
+		dtl1_ग_लिखो_wakeup(info);
+	पूर्ण
 
 	info->flowmask = flowmask;
 
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
 
-static void dtl1_receive(struct dtl1_info *info)
-{
-	unsigned int iobase;
-	struct nsh *nsh;
-	int boguscount = 0;
+अटल व्योम dtl1_receive(काष्ठा dtl1_info *info)
+अणु
+	अचिन्हित पूर्णांक iobase;
+	काष्ठा nsh *nsh;
+	पूर्णांक boguscount = 0;
 
-	if (!info) {
+	अगर (!info) अणु
 		BT_ERR("Unknown device");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iobase = info->p_dev->resource[0]->start;
 
-	do {
+	करो अणु
 		info->hdev->stat.byte_rx++;
 
 		/* Allocate packet */
-		if (info->rx_skb == NULL) {
+		अगर (info->rx_skb == शून्य) अणु
 			info->rx_skb = bt_skb_alloc(HCI_MAX_FRAME_SIZE, GFP_ATOMIC);
-			if (!info->rx_skb) {
+			अगर (!info->rx_skb) अणु
 				BT_ERR("Can't allocate mem for new packet");
 				info->rx_state = RECV_WAIT_NSH;
 				info->rx_count = NSHL;
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		skb_put_u8(info->rx_skb, inb(iobase + UART_RX));
-		nsh = (struct nsh *)info->rx_skb->data;
+		nsh = (काष्ठा nsh *)info->rx_skb->data;
 
 		info->rx_count--;
 
-		if (info->rx_count == 0) {
+		अगर (info->rx_count == 0) अणु
 
-			switch (info->rx_state) {
-			case RECV_WAIT_NSH:
+			चयन (info->rx_state) अणु
+			हाल RECV_WAIT_NSH:
 				info->rx_state = RECV_WAIT_DATA;
 				info->rx_count = nsh->len + (nsh->len & 0x0001);
-				break;
-			case RECV_WAIT_DATA:
+				अवरोध;
+			हाल RECV_WAIT_DATA:
 				hci_skb_pkt_type(info->rx_skb) = nsh->type;
 
-				/* remove PAD byte if it exists */
-				if (nsh->len & 0x0001) {
+				/* हटाओ PAD byte अगर it exists */
+				अगर (nsh->len & 0x0001) अणु
 					info->rx_skb->tail--;
 					info->rx_skb->len--;
-				}
+				पूर्ण
 
-				/* remove NSH */
+				/* हटाओ NSH */
 				skb_pull(info->rx_skb, NSHL);
 
-				switch (hci_skb_pkt_type(info->rx_skb)) {
-				case 0x80:
-					/* control data for the Nokia Card */
+				चयन (hci_skb_pkt_type(info->rx_skb)) अणु
+				हाल 0x80:
+					/* control data क्रम the Nokia Card */
 					dtl1_control(info, info->rx_skb);
-					break;
-				case 0x82:
-				case 0x83:
-				case 0x84:
+					अवरोध;
+				हाल 0x82:
+				हाल 0x83:
+				हाल 0x84:
 					/* send frame to the HCI layer */
 					hci_skb_pkt_type(info->rx_skb) &= 0x0f;
 					hci_recv_frame(info->hdev, info->rx_skb);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					/* unknown packet */
 					BT_ERR("Unknown HCI packet with type 0x%02x received",
 					       hci_skb_pkt_type(info->rx_skb));
-					kfree_skb(info->rx_skb);
-					break;
-				}
+					kमुक्त_skb(info->rx_skb);
+					अवरोध;
+				पूर्ण
 
 				info->rx_state = RECV_WAIT_NSH;
 				info->rx_count = NSHL;
-				info->rx_skb = NULL;
-				break;
-			}
+				info->rx_skb = शून्य;
+				अवरोध;
+			पूर्ण
 
-		}
+		पूर्ण
 
-		/* Make sure we don't stay here too long */
-		if (boguscount++ > 32)
-			break;
+		/* Make sure we करोn't stay here too दीर्घ */
+		अगर (boguscount++ > 32)
+			अवरोध;
 
-	} while (inb(iobase + UART_LSR) & UART_LSR_DR);
-}
+	पूर्ण जबतक (inb(iobase + UART_LSR) & UART_LSR_DR);
+पूर्ण
 
 
-static irqreturn_t dtl1_interrupt(int irq, void *dev_inst)
-{
-	struct dtl1_info *info = dev_inst;
-	unsigned int iobase;
-	unsigned char msr;
-	int boguscount = 0;
-	int iir, lsr;
-	irqreturn_t r = IRQ_NONE;
+अटल irqवापस_t dtl1_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_inst)
+अणु
+	काष्ठा dtl1_info *info = dev_inst;
+	अचिन्हित पूर्णांक iobase;
+	अचिन्हित अक्षर msr;
+	पूर्णांक boguscount = 0;
+	पूर्णांक iir, lsr;
+	irqवापस_t r = IRQ_NONE;
 
-	if (!info || !info->hdev)
+	अगर (!info || !info->hdev)
 		/* our irq handler is shared */
-		return IRQ_NONE;
+		वापस IRQ_NONE;
 
 	iobase = info->p_dev->resource[0]->start;
 
 	spin_lock(&(info->lock));
 
 	iir = inb(iobase + UART_IIR) & UART_IIR_ID;
-	while (iir) {
+	जबतक (iir) अणु
 
 		r = IRQ_HANDLED;
-		/* Clear interrupt */
+		/* Clear पूर्णांकerrupt */
 		lsr = inb(iobase + UART_LSR);
 
-		switch (iir) {
-		case UART_IIR_RLSI:
+		चयन (iir) अणु
+		हाल UART_IIR_RLSI:
 			BT_ERR("RLSI");
-			break;
-		case UART_IIR_RDI:
-			/* Receive interrupt */
+			अवरोध;
+		हाल UART_IIR_RDI:
+			/* Receive पूर्णांकerrupt */
 			dtl1_receive(info);
-			break;
-		case UART_IIR_THRI:
-			if (lsr & UART_LSR_THRE) {
-				/* Transmitter ready for data */
-				dtl1_write_wakeup(info);
-			}
-			break;
-		default:
+			अवरोध;
+		हाल UART_IIR_THRI:
+			अगर (lsr & UART_LSR_THRE) अणु
+				/* Transmitter पढ़ोy क्रम data */
+				dtl1_ग_लिखो_wakeup(info);
+			पूर्ण
+			अवरोध;
+		शेष:
 			BT_ERR("Unhandled IIR=%#x", iir);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Make sure we don't stay here too long */
-		if (boguscount++ > 100)
-			break;
+		/* Make sure we करोn't stay here too दीर्घ */
+		अगर (boguscount++ > 100)
+			अवरोध;
 
 		iir = inb(iobase + UART_IIR) & UART_IIR_ID;
 
-	}
+	पूर्ण
 
 	msr = inb(iobase + UART_MSR);
 
-	if (info->ri_latch ^ (msr & UART_MSR_RI)) {
+	अगर (info->ri_latch ^ (msr & UART_MSR_RI)) अणु
 		info->ri_latch = msr & UART_MSR_RI;
 		clear_bit(XMIT_WAITING, &(info->tx_state));
-		dtl1_write_wakeup(info);
+		dtl1_ग_लिखो_wakeup(info);
 		r = IRQ_HANDLED;
-	}
+	पूर्ण
 
 	spin_unlock(&(info->lock));
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 
 
-/* ======================== HCI interface ======================== */
+/* ======================== HCI पूर्णांकerface ======================== */
 
 
-static int dtl1_hci_open(struct hci_dev *hdev)
-{
-	return 0;
-}
+अटल पूर्णांक dtl1_hci_खोलो(काष्ठा hci_dev *hdev)
+अणु
+	वापस 0;
+पूर्ण
 
 
-static int dtl1_hci_flush(struct hci_dev *hdev)
-{
-	struct dtl1_info *info = hci_get_drvdata(hdev);
+अटल पूर्णांक dtl1_hci_flush(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा dtl1_info *info = hci_get_drvdata(hdev);
 
 	/* Drop TX queue */
 	skb_queue_purge(&(info->txq));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dtl1_hci_close(struct hci_dev *hdev)
-{
+अटल पूर्णांक dtl1_hci_बंद(काष्ठा hci_dev *hdev)
+अणु
 	dtl1_hci_flush(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dtl1_hci_send_frame(struct hci_dev *hdev, struct sk_buff *skb)
-{
-	struct dtl1_info *info = hci_get_drvdata(hdev);
-	struct sk_buff *s;
-	struct nsh nsh;
+अटल पूर्णांक dtl1_hci_send_frame(काष्ठा hci_dev *hdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dtl1_info *info = hci_get_drvdata(hdev);
+	काष्ठा sk_buff *s;
+	काष्ठा nsh nsh;
 
-	switch (hci_skb_pkt_type(skb)) {
-	case HCI_COMMAND_PKT:
+	चयन (hci_skb_pkt_type(skb)) अणु
+	हाल HCI_COMMAND_PKT:
 		hdev->stat.cmd_tx++;
 		nsh.type = 0x81;
-		break;
-	case HCI_ACLDATA_PKT:
+		अवरोध;
+	हाल HCI_ACLDATA_PKT:
 		hdev->stat.acl_tx++;
 		nsh.type = 0x82;
-		break;
-	case HCI_SCODATA_PKT:
+		अवरोध;
+	हाल HCI_SCODATA_PKT:
 		hdev->stat.sco_tx++;
 		nsh.type = 0x83;
-		break;
-	default:
-		return -EILSEQ;
-	}
+		अवरोध;
+	शेष:
+		वापस -EILSEQ;
+	पूर्ण
 
 	nsh.zero = 0;
 	nsh.len = skb->len;
 
 	s = bt_skb_alloc(NSHL + skb->len + 1, GFP_ATOMIC);
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
 	skb_reserve(s, NSHL);
 	skb_copy_from_linear_data(skb, skb_put(s, skb->len), skb->len);
-	if (skb->len & 0x0001)
+	अगर (skb->len & 0x0001)
 		skb_put_u8(s, 0);	/* PAD */
 
 	/* Prepend skb with Nokia frame header and queue */
-	memcpy(skb_push(s, NSHL), &nsh, NSHL);
+	स_नकल(skb_push(s, NSHL), &nsh, NSHL);
 	skb_queue_tail(&(info->txq), s);
 
-	dtl1_write_wakeup(info);
+	dtl1_ग_लिखो_wakeup(info);
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return 0;
-}
-
-
-
-/* ======================== Card services HCI interaction ======================== */
+	वापस 0;
+पूर्ण
 
 
-static int dtl1_open(struct dtl1_info *info)
-{
-	unsigned long flags;
-	unsigned int iobase = info->p_dev->resource[0]->start;
-	struct hci_dev *hdev;
+
+/* ======================== Card services HCI पूर्णांकeraction ======================== */
+
+
+अटल पूर्णांक dtl1_खोलो(काष्ठा dtl1_info *info)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक iobase = info->p_dev->resource[0]->start;
+	काष्ठा hci_dev *hdev;
 
 	spin_lock_init(&(info->lock));
 
@@ -444,16 +445,16 @@ static int dtl1_open(struct dtl1_info *info)
 
 	info->rx_state = RECV_WAIT_NSH;
 	info->rx_count = NSHL;
-	info->rx_skb = NULL;
+	info->rx_skb = शून्य;
 
 	set_bit(XMIT_WAITING, &(info->tx_state));
 
 	/* Initialize HCI device */
 	hdev = hci_alloc_dev();
-	if (!hdev) {
+	अगर (!hdev) अणु
 		BT_ERR("Can't allocate HCI device");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	info->hdev = hdev;
 
@@ -461,8 +462,8 @@ static int dtl1_open(struct dtl1_info *info)
 	hci_set_drvdata(hdev, info);
 	SET_HCIDEV_DEV(hdev, &info->p_dev->dev);
 
-	hdev->open  = dtl1_hci_open;
-	hdev->close = dtl1_hci_close;
+	hdev->खोलो  = dtl1_hci_खोलो;
+	hdev->बंद = dtl1_hci_बंद;
 	hdev->flush = dtl1_hci_flush;
 	hdev->send  = dtl1_hci_send_frame;
 
@@ -471,7 +472,7 @@ static int dtl1_open(struct dtl1_info *info)
 	/* Reset UART */
 	outb(0, iobase + UART_MCR);
 
-	/* Turn off interrupts */
+	/* Turn off पूर्णांकerrupts */
 	outb(0, iobase + UART_IER);
 
 	/* Initialize UART */
@@ -481,134 +482,134 @@ static int dtl1_open(struct dtl1_info *info)
 	info->ri_latch = inb(info->p_dev->resource[0]->start + UART_MSR)
 				& UART_MSR_RI;
 
-	/* Turn on interrupts */
+	/* Turn on पूर्णांकerrupts */
 	outb(UART_IER_RLSI | UART_IER_RDI | UART_IER_THRI, iobase + UART_IER);
 
 	spin_unlock_irqrestore(&(info->lock), flags);
 
-	/* Timeout before it is safe to send the first HCI packet */
+	/* Timeout beक्रमe it is safe to send the first HCI packet */
 	msleep(2000);
 
 	/* Register HCI device */
-	if (hci_register_dev(hdev) < 0) {
+	अगर (hci_रेजिस्टर_dev(hdev) < 0) अणु
 		BT_ERR("Can't register HCI device");
-		info->hdev = NULL;
-		hci_free_dev(hdev);
-		return -ENODEV;
-	}
+		info->hdev = शून्य;
+		hci_मुक्त_dev(hdev);
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dtl1_close(struct dtl1_info *info)
-{
-	unsigned long flags;
-	unsigned int iobase = info->p_dev->resource[0]->start;
-	struct hci_dev *hdev = info->hdev;
+अटल पूर्णांक dtl1_बंद(काष्ठा dtl1_info *info)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक iobase = info->p_dev->resource[0]->start;
+	काष्ठा hci_dev *hdev = info->hdev;
 
-	if (!hdev)
-		return -ENODEV;
+	अगर (!hdev)
+		वापस -ENODEV;
 
-	dtl1_hci_close(hdev);
+	dtl1_hci_बंद(hdev);
 
 	spin_lock_irqsave(&(info->lock), flags);
 
 	/* Reset UART */
 	outb(0, iobase + UART_MCR);
 
-	/* Turn off interrupts */
+	/* Turn off पूर्णांकerrupts */
 	outb(0, iobase + UART_IER);
 
 	spin_unlock_irqrestore(&(info->lock), flags);
 
-	hci_unregister_dev(hdev);
-	hci_free_dev(hdev);
+	hci_unरेजिस्टर_dev(hdev);
+	hci_मुक्त_dev(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dtl1_probe(struct pcmcia_device *link)
-{
-	struct dtl1_info *info;
+अटल पूर्णांक dtl1_probe(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा dtl1_info *info;
 
 	/* Create new info device */
-	info = devm_kzalloc(&link->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&link->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->p_dev = link;
 	link->priv = info;
 
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
 
-	return dtl1_config(link);
-}
+	वापस dtl1_config(link);
+पूर्ण
 
 
-static void dtl1_detach(struct pcmcia_device *link)
-{
-	struct dtl1_info *info = link->priv;
+अटल व्योम dtl1_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा dtl1_info *info = link->priv;
 
-	dtl1_close(info);
+	dtl1_बंद(info);
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int dtl1_confcheck(struct pcmcia_device *p_dev, void *priv_data)
-{
-	if ((p_dev->resource[1]->end) || (p_dev->resource[1]->end < 8))
-		return -ENODEV;
+अटल पूर्णांक dtl1_confcheck(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	अगर ((p_dev->resource[1]->end) || (p_dev->resource[1]->end < 8))
+		वापस -ENODEV;
 
 	p_dev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 
-	return pcmcia_request_io(p_dev);
-}
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
-static int dtl1_config(struct pcmcia_device *link)
-{
-	struct dtl1_info *info = link->priv;
-	int ret;
+अटल पूर्णांक dtl1_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा dtl1_info *info = link->priv;
+	पूर्णांक ret;
 
-	/* Look for a generic full-sized window */
+	/* Look क्रम a generic full-sized winकरोw */
 	link->resource[0]->end = 8;
-	ret = pcmcia_loop_config(link, dtl1_confcheck, NULL);
-	if (ret)
-		goto failed;
+	ret = pcmcia_loop_config(link, dtl1_confcheck, शून्य);
+	अगर (ret)
+		जाओ failed;
 
-	ret = pcmcia_request_irq(link, dtl1_interrupt);
-	if (ret)
-		goto failed;
+	ret = pcmcia_request_irq(link, dtl1_पूर्णांकerrupt);
+	अगर (ret)
+		जाओ failed;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
-	ret = dtl1_open(info);
-	if (ret)
-		goto failed;
+	ret = dtl1_खोलो(info);
+	अगर (ret)
+		जाओ failed;
 
-	return 0;
+	वापस 0;
 
 failed:
 	dtl1_detach(link);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pcmcia_device_id dtl1_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id dtl1_ids[] = अणु
 	PCMCIA_DEVICE_PROD_ID12("Nokia Mobile Phones", "DTL-1", 0xe1bfdd64, 0xe168480d),
 	PCMCIA_DEVICE_PROD_ID12("Nokia Mobile Phones", "DTL-4", 0xe1bfdd64, 0x9102bc82),
 	PCMCIA_DEVICE_PROD_ID12("Socket", "CF", 0xb38bcc2e, 0x44ebf863),
 	PCMCIA_DEVICE_PROD_ID12("Socket", "CF+ Personal Network Card", 0xb38bcc2e, 0xe732bae3),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, dtl1_ids);
 
-static struct pcmcia_driver dtl1_driver = {
+अटल काष्ठा pcmcia_driver dtl1_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "dtl1_cs",
 	.probe		= dtl1_probe,
-	.remove		= dtl1_detach,
+	.हटाओ		= dtl1_detach,
 	.id_table	= dtl1_ids,
-};
+पूर्ण;
 module_pcmcia_driver(dtl1_driver);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,63 +24,63 @@
  *
  */
 
-#include "reg_helper.h"
-#include "fixed31_32.h"
-#include "resource.h"
-#include "basics/conversion.h"
-#include "dwb.h"
-#include "dcn30_dwb.h"
-#include "dcn30_cm_common.h"
-#include "dcn10/dcn10_cm_common.h"
+#समावेश "reg_helper.h"
+#समावेश "fixed31_32.h"
+#समावेश "resource.h"
+#समावेश "basics/conversion.h"
+#समावेश "dwb.h"
+#समावेश "dcn30_dwb.h"
+#समावेश "dcn30_cm_common.h"
+#समावेश "dcn10/dcn10_cm_common.h"
 
 
-#define REG(reg)\
+#घोषणा REG(reg)\
 	dwbc30->dwbc_regs->reg
 
-#define CTX \
+#घोषणा CTX \
 	dwbc30->base.ctx
 
-#undef FN
-#define FN(reg_name, field_name) \
-	dwbc30->dwbc_shift->field_name, dwbc30->dwbc_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	dwbc30->dwbc_shअगरt->field_name, dwbc30->dwbc_mask->field_name
 
-#define TO_DCN30_DWBC(dwbc_base) \
-	container_of(dwbc_base, struct dcn30_dwbc, base)
+#घोषणा TO_DCN30_DWBC(dwbc_base) \
+	container_of(dwbc_base, काष्ठा dcn30_dwbc, base)
 
-static void dwb3_get_reg_field_ogam(struct dcn30_dwbc *dwbc30,
-	struct dcn3_xfer_func_reg *reg)
-{
-	reg->shifts.exp_region0_lut_offset = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION0_LUT_OFFSET;
+अटल व्योम dwb3_get_reg_field_ogam(काष्ठा dcn30_dwbc *dwbc30,
+	काष्ठा dcn3_xfer_func_reg *reg)
+अणु
+	reg->shअगरts.exp_region0_lut_offset = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION0_LUT_OFFSET;
 	reg->masks.exp_region0_lut_offset = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION0_LUT_OFFSET;
-	reg->shifts.exp_region0_num_segments = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
+	reg->shअगरts.exp_region0_num_segments = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
 	reg->masks.exp_region0_num_segments = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION0_NUM_SEGMENTS;
-	reg->shifts.exp_region1_lut_offset = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION1_LUT_OFFSET;
+	reg->shअगरts.exp_region1_lut_offset = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION1_LUT_OFFSET;
 	reg->masks.exp_region1_lut_offset = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION1_LUT_OFFSET;
-	reg->shifts.exp_region1_num_segments = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
+	reg->shअगरts.exp_region1_num_segments = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
 	reg->masks.exp_region1_num_segments = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION1_NUM_SEGMENTS;
 
-	reg->shifts.field_region_end = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_END_B;
+	reg->shअगरts.field_region_end = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_END_B;
 	reg->masks.field_region_end = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_END_B;
-	reg->shifts.field_region_end_slope = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_END_SLOPE_B;
+	reg->shअगरts.field_region_end_slope = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_END_SLOPE_B;
 	reg->masks.field_region_end_slope = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_END_SLOPE_B;
-	reg->shifts.field_region_end_base = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_END_BASE_B;
+	reg->shअगरts.field_region_end_base = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_END_BASE_B;
 	reg->masks.field_region_end_base = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_END_BASE_B;
-	reg->shifts.field_region_linear_slope = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_START_SLOPE_B;
+	reg->shअगरts.field_region_linear_slope = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_START_SLOPE_B;
 	reg->masks.field_region_linear_slope = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_START_SLOPE_B;
 	reg->masks.field_offset = dwbc30->dwbc_mask->DWB_OGAM_RAMA_OFFSET_B;
-	reg->shifts.field_offset = dwbc30->dwbc_shift->DWB_OGAM_RAMA_OFFSET_B;
-	reg->shifts.exp_region_start = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_START_B;
+	reg->shअगरts.field_offset = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_OFFSET_B;
+	reg->shअगरts.exp_region_start = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_START_B;
 	reg->masks.exp_region_start = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_START_B;
-	reg->shifts.exp_resion_start_segment = dwbc30->dwbc_shift->DWB_OGAM_RAMA_EXP_REGION_START_SEGMENT_B;
+	reg->shअगरts.exp_resion_start_segment = dwbc30->dwbc_shअगरt->DWB_OGAM_RAMA_EXP_REGION_START_SEGMENT_B;
 	reg->masks.exp_resion_start_segment = dwbc30->dwbc_mask->DWB_OGAM_RAMA_EXP_REGION_START_SEGMENT_B;
-}
+पूर्ण
 
 /*program dwb ogam RAM A*/
-static void dwb3_program_ogam_luta_settings(
-	struct dcn30_dwbc *dwbc30,
-	const struct pwl_params *params)
-{
-	struct dcn3_xfer_func_reg gam_regs;
+अटल व्योम dwb3_program_ogam_luta_settings(
+	काष्ठा dcn30_dwbc *dwbc30,
+	स्थिर काष्ठा pwl_params *params)
+अणु
+	काष्ठा dcn3_xfer_func_reg gam_regs;
 
 	dwb3_get_reg_field_ogam(dwbc30, &gam_regs);
 
@@ -103,16 +104,16 @@ static void dwb3_program_ogam_luta_settings(
 	gam_regs.offset_r = REG(DWB_OGAM_RAMA_OFFSET_R);
 	gam_regs.region_start = REG(DWB_OGAM_RAMA_REGION_0_1);
 	gam_regs.region_end = REG(DWB_OGAM_RAMA_REGION_32_33);
-	/*todo*/
+	/*toकरो*/
 	cm_helper_program_gamcor_xfer_func(dwbc30->base.ctx, params, &gam_regs);
-}
+पूर्ण
 
 /*program dwb ogam RAM B*/
-static void dwb3_program_ogam_lutb_settings(
-	struct dcn30_dwbc *dwbc30,
-	const struct pwl_params *params)
-{
-	struct dcn3_xfer_func_reg gam_regs;
+अटल व्योम dwb3_program_ogam_lutb_settings(
+	काष्ठा dcn30_dwbc *dwbc30,
+	स्थिर काष्ठा pwl_params *params)
+अणु
+	काष्ठा dcn3_xfer_func_reg gam_regs;
 
 	dwb3_get_reg_field_ogam(dwbc30, &gam_regs);
 
@@ -138,55 +139,55 @@ static void dwb3_program_ogam_lutb_settings(
 	gam_regs.region_end = REG(DWB_OGAM_RAMB_REGION_32_33);
 
 	cm_helper_program_gamcor_xfer_func(dwbc30->base.ctx, params, &gam_regs);
-}
+पूर्ण
 
-static enum dc_lut_mode dwb3_get_ogam_current(
-	struct dcn30_dwbc *dwbc30)
-{
-	enum dc_lut_mode mode;
-	uint32_t state_mode;
-	uint32_t ram_select;
+अटल क्रमागत dc_lut_mode dwb3_get_ogam_current(
+	काष्ठा dcn30_dwbc *dwbc30)
+अणु
+	क्रमागत dc_lut_mode mode;
+	uपूर्णांक32_t state_mode;
+	uपूर्णांक32_t ram_select;
 
 	REG_GET(DWB_OGAM_CONTROL,
 		DWB_OGAM_MODE, &state_mode);
 	REG_GET(DWB_OGAM_CONTROL,
 		DWB_OGAM_SELECT, &ram_select);
 
-	if (state_mode == 0) {
+	अगर (state_mode == 0) अणु
 		mode = LUT_BYPASS;
-	} else if (state_mode == 2) {
-		if (ram_select == 0)
+	पूर्ण अन्यथा अगर (state_mode == 2) अणु
+		अगर (ram_select == 0)
 			mode = LUT_RAM_A;
-		else
+		अन्यथा
 			mode = LUT_RAM_B;
-	} else {
+	पूर्ण अन्यथा अणु
 		// Reserved value
 		mode = LUT_BYPASS;
 		BREAK_TO_DEBUGGER();
-		return mode;
-	}
-	return mode;
-}
+		वापस mode;
+	पूर्ण
+	वापस mode;
+पूर्ण
 
-static void dwb3_configure_ogam_lut(
-	struct dcn30_dwbc *dwbc30,
+अटल व्योम dwb3_configure_ogam_lut(
+	काष्ठा dcn30_dwbc *dwbc30,
 	bool is_ram_a)
-{
+अणु
 	REG_UPDATE(DWB_OGAM_LUT_CONTROL,
 		DWB_OGAM_LUT_READ_COLOR_SEL, 7);
 	REG_UPDATE(DWB_OGAM_CONTROL,
 		DWB_OGAM_SELECT, is_ram_a == true ? 0 : 1);
 	REG_SET(DWB_OGAM_LUT_INDEX, 0, DWB_OGAM_LUT_INDEX, 0);
-}
+पूर्ण
 
-static void dwb3_program_ogam_pwl(struct dcn30_dwbc *dwbc30,
-	const struct pwl_result_data *rgb,
-	uint32_t num)
-{
-	uint32_t i;
+अटल व्योम dwb3_program_ogam_pwl(काष्ठा dcn30_dwbc *dwbc30,
+	स्थिर काष्ठा pwl_result_data *rgb,
+	uपूर्णांक32_t num)
+अणु
+	uपूर्णांक32_t i;
 
     // triple base implementation
-	for (i = 0; i < num/2; i++) {
+	क्रम (i = 0; i < num/2; i++) अणु
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+0].red_reg);
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+0].green_reg);
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+0].blue_reg);
@@ -196,91 +197,91 @@ static void dwb3_program_ogam_pwl(struct dcn30_dwbc *dwbc30,
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+2].red_reg);
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+2].green_reg);
 		REG_SET(DWB_OGAM_LUT_DATA, 0, DWB_OGAM_LUT_DATA, rgb[2*i+2].blue_reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool dwb3_program_ogam_lut(
-	struct dcn30_dwbc *dwbc30,
-	const struct pwl_params *params)
-{
-	enum dc_lut_mode current_mode;
-	enum dc_lut_mode next_mode;
+अटल bool dwb3_program_ogam_lut(
+	काष्ठा dcn30_dwbc *dwbc30,
+	स्थिर काष्ठा pwl_params *params)
+अणु
+	क्रमागत dc_lut_mode current_mode;
+	क्रमागत dc_lut_mode next_mode;
 
-	if (params == NULL) {
+	अगर (params == शून्य) अणु
 		REG_SET(DWB_OGAM_CONTROL, 0, DWB_OGAM_MODE, 0);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	current_mode = dwb3_get_ogam_current(dwbc30);
-	if (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
+	अगर (current_mode == LUT_BYPASS || current_mode == LUT_RAM_A)
 		next_mode = LUT_RAM_B;
-	else
+	अन्यथा
 		next_mode = LUT_RAM_A;
 
 	dwb3_configure_ogam_lut(dwbc30, next_mode == LUT_RAM_A);
 
-	if (next_mode == LUT_RAM_A)
+	अगर (next_mode == LUT_RAM_A)
 		dwb3_program_ogam_luta_settings(dwbc30, params);
-	else
+	अन्यथा
 		dwb3_program_ogam_lutb_settings(dwbc30, params);
 
 	dwb3_program_ogam_pwl(
-		dwbc30, params->rgb_resulted, params->hw_points_num);
+		dwbc30, params->rgb_resulted, params->hw_poपूर्णांकs_num);
 
 	REG_SET(DWB_OGAM_CONTROL, 0, DWB_OGAM_MODE, 2);
 	REG_SET(DWB_OGAM_CONTROL, 0, DWB_OGAM_SELECT, next_mode == LUT_RAM_A ? 0 : 1);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 bool dwb3_ogam_set_input_transfer_func(
-	struct dwbc *dwbc,
-	const struct dc_transfer_func *in_transfer_func_dwb_ogam)
-{
-	struct dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_transfer_func *in_transfer_func_dwb_ogam)
+अणु
+	काष्ठा dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
 	bool result = false;
-	struct pwl_params *dwb_ogam_lut = NULL;
+	काष्ठा pwl_params *dwb_ogam_lut = शून्य;
 
-	if (in_transfer_func_dwb_ogam == NULL)
-		return result;
+	अगर (in_transfer_func_dwb_ogam == शून्य)
+		वापस result;
 
-	dwb_ogam_lut = kzalloc(sizeof(*dwb_ogam_lut), GFP_KERNEL);
+	dwb_ogam_lut = kzalloc(माप(*dwb_ogam_lut), GFP_KERNEL);
 
-	if (dwb_ogam_lut) {
-		cm_helper_translate_curve_to_hw_format(
+	अगर (dwb_ogam_lut) अणु
+		cm_helper_translate_curve_to_hw_क्रमmat(
 			in_transfer_func_dwb_ogam,
 			dwb_ogam_lut, false);
 
 		result = dwb3_program_ogam_lut(
 			dwbc30,
 			dwb_ogam_lut);
-		kfree(dwb_ogam_lut);
-		dwb_ogam_lut = NULL;
-	}
+		kमुक्त(dwb_ogam_lut);
+		dwb_ogam_lut = शून्य;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void dwb3_program_gamut_remap(
-		struct dwbc *dwbc,
-		const uint16_t *regval,
-		enum cm_gamut_coef_format coef_format,
-		enum cm_gamut_remap_select select)
-{
-	struct dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
+अटल व्योम dwb3_program_gamut_remap(
+		काष्ठा dwbc *dwbc,
+		स्थिर uपूर्णांक16_t *regval,
+		क्रमागत cm_gamut_coef_क्रमmat coef_क्रमmat,
+		क्रमागत cm_gamut_remap_select select)
+अणु
+	काष्ठा dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
 
-	struct color_matrices_reg gam_regs;
+	काष्ठा color_matrices_reg gam_regs;
 
-	REG_UPDATE(DWB_GAMUT_REMAP_COEF_FORMAT, DWB_GAMUT_REMAP_COEF_FORMAT, coef_format);
+	REG_UPDATE(DWB_GAMUT_REMAP_COEF_FORMAT, DWB_GAMUT_REMAP_COEF_FORMAT, coef_क्रमmat);
 
-	if (regval == NULL || select == CM_GAMUT_REMAP_MODE_BYPASS) {
+	अगर (regval == शून्य || select == CM_GAMUT_REMAP_MODE_BYPASS) अणु
 		REG_SET(DWB_GAMUT_REMAP_MODE, 0,
 				DWB_GAMUT_REMAP_MODE, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (select) {
-	case CM_GAMUT_REMAP_MODE_RAMA_COEFF:
+	चयन (select) अणु
+	हाल CM_GAMUT_REMAP_MODE_RAMA_COEFF:
 		gam_regs.csc_c11_c12 = REG(DWB_GAMUT_REMAPA_C11_C12);
 		gam_regs.csc_c33_c34 = REG(DWB_GAMUT_REMAPA_C33_C34);
 
@@ -288,8 +289,8 @@ static void dwb3_program_gamut_remap(
 				dwbc30->base.ctx,
 				regval,
 				&gam_regs);
-		break;
-	case CM_GAMUT_REMAP_MODE_RAMB_COEFF:
+		अवरोध;
+	हाल CM_GAMUT_REMAP_MODE_RAMB_COEFF:
 		gam_regs.csc_c11_c12 = REG(DWB_GAMUT_REMAPB_C11_C12);
 		gam_regs.csc_c33_c34 = REG(DWB_GAMUT_REMAPB_C33_C34);
 
@@ -297,58 +298,58 @@ static void dwb3_program_gamut_remap(
 				dwbc30->base.ctx,
 				regval,
 				&gam_regs);
-		break;
-	case CM_GAMUT_REMAP_MODE_RESERVED:
+		अवरोध;
+	हाल CM_GAMUT_REMAP_MODE_RESERVED:
 		/* should never happen, bug */
 		BREAK_TO_DEBUGGER();
-		return;
-	default:
-		break;
-	}
+		वापस;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	REG_SET(DWB_GAMUT_REMAP_MODE, 0,
 			DWB_GAMUT_REMAP_MODE, select);
 
-}
+पूर्ण
 
-void dwb3_set_gamut_remap(
-	struct dwbc *dwbc,
-	const struct dc_dwb_params *params)
-{
-	struct dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
-	struct cm_grph_csc_adjustment adjust = params->csc_params;
-	int i = 0;
+व्योम dwb3_set_gamut_remap(
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_dwb_params *params)
+अणु
+	काष्ठा dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
+	काष्ठा cm_grph_csc_adjusपंचांगent adjust = params->csc_params;
+	पूर्णांक i = 0;
 
-	if (adjust.gamut_adjust_type != CM_GAMUT_ADJUST_TYPE_SW) {
-		/* Bypass if type is bypass or hw */
-		dwb3_program_gamut_remap(dwbc, NULL, adjust.gamut_coef_format, CM_GAMUT_REMAP_MODE_BYPASS);
-	} else {
-		struct fixed31_32 arr_matrix[12];
-		uint16_t arr_reg_val[12];
-		unsigned int current_mode;
+	अगर (adjust.gamut_adjust_type != CM_GAMUT_ADJUST_TYPE_SW) अणु
+		/* Bypass अगर type is bypass or hw */
+		dwb3_program_gamut_remap(dwbc, शून्य, adjust.gamut_coef_क्रमmat, CM_GAMUT_REMAP_MODE_BYPASS);
+	पूर्ण अन्यथा अणु
+		काष्ठा fixed31_32 arr_matrix[12];
+		uपूर्णांक16_t arr_reg_val[12];
+		अचिन्हित पूर्णांक current_mode;
 
-		for (i = 0; i < 12; i++)
+		क्रम (i = 0; i < 12; i++)
 			arr_matrix[i] = adjust.temperature_matrix[i];
 
-		convert_float_matrix(arr_reg_val, arr_matrix, 12);
+		convert_भग्न_matrix(arr_reg_val, arr_matrix, 12);
 
 		REG_GET(DWB_GAMUT_REMAP_MODE, DWB_GAMUT_REMAP_MODE_CURRENT, &current_mode);
 
-		if (current_mode == CM_GAMUT_REMAP_MODE_RAMA_COEFF) {
+		अगर (current_mode == CM_GAMUT_REMAP_MODE_RAMA_COEFF) अणु
 			dwb3_program_gamut_remap(dwbc, arr_reg_val,
-					adjust.gamut_coef_format, CM_GAMUT_REMAP_MODE_RAMB_COEFF);
-		} else {
+					adjust.gamut_coef_क्रमmat, CM_GAMUT_REMAP_MODE_RAMB_COEFF);
+		पूर्ण अन्यथा अणु
 			dwb3_program_gamut_remap(dwbc, arr_reg_val,
-					adjust.gamut_coef_format, CM_GAMUT_REMAP_MODE_RAMA_COEFF);
-		}
-	}
-}
+					adjust.gamut_coef_क्रमmat, CM_GAMUT_REMAP_MODE_RAMA_COEFF);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void dwb3_program_hdr_mult(
-	struct dwbc *dwbc,
-	const struct dc_dwb_params *params)
-{
-	struct dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
+व्योम dwb3_program_hdr_mult(
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_dwb_params *params)
+अणु
+	काष्ठा dcn30_dwbc *dwbc30 = TO_DCN30_DWBC(dwbc);
 
 	REG_UPDATE(DWB_HDR_MULT_COEF, DWB_HDR_MULT_COEF, params->hdr_mult);
-}
+पूर्ण

@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_MEMCPY_H__
-#define __I915_MEMCPY_H__
+#अगर_अघोषित __I915_MEMCPY_H__
+#घोषणा __I915_MEMCPY_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-void i915_memcpy_init_early(struct drm_i915_private *i915);
+व्योम i915_स_नकल_init_early(काष्ठा drm_i915_निजी *i915);
 
-bool i915_memcpy_from_wc(void *dst, const void *src, unsigned long len);
-void i915_unaligned_memcpy_from_wc(void *dst, const void *src, unsigned long len);
+bool i915_स_नकल_from_wc(व्योम *dst, स्थिर व्योम *src, अचिन्हित दीर्घ len);
+व्योम i915_unaligned_स_नकल_from_wc(व्योम *dst, स्थिर व्योम *src, अचिन्हित दीर्घ len);
 
-/* The movntdqa instructions used for memcpy-from-wc require 16-byte alignment,
- * as well as SSE4.1 support. i915_memcpy_from_wc() will report if it cannot
- * perform the operation. To check beforehand, pass in the parameters to
- * to i915_can_memcpy_from_wc() - since we only care about the low 4 bits,
- * you only need to pass in the minor offsets, page-aligned pointers are
+/* The movntdqa inकाष्ठाions used क्रम स_नकल-from-wc require 16-byte alignment,
+ * as well as SSE4.1 support. i915_स_नकल_from_wc() will report अगर it cannot
+ * perक्रमm the operation. To check beक्रमehand, pass in the parameters to
+ * to i915_can_स_नकल_from_wc() - since we only care about the low 4 bits,
+ * you only need to pass in the minor offsets, page-aligned poपूर्णांकers are
  * always valid.
  *
- * For just checking for SSE4.1, in the foreknowledge that the future use
- * will be correctly aligned, just use i915_has_memcpy_from_wc().
+ * For just checking क्रम SSE4.1, in the क्रमeknowledge that the future use
+ * will be correctly aligned, just use i915_has_स_नकल_from_wc().
  */
-#define i915_can_memcpy_from_wc(dst, src, len) \
-	i915_memcpy_from_wc((void *)((unsigned long)(dst) | (unsigned long)(src) | (len)), NULL, 0)
+#घोषणा i915_can_स_नकल_from_wc(dst, src, len) \
+	i915_स_नकल_from_wc((व्योम *)((अचिन्हित दीर्घ)(dst) | (अचिन्हित दीर्घ)(src) | (len)), शून्य, 0)
 
-#define i915_has_memcpy_from_wc() \
-	i915_memcpy_from_wc(NULL, NULL, 0)
+#घोषणा i915_has_स_नकल_from_wc() \
+	i915_स_नकल_from_wc(शून्य, शून्य, 0)
 
-#endif /* __I915_MEMCPY_H__ */
+#पूर्ण_अगर /* __I915_MEMCPY_H__ */

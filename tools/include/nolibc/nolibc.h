@@ -1,299 +1,300 @@
-/* SPDX-License-Identifier: LGPL-2.1 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: LGPL-2.1 OR MIT */
 /* nolibc.h
  * Copyright (C) 2017-2018 Willy Tarreau <w@1wt.eu>
  */
 
 /*
- * This file is designed to be used as a libc alternative for minimal programs
+ * This file is deचिन्हित to be used as a libc alternative क्रम minimal programs
  * with very limited requirements. It consists of a small number of syscall and
- * type definitions, and the minimal startup code needed to call main().
- * All syscalls are declared as static functions so that they can be optimized
+ * type definitions, and the minimal startup code needed to call मुख्य().
+ * All syscalls are declared as अटल functions so that they can be optimized
  * away by the compiler when not used.
  *
- * Syscalls are split into 3 levels:
- *   - The lower level is the arch-specific syscall() definition, consisting in
+ * Syscalls are split पूर्णांकo 3 levels:
+ *   - The lower level is the arch-specअगरic syscall() definition, consisting in
  *     assembly code in compound expressions. These are called my_syscall0() to
  *     my_syscall6() depending on the number of arguments. The MIPS
  *     implementation is limited to 5 arguments. All input arguments are cast
- *     to a long stored in a register. These expressions always return the
- *     syscall's return value as a signed long value which is often either a
- *     pointer or the negated errno value.
+ *     to a दीर्घ stored in a रेजिस्टर. These expressions always वापस the
+ *     syscall's वापस value as a चिन्हित दीर्घ value which is often either a
+ *     poपूर्णांकer or the negated त्रुटि_सं value.
  *
  *   - The second level is mostly architecture-independent. It is made of
- *     static functions called sys_<name>() which rely on my_syscallN()
+ *     अटल functions called sys_<name>() which rely on my_syscallN()
  *     depending on the syscall definition. These functions are responsible
- *     for exposing the appropriate types for the syscall arguments (int,
- *     pointers, etc) and for setting the appropriate return type (often int).
- *     A few of them are architecture-specific because the syscalls are not all
- *     mapped exactly the same among architectures. For example, some archs do
+ *     क्रम exposing the appropriate types क्रम the syscall arguments (पूर्णांक,
+ *     poपूर्णांकers, etc) and क्रम setting the appropriate वापस type (often पूर्णांक).
+ *     A few of them are architecture-specअगरic because the syscalls are not all
+ *     mapped exactly the same among architectures. For example, some archs करो
  *     not implement select() and need pselect6() instead, so the sys_select()
- *     function will have to abstract this.
+ *     function will have to असलtract this.
  *
  *   - The third level is the libc call definition. It exposes the lower raw
- *     sys_<name>() calls in a way that looks like what a libc usually does,
- *     takes care of specific input values, and of setting errno upon error.
+ *     sys_<name>() calls in a way that looks like what a libc usually करोes,
+ *     takes care of specअगरic input values, and of setting त्रुटि_सं upon error.
  *     There can be minor variations compared to standard libc calls. For
- *     example the open() call always takes 3 args here.
+ *     example the खोलो() call always takes 3 args here.
  *
- * The errno variable is declared static and unused. This way it can be
- * optimized away if not used. However this means that a program made of
- * multiple C files may observe different errno values (one per C file). For
- * the type of programs this project targets it usually is not a problem. The
+ * The त्रुटि_सं variable is declared अटल and unused. This way it can be
+ * optimized away अगर not used. However this means that a program made of
+ * multiple C files may observe dअगरferent त्रुटि_सं values (one per C file). For
+ * the type of programs this project tarमाला_लो it usually is not a problem. The
  * resulting program may even be reduced by defining the NOLIBC_IGNORE_ERRNO
- * macro, in which case the errno value will never be assigned.
+ * macro, in which हाल the त्रुटि_सं value will never be asचिन्हित.
  *
- * Some stdint-like integer types are defined. These are valid on all currently
- * supported architectures, because signs are enforced, ints are assumed to be
- * 32 bits, longs the size of a pointer and long long 64 bits. If more
+ * Some मानक_निवेशt-like पूर्णांकeger types are defined. These are valid on all currently
+ * supported architectures, because signs are enक्रमced, पूर्णांकs are assumed to be
+ * 32 bits, दीर्घs the size of a poपूर्णांकer and दीर्घ दीर्घ 64 bits. If more
  * architectures have to be supported, this may need to be adapted.
  *
- * Some macro definitions like the O_* values passed to open(), and some
- * structures like the sys_stat struct depend on the architecture.
+ * Some macro definitions like the O_* values passed to खोलो(), and some
+ * काष्ठाures like the sys_stat काष्ठा depend on the architecture.
  *
- * The definitions start with the architecture-specific parts, which are picked
+ * The definitions start with the architecture-specअगरic parts, which are picked
  * based on what the compiler knows about the target architecture, and are
  * completed with the generic code. Since it is the compiler which sets the
  * target architecture, cross-compiling normally works out of the box without
- * having to specify anything.
+ * having to specअगरy anything.
  *
- * Finally some very common libc-level functions are provided. It is the case
- * for a few functions usually found in string.h, ctype.h, or stdlib.h. Nothing
+ * Finally some very common libc-level functions are provided. It is the हाल
+ * क्रम a few functions usually found in माला.स, प्रकार.स, or मानककोष.स. Nothing
  * is currently provided regarding stdio emulation.
  *
- * The macro NOLIBC is always defined, so that it is possible for a program to
- * check this macro to know if it is being built against and decide to disable
+ * The macro NOLIBC is always defined, so that it is possible क्रम a program to
+ * check this macro to know अगर it is being built against and decide to disable
  * some features or simply not to include some standard libc files.
  *
- * Ideally this file should be split in multiple files for easier long term
- * maintenance, but provided as a single file as it is now, it's quite
+ * Ideally this file should be split in multiple files क्रम easier दीर्घ term
+ * मुख्यtenance, but provided as a single file as it is now, it's quite
  * convenient to use. Maybe some variations involving a set of includes at the
  * top could work.
  *
- * A simple static executable may be built this way :
+ * A simple अटल executable may be built this way :
  *      $ gcc -fno-asynchronous-unwind-tables -fno-ident -s -Os -nostdlib \
- *            -static -include nolibc.h -o hello hello.c -lgcc
+ *            -अटल -include nolibc.h -o hello hello.c -lgcc
  *
  * A very useful calling convention table may be found here :
- *      http://man7.org/linux/man-pages/man2/syscall.2.html
+ *      http://man7.org/linux/man-pages/man2/syscall.2.hपंचांगl
  *
- * This doc is quite convenient though not necessarily up to date :
+ * This करोc is quite convenient though not necessarily up to date :
  *      https://w3challs.com/syscalls/
  *
  */
 
-#include <asm/unistd.h>
-#include <asm/ioctls.h>
-#include <asm/errno.h>
-#include <linux/fs.h>
-#include <linux/loop.h>
-#include <linux/time.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/ioctls.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/loop.h>
+#समावेश <linux/समय.स>
 
-#define NOLIBC
+#घोषणा NOLIBC
 
-/* this way it will be removed if unused */
-static int errno;
+/* this way it will be हटाओd अगर unused */
+अटल पूर्णांक त्रुटि_सं;
 
-#ifndef NOLIBC_IGNORE_ERRNO
-#define SET_ERRNO(v) do { errno = (v); } while (0)
-#else
-#define SET_ERRNO(v) do { } while (0)
-#endif
+#अगर_अघोषित NOLIBC_IGNORE_ERRNO
+#घोषणा SET_ERRNO(v) करो अणु त्रुटि_सं = (v); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा SET_ERRNO(v) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-/* errno codes all ensure that they will not conflict with a valid pointer
+/* त्रुटि_सं codes all ensure that they will not conflict with a valid poपूर्णांकer
  * because they all correspond to the highest addressable memory page.
  */
-#define MAX_ERRNO 4095
+#घोषणा MAX_ERRNO 4095
 
-/* Declare a few quite common macros and types that usually are in stdlib.h,
- * stdint.h, ctype.h, unistd.h and a few other common locations.
+/* Declare a few quite common macros and types that usually are in मानककोष.स,
+ * मानक_निवेशt.h, प्रकार.स, unistd.h and a few other common locations.
  */
 
-#define NULL ((void *)0)
+#घोषणा शून्य ((व्योम *)0)
 
-/* stdint types */
-typedef unsigned char       uint8_t;
-typedef   signed char        int8_t;
-typedef unsigned short     uint16_t;
-typedef   signed short      int16_t;
-typedef unsigned int       uint32_t;
-typedef   signed int        int32_t;
-typedef unsigned long long uint64_t;
-typedef   signed long long  int64_t;
-typedef unsigned long        size_t;
-typedef   signed long       ssize_t;
-typedef unsigned long     uintptr_t;
-typedef   signed long      intptr_t;
-typedef   signed long     ptrdiff_t;
+/* मानक_निवेशt types */
+प्रकार अचिन्हित अक्षर       uपूर्णांक8_t;
+प्रकार   चिन्हित अक्षर        पूर्णांक8_t;
+प्रकार अचिन्हित लघु     uपूर्णांक16_t;
+प्रकार   चिन्हित लघु      पूर्णांक16_t;
+प्रकार अचिन्हित पूर्णांक       uपूर्णांक32_t;
+प्रकार   चिन्हित पूर्णांक        पूर्णांक32_t;
+प्रकार अचिन्हित दीर्घ दीर्घ uपूर्णांक64_t;
+प्रकार   चिन्हित दीर्घ दीर्घ  पूर्णांक64_t;
+प्रकार अचिन्हित दीर्घ        माप_प्रकार;
+प्रकार   चिन्हित दीर्घ       sमाप_प्रकार;
+प्रकार अचिन्हित दीर्घ     uपूर्णांकptr_t;
+प्रकार   चिन्हित दीर्घ      पूर्णांकptr_t;
+प्रकार   चिन्हित दीर्घ     सूचक_भेद_प्रकार;
 
-/* for stat() */
-typedef unsigned int          dev_t;
-typedef unsigned long         ino_t;
-typedef unsigned int         mode_t;
-typedef   signed int          pid_t;
-typedef unsigned int          uid_t;
-typedef unsigned int          gid_t;
-typedef unsigned long       nlink_t;
-typedef   signed long         off_t;
-typedef   signed long     blksize_t;
-typedef   signed long      blkcnt_t;
-typedef   signed long        time_t;
+/* क्रम stat() */
+प्रकार अचिन्हित पूर्णांक          dev_t;
+प्रकार अचिन्हित दीर्घ         ino_t;
+प्रकार अचिन्हित पूर्णांक         mode_t;
+प्रकार   चिन्हित पूर्णांक          pid_t;
+प्रकार अचिन्हित पूर्णांक          uid_t;
+प्रकार अचिन्हित पूर्णांक          gid_t;
+प्रकार अचिन्हित दीर्घ       nlink_t;
+प्रकार   चिन्हित दीर्घ         off_t;
+प्रकार   चिन्हित दीर्घ     blkमाप_प्रकार;
+प्रकार   चिन्हित दीर्घ      blkcnt_t;
+प्रकार   चिन्हित दीर्घ        समय_प्रकार;
 
-/* for poll() */
-struct pollfd {
-	int fd;
-	short int events;
-	short int revents;
-};
+/* क्रम poll() */
+काष्ठा pollfd अणु
+	पूर्णांक fd;
+	लघु पूर्णांक events;
+	लघु पूर्णांक revents;
+पूर्ण;
 
-/* for getdents64() */
-struct linux_dirent64 {
-	uint64_t       d_ino;
-	int64_t        d_off;
-	unsigned short d_reclen;
-	unsigned char  d_type;
-	char           d_name[];
-};
+/* क्रम getdents64() */
+काष्ठा linux_dirent64 अणु
+	uपूर्णांक64_t       d_ino;
+	पूर्णांक64_t        d_off;
+	अचिन्हित लघु d_reclen;
+	अचिन्हित अक्षर  d_type;
+	अक्षर           d_name[];
+पूर्ण;
 
 /* commonly an fd_set represents 256 FDs */
-#define FD_SETSIZE 256
-typedef struct { uint32_t fd32[FD_SETSIZE/32]; } fd_set;
+#घोषणा FD_SETSIZE 256
+प्रकार काष्ठा अणु uपूर्णांक32_t fd32[FD_SETSIZE/32]; पूर्ण fd_set;
 
-/* needed by wait4() */
-struct rusage {
-	struct timeval ru_utime;
-	struct timeval ru_stime;
-	long   ru_maxrss;
-	long   ru_ixrss;
-	long   ru_idrss;
-	long   ru_isrss;
-	long   ru_minflt;
-	long   ru_majflt;
-	long   ru_nswap;
-	long   ru_inblock;
-	long   ru_oublock;
-	long   ru_msgsnd;
-	long   ru_msgrcv;
-	long   ru_nsignals;
-	long   ru_nvcsw;
-	long   ru_nivcsw;
-};
+/* needed by रुको4() */
+काष्ठा rusage अणु
+	काष्ठा समयval ru_uसमय;
+	काष्ठा समयval ru_sसमय;
+	दीर्घ   ru_maxrss;
+	दीर्घ   ru_ixrss;
+	दीर्घ   ru_idrss;
+	दीर्घ   ru_isrss;
+	दीर्घ   ru_minflt;
+	दीर्घ   ru_majflt;
+	दीर्घ   ru_nswap;
+	दीर्घ   ru_inblock;
+	दीर्घ   ru_oublock;
+	दीर्घ   ru_msgsnd;
+	दीर्घ   ru_msgrcv;
+	दीर्घ   ru_nसंकेतs;
+	दीर्घ   ru_nvcsw;
+	दीर्घ   ru_nivcsw;
+पूर्ण;
 
 /* stat flags (WARNING, octal here) */
-#define S_IFDIR       0040000
-#define S_IFCHR       0020000
-#define S_IFBLK       0060000
-#define S_IFREG       0100000
-#define S_IFIFO       0010000
-#define S_IFLNK       0120000
-#define S_IFSOCK      0140000
-#define S_IFMT        0170000
+#घोषणा S_IFसूची       0040000
+#घोषणा S_IFCHR       0020000
+#घोषणा S_IFBLK       0060000
+#घोषणा S_IFREG       0100000
+#घोषणा S_IFIFO       0010000
+#घोषणा S_IFLNK       0120000
+#घोषणा S_IFSOCK      0140000
+#घोषणा S_IFMT        0170000
 
-#define S_ISDIR(mode)  (((mode) & S_IFDIR) == S_IFDIR)
-#define S_ISCHR(mode)  (((mode) & S_IFCHR) == S_IFCHR)
-#define S_ISBLK(mode)  (((mode) & S_IFBLK) == S_IFBLK)
-#define S_ISREG(mode)  (((mode) & S_IFREG) == S_IFREG)
-#define S_ISFIFO(mode) (((mode) & S_IFIFO) == S_IFIFO)
-#define S_ISLNK(mode)  (((mode) & S_IFLNK) == S_IFLNK)
-#define S_ISSOCK(mode) (((mode) & S_IFSOCK) == S_IFSOCK)
+#घोषणा S_ISसूची(mode)  (((mode) & S_IFसूची) == S_IFसूची)
+#घोषणा S_ISCHR(mode)  (((mode) & S_IFCHR) == S_IFCHR)
+#घोषणा S_ISBLK(mode)  (((mode) & S_IFBLK) == S_IFBLK)
+#घोषणा S_ISREG(mode)  (((mode) & S_IFREG) == S_IFREG)
+#घोषणा S_ISFIFO(mode) (((mode) & S_IFIFO) == S_IFIFO)
+#घोषणा S_ISLNK(mode)  (((mode) & S_IFLNK) == S_IFLNK)
+#घोषणा S_ISSOCK(mode) (((mode) & S_IFSOCK) == S_IFSOCK)
 
-#define DT_UNKNOWN 0
-#define DT_FIFO    1
-#define DT_CHR     2
-#define DT_DIR     4
-#define DT_BLK     6
-#define DT_REG     8
-#define DT_LNK    10
-#define DT_SOCK   12
+#घोषणा DT_UNKNOWN 0
+#घोषणा DT_FIFO    1
+#घोषणा DT_CHR     2
+#घोषणा DT_सूची     4
+#घोषणा DT_BLK     6
+#घोषणा DT_REG     8
+#घोषणा DT_LNK    10
+#घोषणा DT_SOCK   12
 
 /* all the *at functions */
-#ifndef AT_FDCWD
-#define AT_FDCWD             -100
-#endif
+#अगर_अघोषित AT_FDCWD
+#घोषणा AT_FDCWD             -100
+#पूर्ण_अगर
 
 /* lseek */
-#define SEEK_SET        0
-#define SEEK_CUR        1
-#define SEEK_END        2
+#घोषणा शुरू_से        0
+#घोषणा प्रस्तुत_से        1
+#घोषणा अंत_से        2
 
 /* reboot */
-#define LINUX_REBOOT_MAGIC1         0xfee1dead
-#define LINUX_REBOOT_MAGIC2         0x28121969
-#define LINUX_REBOOT_CMD_HALT       0xcdef0123
-#define LINUX_REBOOT_CMD_POWER_OFF  0x4321fedc
-#define LINUX_REBOOT_CMD_RESTART    0x01234567
-#define LINUX_REBOOT_CMD_SW_SUSPEND 0xd000fce2
+#घोषणा LINUX_REBOOT_MAGIC1         0xfee1dead
+#घोषणा LINUX_REBOOT_MAGIC2         0x28121969
+#घोषणा LINUX_REBOOT_CMD_HALT       0xcdef0123
+#घोषणा LINUX_REBOOT_CMD_POWER_OFF  0x4321fedc
+#घोषणा LINUX_REBOOT_CMD_RESTART    0x01234567
+#घोषणा LINUX_REBOOT_CMD_SW_SUSPEND 0xd000fce2
 
 
-/* The format of the struct as returned by the libc to the application, which
- * significantly differs from the format returned by the stat() syscall flavours.
+/* The क्रमmat of the काष्ठा as वापसed by the libc to the application, which
+ * signअगरicantly dअगरfers from the क्रमmat वापसed by the stat() syscall flavours.
  */
-struct stat {
+काष्ठा stat अणु
 	dev_t     st_dev;     /* ID of device containing file */
 	ino_t     st_ino;     /* inode number */
 	mode_t    st_mode;    /* protection */
 	nlink_t   st_nlink;   /* number of hard links */
 	uid_t     st_uid;     /* user ID of owner */
 	gid_t     st_gid;     /* group ID of owner */
-	dev_t     st_rdev;    /* device ID (if special file) */
+	dev_t     st_rdev;    /* device ID (अगर special file) */
 	off_t     st_size;    /* total size, in bytes */
-	blksize_t st_blksize; /* blocksize for file system I/O */
+	blkमाप_प्रकार st_blksize; /* blocksize क्रम file प्रणाली I/O */
 	blkcnt_t  st_blocks;  /* number of 512B blocks allocated */
-	time_t    st_atime;   /* time of last access */
-	time_t    st_mtime;   /* time of last modification */
-	time_t    st_ctime;   /* time of last status change */
-};
+	समय_प्रकार    st_aसमय;   /* समय of last access */
+	समय_प्रकार    st_mसमय;   /* समय of last modअगरication */
+	समय_प्रकार    st_स_समय;   /* समय of last status change */
+पूर्ण;
 
-#define WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
-#define WIFEXITED(status)     (((status) & 0x7f) == 0)
+#घोषणा WEXITSTATUS(status)   (((status) & 0xff00) >> 8)
+#घोषणा WIFEXITED(status)     (((status) & 0x7f) == 0)
 
-/* for SIGCHLD */
-#include <asm/signal.h>
+/* क्रम SIGCHLD */
+#समावेश <यंत्र/संकेत.स>
 
-/* Below comes the architecture-specific code. For each architecture, we have
+/* Below comes the architecture-specअगरic code. For each architecture, we have
  * the syscall declarations and the _start code definition. This is the only
- * global part. On all architectures the kernel puts everything in the stack
- * before jumping to _start just above us, without any return address (_start
- * is not a function but an entry pint). So at the stack pointer we find argc.
- * Then argv[] begins, and ends at the first NULL. Then we have envp which
- * starts and ends with a NULL as well. So envp=argv+argc+1.
+ * global part. On all architectures the kernel माला_दो everything in the stack
+ * beक्रमe jumping to _start just above us, without any वापस address (_start
+ * is not a function but an entry pपूर्णांक). So at the stack poपूर्णांकer we find argc.
+ * Then argv[] begins, and ends at the first शून्य. Then we have envp which
+ * starts and ends with a शून्य as well. So envp=argv+argc+1.
  */
 
-#if defined(__x86_64__)
-/* Syscalls for x86_64 :
- *   - registers are 64-bit
+#अगर defined(__x86_64__)
+/* Syscalls क्रम x86_64 :
+ *   - रेजिस्टरs are 64-bit
  *   - syscall number is passed in rax
  *   - arguments are in rdi, rsi, rdx, r10, r8, r9 respectively
- *   - the system call is performed by calling the syscall instruction
- *   - syscall return comes in rax
+ *   - the प्रणाली call is perक्रमmed by calling the syscall inकाष्ठाion
+ *   - syscall वापस comes in rax
  *   - rcx and r8..r11 may be clobbered, others are preserved.
- *   - the arguments are cast to long and assigned into the target registers
- *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register constraints.
- *   - the syscall number is always specified last in order to allow to force
- *     some registers before (gcc refuses a %-register at the last position).
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target रेजिस्टरs
+ *     which are then simply passed as रेजिस्टरs to the यंत्र code, so that we
+ *     करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
+ *   - the syscall number is always specअगरied last in order to allow to क्रमce
+ *     some रेजिस्टरs beक्रमe (gcc refuses a %-रेजिस्टर at the last position).
  */
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
 		: "0"(_num)                                                   \
 		: "rcx", "r8", "r9", "r10", "r11", "memory", "cc"             \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1),                                                 \
@@ -301,16 +302,16 @@ struct stat {
 		: "rcx", "r8", "r9", "r10", "r11", "memory", "cc"             \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
-	register long _arg2 asm("rsi") = (long)(arg2);                        \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("rsi") = (दीर्घ)(arg2);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2),                                     \
@@ -318,17 +319,17 @@ struct stat {
 		: "rcx", "r8", "r9", "r10", "r11", "memory", "cc"             \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
-	register long _arg2 asm("rsi") = (long)(arg2);                        \
-	register long _arg3 asm("rdx") = (long)(arg3);                        \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("rsi") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("rdx") = (दीर्घ)(arg3);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3),                         \
@@ -336,18 +337,18 @@ struct stat {
 		: "rcx", "r8", "r9", "r10", "r11", "memory", "cc"             \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
-	register long _arg2 asm("rsi") = (long)(arg2);                        \
-	register long _arg3 asm("rdx") = (long)(arg3);                        \
-	register long _arg4 asm("r10") = (long)(arg4);                        \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("rsi") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("rdx") = (दीर्घ)(arg3);                        \
+	रेजिस्टर दीर्घ _arg4 यंत्र("r10") = (दीर्घ)(arg4);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4)                                    \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4),             \
@@ -355,19 +356,19 @@ struct stat {
 		: "rcx", "r8", "r9", "r11", "memory", "cc"                    \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
-	register long _arg2 asm("rsi") = (long)(arg2);                        \
-	register long _arg3 asm("rdx") = (long)(arg3);                        \
-	register long _arg4 asm("r10") = (long)(arg4);                        \
-	register long _arg5 asm("r8")  = (long)(arg5);                        \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("rsi") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("rdx") = (दीर्घ)(arg3);                        \
+	रेजिस्टर दीर्घ _arg4 यंत्र("r10") = (दीर्घ)(arg4);                        \
+	रेजिस्टर दीर्घ _arg5 यंत्र("r8")  = (दीर्घ)(arg5);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4), "=r"(_arg5)                       \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -375,20 +376,20 @@ struct stat {
 		: "rcx", "r9", "r11", "memory", "cc"                          \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num  asm("rax") = (num);                               \
-	register long _arg1 asm("rdi") = (long)(arg1);                        \
-	register long _arg2 asm("rsi") = (long)(arg2);                        \
-	register long _arg3 asm("rdx") = (long)(arg3);                        \
-	register long _arg4 asm("r10") = (long)(arg4);                        \
-	register long _arg5 asm("r8")  = (long)(arg5);                        \
-	register long _arg6 asm("r9")  = (long)(arg6);                        \
+#घोषणा my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("rax") = (num);                               \
+	रेजिस्टर दीर्घ _arg1 यंत्र("rdi") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("rsi") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("rdx") = (दीर्घ)(arg3);                        \
+	रेजिस्टर दीर्घ _arg4 यंत्र("r10") = (दीर्घ)(arg4);                        \
+	रेजिस्टर दीर्घ _arg5 यंत्र("r8")  = (दीर्घ)(arg5);                        \
+	रेजिस्टर दीर्घ _arg6 यंत्र("r9")  = (दीर्घ)(arg6);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"syscall\n"                                                   \
 		: "=a" (_ret), "=r"(_arg4), "=r"(_arg5)                       \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -396,103 +397,103 @@ struct stat {
 		: "rcx", "r11", "memory", "cc"                                \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
 /* startup code */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".global _start\n"
     "_start:\n"
     "pop %rdi\n"                // argc   (first arg, %rdi)
     "mov %rsp, %rsi\n"          // argv[] (second arg, %rsi)
-    "lea 8(%rsi,%rdi,8),%rdx\n" // then a NULL then envp (third arg, %rdx)
+    "lea 8(%rsi,%rdi,8),%rdx\n" // then a शून्य then envp (third arg, %rdx)
     "and $-16, %rsp\n"          // x86 ABI : esp must be 16-byte aligned when
     "sub $8, %rsp\n"            // entering the callee
-    "call main\n"               // main() returns the status code, we'll exit with it.
-    "movzb %al, %rdi\n"         // retrieve exit code from 8 lower bits
-    "mov $60, %rax\n"           // NR_exit == 60
-    "syscall\n"                 // really exit
-    "hlt\n"                     // ensure it does not return
+    "call main\n"               // मुख्य() वापसs the status code, we'll निकास with it.
+    "movzb %al, %rdi\n"         // retrieve निकास code from 8 lower bits
+    "mov $60, %rax\n"           // NR_निकास == 60
+    "syscall\n"                 // really निकास
+    "hlt\n"                     // ensure it करोes not वापस
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_CREAT          0x40
-#define O_EXCL           0x80
-#define O_NOCTTY        0x100
-#define O_TRUNC         0x200
-#define O_APPEND        0x400
-#define O_NONBLOCK      0x800
-#define O_DIRECTORY   0x10000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_CREAT          0x40
+#घोषणा O_EXCL           0x80
+#घोषणा O_NOCTTY        0x100
+#घोषणा O_TRUNC         0x200
+#घोषणा O_APPEND        0x400
+#घोषणा O_NONBLOCK      0x800
+#घोषणा O_सूचीECTORY   0x10000
 
-/* The struct returned by the stat() syscall, equivalent to stat64(). The
- * syscall returns 116 bytes and stops in the middle of __unused.
+/* The काष्ठा वापसed by the stat() syscall, equivalent to stat64(). The
+ * syscall वापसs 116 bytes and stops in the middle of __unused.
  */
-struct sys_stat_struct {
-	unsigned long st_dev;
-	unsigned long st_ino;
-	unsigned long st_nlink;
-	unsigned int  st_mode;
-	unsigned int  st_uid;
+काष्ठा sys_stat_काष्ठा अणु
+	अचिन्हित दीर्घ st_dev;
+	अचिन्हित दीर्घ st_ino;
+	अचिन्हित दीर्घ st_nlink;
+	अचिन्हित पूर्णांक  st_mode;
+	अचिन्हित पूर्णांक  st_uid;
 
-	unsigned int  st_gid;
-	unsigned int  __pad0;
-	unsigned long st_rdev;
-	long          st_size;
-	long          st_blksize;
+	अचिन्हित पूर्णांक  st_gid;
+	अचिन्हित पूर्णांक  __pad0;
+	अचिन्हित दीर्घ st_rdev;
+	दीर्घ          st_size;
+	दीर्घ          st_blksize;
 
-	long          st_blocks;
-	unsigned long st_atime;
-	unsigned long st_atime_nsec;
-	unsigned long st_mtime;
+	दीर्घ          st_blocks;
+	अचिन्हित दीर्घ st_aसमय;
+	अचिन्हित दीर्घ st_aसमय_nsec;
+	अचिन्हित दीर्घ st_mसमय;
 
-	unsigned long st_mtime_nsec;
-	unsigned long st_ctime;
-	unsigned long st_ctime_nsec;
-	long          __unused[3];
-};
+	अचिन्हित दीर्घ st_mसमय_nsec;
+	अचिन्हित दीर्घ st_स_समय;
+	अचिन्हित दीर्घ st_स_समय_nsec;
+	दीर्घ          __unused[3];
+पूर्ण;
 
-#elif defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
-/* Syscalls for i386 :
+#या_अगर defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__)
+/* Syscalls क्रम i386 :
  *   - mostly similar to x86_64
- *   - registers are 32-bit
+ *   - रेजिस्टरs are 32-bit
  *   - syscall number is passed in eax
  *   - arguments are in ebx, ecx, edx, esi, edi, ebp respectively
- *   - all registers are preserved (except eax of course)
- *   - the system call is performed by calling int $0x80
- *   - syscall return comes in eax
- *   - the arguments are cast to long and assigned into the target registers
- *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register constraints.
- *   - the syscall number is always specified last in order to allow to force
- *     some registers before (gcc refuses a %-register at the last position).
+ *   - all रेजिस्टरs are preserved (except eax of course)
+ *   - the प्रणाली call is perक्रमmed by calling पूर्णांक $0x80
+ *   - syscall वापस comes in eax
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target रेजिस्टरs
+ *     which are then simply passed as रेजिस्टरs to the यंत्र code, so that we
+ *     करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
+ *   - the syscall number is always specअगरied last in order to allow to क्रमce
+ *     some रेजिस्टरs beक्रमe (gcc refuses a %-रेजिस्टर at the last position).
  *
- * Also, i386 supports the old_select syscall if newselect is not available
+ * Also, i386 supports the old_select syscall अगर newselect is not available
  */
-#define __ARCH_WANT_SYS_OLD_SELECT
+#घोषणा __ARCH_WANT_SYS_OLD_SELECT
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "0"(_num)                                                   \
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
-	register long _arg1 asm("ebx") = (long)(arg1);                        \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("ebx") = (दीर्घ)(arg1);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1),                                                 \
@@ -500,16 +501,16 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
-	register long _arg1 asm("ebx") = (long)(arg1);                        \
-	register long _arg2 asm("ecx") = (long)(arg2);                        \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("ebx") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("ecx") = (दीर्घ)(arg2);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2),                                     \
@@ -517,17 +518,17 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
-	register long _arg1 asm("ebx") = (long)(arg1);                        \
-	register long _arg2 asm("ecx") = (long)(arg2);                        \
-	register long _arg3 asm("edx") = (long)(arg3);                        \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("ebx") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("ecx") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("edx") = (दीर्घ)(arg3);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3),                         \
@@ -535,18 +536,18 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
-	register long _arg1 asm("ebx") = (long)(arg1);                        \
-	register long _arg2 asm("ecx") = (long)(arg2);                        \
-	register long _arg3 asm("edx") = (long)(arg3);                        \
-	register long _arg4 asm("esi") = (long)(arg4);                        \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("ebx") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("ecx") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("edx") = (दीर्घ)(arg3);                        \
+	रेजिस्टर दीर्घ _arg4 यंत्र("esi") = (दीर्घ)(arg4);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4),             \
@@ -554,19 +555,19 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	long _ret;                                                            \
-	register long _num asm("eax") = (num);                                \
-	register long _arg1 asm("ebx") = (long)(arg1);                        \
-	register long _arg2 asm("ecx") = (long)(arg2);                        \
-	register long _arg3 asm("edx") = (long)(arg3);                        \
-	register long _arg4 asm("esi") = (long)(arg4);                        \
-	register long _arg5 asm("edi") = (long)(arg5);                        \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	दीर्घ _ret;                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("eax") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("ebx") = (दीर्घ)(arg1);                        \
+	रेजिस्टर दीर्घ _arg2 यंत्र("ecx") = (दीर्घ)(arg2);                        \
+	रेजिस्टर दीर्घ _arg3 यंत्र("edx") = (दीर्घ)(arg3);                        \
+	रेजिस्टर दीर्घ _arg4 यंत्र("esi") = (दीर्घ)(arg4);                        \
+	रेजिस्टर दीर्घ _arg5 यंत्र("edi") = (दीर्घ)(arg5);                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"int $0x80\n"                                                 \
 		: "=a" (_ret)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -574,104 +575,104 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_ret;                                                                 \
-})
+पूर्ण)
 
 /* startup code */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".global _start\n"
     "_start:\n"
     "pop %eax\n"                // argc   (first arg, %eax)
     "mov %esp, %ebx\n"          // argv[] (second arg, %ebx)
-    "lea 4(%ebx,%eax,4),%ecx\n" // then a NULL then envp (third arg, %ecx)
+    "lea 4(%ebx,%eax,4),%ecx\n" // then a शून्य then envp (third arg, %ecx)
     "and $-16, %esp\n"          // x86 ABI : esp must be 16-byte aligned when
-    "push %ecx\n"               // push all registers on the stack so that we
+    "push %ecx\n"               // push all रेजिस्टरs on the stack so that we
     "push %ebx\n"               // support both regparm and plain stack modes
     "push %eax\n"
-    "call main\n"               // main() returns the status code in %eax
-    "movzbl %al, %ebx\n"        // retrieve exit code from lower 8 bits
-    "movl   $1, %eax\n"         // NR_exit == 1
-    "int    $0x80\n"            // exit now
-    "hlt\n"                     // ensure it does not
+    "call main\n"               // मुख्य() वापसs the status code in %eax
+    "movzbl %al, %ebx\n"        // retrieve निकास code from lower 8 bits
+    "movl   $1, %eax\n"         // NR_निकास == 1
+    "int    $0x80\n"            // निकास now
+    "hlt\n"                     // ensure it करोes not
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_CREAT          0x40
-#define O_EXCL           0x80
-#define O_NOCTTY        0x100
-#define O_TRUNC         0x200
-#define O_APPEND        0x400
-#define O_NONBLOCK      0x800
-#define O_DIRECTORY   0x10000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_CREAT          0x40
+#घोषणा O_EXCL           0x80
+#घोषणा O_NOCTTY        0x100
+#घोषणा O_TRUNC         0x200
+#घोषणा O_APPEND        0x400
+#घोषणा O_NONBLOCK      0x800
+#घोषणा O_सूचीECTORY   0x10000
 
-/* The struct returned by the stat() syscall, 32-bit only, the syscall returns
- * exactly 56 bytes (stops before the unused array).
+/* The काष्ठा वापसed by the stat() syscall, 32-bit only, the syscall वापसs
+ * exactly 56 bytes (stops beक्रमe the unused array).
  */
-struct sys_stat_struct {
-	unsigned long  st_dev;
-	unsigned long  st_ino;
-	unsigned short st_mode;
-	unsigned short st_nlink;
-	unsigned short st_uid;
-	unsigned short st_gid;
+काष्ठा sys_stat_काष्ठा अणु
+	अचिन्हित दीर्घ  st_dev;
+	अचिन्हित दीर्घ  st_ino;
+	अचिन्हित लघु st_mode;
+	अचिन्हित लघु st_nlink;
+	अचिन्हित लघु st_uid;
+	अचिन्हित लघु st_gid;
 
-	unsigned long  st_rdev;
-	unsigned long  st_size;
-	unsigned long  st_blksize;
-	unsigned long  st_blocks;
+	अचिन्हित दीर्घ  st_rdev;
+	अचिन्हित दीर्घ  st_size;
+	अचिन्हित दीर्घ  st_blksize;
+	अचिन्हित दीर्घ  st_blocks;
 
-	unsigned long  st_atime;
-	unsigned long  st_atime_nsec;
-	unsigned long  st_mtime;
-	unsigned long  st_mtime_nsec;
+	अचिन्हित दीर्घ  st_aसमय;
+	अचिन्हित दीर्घ  st_aसमय_nsec;
+	अचिन्हित दीर्घ  st_mसमय;
+	अचिन्हित दीर्घ  st_mसमय_nsec;
 
-	unsigned long  st_ctime;
-	unsigned long  st_ctime_nsec;
-	unsigned long  __unused[2];
-};
+	अचिन्हित दीर्घ  st_स_समय;
+	अचिन्हित दीर्घ  st_स_समय_nsec;
+	अचिन्हित दीर्घ  __unused[2];
+पूर्ण;
 
-#elif defined(__ARM_EABI__)
-/* Syscalls for ARM in ARM or Thumb modes :
- *   - registers are 32-bit
+#या_अगर defined(__ARM_EABI__)
+/* Syscalls क्रम ARM in ARM or Thumb modes :
+ *   - रेजिस्टरs are 32-bit
  *   - stack is 8-byte aligned
- *     ( http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.faqs/ka4127.html)
+ *     ( http://infocenter.arm.com/help/index.jsp?topic=/com.arm.करोc.faqs/ka4127.hपंचांगl)
  *   - syscall number is passed in r7
  *   - arguments are in r0, r1, r2, r3, r4, r5
- *   - the system call is performed by calling svc #0
- *   - syscall return comes in r0.
+ *   - the प्रणाली call is perक्रमmed by calling svc #0
+ *   - syscall वापस comes in r0.
  *   - only lr is clobbered.
- *   - the arguments are cast to long and assigned into the target registers
- *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register constraints.
- *   - the syscall number is always specified last in order to allow to force
- *     some registers before (gcc refuses a %-register at the last position).
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target रेजिस्टरs
+ *     which are then simply passed as रेजिस्टरs to the यंत्र code, so that we
+ *     करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
+ *   - the syscall number is always specअगरied last in order to allow to क्रमce
+ *     some रेजिस्टरs beक्रमe (gcc refuses a %-रेजिस्टर at the last position).
  *
- * Also, ARM supports the old_select syscall if newselect is not available
+ * Also, ARM supports the old_select syscall अगर newselect is not available
  */
-#define __ARCH_WANT_SYS_OLD_SELECT
+#घोषणा __ARCH_WANT_SYS_OLD_SELECT
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0");                                        \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_num)                                                   \
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0") = (long)(arg1);                         \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0") = (दीर्घ)(arg1);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1),                                                 \
@@ -679,15 +680,15 @@ struct sys_stat_struct {
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0") = (long)(arg1);                         \
-	register long _arg2 asm("r1") = (long)(arg2);                         \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("r1") = (दीर्घ)(arg2);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2),                                     \
@@ -695,16 +696,16 @@ struct sys_stat_struct {
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0") = (long)(arg1);                         \
-	register long _arg2 asm("r1") = (long)(arg2);                         \
-	register long _arg3 asm("r2") = (long)(arg3);                         \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("r1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("r2") = (दीर्घ)(arg3);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3),                         \
@@ -712,17 +713,17 @@ struct sys_stat_struct {
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0") = (long)(arg1);                         \
-	register long _arg2 asm("r1") = (long)(arg2);                         \
-	register long _arg3 asm("r2") = (long)(arg3);                         \
-	register long _arg4 asm("r3") = (long)(arg4);                         \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("r1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("r2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("r3") = (दीर्घ)(arg4);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4),             \
@@ -730,18 +731,18 @@ struct sys_stat_struct {
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	register long _num asm("r7") = (num);                                 \
-	register long _arg1 asm("r0") = (long)(arg1);                         \
-	register long _arg2 asm("r1") = (long)(arg2);                         \
-	register long _arg3 asm("r2") = (long)(arg3);                         \
-	register long _arg4 asm("r3") = (long)(arg4);                         \
-	register long _arg5 asm("r4") = (long)(arg5);                         \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("r7") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("r0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("r1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("r2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("r3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 यंत्र("r4") = (दीर्घ)(arg5);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -749,118 +750,118 @@ struct sys_stat_struct {
 		: "memory", "cc", "lr"                                        \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
 /* startup code */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".global _start\n"
     "_start:\n"
-#if defined(__THUMBEB__) || defined(__THUMBEL__)
-    /* We enter here in 32-bit mode but if some previous functions were in
+#अगर defined(__THUMBEB__) || defined(__THUMBEL__)
+    /* We enter here in 32-bit mode but अगर some previous functions were in
      * 16-bit mode, the assembler cannot know, so we need to tell it we're in
-     * 32-bit now, then switch to 16-bit (is there a better way to do it than
-     * adding 1 by hand ?) and tell the asm we're now in 16-bit mode so that
-     * it generates correct instructions. Note that we do not support thumb1.
+     * 32-bit now, then चयन to 16-bit (is there a better way to करो it than
+     * adding 1 by hand ?) and tell the यंत्र we're now in 16-bit mode so that
+     * it generates correct inकाष्ठाions. Note that we करो not support thumb1.
      */
     ".code 32\n"
     "add     r0, pc, #1\n"
     "bx      r0\n"
     ".code 16\n"
-#endif
+#पूर्ण_अगर
     "pop {%r0}\n"                 // argc was in the stack
     "mov %r1, %sp\n"              // argv = sp
     "add %r2, %r1, %r0, lsl #2\n" // envp = argv + 4*argc ...
     "add %r2, %r2, $4\n"          //        ... + 4
     "and %r3, %r1, $-8\n"         // AAPCS : sp must be 8-byte aligned in the
-    "mov %sp, %r3\n"              //         callee, an bl doesn't push (lr=pc)
-    "bl main\n"                   // main() returns the status code, we'll exit with it.
-    "and %r0, %r0, $0xff\n"       // limit exit code to 8 bits
-    "movs r7, $1\n"               // NR_exit == 1
+    "mov %sp, %r3\n"              //         callee, an bl करोesn't push (lr=pc)
+    "bl main\n"                   // मुख्य() वापसs the status code, we'll निकास with it.
+    "and %r0, %r0, $0xff\n"       // limit निकास code to 8 bits
+    "movs r7, $1\n"               // NR_निकास == 1
     "svc $0x00\n"
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_CREAT          0x40
-#define O_EXCL           0x80
-#define O_NOCTTY        0x100
-#define O_TRUNC         0x200
-#define O_APPEND        0x400
-#define O_NONBLOCK      0x800
-#define O_DIRECTORY    0x4000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_CREAT          0x40
+#घोषणा O_EXCL           0x80
+#घोषणा O_NOCTTY        0x100
+#घोषणा O_TRUNC         0x200
+#घोषणा O_APPEND        0x400
+#घोषणा O_NONBLOCK      0x800
+#घोषणा O_सूचीECTORY    0x4000
 
-/* The struct returned by the stat() syscall, 32-bit only, the syscall returns
- * exactly 56 bytes (stops before the unused array). In big endian, the format
- * differs as devices are returned as short only.
+/* The काष्ठा वापसed by the stat() syscall, 32-bit only, the syscall वापसs
+ * exactly 56 bytes (stops beक्रमe the unused array). In big endian, the क्रमmat
+ * dअगरfers as devices are वापसed as लघु only.
  */
-struct sys_stat_struct {
-#if defined(__ARMEB__)
-	unsigned short st_dev;
-	unsigned short __pad1;
-#else
-	unsigned long  st_dev;
-#endif
-	unsigned long  st_ino;
-	unsigned short st_mode;
-	unsigned short st_nlink;
-	unsigned short st_uid;
-	unsigned short st_gid;
-#if defined(__ARMEB__)
-	unsigned short st_rdev;
-	unsigned short __pad2;
-#else
-	unsigned long  st_rdev;
-#endif
-	unsigned long  st_size;
-	unsigned long  st_blksize;
-	unsigned long  st_blocks;
-	unsigned long  st_atime;
-	unsigned long  st_atime_nsec;
-	unsigned long  st_mtime;
-	unsigned long  st_mtime_nsec;
-	unsigned long  st_ctime;
-	unsigned long  st_ctime_nsec;
-	unsigned long  __unused[2];
-};
+काष्ठा sys_stat_काष्ठा अणु
+#अगर defined(__ARMEB__)
+	अचिन्हित लघु st_dev;
+	अचिन्हित लघु __pad1;
+#अन्यथा
+	अचिन्हित दीर्घ  st_dev;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ  st_ino;
+	अचिन्हित लघु st_mode;
+	अचिन्हित लघु st_nlink;
+	अचिन्हित लघु st_uid;
+	अचिन्हित लघु st_gid;
+#अगर defined(__ARMEB__)
+	अचिन्हित लघु st_rdev;
+	अचिन्हित लघु __pad2;
+#अन्यथा
+	अचिन्हित दीर्घ  st_rdev;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ  st_size;
+	अचिन्हित दीर्घ  st_blksize;
+	अचिन्हित दीर्घ  st_blocks;
+	अचिन्हित दीर्घ  st_aसमय;
+	अचिन्हित दीर्घ  st_aसमय_nsec;
+	अचिन्हित दीर्घ  st_mसमय;
+	अचिन्हित दीर्घ  st_mसमय_nsec;
+	अचिन्हित दीर्घ  st_स_समय;
+	अचिन्हित दीर्घ  st_स_समय_nsec;
+	अचिन्हित दीर्घ  __unused[2];
+पूर्ण;
 
-#elif defined(__aarch64__)
-/* Syscalls for AARCH64 :
- *   - registers are 64-bit
+#या_अगर defined(__aarch64__)
+/* Syscalls क्रम AARCH64 :
+ *   - रेजिस्टरs are 64-bit
  *   - stack is 16-byte aligned
  *   - syscall number is passed in x8
  *   - arguments are in x0, x1, x2, x3, x4, x5
- *   - the system call is performed by calling svc 0
- *   - syscall return comes in x0.
- *   - the arguments are cast to long and assigned into the target registers
- *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register constraints.
+ *   - the प्रणाली call is perक्रमmed by calling svc 0
+ *   - syscall वापस comes in x0.
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target रेजिस्टरs
+ *     which are then simply passed as रेजिस्टरs to the यंत्र code, so that we
+ *     करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
  *
  * On aarch64, select() is not implemented so we have to use pselect6().
  */
-#define __ARCH_WANT_SYS_PSELECT6
+#घोषणा __ARCH_WANT_SYS_PSELECT6
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0");                                        \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_num)                                                   \
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1),                                                 \
@@ -868,15 +869,15 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
-	register long _arg2 asm("x1") = (long)(arg2);                         \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("x1") = (दीर्घ)(arg2);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2),                                     \
@@ -884,16 +885,16 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
-	register long _arg2 asm("x1") = (long)(arg2);                         \
-	register long _arg3 asm("x2") = (long)(arg3);                         \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("x1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("x2") = (दीर्घ)(arg3);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3),                         \
@@ -901,17 +902,17 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
-	register long _arg2 asm("x1") = (long)(arg2);                         \
-	register long _arg3 asm("x2") = (long)(arg3);                         \
-	register long _arg4 asm("x3") = (long)(arg4);                         \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("x1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("x2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("x3") = (दीर्घ)(arg4);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r"(_arg1)                                                 \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4),             \
@@ -919,18 +920,18 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
-	register long _arg2 asm("x1") = (long)(arg2);                         \
-	register long _arg3 asm("x2") = (long)(arg3);                         \
-	register long _arg4 asm("x3") = (long)(arg4);                         \
-	register long _arg5 asm("x4") = (long)(arg5);                         \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("x1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("x2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("x3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 यंत्र("x4") = (दीर्घ)(arg5);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -938,19 +939,19 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
-({                                                                            \
-	register long _num  asm("x8") = (num);                                \
-	register long _arg1 asm("x0") = (long)(arg1);                         \
-	register long _arg2 asm("x1") = (long)(arg2);                         \
-	register long _arg3 asm("x2") = (long)(arg3);                         \
-	register long _arg4 asm("x3") = (long)(arg4);                         \
-	register long _arg5 asm("x4") = (long)(arg5);                         \
-	register long _arg6 asm("x5") = (long)(arg6);                         \
+#घोषणा my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("x8") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("x0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("x1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("x2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("x3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 यंत्र("x4") = (दीर्घ)(arg5);                         \
+	रेजिस्टर दीर्घ _arg6 यंत्र("x5") = (दीर्घ)(arg6);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"svc #0\n"                                                    \
 		: "=r" (_arg1)                                                \
 		: "r"(_arg1), "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), \
@@ -958,10 +959,10 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
 /* startup code */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".global _start\n"
     "_start:\n"
     "ldr x0, [sp]\n"              // argc (x0) was in the stack
@@ -970,79 +971,79 @@ asm(".section .text\n"
     "add x2, x2, 8\n"             //           + 8 (skip null)
     "add x2, x2, x1\n"            //           + argv
     "and sp, x1, -16\n"           // sp must be 16-byte aligned in the callee
-    "bl main\n"                   // main() returns the status code, we'll exit with it.
-    "and x0, x0, 0xff\n"          // limit exit code to 8 bits
-    "mov x8, 93\n"                // NR_exit == 93
+    "bl main\n"                   // मुख्य() वापसs the status code, we'll निकास with it.
+    "and x0, x0, 0xff\n"          // limit निकास code to 8 bits
+    "mov x8, 93\n"                // NR_निकास == 93
     "svc #0\n"
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_CREAT          0x40
-#define O_EXCL           0x80
-#define O_NOCTTY        0x100
-#define O_TRUNC         0x200
-#define O_APPEND        0x400
-#define O_NONBLOCK      0x800
-#define O_DIRECTORY    0x4000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_CREAT          0x40
+#घोषणा O_EXCL           0x80
+#घोषणा O_NOCTTY        0x100
+#घोषणा O_TRUNC         0x200
+#घोषणा O_APPEND        0x400
+#घोषणा O_NONBLOCK      0x800
+#घोषणा O_सूचीECTORY    0x4000
 
-/* The struct returned by the newfstatat() syscall. Differs slightly from the
+/* The काष्ठा वापसed by the newख_स्थितिat() syscall. Dअगरfers slightly from the
  * x86_64's stat one by field ordering, so be careful.
  */
-struct sys_stat_struct {
-	unsigned long   st_dev;
-	unsigned long   st_ino;
-	unsigned int    st_mode;
-	unsigned int    st_nlink;
-	unsigned int    st_uid;
-	unsigned int    st_gid;
+काष्ठा sys_stat_काष्ठा अणु
+	अचिन्हित दीर्घ   st_dev;
+	अचिन्हित दीर्घ   st_ino;
+	अचिन्हित पूर्णांक    st_mode;
+	अचिन्हित पूर्णांक    st_nlink;
+	अचिन्हित पूर्णांक    st_uid;
+	अचिन्हित पूर्णांक    st_gid;
 
-	unsigned long   st_rdev;
-	unsigned long   __pad1;
-	long            st_size;
-	int             st_blksize;
-	int             __pad2;
+	अचिन्हित दीर्घ   st_rdev;
+	अचिन्हित दीर्घ   __pad1;
+	दीर्घ            st_size;
+	पूर्णांक             st_blksize;
+	पूर्णांक             __pad2;
 
-	long            st_blocks;
-	long            st_atime;
-	unsigned long   st_atime_nsec;
-	long            st_mtime;
+	दीर्घ            st_blocks;
+	दीर्घ            st_aसमय;
+	अचिन्हित दीर्घ   st_aसमय_nsec;
+	दीर्घ            st_mसमय;
 
-	unsigned long   st_mtime_nsec;
-	long            st_ctime;
-	unsigned long   st_ctime_nsec;
-	unsigned int    __unused[2];
-};
+	अचिन्हित दीर्घ   st_mसमय_nsec;
+	दीर्घ            st_स_समय;
+	अचिन्हित दीर्घ   st_स_समय_nsec;
+	अचिन्हित पूर्णांक    __unused[2];
+पूर्ण;
 
-#elif defined(__mips__) && defined(_ABIO32)
-/* Syscalls for MIPS ABI O32 :
+#या_अगर defined(__mips__) && defined(_ABIO32)
+/* Syscalls क्रम MIPS ABI O32 :
  *   - WARNING! there's always a delayed slot!
- *   - WARNING again, the syntax is different, registers take a '$' and numbers
- *     do not.
- *   - registers are 32-bit
+ *   - WARNING again, the syntax is dअगरferent, रेजिस्टरs take a '$' and numbers
+ *     करो not.
+ *   - रेजिस्टरs are 32-bit
  *   - stack is 8-byte aligned
  *   - syscall number is passed in v0 (starts at 0xfa0).
  *   - arguments are in a0, a1, a2, a3, then the stack. The caller needs to
- *     leave some room in the stack for the callee to save a0..a3 if needed.
- *   - Many registers are clobbered, in fact only a0..a2 and s0..s8 are
+ *     leave some room in the stack क्रम the callee to save a0..a3 अगर needed.
+ *   - Many रेजिस्टरs are clobbered, in fact only a0..a2 and s0..s8 are
  *     preserved. See: https://www.linux-mips.org/wiki/Syscall as well as
  *     scall32-o32.S in the kernel sources.
- *   - the system call is performed by calling "syscall"
- *   - syscall return comes in v0, and register a3 needs to be checked to know
- *     if an error occured, in which case errno is in v0.
- *   - the arguments are cast to long and assigned into the target registers
- *     which are then simply passed as registers to the asm code, so that we
- *     don't have to experience issues with register constraints.
+ *   - the प्रणाली call is perक्रमmed by calling "syscall"
+ *   - syscall वापस comes in v0, and रेजिस्टर a3 needs to be checked to know
+ *     अगर an error occured, in which हाल त्रुटि_सं is in v0.
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target रेजिस्टरs
+ *     which are then simply passed as रेजिस्टरs to the यंत्र code, so that we
+ *     करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
  */
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	register long _num asm("v0") = (num);                                 \
-	register long _arg4 asm("a3");                                        \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0") = (num);                                 \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
 		"addiu $sp, $sp, 32\n"                                        \
@@ -1052,15 +1053,15 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	register long _num asm("v0") = (num);                                 \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg4 asm("a3");                                        \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
 		"addiu $sp, $sp, 32\n"                                        \
@@ -1071,16 +1072,16 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	register long _num asm("v0") = (num);                                 \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg4 asm("a3");                                        \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
 		"addiu $sp, $sp, 32\n"                                        \
@@ -1091,17 +1092,17 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	register long _num asm("v0")  = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3");                                        \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0")  = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
 		"addiu $sp, $sp, 32\n"                                        \
@@ -1112,17 +1113,17 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	register long _num asm("v0") = (num);                                 \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3") = (long)(arg4);                         \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3") = (दीर्घ)(arg4);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"syscall\n"                                                   \
 		"addiu $sp, $sp, 32\n"                                        \
@@ -1133,18 +1134,18 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	register long _num asm("v0") = (num);                                 \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3") = (long)(arg4);                         \
-	register long _arg5 = (long)(arg5);				      \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num यंत्र("v0") = (num);                                 \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 = (दीर्घ)(arg5);				      \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"addiu $sp, $sp, -32\n"                                       \
 		"sw %7, 16($sp)\n"                                            \
 		"syscall\n  "                                                 \
@@ -1156,10 +1157,10 @@ struct sys_stat_struct {
 		  "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9"  \
 	);                                                                    \
 	_arg4 ? -_num : _num;                                                 \
-})
+पूर्ण)
 
 /* startup code, note that it's called __start on MIPS */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".set nomips16\n"
     ".global __start\n"
     ".set    noreorder\n"
@@ -1174,108 +1175,108 @@ asm(".section .text\n"
     "li $t0, -8\n"
     "and $sp, $sp, $t0\n"         // sp must be 8-byte aligned
     "addiu $sp,$sp,-16\n"         // the callee expects to save a0..a3 there!
-    "jal main\n"                  // main() returns the status code, we'll exit with it.
+    "jal main\n"                  // मुख्य() वापसs the status code, we'll निकास with it.
     "nop\n"                       // delayed slot
-    "and $a0, $v0, 0xff\n"        // limit exit code to 8 bits
-    "li $v0, 4001\n"              // NR_exit == 4001
+    "and $a0, $v0, 0xff\n"        // limit निकास code to 8 bits
+    "li $v0, 4001\n"              // NR_निकास == 4001
     "syscall\n"
     ".end __start\n"
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_APPEND       0x0008
-#define O_NONBLOCK     0x0080
-#define O_CREAT        0x0100
-#define O_TRUNC        0x0200
-#define O_EXCL         0x0400
-#define O_NOCTTY       0x0800
-#define O_DIRECTORY   0x10000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_APPEND       0x0008
+#घोषणा O_NONBLOCK     0x0080
+#घोषणा O_CREAT        0x0100
+#घोषणा O_TRUNC        0x0200
+#घोषणा O_EXCL         0x0400
+#घोषणा O_NOCTTY       0x0800
+#घोषणा O_सूचीECTORY   0x10000
 
-/* The struct returned by the stat() syscall. 88 bytes are returned by the
+/* The काष्ठा वापसed by the stat() syscall. 88 bytes are वापसed by the
  * syscall.
  */
-struct sys_stat_struct {
-	unsigned int  st_dev;
-	long          st_pad1[3];
-	unsigned long st_ino;
-	unsigned int  st_mode;
-	unsigned int  st_nlink;
-	unsigned int  st_uid;
-	unsigned int  st_gid;
-	unsigned int  st_rdev;
-	long          st_pad2[2];
-	long          st_size;
-	long          st_pad3;
-	long          st_atime;
-	long          st_atime_nsec;
-	long          st_mtime;
-	long          st_mtime_nsec;
-	long          st_ctime;
-	long          st_ctime_nsec;
-	long          st_blksize;
-	long          st_blocks;
-	long          st_pad4[14];
-};
+काष्ठा sys_stat_काष्ठा अणु
+	अचिन्हित पूर्णांक  st_dev;
+	दीर्घ          st_pad1[3];
+	अचिन्हित दीर्घ st_ino;
+	अचिन्हित पूर्णांक  st_mode;
+	अचिन्हित पूर्णांक  st_nlink;
+	अचिन्हित पूर्णांक  st_uid;
+	अचिन्हित पूर्णांक  st_gid;
+	अचिन्हित पूर्णांक  st_rdev;
+	दीर्घ          st_pad2[2];
+	दीर्घ          st_size;
+	दीर्घ          st_pad3;
+	दीर्घ          st_aसमय;
+	दीर्घ          st_aसमय_nsec;
+	दीर्घ          st_mसमय;
+	दीर्घ          st_mसमय_nsec;
+	दीर्घ          st_स_समय;
+	दीर्घ          st_स_समय_nsec;
+	दीर्घ          st_blksize;
+	दीर्घ          st_blocks;
+	दीर्घ          st_pad4[14];
+पूर्ण;
 
-#elif defined(__riscv)
+#या_अगर defined(__riscv)
 
-#if   __riscv_xlen == 64
-#define PTRLOG "3"
-#define SZREG  "8"
-#elif __riscv_xlen == 32
-#define PTRLOG "2"
-#define SZREG  "4"
-#endif
+#अगर   __riscv_xlen == 64
+#घोषणा PTRLOG "3"
+#घोषणा SZREG  "8"
+#या_अगर __riscv_xlen == 32
+#घोषणा PTRLOG "2"
+#घोषणा SZREG  "4"
+#पूर्ण_अगर
 
-/* Syscalls for RISCV :
+/* Syscalls क्रम RISCV :
  *   - stack is 16-byte aligned
  *   - syscall number is passed in a7
  *   - arguments are in a0, a1, a2, a3, a4, a5
- *   - the system call is performed by calling ecall
- *   - syscall return comes in a0
- *   - the arguments are cast to long and assigned into the target
- *     registers which are then simply passed as registers to the asm code,
- *     so that we don't have to experience issues with register constraints.
+ *   - the प्रणाली call is perक्रमmed by calling ecall
+ *   - syscall वापस comes in a0
+ *   - the arguments are cast to दीर्घ and asचिन्हित पूर्णांकo the target
+ *     रेजिस्टरs which are then simply passed as रेजिस्टरs to the यंत्र code,
+ *     so that we करोn't have to experience issues with रेजिस्टर स्थिरraपूर्णांकs.
  */
 
-#define my_syscall0(num)                                                      \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0");                                        \
+#घोषणा my_syscall0(num)                                                      \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0");                                        \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n\t"                                                   \
 		: "=r"(_arg1)                                                 \
 		: "r"(_num)                                                   \
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall1(num, arg1)                                                \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);		              \
+#घोषणा my_syscall1(num, arg1)                                                \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);		              \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n"                                                     \
 		: "+r"(_arg1)                                                 \
 		: "r"(_num)                                                   \
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall2(num, arg1, arg2)                                          \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
+#घोषणा my_syscall2(num, arg1, arg2)                                          \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n"                                                     \
 		: "+r"(_arg1)                                                 \
 		: "r"(_arg2),                                                 \
@@ -1283,16 +1284,16 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall3(num, arg1, arg2, arg3)                                    \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
+#घोषणा my_syscall3(num, arg1, arg2, arg3)                                    \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n\t"                                                   \
 		: "+r"(_arg1)                                                 \
 		: "r"(_arg2), "r"(_arg3),                                     \
@@ -1300,17 +1301,17 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall4(num, arg1, arg2, arg3, arg4)                              \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3") = (long)(arg4);                         \
+#घोषणा my_syscall4(num, arg1, arg2, arg3, arg4)                              \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3") = (दीर्घ)(arg4);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n"                                                     \
 		: "+r"(_arg1)                                                 \
 		: "r"(_arg2), "r"(_arg3), "r"(_arg4),                         \
@@ -1318,18 +1319,18 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3") = (long)(arg4);                         \
-	register long _arg5 asm("a4") = (long)(arg5);                         \
+#घोषणा my_syscall5(num, arg1, arg2, arg3, arg4, arg5)                        \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 यंत्र("a4") = (दीर्घ)(arg5);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n"                                                     \
 		: "+r"(_arg1)                                                 \
 		: "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5),             \
@@ -1337,19 +1338,19 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
-#define my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
-({                                                                            \
-	register long _num  asm("a7") = (num);                                \
-	register long _arg1 asm("a0") = (long)(arg1);                         \
-	register long _arg2 asm("a1") = (long)(arg2);                         \
-	register long _arg3 asm("a2") = (long)(arg3);                         \
-	register long _arg4 asm("a3") = (long)(arg4);                         \
-	register long _arg5 asm("a4") = (long)(arg5);                         \
-	register long _arg6 asm("a5") = (long)(arg6);                         \
+#घोषणा my_syscall6(num, arg1, arg2, arg3, arg4, arg5, arg6)                  \
+(अणु                                                                            \
+	रेजिस्टर दीर्घ _num  यंत्र("a7") = (num);                                \
+	रेजिस्टर दीर्घ _arg1 यंत्र("a0") = (दीर्घ)(arg1);                         \
+	रेजिस्टर दीर्घ _arg2 यंत्र("a1") = (दीर्घ)(arg2);                         \
+	रेजिस्टर दीर्घ _arg3 यंत्र("a2") = (दीर्घ)(arg3);                         \
+	रेजिस्टर दीर्घ _arg4 यंत्र("a3") = (दीर्घ)(arg4);                         \
+	रेजिस्टर दीर्घ _arg5 यंत्र("a4") = (दीर्घ)(arg5);                         \
+	रेजिस्टर दीर्घ _arg6 यंत्र("a5") = (दीर्घ)(arg6);                         \
 									      \
-	asm volatile (                                                        \
+	यंत्र अस्थिर (                                                        \
 		"ecall\n"                                                     \
 		: "+r"(_arg1)                                                 \
 		: "r"(_arg2), "r"(_arg3), "r"(_arg4), "r"(_arg5), "r"(_arg6), \
@@ -1357,10 +1358,10 @@ struct sys_stat_struct {
 		: "memory", "cc"                                              \
 	);                                                                    \
 	_arg1;                                                                \
-})
+पूर्ण)
 
 /* startup code */
-asm(".section .text\n"
+यंत्र(".section .text\n"
     ".global _start\n"
     "_start:\n"
     ".option push\n"
@@ -1373,363 +1374,363 @@ asm(".section .text\n"
     "add   a2, a2, "SZREG"\n"    //             + SZREG (skip null)
     "add   a2,a2,a1\n"           //             + argv
     "andi  sp,a1,-16\n"          // sp must be 16-byte aligned
-    "call  main\n"               // main() returns the status code, we'll exit with it.
-    "andi  a0, a0, 0xff\n"       // limit exit code to 8 bits
-    "li a7, 93\n"                // NR_exit == 93
+    "call  main\n"               // मुख्य() वापसs the status code, we'll निकास with it.
+    "andi  a0, a0, 0xff\n"       // limit निकास code to 8 bits
+    "li a7, 93\n"                // NR_निकास == 93
     "ecall\n"
     "");
 
-/* fcntl / open */
-#define O_RDONLY            0
-#define O_WRONLY            1
-#define O_RDWR              2
-#define O_CREAT         0x100
-#define O_EXCL          0x200
-#define O_NOCTTY        0x400
-#define O_TRUNC        0x1000
-#define O_APPEND       0x2000
-#define O_NONBLOCK     0x4000
-#define O_DIRECTORY  0x200000
+/* fcntl / खोलो */
+#घोषणा O_RDONLY            0
+#घोषणा O_WRONLY            1
+#घोषणा O_RDWR              2
+#घोषणा O_CREAT         0x100
+#घोषणा O_EXCL          0x200
+#घोषणा O_NOCTTY        0x400
+#घोषणा O_TRUNC        0x1000
+#घोषणा O_APPEND       0x2000
+#घोषणा O_NONBLOCK     0x4000
+#घोषणा O_सूचीECTORY  0x200000
 
-struct sys_stat_struct {
-	unsigned long	st_dev;		/* Device.  */
-	unsigned long	st_ino;		/* File serial number.  */
-	unsigned int	st_mode;	/* File mode.  */
-	unsigned int	st_nlink;	/* Link count.  */
-	unsigned int	st_uid;		/* User ID of the file's owner.  */
-	unsigned int	st_gid;		/* Group ID of the file's group. */
-	unsigned long	st_rdev;	/* Device number, if device.  */
-	unsigned long	__pad1;
-	long		st_size;	/* Size of file, in bytes.  */
-	int		st_blksize;	/* Optimal block size for I/O.  */
-	int		__pad2;
-	long		st_blocks;	/* Number 512-byte blocks allocated. */
-	long		st_atime;	/* Time of last access.  */
-	unsigned long	st_atime_nsec;
-	long		st_mtime;	/* Time of last modification.  */
-	unsigned long	st_mtime_nsec;
-	long		st_ctime;	/* Time of last status change.  */
-	unsigned long	st_ctime_nsec;
-	unsigned int	__unused4;
-	unsigned int	__unused5;
-};
+काष्ठा sys_stat_काष्ठा अणु
+	अचिन्हित दीर्घ	st_dev;		/* Device.  */
+	अचिन्हित दीर्घ	st_ino;		/* File serial number.  */
+	अचिन्हित पूर्णांक	st_mode;	/* File mode.  */
+	अचिन्हित पूर्णांक	st_nlink;	/* Link count.  */
+	अचिन्हित पूर्णांक	st_uid;		/* User ID of the file's owner.  */
+	अचिन्हित पूर्णांक	st_gid;		/* Group ID of the file's group. */
+	अचिन्हित दीर्घ	st_rdev;	/* Device number, अगर device.  */
+	अचिन्हित दीर्घ	__pad1;
+	दीर्घ		st_size;	/* Size of file, in bytes.  */
+	पूर्णांक		st_blksize;	/* Optimal block size क्रम I/O.  */
+	पूर्णांक		__pad2;
+	दीर्घ		st_blocks;	/* Number 512-byte blocks allocated. */
+	दीर्घ		st_aसमय;	/* Time of last access.  */
+	अचिन्हित दीर्घ	st_aसमय_nsec;
+	दीर्घ		st_mसमय;	/* Time of last modअगरication.  */
+	अचिन्हित दीर्घ	st_mसमय_nsec;
+	दीर्घ		st_स_समय;	/* Time of last status change.  */
+	अचिन्हित दीर्घ	st_स_समय_nsec;
+	अचिन्हित पूर्णांक	__unused4;
+	अचिन्हित पूर्णांक	__unused5;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
 
 /* Below are the C functions used to declare the raw syscalls. They try to be
- * architecture-agnostic, and return either a success or -errno. Declaring them
- * static will lead to them being inlined in most cases, but it's still possible
- * to reference them by a pointer if needed.
+ * architecture-agnostic, and वापस either a success or -त्रुटि_सं. Declaring them
+ * अटल will lead to them being अंतरभूतd in most हालs, but it's still possible
+ * to reference them by a poपूर्णांकer अगर needed.
  */
-static __attribute__((unused))
-void *sys_brk(void *addr)
-{
-	return (void *)my_syscall1(__NR_brk, addr);
-}
+अटल __attribute__((unused))
+व्योम *sys_brk(व्योम *addr)
+अणु
+	वापस (व्योम *)my_syscall1(__NR_brk, addr);
+पूर्ण
 
-static __attribute__((noreturn,unused))
-void sys_exit(int status)
-{
-	my_syscall1(__NR_exit, status & 255);
-	while(1); // shut the "noreturn" warnings.
-}
+अटल __attribute__((noवापस,unused))
+व्योम sys_निकास(पूर्णांक status)
+अणु
+	my_syscall1(__NR_निकास, status & 255);
+	जबतक(1); // shut the "noreturn" warnings.
+पूर्ण
 
-static __attribute__((unused))
-int sys_chdir(const char *path)
-{
-	return my_syscall1(__NR_chdir, path);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_स_बदलो(स्थिर अक्षर *path)
+अणु
+	वापस my_syscall1(__NR_स_बदलो, path);
+पूर्ण
 
-static __attribute__((unused))
-int sys_chmod(const char *path, mode_t mode)
-{
-#ifdef __NR_fchmodat
-	return my_syscall4(__NR_fchmodat, AT_FDCWD, path, mode, 0);
-#elif defined(__NR_chmod)
-	return my_syscall2(__NR_chmod, path, mode);
-#else
-#error Neither __NR_fchmodat nor __NR_chmod defined, cannot implement sys_chmod()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_chmod(स्थिर अक्षर *path, mode_t mode)
+अणु
+#अगर_घोषित __NR_fchmodat
+	वापस my_syscall4(__NR_fchmodat, AT_FDCWD, path, mode, 0);
+#या_अगर defined(__NR_chmod)
+	वापस my_syscall2(__NR_chmod, path, mode);
+#अन्यथा
+#त्रुटि Neither __NR_fchmodat nor __NR_chmod defined, cannot implement sys_chmod()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_chown(const char *path, uid_t owner, gid_t group)
-{
-#ifdef __NR_fchownat
-	return my_syscall5(__NR_fchownat, AT_FDCWD, path, owner, group, 0);
-#elif defined(__NR_chown)
-	return my_syscall3(__NR_chown, path, owner, group);
-#else
-#error Neither __NR_fchownat nor __NR_chown defined, cannot implement sys_chown()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_chown(स्थिर अक्षर *path, uid_t owner, gid_t group)
+अणु
+#अगर_घोषित __NR_fchownat
+	वापस my_syscall5(__NR_fchownat, AT_FDCWD, path, owner, group, 0);
+#या_अगर defined(__NR_chown)
+	वापस my_syscall3(__NR_chown, path, owner, group);
+#अन्यथा
+#त्रुटि Neither __NR_fchownat nor __NR_chown defined, cannot implement sys_chown()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_chroot(const char *path)
-{
-	return my_syscall1(__NR_chroot, path);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_chroot(स्थिर अक्षर *path)
+अणु
+	वापस my_syscall1(__NR_chroot, path);
+पूर्ण
 
-static __attribute__((unused))
-int sys_close(int fd)
-{
-	return my_syscall1(__NR_close, fd);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_बंद(पूर्णांक fd)
+अणु
+	वापस my_syscall1(__NR_बंद, fd);
+पूर्ण
 
-static __attribute__((unused))
-int sys_dup(int fd)
-{
-	return my_syscall1(__NR_dup, fd);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_dup(पूर्णांक fd)
+अणु
+	वापस my_syscall1(__NR_dup, fd);
+पूर्ण
 
-#ifdef __NR_dup3
-static __attribute__((unused))
-int sys_dup3(int old, int new, int flags)
-{
-	return my_syscall3(__NR_dup3, old, new, flags);
-}
-#endif
+#अगर_घोषित __NR_dup3
+अटल __attribute__((unused))
+पूर्णांक sys_dup3(पूर्णांक old, पूर्णांक new, पूर्णांक flags)
+अणु
+	वापस my_syscall3(__NR_dup3, old, new, flags);
+पूर्ण
+#पूर्ण_अगर
 
-static __attribute__((unused))
-int sys_dup2(int old, int new)
-{
-#ifdef __NR_dup3
-	return my_syscall3(__NR_dup3, old, new, 0);
-#elif defined(__NR_dup2)
-	return my_syscall2(__NR_dup2, old, new);
-#else
-#error Neither __NR_dup3 nor __NR_dup2 defined, cannot implement sys_dup2()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_dup2(पूर्णांक old, पूर्णांक new)
+अणु
+#अगर_घोषित __NR_dup3
+	वापस my_syscall3(__NR_dup3, old, new, 0);
+#या_अगर defined(__NR_dup2)
+	वापस my_syscall2(__NR_dup2, old, new);
+#अन्यथा
+#त्रुटि Neither __NR_dup3 nor __NR_dup2 defined, cannot implement sys_dup2()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_execve(const char *filename, char *const argv[], char *const envp[])
-{
-	return my_syscall3(__NR_execve, filename, argv, envp);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_execve(स्थिर अक्षर *filename, अक्षर *स्थिर argv[], अक्षर *स्थिर envp[])
+अणु
+	वापस my_syscall3(__NR_execve, filename, argv, envp);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_fork(void)
-{
-#ifdef __NR_clone
-	/* note: some archs only have clone() and not fork(). Different archs
-	 * have a different API, but most archs have the flags on first arg and
+अटल __attribute__((unused))
+pid_t sys_विभाजन(व्योम)
+अणु
+#अगर_घोषित __NR_clone
+	/* note: some archs only have clone() and not विभाजन(). Dअगरferent archs
+	 * have a dअगरferent API, but most archs have the flags on first arg and
 	 * will not use the rest with no other flag.
 	 */
-	return my_syscall5(__NR_clone, SIGCHLD, 0, 0, 0, 0);
-#elif defined(__NR_fork)
-	return my_syscall0(__NR_fork);
-#else
-#error Neither __NR_clone nor __NR_fork defined, cannot implement sys_fork()
-#endif
-}
+	वापस my_syscall5(__NR_clone, SIGCHLD, 0, 0, 0, 0);
+#या_अगर defined(__NR_विभाजन)
+	वापस my_syscall0(__NR_विभाजन);
+#अन्यथा
+#त्रुटि Neither __NR_clone nor __NR_विभाजन defined, cannot implement sys_विभाजन()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_fsync(int fd)
-{
-	return my_syscall1(__NR_fsync, fd);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_fsync(पूर्णांक fd)
+अणु
+	वापस my_syscall1(__NR_fsync, fd);
+पूर्ण
 
-static __attribute__((unused))
-int sys_getdents64(int fd, struct linux_dirent64 *dirp, int count)
-{
-	return my_syscall3(__NR_getdents64, fd, dirp, count);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_getdents64(पूर्णांक fd, काष्ठा linux_dirent64 *dirp, पूर्णांक count)
+अणु
+	वापस my_syscall3(__NR_getdents64, fd, dirp, count);
+पूर्ण
 
-static __attribute__((unused))
+अटल __attribute__((unused))
 pid_t sys_getpgid(pid_t pid)
-{
-	return my_syscall1(__NR_getpgid, pid);
-}
+अणु
+	वापस my_syscall1(__NR_getpgid, pid);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_getpgrp(void)
-{
-	return sys_getpgid(0);
-}
+अटल __attribute__((unused))
+pid_t sys_getpgrp(व्योम)
+अणु
+	वापस sys_getpgid(0);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_getpid(void)
-{
-	return my_syscall0(__NR_getpid);
-}
+अटल __attribute__((unused))
+pid_t sys_getpid(व्योम)
+अणु
+	वापस my_syscall0(__NR_getpid);
+पूर्ण
 
-static __attribute__((unused))
-int sys_gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-	return my_syscall2(__NR_gettimeofday, tv, tz);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_समय_लोofday(काष्ठा समयval *tv, काष्ठा समयzone *tz)
+अणु
+	वापस my_syscall2(__NR_समय_लोofday, tv, tz);
+पूर्ण
 
-static __attribute__((unused))
-int sys_ioctl(int fd, unsigned long req, void *value)
-{
-	return my_syscall3(__NR_ioctl, fd, req, value);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_ioctl(पूर्णांक fd, अचिन्हित दीर्घ req, व्योम *value)
+अणु
+	वापस my_syscall3(__NR_ioctl, fd, req, value);
+पूर्ण
 
-static __attribute__((unused))
-int sys_kill(pid_t pid, int signal)
-{
-	return my_syscall2(__NR_kill, pid, signal);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_समाप्त(pid_t pid, पूर्णांक संकेत)
+अणु
+	वापस my_syscall2(__NR_समाप्त, pid, संकेत);
+पूर्ण
 
-static __attribute__((unused))
-int sys_link(const char *old, const char *new)
-{
-#ifdef __NR_linkat
-	return my_syscall5(__NR_linkat, AT_FDCWD, old, AT_FDCWD, new, 0);
-#elif defined(__NR_link)
-	return my_syscall2(__NR_link, old, new);
-#else
-#error Neither __NR_linkat nor __NR_link defined, cannot implement sys_link()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_link(स्थिर अक्षर *old, स्थिर अक्षर *new)
+अणु
+#अगर_घोषित __NR_linkat
+	वापस my_syscall5(__NR_linkat, AT_FDCWD, old, AT_FDCWD, new, 0);
+#या_अगर defined(__NR_link)
+	वापस my_syscall2(__NR_link, old, new);
+#अन्यथा
+#त्रुटि Neither __NR_linkat nor __NR_link defined, cannot implement sys_link()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-off_t sys_lseek(int fd, off_t offset, int whence)
-{
-	return my_syscall3(__NR_lseek, fd, offset, whence);
-}
+अटल __attribute__((unused))
+off_t sys_lseek(पूर्णांक fd, off_t offset, पूर्णांक whence)
+अणु
+	वापस my_syscall3(__NR_lseek, fd, offset, whence);
+पूर्ण
 
-static __attribute__((unused))
-int sys_mkdir(const char *path, mode_t mode)
-{
-#ifdef __NR_mkdirat
-	return my_syscall3(__NR_mkdirat, AT_FDCWD, path, mode);
-#elif defined(__NR_mkdir)
-	return my_syscall2(__NR_mkdir, path, mode);
-#else
-#error Neither __NR_mkdirat nor __NR_mkdir defined, cannot implement sys_mkdir()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_सूची_गढ़ो(स्थिर अक्षर *path, mode_t mode)
+अणु
+#अगर_घोषित __NR_सूची_गढ़ोat
+	वापस my_syscall3(__NR_सूची_गढ़ोat, AT_FDCWD, path, mode);
+#या_अगर defined(__NR_सूची_गढ़ो)
+	वापस my_syscall2(__NR_सूची_गढ़ो, path, mode);
+#अन्यथा
+#त्रुटि Neither __NR_सूची_गढ़ोat nor __NR_सूची_गढ़ो defined, cannot implement sys_सूची_गढ़ो()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-long sys_mknod(const char *path, mode_t mode, dev_t dev)
-{
-#ifdef __NR_mknodat
-	return my_syscall4(__NR_mknodat, AT_FDCWD, path, mode, dev);
-#elif defined(__NR_mknod)
-	return my_syscall3(__NR_mknod, path, mode, dev);
-#else
-#error Neither __NR_mknodat nor __NR_mknod defined, cannot implement sys_mknod()
-#endif
-}
+अटल __attribute__((unused))
+दीर्घ sys_mknod(स्थिर अक्षर *path, mode_t mode, dev_t dev)
+अणु
+#अगर_घोषित __NR_mknodat
+	वापस my_syscall4(__NR_mknodat, AT_FDCWD, path, mode, dev);
+#या_अगर defined(__NR_mknod)
+	वापस my_syscall3(__NR_mknod, path, mode, dev);
+#अन्यथा
+#त्रुटि Neither __NR_mknodat nor __NR_mknod defined, cannot implement sys_mknod()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_mount(const char *src, const char *tgt, const char *fst,
-	      unsigned long flags, const void *data)
-{
-	return my_syscall5(__NR_mount, src, tgt, fst, flags, data);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_mount(स्थिर अक्षर *src, स्थिर अक्षर *tgt, स्थिर अक्षर *fst,
+	      अचिन्हित दीर्घ flags, स्थिर व्योम *data)
+अणु
+	वापस my_syscall5(__NR_mount, src, tgt, fst, flags, data);
+पूर्ण
 
-static __attribute__((unused))
-int sys_open(const char *path, int flags, mode_t mode)
-{
-#ifdef __NR_openat
-	return my_syscall4(__NR_openat, AT_FDCWD, path, flags, mode);
-#elif defined(__NR_open)
-	return my_syscall3(__NR_open, path, flags, mode);
-#else
-#error Neither __NR_openat nor __NR_open defined, cannot implement sys_open()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_खोलो(स्थिर अक्षर *path, पूर्णांक flags, mode_t mode)
+अणु
+#अगर_घोषित __NR_खोलोat
+	वापस my_syscall4(__NR_खोलोat, AT_FDCWD, path, flags, mode);
+#या_अगर defined(__NR_खोलो)
+	वापस my_syscall3(__NR_खोलो, path, flags, mode);
+#अन्यथा
+#त्रुटि Neither __NR_खोलोat nor __NR_खोलो defined, cannot implement sys_खोलो()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_pivot_root(const char *new, const char *old)
-{
-	return my_syscall2(__NR_pivot_root, new, old);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_pivot_root(स्थिर अक्षर *new, स्थिर अक्षर *old)
+अणु
+	वापस my_syscall2(__NR_pivot_root, new, old);
+पूर्ण
 
-static __attribute__((unused))
-int sys_poll(struct pollfd *fds, int nfds, int timeout)
-{
-#if defined(__NR_ppoll)
-	struct timespec t;
+अटल __attribute__((unused))
+पूर्णांक sys_poll(काष्ठा pollfd *fds, पूर्णांक nfds, पूर्णांक समयout)
+अणु
+#अगर defined(__NR_ppoll)
+	काष्ठा बारpec t;
 
-	if (timeout >= 0) {
-		t.tv_sec  = timeout / 1000;
-		t.tv_nsec = (timeout % 1000) * 1000000;
-	}
-	return my_syscall4(__NR_ppoll, fds, nfds, (timeout >= 0) ? &t : NULL, NULL);
-#elif defined(__NR_poll)
-	return my_syscall3(__NR_poll, fds, nfds, timeout);
-#else
-#error Neither __NR_ppoll nor __NR_poll defined, cannot implement sys_poll()
-#endif
-}
+	अगर (समयout >= 0) अणु
+		t.tv_sec  = समयout / 1000;
+		t.tv_nsec = (समयout % 1000) * 1000000;
+	पूर्ण
+	वापस my_syscall4(__NR_ppoll, fds, nfds, (समयout >= 0) ? &t : शून्य, शून्य);
+#या_अगर defined(__NR_poll)
+	वापस my_syscall3(__NR_poll, fds, nfds, समयout);
+#अन्यथा
+#त्रुटि Neither __NR_ppoll nor __NR_poll defined, cannot implement sys_poll()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-ssize_t sys_read(int fd, void *buf, size_t count)
-{
-	return my_syscall3(__NR_read, fd, buf, count);
-}
+अटल __attribute__((unused))
+sमाप_प्रकार sys_पढ़ो(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
+अणु
+	वापस my_syscall3(__NR_पढ़ो, fd, buf, count);
+पूर्ण
 
-static __attribute__((unused))
-ssize_t sys_reboot(int magic1, int magic2, int cmd, void *arg)
-{
-	return my_syscall4(__NR_reboot, magic1, magic2, cmd, arg);
-}
+अटल __attribute__((unused))
+sमाप_प्रकार sys_reboot(पूर्णांक magic1, पूर्णांक magic2, पूर्णांक cmd, व्योम *arg)
+अणु
+	वापस my_syscall4(__NR_reboot, magic1, magic2, cmd, arg);
+पूर्ण
 
-static __attribute__((unused))
-int sys_sched_yield(void)
-{
-	return my_syscall0(__NR_sched_yield);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_sched_yield(व्योम)
+अणु
+	वापस my_syscall0(__NR_sched_yield);
+पूर्ण
 
-static __attribute__((unused))
-int sys_select(int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, struct timeval *timeout)
-{
-#if defined(__ARCH_WANT_SYS_OLD_SELECT) && !defined(__NR__newselect)
-	struct sel_arg_struct {
-		unsigned long n;
+अटल __attribute__((unused))
+पूर्णांक sys_select(पूर्णांक nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, काष्ठा समयval *समयout)
+अणु
+#अगर defined(__ARCH_WANT_SYS_OLD_SELECT) && !defined(__NR__newselect)
+	काष्ठा sel_arg_काष्ठा अणु
+		अचिन्हित दीर्घ n;
 		fd_set *r, *w, *e;
-		struct timeval *t;
-	} arg = { .n = nfds, .r = rfds, .w = wfds, .e = efds, .t = timeout };
-	return my_syscall1(__NR_select, &arg);
-#elif defined(__ARCH_WANT_SYS_PSELECT6) && defined(__NR_pselect6)
-	struct timespec t;
+		काष्ठा समयval *t;
+	पूर्ण arg = अणु .n = nfds, .r = rfds, .w = wfds, .e = efds, .t = समयout पूर्ण;
+	वापस my_syscall1(__NR_select, &arg);
+#या_अगर defined(__ARCH_WANT_SYS_PSELECT6) && defined(__NR_pselect6)
+	काष्ठा बारpec t;
 
-	if (timeout) {
-		t.tv_sec  = timeout->tv_sec;
-		t.tv_nsec = timeout->tv_usec * 1000;
-	}
-	return my_syscall6(__NR_pselect6, nfds, rfds, wfds, efds, timeout ? &t : NULL, NULL);
-#elif defined(__NR__newselect) || defined(__NR_select)
-#ifndef __NR__newselect
-#define __NR__newselect __NR_select
-#endif
-	return my_syscall5(__NR__newselect, nfds, rfds, wfds, efds, timeout);
-#else
-#error None of __NR_select, __NR_pselect6, nor __NR__newselect defined, cannot implement sys_select()
-#endif
-}
+	अगर (समयout) अणु
+		t.tv_sec  = समयout->tv_sec;
+		t.tv_nsec = समयout->tv_usec * 1000;
+	पूर्ण
+	वापस my_syscall6(__NR_pselect6, nfds, rfds, wfds, efds, समयout ? &t : शून्य, शून्य);
+#या_अगर defined(__NR__newselect) || defined(__NR_select)
+#अगर_अघोषित __NR__newselect
+#घोषणा __NR__newselect __NR_select
+#पूर्ण_अगर
+	वापस my_syscall5(__NR__newselect, nfds, rfds, wfds, efds, समयout);
+#अन्यथा
+#त्रुटि None of __NR_select, __NR_pselect6, nor __NR__newselect defined, cannot implement sys_select()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-int sys_setpgid(pid_t pid, pid_t pgid)
-{
-	return my_syscall2(__NR_setpgid, pid, pgid);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_setpgid(pid_t pid, pid_t pgid)
+अणु
+	वापस my_syscall2(__NR_setpgid, pid, pgid);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_setsid(void)
-{
-	return my_syscall0(__NR_setsid);
-}
+अटल __attribute__((unused))
+pid_t sys_setsid(व्योम)
+अणु
+	वापस my_syscall0(__NR_setsid);
+पूर्ण
 
-static __attribute__((unused))
-int sys_stat(const char *path, struct stat *buf)
-{
-	struct sys_stat_struct stat;
-	long ret;
+अटल __attribute__((unused))
+पूर्णांक sys_stat(स्थिर अक्षर *path, काष्ठा stat *buf)
+अणु
+	काष्ठा sys_stat_काष्ठा stat;
+	दीर्घ ret;
 
-#ifdef __NR_newfstatat
-	/* only solution for arm64 */
-	ret = my_syscall4(__NR_newfstatat, AT_FDCWD, path, &stat, 0);
-#elif defined(__NR_stat)
+#अगर_घोषित __NR_newख_स्थितिat
+	/* only solution क्रम arm64 */
+	ret = my_syscall4(__NR_newख_स्थितिat, AT_FDCWD, path, &stat, 0);
+#या_अगर defined(__NR_stat)
 	ret = my_syscall2(__NR_stat, path, &stat);
-#else
-#error Neither __NR_newfstatat nor __NR_stat defined, cannot implement sys_stat()
-#endif
+#अन्यथा
+#त्रुटि Neither __NR_newख_स्थितिat nor __NR_stat defined, cannot implement sys_stat()
+#पूर्ण_अगर
 	buf->st_dev     = stat.st_dev;
 	buf->st_ino     = stat.st_ino;
 	buf->st_mode    = stat.st_mode;
@@ -1740,795 +1741,795 @@ int sys_stat(const char *path, struct stat *buf)
 	buf->st_size    = stat.st_size;
 	buf->st_blksize = stat.st_blksize;
 	buf->st_blocks  = stat.st_blocks;
-	buf->st_atime   = stat.st_atime;
-	buf->st_mtime   = stat.st_mtime;
-	buf->st_ctime   = stat.st_ctime;
-	return ret;
-}
+	buf->st_aसमय   = stat.st_aसमय;
+	buf->st_mसमय   = stat.st_mसमय;
+	buf->st_स_समय   = stat.st_स_समय;
+	वापस ret;
+पूर्ण
 
 
-static __attribute__((unused))
-int sys_symlink(const char *old, const char *new)
-{
-#ifdef __NR_symlinkat
-	return my_syscall3(__NR_symlinkat, old, AT_FDCWD, new);
-#elif defined(__NR_symlink)
-	return my_syscall2(__NR_symlink, old, new);
-#else
-#error Neither __NR_symlinkat nor __NR_symlink defined, cannot implement sys_symlink()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_symlink(स्थिर अक्षर *old, स्थिर अक्षर *new)
+अणु
+#अगर_घोषित __NR_symlinkat
+	वापस my_syscall3(__NR_symlinkat, old, AT_FDCWD, new);
+#या_अगर defined(__NR_symlink)
+	वापस my_syscall2(__NR_symlink, old, new);
+#अन्यथा
+#त्रुटि Neither __NR_symlinkat nor __NR_symlink defined, cannot implement sys_symlink()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
+अटल __attribute__((unused))
 mode_t sys_umask(mode_t mode)
-{
-	return my_syscall1(__NR_umask, mode);
-}
+अणु
+	वापस my_syscall1(__NR_umask, mode);
+पूर्ण
 
-static __attribute__((unused))
-int sys_umount2(const char *path, int flags)
-{
-	return my_syscall2(__NR_umount2, path, flags);
-}
+अटल __attribute__((unused))
+पूर्णांक sys_umount2(स्थिर अक्षर *path, पूर्णांक flags)
+अणु
+	वापस my_syscall2(__NR_umount2, path, flags);
+पूर्ण
 
-static __attribute__((unused))
-int sys_unlink(const char *path)
-{
-#ifdef __NR_unlinkat
-	return my_syscall3(__NR_unlinkat, AT_FDCWD, path, 0);
-#elif defined(__NR_unlink)
-	return my_syscall1(__NR_unlink, path);
-#else
-#error Neither __NR_unlinkat nor __NR_unlink defined, cannot implement sys_unlink()
-#endif
-}
+अटल __attribute__((unused))
+पूर्णांक sys_unlink(स्थिर अक्षर *path)
+अणु
+#अगर_घोषित __NR_unlinkat
+	वापस my_syscall3(__NR_unlinkat, AT_FDCWD, path, 0);
+#या_अगर defined(__NR_unlink)
+	वापस my_syscall1(__NR_unlink, path);
+#अन्यथा
+#त्रुटि Neither __NR_unlinkat nor __NR_unlink defined, cannot implement sys_unlink()
+#पूर्ण_अगर
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_wait4(pid_t pid, int *status, int options, struct rusage *rusage)
-{
-	return my_syscall4(__NR_wait4, pid, status, options, rusage);
-}
+अटल __attribute__((unused))
+pid_t sys_रुको4(pid_t pid, पूर्णांक *status, पूर्णांक options, काष्ठा rusage *rusage)
+अणु
+	वापस my_syscall4(__NR_रुको4, pid, status, options, rusage);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_waitpid(pid_t pid, int *status, int options)
-{
-	return sys_wait4(pid, status, options, 0);
-}
+अटल __attribute__((unused))
+pid_t sys_रुकोpid(pid_t pid, पूर्णांक *status, पूर्णांक options)
+अणु
+	वापस sys_रुको4(pid, status, options, 0);
+पूर्ण
 
-static __attribute__((unused))
-pid_t sys_wait(int *status)
-{
-	return sys_waitpid(-1, status, 0);
-}
+अटल __attribute__((unused))
+pid_t sys_रुको(पूर्णांक *status)
+अणु
+	वापस sys_रुकोpid(-1, status, 0);
+पूर्ण
 
-static __attribute__((unused))
-ssize_t sys_write(int fd, const void *buf, size_t count)
-{
-	return my_syscall3(__NR_write, fd, buf, count);
-}
+अटल __attribute__((unused))
+sमाप_प्रकार sys_ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
+अणु
+	वापस my_syscall3(__NR_ग_लिखो, fd, buf, count);
+पूर्ण
 
 
-/* Below are the libc-compatible syscalls which return x or -1 and set errno.
- * They rely on the functions above. Similarly they're marked static so that it
- * is possible to assign pointers to them if needed.
+/* Below are the libc-compatible syscalls which वापस x or -1 and set त्रुटि_सं.
+ * They rely on the functions above. Similarly they're marked अटल so that it
+ * is possible to assign poपूर्णांकers to them अगर needed.
  */
 
-static __attribute__((unused))
-int brk(void *addr)
-{
-	void *ret = sys_brk(addr);
+अटल __attribute__((unused))
+पूर्णांक brk(व्योम *addr)
+अणु
+	व्योम *ret = sys_brk(addr);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		SET_ERRNO(ENOMEM);
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static __attribute__((noreturn,unused))
-void exit(int status)
-{
-	sys_exit(status);
-}
+अटल __attribute__((noवापस,unused))
+व्योम निकास(पूर्णांक status)
+अणु
+	sys_निकास(status);
+पूर्ण
 
-static __attribute__((unused))
-int chdir(const char *path)
-{
-	int ret = sys_chdir(path);
+अटल __attribute__((unused))
+पूर्णांक स_बदलो(स्थिर अक्षर *path)
+अणु
+	पूर्णांक ret = sys_स_बदलो(path);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int chmod(const char *path, mode_t mode)
-{
-	int ret = sys_chmod(path, mode);
+अटल __attribute__((unused))
+पूर्णांक chmod(स्थिर अक्षर *path, mode_t mode)
+अणु
+	पूर्णांक ret = sys_chmod(path, mode);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int chown(const char *path, uid_t owner, gid_t group)
-{
-	int ret = sys_chown(path, owner, group);
+अटल __attribute__((unused))
+पूर्णांक chown(स्थिर अक्षर *path, uid_t owner, gid_t group)
+अणु
+	पूर्णांक ret = sys_chown(path, owner, group);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int chroot(const char *path)
-{
-	int ret = sys_chroot(path);
+अटल __attribute__((unused))
+पूर्णांक chroot(स्थिर अक्षर *path)
+अणु
+	पूर्णांक ret = sys_chroot(path);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int close(int fd)
-{
-	int ret = sys_close(fd);
+अटल __attribute__((unused))
+पूर्णांक बंद(पूर्णांक fd)
+अणु
+	पूर्णांक ret = sys_बंद(fd);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int dup(int fd)
-{
-	int ret = sys_dup(fd);
+अटल __attribute__((unused))
+पूर्णांक dup(पूर्णांक fd)
+अणु
+	पूर्णांक ret = sys_dup(fd);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int dup2(int old, int new)
-{
-	int ret = sys_dup2(old, new);
+अटल __attribute__((unused))
+पूर्णांक dup2(पूर्णांक old, पूर्णांक new)
+अणु
+	पूर्णांक ret = sys_dup2(old, new);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#ifdef __NR_dup3
-static __attribute__((unused))
-int dup3(int old, int new, int flags)
-{
-	int ret = sys_dup3(old, new, flags);
+#अगर_घोषित __NR_dup3
+अटल __attribute__((unused))
+पूर्णांक dup3(पूर्णांक old, पूर्णांक new, पूर्णांक flags)
+अणु
+	पूर्णांक ret = sys_dup3(old, new, flags);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
-#endif
+	पूर्ण
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static __attribute__((unused))
-int execve(const char *filename, char *const argv[], char *const envp[])
-{
-	int ret = sys_execve(filename, argv, envp);
+अटल __attribute__((unused))
+पूर्णांक execve(स्थिर अक्षर *filename, अक्षर *स्थिर argv[], अक्षर *स्थिर envp[])
+अणु
+	पूर्णांक ret = sys_execve(filename, argv, envp);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t fork(void)
-{
-	pid_t ret = sys_fork();
+अटल __attribute__((unused))
+pid_t विभाजन(व्योम)
+अणु
+	pid_t ret = sys_विभाजन();
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int fsync(int fd)
-{
-	int ret = sys_fsync(fd);
+अटल __attribute__((unused))
+पूर्णांक fsync(पूर्णांक fd)
+अणु
+	पूर्णांक ret = sys_fsync(fd);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int getdents64(int fd, struct linux_dirent64 *dirp, int count)
-{
-	int ret = sys_getdents64(fd, dirp, count);
+अटल __attribute__((unused))
+पूर्णांक getdents64(पूर्णांक fd, काष्ठा linux_dirent64 *dirp, पूर्णांक count)
+अणु
+	पूर्णांक ret = sys_getdents64(fd, dirp, count);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
+अटल __attribute__((unused))
 pid_t getpgid(pid_t pid)
-{
+अणु
 	pid_t ret = sys_getpgid(pid);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t getpgrp(void)
-{
+अटल __attribute__((unused))
+pid_t getpgrp(व्योम)
+अणु
 	pid_t ret = sys_getpgrp();
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t getpid(void)
-{
+अटल __attribute__((unused))
+pid_t getpid(व्योम)
+अणु
 	pid_t ret = sys_getpid();
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int gettimeofday(struct timeval *tv, struct timezone *tz)
-{
-	int ret = sys_gettimeofday(tv, tz);
+अटल __attribute__((unused))
+पूर्णांक समय_लोofday(काष्ठा समयval *tv, काष्ठा समयzone *tz)
+अणु
+	पूर्णांक ret = sys_समय_लोofday(tv, tz);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int ioctl(int fd, unsigned long req, void *value)
-{
-	int ret = sys_ioctl(fd, req, value);
+अटल __attribute__((unused))
+पूर्णांक ioctl(पूर्णांक fd, अचिन्हित दीर्घ req, व्योम *value)
+अणु
+	पूर्णांक ret = sys_ioctl(fd, req, value);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int kill(pid_t pid, int signal)
-{
-	int ret = sys_kill(pid, signal);
+अटल __attribute__((unused))
+पूर्णांक समाप्त(pid_t pid, पूर्णांक संकेत)
+अणु
+	पूर्णांक ret = sys_समाप्त(pid, संकेत);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int link(const char *old, const char *new)
-{
-	int ret = sys_link(old, new);
+अटल __attribute__((unused))
+पूर्णांक link(स्थिर अक्षर *old, स्थिर अक्षर *new)
+अणु
+	पूर्णांक ret = sys_link(old, new);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-off_t lseek(int fd, off_t offset, int whence)
-{
+अटल __attribute__((unused))
+off_t lseek(पूर्णांक fd, off_t offset, पूर्णांक whence)
+अणु
 	off_t ret = sys_lseek(fd, offset, whence);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int mkdir(const char *path, mode_t mode)
-{
-	int ret = sys_mkdir(path, mode);
+अटल __attribute__((unused))
+पूर्णांक सूची_गढ़ो(स्थिर अक्षर *path, mode_t mode)
+अणु
+	पूर्णांक ret = sys_सूची_गढ़ो(path, mode);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int mknod(const char *path, mode_t mode, dev_t dev)
-{
-	int ret = sys_mknod(path, mode, dev);
+अटल __attribute__((unused))
+पूर्णांक mknod(स्थिर अक्षर *path, mode_t mode, dev_t dev)
+अणु
+	पूर्णांक ret = sys_mknod(path, mode, dev);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int mount(const char *src, const char *tgt,
-	  const char *fst, unsigned long flags,
-	  const void *data)
-{
-	int ret = sys_mount(src, tgt, fst, flags, data);
+अटल __attribute__((unused))
+पूर्णांक mount(स्थिर अक्षर *src, स्थिर अक्षर *tgt,
+	  स्थिर अक्षर *fst, अचिन्हित दीर्घ flags,
+	  स्थिर व्योम *data)
+अणु
+	पूर्णांक ret = sys_mount(src, tgt, fst, flags, data);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int open(const char *path, int flags, mode_t mode)
-{
-	int ret = sys_open(path, flags, mode);
+अटल __attribute__((unused))
+पूर्णांक खोलो(स्थिर अक्षर *path, पूर्णांक flags, mode_t mode)
+अणु
+	पूर्णांक ret = sys_खोलो(path, flags, mode);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int pivot_root(const char *new, const char *old)
-{
-	int ret = sys_pivot_root(new, old);
+अटल __attribute__((unused))
+पूर्णांक pivot_root(स्थिर अक्षर *new, स्थिर अक्षर *old)
+अणु
+	पूर्णांक ret = sys_pivot_root(new, old);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int poll(struct pollfd *fds, int nfds, int timeout)
-{
-	int ret = sys_poll(fds, nfds, timeout);
+अटल __attribute__((unused))
+पूर्णांक poll(काष्ठा pollfd *fds, पूर्णांक nfds, पूर्णांक समयout)
+अणु
+	पूर्णांक ret = sys_poll(fds, nfds, समयout);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-ssize_t read(int fd, void *buf, size_t count)
-{
-	ssize_t ret = sys_read(fd, buf, count);
+अटल __attribute__((unused))
+sमाप_प्रकार पढ़ो(पूर्णांक fd, व्योम *buf, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret = sys_पढ़ो(fd, buf, count);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int reboot(int cmd)
-{
-	int ret = sys_reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, 0);
+अटल __attribute__((unused))
+पूर्णांक reboot(पूर्णांक cmd)
+अणु
+	पूर्णांक ret = sys_reboot(LINUX_REBOOT_MAGIC1, LINUX_REBOOT_MAGIC2, cmd, 0);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-void *sbrk(intptr_t inc)
-{
-	void *ret;
+अटल __attribute__((unused))
+व्योम *sbrk(पूर्णांकptr_t inc)
+अणु
+	व्योम *ret;
 
 	/* first call to find current end */
-	if ((ret = sys_brk(0)) && (sys_brk(ret + inc) == ret + inc))
-		return ret + inc;
+	अगर ((ret = sys_brk(0)) && (sys_brk(ret + inc) == ret + inc))
+		वापस ret + inc;
 
 	SET_ERRNO(ENOMEM);
-	return (void *)-1;
-}
+	वापस (व्योम *)-1;
+पूर्ण
 
-static __attribute__((unused))
-int sched_yield(void)
-{
-	int ret = sys_sched_yield();
+अटल __attribute__((unused))
+पूर्णांक sched_yield(व्योम)
+अणु
+	पूर्णांक ret = sys_sched_yield();
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int select(int nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, struct timeval *timeout)
-{
-	int ret = sys_select(nfds, rfds, wfds, efds, timeout);
+अटल __attribute__((unused))
+पूर्णांक select(पूर्णांक nfds, fd_set *rfds, fd_set *wfds, fd_set *efds, काष्ठा समयval *समयout)
+अणु
+	पूर्णांक ret = sys_select(nfds, rfds, wfds, efds, समयout);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int setpgid(pid_t pid, pid_t pgid)
-{
-	int ret = sys_setpgid(pid, pgid);
+अटल __attribute__((unused))
+पूर्णांक setpgid(pid_t pid, pid_t pgid)
+अणु
+	पूर्णांक ret = sys_setpgid(pid, pgid);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t setsid(void)
-{
+अटल __attribute__((unused))
+pid_t setsid(व्योम)
+अणु
 	pid_t ret = sys_setsid();
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-unsigned int sleep(unsigned int seconds)
-{
-	struct timeval my_timeval = { seconds, 0 };
+अटल __attribute__((unused))
+अचिन्हित पूर्णांक sleep(अचिन्हित पूर्णांक seconds)
+अणु
+	काष्ठा समयval my_समयval = अणु seconds, 0 पूर्ण;
 
-	if (sys_select(0, 0, 0, 0, &my_timeval) < 0)
-		return my_timeval.tv_sec + !!my_timeval.tv_usec;
-	else
-		return 0;
-}
+	अगर (sys_select(0, 0, 0, 0, &my_समयval) < 0)
+		वापस my_समयval.tv_sec + !!my_समयval.tv_usec;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static __attribute__((unused))
-int stat(const char *path, struct stat *buf)
-{
-	int ret = sys_stat(path, buf);
+अटल __attribute__((unused))
+पूर्णांक stat(स्थिर अक्षर *path, काष्ठा stat *buf)
+अणु
+	पूर्णांक ret = sys_stat(path, buf);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int symlink(const char *old, const char *new)
-{
-	int ret = sys_symlink(old, new);
+अटल __attribute__((unused))
+पूर्णांक symlink(स्थिर अक्षर *old, स्थिर अक्षर *new)
+अणु
+	पूर्णांक ret = sys_symlink(old, new);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int tcsetpgrp(int fd, pid_t pid)
-{
-	return ioctl(fd, TIOCSPGRP, &pid);
-}
+अटल __attribute__((unused))
+पूर्णांक tcsetpgrp(पूर्णांक fd, pid_t pid)
+अणु
+	वापस ioctl(fd, TIOCSPGRP, &pid);
+पूर्ण
 
-static __attribute__((unused))
+अटल __attribute__((unused))
 mode_t umask(mode_t mode)
-{
-	return sys_umask(mode);
-}
+अणु
+	वापस sys_umask(mode);
+पूर्ण
 
-static __attribute__((unused))
-int umount2(const char *path, int flags)
-{
-	int ret = sys_umount2(path, flags);
+अटल __attribute__((unused))
+पूर्णांक umount2(स्थिर अक्षर *path, पूर्णांक flags)
+अणु
+	पूर्णांक ret = sys_umount2(path, flags);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-int unlink(const char *path)
-{
-	int ret = sys_unlink(path);
+अटल __attribute__((unused))
+पूर्णांक unlink(स्थिर अक्षर *path)
+अणु
+	पूर्णांक ret = sys_unlink(path);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t wait4(pid_t pid, int *status, int options, struct rusage *rusage)
-{
-	pid_t ret = sys_wait4(pid, status, options, rusage);
+अटल __attribute__((unused))
+pid_t रुको4(pid_t pid, पूर्णांक *status, पूर्णांक options, काष्ठा rusage *rusage)
+अणु
+	pid_t ret = sys_रुको4(pid, status, options, rusage);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t waitpid(pid_t pid, int *status, int options)
-{
-	pid_t ret = sys_waitpid(pid, status, options);
+अटल __attribute__((unused))
+pid_t रुकोpid(pid_t pid, पूर्णांक *status, पूर्णांक options)
+अणु
+	pid_t ret = sys_रुकोpid(pid, status, options);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-pid_t wait(int *status)
-{
-	pid_t ret = sys_wait(status);
+अटल __attribute__((unused))
+pid_t रुको(पूर्णांक *status)
+अणु
+	pid_t ret = sys_रुको(status);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-ssize_t write(int fd, const void *buf, size_t count)
-{
-	ssize_t ret = sys_write(fd, buf, count);
+अटल __attribute__((unused))
+sमाप_प्रकार ग_लिखो(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार count)
+अणु
+	sमाप_प्रकार ret = sys_ग_लिखो(fd, buf, count);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		SET_ERRNO(-ret);
 		ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* some size-optimized reimplementations of a few common str* and mem*
- * functions. They're marked static, except memcpy() and raise() which are used
+ * functions. They're marked अटल, except स_नकल() and उठाओ() which are used
  * by libgcc on ARM, so they are marked weak instead in order not to cause an
  * error when building a program made of multiple files (not recommended).
  */
 
-static __attribute__((unused))
-void *memmove(void *dst, const void *src, size_t len)
-{
-	ssize_t pos = (dst <= src) ? -1 : (long)len;
-	void *ret = dst;
+अटल __attribute__((unused))
+व्योम *स_हटाओ(व्योम *dst, स्थिर व्योम *src, माप_प्रकार len)
+अणु
+	sमाप_प्रकार pos = (dst <= src) ? -1 : (दीर्घ)len;
+	व्योम *ret = dst;
 
-	while (len--) {
+	जबतक (len--) अणु
 		pos += (dst <= src) ? 1 : -1;
-		((char *)dst)[pos] = ((char *)src)[pos];
-	}
-	return ret;
-}
+		((अक्षर *)dst)[pos] = ((अक्षर *)src)[pos];
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-void *memset(void *dst, int b, size_t len)
-{
-	char *p = dst;
+अटल __attribute__((unused))
+व्योम *स_रखो(व्योम *dst, पूर्णांक b, माप_प्रकार len)
+अणु
+	अक्षर *p = dst;
 
-	while (len--)
+	जबतक (len--)
 		*(p++) = b;
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-static __attribute__((unused))
-int memcmp(const void *s1, const void *s2, size_t n)
-{
-	size_t ofs = 0;
-	char c1 = 0;
+अटल __attribute__((unused))
+पूर्णांक स_भेद(स्थिर व्योम *s1, स्थिर व्योम *s2, माप_प्रकार n)
+अणु
+	माप_प्रकार ofs = 0;
+	अक्षर c1 = 0;
 
-	while (ofs < n && !(c1 = ((char *)s1)[ofs] - ((char *)s2)[ofs])) {
+	जबतक (ofs < n && !(c1 = ((अक्षर *)s1)[ofs] - ((अक्षर *)s2)[ofs])) अणु
 		ofs++;
-	}
-	return c1;
-}
+	पूर्ण
+	वापस c1;
+पूर्ण
 
-static __attribute__((unused))
-char *strcpy(char *dst, const char *src)
-{
-	char *ret = dst;
+अटल __attribute__((unused))
+अक्षर *म_नकल(अक्षर *dst, स्थिर अक्षर *src)
+अणु
+	अक्षर *ret = dst;
 
-	while ((*dst++ = *src++));
-	return ret;
-}
+	जबतक ((*dst++ = *src++));
+	वापस ret;
+पूर्ण
 
-static __attribute__((unused))
-char *strchr(const char *s, int c)
-{
-	while (*s) {
-		if (*s == (char)c)
-			return (char *)s;
+अटल __attribute__((unused))
+अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c)
+अणु
+	जबतक (*s) अणु
+		अगर (*s == (अक्षर)c)
+			वापस (अक्षर *)s;
 		s++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static __attribute__((unused))
-char *strrchr(const char *s, int c)
-{
-	const char *ret = NULL;
+अटल __attribute__((unused))
+अक्षर *म_खोजप(स्थिर अक्षर *s, पूर्णांक c)
+अणु
+	स्थिर अक्षर *ret = शून्य;
 
-	while (*s) {
-		if (*s == (char)c)
+	जबतक (*s) अणु
+		अगर (*s == (अक्षर)c)
 			ret = s;
 		s++;
-	}
-	return (char *)ret;
-}
+	पूर्ण
+	वापस (अक्षर *)ret;
+पूर्ण
 
-static __attribute__((unused))
-size_t nolibc_strlen(const char *str)
-{
-	size_t len;
+अटल __attribute__((unused))
+माप_प्रकार nolibc_म_माप(स्थिर अक्षर *str)
+अणु
+	माप_प्रकार len;
 
-	for (len = 0; str[len]; len++);
-	return len;
-}
+	क्रम (len = 0; str[len]; len++);
+	वापस len;
+पूर्ण
 
-#define strlen(str) ({                          \
-	__builtin_constant_p((str)) ?           \
-		__builtin_strlen((str)) :       \
-		nolibc_strlen((str));           \
-})
+#घोषणा म_माप(str) (अणु                          \
+	__builtin_स्थिरant_p((str)) ?           \
+		__builtin_म_माप((str)) :       \
+		nolibc_म_माप((str));           \
+पूर्ण)
 
-static __attribute__((unused))
-int isdigit(int c)
-{
-	return (unsigned int)(c - '0') <= 9;
-}
+अटल __attribute__((unused))
+पूर्णांक है_अंक(पूर्णांक c)
+अणु
+	वापस (अचिन्हित पूर्णांक)(c - '0') <= 9;
+पूर्ण
 
-static __attribute__((unused))
-long atol(const char *s)
-{
-	unsigned long ret = 0;
-	unsigned long d;
-	int neg = 0;
+अटल __attribute__((unused))
+दीर्घ म_से_द(स्थिर अक्षर *s)
+अणु
+	अचिन्हित दीर्घ ret = 0;
+	अचिन्हित दीर्घ d;
+	पूर्णांक neg = 0;
 
-	if (*s == '-') {
+	अगर (*s == '-') अणु
 		neg = 1;
 		s++;
-	}
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		d = (*s++) - '0';
-		if (d > 9)
-			break;
+		अगर (d > 9)
+			अवरोध;
 		ret *= 10;
 		ret += d;
-	}
+	पूर्ण
 
-	return neg ? -ret : ret;
-}
+	वापस neg ? -ret : ret;
+पूर्ण
 
-static __attribute__((unused))
-int atoi(const char *s)
-{
-	return atol(s);
-}
+अटल __attribute__((unused))
+पूर्णांक म_से_प(स्थिर अक्षर *s)
+अणु
+	वापस म_से_द(s);
+पूर्ण
 
-static __attribute__((unused))
-const char *ltoa(long in)
-{
-	/* large enough for -9223372036854775808 */
-	static char buffer[21];
-	char       *pos = buffer + sizeof(buffer) - 1;
-	int         neg = in < 0;
-	unsigned long n = neg ? -in : in;
+अटल __attribute__((unused))
+स्थिर अक्षर *ltoa(दीर्घ in)
+अणु
+	/* large enough क्रम -9223372036854775808 */
+	अटल अक्षर buffer[21];
+	अक्षर       *pos = buffer + माप(buffer) - 1;
+	पूर्णांक         neg = in < 0;
+	अचिन्हित दीर्घ n = neg ? -in : in;
 
 	*pos-- = '\0';
-	do {
+	करो अणु
 		*pos-- = '0' + n % 10;
 		n /= 10;
-		if (pos < buffer)
-			return pos + 1;
-	} while (n);
+		अगर (pos < buffer)
+			वापस pos + 1;
+	पूर्ण जबतक (n);
 
-	if (neg)
+	अगर (neg)
 		*pos-- = '-';
-	return pos + 1;
-}
+	वापस pos + 1;
+पूर्ण
 
 __attribute__((weak,unused))
-void *memcpy(void *dst, const void *src, size_t len)
-{
-	return memmove(dst, src, len);
-}
+व्योम *स_नकल(व्योम *dst, स्थिर व्योम *src, माप_प्रकार len)
+अणु
+	वापस स_हटाओ(dst, src, len);
+पूर्ण
 
-/* needed by libgcc for divide by zero */
+/* needed by libgcc क्रम भागide by zero */
 __attribute__((weak,unused))
-int raise(int signal)
-{
-	return kill(getpid(), signal);
-}
+पूर्णांक उठाओ(पूर्णांक संकेत)
+अणु
+	वापस समाप्त(getpid(), संकेत);
+पूर्ण
 
 /* Here come a few helper functions */
 
-static __attribute__((unused))
-void FD_ZERO(fd_set *set)
-{
-	memset(set, 0, sizeof(*set));
-}
+अटल __attribute__((unused))
+व्योम FD_ZERO(fd_set *set)
+अणु
+	स_रखो(set, 0, माप(*set));
+पूर्ण
 
-static __attribute__((unused))
-void FD_SET(int fd, fd_set *set)
-{
-	if (fd < 0 || fd >= FD_SETSIZE)
-		return;
+अटल __attribute__((unused))
+व्योम FD_SET(पूर्णांक fd, fd_set *set)
+अणु
+	अगर (fd < 0 || fd >= FD_SETSIZE)
+		वापस;
 	set->fd32[fd / 32] |= 1 << (fd & 31);
-}
+पूर्ण
 
 /* WARNING, it only deals with the 4096 first majors and 256 first minors */
-static __attribute__((unused))
-dev_t makedev(unsigned int major, unsigned int minor)
-{
-	return ((major & 0xfff) << 8) | (minor & 0xff);
-}
+अटल __attribute__((unused))
+dev_t makedev(अचिन्हित पूर्णांक major, अचिन्हित पूर्णांक minor)
+अणु
+	वापस ((major & 0xfff) << 8) | (minor & 0xff);
+पूर्ण

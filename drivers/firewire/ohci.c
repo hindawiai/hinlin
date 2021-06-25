@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for OHCI 1394 controllers
+ * Driver क्रम OHCI 1394 controllers
  *
  * Copyright (C) 2003-2006 Kristian Hoegsberg <krh@bitplanet.net>
  */
 
-#include <linux/bitops.h>
-#include <linux/bug.h>
-#include <linux/compiler.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/firewire.h>
-#include <linux/firewire-constants.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/time.h>
-#include <linux/vmalloc.h>
-#include <linux/workqueue.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/firewire.h>
+#समावेश <linux/firewire-स्थिरants.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/workqueue.h>
 
-#include <asm/byteorder.h>
-#include <asm/page.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/page.h>
 
-#ifdef CONFIG_PPC_PMAC
-#include <asm/pmac_feature.h>
-#endif
+#अगर_घोषित CONFIG_PPC_PMAC
+#समावेश <यंत्र/pmac_feature.h>
+#पूर्ण_अगर
 
-#include "core.h"
-#include "ohci.h"
+#समावेश "core.h"
+#समावेश "ohci.h"
 
-#define ohci_info(ohci, f, args...)	dev_info(ohci->card.device, f, ##args)
-#define ohci_notice(ohci, f, args...)	dev_notice(ohci->card.device, f, ##args)
-#define ohci_err(ohci, f, args...)	dev_err(ohci->card.device, f, ##args)
+#घोषणा ohci_info(ohci, f, args...)	dev_info(ohci->card.device, f, ##args)
+#घोषणा ohci_notice(ohci, f, args...)	dev_notice(ohci->card.device, f, ##args)
+#घोषणा ohci_err(ohci, f, args...)	dev_err(ohci->card.device, f, ##args)
 
-#define DESCRIPTOR_OUTPUT_MORE		0
-#define DESCRIPTOR_OUTPUT_LAST		(1 << 12)
-#define DESCRIPTOR_INPUT_MORE		(2 << 12)
-#define DESCRIPTOR_INPUT_LAST		(3 << 12)
-#define DESCRIPTOR_STATUS		(1 << 11)
-#define DESCRIPTOR_KEY_IMMEDIATE	(2 << 8)
-#define DESCRIPTOR_PING			(1 << 7)
-#define DESCRIPTOR_YY			(1 << 6)
-#define DESCRIPTOR_NO_IRQ		(0 << 4)
-#define DESCRIPTOR_IRQ_ERROR		(1 << 4)
-#define DESCRIPTOR_IRQ_ALWAYS		(3 << 4)
-#define DESCRIPTOR_BRANCH_ALWAYS	(3 << 2)
-#define DESCRIPTOR_WAIT			(3 << 0)
+#घोषणा DESCRIPTOR_OUTPUT_MORE		0
+#घोषणा DESCRIPTOR_OUTPUT_LAST		(1 << 12)
+#घोषणा DESCRIPTOR_INPUT_MORE		(2 << 12)
+#घोषणा DESCRIPTOR_INPUT_LAST		(3 << 12)
+#घोषणा DESCRIPTOR_STATUS		(1 << 11)
+#घोषणा DESCRIPTOR_KEY_IMMEDIATE	(2 << 8)
+#घोषणा DESCRIPTOR_PING			(1 << 7)
+#घोषणा DESCRIPTOR_YY			(1 << 6)
+#घोषणा DESCRIPTOR_NO_IRQ		(0 << 4)
+#घोषणा DESCRIPTOR_IRQ_ERROR		(1 << 4)
+#घोषणा DESCRIPTOR_IRQ_ALWAYS		(3 << 4)
+#घोषणा DESCRIPTOR_BRANCH_ALWAYS	(3 << 2)
+#घोषणा DESCRIPTOR_WAIT			(3 << 0)
 
-#define DESCRIPTOR_CMD			(0xf << 12)
+#घोषणा DESCRIPTOR_CMD			(0xf << 12)
 
-struct descriptor {
+काष्ठा descriptor अणु
 	__le16 req_count;
 	__le16 control;
 	__le32 data_address;
 	__le32 branch_address;
 	__le16 res_count;
 	__le16 transfer_status;
-} __attribute__((aligned(16)));
+पूर्ण __attribute__((aligned(16)));
 
-#define CONTROL_SET(regs)	(regs)
-#define CONTROL_CLEAR(regs)	((regs) + 4)
-#define COMMAND_PTR(regs)	((regs) + 12)
-#define CONTEXT_MATCH(regs)	((regs) + 16)
+#घोषणा CONTROL_SET(regs)	(regs)
+#घोषणा CONTROL_CLEAR(regs)	((regs) + 4)
+#घोषणा COMMAND_PTR(regs)	((regs) + 12)
+#घोषणा CONTEXT_MATCH(regs)	((regs) + 16)
 
-#define AR_BUFFER_SIZE	(32*1024)
-#define AR_BUFFERS_MIN	DIV_ROUND_UP(AR_BUFFER_SIZE, PAGE_SIZE)
-/* we need at least two pages for proper list management */
-#define AR_BUFFERS	(AR_BUFFERS_MIN >= 2 ? AR_BUFFERS_MIN : 2)
+#घोषणा AR_BUFFER_SIZE	(32*1024)
+#घोषणा AR_BUFFERS_MIN	DIV_ROUND_UP(AR_BUFFER_SIZE, PAGE_SIZE)
+/* we need at least two pages क्रम proper list management */
+#घोषणा AR_BUFFERS	(AR_BUFFERS_MIN >= 2 ? AR_BUFFERS_MIN : 2)
 
-#define MAX_ASYNC_PAYLOAD	4096
-#define MAX_AR_PACKET_SIZE	(16 + MAX_ASYNC_PAYLOAD + 4)
-#define AR_WRAPAROUND_PAGES	DIV_ROUND_UP(MAX_AR_PACKET_SIZE, PAGE_SIZE)
+#घोषणा MAX_ASYNC_PAYLOAD	4096
+#घोषणा MAX_AR_PACKET_SIZE	(16 + MAX_ASYNC_PAYLOAD + 4)
+#घोषणा AR_WRAPAROUND_PAGES	DIV_ROUND_UP(MAX_AR_PACKET_SIZE, PAGE_SIZE)
 
-struct ar_context {
-	struct fw_ohci *ohci;
-	struct page *pages[AR_BUFFERS];
-	void *buffer;
-	struct descriptor *descriptors;
+काष्ठा ar_context अणु
+	काष्ठा fw_ohci *ohci;
+	काष्ठा page *pages[AR_BUFFERS];
+	व्योम *buffer;
+	काष्ठा descriptor *descriptors;
 	dma_addr_t descriptors_bus;
-	void *pointer;
-	unsigned int last_buffer_index;
+	व्योम *poपूर्णांकer;
+	अचिन्हित पूर्णांक last_buffer_index;
 	u32 regs;
-	struct tasklet_struct tasklet;
-};
+	काष्ठा tasklet_काष्ठा tasklet;
+पूर्ण;
 
-struct context;
+काष्ठा context;
 
-typedef int (*descriptor_callback_t)(struct context *ctx,
-				     struct descriptor *d,
-				     struct descriptor *last);
+प्रकार पूर्णांक (*descriptor_callback_t)(काष्ठा context *ctx,
+				     काष्ठा descriptor *d,
+				     काष्ठा descriptor *last);
 
 /*
- * A buffer that contains a block of DMA-able coherent memory used for
+ * A buffer that contains a block of DMA-able coherent memory used क्रम
  * storing a portion of a DMA descriptor program.
  */
-struct descriptor_buffer {
-	struct list_head list;
+काष्ठा descriptor_buffer अणु
+	काष्ठा list_head list;
 	dma_addr_t buffer_bus;
-	size_t buffer_size;
-	size_t used;
-	struct descriptor buffer[];
-};
+	माप_प्रकार buffer_size;
+	माप_प्रकार used;
+	काष्ठा descriptor buffer[];
+पूर्ण;
 
-struct context {
-	struct fw_ohci *ohci;
+काष्ठा context अणु
+	काष्ठा fw_ohci *ohci;
 	u32 regs;
-	int total_allocation;
+	पूर्णांक total_allocation;
 	u32 current_bus;
 	bool running;
 	bool flushing;
 
 	/*
-	 * List of page-sized buffers for storing DMA descriptors.
+	 * List of page-sized buffers क्रम storing DMA descriptors.
 	 * Head of list contains buffers in use and tail of list contains
-	 * free buffers.
+	 * मुक्त buffers.
 	 */
-	struct list_head buffer_list;
+	काष्ठा list_head buffer_list;
 
 	/*
-	 * Pointer to a buffer inside buffer_list that contains the tail
+	 * Poपूर्णांकer to a buffer inside buffer_list that contains the tail
 	 * end of the current DMA program.
 	 */
-	struct descriptor_buffer *buffer_tail;
+	काष्ठा descriptor_buffer *buffer_tail;
 
 	/*
 	 * The descriptor containing the branch address of the first
 	 * descriptor that has not yet been filled by the device.
 	 */
-	struct descriptor *last;
+	काष्ठा descriptor *last;
 
 	/*
 	 * The last descriptor block in the DMA program. It contains the branch
 	 * address that must be updated upon appending a new descriptor.
 	 */
-	struct descriptor *prev;
-	int prev_z;
+	काष्ठा descriptor *prev;
+	पूर्णांक prev_z;
 
 	descriptor_callback_t callback;
 
-	struct tasklet_struct tasklet;
-};
+	काष्ठा tasklet_काष्ठा tasklet;
+पूर्ण;
 
-#define IT_HEADER_SY(v)          ((v) <<  0)
-#define IT_HEADER_TCODE(v)       ((v) <<  4)
-#define IT_HEADER_CHANNEL(v)     ((v) <<  8)
-#define IT_HEADER_TAG(v)         ((v) << 14)
-#define IT_HEADER_SPEED(v)       ((v) << 16)
-#define IT_HEADER_DATA_LENGTH(v) ((v) << 16)
+#घोषणा IT_HEADER_SY(v)          ((v) <<  0)
+#घोषणा IT_HEADER_TCODE(v)       ((v) <<  4)
+#घोषणा IT_HEADER_CHANNEL(v)     ((v) <<  8)
+#घोषणा IT_HEADER_TAG(v)         ((v) << 14)
+#घोषणा IT_HEADER_SPEED(v)       ((v) << 16)
+#घोषणा IT_HEADER_DATA_LENGTH(v) ((v) << 16)
 
-struct iso_context {
-	struct fw_iso_context base;
-	struct context context;
-	void *header;
-	size_t header_length;
-	unsigned long flushing_completions;
+काष्ठा iso_context अणु
+	काष्ठा fw_iso_context base;
+	काष्ठा context context;
+	व्योम *header;
+	माप_प्रकार header_length;
+	अचिन्हित दीर्घ flushing_completions;
 	u32 mc_buffer_bus;
 	u16 mc_completed;
-	u16 last_timestamp;
+	u16 last_बारtamp;
 	u8 sync;
 	u8 tags;
-};
+पूर्ण;
 
-#define CONFIG_ROM_SIZE 1024
+#घोषणा CONFIG_ROM_SIZE 1024
 
-struct fw_ohci {
-	struct fw_card card;
+काष्ठा fw_ohci अणु
+	काष्ठा fw_card card;
 
-	__iomem char *registers;
-	int node_id;
-	int generation;
-	int request_generation;	/* for timestamping incoming requests */
-	unsigned quirks;
-	unsigned int pri_req_max;
-	u32 bus_time;
-	bool bus_time_running;
+	__iomem अक्षर *रेजिस्टरs;
+	पूर्णांक node_id;
+	पूर्णांक generation;
+	पूर्णांक request_generation;	/* क्रम बारtamping incoming requests */
+	अचिन्हित quirks;
+	अचिन्हित पूर्णांक pri_req_max;
+	u32 bus_समय;
+	bool bus_समय_running;
 	bool is_root;
 	bool csr_state_setclear_abdicate;
-	int n_ir;
-	int n_it;
+	पूर्णांक n_ir;
+	पूर्णांक n_it;
 	/*
-	 * Spinlock for accessing fw_ohci data.  Never call out of
+	 * Spinlock क्रम accessing fw_ohci data.  Never call out of
 	 * this driver with this lock held.
 	 */
 	spinlock_t lock;
 
-	struct mutex phy_reg_mutex;
+	काष्ठा mutex phy_reg_mutex;
 
-	void *misc_buffer;
+	व्योम *misc_buffer;
 	dma_addr_t misc_buffer_bus;
 
-	struct ar_context ar_request_ctx;
-	struct ar_context ar_response_ctx;
-	struct context at_request_ctx;
-	struct context at_response_ctx;
+	काष्ठा ar_context ar_request_ctx;
+	काष्ठा ar_context ar_response_ctx;
+	काष्ठा context at_request_ctx;
+	काष्ठा context at_response_ctx;
 
 	u32 it_context_support;
 	u32 it_context_mask;     /* unoccupied IT contexts */
-	struct iso_context *it_context_list;
+	काष्ठा iso_context *it_context_list;
 	u64 ir_context_channels; /* unoccupied channels */
 	u32 ir_context_support;
 	u32 ir_context_mask;     /* unoccupied IR contexts */
-	struct iso_context *ir_context_list;
+	काष्ठा iso_context *ir_context_list;
 	u64 mc_channels; /* channels in use by the multichannel IR context */
 	bool mc_allocated;
 
@@ -224,154 +225,154 @@ struct fw_ohci {
 
 	__le32    *self_id;
 	dma_addr_t self_id_bus;
-	struct work_struct bus_reset_work;
+	काष्ठा work_काष्ठा bus_reset_work;
 
 	u32 self_id_buffer[512];
-};
+पूर्ण;
 
-static struct workqueue_struct *selfid_workqueue;
+अटल काष्ठा workqueue_काष्ठा *selfid_workqueue;
 
-static inline struct fw_ohci *fw_ohci(struct fw_card *card)
-{
-	return container_of(card, struct fw_ohci, card);
-}
+अटल अंतरभूत काष्ठा fw_ohci *fw_ohci(काष्ठा fw_card *card)
+अणु
+	वापस container_of(card, काष्ठा fw_ohci, card);
+पूर्ण
 
-#define IT_CONTEXT_CYCLE_MATCH_ENABLE	0x80000000
-#define IR_CONTEXT_BUFFER_FILL		0x80000000
-#define IR_CONTEXT_ISOCH_HEADER		0x40000000
-#define IR_CONTEXT_CYCLE_MATCH_ENABLE	0x20000000
-#define IR_CONTEXT_MULTI_CHANNEL_MODE	0x10000000
-#define IR_CONTEXT_DUAL_BUFFER_MODE	0x08000000
+#घोषणा IT_CONTEXT_CYCLE_MATCH_ENABLE	0x80000000
+#घोषणा IR_CONTEXT_BUFFER_FILL		0x80000000
+#घोषणा IR_CONTEXT_ISOCH_HEADER		0x40000000
+#घोषणा IR_CONTEXT_CYCLE_MATCH_ENABLE	0x20000000
+#घोषणा IR_CONTEXT_MULTI_CHANNEL_MODE	0x10000000
+#घोषणा IR_CONTEXT_DUAL_BUFFER_MODE	0x08000000
 
-#define CONTEXT_RUN	0x8000
-#define CONTEXT_WAKE	0x1000
-#define CONTEXT_DEAD	0x0800
-#define CONTEXT_ACTIVE	0x0400
+#घोषणा CONTEXT_RUN	0x8000
+#घोषणा CONTEXT_WAKE	0x1000
+#घोषणा CONTEXT_DEAD	0x0800
+#घोषणा CONTEXT_ACTIVE	0x0400
 
-#define OHCI1394_MAX_AT_REQ_RETRIES	0xf
-#define OHCI1394_MAX_AT_RESP_RETRIES	0x2
-#define OHCI1394_MAX_PHYS_RESP_RETRIES	0x8
+#घोषणा OHCI1394_MAX_AT_REQ_RETRIES	0xf
+#घोषणा OHCI1394_MAX_AT_RESP_RETRIES	0x2
+#घोषणा OHCI1394_MAX_PHYS_RESP_RETRIES	0x8
 
-#define OHCI1394_REGISTER_SIZE		0x800
-#define OHCI1394_PCI_HCI_Control	0x40
-#define SELF_ID_BUF_SIZE		0x800
-#define OHCI_TCODE_PHY_PACKET		0x0e
-#define OHCI_VERSION_1_1		0x010010
+#घोषणा OHCI1394_REGISTER_SIZE		0x800
+#घोषणा OHCI1394_PCI_HCI_Control	0x40
+#घोषणा SELF_ID_BUF_SIZE		0x800
+#घोषणा OHCI_TCODE_PHY_PACKET		0x0e
+#घोषणा OHCI_VERSION_1_1		0x010010
 
-static char ohci_driver_name[] = KBUILD_MODNAME;
+अटल अक्षर ohci_driver_name[] = KBUILD_MODNAME;
 
-#define PCI_VENDOR_ID_PINNACLE_SYSTEMS	0x11bd
-#define PCI_DEVICE_ID_AGERE_FW643	0x5901
-#define PCI_DEVICE_ID_CREATIVE_SB1394	0x4001
-#define PCI_DEVICE_ID_JMICRON_JMB38X_FW	0x2380
-#define PCI_DEVICE_ID_TI_TSB12LV22	0x8009
-#define PCI_DEVICE_ID_TI_TSB12LV26	0x8020
-#define PCI_DEVICE_ID_TI_TSB82AA2	0x8025
-#define PCI_DEVICE_ID_VIA_VT630X	0x3044
-#define PCI_REV_ID_VIA_VT6306		0x46
-#define PCI_DEVICE_ID_VIA_VT6315	0x3403
+#घोषणा PCI_VENDOR_ID_PINNACLE_SYSTEMS	0x11bd
+#घोषणा PCI_DEVICE_ID_AGERE_FW643	0x5901
+#घोषणा PCI_DEVICE_ID_CREATIVE_SB1394	0x4001
+#घोषणा PCI_DEVICE_ID_JMICRON_JMB38X_FW	0x2380
+#घोषणा PCI_DEVICE_ID_TI_TSB12LV22	0x8009
+#घोषणा PCI_DEVICE_ID_TI_TSB12LV26	0x8020
+#घोषणा PCI_DEVICE_ID_TI_TSB82AA2	0x8025
+#घोषणा PCI_DEVICE_ID_VIA_VT630X	0x3044
+#घोषणा PCI_REV_ID_VIA_VT6306		0x46
+#घोषणा PCI_DEVICE_ID_VIA_VT6315	0x3403
 
-#define QUIRK_CYCLE_TIMER		0x1
-#define QUIRK_RESET_PACKET		0x2
-#define QUIRK_BE_HEADERS		0x4
-#define QUIRK_NO_1394A			0x8
-#define QUIRK_NO_MSI			0x10
-#define QUIRK_TI_SLLZ059		0x20
-#define QUIRK_IR_WAKE			0x40
+#घोषणा QUIRK_CYCLE_TIMER		0x1
+#घोषणा QUIRK_RESET_PACKET		0x2
+#घोषणा QUIRK_BE_HEADERS		0x4
+#घोषणा QUIRK_NO_1394A			0x8
+#घोषणा QUIRK_NO_MSI			0x10
+#घोषणा QUIRK_TI_SLLZ059		0x20
+#घोषणा QUIRK_IR_WAKE			0x40
 
-/* In case of multiple matches in ohci_quirks[], only the first one is used. */
-static const struct {
-	unsigned short vendor, device, revision, flags;
-} ohci_quirks[] = {
-	{PCI_VENDOR_ID_AL, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_CYCLE_TIMER},
+/* In हाल of multiple matches in ohci_quirks[], only the first one is used. */
+अटल स्थिर काष्ठा अणु
+	अचिन्हित लघु venकरोr, device, revision, flags;
+पूर्ण ohci_quirks[] = अणु
+	अणुPCI_VENDOR_ID_AL, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_CYCLE_TIMERपूर्ण,
 
-	{PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_FW, PCI_ANY_ID,
-		QUIRK_BE_HEADERS},
+	अणुPCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_FW, PCI_ANY_ID,
+		QUIRK_BE_HEADERSपूर्ण,
 
-	{PCI_VENDOR_ID_ATT, PCI_DEVICE_ID_AGERE_FW643, 6,
-		QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_ATT, PCI_DEVICE_ID_AGERE_FW643, 6,
+		QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_CREATIVE, PCI_DEVICE_ID_CREATIVE_SB1394, PCI_ANY_ID,
-		QUIRK_RESET_PACKET},
+	अणुPCI_VENDOR_ID_CREATIVE, PCI_DEVICE_ID_CREATIVE_SB1394, PCI_ANY_ID,
+		QUIRK_RESET_PACKETपूर्ण,
 
-	{PCI_VENDOR_ID_JMICRON, PCI_DEVICE_ID_JMICRON_JMB38X_FW, PCI_ANY_ID,
-		QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_JMICRON, PCI_DEVICE_ID_JMICRON_JMB38X_FW, PCI_ANY_ID,
+		QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_NEC, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_CYCLE_TIMER},
+	अणुPCI_VENDOR_ID_NEC, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_CYCLE_TIMERपूर्ण,
 
-	{PCI_VENDOR_ID_O2, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_O2, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_RICOH, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_CYCLE_TIMER | QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_RICOH, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_CYCLE_TIMER | QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB12LV22, PCI_ANY_ID,
-		QUIRK_CYCLE_TIMER | QUIRK_RESET_PACKET | QUIRK_NO_1394A},
+	अणुPCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB12LV22, PCI_ANY_ID,
+		QUIRK_CYCLE_TIMER | QUIRK_RESET_PACKET | QUIRK_NO_1394Aपूर्ण,
 
-	{PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB12LV26, PCI_ANY_ID,
-		QUIRK_RESET_PACKET | QUIRK_TI_SLLZ059},
+	अणुPCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB12LV26, PCI_ANY_ID,
+		QUIRK_RESET_PACKET | QUIRK_TI_SLLZ059पूर्ण,
 
-	{PCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB82AA2, PCI_ANY_ID,
-		QUIRK_RESET_PACKET | QUIRK_TI_SLLZ059},
+	अणुPCI_VENDOR_ID_TI, PCI_DEVICE_ID_TI_TSB82AA2, PCI_ANY_ID,
+		QUIRK_RESET_PACKET | QUIRK_TI_SLLZ059पूर्ण,
 
-	{PCI_VENDOR_ID_TI, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_RESET_PACKET},
+	अणुPCI_VENDOR_ID_TI, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_RESET_PACKETपूर्ण,
 
-	{PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT630X, PCI_REV_ID_VIA_VT6306,
-		QUIRK_CYCLE_TIMER | QUIRK_IR_WAKE},
+	अणुPCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT630X, PCI_REV_ID_VIA_VT6306,
+		QUIRK_CYCLE_TIMER | QUIRK_IR_WAKEपूर्ण,
 
-	{PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT6315, 0,
-		QUIRK_CYCLE_TIMER /* FIXME: necessary? */ | QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT6315, 0,
+		QUIRK_CYCLE_TIMER /* FIXME: necessary? */ | QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT6315, PCI_ANY_ID,
-		QUIRK_NO_MSI},
+	अणुPCI_VENDOR_ID_VIA, PCI_DEVICE_ID_VIA_VT6315, PCI_ANY_ID,
+		QUIRK_NO_MSIपूर्ण,
 
-	{PCI_VENDOR_ID_VIA, PCI_ANY_ID, PCI_ANY_ID,
-		QUIRK_CYCLE_TIMER | QUIRK_NO_MSI},
-};
+	अणुPCI_VENDOR_ID_VIA, PCI_ANY_ID, PCI_ANY_ID,
+		QUIRK_CYCLE_TIMER | QUIRK_NO_MSIपूर्ण,
+पूर्ण;
 
 /* This overrides anything that was found in ohci_quirks[]. */
-static int param_quirks;
-module_param_named(quirks, param_quirks, int, 0644);
+अटल पूर्णांक param_quirks;
+module_param_named(quirks, param_quirks, पूर्णांक, 0644);
 MODULE_PARM_DESC(quirks, "Chip quirks (default = 0"
-	", nonatomic cycle timer = "	__stringify(QUIRK_CYCLE_TIMER)
-	", reset packet generation = "	__stringify(QUIRK_RESET_PACKET)
-	", AR/selfID endianness = "	__stringify(QUIRK_BE_HEADERS)
-	", no 1394a enhancements = "	__stringify(QUIRK_NO_1394A)
-	", disable MSI = "		__stringify(QUIRK_NO_MSI)
-	", TI SLLZ059 erratum = "	__stringify(QUIRK_TI_SLLZ059)
-	", IR wake unreliable = "	__stringify(QUIRK_IR_WAKE)
+	", nonatomic cycle timer = "	__stringअगरy(QUIRK_CYCLE_TIMER)
+	", reset packet generation = "	__stringअगरy(QUIRK_RESET_PACKET)
+	", AR/selfID endianness = "	__stringअगरy(QUIRK_BE_HEADERS)
+	", no 1394a enhancements = "	__stringअगरy(QUIRK_NO_1394A)
+	", disable MSI = "		__stringअगरy(QUIRK_NO_MSI)
+	", TI SLLZ059 erratum = "	__stringअगरy(QUIRK_TI_SLLZ059)
+	", IR wake unreliable = "	__stringअगरy(QUIRK_IR_WAKE)
 	")");
 
-#define OHCI_PARAM_DEBUG_AT_AR		1
-#define OHCI_PARAM_DEBUG_SELFIDS	2
-#define OHCI_PARAM_DEBUG_IRQS		4
-#define OHCI_PARAM_DEBUG_BUSRESETS	8 /* only effective before chip init */
+#घोषणा OHCI_PARAM_DEBUG_AT_AR		1
+#घोषणा OHCI_PARAM_DEBUG_SELFIDS	2
+#घोषणा OHCI_PARAM_DEBUG_IRQS		4
+#घोषणा OHCI_PARAM_DEBUG_BUSRESETS	8 /* only effective beक्रमe chip init */
 
-static int param_debug;
-module_param_named(debug, param_debug, int, 0644);
+अटल पूर्णांक param_debug;
+module_param_named(debug, param_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Verbose logging (default = 0"
-	", AT/AR events = "	__stringify(OHCI_PARAM_DEBUG_AT_AR)
-	", self-IDs = "		__stringify(OHCI_PARAM_DEBUG_SELFIDS)
-	", IRQs = "		__stringify(OHCI_PARAM_DEBUG_IRQS)
-	", busReset events = "	__stringify(OHCI_PARAM_DEBUG_BUSRESETS)
+	", AT/AR events = "	__stringअगरy(OHCI_PARAM_DEBUG_AT_AR)
+	", self-IDs = "		__stringअगरy(OHCI_PARAM_DEBUG_SELFIDS)
+	", IRQs = "		__stringअगरy(OHCI_PARAM_DEBUG_IRQS)
+	", busReset events = "	__stringअगरy(OHCI_PARAM_DEBUG_BUSRESETS)
 	", or a combination, or all = -1)");
 
-static bool param_remote_dma;
+अटल bool param_remote_dma;
 module_param_named(remote_dma, param_remote_dma, bool, 0444);
 MODULE_PARM_DESC(remote_dma, "Enable unfiltered remote DMA (default = N)");
 
-static void log_irqs(struct fw_ohci *ohci, u32 evt)
-{
-	if (likely(!(param_debug &
+अटल व्योम log_irqs(काष्ठा fw_ohci *ohci, u32 evt)
+अणु
+	अगर (likely(!(param_debug &
 			(OHCI_PARAM_DEBUG_IRQS | OHCI_PARAM_DEBUG_BUSRESETS))))
-		return;
+		वापस;
 
-	if (!(param_debug & OHCI_PARAM_DEBUG_IRQS) &&
+	अगर (!(param_debug & OHCI_PARAM_DEBUG_IRQS) &&
 	    !(evt & OHCI1394_busReset))
-		return;
+		वापस;
 
 	ohci_notice(ohci, "IRQ %08x%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n", evt,
 	    evt & OHCI1394_selfIDComplete	? " selfID"		: "",
@@ -396,49 +397,49 @@ static void log_irqs(struct fw_ohci *ohci, u32 evt)
 		    OHCI1394_cycleInconsistent |
 		    OHCI1394_regAccessFail | OHCI1394_busReset)
 						? " ?"			: "");
-}
+पूर्ण
 
-static const char *speed[] = {
+अटल स्थिर अक्षर *speed[] = अणु
 	[0] = "S100", [1] = "S200", [2] = "S400",    [3] = "beta",
-};
-static const char *power[] = {
+पूर्ण;
+अटल स्थिर अक्षर *घातer[] = अणु
 	[0] = "+0W",  [1] = "+15W", [2] = "+30W",    [3] = "+45W",
 	[4] = "-3W",  [5] = " ?W",  [6] = "-3..-6W", [7] = "-3..-10W",
-};
-static const char port[] = { '.', '-', 'p', 'c', };
+पूर्ण;
+अटल स्थिर अक्षर port[] = अणु '.', '-', 'p', 'c', पूर्ण;
 
-static char _p(u32 *s, int shift)
-{
-	return port[*s >> shift & 3];
-}
+अटल अक्षर _p(u32 *s, पूर्णांक shअगरt)
+अणु
+	वापस port[*s >> shअगरt & 3];
+पूर्ण
 
-static void log_selfids(struct fw_ohci *ohci, int generation, int self_id_count)
-{
+अटल व्योम log_selfids(काष्ठा fw_ohci *ohci, पूर्णांक generation, पूर्णांक self_id_count)
+अणु
 	u32 *s;
 
-	if (likely(!(param_debug & OHCI_PARAM_DEBUG_SELFIDS)))
-		return;
+	अगर (likely(!(param_debug & OHCI_PARAM_DEBUG_SELFIDS)))
+		वापस;
 
 	ohci_notice(ohci, "%d selfIDs, generation %d, local node ID %04x\n",
 		    self_id_count, generation, ohci->node_id);
 
-	for (s = ohci->self_id_buffer; self_id_count--; ++s)
-		if ((*s & 1 << 23) == 0)
+	क्रम (s = ohci->self_id_buffer; self_id_count--; ++s)
+		अगर ((*s & 1 << 23) == 0)
 			ohci_notice(ohci,
 			    "selfID 0: %08x, phy %d [%c%c%c] %s gc=%d %s %s%s%s\n",
 			    *s, *s >> 24 & 63, _p(s, 6), _p(s, 4), _p(s, 2),
 			    speed[*s >> 14 & 3], *s >> 16 & 63,
-			    power[*s >> 8 & 7], *s >> 22 & 1 ? "L" : "",
+			    घातer[*s >> 8 & 7], *s >> 22 & 1 ? "L" : "",
 			    *s >> 11 & 1 ? "c" : "", *s & 2 ? "i" : "");
-		else
+		अन्यथा
 			ohci_notice(ohci,
 			    "selfID n: %08x, phy %d [%c%c%c%c%c%c%c%c]\n",
 			    *s, *s >> 24 & 63,
 			    _p(s, 16), _p(s, 14), _p(s, 12), _p(s, 10),
 			    _p(s,  8), _p(s,  6), _p(s,  4), _p(s,  2));
-}
+पूर्ण
 
-static const char *evts[] = {
+अटल स्थिर अक्षर *evts[] = अणु
 	[0x00] = "evt_no_status",	[0x01] = "-reserved-",
 	[0x02] = "evt_long_packet",	[0x03] = "evt_missing_ack",
 	[0x04] = "evt_underrun",	[0x05] = "evt_overrun",
@@ -456,8 +457,8 @@ static const char *evts[] = {
 	[0x1c] = "-reserved-",		[0x1d] = "ack_data_error",
 	[0x1e] = "ack_type_error",	[0x1f] = "-reserved-",
 	[0x20] = "pending/cancelled",
-};
-static const char *tcodes[] = {
+पूर्ण;
+अटल स्थिर अक्षर *tcodes[] = अणु
 	[0x0] = "QW req",		[0x1] = "BW req",
 	[0x2] = "W resp",		[0x3] = "-reserved-",
 	[0x4] = "QR req",		[0x5] = "BR req",
@@ -466,404 +467,404 @@ static const char *tcodes[] = {
 	[0xa] = "async stream packet",	[0xb] = "Lk resp",
 	[0xc] = "-reserved-",		[0xd] = "-reserved-",
 	[0xe] = "link internal",	[0xf] = "-reserved-",
-};
+पूर्ण;
 
-static void log_ar_at_event(struct fw_ohci *ohci,
-			    char dir, int speed, u32 *header, int evt)
-{
-	int tcode = header[0] >> 4 & 0xf;
-	char specific[12];
+अटल व्योम log_ar_at_event(काष्ठा fw_ohci *ohci,
+			    अक्षर dir, पूर्णांक speed, u32 *header, पूर्णांक evt)
+अणु
+	पूर्णांक tcode = header[0] >> 4 & 0xf;
+	अक्षर specअगरic[12];
 
-	if (likely(!(param_debug & OHCI_PARAM_DEBUG_AT_AR)))
-		return;
+	अगर (likely(!(param_debug & OHCI_PARAM_DEBUG_AT_AR)))
+		वापस;
 
-	if (unlikely(evt >= ARRAY_SIZE(evts)))
+	अगर (unlikely(evt >= ARRAY_SIZE(evts)))
 			evt = 0x1f;
 
-	if (evt == OHCI1394_evt_bus_reset) {
+	अगर (evt == OHCI1394_evt_bus_reset) अणु
 		ohci_notice(ohci, "A%c evt_bus_reset, generation %d\n",
 			    dir, (header[2] >> 16) & 0xff);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (tcode) {
-	case 0x0: case 0x6: case 0x8:
-		snprintf(specific, sizeof(specific), " = %08x",
-			 be32_to_cpu((__force __be32)header[3]));
-		break;
-	case 0x1: case 0x5: case 0x7: case 0x9: case 0xb:
-		snprintf(specific, sizeof(specific), " %x,%x",
+	चयन (tcode) अणु
+	हाल 0x0: हाल 0x6: हाल 0x8:
+		snम_लिखो(specअगरic, माप(specअगरic), " = %08x",
+			 be32_to_cpu((__क्रमce __be32)header[3]));
+		अवरोध;
+	हाल 0x1: हाल 0x5: हाल 0x7: हाल 0x9: हाल 0xb:
+		snम_लिखो(specअगरic, माप(specअगरic), " %x,%x",
 			 header[3] >> 16, header[3] & 0xffff);
-		break;
-	default:
-		specific[0] = '\0';
-	}
+		अवरोध;
+	शेष:
+		specअगरic[0] = '\0';
+	पूर्ण
 
-	switch (tcode) {
-	case 0xa:
+	चयन (tcode) अणु
+	हाल 0xa:
 		ohci_notice(ohci, "A%c %s, %s\n",
 			    dir, evts[evt], tcodes[tcode]);
-		break;
-	case 0xe:
+		अवरोध;
+	हाल 0xe:
 		ohci_notice(ohci, "A%c %s, PHY %08x %08x\n",
 			    dir, evts[evt], header[1], header[2]);
-		break;
-	case 0x0: case 0x1: case 0x4: case 0x5: case 0x9:
+		अवरोध;
+	हाल 0x0: हाल 0x1: हाल 0x4: हाल 0x5: हाल 0x9:
 		ohci_notice(ohci,
 			    "A%c spd %x tl %02x, %04x -> %04x, %s, %s, %04x%08x%s\n",
 			    dir, speed, header[0] >> 10 & 0x3f,
 			    header[1] >> 16, header[0] >> 16, evts[evt],
-			    tcodes[tcode], header[1] & 0xffff, header[2], specific);
-		break;
-	default:
+			    tcodes[tcode], header[1] & 0xffff, header[2], specअगरic);
+		अवरोध;
+	शेष:
 		ohci_notice(ohci,
 			    "A%c spd %x tl %02x, %04x -> %04x, %s, %s%s\n",
 			    dir, speed, header[0] >> 10 & 0x3f,
 			    header[1] >> 16, header[0] >> 16, evts[evt],
-			    tcodes[tcode], specific);
-	}
-}
+			    tcodes[tcode], specअगरic);
+	पूर्ण
+पूर्ण
 
-static inline void reg_write(const struct fw_ohci *ohci, int offset, u32 data)
-{
-	writel(data, ohci->registers + offset);
-}
+अटल अंतरभूत व्योम reg_ग_लिखो(स्थिर काष्ठा fw_ohci *ohci, पूर्णांक offset, u32 data)
+अणु
+	ग_लिखोl(data, ohci->रेजिस्टरs + offset);
+पूर्ण
 
-static inline u32 reg_read(const struct fw_ohci *ohci, int offset)
-{
-	return readl(ohci->registers + offset);
-}
+अटल अंतरभूत u32 reg_पढ़ो(स्थिर काष्ठा fw_ohci *ohci, पूर्णांक offset)
+अणु
+	वापस पढ़ोl(ohci->रेजिस्टरs + offset);
+पूर्ण
 
-static inline void flush_writes(const struct fw_ohci *ohci)
-{
-	/* Do a dummy read to flush writes. */
-	reg_read(ohci, OHCI1394_Version);
-}
+अटल अंतरभूत व्योम flush_ग_लिखोs(स्थिर काष्ठा fw_ohci *ohci)
+अणु
+	/* Do a dummy पढ़ो to flush ग_लिखोs. */
+	reg_पढ़ो(ohci, OHCI1394_Version);
+पूर्ण
 
 /*
- * Beware!  read_phy_reg(), write_phy_reg(), update_phy_reg(), and
- * read_paged_phy_reg() require the caller to hold ohci->phy_reg_mutex.
- * In other words, only use ohci_read_phy_reg() and ohci_update_phy_reg()
- * directly.  Exceptions are intrinsically serialized contexts like pci_probe.
+ * Beware!  पढ़ो_phy_reg(), ग_लिखो_phy_reg(), update_phy_reg(), and
+ * पढ़ो_paged_phy_reg() require the caller to hold ohci->phy_reg_mutex.
+ * In other words, only use ohci_पढ़ो_phy_reg() and ohci_update_phy_reg()
+ * directly.  Exceptions are पूर्णांकrinsically serialized contexts like pci_probe.
  */
-static int read_phy_reg(struct fw_ohci *ohci, int addr)
-{
+अटल पूर्णांक पढ़ो_phy_reg(काष्ठा fw_ohci *ohci, पूर्णांक addr)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	reg_write(ohci, OHCI1394_PhyControl, OHCI1394_PhyControl_Read(addr));
-	for (i = 0; i < 3 + 100; i++) {
-		val = reg_read(ohci, OHCI1394_PhyControl);
-		if (!~val)
-			return -ENODEV; /* Card was ejected. */
+	reg_ग_लिखो(ohci, OHCI1394_PhyControl, OHCI1394_PhyControl_Read(addr));
+	क्रम (i = 0; i < 3 + 100; i++) अणु
+		val = reg_पढ़ो(ohci, OHCI1394_PhyControl);
+		अगर (!~val)
+			वापस -ENODEV; /* Card was ejected. */
 
-		if (val & OHCI1394_PhyControl_ReadDone)
-			return OHCI1394_PhyControl_ReadData(val);
+		अगर (val & OHCI1394_PhyControl_ReadDone)
+			वापस OHCI1394_PhyControl_ReadData(val);
 
 		/*
-		 * Try a few times without waiting.  Sleeping is necessary
-		 * only when the link/PHY interface is busy.
+		 * Try a few बार without रुकोing.  Sleeping is necessary
+		 * only when the link/PHY पूर्णांकerface is busy.
 		 */
-		if (i >= 3)
+		अगर (i >= 3)
 			msleep(1);
-	}
+	पूर्ण
 	ohci_err(ohci, "failed to read phy reg %d\n", addr);
 	dump_stack();
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int write_phy_reg(const struct fw_ohci *ohci, int addr, u32 val)
-{
-	int i;
+अटल पूर्णांक ग_लिखो_phy_reg(स्थिर काष्ठा fw_ohci *ohci, पूर्णांक addr, u32 val)
+अणु
+	पूर्णांक i;
 
-	reg_write(ohci, OHCI1394_PhyControl,
+	reg_ग_लिखो(ohci, OHCI1394_PhyControl,
 		  OHCI1394_PhyControl_Write(addr, val));
-	for (i = 0; i < 3 + 100; i++) {
-		val = reg_read(ohci, OHCI1394_PhyControl);
-		if (!~val)
-			return -ENODEV; /* Card was ejected. */
+	क्रम (i = 0; i < 3 + 100; i++) अणु
+		val = reg_पढ़ो(ohci, OHCI1394_PhyControl);
+		अगर (!~val)
+			वापस -ENODEV; /* Card was ejected. */
 
-		if (!(val & OHCI1394_PhyControl_WritePending))
-			return 0;
+		अगर (!(val & OHCI1394_PhyControl_WritePending))
+			वापस 0;
 
-		if (i >= 3)
+		अगर (i >= 3)
 			msleep(1);
-	}
+	पूर्ण
 	ohci_err(ohci, "failed to write phy reg %d, val %u\n", addr, val);
 	dump_stack();
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static int update_phy_reg(struct fw_ohci *ohci, int addr,
-			  int clear_bits, int set_bits)
-{
-	int ret = read_phy_reg(ohci, addr);
-	if (ret < 0)
-		return ret;
+अटल पूर्णांक update_phy_reg(काष्ठा fw_ohci *ohci, पूर्णांक addr,
+			  पूर्णांक clear_bits, पूर्णांक set_bits)
+अणु
+	पूर्णांक ret = पढ़ो_phy_reg(ohci, addr);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * The interrupt status bits are cleared by writing a one bit.
-	 * Avoid clearing them unless explicitly requested in set_bits.
+	 * The पूर्णांकerrupt status bits are cleared by writing a one bit.
+	 * Aव्योम clearing them unless explicitly requested in set_bits.
 	 */
-	if (addr == 5)
+	अगर (addr == 5)
 		clear_bits |= PHY_INT_STATUS_BITS;
 
-	return write_phy_reg(ohci, addr, (ret & ~clear_bits) | set_bits);
-}
+	वापस ग_लिखो_phy_reg(ohci, addr, (ret & ~clear_bits) | set_bits);
+पूर्ण
 
-static int read_paged_phy_reg(struct fw_ohci *ohci, int page, int addr)
-{
-	int ret;
+अटल पूर्णांक पढ़ो_paged_phy_reg(काष्ठा fw_ohci *ohci, पूर्णांक page, पूर्णांक addr)
+अणु
+	पूर्णांक ret;
 
 	ret = update_phy_reg(ohci, 7, PHY_PAGE_SELECT, page << 5);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return read_phy_reg(ohci, addr);
-}
+	वापस पढ़ो_phy_reg(ohci, addr);
+पूर्ण
 
-static int ohci_read_phy_reg(struct fw_card *card, int addr)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	int ret;
+अटल पूर्णांक ohci_पढ़ो_phy_reg(काष्ठा fw_card *card, पूर्णांक addr)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	पूर्णांक ret;
 
 	mutex_lock(&ohci->phy_reg_mutex);
-	ret = read_phy_reg(ohci, addr);
+	ret = पढ़ो_phy_reg(ohci, addr);
 	mutex_unlock(&ohci->phy_reg_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ohci_update_phy_reg(struct fw_card *card, int addr,
-			       int clear_bits, int set_bits)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	int ret;
+अटल पूर्णांक ohci_update_phy_reg(काष्ठा fw_card *card, पूर्णांक addr,
+			       पूर्णांक clear_bits, पूर्णांक set_bits)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	पूर्णांक ret;
 
 	mutex_lock(&ohci->phy_reg_mutex);
 	ret = update_phy_reg(ohci, addr, clear_bits, set_bits);
 	mutex_unlock(&ohci->phy_reg_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline dma_addr_t ar_buffer_bus(struct ar_context *ctx, unsigned int i)
-{
-	return page_private(ctx->pages[i]);
-}
+अटल अंतरभूत dma_addr_t ar_buffer_bus(काष्ठा ar_context *ctx, अचिन्हित पूर्णांक i)
+अणु
+	वापस page_निजी(ctx->pages[i]);
+पूर्ण
 
-static void ar_context_link_page(struct ar_context *ctx, unsigned int index)
-{
-	struct descriptor *d;
+अटल व्योम ar_context_link_page(काष्ठा ar_context *ctx, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा descriptor *d;
 
 	d = &ctx->descriptors[index];
 	d->branch_address  &= cpu_to_le32(~0xf);
 	d->res_count       =  cpu_to_le16(PAGE_SIZE);
 	d->transfer_status =  0;
 
-	wmb(); /* finish init of new descriptors before branch_address update */
+	wmb(); /* finish init of new descriptors beक्रमe branch_address update */
 	d = &ctx->descriptors[ctx->last_buffer_index];
 	d->branch_address  |= cpu_to_le32(1);
 
 	ctx->last_buffer_index = index;
 
-	reg_write(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
-}
+	reg_ग_लिखो(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
+पूर्ण
 
-static void ar_context_release(struct ar_context *ctx)
-{
-	struct device *dev = ctx->ohci->card.device;
-	unsigned int i;
+अटल व्योम ar_context_release(काष्ठा ar_context *ctx)
+अणु
+	काष्ठा device *dev = ctx->ohci->card.device;
+	अचिन्हित पूर्णांक i;
 
 	vunmap(ctx->buffer);
 
-	for (i = 0; i < AR_BUFFERS; i++) {
-		if (ctx->pages[i])
-			dma_free_pages(dev, PAGE_SIZE, ctx->pages[i],
+	क्रम (i = 0; i < AR_BUFFERS; i++) अणु
+		अगर (ctx->pages[i])
+			dma_मुक्त_pages(dev, PAGE_SIZE, ctx->pages[i],
 				       ar_buffer_bus(ctx, i), DMA_FROM_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ar_context_abort(struct ar_context *ctx, const char *error_msg)
-{
-	struct fw_ohci *ohci = ctx->ohci;
+अटल व्योम ar_context_पात(काष्ठा ar_context *ctx, स्थिर अक्षर *error_msg)
+अणु
+	काष्ठा fw_ohci *ohci = ctx->ohci;
 
-	if (reg_read(ohci, CONTROL_CLEAR(ctx->regs)) & CONTEXT_RUN) {
-		reg_write(ohci, CONTROL_CLEAR(ctx->regs), CONTEXT_RUN);
-		flush_writes(ohci);
+	अगर (reg_पढ़ो(ohci, CONTROL_CLEAR(ctx->regs)) & CONTEXT_RUN) अणु
+		reg_ग_लिखो(ohci, CONTROL_CLEAR(ctx->regs), CONTEXT_RUN);
+		flush_ग_लिखोs(ohci);
 
 		ohci_err(ohci, "AR error: %s; DMA stopped\n", error_msg);
-	}
+	पूर्ण
 	/* FIXME: restart? */
-}
+पूर्ण
 
-static inline unsigned int ar_next_buffer_index(unsigned int index)
-{
-	return (index + 1) % AR_BUFFERS;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ar_next_buffer_index(अचिन्हित पूर्णांक index)
+अणु
+	वापस (index + 1) % AR_BUFFERS;
+पूर्ण
 
-static inline unsigned int ar_first_buffer_index(struct ar_context *ctx)
-{
-	return ar_next_buffer_index(ctx->last_buffer_index);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ar_first_buffer_index(काष्ठा ar_context *ctx)
+अणु
+	वापस ar_next_buffer_index(ctx->last_buffer_index);
+पूर्ण
 
 /*
- * We search for the buffer that contains the last AR packet DMA data written
+ * We search क्रम the buffer that contains the last AR packet DMA data written
  * by the controller.
  */
-static unsigned int ar_search_last_active_buffer(struct ar_context *ctx,
-						 unsigned int *buffer_offset)
-{
-	unsigned int i, next_i, last = ctx->last_buffer_index;
+अटल अचिन्हित पूर्णांक ar_search_last_active_buffer(काष्ठा ar_context *ctx,
+						 अचिन्हित पूर्णांक *buffer_offset)
+अणु
+	अचिन्हित पूर्णांक i, next_i, last = ctx->last_buffer_index;
 	__le16 res_count, next_res_count;
 
 	i = ar_first_buffer_index(ctx);
 	res_count = READ_ONCE(ctx->descriptors[i].res_count);
 
 	/* A buffer that is not yet completely filled must be the last one. */
-	while (i != last && res_count == 0) {
+	जबतक (i != last && res_count == 0) अणु
 
 		/* Peek at the next descriptor. */
 		next_i = ar_next_buffer_index(i);
-		rmb(); /* read descriptors in order */
+		rmb(); /* पढ़ो descriptors in order */
 		next_res_count = READ_ONCE(ctx->descriptors[next_i].res_count);
 		/*
 		 * If the next descriptor is still empty, we must stop at this
 		 * descriptor.
 		 */
-		if (next_res_count == cpu_to_le16(PAGE_SIZE)) {
+		अगर (next_res_count == cpu_to_le16(PAGE_SIZE)) अणु
 			/*
-			 * The exception is when the DMA data for one packet is
-			 * split over three buffers; in this case, the middle
+			 * The exception is when the DMA data क्रम one packet is
+			 * split over three buffers; in this हाल, the middle
 			 * buffer's descriptor might be never updated by the
 			 * controller and look still empty, and we have to peek
 			 * at the third one.
 			 */
-			if (MAX_AR_PACKET_SIZE > PAGE_SIZE && i != last) {
+			अगर (MAX_AR_PACKET_SIZE > PAGE_SIZE && i != last) अणु
 				next_i = ar_next_buffer_index(next_i);
 				rmb();
 				next_res_count = READ_ONCE(ctx->descriptors[next_i].res_count);
-				if (next_res_count != cpu_to_le16(PAGE_SIZE))
-					goto next_buffer_is_active;
-			}
+				अगर (next_res_count != cpu_to_le16(PAGE_SIZE))
+					जाओ next_buffer_is_active;
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 next_buffer_is_active:
 		i = next_i;
 		res_count = next_res_count;
-	}
+	पूर्ण
 
-	rmb(); /* read res_count before the DMA data */
+	rmb(); /* पढ़ो res_count beक्रमe the DMA data */
 
 	*buffer_offset = PAGE_SIZE - le16_to_cpu(res_count);
-	if (*buffer_offset > PAGE_SIZE) {
+	अगर (*buffer_offset > PAGE_SIZE) अणु
 		*buffer_offset = 0;
-		ar_context_abort(ctx, "corrupted descriptor");
-	}
+		ar_context_पात(ctx, "corrupted descriptor");
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void ar_sync_buffers_for_cpu(struct ar_context *ctx,
-				    unsigned int end_buffer_index,
-				    unsigned int end_buffer_offset)
-{
-	unsigned int i;
+अटल व्योम ar_sync_buffers_क्रम_cpu(काष्ठा ar_context *ctx,
+				    अचिन्हित पूर्णांक end_buffer_index,
+				    अचिन्हित पूर्णांक end_buffer_offset)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	i = ar_first_buffer_index(ctx);
-	while (i != end_buffer_index) {
-		dma_sync_single_for_cpu(ctx->ohci->card.device,
+	जबतक (i != end_buffer_index) अणु
+		dma_sync_single_क्रम_cpu(ctx->ohci->card.device,
 					ar_buffer_bus(ctx, i),
 					PAGE_SIZE, DMA_FROM_DEVICE);
 		i = ar_next_buffer_index(i);
-	}
-	if (end_buffer_offset > 0)
-		dma_sync_single_for_cpu(ctx->ohci->card.device,
+	पूर्ण
+	अगर (end_buffer_offset > 0)
+		dma_sync_single_क्रम_cpu(ctx->ohci->card.device,
 					ar_buffer_bus(ctx, i),
 					end_buffer_offset, DMA_FROM_DEVICE);
-}
+पूर्ण
 
-#if defined(CONFIG_PPC_PMAC) && defined(CONFIG_PPC32)
-#define cond_le32_to_cpu(v) \
-	(ohci->quirks & QUIRK_BE_HEADERS ? (__force __u32)(v) : le32_to_cpu(v))
-#else
-#define cond_le32_to_cpu(v) le32_to_cpu(v)
-#endif
+#अगर defined(CONFIG_PPC_PMAC) && defined(CONFIG_PPC32)
+#घोषणा cond_le32_to_cpu(v) \
+	(ohci->quirks & QUIRK_BE_HEADERS ? (__क्रमce __u32)(v) : le32_to_cpu(v))
+#अन्यथा
+#घोषणा cond_le32_to_cpu(v) le32_to_cpu(v)
+#पूर्ण_अगर
 
-static __le32 *handle_ar_packet(struct ar_context *ctx, __le32 *buffer)
-{
-	struct fw_ohci *ohci = ctx->ohci;
-	struct fw_packet p;
+अटल __le32 *handle_ar_packet(काष्ठा ar_context *ctx, __le32 *buffer)
+अणु
+	काष्ठा fw_ohci *ohci = ctx->ohci;
+	काष्ठा fw_packet p;
 	u32 status, length, tcode;
-	int evt;
+	पूर्णांक evt;
 
 	p.header[0] = cond_le32_to_cpu(buffer[0]);
 	p.header[1] = cond_le32_to_cpu(buffer[1]);
 	p.header[2] = cond_le32_to_cpu(buffer[2]);
 
 	tcode = (p.header[0] >> 4) & 0x0f;
-	switch (tcode) {
-	case TCODE_WRITE_QUADLET_REQUEST:
-	case TCODE_READ_QUADLET_RESPONSE:
-		p.header[3] = (__force __u32) buffer[3];
+	चयन (tcode) अणु
+	हाल TCODE_WRITE_QUADLET_REQUEST:
+	हाल TCODE_READ_QUADLET_RESPONSE:
+		p.header[3] = (__क्रमce __u32) buffer[3];
 		p.header_length = 16;
 		p.payload_length = 0;
-		break;
+		अवरोध;
 
-	case TCODE_READ_BLOCK_REQUEST :
+	हाल TCODE_READ_BLOCK_REQUEST :
 		p.header[3] = cond_le32_to_cpu(buffer[3]);
 		p.header_length = 16;
 		p.payload_length = 0;
-		break;
+		अवरोध;
 
-	case TCODE_WRITE_BLOCK_REQUEST:
-	case TCODE_READ_BLOCK_RESPONSE:
-	case TCODE_LOCK_REQUEST:
-	case TCODE_LOCK_RESPONSE:
+	हाल TCODE_WRITE_BLOCK_REQUEST:
+	हाल TCODE_READ_BLOCK_RESPONSE:
+	हाल TCODE_LOCK_REQUEST:
+	हाल TCODE_LOCK_RESPONSE:
 		p.header[3] = cond_le32_to_cpu(buffer[3]);
 		p.header_length = 16;
 		p.payload_length = p.header[3] >> 16;
-		if (p.payload_length > MAX_ASYNC_PAYLOAD) {
-			ar_context_abort(ctx, "invalid packet length");
-			return NULL;
-		}
-		break;
+		अगर (p.payload_length > MAX_ASYNC_PAYLOAD) अणु
+			ar_context_पात(ctx, "invalid packet length");
+			वापस शून्य;
+		पूर्ण
+		अवरोध;
 
-	case TCODE_WRITE_RESPONSE:
-	case TCODE_READ_QUADLET_REQUEST:
-	case OHCI_TCODE_PHY_PACKET:
+	हाल TCODE_WRITE_RESPONSE:
+	हाल TCODE_READ_QUADLET_REQUEST:
+	हाल OHCI_TCODE_PHY_PACKET:
 		p.header_length = 12;
 		p.payload_length = 0;
-		break;
+		अवरोध;
 
-	default:
-		ar_context_abort(ctx, "invalid tcode");
-		return NULL;
-	}
+	शेष:
+		ar_context_पात(ctx, "invalid tcode");
+		वापस शून्य;
+	पूर्ण
 
-	p.payload = (void *) buffer + p.header_length;
+	p.payload = (व्योम *) buffer + p.header_length;
 
-	/* FIXME: What to do about evt_* errors? */
+	/* FIXME: What to करो about evt_* errors? */
 	length = (p.header_length + p.payload_length + 3) / 4;
 	status = cond_le32_to_cpu(buffer[length]);
 	evt    = (status >> 16) & 0x1f;
 
 	p.ack        = evt - 16;
 	p.speed      = (status >> 21) & 0x7;
-	p.timestamp  = status & 0xffff;
+	p.बारtamp  = status & 0xffff;
 	p.generation = ohci->request_generation;
 
 	log_ar_at_event(ohci, 'R', p.speed, p.header, evt);
 
 	/*
-	 * Several controllers, notably from NEC and VIA, forget to
-	 * write ack_complete status at PHY packet reception.
+	 * Several controllers, notably from NEC and VIA, क्रमget to
+	 * ग_लिखो ack_complete status at PHY packet reception.
 	 */
-	if (evt == OHCI1394_evt_no_status &&
+	अगर (evt == OHCI1394_evt_no_status &&
 	    (p.header[0] & 0xff) == (OHCI1394_phy_tcode << 4))
 		p.ack = ACK_COMPLETE;
 
@@ -872,135 +873,135 @@ static __le32 *handle_ar_packet(struct ar_context *ctx, __le32 *buffer)
 	 * the new generation number when a bus reset happens (see
 	 * section 8.4.2.3).  This helps us determine when a request
 	 * was received and make sure we send the response in the same
-	 * generation.  We only need this for requests; for responses
-	 * we use the unique tlabel for finding the matching
+	 * generation.  We only need this क्रम requests; क्रम responses
+	 * we use the unique tlabel क्रम finding the matching
 	 * request.
 	 *
-	 * Alas some chips sometimes emit bus reset packets with a
-	 * wrong generation.  We set the correct generation for these
-	 * at a slightly incorrect time (in bus_reset_work).
+	 * Alas some chips someबार emit bus reset packets with a
+	 * wrong generation.  We set the correct generation क्रम these
+	 * at a slightly incorrect समय (in bus_reset_work).
 	 */
-	if (evt == OHCI1394_evt_bus_reset) {
-		if (!(ohci->quirks & QUIRK_RESET_PACKET))
+	अगर (evt == OHCI1394_evt_bus_reset) अणु
+		अगर (!(ohci->quirks & QUIRK_RESET_PACKET))
 			ohci->request_generation = (p.header[2] >> 16) & 0xff;
-	} else if (ctx == &ohci->ar_request_ctx) {
+	पूर्ण अन्यथा अगर (ctx == &ohci->ar_request_ctx) अणु
 		fw_core_handle_request(&ohci->card, &p);
-	} else {
+	पूर्ण अन्यथा अणु
 		fw_core_handle_response(&ohci->card, &p);
-	}
+	पूर्ण
 
-	return buffer + length + 1;
-}
+	वापस buffer + length + 1;
+पूर्ण
 
-static void *handle_ar_packets(struct ar_context *ctx, void *p, void *end)
-{
-	void *next;
+अटल व्योम *handle_ar_packets(काष्ठा ar_context *ctx, व्योम *p, व्योम *end)
+अणु
+	व्योम *next;
 
-	while (p < end) {
+	जबतक (p < end) अणु
 		next = handle_ar_packet(ctx, p);
-		if (!next)
-			return p;
+		अगर (!next)
+			वापस p;
 		p = next;
-	}
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void ar_recycle_buffers(struct ar_context *ctx, unsigned int end_buffer)
-{
-	unsigned int i;
+अटल व्योम ar_recycle_buffers(काष्ठा ar_context *ctx, अचिन्हित पूर्णांक end_buffer)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	i = ar_first_buffer_index(ctx);
-	while (i != end_buffer) {
-		dma_sync_single_for_device(ctx->ohci->card.device,
+	जबतक (i != end_buffer) अणु
+		dma_sync_single_क्रम_device(ctx->ohci->card.device,
 					   ar_buffer_bus(ctx, i),
 					   PAGE_SIZE, DMA_FROM_DEVICE);
 		ar_context_link_page(ctx, i);
 		i = ar_next_buffer_index(i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ar_context_tasklet(unsigned long data)
-{
-	struct ar_context *ctx = (struct ar_context *)data;
-	unsigned int end_buffer_index, end_buffer_offset;
-	void *p, *end;
+अटल व्योम ar_context_tasklet(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा ar_context *ctx = (काष्ठा ar_context *)data;
+	अचिन्हित पूर्णांक end_buffer_index, end_buffer_offset;
+	व्योम *p, *end;
 
-	p = ctx->pointer;
-	if (!p)
-		return;
+	p = ctx->poपूर्णांकer;
+	अगर (!p)
+		वापस;
 
 	end_buffer_index = ar_search_last_active_buffer(ctx,
 							&end_buffer_offset);
-	ar_sync_buffers_for_cpu(ctx, end_buffer_index, end_buffer_offset);
+	ar_sync_buffers_क्रम_cpu(ctx, end_buffer_index, end_buffer_offset);
 	end = ctx->buffer + end_buffer_index * PAGE_SIZE + end_buffer_offset;
 
-	if (end_buffer_index < ar_first_buffer_index(ctx)) {
+	अगर (end_buffer_index < ar_first_buffer_index(ctx)) अणु
 		/*
 		 * The filled part of the overall buffer wraps around; handle
 		 * all packets up to the buffer end here.  If the last packet
 		 * wraps around, its tail will be visible after the buffer end
 		 * because the buffer start pages are mapped there again.
 		 */
-		void *buffer_end = ctx->buffer + AR_BUFFERS * PAGE_SIZE;
+		व्योम *buffer_end = ctx->buffer + AR_BUFFERS * PAGE_SIZE;
 		p = handle_ar_packets(ctx, p, buffer_end);
-		if (p < buffer_end)
-			goto error;
-		/* adjust p to point back into the actual buffer */
+		अगर (p < buffer_end)
+			जाओ error;
+		/* adjust p to poपूर्णांक back पूर्णांकo the actual buffer */
 		p -= AR_BUFFERS * PAGE_SIZE;
-	}
+	पूर्ण
 
 	p = handle_ar_packets(ctx, p, end);
-	if (p != end) {
-		if (p > end)
-			ar_context_abort(ctx, "inconsistent descriptor");
-		goto error;
-	}
+	अगर (p != end) अणु
+		अगर (p > end)
+			ar_context_पात(ctx, "inconsistent descriptor");
+		जाओ error;
+	पूर्ण
 
-	ctx->pointer = p;
+	ctx->poपूर्णांकer = p;
 	ar_recycle_buffers(ctx, end_buffer_index);
 
-	return;
+	वापस;
 
 error:
-	ctx->pointer = NULL;
-}
+	ctx->poपूर्णांकer = शून्य;
+पूर्ण
 
-static int ar_context_init(struct ar_context *ctx, struct fw_ohci *ohci,
-			   unsigned int descriptors_offset, u32 regs)
-{
-	struct device *dev = ohci->card.device;
-	unsigned int i;
+अटल पूर्णांक ar_context_init(काष्ठा ar_context *ctx, काष्ठा fw_ohci *ohci,
+			   अचिन्हित पूर्णांक descriptors_offset, u32 regs)
+अणु
+	काष्ठा device *dev = ohci->card.device;
+	अचिन्हित पूर्णांक i;
 	dma_addr_t dma_addr;
-	struct page *pages[AR_BUFFERS + AR_WRAPAROUND_PAGES];
-	struct descriptor *d;
+	काष्ठा page *pages[AR_BUFFERS + AR_WRAPAROUND_PAGES];
+	काष्ठा descriptor *d;
 
 	ctx->regs        = regs;
 	ctx->ohci        = ohci;
-	tasklet_init(&ctx->tasklet, ar_context_tasklet, (unsigned long)ctx);
+	tasklet_init(&ctx->tasklet, ar_context_tasklet, (अचिन्हित दीर्घ)ctx);
 
-	for (i = 0; i < AR_BUFFERS; i++) {
+	क्रम (i = 0; i < AR_BUFFERS; i++) अणु
 		ctx->pages[i] = dma_alloc_pages(dev, PAGE_SIZE, &dma_addr,
 						DMA_FROM_DEVICE, GFP_KERNEL);
-		if (!ctx->pages[i])
-			goto out_of_memory;
-		set_page_private(ctx->pages[i], dma_addr);
-		dma_sync_single_for_device(dev, dma_addr, PAGE_SIZE,
+		अगर (!ctx->pages[i])
+			जाओ out_of_memory;
+		set_page_निजी(ctx->pages[i], dma_addr);
+		dma_sync_single_क्रम_device(dev, dma_addr, PAGE_SIZE,
 					   DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
-	for (i = 0; i < AR_BUFFERS; i++)
+	क्रम (i = 0; i < AR_BUFFERS; i++)
 		pages[i]              = ctx->pages[i];
-	for (i = 0; i < AR_WRAPAROUND_PAGES; i++)
+	क्रम (i = 0; i < AR_WRAPAROUND_PAGES; i++)
 		pages[AR_BUFFERS + i] = ctx->pages[i];
 	ctx->buffer = vmap(pages, ARRAY_SIZE(pages), VM_MAP, PAGE_KERNEL);
-	if (!ctx->buffer)
-		goto out_of_memory;
+	अगर (!ctx->buffer)
+		जाओ out_of_memory;
 
 	ctx->descriptors     = ohci->misc_buffer     + descriptors_offset;
 	ctx->descriptors_bus = ohci->misc_buffer_bus + descriptors_offset;
 
-	for (i = 0; i < AR_BUFFERS; i++) {
+	क्रम (i = 0; i < AR_BUFFERS; i++) अणु
 		d = &ctx->descriptors[i];
 		d->req_count      = cpu_to_le16(PAGE_SIZE);
 		d->control        = cpu_to_le16(DESCRIPTOR_INPUT_MORE |
@@ -1008,113 +1009,113 @@ static int ar_context_init(struct ar_context *ctx, struct fw_ohci *ohci,
 						DESCRIPTOR_BRANCH_ALWAYS);
 		d->data_address   = cpu_to_le32(ar_buffer_bus(ctx, i));
 		d->branch_address = cpu_to_le32(ctx->descriptors_bus +
-			ar_next_buffer_index(i) * sizeof(struct descriptor));
-	}
+			ar_next_buffer_index(i) * माप(काष्ठा descriptor));
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_of_memory:
 	ar_context_release(ctx);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void ar_context_run(struct ar_context *ctx)
-{
-	unsigned int i;
+अटल व्योम ar_context_run(काष्ठा ar_context *ctx)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < AR_BUFFERS; i++)
+	क्रम (i = 0; i < AR_BUFFERS; i++)
 		ar_context_link_page(ctx, i);
 
-	ctx->pointer = ctx->buffer;
+	ctx->poपूर्णांकer = ctx->buffer;
 
-	reg_write(ctx->ohci, COMMAND_PTR(ctx->regs), ctx->descriptors_bus | 1);
-	reg_write(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_RUN);
-}
+	reg_ग_लिखो(ctx->ohci, COMMAND_PTR(ctx->regs), ctx->descriptors_bus | 1);
+	reg_ग_लिखो(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_RUN);
+पूर्ण
 
-static struct descriptor *find_branch_descriptor(struct descriptor *d, int z)
-{
+अटल काष्ठा descriptor *find_branch_descriptor(काष्ठा descriptor *d, पूर्णांक z)
+अणु
 	__le16 branch;
 
 	branch = d->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS);
 
 	/* figure out which descriptor the branch address goes in */
-	if (z == 2 && branch == cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
-		return d;
-	else
-		return d + z - 1;
-}
+	अगर (z == 2 && branch == cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
+		वापस d;
+	अन्यथा
+		वापस d + z - 1;
+पूर्ण
 
-static void context_tasklet(unsigned long data)
-{
-	struct context *ctx = (struct context *) data;
-	struct descriptor *d, *last;
+अटल व्योम context_tasklet(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा context *ctx = (काष्ठा context *) data;
+	काष्ठा descriptor *d, *last;
 	u32 address;
-	int z;
-	struct descriptor_buffer *desc;
+	पूर्णांक z;
+	काष्ठा descriptor_buffer *desc;
 
 	desc = list_entry(ctx->buffer_list.next,
-			struct descriptor_buffer, list);
+			काष्ठा descriptor_buffer, list);
 	last = ctx->last;
-	while (last->branch_address != 0) {
-		struct descriptor_buffer *old_desc = desc;
+	जबतक (last->branch_address != 0) अणु
+		काष्ठा descriptor_buffer *old_desc = desc;
 		address = le32_to_cpu(last->branch_address);
 		z = address & 0xf;
 		address &= ~0xf;
 		ctx->current_bus = address;
 
-		/* If the branch address points to a buffer outside of the
+		/* If the branch address poपूर्णांकs to a buffer outside of the
 		 * current buffer, advance to the next buffer. */
-		if (address < desc->buffer_bus ||
+		अगर (address < desc->buffer_bus ||
 				address >= desc->buffer_bus + desc->used)
 			desc = list_entry(desc->list.next,
-					struct descriptor_buffer, list);
-		d = desc->buffer + (address - desc->buffer_bus) / sizeof(*d);
+					काष्ठा descriptor_buffer, list);
+		d = desc->buffer + (address - desc->buffer_bus) / माप(*d);
 		last = find_branch_descriptor(d, z);
 
-		if (!ctx->callback(ctx, d, last))
-			break;
+		अगर (!ctx->callback(ctx, d, last))
+			अवरोध;
 
-		if (old_desc != desc) {
+		अगर (old_desc != desc) अणु
 			/* If we've advanced to the next buffer, move the
-			 * previous buffer to the free list. */
-			unsigned long flags;
+			 * previous buffer to the मुक्त list. */
+			अचिन्हित दीर्घ flags;
 			old_desc->used = 0;
 			spin_lock_irqsave(&ctx->ohci->lock, flags);
 			list_move_tail(&old_desc->list, &ctx->buffer_list);
 			spin_unlock_irqrestore(&ctx->ohci->lock, flags);
-		}
+		पूर्ण
 		ctx->last = last;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Allocate a new buffer and add it to the list of free buffers for this
+ * Allocate a new buffer and add it to the list of मुक्त buffers क्रम this
  * context.  Must be called with ohci->lock held.
  */
-static int context_add_buffer(struct context *ctx)
-{
-	struct descriptor_buffer *desc;
+अटल पूर्णांक context_add_buffer(काष्ठा context *ctx)
+अणु
+	काष्ठा descriptor_buffer *desc;
 	dma_addr_t bus_addr;
-	int offset;
+	पूर्णांक offset;
 
 	/*
-	 * 16MB of descriptors should be far more than enough for any DMA
+	 * 16MB of descriptors should be far more than enough क्रम any DMA
 	 * program.  This will catch run-away userspace or DoS attacks.
 	 */
-	if (ctx->total_allocation >= 16*1024*1024)
-		return -ENOMEM;
+	अगर (ctx->total_allocation >= 16*1024*1024)
+		वापस -ENOMEM;
 
 	desc = dma_alloc_coherent(ctx->ohci->card.device, PAGE_SIZE,
 			&bus_addr, GFP_ATOMIC);
-	if (!desc)
-		return -ENOMEM;
+	अगर (!desc)
+		वापस -ENOMEM;
 
-	offset = (void *)&desc->buffer - (void *)desc;
+	offset = (व्योम *)&desc->buffer - (व्योम *)desc;
 	/*
-	 * Some controllers, like JMicron ones, always issue 0x20-byte DMA reads
-	 * for descriptors, even 0x10-byte ones. This can cause page faults when
-	 * an IOMMU is in use and the oversized read crosses a page boundary.
+	 * Some controllers, like JMicron ones, always issue 0x20-byte DMA पढ़ोs
+	 * क्रम descriptors, even 0x10-byte ones. This can cause page faults when
+	 * an IOMMU is in use and the oversized पढ़ो crosses a page boundary.
 	 * Work around this by always leaving at least 0x10 bytes of padding.
 	 */
 	desc->buffer_size = PAGE_SIZE - offset - 0x10;
@@ -1124,423 +1125,423 @@ static int context_add_buffer(struct context *ctx)
 	list_add_tail(&desc->list, &ctx->buffer_list);
 	ctx->total_allocation += PAGE_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int context_init(struct context *ctx, struct fw_ohci *ohci,
+अटल पूर्णांक context_init(काष्ठा context *ctx, काष्ठा fw_ohci *ohci,
 			u32 regs, descriptor_callback_t callback)
-{
+अणु
 	ctx->ohci = ohci;
 	ctx->regs = regs;
 	ctx->total_allocation = 0;
 
 	INIT_LIST_HEAD(&ctx->buffer_list);
-	if (context_add_buffer(ctx) < 0)
-		return -ENOMEM;
+	अगर (context_add_buffer(ctx) < 0)
+		वापस -ENOMEM;
 
 	ctx->buffer_tail = list_entry(ctx->buffer_list.next,
-			struct descriptor_buffer, list);
+			काष्ठा descriptor_buffer, list);
 
-	tasklet_init(&ctx->tasklet, context_tasklet, (unsigned long)ctx);
+	tasklet_init(&ctx->tasklet, context_tasklet, (अचिन्हित दीर्घ)ctx);
 	ctx->callback = callback;
 
 	/*
-	 * We put a dummy descriptor in the buffer that has a NULL
+	 * We put a dummy descriptor in the buffer that has a शून्य
 	 * branch address and looks like it's been sent.  That way we
 	 * have a descriptor to append DMA programs to.
 	 */
-	memset(ctx->buffer_tail->buffer, 0, sizeof(*ctx->buffer_tail->buffer));
+	स_रखो(ctx->buffer_tail->buffer, 0, माप(*ctx->buffer_tail->buffer));
 	ctx->buffer_tail->buffer->control = cpu_to_le16(DESCRIPTOR_OUTPUT_LAST);
 	ctx->buffer_tail->buffer->transfer_status = cpu_to_le16(0x8011);
-	ctx->buffer_tail->used += sizeof(*ctx->buffer_tail->buffer);
+	ctx->buffer_tail->used += माप(*ctx->buffer_tail->buffer);
 	ctx->last = ctx->buffer_tail->buffer;
 	ctx->prev = ctx->buffer_tail->buffer;
 	ctx->prev_z = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void context_release(struct context *ctx)
-{
-	struct fw_card *card = &ctx->ohci->card;
-	struct descriptor_buffer *desc, *tmp;
+अटल व्योम context_release(काष्ठा context *ctx)
+अणु
+	काष्ठा fw_card *card = &ctx->ohci->card;
+	काष्ठा descriptor_buffer *desc, *पंचांगp;
 
-	list_for_each_entry_safe(desc, tmp, &ctx->buffer_list, list)
-		dma_free_coherent(card->device, PAGE_SIZE, desc,
+	list_क्रम_each_entry_safe(desc, पंचांगp, &ctx->buffer_list, list)
+		dma_मुक्त_coherent(card->device, PAGE_SIZE, desc,
 			desc->buffer_bus -
-			((void *)&desc->buffer - (void *)desc));
-}
+			((व्योम *)&desc->buffer - (व्योम *)desc));
+पूर्ण
 
 /* Must be called with ohci->lock held */
-static struct descriptor *context_get_descriptors(struct context *ctx,
-						  int z, dma_addr_t *d_bus)
-{
-	struct descriptor *d = NULL;
-	struct descriptor_buffer *desc = ctx->buffer_tail;
+अटल काष्ठा descriptor *context_get_descriptors(काष्ठा context *ctx,
+						  पूर्णांक z, dma_addr_t *d_bus)
+अणु
+	काष्ठा descriptor *d = शून्य;
+	काष्ठा descriptor_buffer *desc = ctx->buffer_tail;
 
-	if (z * sizeof(*d) > desc->buffer_size)
-		return NULL;
+	अगर (z * माप(*d) > desc->buffer_size)
+		वापस शून्य;
 
-	if (z * sizeof(*d) > desc->buffer_size - desc->used) {
-		/* No room for the descriptor in this buffer, so advance to the
+	अगर (z * माप(*d) > desc->buffer_size - desc->used) अणु
+		/* No room क्रम the descriptor in this buffer, so advance to the
 		 * next one. */
 
-		if (desc->list.next == &ctx->buffer_list) {
-			/* If there is no free buffer next in the list,
+		अगर (desc->list.next == &ctx->buffer_list) अणु
+			/* If there is no मुक्त buffer next in the list,
 			 * allocate one. */
-			if (context_add_buffer(ctx) < 0)
-				return NULL;
-		}
+			अगर (context_add_buffer(ctx) < 0)
+				वापस शून्य;
+		पूर्ण
 		desc = list_entry(desc->list.next,
-				struct descriptor_buffer, list);
+				काष्ठा descriptor_buffer, list);
 		ctx->buffer_tail = desc;
-	}
+	पूर्ण
 
-	d = desc->buffer + desc->used / sizeof(*d);
-	memset(d, 0, z * sizeof(*d));
+	d = desc->buffer + desc->used / माप(*d);
+	स_रखो(d, 0, z * माप(*d));
 	*d_bus = desc->buffer_bus + desc->used;
 
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static void context_run(struct context *ctx, u32 extra)
-{
-	struct fw_ohci *ohci = ctx->ohci;
+अटल व्योम context_run(काष्ठा context *ctx, u32 extra)
+अणु
+	काष्ठा fw_ohci *ohci = ctx->ohci;
 
-	reg_write(ohci, COMMAND_PTR(ctx->regs),
+	reg_ग_लिखो(ohci, COMMAND_PTR(ctx->regs),
 		  le32_to_cpu(ctx->last->branch_address));
-	reg_write(ohci, CONTROL_CLEAR(ctx->regs), ~0);
-	reg_write(ohci, CONTROL_SET(ctx->regs), CONTEXT_RUN | extra);
+	reg_ग_लिखो(ohci, CONTROL_CLEAR(ctx->regs), ~0);
+	reg_ग_लिखो(ohci, CONTROL_SET(ctx->regs), CONTEXT_RUN | extra);
 	ctx->running = true;
-	flush_writes(ohci);
-}
+	flush_ग_लिखोs(ohci);
+पूर्ण
 
-static void context_append(struct context *ctx,
-			   struct descriptor *d, int z, int extra)
-{
+अटल व्योम context_append(काष्ठा context *ctx,
+			   काष्ठा descriptor *d, पूर्णांक z, पूर्णांक extra)
+अणु
 	dma_addr_t d_bus;
-	struct descriptor_buffer *desc = ctx->buffer_tail;
-	struct descriptor *d_branch;
+	काष्ठा descriptor_buffer *desc = ctx->buffer_tail;
+	काष्ठा descriptor *d_branch;
 
-	d_bus = desc->buffer_bus + (d - desc->buffer) * sizeof(*d);
+	d_bus = desc->buffer_bus + (d - desc->buffer) * माप(*d);
 
-	desc->used += (z + extra) * sizeof(*d);
+	desc->used += (z + extra) * माप(*d);
 
-	wmb(); /* finish init of new descriptors before branch_address update */
+	wmb(); /* finish init of new descriptors beक्रमe branch_address update */
 
 	d_branch = find_branch_descriptor(ctx->prev, ctx->prev_z);
 	d_branch->branch_address = cpu_to_le32(d_bus | z);
 
 	/*
 	 * VT6306 incorrectly checks only the single descriptor at the
-	 * CommandPtr when the wake bit is written, so if it's a
+	 * CommandPtr when the wake bit is written, so अगर it's a
 	 * multi-descriptor block starting with an INPUT_MORE, put a copy of
 	 * the branch address in the first descriptor.
 	 *
-	 * Not doing this for transmit contexts since not sure how it interacts
+	 * Not करोing this क्रम transmit contexts since not sure how it पूर्णांकeracts
 	 * with skip addresses.
 	 */
-	if (unlikely(ctx->ohci->quirks & QUIRK_IR_WAKE) &&
+	अगर (unlikely(ctx->ohci->quirks & QUIRK_IR_WAKE) &&
 	    d_branch != ctx->prev &&
 	    (ctx->prev->control & cpu_to_le16(DESCRIPTOR_CMD)) ==
-	     cpu_to_le16(DESCRIPTOR_INPUT_MORE)) {
+	     cpu_to_le16(DESCRIPTOR_INPUT_MORE)) अणु
 		ctx->prev->branch_address = cpu_to_le32(d_bus | z);
-	}
+	पूर्ण
 
 	ctx->prev = d;
 	ctx->prev_z = z;
-}
+पूर्ण
 
-static void context_stop(struct context *ctx)
-{
-	struct fw_ohci *ohci = ctx->ohci;
+अटल व्योम context_stop(काष्ठा context *ctx)
+अणु
+	काष्ठा fw_ohci *ohci = ctx->ohci;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	reg_write(ohci, CONTROL_CLEAR(ctx->regs), CONTEXT_RUN);
+	reg_ग_लिखो(ohci, CONTROL_CLEAR(ctx->regs), CONTEXT_RUN);
 	ctx->running = false;
 
-	for (i = 0; i < 1000; i++) {
-		reg = reg_read(ohci, CONTROL_SET(ctx->regs));
-		if ((reg & CONTEXT_ACTIVE) == 0)
-			return;
+	क्रम (i = 0; i < 1000; i++) अणु
+		reg = reg_पढ़ो(ohci, CONTROL_SET(ctx->regs));
+		अगर ((reg & CONTEXT_ACTIVE) == 0)
+			वापस;
 
-		if (i)
+		अगर (i)
 			udelay(10);
-	}
+	पूर्ण
 	ohci_err(ohci, "DMA context still active (0x%08x)\n", reg);
-}
+पूर्ण
 
-struct driver_data {
-	u8 inline_data[8];
-	struct fw_packet *packet;
-};
+काष्ठा driver_data अणु
+	u8 अंतरभूत_data[8];
+	काष्ठा fw_packet *packet;
+पूर्ण;
 
 /*
- * This function apppends a packet to the DMA queue for transmission.
+ * This function apppends a packet to the DMA queue क्रम transmission.
  * Must always be called with the ochi->lock held to ensure proper
  * generation handling and locking around packet queue manipulation.
  */
-static int at_context_queue_packet(struct context *ctx,
-				   struct fw_packet *packet)
-{
-	struct fw_ohci *ohci = ctx->ohci;
+अटल पूर्णांक at_context_queue_packet(काष्ठा context *ctx,
+				   काष्ठा fw_packet *packet)
+अणु
+	काष्ठा fw_ohci *ohci = ctx->ohci;
 	dma_addr_t d_bus, payload_bus;
-	struct driver_data *driver_data;
-	struct descriptor *d, *last;
+	काष्ठा driver_data *driver_data;
+	काष्ठा descriptor *d, *last;
 	__le32 *header;
-	int z, tcode;
+	पूर्णांक z, tcode;
 
 	d = context_get_descriptors(ctx, 4, &d_bus);
-	if (d == NULL) {
+	अगर (d == शून्य) अणु
 		packet->ack = RCODE_SEND_ERROR;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	d[0].control   = cpu_to_le16(DESCRIPTOR_KEY_IMMEDIATE);
-	d[0].res_count = cpu_to_le16(packet->timestamp);
+	d[0].res_count = cpu_to_le16(packet->बारtamp);
 
 	/*
-	 * The DMA format for asynchronous link packets is different
-	 * from the IEEE1394 layout, so shift the fields around
+	 * The DMA क्रमmat क्रम asynchronous link packets is dअगरferent
+	 * from the IEEE1394 layout, so shअगरt the fields around
 	 * accordingly.
 	 */
 
 	tcode = (packet->header[0] >> 4) & 0x0f;
 	header = (__le32 *) &d[1];
-	switch (tcode) {
-	case TCODE_WRITE_QUADLET_REQUEST:
-	case TCODE_WRITE_BLOCK_REQUEST:
-	case TCODE_WRITE_RESPONSE:
-	case TCODE_READ_QUADLET_REQUEST:
-	case TCODE_READ_BLOCK_REQUEST:
-	case TCODE_READ_QUADLET_RESPONSE:
-	case TCODE_READ_BLOCK_RESPONSE:
-	case TCODE_LOCK_REQUEST:
-	case TCODE_LOCK_RESPONSE:
+	चयन (tcode) अणु
+	हाल TCODE_WRITE_QUADLET_REQUEST:
+	हाल TCODE_WRITE_BLOCK_REQUEST:
+	हाल TCODE_WRITE_RESPONSE:
+	हाल TCODE_READ_QUADLET_REQUEST:
+	हाल TCODE_READ_BLOCK_REQUEST:
+	हाल TCODE_READ_QUADLET_RESPONSE:
+	हाल TCODE_READ_BLOCK_RESPONSE:
+	हाल TCODE_LOCK_REQUEST:
+	हाल TCODE_LOCK_RESPONSE:
 		header[0] = cpu_to_le32((packet->header[0] & 0xffff) |
 					(packet->speed << 16));
 		header[1] = cpu_to_le32((packet->header[1] & 0xffff) |
 					(packet->header[0] & 0xffff0000));
 		header[2] = cpu_to_le32(packet->header[2]);
 
-		if (TCODE_IS_BLOCK_PACKET(tcode))
+		अगर (TCODE_IS_BLOCK_PACKET(tcode))
 			header[3] = cpu_to_le32(packet->header[3]);
-		else
-			header[3] = (__force __le32) packet->header[3];
+		अन्यथा
+			header[3] = (__क्रमce __le32) packet->header[3];
 
 		d[0].req_count = cpu_to_le16(packet->header_length);
-		break;
+		अवरोध;
 
-	case TCODE_LINK_INTERNAL:
+	हाल TCODE_LINK_INTERNAL:
 		header[0] = cpu_to_le32((OHCI1394_phy_tcode << 4) |
 					(packet->speed << 16));
 		header[1] = cpu_to_le32(packet->header[1]);
 		header[2] = cpu_to_le32(packet->header[2]);
 		d[0].req_count = cpu_to_le16(12);
 
-		if (is_ping_packet(&packet->header[1]))
+		अगर (is_ping_packet(&packet->header[1]))
 			d[0].control |= cpu_to_le16(DESCRIPTOR_PING);
-		break;
+		अवरोध;
 
-	case TCODE_STREAM_DATA:
+	हाल TCODE_STREAM_DATA:
 		header[0] = cpu_to_le32((packet->header[0] & 0xffff) |
 					(packet->speed << 16));
 		header[1] = cpu_to_le32(packet->header[0] & 0xffff0000);
 		d[0].req_count = cpu_to_le16(8);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* BUG(); */
 		packet->ack = RCODE_SEND_ERROR;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	BUILD_BUG_ON(sizeof(struct driver_data) > sizeof(struct descriptor));
-	driver_data = (struct driver_data *) &d[3];
+	BUILD_BUG_ON(माप(काष्ठा driver_data) > माप(काष्ठा descriptor));
+	driver_data = (काष्ठा driver_data *) &d[3];
 	driver_data->packet = packet;
 	packet->driver_data = driver_data;
 
-	if (packet->payload_length > 0) {
-		if (packet->payload_length > sizeof(driver_data->inline_data)) {
+	अगर (packet->payload_length > 0) अणु
+		अगर (packet->payload_length > माप(driver_data->अंतरभूत_data)) अणु
 			payload_bus = dma_map_single(ohci->card.device,
 						     packet->payload,
 						     packet->payload_length,
 						     DMA_TO_DEVICE);
-			if (dma_mapping_error(ohci->card.device, payload_bus)) {
+			अगर (dma_mapping_error(ohci->card.device, payload_bus)) अणु
 				packet->ack = RCODE_SEND_ERROR;
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			packet->payload_bus	= payload_bus;
 			packet->payload_mapped	= true;
-		} else {
-			memcpy(driver_data->inline_data, packet->payload,
+		पूर्ण अन्यथा अणु
+			स_नकल(driver_data->अंतरभूत_data, packet->payload,
 			       packet->payload_length);
-			payload_bus = d_bus + 3 * sizeof(*d);
-		}
+			payload_bus = d_bus + 3 * माप(*d);
+		पूर्ण
 
 		d[2].req_count    = cpu_to_le16(packet->payload_length);
 		d[2].data_address = cpu_to_le32(payload_bus);
 		last = &d[2];
 		z = 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		last = &d[0];
 		z = 2;
-	}
+	पूर्ण
 
 	last->control |= cpu_to_le16(DESCRIPTOR_OUTPUT_LAST |
 				     DESCRIPTOR_IRQ_ALWAYS |
 				     DESCRIPTOR_BRANCH_ALWAYS);
 
 	/* FIXME: Document how the locking works. */
-	if (ohci->generation != packet->generation) {
-		if (packet->payload_mapped)
+	अगर (ohci->generation != packet->generation) अणु
+		अगर (packet->payload_mapped)
 			dma_unmap_single(ohci->card.device, payload_bus,
 					 packet->payload_length, DMA_TO_DEVICE);
 		packet->ack = RCODE_GENERATION;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	context_append(ctx, d, z, 4 - z);
 
-	if (ctx->running)
-		reg_write(ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
-	else
+	अगर (ctx->running)
+		reg_ग_लिखो(ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
+	अन्यथा
 		context_run(ctx, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at_context_flush(struct context *ctx)
-{
+अटल व्योम at_context_flush(काष्ठा context *ctx)
+अणु
 	tasklet_disable(&ctx->tasklet);
 
 	ctx->flushing = true;
-	context_tasklet((unsigned long)ctx);
+	context_tasklet((अचिन्हित दीर्घ)ctx);
 	ctx->flushing = false;
 
 	tasklet_enable(&ctx->tasklet);
-}
+पूर्ण
 
-static int handle_at_packet(struct context *context,
-			    struct descriptor *d,
-			    struct descriptor *last)
-{
-	struct driver_data *driver_data;
-	struct fw_packet *packet;
-	struct fw_ohci *ohci = context->ohci;
-	int evt;
+अटल पूर्णांक handle_at_packet(काष्ठा context *context,
+			    काष्ठा descriptor *d,
+			    काष्ठा descriptor *last)
+अणु
+	काष्ठा driver_data *driver_data;
+	काष्ठा fw_packet *packet;
+	काष्ठा fw_ohci *ohci = context->ohci;
+	पूर्णांक evt;
 
-	if (last->transfer_status == 0 && !context->flushing)
-		/* This descriptor isn't done yet, stop iteration. */
-		return 0;
+	अगर (last->transfer_status == 0 && !context->flushing)
+		/* This descriptor isn't करोne yet, stop iteration. */
+		वापस 0;
 
-	driver_data = (struct driver_data *) &d[3];
+	driver_data = (काष्ठा driver_data *) &d[3];
 	packet = driver_data->packet;
-	if (packet == NULL)
-		/* This packet was cancelled, just continue. */
-		return 1;
+	अगर (packet == शून्य)
+		/* This packet was cancelled, just जारी. */
+		वापस 1;
 
-	if (packet->payload_mapped)
+	अगर (packet->payload_mapped)
 		dma_unmap_single(ohci->card.device, packet->payload_bus,
 				 packet->payload_length, DMA_TO_DEVICE);
 
 	evt = le16_to_cpu(last->transfer_status) & 0x1f;
-	packet->timestamp = le16_to_cpu(last->res_count);
+	packet->बारtamp = le16_to_cpu(last->res_count);
 
 	log_ar_at_event(ohci, 'T', packet->speed, packet->header, evt);
 
-	switch (evt) {
-	case OHCI1394_evt_timeout:
-		/* Async response transmit timed out. */
+	चयन (evt) अणु
+	हाल OHCI1394_evt_समयout:
+		/* Async response transmit समयd out. */
 		packet->ack = RCODE_CANCELLED;
-		break;
+		अवरोध;
 
-	case OHCI1394_evt_flushed:
+	हाल OHCI1394_evt_flushed:
 		/*
 		 * The packet was flushed should give same error as
 		 * when we try to use a stale generation count.
 		 */
 		packet->ack = RCODE_GENERATION;
-		break;
+		अवरोध;
 
-	case OHCI1394_evt_missing_ack:
-		if (context->flushing)
+	हाल OHCI1394_evt_missing_ack:
+		अगर (context->flushing)
 			packet->ack = RCODE_GENERATION;
-		else {
+		अन्यथा अणु
 			/*
 			 * Using a valid (current) generation count, but the
 			 * node is not on the bus or not sending acks.
 			 */
 			packet->ack = RCODE_NO_ACK;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ACK_COMPLETE + 0x10:
-	case ACK_PENDING + 0x10:
-	case ACK_BUSY_X + 0x10:
-	case ACK_BUSY_A + 0x10:
-	case ACK_BUSY_B + 0x10:
-	case ACK_DATA_ERROR + 0x10:
-	case ACK_TYPE_ERROR + 0x10:
+	हाल ACK_COMPLETE + 0x10:
+	हाल ACK_PENDING + 0x10:
+	हाल ACK_BUSY_X + 0x10:
+	हाल ACK_BUSY_A + 0x10:
+	हाल ACK_BUSY_B + 0x10:
+	हाल ACK_DATA_ERROR + 0x10:
+	हाल ACK_TYPE_ERROR + 0x10:
 		packet->ack = evt - 0x10;
-		break;
+		अवरोध;
 
-	case OHCI1394_evt_no_status:
-		if (context->flushing) {
+	हाल OHCI1394_evt_no_status:
+		अगर (context->flushing) अणु
 			packet->ack = RCODE_GENERATION;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
 
-	default:
+	शेष:
 		packet->ack = RCODE_SEND_ERROR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	packet->callback(packet, &ohci->card, packet->ack);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#define HEADER_GET_DESTINATION(q)	(((q) >> 16) & 0xffff)
-#define HEADER_GET_TCODE(q)		(((q) >> 4) & 0x0f)
-#define HEADER_GET_OFFSET_HIGH(q)	(((q) >> 0) & 0xffff)
-#define HEADER_GET_DATA_LENGTH(q)	(((q) >> 16) & 0xffff)
-#define HEADER_GET_EXTENDED_TCODE(q)	(((q) >> 0) & 0xffff)
+#घोषणा HEADER_GET_DESTINATION(q)	(((q) >> 16) & 0xffff)
+#घोषणा HEADER_GET_TCODE(q)		(((q) >> 4) & 0x0f)
+#घोषणा HEADER_GET_OFFSET_HIGH(q)	(((q) >> 0) & 0xffff)
+#घोषणा HEADER_GET_DATA_LENGTH(q)	(((q) >> 16) & 0xffff)
+#घोषणा HEADER_GET_EXTENDED_TCODE(q)	(((q) >> 0) & 0xffff)
 
-static void handle_local_rom(struct fw_ohci *ohci,
-			     struct fw_packet *packet, u32 csr)
-{
-	struct fw_packet response;
-	int tcode, length, i;
+अटल व्योम handle_local_rom(काष्ठा fw_ohci *ohci,
+			     काष्ठा fw_packet *packet, u32 csr)
+अणु
+	काष्ठा fw_packet response;
+	पूर्णांक tcode, length, i;
 
 	tcode = HEADER_GET_TCODE(packet->header[0]);
-	if (TCODE_IS_BLOCK_PACKET(tcode))
+	अगर (TCODE_IS_BLOCK_PACKET(tcode))
 		length = HEADER_GET_DATA_LENGTH(packet->header[3]);
-	else
+	अन्यथा
 		length = 4;
 
 	i = csr - CSR_CONFIG_ROM;
-	if (i + length > CONFIG_ROM_SIZE) {
+	अगर (i + length > CONFIG_ROM_SIZE) अणु
 		fw_fill_response(&response, packet->header,
-				 RCODE_ADDRESS_ERROR, NULL, 0);
-	} else if (!TCODE_IS_READ_REQUEST(tcode)) {
+				 RCODE_ADDRESS_ERROR, शून्य, 0);
+	पूर्ण अन्यथा अगर (!TCODE_IS_READ_REQUEST(tcode)) अणु
 		fw_fill_response(&response, packet->header,
-				 RCODE_TYPE_ERROR, NULL, 0);
-	} else {
+				 RCODE_TYPE_ERROR, शून्य, 0);
+	पूर्ण अन्यथा अणु
 		fw_fill_response(&response, packet->header, RCODE_COMPLETE,
-				 (void *) ohci->config_rom + i, length);
-	}
+				 (व्योम *) ohci->config_rom + i, length);
+	पूर्ण
 
 	fw_core_handle_response(&ohci->card, &response);
-}
+पूर्ण
 
-static void handle_local_lock(struct fw_ohci *ohci,
-			      struct fw_packet *packet, u32 csr)
-{
-	struct fw_packet response;
-	int tcode, length, ext_tcode, sel, try;
+अटल व्योम handle_local_lock(काष्ठा fw_ohci *ohci,
+			      काष्ठा fw_packet *packet, u32 csr)
+अणु
+	काष्ठा fw_packet response;
+	पूर्णांक tcode, length, ext_tcode, sel, try;
 	__be32 *payload, lock_old;
 	u32 lock_arg, lock_data;
 
@@ -1549,436 +1550,436 @@ static void handle_local_lock(struct fw_ohci *ohci,
 	payload = packet->payload;
 	ext_tcode = HEADER_GET_EXTENDED_TCODE(packet->header[3]);
 
-	if (tcode == TCODE_LOCK_REQUEST &&
-	    ext_tcode == EXTCODE_COMPARE_SWAP && length == 8) {
+	अगर (tcode == TCODE_LOCK_REQUEST &&
+	    ext_tcode == EXTCODE_COMPARE_SWAP && length == 8) अणु
 		lock_arg = be32_to_cpu(payload[0]);
 		lock_data = be32_to_cpu(payload[1]);
-	} else if (tcode == TCODE_READ_QUADLET_REQUEST) {
+	पूर्ण अन्यथा अगर (tcode == TCODE_READ_QUADLET_REQUEST) अणु
 		lock_arg = 0;
 		lock_data = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		fw_fill_response(&response, packet->header,
-				 RCODE_TYPE_ERROR, NULL, 0);
-		goto out;
-	}
+				 RCODE_TYPE_ERROR, शून्य, 0);
+		जाओ out;
+	पूर्ण
 
 	sel = (csr - CSR_BUS_MANAGER_ID) / 4;
-	reg_write(ohci, OHCI1394_CSRData, lock_data);
-	reg_write(ohci, OHCI1394_CSRCompareData, lock_arg);
-	reg_write(ohci, OHCI1394_CSRControl, sel);
+	reg_ग_लिखो(ohci, OHCI1394_CSRData, lock_data);
+	reg_ग_लिखो(ohci, OHCI1394_CSRCompareData, lock_arg);
+	reg_ग_लिखो(ohci, OHCI1394_CSRControl, sel);
 
-	for (try = 0; try < 20; try++)
-		if (reg_read(ohci, OHCI1394_CSRControl) & 0x80000000) {
-			lock_old = cpu_to_be32(reg_read(ohci,
+	क्रम (try = 0; try < 20; try++)
+		अगर (reg_पढ़ो(ohci, OHCI1394_CSRControl) & 0x80000000) अणु
+			lock_old = cpu_to_be32(reg_पढ़ो(ohci,
 							OHCI1394_CSRData));
 			fw_fill_response(&response, packet->header,
 					 RCODE_COMPLETE,
-					 &lock_old, sizeof(lock_old));
-			goto out;
-		}
+					 &lock_old, माप(lock_old));
+			जाओ out;
+		पूर्ण
 
 	ohci_err(ohci, "swap not done (CSR lock timeout)\n");
-	fw_fill_response(&response, packet->header, RCODE_BUSY, NULL, 0);
+	fw_fill_response(&response, packet->header, RCODE_BUSY, शून्य, 0);
 
  out:
 	fw_core_handle_response(&ohci->card, &response);
-}
+पूर्ण
 
-static void handle_local_request(struct context *ctx, struct fw_packet *packet)
-{
+अटल व्योम handle_local_request(काष्ठा context *ctx, काष्ठा fw_packet *packet)
+अणु
 	u64 offset, csr;
 
-	if (ctx == &ctx->ohci->at_request_ctx) {
+	अगर (ctx == &ctx->ohci->at_request_ctx) अणु
 		packet->ack = ACK_PENDING;
 		packet->callback(packet, &ctx->ohci->card, packet->ack);
-	}
+	पूर्ण
 
 	offset =
-		((unsigned long long)
+		((अचिन्हित दीर्घ दीर्घ)
 		 HEADER_GET_OFFSET_HIGH(packet->header[1]) << 32) |
 		packet->header[2];
 	csr = offset - CSR_REGISTER_BASE;
 
-	/* Handle config rom reads. */
-	if (csr >= CSR_CONFIG_ROM && csr < CSR_CONFIG_ROM_END)
+	/* Handle config rom पढ़ोs. */
+	अगर (csr >= CSR_CONFIG_ROM && csr < CSR_CONFIG_ROM_END)
 		handle_local_rom(ctx->ohci, packet, csr);
-	else switch (csr) {
-	case CSR_BUS_MANAGER_ID:
-	case CSR_BANDWIDTH_AVAILABLE:
-	case CSR_CHANNELS_AVAILABLE_HI:
-	case CSR_CHANNELS_AVAILABLE_LO:
+	अन्यथा चयन (csr) अणु
+	हाल CSR_BUS_MANAGER_ID:
+	हाल CSR_BANDWIDTH_AVAILABLE:
+	हाल CSR_CHANNELS_AVAILABLE_HI:
+	हाल CSR_CHANNELS_AVAILABLE_LO:
 		handle_local_lock(ctx->ohci, packet, csr);
-		break;
-	default:
-		if (ctx == &ctx->ohci->at_request_ctx)
+		अवरोध;
+	शेष:
+		अगर (ctx == &ctx->ohci->at_request_ctx)
 			fw_core_handle_request(&ctx->ohci->card, packet);
-		else
+		अन्यथा
 			fw_core_handle_response(&ctx->ohci->card, packet);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ctx == &ctx->ohci->at_response_ctx) {
+	अगर (ctx == &ctx->ohci->at_response_ctx) अणु
 		packet->ack = ACK_COMPLETE;
 		packet->callback(packet, &ctx->ohci->card, packet->ack);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void at_context_transmit(struct context *ctx, struct fw_packet *packet)
-{
-	unsigned long flags;
-	int ret;
+अटल व्योम at_context_transmit(काष्ठा context *ctx, काष्ठा fw_packet *packet)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&ctx->ohci->lock, flags);
 
-	if (HEADER_GET_DESTINATION(packet->header[0]) == ctx->ohci->node_id &&
-	    ctx->ohci->generation == packet->generation) {
+	अगर (HEADER_GET_DESTINATION(packet->header[0]) == ctx->ohci->node_id &&
+	    ctx->ohci->generation == packet->generation) अणु
 		spin_unlock_irqrestore(&ctx->ohci->lock, flags);
 		handle_local_request(ctx, packet);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = at_context_queue_packet(ctx, packet);
 	spin_unlock_irqrestore(&ctx->ohci->lock, flags);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		packet->callback(packet, &ctx->ohci->card, packet->ack);
 
-}
+पूर्ण
 
-static void detect_dead_context(struct fw_ohci *ohci,
-				const char *name, unsigned int regs)
-{
+अटल व्योम detect_dead_context(काष्ठा fw_ohci *ohci,
+				स्थिर अक्षर *name, अचिन्हित पूर्णांक regs)
+अणु
 	u32 ctl;
 
-	ctl = reg_read(ohci, CONTROL_SET(regs));
-	if (ctl & CONTEXT_DEAD)
+	ctl = reg_पढ़ो(ohci, CONTROL_SET(regs));
+	अगर (ctl & CONTEXT_DEAD)
 		ohci_err(ohci, "DMA context %s has stopped, error code: %s\n",
 			name, evts[ctl & 0x1f]);
-}
+पूर्ण
 
-static void handle_dead_contexts(struct fw_ohci *ohci)
-{
-	unsigned int i;
-	char name[8];
+अटल व्योम handle_dead_contexts(काष्ठा fw_ohci *ohci)
+अणु
+	अचिन्हित पूर्णांक i;
+	अक्षर name[8];
 
 	detect_dead_context(ohci, "ATReq", OHCI1394_AsReqTrContextBase);
 	detect_dead_context(ohci, "ATRsp", OHCI1394_AsRspTrContextBase);
 	detect_dead_context(ohci, "ARReq", OHCI1394_AsReqRcvContextBase);
 	detect_dead_context(ohci, "ARRsp", OHCI1394_AsRspRcvContextBase);
-	for (i = 0; i < 32; ++i) {
-		if (!(ohci->it_context_support & (1 << i)))
-			continue;
-		sprintf(name, "IT%u", i);
+	क्रम (i = 0; i < 32; ++i) अणु
+		अगर (!(ohci->it_context_support & (1 << i)))
+			जारी;
+		प्र_लिखो(name, "IT%u", i);
 		detect_dead_context(ohci, name, OHCI1394_IsoXmitContextBase(i));
-	}
-	for (i = 0; i < 32; ++i) {
-		if (!(ohci->ir_context_support & (1 << i)))
-			continue;
-		sprintf(name, "IR%u", i);
+	पूर्ण
+	क्रम (i = 0; i < 32; ++i) अणु
+		अगर (!(ohci->ir_context_support & (1 << i)))
+			जारी;
+		प्र_लिखो(name, "IR%u", i);
 		detect_dead_context(ohci, name, OHCI1394_IsoRcvContextBase(i));
-	}
+	पूर्ण
 	/* TODO: maybe try to flush and restart the dead contexts */
-}
+पूर्ण
 
-static u32 cycle_timer_ticks(u32 cycle_timer)
-{
+अटल u32 cycle_समयr_ticks(u32 cycle_समयr)
+अणु
 	u32 ticks;
 
-	ticks = cycle_timer & 0xfff;
-	ticks += 3072 * ((cycle_timer >> 12) & 0x1fff);
-	ticks += (3072 * 8000) * (cycle_timer >> 25);
+	ticks = cycle_समयr & 0xfff;
+	ticks += 3072 * ((cycle_समयr >> 12) & 0x1fff);
+	ticks += (3072 * 8000) * (cycle_समयr >> 25);
 
-	return ticks;
-}
+	वापस ticks;
+पूर्ण
 
 /*
  * Some controllers exhibit one or more of the following bugs when updating the
- * iso cycle timer register:
- *  - When the lowest six bits are wrapping around to zero, a read that happens
- *    at the same time will return garbage in the lowest ten bits.
+ * iso cycle समयr रेजिस्टर:
+ *  - When the lowest six bits are wrapping around to zero, a पढ़ो that happens
+ *    at the same समय will वापस garbage in the lowest ten bits.
  *  - When the cycleOffset field wraps around to zero, the cycleCount field is
- *    not incremented for about 60 ns.
- *  - Occasionally, the entire register reads zero.
+ *    not incremented क्रम about 60 ns.
+ *  - Occasionally, the entire रेजिस्टर पढ़ोs zero.
  *
- * To catch these, we read the register three times and ensure that the
- * difference between each two consecutive reads is approximately the same, i.e.
- * less than twice the other.  Furthermore, any negative difference indicates an
- * error.  (A PCI read should take at least 20 ticks of the 24.576 MHz timer to
- * execute, so we have enough precision to compute the ratio of the differences.)
+ * To catch these, we पढ़ो the रेजिस्टर three बार and ensure that the
+ * dअगरference between each two consecutive पढ़ोs is approximately the same, i.e.
+ * less than twice the other.  Furthermore, any negative dअगरference indicates an
+ * error.  (A PCI पढ़ो should take at least 20 ticks of the 24.576 MHz समयr to
+ * execute, so we have enough precision to compute the ratio of the dअगरferences.)
  */
-static u32 get_cycle_time(struct fw_ohci *ohci)
-{
+अटल u32 get_cycle_समय(काष्ठा fw_ohci *ohci)
+अणु
 	u32 c0, c1, c2;
 	u32 t0, t1, t2;
-	s32 diff01, diff12;
-	int i;
+	s32 dअगरf01, dअगरf12;
+	पूर्णांक i;
 
-	c2 = reg_read(ohci, OHCI1394_IsochronousCycleTimer);
+	c2 = reg_पढ़ो(ohci, OHCI1394_IsochronousCycleTimer);
 
-	if (ohci->quirks & QUIRK_CYCLE_TIMER) {
+	अगर (ohci->quirks & QUIRK_CYCLE_TIMER) अणु
 		i = 0;
 		c1 = c2;
-		c2 = reg_read(ohci, OHCI1394_IsochronousCycleTimer);
-		do {
+		c2 = reg_पढ़ो(ohci, OHCI1394_IsochronousCycleTimer);
+		करो अणु
 			c0 = c1;
 			c1 = c2;
-			c2 = reg_read(ohci, OHCI1394_IsochronousCycleTimer);
-			t0 = cycle_timer_ticks(c0);
-			t1 = cycle_timer_ticks(c1);
-			t2 = cycle_timer_ticks(c2);
-			diff01 = t1 - t0;
-			diff12 = t2 - t1;
-		} while ((diff01 <= 0 || diff12 <= 0 ||
-			  diff01 / diff12 >= 2 || diff12 / diff01 >= 2)
+			c2 = reg_पढ़ो(ohci, OHCI1394_IsochronousCycleTimer);
+			t0 = cycle_समयr_ticks(c0);
+			t1 = cycle_समयr_ticks(c1);
+			t2 = cycle_समयr_ticks(c2);
+			dअगरf01 = t1 - t0;
+			dअगरf12 = t2 - t1;
+		पूर्ण जबतक ((dअगरf01 <= 0 || dअगरf12 <= 0 ||
+			  dअगरf01 / dअगरf12 >= 2 || dअगरf12 / dअगरf01 >= 2)
 			 && i++ < 20);
-	}
+	पूर्ण
 
-	return c2;
-}
+	वापस c2;
+पूर्ण
 
 /*
- * This function has to be called at least every 64 seconds.  The bus_time
- * field stores not only the upper 25 bits of the BUS_TIME register but also
- * the most significant bit of the cycle timer in bit 6 so that we can detect
+ * This function has to be called at least every 64 seconds.  The bus_समय
+ * field stores not only the upper 25 bits of the BUS_TIME रेजिस्टर but also
+ * the most signअगरicant bit of the cycle समयr in bit 6 so that we can detect
  * changes in this bit.
  */
-static u32 update_bus_time(struct fw_ohci *ohci)
-{
-	u32 cycle_time_seconds = get_cycle_time(ohci) >> 25;
+अटल u32 update_bus_समय(काष्ठा fw_ohci *ohci)
+अणु
+	u32 cycle_समय_seconds = get_cycle_समय(ohci) >> 25;
 
-	if (unlikely(!ohci->bus_time_running)) {
-		reg_write(ohci, OHCI1394_IntMaskSet, OHCI1394_cycle64Seconds);
-		ohci->bus_time = (lower_32_bits(ktime_get_seconds()) & ~0x7f) |
-		                 (cycle_time_seconds & 0x40);
-		ohci->bus_time_running = true;
-	}
+	अगर (unlikely(!ohci->bus_समय_running)) अणु
+		reg_ग_लिखो(ohci, OHCI1394_IntMaskSet, OHCI1394_cycle64Seconds);
+		ohci->bus_समय = (lower_32_bits(kसमय_get_seconds()) & ~0x7f) |
+		                 (cycle_समय_seconds & 0x40);
+		ohci->bus_समय_running = true;
+	पूर्ण
 
-	if ((ohci->bus_time & 0x40) != (cycle_time_seconds & 0x40))
-		ohci->bus_time += 0x40;
+	अगर ((ohci->bus_समय & 0x40) != (cycle_समय_seconds & 0x40))
+		ohci->bus_समय += 0x40;
 
-	return ohci->bus_time | cycle_time_seconds;
-}
+	वापस ohci->bus_समय | cycle_समय_seconds;
+पूर्ण
 
-static int get_status_for_port(struct fw_ohci *ohci, int port_index)
-{
-	int reg;
+अटल पूर्णांक get_status_क्रम_port(काष्ठा fw_ohci *ohci, पूर्णांक port_index)
+अणु
+	पूर्णांक reg;
 
 	mutex_lock(&ohci->phy_reg_mutex);
-	reg = write_phy_reg(ohci, 7, port_index);
-	if (reg >= 0)
-		reg = read_phy_reg(ohci, 8);
+	reg = ग_लिखो_phy_reg(ohci, 7, port_index);
+	अगर (reg >= 0)
+		reg = पढ़ो_phy_reg(ohci, 8);
 	mutex_unlock(&ohci->phy_reg_mutex);
-	if (reg < 0)
-		return reg;
+	अगर (reg < 0)
+		वापस reg;
 
-	switch (reg & 0x0f) {
-	case 0x06:
-		return 2;	/* is child node (connected to parent node) */
-	case 0x0e:
-		return 3;	/* is parent node (connected to child node) */
-	}
-	return 1;		/* not connected */
-}
+	चयन (reg & 0x0f) अणु
+	हाल 0x06:
+		वापस 2;	/* is child node (connected to parent node) */
+	हाल 0x0e:
+		वापस 3;	/* is parent node (connected to child node) */
+	पूर्ण
+	वापस 1;		/* not connected */
+पूर्ण
 
-static int get_self_id_pos(struct fw_ohci *ohci, u32 self_id,
-	int self_id_count)
-{
-	int i;
+अटल पूर्णांक get_self_id_pos(काष्ठा fw_ohci *ohci, u32 self_id,
+	पूर्णांक self_id_count)
+अणु
+	पूर्णांक i;
 	u32 entry;
 
-	for (i = 0; i < self_id_count; i++) {
+	क्रम (i = 0; i < self_id_count; i++) अणु
 		entry = ohci->self_id_buffer[i];
-		if ((self_id & 0xff000000) == (entry & 0xff000000))
-			return -1;
-		if ((self_id & 0xff000000) < (entry & 0xff000000))
-			return i;
-	}
-	return i;
-}
+		अगर ((self_id & 0xff000000) == (entry & 0xff000000))
+			वापस -1;
+		अगर ((self_id & 0xff000000) < (entry & 0xff000000))
+			वापस i;
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static int initiated_reset(struct fw_ohci *ohci)
-{
-	int reg;
-	int ret = 0;
+अटल पूर्णांक initiated_reset(काष्ठा fw_ohci *ohci)
+अणु
+	पूर्णांक reg;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&ohci->phy_reg_mutex);
-	reg = write_phy_reg(ohci, 7, 0xe0); /* Select page 7 */
-	if (reg >= 0) {
-		reg = read_phy_reg(ohci, 8);
+	reg = ग_लिखो_phy_reg(ohci, 7, 0xe0); /* Select page 7 */
+	अगर (reg >= 0) अणु
+		reg = पढ़ो_phy_reg(ohci, 8);
 		reg |= 0x40;
-		reg = write_phy_reg(ohci, 8, reg); /* set PMODE bit */
-		if (reg >= 0) {
-			reg = read_phy_reg(ohci, 12); /* read register 12 */
-			if (reg >= 0) {
-				if ((reg & 0x08) == 0x08) {
+		reg = ग_लिखो_phy_reg(ohci, 8, reg); /* set PMODE bit */
+		अगर (reg >= 0) अणु
+			reg = पढ़ो_phy_reg(ohci, 12); /* पढ़ो रेजिस्टर 12 */
+			अगर (reg >= 0) अणु
+				अगर ((reg & 0x08) == 0x08) अणु
 					/* bit 3 indicates "initiated reset" */
 					ret = 0x2;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ohci->phy_reg_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * TI TSB82AA2B and TSB12LV26 do not receive the selfID of a locally
+ * TI TSB82AA2B and TSB12LV26 करो not receive the selfID of a locally
  * attached TSB41BA3D phy; see http://www.ti.com/litv/pdf/sllz059.
- * Construct the selfID from phy register contents.
+ * Conकाष्ठा the selfID from phy रेजिस्टर contents.
  */
-static int find_and_insert_self_id(struct fw_ohci *ohci, int self_id_count)
-{
-	int reg, i, pos, status;
+अटल पूर्णांक find_and_insert_self_id(काष्ठा fw_ohci *ohci, पूर्णांक self_id_count)
+अणु
+	पूर्णांक reg, i, pos, status;
 	/* link active 1, speed 3, bridge 0, contender 1, more packets 0 */
 	u32 self_id = 0x8040c800;
 
-	reg = reg_read(ohci, OHCI1394_NodeID);
-	if (!(reg & OHCI1394_NodeID_idValid)) {
+	reg = reg_पढ़ो(ohci, OHCI1394_NodeID);
+	अगर (!(reg & OHCI1394_NodeID_idValid)) अणु
 		ohci_notice(ohci,
 			    "node ID not valid, new bus reset in progress\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	self_id |= ((reg & 0x3f) << 24); /* phy ID */
 
-	reg = ohci_read_phy_reg(&ohci->card, 4);
-	if (reg < 0)
-		return reg;
-	self_id |= ((reg & 0x07) << 8); /* power class */
+	reg = ohci_पढ़ो_phy_reg(&ohci->card, 4);
+	अगर (reg < 0)
+		वापस reg;
+	self_id |= ((reg & 0x07) << 8); /* घातer class */
 
-	reg = ohci_read_phy_reg(&ohci->card, 1);
-	if (reg < 0)
-		return reg;
+	reg = ohci_पढ़ो_phy_reg(&ohci->card, 1);
+	अगर (reg < 0)
+		वापस reg;
 	self_id |= ((reg & 0x3f) << 16); /* gap count */
 
-	for (i = 0; i < 3; i++) {
-		status = get_status_for_port(ohci, i);
-		if (status < 0)
-			return status;
+	क्रम (i = 0; i < 3; i++) अणु
+		status = get_status_क्रम_port(ohci, i);
+		अगर (status < 0)
+			वापस status;
 		self_id |= ((status & 0x3) << (6 - (i * 2)));
-	}
+	पूर्ण
 
 	self_id |= initiated_reset(ohci);
 
 	pos = get_self_id_pos(ohci, self_id, self_id_count);
-	if (pos >= 0) {
-		memmove(&(ohci->self_id_buffer[pos+1]),
+	अगर (pos >= 0) अणु
+		स_हटाओ(&(ohci->self_id_buffer[pos+1]),
 			&(ohci->self_id_buffer[pos]),
-			(self_id_count - pos) * sizeof(*ohci->self_id_buffer));
+			(self_id_count - pos) * माप(*ohci->self_id_buffer));
 		ohci->self_id_buffer[pos] = self_id;
 		self_id_count++;
-	}
-	return self_id_count;
-}
+	पूर्ण
+	वापस self_id_count;
+पूर्ण
 
-static void bus_reset_work(struct work_struct *work)
-{
-	struct fw_ohci *ohci =
-		container_of(work, struct fw_ohci, bus_reset_work);
-	int self_id_count, generation, new_generation, i, j;
+अटल व्योम bus_reset_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fw_ohci *ohci =
+		container_of(work, काष्ठा fw_ohci, bus_reset_work);
+	पूर्णांक self_id_count, generation, new_generation, i, j;
 	u32 reg;
-	void *free_rom = NULL;
-	dma_addr_t free_rom_bus = 0;
+	व्योम *मुक्त_rom = शून्य;
+	dma_addr_t मुक्त_rom_bus = 0;
 	bool is_new_root;
 
-	reg = reg_read(ohci, OHCI1394_NodeID);
-	if (!(reg & OHCI1394_NodeID_idValid)) {
+	reg = reg_पढ़ो(ohci, OHCI1394_NodeID);
+	अगर (!(reg & OHCI1394_NodeID_idValid)) अणु
 		ohci_notice(ohci,
 			    "node ID not valid, new bus reset in progress\n");
-		return;
-	}
-	if ((reg & OHCI1394_NodeID_nodeNumber) == 63) {
+		वापस;
+	पूर्ण
+	अगर ((reg & OHCI1394_NodeID_nodeNumber) == 63) अणु
 		ohci_notice(ohci, "malconfigured bus\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	ohci->node_id = reg & (OHCI1394_NodeID_busNumber |
 			       OHCI1394_NodeID_nodeNumber);
 
 	is_new_root = (reg & OHCI1394_NodeID_root) != 0;
-	if (!(ohci->is_root && is_new_root))
-		reg_write(ohci, OHCI1394_LinkControlSet,
+	अगर (!(ohci->is_root && is_new_root))
+		reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 			  OHCI1394_LinkControl_cycleMaster);
 	ohci->is_root = is_new_root;
 
-	reg = reg_read(ohci, OHCI1394_SelfIDCount);
-	if (reg & OHCI1394_SelfIDCount_selfIDError) {
+	reg = reg_पढ़ो(ohci, OHCI1394_SelfIDCount);
+	अगर (reg & OHCI1394_SelfIDCount_selfIDError) अणु
 		ohci_notice(ohci, "self ID receive error\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
-	 * The count in the SelfIDCount register is the number of
+	 * The count in the SelfIDCount रेजिस्टर is the number of
 	 * bytes in the self ID receive buffer.  Since we also receive
-	 * the inverted quadlets and a header quadlet, we shift one
+	 * the inverted quadlets and a header quadlet, we shअगरt one
 	 * bit extra to get the actual number of self IDs.
 	 */
 	self_id_count = (reg >> 3) & 0xff;
 
-	if (self_id_count > 252) {
+	अगर (self_id_count > 252) अणु
 		ohci_notice(ohci, "bad selfIDSize (%08x)\n", reg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	generation = (cond_le32_to_cpu(ohci->self_id[0]) >> 16) & 0xff;
 	rmb();
 
-	for (i = 1, j = 0; j < self_id_count; i += 2, j++) {
+	क्रम (i = 1, j = 0; j < self_id_count; i += 2, j++) अणु
 		u32 id  = cond_le32_to_cpu(ohci->self_id[i]);
 		u32 id2 = cond_le32_to_cpu(ohci->self_id[i + 1]);
 
-		if (id != ~id2) {
+		अगर (id != ~id2) अणु
 			/*
 			 * If the invalid data looks like a cycle start packet,
 			 * it's likely to be the result of the cycle master
-			 * having a wrong gap count.  In this case, the self IDs
+			 * having a wrong gap count.  In this हाल, the self IDs
 			 * so far are valid and should be processed so that the
 			 * bus manager can then correct the gap count.
 			 */
-			if (id == 0xffff008f) {
+			अगर (id == 0xffff008f) अणु
 				ohci_notice(ohci, "ignoring spurious self IDs\n");
 				self_id_count = j;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			ohci_notice(ohci, "bad self ID %d/%d (%08x != ~%08x)\n",
 				    j, self_id_count, id, id2);
-			return;
-		}
+			वापस;
+		पूर्ण
 		ohci->self_id_buffer[j] = id;
-	}
+	पूर्ण
 
-	if (ohci->quirks & QUIRK_TI_SLLZ059) {
+	अगर (ohci->quirks & QUIRK_TI_SLLZ059) अणु
 		self_id_count = find_and_insert_self_id(ohci, self_id_count);
-		if (self_id_count < 0) {
+		अगर (self_id_count < 0) अणु
 			ohci_notice(ohci,
 				    "could not construct local self ID\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (self_id_count == 0) {
+	अगर (self_id_count == 0) अणु
 		ohci_notice(ohci, "no self IDs\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	rmb();
 
 	/*
-	 * Check the consistency of the self IDs we just read.  The
-	 * problem we face is that a new bus reset can start while we
-	 * read out the self IDs from the DMA buffer. If this happens,
+	 * Check the consistency of the self IDs we just पढ़ो.  The
+	 * problem we face is that a new bus reset can start जबतक we
+	 * पढ़ो out the self IDs from the DMA buffer. If this happens,
 	 * the DMA buffer will be overwritten with new self IDs and we
-	 * will read out inconsistent data.  The OHCI specification
+	 * will पढ़ो out inconsistent data.  The OHCI specअगरication
 	 * (section 11.2) recommends a technique similar to
 	 * linux/seqlock.h, where we remember the generation of the
-	 * self IDs in the buffer before reading them out and compare
-	 * it to the current generation after reading them out.  If
+	 * self IDs in the buffer beक्रमe पढ़ोing them out and compare
+	 * it to the current generation after पढ़ोing them out.  If
 	 * the two generations match we know we have a consistent set
 	 * of self IDs.
 	 */
 
-	new_generation = (reg_read(ohci, OHCI1394_SelfIDCount) >> 16) & 0xff;
-	if (new_generation != generation) {
+	new_generation = (reg_पढ़ो(ohci, OHCI1394_SelfIDCount) >> 16) & 0xff;
+	अगर (new_generation != generation) अणु
 		ohci_notice(ohci, "new bus reset, discarding self ids\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* FIXME: Document how the locking works. */
 	spin_lock_irq(&ohci->lock);
@@ -2000,52 +2001,52 @@ static void bus_reset_work(struct work_struct *work)
 	spin_lock_irq(&ohci->lock);
 
 	ohci->generation = generation;
-	reg_write(ohci, OHCI1394_IntEventClear, OHCI1394_busReset);
+	reg_ग_लिखो(ohci, OHCI1394_IntEventClear, OHCI1394_busReset);
 
-	if (ohci->quirks & QUIRK_RESET_PACKET)
+	अगर (ohci->quirks & QUIRK_RESET_PACKET)
 		ohci->request_generation = generation;
 
 	/*
 	 * This next bit is unrelated to the AT context stuff but we
-	 * have to do it under the spinlock also.  If a new config rom
-	 * was set up before this reset, the old one is now no longer
-	 * in use and we can free it. Update the config rom pointers
-	 * to point to the current config rom and clear the
-	 * next_config_rom pointer so a new update can take place.
+	 * have to करो it under the spinlock also.  If a new config rom
+	 * was set up beक्रमe this reset, the old one is now no दीर्घer
+	 * in use and we can मुक्त it. Update the config rom poपूर्णांकers
+	 * to poपूर्णांक to the current config rom and clear the
+	 * next_config_rom poपूर्णांकer so a new update can take place.
 	 */
 
-	if (ohci->next_config_rom != NULL) {
-		if (ohci->next_config_rom != ohci->config_rom) {
-			free_rom      = ohci->config_rom;
-			free_rom_bus  = ohci->config_rom_bus;
-		}
+	अगर (ohci->next_config_rom != शून्य) अणु
+		अगर (ohci->next_config_rom != ohci->config_rom) अणु
+			मुक्त_rom      = ohci->config_rom;
+			मुक्त_rom_bus  = ohci->config_rom_bus;
+		पूर्ण
 		ohci->config_rom      = ohci->next_config_rom;
 		ohci->config_rom_bus  = ohci->next_config_rom_bus;
-		ohci->next_config_rom = NULL;
+		ohci->next_config_rom = शून्य;
 
 		/*
 		 * Restore config_rom image and manually update
-		 * config_rom registers.  Writing the header quadlet
-		 * will indicate that the config rom is ready, so we
-		 * do that last.
+		 * config_rom रेजिस्टरs.  Writing the header quadlet
+		 * will indicate that the config rom is पढ़ोy, so we
+		 * करो that last.
 		 */
-		reg_write(ohci, OHCI1394_BusOptions,
+		reg_ग_लिखो(ohci, OHCI1394_BusOptions,
 			  be32_to_cpu(ohci->config_rom[2]));
 		ohci->config_rom[0] = ohci->next_header;
-		reg_write(ohci, OHCI1394_ConfigROMhdr,
+		reg_ग_लिखो(ohci, OHCI1394_ConfigROMhdr,
 			  be32_to_cpu(ohci->next_header));
-	}
+	पूर्ण
 
-	if (param_remote_dma) {
-		reg_write(ohci, OHCI1394_PhyReqFilterHiSet, ~0);
-		reg_write(ohci, OHCI1394_PhyReqFilterLoSet, ~0);
-	}
+	अगर (param_remote_dma) अणु
+		reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterHiSet, ~0);
+		reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterLoSet, ~0);
+	पूर्ण
 
 	spin_unlock_irq(&ohci->lock);
 
-	if (free_rom)
-		dma_free_coherent(ohci->card.device, CONFIG_ROM_SIZE,
-				  free_rom, free_rom_bus);
+	अगर (मुक्त_rom)
+		dma_मुक्त_coherent(ohci->card.device, CONFIG_ROM_SIZE,
+				  मुक्त_rom, मुक्त_rom_bus);
 
 	log_selfids(ohci, generation, self_id_count);
 
@@ -2053,355 +2054,355 @@ static void bus_reset_work(struct work_struct *work)
 				 self_id_count, ohci->self_id_buffer,
 				 ohci->csr_state_setclear_abdicate);
 	ohci->csr_state_setclear_abdicate = false;
-}
+पूर्ण
 
-static irqreturn_t irq_handler(int irq, void *data)
-{
-	struct fw_ohci *ohci = data;
+अटल irqवापस_t irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा fw_ohci *ohci = data;
 	u32 event, iso_event;
-	int i;
+	पूर्णांक i;
 
-	event = reg_read(ohci, OHCI1394_IntEventClear);
+	event = reg_पढ़ो(ohci, OHCI1394_IntEventClear);
 
-	if (!event || !~event)
-		return IRQ_NONE;
+	अगर (!event || !~event)
+		वापस IRQ_NONE;
 
 	/*
 	 * busReset and postedWriteErr must not be cleared yet
 	 * (OHCI 1.1 clauses 7.2.3.2 and 13.2.8.1)
 	 */
-	reg_write(ohci, OHCI1394_IntEventClear,
+	reg_ग_लिखो(ohci, OHCI1394_IntEventClear,
 		  event & ~(OHCI1394_busReset | OHCI1394_postedWriteErr));
 	log_irqs(ohci, event);
 
-	if (event & OHCI1394_selfIDComplete)
+	अगर (event & OHCI1394_selfIDComplete)
 		queue_work(selfid_workqueue, &ohci->bus_reset_work);
 
-	if (event & OHCI1394_RQPkt)
+	अगर (event & OHCI1394_RQPkt)
 		tasklet_schedule(&ohci->ar_request_ctx.tasklet);
 
-	if (event & OHCI1394_RSPkt)
+	अगर (event & OHCI1394_RSPkt)
 		tasklet_schedule(&ohci->ar_response_ctx.tasklet);
 
-	if (event & OHCI1394_reqTxComplete)
+	अगर (event & OHCI1394_reqTxComplete)
 		tasklet_schedule(&ohci->at_request_ctx.tasklet);
 
-	if (event & OHCI1394_respTxComplete)
+	अगर (event & OHCI1394_respTxComplete)
 		tasklet_schedule(&ohci->at_response_ctx.tasklet);
 
-	if (event & OHCI1394_isochRx) {
-		iso_event = reg_read(ohci, OHCI1394_IsoRecvIntEventClear);
-		reg_write(ohci, OHCI1394_IsoRecvIntEventClear, iso_event);
+	अगर (event & OHCI1394_isochRx) अणु
+		iso_event = reg_पढ़ो(ohci, OHCI1394_IsoRecvIntEventClear);
+		reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntEventClear, iso_event);
 
-		while (iso_event) {
+		जबतक (iso_event) अणु
 			i = ffs(iso_event) - 1;
 			tasklet_schedule(
 				&ohci->ir_context_list[i].context.tasklet);
 			iso_event &= ~(1 << i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (event & OHCI1394_isochTx) {
-		iso_event = reg_read(ohci, OHCI1394_IsoXmitIntEventClear);
-		reg_write(ohci, OHCI1394_IsoXmitIntEventClear, iso_event);
+	अगर (event & OHCI1394_isochTx) अणु
+		iso_event = reg_पढ़ो(ohci, OHCI1394_IsoXmitIntEventClear);
+		reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntEventClear, iso_event);
 
-		while (iso_event) {
+		जबतक (iso_event) अणु
 			i = ffs(iso_event) - 1;
 			tasklet_schedule(
 				&ohci->it_context_list[i].context.tasklet);
 			iso_event &= ~(1 << i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(event & OHCI1394_regAccessFail))
+	अगर (unlikely(event & OHCI1394_regAccessFail))
 		ohci_err(ohci, "register access failure\n");
 
-	if (unlikely(event & OHCI1394_postedWriteErr)) {
-		reg_read(ohci, OHCI1394_PostedWriteAddressHi);
-		reg_read(ohci, OHCI1394_PostedWriteAddressLo);
-		reg_write(ohci, OHCI1394_IntEventClear,
+	अगर (unlikely(event & OHCI1394_postedWriteErr)) अणु
+		reg_पढ़ो(ohci, OHCI1394_PostedWriteAddressHi);
+		reg_पढ़ो(ohci, OHCI1394_PostedWriteAddressLo);
+		reg_ग_लिखो(ohci, OHCI1394_IntEventClear,
 			  OHCI1394_postedWriteErr);
-		if (printk_ratelimit())
+		अगर (prपूर्णांकk_ratelimit())
 			ohci_err(ohci, "PCI posted write error\n");
-	}
+	पूर्ण
 
-	if (unlikely(event & OHCI1394_cycleTooLong)) {
-		if (printk_ratelimit())
+	अगर (unlikely(event & OHCI1394_cycleTooLong)) अणु
+		अगर (prपूर्णांकk_ratelimit())
 			ohci_notice(ohci, "isochronous cycle too long\n");
-		reg_write(ohci, OHCI1394_LinkControlSet,
+		reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 			  OHCI1394_LinkControl_cycleMaster);
-	}
+	पूर्ण
 
-	if (unlikely(event & OHCI1394_cycleInconsistent)) {
+	अगर (unlikely(event & OHCI1394_cycleInconsistent)) अणु
 		/*
 		 * We need to clear this event bit in order to make
 		 * cycleMatch isochronous I/O work.  In theory we should
 		 * stop active cycleMatch iso contexts now and restart
 		 * them at least two cycles later.  (FIXME?)
 		 */
-		if (printk_ratelimit())
+		अगर (prपूर्णांकk_ratelimit())
 			ohci_notice(ohci, "isochronous cycle inconsistent\n");
-	}
+	पूर्ण
 
-	if (unlikely(event & OHCI1394_unrecoverableError))
+	अगर (unlikely(event & OHCI1394_unrecoverableError))
 		handle_dead_contexts(ohci);
 
-	if (event & OHCI1394_cycle64Seconds) {
+	अगर (event & OHCI1394_cycle64Seconds) अणु
 		spin_lock(&ohci->lock);
-		update_bus_time(ohci);
+		update_bus_समय(ohci);
 		spin_unlock(&ohci->lock);
-	} else
-		flush_writes(ohci);
+	पूर्ण अन्यथा
+		flush_ग_लिखोs(ohci);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int software_reset(struct fw_ohci *ohci)
-{
+अटल पूर्णांक software_reset(काष्ठा fw_ohci *ohci)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	reg_write(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_softReset);
-	for (i = 0; i < 500; i++) {
-		val = reg_read(ohci, OHCI1394_HCControlSet);
-		if (!~val)
-			return -ENODEV; /* Card was ejected. */
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet, OHCI1394_HCControl_softReset);
+	क्रम (i = 0; i < 500; i++) अणु
+		val = reg_पढ़ो(ohci, OHCI1394_HCControlSet);
+		अगर (!~val)
+			वापस -ENODEV; /* Card was ejected. */
 
-		if (!(val & OHCI1394_HCControl_softReset))
-			return 0;
+		अगर (!(val & OHCI1394_HCControl_softReset))
+			वापस 0;
 
 		msleep(1);
-	}
+	पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void copy_config_rom(__be32 *dest, const __be32 *src, size_t length)
-{
-	size_t size = length * 4;
+अटल व्योम copy_config_rom(__be32 *dest, स्थिर __be32 *src, माप_प्रकार length)
+अणु
+	माप_प्रकार size = length * 4;
 
-	memcpy(dest, src, size);
-	if (size < CONFIG_ROM_SIZE)
-		memset(&dest[length], 0, CONFIG_ROM_SIZE - size);
-}
+	स_नकल(dest, src, size);
+	अगर (size < CONFIG_ROM_SIZE)
+		स_रखो(&dest[length], 0, CONFIG_ROM_SIZE - size);
+पूर्ण
 
-static int configure_1394a_enhancements(struct fw_ohci *ohci)
-{
+अटल पूर्णांक configure_1394a_enhancements(काष्ठा fw_ohci *ohci)
+अणु
 	bool enable_1394a;
-	int ret, clear, set, offset;
+	पूर्णांक ret, clear, set, offset;
 
-	/* Check if the driver should configure link and PHY. */
-	if (!(reg_read(ohci, OHCI1394_HCControlSet) &
+	/* Check अगर the driver should configure link and PHY. */
+	अगर (!(reg_पढ़ो(ohci, OHCI1394_HCControlSet) &
 	      OHCI1394_HCControl_programPhyEnable))
-		return 0;
+		वापस 0;
 
 	/* Paranoia: check whether the PHY supports 1394a, too. */
 	enable_1394a = false;
-	ret = read_phy_reg(ohci, 2);
-	if (ret < 0)
-		return ret;
-	if ((ret & PHY_EXTENDED_REGISTERS) == PHY_EXTENDED_REGISTERS) {
-		ret = read_paged_phy_reg(ohci, 1, 8);
-		if (ret < 0)
-			return ret;
-		if (ret >= 1)
+	ret = पढ़ो_phy_reg(ohci, 2);
+	अगर (ret < 0)
+		वापस ret;
+	अगर ((ret & PHY_EXTENDED_REGISTERS) == PHY_EXTENDED_REGISTERS) अणु
+		ret = पढ़ो_paged_phy_reg(ohci, 1, 8);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret >= 1)
 			enable_1394a = true;
-	}
+	पूर्ण
 
-	if (ohci->quirks & QUIRK_NO_1394A)
+	अगर (ohci->quirks & QUIRK_NO_1394A)
 		enable_1394a = false;
 
 	/* Configure PHY and link consistently. */
-	if (enable_1394a) {
+	अगर (enable_1394a) अणु
 		clear = 0;
 		set = PHY_ENABLE_ACCEL | PHY_ENABLE_MULTI;
-	} else {
+	पूर्ण अन्यथा अणु
 		clear = PHY_ENABLE_ACCEL | PHY_ENABLE_MULTI;
 		set = 0;
-	}
+	पूर्ण
 	ret = update_phy_reg(ohci, 5, clear, set);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (enable_1394a)
+	अगर (enable_1394a)
 		offset = OHCI1394_HCControlSet;
-	else
+	अन्यथा
 		offset = OHCI1394_HCControlClear;
-	reg_write(ohci, offset, OHCI1394_HCControl_aPhyEnhanceEnable);
+	reg_ग_लिखो(ohci, offset, OHCI1394_HCControl_aPhyEnhanceEnable);
 
 	/* Clean up: configuration has been taken care of. */
-	reg_write(ohci, OHCI1394_HCControlClear,
+	reg_ग_लिखो(ohci, OHCI1394_HCControlClear,
 		  OHCI1394_HCControl_programPhyEnable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int probe_tsb41ba3d(struct fw_ohci *ohci)
-{
-	/* TI vendor ID = 0x080028, TSB41BA3D product ID = 0x833005 (sic) */
-	static const u8 id[] = { 0x08, 0x00, 0x28, 0x83, 0x30, 0x05, };
-	int reg, i;
+अटल पूर्णांक probe_tsb41ba3d(काष्ठा fw_ohci *ohci)
+अणु
+	/* TI venकरोr ID = 0x080028, TSB41BA3D product ID = 0x833005 (sic) */
+	अटल स्थिर u8 id[] = अणु 0x08, 0x00, 0x28, 0x83, 0x30, 0x05, पूर्ण;
+	पूर्णांक reg, i;
 
-	reg = read_phy_reg(ohci, 2);
-	if (reg < 0)
-		return reg;
-	if ((reg & PHY_EXTENDED_REGISTERS) != PHY_EXTENDED_REGISTERS)
-		return 0;
+	reg = पढ़ो_phy_reg(ohci, 2);
+	अगर (reg < 0)
+		वापस reg;
+	अगर ((reg & PHY_EXTENDED_REGISTERS) != PHY_EXTENDED_REGISTERS)
+		वापस 0;
 
-	for (i = ARRAY_SIZE(id) - 1; i >= 0; i--) {
-		reg = read_paged_phy_reg(ohci, 1, i + 10);
-		if (reg < 0)
-			return reg;
-		if (reg != id[i])
-			return 0;
-	}
-	return 1;
-}
+	क्रम (i = ARRAY_SIZE(id) - 1; i >= 0; i--) अणु
+		reg = पढ़ो_paged_phy_reg(ohci, 1, i + 10);
+		अगर (reg < 0)
+			वापस reg;
+		अगर (reg != id[i])
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int ohci_enable(struct fw_card *card,
-		       const __be32 *config_rom, size_t length)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
+अटल पूर्णांक ohci_enable(काष्ठा fw_card *card,
+		       स्थिर __be32 *config_rom, माप_प्रकार length)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
 	u32 lps, version, irqs;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	ret = software_reset(ohci);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ohci_err(ohci, "failed to reset ohci card\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Now enable LPS, which we need in order to start accessing
-	 * most of the registers.  In fact, on some cards (ALI M5251),
-	 * accessing registers in the SClk domain without LPS enabled
+	 * most of the रेजिस्टरs.  In fact, on some cards (ALI M5251),
+	 * accessing रेजिस्टरs in the SClk करोमुख्य without LPS enabled
 	 * will lock up the machine.  Wait 50msec to make sure we have
 	 * full link enabled.  However, with some cards (well, at least
-	 * a JMicron PCIe card), we have to try again sometimes.
+	 * a JMicron PCIe card), we have to try again someबार.
 	 *
-	 * TI TSB82AA2 + TSB81BA3(A) cards signal LPS enabled early but
-	 * cannot actually use the phy at that time.  These need tens of
-	 * millisecods pause between LPS write and first phy access too.
+	 * TI TSB82AA2 + TSB81BA3(A) cards संकेत LPS enabled early but
+	 * cannot actually use the phy at that समय.  These need tens of
+	 * millisecods छोड़ो between LPS ग_लिखो and first phy access too.
 	 */
 
-	reg_write(ohci, OHCI1394_HCControlSet,
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet,
 		  OHCI1394_HCControl_LPS |
 		  OHCI1394_HCControl_postedWriteEnable);
-	flush_writes(ohci);
+	flush_ग_लिखोs(ohci);
 
-	for (lps = 0, i = 0; !lps && i < 3; i++) {
+	क्रम (lps = 0, i = 0; !lps && i < 3; i++) अणु
 		msleep(50);
-		lps = reg_read(ohci, OHCI1394_HCControlSet) &
+		lps = reg_पढ़ो(ohci, OHCI1394_HCControlSet) &
 		      OHCI1394_HCControl_LPS;
-	}
+	पूर्ण
 
-	if (!lps) {
+	अगर (!lps) अणु
 		ohci_err(ohci, "failed to set Link Power Status\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (ohci->quirks & QUIRK_TI_SLLZ059) {
+	अगर (ohci->quirks & QUIRK_TI_SLLZ059) अणु
 		ret = probe_tsb41ba3d(ohci);
-		if (ret < 0)
-			return ret;
-		if (ret)
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret)
 			ohci_notice(ohci, "local TSB41BA3D phy\n");
-		else
+		अन्यथा
 			ohci->quirks &= ~QUIRK_TI_SLLZ059;
-	}
+	पूर्ण
 
-	reg_write(ohci, OHCI1394_HCControlClear,
+	reg_ग_लिखो(ohci, OHCI1394_HCControlClear,
 		  OHCI1394_HCControl_noByteSwapData);
 
-	reg_write(ohci, OHCI1394_SelfIDBuffer, ohci->self_id_bus);
-	reg_write(ohci, OHCI1394_LinkControlSet,
+	reg_ग_लिखो(ohci, OHCI1394_SelfIDBuffer, ohci->self_id_bus);
+	reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 		  OHCI1394_LinkControl_cycleTimerEnable |
 		  OHCI1394_LinkControl_cycleMaster);
 
-	reg_write(ohci, OHCI1394_ATRetries,
+	reg_ग_लिखो(ohci, OHCI1394_ATRetries,
 		  OHCI1394_MAX_AT_REQ_RETRIES |
 		  (OHCI1394_MAX_AT_RESP_RETRIES << 4) |
 		  (OHCI1394_MAX_PHYS_RESP_RETRIES << 8) |
 		  (200 << 16));
 
-	ohci->bus_time_running = false;
+	ohci->bus_समय_running = false;
 
-	for (i = 0; i < 32; i++)
-		if (ohci->ir_context_support & (1 << i))
-			reg_write(ohci, OHCI1394_IsoRcvContextControlClear(i),
+	क्रम (i = 0; i < 32; i++)
+		अगर (ohci->ir_context_support & (1 << i))
+			reg_ग_लिखो(ohci, OHCI1394_IsoRcvContextControlClear(i),
 				  IR_CONTEXT_MULTI_CHANNEL_MODE);
 
-	version = reg_read(ohci, OHCI1394_Version) & 0x00ff00ff;
-	if (version >= OHCI_VERSION_1_1) {
-		reg_write(ohci, OHCI1394_InitialChannelsAvailableHi,
+	version = reg_पढ़ो(ohci, OHCI1394_Version) & 0x00ff00ff;
+	अगर (version >= OHCI_VERSION_1_1) अणु
+		reg_ग_लिखो(ohci, OHCI1394_InitialChannelsAvailableHi,
 			  0xfffffffe);
-		card->broadcast_channel_auto_allocated = true;
-	}
+		card->broadcast_channel_स्वतः_allocated = true;
+	पूर्ण
 
 	/* Get implemented bits of the priority arbitration request counter. */
-	reg_write(ohci, OHCI1394_FairnessControl, 0x3f);
-	ohci->pri_req_max = reg_read(ohci, OHCI1394_FairnessControl) & 0x3f;
-	reg_write(ohci, OHCI1394_FairnessControl, 0);
+	reg_ग_लिखो(ohci, OHCI1394_FairnessControl, 0x3f);
+	ohci->pri_req_max = reg_पढ़ो(ohci, OHCI1394_FairnessControl) & 0x3f;
+	reg_ग_लिखो(ohci, OHCI1394_FairnessControl, 0);
 	card->priority_budget_implemented = ohci->pri_req_max != 0;
 
-	reg_write(ohci, OHCI1394_PhyUpperBound, FW_MAX_PHYSICAL_RANGE >> 16);
-	reg_write(ohci, OHCI1394_IntEventClear, ~0);
-	reg_write(ohci, OHCI1394_IntMaskClear, ~0);
+	reg_ग_लिखो(ohci, OHCI1394_PhyUpperBound, FW_MAX_PHYSICAL_RANGE >> 16);
+	reg_ग_लिखो(ohci, OHCI1394_IntEventClear, ~0);
+	reg_ग_लिखो(ohci, OHCI1394_IntMaskClear, ~0);
 
 	ret = configure_1394a_enhancements(ohci);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Activate link_on bit and contender bit in our self ID packets.*/
 	ret = ohci_update_phy_reg(card, 4, 0, PHY_LINK_ACTIVE | PHY_CONTENDER);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
 	 * When the link is not yet enabled, the atomic config rom
 	 * update mechanism described below in ohci_set_config_rom()
 	 * is not active.  We have to update ConfigRomHeader and
-	 * BusOptions manually, and the write to ConfigROMmap takes
+	 * BusOptions manually, and the ग_लिखो to ConfigROMmap takes
 	 * effect immediately.  We tie this to the enabling of the
-	 * link, so we have a valid config rom before enabling - the
+	 * link, so we have a valid config rom beक्रमe enabling - the
 	 * OHCI requires that ConfigROMhdr and BusOptions have valid
-	 * values before enabling.
+	 * values beक्रमe enabling.
 	 *
 	 * However, when the ConfigROMmap is written, some controllers
-	 * always read back quadlets 0 and 2 from the config rom to
-	 * the ConfigRomHeader and BusOptions registers on bus reset.
-	 * They shouldn't do that in this initial case where the link
+	 * always पढ़ो back quadlets 0 and 2 from the config rom to
+	 * the ConfigRomHeader and BusOptions रेजिस्टरs on bus reset.
+	 * They shouldn't करो that in this initial हाल where the link
 	 * isn't enabled.  This means we have to use the same
-	 * workaround here, setting the bus header to 0 and then write
+	 * workaround here, setting the bus header to 0 and then ग_लिखो
 	 * the right values in the bus reset tasklet.
 	 */
 
-	if (config_rom) {
+	अगर (config_rom) अणु
 		ohci->next_config_rom =
 			dma_alloc_coherent(ohci->card.device, CONFIG_ROM_SIZE,
 					   &ohci->next_config_rom_bus,
 					   GFP_KERNEL);
-		if (ohci->next_config_rom == NULL)
-			return -ENOMEM;
+		अगर (ohci->next_config_rom == शून्य)
+			वापस -ENOMEM;
 
 		copy_config_rom(ohci->next_config_rom, config_rom, length);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * In the suspend case, config_rom is NULL, which
+		 * In the suspend हाल, config_rom is शून्य, which
 		 * means that we just reuse the old config rom.
 		 */
 		ohci->next_config_rom = ohci->config_rom;
 		ohci->next_config_rom_bus = ohci->config_rom_bus;
-	}
+	पूर्ण
 
 	ohci->next_header = ohci->next_config_rom[0];
 	ohci->next_config_rom[0] = 0;
-	reg_write(ohci, OHCI1394_ConfigROMhdr, 0);
-	reg_write(ohci, OHCI1394_BusOptions,
+	reg_ग_लिखो(ohci, OHCI1394_ConfigROMhdr, 0);
+	reg_ग_लिखो(ohci, OHCI1394_BusOptions,
 		  be32_to_cpu(ohci->next_config_rom[2]));
-	reg_write(ohci, OHCI1394_ConfigROMmap, ohci->next_config_rom_bus);
+	reg_ग_लिखो(ohci, OHCI1394_ConfigROMmap, ohci->next_config_rom_bus);
 
-	reg_write(ohci, OHCI1394_AsReqFilterHiSet, 0x80000000);
+	reg_ग_लिखो(ohci, OHCI1394_AsReqFilterHiSet, 0x80000000);
 
 	irqs =	OHCI1394_reqTxComplete | OHCI1394_respTxComplete |
 		OHCI1394_RQPkt | OHCI1394_RSPkt |
@@ -2413,33 +2414,33 @@ static int ohci_enable(struct fw_card *card,
 		OHCI1394_unrecoverableError |
 		OHCI1394_cycleTooLong |
 		OHCI1394_masterIntEnable;
-	if (param_debug & OHCI_PARAM_DEBUG_BUSRESETS)
+	अगर (param_debug & OHCI_PARAM_DEBUG_BUSRESETS)
 		irqs |= OHCI1394_busReset;
-	reg_write(ohci, OHCI1394_IntMaskSet, irqs);
+	reg_ग_लिखो(ohci, OHCI1394_IntMaskSet, irqs);
 
-	reg_write(ohci, OHCI1394_HCControlSet,
+	reg_ग_लिखो(ohci, OHCI1394_HCControlSet,
 		  OHCI1394_HCControl_linkEnable |
 		  OHCI1394_HCControl_BIBimageValid);
 
-	reg_write(ohci, OHCI1394_LinkControlSet,
+	reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 		  OHCI1394_LinkControl_rcvSelfID |
 		  OHCI1394_LinkControl_rcvPhyPkt);
 
 	ar_context_run(&ohci->ar_request_ctx);
 	ar_context_run(&ohci->ar_response_ctx);
 
-	flush_writes(ohci);
+	flush_ग_लिखोs(ohci);
 
-	/* We are ready to go, reset bus to finish initialization. */
+	/* We are पढ़ोy to go, reset bus to finish initialization. */
 	fw_schedule_bus_reset(&ohci->card, false, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_set_config_rom(struct fw_card *card,
-			       const __be32 *config_rom, size_t length)
-{
-	struct fw_ohci *ohci;
+अटल पूर्णांक ohci_set_config_rom(काष्ठा fw_card *card,
+			       स्थिर __be32 *config_rom, माप_प्रकार length)
+अणु
+	काष्ठा fw_ohci *ohci;
 	__be32 *next_config_rom;
 	dma_addr_t next_config_rom_bus;
 
@@ -2448,354 +2449,354 @@ static int ohci_set_config_rom(struct fw_card *card,
 	/*
 	 * When the OHCI controller is enabled, the config rom update
 	 * mechanism is a bit tricky, but easy enough to use.  See
-	 * section 5.5.6 in the OHCI specification.
+	 * section 5.5.6 in the OHCI specअगरication.
 	 *
 	 * The OHCI controller caches the new config rom address in a
-	 * shadow register (ConfigROMmapNext) and needs a bus reset
-	 * for the changes to take place.  When the bus reset is
-	 * detected, the controller loads the new values for the
-	 * ConfigRomHeader and BusOptions registers from the specified
+	 * shaकरोw रेजिस्टर (ConfigROMmapNext) and needs a bus reset
+	 * क्रम the changes to take place.  When the bus reset is
+	 * detected, the controller loads the new values क्रम the
+	 * ConfigRomHeader and BusOptions रेजिस्टरs from the specअगरied
 	 * config rom and loads ConfigROMmap from the ConfigROMmapNext
-	 * shadow register. All automatically and atomically.
+	 * shaकरोw रेजिस्टर. All स्वतःmatically and atomically.
 	 *
-	 * Now, there's a twist to this story.  The automatic load of
-	 * ConfigRomHeader and BusOptions doesn't honor the
+	 * Now, there's a twist to this story.  The स्वतःmatic load of
+	 * ConfigRomHeader and BusOptions करोesn't honor the
 	 * noByteSwapData bit, so with a be32 config rom, the
-	 * controller will load be32 values in to these registers
+	 * controller will load be32 values in to these रेजिस्टरs
 	 * during the atomic update, even on litte endian
 	 * architectures.  The workaround we use is to put a 0 in the
 	 * header quadlet; 0 is endian agnostic and means that the
-	 * config rom isn't ready yet.  In the bus reset tasklet we
-	 * then set up the real values for the two registers.
+	 * config rom isn't पढ़ोy yet.  In the bus reset tasklet we
+	 * then set up the real values क्रम the two रेजिस्टरs.
 	 *
-	 * We use ohci->lock to avoid racing with the code that sets
-	 * ohci->next_config_rom to NULL (see bus_reset_work).
+	 * We use ohci->lock to aव्योम racing with the code that sets
+	 * ohci->next_config_rom to शून्य (see bus_reset_work).
 	 */
 
 	next_config_rom =
 		dma_alloc_coherent(ohci->card.device, CONFIG_ROM_SIZE,
 				   &next_config_rom_bus, GFP_KERNEL);
-	if (next_config_rom == NULL)
-		return -ENOMEM;
+	अगर (next_config_rom == शून्य)
+		वापस -ENOMEM;
 
 	spin_lock_irq(&ohci->lock);
 
 	/*
-	 * If there is not an already pending config_rom update,
-	 * push our new allocation into the ohci->next_config_rom
+	 * If there is not an alपढ़ोy pending config_rom update,
+	 * push our new allocation पूर्णांकo the ohci->next_config_rom
 	 * and then mark the local variable as null so that we
 	 * won't deallocate the new buffer.
 	 *
-	 * OTOH, if there is a pending config_rom update, just
+	 * OTOH, अगर there is a pending config_rom update, just
 	 * use that buffer with the new config_rom data, and
-	 * let this routine free the unused DMA allocation.
+	 * let this routine मुक्त the unused DMA allocation.
 	 */
 
-	if (ohci->next_config_rom == NULL) {
+	अगर (ohci->next_config_rom == शून्य) अणु
 		ohci->next_config_rom = next_config_rom;
 		ohci->next_config_rom_bus = next_config_rom_bus;
-		next_config_rom = NULL;
-	}
+		next_config_rom = शून्य;
+	पूर्ण
 
 	copy_config_rom(ohci->next_config_rom, config_rom, length);
 
 	ohci->next_header = config_rom[0];
 	ohci->next_config_rom[0] = 0;
 
-	reg_write(ohci, OHCI1394_ConfigROMmap, ohci->next_config_rom_bus);
+	reg_ग_लिखो(ohci, OHCI1394_ConfigROMmap, ohci->next_config_rom_bus);
 
 	spin_unlock_irq(&ohci->lock);
 
 	/* If we didn't use the DMA allocation, delete it. */
-	if (next_config_rom != NULL)
-		dma_free_coherent(ohci->card.device, CONFIG_ROM_SIZE,
+	अगर (next_config_rom != शून्य)
+		dma_मुक्त_coherent(ohci->card.device, CONFIG_ROM_SIZE,
 				  next_config_rom, next_config_rom_bus);
 
 	/*
 	 * Now initiate a bus reset to have the changes take
 	 * effect. We clean up the old config rom memory and DMA
 	 * mappings in the bus reset tasklet, since the OHCI
-	 * controller could need to access it before the bus reset
+	 * controller could need to access it beक्रमe the bus reset
 	 * takes effect.
 	 */
 
 	fw_schedule_bus_reset(&ohci->card, true, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ohci_send_request(struct fw_card *card, struct fw_packet *packet)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
+अटल व्योम ohci_send_request(काष्ठा fw_card *card, काष्ठा fw_packet *packet)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
 
 	at_context_transmit(&ohci->at_request_ctx, packet);
-}
+पूर्ण
 
-static void ohci_send_response(struct fw_card *card, struct fw_packet *packet)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
+अटल व्योम ohci_send_response(काष्ठा fw_card *card, काष्ठा fw_packet *packet)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
 
 	at_context_transmit(&ohci->at_response_ctx, packet);
-}
+पूर्ण
 
-static int ohci_cancel_packet(struct fw_card *card, struct fw_packet *packet)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	struct context *ctx = &ohci->at_request_ctx;
-	struct driver_data *driver_data = packet->driver_data;
-	int ret = -ENOENT;
+अटल पूर्णांक ohci_cancel_packet(काष्ठा fw_card *card, काष्ठा fw_packet *packet)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	काष्ठा context *ctx = &ohci->at_request_ctx;
+	काष्ठा driver_data *driver_data = packet->driver_data;
+	पूर्णांक ret = -ENOENT;
 
 	tasklet_disable_in_atomic(&ctx->tasklet);
 
-	if (packet->ack != 0)
-		goto out;
+	अगर (packet->ack != 0)
+		जाओ out;
 
-	if (packet->payload_mapped)
+	अगर (packet->payload_mapped)
 		dma_unmap_single(ohci->card.device, packet->payload_bus,
 				 packet->payload_length, DMA_TO_DEVICE);
 
 	log_ar_at_event(ohci, 'T', packet->speed, packet->header, 0x20);
-	driver_data->packet = NULL;
+	driver_data->packet = शून्य;
 	packet->ack = RCODE_CANCELLED;
 	packet->callback(packet, &ohci->card, packet->ack);
 	ret = 0;
  out:
 	tasklet_enable(&ctx->tasklet);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ohci_enable_phys_dma(struct fw_card *card,
-				int node_id, int generation)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	unsigned long flags;
-	int n, ret = 0;
+अटल पूर्णांक ohci_enable_phys_dma(काष्ठा fw_card *card,
+				पूर्णांक node_id, पूर्णांक generation)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक n, ret = 0;
 
-	if (param_remote_dma)
-		return 0;
+	अगर (param_remote_dma)
+		वापस 0;
 
 	/*
-	 * FIXME:  Make sure this bitmask is cleared when we clear the busReset
-	 * interrupt bit.  Clear physReqResourceAllBuses on bus reset.
+	 * FIXME:  Make sure this biपंचांगask is cleared when we clear the busReset
+	 * पूर्णांकerrupt bit.  Clear physReqResourceAllBuses on bus reset.
 	 */
 
 	spin_lock_irqsave(&ohci->lock, flags);
 
-	if (ohci->generation != generation) {
+	अगर (ohci->generation != generation) अणु
 		ret = -ESTALE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Note, if the node ID contains a non-local bus ID, physical DMA is
-	 * enabled for _all_ nodes on remote buses.
+	 * Note, अगर the node ID contains a non-local bus ID, physical DMA is
+	 * enabled क्रम _all_ nodes on remote buses.
 	 */
 
 	n = (node_id & 0xffc0) == LOCAL_BUS ? node_id & 0x3f : 63;
-	if (n < 32)
-		reg_write(ohci, OHCI1394_PhyReqFilterLoSet, 1 << n);
-	else
-		reg_write(ohci, OHCI1394_PhyReqFilterHiSet, 1 << (n - 32));
+	अगर (n < 32)
+		reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterLoSet, 1 << n);
+	अन्यथा
+		reg_ग_लिखो(ohci, OHCI1394_PhyReqFilterHiSet, 1 << (n - 32));
 
-	flush_writes(ohci);
+	flush_ग_लिखोs(ohci);
  out:
 	spin_unlock_irqrestore(&ohci->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 ohci_read_csr(struct fw_card *card, int csr_offset)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	unsigned long flags;
+अटल u32 ohci_पढ़ो_csr(काष्ठा fw_card *card, पूर्णांक csr_offset)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	अचिन्हित दीर्घ flags;
 	u32 value;
 
-	switch (csr_offset) {
-	case CSR_STATE_CLEAR:
-	case CSR_STATE_SET:
-		if (ohci->is_root &&
-		    (reg_read(ohci, OHCI1394_LinkControlSet) &
+	चयन (csr_offset) अणु
+	हाल CSR_STATE_CLEAR:
+	हाल CSR_STATE_SET:
+		अगर (ohci->is_root &&
+		    (reg_पढ़ो(ohci, OHCI1394_LinkControlSet) &
 		     OHCI1394_LinkControl_cycleMaster))
 			value = CSR_STATE_BIT_CMSTR;
-		else
+		अन्यथा
 			value = 0;
-		if (ohci->csr_state_setclear_abdicate)
+		अगर (ohci->csr_state_setclear_abdicate)
 			value |= CSR_STATE_BIT_ABDICATE;
 
-		return value;
+		वापस value;
 
-	case CSR_NODE_IDS:
-		return reg_read(ohci, OHCI1394_NodeID) << 16;
+	हाल CSR_NODE_IDS:
+		वापस reg_पढ़ो(ohci, OHCI1394_NodeID) << 16;
 
-	case CSR_CYCLE_TIME:
-		return get_cycle_time(ohci);
+	हाल CSR_CYCLE_TIME:
+		वापस get_cycle_समय(ohci);
 
-	case CSR_BUS_TIME:
+	हाल CSR_BUS_TIME:
 		/*
-		 * We might be called just after the cycle timer has wrapped
-		 * around but just before the cycle64Seconds handler, so we
-		 * better check here, too, if the bus time needs to be updated.
+		 * We might be called just after the cycle समयr has wrapped
+		 * around but just beक्रमe the cycle64Seconds handler, so we
+		 * better check here, too, अगर the bus समय needs to be updated.
 		 */
 		spin_lock_irqsave(&ohci->lock, flags);
-		value = update_bus_time(ohci);
+		value = update_bus_समय(ohci);
 		spin_unlock_irqrestore(&ohci->lock, flags);
-		return value;
+		वापस value;
 
-	case CSR_BUSY_TIMEOUT:
-		value = reg_read(ohci, OHCI1394_ATRetries);
-		return (value >> 4) & 0x0ffff00f;
+	हाल CSR_BUSY_TIMEOUT:
+		value = reg_पढ़ो(ohci, OHCI1394_ATRetries);
+		वापस (value >> 4) & 0x0ffff00f;
 
-	case CSR_PRIORITY_BUDGET:
-		return (reg_read(ohci, OHCI1394_FairnessControl) & 0x3f) |
+	हाल CSR_PRIORITY_BUDGET:
+		वापस (reg_पढ़ो(ohci, OHCI1394_FairnessControl) & 0x3f) |
 			(ohci->pri_req_max << 8);
 
-	default:
+	शेष:
 		WARN_ON(1);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void ohci_write_csr(struct fw_card *card, int csr_offset, u32 value)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	unsigned long flags;
+अटल व्योम ohci_ग_लिखो_csr(काष्ठा fw_card *card, पूर्णांक csr_offset, u32 value)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	अचिन्हित दीर्घ flags;
 
-	switch (csr_offset) {
-	case CSR_STATE_CLEAR:
-		if ((value & CSR_STATE_BIT_CMSTR) && ohci->is_root) {
-			reg_write(ohci, OHCI1394_LinkControlClear,
+	चयन (csr_offset) अणु
+	हाल CSR_STATE_CLEAR:
+		अगर ((value & CSR_STATE_BIT_CMSTR) && ohci->is_root) अणु
+			reg_ग_लिखो(ohci, OHCI1394_LinkControlClear,
 				  OHCI1394_LinkControl_cycleMaster);
-			flush_writes(ohci);
-		}
-		if (value & CSR_STATE_BIT_ABDICATE)
+			flush_ग_लिखोs(ohci);
+		पूर्ण
+		अगर (value & CSR_STATE_BIT_ABDICATE)
 			ohci->csr_state_setclear_abdicate = false;
-		break;
+		अवरोध;
 
-	case CSR_STATE_SET:
-		if ((value & CSR_STATE_BIT_CMSTR) && ohci->is_root) {
-			reg_write(ohci, OHCI1394_LinkControlSet,
+	हाल CSR_STATE_SET:
+		अगर ((value & CSR_STATE_BIT_CMSTR) && ohci->is_root) अणु
+			reg_ग_लिखो(ohci, OHCI1394_LinkControlSet,
 				  OHCI1394_LinkControl_cycleMaster);
-			flush_writes(ohci);
-		}
-		if (value & CSR_STATE_BIT_ABDICATE)
+			flush_ग_लिखोs(ohci);
+		पूर्ण
+		अगर (value & CSR_STATE_BIT_ABDICATE)
 			ohci->csr_state_setclear_abdicate = true;
-		break;
+		अवरोध;
 
-	case CSR_NODE_IDS:
-		reg_write(ohci, OHCI1394_NodeID, value >> 16);
-		flush_writes(ohci);
-		break;
+	हाल CSR_NODE_IDS:
+		reg_ग_लिखो(ohci, OHCI1394_NodeID, value >> 16);
+		flush_ग_लिखोs(ohci);
+		अवरोध;
 
-	case CSR_CYCLE_TIME:
-		reg_write(ohci, OHCI1394_IsochronousCycleTimer, value);
-		reg_write(ohci, OHCI1394_IntEventSet,
+	हाल CSR_CYCLE_TIME:
+		reg_ग_लिखो(ohci, OHCI1394_IsochronousCycleTimer, value);
+		reg_ग_लिखो(ohci, OHCI1394_IntEventSet,
 			  OHCI1394_cycleInconsistent);
-		flush_writes(ohci);
-		break;
+		flush_ग_लिखोs(ohci);
+		अवरोध;
 
-	case CSR_BUS_TIME:
+	हाल CSR_BUS_TIME:
 		spin_lock_irqsave(&ohci->lock, flags);
-		ohci->bus_time = (update_bus_time(ohci) & 0x40) |
+		ohci->bus_समय = (update_bus_समय(ohci) & 0x40) |
 		                 (value & ~0x7f);
 		spin_unlock_irqrestore(&ohci->lock, flags);
-		break;
+		अवरोध;
 
-	case CSR_BUSY_TIMEOUT:
+	हाल CSR_BUSY_TIMEOUT:
 		value = (value & 0xf) | ((value & 0xf) << 4) |
 			((value & 0xf) << 8) | ((value & 0x0ffff000) << 4);
-		reg_write(ohci, OHCI1394_ATRetries, value);
-		flush_writes(ohci);
-		break;
+		reg_ग_लिखो(ohci, OHCI1394_ATRetries, value);
+		flush_ग_लिखोs(ohci);
+		अवरोध;
 
-	case CSR_PRIORITY_BUDGET:
-		reg_write(ohci, OHCI1394_FairnessControl, value & 0x3f);
-		flush_writes(ohci);
-		break;
+	हाल CSR_PRIORITY_BUDGET:
+		reg_ग_लिखो(ohci, OHCI1394_FairnessControl, value & 0x3f);
+		flush_ग_लिखोs(ohci);
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void flush_iso_completions(struct iso_context *ctx)
-{
-	ctx->base.callback.sc(&ctx->base, ctx->last_timestamp,
+अटल व्योम flush_iso_completions(काष्ठा iso_context *ctx)
+अणु
+	ctx->base.callback.sc(&ctx->base, ctx->last_बारtamp,
 			      ctx->header_length, ctx->header,
 			      ctx->base.callback_data);
 	ctx->header_length = 0;
-}
+पूर्ण
 
-static void copy_iso_headers(struct iso_context *ctx, const u32 *dma_hdr)
-{
+अटल व्योम copy_iso_headers(काष्ठा iso_context *ctx, स्थिर u32 *dma_hdr)
+अणु
 	u32 *ctx_hdr;
 
-	if (ctx->header_length + ctx->base.header_size > PAGE_SIZE) {
-		if (ctx->base.drop_overflow_headers)
-			return;
+	अगर (ctx->header_length + ctx->base.header_size > PAGE_SIZE) अणु
+		अगर (ctx->base.drop_overflow_headers)
+			वापस;
 		flush_iso_completions(ctx);
-	}
+	पूर्ण
 
 	ctx_hdr = ctx->header + ctx->header_length;
-	ctx->last_timestamp = (u16)le32_to_cpu((__force __le32)dma_hdr[0]);
+	ctx->last_बारtamp = (u16)le32_to_cpu((__क्रमce __le32)dma_hdr[0]);
 
 	/*
 	 * The two iso header quadlets are byteswapped to little
 	 * endian by the controller, but we want to present them
-	 * as big endian for consistency with the bus endianness.
+	 * as big endian क्रम consistency with the bus endianness.
 	 */
-	if (ctx->base.header_size > 0)
+	अगर (ctx->base.header_size > 0)
 		ctx_hdr[0] = swab32(dma_hdr[1]); /* iso packet header */
-	if (ctx->base.header_size > 4)
-		ctx_hdr[1] = swab32(dma_hdr[0]); /* timestamp */
-	if (ctx->base.header_size > 8)
-		memcpy(&ctx_hdr[2], &dma_hdr[2], ctx->base.header_size - 8);
+	अगर (ctx->base.header_size > 4)
+		ctx_hdr[1] = swab32(dma_hdr[0]); /* बारtamp */
+	अगर (ctx->base.header_size > 8)
+		स_नकल(&ctx_hdr[2], &dma_hdr[2], ctx->base.header_size - 8);
 	ctx->header_length += ctx->base.header_size;
-}
+पूर्ण
 
-static int handle_ir_packet_per_buffer(struct context *context,
-				       struct descriptor *d,
-				       struct descriptor *last)
-{
-	struct iso_context *ctx =
-		container_of(context, struct iso_context, context);
-	struct descriptor *pd;
+अटल पूर्णांक handle_ir_packet_per_buffer(काष्ठा context *context,
+				       काष्ठा descriptor *d,
+				       काष्ठा descriptor *last)
+अणु
+	काष्ठा iso_context *ctx =
+		container_of(context, काष्ठा iso_context, context);
+	काष्ठा descriptor *pd;
 	u32 buffer_dma;
 
-	for (pd = d; pd <= last; pd++)
-		if (pd->transfer_status)
-			break;
-	if (pd > last)
-		/* Descriptor(s) not done yet, stop iteration */
-		return 0;
+	क्रम (pd = d; pd <= last; pd++)
+		अगर (pd->transfer_status)
+			अवरोध;
+	अगर (pd > last)
+		/* Descriptor(s) not करोne yet, stop iteration */
+		वापस 0;
 
-	while (!(d->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))) {
+	जबतक (!(d->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))) अणु
 		d++;
 		buffer_dma = le32_to_cpu(d->data_address);
-		dma_sync_single_range_for_cpu(context->ohci->card.device,
+		dma_sync_single_range_क्रम_cpu(context->ohci->card.device,
 					      buffer_dma & PAGE_MASK,
 					      buffer_dma & ~PAGE_MASK,
 					      le16_to_cpu(d->req_count),
 					      DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
 	copy_iso_headers(ctx, (u32 *) (last + 1));
 
-	if (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS))
+	अगर (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS))
 		flush_iso_completions(ctx);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* d == last because each descriptor block is only a single descriptor. */
-static int handle_ir_buffer_fill(struct context *context,
-				 struct descriptor *d,
-				 struct descriptor *last)
-{
-	struct iso_context *ctx =
-		container_of(context, struct iso_context, context);
-	unsigned int req_count, res_count, completed;
+अटल पूर्णांक handle_ir_buffer_fill(काष्ठा context *context,
+				 काष्ठा descriptor *d,
+				 काष्ठा descriptor *last)
+अणु
+	काष्ठा iso_context *ctx =
+		container_of(context, काष्ठा iso_context, context);
+	अचिन्हित पूर्णांक req_count, res_count, completed;
 	u32 buffer_dma;
 
 	req_count = le16_to_cpu(last->req_count);
@@ -2803,33 +2804,33 @@ static int handle_ir_buffer_fill(struct context *context,
 	completed = req_count - res_count;
 	buffer_dma = le32_to_cpu(last->data_address);
 
-	if (completed > 0) {
+	अगर (completed > 0) अणु
 		ctx->mc_buffer_bus = buffer_dma;
 		ctx->mc_completed = completed;
-	}
+	पूर्ण
 
-	if (res_count != 0)
-		/* Descriptor(s) not done yet, stop iteration */
-		return 0;
+	अगर (res_count != 0)
+		/* Descriptor(s) not करोne yet, stop iteration */
+		वापस 0;
 
-	dma_sync_single_range_for_cpu(context->ohci->card.device,
+	dma_sync_single_range_क्रम_cpu(context->ohci->card.device,
 				      buffer_dma & PAGE_MASK,
 				      buffer_dma & ~PAGE_MASK,
 				      completed, DMA_FROM_DEVICE);
 
-	if (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS)) {
+	अगर (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS)) अणु
 		ctx->base.callback.mc(&ctx->base,
 				      buffer_dma + completed,
 				      ctx->base.callback_data);
 		ctx->mc_completed = 0;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void flush_ir_buffer_fill(struct iso_context *ctx)
-{
-	dma_sync_single_range_for_cpu(ctx->context.ohci->card.device,
+अटल व्योम flush_ir_buffer_fill(काष्ठा iso_context *ctx)
+अणु
+	dma_sync_single_range_क्रम_cpu(ctx->context.ohci->card.device,
 				      ctx->mc_buffer_bus & PAGE_MASK,
 				      ctx->mc_buffer_bus & ~PAGE_MASK,
 				      ctx->mc_completed, DMA_FROM_DEVICE);
@@ -2838,17 +2839,17 @@ static void flush_ir_buffer_fill(struct iso_context *ctx)
 			      ctx->mc_buffer_bus + ctx->mc_completed,
 			      ctx->base.callback_data);
 	ctx->mc_completed = 0;
-}
+पूर्ण
 
-static inline void sync_it_packet_for_cpu(struct context *context,
-					  struct descriptor *pd)
-{
+अटल अंतरभूत व्योम sync_it_packet_क्रम_cpu(काष्ठा context *context,
+					  काष्ठा descriptor *pd)
+अणु
 	__le16 control;
 	u32 buffer_dma;
 
 	/* only packets beginning with OUTPUT_MORE* have data buffers */
-	if (pd->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
-		return;
+	अगर (pd->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
+		वापस;
 
 	/* skip over the OUTPUT_MORE_IMMEDIATE descriptor */
 	pd += 2;
@@ -2858,373 +2859,373 @@ static inline void sync_it_packet_for_cpu(struct context *context,
 	 * data buffer is in the context program's coherent page and must not
 	 * be synced.
 	 */
-	if ((le32_to_cpu(pd->data_address) & PAGE_MASK) ==
-	    (context->current_bus          & PAGE_MASK)) {
-		if (pd->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
-			return;
+	अगर ((le32_to_cpu(pd->data_address) & PAGE_MASK) ==
+	    (context->current_bus          & PAGE_MASK)) अणु
+		अगर (pd->control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS))
+			वापस;
 		pd++;
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		buffer_dma = le32_to_cpu(pd->data_address);
-		dma_sync_single_range_for_cpu(context->ohci->card.device,
+		dma_sync_single_range_क्रम_cpu(context->ohci->card.device,
 					      buffer_dma & PAGE_MASK,
 					      buffer_dma & ~PAGE_MASK,
 					      le16_to_cpu(pd->req_count),
 					      DMA_TO_DEVICE);
 		control = pd->control;
 		pd++;
-	} while (!(control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS)));
-}
+	पूर्ण जबतक (!(control & cpu_to_le16(DESCRIPTOR_BRANCH_ALWAYS)));
+पूर्ण
 
-static int handle_it_packet(struct context *context,
-			    struct descriptor *d,
-			    struct descriptor *last)
-{
-	struct iso_context *ctx =
-		container_of(context, struct iso_context, context);
-	struct descriptor *pd;
+अटल पूर्णांक handle_it_packet(काष्ठा context *context,
+			    काष्ठा descriptor *d,
+			    काष्ठा descriptor *last)
+अणु
+	काष्ठा iso_context *ctx =
+		container_of(context, काष्ठा iso_context, context);
+	काष्ठा descriptor *pd;
 	__be32 *ctx_hdr;
 
-	for (pd = d; pd <= last; pd++)
-		if (pd->transfer_status)
-			break;
-	if (pd > last)
-		/* Descriptor(s) not done yet, stop iteration */
-		return 0;
+	क्रम (pd = d; pd <= last; pd++)
+		अगर (pd->transfer_status)
+			अवरोध;
+	अगर (pd > last)
+		/* Descriptor(s) not करोne yet, stop iteration */
+		वापस 0;
 
-	sync_it_packet_for_cpu(context, d);
+	sync_it_packet_क्रम_cpu(context, d);
 
-	if (ctx->header_length + 4 > PAGE_SIZE) {
-		if (ctx->base.drop_overflow_headers)
-			return 1;
+	अगर (ctx->header_length + 4 > PAGE_SIZE) अणु
+		अगर (ctx->base.drop_overflow_headers)
+			वापस 1;
 		flush_iso_completions(ctx);
-	}
+	पूर्ण
 
 	ctx_hdr = ctx->header + ctx->header_length;
-	ctx->last_timestamp = le16_to_cpu(last->res_count);
+	ctx->last_बारtamp = le16_to_cpu(last->res_count);
 	/* Present this value as big-endian to match the receive code */
 	*ctx_hdr = cpu_to_be32((le16_to_cpu(pd->transfer_status) << 16) |
 			       le16_to_cpu(pd->res_count));
 	ctx->header_length += 4;
 
-	if (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS))
+	अगर (last->control & cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS))
 		flush_iso_completions(ctx);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void set_multichannel_mask(struct fw_ohci *ohci, u64 channels)
-{
+अटल व्योम set_multichannel_mask(काष्ठा fw_ohci *ohci, u64 channels)
+अणु
 	u32 hi = channels >> 32, lo = channels;
 
-	reg_write(ohci, OHCI1394_IRMultiChanMaskHiClear, ~hi);
-	reg_write(ohci, OHCI1394_IRMultiChanMaskLoClear, ~lo);
-	reg_write(ohci, OHCI1394_IRMultiChanMaskHiSet, hi);
-	reg_write(ohci, OHCI1394_IRMultiChanMaskLoSet, lo);
+	reg_ग_लिखो(ohci, OHCI1394_IRMultiChanMaskHiClear, ~hi);
+	reg_ग_लिखो(ohci, OHCI1394_IRMultiChanMaskLoClear, ~lo);
+	reg_ग_लिखो(ohci, OHCI1394_IRMultiChanMaskHiSet, hi);
+	reg_ग_लिखो(ohci, OHCI1394_IRMultiChanMaskLoSet, lo);
 	ohci->mc_channels = channels;
-}
+पूर्ण
 
-static struct fw_iso_context *ohci_allocate_iso_context(struct fw_card *card,
-				int type, int channel, size_t header_size)
-{
-	struct fw_ohci *ohci = fw_ohci(card);
-	struct iso_context *ctx;
+अटल काष्ठा fw_iso_context *ohci_allocate_iso_context(काष्ठा fw_card *card,
+				पूर्णांक type, पूर्णांक channel, माप_प्रकार header_size)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(card);
+	काष्ठा iso_context *ctx;
 	descriptor_callback_t callback;
 	u64 *channels;
 	u32 *mask, regs;
-	int index, ret = -EBUSY;
+	पूर्णांक index, ret = -EBUSY;
 
 	spin_lock_irq(&ohci->lock);
 
-	switch (type) {
-	case FW_ISO_CONTEXT_TRANSMIT:
+	चयन (type) अणु
+	हाल FW_ISO_CONTEXT_TRANSMIT:
 		mask     = &ohci->it_context_mask;
 		callback = handle_it_packet;
 		index    = ffs(*mask) - 1;
-		if (index >= 0) {
+		अगर (index >= 0) अणु
 			*mask &= ~(1 << index);
 			regs = OHCI1394_IsoXmitContextBase(index);
 			ctx  = &ohci->it_context_list[index];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE:
+	हाल FW_ISO_CONTEXT_RECEIVE:
 		channels = &ohci->ir_context_channels;
 		mask     = &ohci->ir_context_mask;
 		callback = handle_ir_packet_per_buffer;
 		index    = *channels & 1ULL << channel ? ffs(*mask) - 1 : -1;
-		if (index >= 0) {
+		अगर (index >= 0) अणु
 			*channels &= ~(1ULL << channel);
 			*mask     &= ~(1 << index);
 			regs = OHCI1394_IsoRcvContextBase(index);
 			ctx  = &ohci->ir_context_list[index];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		mask     = &ohci->ir_context_mask;
 		callback = handle_ir_buffer_fill;
 		index    = !ohci->mc_allocated ? ffs(*mask) - 1 : -1;
-		if (index >= 0) {
+		अगर (index >= 0) अणु
 			ohci->mc_allocated = true;
 			*mask &= ~(1 << index);
 			regs = OHCI1394_IsoRcvContextBase(index);
 			ctx  = &ohci->ir_context_list[index];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		index = -1;
 		ret = -ENOSYS;
-	}
+	पूर्ण
 
 	spin_unlock_irq(&ohci->lock);
 
-	if (index < 0)
-		return ERR_PTR(ret);
+	अगर (index < 0)
+		वापस ERR_PTR(ret);
 
-	memset(ctx, 0, sizeof(*ctx));
+	स_रखो(ctx, 0, माप(*ctx));
 	ctx->header_length = 0;
-	ctx->header = (void *) __get_free_page(GFP_KERNEL);
-	if (ctx->header == NULL) {
+	ctx->header = (व्योम *) __get_मुक्त_page(GFP_KERNEL);
+	अगर (ctx->header == शून्य) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = context_init(&ctx->context, ohci, regs, callback);
-	if (ret < 0)
-		goto out_with_header;
+	अगर (ret < 0)
+		जाओ out_with_header;
 
-	if (type == FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL) {
+	अगर (type == FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL) अणु
 		set_multichannel_mask(ohci, 0);
 		ctx->mc_completed = 0;
-	}
+	पूर्ण
 
-	return &ctx->base;
+	वापस &ctx->base;
 
  out_with_header:
-	free_page((unsigned long)ctx->header);
+	मुक्त_page((अचिन्हित दीर्घ)ctx->header);
  out:
 	spin_lock_irq(&ohci->lock);
 
-	switch (type) {
-	case FW_ISO_CONTEXT_RECEIVE:
+	चयन (type) अणु
+	हाल FW_ISO_CONTEXT_RECEIVE:
 		*channels |= 1ULL << channel;
-		break;
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		ohci->mc_allocated = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	*mask |= 1 << index;
 
 	spin_unlock_irq(&ohci->lock);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int ohci_start_iso(struct fw_iso_context *base,
+अटल पूर्णांक ohci_start_iso(काष्ठा fw_iso_context *base,
 			  s32 cycle, u32 sync, u32 tags)
-{
-	struct iso_context *ctx = container_of(base, struct iso_context, base);
-	struct fw_ohci *ohci = ctx->context.ohci;
+अणु
+	काष्ठा iso_context *ctx = container_of(base, काष्ठा iso_context, base);
+	काष्ठा fw_ohci *ohci = ctx->context.ohci;
 	u32 control = IR_CONTEXT_ISOCH_HEADER, match;
-	int index;
+	पूर्णांक index;
 
 	/* the controller cannot start without any queued packets */
-	if (ctx->context.last->branch_address == 0)
-		return -ENODATA;
+	अगर (ctx->context.last->branch_address == 0)
+		वापस -ENODATA;
 
-	switch (ctx->base.type) {
-	case FW_ISO_CONTEXT_TRANSMIT:
+	चयन (ctx->base.type) अणु
+	हाल FW_ISO_CONTEXT_TRANSMIT:
 		index = ctx - ohci->it_context_list;
 		match = 0;
-		if (cycle >= 0)
+		अगर (cycle >= 0)
 			match = IT_CONTEXT_CYCLE_MATCH_ENABLE |
 				(cycle & 0x7fff) << 16;
 
-		reg_write(ohci, OHCI1394_IsoXmitIntEventClear, 1 << index);
-		reg_write(ohci, OHCI1394_IsoXmitIntMaskSet, 1 << index);
+		reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntEventClear, 1 << index);
+		reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntMaskSet, 1 << index);
 		context_run(&ctx->context, match);
-		break;
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		control |= IR_CONTEXT_BUFFER_FILL|IR_CONTEXT_MULTI_CHANNEL_MODE;
 		fallthrough;
-	case FW_ISO_CONTEXT_RECEIVE:
+	हाल FW_ISO_CONTEXT_RECEIVE:
 		index = ctx - ohci->ir_context_list;
 		match = (tags << 28) | (sync << 8) | ctx->base.channel;
-		if (cycle >= 0) {
+		अगर (cycle >= 0) अणु
 			match |= (cycle & 0x07fff) << 12;
 			control |= IR_CONTEXT_CYCLE_MATCH_ENABLE;
-		}
+		पूर्ण
 
-		reg_write(ohci, OHCI1394_IsoRecvIntEventClear, 1 << index);
-		reg_write(ohci, OHCI1394_IsoRecvIntMaskSet, 1 << index);
-		reg_write(ohci, CONTEXT_MATCH(ctx->context.regs), match);
+		reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntEventClear, 1 << index);
+		reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntMaskSet, 1 << index);
+		reg_ग_लिखो(ohci, CONTEXT_MATCH(ctx->context.regs), match);
 		context_run(&ctx->context, control);
 
 		ctx->sync = sync;
 		ctx->tags = tags;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_stop_iso(struct fw_iso_context *base)
-{
-	struct fw_ohci *ohci = fw_ohci(base->card);
-	struct iso_context *ctx = container_of(base, struct iso_context, base);
-	int index;
+अटल पूर्णांक ohci_stop_iso(काष्ठा fw_iso_context *base)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(base->card);
+	काष्ठा iso_context *ctx = container_of(base, काष्ठा iso_context, base);
+	पूर्णांक index;
 
-	switch (ctx->base.type) {
-	case FW_ISO_CONTEXT_TRANSMIT:
+	चयन (ctx->base.type) अणु
+	हाल FW_ISO_CONTEXT_TRANSMIT:
 		index = ctx - ohci->it_context_list;
-		reg_write(ohci, OHCI1394_IsoXmitIntMaskClear, 1 << index);
-		break;
+		reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntMaskClear, 1 << index);
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE:
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	हाल FW_ISO_CONTEXT_RECEIVE:
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		index = ctx - ohci->ir_context_list;
-		reg_write(ohci, OHCI1394_IsoRecvIntMaskClear, 1 << index);
-		break;
-	}
-	flush_writes(ohci);
+		reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntMaskClear, 1 << index);
+		अवरोध;
+	पूर्ण
+	flush_ग_लिखोs(ohci);
 	context_stop(&ctx->context);
-	tasklet_kill(&ctx->context.tasklet);
+	tasklet_समाप्त(&ctx->context.tasklet);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ohci_free_iso_context(struct fw_iso_context *base)
-{
-	struct fw_ohci *ohci = fw_ohci(base->card);
-	struct iso_context *ctx = container_of(base, struct iso_context, base);
-	unsigned long flags;
-	int index;
+अटल व्योम ohci_मुक्त_iso_context(काष्ठा fw_iso_context *base)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(base->card);
+	काष्ठा iso_context *ctx = container_of(base, काष्ठा iso_context, base);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index;
 
 	ohci_stop_iso(base);
 	context_release(&ctx->context);
-	free_page((unsigned long)ctx->header);
+	मुक्त_page((अचिन्हित दीर्घ)ctx->header);
 
 	spin_lock_irqsave(&ohci->lock, flags);
 
-	switch (base->type) {
-	case FW_ISO_CONTEXT_TRANSMIT:
+	चयन (base->type) अणु
+	हाल FW_ISO_CONTEXT_TRANSMIT:
 		index = ctx - ohci->it_context_list;
 		ohci->it_context_mask |= 1 << index;
-		break;
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE:
+	हाल FW_ISO_CONTEXT_RECEIVE:
 		index = ctx - ohci->ir_context_list;
 		ohci->ir_context_mask |= 1 << index;
 		ohci->ir_context_channels |= 1ULL << base->channel;
-		break;
+		अवरोध;
 
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		index = ctx - ohci->ir_context_list;
 		ohci->ir_context_mask |= 1 << index;
 		ohci->ir_context_channels |= ohci->mc_channels;
 		ohci->mc_channels = 0;
 		ohci->mc_allocated = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&ohci->lock, flags);
-}
+पूर्ण
 
-static int ohci_set_iso_channels(struct fw_iso_context *base, u64 *channels)
-{
-	struct fw_ohci *ohci = fw_ohci(base->card);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ohci_set_iso_channels(काष्ठा fw_iso_context *base, u64 *channels)
+अणु
+	काष्ठा fw_ohci *ohci = fw_ohci(base->card);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	switch (base->type) {
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+	चयन (base->type) अणु
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 
 		spin_lock_irqsave(&ohci->lock, flags);
 
 		/* Don't allow multichannel to grab other contexts' channels. */
-		if (~ohci->ir_context_channels & ~ohci->mc_channels & *channels) {
+		अगर (~ohci->ir_context_channels & ~ohci->mc_channels & *channels) अणु
 			*channels = ohci->ir_context_channels;
 			ret = -EBUSY;
-		} else {
+		पूर्ण अन्यथा अणु
 			set_multichannel_mask(ohci, *channels);
 			ret = 0;
-		}
+		पूर्ण
 
 		spin_unlock_irqrestore(&ohci->lock, flags);
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM
-static void ohci_resume_iso_dma(struct fw_ohci *ohci)
-{
-	int i;
-	struct iso_context *ctx;
+#अगर_घोषित CONFIG_PM
+अटल व्योम ohci_resume_iso_dma(काष्ठा fw_ohci *ohci)
+अणु
+	पूर्णांक i;
+	काष्ठा iso_context *ctx;
 
-	for (i = 0 ; i < ohci->n_ir ; i++) {
+	क्रम (i = 0 ; i < ohci->n_ir ; i++) अणु
 		ctx = &ohci->ir_context_list[i];
-		if (ctx->context.running)
+		अगर (ctx->context.running)
 			ohci_start_iso(&ctx->base, 0, ctx->sync, ctx->tags);
-	}
+	पूर्ण
 
-	for (i = 0 ; i < ohci->n_it ; i++) {
+	क्रम (i = 0 ; i < ohci->n_it ; i++) अणु
 		ctx = &ohci->it_context_list[i];
-		if (ctx->context.running)
+		अगर (ctx->context.running)
 			ohci_start_iso(&ctx->base, 0, ctx->sync, ctx->tags);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static int queue_iso_transmit(struct iso_context *ctx,
-			      struct fw_iso_packet *packet,
-			      struct fw_iso_buffer *buffer,
-			      unsigned long payload)
-{
-	struct descriptor *d, *last, *pd;
-	struct fw_iso_packet *p;
+अटल पूर्णांक queue_iso_transmit(काष्ठा iso_context *ctx,
+			      काष्ठा fw_iso_packet *packet,
+			      काष्ठा fw_iso_buffer *buffer,
+			      अचिन्हित दीर्घ payload)
+अणु
+	काष्ठा descriptor *d, *last, *pd;
+	काष्ठा fw_iso_packet *p;
 	__le32 *header;
 	dma_addr_t d_bus, page_bus;
 	u32 z, header_z, payload_z, irq;
 	u32 payload_index, payload_end_index, next_page_index;
-	int page, end_page, i, length, offset;
+	पूर्णांक page, end_page, i, length, offset;
 
 	p = packet;
 	payload_index = payload;
 
-	if (p->skip)
+	अगर (p->skip)
 		z = 1;
-	else
+	अन्यथा
 		z = 2;
-	if (p->header_length > 0)
+	अगर (p->header_length > 0)
 		z++;
 
 	/* Determine the first page the payload isn't contained in. */
 	end_page = PAGE_ALIGN(payload_index + p->payload_length) >> PAGE_SHIFT;
-	if (p->payload_length > 0)
+	अगर (p->payload_length > 0)
 		payload_z = end_page - (payload_index >> PAGE_SHIFT);
-	else
+	अन्यथा
 		payload_z = 0;
 
 	z += payload_z;
 
 	/* Get header size in number of descriptors. */
-	header_z = DIV_ROUND_UP(p->header_length, sizeof(*d));
+	header_z = DIV_ROUND_UP(p->header_length, माप(*d));
 
 	d = context_get_descriptors(&ctx->context, z + header_z, &d_bus);
-	if (d == NULL)
-		return -ENOMEM;
+	अगर (d == शून्य)
+		वापस -ENOMEM;
 
-	if (!p->skip) {
+	अगर (!p->skip) अणु
 		d[0].control   = cpu_to_le16(DESCRIPTOR_KEY_IMMEDIATE);
 		d[0].req_count = cpu_to_le16(8);
 		/*
@@ -3245,17 +3246,17 @@ static int queue_iso_transmit(struct iso_context *ctx,
 		header[1] =
 			cpu_to_le32(IT_HEADER_DATA_LENGTH(p->header_length +
 							  p->payload_length));
-	}
+	पूर्ण
 
-	if (p->header_length > 0) {
+	अगर (p->header_length > 0) अणु
 		d[2].req_count    = cpu_to_le16(p->header_length);
-		d[2].data_address = cpu_to_le32(d_bus + z * sizeof(*d));
-		memcpy(&d[z], p->header, p->header_length);
-	}
+		d[2].data_address = cpu_to_le32(d_bus + z * माप(*d));
+		स_नकल(&d[z], p->header, p->header_length);
+	पूर्ण
 
 	pd = d + z - payload_z;
 	payload_end_index = payload_index + p->payload_length;
-	for (i = 0; i < payload_z; i++) {
+	क्रम (i = 0; i < payload_z; i++) अणु
 		page               = payload_index >> PAGE_SHIFT;
 		offset             = payload_index & ~PAGE_MASK;
 		next_page_index    = (page + 1) << PAGE_SHIFT;
@@ -3263,19 +3264,19 @@ static int queue_iso_transmit(struct iso_context *ctx,
 			min(next_page_index, payload_end_index) - payload_index;
 		pd[i].req_count    = cpu_to_le16(length);
 
-		page_bus = page_private(buffer->pages[page]);
+		page_bus = page_निजी(buffer->pages[page]);
 		pd[i].data_address = cpu_to_le32(page_bus + offset);
 
-		dma_sync_single_range_for_device(ctx->context.ohci->card.device,
+		dma_sync_single_range_क्रम_device(ctx->context.ohci->card.device,
 						 page_bus, offset, length,
 						 DMA_TO_DEVICE);
 
 		payload_index += length;
-	}
+	पूर्ण
 
-	if (p->interrupt)
+	अगर (p->पूर्णांकerrupt)
 		irq = DESCRIPTOR_IRQ_ALWAYS;
-	else
+	अन्यथा
 		irq = DESCRIPTOR_NO_IRQ;
 
 	last = z == 2 ? d : d + z - 1;
@@ -3286,133 +3287,133 @@ static int queue_iso_transmit(struct iso_context *ctx,
 
 	context_append(&ctx->context, d, z, header_z);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int queue_iso_packet_per_buffer(struct iso_context *ctx,
-				       struct fw_iso_packet *packet,
-				       struct fw_iso_buffer *buffer,
-				       unsigned long payload)
-{
-	struct device *device = ctx->context.ohci->card.device;
-	struct descriptor *d, *pd;
+अटल पूर्णांक queue_iso_packet_per_buffer(काष्ठा iso_context *ctx,
+				       काष्ठा fw_iso_packet *packet,
+				       काष्ठा fw_iso_buffer *buffer,
+				       अचिन्हित दीर्घ payload)
+अणु
+	काष्ठा device *device = ctx->context.ohci->card.device;
+	काष्ठा descriptor *d, *pd;
 	dma_addr_t d_bus, page_bus;
 	u32 z, header_z, rest;
-	int i, j, length;
-	int page, offset, packet_count, header_size, payload_per_buffer;
+	पूर्णांक i, j, length;
+	पूर्णांक page, offset, packet_count, header_size, payload_per_buffer;
 
 	/*
-	 * The OHCI controller puts the isochronous header and trailer in the
+	 * The OHCI controller माला_दो the isochronous header and trailer in the
 	 * buffer, so we need at least 8 bytes.
 	 */
 	packet_count = packet->header_length / ctx->base.header_size;
-	header_size  = max(ctx->base.header_size, (size_t)8);
+	header_size  = max(ctx->base.header_size, (माप_प्रकार)8);
 
 	/* Get header size in number of descriptors. */
-	header_z = DIV_ROUND_UP(header_size, sizeof(*d));
+	header_z = DIV_ROUND_UP(header_size, माप(*d));
 	page     = payload >> PAGE_SHIFT;
 	offset   = payload & ~PAGE_MASK;
 	payload_per_buffer = packet->payload_length / packet_count;
 
-	for (i = 0; i < packet_count; i++) {
-		/* d points to the header descriptor */
+	क्रम (i = 0; i < packet_count; i++) अणु
+		/* d poपूर्णांकs to the header descriptor */
 		z = DIV_ROUND_UP(payload_per_buffer + offset, PAGE_SIZE) + 1;
 		d = context_get_descriptors(&ctx->context,
 				z + header_z, &d_bus);
-		if (d == NULL)
-			return -ENOMEM;
+		अगर (d == शून्य)
+			वापस -ENOMEM;
 
 		d->control      = cpu_to_le16(DESCRIPTOR_STATUS |
 					      DESCRIPTOR_INPUT_MORE);
-		if (packet->skip && i == 0)
+		अगर (packet->skip && i == 0)
 			d->control |= cpu_to_le16(DESCRIPTOR_WAIT);
 		d->req_count    = cpu_to_le16(header_size);
 		d->res_count    = d->req_count;
 		d->transfer_status = 0;
-		d->data_address = cpu_to_le32(d_bus + (z * sizeof(*d)));
+		d->data_address = cpu_to_le32(d_bus + (z * माप(*d)));
 
 		rest = payload_per_buffer;
 		pd = d;
-		for (j = 1; j < z; j++) {
+		क्रम (j = 1; j < z; j++) अणु
 			pd++;
 			pd->control = cpu_to_le16(DESCRIPTOR_STATUS |
 						  DESCRIPTOR_INPUT_MORE);
 
-			if (offset + rest < PAGE_SIZE)
+			अगर (offset + rest < PAGE_SIZE)
 				length = rest;
-			else
+			अन्यथा
 				length = PAGE_SIZE - offset;
 			pd->req_count = cpu_to_le16(length);
 			pd->res_count = pd->req_count;
 			pd->transfer_status = 0;
 
-			page_bus = page_private(buffer->pages[page]);
+			page_bus = page_निजी(buffer->pages[page]);
 			pd->data_address = cpu_to_le32(page_bus + offset);
 
-			dma_sync_single_range_for_device(device, page_bus,
+			dma_sync_single_range_क्रम_device(device, page_bus,
 							 offset, length,
 							 DMA_FROM_DEVICE);
 
 			offset = (offset + length) & ~PAGE_MASK;
 			rest -= length;
-			if (offset == 0)
+			अगर (offset == 0)
 				page++;
-		}
+		पूर्ण
 		pd->control = cpu_to_le16(DESCRIPTOR_STATUS |
 					  DESCRIPTOR_INPUT_LAST |
 					  DESCRIPTOR_BRANCH_ALWAYS);
-		if (packet->interrupt && i == packet_count - 1)
+		अगर (packet->पूर्णांकerrupt && i == packet_count - 1)
 			pd->control |= cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS);
 
 		context_append(&ctx->context, d, z, header_z);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int queue_iso_buffer_fill(struct iso_context *ctx,
-				 struct fw_iso_packet *packet,
-				 struct fw_iso_buffer *buffer,
-				 unsigned long payload)
-{
-	struct descriptor *d;
+अटल पूर्णांक queue_iso_buffer_fill(काष्ठा iso_context *ctx,
+				 काष्ठा fw_iso_packet *packet,
+				 काष्ठा fw_iso_buffer *buffer,
+				 अचिन्हित दीर्घ payload)
+अणु
+	काष्ठा descriptor *d;
 	dma_addr_t d_bus, page_bus;
-	int page, offset, rest, z, i, length;
+	पूर्णांक page, offset, rest, z, i, length;
 
 	page   = payload >> PAGE_SHIFT;
 	offset = payload & ~PAGE_MASK;
 	rest   = packet->payload_length;
 
-	/* We need one descriptor for each page in the buffer. */
+	/* We need one descriptor क्रम each page in the buffer. */
 	z = DIV_ROUND_UP(offset + rest, PAGE_SIZE);
 
-	if (WARN_ON(offset & 3 || rest & 3 || page + z > buffer->page_count))
-		return -EFAULT;
+	अगर (WARN_ON(offset & 3 || rest & 3 || page + z > buffer->page_count))
+		वापस -EFAULT;
 
-	for (i = 0; i < z; i++) {
+	क्रम (i = 0; i < z; i++) अणु
 		d = context_get_descriptors(&ctx->context, 1, &d_bus);
-		if (d == NULL)
-			return -ENOMEM;
+		अगर (d == शून्य)
+			वापस -ENOMEM;
 
 		d->control = cpu_to_le16(DESCRIPTOR_INPUT_MORE |
 					 DESCRIPTOR_BRANCH_ALWAYS);
-		if (packet->skip && i == 0)
+		अगर (packet->skip && i == 0)
 			d->control |= cpu_to_le16(DESCRIPTOR_WAIT);
-		if (packet->interrupt && i == z - 1)
+		अगर (packet->पूर्णांकerrupt && i == z - 1)
 			d->control |= cpu_to_le16(DESCRIPTOR_IRQ_ALWAYS);
 
-		if (offset + rest < PAGE_SIZE)
+		अगर (offset + rest < PAGE_SIZE)
 			length = rest;
-		else
+		अन्यथा
 			length = PAGE_SIZE - offset;
 		d->req_count = cpu_to_le16(length);
 		d->res_count = d->req_count;
 		d->transfer_status = 0;
 
-		page_bus = page_private(buffer->pages[page]);
+		page_bus = page_निजी(buffer->pages[page]);
 		d->data_address = cpu_to_le32(page_bus + offset);
 
-		dma_sync_single_range_for_device(ctx->context.ohci->card.device,
+		dma_sync_single_range_क्रम_device(ctx->context.ohci->card.device,
 						 page_bus, offset, length,
 						 DMA_FROM_DEVICE);
 
@@ -3421,161 +3422,161 @@ static int queue_iso_buffer_fill(struct iso_context *ctx,
 		page++;
 
 		context_append(&ctx->context, d, 1, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ohci_queue_iso(struct fw_iso_context *base,
-			  struct fw_iso_packet *packet,
-			  struct fw_iso_buffer *buffer,
-			  unsigned long payload)
-{
-	struct iso_context *ctx = container_of(base, struct iso_context, base);
-	unsigned long flags;
-	int ret = -ENOSYS;
+अटल पूर्णांक ohci_queue_iso(काष्ठा fw_iso_context *base,
+			  काष्ठा fw_iso_packet *packet,
+			  काष्ठा fw_iso_buffer *buffer,
+			  अचिन्हित दीर्घ payload)
+अणु
+	काष्ठा iso_context *ctx = container_of(base, काष्ठा iso_context, base);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -ENOSYS;
 
 	spin_lock_irqsave(&ctx->context.ohci->lock, flags);
-	switch (base->type) {
-	case FW_ISO_CONTEXT_TRANSMIT:
+	चयन (base->type) अणु
+	हाल FW_ISO_CONTEXT_TRANSMIT:
 		ret = queue_iso_transmit(ctx, packet, buffer, payload);
-		break;
-	case FW_ISO_CONTEXT_RECEIVE:
+		अवरोध;
+	हाल FW_ISO_CONTEXT_RECEIVE:
 		ret = queue_iso_packet_per_buffer(ctx, packet, buffer, payload);
-		break;
-	case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+		अवरोध;
+	हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
 		ret = queue_iso_buffer_fill(ctx, packet, buffer, payload);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&ctx->context.ohci->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ohci_flush_queue_iso(struct fw_iso_context *base)
-{
-	struct context *ctx =
-			&container_of(base, struct iso_context, base)->context;
+अटल व्योम ohci_flush_queue_iso(काष्ठा fw_iso_context *base)
+अणु
+	काष्ठा context *ctx =
+			&container_of(base, काष्ठा iso_context, base)->context;
 
-	reg_write(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
-}
+	reg_ग_लिखो(ctx->ohci, CONTROL_SET(ctx->regs), CONTEXT_WAKE);
+पूर्ण
 
-static int ohci_flush_iso_completions(struct fw_iso_context *base)
-{
-	struct iso_context *ctx = container_of(base, struct iso_context, base);
-	int ret = 0;
+अटल पूर्णांक ohci_flush_iso_completions(काष्ठा fw_iso_context *base)
+अणु
+	काष्ठा iso_context *ctx = container_of(base, काष्ठा iso_context, base);
+	पूर्णांक ret = 0;
 
 	tasklet_disable_in_atomic(&ctx->context.tasklet);
 
-	if (!test_and_set_bit_lock(0, &ctx->flushing_completions)) {
-		context_tasklet((unsigned long)&ctx->context);
+	अगर (!test_and_set_bit_lock(0, &ctx->flushing_completions)) अणु
+		context_tasklet((अचिन्हित दीर्घ)&ctx->context);
 
-		switch (base->type) {
-		case FW_ISO_CONTEXT_TRANSMIT:
-		case FW_ISO_CONTEXT_RECEIVE:
-			if (ctx->header_length != 0)
+		चयन (base->type) अणु
+		हाल FW_ISO_CONTEXT_TRANSMIT:
+		हाल FW_ISO_CONTEXT_RECEIVE:
+			अगर (ctx->header_length != 0)
 				flush_iso_completions(ctx);
-			break;
-		case FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
-			if (ctx->mc_completed != 0)
+			अवरोध;
+		हाल FW_ISO_CONTEXT_RECEIVE_MULTICHANNEL:
+			अगर (ctx->mc_completed != 0)
 				flush_ir_buffer_fill(ctx);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -ENOSYS;
-		}
+		पूर्ण
 
 		clear_bit_unlock(0, &ctx->flushing_completions);
 		smp_mb__after_atomic();
-	}
+	पूर्ण
 
 	tasklet_enable(&ctx->context.tasklet);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct fw_card_driver ohci_driver = {
+अटल स्थिर काष्ठा fw_card_driver ohci_driver = अणु
 	.enable			= ohci_enable,
-	.read_phy_reg		= ohci_read_phy_reg,
+	.पढ़ो_phy_reg		= ohci_पढ़ो_phy_reg,
 	.update_phy_reg		= ohci_update_phy_reg,
 	.set_config_rom		= ohci_set_config_rom,
 	.send_request		= ohci_send_request,
 	.send_response		= ohci_send_response,
 	.cancel_packet		= ohci_cancel_packet,
 	.enable_phys_dma	= ohci_enable_phys_dma,
-	.read_csr		= ohci_read_csr,
-	.write_csr		= ohci_write_csr,
+	.पढ़ो_csr		= ohci_पढ़ो_csr,
+	.ग_लिखो_csr		= ohci_ग_लिखो_csr,
 
 	.allocate_iso_context	= ohci_allocate_iso_context,
-	.free_iso_context	= ohci_free_iso_context,
+	.मुक्त_iso_context	= ohci_मुक्त_iso_context,
 	.set_iso_channels	= ohci_set_iso_channels,
 	.queue_iso		= ohci_queue_iso,
 	.flush_queue_iso	= ohci_flush_queue_iso,
 	.flush_iso_completions	= ohci_flush_iso_completions,
 	.start_iso		= ohci_start_iso,
 	.stop_iso		= ohci_stop_iso,
-};
+पूर्ण;
 
-#ifdef CONFIG_PPC_PMAC
-static void pmac_ohci_on(struct pci_dev *dev)
-{
-	if (machine_is(powermac)) {
-		struct device_node *ofn = pci_device_to_OF_node(dev);
+#अगर_घोषित CONFIG_PPC_PMAC
+अटल व्योम pmac_ohci_on(काष्ठा pci_dev *dev)
+अणु
+	अगर (machine_is(घातermac)) अणु
+		काष्ठा device_node *ofn = pci_device_to_OF_node(dev);
 
-		if (ofn) {
+		अगर (ofn) अणु
 			pmac_call_feature(PMAC_FTR_1394_CABLE_POWER, ofn, 0, 1);
 			pmac_call_feature(PMAC_FTR_1394_ENABLE, ofn, 0, 1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pmac_ohci_off(struct pci_dev *dev)
-{
-	if (machine_is(powermac)) {
-		struct device_node *ofn = pci_device_to_OF_node(dev);
+अटल व्योम pmac_ohci_off(काष्ठा pci_dev *dev)
+अणु
+	अगर (machine_is(घातermac)) अणु
+		काष्ठा device_node *ofn = pci_device_to_OF_node(dev);
 
-		if (ofn) {
+		अगर (ofn) अणु
 			pmac_call_feature(PMAC_FTR_1394_ENABLE, ofn, 0, 0);
 			pmac_call_feature(PMAC_FTR_1394_CABLE_POWER, ofn, 0, 0);
-		}
-	}
-}
-#else
-static inline void pmac_ohci_on(struct pci_dev *dev) {}
-static inline void pmac_ohci_off(struct pci_dev *dev) {}
-#endif /* CONFIG_PPC_PMAC */
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम pmac_ohci_on(काष्ठा pci_dev *dev) अणुपूर्ण
+अटल अंतरभूत व्योम pmac_ohci_off(काष्ठा pci_dev *dev) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_PMAC */
 
-static int pci_probe(struct pci_dev *dev,
-			       const struct pci_device_id *ent)
-{
-	struct fw_ohci *ohci;
+अटल पूर्णांक pci_probe(काष्ठा pci_dev *dev,
+			       स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा fw_ohci *ohci;
 	u32 bus_options, max_receive, link_speed, version;
 	u64 guid;
-	int i, err;
-	size_t size;
+	पूर्णांक i, err;
+	माप_प्रकार size;
 
-	if (dev->vendor == PCI_VENDOR_ID_PINNACLE_SYSTEMS) {
+	अगर (dev->venकरोr == PCI_VENDOR_ID_PINNACLE_SYSTEMS) अणु
 		dev_err(&dev->dev, "Pinnacle MovieBoard is not yet supported\n");
-		return -ENOSYS;
-	}
+		वापस -ENOSYS;
+	पूर्ण
 
-	ohci = kzalloc(sizeof(*ohci), GFP_KERNEL);
-	if (ohci == NULL) {
+	ohci = kzalloc(माप(*ohci), GFP_KERNEL);
+	अगर (ohci == शून्य) अणु
 		err = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	fw_card_initialize(&ohci->card, &ohci_driver, &dev->dev);
 
 	pmac_ohci_on(dev);
 
 	err = pci_enable_device(dev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->dev, "failed to enable OHCI hardware\n");
-		goto fail_free;
-	}
+		जाओ fail_मुक्त;
+	पूर्ण
 
 	pci_set_master(dev);
-	pci_write_config_dword(dev, OHCI1394_PCI_HCI_Control, 0);
+	pci_ग_लिखो_config_dword(dev, OHCI1394_PCI_HCI_Control, 0);
 	pci_set_drvdata(dev, ohci);
 
 	spin_lock_init(&ohci->lock);
@@ -3583,142 +3584,142 @@ static int pci_probe(struct pci_dev *dev,
 
 	INIT_WORK(&ohci->bus_reset_work, bus_reset_work);
 
-	if (!(pci_resource_flags(dev, 0) & IORESOURCE_MEM) ||
-	    pci_resource_len(dev, 0) < OHCI1394_REGISTER_SIZE) {
+	अगर (!(pci_resource_flags(dev, 0) & IORESOURCE_MEM) ||
+	    pci_resource_len(dev, 0) < OHCI1394_REGISTER_SIZE) अणु
 		ohci_err(ohci, "invalid MMIO resource\n");
 		err = -ENXIO;
-		goto fail_disable;
-	}
+		जाओ fail_disable;
+	पूर्ण
 
 	err = pci_request_region(dev, 0, ohci_driver_name);
-	if (err) {
+	अगर (err) अणु
 		ohci_err(ohci, "MMIO resource unavailable\n");
-		goto fail_disable;
-	}
+		जाओ fail_disable;
+	पूर्ण
 
-	ohci->registers = pci_iomap(dev, 0, OHCI1394_REGISTER_SIZE);
-	if (ohci->registers == NULL) {
+	ohci->रेजिस्टरs = pci_iomap(dev, 0, OHCI1394_REGISTER_SIZE);
+	अगर (ohci->रेजिस्टरs == शून्य) अणु
 		ohci_err(ohci, "failed to remap registers\n");
 		err = -ENXIO;
-		goto fail_iomem;
-	}
+		जाओ fail_iomem;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(ohci_quirks); i++)
-		if ((ohci_quirks[i].vendor == dev->vendor) &&
-		    (ohci_quirks[i].device == (unsigned short)PCI_ANY_ID ||
+	क्रम (i = 0; i < ARRAY_SIZE(ohci_quirks); i++)
+		अगर ((ohci_quirks[i].venकरोr == dev->venकरोr) &&
+		    (ohci_quirks[i].device == (अचिन्हित लघु)PCI_ANY_ID ||
 		     ohci_quirks[i].device == dev->device) &&
-		    (ohci_quirks[i].revision == (unsigned short)PCI_ANY_ID ||
-		     ohci_quirks[i].revision >= dev->revision)) {
+		    (ohci_quirks[i].revision == (अचिन्हित लघु)PCI_ANY_ID ||
+		     ohci_quirks[i].revision >= dev->revision)) अणु
 			ohci->quirks = ohci_quirks[i].flags;
-			break;
-		}
-	if (param_quirks)
+			अवरोध;
+		पूर्ण
+	अगर (param_quirks)
 		ohci->quirks = param_quirks;
 
 	/*
 	 * Because dma_alloc_coherent() allocates at least one page,
-	 * we save space by using a common buffer for the AR request/
+	 * we save space by using a common buffer क्रम the AR request/
 	 * response descriptors and the self IDs buffer.
 	 */
-	BUILD_BUG_ON(AR_BUFFERS * sizeof(struct descriptor) > PAGE_SIZE/4);
+	BUILD_BUG_ON(AR_BUFFERS * माप(काष्ठा descriptor) > PAGE_SIZE/4);
 	BUILD_BUG_ON(SELF_ID_BUF_SIZE > PAGE_SIZE/2);
 	ohci->misc_buffer = dma_alloc_coherent(ohci->card.device,
 					       PAGE_SIZE,
 					       &ohci->misc_buffer_bus,
 					       GFP_KERNEL);
-	if (!ohci->misc_buffer) {
+	अगर (!ohci->misc_buffer) अणु
 		err = -ENOMEM;
-		goto fail_iounmap;
-	}
+		जाओ fail_iounmap;
+	पूर्ण
 
 	err = ar_context_init(&ohci->ar_request_ctx, ohci, 0,
 			      OHCI1394_AsReqRcvContextControlSet);
-	if (err < 0)
-		goto fail_misc_buf;
+	अगर (err < 0)
+		जाओ fail_misc_buf;
 
 	err = ar_context_init(&ohci->ar_response_ctx, ohci, PAGE_SIZE/4,
 			      OHCI1394_AsRspRcvContextControlSet);
-	if (err < 0)
-		goto fail_arreq_ctx;
+	अगर (err < 0)
+		जाओ fail_arreq_ctx;
 
 	err = context_init(&ohci->at_request_ctx, ohci,
 			   OHCI1394_AsReqTrContextControlSet, handle_at_packet);
-	if (err < 0)
-		goto fail_arrsp_ctx;
+	अगर (err < 0)
+		जाओ fail_arrsp_ctx;
 
 	err = context_init(&ohci->at_response_ctx, ohci,
 			   OHCI1394_AsRspTrContextControlSet, handle_at_packet);
-	if (err < 0)
-		goto fail_atreq_ctx;
+	अगर (err < 0)
+		जाओ fail_atreq_ctx;
 
-	reg_write(ohci, OHCI1394_IsoRecvIntMaskSet, ~0);
+	reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntMaskSet, ~0);
 	ohci->ir_context_channels = ~0ULL;
-	ohci->ir_context_support = reg_read(ohci, OHCI1394_IsoRecvIntMaskSet);
-	reg_write(ohci, OHCI1394_IsoRecvIntMaskClear, ~0);
+	ohci->ir_context_support = reg_पढ़ो(ohci, OHCI1394_IsoRecvIntMaskSet);
+	reg_ग_लिखो(ohci, OHCI1394_IsoRecvIntMaskClear, ~0);
 	ohci->ir_context_mask = ohci->ir_context_support;
 	ohci->n_ir = hweight32(ohci->ir_context_mask);
-	size = sizeof(struct iso_context) * ohci->n_ir;
+	size = माप(काष्ठा iso_context) * ohci->n_ir;
 	ohci->ir_context_list = kzalloc(size, GFP_KERNEL);
 
-	reg_write(ohci, OHCI1394_IsoXmitIntMaskSet, ~0);
-	ohci->it_context_support = reg_read(ohci, OHCI1394_IsoXmitIntMaskSet);
-	/* JMicron JMB38x often shows 0 at first read, just ignore it */
-	if (!ohci->it_context_support) {
+	reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntMaskSet, ~0);
+	ohci->it_context_support = reg_पढ़ो(ohci, OHCI1394_IsoXmitIntMaskSet);
+	/* JMicron JMB38x often shows 0 at first पढ़ो, just ignore it */
+	अगर (!ohci->it_context_support) अणु
 		ohci_notice(ohci, "overriding IsoXmitIntMask\n");
 		ohci->it_context_support = 0xf;
-	}
-	reg_write(ohci, OHCI1394_IsoXmitIntMaskClear, ~0);
+	पूर्ण
+	reg_ग_लिखो(ohci, OHCI1394_IsoXmitIntMaskClear, ~0);
 	ohci->it_context_mask = ohci->it_context_support;
 	ohci->n_it = hweight32(ohci->it_context_mask);
-	size = sizeof(struct iso_context) * ohci->n_it;
+	size = माप(काष्ठा iso_context) * ohci->n_it;
 	ohci->it_context_list = kzalloc(size, GFP_KERNEL);
 
-	if (ohci->it_context_list == NULL || ohci->ir_context_list == NULL) {
+	अगर (ohci->it_context_list == शून्य || ohci->ir_context_list == शून्य) अणु
 		err = -ENOMEM;
-		goto fail_contexts;
-	}
+		जाओ fail_contexts;
+	पूर्ण
 
 	ohci->self_id     = ohci->misc_buffer     + PAGE_SIZE/2;
 	ohci->self_id_bus = ohci->misc_buffer_bus + PAGE_SIZE/2;
 
-	bus_options = reg_read(ohci, OHCI1394_BusOptions);
+	bus_options = reg_पढ़ो(ohci, OHCI1394_BusOptions);
 	max_receive = (bus_options >> 12) & 0xf;
 	link_speed = bus_options & 0x7;
-	guid = ((u64) reg_read(ohci, OHCI1394_GUIDHi) << 32) |
-		reg_read(ohci, OHCI1394_GUIDLo);
+	guid = ((u64) reg_पढ़ो(ohci, OHCI1394_GUIDHi) << 32) |
+		reg_पढ़ो(ohci, OHCI1394_GUIDLo);
 
-	if (!(ohci->quirks & QUIRK_NO_MSI))
+	अगर (!(ohci->quirks & QUIRK_NO_MSI))
 		pci_enable_msi(dev);
-	if (request_irq(dev->irq, irq_handler,
+	अगर (request_irq(dev->irq, irq_handler,
 			pci_dev_msi_enabled(dev) ? 0 : IRQF_SHARED,
-			ohci_driver_name, ohci)) {
+			ohci_driver_name, ohci)) अणु
 		ohci_err(ohci, "failed to allocate interrupt %d\n", dev->irq);
 		err = -EIO;
-		goto fail_msi;
-	}
+		जाओ fail_msi;
+	पूर्ण
 
 	err = fw_card_add(&ohci->card, max_receive, link_speed, guid);
-	if (err)
-		goto fail_irq;
+	अगर (err)
+		जाओ fail_irq;
 
-	version = reg_read(ohci, OHCI1394_Version) & 0x00ff00ff;
+	version = reg_पढ़ो(ohci, OHCI1394_Version) & 0x00ff00ff;
 	ohci_notice(ohci,
 		    "added OHCI v%x.%x device as card %d, "
 		    "%d IR + %d IT contexts, quirks 0x%x%s\n",
 		    version >> 16, version & 0xff, ohci->card.index,
 		    ohci->n_ir, ohci->n_it, ohci->quirks,
-		    reg_read(ohci, OHCI1394_PhyUpperBound) ?
+		    reg_पढ़ो(ohci, OHCI1394_PhyUpperBound) ?
 			", physUB" : "");
 
-	return 0;
+	वापस 0;
 
  fail_irq:
-	free_irq(dev->irq, ohci);
+	मुक्त_irq(dev->irq, ohci);
  fail_msi:
 	pci_disable_msi(dev);
  fail_contexts:
-	kfree(ohci->ir_context_list);
-	kfree(ohci->it_context_list);
+	kमुक्त(ohci->ir_context_list);
+	kमुक्त(ohci->it_context_list);
 	context_release(&ohci->at_response_ctx);
  fail_atreq_ctx:
 	context_release(&ohci->at_request_ctx);
@@ -3727,35 +3728,35 @@ static int pci_probe(struct pci_dev *dev,
  fail_arreq_ctx:
 	ar_context_release(&ohci->ar_request_ctx);
  fail_misc_buf:
-	dma_free_coherent(ohci->card.device, PAGE_SIZE,
+	dma_मुक्त_coherent(ohci->card.device, PAGE_SIZE,
 			  ohci->misc_buffer, ohci->misc_buffer_bus);
  fail_iounmap:
-	pci_iounmap(dev, ohci->registers);
+	pci_iounmap(dev, ohci->रेजिस्टरs);
  fail_iomem:
 	pci_release_region(dev, 0);
  fail_disable:
 	pci_disable_device(dev);
- fail_free:
-	kfree(ohci);
+ fail_मुक्त:
+	kमुक्त(ohci);
 	pmac_ohci_off(dev);
  fail:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void pci_remove(struct pci_dev *dev)
-{
-	struct fw_ohci *ohci = pci_get_drvdata(dev);
+अटल व्योम pci_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा fw_ohci *ohci = pci_get_drvdata(dev);
 
 	/*
 	 * If the removal is happening from the suspend state, LPS won't be
-	 * enabled and host registers (eg., IntMaskClear) won't be accessible.
+	 * enabled and host रेजिस्टरs (eg., IntMaskClear) won't be accessible.
 	 */
-	if (reg_read(ohci, OHCI1394_HCControlSet) & OHCI1394_HCControl_LPS) {
-		reg_write(ohci, OHCI1394_IntMaskClear, ~0);
-		flush_writes(ohci);
-	}
+	अगर (reg_पढ़ो(ohci, OHCI1394_HCControlSet) & OHCI1394_HCControl_LPS) अणु
+		reg_ग_लिखो(ohci, OHCI1394_IntMaskClear, ~0);
+		flush_ग_लिखोs(ohci);
+	पूर्ण
 	cancel_work_sync(&ohci->bus_reset_work);
-	fw_core_remove_card(&ohci->card);
+	fw_core_हटाओ_card(&ohci->card);
 
 	/*
 	 * FIXME: Fail all pending packets here, now that the upper
@@ -3763,122 +3764,122 @@ static void pci_remove(struct pci_dev *dev)
 	 */
 
 	software_reset(ohci);
-	free_irq(dev->irq, ohci);
+	मुक्त_irq(dev->irq, ohci);
 
-	if (ohci->next_config_rom && ohci->next_config_rom != ohci->config_rom)
-		dma_free_coherent(ohci->card.device, CONFIG_ROM_SIZE,
+	अगर (ohci->next_config_rom && ohci->next_config_rom != ohci->config_rom)
+		dma_मुक्त_coherent(ohci->card.device, CONFIG_ROM_SIZE,
 				  ohci->next_config_rom, ohci->next_config_rom_bus);
-	if (ohci->config_rom)
-		dma_free_coherent(ohci->card.device, CONFIG_ROM_SIZE,
+	अगर (ohci->config_rom)
+		dma_मुक्त_coherent(ohci->card.device, CONFIG_ROM_SIZE,
 				  ohci->config_rom, ohci->config_rom_bus);
 	ar_context_release(&ohci->ar_request_ctx);
 	ar_context_release(&ohci->ar_response_ctx);
-	dma_free_coherent(ohci->card.device, PAGE_SIZE,
+	dma_मुक्त_coherent(ohci->card.device, PAGE_SIZE,
 			  ohci->misc_buffer, ohci->misc_buffer_bus);
 	context_release(&ohci->at_request_ctx);
 	context_release(&ohci->at_response_ctx);
-	kfree(ohci->it_context_list);
-	kfree(ohci->ir_context_list);
+	kमुक्त(ohci->it_context_list);
+	kमुक्त(ohci->ir_context_list);
 	pci_disable_msi(dev);
-	pci_iounmap(dev, ohci->registers);
+	pci_iounmap(dev, ohci->रेजिस्टरs);
 	pci_release_region(dev, 0);
 	pci_disable_device(dev);
-	kfree(ohci);
+	kमुक्त(ohci);
 	pmac_ohci_off(dev);
 
 	dev_notice(&dev->dev, "removed fw-ohci device\n");
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int pci_suspend(struct pci_dev *dev, pm_message_t state)
-{
-	struct fw_ohci *ohci = pci_get_drvdata(dev);
-	int err;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक pci_suspend(काष्ठा pci_dev *dev, pm_message_t state)
+अणु
+	काष्ठा fw_ohci *ohci = pci_get_drvdata(dev);
+	पूर्णांक err;
 
 	software_reset(ohci);
 	err = pci_save_state(dev);
-	if (err) {
+	अगर (err) अणु
 		ohci_err(ohci, "pci_save_state failed\n");
-		return err;
-	}
-	err = pci_set_power_state(dev, pci_choose_state(dev, state));
-	if (err)
+		वापस err;
+	पूर्ण
+	err = pci_set_घातer_state(dev, pci_choose_state(dev, state));
+	अगर (err)
 		ohci_err(ohci, "pci_set_power_state failed with %d\n", err);
 	pmac_ohci_off(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_resume(struct pci_dev *dev)
-{
-	struct fw_ohci *ohci = pci_get_drvdata(dev);
-	int err;
+अटल पूर्णांक pci_resume(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा fw_ohci *ohci = pci_get_drvdata(dev);
+	पूर्णांक err;
 
 	pmac_ohci_on(dev);
-	pci_set_power_state(dev, PCI_D0);
+	pci_set_घातer_state(dev, PCI_D0);
 	pci_restore_state(dev);
 	err = pci_enable_device(dev);
-	if (err) {
+	अगर (err) अणु
 		ohci_err(ohci, "pci_enable_device failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Some systems don't setup GUID register on resume from ram  */
-	if (!reg_read(ohci, OHCI1394_GUIDLo) &&
-					!reg_read(ohci, OHCI1394_GUIDHi)) {
-		reg_write(ohci, OHCI1394_GUIDLo, (u32)ohci->card.guid);
-		reg_write(ohci, OHCI1394_GUIDHi, (u32)(ohci->card.guid >> 32));
-	}
+	/* Some प्रणालीs करोn't setup GUID रेजिस्टर on resume from ram  */
+	अगर (!reg_पढ़ो(ohci, OHCI1394_GUIDLo) &&
+					!reg_पढ़ो(ohci, OHCI1394_GUIDHi)) अणु
+		reg_ग_लिखो(ohci, OHCI1394_GUIDLo, (u32)ohci->card.guid);
+		reg_ग_लिखो(ohci, OHCI1394_GUIDHi, (u32)(ohci->card.guid >> 32));
+	पूर्ण
 
-	err = ohci_enable(&ohci->card, NULL, 0);
-	if (err)
-		return err;
+	err = ohci_enable(&ohci->card, शून्य, 0);
+	अगर (err)
+		वापस err;
 
 	ohci_resume_iso_dma(ohci);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct pci_device_id pci_table[] = {
-	{ PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_FIREWIRE_OHCI, ~0) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id pci_table[] = अणु
+	अणु PCI_DEVICE_CLASS(PCI_CLASS_SERIAL_FIREWIRE_OHCI, ~0) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pci_table);
 
-static struct pci_driver fw_ohci_pci_driver = {
+अटल काष्ठा pci_driver fw_ohci_pci_driver = अणु
 	.name		= ohci_driver_name,
 	.id_table	= pci_table,
 	.probe		= pci_probe,
-	.remove		= pci_remove,
-#ifdef CONFIG_PM
+	.हटाओ		= pci_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.resume		= pci_resume,
 	.suspend	= pci_suspend,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init fw_ohci_init(void)
-{
+अटल पूर्णांक __init fw_ohci_init(व्योम)
+अणु
 	selfid_workqueue = alloc_workqueue(KBUILD_MODNAME, WQ_MEM_RECLAIM, 0);
-	if (!selfid_workqueue)
-		return -ENOMEM;
+	अगर (!selfid_workqueue)
+		वापस -ENOMEM;
 
-	return pci_register_driver(&fw_ohci_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&fw_ohci_pci_driver);
+पूर्ण
 
-static void __exit fw_ohci_cleanup(void)
-{
-	pci_unregister_driver(&fw_ohci_pci_driver);
+अटल व्योम __निकास fw_ohci_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&fw_ohci_pci_driver);
 	destroy_workqueue(selfid_workqueue);
-}
+पूर्ण
 
 module_init(fw_ohci_init);
-module_exit(fw_ohci_cleanup);
+module_निकास(fw_ohci_cleanup);
 
 MODULE_AUTHOR("Kristian Hoegsberg <krh@bitplanet.net>");
 MODULE_DESCRIPTION("Driver for PCI OHCI IEEE1394 controllers");
 MODULE_LICENSE("GPL");
 
-/* Provide a module alias so root-on-sbp2 initrds don't break. */
+/* Provide a module alias so root-on-sbp2 initrds करोn't अवरोध. */
 MODULE_ALIAS("ohci1394");

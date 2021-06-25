@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/rculist.h>
-#include <linux/skbuff.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/static_key.h>
-#include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_log.h>
-#include <net/netfilter/nft_meta.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/अटल_key.h>
+#समावेश <linux/netfilter/nfnetlink.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_log.h>
+#समावेश <net/netfilter/nft_meta.h>
 
-static noinline void __nft_trace_packet(struct nft_traceinfo *info,
-					const struct nft_chain *chain,
-					enum nft_trace_types type)
-{
-	const struct nft_pktinfo *pkt = info->pkt;
+अटल noअंतरभूत व्योम __nft_trace_packet(काष्ठा nft_traceinfo *info,
+					स्थिर काष्ठा nft_chain *chain,
+					क्रमागत nft_trace_types type)
+अणु
+	स्थिर काष्ठा nft_pktinfo *pkt = info->pkt;
 
-	if (!info->trace || !pkt->skb->nf_trace)
-		return;
+	अगर (!info->trace || !pkt->skb->nf_trace)
+		वापस;
 
 	info->chain = chain;
 	info->type = type;
 
-	nft_trace_notify(info);
-}
+	nft_trace_notअगरy(info);
+पूर्ण
 
-static inline void nft_trace_packet(struct nft_traceinfo *info,
-				    const struct nft_chain *chain,
-				    const struct nft_rule *rule,
-				    enum nft_trace_types type)
-{
-	if (static_branch_unlikely(&nft_trace_enabled)) {
+अटल अंतरभूत व्योम nft_trace_packet(काष्ठा nft_traceinfo *info,
+				    स्थिर काष्ठा nft_chain *chain,
+				    स्थिर काष्ठा nft_rule *rule,
+				    क्रमागत nft_trace_types type)
+अणु
+	अगर (अटल_branch_unlikely(&nft_trace_enabled)) अणु
 		info->rule = rule;
 		__nft_trace_packet(info, chain, type);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nft_bitwise_fast_eval(const struct nft_expr *expr,
-				  struct nft_regs *regs)
-{
-	const struct nft_bitwise_fast_expr *priv = nft_expr_priv(expr);
+अटल व्योम nft_bitwise_fast_eval(स्थिर काष्ठा nft_expr *expr,
+				  काष्ठा nft_regs *regs)
+अणु
+	स्थिर काष्ठा nft_bitwise_fast_expr *priv = nft_expr_priv(expr);
 	u32 *src = &regs->data[priv->sreg];
 	u32 *dst = &regs->data[priv->dreg];
 
 	*dst = (*src & priv->mask) ^ priv->xor;
-}
+पूर्ण
 
-static void nft_cmp_fast_eval(const struct nft_expr *expr,
-			      struct nft_regs *regs)
-{
-	const struct nft_cmp_fast_expr *priv = nft_expr_priv(expr);
+अटल व्योम nft_cmp_fast_eval(स्थिर काष्ठा nft_expr *expr,
+			      काष्ठा nft_regs *regs)
+अणु
+	स्थिर काष्ठा nft_cmp_fast_expr *priv = nft_expr_priv(expr);
 
-	if (((regs->data[priv->sreg] & priv->mask) == priv->data) ^ priv->inv)
-		return;
+	अगर (((regs->data[priv->sreg] & priv->mask) == priv->data) ^ priv->inv)
+		वापस;
 	regs->verdict.code = NFT_BREAK;
-}
+पूर्ण
 
-static bool nft_payload_fast_eval(const struct nft_expr *expr,
-				  struct nft_regs *regs,
-				  const struct nft_pktinfo *pkt)
-{
-	const struct nft_payload *priv = nft_expr_priv(expr);
-	const struct sk_buff *skb = pkt->skb;
+अटल bool nft_payload_fast_eval(स्थिर काष्ठा nft_expr *expr,
+				  काष्ठा nft_regs *regs,
+				  स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_payload *priv = nft_expr_priv(expr);
+	स्थिर काष्ठा sk_buff *skb = pkt->skb;
 	u32 *dest = &regs->data[priv->dreg];
-	unsigned char *ptr;
+	अचिन्हित अक्षर *ptr;
 
-	if (priv->base == NFT_PAYLOAD_NETWORK_HEADER)
+	अगर (priv->base == NFT_PAYLOAD_NETWORK_HEADER)
 		ptr = skb_network_header(skb);
-	else {
-		if (!pkt->tprot_set)
-			return false;
+	अन्यथा अणु
+		अगर (!pkt->tprot_set)
+			वापस false;
 		ptr = skb_network_header(skb) + pkt->xt.thoff;
-	}
+	पूर्ण
 
 	ptr += priv->offset;
 
-	if (unlikely(ptr + priv->len > skb_tail_pointer(skb)))
-		return false;
+	अगर (unlikely(ptr + priv->len > skb_tail_poपूर्णांकer(skb)))
+		वापस false;
 
 	*dest = 0;
-	if (priv->len == 2)
+	अगर (priv->len == 2)
 		*(u16 *)dest = *(u16 *)ptr;
-	else if (priv->len == 4)
+	अन्यथा अगर (priv->len == 4)
 		*(u32 *)dest = *(u32 *)ptr;
-	else
+	अन्यथा
 		*(u8 *)dest = *(u8 *)ptr;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 DEFINE_STATIC_KEY_FALSE(nft_counters_enabled);
 
-static noinline void nft_update_chain_stats(const struct nft_chain *chain,
-					    const struct nft_pktinfo *pkt)
-{
-	struct nft_base_chain *base_chain;
-	struct nft_stats __percpu *pstats;
-	struct nft_stats *stats;
+अटल noअंतरभूत व्योम nft_update_chain_stats(स्थिर काष्ठा nft_chain *chain,
+					    स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	काष्ठा nft_base_chain *base_chain;
+	काष्ठा nft_stats __percpu *pstats;
+	काष्ठा nft_stats *stats;
 
 	base_chain = nft_base_chain(chain);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pstats = READ_ONCE(base_chain->stats);
-	if (pstats) {
+	अगर (pstats) अणु
 		local_bh_disable();
 		stats = this_cpu_ptr(pstats);
 		u64_stats_update_begin(&stats->syncp);
@@ -120,24 +121,24 @@ static noinline void nft_update_chain_stats(const struct nft_chain *chain,
 		stats->bytes += pkt->skb->len;
 		u64_stats_update_end(&stats->syncp);
 		local_bh_enable();
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-struct nft_jumpstack {
-	const struct nft_chain	*chain;
-	struct nft_rule	*const *rules;
-};
+काष्ठा nft_jumpstack अणु
+	स्थिर काष्ठा nft_chain	*chain;
+	काष्ठा nft_rule	*स्थिर *rules;
+पूर्ण;
 
-static void expr_call_ops_eval(const struct nft_expr *expr,
-			       struct nft_regs *regs,
-			       struct nft_pktinfo *pkt)
-{
-#ifdef CONFIG_RETPOLINE
-	unsigned long e = (unsigned long)expr->ops->eval;
-#define X(e, fun) \
-	do { if ((e) == (unsigned long)(fun)) \
-		return fun(expr, regs, pkt); } while (0)
+अटल व्योम expr_call_ops_eval(स्थिर काष्ठा nft_expr *expr,
+			       काष्ठा nft_regs *regs,
+			       काष्ठा nft_pktinfo *pkt)
+अणु
+#अगर_घोषित CONFIG_RETPOLINE
+	अचिन्हित दीर्घ e = (अचिन्हित दीर्घ)expr->ops->eval;
+#घोषणा X(e, fun) \
+	करो अणु अगर ((e) == (अचिन्हित दीर्घ)(fun)) \
+		वापस fun(expr, regs, pkt); पूर्ण जबतक (0)
 
 	X(e, nft_payload_eval);
 	X(e, nft_cmp_eval);
@@ -149,114 +150,114 @@ static void expr_call_ops_eval(const struct nft_expr *expr,
 	X(e, nft_dynset_eval);
 	X(e, nft_rt_get_eval);
 	X(e, nft_bitwise_eval);
-#undef  X
-#endif /* CONFIG_RETPOLINE */
+#अघोषित  X
+#पूर्ण_अगर /* CONFIG_RETPOLINE */
 	expr->ops->eval(expr, regs, pkt);
-}
+पूर्ण
 
-unsigned int
-nft_do_chain(struct nft_pktinfo *pkt, void *priv)
-{
-	const struct nft_chain *chain = priv, *basechain = chain;
-	const struct net *net = nft_net(pkt);
-	struct nft_rule *const *rules;
-	const struct nft_rule *rule;
-	const struct nft_expr *expr, *last;
-	struct nft_regs regs;
-	unsigned int stackptr = 0;
-	struct nft_jumpstack jumpstack[NFT_JUMP_STACK_SIZE];
+अचिन्हित पूर्णांक
+nft_करो_chain(काष्ठा nft_pktinfo *pkt, व्योम *priv)
+अणु
+	स्थिर काष्ठा nft_chain *chain = priv, *basechain = chain;
+	स्थिर काष्ठा net *net = nft_net(pkt);
+	काष्ठा nft_rule *स्थिर *rules;
+	स्थिर काष्ठा nft_rule *rule;
+	स्थिर काष्ठा nft_expr *expr, *last;
+	काष्ठा nft_regs regs;
+	अचिन्हित पूर्णांक stackptr = 0;
+	काष्ठा nft_jumpstack jumpstack[NFT_JUMP_STACK_SIZE];
 	bool genbit = READ_ONCE(net->nft.gencursor);
-	struct nft_traceinfo info;
+	काष्ठा nft_traceinfo info;
 
 	info.trace = false;
-	if (static_branch_unlikely(&nft_trace_enabled))
+	अगर (अटल_branch_unlikely(&nft_trace_enabled))
 		nft_trace_init(&info, pkt, &regs.verdict, basechain);
-do_chain:
-	if (genbit)
+करो_chain:
+	अगर (genbit)
 		rules = rcu_dereference(chain->rules_gen_1);
-	else
+	अन्यथा
 		rules = rcu_dereference(chain->rules_gen_0);
 
 next_rule:
 	rule = *rules;
 	regs.verdict.code = NFT_CONTINUE;
-	for (; *rules ; rules++) {
+	क्रम (; *rules ; rules++) अणु
 		rule = *rules;
-		nft_rule_for_each_expr(expr, last, rule) {
-			if (expr->ops == &nft_cmp_fast_ops)
+		nft_rule_क्रम_each_expr(expr, last, rule) अणु
+			अगर (expr->ops == &nft_cmp_fast_ops)
 				nft_cmp_fast_eval(expr, &regs);
-			else if (expr->ops == &nft_bitwise_fast_ops)
+			अन्यथा अगर (expr->ops == &nft_bitwise_fast_ops)
 				nft_bitwise_fast_eval(expr, &regs);
-			else if (expr->ops != &nft_payload_fast_ops ||
+			अन्यथा अगर (expr->ops != &nft_payload_fast_ops ||
 				 !nft_payload_fast_eval(expr, &regs, pkt))
 				expr_call_ops_eval(expr, &regs, pkt);
 
-			if (regs.verdict.code != NFT_CONTINUE)
-				break;
-		}
+			अगर (regs.verdict.code != NFT_CONTINUE)
+				अवरोध;
+		पूर्ण
 
-		switch (regs.verdict.code) {
-		case NFT_BREAK:
+		चयन (regs.verdict.code) अणु
+		हाल NFT_BREAK:
 			regs.verdict.code = NFT_CONTINUE;
-			continue;
-		case NFT_CONTINUE:
+			जारी;
+		हाल NFT_CONTINUE:
 			nft_trace_packet(&info, chain, rule,
 					 NFT_TRACETYPE_RULE);
-			continue;
-		}
-		break;
-	}
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	switch (regs.verdict.code & NF_VERDICT_MASK) {
-	case NF_ACCEPT:
-	case NF_DROP:
-	case NF_QUEUE:
-	case NF_STOLEN:
+	चयन (regs.verdict.code & NF_VERDICT_MASK) अणु
+	हाल NF_ACCEPT:
+	हाल NF_DROP:
+	हाल NF_QUEUE:
+	हाल NF_STOLEN:
 		nft_trace_packet(&info, chain, rule,
 				 NFT_TRACETYPE_RULE);
-		return regs.verdict.code;
-	}
+		वापस regs.verdict.code;
+	पूर्ण
 
-	switch (regs.verdict.code) {
-	case NFT_JUMP:
-		if (WARN_ON_ONCE(stackptr >= NFT_JUMP_STACK_SIZE))
-			return NF_DROP;
+	चयन (regs.verdict.code) अणु
+	हाल NFT_JUMP:
+		अगर (WARN_ON_ONCE(stackptr >= NFT_JUMP_STACK_SIZE))
+			वापस NF_DROP;
 		jumpstack[stackptr].chain = chain;
 		jumpstack[stackptr].rules = rules + 1;
 		stackptr++;
 		fallthrough;
-	case NFT_GOTO:
+	हाल NFT_GOTO:
 		nft_trace_packet(&info, chain, rule,
 				 NFT_TRACETYPE_RULE);
 
 		chain = regs.verdict.chain;
-		goto do_chain;
-	case NFT_CONTINUE:
-	case NFT_RETURN:
+		जाओ करो_chain;
+	हाल NFT_CONTINUE:
+	हाल NFT_RETURN:
 		nft_trace_packet(&info, chain, rule,
 				 NFT_TRACETYPE_RETURN);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	if (stackptr > 0) {
+	अगर (stackptr > 0) अणु
 		stackptr--;
 		chain = jumpstack[stackptr].chain;
 		rules = jumpstack[stackptr].rules;
-		goto next_rule;
-	}
+		जाओ next_rule;
+	पूर्ण
 
-	nft_trace_packet(&info, basechain, NULL, NFT_TRACETYPE_POLICY);
+	nft_trace_packet(&info, basechain, शून्य, NFT_TRACETYPE_POLICY);
 
-	if (static_branch_unlikely(&nft_counters_enabled))
+	अगर (अटल_branch_unlikely(&nft_counters_enabled))
 		nft_update_chain_stats(basechain, pkt);
 
-	return nft_base_chain(basechain)->policy;
-}
-EXPORT_SYMBOL_GPL(nft_do_chain);
+	वापस nft_base_chain(basechain)->policy;
+पूर्ण
+EXPORT_SYMBOL_GPL(nft_करो_chain);
 
-static struct nft_expr_type *nft_basic_types[] = {
+अटल काष्ठा nft_expr_type *nft_basic_types[] = अणु
 	&nft_imm_type,
 	&nft_cmp_type,
 	&nft_lookup_type,
@@ -268,51 +269,51 @@ static struct nft_expr_type *nft_basic_types[] = {
 	&nft_meta_type,
 	&nft_rt_type,
 	&nft_exthdr_type,
-};
+पूर्ण;
 
-static struct nft_object_type *nft_basic_objects[] = {
-#ifdef CONFIG_NETWORK_SECMARK
+अटल काष्ठा nft_object_type *nft_basic_objects[] = अणु
+#अगर_घोषित CONFIG_NETWORK_SECMARK
 	&nft_secmark_obj_type,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-int __init nf_tables_core_module_init(void)
-{
-	int err, i, j = 0;
+पूर्णांक __init nf_tables_core_module_init(व्योम)
+अणु
+	पूर्णांक err, i, j = 0;
 
-	for (i = 0; i < ARRAY_SIZE(nft_basic_objects); i++) {
-		err = nft_register_obj(nft_basic_objects[i]);
-		if (err)
-			goto err;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(nft_basic_objects); i++) अणु
+		err = nft_रेजिस्टर_obj(nft_basic_objects[i]);
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
-	for (j = 0; j < ARRAY_SIZE(nft_basic_types); j++) {
-		err = nft_register_expr(nft_basic_types[j]);
-		if (err)
-			goto err;
-	}
+	क्रम (j = 0; j < ARRAY_SIZE(nft_basic_types); j++) अणु
+		err = nft_रेजिस्टर_expr(nft_basic_types[j]);
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	while (j-- > 0)
-		nft_unregister_expr(nft_basic_types[j]);
+	जबतक (j-- > 0)
+		nft_unरेजिस्टर_expr(nft_basic_types[j]);
 
-	while (i-- > 0)
-		nft_unregister_obj(nft_basic_objects[i]);
+	जबतक (i-- > 0)
+		nft_unरेजिस्टर_obj(nft_basic_objects[i]);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void nf_tables_core_module_exit(void)
-{
-	int i;
+व्योम nf_tables_core_module_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
 	i = ARRAY_SIZE(nft_basic_types);
-	while (i-- > 0)
-		nft_unregister_expr(nft_basic_types[i]);
+	जबतक (i-- > 0)
+		nft_unरेजिस्टर_expr(nft_basic_types[i]);
 
 	i = ARRAY_SIZE(nft_basic_objects);
-	while (i-- > 0)
-		nft_unregister_obj(nft_basic_objects[i]);
-}
+	जबतक (i-- > 0)
+		nft_unरेजिस्टर_obj(nft_basic_objects[i]);
+पूर्ण

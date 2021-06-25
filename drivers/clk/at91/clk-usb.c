@@ -1,210 +1,211 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2013 Boris BREZILLON <b.brezillon@overkiz.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/clkdev.h>
-#include <linux/clk/at91_pmc.h>
-#include <linux/of.h>
-#include <linux/mfd/syscon.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk/at91_pmc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/regmap.h>
 
-#include "pmc.h"
+#समावेश "pmc.h"
 
-#define SAM9X5_USB_DIV_SHIFT	8
-#define SAM9X5_USB_MAX_DIV	0xf
+#घोषणा SAM9X5_USB_DIV_SHIFT	8
+#घोषणा SAM9X5_USB_MAX_DIV	0xf
 
-#define RM9200_USB_DIV_SHIFT	28
-#define RM9200_USB_DIV_TAB_SIZE	4
+#घोषणा RM9200_USB_DIV_SHIFT	28
+#घोषणा RM9200_USB_DIV_TAB_SIZE	4
 
-#define SAM9X5_USBS_MASK	GENMASK(0, 0)
-#define SAM9X60_USBS_MASK	GENMASK(1, 0)
+#घोषणा SAM9X5_USBS_MASK	GENMASK(0, 0)
+#घोषणा SAM9X60_USBS_MASK	GENMASK(1, 0)
 
-struct at91sam9x5_clk_usb {
-	struct clk_hw hw;
-	struct regmap *regmap;
+काष्ठा at91sam9x5_clk_usb अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
 	u32 usbs_mask;
 	u8 num_parents;
-};
+पूर्ण;
 
-#define to_at91sam9x5_clk_usb(hw) \
-	container_of(hw, struct at91sam9x5_clk_usb, hw)
+#घोषणा to_at91sam9x5_clk_usb(hw) \
+	container_of(hw, काष्ठा at91sam9x5_clk_usb, hw)
 
-struct at91rm9200_clk_usb {
-	struct clk_hw hw;
-	struct regmap *regmap;
-	u32 divisors[4];
-};
+काष्ठा at91rm9200_clk_usb अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
+	u32 भागisors[4];
+पूर्ण;
 
-#define to_at91rm9200_clk_usb(hw) \
-	container_of(hw, struct at91rm9200_clk_usb, hw)
+#घोषणा to_at91rm9200_clk_usb(hw) \
+	container_of(hw, काष्ठा at91rm9200_clk_usb, hw)
 
-static unsigned long at91sam9x5_clk_usb_recalc_rate(struct clk_hw *hw,
-						    unsigned long parent_rate)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
-	unsigned int usbr;
-	u8 usbdiv;
+अटल अचिन्हित दीर्घ at91sam9x5_clk_usb_recalc_rate(काष्ठा clk_hw *hw,
+						    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+	अचिन्हित पूर्णांक usbr;
+	u8 usbभाग;
 
-	regmap_read(usb->regmap, AT91_PMC_USB, &usbr);
-	usbdiv = (usbr & AT91_PMC_OHCIUSBDIV) >> SAM9X5_USB_DIV_SHIFT;
+	regmap_पढ़ो(usb->regmap, AT91_PMC_USB, &usbr);
+	usbभाग = (usbr & AT91_PMC_OHCIUSBDIV) >> SAM9X5_USB_DIV_SHIFT;
 
-	return DIV_ROUND_CLOSEST(parent_rate, (usbdiv + 1));
-}
+	वापस DIV_ROUND_CLOSEST(parent_rate, (usbभाग + 1));
+पूर्ण
 
-static int at91sam9x5_clk_usb_determine_rate(struct clk_hw *hw,
-					     struct clk_rate_request *req)
-{
-	struct clk_hw *parent;
-	long best_rate = -EINVAL;
-	unsigned long tmp_rate;
-	int best_diff = -1;
-	int tmp_diff;
-	int i;
+अटल पूर्णांक at91sam9x5_clk_usb_determine_rate(काष्ठा clk_hw *hw,
+					     काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा clk_hw *parent;
+	दीर्घ best_rate = -EINVAL;
+	अचिन्हित दीर्घ पंचांगp_rate;
+	पूर्णांक best_dअगरf = -1;
+	पूर्णांक पंचांगp_dअगरf;
+	पूर्णांक i;
 
-	for (i = 0; i < clk_hw_get_num_parents(hw); i++) {
-		int div;
+	क्रम (i = 0; i < clk_hw_get_num_parents(hw); i++) अणु
+		पूर्णांक भाग;
 
 		parent = clk_hw_get_parent_by_index(hw, i);
-		if (!parent)
-			continue;
+		अगर (!parent)
+			जारी;
 
-		for (div = 1; div < SAM9X5_USB_MAX_DIV + 2; div++) {
-			unsigned long tmp_parent_rate;
+		क्रम (भाग = 1; भाग < SAM9X5_USB_MAX_DIV + 2; भाग++) अणु
+			अचिन्हित दीर्घ पंचांगp_parent_rate;
 
-			tmp_parent_rate = req->rate * div;
-			tmp_parent_rate = clk_hw_round_rate(parent,
-							   tmp_parent_rate);
-			if (!tmp_parent_rate)
-				continue;
+			पंचांगp_parent_rate = req->rate * भाग;
+			पंचांगp_parent_rate = clk_hw_round_rate(parent,
+							   पंचांगp_parent_rate);
+			अगर (!पंचांगp_parent_rate)
+				जारी;
 
-			tmp_rate = DIV_ROUND_CLOSEST(tmp_parent_rate, div);
-			if (tmp_rate < req->rate)
-				tmp_diff = req->rate - tmp_rate;
-			else
-				tmp_diff = tmp_rate - req->rate;
+			पंचांगp_rate = DIV_ROUND_CLOSEST(पंचांगp_parent_rate, भाग);
+			अगर (पंचांगp_rate < req->rate)
+				पंचांगp_dअगरf = req->rate - पंचांगp_rate;
+			अन्यथा
+				पंचांगp_dअगरf = पंचांगp_rate - req->rate;
 
-			if (best_diff < 0 || best_diff > tmp_diff) {
-				best_rate = tmp_rate;
-				best_diff = tmp_diff;
-				req->best_parent_rate = tmp_parent_rate;
+			अगर (best_dअगरf < 0 || best_dअगरf > पंचांगp_dअगरf) अणु
+				best_rate = पंचांगp_rate;
+				best_dअगरf = पंचांगp_dअगरf;
+				req->best_parent_rate = पंचांगp_parent_rate;
 				req->best_parent_hw = parent;
-			}
+			पूर्ण
 
-			if (!best_diff || tmp_rate < req->rate)
-				break;
-		}
+			अगर (!best_dअगरf || पंचांगp_rate < req->rate)
+				अवरोध;
+		पूर्ण
 
-		if (!best_diff)
-			break;
-	}
+		अगर (!best_dअगरf)
+			अवरोध;
+	पूर्ण
 
-	if (best_rate < 0)
-		return best_rate;
+	अगर (best_rate < 0)
+		वापस best_rate;
 
 	req->rate = best_rate;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int at91sam9x5_clk_usb_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+अटल पूर्णांक at91sam9x5_clk_usb_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
 
-	if (index >= usb->num_parents)
-		return -EINVAL;
+	अगर (index >= usb->num_parents)
+		वापस -EINVAL;
 
 	regmap_update_bits(usb->regmap, AT91_PMC_USB, usb->usbs_mask, index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 at91sam9x5_clk_usb_get_parent(struct clk_hw *hw)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
-	unsigned int usbr;
+अटल u8 at91sam9x5_clk_usb_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+	अचिन्हित पूर्णांक usbr;
 
-	regmap_read(usb->regmap, AT91_PMC_USB, &usbr);
+	regmap_पढ़ो(usb->regmap, AT91_PMC_USB, &usbr);
 
-	return usbr & usb->usbs_mask;
-}
+	वापस usbr & usb->usbs_mask;
+पूर्ण
 
-static int at91sam9x5_clk_usb_set_rate(struct clk_hw *hw, unsigned long rate,
-				       unsigned long parent_rate)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
-	unsigned long div;
+अटल पूर्णांक at91sam9x5_clk_usb_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+	अचिन्हित दीर्घ भाग;
 
-	if (!rate)
-		return -EINVAL;
+	अगर (!rate)
+		वापस -EINVAL;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (div > SAM9X5_USB_MAX_DIV + 1 || !div)
-		return -EINVAL;
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर (भाग > SAM9X5_USB_MAX_DIV + 1 || !भाग)
+		वापस -EINVAL;
 
 	regmap_update_bits(usb->regmap, AT91_PMC_USB, AT91_PMC_OHCIUSBDIV,
-			   (div - 1) << SAM9X5_USB_DIV_SHIFT);
+			   (भाग - 1) << SAM9X5_USB_DIV_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops at91sam9x5_usb_ops = {
+अटल स्थिर काष्ठा clk_ops at91sam9x5_usb_ops = अणु
 	.recalc_rate = at91sam9x5_clk_usb_recalc_rate,
 	.determine_rate = at91sam9x5_clk_usb_determine_rate,
 	.get_parent = at91sam9x5_clk_usb_get_parent,
 	.set_parent = at91sam9x5_clk_usb_set_parent,
 	.set_rate = at91sam9x5_clk_usb_set_rate,
-};
+पूर्ण;
 
-static int at91sam9n12_clk_usb_enable(struct clk_hw *hw)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+अटल पूर्णांक at91sam9n12_clk_usb_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
 
 	regmap_update_bits(usb->regmap, AT91_PMC_USB, AT91_PMC_USBS,
 			   AT91_PMC_USBS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void at91sam9n12_clk_usb_disable(struct clk_hw *hw)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+अटल व्योम at91sam9n12_clk_usb_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
 
 	regmap_update_bits(usb->regmap, AT91_PMC_USB, AT91_PMC_USBS, 0);
-}
+पूर्ण
 
-static int at91sam9n12_clk_usb_is_enabled(struct clk_hw *hw)
-{
-	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
-	unsigned int usbr;
+अटल पूर्णांक at91sam9n12_clk_usb_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(hw);
+	अचिन्हित पूर्णांक usbr;
 
-	regmap_read(usb->regmap, AT91_PMC_USB, &usbr);
+	regmap_पढ़ो(usb->regmap, AT91_PMC_USB, &usbr);
 
-	return usbr & AT91_PMC_USBS;
-}
+	वापस usbr & AT91_PMC_USBS;
+पूर्ण
 
-static const struct clk_ops at91sam9n12_usb_ops = {
+अटल स्थिर काष्ठा clk_ops at91sam9n12_usb_ops = अणु
 	.enable = at91sam9n12_clk_usb_enable,
 	.disable = at91sam9n12_clk_usb_disable,
 	.is_enabled = at91sam9n12_clk_usb_is_enabled,
 	.recalc_rate = at91sam9x5_clk_usb_recalc_rate,
 	.determine_rate = at91sam9x5_clk_usb_determine_rate,
 	.set_rate = at91sam9x5_clk_usb_set_rate,
-};
+पूर्ण;
 
-static struct clk_hw * __init
-_at91sam9x5_clk_register_usb(struct regmap *regmap, const char *name,
-			     const char **parent_names, u8 num_parents,
+अटल काष्ठा clk_hw * __init
+_at91sam9x5_clk_रेजिस्टर_usb(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			     स्थिर अक्षर **parent_names, u8 num_parents,
 			     u32 usbs_mask)
-{
-	struct at91sam9x5_clk_usb *usb;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	usb = kzalloc(sizeof(*usb), GFP_KERNEL);
-	if (!usb)
-		return ERR_PTR(-ENOMEM);
+	usb = kzalloc(माप(*usb), GFP_KERNEL);
+	अगर (!usb)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &at91sam9x5_usb_ops;
@@ -219,43 +220,43 @@ _at91sam9x5_clk_register_usb(struct regmap *regmap, const char *name,
 	usb->num_parents = num_parents;
 
 	hw = &usb->hw;
-	ret = clk_hw_register(NULL, &usb->hw);
-	if (ret) {
-		kfree(usb);
+	ret = clk_hw_रेजिस्टर(शून्य, &usb->hw);
+	अगर (ret) अणु
+		kमुक्त(usb);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-struct clk_hw * __init
-at91sam9x5_clk_register_usb(struct regmap *regmap, const char *name,
-			    const char **parent_names, u8 num_parents)
-{
-	return _at91sam9x5_clk_register_usb(regmap, name, parent_names,
+काष्ठा clk_hw * __init
+at91sam9x5_clk_रेजिस्टर_usb(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			    स्थिर अक्षर **parent_names, u8 num_parents)
+अणु
+	वापस _at91sam9x5_clk_रेजिस्टर_usb(regmap, name, parent_names,
 					    num_parents, SAM9X5_USBS_MASK);
-}
+पूर्ण
 
-struct clk_hw * __init
-sam9x60_clk_register_usb(struct regmap *regmap, const char *name,
-			 const char **parent_names, u8 num_parents)
-{
-	return _at91sam9x5_clk_register_usb(regmap, name, parent_names,
+काष्ठा clk_hw * __init
+sam9x60_clk_रेजिस्टर_usb(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			 स्थिर अक्षर **parent_names, u8 num_parents)
+अणु
+	वापस _at91sam9x5_clk_रेजिस्टर_usb(regmap, name, parent_names,
 					    num_parents, SAM9X60_USBS_MASK);
-}
+पूर्ण
 
-struct clk_hw * __init
-at91sam9n12_clk_register_usb(struct regmap *regmap, const char *name,
-			     const char *parent_name)
-{
-	struct at91sam9x5_clk_usb *usb;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw * __init
+at91sam9n12_clk_रेजिस्टर_usb(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			     स्थिर अक्षर *parent_name)
+अणु
+	काष्ठा at91sam9x5_clk_usb *usb;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	usb = kzalloc(sizeof(*usb), GFP_KERNEL);
-	if (!usb)
-		return ERR_PTR(-ENOMEM);
+	usb = kzalloc(माप(*usb), GFP_KERNEL);
+	अगर (!usb)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &at91sam9n12_usb_ops;
@@ -267,112 +268,112 @@ at91sam9n12_clk_register_usb(struct regmap *regmap, const char *name,
 	usb->regmap = regmap;
 
 	hw = &usb->hw;
-	ret = clk_hw_register(NULL, &usb->hw);
-	if (ret) {
-		kfree(usb);
+	ret = clk_hw_रेजिस्टर(शून्य, &usb->hw);
+	अगर (ret) अणु
+		kमुक्त(usb);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static unsigned long at91rm9200_clk_usb_recalc_rate(struct clk_hw *hw,
-						    unsigned long parent_rate)
-{
-	struct at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
-	unsigned int pllbr;
-	u8 usbdiv;
+अटल अचिन्हित दीर्घ at91rm9200_clk_usb_recalc_rate(काष्ठा clk_hw *hw,
+						    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
+	अचिन्हित पूर्णांक pllbr;
+	u8 usbभाग;
 
-	regmap_read(usb->regmap, AT91_CKGR_PLLBR, &pllbr);
+	regmap_पढ़ो(usb->regmap, AT91_CKGR_PLLBR, &pllbr);
 
-	usbdiv = (pllbr & AT91_PMC_USBDIV) >> RM9200_USB_DIV_SHIFT;
-	if (usb->divisors[usbdiv])
-		return parent_rate / usb->divisors[usbdiv];
+	usbभाग = (pllbr & AT91_PMC_USBDIV) >> RM9200_USB_DIV_SHIFT;
+	अगर (usb->भागisors[usbभाग])
+		वापस parent_rate / usb->भागisors[usbभाग];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long at91rm9200_clk_usb_round_rate(struct clk_hw *hw, unsigned long rate,
-					  unsigned long *parent_rate)
-{
-	struct at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
-	struct clk_hw *parent = clk_hw_get_parent(hw);
-	unsigned long bestrate = 0;
-	int bestdiff = -1;
-	unsigned long tmprate;
-	int tmpdiff;
-	int i = 0;
+अटल दीर्घ at91rm9200_clk_usb_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+					  अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
+	काष्ठा clk_hw *parent = clk_hw_get_parent(hw);
+	अचिन्हित दीर्घ bestrate = 0;
+	पूर्णांक bestdअगरf = -1;
+	अचिन्हित दीर्घ पंचांगprate;
+	पूर्णांक पंचांगpdअगरf;
+	पूर्णांक i = 0;
 
-	for (i = 0; i < RM9200_USB_DIV_TAB_SIZE; i++) {
-		unsigned long tmp_parent_rate;
+	क्रम (i = 0; i < RM9200_USB_DIV_TAB_SIZE; i++) अणु
+		अचिन्हित दीर्घ पंचांगp_parent_rate;
 
-		if (!usb->divisors[i])
-			continue;
+		अगर (!usb->भागisors[i])
+			जारी;
 
-		tmp_parent_rate = rate * usb->divisors[i];
-		tmp_parent_rate = clk_hw_round_rate(parent, tmp_parent_rate);
-		tmprate = DIV_ROUND_CLOSEST(tmp_parent_rate, usb->divisors[i]);
-		if (tmprate < rate)
-			tmpdiff = rate - tmprate;
-		else
-			tmpdiff = tmprate - rate;
+		पंचांगp_parent_rate = rate * usb->भागisors[i];
+		पंचांगp_parent_rate = clk_hw_round_rate(parent, पंचांगp_parent_rate);
+		पंचांगprate = DIV_ROUND_CLOSEST(पंचांगp_parent_rate, usb->भागisors[i]);
+		अगर (पंचांगprate < rate)
+			पंचांगpdअगरf = rate - पंचांगprate;
+		अन्यथा
+			पंचांगpdअगरf = पंचांगprate - rate;
 
-		if (bestdiff < 0 || bestdiff > tmpdiff) {
-			bestrate = tmprate;
-			bestdiff = tmpdiff;
-			*parent_rate = tmp_parent_rate;
-		}
+		अगर (bestdअगरf < 0 || bestdअगरf > पंचांगpdअगरf) अणु
+			bestrate = पंचांगprate;
+			bestdअगरf = पंचांगpdअगरf;
+			*parent_rate = पंचांगp_parent_rate;
+		पूर्ण
 
-		if (!bestdiff)
-			break;
-	}
+		अगर (!bestdअगरf)
+			अवरोध;
+	पूर्ण
 
-	return bestrate;
-}
+	वापस bestrate;
+पूर्ण
 
-static int at91rm9200_clk_usb_set_rate(struct clk_hw *hw, unsigned long rate,
-				       unsigned long parent_rate)
-{
-	int i;
-	struct at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
-	unsigned long div;
+अटल पूर्णांक at91rm9200_clk_usb_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				       अचिन्हित दीर्घ parent_rate)
+अणु
+	पूर्णांक i;
+	काष्ठा at91rm9200_clk_usb *usb = to_at91rm9200_clk_usb(hw);
+	अचिन्हित दीर्घ भाग;
 
-	if (!rate)
-		return -EINVAL;
+	अगर (!rate)
+		वापस -EINVAL;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
 
-	for (i = 0; i < RM9200_USB_DIV_TAB_SIZE; i++) {
-		if (usb->divisors[i] == div) {
+	क्रम (i = 0; i < RM9200_USB_DIV_TAB_SIZE; i++) अणु
+		अगर (usb->भागisors[i] == भाग) अणु
 			regmap_update_bits(usb->regmap, AT91_CKGR_PLLBR,
 					   AT91_PMC_USBDIV,
 					   i << RM9200_USB_DIV_SHIFT);
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct clk_ops at91rm9200_usb_ops = {
+अटल स्थिर काष्ठा clk_ops at91rm9200_usb_ops = अणु
 	.recalc_rate = at91rm9200_clk_usb_recalc_rate,
 	.round_rate = at91rm9200_clk_usb_round_rate,
 	.set_rate = at91rm9200_clk_usb_set_rate,
-};
+पूर्ण;
 
-struct clk_hw * __init
-at91rm9200_clk_register_usb(struct regmap *regmap, const char *name,
-			    const char *parent_name, const u32 *divisors)
-{
-	struct at91rm9200_clk_usb *usb;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw * __init
+at91rm9200_clk_रेजिस्टर_usb(काष्ठा regmap *regmap, स्थिर अक्षर *name,
+			    स्थिर अक्षर *parent_name, स्थिर u32 *भागisors)
+अणु
+	काष्ठा at91rm9200_clk_usb *usb;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	usb = kzalloc(sizeof(*usb), GFP_KERNEL);
-	if (!usb)
-		return ERR_PTR(-ENOMEM);
+	usb = kzalloc(माप(*usb), GFP_KERNEL);
+	अगर (!usb)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
 	init.ops = &at91rm9200_usb_ops;
@@ -382,14 +383,14 @@ at91rm9200_clk_register_usb(struct regmap *regmap, const char *name,
 
 	usb->hw.init = &init;
 	usb->regmap = regmap;
-	memcpy(usb->divisors, divisors, sizeof(usb->divisors));
+	स_नकल(usb->भागisors, भागisors, माप(usb->भागisors));
 
 	hw = &usb->hw;
-	ret = clk_hw_register(NULL, &usb->hw);
-	if (ret) {
-		kfree(usb);
+	ret = clk_hw_रेजिस्टर(शून्य, &usb->hw);
+	अगर (ret) अणु
+		kमुक्त(usb);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

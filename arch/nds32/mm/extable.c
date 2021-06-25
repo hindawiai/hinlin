@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/extable.h>
-#include <linux/uaccess.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/uaccess.h>
 
-int fixup_exception(struct pt_regs *regs)
-{
-	const struct exception_table_entry *fixup;
+पूर्णांक fixup_exception(काष्ठा pt_regs *regs)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
 
-	fixup = search_exception_tables(instruction_pointer(regs));
-	if (fixup)
+	fixup = search_exception_tables(inकाष्ठाion_poपूर्णांकer(regs));
+	अगर (fixup)
 		regs->ipc = fixup->fixup;
 
-	return fixup != NULL;
-}
+	वापस fixup != शून्य;
+पूर्ण

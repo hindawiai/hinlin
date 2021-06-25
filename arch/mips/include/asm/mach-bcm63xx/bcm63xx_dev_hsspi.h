@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_DEV_HSSPI_H
-#define BCM63XX_DEV_HSSPI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_DEV_HSSPI_H
+#घोषणा BCM63XX_DEV_HSSPI_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-int bcm63xx_hsspi_register(void);
+पूर्णांक bcm63xx_hsspi_रेजिस्टर(व्योम);
 
-#endif /* BCM63XX_DEV_HSSPI_H */
+#पूर्ण_अगर /* BCM63XX_DEV_HSSPI_H */

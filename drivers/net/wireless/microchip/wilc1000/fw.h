@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2012 - 2018 Microchip Technology Inc., and its subsidiaries.
  * All rights reserved.
  */
 
-#ifndef WILC_FW_H
-#define WILC_FW_H
+#अगर_अघोषित WILC_FW_H
+#घोषणा WILC_FW_H
 
-#include <linux/ieee80211.h>
+#समावेश <linux/ieee80211.h>
 
-#define WILC_MAX_NUM_STA			9
-#define WILC_MAX_RATES_SUPPORTED		12
-#define WILC_MAX_NUM_PMKIDS			16
-#define WILC_MAX_NUM_SCANNED_CH			14
+#घोषणा WILC_MAX_NUM_STA			9
+#घोषणा WILC_MAX_RATES_SUPPORTED		12
+#घोषणा WILC_MAX_NUM_PMKIDS			16
+#घोषणा WILC_MAX_NUM_SCANNED_CH			14
 
-struct wilc_assoc_resp {
+काष्ठा wilc_assoc_resp अणु
 	__le16 capab_info;
 	__le16 status_code;
 	__le16 aid;
-} __packed;
+पूर्ण __packed;
 
-struct wilc_pmkid {
+काष्ठा wilc_pmkid अणु
 	u8 bssid[ETH_ALEN];
 	u8 pmkid[WLAN_PMKID_LEN];
-} __packed;
+पूर्ण __packed;
 
-struct wilc_pmkid_attr {
+काष्ठा wilc_pmkid_attr अणु
 	u8 numpmkid;
-	struct wilc_pmkid pmkidlist[WILC_MAX_NUM_PMKIDS];
-} __packed;
+	काष्ठा wilc_pmkid pmkidlist[WILC_MAX_NUM_PMKIDS];
+पूर्ण __packed;
 
-struct wilc_reg_frame {
+काष्ठा wilc_reg_frame अणु
 	u8 reg;
 	u8 reg_id;
 	__le16 frame_type;
-} __packed;
+पूर्ण __packed;
 
-struct wilc_drv_handler {
+काष्ठा wilc_drv_handler अणु
 	__le32 handler;
 	u8 mode;
-} __packed;
+पूर्ण __packed;
 
-struct wilc_wep_key {
+काष्ठा wilc_wep_key अणु
 	u8 index;
 	u8 key_len;
 	u8 key[];
-} __packed;
+पूर्ण __packed;
 
-struct wilc_sta_wpa_ptk {
+काष्ठा wilc_sta_wpa_ptk अणु
 	u8 mac_addr[ETH_ALEN];
 	u8 key_len;
 	u8 key[];
-} __packed;
+पूर्ण __packed;
 
-struct wilc_ap_wpa_ptk {
+काष्ठा wilc_ap_wpa_ptk अणु
 	u8 mac_addr[ETH_ALEN];
 	u8 index;
 	u8 key_len;
 	u8 key[];
-} __packed;
+पूर्ण __packed;
 
-struct wilc_gtk_key {
+काष्ठा wilc_gtk_key अणु
 	u8 mac_addr[ETH_ALEN];
 	u8 rsc[8];
 	u8 index;
 	u8 key_len;
 	u8 key[];
-} __packed;
+पूर्ण __packed;
 
-struct wilc_op_mode {
+काष्ठा wilc_op_mode अणु
 	__le32 mode;
-} __packed;
+पूर्ण __packed;
 
-struct wilc_noa_opp_enable {
-	u8 ct_window;
+काष्ठा wilc_noa_opp_enable अणु
+	u8 ct_winकरोw;
 	u8 cnt;
 	__le32 duration;
-	__le32 interval;
-	__le32 start_time;
-} __packed;
+	__le32 पूर्णांकerval;
+	__le32 start_समय;
+पूर्ण __packed;
 
-struct wilc_noa_opp_disable {
+काष्ठा wilc_noa_opp_disable अणु
 	u8 cnt;
 	__le32 duration;
-	__le32 interval;
-	__le32 start_time;
-} __packed;
+	__le32 पूर्णांकerval;
+	__le32 start_समय;
+पूर्ण __packed;
 
-struct wilc_join_bss_param {
-	char ssid[IEEE80211_MAX_SSID_LEN];
+काष्ठा wilc_join_bss_param अणु
+	अक्षर ssid[IEEE80211_MAX_SSID_LEN];
 	u8 ssid_terminator;
 	u8 bss_type;
 	u8 ch;
@@ -111,9 +112,9 @@ struct wilc_join_bss_param {
 	__le32 tsf_lo;
 	u8 idx;
 	u8 opp_enabled;
-	union {
-		struct wilc_noa_opp_disable opp_dis;
-		struct wilc_noa_opp_enable opp_en;
-	};
-} __packed;
-#endif
+	जोड़ अणु
+		काष्ठा wilc_noa_opp_disable opp_dis;
+		काष्ठा wilc_noa_opp_enable opp_en;
+	पूर्ण;
+पूर्ण __packed;
+#पूर्ण_अगर

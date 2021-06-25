@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * hibernate.c:  Hibernaton support specific for sparc64.
+ * hibernate.c:  Hibernaton support specअगरic क्रम sparc64.
  *
  * Copyright (C) 2013 Kirill V Tkhai (tkhai@yandex.ru)
  */
 
-#include <linux/mm.h>
+#समावेश <linux/mm.h>
 
-#include <asm/hibernate.h>
-#include <asm/visasm.h>
-#include <asm/page.h>
-#include <asm/sections.h>
-#include <asm/tlb.h>
+#समावेश <यंत्र/hibernate.h>
+#समावेश <यंत्र/visयंत्र.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/tlb.h>
 
-struct saved_context saved_context;
+काष्ठा saved_context saved_context;
 
 /*
- *	pfn_is_nosave - check if given pfn is in the 'nosave' section
+ *	pfn_is_nosave - check अगर given pfn is in the 'nosave' section
  */
 
-int pfn_is_nosave(unsigned long pfn)
-{
-	unsigned long nosave_begin_pfn = PFN_DOWN((unsigned long)&__nosave_begin);
-	unsigned long nosave_end_pfn = PFN_DOWN((unsigned long)&__nosave_end);
+पूर्णांक pfn_is_nosave(अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ nosave_begin_pfn = PFN_DOWN((अचिन्हित दीर्घ)&__nosave_begin);
+	अचिन्हित दीर्घ nosave_end_pfn = PFN_DOWN((अचिन्हित दीर्घ)&__nosave_end);
 
-	return (pfn >= nosave_begin_pfn) && (pfn < nosave_end_pfn);
-}
+	वापस (pfn >= nosave_begin_pfn) && (pfn < nosave_end_pfn);
+पूर्ण
 
-void save_processor_state(void)
-{
+व्योम save_processor_state(व्योम)
+अणु
 	save_and_clear_fpu();
-}
+पूर्ण
 
-void restore_processor_state(void)
-{
-	struct mm_struct *mm = current->active_mm;
+व्योम restore_processor_state(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->active_mm;
 
-	tsb_context_switch_ctx(mm, CTX_HWBITS(mm->context));
-}
+	tsb_context_चयन_ctx(mm, CTX_HWBITS(mm->context));
+पूर्ण

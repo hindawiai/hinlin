@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Samsung EXYNOS4x12 FIMC-IS (Imaging Subsystem) driver
+ * Samsung EXYNOS4x12 FIMC-IS (Imaging Subप्रणाली) driver
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *
  * Authors:  Sylwester Nawrocki <s.nawrocki@samsung.com>
  *	     Younghwan Joo <yhwan.joo@samsung.com>
  */
-#ifndef FIMC_IS_SENSOR_H_
-#define FIMC_IS_SENSOR_H_
+#अगर_अघोषित FIMC_IS_SENSOR_H_
+#घोषणा FIMC_IS_SENSOR_H_
 
-#include <linux/of.h>
-#include <linux/types.h>
+#समावेश <linux/of.h>
+#समावेश <linux/types.h>
 
-#define S5K6A3_OPEN_TIMEOUT		2000 /* ms */
-#define S5K6A3_SENSOR_WIDTH		1392
-#define S5K6A3_SENSOR_HEIGHT		1392
+#घोषणा S5K6A3_OPEN_TIMEOUT		2000 /* ms */
+#घोषणा S5K6A3_SENSOR_WIDTH		1392
+#घोषणा S5K6A3_SENSOR_HEIGHT		1392
 
-enum fimc_is_sensor_id {
+क्रमागत fimc_is_sensor_id अणु
 	FIMC_IS_SENSOR_ID_S5K3H2 = 1,
 	FIMC_IS_SENSOR_ID_S5K6A3,
 	FIMC_IS_SENSOR_ID_S5K4E5,
 	FIMC_IS_SENSOR_ID_S5K3H7,
 	FIMC_IS_SENSOR_ID_CUSTOM,
 	FIMC_IS_SENSOR_ID_END
-};
+पूर्ण;
 
-#define IS_SENSOR_CTRL_BUS_I2C0		0
-#define IS_SENSOR_CTRL_BUS_I2C1		1
+#घोषणा IS_SENSOR_CTRL_BUS_I2C0		0
+#घोषणा IS_SENSOR_CTRL_BUS_I2C1		1
 
-struct sensor_drv_data {
-	enum fimc_is_sensor_id id;
-	/* sensor open timeout in ms */
-	unsigned short open_timeout;
-};
+काष्ठा sensor_drv_data अणु
+	क्रमागत fimc_is_sensor_id id;
+	/* sensor खोलो समयout in ms */
+	अचिन्हित लघु खोलो_समयout;
+पूर्ण;
 
 /**
- * struct fimc_is_sensor - fimc-is sensor data structure
- * @drvdata: a pointer to the sensor's parameters data structure
+ * काष्ठा fimc_is_sensor - fimc-is sensor data काष्ठाure
+ * @drvdata: a poपूर्णांकer to the sensor's parameters data काष्ठाure
  * @i2c_bus: ISP I2C bus index (0...1)
  * @test_pattern: true to enable video test pattern
  */
-struct fimc_is_sensor {
-	const struct sensor_drv_data *drvdata;
-	unsigned int i2c_bus;
+काष्ठा fimc_is_sensor अणु
+	स्थिर काष्ठा sensor_drv_data *drvdata;
+	अचिन्हित पूर्णांक i2c_bus;
 	u8 test_pattern;
-};
+पूर्ण;
 
-const struct sensor_drv_data *fimc_is_sensor_get_drvdata(
-				struct device_node *node);
+स्थिर काष्ठा sensor_drv_data *fimc_is_sensor_get_drvdata(
+				काष्ठा device_node *node);
 
-#endif /* FIMC_IS_SENSOR_H_ */
+#पूर्ण_अगर /* FIMC_IS_SENSOR_H_ */

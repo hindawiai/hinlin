@@ -1,1 +1,2 @@
-#include <sysdep/kernel-offsets.h>
+<शैली गुरु>
+#समावेश <sysdep/kernel-offsets.h>

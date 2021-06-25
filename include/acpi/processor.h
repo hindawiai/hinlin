@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ACPI_PROCESSOR_H
-#define __ACPI_PROCESSOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ACPI_PROCESSOR_H
+#घोषणा __ACPI_PROCESSOR_H
 
-#include <linux/kernel.h>
-#include <linux/cpu.h>
-#include <linux/cpufreq.h>
-#include <linux/pm_qos.h>
-#include <linux/thermal.h>
-#include <asm/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/thermal.h>
+#समावेश <यंत्र/acpi.h>
 
-#define ACPI_PROCESSOR_CLASS		"processor"
-#define ACPI_PROCESSOR_DEVICE_NAME	"Processor"
-#define ACPI_PROCESSOR_DEVICE_HID	"ACPI0007"
-#define ACPI_PROCESSOR_CONTAINER_HID	"ACPI0010"
+#घोषणा ACPI_PROCESSOR_CLASS		"processor"
+#घोषणा ACPI_PROCESSOR_DEVICE_NAME	"Processor"
+#घोषणा ACPI_PROCESSOR_DEVICE_HID	"ACPI0007"
+#घोषणा ACPI_PROCESSOR_CONTAINER_HID	"ACPI0010"
 
-#define ACPI_PROCESSOR_BUSY_METRIC	10
+#घोषणा ACPI_PROCESSOR_BUSY_METRIC	10
 
-#define ACPI_PROCESSOR_MAX_POWER	8
-#define ACPI_PROCESSOR_MAX_C2_LATENCY	100
-#define ACPI_PROCESSOR_MAX_C3_LATENCY	1000
+#घोषणा ACPI_PROCESSOR_MAX_POWER	8
+#घोषणा ACPI_PROCESSOR_MAX_C2_LATENCY	100
+#घोषणा ACPI_PROCESSOR_MAX_C3_LATENCY	1000
 
-#define ACPI_PROCESSOR_MAX_THROTTLING	16
-#define ACPI_PROCESSOR_MAX_THROTTLE	250	/* 25% */
-#define ACPI_PROCESSOR_MAX_DUTY_WIDTH	4
+#घोषणा ACPI_PROCESSOR_MAX_THROTTLING	16
+#घोषणा ACPI_PROCESSOR_MAX_THROTTLE	250	/* 25% */
+#घोषणा ACPI_PROCESSOR_MAX_DUTY_WIDTH	4
 
-#define ACPI_PDC_REVISION_ID		0x1
+#घोषणा ACPI_PDC_REVISION_ID		0x1
 
-#define ACPI_PSD_REV0_REVISION		0	/* Support for _PSD as in ACPI 3.0 */
-#define ACPI_PSD_REV0_ENTRIES		5
+#घोषणा ACPI_PSD_REV0_REVISION		0	/* Support क्रम _PSD as in ACPI 3.0 */
+#घोषणा ACPI_PSD_REV0_ENTRIES		5
 
-#define ACPI_TSD_REV0_REVISION		0	/* Support for _PSD as in ACPI 3.0 */
-#define ACPI_TSD_REV0_ENTRIES		5
+#घोषणा ACPI_TSD_REV0_REVISION		0	/* Support क्रम _PSD as in ACPI 3.0 */
+#घोषणा ACPI_TSD_REV0_ENTRIES		5
 /*
  * Types of coordination defined in ACPI 3.0. Same macros can be used across
  * P, C and T states
  */
-#define DOMAIN_COORD_TYPE_SW_ALL	0xfc
-#define DOMAIN_COORD_TYPE_SW_ANY	0xfd
-#define DOMAIN_COORD_TYPE_HW_ALL	0xfe
+#घोषणा DOMAIN_COORD_TYPE_SW_ALL	0xfc
+#घोषणा DOMAIN_COORD_TYPE_SW_ANY	0xfd
+#घोषणा DOMAIN_COORD_TYPE_HW_ALL	0xfe
 
-#define ACPI_CSTATE_SYSTEMIO	0
-#define ACPI_CSTATE_FFH		1
-#define ACPI_CSTATE_HALT	2
-#define ACPI_CSTATE_INTEGER	3
+#घोषणा ACPI_CSTATE_SYSTEMIO	0
+#घोषणा ACPI_CSTATE_FFH		1
+#घोषणा ACPI_CSTATE_HALT	2
+#घोषणा ACPI_CSTATE_INTEGER	3
 
-#define ACPI_CX_DESC_LEN	32
+#घोषणा ACPI_CX_DESC_LEN	32
 
 /* Power Management */
 
-struct acpi_processor_cx;
+काष्ठा acpi_processor_cx;
 
-struct acpi_power_register {
+काष्ठा acpi_घातer_रेजिस्टर अणु
 	u8 descriptor;
 	u16 length;
 	u8 space_id;
@@ -58,9 +59,9 @@ struct acpi_power_register {
 	u8 bit_offset;
 	u8 access_size;
 	u64 address;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_processor_cx {
+काष्ठा acpi_processor_cx अणु
 	u8 valid;
 	u8 type;
 	u32 address;
@@ -68,12 +69,12 @@ struct acpi_processor_cx {
 	u8 index;
 	u32 latency;
 	u8 bm_sts_skip;
-	char desc[ACPI_CX_DESC_LEN];
-};
+	अक्षर desc[ACPI_CX_DESC_LEN];
+पूर्ण;
 
-struct acpi_lpi_state {
+काष्ठा acpi_lpi_state अणु
 	u32 min_residency;
-	u32 wake_latency; /* worst case */
+	u32 wake_latency; /* worst हाल */
 	u32 flags;
 	u32 arch_flags;
 	u32 res_cnt_freq;
@@ -81,29 +82,29 @@ struct acpi_lpi_state {
 	u64 address;
 	u8 index;
 	u8 entry_method;
-	char desc[ACPI_CX_DESC_LEN];
-};
+	अक्षर desc[ACPI_CX_DESC_LEN];
+पूर्ण;
 
-struct acpi_processor_power {
-	int count;
-	union {
-		struct acpi_processor_cx states[ACPI_PROCESSOR_MAX_POWER];
-		struct acpi_lpi_state lpi_states[ACPI_PROCESSOR_MAX_POWER];
-	};
-	int timer_broadcast_on_state;
-};
+काष्ठा acpi_processor_घातer अणु
+	पूर्णांक count;
+	जोड़ अणु
+		काष्ठा acpi_processor_cx states[ACPI_PROCESSOR_MAX_POWER];
+		काष्ठा acpi_lpi_state lpi_states[ACPI_PROCESSOR_MAX_POWER];
+	पूर्ण;
+	पूर्णांक समयr_broadcast_on_state;
+पूर्ण;
 
-/* Performance Management */
+/* Perक्रमmance Management */
 
-struct acpi_psd_package {
+काष्ठा acpi_psd_package अणु
 	u64 num_entries;
 	u64 revision;
-	u64 domain;
+	u64 करोमुख्य;
 	u64 coord_type;
 	u64 num_processors;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_pct_register {
+काष्ठा acpi_pct_रेजिस्टर अणु
 	u8 descriptor;
 	u16 length;
 	u8 space_id;
@@ -111,40 +112,40 @@ struct acpi_pct_register {
 	u8 bit_offset;
 	u8 reserved;
 	u64 address;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_processor_px {
+काष्ठा acpi_processor_px अणु
 	u64 core_frequency;	/* megahertz */
-	u64 power;	/* milliWatts */
+	u64 घातer;	/* milliWatts */
 	u64 transition_latency;	/* microseconds */
 	u64 bus_master_latency;	/* microseconds */
 	u64 control;	/* control value */
 	u64 status;	/* success indicator */
-};
+पूर्ण;
 
-struct acpi_processor_performance {
-	unsigned int state;
-	unsigned int platform_limit;
-	struct acpi_pct_register control_register;
-	struct acpi_pct_register status_register;
-	unsigned int state_count;
-	struct acpi_processor_px *states;
-	struct acpi_psd_package domain_info;
+काष्ठा acpi_processor_perक्रमmance अणु
+	अचिन्हित पूर्णांक state;
+	अचिन्हित पूर्णांक platक्रमm_limit;
+	काष्ठा acpi_pct_रेजिस्टर control_रेजिस्टर;
+	काष्ठा acpi_pct_रेजिस्टर status_रेजिस्टर;
+	अचिन्हित पूर्णांक state_count;
+	काष्ठा acpi_processor_px *states;
+	काष्ठा acpi_psd_package करोमुख्य_info;
 	cpumask_var_t shared_cpu_map;
-	unsigned int shared_type;
-};
+	अचिन्हित पूर्णांक shared_type;
+पूर्ण;
 
 /* Throttling Control */
 
-struct acpi_tsd_package {
+काष्ठा acpi_tsd_package अणु
 	u64 num_entries;
 	u64 revision;
-	u64 domain;
+	u64 करोमुख्य;
 	u64 coord_type;
 	u64 num_processors;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_ptc_register {
+काष्ठा acpi_ptc_रेजिस्टर अणु
 	u8 descriptor;
 	u16 length;
 	u8 space_id;
@@ -152,304 +153,304 @@ struct acpi_ptc_register {
 	u8 bit_offset;
 	u8 reserved;
 	u64 address;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_processor_tx_tss {
+काष्ठा acpi_processor_tx_tss अणु
 	u64 freqpercentage;	/* */
-	u64 power;	/* milliWatts */
+	u64 घातer;	/* milliWatts */
 	u64 transition_latency;	/* microseconds */
 	u64 control;	/* control value */
 	u64 status;	/* success indicator */
-};
-struct acpi_processor_tx {
-	u16 power;
-	u16 performance;
-};
+पूर्ण;
+काष्ठा acpi_processor_tx अणु
+	u16 घातer;
+	u16 perक्रमmance;
+पूर्ण;
 
-struct acpi_processor;
-struct acpi_processor_throttling {
-	unsigned int state;
-	unsigned int platform_limit;
-	struct acpi_pct_register control_register;
-	struct acpi_pct_register status_register;
-	unsigned int state_count;
-	struct acpi_processor_tx_tss *states_tss;
-	struct acpi_tsd_package domain_info;
+काष्ठा acpi_processor;
+काष्ठा acpi_processor_throttling अणु
+	अचिन्हित पूर्णांक state;
+	अचिन्हित पूर्णांक platक्रमm_limit;
+	काष्ठा acpi_pct_रेजिस्टर control_रेजिस्टर;
+	काष्ठा acpi_pct_रेजिस्टर status_रेजिस्टर;
+	अचिन्हित पूर्णांक state_count;
+	काष्ठा acpi_processor_tx_tss *states_tss;
+	काष्ठा acpi_tsd_package करोमुख्य_info;
 	cpumask_var_t shared_cpu_map;
-	int (*acpi_processor_get_throttling) (struct acpi_processor * pr);
-	int (*acpi_processor_set_throttling) (struct acpi_processor * pr,
-					      int state, bool force);
+	पूर्णांक (*acpi_processor_get_throttling) (काष्ठा acpi_processor * pr);
+	पूर्णांक (*acpi_processor_set_throttling) (काष्ठा acpi_processor * pr,
+					      पूर्णांक state, bool क्रमce);
 
 	u32 address;
 	u8 duty_offset;
 	u8 duty_width;
 	u8 tsd_valid_flag;
-	unsigned int shared_type;
-	struct acpi_processor_tx states[ACPI_PROCESSOR_MAX_THROTTLING];
-};
+	अचिन्हित पूर्णांक shared_type;
+	काष्ठा acpi_processor_tx states[ACPI_PROCESSOR_MAX_THROTTLING];
+पूर्ण;
 
 /* Limit Interface */
 
-struct acpi_processor_lx {
-	int px;			/* performance state */
-	int tx;			/* throttle level */
-};
+काष्ठा acpi_processor_lx अणु
+	पूर्णांक px;			/* perक्रमmance state */
+	पूर्णांक tx;			/* throttle level */
+पूर्ण;
 
-struct acpi_processor_limit {
-	struct acpi_processor_lx state;	/* current limit */
-	struct acpi_processor_lx thermal;	/* thermal limit */
-	struct acpi_processor_lx user;	/* user limit */
-};
+काष्ठा acpi_processor_limit अणु
+	काष्ठा acpi_processor_lx state;	/* current limit */
+	काष्ठा acpi_processor_lx thermal;	/* thermal limit */
+	काष्ठा acpi_processor_lx user;	/* user limit */
+पूर्ण;
 
-struct acpi_processor_flags {
-	u8 power:1;
-	u8 performance:1;
+काष्ठा acpi_processor_flags अणु
+	u8 घातer:1;
+	u8 perक्रमmance:1;
 	u8 throttling:1;
 	u8 limit:1;
 	u8 bm_control:1;
 	u8 bm_check:1;
 	u8 has_cst:1;
 	u8 has_lpi:1;
-	u8 power_setup_done:1;
+	u8 घातer_setup_करोne:1;
 	u8 bm_rld_set:1;
 	u8 need_hotplug_init:1;
-};
+पूर्ण;
 
-struct acpi_processor {
+काष्ठा acpi_processor अणु
 	acpi_handle handle;
 	u32 acpi_id;
-	phys_cpuid_t phys_id;	/* CPU hardware ID such as APIC ID for x86 */
+	phys_cpuid_t phys_id;	/* CPU hardware ID such as APIC ID क्रम x86 */
 	u32 id;		/* CPU logical ID allocated by OS */
 	u32 pblk;
-	int performance_platform_limit;
-	int throttling_platform_limit;
+	पूर्णांक perक्रमmance_platक्रमm_limit;
+	पूर्णांक throttling_platक्रमm_limit;
 	/* 0 - states 0..n-th state available */
 
-	struct acpi_processor_flags flags;
-	struct acpi_processor_power power;
-	struct acpi_processor_performance *performance;
-	struct acpi_processor_throttling throttling;
-	struct acpi_processor_limit limit;
-	struct thermal_cooling_device *cdev;
-	struct device *dev; /* Processor device. */
-	struct freq_qos_request perflib_req;
-	struct freq_qos_request thermal_req;
-};
+	काष्ठा acpi_processor_flags flags;
+	काष्ठा acpi_processor_घातer घातer;
+	काष्ठा acpi_processor_perक्रमmance *perक्रमmance;
+	काष्ठा acpi_processor_throttling throttling;
+	काष्ठा acpi_processor_limit limit;
+	काष्ठा thermal_cooling_device *cdev;
+	काष्ठा device *dev; /* Processor device. */
+	काष्ठा freq_qos_request perflib_req;
+	काष्ठा freq_qos_request thermal_req;
+पूर्ण;
 
-struct acpi_processor_errata {
+काष्ठा acpi_processor_errata अणु
 	u8 smp;
-	struct {
+	काष्ठा अणु
 		u8 throttle:1;
 		u8 fdma:1;
 		u8 reserved:6;
 		u32 bmisx;
-	} piix4;
-};
+	पूर्ण piix4;
+पूर्ण;
 
-extern int acpi_processor_preregister_performance(struct
-						  acpi_processor_performance
-						  __percpu *performance);
+बाह्य पूर्णांक acpi_processor_preरेजिस्टर_perक्रमmance(काष्ठा
+						  acpi_processor_perक्रमmance
+						  __percpu *perक्रमmance);
 
-extern int acpi_processor_register_performance(struct acpi_processor_performance
-					       *performance, unsigned int cpu);
-extern void acpi_processor_unregister_performance(unsigned int cpu);
+बाह्य पूर्णांक acpi_processor_रेजिस्टर_perक्रमmance(काष्ठा acpi_processor_perक्रमmance
+					       *perक्रमmance, अचिन्हित पूर्णांक cpu);
+बाह्य व्योम acpi_processor_unरेजिस्टर_perक्रमmance(अचिन्हित पूर्णांक cpu);
 
-int acpi_processor_pstate_control(void);
+पूर्णांक acpi_processor_pstate_control(व्योम);
 /* note: this locks both the calling module and the processor module
-         if a _PPC object exists, rmmod is disallowed then */
-int acpi_processor_notify_smm(struct module *calling_module);
-int acpi_processor_get_psd(acpi_handle handle,
-			   struct acpi_psd_package *pdomain);
+         अगर a _PPC object exists, rmmod is disallowed then */
+पूर्णांक acpi_processor_notअगरy_smm(काष्ठा module *calling_module);
+पूर्णांक acpi_processor_get_psd(acpi_handle handle,
+			   काष्ठा acpi_psd_package *pकरोमुख्य);
 
 /* parsing the _P* objects. */
-extern int acpi_processor_get_performance_info(struct acpi_processor *pr);
+बाह्य पूर्णांक acpi_processor_get_perक्रमmance_info(काष्ठा acpi_processor *pr);
 
-/* for communication between multiple parts of the processor kernel module */
-DECLARE_PER_CPU(struct acpi_processor *, processors);
-extern struct acpi_processor_errata errata;
+/* क्रम communication between multiple parts of the processor kernel module */
+DECLARE_PER_CPU(काष्ठा acpi_processor *, processors);
+बाह्य काष्ठा acpi_processor_errata errata;
 
-#if defined(ARCH_HAS_POWER_INIT) && defined(CONFIG_ACPI_PROCESSOR_CSTATE)
-void acpi_processor_power_init_bm_check(struct acpi_processor_flags *flags,
-					unsigned int cpu);
-int acpi_processor_ffh_cstate_probe(unsigned int cpu,
-				    struct acpi_processor_cx *cx,
-				    struct acpi_power_register *reg);
-void acpi_processor_ffh_cstate_enter(struct acpi_processor_cx *cstate);
-#else
-static inline void acpi_processor_power_init_bm_check(struct
+#अगर defined(ARCH_HAS_POWER_INIT) && defined(CONFIG_ACPI_PROCESSOR_CSTATE)
+व्योम acpi_processor_घातer_init_bm_check(काष्ठा acpi_processor_flags *flags,
+					अचिन्हित पूर्णांक cpu);
+पूर्णांक acpi_processor_ffh_cstate_probe(अचिन्हित पूर्णांक cpu,
+				    काष्ठा acpi_processor_cx *cx,
+				    काष्ठा acpi_घातer_रेजिस्टर *reg);
+व्योम acpi_processor_ffh_cstate_enter(काष्ठा acpi_processor_cx *cstate);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_processor_घातer_init_bm_check(काष्ठा
 						      acpi_processor_flags
-						      *flags, unsigned int cpu)
-{
+						      *flags, अचिन्हित पूर्णांक cpu)
+अणु
 	flags->bm_check = 1;
-	return;
-}
-static inline int acpi_processor_ffh_cstate_probe(unsigned int cpu,
-						  struct acpi_processor_cx *cx,
-						  struct acpi_power_register
+	वापस;
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_processor_ffh_cstate_probe(अचिन्हित पूर्णांक cpu,
+						  काष्ठा acpi_processor_cx *cx,
+						  काष्ठा acpi_घातer_रेजिस्टर
 						  *reg)
-{
-	return -1;
-}
-static inline void acpi_processor_ffh_cstate_enter(struct acpi_processor_cx
+अणु
+	वापस -1;
+पूर्ण
+अटल अंतरभूत व्योम acpi_processor_ffh_cstate_enter(काष्ठा acpi_processor_cx
 						   *cstate)
-{
-	return;
-}
-#endif
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर
 
-static inline int call_on_cpu(int cpu, long (*fn)(void *), void *arg,
+अटल अंतरभूत पूर्णांक call_on_cpu(पूर्णांक cpu, दीर्घ (*fn)(व्योम *), व्योम *arg,
 			      bool direct)
-{
-	if (direct || (is_percpu_thread() && cpu == smp_processor_id()))
-		return fn(arg);
-	return work_on_cpu(cpu, fn, arg);
-}
+अणु
+	अगर (direct || (is_percpu_thपढ़ो() && cpu == smp_processor_id()))
+		वापस fn(arg);
+	वापस work_on_cpu(cpu, fn, arg);
+पूर्ण
 
 /* in processor_perflib.c */
 
-#ifdef CONFIG_CPU_FREQ
-extern bool acpi_processor_cpufreq_init;
-void acpi_processor_ignore_ppc_init(void);
-void acpi_processor_ppc_init(struct cpufreq_policy *policy);
-void acpi_processor_ppc_exit(struct cpufreq_policy *policy);
-void acpi_processor_ppc_has_changed(struct acpi_processor *pr, int event_flag);
-extern int acpi_processor_get_bios_limit(int cpu, unsigned int *limit);
-#else
-static inline void acpi_processor_ignore_ppc_init(void)
-{
-	return;
-}
-static inline void acpi_processor_ppc_init(struct cpufreq_policy *policy)
-{
-	return;
-}
-static inline void acpi_processor_ppc_exit(struct cpufreq_policy *policy)
-{
-	return;
-}
-static inline void acpi_processor_ppc_has_changed(struct acpi_processor *pr,
-								int event_flag)
-{
-	static unsigned int printout = 1;
-	if (printout) {
-		printk(KERN_WARNING
+#अगर_घोषित CONFIG_CPU_FREQ
+बाह्य bool acpi_processor_cpufreq_init;
+व्योम acpi_processor_ignore_ppc_init(व्योम);
+व्योम acpi_processor_ppc_init(काष्ठा cpufreq_policy *policy);
+व्योम acpi_processor_ppc_निकास(काष्ठा cpufreq_policy *policy);
+व्योम acpi_processor_ppc_has_changed(काष्ठा acpi_processor *pr, पूर्णांक event_flag);
+बाह्य पूर्णांक acpi_processor_get_bios_limit(पूर्णांक cpu, अचिन्हित पूर्णांक *limit);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_processor_ignore_ppc_init(व्योम)
+अणु
+	वापस;
+पूर्ण
+अटल अंतरभूत व्योम acpi_processor_ppc_init(काष्ठा cpufreq_policy *policy)
+अणु
+	वापस;
+पूर्ण
+अटल अंतरभूत व्योम acpi_processor_ppc_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	वापस;
+पूर्ण
+अटल अंतरभूत व्योम acpi_processor_ppc_has_changed(काष्ठा acpi_processor *pr,
+								पूर्णांक event_flag)
+अणु
+	अटल अचिन्हित पूर्णांक prपूर्णांकout = 1;
+	अगर (prपूर्णांकout) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "Warning: Processor Platform Limit event detected, but not handled.\n");
-		printk(KERN_WARNING
+		prपूर्णांकk(KERN_WARNING
 		       "Consider compiling CPUfreq support into your kernel.\n");
-		printout = 0;
-	}
-}
-static inline int acpi_processor_get_bios_limit(int cpu, unsigned int *limit)
-{
-	return -ENODEV;
-}
+		prपूर्णांकout = 0;
+	पूर्ण
+पूर्ण
+अटल अंतरभूत पूर्णांक acpi_processor_get_bios_limit(पूर्णांक cpu, अचिन्हित पूर्णांक *limit)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-#endif				/* CONFIG_CPU_FREQ */
+#पूर्ण_अगर				/* CONFIG_CPU_FREQ */
 
 /* in processor_core.c */
-phys_cpuid_t acpi_get_phys_id(acpi_handle, int type, u32 acpi_id);
+phys_cpuid_t acpi_get_phys_id(acpi_handle, पूर्णांक type, u32 acpi_id);
 phys_cpuid_t acpi_map_madt_entry(u32 acpi_id);
-int acpi_map_cpuid(phys_cpuid_t phys_id, u32 acpi_id);
-int acpi_get_cpuid(acpi_handle, int type, u32 acpi_id);
+पूर्णांक acpi_map_cpuid(phys_cpuid_t phys_id, u32 acpi_id);
+पूर्णांक acpi_get_cpuid(acpi_handle, पूर्णांक type, u32 acpi_id);
 
-#ifdef CONFIG_ACPI_CPPC_LIB
-extern int acpi_cppc_processor_probe(struct acpi_processor *pr);
-extern void acpi_cppc_processor_exit(struct acpi_processor *pr);
-#else
-static inline int acpi_cppc_processor_probe(struct acpi_processor *pr)
-{
-	return 0;
-}
-static inline void acpi_cppc_processor_exit(struct acpi_processor *pr)
-{
-	return;
-}
-#endif	/* CONFIG_ACPI_CPPC_LIB */
+#अगर_घोषित CONFIG_ACPI_CPPC_LIB
+बाह्य पूर्णांक acpi_cppc_processor_probe(काष्ठा acpi_processor *pr);
+बाह्य व्योम acpi_cppc_processor_निकास(काष्ठा acpi_processor *pr);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_cppc_processor_probe(काष्ठा acpi_processor *pr)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम acpi_cppc_processor_निकास(काष्ठा acpi_processor *pr)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_ACPI_CPPC_LIB */
 
 /* in processor_pdc.c */
-void acpi_processor_set_pdc(acpi_handle handle);
+व्योम acpi_processor_set_pdc(acpi_handle handle);
 
 /* in processor_throttling.c */
-#ifdef CONFIG_ACPI_CPU_FREQ_PSS
-int acpi_processor_tstate_has_changed(struct acpi_processor *pr);
-int acpi_processor_get_throttling_info(struct acpi_processor *pr);
-extern int acpi_processor_set_throttling(struct acpi_processor *pr,
-					 int state, bool force);
+#अगर_घोषित CONFIG_ACPI_CPU_FREQ_PSS
+पूर्णांक acpi_processor_tstate_has_changed(काष्ठा acpi_processor *pr);
+पूर्णांक acpi_processor_get_throttling_info(काष्ठा acpi_processor *pr);
+बाह्य पूर्णांक acpi_processor_set_throttling(काष्ठा acpi_processor *pr,
+					 पूर्णांक state, bool क्रमce);
 /*
  * Reevaluate whether the T-state is invalid after one cpu is
- * onlined/offlined. In such case the flags.throttling will be updated.
+ * onlined/offlined. In such हाल the flags.throttling will be updated.
  */
-extern void acpi_processor_reevaluate_tstate(struct acpi_processor *pr,
+बाह्य व्योम acpi_processor_reevaluate_tstate(काष्ठा acpi_processor *pr,
 			bool is_dead);
-extern const struct file_operations acpi_processor_throttling_fops;
-extern void acpi_processor_throttling_init(void);
-#else
-static inline int acpi_processor_tstate_has_changed(struct acpi_processor *pr)
-{
-	return 0;
-}
+बाह्य स्थिर काष्ठा file_operations acpi_processor_throttling_fops;
+बाह्य व्योम acpi_processor_throttling_init(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_processor_tstate_has_changed(काष्ठा acpi_processor *pr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int acpi_processor_get_throttling_info(struct acpi_processor *pr)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_processor_get_throttling_info(काष्ठा acpi_processor *pr)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_processor_set_throttling(struct acpi_processor *pr,
-					 int state, bool force)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_processor_set_throttling(काष्ठा acpi_processor *pr,
+					 पूर्णांक state, bool क्रमce)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline void acpi_processor_reevaluate_tstate(struct acpi_processor *pr,
-			bool is_dead) {}
+अटल अंतरभूत व्योम acpi_processor_reevaluate_tstate(काष्ठा acpi_processor *pr,
+			bool is_dead) अणुपूर्ण
 
-static inline void acpi_processor_throttling_init(void) {}
-#endif	/* CONFIG_ACPI_CPU_FREQ_PSS */
+अटल अंतरभूत व्योम acpi_processor_throttling_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर	/* CONFIG_ACPI_CPU_FREQ_PSS */
 
 /* in processor_idle.c */
-extern struct cpuidle_driver acpi_idle_driver;
-#ifdef CONFIG_ACPI_PROCESSOR_IDLE
-int acpi_processor_power_init(struct acpi_processor *pr);
-int acpi_processor_power_exit(struct acpi_processor *pr);
-int acpi_processor_power_state_has_changed(struct acpi_processor *pr);
-int acpi_processor_hotplug(struct acpi_processor *pr);
-#else
-static inline int acpi_processor_power_init(struct acpi_processor *pr)
-{
-	return -ENODEV;
-}
+बाह्य काष्ठा cpuidle_driver acpi_idle_driver;
+#अगर_घोषित CONFIG_ACPI_PROCESSOR_IDLE
+पूर्णांक acpi_processor_घातer_init(काष्ठा acpi_processor *pr);
+पूर्णांक acpi_processor_घातer_निकास(काष्ठा acpi_processor *pr);
+पूर्णांक acpi_processor_घातer_state_has_changed(काष्ठा acpi_processor *pr);
+पूर्णांक acpi_processor_hotplug(काष्ठा acpi_processor *pr);
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_processor_घातer_init(काष्ठा acpi_processor *pr)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_processor_power_exit(struct acpi_processor *pr)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_processor_घातer_निकास(काष्ठा acpi_processor *pr)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_processor_power_state_has_changed(struct acpi_processor *pr)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक acpi_processor_घातer_state_has_changed(काष्ठा acpi_processor *pr)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int acpi_processor_hotplug(struct acpi_processor *pr)
-{
-	return -ENODEV;
-}
-#endif /* CONFIG_ACPI_PROCESSOR_IDLE */
+अटल अंतरभूत पूर्णांक acpi_processor_hotplug(काष्ठा acpi_processor *pr)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI_PROCESSOR_IDLE */
 
 /* in processor_thermal.c */
-int acpi_processor_get_limit_info(struct acpi_processor *pr);
-extern const struct thermal_cooling_device_ops processor_cooling_ops;
-#if defined(CONFIG_ACPI_CPU_FREQ_PSS) & defined(CONFIG_CPU_FREQ)
-void acpi_thermal_cpufreq_init(struct cpufreq_policy *policy);
-void acpi_thermal_cpufreq_exit(struct cpufreq_policy *policy);
-#else
-static inline void acpi_thermal_cpufreq_init(struct cpufreq_policy *policy)
-{
-	return;
-}
-static inline void acpi_thermal_cpufreq_exit(struct cpufreq_policy *policy)
-{
-	return;
-}
-#endif	/* CONFIG_ACPI_CPU_FREQ_PSS */
+पूर्णांक acpi_processor_get_limit_info(काष्ठा acpi_processor *pr);
+बाह्य स्थिर काष्ठा thermal_cooling_device_ops processor_cooling_ops;
+#अगर defined(CONFIG_ACPI_CPU_FREQ_PSS) & defined(CONFIG_CPU_FREQ)
+व्योम acpi_thermal_cpufreq_init(काष्ठा cpufreq_policy *policy);
+व्योम acpi_thermal_cpufreq_निकास(काष्ठा cpufreq_policy *policy);
+#अन्यथा
+अटल अंतरभूत व्योम acpi_thermal_cpufreq_init(काष्ठा cpufreq_policy *policy)
+अणु
+	वापस;
+पूर्ण
+अटल अंतरभूत व्योम acpi_thermal_cpufreq_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_ACPI_CPU_FREQ_PSS */
 
-#endif
+#पूर्ण_अगर

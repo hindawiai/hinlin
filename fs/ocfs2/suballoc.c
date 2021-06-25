@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * suballoc.c
  *
- * metadata alloc and free
+ * metadata alloc and मुक्त
  * Inspired by ext3 block groups.
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#include <linux/fs.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/highmem.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/highस्मृति.स>
 
-#include <cluster/masklog.h>
+#समावेश <cluster/masklog.h>
 
-#include "ocfs2.h"
+#समावेश "ocfs2.h"
 
-#include "alloc.h"
-#include "blockcheck.h"
-#include "dlmglue.h"
-#include "inode.h"
-#include "journal.h"
-#include "localalloc.h"
-#include "suballoc.h"
-#include "super.h"
-#include "sysfile.h"
-#include "uptodate.h"
-#include "ocfs2_trace.h"
+#समावेश "alloc.h"
+#समावेश "blockcheck.h"
+#समावेश "dlmglue.h"
+#समावेश "inode.h"
+#समावेश "journal.h"
+#समावेश "localalloc.h"
+#समावेश "suballoc.h"
+#समावेश "super.h"
+#समावेश "sysfile.h"
+#समावेश "uptodate.h"
+#समावेश "ocfs2_trace.h"
 
-#include "buffer_head_io.h"
+#समावेश "buffer_head_io.h"
 
-#define NOT_ALLOC_NEW_GROUP		0
-#define ALLOC_NEW_GROUP			0x1
-#define ALLOC_GROUPS_FROM_GLOBAL	0x2
+#घोषणा NOT_ALLOC_NEW_GROUP		0
+#घोषणा ALLOC_NEW_GROUP			0x1
+#घोषणा ALLOC_GROUPS_FROM_GLOBAL	0x2
 
-#define OCFS2_MAX_TO_STEAL		1024
+#घोषणा OCFS2_MAX_TO_STEAL		1024
 
-struct ocfs2_suballoc_result {
+काष्ठा ocfs2_suballoc_result अणु
 	u64		sr_bg_blkno;	/* The bg we allocated from.  Set
 					   to 0 when a block group is
 					   contiguous. */
@@ -48,474 +49,474 @@ struct ocfs2_suballoc_result {
 					     * block.
 					     */
 	u64		sr_blkno;	/* The first allocated block */
-	unsigned int	sr_bit_offset;	/* The bit in the bg */
-	unsigned int	sr_bits;	/* How many bits we claimed */
-};
+	अचिन्हित पूर्णांक	sr_bit_offset;	/* The bit in the bg */
+	अचिन्हित पूर्णांक	sr_bits;	/* How many bits we claimed */
+पूर्ण;
 
-static u64 ocfs2_group_from_res(struct ocfs2_suballoc_result *res)
-{
-	if (res->sr_blkno == 0)
-		return 0;
+अटल u64 ocfs2_group_from_res(काष्ठा ocfs2_suballoc_result *res)
+अणु
+	अगर (res->sr_blkno == 0)
+		वापस 0;
 
-	if (res->sr_bg_blkno)
-		return res->sr_bg_blkno;
+	अगर (res->sr_bg_blkno)
+		वापस res->sr_bg_blkno;
 
-	return ocfs2_which_suballoc_group(res->sr_blkno, res->sr_bit_offset);
-}
+	वापस ocfs2_which_suballoc_group(res->sr_blkno, res->sr_bit_offset);
+पूर्ण
 
-static inline u16 ocfs2_find_victim_chain(struct ocfs2_chain_list *cl);
-static int ocfs2_block_group_fill(handle_t *handle,
-				  struct inode *alloc_inode,
-				  struct buffer_head *bg_bh,
+अटल अंतरभूत u16 ocfs2_find_victim_chain(काष्ठा ocfs2_chain_list *cl);
+अटल पूर्णांक ocfs2_block_group_fill(handle_t *handle,
+				  काष्ठा inode *alloc_inode,
+				  काष्ठा buffer_head *bg_bh,
 				  u64 group_blkno,
-				  unsigned int group_clusters,
+				  अचिन्हित पूर्णांक group_clusters,
 				  u16 my_chain,
-				  struct ocfs2_chain_list *cl);
-static int ocfs2_block_group_alloc(struct ocfs2_super *osb,
-				   struct inode *alloc_inode,
-				   struct buffer_head *bh,
+				  काष्ठा ocfs2_chain_list *cl);
+अटल पूर्णांक ocfs2_block_group_alloc(काष्ठा ocfs2_super *osb,
+				   काष्ठा inode *alloc_inode,
+				   काष्ठा buffer_head *bh,
 				   u64 max_block,
 				   u64 *last_alloc_group,
-				   int flags);
+				   पूर्णांक flags);
 
-static int ocfs2_cluster_group_search(struct inode *inode,
-				      struct buffer_head *group_bh,
+अटल पूर्णांक ocfs2_cluster_group_search(काष्ठा inode *inode,
+				      काष्ठा buffer_head *group_bh,
 				      u32 bits_wanted, u32 min_bits,
 				      u64 max_block,
-				      struct ocfs2_suballoc_result *res);
-static int ocfs2_block_group_search(struct inode *inode,
-				    struct buffer_head *group_bh,
+				      काष्ठा ocfs2_suballoc_result *res);
+अटल पूर्णांक ocfs2_block_group_search(काष्ठा inode *inode,
+				    काष्ठा buffer_head *group_bh,
 				    u32 bits_wanted, u32 min_bits,
 				    u64 max_block,
-				    struct ocfs2_suballoc_result *res);
-static int ocfs2_claim_suballoc_bits(struct ocfs2_alloc_context *ac,
+				    काष्ठा ocfs2_suballoc_result *res);
+अटल पूर्णांक ocfs2_claim_suballoc_bits(काष्ठा ocfs2_alloc_context *ac,
 				     handle_t *handle,
 				     u32 bits_wanted,
 				     u32 min_bits,
-				     struct ocfs2_suballoc_result *res);
-static int ocfs2_test_bg_bit_allocatable(struct buffer_head *bg_bh,
-					 int nr);
-static int ocfs2_relink_block_group(handle_t *handle,
-				    struct inode *alloc_inode,
-				    struct buffer_head *fe_bh,
-				    struct buffer_head *bg_bh,
-				    struct buffer_head *prev_bg_bh,
+				     काष्ठा ocfs2_suballoc_result *res);
+अटल पूर्णांक ocfs2_test_bg_bit_allocatable(काष्ठा buffer_head *bg_bh,
+					 पूर्णांक nr);
+अटल पूर्णांक ocfs2_relink_block_group(handle_t *handle,
+				    काष्ठा inode *alloc_inode,
+				    काष्ठा buffer_head *fe_bh,
+				    काष्ठा buffer_head *bg_bh,
+				    काष्ठा buffer_head *prev_bg_bh,
 				    u16 chain);
-static inline int ocfs2_block_group_reasonably_empty(struct ocfs2_group_desc *bg,
+अटल अंतरभूत पूर्णांक ocfs2_block_group_reasonably_empty(काष्ठा ocfs2_group_desc *bg,
 						     u32 wanted);
-static inline u32 ocfs2_desc_bitmap_to_cluster_off(struct inode *inode,
+अटल अंतरभूत u32 ocfs2_desc_biपंचांगap_to_cluster_off(काष्ठा inode *inode,
 						   u64 bg_blkno,
 						   u16 bg_bit_off);
-static inline void ocfs2_block_to_cluster_group(struct inode *inode,
+अटल अंतरभूत व्योम ocfs2_block_to_cluster_group(काष्ठा inode *inode,
 						u64 data_blkno,
 						u64 *bg_blkno,
 						u16 *bg_bit_off);
-static int ocfs2_reserve_clusters_with_limit(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_reserve_clusters_with_limit(काष्ठा ocfs2_super *osb,
 					     u32 bits_wanted, u64 max_block,
-					     int flags,
-					     struct ocfs2_alloc_context **ac);
+					     पूर्णांक flags,
+					     काष्ठा ocfs2_alloc_context **ac);
 
-void ocfs2_free_ac_resource(struct ocfs2_alloc_context *ac)
-{
-	struct inode *inode = ac->ac_inode;
+व्योम ocfs2_मुक्त_ac_resource(काष्ठा ocfs2_alloc_context *ac)
+अणु
+	काष्ठा inode *inode = ac->ac_inode;
 
-	if (inode) {
-		if (ac->ac_which != OCFS2_AC_USE_LOCAL)
+	अगर (inode) अणु
+		अगर (ac->ac_which != OCFS2_AC_USE_LOCAL)
 			ocfs2_inode_unlock(inode, 1);
 
 		inode_unlock(inode);
 
 		iput(inode);
-		ac->ac_inode = NULL;
-	}
-	brelse(ac->ac_bh);
-	ac->ac_bh = NULL;
-	ac->ac_resv = NULL;
-	kfree(ac->ac_find_loc_priv);
-	ac->ac_find_loc_priv = NULL;
-}
+		ac->ac_inode = शून्य;
+	पूर्ण
+	brअन्यथा(ac->ac_bh);
+	ac->ac_bh = शून्य;
+	ac->ac_resv = शून्य;
+	kमुक्त(ac->ac_find_loc_priv);
+	ac->ac_find_loc_priv = शून्य;
+पूर्ण
 
-void ocfs2_free_alloc_context(struct ocfs2_alloc_context *ac)
-{
-	ocfs2_free_ac_resource(ac);
-	kfree(ac);
-}
+व्योम ocfs2_मुक्त_alloc_context(काष्ठा ocfs2_alloc_context *ac)
+अणु
+	ocfs2_मुक्त_ac_resource(ac);
+	kमुक्त(ac);
+पूर्ण
 
-static u32 ocfs2_bits_per_group(struct ocfs2_chain_list *cl)
-{
-	return (u32)le16_to_cpu(cl->cl_cpg) * (u32)le16_to_cpu(cl->cl_bpc);
-}
+अटल u32 ocfs2_bits_per_group(काष्ठा ocfs2_chain_list *cl)
+अणु
+	वापस (u32)le16_to_cpu(cl->cl_cpg) * (u32)le16_to_cpu(cl->cl_bpc);
+पूर्ण
 
-#define do_error(fmt, ...)						\
-do {									\
-	if (resize)							\
+#घोषणा करो_error(fmt, ...)						\
+करो अणु									\
+	अगर (resize)							\
 		mlog(ML_ERROR, fmt, ##__VA_ARGS__);			\
-	else								\
-		return ocfs2_error(sb, fmt, ##__VA_ARGS__);		\
-} while (0)
+	अन्यथा								\
+		वापस ocfs2_error(sb, fmt, ##__VA_ARGS__);		\
+पूर्ण जबतक (0)
 
-static int ocfs2_validate_gd_self(struct super_block *sb,
-				  struct buffer_head *bh,
-				  int resize)
-{
-	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *)bh->b_data;
+अटल पूर्णांक ocfs2_validate_gd_self(काष्ठा super_block *sb,
+				  काष्ठा buffer_head *bh,
+				  पूर्णांक resize)
+अणु
+	काष्ठा ocfs2_group_desc *gd = (काष्ठा ocfs2_group_desc *)bh->b_data;
 
-	if (!OCFS2_IS_VALID_GROUP_DESC(gd)) {
-		do_error("Group descriptor #%llu has bad signature %.*s\n",
-			 (unsigned long long)bh->b_blocknr, 7,
+	अगर (!OCFS2_IS_VALID_GROUP_DESC(gd)) अणु
+		करो_error("Group descriptor #%llu has bad signature %.*s\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr, 7,
 			 gd->bg_signature);
-	}
+	पूर्ण
 
-	if (le64_to_cpu(gd->bg_blkno) != bh->b_blocknr) {
-		do_error("Group descriptor #%llu has an invalid bg_blkno of %llu\n",
-			 (unsigned long long)bh->b_blocknr,
-			 (unsigned long long)le64_to_cpu(gd->bg_blkno));
-	}
+	अगर (le64_to_cpu(gd->bg_blkno) != bh->b_blocknr) अणु
+		करो_error("Group descriptor #%llu has an invalid bg_blkno of %llu\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(gd->bg_blkno));
+	पूर्ण
 
-	if (le32_to_cpu(gd->bg_generation) != OCFS2_SB(sb)->fs_generation) {
-		do_error("Group descriptor #%llu has an invalid fs_generation of #%u\n",
-			 (unsigned long long)bh->b_blocknr,
+	अगर (le32_to_cpu(gd->bg_generation) != OCFS2_SB(sb)->fs_generation) अणु
+		करो_error("Group descriptor #%llu has an invalid fs_generation of #%u\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 			 le32_to_cpu(gd->bg_generation));
-	}
+	पूर्ण
 
-	if (le16_to_cpu(gd->bg_free_bits_count) > le16_to_cpu(gd->bg_bits)) {
-		do_error("Group descriptor #%llu has bit count %u but claims that %u are free\n",
-			 (unsigned long long)bh->b_blocknr,
+	अगर (le16_to_cpu(gd->bg_मुक्त_bits_count) > le16_to_cpu(gd->bg_bits)) अणु
+		करो_error("Group descriptor #%llu has bit count %u but claims that %u are free\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 			 le16_to_cpu(gd->bg_bits),
-			 le16_to_cpu(gd->bg_free_bits_count));
-	}
+			 le16_to_cpu(gd->bg_मुक्त_bits_count));
+	पूर्ण
 
-	if (le16_to_cpu(gd->bg_bits) > (8 * le16_to_cpu(gd->bg_size))) {
-		do_error("Group descriptor #%llu has bit count %u but max bitmap bits of %u\n",
-			 (unsigned long long)bh->b_blocknr,
+	अगर (le16_to_cpu(gd->bg_bits) > (8 * le16_to_cpu(gd->bg_size))) अणु
+		करो_error("Group descriptor #%llu has bit count %u but max bitmap bits of %u\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 			 le16_to_cpu(gd->bg_bits),
 			 8 * le16_to_cpu(gd->bg_size));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocfs2_validate_gd_parent(struct super_block *sb,
-				    struct ocfs2_dinode *di,
-				    struct buffer_head *bh,
-				    int resize)
-{
-	unsigned int max_bits;
-	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *)bh->b_data;
+अटल पूर्णांक ocfs2_validate_gd_parent(काष्ठा super_block *sb,
+				    काष्ठा ocfs2_dinode *di,
+				    काष्ठा buffer_head *bh,
+				    पूर्णांक resize)
+अणु
+	अचिन्हित पूर्णांक max_bits;
+	काष्ठा ocfs2_group_desc *gd = (काष्ठा ocfs2_group_desc *)bh->b_data;
 
-	if (di->i_blkno != gd->bg_parent_dinode) {
-		do_error("Group descriptor #%llu has bad parent pointer (%llu, expected %llu)\n",
-			 (unsigned long long)bh->b_blocknr,
-			 (unsigned long long)le64_to_cpu(gd->bg_parent_dinode),
-			 (unsigned long long)le64_to_cpu(di->i_blkno));
-	}
+	अगर (di->i_blkno != gd->bg_parent_dinode) अणु
+		करो_error("Group descriptor #%llu has bad parent pointer (%llu, expected %llu)\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(gd->bg_parent_dinode),
+			 (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(di->i_blkno));
+	पूर्ण
 
 	max_bits = le16_to_cpu(di->id2.i_chain.cl_cpg) * le16_to_cpu(di->id2.i_chain.cl_bpc);
-	if (le16_to_cpu(gd->bg_bits) > max_bits) {
-		do_error("Group descriptor #%llu has bit count of %u\n",
-			 (unsigned long long)bh->b_blocknr,
+	अगर (le16_to_cpu(gd->bg_bits) > max_bits) अणु
+		करो_error("Group descriptor #%llu has bit count of %u\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 			 le16_to_cpu(gd->bg_bits));
-	}
+	पूर्ण
 
-	/* In resize, we may meet the case bg_chain == cl_next_free_rec. */
-	if ((le16_to_cpu(gd->bg_chain) >
-	     le16_to_cpu(di->id2.i_chain.cl_next_free_rec)) ||
+	/* In resize, we may meet the हाल bg_chain == cl_next_मुक्त_rec. */
+	अगर ((le16_to_cpu(gd->bg_chain) >
+	     le16_to_cpu(di->id2.i_chain.cl_next_मुक्त_rec)) ||
 	    ((le16_to_cpu(gd->bg_chain) ==
-	     le16_to_cpu(di->id2.i_chain.cl_next_free_rec)) && !resize)) {
-		do_error("Group descriptor #%llu has bad chain %u\n",
-			 (unsigned long long)bh->b_blocknr,
+	     le16_to_cpu(di->id2.i_chain.cl_next_मुक्त_rec)) && !resize)) अणु
+		करो_error("Group descriptor #%llu has bad chain %u\n",
+			 (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr,
 			 le16_to_cpu(gd->bg_chain));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#undef do_error
+#अघोषित करो_error
 
 /*
- * This version only prints errors.  It does not fail the filesystem, and
- * exists only for resize.
+ * This version only prपूर्णांकs errors.  It करोes not fail the fileप्रणाली, and
+ * exists only क्रम resize.
  */
-int ocfs2_check_group_descriptor(struct super_block *sb,
-				 struct ocfs2_dinode *di,
-				 struct buffer_head *bh)
-{
-	int rc;
-	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *)bh->b_data;
+पूर्णांक ocfs2_check_group_descriptor(काष्ठा super_block *sb,
+				 काष्ठा ocfs2_dinode *di,
+				 काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक rc;
+	काष्ठा ocfs2_group_desc *gd = (काष्ठा ocfs2_group_desc *)bh->b_data;
 
 	BUG_ON(!buffer_uptodate(bh));
 
 	/*
-	 * If the ecc fails, we return the error but otherwise
-	 * leave the filesystem running.  We know any error is
+	 * If the ecc fails, we वापस the error but otherwise
+	 * leave the fileप्रणाली running.  We know any error is
 	 * local to this block.
 	 */
 	rc = ocfs2_validate_meta_ecc(sb, bh->b_data, &gd->bg_check);
-	if (rc) {
+	अगर (rc) अणु
 		mlog(ML_ERROR,
 		     "Checksum failed for group descriptor %llu\n",
-		     (unsigned long long)bh->b_blocknr);
-	} else
+		     (अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
+	पूर्ण अन्यथा
 		rc = ocfs2_validate_gd_self(sb, bh, 1);
-	if (!rc)
+	अगर (!rc)
 		rc = ocfs2_validate_gd_parent(sb, di, bh, 1);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ocfs2_validate_group_descriptor(struct super_block *sb,
-					   struct buffer_head *bh)
-{
-	int rc;
-	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *)bh->b_data;
+अटल पूर्णांक ocfs2_validate_group_descriptor(काष्ठा super_block *sb,
+					   काष्ठा buffer_head *bh)
+अणु
+	पूर्णांक rc;
+	काष्ठा ocfs2_group_desc *gd = (काष्ठा ocfs2_group_desc *)bh->b_data;
 
 	trace_ocfs2_validate_group_descriptor(
-					(unsigned long long)bh->b_blocknr);
+					(अचिन्हित दीर्घ दीर्घ)bh->b_blocknr);
 
 	BUG_ON(!buffer_uptodate(bh));
 
 	/*
-	 * If the ecc fails, we return the error but otherwise
-	 * leave the filesystem running.  We know any error is
+	 * If the ecc fails, we वापस the error but otherwise
+	 * leave the fileप्रणाली running.  We know any error is
 	 * local to this block.
 	 */
 	rc = ocfs2_validate_meta_ecc(sb, bh->b_data, &gd->bg_check);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * Errors after here are fatal.
 	 */
 
-	return ocfs2_validate_gd_self(sb, bh, 0);
-}
+	वापस ocfs2_validate_gd_self(sb, bh, 0);
+पूर्ण
 
-int ocfs2_read_group_descriptor(struct inode *inode, struct ocfs2_dinode *di,
-				u64 gd_blkno, struct buffer_head **bh)
-{
-	int rc;
-	struct buffer_head *tmp = *bh;
+पूर्णांक ocfs2_पढ़ो_group_descriptor(काष्ठा inode *inode, काष्ठा ocfs2_dinode *di,
+				u64 gd_blkno, काष्ठा buffer_head **bh)
+अणु
+	पूर्णांक rc;
+	काष्ठा buffer_head *पंचांगp = *bh;
 
-	rc = ocfs2_read_block(INODE_CACHE(inode), gd_blkno, &tmp,
+	rc = ocfs2_पढ़ो_block(INODE_CACHE(inode), gd_blkno, &पंचांगp,
 			      ocfs2_validate_group_descriptor);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rc = ocfs2_validate_gd_parent(inode->i_sb, di, tmp, 0);
-	if (rc) {
-		brelse(tmp);
-		goto out;
-	}
+	rc = ocfs2_validate_gd_parent(inode->i_sb, di, पंचांगp, 0);
+	अगर (rc) अणु
+		brअन्यथा(पंचांगp);
+		जाओ out;
+	पूर्ण
 
-	/* If ocfs2_read_block() got us a new bh, pass it up. */
-	if (!*bh)
-		*bh = tmp;
+	/* If ocfs2_पढ़ो_block() got us a new bh, pass it up. */
+	अगर (!*bh)
+		*bh = पंचांगp;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void ocfs2_bg_discontig_add_extent(struct ocfs2_super *osb,
-					  struct ocfs2_group_desc *bg,
-					  struct ocfs2_chain_list *cl,
-					  u64 p_blkno, unsigned int clusters)
-{
-	struct ocfs2_extent_list *el = &bg->bg_list;
-	struct ocfs2_extent_rec *rec;
+अटल व्योम ocfs2_bg_discontig_add_extent(काष्ठा ocfs2_super *osb,
+					  काष्ठा ocfs2_group_desc *bg,
+					  काष्ठा ocfs2_chain_list *cl,
+					  u64 p_blkno, अचिन्हित पूर्णांक clusters)
+अणु
+	काष्ठा ocfs2_extent_list *el = &bg->bg_list;
+	काष्ठा ocfs2_extent_rec *rec;
 
 	BUG_ON(!ocfs2_supports_discontig_bg(osb));
-	if (!el->l_next_free_rec)
+	अगर (!el->l_next_मुक्त_rec)
 		el->l_count = cpu_to_le16(ocfs2_extent_recs_per_gd(osb->sb));
-	rec = &el->l_recs[le16_to_cpu(el->l_next_free_rec)];
+	rec = &el->l_recs[le16_to_cpu(el->l_next_मुक्त_rec)];
 	rec->e_blkno = cpu_to_le64(p_blkno);
 	rec->e_cpos = cpu_to_le32(le16_to_cpu(bg->bg_bits) /
 				  le16_to_cpu(cl->cl_bpc));
 	rec->e_leaf_clusters = cpu_to_le16(clusters);
 	le16_add_cpu(&bg->bg_bits, clusters * le16_to_cpu(cl->cl_bpc));
-	le16_add_cpu(&bg->bg_free_bits_count,
+	le16_add_cpu(&bg->bg_मुक्त_bits_count,
 		     clusters * le16_to_cpu(cl->cl_bpc));
-	le16_add_cpu(&el->l_next_free_rec, 1);
-}
+	le16_add_cpu(&el->l_next_मुक्त_rec, 1);
+पूर्ण
 
-static int ocfs2_block_group_fill(handle_t *handle,
-				  struct inode *alloc_inode,
-				  struct buffer_head *bg_bh,
+अटल पूर्णांक ocfs2_block_group_fill(handle_t *handle,
+				  काष्ठा inode *alloc_inode,
+				  काष्ठा buffer_head *bg_bh,
 				  u64 group_blkno,
-				  unsigned int group_clusters,
+				  अचिन्हित पूर्णांक group_clusters,
 				  u16 my_chain,
-				  struct ocfs2_chain_list *cl)
-{
-	int status = 0;
-	struct ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
-	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) bg_bh->b_data;
-	struct super_block * sb = alloc_inode->i_sb;
+				  काष्ठा ocfs2_chain_list *cl)
+अणु
+	पूर्णांक status = 0;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
+	काष्ठा ocfs2_group_desc *bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
+	काष्ठा super_block * sb = alloc_inode->i_sb;
 
-	if (((unsigned long long) bg_bh->b_blocknr) != group_blkno) {
+	अगर (((अचिन्हित दीर्घ दीर्घ) bg_bh->b_blocknr) != group_blkno) अणु
 		status = ocfs2_error(alloc_inode->i_sb,
 				     "group block (%llu) != b_blocknr (%llu)\n",
-				     (unsigned long long)group_blkno,
-				     (unsigned long long) bg_bh->b_blocknr);
-		goto bail;
-	}
+				     (अचिन्हित दीर्घ दीर्घ)group_blkno,
+				     (अचिन्हित दीर्घ दीर्घ) bg_bh->b_blocknr);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_journal_access_gd(handle,
 					 INODE_CACHE(alloc_inode),
 					 bg_bh,
 					 OCFS2_JOURNAL_ACCESS_CREATE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	memset(bg, 0, sb->s_blocksize);
-	strcpy(bg->bg_signature, OCFS2_GROUP_DESC_SIGNATURE);
+	स_रखो(bg, 0, sb->s_blocksize);
+	म_नकल(bg->bg_signature, OCFS2_GROUP_DESC_SIGNATURE);
 	bg->bg_generation = cpu_to_le32(osb->fs_generation);
-	bg->bg_size = cpu_to_le16(ocfs2_group_bitmap_size(sb, 1,
+	bg->bg_size = cpu_to_le16(ocfs2_group_biपंचांगap_size(sb, 1,
 						osb->s_feature_incompat));
 	bg->bg_chain = cpu_to_le16(my_chain);
 	bg->bg_next_group = cl->cl_recs[my_chain].c_blkno;
 	bg->bg_parent_dinode = cpu_to_le64(OCFS2_I(alloc_inode)->ip_blkno);
 	bg->bg_blkno = cpu_to_le64(group_blkno);
-	if (group_clusters == le16_to_cpu(cl->cl_cpg))
+	अगर (group_clusters == le16_to_cpu(cl->cl_cpg))
 		bg->bg_bits = cpu_to_le16(ocfs2_bits_per_group(cl));
-	else
+	अन्यथा
 		ocfs2_bg_discontig_add_extent(osb, bg, cl, group_blkno,
 					      group_clusters);
 
-	/* set the 1st bit in the bitmap to account for the descriptor block */
-	ocfs2_set_bit(0, (unsigned long *)bg->bg_bitmap);
-	bg->bg_free_bits_count = cpu_to_le16(le16_to_cpu(bg->bg_bits) - 1);
+	/* set the 1st bit in the biपंचांगap to account क्रम the descriptor block */
+	ocfs2_set_bit(0, (अचिन्हित दीर्घ *)bg->bg_biपंचांगap);
+	bg->bg_मुक्त_bits_count = cpu_to_le16(le16_to_cpu(bg->bg_bits) - 1);
 
 	ocfs2_journal_dirty(handle, bg_bh);
 
 	/* There is no need to zero out or otherwise initialize the
 	 * other blocks in a group - All valid FS metadata in a block
 	 * group stores the superblock fs_generation value at
-	 * allocation time. */
+	 * allocation समय. */
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-static inline u16 ocfs2_find_smallest_chain(struct ocfs2_chain_list *cl)
-{
+अटल अंतरभूत u16 ocfs2_find_smallest_chain(काष्ठा ocfs2_chain_list *cl)
+अणु
 	u16 curr, best;
 
 	best = curr = 0;
-	while (curr < le16_to_cpu(cl->cl_count)) {
-		if (le32_to_cpu(cl->cl_recs[best].c_total) >
+	जबतक (curr < le16_to_cpu(cl->cl_count)) अणु
+		अगर (le32_to_cpu(cl->cl_recs[best].c_total) >
 		    le32_to_cpu(cl->cl_recs[curr].c_total))
 			best = curr;
 		curr++;
-	}
-	return best;
-}
+	पूर्ण
+	वापस best;
+पूर्ण
 
-static struct buffer_head *
-ocfs2_block_group_alloc_contig(struct ocfs2_super *osb, handle_t *handle,
-			       struct inode *alloc_inode,
-			       struct ocfs2_alloc_context *ac,
-			       struct ocfs2_chain_list *cl)
-{
-	int status;
+अटल काष्ठा buffer_head *
+ocfs2_block_group_alloc_contig(काष्ठा ocfs2_super *osb, handle_t *handle,
+			       काष्ठा inode *alloc_inode,
+			       काष्ठा ocfs2_alloc_context *ac,
+			       काष्ठा ocfs2_chain_list *cl)
+अणु
+	पूर्णांक status;
 	u32 bit_off, num_bits;
 	u64 bg_blkno;
-	struct buffer_head *bg_bh;
-	unsigned int alloc_rec = ocfs2_find_smallest_chain(cl);
+	काष्ठा buffer_head *bg_bh;
+	अचिन्हित पूर्णांक alloc_rec = ocfs2_find_smallest_chain(cl);
 
 	status = ocfs2_claim_clusters(handle, ac,
 				      le16_to_cpu(cl->cl_cpg), &bit_off,
 				      &num_bits);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	/* setup the group */
 	bg_blkno = ocfs2_clusters_to_blocks(osb->sb, bit_off);
 	trace_ocfs2_block_group_alloc_contig(
-	     (unsigned long long)bg_blkno, alloc_rec);
+	     (अचिन्हित दीर्घ दीर्घ)bg_blkno, alloc_rec);
 
 	bg_bh = sb_getblk(osb->sb, bg_blkno);
-	if (!bg_bh) {
+	अगर (!bg_bh) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	ocfs2_set_new_buffer_uptodate(INODE_CACHE(alloc_inode), bg_bh);
 
 	status = ocfs2_block_group_fill(handle, alloc_inode, bg_bh,
 					bg_blkno, num_bits, alloc_rec, cl);
-	if (status < 0) {
-		brelse(bg_bh);
-		mlog_errno(status);
-	}
+	अगर (status < 0) अणु
+		brअन्यथा(bg_bh);
+		mlog_त्रुटि_सं(status);
+	पूर्ण
 
 bail:
-	return status ? ERR_PTR(status) : bg_bh;
-}
+	वापस status ? ERR_PTR(status) : bg_bh;
+पूर्ण
 
-static int ocfs2_block_group_claim_bits(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_block_group_claim_bits(काष्ठा ocfs2_super *osb,
 					handle_t *handle,
-					struct ocfs2_alloc_context *ac,
-					unsigned int min_bits,
+					काष्ठा ocfs2_alloc_context *ac,
+					अचिन्हित पूर्णांक min_bits,
 					u32 *bit_off, u32 *num_bits)
-{
-	int status = 0;
+अणु
+	पूर्णांक status = 0;
 
-	while (min_bits) {
+	जबतक (min_bits) अणु
 		status = ocfs2_claim_clusters(handle, ac, min_bits,
 					      bit_off, num_bits);
-		if (status != -ENOSPC)
-			break;
+		अगर (status != -ENOSPC)
+			अवरोध;
 
 		min_bits >>= 1;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_block_group_grow_discontig(handle_t *handle,
-					    struct inode *alloc_inode,
-					    struct buffer_head *bg_bh,
-					    struct ocfs2_alloc_context *ac,
-					    struct ocfs2_chain_list *cl,
-					    unsigned int min_bits)
-{
-	int status;
-	struct ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
-	struct ocfs2_group_desc *bg =
-		(struct ocfs2_group_desc *)bg_bh->b_data;
-	unsigned int needed = le16_to_cpu(cl->cl_cpg) -
+अटल पूर्णांक ocfs2_block_group_grow_discontig(handle_t *handle,
+					    काष्ठा inode *alloc_inode,
+					    काष्ठा buffer_head *bg_bh,
+					    काष्ठा ocfs2_alloc_context *ac,
+					    काष्ठा ocfs2_chain_list *cl,
+					    अचिन्हित पूर्णांक min_bits)
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
+	काष्ठा ocfs2_group_desc *bg =
+		(काष्ठा ocfs2_group_desc *)bg_bh->b_data;
+	अचिन्हित पूर्णांक needed = le16_to_cpu(cl->cl_cpg) -
 			 le16_to_cpu(bg->bg_bits) / le16_to_cpu(cl->cl_bpc);
 	u32 p_cpos, clusters;
 	u64 p_blkno;
-	struct ocfs2_extent_list *el = &bg->bg_list;
+	काष्ठा ocfs2_extent_list *el = &bg->bg_list;
 
 	status = ocfs2_journal_access_gd(handle,
 					 INODE_CACHE(alloc_inode),
 					 bg_bh,
 					 OCFS2_JOURNAL_ACCESS_CREATE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	while ((needed > 0) && (le16_to_cpu(el->l_next_free_rec) <
-				le16_to_cpu(el->l_count))) {
-		if (min_bits > needed)
+	जबतक ((needed > 0) && (le16_to_cpu(el->l_next_मुक्त_rec) <
+				le16_to_cpu(el->l_count))) अणु
+		अगर (min_bits > needed)
 			min_bits = needed;
 		status = ocfs2_block_group_claim_bits(osb, handle, ac,
 						      min_bits, &p_cpos,
 						      &clusters);
-		if (status < 0) {
-			if (status != -ENOSPC)
-				mlog_errno(status);
-			goto bail;
-		}
+		अगर (status < 0) अणु
+			अगर (status != -ENOSPC)
+				mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 		p_blkno = ocfs2_clusters_to_blocks(osb->sb, p_cpos);
 		ocfs2_bg_discontig_add_extent(osb, bg, cl, p_blkno,
 					      clusters);
@@ -523,83 +524,83 @@ static int ocfs2_block_group_grow_discontig(handle_t *handle,
 		min_bits = clusters;
 		needed = le16_to_cpu(cl->cl_cpg) -
 			 le16_to_cpu(bg->bg_bits) / le16_to_cpu(cl->cl_bpc);
-	}
+	पूर्ण
 
-	if (needed > 0) {
+	अगर (needed > 0) अणु
 		/*
 		 * We have used up all the extent rec but can't fill up
 		 * the cpg. So bail out.
 		 */
 		status = -ENOSPC;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	ocfs2_journal_dirty(handle, bg_bh);
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void ocfs2_bg_alloc_cleanup(handle_t *handle,
-				   struct ocfs2_alloc_context *cluster_ac,
-				   struct inode *alloc_inode,
-				   struct buffer_head *bg_bh)
-{
-	int i, ret;
-	struct ocfs2_group_desc *bg;
-	struct ocfs2_extent_list *el;
-	struct ocfs2_extent_rec *rec;
+अटल व्योम ocfs2_bg_alloc_cleanup(handle_t *handle,
+				   काष्ठा ocfs2_alloc_context *cluster_ac,
+				   काष्ठा inode *alloc_inode,
+				   काष्ठा buffer_head *bg_bh)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा ocfs2_group_desc *bg;
+	काष्ठा ocfs2_extent_list *el;
+	काष्ठा ocfs2_extent_rec *rec;
 
-	if (!bg_bh)
-		return;
+	अगर (!bg_bh)
+		वापस;
 
-	bg = (struct ocfs2_group_desc *)bg_bh->b_data;
+	bg = (काष्ठा ocfs2_group_desc *)bg_bh->b_data;
 	el = &bg->bg_list;
-	for (i = 0; i < le16_to_cpu(el->l_next_free_rec); i++) {
+	क्रम (i = 0; i < le16_to_cpu(el->l_next_मुक्त_rec); i++) अणु
 		rec = &el->l_recs[i];
-		ret = ocfs2_free_clusters(handle, cluster_ac->ac_inode,
+		ret = ocfs2_मुक्त_clusters(handle, cluster_ac->ac_inode,
 					  cluster_ac->ac_bh,
 					  le64_to_cpu(rec->e_blkno),
 					  le16_to_cpu(rec->e_leaf_clusters));
-		if (ret)
-			mlog_errno(ret);
-		/* Try all the clusters to free */
-	}
+		अगर (ret)
+			mlog_त्रुटि_सं(ret);
+		/* Try all the clusters to मुक्त */
+	पूर्ण
 
-	ocfs2_remove_from_cache(INODE_CACHE(alloc_inode), bg_bh);
-	brelse(bg_bh);
-}
+	ocfs2_हटाओ_from_cache(INODE_CACHE(alloc_inode), bg_bh);
+	brअन्यथा(bg_bh);
+पूर्ण
 
-static struct buffer_head *
+अटल काष्ठा buffer_head *
 ocfs2_block_group_alloc_discontig(handle_t *handle,
-				  struct inode *alloc_inode,
-				  struct ocfs2_alloc_context *ac,
-				  struct ocfs2_chain_list *cl)
-{
-	int status;
+				  काष्ठा inode *alloc_inode,
+				  काष्ठा ocfs2_alloc_context *ac,
+				  काष्ठा ocfs2_chain_list *cl)
+अणु
+	पूर्णांक status;
 	u32 bit_off, num_bits;
 	u64 bg_blkno;
-	unsigned int min_bits = le16_to_cpu(cl->cl_cpg) >> 1;
-	struct buffer_head *bg_bh = NULL;
-	unsigned int alloc_rec = ocfs2_find_smallest_chain(cl);
-	struct ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
+	अचिन्हित पूर्णांक min_bits = le16_to_cpu(cl->cl_cpg) >> 1;
+	काष्ठा buffer_head *bg_bh = शून्य;
+	अचिन्हित पूर्णांक alloc_rec = ocfs2_find_smallest_chain(cl);
+	काष्ठा ocfs2_super *osb = OCFS2_SB(alloc_inode->i_sb);
 
-	if (!ocfs2_supports_discontig_bg(osb)) {
+	अगर (!ocfs2_supports_discontig_bg(osb)) अणु
 		status = -ENOSPC;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_extend_trans(handle,
 				    ocfs2_calc_bg_discontig_credits(osb->sb));
-	if (status) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	/*
 	 * We're going to be grabbing from multiple cluster groups.
-	 * We don't have enough credits to relink them all, and the
-	 * cluster groups will be staying in cache for the duration of
+	 * We करोn't have enough credits to relink them all, and the
+	 * cluster groups will be staying in cache क्रम the duration of
 	 * this operation.
 	 */
 	ac->ac_disable_chain_relink = 1;
@@ -607,125 +608,125 @@ ocfs2_block_group_alloc_discontig(handle_t *handle,
 	/* Claim the first region */
 	status = ocfs2_block_group_claim_bits(osb, handle, ac, min_bits,
 					      &bit_off, &num_bits);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	min_bits = num_bits;
 
 	/* setup the group */
 	bg_blkno = ocfs2_clusters_to_blocks(osb->sb, bit_off);
 	trace_ocfs2_block_group_alloc_discontig(
-				(unsigned long long)bg_blkno, alloc_rec);
+				(अचिन्हित दीर्घ दीर्घ)bg_blkno, alloc_rec);
 
 	bg_bh = sb_getblk(osb->sb, bg_blkno);
-	if (!bg_bh) {
+	अगर (!bg_bh) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	ocfs2_set_new_buffer_uptodate(INODE_CACHE(alloc_inode), bg_bh);
 
 	status = ocfs2_block_group_fill(handle, alloc_inode, bg_bh,
 					bg_blkno, num_bits, alloc_rec, cl);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_block_group_grow_discontig(handle, alloc_inode,
 						  bg_bh, ac, cl, min_bits);
-	if (status)
-		mlog_errno(status);
+	अगर (status)
+		mlog_त्रुटि_सं(status);
 
 bail:
-	if (status)
+	अगर (status)
 		ocfs2_bg_alloc_cleanup(handle, ac, alloc_inode, bg_bh);
-	return status ? ERR_PTR(status) : bg_bh;
-}
+	वापस status ? ERR_PTR(status) : bg_bh;
+पूर्ण
 
 /*
- * We expect the block group allocator to already be locked.
+ * We expect the block group allocator to alपढ़ोy be locked.
  */
-static int ocfs2_block_group_alloc(struct ocfs2_super *osb,
-				   struct inode *alloc_inode,
-				   struct buffer_head *bh,
+अटल पूर्णांक ocfs2_block_group_alloc(काष्ठा ocfs2_super *osb,
+				   काष्ठा inode *alloc_inode,
+				   काष्ठा buffer_head *bh,
 				   u64 max_block,
 				   u64 *last_alloc_group,
-				   int flags)
-{
-	int status, credits;
-	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) bh->b_data;
-	struct ocfs2_chain_list *cl;
-	struct ocfs2_alloc_context *ac = NULL;
-	handle_t *handle = NULL;
+				   पूर्णांक flags)
+अणु
+	पूर्णांक status, credits;
+	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) bh->b_data;
+	काष्ठा ocfs2_chain_list *cl;
+	काष्ठा ocfs2_alloc_context *ac = शून्य;
+	handle_t *handle = शून्य;
 	u16 alloc_rec;
-	struct buffer_head *bg_bh = NULL;
-	struct ocfs2_group_desc *bg;
+	काष्ठा buffer_head *bg_bh = शून्य;
+	काष्ठा ocfs2_group_desc *bg;
 
-	BUG_ON(ocfs2_is_cluster_bitmap(alloc_inode));
+	BUG_ON(ocfs2_is_cluster_biपंचांगap(alloc_inode));
 
 	cl = &fe->id2.i_chain;
 	status = ocfs2_reserve_clusters_with_limit(osb,
 						   le16_to_cpu(cl->cl_cpg),
 						   max_block, flags, &ac);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	credits = ocfs2_calc_group_alloc_credits(osb->sb,
 						 le16_to_cpu(cl->cl_cpg));
 	handle = ocfs2_start_trans(osb, credits);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		status = PTR_ERR(handle);
-		handle = NULL;
-		mlog_errno(status);
-		goto bail;
-	}
+		handle = शून्य;
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	if (last_alloc_group && *last_alloc_group != 0) {
+	अगर (last_alloc_group && *last_alloc_group != 0) अणु
 		trace_ocfs2_block_group_alloc(
-				(unsigned long long)*last_alloc_group);
+				(अचिन्हित दीर्घ दीर्घ)*last_alloc_group);
 		ac->ac_last_group = *last_alloc_group;
-	}
+	पूर्ण
 
 	bg_bh = ocfs2_block_group_alloc_contig(osb, handle, alloc_inode,
 					       ac, cl);
-	if (PTR_ERR(bg_bh) == -ENOSPC)
+	अगर (PTR_ERR(bg_bh) == -ENOSPC)
 		bg_bh = ocfs2_block_group_alloc_discontig(handle,
 							  alloc_inode,
 							  ac, cl);
-	if (IS_ERR(bg_bh)) {
+	अगर (IS_ERR(bg_bh)) अणु
 		status = PTR_ERR(bg_bh);
-		bg_bh = NULL;
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
-	bg = (struct ocfs2_group_desc *) bg_bh->b_data;
+		bg_bh = शून्य;
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
+	bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(alloc_inode),
 					 bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	alloc_rec = le16_to_cpu(bg->bg_chain);
-	le32_add_cpu(&cl->cl_recs[alloc_rec].c_free,
-		     le16_to_cpu(bg->bg_free_bits_count));
+	le32_add_cpu(&cl->cl_recs[alloc_rec].c_मुक्त,
+		     le16_to_cpu(bg->bg_मुक्त_bits_count));
 	le32_add_cpu(&cl->cl_recs[alloc_rec].c_total,
 		     le16_to_cpu(bg->bg_bits));
 	cl->cl_recs[alloc_rec].c_blkno = bg->bg_blkno;
-	if (le16_to_cpu(cl->cl_next_free_rec) < le16_to_cpu(cl->cl_count))
-		le16_add_cpu(&cl->cl_next_free_rec, 1);
+	अगर (le16_to_cpu(cl->cl_next_मुक्त_rec) < le16_to_cpu(cl->cl_count))
+		le16_add_cpu(&cl->cl_next_मुक्त_rec, 1);
 
-	le32_add_cpu(&fe->id1.bitmap1.i_used, le16_to_cpu(bg->bg_bits) -
-					le16_to_cpu(bg->bg_free_bits_count));
-	le32_add_cpu(&fe->id1.bitmap1.i_total, le16_to_cpu(bg->bg_bits));
+	le32_add_cpu(&fe->id1.biपंचांगap1.i_used, le16_to_cpu(bg->bg_bits) -
+					le16_to_cpu(bg->bg_मुक्त_bits_count));
+	le32_add_cpu(&fe->id1.biपंचांगap1.i_total, le16_to_cpu(bg->bg_bits));
 	le32_add_cpu(&fe->i_clusters, le16_to_cpu(cl->cl_cpg));
 
 	ocfs2_journal_dirty(handle, bh);
@@ -735,307 +736,307 @@ static int ocfs2_block_group_alloc(struct ocfs2_super *osb,
 	fe->i_size = cpu_to_le64(ocfs2_clusters_to_bytes(alloc_inode->i_sb,
 					     le32_to_cpu(fe->i_clusters)));
 	spin_unlock(&OCFS2_I(alloc_inode)->ip_lock);
-	i_size_write(alloc_inode, le64_to_cpu(fe->i_size));
+	i_size_ग_लिखो(alloc_inode, le64_to_cpu(fe->i_size));
 	alloc_inode->i_blocks = ocfs2_inode_sector_count(alloc_inode);
 	ocfs2_update_inode_fsync_trans(handle, alloc_inode, 0);
 
 	status = 0;
 
 	/* save the new last alloc group so that the caller can cache it. */
-	if (last_alloc_group)
+	अगर (last_alloc_group)
 		*last_alloc_group = ac->ac_last_group;
 
 bail:
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(osb, handle);
 
-	if (ac)
-		ocfs2_free_alloc_context(ac);
+	अगर (ac)
+		ocfs2_मुक्त_alloc_context(ac);
 
-	brelse(bg_bh);
+	brअन्यथा(bg_bh);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-static int ocfs2_reserve_suballoc_bits(struct ocfs2_super *osb,
-				       struct ocfs2_alloc_context *ac,
-				       int type,
+अटल पूर्णांक ocfs2_reserve_suballoc_bits(काष्ठा ocfs2_super *osb,
+				       काष्ठा ocfs2_alloc_context *ac,
+				       पूर्णांक type,
 				       u32 slot,
 				       u64 *last_alloc_group,
-				       int flags)
-{
-	int status;
+				       पूर्णांक flags)
+अणु
+	पूर्णांक status;
 	u32 bits_wanted = ac->ac_bits_wanted;
-	struct inode *alloc_inode;
-	struct buffer_head *bh = NULL;
-	struct ocfs2_dinode *fe;
-	u32 free_bits;
+	काष्ठा inode *alloc_inode;
+	काष्ठा buffer_head *bh = शून्य;
+	काष्ठा ocfs2_dinode *fe;
+	u32 मुक्त_bits;
 
-	alloc_inode = ocfs2_get_system_file_inode(osb, type, slot);
-	if (!alloc_inode) {
-		mlog_errno(-EINVAL);
-		return -EINVAL;
-	}
+	alloc_inode = ocfs2_get_प्रणाली_file_inode(osb, type, slot);
+	अगर (!alloc_inode) अणु
+		mlog_त्रुटि_सं(-EINVAL);
+		वापस -EINVAL;
+	पूर्ण
 
 	inode_lock(alloc_inode);
 
 	status = ocfs2_inode_lock(alloc_inode, &bh, 1);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		inode_unlock(alloc_inode);
 		iput(alloc_inode);
 
-		mlog_errno(status);
-		return status;
-	}
+		mlog_त्रुटि_सं(status);
+		वापस status;
+	पूर्ण
 
 	ac->ac_inode = alloc_inode;
 	ac->ac_alloc_slot = slot;
 
-	fe = (struct ocfs2_dinode *) bh->b_data;
+	fe = (काष्ठा ocfs2_dinode *) bh->b_data;
 
-	/* The bh was validated by the inode read inside
+	/* The bh was validated by the inode पढ़ो inside
 	 * ocfs2_inode_lock().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_DINODE(fe));
 
-	if (!(fe->i_flags & cpu_to_le32(OCFS2_CHAIN_FL))) {
+	अगर (!(fe->i_flags & cpu_to_le32(OCFS2_CHAIN_FL))) अणु
 		status = ocfs2_error(alloc_inode->i_sb,
 				     "Invalid chain allocator %llu\n",
-				     (unsigned long long)le64_to_cpu(fe->i_blkno));
-		goto bail;
-	}
+				     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_blkno));
+		जाओ bail;
+	पूर्ण
 
-	free_bits = le32_to_cpu(fe->id1.bitmap1.i_total) -
-		le32_to_cpu(fe->id1.bitmap1.i_used);
+	मुक्त_bits = le32_to_cpu(fe->id1.biपंचांगap1.i_total) -
+		le32_to_cpu(fe->id1.biपंचांगap1.i_used);
 
-	if (bits_wanted > free_bits) {
-		/* cluster bitmap never grows */
-		if (ocfs2_is_cluster_bitmap(alloc_inode)) {
+	अगर (bits_wanted > मुक्त_bits) अणु
+		/* cluster biपंचांगap never grows */
+		अगर (ocfs2_is_cluster_biपंचांगap(alloc_inode)) अणु
 			trace_ocfs2_reserve_suballoc_bits_nospc(bits_wanted,
-								free_bits);
+								मुक्त_bits);
 			status = -ENOSPC;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
-		if (!(flags & ALLOC_NEW_GROUP)) {
+		अगर (!(flags & ALLOC_NEW_GROUP)) अणु
 			trace_ocfs2_reserve_suballoc_bits_no_new_group(
-						slot, bits_wanted, free_bits);
+						slot, bits_wanted, मुक्त_bits);
 			status = -ENOSPC;
-			goto bail;
-		}
+			जाओ bail;
+		पूर्ण
 
 		status = ocfs2_block_group_alloc(osb, alloc_inode, bh,
 						 ac->ac_max_block,
 						 last_alloc_group, flags);
-		if (status < 0) {
-			if (status != -ENOSPC)
-				mlog_errno(status);
-			goto bail;
-		}
+		अगर (status < 0) अणु
+			अगर (status != -ENOSPC)
+				mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
 		atomic_inc(&osb->alloc_stats.bg_extends);
 
-		/* You should never ask for this much metadata */
+		/* You should never ask क्रम this much metadata */
 		BUG_ON(bits_wanted >
-		       (le32_to_cpu(fe->id1.bitmap1.i_total)
-			- le32_to_cpu(fe->id1.bitmap1.i_used)));
-	}
+		       (le32_to_cpu(fe->id1.biपंचांगap1.i_total)
+			- le32_to_cpu(fe->id1.biपंचांगap1.i_used)));
+	पूर्ण
 
 	get_bh(bh);
 	ac->ac_bh = bh;
 bail:
-	brelse(bh);
+	brअन्यथा(bh);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-static void ocfs2_init_inode_steal_slot(struct ocfs2_super *osb)
-{
+अटल व्योम ocfs2_init_inode_steal_slot(काष्ठा ocfs2_super *osb)
+अणु
 	spin_lock(&osb->osb_lock);
 	osb->s_inode_steal_slot = OCFS2_INVALID_SLOT;
 	spin_unlock(&osb->osb_lock);
 	atomic_set(&osb->s_num_inodes_stolen, 0);
-}
+पूर्ण
 
-static void ocfs2_init_meta_steal_slot(struct ocfs2_super *osb)
-{
+अटल व्योम ocfs2_init_meta_steal_slot(काष्ठा ocfs2_super *osb)
+अणु
 	spin_lock(&osb->osb_lock);
 	osb->s_meta_steal_slot = OCFS2_INVALID_SLOT;
 	spin_unlock(&osb->osb_lock);
 	atomic_set(&osb->s_num_meta_stolen, 0);
-}
+पूर्ण
 
-void ocfs2_init_steal_slots(struct ocfs2_super *osb)
-{
+व्योम ocfs2_init_steal_slots(काष्ठा ocfs2_super *osb)
+अणु
 	ocfs2_init_inode_steal_slot(osb);
 	ocfs2_init_meta_steal_slot(osb);
-}
+पूर्ण
 
-static void __ocfs2_set_steal_slot(struct ocfs2_super *osb, int slot, int type)
-{
+अटल व्योम __ocfs2_set_steal_slot(काष्ठा ocfs2_super *osb, पूर्णांक slot, पूर्णांक type)
+अणु
 	spin_lock(&osb->osb_lock);
-	if (type == INODE_ALLOC_SYSTEM_INODE)
+	अगर (type == INODE_ALLOC_SYSTEM_INODE)
 		osb->s_inode_steal_slot = (u16)slot;
-	else if (type == EXTENT_ALLOC_SYSTEM_INODE)
+	अन्यथा अगर (type == EXTENT_ALLOC_SYSTEM_INODE)
 		osb->s_meta_steal_slot = (u16)slot;
 	spin_unlock(&osb->osb_lock);
-}
+पूर्ण
 
-static int __ocfs2_get_steal_slot(struct ocfs2_super *osb, int type)
-{
-	int slot = OCFS2_INVALID_SLOT;
+अटल पूर्णांक __ocfs2_get_steal_slot(काष्ठा ocfs2_super *osb, पूर्णांक type)
+अणु
+	पूर्णांक slot = OCFS2_INVALID_SLOT;
 
 	spin_lock(&osb->osb_lock);
-	if (type == INODE_ALLOC_SYSTEM_INODE)
+	अगर (type == INODE_ALLOC_SYSTEM_INODE)
 		slot = osb->s_inode_steal_slot;
-	else if (type == EXTENT_ALLOC_SYSTEM_INODE)
+	अन्यथा अगर (type == EXTENT_ALLOC_SYSTEM_INODE)
 		slot = osb->s_meta_steal_slot;
 	spin_unlock(&osb->osb_lock);
 
-	return slot;
-}
+	वापस slot;
+पूर्ण
 
-static int ocfs2_get_inode_steal_slot(struct ocfs2_super *osb)
-{
-	return __ocfs2_get_steal_slot(osb, INODE_ALLOC_SYSTEM_INODE);
-}
+अटल पूर्णांक ocfs2_get_inode_steal_slot(काष्ठा ocfs2_super *osb)
+अणु
+	वापस __ocfs2_get_steal_slot(osb, INODE_ALLOC_SYSTEM_INODE);
+पूर्ण
 
-static int ocfs2_get_meta_steal_slot(struct ocfs2_super *osb)
-{
-	return __ocfs2_get_steal_slot(osb, EXTENT_ALLOC_SYSTEM_INODE);
-}
+अटल पूर्णांक ocfs2_get_meta_steal_slot(काष्ठा ocfs2_super *osb)
+अणु
+	वापस __ocfs2_get_steal_slot(osb, EXTENT_ALLOC_SYSTEM_INODE);
+पूर्ण
 
-static int ocfs2_steal_resource(struct ocfs2_super *osb,
-				struct ocfs2_alloc_context *ac,
-				int type)
-{
-	int i, status = -ENOSPC;
-	int slot = __ocfs2_get_steal_slot(osb, type);
+अटल पूर्णांक ocfs2_steal_resource(काष्ठा ocfs2_super *osb,
+				काष्ठा ocfs2_alloc_context *ac,
+				पूर्णांक type)
+अणु
+	पूर्णांक i, status = -ENOSPC;
+	पूर्णांक slot = __ocfs2_get_steal_slot(osb, type);
 
 	/* Start to steal resource from the first slot after ours. */
-	if (slot == OCFS2_INVALID_SLOT)
+	अगर (slot == OCFS2_INVALID_SLOT)
 		slot = osb->slot_num + 1;
 
-	for (i = 0; i < osb->max_slots; i++, slot++) {
-		if (slot == osb->max_slots)
+	क्रम (i = 0; i < osb->max_slots; i++, slot++) अणु
+		अगर (slot == osb->max_slots)
 			slot = 0;
 
-		if (slot == osb->slot_num)
-			continue;
+		अगर (slot == osb->slot_num)
+			जारी;
 
 		status = ocfs2_reserve_suballoc_bits(osb, ac,
 						     type,
-						     (u32)slot, NULL,
+						     (u32)slot, शून्य,
 						     NOT_ALLOC_NEW_GROUP);
-		if (status >= 0) {
+		अगर (status >= 0) अणु
 			__ocfs2_set_steal_slot(osb, slot, type);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ocfs2_free_ac_resource(ac);
-	}
+		ocfs2_मुक्त_ac_resource(ac);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int ocfs2_steal_inode(struct ocfs2_super *osb,
-			     struct ocfs2_alloc_context *ac)
-{
-	return ocfs2_steal_resource(osb, ac, INODE_ALLOC_SYSTEM_INODE);
-}
+अटल पूर्णांक ocfs2_steal_inode(काष्ठा ocfs2_super *osb,
+			     काष्ठा ocfs2_alloc_context *ac)
+अणु
+	वापस ocfs2_steal_resource(osb, ac, INODE_ALLOC_SYSTEM_INODE);
+पूर्ण
 
-static int ocfs2_steal_meta(struct ocfs2_super *osb,
-			    struct ocfs2_alloc_context *ac)
-{
-	return ocfs2_steal_resource(osb, ac, EXTENT_ALLOC_SYSTEM_INODE);
-}
+अटल पूर्णांक ocfs2_steal_meta(काष्ठा ocfs2_super *osb,
+			    काष्ठा ocfs2_alloc_context *ac)
+अणु
+	वापस ocfs2_steal_resource(osb, ac, EXTENT_ALLOC_SYSTEM_INODE);
+पूर्ण
 
-int ocfs2_reserve_new_metadata_blocks(struct ocfs2_super *osb,
-				      int blocks,
-				      struct ocfs2_alloc_context **ac)
-{
-	int status;
-	int slot = ocfs2_get_meta_steal_slot(osb);
+पूर्णांक ocfs2_reserve_new_metadata_blocks(काष्ठा ocfs2_super *osb,
+				      पूर्णांक blocks,
+				      काष्ठा ocfs2_alloc_context **ac)
+अणु
+	पूर्णांक status;
+	पूर्णांक slot = ocfs2_get_meta_steal_slot(osb);
 
-	*ac = kzalloc(sizeof(struct ocfs2_alloc_context), GFP_KERNEL);
-	if (!(*ac)) {
+	*ac = kzalloc(माप(काष्ठा ocfs2_alloc_context), GFP_KERNEL);
+	अगर (!(*ac)) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	(*ac)->ac_bits_wanted = blocks;
 	(*ac)->ac_which = OCFS2_AC_USE_META;
 	(*ac)->ac_group_search = ocfs2_block_group_search;
 
-	if (slot != OCFS2_INVALID_SLOT &&
-		atomic_read(&osb->s_num_meta_stolen) < OCFS2_MAX_TO_STEAL)
-		goto extent_steal;
+	अगर (slot != OCFS2_INVALID_SLOT &&
+		atomic_पढ़ो(&osb->s_num_meta_stolen) < OCFS2_MAX_TO_STEAL)
+		जाओ extent_steal;
 
 	atomic_set(&osb->s_num_meta_stolen, 0);
 	status = ocfs2_reserve_suballoc_bits(osb, (*ac),
 					     EXTENT_ALLOC_SYSTEM_INODE,
-					     (u32)osb->slot_num, NULL,
+					     (u32)osb->slot_num, शून्य,
 					     ALLOC_GROUPS_FROM_GLOBAL|ALLOC_NEW_GROUP);
 
 
-	if (status >= 0) {
+	अगर (status >= 0) अणु
 		status = 0;
-		if (slot != OCFS2_INVALID_SLOT)
+		अगर (slot != OCFS2_INVALID_SLOT)
 			ocfs2_init_meta_steal_slot(osb);
-		goto bail;
-	} else if (status < 0 && status != -ENOSPC) {
-		mlog_errno(status);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण अन्यथा अगर (status < 0 && status != -ENOSPC) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	ocfs2_free_ac_resource(*ac);
+	ocfs2_मुक्त_ac_resource(*ac);
 
 extent_steal:
 	status = ocfs2_steal_meta(osb, *ac);
 	atomic_inc(&osb->s_num_meta_stolen);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = 0;
 bail:
-	if ((status < 0) && *ac) {
-		ocfs2_free_alloc_context(*ac);
-		*ac = NULL;
-	}
+	अगर ((status < 0) && *ac) अणु
+		ocfs2_मुक्त_alloc_context(*ac);
+		*ac = शून्य;
+	पूर्ण
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_reserve_new_metadata(struct ocfs2_super *osb,
-			       struct ocfs2_extent_list *root_el,
-			       struct ocfs2_alloc_context **ac)
-{
-	return ocfs2_reserve_new_metadata_blocks(osb,
+पूर्णांक ocfs2_reserve_new_metadata(काष्ठा ocfs2_super *osb,
+			       काष्ठा ocfs2_extent_list *root_el,
+			       काष्ठा ocfs2_alloc_context **ac)
+अणु
+	वापस ocfs2_reserve_new_metadata_blocks(osb,
 					ocfs2_extend_meta_needed(root_el),
 					ac);
-}
+पूर्ण
 
-int ocfs2_reserve_new_inode(struct ocfs2_super *osb,
-			    struct ocfs2_alloc_context **ac)
-{
-	int status;
-	int slot = ocfs2_get_inode_steal_slot(osb);
+पूर्णांक ocfs2_reserve_new_inode(काष्ठा ocfs2_super *osb,
+			    काष्ठा ocfs2_alloc_context **ac)
+अणु
+	पूर्णांक status;
+	पूर्णांक slot = ocfs2_get_inode_steal_slot(osb);
 	u64 alloc_group;
 
-	*ac = kzalloc(sizeof(struct ocfs2_alloc_context), GFP_KERNEL);
-	if (!(*ac)) {
+	*ac = kzalloc(माप(काष्ठा ocfs2_alloc_context), GFP_KERNEL);
+	अगर (!(*ac)) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	(*ac)->ac_bits_wanted = 1;
 	(*ac)->ac_which = OCFS2_AC_USE_INODE;
@@ -1045,9 +1046,9 @@ int ocfs2_reserve_new_inode(struct ocfs2_super *osb,
 	/*
 	 * stat(2) can't handle i_ino > 32bits, so we tell the
 	 * lower levels not to allocate us a block group past that
-	 * limit.  The 'inode64' mount option avoids this behavior.
+	 * limit.  The 'inode64' mount option aव्योमs this behavior.
 	 */
-	if (!(osb->s_mount_opt & OCFS2_MOUNT_INODE64))
+	अगर (!(osb->s_mount_opt & OCFS2_MOUNT_INODE64))
 		(*ac)->ac_max_block = (u32)~0U;
 
 	/*
@@ -1057,11 +1058,11 @@ int ocfs2_reserve_new_inode(struct ocfs2_super *osb,
 	 * 2. when we complete local alloc recovery.
 	 * 3. when we successfully allocate from our own slot.
 	 * After it is set, we will go on stealing inodes until we find the
-	 * need to check our slots to see whether there is some space for us.
+	 * need to check our slots to see whether there is some space क्रम us.
 	 */
-	if (slot != OCFS2_INVALID_SLOT &&
-	    atomic_read(&osb->s_num_inodes_stolen) < OCFS2_MAX_TO_STEAL)
-		goto inode_steal;
+	अगर (slot != OCFS2_INVALID_SLOT &&
+	    atomic_पढ़ो(&osb->s_num_inodes_stolen) < OCFS2_MAX_TO_STEAL)
+		जाओ inode_steal;
 
 	atomic_set(&osb->s_num_inodes_stolen, 0);
 	alloc_group = osb->osb_inode_alloc_group;
@@ -1071,356 +1072,356 @@ int ocfs2_reserve_new_inode(struct ocfs2_super *osb,
 					     &alloc_group,
 					     ALLOC_NEW_GROUP |
 					     ALLOC_GROUPS_FROM_GLOBAL);
-	if (status >= 0) {
+	अगर (status >= 0) अणु
 		status = 0;
 
 		spin_lock(&osb->osb_lock);
 		osb->osb_inode_alloc_group = alloc_group;
 		spin_unlock(&osb->osb_lock);
 		trace_ocfs2_reserve_new_inode_new_group(
-			(unsigned long long)alloc_group);
+			(अचिन्हित दीर्घ दीर्घ)alloc_group);
 
 		/*
-		 * Some inodes must be freed by us, so try to allocate
-		 * from our own next time.
+		 * Some inodes must be मुक्तd by us, so try to allocate
+		 * from our own next समय.
 		 */
-		if (slot != OCFS2_INVALID_SLOT)
+		अगर (slot != OCFS2_INVALID_SLOT)
 			ocfs2_init_inode_steal_slot(osb);
-		goto bail;
-	} else if (status < 0 && status != -ENOSPC) {
-		mlog_errno(status);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण अन्यथा अगर (status < 0 && status != -ENOSPC) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	ocfs2_free_ac_resource(*ac);
+	ocfs2_मुक्त_ac_resource(*ac);
 
 inode_steal:
 	status = ocfs2_steal_inode(osb, *ac);
 	atomic_inc(&osb->s_num_inodes_stolen);
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = 0;
 bail:
-	if ((status < 0) && *ac) {
-		ocfs2_free_alloc_context(*ac);
-		*ac = NULL;
-	}
+	अगर ((status < 0) && *ac) अणु
+		ocfs2_मुक्त_alloc_context(*ac);
+		*ac = शून्य;
+	पूर्ण
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-/* local alloc code has to do the same thing, so rather than do this
+/* local alloc code has to करो the same thing, so rather than करो this
  * twice.. */
-int ocfs2_reserve_cluster_bitmap_bits(struct ocfs2_super *osb,
-				      struct ocfs2_alloc_context *ac)
-{
-	int status;
+पूर्णांक ocfs2_reserve_cluster_biपंचांगap_bits(काष्ठा ocfs2_super *osb,
+				      काष्ठा ocfs2_alloc_context *ac)
+अणु
+	पूर्णांक status;
 
 	ac->ac_which = OCFS2_AC_USE_MAIN;
 	ac->ac_group_search = ocfs2_cluster_group_search;
 
 	status = ocfs2_reserve_suballoc_bits(osb, ac,
 					     GLOBAL_BITMAP_SYSTEM_INODE,
-					     OCFS2_INVALID_SLOT, NULL,
+					     OCFS2_INVALID_SLOT, शून्य,
 					     ALLOC_NEW_GROUP);
-	if (status < 0 && status != -ENOSPC)
-		mlog_errno(status);
+	अगर (status < 0 && status != -ENOSPC)
+		mlog_त्रुटि_सं(status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-/* Callers don't need to care which bitmap (local alloc or main) to
- * use so we figure it out for them, but unfortunately this clutters
+/* Callers करोn't need to care which biपंचांगap (local alloc or मुख्य) to
+ * use so we figure it out क्रम them, but unक्रमtunately this clutters
  * things a bit. */
-static int ocfs2_reserve_clusters_with_limit(struct ocfs2_super *osb,
+अटल पूर्णांक ocfs2_reserve_clusters_with_limit(काष्ठा ocfs2_super *osb,
 					     u32 bits_wanted, u64 max_block,
-					     int flags,
-					     struct ocfs2_alloc_context **ac)
-{
-	int status, ret = 0;
-	int retried = 0;
+					     पूर्णांक flags,
+					     काष्ठा ocfs2_alloc_context **ac)
+अणु
+	पूर्णांक status, ret = 0;
+	पूर्णांक retried = 0;
 
-	*ac = kzalloc(sizeof(struct ocfs2_alloc_context), GFP_KERNEL);
-	if (!(*ac)) {
+	*ac = kzalloc(माप(काष्ठा ocfs2_alloc_context), GFP_KERNEL);
+	अगर (!(*ac)) अणु
 		status = -ENOMEM;
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	(*ac)->ac_bits_wanted = bits_wanted;
 	(*ac)->ac_max_block = max_block;
 
 	status = -ENOSPC;
-	if (!(flags & ALLOC_GROUPS_FROM_GLOBAL) &&
-	    ocfs2_alloc_should_use_local(osb, bits_wanted)) {
+	अगर (!(flags & ALLOC_GROUPS_FROM_GLOBAL) &&
+	    ocfs2_alloc_should_use_local(osb, bits_wanted)) अणु
 		status = ocfs2_reserve_local_alloc_bits(osb,
 							bits_wanted,
 							*ac);
-		if ((status < 0) && (status != -ENOSPC)) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर ((status < 0) && (status != -ENOSPC)) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	if (status == -ENOSPC) {
+	अगर (status == -ENOSPC) अणु
 retry:
-		status = ocfs2_reserve_cluster_bitmap_bits(osb, *ac);
-		/* Retry if there is sufficient space cached in truncate log */
-		if (status == -ENOSPC && !retried) {
+		status = ocfs2_reserve_cluster_biपंचांगap_bits(osb, *ac);
+		/* Retry अगर there is sufficient space cached in truncate log */
+		अगर (status == -ENOSPC && !retried) अणु
 			retried = 1;
 			ocfs2_inode_unlock((*ac)->ac_inode, 1);
 			inode_unlock((*ac)->ac_inode);
 
-			ret = ocfs2_try_to_free_truncate_log(osb, bits_wanted);
-			if (ret == 1) {
+			ret = ocfs2_try_to_मुक्त_truncate_log(osb, bits_wanted);
+			अगर (ret == 1) अणु
 				iput((*ac)->ac_inode);
-				(*ac)->ac_inode = NULL;
-				goto retry;
-			}
+				(*ac)->ac_inode = शून्य;
+				जाओ retry;
+			पूर्ण
 
-			if (ret < 0)
-				mlog_errno(ret);
+			अगर (ret < 0)
+				mlog_त्रुटि_सं(ret);
 
 			inode_lock((*ac)->ac_inode);
-			ret = ocfs2_inode_lock((*ac)->ac_inode, NULL, 1);
-			if (ret < 0) {
-				mlog_errno(ret);
+			ret = ocfs2_inode_lock((*ac)->ac_inode, शून्य, 1);
+			अगर (ret < 0) अणु
+				mlog_त्रुटि_सं(ret);
 				inode_unlock((*ac)->ac_inode);
 				iput((*ac)->ac_inode);
-				(*ac)->ac_inode = NULL;
-				goto bail;
-			}
-		}
-		if (status < 0) {
-			if (status != -ENOSPC)
-				mlog_errno(status);
-			goto bail;
-		}
-	}
+				(*ac)->ac_inode = शून्य;
+				जाओ bail;
+			पूर्ण
+		पूर्ण
+		अगर (status < 0) अणु
+			अगर (status != -ENOSPC)
+				mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
 	status = 0;
 bail:
-	if ((status < 0) && *ac) {
-		ocfs2_free_alloc_context(*ac);
-		*ac = NULL;
-	}
+	अगर ((status < 0) && *ac) अणु
+		ocfs2_मुक्त_alloc_context(*ac);
+		*ac = शून्य;
+	पूर्ण
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_reserve_clusters(struct ocfs2_super *osb,
+पूर्णांक ocfs2_reserve_clusters(काष्ठा ocfs2_super *osb,
 			   u32 bits_wanted,
-			   struct ocfs2_alloc_context **ac)
-{
-	return ocfs2_reserve_clusters_with_limit(osb, bits_wanted, 0,
+			   काष्ठा ocfs2_alloc_context **ac)
+अणु
+	वापस ocfs2_reserve_clusters_with_limit(osb, bits_wanted, 0,
 						 ALLOC_NEW_GROUP, ac);
-}
+पूर्ण
 
 /*
- * More or less lifted from ext3. I'll leave their description below:
+ * More or less lअगरted from ext3. I'll leave their description below:
  *
  * "For ext3 allocations, we must not reuse any blocks which are
- * allocated in the bitmap buffer's "last committed data" copy.  This
- * prevents deletes from freeing up the page for reuse until we have
+ * allocated in the biपंचांगap buffer's "last committed data" copy.  This
+ * prevents deletes from मुक्तing up the page क्रम reuse until we have
  * committed the delete transaction.
  *
- * If we didn't do this, then deleting something and reallocating it as
- * data would allow the old block to be overwritten before the
- * transaction committed (because we force data to disk before commit).
- * This would lead to corruption if we crashed between overwriting the
+ * If we didn't करो this, then deleting something and पुनः_स्मृतिating it as
+ * data would allow the old block to be overwritten beक्रमe the
+ * transaction committed (because we क्रमce data to disk beक्रमe commit).
+ * This would lead to corruption अगर we crashed between overwriting the
  * data and committing the delete.
  *
  * @@@ We may want to make this allocation behaviour conditional on
- * data-writes at some point, and disable it for metadata allocations or
+ * data-ग_लिखोs at some poपूर्णांक, and disable it क्रम metadata allocations or
  * sync-data inodes."
  *
- * Note: OCFS2 already does this differently for metadata vs data
- * allocations, as those bitmaps are separate and undo access is never
+ * Note: OCFS2 alपढ़ोy करोes this dअगरferently क्रम metadata vs data
+ * allocations, as those biपंचांगaps are separate and unकरो access is never
  * called on a metadata group descriptor.
  */
-static int ocfs2_test_bg_bit_allocatable(struct buffer_head *bg_bh,
-					 int nr)
-{
-	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) bg_bh->b_data;
-	struct journal_head *jh;
-	int ret;
+अटल पूर्णांक ocfs2_test_bg_bit_allocatable(काष्ठा buffer_head *bg_bh,
+					 पूर्णांक nr)
+अणु
+	काष्ठा ocfs2_group_desc *bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
+	काष्ठा journal_head *jh;
+	पूर्णांक ret;
 
-	if (ocfs2_test_bit(nr, (unsigned long *)bg->bg_bitmap))
-		return 0;
+	अगर (ocfs2_test_bit(nr, (अचिन्हित दीर्घ *)bg->bg_biपंचांगap))
+		वापस 0;
 
-	if (!buffer_jbd(bg_bh))
-		return 1;
+	अगर (!buffer_jbd(bg_bh))
+		वापस 1;
 
 	jh = bh2jh(bg_bh);
 	spin_lock(&jh->b_state_lock);
-	bg = (struct ocfs2_group_desc *) jh->b_committed_data;
-	if (bg)
-		ret = !ocfs2_test_bit(nr, (unsigned long *)bg->bg_bitmap);
-	else
+	bg = (काष्ठा ocfs2_group_desc *) jh->b_committed_data;
+	अगर (bg)
+		ret = !ocfs2_test_bit(nr, (अचिन्हित दीर्घ *)bg->bg_biपंचांगap);
+	अन्यथा
 		ret = 1;
 	spin_unlock(&jh->b_state_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_block_group_find_clear_bits(struct ocfs2_super *osb,
-					     struct buffer_head *bg_bh,
-					     unsigned int bits_wanted,
-					     unsigned int total_bits,
-					     struct ocfs2_suballoc_result *res)
-{
-	void *bitmap;
+अटल पूर्णांक ocfs2_block_group_find_clear_bits(काष्ठा ocfs2_super *osb,
+					     काष्ठा buffer_head *bg_bh,
+					     अचिन्हित पूर्णांक bits_wanted,
+					     अचिन्हित पूर्णांक total_bits,
+					     काष्ठा ocfs2_suballoc_result *res)
+अणु
+	व्योम *biपंचांगap;
 	u16 best_offset, best_size;
-	int offset, start, found, status = 0;
-	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) bg_bh->b_data;
+	पूर्णांक offset, start, found, status = 0;
+	काष्ठा ocfs2_group_desc *bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
 
 	/* Callers got this descriptor from
-	 * ocfs2_read_group_descriptor().  Any corruption is a code bug. */
+	 * ocfs2_पढ़ो_group_descriptor().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_GROUP_DESC(bg));
 
 	found = start = best_offset = best_size = 0;
-	bitmap = bg->bg_bitmap;
+	biपंचांगap = bg->bg_biपंचांगap;
 
-	while((offset = ocfs2_find_next_zero_bit(bitmap, total_bits, start)) != -1) {
-		if (offset == total_bits)
-			break;
+	जबतक((offset = ocfs2_find_next_zero_bit(biपंचांगap, total_bits, start)) != -1) अणु
+		अगर (offset == total_bits)
+			अवरोध;
 
-		if (!ocfs2_test_bg_bit_allocatable(bg_bh, offset)) {
+		अगर (!ocfs2_test_bg_bit_allocatable(bg_bh, offset)) अणु
 			/* We found a zero, but we can't use it as it
 			 * hasn't been put to disk yet! */
 			found = 0;
 			start = offset + 1;
-		} else if (offset == start) {
+		पूर्ण अन्यथा अगर (offset == start) अणु
 			/* we found a zero */
 			found++;
 			/* move start to the next bit to test */
 			start++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* got a zero after some ones */
 			found = 1;
 			start = offset + 1;
-		}
-		if (found > best_size) {
+		पूर्ण
+		अगर (found > best_size) अणु
 			best_size = found;
 			best_offset = start - found;
-		}
+		पूर्ण
 		/* we got everything we needed */
-		if (found == bits_wanted) {
+		अगर (found == bits_wanted) अणु
 			/* mlog(0, "Found it all!\n"); */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (best_size) {
+	अगर (best_size) अणु
 		res->sr_bit_offset = best_offset;
 		res->sr_bits = best_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		status = -ENOSPC;
 		/* No error log here -- see the comment above
 		 * ocfs2_test_bg_bit_allocatable */
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_block_group_set_bits(handle_t *handle,
-					     struct inode *alloc_inode,
-					     struct ocfs2_group_desc *bg,
-					     struct buffer_head *group_bh,
-					     unsigned int bit_off,
-					     unsigned int num_bits)
-{
-	int status;
-	void *bitmap = bg->bg_bitmap;
-	int journal_type = OCFS2_JOURNAL_ACCESS_WRITE;
+पूर्णांक ocfs2_block_group_set_bits(handle_t *handle,
+					     काष्ठा inode *alloc_inode,
+					     काष्ठा ocfs2_group_desc *bg,
+					     काष्ठा buffer_head *group_bh,
+					     अचिन्हित पूर्णांक bit_off,
+					     अचिन्हित पूर्णांक num_bits)
+अणु
+	पूर्णांक status;
+	व्योम *biपंचांगap = bg->bg_biपंचांगap;
+	पूर्णांक journal_type = OCFS2_JOURNAL_ACCESS_WRITE;
 
 	/* All callers get the descriptor via
-	 * ocfs2_read_group_descriptor().  Any corruption is a code bug. */
+	 * ocfs2_पढ़ो_group_descriptor().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_GROUP_DESC(bg));
-	BUG_ON(le16_to_cpu(bg->bg_free_bits_count) < num_bits);
+	BUG_ON(le16_to_cpu(bg->bg_मुक्त_bits_count) < num_bits);
 
 	trace_ocfs2_block_group_set_bits(bit_off, num_bits);
 
-	if (ocfs2_is_cluster_bitmap(alloc_inode))
+	अगर (ocfs2_is_cluster_biपंचांगap(alloc_inode))
 		journal_type = OCFS2_JOURNAL_ACCESS_UNDO;
 
 	status = ocfs2_journal_access_gd(handle,
 					 INODE_CACHE(alloc_inode),
 					 group_bh,
 					 journal_type);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
-	le16_add_cpu(&bg->bg_free_bits_count, -num_bits);
-	if (le16_to_cpu(bg->bg_free_bits_count) > le16_to_cpu(bg->bg_bits)) {
-		return ocfs2_error(alloc_inode->i_sb, "Group descriptor # %llu has bit count %u but claims %u are freed. num_bits %d\n",
-				   (unsigned long long)le64_to_cpu(bg->bg_blkno),
+	le16_add_cpu(&bg->bg_मुक्त_bits_count, -num_bits);
+	अगर (le16_to_cpu(bg->bg_मुक्त_bits_count) > le16_to_cpu(bg->bg_bits)) अणु
+		वापस ocfs2_error(alloc_inode->i_sb, "Group descriptor # %llu has bit count %u but claims %u are freed. num_bits %d\n",
+				   (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(bg->bg_blkno),
 				   le16_to_cpu(bg->bg_bits),
-				   le16_to_cpu(bg->bg_free_bits_count),
+				   le16_to_cpu(bg->bg_मुक्त_bits_count),
 				   num_bits);
-	}
-	while(num_bits--)
-		ocfs2_set_bit(bit_off++, bitmap);
+	पूर्ण
+	जबतक(num_bits--)
+		ocfs2_set_bit(bit_off++, biपंचांगap);
 
 	ocfs2_journal_dirty(handle, group_bh);
 
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* find the one with the most empty bits */
-static inline u16 ocfs2_find_victim_chain(struct ocfs2_chain_list *cl)
-{
+अटल अंतरभूत u16 ocfs2_find_victim_chain(काष्ठा ocfs2_chain_list *cl)
+अणु
 	u16 curr, best;
 
-	BUG_ON(!cl->cl_next_free_rec);
+	BUG_ON(!cl->cl_next_मुक्त_rec);
 
 	best = curr = 0;
-	while (curr < le16_to_cpu(cl->cl_next_free_rec)) {
-		if (le32_to_cpu(cl->cl_recs[curr].c_free) >
-		    le32_to_cpu(cl->cl_recs[best].c_free))
+	जबतक (curr < le16_to_cpu(cl->cl_next_मुक्त_rec)) अणु
+		अगर (le32_to_cpu(cl->cl_recs[curr].c_मुक्त) >
+		    le32_to_cpu(cl->cl_recs[best].c_मुक्त))
 			best = curr;
 		curr++;
-	}
+	पूर्ण
 
-	BUG_ON(best >= le16_to_cpu(cl->cl_next_free_rec));
-	return best;
-}
+	BUG_ON(best >= le16_to_cpu(cl->cl_next_मुक्त_rec));
+	वापस best;
+पूर्ण
 
-static int ocfs2_relink_block_group(handle_t *handle,
-				    struct inode *alloc_inode,
-				    struct buffer_head *fe_bh,
-				    struct buffer_head *bg_bh,
-				    struct buffer_head *prev_bg_bh,
+अटल पूर्णांक ocfs2_relink_block_group(handle_t *handle,
+				    काष्ठा inode *alloc_inode,
+				    काष्ठा buffer_head *fe_bh,
+				    काष्ठा buffer_head *bg_bh,
+				    काष्ठा buffer_head *prev_bg_bh,
 				    u16 chain)
-{
-	int status;
+अणु
+	पूर्णांक status;
 	/* there is a really tiny chance the journal calls could fail,
-	 * but we wouldn't want inconsistent blocks in *any* case. */
+	 * but we wouldn't want inconsistent blocks in *any* हाल. */
 	u64 bg_ptr, prev_bg_ptr;
-	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) fe_bh->b_data;
-	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) bg_bh->b_data;
-	struct ocfs2_group_desc *prev_bg = (struct ocfs2_group_desc *) prev_bg_bh->b_data;
+	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) fe_bh->b_data;
+	काष्ठा ocfs2_group_desc *bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
+	काष्ठा ocfs2_group_desc *prev_bg = (काष्ठा ocfs2_group_desc *) prev_bg_bh->b_data;
 
 	/* The caller got these descriptors from
-	 * ocfs2_read_group_descriptor().  Any corruption is a code bug. */
+	 * ocfs2_पढ़ो_group_descriptor().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_GROUP_DESC(bg));
 	BUG_ON(!OCFS2_IS_VALID_GROUP_DESC(prev_bg));
 
 	trace_ocfs2_relink_block_group(
-		(unsigned long long)le64_to_cpu(fe->i_blkno), chain,
-		(unsigned long long)le64_to_cpu(bg->bg_blkno),
-		(unsigned long long)le64_to_cpu(prev_bg->bg_blkno));
+		(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_blkno), chain,
+		(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(bg->bg_blkno),
+		(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(prev_bg->bg_blkno));
 
 	bg_ptr = le64_to_cpu(bg->bg_next_group);
 	prev_bg_ptr = le64_to_cpu(prev_bg->bg_next_group);
@@ -1428,272 +1429,272 @@ static int ocfs2_relink_block_group(handle_t *handle,
 	status = ocfs2_journal_access_gd(handle, INODE_CACHE(alloc_inode),
 					 prev_bg_bh,
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0)
-		goto out;
+	अगर (status < 0)
+		जाओ out;
 
 	prev_bg->bg_next_group = bg->bg_next_group;
 	ocfs2_journal_dirty(handle, prev_bg_bh);
 
 	status = ocfs2_journal_access_gd(handle, INODE_CACHE(alloc_inode),
 					 bg_bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0)
-		goto out_rollback_prev_bg;
+	अगर (status < 0)
+		जाओ out_rollback_prev_bg;
 
 	bg->bg_next_group = fe->id2.i_chain.cl_recs[chain].c_blkno;
 	ocfs2_journal_dirty(handle, bg_bh);
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(alloc_inode),
 					 fe_bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0)
-		goto out_rollback_bg;
+	अगर (status < 0)
+		जाओ out_rollback_bg;
 
 	fe->id2.i_chain.cl_recs[chain].c_blkno = bg->bg_blkno;
 	ocfs2_journal_dirty(handle, fe_bh);
 
 out:
-	if (status < 0)
-		mlog_errno(status);
-	return status;
+	अगर (status < 0)
+		mlog_त्रुटि_सं(status);
+	वापस status;
 
 out_rollback_bg:
 	bg->bg_next_group = cpu_to_le64(bg_ptr);
 out_rollback_prev_bg:
 	prev_bg->bg_next_group = cpu_to_le64(prev_bg_ptr);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static inline int ocfs2_block_group_reasonably_empty(struct ocfs2_group_desc *bg,
+अटल अंतरभूत पूर्णांक ocfs2_block_group_reasonably_empty(काष्ठा ocfs2_group_desc *bg,
 						     u32 wanted)
-{
-	return le16_to_cpu(bg->bg_free_bits_count) > wanted;
-}
+अणु
+	वापस le16_to_cpu(bg->bg_मुक्त_bits_count) > wanted;
+पूर्ण
 
-/* return 0 on success, -ENOSPC to keep searching and any other < 0
+/* वापस 0 on success, -ENOSPC to keep searching and any other < 0
  * value on error. */
-static int ocfs2_cluster_group_search(struct inode *inode,
-				      struct buffer_head *group_bh,
+अटल पूर्णांक ocfs2_cluster_group_search(काष्ठा inode *inode,
+				      काष्ठा buffer_head *group_bh,
 				      u32 bits_wanted, u32 min_bits,
 				      u64 max_block,
-				      struct ocfs2_suballoc_result *res)
-{
-	int search = -ENOSPC;
-	int ret;
+				      काष्ठा ocfs2_suballoc_result *res)
+अणु
+	पूर्णांक search = -ENOSPC;
+	पूर्णांक ret;
 	u64 blkoff;
-	struct ocfs2_group_desc *gd = (struct ocfs2_group_desc *) group_bh->b_data;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
-	unsigned int max_bits, gd_cluster_off;
+	काष्ठा ocfs2_group_desc *gd = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+	अचिन्हित पूर्णांक max_bits, gd_cluster_off;
 
-	BUG_ON(!ocfs2_is_cluster_bitmap(inode));
+	BUG_ON(!ocfs2_is_cluster_biपंचांगap(inode));
 
-	if (gd->bg_free_bits_count) {
+	अगर (gd->bg_मुक्त_bits_count) अणु
 		max_bits = le16_to_cpu(gd->bg_bits);
 
-		/* Tail groups in cluster bitmaps which aren't cpg
+		/* Tail groups in cluster biपंचांगaps which aren't cpg
 		 * aligned are prone to partial extension by a failed
-		 * fs resize. If the file system resize never got to
-		 * update the dinode cluster count, then we don't want
+		 * fs resize. If the file प्रणाली resize never got to
+		 * update the dinode cluster count, then we करोn't want
 		 * to trust any clusters past it, regardless of what
 		 * the group descriptor says. */
 		gd_cluster_off = ocfs2_blocks_to_clusters(inode->i_sb,
 							  le64_to_cpu(gd->bg_blkno));
-		if ((gd_cluster_off + max_bits) >
-		    OCFS2_I(inode)->ip_clusters) {
+		अगर ((gd_cluster_off + max_bits) >
+		    OCFS2_I(inode)->ip_clusters) अणु
 			max_bits = OCFS2_I(inode)->ip_clusters - gd_cluster_off;
 			trace_ocfs2_cluster_group_search_wrong_max_bits(
-				(unsigned long long)le64_to_cpu(gd->bg_blkno),
+				(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(gd->bg_blkno),
 				le16_to_cpu(gd->bg_bits),
 				OCFS2_I(inode)->ip_clusters, max_bits);
-		}
+		पूर्ण
 
 		ret = ocfs2_block_group_find_clear_bits(osb,
 							group_bh, bits_wanted,
 							max_bits, res);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (max_block) {
+		अगर (max_block) अणु
 			blkoff = ocfs2_clusters_to_blocks(inode->i_sb,
 							  gd_cluster_off +
 							  res->sr_bit_offset +
 							  res->sr_bits);
 			trace_ocfs2_cluster_group_search_max_block(
-				(unsigned long long)blkoff,
-				(unsigned long long)max_block);
-			if (blkoff > max_block)
-				return -ENOSPC;
-		}
+				(अचिन्हित दीर्घ दीर्घ)blkoff,
+				(अचिन्हित दीर्घ दीर्घ)max_block);
+			अगर (blkoff > max_block)
+				वापस -ENOSPC;
+		पूर्ण
 
 		/* ocfs2_block_group_find_clear_bits() might
-		 * return success, but we still want to return
+		 * वापस success, but we still want to वापस
 		 * -ENOSPC unless it found the minimum number
 		 * of bits. */
-		if (min_bits <= res->sr_bits)
+		अगर (min_bits <= res->sr_bits)
 			search = 0; /* success */
-		else if (res->sr_bits) {
+		अन्यथा अगर (res->sr_bits) अणु
 			/*
-			 * Don't show bits which we'll be returning
-			 * for allocation to the local alloc bitmap.
+			 * Don't show bits which we'll be वापसing
+			 * क्रम allocation to the local alloc biपंचांगap.
 			 */
-			ocfs2_local_alloc_seen_free_bits(osb, res->sr_bits);
-		}
-	}
+			ocfs2_local_alloc_seen_मुक्त_bits(osb, res->sr_bits);
+		पूर्ण
+	पूर्ण
 
-	return search;
-}
+	वापस search;
+पूर्ण
 
-static int ocfs2_block_group_search(struct inode *inode,
-				    struct buffer_head *group_bh,
+अटल पूर्णांक ocfs2_block_group_search(काष्ठा inode *inode,
+				    काष्ठा buffer_head *group_bh,
 				    u32 bits_wanted, u32 min_bits,
 				    u64 max_block,
-				    struct ocfs2_suballoc_result *res)
-{
-	int ret = -ENOSPC;
+				    काष्ठा ocfs2_suballoc_result *res)
+अणु
+	पूर्णांक ret = -ENOSPC;
 	u64 blkoff;
-	struct ocfs2_group_desc *bg = (struct ocfs2_group_desc *) group_bh->b_data;
+	काष्ठा ocfs2_group_desc *bg = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
 
 	BUG_ON(min_bits != 1);
-	BUG_ON(ocfs2_is_cluster_bitmap(inode));
+	BUG_ON(ocfs2_is_cluster_biपंचांगap(inode));
 
-	if (bg->bg_free_bits_count) {
+	अगर (bg->bg_मुक्त_bits_count) अणु
 		ret = ocfs2_block_group_find_clear_bits(OCFS2_SB(inode->i_sb),
 							group_bh, bits_wanted,
 							le16_to_cpu(bg->bg_bits),
 							res);
-		if (!ret && max_block) {
+		अगर (!ret && max_block) अणु
 			blkoff = le64_to_cpu(bg->bg_blkno) +
 				res->sr_bit_offset + res->sr_bits;
 			trace_ocfs2_block_group_search_max_block(
-				(unsigned long long)blkoff,
-				(unsigned long long)max_block);
-			if (blkoff > max_block)
+				(अचिन्हित दीर्घ दीर्घ)blkoff,
+				(अचिन्हित दीर्घ दीर्घ)max_block);
+			अगर (blkoff > max_block)
 				ret = -ENOSPC;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_alloc_dinode_update_counts(struct inode *inode,
+पूर्णांक ocfs2_alloc_dinode_update_counts(काष्ठा inode *inode,
 				       handle_t *handle,
-				       struct buffer_head *di_bh,
+				       काष्ठा buffer_head *di_bh,
 				       u32 num_bits,
 				       u16 chain)
-{
-	int ret;
-	u32 tmp_used;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) di_bh->b_data;
-	struct ocfs2_chain_list *cl = (struct ocfs2_chain_list *) &di->id2.i_chain;
+अणु
+	पूर्णांक ret;
+	u32 पंचांगp_used;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
+	काष्ठा ocfs2_chain_list *cl = (काष्ठा ocfs2_chain_list *) &di->id2.i_chain;
 
 	ret = ocfs2_journal_access_di(handle, INODE_CACHE(inode), di_bh,
 				      OCFS2_JOURNAL_ACCESS_WRITE);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	tmp_used = le32_to_cpu(di->id1.bitmap1.i_used);
-	di->id1.bitmap1.i_used = cpu_to_le32(num_bits + tmp_used);
-	le32_add_cpu(&cl->cl_recs[chain].c_free, -num_bits);
+	पंचांगp_used = le32_to_cpu(di->id1.biपंचांगap1.i_used);
+	di->id1.biपंचांगap1.i_used = cpu_to_le32(num_bits + पंचांगp_used);
+	le32_add_cpu(&cl->cl_recs[chain].c_मुक्त, -num_bits);
 	ocfs2_journal_dirty(handle, di_bh);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ocfs2_rollback_alloc_dinode_counts(struct inode *inode,
-				       struct buffer_head *di_bh,
+व्योम ocfs2_rollback_alloc_dinode_counts(काष्ठा inode *inode,
+				       काष्ठा buffer_head *di_bh,
 				       u32 num_bits,
 				       u16 chain)
-{
-	u32 tmp_used;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) di_bh->b_data;
-	struct ocfs2_chain_list *cl;
+अणु
+	u32 पंचांगp_used;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) di_bh->b_data;
+	काष्ठा ocfs2_chain_list *cl;
 
-	cl = (struct ocfs2_chain_list *)&di->id2.i_chain;
-	tmp_used = le32_to_cpu(di->id1.bitmap1.i_used);
-	di->id1.bitmap1.i_used = cpu_to_le32(tmp_used - num_bits);
-	le32_add_cpu(&cl->cl_recs[chain].c_free, num_bits);
-}
+	cl = (काष्ठा ocfs2_chain_list *)&di->id2.i_chain;
+	पंचांगp_used = le32_to_cpu(di->id1.biपंचांगap1.i_used);
+	di->id1.biपंचांगap1.i_used = cpu_to_le32(पंचांगp_used - num_bits);
+	le32_add_cpu(&cl->cl_recs[chain].c_मुक्त, num_bits);
+पूर्ण
 
-static int ocfs2_bg_discontig_fix_by_rec(struct ocfs2_suballoc_result *res,
-					 struct ocfs2_extent_rec *rec,
-					 struct ocfs2_chain_list *cl)
-{
-	unsigned int bpc = le16_to_cpu(cl->cl_bpc);
-	unsigned int bitoff = le32_to_cpu(rec->e_cpos) * bpc;
-	unsigned int bitcount = le16_to_cpu(rec->e_leaf_clusters) * bpc;
+अटल पूर्णांक ocfs2_bg_discontig_fix_by_rec(काष्ठा ocfs2_suballoc_result *res,
+					 काष्ठा ocfs2_extent_rec *rec,
+					 काष्ठा ocfs2_chain_list *cl)
+अणु
+	अचिन्हित पूर्णांक bpc = le16_to_cpu(cl->cl_bpc);
+	अचिन्हित पूर्णांक bitoff = le32_to_cpu(rec->e_cpos) * bpc;
+	अचिन्हित पूर्णांक bitcount = le16_to_cpu(rec->e_leaf_clusters) * bpc;
 
-	if (res->sr_bit_offset < bitoff)
-		return 0;
-	if (res->sr_bit_offset >= (bitoff + bitcount))
-		return 0;
+	अगर (res->sr_bit_offset < bitoff)
+		वापस 0;
+	अगर (res->sr_bit_offset >= (bitoff + bitcount))
+		वापस 0;
 	res->sr_blkno = le64_to_cpu(rec->e_blkno) +
 		(res->sr_bit_offset - bitoff);
-	if ((res->sr_bit_offset + res->sr_bits) > (bitoff + bitcount))
+	अगर ((res->sr_bit_offset + res->sr_bits) > (bitoff + bitcount))
 		res->sr_bits = (bitoff + bitcount) - res->sr_bit_offset;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void ocfs2_bg_discontig_fix_result(struct ocfs2_alloc_context *ac,
-					  struct ocfs2_group_desc *bg,
-					  struct ocfs2_suballoc_result *res)
-{
-	int i;
+अटल व्योम ocfs2_bg_discontig_fix_result(काष्ठा ocfs2_alloc_context *ac,
+					  काष्ठा ocfs2_group_desc *bg,
+					  काष्ठा ocfs2_suballoc_result *res)
+अणु
+	पूर्णांक i;
 	u64 bg_blkno = res->sr_bg_blkno;  /* Save off */
-	struct ocfs2_extent_rec *rec;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)ac->ac_bh->b_data;
-	struct ocfs2_chain_list *cl = &di->id2.i_chain;
+	काष्ठा ocfs2_extent_rec *rec;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)ac->ac_bh->b_data;
+	काष्ठा ocfs2_chain_list *cl = &di->id2.i_chain;
 
-	if (ocfs2_is_cluster_bitmap(ac->ac_inode)) {
+	अगर (ocfs2_is_cluster_biपंचांगap(ac->ac_inode)) अणु
 		res->sr_blkno = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	res->sr_blkno = res->sr_bg_blkno + res->sr_bit_offset;
-	res->sr_bg_blkno = 0;  /* Clear it for contig block groups */
-	if (!ocfs2_supports_discontig_bg(OCFS2_SB(ac->ac_inode->i_sb)) ||
-	    !bg->bg_list.l_next_free_rec)
-		return;
+	res->sr_bg_blkno = 0;  /* Clear it क्रम contig block groups */
+	अगर (!ocfs2_supports_discontig_bg(OCFS2_SB(ac->ac_inode->i_sb)) ||
+	    !bg->bg_list.l_next_मुक्त_rec)
+		वापस;
 
-	for (i = 0; i < le16_to_cpu(bg->bg_list.l_next_free_rec); i++) {
+	क्रम (i = 0; i < le16_to_cpu(bg->bg_list.l_next_मुक्त_rec); i++) अणु
 		rec = &bg->bg_list.l_recs[i];
-		if (ocfs2_bg_discontig_fix_by_rec(res, rec, cl)) {
+		अगर (ocfs2_bg_discontig_fix_by_rec(res, rec, cl)) अणु
 			res->sr_bg_blkno = bg_blkno;  /* Restore */
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ocfs2_search_one_group(struct ocfs2_alloc_context *ac,
+अटल पूर्णांक ocfs2_search_one_group(काष्ठा ocfs2_alloc_context *ac,
 				  handle_t *handle,
 				  u32 bits_wanted,
 				  u32 min_bits,
-				  struct ocfs2_suballoc_result *res,
+				  काष्ठा ocfs2_suballoc_result *res,
 				  u16 *bits_left)
-{
-	int ret;
-	struct buffer_head *group_bh = NULL;
-	struct ocfs2_group_desc *gd;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)ac->ac_bh->b_data;
-	struct inode *alloc_inode = ac->ac_inode;
+अणु
+	पूर्णांक ret;
+	काष्ठा buffer_head *group_bh = शून्य;
+	काष्ठा ocfs2_group_desc *gd;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)ac->ac_bh->b_data;
+	काष्ठा inode *alloc_inode = ac->ac_inode;
 
-	ret = ocfs2_read_group_descriptor(alloc_inode, di,
+	ret = ocfs2_पढ़ो_group_descriptor(alloc_inode, di,
 					  res->sr_bg_blkno, &group_bh);
-	if (ret < 0) {
-		mlog_errno(ret);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		वापस ret;
+	पूर्ण
 
-	gd = (struct ocfs2_group_desc *) group_bh->b_data;
+	gd = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
 	ret = ac->ac_group_search(alloc_inode, group_bh, bits_wanted, min_bits,
 				  ac->ac_max_block, res);
-	if (ret < 0) {
-		if (ret != -ENOSPC)
-			mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		अगर (ret != -ENOSPC)
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ocfs2_bg_discontig_fix_result(ac, gd, res);
 
 	/*
@@ -1702,103 +1703,103 @@ static int ocfs2_search_one_group(struct ocfs2_alloc_context *ac,
 	 */
 	res->sr_bg_stable_blkno = group_bh->b_blocknr;
 
-	if (ac->ac_find_loc_only)
-		goto out_loc_only;
+	अगर (ac->ac_find_loc_only)
+		जाओ out_loc_only;
 
 	ret = ocfs2_alloc_dinode_update_counts(alloc_inode, handle, ac->ac_bh,
 					       res->sr_bits,
 					       le16_to_cpu(gd->bg_chain));
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_block_group_set_bits(handle, alloc_inode, gd, group_bh,
 					 res->sr_bit_offset, res->sr_bits);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ocfs2_rollback_alloc_dinode_counts(alloc_inode, ac->ac_bh,
 					       res->sr_bits,
 					       le16_to_cpu(gd->bg_chain));
-		mlog_errno(ret);
-	}
+		mlog_त्रुटि_सं(ret);
+	पूर्ण
 
 out_loc_only:
-	*bits_left = le16_to_cpu(gd->bg_free_bits_count);
+	*bits_left = le16_to_cpu(gd->bg_मुक्त_bits_count);
 
 out:
-	brelse(group_bh);
+	brअन्यथा(group_bh);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ocfs2_search_chain(struct ocfs2_alloc_context *ac,
+अटल पूर्णांक ocfs2_search_chain(काष्ठा ocfs2_alloc_context *ac,
 			      handle_t *handle,
 			      u32 bits_wanted,
 			      u32 min_bits,
-			      struct ocfs2_suballoc_result *res,
+			      काष्ठा ocfs2_suballoc_result *res,
 			      u16 *bits_left)
-{
-	int status;
+अणु
+	पूर्णांक status;
 	u16 chain;
 	u64 next_group;
-	struct inode *alloc_inode = ac->ac_inode;
-	struct buffer_head *group_bh = NULL;
-	struct buffer_head *prev_group_bh = NULL;
-	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) ac->ac_bh->b_data;
-	struct ocfs2_chain_list *cl = (struct ocfs2_chain_list *) &fe->id2.i_chain;
-	struct ocfs2_group_desc *bg;
+	काष्ठा inode *alloc_inode = ac->ac_inode;
+	काष्ठा buffer_head *group_bh = शून्य;
+	काष्ठा buffer_head *prev_group_bh = शून्य;
+	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) ac->ac_bh->b_data;
+	काष्ठा ocfs2_chain_list *cl = (काष्ठा ocfs2_chain_list *) &fe->id2.i_chain;
+	काष्ठा ocfs2_group_desc *bg;
 
 	chain = ac->ac_chain;
 	trace_ocfs2_search_chain_begin(
-		(unsigned long long)OCFS2_I(alloc_inode)->ip_blkno,
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(alloc_inode)->ip_blkno,
 		bits_wanted, chain);
 
-	status = ocfs2_read_group_descriptor(alloc_inode, fe,
+	status = ocfs2_पढ़ो_group_descriptor(alloc_inode, fe,
 					     le64_to_cpu(cl->cl_recs[chain].c_blkno),
 					     &group_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
-	bg = (struct ocfs2_group_desc *) group_bh->b_data;
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
+	bg = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
 
 	status = -ENOSPC;
-	/* for now, the chain search is a bit simplistic. We just use
+	/* क्रम now, the chain search is a bit simplistic. We just use
 	 * the 1st group with any empty bits. */
-	while ((status = ac->ac_group_search(alloc_inode, group_bh,
+	जबतक ((status = ac->ac_group_search(alloc_inode, group_bh,
 					     bits_wanted, min_bits,
 					     ac->ac_max_block,
-					     res)) == -ENOSPC) {
-		if (!bg->bg_next_group)
-			break;
+					     res)) == -ENOSPC) अणु
+		अगर (!bg->bg_next_group)
+			अवरोध;
 
-		brelse(prev_group_bh);
-		prev_group_bh = NULL;
+		brअन्यथा(prev_group_bh);
+		prev_group_bh = शून्य;
 
 		next_group = le64_to_cpu(bg->bg_next_group);
 		prev_group_bh = group_bh;
-		group_bh = NULL;
-		status = ocfs2_read_group_descriptor(alloc_inode, fe,
+		group_bh = शून्य;
+		status = ocfs2_पढ़ो_group_descriptor(alloc_inode, fe,
 						     next_group, &group_bh);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-		bg = (struct ocfs2_group_desc *) group_bh->b_data;
-	}
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+		bg = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
+	पूर्ण
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	trace_ocfs2_search_chain_succ(
-		(unsigned long long)le64_to_cpu(bg->bg_blkno), res->sr_bits);
+		(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(bg->bg_blkno), res->sr_bits);
 
 	res->sr_bg_blkno = le64_to_cpu(bg->bg_blkno);
 
 	BUG_ON(res->sr_bits == 0);
-	if (!status)
+	अगर (!status)
 		ocfs2_bg_discontig_fix_result(ac, bg, res);
 
 	/*
@@ -1808,40 +1809,40 @@ static int ocfs2_search_chain(struct ocfs2_alloc_context *ac,
 	res->sr_bg_stable_blkno = group_bh->b_blocknr;
 
 	/*
-	 * Keep track of previous block descriptor read. When
-	 * we find a target, if we have read more than X
+	 * Keep track of previous block descriptor पढ़ो. When
+	 * we find a target, अगर we have पढ़ो more than X
 	 * number of descriptors, and the target is reasonably
 	 * empty, relink him to top of his chain.
 	 *
-	 * We've read 0 extra blocks and only send one more to
+	 * We've पढ़ो 0 extra blocks and only send one more to
 	 * the transaction, yet the next guy to search has a
-	 * much easier time.
+	 * much easier समय.
 	 *
 	 * Do this *after* figuring out how many bits we're taking out
 	 * of our target group.
 	 */
-	if (!ac->ac_disable_chain_relink &&
+	अगर (!ac->ac_disable_chain_relink &&
 	    (prev_group_bh) &&
-	    (ocfs2_block_group_reasonably_empty(bg, res->sr_bits))) {
+	    (ocfs2_block_group_reasonably_empty(bg, res->sr_bits))) अणु
 		status = ocfs2_relink_block_group(handle, alloc_inode,
 						  ac->ac_bh, group_bh,
 						  prev_group_bh, chain);
-		if (status < 0) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर (status < 0) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	if (ac->ac_find_loc_only)
-		goto out_loc_only;
+	अगर (ac->ac_find_loc_only)
+		जाओ out_loc_only;
 
 	status = ocfs2_alloc_dinode_update_counts(alloc_inode, handle,
 						  ac->ac_bh, res->sr_bits,
 						  chain);
-	if (status) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_block_group_set_bits(handle,
 					    alloc_inode,
@@ -1849,150 +1850,150 @@ static int ocfs2_search_chain(struct ocfs2_alloc_context *ac,
 					    group_bh,
 					    res->sr_bit_offset,
 					    res->sr_bits);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		ocfs2_rollback_alloc_dinode_counts(alloc_inode,
 					ac->ac_bh, res->sr_bits, chain);
-		mlog_errno(status);
-		goto bail;
-	}
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	trace_ocfs2_search_chain_end(
-			(unsigned long long)le64_to_cpu(fe->i_blkno),
+			(अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_blkno),
 			res->sr_bits);
 
 out_loc_only:
-	*bits_left = le16_to_cpu(bg->bg_free_bits_count);
+	*bits_left = le16_to_cpu(bg->bg_मुक्त_bits_count);
 bail:
-	brelse(group_bh);
-	brelse(prev_group_bh);
+	brअन्यथा(group_bh);
+	brअन्यथा(prev_group_bh);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /* will give out up to bits_wanted contiguous bits. */
-static int ocfs2_claim_suballoc_bits(struct ocfs2_alloc_context *ac,
+अटल पूर्णांक ocfs2_claim_suballoc_bits(काष्ठा ocfs2_alloc_context *ac,
 				     handle_t *handle,
 				     u32 bits_wanted,
 				     u32 min_bits,
-				     struct ocfs2_suballoc_result *res)
-{
-	int status;
+				     काष्ठा ocfs2_suballoc_result *res)
+अणु
+	पूर्णांक status;
 	u16 victim, i;
 	u16 bits_left = 0;
-	u64 hint = ac->ac_last_group;
-	struct ocfs2_chain_list *cl;
-	struct ocfs2_dinode *fe;
+	u64 hपूर्णांक = ac->ac_last_group;
+	काष्ठा ocfs2_chain_list *cl;
+	काष्ठा ocfs2_dinode *fe;
 
 	BUG_ON(ac->ac_bits_given >= ac->ac_bits_wanted);
 	BUG_ON(bits_wanted > (ac->ac_bits_wanted - ac->ac_bits_given));
 	BUG_ON(!ac->ac_bh);
 
-	fe = (struct ocfs2_dinode *) ac->ac_bh->b_data;
+	fe = (काष्ठा ocfs2_dinode *) ac->ac_bh->b_data;
 
-	/* The bh was validated by the inode read during
+	/* The bh was validated by the inode पढ़ो during
 	 * ocfs2_reserve_suballoc_bits().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_DINODE(fe));
 
-	if (le32_to_cpu(fe->id1.bitmap1.i_used) >=
-	    le32_to_cpu(fe->id1.bitmap1.i_total)) {
+	अगर (le32_to_cpu(fe->id1.biपंचांगap1.i_used) >=
+	    le32_to_cpu(fe->id1.biपंचांगap1.i_total)) अणु
 		status = ocfs2_error(ac->ac_inode->i_sb,
 				     "Chain allocator dinode %llu has %u used bits but only %u total\n",
-				     (unsigned long long)le64_to_cpu(fe->i_blkno),
-				     le32_to_cpu(fe->id1.bitmap1.i_used),
-				     le32_to_cpu(fe->id1.bitmap1.i_total));
-		goto bail;
-	}
+				     (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(fe->i_blkno),
+				     le32_to_cpu(fe->id1.biपंचांगap1.i_used),
+				     le32_to_cpu(fe->id1.biपंचांगap1.i_total));
+		जाओ bail;
+	पूर्ण
 
-	res->sr_bg_blkno = hint;
-	if (res->sr_bg_blkno) {
-		/* Attempt to short-circuit the usual search mechanism
+	res->sr_bg_blkno = hपूर्णांक;
+	अगर (res->sr_bg_blkno) अणु
+		/* Attempt to लघु-circuit the usual search mechanism
 		 * by jumping straight to the most recently used
-		 * allocation group. This helps us maintain some
+		 * allocation group. This helps us मुख्यtain some
 		 * contiguousness across allocations. */
 		status = ocfs2_search_one_group(ac, handle, bits_wanted,
 						min_bits, res, &bits_left);
-		if (!status)
-			goto set_hint;
-		if (status < 0 && status != -ENOSPC) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर (!status)
+			जाओ set_hपूर्णांक;
+		अगर (status < 0 && status != -ENOSPC) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-	cl = (struct ocfs2_chain_list *) &fe->id2.i_chain;
+	cl = (काष्ठा ocfs2_chain_list *) &fe->id2.i_chain;
 
 	victim = ocfs2_find_victim_chain(cl);
 	ac->ac_chain = victim;
 
 	status = ocfs2_search_chain(ac, handle, bits_wanted, min_bits,
 				    res, &bits_left);
-	if (!status) {
-		if (ocfs2_is_cluster_bitmap(ac->ac_inode))
-			hint = res->sr_bg_blkno;
-		else
-			hint = ocfs2_group_from_res(res);
-		goto set_hint;
-	}
-	if (status < 0 && status != -ENOSPC) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (!status) अणु
+		अगर (ocfs2_is_cluster_biपंचांगap(ac->ac_inode))
+			hपूर्णांक = res->sr_bg_blkno;
+		अन्यथा
+			hपूर्णांक = ocfs2_group_from_res(res);
+		जाओ set_hपूर्णांक;
+	पूर्ण
+	अगर (status < 0 && status != -ENOSPC) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	trace_ocfs2_claim_suballoc_bits(victim);
 
-	/* If we didn't pick a good victim, then just default to
+	/* If we didn't pick a good victim, then just शेष to
 	 * searching each chain in order. Don't allow chain relinking
-	 * because we only calculate enough journal credits for one
+	 * because we only calculate enough journal credits क्रम one
 	 * relink per alloc. */
 	ac->ac_disable_chain_relink = 1;
-	for (i = 0; i < le16_to_cpu(cl->cl_next_free_rec); i ++) {
-		if (i == victim)
-			continue;
-		if (!cl->cl_recs[i].c_free)
-			continue;
+	क्रम (i = 0; i < le16_to_cpu(cl->cl_next_मुक्त_rec); i ++) अणु
+		अगर (i == victim)
+			जारी;
+		अगर (!cl->cl_recs[i].c_मुक्त)
+			जारी;
 
 		ac->ac_chain = i;
 		status = ocfs2_search_chain(ac, handle, bits_wanted, min_bits,
 					    res, &bits_left);
-		if (!status) {
-			hint = ocfs2_group_from_res(res);
-			break;
-		}
-		if (status < 0 && status != -ENOSPC) {
-			mlog_errno(status);
-			goto bail;
-		}
-	}
+		अगर (!status) अणु
+			hपूर्णांक = ocfs2_group_from_res(res);
+			अवरोध;
+		पूर्ण
+		अगर (status < 0 && status != -ENOSPC) अणु
+			mlog_त्रुटि_सं(status);
+			जाओ bail;
+		पूर्ण
+	पूर्ण
 
-set_hint:
-	if (status != -ENOSPC) {
+set_hपूर्णांक:
+	अगर (status != -ENOSPC) अणु
 		/* If the next search of this group is not likely to
 		 * yield a suitable extent, then we reset the last
-		 * group hint so as to not waste a disk read */
-		if (bits_left < min_bits)
+		 * group hपूर्णांक so as to not waste a disk पढ़ो */
+		अगर (bits_left < min_bits)
 			ac->ac_last_group = 0;
-		else
-			ac->ac_last_group = hint;
-	}
+		अन्यथा
+			ac->ac_last_group = hपूर्णांक;
+	पूर्ण
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_claim_metadata(handle_t *handle,
-			 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_metadata(handle_t *handle,
+			 काष्ठा ocfs2_alloc_context *ac,
 			 u32 bits_wanted,
 			 u64 *suballoc_loc,
 			 u16 *suballoc_bit_start,
-			 unsigned int *num_bits,
+			 अचिन्हित पूर्णांक *num_bits,
 			 u64 *blkno_start)
-{
-	int status;
-	struct ocfs2_suballoc_result res = { .sr_blkno = 0, };
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_suballoc_result res = अणु .sr_blkno = 0, पूर्ण;
 
 	BUG_ON(!ac);
 	BUG_ON(ac->ac_bits_wanted < (ac->ac_bits_given + bits_wanted));
@@ -2003,10 +2004,10 @@ int ocfs2_claim_metadata(handle_t *handle,
 					   bits_wanted,
 					   1,
 					   &res);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	atomic_inc(&OCFS2_SB(ac->ac_inode->i_sb)->alloc_stats.bg_allocs);
 
 	*suballoc_loc = res.sr_bg_blkno;
@@ -2016,146 +2017,146 @@ int ocfs2_claim_metadata(handle_t *handle,
 	*num_bits = res.sr_bits;
 	status = 0;
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-static void ocfs2_init_inode_ac_group(struct inode *dir,
-				      struct buffer_head *parent_di_bh,
-				      struct ocfs2_alloc_context *ac)
-{
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *)parent_di_bh->b_data;
+अटल व्योम ocfs2_init_inode_ac_group(काष्ठा inode *dir,
+				      काष्ठा buffer_head *parent_di_bh,
+				      काष्ठा ocfs2_alloc_context *ac)
+अणु
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *)parent_di_bh->b_data;
 	/*
-	 * Try to allocate inodes from some specific group.
+	 * Try to allocate inodes from some specअगरic group.
 	 *
 	 * If the parent dir has recorded the last group used in allocation,
-	 * cool, use it. Otherwise if we try to allocate new inode from the
-	 * same slot the parent dir belongs to, use the same chunk.
+	 * cool, use it. Otherwise अगर we try to allocate new inode from the
+	 * same slot the parent dir beदीर्घs to, use the same chunk.
 	 *
-	 * We are very careful here to avoid the mistake of setting
-	 * ac_last_group to a group descriptor from a different (unlocked) slot.
+	 * We are very careful here to aव्योम the mistake of setting
+	 * ac_last_group to a group descriptor from a dअगरferent (unlocked) slot.
 	 */
-	if (OCFS2_I(dir)->ip_last_used_group &&
+	अगर (OCFS2_I(dir)->ip_last_used_group &&
 	    OCFS2_I(dir)->ip_last_used_slot == ac->ac_alloc_slot)
 		ac->ac_last_group = OCFS2_I(dir)->ip_last_used_group;
-	else if (le16_to_cpu(di->i_suballoc_slot) == ac->ac_alloc_slot) {
-		if (di->i_suballoc_loc)
+	अन्यथा अगर (le16_to_cpu(di->i_suballoc_slot) == ac->ac_alloc_slot) अणु
+		अगर (di->i_suballoc_loc)
 			ac->ac_last_group = le64_to_cpu(di->i_suballoc_loc);
-		else
+		अन्यथा
 			ac->ac_last_group = ocfs2_which_suballoc_group(
 					le64_to_cpu(di->i_blkno),
 					le16_to_cpu(di->i_suballoc_bit));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void ocfs2_save_inode_ac_group(struct inode *dir,
-					     struct ocfs2_alloc_context *ac)
-{
+अटल अंतरभूत व्योम ocfs2_save_inode_ac_group(काष्ठा inode *dir,
+					     काष्ठा ocfs2_alloc_context *ac)
+अणु
 	OCFS2_I(dir)->ip_last_used_group = ac->ac_last_group;
 	OCFS2_I(dir)->ip_last_used_slot = ac->ac_alloc_slot;
-}
+पूर्ण
 
-int ocfs2_find_new_inode_loc(struct inode *dir,
-			     struct buffer_head *parent_fe_bh,
-			     struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_find_new_inode_loc(काष्ठा inode *dir,
+			     काष्ठा buffer_head *parent_fe_bh,
+			     काष्ठा ocfs2_alloc_context *ac,
 			     u64 *fe_blkno)
-{
-	int ret;
-	handle_t *handle = NULL;
-	struct ocfs2_suballoc_result *res;
+अणु
+	पूर्णांक ret;
+	handle_t *handle = शून्य;
+	काष्ठा ocfs2_suballoc_result *res;
 
 	BUG_ON(!ac);
 	BUG_ON(ac->ac_bits_given != 0);
 	BUG_ON(ac->ac_bits_wanted != 1);
 	BUG_ON(ac->ac_which != OCFS2_AC_USE_INODE);
 
-	res = kzalloc(sizeof(*res), GFP_NOFS);
-	if (res == NULL) {
+	res = kzalloc(माप(*res), GFP_NOFS);
+	अगर (res == शून्य) अणु
 		ret = -ENOMEM;
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ocfs2_init_inode_ac_group(dir, parent_fe_bh, ac);
 
 	/*
-	 * The handle started here is for chain relink. Alternatively,
-	 * we could just disable relink for these calls.
+	 * The handle started here is क्रम chain relink. Alternatively,
+	 * we could just disable relink क्रम these calls.
 	 */
 	handle = ocfs2_start_trans(OCFS2_SB(dir->i_sb), OCFS2_SUBALLOC_ALLOC);
-	if (IS_ERR(handle)) {
+	अगर (IS_ERR(handle)) अणु
 		ret = PTR_ERR(handle);
-		handle = NULL;
-		mlog_errno(ret);
-		goto out;
-	}
+		handle = शून्य;
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * This will instruct ocfs2_claim_suballoc_bits and
+	 * This will inकाष्ठा ocfs2_claim_suballoc_bits and
 	 * ocfs2_search_one_group to search but save actual allocation
-	 * for later.
+	 * क्रम later.
 	 */
 	ac->ac_find_loc_only = 1;
 
 	ret = ocfs2_claim_suballoc_bits(ac, handle, 1, 1, res);
-	if (ret < 0) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ac->ac_find_loc_priv = res;
 	*fe_blkno = res->sr_blkno;
 	ocfs2_update_inode_fsync_trans(handle, dir, 0);
 out:
-	if (handle)
+	अगर (handle)
 		ocfs2_commit_trans(OCFS2_SB(dir->i_sb), handle);
 
-	if (ret)
-		kfree(res);
+	अगर (ret)
+		kमुक्त(res);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_claim_new_inode_at_loc(handle_t *handle,
-				 struct inode *dir,
-				 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_new_inode_at_loc(handle_t *handle,
+				 काष्ठा inode *dir,
+				 काष्ठा ocfs2_alloc_context *ac,
 				 u64 *suballoc_loc,
 				 u16 *suballoc_bit,
 				 u64 di_blkno)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u16 chain;
-	struct ocfs2_suballoc_result *res = ac->ac_find_loc_priv;
-	struct buffer_head *bg_bh = NULL;
-	struct ocfs2_group_desc *bg;
-	struct ocfs2_dinode *di = (struct ocfs2_dinode *) ac->ac_bh->b_data;
+	काष्ठा ocfs2_suballoc_result *res = ac->ac_find_loc_priv;
+	काष्ठा buffer_head *bg_bh = शून्य;
+	काष्ठा ocfs2_group_desc *bg;
+	काष्ठा ocfs2_dinode *di = (काष्ठा ocfs2_dinode *) ac->ac_bh->b_data;
 
 	/*
-	 * Since di_blkno is being passed back in, we check for any
+	 * Since di_blkno is being passed back in, we check क्रम any
 	 * inconsistencies which may have happened between
 	 * calls. These are code bugs as di_blkno is not expected to
-	 * change once returned from ocfs2_find_new_inode_loc()
+	 * change once वापसed from ocfs2_find_new_inode_loc()
 	 */
 	BUG_ON(res->sr_blkno != di_blkno);
 
-	ret = ocfs2_read_group_descriptor(ac->ac_inode, di,
+	ret = ocfs2_पढ़ो_group_descriptor(ac->ac_inode, di,
 					  res->sr_bg_stable_blkno, &bg_bh);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	bg = (struct ocfs2_group_desc *) bg_bh->b_data;
+	bg = (काष्ठा ocfs2_group_desc *) bg_bh->b_data;
 	chain = le16_to_cpu(bg->bg_chain);
 
 	ret = ocfs2_alloc_dinode_update_counts(ac->ac_inode, handle,
 					       ac->ac_bh, res->sr_bits,
 					       chain);
-	if (ret) {
-		mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret) अणु
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	ret = ocfs2_block_group_set_bits(handle,
 					 ac->ac_inode,
@@ -2163,14 +2164,14 @@ int ocfs2_claim_new_inode_at_loc(handle_t *handle,
 					 bg_bh,
 					 res->sr_bit_offset,
 					 res->sr_bits);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		ocfs2_rollback_alloc_dinode_counts(ac->ac_inode,
 					       ac->ac_bh, res->sr_bits, chain);
-		mlog_errno(ret);
-		goto out;
-	}
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
-	trace_ocfs2_claim_new_inode_at_loc((unsigned long long)di_blkno,
+	trace_ocfs2_claim_new_inode_at_loc((अचिन्हित दीर्घ दीर्घ)di_blkno,
 					   res->sr_bits);
 
 	atomic_inc(&OCFS2_SB(ac->ac_inode->i_sb)->alloc_stats.bg_allocs);
@@ -2183,21 +2184,21 @@ int ocfs2_claim_new_inode_at_loc(handle_t *handle,
 	ocfs2_save_inode_ac_group(dir, ac);
 
 out:
-	brelse(bg_bh);
+	brअन्यथा(bg_bh);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ocfs2_claim_new_inode(handle_t *handle,
-			  struct inode *dir,
-			  struct buffer_head *parent_fe_bh,
-			  struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_new_inode(handle_t *handle,
+			  काष्ठा inode *dir,
+			  काष्ठा buffer_head *parent_fe_bh,
+			  काष्ठा ocfs2_alloc_context *ac,
 			  u64 *suballoc_loc,
 			  u16 *suballoc_bit,
 			  u64 *fe_blkno)
-{
-	int status;
-	struct ocfs2_suballoc_result res;
+अणु
+	पूर्णांक status;
+	काष्ठा ocfs2_suballoc_result res;
 
 	BUG_ON(!ac);
 	BUG_ON(ac->ac_bits_given != 0);
@@ -2211,10 +2212,10 @@ int ocfs2_claim_new_inode(handle_t *handle,
 					   1,
 					   1,
 					   &res);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 	atomic_inc(&OCFS2_SB(ac->ac_inode->i_sb)->alloc_stats.bg_allocs);
 
 	BUG_ON(res.sr_bits != 1);
@@ -2226,90 +2227,90 @@ int ocfs2_claim_new_inode(handle_t *handle,
 	ocfs2_save_inode_ac_group(dir, ac);
 	status = 0;
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-/* translate a group desc. blkno and it's bitmap offset into
+/* translate a group desc. blkno and it's biपंचांगap offset पूर्णांकo
  * disk cluster offset. */
-static inline u32 ocfs2_desc_bitmap_to_cluster_off(struct inode *inode,
+अटल अंतरभूत u32 ocfs2_desc_biपंचांगap_to_cluster_off(काष्ठा inode *inode,
 						   u64 bg_blkno,
 						   u16 bg_bit_off)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	u32 cluster = 0;
 
-	BUG_ON(!ocfs2_is_cluster_bitmap(inode));
+	BUG_ON(!ocfs2_is_cluster_biपंचांगap(inode));
 
-	if (bg_blkno != osb->first_cluster_group_blkno)
+	अगर (bg_blkno != osb->first_cluster_group_blkno)
 		cluster = ocfs2_blocks_to_clusters(inode->i_sb, bg_blkno);
 	cluster += (u32) bg_bit_off;
-	return cluster;
-}
+	वापस cluster;
+पूर्ण
 
-/* given a cluster offset, calculate which block group it belongs to
- * and return that block offset. */
-u64 ocfs2_which_cluster_group(struct inode *inode, u32 cluster)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+/* given a cluster offset, calculate which block group it beदीर्घs to
+ * and वापस that block offset. */
+u64 ocfs2_which_cluster_group(काष्ठा inode *inode, u32 cluster)
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	u32 group_no;
 
-	BUG_ON(!ocfs2_is_cluster_bitmap(inode));
+	BUG_ON(!ocfs2_is_cluster_biपंचांगap(inode));
 
-	group_no = cluster / osb->bitmap_cpg;
-	if (!group_no)
-		return osb->first_cluster_group_blkno;
-	return ocfs2_clusters_to_blocks(inode->i_sb,
-					group_no * osb->bitmap_cpg);
-}
+	group_no = cluster / osb->biपंचांगap_cpg;
+	अगर (!group_no)
+		वापस osb->first_cluster_group_blkno;
+	वापस ocfs2_clusters_to_blocks(inode->i_sb,
+					group_no * osb->biपंचांगap_cpg);
+पूर्ण
 
 /* given the block number of a cluster start, calculate which cluster
- * group and descriptor bitmap offset that corresponds to. */
-static inline void ocfs2_block_to_cluster_group(struct inode *inode,
+ * group and descriptor biपंचांगap offset that corresponds to. */
+अटल अंतरभूत व्योम ocfs2_block_to_cluster_group(काष्ठा inode *inode,
 						u64 data_blkno,
 						u64 *bg_blkno,
 						u16 *bg_bit_off)
-{
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+अणु
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 	u32 data_cluster = ocfs2_blocks_to_clusters(osb->sb, data_blkno);
 
-	BUG_ON(!ocfs2_is_cluster_bitmap(inode));
+	BUG_ON(!ocfs2_is_cluster_biपंचांगap(inode));
 
 	*bg_blkno = ocfs2_which_cluster_group(inode,
 					      data_cluster);
 
-	if (*bg_blkno == osb->first_cluster_group_blkno)
+	अगर (*bg_blkno == osb->first_cluster_group_blkno)
 		*bg_bit_off = (u16) data_cluster;
-	else
+	अन्यथा
 		*bg_bit_off = (u16) ocfs2_blocks_to_clusters(osb->sb,
 							     data_blkno - *bg_blkno);
-}
+पूर्ण
 
 /*
  * min_bits - minimum contiguous chunk from this total allocation we
- * can handle. set to what we asked for originally for a full
+ * can handle. set to what we asked क्रम originally क्रम a full
  * contig. allocation, set to '1' to indicate we can deal with extents
  * of any size.
  */
-int __ocfs2_claim_clusters(handle_t *handle,
-			   struct ocfs2_alloc_context *ac,
+पूर्णांक __ocfs2_claim_clusters(handle_t *handle,
+			   काष्ठा ocfs2_alloc_context *ac,
 			   u32 min_clusters,
 			   u32 max_clusters,
 			   u32 *cluster_start,
 			   u32 *num_clusters)
-{
-	int status;
-	unsigned int bits_wanted = max_clusters;
-	struct ocfs2_suballoc_result res = { .sr_blkno = 0, };
-	struct ocfs2_super *osb = OCFS2_SB(ac->ac_inode->i_sb);
+अणु
+	पूर्णांक status;
+	अचिन्हित पूर्णांक bits_wanted = max_clusters;
+	काष्ठा ocfs2_suballoc_result res = अणु .sr_blkno = 0, पूर्ण;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(ac->ac_inode->i_sb);
 
 	BUG_ON(ac->ac_bits_given >= ac->ac_bits_wanted);
 
 	BUG_ON(ac->ac_which != OCFS2_AC_USE_LOCAL
 	       && ac->ac_which != OCFS2_AC_USE_MAIN);
 
-	if (ac->ac_which == OCFS2_AC_USE_LOCAL) {
+	अगर (ac->ac_which == OCFS2_AC_USE_LOCAL) अणु
 		WARN_ON(min_clusters > 1);
 
 		status = ocfs2_claim_local_alloc_bits(osb,
@@ -2318,548 +2319,548 @@ int __ocfs2_claim_clusters(handle_t *handle,
 						      bits_wanted,
 						      cluster_start,
 						      num_clusters);
-		if (!status)
+		अगर (!status)
 			atomic_inc(&osb->alloc_stats.local_data);
-	} else {
-		if (min_clusters > (osb->bitmap_cpg - 1)) {
-			/* The only paths asking for contiguousness
-			 * should know about this already. */
+	पूर्ण अन्यथा अणु
+		अगर (min_clusters > (osb->biपंचांगap_cpg - 1)) अणु
+			/* The only paths asking क्रम contiguousness
+			 * should know about this alपढ़ोy. */
 			mlog(ML_ERROR, "minimum allocation requested %u exceeds "
 			     "group bitmap size %u!\n", min_clusters,
-			     osb->bitmap_cpg);
+			     osb->biपंचांगap_cpg);
 			status = -ENOSPC;
-			goto bail;
-		}
-		/* clamp the current request down to a realistic size. */
-		if (bits_wanted > (osb->bitmap_cpg - 1))
-			bits_wanted = osb->bitmap_cpg - 1;
+			जाओ bail;
+		पूर्ण
+		/* clamp the current request करोwn to a realistic size. */
+		अगर (bits_wanted > (osb->biपंचांगap_cpg - 1))
+			bits_wanted = osb->biपंचांगap_cpg - 1;
 
 		status = ocfs2_claim_suballoc_bits(ac,
 						   handle,
 						   bits_wanted,
 						   min_clusters,
 						   &res);
-		if (!status) {
+		अगर (!status) अणु
 			BUG_ON(res.sr_blkno); /* cluster alloc can't set */
 			*cluster_start =
-				ocfs2_desc_bitmap_to_cluster_off(ac->ac_inode,
+				ocfs2_desc_biपंचांगap_to_cluster_off(ac->ac_inode,
 								 res.sr_bg_blkno,
 								 res.sr_bit_offset);
-			atomic_inc(&osb->alloc_stats.bitmap_data);
+			atomic_inc(&osb->alloc_stats.biपंचांगap_data);
 			*num_clusters = res.sr_bits;
-		}
-	}
-	if (status < 0) {
-		if (status != -ENOSPC)
-			mlog_errno(status);
-		goto bail;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (status < 0) अणु
+		अगर (status != -ENOSPC)
+			mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	ac->ac_bits_given += *num_clusters;
 
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
-int ocfs2_claim_clusters(handle_t *handle,
-			 struct ocfs2_alloc_context *ac,
+पूर्णांक ocfs2_claim_clusters(handle_t *handle,
+			 काष्ठा ocfs2_alloc_context *ac,
 			 u32 min_clusters,
 			 u32 *cluster_start,
 			 u32 *num_clusters)
-{
-	unsigned int bits_wanted = ac->ac_bits_wanted - ac->ac_bits_given;
+अणु
+	अचिन्हित पूर्णांक bits_wanted = ac->ac_bits_wanted - ac->ac_bits_given;
 
-	return __ocfs2_claim_clusters(handle, ac, min_clusters,
+	वापस __ocfs2_claim_clusters(handle, ac, min_clusters,
 				      bits_wanted, cluster_start, num_clusters);
-}
+पूर्ण
 
-static int ocfs2_block_group_clear_bits(handle_t *handle,
-					struct inode *alloc_inode,
-					struct ocfs2_group_desc *bg,
-					struct buffer_head *group_bh,
-					unsigned int bit_off,
-					unsigned int num_bits,
-					void (*undo_fn)(unsigned int bit,
-							unsigned long *bmap))
-{
-	int status;
-	unsigned int tmp;
-	struct ocfs2_group_desc *undo_bg = NULL;
-	struct journal_head *jh;
+अटल पूर्णांक ocfs2_block_group_clear_bits(handle_t *handle,
+					काष्ठा inode *alloc_inode,
+					काष्ठा ocfs2_group_desc *bg,
+					काष्ठा buffer_head *group_bh,
+					अचिन्हित पूर्णांक bit_off,
+					अचिन्हित पूर्णांक num_bits,
+					व्योम (*unकरो_fn)(अचिन्हित पूर्णांक bit,
+							अचिन्हित दीर्घ *bmap))
+अणु
+	पूर्णांक status;
+	अचिन्हित पूर्णांक पंचांगp;
+	काष्ठा ocfs2_group_desc *unकरो_bg = शून्य;
+	काष्ठा journal_head *jh;
 
 	/* The caller got this descriptor from
-	 * ocfs2_read_group_descriptor().  Any corruption is a code bug. */
+	 * ocfs2_पढ़ो_group_descriptor().  Any corruption is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_GROUP_DESC(bg));
 
 	trace_ocfs2_block_group_clear_bits(bit_off, num_bits);
 
-	BUG_ON(undo_fn && !ocfs2_is_cluster_bitmap(alloc_inode));
+	BUG_ON(unकरो_fn && !ocfs2_is_cluster_biपंचांगap(alloc_inode));
 	status = ocfs2_journal_access_gd(handle, INODE_CACHE(alloc_inode),
 					 group_bh,
-					 undo_fn ?
+					 unकरो_fn ?
 					 OCFS2_JOURNAL_ACCESS_UNDO :
 					 OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	jh = bh2jh(group_bh);
-	if (undo_fn) {
+	अगर (unकरो_fn) अणु
 		spin_lock(&jh->b_state_lock);
-		undo_bg = (struct ocfs2_group_desc *) jh->b_committed_data;
-		BUG_ON(!undo_bg);
-	}
+		unकरो_bg = (काष्ठा ocfs2_group_desc *) jh->b_committed_data;
+		BUG_ON(!unकरो_bg);
+	पूर्ण
 
-	tmp = num_bits;
-	while(tmp--) {
-		ocfs2_clear_bit((bit_off + tmp),
-				(unsigned long *) bg->bg_bitmap);
-		if (undo_fn)
-			undo_fn(bit_off + tmp,
-				(unsigned long *) undo_bg->bg_bitmap);
-	}
-	le16_add_cpu(&bg->bg_free_bits_count, num_bits);
-	if (le16_to_cpu(bg->bg_free_bits_count) > le16_to_cpu(bg->bg_bits)) {
-		if (undo_fn)
+	पंचांगp = num_bits;
+	जबतक(पंचांगp--) अणु
+		ocfs2_clear_bit((bit_off + पंचांगp),
+				(अचिन्हित दीर्घ *) bg->bg_biपंचांगap);
+		अगर (unकरो_fn)
+			unकरो_fn(bit_off + पंचांगp,
+				(अचिन्हित दीर्घ *) unकरो_bg->bg_biपंचांगap);
+	पूर्ण
+	le16_add_cpu(&bg->bg_मुक्त_bits_count, num_bits);
+	अगर (le16_to_cpu(bg->bg_मुक्त_bits_count) > le16_to_cpu(bg->bg_bits)) अणु
+		अगर (unकरो_fn)
 			spin_unlock(&jh->b_state_lock);
-		return ocfs2_error(alloc_inode->i_sb, "Group descriptor # %llu has bit count %u but claims %u are freed. num_bits %d\n",
-				   (unsigned long long)le64_to_cpu(bg->bg_blkno),
+		वापस ocfs2_error(alloc_inode->i_sb, "Group descriptor # %llu has bit count %u but claims %u are freed. num_bits %d\n",
+				   (अचिन्हित दीर्घ दीर्घ)le64_to_cpu(bg->bg_blkno),
 				   le16_to_cpu(bg->bg_bits),
-				   le16_to_cpu(bg->bg_free_bits_count),
+				   le16_to_cpu(bg->bg_मुक्त_bits_count),
 				   num_bits);
-	}
+	पूर्ण
 
-	if (undo_fn)
+	अगर (unकरो_fn)
 		spin_unlock(&jh->b_state_lock);
 
 	ocfs2_journal_dirty(handle, group_bh);
 bail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * expects the suballoc inode to already be locked.
+ * expects the suballoc inode to alपढ़ोy be locked.
  */
-static int _ocfs2_free_suballoc_bits(handle_t *handle,
-				     struct inode *alloc_inode,
-				     struct buffer_head *alloc_bh,
-				     unsigned int start_bit,
+अटल पूर्णांक _ocfs2_मुक्त_suballoc_bits(handle_t *handle,
+				     काष्ठा inode *alloc_inode,
+				     काष्ठा buffer_head *alloc_bh,
+				     अचिन्हित पूर्णांक start_bit,
 				     u64 bg_blkno,
-				     unsigned int count,
-				     void (*undo_fn)(unsigned int bit,
-						     unsigned long *bitmap))
-{
-	int status = 0;
-	u32 tmp_used;
-	struct ocfs2_dinode *fe = (struct ocfs2_dinode *) alloc_bh->b_data;
-	struct ocfs2_chain_list *cl = &fe->id2.i_chain;
-	struct buffer_head *group_bh = NULL;
-	struct ocfs2_group_desc *group;
+				     अचिन्हित पूर्णांक count,
+				     व्योम (*unकरो_fn)(अचिन्हित पूर्णांक bit,
+						     अचिन्हित दीर्घ *biपंचांगap))
+अणु
+	पूर्णांक status = 0;
+	u32 पंचांगp_used;
+	काष्ठा ocfs2_dinode *fe = (काष्ठा ocfs2_dinode *) alloc_bh->b_data;
+	काष्ठा ocfs2_chain_list *cl = &fe->id2.i_chain;
+	काष्ठा buffer_head *group_bh = शून्य;
+	काष्ठा ocfs2_group_desc *group;
 
-	/* The alloc_bh comes from ocfs2_free_dinode() or
-	 * ocfs2_free_clusters().  The callers have all locked the
+	/* The alloc_bh comes from ocfs2_मुक्त_dinode() or
+	 * ocfs2_मुक्त_clusters().  The callers have all locked the
 	 * allocator and gotten alloc_bh from the lock call.  This
 	 * validates the dinode buffer.  Any corruption that has happened
 	 * is a code bug. */
 	BUG_ON(!OCFS2_IS_VALID_DINODE(fe));
 	BUG_ON((count + start_bit) > ocfs2_bits_per_group(cl));
 
-	trace_ocfs2_free_suballoc_bits(
-		(unsigned long long)OCFS2_I(alloc_inode)->ip_blkno,
-		(unsigned long long)bg_blkno,
+	trace_ocfs2_मुक्त_suballoc_bits(
+		(अचिन्हित दीर्घ दीर्घ)OCFS2_I(alloc_inode)->ip_blkno,
+		(अचिन्हित दीर्घ दीर्घ)bg_blkno,
 		start_bit, count);
 
-	status = ocfs2_read_group_descriptor(alloc_inode, fe, bg_blkno,
+	status = ocfs2_पढ़ो_group_descriptor(alloc_inode, fe, bg_blkno,
 					     &group_bh);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
-	group = (struct ocfs2_group_desc *) group_bh->b_data;
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
+	group = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
 
 	BUG_ON((count + start_bit) > le16_to_cpu(group->bg_bits));
 
 	status = ocfs2_block_group_clear_bits(handle, alloc_inode,
 					      group, group_bh,
-					      start_bit, count, undo_fn);
-	if (status < 0) {
-		mlog_errno(status);
-		goto bail;
-	}
+					      start_bit, count, unकरो_fn);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_journal_access_di(handle, INODE_CACHE(alloc_inode),
 					 alloc_bh, OCFS2_JOURNAL_ACCESS_WRITE);
-	if (status < 0) {
-		mlog_errno(status);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
 		ocfs2_block_group_set_bits(handle, alloc_inode, group, group_bh,
 				start_bit, count);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	le32_add_cpu(&cl->cl_recs[le16_to_cpu(group->bg_chain)].c_free,
+	le32_add_cpu(&cl->cl_recs[le16_to_cpu(group->bg_chain)].c_मुक्त,
 		     count);
-	tmp_used = le32_to_cpu(fe->id1.bitmap1.i_used);
-	fe->id1.bitmap1.i_used = cpu_to_le32(tmp_used - count);
+	पंचांगp_used = le32_to_cpu(fe->id1.biपंचांगap1.i_used);
+	fe->id1.biपंचांगap1.i_used = cpu_to_le32(पंचांगp_used - count);
 	ocfs2_journal_dirty(handle, alloc_bh);
 
 bail:
-	brelse(group_bh);
-	return status;
-}
+	brअन्यथा(group_bh);
+	वापस status;
+पूर्ण
 
-int ocfs2_free_suballoc_bits(handle_t *handle,
-			     struct inode *alloc_inode,
-			     struct buffer_head *alloc_bh,
-			     unsigned int start_bit,
+पूर्णांक ocfs2_मुक्त_suballoc_bits(handle_t *handle,
+			     काष्ठा inode *alloc_inode,
+			     काष्ठा buffer_head *alloc_bh,
+			     अचिन्हित पूर्णांक start_bit,
 			     u64 bg_blkno,
-			     unsigned int count)
-{
-	return _ocfs2_free_suballoc_bits(handle, alloc_inode, alloc_bh,
-					 start_bit, bg_blkno, count, NULL);
-}
+			     अचिन्हित पूर्णांक count)
+अणु
+	वापस _ocfs2_मुक्त_suballoc_bits(handle, alloc_inode, alloc_bh,
+					 start_bit, bg_blkno, count, शून्य);
+पूर्ण
 
-int ocfs2_free_dinode(handle_t *handle,
-		      struct inode *inode_alloc_inode,
-		      struct buffer_head *inode_alloc_bh,
-		      struct ocfs2_dinode *di)
-{
+पूर्णांक ocfs2_मुक्त_dinode(handle_t *handle,
+		      काष्ठा inode *inode_alloc_inode,
+		      काष्ठा buffer_head *inode_alloc_bh,
+		      काष्ठा ocfs2_dinode *di)
+अणु
 	u64 blk = le64_to_cpu(di->i_blkno);
 	u16 bit = le16_to_cpu(di->i_suballoc_bit);
 	u64 bg_blkno = ocfs2_which_suballoc_group(blk, bit);
 
-	if (di->i_suballoc_loc)
+	अगर (di->i_suballoc_loc)
 		bg_blkno = le64_to_cpu(di->i_suballoc_loc);
-	return ocfs2_free_suballoc_bits(handle, inode_alloc_inode,
+	वापस ocfs2_मुक्त_suballoc_bits(handle, inode_alloc_inode,
 					inode_alloc_bh, bit, bg_blkno, 1);
-}
+पूर्ण
 
-static int _ocfs2_free_clusters(handle_t *handle,
-				struct inode *bitmap_inode,
-				struct buffer_head *bitmap_bh,
+अटल पूर्णांक _ocfs2_मुक्त_clusters(handle_t *handle,
+				काष्ठा inode *biपंचांगap_inode,
+				काष्ठा buffer_head *biपंचांगap_bh,
 				u64 start_blk,
-				unsigned int num_clusters,
-				void (*undo_fn)(unsigned int bit,
-						unsigned long *bitmap))
-{
-	int status;
+				अचिन्हित पूर्णांक num_clusters,
+				व्योम (*unकरो_fn)(अचिन्हित पूर्णांक bit,
+						अचिन्हित दीर्घ *biपंचांगap))
+अणु
+	पूर्णांक status;
 	u16 bg_start_bit;
 	u64 bg_blkno;
 
 	/* You can't ever have a contiguous set of clusters
-	 * bigger than a block group bitmap so we never have to worry
+	 * bigger than a block group biपंचांगap so we never have to worry
 	 * about looping on them.
-	 * This is expensive. We can safely remove once this stuff has
+	 * This is expensive. We can safely हटाओ once this stuff has
 	 * gotten tested really well. */
-	BUG_ON(start_blk != ocfs2_clusters_to_blocks(bitmap_inode->i_sb,
-				ocfs2_blocks_to_clusters(bitmap_inode->i_sb,
+	BUG_ON(start_blk != ocfs2_clusters_to_blocks(biपंचांगap_inode->i_sb,
+				ocfs2_blocks_to_clusters(biपंचांगap_inode->i_sb,
 							 start_blk)));
 
 
-	ocfs2_block_to_cluster_group(bitmap_inode, start_blk, &bg_blkno,
+	ocfs2_block_to_cluster_group(biपंचांगap_inode, start_blk, &bg_blkno,
 				     &bg_start_bit);
 
-	trace_ocfs2_free_clusters((unsigned long long)bg_blkno,
-			(unsigned long long)start_blk,
+	trace_ocfs2_मुक्त_clusters((अचिन्हित दीर्घ दीर्घ)bg_blkno,
+			(अचिन्हित दीर्घ दीर्घ)start_blk,
 			bg_start_bit, num_clusters);
 
-	status = _ocfs2_free_suballoc_bits(handle, bitmap_inode, bitmap_bh,
+	status = _ocfs2_मुक्त_suballoc_bits(handle, biपंचांगap_inode, biपंचांगap_bh,
 					   bg_start_bit, bg_blkno,
-					   num_clusters, undo_fn);
-	if (status < 0) {
-		mlog_errno(status);
-		goto out;
-	}
+					   num_clusters, unकरो_fn);
+	अगर (status < 0) अणु
+		mlog_त्रुटि_सं(status);
+		जाओ out;
+	पूर्ण
 
-	ocfs2_local_alloc_seen_free_bits(OCFS2_SB(bitmap_inode->i_sb),
+	ocfs2_local_alloc_seen_मुक्त_bits(OCFS2_SB(biपंचांगap_inode->i_sb),
 					 num_clusters);
 
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ocfs2_free_clusters(handle_t *handle,
-			struct inode *bitmap_inode,
-			struct buffer_head *bitmap_bh,
+पूर्णांक ocfs2_मुक्त_clusters(handle_t *handle,
+			काष्ठा inode *biपंचांगap_inode,
+			काष्ठा buffer_head *biपंचांगap_bh,
 			u64 start_blk,
-			unsigned int num_clusters)
-{
-	return _ocfs2_free_clusters(handle, bitmap_inode, bitmap_bh,
+			अचिन्हित पूर्णांक num_clusters)
+अणु
+	वापस _ocfs2_मुक्त_clusters(handle, biपंचांगap_inode, biपंचांगap_bh,
 				    start_blk, num_clusters,
 				    _ocfs2_set_bit);
-}
+पूर्ण
 
 /*
- * Give never-used clusters back to the global bitmap.  We don't need
- * to protect these bits in the undo buffer.
+ * Give never-used clusters back to the global biपंचांगap.  We करोn't need
+ * to protect these bits in the unकरो buffer.
  */
-int ocfs2_release_clusters(handle_t *handle,
-			   struct inode *bitmap_inode,
-			   struct buffer_head *bitmap_bh,
+पूर्णांक ocfs2_release_clusters(handle_t *handle,
+			   काष्ठा inode *biपंचांगap_inode,
+			   काष्ठा buffer_head *biपंचांगap_bh,
 			   u64 start_blk,
-			   unsigned int num_clusters)
-{
-	return _ocfs2_free_clusters(handle, bitmap_inode, bitmap_bh,
+			   अचिन्हित पूर्णांक num_clusters)
+अणु
+	वापस _ocfs2_मुक्त_clusters(handle, biपंचांगap_inode, biपंचांगap_bh,
 				    start_blk, num_clusters,
 				    _ocfs2_clear_bit);
-}
+पूर्ण
 
 /*
  * For a given allocation, determine which allocators will need to be
  * accessed, and lock them, reserving the appropriate number of bits.
  *
- * Sparse file systems call this from ocfs2_write_begin_nolock()
+ * Sparse file प्रणालीs call this from ocfs2_ग_लिखो_begin_nolock()
  * and ocfs2_allocate_unwritten_extents().
  *
- * File systems which don't support holes call this from
+ * File प्रणालीs which करोn't support holes call this from
  * ocfs2_extend_allocation().
  */
-int ocfs2_lock_allocators(struct inode *inode,
-			  struct ocfs2_extent_tree *et,
+पूर्णांक ocfs2_lock_allocators(काष्ठा inode *inode,
+			  काष्ठा ocfs2_extent_tree *et,
 			  u32 clusters_to_add, u32 extents_to_split,
-			  struct ocfs2_alloc_context **data_ac,
-			  struct ocfs2_alloc_context **meta_ac)
-{
-	int ret = 0, num_free_extents;
-	unsigned int max_recs_needed = clusters_to_add + 2 * extents_to_split;
-	struct ocfs2_super *osb = OCFS2_SB(inode->i_sb);
+			  काष्ठा ocfs2_alloc_context **data_ac,
+			  काष्ठा ocfs2_alloc_context **meta_ac)
+अणु
+	पूर्णांक ret = 0, num_मुक्त_extents;
+	अचिन्हित पूर्णांक max_recs_needed = clusters_to_add + 2 * extents_to_split;
+	काष्ठा ocfs2_super *osb = OCFS2_SB(inode->i_sb);
 
-	*meta_ac = NULL;
-	if (data_ac)
-		*data_ac = NULL;
+	*meta_ac = शून्य;
+	अगर (data_ac)
+		*data_ac = शून्य;
 
-	BUG_ON(clusters_to_add != 0 && data_ac == NULL);
+	BUG_ON(clusters_to_add != 0 && data_ac == शून्य);
 
-	num_free_extents = ocfs2_num_free_extents(et);
-	if (num_free_extents < 0) {
-		ret = num_free_extents;
-		mlog_errno(ret);
-		goto out;
-	}
+	num_मुक्त_extents = ocfs2_num_मुक्त_extents(et);
+	अगर (num_मुक्त_extents < 0) अणु
+		ret = num_मुक्त_extents;
+		mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Sparse allocation file systems need to be more conservative
-	 * with reserving room for expansion - the actual allocation
-	 * happens while we've got a journal handle open so re-taking
-	 * a cluster lock (because we ran out of room for another
+	 * Sparse allocation file प्रणालीs need to be more conservative
+	 * with reserving room क्रम expansion - the actual allocation
+	 * happens जबतक we've got a journal handle खोलो so re-taking
+	 * a cluster lock (because we ran out of room क्रम another
 	 * extent) will violate ordering rules.
 	 *
-	 * Most of the time we'll only be seeing this 1 cluster at a time
+	 * Most of the समय we'll only be seeing this 1 cluster at a समय
 	 * anyway.
 	 *
-	 * Always lock for any unwritten extents - we might want to
+	 * Always lock क्रम any unwritten extents - we might want to
 	 * add blocks during a split.
 	 */
-	if (!num_free_extents ||
-	    (ocfs2_sparse_alloc(osb) && num_free_extents < max_recs_needed)) {
+	अगर (!num_मुक्त_extents ||
+	    (ocfs2_sparse_alloc(osb) && num_मुक्त_extents < max_recs_needed)) अणु
 		ret = ocfs2_reserve_new_metadata(osb, et->et_root_el, meta_ac);
-		if (ret < 0) {
-			if (ret != -ENOSPC)
-				mlog_errno(ret);
-			goto out;
-		}
-	}
+		अगर (ret < 0) अणु
+			अगर (ret != -ENOSPC)
+				mlog_त्रुटि_सं(ret);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (clusters_to_add == 0)
-		goto out;
+	अगर (clusters_to_add == 0)
+		जाओ out;
 
 	ret = ocfs2_reserve_clusters(osb, clusters_to_add, data_ac);
-	if (ret < 0) {
-		if (ret != -ENOSPC)
-			mlog_errno(ret);
-		goto out;
-	}
+	अगर (ret < 0) अणु
+		अगर (ret != -ENOSPC)
+			mlog_त्रुटि_सं(ret);
+		जाओ out;
+	पूर्ण
 
 out:
-	if (ret) {
-		if (*meta_ac) {
-			ocfs2_free_alloc_context(*meta_ac);
-			*meta_ac = NULL;
-		}
+	अगर (ret) अणु
+		अगर (*meta_ac) अणु
+			ocfs2_मुक्त_alloc_context(*meta_ac);
+			*meta_ac = शून्य;
+		पूर्ण
 
 		/*
 		 * We cannot have an error and a non null *data_ac.
 		 */
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Read the inode specified by blkno to get suballoc_slot and
+ * Read the inode specअगरied by blkno to get suballoc_slot and
  * suballoc_bit.
  */
-static int ocfs2_get_suballoc_slot_bit(struct ocfs2_super *osb, u64 blkno,
+अटल पूर्णांक ocfs2_get_suballoc_slot_bit(काष्ठा ocfs2_super *osb, u64 blkno,
 				       u16 *suballoc_slot, u64 *group_blkno,
 				       u16 *suballoc_bit)
-{
-	int status;
-	struct buffer_head *inode_bh = NULL;
-	struct ocfs2_dinode *inode_fe;
+अणु
+	पूर्णांक status;
+	काष्ठा buffer_head *inode_bh = शून्य;
+	काष्ठा ocfs2_dinode *inode_fe;
 
-	trace_ocfs2_get_suballoc_slot_bit((unsigned long long)blkno);
+	trace_ocfs2_get_suballoc_slot_bit((अचिन्हित दीर्घ दीर्घ)blkno);
 
-	/* dirty read disk */
-	status = ocfs2_read_blocks_sync(osb, blkno, 1, &inode_bh);
-	if (status < 0) {
+	/* dirty पढ़ो disk */
+	status = ocfs2_पढ़ो_blocks_sync(osb, blkno, 1, &inode_bh);
+	अगर (status < 0) अणु
 		mlog(ML_ERROR, "read block %llu failed %d\n",
-		     (unsigned long long)blkno, status);
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)blkno, status);
+		जाओ bail;
+	पूर्ण
 
-	inode_fe = (struct ocfs2_dinode *) inode_bh->b_data;
-	if (!OCFS2_IS_VALID_DINODE(inode_fe)) {
+	inode_fe = (काष्ठा ocfs2_dinode *) inode_bh->b_data;
+	अगर (!OCFS2_IS_VALID_DINODE(inode_fe)) अणु
 		mlog(ML_ERROR, "invalid inode %llu requested\n",
-		     (unsigned long long)blkno);
+		     (अचिन्हित दीर्घ दीर्घ)blkno);
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (le16_to_cpu(inode_fe->i_suballoc_slot) != (u16)OCFS2_INVALID_SLOT &&
-	    (u32)le16_to_cpu(inode_fe->i_suballoc_slot) > osb->max_slots - 1) {
+	अगर (le16_to_cpu(inode_fe->i_suballoc_slot) != (u16)OCFS2_INVALID_SLOT &&
+	    (u32)le16_to_cpu(inode_fe->i_suballoc_slot) > osb->max_slots - 1) अणु
 		mlog(ML_ERROR, "inode %llu has invalid suballoc slot %u\n",
-		     (unsigned long long)blkno,
+		     (अचिन्हित दीर्घ दीर्घ)blkno,
 		     (u32)le16_to_cpu(inode_fe->i_suballoc_slot));
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (suballoc_slot)
+	अगर (suballoc_slot)
 		*suballoc_slot = le16_to_cpu(inode_fe->i_suballoc_slot);
-	if (suballoc_bit)
+	अगर (suballoc_bit)
 		*suballoc_bit = le16_to_cpu(inode_fe->i_suballoc_bit);
-	if (group_blkno)
+	अगर (group_blkno)
 		*group_blkno = le64_to_cpu(inode_fe->i_suballoc_loc);
 
 bail:
-	brelse(inode_bh);
+	brअन्यथा(inode_bh);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
- * test whether bit is SET in allocator bitmap or not.  on success, 0
- * is returned and *res is 1 for SET; 0 otherwise.  when fails, errno
- * is returned and *res is meaningless.  Call this after you have
+ * test whether bit is SET in allocator biपंचांगap or not.  on success, 0
+ * is वापसed and *res is 1 क्रम SET; 0 otherwise.  when fails, त्रुटि_सं
+ * is वापसed and *res is meaningless.  Call this after you have
  * cluster locked against suballoc, or you may get a result based on
  * non-up2date contents
  */
-static int ocfs2_test_suballoc_bit(struct ocfs2_super *osb,
-				   struct inode *suballoc,
-				   struct buffer_head *alloc_bh,
+अटल पूर्णांक ocfs2_test_suballoc_bit(काष्ठा ocfs2_super *osb,
+				   काष्ठा inode *suballoc,
+				   काष्ठा buffer_head *alloc_bh,
 				   u64 group_blkno, u64 blkno,
-				   u16 bit, int *res)
-{
-	struct ocfs2_dinode *alloc_di;
-	struct ocfs2_group_desc *group;
-	struct buffer_head *group_bh = NULL;
+				   u16 bit, पूर्णांक *res)
+अणु
+	काष्ठा ocfs2_dinode *alloc_di;
+	काष्ठा ocfs2_group_desc *group;
+	काष्ठा buffer_head *group_bh = शून्य;
 	u64 bg_blkno;
-	int status;
+	पूर्णांक status;
 
-	trace_ocfs2_test_suballoc_bit((unsigned long long)blkno,
-				      (unsigned int)bit);
+	trace_ocfs2_test_suballoc_bit((अचिन्हित दीर्घ दीर्घ)blkno,
+				      (अचिन्हित पूर्णांक)bit);
 
-	alloc_di = (struct ocfs2_dinode *)alloc_bh->b_data;
-	if ((bit + 1) > ocfs2_bits_per_group(&alloc_di->id2.i_chain)) {
+	alloc_di = (काष्ठा ocfs2_dinode *)alloc_bh->b_data;
+	अगर ((bit + 1) > ocfs2_bits_per_group(&alloc_di->id2.i_chain)) अणु
 		mlog(ML_ERROR, "suballoc bit %u out of range of %u\n",
-		     (unsigned int)bit,
+		     (अचिन्हित पूर्णांक)bit,
 		     ocfs2_bits_per_group(&alloc_di->id2.i_chain));
 		status = -EINVAL;
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	bg_blkno = group_blkno ? group_blkno :
 		   ocfs2_which_suballoc_group(blkno, bit);
-	status = ocfs2_read_group_descriptor(suballoc, alloc_di, bg_blkno,
+	status = ocfs2_पढ़ो_group_descriptor(suballoc, alloc_di, bg_blkno,
 					     &group_bh);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		mlog(ML_ERROR, "read group %llu failed %d\n",
-		     (unsigned long long)bg_blkno, status);
-		goto bail;
-	}
+		     (अचिन्हित दीर्घ दीर्घ)bg_blkno, status);
+		जाओ bail;
+	पूर्ण
 
-	group = (struct ocfs2_group_desc *) group_bh->b_data;
-	*res = ocfs2_test_bit(bit, (unsigned long *)group->bg_bitmap);
+	group = (काष्ठा ocfs2_group_desc *) group_bh->b_data;
+	*res = ocfs2_test_bit(bit, (अचिन्हित दीर्घ *)group->bg_biपंचांगap);
 
 bail:
-	brelse(group_bh);
+	brअन्यथा(group_bh);
 
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण
 
 /*
- * Test if the bit representing this inode (blkno) is set in the
+ * Test अगर the bit representing this inode (blkno) is set in the
  * suballocator.
  *
- * On success, 0 is returned and *res is 1 for SET; 0 otherwise.
+ * On success, 0 is वापसed and *res is 1 क्रम SET; 0 otherwise.
  *
- * In the event of failure, a negative value is returned and *res is
+ * In the event of failure, a negative value is वापसed and *res is
  * meaningless.
  *
  * Callers must make sure to hold nfs_sync_lock to prevent
  * ocfs2_delete_inode() on another node from accessing the same
  * suballocator concurrently.
  */
-int ocfs2_test_inode_bit(struct ocfs2_super *osb, u64 blkno, int *res)
-{
-	int status;
+पूर्णांक ocfs2_test_inode_bit(काष्ठा ocfs2_super *osb, u64 blkno, पूर्णांक *res)
+अणु
+	पूर्णांक status;
 	u64 group_blkno = 0;
 	u16 suballoc_bit = 0, suballoc_slot = 0;
-	struct inode *inode_alloc_inode;
-	struct buffer_head *alloc_bh = NULL;
+	काष्ठा inode *inode_alloc_inode;
+	काष्ठा buffer_head *alloc_bh = शून्य;
 
-	trace_ocfs2_test_inode_bit((unsigned long long)blkno);
+	trace_ocfs2_test_inode_bit((अचिन्हित दीर्घ दीर्घ)blkno);
 
 	status = ocfs2_get_suballoc_slot_bit(osb, blkno, &suballoc_slot,
 					     &group_blkno, &suballoc_bit);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		mlog(ML_ERROR, "get alloc slot and bit failed %d\n", status);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	if (suballoc_slot == (u16)OCFS2_INVALID_SLOT)
-		inode_alloc_inode = ocfs2_get_system_file_inode(osb,
+	अगर (suballoc_slot == (u16)OCFS2_INVALID_SLOT)
+		inode_alloc_inode = ocfs2_get_प्रणाली_file_inode(osb,
 			GLOBAL_INODE_ALLOC_SYSTEM_INODE, suballoc_slot);
-	else
-		inode_alloc_inode = ocfs2_get_system_file_inode(osb,
+	अन्यथा
+		inode_alloc_inode = ocfs2_get_प्रणाली_file_inode(osb,
 			INODE_ALLOC_SYSTEM_INODE, suballoc_slot);
-	if (!inode_alloc_inode) {
+	अगर (!inode_alloc_inode) अणु
 		/* the error code could be inaccurate, but we are not able to
 		 * get the correct one. */
 		status = -EINVAL;
 		mlog(ML_ERROR, "unable to get alloc inode in slot %u\n",
 		     (u32)suballoc_slot);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	inode_lock(inode_alloc_inode);
 	status = ocfs2_inode_lock(inode_alloc_inode, &alloc_bh, 0);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		inode_unlock(inode_alloc_inode);
 		iput(inode_alloc_inode);
 		mlog(ML_ERROR, "lock on alloc inode on slot %u failed %d\n",
 		     (u32)suballoc_slot, status);
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
 	status = ocfs2_test_suballoc_bit(osb, inode_alloc_inode, alloc_bh,
 					 group_blkno, blkno, suballoc_bit, res);
-	if (status < 0)
+	अगर (status < 0)
 		mlog(ML_ERROR, "test suballoc bit failed %d\n", status);
 
 	ocfs2_inode_unlock(inode_alloc_inode, 0);
 	inode_unlock(inode_alloc_inode);
 
 	iput(inode_alloc_inode);
-	brelse(alloc_bh);
+	brअन्यथा(alloc_bh);
 bail:
-	if (status)
-		mlog_errno(status);
-	return status;
-}
+	अगर (status)
+		mlog_त्रुटि_सं(status);
+	वापस status;
+पूर्ण

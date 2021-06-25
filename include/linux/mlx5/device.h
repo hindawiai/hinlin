@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013-2015, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,223 +31,223 @@
  * SOFTWARE.
  */
 
-#ifndef MLX5_DEVICE_H
-#define MLX5_DEVICE_H
+#अगर_अघोषित MLX5_DEVICE_H
+#घोषणा MLX5_DEVICE_H
 
-#include <linux/types.h>
-#include <rdma/ib_verbs.h>
-#include <linux/mlx5/mlx5_ifc.h>
+#समावेश <linux/types.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <linux/mlx5/mlx5_अगरc.h>
 
-#if defined(__LITTLE_ENDIAN)
-#define MLX5_SET_HOST_ENDIANNESS	0
-#elif defined(__BIG_ENDIAN)
-#define MLX5_SET_HOST_ENDIANNESS	0x80
-#else
-#error Host endianness not defined
-#endif
+#अगर defined(__LITTLE_ENDIAN)
+#घोषणा MLX5_SET_HOST_ENDIANNESS	0
+#या_अगर defined(__BIG_ENDIAN)
+#घोषणा MLX5_SET_HOST_ENDIANNESS	0x80
+#अन्यथा
+#त्रुटि Host endianness not defined
+#पूर्ण_अगर
 
 /* helper macros */
-#define __mlx5_nullp(typ) ((struct mlx5_ifc_##typ##_bits *)0)
-#define __mlx5_bit_sz(typ, fld) sizeof(__mlx5_nullp(typ)->fld)
-#define __mlx5_bit_off(typ, fld) (offsetof(struct mlx5_ifc_##typ##_bits, fld))
-#define __mlx5_16_off(typ, fld) (__mlx5_bit_off(typ, fld) / 16)
-#define __mlx5_dw_off(typ, fld) (__mlx5_bit_off(typ, fld) / 32)
-#define __mlx5_64_off(typ, fld) (__mlx5_bit_off(typ, fld) / 64)
-#define __mlx5_16_bit_off(typ, fld) (16 - __mlx5_bit_sz(typ, fld) - (__mlx5_bit_off(typ, fld) & 0xf))
-#define __mlx5_dw_bit_off(typ, fld) (32 - __mlx5_bit_sz(typ, fld) - (__mlx5_bit_off(typ, fld) & 0x1f))
-#define __mlx5_mask(typ, fld) ((u32)((1ull << __mlx5_bit_sz(typ, fld)) - 1))
-#define __mlx5_dw_mask(typ, fld) (__mlx5_mask(typ, fld) << __mlx5_dw_bit_off(typ, fld))
-#define __mlx5_mask16(typ, fld) ((u16)((1ull << __mlx5_bit_sz(typ, fld)) - 1))
-#define __mlx5_16_mask(typ, fld) (__mlx5_mask16(typ, fld) << __mlx5_16_bit_off(typ, fld))
-#define __mlx5_st_sz_bits(typ) sizeof(struct mlx5_ifc_##typ##_bits)
+#घोषणा __mlx5_nullp(typ) ((काष्ठा mlx5_अगरc_##typ##_bits *)0)
+#घोषणा __mlx5_bit_sz(typ, fld) माप(__mlx5_nullp(typ)->fld)
+#घोषणा __mlx5_bit_off(typ, fld) (दुरत्व(काष्ठा mlx5_अगरc_##typ##_bits, fld))
+#घोषणा __mlx5_16_off(typ, fld) (__mlx5_bit_off(typ, fld) / 16)
+#घोषणा __mlx5_dw_off(typ, fld) (__mlx5_bit_off(typ, fld) / 32)
+#घोषणा __mlx5_64_off(typ, fld) (__mlx5_bit_off(typ, fld) / 64)
+#घोषणा __mlx5_16_bit_off(typ, fld) (16 - __mlx5_bit_sz(typ, fld) - (__mlx5_bit_off(typ, fld) & 0xf))
+#घोषणा __mlx5_dw_bit_off(typ, fld) (32 - __mlx5_bit_sz(typ, fld) - (__mlx5_bit_off(typ, fld) & 0x1f))
+#घोषणा __mlx5_mask(typ, fld) ((u32)((1ull << __mlx5_bit_sz(typ, fld)) - 1))
+#घोषणा __mlx5_dw_mask(typ, fld) (__mlx5_mask(typ, fld) << __mlx5_dw_bit_off(typ, fld))
+#घोषणा __mlx5_mask16(typ, fld) ((u16)((1ull << __mlx5_bit_sz(typ, fld)) - 1))
+#घोषणा __mlx5_16_mask(typ, fld) (__mlx5_mask16(typ, fld) << __mlx5_16_bit_off(typ, fld))
+#घोषणा __mlx5_st_sz_bits(typ) माप(काष्ठा mlx5_अगरc_##typ##_bits)
 
-#define MLX5_FLD_SZ_BYTES(typ, fld) (__mlx5_bit_sz(typ, fld) / 8)
-#define MLX5_ST_SZ_BYTES(typ) (sizeof(struct mlx5_ifc_##typ##_bits) / 8)
-#define MLX5_ST_SZ_DW(typ) (sizeof(struct mlx5_ifc_##typ##_bits) / 32)
-#define MLX5_ST_SZ_QW(typ) (sizeof(struct mlx5_ifc_##typ##_bits) / 64)
-#define MLX5_UN_SZ_BYTES(typ) (sizeof(union mlx5_ifc_##typ##_bits) / 8)
-#define MLX5_UN_SZ_DW(typ) (sizeof(union mlx5_ifc_##typ##_bits) / 32)
-#define MLX5_BYTE_OFF(typ, fld) (__mlx5_bit_off(typ, fld) / 8)
-#define MLX5_ADDR_OF(typ, p, fld) ((void *)((uint8_t *)(p) + MLX5_BYTE_OFF(typ, fld)))
+#घोषणा MLX5_FLD_SZ_BYTES(typ, fld) (__mlx5_bit_sz(typ, fld) / 8)
+#घोषणा MLX5_ST_SZ_BYTES(typ) (माप(काष्ठा mlx5_अगरc_##typ##_bits) / 8)
+#घोषणा MLX5_ST_SZ_DW(typ) (माप(काष्ठा mlx5_अगरc_##typ##_bits) / 32)
+#घोषणा MLX5_ST_SZ_QW(typ) (माप(काष्ठा mlx5_अगरc_##typ##_bits) / 64)
+#घोषणा MLX5_UN_SZ_BYTES(typ) (माप(जोड़ mlx5_अगरc_##typ##_bits) / 8)
+#घोषणा MLX5_UN_SZ_DW(typ) (माप(जोड़ mlx5_अगरc_##typ##_bits) / 32)
+#घोषणा MLX5_BYTE_OFF(typ, fld) (__mlx5_bit_off(typ, fld) / 8)
+#घोषणा MLX5_ADDR_OF(typ, p, fld) ((व्योम *)((uपूर्णांक8_t *)(p) + MLX5_BYTE_OFF(typ, fld)))
 
-/* insert a value to a struct */
-#define MLX5_SET(typ, p, fld, v) do { \
+/* insert a value to a काष्ठा */
+#घोषणा MLX5_SET(typ, p, fld, v) करो अणु \
 	u32 _v = v; \
 	BUILD_BUG_ON(__mlx5_st_sz_bits(typ) % 32);             \
 	*((__be32 *)(p) + __mlx5_dw_off(typ, fld)) = \
 	cpu_to_be32((be32_to_cpu(*((__be32 *)(p) + __mlx5_dw_off(typ, fld))) & \
 		     (~__mlx5_dw_mask(typ, fld))) | (((_v) & __mlx5_mask(typ, fld)) \
 		     << __mlx5_dw_bit_off(typ, fld))); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_ARRAY_SET(typ, p, fld, idx, v) do { \
+#घोषणा MLX5_ARRAY_SET(typ, p, fld, idx, v) करो अणु \
 	BUILD_BUG_ON(__mlx5_bit_off(typ, fld) % 32); \
 	MLX5_SET(typ, p, fld[idx], v); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_SET_TO_ONES(typ, p, fld) do { \
+#घोषणा MLX5_SET_TO_ONES(typ, p, fld) करो अणु \
 	BUILD_BUG_ON(__mlx5_st_sz_bits(typ) % 32);             \
 	*((__be32 *)(p) + __mlx5_dw_off(typ, fld)) = \
 	cpu_to_be32((be32_to_cpu(*((__be32 *)(p) + __mlx5_dw_off(typ, fld))) & \
 		     (~__mlx5_dw_mask(typ, fld))) | ((__mlx5_mask(typ, fld)) \
 		     << __mlx5_dw_bit_off(typ, fld))); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_GET(typ, p, fld) ((be32_to_cpu(*((__be32 *)(p) +\
+#घोषणा MLX5_GET(typ, p, fld) ((be32_to_cpu(*((__be32 *)(p) +\
 __mlx5_dw_off(typ, fld))) >> __mlx5_dw_bit_off(typ, fld)) & \
 __mlx5_mask(typ, fld))
 
-#define MLX5_GET_PR(typ, p, fld) ({ \
+#घोषणा MLX5_GET_PR(typ, p, fld) (अणु \
 	u32 ___t = MLX5_GET(typ, p, fld); \
 	pr_debug(#fld " = 0x%x\n", ___t); \
 	___t; \
-})
+पूर्ण)
 
-#define __MLX5_SET64(typ, p, fld, v) do { \
+#घोषणा __MLX5_SET64(typ, p, fld, v) करो अणु \
 	BUILD_BUG_ON(__mlx5_bit_sz(typ, fld) != 64); \
 	*((__be64 *)(p) + __mlx5_64_off(typ, fld)) = cpu_to_be64(v); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_SET64(typ, p, fld, v) do { \
+#घोषणा MLX5_SET64(typ, p, fld, v) करो अणु \
 	BUILD_BUG_ON(__mlx5_bit_off(typ, fld) % 64); \
 	__MLX5_SET64(typ, p, fld, v); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_ARRAY_SET64(typ, p, fld, idx, v) do { \
+#घोषणा MLX5_ARRAY_SET64(typ, p, fld, idx, v) करो अणु \
 	BUILD_BUG_ON(__mlx5_bit_off(typ, fld) % 64); \
 	__MLX5_SET64(typ, p, fld[idx], v); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define MLX5_GET64(typ, p, fld) be64_to_cpu(*((__be64 *)(p) + __mlx5_64_off(typ, fld)))
+#घोषणा MLX5_GET64(typ, p, fld) be64_to_cpu(*((__be64 *)(p) + __mlx5_64_off(typ, fld)))
 
-#define MLX5_GET64_PR(typ, p, fld) ({ \
+#घोषणा MLX5_GET64_PR(typ, p, fld) (अणु \
 	u64 ___t = MLX5_GET64(typ, p, fld); \
 	pr_debug(#fld " = 0x%llx\n", ___t); \
 	___t; \
-})
+पूर्ण)
 
-#define MLX5_GET16(typ, p, fld) ((be16_to_cpu(*((__be16 *)(p) +\
+#घोषणा MLX5_GET16(typ, p, fld) ((be16_to_cpu(*((__be16 *)(p) +\
 __mlx5_16_off(typ, fld))) >> __mlx5_16_bit_off(typ, fld)) & \
 __mlx5_mask16(typ, fld))
 
-#define MLX5_SET16(typ, p, fld, v) do { \
+#घोषणा MLX5_SET16(typ, p, fld, v) करो अणु \
 	u16 _v = v; \
 	BUILD_BUG_ON(__mlx5_st_sz_bits(typ) % 16);             \
 	*((__be16 *)(p) + __mlx5_16_off(typ, fld)) = \
 	cpu_to_be16((be16_to_cpu(*((__be16 *)(p) + __mlx5_16_off(typ, fld))) & \
 		     (~__mlx5_16_mask(typ, fld))) | (((_v) & __mlx5_mask16(typ, fld)) \
 		     << __mlx5_16_bit_off(typ, fld))); \
-} while (0)
+पूर्ण जबतक (0)
 
 /* Big endian getters */
-#define MLX5_GET64_BE(typ, p, fld) (*((__be64 *)(p) +\
+#घोषणा MLX5_GET64_BE(typ, p, fld) (*((__be64 *)(p) +\
 	__mlx5_64_off(typ, fld)))
 
-#define MLX5_GET_BE(type_t, typ, p, fld) ({				  \
-		type_t tmp;						  \
-		switch (sizeof(tmp)) {					  \
-		case sizeof(u8):					  \
-			tmp = (__force type_t)MLX5_GET(typ, p, fld);	  \
-			break;						  \
-		case sizeof(u16):					  \
-			tmp = (__force type_t)cpu_to_be16(MLX5_GET(typ, p, fld)); \
-			break;						  \
-		case sizeof(u32):					  \
-			tmp = (__force type_t)cpu_to_be32(MLX5_GET(typ, p, fld)); \
-			break;						  \
-		case sizeof(u64):					  \
-			tmp = (__force type_t)MLX5_GET64_BE(typ, p, fld); \
-			break;						  \
-			}						  \
-		tmp;							  \
-		})
+#घोषणा MLX5_GET_BE(type_t, typ, p, fld) (अणु				  \
+		type_t पंचांगp;						  \
+		चयन (माप(पंचांगp)) अणु					  \
+		हाल माप(u8):					  \
+			पंचांगp = (__क्रमce type_t)MLX5_GET(typ, p, fld);	  \
+			अवरोध;						  \
+		हाल माप(u16):					  \
+			पंचांगp = (__क्रमce type_t)cpu_to_be16(MLX5_GET(typ, p, fld)); \
+			अवरोध;						  \
+		हाल माप(u32):					  \
+			पंचांगp = (__क्रमce type_t)cpu_to_be32(MLX5_GET(typ, p, fld)); \
+			अवरोध;						  \
+		हाल माप(u64):					  \
+			पंचांगp = (__क्रमce type_t)MLX5_GET64_BE(typ, p, fld); \
+			अवरोध;						  \
+			पूर्ण						  \
+		पंचांगp;							  \
+		पूर्ण)
 
-enum mlx5_inline_modes {
+क्रमागत mlx5_अंतरभूत_modes अणु
 	MLX5_INLINE_MODE_NONE,
 	MLX5_INLINE_MODE_L2,
 	MLX5_INLINE_MODE_IP,
 	MLX5_INLINE_MODE_TCP_UDP,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MAX_COMMANDS		= 32,
 	MLX5_CMD_DATA_BLOCK_SIZE	= 512,
 	MLX5_PCI_CMD_XPORT		= 7,
 	MLX5_MKEY_BSF_OCTO_SIZE		= 4,
 	MLX5_MAX_PSVS			= 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_EXTENDED_UD_AV		= 0x80000000,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQ_STATE_ARMED		= 9,
 	MLX5_CQ_STATE_ALWAYS_ARMED	= 0xb,
 	MLX5_CQ_STATE_FIRED		= 0xa,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_STAT_RATE_OFFSET	= 5,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_INLINE_SEG = 0x80000000,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_HW_START_PADDING = MLX5_INLINE_SEG,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MIN_PKEY_TABLE_SIZE = 128,
 	MLX5_MAX_LOG_PKEY_TABLE  = 5,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MKEY_INBOX_PG_ACCESS = 1 << 31
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PFAULT_SUBTYPE_WQE = 0,
 	MLX5_PFAULT_SUBTYPE_RDMA = 1,
-};
+पूर्ण;
 
-enum wqe_page_fault_type {
+क्रमागत wqe_page_fault_type अणु
 	MLX5_WQE_PF_TYPE_RMP = 0,
 	MLX5_WQE_PF_TYPE_REQ_SEND_OR_WRITE = 1,
 	MLX5_WQE_PF_TYPE_RESP = 2,
 	MLX5_WQE_PF_TYPE_REQ_READ_OR_ATOMIC = 3,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PERM_LOCAL_READ	= 1 << 2,
 	MLX5_PERM_LOCAL_WRITE	= 1 << 3,
 	MLX5_PERM_REMOTE_READ	= 1 << 4,
 	MLX5_PERM_REMOTE_WRITE	= 1 << 5,
 	MLX5_PERM_ATOMIC	= 1 << 6,
 	MLX5_PERM_UMR_EN	= 1 << 7,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PCIE_CTRL_SMALL_FENCE	= 1 << 0,
 	MLX5_PCIE_CTRL_RELAXED_ORDERING	= 1 << 2,
 	MLX5_PCIE_CTRL_NO_SNOOP		= 1 << 3,
 	MLX5_PCIE_CTRL_TLP_PROCE_EN	= 1 << 6,
 	MLX5_PCIE_CTRL_TPH_MASK		= 3 << 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_EN_RD	= (u64)1,
 	MLX5_EN_WR	= (u64)2
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ADAPTER_PAGE_SHIFT		= 12,
 	MLX5_ADAPTER_PAGE_SIZE		= 1 << MLX5_ADAPTER_PAGE_SHIFT,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_BFREGS_PER_UAR		= 4,
 	MLX5_MAX_UARS			= 1 << 8,
 	MLX5_NON_FP_BFREGS_PER_UAR	= 2,
@@ -258,9 +259,9 @@ enum {
 	MLX5_NON_FP_BFREGS_IN_PAGE	= MLX5_NON_FP_BFREGS_PER_UAR * MLX5_UARS_IN_PAGE,
 	MLX5_MIN_DYN_BFREGS		= 512,
 	MLX5_MAX_DYN_BFREGS		= 1024,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MKEY_MASK_LEN		= 1ull << 0,
 	MLX5_MKEY_MASK_PAGE_SIZE	= 1ull << 1,
 	MLX5_MKEY_MASK_START_ADDR	= 1ull << 6,
@@ -279,39 +280,39 @@ enum {
 	MLX5_MKEY_MASK_RELAXED_ORDERING_WRITE	= 1ull << 25,
 	MLX5_MKEY_MASK_FREE			= 1ull << 29,
 	MLX5_MKEY_MASK_RELAXED_ORDERING_READ	= 1ull << 47,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_UMR_TRANSLATION_OFFSET_EN	= (1 << 4),
 
 	MLX5_UMR_CHECK_NOT_FREE		= (1 << 5),
 	MLX5_UMR_CHECK_FREE		= (2 << 5),
 
 	MLX5_UMR_INLINE			= (1 << 7),
-};
+पूर्ण;
 
-#define MLX5_UMR_MTT_ALIGNMENT 0x40
-#define MLX5_UMR_MTT_MASK      (MLX5_UMR_MTT_ALIGNMENT - 1)
-#define MLX5_UMR_MTT_MIN_CHUNK_SIZE MLX5_UMR_MTT_ALIGNMENT
+#घोषणा MLX5_UMR_MTT_ALIGNMENT 0x40
+#घोषणा MLX5_UMR_MTT_MASK      (MLX5_UMR_MTT_ALIGNMENT - 1)
+#घोषणा MLX5_UMR_MTT_MIN_CHUNK_SIZE MLX5_UMR_MTT_ALIGNMENT
 
-#define MLX5_USER_INDEX_LEN (MLX5_FLD_SZ_BYTES(qpc, user_index) * 8)
+#घोषणा MLX5_USER_INDEX_LEN (MLX5_FLD_SZ_BYTES(qpc, user_index) * 8)
 
-enum {
+क्रमागत अणु
 	MLX5_EVENT_QUEUE_TYPE_QP = 0,
 	MLX5_EVENT_QUEUE_TYPE_RQ = 1,
 	MLX5_EVENT_QUEUE_TYPE_SQ = 2,
 	MLX5_EVENT_QUEUE_TYPE_DCT = 6,
-};
+पूर्ण;
 
 /* mlx5 components can subscribe to any one of these events via
- * mlx5_eq_notifier_register API.
+ * mlx5_eq_notअगरier_रेजिस्टर API.
  */
-enum mlx5_event {
+क्रमागत mlx5_event अणु
 	/* Special value to subscribe to any event */
 	MLX5_EVENT_TYPE_NOTIFY_ANY	   = 0x0,
-	/* HW events enum start: comp events are not subscribable */
+	/* HW events क्रमागत start: comp events are not subscribable */
 	MLX5_EVENT_TYPE_COMP		   = 0x0,
-	/* HW Async events enum start: subscribable events */
+	/* HW Async events क्रमागत start: subscribable events */
 	MLX5_EVENT_TYPE_PATH_MIG	   = 0x01,
 	MLX5_EVENT_TYPE_COMM_EST	   = 0x02,
 	MLX5_EVENT_TYPE_SQ_DRAINED	   = 0x03,
@@ -357,25 +358,25 @@ enum mlx5_event {
 	MLX5_EVENT_TYPE_DEVICE_TRACER      = 0x26,
 
 	MLX5_EVENT_TYPE_MAX                = 0x100,
-};
+पूर्ण;
 
-enum mlx5_driver_event {
+क्रमागत mlx5_driver_event अणु
 	MLX5_DRIVER_EVENT_TYPE_TRAP = 0,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_TRACER_SUBTYPE_OWNERSHIP_CHANGE = 0x0,
 	MLX5_TRACER_SUBTYPE_TRACES_AVAILABLE = 0x1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_GENERAL_SUBTYPE_DELAY_DROP_TIMEOUT = 0x1,
 	MLX5_GENERAL_SUBTYPE_PCI_POWER_CHANGE_EVENT = 0x5,
 	MLX5_GENERAL_SUBTYPE_FW_LIVE_PATCH_EVENT = 0x7,
 	MLX5_GENERAL_SUBTYPE_PCI_SYNC_FOR_FW_UPDATE_EVENT = 0x8,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PORT_CHANGE_SUBTYPE_DOWN		= 1,
 	MLX5_PORT_CHANGE_SUBTYPE_ACTIVE		= 4,
 	MLX5_PORT_CHANGE_SUBTYPE_INITIALIZED	= 5,
@@ -383,9 +384,9 @@ enum {
 	MLX5_PORT_CHANGE_SUBTYPE_PKEY		= 7,
 	MLX5_PORT_CHANGE_SUBTYPE_GUID		= 8,
 	MLX5_PORT_CHANGE_SUBTYPE_CLIENT_REREG	= 9,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_DEV_CAP_FLAG_XRC		= 1LL <<  3,
 	MLX5_DEV_CAP_FLAG_BAD_PKEY_CNTR	= 1LL <<  8,
 	MLX5_DEV_CAP_FLAG_BAD_QKEY_CNTR	= 1LL <<  9,
@@ -398,29 +399,29 @@ enum {
 	MLX5_DEV_CAP_FLAG_DCT		= 1LL << 37,
 	MLX5_DEV_CAP_FLAG_SIG_HAND_OVER	= 1LL << 40,
 	MLX5_DEV_CAP_FLAG_CMDIF_CSUM	= 3LL << 46,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ROCE_VERSION_1		= 0,
 	MLX5_ROCE_VERSION_2		= 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ROCE_VERSION_1_CAP		= 1 << MLX5_ROCE_VERSION_1,
 	MLX5_ROCE_VERSION_2_CAP		= 1 << MLX5_ROCE_VERSION_2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ROCE_L3_TYPE_IPV4		= 0,
 	MLX5_ROCE_L3_TYPE_IPV6		= 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_ROCE_L3_TYPE_IPV4_CAP	= 1 << 1,
 	MLX5_ROCE_L3_TYPE_IPV6_CAP	= 1 << 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_OPCODE_NOP			= 0x00,
 	MLX5_OPCODE_SEND_INVAL		= 0x01,
 	MLX5_OPCODE_RDMA_WRITE		= 0x08,
@@ -454,79 +455,79 @@ enum {
 
 	MLX5_OPCODE_UMR			= 0x25,
 
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_OPC_MOD_TLS_TIS_STATIC_PARAMS = 0x1,
 	MLX5_OPC_MOD_TLS_TIR_STATIC_PARAMS = 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_OPC_MOD_TLS_TIS_PROGRESS_PARAMS = 0x1,
 	MLX5_OPC_MOD_TLS_TIR_PROGRESS_PARAMS = 0x2,
-};
+पूर्ण;
 
-struct mlx5_wqe_tls_static_params_seg {
-	u8     ctx[MLX5_ST_SZ_BYTES(tls_static_params)];
-};
+काष्ठा mlx5_wqe_tls_अटल_params_seg अणु
+	u8     ctx[MLX5_ST_SZ_BYTES(tls_अटल_params)];
+पूर्ण;
 
-struct mlx5_wqe_tls_progress_params_seg {
+काष्ठा mlx5_wqe_tls_progress_params_seg अणु
 	__be32 tis_tir_num;
 	u8     ctx[MLX5_ST_SZ_BYTES(tls_progress_params)];
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_SET_PORT_RESET_QKEY	= 0,
 	MLX5_SET_PORT_GUID0		= 16,
 	MLX5_SET_PORT_NODE_GUID		= 17,
 	MLX5_SET_PORT_SYS_GUID		= 18,
 	MLX5_SET_PORT_GID_TABLE		= 19,
 	MLX5_SET_PORT_PKEY_TABLE	= 20,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_BW_NO_LIMIT   = 0,
 	MLX5_100_MBPS_UNIT = 3,
 	MLX5_GBPS_UNIT	   = 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MAX_PAGE_SHIFT		= 31
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CAP_OFF_CMDIF_CSUM		= 46,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/*
-	 * Max wqe size for rdma read is 512 bytes, so this
+	 * Max wqe size क्रम rdma पढ़ो is 512 bytes, so this
 	 * limits our max_sge_rd as the wqe needs to fit:
 	 * - ctrl segment (16 bytes)
 	 * - rdma segment (16 bytes)
 	 * - scatter elements (16 bytes each)
 	 */
 	MLX5_MAX_SGE_RD	= (512 - 16 - 16) / 16
-};
+पूर्ण;
 
-enum mlx5_odp_transport_cap_bits {
+क्रमागत mlx5_odp_transport_cap_bits अणु
 	MLX5_ODP_SUPPORT_SEND	 = 1 << 31,
 	MLX5_ODP_SUPPORT_RECV	 = 1 << 30,
 	MLX5_ODP_SUPPORT_WRITE	 = 1 << 29,
 	MLX5_ODP_SUPPORT_READ	 = 1 << 28,
-};
+पूर्ण;
 
-struct mlx5_odp_caps {
-	char reserved[0x10];
-	struct {
+काष्ठा mlx5_odp_caps अणु
+	अक्षर reserved[0x10];
+	काष्ठा अणु
 		__be32			rc_odp_caps;
 		__be32			uc_odp_caps;
 		__be32			ud_odp_caps;
-	} per_transport_caps;
-	char reserved2[0xe4];
-};
+	पूर्ण per_transport_caps;
+	अक्षर reserved2[0xe4];
+पूर्ण;
 
-struct mlx5_cmd_layout {
+काष्ठा mlx5_cmd_layout अणु
 	u8		type;
 	u8		rsvd0[3];
 	__be32		inlen;
@@ -539,17 +540,17 @@ struct mlx5_cmd_layout {
 	u8		sig;
 	u8		rsvd1;
 	u8		status_own;
-};
+पूर्ण;
 
-enum mlx5_fatal_assert_bit_offsets {
+क्रमागत mlx5_fatal_निश्चित_bit_offsets अणु
 	MLX5_RFR_OFFSET = 31,
-};
+पूर्ण;
 
-struct health_buffer {
-	__be32		assert_var[5];
+काष्ठा health_buffer अणु
+	__be32		निश्चित_var[5];
 	__be32		rsvd0[3];
-	__be32		assert_exit_ptr;
-	__be32		assert_callra;
+	__be32		निश्चित_निकास_ptr;
+	__be32		निश्चित_callra;
 	__be32		rsvd1[2];
 	__be32		fw_ver;
 	__be32		hw_id;
@@ -557,101 +558,101 @@ struct health_buffer {
 	u8		irisc_index;
 	u8		synd;
 	__be16		ext_synd;
-};
+पूर्ण;
 
-enum mlx5_initializing_bit_offsets {
+क्रमागत mlx5_initializing_bit_offsets अणु
 	MLX5_FW_RESET_SUPPORTED_OFFSET = 30,
-};
+पूर्ण;
 
-enum mlx5_cmd_addr_l_sz_offset {
+क्रमागत mlx5_cmd_addr_l_sz_offset अणु
 	MLX5_NIC_IFC_OFFSET = 8,
-};
+पूर्ण;
 
-struct mlx5_init_seg {
+काष्ठा mlx5_init_seg अणु
 	__be32			fw_rev;
-	__be32			cmdif_rev_fw_sub;
+	__be32			cmdअगर_rev_fw_sub;
 	__be32			rsvd0[2];
 	__be32			cmdq_addr_h;
 	__be32			cmdq_addr_l_sz;
 	__be32			cmd_dbell;
 	__be32			rsvd1[120];
 	__be32			initializing;
-	struct health_buffer	health;
+	काष्ठा health_buffer	health;
 	__be32			rsvd2[880];
-	__be32			internal_timer_h;
-	__be32			internal_timer_l;
+	__be32			पूर्णांकernal_समयr_h;
+	__be32			पूर्णांकernal_समयr_l;
 	__be32			rsvd3[2];
 	__be32			health_counter;
 	__be32			rsvd4[11];
-	__be32			real_time_h;
-	__be32			real_time_l;
+	__be32			real_समय_h;
+	__be32			real_समय_l;
 	__be32			rsvd5[1006];
 	__be64			ieee1588_clk;
 	__be32			ieee1588_clk_type;
-	__be32			clr_intx;
-};
+	__be32			clr_पूर्णांकx;
+पूर्ण;
 
-struct mlx5_eqe_comp {
+काष्ठा mlx5_eqe_comp अणु
 	__be32	reserved[6];
 	__be32	cqn;
-};
+पूर्ण;
 
-struct mlx5_eqe_qp_srq {
+काष्ठा mlx5_eqe_qp_srq अणु
 	__be32	reserved1[5];
 	u8	type;
 	u8	reserved2[3];
 	__be32	qp_srq_n;
-};
+पूर्ण;
 
-struct mlx5_eqe_cq_err {
+काष्ठा mlx5_eqe_cq_err अणु
 	__be32	cqn;
 	u8	reserved1[7];
 	u8	syndrome;
-};
+पूर्ण;
 
-struct mlx5_eqe_xrq_err {
+काष्ठा mlx5_eqe_xrq_err अणु
 	__be32	reserved1[5];
 	__be32	type_xrqn;
 	__be32	reserved2;
-};
+पूर्ण;
 
-struct mlx5_eqe_port_state {
+काष्ठा mlx5_eqe_port_state अणु
 	u8	reserved0[8];
 	u8	port;
-};
+पूर्ण;
 
-struct mlx5_eqe_gpio {
+काष्ठा mlx5_eqe_gpio अणु
 	__be32	reserved0[2];
 	__be64	gpio_event;
-};
+पूर्ण;
 
-struct mlx5_eqe_congestion {
+काष्ठा mlx5_eqe_congestion अणु
 	u8	type;
 	u8	rsvd0;
 	u8	congestion_level;
-};
+पूर्ण;
 
-struct mlx5_eqe_stall_vl {
+काष्ठा mlx5_eqe_stall_vl अणु
 	u8	rsvd0[3];
 	u8	port_vl;
-};
+पूर्ण;
 
-struct mlx5_eqe_cmd {
+काष्ठा mlx5_eqe_cmd अणु
 	__be32	vector;
 	__be32	rsvd[6];
-};
+पूर्ण;
 
-struct mlx5_eqe_page_req {
+काष्ठा mlx5_eqe_page_req अणु
 	__be16		ec_function;
 	__be16		func_id;
 	__be32		num_pages;
 	__be32		rsvd1[5];
-};
+पूर्ण;
 
-struct mlx5_eqe_page_fault {
+काष्ठा mlx5_eqe_page_fault अणु
 	__be32 bytes_committed;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u16     reserved1;
 			__be16  wqe_index;
 			u16	reserved2;
@@ -659,112 +660,112 @@ struct mlx5_eqe_page_fault {
 			__be32  token;
 			u8	reserved4[8];
 			__be32  pftype_wq;
-		} __packed wqe;
-		struct {
+		पूर्ण __packed wqe;
+		काष्ठा अणु
 			__be32  r_key;
 			u16	reserved1;
 			__be16  packet_length;
 			__be32  rdma_op_len;
 			__be64  rdma_va;
 			__be32  pftype_token;
-		} __packed rdma;
-	} __packed;
-} __packed;
+		पूर्ण __packed rdma;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-struct mlx5_eqe_vport_change {
+काष्ठा mlx5_eqe_vport_change अणु
 	u8		rsvd0[2];
 	__be16		vport_num;
 	__be32		rsvd1[6];
-} __packed;
+पूर्ण __packed;
 
-struct mlx5_eqe_port_module {
+काष्ठा mlx5_eqe_port_module अणु
 	u8        reserved_at_0[1];
 	u8        module;
 	u8        reserved_at_2[1];
 	u8        module_status;
 	u8        reserved_at_4[2];
 	u8        error_type;
-} __packed;
+पूर्ण __packed;
 
-struct mlx5_eqe_pps {
+काष्ठा mlx5_eqe_pps अणु
 	u8		rsvd0[3];
 	u8		pin;
 	u8		rsvd1[4];
-	union {
-		struct {
-			__be32		time_sec;
-			__be32		time_nsec;
-		};
-		struct {
-			__be64		time_stamp;
-		};
-	};
+	जोड़ अणु
+		काष्ठा अणु
+			__be32		समय_sec;
+			__be32		समय_nsec;
+		पूर्ण;
+		काष्ठा अणु
+			__be64		समय_stamp;
+		पूर्ण;
+	पूर्ण;
 	u8		rsvd2[12];
-} __packed;
+पूर्ण __packed;
 
-struct mlx5_eqe_dct {
+काष्ठा mlx5_eqe_dct अणु
 	__be32  reserved[6];
 	__be32  dctn;
-};
+पूर्ण;
 
-struct mlx5_eqe_temp_warning {
+काष्ठा mlx5_eqe_temp_warning अणु
 	__be64 sensor_warning_msb;
 	__be64 sensor_warning_lsb;
-} __packed;
+पूर्ण __packed;
 
-#define SYNC_RST_STATE_MASK    0xf
+#घोषणा SYNC_RST_STATE_MASK    0xf
 
-enum sync_rst_state_type {
+क्रमागत sync_rst_state_type अणु
 	MLX5_SYNC_RST_STATE_RESET_REQUEST	= 0x0,
 	MLX5_SYNC_RST_STATE_RESET_NOW		= 0x1,
 	MLX5_SYNC_RST_STATE_RESET_ABORT		= 0x2,
-};
+पूर्ण;
 
-struct mlx5_eqe_sync_fw_update {
+काष्ठा mlx5_eqe_sync_fw_update अणु
 	u8 reserved_at_0[3];
 	u8 sync_rst_state;
-};
+पूर्ण;
 
-struct mlx5_eqe_vhca_state {
+काष्ठा mlx5_eqe_vhca_state अणु
 	__be16 ec_function;
 	__be16 function_id;
-} __packed;
+पूर्ण __packed;
 
-union ev_data {
+जोड़ ev_data अणु
 	__be32				raw[7];
-	struct mlx5_eqe_cmd		cmd;
-	struct mlx5_eqe_comp		comp;
-	struct mlx5_eqe_qp_srq		qp_srq;
-	struct mlx5_eqe_cq_err		cq_err;
-	struct mlx5_eqe_port_state	port;
-	struct mlx5_eqe_gpio		gpio;
-	struct mlx5_eqe_congestion	cong;
-	struct mlx5_eqe_stall_vl	stall_vl;
-	struct mlx5_eqe_page_req	req_pages;
-	struct mlx5_eqe_page_fault	page_fault;
-	struct mlx5_eqe_vport_change	vport_change;
-	struct mlx5_eqe_port_module	port_module;
-	struct mlx5_eqe_pps		pps;
-	struct mlx5_eqe_dct             dct;
-	struct mlx5_eqe_temp_warning	temp_warning;
-	struct mlx5_eqe_xrq_err		xrq_err;
-	struct mlx5_eqe_sync_fw_update	sync_fw_update;
-	struct mlx5_eqe_vhca_state	vhca_state;
-} __packed;
+	काष्ठा mlx5_eqe_cmd		cmd;
+	काष्ठा mlx5_eqe_comp		comp;
+	काष्ठा mlx5_eqe_qp_srq		qp_srq;
+	काष्ठा mlx5_eqe_cq_err		cq_err;
+	काष्ठा mlx5_eqe_port_state	port;
+	काष्ठा mlx5_eqe_gpio		gpio;
+	काष्ठा mlx5_eqe_congestion	cong;
+	काष्ठा mlx5_eqe_stall_vl	stall_vl;
+	काष्ठा mlx5_eqe_page_req	req_pages;
+	काष्ठा mlx5_eqe_page_fault	page_fault;
+	काष्ठा mlx5_eqe_vport_change	vport_change;
+	काष्ठा mlx5_eqe_port_module	port_module;
+	काष्ठा mlx5_eqe_pps		pps;
+	काष्ठा mlx5_eqe_dct             dct;
+	काष्ठा mlx5_eqe_temp_warning	temp_warning;
+	काष्ठा mlx5_eqe_xrq_err		xrq_err;
+	काष्ठा mlx5_eqe_sync_fw_update	sync_fw_update;
+	काष्ठा mlx5_eqe_vhca_state	vhca_state;
+पूर्ण __packed;
 
-struct mlx5_eqe {
+काष्ठा mlx5_eqe अणु
 	u8		rsvd0;
 	u8		type;
 	u8		rsvd1;
 	u8		sub_type;
 	__be32		rsvd2[7];
-	union ev_data	data;
+	जोड़ ev_data	data;
 	__be16		rsvd3;
 	u8		signature;
 	u8		owner;
-} __packed;
+पूर्ण __packed;
 
-struct mlx5_cmd_prot_block {
+काष्ठा mlx5_cmd_prot_block अणु
 	u8		data[MLX5_CMD_DATA_BLOCK_SIZE];
 	u8		rsvd0[48];
 	__be64		next;
@@ -773,29 +774,29 @@ struct mlx5_cmd_prot_block {
 	u8		token;
 	u8		ctrl_sig;
 	u8		sig;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQE_SYND_FLUSHED_IN_ERROR = 5,
-};
+पूर्ण;
 
-struct mlx5_err_cqe {
+काष्ठा mlx5_err_cqe अणु
 	u8	rsvd0[32];
 	__be32	srqn;
 	u8	rsvd1[18];
-	u8	vendor_err_synd;
+	u8	venकरोr_err_synd;
 	u8	syndrome;
 	__be32	s_wqe_opcode_qpn;
 	__be16	wqe_counter;
 	u8	signature;
 	u8	op_own;
-};
+पूर्ण;
 
-struct mlx5_cqe64 {
+काष्ठा mlx5_cqe64 अणु
 	u8		tls_outer_l3_tunneled;
 	u8		rsvd0;
 	__be16		wqe_id;
-	u8		lro_tcppsh_abort_dupack;
+	u8		lro_tcppsh_पात_dupack;
 	u8		lro_min_ttl;
 	__be16		lro_tcp_win;
 	__be32		lro_ack_seq_num;
@@ -810,188 +811,188 @@ struct mlx5_cqe64 {
 	u8		l4_l3_hdr_type;
 	__be16		vlan_info;
 	__be32		srqn; /* [31:24]: lro_num_seg, [23:0]: srqn */
-	union {
+	जोड़ अणु
 		__be32 immediate;
 		__be32 inval_rkey;
 		__be32 pkey;
 		__be32 ft_metadata;
-	};
+	पूर्ण;
 	u8		rsvd40[4];
 	__be32		byte_cnt;
-	__be32		timestamp_h;
-	__be32		timestamp_l;
+	__be32		बारtamp_h;
+	__be32		बारtamp_l;
 	__be32		sop_drop_qpn;
 	__be16		wqe_counter;
 	u8		signature;
 	u8		op_own;
-};
+पूर्ण;
 
-struct mlx5_mini_cqe8 {
-	union {
+काष्ठा mlx5_mini_cqe8 अणु
+	जोड़ अणु
 		__be32 rx_hash_result;
-		struct {
+		काष्ठा अणु
 			__be16 checksum;
 			__be16 stridx;
-		};
-		struct {
+		पूर्ण;
+		काष्ठा अणु
 			__be16 wqe_counter;
 			u8  s_wqe_opcode;
 			u8  reserved;
-		} s_wqe_info;
-	};
+		पूर्ण s_wqe_info;
+	पूर्ण;
 	__be32 byte_cnt;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_NO_INLINE_DATA,
 	MLX5_INLINE_DATA32_SEG,
 	MLX5_INLINE_DATA64_SEG,
 	MLX5_COMPRESSED,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQE_FORMAT_CSUM = 0x1,
 	MLX5_CQE_FORMAT_CSUM_STRIDX = 0x3,
-};
+पूर्ण;
 
-#define MLX5_MINI_CQE_ARRAY_SIZE 8
+#घोषणा MLX5_MINI_CQE_ARRAY_SIZE 8
 
-static inline u8 mlx5_get_cqe_format(struct mlx5_cqe64 *cqe)
-{
-	return (cqe->op_own >> 2) & 0x3;
-}
+अटल अंतरभूत u8 mlx5_get_cqe_क्रमmat(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस (cqe->op_own >> 2) & 0x3;
+पूर्ण
 
-static inline u8 get_cqe_opcode(struct mlx5_cqe64 *cqe)
-{
-	return cqe->op_own >> 4;
-}
+अटल अंतरभूत u8 get_cqe_opcode(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस cqe->op_own >> 4;
+पूर्ण
 
-static inline u8 get_cqe_lro_tcppsh(struct mlx5_cqe64 *cqe)
-{
-	return (cqe->lro_tcppsh_abort_dupack >> 6) & 1;
-}
+अटल अंतरभूत u8 get_cqe_lro_tcppsh(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस (cqe->lro_tcppsh_पात_dupack >> 6) & 1;
+पूर्ण
 
-static inline u8 get_cqe_l4_hdr_type(struct mlx5_cqe64 *cqe)
-{
-	return (cqe->l4_l3_hdr_type >> 4) & 0x7;
-}
+अटल अंतरभूत u8 get_cqe_l4_hdr_type(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस (cqe->l4_l3_hdr_type >> 4) & 0x7;
+पूर्ण
 
-static inline u8 get_cqe_l3_hdr_type(struct mlx5_cqe64 *cqe)
-{
-	return (cqe->l4_l3_hdr_type >> 2) & 0x3;
-}
+अटल अंतरभूत u8 get_cqe_l3_hdr_type(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस (cqe->l4_l3_hdr_type >> 2) & 0x3;
+पूर्ण
 
-static inline bool cqe_is_tunneled(struct mlx5_cqe64 *cqe)
-{
-	return cqe->tls_outer_l3_tunneled & 0x1;
-}
+अटल अंतरभूत bool cqe_is_tunneled(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस cqe->tls_outer_l3_tunneled & 0x1;
+पूर्ण
 
-static inline u8 get_cqe_tls_offload(struct mlx5_cqe64 *cqe)
-{
-	return (cqe->tls_outer_l3_tunneled >> 3) & 0x3;
-}
+अटल अंतरभूत u8 get_cqe_tls_offload(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस (cqe->tls_outer_l3_tunneled >> 3) & 0x3;
+पूर्ण
 
-static inline bool cqe_has_vlan(struct mlx5_cqe64 *cqe)
-{
-	return cqe->l4_l3_hdr_type & 0x1;
-}
+अटल अंतरभूत bool cqe_has_vlan(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस cqe->l4_l3_hdr_type & 0x1;
+पूर्ण
 
-static inline u64 get_cqe_ts(struct mlx5_cqe64 *cqe)
-{
+अटल अंतरभूत u64 get_cqe_ts(काष्ठा mlx5_cqe64 *cqe)
+अणु
 	u32 hi, lo;
 
-	hi = be32_to_cpu(cqe->timestamp_h);
-	lo = be32_to_cpu(cqe->timestamp_l);
+	hi = be32_to_cpu(cqe->बारtamp_h);
+	lo = be32_to_cpu(cqe->बारtamp_l);
 
-	return (u64)lo | ((u64)hi << 32);
-}
+	वापस (u64)lo | ((u64)hi << 32);
+पूर्ण
 
-static inline u16 get_cqe_flow_tag(struct mlx5_cqe64 *cqe)
-{
-	return be32_to_cpu(cqe->sop_drop_qpn) & 0xFFF;
-}
+अटल अंतरभूत u16 get_cqe_flow_tag(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस be32_to_cpu(cqe->sop_drop_qpn) & 0xFFF;
+पूर्ण
 
-#define MLX5_MPWQE_LOG_NUM_STRIDES_EXT_BASE	3
-#define MLX5_MPWQE_LOG_NUM_STRIDES_BASE		9
-#define MLX5_MPWQE_LOG_NUM_STRIDES_MAX		16
-#define MLX5_MPWQE_LOG_STRIDE_SZ_BASE		6
-#define MLX5_MPWQE_LOG_STRIDE_SZ_MAX		13
+#घोषणा MLX5_MPWQE_LOG_NUM_STRIDES_EXT_BASE	3
+#घोषणा MLX5_MPWQE_LOG_NUM_STRIDES_BASE		9
+#घोषणा MLX5_MPWQE_LOG_NUM_STRIDES_MAX		16
+#घोषणा MLX5_MPWQE_LOG_STRIDE_SZ_BASE		6
+#घोषणा MLX5_MPWQE_LOG_STRIDE_SZ_MAX		13
 
-struct mpwrq_cqe_bc {
+काष्ठा mpwrq_cqe_bc अणु
 	__be16	filler_consumed_strides;
 	__be16	byte_cnt;
-};
+पूर्ण;
 
-static inline u16 mpwrq_get_cqe_byte_cnt(struct mlx5_cqe64 *cqe)
-{
-	struct mpwrq_cqe_bc *bc = (struct mpwrq_cqe_bc *)&cqe->byte_cnt;
+अटल अंतरभूत u16 mpwrq_get_cqe_byte_cnt(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	काष्ठा mpwrq_cqe_bc *bc = (काष्ठा mpwrq_cqe_bc *)&cqe->byte_cnt;
 
-	return be16_to_cpu(bc->byte_cnt);
-}
+	वापस be16_to_cpu(bc->byte_cnt);
+पूर्ण
 
-static inline u16 mpwrq_get_cqe_bc_consumed_strides(struct mpwrq_cqe_bc *bc)
-{
-	return 0x7fff & be16_to_cpu(bc->filler_consumed_strides);
-}
+अटल अंतरभूत u16 mpwrq_get_cqe_bc_consumed_strides(काष्ठा mpwrq_cqe_bc *bc)
+अणु
+	वापस 0x7fff & be16_to_cpu(bc->filler_consumed_strides);
+पूर्ण
 
-static inline u16 mpwrq_get_cqe_consumed_strides(struct mlx5_cqe64 *cqe)
-{
-	struct mpwrq_cqe_bc *bc = (struct mpwrq_cqe_bc *)&cqe->byte_cnt;
+अटल अंतरभूत u16 mpwrq_get_cqe_consumed_strides(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	काष्ठा mpwrq_cqe_bc *bc = (काष्ठा mpwrq_cqe_bc *)&cqe->byte_cnt;
 
-	return mpwrq_get_cqe_bc_consumed_strides(bc);
-}
+	वापस mpwrq_get_cqe_bc_consumed_strides(bc);
+पूर्ण
 
-static inline bool mpwrq_is_filler_cqe(struct mlx5_cqe64 *cqe)
-{
-	struct mpwrq_cqe_bc *bc = (struct mpwrq_cqe_bc *)&cqe->byte_cnt;
+अटल अंतरभूत bool mpwrq_is_filler_cqe(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	काष्ठा mpwrq_cqe_bc *bc = (काष्ठा mpwrq_cqe_bc *)&cqe->byte_cnt;
 
-	return 0x8000 & be16_to_cpu(bc->filler_consumed_strides);
-}
+	वापस 0x8000 & be16_to_cpu(bc->filler_consumed_strides);
+पूर्ण
 
-static inline u16 mpwrq_get_cqe_stride_index(struct mlx5_cqe64 *cqe)
-{
-	return be16_to_cpu(cqe->wqe_counter);
-}
+अटल अंतरभूत u16 mpwrq_get_cqe_stride_index(काष्ठा mlx5_cqe64 *cqe)
+अणु
+	वापस be16_to_cpu(cqe->wqe_counter);
+पूर्ण
 
-enum {
+क्रमागत अणु
 	CQE_L4_HDR_TYPE_NONE			= 0x0,
 	CQE_L4_HDR_TYPE_TCP_NO_ACK		= 0x1,
 	CQE_L4_HDR_TYPE_UDP			= 0x2,
 	CQE_L4_HDR_TYPE_TCP_ACK_NO_DATA		= 0x3,
 	CQE_L4_HDR_TYPE_TCP_ACK_AND_DATA	= 0x4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CQE_RSS_HTYPE_IP	= 0x3 << 2,
-	/* cqe->rss_hash_type[3:2] - IP destination selected for hash
+	/* cqe->rss_hash_type[3:2] - IP destination selected क्रम hash
 	 * (00 = none,  01 = IPv4, 10 = IPv6, 11 = Reserved)
 	 */
 	CQE_RSS_HTYPE_L4	= 0x3 << 6,
-	/* cqe->rss_hash_type[7:6] - L4 destination selected for hash
+	/* cqe->rss_hash_type[7:6] - L4 destination selected क्रम hash
 	 * (00 = none, 01 = TCP. 10 = UDP, 11 = IPSEC.SPI
 	 */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_CQE_ROCE_L3_HEADER_TYPE_GRH	= 0x0,
 	MLX5_CQE_ROCE_L3_HEADER_TYPE_IPV6	= 0x1,
 	MLX5_CQE_ROCE_L3_HEADER_TYPE_IPV4	= 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CQE_L2_OK	= 1 << 0,
 	CQE_L3_OK	= 1 << 1,
 	CQE_L4_OK	= 1 << 2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	CQE_TLS_OFFLOAD_NOT_DECRYPTED		= 0x0,
 	CQE_TLS_OFFLOAD_DECRYPTED		= 0x1,
 	CQE_TLS_OFFLOAD_RESYNC			= 0x2,
 	CQE_TLS_OFFLOAD_ERROR			= 0x3,
-};
+पूर्ण;
 
-struct mlx5_sig_err_cqe {
+काष्ठा mlx5_sig_err_cqe अणु
 	u8		rsvd0[16];
 	__be32		expected_trans_sig;
 	__be32		actual_trans_sig;
@@ -1006,39 +1007,39 @@ struct mlx5_sig_err_cqe {
 	u8		rsvd38[2];
 	u8		signature;
 	u8		op_own;
-};
+पूर्ण;
 
-struct mlx5_wqe_srq_next_seg {
+काष्ठा mlx5_wqe_srq_next_seg अणु
 	u8			rsvd0[2];
 	__be16			next_wqe_index;
 	u8			signature;
 	u8			rsvd1[11];
-};
+पूर्ण;
 
-union mlx5_ext_cqe {
-	struct ib_grh	grh;
+जोड़ mlx5_ext_cqe अणु
+	काष्ठा ib_grh	grh;
 	u8		inl[64];
-};
+पूर्ण;
 
-struct mlx5_cqe128 {
-	union mlx5_ext_cqe	inl_grh;
-	struct mlx5_cqe64	cqe64;
-};
+काष्ठा mlx5_cqe128 अणु
+	जोड़ mlx5_ext_cqe	inl_grh;
+	काष्ठा mlx5_cqe64	cqe64;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MKEY_STATUS_FREE = 1 << 6,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MKEY_REMOTE_INVAL	= 1 << 24,
 	MLX5_MKEY_FLAG_SYNC_UMR = 1 << 29,
 	MLX5_MKEY_BSF_EN	= 1 << 30,
-};
+पूर्ण;
 
-struct mlx5_mkey_seg {
+काष्ठा mlx5_mkey_seg अणु
 	/* This is a two bit field occupying bits 31-30.
 	 * bit 31 is always 0,
-	 * bit 30 is zero for regular MRs and 1 (e.g free) for UMRs that do not have tanslation
+	 * bit 30 is zero क्रम regular MRs and 1 (e.g मुक्त) क्रम UMRs that करो not have tanslation
 	 */
 	u8		status;
 	u8		pcie_control;
@@ -1055,75 +1056,75 @@ struct mlx5_mkey_seg {
 	u8		rsvd3[3];
 	u8		log2_page_size;
 	u8		rsvd4[4];
-};
+पूर्ण;
 
-#define MLX5_ATTR_EXTENDED_PORT_INFO	cpu_to_be16(0xff90)
+#घोषणा MLX5_ATTR_EXTENDED_PORT_INFO	cpu_to_be16(0xff90)
 
-enum {
+क्रमागत अणु
 	MLX_EXT_PORT_CAP_FLAG_EXTENDED_PORT_INFO	= 1 <<  0
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	VPORT_STATE_DOWN		= 0x0,
 	VPORT_STATE_UP			= 0x1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_VPORT_ADMIN_STATE_DOWN  = 0x0,
 	MLX5_VPORT_ADMIN_STATE_UP    = 0x1,
 	MLX5_VPORT_ADMIN_STATE_AUTO  = 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_L3_PROT_TYPE_IPV4		= 0,
 	MLX5_L3_PROT_TYPE_IPV6		= 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_L4_PROT_TYPE_TCP		= 0,
 	MLX5_L4_PROT_TYPE_UDP		= 1,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_HASH_FIELD_SEL_SRC_IP	= 1 << 0,
 	MLX5_HASH_FIELD_SEL_DST_IP	= 1 << 1,
 	MLX5_HASH_FIELD_SEL_L4_SPORT	= 1 << 2,
 	MLX5_HASH_FIELD_SEL_L4_DPORT	= 1 << 3,
 	MLX5_HASH_FIELD_SEL_IPSEC_SPI	= 1 << 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_MATCH_OUTER_HEADERS	= 1 << 0,
 	MLX5_MATCH_MISC_PARAMETERS	= 1 << 1,
 	MLX5_MATCH_INNER_HEADERS	= 1 << 2,
 	MLX5_MATCH_MISC_PARAMETERS_2	= 1 << 3,
 	MLX5_MATCH_MISC_PARAMETERS_3	= 1 << 4,
 	MLX5_MATCH_MISC_PARAMETERS_4	= 1 << 5,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_FLOW_TABLE_TYPE_NIC_RCV	= 0,
 	MLX5_FLOW_TABLE_TYPE_ESWITCH	= 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_FLOW_CONTEXT_DEST_TYPE_VPORT	= 0,
 	MLX5_FLOW_CONTEXT_DEST_TYPE_FLOW_TABLE	= 1,
 	MLX5_FLOW_CONTEXT_DEST_TYPE_TIR		= 2,
-};
+पूर्ण;
 
-enum mlx5_list_type {
+क्रमागत mlx5_list_type अणु
 	MLX5_NVPRT_LIST_TYPE_UC   = 0x0,
 	MLX5_NVPRT_LIST_TYPE_MC   = 0x1,
 	MLX5_NVPRT_LIST_TYPE_VLAN = 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_RQC_RQ_TYPE_MEMORY_RQ_INLINE = 0x0,
 	MLX5_RQC_RQ_TYPE_MEMORY_RQ_RPM    = 0x1,
-};
+पूर्ण;
 
-enum mlx5_wol_mode {
+क्रमागत mlx5_wol_mode अणु
 	MLX5_WOL_DISABLE        = 0,
 	MLX5_WOL_SECURED_MAGIC  = 1 << 1,
 	MLX5_WOL_MAGIC          = 1 << 2,
@@ -1132,32 +1133,32 @@ enum mlx5_wol_mode {
 	MLX5_WOL_MULTICAST      = 1 << 5,
 	MLX5_WOL_UNICAST        = 1 << 6,
 	MLX5_WOL_PHY_ACTIVITY   = 1 << 7,
-};
+पूर्ण;
 
-enum mlx5_mpls_supported_fields {
+क्रमागत mlx5_mpls_supported_fields अणु
 	MLX5_FIELD_SUPPORT_MPLS_LABEL = 1 << 0,
 	MLX5_FIELD_SUPPORT_MPLS_EXP   = 1 << 1,
 	MLX5_FIELD_SUPPORT_MPLS_S_BOS = 1 << 2,
 	MLX5_FIELD_SUPPORT_MPLS_TTL   = 1 << 3
-};
+पूर्ण;
 
-enum mlx5_flex_parser_protos {
+क्रमागत mlx5_flex_parser_protos अणु
 	MLX5_FLEX_PROTO_GENEVE	      = 1 << 3,
 	MLX5_FLEX_PROTO_CW_MPLS_GRE   = 1 << 4,
 	MLX5_FLEX_PROTO_CW_MPLS_UDP   = 1 << 5,
 	MLX5_FLEX_PROTO_ICMP	      = 1 << 8,
 	MLX5_FLEX_PROTO_ICMPV6	      = 1 << 9,
-};
+पूर्ण;
 
 /* MLX5 DEV CAPs */
 
 /* TODO: EAT.ME */
-enum mlx5_cap_mode {
+क्रमागत mlx5_cap_mode अणु
 	HCA_CAP_OPMOD_GET_MAX	= 0,
 	HCA_CAP_OPMOD_GET_CUR	= 1,
-};
+पूर्ण;
 
-enum mlx5_cap_type {
+क्रमागत mlx5_cap_type अणु
 	MLX5_CAP_GENERAL = 0,
 	MLX5_CAP_ETHERNET_OFFLOADS,
 	MLX5_CAP_ODP,
@@ -1181,225 +1182,225 @@ enum mlx5_cap_type {
 	MLX5_CAP_IPSEC,
 	/* NUM OF CAP Types */
 	MLX5_CAP_NUM
-};
+पूर्ण;
 
-enum mlx5_pcam_reg_groups {
+क्रमागत mlx5_pcam_reg_groups अणु
 	MLX5_PCAM_REGS_5000_TO_507F                 = 0x0,
-};
+पूर्ण;
 
-enum mlx5_pcam_feature_groups {
+क्रमागत mlx5_pcam_feature_groups अणु
 	MLX5_PCAM_FEATURE_ENHANCED_FEATURES         = 0x0,
-};
+पूर्ण;
 
-enum mlx5_mcam_reg_groups {
+क्रमागत mlx5_mcam_reg_groups अणु
 	MLX5_MCAM_REGS_FIRST_128                    = 0x0,
 	MLX5_MCAM_REGS_0x9080_0x90FF                = 0x1,
 	MLX5_MCAM_REGS_0x9100_0x917F                = 0x2,
 	MLX5_MCAM_REGS_NUM                          = 0x3,
-};
+पूर्ण;
 
-enum mlx5_mcam_feature_groups {
+क्रमागत mlx5_mcam_feature_groups अणु
 	MLX5_MCAM_FEATURE_ENHANCED_FEATURES         = 0x0,
-};
+पूर्ण;
 
-enum mlx5_qcam_reg_groups {
+क्रमागत mlx5_qcam_reg_groups अणु
 	MLX5_QCAM_REGS_FIRST_128                    = 0x0,
-};
+पूर्ण;
 
-enum mlx5_qcam_feature_groups {
+क्रमागत mlx5_qcam_feature_groups अणु
 	MLX5_QCAM_FEATURE_ENHANCED_FEATURES         = 0x0,
-};
+पूर्ण;
 
 /* GET Dev Caps macros */
-#define MLX5_CAP_GEN(mdev, cap) \
+#घोषणा MLX5_CAP_GEN(mdev, cap) \
 	MLX5_GET(cmd_hca_cap, mdev->caps.hca_cur[MLX5_CAP_GENERAL], cap)
 
-#define MLX5_CAP_GEN_64(mdev, cap) \
+#घोषणा MLX5_CAP_GEN_64(mdev, cap) \
 	MLX5_GET64(cmd_hca_cap, mdev->caps.hca_cur[MLX5_CAP_GENERAL], cap)
 
-#define MLX5_CAP_GEN_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_GEN_MAX(mdev, cap) \
 	MLX5_GET(cmd_hca_cap, mdev->caps.hca_max[MLX5_CAP_GENERAL], cap)
 
-#define MLX5_CAP_ETH(mdev, cap) \
+#घोषणा MLX5_CAP_ETH(mdev, cap) \
 	MLX5_GET(per_protocol_networking_offload_caps,\
 		 mdev->caps.hca_cur[MLX5_CAP_ETHERNET_OFFLOADS], cap)
 
-#define MLX5_CAP_ETH_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ETH_MAX(mdev, cap) \
 	MLX5_GET(per_protocol_networking_offload_caps,\
 		 mdev->caps.hca_max[MLX5_CAP_ETHERNET_OFFLOADS], cap)
 
-#define MLX5_CAP_IPOIB_ENHANCED(mdev, cap) \
+#घोषणा MLX5_CAP_IPOIB_ENHANCED(mdev, cap) \
 	MLX5_GET(per_protocol_networking_offload_caps,\
 		 mdev->caps.hca_cur[MLX5_CAP_IPOIB_ENHANCED_OFFLOADS], cap)
 
-#define MLX5_CAP_ROCE(mdev, cap) \
+#घोषणा MLX5_CAP_ROCE(mdev, cap) \
 	MLX5_GET(roce_cap, mdev->caps.hca_cur[MLX5_CAP_ROCE], cap)
 
-#define MLX5_CAP_ROCE_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ROCE_MAX(mdev, cap) \
 	MLX5_GET(roce_cap, mdev->caps.hca_max[MLX5_CAP_ROCE], cap)
 
-#define MLX5_CAP_ATOMIC(mdev, cap) \
+#घोषणा MLX5_CAP_ATOMIC(mdev, cap) \
 	MLX5_GET(atomic_caps, mdev->caps.hca_cur[MLX5_CAP_ATOMIC], cap)
 
-#define MLX5_CAP_ATOMIC_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ATOMIC_MAX(mdev, cap) \
 	MLX5_GET(atomic_caps, mdev->caps.hca_max[MLX5_CAP_ATOMIC], cap)
 
-#define MLX5_CAP_FLOWTABLE(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE(mdev, cap) \
 	MLX5_GET(flow_table_nic_cap, mdev->caps.hca_cur[MLX5_CAP_FLOW_TABLE], cap)
 
-#define MLX5_CAP64_FLOWTABLE(mdev, cap) \
+#घोषणा MLX5_CAP64_FLOWTABLE(mdev, cap) \
 	MLX5_GET64(flow_table_nic_cap, (mdev)->caps.hca_cur[MLX5_CAP_FLOW_TABLE], cap)
 
-#define MLX5_CAP_FLOWTABLE_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_MAX(mdev, cap) \
 	MLX5_GET(flow_table_nic_cap, mdev->caps.hca_max[MLX5_CAP_FLOW_TABLE], cap)
 
-#define MLX5_CAP_FLOWTABLE_NIC_RX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_NIC_RX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_receive.cap)
 
-#define MLX5_CAP_FLOWTABLE_NIC_RX_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_NIC_RX_MAX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_receive.cap)
 
-#define MLX5_CAP_FLOWTABLE_NIC_TX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_NIC_TX(mdev, cap) \
 		MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_transmit.cap)
 
-#define MLX5_CAP_FLOWTABLE_NIC_TX_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_NIC_TX_MAX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_transmit.cap)
 
-#define MLX5_CAP_FLOWTABLE_SNIFFER_RX(mdev, cap) \
-	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_receive_sniffer.cap)
+#घोषणा MLX5_CAP_FLOWTABLE_SNIFFER_RX(mdev, cap) \
+	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_receive_snअगरfer.cap)
 
-#define MLX5_CAP_FLOWTABLE_SNIFFER_RX_MAX(mdev, cap) \
-	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_receive_sniffer.cap)
+#घोषणा MLX5_CAP_FLOWTABLE_SNIFFER_RX_MAX(mdev, cap) \
+	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_receive_snअगरfer.cap)
 
-#define MLX5_CAP_FLOWTABLE_SNIFFER_TX(mdev, cap) \
-	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_transmit_sniffer.cap)
+#घोषणा MLX5_CAP_FLOWTABLE_SNIFFER_TX(mdev, cap) \
+	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_transmit_snअगरfer.cap)
 
-#define MLX5_CAP_FLOWTABLE_SNIFFER_TX_MAX(mdev, cap) \
-	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_transmit_sniffer.cap)
+#घोषणा MLX5_CAP_FLOWTABLE_SNIFFER_TX_MAX(mdev, cap) \
+	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_transmit_snअगरfer.cap)
 
-#define MLX5_CAP_FLOWTABLE_RDMA_RX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_RDMA_RX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_receive_rdma.cap)
 
-#define MLX5_CAP_FLOWTABLE_RDMA_RX_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_RDMA_RX_MAX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_receive_rdma.cap)
 
-#define MLX5_CAP_FLOWTABLE_RDMA_TX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_RDMA_TX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE(mdev, flow_table_properties_nic_transmit_rdma.cap)
 
-#define MLX5_CAP_FLOWTABLE_RDMA_TX_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_FLOWTABLE_RDMA_TX_MAX(mdev, cap) \
 	MLX5_CAP_FLOWTABLE_MAX(mdev, flow_table_properties_nic_transmit_rdma.cap)
 
-#define MLX5_CAP_ESW_FLOWTABLE(mdev, cap) \
-	MLX5_GET(flow_table_eswitch_cap, \
+#घोषणा MLX5_CAP_ESW_FLOWTABLE(mdev, cap) \
+	MLX5_GET(flow_table_eचयन_cap, \
 		 mdev->caps.hca_cur[MLX5_CAP_ESWITCH_FLOW_TABLE], cap)
 
-#define MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, cap) \
-	MLX5_GET(flow_table_eswitch_cap, \
+#घोषणा MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, cap) \
+	MLX5_GET(flow_table_eचयन_cap, \
 		 mdev->caps.hca_max[MLX5_CAP_ESWITCH_FLOW_TABLE], cap)
 
-#define MLX5_CAP_ESW_FLOWTABLE_FDB(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_FLOWTABLE_FDB(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE(mdev, flow_table_properties_nic_esw_fdb.cap)
 
-#define MLX5_CAP_ESW_FLOWTABLE_FDB_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_FLOWTABLE_FDB_MAX(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_nic_esw_fdb.cap)
 
-#define MLX5_CAP_ESW_EGRESS_ACL(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_EGRESS_ACL(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE(mdev, flow_table_properties_esw_acl_egress.cap)
 
-#define MLX5_CAP_ESW_EGRESS_ACL_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_EGRESS_ACL_MAX(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_esw_acl_egress.cap)
 
-#define MLX5_CAP_ESW_INGRESS_ACL(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_INGRESS_ACL(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE(mdev, flow_table_properties_esw_acl_ingress.cap)
 
-#define MLX5_CAP_ESW_INGRESS_ACL_MAX(mdev, cap) \
+#घोषणा MLX5_CAP_ESW_INGRESS_ACL_MAX(mdev, cap) \
 	MLX5_CAP_ESW_FLOWTABLE_MAX(mdev, flow_table_properties_esw_acl_ingress.cap)
 
-#define MLX5_CAP_ESW(mdev, cap) \
-	MLX5_GET(e_switch_cap, \
+#घोषणा MLX5_CAP_ESW(mdev, cap) \
+	MLX5_GET(e_चयन_cap, \
 		 mdev->caps.hca_cur[MLX5_CAP_ESWITCH], cap)
 
-#define MLX5_CAP64_ESW_FLOWTABLE(mdev, cap) \
-	MLX5_GET64(flow_table_eswitch_cap, \
+#घोषणा MLX5_CAP64_ESW_FLOWTABLE(mdev, cap) \
+	MLX5_GET64(flow_table_eचयन_cap, \
 		(mdev)->caps.hca_cur[MLX5_CAP_ESWITCH_FLOW_TABLE], cap)
 
-#define MLX5_CAP_ESW_MAX(mdev, cap) \
-	MLX5_GET(e_switch_cap, \
+#घोषणा MLX5_CAP_ESW_MAX(mdev, cap) \
+	MLX5_GET(e_चयन_cap, \
 		 mdev->caps.hca_max[MLX5_CAP_ESWITCH], cap)
 
-#define MLX5_CAP_ODP(mdev, cap)\
+#घोषणा MLX5_CAP_ODP(mdev, cap)\
 	MLX5_GET(odp_cap, mdev->caps.hca_cur[MLX5_CAP_ODP], cap)
 
-#define MLX5_CAP_ODP_MAX(mdev, cap)\
+#घोषणा MLX5_CAP_ODP_MAX(mdev, cap)\
 	MLX5_GET(odp_cap, mdev->caps.hca_max[MLX5_CAP_ODP], cap)
 
-#define MLX5_CAP_VECTOR_CALC(mdev, cap) \
+#घोषणा MLX5_CAP_VECTOR_CALC(mdev, cap) \
 	MLX5_GET(vector_calc_cap, \
 		 mdev->caps.hca_cur[MLX5_CAP_VECTOR_CALC], cap)
 
-#define MLX5_CAP_QOS(mdev, cap)\
+#घोषणा MLX5_CAP_QOS(mdev, cap)\
 	MLX5_GET(qos_cap, mdev->caps.hca_cur[MLX5_CAP_QOS], cap)
 
-#define MLX5_CAP_DEBUG(mdev, cap)\
+#घोषणा MLX5_CAP_DEBUG(mdev, cap)\
 	MLX5_GET(debug_cap, mdev->caps.hca_cur[MLX5_CAP_DEBUG], cap)
 
-#define MLX5_CAP_PCAM_FEATURE(mdev, fld) \
+#घोषणा MLX5_CAP_PCAM_FEATURE(mdev, fld) \
 	MLX5_GET(pcam_reg, (mdev)->caps.pcam, feature_cap_mask.enhanced_features.fld)
 
-#define MLX5_CAP_PCAM_REG(mdev, reg) \
+#घोषणा MLX5_CAP_PCAM_REG(mdev, reg) \
 	MLX5_GET(pcam_reg, (mdev)->caps.pcam, port_access_reg_cap_mask.regs_5000_to_507f.reg)
 
-#define MLX5_CAP_MCAM_REG(mdev, reg) \
+#घोषणा MLX5_CAP_MCAM_REG(mdev, reg) \
 	MLX5_GET(mcam_reg, (mdev)->caps.mcam[MLX5_MCAM_REGS_FIRST_128], \
 		 mng_access_reg_cap_mask.access_regs.reg)
 
-#define MLX5_CAP_MCAM_REG1(mdev, reg) \
+#घोषणा MLX5_CAP_MCAM_REG1(mdev, reg) \
 	MLX5_GET(mcam_reg, (mdev)->caps.mcam[MLX5_MCAM_REGS_0x9080_0x90FF], \
 		 mng_access_reg_cap_mask.access_regs1.reg)
 
-#define MLX5_CAP_MCAM_REG2(mdev, reg) \
+#घोषणा MLX5_CAP_MCAM_REG2(mdev, reg) \
 	MLX5_GET(mcam_reg, (mdev)->caps.mcam[MLX5_MCAM_REGS_0x9100_0x917F], \
 		 mng_access_reg_cap_mask.access_regs2.reg)
 
-#define MLX5_CAP_MCAM_FEATURE(mdev, fld) \
+#घोषणा MLX5_CAP_MCAM_FEATURE(mdev, fld) \
 	MLX5_GET(mcam_reg, (mdev)->caps.mcam, mng_feature_cap_mask.enhanced_features.fld)
 
-#define MLX5_CAP_QCAM_REG(mdev, fld) \
+#घोषणा MLX5_CAP_QCAM_REG(mdev, fld) \
 	MLX5_GET(qcam_reg, (mdev)->caps.qcam, qos_access_reg_cap_mask.reg_cap.fld)
 
-#define MLX5_CAP_QCAM_FEATURE(mdev, fld) \
+#घोषणा MLX5_CAP_QCAM_FEATURE(mdev, fld) \
 	MLX5_GET(qcam_reg, (mdev)->caps.qcam, qos_feature_cap_mask.feature_cap.fld)
 
-#define MLX5_CAP_FPGA(mdev, cap) \
+#घोषणा MLX5_CAP_FPGA(mdev, cap) \
 	MLX5_GET(fpga_cap, (mdev)->caps.fpga, cap)
 
-#define MLX5_CAP64_FPGA(mdev, cap) \
+#घोषणा MLX5_CAP64_FPGA(mdev, cap) \
 	MLX5_GET64(fpga_cap, (mdev)->caps.fpga, cap)
 
-#define MLX5_CAP_DEV_MEM(mdev, cap)\
+#घोषणा MLX5_CAP_DEV_MEM(mdev, cap)\
 	MLX5_GET(device_mem_cap, mdev->caps.hca_cur[MLX5_CAP_DEV_MEM], cap)
 
-#define MLX5_CAP64_DEV_MEM(mdev, cap)\
+#घोषणा MLX5_CAP64_DEV_MEM(mdev, cap)\
 	MLX5_GET64(device_mem_cap, mdev->caps.hca_cur[MLX5_CAP_DEV_MEM], cap)
 
-#define MLX5_CAP_TLS(mdev, cap) \
+#घोषणा MLX5_CAP_TLS(mdev, cap) \
 	MLX5_GET(tls_cap, (mdev)->caps.hca_cur[MLX5_CAP_TLS], cap)
 
-#define MLX5_CAP_DEV_EVENT(mdev, cap)\
+#घोषणा MLX5_CAP_DEV_EVENT(mdev, cap)\
 	MLX5_ADDR_OF(device_event_cap, (mdev)->caps.hca_cur[MLX5_CAP_DEV_EVENT], cap)
 
-#define MLX5_CAP_DEV_VDPA_EMULATION(mdev, cap)\
+#घोषणा MLX5_CAP_DEV_VDPA_EMULATION(mdev, cap)\
 	MLX5_GET(virtio_emulation_cap, \
 		(mdev)->caps.hca_cur[MLX5_CAP_VDPA_EMULATION], cap)
 
-#define MLX5_CAP64_DEV_VDPA_EMULATION(mdev, cap)\
+#घोषणा MLX5_CAP64_DEV_VDPA_EMULATION(mdev, cap)\
 	MLX5_GET64(virtio_emulation_cap, \
 		(mdev)->caps.hca_cur[MLX5_CAP_VDPA_EMULATION], cap)
 
-#define MLX5_CAP_IPSEC(mdev, cap)\
+#घोषणा MLX5_CAP_IPSEC(mdev, cap)\
 	MLX5_GET(ipsec_cap, (mdev)->caps.hca_cur[MLX5_CAP_IPSEC], cap)
 
-enum {
+क्रमागत अणु
 	MLX5_CMD_STAT_OK			= 0x0,
 	MLX5_CMD_STAT_INT_ERR			= 0x1,
 	MLX5_CMD_STAT_BAD_OP_ERR		= 0x2,
@@ -1416,9 +1417,9 @@ enum {
 	MLX5_CMD_STAT_BAD_QP_STATE_ERR		= 0x10,
 	MLX5_CMD_STAT_BAD_PKT_ERR		= 0x30,
 	MLX5_CMD_STAT_BAD_SIZE_OUTS_CQES_ERR	= 0x40,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_IEEE_802_3_COUNTERS_GROUP	      = 0x0,
 	MLX5_RFC_2863_COUNTERS_GROUP	      = 0x1,
 	MLX5_RFC_2819_COUNTERS_GROUP	      = 0x2,
@@ -1430,24 +1431,24 @@ enum {
 	MLX5_PER_TRAFFIC_CLASS_CONGESTION_GROUP = 0x13,
 	MLX5_PHYSICAL_LAYER_STATISTICAL_GROUP = 0x16,
 	MLX5_INFINIBAND_PORT_COUNTERS_GROUP   = 0x20,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX5_PCIE_PERFORMANCE_COUNTERS_GROUP       = 0x0,
-};
+पूर्ण;
 
-static inline u16 mlx5_to_sw_pkey_sz(int pkey_sz)
-{
-	if (pkey_sz > MLX5_MAX_LOG_PKEY_TABLE)
-		return 0;
-	return MLX5_MIN_PKEY_TABLE_SIZE << pkey_sz;
-}
+अटल अंतरभूत u16 mlx5_to_sw_pkey_sz(पूर्णांक pkey_sz)
+अणु
+	अगर (pkey_sz > MLX5_MAX_LOG_PKEY_TABLE)
+		वापस 0;
+	वापस MLX5_MIN_PKEY_TABLE_SIZE << pkey_sz;
+पूर्ण
 
-#define MLX5_BY_PASS_NUM_REGULAR_PRIOS 16
-#define MLX5_BY_PASS_NUM_DONT_TRAP_PRIOS 16
-#define MLX5_BY_PASS_NUM_MULTICAST_PRIOS 1
-#define MLX5_BY_PASS_NUM_PRIOS (MLX5_BY_PASS_NUM_REGULAR_PRIOS +\
+#घोषणा MLX5_BY_PASS_NUM_REGULAR_PRIOS 16
+#घोषणा MLX5_BY_PASS_NUM_DONT_TRAP_PRIOS 16
+#घोषणा MLX5_BY_PASS_NUM_MULTICAST_PRIOS 1
+#घोषणा MLX5_BY_PASS_NUM_PRIOS (MLX5_BY_PASS_NUM_REGULAR_PRIOS +\
 				MLX5_BY_PASS_NUM_DONT_TRAP_PRIOS +\
 				MLX5_BY_PASS_NUM_MULTICAST_PRIOS)
 
-#endif /* MLX5_DEVICE_H */
+#पूर्ण_अगर /* MLX5_DEVICE_H */

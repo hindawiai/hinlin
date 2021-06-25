@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * itg3200_buffer.c -- support InvenSense ITG3200
  *                     Digital 3-Axis Gyroscope driver
@@ -8,148 +9,148 @@
  * Copyright (c) 2012 Thorsten Nowak <thorsten.nowak@iis.fraunhofer.de>
  */
 
-#include <linux/slab.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/gyro/itg3200.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/gyro/itg3200.h>
 
 
-static int itg3200_read_all_channels(struct i2c_client *i2c, __be16 *buf)
-{
+अटल पूर्णांक itg3200_पढ़ो_all_channels(काष्ठा i2c_client *i2c, __be16 *buf)
+अणु
 	u8 tx = 0x80 | ITG3200_REG_TEMP_OUT_H;
-	struct i2c_msg msg[2] = {
-		{
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु
 			.addr = i2c->addr,
 			.flags = i2c->flags,
 			.len = 1,
 			.buf = &tx,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = i2c->addr,
 			.flags = i2c->flags | I2C_M_RD,
-			.len = ITG3200_SCAN_ELEMENTS * sizeof(s16),
-			.buf = (char *)&buf,
-		},
-	};
+			.len = ITG3200_SCAN_ELEMENTS * माप(s16),
+			.buf = (अक्षर *)&buf,
+		पूर्ण,
+	पूर्ण;
 
-	return i2c_transfer(i2c->adapter, msg, 2);
-}
+	वापस i2c_transfer(i2c->adapter, msg, 2);
+पूर्ण
 
-static irqreturn_t itg3200_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct itg3200 *st = iio_priv(indio_dev);
+अटल irqवापस_t itg3200_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा itg3200 *st = iio_priv(indio_dev);
 	/*
-	 * Ensure correct alignment and padding including for the
-	 * timestamp that may be inserted.
+	 * Ensure correct alignment and padding including क्रम the
+	 * बारtamp that may be inserted.
 	 */
-	struct {
+	काष्ठा अणु
 		__be16 buf[ITG3200_SCAN_ELEMENTS];
 		s64 ts __aligned(8);
-	} scan;
+	पूर्ण scan;
 
-	int ret = itg3200_read_all_channels(st->i2c, scan.buf);
-	if (ret < 0)
-		goto error_ret;
+	पूर्णांक ret = itg3200_पढ़ो_all_channels(st->i2c, scan.buf);
+	अगर (ret < 0)
+		जाओ error_ret;
 
-	iio_push_to_buffers_with_timestamp(indio_dev, &scan, pf->timestamp);
+	iio_push_to_buffers_with_बारtamp(indio_dev, &scan, pf->बारtamp);
 
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
 error_ret:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int itg3200_buffer_configure(struct iio_dev *indio_dev)
-{
-	return iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_time,
-		itg3200_trigger_handler, NULL);
-}
+पूर्णांक itg3200_buffer_configure(काष्ठा iio_dev *indio_dev)
+अणु
+	वापस iio_triggered_buffer_setup(indio_dev, &iio_pollfunc_store_समय,
+		itg3200_trigger_handler, शून्य);
+पूर्ण
 
-void itg3200_buffer_unconfigure(struct iio_dev *indio_dev)
-{
+व्योम itg3200_buffer_unconfigure(काष्ठा iio_dev *indio_dev)
+अणु
 	iio_triggered_buffer_cleanup(indio_dev);
-}
+पूर्ण
 
 
-static int itg3200_data_rdy_trigger_set_state(struct iio_trigger *trig,
+अटल पूर्णांक itg3200_data_rdy_trigger_set_state(काष्ठा iio_trigger *trig,
 		bool state)
-{
-	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	int ret;
+अणु
+	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	पूर्णांक ret;
 	u8 msc;
 
-	ret = itg3200_read_reg_8(indio_dev, ITG3200_REG_IRQ_CONFIG, &msc);
-	if (ret)
-		goto error_ret;
+	ret = itg3200_पढ़ो_reg_8(indio_dev, ITG3200_REG_IRQ_CONFIG, &msc);
+	अगर (ret)
+		जाओ error_ret;
 
-	if (state)
+	अगर (state)
 		msc |= ITG3200_IRQ_DATA_RDY_ENABLE;
-	else
+	अन्यथा
 		msc &= ~ITG3200_IRQ_DATA_RDY_ENABLE;
 
-	ret = itg3200_write_reg_8(indio_dev, ITG3200_REG_IRQ_CONFIG, msc);
-	if (ret)
-		goto error_ret;
+	ret = itg3200_ग_लिखो_reg_8(indio_dev, ITG3200_REG_IRQ_CONFIG, msc);
+	अगर (ret)
+		जाओ error_ret;
 
 error_ret:
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static const struct iio_trigger_ops itg3200_trigger_ops = {
+अटल स्थिर काष्ठा iio_trigger_ops itg3200_trigger_ops = अणु
 	.set_trigger_state = &itg3200_data_rdy_trigger_set_state,
-};
+पूर्ण;
 
-int itg3200_probe_trigger(struct iio_dev *indio_dev)
-{
-	int ret;
-	struct itg3200 *st = iio_priv(indio_dev);
+पूर्णांक itg3200_probe_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा itg3200 *st = iio_priv(indio_dev);
 
 	st->trig = iio_trigger_alloc(&st->i2c->dev, "%s-dev%d", indio_dev->name,
 				     indio_dev->id);
-	if (!st->trig)
-		return -ENOMEM;
+	अगर (!st->trig)
+		वापस -ENOMEM;
 
 	ret = request_irq(st->i2c->irq,
 			  &iio_trigger_generic_data_rdy_poll,
 			  IRQF_TRIGGER_RISING,
 			  "itg3200_data_rdy",
 			  st->trig);
-	if (ret)
-		goto error_free_trig;
+	अगर (ret)
+		जाओ error_मुक्त_trig;
 
 
 	st->trig->ops = &itg3200_trigger_ops;
 	iio_trigger_set_drvdata(st->trig, indio_dev);
-	ret = iio_trigger_register(st->trig);
-	if (ret)
-		goto error_free_irq;
+	ret = iio_trigger_रेजिस्टर(st->trig);
+	अगर (ret)
+		जाओ error_मुक्त_irq;
 
-	/* select default trigger */
+	/* select शेष trigger */
 	indio_dev->trig = iio_trigger_get(st->trig);
 
-	return 0;
+	वापस 0;
 
-error_free_irq:
-	free_irq(st->i2c->irq, st->trig);
-error_free_trig:
-	iio_trigger_free(st->trig);
-	return ret;
-}
+error_मुक्त_irq:
+	मुक्त_irq(st->i2c->irq, st->trig);
+error_मुक्त_trig:
+	iio_trigger_मुक्त(st->trig);
+	वापस ret;
+पूर्ण
 
-void itg3200_remove_trigger(struct iio_dev *indio_dev)
-{
-	struct itg3200 *st = iio_priv(indio_dev);
+व्योम itg3200_हटाओ_trigger(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा itg3200 *st = iio_priv(indio_dev);
 
-	iio_trigger_unregister(st->trig);
-	free_irq(st->i2c->irq, st->trig);
-	iio_trigger_free(st->trig);
-}
+	iio_trigger_unरेजिस्टर(st->trig);
+	मुक्त_irq(st->i2c->irq, st->trig);
+	iio_trigger_मुक्त(st->trig);
+पूर्ण

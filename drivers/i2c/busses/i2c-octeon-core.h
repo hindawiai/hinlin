@@ -1,219 +1,220 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/atomic.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/i2c-smbus.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/atomic.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-smbus.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
 
 /* Controller command patterns */
-#define SW_TWSI_V		BIT_ULL(63)	/* Valid bit */
-#define SW_TWSI_EIA		BIT_ULL(61)	/* Extended internal address */
-#define SW_TWSI_R		BIT_ULL(56)	/* Result or read bit */
-#define SW_TWSI_SOVR		BIT_ULL(55)	/* Size override */
-#define SW_TWSI_SIZE_SHIFT	52
-#define SW_TWSI_ADDR_SHIFT	40
-#define SW_TWSI_IA_SHIFT	32		/* Internal address */
+#घोषणा SW_TWSI_V		BIT_ULL(63)	/* Valid bit */
+#घोषणा SW_TWSI_EIA		BIT_ULL(61)	/* Extended पूर्णांकernal address */
+#घोषणा SW_TWSI_R		BIT_ULL(56)	/* Result or पढ़ो bit */
+#घोषणा SW_TWSI_SOVR		BIT_ULL(55)	/* Size override */
+#घोषणा SW_TWSI_SIZE_SHIFT	52
+#घोषणा SW_TWSI_ADDR_SHIFT	40
+#घोषणा SW_TWSI_IA_SHIFT	32		/* Internal address */
 
 /* Controller opcode word (bits 60:57) */
-#define SW_TWSI_OP_SHIFT	57
-#define SW_TWSI_OP_7		(0ULL << SW_TWSI_OP_SHIFT)
-#define SW_TWSI_OP_7_IA		(1ULL << SW_TWSI_OP_SHIFT)
-#define SW_TWSI_OP_10		(2ULL << SW_TWSI_OP_SHIFT)
-#define SW_TWSI_OP_10_IA	(3ULL << SW_TWSI_OP_SHIFT)
-#define SW_TWSI_OP_TWSI_CLK	(4ULL << SW_TWSI_OP_SHIFT)
-#define SW_TWSI_OP_EOP		(6ULL << SW_TWSI_OP_SHIFT) /* Extended opcode */
+#घोषणा SW_TWSI_OP_SHIFT	57
+#घोषणा SW_TWSI_OP_7		(0ULL << SW_TWSI_OP_SHIFT)
+#घोषणा SW_TWSI_OP_7_IA		(1ULL << SW_TWSI_OP_SHIFT)
+#घोषणा SW_TWSI_OP_10		(2ULL << SW_TWSI_OP_SHIFT)
+#घोषणा SW_TWSI_OP_10_IA	(3ULL << SW_TWSI_OP_SHIFT)
+#घोषणा SW_TWSI_OP_TWSI_CLK	(4ULL << SW_TWSI_OP_SHIFT)
+#घोषणा SW_TWSI_OP_EOP		(6ULL << SW_TWSI_OP_SHIFT) /* Extended opcode */
 
 /* Controller extended opcode word (bits 34:32) */
-#define SW_TWSI_EOP_SHIFT	32
-#define SW_TWSI_EOP_TWSI_DATA	(SW_TWSI_OP_EOP | 1ULL << SW_TWSI_EOP_SHIFT)
-#define SW_TWSI_EOP_TWSI_CTL	(SW_TWSI_OP_EOP | 2ULL << SW_TWSI_EOP_SHIFT)
-#define SW_TWSI_EOP_TWSI_CLKCTL	(SW_TWSI_OP_EOP | 3ULL << SW_TWSI_EOP_SHIFT)
-#define SW_TWSI_EOP_TWSI_STAT	(SW_TWSI_OP_EOP | 3ULL << SW_TWSI_EOP_SHIFT)
-#define SW_TWSI_EOP_TWSI_RST	(SW_TWSI_OP_EOP | 7ULL << SW_TWSI_EOP_SHIFT)
+#घोषणा SW_TWSI_EOP_SHIFT	32
+#घोषणा SW_TWSI_EOP_TWSI_DATA	(SW_TWSI_OP_EOP | 1ULL << SW_TWSI_EOP_SHIFT)
+#घोषणा SW_TWSI_EOP_TWSI_CTL	(SW_TWSI_OP_EOP | 2ULL << SW_TWSI_EOP_SHIFT)
+#घोषणा SW_TWSI_EOP_TWSI_CLKCTL	(SW_TWSI_OP_EOP | 3ULL << SW_TWSI_EOP_SHIFT)
+#घोषणा SW_TWSI_EOP_TWSI_STAT	(SW_TWSI_OP_EOP | 3ULL << SW_TWSI_EOP_SHIFT)
+#घोषणा SW_TWSI_EOP_TWSI_RST	(SW_TWSI_OP_EOP | 7ULL << SW_TWSI_EOP_SHIFT)
 
 /* Controller command and status bits */
-#define TWSI_CTL_CE		0x80	/* High level controller enable */
-#define TWSI_CTL_ENAB		0x40	/* Bus enable */
-#define TWSI_CTL_STA		0x20	/* Master-mode start, HW clears when done */
-#define TWSI_CTL_STP		0x10	/* Master-mode stop, HW clears when done */
-#define TWSI_CTL_IFLG		0x08	/* HW event, SW writes 0 to ACK */
-#define TWSI_CTL_AAK		0x04	/* Assert ACK */
+#घोषणा TWSI_CTL_CE		0x80	/* High level controller enable */
+#घोषणा TWSI_CTL_ENAB		0x40	/* Bus enable */
+#घोषणा TWSI_CTL_STA		0x20	/* Master-mode start, HW clears when करोne */
+#घोषणा TWSI_CTL_STP		0x10	/* Master-mode stop, HW clears when करोne */
+#घोषणा TWSI_CTL_IFLG		0x08	/* HW event, SW ग_लिखोs 0 to ACK */
+#घोषणा TWSI_CTL_AAK		0x04	/* Assert ACK */
 
 /* Status values */
-#define STAT_BUS_ERROR		0x00
-#define STAT_START		0x08
-#define STAT_REP_START		0x10
-#define STAT_TXADDR_ACK		0x18
-#define STAT_TXADDR_NAK		0x20
-#define STAT_TXDATA_ACK		0x28
-#define STAT_TXDATA_NAK		0x30
-#define STAT_LOST_ARB_38	0x38
-#define STAT_RXADDR_ACK		0x40
-#define STAT_RXADDR_NAK		0x48
-#define STAT_RXDATA_ACK		0x50
-#define STAT_RXDATA_NAK		0x58
-#define STAT_SLAVE_60		0x60
-#define STAT_LOST_ARB_68	0x68
-#define STAT_SLAVE_70		0x70
-#define STAT_LOST_ARB_78	0x78
-#define STAT_SLAVE_80		0x80
-#define STAT_SLAVE_88		0x88
-#define STAT_GENDATA_ACK	0x90
-#define STAT_GENDATA_NAK	0x98
-#define STAT_SLAVE_A0		0xA0
-#define STAT_SLAVE_A8		0xA8
-#define STAT_LOST_ARB_B0	0xB0
-#define STAT_SLAVE_LOST		0xB8
-#define STAT_SLAVE_NAK		0xC0
-#define STAT_SLAVE_ACK		0xC8
-#define STAT_AD2W_ACK		0xD0
-#define STAT_AD2W_NAK		0xD8
-#define STAT_IDLE		0xF8
+#घोषणा STAT_BUS_ERROR		0x00
+#घोषणा STAT_START		0x08
+#घोषणा STAT_REP_START		0x10
+#घोषणा STAT_TXADDR_ACK		0x18
+#घोषणा STAT_TXADDR_NAK		0x20
+#घोषणा STAT_TXDATA_ACK		0x28
+#घोषणा STAT_TXDATA_NAK		0x30
+#घोषणा STAT_LOST_ARB_38	0x38
+#घोषणा STAT_RXADDR_ACK		0x40
+#घोषणा STAT_RXADDR_NAK		0x48
+#घोषणा STAT_RXDATA_ACK		0x50
+#घोषणा STAT_RXDATA_NAK		0x58
+#घोषणा STAT_SLAVE_60		0x60
+#घोषणा STAT_LOST_ARB_68	0x68
+#घोषणा STAT_SLAVE_70		0x70
+#घोषणा STAT_LOST_ARB_78	0x78
+#घोषणा STAT_SLAVE_80		0x80
+#घोषणा STAT_SLAVE_88		0x88
+#घोषणा STAT_GENDATA_ACK	0x90
+#घोषणा STAT_GENDATA_NAK	0x98
+#घोषणा STAT_SLAVE_A0		0xA0
+#घोषणा STAT_SLAVE_A8		0xA8
+#घोषणा STAT_LOST_ARB_B0	0xB0
+#घोषणा STAT_SLAVE_LOST		0xB8
+#घोषणा STAT_SLAVE_NAK		0xC0
+#घोषणा STAT_SLAVE_ACK		0xC8
+#घोषणा STAT_AD2W_ACK		0xD0
+#घोषणा STAT_AD2W_NAK		0xD8
+#घोषणा STAT_IDLE		0xF8
 
 /* TWSI_INT values */
-#define TWSI_INT_ST_INT		BIT_ULL(0)
-#define TWSI_INT_TS_INT		BIT_ULL(1)
-#define TWSI_INT_CORE_INT	BIT_ULL(2)
-#define TWSI_INT_ST_EN		BIT_ULL(4)
-#define TWSI_INT_TS_EN		BIT_ULL(5)
-#define TWSI_INT_CORE_EN	BIT_ULL(6)
-#define TWSI_INT_SDA_OVR	BIT_ULL(8)
-#define TWSI_INT_SCL_OVR	BIT_ULL(9)
-#define TWSI_INT_SDA		BIT_ULL(10)
-#define TWSI_INT_SCL		BIT_ULL(11)
+#घोषणा TWSI_INT_ST_INT		BIT_ULL(0)
+#घोषणा TWSI_INT_TS_INT		BIT_ULL(1)
+#घोषणा TWSI_INT_CORE_INT	BIT_ULL(2)
+#घोषणा TWSI_INT_ST_EN		BIT_ULL(4)
+#घोषणा TWSI_INT_TS_EN		BIT_ULL(5)
+#घोषणा TWSI_INT_CORE_EN	BIT_ULL(6)
+#घोषणा TWSI_INT_SDA_OVR	BIT_ULL(8)
+#घोषणा TWSI_INT_SCL_OVR	BIT_ULL(9)
+#घोषणा TWSI_INT_SDA		BIT_ULL(10)
+#घोषणा TWSI_INT_SCL		BIT_ULL(11)
 
-#define I2C_OCTEON_EVENT_WAIT 80 /* microseconds */
+#घोषणा I2C_OCTEON_EVENT_WAIT 80 /* microseconds */
 
 /* Register offsets */
-struct octeon_i2c_reg_offset {
-	unsigned int sw_twsi;
-	unsigned int twsi_int;
-	unsigned int sw_twsi_ext;
-};
+काष्ठा octeon_i2c_reg_offset अणु
+	अचिन्हित पूर्णांक sw_twsi;
+	अचिन्हित पूर्णांक twsi_पूर्णांक;
+	अचिन्हित पूर्णांक sw_twsi_ext;
+पूर्ण;
 
-#define SW_TWSI(x)	(x->roff.sw_twsi)
-#define TWSI_INT(x)	(x->roff.twsi_int)
-#define SW_TWSI_EXT(x)	(x->roff.sw_twsi_ext)
+#घोषणा SW_TWSI(x)	(x->roff.sw_twsi)
+#घोषणा TWSI_INT(x)	(x->roff.twsi_पूर्णांक)
+#घोषणा SW_TWSI_EXT(x)	(x->roff.sw_twsi_ext)
 
-struct octeon_i2c {
-	wait_queue_head_t queue;
-	struct i2c_adapter adap;
-	struct octeon_i2c_reg_offset roff;
-	struct clk *clk;
-	int irq;
-	int hlc_irq;		/* For cn7890 only */
+काष्ठा octeon_i2c अणु
+	रुको_queue_head_t queue;
+	काष्ठा i2c_adapter adap;
+	काष्ठा octeon_i2c_reg_offset roff;
+	काष्ठा clk *clk;
+	पूर्णांक irq;
+	पूर्णांक hlc_irq;		/* For cn7890 only */
 	u32 twsi_freq;
-	int sys_freq;
-	void __iomem *twsi_base;
-	struct device *dev;
+	पूर्णांक sys_freq;
+	व्योम __iomem *twsi_base;
+	काष्ठा device *dev;
 	bool hlc_enabled;
 	bool broken_irq_mode;
 	bool broken_irq_check;
-	void (*int_enable)(struct octeon_i2c *);
-	void (*int_disable)(struct octeon_i2c *);
-	void (*hlc_int_enable)(struct octeon_i2c *);
-	void (*hlc_int_disable)(struct octeon_i2c *);
-	atomic_t int_enable_cnt;
-	atomic_t hlc_int_enable_cnt;
-	struct i2c_smbus_alert_setup alert_data;
-	struct i2c_client *ara;
-};
+	व्योम (*पूर्णांक_enable)(काष्ठा octeon_i2c *);
+	व्योम (*पूर्णांक_disable)(काष्ठा octeon_i2c *);
+	व्योम (*hlc_पूर्णांक_enable)(काष्ठा octeon_i2c *);
+	व्योम (*hlc_पूर्णांक_disable)(काष्ठा octeon_i2c *);
+	atomic_t पूर्णांक_enable_cnt;
+	atomic_t hlc_पूर्णांक_enable_cnt;
+	काष्ठा i2c_smbus_alert_setup alert_data;
+	काष्ठा i2c_client *ara;
+पूर्ण;
 
-static inline void octeon_i2c_writeq_flush(u64 val, void __iomem *addr)
-{
-	__raw_writeq(val, addr);
-	__raw_readq(addr);	/* wait for write to land */
-}
+अटल अंतरभूत व्योम octeon_i2c_ग_लिखोq_flush(u64 val, व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोq(val, addr);
+	__raw_पढ़ोq(addr);	/* रुको क्रम ग_लिखो to land */
+पूर्ण
 
 /**
- * octeon_i2c_reg_write - write an I2C core register
- * @i2c: The struct octeon_i2c
+ * octeon_i2c_reg_ग_लिखो - ग_लिखो an I2C core रेजिस्टर
+ * @i2c: The काष्ठा octeon_i2c
  * @eop_reg: Register selector
  * @data: Value to be written
  *
- * The I2C core registers are accessed indirectly via the SW_TWSI CSR.
+ * The I2C core रेजिस्टरs are accessed indirectly via the SW_TWSI CSR.
  */
-static inline void octeon_i2c_reg_write(struct octeon_i2c *i2c, u64 eop_reg, u8 data)
-{
-	int tries = 1000;
-	u64 tmp;
+अटल अंतरभूत व्योम octeon_i2c_reg_ग_लिखो(काष्ठा octeon_i2c *i2c, u64 eop_reg, u8 data)
+अणु
+	पूर्णांक tries = 1000;
+	u64 पंचांगp;
 
-	__raw_writeq(SW_TWSI_V | eop_reg | data, i2c->twsi_base + SW_TWSI(i2c));
-	do {
-		tmp = __raw_readq(i2c->twsi_base + SW_TWSI(i2c));
-		if (--tries < 0)
-			return;
-	} while ((tmp & SW_TWSI_V) != 0);
-}
+	__raw_ग_लिखोq(SW_TWSI_V | eop_reg | data, i2c->twsi_base + SW_TWSI(i2c));
+	करो अणु
+		पंचांगp = __raw_पढ़ोq(i2c->twsi_base + SW_TWSI(i2c));
+		अगर (--tries < 0)
+			वापस;
+	पूर्ण जबतक ((पंचांगp & SW_TWSI_V) != 0);
+पूर्ण
 
-#define octeon_i2c_ctl_write(i2c, val)					\
-	octeon_i2c_reg_write(i2c, SW_TWSI_EOP_TWSI_CTL, val)
-#define octeon_i2c_data_write(i2c, val)					\
-	octeon_i2c_reg_write(i2c, SW_TWSI_EOP_TWSI_DATA, val)
+#घोषणा octeon_i2c_ctl_ग_लिखो(i2c, val)					\
+	octeon_i2c_reg_ग_लिखो(i2c, SW_TWSI_EOP_TWSI_CTL, val)
+#घोषणा octeon_i2c_data_ग_लिखो(i2c, val)					\
+	octeon_i2c_reg_ग_लिखो(i2c, SW_TWSI_EOP_TWSI_DATA, val)
 
 /**
- * octeon_i2c_reg_read - read lower bits of an I2C core register
- * @i2c: The struct octeon_i2c
+ * octeon_i2c_reg_पढ़ो - पढ़ो lower bits of an I2C core रेजिस्टर
+ * @i2c: The काष्ठा octeon_i2c
  * @eop_reg: Register selector
  *
  * Returns the data.
  *
- * The I2C core registers are accessed indirectly via the SW_TWSI CSR.
+ * The I2C core रेजिस्टरs are accessed indirectly via the SW_TWSI CSR.
  */
-static inline int octeon_i2c_reg_read(struct octeon_i2c *i2c, u64 eop_reg,
-				      int *error)
-{
-	int tries = 1000;
-	u64 tmp;
+अटल अंतरभूत पूर्णांक octeon_i2c_reg_पढ़ो(काष्ठा octeon_i2c *i2c, u64 eop_reg,
+				      पूर्णांक *error)
+अणु
+	पूर्णांक tries = 1000;
+	u64 पंचांगp;
 
-	__raw_writeq(SW_TWSI_V | eop_reg | SW_TWSI_R, i2c->twsi_base + SW_TWSI(i2c));
-	do {
-		tmp = __raw_readq(i2c->twsi_base + SW_TWSI(i2c));
-		if (--tries < 0) {
-			/* signal that the returned data is invalid */
-			if (error)
+	__raw_ग_लिखोq(SW_TWSI_V | eop_reg | SW_TWSI_R, i2c->twsi_base + SW_TWSI(i2c));
+	करो अणु
+		पंचांगp = __raw_पढ़ोq(i2c->twsi_base + SW_TWSI(i2c));
+		अगर (--tries < 0) अणु
+			/* संकेत that the वापसed data is invalid */
+			अगर (error)
 				*error = -EIO;
-			return 0;
-		}
-	} while ((tmp & SW_TWSI_V) != 0);
+			वापस 0;
+		पूर्ण
+	पूर्ण जबतक ((पंचांगp & SW_TWSI_V) != 0);
 
-	return tmp & 0xFF;
-}
+	वापस पंचांगp & 0xFF;
+पूर्ण
 
-#define octeon_i2c_ctl_read(i2c)					\
-	octeon_i2c_reg_read(i2c, SW_TWSI_EOP_TWSI_CTL, NULL)
-#define octeon_i2c_data_read(i2c, error)				\
-	octeon_i2c_reg_read(i2c, SW_TWSI_EOP_TWSI_DATA, error)
-#define octeon_i2c_stat_read(i2c)					\
-	octeon_i2c_reg_read(i2c, SW_TWSI_EOP_TWSI_STAT, NULL)
+#घोषणा octeon_i2c_ctl_पढ़ो(i2c)					\
+	octeon_i2c_reg_पढ़ो(i2c, SW_TWSI_EOP_TWSI_CTL, शून्य)
+#घोषणा octeon_i2c_data_पढ़ो(i2c, error)				\
+	octeon_i2c_reg_पढ़ो(i2c, SW_TWSI_EOP_TWSI_DATA, error)
+#घोषणा octeon_i2c_stat_पढ़ो(i2c)					\
+	octeon_i2c_reg_पढ़ो(i2c, SW_TWSI_EOP_TWSI_STAT, शून्य)
 
 /**
- * octeon_i2c_read_int - read the TWSI_INT register
- * @i2c: The struct octeon_i2c
+ * octeon_i2c_पढ़ो_पूर्णांक - पढ़ो the TWSI_INT रेजिस्टर
+ * @i2c: The काष्ठा octeon_i2c
  *
- * Returns the value of the register.
+ * Returns the value of the रेजिस्टर.
  */
-static inline u64 octeon_i2c_read_int(struct octeon_i2c *i2c)
-{
-	return __raw_readq(i2c->twsi_base + TWSI_INT(i2c));
-}
+अटल अंतरभूत u64 octeon_i2c_पढ़ो_पूर्णांक(काष्ठा octeon_i2c *i2c)
+अणु
+	वापस __raw_पढ़ोq(i2c->twsi_base + TWSI_INT(i2c));
+पूर्ण
 
 /**
- * octeon_i2c_write_int - write the TWSI_INT register
- * @i2c: The struct octeon_i2c
+ * octeon_i2c_ग_लिखो_पूर्णांक - ग_लिखो the TWSI_INT रेजिस्टर
+ * @i2c: The काष्ठा octeon_i2c
  * @data: Value to be written
  */
-static inline void octeon_i2c_write_int(struct octeon_i2c *i2c, u64 data)
-{
-	octeon_i2c_writeq_flush(data, i2c->twsi_base + TWSI_INT(i2c));
-}
+अटल अंतरभूत व्योम octeon_i2c_ग_लिखो_पूर्णांक(काष्ठा octeon_i2c *i2c, u64 data)
+अणु
+	octeon_i2c_ग_लिखोq_flush(data, i2c->twsi_base + TWSI_INT(i2c));
+पूर्ण
 
 /* Prototypes */
-irqreturn_t octeon_i2c_isr(int irq, void *dev_id);
-int octeon_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num);
-int octeon_i2c_init_lowlevel(struct octeon_i2c *i2c);
-void octeon_i2c_set_clock(struct octeon_i2c *i2c);
-extern struct i2c_bus_recovery_info octeon_i2c_recovery_info;
+irqवापस_t octeon_i2c_isr(पूर्णांक irq, व्योम *dev_id);
+पूर्णांक octeon_i2c_xfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num);
+पूर्णांक octeon_i2c_init_lowlevel(काष्ठा octeon_i2c *i2c);
+व्योम octeon_i2c_set_घड़ी(काष्ठा octeon_i2c *i2c);
+बाह्य काष्ठा i2c_bus_recovery_info octeon_i2c_recovery_info;

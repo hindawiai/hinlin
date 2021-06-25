@@ -1,259 +1,260 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Backlight driver for Marvell Semiconductor 88PM8606
+ * Backlight driver क्रम Marvell Semiconductor 88PM8606
  *
  * Copyright (C) 2009 Marvell International Ltd.
  *	Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/fb.h>
-#include <linux/i2c.h>
-#include <linux/backlight.h>
-#include <linux/mfd/88pm860x.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/mfd/88pm860x.h>
+#समावेश <linux/module.h>
 
-#define MAX_BRIGHTNESS		(0xFF)
-#define MIN_BRIGHTNESS		(0)
+#घोषणा MAX_BRIGHTNESS		(0xFF)
+#घोषणा MIN_BRIGHTNESS		(0)
 
-#define CURRENT_BITMASK		(0x1F << 1)
+#घोषणा CURRENT_BITMASK		(0x1F << 1)
 
-struct pm860x_backlight_data {
-	struct pm860x_chip *chip;
-	struct i2c_client *i2c;
-	int	current_brightness;
-	int	port;
-	int	pwm;
-	int	iset;
-	int	reg_duty_cycle;
-	int	reg_always_on;
-	int	reg_current;
-};
+काष्ठा pm860x_backlight_data अणु
+	काष्ठा pm860x_chip *chip;
+	काष्ठा i2c_client *i2c;
+	पूर्णांक	current_brightness;
+	पूर्णांक	port;
+	पूर्णांक	pwm;
+	पूर्णांक	iset;
+	पूर्णांक	reg_duty_cycle;
+	पूर्णांक	reg_always_on;
+	पूर्णांक	reg_current;
+पूर्ण;
 
-static int backlight_power_set(struct pm860x_chip *chip, int port,
-		int on)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक backlight_घातer_set(काष्ठा pm860x_chip *chip, पूर्णांक port,
+		पूर्णांक on)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	switch (port) {
-	case 0:
+	चयन (port) अणु
+	हाल 0:
 		ret = on ? pm8606_osc_enable(chip, WLED1_DUTY) :
 			pm8606_osc_disable(chip, WLED1_DUTY);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		ret = on ? pm8606_osc_enable(chip, WLED2_DUTY) :
 			pm8606_osc_disable(chip, WLED2_DUTY);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		ret = on ? pm8606_osc_enable(chip, WLED3_DUTY) :
 			pm8606_osc_disable(chip, WLED3_DUTY);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int pm860x_backlight_set(struct backlight_device *bl, int brightness)
-{
-	struct pm860x_backlight_data *data = bl_get_data(bl);
-	struct pm860x_chip *chip = data->chip;
-	unsigned char value;
-	int ret;
+अटल पूर्णांक pm860x_backlight_set(काष्ठा backlight_device *bl, पूर्णांक brightness)
+अणु
+	काष्ठा pm860x_backlight_data *data = bl_get_data(bl);
+	काष्ठा pm860x_chip *chip = data->chip;
+	अचिन्हित अक्षर value;
+	पूर्णांक ret;
 
-	if (brightness > MAX_BRIGHTNESS)
+	अगर (brightness > MAX_BRIGHTNESS)
 		value = MAX_BRIGHTNESS;
-	else
+	अन्यथा
 		value = brightness;
 
-	if (brightness)
-		backlight_power_set(chip, data->port, 1);
+	अगर (brightness)
+		backlight_घातer_set(chip, data->port, 1);
 
-	ret = pm860x_reg_write(data->i2c, data->reg_duty_cycle, value);
-	if (ret < 0)
-		goto out;
+	ret = pm860x_reg_ग_लिखो(data->i2c, data->reg_duty_cycle, value);
+	अगर (ret < 0)
+		जाओ out;
 
-	if ((data->current_brightness == 0) && brightness) {
-		if (data->iset) {
+	अगर ((data->current_brightness == 0) && brightness) अणु
+		अगर (data->iset) अणु
 			ret = pm860x_set_bits(data->i2c, data->reg_current,
 					      CURRENT_BITMASK, data->iset);
-			if (ret < 0)
-				goto out;
-		}
-		if (data->pwm) {
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+		अगर (data->pwm) अणु
 			ret = pm860x_set_bits(data->i2c, PM8606_PWM,
 					      PM8606_PWM_FREQ_MASK, data->pwm);
-			if (ret < 0)
-				goto out;
-		}
-		if (brightness == MAX_BRIGHTNESS) {
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+		अगर (brightness == MAX_BRIGHTNESS) अणु
 			/* set WLED_ON bit as 100% */
 			ret = pm860x_set_bits(data->i2c, data->reg_always_on,
 					      PM8606_WLED_ON, PM8606_WLED_ON);
-		}
-	} else {
-		if (brightness == MAX_BRIGHTNESS) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (brightness == MAX_BRIGHTNESS) अणु
 			/* set WLED_ON bit as 100% */
 			ret = pm860x_set_bits(data->i2c, data->reg_always_on,
 					      PM8606_WLED_ON, PM8606_WLED_ON);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* clear WLED_ON bit since it's not 100% */
 			ret = pm860x_set_bits(data->i2c, data->reg_always_on,
 					      PM8606_WLED_ON, 0);
-		}
-	}
-	if (ret < 0)
-		goto out;
+		पूर्ण
+	पूर्ण
+	अगर (ret < 0)
+		जाओ out;
 
-	if (brightness == 0)
-		backlight_power_set(chip, data->port, 0);
+	अगर (brightness == 0)
+		backlight_घातer_set(chip, data->port, 0);
 
 	dev_dbg(chip->dev, "set brightness %d\n", value);
 	data->current_brightness = value;
-	return 0;
+	वापस 0;
 out:
 	dev_dbg(chip->dev, "set brightness %d failure with return value: %d\n",
 		value, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pm860x_backlight_update_status(struct backlight_device *bl)
-{
-	return pm860x_backlight_set(bl, backlight_get_brightness(bl));
-}
+अटल पूर्णांक pm860x_backlight_update_status(काष्ठा backlight_device *bl)
+अणु
+	वापस pm860x_backlight_set(bl, backlight_get_brightness(bl));
+पूर्ण
 
-static int pm860x_backlight_get_brightness(struct backlight_device *bl)
-{
-	struct pm860x_backlight_data *data = bl_get_data(bl);
-	struct pm860x_chip *chip = data->chip;
-	int ret;
+अटल पूर्णांक pm860x_backlight_get_brightness(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा pm860x_backlight_data *data = bl_get_data(bl);
+	काष्ठा pm860x_chip *chip = data->chip;
+	पूर्णांक ret;
 
-	ret = pm860x_reg_read(data->i2c, data->reg_duty_cycle);
-	if (ret < 0)
-		goto out;
+	ret = pm860x_reg_पढ़ो(data->i2c, data->reg_duty_cycle);
+	अगर (ret < 0)
+		जाओ out;
 	data->current_brightness = ret;
 	dev_dbg(chip->dev, "get brightness %d\n", data->current_brightness);
-	return data->current_brightness;
+	वापस data->current_brightness;
 out:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct backlight_ops pm860x_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops pm860x_backlight_ops = अणु
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= pm860x_backlight_update_status,
 	.get_brightness	= pm860x_backlight_get_brightness,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
-static int pm860x_backlight_dt_init(struct platform_device *pdev,
-				    struct pm860x_backlight_data *data,
-				    char *name)
-{
-	struct device_node *nproot, *np;
-	int iset = 0;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक pm860x_backlight_dt_init(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा pm860x_backlight_data *data,
+				    अक्षर *name)
+अणु
+	काष्ठा device_node *nproot, *np;
+	पूर्णांक iset = 0;
 
 	nproot = of_get_child_by_name(pdev->dev.parent->of_node, "backlights");
-	if (!nproot) {
+	अगर (!nproot) अणु
 		dev_err(&pdev->dev, "failed to find backlights node\n");
-		return -ENODEV;
-	}
-	for_each_child_of_node(nproot, np) {
-		if (of_node_name_eq(np, name)) {
-			of_property_read_u32(np, "marvell,88pm860x-iset",
+		वापस -ENODEV;
+	पूर्ण
+	क्रम_each_child_of_node(nproot, np) अणु
+		अगर (of_node_name_eq(np, name)) अणु
+			of_property_पढ़ो_u32(np, "marvell,88pm860x-iset",
 					     &iset);
 			data->iset = PM8606_WLED_CURRENT(iset);
-			of_property_read_u32(np, "marvell,88pm860x-pwm",
+			of_property_पढ़ो_u32(np, "marvell,88pm860x-pwm",
 					     &data->pwm);
 			of_node_put(np);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	of_node_put(nproot);
-	return 0;
-}
-#else
-#define pm860x_backlight_dt_init(x, y, z)	(-1)
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा pm860x_backlight_dt_init(x, y, z)	(-1)
+#पूर्ण_अगर
 
-static int pm860x_backlight_probe(struct platform_device *pdev)
-{
-	struct pm860x_chip *chip = dev_get_drvdata(pdev->dev.parent);
-	struct pm860x_backlight_pdata *pdata = dev_get_platdata(&pdev->dev);
-	struct pm860x_backlight_data *data;
-	struct backlight_device *bl;
-	struct resource *res;
-	struct backlight_properties props;
-	char name[MFD_NAME_SIZE];
-	int ret = 0;
+अटल पूर्णांक pm860x_backlight_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pm860x_chip *chip = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा pm860x_backlight_pdata *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा pm860x_backlight_data *data;
+	काष्ठा backlight_device *bl;
+	काष्ठा resource *res;
+	काष्ठा backlight_properties props;
+	अक्षर name[MFD_NAME_SIZE];
+	पूर्णांक ret = 0;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct pm860x_backlight_data),
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा pm860x_backlight_data),
 			    GFP_KERNEL);
-	if (data == NULL)
-		return -ENOMEM;
-	res = platform_get_resource_byname(pdev, IORESOURCE_REG, "duty cycle");
-	if (!res) {
+	अगर (data == शून्य)
+		वापस -ENOMEM;
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_REG, "duty cycle");
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "No REG resource for duty cycle\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	data->reg_duty_cycle = res->start;
-	res = platform_get_resource_byname(pdev, IORESOURCE_REG, "always on");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_REG, "always on");
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "No REG resource for always on\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	data->reg_always_on = res->start;
-	res = platform_get_resource_byname(pdev, IORESOURCE_REG, "current");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_REG, "current");
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "No REG resource for current\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	data->reg_current = res->start;
 
-	memset(name, 0, MFD_NAME_SIZE);
-	sprintf(name, "backlight-%d", pdev->id);
+	स_रखो(name, 0, MFD_NAME_SIZE);
+	प्र_लिखो(name, "backlight-%d", pdev->id);
 	data->port = pdev->id;
 	data->chip = chip;
 	data->i2c = (chip->id == CHIP_PM8606) ? chip->client : chip->companion;
 	data->current_brightness = MAX_BRIGHTNESS;
-	if (pm860x_backlight_dt_init(pdev, data, name)) {
-		if (pdata) {
+	अगर (pm860x_backlight_dt_init(pdev, data, name)) अणु
+		अगर (pdata) अणु
 			data->pwm = pdata->pwm;
 			data->iset = pdata->iset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = MAX_BRIGHTNESS;
-	bl = devm_backlight_device_register(&pdev->dev, name, &pdev->dev, data,
+	bl = devm_backlight_device_रेजिस्टर(&pdev->dev, name, &pdev->dev, data,
 					&pm860x_backlight_ops, &props);
-	if (IS_ERR(bl)) {
+	अगर (IS_ERR(bl)) अणु
 		dev_err(&pdev->dev, "failed to register backlight\n");
-		return PTR_ERR(bl);
-	}
+		वापस PTR_ERR(bl);
+	पूर्ण
 	bl->props.brightness = MAX_BRIGHTNESS;
 
-	platform_set_drvdata(pdev, bl);
+	platक्रमm_set_drvdata(pdev, bl);
 
-	/* read current backlight */
+	/* पढ़ो current backlight */
 	ret = pm860x_backlight_get_brightness(bl);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	backlight_update_status(bl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pm860x_backlight_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver pm860x_backlight_driver = अणु
+	.driver		= अणु
 		.name	= "88pm860x-backlight",
-	},
+	पूर्ण,
 	.probe		= pm860x_backlight_probe,
-};
+पूर्ण;
 
-module_platform_driver(pm860x_backlight_driver);
+module_platक्रमm_driver(pm860x_backlight_driver);
 
 MODULE_DESCRIPTION("Backlight Driver for Marvell Semiconductor 88PM8606");
 MODULE_AUTHOR("Haojian Zhuang <haojian.zhuang@marvell.com>");

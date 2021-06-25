@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Defines for Mobile Industry Processor Interface (MIPI(R))
+ * Defines क्रम Mobile Industry Processor Interface (MIPI(R))
  * Display Working Group standards: DSI, DCS, DBI, DPI
  *
  * Copyright (C) 2010 Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  * Copyright (C) 2006 Nokia Corporation
  * Author: Imre Deak <imre.deak@nokia.com>
  */
-#ifndef MIPI_DISPLAY_H
-#define MIPI_DISPLAY_H
+#अगर_अघोषित MIPI_DISPLAY_H
+#घोषणा MIPI_DISPLAY_H
 
 /* MIPI DSI Processor-to-Peripheral transaction types */
-enum {
+क्रमागत अणु
 	MIPI_DSI_V_SYNC_START				= 0x01,
 	MIPI_DSI_V_SYNC_END				= 0x11,
 	MIPI_DSI_H_SYNC_START				= 0x21,
@@ -41,7 +42,7 @@ enum {
 
 	MIPI_DSI_SET_MAXIMUM_RETURN_PACKET_SIZE		= 0x37,
 
-	MIPI_DSI_NULL_PACKET				= 0x09,
+	MIPI_DSI_शून्य_PACKET				= 0x09,
 	MIPI_DSI_BLANKING_PACKET			= 0x19,
 	MIPI_DSI_GENERIC_LONG_WRITE			= 0x29,
 	MIPI_DSI_DCS_LONG_WRITE				= 0x39,
@@ -61,10 +62,10 @@ enum {
 	MIPI_DSI_PACKED_PIXEL_STREAM_18			= 0x1e,
 	MIPI_DSI_PIXEL_STREAM_3BYTE_18			= 0x2e,
 	MIPI_DSI_PACKED_PIXEL_STREAM_24			= 0x3e,
-};
+पूर्ण;
 
 /* MIPI DSI Peripheral-to-Processor transaction types */
-enum {
+क्रमागत अणु
 	MIPI_DSI_RX_ACKNOWLEDGE_AND_ERROR_REPORT	= 0x02,
 	MIPI_DSI_RX_END_OF_TRANSMISSION			= 0x08,
 	MIPI_DSI_RX_GENERIC_SHORT_READ_RESPONSE_1BYTE	= 0x11,
@@ -73,10 +74,10 @@ enum {
 	MIPI_DSI_RX_DCS_LONG_READ_RESPONSE		= 0x1c,
 	MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_1BYTE	= 0x21,
 	MIPI_DSI_RX_DCS_SHORT_READ_RESPONSE_2BYTE	= 0x22,
-};
+पूर्ण;
 
 /* MIPI DCS commands */
-enum {
+क्रमागत अणु
 	MIPI_DCS_NOP			= 0x00,
 	MIPI_DCS_SOFT_RESET		= 0x01,
 	MIPI_DCS_GET_COMPRESSION_MODE	= 0x03,
@@ -108,7 +109,7 @@ enum {
 	MIPI_DCS_WRITE_MEMORY_START	= 0x2C,
 	MIPI_DCS_WRITE_LUT		= 0x2D,
 	MIPI_DCS_READ_MEMORY_START	= 0x2E,
-	MIPI_DCS_SET_PARTIAL_ROWS	= 0x30,		/* MIPI DCS 1.02 - MIPI_DCS_SET_PARTIAL_AREA before that */
+	MIPI_DCS_SET_PARTIAL_ROWS	= 0x30,		/* MIPI DCS 1.02 - MIPI_DCS_SET_PARTIAL_AREA beक्रमe that */
 	MIPI_DCS_SET_PARTIAL_COLUMNS	= 0x31,
 	MIPI_DCS_SET_SCROLL_AREA	= 0x33,
 	MIPI_DCS_SET_TEAR_OFF		= 0x34,
@@ -137,14 +138,14 @@ enum {
 	MIPI_DCS_READ_PPS_START		= 0xA2,
 	MIPI_DCS_READ_DDB_CONTINUE	= 0xA8,
 	MIPI_DCS_READ_PPS_CONTINUE	= 0xA9,
-};
+पूर्ण;
 
-/* MIPI DCS pixel formats */
-#define MIPI_DCS_PIXEL_FMT_24BIT	7
-#define MIPI_DCS_PIXEL_FMT_18BIT	6
-#define MIPI_DCS_PIXEL_FMT_16BIT	5
-#define MIPI_DCS_PIXEL_FMT_12BIT	3
-#define MIPI_DCS_PIXEL_FMT_8BIT		2
-#define MIPI_DCS_PIXEL_FMT_3BIT		1
+/* MIPI DCS pixel क्रमmats */
+#घोषणा MIPI_DCS_PIXEL_FMT_24BIT	7
+#घोषणा MIPI_DCS_PIXEL_FMT_18BIT	6
+#घोषणा MIPI_DCS_PIXEL_FMT_16BIT	5
+#घोषणा MIPI_DCS_PIXEL_FMT_12BIT	3
+#घोषणा MIPI_DCS_PIXEL_FMT_8BIT		2
+#घोषणा MIPI_DCS_PIXEL_FMT_3BIT		1
 
-#endif
+#पूर्ण_अगर

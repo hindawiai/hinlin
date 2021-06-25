@@ -1,84 +1,85 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Header file for FPGA Management Engine (FME) Partial Reconfiguration Driver
+ * Header file क्रम FPGA Management Engine (FME) Partial Reconfiguration Driver
  *
  * Copyright (C) 2017-2018 Intel Corporation, Inc.
  *
  * Authors:
- *   Kang Luwei <luwei.kang@intel.com>
- *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
- *   Wu Hao <hao.wu@intel.com>
- *   Joseph Grecco <joe.grecco@intel.com>
- *   Enno Luebbers <enno.luebbers@intel.com>
- *   Tim Whisonant <tim.whisonant@intel.com>
- *   Ananda Ravuri <ananda.ravuri@intel.com>
- *   Henry Mitchel <henry.mitchel@intel.com>
+ *   Kang Luwei <luwei.kang@पूर्णांकel.com>
+ *   Xiao Guangrong <guangrong.xiao@linux.पूर्णांकel.com>
+ *   Wu Hao <hao.wu@पूर्णांकel.com>
+ *   Joseph Grecco <joe.grecco@पूर्णांकel.com>
+ *   Enno Luebbers <enno.luebbers@पूर्णांकel.com>
+ *   Tim Whisonant <tim.whisonant@पूर्णांकel.com>
+ *   Ananda Ravuri <ananda.ravuri@पूर्णांकel.com>
+ *   Henry Mitchel <henry.mitchel@पूर्णांकel.com>
  */
 
-#ifndef __DFL_FME_PR_H
-#define __DFL_FME_PR_H
+#अगर_अघोषित __DFL_FME_PR_H
+#घोषणा __DFL_FME_PR_H
 
-#include <linux/platform_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
 /**
- * struct dfl_fme_region - FME fpga region data structure
+ * काष्ठा dfl_fme_region - FME fpga region data काष्ठाure
  *
- * @region: platform device of the FPGA region.
+ * @region: platक्रमm device of the FPGA region.
  * @node: used to link fme_region to a list.
  * @port_id: indicate which port this region connected to.
  */
-struct dfl_fme_region {
-	struct platform_device *region;
-	struct list_head node;
-	int port_id;
-};
+काष्ठा dfl_fme_region अणु
+	काष्ठा platक्रमm_device *region;
+	काष्ठा list_head node;
+	पूर्णांक port_id;
+पूर्ण;
 
 /**
- * struct dfl_fme_region_pdata - platform data for FME region platform device.
+ * काष्ठा dfl_fme_region_pdata - platक्रमm data क्रम FME region platक्रमm device.
  *
- * @mgr: platform device of the FPGA manager.
- * @br: platform device of the FPGA bridge.
+ * @mgr: platक्रमm device of the FPGA manager.
+ * @br: platक्रमm device of the FPGA bridge.
  * @region_id: region id (same as port_id).
  */
-struct dfl_fme_region_pdata {
-	struct platform_device *mgr;
-	struct platform_device *br;
-	int region_id;
-};
+काष्ठा dfl_fme_region_pdata अणु
+	काष्ठा platक्रमm_device *mgr;
+	काष्ठा platक्रमm_device *br;
+	पूर्णांक region_id;
+पूर्ण;
 
 /**
- * struct dfl_fme_bridge - FME fpga bridge data structure
+ * काष्ठा dfl_fme_bridge - FME fpga bridge data काष्ठाure
  *
- * @br: platform device of the FPGA bridge.
+ * @br: platक्रमm device of the FPGA bridge.
  * @node: used to link fme_bridge to a list.
  */
-struct dfl_fme_bridge {
-	struct platform_device *br;
-	struct list_head node;
-};
+काष्ठा dfl_fme_bridge अणु
+	काष्ठा platक्रमm_device *br;
+	काष्ठा list_head node;
+पूर्ण;
 
 /**
- * struct dfl_fme_bridge_pdata - platform data for FME bridge platform device.
+ * काष्ठा dfl_fme_bridge_pdata - platक्रमm data क्रम FME bridge platक्रमm device.
  *
  * @cdev: container device.
  * @port_id: port id.
  */
-struct dfl_fme_br_pdata {
-	struct dfl_fpga_cdev *cdev;
-	int port_id;
-};
+काष्ठा dfl_fme_br_pdata अणु
+	काष्ठा dfl_fpga_cdev *cdev;
+	पूर्णांक port_id;
+पूर्ण;
 
 /**
- * struct dfl_fme_mgr_pdata - platform data for FME manager platform device.
+ * काष्ठा dfl_fme_mgr_pdata - platक्रमm data क्रम FME manager platक्रमm device.
  *
- * @ioaddr: mapped io address for FME manager platform device.
+ * @ioaddr: mapped io address क्रम FME manager platक्रमm device.
  */
-struct dfl_fme_mgr_pdata {
-	void __iomem *ioaddr;
-};
+काष्ठा dfl_fme_mgr_pdata अणु
+	व्योम __iomem *ioaddr;
+पूर्ण;
 
-#define DFL_FPGA_FME_MGR	"dfl-fme-mgr"
-#define DFL_FPGA_FME_BRIDGE	"dfl-fme-bridge"
-#define DFL_FPGA_FME_REGION	"dfl-fme-region"
+#घोषणा DFL_FPGA_FME_MGR	"dfl-fme-mgr"
+#घोषणा DFL_FPGA_FME_BRIDGE	"dfl-fme-bridge"
+#घोषणा DFL_FPGA_FME_REGION	"dfl-fme-region"
 
-#endif /* __DFL_FME_PR_H */
+#पूर्ण_अगर /* __DFL_FME_PR_H */

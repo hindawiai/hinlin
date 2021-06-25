@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/types.h>
-#include <asm/byteorder.h>
-#include <linux/bitops.h>
-#include <linux/dcbnl.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include "qed.h"
-#include "qed_cxt.h"
-#include "qed_dcbx.h"
-#include "qed_hsi.h"
-#include "qed_sp.h"
-#include "qed_sriov.h"
-#include "qed_rdma.h"
-#ifdef CONFIG_DCB
-#include <linux/qed/qed_eth_if.h>
-#endif
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/dcbnl.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश "qed.h"
+#समावेश "qed_cxt.h"
+#समावेश "qed_dcbx.h"
+#समावेश "qed_hsi.h"
+#समावेश "qed_sp.h"
+#समावेश "qed_sriov.h"
+#समावेश "qed_rdma.h"
+#अगर_घोषित CONFIG_DCB
+#समावेश <linux/qed/qed_eth_अगर.h>
+#पूर्ण_अगर
 
-#define QED_DCBX_MAX_MIB_READ_TRY       (100)
-#define QED_ETH_TYPE_DEFAULT            (0)
-#define QED_ETH_TYPE_ROCE               (0x8915)
-#define QED_UDP_PORT_TYPE_ROCE_V2       (0x12B7)
-#define QED_ETH_TYPE_FCOE               (0x8906)
-#define QED_TCP_PORT_ISCSI              (0xCBC)
+#घोषणा QED_DCBX_MAX_MIB_READ_TRY       (100)
+#घोषणा QED_ETH_TYPE_DEFAULT            (0)
+#घोषणा QED_ETH_TYPE_ROCE               (0x8915)
+#घोषणा QED_UDP_PORT_TYPE_ROCE_V2       (0x12B7)
+#घोषणा QED_ETH_TYPE_FCOE               (0x8906)
+#घोषणा QED_TCP_PORT_ISCSI              (0xCBC)
 
-#define QED_DCBX_INVALID_PRIORITY       0xFF
+#घोषणा QED_DCBX_INVALID_PRIORITY       0xFF
 
 /* Get Traffic Class from priority traffic class table, 4 bits represent
  * the traffic class corresponding to the priority.
  */
-#define QED_DCBX_PRIO2TC(prio_tc_tbl, prio) \
+#घोषणा QED_DCBX_PRIO2TC(prio_tc_tbl, prio) \
 	((u32)(prio_tc_tbl >> ((7 - prio) * 4)) & 0x7)
 
-static const struct qed_dcbx_app_metadata qed_dcbx_app_update[] = {
-	{DCBX_PROTOCOL_ISCSI, "ISCSI", QED_PCI_ISCSI},
-	{DCBX_PROTOCOL_FCOE, "FCOE", QED_PCI_FCOE},
-	{DCBX_PROTOCOL_ROCE, "ROCE", QED_PCI_ETH_ROCE},
-	{DCBX_PROTOCOL_ROCE_V2, "ROCE_V2", QED_PCI_ETH_ROCE},
-	{DCBX_PROTOCOL_ETH, "ETH", QED_PCI_ETH},
-};
+अटल स्थिर काष्ठा qed_dcbx_app_metadata qed_dcbx_app_update[] = अणु
+	अणुDCBX_PROTOCOL_ISCSI, "ISCSI", QED_PCI_ISCSIपूर्ण,
+	अणुDCBX_PROTOCOL_FCOE, "FCOE", QED_PCI_FCOEपूर्ण,
+	अणुDCBX_PROTOCOL_ROCE, "ROCE", QED_PCI_ETH_ROCEपूर्ण,
+	अणुDCBX_PROTOCOL_ROCE_V2, "ROCE_V2", QED_PCI_ETH_ROCEपूर्ण,
+	अणुDCBX_PROTOCOL_ETH, "ETH", QED_PCI_ETHपूर्ण,
+पूर्ण;
 
-static bool qed_dcbx_app_ethtype(u32 app_info_bitmap)
-{
-	return !!(QED_MFW_GET_FIELD(app_info_bitmap, DCBX_APP_SF) ==
+अटल bool qed_dcbx_app_ethtype(u32 app_info_biपंचांगap)
+अणु
+	वापस !!(QED_MFW_GET_FIELD(app_info_biपंचांगap, DCBX_APP_SF) ==
 		  DCBX_APP_SF_ETHTYPE);
-}
+पूर्ण
 
-static bool qed_dcbx_ieee_app_ethtype(u32 app_info_bitmap)
-{
-	u8 mfw_val = QED_MFW_GET_FIELD(app_info_bitmap, DCBX_APP_SF_IEEE);
+अटल bool qed_dcbx_ieee_app_ethtype(u32 app_info_biपंचांगap)
+अणु
+	u8 mfw_val = QED_MFW_GET_FIELD(app_info_biपंचांगap, DCBX_APP_SF_IEEE);
 
 	/* Old MFW */
-	if (mfw_val == DCBX_APP_SF_IEEE_RESERVED)
-		return qed_dcbx_app_ethtype(app_info_bitmap);
+	अगर (mfw_val == DCBX_APP_SF_IEEE_RESERVED)
+		वापस qed_dcbx_app_ethtype(app_info_biपंचांगap);
 
-	return !!(mfw_val == DCBX_APP_SF_IEEE_ETHTYPE);
-}
+	वापस !!(mfw_val == DCBX_APP_SF_IEEE_ETHTYPE);
+पूर्ण
 
-static bool qed_dcbx_app_port(u32 app_info_bitmap)
-{
-	return !!(QED_MFW_GET_FIELD(app_info_bitmap, DCBX_APP_SF) ==
+अटल bool qed_dcbx_app_port(u32 app_info_biपंचांगap)
+अणु
+	वापस !!(QED_MFW_GET_FIELD(app_info_biपंचांगap, DCBX_APP_SF) ==
 		  DCBX_APP_SF_PORT);
-}
+पूर्ण
 
-static bool qed_dcbx_ieee_app_port(u32 app_info_bitmap, u8 type)
-{
-	u8 mfw_val = QED_MFW_GET_FIELD(app_info_bitmap, DCBX_APP_SF_IEEE);
+अटल bool qed_dcbx_ieee_app_port(u32 app_info_biपंचांगap, u8 type)
+अणु
+	u8 mfw_val = QED_MFW_GET_FIELD(app_info_biपंचांगap, DCBX_APP_SF_IEEE);
 
 	/* Old MFW */
-	if (mfw_val == DCBX_APP_SF_IEEE_RESERVED)
-		return qed_dcbx_app_port(app_info_bitmap);
+	अगर (mfw_val == DCBX_APP_SF_IEEE_RESERVED)
+		वापस qed_dcbx_app_port(app_info_biपंचांगap);
 
-	return !!(mfw_val == type || mfw_val == DCBX_APP_SF_IEEE_TCP_UDP_PORT);
-}
+	वापस !!(mfw_val == type || mfw_val == DCBX_APP_SF_IEEE_TCP_UDP_PORT);
+पूर्ण
 
-static bool qed_dcbx_default_tlv(u32 app_info_bitmap, u16 proto_id, bool ieee)
-{
+अटल bool qed_dcbx_शेष_tlv(u32 app_info_biपंचांगap, u16 proto_id, bool ieee)
+अणु
 	bool ethtype;
 
-	if (ieee)
-		ethtype = qed_dcbx_ieee_app_ethtype(app_info_bitmap);
-	else
-		ethtype = qed_dcbx_app_ethtype(app_info_bitmap);
+	अगर (ieee)
+		ethtype = qed_dcbx_ieee_app_ethtype(app_info_biपंचांगap);
+	अन्यथा
+		ethtype = qed_dcbx_app_ethtype(app_info_biपंचांगap);
 
-	return !!(ethtype && (proto_id == QED_ETH_TYPE_DEFAULT));
-}
+	वापस !!(ethtype && (proto_id == QED_ETH_TYPE_DEFAULT));
+पूर्ण
 
-static bool qed_dcbx_iscsi_tlv(u32 app_info_bitmap, u16 proto_id, bool ieee)
-{
+अटल bool qed_dcbx_iscsi_tlv(u32 app_info_biपंचांगap, u16 proto_id, bool ieee)
+अणु
 	bool port;
 
-	if (ieee)
-		port = qed_dcbx_ieee_app_port(app_info_bitmap,
+	अगर (ieee)
+		port = qed_dcbx_ieee_app_port(app_info_biपंचांगap,
 					      DCBX_APP_SF_IEEE_TCP_PORT);
-	else
-		port = qed_dcbx_app_port(app_info_bitmap);
+	अन्यथा
+		port = qed_dcbx_app_port(app_info_biपंचांगap);
 
-	return !!(port && (proto_id == QED_TCP_PORT_ISCSI));
-}
+	वापस !!(port && (proto_id == QED_TCP_PORT_ISCSI));
+पूर्ण
 
-static bool qed_dcbx_fcoe_tlv(u32 app_info_bitmap, u16 proto_id, bool ieee)
-{
+अटल bool qed_dcbx_fcoe_tlv(u32 app_info_biपंचांगap, u16 proto_id, bool ieee)
+अणु
 	bool ethtype;
 
-	if (ieee)
-		ethtype = qed_dcbx_ieee_app_ethtype(app_info_bitmap);
-	else
-		ethtype = qed_dcbx_app_ethtype(app_info_bitmap);
+	अगर (ieee)
+		ethtype = qed_dcbx_ieee_app_ethtype(app_info_biपंचांगap);
+	अन्यथा
+		ethtype = qed_dcbx_app_ethtype(app_info_biपंचांगap);
 
-	return !!(ethtype && (proto_id == QED_ETH_TYPE_FCOE));
-}
+	वापस !!(ethtype && (proto_id == QED_ETH_TYPE_FCOE));
+पूर्ण
 
-static bool qed_dcbx_roce_tlv(u32 app_info_bitmap, u16 proto_id, bool ieee)
-{
+अटल bool qed_dcbx_roce_tlv(u32 app_info_biपंचांगap, u16 proto_id, bool ieee)
+अणु
 	bool ethtype;
 
-	if (ieee)
-		ethtype = qed_dcbx_ieee_app_ethtype(app_info_bitmap);
-	else
-		ethtype = qed_dcbx_app_ethtype(app_info_bitmap);
+	अगर (ieee)
+		ethtype = qed_dcbx_ieee_app_ethtype(app_info_biपंचांगap);
+	अन्यथा
+		ethtype = qed_dcbx_app_ethtype(app_info_biपंचांगap);
 
-	return !!(ethtype && (proto_id == QED_ETH_TYPE_ROCE));
-}
+	वापस !!(ethtype && (proto_id == QED_ETH_TYPE_ROCE));
+पूर्ण
 
-static bool qed_dcbx_roce_v2_tlv(u32 app_info_bitmap, u16 proto_id, bool ieee)
-{
+अटल bool qed_dcbx_roce_v2_tlv(u32 app_info_biपंचांगap, u16 proto_id, bool ieee)
+अणु
 	bool port;
 
-	if (ieee)
-		port = qed_dcbx_ieee_app_port(app_info_bitmap,
+	अगर (ieee)
+		port = qed_dcbx_ieee_app_port(app_info_biपंचांगap,
 					      DCBX_APP_SF_IEEE_UDP_PORT);
-	else
-		port = qed_dcbx_app_port(app_info_bitmap);
+	अन्यथा
+		port = qed_dcbx_app_port(app_info_biपंचांगap);
 
-	return !!(port && (proto_id == QED_UDP_PORT_TYPE_ROCE_V2));
-}
+	वापस !!(port && (proto_id == QED_UDP_PORT_TYPE_ROCE_V2));
+पूर्ण
 
-static void
-qed_dcbx_dp_protocol(struct qed_hwfn *p_hwfn, struct qed_dcbx_results *p_data)
-{
-	enum dcbx_protocol_type id;
-	int i;
+अटल व्योम
+qed_dcbx_dp_protocol(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_dcbx_results *p_data)
+अणु
+	क्रमागत dcbx_protocol_type id;
+	पूर्णांक i;
 
 	DP_VERBOSE(p_hwfn, QED_MSG_DCB, "DCBX negotiated: %d\n",
 		   p_data->dcbx_enabled);
 
-	for (i = 0; i < ARRAY_SIZE(qed_dcbx_app_update); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(qed_dcbx_app_update); i++) अणु
 		id = qed_dcbx_app_update[i].id;
 
 		DP_VERBOSE(p_hwfn, QED_MSG_DCB,
@@ -159,182 +160,182 @@ qed_dcbx_dp_protocol(struct qed_hwfn *p_hwfn, struct qed_dcbx_results *p_data)
 			   qed_dcbx_app_update[i].name, p_data->arr[id].update,
 			   p_data->arr[id].enable, p_data->arr[id].priority,
 			   p_data->arr[id].tc, p_hwfn->hw_info.num_active_tc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-qed_dcbx_set_params(struct qed_dcbx_results *p_data,
-		    struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
+अटल व्योम
+qed_dcbx_set_params(काष्ठा qed_dcbx_results *p_data,
+		    काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
 		    bool app_tlv, bool enable, u8 prio, u8 tc,
-		    enum dcbx_protocol_type type,
-		    enum qed_pci_personality personality)
-{
+		    क्रमागत dcbx_protocol_type type,
+		    क्रमागत qed_pci_personality personality)
+अणु
 	/* PF update ramrod data */
 	p_data->arr[type].enable = enable;
 	p_data->arr[type].priority = prio;
 	p_data->arr[type].tc = tc;
-	if (enable)
+	अगर (enable)
 		p_data->arr[type].update = UPDATE_DCB;
-	else
+	अन्यथा
 		p_data->arr[type].update = DONT_UPDATE_DCB_DSCP;
 
-	if (test_bit(QED_MF_DONT_ADD_VLAN0_TAG, &p_hwfn->cdev->mf_bits))
-		p_data->arr[type].dont_add_vlan0 = true;
+	अगर (test_bit(QED_MF_DONT_ADD_VLAN0_TAG, &p_hwfn->cdev->mf_bits))
+		p_data->arr[type].करोnt_add_vlan0 = true;
 
 	/* QM reconf data */
-	if (app_tlv && p_hwfn->hw_info.personality == personality)
+	अगर (app_tlv && p_hwfn->hw_info.personality == personality)
 		qed_hw_info_set_offload_tc(&p_hwfn->hw_info, tc);
 
-	/* Configure dcbx vlan priority in doorbell block for roce EDPM */
-	if (test_bit(QED_MF_UFP_SPECIFIC, &p_hwfn->cdev->mf_bits) &&
-	    type == DCBX_PROTOCOL_ROCE) {
+	/* Configure dcbx vlan priority in करोorbell block क्रम roce EDPM */
+	अगर (test_bit(QED_MF_UFP_SPECIFIC, &p_hwfn->cdev->mf_bits) &&
+	    type == DCBX_PROTOCOL_ROCE) अणु
 		qed_wr(p_hwfn, p_ptt, DORQ_REG_TAG1_OVRD_MODE, 1);
 		qed_wr(p_hwfn, p_ptt, DORQ_REG_PF_PCP_BB_K2, prio << 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Update app protocol data and hw_info fields with the TLV info */
-static void
-qed_dcbx_update_app_info(struct qed_dcbx_results *p_data,
-			 struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
+अटल व्योम
+qed_dcbx_update_app_info(काष्ठा qed_dcbx_results *p_data,
+			 काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
 			 bool app_tlv, bool enable, u8 prio, u8 tc,
-			 enum dcbx_protocol_type type)
-{
-	enum qed_pci_personality personality;
-	enum dcbx_protocol_type id;
-	int i;
+			 क्रमागत dcbx_protocol_type type)
+अणु
+	क्रमागत qed_pci_personality personality;
+	क्रमागत dcbx_protocol_type id;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(qed_dcbx_app_update); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(qed_dcbx_app_update); i++) अणु
 		id = qed_dcbx_app_update[i].id;
 
-		if (type != id)
-			continue;
+		अगर (type != id)
+			जारी;
 
 		personality = qed_dcbx_app_update[i].personality;
 
 		qed_dcbx_set_params(p_data, p_hwfn, p_ptt, app_tlv, enable,
 				    prio, tc, type, personality);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool
-qed_dcbx_get_app_protocol_type(struct qed_hwfn *p_hwfn,
-			       u32 app_prio_bitmap,
-			       u16 id, enum dcbx_protocol_type *type, bool ieee)
-{
-	if (qed_dcbx_fcoe_tlv(app_prio_bitmap, id, ieee)) {
+अटल bool
+qed_dcbx_get_app_protocol_type(काष्ठा qed_hwfn *p_hwfn,
+			       u32 app_prio_biपंचांगap,
+			       u16 id, क्रमागत dcbx_protocol_type *type, bool ieee)
+अणु
+	अगर (qed_dcbx_fcoe_tlv(app_prio_biपंचांगap, id, ieee)) अणु
 		*type = DCBX_PROTOCOL_FCOE;
-	} else if (qed_dcbx_roce_tlv(app_prio_bitmap, id, ieee)) {
+	पूर्ण अन्यथा अगर (qed_dcbx_roce_tlv(app_prio_biपंचांगap, id, ieee)) अणु
 		*type = DCBX_PROTOCOL_ROCE;
-	} else if (qed_dcbx_iscsi_tlv(app_prio_bitmap, id, ieee)) {
+	पूर्ण अन्यथा अगर (qed_dcbx_iscsi_tlv(app_prio_biपंचांगap, id, ieee)) अणु
 		*type = DCBX_PROTOCOL_ISCSI;
-	} else if (qed_dcbx_default_tlv(app_prio_bitmap, id, ieee)) {
+	पूर्ण अन्यथा अगर (qed_dcbx_शेष_tlv(app_prio_biपंचांगap, id, ieee)) अणु
 		*type = DCBX_PROTOCOL_ETH;
-	} else if (qed_dcbx_roce_v2_tlv(app_prio_bitmap, id, ieee)) {
+	पूर्ण अन्यथा अगर (qed_dcbx_roce_v2_tlv(app_prio_biपंचांगap, id, ieee)) अणु
 		*type = DCBX_PROTOCOL_ROCE_V2;
-	} else {
+	पूर्ण अन्यथा अणु
 		*type = DCBX_MAX_PROTOCOL_TYPE;
 		DP_VERBOSE(p_hwfn, QED_MSG_DCB,
 			   "No action required, App TLV entry = 0x%x\n",
-			   app_prio_bitmap);
-		return false;
-	}
+			   app_prio_biपंचांगap);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Parse app TLV's to update TC information in hw_info structure for
- * reconfiguring QM. Get protocol specific data for PF update ramrod command.
+/* Parse app TLV's to update TC inक्रमmation in hw_info काष्ठाure क्रम
+ * reconfiguring QM. Get protocol specअगरic data क्रम PF update ramrod command.
  */
-static int
-qed_dcbx_process_tlv(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-		     struct qed_dcbx_results *p_data,
-		     struct dcbx_app_priority_entry *p_tbl,
-		     u32 pri_tc_tbl, int count, u8 dcbx_version)
-{
-	enum dcbx_protocol_type type;
+अटल पूर्णांक
+qed_dcbx_process_tlv(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
+		     काष्ठा qed_dcbx_results *p_data,
+		     काष्ठा dcbx_app_priority_entry *p_tbl,
+		     u32 pri_tc_tbl, पूर्णांक count, u8 dcbx_version)
+अणु
+	क्रमागत dcbx_protocol_type type;
 	bool enable, ieee, eth_tlv;
 	u8 tc, priority_map;
 	u16 protocol_id;
-	int priority;
-	int i;
+	पूर्णांक priority;
+	पूर्णांक i;
 
 	DP_VERBOSE(p_hwfn, QED_MSG_DCB, "Num APP entries = %d\n", count);
 
 	ieee = (dcbx_version == DCBX_CONFIG_VERSION_IEEE);
 	eth_tlv = false;
 	/* Parse APP TLV */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		protocol_id = QED_MFW_GET_FIELD(p_tbl[i].entry,
 						DCBX_APP_PROTOCOL_ID);
 		priority_map = QED_MFW_GET_FIELD(p_tbl[i].entry,
 						 DCBX_APP_PRI_MAP);
 		priority = ffs(priority_map) - 1;
-		if (priority < 0) {
+		अगर (priority < 0) अणु
 			DP_ERR(p_hwfn, "Invalid priority\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		tc = QED_DCBX_PRIO2TC(pri_tc_tbl, priority);
-		if (qed_dcbx_get_app_protocol_type(p_hwfn, p_tbl[i].entry,
-						   protocol_id, &type, ieee)) {
-			/* ETH always have the enable bit reset, as it gets
-			 * vlan information per packet. For other protocols,
+		अगर (qed_dcbx_get_app_protocol_type(p_hwfn, p_tbl[i].entry,
+						   protocol_id, &type, ieee)) अणु
+			/* ETH always have the enable bit reset, as it माला_लो
+			 * vlan inक्रमmation per packet. For other protocols,
 			 * should be set according to the dcbx_enabled
-			 * indication, but we only got here if there was an
-			 * app tlv for the protocol, so dcbx must be enabled.
+			 * indication, but we only got here अगर there was an
+			 * app tlv क्रम the protocol, so dcbx must be enabled.
 			 */
-			if (type == DCBX_PROTOCOL_ETH) {
+			अगर (type == DCBX_PROTOCOL_ETH) अणु
 				enable = false;
 				eth_tlv = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				enable = true;
-			}
+			पूर्ण
 
 			qed_dcbx_update_app_info(p_data, p_hwfn, p_ptt, true,
 						 enable, priority, tc, type);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* If Eth TLV is not detected, use UFP TC as default TC */
-	if (test_bit(QED_MF_UFP_SPECIFIC, &p_hwfn->cdev->mf_bits) && !eth_tlv)
+	/* If Eth TLV is not detected, use UFP TC as शेष TC */
+	अगर (test_bit(QED_MF_UFP_SPECIFIC, &p_hwfn->cdev->mf_bits) && !eth_tlv)
 		p_data->arr[DCBX_PROTOCOL_ETH].tc = p_hwfn->ufp_info.tc;
 
 	/* Update ramrod protocol data and hw_info fields
-	 * with default info when corresponding APP TLV's are not detected.
-	 * The enabled field has a different logic for ethernet as only for
-	 * ethernet dcb should disabled by default, as the information arrives
+	 * with शेष info when corresponding APP TLV's are not detected.
+	 * The enabled field has a dअगरferent logic क्रम ethernet as only क्रम
+	 * ethernet dcb should disabled by शेष, as the inक्रमmation arrives
 	 * from the OS (unless an explicit app tlv was present).
 	 */
 	tc = p_data->arr[DCBX_PROTOCOL_ETH].tc;
 	priority = p_data->arr[DCBX_PROTOCOL_ETH].priority;
-	for (type = 0; type < DCBX_MAX_PROTOCOL_TYPE; type++) {
-		if (p_data->arr[type].update)
-			continue;
+	क्रम (type = 0; type < DCBX_MAX_PROTOCOL_TYPE; type++) अणु
+		अगर (p_data->arr[type].update)
+			जारी;
 
 		enable = (type == DCBX_PROTOCOL_ETH) ? false : !!dcbx_version;
 		qed_dcbx_update_app_info(p_data, p_hwfn, p_ptt, false, enable,
 					 priority, tc, type);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Parse app TLV's to update TC information in hw_info structure for
- * reconfiguring QM. Get protocol specific data for PF update ramrod command.
+/* Parse app TLV's to update TC inक्रमmation in hw_info काष्ठाure क्रम
+ * reconfiguring QM. Get protocol specअगरic data क्रम PF update ramrod command.
  */
-static int
-qed_dcbx_process_mib_info(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct dcbx_app_priority_feature *p_app;
-	struct dcbx_app_priority_entry *p_tbl;
-	struct qed_dcbx_results data = { 0 };
-	struct dcbx_ets_feature *p_ets;
-	struct qed_hw_info *p_info;
+अटल पूर्णांक
+qed_dcbx_process_mib_info(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा dcbx_app_priority_feature *p_app;
+	काष्ठा dcbx_app_priority_entry *p_tbl;
+	काष्ठा qed_dcbx_results data = अणु 0 पूर्ण;
+	काष्ठा dcbx_ets_feature *p_ets;
+	काष्ठा qed_hw_info *p_info;
 	u32 pri_tc_tbl, flags;
 	u8 dcbx_version;
-	int num_entries;
-	int rc = 0;
+	पूर्णांक num_entries;
+	पूर्णांक rc = 0;
 
 	flags = p_hwfn->p_dcbx_info->operational.flags;
 	dcbx_version = QED_MFW_GET_FIELD(flags, DCBX_CONFIG_VERSION);
@@ -350,8 +351,8 @@ qed_dcbx_process_mib_info(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 
 	rc = qed_dcbx_process_tlv(p_hwfn, p_ptt, &data, p_tbl, pri_tc_tbl,
 				  num_entries, dcbx_version);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	p_info->num_active_tc = QED_MFW_GET_FIELD(p_ets->flags,
 						  DCBX_ETS_MAX_TCS);
@@ -361,61 +362,61 @@ qed_dcbx_process_mib_info(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 
 	qed_dcbx_dp_protocol(p_hwfn, &data);
 
-	memcpy(&p_hwfn->p_dcbx_info->results, &data,
-	       sizeof(struct qed_dcbx_results));
+	स_नकल(&p_hwfn->p_dcbx_info->results, &data,
+	       माप(काष्ठा qed_dcbx_results));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qed_dcbx_copy_mib(struct qed_hwfn *p_hwfn,
-		  struct qed_ptt *p_ptt,
-		  struct qed_dcbx_mib_meta_data *p_data,
-		  enum qed_mib_read_type type)
-{
+अटल पूर्णांक
+qed_dcbx_copy_mib(काष्ठा qed_hwfn *p_hwfn,
+		  काष्ठा qed_ptt *p_ptt,
+		  काष्ठा qed_dcbx_mib_meta_data *p_data,
+		  क्रमागत qed_mib_पढ़ो_type type)
+अणु
 	u32 prefix_seq_num, suffix_seq_num;
-	int read_count = 0;
-	int rc = 0;
+	पूर्णांक पढ़ो_count = 0;
+	पूर्णांक rc = 0;
 
-	/* The data is considered to be valid only if both sequence numbers are
+	/* The data is considered to be valid only अगर both sequence numbers are
 	 * the same.
 	 */
-	do {
-		if (type == QED_DCBX_REMOTE_LLDP_MIB) {
-			qed_memcpy_from(p_hwfn, p_ptt, p_data->lldp_remote,
+	करो अणु
+		अगर (type == QED_DCBX_REMOTE_LLDP_MIB) अणु
+			qed_स_नकल_from(p_hwfn, p_ptt, p_data->lldp_remote,
 					p_data->addr, p_data->size);
 			prefix_seq_num = p_data->lldp_remote->prefix_seq_num;
 			suffix_seq_num = p_data->lldp_remote->suffix_seq_num;
-		} else {
-			qed_memcpy_from(p_hwfn, p_ptt, p_data->mib,
+		पूर्ण अन्यथा अणु
+			qed_स_नकल_from(p_hwfn, p_ptt, p_data->mib,
 					p_data->addr, p_data->size);
 			prefix_seq_num = p_data->mib->prefix_seq_num;
 			suffix_seq_num = p_data->mib->suffix_seq_num;
-		}
-		read_count++;
+		पूर्ण
+		पढ़ो_count++;
 
 		DP_VERBOSE(p_hwfn,
 			   QED_MSG_DCB,
 			   "mib type = %d, try count = %d prefix seq num  = %d suffix seq num = %d\n",
-			   type, read_count, prefix_seq_num, suffix_seq_num);
-	} while ((prefix_seq_num != suffix_seq_num) &&
-		 (read_count < QED_DCBX_MAX_MIB_READ_TRY));
+			   type, पढ़ो_count, prefix_seq_num, suffix_seq_num);
+	पूर्ण जबतक ((prefix_seq_num != suffix_seq_num) &&
+		 (पढ़ो_count < QED_DCBX_MAX_MIB_READ_TRY));
 
-	if (read_count >= QED_DCBX_MAX_MIB_READ_TRY) {
+	अगर (पढ़ो_count >= QED_DCBX_MAX_MIB_READ_TRY) अणु
 		DP_ERR(p_hwfn,
 		       "MIB read err, mib type = %d, try count = %d prefix seq num = %d suffix seq num = %d\n",
-		       type, read_count, prefix_seq_num, suffix_seq_num);
+		       type, पढ़ो_count, prefix_seq_num, suffix_seq_num);
 		rc = -EIO;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-qed_dcbx_get_priority_info(struct qed_hwfn *p_hwfn,
-			   struct qed_dcbx_app_prio *p_prio,
-			   struct qed_dcbx_results *p_results)
-{
+अटल व्योम
+qed_dcbx_get_priority_info(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा qed_dcbx_app_prio *p_prio,
+			   काष्ठा qed_dcbx_results *p_results)
+अणु
 	u8 val;
 
 	p_prio->roce = QED_DCBX_INVALID_PRIORITY;
@@ -423,25 +424,25 @@ qed_dcbx_get_priority_info(struct qed_hwfn *p_hwfn,
 	p_prio->iscsi = QED_DCBX_INVALID_PRIORITY;
 	p_prio->fcoe = QED_DCBX_INVALID_PRIORITY;
 
-	if (p_results->arr[DCBX_PROTOCOL_ROCE].update &&
+	अगर (p_results->arr[DCBX_PROTOCOL_ROCE].update &&
 	    p_results->arr[DCBX_PROTOCOL_ROCE].enable)
 		p_prio->roce = p_results->arr[DCBX_PROTOCOL_ROCE].priority;
 
-	if (p_results->arr[DCBX_PROTOCOL_ROCE_V2].update &&
-	    p_results->arr[DCBX_PROTOCOL_ROCE_V2].enable) {
+	अगर (p_results->arr[DCBX_PROTOCOL_ROCE_V2].update &&
+	    p_results->arr[DCBX_PROTOCOL_ROCE_V2].enable) अणु
 		val = p_results->arr[DCBX_PROTOCOL_ROCE_V2].priority;
 		p_prio->roce_v2 = val;
-	}
+	पूर्ण
 
-	if (p_results->arr[DCBX_PROTOCOL_ISCSI].update &&
+	अगर (p_results->arr[DCBX_PROTOCOL_ISCSI].update &&
 	    p_results->arr[DCBX_PROTOCOL_ISCSI].enable)
 		p_prio->iscsi = p_results->arr[DCBX_PROTOCOL_ISCSI].priority;
 
-	if (p_results->arr[DCBX_PROTOCOL_FCOE].update &&
+	अगर (p_results->arr[DCBX_PROTOCOL_FCOE].update &&
 	    p_results->arr[DCBX_PROTOCOL_FCOE].enable)
 		p_prio->fcoe = p_results->arr[DCBX_PROTOCOL_FCOE].priority;
 
-	if (p_results->arr[DCBX_PROTOCOL_ETH].update &&
+	अगर (p_results->arr[DCBX_PROTOCOL_ETH].update &&
 	    p_results->arr[DCBX_PROTOCOL_ETH].enable)
 		p_prio->eth = p_results->arr[DCBX_PROTOCOL_ETH].priority;
 
@@ -449,17 +450,17 @@ qed_dcbx_get_priority_info(struct qed_hwfn *p_hwfn,
 		   "Priorities: iscsi %d, roce %d, roce v2 %d, fcoe %d, eth %d\n",
 		   p_prio->iscsi, p_prio->roce, p_prio->roce_v2, p_prio->fcoe,
 		   p_prio->eth);
-}
+पूर्ण
 
-static void
-qed_dcbx_get_app_data(struct qed_hwfn *p_hwfn,
-		      struct dcbx_app_priority_feature *p_app,
-		      struct dcbx_app_priority_entry *p_tbl,
-		      struct qed_dcbx_params *p_params, bool ieee)
-{
-	struct qed_app_entry *entry;
+अटल व्योम
+qed_dcbx_get_app_data(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा dcbx_app_priority_feature *p_app,
+		      काष्ठा dcbx_app_priority_entry *p_tbl,
+		      काष्ठा qed_dcbx_params *p_params, bool ieee)
+अणु
+	काष्ठा qed_app_entry *entry;
 	u8 pri_map;
-	int i;
+	पूर्णांक i;
 
 	p_params->app_willing = QED_MFW_GET_FIELD(p_app->flags,
 						  DCBX_APP_WILLING);
@@ -467,40 +468,40 @@ qed_dcbx_get_app_data(struct qed_hwfn *p_hwfn,
 	p_params->app_error = QED_MFW_GET_FIELD(p_app->flags, DCBX_APP_ERROR);
 	p_params->num_app_entries = QED_MFW_GET_FIELD(p_app->flags,
 						      DCBX_APP_NUM_ENTRIES);
-	for (i = 0; i < DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &p_params->app_entry[i];
-		if (ieee) {
+		अगर (ieee) अणु
 			u8 sf_ieee;
 			u32 val;
 
 			sf_ieee = QED_MFW_GET_FIELD(p_tbl[i].entry,
 						    DCBX_APP_SF_IEEE);
-			switch (sf_ieee) {
-			case DCBX_APP_SF_IEEE_RESERVED:
+			चयन (sf_ieee) अणु
+			हाल DCBX_APP_SF_IEEE_RESERVED:
 				/* Old MFW */
 				val = QED_MFW_GET_FIELD(p_tbl[i].entry,
 							DCBX_APP_SF);
 				entry->sf_ieee = val ?
 				    QED_DCBX_SF_IEEE_TCP_UDP_PORT :
 				    QED_DCBX_SF_IEEE_ETHTYPE;
-				break;
-			case DCBX_APP_SF_IEEE_ETHTYPE:
+				अवरोध;
+			हाल DCBX_APP_SF_IEEE_ETHTYPE:
 				entry->sf_ieee = QED_DCBX_SF_IEEE_ETHTYPE;
-				break;
-			case DCBX_APP_SF_IEEE_TCP_PORT:
+				अवरोध;
+			हाल DCBX_APP_SF_IEEE_TCP_PORT:
 				entry->sf_ieee = QED_DCBX_SF_IEEE_TCP_PORT;
-				break;
-			case DCBX_APP_SF_IEEE_UDP_PORT:
+				अवरोध;
+			हाल DCBX_APP_SF_IEEE_UDP_PORT:
 				entry->sf_ieee = QED_DCBX_SF_IEEE_UDP_PORT;
-				break;
-			case DCBX_APP_SF_IEEE_TCP_UDP_PORT:
+				अवरोध;
+			हाल DCBX_APP_SF_IEEE_TCP_UDP_PORT:
 				entry->sf_ieee = QED_DCBX_SF_IEEE_TCP_UDP_PORT;
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			entry->ethtype = !(QED_MFW_GET_FIELD(p_tbl[i].entry,
 							     DCBX_APP_SF));
-		}
+		पूर्ण
 
 		pri_map = QED_MFW_GET_FIELD(p_tbl[i].entry, DCBX_APP_PRI_MAP);
 		entry->prio = ffs(pri_map) - 1;
@@ -509,18 +510,18 @@ qed_dcbx_get_app_data(struct qed_hwfn *p_hwfn,
 		qed_dcbx_get_app_protocol_type(p_hwfn, p_tbl[i].entry,
 					       entry->proto_id,
 					       &entry->proto_type, ieee);
-	}
+	पूर्ण
 
 	DP_VERBOSE(p_hwfn, QED_MSG_DCB,
 		   "APP params: willing %d, valid %d error = %d\n",
 		   p_params->app_willing, p_params->app_valid,
 		   p_params->app_error);
-}
+पूर्ण
 
-static void
-qed_dcbx_get_pfc_data(struct qed_hwfn *p_hwfn,
-		      u32 pfc, struct qed_dcbx_params *p_params)
-{
+अटल व्योम
+qed_dcbx_get_pfc_data(काष्ठा qed_hwfn *p_hwfn,
+		      u32 pfc, काष्ठा qed_dcbx_params *p_params)
+अणु
 	u8 pfc_map;
 
 	p_params->pfc.willing = QED_MFW_GET_FIELD(pfc, DCBX_PFC_WILLING);
@@ -540,16 +541,16 @@ qed_dcbx_get_pfc_data(struct qed_hwfn *p_hwfn,
 		   "PFC params: willing %d, pfc_bitmap %u max_tc = %u enabled = %d\n",
 		   p_params->pfc.willing, pfc_map, p_params->pfc.max_tc,
 		   p_params->pfc.enabled);
-}
+पूर्ण
 
-static void
-qed_dcbx_get_ets_data(struct qed_hwfn *p_hwfn,
-		      struct dcbx_ets_feature *p_ets,
-		      struct qed_dcbx_params *p_params)
-{
+अटल व्योम
+qed_dcbx_get_ets_data(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा dcbx_ets_feature *p_ets,
+		      काष्ठा qed_dcbx_params *p_params)
+अणु
 	__be32 bw_map[2], tsa_map[2];
 	u32 pri_map;
-	int i;
+	पूर्णांक i;
 
 	p_params->ets_willing = QED_MFW_GET_FIELD(p_ets->flags,
 						  DCBX_ETS_WILLING);
@@ -564,12 +565,12 @@ qed_dcbx_get_ets_data(struct qed_hwfn *p_hwfn,
 		   p_params->ets_cbs, p_ets->pri_tc_tbl[0],
 		   p_params->max_ets_tc);
 
-	if (p_params->ets_enabled && !p_params->max_ets_tc) {
+	अगर (p_params->ets_enabled && !p_params->max_ets_tc) अणु
 		p_params->max_ets_tc = QED_MAX_PFC_PRIORITIES;
 		DP_VERBOSE(p_hwfn, QED_MSG_DCB,
 			   "ETS params: max_ets_tc is forced to %d\n",
 		p_params->max_ets_tc);
-	}
+	पूर्ण
 
 	/* 8 bit tsa and bw data corresponding to each of the 8 TC's are
 	 * encoded in a type u32 array of size 2.
@@ -578,7 +579,7 @@ qed_dcbx_get_ets_data(struct qed_hwfn *p_hwfn,
 	cpu_to_be32_array(tsa_map, p_ets->tc_tsa_tbl, 2);
 	pri_map = p_ets->pri_tc_tbl[0];
 
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) {
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) अणु
 		p_params->ets_tc_bw_tbl[i] = ((u8 *)bw_map)[i];
 		p_params->ets_tc_tsa_tbl[i] = ((u8 *)tsa_map)[i];
 		p_params->ets_pri_tc_tbl[i] = QED_DCBX_PRIO2TC(pri_map, i);
@@ -586,52 +587,52 @@ qed_dcbx_get_ets_data(struct qed_hwfn *p_hwfn,
 			   "elem %d  bw_tbl %x tsa_tbl %x\n",
 			   i, p_params->ets_tc_bw_tbl[i],
 			   p_params->ets_tc_tsa_tbl[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-qed_dcbx_get_common_params(struct qed_hwfn *p_hwfn,
-			   struct dcbx_app_priority_feature *p_app,
-			   struct dcbx_app_priority_entry *p_tbl,
-			   struct dcbx_ets_feature *p_ets,
-			   u32 pfc, struct qed_dcbx_params *p_params, bool ieee)
-{
+अटल व्योम
+qed_dcbx_get_common_params(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा dcbx_app_priority_feature *p_app,
+			   काष्ठा dcbx_app_priority_entry *p_tbl,
+			   काष्ठा dcbx_ets_feature *p_ets,
+			   u32 pfc, काष्ठा qed_dcbx_params *p_params, bool ieee)
+अणु
 	qed_dcbx_get_app_data(p_hwfn, p_app, p_tbl, p_params, ieee);
 	qed_dcbx_get_ets_data(p_hwfn, p_ets, p_params);
 	qed_dcbx_get_pfc_data(p_hwfn, pfc, p_params);
-}
+पूर्ण
 
-static void
-qed_dcbx_get_local_params(struct qed_hwfn *p_hwfn, struct qed_dcbx_get *params)
-{
-	struct dcbx_features *p_feat;
+अटल व्योम
+qed_dcbx_get_local_params(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_dcbx_get *params)
+अणु
+	काष्ठा dcbx_features *p_feat;
 
 	p_feat = &p_hwfn->p_dcbx_info->local_admin.features;
 	qed_dcbx_get_common_params(p_hwfn, &p_feat->app,
 				   p_feat->app.app_pri_tbl, &p_feat->ets,
 				   p_feat->pfc, &params->local.params, false);
 	params->local.valid = true;
-}
+पूर्ण
 
-static void
-qed_dcbx_get_remote_params(struct qed_hwfn *p_hwfn, struct qed_dcbx_get *params)
-{
-	struct dcbx_features *p_feat;
+अटल व्योम
+qed_dcbx_get_remote_params(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_dcbx_get *params)
+अणु
+	काष्ठा dcbx_features *p_feat;
 
 	p_feat = &p_hwfn->p_dcbx_info->remote.features;
 	qed_dcbx_get_common_params(p_hwfn, &p_feat->app,
 				   p_feat->app.app_pri_tbl, &p_feat->ets,
 				   p_feat->pfc, &params->remote.params, false);
 	params->remote.valid = true;
-}
+पूर्ण
 
-static void
-qed_dcbx_get_operational_params(struct qed_hwfn *p_hwfn,
-				struct qed_dcbx_get *params)
-{
-	struct qed_dcbx_operational_params *p_operational;
-	struct qed_dcbx_results *p_results;
-	struct dcbx_features *p_feat;
+अटल व्योम
+qed_dcbx_get_operational_params(काष्ठा qed_hwfn *p_hwfn,
+				काष्ठा qed_dcbx_get *params)
+अणु
+	काष्ठा qed_dcbx_operational_params *p_operational;
+	काष्ठा qed_dcbx_results *p_results;
+	काष्ठा dcbx_features *p_feat;
 	bool enabled, err;
 	u32 flags;
 	bool val;
@@ -639,17 +640,17 @@ qed_dcbx_get_operational_params(struct qed_hwfn *p_hwfn,
 	flags = p_hwfn->p_dcbx_info->operational.flags;
 
 	/* If DCBx version is non zero, then negotiation
-	 * was successfuly performed
+	 * was successfuly perक्रमmed
 	 */
 	p_operational = &params->operational;
 	enabled = !!(QED_MFW_GET_FIELD(flags, DCBX_CONFIG_VERSION) !=
 		     DCBX_CONFIG_VERSION_DISABLED);
-	if (!enabled) {
+	अगर (!enabled) अणु
 		p_operational->enabled = enabled;
 		p_operational->valid = false;
 		DP_VERBOSE(p_hwfn, QED_MSG_DCB, "Dcbx is disabled\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	p_feat = &p_hwfn->p_dcbx_info->operational.features;
 	p_results = &p_hwfn->p_dcbx_info->results;
@@ -679,203 +680,203 @@ qed_dcbx_get_operational_params(struct qed_hwfn *p_hwfn,
 	p_operational->err = err;
 	p_operational->enabled = enabled;
 	p_operational->valid = true;
-}
+पूर्ण
 
-static void
-qed_dcbx_get_local_lldp_params(struct qed_hwfn *p_hwfn,
-			       struct qed_dcbx_get *params)
-{
-	struct lldp_config_params_s *p_local;
+अटल व्योम
+qed_dcbx_get_local_lldp_params(काष्ठा qed_hwfn *p_hwfn,
+			       काष्ठा qed_dcbx_get *params)
+अणु
+	काष्ठा lldp_config_params_s *p_local;
 
 	p_local = &p_hwfn->p_dcbx_info->lldp_local[LLDP_NEAREST_BRIDGE];
 
-	memcpy(params->lldp_local.local_chassis_id, p_local->local_chassis_id,
-	       sizeof(p_local->local_chassis_id));
-	memcpy(params->lldp_local.local_port_id, p_local->local_port_id,
-	       sizeof(p_local->local_port_id));
-}
+	स_नकल(params->lldp_local.local_chassis_id, p_local->local_chassis_id,
+	       माप(p_local->local_chassis_id));
+	स_नकल(params->lldp_local.local_port_id, p_local->local_port_id,
+	       माप(p_local->local_port_id));
+पूर्ण
 
-static void
-qed_dcbx_get_remote_lldp_params(struct qed_hwfn *p_hwfn,
-				struct qed_dcbx_get *params)
-{
-	struct lldp_status_params_s *p_remote;
+अटल व्योम
+qed_dcbx_get_remote_lldp_params(काष्ठा qed_hwfn *p_hwfn,
+				काष्ठा qed_dcbx_get *params)
+अणु
+	काष्ठा lldp_status_params_s *p_remote;
 
 	p_remote = &p_hwfn->p_dcbx_info->lldp_remote[LLDP_NEAREST_BRIDGE];
 
-	memcpy(params->lldp_remote.peer_chassis_id, p_remote->peer_chassis_id,
-	       sizeof(p_remote->peer_chassis_id));
-	memcpy(params->lldp_remote.peer_port_id, p_remote->peer_port_id,
-	       sizeof(p_remote->peer_port_id));
-}
+	स_नकल(params->lldp_remote.peer_chassis_id, p_remote->peer_chassis_id,
+	       माप(p_remote->peer_chassis_id));
+	स_नकल(params->lldp_remote.peer_port_id, p_remote->peer_port_id,
+	       माप(p_remote->peer_port_id));
+पूर्ण
 
-static int
-qed_dcbx_get_params(struct qed_hwfn *p_hwfn, struct qed_dcbx_get *p_params,
-		    enum qed_mib_read_type type)
-{
-	switch (type) {
-	case QED_DCBX_REMOTE_MIB:
+अटल पूर्णांक
+qed_dcbx_get_params(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_dcbx_get *p_params,
+		    क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	चयन (type) अणु
+	हाल QED_DCBX_REMOTE_MIB:
 		qed_dcbx_get_remote_params(p_hwfn, p_params);
-		break;
-	case QED_DCBX_LOCAL_MIB:
+		अवरोध;
+	हाल QED_DCBX_LOCAL_MIB:
 		qed_dcbx_get_local_params(p_hwfn, p_params);
-		break;
-	case QED_DCBX_OPERATIONAL_MIB:
+		अवरोध;
+	हाल QED_DCBX_OPERATIONAL_MIB:
 		qed_dcbx_get_operational_params(p_hwfn, p_params);
-		break;
-	case QED_DCBX_REMOTE_LLDP_MIB:
+		अवरोध;
+	हाल QED_DCBX_REMOTE_LLDP_MIB:
 		qed_dcbx_get_remote_lldp_params(p_hwfn, p_params);
-		break;
-	case QED_DCBX_LOCAL_LLDP_MIB:
+		अवरोध;
+	हाल QED_DCBX_LOCAL_LLDP_MIB:
 		qed_dcbx_get_local_lldp_params(p_hwfn, p_params);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_ERR(p_hwfn, "MIB read err, unknown mib type %d\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-qed_dcbx_read_local_lldp_mib(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_dcbx_mib_meta_data data;
-	int rc = 0;
+अटल पूर्णांक
+qed_dcbx_पढ़ो_local_lldp_mib(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_dcbx_mib_meta_data data;
+	पूर्णांक rc = 0;
 
-	memset(&data, 0, sizeof(data));
-	data.addr = p_hwfn->mcp_info->port_addr + offsetof(struct public_port,
+	स_रखो(&data, 0, माप(data));
+	data.addr = p_hwfn->mcp_info->port_addr + दुरत्व(काष्ठा खुला_port,
 							   lldp_config_params);
 	data.lldp_local = p_hwfn->p_dcbx_info->lldp_local;
-	data.size = sizeof(struct lldp_config_params_s);
-	qed_memcpy_from(p_hwfn, p_ptt, data.lldp_local, data.addr, data.size);
+	data.size = माप(काष्ठा lldp_config_params_s);
+	qed_स_नकल_from(p_hwfn, p_ptt, data.lldp_local, data.addr, data.size);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-qed_dcbx_read_remote_lldp_mib(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
-			      enum qed_mib_read_type type)
-{
-	struct qed_dcbx_mib_meta_data data;
-	int rc = 0;
+अटल पूर्णांक
+qed_dcbx_पढ़ो_remote_lldp_mib(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
+			      क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	काष्ठा qed_dcbx_mib_meta_data data;
+	पूर्णांक rc = 0;
 
-	memset(&data, 0, sizeof(data));
-	data.addr = p_hwfn->mcp_info->port_addr + offsetof(struct public_port,
+	स_रखो(&data, 0, माप(data));
+	data.addr = p_hwfn->mcp_info->port_addr + दुरत्व(काष्ठा खुला_port,
 							   lldp_status_params);
 	data.lldp_remote = p_hwfn->p_dcbx_info->lldp_remote;
-	data.size = sizeof(struct lldp_status_params_s);
+	data.size = माप(काष्ठा lldp_status_params_s);
 	rc = qed_dcbx_copy_mib(p_hwfn, p_ptt, &data, type);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-qed_dcbx_read_operational_mib(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
-			      enum qed_mib_read_type type)
-{
-	struct qed_dcbx_mib_meta_data data;
-	int rc = 0;
+अटल पूर्णांक
+qed_dcbx_पढ़ो_operational_mib(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
+			      क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	काष्ठा qed_dcbx_mib_meta_data data;
+	पूर्णांक rc = 0;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.addr = p_hwfn->mcp_info->port_addr +
-		    offsetof(struct public_port, operational_dcbx_mib);
+		    दुरत्व(काष्ठा खुला_port, operational_dcbx_mib);
 	data.mib = &p_hwfn->p_dcbx_info->operational;
-	data.size = sizeof(struct dcbx_mib);
+	data.size = माप(काष्ठा dcbx_mib);
 	rc = qed_dcbx_copy_mib(p_hwfn, p_ptt, &data, type);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-qed_dcbx_read_remote_mib(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt, enum qed_mib_read_type type)
-{
-	struct qed_dcbx_mib_meta_data data;
-	int rc = 0;
+अटल पूर्णांक
+qed_dcbx_पढ़ो_remote_mib(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt, क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	काष्ठा qed_dcbx_mib_meta_data data;
+	पूर्णांक rc = 0;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.addr = p_hwfn->mcp_info->port_addr +
-		    offsetof(struct public_port, remote_dcbx_mib);
+		    दुरत्व(काष्ठा खुला_port, remote_dcbx_mib);
 	data.mib = &p_hwfn->p_dcbx_info->remote;
-	data.size = sizeof(struct dcbx_mib);
+	data.size = माप(काष्ठा dcbx_mib);
 	rc = qed_dcbx_copy_mib(p_hwfn, p_ptt, &data, type);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-qed_dcbx_read_local_mib(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_dcbx_mib_meta_data data;
-	int rc = 0;
+अटल पूर्णांक
+qed_dcbx_पढ़ो_local_mib(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_dcbx_mib_meta_data data;
+	पूर्णांक rc = 0;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.addr = p_hwfn->mcp_info->port_addr +
-		    offsetof(struct public_port, local_admin_dcbx_mib);
+		    दुरत्व(काष्ठा खुला_port, local_admin_dcbx_mib);
 	data.local_admin = &p_hwfn->p_dcbx_info->local_admin;
-	data.size = sizeof(struct dcbx_local_params);
-	qed_memcpy_from(p_hwfn, p_ptt, data.local_admin, data.addr, data.size);
+	data.size = माप(काष्ठा dcbx_local_params);
+	qed_स_नकल_from(p_hwfn, p_ptt, data.local_admin, data.addr, data.size);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_dcbx_read_mib(struct qed_hwfn *p_hwfn,
-			     struct qed_ptt *p_ptt, enum qed_mib_read_type type)
-{
-	int rc = -EINVAL;
+अटल पूर्णांक qed_dcbx_पढ़ो_mib(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा qed_ptt *p_ptt, क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	पूर्णांक rc = -EINVAL;
 
-	switch (type) {
-	case QED_DCBX_OPERATIONAL_MIB:
-		rc = qed_dcbx_read_operational_mib(p_hwfn, p_ptt, type);
-		break;
-	case QED_DCBX_REMOTE_MIB:
-		rc = qed_dcbx_read_remote_mib(p_hwfn, p_ptt, type);
-		break;
-	case QED_DCBX_LOCAL_MIB:
-		rc = qed_dcbx_read_local_mib(p_hwfn, p_ptt);
-		break;
-	case QED_DCBX_REMOTE_LLDP_MIB:
-		rc = qed_dcbx_read_remote_lldp_mib(p_hwfn, p_ptt, type);
-		break;
-	case QED_DCBX_LOCAL_LLDP_MIB:
-		rc = qed_dcbx_read_local_lldp_mib(p_hwfn, p_ptt);
-		break;
-	default:
+	चयन (type) अणु
+	हाल QED_DCBX_OPERATIONAL_MIB:
+		rc = qed_dcbx_पढ़ो_operational_mib(p_hwfn, p_ptt, type);
+		अवरोध;
+	हाल QED_DCBX_REMOTE_MIB:
+		rc = qed_dcbx_पढ़ो_remote_mib(p_hwfn, p_ptt, type);
+		अवरोध;
+	हाल QED_DCBX_LOCAL_MIB:
+		rc = qed_dcbx_पढ़ो_local_mib(p_hwfn, p_ptt);
+		अवरोध;
+	हाल QED_DCBX_REMOTE_LLDP_MIB:
+		rc = qed_dcbx_पढ़ो_remote_lldp_mib(p_hwfn, p_ptt, type);
+		अवरोध;
+	हाल QED_DCBX_LOCAL_LLDP_MIB:
+		rc = qed_dcbx_पढ़ो_local_lldp_mib(p_hwfn, p_ptt);
+		अवरोध;
+	शेष:
 		DP_ERR(p_hwfn, "MIB read err, unknown mib type %d\n", type);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void qed_dcbx_aen(struct qed_hwfn *hwfn, u32 mib_type)
-{
-	struct qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
-	void *cookie = hwfn->cdev->ops_cookie;
+अटल व्योम qed_dcbx_aen(काष्ठा qed_hwfn *hwfn, u32 mib_type)
+अणु
+	काष्ठा qed_common_cb_ops *op = hwfn->cdev->protocol_ops.common;
+	व्योम *cookie = hwfn->cdev->ops_cookie;
 
-	if (cookie && op->dcbx_aen)
+	अगर (cookie && op->dcbx_aen)
 		op->dcbx_aen(cookie, &hwfn->p_dcbx_info->get, mib_type);
-}
+पूर्ण
 
 /* Read updated MIB.
- * Reconfigure QM and invoke PF update ramrod command if operational MIB
+ * Reconfigure QM and invoke PF update ramrod command अगर operational MIB
  * change is detected.
  */
-int
-qed_dcbx_mib_update_event(struct qed_hwfn *p_hwfn,
-			  struct qed_ptt *p_ptt, enum qed_mib_read_type type)
-{
-	int rc = 0;
+पूर्णांक
+qed_dcbx_mib_update_event(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा qed_ptt *p_ptt, क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	पूर्णांक rc = 0;
 
-	rc = qed_dcbx_read_mib(p_hwfn, p_ptt, type);
-	if (rc)
-		return rc;
+	rc = qed_dcbx_पढ़ो_mib(p_hwfn, p_ptt, type);
+	अगर (rc)
+		वापस rc;
 
-	if (type == QED_DCBX_OPERATIONAL_MIB) {
+	अगर (type == QED_DCBX_OPERATIONAL_MIB) अणु
 		rc = qed_dcbx_process_mib_info(p_hwfn, p_ptt);
-		if (!rc) {
+		अगर (!rc) अणु
 			/* reconfigure tcs of QM queues according
 			 * to negotiation results
 			 */
@@ -884,19 +885,19 @@ qed_dcbx_mib_update_event(struct qed_hwfn *p_hwfn,
 			/* update storm FW with negotiation results */
 			qed_sp_pf_update(p_hwfn);
 
-			/* for roce PFs, we may want to enable/disable DPM
+			/* क्रम roce PFs, we may want to enable/disable DPM
 			 * when DCBx change occurs
 			 */
-			if (p_hwfn->hw_info.personality ==
+			अगर (p_hwfn->hw_info.personality ==
 			    QED_PCI_ETH_ROCE)
 				qed_roce_dpm_dcbx(p_hwfn, p_ptt);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	qed_dcbx_get_params(p_hwfn, &p_hwfn->p_dcbx_info->get, type);
 
-	if (type == QED_DCBX_OPERATIONAL_MIB) {
-		struct qed_dcbx_results *p_data;
+	अगर (type == QED_DCBX_OPERATIONAL_MIB) अणु
+		काष्ठा qed_dcbx_results *p_data;
 		u16 val;
 
 		/* Configure in NIG which protocols support EDPM and should
@@ -908,43 +909,43 @@ qed_dcbx_mib_update_event(struct qed_hwfn *p_hwfn,
 		val <<= NIG_REG_TX_EDPM_CTRL_TX_EDPM_TC_EN_SHIFT;
 		val |= NIG_REG_TX_EDPM_CTRL_TX_EDPM_EN;
 		qed_wr(p_hwfn, p_ptt, NIG_REG_TX_EDPM_CTRL, val);
-	}
+	पूर्ण
 
 	qed_dcbx_aen(p_hwfn, type);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_dcbx_info_alloc(struct qed_hwfn *p_hwfn)
-{
-	p_hwfn->p_dcbx_info = kzalloc(sizeof(*p_hwfn->p_dcbx_info), GFP_KERNEL);
-	if (!p_hwfn->p_dcbx_info)
-		return -ENOMEM;
+पूर्णांक qed_dcbx_info_alloc(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	p_hwfn->p_dcbx_info = kzalloc(माप(*p_hwfn->p_dcbx_info), GFP_KERNEL);
+	अगर (!p_hwfn->p_dcbx_info)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qed_dcbx_info_free(struct qed_hwfn *p_hwfn)
-{
-	kfree(p_hwfn->p_dcbx_info);
-	p_hwfn->p_dcbx_info = NULL;
-}
+व्योम qed_dcbx_info_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	kमुक्त(p_hwfn->p_dcbx_info);
+	p_hwfn->p_dcbx_info = शून्य;
+पूर्ण
 
-static void qed_dcbx_update_protocol_data(struct protocol_dcb_data *p_data,
-					  struct qed_dcbx_results *p_src,
-					  enum dcbx_protocol_type type)
-{
+अटल व्योम qed_dcbx_update_protocol_data(काष्ठा protocol_dcb_data *p_data,
+					  काष्ठा qed_dcbx_results *p_src,
+					  क्रमागत dcbx_protocol_type type)
+अणु
 	p_data->dcb_enable_flag = p_src->arr[type].enable;
 	p_data->dcb_priority = p_src->arr[type].priority;
 	p_data->dcb_tc = p_src->arr[type].tc;
-	p_data->dcb_dont_add_vlan0 = p_src->arr[type].dont_add_vlan0;
-}
+	p_data->dcb_करोnt_add_vlan0 = p_src->arr[type].करोnt_add_vlan0;
+पूर्ण
 
 /* Set pf update ramrod command params */
-void qed_dcbx_set_pf_update_params(struct qed_dcbx_results *p_src,
-				   struct pf_update_ramrod_data *p_dest)
-{
-	struct protocol_dcb_data *p_dcb_data;
+व्योम qed_dcbx_set_pf_update_params(काष्ठा qed_dcbx_results *p_src,
+				   काष्ठा pf_update_ramrod_data *p_dest)
+अणु
+	काष्ठा protocol_dcb_data *p_dcb_data;
 	u8 update_flag;
 
 	update_flag = p_src->arr[DCBX_PROTOCOL_FCOE].update;
@@ -971,106 +972,106 @@ void qed_dcbx_set_pf_update_params(struct qed_dcbx_results *p_src,
 	qed_dcbx_update_protocol_data(p_dcb_data, p_src, DCBX_PROTOCOL_ISCSI);
 	p_dcb_data = &p_dest->eth_dcb_data;
 	qed_dcbx_update_protocol_data(p_dcb_data, p_src, DCBX_PROTOCOL_ETH);
-}
+पूर्ण
 
-u8 qed_dcbx_get_priority_tc(struct qed_hwfn *p_hwfn, u8 pri)
-{
-	struct qed_dcbx_get *dcbx_info = &p_hwfn->p_dcbx_info->get;
+u8 qed_dcbx_get_priority_tc(काष्ठा qed_hwfn *p_hwfn, u8 pri)
+अणु
+	काष्ठा qed_dcbx_get *dcbx_info = &p_hwfn->p_dcbx_info->get;
 
-	if (pri >= QED_MAX_PFC_PRIORITIES) {
+	अगर (pri >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_ERR(p_hwfn, "Invalid priority %d\n", pri);
-		return QED_DCBX_DEFAULT_TC;
-	}
+		वापस QED_DCBX_DEFAULT_TC;
+	पूर्ण
 
-	if (!dcbx_info->operational.valid) {
+	अगर (!dcbx_info->operational.valid) अणु
 		DP_VERBOSE(p_hwfn, QED_MSG_DCB,
 			   "Dcbx parameters not available\n");
-		return QED_DCBX_DEFAULT_TC;
-	}
+		वापस QED_DCBX_DEFAULT_TC;
+	पूर्ण
 
-	return dcbx_info->operational.params.ets_pri_tc_tbl[pri];
-}
+	वापस dcbx_info->operational.params.ets_pri_tc_tbl[pri];
+पूर्ण
 
-#ifdef CONFIG_DCB
-static int qed_dcbx_query_params(struct qed_hwfn *p_hwfn,
-				 struct qed_dcbx_get *p_get,
-				 enum qed_mib_read_type type)
-{
-	struct qed_ptt *p_ptt;
-	int rc;
+#अगर_घोषित CONFIG_DCB
+अटल पूर्णांक qed_dcbx_query_params(काष्ठा qed_hwfn *p_hwfn,
+				 काष्ठा qed_dcbx_get *p_get,
+				 क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	काष्ठा qed_ptt *p_ptt;
+	पूर्णांक rc;
 
-	if (IS_VF(p_hwfn->cdev))
-		return -EINVAL;
+	अगर (IS_VF(p_hwfn->cdev))
+		वापस -EINVAL;
 
 	p_ptt = qed_ptt_acquire(p_hwfn);
-	if (!p_ptt)
-		return -EBUSY;
+	अगर (!p_ptt)
+		वापस -EBUSY;
 
-	rc = qed_dcbx_read_mib(p_hwfn, p_ptt, type);
-	if (rc)
-		goto out;
+	rc = qed_dcbx_पढ़ो_mib(p_hwfn, p_ptt, type);
+	अगर (rc)
+		जाओ out;
 
 	rc = qed_dcbx_get_params(p_hwfn, p_get, type);
 
 out:
 	qed_ptt_release(p_hwfn, p_ptt);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-qed_dcbx_set_pfc_data(struct qed_hwfn *p_hwfn,
-		      u32 *pfc, struct qed_dcbx_params *p_params)
-{
+अटल व्योम
+qed_dcbx_set_pfc_data(काष्ठा qed_hwfn *p_hwfn,
+		      u32 *pfc, काष्ठा qed_dcbx_params *p_params)
+अणु
 	u8 pfc_map = 0;
-	int i;
+	पूर्णांक i;
 
 	*pfc &= ~DCBX_PFC_ERROR_MASK;
 
-	if (p_params->pfc.willing)
+	अगर (p_params->pfc.willing)
 		*pfc |= DCBX_PFC_WILLING_MASK;
-	else
+	अन्यथा
 		*pfc &= ~DCBX_PFC_WILLING_MASK;
 
-	if (p_params->pfc.enabled)
+	अगर (p_params->pfc.enabled)
 		*pfc |= DCBX_PFC_ENABLED_MASK;
-	else
+	अन्यथा
 		*pfc &= ~DCBX_PFC_ENABLED_MASK;
 
 	*pfc &= ~DCBX_PFC_CAPS_MASK;
 	*pfc |= (u32)p_params->pfc.max_tc << DCBX_PFC_CAPS_SHIFT;
 
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
-		if (p_params->pfc.prio[i])
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
+		अगर (p_params->pfc.prio[i])
 			pfc_map |= BIT(i);
 
 	*pfc &= ~DCBX_PFC_PRI_EN_BITMAP_MASK;
 	*pfc |= (pfc_map << DCBX_PFC_PRI_EN_BITMAP_SHIFT);
 
 	DP_VERBOSE(p_hwfn, QED_MSG_DCB, "pfc = 0x%x\n", *pfc);
-}
+पूर्ण
 
-static void
-qed_dcbx_set_ets_data(struct qed_hwfn *p_hwfn,
-		      struct dcbx_ets_feature *p_ets,
-		      struct qed_dcbx_params *p_params)
-{
+अटल व्योम
+qed_dcbx_set_ets_data(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा dcbx_ets_feature *p_ets,
+		      काष्ठा qed_dcbx_params *p_params)
+अणु
 	__be32 bw_map[2], tsa_map[2];
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	if (p_params->ets_willing)
+	अगर (p_params->ets_willing)
 		p_ets->flags |= DCBX_ETS_WILLING_MASK;
-	else
+	अन्यथा
 		p_ets->flags &= ~DCBX_ETS_WILLING_MASK;
 
-	if (p_params->ets_cbs)
+	अगर (p_params->ets_cbs)
 		p_ets->flags |= DCBX_ETS_CBS_MASK;
-	else
+	अन्यथा
 		p_ets->flags &= ~DCBX_ETS_CBS_MASK;
 
-	if (p_params->ets_enabled)
+	अगर (p_params->ets_enabled)
 		p_ets->flags |= DCBX_ETS_ENABLED_MASK;
-	else
+	अन्यथा
 		p_ets->flags &= ~DCBX_ETS_ENABLED_MASK;
 
 	p_ets->flags &= ~DCBX_ETS_MAX_TCS_MASK;
@@ -1078,7 +1079,7 @@ qed_dcbx_set_ets_data(struct qed_hwfn *p_hwfn,
 
 	p_ets->pri_tc_tbl[0] = 0;
 
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) {
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) अणु
 		((u8 *)bw_map)[i] = p_params->ets_tc_bw_tbl[i];
 		((u8 *)tsa_map)[i] = p_params->ets_tc_tsa_tbl[i];
 
@@ -1087,74 +1088,74 @@ qed_dcbx_set_ets_data(struct qed_hwfn *p_hwfn,
 		 */
 		val = (((u32)p_params->ets_pri_tc_tbl[i]) << ((7 - i) * 4));
 		p_ets->pri_tc_tbl[0] |= val;
-	}
+	पूर्ण
 
 	be32_to_cpu_array(p_ets->tc_bw_tbl, bw_map, 2);
 	be32_to_cpu_array(p_ets->tc_tsa_tbl, tsa_map, 2);
-}
+पूर्ण
 
-static void
-qed_dcbx_set_app_data(struct qed_hwfn *p_hwfn,
-		      struct dcbx_app_priority_feature *p_app,
-		      struct qed_dcbx_params *p_params, bool ieee)
-{
+अटल व्योम
+qed_dcbx_set_app_data(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा dcbx_app_priority_feature *p_app,
+		      काष्ठा qed_dcbx_params *p_params, bool ieee)
+अणु
 	u32 *entry;
-	int i;
+	पूर्णांक i;
 
-	if (p_params->app_willing)
+	अगर (p_params->app_willing)
 		p_app->flags |= DCBX_APP_WILLING_MASK;
-	else
+	अन्यथा
 		p_app->flags &= ~DCBX_APP_WILLING_MASK;
 
-	if (p_params->app_valid)
+	अगर (p_params->app_valid)
 		p_app->flags |= DCBX_APP_ENABLED_MASK;
-	else
+	अन्यथा
 		p_app->flags &= ~DCBX_APP_ENABLED_MASK;
 
 	p_app->flags &= ~DCBX_APP_NUM_ENTRIES_MASK;
 	p_app->flags |= (u32)p_params->num_app_entries <<
 	    DCBX_APP_NUM_ENTRIES_SHIFT;
 
-	for (i = 0; i < DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &p_app->app_pri_tbl[i].entry;
 		*entry = 0;
-		if (ieee) {
+		अगर (ieee) अणु
 			*entry &= ~(DCBX_APP_SF_IEEE_MASK | DCBX_APP_SF_MASK);
-			switch (p_params->app_entry[i].sf_ieee) {
-			case QED_DCBX_SF_IEEE_ETHTYPE:
+			चयन (p_params->app_entry[i].sf_ieee) अणु
+			हाल QED_DCBX_SF_IEEE_ETHTYPE:
 				*entry |= ((u32)DCBX_APP_SF_IEEE_ETHTYPE <<
 					   DCBX_APP_SF_IEEE_SHIFT);
 				*entry |= ((u32)DCBX_APP_SF_ETHTYPE <<
 					   DCBX_APP_SF_SHIFT);
-				break;
-			case QED_DCBX_SF_IEEE_TCP_PORT:
+				अवरोध;
+			हाल QED_DCBX_SF_IEEE_TCP_PORT:
 				*entry |= ((u32)DCBX_APP_SF_IEEE_TCP_PORT <<
 					   DCBX_APP_SF_IEEE_SHIFT);
 				*entry |= ((u32)DCBX_APP_SF_PORT <<
 					   DCBX_APP_SF_SHIFT);
-				break;
-			case QED_DCBX_SF_IEEE_UDP_PORT:
+				अवरोध;
+			हाल QED_DCBX_SF_IEEE_UDP_PORT:
 				*entry |= ((u32)DCBX_APP_SF_IEEE_UDP_PORT <<
 					   DCBX_APP_SF_IEEE_SHIFT);
 				*entry |= ((u32)DCBX_APP_SF_PORT <<
 					   DCBX_APP_SF_SHIFT);
-				break;
-			case QED_DCBX_SF_IEEE_TCP_UDP_PORT:
+				अवरोध;
+			हाल QED_DCBX_SF_IEEE_TCP_UDP_PORT:
 				*entry |= ((u32)DCBX_APP_SF_IEEE_TCP_UDP_PORT <<
 					   DCBX_APP_SF_IEEE_SHIFT);
 				*entry |= ((u32)DCBX_APP_SF_PORT <<
 					   DCBX_APP_SF_SHIFT);
-				break;
-			}
-		} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			*entry &= ~DCBX_APP_SF_MASK;
-			if (p_params->app_entry[i].ethtype)
+			अगर (p_params->app_entry[i].ethtype)
 				*entry |= ((u32)DCBX_APP_SF_ETHTYPE <<
 					   DCBX_APP_SF_SHIFT);
-			else
+			अन्यथा
 				*entry |= ((u32)DCBX_APP_SF_PORT <<
 					   DCBX_APP_SF_SHIFT);
-		}
+		पूर्ण
 
 		*entry &= ~DCBX_APP_PROTOCOL_ID_MASK;
 		*entry |= ((u32)p_params->app_entry[i].proto_id <<
@@ -1162,632 +1163,632 @@ qed_dcbx_set_app_data(struct qed_hwfn *p_hwfn,
 		*entry &= ~DCBX_APP_PRI_MAP_MASK;
 		*entry |= ((u32)(p_params->app_entry[i].prio) <<
 			   DCBX_APP_PRI_MAP_SHIFT);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-qed_dcbx_set_local_params(struct qed_hwfn *p_hwfn,
-			  struct dcbx_local_params *local_admin,
-			  struct qed_dcbx_set *params)
-{
+अटल व्योम
+qed_dcbx_set_local_params(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा dcbx_local_params *local_admin,
+			  काष्ठा qed_dcbx_set *params)
+अणु
 	bool ieee = false;
 
 	local_admin->flags = 0;
-	memcpy(&local_admin->features,
+	स_नकल(&local_admin->features,
 	       &p_hwfn->p_dcbx_info->operational.features,
-	       sizeof(local_admin->features));
+	       माप(local_admin->features));
 
-	if (params->enabled) {
+	अगर (params->enabled) अणु
 		local_admin->config = params->ver_num;
 		ieee = !!(params->ver_num & DCBX_CONFIG_VERSION_IEEE);
-	} else {
+	पूर्ण अन्यथा अणु
 		local_admin->config = DCBX_CONFIG_VERSION_DISABLED;
-	}
+	पूर्ण
 
 	DP_VERBOSE(p_hwfn, QED_MSG_DCB, "Dcbx version = %d\n",
 		   local_admin->config);
 
-	if (params->override_flags & QED_DCBX_OVERRIDE_PFC_CFG)
+	अगर (params->override_flags & QED_DCBX_OVERRIDE_PFC_CFG)
 		qed_dcbx_set_pfc_data(p_hwfn, &local_admin->features.pfc,
 				      &params->config.params);
 
-	if (params->override_flags & QED_DCBX_OVERRIDE_ETS_CFG)
+	अगर (params->override_flags & QED_DCBX_OVERRIDE_ETS_CFG)
 		qed_dcbx_set_ets_data(p_hwfn, &local_admin->features.ets,
 				      &params->config.params);
 
-	if (params->override_flags & QED_DCBX_OVERRIDE_APP_CFG)
+	अगर (params->override_flags & QED_DCBX_OVERRIDE_APP_CFG)
 		qed_dcbx_set_app_data(p_hwfn, &local_admin->features.app,
 				      &params->config.params, ieee);
-}
+पूर्ण
 
-int qed_dcbx_config_params(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-			   struct qed_dcbx_set *params, bool hw_commit)
-{
-	struct dcbx_local_params local_admin;
-	struct qed_dcbx_mib_meta_data data;
+पूर्णांक qed_dcbx_config_params(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
+			   काष्ठा qed_dcbx_set *params, bool hw_commit)
+अणु
+	काष्ठा dcbx_local_params local_admin;
+	काष्ठा qed_dcbx_mib_meta_data data;
 	u32 resp = 0, param = 0;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (!hw_commit) {
-		memcpy(&p_hwfn->p_dcbx_info->set, params,
-		       sizeof(struct qed_dcbx_set));
-		return 0;
-	}
+	अगर (!hw_commit) अणु
+		स_नकल(&p_hwfn->p_dcbx_info->set, params,
+		       माप(काष्ठा qed_dcbx_set));
+		वापस 0;
+	पूर्ण
 
 	/* clear set-parmas cache */
-	memset(&p_hwfn->p_dcbx_info->set, 0, sizeof(p_hwfn->p_dcbx_info->set));
+	स_रखो(&p_hwfn->p_dcbx_info->set, 0, माप(p_hwfn->p_dcbx_info->set));
 
-	memset(&local_admin, 0, sizeof(local_admin));
+	स_रखो(&local_admin, 0, माप(local_admin));
 	qed_dcbx_set_local_params(p_hwfn, &local_admin, params);
 
 	data.addr = p_hwfn->mcp_info->port_addr +
-	    offsetof(struct public_port, local_admin_dcbx_mib);
+	    दुरत्व(काष्ठा खुला_port, local_admin_dcbx_mib);
 	data.local_admin = &local_admin;
-	data.size = sizeof(struct dcbx_local_params);
-	qed_memcpy_to(p_hwfn, p_ptt, data.addr, data.local_admin, data.size);
+	data.size = माप(काष्ठा dcbx_local_params);
+	qed_स_नकल_to(p_hwfn, p_ptt, data.addr, data.local_admin, data.size);
 
 	rc = qed_mcp_cmd(p_hwfn, p_ptt, DRV_MSG_CODE_SET_DCBX,
 			 1 << DRV_MB_PARAM_LLDP_SEND_SHIFT, &resp, &param);
-	if (rc)
+	अगर (rc)
 		DP_NOTICE(p_hwfn, "Failed to send DCBX update request\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_dcbx_get_config_params(struct qed_hwfn *p_hwfn,
-			       struct qed_dcbx_set *params)
-{
-	struct qed_dcbx_get *dcbx_info;
-	int rc;
+पूर्णांक qed_dcbx_get_config_params(काष्ठा qed_hwfn *p_hwfn,
+			       काष्ठा qed_dcbx_set *params)
+अणु
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक rc;
 
-	if (p_hwfn->p_dcbx_info->set.config.valid) {
-		memcpy(params, &p_hwfn->p_dcbx_info->set,
-		       sizeof(struct qed_dcbx_set));
-		return 0;
-	}
+	अगर (p_hwfn->p_dcbx_info->set.config.valid) अणु
+		स_नकल(params, &p_hwfn->p_dcbx_info->set,
+		       माप(काष्ठा qed_dcbx_set));
+		वापस 0;
+	पूर्ण
 
-	dcbx_info = kzalloc(sizeof(*dcbx_info), GFP_KERNEL);
-	if (!dcbx_info)
-		return -ENOMEM;
+	dcbx_info = kzalloc(माप(*dcbx_info), GFP_KERNEL);
+	अगर (!dcbx_info)
+		वापस -ENOMEM;
 
 	rc = qed_dcbx_query_params(p_hwfn, dcbx_info, QED_DCBX_OPERATIONAL_MIB);
-	if (rc) {
-		kfree(dcbx_info);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त(dcbx_info);
+		वापस rc;
+	पूर्ण
 
 	p_hwfn->p_dcbx_info->set.override_flags = 0;
 	p_hwfn->p_dcbx_info->set.ver_num = DCBX_CONFIG_VERSION_DISABLED;
-	if (dcbx_info->operational.cee)
+	अगर (dcbx_info->operational.cee)
 		p_hwfn->p_dcbx_info->set.ver_num |= DCBX_CONFIG_VERSION_CEE;
-	if (dcbx_info->operational.ieee)
+	अगर (dcbx_info->operational.ieee)
 		p_hwfn->p_dcbx_info->set.ver_num |= DCBX_CONFIG_VERSION_IEEE;
-	if (dcbx_info->operational.local)
+	अगर (dcbx_info->operational.local)
 		p_hwfn->p_dcbx_info->set.ver_num |= DCBX_CONFIG_VERSION_STATIC;
 
 	p_hwfn->p_dcbx_info->set.enabled = dcbx_info->operational.enabled;
-	BUILD_BUG_ON(sizeof(dcbx_info->operational.params) !=
-		     sizeof(p_hwfn->p_dcbx_info->set.config.params));
-	memcpy(&p_hwfn->p_dcbx_info->set.config.params,
+	BUILD_BUG_ON(माप(dcbx_info->operational.params) !=
+		     माप(p_hwfn->p_dcbx_info->set.config.params));
+	स_नकल(&p_hwfn->p_dcbx_info->set.config.params,
 	       &dcbx_info->operational.params,
-	       sizeof(p_hwfn->p_dcbx_info->set.config.params));
+	       माप(p_hwfn->p_dcbx_info->set.config.params));
 	p_hwfn->p_dcbx_info->set.config.valid = true;
 
-	memcpy(params, &p_hwfn->p_dcbx_info->set, sizeof(struct qed_dcbx_set));
+	स_नकल(params, &p_hwfn->p_dcbx_info->set, माप(काष्ठा qed_dcbx_set));
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct qed_dcbx_get *qed_dcbnl_get_dcbx(struct qed_hwfn *hwfn,
-					       enum qed_mib_read_type type)
-{
-	struct qed_dcbx_get *dcbx_info;
+अटल काष्ठा qed_dcbx_get *qed_dcbnl_get_dcbx(काष्ठा qed_hwfn *hwfn,
+					       क्रमागत qed_mib_पढ़ो_type type)
+अणु
+	काष्ठा qed_dcbx_get *dcbx_info;
 
-	dcbx_info = kzalloc(sizeof(*dcbx_info), GFP_ATOMIC);
-	if (!dcbx_info)
-		return NULL;
+	dcbx_info = kzalloc(माप(*dcbx_info), GFP_ATOMIC);
+	अगर (!dcbx_info)
+		वापस शून्य;
 
-	if (qed_dcbx_query_params(hwfn, dcbx_info, type)) {
-		kfree(dcbx_info);
-		return NULL;
-	}
+	अगर (qed_dcbx_query_params(hwfn, dcbx_info, type)) अणु
+		kमुक्त(dcbx_info);
+		वापस शून्य;
+	पूर्ण
 
-	if ((type == QED_DCBX_OPERATIONAL_MIB) &&
-	    !dcbx_info->operational.enabled) {
+	अगर ((type == QED_DCBX_OPERATIONAL_MIB) &&
+	    !dcbx_info->operational.enabled) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational\n");
-		kfree(dcbx_info);
-		return NULL;
-	}
+		kमुक्त(dcbx_info);
+		वापस शून्य;
+	पूर्ण
 
-	return dcbx_info;
-}
+	वापस dcbx_info;
+पूर्ण
 
-static u8 qed_dcbnl_getstate(struct qed_dev *cdev)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल u8 qed_dcbnl_माला_लोtate(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 	bool enabled;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return 0;
+	अगर (!dcbx_info)
+		वापस 0;
 
 	enabled = dcbx_info->operational.enabled;
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "DCB state = %d\n", enabled);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return enabled;
-}
+	वापस enabled;
+पूर्ण
 
-static u8 qed_dcbnl_setstate(struct qed_dev *cdev, u8 state)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल u8 qed_dcbnl_setstate(काष्ठा qed_dev *cdev, u8 state)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "DCB state = %d\n", state);
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return 1;
+	अगर (rc)
+		वापस 1;
 
 	dcbx_set.enabled = !!state;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return 1;
+	अगर (!ptt)
+		वापस 1;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc ? 1 : 0;
-}
+	वापस rc ? 1 : 0;
+पूर्ण
 
-static void qed_dcbnl_getpgtccfgtx(struct qed_dev *cdev, int tc, u8 *prio_type,
+अटल व्योम qed_dcbnl_getpgtccfgtx(काष्ठा qed_dev *cdev, पूर्णांक tc, u8 *prio_type,
 				   u8 *pgid, u8 *bw_pct, u8 *up_map)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "tc = %d\n", tc);
 	*prio_type = *pgid = *bw_pct = *up_map = 0;
-	if (tc < 0 || tc >= QED_MAX_PFC_PRIORITIES) {
+	अगर (tc < 0 || tc >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid tc %d\n", tc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return;
+	अगर (!dcbx_info)
+		वापस;
 
 	*pgid = dcbx_info->operational.params.ets_pri_tc_tbl[tc];
-	kfree(dcbx_info);
-}
+	kमुक्त(dcbx_info);
+पूर्ण
 
-static void qed_dcbnl_getpgbwgcfgtx(struct qed_dev *cdev, int pgid, u8 *bw_pct)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल व्योम qed_dcbnl_getpgbwgcfgtx(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 *bw_pct)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 
 	*bw_pct = 0;
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "pgid = %d\n", pgid);
-	if (pgid < 0 || pgid >= QED_MAX_PFC_PRIORITIES) {
+	अगर (pgid < 0 || pgid >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid pgid %d\n", pgid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return;
+	अगर (!dcbx_info)
+		वापस;
 
 	*bw_pct = dcbx_info->operational.params.ets_tc_bw_tbl[pgid];
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "bw_pct = %d\n", *bw_pct);
-	kfree(dcbx_info);
-}
+	kमुक्त(dcbx_info);
+पूर्ण
 
-static void qed_dcbnl_getpgtccfgrx(struct qed_dev *cdev, int tc, u8 *prio,
+अटल व्योम qed_dcbnl_getpgtccfgrx(काष्ठा qed_dev *cdev, पूर्णांक tc, u8 *prio,
 				   u8 *bwg_id, u8 *bw_pct, u8 *up_map)
-{
+अणु
 	DP_INFO(QED_LEADING_HWFN(cdev), "Rx ETS is not supported\n");
 	*prio = *bwg_id = *bw_pct = *up_map = 0;
-}
+पूर्ण
 
-static void qed_dcbnl_getpgbwgcfgrx(struct qed_dev *cdev,
-				    int bwg_id, u8 *bw_pct)
-{
+अटल व्योम qed_dcbnl_getpgbwgcfgrx(काष्ठा qed_dev *cdev,
+				    पूर्णांक bwg_id, u8 *bw_pct)
+अणु
 	DP_INFO(QED_LEADING_HWFN(cdev), "Rx ETS is not supported\n");
 	*bw_pct = 0;
-}
+पूर्ण
 
-static void qed_dcbnl_getpfccfg(struct qed_dev *cdev,
-				int priority, u8 *setting)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल व्योम qed_dcbnl_getpfccfg(काष्ठा qed_dev *cdev,
+				पूर्णांक priority, u8 *setting)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "priority = %d\n", priority);
-	if (priority < 0 || priority >= QED_MAX_PFC_PRIORITIES) {
+	अगर (priority < 0 || priority >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid priority %d\n", priority);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return;
+	अगर (!dcbx_info)
+		वापस;
 
 	*setting = dcbx_info->operational.params.pfc.prio[priority];
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "setting = %d\n", *setting);
-	kfree(dcbx_info);
-}
+	kमुक्त(dcbx_info);
+पूर्ण
 
-static void qed_dcbnl_setpfccfg(struct qed_dev *cdev, int priority, u8 setting)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल व्योम qed_dcbnl_setpfccfg(काष्ठा qed_dev *cdev, पूर्णांक priority, u8 setting)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "priority = %d setting = %d\n",
 		   priority, setting);
-	if (priority < 0 || priority >= QED_MAX_PFC_PRIORITIES) {
+	अगर (priority < 0 || priority >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid priority %d\n", priority);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return;
+	अगर (rc)
+		वापस;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_PFC_CFG;
 	dcbx_set.config.params.pfc.prio[priority] = !!setting;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return;
+	अगर (!ptt)
+		वापस;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
-}
+पूर्ण
 
-static u8 qed_dcbnl_getcap(struct qed_dev *cdev, int capid, u8 *cap)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	int rc = 0;
+अटल u8 qed_dcbnl_अ_लोap(काष्ठा qed_dev *cdev, पूर्णांक capid, u8 *cap)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक rc = 0;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "capid = %d\n", capid);
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return 1;
+	अगर (!dcbx_info)
+		वापस 1;
 
-	switch (capid) {
-	case DCB_CAP_ATTR_PG:
-	case DCB_CAP_ATTR_PFC:
-	case DCB_CAP_ATTR_UP2TC:
-	case DCB_CAP_ATTR_GSP:
+	चयन (capid) अणु
+	हाल DCB_CAP_ATTR_PG:
+	हाल DCB_CAP_ATTR_PFC:
+	हाल DCB_CAP_ATTR_UP2TC:
+	हाल DCB_CAP_ATTR_GSP:
 		*cap = true;
-		break;
-	case DCB_CAP_ATTR_PG_TCS:
-	case DCB_CAP_ATTR_PFC_TCS:
+		अवरोध;
+	हाल DCB_CAP_ATTR_PG_TCS:
+	हाल DCB_CAP_ATTR_PFC_TCS:
 		*cap = 0x80;
-		break;
-	case DCB_CAP_ATTR_DCBX:
+		अवरोध;
+	हाल DCB_CAP_ATTR_DCBX:
 		*cap = (DCB_CAP_DCBX_VER_CEE | DCB_CAP_DCBX_VER_IEEE |
 			DCB_CAP_DCBX_STATIC);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*cap = false;
 		rc = 1;
-	}
+	पूर्ण
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "id = %d caps = %d\n", capid, *cap);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_dcbnl_getnumtcs(struct qed_dev *cdev, int tcid, u8 *num)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	int rc = 0;
+अटल पूर्णांक qed_dcbnl_getnumtcs(काष्ठा qed_dev *cdev, पूर्णांक tcid, u8 *num)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक rc = 0;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "tcid = %d\n", tcid);
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	switch (tcid) {
-	case DCB_NUMTCS_ATTR_PG:
+	चयन (tcid) अणु
+	हाल DCB_NUMTCS_ATTR_PG:
 		*num = dcbx_info->operational.params.max_ets_tc;
-		break;
-	case DCB_NUMTCS_ATTR_PFC:
+		अवरोध;
+	हाल DCB_NUMTCS_ATTR_PFC:
 		*num = dcbx_info->operational.params.pfc.max_tc;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "numtcs = %d\n", *num);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u8 qed_dcbnl_getpfcstate(struct qed_dev *cdev)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल u8 qed_dcbnl_getpfcstate(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 	bool enabled;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return 0;
+	अगर (!dcbx_info)
+		वापस 0;
 
 	enabled = dcbx_info->operational.params.pfc.enabled;
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "pfc state = %d\n", enabled);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return enabled;
-}
+	वापस enabled;
+पूर्ण
 
-static u8 qed_dcbnl_getdcbx(struct qed_dev *cdev)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल u8 qed_dcbnl_getdcbx(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 	u8 mode = 0;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return 0;
+	अगर (!dcbx_info)
+		वापस 0;
 
-	if (dcbx_info->operational.ieee)
+	अगर (dcbx_info->operational.ieee)
 		mode |= DCB_CAP_DCBX_VER_IEEE;
-	if (dcbx_info->operational.cee)
+	अगर (dcbx_info->operational.cee)
 		mode |= DCB_CAP_DCBX_VER_CEE;
-	if (dcbx_info->operational.local)
+	अगर (dcbx_info->operational.local)
 		mode |= DCB_CAP_DCBX_STATIC;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "dcb mode = %d\n", mode);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static void qed_dcbnl_setpgtccfgtx(struct qed_dev *cdev,
-				   int tc,
+अटल व्योम qed_dcbnl_setpgtccfgtx(काष्ठा qed_dev *cdev,
+				   पूर्णांक tc,
 				   u8 pri_type, u8 pgid, u8 bw_pct, u8 up_map)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB,
 		   "tc = %d pri_type = %d pgid = %d bw_pct = %d up_map = %d\n",
 		   tc, pri_type, pgid, bw_pct, up_map);
 
-	if (tc < 0 || tc >= QED_MAX_PFC_PRIORITIES) {
+	अगर (tc < 0 || tc >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid tc %d\n", tc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return;
+	अगर (rc)
+		वापस;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_ETS_CFG;
 	dcbx_set.config.params.ets_pri_tc_tbl[tc] = pgid;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return;
+	अगर (!ptt)
+		वापस;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
-}
+पूर्ण
 
-static void qed_dcbnl_setpgtccfgrx(struct qed_dev *cdev, int prio,
+अटल व्योम qed_dcbnl_setpgtccfgrx(काष्ठा qed_dev *cdev, पूर्णांक prio,
 				   u8 pri_type, u8 pgid, u8 bw_pct, u8 up_map)
-{
+अणु
 	DP_INFO(QED_LEADING_HWFN(cdev), "Rx ETS is not supported\n");
-}
+पूर्ण
 
-static void qed_dcbnl_setpgbwgcfgtx(struct qed_dev *cdev, int pgid, u8 bw_pct)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल व्योम qed_dcbnl_setpgbwgcfgtx(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 bw_pct)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "pgid = %d bw_pct = %d\n", pgid, bw_pct);
-	if (pgid < 0 || pgid >= QED_MAX_PFC_PRIORITIES) {
+	अगर (pgid < 0 || pgid >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid pgid %d\n", pgid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return;
+	अगर (rc)
+		वापस;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_ETS_CFG;
 	dcbx_set.config.params.ets_tc_bw_tbl[pgid] = bw_pct;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return;
+	अगर (!ptt)
+		वापस;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
-}
+पूर्ण
 
-static void qed_dcbnl_setpgbwgcfgrx(struct qed_dev *cdev, int pgid, u8 bw_pct)
-{
+अटल व्योम qed_dcbnl_setpgbwgcfgrx(काष्ठा qed_dev *cdev, पूर्णांक pgid, u8 bw_pct)
+अणु
 	DP_INFO(QED_LEADING_HWFN(cdev), "Rx ETS is not supported\n");
-}
+पूर्ण
 
-static u8 qed_dcbnl_setall(struct qed_dev *cdev)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल u8 qed_dcbnl_setall(काष्ठा qed_dev *cdev)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return 1;
+	अगर (rc)
+		वापस 1;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return 1;
+	अगर (!ptt)
+		वापस 1;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 1);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_dcbnl_setnumtcs(struct qed_dev *cdev, int tcid, u8 num)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल पूर्णांक qed_dcbnl_setnumtcs(काष्ठा qed_dev *cdev, पूर्णांक tcid, u8 num)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "tcid = %d num = %d\n", tcid, num);
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return 1;
+	अगर (rc)
+		वापस 1;
 
-	switch (tcid) {
-	case DCB_NUMTCS_ATTR_PG:
+	चयन (tcid) अणु
+	हाल DCB_NUMTCS_ATTR_PG:
 		dcbx_set.override_flags |= QED_DCBX_OVERRIDE_ETS_CFG;
 		dcbx_set.config.params.max_ets_tc = num;
-		break;
-	case DCB_NUMTCS_ATTR_PFC:
+		अवरोध;
+	हाल DCB_NUMTCS_ATTR_PFC:
 		dcbx_set.override_flags |= QED_DCBX_OVERRIDE_PFC_CFG;
 		dcbx_set.config.params.pfc.max_tc = num;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_INFO(hwfn, "Invalid tcid %d\n", tcid);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return -EINVAL;
+	अगर (!ptt)
+		वापस -EINVAL;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qed_dcbnl_setpfcstate(struct qed_dev *cdev, u8 state)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल व्योम qed_dcbnl_setpfcstate(काष्ठा qed_dev *cdev, u8 state)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "new state = %d\n", state);
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return;
+	अगर (rc)
+		वापस;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_PFC_CFG;
 	dcbx_set.config.params.pfc.enabled = !!state;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return;
+	अगर (!ptt)
+		वापस;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
-}
+पूर्ण
 
-static int qed_dcbnl_getapp(struct qed_dev *cdev, u8 idtype, u16 idval)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_app_entry *entry;
+अटल पूर्णांक qed_dcbnl_getapp(काष्ठा qed_dev *cdev, u8 idtype, u16 idval)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_app_entry *entry;
 	bool ethtype;
 	u8 prio = 0;
-	int i;
+	पूर्णांक i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
 	ethtype = !!(idtype == DCB_APP_IDTYPE_ETHTYPE);
-	for (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &dcbx_info->operational.params.app_entry[i];
-		if ((entry->ethtype == ethtype) && (entry->proto_id == idval)) {
+		अगर ((entry->ethtype == ethtype) && (entry->proto_id == idval)) अणु
 			prio = entry->prio;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == QED_DCBX_MAX_APP_PROTOCOL) {
+	अगर (i == QED_DCBX_MAX_APP_PROTOCOL) अणु
 		DP_ERR(cdev, "App entry (%d, %d) not found\n", idtype, idval);
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return prio;
-}
+	वापस prio;
+पूर्ण
 
-static int qed_dcbnl_setapp(struct qed_dev *cdev,
+अटल पूर्णांक qed_dcbnl_setapp(काष्ठा qed_dev *cdev,
 			    u8 idtype, u16 idval, u8 pri_map)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_app_entry *entry;
-	struct qed_ptt *ptt;
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_app_entry *entry;
+	काष्ठा qed_ptt *ptt;
 	bool ethtype;
-	int rc, i;
+	पूर्णांक rc, i;
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return -EINVAL;
+	अगर (rc)
+		वापस -EINVAL;
 
 	ethtype = !!(idtype == DCB_APP_IDTYPE_ETHTYPE);
-	for (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &dcbx_set.config.params.app_entry[i];
-		if ((entry->ethtype == ethtype) && (entry->proto_id == idval))
-			break;
+		अगर ((entry->ethtype == ethtype) && (entry->proto_id == idval))
+			अवरोध;
 		/* First empty slot */
-		if (!entry->proto_id) {
+		अगर (!entry->proto_id) अणु
 			dcbx_set.config.params.num_app_entries++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == QED_DCBX_MAX_APP_PROTOCOL) {
+	अगर (i == QED_DCBX_MAX_APP_PROTOCOL) अणु
 		DP_ERR(cdev, "App table is full\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_APP_CFG;
 	dcbx_set.config.params.app_entry[i].ethtype = ethtype;
@@ -1795,568 +1796,568 @@ static int qed_dcbnl_setapp(struct qed_dev *cdev,
 	dcbx_set.config.params.app_entry[i].prio = pri_map;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return -EBUSY;
+	अगर (!ptt)
+		वापस -EBUSY;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u8 qed_dcbnl_setdcbx(struct qed_dev *cdev, u8 mode)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल u8 qed_dcbnl_setdcbx(काष्ठा qed_dev *cdev, u8 mode)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "new mode = %x\n", mode);
 
-	if (!(mode & DCB_CAP_DCBX_VER_IEEE) &&
-	    !(mode & DCB_CAP_DCBX_VER_CEE) && !(mode & DCB_CAP_DCBX_STATIC)) {
+	अगर (!(mode & DCB_CAP_DCBX_VER_IEEE) &&
+	    !(mode & DCB_CAP_DCBX_VER_CEE) && !(mode & DCB_CAP_DCBX_STATIC)) अणु
 		DP_INFO(hwfn, "Allowed modes are cee, ieee or static\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return 1;
+	अगर (rc)
+		वापस 1;
 
 	dcbx_set.ver_num = 0;
-	if (mode & DCB_CAP_DCBX_VER_CEE) {
+	अगर (mode & DCB_CAP_DCBX_VER_CEE) अणु
 		dcbx_set.ver_num |= DCBX_CONFIG_VERSION_CEE;
 		dcbx_set.enabled = true;
-	}
+	पूर्ण
 
-	if (mode & DCB_CAP_DCBX_VER_IEEE) {
+	अगर (mode & DCB_CAP_DCBX_VER_IEEE) अणु
 		dcbx_set.ver_num |= DCBX_CONFIG_VERSION_IEEE;
 		dcbx_set.enabled = true;
-	}
+	पूर्ण
 
-	if (mode & DCB_CAP_DCBX_STATIC) {
+	अगर (mode & DCB_CAP_DCBX_STATIC) अणु
 		dcbx_set.ver_num |= DCBX_CONFIG_VERSION_STATIC;
 		dcbx_set.enabled = true;
-	}
+	पूर्ण
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return 1;
+	अगर (!ptt)
+		वापस 1;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static u8 qed_dcbnl_getfeatcfg(struct qed_dev *cdev, int featid, u8 *flags)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अटल u8 qed_dcbnl_getfeatcfg(काष्ठा qed_dev *cdev, पूर्णांक featid, u8 *flags)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "Feature id  = %d\n", featid);
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return 1;
+	अगर (!dcbx_info)
+		वापस 1;
 
 	*flags = 0;
-	switch (featid) {
-	case DCB_FEATCFG_ATTR_PG:
-		if (dcbx_info->operational.params.ets_enabled)
+	चयन (featid) अणु
+	हाल DCB_FEATCFG_ATTR_PG:
+		अगर (dcbx_info->operational.params.ets_enabled)
 			*flags = DCB_FEATCFG_ENABLE;
-		else
+		अन्यथा
 			*flags = DCB_FEATCFG_ERROR;
-		break;
-	case DCB_FEATCFG_ATTR_PFC:
-		if (dcbx_info->operational.params.pfc.enabled)
+		अवरोध;
+	हाल DCB_FEATCFG_ATTR_PFC:
+		अगर (dcbx_info->operational.params.pfc.enabled)
 			*flags = DCB_FEATCFG_ENABLE;
-		else
+		अन्यथा
 			*flags = DCB_FEATCFG_ERROR;
-		break;
-	case DCB_FEATCFG_ATTR_APP:
-		if (dcbx_info->operational.params.app_valid)
+		अवरोध;
+	हाल DCB_FEATCFG_ATTR_APP:
+		अगर (dcbx_info->operational.params.app_valid)
 			*flags = DCB_FEATCFG_ENABLE;
-		else
+		अन्यथा
 			*flags = DCB_FEATCFG_ERROR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_INFO(hwfn, "Invalid feature-ID %d\n", featid);
-		kfree(dcbx_info);
-		return 1;
-	}
+		kमुक्त(dcbx_info);
+		वापस 1;
+	पूर्ण
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "flags = %d\n", *flags);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 qed_dcbnl_setfeatcfg(struct qed_dev *cdev, int featid, u8 flags)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_set dcbx_set;
+अटल u8 qed_dcbnl_setfeatcfg(काष्ठा qed_dev *cdev, पूर्णांक featid, u8 flags)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_set dcbx_set;
 	bool enabled, willing;
-	struct qed_ptt *ptt;
-	int rc;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "featid = %d flags = %d\n",
 		   featid, flags);
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return 1;
+	अगर (rc)
+		वापस 1;
 
 	enabled = !!(flags & DCB_FEATCFG_ENABLE);
 	willing = !!(flags & DCB_FEATCFG_WILLING);
-	switch (featid) {
-	case DCB_FEATCFG_ATTR_PG:
+	चयन (featid) अणु
+	हाल DCB_FEATCFG_ATTR_PG:
 		dcbx_set.override_flags |= QED_DCBX_OVERRIDE_ETS_CFG;
 		dcbx_set.config.params.ets_enabled = enabled;
 		dcbx_set.config.params.ets_willing = willing;
-		break;
-	case DCB_FEATCFG_ATTR_PFC:
+		अवरोध;
+	हाल DCB_FEATCFG_ATTR_PFC:
 		dcbx_set.override_flags |= QED_DCBX_OVERRIDE_PFC_CFG;
 		dcbx_set.config.params.pfc.enabled = enabled;
 		dcbx_set.config.params.pfc.willing = willing;
-		break;
-	case DCB_FEATCFG_ATTR_APP:
+		अवरोध;
+	हाल DCB_FEATCFG_ATTR_APP:
 		dcbx_set.override_flags |= QED_DCBX_OVERRIDE_APP_CFG;
 		dcbx_set.config.params.app_willing = willing;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_INFO(hwfn, "Invalid feature-ID %d\n", featid);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return 1;
+	अगर (!ptt)
+		वापस 1;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_peer_getappinfo(struct qed_dev *cdev,
-				     struct dcb_peer_app_info *info,
+अटल पूर्णांक qed_dcbnl_peer_getappinfo(काष्ठा qed_dev *cdev,
+				     काष्ठा dcb_peer_app_info *info,
 				     u16 *app_count)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_REMOTE_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
 	info->willing = dcbx_info->remote.params.app_willing;
 	info->error = dcbx_info->remote.params.app_error;
 	*app_count = dcbx_info->remote.params.num_app_entries;
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_peer_getapptable(struct qed_dev *cdev,
-				      struct dcb_app *table)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	int i;
+अटल पूर्णांक qed_dcbnl_peer_getapptable(काष्ठा qed_dev *cdev,
+				      काष्ठा dcb_app *table)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_REMOTE_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	for (i = 0; i < dcbx_info->remote.params.num_app_entries; i++) {
-		if (dcbx_info->remote.params.app_entry[i].ethtype)
+	क्रम (i = 0; i < dcbx_info->remote.params.num_app_entries; i++) अणु
+		अगर (dcbx_info->remote.params.app_entry[i].ethtype)
 			table[i].selector = DCB_APP_IDTYPE_ETHTYPE;
-		else
+		अन्यथा
 			table[i].selector = DCB_APP_IDTYPE_PORTNUM;
 		table[i].priority = dcbx_info->remote.params.app_entry[i].prio;
 		table[i].protocol =
 		    dcbx_info->remote.params.app_entry[i].proto_id;
-	}
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_cee_peer_getpfc(struct qed_dev *cdev, struct cee_pfc *pfc)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	int i;
+अटल पूर्णांक qed_dcbnl_cee_peer_getpfc(काष्ठा qed_dev *cdev, काष्ठा cee_pfc *pfc)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_REMOTE_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
-		if (dcbx_info->remote.params.pfc.prio[i])
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
+		अगर (dcbx_info->remote.params.pfc.prio[i])
 			pfc->pfc_en |= BIT(i);
 
 	pfc->tcs_supported = dcbx_info->remote.params.pfc.max_tc;
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "pfc state = %d tcs_supported = %d\n",
 		   pfc->pfc_en, pfc->tcs_supported);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_cee_peer_getpg(struct qed_dev *cdev, struct cee_pg *pg)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	int i;
+अटल पूर्णांक qed_dcbnl_cee_peer_getpg(काष्ठा qed_dev *cdev, काष्ठा cee_pg *pg)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_REMOTE_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
 	pg->willing = dcbx_info->remote.params.ets_willing;
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) {
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++) अणु
 		pg->pg_bw[i] = dcbx_info->remote.params.ets_tc_bw_tbl[i];
 		pg->prio_pg[i] = dcbx_info->remote.params.ets_pri_tc_tbl[i];
-	}
+	पूर्ण
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "willing = %d", pg->willing);
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_get_ieee_pfc(struct qed_dev *cdev,
-				  struct ieee_pfc *pfc, bool remote)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_params *params;
-	struct qed_dcbx_get *dcbx_info;
-	int rc, i;
+अटल पूर्णांक qed_dcbnl_get_ieee_pfc(काष्ठा qed_dev *cdev,
+				  काष्ठा ieee_pfc *pfc, bool remote)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_params *params;
+	काष्ठा qed_dcbx_get *dcbx_info;
+	पूर्णांक rc, i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (remote) {
-		memset(dcbx_info, 0, sizeof(*dcbx_info));
+	अगर (remote) अणु
+		स_रखो(dcbx_info, 0, माप(*dcbx_info));
 		rc = qed_dcbx_query_params(hwfn, dcbx_info,
 					   QED_DCBX_REMOTE_MIB);
-		if (rc) {
-			kfree(dcbx_info);
-			return -EINVAL;
-		}
+		अगर (rc) अणु
+			kमुक्त(dcbx_info);
+			वापस -EINVAL;
+		पूर्ण
 
 		params = &dcbx_info->remote.params;
-	} else {
+	पूर्ण अन्यथा अणु
 		params = &dcbx_info->operational.params;
-	}
+	पूर्ण
 
 	pfc->pfc_cap = params->pfc.max_tc;
 	pfc->pfc_en = 0;
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
-		if (params->pfc.prio[i])
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
+		अगर (params->pfc.prio[i])
 			pfc->pfc_en |= BIT(i);
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_ieee_getpfc(struct qed_dev *cdev, struct ieee_pfc *pfc)
-{
-	return qed_dcbnl_get_ieee_pfc(cdev, pfc, false);
-}
+अटल पूर्णांक qed_dcbnl_ieee_getpfc(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc)
+अणु
+	वापस qed_dcbnl_get_ieee_pfc(cdev, pfc, false);
+पूर्ण
 
-static int qed_dcbnl_ieee_setpfc(struct qed_dev *cdev, struct ieee_pfc *pfc)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc, i;
+अटल पूर्णांक qed_dcbnl_ieee_setpfc(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc, i;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return -EINVAL;
+	अगर (rc)
+		वापस -EINVAL;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_PFC_CFG;
-	for (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
+	क्रम (i = 0; i < QED_MAX_PFC_PRIORITIES; i++)
 		dcbx_set.config.params.pfc.prio[i] = !!(pfc->pfc_en & BIT(i));
 
 	dcbx_set.config.params.pfc.max_tc = pfc->pfc_cap;
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return -EINVAL;
+	अगर (!ptt)
+		वापस -EINVAL;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_dcbnl_get_ieee_ets(struct qed_dev *cdev,
-				  struct ieee_ets *ets, bool remote)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_dcbx_params *params;
-	int rc;
+अटल पूर्णांक qed_dcbnl_get_ieee_ets(काष्ठा qed_dev *cdev,
+				  काष्ठा ieee_ets *ets, bool remote)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_dcbx_params *params;
+	पूर्णांक rc;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (remote) {
-		memset(dcbx_info, 0, sizeof(*dcbx_info));
+	अगर (remote) अणु
+		स_रखो(dcbx_info, 0, माप(*dcbx_info));
 		rc = qed_dcbx_query_params(hwfn, dcbx_info,
 					   QED_DCBX_REMOTE_MIB);
-		if (rc) {
-			kfree(dcbx_info);
-			return -EINVAL;
-		}
+		अगर (rc) अणु
+			kमुक्त(dcbx_info);
+			वापस -EINVAL;
+		पूर्ण
 
 		params = &dcbx_info->remote.params;
-	} else {
+	पूर्ण अन्यथा अणु
 		params = &dcbx_info->operational.params;
-	}
+	पूर्ण
 
 	ets->ets_cap = params->max_ets_tc;
 	ets->willing = params->ets_willing;
 	ets->cbs = params->ets_cbs;
-	memcpy(ets->tc_tx_bw, params->ets_tc_bw_tbl, sizeof(ets->tc_tx_bw));
-	memcpy(ets->tc_tsa, params->ets_tc_tsa_tbl, sizeof(ets->tc_tsa));
-	memcpy(ets->prio_tc, params->ets_pri_tc_tbl, sizeof(ets->prio_tc));
-	kfree(dcbx_info);
+	स_नकल(ets->tc_tx_bw, params->ets_tc_bw_tbl, माप(ets->tc_tx_bw));
+	स_नकल(ets->tc_tsa, params->ets_tc_tsa_tbl, माप(ets->tc_tsa));
+	स_नकल(ets->prio_tc, params->ets_pri_tc_tbl, माप(ets->prio_tc));
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_ieee_getets(struct qed_dev *cdev, struct ieee_ets *ets)
-{
-	return qed_dcbnl_get_ieee_ets(cdev, ets, false);
-}
+अटल पूर्णांक qed_dcbnl_ieee_getets(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets)
+अणु
+	वापस qed_dcbnl_get_ieee_ets(cdev, ets, false);
+पूर्ण
 
-static int qed_dcbnl_ieee_setets(struct qed_dev *cdev, struct ieee_ets *ets)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_dcbx_set dcbx_set;
-	struct qed_ptt *ptt;
-	int rc;
+अटल पूर्णांक qed_dcbnl_ieee_setets(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_ptt *ptt;
+	पूर्णांक rc;
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return -EINVAL;
+	अगर (rc)
+		वापस -EINVAL;
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_ETS_CFG;
 	dcbx_set.config.params.max_ets_tc = ets->ets_cap;
 	dcbx_set.config.params.ets_willing = ets->willing;
 	dcbx_set.config.params.ets_cbs = ets->cbs;
-	memcpy(dcbx_set.config.params.ets_tc_bw_tbl, ets->tc_tx_bw,
-	       sizeof(ets->tc_tx_bw));
-	memcpy(dcbx_set.config.params.ets_tc_tsa_tbl, ets->tc_tsa,
-	       sizeof(ets->tc_tsa));
-	memcpy(dcbx_set.config.params.ets_pri_tc_tbl, ets->prio_tc,
-	       sizeof(ets->prio_tc));
+	स_नकल(dcbx_set.config.params.ets_tc_bw_tbl, ets->tc_tx_bw,
+	       माप(ets->tc_tx_bw));
+	स_नकल(dcbx_set.config.params.ets_tc_tsa_tbl, ets->tc_tsa,
+	       माप(ets->tc_tsa));
+	स_नकल(dcbx_set.config.params.ets_pri_tc_tbl, ets->prio_tc,
+	       माप(ets->prio_tc));
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return -EINVAL;
+	अगर (!ptt)
+		वापस -EINVAL;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-qed_dcbnl_ieee_peer_getets(struct qed_dev *cdev, struct ieee_ets *ets)
-{
-	return qed_dcbnl_get_ieee_ets(cdev, ets, true);
-}
+अटल पूर्णांक
+qed_dcbnl_ieee_peer_getets(काष्ठा qed_dev *cdev, काष्ठा ieee_ets *ets)
+अणु
+	वापस qed_dcbnl_get_ieee_ets(cdev, ets, true);
+पूर्ण
 
-static int
-qed_dcbnl_ieee_peer_getpfc(struct qed_dev *cdev, struct ieee_pfc *pfc)
-{
-	return qed_dcbnl_get_ieee_pfc(cdev, pfc, true);
-}
+अटल पूर्णांक
+qed_dcbnl_ieee_peer_getpfc(काष्ठा qed_dev *cdev, काष्ठा ieee_pfc *pfc)
+अणु
+	वापस qed_dcbnl_get_ieee_pfc(cdev, pfc, true);
+पूर्ण
 
-static int qed_get_sf_ieee_value(u8 selector, u8 *sf_ieee)
-{
-	switch (selector) {
-	case IEEE_8021QAZ_APP_SEL_ETHERTYPE:
+अटल पूर्णांक qed_get_sf_ieee_value(u8 selector, u8 *sf_ieee)
+अणु
+	चयन (selector) अणु
+	हाल IEEE_8021QAZ_APP_SEL_ETHERTYPE:
 		*sf_ieee = QED_DCBX_SF_IEEE_ETHTYPE;
-		break;
-	case IEEE_8021QAZ_APP_SEL_STREAM:
+		अवरोध;
+	हाल IEEE_8021QAZ_APP_SEL_STREAM:
 		*sf_ieee = QED_DCBX_SF_IEEE_TCP_PORT;
-		break;
-	case IEEE_8021QAZ_APP_SEL_DGRAM:
+		अवरोध;
+	हाल IEEE_8021QAZ_APP_SEL_DGRAM:
 		*sf_ieee = QED_DCBX_SF_IEEE_UDP_PORT;
-		break;
-	case IEEE_8021QAZ_APP_SEL_ANY:
+		अवरोध;
+	हाल IEEE_8021QAZ_APP_SEL_ANY:
 		*sf_ieee = QED_DCBX_SF_IEEE_TCP_UDP_PORT;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_ieee_getapp(struct qed_dev *cdev, struct dcb_app *app)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_app_entry *entry;
+अटल पूर्णांक qed_dcbnl_ieee_getapp(काष्ठा qed_dev *cdev, काष्ठा dcb_app *app)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_app_entry *entry;
 	u8 prio = 0;
 	u8 sf_ieee;
-	int i;
+	पूर्णांक i;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "selector = %d protocol = %d\n",
 		   app->selector, app->protocol);
 
-	if (qed_get_sf_ieee_value(app->selector, &sf_ieee)) {
+	अगर (qed_get_sf_ieee_value(app->selector, &sf_ieee)) अणु
 		DP_INFO(cdev, "Invalid selector field value %d\n",
 			app->selector);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &dcbx_info->operational.params.app_entry[i];
-		if ((entry->sf_ieee == sf_ieee) &&
-		    (entry->proto_id == app->protocol)) {
+		अगर ((entry->sf_ieee == sf_ieee) &&
+		    (entry->proto_id == app->protocol)) अणु
 			prio = entry->prio;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == QED_DCBX_MAX_APP_PROTOCOL) {
+	अगर (i == QED_DCBX_MAX_APP_PROTOCOL) अणु
 		DP_ERR(cdev, "App entry (%d, %d) not found\n", app->selector,
 		       app->protocol);
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
 	app->priority = ffs(prio) - 1;
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_dcbnl_ieee_setapp(struct qed_dev *cdev, struct dcb_app *app)
-{
-	struct qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
-	struct qed_dcbx_get *dcbx_info;
-	struct qed_dcbx_set dcbx_set;
-	struct qed_app_entry *entry;
-	struct qed_ptt *ptt;
+अटल पूर्णांक qed_dcbnl_ieee_setapp(काष्ठा qed_dev *cdev, काष्ठा dcb_app *app)
+अणु
+	काष्ठा qed_hwfn *hwfn = QED_LEADING_HWFN(cdev);
+	काष्ठा qed_dcbx_get *dcbx_info;
+	काष्ठा qed_dcbx_set dcbx_set;
+	काष्ठा qed_app_entry *entry;
+	काष्ठा qed_ptt *ptt;
 	u8 sf_ieee;
-	int rc, i;
+	पूर्णांक rc, i;
 
 	DP_VERBOSE(hwfn, QED_MSG_DCB, "selector = %d protocol = %d pri = %d\n",
 		   app->selector, app->protocol, app->priority);
-	if (app->priority >= QED_MAX_PFC_PRIORITIES) {
+	अगर (app->priority >= QED_MAX_PFC_PRIORITIES) अणु
 		DP_INFO(hwfn, "Invalid priority %d\n", app->priority);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (qed_get_sf_ieee_value(app->selector, &sf_ieee)) {
+	अगर (qed_get_sf_ieee_value(app->selector, &sf_ieee)) अणु
 		DP_INFO(cdev, "Invalid selector field value %d\n",
 			app->selector);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dcbx_info = qed_dcbnl_get_dcbx(hwfn, QED_DCBX_OPERATIONAL_MIB);
-	if (!dcbx_info)
-		return -EINVAL;
+	अगर (!dcbx_info)
+		वापस -EINVAL;
 
-	if (!dcbx_info->operational.ieee) {
+	अगर (!dcbx_info->operational.ieee) अणु
 		DP_INFO(hwfn, "DCBX is not enabled/operational in IEEE mode\n");
-		kfree(dcbx_info);
-		return -EINVAL;
-	}
+		kमुक्त(dcbx_info);
+		वापस -EINVAL;
+	पूर्ण
 
-	kfree(dcbx_info);
+	kमुक्त(dcbx_info);
 
-	memset(&dcbx_set, 0, sizeof(dcbx_set));
+	स_रखो(&dcbx_set, 0, माप(dcbx_set));
 	rc = qed_dcbx_get_config_params(hwfn, &dcbx_set);
-	if (rc)
-		return -EINVAL;
+	अगर (rc)
+		वापस -EINVAL;
 
-	for (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) {
+	क्रम (i = 0; i < QED_DCBX_MAX_APP_PROTOCOL; i++) अणु
 		entry = &dcbx_set.config.params.app_entry[i];
-		if ((entry->sf_ieee == sf_ieee) &&
+		अगर ((entry->sf_ieee == sf_ieee) &&
 		    (entry->proto_id == app->protocol))
-			break;
+			अवरोध;
 		/* First empty slot */
-		if (!entry->proto_id) {
+		अगर (!entry->proto_id) अणु
 			dcbx_set.config.params.num_app_entries++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == QED_DCBX_MAX_APP_PROTOCOL) {
+	अगर (i == QED_DCBX_MAX_APP_PROTOCOL) अणु
 		DP_ERR(cdev, "App table is full\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	dcbx_set.override_flags |= QED_DCBX_OVERRIDE_APP_CFG;
 	dcbx_set.config.params.app_entry[i].sf_ieee = sf_ieee;
@@ -2364,18 +2365,18 @@ static int qed_dcbnl_ieee_setapp(struct qed_dev *cdev, struct dcb_app *app)
 	dcbx_set.config.params.app_entry[i].prio = BIT(app->priority);
 
 	ptt = qed_ptt_acquire(hwfn);
-	if (!ptt)
-		return -EBUSY;
+	अगर (!ptt)
+		वापस -EBUSY;
 
 	rc = qed_dcbx_config_params(hwfn, ptt, &dcbx_set, 0);
 
 	qed_ptt_release(hwfn, ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-const struct qed_eth_dcbnl_ops qed_dcbnl_ops_pass = {
-	.getstate = qed_dcbnl_getstate,
+स्थिर काष्ठा qed_eth_dcbnl_ops qed_dcbnl_ops_pass = अणु
+	.माला_लोtate = qed_dcbnl_माला_लोtate,
 	.setstate = qed_dcbnl_setstate,
 	.getpgtccfgtx = qed_dcbnl_getpgtccfgtx,
 	.getpgbwgcfgtx = qed_dcbnl_getpgbwgcfgtx,
@@ -2383,7 +2384,7 @@ const struct qed_eth_dcbnl_ops qed_dcbnl_ops_pass = {
 	.getpgbwgcfgrx = qed_dcbnl_getpgbwgcfgrx,
 	.getpfccfg = qed_dcbnl_getpfccfg,
 	.setpfccfg = qed_dcbnl_setpfccfg,
-	.getcap = qed_dcbnl_getcap,
+	.अ_लोap = qed_dcbnl_अ_लोap,
 	.getnumtcs = qed_dcbnl_getnumtcs,
 	.getpfcstate = qed_dcbnl_getpfcstate,
 	.getdcbx = qed_dcbnl_getdcbx,
@@ -2411,6 +2412,6 @@ const struct qed_eth_dcbnl_ops qed_dcbnl_ops_pass = {
 	.ieee_peer_getets = qed_dcbnl_ieee_peer_getets,
 	.ieee_getapp = qed_dcbnl_ieee_getapp,
 	.ieee_setapp = qed_dcbnl_ieee_setapp,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

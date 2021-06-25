@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2004-2009 Freescale Semiconductor, Inc. All Rights Reserved.
  */
 
-#ifndef __ASM_ARCH_MXC_DMA_H__
-#define __ASM_ARCH_MXC_DMA_H__
+#अगर_अघोषित __ASM_ARCH_MXC_DMA_H__
+#घोषणा __ASM_ARCH_MXC_DMA_H__
 
-#include <linux/scatterlist.h>
-#include <linux/device.h>
-#include <linux/dmaengine.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmaengine.h>
 
 /*
- * This enumerates peripheral types. Used for SDMA.
+ * This क्रमागतerates peripheral types. Used क्रम SDMA.
  */
-enum sdma_peripheral_type {
-	IMX_DMATYPE_SSI,	/* MCU domain SSI */
+क्रमागत sdma_peripheral_type अणु
+	IMX_DMATYPE_SSI,	/* MCU करोमुख्य SSI */
 	IMX_DMATYPE_SSI_SP,	/* Shared SSI */
 	IMX_DMATYPE_MMC,	/* MMC */
 	IMX_DMATYPE_SDHC,	/* SDHC */
-	IMX_DMATYPE_UART,	/* MCU domain UART */
+	IMX_DMATYPE_UART,	/* MCU करोमुख्य UART */
 	IMX_DMATYPE_UART_SP,	/* Shared UART */
 	IMX_DMATYPE_FIRI,	/* FIRI */
-	IMX_DMATYPE_CSPI,	/* MCU domain CSPI */
+	IMX_DMATYPE_CSPI,	/* MCU करोमुख्य CSPI */
 	IMX_DMATYPE_CSPI_SP,	/* Shared CSPI */
 	IMX_DMATYPE_SIM,	/* SIM */
 	IMX_DMATYPE_ATA,	/* ATA */
@@ -39,30 +40,30 @@ enum sdma_peripheral_type {
 	IMX_DMATYPE_SSI_DUAL,	/* SSI Dual FIFO */
 	IMX_DMATYPE_ASRC_SP,	/* Shared ASRC */
 	IMX_DMATYPE_SAI,	/* SAI */
-};
+पूर्ण;
 
-enum imx_dma_prio {
+क्रमागत imx_dma_prio अणु
 	DMA_PRIO_HIGH = 0,
 	DMA_PRIO_MEDIUM = 1,
 	DMA_PRIO_LOW = 2
-};
+पूर्ण;
 
-struct imx_dma_data {
-	int dma_request; /* DMA request line */
-	int dma_request2; /* secondary DMA request line */
-	enum sdma_peripheral_type peripheral_type;
-	int priority;
-};
+काष्ठा imx_dma_data अणु
+	पूर्णांक dma_request; /* DMA request line */
+	पूर्णांक dma_request2; /* secondary DMA request line */
+	क्रमागत sdma_peripheral_type peripheral_type;
+	पूर्णांक priority;
+पूर्ण;
 
-static inline int imx_dma_is_ipu(struct dma_chan *chan)
-{
-	return !strcmp(dev_name(chan->device->dev), "ipu-core");
-}
+अटल अंतरभूत पूर्णांक imx_dma_is_ipu(काष्ठा dma_chan *chan)
+अणु
+	वापस !म_भेद(dev_name(chan->device->dev), "ipu-core");
+पूर्ण
 
-static inline int imx_dma_is_general_purpose(struct dma_chan *chan)
-{
-	return !strcmp(chan->device->dev->driver->name, "imx-sdma") ||
-		!strcmp(chan->device->dev->driver->name, "imx-dma");
-}
+अटल अंतरभूत पूर्णांक imx_dma_is_general_purpose(काष्ठा dma_chan *chan)
+अणु
+	वापस !म_भेद(chan->device->dev->driver->name, "imx-sdma") ||
+		!म_भेद(chan->device->dev->driver->name, "imx-dma");
+पूर्ण
 
-#endif
+#पूर्ण_अगर

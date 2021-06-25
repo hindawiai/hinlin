@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 Microsoft Corporation.
  *
  * Author:  Jaskaran Singh Khurana <jaskarankhurana@linux.microsoft.com>
  *
  */
-#ifndef DM_VERITY_SIG_VERIFICATION_H
-#define DM_VERITY_SIG_VERIFICATION_H
+#अगर_अघोषित DM_VERITY_SIG_VERIFICATION_H
+#घोषणा DM_VERITY_SIG_VERIFICATION_H
 
-#define DM_VERITY_ROOT_HASH_VERIFICATION "DM Verity Sig Verification"
-#define DM_VERITY_ROOT_HASH_VERIFICATION_OPT_SIG_KEY "root_hash_sig_key_desc"
+#घोषणा DM_VERITY_ROOT_HASH_VERIFICATION "DM Verity Sig Verification"
+#घोषणा DM_VERITY_ROOT_HASH_VERIFICATION_OPT_SIG_KEY "root_hash_sig_key_desc"
 
-struct dm_verity_sig_opts {
-	unsigned int sig_size;
+काष्ठा dm_verity_sig_opts अणु
+	अचिन्हित पूर्णांक sig_size;
 	u8 *sig;
-};
+पूर्ण;
 
-#ifdef CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG
+#अगर_घोषित CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG
 
-#define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 2
+#घोषणा DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 2
 
-int verity_verify_root_hash(const void *data, size_t data_len,
-			    const void *sig_data, size_t sig_len);
-bool verity_verify_is_sig_opt_arg(const char *arg_name);
+पूर्णांक verity_verअगरy_root_hash(स्थिर व्योम *data, माप_प्रकार data_len,
+			    स्थिर व्योम *sig_data, माप_प्रकार sig_len);
+bool verity_verअगरy_is_sig_opt_arg(स्थिर अक्षर *arg_name);
 
-int verity_verify_sig_parse_opt_args(struct dm_arg_set *as, struct dm_verity *v,
-				    struct dm_verity_sig_opts *sig_opts,
-				    unsigned int *argc, const char *arg_name);
+पूर्णांक verity_verअगरy_sig_parse_opt_args(काष्ठा dm_arg_set *as, काष्ठा dm_verity *v,
+				    काष्ठा dm_verity_sig_opts *sig_opts,
+				    अचिन्हित पूर्णांक *argc, स्थिर अक्षर *arg_name);
 
-void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts);
+व्योम verity_verअगरy_sig_opts_cleanup(काष्ठा dm_verity_sig_opts *sig_opts);
 
-#else
+#अन्यथा
 
-#define DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 0
+#घोषणा DM_VERITY_ROOT_HASH_VERIFICATION_OPTS 0
 
-static inline int verity_verify_root_hash(const void *data, size_t data_len,
-					  const void *sig_data, size_t sig_len)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक verity_verअगरy_root_hash(स्थिर व्योम *data, माप_प्रकार data_len,
+					  स्थिर व्योम *sig_data, माप_प्रकार sig_len)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline bool verity_verify_is_sig_opt_arg(const char *arg_name)
-{
-	return false;
-}
+अटल अंतरभूत bool verity_verअगरy_is_sig_opt_arg(स्थिर अक्षर *arg_name)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int verity_verify_sig_parse_opt_args(struct dm_arg_set *as,
-			struct dm_verity *v, struct dm_verity_sig_opts *sig_opts,
-			unsigned int *argc, const char *arg_name)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक verity_verअगरy_sig_parse_opt_args(काष्ठा dm_arg_set *as,
+			काष्ठा dm_verity *v, काष्ठा dm_verity_sig_opts *sig_opts,
+			अचिन्हित पूर्णांक *argc, स्थिर अक्षर *arg_name)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void verity_verify_sig_opts_cleanup(struct dm_verity_sig_opts *sig_opts)
-{
-}
+अटल अंतरभूत व्योम verity_verअगरy_sig_opts_cleanup(काष्ठा dm_verity_sig_opts *sig_opts)
+अणु
+पूर्ण
 
-#endif /* CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG */
-#endif /* DM_VERITY_SIG_VERIFICATION_H */
+#पूर्ण_अगर /* CONFIG_DM_VERITY_VERIFY_ROOTHASH_SIG */
+#पूर्ण_अगर /* DM_VERITY_SIG_VERIFICATION_H */

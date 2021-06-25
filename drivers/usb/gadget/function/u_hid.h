@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * u_hid.h
  *
- * Utility definitions for the hid function
+ * Utility definitions क्रम the hid function
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -10,30 +11,30 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#ifndef U_HID_H
-#define U_HID_H
+#अगर_अघोषित U_HID_H
+#घोषणा U_HID_H
 
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/composite.h>
 
-struct f_hid_opts {
-	struct usb_function_instance	func_inst;
-	int				minor;
-	unsigned char			subclass;
-	unsigned char			protocol;
-	unsigned short			report_length;
-	unsigned short			report_desc_length;
-	unsigned char			*report_desc;
+काष्ठा f_hid_opts अणु
+	काष्ठा usb_function_instance	func_inst;
+	पूर्णांक				minor;
+	अचिन्हित अक्षर			subclass;
+	अचिन्हित अक्षर			protocol;
+	अचिन्हित लघु			report_length;
+	अचिन्हित लघु			report_desc_length;
+	अचिन्हित अक्षर			*report_desc;
 	bool				report_desc_alloc;
 
 	/*
-	 * Protect the data form concurrent access by read/write
-	 * and create symlink/remove symlink.
+	 * Protect the data क्रमm concurrent access by पढ़ो/ग_लिखो
+	 * and create symlink/हटाओ symlink.
 	 */
-	 struct mutex			lock;
-	 int				refcnt;
-};
+	 काष्ठा mutex			lock;
+	 पूर्णांक				refcnt;
+पूर्ण;
 
-int ghid_setup(struct usb_gadget *g, int count);
-void ghid_cleanup(void);
+पूर्णांक ghid_setup(काष्ठा usb_gadget *g, पूर्णांक count);
+व्योम ghid_cleanup(व्योम);
 
-#endif /* U_HID_H */
+#पूर्ण_अगर /* U_HID_H */

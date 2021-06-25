@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Realtek RTL2832 DVB-T demodulator driver
  *
@@ -6,47 +7,47 @@
  * Copyright (C) 2012-2014 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef RTL2832_PRIV_H
-#define RTL2832_PRIV_H
+#अगर_अघोषित RTL2832_PRIV_H
+#घोषणा RTL2832_PRIV_H
 
-#include <linux/regmap.h>
-#include <linux/math64.h>
-#include <linux/bitops.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/bitops.h>
 
-#include <media/dvb_frontend.h>
-#include <media/dvb_math.h>
-#include "rtl2832.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_गणित.स>
+#समावेश "rtl2832.h"
 
-struct rtl2832_dev {
-	struct rtl2832_platform_data *pdata;
-	struct i2c_client *client;
-	struct regmap_config regmap_config;
-	struct regmap *regmap;
-	struct i2c_mux_core *muxc;
-	struct dvb_frontend fe;
-	enum fe_status fe_status;
-	u64 post_bit_error_prev; /* for old DVBv3 read_ber() calculation */
+काष्ठा rtl2832_dev अणु
+	काष्ठा rtl2832_platक्रमm_data *pdata;
+	काष्ठा i2c_client *client;
+	काष्ठा regmap_config regmap_config;
+	काष्ठा regmap *regmap;
+	काष्ठा i2c_mux_core *muxc;
+	काष्ठा dvb_frontend fe;
+	क्रमागत fe_status fe_status;
+	u64 post_bit_error_prev; /* क्रम old DVBv3 पढ़ो_ber() calculation */
 	u64 post_bit_error;
 	u64 post_bit_count;
 	bool sleeping;
-	struct delayed_work i2c_gate_work;
-	unsigned long filters; /* PID filter */
+	काष्ठा delayed_work i2c_gate_work;
+	अचिन्हित दीर्घ filters; /* PID filter */
 	bool slave_ts;
-};
+पूर्ण;
 
-struct rtl2832_reg_entry {
+काष्ठा rtl2832_reg_entry अणु
 	u16 start_address;
 	u8 msb;
 	u8 lsb;
-};
+पूर्ण;
 
-struct rtl2832_reg_value {
-	int reg;
+काष्ठा rtl2832_reg_value अणु
+	पूर्णांक reg;
 	u32 value;
-};
+पूर्ण;
 
-/* Demod register bit names */
-enum DVBT_REG_BIT_NAME {
+/* Demod रेजिस्टर bit names */
+क्रमागत DVBT_REG_BIT_NAME अणु
 	DVBT_SOFT_RST,
 	DVBT_IIC_REPEAT,
 	DVBT_TR_WAIT_MIN_8K,
@@ -236,180 +237,180 @@ enum DVBT_REG_BIT_NAME {
 	DVBT_TEST_REG_3,
 	DVBT_TEST_REG_4,
 	DVBT_REG_BIT_NAME_ITEM_TERMINATOR,
-};
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_fc2580[] = {
-	{DVBT_DAGC_TRG_VAL,             0x39},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x5a},
-	{DVBT_AAGC_LOOP_GAIN,           0x16},
-	{DVBT_LOOP_GAIN2_3_0,            0x6},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x16},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x9c},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9f4},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_fc2580[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x39पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x5aपूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x16पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x6पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x16पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x9cपूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9f4पूर्ण,
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_tua9001[] = {
-	{DVBT_DAGC_TRG_VAL,             0x39},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x5a},
-	{DVBT_AAGC_LOOP_GAIN,           0x16},
-	{DVBT_LOOP_GAIN2_3_0,            0x6},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x16},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x9c},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9f4},
-	{DVBT_OPT_ADC_IQ,                0x1},
-	{DVBT_AD_AVI,                    0x0},
-	{DVBT_AD_AVQ,                    0x0},
-	{DVBT_SPEC_INV,                  0x0},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_tua9001[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x39पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x5aपूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x16पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x6पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x16पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x9cपूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9f4पूर्ण,
+	अणुDVBT_OPT_ADC_IQ,                0x1पूर्ण,
+	अणुDVBT_AD_AVI,                    0x0पूर्ण,
+	अणुDVBT_AD_AVQ,                    0x0पूर्ण,
+	अणुDVBT_SPEC_INV,                  0x0पूर्ण,
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_fc0012[] = {
-	{DVBT_DAGC_TRG_VAL,             0x5a},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x5a},
-	{DVBT_AAGC_LOOP_GAIN,           0x16},
-	{DVBT_LOOP_GAIN2_3_0,            0x6},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x16},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x80},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9bf},
-	{DVBT_EN_GI_PGA,                 0x0},
-	{DVBT_THD_LOCK_UP,               0x0},
-	{DVBT_THD_LOCK_DW,               0x0},
-	{DVBT_THD_UP1,                  0x11},
-	{DVBT_THD_DW1,                  0xef},
-	{DVBT_INTER_CNT_LEN,             0xc},
-	{DVBT_GI_PGA_STATE,              0x0},
-	{DVBT_EN_AGC_PGA,                0x1},
-	{DVBT_IF_AGC_MAN,                0x0},
-	{DVBT_SPEC_INV,                  0x0},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_fc0012[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x5aपूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x5aपूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x16पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x6पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x16पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9bfपूर्ण,
+	अणुDVBT_EN_GI_PGA,                 0x0पूर्ण,
+	अणुDVBT_THD_LOCK_UP,               0x0पूर्ण,
+	अणुDVBT_THD_LOCK_DW,               0x0पूर्ण,
+	अणुDVBT_THD_UP1,                  0x11पूर्ण,
+	अणुDVBT_THD_DW1,                  0xefपूर्ण,
+	अणुDVBT_INTER_CNT_LEN,             0xcपूर्ण,
+	अणुDVBT_GI_PGA_STATE,              0x0पूर्ण,
+	अणुDVBT_EN_AGC_PGA,                0x1पूर्ण,
+	अणुDVBT_IF_AGC_MAN,                0x0पूर्ण,
+	अणुDVBT_SPEC_INV,                  0x0पूर्ण,
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_e4000[] = {
-	{DVBT_DAGC_TRG_VAL,             0x5a},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x5a},
-	{DVBT_AAGC_LOOP_GAIN,           0x18},
-	{DVBT_LOOP_GAIN2_3_0,            0x8},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x18},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x80},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9d4},
-	{DVBT_EN_GI_PGA,                 0x0},
-	{DVBT_THD_LOCK_UP,               0x0},
-	{DVBT_THD_LOCK_DW,               0x0},
-	{DVBT_THD_UP1,                  0x14},
-	{DVBT_THD_DW1,                  0xec},
-	{DVBT_INTER_CNT_LEN,             0xc},
-	{DVBT_GI_PGA_STATE,              0x0},
-	{DVBT_EN_AGC_PGA,                0x1},
-	{DVBT_REG_GPE,                   0x1},
-	{DVBT_REG_GPO,                   0x1},
-	{DVBT_REG_MONSEL,                0x1},
-	{DVBT_REG_MON,                   0x1},
-	{DVBT_REG_4MSEL,                 0x0},
-	{DVBT_SPEC_INV,                  0x0},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_e4000[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x5aपूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x5aपूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x18पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x8पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x18पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9d4पूर्ण,
+	अणुDVBT_EN_GI_PGA,                 0x0पूर्ण,
+	अणुDVBT_THD_LOCK_UP,               0x0पूर्ण,
+	अणुDVBT_THD_LOCK_DW,               0x0पूर्ण,
+	अणुDVBT_THD_UP1,                  0x14पूर्ण,
+	अणुDVBT_THD_DW1,                  0xecपूर्ण,
+	अणुDVBT_INTER_CNT_LEN,             0xcपूर्ण,
+	अणुDVBT_GI_PGA_STATE,              0x0पूर्ण,
+	अणुDVBT_EN_AGC_PGA,                0x1पूर्ण,
+	अणुDVBT_REG_GPE,                   0x1पूर्ण,
+	अणुDVBT_REG_GPO,                   0x1पूर्ण,
+	अणुDVBT_REG_MONSEL,                0x1पूर्ण,
+	अणुDVBT_REG_MON,                   0x1पूर्ण,
+	अणुDVBT_REG_4MSEL,                 0x0पूर्ण,
+	अणुDVBT_SPEC_INV,                  0x0पूर्ण,
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_r820t[] = {
-	{DVBT_DAGC_TRG_VAL,             0x39},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x40},
-	{DVBT_AAGC_LOOP_GAIN,           0x16},
-	{DVBT_LOOP_GAIN2_3_0,            0x8},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x18},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x80},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9f4},
-	{DVBT_SPEC_INV,                  0x1},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_r820t[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x39पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x40पूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x16पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x8पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x18पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9f4पूर्ण,
+	अणुDVBT_SPEC_INV,                  0x1पूर्ण,
+पूर्ण;
 
-static const struct rtl2832_reg_value rtl2832_tuner_init_si2157[] = {
-	{DVBT_DAGC_TRG_VAL,             0x39},
-	{DVBT_AGC_TARG_VAL_0,            0x0},
-	{DVBT_AGC_TARG_VAL_8_1,         0x40},
-	{DVBT_AAGC_LOOP_GAIN,           0x16},
-	{DVBT_LOOP_GAIN2_3_0,            0x8},
-	{DVBT_LOOP_GAIN2_4,              0x1},
-	{DVBT_LOOP_GAIN3,               0x18},
-	{DVBT_VTOP1,                    0x35},
-	{DVBT_VTOP2,                    0x21},
-	{DVBT_VTOP3,                    0x21},
-	{DVBT_KRF1,                      0x0},
-	{DVBT_KRF2,                     0x40},
-	{DVBT_KRF3,                     0x10},
-	{DVBT_KRF4,                     0x10},
-	{DVBT_IF_AGC_MIN,               0x80},
-	{DVBT_IF_AGC_MAX,               0x7f},
-	{DVBT_RF_AGC_MIN,               0x80},
-	{DVBT_RF_AGC_MAX,               0x7f},
-	{DVBT_POLAR_RF_AGC,              0x0},
-	{DVBT_POLAR_IF_AGC,              0x0},
-	{DVBT_AD7_SETTING,            0xe9f4},
-	{DVBT_SPEC_INV,                  0x0},
-};
+अटल स्थिर काष्ठा rtl2832_reg_value rtl2832_tuner_init_si2157[] = अणु
+	अणुDVBT_DAGC_TRG_VAL,             0x39पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_0,            0x0पूर्ण,
+	अणुDVBT_AGC_TARG_VAL_8_1,         0x40पूर्ण,
+	अणुDVBT_AAGC_LOOP_GAIN,           0x16पूर्ण,
+	अणुDVBT_LOOP_GAIN2_3_0,            0x8पूर्ण,
+	अणुDVBT_LOOP_GAIN2_4,              0x1पूर्ण,
+	अणुDVBT_LOOP_GAIN3,               0x18पूर्ण,
+	अणुDVBT_VTOP1,                    0x35पूर्ण,
+	अणुDVBT_VTOP2,                    0x21पूर्ण,
+	अणुDVBT_VTOP3,                    0x21पूर्ण,
+	अणुDVBT_KRF1,                      0x0पूर्ण,
+	अणुDVBT_KRF2,                     0x40पूर्ण,
+	अणुDVBT_KRF3,                     0x10पूर्ण,
+	अणुDVBT_KRF4,                     0x10पूर्ण,
+	अणुDVBT_IF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_IF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_RF_AGC_MIN,               0x80पूर्ण,
+	अणुDVBT_RF_AGC_MAX,               0x7fपूर्ण,
+	अणुDVBT_POLAR_RF_AGC,              0x0पूर्ण,
+	अणुDVBT_POLAR_IF_AGC,              0x0पूर्ण,
+	अणुDVBT_AD7_SETTING,            0xe9f4पूर्ण,
+	अणुDVBT_SPEC_INV,                  0x0पूर्ण,
+पूर्ण;
 
-#endif /* RTL2832_PRIV_H */
+#पूर्ण_अगर /* RTL2832_PRIV_H */

@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * lib80211 crypt: host-based TKIP encryption implementation for lib80211
+ * lib80211 crypt: host-based TKIP encryption implementation क्रम lib80211
  *
  * Copyright (c) 2003-2004, Jouni Malinen <j@w1.fi>
  * Copyright (c) 2008, John W. Linville <linville@tuxdriver.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/err.h>
-#include <linux/fips.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/random.h>
-#include <linux/scatterlist.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/mm.h>
-#include <linux/if_ether.h>
-#include <linux/if_arp.h>
-#include <asm/string.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fips.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <यंत्र/माला.स>
 
-#include <linux/wireless.h>
-#include <linux/ieee80211.h>
-#include <net/iw_handler.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/ieee80211.h>
+#समावेश <net/iw_handler.h>
 
-#include <crypto/arc4.h>
-#include <crypto/hash.h>
-#include <linux/crypto.h>
-#include <linux/crc32.h>
+#समावेश <crypto/arc4.h>
+#समावेश <crypto/hash.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/crc32.h>
 
-#include <net/lib80211.h>
+#समावेश <net/lib80211.h>
 
 MODULE_AUTHOR("Jouni Malinen");
 MODULE_DESCRIPTION("lib80211 crypt: TKIP");
 MODULE_LICENSE("GPL");
 
-#define TKIP_HDR_LEN 8
+#घोषणा TKIP_HDR_LEN 8
 
-struct lib80211_tkip_data {
-#define TKIP_KEY_LEN 32
+काष्ठा lib80211_tkip_data अणु
+#घोषणा TKIP_KEY_LEN 32
 	u8 key[TKIP_KEY_LEN];
-	int key_set;
+	पूर्णांक key_set;
 
 	u32 tx_iv32;
 	u16 tx_iv16;
 	u16 tx_ttak[5];
-	int tx_phase1_done;
+	पूर्णांक tx_phase1_करोne;
 
 	u32 rx_iv32;
 	u16 rx_iv16;
 	u16 rx_ttak[5];
-	int rx_phase1_done;
+	पूर्णांक rx_phase1_करोne;
 	u32 rx_iv32_new;
 	u16 rx_iv16_new;
 
-	u32 dot11RSNAStatsTKIPReplays;
-	u32 dot11RSNAStatsTKIPICVErrors;
-	u32 dot11RSNAStatsTKIPLocalMICFailures;
+	u32 करोt11RSNAStatsTKIPReplays;
+	u32 करोt11RSNAStatsTKIPICVErrors;
+	u32 करोt11RSNAStatsTKIPLocalMICFailures;
 
-	int key_idx;
+	पूर्णांक key_idx;
 
-	struct arc4_ctx rx_ctx_arc4;
-	struct arc4_ctx tx_ctx_arc4;
-	struct crypto_shash *rx_tfm_michael;
-	struct crypto_shash *tx_tfm_michael;
+	काष्ठा arc4_ctx rx_ctx_arc4;
+	काष्ठा arc4_ctx tx_ctx_arc4;
+	काष्ठा crypto_shash *rx_tfm_michael;
+	काष्ठा crypto_shash *tx_tfm_michael;
 
-	/* scratch buffers for virt_to_page() (crypto API) */
+	/* scratch buffers क्रम virt_to_page() (crypto API) */
 	u8 rx_hdr[16], tx_hdr[16];
 
-	unsigned long flags;
-};
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-static unsigned long lib80211_tkip_set_flags(unsigned long flags, void *priv)
-{
-	struct lib80211_tkip_data *_priv = priv;
-	unsigned long old_flags = _priv->flags;
+अटल अचिन्हित दीर्घ lib80211_tkip_set_flags(अचिन्हित दीर्घ flags, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *_priv = priv;
+	अचिन्हित दीर्घ old_flags = _priv->flags;
 	_priv->flags = flags;
-	return old_flags;
-}
+	वापस old_flags;
+पूर्ण
 
-static unsigned long lib80211_tkip_get_flags(void *priv)
-{
-	struct lib80211_tkip_data *_priv = priv;
-	return _priv->flags;
-}
+अटल अचिन्हित दीर्घ lib80211_tkip_get_flags(व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *_priv = priv;
+	वापस _priv->flags;
+पूर्ण
 
-static void *lib80211_tkip_init(int key_idx)
-{
-	struct lib80211_tkip_data *priv;
+अटल व्योम *lib80211_tkip_init(पूर्णांक key_idx)
+अणु
+	काष्ठा lib80211_tkip_data *priv;
 
-	if (fips_enabled)
-		return NULL;
+	अगर (fips_enabled)
+		वापस शून्य;
 
-	priv = kzalloc(sizeof(*priv), GFP_ATOMIC);
-	if (priv == NULL)
-		goto fail;
+	priv = kzalloc(माप(*priv), GFP_ATOMIC);
+	अगर (priv == शून्य)
+		जाओ fail;
 
 	priv->key_idx = key_idx;
 
 	priv->tx_tfm_michael = crypto_alloc_shash("michael_mic", 0, 0);
-	if (IS_ERR(priv->tx_tfm_michael)) {
-		priv->tx_tfm_michael = NULL;
-		goto fail;
-	}
+	अगर (IS_ERR(priv->tx_tfm_michael)) अणु
+		priv->tx_tfm_michael = शून्य;
+		जाओ fail;
+	पूर्ण
 
 	priv->rx_tfm_michael = crypto_alloc_shash("michael_mic", 0, 0);
-	if (IS_ERR(priv->rx_tfm_michael)) {
-		priv->rx_tfm_michael = NULL;
-		goto fail;
-	}
+	अगर (IS_ERR(priv->rx_tfm_michael)) अणु
+		priv->rx_tfm_michael = शून्य;
+		जाओ fail;
+	पूर्ण
 
-	return priv;
+	वापस priv;
 
       fail:
-	if (priv) {
-		crypto_free_shash(priv->tx_tfm_michael);
-		crypto_free_shash(priv->rx_tfm_michael);
-		kfree(priv);
-	}
+	अगर (priv) अणु
+		crypto_मुक्त_shash(priv->tx_tfm_michael);
+		crypto_मुक्त_shash(priv->rx_tfm_michael);
+		kमुक्त(priv);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void lib80211_tkip_deinit(void *priv)
-{
-	struct lib80211_tkip_data *_priv = priv;
-	if (_priv) {
-		crypto_free_shash(_priv->tx_tfm_michael);
-		crypto_free_shash(_priv->rx_tfm_michael);
-	}
-	kfree_sensitive(priv);
-}
+अटल व्योम lib80211_tkip_deinit(व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *_priv = priv;
+	अगर (_priv) अणु
+		crypto_मुक्त_shash(_priv->tx_tfm_michael);
+		crypto_मुक्त_shash(_priv->rx_tfm_michael);
+	पूर्ण
+	kमुक्त_sensitive(priv);
+पूर्ण
 
-static inline u16 RotR1(u16 val)
-{
-	return (val >> 1) | (val << 15);
-}
+अटल अंतरभूत u16 RotR1(u16 val)
+अणु
+	वापस (val >> 1) | (val << 15);
+पूर्ण
 
-static inline u8 Lo8(u16 val)
-{
-	return val & 0xff;
-}
+अटल अंतरभूत u8 Lo8(u16 val)
+अणु
+	वापस val & 0xff;
+पूर्ण
 
-static inline u8 Hi8(u16 val)
-{
-	return val >> 8;
-}
+अटल अंतरभूत u8 Hi8(u16 val)
+अणु
+	वापस val >> 8;
+पूर्ण
 
-static inline u16 Lo16(u32 val)
-{
-	return val & 0xffff;
-}
+अटल अंतरभूत u16 Lo16(u32 val)
+अणु
+	वापस val & 0xffff;
+पूर्ण
 
-static inline u16 Hi16(u32 val)
-{
-	return val >> 16;
-}
+अटल अंतरभूत u16 Hi16(u32 val)
+अणु
+	वापस val >> 16;
+पूर्ण
 
-static inline u16 Mk16(u8 hi, u8 lo)
-{
-	return lo | (((u16) hi) << 8);
-}
+अटल अंतरभूत u16 Mk16(u8 hi, u8 lo)
+अणु
+	वापस lo | (((u16) hi) << 8);
+पूर्ण
 
-static inline u16 Mk16_le(__le16 * v)
-{
-	return le16_to_cpu(*v);
-}
+अटल अंतरभूत u16 Mk16_le(__le16 * v)
+अणु
+	वापस le16_to_cpu(*v);
+पूर्ण
 
-static const u16 Sbox[256] = {
+अटल स्थिर u16 Sbox[256] = अणु
 	0xC6A5, 0xF884, 0xEE99, 0xF68D, 0xFF0D, 0xD6BD, 0xDEB1, 0x9154,
 	0x6050, 0x0203, 0xCEA9, 0x567D, 0xE719, 0xB562, 0x4DE6, 0xEC9A,
 	0x8F45, 0x1F9D, 0x8940, 0xFA87, 0xEF15, 0xB2EB, 0x8EC9, 0xFB0B,
@@ -202,20 +203,20 @@ static const u16 Sbox[256] = {
 	0x2DB6, 0x3C22, 0x1592, 0xC920, 0x8749, 0xAAFF, 0x5078, 0xA57A,
 	0x038F, 0x59F8, 0x0980, 0x1A17, 0x65DA, 0xD731, 0x84C6, 0xD0B8,
 	0x82C3, 0x29B0, 0x5A77, 0x1E11, 0x7BCB, 0xA8FC, 0x6DD6, 0x2C3A,
-};
+पूर्ण;
 
-static inline u16 _S_(u16 v)
-{
+अटल अंतरभूत u16 _S_(u16 v)
+अणु
 	u16 t = Sbox[Hi8(v)];
-	return Sbox[Lo8(v)] ^ ((t << 8) | (t >> 8));
-}
+	वापस Sbox[Lo8(v)] ^ ((t << 8) | (t >> 8));
+पूर्ण
 
-#define PHASE1_LOOP_COUNT 8
+#घोषणा PHASE1_LOOP_COUNT 8
 
-static void tkip_mixing_phase1(u16 * TTAK, const u8 * TK, const u8 * TA,
+अटल व्योम tkip_mixing_phase1(u16 * TTAK, स्थिर u8 * TK, स्थिर u8 * TA,
 			       u32 IV32)
-{
-	int i, j;
+अणु
+	पूर्णांक i, j;
 
 	/* Initialize the 80-bit TTAK from TSC (IV32) and TA[0..5] */
 	TTAK[0] = Lo16(IV32);
@@ -224,21 +225,21 @@ static void tkip_mixing_phase1(u16 * TTAK, const u8 * TK, const u8 * TA,
 	TTAK[3] = Mk16(TA[3], TA[2]);
 	TTAK[4] = Mk16(TA[5], TA[4]);
 
-	for (i = 0; i < PHASE1_LOOP_COUNT; i++) {
+	क्रम (i = 0; i < PHASE1_LOOP_COUNT; i++) अणु
 		j = 2 * (i & 1);
 		TTAK[0] += _S_(TTAK[4] ^ Mk16(TK[1 + j], TK[0 + j]));
 		TTAK[1] += _S_(TTAK[0] ^ Mk16(TK[5 + j], TK[4 + j]));
 		TTAK[2] += _S_(TTAK[1] ^ Mk16(TK[9 + j], TK[8 + j]));
 		TTAK[3] += _S_(TTAK[2] ^ Mk16(TK[13 + j], TK[12 + j]));
 		TTAK[4] += _S_(TTAK[3] ^ Mk16(TK[1 + j], TK[0 + j])) + i;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tkip_mixing_phase2(u8 * WEPSeed, const u8 * TK, const u16 * TTAK,
+अटल व्योम tkip_mixing_phase2(u8 * WEPSeed, स्थिर u8 * TK, स्थिर u16 * TTAK,
 			       u16 IV16)
-{
+अणु
 	/* Make temporary area overlap WEP seed so that the final copy can be
-	 * avoided on little endian hosts. */
+	 * aव्योमed on little endian hosts. */
 	u16 *PPK = (u16 *) & WEPSeed[4];
 
 	/* Step 1 - make copy of TTAK and bring in TSC */
@@ -271,39 +272,39 @@ static void tkip_mixing_phase2(u8 * WEPSeed, const u8 * TK, const u16 * TTAK,
 	WEPSeed[2] = Lo8(IV16);
 	WEPSeed[3] = Lo8((PPK[5] ^ Mk16_le((__le16 *) & TK[0])) >> 1);
 
-#ifdef __BIG_ENDIAN
-	{
-		int i;
-		for (i = 0; i < 6; i++)
+#अगर_घोषित __BIG_ENDIAN
+	अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < 6; i++)
 			PPK[i] = (PPK[i] << 8) | (PPK[i] >> 8);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static int lib80211_tkip_hdr(struct sk_buff *skb, int hdr_len,
-			      u8 * rc4key, int keylen, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
+अटल पूर्णांक lib80211_tkip_hdr(काष्ठा sk_buff *skb, पूर्णांक hdr_len,
+			      u8 * rc4key, पूर्णांक keylen, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
 	u8 *pos;
-	struct ieee80211_hdr *hdr;
+	काष्ठा ieee80211_hdr *hdr;
 
-	hdr = (struct ieee80211_hdr *)skb->data;
+	hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
-	if (skb_headroom(skb) < TKIP_HDR_LEN || skb->len < hdr_len)
-		return -1;
+	अगर (skb_headroom(skb) < TKIP_HDR_LEN || skb->len < hdr_len)
+		वापस -1;
 
-	if (rc4key == NULL || keylen < 16)
-		return -1;
+	अगर (rc4key == शून्य || keylen < 16)
+		वापस -1;
 
-	if (!tkey->tx_phase1_done) {
+	अगर (!tkey->tx_phase1_करोne) अणु
 		tkip_mixing_phase1(tkey->tx_ttak, tkey->key, hdr->addr2,
 				   tkey->tx_iv32);
-		tkey->tx_phase1_done = 1;
-	}
+		tkey->tx_phase1_करोne = 1;
+	पूर्ण
 	tkip_mixing_phase2(rc4key, tkey->key, tkey->tx_ttak, tkey->tx_iv16);
 
 	pos = skb_push(skb, TKIP_HDR_LEN);
-	memmove(pos, pos + TKIP_HDR_LEN, hdr_len);
+	स_हटाओ(pos, pos + TKIP_HDR_LEN, hdr_len);
 	pos += hdr_len;
 
 	*pos++ = *rc4key;
@@ -316,36 +317,36 @@ static int lib80211_tkip_hdr(struct sk_buff *skb, int hdr_len,
 	*pos++ = (tkey->tx_iv32 >> 24) & 0xff;
 
 	tkey->tx_iv16++;
-	if (tkey->tx_iv16 == 0) {
-		tkey->tx_phase1_done = 0;
+	अगर (tkey->tx_iv16 == 0) अणु
+		tkey->tx_phase1_करोne = 0;
 		tkey->tx_iv32++;
-	}
+	पूर्ण
 
-	return TKIP_HDR_LEN;
-}
+	वापस TKIP_HDR_LEN;
+पूर्ण
 
-static int lib80211_tkip_encrypt(struct sk_buff *skb, int hdr_len, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
-	int len;
+अटल पूर्णांक lib80211_tkip_encrypt(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
+	पूर्णांक len;
 	u8 rc4key[16], *pos, *icv;
 	u32 crc;
 
-	if (tkey->flags & IEEE80211_CRYPTO_TKIP_COUNTERMEASURES) {
-		struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
+	अगर (tkey->flags & IEEE80211_CRYPTO_TKIP_COUNTERMEASURES) अणु
+		काष्ठा ieee80211_hdr *hdr = (काष्ठा ieee80211_hdr *)skb->data;
 		net_dbg_ratelimited("TKIP countermeasures: dropped TX packet to %pM\n",
 				    hdr->addr1);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (skb_tailroom(skb) < 4 || skb->len < hdr_len)
-		return -1;
+	अगर (skb_tailroom(skb) < 4 || skb->len < hdr_len)
+		वापस -1;
 
 	len = skb->len - hdr_len;
 	pos = skb->data + hdr_len;
 
-	if ((lib80211_tkip_hdr(skb, hdr_len, rc4key, 16, priv)) < 0)
-		return -1;
+	अगर ((lib80211_tkip_hdr(skb, hdr_len, rc4key, 16, priv)) < 0)
+		वापस -1;
 
 	crc = ~crc32_le(~0, pos, len);
 	icv = skb_put(skb, 4);
@@ -357,81 +358,81 @@ static int lib80211_tkip_encrypt(struct sk_buff *skb, int hdr_len, void *priv)
 	arc4_setkey(&tkey->tx_ctx_arc4, rc4key, 16);
 	arc4_crypt(&tkey->tx_ctx_arc4, pos, pos, len + 4);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * deal with seq counter wrapping correctly.
- * refer to timer_after() for jiffies wrapping handling
+ * refer to समयr_after() क्रम jअगरfies wrapping handling
  */
-static inline int tkip_replay_check(u32 iv32_n, u16 iv16_n,
+अटल अंतरभूत पूर्णांक tkip_replay_check(u32 iv32_n, u16 iv16_n,
 				    u32 iv32_o, u16 iv16_o)
-{
-	if ((s32)iv32_n - (s32)iv32_o < 0 ||
+अणु
+	अगर ((s32)iv32_n - (s32)iv32_o < 0 ||
 	    (iv32_n == iv32_o && iv16_n <= iv16_o))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int lib80211_tkip_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
+अटल पूर्णांक lib80211_tkip_decrypt(काष्ठा sk_buff *skb, पूर्णांक hdr_len, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
 	u8 rc4key[16];
 	u8 keyidx, *pos;
 	u32 iv32;
 	u16 iv16;
-	struct ieee80211_hdr *hdr;
+	काष्ठा ieee80211_hdr *hdr;
 	u8 icv[4];
 	u32 crc;
-	int plen;
+	पूर्णांक plen;
 
-	hdr = (struct ieee80211_hdr *)skb->data;
+	hdr = (काष्ठा ieee80211_hdr *)skb->data;
 
-	if (tkey->flags & IEEE80211_CRYPTO_TKIP_COUNTERMEASURES) {
+	अगर (tkey->flags & IEEE80211_CRYPTO_TKIP_COUNTERMEASURES) अणु
 		net_dbg_ratelimited("TKIP countermeasures: dropped received packet from %pM\n",
 				    hdr->addr2);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (skb->len < hdr_len + TKIP_HDR_LEN + 4)
-		return -1;
+	अगर (skb->len < hdr_len + TKIP_HDR_LEN + 4)
+		वापस -1;
 
 	pos = skb->data + hdr_len;
 	keyidx = pos[3];
-	if (!(keyidx & (1 << 5))) {
+	अगर (!(keyidx & (1 << 5))) अणु
 		net_dbg_ratelimited("TKIP: received packet without ExtIV flag from %pM\n",
 				    hdr->addr2);
-		return -2;
-	}
+		वापस -2;
+	पूर्ण
 	keyidx >>= 6;
-	if (tkey->key_idx != keyidx) {
+	अगर (tkey->key_idx != keyidx) अणु
 		net_dbg_ratelimited("TKIP: RX tkey->key_idx=%d frame keyidx=%d\n",
 				    tkey->key_idx, keyidx);
-		return -6;
-	}
-	if (!tkey->key_set) {
+		वापस -6;
+	पूर्ण
+	अगर (!tkey->key_set) अणु
 		net_dbg_ratelimited("TKIP: received packet from %pM with keyid=%d that does not have a configured key\n",
 				    hdr->addr2, keyidx);
-		return -3;
-	}
+		वापस -3;
+	पूर्ण
 	iv16 = (pos[0] << 8) | pos[2];
 	iv32 = pos[4] | (pos[5] << 8) | (pos[6] << 16) | (pos[7] << 24);
 	pos += TKIP_HDR_LEN;
 
-	if (tkip_replay_check(iv32, iv16, tkey->rx_iv32, tkey->rx_iv16)) {
-#ifdef CONFIG_LIB80211_DEBUG
+	अगर (tkip_replay_check(iv32, iv16, tkey->rx_iv32, tkey->rx_iv16)) अणु
+#अगर_घोषित CONFIG_LIB80211_DEBUG
 		net_dbg_ratelimited("TKIP: replay detected: STA=%pM previous TSC %08x%04x received TSC %08x%04x\n",
 				    hdr->addr2, tkey->rx_iv32, tkey->rx_iv16,
 				    iv32, iv16);
-#endif
-		tkey->dot11RSNAStatsTKIPReplays++;
-		return -4;
-	}
+#पूर्ण_अगर
+		tkey->करोt11RSNAStatsTKIPReplays++;
+		वापस -4;
+	पूर्ण
 
-	if (iv32 != tkey->rx_iv32 || !tkey->rx_phase1_done) {
+	अगर (iv32 != tkey->rx_iv32 || !tkey->rx_phase1_करोne) अणु
 		tkip_mixing_phase1(tkey->rx_ttak, tkey->key, hdr->addr2, iv32);
-		tkey->rx_phase1_done = 1;
-	}
+		tkey->rx_phase1_करोne = 1;
+	पूर्ण
 	tkip_mixing_phase2(rc4key, tkey->key, tkey->rx_ttak, iv16);
 
 	plen = skb->len - hdr_len - 12;
@@ -444,228 +445,228 @@ static int lib80211_tkip_decrypt(struct sk_buff *skb, int hdr_len, void *priv)
 	icv[1] = crc >> 8;
 	icv[2] = crc >> 16;
 	icv[3] = crc >> 24;
-	if (memcmp(icv, pos + plen, 4) != 0) {
-		if (iv32 != tkey->rx_iv32) {
-			/* Previously cached Phase1 result was already lost, so
-			 * it needs to be recalculated for the next packet. */
-			tkey->rx_phase1_done = 0;
-		}
-#ifdef CONFIG_LIB80211_DEBUG
+	अगर (स_भेद(icv, pos + plen, 4) != 0) अणु
+		अगर (iv32 != tkey->rx_iv32) अणु
+			/* Previously cached Phase1 result was alपढ़ोy lost, so
+			 * it needs to be recalculated क्रम the next packet. */
+			tkey->rx_phase1_करोne = 0;
+		पूर्ण
+#अगर_घोषित CONFIG_LIB80211_DEBUG
 		net_dbg_ratelimited("TKIP: ICV error detected: STA=%pM\n",
 				    hdr->addr2);
-#endif
-		tkey->dot11RSNAStatsTKIPICVErrors++;
-		return -5;
-	}
+#पूर्ण_अगर
+		tkey->करोt11RSNAStatsTKIPICVErrors++;
+		वापस -5;
+	पूर्ण
 
-	/* Update real counters only after Michael MIC verification has
+	/* Update real counters only after Michael MIC verअगरication has
 	 * completed */
 	tkey->rx_iv32_new = iv32;
 	tkey->rx_iv16_new = iv16;
 
 	/* Remove IV and ICV */
-	memmove(skb->data + TKIP_HDR_LEN, skb->data, hdr_len);
+	स_हटाओ(skb->data + TKIP_HDR_LEN, skb->data, hdr_len);
 	skb_pull(skb, TKIP_HDR_LEN);
 	skb_trim(skb, skb->len - 4);
 
-	return keyidx;
-}
+	वापस keyidx;
+पूर्ण
 
-static int michael_mic(struct crypto_shash *tfm_michael, u8 *key, u8 *hdr,
-		       u8 *data, size_t data_len, u8 *mic)
-{
+अटल पूर्णांक michael_mic(काष्ठा crypto_shash *tfm_michael, u8 *key, u8 *hdr,
+		       u8 *data, माप_प्रकार data_len, u8 *mic)
+अणु
 	SHASH_DESC_ON_STACK(desc, tfm_michael);
-	int err;
+	पूर्णांक err;
 
-	if (tfm_michael == NULL) {
+	अगर (tfm_michael == शून्य) अणु
 		pr_warn("%s(): tfm_michael == NULL\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	desc->tfm = tfm_michael;
 
-	if (crypto_shash_setkey(tfm_michael, key, 8))
-		return -1;
+	अगर (crypto_shash_setkey(tfm_michael, key, 8))
+		वापस -1;
 
 	err = crypto_shash_init(desc);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = crypto_shash_update(desc, hdr, 16);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = crypto_shash_update(desc, data, data_len);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	err = crypto_shash_final(desc, mic);
 
 out:
 	shash_desc_zero(desc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void michael_mic_hdr(struct sk_buff *skb, u8 * hdr)
-{
-	struct ieee80211_hdr *hdr11;
+अटल व्योम michael_mic_hdr(काष्ठा sk_buff *skb, u8 * hdr)
+अणु
+	काष्ठा ieee80211_hdr *hdr11;
 
-	hdr11 = (struct ieee80211_hdr *)skb->data;
+	hdr11 = (काष्ठा ieee80211_hdr *)skb->data;
 
-	switch (le16_to_cpu(hdr11->frame_control) &
-		(IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS)) {
-	case IEEE80211_FCTL_TODS:
-		memcpy(hdr, hdr11->addr3, ETH_ALEN);	/* DA */
-		memcpy(hdr + ETH_ALEN, hdr11->addr2, ETH_ALEN);	/* SA */
-		break;
-	case IEEE80211_FCTL_FROMDS:
-		memcpy(hdr, hdr11->addr1, ETH_ALEN);	/* DA */
-		memcpy(hdr + ETH_ALEN, hdr11->addr3, ETH_ALEN);	/* SA */
-		break;
-	case IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS:
-		memcpy(hdr, hdr11->addr3, ETH_ALEN);	/* DA */
-		memcpy(hdr + ETH_ALEN, hdr11->addr4, ETH_ALEN);	/* SA */
-		break;
-	default:
-		memcpy(hdr, hdr11->addr1, ETH_ALEN);	/* DA */
-		memcpy(hdr + ETH_ALEN, hdr11->addr2, ETH_ALEN);	/* SA */
-		break;
-	}
+	चयन (le16_to_cpu(hdr11->frame_control) &
+		(IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS)) अणु
+	हाल IEEE80211_FCTL_TODS:
+		स_नकल(hdr, hdr11->addr3, ETH_ALEN);	/* DA */
+		स_नकल(hdr + ETH_ALEN, hdr11->addr2, ETH_ALEN);	/* SA */
+		अवरोध;
+	हाल IEEE80211_FCTL_FROMDS:
+		स_नकल(hdr, hdr11->addr1, ETH_ALEN);	/* DA */
+		स_नकल(hdr + ETH_ALEN, hdr11->addr3, ETH_ALEN);	/* SA */
+		अवरोध;
+	हाल IEEE80211_FCTL_FROMDS | IEEE80211_FCTL_TODS:
+		स_नकल(hdr, hdr11->addr3, ETH_ALEN);	/* DA */
+		स_नकल(hdr + ETH_ALEN, hdr11->addr4, ETH_ALEN);	/* SA */
+		अवरोध;
+	शेष:
+		स_नकल(hdr, hdr11->addr1, ETH_ALEN);	/* DA */
+		स_नकल(hdr + ETH_ALEN, hdr11->addr2, ETH_ALEN);	/* SA */
+		अवरोध;
+	पूर्ण
 
-	if (ieee80211_is_data_qos(hdr11->frame_control)) {
+	अगर (ieee80211_is_data_qos(hdr11->frame_control)) अणु
 		hdr[12] = le16_to_cpu(*((__le16 *)ieee80211_get_qos_ctl(hdr11)))
 			& IEEE80211_QOS_CTL_TID_MASK;
-	} else
+	पूर्ण अन्यथा
 		hdr[12] = 0;		/* priority */
 
 	hdr[13] = hdr[14] = hdr[15] = 0;	/* reserved */
-}
+पूर्ण
 
-static int lib80211_michael_mic_add(struct sk_buff *skb, int hdr_len,
-				     void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
+अटल पूर्णांक lib80211_michael_mic_add(काष्ठा sk_buff *skb, पूर्णांक hdr_len,
+				     व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
 	u8 *pos;
 
-	if (skb_tailroom(skb) < 8 || skb->len < hdr_len) {
-		printk(KERN_DEBUG "Invalid packet for Michael MIC add "
+	अगर (skb_tailroom(skb) < 8 || skb->len < hdr_len) अणु
+		prपूर्णांकk(KERN_DEBUG "Invalid packet for Michael MIC add "
 		       "(tailroom=%d hdr_len=%d skb->len=%d)\n",
 		       skb_tailroom(skb), hdr_len, skb->len);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	michael_mic_hdr(skb, tkey->tx_hdr);
 	pos = skb_put(skb, 8);
-	if (michael_mic(tkey->tx_tfm_michael, &tkey->key[16], tkey->tx_hdr,
+	अगर (michael_mic(tkey->tx_tfm_michael, &tkey->key[16], tkey->tx_hdr,
 			skb->data + hdr_len, skb->len - 8 - hdr_len, pos))
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lib80211_michael_mic_failure(struct net_device *dev,
-					  struct ieee80211_hdr *hdr,
-					  int keyidx)
-{
-	union iwreq_data wrqu;
-	struct iw_michaelmicfailure ev;
+अटल व्योम lib80211_michael_mic_failure(काष्ठा net_device *dev,
+					  काष्ठा ieee80211_hdr *hdr,
+					  पूर्णांक keyidx)
+अणु
+	जोड़ iwreq_data wrqu;
+	काष्ठा iw_michaelmicfailure ev;
 
 	/* TODO: needed parameters: count, keyid, key type, TSC */
-	memset(&ev, 0, sizeof(ev));
+	स_रखो(&ev, 0, माप(ev));
 	ev.flags = keyidx & IW_MICFAILURE_KEY_ID;
-	if (hdr->addr1[0] & 0x01)
+	अगर (hdr->addr1[0] & 0x01)
 		ev.flags |= IW_MICFAILURE_GROUP;
-	else
+	अन्यथा
 		ev.flags |= IW_MICFAILURE_PAIRWISE;
 	ev.src_addr.sa_family = ARPHRD_ETHER;
-	memcpy(ev.src_addr.sa_data, hdr->addr2, ETH_ALEN);
-	memset(&wrqu, 0, sizeof(wrqu));
-	wrqu.data.length = sizeof(ev);
-	wireless_send_event(dev, IWEVMICHAELMICFAILURE, &wrqu, (char *)&ev);
-}
+	स_नकल(ev.src_addr.sa_data, hdr->addr2, ETH_ALEN);
+	स_रखो(&wrqu, 0, माप(wrqu));
+	wrqu.data.length = माप(ev);
+	wireless_send_event(dev, IWEVMICHAELMICFAILURE, &wrqu, (अक्षर *)&ev);
+पूर्ण
 
-static int lib80211_michael_mic_verify(struct sk_buff *skb, int keyidx,
-					int hdr_len, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
+अटल पूर्णांक lib80211_michael_mic_verअगरy(काष्ठा sk_buff *skb, पूर्णांक keyidx,
+					पूर्णांक hdr_len, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
 	u8 mic[8];
 
-	if (!tkey->key_set)
-		return -1;
+	अगर (!tkey->key_set)
+		वापस -1;
 
 	michael_mic_hdr(skb, tkey->rx_hdr);
-	if (michael_mic(tkey->rx_tfm_michael, &tkey->key[24], tkey->rx_hdr,
+	अगर (michael_mic(tkey->rx_tfm_michael, &tkey->key[24], tkey->rx_hdr,
 			skb->data + hdr_len, skb->len - 8 - hdr_len, mic))
-		return -1;
-	if (memcmp(mic, skb->data + skb->len - 8, 8) != 0) {
-		struct ieee80211_hdr *hdr;
-		hdr = (struct ieee80211_hdr *)skb->data;
-		printk(KERN_DEBUG "%s: Michael MIC verification failed for "
+		वापस -1;
+	अगर (स_भेद(mic, skb->data + skb->len - 8, 8) != 0) अणु
+		काष्ठा ieee80211_hdr *hdr;
+		hdr = (काष्ठा ieee80211_hdr *)skb->data;
+		prपूर्णांकk(KERN_DEBUG "%s: Michael MIC verification failed for "
 		       "MSDU from %pM keyidx=%d\n",
 		       skb->dev ? skb->dev->name : "N/A", hdr->addr2,
 		       keyidx);
-		if (skb->dev)
+		अगर (skb->dev)
 			lib80211_michael_mic_failure(skb->dev, hdr, keyidx);
-		tkey->dot11RSNAStatsTKIPLocalMICFailures++;
-		return -1;
-	}
+		tkey->करोt11RSNAStatsTKIPLocalMICFailures++;
+		वापस -1;
+	पूर्ण
 
-	/* Update TSC counters for RX now that the packet verification has
+	/* Update TSC counters क्रम RX now that the packet verअगरication has
 	 * completed. */
 	tkey->rx_iv32 = tkey->rx_iv32_new;
 	tkey->rx_iv16 = tkey->rx_iv16_new;
 
 	skb_trim(skb, skb->len - 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lib80211_tkip_set_key(void *key, int len, u8 * seq, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
-	int keyidx;
-	struct crypto_shash *tfm = tkey->tx_tfm_michael;
-	struct arc4_ctx *tfm2 = &tkey->tx_ctx_arc4;
-	struct crypto_shash *tfm3 = tkey->rx_tfm_michael;
-	struct arc4_ctx *tfm4 = &tkey->rx_ctx_arc4;
+अटल पूर्णांक lib80211_tkip_set_key(व्योम *key, पूर्णांक len, u8 * seq, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
+	पूर्णांक keyidx;
+	काष्ठा crypto_shash *tfm = tkey->tx_tfm_michael;
+	काष्ठा arc4_ctx *tfm2 = &tkey->tx_ctx_arc4;
+	काष्ठा crypto_shash *tfm3 = tkey->rx_tfm_michael;
+	काष्ठा arc4_ctx *tfm4 = &tkey->rx_ctx_arc4;
 
 	keyidx = tkey->key_idx;
-	memset(tkey, 0, sizeof(*tkey));
+	स_रखो(tkey, 0, माप(*tkey));
 	tkey->key_idx = keyidx;
 	tkey->tx_tfm_michael = tfm;
 	tkey->tx_ctx_arc4 = *tfm2;
 	tkey->rx_tfm_michael = tfm3;
 	tkey->rx_ctx_arc4 = *tfm4;
-	if (len == TKIP_KEY_LEN) {
-		memcpy(tkey->key, key, TKIP_KEY_LEN);
+	अगर (len == TKIP_KEY_LEN) अणु
+		स_नकल(tkey->key, key, TKIP_KEY_LEN);
 		tkey->key_set = 1;
 		tkey->tx_iv16 = 1;	/* TSC is initialized to 1 */
-		if (seq) {
+		अगर (seq) अणु
 			tkey->rx_iv32 = (seq[5] << 24) | (seq[4] << 16) |
 			    (seq[3] << 8) | seq[2];
 			tkey->rx_iv16 = (seq[1] << 8) | seq[0];
-		}
-	} else if (len == 0)
+		पूर्ण
+	पूर्ण अन्यथा अगर (len == 0)
 		tkey->key_set = 0;
-	else
-		return -1;
+	अन्यथा
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lib80211_tkip_get_key(void *key, int len, u8 * seq, void *priv)
-{
-	struct lib80211_tkip_data *tkey = priv;
+अटल पूर्णांक lib80211_tkip_get_key(व्योम *key, पूर्णांक len, u8 * seq, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkey = priv;
 
-	if (len < TKIP_KEY_LEN)
-		return -1;
+	अगर (len < TKIP_KEY_LEN)
+		वापस -1;
 
-	if (!tkey->key_set)
-		return 0;
-	memcpy(key, tkey->key, TKIP_KEY_LEN);
+	अगर (!tkey->key_set)
+		वापस 0;
+	स_नकल(key, tkey->key, TKIP_KEY_LEN);
 
-	if (seq) {
+	अगर (seq) अणु
 		/* Return the sequence number of the last transmitted frame. */
 		u16 iv16 = tkey->tx_iv16;
 		u32 iv32 = tkey->tx_iv32;
-		if (iv16 == 0)
+		अगर (iv16 == 0)
 			iv32--;
 		iv16--;
 		seq[0] = tkey->tx_iv16;
@@ -674,15 +675,15 @@ static int lib80211_tkip_get_key(void *key, int len, u8 * seq, void *priv)
 		seq[3] = tkey->tx_iv32 >> 8;
 		seq[4] = tkey->tx_iv32 >> 16;
 		seq[5] = tkey->tx_iv32 >> 24;
-	}
+	पूर्ण
 
-	return TKIP_KEY_LEN;
-}
+	वापस TKIP_KEY_LEN;
+पूर्ण
 
-static void lib80211_tkip_print_stats(struct seq_file *m, void *priv)
-{
-	struct lib80211_tkip_data *tkip = priv;
-	seq_printf(m,
+अटल व्योम lib80211_tkip_prपूर्णांक_stats(काष्ठा seq_file *m, व्योम *priv)
+अणु
+	काष्ठा lib80211_tkip_data *tkip = priv;
+	seq_म_लिखो(m,
 		   "key[%d] alg=TKIP key_set=%d "
 		   "tx_pn=%02x%02x%02x%02x%02x%02x "
 		   "rx_pn=%02x%02x%02x%02x%02x%02x "
@@ -700,39 +701,39 @@ static void lib80211_tkip_print_stats(struct seq_file *m, void *priv)
 		   tkip->rx_iv32 & 0xff,
 		   (tkip->rx_iv16 >> 8) & 0xff,
 		   tkip->rx_iv16 & 0xff,
-		   tkip->dot11RSNAStatsTKIPReplays,
-		   tkip->dot11RSNAStatsTKIPICVErrors,
-		   tkip->dot11RSNAStatsTKIPLocalMICFailures);
-}
+		   tkip->करोt11RSNAStatsTKIPReplays,
+		   tkip->करोt11RSNAStatsTKIPICVErrors,
+		   tkip->करोt11RSNAStatsTKIPLocalMICFailures);
+पूर्ण
 
-static struct lib80211_crypto_ops lib80211_crypt_tkip = {
+अटल काष्ठा lib80211_crypto_ops lib80211_crypt_tkip = अणु
 	.name = "TKIP",
 	.init = lib80211_tkip_init,
 	.deinit = lib80211_tkip_deinit,
 	.encrypt_mpdu = lib80211_tkip_encrypt,
 	.decrypt_mpdu = lib80211_tkip_decrypt,
 	.encrypt_msdu = lib80211_michael_mic_add,
-	.decrypt_msdu = lib80211_michael_mic_verify,
+	.decrypt_msdu = lib80211_michael_mic_verअगरy,
 	.set_key = lib80211_tkip_set_key,
 	.get_key = lib80211_tkip_get_key,
-	.print_stats = lib80211_tkip_print_stats,
+	.prपूर्णांक_stats = lib80211_tkip_prपूर्णांक_stats,
 	.extra_mpdu_prefix_len = 4 + 4,	/* IV + ExtIV */
 	.extra_mpdu_postfix_len = 4,	/* ICV */
 	.extra_msdu_postfix_len = 8,	/* MIC */
 	.get_flags = lib80211_tkip_get_flags,
 	.set_flags = lib80211_tkip_set_flags,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init lib80211_crypto_tkip_init(void)
-{
-	return lib80211_register_crypto_ops(&lib80211_crypt_tkip);
-}
+अटल पूर्णांक __init lib80211_crypto_tkip_init(व्योम)
+अणु
+	वापस lib80211_रेजिस्टर_crypto_ops(&lib80211_crypt_tkip);
+पूर्ण
 
-static void __exit lib80211_crypto_tkip_exit(void)
-{
-	lib80211_unregister_crypto_ops(&lib80211_crypt_tkip);
-}
+अटल व्योम __निकास lib80211_crypto_tkip_निकास(व्योम)
+अणु
+	lib80211_unरेजिस्टर_crypto_ops(&lib80211_crypt_tkip);
+पूर्ण
 
 module_init(lib80211_crypto_tkip_init);
-module_exit(lib80211_crypto_tkip_exit);
+module_निकास(lib80211_crypto_tkip_निकास);

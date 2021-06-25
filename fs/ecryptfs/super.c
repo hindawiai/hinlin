@@ -1,110 +1,111 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * eCryptfs: Linux filesystem encryption layer
+ * eCryptfs: Linux fileप्रणाली encryption layer
  *
- * Copyright (C) 1997-2003 Erez Zadok
+ * Copyright (C) 1997-2003 Erez Zaकरोk
  * Copyright (C) 2001-2003 Stony Brook University
  * Copyright (C) 2004-2006 International Business Machines Corp.
  *   Author(s): Michael A. Halcrow <mahalcro@us.ibm.com>
  *              Michael C. Thompson <mcthomps@us.ibm.com>
  */
 
-#include <linux/fs.h>
-#include <linux/mount.h>
-#include <linux/key.h>
-#include <linux/slab.h>
-#include <linux/seq_file.h>
-#include <linux/file.h>
-#include <linux/statfs.h>
-#include <linux/magic.h>
-#include "ecryptfs_kernel.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/key.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/file.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/magic.h>
+#समावेश "ecryptfs_kernel.h"
 
-struct kmem_cache *ecryptfs_inode_info_cache;
+काष्ठा kmem_cache *ecryptfs_inode_info_cache;
 
 /**
  * ecryptfs_alloc_inode - allocate an ecryptfs inode
- * @sb: Pointer to the ecryptfs super block
+ * @sb: Poपूर्णांकer to the ecryptfs super block
  *
- * Called to bring an inode into existence.
+ * Called to bring an inode पूर्णांकo existence.
  *
- * Only handle allocation, setting up structures should be done in
- * ecryptfs_read_inode. This is because the kernel, between now and
- * then, will 0 out the private data pointer.
+ * Only handle allocation, setting up काष्ठाures should be करोne in
+ * ecryptfs_पढ़ो_inode. This is because the kernel, between now and
+ * then, will 0 out the निजी data poपूर्णांकer.
  *
- * Returns a pointer to a newly allocated inode, NULL otherwise
+ * Returns a poपूर्णांकer to a newly allocated inode, शून्य otherwise
  */
-static struct inode *ecryptfs_alloc_inode(struct super_block *sb)
-{
-	struct ecryptfs_inode_info *inode_info;
-	struct inode *inode = NULL;
+अटल काष्ठा inode *ecryptfs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा ecryptfs_inode_info *inode_info;
+	काष्ठा inode *inode = शून्य;
 
 	inode_info = kmem_cache_alloc(ecryptfs_inode_info_cache, GFP_KERNEL);
-	if (unlikely(!inode_info))
-		goto out;
-	if (ecryptfs_init_crypt_stat(&inode_info->crypt_stat)) {
-		kmem_cache_free(ecryptfs_inode_info_cache, inode_info);
-		goto out;
-	}
+	अगर (unlikely(!inode_info))
+		जाओ out;
+	अगर (ecryptfs_init_crypt_stat(&inode_info->crypt_stat)) अणु
+		kmem_cache_मुक्त(ecryptfs_inode_info_cache, inode_info);
+		जाओ out;
+	पूर्ण
 	mutex_init(&inode_info->lower_file_mutex);
 	atomic_set(&inode_info->lower_file_count, 0);
-	inode_info->lower_file = NULL;
+	inode_info->lower_file = शून्य;
 	inode = &inode_info->vfs_inode;
 out:
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static void ecryptfs_free_inode(struct inode *inode)
-{
-	struct ecryptfs_inode_info *inode_info;
-	inode_info = ecryptfs_inode_to_private(inode);
+अटल व्योम ecryptfs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा ecryptfs_inode_info *inode_info;
+	inode_info = ecryptfs_inode_to_निजी(inode);
 
-	kmem_cache_free(ecryptfs_inode_info_cache, inode_info);
-}
+	kmem_cache_मुक्त(ecryptfs_inode_info_cache, inode_info);
+पूर्ण
 
 /**
  * ecryptfs_destroy_inode
  * @inode: The ecryptfs inode
  *
- * This is used during the final destruction of the inode.  All
+ * This is used during the final deकाष्ठाion of the inode.  All
  * allocation of memory related to the inode, including allocated
- * memory in the crypt_stat struct, will be released here.
+ * memory in the crypt_stat काष्ठा, will be released here.
  * There should be no chance that this deallocation will be missed.
  */
-static void ecryptfs_destroy_inode(struct inode *inode)
-{
-	struct ecryptfs_inode_info *inode_info;
+अटल व्योम ecryptfs_destroy_inode(काष्ठा inode *inode)
+अणु
+	काष्ठा ecryptfs_inode_info *inode_info;
 
-	inode_info = ecryptfs_inode_to_private(inode);
+	inode_info = ecryptfs_inode_to_निजी(inode);
 	BUG_ON(inode_info->lower_file);
 	ecryptfs_destroy_crypt_stat(&inode_info->crypt_stat);
-}
+पूर्ण
 
 /**
  * ecryptfs_statfs
  * @dentry: The ecryptfs dentry
- * @buf: The struct kstatfs to fill in with stats
+ * @buf: The काष्ठा kstatfs to fill in with stats
  *
- * Get the filesystem statistics. Currently, we let this pass right through
- * to the lower filesystem and take no action ourselves.
+ * Get the fileप्रणाली statistics. Currently, we let this pass right through
+ * to the lower fileप्रणाली and take no action ourselves.
  */
-static int ecryptfs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct dentry *lower_dentry = ecryptfs_dentry_to_lower(dentry);
-	int rc;
+अटल पूर्णांक ecryptfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा dentry *lower_dentry = ecryptfs_dentry_to_lower(dentry);
+	पूर्णांक rc;
 
-	if (!lower_dentry->d_sb->s_op->statfs)
-		return -ENOSYS;
+	अगर (!lower_dentry->d_sb->s_op->statfs)
+		वापस -ENOSYS;
 
 	rc = lower_dentry->d_sb->s_op->statfs(lower_dentry, buf);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	buf->f_type = ECRYPTFS_SUPER_MAGIC;
 	rc = ecryptfs_set_f_namelen(&buf->f_namelen, buf->f_namelen,
-	       &ecryptfs_superblock_to_private(dentry->d_sb)->mount_crypt_stat);
+	       &ecryptfs_superblock_to_निजी(dentry->d_sb)->mount_crypt_stat);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
  * ecryptfs_evict_inode
@@ -112,67 +113,67 @@ static int ecryptfs_statfs(struct dentry *dentry, struct kstatfs *buf)
  *
  * Called by iput() when the inode reference count reached zero
  * and the inode is not hashed anywhere.  Used to clear anything
- * that needs to be, before the inode is completely destroyed and put
- * on the inode free list. We use this to drop out reference to the
+ * that needs to be, beक्रमe the inode is completely destroyed and put
+ * on the inode मुक्त list. We use this to drop out reference to the
  * lower inode.
  */
-static void ecryptfs_evict_inode(struct inode *inode)
-{
+अटल व्योम ecryptfs_evict_inode(काष्ठा inode *inode)
+अणु
 	truncate_inode_pages_final(&inode->i_data);
 	clear_inode(inode);
 	iput(ecryptfs_inode_to_lower(inode));
-}
+पूर्ण
 
 /*
  * ecryptfs_show_options
  *
- * Prints the mount options for a given superblock.
- * Returns zero; does not fail.
+ * Prपूर्णांकs the mount options क्रम a given superblock.
+ * Returns zero; करोes not fail.
  */
-static int ecryptfs_show_options(struct seq_file *m, struct dentry *root)
-{
-	struct super_block *sb = root->d_sb;
-	struct ecryptfs_mount_crypt_stat *mount_crypt_stat =
-		&ecryptfs_superblock_to_private(sb)->mount_crypt_stat;
-	struct ecryptfs_global_auth_tok *walker;
+अटल पूर्णांक ecryptfs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा super_block *sb = root->d_sb;
+	काष्ठा ecryptfs_mount_crypt_stat *mount_crypt_stat =
+		&ecryptfs_superblock_to_निजी(sb)->mount_crypt_stat;
+	काष्ठा ecryptfs_global_auth_tok *walker;
 
 	mutex_lock(&mount_crypt_stat->global_auth_tok_list_mutex);
-	list_for_each_entry(walker,
+	list_क्रम_each_entry(walker,
 			    &mount_crypt_stat->global_auth_tok_list,
-			    mount_crypt_stat_list) {
-		if (walker->flags & ECRYPTFS_AUTH_TOK_FNEK)
-			seq_printf(m, ",ecryptfs_fnek_sig=%s", walker->sig);
-		else
-			seq_printf(m, ",ecryptfs_sig=%s", walker->sig);
-	}
+			    mount_crypt_stat_list) अणु
+		अगर (walker->flags & ECRYPTFS_AUTH_TOK_FNEK)
+			seq_म_लिखो(m, ",ecryptfs_fnek_sig=%s", walker->sig);
+		अन्यथा
+			seq_म_लिखो(m, ",ecryptfs_sig=%s", walker->sig);
+	पूर्ण
 	mutex_unlock(&mount_crypt_stat->global_auth_tok_list_mutex);
 
-	seq_printf(m, ",ecryptfs_cipher=%s",
-		mount_crypt_stat->global_default_cipher_name);
+	seq_म_लिखो(m, ",ecryptfs_cipher=%s",
+		mount_crypt_stat->global_शेष_cipher_name);
 
-	if (mount_crypt_stat->global_default_cipher_key_size)
-		seq_printf(m, ",ecryptfs_key_bytes=%zd",
-			   mount_crypt_stat->global_default_cipher_key_size);
-	if (mount_crypt_stat->flags & ECRYPTFS_PLAINTEXT_PASSTHROUGH_ENABLED)
-		seq_printf(m, ",ecryptfs_passthrough");
-	if (mount_crypt_stat->flags & ECRYPTFS_XATTR_METADATA_ENABLED)
-		seq_printf(m, ",ecryptfs_xattr_metadata");
-	if (mount_crypt_stat->flags & ECRYPTFS_ENCRYPTED_VIEW_ENABLED)
-		seq_printf(m, ",ecryptfs_encrypted_view");
-	if (mount_crypt_stat->flags & ECRYPTFS_UNLINK_SIGS)
-		seq_printf(m, ",ecryptfs_unlink_sigs");
-	if (mount_crypt_stat->flags & ECRYPTFS_GLOBAL_MOUNT_AUTH_TOK_ONLY)
-		seq_printf(m, ",ecryptfs_mount_auth_tok_only");
+	अगर (mount_crypt_stat->global_शेष_cipher_key_size)
+		seq_म_लिखो(m, ",ecryptfs_key_bytes=%zd",
+			   mount_crypt_stat->global_शेष_cipher_key_size);
+	अगर (mount_crypt_stat->flags & ECRYPTFS_PLAINTEXT_PASSTHROUGH_ENABLED)
+		seq_म_लिखो(m, ",ecryptfs_passthrough");
+	अगर (mount_crypt_stat->flags & ECRYPTFS_XATTR_METADATA_ENABLED)
+		seq_म_लिखो(m, ",ecryptfs_xattr_metadata");
+	अगर (mount_crypt_stat->flags & ECRYPTFS_ENCRYPTED_VIEW_ENABLED)
+		seq_म_लिखो(m, ",ecryptfs_encrypted_view");
+	अगर (mount_crypt_stat->flags & ECRYPTFS_UNLINK_SIGS)
+		seq_म_लिखो(m, ",ecryptfs_unlink_sigs");
+	अगर (mount_crypt_stat->flags & ECRYPTFS_GLOBAL_MOUNT_AUTH_TOK_ONLY)
+		seq_म_लिखो(m, ",ecryptfs_mount_auth_tok_only");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct super_operations ecryptfs_sops = {
+स्थिर काष्ठा super_operations ecryptfs_sops = अणु
 	.alloc_inode = ecryptfs_alloc_inode,
 	.destroy_inode = ecryptfs_destroy_inode,
-	.free_inode = ecryptfs_free_inode,
+	.मुक्त_inode = ecryptfs_मुक्त_inode,
 	.statfs = ecryptfs_statfs,
-	.remount_fs = NULL,
+	.remount_fs = शून्य,
 	.evict_inode = ecryptfs_evict_inode,
 	.show_options = ecryptfs_show_options
-};
+पूर्ण;

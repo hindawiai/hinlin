@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TM2 touchkey device driver
  *
@@ -9,193 +10,193 @@
  * Author: Jaechul Lee <jcsing.lee@samsung.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pm.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define TM2_TOUCHKEY_DEV_NAME		"tm2-touchkey"
+#घोषणा TM2_TOUCHKEY_DEV_NAME		"tm2-touchkey"
 
-#define ARIES_TOUCHKEY_CMD_LED_ON	0x1
-#define ARIES_TOUCHKEY_CMD_LED_OFF	0x2
-#define TM2_TOUCHKEY_CMD_LED_ON		0x10
-#define TM2_TOUCHKEY_CMD_LED_OFF	0x20
-#define TM2_TOUCHKEY_BIT_PRESS_EV	BIT(3)
-#define TM2_TOUCHKEY_BIT_KEYCODE	GENMASK(2, 0)
-#define TM2_TOUCHKEY_LED_VOLTAGE_MIN	2500000
-#define TM2_TOUCHKEY_LED_VOLTAGE_MAX	3300000
+#घोषणा ARIES_TOUCHKEY_CMD_LED_ON	0x1
+#घोषणा ARIES_TOUCHKEY_CMD_LED_OFF	0x2
+#घोषणा TM2_TOUCHKEY_CMD_LED_ON		0x10
+#घोषणा TM2_TOUCHKEY_CMD_LED_OFF	0x20
+#घोषणा TM2_TOUCHKEY_BIT_PRESS_EV	BIT(3)
+#घोषणा TM2_TOUCHKEY_BIT_KEYCODE	GENMASK(2, 0)
+#घोषणा TM2_TOUCHKEY_LED_VOLTAGE_MIN	2500000
+#घोषणा TM2_TOUCHKEY_LED_VOLTAGE_MAX	3300000
 
-struct touchkey_variant {
+काष्ठा touchkey_variant अणु
 	u8 keycode_reg;
 	u8 base_reg;
 	u8 cmd_led_on;
 	u8 cmd_led_off;
 	bool no_reg;
 	bool fixed_regulator;
-};
+पूर्ण;
 
-struct tm2_touchkey_data {
-	struct i2c_client *client;
-	struct input_dev *input_dev;
-	struct led_classdev led_dev;
-	struct regulator *vdd;
-	struct regulator_bulk_data regulators[3];
-	const struct touchkey_variant *variant;
+काष्ठा पंचांग2_touchkey_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा input_dev *input_dev;
+	काष्ठा led_classdev led_dev;
+	काष्ठा regulator *vdd;
+	काष्ठा regulator_bulk_data regulators[3];
+	स्थिर काष्ठा touchkey_variant *variant;
 	u32 keycodes[4];
-	int num_keycodes;
-};
+	पूर्णांक num_keycodes;
+पूर्ण;
 
-static const struct touchkey_variant tm2_touchkey_variant = {
+अटल स्थिर काष्ठा touchkey_variant पंचांग2_touchkey_variant = अणु
 	.keycode_reg = 0x03,
 	.base_reg = 0x00,
 	.cmd_led_on = TM2_TOUCHKEY_CMD_LED_ON,
 	.cmd_led_off = TM2_TOUCHKEY_CMD_LED_OFF,
-};
+पूर्ण;
 
-static const struct touchkey_variant midas_touchkey_variant = {
+अटल स्थिर काष्ठा touchkey_variant midas_touchkey_variant = अणु
 	.keycode_reg = 0x00,
 	.base_reg = 0x00,
 	.cmd_led_on = TM2_TOUCHKEY_CMD_LED_ON,
 	.cmd_led_off = TM2_TOUCHKEY_CMD_LED_OFF,
-};
+पूर्ण;
 
-static struct touchkey_variant aries_touchkey_variant = {
+अटल काष्ठा touchkey_variant aries_touchkey_variant = अणु
 	.no_reg = true,
 	.fixed_regulator = true,
 	.cmd_led_on = ARIES_TOUCHKEY_CMD_LED_ON,
 	.cmd_led_off = ARIES_TOUCHKEY_CMD_LED_OFF,
-};
+पूर्ण;
 
-static const struct touchkey_variant tc360_touchkey_variant = {
+अटल स्थिर काष्ठा touchkey_variant tc360_touchkey_variant = अणु
 	.keycode_reg = 0x00,
 	.base_reg = 0x00,
 	.fixed_regulator = true,
 	.cmd_led_on = TM2_TOUCHKEY_CMD_LED_ON,
 	.cmd_led_off = TM2_TOUCHKEY_CMD_LED_OFF,
-};
+पूर्ण;
 
-static int tm2_touchkey_led_brightness_set(struct led_classdev *led_dev,
-					    enum led_brightness brightness)
-{
-	struct tm2_touchkey_data *touchkey =
-		container_of(led_dev, struct tm2_touchkey_data, led_dev);
+अटल पूर्णांक पंचांग2_touchkey_led_brightness_set(काष्ठा led_classdev *led_dev,
+					    क्रमागत led_brightness brightness)
+अणु
+	काष्ठा पंचांग2_touchkey_data *touchkey =
+		container_of(led_dev, काष्ठा पंचांग2_touchkey_data, led_dev);
 	u32 volt;
 	u8 data;
 
-	if (brightness == LED_OFF) {
+	अगर (brightness == LED_OFF) अणु
 		volt = TM2_TOUCHKEY_LED_VOLTAGE_MIN;
 		data = touchkey->variant->cmd_led_off;
-	} else {
+	पूर्ण अन्यथा अणु
 		volt = TM2_TOUCHKEY_LED_VOLTAGE_MAX;
 		data = touchkey->variant->cmd_led_on;
-	}
+	पूर्ण
 
-	if (!touchkey->variant->fixed_regulator)
+	अगर (!touchkey->variant->fixed_regulator)
 		regulator_set_voltage(touchkey->vdd, volt, volt);
 
-	return touchkey->variant->no_reg ?
-		i2c_smbus_write_byte(touchkey->client, data) :
-		i2c_smbus_write_byte_data(touchkey->client,
+	वापस touchkey->variant->no_reg ?
+		i2c_smbus_ग_लिखो_byte(touchkey->client, data) :
+		i2c_smbus_ग_लिखो_byte_data(touchkey->client,
 					  touchkey->variant->base_reg, data);
-}
+पूर्ण
 
-static int tm2_touchkey_power_enable(struct tm2_touchkey_data *touchkey)
-{
-	int error;
+अटल पूर्णांक पंचांग2_touchkey_घातer_enable(काष्ठा पंचांग2_touchkey_data *touchkey)
+अणु
+	पूर्णांक error;
 
 	error = regulator_bulk_enable(ARRAY_SIZE(touchkey->regulators),
 				      touchkey->regulators);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* waiting for device initialization, at least 150ms */
+	/* रुकोing क्रम device initialization, at least 150ms */
 	msleep(150);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tm2_touchkey_power_disable(void *data)
-{
-	struct tm2_touchkey_data *touchkey = data;
+अटल व्योम पंचांग2_touchkey_घातer_disable(व्योम *data)
+अणु
+	काष्ठा पंचांग2_touchkey_data *touchkey = data;
 
 	regulator_bulk_disable(ARRAY_SIZE(touchkey->regulators),
 			       touchkey->regulators);
-}
+पूर्ण
 
-static irqreturn_t tm2_touchkey_irq_handler(int irq, void *devid)
-{
-	struct tm2_touchkey_data *touchkey = devid;
-	int data;
-	int index;
-	int i;
+अटल irqवापस_t पंचांग2_touchkey_irq_handler(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा पंचांग2_touchkey_data *touchkey = devid;
+	पूर्णांक data;
+	पूर्णांक index;
+	पूर्णांक i;
 
-	if (touchkey->variant->no_reg)
-		data = i2c_smbus_read_byte(touchkey->client);
-	else
-		data = i2c_smbus_read_byte_data(touchkey->client,
+	अगर (touchkey->variant->no_reg)
+		data = i2c_smbus_पढ़ो_byte(touchkey->client);
+	अन्यथा
+		data = i2c_smbus_पढ़ो_byte_data(touchkey->client,
 						touchkey->variant->keycode_reg);
-	if (data < 0) {
+	अगर (data < 0) अणु
 		dev_err(&touchkey->client->dev,
 			"failed to read i2c data: %d\n", data);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	index = (data & TM2_TOUCHKEY_BIT_KEYCODE) - 1;
-	if (index < 0 || index >= touchkey->num_keycodes) {
+	अगर (index < 0 || index >= touchkey->num_keycodes) अणु
 		dev_warn(&touchkey->client->dev,
 			 "invalid keycode index %d\n", index);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (data & TM2_TOUCHKEY_BIT_PRESS_EV) {
-		for (i = 0; i < touchkey->num_keycodes; i++)
+	अगर (data & TM2_TOUCHKEY_BIT_PRESS_EV) अणु
+		क्रम (i = 0; i < touchkey->num_keycodes; i++)
 			input_report_key(touchkey->input_dev,
 					 touchkey->keycodes[i], 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		input_report_key(touchkey->input_dev,
 				 touchkey->keycodes[index], 1);
-	}
+	पूर्ण
 
 	input_sync(touchkey->input_dev);
 
 out:
-	if (touchkey->variant->fixed_regulator &&
-				data & TM2_TOUCHKEY_BIT_PRESS_EV) {
+	अगर (touchkey->variant->fixed_regulator &&
+				data & TM2_TOUCHKEY_BIT_PRESS_EV) अणु
 		/* touch turns backlight on, so make sure we're in sync */
-		if (touchkey->led_dev.brightness == LED_OFF)
-			tm2_touchkey_led_brightness_set(&touchkey->led_dev,
+		अगर (touchkey->led_dev.brightness == LED_OFF)
+			पंचांग2_touchkey_led_brightness_set(&touchkey->led_dev,
 							LED_OFF);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int tm2_touchkey_probe(struct i2c_client *client,
-			      const struct i2c_device_id *id)
-{
-	struct device_node *np = client->dev.of_node;
-	struct tm2_touchkey_data *touchkey;
-	int error;
-	int i;
+अटल पूर्णांक पंचांग2_touchkey_probe(काष्ठा i2c_client *client,
+			      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device_node *np = client->dev.of_node;
+	काष्ठा पंचांग2_touchkey_data *touchkey;
+	पूर्णांक error;
+	पूर्णांक i;
 
-	if (!i2c_check_functionality(client->adapter,
-			I2C_FUNC_SMBUS_BYTE | I2C_FUNC_SMBUS_BYTE_DATA)) {
+	अगर (!i2c_check_functionality(client->adapter,
+			I2C_FUNC_SMBUS_BYTE | I2C_FUNC_SMBUS_BYTE_DATA)) अणु
 		dev_err(&client->dev, "incompatible I2C adapter\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	touchkey = devm_kzalloc(&client->dev, sizeof(*touchkey), GFP_KERNEL);
-	if (!touchkey)
-		return -ENOMEM;
+	touchkey = devm_kzalloc(&client->dev, माप(*touchkey), GFP_KERNEL);
+	अगर (!touchkey)
+		वापस -ENOMEM;
 
 	touchkey->client = client;
 	i2c_set_clientdata(client, touchkey);
@@ -208,152 +209,152 @@ static int tm2_touchkey_probe(struct i2c_client *client,
 	error = devm_regulator_bulk_get(&client->dev,
 					ARRAY_SIZE(touchkey->regulators),
 					touchkey->regulators);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev, "failed to get regulators: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	/* Save VDD for easy access */
+	/* Save VDD क्रम easy access */
 	touchkey->vdd = touchkey->regulators[1].consumer;
 
-	touchkey->num_keycodes = of_property_read_variable_u32_array(np,
+	touchkey->num_keycodes = of_property_पढ़ो_variable_u32_array(np,
 					"linux,keycodes", touchkey->keycodes, 0,
 					ARRAY_SIZE(touchkey->keycodes));
-	if (touchkey->num_keycodes <= 0) {
-		/* default keycodes */
+	अगर (touchkey->num_keycodes <= 0) अणु
+		/* शेष keycodes */
 		touchkey->keycodes[0] = KEY_PHONE;
 		touchkey->keycodes[1] = KEY_BACK;
 		touchkey->num_keycodes = 2;
-	}
+	पूर्ण
 
-	error = tm2_touchkey_power_enable(touchkey);
-	if (error) {
+	error = पंचांग2_touchkey_घातer_enable(touchkey);
+	अगर (error) अणु
 		dev_err(&client->dev, "failed to power up device: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_add_action_or_reset(&client->dev,
-					 tm2_touchkey_power_disable, touchkey);
-	if (error) {
+					 पंचांग2_touchkey_घातer_disable, touchkey);
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to install poweroff handler: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/* input device */
 	touchkey->input_dev = devm_input_allocate_device(&client->dev);
-	if (!touchkey->input_dev) {
+	अगर (!touchkey->input_dev) अणु
 		dev_err(&client->dev, "failed to allocate input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	touchkey->input_dev->name = TM2_TOUCHKEY_DEV_NAME;
 	touchkey->input_dev->id.bustype = BUS_I2C;
 
-	for (i = 0; i < touchkey->num_keycodes; i++)
+	क्रम (i = 0; i < touchkey->num_keycodes; i++)
 		input_set_capability(touchkey->input_dev, EV_KEY,
 				     touchkey->keycodes[i]);
 
-	error = input_register_device(touchkey->input_dev);
-	if (error) {
+	error = input_रेजिस्टर_device(touchkey->input_dev);
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to register input device: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = devm_request_threaded_irq(&client->dev, client->irq,
-					  NULL, tm2_touchkey_irq_handler,
+	error = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					  शून्य, पंचांग2_touchkey_irq_handler,
 					  IRQF_ONESHOT,
 					  TM2_TOUCHKEY_DEV_NAME, touchkey);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to request threaded irq: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	/* led device */
 	touchkey->led_dev.name = TM2_TOUCHKEY_DEV_NAME;
 	touchkey->led_dev.brightness = LED_ON;
 	touchkey->led_dev.max_brightness = LED_ON;
 	touchkey->led_dev.brightness_set_blocking =
-					tm2_touchkey_led_brightness_set;
+					पंचांग2_touchkey_led_brightness_set;
 
-	error = devm_led_classdev_register(&client->dev, &touchkey->led_dev);
-	if (error) {
+	error = devm_led_classdev_रेजिस्टर(&client->dev, &touchkey->led_dev);
+	अगर (error) अणु
 		dev_err(&client->dev,
 			"failed to register touchkey led: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (touchkey->variant->fixed_regulator)
-		tm2_touchkey_led_brightness_set(&touchkey->led_dev, LED_ON);
+	अगर (touchkey->variant->fixed_regulator)
+		पंचांग2_touchkey_led_brightness_set(&touchkey->led_dev, LED_ON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused tm2_touchkey_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct tm2_touchkey_data *touchkey = i2c_get_clientdata(client);
+अटल पूर्णांक __maybe_unused पंचांग2_touchkey_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा पंचांग2_touchkey_data *touchkey = i2c_get_clientdata(client);
 
 	disable_irq(client->irq);
-	tm2_touchkey_power_disable(touchkey);
+	पंचांग2_touchkey_घातer_disable(touchkey);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused tm2_touchkey_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct tm2_touchkey_data *touchkey = i2c_get_clientdata(client);
-	int ret;
+अटल पूर्णांक __maybe_unused पंचांग2_touchkey_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा पंचांग2_touchkey_data *touchkey = i2c_get_clientdata(client);
+	पूर्णांक ret;
 
 	enable_irq(client->irq);
 
-	ret = tm2_touchkey_power_enable(touchkey);
-	if (ret)
+	ret = पंचांग2_touchkey_घातer_enable(touchkey);
+	अगर (ret)
 		dev_err(dev, "failed to enable power: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(tm2_touchkey_pm_ops,
-			 tm2_touchkey_suspend, tm2_touchkey_resume);
+अटल SIMPLE_DEV_PM_OPS(पंचांग2_touchkey_pm_ops,
+			 पंचांग2_touchkey_suspend, पंचांग2_touchkey_resume);
 
-static const struct i2c_device_id tm2_touchkey_id_table[] = {
-	{ TM2_TOUCHKEY_DEV_NAME, 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(i2c, tm2_touchkey_id_table);
+अटल स्थिर काष्ठा i2c_device_id पंचांग2_touchkey_id_table[] = अणु
+	अणु TM2_TOUCHKEY_DEV_NAME, 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, पंचांग2_touchkey_id_table);
 
-static const struct of_device_id tm2_touchkey_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id पंचांग2_touchkey_of_match[] = अणु
+	अणु
 		.compatible = "cypress,tm2-touchkey",
-		.data = &tm2_touchkey_variant,
-	}, {
+		.data = &पंचांग2_touchkey_variant,
+	पूर्ण, अणु
 		.compatible = "cypress,midas-touchkey",
 		.data = &midas_touchkey_variant,
-	}, {
+	पूर्ण, अणु
 		.compatible = "cypress,aries-touchkey",
 		.data = &aries_touchkey_variant,
-	}, {
+	पूर्ण, अणु
 		.compatible = "coreriver,tc360-touchkey",
 		.data = &tc360_touchkey_variant,
-	},
-	{ },
-};
-MODULE_DEVICE_TABLE(of, tm2_touchkey_of_match);
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, पंचांग2_touchkey_of_match);
 
-static struct i2c_driver tm2_touchkey_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver पंचांग2_touchkey_driver = अणु
+	.driver = अणु
 		.name = TM2_TOUCHKEY_DEV_NAME,
-		.pm = &tm2_touchkey_pm_ops,
-		.of_match_table = of_match_ptr(tm2_touchkey_of_match),
-	},
-	.probe = tm2_touchkey_probe,
-	.id_table = tm2_touchkey_id_table,
-};
-module_i2c_driver(tm2_touchkey_driver);
+		.pm = &पंचांग2_touchkey_pm_ops,
+		.of_match_table = of_match_ptr(पंचांग2_touchkey_of_match),
+	पूर्ण,
+	.probe = पंचांग2_touchkey_probe,
+	.id_table = पंचांग2_touchkey_id_table,
+पूर्ण;
+module_i2c_driver(पंचांग2_touchkey_driver);
 
 MODULE_AUTHOR("Beomho Seo <beomho.seo@samsung.com>");
 MODULE_AUTHOR("Jaechul Lee <jcsing.lee@samsung.com>");

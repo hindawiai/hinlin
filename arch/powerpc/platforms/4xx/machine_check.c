@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/ptrace.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/ptrace.h>
 
-#include <asm/reg.h>
+#समावेश <यंत्र/reg.h>
 
-int machine_check_4xx(struct pt_regs *regs)
-{
-	unsigned long reason = regs->dsisr;
+पूर्णांक machine_check_4xx(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ reason = regs->dsisr;
 
-	if (reason & ESR_IMCP) {
-		printk("Instruction");
+	अगर (reason & ESR_IMCP) अणु
+		prपूर्णांकk("Instruction");
 		mtspr(SPRN_ESR, reason & ~ESR_IMCP);
-	} else
-		printk("Data");
-	printk(" machine check in kernel mode.\n");
+	पूर्ण अन्यथा
+		prपूर्णांकk("Data");
+	prपूर्णांकk(" machine check in kernel mode.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

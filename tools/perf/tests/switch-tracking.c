@@ -1,430 +1,431 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/time.h>
-#include <sys/prctl.h>
-#include <errno.h>
-#include <limits.h>
-#include <time.h>
-#include <stdlib.h>
-#include <linux/zalloc.h>
-#include <perf/cpumap.h>
-#include <perf/evlist.h>
-#include <perf/mmap.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/समय.स>
+#समावेश <sys/prctl.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <समय.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/zभाग.स>
+#समावेश <perf/cpumap.h>
+#समावेश <perf/evlist.h>
+#समावेश <perf/mmap.h>
 
-#include "debug.h"
-#include "parse-events.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "thread_map.h"
-#include "record.h"
-#include "tests.h"
-#include "util/mmap.h"
-#include "pmu.h"
+#समावेश "debug.h"
+#समावेश "parse-events.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "thread_map.h"
+#समावेश "record.h"
+#समावेश "tests.h"
+#समावेश "util/mmap.h"
+#समावेश "pmu.h"
 
-static int spin_sleep(void)
-{
-	struct timeval start, now, diff, maxtime;
-	struct timespec ts;
-	int err, i;
+अटल पूर्णांक spin_sleep(व्योम)
+अणु
+	काष्ठा समयval start, now, dअगरf, maxसमय;
+	काष्ठा बारpec ts;
+	पूर्णांक err, i;
 
-	maxtime.tv_sec = 0;
-	maxtime.tv_usec = 50000;
+	maxसमय.tv_sec = 0;
+	maxसमय.tv_usec = 50000;
 
-	err = gettimeofday(&start, NULL);
-	if (err)
-		return err;
+	err = समय_लोofday(&start, शून्य);
+	अगर (err)
+		वापस err;
 
-	/* Spin for 50ms */
-	while (1) {
-		for (i = 0; i < 1000; i++)
+	/* Spin क्रम 50ms */
+	जबतक (1) अणु
+		क्रम (i = 0; i < 1000; i++)
 			barrier();
 
-		err = gettimeofday(&now, NULL);
-		if (err)
-			return err;
+		err = समय_लोofday(&now, शून्य);
+		अगर (err)
+			वापस err;
 
-		timersub(&now, &start, &diff);
-		if (timercmp(&diff, &maxtime, > /* For checkpatch */))
-			break;
-	}
+		समयrsub(&now, &start, &dअगरf);
+		अगर (समयrcmp(&dअगरf, &maxसमय, > /* For checkpatch */))
+			अवरोध;
+	पूर्ण
 
 	ts.tv_nsec = 50 * 1000 * 1000;
 	ts.tv_sec = 0;
 
-	/* Sleep for 50ms */
-	err = nanosleep(&ts, NULL);
-	if (err == EINTR)
+	/* Sleep क्रम 50ms */
+	err = nanosleep(&ts, शून्य);
+	अगर (err == EINTR)
 		err = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct switch_tracking {
-	struct evsel *switch_evsel;
-	struct evsel *cycles_evsel;
+काष्ठा चयन_tracking अणु
+	काष्ठा evsel *चयन_evsel;
+	काष्ठा evsel *cycles_evsel;
 	pid_t *tids;
-	int nr_tids;
-	int comm_seen[4];
-	int cycles_before_comm_1;
-	int cycles_between_comm_2_and_comm_3;
-	int cycles_after_comm_4;
-};
+	पूर्णांक nr_tids;
+	पूर्णांक comm_seen[4];
+	पूर्णांक cycles_beक्रमe_comm_1;
+	पूर्णांक cycles_between_comm_2_and_comm_3;
+	पूर्णांक cycles_after_comm_4;
+पूर्ण;
 
-static int check_comm(struct switch_tracking *switch_tracking,
-		      union perf_event *event, const char *comm, int nr)
-{
-	if (event->header.type == PERF_RECORD_COMM &&
+अटल पूर्णांक check_comm(काष्ठा चयन_tracking *चयन_tracking,
+		      जोड़ perf_event *event, स्थिर अक्षर *comm, पूर्णांक nr)
+अणु
+	अगर (event->header.type == PERF_RECORD_COMM &&
 	    (pid_t)event->comm.pid == getpid() &&
 	    (pid_t)event->comm.tid == getpid() &&
-	    strcmp(event->comm.comm, comm) == 0) {
-		if (switch_tracking->comm_seen[nr]) {
+	    म_भेद(event->comm.comm, comm) == 0) अणु
+		अगर (चयन_tracking->comm_seen[nr]) अणु
 			pr_debug("Duplicate comm event\n");
-			return -1;
-		}
-		switch_tracking->comm_seen[nr] = 1;
+			वापस -1;
+		पूर्ण
+		चयन_tracking->comm_seen[nr] = 1;
 		pr_debug3("comm event: %s nr: %d\n", event->comm.comm, nr);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int check_cpu(struct switch_tracking *switch_tracking, int cpu)
-{
-	int i, nr = cpu + 1;
+अटल पूर्णांक check_cpu(काष्ठा चयन_tracking *चयन_tracking, पूर्णांक cpu)
+अणु
+	पूर्णांक i, nr = cpu + 1;
 
-	if (cpu < 0)
-		return -1;
+	अगर (cpu < 0)
+		वापस -1;
 
-	if (!switch_tracking->tids) {
-		switch_tracking->tids = calloc(nr, sizeof(pid_t));
-		if (!switch_tracking->tids)
-			return -1;
-		for (i = 0; i < nr; i++)
-			switch_tracking->tids[i] = -1;
-		switch_tracking->nr_tids = nr;
-		return 0;
-	}
+	अगर (!चयन_tracking->tids) अणु
+		चयन_tracking->tids = सुस्मृति(nr, माप(pid_t));
+		अगर (!चयन_tracking->tids)
+			वापस -1;
+		क्रम (i = 0; i < nr; i++)
+			चयन_tracking->tids[i] = -1;
+		चयन_tracking->nr_tids = nr;
+		वापस 0;
+	पूर्ण
 
-	if (cpu >= switch_tracking->nr_tids) {
-		void *addr;
+	अगर (cpu >= चयन_tracking->nr_tids) अणु
+		व्योम *addr;
 
-		addr = realloc(switch_tracking->tids, nr * sizeof(pid_t));
-		if (!addr)
-			return -1;
-		switch_tracking->tids = addr;
-		for (i = switch_tracking->nr_tids; i < nr; i++)
-			switch_tracking->tids[i] = -1;
-		switch_tracking->nr_tids = nr;
-		return 0;
-	}
+		addr = पुनः_स्मृति(चयन_tracking->tids, nr * माप(pid_t));
+		अगर (!addr)
+			वापस -1;
+		चयन_tracking->tids = addr;
+		क्रम (i = चयन_tracking->nr_tids; i < nr; i++)
+			चयन_tracking->tids[i] = -1;
+		चयन_tracking->nr_tids = nr;
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_sample_event(struct evlist *evlist,
-				union perf_event *event,
-				struct switch_tracking *switch_tracking)
-{
-	struct perf_sample sample;
-	struct evsel *evsel;
+अटल पूर्णांक process_sample_event(काष्ठा evlist *evlist,
+				जोड़ perf_event *event,
+				काष्ठा चयन_tracking *चयन_tracking)
+अणु
+	काष्ठा perf_sample sample;
+	काष्ठा evsel *evsel;
 	pid_t next_tid, prev_tid;
-	int cpu, err;
+	पूर्णांक cpu, err;
 
-	if (evlist__parse_sample(evlist, event, &sample)) {
+	अगर (evlist__parse_sample(evlist, event, &sample)) अणु
 		pr_debug("evlist__parse_sample failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	evsel = evlist__id2evsel(evlist, sample.id);
-	if (evsel == switch_tracking->switch_evsel) {
-		next_tid = evsel__intval(evsel, &sample, "next_pid");
-		prev_tid = evsel__intval(evsel, &sample, "prev_pid");
+	अगर (evsel == चयन_tracking->चयन_evsel) अणु
+		next_tid = evsel__पूर्णांकval(evsel, &sample, "next_pid");
+		prev_tid = evsel__पूर्णांकval(evsel, &sample, "prev_pid");
 		cpu = sample.cpu;
 		pr_debug3("sched_switch: cpu: %d prev_tid %d next_tid %d\n",
 			  cpu, prev_tid, next_tid);
-		err = check_cpu(switch_tracking, cpu);
-		if (err)
-			return err;
+		err = check_cpu(चयन_tracking, cpu);
+		अगर (err)
+			वापस err;
 		/*
-		 * Check for no missing sched_switch events i.e. that the
-		 * evsel->core.system_wide flag has worked.
+		 * Check क्रम no missing sched_चयन events i.e. that the
+		 * evsel->core.प्रणाली_wide flag has worked.
 		 */
-		if (switch_tracking->tids[cpu] != -1 &&
-		    switch_tracking->tids[cpu] != prev_tid) {
+		अगर (चयन_tracking->tids[cpu] != -1 &&
+		    चयन_tracking->tids[cpu] != prev_tid) अणु
 			pr_debug("Missing sched_switch events\n");
-			return -1;
-		}
-		switch_tracking->tids[cpu] = next_tid;
-	}
+			वापस -1;
+		पूर्ण
+		चयन_tracking->tids[cpu] = next_tid;
+	पूर्ण
 
-	if (evsel == switch_tracking->cycles_evsel) {
+	अगर (evsel == चयन_tracking->cycles_evsel) अणु
 		pr_debug3("cycles event\n");
-		if (!switch_tracking->comm_seen[0])
-			switch_tracking->cycles_before_comm_1 = 1;
-		if (switch_tracking->comm_seen[1] &&
-		    !switch_tracking->comm_seen[2])
-			switch_tracking->cycles_between_comm_2_and_comm_3 = 1;
-		if (switch_tracking->comm_seen[3])
-			switch_tracking->cycles_after_comm_4 = 1;
-	}
+		अगर (!चयन_tracking->comm_seen[0])
+			चयन_tracking->cycles_beक्रमe_comm_1 = 1;
+		अगर (चयन_tracking->comm_seen[1] &&
+		    !चयन_tracking->comm_seen[2])
+			चयन_tracking->cycles_between_comm_2_and_comm_3 = 1;
+		अगर (चयन_tracking->comm_seen[3])
+			चयन_tracking->cycles_after_comm_4 = 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int process_event(struct evlist *evlist, union perf_event *event,
-			 struct switch_tracking *switch_tracking)
-{
-	if (event->header.type == PERF_RECORD_SAMPLE)
-		return process_sample_event(evlist, event, switch_tracking);
+अटल पूर्णांक process_event(काष्ठा evlist *evlist, जोड़ perf_event *event,
+			 काष्ठा चयन_tracking *चयन_tracking)
+अणु
+	अगर (event->header.type == PERF_RECORD_SAMPLE)
+		वापस process_sample_event(evlist, event, चयन_tracking);
 
-	if (event->header.type == PERF_RECORD_COMM) {
-		int err, done = 0;
+	अगर (event->header.type == PERF_RECORD_COMM) अणु
+		पूर्णांक err, करोne = 0;
 
-		err = check_comm(switch_tracking, event, "Test COMM 1", 0);
-		if (err < 0)
-			return -1;
-		done += err;
-		err = check_comm(switch_tracking, event, "Test COMM 2", 1);
-		if (err < 0)
-			return -1;
-		done += err;
-		err = check_comm(switch_tracking, event, "Test COMM 3", 2);
-		if (err < 0)
-			return -1;
-		done += err;
-		err = check_comm(switch_tracking, event, "Test COMM 4", 3);
-		if (err < 0)
-			return -1;
-		done += err;
-		if (done != 1) {
+		err = check_comm(चयन_tracking, event, "Test COMM 1", 0);
+		अगर (err < 0)
+			वापस -1;
+		करोne += err;
+		err = check_comm(चयन_tracking, event, "Test COMM 2", 1);
+		अगर (err < 0)
+			वापस -1;
+		करोne += err;
+		err = check_comm(चयन_tracking, event, "Test COMM 3", 2);
+		अगर (err < 0)
+			वापस -1;
+		करोne += err;
+		err = check_comm(चयन_tracking, event, "Test COMM 4", 3);
+		अगर (err < 0)
+			वापस -1;
+		करोne += err;
+		अगर (करोne != 1) अणु
 			pr_debug("Unexpected comm event\n");
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct event_node {
-	struct list_head list;
-	union perf_event *event;
-	u64 event_time;
-};
+काष्ठा event_node अणु
+	काष्ठा list_head list;
+	जोड़ perf_event *event;
+	u64 event_समय;
+पूर्ण;
 
-static int add_event(struct evlist *evlist, struct list_head *events,
-		     union perf_event *event)
-{
-	struct perf_sample sample;
-	struct event_node *node;
+अटल पूर्णांक add_event(काष्ठा evlist *evlist, काष्ठा list_head *events,
+		     जोड़ perf_event *event)
+अणु
+	काष्ठा perf_sample sample;
+	काष्ठा event_node *node;
 
-	node = malloc(sizeof(struct event_node));
-	if (!node) {
+	node = दो_स्मृति(माप(काष्ठा event_node));
+	अगर (!node) अणु
 		pr_debug("malloc failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	node->event = event;
 	list_add(&node->list, events);
 
-	if (evlist__parse_sample(evlist, event, &sample)) {
+	अगर (evlist__parse_sample(evlist, event, &sample)) अणु
 		pr_debug("evlist__parse_sample failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!sample.time) {
+	अगर (!sample.समय) अणु
 		pr_debug("event with no time\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	node->event_time = sample.time;
+	node->event_समय = sample.समय;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_event_nodes(struct list_head *events)
-{
-	struct event_node *node;
+अटल व्योम मुक्त_event_nodes(काष्ठा list_head *events)
+अणु
+	काष्ठा event_node *node;
 
-	while (!list_empty(events)) {
-		node = list_entry(events->next, struct event_node, list);
+	जबतक (!list_empty(events)) अणु
+		node = list_entry(events->next, काष्ठा event_node, list);
 		list_del_init(&node->list);
-		free(node);
-	}
-}
+		मुक्त(node);
+	पूर्ण
+पूर्ण
 
-static int compar(const void *a, const void *b)
-{
-	const struct event_node *nodea = a;
-	const struct event_node *nodeb = b;
-	s64 cmp = nodea->event_time - nodeb->event_time;
+अटल पूर्णांक compar(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा event_node *nodea = a;
+	स्थिर काष्ठा event_node *nodeb = b;
+	s64 cmp = nodea->event_समय - nodeb->event_समय;
 
-	return cmp;
-}
+	वापस cmp;
+पूर्ण
 
-static int process_events(struct evlist *evlist,
-			  struct switch_tracking *switch_tracking)
-{
-	union perf_event *event;
-	unsigned pos, cnt = 0;
+अटल पूर्णांक process_events(काष्ठा evlist *evlist,
+			  काष्ठा चयन_tracking *चयन_tracking)
+अणु
+	जोड़ perf_event *event;
+	अचिन्हित pos, cnt = 0;
 	LIST_HEAD(events);
-	struct event_node *events_array, *node;
-	struct mmap *md;
-	int i, ret;
+	काष्ठा event_node *events_array, *node;
+	काष्ठा mmap *md;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
 		md = &evlist->mmap[i];
-		if (perf_mmap__read_init(&md->core) < 0)
-			continue;
+		अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+			जारी;
 
-		while ((event = perf_mmap__read_event(&md->core)) != NULL) {
+		जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
 			cnt += 1;
 			ret = add_event(evlist, &events, event);
 			 perf_mmap__consume(&md->core);
-			if (ret < 0)
-				goto out_free_nodes;
-		}
-		perf_mmap__read_done(&md->core);
-	}
+			अगर (ret < 0)
+				जाओ out_मुक्त_nodes;
+		पूर्ण
+		perf_mmap__पढ़ो_करोne(&md->core);
+	पूर्ण
 
-	events_array = calloc(cnt, sizeof(struct event_node));
-	if (!events_array) {
+	events_array = सुस्मृति(cnt, माप(काष्ठा event_node));
+	अगर (!events_array) अणु
 		pr_debug("calloc failed\n");
 		ret = -1;
-		goto out_free_nodes;
-	}
+		जाओ out_मुक्त_nodes;
+	पूर्ण
 
 	pos = 0;
-	list_for_each_entry(node, &events, list)
+	list_क्रम_each_entry(node, &events, list)
 		events_array[pos++] = *node;
 
-	qsort(events_array, cnt, sizeof(struct event_node), compar);
+	क्विक(events_array, cnt, माप(काष्ठा event_node), compar);
 
-	for (pos = 0; pos < cnt; pos++) {
+	क्रम (pos = 0; pos < cnt; pos++) अणु
 		ret = process_event(evlist, events_array[pos].event,
-				    switch_tracking);
-		if (ret < 0)
-			goto out_free;
-	}
+				    चयन_tracking);
+		अगर (ret < 0)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	ret = 0;
-out_free:
+out_मुक्त:
 	pr_debug("%u events recorded\n", cnt);
-	free(events_array);
-out_free_nodes:
-	free_event_nodes(&events);
-	return ret;
-}
+	मुक्त(events_array);
+out_मुक्त_nodes:
+	मुक्त_event_nodes(&events);
+	वापस ret;
+पूर्ण
 
 /**
- * test__switch_tracking - test using sched_switch and tracking events.
+ * test__चयन_tracking - test using sched_चयन and tracking events.
  *
- * This function implements a test that checks that sched_switch events and
- * tracking events can be recorded for a workload (current process) using the
- * evsel->core.system_wide and evsel->tracking flags (respectively) with other events
- * sometimes enabled or disabled.
+ * This function implements a test that checks that sched_चयन events and
+ * tracking events can be recorded क्रम a workload (current process) using the
+ * evsel->core.प्रणाली_wide and evsel->tracking flags (respectively) with other events
+ * someबार enabled or disabled.
  */
-int test__switch_tracking(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	const char *sched_switch = "sched:sched_switch";
-	struct switch_tracking switch_tracking = { .tids = NULL, };
-	struct record_opts opts = {
-		.mmap_pages	     = UINT_MAX,
-		.user_freq	     = UINT_MAX,
-		.user_interval	     = ULLONG_MAX,
+पूर्णांक test__चयन_tracking(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	स्थिर अक्षर *sched_चयन = "sched:sched_switch";
+	काष्ठा चयन_tracking चयन_tracking = अणु .tids = शून्य, पूर्ण;
+	काष्ठा record_opts opts = अणु
+		.mmap_pages	     = अच_पूर्णांक_उच्च,
+		.user_freq	     = अच_पूर्णांक_उच्च,
+		.user_पूर्णांकerval	     = ULदीर्घ_उच्च,
 		.freq		     = 4000,
-		.target		     = {
+		.target		     = अणु
 			.uses_mmap   = true,
-		},
-	};
-	struct perf_thread_map *threads = NULL;
-	struct perf_cpu_map *cpus = NULL;
-	struct evlist *evlist = NULL;
-	struct evsel *evsel, *cpu_clocks_evsel, *cycles_evsel;
-	struct evsel *switch_evsel, *tracking_evsel;
-	const char *comm;
-	int err = -1;
+		पूर्ण,
+	पूर्ण;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य;
+	काष्ठा perf_cpu_map *cpus = शून्य;
+	काष्ठा evlist *evlist = शून्य;
+	काष्ठा evsel *evsel, *cpu_घड़ीs_evsel, *cycles_evsel;
+	काष्ठा evsel *चयन_evsel, *tracking_evsel;
+	स्थिर अक्षर *comm;
+	पूर्णांक err = -1;
 
-	threads = thread_map__new(-1, getpid(), UINT_MAX);
-	if (!threads) {
+	thपढ़ोs = thपढ़ो_map__new(-1, getpid(), अच_पूर्णांक_उच्च);
+	अगर (!thपढ़ोs) अणु
 		pr_debug("thread_map__new failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	cpus = perf_cpu_map__new(NULL);
-	if (!cpus) {
+	cpus = perf_cpu_map__new(शून्य);
+	अगर (!cpus) अणु
 		pr_debug("perf_cpu_map__new failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evlist = evlist__new();
-	if (!evlist) {
+	अगर (!evlist) अणु
 		pr_debug("evlist__new failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	perf_evlist__set_maps(&evlist->core, cpus, threads);
+	perf_evlist__set_maps(&evlist->core, cpus, thपढ़ोs);
 
 	/* First event */
-	err = parse_events(evlist, "cpu-clock:u", NULL);
-	if (err) {
+	err = parse_events(evlist, "cpu-clock:u", शून्य);
+	अगर (err) अणु
 		pr_debug("Failed to parse event dummy:u\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	cpu_clocks_evsel = evlist__last(evlist);
+	cpu_घड़ीs_evsel = evlist__last(evlist);
 
 	/* Second event */
-	if (perf_pmu__has_hybrid())
-		err = parse_events(evlist, "cpu_core/cycles/u", NULL);
-	else
-		err = parse_events(evlist, "cycles:u", NULL);
-	if (err) {
+	अगर (perf_pmu__has_hybrid())
+		err = parse_events(evlist, "cpu_core/cycles/u", शून्य);
+	अन्यथा
+		err = parse_events(evlist, "cycles:u", शून्य);
+	अगर (err) अणु
 		pr_debug("Failed to parse event cycles:u\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	cycles_evsel = evlist__last(evlist);
 
 	/* Third event */
-	if (!evlist__can_select_event(evlist, sched_switch)) {
+	अगर (!evlist__can_select_event(evlist, sched_चयन)) अणु
 		pr_debug("No sched_switch\n");
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = parse_events(evlist, sched_switch, NULL);
-	if (err) {
-		pr_debug("Failed to parse event %s\n", sched_switch);
-		goto out_err;
-	}
+	err = parse_events(evlist, sched_चयन, शून्य);
+	अगर (err) अणु
+		pr_debug("Failed to parse event %s\n", sched_चयन);
+		जाओ out_err;
+	पूर्ण
 
-	switch_evsel = evlist__last(evlist);
+	चयन_evsel = evlist__last(evlist);
 
-	evsel__set_sample_bit(switch_evsel, CPU);
-	evsel__set_sample_bit(switch_evsel, TIME);
+	evsel__set_sample_bit(चयन_evsel, CPU);
+	evsel__set_sample_bit(चयन_evsel, TIME);
 
-	switch_evsel->core.system_wide = true;
-	switch_evsel->no_aux_samples = true;
-	switch_evsel->immediate = true;
+	चयन_evsel->core.प्रणाली_wide = true;
+	चयन_evsel->no_aux_samples = true;
+	चयन_evsel->immediate = true;
 
 	/* Test moving an event to the front */
-	if (cycles_evsel == evlist__first(evlist)) {
+	अगर (cycles_evsel == evlist__first(evlist)) अणु
 		pr_debug("cycles event already at front");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	evlist__to_front(evlist, cycles_evsel);
-	if (cycles_evsel != evlist__first(evlist)) {
+	अगर (cycles_evsel != evlist__first(evlist)) अणु
 		pr_debug("Failed to move cycles event to front");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evsel__set_sample_bit(cycles_evsel, CPU);
 	evsel__set_sample_bit(cycles_evsel, TIME);
 
 	/* Fourth event */
-	err = parse_events(evlist, "dummy:u", NULL);
-	if (err) {
+	err = parse_events(evlist, "dummy:u", शून्य);
+	अगर (err) अणु
 		pr_debug("Failed to parse event dummy:u\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	tracking_evsel = evlist__last(evlist);
 
@@ -436,155 +437,155 @@ int test__switch_tracking(struct test *test __maybe_unused, int subtest __maybe_
 	evsel__set_sample_bit(tracking_evsel, TIME);
 
 	/* Config events */
-	evlist__config(evlist, &opts, NULL);
+	evlist__config(evlist, &opts, शून्य);
 
 	/* Check moved event is still at the front */
-	if (cycles_evsel != evlist__first(evlist)) {
+	अगर (cycles_evsel != evlist__first(evlist)) अणु
 		pr_debug("Front event no longer at front");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Check tracking event is tracking */
-	if (!tracking_evsel->core.attr.mmap || !tracking_evsel->core.attr.comm) {
+	अगर (!tracking_evsel->core.attr.mmap || !tracking_evsel->core.attr.comm) अणु
 		pr_debug("Tracking event not tracking\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Check non-tracking events are not tracking */
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel != tracking_evsel) {
-			if (evsel->core.attr.mmap || evsel->core.attr.comm) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel != tracking_evsel) अणु
+			अगर (evsel->core.attr.mmap || evsel->core.attr.comm) अणु
 				pr_debug("Non-tracking event is tracking\n");
-				goto out_err;
-			}
-		}
-	}
+				जाओ out_err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (evlist__open(evlist) < 0) {
+	अगर (evlist__खोलो(evlist) < 0) अणु
 		pr_debug("Not supported\n");
 		err = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	err = evlist__mmap(evlist, UINT_MAX);
-	if (err) {
+	err = evlist__mmap(evlist, अच_पूर्णांक_उच्च);
+	अगर (err) अणु
 		pr_debug("evlist__mmap failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evlist__enable(evlist);
 
-	err = evsel__disable(cpu_clocks_evsel);
-	if (err) {
+	err = evsel__disable(cpu_घड़ीs_evsel);
+	अगर (err) अणु
 		pr_debug("perf_evlist__disable_event failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = spin_sleep();
-	if (err) {
+	अगर (err) अणु
 		pr_debug("spin_sleep failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	comm = "Test COMM 1";
-	err = prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0);
-	if (err) {
+	err = prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0);
+	अगर (err) अणु
 		pr_debug("PR_SET_NAME failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = evsel__disable(cycles_evsel);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("perf_evlist__disable_event failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	comm = "Test COMM 2";
-	err = prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0);
-	if (err) {
+	err = prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0);
+	अगर (err) अणु
 		pr_debug("PR_SET_NAME failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = spin_sleep();
-	if (err) {
+	अगर (err) अणु
 		pr_debug("spin_sleep failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	comm = "Test COMM 3";
-	err = prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0);
-	if (err) {
+	err = prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0);
+	अगर (err) अणु
 		pr_debug("PR_SET_NAME failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = evsel__enable(cycles_evsel);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("perf_evlist__disable_event failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	comm = "Test COMM 4";
-	err = prctl(PR_SET_NAME, (unsigned long)comm, 0, 0, 0);
-	if (err) {
+	err = prctl(PR_SET_NAME, (अचिन्हित दीर्घ)comm, 0, 0, 0);
+	अगर (err) अणु
 		pr_debug("PR_SET_NAME failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = spin_sleep();
-	if (err) {
+	अगर (err) अणु
 		pr_debug("spin_sleep failed!\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evlist__disable(evlist);
 
-	switch_tracking.switch_evsel = switch_evsel;
-	switch_tracking.cycles_evsel = cycles_evsel;
+	चयन_tracking.चयन_evsel = चयन_evsel;
+	चयन_tracking.cycles_evsel = cycles_evsel;
 
-	err = process_events(evlist, &switch_tracking);
+	err = process_events(evlist, &चयन_tracking);
 
-	zfree(&switch_tracking.tids);
+	zमुक्त(&चयन_tracking.tids);
 
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	/* Check all 4 comm events were seen i.e. that evsel->tracking works */
-	if (!switch_tracking.comm_seen[0] || !switch_tracking.comm_seen[1] ||
-	    !switch_tracking.comm_seen[2] || !switch_tracking.comm_seen[3]) {
+	अगर (!चयन_tracking.comm_seen[0] || !चयन_tracking.comm_seen[1] ||
+	    !चयन_tracking.comm_seen[2] || !चयन_tracking.comm_seen[3]) अणु
 		pr_debug("Missing comm events\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Check cycles event got enabled */
-	if (!switch_tracking.cycles_before_comm_1) {
+	अगर (!चयन_tracking.cycles_beक्रमe_comm_1) अणु
 		pr_debug("Missing cycles events\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Check cycles event got disabled */
-	if (switch_tracking.cycles_between_comm_2_and_comm_3) {
+	अगर (चयन_tracking.cycles_between_comm_2_and_comm_3) अणु
 		pr_debug("cycles events even though event was disabled\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	/* Check cycles event got enabled again */
-	if (!switch_tracking.cycles_after_comm_4) {
+	अगर (!चयन_tracking.cycles_after_comm_4) अणु
 		pr_debug("Missing cycles events\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 out:
-	if (evlist) {
+	अगर (evlist) अणु
 		evlist__disable(evlist);
 		evlist__delete(evlist);
-	}
+	पूर्ण
 	perf_cpu_map__put(cpus);
-	perf_thread_map__put(threads);
+	perf_thपढ़ो_map__put(thपढ़ोs);
 
-	return err;
+	वापस err;
 
 out_err:
 	err = -1;
-	goto out;
-}
+	जाओ out;
+पूर्ण

@@ -1,127 +1,128 @@
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include "../../../../mm/gup_test.h"
+<शैली गुरु>
+#समावेश <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <sys/ioctl.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश "../../../../mm/gup_test.h"
 
-#define MB (1UL << 20)
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
+#घोषणा MB (1UL << 20)
+#घोषणा PAGE_SIZE sysconf(_SC_PAGESIZE)
 
 /* Just the flags we need, copied from mm.h: */
-#define FOLL_WRITE	0x01	/* check pte is writable */
-#define FOLL_TOUCH	0x02	/* mark page accessed */
+#घोषणा FOLL_WRITE	0x01	/* check pte is writable */
+#घोषणा FOLL_TOUCH	0x02	/* mark page accessed */
 
-static char *cmd_to_str(unsigned long cmd)
-{
-	switch (cmd) {
-	case GUP_FAST_BENCHMARK:
-		return "GUP_FAST_BENCHMARK";
-	case PIN_FAST_BENCHMARK:
-		return "PIN_FAST_BENCHMARK";
-	case PIN_LONGTERM_BENCHMARK:
-		return "PIN_LONGTERM_BENCHMARK";
-	case GUP_BASIC_TEST:
-		return "GUP_BASIC_TEST";
-	case PIN_BASIC_TEST:
-		return "PIN_BASIC_TEST";
-	case DUMP_USER_PAGES_TEST:
-		return "DUMP_USER_PAGES_TEST";
-	}
-	return "Unknown command";
-}
+अटल अक्षर *cmd_to_str(अचिन्हित दीर्घ cmd)
+अणु
+	चयन (cmd) अणु
+	हाल GUP_FAST_BENCHMARK:
+		वापस "GUP_FAST_BENCHMARK";
+	हाल PIN_FAST_BENCHMARK:
+		वापस "PIN_FAST_BENCHMARK";
+	हाल PIN_LONGTERM_BENCHMARK:
+		वापस "PIN_LONGTERM_BENCHMARK";
+	हाल GUP_BASIC_TEST:
+		वापस "GUP_BASIC_TEST";
+	हाल PIN_BASIC_TEST:
+		वापस "PIN_BASIC_TEST";
+	हाल DUMP_USER_PAGES_TEST:
+		वापस "DUMP_USER_PAGES_TEST";
+	पूर्ण
+	वापस "Unknown command";
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	struct gup_test gup = { 0 };
-	unsigned long size = 128 * MB;
-	int i, fd, filed, opt, nr_pages = 1, thp = -1, repeats = 1, write = 1;
-	unsigned long cmd = GUP_FAST_BENCHMARK;
-	int flags = MAP_PRIVATE, touch = 0;
-	char *file = "/dev/zero";
-	char *p;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा gup_test gup = अणु 0 पूर्ण;
+	अचिन्हित दीर्घ size = 128 * MB;
+	पूर्णांक i, fd, filed, opt, nr_pages = 1, thp = -1, repeats = 1, ग_लिखो = 1;
+	अचिन्हित दीर्घ cmd = GUP_FAST_BENCHMARK;
+	पूर्णांक flags = MAP_PRIVATE, touch = 0;
+	अक्षर *file = "/dev/zero";
+	अक्षर *p;
 
-	while ((opt = getopt(argc, argv, "m:r:n:F:f:abctTLUuwWSHpz")) != -1) {
-		switch (opt) {
-		case 'a':
+	जबतक ((opt = getopt(argc, argv, "m:r:n:F:f:abctTLUuwWSHpz")) != -1) अणु
+		चयन (opt) अणु
+		हाल 'a':
 			cmd = PIN_FAST_BENCHMARK;
-			break;
-		case 'b':
+			अवरोध;
+		हाल 'b':
 			cmd = PIN_BASIC_TEST;
-			break;
-		case 'L':
+			अवरोध;
+		हाल 'L':
 			cmd = PIN_LONGTERM_BENCHMARK;
-			break;
-		case 'c':
+			अवरोध;
+		हाल 'c':
 			cmd = DUMP_USER_PAGES_TEST;
 			/*
 			 * Dump page 0 (index 1). May be overridden later, by
 			 * user's non-option arguments.
 			 *
-			 * .which_pages is zero-based, so that zero can mean "do
+			 * .which_pages is zero-based, so that zero can mean "करो
 			 * nothing".
 			 */
 			gup.which_pages[0] = 1;
-			break;
-		case 'p':
+			अवरोध;
+		हाल 'p':
 			/* works only with DUMP_USER_PAGES_TEST */
 			gup.test_flags |= GUP_TEST_FLAG_DUMP_PAGES_USE_PIN;
-			break;
-		case 'F':
-			/* strtol, so you can pass flags in hex form */
-			gup.gup_flags = strtol(optarg, 0, 0);
-			break;
-		case 'm':
-			size = atoi(optarg) * MB;
-			break;
-		case 'r':
-			repeats = atoi(optarg);
-			break;
-		case 'n':
-			nr_pages = atoi(optarg);
-			break;
-		case 't':
+			अवरोध;
+		हाल 'F':
+			/* म_से_दीर्घ, so you can pass flags in hex क्रमm */
+			gup.gup_flags = म_से_दीर्घ(optarg, 0, 0);
+			अवरोध;
+		हाल 'm':
+			size = म_से_प(optarg) * MB;
+			अवरोध;
+		हाल 'r':
+			repeats = म_से_प(optarg);
+			अवरोध;
+		हाल 'n':
+			nr_pages = म_से_प(optarg);
+			अवरोध;
+		हाल 't':
 			thp = 1;
-			break;
-		case 'T':
+			अवरोध;
+		हाल 'T':
 			thp = 0;
-			break;
-		case 'U':
+			अवरोध;
+		हाल 'U':
 			cmd = GUP_BASIC_TEST;
-			break;
-		case 'u':
+			अवरोध;
+		हाल 'u':
 			cmd = GUP_FAST_BENCHMARK;
-			break;
-		case 'w':
-			write = 1;
-			break;
-		case 'W':
-			write = 0;
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'w':
+			ग_लिखो = 1;
+			अवरोध;
+		हाल 'W':
+			ग_लिखो = 0;
+			अवरोध;
+		हाल 'f':
 			file = optarg;
-			break;
-		case 'S':
+			अवरोध;
+		हाल 'S':
 			flags &= ~MAP_PRIVATE;
 			flags |= MAP_SHARED;
-			break;
-		case 'H':
+			अवरोध;
+		हाल 'H':
 			flags |= (MAP_HUGETLB | MAP_ANONYMOUS);
-			break;
-		case 'z':
-			/* fault pages in gup, do not fault in userland */
+			अवरोध;
+		हाल 'z':
+			/* fault pages in gup, करो not fault in userland */
 			touch = 1;
-			break;
-		default:
-			return -1;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	if (optind < argc) {
-		int extra_arg_count = 0;
+	अगर (optind < argc) अणु
+		पूर्णांक extra_arg_count = 0;
 		/*
 		 * For example:
 		 *
@@ -130,87 +131,87 @@ int main(int argc, char **argv)
 		 * ...to dump pages 0, 1, and 4097
 		 */
 
-		while ((optind < argc) &&
-		       (extra_arg_count < GUP_TEST_MAX_PAGES_TO_DUMP)) {
+		जबतक ((optind < argc) &&
+		       (extra_arg_count < GUP_TEST_MAX_PAGES_TO_DUMP)) अणु
 			/*
 			 * Do the 1-based indexing here, so that the user can
 			 * use normal 0-based indexing on the command line.
 			 */
-			long page_index = strtol(argv[optind], 0, 0) + 1;
+			दीर्घ page_index = म_से_दीर्घ(argv[optind], 0, 0) + 1;
 
 			gup.which_pages[extra_arg_count] = page_index;
 			extra_arg_count++;
 			optind++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	filed = open(file, O_RDWR|O_CREAT);
-	if (filed < 0) {
-		perror("open");
-		exit(filed);
-	}
+	filed = खोलो(file, O_RDWR|O_CREAT);
+	अगर (filed < 0) अणु
+		लिखो_त्रुटि("open");
+		निकास(filed);
+	पूर्ण
 
 	gup.nr_pages_per_call = nr_pages;
-	if (write)
+	अगर (ग_लिखो)
 		gup.gup_flags |= FOLL_WRITE;
 
-	fd = open("/sys/kernel/debug/gup_test", O_RDWR);
-	if (fd == -1) {
-		perror("open");
-		exit(1);
-	}
+	fd = खोलो("/sys/kernel/debug/gup_test", O_RDWR);
+	अगर (fd == -1) अणु
+		लिखो_त्रुटि("open");
+		निकास(1);
+	पूर्ण
 
-	p = mmap(NULL, size, PROT_READ | PROT_WRITE, flags, filed, 0);
-	if (p == MAP_FAILED) {
-		perror("mmap");
-		exit(1);
-	}
-	gup.addr = (unsigned long)p;
+	p = mmap(शून्य, size, PROT_READ | PROT_WRITE, flags, filed, 0);
+	अगर (p == MAP_FAILED) अणु
+		लिखो_त्रुटि("mmap");
+		निकास(1);
+	पूर्ण
+	gup.addr = (अचिन्हित दीर्घ)p;
 
-	if (thp == 1)
+	अगर (thp == 1)
 		madvise(p, size, MADV_HUGEPAGE);
-	else if (thp == 0)
+	अन्यथा अगर (thp == 0)
 		madvise(p, size, MADV_NOHUGEPAGE);
 
 	/*
-	 * FOLL_TOUCH, in gup_test, is used as an either/or case: either
+	 * FOLL_TOUCH, in gup_test, is used as an either/or हाल: either
 	 * fault pages in from the kernel via FOLL_TOUCH, or fault them
-	 * in here, from user space. This allows comparison of performance
-	 * between those two cases.
+	 * in here, from user space. This allows comparison of perक्रमmance
+	 * between those two हालs.
 	 */
-	if (touch) {
+	अगर (touch) अणु
 		gup.gup_flags |= FOLL_TOUCH;
-	} else {
-		for (; (unsigned long)p < gup.addr + size; p += PAGE_SIZE)
+	पूर्ण अन्यथा अणु
+		क्रम (; (अचिन्हित दीर्घ)p < gup.addr + size; p += PAGE_SIZE)
 			p[0] = 0;
-	}
+	पूर्ण
 
-	/* Only report timing information on the *_BENCHMARK commands: */
-	if ((cmd == PIN_FAST_BENCHMARK) || (cmd == GUP_FAST_BENCHMARK) ||
-	     (cmd == PIN_LONGTERM_BENCHMARK)) {
-		for (i = 0; i < repeats; i++) {
+	/* Only report timing inक्रमmation on the *_BENCHMARK commands: */
+	अगर ((cmd == PIN_FAST_BENCHMARK) || (cmd == GUP_FAST_BENCHMARK) ||
+	     (cmd == PIN_LONGTERM_BENCHMARK)) अणु
+		क्रम (i = 0; i < repeats; i++) अणु
 			gup.size = size;
-			if (ioctl(fd, cmd, &gup))
-				perror("ioctl"), exit(1);
+			अगर (ioctl(fd, cmd, &gup))
+				लिखो_त्रुटि("ioctl"), निकास(1);
 
-			printf("%s: Time: get:%lld put:%lld us",
+			म_लिखो("%s: Time: get:%lld put:%lld us",
 			       cmd_to_str(cmd), gup.get_delta_usec,
 			       gup.put_delta_usec);
-			if (gup.size != size)
-				printf(", truncated (size: %lld)", gup.size);
-			printf("\n");
-		}
-	} else {
+			अगर (gup.size != size)
+				म_लिखो(", truncated (size: %lld)", gup.size);
+			म_लिखो("\n");
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		gup.size = size;
-		if (ioctl(fd, cmd, &gup)) {
-			perror("ioctl");
-			exit(1);
-		}
+		अगर (ioctl(fd, cmd, &gup)) अणु
+			लिखो_त्रुटि("ioctl");
+			निकास(1);
+		पूर्ण
 
-		printf("%s: done\n", cmd_to_str(cmd));
-		if (gup.size != size)
-			printf("Truncated (size: %lld)\n", gup.size);
-	}
+		म_लिखो("%s: done\n", cmd_to_str(cmd));
+		अगर (gup.size != size)
+			म_लिखो("Truncated (size: %lld)\n", gup.size);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

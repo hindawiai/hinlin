@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware definitions for HP iPAQ h5xxx Handheld Computers
+ * Hardware definitions क्रम HP iPAQ h5xxx Handheld Computers
  *
  * Copyright 2000-2003  Hewlett-Packard Company.
  * Copyright 2002       Jamey Hicks <jamey.hicks@hp.com>
  * Copyright 2004-2005  Phil Blundell <pb@handhelds.org>
- * Copyright 2007-2008  Anton Vorontsov <cbouatmailru@gmail.com>
+ * Copyright 2007-2008  Anton Vorontsov <cbouaपंचांगailru@gmail.com>
  *
  * COMPAQ COMPUTER CORPORATION MAKES NO WARRANTIES, EXPRESSED OR IMPLIED,
  * AS TO THE USEFULNESS OR CORRECTNESS OF THIS CODE OR ITS
@@ -14,115 +15,115 @@
  * Author: Jamey Hicks.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/irq.h>
 
-#include "pxa25x.h"
-#include "h5000.h"
-#include "udc.h"
-#include <mach/smemc.h>
+#समावेश "pxa25x.h"
+#समावेश "h5000.h"
+#समावेश "udc.h"
+#समावेश <mach/smemc.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
 /*
  * Flash
  */
 
-static struct mtd_partition h5000_flash0_partitions[] = {
-	{
+अटल काष्ठा mtd_partition h5000_flash0_partitions[] = अणु
+	अणु
 		.name = "bootldr",
 		.size = 0x00040000,
 		.offset = 0,
 		.mask_flags = MTD_WRITEABLE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "root",
 		.size = MTDPART_SIZ_FULL,
 		.offset = MTDPART_OFS_APPEND,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct mtd_partition h5000_flash1_partitions[] = {
-	{
+अटल काष्ठा mtd_partition h5000_flash1_partitions[] = अणु
+	अणु
 		.name = "second root",
 		.size = SZ_16M - 0x00040000,
 		.offset = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "asset",
 		.size = MTDPART_SIZ_FULL,
 		.offset = MTDPART_OFS_APPEND,
 		.mask_flags = MTD_WRITEABLE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data h5000_flash0_data = {
+अटल काष्ठा physmap_flash_data h5000_flash0_data = अणु
 	.width = 4,
 	.parts = h5000_flash0_partitions,
 	.nr_parts = ARRAY_SIZE(h5000_flash0_partitions),
-};
+पूर्ण;
 
-static struct physmap_flash_data h5000_flash1_data = {
+अटल काष्ठा physmap_flash_data h5000_flash1_data = अणु
 	.width = 4,
 	.parts = h5000_flash1_partitions,
 	.nr_parts = ARRAY_SIZE(h5000_flash1_partitions),
-};
+पूर्ण;
 
-static struct resource h5000_flash0_resources = {
+अटल काष्ठा resource h5000_flash0_resources = अणु
 	.start = PXA_CS0_PHYS,
 	.end = PXA_CS0_PHYS + SZ_32M - 1,
 	.flags = IORESOURCE_MEM | IORESOURCE_MEM_32BIT,
-};
+पूर्ण;
 
-static struct resource h5000_flash1_resources = {
+अटल काष्ठा resource h5000_flash1_resources = अणु
 	.start = PXA_CS0_PHYS + SZ_32M,
 	.end = PXA_CS0_PHYS + SZ_32M + SZ_16M - 1,
 	.flags = IORESOURCE_MEM | IORESOURCE_MEM_32BIT,
-};
+पूर्ण;
 
-static struct platform_device h5000_flash[] = {
-	{
+अटल काष्ठा platक्रमm_device h5000_flash[] = अणु
+	अणु
 		.name = "physmap-flash",
 		.id = 0,
 		.resource = &h5000_flash0_resources,
 		.num_resources = 1,
-		.dev = {
-			.platform_data = &h5000_flash0_data,
-		},
-	},
-	{
+		.dev = अणु
+			.platक्रमm_data = &h5000_flash0_data,
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name = "physmap-flash",
 		.id = 1,
 		.resource = &h5000_flash1_resources,
 		.num_resources = 1,
-		.dev = {
-			.platform_data = &h5000_flash1_data,
-		},
-	},
-};
+		.dev = अणु
+			.platक्रमm_data = &h5000_flash1_data,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
  * USB Device Controller
  */
 
-static struct pxa2xx_udc_mach_info h5000_udc_mach_info __initdata = {
+अटल काष्ठा pxa2xx_udc_mach_info h5000_udc_mach_info __initdata = अणु
 	.gpio_pullup = H5000_GPIO_USB_PULLUP,
-};
+पूर्ण;
 
 /*
  * GPIO setup
  */
 
-static unsigned long h5000_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ h5000_pin_config[] __initdata = अणु
 	/* Crystal and Clock Signals */
 	GPIO12_32KHz,
 
@@ -159,7 +160,7 @@ static unsigned long h5000_pin_config[] __initdata = {
 	GPIO30_I2S_SDATA_OUT,
 	GPIO31_I2S_SYNC,
 	GPIO32_I2S_SYSCLK,
-};
+पूर्ण;
 
 /*
  * Localbus setup:
@@ -168,35 +169,35 @@ static unsigned long h5000_pin_config[] __initdata = {
  * CS5: SAMCOP.
  */
 
-static void fix_msc(void)
-{
-	__raw_writel(0x129c24f2, MSC0);
-	__raw_writel(0x7ff424fa, MSC1);
-	__raw_writel(0x7ff47ff4, MSC2);
+अटल व्योम fix_msc(व्योम)
+अणु
+	__raw_ग_लिखोl(0x129c24f2, MSC0);
+	__raw_ग_लिखोl(0x7ff424fa, MSC1);
+	__raw_ग_लिखोl(0x7ff47ff4, MSC2);
 
-	__raw_writel(__raw_readl(MDREFR) | 0x02080000, MDREFR);
-}
+	__raw_ग_लिखोl(__raw_पढ़ोl(MDREFR) | 0x02080000, MDREFR);
+पूर्ण
 
 /*
- * Platform devices
+ * Platक्रमm devices
  */
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&h5000_flash[0],
 	&h5000_flash[1],
-};
+पूर्ण;
 
-static void __init h5000_init(void)
-{
+अटल व्योम __init h5000_init(व्योम)
+अणु
 	fix_msc();
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(h5000_pin_config));
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 	pxa_set_udc_info(&h5000_udc_mach_info);
-	platform_add_devices(ARRAY_AND_SIZE(devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(devices));
+पूर्ण
 
 MACHINE_START(H5400, "HP iPAQ H5000")
 	.atag_offset = 0x100,
@@ -204,7 +205,7 @@ MACHINE_START(H5400, "HP iPAQ H5000")
 	.nr_irqs = PXA_NR_IRQS,
 	.init_irq = pxa25x_init_irq,
 	.handle_irq = pxa25x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine = h5000_init,
 	.restart	= pxa_restart,
 MACHINE_END

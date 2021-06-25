@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * multiorder.c: Multi-order radix tree entry testing
  * Copyright (c) 2016 Intel Corporation
- * Author: Ross Zwisler <ross.zwisler@linux.intel.com>
- * Author: Matthew Wilcox <matthew.r.wilcox@intel.com>
+ * Author: Ross Zwisler <ross.zwisler@linux.पूर्णांकel.com>
+ * Author: Matthew Wilcox <matthew.r.wilcox@पूर्णांकel.com>
  */
-#include <linux/radix-tree.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <pthread.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <pthपढ़ो.h>
 
-#include "test.h"
+#समावेश "test.h"
 
-static int item_insert_order(struct xarray *xa, unsigned long index,
-			unsigned order)
-{
+अटल पूर्णांक item_insert_order(काष्ठा xarray *xa, अचिन्हित दीर्घ index,
+			अचिन्हित order)
+अणु
 	XA_STATE_ORDER(xas, xa, index, order);
-	struct item *item = item_create(index, order);
+	काष्ठा item *item = item_create(index, order);
 
-	do {
+	करो अणु
 		xas_lock(&xas);
 		xas_store(&xas, item);
 		xas_unlock(&xas);
-	} while (xas_nomem(&xas, GFP_KERNEL));
+	पूर्ण जबतक (xas_nomem(&xas, GFP_KERNEL));
 
-	if (!xas_error(&xas))
-		return 0;
+	अगर (!xas_error(&xas))
+		वापस 0;
 
-	free(item);
-	return xas_error(&xas);
-}
+	मुक्त(item);
+	वापस xas_error(&xas);
+पूर्ण
 
-void multiorder_iteration(struct xarray *xa)
-{
+व्योम multiorder_iteration(काष्ठा xarray *xa)
+अणु
 	XA_STATE(xas, xa, 0);
-	struct item *item;
-	int i, j, err;
+	काष्ठा item *item;
+	पूर्णांक i, j, err;
 
-#define NUM_ENTRIES 11
-	int index[NUM_ENTRIES] = {0, 2, 4, 8, 16, 32, 34, 36, 64, 72, 128};
-	int order[NUM_ENTRIES] = {1, 1, 2, 3,  4,  1,  0,  1,  3,  0, 7};
+#घोषणा NUM_ENTRIES 11
+	पूर्णांक index[NUM_ENTRIES] = अणु0, 2, 4, 8, 16, 32, 34, 36, 64, 72, 128पूर्ण;
+	पूर्णांक order[NUM_ENTRIES] = अणु1, 1, 2, 3,  4,  1,  0,  1,  3,  0, 7पूर्ण;
 
-	printv(1, "Multiorder iteration test\n");
+	prपूर्णांकv(1, "Multiorder iteration test\n");
 
-	for (i = 0; i < NUM_ENTRIES; i++) {
+	क्रम (i = 0; i < NUM_ENTRIES; i++) अणु
 		err = item_insert_order(xa, index[i], order[i]);
-		assert(!err);
-	}
+		निश्चित(!err);
+	पूर्ण
 
-	for (j = 0; j < 256; j++) {
-		for (i = 0; i < NUM_ENTRIES; i++)
-			if (j <= (index[i] | ((1 << order[i]) - 1)))
-				break;
+	क्रम (j = 0; j < 256; j++) अणु
+		क्रम (i = 0; i < NUM_ENTRIES; i++)
+			अगर (j <= (index[i] | ((1 << order[i]) - 1)))
+				अवरोध;
 
 		xas_set(&xas, j);
-		xas_for_each(&xas, item, ULONG_MAX) {
-			int height = order[i] / XA_CHUNK_SHIFT;
-			int shift = height * XA_CHUNK_SHIFT;
-			unsigned long mask = (1UL << order[i]) - 1;
+		xas_क्रम_each(&xas, item, अच_दीर्घ_उच्च) अणु
+			पूर्णांक height = order[i] / XA_CHUNK_SHIFT;
+			पूर्णांक shअगरt = height * XA_CHUNK_SHIFT;
+			अचिन्हित दीर्घ mask = (1UL << order[i]) - 1;
 
-			assert((xas.xa_index | mask) == (index[i] | mask));
-			assert(xas.xa_node->shift == shift);
-			assert(!radix_tree_is_internal_node(item));
-			assert((item->index | mask) == (index[i] | mask));
-			assert(item->order == order[i]);
+			निश्चित((xas.xa_index | mask) == (index[i] | mask));
+			निश्चित(xas.xa_node->shअगरt == shअगरt);
+			निश्चित(!radix_tree_is_पूर्णांकernal_node(item));
+			निश्चित((item->index | mask) == (index[i] | mask));
+			निश्चित(item->order == order[i]);
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	item_kill_tree(xa);
-}
+	item_समाप्त_tree(xa);
+पूर्ण
 
-void multiorder_tagged_iteration(struct xarray *xa)
-{
+व्योम multiorder_tagged_iteration(काष्ठा xarray *xa)
+अणु
 	XA_STATE(xas, xa, 0);
-	struct item *item;
-	int i, j;
+	काष्ठा item *item;
+	पूर्णांक i, j;
 
-#define MT_NUM_ENTRIES 9
-	int index[MT_NUM_ENTRIES] = {0, 2, 4, 16, 32, 40, 64, 72, 128};
-	int order[MT_NUM_ENTRIES] = {1, 0, 2, 4,  3,  1,  3,  0,   7};
+#घोषणा MT_NUM_ENTRIES 9
+	पूर्णांक index[MT_NUM_ENTRIES] = अणु0, 2, 4, 16, 32, 40, 64, 72, 128पूर्ण;
+	पूर्णांक order[MT_NUM_ENTRIES] = अणु1, 0, 2, 4,  3,  1,  3,  0,   7पूर्ण;
 
-#define TAG_ENTRIES 7
-	int tag_index[TAG_ENTRIES] = {0, 4, 16, 40, 64, 72, 128};
+#घोषणा TAG_ENTRIES 7
+	पूर्णांक tag_index[TAG_ENTRIES] = अणु0, 4, 16, 40, 64, 72, 128पूर्ण;
 
-	printv(1, "Multiorder tagged iteration test\n");
+	prपूर्णांकv(1, "Multiorder tagged iteration test\n");
 
-	for (i = 0; i < MT_NUM_ENTRIES; i++)
-		assert(!item_insert_order(xa, index[i], order[i]));
+	क्रम (i = 0; i < MT_NUM_ENTRIES; i++)
+		निश्चित(!item_insert_order(xa, index[i], order[i]));
 
-	assert(!xa_marked(xa, XA_MARK_1));
+	निश्चित(!xa_marked(xa, XA_MARK_1));
 
-	for (i = 0; i < TAG_ENTRIES; i++)
+	क्रम (i = 0; i < TAG_ENTRIES; i++)
 		xa_set_mark(xa, tag_index[i], XA_MARK_1);
 
-	for (j = 0; j < 256; j++) {
-		int k;
+	क्रम (j = 0; j < 256; j++) अणु
+		पूर्णांक k;
 
-		for (i = 0; i < TAG_ENTRIES; i++) {
-			for (k = i; index[k] < tag_index[i]; k++)
+		क्रम (i = 0; i < TAG_ENTRIES; i++) अणु
+			क्रम (k = i; index[k] < tag_index[i]; k++)
 				;
-			if (j <= (index[k] | ((1 << order[k]) - 1)))
-				break;
-		}
+			अगर (j <= (index[k] | ((1 << order[k]) - 1)))
+				अवरोध;
+		पूर्ण
 
 		xas_set(&xas, j);
-		xas_for_each_marked(&xas, item, ULONG_MAX, XA_MARK_1) {
-			unsigned long mask;
-			for (k = i; index[k] < tag_index[i]; k++)
+		xas_क्रम_each_marked(&xas, item, अच_दीर्घ_उच्च, XA_MARK_1) अणु
+			अचिन्हित दीर्घ mask;
+			क्रम (k = i; index[k] < tag_index[i]; k++)
 				;
 			mask = (1UL << order[k]) - 1;
 
-			assert((xas.xa_index | mask) == (tag_index[i] | mask));
-			assert(!xa_is_internal(item));
-			assert((item->index | mask) == (tag_index[i] | mask));
-			assert(item->order == order[k]);
+			निश्चित((xas.xa_index | mask) == (tag_index[i] | mask));
+			निश्चित(!xa_is_पूर्णांकernal(item));
+			निश्चित((item->index | mask) == (tag_index[i] | mask));
+			निश्चित(item->order == order[k]);
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	assert(tag_tagged_items(xa, 0, ULONG_MAX, TAG_ENTRIES, XA_MARK_1,
+	निश्चित(tag_tagged_items(xa, 0, अच_दीर्घ_उच्च, TAG_ENTRIES, XA_MARK_1,
 				XA_MARK_2) == TAG_ENTRIES);
 
-	for (j = 0; j < 256; j++) {
-		int mask, k;
+	क्रम (j = 0; j < 256; j++) अणु
+		पूर्णांक mask, k;
 
-		for (i = 0; i < TAG_ENTRIES; i++) {
-			for (k = i; index[k] < tag_index[i]; k++)
+		क्रम (i = 0; i < TAG_ENTRIES; i++) अणु
+			क्रम (k = i; index[k] < tag_index[i]; k++)
 				;
-			if (j <= (index[k] | ((1 << order[k]) - 1)))
-				break;
-		}
+			अगर (j <= (index[k] | ((1 << order[k]) - 1)))
+				अवरोध;
+		पूर्ण
 
 		xas_set(&xas, j);
-		xas_for_each_marked(&xas, item, ULONG_MAX, XA_MARK_2) {
-			for (k = i; index[k] < tag_index[i]; k++)
+		xas_क्रम_each_marked(&xas, item, अच_दीर्घ_उच्च, XA_MARK_2) अणु
+			क्रम (k = i; index[k] < tag_index[i]; k++)
 				;
 			mask = (1 << order[k]) - 1;
 
-			assert((xas.xa_index | mask) == (tag_index[i] | mask));
-			assert(!xa_is_internal(item));
-			assert((item->index | mask) == (tag_index[i] | mask));
-			assert(item->order == order[k]);
+			निश्चित((xas.xa_index | mask) == (tag_index[i] | mask));
+			निश्चित(!xa_is_पूर्णांकernal(item));
+			निश्चित((item->index | mask) == (tag_index[i] | mask));
+			निश्चित(item->order == order[k]);
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	assert(tag_tagged_items(xa, 1, ULONG_MAX, MT_NUM_ENTRIES * 2, XA_MARK_1,
+	निश्चित(tag_tagged_items(xa, 1, अच_दीर्घ_उच्च, MT_NUM_ENTRIES * 2, XA_MARK_1,
 				XA_MARK_0) == TAG_ENTRIES);
 	i = 0;
 	xas_set(&xas, 0);
-	xas_for_each_marked(&xas, item, ULONG_MAX, XA_MARK_0) {
-		assert(xas.xa_index == tag_index[i]);
+	xas_क्रम_each_marked(&xas, item, अच_दीर्घ_उच्च, XA_MARK_0) अणु
+		निश्चित(xas.xa_index == tag_index[i]);
 		i++;
-	}
-	assert(i == TAG_ENTRIES);
+	पूर्ण
+	निश्चित(i == TAG_ENTRIES);
 
-	item_kill_tree(xa);
-}
+	item_समाप्त_tree(xa);
+पूर्ण
 
 bool stop_iteration = false;
 
-static void *creator_func(void *ptr)
-{
+अटल व्योम *creator_func(व्योम *ptr)
+अणु
 	/* 'order' is set up to ensure we have sibling entries */
-	unsigned int order = RADIX_TREE_MAP_SHIFT - 1;
-	struct radix_tree_root *tree = ptr;
-	int i;
+	अचिन्हित पूर्णांक order = RADIX_TREE_MAP_SHIFT - 1;
+	काष्ठा radix_tree_root *tree = ptr;
+	पूर्णांक i;
 
-	for (i = 0; i < 10000; i++) {
+	क्रम (i = 0; i < 10000; i++) अणु
 		item_insert_order(tree, 0, order);
 		item_delete_rcu(tree, 0);
-	}
+	पूर्ण
 
 	stop_iteration = true;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *iterator_func(void *ptr)
-{
+अटल व्योम *iterator_func(व्योम *ptr)
+अणु
 	XA_STATE(xas, ptr, 0);
-	struct item *item;
+	काष्ठा item *item;
 
-	while (!stop_iteration) {
-		rcu_read_lock();
-		xas_for_each(&xas, item, ULONG_MAX) {
-			if (xas_retry(&xas, item))
-				continue;
+	जबतक (!stop_iteration) अणु
+		rcu_पढ़ो_lock();
+		xas_क्रम_each(&xas, item, अच_दीर्घ_उच्च) अणु
+			अगर (xas_retry(&xas, item))
+				जारी;
 
 			item_sanity(item, xas.xa_index);
-		}
-		rcu_read_unlock();
-	}
-	return NULL;
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void multiorder_iteration_race(struct xarray *xa)
-{
-	const int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-	pthread_t worker_thread[num_threads];
-	int i;
+अटल व्योम multiorder_iteration_race(काष्ठा xarray *xa)
+अणु
+	स्थिर पूर्णांक num_thपढ़ोs = sysconf(_SC_NPROCESSORS_ONLN);
+	pthपढ़ो_t worker_thपढ़ो[num_thपढ़ोs];
+	पूर्णांक i;
 
-	pthread_create(&worker_thread[0], NULL, &creator_func, xa);
-	for (i = 1; i < num_threads; i++)
-		pthread_create(&worker_thread[i], NULL, &iterator_func, xa);
+	pthपढ़ो_create(&worker_thपढ़ो[0], शून्य, &creator_func, xa);
+	क्रम (i = 1; i < num_thपढ़ोs; i++)
+		pthपढ़ो_create(&worker_thपढ़ो[i], शून्य, &iterator_func, xa);
 
-	for (i = 0; i < num_threads; i++)
-		pthread_join(worker_thread[i], NULL);
+	क्रम (i = 0; i < num_thपढ़ोs; i++)
+		pthपढ़ो_join(worker_thपढ़ो[i], शून्य);
 
-	item_kill_tree(xa);
-}
+	item_समाप्त_tree(xa);
+पूर्ण
 
-static DEFINE_XARRAY(array);
+अटल DEFINE_XARRAY(array);
 
-void multiorder_checks(void)
-{
+व्योम multiorder_checks(व्योम)
+अणु
 	multiorder_iteration(&array);
 	multiorder_tagged_iteration(&array);
 	multiorder_iteration_race(&array);
 
 	radix_tree_cpu_dead(0);
-}
+पूर्ण
 
-int __weak main(void)
-{
-	rcu_register_thread();
+पूर्णांक __weak मुख्य(व्योम)
+अणु
+	rcu_रेजिस्टर_thपढ़ो();
 	radix_tree_init();
 	multiorder_checks();
-	rcu_unregister_thread();
-	return 0;
-}
+	rcu_unरेजिस्टर_thपढ़ो();
+	वापस 0;
+पूर्ण

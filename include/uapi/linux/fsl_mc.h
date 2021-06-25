@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Management Complex (MC) userspace public interface
+ * Management Complex (MC) userspace खुला पूर्णांकerface
  *
  * Copyright 2021 NXP
  *
  */
-#ifndef _UAPI_FSL_MC_H_
-#define _UAPI_FSL_MC_H_
+#अगर_अघोषित _UAPI_FSL_MC_H_
+#घोषणा _UAPI_FSL_MC_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define MC_CMD_NUM_OF_PARAMS	7
+#घोषणा MC_CMD_NUM_OF_PARAMS	7
 
 /**
- * struct fsl_mc_command - Management Complex (MC) command structure
+ * काष्ठा fsl_mc_command - Management Complex (MC) command काष्ठाure
  * @header: MC command header
  * @params: MC command parameters
  *
  * Used by FSL_MC_SEND_MC_COMMAND
  */
-struct fsl_mc_command {
+काष्ठा fsl_mc_command अणु
 	__le64 header;
 	__le64 params[MC_CMD_NUM_OF_PARAMS];
-};
+पूर्ण;
 
-#define FSL_MC_SEND_CMD_IOCTL_TYPE	'R'
-#define FSL_MC_SEND_CMD_IOCTL_SEQ	0xE0
+#घोषणा FSL_MC_SEND_CMD_IOCTL_TYPE	'R'
+#घोषणा FSL_MC_SEND_CMD_IOCTL_SEQ	0xE0
 
-#define FSL_MC_SEND_MC_COMMAND \
+#घोषणा FSL_MC_SEND_MC_COMMAND \
 	_IOWR(FSL_MC_SEND_CMD_IOCTL_TYPE, FSL_MC_SEND_CMD_IOCTL_SEQ, \
-	struct fsl_mc_command)
+	काष्ठा fsl_mc_command)
 
-#endif /* _UAPI_FSL_MC_H_ */
+#पूर्ण_अगर /* _UAPI_FSL_MC_H_ */

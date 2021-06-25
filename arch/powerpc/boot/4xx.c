@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2007 David Gibson, IBM Corporation.
  *
@@ -10,202 +11,202 @@
  *   Copyright (c) 2003, 2004 Zultys Technologies
  *
  * Copyright (C) 2009 Wind River Systems, Inc.
- *   Updated for supporting PPC405EX on Kilauea.
+ *   Updated क्रम supporting PPC405EX on Kilauea.
  *   Tiejun Chen <tiejun.chen@windriver.com>
  */
-#include <stddef.h>
-#include "types.h"
-#include "string.h"
-#include "stdio.h"
-#include "ops.h"
-#include "reg.h"
-#include "dcr.h"
+#समावेश <मानकघोष.स>
+#समावेश "types.h"
+#समावेश "string.h"
+#समावेश "stdio.h"
+#समावेश "ops.h"
+#समावेश "reg.h"
+#समावेश "dcr.h"
 
-static unsigned long chip_11_errata(unsigned long memsize)
-{
-	unsigned long pvr;
+अटल अचिन्हित दीर्घ chip_11_errata(अचिन्हित दीर्घ memsize)
+अणु
+	अचिन्हित दीर्घ pvr;
 
 	pvr = mfpvr();
 
-	switch (pvr & 0xf0000ff0) {
-		case 0x40000850:
-		case 0x400008d0:
-		case 0x200008d0:
+	चयन (pvr & 0xf0000ff0) अणु
+		हाल 0x40000850:
+		हाल 0x400008d0:
+		हाल 0x200008d0:
 			memsize -= 4096;
-			break;
-		default:
-			break;
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+	पूर्ण
 
-	return memsize;
-}
+	वापस memsize;
+पूर्ण
 
-/* Read the 4xx SDRAM controller to get size of system memory. */
-void ibm4xx_sdram_fixup_memsize(void)
-{
-	int i;
-	unsigned long memsize, bank_config;
+/* Read the 4xx SDRAM controller to get size of प्रणाली memory. */
+व्योम ibm4xx_sdram_fixup_memsize(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ memsize, bank_config;
 
 	memsize = 0;
-	for (i = 0; i < ARRAY_SIZE(sdram_bxcr); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(sdram_bxcr); i++) अणु
 		bank_config = SDRAM0_READ(sdram_bxcr[i]);
-		if (bank_config & SDRAM_CONFIG_BANK_ENABLE)
+		अगर (bank_config & SDRAM_CONFIG_BANK_ENABLE)
 			memsize += SDRAM_CONFIG_BANK_SIZE(bank_config);
-	}
+	पूर्ण
 
 	memsize = chip_11_errata(memsize);
 	dt_fixup_memory(0, memsize);
-}
+पूर्ण
 
-/* Read the 440SPe MQ controller to get size of system memory. */
-#define DCRN_MQ0_B0BAS		0x40
-#define DCRN_MQ0_B1BAS		0x41
-#define DCRN_MQ0_B2BAS		0x42
-#define DCRN_MQ0_B3BAS		0x43
+/* Read the 440SPe MQ controller to get size of प्रणाली memory. */
+#घोषणा DCRN_MQ0_B0BAS		0x40
+#घोषणा DCRN_MQ0_B1BAS		0x41
+#घोषणा DCRN_MQ0_B2BAS		0x42
+#घोषणा DCRN_MQ0_B3BAS		0x43
 
-static u64 ibm440spe_decode_bas(u32 bas)
-{
+अटल u64 ibm440spe_decode_bas(u32 bas)
+अणु
 	u64 base = ((u64)(bas & 0xFFE00000u)) << 2;
 
-	/* open coded because I'm paranoid about invalid values */
-	switch ((bas >> 4) & 0xFFF) {
-	case 0:
-		return 0;
-	case 0xffc:
-		return base + 0x000800000ull;
-	case 0xff8:
-		return base + 0x001000000ull;
-	case 0xff0:
-		return base + 0x002000000ull;
-	case 0xfe0:
-		return base + 0x004000000ull;
-	case 0xfc0:
-		return base + 0x008000000ull;
-	case 0xf80:
-		return base + 0x010000000ull;
-	case 0xf00:
-		return base + 0x020000000ull;
-	case 0xe00:
-		return base + 0x040000000ull;
-	case 0xc00:
-		return base + 0x080000000ull;
-	case 0x800:
-		return base + 0x100000000ull;
-	}
-	printf("Memory BAS value 0x%08x unsupported !\n", bas);
-	return 0;
-}
+	/* खोलो coded because I'm paranoid about invalid values */
+	चयन ((bas >> 4) & 0xFFF) अणु
+	हाल 0:
+		वापस 0;
+	हाल 0xffc:
+		वापस base + 0x000800000ull;
+	हाल 0xff8:
+		वापस base + 0x001000000ull;
+	हाल 0xff0:
+		वापस base + 0x002000000ull;
+	हाल 0xfe0:
+		वापस base + 0x004000000ull;
+	हाल 0xfc0:
+		वापस base + 0x008000000ull;
+	हाल 0xf80:
+		वापस base + 0x010000000ull;
+	हाल 0xf00:
+		वापस base + 0x020000000ull;
+	हाल 0xe00:
+		वापस base + 0x040000000ull;
+	हाल 0xc00:
+		वापस base + 0x080000000ull;
+	हाल 0x800:
+		वापस base + 0x100000000ull;
+	पूर्ण
+	म_लिखो("Memory BAS value 0x%08x unsupported !\n", bas);
+	वापस 0;
+पूर्ण
 
-void ibm440spe_fixup_memsize(void)
-{
+व्योम ibm440spe_fixup_memsize(व्योम)
+अणु
 	u64 banktop, memsize = 0;
 
-	/* Ultimately, we should directly construct the memory node
+	/* Ultimately, we should directly स्थिरruct the memory node
 	 * so we are able to handle holes in the memory address space
 	 */
 	banktop = ibm440spe_decode_bas(mfdcr(DCRN_MQ0_B0BAS));
-	if (banktop > memsize)
+	अगर (banktop > memsize)
 		memsize = banktop;
 	banktop = ibm440spe_decode_bas(mfdcr(DCRN_MQ0_B1BAS));
-	if (banktop > memsize)
+	अगर (banktop > memsize)
 		memsize = banktop;
 	banktop = ibm440spe_decode_bas(mfdcr(DCRN_MQ0_B2BAS));
-	if (banktop > memsize)
+	अगर (banktop > memsize)
 		memsize = banktop;
 	banktop = ibm440spe_decode_bas(mfdcr(DCRN_MQ0_B3BAS));
-	if (banktop > memsize)
+	अगर (banktop > memsize)
 		memsize = banktop;
 
 	dt_fixup_memory(0, memsize);
-}
+पूर्ण
 
 
 /* 4xx DDR1/2 Denali memory controller support */
-/* DDR0 registers */
-#define DDR0_02			2
-#define DDR0_08			8
-#define DDR0_10			10
-#define DDR0_14			14
-#define DDR0_42			42
-#define DDR0_43			43
+/* DDR0 रेजिस्टरs */
+#घोषणा DDR0_02			2
+#घोषणा DDR0_08			8
+#घोषणा DDR0_10			10
+#घोषणा DDR0_14			14
+#घोषणा DDR0_42			42
+#घोषणा DDR0_43			43
 
 /* DDR0_02 */
-#define DDR_START		0x1
-#define DDR_START_SHIFT		0
-#define DDR_MAX_CS_REG		0x3
-#define DDR_MAX_CS_REG_SHIFT	24
-#define DDR_MAX_COL_REG		0xf
-#define DDR_MAX_COL_REG_SHIFT	16
-#define DDR_MAX_ROW_REG		0xf
-#define DDR_MAX_ROW_REG_SHIFT	8
+#घोषणा DDR_START		0x1
+#घोषणा DDR_START_SHIFT		0
+#घोषणा DDR_MAX_CS_REG		0x3
+#घोषणा DDR_MAX_CS_REG_SHIFT	24
+#घोषणा DDR_MAX_COL_REG		0xf
+#घोषणा DDR_MAX_COL_REG_SHIFT	16
+#घोषणा DDR_MAX_ROW_REG		0xf
+#घोषणा DDR_MAX_ROW_REG_SHIFT	8
 /* DDR0_08 */
-#define DDR_DDR2_MODE		0x1
-#define DDR_DDR2_MODE_SHIFT	0
+#घोषणा DDR_DDR2_MODE		0x1
+#घोषणा DDR_DDR2_MODE_SHIFT	0
 /* DDR0_10 */
-#define DDR_CS_MAP		0x3
-#define DDR_CS_MAP_SHIFT	8
+#घोषणा DDR_CS_MAP		0x3
+#घोषणा DDR_CS_MAP_SHIFT	8
 /* DDR0_14 */
-#define DDR_REDUC		0x1
-#define DDR_REDUC_SHIFT		16
+#घोषणा DDR_REDUC		0x1
+#घोषणा DDR_REDUC_SHIFT		16
 /* DDR0_42 */
-#define DDR_APIN		0x7
-#define DDR_APIN_SHIFT		24
+#घोषणा DDR_APIN		0x7
+#घोषणा DDR_APIN_SHIFT		24
 /* DDR0_43 */
-#define DDR_COL_SZ		0x7
-#define DDR_COL_SZ_SHIFT	8
-#define DDR_BANK8		0x1
-#define DDR_BANK8_SHIFT		0
+#घोषणा DDR_COL_SZ		0x7
+#घोषणा DDR_COL_SZ_SHIFT	8
+#घोषणा DDR_BANK8		0x1
+#घोषणा DDR_BANK8_SHIFT		0
 
-#define DDR_GET_VAL(val, mask, shift)	(((val) >> (shift)) & (mask))
+#घोषणा DDR_GET_VAL(val, mask, shअगरt)	(((val) >> (shअगरt)) & (mask))
 
 /*
  * Some U-Boot versions set the number of chipselects to two
- * for Sequoia/Rainier boards while they only have one chipselect
+ * क्रम Sequoia/Rainier boards जबतक they only have one chipselect
  * hardwired. Hardcode the number of chipselects to one
- * for sequioa/rainer board models or read the actual value
- * from the memory controller register DDR0_10 otherwise.
+ * क्रम sequioa/rainer board models or पढ़ो the actual value
+ * from the memory controller रेजिस्टर DDR0_10 otherwise.
  */
-static inline u32 ibm4xx_denali_get_cs(void)
-{
-	void *devp;
-	char model[64];
+अटल अंतरभूत u32 ibm4xx_denali_get_cs(व्योम)
+अणु
+	व्योम *devp;
+	अक्षर model[64];
 	u32 val, cs;
 
 	devp = finddevice("/");
-	if (!devp)
-		goto read_cs;
+	अगर (!devp)
+		जाओ पढ़ो_cs;
 
-	if (getprop(devp, "model", model, sizeof(model)) <= 0)
-		goto read_cs;
+	अगर (getprop(devp, "model", model, माप(model)) <= 0)
+		जाओ पढ़ो_cs;
 
-	model[sizeof(model)-1] = 0;
+	model[माप(model)-1] = 0;
 
-	if (!strcmp(model, "amcc,sequoia") ||
-	    !strcmp(model, "amcc,rainier"))
-		return 1;
+	अगर (!म_भेद(model, "amcc,sequoia") ||
+	    !म_भेद(model, "amcc,rainier"))
+		वापस 1;
 
-read_cs:
+पढ़ो_cs:
 	/* get CS value */
 	val = SDRAM0_READ(DDR0_10);
 
 	val = DDR_GET_VAL(val, DDR_CS_MAP, DDR_CS_MAP_SHIFT);
 	cs = 0;
-	while (val) {
-		if (val & 0x1)
+	जबतक (val) अणु
+		अगर (val & 0x1)
 			cs++;
 		val = val >> 1;
-	}
-	return cs;
-}
+	पूर्ण
+	वापस cs;
+पूर्ण
 
-void ibm4xx_denali_fixup_memsize(void)
-{
+व्योम ibm4xx_denali_fixup_memsize(व्योम)
+अणु
 	u32 val, max_cs, max_col, max_row;
 	u32 cs, col, row, bank, dpath;
-	unsigned long memsize;
+	अचिन्हित दीर्घ memsize;
 
 	val = SDRAM0_READ(DDR0_02);
-	if (!DDR_GET_VAL(val, DDR_START, DDR_START_SHIFT))
+	अगर (!DDR_GET_VAL(val, DDR_START, DDR_START_SHIFT))
 		fatal("DDR controller is not initialized\n");
 
 	/* get maximum cs col and row values */
@@ -214,24 +215,24 @@ void ibm4xx_denali_fixup_memsize(void)
 	max_row = DDR_GET_VAL(val, DDR_MAX_ROW_REG, DDR_MAX_ROW_REG_SHIFT);
 
 	cs = ibm4xx_denali_get_cs();
-	if (!cs)
+	अगर (!cs)
 		fatal("No memory installed\n");
-	if (cs > max_cs)
+	अगर (cs > max_cs)
 		fatal("DDR wrong CS configuration\n");
 
 	/* get data path bytes */
 	val = SDRAM0_READ(DDR0_14);
 
-	if (DDR_GET_VAL(val, DDR_REDUC, DDR_REDUC_SHIFT))
+	अगर (DDR_GET_VAL(val, DDR_REDUC, DDR_REDUC_SHIFT))
 		dpath = 4; /* 32 bits */
-	else
+	अन्यथा
 		dpath = 8; /* 64 bits */
 
 	/* get address pins (rows) */
 	val = SDRAM0_READ(DDR0_42);
 
 	row = DDR_GET_VAL(val, DDR_APIN, DDR_APIN_SHIFT);
-	if (row > max_row)
+	अगर (row > max_row)
 		fatal("DDR wrong APIN configuration\n");
 	row = max_row - row;
 
@@ -239,165 +240,165 @@ void ibm4xx_denali_fixup_memsize(void)
 	val = SDRAM0_READ(DDR0_43);
 
 	col = DDR_GET_VAL(val, DDR_COL_SZ, DDR_COL_SZ_SHIFT);
-	if (col > max_col)
+	अगर (col > max_col)
 		fatal("DDR wrong COL configuration\n");
 	col = max_col - col;
 
-	if (DDR_GET_VAL(val, DDR_BANK8, DDR_BANK8_SHIFT))
+	अगर (DDR_GET_VAL(val, DDR_BANK8, DDR_BANK8_SHIFT))
 		bank = 8; /* 8 banks */
-	else
+	अन्यथा
 		bank = 4; /* 4 banks */
 
 	memsize = cs * (1 << (col+row)) * bank * dpath;
 	memsize = chip_11_errata(memsize);
 	dt_fixup_memory(0, memsize);
-}
+पूर्ण
 
-#define SPRN_DBCR0_40X 0x3F2
-#define SPRN_DBCR0_44X 0x134
-#define DBCR0_RST_SYSTEM 0x30000000
+#घोषणा SPRN_DBCR0_40X 0x3F2
+#घोषणा SPRN_DBCR0_44X 0x134
+#घोषणा DBCR0_RST_SYSTEM 0x30000000
 
-void ibm44x_dbcr_reset(void)
-{
-	unsigned long tmp;
+व्योम ibm44x_dbcr_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	asm volatile (
+	यंत्र अस्थिर (
 		"mfspr	%0,%1\n"
 		"oris	%0,%0,%2@h\n"
 		"mtspr	%1,%0"
-		: "=&r"(tmp) : "i"(SPRN_DBCR0_44X), "i"(DBCR0_RST_SYSTEM)
+		: "=&r"(पंचांगp) : "i"(SPRN_DBCR0_44X), "i"(DBCR0_RST_SYSTEM)
 		);
 
-}
+पूर्ण
 
-void ibm40x_dbcr_reset(void)
-{
-	unsigned long tmp;
+व्योम ibm40x_dbcr_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	asm volatile (
+	यंत्र अस्थिर (
 		"mfspr	%0,%1\n"
 		"oris	%0,%0,%2@h\n"
 		"mtspr	%1,%0"
-		: "=&r"(tmp) : "i"(SPRN_DBCR0_40X), "i"(DBCR0_RST_SYSTEM)
+		: "=&r"(पंचांगp) : "i"(SPRN_DBCR0_40X), "i"(DBCR0_RST_SYSTEM)
 		);
-}
+पूर्ण
 
-#define EMAC_RESET 0x20000000
-void ibm4xx_quiesce_eth(u32 *emac0, u32 *emac1)
-{
-	/* Quiesce the MAL and EMAC(s) since PIBS/OpenBIOS don't
-	 * do this for us
+#घोषणा EMAC_RESET 0x20000000
+व्योम ibm4xx_quiesce_eth(u32 *emac0, u32 *emac1)
+अणु
+	/* Quiesce the MAL and EMAC(s) since PIBS/OpenBIOS करोn't
+	 * करो this क्रम us
 	 */
-	if (emac0)
+	अगर (emac0)
 		*emac0 = EMAC_RESET;
-	if (emac1)
+	अगर (emac1)
 		*emac1 = EMAC_RESET;
 
 	mtdcr(DCRN_MAL0_CFG, MAL_RESET);
-	while (mfdcr(DCRN_MAL0_CFG) & MAL_RESET)
+	जबतक (mfdcr(DCRN_MAL0_CFG) & MAL_RESET)
 		; /* loop until reset takes effect */
-}
+पूर्ण
 
-/* Read 4xx EBC bus bridge registers to get mappings of the peripheral
- * banks into the OPB address space */
-void ibm4xx_fixup_ebc_ranges(const char *ebc)
-{
-	void *devp;
+/* Read 4xx EBC bus bridge रेजिस्टरs to get mappings of the peripheral
+ * banks पूर्णांकo the OPB address space */
+व्योम ibm4xx_fixup_ebc_ranges(स्थिर अक्षर *ebc)
+अणु
+	व्योम *devp;
 	u32 bxcr;
 	u32 ranges[EBC_NUM_BANKS*4];
 	u32 *p = ranges;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < EBC_NUM_BANKS; i++) {
+	क्रम (i = 0; i < EBC_NUM_BANKS; i++) अणु
 		mtdcr(DCRN_EBC0_CFGADDR, EBC_BXCR(i));
 		bxcr = mfdcr(DCRN_EBC0_CFGDATA);
 
-		if ((bxcr & EBC_BXCR_BU) != EBC_BXCR_BU_OFF) {
+		अगर ((bxcr & EBC_BXCR_BU) != EBC_BXCR_BU_OFF) अणु
 			*p++ = i;
 			*p++ = 0;
 			*p++ = bxcr & EBC_BXCR_BAS;
 			*p++ = EBC_BXCR_BANK_SIZE(bxcr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	devp = finddevice(ebc);
-	if (! devp)
+	अगर (! devp)
 		fatal("Couldn't locate EBC node %s\n\r", ebc);
 
-	setprop(devp, "ranges", ranges, (p - ranges) * sizeof(u32));
-}
+	setprop(devp, "ranges", ranges, (p - ranges) * माप(u32));
+पूर्ण
 
-/* Calculate 440GP clocks */
-void ibm440gp_fixup_clocks(unsigned int sys_clk, unsigned int ser_clk)
-{
+/* Calculate 440GP घड़ीs */
+व्योम ibm440gp_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk, अचिन्हित पूर्णांक ser_clk)
+अणु
 	u32 sys0 = mfdcr(DCRN_CPC0_SYS0);
 	u32 cr0 = mfdcr(DCRN_CPC0_CR0);
 	u32 cpu, plb, opb, ebc, tb, uart0, uart1, m;
 	u32 opdv = CPC0_SYS0_OPDV(sys0);
 	u32 epdv = CPC0_SYS0_EPDV(sys0);
 
-	if (sys0 & CPC0_SYS0_BYPASS) {
-		/* Bypass system PLL */
+	अगर (sys0 & CPC0_SYS0_BYPASS) अणु
+		/* Bypass प्रणाली PLL */
 		cpu = plb = sys_clk;
-	} else {
-		if (sys0 & CPC0_SYS0_EXTSL)
+	पूर्ण अन्यथा अणु
+		अगर (sys0 & CPC0_SYS0_EXTSL)
 			/* PerClk */
 			m = CPC0_SYS0_FWDVB(sys0) * opdv * epdv;
-		else
-			/* CPU clock */
+		अन्यथा
+			/* CPU घड़ी */
 			m = CPC0_SYS0_FBDV(sys0) * CPC0_SYS0_FWDVA(sys0);
 		cpu = sys_clk * m / CPC0_SYS0_FWDVA(sys0);
 		plb = sys_clk * m / CPC0_SYS0_FWDVB(sys0);
-	}
+	पूर्ण
 
 	opb = plb / opdv;
 	ebc = opb / epdv;
 
-	/* FIXME: Check if this is for all 440GP, or just Ebony */
-	if ((mfpvr() & 0xf0000fff) == 0x40000440)
-		/* Rev. B 440GP, use external system clock */
+	/* FIXME: Check अगर this is क्रम all 440GP, or just Ebony */
+	अगर ((mfpvr() & 0xf0000fff) == 0x40000440)
+		/* Rev. B 440GP, use बाह्यal प्रणाली घड़ी */
 		tb = sys_clk;
-	else
-		/* Rev. C 440GP, errata force us to use internal clock */
+	अन्यथा
+		/* Rev. C 440GP, errata क्रमce us to use पूर्णांकernal घड़ी */
 		tb = cpu;
 
-	if (cr0 & CPC0_CR0_U0EC)
-		/* External UART clock */
+	अगर (cr0 & CPC0_CR0_U0EC)
+		/* External UART घड़ी */
 		uart0 = ser_clk;
-	else
-		/* Internal UART clock */
+	अन्यथा
+		/* Internal UART घड़ी */
 		uart0 = plb / CPC0_CR0_UDIV(cr0);
 
-	if (cr0 & CPC0_CR0_U1EC)
-		/* External UART clock */
+	अगर (cr0 & CPC0_CR0_U1EC)
+		/* External UART घड़ी */
 		uart1 = ser_clk;
-	else
-		/* Internal UART clock */
+	अन्यथा
+		/* Internal UART घड़ी */
 		uart1 = plb / CPC0_CR0_UDIV(cr0);
 
-	printf("PPC440GP: SysClk = %dMHz (%x)\n\r",
+	म_लिखो("PPC440GP: SysClk = %dMHz (%x)\n\r",
 	       (sys_clk + 500000) / 1000000, sys_clk);
 
-	dt_fixup_cpu_clocks(cpu, tb, 0);
+	dt_fixup_cpu_घड़ीs(cpu, tb, 0);
 
-	dt_fixup_clock("/plb", plb);
-	dt_fixup_clock("/plb/opb", opb);
-	dt_fixup_clock("/plb/opb/ebc", ebc);
-	dt_fixup_clock("/plb/opb/serial@40000200", uart0);
-	dt_fixup_clock("/plb/opb/serial@40000300", uart1);
-}
+	dt_fixup_घड़ी("/plb", plb);
+	dt_fixup_घड़ी("/plb/opb", opb);
+	dt_fixup_घड़ी("/plb/opb/ebc", ebc);
+	dt_fixup_घड़ी("/plb/opb/serial@40000200", uart0);
+	dt_fixup_घड़ी("/plb/opb/serial@40000300", uart1);
+पूर्ण
 
-#define SPRN_CCR1 0x378
+#घोषणा SPRN_CCR1 0x378
 
-static inline u32 __fix_zero(u32 v, u32 def)
-{
-	return v ? v : def;
-}
+अटल अंतरभूत u32 __fix_zero(u32 v, u32 def)
+अणु
+	वापस v ? v : def;
+पूर्ण
 
-static unsigned int __ibm440eplike_fixup_clocks(unsigned int sys_clk,
-						unsigned int tmr_clk,
-						int per_clk_from_opb)
-{
+अटल अचिन्हित पूर्णांक __ibm440eplike_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk,
+						अचिन्हित पूर्णांक पंचांगr_clk,
+						पूर्णांक per_clk_from_opb)
+अणु
 	/* PLL config */
 	u32 pllc  = CPR0_READ(DCRN_CPR0_PLLC);
 	u32 plld  = CPR0_READ(DCRN_CPR0_PLLD);
@@ -412,214 +413,214 @@ static unsigned int __ibm440eplike_fixup_clocks(unsigned int sys_clk,
 	u32 opbdv0 = __fix_zero((CPR0_READ(DCRN_CPR0_OPBD) >> 24) & 3, 4);
 	u32 perdv0 = __fix_zero((CPR0_READ(DCRN_CPR0_PERD) >> 24) & 3, 4);
 
-	/* Input clocks for primary dividers */
+	/* Input घड़ीs क्रम primary भागiders */
 	u32 clk_a, clk_b;
 
-	/* Resulting clocks */
+	/* Resulting घड़ीs */
 	u32 cpu, plb, opb, ebc, vco;
 
 	/* Timebase */
-	u32 ccr1, tb = tmr_clk;
+	u32 ccr1, tb = पंचांगr_clk;
 
-	if (pllc & 0x40000000) {
+	अगर (pllc & 0x40000000) अणु
 		u32 m;
 
 		/* Feedback path */
-		switch ((pllc >> 24) & 7) {
-		case 0:
+		चयन ((pllc >> 24) & 7) अणु
+		हाल 0:
 			/* PLLOUTx */
 			m = ((pllc & 0x20000000) ? fwdvb : fwdva) * lfbdv;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			/* CPU */
 			m = fwdva * pradv0;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			/* PERClk */
 			m = fwdvb * prbdv0 * opbdv0 * perdv0;
-			break;
-		default:
-			printf("WARNING ! Invalid PLL feedback source !\n");
-			goto bypass;
-		}
+			अवरोध;
+		शेष:
+			म_लिखो("WARNING ! Invalid PLL feedback source !\n");
+			जाओ bypass;
+		पूर्ण
 		m *= fbdv;
 		vco = sys_clk * m;
 		clk_a = vco / fwdva;
 		clk_b = vco / fwdvb;
-	} else {
+	पूर्ण अन्यथा अणु
 bypass:
-		/* Bypass system PLL */
+		/* Bypass प्रणाली PLL */
 		vco = 0;
 		clk_a = clk_b = sys_clk;
-	}
+	पूर्ण
 
 	cpu = clk_a / pradv0;
 	plb = clk_b / prbdv0;
 	opb = plb / opbdv0;
 	ebc = (per_clk_from_opb ? opb : plb) / perdv0;
 
-	/* Figure out timebase.  Either CPU or default TmrClk */
+	/* Figure out समयbase.  Either CPU or शेष TmrClk */
 	ccr1 = mfspr(SPRN_CCR1);
 
-	/* If passed a 0 tmr_clk, force CPU clock */
-	if (tb == 0) {
+	/* If passed a 0 पंचांगr_clk, क्रमce CPU घड़ी */
+	अगर (tb == 0) अणु
 		ccr1 &= ~0x80u;
 		mtspr(SPRN_CCR1, ccr1);
-	}
-	if ((ccr1 & 0x0080) == 0)
+	पूर्ण
+	अगर ((ccr1 & 0x0080) == 0)
 		tb = cpu;
 
-	dt_fixup_cpu_clocks(cpu, tb, 0);
-	dt_fixup_clock("/plb", plb);
-	dt_fixup_clock("/plb/opb", opb);
-	dt_fixup_clock("/plb/opb/ebc", ebc);
+	dt_fixup_cpu_घड़ीs(cpu, tb, 0);
+	dt_fixup_घड़ी("/plb", plb);
+	dt_fixup_घड़ी("/plb/opb", opb);
+	dt_fixup_घड़ी("/plb/opb/ebc", ebc);
 
-	return plb;
-}
+	वापस plb;
+पूर्ण
 
-static void eplike_fixup_uart_clk(int index, const char *path,
-				  unsigned int ser_clk,
-				  unsigned int plb_clk)
-{
-	unsigned int sdr;
-	unsigned int clock;
+अटल व्योम eplike_fixup_uart_clk(पूर्णांक index, स्थिर अक्षर *path,
+				  अचिन्हित पूर्णांक ser_clk,
+				  अचिन्हित पूर्णांक plb_clk)
+अणु
+	अचिन्हित पूर्णांक sdr;
+	अचिन्हित पूर्णांक घड़ी;
 
-	switch (index) {
-	case 0:
+	चयन (index) अणु
+	हाल 0:
 		sdr = SDR0_READ(DCRN_SDR0_UART0);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		sdr = SDR0_READ(DCRN_SDR0_UART1);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		sdr = SDR0_READ(DCRN_SDR0_UART2);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		sdr = SDR0_READ(DCRN_SDR0_UART3);
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	if (sdr & 0x00800000u)
-		clock = ser_clk;
-	else
-		clock = plb_clk / __fix_zero(sdr & 0xff, 256);
+	अगर (sdr & 0x00800000u)
+		घड़ी = ser_clk;
+	अन्यथा
+		घड़ी = plb_clk / __fix_zero(sdr & 0xff, 256);
 
-	dt_fixup_clock(path, clock);
-}
+	dt_fixup_घड़ी(path, घड़ी);
+पूर्ण
 
-void ibm440ep_fixup_clocks(unsigned int sys_clk,
-			   unsigned int ser_clk,
-			   unsigned int tmr_clk)
-{
-	unsigned int plb_clk = __ibm440eplike_fixup_clocks(sys_clk, tmr_clk, 0);
+व्योम ibm440ep_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk,
+			   अचिन्हित पूर्णांक ser_clk,
+			   अचिन्हित पूर्णांक पंचांगr_clk)
+अणु
+	अचिन्हित पूर्णांक plb_clk = __ibm440eplike_fixup_घड़ीs(sys_clk, पंचांगr_clk, 0);
 
-	/* serial clocks need fixup based on int/ext */
+	/* serial घड़ीs need fixup based on पूर्णांक/ext */
 	eplike_fixup_uart_clk(0, "/plb/opb/serial@ef600300", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(1, "/plb/opb/serial@ef600400", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(2, "/plb/opb/serial@ef600500", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(3, "/plb/opb/serial@ef600600", ser_clk, plb_clk);
-}
+पूर्ण
 
-void ibm440gx_fixup_clocks(unsigned int sys_clk,
-			   unsigned int ser_clk,
-			   unsigned int tmr_clk)
-{
-	unsigned int plb_clk = __ibm440eplike_fixup_clocks(sys_clk, tmr_clk, 1);
+व्योम ibm440gx_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk,
+			   अचिन्हित पूर्णांक ser_clk,
+			   अचिन्हित पूर्णांक पंचांगr_clk)
+अणु
+	अचिन्हित पूर्णांक plb_clk = __ibm440eplike_fixup_घड़ीs(sys_clk, पंचांगr_clk, 1);
 
-	/* serial clocks need fixup based on int/ext */
+	/* serial घड़ीs need fixup based on पूर्णांक/ext */
 	eplike_fixup_uart_clk(0, "/plb/opb/serial@40000200", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(1, "/plb/opb/serial@40000300", ser_clk, plb_clk);
-}
+पूर्ण
 
-void ibm440spe_fixup_clocks(unsigned int sys_clk,
-			    unsigned int ser_clk,
-			    unsigned int tmr_clk)
-{
-	unsigned int plb_clk = __ibm440eplike_fixup_clocks(sys_clk, tmr_clk, 1);
+व्योम ibm440spe_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk,
+			    अचिन्हित पूर्णांक ser_clk,
+			    अचिन्हित पूर्णांक पंचांगr_clk)
+अणु
+	अचिन्हित पूर्णांक plb_clk = __ibm440eplike_fixup_घड़ीs(sys_clk, पंचांगr_clk, 1);
 
-	/* serial clocks need fixup based on int/ext */
+	/* serial घड़ीs need fixup based on पूर्णांक/ext */
 	eplike_fixup_uart_clk(0, "/plb/opb/serial@f0000200", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(1, "/plb/opb/serial@f0000300", ser_clk, plb_clk);
 	eplike_fixup_uart_clk(2, "/plb/opb/serial@f0000600", ser_clk, plb_clk);
-}
+पूर्ण
 
-void ibm405gp_fixup_clocks(unsigned int sys_clk, unsigned int ser_clk)
-{
+व्योम ibm405gp_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk, अचिन्हित पूर्णांक ser_clk)
+अणु
 	u32 pllmr = mfdcr(DCRN_CPC0_PLLMR);
 	u32 cpc0_cr0 = mfdcr(DCRN_405_CPC0_CR0);
 	u32 cpc0_cr1 = mfdcr(DCRN_405_CPC0_CR1);
 	u32 psr = mfdcr(DCRN_405_CPC0_PSR);
 	u32 cpu, plb, opb, ebc, tb, uart0, uart1, m;
-	u32 fwdv, fwdvb, fbdv, cbdv, opdv, epdv, ppdv, udiv;
+	u32 fwdv, fwdvb, fbdv, cbdv, opdv, epdv, ppdv, uभाग;
 
 	fwdv = (8 - ((pllmr & 0xe0000000) >> 29));
 	fbdv = (pllmr & 0x1e000000) >> 25;
-	if (fbdv == 0)
+	अगर (fbdv == 0)
 		fbdv = 16;
 	cbdv = ((pllmr & 0x00060000) >> 17) + 1; /* CPU:PLB */
 	opdv = ((pllmr & 0x00018000) >> 15) + 1; /* PLB:OPB */
 	ppdv = ((pllmr & 0x00006000) >> 13) + 1; /* PLB:PCI */
 	epdv = ((pllmr & 0x00001800) >> 11) + 2; /* PLB:EBC */
-	udiv = ((cpc0_cr0 & 0x3e) >> 1) + 1;
+	uभाग = ((cpc0_cr0 & 0x3e) >> 1) + 1;
 
-	/* check for 405GPr */
-	if ((mfpvr() & 0xfffffff0) == (0x50910951 & 0xfffffff0)) {
+	/* check क्रम 405GPr */
+	अगर ((mfpvr() & 0xfffffff0) == (0x50910951 & 0xfffffff0)) अणु
 		fwdvb = 8 - (pllmr & 0x00000007);
-		if (!(psr & 0x00001000)) /* PCI async mode enable == 0 */
-			if (psr & 0x00000020) /* New mode enable */
+		अगर (!(psr & 0x00001000)) /* PCI async mode enable == 0 */
+			अगर (psr & 0x00000020) /* New mode enable */
 				m = fwdvb * 2 * ppdv;
-			else
+			अन्यथा
 				m = fwdvb * cbdv * ppdv;
-		else if (psr & 0x00000020) /* New mode enable */
-			if (psr & 0x00000800) /* PerClk synch mode */
+		अन्यथा अगर (psr & 0x00000020) /* New mode enable */
+			अगर (psr & 0x00000800) /* PerClk synch mode */
 				m = fwdvb * 2 * epdv;
-			else
+			अन्यथा
 				m = fbdv * fwdv;
-		else if (epdv == fbdv)
+		अन्यथा अगर (epdv == fbdv)
 			m = fbdv * cbdv * epdv;
-		else
+		अन्यथा
 			m = fbdv * fwdvb * cbdv;
 
 		cpu = sys_clk * m / fwdv;
 		plb = sys_clk * m / (fwdvb * cbdv);
-	} else {
+	पूर्ण अन्यथा अणु
 		m = fwdv * fbdv * cbdv;
 		cpu = sys_clk * m / fwdv;
 		plb = cpu / cbdv;
-	}
+	पूर्ण
 	opb = plb / opdv;
 	ebc = plb / epdv;
 
-	if (cpc0_cr0 & 0x80)
-		/* uart0 uses the external clock */
+	अगर (cpc0_cr0 & 0x80)
+		/* uart0 uses the बाह्यal घड़ी */
 		uart0 = ser_clk;
-	else
-		uart0 = cpu / udiv;
+	अन्यथा
+		uart0 = cpu / uभाग;
 
-	if (cpc0_cr0 & 0x40)
-		/* uart1 uses the external clock */
+	अगर (cpc0_cr0 & 0x40)
+		/* uart1 uses the बाह्यal घड़ी */
 		uart1 = ser_clk;
-	else
-		uart1 = cpu / udiv;
+	अन्यथा
+		uart1 = cpu / uभाग;
 
-	/* setup the timebase clock to tick at the cpu frequency */
+	/* setup the समयbase घड़ी to tick at the cpu frequency */
 	cpc0_cr1 = cpc0_cr1 & ~0x00800000;
 	mtdcr(DCRN_405_CPC0_CR1, cpc0_cr1);
 	tb = cpu;
 
-	dt_fixup_cpu_clocks(cpu, tb, 0);
-	dt_fixup_clock("/plb", plb);
-	dt_fixup_clock("/plb/opb", opb);
-	dt_fixup_clock("/plb/ebc", ebc);
-	dt_fixup_clock("/plb/opb/serial@ef600300", uart0);
-	dt_fixup_clock("/plb/opb/serial@ef600400", uart1);
-}
+	dt_fixup_cpu_घड़ीs(cpu, tb, 0);
+	dt_fixup_घड़ी("/plb", plb);
+	dt_fixup_घड़ी("/plb/opb", opb);
+	dt_fixup_घड़ी("/plb/ebc", ebc);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600300", uart0);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600400", uart1);
+पूर्ण
 
 
-void ibm405ep_fixup_clocks(unsigned int sys_clk)
-{
+व्योम ibm405ep_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk)
+अणु
 	u32 pllmr0 = mfdcr(DCRN_CPC0_PLLMR0);
 	u32 pllmr1 = mfdcr(DCRN_CPC0_PLLMR1);
 	u32 cpc0_ucr = mfdcr(DCRN_CPC0_UCR);
@@ -630,7 +631,7 @@ void ibm405ep_fixup_clocks(unsigned int sys_clk)
 	fwdva = 8 - ((pllmr1 & 0x00070000) >> 16);
 	fwdvb = 8 - ((pllmr1 & 0x00007000) >> 12);
 	fbdv = (pllmr1 & 0x00f00000) >> 20;
-	if (fbdv == 0)
+	अगर (fbdv == 0)
 		fbdv = 16;
 
 	cbdv = ((pllmr0 & 0x00030000) >> 16) + 1; /* CPU:PLB */
@@ -640,9 +641,9 @@ void ibm405ep_fixup_clocks(unsigned int sys_clk)
 	m = fbdv * fwdvb;
 
 	pllmr0_ccdv = ((pllmr0 & 0x00300000) >> 20) + 1;
-	if (pllmr1 & 0x80000000)
+	अगर (pllmr1 & 0x80000000)
 		cpu = sys_clk * m / (fwdva * pllmr0_ccdv);
-	else
+	अन्यथा
 		cpu = sys_clk / pllmr0_ccdv;
 
 	plb = cpu / cbdv;
@@ -652,33 +653,33 @@ void ibm405ep_fixup_clocks(unsigned int sys_clk)
 	uart0 = cpu / (cpc0_ucr & 0x0000007f);
 	uart1 = cpu / ((cpc0_ucr & 0x00007f00) >> 8);
 
-	dt_fixup_cpu_clocks(cpu, tb, 0);
-	dt_fixup_clock("/plb", plb);
-	dt_fixup_clock("/plb/opb", opb);
-	dt_fixup_clock("/plb/ebc", ebc);
-	dt_fixup_clock("/plb/opb/serial@ef600300", uart0);
-	dt_fixup_clock("/plb/opb/serial@ef600400", uart1);
-}
+	dt_fixup_cpu_घड़ीs(cpu, tb, 0);
+	dt_fixup_घड़ी("/plb", plb);
+	dt_fixup_घड़ी("/plb/opb", opb);
+	dt_fixup_घड़ी("/plb/ebc", ebc);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600300", uart0);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600400", uart1);
+पूर्ण
 
-static u8 ibm405ex_fwdv_multi_bits[] = {
-	/* values for:  1 - 16 */
+अटल u8 ibm405ex_fwdv_multi_bits[] = अणु
+	/* values क्रम:  1 - 16 */
 	0x01, 0x02, 0x0e, 0x09, 0x04, 0x0b, 0x10, 0x0d, 0x0c, 0x05,
 	0x06, 0x0f, 0x0a, 0x07, 0x08, 0x03
-};
+पूर्ण;
 
-u32 ibm405ex_get_fwdva(unsigned long cpr_fwdv)
-{
+u32 ibm405ex_get_fwdva(अचिन्हित दीर्घ cpr_fwdv)
+अणु
 	u32 index;
 
-	for (index = 0; index < ARRAY_SIZE(ibm405ex_fwdv_multi_bits); index++)
-		if (cpr_fwdv == (u32)ibm405ex_fwdv_multi_bits[index])
-			return index + 1;
+	क्रम (index = 0; index < ARRAY_SIZE(ibm405ex_fwdv_multi_bits); index++)
+		अगर (cpr_fwdv == (u32)ibm405ex_fwdv_multi_bits[index])
+			वापस index + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 ibm405ex_fbdv_multi_bits[] = {
-	/* values for:  1 - 100 */
+अटल u8 ibm405ex_fbdv_multi_bits[] = अणु
+	/* values क्रम:  1 - 100 */
 	0x00, 0xff, 0x7e, 0xfd, 0x7a, 0xf5, 0x6a, 0xd5, 0x2a, 0xd4,
 	0x29, 0xd3, 0x26, 0xcc, 0x19, 0xb3, 0x67, 0xce, 0x1d, 0xbb,
 	0x77, 0xee, 0x5d, 0xba, 0x74, 0xe9, 0x52, 0xa5, 0x4b, 0x96,
@@ -689,7 +690,7 @@ static u8 ibm405ex_fbdv_multi_bits[] = {
 	0x17, 0xaf, 0x5f, 0xbe, 0x7c, 0xf9, 0x72, 0xe5, 0x4a, 0x95,
 	0x2b, 0xd7, 0x2e, 0xdc, 0x39, 0xf3, 0x66, 0xcd, 0x1a, 0xb4,
 	0x68, 0xd1, 0x22, 0xc4, 0x09, 0x93, 0x27, 0xcf, 0x1e, 0xbc,
-	/* values for:  101 - 200 */
+	/* values क्रम:  101 - 200 */
 	0x78, 0xf1, 0x62, 0xc5, 0x0a, 0x94, 0x28, 0xd0, 0x21, 0xc3,
 	0x06, 0x8c, 0x18, 0xb0, 0x60, 0xc1, 0x02, 0x84, 0x08, 0x90,
 	0x20, 0xc0, 0x01, 0x83, 0x07, 0x8f, 0x1f, 0xbf, 0x7f, 0xfe,
@@ -700,28 +701,28 @@ static u8 ibm405ex_fbdv_multi_bits[] = {
 	0x6d, 0xda, 0x35, 0xeb, 0x56, 0xad, 0x5b, 0xb6, 0x6c, 0xd9,
 	0x32, 0xe4, 0x49, 0x92, 0x24, 0xc8, 0x11, 0xa3, 0x47, 0x8e,
 	0x1c, 0xb8, 0x70, 0xe1, 0x42, 0x85, 0x0b, 0x97, 0x2f, 0xdf,
-	/* values for:  201 - 255 */
+	/* values क्रम:  201 - 255 */
 	0x3e, 0xfc, 0x79, 0xf2, 0x65, 0xca, 0x15, 0xab, 0x57, 0xae,
 	0x5c, 0xb9, 0x73, 0xe6, 0x4d, 0x9a, 0x34, 0xe8, 0x51, 0xa2,
 	0x44, 0x89, 0x13, 0xa7, 0x4f, 0x9e, 0x3c, 0xf8, 0x71, 0xe2,
 	0x45, 0x8a, 0x14, 0xa8, 0x50, 0xa1, 0x43, 0x86, 0x0c, 0x98,
 	0x30, 0xe0, 0x41, 0x82, 0x04, 0x88, 0x10, 0xa0, 0x40, 0x81,
 	0x03, 0x87, 0x0f, 0x9f, 0x3f  /* END */
-};
+पूर्ण;
 
-u32 ibm405ex_get_fbdv(unsigned long cpr_fbdv)
-{
+u32 ibm405ex_get_fbdv(अचिन्हित दीर्घ cpr_fbdv)
+अणु
 	u32 index;
 
-	for (index = 0; index < ARRAY_SIZE(ibm405ex_fbdv_multi_bits); index++)
-		if (cpr_fbdv == (u32)ibm405ex_fbdv_multi_bits[index])
-			return index + 1;
+	क्रम (index = 0; index < ARRAY_SIZE(ibm405ex_fbdv_multi_bits); index++)
+		अगर (cpr_fbdv == (u32)ibm405ex_fbdv_multi_bits[index])
+			वापस index + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ibm405ex_fixup_clocks(unsigned int sys_clk, unsigned int uart_clk)
-{
+व्योम ibm405ex_fixup_घड़ीs(अचिन्हित पूर्णांक sys_clk, अचिन्हित पूर्णांक uart_clk)
+अणु
 	/* PLL config */
 	u32 pllc  = CPR0_READ(DCRN_CPR0_PLLC);
 	u32 plld  = CPR0_READ(DCRN_CPR0_PLLD);
@@ -745,38 +746,38 @@ void ibm405ex_fixup_clocks(unsigned int sys_clk, unsigned int uart_clk)
 
 	u32 perdv0 = __fix_zero((perd >> 24) & 3, 4);
 
-	/* Resulting clocks */
+	/* Resulting घड़ीs */
 	u32 cpu, plb, opb, ebc, vco, tb, uart0, uart1;
 
-	/* PLL's VCO is the source for primary forward ? */
-	if (pllc & 0x40000000) {
+	/* PLL's VCO is the source क्रम primary क्रमward ? */
+	अगर (pllc & 0x40000000) अणु
 		u32 m;
 
 		/* Feedback path */
-		switch ((pllc >> 24) & 7) {
-		case 0:
+		चयन ((pllc >> 24) & 7) अणु
+		हाल 0:
 			/* PLLOUTx */
 			m = fbdv;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			/* CPU */
 			m = fbdv * fwdva * cpudv0;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			/* PERClk */
 			m = fbdv * fwdva * plb2xdv0 * plbdv0 * opbdv0 * perdv0;
-			break;
-		default:
-			printf("WARNING ! Invalid PLL feedback source !\n");
-			goto bypass;
-		}
+			अवरोध;
+		शेष:
+			म_लिखो("WARNING ! Invalid PLL feedback source !\n");
+			जाओ bypass;
+		पूर्ण
 
-		vco = (unsigned int)(sys_clk * m);
-	} else {
+		vco = (अचिन्हित पूर्णांक)(sys_clk * m);
+	पूर्ण अन्यथा अणु
 bypass:
-		/* Bypass system PLL */
+		/* Bypass प्रणाली PLL */
 		vco = 0;
-	}
+	पूर्ण
 
 	/* CPU = VCO / ( FWDVA x CPUDV0) */
 	cpu = vco / (fwdva * cpudv0);
@@ -790,10 +791,10 @@ bypass:
 	tb = cpu;
 	uart0 = uart1 = uart_clk;
 
-	dt_fixup_cpu_clocks(cpu, tb, 0);
-	dt_fixup_clock("/plb", plb);
-	dt_fixup_clock("/plb/opb", opb);
-	dt_fixup_clock("/plb/opb/ebc", ebc);
-	dt_fixup_clock("/plb/opb/serial@ef600200", uart0);
-	dt_fixup_clock("/plb/opb/serial@ef600300", uart1);
-}
+	dt_fixup_cpu_घड़ीs(cpu, tb, 0);
+	dt_fixup_घड़ी("/plb", plb);
+	dt_fixup_घड़ी("/plb/opb", opb);
+	dt_fixup_घड़ी("/plb/opb/ebc", ebc);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600200", uart0);
+	dt_fixup_घड़ी("/plb/opb/serial@ef600300", uart1);
+पूर्ण

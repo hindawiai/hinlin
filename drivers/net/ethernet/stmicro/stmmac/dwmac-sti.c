@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * dwmac-sti.c - STMicroelectronics DWMAC Specific Glue layer
+ * dwmac-sti.c - STMicroelectronics DWMAC Specअगरic Glue layer
  *
  * Copyright (C) 2003-2014 STMicroelectronics (R&D) Limited
  * Author: Srinivas Kandagatla <srinivas.kandagatla@st.com>
  * Contributors: Giuseppe Cavallaro <peppe.cavallaro@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/stmmac.h>
-#include <linux/phy.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_net.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sपंचांगmac.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_net.h>
 
-#include "stmmac_platform.h"
+#समावेश "stmmac_platform.h"
 
-#define DWMAC_125MHZ	125000000
-#define DWMAC_50MHZ	50000000
-#define DWMAC_25MHZ	25000000
-#define DWMAC_2_5MHZ	2500000
+#घोषणा DWMAC_125MHZ	125000000
+#घोषणा DWMAC_50MHZ	50000000
+#घोषणा DWMAC_25MHZ	25000000
+#घोषणा DWMAC_2_5MHZ	2500000
 
-#define IS_PHY_IF_MODE_RGMII(iface)	(iface == PHY_INTERFACE_MODE_RGMII || \
-			iface == PHY_INTERFACE_MODE_RGMII_ID || \
-			iface == PHY_INTERFACE_MODE_RGMII_RXID || \
-			iface == PHY_INTERFACE_MODE_RGMII_TXID)
+#घोषणा IS_PHY_IF_MODE_RGMII(अगरace)	(अगरace == PHY_INTERFACE_MODE_RGMII || \
+			अगरace == PHY_INTERFACE_MODE_RGMII_ID || \
+			अगरace == PHY_INTERFACE_MODE_RGMII_RXID || \
+			अगरace == PHY_INTERFACE_MODE_RGMII_TXID)
 
-#define IS_PHY_IF_MODE_GBIT(iface)	(IS_PHY_IF_MODE_RGMII(iface) || \
-					 iface == PHY_INTERFACE_MODE_GMII)
+#घोषणा IS_PHY_IF_MODE_GBIT(अगरace)	(IS_PHY_IF_MODE_RGMII(अगरace) || \
+					 अगरace == PHY_INTERFACE_MODE_GMII)
 
-/* STiH4xx register definitions (STiH415/STiH416/STiH407/STiH410 families)
+/* STiH4xx रेजिस्टर definitions (STiH415/STiH416/STiH407/STiH410 families)
  *
- * Below table summarizes the clock requirement and clock sources for
- * supported phy interface modes with link speeds.
+ * Below table summarizes the घड़ी requirement and घड़ी sources क्रम
+ * supported phy पूर्णांकerface modes with link speeds.
  * ________________________________________________
  *|  PHY_MODE	| 1000 Mbit Link | 100 Mbit Link   |
  * ------------------------------------------------
@@ -70,12 +71,12 @@
  *-------------------------------
  */
 
-#define STIH4XX_RETIME_SRC_MASK			GENMASK(8, 6)
-#define STIH4XX_ETH_SEL_TX_RETIME_CLK		BIT(8)
-#define STIH4XX_ETH_SEL_INTERNAL_NOTEXT_PHYCLK	BIT(7)
-#define STIH4XX_ETH_SEL_TXCLK_NOT_CLK125	BIT(6)
+#घोषणा STIH4XX_RETIME_SRC_MASK			GENMASK(8, 6)
+#घोषणा STIH4XX_ETH_SEL_TX_RETIME_CLK		BIT(8)
+#घोषणा STIH4XX_ETH_SEL_INTERNAL_NOTEXT_PHYCLK	BIT(7)
+#घोषणा STIH4XX_ETH_SEL_TXCLK_NOT_CLK125	BIT(6)
 
-/* STiD127 register definitions
+/* STiD127 रेजिस्टर definitions
  *-----------------------
  * src	 |BIT(6)| BIT(7)|
  *-----------------------
@@ -92,14 +93,14 @@
  *-----------------------
  */
 
-#define STID127_RETIME_SRC_MASK			GENMASK(7, 6)
-#define STID127_ETH_SEL_INTERNAL_NOTEXT_PHYCLK	BIT(7)
-#define STID127_ETH_SEL_INTERNAL_NOTEXT_TXCLK	BIT(6)
+#घोषणा STID127_RETIME_SRC_MASK			GENMASK(7, 6)
+#घोषणा STID127_ETH_SEL_INTERNAL_NOTEXT_PHYCLK	BIT(7)
+#घोषणा STID127_ETH_SEL_INTERNAL_NOTEXT_TXCLK	BIT(6)
 
-#define ENMII_MASK	GENMASK(5, 5)
-#define ENMII		BIT(5)
-#define EN_MASK		GENMASK(1, 1)
-#define EN		BIT(1)
+#घोषणा ENMII_MASK	GENMASK(5, 5)
+#घोषणा ENMII		BIT(5)
+#घोषणा EN_MASK		GENMASK(1, 1)
+#घोषणा EN		BIT(1)
 
 /*
  * 3 bits [4:2]
@@ -108,328 +109,328 @@
  *	010-SGMII
  *	100-RMII
  */
-#define MII_PHY_SEL_MASK	GENMASK(4, 2)
-#define ETH_PHY_SEL_RMII	BIT(4)
-#define ETH_PHY_SEL_SGMII	BIT(3)
-#define ETH_PHY_SEL_RGMII	BIT(2)
-#define ETH_PHY_SEL_GMII	0x0
-#define ETH_PHY_SEL_MII		0x0
+#घोषणा MII_PHY_SEL_MASK	GENMASK(4, 2)
+#घोषणा ETH_PHY_SEL_RMII	BIT(4)
+#घोषणा ETH_PHY_SEL_SGMII	BIT(3)
+#घोषणा ETH_PHY_SEL_RGMII	BIT(2)
+#घोषणा ETH_PHY_SEL_GMII	0x0
+#घोषणा ETH_PHY_SEL_MII		0x0
 
-struct sti_dwmac {
-	phy_interface_t interface;	/* MII interface */
-	bool ext_phyclk;	/* Clock from external PHY */
-	u32 tx_retime_src;	/* TXCLK Retiming*/
-	struct clk *clk;	/* PHY clock */
-	u32 ctrl_reg;		/* GMAC glue-logic control register */
-	int clk_sel_reg;	/* GMAC ext clk selection register */
-	struct regmap *regmap;
+काष्ठा sti_dwmac अणु
+	phy_पूर्णांकerface_t पूर्णांकerface;	/* MII पूर्णांकerface */
+	bool ext_phyclk;	/* Clock from बाह्यal PHY */
+	u32 tx_reसमय_src;	/* TXCLK Retiming*/
+	काष्ठा clk *clk;	/* PHY घड़ी */
+	u32 ctrl_reg;		/* GMAC glue-logic control रेजिस्टर */
+	पूर्णांक clk_sel_reg;	/* GMAC ext clk selection रेजिस्टर */
+	काष्ठा regmap *regmap;
 	bool gmac_en;
 	u32 speed;
-	void (*fix_retime_src)(void *priv, unsigned int speed);
-};
+	व्योम (*fix_reसमय_src)(व्योम *priv, अचिन्हित पूर्णांक speed);
+पूर्ण;
 
-struct sti_dwmac_of_data {
-	void (*fix_retime_src)(void *priv, unsigned int speed);
-};
+काष्ठा sti_dwmac_of_data अणु
+	व्योम (*fix_reसमय_src)(व्योम *priv, अचिन्हित पूर्णांक speed);
+पूर्ण;
 
-static u32 phy_intf_sels[] = {
+अटल u32 phy_पूर्णांकf_sels[] = अणु
 	[PHY_INTERFACE_MODE_MII] = ETH_PHY_SEL_MII,
 	[PHY_INTERFACE_MODE_GMII] = ETH_PHY_SEL_GMII,
 	[PHY_INTERFACE_MODE_RGMII] = ETH_PHY_SEL_RGMII,
 	[PHY_INTERFACE_MODE_RGMII_ID] = ETH_PHY_SEL_RGMII,
 	[PHY_INTERFACE_MODE_SGMII] = ETH_PHY_SEL_SGMII,
 	[PHY_INTERFACE_MODE_RMII] = ETH_PHY_SEL_RMII,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TX_RETIME_SRC_NA = 0,
 	TX_RETIME_SRC_TXCLK = 1,
 	TX_RETIME_SRC_CLK_125,
 	TX_RETIME_SRC_PHYCLK,
 	TX_RETIME_SRC_CLKGEN,
-};
+पूर्ण;
 
-static u32 stih4xx_tx_retime_val[] = {
+अटल u32 stih4xx_tx_reसमय_val[] = अणु
 	[TX_RETIME_SRC_TXCLK] = STIH4XX_ETH_SEL_TXCLK_NOT_CLK125,
 	[TX_RETIME_SRC_CLK_125] = 0x0,
 	[TX_RETIME_SRC_PHYCLK] = STIH4XX_ETH_SEL_TX_RETIME_CLK,
 	[TX_RETIME_SRC_CLKGEN] = STIH4XX_ETH_SEL_TX_RETIME_CLK
 				 | STIH4XX_ETH_SEL_INTERNAL_NOTEXT_PHYCLK,
-};
+पूर्ण;
 
-static void stih4xx_fix_retime_src(void *priv, u32 spd)
-{
-	struct sti_dwmac *dwmac = priv;
-	u32 src = dwmac->tx_retime_src;
+अटल व्योम stih4xx_fix_reसमय_src(व्योम *priv, u32 spd)
+अणु
+	काष्ठा sti_dwmac *dwmac = priv;
+	u32 src = dwmac->tx_reसमय_src;
 	u32 reg = dwmac->ctrl_reg;
 	u32 freq = 0;
 
-	if (dwmac->interface == PHY_INTERFACE_MODE_MII) {
+	अगर (dwmac->पूर्णांकerface == PHY_INTERFACE_MODE_MII) अणु
 		src = TX_RETIME_SRC_TXCLK;
-	} else if (dwmac->interface == PHY_INTERFACE_MODE_RMII) {
-		if (dwmac->ext_phyclk) {
+	पूर्ण अन्यथा अगर (dwmac->पूर्णांकerface == PHY_INTERFACE_MODE_RMII) अणु
+		अगर (dwmac->ext_phyclk) अणु
 			src = TX_RETIME_SRC_PHYCLK;
-		} else {
+		पूर्ण अन्यथा अणु
 			src = TX_RETIME_SRC_CLKGEN;
 			freq = DWMAC_50MHZ;
-		}
-	} else if (IS_PHY_IF_MODE_RGMII(dwmac->interface)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (IS_PHY_IF_MODE_RGMII(dwmac->पूर्णांकerface)) अणु
 		/* On GiGa clk source can be either ext or from clkgen */
-		if (spd == SPEED_1000) {
+		अगर (spd == SPEED_1000) अणु
 			freq = DWMAC_125MHZ;
-		} else {
-			/* Switch to clkgen for these speeds */
+		पूर्ण अन्यथा अणु
+			/* Switch to clkgen क्रम these speeds */
 			src = TX_RETIME_SRC_CLKGEN;
-			if (spd == SPEED_100)
+			अगर (spd == SPEED_100)
 				freq = DWMAC_25MHZ;
-			else if (spd == SPEED_10)
+			अन्यथा अगर (spd == SPEED_10)
 				freq = DWMAC_2_5MHZ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (src == TX_RETIME_SRC_CLKGEN && freq)
+	अगर (src == TX_RETIME_SRC_CLKGEN && freq)
 		clk_set_rate(dwmac->clk, freq);
 
 	regmap_update_bits(dwmac->regmap, reg, STIH4XX_RETIME_SRC_MASK,
-			   stih4xx_tx_retime_val[src]);
-}
+			   stih4xx_tx_reसमय_val[src]);
+पूर्ण
 
-static void stid127_fix_retime_src(void *priv, u32 spd)
-{
-	struct sti_dwmac *dwmac = priv;
+अटल व्योम stid127_fix_reसमय_src(व्योम *priv, u32 spd)
+अणु
+	काष्ठा sti_dwmac *dwmac = priv;
 	u32 reg = dwmac->ctrl_reg;
 	u32 freq = 0;
 	u32 val = 0;
 
-	if (dwmac->interface == PHY_INTERFACE_MODE_MII) {
+	अगर (dwmac->पूर्णांकerface == PHY_INTERFACE_MODE_MII) अणु
 		val = STID127_ETH_SEL_INTERNAL_NOTEXT_TXCLK;
-	} else if (dwmac->interface == PHY_INTERFACE_MODE_RMII) {
-		if (!dwmac->ext_phyclk) {
+	पूर्ण अन्यथा अगर (dwmac->पूर्णांकerface == PHY_INTERFACE_MODE_RMII) अणु
+		अगर (!dwmac->ext_phyclk) अणु
 			val = STID127_ETH_SEL_INTERNAL_NOTEXT_PHYCLK;
 			freq = DWMAC_50MHZ;
-		}
-	} else if (IS_PHY_IF_MODE_RGMII(dwmac->interface)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (IS_PHY_IF_MODE_RGMII(dwmac->पूर्णांकerface)) अणु
 		val = STID127_ETH_SEL_INTERNAL_NOTEXT_TXCLK;
-		if (spd == SPEED_1000)
+		अगर (spd == SPEED_1000)
 			freq = DWMAC_125MHZ;
-		else if (spd == SPEED_100)
+		अन्यथा अगर (spd == SPEED_100)
 			freq = DWMAC_25MHZ;
-		else if (spd == SPEED_10)
+		अन्यथा अगर (spd == SPEED_10)
 			freq = DWMAC_2_5MHZ;
-	}
+	पूर्ण
 
-	if (freq)
+	अगर (freq)
 		clk_set_rate(dwmac->clk, freq);
 
 	regmap_update_bits(dwmac->regmap, reg, STID127_RETIME_SRC_MASK, val);
-}
+पूर्ण
 
-static int sti_dwmac_set_mode(struct sti_dwmac *dwmac)
-{
-	struct regmap *regmap = dwmac->regmap;
-	int iface = dwmac->interface;
+अटल पूर्णांक sti_dwmac_set_mode(काष्ठा sti_dwmac *dwmac)
+अणु
+	काष्ठा regmap *regmap = dwmac->regmap;
+	पूर्णांक अगरace = dwmac->पूर्णांकerface;
 	u32 reg = dwmac->ctrl_reg;
 	u32 val;
 
-	if (dwmac->gmac_en)
+	अगर (dwmac->gmac_en)
 		regmap_update_bits(regmap, reg, EN_MASK, EN);
 
-	regmap_update_bits(regmap, reg, MII_PHY_SEL_MASK, phy_intf_sels[iface]);
+	regmap_update_bits(regmap, reg, MII_PHY_SEL_MASK, phy_पूर्णांकf_sels[अगरace]);
 
-	val = (iface == PHY_INTERFACE_MODE_REVMII) ? 0 : ENMII;
+	val = (अगरace == PHY_INTERFACE_MODE_REVMII) ? 0 : ENMII;
 	regmap_update_bits(regmap, reg, ENMII_MASK, val);
 
-	dwmac->fix_retime_src(dwmac, dwmac->speed);
+	dwmac->fix_reसमय_src(dwmac, dwmac->speed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sti_dwmac_parse_data(struct sti_dwmac *dwmac,
-				struct platform_device *pdev)
-{
-	struct resource *res;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct regmap *regmap;
-	int err;
+अटल पूर्णांक sti_dwmac_parse_data(काष्ठा sti_dwmac *dwmac,
+				काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा regmap *regmap;
+	पूर्णांक err;
 
-	/* clk selection from extra syscfg register */
+	/* clk selection from extra syscfg रेजिस्टर */
 	dwmac->clk_sel_reg = -ENXIO;
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "sti-clkconf");
-	if (res)
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "sti-clkconf");
+	अगर (res)
 		dwmac->clk_sel_reg = res->start;
 
 	regmap = syscon_regmap_lookup_by_phandle(np, "st,syscon");
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
-	err = of_property_read_u32_index(np, "st,syscon", 1, &dwmac->ctrl_reg);
-	if (err) {
+	err = of_property_पढ़ो_u32_index(np, "st,syscon", 1, &dwmac->ctrl_reg);
+	अगर (err) अणु
 		dev_err(dev, "Can't get sysconfig ctrl offset (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = of_get_phy_mode(np, &dwmac->interface);
-	if (err && err != -ENODEV) {
+	err = of_get_phy_mode(np, &dwmac->पूर्णांकerface);
+	अगर (err && err != -ENODEV) अणु
 		dev_err(dev, "Can't get phy-mode\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dwmac->regmap = regmap;
-	dwmac->gmac_en = of_property_read_bool(np, "st,gmac_en");
-	dwmac->ext_phyclk = of_property_read_bool(np, "st,ext-phyclk");
-	dwmac->tx_retime_src = TX_RETIME_SRC_NA;
+	dwmac->gmac_en = of_property_पढ़ो_bool(np, "st,gmac_en");
+	dwmac->ext_phyclk = of_property_पढ़ो_bool(np, "st,ext-phyclk");
+	dwmac->tx_reसमय_src = TX_RETIME_SRC_NA;
 	dwmac->speed = SPEED_100;
 
-	if (IS_PHY_IF_MODE_GBIT(dwmac->interface)) {
-		const char *rs;
+	अगर (IS_PHY_IF_MODE_GBIT(dwmac->पूर्णांकerface)) अणु
+		स्थिर अक्षर *rs;
 
-		dwmac->tx_retime_src = TX_RETIME_SRC_CLKGEN;
+		dwmac->tx_reसमय_src = TX_RETIME_SRC_CLKGEN;
 
-		err = of_property_read_string(np, "st,tx-retime-src", &rs);
-		if (err < 0) {
+		err = of_property_पढ़ो_string(np, "st,tx-retime-src", &rs);
+		अगर (err < 0) अणु
 			dev_warn(dev, "Use internal clock source\n");
-		} else {
-			if (!strcasecmp(rs, "clk_125"))
-				dwmac->tx_retime_src = TX_RETIME_SRC_CLK_125;
-			else if (!strcasecmp(rs, "txclk"))
-				dwmac->tx_retime_src = TX_RETIME_SRC_TXCLK;
-		}
+		पूर्ण अन्यथा अणु
+			अगर (!strहालcmp(rs, "clk_125"))
+				dwmac->tx_reसमय_src = TX_RETIME_SRC_CLK_125;
+			अन्यथा अगर (!strहालcmp(rs, "txclk"))
+				dwmac->tx_reसमय_src = TX_RETIME_SRC_TXCLK;
+		पूर्ण
 		dwmac->speed = SPEED_1000;
-	}
+	पूर्ण
 
 	dwmac->clk = devm_clk_get(dev, "sti-ethclk");
-	if (IS_ERR(dwmac->clk)) {
+	अगर (IS_ERR(dwmac->clk)) अणु
 		dev_warn(dev, "No phy clock provided...\n");
-		dwmac->clk = NULL;
-	}
+		dwmac->clk = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sti_dwmac_probe(struct platform_device *pdev)
-{
-	struct plat_stmmacenet_data *plat_dat;
-	const struct sti_dwmac_of_data *data;
-	struct stmmac_resources stmmac_res;
-	struct sti_dwmac *dwmac;
-	int ret;
+अटल पूर्णांक sti_dwmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा plat_sपंचांगmacenet_data *plat_dat;
+	स्थिर काष्ठा sti_dwmac_of_data *data;
+	काष्ठा sपंचांगmac_resources sपंचांगmac_res;
+	काष्ठा sti_dwmac *dwmac;
+	पूर्णांक ret;
 
 	data = of_device_get_match_data(&pdev->dev);
-	if (!data) {
+	अगर (!data) अणु
 		dev_err(&pdev->dev, "No OF match data provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = stmmac_get_platform_resources(pdev, &stmmac_res);
-	if (ret)
-		return ret;
+	ret = sपंचांगmac_get_platक्रमm_resources(pdev, &sपंचांगmac_res);
+	अगर (ret)
+		वापस ret;
 
-	plat_dat = stmmac_probe_config_dt(pdev, stmmac_res.mac);
-	if (IS_ERR(plat_dat))
-		return PTR_ERR(plat_dat);
+	plat_dat = sपंचांगmac_probe_config_dt(pdev, sपंचांगmac_res.mac);
+	अगर (IS_ERR(plat_dat))
+		वापस PTR_ERR(plat_dat);
 
-	dwmac = devm_kzalloc(&pdev->dev, sizeof(*dwmac), GFP_KERNEL);
-	if (!dwmac) {
+	dwmac = devm_kzalloc(&pdev->dev, माप(*dwmac), GFP_KERNEL);
+	अगर (!dwmac) अणु
 		ret = -ENOMEM;
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
 	ret = sti_dwmac_parse_data(dwmac, pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to parse OF data\n");
-		goto err_remove_config_dt;
-	}
+		जाओ err_हटाओ_config_dt;
+	पूर्ण
 
-	dwmac->fix_retime_src = data->fix_retime_src;
+	dwmac->fix_reसमय_src = data->fix_reसमय_src;
 
 	plat_dat->bsp_priv = dwmac;
-	plat_dat->fix_mac_speed = data->fix_retime_src;
+	plat_dat->fix_mac_speed = data->fix_reसमय_src;
 
 	ret = clk_prepare_enable(dwmac->clk);
-	if (ret)
-		goto err_remove_config_dt;
+	अगर (ret)
+		जाओ err_हटाओ_config_dt;
 
 	ret = sti_dwmac_set_mode(dwmac);
-	if (ret)
-		goto disable_clk;
+	अगर (ret)
+		जाओ disable_clk;
 
-	ret = stmmac_dvr_probe(&pdev->dev, plat_dat, &stmmac_res);
-	if (ret)
-		goto disable_clk;
+	ret = sपंचांगmac_dvr_probe(&pdev->dev, plat_dat, &sपंचांगmac_res);
+	अगर (ret)
+		जाओ disable_clk;
 
-	return 0;
+	वापस 0;
 
 disable_clk:
 	clk_disable_unprepare(dwmac->clk);
-err_remove_config_dt:
-	stmmac_remove_config_dt(pdev, plat_dat);
+err_हटाओ_config_dt:
+	sपंचांगmac_हटाओ_config_dt(pdev, plat_dat);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sti_dwmac_remove(struct platform_device *pdev)
-{
-	struct sti_dwmac *dwmac = get_stmmac_bsp_priv(&pdev->dev);
-	int ret = stmmac_dvr_remove(&pdev->dev);
-
-	clk_disable_unprepare(dwmac->clk);
-
-	return ret;
-}
-
-#ifdef CONFIG_PM_SLEEP
-static int sti_dwmac_suspend(struct device *dev)
-{
-	struct sti_dwmac *dwmac = get_stmmac_bsp_priv(dev);
-	int ret = stmmac_suspend(dev);
+अटल पूर्णांक sti_dwmac_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sti_dwmac *dwmac = get_sपंचांगmac_bsp_priv(&pdev->dev);
+	पूर्णांक ret = sपंचांगmac_dvr_हटाओ(&pdev->dev);
 
 	clk_disable_unprepare(dwmac->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sti_dwmac_resume(struct device *dev)
-{
-	struct sti_dwmac *dwmac = get_stmmac_bsp_priv(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sti_dwmac_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sti_dwmac *dwmac = get_sपंचांगmac_bsp_priv(dev);
+	पूर्णांक ret = sपंचांगmac_suspend(dev);
+
+	clk_disable_unprepare(dwmac->clk);
+
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक sti_dwmac_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sti_dwmac *dwmac = get_sपंचांगmac_bsp_priv(dev);
 
 	clk_prepare_enable(dwmac->clk);
 	sti_dwmac_set_mode(dwmac);
 
-	return stmmac_resume(dev);
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस sपंचांगmac_resume(dev);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(sti_dwmac_pm_ops, sti_dwmac_suspend,
+अटल SIMPLE_DEV_PM_OPS(sti_dwmac_pm_ops, sti_dwmac_suspend,
 					   sti_dwmac_resume);
 
-static const struct sti_dwmac_of_data stih4xx_dwmac_data = {
-	.fix_retime_src = stih4xx_fix_retime_src,
-};
+अटल स्थिर काष्ठा sti_dwmac_of_data stih4xx_dwmac_data = अणु
+	.fix_reसमय_src = stih4xx_fix_reसमय_src,
+पूर्ण;
 
-static const struct sti_dwmac_of_data stid127_dwmac_data = {
-	.fix_retime_src = stid127_fix_retime_src,
-};
+अटल स्थिर काष्ठा sti_dwmac_of_data stid127_dwmac_data = अणु
+	.fix_reसमय_src = stid127_fix_reसमय_src,
+पूर्ण;
 
-static const struct of_device_id sti_dwmac_match[] = {
-	{ .compatible = "st,stih415-dwmac", .data = &stih4xx_dwmac_data},
-	{ .compatible = "st,stih416-dwmac", .data = &stih4xx_dwmac_data},
-	{ .compatible = "st,stid127-dwmac", .data = &stid127_dwmac_data},
-	{ .compatible = "st,stih407-dwmac", .data = &stih4xx_dwmac_data},
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sti_dwmac_match[] = अणु
+	अणु .compatible = "st,stih415-dwmac", .data = &stih4xx_dwmac_dataपूर्ण,
+	अणु .compatible = "st,stih416-dwmac", .data = &stih4xx_dwmac_dataपूर्ण,
+	अणु .compatible = "st,stid127-dwmac", .data = &stid127_dwmac_dataपूर्ण,
+	अणु .compatible = "st,stih407-dwmac", .data = &stih4xx_dwmac_dataपूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sti_dwmac_match);
 
-static struct platform_driver sti_dwmac_driver = {
+अटल काष्ठा platक्रमm_driver sti_dwmac_driver = अणु
 	.probe  = sti_dwmac_probe,
-	.remove = sti_dwmac_remove,
-	.driver = {
+	.हटाओ = sti_dwmac_हटाओ,
+	.driver = अणु
 		.name           = "sti-dwmac",
 		.pm		= &sti_dwmac_pm_ops,
 		.of_match_table = sti_dwmac_match,
-	},
-};
-module_platform_driver(sti_dwmac_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(sti_dwmac_driver);
 
 MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@st.com>");
 MODULE_DESCRIPTION("STMicroelectronics DWMAC Specific Glue layer");

@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * arch/arm64/kernel/return_address.c
+ * arch/arm64/kernel/वापस_address.c
  *
  * Copyright (C) 2013 Linaro Limited
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
  */
 
-#include <linux/export.h>
-#include <linux/ftrace.h>
-#include <linux/kprobes.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/kprobes.h>
 
-#include <asm/stack_pointer.h>
-#include <asm/stacktrace.h>
+#समावेश <यंत्र/stack_poपूर्णांकer.h>
+#समावेश <यंत्र/stacktrace.h>
 
-struct return_address_data {
-	unsigned int level;
-	void *addr;
-};
+काष्ठा वापस_address_data अणु
+	अचिन्हित पूर्णांक level;
+	व्योम *addr;
+पूर्ण;
 
-static bool save_return_addr(void *d, unsigned long pc)
-{
-	struct return_address_data *data = d;
+अटल bool save_वापस_addr(व्योम *d, अचिन्हित दीर्घ pc)
+अणु
+	काष्ठा वापस_address_data *data = d;
 
-	if (!data->level) {
-		data->addr = (void *)pc;
-		return false;
-	} else {
+	अगर (!data->level) अणु
+		data->addr = (व्योम *)pc;
+		वापस false;
+	पूर्ण अन्यथा अणु
 		--data->level;
-		return true;
-	}
-}
-NOKPROBE_SYMBOL(save_return_addr);
+		वापस true;
+	पूर्ण
+पूर्ण
+NOKPROBE_SYMBOL(save_वापस_addr);
 
-void *return_address(unsigned int level)
-{
-	struct return_address_data data;
-	struct stackframe frame;
+व्योम *वापस_address(अचिन्हित पूर्णांक level)
+अणु
+	काष्ठा वापस_address_data data;
+	काष्ठा stackframe frame;
 
 	data.level = level + 2;
-	data.addr = NULL;
+	data.addr = शून्य;
 
 	start_backtrace(&frame,
-			(unsigned long)__builtin_frame_address(0),
-			(unsigned long)return_address);
-	walk_stackframe(current, &frame, save_return_addr, &data);
+			(अचिन्हित दीर्घ)__builtin_frame_address(0),
+			(अचिन्हित दीर्घ)वापस_address);
+	walk_stackframe(current, &frame, save_वापस_addr, &data);
 
-	if (!data.level)
-		return data.addr;
-	else
-		return NULL;
-}
-EXPORT_SYMBOL_GPL(return_address);
-NOKPROBE_SYMBOL(return_address);
+	अगर (!data.level)
+		वापस data.addr;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(वापस_address);
+NOKPROBE_SYMBOL(वापस_address);

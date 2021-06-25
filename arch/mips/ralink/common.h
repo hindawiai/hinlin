@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  * Copyright (C) 2013 John Crispin <john@phrozen.org>
  */
 
-#ifndef _RALINK_COMMON_H__
-#define _RALINK_COMMON_H__
+#अगर_अघोषित _RALINK_COMMON_H__
+#घोषणा _RALINK_COMMON_H__
 
-#define RAMIPS_SYS_TYPE_LEN	32
+#घोषणा RAMIPS_SYS_TYPE_LEN	32
 
-struct ralink_soc_info {
-	unsigned char sys_type[RAMIPS_SYS_TYPE_LEN];
-	unsigned char *compatible;
+काष्ठा ralink_soc_info अणु
+	अचिन्हित अक्षर sys_type[RAMIPS_SYS_TYPE_LEN];
+	अचिन्हित अक्षर *compatible;
 
-	unsigned long mem_base;
-	unsigned long mem_size;
-	unsigned long mem_size_min;
-	unsigned long mem_size_max;
-	void (*mem_detect)(void);
-};
-extern struct ralink_soc_info soc_info;
+	अचिन्हित दीर्घ mem_base;
+	अचिन्हित दीर्घ mem_size;
+	अचिन्हित दीर्घ mem_size_min;
+	अचिन्हित दीर्घ mem_size_max;
+	व्योम (*mem_detect)(व्योम);
+पूर्ण;
+बाह्य काष्ठा ralink_soc_info soc_info;
 
-extern void ralink_of_remap(void);
+बाह्य व्योम ralink_of_remap(व्योम);
 
-extern void ralink_clk_init(void);
-extern void ralink_clk_add(const char *dev, unsigned long rate);
+बाह्य व्योम ralink_clk_init(व्योम);
+बाह्य व्योम ralink_clk_add(स्थिर अक्षर *dev, अचिन्हित दीर्घ rate);
 
-extern void ralink_rst_init(void);
+बाह्य व्योम ralink_rst_init(व्योम);
 
-extern void __init prom_soc_init(struct ralink_soc_info *soc_info);
+बाह्य व्योम __init prom_soc_init(काष्ठा ralink_soc_info *soc_info);
 
-__iomem void *plat_of_remap_node(const char *node);
+__iomem व्योम *plat_of_remap_node(स्थिर अक्षर *node);
 
-#endif /* _RALINK_COMMON_H__ */
+#पूर्ण_अगर /* _RALINK_COMMON_H__ */

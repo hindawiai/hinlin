@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _DP_DEBUG_H_
-#define _DP_DEBUG_H_
+#अगर_अघोषित _DP_DEBUG_H_
+#घोषणा _DP_DEBUG_H_
 
-#include "dp_panel.h"
-#include "dp_link.h"
+#समावेश "dp_panel.h"
+#समावेश "dp_link.h"
 
 /**
- * struct dp_debug
- * @debug_en: specifies whether debug mode enabled
+ * काष्ठा dp_debug
+ * @debug_en: specअगरies whether debug mode enabled
  * @vdisplay: used to filter out vdisplay value
  * @hdisplay: used to filter out hdisplay value
  * @vrefresh: used to filter out vrefresh value
- * @tpg_state: specifies whether tpg feature is enabled
+ * @tpg_state: specअगरies whether tpg feature is enabled
  */
-struct dp_debug {
+काष्ठा dp_debug अणु
 	bool debug_en;
-	int aspect_ratio;
-	int vdisplay;
-	int hdisplay;
-	int vrefresh;
-};
+	पूर्णांक aspect_ratio;
+	पूर्णांक vdisplay;
+	पूर्णांक hdisplay;
+	पूर्णांक vrefresh;
+पूर्ण;
 
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
 /**
  * dp_debug_get() - configure and get the DisplayPlot debug module data
@@ -34,17 +35,17 @@ struct dp_debug {
  * @panel: instance of panel module
  * @usbpd: instance of usbpd module
  * @link: instance of link module
- * @connector: double pointer to display connector
- * @minor: pointer to drm minor number after device registration
- * return: pointer to allocated debug module data
+ * @connector: द्विगुन poपूर्णांकer to display connector
+ * @minor: poपूर्णांकer to drm minor number after device registration
+ * वापस: poपूर्णांकer to allocated debug module data
  *
  * This function sets up the debug module and provides a way
- * for debugfs input to be communicated with existing modules
+ * क्रम debugfs input to be communicated with existing modules
  */
-struct dp_debug *dp_debug_get(struct device *dev, struct dp_panel *panel,
-		struct dp_usbpd *usbpd, struct dp_link *link,
-		struct drm_connector **connector,
-		struct drm_minor *minor);
+काष्ठा dp_debug *dp_debug_get(काष्ठा device *dev, काष्ठा dp_panel *panel,
+		काष्ठा dp_usbpd *usbpd, काष्ठा dp_link *link,
+		काष्ठा drm_connector **connector,
+		काष्ठा drm_minor *minor);
 
 /**
  * dp_debug_put()
@@ -53,22 +54,22 @@ struct dp_debug *dp_debug_get(struct device *dev, struct dp_panel *panel,
  *
  * @dp_debug: instance of dp_debug
  */
-void dp_debug_put(struct dp_debug *dp_debug);
+व्योम dp_debug_put(काष्ठा dp_debug *dp_debug);
 
-#else
+#अन्यथा
 
-static inline
-struct dp_debug *dp_debug_get(struct device *dev, struct dp_panel *panel,
-		struct dp_usbpd *usbpd, struct dp_link *link,
-		struct drm_connector **connector, struct drm_minor *minor)
-{
-	return ERR_PTR(-EINVAL);
-}
+अटल अंतरभूत
+काष्ठा dp_debug *dp_debug_get(काष्ठा device *dev, काष्ठा dp_panel *panel,
+		काष्ठा dp_usbpd *usbpd, काष्ठा dp_link *link,
+		काष्ठा drm_connector **connector, काष्ठा drm_minor *minor)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static inline void dp_debug_put(struct dp_debug *dp_debug)
-{
-}
+अटल अंतरभूत व्योम dp_debug_put(काष्ठा dp_debug *dp_debug)
+अणु
+पूर्ण
 
-#endif /* defined(CONFIG_DEBUG_FS) */
+#पूर्ण_अगर /* defined(CONFIG_DEBUG_FS) */
 
-#endif /* _DP_DEBUG_H_ */
+#पूर्ण_अगर /* _DP_DEBUG_H_ */

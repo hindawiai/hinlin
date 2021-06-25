@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_SSB_EMBEDDED_H_
-#define LINUX_SSB_EMBEDDED_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_SSB_EMBEDDED_H_
+#घोषणा LINUX_SSB_EMBEDDED_H_
 
-#include <linux/types.h>
-#include <linux/ssb/ssb.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ssb/ssb.h>
 
 
-extern int ssb_watchdog_timer_set(struct ssb_bus *bus, u32 ticks);
+बाह्य पूर्णांक ssb_watchकरोg_समयr_set(काष्ठा ssb_bus *bus, u32 ticks);
 
 /* Generic GPIO API */
-u32 ssb_gpio_in(struct ssb_bus *bus, u32 mask);
-u32 ssb_gpio_out(struct ssb_bus *bus, u32 mask, u32 value);
-u32 ssb_gpio_outen(struct ssb_bus *bus, u32 mask, u32 value);
-u32 ssb_gpio_control(struct ssb_bus *bus, u32 mask, u32 value);
-u32 ssb_gpio_intmask(struct ssb_bus *bus, u32 mask, u32 value);
-u32 ssb_gpio_polarity(struct ssb_bus *bus, u32 mask, u32 value);
+u32 ssb_gpio_in(काष्ठा ssb_bus *bus, u32 mask);
+u32 ssb_gpio_out(काष्ठा ssb_bus *bus, u32 mask, u32 value);
+u32 ssb_gpio_outen(काष्ठा ssb_bus *bus, u32 mask, u32 value);
+u32 ssb_gpio_control(काष्ठा ssb_bus *bus, u32 mask, u32 value);
+u32 ssb_gpio_पूर्णांकmask(काष्ठा ssb_bus *bus, u32 mask, u32 value);
+u32 ssb_gpio_polarity(काष्ठा ssb_bus *bus, u32 mask, u32 value);
 
-#endif /* LINUX_SSB_EMBEDDED_H_ */
+#पूर्ण_अगर /* LINUX_SSB_EMBEDDED_H_ */

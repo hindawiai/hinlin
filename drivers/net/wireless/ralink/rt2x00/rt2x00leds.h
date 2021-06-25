@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -7,27 +8,27 @@
 
 /*
 	Module: rt2x00lib
-	Abstract: rt2x00 led datastructures and routines
+	Abstract: rt2x00 led dataकाष्ठाures and routines
  */
 
-#ifndef RT2X00LEDS_H
-#define RT2X00LEDS_H
+#अगर_अघोषित RT2X00LEDS_H
+#घोषणा RT2X00LEDS_H
 
-enum led_type {
+क्रमागत led_type अणु
 	LED_TYPE_RADIO,
 	LED_TYPE_ASSOC,
 	LED_TYPE_ACTIVITY,
 	LED_TYPE_QUALITY,
-};
+पूर्ण;
 
-struct rt2x00_led {
-	struct rt2x00_dev *rt2x00dev;
-	struct led_classdev led_dev;
+काष्ठा rt2x00_led अणु
+	काष्ठा rt2x00_dev *rt2x00dev;
+	काष्ठा led_classdev led_dev;
 
-	enum led_type type;
-	unsigned int flags;
-#define LED_INITIALIZED		( 1 << 0 )
-#define LED_REGISTERED		( 1 << 1 )
-};
+	क्रमागत led_type type;
+	अचिन्हित पूर्णांक flags;
+#घोषणा LED_INITIALIZED		( 1 << 0 )
+#घोषणा LED_REGISTERED		( 1 << 1 )
+पूर्ण;
 
-#endif /* RT2X00LEDS_H */
+#पूर्ण_अगर /* RT2X00LEDS_H */

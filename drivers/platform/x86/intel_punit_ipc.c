@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for the Intel P-Unit Mailbox IPC mechanism
+ * Driver क्रम the Intel P-Unit Mailbox IPC mechanism
  *
  * (C) Copyright 2015 Intel Corporation
  *
  * The heart of the P-Unit is the Foxton microcontroller and its firmware,
- * which provide mailbox interface for power management usage.
+ * which provide mailbox पूर्णांकerface क्रम घातer management usage.
  */
 
-#include <linux/acpi.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/intel_punit_ipc.h>
+#समावेश <यंत्र/पूर्णांकel_punit_ipc.h>
 
-/* IPC Mailbox registers */
-#define OFFSET_DATA_LOW		0x0
-#define OFFSET_DATA_HIGH	0x4
-/* bit field of interface register */
-#define	CMD_RUN			BIT(31)
-#define	CMD_ERRCODE_MASK	GENMASK(7, 0)
-#define	CMD_PARA1_SHIFT		8
-#define	CMD_PARA2_SHIFT		16
+/* IPC Mailbox रेजिस्टरs */
+#घोषणा OFFSET_DATA_LOW		0x0
+#घोषणा OFFSET_DATA_HIGH	0x4
+/* bit field of पूर्णांकerface रेजिस्टर */
+#घोषणा	CMD_RUN			BIT(31)
+#घोषणा	CMD_ERRCODE_MASK	GENMASK(7, 0)
+#घोषणा	CMD_PARA1_SHIFT		8
+#घोषणा	CMD_PARA2_SHIFT		16
 
-#define CMD_TIMEOUT_SECONDS	1
+#घोषणा CMD_TIMEOUT_SECONDS	1
 
-enum {
+क्रमागत अणु
 	BASE_DATA = 0,
 	BASE_IFACE,
 	BASE_MAX,
-};
+पूर्ण;
 
-typedef struct {
-	struct device *dev;
-	struct mutex lock;
-	int irq;
-	struct completion cmd_complete;
-	/* base of interface and data registers */
-	void __iomem *base[RESERVED_IPC][BASE_MAX];
+प्रकार काष्ठा अणु
+	काष्ठा device *dev;
+	काष्ठा mutex lock;
+	पूर्णांक irq;
+	काष्ठा completion cmd_complete;
+	/* base of पूर्णांकerface and data रेजिस्टरs */
+	व्योम __iomem *base[RESERVED_IPC][BASE_MAX];
 	IPC_TYPE type;
-} IPC_DEV;
+पूर्ण IPC_DEV;
 
-static IPC_DEV *punit_ipcdev;
+अटल IPC_DEV *punit_ipcdev;
 
-static inline u32 ipc_read_status(IPC_DEV *ipcdev, IPC_TYPE type)
-{
-	return readl(ipcdev->base[type][BASE_IFACE]);
-}
+अटल अंतरभूत u32 ipc_पढ़ो_status(IPC_DEV *ipcdev, IPC_TYPE type)
+अणु
+	वापस पढ़ोl(ipcdev->base[type][BASE_IFACE]);
+पूर्ण
 
-static inline void ipc_write_cmd(IPC_DEV *ipcdev, IPC_TYPE type, u32 cmd)
-{
-	writel(cmd, ipcdev->base[type][BASE_IFACE]);
-}
+अटल अंतरभूत व्योम ipc_ग_लिखो_cmd(IPC_DEV *ipcdev, IPC_TYPE type, u32 cmd)
+अणु
+	ग_लिखोl(cmd, ipcdev->base[type][BASE_IFACE]);
+पूर्ण
 
-static inline u32 ipc_read_data_low(IPC_DEV *ipcdev, IPC_TYPE type)
-{
-	return readl(ipcdev->base[type][BASE_DATA] + OFFSET_DATA_LOW);
-}
+अटल अंतरभूत u32 ipc_पढ़ो_data_low(IPC_DEV *ipcdev, IPC_TYPE type)
+अणु
+	वापस पढ़ोl(ipcdev->base[type][BASE_DATA] + OFFSET_DATA_LOW);
+पूर्ण
 
-static inline u32 ipc_read_data_high(IPC_DEV *ipcdev, IPC_TYPE type)
-{
-	return readl(ipcdev->base[type][BASE_DATA] + OFFSET_DATA_HIGH);
-}
+अटल अंतरभूत u32 ipc_पढ़ो_data_high(IPC_DEV *ipcdev, IPC_TYPE type)
+अणु
+	वापस पढ़ोl(ipcdev->base[type][BASE_DATA] + OFFSET_DATA_HIGH);
+पूर्ण
 
-static inline void ipc_write_data_low(IPC_DEV *ipcdev, IPC_TYPE type, u32 data)
-{
-	writel(data, ipcdev->base[type][BASE_DATA] + OFFSET_DATA_LOW);
-}
+अटल अंतरभूत व्योम ipc_ग_लिखो_data_low(IPC_DEV *ipcdev, IPC_TYPE type, u32 data)
+अणु
+	ग_लिखोl(data, ipcdev->base[type][BASE_DATA] + OFFSET_DATA_LOW);
+पूर्ण
 
-static inline void ipc_write_data_high(IPC_DEV *ipcdev, IPC_TYPE type, u32 data)
-{
-	writel(data, ipcdev->base[type][BASE_DATA] + OFFSET_DATA_HIGH);
-}
+अटल अंतरभूत व्योम ipc_ग_लिखो_data_high(IPC_DEV *ipcdev, IPC_TYPE type, u32 data)
+अणु
+	ग_लिखोl(data, ipcdev->base[type][BASE_DATA] + OFFSET_DATA_HIGH);
+पूर्ण
 
-static const char *ipc_err_string(int error)
-{
-	if (error == IPC_PUNIT_ERR_SUCCESS)
-		return "no error";
-	else if (error == IPC_PUNIT_ERR_INVALID_CMD)
-		return "invalid command";
-	else if (error == IPC_PUNIT_ERR_INVALID_PARAMETER)
-		return "invalid parameter";
-	else if (error == IPC_PUNIT_ERR_CMD_TIMEOUT)
-		return "command timeout";
-	else if (error == IPC_PUNIT_ERR_CMD_LOCKED)
-		return "command locked";
-	else if (error == IPC_PUNIT_ERR_INVALID_VR_ID)
-		return "invalid vr id";
-	else if (error == IPC_PUNIT_ERR_VR_ERR)
-		return "vr error";
-	else
-		return "unknown error";
-}
+अटल स्थिर अक्षर *ipc_err_string(पूर्णांक error)
+अणु
+	अगर (error == IPC_PUNIT_ERR_SUCCESS)
+		वापस "no error";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_INVALID_CMD)
+		वापस "invalid command";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_INVALID_PARAMETER)
+		वापस "invalid parameter";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_CMD_TIMEOUT)
+		वापस "command timeout";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_CMD_LOCKED)
+		वापस "command locked";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_INVALID_VR_ID)
+		वापस "invalid vr id";
+	अन्यथा अगर (error == IPC_PUNIT_ERR_VR_ERR)
+		वापस "vr error";
+	अन्यथा
+		वापस "unknown error";
+पूर्ण
 
-static int intel_punit_ipc_check_status(IPC_DEV *ipcdev, IPC_TYPE type)
-{
-	int loops = CMD_TIMEOUT_SECONDS * USEC_PER_SEC;
-	int errcode;
-	int status;
+अटल पूर्णांक पूर्णांकel_punit_ipc_check_status(IPC_DEV *ipcdev, IPC_TYPE type)
+अणु
+	पूर्णांक loops = CMD_TIMEOUT_SECONDS * USEC_PER_SEC;
+	पूर्णांक errcode;
+	पूर्णांक status;
 
-	if (ipcdev->irq) {
-		if (!wait_for_completion_timeout(&ipcdev->cmd_complete,
-						 CMD_TIMEOUT_SECONDS * HZ)) {
+	अगर (ipcdev->irq) अणु
+		अगर (!रुको_क्रम_completion_समयout(&ipcdev->cmd_complete,
+						 CMD_TIMEOUT_SECONDS * HZ)) अणु
 			dev_err(ipcdev->dev, "IPC timed out\n");
-			return -ETIMEDOUT;
-		}
-	} else {
-		while ((ipc_read_status(ipcdev, type) & CMD_RUN) && --loops)
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक ((ipc_पढ़ो_status(ipcdev, type) & CMD_RUN) && --loops)
 			udelay(1);
-		if (!loops) {
+		अगर (!loops) अणु
 			dev_err(ipcdev->dev, "IPC timed out\n");
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	status = ipc_read_status(ipcdev, type);
+	status = ipc_पढ़ो_status(ipcdev, type);
 	errcode = status & CMD_ERRCODE_MASK;
-	if (errcode) {
+	अगर (errcode) अणु
 		dev_err(ipcdev->dev, "IPC failed: %s, IPC_STS=0x%x\n",
 			ipc_err_string(errcode), status);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_punit_ipc_simple_command() - Simple IPC command
+ * पूर्णांकel_punit_ipc_simple_command() - Simple IPC command
  * @cmd:	IPC command code.
- * @para1:	First 8bit parameter, set 0 if not used.
- * @para2:	Second 8bit parameter, set 0 if not used.
+ * @para1:	First 8bit parameter, set 0 अगर not used.
+ * @para2:	Second 8bit parameter, set 0 अगर not used.
  *
  * Send a IPC command to P-Unit when there is no data transaction
  *
  * Return:	IPC error code or 0 on success.
  */
-int intel_punit_ipc_simple_command(int cmd, int para1, int para2)
-{
+पूर्णांक पूर्णांकel_punit_ipc_simple_command(पूर्णांक cmd, पूर्णांक para1, पूर्णांक para2)
+अणु
 	IPC_DEV *ipcdev = punit_ipcdev;
 	IPC_TYPE type;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&ipcdev->lock);
 
@@ -155,90 +156,90 @@ int intel_punit_ipc_simple_command(int cmd, int para1, int para2)
 
 	val = cmd & ~IPC_PUNIT_CMD_TYPE_MASK;
 	val |= CMD_RUN | para2 << CMD_PARA2_SHIFT | para1 << CMD_PARA1_SHIFT;
-	ipc_write_cmd(ipcdev, type, val);
-	ret = intel_punit_ipc_check_status(ipcdev, type);
+	ipc_ग_लिखो_cmd(ipcdev, type, val);
+	ret = पूर्णांकel_punit_ipc_check_status(ipcdev, type);
 
 	mutex_unlock(&ipcdev->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL(intel_punit_ipc_simple_command);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(पूर्णांकel_punit_ipc_simple_command);
 
 /**
- * intel_punit_ipc_command() - IPC command with data and pointers
+ * पूर्णांकel_punit_ipc_command() - IPC command with data and poपूर्णांकers
  * @cmd:	IPC command code.
- * @para1:	First 8bit parameter, set 0 if not used.
- * @para2:	Second 8bit parameter, set 0 if not used.
- * @in:		Input data, 32bit for BIOS cmd, two 32bit for GTD and ISPD.
+ * @para1:	First 8bit parameter, set 0 अगर not used.
+ * @para2:	Second 8bit parameter, set 0 अगर not used.
+ * @in:		Input data, 32bit क्रम BIOS cmd, two 32bit क्रम GTD and ISPD.
  * @out:	Output data.
  *
  * Send a IPC command to P-Unit with data transaction
  *
  * Return:	IPC error code or 0 on success.
  */
-int intel_punit_ipc_command(u32 cmd, u32 para1, u32 para2, u32 *in, u32 *out)
-{
+पूर्णांक पूर्णांकel_punit_ipc_command(u32 cmd, u32 para1, u32 para2, u32 *in, u32 *out)
+अणु
 	IPC_DEV *ipcdev = punit_ipcdev;
 	IPC_TYPE type;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&ipcdev->lock);
 
 	reinit_completion(&ipcdev->cmd_complete);
 	type = (cmd & IPC_PUNIT_CMD_TYPE_MASK) >> IPC_TYPE_OFFSET;
 
-	if (in) {
-		ipc_write_data_low(ipcdev, type, *in);
-		if (type == GTDRIVER_IPC || type == ISPDRIVER_IPC)
-			ipc_write_data_high(ipcdev, type, *++in);
-	}
+	अगर (in) अणु
+		ipc_ग_लिखो_data_low(ipcdev, type, *in);
+		अगर (type == GTDRIVER_IPC || type == ISPDRIVER_IPC)
+			ipc_ग_लिखो_data_high(ipcdev, type, *++in);
+	पूर्ण
 
 	val = cmd & ~IPC_PUNIT_CMD_TYPE_MASK;
 	val |= CMD_RUN | para2 << CMD_PARA2_SHIFT | para1 << CMD_PARA1_SHIFT;
-	ipc_write_cmd(ipcdev, type, val);
+	ipc_ग_लिखो_cmd(ipcdev, type, val);
 
-	ret = intel_punit_ipc_check_status(ipcdev, type);
-	if (ret)
-		goto out;
+	ret = पूर्णांकel_punit_ipc_check_status(ipcdev, type);
+	अगर (ret)
+		जाओ out;
 
-	if (out) {
-		*out = ipc_read_data_low(ipcdev, type);
-		if (type == GTDRIVER_IPC || type == ISPDRIVER_IPC)
-			*++out = ipc_read_data_high(ipcdev, type);
-	}
+	अगर (out) अणु
+		*out = ipc_पढ़ो_data_low(ipcdev, type);
+		अगर (type == GTDRIVER_IPC || type == ISPDRIVER_IPC)
+			*++out = ipc_पढ़ो_data_high(ipcdev, type);
+	पूर्ण
 
 out:
 	mutex_unlock(&ipcdev->lock);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(intel_punit_ipc_command);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_punit_ipc_command);
 
-static irqreturn_t intel_punit_ioc(int irq, void *dev_id)
-{
+अटल irqवापस_t पूर्णांकel_punit_ioc(पूर्णांक irq, व्योम *dev_id)
+अणु
 	IPC_DEV *ipcdev = dev_id;
 
 	complete(&ipcdev->cmd_complete);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int intel_punit_get_bars(struct platform_device *pdev)
-{
-	void __iomem *addr;
+अटल पूर्णांक पूर्णांकel_punit_get_bars(काष्ठा platक्रमm_device *pdev)
+अणु
+	व्योम __iomem *addr;
 
 	/*
 	 * The following resources are required
 	 * - BIOS_IPC BASE_DATA
 	 * - BIOS_IPC BASE_IFACE
 	 */
-	addr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(addr))
-		return PTR_ERR(addr);
+	addr = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(addr))
+		वापस PTR_ERR(addr);
 	punit_ipcdev->base[BIOS_IPC][BASE_DATA] = addr;
 
-	addr = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(addr))
-		return PTR_ERR(addr);
+	addr = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(addr))
+		वापस PTR_ERR(addr);
 	punit_ipcdev->base[BIOS_IPC][BASE_IFACE] = addr;
 
 	/*
@@ -248,95 +249,95 @@ static int intel_punit_get_bars(struct platform_device *pdev)
 	 * - GTDRIVER_IPC BASE_DATA
 	 * - GTDRIVER_IPC BASE_IFACE
 	 */
-	addr = devm_platform_ioremap_resource(pdev, 2);
-	if (!IS_ERR(addr))
+	addr = devm_platक्रमm_ioremap_resource(pdev, 2);
+	अगर (!IS_ERR(addr))
 		punit_ipcdev->base[ISPDRIVER_IPC][BASE_DATA] = addr;
 
-	addr = devm_platform_ioremap_resource(pdev, 3);
-	if (!IS_ERR(addr))
+	addr = devm_platक्रमm_ioremap_resource(pdev, 3);
+	अगर (!IS_ERR(addr))
 		punit_ipcdev->base[ISPDRIVER_IPC][BASE_IFACE] = addr;
 
-	addr = devm_platform_ioremap_resource(pdev, 4);
-	if (!IS_ERR(addr))
+	addr = devm_platक्रमm_ioremap_resource(pdev, 4);
+	अगर (!IS_ERR(addr))
 		punit_ipcdev->base[GTDRIVER_IPC][BASE_DATA] = addr;
 
-	addr = devm_platform_ioremap_resource(pdev, 5);
-	if (!IS_ERR(addr))
+	addr = devm_platक्रमm_ioremap_resource(pdev, 5);
+	अगर (!IS_ERR(addr))
 		punit_ipcdev->base[GTDRIVER_IPC][BASE_IFACE] = addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_punit_ipc_probe(struct platform_device *pdev)
-{
-	int irq, ret;
+अटल पूर्णांक पूर्णांकel_punit_ipc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक irq, ret;
 
 	punit_ipcdev = devm_kzalloc(&pdev->dev,
-				    sizeof(*punit_ipcdev), GFP_KERNEL);
-	if (!punit_ipcdev)
-		return -ENOMEM;
+				    माप(*punit_ipcdev), GFP_KERNEL);
+	अगर (!punit_ipcdev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, punit_ipcdev);
+	platक्रमm_set_drvdata(pdev, punit_ipcdev);
 
-	irq = platform_get_irq_optional(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	अगर (irq < 0) अणु
 		dev_warn(&pdev->dev, "Invalid IRQ, using polling mode\n");
-	} else {
-		ret = devm_request_irq(&pdev->dev, irq, intel_punit_ioc,
+	पूर्ण अन्यथा अणु
+		ret = devm_request_irq(&pdev->dev, irq, पूर्णांकel_punit_ioc,
 				       IRQF_NO_SUSPEND, "intel_punit_ipc",
 				       &punit_ipcdev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Failed to request irq: %d\n", irq);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		punit_ipcdev->irq = irq;
-	}
+	पूर्ण
 
-	ret = intel_punit_get_bars(pdev);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_punit_get_bars(pdev);
+	अगर (ret)
+		वापस ret;
 
 	punit_ipcdev->dev = &pdev->dev;
 	mutex_init(&punit_ipcdev->lock);
 	init_completion(&punit_ipcdev->cmd_complete);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_punit_ipc_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक पूर्णांकel_punit_ipc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id punit_ipc_acpi_ids[] = {
-	{ "INT34D4", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id punit_ipc_acpi_ids[] = अणु
+	अणु "INT34D4", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, punit_ipc_acpi_ids);
 
-static struct platform_driver intel_punit_ipc_driver = {
-	.probe = intel_punit_ipc_probe,
-	.remove = intel_punit_ipc_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पूर्णांकel_punit_ipc_driver = अणु
+	.probe = पूर्णांकel_punit_ipc_probe,
+	.हटाओ = पूर्णांकel_punit_ipc_हटाओ,
+	.driver = अणु
 		.name = "intel_punit_ipc",
 		.acpi_match_table = ACPI_PTR(punit_ipc_acpi_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init intel_punit_ipc_init(void)
-{
-	return platform_driver_register(&intel_punit_ipc_driver);
-}
+अटल पूर्णांक __init पूर्णांकel_punit_ipc_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&पूर्णांकel_punit_ipc_driver);
+पूर्ण
 
-static void __exit intel_punit_ipc_exit(void)
-{
-	platform_driver_unregister(&intel_punit_ipc_driver);
-}
+अटल व्योम __निकास पूर्णांकel_punit_ipc_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&पूर्णांकel_punit_ipc_driver);
+पूर्ण
 
 MODULE_AUTHOR("Zha Qipeng <qipeng.zha@intel.com>");
 MODULE_DESCRIPTION("Intel P-Unit IPC driver");
 MODULE_LICENSE("GPL v2");
 
 /* Some modules are dependent on this, so init earlier */
-fs_initcall(intel_punit_ipc_init);
-module_exit(intel_punit_ipc_exit);
+fs_initcall(पूर्णांकel_punit_ipc_init);
+module_निकास(पूर्णांकel_punit_ipc_निकास);

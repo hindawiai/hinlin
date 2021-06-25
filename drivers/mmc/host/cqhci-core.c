@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include <linux/highmem.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
-#include <linux/scatterlist.h>
-#include <linux/platform_device.h>
-#include <linux/ktime.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/kसमय.स>
 
-#include <linux/mmc/mmc.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/card.h>
+#समावेश <linux/mmc/mmc.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/card.h>
 
-#include "cqhci.h"
-#include "cqhci-crypto.h"
+#समावेश "cqhci.h"
+#समावेश "cqhci-crypto.h"
 
-#define DCMD_SLOT 31
-#define NUM_SLOTS 32
+#घोषणा DCMD_SLOT 31
+#घोषणा NUM_SLOTS 32
 
-struct cqhci_slot {
-	struct mmc_request *mrq;
-	unsigned int flags;
-#define CQHCI_EXTERNAL_TIMEOUT	BIT(0)
-#define CQHCI_COMPLETED		BIT(1)
-#define CQHCI_HOST_CRC		BIT(2)
-#define CQHCI_HOST_TIMEOUT	BIT(3)
-#define CQHCI_HOST_OTHER	BIT(4)
-};
+काष्ठा cqhci_slot अणु
+	काष्ठा mmc_request *mrq;
+	अचिन्हित पूर्णांक flags;
+#घोषणा CQHCI_EXTERNAL_TIMEOUT	BIT(0)
+#घोषणा CQHCI_COMPLETED		BIT(1)
+#घोषणा CQHCI_HOST_CRC		BIT(2)
+#घोषणा CQHCI_HOST_TIMEOUT	BIT(3)
+#घोषणा CQHCI_HOST_OTHER	BIT(4)
+पूर्ण;
 
-static inline u8 *get_desc(struct cqhci_host *cq_host, u8 tag)
-{
-	return cq_host->desc_base + (tag * cq_host->slot_sz);
-}
+अटल अंतरभूत u8 *get_desc(काष्ठा cqhci_host *cq_host, u8 tag)
+अणु
+	वापस cq_host->desc_base + (tag * cq_host->slot_sz);
+पूर्ण
 
-static inline u8 *get_link_desc(struct cqhci_host *cq_host, u8 tag)
-{
+अटल अंतरभूत u8 *get_link_desc(काष्ठा cqhci_host *cq_host, u8 tag)
+अणु
 	u8 *desc = get_desc(cq_host, tag);
 
-	return desc + cq_host->task_desc_len;
-}
+	वापस desc + cq_host->task_desc_len;
+पूर्ण
 
-static inline dma_addr_t get_trans_desc_dma(struct cqhci_host *cq_host, u8 tag)
-{
-	return cq_host->trans_desc_dma_base +
+अटल अंतरभूत dma_addr_t get_trans_desc_dma(काष्ठा cqhci_host *cq_host, u8 tag)
+अणु
+	वापस cq_host->trans_desc_dma_base +
 		(cq_host->mmc->max_segs * tag *
 		 cq_host->trans_desc_len);
-}
+पूर्ण
 
-static inline u8 *get_trans_desc(struct cqhci_host *cq_host, u8 tag)
-{
-	return cq_host->trans_desc_base +
+अटल अंतरभूत u8 *get_trans_desc(काष्ठा cqhci_host *cq_host, u8 tag)
+अणु
+	वापस cq_host->trans_desc_base +
 		(cq_host->trans_desc_len * cq_host->mmc->max_segs * tag);
-}
+पूर्ण
 
-static void setup_trans_desc(struct cqhci_host *cq_host, u8 tag)
-{
+अटल व्योम setup_trans_desc(काष्ठा cqhci_host *cq_host, u8 tag)
+अणु
 	u8 *link_temp;
 	dma_addr_t trans_temp;
 
 	link_temp = get_link_desc(cq_host, tag);
 	trans_temp = get_trans_desc_dma(cq_host, tag);
 
-	memset(link_temp, 0, cq_host->link_desc_len);
-	if (cq_host->link_desc_len > 8)
+	स_रखो(link_temp, 0, cq_host->link_desc_len);
+	अगर (cq_host->link_desc_len > 8)
 		*(link_temp + 8) = 0;
 
-	if (tag == DCMD_SLOT && (cq_host->mmc->caps2 & MMC_CAP2_CQE_DCMD)) {
+	अगर (tag == DCMD_SLOT && (cq_host->mmc->caps2 & MMC_CAP2_CQE_DCMD)) अणु
 		*link_temp = CQHCI_VALID(0) | CQHCI_ACT(0) | CQHCI_END(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	*link_temp = CQHCI_VALID(1) | CQHCI_ACT(0x6) | CQHCI_END(0);
 
-	if (cq_host->dma64) {
-		__le64 *data_addr = (__le64 __force *)(link_temp + 4);
+	अगर (cq_host->dma64) अणु
+		__le64 *data_addr = (__le64 __क्रमce *)(link_temp + 4);
 
 		data_addr[0] = cpu_to_le64(trans_temp);
-	} else {
-		__le32 *data_addr = (__le32 __force *)(link_temp + 4);
+	पूर्ण अन्यथा अणु
+		__le32 *data_addr = (__le32 __क्रमce *)(link_temp + 4);
 
 		data_addr[0] = cpu_to_le32(trans_temp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cqhci_set_irqs(struct cqhci_host *cq_host, u32 set)
-{
-	cqhci_writel(cq_host, set, CQHCI_ISTE);
-	cqhci_writel(cq_host, set, CQHCI_ISGE);
-}
+अटल व्योम cqhci_set_irqs(काष्ठा cqhci_host *cq_host, u32 set)
+अणु
+	cqhci_ग_लिखोl(cq_host, set, CQHCI_ISTE);
+	cqhci_ग_लिखोl(cq_host, set, CQHCI_ISGE);
+पूर्ण
 
-#define DRV_NAME "cqhci"
+#घोषणा DRV_NAME "cqhci"
 
-#define CQHCI_DUMP(f, x...) \
+#घोषणा CQHCI_DUMP(f, x...) \
 	pr_err("%s: " DRV_NAME ": " f, mmc_hostname(mmc), ## x)
 
-static void cqhci_dumpregs(struct cqhci_host *cq_host)
-{
-	struct mmc_host *mmc = cq_host->mmc;
+अटल व्योम cqhci_dumpregs(काष्ठा cqhci_host *cq_host)
+अणु
+	काष्ठा mmc_host *mmc = cq_host->mmc;
 
 	CQHCI_DUMP("============ CQHCI REGISTER DUMP ===========\n");
 
 	CQHCI_DUMP("Caps:      0x%08x | Version:  0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_CAP),
-		   cqhci_readl(cq_host, CQHCI_VER));
+		   cqhci_पढ़ोl(cq_host, CQHCI_CAP),
+		   cqhci_पढ़ोl(cq_host, CQHCI_VER));
 	CQHCI_DUMP("Config:    0x%08x | Control:  0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_CFG),
-		   cqhci_readl(cq_host, CQHCI_CTL));
+		   cqhci_पढ़ोl(cq_host, CQHCI_CFG),
+		   cqhci_पढ़ोl(cq_host, CQHCI_CTL));
 	CQHCI_DUMP("Int stat:  0x%08x | Int enab: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_IS),
-		   cqhci_readl(cq_host, CQHCI_ISTE));
+		   cqhci_पढ़ोl(cq_host, CQHCI_IS),
+		   cqhci_पढ़ोl(cq_host, CQHCI_ISTE));
 	CQHCI_DUMP("Int sig:   0x%08x | Int Coal: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_ISGE),
-		   cqhci_readl(cq_host, CQHCI_IC));
+		   cqhci_पढ़ोl(cq_host, CQHCI_ISGE),
+		   cqhci_पढ़ोl(cq_host, CQHCI_IC));
 	CQHCI_DUMP("TDL base:  0x%08x | TDL up32: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_TDLBA),
-		   cqhci_readl(cq_host, CQHCI_TDLBAU));
+		   cqhci_पढ़ोl(cq_host, CQHCI_TDLBA),
+		   cqhci_पढ़ोl(cq_host, CQHCI_TDLBAU));
 	CQHCI_DUMP("Doorbell:  0x%08x | TCN:      0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_TDBR),
-		   cqhci_readl(cq_host, CQHCI_TCN));
+		   cqhci_पढ़ोl(cq_host, CQHCI_TDBR),
+		   cqhci_पढ़ोl(cq_host, CQHCI_TCN));
 	CQHCI_DUMP("Dev queue: 0x%08x | Dev Pend: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_DQS),
-		   cqhci_readl(cq_host, CQHCI_DPT));
+		   cqhci_पढ़ोl(cq_host, CQHCI_DQS),
+		   cqhci_पढ़ोl(cq_host, CQHCI_DPT));
 	CQHCI_DUMP("Task clr:  0x%08x | SSC1:     0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_TCLR),
-		   cqhci_readl(cq_host, CQHCI_SSC1));
+		   cqhci_पढ़ोl(cq_host, CQHCI_TCLR),
+		   cqhci_पढ़ोl(cq_host, CQHCI_SSC1));
 	CQHCI_DUMP("SSC2:      0x%08x | DCMD rsp: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_SSC2),
-		   cqhci_readl(cq_host, CQHCI_CRDCT));
+		   cqhci_पढ़ोl(cq_host, CQHCI_SSC2),
+		   cqhci_पढ़ोl(cq_host, CQHCI_CRDCT));
 	CQHCI_DUMP("RED mask:  0x%08x | TERRI:    0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_RMEM),
-		   cqhci_readl(cq_host, CQHCI_TERRI));
+		   cqhci_पढ़ोl(cq_host, CQHCI_RMEM),
+		   cqhci_पढ़ोl(cq_host, CQHCI_TERRI));
 	CQHCI_DUMP("Resp idx:  0x%08x | Resp arg: 0x%08x\n",
-		   cqhci_readl(cq_host, CQHCI_CRI),
-		   cqhci_readl(cq_host, CQHCI_CRA));
+		   cqhci_पढ़ोl(cq_host, CQHCI_CRI),
+		   cqhci_पढ़ोl(cq_host, CQHCI_CRA));
 
-	if (cq_host->ops->dumpregs)
+	अगर (cq_host->ops->dumpregs)
 		cq_host->ops->dumpregs(mmc);
-	else
+	अन्यथा
 		CQHCI_DUMP(": ===========================================\n");
-}
+पूर्ण
 
 /*
- * The allocated descriptor table for task, link & transfer descritors
+ * The allocated descriptor table क्रम task, link & transfer descritors
  * looks like:
  * |----------|
  * |task desc |  |->|----------|
@@ -157,37 +158,37 @@ static void cqhci_dumpregs(struct cqhci_host *cq_host)
  *  no. of slots      max-segs
  *      .           |----------|
  * |----------|
- * The idea here is to create the [task+trans] table and mark & point the
+ * The idea here is to create the [task+trans] table and mark & poपूर्णांक the
  * link desc to the transfer desc table on a per slot basis.
  */
-static int cqhci_host_alloc_tdl(struct cqhci_host *cq_host)
-{
-	int i = 0;
+अटल पूर्णांक cqhci_host_alloc_tdl(काष्ठा cqhci_host *cq_host)
+अणु
+	पूर्णांक i = 0;
 
 	/* task descriptor can be 64/128 bit irrespective of arch */
-	if (cq_host->caps & CQHCI_TASK_DESC_SZ_128) {
-		cqhci_writel(cq_host, cqhci_readl(cq_host, CQHCI_CFG) |
+	अगर (cq_host->caps & CQHCI_TASK_DESC_SZ_128) अणु
+		cqhci_ग_लिखोl(cq_host, cqhci_पढ़ोl(cq_host, CQHCI_CFG) |
 			       CQHCI_TASK_DESC_SZ, CQHCI_CFG);
 		cq_host->task_desc_len = 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		cq_host->task_desc_len = 8;
-	}
+	पूर्ण
 
 	/*
 	 * 96 bits length of transfer desc instead of 128 bits which means
 	 * ADMA would expect next valid descriptor at the 96th bit
 	 * or 128th bit
 	 */
-	if (cq_host->dma64) {
-		if (cq_host->quirks & CQHCI_QUIRK_SHORT_TXFR_DESC_SZ)
+	अगर (cq_host->dma64) अणु
+		अगर (cq_host->quirks & CQHCI_QUIRK_SHORT_TXFR_DESC_SZ)
 			cq_host->trans_desc_len = 12;
-		else
+		अन्यथा
 			cq_host->trans_desc_len = 16;
 		cq_host->link_desc_len = 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		cq_host->trans_desc_len = 8;
 		cq_host->link_desc_len = 8;
-	}
+	पूर्ण
 
 	/* total size of a slot: 1 task & 1 transfer (link) */
 	cq_host->slot_sz = cq_host->task_desc_len + cq_host->link_desc_len;
@@ -202,8 +203,8 @@ static int cqhci_host_alloc_tdl(struct cqhci_host *cq_host)
 		 cq_host->slot_sz);
 
 	/*
-	 * allocate a dma-mapped chunk of memory for the descriptors
-	 * allocate a dma-mapped chunk of memory for link descriptors
+	 * allocate a dma-mapped chunk of memory क्रम the descriptors
+	 * allocate a dma-mapped chunk of memory क्रम link descriptors
 	 * setup each link-desc memory offset per slot-number to
 	 * the descriptor table.
 	 */
@@ -211,210 +212,210 @@ static int cqhci_host_alloc_tdl(struct cqhci_host *cq_host)
 						 cq_host->desc_size,
 						 &cq_host->desc_dma_base,
 						 GFP_KERNEL);
-	if (!cq_host->desc_base)
-		return -ENOMEM;
+	अगर (!cq_host->desc_base)
+		वापस -ENOMEM;
 
 	cq_host->trans_desc_base = dmam_alloc_coherent(mmc_dev(cq_host->mmc),
 					      cq_host->data_size,
 					      &cq_host->trans_desc_dma_base,
 					      GFP_KERNEL);
-	if (!cq_host->trans_desc_base) {
-		dmam_free_coherent(mmc_dev(cq_host->mmc), cq_host->desc_size,
+	अगर (!cq_host->trans_desc_base) अणु
+		dmam_मुक्त_coherent(mmc_dev(cq_host->mmc), cq_host->desc_size,
 				   cq_host->desc_base,
 				   cq_host->desc_dma_base);
-		cq_host->desc_base = NULL;
+		cq_host->desc_base = शून्य;
 		cq_host->desc_dma_base = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pr_debug("%s: cqhci: desc-base: 0x%p trans-base: 0x%p\n desc_dma 0x%llx trans_dma: 0x%llx\n",
 		 mmc_hostname(cq_host->mmc), cq_host->desc_base, cq_host->trans_desc_base,
-		(unsigned long long)cq_host->desc_dma_base,
-		(unsigned long long)cq_host->trans_desc_dma_base);
+		(अचिन्हित दीर्घ दीर्घ)cq_host->desc_dma_base,
+		(अचिन्हित दीर्घ दीर्घ)cq_host->trans_desc_dma_base);
 
-	for (; i < (cq_host->num_slots); i++)
+	क्रम (; i < (cq_host->num_slots); i++)
 		setup_trans_desc(cq_host, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __cqhci_enable(struct cqhci_host *cq_host)
-{
-	struct mmc_host *mmc = cq_host->mmc;
+अटल व्योम __cqhci_enable(काष्ठा cqhci_host *cq_host)
+अणु
+	काष्ठा mmc_host *mmc = cq_host->mmc;
 	u32 cqcfg;
 
-	cqcfg = cqhci_readl(cq_host, CQHCI_CFG);
+	cqcfg = cqhci_पढ़ोl(cq_host, CQHCI_CFG);
 
-	/* Configuration must not be changed while enabled */
-	if (cqcfg & CQHCI_ENABLE) {
+	/* Configuration must not be changed जबतक enabled */
+	अगर (cqcfg & CQHCI_ENABLE) अणु
 		cqcfg &= ~CQHCI_ENABLE;
-		cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
-	}
+		cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
+	पूर्ण
 
 	cqcfg &= ~(CQHCI_DCMD | CQHCI_TASK_DESC_SZ);
 
-	if (mmc->caps2 & MMC_CAP2_CQE_DCMD)
+	अगर (mmc->caps2 & MMC_CAP2_CQE_DCMD)
 		cqcfg |= CQHCI_DCMD;
 
-	if (cq_host->caps & CQHCI_TASK_DESC_SZ_128)
+	अगर (cq_host->caps & CQHCI_TASK_DESC_SZ_128)
 		cqcfg |= CQHCI_TASK_DESC_SZ;
 
-	if (mmc->caps2 & MMC_CAP2_CRYPTO)
+	अगर (mmc->caps2 & MMC_CAP2_CRYPTO)
 		cqcfg |= CQHCI_CRYPTO_GENERAL_ENABLE;
 
-	cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+	cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
 
-	cqhci_writel(cq_host, lower_32_bits(cq_host->desc_dma_base),
+	cqhci_ग_लिखोl(cq_host, lower_32_bits(cq_host->desc_dma_base),
 		     CQHCI_TDLBA);
-	cqhci_writel(cq_host, upper_32_bits(cq_host->desc_dma_base),
+	cqhci_ग_लिखोl(cq_host, upper_32_bits(cq_host->desc_dma_base),
 		     CQHCI_TDLBAU);
 
-	cqhci_writel(cq_host, cq_host->rca, CQHCI_SSC2);
+	cqhci_ग_लिखोl(cq_host, cq_host->rca, CQHCI_SSC2);
 
 	cqhci_set_irqs(cq_host, 0);
 
 	cqcfg |= CQHCI_ENABLE;
 
-	cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+	cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
 
 	mmc->cqe_on = true;
 
-	if (cq_host->ops->enable)
+	अगर (cq_host->ops->enable)
 		cq_host->ops->enable(mmc);
 
-	/* Ensure all writes are done before interrupts are enabled */
+	/* Ensure all ग_लिखोs are करोne beक्रमe पूर्णांकerrupts are enabled */
 	wmb();
 
 	cqhci_set_irqs(cq_host, CQHCI_IS_MASK);
 
 	cq_host->activated = true;
-}
+पूर्ण
 
-static void __cqhci_disable(struct cqhci_host *cq_host)
-{
+अटल व्योम __cqhci_disable(काष्ठा cqhci_host *cq_host)
+अणु
 	u32 cqcfg;
 
-	cqcfg = cqhci_readl(cq_host, CQHCI_CFG);
+	cqcfg = cqhci_पढ़ोl(cq_host, CQHCI_CFG);
 	cqcfg &= ~CQHCI_ENABLE;
-	cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+	cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
 
 	cq_host->mmc->cqe_on = false;
 
 	cq_host->activated = false;
-}
+पूर्ण
 
-int cqhci_deactivate(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+पूर्णांक cqhci_deactivate(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 
-	if (cq_host->enabled && cq_host->activated)
+	अगर (cq_host->enabled && cq_host->activated)
 		__cqhci_disable(cq_host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cqhci_deactivate);
 
-int cqhci_resume(struct mmc_host *mmc)
-{
-	/* Re-enable is done upon first request */
-	return 0;
-}
+पूर्णांक cqhci_resume(काष्ठा mmc_host *mmc)
+अणु
+	/* Re-enable is करोne upon first request */
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cqhci_resume);
 
-static int cqhci_enable(struct mmc_host *mmc, struct mmc_card *card)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	int err;
+अटल पूर्णांक cqhci_enable(काष्ठा mmc_host *mmc, काष्ठा mmc_card *card)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	पूर्णांक err;
 
-	if (!card->ext_csd.cmdq_en)
-		return -EINVAL;
+	अगर (!card->ext_csd.cmdq_en)
+		वापस -EINVAL;
 
-	if (cq_host->enabled)
-		return 0;
+	अगर (cq_host->enabled)
+		वापस 0;
 
 	cq_host->rca = card->rca;
 
 	err = cqhci_host_alloc_tdl(cq_host);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Failed to enable CQE, error %d\n",
 		       mmc_hostname(mmc), err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	__cqhci_enable(cq_host);
 
 	cq_host->enabled = true;
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	cqhci_dumpregs(cq_host);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-/* CQHCI is idle and should halt immediately, so set a small timeout */
-#define CQHCI_OFF_TIMEOUT 100
+/* CQHCI is idle and should halt immediately, so set a small समयout */
+#घोषणा CQHCI_OFF_TIMEOUT 100
 
-static u32 cqhci_read_ctl(struct cqhci_host *cq_host)
-{
-	return cqhci_readl(cq_host, CQHCI_CTL);
-}
+अटल u32 cqhci_पढ़ो_ctl(काष्ठा cqhci_host *cq_host)
+अणु
+	वापस cqhci_पढ़ोl(cq_host, CQHCI_CTL);
+पूर्ण
 
-static void cqhci_off(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम cqhci_off(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	u32 reg;
-	int err;
+	पूर्णांक err;
 
-	if (!cq_host->enabled || !mmc->cqe_on || cq_host->recovery_halt)
-		return;
+	अगर (!cq_host->enabled || !mmc->cqe_on || cq_host->recovery_halt)
+		वापस;
 
-	if (cq_host->ops->disable)
+	अगर (cq_host->ops->disable)
 		cq_host->ops->disable(mmc, false);
 
-	cqhci_writel(cq_host, CQHCI_HALT, CQHCI_CTL);
+	cqhci_ग_लिखोl(cq_host, CQHCI_HALT, CQHCI_CTL);
 
-	err = readx_poll_timeout(cqhci_read_ctl, cq_host, reg,
+	err = पढ़ोx_poll_समयout(cqhci_पढ़ो_ctl, cq_host, reg,
 				 reg & CQHCI_HALT, 0, CQHCI_OFF_TIMEOUT);
-	if (err < 0)
+	अगर (err < 0)
 		pr_err("%s: cqhci: CQE stuck on\n", mmc_hostname(mmc));
-	else
+	अन्यथा
 		pr_debug("%s: cqhci: CQE off\n", mmc_hostname(mmc));
 
-	if (cq_host->ops->post_disable)
+	अगर (cq_host->ops->post_disable)
 		cq_host->ops->post_disable(mmc);
 
 	mmc->cqe_on = false;
-}
+पूर्ण
 
-static void cqhci_disable(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम cqhci_disable(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 
-	if (!cq_host->enabled)
-		return;
+	अगर (!cq_host->enabled)
+		वापस;
 
 	cqhci_off(mmc);
 
 	__cqhci_disable(cq_host);
 
-	dmam_free_coherent(mmc_dev(mmc), cq_host->data_size,
+	dmam_मुक्त_coherent(mmc_dev(mmc), cq_host->data_size,
 			   cq_host->trans_desc_base,
 			   cq_host->trans_desc_dma_base);
 
-	dmam_free_coherent(mmc_dev(mmc), cq_host->desc_size,
+	dmam_मुक्त_coherent(mmc_dev(mmc), cq_host->desc_size,
 			   cq_host->desc_base,
 			   cq_host->desc_dma_base);
 
-	cq_host->trans_desc_base = NULL;
-	cq_host->desc_base = NULL;
+	cq_host->trans_desc_base = शून्य;
+	cq_host->desc_base = शून्य;
 
 	cq_host->enabled = false;
-}
+पूर्ण
 
-static void cqhci_prep_task_desc(struct mmc_request *mrq,
-				 struct cqhci_host *cq_host, int tag)
-{
-	__le64 *task_desc = (__le64 __force *)get_desc(cq_host, tag);
+अटल व्योम cqhci_prep_task_desc(काष्ठा mmc_request *mrq,
+				 काष्ठा cqhci_host *cq_host, पूर्णांक tag)
+अणु
+	__le64 *task_desc = (__le64 __क्रमce *)get_desc(cq_host, tag);
 	u32 req_flags = mrq->data->flags;
 	u64 desc0;
 
@@ -424,7 +425,7 @@ static void cqhci_prep_task_desc(struct mmc_request *mrq,
 		CQHCI_ACT(0x5) |
 		CQHCI_FORCED_PROG(!!(req_flags & MMC_DATA_FORCED_PRG)) |
 		CQHCI_DATA_TAG(!!(req_flags & MMC_DATA_DAT_TAG)) |
-		CQHCI_DATA_DIR(!!(req_flags & MMC_DATA_READ)) |
+		CQHCI_DATA_सूची(!!(req_flags & MMC_DATA_READ)) |
 		CQHCI_PRIORITY(!!(req_flags & MMC_DATA_PRIO)) |
 		CQHCI_QBAR(!!(req_flags & MMC_DATA_QBR)) |
 		CQHCI_REL_WRITE(!!(req_flags & MMC_DATA_REL_WR)) |
@@ -433,43 +434,43 @@ static void cqhci_prep_task_desc(struct mmc_request *mrq,
 
 	task_desc[0] = cpu_to_le64(desc0);
 
-	if (cq_host->caps & CQHCI_TASK_DESC_SZ_128) {
+	अगर (cq_host->caps & CQHCI_TASK_DESC_SZ_128) अणु
 		u64 desc1 = cqhci_crypto_prep_task_desc(mrq);
 
 		task_desc[1] = cpu_to_le64(desc1);
 
 		pr_debug("%s: cqhci: tag %d task descriptor 0x%016llx%016llx\n",
 			 mmc_hostname(mrq->host), mrq->tag, desc1, desc0);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("%s: cqhci: tag %d task descriptor 0x%016llx\n",
 			 mmc_hostname(mrq->host), mrq->tag, desc0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cqhci_dma_map(struct mmc_host *host, struct mmc_request *mrq)
-{
-	int sg_count;
-	struct mmc_data *data = mrq->data;
+अटल पूर्णांक cqhci_dma_map(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक sg_count;
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	sg_count = dma_map_sg(mmc_dev(host), data->sg,
 			      data->sg_len,
 			      (data->flags & MMC_DATA_WRITE) ?
 			      DMA_TO_DEVICE : DMA_FROM_DEVICE);
-	if (!sg_count) {
+	अगर (!sg_count) अणु
 		pr_err("%s: sg-len: %d\n", __func__, data->sg_len);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return sg_count;
-}
+	वापस sg_count;
+पूर्ण
 
-static void cqhci_set_tran_desc(u8 *desc, dma_addr_t addr, int len, bool end,
+अटल व्योम cqhci_set_tran_desc(u8 *desc, dma_addr_t addr, पूर्णांक len, bool end,
 				bool dma64)
-{
-	__le32 *attr = (__le32 __force *)desc;
+अणु
+	__le32 *attr = (__le32 __क्रमce *)desc;
 
 	*attr = (CQHCI_VALID(1) |
 		 CQHCI_END(end ? 1 : 0) |
@@ -477,76 +478,76 @@ static void cqhci_set_tran_desc(u8 *desc, dma_addr_t addr, int len, bool end,
 		 CQHCI_ACT(0x4) |
 		 CQHCI_DAT_LENGTH(len));
 
-	if (dma64) {
-		__le64 *dataddr = (__le64 __force *)(desc + 4);
+	अगर (dma64) अणु
+		__le64 *dataddr = (__le64 __क्रमce *)(desc + 4);
 
 		dataddr[0] = cpu_to_le64(addr);
-	} else {
-		__le32 *dataddr = (__le32 __force *)(desc + 4);
+	पूर्ण अन्यथा अणु
+		__le32 *dataddr = (__le32 __क्रमce *)(desc + 4);
 
 		dataddr[0] = cpu_to_le32(addr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cqhci_prep_tran_desc(struct mmc_request *mrq,
-			       struct cqhci_host *cq_host, int tag)
-{
-	struct mmc_data *data = mrq->data;
-	int i, sg_count, len;
+अटल पूर्णांक cqhci_prep_tran_desc(काष्ठा mmc_request *mrq,
+			       काष्ठा cqhci_host *cq_host, पूर्णांक tag)
+अणु
+	काष्ठा mmc_data *data = mrq->data;
+	पूर्णांक i, sg_count, len;
 	bool end = false;
 	bool dma64 = cq_host->dma64;
 	dma_addr_t addr;
 	u8 *desc;
-	struct scatterlist *sg;
+	काष्ठा scatterlist *sg;
 
 	sg_count = cqhci_dma_map(mrq->host, mrq);
-	if (sg_count < 0) {
+	अगर (sg_count < 0) अणु
 		pr_err("%s: %s: unable to map sg lists, %d\n",
 				mmc_hostname(mrq->host), __func__, sg_count);
-		return sg_count;
-	}
+		वापस sg_count;
+	पूर्ण
 
 	desc = get_trans_desc(cq_host, tag);
 
-	for_each_sg(data->sg, sg, sg_count, i) {
+	क्रम_each_sg(data->sg, sg, sg_count, i) अणु
 		addr = sg_dma_address(sg);
 		len = sg_dma_len(sg);
 
-		if ((i+1) == sg_count)
+		अगर ((i+1) == sg_count)
 			end = true;
 		cqhci_set_tran_desc(desc, addr, len, end, dma64);
 		desc += cq_host->trans_desc_len;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cqhci_prep_dcmd_desc(struct mmc_host *mmc,
-				   struct mmc_request *mrq)
-{
-	u64 *task_desc = NULL;
+अटल व्योम cqhci_prep_dcmd_desc(काष्ठा mmc_host *mmc,
+				   काष्ठा mmc_request *mrq)
+अणु
+	u64 *task_desc = शून्य;
 	u64 data = 0;
 	u8 resp_type;
 	u8 *desc;
 	__le64 *dataddr;
-	struct cqhci_host *cq_host = mmc->cqe_private;
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	u8 timing;
 
-	if (!(mrq->cmd->flags & MMC_RSP_PRESENT)) {
+	अगर (!(mrq->cmd->flags & MMC_RSP_PRESENT)) अणु
 		resp_type = 0x0;
 		timing = 0x1;
-	} else {
-		if (mrq->cmd->flags & MMC_RSP_R1B) {
+	पूर्ण अन्यथा अणु
+		अगर (mrq->cmd->flags & MMC_RSP_R1B) अणु
 			resp_type = 0x3;
 			timing = 0x0;
-		} else {
+		पूर्ण अन्यथा अणु
 			resp_type = 0x2;
 			timing = 0x1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	task_desc = (__le64 __force *)get_desc(cq_host, cq_host->dcmd_slot);
-	memset(task_desc, 0, cq_host->task_desc_len);
+	task_desc = (__le64 __क्रमce *)get_desc(cq_host, cq_host->dcmd_slot);
+	स_रखो(task_desc, 0, cq_host->task_desc_len);
 	data |= (CQHCI_VALID(1) |
 		 CQHCI_END(1) |
 		 CQHCI_INT(1) |
@@ -554,429 +555,429 @@ static void cqhci_prep_dcmd_desc(struct mmc_host *mmc,
 		 CQHCI_ACT(0x5) |
 		 CQHCI_CMD_INDEX(mrq->cmd->opcode) |
 		 CQHCI_CMD_TIMING(timing) | CQHCI_RESP_TYPE(resp_type));
-	if (cq_host->ops->update_dcmd_desc)
+	अगर (cq_host->ops->update_dcmd_desc)
 		cq_host->ops->update_dcmd_desc(mmc, mrq, &data);
 	*task_desc |= data;
 	desc = (u8 *)task_desc;
 	pr_debug("%s: cqhci: dcmd: cmd: %d timing: %d resp: %d\n",
 		 mmc_hostname(mmc), mrq->cmd->opcode, timing, resp_type);
-	dataddr = (__le64 __force *)(desc + 4);
+	dataddr = (__le64 __क्रमce *)(desc + 4);
 	dataddr[0] = cpu_to_le64((u64)mrq->cmd->arg);
 
-}
+पूर्ण
 
-static void cqhci_post_req(struct mmc_host *host, struct mmc_request *mrq)
-{
-	struct mmc_data *data = mrq->data;
+अटल व्योम cqhci_post_req(काष्ठा mmc_host *host, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (data) {
+	अगर (data) अणु
 		dma_unmap_sg(mmc_dev(host), data->sg, data->sg_len,
 			     (data->flags & MMC_DATA_READ) ?
 			     DMA_FROM_DEVICE : DMA_TO_DEVICE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int cqhci_tag(struct mmc_request *mrq)
-{
-	return mrq->cmd ? DCMD_SLOT : mrq->tag;
-}
+अटल अंतरभूत पूर्णांक cqhci_tag(काष्ठा mmc_request *mrq)
+अणु
+	वापस mrq->cmd ? DCMD_SLOT : mrq->tag;
+पूर्ण
 
-static int cqhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
-{
-	int err = 0;
-	int tag = cqhci_tag(mrq);
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	unsigned long flags;
+अटल पूर्णांक cqhci_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक tag = cqhci_tag(mrq);
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	अचिन्हित दीर्घ flags;
 
-	if (!cq_host->enabled) {
+	अगर (!cq_host->enabled) अणु
 		pr_err("%s: cqhci: not enabled\n", mmc_hostname(mmc));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* First request after resume has to re-enable */
-	if (!cq_host->activated)
+	अगर (!cq_host->activated)
 		__cqhci_enable(cq_host);
 
-	if (!mmc->cqe_on) {
-		if (cq_host->ops->pre_enable)
+	अगर (!mmc->cqe_on) अणु
+		अगर (cq_host->ops->pre_enable)
 			cq_host->ops->pre_enable(mmc);
 
-		cqhci_writel(cq_host, 0, CQHCI_CTL);
+		cqhci_ग_लिखोl(cq_host, 0, CQHCI_CTL);
 		mmc->cqe_on = true;
 		pr_debug("%s: cqhci: CQE on\n", mmc_hostname(mmc));
-		if (cqhci_readl(cq_host, CQHCI_CTL) && CQHCI_HALT) {
+		अगर (cqhci_पढ़ोl(cq_host, CQHCI_CTL) && CQHCI_HALT) अणु
 			pr_err("%s: cqhci: CQE failed to exit halt state\n",
 			       mmc_hostname(mmc));
-		}
-		if (cq_host->ops->enable)
+		पूर्ण
+		अगर (cq_host->ops->enable)
 			cq_host->ops->enable(mmc);
-	}
+	पूर्ण
 
-	if (mrq->data) {
+	अगर (mrq->data) अणु
 		cqhci_prep_task_desc(mrq, cq_host, tag);
 
 		err = cqhci_prep_tran_desc(mrq, cq_host, tag);
-		if (err) {
+		अगर (err) अणु
 			pr_err("%s: cqhci: failed to setup tx desc: %d\n",
 			       mmc_hostname(mmc), err);
-			return err;
-		}
-	} else {
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cqhci_prep_dcmd_desc(mmc, mrq);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&cq_host->lock, flags);
 
-	if (cq_host->recovery_halt) {
+	अगर (cq_host->recovery_halt) अणु
 		err = -EBUSY;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	cq_host->slot[tag].mrq = mrq;
 	cq_host->slot[tag].flags = 0;
 
 	cq_host->qcnt += 1;
-	/* Make sure descriptors are ready before ringing the doorbell */
+	/* Make sure descriptors are पढ़ोy beक्रमe ringing the करोorbell */
 	wmb();
-	cqhci_writel(cq_host, 1 << tag, CQHCI_TDBR);
-	if (!(cqhci_readl(cq_host, CQHCI_TDBR) & (1 << tag)))
+	cqhci_ग_लिखोl(cq_host, 1 << tag, CQHCI_TDBR);
+	अगर (!(cqhci_पढ़ोl(cq_host, CQHCI_TDBR) & (1 << tag)))
 		pr_debug("%s: cqhci: doorbell not set for tag %d\n",
 			 mmc_hostname(mmc), tag);
 out_unlock:
 	spin_unlock_irqrestore(&cq_host->lock, flags);
 
-	if (err)
+	अगर (err)
 		cqhci_post_req(mmc, mrq);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cqhci_recovery_needed(struct mmc_host *mmc, struct mmc_request *mrq,
-				  bool notify)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम cqhci_recovery_needed(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq,
+				  bool notअगरy)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 
-	if (!cq_host->recovery_halt) {
+	अगर (!cq_host->recovery_halt) अणु
 		cq_host->recovery_halt = true;
 		pr_debug("%s: cqhci: recovery needed\n", mmc_hostname(mmc));
-		wake_up(&cq_host->wait_queue);
-		if (notify && mrq->recovery_notifier)
-			mrq->recovery_notifier(mrq);
-	}
-}
+		wake_up(&cq_host->रुको_queue);
+		अगर (notअगरy && mrq->recovery_notअगरier)
+			mrq->recovery_notअगरier(mrq);
+	पूर्ण
+पूर्ण
 
-static unsigned int cqhci_error_flags(int error1, int error2)
-{
-	int error = error1 ? error1 : error2;
+अटल अचिन्हित पूर्णांक cqhci_error_flags(पूर्णांक error1, पूर्णांक error2)
+अणु
+	पूर्णांक error = error1 ? error1 : error2;
 
-	switch (error) {
-	case -EILSEQ:
-		return CQHCI_HOST_CRC;
-	case -ETIMEDOUT:
-		return CQHCI_HOST_TIMEOUT;
-	default:
-		return CQHCI_HOST_OTHER;
-	}
-}
+	चयन (error) अणु
+	हाल -EILSEQ:
+		वापस CQHCI_HOST_CRC;
+	हाल -ETIMEDOUT:
+		वापस CQHCI_HOST_TIMEOUT;
+	शेष:
+		वापस CQHCI_HOST_OTHER;
+	पूर्ण
+पूर्ण
 
-static void cqhci_error_irq(struct mmc_host *mmc, u32 status, int cmd_error,
-			    int data_error)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	struct cqhci_slot *slot;
+अटल व्योम cqhci_error_irq(काष्ठा mmc_host *mmc, u32 status, पूर्णांक cmd_error,
+			    पूर्णांक data_error)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	काष्ठा cqhci_slot *slot;
 	u32 terri;
 	u32 tdpe;
-	int tag;
+	पूर्णांक tag;
 
 	spin_lock(&cq_host->lock);
 
-	terri = cqhci_readl(cq_host, CQHCI_TERRI);
+	terri = cqhci_पढ़ोl(cq_host, CQHCI_TERRI);
 
 	pr_debug("%s: cqhci: error IRQ status: 0x%08x cmd error %d data error %d TERRI: 0x%08x\n",
 		 mmc_hostname(mmc), status, cmd_error, data_error, terri);
 
-	/* Forget about errors when recovery has already been triggered */
-	if (cq_host->recovery_halt)
-		goto out_unlock;
+	/* Forget about errors when recovery has alपढ़ोy been triggered */
+	अगर (cq_host->recovery_halt)
+		जाओ out_unlock;
 
-	if (!cq_host->qcnt) {
+	अगर (!cq_host->qcnt) अणु
 		WARN_ONCE(1, "%s: cqhci: error when idle. IRQ status: 0x%08x cmd error %d data error %d TERRI: 0x%08x\n",
 			  mmc_hostname(mmc), status, cmd_error, data_error,
 			  terri);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (CQHCI_TERRI_C_VALID(terri)) {
+	अगर (CQHCI_TERRI_C_VALID(terri)) अणु
 		tag = CQHCI_TERRI_C_TASK(terri);
 		slot = &cq_host->slot[tag];
-		if (slot->mrq) {
+		अगर (slot->mrq) अणु
 			slot->flags = cqhci_error_flags(cmd_error, data_error);
 			cqhci_recovery_needed(mmc, slot->mrq, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (CQHCI_TERRI_D_VALID(terri)) {
+	अगर (CQHCI_TERRI_D_VALID(terri)) अणु
 		tag = CQHCI_TERRI_D_TASK(terri);
 		slot = &cq_host->slot[tag];
-		if (slot->mrq) {
+		अगर (slot->mrq) अणु
 			slot->flags = cqhci_error_flags(data_error, cmd_error);
 			cqhci_recovery_needed(mmc, slot->mrq, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Handle ICCE ("Invalid Crypto Configuration Error").  This should
 	 * never happen, since the block layer ensures that all crypto-enabled
-	 * I/O requests have a valid keyslot before they reach the driver.
+	 * I/O requests have a valid keyslot beक्रमe they reach the driver.
 	 *
-	 * Note that GCE ("General Crypto Error") is different; it already got
+	 * Note that GCE ("General Crypto Error") is dअगरferent; it alपढ़ोy got
 	 * handled above by checking TERRI.
 	 */
-	if (status & CQHCI_IS_ICCE) {
-		tdpe = cqhci_readl(cq_host, CQHCI_TDPE);
+	अगर (status & CQHCI_IS_ICCE) अणु
+		tdpe = cqhci_पढ़ोl(cq_host, CQHCI_TDPE);
 		WARN_ONCE(1,
 			  "%s: cqhci: invalid crypto configuration error. IRQ status: 0x%08x TDPE: 0x%08x\n",
 			  mmc_hostname(mmc), status, tdpe);
-		while (tdpe != 0) {
+		जबतक (tdpe != 0) अणु
 			tag = __ffs(tdpe);
 			tdpe &= ~(1 << tag);
 			slot = &cq_host->slot[tag];
-			if (!slot->mrq)
-				continue;
+			अगर (!slot->mrq)
+				जारी;
 			slot->flags = cqhci_error_flags(data_error, cmd_error);
 			cqhci_recovery_needed(mmc, slot->mrq, true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!cq_host->recovery_halt) {
+	अगर (!cq_host->recovery_halt) अणु
 		/*
-		 * The only way to guarantee forward progress is to mark at
-		 * least one task in error, so if none is indicated, pick one.
+		 * The only way to guarantee क्रमward progress is to mark at
+		 * least one task in error, so अगर none is indicated, pick one.
 		 */
-		for (tag = 0; tag < NUM_SLOTS; tag++) {
+		क्रम (tag = 0; tag < NUM_SLOTS; tag++) अणु
 			slot = &cq_host->slot[tag];
-			if (!slot->mrq)
-				continue;
+			अगर (!slot->mrq)
+				जारी;
 			slot->flags = cqhci_error_flags(data_error, cmd_error);
 			cqhci_recovery_needed(mmc, slot->mrq, true);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out_unlock:
 	spin_unlock(&cq_host->lock);
-}
+पूर्ण
 
-static void cqhci_finish_mrq(struct mmc_host *mmc, unsigned int tag)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	struct cqhci_slot *slot = &cq_host->slot[tag];
-	struct mmc_request *mrq = slot->mrq;
-	struct mmc_data *data;
+अटल व्योम cqhci_finish_mrq(काष्ठा mmc_host *mmc, अचिन्हित पूर्णांक tag)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	काष्ठा cqhci_slot *slot = &cq_host->slot[tag];
+	काष्ठा mmc_request *mrq = slot->mrq;
+	काष्ठा mmc_data *data;
 
-	if (!mrq) {
+	अगर (!mrq) अणु
 		WARN_ONCE(1, "%s: cqhci: spurious TCN for tag %d\n",
 			  mmc_hostname(mmc), tag);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* No completions allowed during recovery */
-	if (cq_host->recovery_halt) {
+	अगर (cq_host->recovery_halt) अणु
 		slot->flags |= CQHCI_COMPLETED;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	slot->mrq = NULL;
+	slot->mrq = शून्य;
 
 	cq_host->qcnt -= 1;
 
 	data = mrq->data;
-	if (data) {
-		if (data->error)
+	अगर (data) अणु
+		अगर (data->error)
 			data->bytes_xfered = 0;
-		else
+		अन्यथा
 			data->bytes_xfered = data->blksz * data->blocks;
-	}
+	पूर्ण
 
-	mmc_cqe_request_done(mmc, mrq);
-}
+	mmc_cqe_request_करोne(mmc, mrq);
+पूर्ण
 
-irqreturn_t cqhci_irq(struct mmc_host *mmc, u32 intmask, int cmd_error,
-		      int data_error)
-{
+irqवापस_t cqhci_irq(काष्ठा mmc_host *mmc, u32 पूर्णांकmask, पूर्णांक cmd_error,
+		      पूर्णांक data_error)
+अणु
 	u32 status;
-	unsigned long tag = 0, comp_status;
-	struct cqhci_host *cq_host = mmc->cqe_private;
+	अचिन्हित दीर्घ tag = 0, comp_status;
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 
-	status = cqhci_readl(cq_host, CQHCI_IS);
-	cqhci_writel(cq_host, status, CQHCI_IS);
+	status = cqhci_पढ़ोl(cq_host, CQHCI_IS);
+	cqhci_ग_लिखोl(cq_host, status, CQHCI_IS);
 
 	pr_debug("%s: cqhci: IRQ status: 0x%08x\n", mmc_hostname(mmc), status);
 
-	if ((status & (CQHCI_IS_RED | CQHCI_IS_GCE | CQHCI_IS_ICCE)) ||
+	अगर ((status & (CQHCI_IS_RED | CQHCI_IS_GCE | CQHCI_IS_ICCE)) ||
 	    cmd_error || data_error)
 		cqhci_error_irq(mmc, status, cmd_error, data_error);
 
-	if (status & CQHCI_IS_TCC) {
-		/* read TCN and complete the request */
-		comp_status = cqhci_readl(cq_host, CQHCI_TCN);
-		cqhci_writel(cq_host, comp_status, CQHCI_TCN);
+	अगर (status & CQHCI_IS_TCC) अणु
+		/* पढ़ो TCN and complete the request */
+		comp_status = cqhci_पढ़ोl(cq_host, CQHCI_TCN);
+		cqhci_ग_लिखोl(cq_host, comp_status, CQHCI_TCN);
 		pr_debug("%s: cqhci: TCN: 0x%08lx\n",
 			 mmc_hostname(mmc), comp_status);
 
 		spin_lock(&cq_host->lock);
 
-		for_each_set_bit(tag, &comp_status, cq_host->num_slots) {
+		क्रम_each_set_bit(tag, &comp_status, cq_host->num_slots) अणु
 			/* complete the corresponding mrq */
 			pr_debug("%s: cqhci: completing tag %lu\n",
 				 mmc_hostname(mmc), tag);
 			cqhci_finish_mrq(mmc, tag);
-		}
+		पूर्ण
 
-		if (cq_host->waiting_for_idle && !cq_host->qcnt) {
-			cq_host->waiting_for_idle = false;
-			wake_up(&cq_host->wait_queue);
-		}
+		अगर (cq_host->रुकोing_क्रम_idle && !cq_host->qcnt) अणु
+			cq_host->रुकोing_क्रम_idle = false;
+			wake_up(&cq_host->रुको_queue);
+		पूर्ण
 
 		spin_unlock(&cq_host->lock);
-	}
+	पूर्ण
 
-	if (status & CQHCI_IS_TCL)
-		wake_up(&cq_host->wait_queue);
+	अगर (status & CQHCI_IS_TCL)
+		wake_up(&cq_host->रुको_queue);
 
-	if (status & CQHCI_IS_HAC)
-		wake_up(&cq_host->wait_queue);
+	अगर (status & CQHCI_IS_HAC)
+		wake_up(&cq_host->रुको_queue);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 EXPORT_SYMBOL(cqhci_irq);
 
-static bool cqhci_is_idle(struct cqhci_host *cq_host, int *ret)
-{
-	unsigned long flags;
+अटल bool cqhci_is_idle(काष्ठा cqhci_host *cq_host, पूर्णांक *ret)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool is_idle;
 
 	spin_lock_irqsave(&cq_host->lock, flags);
 	is_idle = !cq_host->qcnt || cq_host->recovery_halt;
 	*ret = cq_host->recovery_halt ? -EBUSY : 0;
-	cq_host->waiting_for_idle = !is_idle;
+	cq_host->रुकोing_क्रम_idle = !is_idle;
 	spin_unlock_irqrestore(&cq_host->lock, flags);
 
-	return is_idle;
-}
+	वापस is_idle;
+पूर्ण
 
-static int cqhci_wait_for_idle(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	int ret;
+अटल पूर्णांक cqhci_रुको_क्रम_idle(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	पूर्णांक ret;
 
-	wait_event(cq_host->wait_queue, cqhci_is_idle(cq_host, &ret));
+	रुको_event(cq_host->रुको_queue, cqhci_is_idle(cq_host, &ret));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool cqhci_timeout(struct mmc_host *mmc, struct mmc_request *mrq,
+अटल bool cqhci_समयout(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq,
 			  bool *recovery_needed)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	int tag = cqhci_tag(mrq);
-	struct cqhci_slot *slot = &cq_host->slot[tag];
-	unsigned long flags;
-	bool timed_out;
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	पूर्णांक tag = cqhci_tag(mrq);
+	काष्ठा cqhci_slot *slot = &cq_host->slot[tag];
+	अचिन्हित दीर्घ flags;
+	bool समयd_out;
 
 	spin_lock_irqsave(&cq_host->lock, flags);
-	timed_out = slot->mrq == mrq;
-	if (timed_out) {
+	समयd_out = slot->mrq == mrq;
+	अगर (समयd_out) अणु
 		slot->flags |= CQHCI_EXTERNAL_TIMEOUT;
 		cqhci_recovery_needed(mmc, mrq, false);
 		*recovery_needed = cq_host->recovery_halt;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cq_host->lock, flags);
 
-	if (timed_out) {
+	अगर (समयd_out) अणु
 		pr_err("%s: cqhci: timeout for tag %d\n",
 		       mmc_hostname(mmc), tag);
 		cqhci_dumpregs(cq_host);
-	}
+	पूर्ण
 
-	return timed_out;
-}
+	वापस समयd_out;
+पूर्ण
 
-static bool cqhci_tasks_cleared(struct cqhci_host *cq_host)
-{
-	return !(cqhci_readl(cq_host, CQHCI_CTL) & CQHCI_CLEAR_ALL_TASKS);
-}
+अटल bool cqhci_tasks_cleared(काष्ठा cqhci_host *cq_host)
+अणु
+	वापस !(cqhci_पढ़ोl(cq_host, CQHCI_CTL) & CQHCI_CLEAR_ALL_TASKS);
+पूर्ण
 
-static bool cqhci_clear_all_tasks(struct mmc_host *mmc, unsigned int timeout)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल bool cqhci_clear_all_tasks(काष्ठा mmc_host *mmc, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	bool ret;
 	u32 ctl;
 
 	cqhci_set_irqs(cq_host, CQHCI_IS_TCL);
 
-	ctl = cqhci_readl(cq_host, CQHCI_CTL);
+	ctl = cqhci_पढ़ोl(cq_host, CQHCI_CTL);
 	ctl |= CQHCI_CLEAR_ALL_TASKS;
-	cqhci_writel(cq_host, ctl, CQHCI_CTL);
+	cqhci_ग_लिखोl(cq_host, ctl, CQHCI_CTL);
 
-	wait_event_timeout(cq_host->wait_queue, cqhci_tasks_cleared(cq_host),
-			   msecs_to_jiffies(timeout) + 1);
+	रुको_event_समयout(cq_host->रुको_queue, cqhci_tasks_cleared(cq_host),
+			   msecs_to_jअगरfies(समयout) + 1);
 
 	cqhci_set_irqs(cq_host, 0);
 
 	ret = cqhci_tasks_cleared(cq_host);
 
-	if (!ret)
+	अगर (!ret)
 		pr_debug("%s: cqhci: Failed to clear tasks\n",
 			 mmc_hostname(mmc));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool cqhci_halted(struct cqhci_host *cq_host)
-{
-	return cqhci_readl(cq_host, CQHCI_CTL) & CQHCI_HALT;
-}
+अटल bool cqhci_halted(काष्ठा cqhci_host *cq_host)
+अणु
+	वापस cqhci_पढ़ोl(cq_host, CQHCI_CTL) & CQHCI_HALT;
+पूर्ण
 
-static bool cqhci_halt(struct mmc_host *mmc, unsigned int timeout)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल bool cqhci_halt(काष्ठा mmc_host *mmc, अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 	bool ret;
 	u32 ctl;
 
-	if (cqhci_halted(cq_host))
-		return true;
+	अगर (cqhci_halted(cq_host))
+		वापस true;
 
 	cqhci_set_irqs(cq_host, CQHCI_IS_HAC);
 
-	ctl = cqhci_readl(cq_host, CQHCI_CTL);
+	ctl = cqhci_पढ़ोl(cq_host, CQHCI_CTL);
 	ctl |= CQHCI_HALT;
-	cqhci_writel(cq_host, ctl, CQHCI_CTL);
+	cqhci_ग_लिखोl(cq_host, ctl, CQHCI_CTL);
 
-	wait_event_timeout(cq_host->wait_queue, cqhci_halted(cq_host),
-			   msecs_to_jiffies(timeout) + 1);
+	रुको_event_समयout(cq_host->रुको_queue, cqhci_halted(cq_host),
+			   msecs_to_jअगरfies(समयout) + 1);
 
 	cqhci_set_irqs(cq_host, 0);
 
 	ret = cqhci_halted(cq_host);
 
-	if (!ret)
+	अगर (!ret)
 		pr_debug("%s: cqhci: Failed to halt\n", mmc_hostname(mmc));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * After halting we expect to be able to use the command line. We interpret the
+ * After halting we expect to be able to use the command line. We पूर्णांकerpret the
  * failure to halt to mean the data lines might still be in use (and the upper
- * layers will need to send a STOP command), so we set the timeout based on a
- * generous command timeout.
+ * layers will need to send a STOP command), so we set the समयout based on a
+ * generous command समयout.
  */
-#define CQHCI_START_HALT_TIMEOUT	5
+#घोषणा CQHCI_START_HALT_TIMEOUT	5
 
-static void cqhci_recovery_start(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
+अटल व्योम cqhci_recovery_start(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
 
 	pr_debug("%s: cqhci: %s\n", mmc_hostname(mmc), __func__);
 
@@ -984,73 +985,73 @@ static void cqhci_recovery_start(struct mmc_host *mmc)
 
 	cqhci_halt(mmc, CQHCI_START_HALT_TIMEOUT);
 
-	if (cq_host->ops->disable)
+	अगर (cq_host->ops->disable)
 		cq_host->ops->disable(mmc, true);
 
 	mmc->cqe_on = false;
-}
+पूर्ण
 
-static int cqhci_error_from_flags(unsigned int flags)
-{
-	if (!flags)
-		return 0;
+अटल पूर्णांक cqhci_error_from_flags(अचिन्हित पूर्णांक flags)
+अणु
+	अगर (!flags)
+		वापस 0;
 
 	/* CRC errors might indicate re-tuning so prefer to report that */
-	if (flags & CQHCI_HOST_CRC)
-		return -EILSEQ;
+	अगर (flags & CQHCI_HOST_CRC)
+		वापस -EILSEQ;
 
-	if (flags & (CQHCI_EXTERNAL_TIMEOUT | CQHCI_HOST_TIMEOUT))
-		return -ETIMEDOUT;
+	अगर (flags & (CQHCI_EXTERNAL_TIMEOUT | CQHCI_HOST_TIMEOUT))
+		वापस -ETIMEDOUT;
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static void cqhci_recover_mrq(struct cqhci_host *cq_host, unsigned int tag)
-{
-	struct cqhci_slot *slot = &cq_host->slot[tag];
-	struct mmc_request *mrq = slot->mrq;
-	struct mmc_data *data;
+अटल व्योम cqhci_recover_mrq(काष्ठा cqhci_host *cq_host, अचिन्हित पूर्णांक tag)
+अणु
+	काष्ठा cqhci_slot *slot = &cq_host->slot[tag];
+	काष्ठा mmc_request *mrq = slot->mrq;
+	काष्ठा mmc_data *data;
 
-	if (!mrq)
-		return;
+	अगर (!mrq)
+		वापस;
 
-	slot->mrq = NULL;
+	slot->mrq = शून्य;
 
 	cq_host->qcnt -= 1;
 
 	data = mrq->data;
-	if (data) {
+	अगर (data) अणु
 		data->bytes_xfered = 0;
 		data->error = cqhci_error_from_flags(slot->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		mrq->cmd->error = cqhci_error_from_flags(slot->flags);
-	}
+	पूर्ण
 
-	mmc_cqe_request_done(cq_host->mmc, mrq);
-}
+	mmc_cqe_request_करोne(cq_host->mmc, mrq);
+पूर्ण
 
-static void cqhci_recover_mrqs(struct cqhci_host *cq_host)
-{
-	int i;
+अटल व्योम cqhci_recover_mrqs(काष्ठा cqhci_host *cq_host)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cq_host->num_slots; i++)
+	क्रम (i = 0; i < cq_host->num_slots; i++)
 		cqhci_recover_mrq(cq_host, i);
-}
+पूर्ण
 
 /*
- * By now the command and data lines should be unused so there is no reason for
- * CQHCI to take a long time to halt, but if it doesn't halt there could be
+ * By now the command and data lines should be unused so there is no reason क्रम
+ * CQHCI to take a दीर्घ समय to halt, but अगर it करोesn't halt there could be
  * problems clearing tasks, so be generous.
  */
-#define CQHCI_FINISH_HALT_TIMEOUT	20
+#घोषणा CQHCI_FINISH_HALT_TIMEOUT	20
 
-/* CQHCI could be expected to clear it's internal state pretty quickly */
-#define CQHCI_CLEAR_TIMEOUT		20
+/* CQHCI could be expected to clear it's पूर्णांकernal state pretty quickly */
+#घोषणा CQHCI_CLEAR_TIMEOUT		20
 
-static void cqhci_recovery_finish(struct mmc_host *mmc)
-{
-	struct cqhci_host *cq_host = mmc->cqe_private;
-	unsigned long flags;
+अटल व्योम cqhci_recovery_finish(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा cqhci_host *cq_host = mmc->cqe_निजी;
+	अचिन्हित दीर्घ flags;
 	u32 cqcfg;
 	bool ok;
 
@@ -1060,28 +1061,28 @@ static void cqhci_recovery_finish(struct mmc_host *mmc)
 
 	ok = cqhci_halt(mmc, CQHCI_FINISH_HALT_TIMEOUT);
 
-	if (!cqhci_clear_all_tasks(mmc, CQHCI_CLEAR_TIMEOUT))
+	अगर (!cqhci_clear_all_tasks(mmc, CQHCI_CLEAR_TIMEOUT))
 		ok = false;
 
 	/*
-	 * The specification contradicts itself, by saying that tasks cannot be
-	 * cleared if CQHCI does not halt, but if CQHCI does not halt, it should
-	 * be disabled/re-enabled, but not to disable before clearing tasks.
+	 * The specअगरication contradicts itself, by saying that tasks cannot be
+	 * cleared अगर CQHCI करोes not halt, but अगर CQHCI करोes not halt, it should
+	 * be disabled/re-enabled, but not to disable beक्रमe clearing tasks.
 	 * Have a go anyway.
 	 */
-	if (!ok) {
+	अगर (!ok) अणु
 		pr_debug("%s: cqhci: disable / re-enable\n", mmc_hostname(mmc));
-		cqcfg = cqhci_readl(cq_host, CQHCI_CFG);
+		cqcfg = cqhci_पढ़ोl(cq_host, CQHCI_CFG);
 		cqcfg &= ~CQHCI_ENABLE;
-		cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+		cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
 		cqcfg |= CQHCI_ENABLE;
-		cqhci_writel(cq_host, cqcfg, CQHCI_CFG);
+		cqhci_ग_लिखोl(cq_host, cqcfg, CQHCI_CFG);
 		/* Be sure that there are no tasks */
 		ok = cqhci_halt(mmc, CQHCI_FINISH_HALT_TIMEOUT);
-		if (!cqhci_clear_all_tasks(mmc, CQHCI_CLEAR_TIMEOUT))
+		अगर (!cqhci_clear_all_tasks(mmc, CQHCI_CLEAR_TIMEOUT))
 			ok = false;
 		WARN_ON(!ok);
-	}
+	पूर्ण
 
 	cqhci_recover_mrqs(cq_host);
 
@@ -1093,77 +1094,77 @@ static void cqhci_recovery_finish(struct mmc_host *mmc)
 	mmc->cqe_on = false;
 	spin_unlock_irqrestore(&cq_host->lock, flags);
 
-	/* Ensure all writes are done before interrupts are re-enabled */
+	/* Ensure all ग_लिखोs are करोne beक्रमe पूर्णांकerrupts are re-enabled */
 	wmb();
 
-	cqhci_writel(cq_host, CQHCI_IS_HAC | CQHCI_IS_TCL, CQHCI_IS);
+	cqhci_ग_लिखोl(cq_host, CQHCI_IS_HAC | CQHCI_IS_TCL, CQHCI_IS);
 
 	cqhci_set_irqs(cq_host, CQHCI_IS_MASK);
 
 	pr_debug("%s: cqhci: recovery done\n", mmc_hostname(mmc));
-}
+पूर्ण
 
-static const struct mmc_cqe_ops cqhci_cqe_ops = {
+अटल स्थिर काष्ठा mmc_cqe_ops cqhci_cqe_ops = अणु
 	.cqe_enable = cqhci_enable,
 	.cqe_disable = cqhci_disable,
 	.cqe_request = cqhci_request,
 	.cqe_post_req = cqhci_post_req,
 	.cqe_off = cqhci_off,
-	.cqe_wait_for_idle = cqhci_wait_for_idle,
-	.cqe_timeout = cqhci_timeout,
+	.cqe_रुको_क्रम_idle = cqhci_रुको_क्रम_idle,
+	.cqe_समयout = cqhci_समयout,
 	.cqe_recovery_start = cqhci_recovery_start,
 	.cqe_recovery_finish = cqhci_recovery_finish,
-};
+पूर्ण;
 
-struct cqhci_host *cqhci_pltfm_init(struct platform_device *pdev)
-{
-	struct cqhci_host *cq_host;
-	struct resource *cqhci_memres = NULL;
+काष्ठा cqhci_host *cqhci_pltfm_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cqhci_host *cq_host;
+	काष्ठा resource *cqhci_memres = शून्य;
 
-	/* check and setup CMDQ interface */
-	cqhci_memres = platform_get_resource_byname(pdev, IORESOURCE_MEM,
+	/* check and setup CMDQ पूर्णांकerface */
+	cqhci_memres = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM,
 						   "cqhci");
-	if (!cqhci_memres) {
+	अगर (!cqhci_memres) अणु
 		dev_dbg(&pdev->dev, "CMDQ not supported\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	cq_host = devm_kzalloc(&pdev->dev, sizeof(*cq_host), GFP_KERNEL);
-	if (!cq_host)
-		return ERR_PTR(-ENOMEM);
+	cq_host = devm_kzalloc(&pdev->dev, माप(*cq_host), GFP_KERNEL);
+	अगर (!cq_host)
+		वापस ERR_PTR(-ENOMEM);
 	cq_host->mmio = devm_ioremap(&pdev->dev,
 				     cqhci_memres->start,
 				     resource_size(cqhci_memres));
-	if (!cq_host->mmio) {
+	अगर (!cq_host->mmio) अणु
 		dev_err(&pdev->dev, "failed to remap cqhci regs\n");
-		return ERR_PTR(-EBUSY);
-	}
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
 	dev_dbg(&pdev->dev, "CMDQ ioremap: done\n");
 
-	return cq_host;
-}
+	वापस cq_host;
+पूर्ण
 EXPORT_SYMBOL(cqhci_pltfm_init);
 
-static unsigned int cqhci_ver_major(struct cqhci_host *cq_host)
-{
-	return CQHCI_VER_MAJOR(cqhci_readl(cq_host, CQHCI_VER));
-}
+अटल अचिन्हित पूर्णांक cqhci_ver_major(काष्ठा cqhci_host *cq_host)
+अणु
+	वापस CQHCI_VER_MAJOR(cqhci_पढ़ोl(cq_host, CQHCI_VER));
+पूर्ण
 
-static unsigned int cqhci_ver_minor(struct cqhci_host *cq_host)
-{
-	u32 ver = cqhci_readl(cq_host, CQHCI_VER);
+अटल अचिन्हित पूर्णांक cqhci_ver_minor(काष्ठा cqhci_host *cq_host)
+अणु
+	u32 ver = cqhci_पढ़ोl(cq_host, CQHCI_VER);
 
-	return CQHCI_VER_MINOR1(ver) * 10 + CQHCI_VER_MINOR2(ver);
-}
+	वापस CQHCI_VER_MINOR1(ver) * 10 + CQHCI_VER_MINOR2(ver);
+पूर्ण
 
-int cqhci_init(struct cqhci_host *cq_host, struct mmc_host *mmc,
+पूर्णांक cqhci_init(काष्ठा cqhci_host *cq_host, काष्ठा mmc_host *mmc,
 	      bool dma64)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	cq_host->dma64 = dma64;
 	cq_host->mmc = mmc;
-	cq_host->mmc->cqe_private = cq_host;
+	cq_host->mmc->cqe_निजी = cq_host;
 
 	cq_host->num_slots = NUM_SLOTS;
 	cq_host->dcmd_slot = DCMD_SLOT;
@@ -1171,40 +1172,40 @@ int cqhci_init(struct cqhci_host *cq_host, struct mmc_host *mmc,
 	mmc->cqe_ops = &cqhci_cqe_ops;
 
 	mmc->cqe_qdepth = NUM_SLOTS;
-	if (mmc->caps2 & MMC_CAP2_CQE_DCMD)
+	अगर (mmc->caps2 & MMC_CAP2_CQE_DCMD)
 		mmc->cqe_qdepth -= 1;
 
-	cq_host->slot = devm_kcalloc(mmc_dev(mmc), cq_host->num_slots,
-				     sizeof(*cq_host->slot), GFP_KERNEL);
-	if (!cq_host->slot) {
+	cq_host->slot = devm_kसुस्मृति(mmc_dev(mmc), cq_host->num_slots,
+				     माप(*cq_host->slot), GFP_KERNEL);
+	अगर (!cq_host->slot) अणु
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	err = cqhci_crypto_init(cq_host);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: CQHCI crypto initialization failed\n",
 		       mmc_hostname(mmc));
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	spin_lock_init(&cq_host->lock);
 
 	init_completion(&cq_host->halt_comp);
-	init_waitqueue_head(&cq_host->wait_queue);
+	init_रुकोqueue_head(&cq_host->रुको_queue);
 
 	pr_info("%s: CQHCI version %u.%02u\n",
 		mmc_hostname(mmc), cqhci_ver_major(cq_host),
 		cqhci_ver_minor(cq_host));
 
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_err("%s: CQHCI version %u.%02u failed to initialize, error %d\n",
 	       mmc_hostname(mmc), cqhci_ver_major(cq_host),
 	       cqhci_ver_minor(cq_host), err);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(cqhci_init);
 
 MODULE_AUTHOR("Venkat Gopalakrishnan <venkatg@codeaurora.org>");

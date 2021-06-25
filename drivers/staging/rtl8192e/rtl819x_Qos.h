@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#ifndef __INC_QOS_TYPE_H
-#define __INC_QOS_TYPE_H
+#अगर_अघोषित __INC_QOS_TYPE_H
+#घोषणा __INC_QOS_TYPE_H
 
-#define BIT0		    0x00000001
-#define BIT1		    0x00000002
-#define BIT2		    0x00000004
-#define BIT3		    0x00000008
-#define BIT4		    0x00000010
-#define BIT5		    0x00000020
-#define BIT6		    0x00000040
-#define BIT7		    0x00000080
-#define BIT8		    0x00000100
-#define BIT9		    0x00000200
-#define BIT10		   0x00000400
-#define BIT11		   0x00000800
-#define BIT12		   0x00001000
-#define BIT13		   0x00002000
-#define BIT14		   0x00004000
-#define BIT15		   0x00008000
-#define BIT16		   0x00010000
-#define BIT17		   0x00020000
-#define BIT18		   0x00040000
-#define BIT19		   0x00080000
-#define BIT20		   0x00100000
-#define BIT21		   0x00200000
-#define BIT22		   0x00400000
-#define BIT23		   0x00800000
-#define BIT24		   0x01000000
-#define BIT25		   0x02000000
-#define BIT26		   0x04000000
-#define BIT27		   0x08000000
-#define BIT28		   0x10000000
-#define BIT29		   0x20000000
-#define BIT30		   0x40000000
-#define BIT31		   0x80000000
+#घोषणा BIT0		    0x00000001
+#घोषणा BIT1		    0x00000002
+#घोषणा BIT2		    0x00000004
+#घोषणा BIT3		    0x00000008
+#घोषणा BIT4		    0x00000010
+#घोषणा BIT5		    0x00000020
+#घोषणा BIT6		    0x00000040
+#घोषणा BIT7		    0x00000080
+#घोषणा BIT8		    0x00000100
+#घोषणा BIT9		    0x00000200
+#घोषणा BIT10		   0x00000400
+#घोषणा BIT11		   0x00000800
+#घोषणा BIT12		   0x00001000
+#घोषणा BIT13		   0x00002000
+#घोषणा BIT14		   0x00004000
+#घोषणा BIT15		   0x00008000
+#घोषणा BIT16		   0x00010000
+#घोषणा BIT17		   0x00020000
+#घोषणा BIT18		   0x00040000
+#घोषणा BIT19		   0x00080000
+#घोषणा BIT20		   0x00100000
+#घोषणा BIT21		   0x00200000
+#घोषणा BIT22		   0x00400000
+#घोषणा BIT23		   0x00800000
+#घोषणा BIT24		   0x01000000
+#घोषणा BIT25		   0x02000000
+#घोषणा BIT26		   0x04000000
+#घोषणा BIT27		   0x08000000
+#घोषणा BIT28		   0x10000000
+#घोषणा BIT29		   0x20000000
+#घोषणा BIT30		   0x40000000
+#घोषणा BIT31		   0x80000000
 
-union qos_tsinfo {
-	u8		charData[3];
-	struct {
+जोड़ qos_tsinfo अणु
+	u8		अक्षरData[3];
+	काष्ठा अणु
 		u8		ucTrafficType:1;
 		u8		ucTSID:4;
 		u8		ucDirection:2;
@@ -53,14 +54,14 @@ union qos_tsinfo {
 		u8		ucTSInfoAckPolicy:2;
 		u8		ucSchedule:1;
 		u8		ucReserved:7;
-	} field;
-};
+	पूर्ण field;
+पूर्ण;
 
-union tspec_body {
-	u8		charData[55];
+जोड़ tspec_body अणु
+	u8		अक्षरData[55];
 
-	struct {
-		union qos_tsinfo TSInfo;
+	काष्ठा अणु
+		जोड़ qos_tsinfo TSInfo;
 		u16	NominalMSDUsize;
 		u16	MaxMSDUsize;
 		u32	MinServiceItv;
@@ -76,60 +77,60 @@ union tspec_body {
 		u32	MinPhyRate;
 		u16	SurplusBandwidthAllowance;
 		u16	MediumTime;
-	} f;
-};
+	पूर्ण f;
+पूर्ण;
 
-struct octet_string {
+काष्ठा octet_string अणु
 	u8 *Octet;
 	u16 Length;
-};
+पूर्ण;
 
-#define AC0_BE	0
-#define AC1_BK	1
-#define AC2_VI	2
-#define AC3_VO	3
-#define AC_MAX	4
+#घोषणा AC0_BE	0
+#घोषणा AC1_BK	1
+#घोषणा AC2_VI	2
+#घोषणा AC3_VO	3
+#घोषणा AC_MAX	4
 
-enum direction_value {
-	DIR_UP			= 0,
-	DIR_DOWN		= 1,
-	DIR_DIRECT		= 2,
-	DIR_BI_DIR		= 3,
-};
+क्रमागत direction_value अणु
+	सूची_UP			= 0,
+	सूची_DOWN		= 1,
+	सूची_सूचीECT		= 2,
+	सूची_BI_सूची		= 3,
+पूर्ण;
 
-enum acm_method {
+क्रमागत acm_method अणु
 	eAcmWay0_SwAndHw		= 0,
 	eAcmWay1_HW			= 1,
 	eAcmWay2_SW			= 2,
-};
+पूर्ण;
 
 
-struct acm {
+काष्ठा acm अणु
 	u64		UsedTime;
 	u64		MediumTime;
 	u8		HwAcmCtl;
-};
+पूर्ण;
 
-union qos_tclas {
+जोड़ qos_tclas अणु
 
-	struct _TYPE_GENERAL {
+	काष्ठा _TYPE_GENERAL अणु
 		u8		Priority;
-		u8		ClassifierType;
+		u8		ClassअगरierType;
 		u8		Mask;
-	} TYPE_GENERAL;
+	पूर्ण TYPE_GENERAL;
 
-	struct _TYPE0_ETH {
+	काष्ठा _TYPE0_ETH अणु
 		u8		Priority;
-		u8		ClassifierType;
+		u8		ClassअगरierType;
 		u8		Mask;
 		u8		SrcAddr[ETH_ALEN];
 		u8		DstAddr[ETH_ALEN];
 		u16		Type;
-	} TYPE0_ETH;
+	पूर्ण TYPE0_ETH;
 
-	struct _TYPE1_IPV4 {
+	काष्ठा _TYPE1_IPV4 अणु
 		u8		Priority;
-		u8		ClassifierType;
+		u8		ClassअगरierType;
 		u8		Mask;
 		u8		Version;
 		u8		SrcIP[4];
@@ -139,11 +140,11 @@ union qos_tclas {
 		u8		DSCP;
 		u8		Protocol;
 		u8		Reserved;
-	} TYPE1_IPV4;
+	पूर्ण TYPE1_IPV4;
 
-	struct _TYPE1_IPV6 {
+	काष्ठा _TYPE1_IPV6 अणु
 		u8		Priority;
-		u8		ClassifierType;
+		u8		ClassअगरierType;
 		u8		Mask;
 		u8		Version;
 		u8		SrcIP[16];
@@ -151,25 +152,25 @@ union qos_tclas {
 		u16		SrcPort;
 		u16		DstPort;
 		u8		FlowLabel[3];
-	} TYPE1_IPV6;
+	पूर्ण TYPE1_IPV6;
 
-	struct _TYPE2_8021Q {
+	काष्ठा _TYPE2_8021Q अणु
 		u8		Priority;
-		u8		ClassifierType;
+		u8		ClassअगरierType;
 		u8		Mask;
 		u16		TagType;
-	} TYPE2_8021Q;
-};
+	पूर्ण TYPE2_8021Q;
+पूर्ण;
 
-union aci_aifsn {
-	u8	charData;
+जोड़ aci_aअगरsn अणु
+	u8	अक्षरData;
 
-	struct {
+	काष्ठा अणु
 		u8	AIFSN:4;
 		u8	acm:1;
 		u8	ACI:2;
 		u8	Reserved:1;
-	} f;
-};
+	पूर्ण f;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

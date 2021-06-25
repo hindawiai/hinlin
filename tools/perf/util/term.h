@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_TERM_H
-#define __PERF_TERM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_TERM_H
+#घोषणा __PERF_TERM_H
 
-struct termios;
-struct winsize;
+काष्ठा termios;
+काष्ठा winsize;
 
-void get_term_dimensions(struct winsize *ws);
-void set_term_quiet_input(struct termios *old);
+व्योम get_term_dimensions(काष्ठा winsize *ws);
+व्योम set_term_quiet_input(काष्ठा termios *old);
 
-#endif /* __PERF_TERM_H */
+#पूर्ण_अगर /* __PERF_TERM_H */

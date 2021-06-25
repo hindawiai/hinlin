@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_FPU_H
-#define __ASM_SH_FPU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_FPU_H
+#घोषणा __ASM_SH_FPU_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-struct task_struct;
+काष्ठा task_काष्ठा;
 
-#ifdef CONFIG_SH_FPU
-static inline void release_fpu(struct pt_regs *regs)
-{
+#अगर_घोषित CONFIG_SH_FPU
+अटल अंतरभूत व्योम release_fpu(काष्ठा pt_regs *regs)
+अणु
 	regs->sr |= SR_FD;
-}
+पूर्ण
 
-static inline void grab_fpu(struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम grab_fpu(काष्ठा pt_regs *regs)
+अणु
 	regs->sr &= ~SR_FD;
-}
+पूर्ण
 
-extern void save_fpu(struct task_struct *__tsk);
-extern void restore_fpu(struct task_struct *__tsk);
-extern void fpu_state_restore(struct pt_regs *regs);
-extern void __fpu_state_restore(void);
-#else
-#define save_fpu(tsk)			do { } while (0)
-#define restore_fpu(tsk)		do { } while (0)
-#define release_fpu(regs)		do { } while (0)
-#define grab_fpu(regs)			do { } while (0)
-#define fpu_state_restore(regs)		do { } while (0)
-#define __fpu_state_restore(regs)	do { } while (0)
-#endif
+बाह्य व्योम save_fpu(काष्ठा task_काष्ठा *__tsk);
+बाह्य व्योम restore_fpu(काष्ठा task_काष्ठा *__tsk);
+बाह्य व्योम fpu_state_restore(काष्ठा pt_regs *regs);
+बाह्य व्योम __fpu_state_restore(व्योम);
+#अन्यथा
+#घोषणा save_fpu(tsk)			करो अणु पूर्ण जबतक (0)
+#घोषणा restore_fpu(tsk)		करो अणु पूर्ण जबतक (0)
+#घोषणा release_fpu(regs)		करो अणु पूर्ण जबतक (0)
+#घोषणा grab_fpu(regs)			करो अणु पूर्ण जबतक (0)
+#घोषणा fpu_state_restore(regs)		करो अणु पूर्ण जबतक (0)
+#घोषणा __fpu_state_restore(regs)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct user_regset;
+काष्ठा user_regset;
 
-extern int do_fpu_inst(unsigned short, struct pt_regs *);
-extern int init_fpu(struct task_struct *);
+बाह्य पूर्णांक करो_fpu_inst(अचिन्हित लघु, काष्ठा pt_regs *);
+बाह्य पूर्णांक init_fpu(काष्ठा task_काष्ठा *);
 
-static inline void __unlazy_fpu(struct task_struct *tsk, struct pt_regs *regs)
-{
-	if (task_thread_info(tsk)->status & TS_USEDFPU) {
-		task_thread_info(tsk)->status &= ~TS_USEDFPU;
+अटल अंतरभूत व्योम __unlazy_fpu(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs)
+अणु
+	अगर (task_thपढ़ो_info(tsk)->status & TS_USEDFPU) अणु
+		task_thपढ़ो_info(tsk)->status &= ~TS_USEDFPU;
 		save_fpu(tsk);
 		release_fpu(regs);
-	} else
-		tsk->thread.fpu_counter = 0;
-}
+	पूर्ण अन्यथा
+		tsk->thपढ़ो.fpu_counter = 0;
+पूर्ण
 
-static inline void unlazy_fpu(struct task_struct *tsk, struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम unlazy_fpu(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs)
+अणु
 	preempt_disable();
 	__unlazy_fpu(tsk, regs);
 	preempt_enable();
-}
+पूर्ण
 
-static inline void clear_fpu(struct task_struct *tsk, struct pt_regs *regs)
-{
+अटल अंतरभूत व्योम clear_fpu(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs)
+अणु
 	preempt_disable();
-	if (task_thread_info(tsk)->status & TS_USEDFPU) {
-		task_thread_info(tsk)->status &= ~TS_USEDFPU;
+	अगर (task_thपढ़ो_info(tsk)->status & TS_USEDFPU) अणु
+		task_thपढ़ो_info(tsk)->status &= ~TS_USEDFPU;
 		release_fpu(regs);
-	}
+	पूर्ण
 	preempt_enable();
-}
+पूर्ण
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* __ASM_SH_FPU_H */
+#पूर्ण_अगर /* __ASM_SH_FPU_H */

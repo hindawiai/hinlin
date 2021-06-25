@@ -1,467 +1,468 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Synopsys DesignWare PCIe Endpoint controller driver
+ * Synopsys DesignWare PCIe Endpoपूर्णांक controller driver
  *
  * Copyright (C) 2017 Texas Instruments
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#include <linux/of.h>
-#include <linux/platform_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pcie-designware.h"
-#include <linux/pci-epc.h>
-#include <linux/pci-epf.h>
+#समावेश "pcie-designware.h"
+#समावेश <linux/pci-epc.h>
+#समावेश <linux/pci-epf.h>
 
-#include "../../pci.h"
+#समावेश "../../pci.h"
 
-void dw_pcie_ep_linkup(struct dw_pcie_ep *ep)
-{
-	struct pci_epc *epc = ep->epc;
+व्योम dw_pcie_ep_linkup(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा pci_epc *epc = ep->epc;
 
 	pci_epc_linkup(epc);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dw_pcie_ep_linkup);
 
-void dw_pcie_ep_init_notify(struct dw_pcie_ep *ep)
-{
-	struct pci_epc *epc = ep->epc;
+व्योम dw_pcie_ep_init_notअगरy(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा pci_epc *epc = ep->epc;
 
-	pci_epc_init_notify(epc);
-}
-EXPORT_SYMBOL_GPL(dw_pcie_ep_init_notify);
+	pci_epc_init_notअगरy(epc);
+पूर्ण
+EXPORT_SYMBOL_GPL(dw_pcie_ep_init_notअगरy);
 
-struct dw_pcie_ep_func *
-dw_pcie_ep_get_func_from_ep(struct dw_pcie_ep *ep, u8 func_no)
-{
-	struct dw_pcie_ep_func *ep_func;
+काष्ठा dw_pcie_ep_func *
+dw_pcie_ep_get_func_from_ep(काष्ठा dw_pcie_ep *ep, u8 func_no)
+अणु
+	काष्ठा dw_pcie_ep_func *ep_func;
 
-	list_for_each_entry(ep_func, &ep->func_list, list) {
-		if (ep_func->func_no == func_no)
-			return ep_func;
-	}
+	list_क्रम_each_entry(ep_func, &ep->func_list, list) अणु
+		अगर (ep_func->func_no == func_no)
+			वापस ep_func;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static unsigned int dw_pcie_ep_func_select(struct dw_pcie_ep *ep, u8 func_no)
-{
-	unsigned int func_offset = 0;
+अटल अचिन्हित पूर्णांक dw_pcie_ep_func_select(काष्ठा dw_pcie_ep *ep, u8 func_no)
+अणु
+	अचिन्हित पूर्णांक func_offset = 0;
 
-	if (ep->ops->func_conf_select)
+	अगर (ep->ops->func_conf_select)
 		func_offset = ep->ops->func_conf_select(ep, func_no);
 
-	return func_offset;
-}
+	वापस func_offset;
+पूर्ण
 
-static void __dw_pcie_ep_reset_bar(struct dw_pcie *pci, u8 func_no,
-				   enum pci_barno bar, int flags)
-{
+अटल व्योम __dw_pcie_ep_reset_bar(काष्ठा dw_pcie *pci, u8 func_no,
+				   क्रमागत pci_barno bar, पूर्णांक flags)
+अणु
 	u32 reg;
-	unsigned int func_offset = 0;
-	struct dw_pcie_ep *ep = &pci->ep;
+	अचिन्हित पूर्णांक func_offset = 0;
+	काष्ठा dw_pcie_ep *ep = &pci->ep;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = func_offset + PCI_BASE_ADDRESS_0 + (4 * bar);
 	dw_pcie_dbi_ro_wr_en(pci);
-	dw_pcie_writel_dbi2(pci, reg, 0x0);
-	dw_pcie_writel_dbi(pci, reg, 0x0);
-	if (flags & PCI_BASE_ADDRESS_MEM_TYPE_64) {
-		dw_pcie_writel_dbi2(pci, reg + 4, 0x0);
-		dw_pcie_writel_dbi(pci, reg + 4, 0x0);
-	}
+	dw_pcie_ग_लिखोl_dbi2(pci, reg, 0x0);
+	dw_pcie_ग_लिखोl_dbi(pci, reg, 0x0);
+	अगर (flags & PCI_BASE_ADDRESS_MEM_TYPE_64) अणु
+		dw_pcie_ग_लिखोl_dbi2(pci, reg + 4, 0x0);
+		dw_pcie_ग_लिखोl_dbi(pci, reg + 4, 0x0);
+	पूर्ण
 	dw_pcie_dbi_ro_wr_dis(pci);
-}
+पूर्ण
 
-void dw_pcie_ep_reset_bar(struct dw_pcie *pci, enum pci_barno bar)
-{
+व्योम dw_pcie_ep_reset_bar(काष्ठा dw_pcie *pci, क्रमागत pci_barno bar)
+अणु
 	u8 func_no, funcs;
 
 	funcs = pci->ep.epc->max_functions;
 
-	for (func_no = 0; func_no < funcs; func_no++)
+	क्रम (func_no = 0; func_no < funcs; func_no++)
 		__dw_pcie_ep_reset_bar(pci, func_no, bar, 0);
-}
+पूर्ण
 
-static u8 __dw_pcie_ep_find_next_cap(struct dw_pcie_ep *ep, u8 func_no,
+अटल u8 __dw_pcie_ep_find_next_cap(काष्ठा dw_pcie_ep *ep, u8 func_no,
 		u8 cap_ptr, u8 cap)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	unsigned int func_offset = 0;
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	अचिन्हित पूर्णांक func_offset = 0;
 	u8 cap_id, next_cap_ptr;
 	u16 reg;
 
-	if (!cap_ptr)
-		return 0;
+	अगर (!cap_ptr)
+		वापस 0;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
-	reg = dw_pcie_readw_dbi(pci, func_offset + cap_ptr);
+	reg = dw_pcie_पढ़ोw_dbi(pci, func_offset + cap_ptr);
 	cap_id = (reg & 0x00ff);
 
-	if (cap_id > PCI_CAP_ID_MAX)
-		return 0;
+	अगर (cap_id > PCI_CAP_ID_MAX)
+		वापस 0;
 
-	if (cap_id == cap)
-		return cap_ptr;
+	अगर (cap_id == cap)
+		वापस cap_ptr;
 
 	next_cap_ptr = (reg & 0xff00) >> 8;
-	return __dw_pcie_ep_find_next_cap(ep, func_no, next_cap_ptr, cap);
-}
+	वापस __dw_pcie_ep_find_next_cap(ep, func_no, next_cap_ptr, cap);
+पूर्ण
 
-static u8 dw_pcie_ep_find_capability(struct dw_pcie_ep *ep, u8 func_no, u8 cap)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	unsigned int func_offset = 0;
+अटल u8 dw_pcie_ep_find_capability(काष्ठा dw_pcie_ep *ep, u8 func_no, u8 cap)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	अचिन्हित पूर्णांक func_offset = 0;
 	u8 next_cap_ptr;
 	u16 reg;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
-	reg = dw_pcie_readw_dbi(pci, func_offset + PCI_CAPABILITY_LIST);
+	reg = dw_pcie_पढ़ोw_dbi(pci, func_offset + PCI_CAPABILITY_LIST);
 	next_cap_ptr = (reg & 0x00ff);
 
-	return __dw_pcie_ep_find_next_cap(ep, func_no, next_cap_ptr, cap);
-}
+	वापस __dw_pcie_ep_find_next_cap(ep, func_no, next_cap_ptr, cap);
+पूर्ण
 
-static int dw_pcie_ep_write_header(struct pci_epc *epc, u8 func_no,
-				   struct pci_epf_header *hdr)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	unsigned int func_offset = 0;
+अटल पूर्णांक dw_pcie_ep_ग_लिखो_header(काष्ठा pci_epc *epc, u8 func_no,
+				   काष्ठा pci_epf_header *hdr)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	अचिन्हित पूर्णांक func_offset = 0;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	dw_pcie_dbi_ro_wr_en(pci);
-	dw_pcie_writew_dbi(pci, func_offset + PCI_VENDOR_ID, hdr->vendorid);
-	dw_pcie_writew_dbi(pci, func_offset + PCI_DEVICE_ID, hdr->deviceid);
-	dw_pcie_writeb_dbi(pci, func_offset + PCI_REVISION_ID, hdr->revid);
-	dw_pcie_writeb_dbi(pci, func_offset + PCI_CLASS_PROG, hdr->progif_code);
-	dw_pcie_writew_dbi(pci, func_offset + PCI_CLASS_DEVICE,
+	dw_pcie_ग_लिखोw_dbi(pci, func_offset + PCI_VENDOR_ID, hdr->venकरोrid);
+	dw_pcie_ग_लिखोw_dbi(pci, func_offset + PCI_DEVICE_ID, hdr->deviceid);
+	dw_pcie_ग_लिखोb_dbi(pci, func_offset + PCI_REVISION_ID, hdr->revid);
+	dw_pcie_ग_लिखोb_dbi(pci, func_offset + PCI_CLASS_PROG, hdr->progअगर_code);
+	dw_pcie_ग_लिखोw_dbi(pci, func_offset + PCI_CLASS_DEVICE,
 			   hdr->subclass_code | hdr->baseclass_code << 8);
-	dw_pcie_writeb_dbi(pci, func_offset + PCI_CACHE_LINE_SIZE,
+	dw_pcie_ग_लिखोb_dbi(pci, func_offset + PCI_CACHE_LINE_SIZE,
 			   hdr->cache_line_size);
-	dw_pcie_writew_dbi(pci, func_offset + PCI_SUBSYSTEM_VENDOR_ID,
-			   hdr->subsys_vendor_id);
-	dw_pcie_writew_dbi(pci, func_offset + PCI_SUBSYSTEM_ID, hdr->subsys_id);
-	dw_pcie_writeb_dbi(pci, func_offset + PCI_INTERRUPT_PIN,
-			   hdr->interrupt_pin);
+	dw_pcie_ग_लिखोw_dbi(pci, func_offset + PCI_SUBSYSTEM_VENDOR_ID,
+			   hdr->subsys_venकरोr_id);
+	dw_pcie_ग_लिखोw_dbi(pci, func_offset + PCI_SUBSYSTEM_ID, hdr->subsys_id);
+	dw_pcie_ग_लिखोb_dbi(pci, func_offset + PCI_INTERRUPT_PIN,
+			   hdr->पूर्णांकerrupt_pin);
 	dw_pcie_dbi_ro_wr_dis(pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_ep_inbound_atu(struct dw_pcie_ep *ep, u8 func_no,
-				  enum pci_barno bar, dma_addr_t cpu_addr,
-				  enum dw_pcie_as_type as_type)
-{
-	int ret;
-	u32 free_win;
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_inbound_atu(काष्ठा dw_pcie_ep *ep, u8 func_no,
+				  क्रमागत pci_barno bar, dma_addr_t cpu_addr,
+				  क्रमागत dw_pcie_as_type as_type)
+अणु
+	पूर्णांक ret;
+	u32 मुक्त_win;
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	free_win = find_first_zero_bit(ep->ib_window_map, pci->num_ib_windows);
-	if (free_win >= pci->num_ib_windows) {
+	मुक्त_win = find_first_zero_bit(ep->ib_winकरोw_map, pci->num_ib_winकरोws);
+	अगर (मुक्त_win >= pci->num_ib_winकरोws) अणु
 		dev_err(pci->dev, "No free inbound window\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = dw_pcie_prog_inbound_atu(pci, func_no, free_win, bar, cpu_addr,
+	ret = dw_pcie_prog_inbound_atu(pci, func_no, मुक्त_win, bar, cpu_addr,
 				       as_type);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pci->dev, "Failed to program IB window\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ep->bar_to_atu[bar] = free_win;
-	set_bit(free_win, ep->ib_window_map);
+	ep->bar_to_atu[bar] = मुक्त_win;
+	set_bit(मुक्त_win, ep->ib_winकरोw_map);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_ep_outbound_atu(struct dw_pcie_ep *ep, u8 func_no,
+अटल पूर्णांक dw_pcie_ep_outbound_atu(काष्ठा dw_pcie_ep *ep, u8 func_no,
 				   phys_addr_t phys_addr,
-				   u64 pci_addr, size_t size)
-{
-	u32 free_win;
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+				   u64 pci_addr, माप_प्रकार size)
+अणु
+	u32 मुक्त_win;
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	free_win = find_first_zero_bit(ep->ob_window_map, pci->num_ob_windows);
-	if (free_win >= pci->num_ob_windows) {
+	मुक्त_win = find_first_zero_bit(ep->ob_winकरोw_map, pci->num_ob_winकरोws);
+	अगर (मुक्त_win >= pci->num_ob_winकरोws) अणु
 		dev_err(pci->dev, "No free outbound window\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dw_pcie_prog_ep_outbound_atu(pci, func_no, free_win, PCIE_ATU_TYPE_MEM,
+	dw_pcie_prog_ep_outbound_atu(pci, func_no, मुक्त_win, PCIE_ATU_TYPE_MEM,
 				     phys_addr, pci_addr, size);
 
-	set_bit(free_win, ep->ob_window_map);
-	ep->outbound_addr[free_win] = phys_addr;
+	set_bit(मुक्त_win, ep->ob_winकरोw_map);
+	ep->outbound_addr[मुक्त_win] = phys_addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dw_pcie_ep_clear_bar(struct pci_epc *epc, u8 func_no,
-				 struct pci_epf_bar *epf_bar)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	enum pci_barno bar = epf_bar->barno;
+अटल व्योम dw_pcie_ep_clear_bar(काष्ठा pci_epc *epc, u8 func_no,
+				 काष्ठा pci_epf_bar *epf_bar)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	क्रमागत pci_barno bar = epf_bar->barno;
 	u32 atu_index = ep->bar_to_atu[bar];
 
 	__dw_pcie_ep_reset_bar(pci, func_no, bar, epf_bar->flags);
 
 	dw_pcie_disable_atu(pci, atu_index, DW_PCIE_REGION_INBOUND);
-	clear_bit(atu_index, ep->ib_window_map);
-	ep->epf_bar[bar] = NULL;
-}
+	clear_bit(atu_index, ep->ib_winकरोw_map);
+	ep->epf_bar[bar] = शून्य;
+पूर्ण
 
-static int dw_pcie_ep_set_bar(struct pci_epc *epc, u8 func_no,
-			      struct pci_epf_bar *epf_bar)
-{
-	int ret;
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	enum pci_barno bar = epf_bar->barno;
-	size_t size = epf_bar->size;
-	int flags = epf_bar->flags;
-	enum dw_pcie_as_type as_type;
+अटल पूर्णांक dw_pcie_ep_set_bar(काष्ठा pci_epc *epc, u8 func_no,
+			      काष्ठा pci_epf_bar *epf_bar)
+अणु
+	पूर्णांक ret;
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	क्रमागत pci_barno bar = epf_bar->barno;
+	माप_प्रकार size = epf_bar->size;
+	पूर्णांक flags = epf_bar->flags;
+	क्रमागत dw_pcie_as_type as_type;
 	u32 reg;
-	unsigned int func_offset = 0;
+	अचिन्हित पूर्णांक func_offset = 0;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = PCI_BASE_ADDRESS_0 + (4 * bar) + func_offset;
 
-	if (!(flags & PCI_BASE_ADDRESS_SPACE))
+	अगर (!(flags & PCI_BASE_ADDRESS_SPACE))
 		as_type = DW_PCIE_AS_MEM;
-	else
+	अन्यथा
 		as_type = DW_PCIE_AS_IO;
 
 	ret = dw_pcie_ep_inbound_atu(ep, func_no, bar,
 				     epf_bar->phys_addr, as_type);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dw_pcie_dbi_ro_wr_en(pci);
 
-	dw_pcie_writel_dbi2(pci, reg, lower_32_bits(size - 1));
-	dw_pcie_writel_dbi(pci, reg, flags);
+	dw_pcie_ग_लिखोl_dbi2(pci, reg, lower_32_bits(size - 1));
+	dw_pcie_ग_लिखोl_dbi(pci, reg, flags);
 
-	if (flags & PCI_BASE_ADDRESS_MEM_TYPE_64) {
-		dw_pcie_writel_dbi2(pci, reg + 4, upper_32_bits(size - 1));
-		dw_pcie_writel_dbi(pci, reg + 4, 0);
-	}
+	अगर (flags & PCI_BASE_ADDRESS_MEM_TYPE_64) अणु
+		dw_pcie_ग_लिखोl_dbi2(pci, reg + 4, upper_32_bits(size - 1));
+		dw_pcie_ग_लिखोl_dbi(pci, reg + 4, 0);
+	पूर्ण
 
 	ep->epf_bar[bar] = epf_bar;
 	dw_pcie_dbi_ro_wr_dis(pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_find_index(struct dw_pcie_ep *ep, phys_addr_t addr,
+अटल पूर्णांक dw_pcie_find_index(काष्ठा dw_pcie_ep *ep, phys_addr_t addr,
 			      u32 *atu_index)
-{
+अणु
 	u32 index;
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	for (index = 0; index < pci->num_ob_windows; index++) {
-		if (ep->outbound_addr[index] != addr)
-			continue;
+	क्रम (index = 0; index < pci->num_ob_winकरोws; index++) अणु
+		अगर (ep->outbound_addr[index] != addr)
+			जारी;
 		*atu_index = index;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void dw_pcie_ep_unmap_addr(struct pci_epc *epc, u8 func_no,
+अटल व्योम dw_pcie_ep_unmap_addr(काष्ठा pci_epc *epc, u8 func_no,
 				  phys_addr_t addr)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 	u32 atu_index;
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
 	ret = dw_pcie_find_index(ep, addr, &atu_index);
-	if (ret < 0)
-		return;
+	अगर (ret < 0)
+		वापस;
 
 	dw_pcie_disable_atu(pci, atu_index, DW_PCIE_REGION_OUTBOUND);
-	clear_bit(atu_index, ep->ob_window_map);
-}
+	clear_bit(atu_index, ep->ob_winकरोw_map);
+पूर्ण
 
-static int dw_pcie_ep_map_addr(struct pci_epc *epc, u8 func_no,
+अटल पूर्णांक dw_pcie_ep_map_addr(काष्ठा pci_epc *epc, u8 func_no,
 			       phys_addr_t addr,
-			       u64 pci_addr, size_t size)
-{
-	int ret;
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+			       u64 pci_addr, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
 	ret = dw_pcie_ep_outbound_atu(ep, func_no, addr, pci_addr, size);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pci->dev, "Failed to enable address\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_ep_get_msi(struct pci_epc *epc, u8 func_no)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_get_msi(काष्ठा pci_epc *epc, u8 func_no)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 	u32 val, reg;
-	unsigned int func_offset = 0;
-	struct dw_pcie_ep_func *ep_func;
+	अचिन्हित पूर्णांक func_offset = 0;
+	काष्ठा dw_pcie_ep_func *ep_func;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msi_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msi_cap)
+		वापस -EINVAL;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = ep_func->msi_cap + func_offset + PCI_MSI_FLAGS;
-	val = dw_pcie_readw_dbi(pci, reg);
-	if (!(val & PCI_MSI_FLAGS_ENABLE))
-		return -EINVAL;
+	val = dw_pcie_पढ़ोw_dbi(pci, reg);
+	अगर (!(val & PCI_MSI_FLAGS_ENABLE))
+		वापस -EINVAL;
 
 	val = (val & PCI_MSI_FLAGS_QSIZE) >> 4;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int dw_pcie_ep_set_msi(struct pci_epc *epc, u8 func_no, u8 interrupts)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_set_msi(काष्ठा pci_epc *epc, u8 func_no, u8 पूर्णांकerrupts)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 	u32 val, reg;
-	unsigned int func_offset = 0;
-	struct dw_pcie_ep_func *ep_func;
+	अचिन्हित पूर्णांक func_offset = 0;
+	काष्ठा dw_pcie_ep_func *ep_func;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msi_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msi_cap)
+		वापस -EINVAL;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = ep_func->msi_cap + func_offset + PCI_MSI_FLAGS;
-	val = dw_pcie_readw_dbi(pci, reg);
+	val = dw_pcie_पढ़ोw_dbi(pci, reg);
 	val &= ~PCI_MSI_FLAGS_QMASK;
-	val |= (interrupts << 1) & PCI_MSI_FLAGS_QMASK;
+	val |= (पूर्णांकerrupts << 1) & PCI_MSI_FLAGS_QMASK;
 	dw_pcie_dbi_ro_wr_en(pci);
-	dw_pcie_writew_dbi(pci, reg, val);
+	dw_pcie_ग_लिखोw_dbi(pci, reg, val);
 	dw_pcie_dbi_ro_wr_dis(pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_ep_get_msix(struct pci_epc *epc, u8 func_no)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_get_msix(काष्ठा pci_epc *epc, u8 func_no)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 	u32 val, reg;
-	unsigned int func_offset = 0;
-	struct dw_pcie_ep_func *ep_func;
+	अचिन्हित पूर्णांक func_offset = 0;
+	काष्ठा dw_pcie_ep_func *ep_func;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msix_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msix_cap)
+		वापस -EINVAL;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = ep_func->msix_cap + func_offset + PCI_MSIX_FLAGS;
-	val = dw_pcie_readw_dbi(pci, reg);
-	if (!(val & PCI_MSIX_FLAGS_ENABLE))
-		return -EINVAL;
+	val = dw_pcie_पढ़ोw_dbi(pci, reg);
+	अगर (!(val & PCI_MSIX_FLAGS_ENABLE))
+		वापस -EINVAL;
 
 	val &= PCI_MSIX_FLAGS_QSIZE;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int dw_pcie_ep_set_msix(struct pci_epc *epc, u8 func_no, u16 interrupts,
-			       enum pci_barno bir, u32 offset)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_set_msix(काष्ठा pci_epc *epc, u8 func_no, u16 पूर्णांकerrupts,
+			       क्रमागत pci_barno bir, u32 offset)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 	u32 val, reg;
-	unsigned int func_offset = 0;
-	struct dw_pcie_ep_func *ep_func;
+	अचिन्हित पूर्णांक func_offset = 0;
+	काष्ठा dw_pcie_ep_func *ep_func;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msix_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msix_cap)
+		वापस -EINVAL;
 
 	dw_pcie_dbi_ro_wr_en(pci);
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = ep_func->msix_cap + func_offset + PCI_MSIX_FLAGS;
-	val = dw_pcie_readw_dbi(pci, reg);
+	val = dw_pcie_पढ़ोw_dbi(pci, reg);
 	val &= ~PCI_MSIX_FLAGS_QSIZE;
-	val |= interrupts;
-	dw_pcie_writew_dbi(pci, reg, val);
+	val |= पूर्णांकerrupts;
+	dw_pcie_ग_लिखोw_dbi(pci, reg, val);
 
 	reg = ep_func->msix_cap + func_offset + PCI_MSIX_TABLE;
 	val = offset | bir;
-	dw_pcie_writel_dbi(pci, reg, val);
+	dw_pcie_ग_लिखोl_dbi(pci, reg, val);
 
 	reg = ep_func->msix_cap + func_offset + PCI_MSIX_PBA;
-	val = (offset + (interrupts * PCI_MSIX_ENTRY_SIZE)) | bir;
-	dw_pcie_writel_dbi(pci, reg, val);
+	val = (offset + (पूर्णांकerrupts * PCI_MSIX_ENTRY_SIZE)) | bir;
+	dw_pcie_ग_लिखोl_dbi(pci, reg, val);
 
 	dw_pcie_dbi_ro_wr_dis(pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_pcie_ep_raise_irq(struct pci_epc *epc, u8 func_no,
-				enum pci_epc_irq_type type, u16 interrupt_num)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
+अटल पूर्णांक dw_pcie_ep_उठाओ_irq(काष्ठा pci_epc *epc, u8 func_no,
+				क्रमागत pci_epc_irq_type type, u16 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
 
-	if (!ep->ops->raise_irq)
-		return -EINVAL;
+	अगर (!ep->ops->उठाओ_irq)
+		वापस -EINVAL;
 
-	return ep->ops->raise_irq(ep, func_no, type, interrupt_num);
-}
+	वापस ep->ops->उठाओ_irq(ep, func_no, type, पूर्णांकerrupt_num);
+पूर्ण
 
-static void dw_pcie_ep_stop(struct pci_epc *epc)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल व्योम dw_pcie_ep_stop(काष्ठा pci_epc *epc)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	if (pci->ops && pci->ops->stop_link)
+	अगर (pci->ops && pci->ops->stop_link)
 		pci->ops->stop_link(pci);
-}
+पूर्ण
 
-static int dw_pcie_ep_start(struct pci_epc *epc)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_pcie_ep_start(काष्ठा pci_epc *epc)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	if (!pci->ops || !pci->ops->start_link)
-		return -EINVAL;
+	अगर (!pci->ops || !pci->ops->start_link)
+		वापस -EINVAL;
 
-	return pci->ops->start_link(pci);
-}
+	वापस pci->ops->start_link(pci);
+पूर्ण
 
-static const struct pci_epc_features*
-dw_pcie_ep_get_features(struct pci_epc *epc, u8 func_no)
-{
-	struct dw_pcie_ep *ep = epc_get_drvdata(epc);
+अटल स्थिर काष्ठा pci_epc_features*
+dw_pcie_ep_get_features(काष्ठा pci_epc *epc, u8 func_no)
+अणु
+	काष्ठा dw_pcie_ep *ep = epc_get_drvdata(epc);
 
-	if (!ep->ops->get_features)
-		return NULL;
+	अगर (!ep->ops->get_features)
+		वापस शून्य;
 
-	return ep->ops->get_features(ep);
-}
+	वापस ep->ops->get_features(ep);
+पूर्ण
 
-static const struct pci_epc_ops epc_ops = {
-	.write_header		= dw_pcie_ep_write_header,
+अटल स्थिर काष्ठा pci_epc_ops epc_ops = अणु
+	.ग_लिखो_header		= dw_pcie_ep_ग_लिखो_header,
 	.set_bar		= dw_pcie_ep_set_bar,
 	.clear_bar		= dw_pcie_ep_clear_bar,
 	.map_addr		= dw_pcie_ep_map_addr,
@@ -470,290 +471,290 @@ static const struct pci_epc_ops epc_ops = {
 	.get_msi		= dw_pcie_ep_get_msi,
 	.set_msix		= dw_pcie_ep_set_msix,
 	.get_msix		= dw_pcie_ep_get_msix,
-	.raise_irq		= dw_pcie_ep_raise_irq,
+	.उठाओ_irq		= dw_pcie_ep_उठाओ_irq,
 	.start			= dw_pcie_ep_start,
 	.stop			= dw_pcie_ep_stop,
 	.get_features		= dw_pcie_ep_get_features,
-};
+पूर्ण;
 
-int dw_pcie_ep_raise_legacy_irq(struct dw_pcie_ep *ep, u8 func_no)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct device *dev = pci->dev;
+पूर्णांक dw_pcie_ep_उठाओ_legacy_irq(काष्ठा dw_pcie_ep *ep, u8 func_no)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा device *dev = pci->dev;
 
 	dev_err(dev, "EP cannot trigger legacy IRQs\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int dw_pcie_ep_raise_msi_irq(struct dw_pcie_ep *ep, u8 func_no,
-			     u8 interrupt_num)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct dw_pcie_ep_func *ep_func;
-	struct pci_epc *epc = ep->epc;
-	unsigned int aligned_offset;
-	unsigned int func_offset = 0;
+पूर्णांक dw_pcie_ep_उठाओ_msi_irq(काष्ठा dw_pcie_ep *ep, u8 func_no,
+			     u8 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा dw_pcie_ep_func *ep_func;
+	काष्ठा pci_epc *epc = ep->epc;
+	अचिन्हित पूर्णांक aligned_offset;
+	अचिन्हित पूर्णांक func_offset = 0;
 	u16 msg_ctrl, msg_data;
 	u32 msg_addr_lower, msg_addr_upper, reg;
 	u64 msg_addr;
 	bool has_upper;
-	int ret;
+	पूर्णांक ret;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msi_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msi_cap)
+		वापस -EINVAL;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
-	/* Raise MSI per the PCI Local Bus Specification Revision 3.0, 6.8.1. */
+	/* Raise MSI per the PCI Local Bus Specअगरication Revision 3.0, 6.8.1. */
 	reg = ep_func->msi_cap + func_offset + PCI_MSI_FLAGS;
-	msg_ctrl = dw_pcie_readw_dbi(pci, reg);
+	msg_ctrl = dw_pcie_पढ़ोw_dbi(pci, reg);
 	has_upper = !!(msg_ctrl & PCI_MSI_FLAGS_64BIT);
 	reg = ep_func->msi_cap + func_offset + PCI_MSI_ADDRESS_LO;
-	msg_addr_lower = dw_pcie_readl_dbi(pci, reg);
-	if (has_upper) {
+	msg_addr_lower = dw_pcie_पढ़ोl_dbi(pci, reg);
+	अगर (has_upper) अणु
 		reg = ep_func->msi_cap + func_offset + PCI_MSI_ADDRESS_HI;
-		msg_addr_upper = dw_pcie_readl_dbi(pci, reg);
+		msg_addr_upper = dw_pcie_पढ़ोl_dbi(pci, reg);
 		reg = ep_func->msi_cap + func_offset + PCI_MSI_DATA_64;
-		msg_data = dw_pcie_readw_dbi(pci, reg);
-	} else {
+		msg_data = dw_pcie_पढ़ोw_dbi(pci, reg);
+	पूर्ण अन्यथा अणु
 		msg_addr_upper = 0;
 		reg = ep_func->msi_cap + func_offset + PCI_MSI_DATA_32;
-		msg_data = dw_pcie_readw_dbi(pci, reg);
-	}
-	aligned_offset = msg_addr_lower & (epc->mem->window.page_size - 1);
+		msg_data = dw_pcie_पढ़ोw_dbi(pci, reg);
+	पूर्ण
+	aligned_offset = msg_addr_lower & (epc->mem->winकरोw.page_size - 1);
 	msg_addr = ((u64)msg_addr_upper) << 32 |
 			(msg_addr_lower & ~aligned_offset);
 	ret = dw_pcie_ep_map_addr(epc, func_no, ep->msi_mem_phys, msg_addr,
-				  epc->mem->window.page_size);
-	if (ret)
-		return ret;
+				  epc->mem->winकरोw.page_size);
+	अगर (ret)
+		वापस ret;
 
-	writel(msg_data | (interrupt_num - 1), ep->msi_mem + aligned_offset);
+	ग_लिखोl(msg_data | (पूर्णांकerrupt_num - 1), ep->msi_mem + aligned_offset);
 
 	dw_pcie_ep_unmap_addr(epc, func_no, ep->msi_mem_phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dw_pcie_ep_raise_msix_irq_doorbell(struct dw_pcie_ep *ep, u8 func_no,
-				       u16 interrupt_num)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct dw_pcie_ep_func *ep_func;
+पूर्णांक dw_pcie_ep_उठाओ_msix_irq_करोorbell(काष्ठा dw_pcie_ep *ep, u8 func_no,
+				       u16 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा dw_pcie_ep_func *ep_func;
 	u32 msg_data;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msix_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msix_cap)
+		वापस -EINVAL;
 
 	msg_data = (func_no << PCIE_MSIX_DOORBELL_PF_SHIFT) |
-		   (interrupt_num - 1);
+		   (पूर्णांकerrupt_num - 1);
 
-	dw_pcie_writel_dbi(pci, PCIE_MSIX_DOORBELL, msg_data);
+	dw_pcie_ग_लिखोl_dbi(pci, PCIE_MSIX_DOORBELL, msg_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dw_pcie_ep_raise_msix_irq(struct dw_pcie_ep *ep, u8 func_no,
-			      u16 interrupt_num)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct dw_pcie_ep_func *ep_func;
-	struct pci_epf_msix_tbl *msix_tbl;
-	struct pci_epc *epc = ep->epc;
-	unsigned int func_offset = 0;
+पूर्णांक dw_pcie_ep_उठाओ_msix_irq(काष्ठा dw_pcie_ep *ep, u8 func_no,
+			      u16 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा dw_pcie_ep_func *ep_func;
+	काष्ठा pci_epf_msix_tbl *msix_tbl;
+	काष्ठा pci_epc *epc = ep->epc;
+	अचिन्हित पूर्णांक func_offset = 0;
 	u32 reg, msg_data, vec_ctrl;
-	unsigned int aligned_offset;
+	अचिन्हित पूर्णांक aligned_offset;
 	u32 tbl_offset;
 	u64 msg_addr;
-	int ret;
+	पूर्णांक ret;
 	u8 bir;
 
 	ep_func = dw_pcie_ep_get_func_from_ep(ep, func_no);
-	if (!ep_func || !ep_func->msix_cap)
-		return -EINVAL;
+	अगर (!ep_func || !ep_func->msix_cap)
+		वापस -EINVAL;
 
 	func_offset = dw_pcie_ep_func_select(ep, func_no);
 
 	reg = ep_func->msix_cap + func_offset + PCI_MSIX_TABLE;
-	tbl_offset = dw_pcie_readl_dbi(pci, reg);
+	tbl_offset = dw_pcie_पढ़ोl_dbi(pci, reg);
 	bir = (tbl_offset & PCI_MSIX_TABLE_BIR);
 	tbl_offset &= PCI_MSIX_TABLE_OFFSET;
 
 	msix_tbl = ep->epf_bar[bir]->addr + tbl_offset;
-	msg_addr = msix_tbl[(interrupt_num - 1)].msg_addr;
-	msg_data = msix_tbl[(interrupt_num - 1)].msg_data;
-	vec_ctrl = msix_tbl[(interrupt_num - 1)].vector_ctrl;
+	msg_addr = msix_tbl[(पूर्णांकerrupt_num - 1)].msg_addr;
+	msg_data = msix_tbl[(पूर्णांकerrupt_num - 1)].msg_data;
+	vec_ctrl = msix_tbl[(पूर्णांकerrupt_num - 1)].vector_ctrl;
 
-	if (vec_ctrl & PCI_MSIX_ENTRY_CTRL_MASKBIT) {
+	अगर (vec_ctrl & PCI_MSIX_ENTRY_CTRL_MASKBIT) अणु
 		dev_dbg(pci->dev, "MSI-X entry ctrl set\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	aligned_offset = msg_addr & (epc->mem->window.page_size - 1);
+	aligned_offset = msg_addr & (epc->mem->winकरोw.page_size - 1);
 	ret = dw_pcie_ep_map_addr(epc, func_no, ep->msi_mem_phys,  msg_addr,
-				  epc->mem->window.page_size);
-	if (ret)
-		return ret;
+				  epc->mem->winकरोw.page_size);
+	अगर (ret)
+		वापस ret;
 
-	writel(msg_data, ep->msi_mem + aligned_offset);
+	ग_लिखोl(msg_data, ep->msi_mem + aligned_offset);
 
 	dw_pcie_ep_unmap_addr(epc, func_no, ep->msi_mem_phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dw_pcie_ep_exit(struct dw_pcie_ep *ep)
-{
-	struct pci_epc *epc = ep->epc;
+व्योम dw_pcie_ep_निकास(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा pci_epc *epc = ep->epc;
 
-	pci_epc_mem_free_addr(epc, ep->msi_mem_phys, ep->msi_mem,
-			      epc->mem->window.page_size);
+	pci_epc_mem_मुक्त_addr(epc, ep->msi_mem_phys, ep->msi_mem,
+			      epc->mem->winकरोw.page_size);
 
-	pci_epc_mem_exit(epc);
-}
+	pci_epc_mem_निकास(epc);
+पूर्ण
 
-static unsigned int dw_pcie_ep_find_ext_capability(struct dw_pcie *pci, int cap)
-{
+अटल अचिन्हित पूर्णांक dw_pcie_ep_find_ext_capability(काष्ठा dw_pcie *pci, पूर्णांक cap)
+अणु
 	u32 header;
-	int pos = PCI_CFG_SPACE_SIZE;
+	पूर्णांक pos = PCI_CFG_SPACE_SIZE;
 
-	while (pos) {
-		header = dw_pcie_readl_dbi(pci, pos);
-		if (PCI_EXT_CAP_ID(header) == cap)
-			return pos;
+	जबतक (pos) अणु
+		header = dw_pcie_पढ़ोl_dbi(pci, pos);
+		अगर (PCI_EXT_CAP_ID(header) == cap)
+			वापस pos;
 
 		pos = PCI_EXT_CAP_NEXT(header);
-		if (!pos)
-			break;
-	}
+		अगर (!pos)
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dw_pcie_ep_init_complete(struct dw_pcie_ep *ep)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	unsigned int offset;
-	unsigned int nbars;
+पूर्णांक dw_pcie_ep_init_complete(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक nbars;
 	u8 hdr_type;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	hdr_type = dw_pcie_readb_dbi(pci, PCI_HEADER_TYPE) &
+	hdr_type = dw_pcie_पढ़ोb_dbi(pci, PCI_HEADER_TYPE) &
 		   PCI_HEADER_TYPE_MASK;
-	if (hdr_type != PCI_HEADER_TYPE_NORMAL) {
+	अगर (hdr_type != PCI_HEADER_TYPE_NORMAL) अणु
 		dev_err(pci->dev,
 			"PCIe controller is not set to EP mode (hdr_type:0x%x)!\n",
 			hdr_type);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	offset = dw_pcie_ep_find_ext_capability(pci, PCI_EXT_CAP_ID_REBAR);
 
 	dw_pcie_dbi_ro_wr_en(pci);
 
-	if (offset) {
-		reg = dw_pcie_readl_dbi(pci, offset + PCI_REBAR_CTRL);
+	अगर (offset) अणु
+		reg = dw_pcie_पढ़ोl_dbi(pci, offset + PCI_REBAR_CTRL);
 		nbars = (reg & PCI_REBAR_CTRL_NBAR_MASK) >>
 			PCI_REBAR_CTRL_NBAR_SHIFT;
 
-		for (i = 0; i < nbars; i++, offset += PCI_REBAR_CTRL)
-			dw_pcie_writel_dbi(pci, offset + PCI_REBAR_CAP, 0x0);
-	}
+		क्रम (i = 0; i < nbars; i++, offset += PCI_REBAR_CTRL)
+			dw_pcie_ग_लिखोl_dbi(pci, offset + PCI_REBAR_CAP, 0x0);
+	पूर्ण
 
 	dw_pcie_setup(pci);
 	dw_pcie_dbi_ro_wr_dis(pci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dw_pcie_ep_init_complete);
 
-int dw_pcie_ep_init(struct dw_pcie_ep *ep)
-{
-	int ret;
-	void *addr;
+पूर्णांक dw_pcie_ep_init(काष्ठा dw_pcie_ep *ep)
+अणु
+	पूर्णांक ret;
+	व्योम *addr;
 	u8 func_no;
-	struct resource *res;
-	struct pci_epc *epc;
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	struct device *dev = pci->dev;
-	struct platform_device *pdev = to_platform_device(dev);
-	struct device_node *np = dev->of_node;
-	const struct pci_epc_features *epc_features;
-	struct dw_pcie_ep_func *ep_func;
+	काष्ठा resource *res;
+	काष्ठा pci_epc *epc;
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	काष्ठा device *dev = pci->dev;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा pci_epc_features *epc_features;
+	काष्ठा dw_pcie_ep_func *ep_func;
 
 	INIT_LIST_HEAD(&ep->func_list);
 
-	if (!pci->dbi_base) {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dbi");
+	अगर (!pci->dbi_base) अणु
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dbi");
 		pci->dbi_base = devm_pci_remap_cfg_resource(dev, res);
-		if (IS_ERR(pci->dbi_base))
-			return PTR_ERR(pci->dbi_base);
-	}
+		अगर (IS_ERR(pci->dbi_base))
+			वापस PTR_ERR(pci->dbi_base);
+	पूर्ण
 
-	if (!pci->dbi_base2) {
-		res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "dbi2");
-		if (!res)
+	अगर (!pci->dbi_base2) अणु
+		res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "dbi2");
+		अगर (!res)
 			pci->dbi_base2 = pci->dbi_base + SZ_4K;
-		else {
+		अन्यथा अणु
 			pci->dbi_base2 = devm_pci_remap_cfg_resource(dev, res);
-			if (IS_ERR(pci->dbi_base2))
-				return PTR_ERR(pci->dbi_base2);
-		}
-	}
+			अगर (IS_ERR(pci->dbi_base2))
+				वापस PTR_ERR(pci->dbi_base2);
+		पूर्ण
+	पूर्ण
 
 	dw_pcie_iatu_detect(pci);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "addr_space");
-	if (!res)
-		return -EINVAL;
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "addr_space");
+	अगर (!res)
+		वापस -EINVAL;
 
 	ep->phys_base = res->start;
 	ep->addr_size = resource_size(res);
 
-	ep->ib_window_map = devm_kcalloc(dev,
-					 BITS_TO_LONGS(pci->num_ib_windows),
-					 sizeof(long),
+	ep->ib_winकरोw_map = devm_kसुस्मृति(dev,
+					 BITS_TO_LONGS(pci->num_ib_winकरोws),
+					 माप(दीर्घ),
 					 GFP_KERNEL);
-	if (!ep->ib_window_map)
-		return -ENOMEM;
+	अगर (!ep->ib_winकरोw_map)
+		वापस -ENOMEM;
 
-	ep->ob_window_map = devm_kcalloc(dev,
-					 BITS_TO_LONGS(pci->num_ob_windows),
-					 sizeof(long),
+	ep->ob_winकरोw_map = devm_kसुस्मृति(dev,
+					 BITS_TO_LONGS(pci->num_ob_winकरोws),
+					 माप(दीर्घ),
 					 GFP_KERNEL);
-	if (!ep->ob_window_map)
-		return -ENOMEM;
+	अगर (!ep->ob_winकरोw_map)
+		वापस -ENOMEM;
 
-	addr = devm_kcalloc(dev, pci->num_ob_windows, sizeof(phys_addr_t),
+	addr = devm_kसुस्मृति(dev, pci->num_ob_winकरोws, माप(phys_addr_t),
 			    GFP_KERNEL);
-	if (!addr)
-		return -ENOMEM;
+	अगर (!addr)
+		वापस -ENOMEM;
 	ep->outbound_addr = addr;
 
-	if (pci->link_gen < 1)
+	अगर (pci->link_gen < 1)
 		pci->link_gen = of_pci_get_max_link_speed(np);
 
 	epc = devm_pci_epc_create(dev, &epc_ops);
-	if (IS_ERR(epc)) {
+	अगर (IS_ERR(epc)) अणु
 		dev_err(dev, "Failed to create epc device\n");
-		return PTR_ERR(epc);
-	}
+		वापस PTR_ERR(epc);
+	पूर्ण
 
 	ep->epc = epc;
 	epc_set_drvdata(epc, ep);
 
-	ret = of_property_read_u8(np, "max-functions", &epc->max_functions);
-	if (ret < 0)
+	ret = of_property_पढ़ो_u8(np, "max-functions", &epc->max_functions);
+	अगर (ret < 0)
 		epc->max_functions = 1;
 
-	for (func_no = 0; func_no < epc->max_functions; func_no++) {
-		ep_func = devm_kzalloc(dev, sizeof(*ep_func), GFP_KERNEL);
-		if (!ep_func)
-			return -ENOMEM;
+	क्रम (func_no = 0; func_no < epc->max_functions; func_no++) अणु
+		ep_func = devm_kzalloc(dev, माप(*ep_func), GFP_KERNEL);
+		अगर (!ep_func)
+			वापस -ENOMEM;
 
 		ep_func->func_no = func_no;
 		ep_func->msi_cap = dw_pcie_ep_find_capability(ep, func_no,
@@ -762,31 +763,31 @@ int dw_pcie_ep_init(struct dw_pcie_ep *ep)
 							       PCI_CAP_ID_MSIX);
 
 		list_add_tail(&ep_func->list, &ep->func_list);
-	}
+	पूर्ण
 
-	if (ep->ops->ep_init)
+	अगर (ep->ops->ep_init)
 		ep->ops->ep_init(ep);
 
 	ret = pci_epc_mem_init(epc, ep->phys_base, ep->addr_size,
 			       ep->page_size);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Failed to initialize address space\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ep->msi_mem = pci_epc_mem_alloc_addr(epc, &ep->msi_mem_phys,
-					     epc->mem->window.page_size);
-	if (!ep->msi_mem) {
+					     epc->mem->winकरोw.page_size);
+	अगर (!ep->msi_mem) अणु
 		dev_err(dev, "Failed to reserve memory for MSI/MSI-X\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (ep->ops->get_features) {
+	अगर (ep->ops->get_features) अणु
 		epc_features = ep->ops->get_features(ep);
-		if (epc_features->core_init_notifier)
-			return 0;
-	}
+		अगर (epc_features->core_init_notअगरier)
+			वापस 0;
+	पूर्ण
 
-	return dw_pcie_ep_init_complete(ep);
-}
+	वापस dw_pcie_ep_init_complete(ep);
+पूर्ण
 EXPORT_SYMBOL_GPL(dw_pcie_ep_init);

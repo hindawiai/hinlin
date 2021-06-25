@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*****************************************************************************
  *                                                                           *
  * File: espi.h                                                              *
@@ -6,12 +7,12 @@
  * Description:                                                              *
  *  part of the Chelsio 10Gb Ethernet Driver.                                *
  *                                                                           *
- * This program is free software; you can redistribute it and/or modify      *
+ * This program is मुक्त software; you can redistribute it and/or modअगरy      *
  * it under the terms of the GNU General Public License, version 2, as       *
  * published by the Free Software Foundation.                                *
  *                                                                           *
- * You should have received a copy of the GNU General Public License along   *
- * with this program; if not, see <http://www.gnu.org/licenses/>.            *
+ * You should have received a copy of the GNU General Public License aदीर्घ   *
+ * with this program; अगर not, see <http://www.gnu.org/licenses/>.            *
  *                                                                           *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED    *
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF      *
@@ -22,12 +23,12 @@
  * Copyright (c) 2003 - 2005 Chelsio Communications, Inc.                    *
  * All rights reserved.                                                      *
  *                                                                           *
- * Maintainers: maintainers@chelsio.com                                      *
+ * Maपूर्णांकainers: मुख्यtainers@chelsio.com                                      *
  *                                                                           *
  * Authors: Dimitrios Michailidis   <dm@chelsio.com>                         *
  *          Tina Yang               <tainay@chelsio.com>                     *
  *          Felix Marti             <felix@chelsio.com>                      *
- *          Scott Bardone           <sbardone@chelsio.com>                   *
+ *          Scott Barकरोne           <sbarकरोne@chelsio.com>                   *
  *          Kurt Ottaway            <kottaway@chelsio.com>                   *
  *          Frank DiMambro          <frank@chelsio.com>                      *
  *                                                                           *
@@ -35,33 +36,33 @@
  *                                                                           *
  ****************************************************************************/
 
-#ifndef _CXGB_ESPI_H_
-#define _CXGB_ESPI_H_
+#अगर_अघोषित _CXGB_ESPI_H_
+#घोषणा _CXGB_ESPI_H_
 
-#include "common.h"
+#समावेश "common.h"
 
-struct espi_intr_counts {
-	unsigned int DIP4_err;
-	unsigned int rx_drops;
-	unsigned int tx_drops;
-	unsigned int rx_ovflw;
-	unsigned int parity_err;
-	unsigned int DIP2_parity_err;
-};
+काष्ठा espi_पूर्णांकr_counts अणु
+	अचिन्हित पूर्णांक DIP4_err;
+	अचिन्हित पूर्णांक rx_drops;
+	अचिन्हित पूर्णांक tx_drops;
+	अचिन्हित पूर्णांक rx_ovflw;
+	अचिन्हित पूर्णांक parity_err;
+	अचिन्हित पूर्णांक DIP2_parity_err;
+पूर्ण;
 
-struct peespi;
+काष्ठा peespi;
 
-struct peespi *t1_espi_create(adapter_t *adapter);
-void t1_espi_destroy(struct peespi *espi);
-int t1_espi_init(struct peespi *espi, int mac_type, int nports);
+काष्ठा peespi *t1_espi_create(adapter_t *adapter);
+व्योम t1_espi_destroy(काष्ठा peespi *espi);
+पूर्णांक t1_espi_init(काष्ठा peespi *espi, पूर्णांक mac_type, पूर्णांक nports);
 
-void t1_espi_intr_enable(struct peespi *);
-void t1_espi_intr_clear(struct peespi *);
-void t1_espi_intr_disable(struct peespi *);
-int t1_espi_intr_handler(struct peespi *);
-const struct espi_intr_counts *t1_espi_get_intr_counts(struct peespi *espi);
+व्योम t1_espi_पूर्णांकr_enable(काष्ठा peespi *);
+व्योम t1_espi_पूर्णांकr_clear(काष्ठा peespi *);
+व्योम t1_espi_पूर्णांकr_disable(काष्ठा peespi *);
+पूर्णांक t1_espi_पूर्णांकr_handler(काष्ठा peespi *);
+स्थिर काष्ठा espi_पूर्णांकr_counts *t1_espi_get_पूर्णांकr_counts(काष्ठा peespi *espi);
 
-u32 t1_espi_get_mon(adapter_t *adapter, u32 addr, u8 wait);
-int t1_espi_get_mon_t204(adapter_t *, u32 *, u8);
+u32 t1_espi_get_mon(adapter_t *adapter, u32 addr, u8 रुको);
+पूर्णांक t1_espi_get_mon_t204(adapter_t *, u32 *, u8);
 
-#endif /* _CXGB_ESPI_H_ */
+#पूर्ण_अगर /* _CXGB_ESPI_H_ */

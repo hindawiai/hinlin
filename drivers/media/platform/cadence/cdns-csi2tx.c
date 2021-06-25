@@ -1,355 +1,356 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Cadence MIPI-CSI2 TX Controller
+ * Driver क्रम Cadence MIPI-CSI2 TX Controller
  *
  * Copyright (C) 2017-2019 Cadence Design Systems Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_graph.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-subdev.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-subdev.h>
 
-#define CSI2TX_DEVICE_CONFIG_REG	0x00
-#define CSI2TX_DEVICE_CONFIG_STREAMS_MASK	GENMASK(6, 4)
-#define CSI2TX_DEVICE_CONFIG_HAS_DPHY		BIT(3)
-#define CSI2TX_DEVICE_CONFIG_LANES_MASK		GENMASK(2, 0)
+#घोषणा CSI2TX_DEVICE_CONFIG_REG	0x00
+#घोषणा CSI2TX_DEVICE_CONFIG_STREAMS_MASK	GENMASK(6, 4)
+#घोषणा CSI2TX_DEVICE_CONFIG_HAS_DPHY		BIT(3)
+#घोषणा CSI2TX_DEVICE_CONFIG_LANES_MASK		GENMASK(2, 0)
 
-#define CSI2TX_CONFIG_REG		0x20
-#define CSI2TX_CONFIG_CFG_REQ			BIT(2)
-#define CSI2TX_CONFIG_SRST_REQ			BIT(1)
+#घोषणा CSI2TX_CONFIG_REG		0x20
+#घोषणा CSI2TX_CONFIG_CFG_REQ			BIT(2)
+#घोषणा CSI2TX_CONFIG_SRST_REQ			BIT(1)
 
-#define CSI2TX_DPHY_CFG_REG		0x28
-#define CSI2TX_DPHY_CFG_CLK_RESET		BIT(16)
-#define CSI2TX_DPHY_CFG_LANE_RESET(n)		BIT((n) + 12)
-#define CSI2TX_DPHY_CFG_MODE_MASK		GENMASK(9, 8)
-#define CSI2TX_DPHY_CFG_MODE_LPDT		(2 << 8)
-#define CSI2TX_DPHY_CFG_MODE_HS			(1 << 8)
-#define CSI2TX_DPHY_CFG_MODE_ULPS		(0 << 8)
-#define CSI2TX_DPHY_CFG_CLK_ENABLE		BIT(4)
-#define CSI2TX_DPHY_CFG_LANE_ENABLE(n)		BIT(n)
+#घोषणा CSI2TX_DPHY_CFG_REG		0x28
+#घोषणा CSI2TX_DPHY_CFG_CLK_RESET		BIT(16)
+#घोषणा CSI2TX_DPHY_CFG_LANE_RESET(n)		BIT((n) + 12)
+#घोषणा CSI2TX_DPHY_CFG_MODE_MASK		GENMASK(9, 8)
+#घोषणा CSI2TX_DPHY_CFG_MODE_LPDT		(2 << 8)
+#घोषणा CSI2TX_DPHY_CFG_MODE_HS			(1 << 8)
+#घोषणा CSI2TX_DPHY_CFG_MODE_ULPS		(0 << 8)
+#घोषणा CSI2TX_DPHY_CFG_CLK_ENABLE		BIT(4)
+#घोषणा CSI2TX_DPHY_CFG_LANE_ENABLE(n)		BIT(n)
 
-#define CSI2TX_DPHY_CLK_WAKEUP_REG	0x2c
-#define CSI2TX_DPHY_CLK_WAKEUP_ULPS_CYCLES(n)	((n) & 0xffff)
+#घोषणा CSI2TX_DPHY_CLK_WAKEUP_REG	0x2c
+#घोषणा CSI2TX_DPHY_CLK_WAKEUP_ULPS_CYCLES(n)	((n) & 0xffff)
 
-#define CSI2TX_DT_CFG_REG(n)		(0x80 + (n) * 8)
-#define CSI2TX_DT_CFG_DT(n)			(((n) & 0x3f) << 2)
+#घोषणा CSI2TX_DT_CFG_REG(n)		(0x80 + (n) * 8)
+#घोषणा CSI2TX_DT_CFG_DT(n)			(((n) & 0x3f) << 2)
 
-#define CSI2TX_DT_FORMAT_REG(n)		(0x84 + (n) * 8)
-#define CSI2TX_DT_FORMAT_BYTES_PER_LINE(n)	(((n) & 0xffff) << 16)
-#define CSI2TX_DT_FORMAT_MAX_LINE_NUM(n)	((n) & 0xffff)
+#घोषणा CSI2TX_DT_FORMAT_REG(n)		(0x84 + (n) * 8)
+#घोषणा CSI2TX_DT_FORMAT_BYTES_PER_LINE(n)	(((n) & 0xffff) << 16)
+#घोषणा CSI2TX_DT_FORMAT_MAX_LINE_NUM(n)	((n) & 0xffff)
 
-#define CSI2TX_STREAM_IF_CFG_REG(n)	(0x100 + (n) * 4)
-#define CSI2TX_STREAM_IF_CFG_FILL_LEVEL(n)	((n) & 0x1f)
+#घोषणा CSI2TX_STREAM_IF_CFG_REG(n)	(0x100 + (n) * 4)
+#घोषणा CSI2TX_STREAM_IF_CFG_FILL_LEVEL(n)	((n) & 0x1f)
 
 /* CSI2TX V2 Registers */
-#define CSI2TX_V2_DPHY_CFG_REG			0x28
-#define CSI2TX_V2_DPHY_CFG_RESET		BIT(16)
-#define CSI2TX_V2_DPHY_CFG_CLOCK_MODE		BIT(10)
-#define CSI2TX_V2_DPHY_CFG_MODE_MASK		GENMASK(9, 8)
-#define CSI2TX_V2_DPHY_CFG_MODE_LPDT		(2 << 8)
-#define CSI2TX_V2_DPHY_CFG_MODE_HS		(1 << 8)
-#define CSI2TX_V2_DPHY_CFG_MODE_ULPS		(0 << 8)
-#define CSI2TX_V2_DPHY_CFG_CLK_ENABLE		BIT(4)
-#define CSI2TX_V2_DPHY_CFG_LANE_ENABLE(n)	BIT(n)
+#घोषणा CSI2TX_V2_DPHY_CFG_REG			0x28
+#घोषणा CSI2TX_V2_DPHY_CFG_RESET		BIT(16)
+#घोषणा CSI2TX_V2_DPHY_CFG_CLOCK_MODE		BIT(10)
+#घोषणा CSI2TX_V2_DPHY_CFG_MODE_MASK		GENMASK(9, 8)
+#घोषणा CSI2TX_V2_DPHY_CFG_MODE_LPDT		(2 << 8)
+#घोषणा CSI2TX_V2_DPHY_CFG_MODE_HS		(1 << 8)
+#घोषणा CSI2TX_V2_DPHY_CFG_MODE_ULPS		(0 << 8)
+#घोषणा CSI2TX_V2_DPHY_CFG_CLK_ENABLE		BIT(4)
+#घोषणा CSI2TX_V2_DPHY_CFG_LANE_ENABLE(n)	BIT(n)
 
-#define CSI2TX_LANES_MAX	4
-#define CSI2TX_STREAMS_MAX	4
+#घोषणा CSI2TX_LANES_MAX	4
+#घोषणा CSI2TX_STREAMS_MAX	4
 
-enum csi2tx_pads {
+क्रमागत csi2tx_pads अणु
 	CSI2TX_PAD_SOURCE,
 	CSI2TX_PAD_SINK_STREAM0,
 	CSI2TX_PAD_SINK_STREAM1,
 	CSI2TX_PAD_SINK_STREAM2,
 	CSI2TX_PAD_SINK_STREAM3,
 	CSI2TX_PAD_MAX,
-};
+पूर्ण;
 
-struct csi2tx_fmt {
+काष्ठा csi2tx_fmt अणु
 	u32	mbus;
 	u32	dt;
 	u32	bpp;
-};
+पूर्ण;
 
-struct csi2tx_priv;
+काष्ठा csi2tx_priv;
 
 /* CSI2TX Variant Operations */
-struct csi2tx_vops {
-	void (*dphy_setup)(struct csi2tx_priv *csi2tx);
-};
+काष्ठा csi2tx_vops अणु
+	व्योम (*dphy_setup)(काष्ठा csi2tx_priv *csi2tx);
+पूर्ण;
 
-struct csi2tx_priv {
-	struct device			*dev;
-	unsigned int			count;
+काष्ठा csi2tx_priv अणु
+	काष्ठा device			*dev;
+	अचिन्हित पूर्णांक			count;
 
 	/*
 	 * Used to prevent race conditions between multiple,
 	 * concurrent calls to start and stop.
 	 */
-	struct mutex			lock;
+	काष्ठा mutex			lock;
 
-	void __iomem			*base;
+	व्योम __iomem			*base;
 
-	struct csi2tx_vops		*vops;
+	काष्ठा csi2tx_vops		*vops;
 
-	struct clk			*esc_clk;
-	struct clk			*p_clk;
-	struct clk			*pixel_clk[CSI2TX_STREAMS_MAX];
+	काष्ठा clk			*esc_clk;
+	काष्ठा clk			*p_clk;
+	काष्ठा clk			*pixel_clk[CSI2TX_STREAMS_MAX];
 
-	struct v4l2_subdev		subdev;
-	struct media_pad		pads[CSI2TX_PAD_MAX];
-	struct v4l2_mbus_framefmt	pad_fmts[CSI2TX_PAD_MAX];
+	काष्ठा v4l2_subdev		subdev;
+	काष्ठा media_pad		pads[CSI2TX_PAD_MAX];
+	काष्ठा v4l2_mbus_framefmt	pad_fmts[CSI2TX_PAD_MAX];
 
-	bool				has_internal_dphy;
+	bool				has_पूर्णांकernal_dphy;
 	u8				lanes[CSI2TX_LANES_MAX];
-	unsigned int			num_lanes;
-	unsigned int			max_lanes;
-	unsigned int			max_streams;
-};
+	अचिन्हित पूर्णांक			num_lanes;
+	अचिन्हित पूर्णांक			max_lanes;
+	अचिन्हित पूर्णांक			max_streams;
+पूर्ण;
 
-static const struct csi2tx_fmt csi2tx_formats[] = {
-	{
+अटल स्थिर काष्ठा csi2tx_fmt csi2tx_क्रमmats[] = अणु
+	अणु
 		.mbus	= MEDIA_BUS_FMT_UYVY8_1X16,
 		.bpp	= 2,
 		.dt	= 0x1e,
-	},
-	{
+	पूर्ण,
+	अणु
 		.mbus	= MEDIA_BUS_FMT_RGB888_1X24,
 		.bpp	= 3,
 		.dt	= 0x24,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct v4l2_mbus_framefmt fmt_default = {
+अटल स्थिर काष्ठा v4l2_mbus_framefmt fmt_शेष = अणु
 	.width		= 1280,
 	.height		= 720,
 	.code		= MEDIA_BUS_FMT_RGB888_1X24,
 	.field		= V4L2_FIELD_NONE,
 	.colorspace	= V4L2_COLORSPACE_DEFAULT,
-};
+पूर्ण;
 
-static inline
-struct csi2tx_priv *v4l2_subdev_to_csi2tx(struct v4l2_subdev *subdev)
-{
-	return container_of(subdev, struct csi2tx_priv, subdev);
-}
+अटल अंतरभूत
+काष्ठा csi2tx_priv *v4l2_subdev_to_csi2tx(काष्ठा v4l2_subdev *subdev)
+अणु
+	वापस container_of(subdev, काष्ठा csi2tx_priv, subdev);
+पूर्ण
 
-static const struct csi2tx_fmt *csi2tx_get_fmt_from_mbus(u32 mbus)
-{
-	unsigned int i;
+अटल स्थिर काष्ठा csi2tx_fmt *csi2tx_get_fmt_from_mbus(u32 mbus)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(csi2tx_formats); i++)
-		if (csi2tx_formats[i].mbus == mbus)
-			return &csi2tx_formats[i];
+	क्रम (i = 0; i < ARRAY_SIZE(csi2tx_क्रमmats); i++)
+		अगर (csi2tx_क्रमmats[i].mbus == mbus)
+			वापस &csi2tx_क्रमmats[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int csi2tx_enum_mbus_code(struct v4l2_subdev *subdev,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->pad || code->index >= ARRAY_SIZE(csi2tx_formats))
-		return -EINVAL;
+अटल पूर्णांक csi2tx_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->pad || code->index >= ARRAY_SIZE(csi2tx_क्रमmats))
+		वापस -EINVAL;
 
-	code->code = csi2tx_formats[code->index].mbus;
+	code->code = csi2tx_क्रमmats[code->index].mbus;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct v4l2_mbus_framefmt *
-__csi2tx_get_pad_format(struct v4l2_subdev *subdev,
-			struct v4l2_subdev_pad_config *cfg,
-			struct v4l2_subdev_format *fmt)
-{
-	struct csi2tx_priv *csi2tx = v4l2_subdev_to_csi2tx(subdev);
+अटल काष्ठा v4l2_mbus_framefmt *
+__csi2tx_get_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
+			काष्ठा v4l2_subdev_pad_config *cfg,
+			काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा csi2tx_priv *csi2tx = v4l2_subdev_to_csi2tx(subdev);
 
-	if (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
-		return v4l2_subdev_get_try_format(subdev, cfg,
+	अगर (fmt->which == V4L2_SUBDEV_FORMAT_TRY)
+		वापस v4l2_subdev_get_try_क्रमmat(subdev, cfg,
 						  fmt->pad);
 
-	return &csi2tx->pad_fmts[fmt->pad];
-}
+	वापस &csi2tx->pad_fmts[fmt->pad];
+पूर्ण
 
-static int csi2tx_get_pad_format(struct v4l2_subdev *subdev,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_format *fmt)
-{
-	const struct v4l2_mbus_framefmt *format;
-
-	/* Multiplexed pad? */
-	if (fmt->pad == CSI2TX_PAD_SOURCE)
-		return -EINVAL;
-
-	format = __csi2tx_get_pad_format(subdev, cfg, fmt);
-	if (!format)
-		return -EINVAL;
-
-	fmt->format = *format;
-
-	return 0;
-}
-
-static int csi2tx_set_pad_format(struct v4l2_subdev *subdev,
-				 struct v4l2_subdev_pad_config *cfg,
-				 struct v4l2_subdev_format *fmt)
-{
-	const struct v4l2_mbus_framefmt *src_format = &fmt->format;
-	struct v4l2_mbus_framefmt *dst_format;
+अटल पूर्णांक csi2tx_get_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	स्थिर काष्ठा v4l2_mbus_framefmt *क्रमmat;
 
 	/* Multiplexed pad? */
-	if (fmt->pad == CSI2TX_PAD_SOURCE)
-		return -EINVAL;
+	अगर (fmt->pad == CSI2TX_PAD_SOURCE)
+		वापस -EINVAL;
 
-	if (!csi2tx_get_fmt_from_mbus(fmt->format.code))
-		src_format = &fmt_default;
+	क्रमmat = __csi2tx_get_pad_क्रमmat(subdev, cfg, fmt);
+	अगर (!क्रमmat)
+		वापस -EINVAL;
 
-	dst_format = __csi2tx_get_pad_format(subdev, cfg, fmt);
-	if (!dst_format)
-		return -EINVAL;
+	fmt->क्रमmat = *क्रमmat;
 
-	*dst_format = *src_format;
+	वापस 0;
+पूर्ण
 
-	return 0;
-}
+अटल पूर्णांक csi2tx_set_pad_क्रमmat(काष्ठा v4l2_subdev *subdev,
+				 काष्ठा v4l2_subdev_pad_config *cfg,
+				 काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	स्थिर काष्ठा v4l2_mbus_framefmt *src_क्रमmat = &fmt->क्रमmat;
+	काष्ठा v4l2_mbus_framefmt *dst_क्रमmat;
 
-static const struct v4l2_subdev_pad_ops csi2tx_pad_ops = {
-	.enum_mbus_code	= csi2tx_enum_mbus_code,
-	.get_fmt	= csi2tx_get_pad_format,
-	.set_fmt	= csi2tx_set_pad_format,
-};
+	/* Multiplexed pad? */
+	अगर (fmt->pad == CSI2TX_PAD_SOURCE)
+		वापस -EINVAL;
+
+	अगर (!csi2tx_get_fmt_from_mbus(fmt->क्रमmat.code))
+		src_क्रमmat = &fmt_शेष;
+
+	dst_क्रमmat = __csi2tx_get_pad_क्रमmat(subdev, cfg, fmt);
+	अगर (!dst_क्रमmat)
+		वापस -EINVAL;
+
+	*dst_क्रमmat = *src_क्रमmat;
+
+	वापस 0;
+पूर्ण
+
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops csi2tx_pad_ops = अणु
+	.क्रमागत_mbus_code	= csi2tx_क्रमागत_mbus_code,
+	.get_fmt	= csi2tx_get_pad_क्रमmat,
+	.set_fmt	= csi2tx_set_pad_क्रमmat,
+पूर्ण;
 
 /* Set Wake Up value in the D-PHY */
-static void csi2tx_dphy_set_wakeup(struct csi2tx_priv *csi2tx)
-{
-	writel(CSI2TX_DPHY_CLK_WAKEUP_ULPS_CYCLES(32),
+अटल व्योम csi2tx_dphy_set_wakeup(काष्ठा csi2tx_priv *csi2tx)
+अणु
+	ग_लिखोl(CSI2TX_DPHY_CLK_WAKEUP_ULPS_CYCLES(32),
 	       csi2tx->base + CSI2TX_DPHY_CLK_WAKEUP_REG);
-}
+पूर्ण
 
 /*
  * Finishes the D-PHY initialization
  * reg dphy cfg value to be used
  */
-static void csi2tx_dphy_init_finish(struct csi2tx_priv *csi2tx, u32 reg)
-{
-	unsigned int i;
+अटल व्योम csi2tx_dphy_init_finish(काष्ठा csi2tx_priv *csi2tx, u32 reg)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	udelay(10);
 
-	/* Enable our (clock and data) lanes */
+	/* Enable our (घड़ी and data) lanes */
 	reg |= CSI2TX_DPHY_CFG_CLK_ENABLE;
-	for (i = 0; i < csi2tx->num_lanes; i++)
+	क्रम (i = 0; i < csi2tx->num_lanes; i++)
 		reg |= CSI2TX_DPHY_CFG_LANE_ENABLE(csi2tx->lanes[i] - 1);
-	writel(reg, csi2tx->base + CSI2TX_DPHY_CFG_REG);
+	ग_लिखोl(reg, csi2tx->base + CSI2TX_DPHY_CFG_REG);
 
 	udelay(10);
 
 	/* Switch to HS mode */
 	reg &= ~CSI2TX_DPHY_CFG_MODE_MASK;
-	writel(reg | CSI2TX_DPHY_CFG_MODE_HS,
+	ग_लिखोl(reg | CSI2TX_DPHY_CFG_MODE_HS,
 	       csi2tx->base + CSI2TX_DPHY_CFG_REG);
-}
+पूर्ण
 
 /* Configures D-PHY in CSIv1.3 */
-static void csi2tx_dphy_setup(struct csi2tx_priv *csi2tx)
-{
+अटल व्योम csi2tx_dphy_setup(काष्ठा csi2tx_priv *csi2tx)
+अणु
 	u32 reg;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	csi2tx_dphy_set_wakeup(csi2tx);
 
-	/* Put our lanes (clock and data) out of reset */
+	/* Put our lanes (घड़ी and data) out of reset */
 	reg = CSI2TX_DPHY_CFG_CLK_RESET | CSI2TX_DPHY_CFG_MODE_LPDT;
-	for (i = 0; i < csi2tx->num_lanes; i++)
+	क्रम (i = 0; i < csi2tx->num_lanes; i++)
 		reg |= CSI2TX_DPHY_CFG_LANE_RESET(csi2tx->lanes[i] - 1);
-	writel(reg, csi2tx->base + CSI2TX_DPHY_CFG_REG);
+	ग_लिखोl(reg, csi2tx->base + CSI2TX_DPHY_CFG_REG);
 
 	csi2tx_dphy_init_finish(csi2tx, reg);
-}
+पूर्ण
 
 /* Configures D-PHY in CSIv2 */
-static void csi2tx_v2_dphy_setup(struct csi2tx_priv *csi2tx)
-{
+अटल व्योम csi2tx_v2_dphy_setup(काष्ठा csi2tx_priv *csi2tx)
+अणु
 	u32 reg;
 
 	csi2tx_dphy_set_wakeup(csi2tx);
 
-	/* Put our lanes (clock and data) out of reset */
+	/* Put our lanes (घड़ी and data) out of reset */
 	reg = CSI2TX_V2_DPHY_CFG_RESET | CSI2TX_V2_DPHY_CFG_MODE_LPDT;
-	writel(reg, csi2tx->base + CSI2TX_V2_DPHY_CFG_REG);
+	ग_लिखोl(reg, csi2tx->base + CSI2TX_V2_DPHY_CFG_REG);
 
 	csi2tx_dphy_init_finish(csi2tx, reg);
-}
+पूर्ण
 
-static void csi2tx_reset(struct csi2tx_priv *csi2tx)
-{
-	writel(CSI2TX_CONFIG_SRST_REQ, csi2tx->base + CSI2TX_CONFIG_REG);
+अटल व्योम csi2tx_reset(काष्ठा csi2tx_priv *csi2tx)
+अणु
+	ग_लिखोl(CSI2TX_CONFIG_SRST_REQ, csi2tx->base + CSI2TX_CONFIG_REG);
 
 	udelay(10);
-}
+पूर्ण
 
-static int csi2tx_start(struct csi2tx_priv *csi2tx)
-{
-	struct media_entity *entity = &csi2tx->subdev.entity;
-	struct media_link *link;
-	unsigned int i;
+अटल पूर्णांक csi2tx_start(काष्ठा csi2tx_priv *csi2tx)
+अणु
+	काष्ठा media_entity *entity = &csi2tx->subdev.entity;
+	काष्ठा media_link *link;
+	अचिन्हित पूर्णांक i;
 
 	csi2tx_reset(csi2tx);
 
-	writel(CSI2TX_CONFIG_CFG_REQ, csi2tx->base + CSI2TX_CONFIG_REG);
+	ग_लिखोl(CSI2TX_CONFIG_CFG_REQ, csi2tx->base + CSI2TX_CONFIG_REG);
 
 	udelay(10);
 
-	if (csi2tx->vops && csi2tx->vops->dphy_setup) {
+	अगर (csi2tx->vops && csi2tx->vops->dphy_setup) अणु
 		csi2tx->vops->dphy_setup(csi2tx);
 		udelay(10);
-	}
+	पूर्ण
 
 	/*
-	 * Create a static mapping between the CSI virtual channels
+	 * Create a अटल mapping between the CSI भव channels
 	 * and the input streams.
 	 *
-	 * This should be enhanced, but v4l2 lacks the support for
+	 * This should be enhanced, but v4l2 lacks the support क्रम
 	 * changing that mapping dynamically at the moment.
 	 *
-	 * We're protected from the userspace setting up links at the
-	 * same time by the upper layer having called
+	 * We're रक्षित from the userspace setting up links at the
+	 * same समय by the upper layer having called
 	 * media_pipeline_start().
 	 */
-	list_for_each_entry(link, &entity->links, list) {
-		struct v4l2_mbus_framefmt *mfmt;
-		const struct csi2tx_fmt *fmt;
-		unsigned int stream;
-		int pad_idx = -1;
+	list_क्रम_each_entry(link, &entity->links, list) अणु
+		काष्ठा v4l2_mbus_framefmt *mfmt;
+		स्थिर काष्ठा csi2tx_fmt *fmt;
+		अचिन्हित पूर्णांक stream;
+		पूर्णांक pad_idx = -1;
 
 		/* Only consider our enabled input pads */
-		for (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++) {
-			struct media_pad *pad = &csi2tx->pads[i];
+		क्रम (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++) अणु
+			काष्ठा media_pad *pad = &csi2tx->pads[i];
 
-			if ((pad == link->sink) &&
-			    (link->flags & MEDIA_LNK_FL_ENABLED)) {
+			अगर ((pad == link->sink) &&
+			    (link->flags & MEDIA_LNK_FL_ENABLED)) अणु
 				pad_idx = i;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (pad_idx < 0)
-			continue;
+		अगर (pad_idx < 0)
+			जारी;
 
 		mfmt = &csi2tx->pad_fmts[pad_idx];
 		fmt = csi2tx_get_fmt_from_mbus(mfmt->code);
-		if (!fmt)
-			continue;
+		अगर (!fmt)
+			जारी;
 
 		stream = pad_idx - CSI2TX_PAD_SINK_STREAM0;
 
@@ -360,296 +361,296 @@ static int csi2tx_start(struct csi2tx_priv *csi2tx)
 		 * not equal to its stream ID. We need to find a
 		 * proper way to address it.
 		 */
-		writel(CSI2TX_DT_CFG_DT(fmt->dt),
+		ग_लिखोl(CSI2TX_DT_CFG_DT(fmt->dt),
 		       csi2tx->base + CSI2TX_DT_CFG_REG(stream));
 
-		writel(CSI2TX_DT_FORMAT_BYTES_PER_LINE(mfmt->width * fmt->bpp) |
+		ग_लिखोl(CSI2TX_DT_FORMAT_BYTES_PER_LINE(mfmt->width * fmt->bpp) |
 		       CSI2TX_DT_FORMAT_MAX_LINE_NUM(mfmt->height + 1),
 		       csi2tx->base + CSI2TX_DT_FORMAT_REG(stream));
 
 		/*
 		 * TODO: This needs to be calculated based on the
-		 * output CSI2 clock rate.
+		 * output CSI2 घड़ी rate.
 		 */
-		writel(CSI2TX_STREAM_IF_CFG_FILL_LEVEL(4),
+		ग_लिखोl(CSI2TX_STREAM_IF_CFG_FILL_LEVEL(4),
 		       csi2tx->base + CSI2TX_STREAM_IF_CFG_REG(stream));
-	}
+	पूर्ण
 
 	/* Disable the configuration mode */
-	writel(0, csi2tx->base + CSI2TX_CONFIG_REG);
+	ग_लिखोl(0, csi2tx->base + CSI2TX_CONFIG_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void csi2tx_stop(struct csi2tx_priv *csi2tx)
-{
-	writel(CSI2TX_CONFIG_CFG_REQ | CSI2TX_CONFIG_SRST_REQ,
+अटल व्योम csi2tx_stop(काष्ठा csi2tx_priv *csi2tx)
+अणु
+	ग_लिखोl(CSI2TX_CONFIG_CFG_REQ | CSI2TX_CONFIG_SRST_REQ,
 	       csi2tx->base + CSI2TX_CONFIG_REG);
-}
+पूर्ण
 
-static int csi2tx_s_stream(struct v4l2_subdev *subdev, int enable)
-{
-	struct csi2tx_priv *csi2tx = v4l2_subdev_to_csi2tx(subdev);
-	int ret = 0;
+अटल पूर्णांक csi2tx_s_stream(काष्ठा v4l2_subdev *subdev, पूर्णांक enable)
+अणु
+	काष्ठा csi2tx_priv *csi2tx = v4l2_subdev_to_csi2tx(subdev);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&csi2tx->lock);
 
-	if (enable) {
+	अगर (enable) अणु
 		/*
 		 * If we're not the first users, there's no need to
 		 * enable the whole controller.
 		 */
-		if (!csi2tx->count) {
+		अगर (!csi2tx->count) अणु
 			ret = csi2tx_start(csi2tx);
-			if (ret)
-				goto out;
-		}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
 
 		csi2tx->count++;
-	} else {
+	पूर्ण अन्यथा अणु
 		csi2tx->count--;
 
 		/*
 		 * Let the last user turn off the lights.
 		 */
-		if (!csi2tx->count)
+		अगर (!csi2tx->count)
 			csi2tx_stop(csi2tx);
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&csi2tx->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_subdev_video_ops csi2tx_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops csi2tx_video_ops = अणु
 	.s_stream	= csi2tx_s_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops csi2tx_subdev_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops csi2tx_subdev_ops = अणु
 	.pad		= &csi2tx_pad_ops,
 	.video		= &csi2tx_video_ops,
-};
+पूर्ण;
 
-static int csi2tx_get_resources(struct csi2tx_priv *csi2tx,
-				struct platform_device *pdev)
-{
-	struct resource *res;
-	unsigned int i;
+अटल पूर्णांक csi2tx_get_resources(काष्ठा csi2tx_priv *csi2tx,
+				काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक i;
 	u32 dev_cfg;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	csi2tx->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(csi2tx->base))
-		return PTR_ERR(csi2tx->base);
+	अगर (IS_ERR(csi2tx->base))
+		वापस PTR_ERR(csi2tx->base);
 
 	csi2tx->p_clk = devm_clk_get(&pdev->dev, "p_clk");
-	if (IS_ERR(csi2tx->p_clk)) {
+	अगर (IS_ERR(csi2tx->p_clk)) अणु
 		dev_err(&pdev->dev, "Couldn't get p_clk\n");
-		return PTR_ERR(csi2tx->p_clk);
-	}
+		वापस PTR_ERR(csi2tx->p_clk);
+	पूर्ण
 
 	csi2tx->esc_clk = devm_clk_get(&pdev->dev, "esc_clk");
-	if (IS_ERR(csi2tx->esc_clk)) {
+	अगर (IS_ERR(csi2tx->esc_clk)) अणु
 		dev_err(&pdev->dev, "Couldn't get the esc_clk\n");
-		return PTR_ERR(csi2tx->esc_clk);
-	}
+		वापस PTR_ERR(csi2tx->esc_clk);
+	पूर्ण
 
 	clk_prepare_enable(csi2tx->p_clk);
-	dev_cfg = readl(csi2tx->base + CSI2TX_DEVICE_CONFIG_REG);
+	dev_cfg = पढ़ोl(csi2tx->base + CSI2TX_DEVICE_CONFIG_REG);
 	clk_disable_unprepare(csi2tx->p_clk);
 
 	csi2tx->max_lanes = dev_cfg & CSI2TX_DEVICE_CONFIG_LANES_MASK;
-	if (csi2tx->max_lanes > CSI2TX_LANES_MAX) {
+	अगर (csi2tx->max_lanes > CSI2TX_LANES_MAX) अणु
 		dev_err(&pdev->dev, "Invalid number of lanes: %u\n",
 			csi2tx->max_lanes);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	csi2tx->max_streams = (dev_cfg & CSI2TX_DEVICE_CONFIG_STREAMS_MASK) >> 4;
-	if (csi2tx->max_streams > CSI2TX_STREAMS_MAX) {
+	अगर (csi2tx->max_streams > CSI2TX_STREAMS_MAX) अणु
 		dev_err(&pdev->dev, "Invalid number of streams: %u\n",
 			csi2tx->max_streams);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	csi2tx->has_internal_dphy = !!(dev_cfg & CSI2TX_DEVICE_CONFIG_HAS_DPHY);
+	csi2tx->has_पूर्णांकernal_dphy = !!(dev_cfg & CSI2TX_DEVICE_CONFIG_HAS_DPHY);
 
-	for (i = 0; i < csi2tx->max_streams; i++) {
-		char clk_name[16];
+	क्रम (i = 0; i < csi2tx->max_streams; i++) अणु
+		अक्षर clk_name[16];
 
-		snprintf(clk_name, sizeof(clk_name), "pixel_if%u_clk", i);
+		snम_लिखो(clk_name, माप(clk_name), "pixel_if%u_clk", i);
 		csi2tx->pixel_clk[i] = devm_clk_get(&pdev->dev, clk_name);
-		if (IS_ERR(csi2tx->pixel_clk[i])) {
+		अगर (IS_ERR(csi2tx->pixel_clk[i])) अणु
 			dev_err(&pdev->dev, "Couldn't get clock %s\n",
 				clk_name);
-			return PTR_ERR(csi2tx->pixel_clk[i]);
-		}
-	}
+			वापस PTR_ERR(csi2tx->pixel_clk[i]);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int csi2tx_check_lanes(struct csi2tx_priv *csi2tx)
-{
-	struct v4l2_fwnode_endpoint v4l2_ep = { .bus_type = 0 };
-	struct device_node *ep;
-	int ret, i;
+अटल पूर्णांक csi2tx_check_lanes(काष्ठा csi2tx_priv *csi2tx)
+अणु
+	काष्ठा v4l2_fwnode_endpoपूर्णांक v4l2_ep = अणु .bus_type = 0 पूर्ण;
+	काष्ठा device_node *ep;
+	पूर्णांक ret, i;
 
-	ep = of_graph_get_endpoint_by_regs(csi2tx->dev->of_node, 0, 0);
-	if (!ep)
-		return -EINVAL;
+	ep = of_graph_get_endpoपूर्णांक_by_regs(csi2tx->dev->of_node, 0, 0);
+	अगर (!ep)
+		वापस -EINVAL;
 
-	ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(ep), &v4l2_ep);
-	if (ret) {
+	ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(ep), &v4l2_ep);
+	अगर (ret) अणु
 		dev_err(csi2tx->dev, "Could not parse v4l2 endpoint\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (v4l2_ep.bus_type != V4L2_MBUS_CSI2_DPHY) {
+	अगर (v4l2_ep.bus_type != V4L2_MBUS_CSI2_DPHY) अणु
 		dev_err(csi2tx->dev, "Unsupported media bus type: 0x%x\n",
 			v4l2_ep.bus_type);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	csi2tx->num_lanes = v4l2_ep.bus.mipi_csi2.num_data_lanes;
-	if (csi2tx->num_lanes > csi2tx->max_lanes) {
+	अगर (csi2tx->num_lanes > csi2tx->max_lanes) अणु
 		dev_err(csi2tx->dev,
 			"Current configuration uses more lanes than supported\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < csi2tx->num_lanes; i++) {
-		if (v4l2_ep.bus.mipi_csi2.data_lanes[i] < 1) {
+	क्रम (i = 0; i < csi2tx->num_lanes; i++) अणु
+		अगर (v4l2_ep.bus.mipi_csi2.data_lanes[i] < 1) अणु
 			dev_err(csi2tx->dev, "Invalid lane[%d] number: %u\n",
 				i, v4l2_ep.bus.mipi_csi2.data_lanes[i]);
 			ret = -EINVAL;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	memcpy(csi2tx->lanes, v4l2_ep.bus.mipi_csi2.data_lanes,
-	       sizeof(csi2tx->lanes));
+	स_नकल(csi2tx->lanes, v4l2_ep.bus.mipi_csi2.data_lanes,
+	       माप(csi2tx->lanes));
 
 out:
 	of_node_put(ep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct csi2tx_vops csi2tx_vops = {
+अटल स्थिर काष्ठा csi2tx_vops csi2tx_vops = अणु
 	.dphy_setup = csi2tx_dphy_setup,
-};
+पूर्ण;
 
-static const struct csi2tx_vops csi2tx_v2_vops = {
+अटल स्थिर काष्ठा csi2tx_vops csi2tx_v2_vops = अणु
 	.dphy_setup = csi2tx_v2_dphy_setup,
-};
+पूर्ण;
 
-static const struct of_device_id csi2tx_of_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id csi2tx_of_table[] = अणु
+	अणु
 		.compatible = "cdns,csi2tx",
 		.data = &csi2tx_vops
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "cdns,csi2tx-1.3",
 		.data = &csi2tx_vops
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "cdns,csi2tx-2.1",
 		.data = &csi2tx_v2_vops
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, csi2tx_of_table);
 
-static int csi2tx_probe(struct platform_device *pdev)
-{
-	struct csi2tx_priv *csi2tx;
-	const struct of_device_id *of_id;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक csi2tx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा csi2tx_priv *csi2tx;
+	स्थिर काष्ठा of_device_id *of_id;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	csi2tx = kzalloc(sizeof(*csi2tx), GFP_KERNEL);
-	if (!csi2tx)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, csi2tx);
+	csi2tx = kzalloc(माप(*csi2tx), GFP_KERNEL);
+	अगर (!csi2tx)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, csi2tx);
 	mutex_init(&csi2tx->lock);
 	csi2tx->dev = &pdev->dev;
 
 	ret = csi2tx_get_resources(csi2tx, pdev);
-	if (ret)
-		goto err_free_priv;
+	अगर (ret)
+		जाओ err_मुक्त_priv;
 
 	of_id = of_match_node(csi2tx_of_table, pdev->dev.of_node);
-	csi2tx->vops = (struct csi2tx_vops *)of_id->data;
+	csi2tx->vops = (काष्ठा csi2tx_vops *)of_id->data;
 
 	v4l2_subdev_init(&csi2tx->subdev, &csi2tx_subdev_ops);
 	csi2tx->subdev.owner = THIS_MODULE;
 	csi2tx->subdev.dev = &pdev->dev;
 	csi2tx->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	snprintf(csi2tx->subdev.name, V4L2_SUBDEV_NAME_SIZE, "%s.%s",
+	snम_लिखो(csi2tx->subdev.name, V4L2_SUBDEV_NAME_SIZE, "%s.%s",
 		 KBUILD_MODNAME, dev_name(&pdev->dev));
 
 	ret = csi2tx_check_lanes(csi2tx);
-	if (ret)
-		goto err_free_priv;
+	अगर (ret)
+		जाओ err_मुक्त_priv;
 
 	/* Create our media pads */
 	csi2tx->subdev.entity.function = MEDIA_ENT_F_VID_IF_BRIDGE;
 	csi2tx->pads[CSI2TX_PAD_SOURCE].flags = MEDIA_PAD_FL_SOURCE;
-	for (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++)
+	क्रम (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++)
 		csi2tx->pads[i].flags = MEDIA_PAD_FL_SINK;
 
 	/*
-	 * Only the input pads are considered to have a format at the
+	 * Only the input pads are considered to have a क्रमmat at the
 	 * moment. The CSI link can multiplex various streams with
-	 * different formats, and we can't expose this in v4l2 right
+	 * dअगरferent क्रमmats, and we can't expose this in v4l2 right
 	 * now.
 	 */
-	for (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++)
-		csi2tx->pad_fmts[i] = fmt_default;
+	क्रम (i = CSI2TX_PAD_SINK_STREAM0; i < CSI2TX_PAD_MAX; i++)
+		csi2tx->pad_fmts[i] = fmt_शेष;
 
 	ret = media_entity_pads_init(&csi2tx->subdev.entity, CSI2TX_PAD_MAX,
 				     csi2tx->pads);
-	if (ret)
-		goto err_free_priv;
+	अगर (ret)
+		जाओ err_मुक्त_priv;
 
-	ret = v4l2_async_register_subdev(&csi2tx->subdev);
-	if (ret < 0)
-		goto err_free_priv;
+	ret = v4l2_async_रेजिस्टर_subdev(&csi2tx->subdev);
+	अगर (ret < 0)
+		जाओ err_मुक्त_priv;
 
 	dev_info(&pdev->dev,
 		 "Probed CSI2TX with %u/%u lanes, %u streams, %s D-PHY\n",
 		 csi2tx->num_lanes, csi2tx->max_lanes, csi2tx->max_streams,
-		 csi2tx->has_internal_dphy ? "internal" : "no");
+		 csi2tx->has_पूर्णांकernal_dphy ? "internal" : "no");
 
-	return 0;
+	वापस 0;
 
-err_free_priv:
-	kfree(csi2tx);
-	return ret;
-}
+err_मुक्त_priv:
+	kमुक्त(csi2tx);
+	वापस ret;
+पूर्ण
 
-static int csi2tx_remove(struct platform_device *pdev)
-{
-	struct csi2tx_priv *csi2tx = platform_get_drvdata(pdev);
+अटल पूर्णांक csi2tx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा csi2tx_priv *csi2tx = platक्रमm_get_drvdata(pdev);
 
-	v4l2_async_unregister_subdev(&csi2tx->subdev);
-	kfree(csi2tx);
+	v4l2_async_unरेजिस्टर_subdev(&csi2tx->subdev);
+	kमुक्त(csi2tx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver csi2tx_driver = {
+अटल काष्ठा platक्रमm_driver csi2tx_driver = अणु
 	.probe	= csi2tx_probe,
-	.remove	= csi2tx_remove,
+	.हटाओ	= csi2tx_हटाओ,
 
-	.driver	= {
+	.driver	= अणु
 		.name		= "cdns-csi2tx",
 		.of_match_table	= csi2tx_of_table,
-	},
-};
-module_platform_driver(csi2tx_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(csi2tx_driver);
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@bootlin.com>");
 MODULE_DESCRIPTION("Cadence CSI2-TX controller");
 MODULE_LICENSE("GPL");

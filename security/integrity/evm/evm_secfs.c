@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2010 IBM Corporation
  *
@@ -6,214 +7,214 @@
  * Mimi Zohar <zohar@us.ibm.com>
  *
  * File: evm_secfs.c
- *	- Used to signal when key is on keyring
+ *	- Used to संकेत when key is on keyring
  *	- Get the key and enable EVM
  */
 
-#include <linux/audit.h>
-#include <linux/uaccess.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include "evm.h"
+#समावेश <linux/audit.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश "evm.h"
 
-static struct dentry *evm_dir;
-static struct dentry *evm_init_tpm;
-static struct dentry *evm_symlink;
+अटल काष्ठा dentry *evm_dir;
+अटल काष्ठा dentry *evm_init_tpm;
+अटल काष्ठा dentry *evm_symlink;
 
-#ifdef CONFIG_EVM_ADD_XATTRS
-static struct dentry *evm_xattrs;
-static DEFINE_MUTEX(xattr_list_mutex);
-static int evm_xattrs_locked;
-#endif
+#अगर_घोषित CONFIG_EVM_ADD_XATTRS
+अटल काष्ठा dentry *evm_xattrs;
+अटल DEFINE_MUTEX(xattr_list_mutex);
+अटल पूर्णांक evm_xattrs_locked;
+#पूर्ण_अगर
 
 /**
- * evm_read_key - read() for <securityfs>/evm
+ * evm_पढ़ो_key - पढ़ो() क्रम <securityfs>/evm
  *
- * @filp: file pointer, not actually used
+ * @filp: file poपूर्णांकer, not actually used
  * @buf: where to put the result
- * @count: maximum to send along
+ * @count: maximum to send aदीर्घ
  * @ppos: where to start
  *
- * Returns number of bytes read or error code, as appropriate
+ * Returns number of bytes पढ़ो or error code, as appropriate
  */
-static ssize_t evm_read_key(struct file *filp, char __user *buf,
-			    size_t count, loff_t *ppos)
-{
-	char temp[80];
-	ssize_t rc;
+अटल sमाप_प्रकार evm_पढ़ो_key(काष्ठा file *filp, अक्षर __user *buf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर temp[80];
+	sमाप_प्रकार rc;
 
-	if (*ppos != 0)
-		return 0;
+	अगर (*ppos != 0)
+		वापस 0;
 
-	sprintf(temp, "%d", (evm_initialized & ~EVM_SETUP_COMPLETE));
-	rc = simple_read_from_buffer(buf, count, ppos, temp, strlen(temp));
+	प्र_लिखो(temp, "%d", (evm_initialized & ~EVM_SETUP_COMPLETE));
+	rc = simple_पढ़ो_from_buffer(buf, count, ppos, temp, म_माप(temp));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * evm_write_key - write() for <securityfs>/evm
- * @file: file pointer, not actually used
+ * evm_ग_लिखो_key - ग_लिखो() क्रम <securityfs>/evm
+ * @file: file poपूर्णांकer, not actually used
  * @buf: where to get the data from
  * @count: bytes sent
  * @ppos: where to start
  *
- * Used to signal that key is on the kernel key ring.
- * - get the integrity hmac key from the kernel key ring
- * - create list of hmac protected extended attributes
+ * Used to संकेत that key is on the kernel key ring.
+ * - get the पूर्णांकegrity hmac key from the kernel key ring
+ * - create list of hmac रक्षित extended attributes
  * Returns number of bytes written or error code, as appropriate
  */
-static ssize_t evm_write_key(struct file *file, const char __user *buf,
-			     size_t count, loff_t *ppos)
-{
-	int i, ret;
+अटल sमाप_प्रकार evm_ग_लिखो_key(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक i, ret;
 
-	if (!capable(CAP_SYS_ADMIN) || (evm_initialized & EVM_SETUP_COMPLETE))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN) || (evm_initialized & EVM_SETUP_COMPLETE))
+		वापस -EPERM;
 
-	ret = kstrtoint_from_user(buf, count, 0, &i);
+	ret = kstrtoपूर्णांक_from_user(buf, count, 0, &i);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Reject invalid values */
-	if (!i || (i & ~EVM_INIT_MASK) != 0)
-		return -EINVAL;
+	अगर (!i || (i & ~EVM_INIT_MASK) != 0)
+		वापस -EINVAL;
 
-	/* Don't allow a request to freshly enable metadata writes if
+	/* Don't allow a request to freshly enable metadata ग_लिखोs अगर
 	 * keys are loaded.
 	 */
-	if ((i & EVM_ALLOW_METADATA_WRITES) &&
+	अगर ((i & EVM_ALLOW_METADATA_WRITES) &&
 	    ((evm_initialized & EVM_KEY_MASK) != 0) &&
 	    !(evm_initialized & EVM_ALLOW_METADATA_WRITES))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (i & EVM_INIT_HMAC) {
+	अगर (i & EVM_INIT_HMAC) अणु
 		ret = evm_init_key();
-		if (ret != 0)
-			return ret;
-		/* Forbid further writes after the symmetric key is loaded */
+		अगर (ret != 0)
+			वापस ret;
+		/* Forbid further ग_लिखोs after the symmetric key is loaded */
 		i |= EVM_SETUP_COMPLETE;
-	}
+	पूर्ण
 
 	evm_initialized |= i;
 
-	/* Don't allow protected metadata modification if a symmetric key
+	/* Don't allow रक्षित metadata modअगरication अगर a symmetric key
 	 * is loaded
 	 */
-	if (evm_initialized & EVM_INIT_HMAC)
+	अगर (evm_initialized & EVM_INIT_HMAC)
 		evm_initialized &= ~(EVM_ALLOW_METADATA_WRITES);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations evm_key_ops = {
-	.read		= evm_read_key,
-	.write		= evm_write_key,
-};
+अटल स्थिर काष्ठा file_operations evm_key_ops = अणु
+	.पढ़ो		= evm_पढ़ो_key,
+	.ग_लिखो		= evm_ग_लिखो_key,
+पूर्ण;
 
-#ifdef CONFIG_EVM_ADD_XATTRS
+#अगर_घोषित CONFIG_EVM_ADD_XATTRS
 /**
- * evm_read_xattrs - read() for <securityfs>/evm_xattrs
+ * evm_पढ़ो_xattrs - पढ़ो() क्रम <securityfs>/evm_xattrs
  *
- * @filp: file pointer, not actually used
+ * @filp: file poपूर्णांकer, not actually used
  * @buf: where to put the result
- * @count: maximum to send along
+ * @count: maximum to send aदीर्घ
  * @ppos: where to start
  *
- * Returns number of bytes read or error code, as appropriate
+ * Returns number of bytes पढ़ो or error code, as appropriate
  */
-static ssize_t evm_read_xattrs(struct file *filp, char __user *buf,
-			       size_t count, loff_t *ppos)
-{
-	char *temp;
-	int offset = 0;
-	ssize_t rc, size = 0;
-	struct xattr_list *xattr;
+अटल sमाप_प्रकार evm_पढ़ो_xattrs(काष्ठा file *filp, अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *temp;
+	पूर्णांक offset = 0;
+	sमाप_प्रकार rc, size = 0;
+	काष्ठा xattr_list *xattr;
 
-	if (*ppos != 0)
-		return 0;
+	अगर (*ppos != 0)
+		वापस 0;
 
-	rc = mutex_lock_interruptible(&xattr_list_mutex);
-	if (rc)
-		return -ERESTARTSYS;
+	rc = mutex_lock_पूर्णांकerruptible(&xattr_list_mutex);
+	अगर (rc)
+		वापस -ERESTARTSYS;
 
-	list_for_each_entry(xattr, &evm_config_xattrnames, list)
-		size += strlen(xattr->name) + 1;
+	list_क्रम_each_entry(xattr, &evm_config_xattrnames, list)
+		size += म_माप(xattr->name) + 1;
 
-	temp = kmalloc(size + 1, GFP_KERNEL);
-	if (!temp) {
+	temp = kदो_स्मृति(size + 1, GFP_KERNEL);
+	अगर (!temp) अणु
 		mutex_unlock(&xattr_list_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	list_for_each_entry(xattr, &evm_config_xattrnames, list) {
-		sprintf(temp + offset, "%s\n", xattr->name);
-		offset += strlen(xattr->name) + 1;
-	}
+	list_क्रम_each_entry(xattr, &evm_config_xattrnames, list) अणु
+		प्र_लिखो(temp + offset, "%s\n", xattr->name);
+		offset += म_माप(xattr->name) + 1;
+	पूर्ण
 
 	mutex_unlock(&xattr_list_mutex);
-	rc = simple_read_from_buffer(buf, count, ppos, temp, strlen(temp));
+	rc = simple_पढ़ो_from_buffer(buf, count, ppos, temp, म_माप(temp));
 
-	kfree(temp);
+	kमुक्त(temp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * evm_write_xattrs - write() for <securityfs>/evm_xattrs
- * @file: file pointer, not actually used
+ * evm_ग_लिखो_xattrs - ग_लिखो() क्रम <securityfs>/evm_xattrs
+ * @file: file poपूर्णांकer, not actually used
  * @buf: where to get the data from
  * @count: bytes sent
  * @ppos: where to start
  *
  * Returns number of bytes written or error code, as appropriate
  */
-static ssize_t evm_write_xattrs(struct file *file, const char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	int len, err;
-	struct xattr_list *xattr, *tmp;
-	struct audit_buffer *ab;
-	struct iattr newattrs;
-	struct inode *inode;
+अटल sमाप_प्रकार evm_ग_लिखो_xattrs(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक len, err;
+	काष्ठा xattr_list *xattr, *पंचांगp;
+	काष्ठा audit_buffer *ab;
+	काष्ठा iattr newattrs;
+	काष्ठा inode *inode;
 
-	if (!capable(CAP_SYS_ADMIN) || evm_xattrs_locked)
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN) || evm_xattrs_locked)
+		वापस -EPERM;
 
-	if (*ppos != 0)
-		return -EINVAL;
+	अगर (*ppos != 0)
+		वापस -EINVAL;
 
-	if (count > XATTR_NAME_MAX)
-		return -E2BIG;
+	अगर (count > XATTR_NAME_MAX)
+		वापस -E2BIG;
 
 	ab = audit_log_start(audit_context(), GFP_KERNEL,
 			     AUDIT_INTEGRITY_EVM_XATTR);
-	if (!ab)
-		return -ENOMEM;
+	अगर (!ab)
+		वापस -ENOMEM;
 
-	xattr = kmalloc(sizeof(struct xattr_list), GFP_KERNEL);
-	if (!xattr) {
+	xattr = kदो_स्मृति(माप(काष्ठा xattr_list), GFP_KERNEL);
+	अगर (!xattr) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	xattr->name = memdup_user_nul(buf, count);
-	if (IS_ERR(xattr->name)) {
+	अगर (IS_ERR(xattr->name)) अणु
 		err = PTR_ERR(xattr->name);
-		xattr->name = NULL;
-		goto out;
-	}
+		xattr->name = शून्य;
+		जाओ out;
+	पूर्ण
 
 	/* Remove any trailing newline */
-	len = strlen(xattr->name);
-	if (len && xattr->name[len-1] == '\n')
+	len = म_माप(xattr->name);
+	अगर (len && xattr->name[len-1] == '\n')
 		xattr->name[len-1] = '\0';
 
-	audit_log_format(ab, "xattr=");
+	audit_log_क्रमmat(ab, "xattr=");
 	audit_log_untrustedstring(ab, xattr->name);
 
-	if (strcmp(xattr->name, ".") == 0) {
+	अगर (म_भेद(xattr->name, ".") == 0) अणु
 		evm_xattrs_locked = 1;
 		newattrs.ia_mode = S_IFREG | 0440;
 		newattrs.ia_valid = ATTR_MODE;
@@ -221,101 +222,101 @@ static ssize_t evm_write_xattrs(struct file *file, const char __user *buf,
 		inode_lock(inode);
 		err = simple_setattr(&init_user_ns, evm_xattrs, &newattrs);
 		inode_unlock(inode);
-		if (!err)
+		अगर (!err)
 			err = count;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (strncmp(xattr->name, XATTR_SECURITY_PREFIX,
-		    XATTR_SECURITY_PREFIX_LEN) != 0) {
+	अगर (म_भेदन(xattr->name, XATTR_SECURITY_PREFIX,
+		    XATTR_SECURITY_PREFIX_LEN) != 0) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * xattr_list_mutex guards against races in evm_read_xattrs().
+	 * xattr_list_mutex guards against races in evm_पढ़ो_xattrs().
 	 * Entries are only added to the evm_config_xattrnames list
-	 * and never deleted. Therefore, the list is traversed
-	 * using list_for_each_entry_lockless() without holding
-	 * the mutex in evm_calc_hmac_or_hash(), evm_find_protected_xattrs()
-	 * and evm_protected_xattr().
+	 * and never deleted. Thereक्रमe, the list is traversed
+	 * using list_क्रम_each_entry_lockless() without holding
+	 * the mutex in evm_calc_hmac_or_hash(), evm_find_रक्षित_xattrs()
+	 * and evm_रक्षित_xattr().
 	 */
 	mutex_lock(&xattr_list_mutex);
-	list_for_each_entry(tmp, &evm_config_xattrnames, list) {
-		if (strcmp(xattr->name, tmp->name) == 0) {
+	list_क्रम_each_entry(पंचांगp, &evm_config_xattrnames, list) अणु
+		अगर (म_भेद(xattr->name, पंचांगp->name) == 0) अणु
 			err = -EEXIST;
 			mutex_unlock(&xattr_list_mutex);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	list_add_tail_rcu(&xattr->list, &evm_config_xattrnames);
 	mutex_unlock(&xattr_list_mutex);
 
-	audit_log_format(ab, " res=0");
+	audit_log_क्रमmat(ab, " res=0");
 	audit_log_end(ab);
-	return count;
+	वापस count;
 out:
-	audit_log_format(ab, " res=%d", err);
+	audit_log_क्रमmat(ab, " res=%d", err);
 	audit_log_end(ab);
-	if (xattr) {
-		kfree(xattr->name);
-		kfree(xattr);
-	}
-	return err;
-}
+	अगर (xattr) अणु
+		kमुक्त(xattr->name);
+		kमुक्त(xattr);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static const struct file_operations evm_xattr_ops = {
-	.read		= evm_read_xattrs,
-	.write		= evm_write_xattrs,
-};
+अटल स्थिर काष्ठा file_operations evm_xattr_ops = अणु
+	.पढ़ो		= evm_पढ़ो_xattrs,
+	.ग_लिखो		= evm_ग_लिखो_xattrs,
+पूर्ण;
 
-static int evm_init_xattrs(void)
-{
-	evm_xattrs = securityfs_create_file("evm_xattrs", 0660, evm_dir, NULL,
+अटल पूर्णांक evm_init_xattrs(व्योम)
+अणु
+	evm_xattrs = securityfs_create_file("evm_xattrs", 0660, evm_dir, शून्य,
 					    &evm_xattr_ops);
-	if (!evm_xattrs || IS_ERR(evm_xattrs))
-		return -EFAULT;
+	अगर (!evm_xattrs || IS_ERR(evm_xattrs))
+		वापस -EFAULT;
 
-	return 0;
-}
-#else
-static int evm_init_xattrs(void)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक evm_init_xattrs(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-int __init evm_init_secfs(void)
-{
-	int error = 0;
+पूर्णांक __init evm_init_secfs(व्योम)
+अणु
+	पूर्णांक error = 0;
 
-	evm_dir = securityfs_create_dir("evm", integrity_dir);
-	if (!evm_dir || IS_ERR(evm_dir))
-		return -EFAULT;
+	evm_dir = securityfs_create_dir("evm", पूर्णांकegrity_dir);
+	अगर (!evm_dir || IS_ERR(evm_dir))
+		वापस -EFAULT;
 
 	evm_init_tpm = securityfs_create_file("evm", 0660,
-					      evm_dir, NULL, &evm_key_ops);
-	if (!evm_init_tpm || IS_ERR(evm_init_tpm)) {
+					      evm_dir, शून्य, &evm_key_ops);
+	अगर (!evm_init_tpm || IS_ERR(evm_init_tpm)) अणु
 		error = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	evm_symlink = securityfs_create_symlink("evm", NULL,
-						"integrity/evm/evm", NULL);
-	if (!evm_symlink || IS_ERR(evm_symlink)) {
+	evm_symlink = securityfs_create_symlink("evm", शून्य,
+						"integrity/evm/evm", शून्य);
+	अगर (!evm_symlink || IS_ERR(evm_symlink)) अणु
 		error = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (evm_init_xattrs() != 0) {
+	अगर (evm_init_xattrs() != 0) अणु
 		error = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out:
-	securityfs_remove(evm_symlink);
-	securityfs_remove(evm_init_tpm);
-	securityfs_remove(evm_dir);
-	return error;
-}
+	securityfs_हटाओ(evm_symlink);
+	securityfs_हटाओ(evm_init_tpm);
+	securityfs_हटाओ(evm_dir);
+	वापस error;
+पूर्ण

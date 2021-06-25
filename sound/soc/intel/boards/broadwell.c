@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Intel Broadwell Wildcatpoint SST Audio
+ * Intel Broadwell Wildcatpoपूर्णांक SST Audio
  *
  * Copyright (C) 2013, Intel Corporation. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/soc.h>
-#include <sound/jack.h>
-#include <sound/pcm_params.h>
-#include <sound/soc-acpi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc-acpi.h>
 
-#include "../../codecs/rt286.h"
+#समावेश "../../codecs/rt286.h"
 
-static struct snd_soc_jack broadwell_headset;
+अटल काष्ठा snd_soc_jack broadwell_headset;
 /* Headset jack detection DAPM pins */
-static struct snd_soc_jack_pin broadwell_headset_pins[] = {
-	{
+अटल काष्ठा snd_soc_jack_pin broadwell_headset_pins[] = अणु
+	अणु
 		.pin = "Mic Jack",
 		.mask = SND_JACK_MICROPHONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pin = "Headphone Jack",
 		.mask = SND_JACK_HEADPHONE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_kcontrol_new broadwell_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new broadwell_controls[] = अणु
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget broadwell_widgets[] = {
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_SPK("Speaker", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_MIC("DMIC1", NULL),
-	SND_SOC_DAPM_MIC("DMIC2", NULL),
-	SND_SOC_DAPM_LINE("Line Jack", NULL),
-};
+अटल स्थिर काष्ठा snd_soc_dapm_widget broadwell_widमाला_लो[] = अणु
+	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
+	SND_SOC_DAPM_SPK("Speaker", शून्य),
+	SND_SOC_DAPM_MIC("Mic Jack", शून्य),
+	SND_SOC_DAPM_MIC("DMIC1", शून्य),
+	SND_SOC_DAPM_MIC("DMIC2", शून्य),
+	SND_SOC_DAPM_LINE("Line Jack", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route broadwell_rt286_map[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route broadwell_rt286_map[] = अणु
 
 	/* speaker */
-	{"Speaker", NULL, "SPOR"},
-	{"Speaker", NULL, "SPOL"},
+	अणु"Speaker", शून्य, "SPOR"पूर्ण,
+	अणु"Speaker", शून्य, "SPOL"पूर्ण,
 
-	/* HP jack connectors - unknown if we have jack deteck */
-	{"Headphone Jack", NULL, "HPO Pin"},
+	/* HP jack connectors - unknown अगर we have jack deteck */
+	अणु"Headphone Jack", शून्य, "HPO Pin"पूर्ण,
 
 	/* other jacks */
-	{"MIC1", NULL, "Mic Jack"},
-	{"LINE1", NULL, "Line Jack"},
+	अणु"MIC1", शून्य, "Mic Jack"पूर्ण,
+	अणु"LINE1", शून्य, "Line Jack"पूर्ण,
 
 	/* digital mics */
-	{"DMIC1 Pin", NULL, "DMIC1"},
-	{"DMIC2 Pin", NULL, "DMIC2"},
+	अणु"DMIC1 Pin", शून्य, "DMIC1"पूर्ण,
+	अणु"DMIC2 Pin", शून्य, "DMIC2"पूर्ण,
 
 	/* CODEC BE connections */
-	{"SSP0 CODEC IN", NULL, "AIF1 Capture"},
-	{"AIF1 Playback", NULL, "SSP0 CODEC OUT"},
-};
+	अणु"SSP0 CODEC IN", शून्य, "AIF1 Capture"पूर्ण,
+	अणु"AIF1 Playback", शून्य, "SSP0 CODEC OUT"पूर्ण,
+पूर्ण;
 
-static int broadwell_rt286_codec_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
-	int ret = 0;
+अटल पूर्णांक broadwell_rt286_codec_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_component *component = asoc_rtd_to_codec(rtd, 0)->component;
+	पूर्णांक ret = 0;
 	ret = snd_soc_card_jack_new(rtd->card, "Headset",
 		SND_JACK_HEADSET | SND_JACK_BTN_0, &broadwell_headset,
 		broadwell_headset_pins, ARRAY_SIZE(broadwell_headset_pins));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	rt286_mic_detect(component, &broadwell_headset);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int broadwell_ssp0_fixup(struct snd_soc_pcm_runtime *rtd,
-			struct snd_pcm_hw_params *params)
-{
-	struct snd_interval *rate = hw_param_interval(params,
+अटल पूर्णांक broadwell_ssp0_fixup(काष्ठा snd_soc_pcm_runसमय *rtd,
+			काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_पूर्णांकerval *rate = hw_param_पूर्णांकerval(params,
 						      SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval *chan = hw_param_interval(params,
+	काष्ठा snd_पूर्णांकerval *chan = hw_param_पूर्णांकerval(params,
 						      SNDRV_PCM_HW_PARAM_CHANNELS);
 
 	/* The ADSP will covert the FE rate to 48k, stereo */
@@ -93,58 +94,58 @@ static int broadwell_ssp0_fixup(struct snd_soc_pcm_runtime *rtd,
 	chan->min = chan->max = 2;
 
 	/* set SSP0 to 16 bit */
-	params_set_format(params, SNDRV_PCM_FORMAT_S16_LE);
-	return 0;
-}
+	params_set_क्रमmat(params, SNDRV_PCM_FORMAT_S16_LE);
+	वापस 0;
+पूर्ण
 
-static int broadwell_rt286_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	int ret;
+अटल पूर्णांक broadwell_rt286_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	पूर्णांक ret;
 
 	ret = snd_soc_dai_set_sysclk(codec_dai, RT286_SCLK_S_PLL, 24000000,
 		SND_SOC_CLOCK_IN);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "can't set codec sysclk configuration\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct snd_soc_ops broadwell_rt286_ops = {
+अटल स्थिर काष्ठा snd_soc_ops broadwell_rt286_ops = अणु
 	.hw_params = broadwell_rt286_hw_params,
-};
+पूर्ण;
 
-static const unsigned int channels[] = {
+अटल स्थिर अचिन्हित पूर्णांक channels[] = अणु
 	2,
-};
+पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list constraints_channels = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list स्थिरraपूर्णांकs_channels = अणु
 	.count = ARRAY_SIZE(channels),
 	.list = channels,
 	.mask = 0,
-};
+पूर्ण;
 
-static int broadwell_fe_startup(struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक broadwell_fe_startup(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	/* Board supports stereo configuration only */
-	runtime->hw.channels_max = 2;
-	return snd_pcm_hw_constraint_list(runtime, 0,
+	runसमय->hw.channels_max = 2;
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
 					  SNDRV_PCM_HW_PARAM_CHANNELS,
-					  &constraints_channels);
-}
+					  &स्थिरraपूर्णांकs_channels);
+पूर्ण
 
-static const struct snd_soc_ops broadwell_fe_ops = {
+अटल स्थिर काष्ठा snd_soc_ops broadwell_fe_ops = अणु
 	.startup = broadwell_fe_startup,
-};
+पूर्ण;
 
-SND_SOC_DAILINK_DEF(system,
+SND_SOC_DAILINK_DEF(प्रणाली,
 	DAILINK_COMP_ARRAY(COMP_CPU("System Pin")));
 
 SND_SOC_DAILINK_DEF(offload0,
@@ -159,7 +160,7 @@ SND_SOC_DAILINK_DEF(loopback,
 SND_SOC_DAILINK_DEF(dummy,
 	DAILINK_COMP_ARRAY(COMP_DUMMY()));
 
-SND_SOC_DAILINK_DEF(platform,
+SND_SOC_DAILINK_DEF(platक्रमm,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("haswell-pcm-audio")));
 
 SND_SOC_DAILINK_DEF(codec,
@@ -168,49 +169,49 @@ SND_SOC_DAILINK_DEF(codec,
 SND_SOC_DAILINK_DEF(ssp0_port,
 	    DAILINK_COMP_ARRAY(COMP_CPU("ssp0-port")));
 
-/* broadwell digital audio interface glue - connects codec <--> CPU */
-static struct snd_soc_dai_link broadwell_rt286_dais[] = {
+/* broadwell digital audio पूर्णांकerface glue - connects codec <--> CPU */
+अटल काष्ठा snd_soc_dai_link broadwell_rt286_dais[] = अणु
 	/* Front End DAI links */
-	{
+	अणु
 		.name = "System PCM",
 		.stream_name = "System Playback/Capture",
 		.nonatomic = 1,
 		.dynamic = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POST},
+		.trigger = अणुSND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POSTपूर्ण,
 		.ops = &broadwell_fe_ops,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		SND_SOC_DAILINK_REG(system, dummy, platform),
-	},
-	{
+		SND_SOC_DAILINK_REG(प्रणाली, dummy, platक्रमm),
+	पूर्ण,
+	अणु
 		.name = "Offload0",
 		.stream_name = "Offload0 Playback",
 		.nonatomic = 1,
 		.dynamic = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POST},
+		.trigger = अणुSND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POSTपूर्ण,
 		.dpcm_playback = 1,
-		SND_SOC_DAILINK_REG(offload0, dummy, platform),
-	},
-	{
+		SND_SOC_DAILINK_REG(offload0, dummy, platक्रमm),
+	पूर्ण,
+	अणु
 		.name = "Offload1",
 		.stream_name = "Offload1 Playback",
 		.nonatomic = 1,
 		.dynamic = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POST},
+		.trigger = अणुSND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POSTपूर्ण,
 		.dpcm_playback = 1,
-		SND_SOC_DAILINK_REG(offload1, dummy, platform),
-	},
-	{
+		SND_SOC_DAILINK_REG(offload1, dummy, platक्रमm),
+	पूर्ण,
+	अणु
 		.name = "Loopback PCM",
 		.stream_name = "Loopback",
 		.nonatomic = 1,
 		.dynamic = 1,
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POST},
+		.trigger = अणुSND_SOC_DPCM_TRIGGER_POST, SND_SOC_DPCM_TRIGGER_POSTपूर्ण,
 		.dpcm_capture = 1,
-		SND_SOC_DAILINK_REG(loopback, dummy, platform),
-	},
+		SND_SOC_DAILINK_REG(loopback, dummy, platक्रमm),
+	पूर्ण,
 	/* Back End DAI links */
-	{
+	अणु
 		/* SSP0 - Codec */
 		.name = "Codec",
 		.id = 0,
@@ -218,118 +219,118 @@ static struct snd_soc_dai_link broadwell_rt286_dais[] = {
 		.init = broadwell_rt286_codec_init,
 		.dai_fmt = SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 			SND_SOC_DAIFMT_CBS_CFS,
-		.ignore_pmdown_time = 1,
+		.ignore_pmकरोwn_समय = 1,
 		.be_hw_params_fixup = broadwell_ssp0_fixup,
 		.ops = &broadwell_rt286_ops,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		SND_SOC_DAILINK_REG(ssp0_port, codec, platform),
-	},
-};
+		SND_SOC_DAILINK_REG(ssp0_port, codec, platक्रमm),
+	पूर्ण,
+पूर्ण;
 
-static int broadwell_disable_jack(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
+अटल पूर्णांक broadwell_disable_jack(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
 
-	for_each_card_components(card, component) {
-		if (!strcmp(component->name, "i2c-INT343A:00")) {
+	क्रम_each_card_components(card, component) अणु
+		अगर (!म_भेद(component->name, "i2c-INT343A:00")) अणु
 
 			dev_dbg(component->dev, "disabling jack detect before going to suspend.\n");
-			rt286_mic_detect(component, NULL);
-			break;
-		}
-	}
+			rt286_mic_detect(component, शून्य);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int broadwell_suspend(struct snd_soc_card *card)
-{
-	return broadwell_disable_jack(card);
-}
+अटल पूर्णांक broadwell_suspend(काष्ठा snd_soc_card *card)
+अणु
+	वापस broadwell_disable_jack(card);
+पूर्ण
 
-static int broadwell_resume(struct snd_soc_card *card){
-	struct snd_soc_component *component;
+अटल पूर्णांक broadwell_resume(काष्ठा snd_soc_card *card)अणु
+	काष्ठा snd_soc_component *component;
 
-	for_each_card_components(card, component) {
-		if (!strcmp(component->name, "i2c-INT343A:00")) {
+	क्रम_each_card_components(card, component) अणु
+		अगर (!म_भेद(component->name, "i2c-INT343A:00")) अणु
 
 			dev_dbg(component->dev, "enabling jack detect for resume.\n");
 			rt286_mic_detect(component, &broadwell_headset);
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* use space before codec name to simplify card ID, and simplify driver name */
-#define SOF_CARD_NAME "bdw rt286" /* card name will be 'sof-bdw rt286' */
-#define SOF_DRIVER_NAME "SOF"
+/* use space beक्रमe codec name to simplअगरy card ID, and simplअगरy driver name */
+#घोषणा SOF_CARD_NAME "bdw rt286" /* card name will be 'sof-bdw rt286' */
+#घोषणा SOF_DRIVER_NAME "SOF"
 
-#define CARD_NAME "broadwell-rt286"
-#define DRIVER_NAME NULL /* card name will be used for driver name */
+#घोषणा CARD_NAME "broadwell-rt286"
+#घोषणा DRIVER_NAME शून्य /* card name will be used क्रम driver name */
 
-/* broadwell audio machine driver for WPT + RT286S */
-static struct snd_soc_card broadwell_rt286 = {
+/* broadwell audio machine driver क्रम WPT + RT286S */
+अटल काष्ठा snd_soc_card broadwell_rt286 = अणु
 	.owner = THIS_MODULE,
 	.dai_link = broadwell_rt286_dais,
 	.num_links = ARRAY_SIZE(broadwell_rt286_dais),
 	.controls = broadwell_controls,
 	.num_controls = ARRAY_SIZE(broadwell_controls),
-	.dapm_widgets = broadwell_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(broadwell_widgets),
+	.dapm_widमाला_लो = broadwell_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(broadwell_widमाला_लो),
 	.dapm_routes = broadwell_rt286_map,
 	.num_dapm_routes = ARRAY_SIZE(broadwell_rt286_map),
 	.fully_routed = true,
 	.suspend_pre = broadwell_suspend,
 	.resume_post = broadwell_resume,
-};
+पूर्ण;
 
-static int broadwell_audio_probe(struct platform_device *pdev)
-{
-	struct snd_soc_acpi_mach *mach;
-	int ret;
+अटल पूर्णांक broadwell_audio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_acpi_mach *mach;
+	पूर्णांक ret;
 
 	broadwell_rt286.dev = &pdev->dev;
 
-	/* override plaform name, if required */
-	mach = pdev->dev.platform_data;
-	ret = snd_soc_fixup_dai_links_platform_name(&broadwell_rt286,
-						    mach->mach_params.platform);
-	if (ret)
-		return ret;
+	/* override plaक्रमm name, अगर required */
+	mach = pdev->dev.platक्रमm_data;
+	ret = snd_soc_fixup_dai_links_platक्रमm_name(&broadwell_rt286,
+						    mach->mach_params.platक्रमm);
+	अगर (ret)
+		वापस ret;
 
 	/* set card and driver name */
-	if (snd_soc_acpi_sof_parent(&pdev->dev)) {
+	अगर (snd_soc_acpi_sof_parent(&pdev->dev)) अणु
 		broadwell_rt286.name = SOF_CARD_NAME;
 		broadwell_rt286.driver_name = SOF_DRIVER_NAME;
-	} else {
+	पूर्ण अन्यथा अणु
 		broadwell_rt286.name = CARD_NAME;
 		broadwell_rt286.driver_name = DRIVER_NAME;
-	}
+	पूर्ण
 
-	return devm_snd_soc_register_card(&pdev->dev, &broadwell_rt286);
-}
+	वापस devm_snd_soc_रेजिस्टर_card(&pdev->dev, &broadwell_rt286);
+पूर्ण
 
-static int broadwell_audio_remove(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
+अटल पूर्णांक broadwell_audio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
 
-	return broadwell_disable_jack(card);
-}
+	वापस broadwell_disable_jack(card);
+पूर्ण
 
-static struct platform_driver broadwell_audio = {
+अटल काष्ठा platक्रमm_driver broadwell_audio = अणु
 	.probe = broadwell_audio_probe,
-	.remove = broadwell_audio_remove,
-	.driver = {
+	.हटाओ = broadwell_audio_हटाओ,
+	.driver = अणु
 		.name = "broadwell-audio",
 		.pm = &snd_soc_pm_ops
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(broadwell_audio)
+module_platक्रमm_driver(broadwell_audio)
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Liam Girdwood, Xingchao Wang");
 MODULE_DESCRIPTION("Intel SST Audio for WPT/Broadwell");
 MODULE_LICENSE("GPL v2");

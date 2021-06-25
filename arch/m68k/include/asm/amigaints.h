@@ -1,113 +1,114 @@
+<शैली गुरु>
 /*
-** amigaints.h -- Amiga Linux interrupt handling structs and prototypes
+** amigaपूर्णांकs.h -- Amiga Linux पूर्णांकerrupt handling काष्ठाs and prototypes
 **
 ** Copyright 1992 by Greg Harp
 **
 ** This file is subject to the terms and conditions of the GNU General Public
-** License.  See the file COPYING in the main directory of this archive
-** for more details.
+** License.  See the file COPYING in the मुख्य directory of this archive
+** क्रम more details.
 **
 ** Created 10/2/92 by Greg Harp
 */
 
-#ifndef _ASMm68k_AMIGAINTS_H_
-#define _ASMm68k_AMIGAINTS_H_
+#अगर_अघोषित _ASMm68k_AMIGAINTS_H_
+#घोषणा _ASMm68k_AMIGAINTS_H_
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
 /*
 ** Amiga Interrupt sources.
 **
 */
 
-#define AUTO_IRQS           (8)
-#define AMI_STD_IRQS        (14)
-#define CIA_IRQS            (5)
-#define AMI_IRQS            (32) /* AUTO_IRQS+AMI_STD_IRQS+2*CIA_IRQS */
+#घोषणा AUTO_IRQS           (8)
+#घोषणा AMI_STD_IRQS        (14)
+#घोषणा CIA_IRQS            (5)
+#घोषणा AMI_IRQS            (32) /* AUTO_IRQS+AMI_STD_IRQS+2*CIA_IRQS */
 
-/* builtin serial port interrupts */
-#define IRQ_AMIGA_TBE		(IRQ_USER+0)
-#define IRQ_AMIGA_RBF		(IRQ_USER+11)
+/* builtin serial port पूर्णांकerrupts */
+#घोषणा IRQ_AMIGA_TBE		(IRQ_USER+0)
+#घोषणा IRQ_AMIGA_RBF		(IRQ_USER+11)
 
-/* floppy disk interrupts */
-#define IRQ_AMIGA_DSKBLK	(IRQ_USER+1)
-#define IRQ_AMIGA_DSKSYN	(IRQ_USER+12)
+/* floppy disk पूर्णांकerrupts */
+#घोषणा IRQ_AMIGA_DSKBLK	(IRQ_USER+1)
+#घोषणा IRQ_AMIGA_DSKSYN	(IRQ_USER+12)
 
-/* software interrupts */
-#define IRQ_AMIGA_SOFT		(IRQ_USER+2)
+/* software पूर्णांकerrupts */
+#घोषणा IRQ_AMIGA_SOFT		(IRQ_USER+2)
 
-/* interrupts from external hardware */
-#define IRQ_AMIGA_PORTS		IRQ_AUTO_2
-#define IRQ_AMIGA_EXTER		IRQ_AUTO_6
+/* पूर्णांकerrupts from बाह्यal hardware */
+#घोषणा IRQ_AMIGA_PORTS		IRQ_AUTO_2
+#घोषणा IRQ_AMIGA_EXTER		IRQ_AUTO_6
 
-/* copper interrupt */
-#define IRQ_AMIGA_COPPER	(IRQ_USER+4)
+/* copper पूर्णांकerrupt */
+#घोषणा IRQ_AMIGA_COPPER	(IRQ_USER+4)
 
-/* vertical blanking interrupt */
-#define IRQ_AMIGA_VERTB		(IRQ_USER+5)
+/* vertical blanking पूर्णांकerrupt */
+#घोषणा IRQ_AMIGA_VERTB		(IRQ_USER+5)
 
-/* Blitter done interrupt */
-#define IRQ_AMIGA_BLIT		(IRQ_USER+6)
+/* Blitter करोne पूर्णांकerrupt */
+#घोषणा IRQ_AMIGA_BLIT		(IRQ_USER+6)
 
-/* Audio interrupts */
-#define IRQ_AMIGA_AUD0		(IRQ_USER+7)
-#define IRQ_AMIGA_AUD1		(IRQ_USER+8)
-#define IRQ_AMIGA_AUD2		(IRQ_USER+9)
-#define IRQ_AMIGA_AUD3		(IRQ_USER+10)
+/* Audio पूर्णांकerrupts */
+#घोषणा IRQ_AMIGA_AUD0		(IRQ_USER+7)
+#घोषणा IRQ_AMIGA_AUD1		(IRQ_USER+8)
+#घोषणा IRQ_AMIGA_AUD2		(IRQ_USER+9)
+#घोषणा IRQ_AMIGA_AUD3		(IRQ_USER+10)
 
-/* CIA interrupt sources */
-#define IRQ_AMIGA_CIAA		(IRQ_USER+14)
-#define IRQ_AMIGA_CIAA_TA	(IRQ_USER+14)
-#define IRQ_AMIGA_CIAA_TB	(IRQ_USER+15)
-#define IRQ_AMIGA_CIAA_ALRM	(IRQ_USER+16)
-#define IRQ_AMIGA_CIAA_SP	(IRQ_USER+17)
-#define IRQ_AMIGA_CIAA_FLG	(IRQ_USER+18)
-#define IRQ_AMIGA_CIAB		(IRQ_USER+19)
-#define IRQ_AMIGA_CIAB_TA	(IRQ_USER+19)
-#define IRQ_AMIGA_CIAB_TB	(IRQ_USER+20)
-#define IRQ_AMIGA_CIAB_ALRM	(IRQ_USER+21)
-#define IRQ_AMIGA_CIAB_SP	(IRQ_USER+22)
-#define IRQ_AMIGA_CIAB_FLG	(IRQ_USER+23)
+/* CIA पूर्णांकerrupt sources */
+#घोषणा IRQ_AMIGA_CIAA		(IRQ_USER+14)
+#घोषणा IRQ_AMIGA_CIAA_TA	(IRQ_USER+14)
+#घोषणा IRQ_AMIGA_CIAA_TB	(IRQ_USER+15)
+#घोषणा IRQ_AMIGA_CIAA_ALRM	(IRQ_USER+16)
+#घोषणा IRQ_AMIGA_CIAA_SP	(IRQ_USER+17)
+#घोषणा IRQ_AMIGA_CIAA_FLG	(IRQ_USER+18)
+#घोषणा IRQ_AMIGA_CIAB		(IRQ_USER+19)
+#घोषणा IRQ_AMIGA_CIAB_TA	(IRQ_USER+19)
+#घोषणा IRQ_AMIGA_CIAB_TB	(IRQ_USER+20)
+#घोषणा IRQ_AMIGA_CIAB_ALRM	(IRQ_USER+21)
+#घोषणा IRQ_AMIGA_CIAB_SP	(IRQ_USER+22)
+#घोषणा IRQ_AMIGA_CIAB_FLG	(IRQ_USER+23)
 
 
 /* INTREQR masks */
-#define IF_SETCLR   0x8000      /* set/clr bit */
-#define IF_INTEN    0x4000	/* master interrupt bit in INT* registers */
-#define IF_EXTER    0x2000	/* external level 6 and CIA B interrupt */
-#define IF_DSKSYN   0x1000	/* disk sync interrupt */
-#define IF_RBF	    0x0800	/* serial receive buffer full interrupt */
-#define IF_AUD3     0x0400	/* audio channel 3 done interrupt */
-#define IF_AUD2     0x0200	/* audio channel 2 done interrupt */
-#define IF_AUD1     0x0100	/* audio channel 1 done interrupt */
-#define IF_AUD0     0x0080	/* audio channel 0 done interrupt */
-#define IF_BLIT     0x0040	/* blitter done interrupt */
-#define IF_VERTB    0x0020	/* vertical blanking interrupt */
-#define IF_COPER    0x0010	/* copper interrupt */
-#define IF_PORTS    0x0008	/* external level 2 and CIA A interrupt */
-#define IF_SOFT     0x0004	/* software initiated interrupt */
-#define IF_DSKBLK   0x0002	/* diskblock DMA finished */
-#define IF_TBE	    0x0001	/* serial transmit buffer empty interrupt */
+#घोषणा IF_SETCLR   0x8000      /* set/clr bit */
+#घोषणा IF_INTEN    0x4000	/* master पूर्णांकerrupt bit in INT* रेजिस्टरs */
+#घोषणा IF_EXTER    0x2000	/* बाह्यal level 6 and CIA B पूर्णांकerrupt */
+#घोषणा IF_DSKSYN   0x1000	/* disk sync पूर्णांकerrupt */
+#घोषणा IF_RBF	    0x0800	/* serial receive buffer full पूर्णांकerrupt */
+#घोषणा IF_AUD3     0x0400	/* audio channel 3 करोne पूर्णांकerrupt */
+#घोषणा IF_AUD2     0x0200	/* audio channel 2 करोne पूर्णांकerrupt */
+#घोषणा IF_AUD1     0x0100	/* audio channel 1 करोne पूर्णांकerrupt */
+#घोषणा IF_AUD0     0x0080	/* audio channel 0 करोne पूर्णांकerrupt */
+#घोषणा IF_BLIT     0x0040	/* blitter करोne पूर्णांकerrupt */
+#घोषणा IF_VERTB    0x0020	/* vertical blanking पूर्णांकerrupt */
+#घोषणा IF_COPER    0x0010	/* copper पूर्णांकerrupt */
+#घोषणा IF_PORTS    0x0008	/* बाह्यal level 2 and CIA A पूर्णांकerrupt */
+#घोषणा IF_SOFT     0x0004	/* software initiated पूर्णांकerrupt */
+#घोषणा IF_DSKBLK   0x0002	/* diskblock DMA finished */
+#घोषणा IF_TBE	    0x0001	/* serial transmit buffer empty पूर्णांकerrupt */
 
-/* CIA interrupt control register bits */
+/* CIA पूर्णांकerrupt control रेजिस्टर bits */
 
-#define CIA_ICR_TA	0x01
-#define CIA_ICR_TB	0x02
-#define CIA_ICR_ALRM	0x04
-#define CIA_ICR_SP	0x08
-#define CIA_ICR_FLG	0x10
-#define CIA_ICR_ALL	0x1f
-#define CIA_ICR_SETCLR	0x80
+#घोषणा CIA_ICR_TA	0x01
+#घोषणा CIA_ICR_TB	0x02
+#घोषणा CIA_ICR_ALRM	0x04
+#घोषणा CIA_ICR_SP	0x08
+#घोषणा CIA_ICR_FLG	0x10
+#घोषणा CIA_ICR_ALL	0x1f
+#घोषणा CIA_ICR_SETCLR	0x80
 
-extern void amiga_init_IRQ(void);
+बाह्य व्योम amiga_init_IRQ(व्योम);
 
-/* to access the interrupt control registers of CIA's use only
+/* to access the पूर्णांकerrupt control रेजिस्टरs of CIA's use only
 ** these functions, they behave exactly like the amiga os routines
 */
 
-extern struct ciabase ciaa_base, ciab_base;
+बाह्य काष्ठा ciabase ciaa_base, ciab_base;
 
-extern void cia_init_IRQ(struct ciabase *base);
-extern unsigned char cia_set_irq(struct ciabase *base, unsigned char mask);
-extern unsigned char cia_able_irq(struct ciabase *base, unsigned char mask);
+बाह्य व्योम cia_init_IRQ(काष्ठा ciabase *base);
+बाह्य अचिन्हित अक्षर cia_set_irq(काष्ठा ciabase *base, अचिन्हित अक्षर mask);
+बाह्य अचिन्हित अक्षर cia_able_irq(काष्ठा ciabase *base, अचिन्हित अक्षर mask);
 
-#endif /* asm-m68k/amigaints.h */
+#पूर्ण_अगर /* यंत्र-m68k/amigaपूर्णांकs.h */

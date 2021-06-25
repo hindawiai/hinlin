@@ -1,320 +1,321 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __M68K_MMU_CONTEXT_H
-#define __M68K_MMU_CONTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __M68K_MMU_CONTEXT_H
+#घोषणा __M68K_MMU_CONTEXT_H
 
-#include <asm-generic/mm_hooks.h>
-#include <linux/mm_types.h>
+#समावेश <यंत्र-generic/mm_hooks.h>
+#समावेश <linux/mm_types.h>
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
-#if defined(CONFIG_COLDFIRE)
+#अगर defined(CONFIG_COLDFIRE)
 
-#include <asm/atomic.h>
-#include <asm/bitops.h>
-#include <asm/mcfmmu.h>
-#include <asm/mmu.h>
+#समावेश <यंत्र/atomic.h>
+#समावेश <यंत्र/bitops.h>
+#समावेश <यंत्र/mcfmmu.h>
+#समावेश <यंत्र/mmu.h>
 
-#define NO_CONTEXT		256
-#define LAST_CONTEXT		255
-#define FIRST_CONTEXT		1
+#घोषणा NO_CONTEXT		256
+#घोषणा LAST_CONTEXT		255
+#घोषणा FIRST_CONTEXT		1
 
-extern unsigned long context_map[];
-extern mm_context_t next_mmu_context;
+बाह्य अचिन्हित दीर्घ context_map[];
+बाह्य mm_context_t next_mmu_context;
 
-extern atomic_t nr_free_contexts;
-extern struct mm_struct *context_mm[LAST_CONTEXT+1];
-extern void steal_context(void);
+बाह्य atomic_t nr_मुक्त_contexts;
+बाह्य काष्ठा mm_काष्ठा *context_mm[LAST_CONTEXT+1];
+बाह्य व्योम steal_context(व्योम);
 
-static inline void get_mmu_context(struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम get_mmu_context(काष्ठा mm_काष्ठा *mm)
+अणु
 	mm_context_t ctx;
 
-	if (mm->context != NO_CONTEXT)
-		return;
-	while (atomic_dec_and_test_lt(&nr_free_contexts)) {
-		atomic_inc(&nr_free_contexts);
+	अगर (mm->context != NO_CONTEXT)
+		वापस;
+	जबतक (atomic_dec_and_test_lt(&nr_मुक्त_contexts)) अणु
+		atomic_inc(&nr_मुक्त_contexts);
 		steal_context();
-	}
+	पूर्ण
 	ctx = next_mmu_context;
-	while (test_and_set_bit(ctx, context_map)) {
+	जबतक (test_and_set_bit(ctx, context_map)) अणु
 		ctx = find_next_zero_bit(context_map, LAST_CONTEXT+1, ctx);
-		if (ctx > LAST_CONTEXT)
+		अगर (ctx > LAST_CONTEXT)
 			ctx = 0;
-	}
+	पूर्ण
 	next_mmu_context = (ctx + 1) & LAST_CONTEXT;
 	mm->context = ctx;
 	context_mm[ctx] = mm;
-}
+पूर्ण
 
 /*
- * Set up the context for a new address space.
+ * Set up the context क्रम a new address space.
  */
-#define init_new_context(tsk, mm)	(((mm)->context = NO_CONTEXT), 0)
+#घोषणा init_new_context(tsk, mm)	(((mm)->context = NO_CONTEXT), 0)
 
 /*
- * We're finished using the context for an address space.
+ * We're finished using the context क्रम an address space.
  */
-#define destroy_context destroy_context
-static inline void destroy_context(struct mm_struct *mm)
-{
-	if (mm->context != NO_CONTEXT) {
+#घोषणा destroy_context destroy_context
+अटल अंतरभूत व्योम destroy_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm->context != NO_CONTEXT) अणु
 		clear_bit(mm->context, context_map);
 		mm->context = NO_CONTEXT;
-		atomic_inc(&nr_free_contexts);
-	}
-}
+		atomic_inc(&nr_मुक्त_contexts);
+	पूर्ण
+पूर्ण
 
-static inline void set_context(mm_context_t context, pgd_t *pgd)
-{
-	__asm__ __volatile__ ("movec %0,%%asid" : : "d" (context));
-}
+अटल अंतरभूत व्योम set_context(mm_context_t context, pgd_t *pgd)
+अणु
+	__यंत्र__ __अस्थिर__ ("movec %0,%%asid" : : "d" (context));
+पूर्ण
 
-static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
-	struct task_struct *tsk)
-{
+अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+	काष्ठा task_काष्ठा *tsk)
+अणु
 	get_mmu_context(tsk->mm);
 	set_context(tsk->mm->context, next->pgd);
-}
+पूर्ण
 
 /*
  * After we have set current->mm to a new value, this activates
- * the context for the new mm so we see the new mappings.
+ * the context क्रम the new mm so we see the new mappings.
  */
-#define activate_mm activate_mm
-static inline void activate_mm(struct mm_struct *active_mm,
-	struct mm_struct *mm)
-{
+#घोषणा activate_mm activate_mm
+अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *active_mm,
+	काष्ठा mm_काष्ठा *mm)
+अणु
 	get_mmu_context(mm);
 	set_context(mm->context, mm->pgd);
-}
+पूर्ण
 
-#define prepare_arch_switch(next) load_ksp_mmu(next)
+#घोषणा prepare_arch_चयन(next) load_ksp_mmu(next)
 
-static inline void load_ksp_mmu(struct task_struct *task)
-{
-	unsigned long flags;
-	struct mm_struct *mm;
-	int asid;
+अटल अंतरभूत व्योम load_ksp_mmu(काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा mm_काष्ठा *mm;
+	पूर्णांक asid;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-	unsigned long mmuar;
+	अचिन्हित दीर्घ mmuar;
 
 	local_irq_save(flags);
-	mmuar = task->thread.ksp;
+	mmuar = task->thपढ़ो.ksp;
 
-	/* Search for a valid TLB entry, if one is found, don't remap */
-	mmu_write(MMUAR, mmuar);
-	mmu_write(MMUOR, MMUOR_STLB | MMUOR_ADR);
-	if (mmu_read(MMUSR) & MMUSR_HIT)
-		goto end;
+	/* Search क्रम a valid TLB entry, अगर one is found, करोn't remap */
+	mmu_ग_लिखो(MMUAR, mmuar);
+	mmu_ग_लिखो(MMUOR, MMUOR_STLB | MMUOR_ADR);
+	अगर (mmu_पढ़ो(MMUSR) & MMUSR_HIT)
+		जाओ end;
 
-	if (mmuar >= PAGE_OFFSET) {
+	अगर (mmuar >= PAGE_OFFSET) अणु
 		mm = &init_mm;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("load_ksp_mmu: non-kernel mm found: 0x%p\n", task->mm);
 		mm = task->mm;
-	}
+	पूर्ण
 
-	if (!mm)
-		goto bug;
+	अगर (!mm)
+		जाओ bug;
 
 	pgd = pgd_offset(mm, mmuar);
-	if (pgd_none(*pgd))
-		goto bug;
+	अगर (pgd_none(*pgd))
+		जाओ bug;
 
 	p4d = p4d_offset(pgd, mmuar);
-	if (p4d_none(*p4d))
-		goto bug;
+	अगर (p4d_none(*p4d))
+		जाओ bug;
 
 	pud = pud_offset(p4d, mmuar);
-	if (pud_none(*pud))
-		goto bug;
+	अगर (pud_none(*pud))
+		जाओ bug;
 
 	pmd = pmd_offset(pud, mmuar);
-	if (pmd_none(*pmd))
-		goto bug;
+	अगर (pmd_none(*pmd))
+		जाओ bug;
 
 	pte = (mmuar >= PAGE_OFFSET) ? pte_offset_kernel(pmd, mmuar)
 				     : pte_offset_map(pmd, mmuar);
-	if (pte_none(*pte) || !pte_present(*pte))
-		goto bug;
+	अगर (pte_none(*pte) || !pte_present(*pte))
+		जाओ bug;
 
 	set_pte(pte, pte_mkyoung(*pte));
 	asid = mm->context & 0xff;
-	if (!pte_dirty(*pte) && mmuar <= PAGE_OFFSET)
+	अगर (!pte_dirty(*pte) && mmuar <= PAGE_OFFSET)
 		set_pte(pte, pte_wrprotect(*pte));
 
-	mmu_write(MMUTR, (mmuar & PAGE_MASK) | (asid << MMUTR_IDN) |
-		(((int)(pte->pte) & (int)CF_PAGE_MMUTR_MASK)
+	mmu_ग_लिखो(MMUTR, (mmuar & PAGE_MASK) | (asid << MMUTR_IDN) |
+		(((पूर्णांक)(pte->pte) & (पूर्णांक)CF_PAGE_MMUTR_MASK)
 		>> CF_PAGE_MMUTR_SHIFT) | MMUTR_V);
 
-	mmu_write(MMUDR, (pte_val(*pte) & PAGE_MASK) |
+	mmu_ग_लिखो(MMUDR, (pte_val(*pte) & PAGE_MASK) |
 		((pte->pte) & CF_PAGE_MMUDR_MASK) | MMUDR_SZ_8KB | MMUDR_X);
 
-	mmu_write(MMUOR, MMUOR_ACC | MMUOR_UAA);
+	mmu_ग_लिखो(MMUOR, MMUOR_ACC | MMUOR_UAA);
 
-	goto end;
+	जाओ end;
 
 bug:
 	pr_info("ksp load failed: mm=0x%p ksp=0x08%lx\n", mm, mmuar);
 end:
 	local_irq_restore(flags);
-}
+पूर्ण
 
-#elif defined(CONFIG_SUN3)
-#include <asm/sun3mmu.h>
-#include <linux/sched.h>
+#या_अगर defined(CONFIG_SUN3)
+#समावेश <यंत्र/sun3mmu.h>
+#समावेश <linux/sched.h>
 
-extern unsigned long get_free_context(struct mm_struct *mm);
-extern void clear_context(unsigned long context);
+बाह्य अचिन्हित दीर्घ get_मुक्त_context(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम clear_context(अचिन्हित दीर्घ context);
 
-/* set the context for a new task to unmapped */
-#define init_new_context init_new_context
-static inline int init_new_context(struct task_struct *tsk,
-				   struct mm_struct *mm)
-{
+/* set the context क्रम a new task to unmapped */
+#घोषणा init_new_context init_new_context
+अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
+				   काष्ठा mm_काष्ठा *mm)
+अणु
 	mm->context = SUN3_INVALID_CONTEXT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* find the context given to this process, and if it hasn't already
-   got one, go get one for it. */
-static inline void get_mmu_context(struct mm_struct *mm)
-{
-	if (mm->context == SUN3_INVALID_CONTEXT)
-		mm->context = get_free_context(mm);
-}
+/* find the context given to this process, and अगर it hasn't alपढ़ोy
+   got one, go get one क्रम it. */
+अटल अंतरभूत व्योम get_mmu_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm->context == SUN3_INVALID_CONTEXT)
+		mm->context = get_मुक्त_context(mm);
+पूर्ण
 
-/* flush context if allocated... */
-#define destroy_context destroy_context
-static inline void destroy_context(struct mm_struct *mm)
-{
-	if (mm->context != SUN3_INVALID_CONTEXT)
+/* flush context अगर allocated... */
+#घोषणा destroy_context destroy_context
+अटल अंतरभूत व्योम destroy_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm->context != SUN3_INVALID_CONTEXT)
 		clear_context(mm->context);
-}
+पूर्ण
 
-static inline void activate_context(struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम activate_context(काष्ठा mm_काष्ठा *mm)
+अणु
 	get_mmu_context(mm);
 	sun3_put_context(mm->context);
-}
+पूर्ण
 
-static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
-			     struct task_struct *tsk)
-{
+अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+			     काष्ठा task_काष्ठा *tsk)
+अणु
 	activate_context(tsk->mm);
-}
+पूर्ण
 
-#define activate_mm activate_mm
-static inline void activate_mm(struct mm_struct *prev_mm,
-			       struct mm_struct *next_mm)
-{
+#घोषणा activate_mm activate_mm
+अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *prev_mm,
+			       काष्ठा mm_काष्ठा *next_mm)
+अणु
 	activate_context(next_mm);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#include <asm/setup.h>
-#include <asm/page.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#define init_new_context init_new_context
-static inline int init_new_context(struct task_struct *tsk,
-				   struct mm_struct *mm)
-{
+#घोषणा init_new_context init_new_context
+अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
+				   काष्ठा mm_काष्ठा *mm)
+अणु
 	mm->context = virt_to_phys(mm->pgd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void switch_mm_0230(struct mm_struct *mm)
-{
-	unsigned long crp[2] = {
+अटल अंतरभूत व्योम चयन_mm_0230(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ crp[2] = अणु
 		0x80000000 | _PAGE_TABLE, mm->context
-	};
-	unsigned long tmp;
+	पूर्ण;
+	अचिन्हित दीर्घ पंचांगp;
 
-	asm volatile (".chip 68030");
+	यंत्र अस्थिर (".chip 68030");
 
-	/* flush MC68030/MC68020 caches (they are virtually addressed) */
-	asm volatile (
+	/* flush MC68030/MC68020 caches (they are भवly addressed) */
+	यंत्र अस्थिर (
 		"movec %%cacr,%0;"
 		"orw %1,%0; "
 		"movec %0,%%cacr"
-		: "=d" (tmp) : "di" (FLUSH_I_AND_D));
+		: "=d" (पंचांगp) : "di" (FLUSH_I_AND_D));
 
-	/* Switch the root pointer. For a 030-only kernel,
-	 * avoid flushing the whole ATC, we only need to
-	 * flush the user entries. The 68851 does this by
-	 * itself. Avoid a runtime check here.
+	/* Switch the root poपूर्णांकer. For a 030-only kernel,
+	 * aव्योम flushing the whole ATC, we only need to
+	 * flush the user entries. The 68851 करोes this by
+	 * itself. Aव्योम a runसमय check here.
 	 */
-	asm volatile (
-#ifdef CPU_M68030_ONLY
+	यंत्र अस्थिर (
+#अगर_घोषित CPU_M68030_ONLY
 		"pmovefd %0,%%crp; "
 		"pflush #0,#4"
-#else
+#अन्यथा
 		"pmove %0,%%crp"
-#endif
+#पूर्ण_अगर
 		: : "m" (crp[0]));
 
-	asm volatile (".chip 68k");
-}
+	यंत्र अस्थिर (".chip 68k");
+पूर्ण
 
-static inline void switch_mm_0460(struct mm_struct *mm)
-{
-	asm volatile (".chip 68040");
+अटल अंतरभूत व्योम चयन_mm_0460(काष्ठा mm_काष्ठा *mm)
+अणु
+	यंत्र अस्थिर (".chip 68040");
 
 	/* flush address translation cache (user entries) */
-	asm volatile ("pflushan");
+	यंत्र अस्थिर ("pflushan");
 
-	/* switch the root pointer */
-	asm volatile ("movec %0,%%urp" : : "r" (mm->context));
+	/* चयन the root poपूर्णांकer */
+	यंत्र अस्थिर ("movec %0,%%urp" : : "r" (mm->context));
 
-	if (CPU_IS_060) {
-		unsigned long tmp;
+	अगर (CPU_IS_060) अणु
+		अचिन्हित दीर्घ पंचांगp;
 
 		/* clear user entries in the branch cache */
-		asm volatile (
+		यंत्र अस्थिर (
 			"movec %%cacr,%0; "
 		        "orl %1,%0; "
 		        "movec %0,%%cacr"
-			: "=d" (tmp): "di" (0x00200000));
-	}
+			: "=d" (पंचांगp): "di" (0x00200000));
+	पूर्ण
 
-	asm volatile (".chip 68k");
-}
+	यंत्र अस्थिर (".chip 68k");
+पूर्ण
 
-static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next, struct task_struct *tsk)
-{
-	if (prev != next) {
-		if (CPU_IS_020_OR_030)
-			switch_mm_0230(next);
-		else
-			switch_mm_0460(next);
-	}
-}
+अटल अंतरभूत व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next, काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (prev != next) अणु
+		अगर (CPU_IS_020_OR_030)
+			चयन_mm_0230(next);
+		अन्यथा
+			चयन_mm_0460(next);
+	पूर्ण
+पूर्ण
 
-#define activate_mm activate_mm
-static inline void activate_mm(struct mm_struct *prev_mm,
-			       struct mm_struct *next_mm)
-{
+#घोषणा activate_mm activate_mm
+अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *prev_mm,
+			       काष्ठा mm_काष्ठा *next_mm)
+अणु
 	next_mm->context = virt_to_phys(next_mm->pgd);
 
-	if (CPU_IS_020_OR_030)
-		switch_mm_0230(next_mm);
-	else
-		switch_mm_0460(next_mm);
-}
+	अगर (CPU_IS_020_OR_030)
+		चयन_mm_0230(next_mm);
+	अन्यथा
+		चयन_mm_0460(next_mm);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#else /* !CONFIG_MMU */
+#अन्यथा /* !CONFIG_MMU */
 
-#include <asm-generic/nommu_context.h>
+#समावेश <यंत्र-generic/nommu_context.h>
 
-#endif /* CONFIG_MMU */
-#endif /* __M68K_MMU_CONTEXT_H */
+#पूर्ण_अगर /* CONFIG_MMU */
+#पूर्ण_अगर /* __M68K_MMU_CONTEXT_H */

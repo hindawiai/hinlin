@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Base unit test (KUnit) API.
  *
@@ -6,673 +7,673 @@
  * Author: Brendan Higgins <brendanhiggins@google.com>
  */
 
-#include <kunit/test.h>
-#include <kunit/test-bug.h>
-#include <linux/kernel.h>
-#include <linux/kref.h>
-#include <linux/sched/debug.h>
-#include <linux/sched.h>
+#समावेश <kunit/test.h>
+#समावेश <kunit/test-bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched.h>
 
-#include "debugfs.h"
-#include "string-stream.h"
-#include "try-catch-impl.h"
+#समावेश "debugfs.h"
+#समावेश "string-stream.h"
+#समावेश "try-catch-impl.h"
 
-#if IS_BUILTIN(CONFIG_KUNIT)
+#अगर IS_BUILTIN(CONFIG_KUNIT)
 /*
- * Fail the current test and print an error message to the log.
+ * Fail the current test and prपूर्णांक an error message to the log.
  */
-void __kunit_fail_current_test(const char *file, int line, const char *fmt, ...)
-{
-	va_list args;
-	int len;
-	char *buffer;
+व्योम __kunit_fail_current_test(स्थिर अक्षर *file, पूर्णांक line, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक len;
+	अक्षर *buffer;
 
-	if (!current->kunit_test)
-		return;
+	अगर (!current->kunit_test)
+		वापस;
 
 	kunit_set_failure(current->kunit_test);
 
 	/* kunit_err() only accepts literals, so evaluate the args first. */
-	va_start(args, fmt);
-	len = vsnprintf(NULL, 0, fmt, args) + 1;
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	len = vsnम_लिखो(शून्य, 0, fmt, args) + 1;
+	बहु_पूर्ण(args);
 
-	buffer = kunit_kmalloc(current->kunit_test, len, GFP_KERNEL);
-	if (!buffer)
-		return;
+	buffer = kunit_kदो_स्मृति(current->kunit_test, len, GFP_KERNEL);
+	अगर (!buffer)
+		वापस;
 
-	va_start(args, fmt);
-	vsnprintf(buffer, len, fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(buffer, len, fmt, args);
+	बहु_पूर्ण(args);
 
 	kunit_err(current->kunit_test, "%s:%d: %s", file, line, buffer);
-	kunit_kfree(current->kunit_test, buffer);
-}
+	kunit_kमुक्त(current->kunit_test, buffer);
+पूर्ण
 EXPORT_SYMBOL_GPL(__kunit_fail_current_test);
-#endif
+#पूर्ण_अगर
 
 /*
- * Append formatted message to log, size of which is limited to
+ * Append क्रमmatted message to log, size of which is limited to
  * KUNIT_LOG_SIZE bytes (including null terminating byte).
  */
-void kunit_log_append(char *log, const char *fmt, ...)
-{
-	char line[KUNIT_LOG_SIZE];
-	va_list args;
-	int len_left;
+व्योम kunit_log_append(अक्षर *log, स्थिर अक्षर *fmt, ...)
+अणु
+	अक्षर line[KUNIT_LOG_SIZE];
+	बहु_सूची args;
+	पूर्णांक len_left;
 
-	if (!log)
-		return;
+	अगर (!log)
+		वापस;
 
-	len_left = KUNIT_LOG_SIZE - strlen(log) - 1;
-	if (len_left <= 0)
-		return;
+	len_left = KUNIT_LOG_SIZE - म_माप(log) - 1;
+	अगर (len_left <= 0)
+		वापस;
 
-	va_start(args, fmt);
-	vsnprintf(line, sizeof(line), fmt, args);
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	vsnम_लिखो(line, माप(line), fmt, args);
+	बहु_पूर्ण(args);
 
-	strncat(log, line, len_left);
-}
+	म_जोड़न(log, line, len_left);
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_log_append);
 
-size_t kunit_suite_num_test_cases(struct kunit_suite *suite)
-{
-	struct kunit_case *test_case;
-	size_t len = 0;
+माप_प्रकार kunit_suite_num_test_हालs(काष्ठा kunit_suite *suite)
+अणु
+	काष्ठा kunit_हाल *test_हाल;
+	माप_प्रकार len = 0;
 
-	kunit_suite_for_each_test_case(suite, test_case)
+	kunit_suite_क्रम_each_test_हाल(suite, test_हाल)
 		len++;
 
-	return len;
-}
-EXPORT_SYMBOL_GPL(kunit_suite_num_test_cases);
+	वापस len;
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_suite_num_test_हालs);
 
-static void kunit_print_subtest_start(struct kunit_suite *suite)
-{
+अटल व्योम kunit_prपूर्णांक_subtest_start(काष्ठा kunit_suite *suite)
+अणु
 	kunit_log(KERN_INFO, suite, KUNIT_SUBTEST_INDENT "# Subtest: %s",
 		  suite->name);
 	kunit_log(KERN_INFO, suite, KUNIT_SUBTEST_INDENT "1..%zd",
-		  kunit_suite_num_test_cases(suite));
-}
+		  kunit_suite_num_test_हालs(suite));
+पूर्ण
 
-static void kunit_print_ok_not_ok(void *test_or_suite,
+अटल व्योम kunit_prपूर्णांक_ok_not_ok(व्योम *test_or_suite,
 				  bool is_test,
 				  bool is_ok,
-				  size_t test_number,
-				  const char *description)
-{
-	struct kunit_suite *suite = is_test ? NULL : test_or_suite;
-	struct kunit *test = is_test ? test_or_suite : NULL;
+				  माप_प्रकार test_number,
+				  स्थिर अक्षर *description)
+अणु
+	काष्ठा kunit_suite *suite = is_test ? शून्य : test_or_suite;
+	काष्ठा kunit *test = is_test ? test_or_suite : शून्य;
 
 	/*
-	 * We do not log the test suite results as doing so would
+	 * We करो not log the test suite results as करोing so would
 	 * mean debugfs display would consist of the test suite
-	 * description and status prior to individual test results.
-	 * Hence directly printk the suite status, and we will
-	 * separately seq_printf() the suite status for the debugfs
+	 * description and status prior to inभागidual test results.
+	 * Hence directly prपूर्णांकk the suite status, and we will
+	 * separately seq_म_लिखो() the suite status क्रम the debugfs
 	 * representation.
 	 */
-	if (suite)
+	अगर (suite)
 		pr_info("%s %zd - %s\n",
 			kunit_status_to_string(is_ok),
 			test_number, description);
-	else
+	अन्यथा
 		kunit_log(KERN_INFO, test, KUNIT_SUBTEST_INDENT "%s %zd - %s",
 			  kunit_status_to_string(is_ok),
 			  test_number, description);
-}
+पूर्ण
 
-bool kunit_suite_has_succeeded(struct kunit_suite *suite)
-{
-	const struct kunit_case *test_case;
+bool kunit_suite_has_succeeded(काष्ठा kunit_suite *suite)
+अणु
+	स्थिर काष्ठा kunit_हाल *test_हाल;
 
-	kunit_suite_for_each_test_case(suite, test_case) {
-		if (!test_case->success)
-			return false;
-	}
+	kunit_suite_क्रम_each_test_हाल(suite, test_हाल) अणु
+		अगर (!test_हाल->success)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_suite_has_succeeded);
 
-static void kunit_print_subtest_end(struct kunit_suite *suite)
-{
-	static size_t kunit_suite_counter = 1;
+अटल व्योम kunit_prपूर्णांक_subtest_end(काष्ठा kunit_suite *suite)
+अणु
+	अटल माप_प्रकार kunit_suite_counter = 1;
 
-	kunit_print_ok_not_ok((void *)suite, false,
+	kunit_prपूर्णांक_ok_not_ok((व्योम *)suite, false,
 			      kunit_suite_has_succeeded(suite),
 			      kunit_suite_counter++,
 			      suite->name);
-}
+पूर्ण
 
-unsigned int kunit_test_case_num(struct kunit_suite *suite,
-				 struct kunit_case *test_case)
-{
-	struct kunit_case *tc;
-	unsigned int i = 1;
+अचिन्हित पूर्णांक kunit_test_हाल_num(काष्ठा kunit_suite *suite,
+				 काष्ठा kunit_हाल *test_हाल)
+अणु
+	काष्ठा kunit_हाल *tc;
+	अचिन्हित पूर्णांक i = 1;
 
-	kunit_suite_for_each_test_case(suite, tc) {
-		if (tc == test_case)
-			return i;
+	kunit_suite_क्रम_each_test_हाल(suite, tc) अणु
+		अगर (tc == test_हाल)
+			वापस i;
 		i++;
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(kunit_test_case_num);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_test_हाल_num);
 
-static void kunit_print_string_stream(struct kunit *test,
-				      struct string_stream *stream)
-{
-	struct string_stream_fragment *fragment;
-	char *buf;
+अटल व्योम kunit_prपूर्णांक_string_stream(काष्ठा kunit *test,
+				      काष्ठा string_stream *stream)
+अणु
+	काष्ठा string_stream_fragment *fragment;
+	अक्षर *buf;
 
-	if (string_stream_is_empty(stream))
-		return;
+	अगर (string_stream_is_empty(stream))
+		वापस;
 
 	buf = string_stream_get_string(stream);
-	if (!buf) {
+	अगर (!buf) अणु
 		kunit_err(test,
 			  "Could not allocate buffer, dumping stream:\n");
-		list_for_each_entry(fragment, &stream->fragments, node) {
+		list_क्रम_each_entry(fragment, &stream->fragments, node) अणु
 			kunit_err(test, "%s", fragment->fragment);
-		}
+		पूर्ण
 		kunit_err(test, "\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		kunit_err(test, "%s", buf);
-		kunit_kfree(test, buf);
-	}
-}
+		kunit_kमुक्त(test, buf);
+	पूर्ण
+पूर्ण
 
-static void kunit_fail(struct kunit *test, struct kunit_assert *assert)
-{
-	struct string_stream *stream;
+अटल व्योम kunit_fail(काष्ठा kunit *test, काष्ठा kunit_निश्चित *निश्चित)
+अणु
+	काष्ठा string_stream *stream;
 
 	kunit_set_failure(test);
 
 	stream = alloc_string_stream(test, GFP_KERNEL);
-	if (!stream) {
+	अगर (!stream) अणु
 		WARN(true,
 		     "Could not allocate stream to print failed assertion in %s:%d\n",
-		     assert->file,
-		     assert->line);
-		return;
-	}
+		     निश्चित->file,
+		     निश्चित->line);
+		वापस;
+	पूर्ण
 
-	assert->format(assert, stream);
+	निश्चित->क्रमmat(निश्चित, stream);
 
-	kunit_print_string_stream(test, stream);
+	kunit_prपूर्णांक_string_stream(test, stream);
 
 	WARN_ON(string_stream_destroy(stream));
-}
+पूर्ण
 
-static void __noreturn kunit_abort(struct kunit *test)
-{
-	kunit_try_catch_throw(&test->try_catch); /* Does not return. */
+अटल व्योम __noवापस kunit_पात(काष्ठा kunit *test)
+अणु
+	kunit_try_catch_throw(&test->try_catch); /* Does not वापस. */
 
 	/*
-	 * Throw could not abort from test.
+	 * Throw could not पात from test.
 	 *
 	 * XXX: we should never reach this line! As kunit_try_catch_throw is
-	 * marked __noreturn.
+	 * marked __noवापस.
 	 */
 	WARN_ONCE(true, "Throw could not abort from test!\n");
-}
+पूर्ण
 
-void kunit_do_assertion(struct kunit *test,
-			struct kunit_assert *assert,
+व्योम kunit_करो_निश्चितion(काष्ठा kunit *test,
+			काष्ठा kunit_निश्चित *निश्चित,
 			bool pass,
-			const char *fmt, ...)
-{
-	va_list args;
+			स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	if (pass)
-		return;
+	अगर (pass)
+		वापस;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
-	assert->message.fmt = fmt;
-	assert->message.va = &args;
+	निश्चित->message.fmt = fmt;
+	निश्चित->message.va = &args;
 
-	kunit_fail(test, assert);
+	kunit_fail(test, निश्चित);
 
-	va_end(args);
+	बहु_पूर्ण(args);
 
-	if (assert->type == KUNIT_ASSERTION)
-		kunit_abort(test);
-}
-EXPORT_SYMBOL_GPL(kunit_do_assertion);
+	अगर (निश्चित->type == KUNIT_ASSERTION)
+		kunit_पात(test);
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_करो_निश्चितion);
 
-void kunit_init_test(struct kunit *test, const char *name, char *log)
-{
+व्योम kunit_init_test(काष्ठा kunit *test, स्थिर अक्षर *name, अक्षर *log)
+अणु
 	spin_lock_init(&test->lock);
 	INIT_LIST_HEAD(&test->resources);
 	test->name = name;
 	test->log = log;
-	if (test->log)
+	अगर (test->log)
 		test->log[0] = '\0';
 	test->success = true;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_init_test);
 
 /*
- * Initializes and runs test case. Does not clean up or do post validations.
+ * Initializes and runs test हाल. Does not clean up or करो post validations.
  */
-static void kunit_run_case_internal(struct kunit *test,
-				    struct kunit_suite *suite,
-				    struct kunit_case *test_case)
-{
-	if (suite->init) {
-		int ret;
+अटल व्योम kunit_run_हाल_पूर्णांकernal(काष्ठा kunit *test,
+				    काष्ठा kunit_suite *suite,
+				    काष्ठा kunit_हाल *test_हाल)
+अणु
+	अगर (suite->init) अणु
+		पूर्णांक ret;
 
 		ret = suite->init(test);
-		if (ret) {
+		अगर (ret) अणु
 			kunit_err(test, "failed to initialize: %d\n", ret);
 			kunit_set_failure(test);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	test_case->run_case(test);
-}
+	test_हाल->run_हाल(test);
+पूर्ण
 
-static void kunit_case_internal_cleanup(struct kunit *test)
-{
+अटल व्योम kunit_हाल_पूर्णांकernal_cleanup(काष्ठा kunit *test)
+अणु
 	kunit_cleanup(test);
-}
+पूर्ण
 
 /*
- * Performs post validations and cleanup after a test case was run.
- * XXX: Should ONLY BE CALLED AFTER kunit_run_case_internal!
+ * Perक्रमms post validations and cleanup after a test हाल was run.
+ * XXX: Should ONLY BE CALLED AFTER kunit_run_हाल_पूर्णांकernal!
  */
-static void kunit_run_case_cleanup(struct kunit *test,
-				   struct kunit_suite *suite)
-{
-	if (suite->exit)
-		suite->exit(test);
+अटल व्योम kunit_run_हाल_cleanup(काष्ठा kunit *test,
+				   काष्ठा kunit_suite *suite)
+अणु
+	अगर (suite->निकास)
+		suite->निकास(test);
 
-	kunit_case_internal_cleanup(test);
-}
+	kunit_हाल_पूर्णांकernal_cleanup(test);
+पूर्ण
 
-struct kunit_try_catch_context {
-	struct kunit *test;
-	struct kunit_suite *suite;
-	struct kunit_case *test_case;
-};
+काष्ठा kunit_try_catch_context अणु
+	काष्ठा kunit *test;
+	काष्ठा kunit_suite *suite;
+	काष्ठा kunit_हाल *test_हाल;
+पूर्ण;
 
-static void kunit_try_run_case(void *data)
-{
-	struct kunit_try_catch_context *ctx = data;
-	struct kunit *test = ctx->test;
-	struct kunit_suite *suite = ctx->suite;
-	struct kunit_case *test_case = ctx->test_case;
+अटल व्योम kunit_try_run_हाल(व्योम *data)
+अणु
+	काष्ठा kunit_try_catch_context *ctx = data;
+	काष्ठा kunit *test = ctx->test;
+	काष्ठा kunit_suite *suite = ctx->suite;
+	काष्ठा kunit_हाल *test_हाल = ctx->test_हाल;
 
 	current->kunit_test = test;
 
 	/*
-	 * kunit_run_case_internal may encounter a fatal error; if it does,
-	 * abort will be called, this thread will exit, and finally the parent
-	 * thread will resume control and handle any necessary clean up.
+	 * kunit_run_हाल_पूर्णांकernal may encounter a fatal error; अगर it करोes,
+	 * पात will be called, this thपढ़ो will निकास, and finally the parent
+	 * thपढ़ो will resume control and handle any necessary clean up.
 	 */
-	kunit_run_case_internal(test, suite, test_case);
+	kunit_run_हाल_पूर्णांकernal(test, suite, test_हाल);
 	/* This line may never be reached. */
-	kunit_run_case_cleanup(test, suite);
-}
+	kunit_run_हाल_cleanup(test, suite);
+पूर्ण
 
-static void kunit_catch_run_case(void *data)
-{
-	struct kunit_try_catch_context *ctx = data;
-	struct kunit *test = ctx->test;
-	struct kunit_suite *suite = ctx->suite;
-	int try_exit_code = kunit_try_catch_get_result(&test->try_catch);
+अटल व्योम kunit_catch_run_हाल(व्योम *data)
+अणु
+	काष्ठा kunit_try_catch_context *ctx = data;
+	काष्ठा kunit *test = ctx->test;
+	काष्ठा kunit_suite *suite = ctx->suite;
+	पूर्णांक try_निकास_code = kunit_try_catch_get_result(&test->try_catch);
 
-	if (try_exit_code) {
+	अगर (try_निकास_code) अणु
 		kunit_set_failure(test);
 		/*
-		 * Test case could not finish, we have no idea what state it is
-		 * in, so don't do clean up.
+		 * Test हाल could not finish, we have no idea what state it is
+		 * in, so करोn't करो clean up.
 		 */
-		if (try_exit_code == -ETIMEDOUT) {
+		अगर (try_निकास_code == -ETIMEDOUT) अणु
 			kunit_err(test, "test case timed out\n");
 		/*
-		 * Unknown internal error occurred preventing test case from
+		 * Unknown पूर्णांकernal error occurred preventing test हाल from
 		 * running, so there is nothing to clean up.
 		 */
-		} else {
+		पूर्ण अन्यथा अणु
 			kunit_err(test, "internal error occurred preventing test case from running: %d\n",
-				  try_exit_code);
-		}
-		return;
-	}
+				  try_निकास_code);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/*
-	 * Test case was run, but aborted. It is the test case's business as to
+	 * Test हाल was run, but पातed. It is the test हाल's business as to
 	 * whether it failed or not, we just need to clean up.
 	 */
-	kunit_run_case_cleanup(test, suite);
-}
+	kunit_run_हाल_cleanup(test, suite);
+पूर्ण
 
 /*
- * Performs all logic to run a test case. It also catches most errors that
- * occur in a test case and reports them as failures.
+ * Perक्रमms all logic to run a test हाल. It also catches most errors that
+ * occur in a test हाल and reports them as failures.
  */
-static void kunit_run_case_catch_errors(struct kunit_suite *suite,
-					struct kunit_case *test_case,
-					struct kunit *test)
-{
-	struct kunit_try_catch_context context;
-	struct kunit_try_catch *try_catch;
+अटल व्योम kunit_run_हाल_catch_errors(काष्ठा kunit_suite *suite,
+					काष्ठा kunit_हाल *test_हाल,
+					काष्ठा kunit *test)
+अणु
+	काष्ठा kunit_try_catch_context context;
+	काष्ठा kunit_try_catch *try_catch;
 
-	kunit_init_test(test, test_case->name, test_case->log);
+	kunit_init_test(test, test_हाल->name, test_हाल->log);
 	try_catch = &test->try_catch;
 
 	kunit_try_catch_init(try_catch,
 			     test,
-			     kunit_try_run_case,
-			     kunit_catch_run_case);
+			     kunit_try_run_हाल,
+			     kunit_catch_run_हाल);
 	context.test = test;
 	context.suite = suite;
-	context.test_case = test_case;
+	context.test_हाल = test_हाल;
 	kunit_try_catch_run(try_catch, &context);
 
-	test_case->success = test->success;
-}
+	test_हाल->success = test->success;
+पूर्ण
 
-int kunit_run_tests(struct kunit_suite *suite)
-{
-	char param_desc[KUNIT_PARAM_DESC_SIZE];
-	struct kunit_case *test_case;
+पूर्णांक kunit_run_tests(काष्ठा kunit_suite *suite)
+अणु
+	अक्षर param_desc[KUNIT_PARAM_DESC_SIZE];
+	काष्ठा kunit_हाल *test_हाल;
 
-	kunit_print_subtest_start(suite);
+	kunit_prपूर्णांक_subtest_start(suite);
 
-	kunit_suite_for_each_test_case(suite, test_case) {
-		struct kunit test = { .param_value = NULL, .param_index = 0 };
+	kunit_suite_क्रम_each_test_हाल(suite, test_हाल) अणु
+		काष्ठा kunit test = अणु .param_value = शून्य, .param_index = 0 पूर्ण;
 		bool test_success = true;
 
-		if (test_case->generate_params) {
+		अगर (test_हाल->generate_params) अणु
 			/* Get initial param. */
 			param_desc[0] = '\0';
-			test.param_value = test_case->generate_params(NULL, param_desc);
-		}
+			test.param_value = test_हाल->generate_params(शून्य, param_desc);
+		पूर्ण
 
-		do {
-			kunit_run_case_catch_errors(suite, test_case, &test);
-			test_success &= test_case->success;
+		करो अणु
+			kunit_run_हाल_catch_errors(suite, test_हाल, &test);
+			test_success &= test_हाल->success;
 
-			if (test_case->generate_params) {
-				if (param_desc[0] == '\0') {
-					snprintf(param_desc, sizeof(param_desc),
+			अगर (test_हाल->generate_params) अणु
+				अगर (param_desc[0] == '\0') अणु
+					snम_लिखो(param_desc, माप(param_desc),
 						 "param-%d", test.param_index);
-				}
+				पूर्ण
 
 				kunit_log(KERN_INFO, &test,
 					  KUNIT_SUBTEST_INDENT
 					  "# %s: %s %d - %s",
-					  test_case->name,
+					  test_हाल->name,
 					  kunit_status_to_string(test.success),
 					  test.param_index + 1, param_desc);
 
 				/* Get next param. */
 				param_desc[0] = '\0';
-				test.param_value = test_case->generate_params(test.param_value, param_desc);
+				test.param_value = test_हाल->generate_params(test.param_value, param_desc);
 				test.param_index++;
-			}
-		} while (test.param_value);
+			पूर्ण
+		पूर्ण जबतक (test.param_value);
 
-		kunit_print_ok_not_ok(&test, true, test_success,
-				      kunit_test_case_num(suite, test_case),
-				      test_case->name);
-	}
+		kunit_prपूर्णांक_ok_not_ok(&test, true, test_success,
+				      kunit_test_हाल_num(suite, test_हाल),
+				      test_हाल->name);
+	पूर्ण
 
-	kunit_print_subtest_end(suite);
+	kunit_prपूर्णांक_subtest_end(suite);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_run_tests);
 
-static void kunit_init_suite(struct kunit_suite *suite)
-{
+अटल व्योम kunit_init_suite(काष्ठा kunit_suite *suite)
+अणु
 	kunit_debugfs_create_suite(suite);
-}
+पूर्ण
 
-int __kunit_test_suites_init(struct kunit_suite * const * const suites)
-{
-	unsigned int i;
+पूर्णांक __kunit_test_suites_init(काष्ठा kunit_suite * स्थिर * स्थिर suites)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; suites[i] != NULL; i++) {
+	क्रम (i = 0; suites[i] != शून्य; i++) अणु
 		kunit_init_suite(suites[i]);
 		kunit_run_tests(suites[i]);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__kunit_test_suites_init);
 
-static void kunit_exit_suite(struct kunit_suite *suite)
-{
+अटल व्योम kunit_निकास_suite(काष्ठा kunit_suite *suite)
+अणु
 	kunit_debugfs_destroy_suite(suite);
-}
+पूर्ण
 
-void __kunit_test_suites_exit(struct kunit_suite **suites)
-{
-	unsigned int i;
+व्योम __kunit_test_suites_निकास(काष्ठा kunit_suite **suites)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; suites[i] != NULL; i++)
-		kunit_exit_suite(suites[i]);
-}
-EXPORT_SYMBOL_GPL(__kunit_test_suites_exit);
+	क्रम (i = 0; suites[i] != शून्य; i++)
+		kunit_निकास_suite(suites[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(__kunit_test_suites_निकास);
 
 /*
- * Used for static resources and when a kunit_resource * has been created by
+ * Used क्रम अटल resources and when a kunit_resource * has been created by
  * kunit_alloc_resource().  When an init function is supplied, @data is passed
- * into the init function; otherwise, we simply set the resource data field to
+ * पूर्णांकo the init function; otherwise, we simply set the resource data field to
  * the data value passed in.
  */
-int kunit_add_resource(struct kunit *test,
+पूर्णांक kunit_add_resource(काष्ठा kunit *test,
 		       kunit_resource_init_t init,
-		       kunit_resource_free_t free,
-		       struct kunit_resource *res,
-		       void *data)
-{
-	int ret = 0;
+		       kunit_resource_मुक्त_t मुक्त,
+		       काष्ठा kunit_resource *res,
+		       व्योम *data)
+अणु
+	पूर्णांक ret = 0;
 
-	res->free = free;
+	res->मुक्त = मुक्त;
 	kref_init(&res->refcount);
 
-	if (init) {
+	अगर (init) अणु
 		ret = init(res, data);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		res->data = data;
-	}
+	पूर्ण
 
 	spin_lock(&test->lock);
 	list_add_tail(&res->node, &test->resources);
-	/* refcount for list is established by kref_init() */
+	/* refcount क्रम list is established by kref_init() */
 	spin_unlock(&test->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_add_resource);
 
-int kunit_add_named_resource(struct kunit *test,
+पूर्णांक kunit_add_named_resource(काष्ठा kunit *test,
 			     kunit_resource_init_t init,
-			     kunit_resource_free_t free,
-			     struct kunit_resource *res,
-			     const char *name,
-			     void *data)
-{
-	struct kunit_resource *existing;
+			     kunit_resource_मुक्त_t मुक्त,
+			     काष्ठा kunit_resource *res,
+			     स्थिर अक्षर *name,
+			     व्योम *data)
+अणु
+	काष्ठा kunit_resource *existing;
 
-	if (!name)
-		return -EINVAL;
+	अगर (!name)
+		वापस -EINVAL;
 
 	existing = kunit_find_named_resource(test, name);
-	if (existing) {
+	अगर (existing) अणु
 		kunit_put_resource(existing);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	res->name = name;
 
-	return kunit_add_resource(test, init, free, res, data);
-}
+	वापस kunit_add_resource(test, init, मुक्त, res, data);
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_add_named_resource);
 
-struct kunit_resource *kunit_alloc_and_get_resource(struct kunit *test,
+काष्ठा kunit_resource *kunit_alloc_and_get_resource(काष्ठा kunit *test,
 						    kunit_resource_init_t init,
-						    kunit_resource_free_t free,
-						    gfp_t internal_gfp,
-						    void *data)
-{
-	struct kunit_resource *res;
-	int ret;
+						    kunit_resource_मुक्त_t मुक्त,
+						    gfp_t पूर्णांकernal_gfp,
+						    व्योम *data)
+अणु
+	काष्ठा kunit_resource *res;
+	पूर्णांक ret;
 
-	res = kzalloc(sizeof(*res), internal_gfp);
-	if (!res)
-		return NULL;
+	res = kzalloc(माप(*res), पूर्णांकernal_gfp);
+	अगर (!res)
+		वापस शून्य;
 
-	ret = kunit_add_resource(test, init, free, res, data);
-	if (!ret) {
+	ret = kunit_add_resource(test, init, मुक्त, res, data);
+	अगर (!ret) अणु
 		/*
-		 * bump refcount for get; kunit_resource_put() should be called
-		 * when done.
+		 * bump refcount क्रम get; kunit_resource_put() should be called
+		 * when करोne.
 		 */
 		kunit_get_resource(res);
-		return res;
-	}
-	return NULL;
-}
+		वापस res;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_alloc_and_get_resource);
 
-void kunit_remove_resource(struct kunit *test, struct kunit_resource *res)
-{
+व्योम kunit_हटाओ_resource(काष्ठा kunit *test, काष्ठा kunit_resource *res)
+अणु
 	spin_lock(&test->lock);
 	list_del(&res->node);
 	spin_unlock(&test->lock);
 	kunit_put_resource(res);
-}
-EXPORT_SYMBOL_GPL(kunit_remove_resource);
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_हटाओ_resource);
 
-int kunit_destroy_resource(struct kunit *test, kunit_resource_match_t match,
-			   void *match_data)
-{
-	struct kunit_resource *res = kunit_find_resource(test, match,
+पूर्णांक kunit_destroy_resource(काष्ठा kunit *test, kunit_resource_match_t match,
+			   व्योम *match_data)
+अणु
+	काष्ठा kunit_resource *res = kunit_find_resource(test, match,
 							 match_data);
 
-	if (!res)
-		return -ENOENT;
+	अगर (!res)
+		वापस -ENOENT;
 
-	kunit_remove_resource(test, res);
+	kunit_हटाओ_resource(test, res);
 
 	/* We have a reference also via _find(); drop it. */
 	kunit_put_resource(res);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_destroy_resource);
 
-struct kunit_kmalloc_params {
-	size_t size;
+काष्ठा kunit_kदो_स्मृति_params अणु
+	माप_प्रकार size;
 	gfp_t gfp;
-};
+पूर्ण;
 
-static int kunit_kmalloc_init(struct kunit_resource *res, void *context)
-{
-	struct kunit_kmalloc_params *params = context;
+अटल पूर्णांक kunit_kदो_स्मृति_init(काष्ठा kunit_resource *res, व्योम *context)
+अणु
+	काष्ठा kunit_kदो_स्मृति_params *params = context;
 
-	res->data = kmalloc(params->size, params->gfp);
-	if (!res->data)
-		return -ENOMEM;
+	res->data = kदो_स्मृति(params->size, params->gfp);
+	अगर (!res->data)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kunit_kmalloc_free(struct kunit_resource *res)
-{
-	kfree(res->data);
-}
+अटल व्योम kunit_kदो_स्मृति_मुक्त(काष्ठा kunit_resource *res)
+अणु
+	kमुक्त(res->data);
+पूर्ण
 
-void *kunit_kmalloc(struct kunit *test, size_t size, gfp_t gfp)
-{
-	struct kunit_kmalloc_params params = {
+व्योम *kunit_kदो_स्मृति(काष्ठा kunit *test, माप_प्रकार size, gfp_t gfp)
+अणु
+	काष्ठा kunit_kदो_स्मृति_params params = अणु
 		.size = size,
 		.gfp = gfp
-	};
+	पूर्ण;
 
-	return kunit_alloc_resource(test,
-				    kunit_kmalloc_init,
-				    kunit_kmalloc_free,
+	वापस kunit_alloc_resource(test,
+				    kunit_kदो_स्मृति_init,
+				    kunit_kदो_स्मृति_मुक्त,
 				    gfp,
 				    &params);
-}
-EXPORT_SYMBOL_GPL(kunit_kmalloc);
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_kदो_स्मृति);
 
-void kunit_kfree(struct kunit *test, const void *ptr)
-{
-	struct kunit_resource *res;
+व्योम kunit_kमुक्त(काष्ठा kunit *test, स्थिर व्योम *ptr)
+अणु
+	काष्ठा kunit_resource *res;
 
 	res = kunit_find_resource(test, kunit_resource_instance_match,
-				  (void *)ptr);
+				  (व्योम *)ptr);
 
 	/*
 	 * Removing the resource from the list of resources drops the
-	 * reference count to 1; the final put will trigger the free.
+	 * reference count to 1; the final put will trigger the मुक्त.
 	 */
-	kunit_remove_resource(test, res);
+	kunit_हटाओ_resource(test, res);
 
 	kunit_put_resource(res);
 
-}
-EXPORT_SYMBOL_GPL(kunit_kfree);
+पूर्ण
+EXPORT_SYMBOL_GPL(kunit_kमुक्त);
 
-void kunit_cleanup(struct kunit *test)
-{
-	struct kunit_resource *res;
+व्योम kunit_cleanup(काष्ठा kunit *test)
+अणु
+	काष्ठा kunit_resource *res;
 
 	/*
-	 * test->resources is a stack - each allocation must be freed in the
+	 * test->resources is a stack - each allocation must be मुक्तd in the
 	 * reverse order from which it was added since one resource may depend
-	 * on another for its entire lifetime.
-	 * Also, we cannot use the normal list_for_each constructs, even the
+	 * on another क्रम its entire lअगरeसमय.
+	 * Also, we cannot use the normal list_क्रम_each स्थिरructs, even the
 	 * safe ones because *arbitrary* nodes may be deleted when
-	 * kunit_resource_free is called; the list_for_each_safe variants only
+	 * kunit_resource_मुक्त is called; the list_क्रम_each_safe variants only
 	 * protect against the current node being deleted, not the next.
 	 */
-	while (true) {
+	जबतक (true) अणु
 		spin_lock(&test->lock);
-		if (list_empty(&test->resources)) {
+		अगर (list_empty(&test->resources)) अणु
 			spin_unlock(&test->lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		res = list_last_entry(&test->resources,
-				      struct kunit_resource,
+				      काष्ठा kunit_resource,
 				      node);
 		/*
-		 * Need to unlock here as a resource may remove another
-		 * resource, and this can't happen if the test->lock
+		 * Need to unlock here as a resource may हटाओ another
+		 * resource, and this can't happen अगर the test->lock
 		 * is held.
 		 */
 		spin_unlock(&test->lock);
-		kunit_remove_resource(test, res);
-	}
-	current->kunit_test = NULL;
-}
+		kunit_हटाओ_resource(test, res);
+	पूर्ण
+	current->kunit_test = शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(kunit_cleanup);
 
-static int __init kunit_init(void)
-{
+अटल पूर्णांक __init kunit_init(व्योम)
+अणु
 	kunit_debugfs_init();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(kunit_init);
 
-static void __exit kunit_exit(void)
-{
+अटल व्योम __निकास kunit_निकास(व्योम)
+अणु
 	kunit_debugfs_cleanup();
-}
-module_exit(kunit_exit);
+पूर्ण
+module_निकास(kunit_निकास);
 
 MODULE_LICENSE("GPL v2");

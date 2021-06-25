@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BMI088_ACCEL_H
-#define BMI088_ACCEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BMI088_ACCEL_H
+#घोषणा BMI088_ACCEL_H
 
-#include <linux/pm.h>
-#include <linux/regmap.h>
-#include <linux/types.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/types.h>
 
-struct device;
+काष्ठा device;
 
-extern const struct regmap_config bmi088_regmap_conf;
-extern const struct dev_pm_ops bmi088_accel_pm_ops;
+बाह्य स्थिर काष्ठा regmap_config bmi088_regmap_conf;
+बाह्य स्थिर काष्ठा dev_pm_ops bmi088_accel_pm_ops;
 
-int bmi088_accel_core_probe(struct device *dev, struct regmap *regmap, int irq,
-			    const char *name, bool block_supported);
-int bmi088_accel_core_remove(struct device *dev);
+पूर्णांक bmi088_accel_core_probe(काष्ठा device *dev, काष्ठा regmap *regmap, पूर्णांक irq,
+			    स्थिर अक्षर *name, bool block_supported);
+पूर्णांक bmi088_accel_core_हटाओ(काष्ठा device *dev);
 
-#endif /* BMI088_ACCEL_H */
+#पूर्ण_अगर /* BMI088_ACCEL_H */

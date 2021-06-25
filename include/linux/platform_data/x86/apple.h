@@ -1,13 +1,14 @@
-#ifndef PLATFORM_DATA_X86_APPLE_H
-#define PLATFORM_DATA_X86_APPLE_H
+<शैली गुरु>
+#अगर_अघोषित PLATFORM_DATA_X86_APPLE_H
+#घोषणा PLATFORM_DATA_X86_APPLE_H
 
-#ifdef CONFIG_X86
+#अगर_घोषित CONFIG_X86
 /**
- * x86_apple_machine - whether the machine is an x86 Apple Macintosh
+ * x86_apple_machine - whether the machine is an x86 Apple Macपूर्णांकosh
  */
-extern bool x86_apple_machine;
-#else
-#define x86_apple_machine false
-#endif
+बाह्य bool x86_apple_machine;
+#अन्यथा
+#घोषणा x86_apple_machine false
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

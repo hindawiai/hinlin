@@ -1,147 +1,148 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * utils.h: Utilities for SPU-side of the context switch operation.
+ * utils.h: Utilities क्रम SPU-side of the context चयन operation.
  *
  * (C) Copyright IBM 2005
  */
 
-#ifndef _SPU_CONTEXT_UTILS_H_
-#define _SPU_CONTEXT_UTILS_H_
+#अगर_अघोषित _SPU_CONTEXT_UTILS_H_
+#घोषणा _SPU_CONTEXT_UTILS_H_
 
 /*
  * 64-bit safe EA.
  */
-typedef union {
-	unsigned long long ull;
-	unsigned int ui[2];
-} addr64;
+प्रकार जोड़ अणु
+	अचिन्हित दीर्घ दीर्घ ull;
+	अचिन्हित पूर्णांक ui[2];
+पूर्ण addr64;
 
 /*
- * 128-bit register template.
+ * 128-bit रेजिस्टर ढाँचा.
  */
-typedef union {
-	unsigned int slot[4];
-	vector unsigned int v;
-} spu_reg128v;
+प्रकार जोड़ अणु
+	अचिन्हित पूर्णांक slot[4];
+	vector अचिन्हित पूर्णांक v;
+पूर्ण spu_reg128v;
 
 /*
- * DMA list structure.
+ * DMA list काष्ठाure.
  */
-struct dma_list_elem {
-	unsigned int size;
-	unsigned int ea_low;
-};
+काष्ठा dma_list_elem अणु
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक ea_low;
+पूर्ण;
 
 /*
- * Declare storage for 8-byte aligned DMA list.
+ * Declare storage क्रम 8-byte aligned DMA list.
  */
-struct dma_list_elem dma_list[15] __attribute__ ((aligned(8)));
+काष्ठा dma_list_elem dma_list[15] __attribute__ ((aligned(8)));
 
 /*
- * External definition for storage
+ * External definition क्रम storage
  * declared in crt0.
  */
-extern spu_reg128v regs_spill[NR_SPU_SPILL_REGS];
+बाह्य spu_reg128v regs_spill[NR_SPU_SPILL_REGS];
 
 /*
- * Compute LSCSA byte offset for a given field.
+ * Compute LSCSA byte offset क्रम a given field.
  */
-static struct spu_lscsa *dummy = (struct spu_lscsa *)0;
-#define LSCSA_BYTE_OFFSET(_field)  \
-	((char *)(&(dummy->_field)) - (char *)(&(dummy->gprs[0].slot[0])))
-#define LSCSA_QW_OFFSET(_field)  (LSCSA_BYTE_OFFSET(_field) >> 4)
+अटल काष्ठा spu_lscsa *dummy = (काष्ठा spu_lscsa *)0;
+#घोषणा LSCSA_BYTE_OFFSET(_field)  \
+	((अक्षर *)(&(dummy->_field)) - (अक्षर *)(&(dummy->gprs[0].slot[0])))
+#घोषणा LSCSA_QW_OFFSET(_field)  (LSCSA_BYTE_OFFSET(_field) >> 4)
 
-static inline void set_event_mask(void)
-{
-	unsigned int event_mask = 0;
+अटल अंतरभूत व्योम set_event_mask(व्योम)
+अणु
+	अचिन्हित पूर्णांक event_mask = 0;
 
 	/* Save, Step 4:
 	 * Restore, Step 1:
 	 *    Set the SPU_RdEventMsk channel to zero to mask
 	 *    all events.
 	 */
-	spu_writech(SPU_WrEventMask, event_mask);
-}
+	spu_ग_लिखोch(SPU_WrEventMask, event_mask);
+पूर्ण
 
-static inline void set_tag_mask(void)
-{
-	unsigned int tag_mask = 1;
+अटल अंतरभूत व्योम set_tag_mask(व्योम)
+अणु
+	अचिन्हित पूर्णांक tag_mask = 1;
 
 	/* Save, Step 5:
 	 * Restore, Step 2:
 	 *    Set the SPU_WrTagMsk channel to '01' to unmask
 	 *    only tag group 0.
 	 */
-	spu_writech(MFC_WrTagMask, tag_mask);
-}
+	spu_ग_लिखोch(MFC_WrTagMask, tag_mask);
+पूर्ण
 
-static inline void build_dma_list(addr64 lscsa_ea)
-{
-	unsigned int ea_low;
-	int i;
+अटल अंतरभूत व्योम build_dma_list(addr64 lscsa_ea)
+अणु
+	अचिन्हित पूर्णांक ea_low;
+	पूर्णांक i;
 
 	/* Save, Step 6:
 	 * Restore, Step 3:
-	 *    Update the effective address for the CSA in the
+	 *    Update the effective address क्रम the CSA in the
 	 *    pre-canned DMA-list in local storage.
 	 */
 	ea_low = lscsa_ea.ui[1];
 	ea_low += LSCSA_BYTE_OFFSET(ls[16384]);
 
-	for (i = 0; i < 15; i++, ea_low += 16384) {
+	क्रम (i = 0; i < 15; i++, ea_low += 16384) अणु
 		dma_list[i].size = 16384;
 		dma_list[i].ea_low = ea_low;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void enqueue_putllc(addr64 lscsa_ea)
-{
-	unsigned int ls = 0;
-	unsigned int size = 128;
-	unsigned int tag_id = 0;
-	unsigned int cmd = 0xB4;	/* PUTLLC */
+अटल अंतरभूत व्योम enqueue_putllc(addr64 lscsa_ea)
+अणु
+	अचिन्हित पूर्णांक ls = 0;
+	अचिन्हित पूर्णांक size = 128;
+	अचिन्हित पूर्णांक tag_id = 0;
+	अचिन्हित पूर्णांक cmd = 0xB4;	/* PUTLLC */
 
 	/* Save, Step 12:
 	 * Restore, Step 7:
 	 *    Send a PUTLLC (tag 0) command to the MFC using
 	 *    an effective address in the CSA in order to
-	 *    remove any possible lock-line reservation.
+	 *    हटाओ any possible lock-line reservation.
 	 */
-	spu_writech(MFC_LSA, ls);
-	spu_writech(MFC_EAH, lscsa_ea.ui[0]);
-	spu_writech(MFC_EAL, lscsa_ea.ui[1]);
-	spu_writech(MFC_Size, size);
-	spu_writech(MFC_TagID, tag_id);
-	spu_writech(MFC_Cmd, cmd);
-}
+	spu_ग_लिखोch(MFC_LSA, ls);
+	spu_ग_लिखोch(MFC_EAH, lscsa_ea.ui[0]);
+	spu_ग_लिखोch(MFC_EAL, lscsa_ea.ui[1]);
+	spu_ग_लिखोch(MFC_Size, size);
+	spu_ग_लिखोch(MFC_TagID, tag_id);
+	spu_ग_लिखोch(MFC_Cmd, cmd);
+पूर्ण
 
-static inline void set_tag_update(void)
-{
-	unsigned int update_any = 1;
+अटल अंतरभूत व्योम set_tag_update(व्योम)
+अणु
+	अचिन्हित पूर्णांक update_any = 1;
 
 	/* Save, Step 15:
 	 * Restore, Step 8:
 	 *    Write the MFC_TagUpdate channel with '01'.
 	 */
-	spu_writech(MFC_WrTagUpdate, update_any);
-}
+	spu_ग_लिखोch(MFC_WrTagUpdate, update_any);
+पूर्ण
 
-static inline void read_tag_status(void)
-{
+अटल अंतरभूत व्योम पढ़ो_tag_status(व्योम)
+अणु
 	/* Save, Step 16:
 	 * Restore, Step 9:
 	 *    Read the MFC_TagStat channel data.
 	 */
-	spu_readch(MFC_RdTagStat);
-}
+	spu_पढ़ोch(MFC_RdTagStat);
+पूर्ण
 
-static inline void read_llar_status(void)
-{
+अटल अंतरभूत व्योम पढ़ो_llar_status(व्योम)
+अणु
 	/* Save, Step 17:
 	 * Restore, Step 10:
 	 *    Read the MFC_AtomicStat channel data.
 	 */
-	spu_readch(MFC_RdAtomicStat);
-}
+	spu_पढ़ोch(MFC_RdAtomicStat);
+पूर्ण
 
-#endif				/* _SPU_CONTEXT_UTILS_H_ */
+#पूर्ण_अगर				/* _SPU_CONTEXT_UTILS_H_ */

@@ -1,303 +1,304 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AEAD: Authenticated Encryption with Associated Data
  *
- * This file provides API support for AEAD algorithms.
+ * This file provides API support क्रम AEAD algorithms.
  *
- * Copyright (c) 2007-2015 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2007-2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#include <crypto/internal/aead.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/seq_file.h>
-#include <linux/cryptouser.h>
-#include <net/netlink.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/cryptouser.h>
+#समावेश <net/netlink.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-static int setkey_unaligned(struct crypto_aead *tfm, const u8 *key,
-			    unsigned int keylen)
-{
-	unsigned long alignmask = crypto_aead_alignmask(tfm);
-	int ret;
+अटल पूर्णांक setkey_unaligned(काष्ठा crypto_aead *tfm, स्थिर u8 *key,
+			    अचिन्हित पूर्णांक keylen)
+अणु
+	अचिन्हित दीर्घ alignmask = crypto_aead_alignmask(tfm);
+	पूर्णांक ret;
 	u8 *buffer, *alignbuffer;
-	unsigned long absize;
+	अचिन्हित दीर्घ असलize;
 
-	absize = keylen + alignmask;
-	buffer = kmalloc(absize, GFP_ATOMIC);
-	if (!buffer)
-		return -ENOMEM;
+	असलize = keylen + alignmask;
+	buffer = kदो_स्मृति(असलize, GFP_ATOMIC);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	alignbuffer = (u8 *)ALIGN((unsigned long)buffer, alignmask + 1);
-	memcpy(alignbuffer, key, keylen);
+	alignbuffer = (u8 *)ALIGN((अचिन्हित दीर्घ)buffer, alignmask + 1);
+	स_नकल(alignbuffer, key, keylen);
 	ret = crypto_aead_alg(tfm)->setkey(tfm, alignbuffer, keylen);
-	memset(alignbuffer, 0, keylen);
-	kfree(buffer);
-	return ret;
-}
+	स_रखो(alignbuffer, 0, keylen);
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
 
-int crypto_aead_setkey(struct crypto_aead *tfm,
-		       const u8 *key, unsigned int keylen)
-{
-	unsigned long alignmask = crypto_aead_alignmask(tfm);
-	int err;
+पूर्णांक crypto_aead_setkey(काष्ठा crypto_aead *tfm,
+		       स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	अचिन्हित दीर्घ alignmask = crypto_aead_alignmask(tfm);
+	पूर्णांक err;
 
-	if ((unsigned long)key & alignmask)
+	अगर ((अचिन्हित दीर्घ)key & alignmask)
 		err = setkey_unaligned(tfm, key, keylen);
-	else
+	अन्यथा
 		err = crypto_aead_alg(tfm)->setkey(tfm, key, keylen);
 
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		crypto_aead_set_flags(tfm, CRYPTO_TFM_NEED_KEY);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	crypto_aead_clear_flags(tfm, CRYPTO_TFM_NEED_KEY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_aead_setkey);
 
-int crypto_aead_setauthsize(struct crypto_aead *tfm, unsigned int authsize)
-{
-	int err;
+पूर्णांक crypto_aead_setauthsize(काष्ठा crypto_aead *tfm, अचिन्हित पूर्णांक authsize)
+अणु
+	पूर्णांक err;
 
-	if ((!authsize && crypto_aead_maxauthsize(tfm)) ||
+	अगर ((!authsize && crypto_aead_maxauthsize(tfm)) ||
 	    authsize > crypto_aead_maxauthsize(tfm))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (crypto_aead_alg(tfm)->setauthsize) {
+	अगर (crypto_aead_alg(tfm)->setauthsize) अणु
 		err = crypto_aead_alg(tfm)->setauthsize(tfm, authsize);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	tfm->authsize = authsize;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_aead_setauthsize);
 
-int crypto_aead_encrypt(struct aead_request *req)
-{
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct crypto_alg *alg = aead->base.__crt_alg;
-	unsigned int cryptlen = req->cryptlen;
-	int ret;
+पूर्णांक crypto_aead_encrypt(काष्ठा aead_request *req)
+अणु
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा crypto_alg *alg = aead->base.__crt_alg;
+	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
+	पूर्णांक ret;
 
 	crypto_stats_get(alg);
-	if (crypto_aead_get_flags(aead) & CRYPTO_TFM_NEED_KEY)
+	अगर (crypto_aead_get_flags(aead) & CRYPTO_TFM_NEED_KEY)
 		ret = -ENOKEY;
-	else
+	अन्यथा
 		ret = crypto_aead_alg(aead)->encrypt(req);
 	crypto_stats_aead_encrypt(cryptlen, alg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_aead_encrypt);
 
-int crypto_aead_decrypt(struct aead_request *req)
-{
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct crypto_alg *alg = aead->base.__crt_alg;
-	unsigned int cryptlen = req->cryptlen;
-	int ret;
+पूर्णांक crypto_aead_decrypt(काष्ठा aead_request *req)
+अणु
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा crypto_alg *alg = aead->base.__crt_alg;
+	अचिन्हित पूर्णांक cryptlen = req->cryptlen;
+	पूर्णांक ret;
 
 	crypto_stats_get(alg);
-	if (crypto_aead_get_flags(aead) & CRYPTO_TFM_NEED_KEY)
+	अगर (crypto_aead_get_flags(aead) & CRYPTO_TFM_NEED_KEY)
 		ret = -ENOKEY;
-	else if (req->cryptlen < crypto_aead_authsize(aead))
+	अन्यथा अगर (req->cryptlen < crypto_aead_authsize(aead))
 		ret = -EINVAL;
-	else
+	अन्यथा
 		ret = crypto_aead_alg(aead)->decrypt(req);
 	crypto_stats_aead_decrypt(cryptlen, alg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_aead_decrypt);
 
-static void crypto_aead_exit_tfm(struct crypto_tfm *tfm)
-{
-	struct crypto_aead *aead = __crypto_aead_cast(tfm);
-	struct aead_alg *alg = crypto_aead_alg(aead);
+अटल व्योम crypto_aead_निकास_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_aead *aead = __crypto_aead_cast(tfm);
+	काष्ठा aead_alg *alg = crypto_aead_alg(aead);
 
-	alg->exit(aead);
-}
+	alg->निकास(aead);
+पूर्ण
 
-static int crypto_aead_init_tfm(struct crypto_tfm *tfm)
-{
-	struct crypto_aead *aead = __crypto_aead_cast(tfm);
-	struct aead_alg *alg = crypto_aead_alg(aead);
+अटल पूर्णांक crypto_aead_init_tfm(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_aead *aead = __crypto_aead_cast(tfm);
+	काष्ठा aead_alg *alg = crypto_aead_alg(aead);
 
 	crypto_aead_set_flags(aead, CRYPTO_TFM_NEED_KEY);
 
 	aead->authsize = alg->maxauthsize;
 
-	if (alg->exit)
-		aead->base.exit = crypto_aead_exit_tfm;
+	अगर (alg->निकास)
+		aead->base.निकास = crypto_aead_निकास_tfm;
 
-	if (alg->init)
-		return alg->init(aead);
+	अगर (alg->init)
+		वापस alg->init(aead);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_NET
-static int crypto_aead_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	struct crypto_report_aead raead;
-	struct aead_alg *aead = container_of(alg, struct aead_alg, base);
+#अगर_घोषित CONFIG_NET
+अटल पूर्णांक crypto_aead_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा crypto_report_aead raead;
+	काष्ठा aead_alg *aead = container_of(alg, काष्ठा aead_alg, base);
 
-	memset(&raead, 0, sizeof(raead));
+	स_रखो(&raead, 0, माप(raead));
 
-	strscpy(raead.type, "aead", sizeof(raead.type));
-	strscpy(raead.geniv, "<none>", sizeof(raead.geniv));
+	strscpy(raead.type, "aead", माप(raead.type));
+	strscpy(raead.geniv, "<none>", माप(raead.geniv));
 
 	raead.blocksize = alg->cra_blocksize;
 	raead.maxauthsize = aead->maxauthsize;
 	raead.ivsize = aead->ivsize;
 
-	return nla_put(skb, CRYPTOCFGA_REPORT_AEAD, sizeof(raead), &raead);
-}
-#else
-static int crypto_aead_report(struct sk_buff *skb, struct crypto_alg *alg)
-{
-	return -ENOSYS;
-}
-#endif
+	वापस nla_put(skb, CRYPTOCFGA_REPORT_AEAD, माप(raead), &raead);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक crypto_aead_report(काष्ठा sk_buff *skb, काष्ठा crypto_alg *alg)
+अणु
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-static void crypto_aead_show(struct seq_file *m, struct crypto_alg *alg)
+अटल व्योम crypto_aead_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
 	__maybe_unused;
-static void crypto_aead_show(struct seq_file *m, struct crypto_alg *alg)
-{
-	struct aead_alg *aead = container_of(alg, struct aead_alg, base);
+अटल व्योम crypto_aead_show(काष्ठा seq_file *m, काष्ठा crypto_alg *alg)
+अणु
+	काष्ठा aead_alg *aead = container_of(alg, काष्ठा aead_alg, base);
 
-	seq_printf(m, "type         : aead\n");
-	seq_printf(m, "async        : %s\n", alg->cra_flags & CRYPTO_ALG_ASYNC ?
+	seq_म_लिखो(m, "type         : aead\n");
+	seq_म_लिखो(m, "async        : %s\n", alg->cra_flags & CRYPTO_ALG_ASYNC ?
 					     "yes" : "no");
-	seq_printf(m, "blocksize    : %u\n", alg->cra_blocksize);
-	seq_printf(m, "ivsize       : %u\n", aead->ivsize);
-	seq_printf(m, "maxauthsize  : %u\n", aead->maxauthsize);
-	seq_printf(m, "geniv        : <none>\n");
-}
+	seq_म_लिखो(m, "blocksize    : %u\n", alg->cra_blocksize);
+	seq_म_लिखो(m, "ivsize       : %u\n", aead->ivsize);
+	seq_म_लिखो(m, "maxauthsize  : %u\n", aead->maxauthsize);
+	seq_म_लिखो(m, "geniv        : <none>\n");
+पूर्ण
 
-static void crypto_aead_free_instance(struct crypto_instance *inst)
-{
-	struct aead_instance *aead = aead_instance(inst);
+अटल व्योम crypto_aead_मुक्त_instance(काष्ठा crypto_instance *inst)
+अणु
+	काष्ठा aead_instance *aead = aead_instance(inst);
 
-	aead->free(aead);
-}
+	aead->मुक्त(aead);
+पूर्ण
 
-static const struct crypto_type crypto_aead_type = {
+अटल स्थिर काष्ठा crypto_type crypto_aead_type = अणु
 	.extsize = crypto_alg_extsize,
 	.init_tfm = crypto_aead_init_tfm,
-	.free = crypto_aead_free_instance,
-#ifdef CONFIG_PROC_FS
+	.मुक्त = crypto_aead_मुक्त_instance,
+#अगर_घोषित CONFIG_PROC_FS
 	.show = crypto_aead_show,
-#endif
+#पूर्ण_अगर
 	.report = crypto_aead_report,
 	.maskclear = ~CRYPTO_ALG_TYPE_MASK,
 	.maskset = CRYPTO_ALG_TYPE_MASK,
 	.type = CRYPTO_ALG_TYPE_AEAD,
-	.tfmsize = offsetof(struct crypto_aead, base),
-};
+	.tfmsize = दुरत्व(काष्ठा crypto_aead, base),
+पूर्ण;
 
-int crypto_grab_aead(struct crypto_aead_spawn *spawn,
-		     struct crypto_instance *inst,
-		     const char *name, u32 type, u32 mask)
-{
+पूर्णांक crypto_grab_aead(काष्ठा crypto_aead_spawn *spawn,
+		     काष्ठा crypto_instance *inst,
+		     स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
 	spawn->base.frontend = &crypto_aead_type;
-	return crypto_grab_spawn(&spawn->base, inst, name, type, mask);
-}
+	वापस crypto_grab_spawn(&spawn->base, inst, name, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_grab_aead);
 
-struct crypto_aead *crypto_alloc_aead(const char *alg_name, u32 type, u32 mask)
-{
-	return crypto_alloc_tfm(alg_name, &crypto_aead_type, type, mask);
-}
+काष्ठा crypto_aead *crypto_alloc_aead(स्थिर अक्षर *alg_name, u32 type, u32 mask)
+अणु
+	वापस crypto_alloc_tfm(alg_name, &crypto_aead_type, type, mask);
+पूर्ण
 EXPORT_SYMBOL_GPL(crypto_alloc_aead);
 
-static int aead_prepare_alg(struct aead_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
+अटल पूर्णांक aead_prepare_alg(काष्ठा aead_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
 
-	if (max3(alg->maxauthsize, alg->ivsize, alg->chunksize) >
+	अगर (max3(alg->maxauthsize, alg->ivsize, alg->chunksize) >
 	    PAGE_SIZE / 8)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (!alg->chunksize)
+	अगर (!alg->chunksize)
 		alg->chunksize = base->cra_blocksize;
 
 	base->cra_type = &crypto_aead_type;
 	base->cra_flags &= ~CRYPTO_ALG_TYPE_MASK;
 	base->cra_flags |= CRYPTO_ALG_TYPE_AEAD;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int crypto_register_aead(struct aead_alg *alg)
-{
-	struct crypto_alg *base = &alg->base;
-	int err;
+पूर्णांक crypto_रेजिस्टर_aead(काष्ठा aead_alg *alg)
+अणु
+	काष्ठा crypto_alg *base = &alg->base;
+	पूर्णांक err;
 
 	err = aead_prepare_alg(alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return crypto_register_alg(base);
-}
-EXPORT_SYMBOL_GPL(crypto_register_aead);
+	वापस crypto_रेजिस्टर_alg(base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_aead);
 
-void crypto_unregister_aead(struct aead_alg *alg)
-{
-	crypto_unregister_alg(&alg->base);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_aead);
+व्योम crypto_unरेजिस्टर_aead(काष्ठा aead_alg *alg)
+अणु
+	crypto_unरेजिस्टर_alg(&alg->base);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_aead);
 
-int crypto_register_aeads(struct aead_alg *algs, int count)
-{
-	int i, ret;
+पूर्णांक crypto_रेजिस्टर_aeads(काष्ठा aead_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < count; i++) {
-		ret = crypto_register_aead(&algs[i]);
-		if (ret)
-			goto err;
-	}
+	क्रम (i = 0; i < count; i++) अणु
+		ret = crypto_रेजिस्टर_aead(&algs[i]);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	for (--i; i >= 0; --i)
-		crypto_unregister_aead(&algs[i]);
+	क्रम (--i; i >= 0; --i)
+		crypto_unरेजिस्टर_aead(&algs[i]);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(crypto_register_aeads);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_रेजिस्टर_aeads);
 
-void crypto_unregister_aeads(struct aead_alg *algs, int count)
-{
-	int i;
+व्योम crypto_unरेजिस्टर_aeads(काष्ठा aead_alg *algs, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = count - 1; i >= 0; --i)
-		crypto_unregister_aead(&algs[i]);
-}
-EXPORT_SYMBOL_GPL(crypto_unregister_aeads);
+	क्रम (i = count - 1; i >= 0; --i)
+		crypto_unरेजिस्टर_aead(&algs[i]);
+पूर्ण
+EXPORT_SYMBOL_GPL(crypto_unरेजिस्टर_aeads);
 
-int aead_register_instance(struct crypto_template *tmpl,
-			   struct aead_instance *inst)
-{
-	int err;
+पूर्णांक aead_रेजिस्टर_instance(काष्ठा crypto_ढाँचा *पंचांगpl,
+			   काष्ठा aead_instance *inst)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON(!inst->free))
-		return -EINVAL;
+	अगर (WARN_ON(!inst->मुक्त))
+		वापस -EINVAL;
 
 	err = aead_prepare_alg(&inst->alg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return crypto_register_instance(tmpl, aead_crypto_instance(inst));
-}
-EXPORT_SYMBOL_GPL(aead_register_instance);
+	वापस crypto_रेजिस्टर_instance(पंचांगpl, aead_crypto_instance(inst));
+पूर्ण
+EXPORT_SYMBOL_GPL(aead_रेजिस्टर_instance);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Authenticated Encryption with Associated Data (AEAD)");

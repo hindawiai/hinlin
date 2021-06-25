@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Author: Andrei Vagin <avagin@openvz.org>
+ * Author: Andrei Vagin <avagin@खोलोvz.org>
  * Author: Dmitry Safonov <dima@arista.com>
  */
 
-#include <linux/time_namespace.h>
-#include <linux/user_namespace.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task.h>
-#include <linux/clocksource.h>
-#include <linux/seq_file.h>
-#include <linux/proc_ns.h>
-#include <linux/export.h>
-#include <linux/time.h>
-#include <linux/slab.h>
-#include <linux/cred.h>
-#include <linux/err.h>
-#include <linux/mm.h>
+#समावेश <linux/समय_namespace.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/proc_ns.h>
+#समावेश <linux/export.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mm.h>
 
-#include <vdso/datapage.h>
+#समावेश <vdso/datapage.h>
 
-ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
-				struct timens_offsets *ns_offsets)
-{
-	ktime_t offset;
+kसमय_प्रकार करो_समयns_kसमय_प्रकारo_host(घड़ीid_t घड़ीid, kसमय_प्रकार tim,
+				काष्ठा समयns_offsets *ns_offsets)
+अणु
+	kसमय_प्रकार offset;
 
-	switch (clockid) {
-	case CLOCK_MONOTONIC:
-		offset = timespec64_to_ktime(ns_offsets->monotonic);
-		break;
-	case CLOCK_BOOTTIME:
-	case CLOCK_BOOTTIME_ALARM:
-		offset = timespec64_to_ktime(ns_offsets->boottime);
-		break;
-	default:
-		return tim;
-	}
+	चयन (घड़ीid) अणु
+	हाल CLOCK_MONOTONIC:
+		offset = बारpec64_to_kसमय(ns_offsets->monotonic);
+		अवरोध;
+	हाल CLOCK_BOOTTIME:
+	हाल CLOCK_BOOTTIME_ALARM:
+		offset = बारpec64_to_kसमय(ns_offsets->bootसमय);
+		अवरोध;
+	शेष:
+		वापस tim;
+	पूर्ण
 
 	/*
 	 * Check that @tim value is in [offset, KTIME_MAX + offset]
 	 * and subtract offset.
 	 */
-	if (tim < offset) {
+	अगर (tim < offset) अणु
 		/*
-		 * User can specify @tim *absolute* value - if it's lesser than
-		 * the time namespace's offset - it's already expired.
+		 * User can specअगरy @tim *असलolute* value - अगर it's lesser than
+		 * the समय namespace's offset - it's alपढ़ोy expired.
 		 */
 		tim = 0;
-	} else {
-		tim = ktime_sub(tim, offset);
-		if (unlikely(tim > KTIME_MAX))
+	पूर्ण अन्यथा अणु
+		tim = kसमय_sub(tim, offset);
+		अगर (unlikely(tim > KTIME_MAX))
 			tim = KTIME_MAX;
-	}
+	पूर्ण
 
-	return tim;
-}
+	वापस tim;
+पूर्ण
 
-static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
-{
-	return inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
-}
+अटल काष्ठा ucounts *inc_समय_namespaces(काष्ठा user_namespace *ns)
+अणु
+	वापस inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
+पूर्ण
 
-static void dec_time_namespaces(struct ucounts *ucounts)
-{
+अटल व्योम dec_समय_namespaces(काष्ठा ucounts *ucounts)
+अणु
 	dec_ucount(ucounts, UCOUNT_TIME_NAMESPACES);
-}
+पूर्ण
 
 /**
- * clone_time_ns - Clone a time namespace
+ * clone_समय_ns - Clone a समय namespace
  * @user_ns:	User namespace which owns a new namespace.
  * @old_ns:	Namespace to clone
  *
@@ -75,83 +76,83 @@ static void dec_time_namespaces(struct ucounts *ucounts)
  *
  * Return: The new namespace or ERR_PTR.
  */
-static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
-					  struct time_namespace *old_ns)
-{
-	struct time_namespace *ns;
-	struct ucounts *ucounts;
-	int err;
+अटल काष्ठा समय_namespace *clone_समय_ns(काष्ठा user_namespace *user_ns,
+					  काष्ठा समय_namespace *old_ns)
+अणु
+	काष्ठा समय_namespace *ns;
+	काष्ठा ucounts *ucounts;
+	पूर्णांक err;
 
 	err = -ENOSPC;
-	ucounts = inc_time_namespaces(user_ns);
-	if (!ucounts)
-		goto fail;
+	ucounts = inc_समय_namespaces(user_ns);
+	अगर (!ucounts)
+		जाओ fail;
 
 	err = -ENOMEM;
-	ns = kmalloc(sizeof(*ns), GFP_KERNEL);
-	if (!ns)
-		goto fail_dec;
+	ns = kदो_स्मृति(माप(*ns), GFP_KERNEL);
+	अगर (!ns)
+		जाओ fail_dec;
 
 	refcount_set(&ns->ns.count, 1);
 
 	ns->vvar_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-	if (!ns->vvar_page)
-		goto fail_free;
+	अगर (!ns->vvar_page)
+		जाओ fail_मुक्त;
 
 	err = ns_alloc_inum(&ns->ns);
-	if (err)
-		goto fail_free_page;
+	अगर (err)
+		जाओ fail_मुक्त_page;
 
 	ns->ucounts = ucounts;
-	ns->ns.ops = &timens_operations;
+	ns->ns.ops = &समयns_operations;
 	ns->user_ns = get_user_ns(user_ns);
 	ns->offsets = old_ns->offsets;
 	ns->frozen_offsets = false;
-	return ns;
+	वापस ns;
 
-fail_free_page:
-	__free_page(ns->vvar_page);
-fail_free:
-	kfree(ns);
+fail_मुक्त_page:
+	__मुक्त_page(ns->vvar_page);
+fail_मुक्त:
+	kमुक्त(ns);
 fail_dec:
-	dec_time_namespaces(ucounts);
+	dec_समय_namespaces(ucounts);
 fail:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
 /**
- * copy_time_ns - Create timens_for_children from @old_ns
+ * copy_समय_ns - Create समयns_क्रम_children from @old_ns
  * @flags:	Cloning flags
  * @user_ns:	User namespace which owns a new namespace.
  * @old_ns:	Namespace to clone
  *
- * If CLONE_NEWTIME specified in @flags, creates a new timens_for_children;
+ * If CLONE_NEWTIME specअगरied in @flags, creates a new समयns_क्रम_children;
  * adds a refcounter to @old_ns otherwise.
  *
- * Return: timens_for_children namespace or ERR_PTR.
+ * Return: समयns_क्रम_children namespace or ERR_PTR.
  */
-struct time_namespace *copy_time_ns(unsigned long flags,
-	struct user_namespace *user_ns, struct time_namespace *old_ns)
-{
-	if (!(flags & CLONE_NEWTIME))
-		return get_time_ns(old_ns);
+काष्ठा समय_namespace *copy_समय_ns(अचिन्हित दीर्घ flags,
+	काष्ठा user_namespace *user_ns, काष्ठा समय_namespace *old_ns)
+अणु
+	अगर (!(flags & CLONE_NEWTIME))
+		वापस get_समय_ns(old_ns);
 
-	return clone_time_ns(user_ns, old_ns);
-}
+	वापस clone_समय_ns(user_ns, old_ns);
+पूर्ण
 
-static struct timens_offset offset_from_ts(struct timespec64 off)
-{
-	struct timens_offset ret;
+अटल काष्ठा समयns_offset offset_from_ts(काष्ठा बारpec64 off)
+अणु
+	काष्ठा समयns_offset ret;
 
 	ret.sec = off.tv_sec;
 	ret.nsec = off.tv_nsec;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * A time namespace VVAR page has the same layout as the VVAR page which
- * contains the system wide VDSO data.
+ * A समय namespace VVAR page has the same layout as the VVAR page which
+ * contains the प्रणाली wide VDSO data.
  *
  * For a normal task the VVAR pages are installed in the normal ordering:
  *     VVAR
@@ -159,309 +160,309 @@ static struct timens_offset offset_from_ts(struct timespec64 off)
  *     HVCLOCK
  *     TIMENS   <- Not really required
  *
- * Now for a timens task the pages are installed in the following order:
+ * Now क्रम a समयns task the pages are installed in the following order:
  *     TIMENS
  *     PVCLOCK
  *     HVCLOCK
  *     VVAR
  *
- * The check for vdso_data->clock_mode is in the unlikely path of
- * the seq begin magic. So for the non-timens case most of the time
+ * The check क्रम vdso_data->घड़ी_mode is in the unlikely path of
+ * the seq begin magic. So क्रम the non-समयns हाल most of the समय
  * 'seq' is even, so the branch is not taken.
  *
  * If 'seq' is odd, i.e. a concurrent update is in progress, the extra check
- * for vdso_data->clock_mode is a non-issue. The task is spin waiting for the
- * update to finish and for 'seq' to become even anyway.
+ * क्रम vdso_data->घड़ी_mode is a non-issue. The task is spin रुकोing क्रम the
+ * update to finish and क्रम 'seq' to become even anyway.
  *
- * Timens page has vdso_data->clock_mode set to VDSO_CLOCKMODE_TIMENS which
- * enforces the time namespace handling path.
+ * Timens page has vdso_data->घड़ी_mode set to VDSO_CLOCKMODE_TIMENS which
+ * enक्रमces the समय namespace handling path.
  */
-static void timens_setup_vdso_data(struct vdso_data *vdata,
-				   struct time_namespace *ns)
-{
-	struct timens_offset *offset = vdata->offset;
-	struct timens_offset monotonic = offset_from_ts(ns->offsets.monotonic);
-	struct timens_offset boottime = offset_from_ts(ns->offsets.boottime);
+अटल व्योम समयns_setup_vdso_data(काष्ठा vdso_data *vdata,
+				   काष्ठा समय_namespace *ns)
+अणु
+	काष्ठा समयns_offset *offset = vdata->offset;
+	काष्ठा समयns_offset monotonic = offset_from_ts(ns->offsets.monotonic);
+	काष्ठा समयns_offset bootसमय = offset_from_ts(ns->offsets.bootसमय);
 
 	vdata->seq			= 1;
-	vdata->clock_mode		= VDSO_CLOCKMODE_TIMENS;
+	vdata->घड़ी_mode		= VDSO_CLOCKMODE_TIMENS;
 	offset[CLOCK_MONOTONIC]		= monotonic;
 	offset[CLOCK_MONOTONIC_RAW]	= monotonic;
 	offset[CLOCK_MONOTONIC_COARSE]	= monotonic;
-	offset[CLOCK_BOOTTIME]		= boottime;
-	offset[CLOCK_BOOTTIME_ALARM]	= boottime;
-}
+	offset[CLOCK_BOOTTIME]		= bootसमय;
+	offset[CLOCK_BOOTTIME_ALARM]	= bootसमय;
+पूर्ण
 
 /*
- * Protects possibly multiple offsets writers racing each other
+ * Protects possibly multiple offsets ग_लिखोrs racing each other
  * and tasks entering the namespace.
  */
-static DEFINE_MUTEX(offset_lock);
+अटल DEFINE_MUTEX(offset_lock);
 
-static void timens_set_vvar_page(struct task_struct *task,
-				struct time_namespace *ns)
-{
-	struct vdso_data *vdata;
-	unsigned int i;
+अटल व्योम समयns_set_vvar_page(काष्ठा task_काष्ठा *task,
+				काष्ठा समय_namespace *ns)
+अणु
+	काष्ठा vdso_data *vdata;
+	अचिन्हित पूर्णांक i;
 
-	if (ns == &init_time_ns)
-		return;
+	अगर (ns == &init_समय_ns)
+		वापस;
 
 	/* Fast-path, taken by every task in namespace except the first. */
-	if (likely(ns->frozen_offsets))
-		return;
+	अगर (likely(ns->frozen_offsets))
+		वापस;
 
 	mutex_lock(&offset_lock);
-	/* Nothing to-do: vvar_page has been already initialized. */
-	if (ns->frozen_offsets)
-		goto out;
+	/* Nothing to-करो: vvar_page has been alपढ़ोy initialized. */
+	अगर (ns->frozen_offsets)
+		जाओ out;
 
 	ns->frozen_offsets = true;
 	vdata = arch_get_vdso_data(page_address(ns->vvar_page));
 
-	for (i = 0; i < CS_BASES; i++)
-		timens_setup_vdso_data(&vdata[i], ns);
+	क्रम (i = 0; i < CS_BASES; i++)
+		समयns_setup_vdso_data(&vdata[i], ns);
 
 out:
 	mutex_unlock(&offset_lock);
-}
+पूर्ण
 
-void free_time_ns(struct time_namespace *ns)
-{
-	dec_time_namespaces(ns->ucounts);
+व्योम मुक्त_समय_ns(काष्ठा समय_namespace *ns)
+अणु
+	dec_समय_namespaces(ns->ucounts);
 	put_user_ns(ns->user_ns);
-	ns_free_inum(&ns->ns);
-	__free_page(ns->vvar_page);
-	kfree(ns);
-}
+	ns_मुक्त_inum(&ns->ns);
+	__मुक्त_page(ns->vvar_page);
+	kमुक्त(ns);
+पूर्ण
 
-static struct time_namespace *to_time_ns(struct ns_common *ns)
-{
-	return container_of(ns, struct time_namespace, ns);
-}
+अटल काष्ठा समय_namespace *to_समय_ns(काष्ठा ns_common *ns)
+अणु
+	वापस container_of(ns, काष्ठा समय_namespace, ns);
+पूर्ण
 
-static struct ns_common *timens_get(struct task_struct *task)
-{
-	struct time_namespace *ns = NULL;
-	struct nsproxy *nsproxy;
-
-	task_lock(task);
-	nsproxy = task->nsproxy;
-	if (nsproxy) {
-		ns = nsproxy->time_ns;
-		get_time_ns(ns);
-	}
-	task_unlock(task);
-
-	return ns ? &ns->ns : NULL;
-}
-
-static struct ns_common *timens_for_children_get(struct task_struct *task)
-{
-	struct time_namespace *ns = NULL;
-	struct nsproxy *nsproxy;
+अटल काष्ठा ns_common *समयns_get(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा समय_namespace *ns = शून्य;
+	काष्ठा nsproxy *nsproxy;
 
 	task_lock(task);
 	nsproxy = task->nsproxy;
-	if (nsproxy) {
-		ns = nsproxy->time_ns_for_children;
-		get_time_ns(ns);
-	}
+	अगर (nsproxy) अणु
+		ns = nsproxy->समय_ns;
+		get_समय_ns(ns);
+	पूर्ण
 	task_unlock(task);
 
-	return ns ? &ns->ns : NULL;
-}
+	वापस ns ? &ns->ns : शून्य;
+पूर्ण
 
-static void timens_put(struct ns_common *ns)
-{
-	put_time_ns(to_time_ns(ns));
-}
+अटल काष्ठा ns_common *समयns_क्रम_children_get(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा समय_namespace *ns = शून्य;
+	काष्ठा nsproxy *nsproxy;
 
-void timens_commit(struct task_struct *tsk, struct time_namespace *ns)
-{
-	timens_set_vvar_page(tsk, ns);
-	vdso_join_timens(tsk, ns);
-}
+	task_lock(task);
+	nsproxy = task->nsproxy;
+	अगर (nsproxy) अणु
+		ns = nsproxy->समय_ns_क्रम_children;
+		get_समय_ns(ns);
+	पूर्ण
+	task_unlock(task);
 
-static int timens_install(struct nsset *nsset, struct ns_common *new)
-{
-	struct nsproxy *nsproxy = nsset->nsproxy;
-	struct time_namespace *ns = to_time_ns(new);
+	वापस ns ? &ns->ns : शून्य;
+पूर्ण
 
-	if (!current_is_single_threaded())
-		return -EUSERS;
+अटल व्योम समयns_put(काष्ठा ns_common *ns)
+अणु
+	put_समय_ns(to_समय_ns(ns));
+पूर्ण
 
-	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
+व्योम समयns_commit(काष्ठा task_काष्ठा *tsk, काष्ठा समय_namespace *ns)
+अणु
+	समयns_set_vvar_page(tsk, ns);
+	vdso_join_समयns(tsk, ns);
+पूर्ण
+
+अटल पूर्णांक समयns_install(काष्ठा nsset *nsset, काष्ठा ns_common *new)
+अणु
+	काष्ठा nsproxy *nsproxy = nsset->nsproxy;
+	काष्ठा समय_namespace *ns = to_समय_ns(new);
+
+	अगर (!current_is_single_thपढ़ोed())
+		वापस -EUSERS;
+
+	अगर (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
 	    !ns_capable(nsset->cred->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+		वापस -EPERM;
 
-	get_time_ns(ns);
-	put_time_ns(nsproxy->time_ns);
-	nsproxy->time_ns = ns;
+	get_समय_ns(ns);
+	put_समय_ns(nsproxy->समय_ns);
+	nsproxy->समय_ns = ns;
 
-	get_time_ns(ns);
-	put_time_ns(nsproxy->time_ns_for_children);
-	nsproxy->time_ns_for_children = ns;
-	return 0;
-}
+	get_समय_ns(ns);
+	put_समय_ns(nsproxy->समय_ns_क्रम_children);
+	nsproxy->समय_ns_क्रम_children = ns;
+	वापस 0;
+पूर्ण
 
-void timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
-{
-	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
-	struct time_namespace *ns = to_time_ns(nsc);
+व्योम समयns_on_विभाजन(काष्ठा nsproxy *nsproxy, काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा ns_common *nsc = &nsproxy->समय_ns_क्रम_children->ns;
+	काष्ठा समय_namespace *ns = to_समय_ns(nsc);
 
-	/* create_new_namespaces() already incremented the ref counter */
-	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
-		return;
+	/* create_new_namespaces() alपढ़ोy incremented the ref counter */
+	अगर (nsproxy->समय_ns == nsproxy->समय_ns_क्रम_children)
+		वापस;
 
-	get_time_ns(ns);
-	put_time_ns(nsproxy->time_ns);
-	nsproxy->time_ns = ns;
+	get_समय_ns(ns);
+	put_समय_ns(nsproxy->समय_ns);
+	nsproxy->समय_ns = ns;
 
-	timens_commit(tsk, ns);
-}
+	समयns_commit(tsk, ns);
+पूर्ण
 
-static struct user_namespace *timens_owner(struct ns_common *ns)
-{
-	return to_time_ns(ns)->user_ns;
-}
+अटल काष्ठा user_namespace *समयns_owner(काष्ठा ns_common *ns)
+अणु
+	वापस to_समय_ns(ns)->user_ns;
+पूर्ण
 
-static void show_offset(struct seq_file *m, int clockid, struct timespec64 *ts)
-{
-	char *clock;
+अटल व्योम show_offset(काष्ठा seq_file *m, पूर्णांक घड़ीid, काष्ठा बारpec64 *ts)
+अणु
+	अक्षर *घड़ी;
 
-	switch (clockid) {
-	case CLOCK_BOOTTIME:
-		clock = "boottime";
-		break;
-	case CLOCK_MONOTONIC:
-		clock = "monotonic";
-		break;
-	default:
-		clock = "unknown";
-		break;
-	}
-	seq_printf(m, "%-10s %10lld %9ld\n", clock, ts->tv_sec, ts->tv_nsec);
-}
+	चयन (घड़ीid) अणु
+	हाल CLOCK_BOOTTIME:
+		घड़ी = "boottime";
+		अवरोध;
+	हाल CLOCK_MONOTONIC:
+		घड़ी = "monotonic";
+		अवरोध;
+	शेष:
+		घड़ी = "unknown";
+		अवरोध;
+	पूर्ण
+	seq_म_लिखो(m, "%-10s %10lld %9ld\n", घड़ी, ts->tv_sec, ts->tv_nsec);
+पूर्ण
 
-void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m)
-{
-	struct ns_common *ns;
-	struct time_namespace *time_ns;
+व्योम proc_समयns_show_offsets(काष्ठा task_काष्ठा *p, काष्ठा seq_file *m)
+अणु
+	काष्ठा ns_common *ns;
+	काष्ठा समय_namespace *समय_ns;
 
-	ns = timens_for_children_get(p);
-	if (!ns)
-		return;
-	time_ns = to_time_ns(ns);
+	ns = समयns_क्रम_children_get(p);
+	अगर (!ns)
+		वापस;
+	समय_ns = to_समय_ns(ns);
 
-	show_offset(m, CLOCK_MONOTONIC, &time_ns->offsets.monotonic);
-	show_offset(m, CLOCK_BOOTTIME, &time_ns->offsets.boottime);
-	put_time_ns(time_ns);
-}
+	show_offset(m, CLOCK_MONOTONIC, &समय_ns->offsets.monotonic);
+	show_offset(m, CLOCK_BOOTTIME, &समय_ns->offsets.bootसमय);
+	put_समय_ns(समय_ns);
+पूर्ण
 
-int proc_timens_set_offset(struct file *file, struct task_struct *p,
-			   struct proc_timens_offset *offsets, int noffsets)
-{
-	struct ns_common *ns;
-	struct time_namespace *time_ns;
-	struct timespec64 tp;
-	int i, err;
+पूर्णांक proc_समयns_set_offset(काष्ठा file *file, काष्ठा task_काष्ठा *p,
+			   काष्ठा proc_समयns_offset *offsets, पूर्णांक noffsets)
+अणु
+	काष्ठा ns_common *ns;
+	काष्ठा समय_namespace *समय_ns;
+	काष्ठा बारpec64 tp;
+	पूर्णांक i, err;
 
-	ns = timens_for_children_get(p);
-	if (!ns)
-		return -ESRCH;
-	time_ns = to_time_ns(ns);
+	ns = समयns_क्रम_children_get(p);
+	अगर (!ns)
+		वापस -ESRCH;
+	समय_ns = to_समय_ns(ns);
 
-	if (!file_ns_capable(file, time_ns->user_ns, CAP_SYS_TIME)) {
-		put_time_ns(time_ns);
-		return -EPERM;
-	}
+	अगर (!file_ns_capable(file, समय_ns->user_ns, CAP_SYS_TIME)) अणु
+		put_समय_ns(समय_ns);
+		वापस -EPERM;
+	पूर्ण
 
-	for (i = 0; i < noffsets; i++) {
-		struct proc_timens_offset *off = &offsets[i];
+	क्रम (i = 0; i < noffsets; i++) अणु
+		काष्ठा proc_समयns_offset *off = &offsets[i];
 
-		switch (off->clockid) {
-		case CLOCK_MONOTONIC:
-			ktime_get_ts64(&tp);
-			break;
-		case CLOCK_BOOTTIME:
-			ktime_get_boottime_ts64(&tp);
-			break;
-		default:
+		चयन (off->घड़ीid) अणु
+		हाल CLOCK_MONOTONIC:
+			kसमय_get_ts64(&tp);
+			अवरोध;
+		हाल CLOCK_BOOTTIME:
+			kसमय_get_bootसमय_प्रकारs64(&tp);
+			अवरोध;
+		शेष:
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		err = -ERANGE;
+		err = -दुस्फल;
 
-		if (off->val.tv_sec > KTIME_SEC_MAX ||
+		अगर (off->val.tv_sec > KTIME_SEC_MAX ||
 		    off->val.tv_sec < -KTIME_SEC_MAX)
-			goto out;
+			जाओ out;
 
-		tp = timespec64_add(tp, off->val);
+		tp = बारpec64_add(tp, off->val);
 		/*
-		 * KTIME_SEC_MAX is divided by 2 to be sure that KTIME_MAX is
+		 * KTIME_SEC_MAX is भागided by 2 to be sure that KTIME_MAX is
 		 * still unreachable.
 		 */
-		if (tp.tv_sec < 0 || tp.tv_sec > KTIME_SEC_MAX / 2)
-			goto out;
-	}
+		अगर (tp.tv_sec < 0 || tp.tv_sec > KTIME_SEC_MAX / 2)
+			जाओ out;
+	पूर्ण
 
 	mutex_lock(&offset_lock);
-	if (time_ns->frozen_offsets) {
+	अगर (समय_ns->frozen_offsets) अणु
 		err = -EACCES;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	err = 0;
 	/* Don't report errors after this line */
-	for (i = 0; i < noffsets; i++) {
-		struct proc_timens_offset *off = &offsets[i];
-		struct timespec64 *offset = NULL;
+	क्रम (i = 0; i < noffsets; i++) अणु
+		काष्ठा proc_समयns_offset *off = &offsets[i];
+		काष्ठा बारpec64 *offset = शून्य;
 
-		switch (off->clockid) {
-		case CLOCK_MONOTONIC:
-			offset = &time_ns->offsets.monotonic;
-			break;
-		case CLOCK_BOOTTIME:
-			offset = &time_ns->offsets.boottime;
-			break;
-		}
+		चयन (off->घड़ीid) अणु
+		हाल CLOCK_MONOTONIC:
+			offset = &समय_ns->offsets.monotonic;
+			अवरोध;
+		हाल CLOCK_BOOTTIME:
+			offset = &समय_ns->offsets.bootसमय;
+			अवरोध;
+		पूर्ण
 
 		*offset = off->val;
-	}
+	पूर्ण
 
 out_unlock:
 	mutex_unlock(&offset_lock);
 out:
-	put_time_ns(time_ns);
+	put_समय_ns(समय_ns);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct proc_ns_operations timens_operations = {
+स्थिर काष्ठा proc_ns_operations समयns_operations = अणु
 	.name		= "time",
 	.type		= CLONE_NEWTIME,
-	.get		= timens_get,
-	.put		= timens_put,
-	.install	= timens_install,
-	.owner		= timens_owner,
-};
+	.get		= समयns_get,
+	.put		= समयns_put,
+	.install	= समयns_install,
+	.owner		= समयns_owner,
+पूर्ण;
 
-const struct proc_ns_operations timens_for_children_operations = {
+स्थिर काष्ठा proc_ns_operations समयns_क्रम_children_operations = अणु
 	.name		= "time_for_children",
 	.real_ns_name	= "time",
 	.type		= CLONE_NEWTIME,
-	.get		= timens_for_children_get,
-	.put		= timens_put,
-	.install	= timens_install,
-	.owner		= timens_owner,
-};
+	.get		= समयns_क्रम_children_get,
+	.put		= समयns_put,
+	.install	= समयns_install,
+	.owner		= समयns_owner,
+पूर्ण;
 
-struct time_namespace init_time_ns = {
+काष्ठा समय_namespace init_समय_ns = अणु
 	.ns.count	= REFCOUNT_INIT(3),
 	.user_ns	= &init_user_ns,
 	.ns.inum	= PROC_TIME_INIT_INO,
-	.ns.ops		= &timens_operations,
+	.ns.ops		= &समयns_operations,
 	.frozen_offsets	= true,
-};
+पूर्ण;

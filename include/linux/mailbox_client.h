@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013-2014 Linaro Ltd.
  * Author: Jassi Brar <jassisinghbrar@gmail.com>
  */
 
-#ifndef __MAILBOX_CLIENT_H
-#define __MAILBOX_CLIENT_H
+#अगर_अघोषित __MAILBOX_CLIENT_H
+#घोषणा __MAILBOX_CLIENT_H
 
-#include <linux/of.h>
-#include <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/device.h>
 
-struct mbox_chan;
+काष्ठा mbox_chan;
 
 /**
- * struct mbox_client - User of a mailbox
+ * काष्ठा mbox_client - User of a mailbox
  * @dev:		The client device
  * @tx_block:		If the mbox_send_message should block until data is
  *			transmitted.
- * @tx_tout:		Max block period in ms before TX is assumed failure
- * @knows_txdone:	If the client could run the TX state machine. Usually
- *			if the client receives some ACK packet for transmission.
- *			Unused if the controller already has TX_Done/RTR IRQ.
+ * @tx_tout:		Max block period in ms beक्रमe TX is assumed failure
+ * @knows_txकरोne:	If the client could run the TX state machine. Usually
+ *			अगर the client receives some ACK packet क्रम transmission.
+ *			Unused अगर the controller alपढ़ोy has TX_Done/RTR IRQ.
  * @rx_callback:	Atomic callback to provide client the data received
  * @tx_prepare: 	Atomic callback to ask client to prepare the payload
- *			before initiating the transmission if required.
- * @tx_done:		Atomic callback to tell client of data transmission
+ *			beक्रमe initiating the transmission अगर required.
+ * @tx_करोne:		Atomic callback to tell client of data transmission
  */
-struct mbox_client {
-	struct device *dev;
+काष्ठा mbox_client अणु
+	काष्ठा device *dev;
 	bool tx_block;
-	unsigned long tx_tout;
-	bool knows_txdone;
+	अचिन्हित दीर्घ tx_tout;
+	bool knows_txकरोne;
 
-	void (*rx_callback)(struct mbox_client *cl, void *mssg);
-	void (*tx_prepare)(struct mbox_client *cl, void *mssg);
-	void (*tx_done)(struct mbox_client *cl, void *mssg, int r);
-};
+	व्योम (*rx_callback)(काष्ठा mbox_client *cl, व्योम *mssg);
+	व्योम (*tx_prepare)(काष्ठा mbox_client *cl, व्योम *mssg);
+	व्योम (*tx_करोne)(काष्ठा mbox_client *cl, व्योम *mssg, पूर्णांक r);
+पूर्ण;
 
-struct mbox_chan *mbox_request_channel_byname(struct mbox_client *cl,
-					      const char *name);
-struct mbox_chan *mbox_request_channel(struct mbox_client *cl, int index);
-int mbox_send_message(struct mbox_chan *chan, void *mssg);
-int mbox_flush(struct mbox_chan *chan, unsigned long timeout);
-void mbox_client_txdone(struct mbox_chan *chan, int r); /* atomic */
-bool mbox_client_peek_data(struct mbox_chan *chan); /* atomic */
-void mbox_free_channel(struct mbox_chan *chan); /* may sleep */
+काष्ठा mbox_chan *mbox_request_channel_byname(काष्ठा mbox_client *cl,
+					      स्थिर अक्षर *name);
+काष्ठा mbox_chan *mbox_request_channel(काष्ठा mbox_client *cl, पूर्णांक index);
+पूर्णांक mbox_send_message(काष्ठा mbox_chan *chan, व्योम *mssg);
+पूर्णांक mbox_flush(काष्ठा mbox_chan *chan, अचिन्हित दीर्घ समयout);
+व्योम mbox_client_txकरोne(काष्ठा mbox_chan *chan, पूर्णांक r); /* atomic */
+bool mbox_client_peek_data(काष्ठा mbox_chan *chan); /* atomic */
+व्योम mbox_मुक्त_channel(काष्ठा mbox_chan *chan); /* may sleep */
 
-#endif /* __MAILBOX_CLIENT_H */
+#पूर्ण_अगर /* __MAILBOX_CLIENT_H */

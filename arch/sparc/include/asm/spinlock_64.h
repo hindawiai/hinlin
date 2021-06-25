@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* spinlock.h: 64-bit Sparc spinlock support.
  *
  * Copyright (C) 1997 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef __SPARC64_SPINLOCK_H
-#define __SPARC64_SPINLOCK_H
+#अगर_अघोषित __SPARC64_SPINLOCK_H
+#घोषणा __SPARC64_SPINLOCK_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/processor.h>
-#include <asm/barrier.h>
-#include <asm/qspinlock.h>
-#include <asm/qrwlock.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/qspinlock.h>
+#समावेश <यंत्र/qrwlock.h>
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#endif /* !(__SPARC64_SPINLOCK_H) */
+#पूर्ण_अगर /* !(__SPARC64_SPINLOCK_H) */

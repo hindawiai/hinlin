@@ -1,290 +1,291 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Kprobes-based tracing events
  *
  * Created by Masami Hiramatsu <mhiramat@redhat.com>
  *
  */
-#define pr_fmt(fmt)	"trace_kprobe: " fmt
+#घोषणा pr_fmt(fmt)	"trace_kprobe: " fmt
 
-#include <linux/security.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <linux/rculist.h>
-#include <linux/error-injection.h>
+#समावेश <linux/security.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/error-injection.h>
 
-#include <asm/setup.h>  /* for COMMAND_LINE_SIZE */
+#समावेश <यंत्र/setup.h>  /* क्रम COMMAND_LINE_SIZE */
 
-#include "trace_dynevent.h"
-#include "trace_kprobe_selftest.h"
-#include "trace_probe.h"
-#include "trace_probe_tmpl.h"
+#समावेश "trace_dynevent.h"
+#समावेश "trace_kprobe_selftest.h"
+#समावेश "trace_probe.h"
+#समावेश "trace_probe_tmpl.h"
 
-#define KPROBE_EVENT_SYSTEM "kprobes"
-#define KRETPROBE_MAXACTIVE_MAX 4096
+#घोषणा KPROBE_EVENT_SYSTEM "kprobes"
+#घोषणा KRETPROBE_MAXACTIVE_MAX 4096
 
 /* Kprobe early definition from command line */
-static char kprobe_boot_events_buf[COMMAND_LINE_SIZE] __initdata;
+अटल अक्षर kprobe_boot_events_buf[COMMAND_LINE_SIZE] __initdata;
 
-static int __init set_kprobe_boot_events(char *str)
-{
+अटल पूर्णांक __init set_kprobe_boot_events(अक्षर *str)
+अणु
 	strlcpy(kprobe_boot_events_buf, str, COMMAND_LINE_SIZE);
 	disable_tracing_selftest("running kprobe events");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __setup("kprobe_event=", set_kprobe_boot_events);
 
-static int trace_kprobe_create(const char *raw_command);
-static int trace_kprobe_show(struct seq_file *m, struct dyn_event *ev);
-static int trace_kprobe_release(struct dyn_event *ev);
-static bool trace_kprobe_is_busy(struct dyn_event *ev);
-static bool trace_kprobe_match(const char *system, const char *event,
-			int argc, const char **argv, struct dyn_event *ev);
+अटल पूर्णांक trace_kprobe_create(स्थिर अक्षर *raw_command);
+अटल पूर्णांक trace_kprobe_show(काष्ठा seq_file *m, काष्ठा dyn_event *ev);
+अटल पूर्णांक trace_kprobe_release(काष्ठा dyn_event *ev);
+अटल bool trace_kprobe_is_busy(काष्ठा dyn_event *ev);
+अटल bool trace_kprobe_match(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event,
+			पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा dyn_event *ev);
 
-static struct dyn_event_operations trace_kprobe_ops = {
+अटल काष्ठा dyn_event_operations trace_kprobe_ops = अणु
 	.create = trace_kprobe_create,
 	.show = trace_kprobe_show,
 	.is_busy = trace_kprobe_is_busy,
-	.free = trace_kprobe_release,
+	.मुक्त = trace_kprobe_release,
 	.match = trace_kprobe_match,
-};
+पूर्ण;
 
 /*
  * Kprobe event core functions
  */
-struct trace_kprobe {
-	struct dyn_event	devent;
-	struct kretprobe	rp;	/* Use rp.kp for kprobe use */
-	unsigned long __percpu *nhit;
-	const char		*symbol;	/* symbol name */
-	struct trace_probe	tp;
-};
+काष्ठा trace_kprobe अणु
+	काष्ठा dyn_event	devent;
+	काष्ठा kretprobe	rp;	/* Use rp.kp क्रम kprobe use */
+	अचिन्हित दीर्घ __percpu *nhit;
+	स्थिर अक्षर		*symbol;	/* symbol name */
+	काष्ठा trace_probe	tp;
+पूर्ण;
 
-static bool is_trace_kprobe(struct dyn_event *ev)
-{
-	return ev->ops == &trace_kprobe_ops;
-}
+अटल bool is_trace_kprobe(काष्ठा dyn_event *ev)
+अणु
+	वापस ev->ops == &trace_kprobe_ops;
+पूर्ण
 
-static struct trace_kprobe *to_trace_kprobe(struct dyn_event *ev)
-{
-	return container_of(ev, struct trace_kprobe, devent);
-}
+अटल काष्ठा trace_kprobe *to_trace_kprobe(काष्ठा dyn_event *ev)
+अणु
+	वापस container_of(ev, काष्ठा trace_kprobe, devent);
+पूर्ण
 
 /**
- * for_each_trace_kprobe - iterate over the trace_kprobe list
- * @pos:	the struct trace_kprobe * for each entry
- * @dpos:	the struct dyn_event * to use as a loop cursor
+ * क्रम_each_trace_kprobe - iterate over the trace_kprobe list
+ * @pos:	the काष्ठा trace_kprobe * क्रम each entry
+ * @dpos:	the काष्ठा dyn_event * to use as a loop cursor
  */
-#define for_each_trace_kprobe(pos, dpos)	\
-	for_each_dyn_event(dpos)		\
-		if (is_trace_kprobe(dpos) && (pos = to_trace_kprobe(dpos)))
+#घोषणा क्रम_each_trace_kprobe(pos, dpos)	\
+	क्रम_each_dyn_event(dpos)		\
+		अगर (is_trace_kprobe(dpos) && (pos = to_trace_kprobe(dpos)))
 
-#define SIZEOF_TRACE_KPROBE(n)				\
-	(offsetof(struct trace_kprobe, tp.args) +	\
-	(sizeof(struct probe_arg) * (n)))
+#घोषणा SIZखातापूर्ण_TRACE_KPROBE(n)				\
+	(दुरत्व(काष्ठा trace_kprobe, tp.args) +	\
+	(माप(काष्ठा probe_arg) * (n)))
 
-static nokprobe_inline bool trace_kprobe_is_return(struct trace_kprobe *tk)
-{
-	return tk->rp.handler != NULL;
-}
+अटल nokprobe_अंतरभूत bool trace_kprobe_is_वापस(काष्ठा trace_kprobe *tk)
+अणु
+	वापस tk->rp.handler != शून्य;
+पूर्ण
 
-static nokprobe_inline const char *trace_kprobe_symbol(struct trace_kprobe *tk)
-{
-	return tk->symbol ? tk->symbol : "unknown";
-}
+अटल nokprobe_अंतरभूत स्थिर अक्षर *trace_kprobe_symbol(काष्ठा trace_kprobe *tk)
+अणु
+	वापस tk->symbol ? tk->symbol : "unknown";
+पूर्ण
 
-static nokprobe_inline unsigned long trace_kprobe_offset(struct trace_kprobe *tk)
-{
-	return tk->rp.kp.offset;
-}
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ trace_kprobe_offset(काष्ठा trace_kprobe *tk)
+अणु
+	वापस tk->rp.kp.offset;
+पूर्ण
 
-static nokprobe_inline bool trace_kprobe_has_gone(struct trace_kprobe *tk)
-{
-	return !!(kprobe_gone(&tk->rp.kp));
-}
+अटल nokprobe_अंतरभूत bool trace_kprobe_has_gone(काष्ठा trace_kprobe *tk)
+अणु
+	वापस !!(kprobe_gone(&tk->rp.kp));
+पूर्ण
 
-static nokprobe_inline bool trace_kprobe_within_module(struct trace_kprobe *tk,
-						 struct module *mod)
-{
-	int len = strlen(module_name(mod));
-	const char *name = trace_kprobe_symbol(tk);
+अटल nokprobe_अंतरभूत bool trace_kprobe_within_module(काष्ठा trace_kprobe *tk,
+						 काष्ठा module *mod)
+अणु
+	पूर्णांक len = म_माप(module_name(mod));
+	स्थिर अक्षर *name = trace_kprobe_symbol(tk);
 
-	return strncmp(module_name(mod), name, len) == 0 && name[len] == ':';
-}
+	वापस म_भेदन(module_name(mod), name, len) == 0 && name[len] == ':';
+पूर्ण
 
-static nokprobe_inline bool trace_kprobe_module_exist(struct trace_kprobe *tk)
-{
-	char *p;
+अटल nokprobe_अंतरभूत bool trace_kprobe_module_exist(काष्ठा trace_kprobe *tk)
+अणु
+	अक्षर *p;
 	bool ret;
 
-	if (!tk->symbol)
-		return false;
-	p = strchr(tk->symbol, ':');
-	if (!p)
-		return true;
+	अगर (!tk->symbol)
+		वापस false;
+	p = म_अक्षर(tk->symbol, ':');
+	अगर (!p)
+		वापस true;
 	*p = '\0';
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 	ret = !!find_module(tk->symbol);
-	rcu_read_unlock_sched();
+	rcu_पढ़ो_unlock_sched();
 	*p = ':';
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool trace_kprobe_is_busy(struct dyn_event *ev)
-{
-	struct trace_kprobe *tk = to_trace_kprobe(ev);
+अटल bool trace_kprobe_is_busy(काष्ठा dyn_event *ev)
+अणु
+	काष्ठा trace_kprobe *tk = to_trace_kprobe(ev);
 
-	return trace_probe_is_enabled(&tk->tp);
-}
+	वापस trace_probe_is_enabled(&tk->tp);
+पूर्ण
 
-static bool trace_kprobe_match_command_head(struct trace_kprobe *tk,
-					    int argc, const char **argv)
-{
-	char buf[MAX_ARGSTR_LEN + 1];
+अटल bool trace_kprobe_match_command_head(काष्ठा trace_kprobe *tk,
+					    पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अक्षर buf[MAX_ARGSTR_LEN + 1];
 
-	if (!argc)
-		return true;
+	अगर (!argc)
+		वापस true;
 
-	if (!tk->symbol)
-		snprintf(buf, sizeof(buf), "0x%p", tk->rp.kp.addr);
-	else if (tk->rp.kp.offset)
-		snprintf(buf, sizeof(buf), "%s+%u",
+	अगर (!tk->symbol)
+		snम_लिखो(buf, माप(buf), "0x%p", tk->rp.kp.addr);
+	अन्यथा अगर (tk->rp.kp.offset)
+		snम_लिखो(buf, माप(buf), "%s+%u",
 			 trace_kprobe_symbol(tk), tk->rp.kp.offset);
-	else
-		snprintf(buf, sizeof(buf), "%s", trace_kprobe_symbol(tk));
-	if (strcmp(buf, argv[0]))
-		return false;
+	अन्यथा
+		snम_लिखो(buf, माप(buf), "%s", trace_kprobe_symbol(tk));
+	अगर (म_भेद(buf, argv[0]))
+		वापस false;
 	argc--; argv++;
 
-	return trace_probe_match_command_args(&tk->tp, argc, argv);
-}
+	वापस trace_probe_match_command_args(&tk->tp, argc, argv);
+पूर्ण
 
-static bool trace_kprobe_match(const char *system, const char *event,
-			int argc, const char **argv, struct dyn_event *ev)
-{
-	struct trace_kprobe *tk = to_trace_kprobe(ev);
+अटल bool trace_kprobe_match(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event,
+			पूर्णांक argc, स्थिर अक्षर **argv, काष्ठा dyn_event *ev)
+अणु
+	काष्ठा trace_kprobe *tk = to_trace_kprobe(ev);
 
-	return strcmp(trace_probe_name(&tk->tp), event) == 0 &&
-	    (!system || strcmp(trace_probe_group_name(&tk->tp), system) == 0) &&
+	वापस म_भेद(trace_probe_name(&tk->tp), event) == 0 &&
+	    (!प्रणाली || म_भेद(trace_probe_group_name(&tk->tp), प्रणाली) == 0) &&
 	    trace_kprobe_match_command_head(tk, argc, argv);
-}
+पूर्ण
 
-static nokprobe_inline unsigned long trace_kprobe_nhit(struct trace_kprobe *tk)
-{
-	unsigned long nhit = 0;
-	int cpu;
+अटल nokprobe_अंतरभूत अचिन्हित दीर्घ trace_kprobe_nhit(काष्ठा trace_kprobe *tk)
+अणु
+	अचिन्हित दीर्घ nhit = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		nhit += *per_cpu_ptr(tk->nhit, cpu);
 
-	return nhit;
-}
+	वापस nhit;
+पूर्ण
 
-static nokprobe_inline bool trace_kprobe_is_registered(struct trace_kprobe *tk)
-{
-	return !(list_empty(&tk->rp.kp.list) &&
+अटल nokprobe_अंतरभूत bool trace_kprobe_is_रेजिस्टरed(काष्ठा trace_kprobe *tk)
+अणु
+	वापस !(list_empty(&tk->rp.kp.list) &&
 		 hlist_unhashed(&tk->rp.kp.hlist));
-}
+पूर्ण
 
-/* Return 0 if it fails to find the symbol address */
-static nokprobe_inline
-unsigned long trace_kprobe_address(struct trace_kprobe *tk)
-{
-	unsigned long addr;
+/* Return 0 अगर it fails to find the symbol address */
+अटल nokprobe_अंतरभूत
+अचिन्हित दीर्घ trace_kprobe_address(काष्ठा trace_kprobe *tk)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	if (tk->symbol) {
-		addr = (unsigned long)
+	अगर (tk->symbol) अणु
+		addr = (अचिन्हित दीर्घ)
 			kallsyms_lookup_name(trace_kprobe_symbol(tk));
-		if (addr)
+		अगर (addr)
 			addr += tk->rp.kp.offset;
-	} else {
-		addr = (unsigned long)tk->rp.kp.addr;
-	}
-	return addr;
-}
+	पूर्ण अन्यथा अणु
+		addr = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	पूर्ण
+	वापस addr;
+पूर्ण
 
-static nokprobe_inline struct trace_kprobe *
-trace_kprobe_primary_from_call(struct trace_event_call *call)
-{
-	struct trace_probe *tp;
+अटल nokprobe_अंतरभूत काष्ठा trace_kprobe *
+trace_kprobe_primary_from_call(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(call);
-	if (WARN_ON_ONCE(!tp))
-		return NULL;
+	अगर (WARN_ON_ONCE(!tp))
+		वापस शून्य;
 
-	return container_of(tp, struct trace_kprobe, tp);
-}
+	वापस container_of(tp, काष्ठा trace_kprobe, tp);
+पूर्ण
 
-bool trace_kprobe_on_func_entry(struct trace_event_call *call)
-{
-	struct trace_kprobe *tk = trace_kprobe_primary_from_call(call);
+bool trace_kprobe_on_func_entry(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_kprobe *tk = trace_kprobe_primary_from_call(call);
 
-	return tk ? (kprobe_on_func_entry(tk->rp.kp.addr,
-			tk->rp.kp.addr ? NULL : tk->rp.kp.symbol_name,
+	वापस tk ? (kprobe_on_func_entry(tk->rp.kp.addr,
+			tk->rp.kp.addr ? शून्य : tk->rp.kp.symbol_name,
 			tk->rp.kp.addr ? 0 : tk->rp.kp.offset) == 0) : false;
-}
+पूर्ण
 
-bool trace_kprobe_error_injectable(struct trace_event_call *call)
-{
-	struct trace_kprobe *tk = trace_kprobe_primary_from_call(call);
+bool trace_kprobe_error_injectable(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_kprobe *tk = trace_kprobe_primary_from_call(call);
 
-	return tk ? within_error_injection_list(trace_kprobe_address(tk)) :
+	वापस tk ? within_error_injection_list(trace_kprobe_address(tk)) :
 	       false;
-}
+पूर्ण
 
-static int register_kprobe_event(struct trace_kprobe *tk);
-static int unregister_kprobe_event(struct trace_kprobe *tk);
+अटल पूर्णांक रेजिस्टर_kprobe_event(काष्ठा trace_kprobe *tk);
+अटल पूर्णांक unरेजिस्टर_kprobe_event(काष्ठा trace_kprobe *tk);
 
-static int kprobe_dispatcher(struct kprobe *kp, struct pt_regs *regs);
-static int kretprobe_dispatcher(struct kretprobe_instance *ri,
-				struct pt_regs *regs);
+अटल पूर्णांक kprobe_dispatcher(काष्ठा kprobe *kp, काष्ठा pt_regs *regs);
+अटल पूर्णांक kretprobe_dispatcher(काष्ठा kretprobe_instance *ri,
+				काष्ठा pt_regs *regs);
 
-static void free_trace_kprobe(struct trace_kprobe *tk)
-{
-	if (tk) {
+अटल व्योम मुक्त_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	अगर (tk) अणु
 		trace_probe_cleanup(&tk->tp);
-		kfree(tk->symbol);
-		free_percpu(tk->nhit);
-		kfree(tk);
-	}
-}
+		kमुक्त(tk->symbol);
+		मुक्त_percpu(tk->nhit);
+		kमुक्त(tk);
+	पूर्ण
+पूर्ण
 
 /*
  * Allocate new trace_probe and initialize it (including kprobes).
  */
-static struct trace_kprobe *alloc_trace_kprobe(const char *group,
-					     const char *event,
-					     void *addr,
-					     const char *symbol,
-					     unsigned long offs,
-					     int maxactive,
-					     int nargs, bool is_return)
-{
-	struct trace_kprobe *tk;
-	int ret = -ENOMEM;
+अटल काष्ठा trace_kprobe *alloc_trace_kprobe(स्थिर अक्षर *group,
+					     स्थिर अक्षर *event,
+					     व्योम *addr,
+					     स्थिर अक्षर *symbol,
+					     अचिन्हित दीर्घ offs,
+					     पूर्णांक maxactive,
+					     पूर्णांक nargs, bool is_वापस)
+अणु
+	काष्ठा trace_kprobe *tk;
+	पूर्णांक ret = -ENOMEM;
 
-	tk = kzalloc(SIZEOF_TRACE_KPROBE(nargs), GFP_KERNEL);
-	if (!tk)
-		return ERR_PTR(ret);
+	tk = kzalloc(SIZखातापूर्ण_TRACE_KPROBE(nargs), GFP_KERNEL);
+	अगर (!tk)
+		वापस ERR_PTR(ret);
 
-	tk->nhit = alloc_percpu(unsigned long);
-	if (!tk->nhit)
-		goto error;
+	tk->nhit = alloc_percpu(अचिन्हित दीर्घ);
+	अगर (!tk->nhit)
+		जाओ error;
 
-	if (symbol) {
+	अगर (symbol) अणु
 		tk->symbol = kstrdup(symbol, GFP_KERNEL);
-		if (!tk->symbol)
-			goto error;
+		अगर (!tk->symbol)
+			जाओ error;
 		tk->rp.kp.symbol_name = tk->symbol;
 		tk->rp.kp.offset = offs;
-	} else
+	पूर्ण अन्यथा
 		tk->rp.kp.addr = addr;
 
-	if (is_return)
+	अगर (is_वापस)
 		tk->rp.handler = kretprobe_dispatcher;
-	else
+	अन्यथा
 		tk->rp.kp.pre_handler = kprobe_dispatcher;
 
 	tk->rp.maxactive = maxactive;
@@ -292,427 +293,427 @@ static struct trace_kprobe *alloc_trace_kprobe(const char *group,
 	INIT_LIST_HEAD(&tk->rp.kp.list);
 
 	ret = trace_probe_init(&tk->tp, event, group, false);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	dyn_event_init(&tk->devent, &trace_kprobe_ops);
-	return tk;
+	वापस tk;
 error:
-	free_trace_kprobe(tk);
-	return ERR_PTR(ret);
-}
+	मुक्त_trace_kprobe(tk);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static struct trace_kprobe *find_trace_kprobe(const char *event,
-					      const char *group)
-{
-	struct dyn_event *pos;
-	struct trace_kprobe *tk;
+अटल काष्ठा trace_kprobe *find_trace_kprobe(स्थिर अक्षर *event,
+					      स्थिर अक्षर *group)
+अणु
+	काष्ठा dyn_event *pos;
+	काष्ठा trace_kprobe *tk;
 
-	for_each_trace_kprobe(tk, pos)
-		if (strcmp(trace_probe_name(&tk->tp), event) == 0 &&
-		    strcmp(trace_probe_group_name(&tk->tp), group) == 0)
-			return tk;
-	return NULL;
-}
+	क्रम_each_trace_kprobe(tk, pos)
+		अगर (म_भेद(trace_probe_name(&tk->tp), event) == 0 &&
+		    म_भेद(trace_probe_group_name(&tk->tp), group) == 0)
+			वापस tk;
+	वापस शून्य;
+पूर्ण
 
-static inline int __enable_trace_kprobe(struct trace_kprobe *tk)
-{
-	int ret = 0;
+अटल अंतरभूत पूर्णांक __enable_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	पूर्णांक ret = 0;
 
-	if (trace_kprobe_is_registered(tk) && !trace_kprobe_has_gone(tk)) {
-		if (trace_kprobe_is_return(tk))
+	अगर (trace_kprobe_is_रेजिस्टरed(tk) && !trace_kprobe_has_gone(tk)) अणु
+		अगर (trace_kprobe_is_वापस(tk))
 			ret = enable_kretprobe(&tk->rp);
-		else
+		अन्यथा
 			ret = enable_kprobe(&tk->rp.kp);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __disable_trace_kprobe(struct trace_probe *tp)
-{
-	struct trace_probe *pos;
-	struct trace_kprobe *tk;
+अटल व्योम __disable_trace_kprobe(काष्ठा trace_probe *tp)
+अणु
+	काष्ठा trace_probe *pos;
+	काष्ठा trace_kprobe *tk;
 
-	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
-		tk = container_of(pos, struct trace_kprobe, tp);
-		if (!trace_kprobe_is_registered(tk))
-			continue;
-		if (trace_kprobe_is_return(tk))
+	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
+		tk = container_of(pos, काष्ठा trace_kprobe, tp);
+		अगर (!trace_kprobe_is_रेजिस्टरed(tk))
+			जारी;
+		अगर (trace_kprobe_is_वापस(tk))
 			disable_kretprobe(&tk->rp);
-		else
+		अन्यथा
 			disable_kprobe(&tk->rp.kp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Enable trace_probe
- * if the file is NULL, enable "perf" handler, or enable "trace" handler.
+ * अगर the file is शून्य, enable "perf" handler, or enable "trace" handler.
  */
-static int enable_trace_kprobe(struct trace_event_call *call,
-				struct trace_event_file *file)
-{
-	struct trace_probe *pos, *tp;
-	struct trace_kprobe *tk;
+अटल पूर्णांक enable_trace_kprobe(काष्ठा trace_event_call *call,
+				काष्ठा trace_event_file *file)
+अणु
+	काष्ठा trace_probe *pos, *tp;
+	काष्ठा trace_kprobe *tk;
 	bool enabled;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	tp = trace_probe_primary_from_call(call);
-	if (WARN_ON_ONCE(!tp))
-		return -ENODEV;
+	अगर (WARN_ON_ONCE(!tp))
+		वापस -ENODEV;
 	enabled = trace_probe_is_enabled(tp);
 
 	/* This also changes "enabled" state */
-	if (file) {
+	अगर (file) अणु
 		ret = trace_probe_add_file(tp, file);
-		if (ret)
-			return ret;
-	} else
-		trace_probe_set_flag(tp, TP_FLAG_PROFILE);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा
+		trace_probe_set_flag(tp, TP_FLAG_PROखाता);
 
-	if (enabled)
-		return 0;
+	अगर (enabled)
+		वापस 0;
 
-	list_for_each_entry(pos, trace_probe_probe_list(tp), list) {
-		tk = container_of(pos, struct trace_kprobe, tp);
-		if (trace_kprobe_has_gone(tk))
-			continue;
+	list_क्रम_each_entry(pos, trace_probe_probe_list(tp), list) अणु
+		tk = container_of(pos, काष्ठा trace_kprobe, tp);
+		अगर (trace_kprobe_has_gone(tk))
+			जारी;
 		ret = __enable_trace_kprobe(tk);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		enabled = true;
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		/* Failed to enable one of them. Roll back all */
-		if (enabled)
+		अगर (enabled)
 			__disable_trace_kprobe(tp);
-		if (file)
-			trace_probe_remove_file(tp, file);
-		else
-			trace_probe_clear_flag(tp, TP_FLAG_PROFILE);
-	}
+		अगर (file)
+			trace_probe_हटाओ_file(tp, file);
+		अन्यथा
+			trace_probe_clear_flag(tp, TP_FLAG_PROखाता);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Disable trace_probe
- * if the file is NULL, disable "perf" handler, or disable "trace" handler.
+ * अगर the file is शून्य, disable "perf" handler, or disable "trace" handler.
  */
-static int disable_trace_kprobe(struct trace_event_call *call,
-				struct trace_event_file *file)
-{
-	struct trace_probe *tp;
+अटल पूर्णांक disable_trace_kprobe(काष्ठा trace_event_call *call,
+				काष्ठा trace_event_file *file)
+अणु
+	काष्ठा trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(call);
-	if (WARN_ON_ONCE(!tp))
-		return -ENODEV;
+	अगर (WARN_ON_ONCE(!tp))
+		वापस -ENODEV;
 
-	if (file) {
-		if (!trace_probe_get_file_link(tp, file))
-			return -ENOENT;
-		if (!trace_probe_has_single_file(tp))
-			goto out;
+	अगर (file) अणु
+		अगर (!trace_probe_get_file_link(tp, file))
+			वापस -ENOENT;
+		अगर (!trace_probe_has_single_file(tp))
+			जाओ out;
 		trace_probe_clear_flag(tp, TP_FLAG_TRACE);
-	} else
-		trace_probe_clear_flag(tp, TP_FLAG_PROFILE);
+	पूर्ण अन्यथा
+		trace_probe_clear_flag(tp, TP_FLAG_PROखाता);
 
-	if (!trace_probe_is_enabled(tp))
+	अगर (!trace_probe_is_enabled(tp))
 		__disable_trace_kprobe(tp);
 
  out:
-	if (file)
+	अगर (file)
 		/*
-		 * Synchronization is done in below function. For perf event,
-		 * file == NULL and perf_trace_event_unreg() calls
-		 * tracepoint_synchronize_unregister() to ensure synchronize
-		 * event. We don't need to care about it.
+		 * Synchronization is करोne in below function. For perf event,
+		 * file == शून्य and perf_trace_event_unreg() calls
+		 * tracepoपूर्णांक_synchronize_unरेजिस्टर() to ensure synchronize
+		 * event. We करोn't need to care about it.
 		 */
-		trace_probe_remove_file(tp, file);
+		trace_probe_हटाओ_file(tp, file);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_DYNAMIC_FTRACE) && \
+#अगर defined(CONFIG_DYNAMIC_FTRACE) && \
 	!defined(CONFIG_KPROBE_EVENTS_ON_NOTRACE)
-static bool __within_notrace_func(unsigned long addr)
-{
-	unsigned long offset, size;
+अटल bool __within_notrace_func(अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित दीर्घ offset, size;
 
-	if (!addr || !kallsyms_lookup_size_offset(addr, &size, &offset))
-		return false;
+	अगर (!addr || !kallsyms_lookup_size_offset(addr, &size, &offset))
+		वापस false;
 
 	/* Get the entry address of the target function */
 	addr -= offset;
 
 	/*
-	 * Since ftrace_location_range() does inclusive range check, we need
+	 * Since ftrace_location_range() करोes inclusive range check, we need
 	 * to subtract 1 byte from the end address.
 	 */
-	return !ftrace_location_range(addr, addr + size - 1);
-}
+	वापस !ftrace_location_range(addr, addr + size - 1);
+पूर्ण
 
-static bool within_notrace_func(struct trace_kprobe *tk)
-{
-	unsigned long addr = trace_kprobe_address(tk);
-	char symname[KSYM_NAME_LEN], *p;
+अटल bool within_notrace_func(काष्ठा trace_kprobe *tk)
+अणु
+	अचिन्हित दीर्घ addr = trace_kprobe_address(tk);
+	अक्षर symname[KSYM_NAME_LEN], *p;
 
-	if (!__within_notrace_func(addr))
-		return false;
+	अगर (!__within_notrace_func(addr))
+		वापस false;
 
-	/* Check if the address is on a suffixed-symbol */
-	if (!lookup_symbol_name(addr, symname)) {
-		p = strchr(symname, '.');
-		if (!p)
-			return true;
+	/* Check अगर the address is on a suffixed-symbol */
+	अगर (!lookup_symbol_name(addr, symname)) अणु
+		p = म_अक्षर(symname, '.');
+		अगर (!p)
+			वापस true;
 		*p = '\0';
-		addr = (unsigned long)kprobe_lookup_name(symname, 0);
-		if (addr)
-			return __within_notrace_func(addr);
-	}
+		addr = (अचिन्हित दीर्घ)kprobe_lookup_name(symname, 0);
+		अगर (addr)
+			वापस __within_notrace_func(addr);
+	पूर्ण
 
-	return true;
-}
-#else
-#define within_notrace_func(tk)	(false)
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+#घोषणा within_notrace_func(tk)	(false)
+#पूर्ण_अगर
 
-/* Internal register function - just handle k*probes and flags */
-static int __register_trace_kprobe(struct trace_kprobe *tk)
-{
-	int i, ret;
+/* Internal रेजिस्टर function - just handle k*probes and flags */
+अटल पूर्णांक __रेजिस्टर_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	पूर्णांक i, ret;
 
-	ret = security_locked_down(LOCKDOWN_KPROBES);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_KPROBES);
+	अगर (ret)
+		वापस ret;
 
-	if (trace_kprobe_is_registered(tk))
-		return -EINVAL;
+	अगर (trace_kprobe_is_रेजिस्टरed(tk))
+		वापस -EINVAL;
 
-	if (within_notrace_func(tk)) {
+	अगर (within_notrace_func(tk)) अणु
 		pr_warn("Could not probe notrace function %s\n",
 			trace_kprobe_symbol(tk));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < tk->tp.nr_args; i++) {
+	क्रम (i = 0; i < tk->tp.nr_args; i++) अणु
 		ret = traceprobe_update_arg(&tk->tp.args[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Set/clear disabled flag according to tp->flag */
-	if (trace_probe_is_enabled(&tk->tp))
+	अगर (trace_probe_is_enabled(&tk->tp))
 		tk->rp.kp.flags &= ~KPROBE_FLAG_DISABLED;
-	else
+	अन्यथा
 		tk->rp.kp.flags |= KPROBE_FLAG_DISABLED;
 
-	if (trace_kprobe_is_return(tk))
-		ret = register_kretprobe(&tk->rp);
-	else
-		ret = register_kprobe(&tk->rp.kp);
+	अगर (trace_kprobe_is_वापस(tk))
+		ret = रेजिस्टर_kretprobe(&tk->rp);
+	अन्यथा
+		ret = रेजिस्टर_kprobe(&tk->rp.kp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Internal unregister function - just handle k*probes and flags */
-static void __unregister_trace_kprobe(struct trace_kprobe *tk)
-{
-	if (trace_kprobe_is_registered(tk)) {
-		if (trace_kprobe_is_return(tk))
-			unregister_kretprobe(&tk->rp);
-		else
-			unregister_kprobe(&tk->rp.kp);
-		/* Cleanup kprobe for reuse and mark it unregistered */
+/* Internal unरेजिस्टर function - just handle k*probes and flags */
+अटल व्योम __unरेजिस्टर_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	अगर (trace_kprobe_is_रेजिस्टरed(tk)) अणु
+		अगर (trace_kprobe_is_वापस(tk))
+			unरेजिस्टर_kretprobe(&tk->rp);
+		अन्यथा
+			unरेजिस्टर_kprobe(&tk->rp.kp);
+		/* Cleanup kprobe क्रम reuse and mark it unरेजिस्टरed */
 		INIT_HLIST_NODE(&tk->rp.kp.hlist);
 		INIT_LIST_HEAD(&tk->rp.kp.list);
-		if (tk->rp.kp.symbol_name)
-			tk->rp.kp.addr = NULL;
-	}
-}
+		अगर (tk->rp.kp.symbol_name)
+			tk->rp.kp.addr = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Unregister a trace_probe and probe_event */
-static int unregister_trace_kprobe(struct trace_kprobe *tk)
-{
-	/* If other probes are on the event, just unregister kprobe */
-	if (trace_probe_has_sibling(&tk->tp))
-		goto unreg;
+/* Unरेजिस्टर a trace_probe and probe_event */
+अटल पूर्णांक unरेजिस्टर_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	/* If other probes are on the event, just unरेजिस्टर kprobe */
+	अगर (trace_probe_has_sibling(&tk->tp))
+		जाओ unreg;
 
-	/* Enabled event can not be unregistered */
-	if (trace_probe_is_enabled(&tk->tp))
-		return -EBUSY;
+	/* Enabled event can not be unरेजिस्टरed */
+	अगर (trace_probe_is_enabled(&tk->tp))
+		वापस -EBUSY;
 
-	/* Will fail if probe is being used by ftrace or perf */
-	if (unregister_kprobe_event(tk))
-		return -EBUSY;
+	/* Will fail अगर probe is being used by ftrace or perf */
+	अगर (unरेजिस्टर_kprobe_event(tk))
+		वापस -EBUSY;
 
 unreg:
-	__unregister_trace_kprobe(tk);
-	dyn_event_remove(&tk->devent);
+	__unरेजिस्टर_trace_kprobe(tk);
+	dyn_event_हटाओ(&tk->devent);
 	trace_probe_unlink(&tk->tp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool trace_kprobe_has_same_kprobe(struct trace_kprobe *orig,
-					 struct trace_kprobe *comp)
-{
-	struct trace_probe_event *tpe = orig->tp.event;
-	struct trace_probe *pos;
-	int i;
+अटल bool trace_kprobe_has_same_kprobe(काष्ठा trace_kprobe *orig,
+					 काष्ठा trace_kprobe *comp)
+अणु
+	काष्ठा trace_probe_event *tpe = orig->tp.event;
+	काष्ठा trace_probe *pos;
+	पूर्णांक i;
 
-	list_for_each_entry(pos, &tpe->probes, list) {
-		orig = container_of(pos, struct trace_kprobe, tp);
-		if (strcmp(trace_kprobe_symbol(orig),
+	list_क्रम_each_entry(pos, &tpe->probes, list) अणु
+		orig = container_of(pos, काष्ठा trace_kprobe, tp);
+		अगर (म_भेद(trace_kprobe_symbol(orig),
 			   trace_kprobe_symbol(comp)) ||
 		    trace_kprobe_offset(orig) != trace_kprobe_offset(comp))
-			continue;
+			जारी;
 
 		/*
 		 * trace_probe_compare_arg_type() ensured that nr_args and
 		 * each argument name and type are same. Let's compare comm.
 		 */
-		for (i = 0; i < orig->tp.nr_args; i++) {
-			if (strcmp(orig->tp.args[i].comm,
+		क्रम (i = 0; i < orig->tp.nr_args; i++) अणु
+			अगर (म_भेद(orig->tp.args[i].comm,
 				   comp->tp.args[i].comm))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		if (i == orig->tp.nr_args)
-			return true;
-	}
+		अगर (i == orig->tp.nr_args)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int append_trace_kprobe(struct trace_kprobe *tk, struct trace_kprobe *to)
-{
-	int ret;
+अटल पूर्णांक append_trace_kprobe(काष्ठा trace_kprobe *tk, काष्ठा trace_kprobe *to)
+अणु
+	पूर्णांक ret;
 
 	ret = trace_probe_compare_arg_type(&tk->tp, &to->tp);
-	if (ret) {
+	अगर (ret) अणु
 		/* Note that argument starts index = 2 */
 		trace_probe_log_set_index(ret + 1);
 		trace_probe_log_err(0, DIFF_ARG_TYPE);
-		return -EEXIST;
-	}
-	if (trace_kprobe_has_same_kprobe(to, tk)) {
+		वापस -EEXIST;
+	पूर्ण
+	अगर (trace_kprobe_has_same_kprobe(to, tk)) अणु
 		trace_probe_log_set_index(0);
 		trace_probe_log_err(0, SAME_PROBE);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	/* Append to existing event */
 	ret = trace_probe_append(&tk->tp, &to->tp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Register k*probe */
-	ret = __register_trace_kprobe(tk);
-	if (ret == -ENOENT && !trace_kprobe_module_exist(tk)) {
+	ret = __रेजिस्टर_trace_kprobe(tk);
+	अगर (ret == -ENOENT && !trace_kprobe_module_exist(tk)) अणु
 		pr_warn("This probe might be able to register after target module is loaded. Continue.\n");
 		ret = 0;
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		trace_probe_unlink(&tk->tp);
-	else
+	अन्यथा
 		dyn_event_add(&tk->devent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Register a trace_probe and probe_event */
-static int register_trace_kprobe(struct trace_kprobe *tk)
-{
-	struct trace_kprobe *old_tk;
-	int ret;
+अटल पूर्णांक रेजिस्टर_trace_kprobe(काष्ठा trace_kprobe *tk)
+अणु
+	काष्ठा trace_kprobe *old_tk;
+	पूर्णांक ret;
 
 	mutex_lock(&event_mutex);
 
 	old_tk = find_trace_kprobe(trace_probe_name(&tk->tp),
 				   trace_probe_group_name(&tk->tp));
-	if (old_tk) {
-		if (trace_kprobe_is_return(tk) != trace_kprobe_is_return(old_tk)) {
+	अगर (old_tk) अणु
+		अगर (trace_kprobe_is_वापस(tk) != trace_kprobe_is_वापस(old_tk)) अणु
 			trace_probe_log_set_index(0);
 			trace_probe_log_err(0, DIFF_PROBE_TYPE);
 			ret = -EEXIST;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = append_trace_kprobe(tk, old_tk);
-		}
-		goto end;
-	}
+		पूर्ण
+		जाओ end;
+	पूर्ण
 
 	/* Register new event */
-	ret = register_kprobe_event(tk);
-	if (ret) {
+	ret = रेजिस्टर_kprobe_event(tk);
+	अगर (ret) अणु
 		pr_warn("Failed to register probe event(%d)\n", ret);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	/* Register k*probe */
-	ret = __register_trace_kprobe(tk);
-	if (ret == -ENOENT && !trace_kprobe_module_exist(tk)) {
+	ret = __रेजिस्टर_trace_kprobe(tk);
+	अगर (ret == -ENOENT && !trace_kprobe_module_exist(tk)) अणु
 		pr_warn("This probe might be able to register after target module is loaded. Continue.\n");
 		ret = 0;
-	}
+	पूर्ण
 
-	if (ret < 0)
-		unregister_kprobe_event(tk);
-	else
+	अगर (ret < 0)
+		unरेजिस्टर_kprobe_event(tk);
+	अन्यथा
 		dyn_event_add(&tk->devent);
 
 end:
 	mutex_unlock(&event_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Module notifier call back, checking event on the module */
-static int trace_kprobe_module_callback(struct notifier_block *nb,
-				       unsigned long val, void *data)
-{
-	struct module *mod = data;
-	struct dyn_event *pos;
-	struct trace_kprobe *tk;
-	int ret;
+/* Module notअगरier call back, checking event on the module */
+अटल पूर्णांक trace_kprobe_module_callback(काष्ठा notअगरier_block *nb,
+				       अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा module *mod = data;
+	काष्ठा dyn_event *pos;
+	काष्ठा trace_kprobe *tk;
+	पूर्णांक ret;
 
-	if (val != MODULE_STATE_COMING)
-		return NOTIFY_DONE;
+	अगर (val != MODULE_STATE_COMING)
+		वापस NOTIFY_DONE;
 
 	/* Update probes on coming module */
 	mutex_lock(&event_mutex);
-	for_each_trace_kprobe(tk, pos) {
-		if (trace_kprobe_within_module(tk, mod)) {
+	क्रम_each_trace_kprobe(tk, pos) अणु
+		अगर (trace_kprobe_within_module(tk, mod)) अणु
 			/* Don't need to check busy - this should have gone. */
-			__unregister_trace_kprobe(tk);
-			ret = __register_trace_kprobe(tk);
-			if (ret)
+			__unरेजिस्टर_trace_kprobe(tk);
+			ret = __रेजिस्टर_trace_kprobe(tk);
+			अगर (ret)
 				pr_warn("Failed to re-register probe %s on %s: %d\n",
 					trace_probe_name(&tk->tp),
 					module_name(mod), ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&event_mutex);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block trace_kprobe_module_nb = {
-	.notifier_call = trace_kprobe_module_callback,
+अटल काष्ठा notअगरier_block trace_kprobe_module_nb = अणु
+	.notअगरier_call = trace_kprobe_module_callback,
 	.priority = 1	/* Invoked after kprobe module callback */
-};
+पूर्ण;
 
-/* Convert certain expected symbols into '_' when generating event names */
-static inline void sanitize_event_name(char *name)
-{
-	while (*name++ != '\0')
-		if (*name == ':' || *name == '.')
+/* Convert certain expected symbols पूर्णांकo '_' when generating event names */
+अटल अंतरभूत व्योम sanitize_event_name(अक्षर *name)
+अणु
+	जबतक (*name++ != '\0')
+		अगर (*name == ':' || *name == '.')
 			*name = '_';
-}
+पूर्ण
 
-static int __trace_kprobe_create(int argc, const char *argv[])
-{
+अटल पूर्णांक __trace_kprobe_create(पूर्णांक argc, स्थिर अक्षर *argv[])
+अणु
 	/*
 	 * Argument syntax:
 	 *  - Add kprobe:
@@ -720,358 +721,358 @@ static int __trace_kprobe_create(int argc, const char *argv[])
 	 *  - Add kretprobe:
 	 *      r[MAXACTIVE][:[GRP/]EVENT] [MOD:]KSYM[+0] [FETCHARGS]
 	 *    Or
-	 *      p:[GRP/]EVENT] [MOD:]KSYM[+0]%return [FETCHARGS]
+	 *      p:[GRP/]EVENT] [MOD:]KSYM[+0]%वापस [FETCHARGS]
 	 *
 	 * Fetch args:
-	 *  $retval	: fetch return value
+	 *  $retval	: fetch वापस value
 	 *  $stack	: fetch stack address
 	 *  $stackN	: fetch Nth of stack (N:0-)
 	 *  $comm       : fetch current task comm
 	 *  @ADDR	: fetch memory at ADDR (ADDR should be in kernel)
 	 *  @SYM[+|-offs] : fetch memory at SYM +|- offs (SYM is a data symbol)
-	 *  %REG	: fetch register REG
+	 *  %REG	: fetch रेजिस्टर REG
 	 * Dereferencing memory fetch:
 	 *  +|-offs(ARG) : fetch memory at ARG +|- offs address.
 	 * Alias name of args:
 	 *  NAME=FETCHARG : set NAME as alias of FETCHARG.
 	 * Type of args:
-	 *  FETCHARG:TYPE : use TYPE instead of unsigned long.
+	 *  FETCHARG:TYPE : use TYPE instead of अचिन्हित दीर्घ.
 	 */
-	struct trace_kprobe *tk = NULL;
-	int i, len, ret = 0;
-	bool is_return = false;
-	char *symbol = NULL, *tmp = NULL;
-	const char *event = NULL, *group = KPROBE_EVENT_SYSTEM;
-	int maxactive = 0;
-	long offset = 0;
-	void *addr = NULL;
-	char buf[MAX_EVENT_NAME_LEN];
-	unsigned int flags = TPARG_FL_KERNEL;
+	काष्ठा trace_kprobe *tk = शून्य;
+	पूर्णांक i, len, ret = 0;
+	bool is_वापस = false;
+	अक्षर *symbol = शून्य, *पंचांगp = शून्य;
+	स्थिर अक्षर *event = शून्य, *group = KPROBE_EVENT_SYSTEM;
+	पूर्णांक maxactive = 0;
+	दीर्घ offset = 0;
+	व्योम *addr = शून्य;
+	अक्षर buf[MAX_EVENT_NAME_LEN];
+	अचिन्हित पूर्णांक flags = TPARG_FL_KERNEL;
 
-	switch (argv[0][0]) {
-	case 'r':
-		is_return = true;
-		break;
-	case 'p':
-		break;
-	default:
-		return -ECANCELED;
-	}
-	if (argc < 2)
-		return -ECANCELED;
+	चयन (argv[0][0]) अणु
+	हाल 'r':
+		is_वापस = true;
+		अवरोध;
+	हाल 'p':
+		अवरोध;
+	शेष:
+		वापस -ECANCELED;
+	पूर्ण
+	अगर (argc < 2)
+		वापस -ECANCELED;
 
 	trace_probe_log_init("trace_kprobe", argc, argv);
 
-	event = strchr(&argv[0][1], ':');
-	if (event)
+	event = म_अक्षर(&argv[0][1], ':');
+	अगर (event)
 		event++;
 
-	if (isdigit(argv[0][1])) {
-		if (!is_return) {
+	अगर (है_अंक(argv[0][1])) अणु
+		अगर (!is_वापस) अणु
 			trace_probe_log_err(1, MAXACT_NO_KPROBE);
-			goto parse_error;
-		}
-		if (event)
+			जाओ parse_error;
+		पूर्ण
+		अगर (event)
 			len = event - &argv[0][1] - 1;
-		else
-			len = strlen(&argv[0][1]);
-		if (len > MAX_EVENT_NAME_LEN - 1) {
+		अन्यथा
+			len = म_माप(&argv[0][1]);
+		अगर (len > MAX_EVENT_NAME_LEN - 1) अणु
 			trace_probe_log_err(1, BAD_MAXACT);
-			goto parse_error;
-		}
-		memcpy(buf, &argv[0][1], len);
+			जाओ parse_error;
+		पूर्ण
+		स_नकल(buf, &argv[0][1], len);
 		buf[len] = '\0';
-		ret = kstrtouint(buf, 0, &maxactive);
-		if (ret || !maxactive) {
+		ret = kstrtouपूर्णांक(buf, 0, &maxactive);
+		अगर (ret || !maxactive) अणु
 			trace_probe_log_err(1, BAD_MAXACT);
-			goto parse_error;
-		}
+			जाओ parse_error;
+		पूर्ण
 		/* kretprobes instances are iterated over via a list. The
 		 * maximum should stay reasonable.
 		 */
-		if (maxactive > KRETPROBE_MAXACTIVE_MAX) {
+		अगर (maxactive > KRETPROBE_MAXACTIVE_MAX) अणु
 			trace_probe_log_err(1, MAXACT_TOO_BIG);
-			goto parse_error;
-		}
-	}
+			जाओ parse_error;
+		पूर्ण
+	पूर्ण
 
-	/* try to parse an address. if that fails, try to read the
+	/* try to parse an address. अगर that fails, try to पढ़ो the
 	 * input as a symbol. */
-	if (kstrtoul(argv[1], 0, (unsigned long *)&addr)) {
+	अगर (kम_से_अदीर्घ(argv[1], 0, (अचिन्हित दीर्घ *)&addr)) अणु
 		trace_probe_log_set_index(1);
-		/* Check whether uprobe event specified */
-		if (strchr(argv[1], '/') && strchr(argv[1], ':')) {
+		/* Check whether uprobe event specअगरied */
+		अगर (म_अक्षर(argv[1], '/') && strchr(argv[1], ':')) अणु
 			ret = -ECANCELED;
-			goto error;
-		}
-		/* a symbol specified */
+			जाओ error;
+		पूर्ण
+		/* a symbol specअगरied */
 		symbol = kstrdup(argv[1], GFP_KERNEL);
-		if (!symbol)
-			return -ENOMEM;
+		अगर (!symbol)
+			वापस -ENOMEM;
 
-		tmp = strchr(symbol, '%');
-		if (tmp) {
-			if (!strcmp(tmp, "%return")) {
-				*tmp = '\0';
-				is_return = true;
-			} else {
-				trace_probe_log_err(tmp - symbol, BAD_ADDR_SUFFIX);
-				goto parse_error;
-			}
-		}
+		पंचांगp = म_अक्षर(symbol, '%');
+		अगर (पंचांगp) अणु
+			अगर (!म_भेद(पंचांगp, "%return")) अणु
+				*पंचांगp = '\0';
+				is_वापस = true;
+			पूर्ण अन्यथा अणु
+				trace_probe_log_err(पंचांगp - symbol, BAD_ADDR_SUFFIX);
+				जाओ parse_error;
+			पूर्ण
+		पूर्ण
 
 		/* TODO: support .init module functions */
 		ret = traceprobe_split_symbol_offset(symbol, &offset);
-		if (ret || offset < 0 || offset > UINT_MAX) {
+		अगर (ret || offset < 0 || offset > अच_पूर्णांक_उच्च) अणु
 			trace_probe_log_err(0, BAD_PROBE_ADDR);
-			goto parse_error;
-		}
-		if (is_return)
+			जाओ parse_error;
+		पूर्ण
+		अगर (is_वापस)
 			flags |= TPARG_FL_RETURN;
-		ret = kprobe_on_func_entry(NULL, symbol, offset);
-		if (ret == 0)
+		ret = kprobe_on_func_entry(शून्य, symbol, offset);
+		अगर (ret == 0)
 			flags |= TPARG_FL_FENTRY;
-		/* Defer the ENOENT case until register kprobe */
-		if (ret == -EINVAL && is_return) {
+		/* Defer the ENOENT हाल until रेजिस्टर kprobe */
+		अगर (ret == -EINVAL && is_वापस) अणु
 			trace_probe_log_err(0, BAD_RETPROBE);
-			goto parse_error;
-		}
-	}
+			जाओ parse_error;
+		पूर्ण
+	पूर्ण
 
 	trace_probe_log_set_index(0);
-	if (event) {
+	अगर (event) अणु
 		ret = traceprobe_parse_event_name(&event, &group, buf,
 						  event - argv[0]);
-		if (ret)
-			goto parse_error;
-	} else {
+		अगर (ret)
+			जाओ parse_error;
+	पूर्ण अन्यथा अणु
 		/* Make a new event name */
-		if (symbol)
-			snprintf(buf, MAX_EVENT_NAME_LEN, "%c_%s_%ld",
-				 is_return ? 'r' : 'p', symbol, offset);
-		else
-			snprintf(buf, MAX_EVENT_NAME_LEN, "%c_0x%p",
-				 is_return ? 'r' : 'p', addr);
+		अगर (symbol)
+			snम_लिखो(buf, MAX_EVENT_NAME_LEN, "%c_%s_%ld",
+				 is_वापस ? 'r' : 'p', symbol, offset);
+		अन्यथा
+			snम_लिखो(buf, MAX_EVENT_NAME_LEN, "%c_0x%p",
+				 is_वापस ? 'r' : 'p', addr);
 		sanitize_event_name(buf);
 		event = buf;
-	}
+	पूर्ण
 
 	/* setup a probe */
 	tk = alloc_trace_kprobe(group, event, addr, symbol, offset, maxactive,
-			       argc - 2, is_return);
-	if (IS_ERR(tk)) {
+			       argc - 2, is_वापस);
+	अगर (IS_ERR(tk)) अणु
 		ret = PTR_ERR(tk);
-		/* This must return -ENOMEM, else there is a bug */
+		/* This must वापस -ENOMEM, अन्यथा there is a bug */
 		WARN_ON_ONCE(ret != -ENOMEM);
-		goto out;	/* We know tk is not allocated */
-	}
+		जाओ out;	/* We know tk is not allocated */
+	पूर्ण
 	argc -= 2; argv += 2;
 
 	/* parse arguments */
-	for (i = 0; i < argc && i < MAX_TRACE_ARGS; i++) {
-		tmp = kstrdup(argv[i], GFP_KERNEL);
-		if (!tmp) {
+	क्रम (i = 0; i < argc && i < MAX_TRACE_ARGS; i++) अणु
+		पंचांगp = kstrdup(argv[i], GFP_KERNEL);
+		अगर (!पंचांगp) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		trace_probe_log_set_index(i + 2);
-		ret = traceprobe_parse_probe_arg(&tk->tp, i, tmp, flags);
-		kfree(tmp);
-		if (ret)
-			goto error;	/* This can be -ENOMEM */
-	}
+		ret = traceprobe_parse_probe_arg(&tk->tp, i, पंचांगp, flags);
+		kमुक्त(पंचांगp);
+		अगर (ret)
+			जाओ error;	/* This can be -ENOMEM */
+	पूर्ण
 
-	ret = traceprobe_set_print_fmt(&tk->tp, is_return);
-	if (ret < 0)
-		goto error;
+	ret = traceprobe_set_prपूर्णांक_fmt(&tk->tp, is_वापस);
+	अगर (ret < 0)
+		जाओ error;
 
-	ret = register_trace_kprobe(tk);
-	if (ret) {
+	ret = रेजिस्टर_trace_kprobe(tk);
+	अगर (ret) अणु
 		trace_probe_log_set_index(1);
-		if (ret == -EILSEQ)
+		अगर (ret == -EILSEQ)
 			trace_probe_log_err(0, BAD_INSN_BNDRY);
-		else if (ret == -ENOENT)
+		अन्यथा अगर (ret == -ENOENT)
 			trace_probe_log_err(0, BAD_PROBE_ADDR);
-		else if (ret != -ENOMEM && ret != -EEXIST)
+		अन्यथा अगर (ret != -ENOMEM && ret != -EEXIST)
 			trace_probe_log_err(0, FAIL_REG_PROBE);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 out:
 	trace_probe_log_clear();
-	kfree(symbol);
-	return ret;
+	kमुक्त(symbol);
+	वापस ret;
 
 parse_error:
 	ret = -EINVAL;
 error:
-	free_trace_kprobe(tk);
-	goto out;
-}
+	मुक्त_trace_kprobe(tk);
+	जाओ out;
+पूर्ण
 
-static int trace_kprobe_create(const char *raw_command)
-{
-	return trace_probe_create(raw_command, __trace_kprobe_create);
-}
+अटल पूर्णांक trace_kprobe_create(स्थिर अक्षर *raw_command)
+अणु
+	वापस trace_probe_create(raw_command, __trace_kprobe_create);
+पूर्ण
 
-static int create_or_delete_trace_kprobe(const char *raw_command)
-{
-	int ret;
+अटल पूर्णांक create_or_delete_trace_kprobe(स्थिर अक्षर *raw_command)
+अणु
+	पूर्णांक ret;
 
-	if (raw_command[0] == '-')
-		return dyn_event_release(raw_command, &trace_kprobe_ops);
+	अगर (raw_command[0] == '-')
+		वापस dyn_event_release(raw_command, &trace_kprobe_ops);
 
 	ret = trace_kprobe_create(raw_command);
-	return ret == -ECANCELED ? -EINVAL : ret;
-}
+	वापस ret == -ECANCELED ? -EINVAL : ret;
+पूर्ण
 
-static int trace_kprobe_run_command(struct dynevent_cmd *cmd)
-{
-	return create_or_delete_trace_kprobe(cmd->seq.buffer);
-}
+अटल पूर्णांक trace_kprobe_run_command(काष्ठा dynevent_cmd *cmd)
+अणु
+	वापस create_or_delete_trace_kprobe(cmd->seq.buffer);
+पूर्ण
 
 /**
  * kprobe_event_cmd_init - Initialize a kprobe event command object
- * @cmd: A pointer to the dynevent_cmd struct representing the new event
- * @buf: A pointer to the buffer used to build the command
+ * @cmd: A poपूर्णांकer to the dynevent_cmd काष्ठा representing the new event
+ * @buf: A poपूर्णांकer to the buffer used to build the command
  * @maxlen: The length of the buffer passed in @buf
  *
- * Initialize a synthetic event command object.  Use this before
+ * Initialize a synthetic event command object.  Use this beक्रमe
  * calling any of the other kprobe_event functions.
  */
-void kprobe_event_cmd_init(struct dynevent_cmd *cmd, char *buf, int maxlen)
-{
+व्योम kprobe_event_cmd_init(काष्ठा dynevent_cmd *cmd, अक्षर *buf, पूर्णांक maxlen)
+अणु
 	dynevent_cmd_init(cmd, buf, maxlen, DYNEVENT_TYPE_KPROBE,
 			  trace_kprobe_run_command);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kprobe_event_cmd_init);
 
 /**
  * __kprobe_event_gen_cmd_start - Generate a kprobe event command from arg list
- * @cmd: A pointer to the dynevent_cmd struct representing the new event
+ * @cmd: A poपूर्णांकer to the dynevent_cmd काष्ठा representing the new event
  * @name: The name of the kprobe event
  * @loc: The location of the kprobe event
- * @kretprobe: Is this a return probe?
- * @args: Variable number of arg (pairs), one pair for each field
+ * @kretprobe: Is this a वापस probe?
+ * @args: Variable number of arg (pairs), one pair क्रम each field
  *
  * NOTE: Users normally won't want to call this function directly, but
- * rather use the kprobe_event_gen_cmd_start() wrapper, which automatically
- * adds a NULL to the end of the arg list.  If this function is used
- * directly, make sure the last arg in the variable arg list is NULL.
+ * rather use the kprobe_event_gen_cmd_start() wrapper, which स्वतःmatically
+ * adds a शून्य to the end of the arg list.  If this function is used
+ * directly, make sure the last arg in the variable arg list is शून्य.
  *
  * Generate a kprobe event command to be executed by
  * kprobe_event_gen_cmd_end().  This function can be used to generate the
- * complete command or only the first part of it; in the latter case,
+ * complete command or only the first part of it; in the latter हाल,
  * kprobe_event_add_fields() can be used to add more fields following this.
  *
- * Unlikely the synth_event_gen_cmd_start(), @loc must be specified. This
- * returns -EINVAL if @loc == NULL.
+ * Unlikely the synth_event_gen_cmd_start(), @loc must be specअगरied. This
+ * वापसs -EINVAL अगर @loc == शून्य.
  *
- * Return: 0 if successful, error otherwise.
+ * Return: 0 अगर successful, error otherwise.
  */
-int __kprobe_event_gen_cmd_start(struct dynevent_cmd *cmd, bool kretprobe,
-				 const char *name, const char *loc, ...)
-{
-	char buf[MAX_EVENT_NAME_LEN];
-	struct dynevent_arg arg;
-	va_list args;
-	int ret;
+पूर्णांक __kprobe_event_gen_cmd_start(काष्ठा dynevent_cmd *cmd, bool kretprobe,
+				 स्थिर अक्षर *name, स्थिर अक्षर *loc, ...)
+अणु
+	अक्षर buf[MAX_EVENT_NAME_LEN];
+	काष्ठा dynevent_arg arg;
+	बहु_सूची args;
+	पूर्णांक ret;
 
-	if (cmd->type != DYNEVENT_TYPE_KPROBE)
-		return -EINVAL;
+	अगर (cmd->type != DYNEVENT_TYPE_KPROBE)
+		वापस -EINVAL;
 
-	if (!loc)
-		return -EINVAL;
+	अगर (!loc)
+		वापस -EINVAL;
 
-	if (kretprobe)
-		snprintf(buf, MAX_EVENT_NAME_LEN, "r:kprobes/%s", name);
-	else
-		snprintf(buf, MAX_EVENT_NAME_LEN, "p:kprobes/%s", name);
+	अगर (kretprobe)
+		snम_लिखो(buf, MAX_EVENT_NAME_LEN, "r:kprobes/%s", name);
+	अन्यथा
+		snम_लिखो(buf, MAX_EVENT_NAME_LEN, "p:kprobes/%s", name);
 
 	ret = dynevent_str_add(cmd, buf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dynevent_arg_init(&arg, 0);
 	arg.str = loc;
-	ret = dynevent_arg_add(cmd, &arg, NULL);
-	if (ret)
-		return ret;
+	ret = dynevent_arg_add(cmd, &arg, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	va_start(args, loc);
-	for (;;) {
-		const char *field;
+	बहु_शुरू(args, loc);
+	क्रम (;;) अणु
+		स्थिर अक्षर *field;
 
-		field = va_arg(args, const char *);
-		if (!field)
-			break;
+		field = बहु_तर्क(args, स्थिर अक्षर *);
+		अगर (!field)
+			अवरोध;
 
-		if (++cmd->n_fields > MAX_TRACE_ARGS) {
+		अगर (++cmd->n_fields > MAX_TRACE_ARGS) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		arg.str = field;
-		ret = dynevent_arg_add(cmd, &arg, NULL);
-		if (ret)
-			break;
-	}
-	va_end(args);
+		ret = dynevent_arg_add(cmd, &arg, शून्य);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	बहु_पूर्ण(args);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(__kprobe_event_gen_cmd_start);
 
 /**
  * __kprobe_event_add_fields - Add probe fields to a kprobe command from arg list
- * @cmd: A pointer to the dynevent_cmd struct representing the new event
- * @args: Variable number of arg (pairs), one pair for each field
+ * @cmd: A poपूर्णांकer to the dynevent_cmd काष्ठा representing the new event
+ * @args: Variable number of arg (pairs), one pair क्रम each field
  *
  * NOTE: Users normally won't want to call this function directly, but
  * rather use the kprobe_event_add_fields() wrapper, which
- * automatically adds a NULL to the end of the arg list.  If this
+ * स्वतःmatically adds a शून्य to the end of the arg list.  If this
  * function is used directly, make sure the last arg in the variable
- * arg list is NULL.
+ * arg list is शून्य.
  *
  * Add probe fields to an existing kprobe command using a variable
  * list of args.  Fields are added in the same order they're listed.
  *
- * Return: 0 if successful, error otherwise.
+ * Return: 0 अगर successful, error otherwise.
  */
-int __kprobe_event_add_fields(struct dynevent_cmd *cmd, ...)
-{
-	struct dynevent_arg arg;
-	va_list args;
-	int ret = 0;
+पूर्णांक __kprobe_event_add_fields(काष्ठा dynevent_cmd *cmd, ...)
+अणु
+	काष्ठा dynevent_arg arg;
+	बहु_सूची args;
+	पूर्णांक ret = 0;
 
-	if (cmd->type != DYNEVENT_TYPE_KPROBE)
-		return -EINVAL;
+	अगर (cmd->type != DYNEVENT_TYPE_KPROBE)
+		वापस -EINVAL;
 
 	dynevent_arg_init(&arg, 0);
 
-	va_start(args, cmd);
-	for (;;) {
-		const char *field;
+	बहु_शुरू(args, cmd);
+	क्रम (;;) अणु
+		स्थिर अक्षर *field;
 
-		field = va_arg(args, const char *);
-		if (!field)
-			break;
+		field = बहु_तर्क(args, स्थिर अक्षर *);
+		अगर (!field)
+			अवरोध;
 
-		if (++cmd->n_fields > MAX_TRACE_ARGS) {
+		अगर (++cmd->n_fields > MAX_TRACE_ARGS) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		arg.str = field;
-		ret = dynevent_arg_add(cmd, &arg, NULL);
-		if (ret)
-			break;
-	}
-	va_end(args);
+		ret = dynevent_arg_add(cmd, &arg, शून्य);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
+	बहु_पूर्ण(args);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(__kprobe_event_add_fields);
 
 /**
@@ -1081,315 +1082,315 @@ EXPORT_SYMBOL_GPL(__kprobe_event_add_fields);
  * Delete a kprobe event with the give @name from kernel code rather
  * than directly from the command line.
  *
- * Return: 0 if successful, error otherwise.
+ * Return: 0 अगर successful, error otherwise.
  */
-int kprobe_event_delete(const char *name)
-{
-	char buf[MAX_EVENT_NAME_LEN];
+पूर्णांक kprobe_event_delete(स्थिर अक्षर *name)
+अणु
+	अक्षर buf[MAX_EVENT_NAME_LEN];
 
-	snprintf(buf, MAX_EVENT_NAME_LEN, "-:%s", name);
+	snम_लिखो(buf, MAX_EVENT_NAME_LEN, "-:%s", name);
 
-	return create_or_delete_trace_kprobe(buf);
-}
+	वापस create_or_delete_trace_kprobe(buf);
+पूर्ण
 EXPORT_SYMBOL_GPL(kprobe_event_delete);
 
-static int trace_kprobe_release(struct dyn_event *ev)
-{
-	struct trace_kprobe *tk = to_trace_kprobe(ev);
-	int ret = unregister_trace_kprobe(tk);
+अटल पूर्णांक trace_kprobe_release(काष्ठा dyn_event *ev)
+अणु
+	काष्ठा trace_kprobe *tk = to_trace_kprobe(ev);
+	पूर्णांक ret = unरेजिस्टर_trace_kprobe(tk);
 
-	if (!ret)
-		free_trace_kprobe(tk);
-	return ret;
-}
+	अगर (!ret)
+		मुक्त_trace_kprobe(tk);
+	वापस ret;
+पूर्ण
 
-static int trace_kprobe_show(struct seq_file *m, struct dyn_event *ev)
-{
-	struct trace_kprobe *tk = to_trace_kprobe(ev);
-	int i;
+अटल पूर्णांक trace_kprobe_show(काष्ठा seq_file *m, काष्ठा dyn_event *ev)
+अणु
+	काष्ठा trace_kprobe *tk = to_trace_kprobe(ev);
+	पूर्णांक i;
 
-	seq_putc(m, trace_kprobe_is_return(tk) ? 'r' : 'p');
-	if (trace_kprobe_is_return(tk) && tk->rp.maxactive)
-		seq_printf(m, "%d", tk->rp.maxactive);
-	seq_printf(m, ":%s/%s", trace_probe_group_name(&tk->tp),
+	seq_अ_दो(m, trace_kprobe_is_वापस(tk) ? 'r' : 'p');
+	अगर (trace_kprobe_is_वापस(tk) && tk->rp.maxactive)
+		seq_म_लिखो(m, "%d", tk->rp.maxactive);
+	seq_म_लिखो(m, ":%s/%s", trace_probe_group_name(&tk->tp),
 				trace_probe_name(&tk->tp));
 
-	if (!tk->symbol)
-		seq_printf(m, " 0x%p", tk->rp.kp.addr);
-	else if (tk->rp.kp.offset)
-		seq_printf(m, " %s+%u", trace_kprobe_symbol(tk),
+	अगर (!tk->symbol)
+		seq_म_लिखो(m, " 0x%p", tk->rp.kp.addr);
+	अन्यथा अगर (tk->rp.kp.offset)
+		seq_म_लिखो(m, " %s+%u", trace_kprobe_symbol(tk),
 			   tk->rp.kp.offset);
-	else
-		seq_printf(m, " %s", trace_kprobe_symbol(tk));
+	अन्यथा
+		seq_म_लिखो(m, " %s", trace_kprobe_symbol(tk));
 
-	for (i = 0; i < tk->tp.nr_args; i++)
-		seq_printf(m, " %s=%s", tk->tp.args[i].name, tk->tp.args[i].comm);
-	seq_putc(m, '\n');
+	क्रम (i = 0; i < tk->tp.nr_args; i++)
+		seq_म_लिखो(m, " %s=%s", tk->tp.args[i].name, tk->tp.args[i].comm);
+	seq_अ_दो(m, '\n');
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int probes_seq_show(struct seq_file *m, void *v)
-{
-	struct dyn_event *ev = v;
+अटल पूर्णांक probes_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा dyn_event *ev = v;
 
-	if (!is_trace_kprobe(ev))
-		return 0;
+	अगर (!is_trace_kprobe(ev))
+		वापस 0;
 
-	return trace_kprobe_show(m, ev);
-}
+	वापस trace_kprobe_show(m, ev);
+पूर्ण
 
-static const struct seq_operations probes_seq_op = {
+अटल स्थिर काष्ठा seq_operations probes_seq_op = अणु
 	.start  = dyn_event_seq_start,
 	.next   = dyn_event_seq_next,
 	.stop   = dyn_event_seq_stop,
 	.show   = probes_seq_show
-};
+पूर्ण;
 
-static int probes_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक probes_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
-	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
+	अगर ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) अणु
 		ret = dyn_events_release_all(&trace_kprobe_ops);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return seq_open(file, &probes_seq_op);
-}
+	वापस seq_खोलो(file, &probes_seq_op);
+पूर्ण
 
-static ssize_t probes_write(struct file *file, const char __user *buffer,
-			    size_t count, loff_t *ppos)
-{
-	return trace_parse_run_command(file, buffer, count, ppos,
+अटल sमाप_प्रकार probes_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस trace_parse_run_command(file, buffer, count, ppos,
 				       create_or_delete_trace_kprobe);
-}
+पूर्ण
 
-static const struct file_operations kprobe_events_ops = {
+अटल स्थिर काष्ठा file_operations kprobe_events_ops = अणु
 	.owner          = THIS_MODULE,
-	.open           = probes_open,
-	.read           = seq_read,
+	.खोलो           = probes_खोलो,
+	.पढ़ो           = seq_पढ़ो,
 	.llseek         = seq_lseek,
 	.release        = seq_release,
-	.write		= probes_write,
-};
+	.ग_लिखो		= probes_ग_लिखो,
+पूर्ण;
 
-/* Probes profiling interfaces */
-static int probes_profile_seq_show(struct seq_file *m, void *v)
-{
-	struct dyn_event *ev = v;
-	struct trace_kprobe *tk;
+/* Probes profiling पूर्णांकerfaces */
+अटल पूर्णांक probes_profile_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा dyn_event *ev = v;
+	काष्ठा trace_kprobe *tk;
 
-	if (!is_trace_kprobe(ev))
-		return 0;
+	अगर (!is_trace_kprobe(ev))
+		वापस 0;
 
 	tk = to_trace_kprobe(ev);
-	seq_printf(m, "  %-44s %15lu %15lu\n",
+	seq_म_लिखो(m, "  %-44s %15lu %15lu\n",
 		   trace_probe_name(&tk->tp),
 		   trace_kprobe_nhit(tk),
 		   tk->rp.kp.nmissed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations profile_seq_op = {
+अटल स्थिर काष्ठा seq_operations profile_seq_op = अणु
 	.start  = dyn_event_seq_start,
 	.next   = dyn_event_seq_next,
 	.stop   = dyn_event_seq_stop,
 	.show   = probes_profile_seq_show
-};
+पूर्ण;
 
-static int profile_open(struct inode *inode, struct file *file)
-{
-	int ret;
+अटल पूर्णांक profile_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
-	return seq_open(file, &profile_seq_op);
-}
+	वापस seq_खोलो(file, &profile_seq_op);
+पूर्ण
 
-static const struct file_operations kprobe_profile_ops = {
+अटल स्थिर काष्ठा file_operations kprobe_profile_ops = अणु
 	.owner          = THIS_MODULE,
-	.open           = profile_open,
-	.read           = seq_read,
+	.खोलो           = profile_खोलो,
+	.पढ़ो           = seq_पढ़ो,
 	.llseek         = seq_lseek,
 	.release        = seq_release,
-};
+पूर्ण;
 
-/* Kprobe specific fetch functions */
-
-/* Return the length of string -- including null terminal byte */
-static nokprobe_inline int
-fetch_store_strlen_user(unsigned long addr)
-{
-	const void __user *uaddr =  (__force const void __user *)addr;
-
-	return strnlen_user_nofault(uaddr, MAX_STRING_SIZE);
-}
+/* Kprobe specअगरic fetch functions */
 
 /* Return the length of string -- including null terminal byte */
-static nokprobe_inline int
-fetch_store_strlen(unsigned long addr)
-{
-	int ret, len = 0;
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_म_माप_user(अचिन्हित दीर्घ addr)
+अणु
+	स्थिर व्योम __user *uaddr =  (__क्रमce स्थिर व्योम __user *)addr;
+
+	वापस strnlen_user_nofault(uaddr, MAX_STRING_SIZE);
+पूर्ण
+
+/* Return the length of string -- including null terminal byte */
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_म_माप(अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक ret, len = 0;
 	u8 c;
 
-#ifdef CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
-	if (addr < TASK_SIZE)
-		return fetch_store_strlen_user(addr);
-#endif
+#अगर_घोषित CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
+	अगर (addr < TASK_SIZE)
+		वापस fetch_store_म_माप_user(addr);
+#पूर्ण_अगर
 
-	do {
+	करो अणु
 		ret = copy_from_kernel_nofault(&c, (u8 *)addr + len, 1);
 		len++;
-	} while (c && ret == 0 && len < MAX_STRING_SIZE);
+	पूर्ण जबतक (c && ret == 0 && len < MAX_STRING_SIZE);
 
-	return (ret < 0) ? ret : len;
-}
+	वापस (ret < 0) ? ret : len;
+पूर्ण
 
 /*
  * Fetch a null-terminated string from user. Caller MUST set *(u32 *)buf
  * with max length and relative data location.
  */
-static nokprobe_inline int
-fetch_store_string_user(unsigned long addr, void *dest, void *base)
-{
-	const void __user *uaddr =  (__force const void __user *)addr;
-	int maxlen = get_loc_len(*(u32 *)dest);
-	void *__dest;
-	long ret;
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_string_user(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base)
+अणु
+	स्थिर व्योम __user *uaddr =  (__क्रमce स्थिर व्योम __user *)addr;
+	पूर्णांक maxlen = get_loc_len(*(u32 *)dest);
+	व्योम *__dest;
+	दीर्घ ret;
 
-	if (unlikely(!maxlen))
-		return -ENOMEM;
+	अगर (unlikely(!maxlen))
+		वापस -ENOMEM;
 
 	__dest = get_loc_data(dest, base);
 
-	ret = strncpy_from_user_nofault(__dest, uaddr, maxlen);
-	if (ret >= 0)
+	ret = म_नकलन_from_user_nofault(__dest, uaddr, maxlen);
+	अगर (ret >= 0)
 		*(u32 *)dest = make_data_loc(ret, __dest - base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Fetch a null-terminated string. Caller MUST set *(u32 *)buf with max
  * length and relative data location.
  */
-static nokprobe_inline int
-fetch_store_string(unsigned long addr, void *dest, void *base)
-{
-	int maxlen = get_loc_len(*(u32 *)dest);
-	void *__dest;
-	long ret;
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_string(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base)
+अणु
+	पूर्णांक maxlen = get_loc_len(*(u32 *)dest);
+	व्योम *__dest;
+	दीर्घ ret;
 
-#ifdef CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
-	if ((unsigned long)addr < TASK_SIZE)
-		return fetch_store_string_user(addr, dest, base);
-#endif
+#अगर_घोषित CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
+	अगर ((अचिन्हित दीर्घ)addr < TASK_SIZE)
+		वापस fetch_store_string_user(addr, dest, base);
+#पूर्ण_अगर
 
-	if (unlikely(!maxlen))
-		return -ENOMEM;
+	अगर (unlikely(!maxlen))
+		वापस -ENOMEM;
 
 	__dest = get_loc_data(dest, base);
 
 	/*
-	 * Try to get string again, since the string can be changed while
+	 * Try to get string again, since the string can be changed जबतक
 	 * probing.
 	 */
-	ret = strncpy_from_kernel_nofault(__dest, (void *)addr, maxlen);
-	if (ret >= 0)
+	ret = म_नकलन_from_kernel_nofault(__dest, (व्योम *)addr, maxlen);
+	अगर (ret >= 0)
 		*(u32 *)dest = make_data_loc(ret, __dest - base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static nokprobe_inline int
-probe_mem_read_user(void *dest, void *src, size_t size)
-{
-	const void __user *uaddr =  (__force const void __user *)src;
+अटल nokprobe_अंतरभूत पूर्णांक
+probe_mem_पढ़ो_user(व्योम *dest, व्योम *src, माप_प्रकार size)
+अणु
+	स्थिर व्योम __user *uaddr =  (__क्रमce स्थिर व्योम __user *)src;
 
-	return copy_from_user_nofault(dest, uaddr, size);
-}
+	वापस copy_from_user_nofault(dest, uaddr, size);
+पूर्ण
 
-static nokprobe_inline int
-probe_mem_read(void *dest, void *src, size_t size)
-{
-#ifdef CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
-	if ((unsigned long)src < TASK_SIZE)
-		return probe_mem_read_user(dest, src, size);
-#endif
-	return copy_from_kernel_nofault(dest, src, size);
-}
+अटल nokprobe_अंतरभूत पूर्णांक
+probe_mem_पढ़ो(व्योम *dest, व्योम *src, माप_प्रकार size)
+अणु
+#अगर_घोषित CONFIG_ARCH_HAS_NON_OVERLAPPING_ADDRESS_SPACE
+	अगर ((अचिन्हित दीर्घ)src < TASK_SIZE)
+		वापस probe_mem_पढ़ो_user(dest, src, size);
+#पूर्ण_अगर
+	वापस copy_from_kernel_nofault(dest, src, size);
+पूर्ण
 
-/* Note that we don't verify it, since the code does not come from user space */
-static int
-process_fetch_insn(struct fetch_insn *code, struct pt_regs *regs, void *dest,
-		   void *base)
-{
-	unsigned long val;
+/* Note that we करोn't verअगरy it, since the code करोes not come from user space */
+अटल पूर्णांक
+process_fetch_insn(काष्ठा fetch_insn *code, काष्ठा pt_regs *regs, व्योम *dest,
+		   व्योम *base)
+अणु
+	अचिन्हित दीर्घ val;
 
 retry:
 	/* 1st stage: get value from context */
-	switch (code->op) {
-	case FETCH_OP_REG:
-		val = regs_get_register(regs, code->param);
-		break;
-	case FETCH_OP_STACK:
+	चयन (code->op) अणु
+	हाल FETCH_OP_REG:
+		val = regs_get_रेजिस्टर(regs, code->param);
+		अवरोध;
+	हाल FETCH_OP_STACK:
 		val = regs_get_kernel_stack_nth(regs, code->param);
-		break;
-	case FETCH_OP_STACKP:
-		val = kernel_stack_pointer(regs);
-		break;
-	case FETCH_OP_RETVAL:
-		val = regs_return_value(regs);
-		break;
-	case FETCH_OP_IMM:
+		अवरोध;
+	हाल FETCH_OP_STACKP:
+		val = kernel_stack_poपूर्णांकer(regs);
+		अवरोध;
+	हाल FETCH_OP_RETVAL:
+		val = regs_वापस_value(regs);
+		अवरोध;
+	हाल FETCH_OP_IMM:
 		val = code->immediate;
-		break;
-	case FETCH_OP_COMM:
-		val = (unsigned long)current->comm;
-		break;
-	case FETCH_OP_DATA:
-		val = (unsigned long)code->data;
-		break;
-#ifdef CONFIG_HAVE_FUNCTION_ARG_ACCESS_API
-	case FETCH_OP_ARG:
+		अवरोध;
+	हाल FETCH_OP_COMM:
+		val = (अचिन्हित दीर्घ)current->comm;
+		अवरोध;
+	हाल FETCH_OP_DATA:
+		val = (अचिन्हित दीर्घ)code->data;
+		अवरोध;
+#अगर_घोषित CONFIG_HAVE_FUNCTION_ARG_ACCESS_API
+	हाल FETCH_OP_ARG:
 		val = regs_get_kernel_argument(regs, code->param);
-		break;
-#endif
-	case FETCH_NOP_SYMBOL:	/* Ignore a place holder */
+		अवरोध;
+#पूर्ण_अगर
+	हाल FETCH_NOP_SYMBOL:	/* Ignore a place holder */
 		code++;
-		goto retry;
-	default:
-		return -EILSEQ;
-	}
+		जाओ retry;
+	शेष:
+		वापस -EILSEQ;
+	पूर्ण
 	code++;
 
-	return process_fetch_insn_bottom(code, val, dest, base);
-}
+	वापस process_fetch_insn_bottom(code, val, dest, base);
+पूर्ण
 NOKPROBE_SYMBOL(process_fetch_insn)
 
 /* Kprobe handler */
-static nokprobe_inline void
-__kprobe_trace_func(struct trace_kprobe *tk, struct pt_regs *regs,
-		    struct trace_event_file *trace_file)
-{
-	struct kprobe_trace_entry_head *entry;
-	struct trace_event_call *call = trace_probe_event_call(&tk->tp);
-	struct trace_event_buffer fbuffer;
-	int dsize;
+अटल nokprobe_अंतरभूत व्योम
+__kprobe_trace_func(काष्ठा trace_kprobe *tk, काष्ठा pt_regs *regs,
+		    काष्ठा trace_event_file *trace_file)
+अणु
+	काष्ठा kprobe_trace_entry_head *entry;
+	काष्ठा trace_event_call *call = trace_probe_event_call(&tk->tp);
+	काष्ठा trace_event_buffer fbuffer;
+	पूर्णांक dsize;
 
 	WARN_ON(call != trace_file->event_call);
 
-	if (trace_trigger_soft_disabled(trace_file))
-		return;
+	अगर (trace_trigger_soft_disabled(trace_file))
+		वापस;
 
 	fbuffer.trace_ctx = tracing_gen_ctx();
 	fbuffer.trace_file = trace_file;
@@ -1399,44 +1400,44 @@ __kprobe_trace_func(struct trace_kprobe *tk, struct pt_regs *regs,
 	fbuffer.event =
 		trace_event_buffer_lock_reserve(&fbuffer.buffer, trace_file,
 					call->event.type,
-					sizeof(*entry) + tk->tp.size + dsize,
+					माप(*entry) + tk->tp.size + dsize,
 					fbuffer.trace_ctx);
-	if (!fbuffer.event)
-		return;
+	अगर (!fbuffer.event)
+		वापस;
 
 	fbuffer.regs = regs;
 	entry = fbuffer.entry = ring_buffer_event_data(fbuffer.event);
-	entry->ip = (unsigned long)tk->rp.kp.addr;
-	store_trace_args(&entry[1], &tk->tp, regs, sizeof(*entry), dsize);
+	entry->ip = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	store_trace_args(&entry[1], &tk->tp, regs, माप(*entry), dsize);
 
 	trace_event_buffer_commit(&fbuffer);
-}
+पूर्ण
 
-static void
-kprobe_trace_func(struct trace_kprobe *tk, struct pt_regs *regs)
-{
-	struct event_file_link *link;
+अटल व्योम
+kprobe_trace_func(काष्ठा trace_kprobe *tk, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा event_file_link *link;
 
-	trace_probe_for_each_link_rcu(link, &tk->tp)
+	trace_probe_क्रम_each_link_rcu(link, &tk->tp)
 		__kprobe_trace_func(tk, regs, link->file);
-}
+पूर्ण
 NOKPROBE_SYMBOL(kprobe_trace_func);
 
 /* Kretprobe handler */
-static nokprobe_inline void
-__kretprobe_trace_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
-		       struct pt_regs *regs,
-		       struct trace_event_file *trace_file)
-{
-	struct kretprobe_trace_entry_head *entry;
-	struct trace_event_buffer fbuffer;
-	struct trace_event_call *call = trace_probe_event_call(&tk->tp);
-	int dsize;
+अटल nokprobe_अंतरभूत व्योम
+__kretprobe_trace_func(काष्ठा trace_kprobe *tk, काष्ठा kretprobe_instance *ri,
+		       काष्ठा pt_regs *regs,
+		       काष्ठा trace_event_file *trace_file)
+अणु
+	काष्ठा kretprobe_trace_entry_head *entry;
+	काष्ठा trace_event_buffer fbuffer;
+	काष्ठा trace_event_call *call = trace_probe_event_call(&tk->tp);
+	पूर्णांक dsize;
 
 	WARN_ON(call != trace_file->event_call);
 
-	if (trace_trigger_soft_disabled(trace_file))
-		return;
+	अगर (trace_trigger_soft_disabled(trace_file))
+		वापस;
 
 	fbuffer.trace_ctx = tracing_gen_ctx();
 	fbuffer.trace_file = trace_file;
@@ -1445,670 +1446,670 @@ __kretprobe_trace_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
 	fbuffer.event =
 		trace_event_buffer_lock_reserve(&fbuffer.buffer, trace_file,
 					call->event.type,
-					sizeof(*entry) + tk->tp.size + dsize,
+					माप(*entry) + tk->tp.size + dsize,
 					fbuffer.trace_ctx);
-	if (!fbuffer.event)
-		return;
+	अगर (!fbuffer.event)
+		वापस;
 
 	fbuffer.regs = regs;
 	entry = fbuffer.entry = ring_buffer_event_data(fbuffer.event);
-	entry->func = (unsigned long)tk->rp.kp.addr;
-	entry->ret_ip = (unsigned long)ri->ret_addr;
-	store_trace_args(&entry[1], &tk->tp, regs, sizeof(*entry), dsize);
+	entry->func = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	entry->ret_ip = (अचिन्हित दीर्घ)ri->ret_addr;
+	store_trace_args(&entry[1], &tk->tp, regs, माप(*entry), dsize);
 
 	trace_event_buffer_commit(&fbuffer);
-}
+पूर्ण
 
-static void
-kretprobe_trace_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
-		     struct pt_regs *regs)
-{
-	struct event_file_link *link;
+अटल व्योम
+kretprobe_trace_func(काष्ठा trace_kprobe *tk, काष्ठा kretprobe_instance *ri,
+		     काष्ठा pt_regs *regs)
+अणु
+	काष्ठा event_file_link *link;
 
-	trace_probe_for_each_link_rcu(link, &tk->tp)
+	trace_probe_क्रम_each_link_rcu(link, &tk->tp)
 		__kretprobe_trace_func(tk, ri, regs, link->file);
-}
+पूर्ण
 NOKPROBE_SYMBOL(kretprobe_trace_func);
 
-/* Event entry printers */
-static enum print_line_t
-print_kprobe_event(struct trace_iterator *iter, int flags,
-		   struct trace_event *event)
-{
-	struct kprobe_trace_entry_head *field;
-	struct trace_seq *s = &iter->seq;
-	struct trace_probe *tp;
+/* Event entry prपूर्णांकers */
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_kprobe_event(काष्ठा trace_iterator *iter, पूर्णांक flags,
+		   काष्ठा trace_event *event)
+अणु
+	काष्ठा kprobe_trace_entry_head *field;
+	काष्ठा trace_seq *s = &iter->seq;
+	काष्ठा trace_probe *tp;
 
-	field = (struct kprobe_trace_entry_head *)iter->ent;
+	field = (काष्ठा kprobe_trace_entry_head *)iter->ent;
 	tp = trace_probe_primary_from_call(
-		container_of(event, struct trace_event_call, event));
-	if (WARN_ON_ONCE(!tp))
-		goto out;
+		container_of(event, काष्ठा trace_event_call, event));
+	अगर (WARN_ON_ONCE(!tp))
+		जाओ out;
 
-	trace_seq_printf(s, "%s: (", trace_probe_name(tp));
+	trace_seq_म_लिखो(s, "%s: (", trace_probe_name(tp));
 
-	if (!seq_print_ip_sym(s, field->ip, flags | TRACE_ITER_SYM_OFFSET))
-		goto out;
+	अगर (!seq_prपूर्णांक_ip_sym(s, field->ip, flags | TRACE_ITER_SYM_OFFSET))
+		जाओ out;
 
-	trace_seq_putc(s, ')');
+	trace_seq_अ_दो(s, ')');
 
-	if (print_probe_args(s, tp->args, tp->nr_args,
+	अगर (prपूर्णांक_probe_args(s, tp->args, tp->nr_args,
 			     (u8 *)&field[1], field) < 0)
-		goto out;
+		जाओ out;
 
-	trace_seq_putc(s, '\n');
+	trace_seq_अ_दो(s, '\n');
  out:
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
-static enum print_line_t
-print_kretprobe_event(struct trace_iterator *iter, int flags,
-		      struct trace_event *event)
-{
-	struct kretprobe_trace_entry_head *field;
-	struct trace_seq *s = &iter->seq;
-	struct trace_probe *tp;
+अटल क्रमागत prपूर्णांक_line_t
+prपूर्णांक_kretprobe_event(काष्ठा trace_iterator *iter, पूर्णांक flags,
+		      काष्ठा trace_event *event)
+अणु
+	काष्ठा kretprobe_trace_entry_head *field;
+	काष्ठा trace_seq *s = &iter->seq;
+	काष्ठा trace_probe *tp;
 
-	field = (struct kretprobe_trace_entry_head *)iter->ent;
+	field = (काष्ठा kretprobe_trace_entry_head *)iter->ent;
 	tp = trace_probe_primary_from_call(
-		container_of(event, struct trace_event_call, event));
-	if (WARN_ON_ONCE(!tp))
-		goto out;
+		container_of(event, काष्ठा trace_event_call, event));
+	अगर (WARN_ON_ONCE(!tp))
+		जाओ out;
 
-	trace_seq_printf(s, "%s: (", trace_probe_name(tp));
+	trace_seq_म_लिखो(s, "%s: (", trace_probe_name(tp));
 
-	if (!seq_print_ip_sym(s, field->ret_ip, flags | TRACE_ITER_SYM_OFFSET))
-		goto out;
+	अगर (!seq_prपूर्णांक_ip_sym(s, field->ret_ip, flags | TRACE_ITER_SYM_OFFSET))
+		जाओ out;
 
-	trace_seq_puts(s, " <- ");
+	trace_seq_माला_दो(s, " <- ");
 
-	if (!seq_print_ip_sym(s, field->func, flags & ~TRACE_ITER_SYM_OFFSET))
-		goto out;
+	अगर (!seq_prपूर्णांक_ip_sym(s, field->func, flags & ~TRACE_ITER_SYM_OFFSET))
+		जाओ out;
 
-	trace_seq_putc(s, ')');
+	trace_seq_अ_दो(s, ')');
 
-	if (print_probe_args(s, tp->args, tp->nr_args,
+	अगर (prपूर्णांक_probe_args(s, tp->args, tp->nr_args,
 			     (u8 *)&field[1], field) < 0)
-		goto out;
+		जाओ out;
 
-	trace_seq_putc(s, '\n');
+	trace_seq_अ_दो(s, '\n');
 
  out:
-	return trace_handle_return(s);
-}
+	वापस trace_handle_वापस(s);
+पूर्ण
 
 
-static int kprobe_event_define_fields(struct trace_event_call *event_call)
-{
-	int ret;
-	struct kprobe_trace_entry_head field;
-	struct trace_probe *tp;
+अटल पूर्णांक kprobe_event_define_fields(काष्ठा trace_event_call *event_call)
+अणु
+	पूर्णांक ret;
+	काष्ठा kprobe_trace_entry_head field;
+	काष्ठा trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(event_call);
-	if (WARN_ON_ONCE(!tp))
-		return -ENOENT;
+	अगर (WARN_ON_ONCE(!tp))
+		वापस -ENOENT;
 
-	DEFINE_FIELD(unsigned long, ip, FIELD_STRING_IP, 0);
+	DEFINE_FIELD(अचिन्हित दीर्घ, ip, FIELD_STRING_IP, 0);
 
-	return traceprobe_define_arg_fields(event_call, sizeof(field), tp);
-}
+	वापस traceprobe_define_arg_fields(event_call, माप(field), tp);
+पूर्ण
 
-static int kretprobe_event_define_fields(struct trace_event_call *event_call)
-{
-	int ret;
-	struct kretprobe_trace_entry_head field;
-	struct trace_probe *tp;
+अटल पूर्णांक kretprobe_event_define_fields(काष्ठा trace_event_call *event_call)
+अणु
+	पूर्णांक ret;
+	काष्ठा kretprobe_trace_entry_head field;
+	काष्ठा trace_probe *tp;
 
 	tp = trace_probe_primary_from_call(event_call);
-	if (WARN_ON_ONCE(!tp))
-		return -ENOENT;
+	अगर (WARN_ON_ONCE(!tp))
+		वापस -ENOENT;
 
-	DEFINE_FIELD(unsigned long, func, FIELD_STRING_FUNC, 0);
-	DEFINE_FIELD(unsigned long, ret_ip, FIELD_STRING_RETIP, 0);
+	DEFINE_FIELD(अचिन्हित दीर्घ, func, FIELD_STRING_FUNC, 0);
+	DEFINE_FIELD(अचिन्हित दीर्घ, ret_ip, FIELD_STRING_RETIP, 0);
 
-	return traceprobe_define_arg_fields(event_call, sizeof(field), tp);
-}
+	वापस traceprobe_define_arg_fields(event_call, माप(field), tp);
+पूर्ण
 
-#ifdef CONFIG_PERF_EVENTS
+#अगर_घोषित CONFIG_PERF_EVENTS
 
 /* Kprobe profile handler */
-static int
-kprobe_perf_func(struct trace_kprobe *tk, struct pt_regs *regs)
-{
-	struct trace_event_call *call = trace_probe_event_call(&tk->tp);
-	struct kprobe_trace_entry_head *entry;
-	struct hlist_head *head;
-	int size, __size, dsize;
-	int rctx;
+अटल पूर्णांक
+kprobe_perf_func(काष्ठा trace_kprobe *tk, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा trace_event_call *call = trace_probe_event_call(&tk->tp);
+	काष्ठा kprobe_trace_entry_head *entry;
+	काष्ठा hlist_head *head;
+	पूर्णांक size, __size, dsize;
+	पूर्णांक rctx;
 
-	if (bpf_prog_array_valid(call)) {
-		unsigned long orig_ip = instruction_pointer(regs);
-		int ret;
+	अगर (bpf_prog_array_valid(call)) अणु
+		अचिन्हित दीर्घ orig_ip = inकाष्ठाion_poपूर्णांकer(regs);
+		पूर्णांक ret;
 
 		ret = trace_call_bpf(call, regs);
 
 		/*
-		 * We need to check and see if we modified the pc of the
-		 * pt_regs, and if so return 1 so that we don't do the
+		 * We need to check and see अगर we modअगरied the pc of the
+		 * pt_regs, and अगर so वापस 1 so that we करोn't करो the
 		 * single stepping.
 		 */
-		if (orig_ip != instruction_pointer(regs))
-			return 1;
-		if (!ret)
-			return 0;
-	}
+		अगर (orig_ip != inकाष्ठाion_poपूर्णांकer(regs))
+			वापस 1;
+		अगर (!ret)
+			वापस 0;
+	पूर्ण
 
 	head = this_cpu_ptr(call->perf_events);
-	if (hlist_empty(head))
-		return 0;
+	अगर (hlist_empty(head))
+		वापस 0;
 
 	dsize = __get_data_size(&tk->tp, regs);
-	__size = sizeof(*entry) + tk->tp.size + dsize;
-	size = ALIGN(__size + sizeof(u32), sizeof(u64));
-	size -= sizeof(u32);
+	__size = माप(*entry) + tk->tp.size + dsize;
+	size = ALIGN(__size + माप(u32), माप(u64));
+	size -= माप(u32);
 
-	entry = perf_trace_buf_alloc(size, NULL, &rctx);
-	if (!entry)
-		return 0;
+	entry = perf_trace_buf_alloc(size, शून्य, &rctx);
+	अगर (!entry)
+		वापस 0;
 
-	entry->ip = (unsigned long)tk->rp.kp.addr;
-	memset(&entry[1], 0, dsize);
-	store_trace_args(&entry[1], &tk->tp, regs, sizeof(*entry), dsize);
+	entry->ip = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	स_रखो(&entry[1], 0, dsize);
+	store_trace_args(&entry[1], &tk->tp, regs, माप(*entry), dsize);
 	perf_trace_buf_submit(entry, size, rctx, call->event.type, 1, regs,
-			      head, NULL);
-	return 0;
-}
+			      head, शून्य);
+	वापस 0;
+पूर्ण
 NOKPROBE_SYMBOL(kprobe_perf_func);
 
 /* Kretprobe profile handler */
-static void
-kretprobe_perf_func(struct trace_kprobe *tk, struct kretprobe_instance *ri,
-		    struct pt_regs *regs)
-{
-	struct trace_event_call *call = trace_probe_event_call(&tk->tp);
-	struct kretprobe_trace_entry_head *entry;
-	struct hlist_head *head;
-	int size, __size, dsize;
-	int rctx;
+अटल व्योम
+kretprobe_perf_func(काष्ठा trace_kprobe *tk, काष्ठा kretprobe_instance *ri,
+		    काष्ठा pt_regs *regs)
+अणु
+	काष्ठा trace_event_call *call = trace_probe_event_call(&tk->tp);
+	काष्ठा kretprobe_trace_entry_head *entry;
+	काष्ठा hlist_head *head;
+	पूर्णांक size, __size, dsize;
+	पूर्णांक rctx;
 
-	if (bpf_prog_array_valid(call) && !trace_call_bpf(call, regs))
-		return;
+	अगर (bpf_prog_array_valid(call) && !trace_call_bpf(call, regs))
+		वापस;
 
 	head = this_cpu_ptr(call->perf_events);
-	if (hlist_empty(head))
-		return;
+	अगर (hlist_empty(head))
+		वापस;
 
 	dsize = __get_data_size(&tk->tp, regs);
-	__size = sizeof(*entry) + tk->tp.size + dsize;
-	size = ALIGN(__size + sizeof(u32), sizeof(u64));
-	size -= sizeof(u32);
+	__size = माप(*entry) + tk->tp.size + dsize;
+	size = ALIGN(__size + माप(u32), माप(u64));
+	size -= माप(u32);
 
-	entry = perf_trace_buf_alloc(size, NULL, &rctx);
-	if (!entry)
-		return;
+	entry = perf_trace_buf_alloc(size, शून्य, &rctx);
+	अगर (!entry)
+		वापस;
 
-	entry->func = (unsigned long)tk->rp.kp.addr;
-	entry->ret_ip = (unsigned long)ri->ret_addr;
-	store_trace_args(&entry[1], &tk->tp, regs, sizeof(*entry), dsize);
+	entry->func = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	entry->ret_ip = (अचिन्हित दीर्घ)ri->ret_addr;
+	store_trace_args(&entry[1], &tk->tp, regs, माप(*entry), dsize);
 	perf_trace_buf_submit(entry, size, rctx, call->event.type, 1, regs,
-			      head, NULL);
-}
+			      head, शून्य);
+पूर्ण
 NOKPROBE_SYMBOL(kretprobe_perf_func);
 
-int bpf_get_kprobe_info(const struct perf_event *event, u32 *fd_type,
-			const char **symbol, u64 *probe_offset,
-			u64 *probe_addr, bool perf_type_tracepoint)
-{
-	const char *pevent = trace_event_name(event->tp_event);
-	const char *group = event->tp_event->class->system;
-	struct trace_kprobe *tk;
+पूर्णांक bpf_get_kprobe_info(स्थिर काष्ठा perf_event *event, u32 *fd_type,
+			स्थिर अक्षर **symbol, u64 *probe_offset,
+			u64 *probe_addr, bool perf_type_tracepoपूर्णांक)
+अणु
+	स्थिर अक्षर *pevent = trace_event_name(event->tp_event);
+	स्थिर अक्षर *group = event->tp_event->class->प्रणाली;
+	काष्ठा trace_kprobe *tk;
 
-	if (perf_type_tracepoint)
+	अगर (perf_type_tracepoपूर्णांक)
 		tk = find_trace_kprobe(pevent, group);
-	else
+	अन्यथा
 		tk = trace_kprobe_primary_from_call(event->tp_event);
-	if (!tk)
-		return -EINVAL;
+	अगर (!tk)
+		वापस -EINVAL;
 
-	*fd_type = trace_kprobe_is_return(tk) ? BPF_FD_TYPE_KRETPROBE
+	*fd_type = trace_kprobe_is_वापस(tk) ? BPF_FD_TYPE_KRETPROBE
 					      : BPF_FD_TYPE_KPROBE;
-	if (tk->symbol) {
+	अगर (tk->symbol) अणु
 		*symbol = tk->symbol;
 		*probe_offset = tk->rp.kp.offset;
 		*probe_addr = 0;
-	} else {
-		*symbol = NULL;
+	पूर्ण अन्यथा अणु
+		*symbol = शून्य;
 		*probe_offset = 0;
-		*probe_addr = (unsigned long)tk->rp.kp.addr;
-	}
-	return 0;
-}
-#endif	/* CONFIG_PERF_EVENTS */
+		*probe_addr = (अचिन्हित दीर्घ)tk->rp.kp.addr;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_PERF_EVENTS */
 
 /*
  * called by perf_trace_init() or __ftrace_set_clr_event() under event_mutex.
  *
- * kprobe_trace_self_tests_init() does enable_trace_probe/disable_trace_probe
+ * kprobe_trace_self_tests_init() करोes enable_trace_probe/disable_trace_probe
  * lockless, but we can't race with this __init function.
  */
-static int kprobe_register(struct trace_event_call *event,
-			   enum trace_reg type, void *data)
-{
-	struct trace_event_file *file = data;
+अटल पूर्णांक kprobe_रेजिस्टर(काष्ठा trace_event_call *event,
+			   क्रमागत trace_reg type, व्योम *data)
+अणु
+	काष्ठा trace_event_file *file = data;
 
-	switch (type) {
-	case TRACE_REG_REGISTER:
-		return enable_trace_kprobe(event, file);
-	case TRACE_REG_UNREGISTER:
-		return disable_trace_kprobe(event, file);
+	चयन (type) अणु
+	हाल TRACE_REG_REGISTER:
+		वापस enable_trace_kprobe(event, file);
+	हाल TRACE_REG_UNREGISTER:
+		वापस disable_trace_kprobe(event, file);
 
-#ifdef CONFIG_PERF_EVENTS
-	case TRACE_REG_PERF_REGISTER:
-		return enable_trace_kprobe(event, NULL);
-	case TRACE_REG_PERF_UNREGISTER:
-		return disable_trace_kprobe(event, NULL);
-	case TRACE_REG_PERF_OPEN:
-	case TRACE_REG_PERF_CLOSE:
-	case TRACE_REG_PERF_ADD:
-	case TRACE_REG_PERF_DEL:
-		return 0;
-#endif
-	}
-	return 0;
-}
+#अगर_घोषित CONFIG_PERF_EVENTS
+	हाल TRACE_REG_PERF_REGISTER:
+		वापस enable_trace_kprobe(event, शून्य);
+	हाल TRACE_REG_PERF_UNREGISTER:
+		वापस disable_trace_kprobe(event, शून्य);
+	हाल TRACE_REG_PERF_OPEN:
+	हाल TRACE_REG_PERF_CLOSE:
+	हाल TRACE_REG_PERF_ADD:
+	हाल TRACE_REG_PERF_DEL:
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int kprobe_dispatcher(struct kprobe *kp, struct pt_regs *regs)
-{
-	struct trace_kprobe *tk = container_of(kp, struct trace_kprobe, rp.kp);
-	int ret = 0;
+अटल पूर्णांक kprobe_dispatcher(काष्ठा kprobe *kp, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा trace_kprobe *tk = container_of(kp, काष्ठा trace_kprobe, rp.kp);
+	पूर्णांक ret = 0;
 
 	raw_cpu_inc(*tk->nhit);
 
-	if (trace_probe_test_flag(&tk->tp, TP_FLAG_TRACE))
+	अगर (trace_probe_test_flag(&tk->tp, TP_FLAG_TRACE))
 		kprobe_trace_func(tk, regs);
-#ifdef CONFIG_PERF_EVENTS
-	if (trace_probe_test_flag(&tk->tp, TP_FLAG_PROFILE))
+#अगर_घोषित CONFIG_PERF_EVENTS
+	अगर (trace_probe_test_flag(&tk->tp, TP_FLAG_PROखाता))
 		ret = kprobe_perf_func(tk, regs);
-#endif
-	return ret;
-}
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 NOKPROBE_SYMBOL(kprobe_dispatcher);
 
-static int
-kretprobe_dispatcher(struct kretprobe_instance *ri, struct pt_regs *regs)
-{
-	struct kretprobe *rp = get_kretprobe(ri);
-	struct trace_kprobe *tk = container_of(rp, struct trace_kprobe, rp);
+अटल पूर्णांक
+kretprobe_dispatcher(काष्ठा kretprobe_instance *ri, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kretprobe *rp = get_kretprobe(ri);
+	काष्ठा trace_kprobe *tk = container_of(rp, काष्ठा trace_kprobe, rp);
 
 	raw_cpu_inc(*tk->nhit);
 
-	if (trace_probe_test_flag(&tk->tp, TP_FLAG_TRACE))
+	अगर (trace_probe_test_flag(&tk->tp, TP_FLAG_TRACE))
 		kretprobe_trace_func(tk, ri, regs);
-#ifdef CONFIG_PERF_EVENTS
-	if (trace_probe_test_flag(&tk->tp, TP_FLAG_PROFILE))
+#अगर_घोषित CONFIG_PERF_EVENTS
+	अगर (trace_probe_test_flag(&tk->tp, TP_FLAG_PROखाता))
 		kretprobe_perf_func(tk, ri, regs);
-#endif
-	return 0;	/* We don't tweak kernel, so just return 0 */
-}
+#पूर्ण_अगर
+	वापस 0;	/* We करोn't tweak kernel, so just वापस 0 */
+पूर्ण
 NOKPROBE_SYMBOL(kretprobe_dispatcher);
 
-static struct trace_event_functions kretprobe_funcs = {
-	.trace		= print_kretprobe_event
-};
+अटल काष्ठा trace_event_functions kretprobe_funcs = अणु
+	.trace		= prपूर्णांक_kretprobe_event
+पूर्ण;
 
-static struct trace_event_functions kprobe_funcs = {
-	.trace		= print_kprobe_event
-};
+अटल काष्ठा trace_event_functions kprobe_funcs = अणु
+	.trace		= prपूर्णांक_kprobe_event
+पूर्ण;
 
-static struct trace_event_fields kretprobe_fields_array[] = {
-	{ .type = TRACE_FUNCTION_TYPE,
-	  .define_fields = kretprobe_event_define_fields },
-	{}
-};
+अटल काष्ठा trace_event_fields kretprobe_fields_array[] = अणु
+	अणु .type = TRACE_FUNCTION_TYPE,
+	  .define_fields = kretprobe_event_define_fields पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct trace_event_fields kprobe_fields_array[] = {
-	{ .type = TRACE_FUNCTION_TYPE,
-	  .define_fields = kprobe_event_define_fields },
-	{}
-};
+अटल काष्ठा trace_event_fields kprobe_fields_array[] = अणु
+	अणु .type = TRACE_FUNCTION_TYPE,
+	  .define_fields = kprobe_event_define_fields पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static inline void init_trace_event_call(struct trace_kprobe *tk)
-{
-	struct trace_event_call *call = trace_probe_event_call(&tk->tp);
+अटल अंतरभूत व्योम init_trace_event_call(काष्ठा trace_kprobe *tk)
+अणु
+	काष्ठा trace_event_call *call = trace_probe_event_call(&tk->tp);
 
-	if (trace_kprobe_is_return(tk)) {
+	अगर (trace_kprobe_is_वापस(tk)) अणु
 		call->event.funcs = &kretprobe_funcs;
 		call->class->fields_array = kretprobe_fields_array;
-	} else {
+	पूर्ण अन्यथा अणु
 		call->event.funcs = &kprobe_funcs;
 		call->class->fields_array = kprobe_fields_array;
-	}
+	पूर्ण
 
 	call->flags = TRACE_EVENT_FL_KPROBE;
-	call->class->reg = kprobe_register;
-}
+	call->class->reg = kprobe_रेजिस्टर;
+पूर्ण
 
-static int register_kprobe_event(struct trace_kprobe *tk)
-{
+अटल पूर्णांक रेजिस्टर_kprobe_event(काष्ठा trace_kprobe *tk)
+अणु
 	init_trace_event_call(tk);
 
-	return trace_probe_register_event_call(&tk->tp);
-}
+	वापस trace_probe_रेजिस्टर_event_call(&tk->tp);
+पूर्ण
 
-static int unregister_kprobe_event(struct trace_kprobe *tk)
-{
-	return trace_probe_unregister_event_call(&tk->tp);
-}
+अटल पूर्णांक unरेजिस्टर_kprobe_event(काष्ठा trace_kprobe *tk)
+अणु
+	वापस trace_probe_unरेजिस्टर_event_call(&tk->tp);
+पूर्ण
 
-#ifdef CONFIG_PERF_EVENTS
-/* create a trace_kprobe, but don't add it to global lists */
-struct trace_event_call *
-create_local_trace_kprobe(char *func, void *addr, unsigned long offs,
-			  bool is_return)
-{
-	struct trace_kprobe *tk;
-	int ret;
-	char *event;
+#अगर_घोषित CONFIG_PERF_EVENTS
+/* create a trace_kprobe, but करोn't add it to global lists */
+काष्ठा trace_event_call *
+create_local_trace_kprobe(अक्षर *func, व्योम *addr, अचिन्हित दीर्घ offs,
+			  bool is_वापस)
+अणु
+	काष्ठा trace_kprobe *tk;
+	पूर्णांक ret;
+	अक्षर *event;
 
 	/*
 	 * local trace_kprobes are not added to dyn_event, so they are never
-	 * searched in find_trace_kprobe(). Therefore, there is no concern of
+	 * searched in find_trace_kprobe(). Thereक्रमe, there is no concern of
 	 * duplicated name here.
 	 */
 	event = func ? func : "DUMMY_EVENT";
 
-	tk = alloc_trace_kprobe(KPROBE_EVENT_SYSTEM, event, (void *)addr, func,
+	tk = alloc_trace_kprobe(KPROBE_EVENT_SYSTEM, event, (व्योम *)addr, func,
 				offs, 0 /* maxactive */, 0 /* nargs */,
-				is_return);
+				is_वापस);
 
-	if (IS_ERR(tk)) {
+	अगर (IS_ERR(tk)) अणु
 		pr_info("Failed to allocate trace_probe.(%d)\n",
-			(int)PTR_ERR(tk));
-		return ERR_CAST(tk);
-	}
+			(पूर्णांक)PTR_ERR(tk));
+		वापस ERR_CAST(tk);
+	पूर्ण
 
 	init_trace_event_call(tk);
 
-	if (traceprobe_set_print_fmt(&tk->tp, trace_kprobe_is_return(tk)) < 0) {
+	अगर (traceprobe_set_prपूर्णांक_fmt(&tk->tp, trace_kprobe_is_वापस(tk)) < 0) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	ret = __register_trace_kprobe(tk);
-	if (ret < 0)
-		goto error;
+	ret = __रेजिस्टर_trace_kprobe(tk);
+	अगर (ret < 0)
+		जाओ error;
 
-	return trace_probe_event_call(&tk->tp);
+	वापस trace_probe_event_call(&tk->tp);
 error:
-	free_trace_kprobe(tk);
-	return ERR_PTR(ret);
-}
+	मुक्त_trace_kprobe(tk);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void destroy_local_trace_kprobe(struct trace_event_call *event_call)
-{
-	struct trace_kprobe *tk;
+व्योम destroy_local_trace_kprobe(काष्ठा trace_event_call *event_call)
+अणु
+	काष्ठा trace_kprobe *tk;
 
 	tk = trace_kprobe_primary_from_call(event_call);
-	if (unlikely(!tk))
-		return;
+	अगर (unlikely(!tk))
+		वापस;
 
-	if (trace_probe_is_enabled(&tk->tp)) {
+	अगर (trace_probe_is_enabled(&tk->tp)) अणु
 		WARN_ON(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	__unregister_trace_kprobe(tk);
+	__unरेजिस्टर_trace_kprobe(tk);
 
-	free_trace_kprobe(tk);
-}
-#endif /* CONFIG_PERF_EVENTS */
+	मुक्त_trace_kprobe(tk);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PERF_EVENTS */
 
-static __init void enable_boot_kprobe_events(void)
-{
-	struct trace_array *tr = top_trace_array();
-	struct trace_event_file *file;
-	struct trace_kprobe *tk;
-	struct dyn_event *pos;
+अटल __init व्योम enable_boot_kprobe_events(व्योम)
+अणु
+	काष्ठा trace_array *tr = top_trace_array();
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_kprobe *tk;
+	काष्ठा dyn_event *pos;
 
 	mutex_lock(&event_mutex);
-	for_each_trace_kprobe(tk, pos) {
-		list_for_each_entry(file, &tr->events, list)
-			if (file->event_call == trace_probe_event_call(&tk->tp))
+	क्रम_each_trace_kprobe(tk, pos) अणु
+		list_क्रम_each_entry(file, &tr->events, list)
+			अगर (file->event_call == trace_probe_event_call(&tk->tp))
 				trace_event_enable_disable(file, 1, 0);
-	}
+	पूर्ण
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static __init void setup_boot_kprobe_events(void)
-{
-	char *p, *cmd = kprobe_boot_events_buf;
-	int ret;
+अटल __init व्योम setup_boot_kprobe_events(व्योम)
+अणु
+	अक्षर *p, *cmd = kprobe_boot_events_buf;
+	पूर्णांक ret;
 
 	strreplace(kprobe_boot_events_buf, ',', ' ');
 
-	while (cmd && *cmd != '\0') {
-		p = strchr(cmd, ';');
-		if (p)
+	जबतक (cmd && *cmd != '\0') अणु
+		p = म_अक्षर(cmd, ';');
+		अगर (p)
 			*p++ = '\0';
 
 		ret = create_or_delete_trace_kprobe(cmd);
-		if (ret)
+		अगर (ret)
 			pr_warn("Failed to add event(%d): %s\n", ret, cmd);
 
 		cmd = p;
-	}
+	पूर्ण
 
 	enable_boot_kprobe_events();
-}
+पूर्ण
 
 /*
  * Register dynevent at core_initcall. This allows kernel to setup kprobe
  * events in postcore_initcall without tracefs.
  */
-static __init int init_kprobe_trace_early(void)
-{
-	int ret;
+अटल __init पूर्णांक init_kprobe_trace_early(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = dyn_event_register(&trace_kprobe_ops);
-	if (ret)
-		return ret;
+	ret = dyn_event_रेजिस्टर(&trace_kprobe_ops);
+	अगर (ret)
+		वापस ret;
 
-	if (register_module_notifier(&trace_kprobe_module_nb))
-		return -EINVAL;
+	अगर (रेजिस्टर_module_notअगरier(&trace_kprobe_module_nb))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(init_kprobe_trace_early);
 
-/* Make a tracefs interface for controlling probe points */
-static __init int init_kprobe_trace(void)
-{
-	int ret;
-	struct dentry *entry;
+/* Make a tracefs पूर्णांकerface क्रम controlling probe poपूर्णांकs */
+अटल __init पूर्णांक init_kprobe_trace(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा dentry *entry;
 
 	ret = tracing_init_dentry();
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	entry = tracefs_create_file("kprobe_events", 0644, NULL,
-				    NULL, &kprobe_events_ops);
+	entry = tracefs_create_file("kprobe_events", 0644, शून्य,
+				    शून्य, &kprobe_events_ops);
 
-	/* Event list interface */
-	if (!entry)
+	/* Event list पूर्णांकerface */
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'kprobe_events' entry\n");
 
-	/* Profile interface */
-	entry = tracefs_create_file("kprobe_profile", 0444, NULL,
-				    NULL, &kprobe_profile_ops);
+	/* Profile पूर्णांकerface */
+	entry = tracefs_create_file("kprobe_profile", 0444, शून्य,
+				    शून्य, &kprobe_profile_ops);
 
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'kprobe_profile' entry\n");
 
 	setup_boot_kprobe_events();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 fs_initcall(init_kprobe_trace);
 
 
-#ifdef CONFIG_FTRACE_STARTUP_TEST
-static __init struct trace_event_file *
-find_trace_probe_file(struct trace_kprobe *tk, struct trace_array *tr)
-{
-	struct trace_event_file *file;
+#अगर_घोषित CONFIG_FTRACE_STARTUP_TEST
+अटल __init काष्ठा trace_event_file *
+find_trace_probe_file(काष्ठा trace_kprobe *tk, काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
-	list_for_each_entry(file, &tr->events, list)
-		if (file->event_call == trace_probe_event_call(&tk->tp))
-			return file;
+	list_क्रम_each_entry(file, &tr->events, list)
+		अगर (file->event_call == trace_probe_event_call(&tk->tp))
+			वापस file;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Nobody but us can call enable_trace_kprobe/disable_trace_kprobe at this
- * stage, we can do this lockless.
+ * stage, we can करो this lockless.
  */
-static __init int kprobe_trace_self_tests_init(void)
-{
-	int ret, warn = 0;
-	int (*target)(int, int, int, int, int, int);
-	struct trace_kprobe *tk;
-	struct trace_event_file *file;
+अटल __init पूर्णांक kprobe_trace_self_tests_init(व्योम)
+अणु
+	पूर्णांक ret, warn = 0;
+	पूर्णांक (*target)(पूर्णांक, पूर्णांक, पूर्णांक, पूर्णांक, पूर्णांक, पूर्णांक);
+	काष्ठा trace_kprobe *tk;
+	काष्ठा trace_event_file *file;
 
-	if (tracing_is_disabled())
-		return -ENODEV;
+	अगर (tracing_is_disabled())
+		वापस -ENODEV;
 
-	if (tracing_selftest_disabled)
-		return 0;
+	अगर (tracing_selftest_disabled)
+		वापस 0;
 
 	target = kprobe_trace_selftest_target;
 
 	pr_info("Testing kprobe tracing: ");
 
 	ret = create_or_delete_trace_kprobe("p:testprobe kprobe_trace_selftest_target $stack $stack0 +0($stack)");
-	if (WARN_ON_ONCE(ret)) {
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error on probing function entry.\n");
 		warn++;
-	} else {
-		/* Enable trace point */
+	पूर्ण अन्यथा अणु
+		/* Enable trace poपूर्णांक */
 		tk = find_trace_kprobe("testprobe", KPROBE_EVENT_SYSTEM);
-		if (WARN_ON_ONCE(tk == NULL)) {
+		अगर (WARN_ON_ONCE(tk == शून्य)) अणु
 			pr_warn("error on getting new probe.\n");
 			warn++;
-		} else {
+		पूर्ण अन्यथा अणु
 			file = find_trace_probe_file(tk, top_trace_array());
-			if (WARN_ON_ONCE(file == NULL)) {
+			अगर (WARN_ON_ONCE(file == शून्य)) अणु
 				pr_warn("error on getting probe file.\n");
 				warn++;
-			} else
+			पूर्ण अन्यथा
 				enable_trace_kprobe(
 					trace_probe_event_call(&tk->tp), file);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = create_or_delete_trace_kprobe("r:testprobe2 kprobe_trace_selftest_target $retval");
-	if (WARN_ON_ONCE(ret)) {
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error on probing function return.\n");
 		warn++;
-	} else {
-		/* Enable trace point */
+	पूर्ण अन्यथा अणु
+		/* Enable trace poपूर्णांक */
 		tk = find_trace_kprobe("testprobe2", KPROBE_EVENT_SYSTEM);
-		if (WARN_ON_ONCE(tk == NULL)) {
+		अगर (WARN_ON_ONCE(tk == शून्य)) अणु
 			pr_warn("error on getting 2nd new probe.\n");
 			warn++;
-		} else {
+		पूर्ण अन्यथा अणु
 			file = find_trace_probe_file(tk, top_trace_array());
-			if (WARN_ON_ONCE(file == NULL)) {
+			अगर (WARN_ON_ONCE(file == शून्य)) अणु
 				pr_warn("error on getting probe file.\n");
 				warn++;
-			} else
+			पूर्ण अन्यथा
 				enable_trace_kprobe(
 					trace_probe_event_call(&tk->tp), file);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (warn)
-		goto end;
+	अगर (warn)
+		जाओ end;
 
 	ret = target(1, 2, 3, 4, 5, 6);
 
 	/*
 	 * Not expecting an error here, the check is only to prevent the
 	 * optimizer from removing the call to target() as otherwise there
-	 * are no side-effects and the call is never performed.
+	 * are no side-effects and the call is never perक्रमmed.
 	 */
-	if (ret != 21)
+	अगर (ret != 21)
 		warn++;
 
-	/* Disable trace points before removing it */
+	/* Disable trace poपूर्णांकs beक्रमe removing it */
 	tk = find_trace_kprobe("testprobe", KPROBE_EVENT_SYSTEM);
-	if (WARN_ON_ONCE(tk == NULL)) {
+	अगर (WARN_ON_ONCE(tk == शून्य)) अणु
 		pr_warn("error on getting test probe.\n");
 		warn++;
-	} else {
-		if (trace_kprobe_nhit(tk) != 1) {
+	पूर्ण अन्यथा अणु
+		अगर (trace_kprobe_nhit(tk) != 1) अणु
 			pr_warn("incorrect number of testprobe hits\n");
 			warn++;
-		}
+		पूर्ण
 
 		file = find_trace_probe_file(tk, top_trace_array());
-		if (WARN_ON_ONCE(file == NULL)) {
+		अगर (WARN_ON_ONCE(file == शून्य)) अणु
 			pr_warn("error on getting probe file.\n");
 			warn++;
-		} else
+		पूर्ण अन्यथा
 			disable_trace_kprobe(
 				trace_probe_event_call(&tk->tp), file);
-	}
+	पूर्ण
 
 	tk = find_trace_kprobe("testprobe2", KPROBE_EVENT_SYSTEM);
-	if (WARN_ON_ONCE(tk == NULL)) {
+	अगर (WARN_ON_ONCE(tk == शून्य)) अणु
 		pr_warn("error on getting 2nd test probe.\n");
 		warn++;
-	} else {
-		if (trace_kprobe_nhit(tk) != 1) {
+	पूर्ण अन्यथा अणु
+		अगर (trace_kprobe_nhit(tk) != 1) अणु
 			pr_warn("incorrect number of testprobe2 hits\n");
 			warn++;
-		}
+		पूर्ण
 
 		file = find_trace_probe_file(tk, top_trace_array());
-		if (WARN_ON_ONCE(file == NULL)) {
+		अगर (WARN_ON_ONCE(file == शून्य)) अणु
 			pr_warn("error on getting probe file.\n");
 			warn++;
-		} else
+		पूर्ण अन्यथा
 			disable_trace_kprobe(
 				trace_probe_event_call(&tk->tp), file);
-	}
+	पूर्ण
 
 	ret = create_or_delete_trace_kprobe("-:testprobe");
-	if (WARN_ON_ONCE(ret)) {
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error on deleting a probe.\n");
 		warn++;
-	}
+	पूर्ण
 
 	ret = create_or_delete_trace_kprobe("-:testprobe2");
-	if (WARN_ON_ONCE(ret)) {
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error on deleting a probe.\n");
 		warn++;
-	}
+	पूर्ण
 
 end:
 	ret = dyn_events_release_all(&trace_kprobe_ops);
-	if (WARN_ON_ONCE(ret)) {
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error on cleaning up probes.\n");
 		warn++;
-	}
+	पूर्ण
 	/*
-	 * Wait for the optimizer work to finish. Otherwise it might fiddle
-	 * with probes in already freed __init text.
+	 * Wait क्रम the optimizer work to finish. Otherwise it might fiddle
+	 * with probes in alपढ़ोy मुक्तd __init text.
 	 */
-	wait_for_kprobe_optimizer();
-	if (warn)
+	रुको_क्रम_kprobe_optimizer();
+	अगर (warn)
 		pr_cont("NG: Some tests are failed. Please check them.\n");
-	else
+	अन्यथा
 		pr_cont("OK\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(kprobe_trace_self_tests_init);
 
-#endif
+#पूर्ण_अगर

@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ulpi.c - DesignWare USB3 Controller's ULPI PHY interface
+ * ulpi.c - DesignWare USB3 Controller's ULPI PHY पूर्णांकerface
  *
  * Copyright (C) 2015 Intel Corporation
  *
- * Author: Heikki Krogerus <heikki.krogerus@linux.intel.com>
+ * Author: Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
  */
 
-#include <linux/delay.h>
-#include <linux/time64.h>
-#include <linux/ulpi/regs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समय64.h>
+#समावेश <linux/ulpi/regs.h>
 
-#include "core.h"
-#include "io.h"
+#समावेश "core.h"
+#समावेश "io.h"
 
-#define DWC3_ULPI_ADDR(a) \
+#घोषणा DWC3_ULPI_ADDR(a) \
 		((a >= ULPI_EXT_VENDOR_SPECIFIC) ? \
 		DWC3_GUSB2PHYACC_ADDR(ULPI_ACCESS_EXTENDED) | \
 		DWC3_GUSB2PHYACC_EXTEND_ADDR(a) : DWC3_GUSB2PHYACC_ADDR(a))
 
-#define DWC3_ULPI_BASE_DELAY	DIV_ROUND_UP(NSEC_PER_SEC, 60000000L)
+#घोषणा DWC3_ULPI_BASE_DELAY	DIV_ROUND_UP(NSEC_PER_SEC, 60000000L)
 
-static int dwc3_ulpi_busyloop(struct dwc3 *dwc, u8 addr, bool read)
-{
-	unsigned long ns = 5L * DWC3_ULPI_BASE_DELAY;
-	unsigned int count = 10000;
+अटल पूर्णांक dwc3_ulpi_busyloop(काष्ठा dwc3 *dwc, u8 addr, bool पढ़ो)
+अणु
+	अचिन्हित दीर्घ ns = 5L * DWC3_ULPI_BASE_DELAY;
+	अचिन्हित पूर्णांक count = 10000;
 	u32 reg;
 
-	if (addr >= ULPI_EXT_VENDOR_SPECIFIC)
+	अगर (addr >= ULPI_EXT_VENDOR_SPECIFIC)
 		ns += DWC3_ULPI_BASE_DELAY;
 
-	if (read)
+	अगर (पढ़ो)
 		ns += DWC3_ULPI_BASE_DELAY;
 
-	reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(0));
-	if (reg & DWC3_GUSB2PHYCFG_SUSPHY)
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYCFG(0));
+	अगर (reg & DWC3_GUSB2PHYCFG_SUSPHY)
 		usleep_range(1000, 1200);
 
-	while (count--) {
+	जबतक (count--) अणु
 		ndelay(ns);
-		reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYACC(0));
-		if (reg & DWC3_GUSB2PHYACC_DONE)
-			return 0;
+		reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYACC(0));
+		अगर (reg & DWC3_GUSB2PHYACC_DONE)
+			वापस 0;
 		cpu_relax();
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int dwc3_ulpi_read(struct device *dev, u8 addr)
-{
-	struct dwc3 *dwc = dev_get_drvdata(dev);
+अटल पूर्णांक dwc3_ulpi_पढ़ो(काष्ठा device *dev, u8 addr)
+अणु
+	काष्ठा dwc3 *dwc = dev_get_drvdata(dev);
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	reg = DWC3_GUSB2PHYACC_NEWREGREQ | DWC3_ULPI_ADDR(addr);
-	dwc3_writel(dwc->regs, DWC3_GUSB2PHYACC(0), reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_GUSB2PHYACC(0), reg);
 
 	ret = dwc3_ulpi_busyloop(dwc, addr, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	reg = dwc3_readl(dwc->regs, DWC3_GUSB2PHYACC(0));
+	reg = dwc3_पढ़ोl(dwc->regs, DWC3_GUSB2PHYACC(0));
 
-	return DWC3_GUSB2PHYACC_DATA(reg);
-}
+	वापस DWC3_GUSB2PHYACC_DATA(reg);
+पूर्ण
 
-static int dwc3_ulpi_write(struct device *dev, u8 addr, u8 val)
-{
-	struct dwc3 *dwc = dev_get_drvdata(dev);
+अटल पूर्णांक dwc3_ulpi_ग_लिखो(काष्ठा device *dev, u8 addr, u8 val)
+अणु
+	काष्ठा dwc3 *dwc = dev_get_drvdata(dev);
 	u32 reg;
 
 	reg = DWC3_GUSB2PHYACC_NEWREGREQ | DWC3_ULPI_ADDR(addr);
 	reg |= DWC3_GUSB2PHYACC_WRITE | val;
-	dwc3_writel(dwc->regs, DWC3_GUSB2PHYACC(0), reg);
+	dwc3_ग_लिखोl(dwc->regs, DWC3_GUSB2PHYACC(0), reg);
 
-	return dwc3_ulpi_busyloop(dwc, addr, false);
-}
+	वापस dwc3_ulpi_busyloop(dwc, addr, false);
+पूर्ण
 
-static const struct ulpi_ops dwc3_ulpi_ops = {
-	.read = dwc3_ulpi_read,
-	.write = dwc3_ulpi_write,
-};
+अटल स्थिर काष्ठा ulpi_ops dwc3_ulpi_ops = अणु
+	.पढ़ो = dwc3_ulpi_पढ़ो,
+	.ग_लिखो = dwc3_ulpi_ग_लिखो,
+पूर्ण;
 
-int dwc3_ulpi_init(struct dwc3 *dwc)
-{
-	/* Register the interface */
-	dwc->ulpi = ulpi_register_interface(dwc->dev, &dwc3_ulpi_ops);
-	if (IS_ERR(dwc->ulpi)) {
+पूर्णांक dwc3_ulpi_init(काष्ठा dwc3 *dwc)
+अणु
+	/* Register the पूर्णांकerface */
+	dwc->ulpi = ulpi_रेजिस्टर_पूर्णांकerface(dwc->dev, &dwc3_ulpi_ops);
+	अगर (IS_ERR(dwc->ulpi)) अणु
 		dev_err(dwc->dev, "failed to register ULPI interface");
-		return PTR_ERR(dwc->ulpi);
-	}
+		वापस PTR_ERR(dwc->ulpi);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dwc3_ulpi_exit(struct dwc3 *dwc)
-{
-	if (dwc->ulpi) {
-		ulpi_unregister_interface(dwc->ulpi);
-		dwc->ulpi = NULL;
-	}
-}
+व्योम dwc3_ulpi_निकास(काष्ठा dwc3 *dwc)
+अणु
+	अगर (dwc->ulpi) अणु
+		ulpi_unरेजिस्टर_पूर्णांकerface(dwc->ulpi);
+		dwc->ulpi = शून्य;
+	पूर्ण
+पूर्ण

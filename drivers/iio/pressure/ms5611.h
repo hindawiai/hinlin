@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * MS5611 pressure and temperature sensor driver
  *
@@ -6,61 +7,61 @@
  *
  */
 
-#ifndef _MS5611_H
-#define _MS5611_H
+#अगर_अघोषित _MS5611_H
+#घोषणा _MS5611_H
 
-#include <linux/device.h>
-#include <linux/iio/iio.h>
-#include <linux/mutex.h>
+#समावेश <linux/device.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/mutex.h>
 
-struct regulator;
+काष्ठा regulator;
 
-#define MS5611_RESET			0x1e
-#define MS5611_READ_ADC			0x00
-#define MS5611_READ_PROM_WORD		0xA0
-#define MS5611_PROM_WORDS_NB		8
+#घोषणा MS5611_RESET			0x1e
+#घोषणा MS5611_READ_ADC			0x00
+#घोषणा MS5611_READ_PROM_WORD		0xA0
+#घोषणा MS5611_PROM_WORDS_NB		8
 
-enum {
+क्रमागत अणु
 	MS5611,
 	MS5607,
-};
+पूर्ण;
 
-struct ms5611_chip_info {
+काष्ठा ms5611_chip_info अणु
 	u16 prom[MS5611_PROM_WORDS_NB];
 
-	int (*temp_and_pressure_compensate)(struct ms5611_chip_info *chip_info,
+	पूर्णांक (*temp_and_pressure_compensate)(काष्ठा ms5611_chip_info *chip_info,
 					    s32 *temp, s32 *pressure);
-};
+पूर्ण;
 
 /*
  * OverSampling Rate descriptor.
  * Warning: cmd MUST be kept aligned on a word boundary (see
- * m5611_spi_read_adc_temp_and_pressure in ms5611_spi.c).
+ * m5611_spi_पढ़ो_adc_temp_and_pressure in ms5611_spi.c).
  */
-struct ms5611_osr {
-	unsigned long conv_usec;
+काष्ठा ms5611_osr अणु
+	अचिन्हित दीर्घ conv_usec;
 	u8 cmd;
-	unsigned short rate;
-};
+	अचिन्हित लघु rate;
+पूर्ण;
 
-struct ms5611_state {
-	void *client;
-	struct mutex lock;
+काष्ठा ms5611_state अणु
+	व्योम *client;
+	काष्ठा mutex lock;
 
-	const struct ms5611_osr *pressure_osr;
-	const struct ms5611_osr *temp_osr;
+	स्थिर काष्ठा ms5611_osr *pressure_osr;
+	स्थिर काष्ठा ms5611_osr *temp_osr;
 
-	int (*reset)(struct device *dev);
-	int (*read_prom_word)(struct device *dev, int index, u16 *word);
-	int (*read_adc_temp_and_pressure)(struct device *dev,
+	पूर्णांक (*reset)(काष्ठा device *dev);
+	पूर्णांक (*पढ़ो_prom_word)(काष्ठा device *dev, पूर्णांक index, u16 *word);
+	पूर्णांक (*पढ़ो_adc_temp_and_pressure)(काष्ठा device *dev,
 					  s32 *temp, s32 *pressure);
 
-	struct ms5611_chip_info *chip_info;
-	struct regulator *vdd;
-};
+	काष्ठा ms5611_chip_info *chip_info;
+	काष्ठा regulator *vdd;
+पूर्ण;
 
-int ms5611_probe(struct iio_dev *indio_dev, struct device *dev,
-		 const char *name, int type);
-int ms5611_remove(struct iio_dev *indio_dev);
+पूर्णांक ms5611_probe(काष्ठा iio_dev *indio_dev, काष्ठा device *dev,
+		 स्थिर अक्षर *name, पूर्णांक type);
+पूर्णांक ms5611_हटाओ(काष्ठा iio_dev *indio_dev);
 
-#endif /* _MS5611_H */
+#पूर्ण_अगर /* _MS5611_H */

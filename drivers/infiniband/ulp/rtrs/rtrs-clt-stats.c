@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * RDMA Transport Layer
  *
@@ -6,195 +7,195 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME " L" __stringअगरy(__LINE__) ": " fmt
 
-#include "rtrs-clt.h"
+#समावेश "rtrs-clt.h"
 
-void rtrs_clt_update_wc_stats(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_clt_stats *stats = sess->stats;
-	struct rtrs_clt_stats_pcpu *s;
-	int cpu;
+व्योम rtrs_clt_update_wc_stats(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_clt_stats *stats = sess->stats;
+	काष्ठा rtrs_clt_stats_pcpu *s;
+	पूर्णांक cpu;
 
 	cpu = raw_smp_processor_id();
 	s = this_cpu_ptr(stats->pcpu_stats);
-	if (unlikely(con->cpu != cpu)) {
+	अगर (unlikely(con->cpu != cpu)) अणु
 		s->cpu_migr.to++;
 
-		/* Careful here, override s pointer */
+		/* Careful here, override s poपूर्णांकer */
 		s = per_cpu_ptr(stats->pcpu_stats, con->cpu);
 		atomic_inc(&s->cpu_migr.from);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rtrs_clt_inc_failover_cnt(struct rtrs_clt_stats *stats)
-{
-	struct rtrs_clt_stats_pcpu *s;
+व्योम rtrs_clt_inc_failover_cnt(काष्ठा rtrs_clt_stats *stats)
+अणु
+	काष्ठा rtrs_clt_stats_pcpu *s;
 
 	s = this_cpu_ptr(stats->pcpu_stats);
 	s->rdma.failover_cnt++;
-}
+पूर्ण
 
-int rtrs_clt_stats_migration_cnt_to_str(struct rtrs_clt_stats *stats,
-					 char *buf, size_t len)
-{
-	struct rtrs_clt_stats_pcpu *s;
+पूर्णांक rtrs_clt_stats_migration_cnt_to_str(काष्ठा rtrs_clt_stats *stats,
+					 अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा rtrs_clt_stats_pcpu *s;
 
-	size_t used;
-	int cpu;
+	माप_प्रकार used;
+	पूर्णांक cpu;
 
-	used = scnprintf(buf, len, "    ");
-	for_each_possible_cpu(cpu)
-		used += scnprintf(buf + used, len - used, " CPU%u", cpu);
+	used = scnम_लिखो(buf, len, "    ");
+	क्रम_each_possible_cpu(cpu)
+		used += scnम_लिखो(buf + used, len - used, " CPU%u", cpu);
 
-	used += scnprintf(buf + used, len - used, "\nfrom:");
-	for_each_possible_cpu(cpu) {
+	used += scnम_लिखो(buf + used, len - used, "\nfrom:");
+	क्रम_each_possible_cpu(cpu) अणु
 		s = per_cpu_ptr(stats->pcpu_stats, cpu);
-		used += scnprintf(buf + used, len - used, " %d",
-				  atomic_read(&s->cpu_migr.from));
-	}
+		used += scnम_लिखो(buf + used, len - used, " %d",
+				  atomic_पढ़ो(&s->cpu_migr.from));
+	पूर्ण
 
-	used += scnprintf(buf + used, len - used, "\nto  :");
-	for_each_possible_cpu(cpu) {
+	used += scnम_लिखो(buf + used, len - used, "\nto  :");
+	क्रम_each_possible_cpu(cpu) अणु
 		s = per_cpu_ptr(stats->pcpu_stats, cpu);
-		used += scnprintf(buf + used, len - used, " %d",
+		used += scnम_लिखो(buf + used, len - used, " %d",
 				  s->cpu_migr.to);
-	}
-	used += scnprintf(buf + used, len - used, "\n");
+	पूर्ण
+	used += scnम_लिखो(buf + used, len - used, "\n");
 
-	return used;
-}
+	वापस used;
+पूर्ण
 
-int rtrs_clt_stats_reconnects_to_str(struct rtrs_clt_stats *stats, char *buf,
-				      size_t len)
-{
-	return scnprintf(buf, len, "%d %d\n",
+पूर्णांक rtrs_clt_stats_reconnects_to_str(काष्ठा rtrs_clt_stats *stats, अक्षर *buf,
+				      माप_प्रकार len)
+अणु
+	वापस scnम_लिखो(buf, len, "%d %d\n",
 			 stats->reconnects.successful_cnt,
 			 stats->reconnects.fail_cnt);
-}
+पूर्ण
 
-ssize_t rtrs_clt_stats_rdma_to_str(struct rtrs_clt_stats *stats,
-				    char *page, size_t len)
-{
-	struct rtrs_clt_stats_rdma sum;
-	struct rtrs_clt_stats_rdma *r;
-	int cpu;
+sमाप_प्रकार rtrs_clt_stats_rdma_to_str(काष्ठा rtrs_clt_stats *stats,
+				    अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा rtrs_clt_stats_rdma sum;
+	काष्ठा rtrs_clt_stats_rdma *r;
+	पूर्णांक cpu;
 
-	memset(&sum, 0, sizeof(sum));
+	स_रखो(&sum, 0, माप(sum));
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		r = &per_cpu_ptr(stats->pcpu_stats, cpu)->rdma;
 
 		sum.dir[READ].cnt	  += r->dir[READ].cnt;
-		sum.dir[READ].size_total  += r->dir[READ].size_total;
+		sum.dir[READ].माप_प्रकारotal  += r->dir[READ].माप_प्रकारotal;
 		sum.dir[WRITE].cnt	  += r->dir[WRITE].cnt;
-		sum.dir[WRITE].size_total += r->dir[WRITE].size_total;
+		sum.dir[WRITE].माप_प्रकारotal += r->dir[WRITE].माप_प्रकारotal;
 		sum.failover_cnt	  += r->failover_cnt;
-	}
+	पूर्ण
 
-	return scnprintf(page, len, "%llu %llu %llu %llu %u %llu\n",
-			 sum.dir[READ].cnt, sum.dir[READ].size_total,
-			 sum.dir[WRITE].cnt, sum.dir[WRITE].size_total,
-			 atomic_read(&stats->inflight), sum.failover_cnt);
-}
+	वापस scnम_लिखो(page, len, "%llu %llu %llu %llu %u %llu\n",
+			 sum.dir[READ].cnt, sum.dir[READ].माप_प्रकारotal,
+			 sum.dir[WRITE].cnt, sum.dir[WRITE].माप_प्रकारotal,
+			 atomic_पढ़ो(&stats->inflight), sum.failover_cnt);
+पूर्ण
 
-ssize_t rtrs_clt_reset_all_help(struct rtrs_clt_stats *s,
-				 char *page, size_t len)
-{
-	return scnprintf(page, len, "echo 1 to reset all statistics\n");
-}
+sमाप_प्रकार rtrs_clt_reset_all_help(काष्ठा rtrs_clt_stats *s,
+				 अक्षर *page, माप_प्रकार len)
+अणु
+	वापस scnम_लिखो(page, len, "echo 1 to reset all statistics\n");
+पूर्ण
 
-int rtrs_clt_reset_rdma_stats(struct rtrs_clt_stats *stats, bool enable)
-{
-	struct rtrs_clt_stats_pcpu *s;
-	int cpu;
+पूर्णांक rtrs_clt_reset_rdma_stats(काष्ठा rtrs_clt_stats *stats, bool enable)
+अणु
+	काष्ठा rtrs_clt_stats_pcpu *s;
+	पूर्णांक cpu;
 
-	if (!enable)
-		return -EINVAL;
+	अगर (!enable)
+		वापस -EINVAL;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		s = per_cpu_ptr(stats->pcpu_stats, cpu);
-		memset(&s->rdma, 0, sizeof(s->rdma));
-	}
+		स_रखो(&s->rdma, 0, माप(s->rdma));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtrs_clt_reset_cpu_migr_stats(struct rtrs_clt_stats *stats, bool enable)
-{
-	struct rtrs_clt_stats_pcpu *s;
-	int cpu;
+पूर्णांक rtrs_clt_reset_cpu_migr_stats(काष्ठा rtrs_clt_stats *stats, bool enable)
+अणु
+	काष्ठा rtrs_clt_stats_pcpu *s;
+	पूर्णांक cpu;
 
-	if (!enable)
-		return -EINVAL;
+	अगर (!enable)
+		वापस -EINVAL;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		s = per_cpu_ptr(stats->pcpu_stats, cpu);
-		memset(&s->cpu_migr, 0, sizeof(s->cpu_migr));
-	}
+		स_रखो(&s->cpu_migr, 0, माप(s->cpu_migr));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtrs_clt_reset_reconnects_stat(struct rtrs_clt_stats *stats, bool enable)
-{
-	if (!enable)
-		return -EINVAL;
+पूर्णांक rtrs_clt_reset_reconnects_stat(काष्ठा rtrs_clt_stats *stats, bool enable)
+अणु
+	अगर (!enable)
+		वापस -EINVAL;
 
-	memset(&stats->reconnects, 0, sizeof(stats->reconnects));
+	स_रखो(&stats->reconnects, 0, माप(stats->reconnects));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtrs_clt_reset_all_stats(struct rtrs_clt_stats *s, bool enable)
-{
-	if (enable) {
+पूर्णांक rtrs_clt_reset_all_stats(काष्ठा rtrs_clt_stats *s, bool enable)
+अणु
+	अगर (enable) अणु
 		rtrs_clt_reset_rdma_stats(s, enable);
 		rtrs_clt_reset_cpu_migr_stats(s, enable);
 		rtrs_clt_reset_reconnects_stat(s, enable);
 		atomic_set(&s->inflight, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline void rtrs_clt_update_rdma_stats(struct rtrs_clt_stats *stats,
-					       size_t size, int d)
-{
-	struct rtrs_clt_stats_pcpu *s;
+अटल अंतरभूत व्योम rtrs_clt_update_rdma_stats(काष्ठा rtrs_clt_stats *stats,
+					       माप_प्रकार size, पूर्णांक d)
+अणु
+	काष्ठा rtrs_clt_stats_pcpu *s;
 
 	s = this_cpu_ptr(stats->pcpu_stats);
 	s->rdma.dir[d].cnt++;
-	s->rdma.dir[d].size_total += size;
-}
+	s->rdma.dir[d].माप_प्रकारotal += size;
+पूर्ण
 
-void rtrs_clt_update_all_stats(struct rtrs_clt_io_req *req, int dir)
-{
-	struct rtrs_clt_con *con = req->con;
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_clt_stats *stats = sess->stats;
-	unsigned int len;
+व्योम rtrs_clt_update_all_stats(काष्ठा rtrs_clt_io_req *req, पूर्णांक dir)
+अणु
+	काष्ठा rtrs_clt_con *con = req->con;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_clt_stats *stats = sess->stats;
+	अचिन्हित पूर्णांक len;
 
 	len = req->usr_len + req->data_len;
 	rtrs_clt_update_rdma_stats(stats, len, dir);
-	if (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
+	अगर (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
 		atomic_inc(&stats->inflight);
-}
+पूर्ण
 
-int rtrs_clt_init_stats(struct rtrs_clt_stats *stats)
-{
+पूर्णांक rtrs_clt_init_stats(काष्ठा rtrs_clt_stats *stats)
+अणु
 	stats->pcpu_stats = alloc_percpu(typeof(*stats->pcpu_stats));
-	if (!stats->pcpu_stats)
-		return -ENOMEM;
+	अगर (!stats->pcpu_stats)
+		वापस -ENOMEM;
 
 	/*
 	 * successful_cnt will be set to 0 after session
-	 * is established for the first time
+	 * is established क्रम the first समय
 	 */
 	stats->reconnects.successful_cnt = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * originally written by: Kirk Reiser <kirk@braille.uwo.ca>
- * this version considerably modified by David Borowski, david575@rogers.com
+ * this version considerably modअगरied by David Borowski, david575@rogers.com
  *
  * Copyright (C) 1998-99  Kirk Reiser.
  * Copyright (C) 2003 David Borowski.
  *
- * specificly written as a driver for the speakup screenreview
+ * specअगरicly written as a driver क्रम the speakup screenreview
  * s not a general device driver.
  */
-#include "spk_priv.h"
-#include "speakup.h"
+#समावेश "spk_priv.h"
+#समावेश "speakup.h"
 
-#define DRV_VERSION "2.11"
-#define SYNTH_CLEAR 0x18
-#define PROCSPEECH '\r' /* process speech char */
+#घोषणा DRV_VERSION "2.11"
+#घोषणा SYNTH_CLEAR 0x18
+#घोषणा PROCSPEECH '\r' /* process speech अक्षर */
 
-static struct var_t vars[] = {
-	{ CAPS_START, .u.s = {"\x05P8" } },
-	{ CAPS_STOP, .u.s = {"\x05P5" } },
-	{ RATE, .u.n = {"\x05R%d", 5, 0, 9, 0, 0, NULL } },
-	{ PITCH, .u.n = {"\x05P%d", 5, 0, 9, 0, 0, NULL } },
-	{ VOL, .u.n = {"\x05V%d", 5, 0, 9, 0, 0, NULL } },
-	{ TONE, .u.n = {"\x05T%c", 12, 0, 25, 61, 0, NULL } },
-	{ DIRECT, .u.n = {NULL, 0, 0, 1, 0, 0, NULL } },
+अटल काष्ठा var_t vars[] = अणु
+	अणु CAPS_START, .u.s = अणु"\x05P8" पूर्ण पूर्ण,
+	अणु CAPS_STOP, .u.s = अणु"\x05P5" पूर्ण पूर्ण,
+	अणु RATE, .u.n = अणु"\x05R%d", 5, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु PITCH, .u.n = अणु"\x05P%d", 5, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु VOL, .u.n = अणु"\x05V%d", 5, 0, 9, 0, 0, शून्य पूर्ण पूर्ण,
+	अणु TONE, .u.n = अणु"\x05T%c", 12, 0, 25, 61, 0, शून्य पूर्ण पूर्ण,
+	अणु सूचीECT, .u.n = अणुशून्य, 0, 0, 1, 0, 0, शून्य पूर्ण पूर्ण,
 	V_LAST_VAR
-	 };
+	 पूर्ण;
 
 /* These attributes will appear in /sys/accessibility/speakup/txprt. */
 
-static struct kobj_attribute caps_start_attribute =
+अटल काष्ठा kobj_attribute caps_start_attribute =
 	__ATTR(caps_start, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute caps_stop_attribute =
+अटल काष्ठा kobj_attribute caps_stop_attribute =
 	__ATTR(caps_stop, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute pitch_attribute =
+अटल काष्ठा kobj_attribute pitch_attribute =
 	__ATTR(pitch, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute rate_attribute =
+अटल काष्ठा kobj_attribute rate_attribute =
 	__ATTR(rate, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute tone_attribute =
+अटल काष्ठा kobj_attribute tone_attribute =
 	__ATTR(tone, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute vol_attribute =
+अटल काष्ठा kobj_attribute vol_attribute =
 	__ATTR(vol, 0644, spk_var_show, spk_var_store);
 
-static struct kobj_attribute delay_time_attribute =
-	__ATTR(delay_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute direct_attribute =
+अटल काष्ठा kobj_attribute delay_समय_attribute =
+	__ATTR(delay_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute direct_attribute =
 	__ATTR(direct, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute full_time_attribute =
-	__ATTR(full_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute jiffy_delta_attribute =
-	__ATTR(jiffy_delta, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute trigger_time_attribute =
-	__ATTR(trigger_time, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute full_समय_attribute =
+	__ATTR(full_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute jअगरfy_delta_attribute =
+	__ATTR(jअगरfy_delta, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute trigger_समय_attribute =
+	__ATTR(trigger_समय, 0644, spk_var_show, spk_var_store);
 
 /*
  * Create a group of attributes so that we can create and destroy them all
  * at once.
  */
-static struct attribute *synth_attrs[] = {
+अटल काष्ठा attribute *synth_attrs[] = अणु
 	&caps_start_attribute.attr,
 	&caps_stop_attribute.attr,
 	&pitch_attribute.attr,
 	&rate_attribute.attr,
 	&tone_attribute.attr,
 	&vol_attribute.attr,
-	&delay_time_attribute.attr,
+	&delay_समय_attribute.attr,
 	&direct_attribute.attr,
-	&full_time_attribute.attr,
-	&jiffy_delta_attribute.attr,
-	&trigger_time_attribute.attr,
-	NULL,	/* need to NULL terminate the list of attributes */
-};
+	&full_समय_attribute.attr,
+	&jअगरfy_delta_attribute.attr,
+	&trigger_समय_attribute.attr,
+	शून्य,	/* need to शून्य terminate the list of attributes */
+पूर्ण;
 
-static struct spk_synth synth_txprt = {
+अटल काष्ठा spk_synth synth_txprt = अणु
 	.name = "txprt",
 	.version = DRV_VERSION,
-	.long_name = "Transport",
+	.दीर्घ_name = "Transport",
 	.init = "\x05N1",
 	.procspeech = PROCSPEECH,
 	.clear = SYNTH_CLEAR,
 	.delay = 500,
 	.trigger = 50,
-	.jiffies = 50,
+	.jअगरfies = 50,
 	.full = 40000,
 	.dev_name = SYNTH_DEFAULT_DEV,
 	.startup = SYNTH_START,
@@ -91,27 +92,27 @@ static struct spk_synth synth_txprt = {
 	.probe = spk_ttyio_synth_probe,
 	.release = spk_ttyio_release,
 	.synth_immediate = spk_ttyio_synth_immediate,
-	.catch_up = spk_do_catch_up,
+	.catch_up = spk_करो_catch_up,
 	.flush = spk_synth_flush,
 	.is_alive = spk_synth_is_alive_restart,
-	.synth_adjust = NULL,
-	.read_buff_add = NULL,
-	.get_index = NULL,
-	.indexing = {
-		.command = NULL,
+	.synth_adjust = शून्य,
+	.पढ़ो_buff_add = शून्य,
+	.get_index = शून्य,
+	.indexing = अणु
+		.command = शून्य,
 		.lowindex = 0,
 		.highindex = 0,
 		.currindex = 0,
-	},
-	.attributes = {
+	पूर्ण,
+	.attributes = अणु
 		.attrs = synth_attrs,
 		.name = "txprt",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_param_named(ser, synth_txprt.ser, int, 0444);
-module_param_named(dev, synth_txprt.dev_name, charp, 0444);
-module_param_named(start, synth_txprt.startup, short, 0444);
+module_param_named(ser, synth_txprt.ser, पूर्णांक, 0444);
+module_param_named(dev, synth_txprt.dev_name, अक्षरp, 0444);
+module_param_named(start, synth_txprt.startup, लघु, 0444);
 
 MODULE_PARM_DESC(ser, "Set the serial port for the synthesizer (0-based).");
 MODULE_PARM_DESC(dev, "Set the device e.g. ttyUSB0, for the synthesizer.");

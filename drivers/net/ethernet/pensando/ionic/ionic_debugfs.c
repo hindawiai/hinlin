@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#include <linux/pci.h>
-#include <linux/netdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
 
-#include "ionic.h"
-#include "ionic_bus.h"
-#include "ionic_lif.h"
-#include "ionic_debugfs.h"
+#समावेश "ionic.h"
+#समावेश "ionic_bus.h"
+#समावेश "ionic_lif.h"
+#समावेश "ionic_debugfs.h"
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static struct dentry *ionic_dir;
+अटल काष्ठा dentry *ionic_dir;
 
-void ionic_debugfs_create(void)
-{
-	ionic_dir = debugfs_create_dir(IONIC_DRV_NAME, NULL);
-}
+व्योम ionic_debugfs_create(व्योम)
+अणु
+	ionic_dir = debugfs_create_dir(IONIC_DRV_NAME, शून्य);
+पूर्ण
 
-void ionic_debugfs_destroy(void)
-{
-	debugfs_remove_recursive(ionic_dir);
-}
+व्योम ionic_debugfs_destroy(व्योम)
+अणु
+	debugfs_हटाओ_recursive(ionic_dir);
+पूर्ण
 
-void ionic_debugfs_add_dev(struct ionic *ionic)
-{
+व्योम ionic_debugfs_add_dev(काष्ठा ionic *ionic)
+अणु
 	ionic->dentry = debugfs_create_dir(ionic_bus_info(ionic), ionic_dir);
-}
+पूर्ण
 
-void ionic_debugfs_del_dev(struct ionic *ionic)
-{
-	debugfs_remove_recursive(ionic->dentry);
-	ionic->dentry = NULL;
-}
+व्योम ionic_debugfs_del_dev(काष्ठा ionic *ionic)
+अणु
+	debugfs_हटाओ_recursive(ionic->dentry);
+	ionic->dentry = शून्य;
+पूर्ण
 
-static int identity_show(struct seq_file *seq, void *v)
-{
-	struct ionic *ionic = seq->private;
-	struct ionic_identity *ident;
+अटल पूर्णांक identity_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा ionic *ionic = seq->निजी;
+	काष्ठा ionic_identity *ident;
 
 	ident = &ionic->ident;
 
-	seq_printf(seq, "nlifs:            %d\n", ident->dev.nlifs);
-	seq_printf(seq, "nintrs:           %d\n", ident->dev.nintrs);
-	seq_printf(seq, "ndbpgs_per_lif:   %d\n", ident->dev.ndbpgs_per_lif);
-	seq_printf(seq, "intr_coal_mult:   %d\n", ident->dev.intr_coal_mult);
-	seq_printf(seq, "intr_coal_div:    %d\n", ident->dev.intr_coal_div);
+	seq_म_लिखो(seq, "nlifs:            %d\n", ident->dev.nlअगरs);
+	seq_म_लिखो(seq, "nintrs:           %d\n", ident->dev.nपूर्णांकrs);
+	seq_म_लिखो(seq, "ndbpgs_per_lif:   %d\n", ident->dev.ndbpgs_per_lअगर);
+	seq_म_लिखो(seq, "intr_coal_mult:   %d\n", ident->dev.पूर्णांकr_coal_mult);
+	seq_म_लिखो(seq, "intr_coal_div:    %d\n", ident->dev.पूर्णांकr_coal_भाग);
 
-	seq_printf(seq, "max_ucast_filters:  %d\n", ident->lif.eth.max_ucast_filters);
-	seq_printf(seq, "max_mcast_filters:  %d\n", ident->lif.eth.max_mcast_filters);
+	seq_म_लिखो(seq, "max_ucast_filters:  %d\n", ident->lअगर.eth.max_ucast_filters);
+	seq_म_लिखो(seq, "max_mcast_filters:  %d\n", ident->lअगर.eth.max_mcast_filters);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(identity);
 
-void ionic_debugfs_add_ident(struct ionic *ionic)
-{
+व्योम ionic_debugfs_add_ident(काष्ठा ionic *ionic)
+अणु
 	debugfs_create_file("identity", 0400, ionic->dentry,
 			    ionic, &identity_fops);
-}
+पूर्ण
 
-void ionic_debugfs_add_sizes(struct ionic *ionic)
-{
+व्योम ionic_debugfs_add_sizes(काष्ठा ionic *ionic)
+अणु
 	debugfs_create_u32("nlifs", 0400, ionic->dentry,
-			   (u32 *)&ionic->ident.dev.nlifs);
-	debugfs_create_u32("nintrs", 0400, ionic->dentry, &ionic->nintrs);
+			   (u32 *)&ionic->ident.dev.nlअगरs);
+	debugfs_create_u32("nintrs", 0400, ionic->dentry, &ionic->nपूर्णांकrs);
 
 	debugfs_create_u32("ntxqs_per_lif", 0400, ionic->dentry,
-			   (u32 *)&ionic->ident.lif.eth.config.queue_count[IONIC_QTYPE_TXQ]);
+			   (u32 *)&ionic->ident.lअगर.eth.config.queue_count[IONIC_QTYPE_TXQ]);
 	debugfs_create_u32("nrxqs_per_lif", 0400, ionic->dentry,
-			   (u32 *)&ionic->ident.lif.eth.config.queue_count[IONIC_QTYPE_RXQ]);
-}
+			   (u32 *)&ionic->ident.lअगर.eth.config.queue_count[IONIC_QTYPE_RXQ]);
+पूर्ण
 
-static int q_tail_show(struct seq_file *seq, void *v)
-{
-	struct ionic_queue *q = seq->private;
+अटल पूर्णांक q_tail_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा ionic_queue *q = seq->निजी;
 
-	seq_printf(seq, "%d\n", q->tail_idx);
+	seq_म_लिखो(seq, "%d\n", q->tail_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(q_tail);
 
-static int q_head_show(struct seq_file *seq, void *v)
-{
-	struct ionic_queue *q = seq->private;
+अटल पूर्णांक q_head_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा ionic_queue *q = seq->निजी;
 
-	seq_printf(seq, "%d\n", q->head_idx);
+	seq_म_लिखो(seq, "%d\n", q->head_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(q_head);
 
-static int cq_tail_show(struct seq_file *seq, void *v)
-{
-	struct ionic_cq *cq = seq->private;
+अटल पूर्णांक cq_tail_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा ionic_cq *cq = seq->निजी;
 
-	seq_printf(seq, "%d\n", cq->tail_idx);
+	seq_म_लिखो(seq, "%d\n", cq->tail_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(cq_tail);
 
-static const struct debugfs_reg32 intr_ctrl_regs[] = {
-	{ .name = "coal_init", .offset = 0, },
-	{ .name = "mask", .offset = 4, },
-	{ .name = "credits", .offset = 8, },
-	{ .name = "mask_on_assert", .offset = 12, },
-	{ .name = "coal_timer", .offset = 16, },
-};
+अटल स्थिर काष्ठा debugfs_reg32 पूर्णांकr_ctrl_regs[] = अणु
+	अणु .name = "coal_init", .offset = 0, पूर्ण,
+	अणु .name = "mask", .offset = 4, पूर्ण,
+	अणु .name = "credits", .offset = 8, पूर्ण,
+	अणु .name = "mask_on_assert", .offset = 12, पूर्ण,
+	अणु .name = "coal_timer", .offset = 16, पूर्ण,
+पूर्ण;
 
-void ionic_debugfs_add_qcq(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct dentry *qcq_dentry, *q_dentry, *cq_dentry;
-	struct dentry *intr_dentry, *stats_dentry;
-	struct ionic_dev *idev = &lif->ionic->idev;
-	struct debugfs_regset32 *intr_ctrl_regset;
-	struct ionic_intr_info *intr = &qcq->intr;
-	struct debugfs_blob_wrapper *desc_blob;
-	struct device *dev = lif->ionic->dev;
-	struct ionic_queue *q = &qcq->q;
-	struct ionic_cq *cq = &qcq->cq;
+व्योम ionic_debugfs_add_qcq(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा dentry *qcq_dentry, *q_dentry, *cq_dentry;
+	काष्ठा dentry *पूर्णांकr_dentry, *stats_dentry;
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
+	काष्ठा debugfs_regset32 *पूर्णांकr_ctrl_regset;
+	काष्ठा ionic_पूर्णांकr_info *पूर्णांकr = &qcq->पूर्णांकr;
+	काष्ठा debugfs_blob_wrapper *desc_blob;
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_queue *q = &qcq->q;
+	काष्ठा ionic_cq *cq = &qcq->cq;
 
-	qcq_dentry = debugfs_create_dir(q->name, lif->dentry);
-	if (IS_ERR_OR_NULL(qcq_dentry))
-		return;
+	qcq_dentry = debugfs_create_dir(q->name, lअगर->dentry);
+	अगर (IS_ERR_OR_शून्य(qcq_dentry))
+		वापस;
 	qcq->dentry = qcq_dentry;
 
 	debugfs_create_x64("q_base_pa", 0400, qcq_dentry, &qcq->q_base_pa);
@@ -149,108 +150,108 @@ void ionic_debugfs_add_qcq(struct ionic_lif *lif, struct ionic_qcq *qcq)
 	debugfs_create_file("tail", 0400, q_dentry, q, &q_tail_fops);
 	debugfs_create_file("head", 0400, q_dentry, q, &q_head_fops);
 
-	desc_blob = devm_kzalloc(dev, sizeof(*desc_blob), GFP_KERNEL);
-	if (!desc_blob)
-		return;
+	desc_blob = devm_kzalloc(dev, माप(*desc_blob), GFP_KERNEL);
+	अगर (!desc_blob)
+		वापस;
 	desc_blob->data = q->base;
-	desc_blob->size = (unsigned long)q->num_descs * q->desc_size;
+	desc_blob->size = (अचिन्हित दीर्घ)q->num_descs * q->desc_size;
 	debugfs_create_blob("desc_blob", 0400, q_dentry, desc_blob);
 
-	if (qcq->flags & IONIC_QCQ_F_SG) {
-		desc_blob = devm_kzalloc(dev, sizeof(*desc_blob), GFP_KERNEL);
-		if (!desc_blob)
-			return;
+	अगर (qcq->flags & IONIC_QCQ_F_SG) अणु
+		desc_blob = devm_kzalloc(dev, माप(*desc_blob), GFP_KERNEL);
+		अगर (!desc_blob)
+			वापस;
 		desc_blob->data = q->sg_base;
-		desc_blob->size = (unsigned long)q->num_descs * q->sg_desc_size;
+		desc_blob->size = (अचिन्हित दीर्घ)q->num_descs * q->sg_desc_size;
 		debugfs_create_blob("sg_desc_blob", 0400, q_dentry,
 				    desc_blob);
-	}
+	पूर्ण
 
 	cq_dentry = debugfs_create_dir("cq", qcq->dentry);
 
 	debugfs_create_x64("base_pa", 0400, cq_dentry, &cq->base_pa);
 	debugfs_create_u32("num_descs", 0400, cq_dentry, &cq->num_descs);
 	debugfs_create_u32("desc_size", 0400, cq_dentry, &cq->desc_size);
-	debugfs_create_bool("done_color", 0400, cq_dentry, &cq->done_color);
+	debugfs_create_bool("done_color", 0400, cq_dentry, &cq->करोne_color);
 
 	debugfs_create_file("tail", 0400, cq_dentry, cq, &cq_tail_fops);
 
-	desc_blob = devm_kzalloc(dev, sizeof(*desc_blob), GFP_KERNEL);
-	if (!desc_blob)
-		return;
+	desc_blob = devm_kzalloc(dev, माप(*desc_blob), GFP_KERNEL);
+	अगर (!desc_blob)
+		वापस;
 	desc_blob->data = cq->base;
-	desc_blob->size = (unsigned long)cq->num_descs * cq->desc_size;
+	desc_blob->size = (अचिन्हित दीर्घ)cq->num_descs * cq->desc_size;
 	debugfs_create_blob("desc_blob", 0400, cq_dentry, desc_blob);
 
-	if (qcq->flags & IONIC_QCQ_F_INTR) {
-		intr_dentry = debugfs_create_dir("intr", qcq->dentry);
+	अगर (qcq->flags & IONIC_QCQ_F_INTR) अणु
+		पूर्णांकr_dentry = debugfs_create_dir("intr", qcq->dentry);
 
-		debugfs_create_u32("index", 0400, intr_dentry,
-				   &intr->index);
-		debugfs_create_u32("vector", 0400, intr_dentry,
-				   &intr->vector);
-		debugfs_create_u32("dim_coal_hw", 0400, intr_dentry,
-				   &intr->dim_coal_hw);
+		debugfs_create_u32("index", 0400, पूर्णांकr_dentry,
+				   &पूर्णांकr->index);
+		debugfs_create_u32("vector", 0400, पूर्णांकr_dentry,
+				   &पूर्णांकr->vector);
+		debugfs_create_u32("dim_coal_hw", 0400, पूर्णांकr_dentry,
+				   &पूर्णांकr->dim_coal_hw);
 
-		intr_ctrl_regset = devm_kzalloc(dev, sizeof(*intr_ctrl_regset),
+		पूर्णांकr_ctrl_regset = devm_kzalloc(dev, माप(*पूर्णांकr_ctrl_regset),
 						GFP_KERNEL);
-		if (!intr_ctrl_regset)
-			return;
-		intr_ctrl_regset->regs = intr_ctrl_regs;
-		intr_ctrl_regset->nregs = ARRAY_SIZE(intr_ctrl_regs);
-		intr_ctrl_regset->base = &idev->intr_ctrl[intr->index];
+		अगर (!पूर्णांकr_ctrl_regset)
+			वापस;
+		पूर्णांकr_ctrl_regset->regs = पूर्णांकr_ctrl_regs;
+		पूर्णांकr_ctrl_regset->nregs = ARRAY_SIZE(पूर्णांकr_ctrl_regs);
+		पूर्णांकr_ctrl_regset->base = &idev->पूर्णांकr_ctrl[पूर्णांकr->index];
 
-		debugfs_create_regset32("intr_ctrl", 0400, intr_dentry,
-					intr_ctrl_regset);
-	}
+		debugfs_create_regset32("intr_ctrl", 0400, पूर्णांकr_dentry,
+					पूर्णांकr_ctrl_regset);
+	पूर्ण
 
-	if (qcq->flags & IONIC_QCQ_F_NOTIFYQ) {
+	अगर (qcq->flags & IONIC_QCQ_F_NOTIFYQ) अणु
 		stats_dentry = debugfs_create_dir("notifyblock", qcq->dentry);
 
 		debugfs_create_u64("eid", 0400, stats_dentry,
-				   (u64 *)&lif->info->status.eid);
+				   (u64 *)&lअगर->info->status.eid);
 		debugfs_create_u16("link_status", 0400, stats_dentry,
-				   (u16 *)&lif->info->status.link_status);
+				   (u16 *)&lअगर->info->status.link_status);
 		debugfs_create_u32("link_speed", 0400, stats_dentry,
-				   (u32 *)&lif->info->status.link_speed);
+				   (u32 *)&lअगर->info->status.link_speed);
 		debugfs_create_u16("link_down_count", 0400, stats_dentry,
-				   (u16 *)&lif->info->status.link_down_count);
-	}
-}
+				   (u16 *)&lअगर->info->status.link_करोwn_count);
+	पूर्ण
+पूर्ण
 
-static int netdev_show(struct seq_file *seq, void *v)
-{
-	struct net_device *netdev = seq->private;
+अटल पूर्णांक netdev_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा net_device *netdev = seq->निजी;
 
-	seq_printf(seq, "%s\n", netdev->name);
+	seq_म_लिखो(seq, "%s\n", netdev->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(netdev);
 
-void ionic_debugfs_add_lif(struct ionic_lif *lif)
-{
-	struct dentry *lif_dentry;
+व्योम ionic_debugfs_add_lअगर(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा dentry *lअगर_dentry;
 
-	lif_dentry = debugfs_create_dir(lif->name, lif->ionic->dentry);
-	if (IS_ERR_OR_NULL(lif_dentry))
-		return;
-	lif->dentry = lif_dentry;
+	lअगर_dentry = debugfs_create_dir(lअगर->name, lअगर->ionic->dentry);
+	अगर (IS_ERR_OR_शून्य(lअगर_dentry))
+		वापस;
+	lअगर->dentry = lअगर_dentry;
 
-	debugfs_create_file("netdev", 0400, lif->dentry,
-			    lif->netdev, &netdev_fops);
-}
+	debugfs_create_file("netdev", 0400, lअगर->dentry,
+			    lअगर->netdev, &netdev_fops);
+पूर्ण
 
-void ionic_debugfs_del_lif(struct ionic_lif *lif)
-{
-	debugfs_remove_recursive(lif->dentry);
-	lif->dentry = NULL;
-}
+व्योम ionic_debugfs_del_lअगर(काष्ठा ionic_lअगर *lअगर)
+अणु
+	debugfs_हटाओ_recursive(lअगर->dentry);
+	lअगर->dentry = शून्य;
+पूर्ण
 
-void ionic_debugfs_del_qcq(struct ionic_qcq *qcq)
-{
-	debugfs_remove_recursive(qcq->dentry);
-	qcq->dentry = NULL;
-}
+व्योम ionic_debugfs_del_qcq(काष्ठा ionic_qcq *qcq)
+अणु
+	debugfs_हटाओ_recursive(qcq->dentry);
+	qcq->dentry = शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * generic videomode helper
  *
  * Copyright (c) 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>, Pengutronix
  */
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/of.h>
-#include <video/display_timing.h>
-#include <video/of_display_timing.h>
-#include <video/of_videomode.h>
-#include <video/videomode.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/of.h>
+#समावेश <video/display_timing.h>
+#समावेश <video/of_display_timing.h>
+#समावेश <video/of_videomode.h>
+#समावेश <video/videomode.h>
 
 /**
  * of_get_videomode - get the videomode #<index> from devicetree
  * @np: devicenode with the display_timings
- * @vm: set to return value
- * @index: index into list of display_timings
+ * @vm: set to वापस value
+ * @index: index पूर्णांकo list of display_timings
  *	    (Set this to OF_USE_NATIVE_MODE to use whatever mode is
- *	     specified as native mode in the DT.)
+ *	     specअगरied as native mode in the DT.)
  *
  * DESCRIPTION:
  * Get a list of all display timings and put the one
- * specified by index into *vm. This function should only be used, if
+ * specअगरied by index पूर्णांकo *vm. This function should only be used, अगर
  * only one videomode is to be retrieved. A driver that needs to work
  * with multiple/all videomodes should work with
  * of_get_display_timings instead.
  **/
-int of_get_videomode(struct device_node *np, struct videomode *vm,
-		     int index)
-{
-	struct display_timings *disp;
-	int ret;
+पूर्णांक of_get_videomode(काष्ठा device_node *np, काष्ठा videomode *vm,
+		     पूर्णांक index)
+अणु
+	काष्ठा display_timings *disp;
+	पूर्णांक ret;
 
 	disp = of_get_display_timings(np);
-	if (!disp) {
+	अगर (!disp) अणु
 		pr_err("%pOF: no timings specified\n", np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (index == OF_USE_NATIVE_MODE)
+	अगर (index == OF_USE_NATIVE_MODE)
 		index = disp->native_mode;
 
 	ret = videomode_from_timings(disp, vm, index);
 
 	display_timings_release(disp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_get_videomode);

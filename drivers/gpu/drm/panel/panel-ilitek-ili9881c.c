@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2017-2018, Bootlin
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/fb.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/gpio/consumer.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_modes.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_modes.h>
+#समावेश <drm/drm_panel.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-enum ili9881c_op {
+क्रमागत ili9881c_op अणु
 	ILI9881C_SWITCH_PAGE,
 	ILI9881C_COMMAND,
-};
+पूर्ण;
 
-struct ili9881c_instr {
-	enum ili9881c_op	op;
+काष्ठा ili9881c_instr अणु
+	क्रमागत ili9881c_op	op;
 
-	union arg {
-		struct cmd {
+	जोड़ arg अणु
+		काष्ठा cmd अणु
 			u8	cmd;
 			u8	data;
-		} cmd;
+		पूर्ण cmd;
 		u8	page;
-	} arg;
-};
+	पूर्ण arg;
+पूर्ण;
 
-struct ili9881c_desc {
-	const struct ili9881c_instr *init;
-	const size_t init_length;
-	const struct drm_display_mode *mode;
-};
+काष्ठा ili9881c_desc अणु
+	स्थिर काष्ठा ili9881c_instr *init;
+	स्थिर माप_प्रकार init_length;
+	स्थिर काष्ठा drm_display_mode *mode;
+पूर्ण;
 
-struct ili9881c {
-	struct drm_panel	panel;
-	struct mipi_dsi_device	*dsi;
-	const struct ili9881c_desc	*desc;
+काष्ठा ili9881c अणु
+	काष्ठा drm_panel	panel;
+	काष्ठा mipi_dsi_device	*dsi;
+	स्थिर काष्ठा ili9881c_desc	*desc;
 
-	struct regulator	*power;
-	struct gpio_desc	*reset;
-};
+	काष्ठा regulator	*घातer;
+	काष्ठा gpio_desc	*reset;
+पूर्ण;
 
-#define ILI9881C_SWITCH_PAGE_INSTR(_page)	\
-	{					\
+#घोषणा ILI9881C_SWITCH_PAGE_INSTR(_page)	\
+	अणु					\
 		.op = ILI9881C_SWITCH_PAGE,	\
-		.arg = {			\
+		.arg = अणु			\
 			.page = (_page),	\
-		},				\
-	}
+		पूर्ण,				\
+	पूर्ण
 
-#define ILI9881C_COMMAND_INSTR(_cmd, _data)		\
-	{						\
+#घोषणा ILI9881C_COMMAND_INSTR(_cmd, _data)		\
+	अणु						\
 		.op = ILI9881C_COMMAND,		\
-		.arg = {				\
-			.cmd = {			\
+		.arg = अणु				\
+			.cmd = अणु			\
 				.cmd = (_cmd),		\
 				.data = (_data),	\
-			},				\
-		},					\
-	}
+			पूर्ण,				\
+		पूर्ण,					\
+	पूर्ण
 
-static const struct ili9881c_instr lhr050h41_init[] = {
+अटल स्थिर काष्ठा ili9881c_instr lhr050h41_init[] = अणु
 	ILI9881C_SWITCH_PAGE_INSTR(3),
 	ILI9881C_COMMAND_INSTR(0x01, 0x00),
 	ILI9881C_COMMAND_INSTR(0x02, 0x00),
@@ -258,9 +259,9 @@ static const struct ili9881c_instr lhr050h41_init[] = {
 	ILI9881C_COMMAND_INSTR(0xD1, 0x4b),
 	ILI9881C_COMMAND_INSTR(0xD2, 0x59),
 	ILI9881C_COMMAND_INSTR(0xD3, 0x3F),
-};
+पूर्ण;
 
-static const struct ili9881c_instr k101_im2byl02_init[] = {
+अटल स्थिर काष्ठा ili9881c_instr k101_im2byl02_init[] = अणु
 	ILI9881C_SWITCH_PAGE_INSTR(3),
 	ILI9881C_COMMAND_INSTR(0x01, 0x00),
 	ILI9881C_COMMAND_INSTR(0x02, 0x00),
@@ -313,7 +314,7 @@ static const struct ili9881c_instr k101_im2byl02_init[] = {
 	ILI9881C_COMMAND_INSTR(0x31, 0x00),
 	ILI9881C_COMMAND_INSTR(0x32, 0x00),
 	ILI9881C_COMMAND_INSTR(0x33, 0x00),
-	ILI9881C_COMMAND_INSTR(0x34, 0x00), /* GPWR1/2 non overlap time 2.62us */
+	ILI9881C_COMMAND_INSTR(0x34, 0x00), /* GPWR1/2 non overlap समय 2.62us */
 	ILI9881C_COMMAND_INSTR(0x35, 0x00),
 	ILI9881C_COMMAND_INSTR(0x36, 0x00),
 	ILI9881C_COMMAND_INSTR(0x37, 0x00),
@@ -392,7 +393,7 @@ static const struct ili9881c_instr k101_im2byl02_init[] = {
 	ILI9881C_SWITCH_PAGE_INSTR(4),
 	ILI9881C_COMMAND_INSTR(0x3B, 0xC0), /* ILI4003D sel */
 	ILI9881C_COMMAND_INSTR(0x6C, 0x15), /* Set VCORE voltage = 1.5V */
-	ILI9881C_COMMAND_INSTR(0x6E, 0x2A), /* di_pwr_reg=0 for power mode 2A, VGH clamp 18V */
+	ILI9881C_COMMAND_INSTR(0x6E, 0x2A), /* di_pwr_reg=0 क्रम घातer mode 2A, VGH clamp 18V */
 	ILI9881C_COMMAND_INSTR(0x6F, 0x33), /* pumping ratio VGH=5x VGL=-3x */
 	ILI9881C_COMMAND_INSTR(0x8D, 0x1B), /* VGL clamp -10V */
 	ILI9881C_COMMAND_INSTR(0x87, 0xBA), /* ESD */
@@ -451,58 +452,58 @@ static const struct ili9881c_instr k101_im2byl02_init[] = {
 	ILI9881C_COMMAND_INSTR(0xD1, 0x4C), /* VN8 */
 	ILI9881C_COMMAND_INSTR(0xD2, 0x5D), /* VN4 */
 	ILI9881C_COMMAND_INSTR(0xD3, 0x3F), /* VN0 */
-};
+पूर्ण;
 
-static inline struct ili9881c *panel_to_ili9881c(struct drm_panel *panel)
-{
-	return container_of(panel, struct ili9881c, panel);
-}
+अटल अंतरभूत काष्ठा ili9881c *panel_to_ili9881c(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा ili9881c, panel);
+पूर्ण
 
 /*
- * The panel seems to accept some private DCS commands that map
- * directly to registers.
+ * The panel seems to accept some निजी DCS commands that map
+ * directly to रेजिस्टरs.
  *
  * It is organised by page, with each page having its own set of
- * registers, and the first page looks like it's holding the standard
+ * रेजिस्टरs, and the first page looks like it's holding the standard
  * DCS commands.
  *
- * So before any attempt at sending a command or data, we have to be
- * sure if we're in the right page or not.
+ * So beक्रमe any attempt at sending a command or data, we have to be
+ * sure अगर we're in the right page or not.
  */
-static int ili9881c_switch_page(struct ili9881c *ctx, u8 page)
-{
-	u8 buf[4] = { 0xff, 0x98, 0x81, page };
-	int ret;
+अटल पूर्णांक ili9881c_चयन_page(काष्ठा ili9881c *ctx, u8 page)
+अणु
+	u8 buf[4] = अणु 0xff, 0x98, 0x81, page पूर्ण;
+	पूर्णांक ret;
 
-	ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
-	if (ret < 0)
-		return ret;
+	ret = mipi_dsi_dcs_ग_लिखो_buffer(ctx->dsi, buf, माप(buf));
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ili9881c_send_cmd_data(struct ili9881c *ctx, u8 cmd, u8 data)
-{
-	u8 buf[2] = { cmd, data };
-	int ret;
+अटल पूर्णांक ili9881c_send_cmd_data(काष्ठा ili9881c *ctx, u8 cmd, u8 data)
+अणु
+	u8 buf[2] = अणु cmd, data पूर्ण;
+	पूर्णांक ret;
 
-	ret = mipi_dsi_dcs_write_buffer(ctx->dsi, buf, sizeof(buf));
-	if (ret < 0)
-		return ret;
+	ret = mipi_dsi_dcs_ग_लिखो_buffer(ctx->dsi, buf, माप(buf));
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ili9881c_prepare(struct drm_panel *panel)
-{
-	struct ili9881c *ctx = panel_to_ili9881c(panel);
-	unsigned int i;
-	int ret;
+अटल पूर्णांक ili9881c_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा ili9881c *ctx = panel_to_ili9881c(panel);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	/* Power the panel */
-	ret = regulator_enable(ctx->power);
-	if (ret)
-		return ret;
+	ret = regulator_enable(ctx->घातer);
+	अगर (ret)
+		वापस ret;
 	msleep(5);
 
 	/* And reset it */
@@ -512,65 +513,65 @@ static int ili9881c_prepare(struct drm_panel *panel)
 	gpiod_set_value(ctx->reset, 0);
 	msleep(20);
 
-	for (i = 0; i < ctx->desc->init_length; i++) {
-		const struct ili9881c_instr *instr = &ctx->desc->init[i];
+	क्रम (i = 0; i < ctx->desc->init_length; i++) अणु
+		स्थिर काष्ठा ili9881c_instr *instr = &ctx->desc->init[i];
 
-		if (instr->op == ILI9881C_SWITCH_PAGE)
-			ret = ili9881c_switch_page(ctx, instr->arg.page);
-		else if (instr->op == ILI9881C_COMMAND)
+		अगर (instr->op == ILI9881C_SWITCH_PAGE)
+			ret = ili9881c_चयन_page(ctx, instr->arg.page);
+		अन्यथा अगर (instr->op == ILI9881C_COMMAND)
 			ret = ili9881c_send_cmd_data(ctx, instr->arg.cmd.cmd,
 						      instr->arg.cmd.data);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = ili9881c_switch_page(ctx, 0);
-	if (ret)
-		return ret;
+	ret = ili9881c_चयन_page(ctx, 0);
+	अगर (ret)
+		वापस ret;
 
 	ret = mipi_dsi_dcs_set_tear_on(ctx->dsi, MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = mipi_dsi_dcs_exit_sleep_mode(ctx->dsi);
-	if (ret)
-		return ret;
+	ret = mipi_dsi_dcs_निकास_sleep_mode(ctx->dsi);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ili9881c_enable(struct drm_panel *panel)
-{
-	struct ili9881c *ctx = panel_to_ili9881c(panel);
+अटल पूर्णांक ili9881c_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा ili9881c *ctx = panel_to_ili9881c(panel);
 
 	msleep(120);
 
 	mipi_dsi_dcs_set_display_on(ctx->dsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ili9881c_disable(struct drm_panel *panel)
-{
-	struct ili9881c *ctx = panel_to_ili9881c(panel);
+अटल पूर्णांक ili9881c_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा ili9881c *ctx = panel_to_ili9881c(panel);
 
-	return mipi_dsi_dcs_set_display_off(ctx->dsi);
-}
+	वापस mipi_dsi_dcs_set_display_off(ctx->dsi);
+पूर्ण
 
-static int ili9881c_unprepare(struct drm_panel *panel)
-{
-	struct ili9881c *ctx = panel_to_ili9881c(panel);
+अटल पूर्णांक ili9881c_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा ili9881c *ctx = panel_to_ili9881c(panel);
 
 	mipi_dsi_dcs_enter_sleep_mode(ctx->dsi);
-	regulator_disable(ctx->power);
+	regulator_disable(ctx->घातer);
 	gpiod_set_value(ctx->reset, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_display_mode lhr050h41_default_mode = {
-	.clock		= 62000,
+अटल स्थिर काष्ठा drm_display_mode lhr050h41_शेष_mode = अणु
+	.घड़ी		= 62000,
 
 	.hdisplay	= 720,
 	.hsync_start	= 720 + 10,
@@ -584,10 +585,10 @@ static const struct drm_display_mode lhr050h41_default_mode = {
 
 	.width_mm	= 62,
 	.height_mm	= 110,
-};
+पूर्ण;
 
-static const struct drm_display_mode k101_im2byl02_default_mode = {
-	.clock		= 69700,
+अटल स्थिर काष्ठा drm_display_mode k101_im2byl02_शेष_mode = अणु
+	.घड़ी		= 69700,
 
 	.hdisplay	= 800,
 	.hsync_start	= 800 + 6,
@@ -601,22 +602,22 @@ static const struct drm_display_mode k101_im2byl02_default_mode = {
 
 	.width_mm	= 135,
 	.height_mm	= 217,
-};
+पूर्ण;
 
-static int ili9881c_get_modes(struct drm_panel *panel,
-			      struct drm_connector *connector)
-{
-	struct ili9881c *ctx = panel_to_ili9881c(panel);
-	struct drm_display_mode *mode;
+अटल पूर्णांक ili9881c_get_modes(काष्ठा drm_panel *panel,
+			      काष्ठा drm_connector *connector)
+अणु
+	काष्ठा ili9881c *ctx = panel_to_ili9881c(panel);
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev, ctx->desc->mode);
-	if (!mode) {
+	अगर (!mode) अणु
 		dev_err(&ctx->dsi->dev, "failed to add mode %ux%ux@%u\n",
 			ctx->desc->mode->hdisplay,
 			ctx->desc->mode->vdisplay,
 			drm_mode_vrefresh(ctx->desc->mode));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 
@@ -626,25 +627,25 @@ static int ili9881c_get_modes(struct drm_panel *panel,
 	connector->display_info.width_mm = mode->width_mm;
 	connector->display_info.height_mm = mode->height_mm;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs ili9881c_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs ili9881c_funcs = अणु
 	.prepare	= ili9881c_prepare,
 	.unprepare	= ili9881c_unprepare,
 	.enable		= ili9881c_enable,
 	.disable	= ili9881c_disable,
 	.get_modes	= ili9881c_get_modes,
-};
+पूर्ण;
 
-static int ili9881c_dsi_probe(struct mipi_dsi_device *dsi)
-{
-	struct ili9881c *ctx;
-	int ret;
+अटल पूर्णांक ili9881c_dsi_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा ili9881c *ctx;
+	पूर्णांक ret;
 
-	ctx = devm_kzalloc(&dsi->dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(&dsi->dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 	mipi_dsi_set_drvdata(dsi, ctx);
 	ctx->dsi = dsi;
 	ctx->desc = of_device_get_match_data(&dsi->dev);
@@ -652,68 +653,68 @@ static int ili9881c_dsi_probe(struct mipi_dsi_device *dsi)
 	drm_panel_init(&ctx->panel, &dsi->dev, &ili9881c_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
-	ctx->power = devm_regulator_get(&dsi->dev, "power");
-	if (IS_ERR(ctx->power)) {
+	ctx->घातer = devm_regulator_get(&dsi->dev, "power");
+	अगर (IS_ERR(ctx->घातer)) अणु
 		dev_err(&dsi->dev, "Couldn't get our power regulator\n");
-		return PTR_ERR(ctx->power);
-	}
+		वापस PTR_ERR(ctx->घातer);
+	पूर्ण
 
 	ctx->reset = devm_gpiod_get(&dsi->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(ctx->reset)) {
+	अगर (IS_ERR(ctx->reset)) अणु
 		dev_err(&dsi->dev, "Couldn't get our reset GPIO\n");
-		return PTR_ERR(ctx->reset);
-	}
+		वापस PTR_ERR(ctx->reset);
+	पूर्ण
 
 	ret = drm_panel_of_backlight(&ctx->panel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_panel_add(&ctx->panel);
 
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO_SYNC_PULSE;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
 	dsi->lanes = 4;
 
-	return mipi_dsi_attach(dsi);
-}
+	वापस mipi_dsi_attach(dsi);
+पूर्ण
 
-static int ili9881c_dsi_remove(struct mipi_dsi_device *dsi)
-{
-	struct ili9881c *ctx = mipi_dsi_get_drvdata(dsi);
+अटल पूर्णांक ili9881c_dsi_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा ili9881c *ctx = mipi_dsi_get_drvdata(dsi);
 
 	mipi_dsi_detach(dsi);
-	drm_panel_remove(&ctx->panel);
+	drm_panel_हटाओ(&ctx->panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ili9881c_desc lhr050h41_desc = {
+अटल स्थिर काष्ठा ili9881c_desc lhr050h41_desc = अणु
 	.init = lhr050h41_init,
 	.init_length = ARRAY_SIZE(lhr050h41_init),
-	.mode = &lhr050h41_default_mode,
-};
+	.mode = &lhr050h41_शेष_mode,
+पूर्ण;
 
-static const struct ili9881c_desc k101_im2byl02_desc = {
+अटल स्थिर काष्ठा ili9881c_desc k101_im2byl02_desc = अणु
 	.init = k101_im2byl02_init,
 	.init_length = ARRAY_SIZE(k101_im2byl02_init),
-	.mode = &k101_im2byl02_default_mode,
-};
+	.mode = &k101_im2byl02_शेष_mode,
+पूर्ण;
 
-static const struct of_device_id ili9881c_of_match[] = {
-	{ .compatible = "bananapi,lhr050h41", .data = &lhr050h41_desc },
-	{ .compatible = "feixin,k101-im2byl02", .data = &k101_im2byl02_desc },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ili9881c_of_match[] = अणु
+	अणु .compatible = "bananapi,lhr050h41", .data = &lhr050h41_desc पूर्ण,
+	अणु .compatible = "feixin,k101-im2byl02", .data = &k101_im2byl02_desc पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ili9881c_of_match);
 
-static struct mipi_dsi_driver ili9881c_dsi_driver = {
+अटल काष्ठा mipi_dsi_driver ili9881c_dsi_driver = अणु
 	.probe		= ili9881c_dsi_probe,
-	.remove		= ili9881c_dsi_remove,
-	.driver = {
+	.हटाओ		= ili9881c_dsi_हटाओ,
+	.driver = अणु
 		.name		= "ili9881c-dsi",
 		.of_match_table	= ili9881c_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_mipi_dsi_driver(ili9881c_dsi_driver);
 
 MODULE_AUTHOR("Maxime Ripard <maxime.ripard@free-electrons.com>");

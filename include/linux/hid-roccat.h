@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __HID_ROCCAT_H
-#define __HID_ROCCAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __HID_ROCCAT_H
+#घोषणा __HID_ROCCAT_H
 
 /*
- * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
-#include <linux/hid.h>
-#include <linux/types.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/types.h>
 
-#define ROCCATIOCGREPSIZE _IOR('H', 0xf1, int)
+#घोषणा ROCCATIOCGREPSIZE _IOR('H', 0xf1, पूर्णांक)
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-int roccat_connect(struct class *klass, struct hid_device *hid,
-		int report_size);
-void roccat_disconnect(int minor);
-int roccat_report_event(int minor, u8 const *data);
+पूर्णांक roccat_connect(काष्ठा class *klass, काष्ठा hid_device *hid,
+		पूर्णांक report_size);
+व्योम roccat_disconnect(पूर्णांक minor);
+पूर्णांक roccat_report_event(पूर्णांक minor, u8 स्थिर *data);
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

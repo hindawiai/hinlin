@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  fs/signalfd.c
+ *  fs/संकेतfd.c
  *
  *  Copyright (C) 2003  Linus Torvalds
  *
  *  Mon Mar 5, 2007: Davide Libenzi <davidel@xmailserver.org>
- *      Changed ->read() to return a siginfo strcture instead of signal number.
+ *      Changed ->पढ़ो() to वापस a siginfo strcture instead of संकेत number.
  *      Fixed locking in ->poll().
- *      Added sighand-detach notification.
- *      Added fd re-use in sys_signalfd() syscall.
+ *      Added sighand-detach notअगरication.
+ *      Added fd re-use in sys_संकेतfd() syscall.
  *      Now using anonymous inode source.
- *      Thanks to Oleg Nesterov for useful code review and suggestions.
+ *      Thanks to Oleg Nesterov क्रम useful code review and suggestions.
  *      More comments and suggestions from Arnd Bergmann.
  *  Sat May 19, 2007: Davi E. M. Arnaut <davi@haxent.com.br>
- *      Retrieve multiple signals with one read() call
+ *      Retrieve multiple संकेतs with one पढ़ो() call
  *  Sun Jul 15, 2007: Davide Libenzi <davidel@xmailserver.org>
- *      Attach to the sighand only during read() and poll().
+ *      Attach to the sighand only during पढ़ो() and poll().
  */
 
-#include <linux/file.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/list.h>
-#include <linux/anon_inodes.h>
-#include <linux/signalfd.h>
-#include <linux/syscalls.h>
-#include <linux/proc_fs.h>
-#include <linux/compat.h>
+#समावेश <linux/file.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/list.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/संकेतfd.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/compat.h>
 
-void signalfd_cleanup(struct sighand_struct *sighand)
-{
-	wait_queue_head_t *wqh = &sighand->signalfd_wqh;
+व्योम संकेतfd_cleanup(काष्ठा sighand_काष्ठा *sighand)
+अणु
+	रुको_queue_head_t *wqh = &sighand->संकेतfd_wqh;
 	/*
-	 * The lockless check can race with remove_wait_queue() in progress,
-	 * but in this case its caller should run under rcu_read_lock() and
-	 * sighand_cachep is SLAB_TYPESAFE_BY_RCU, we can safely return.
+	 * The lockless check can race with हटाओ_रुको_queue() in progress,
+	 * but in this हाल its caller should run under rcu_पढ़ो_lock() and
+	 * sighand_cachep is SLAB_TYPESAFE_BY_RCU, we can safely वापस.
 	 */
-	if (likely(!waitqueue_active(wqh)))
-		return;
+	अगर (likely(!रुकोqueue_active(wqh)))
+		वापस;
 
-	/* wait_queue_entry_t->func(POLLFREE) should do remove_wait_queue() */
+	/* रुको_queue_entry_t->func(POLLFREE) should करो हटाओ_रुको_queue() */
 	wake_up_poll(wqh, EPOLLHUP | POLLFREE);
-}
+पूर्ण
 
-struct signalfd_ctx {
+काष्ठा संकेतfd_ctx अणु
 	sigset_t sigmask;
-};
+पूर्ण;
 
-static int signalfd_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
+अटल पूर्णांक संकेतfd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	kमुक्त(file->निजी_data);
+	वापस 0;
+पूर्ण
 
-static __poll_t signalfd_poll(struct file *file, poll_table *wait)
-{
-	struct signalfd_ctx *ctx = file->private_data;
+अटल __poll_t संकेतfd_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा संकेतfd_ctx *ctx = file->निजी_data;
 	__poll_t events = 0;
 
-	poll_wait(file, &current->sighand->signalfd_wqh, wait);
+	poll_रुको(file, &current->sighand->संकेतfd_wqh, रुको);
 
 	spin_lock_irq(&current->sighand->siglock);
-	if (next_signal(&current->pending, &ctx->sigmask) ||
-	    next_signal(&current->signal->shared_pending,
+	अगर (next_संकेत(&current->pending, &ctx->sigmask) ||
+	    next_संकेत(&current->संकेत->shared_pending,
 			&ctx->sigmask))
 		events |= EPOLLIN;
 	spin_unlock_irq(&current->sighand->siglock);
 
-	return events;
-}
+	वापस events;
+पूर्ण
 
 /*
- * Copied from copy_siginfo_to_user() in kernel/signal.c
+ * Copied from copy_siginfo_to_user() in kernel/संकेत.c
  */
-static int signalfd_copyinfo(struct signalfd_siginfo __user *uinfo,
-			     kernel_siginfo_t const *kinfo)
-{
-	struct signalfd_siginfo new;
+अटल पूर्णांक संकेतfd_copyinfo(काष्ठा संकेतfd_siginfo __user *uinfo,
+			     kernel_siginfo_t स्थिर *kinfo)
+अणु
+	काष्ठा संकेतfd_siginfo new;
 
-	BUILD_BUG_ON(sizeof(struct signalfd_siginfo) != 128);
+	BUILD_BUG_ON(माप(काष्ठा संकेतfd_siginfo) != 128);
 
 	/*
 	 * Unused members should be zero ...
 	 */
-	memset(&new, 0, sizeof(new));
+	स_रखो(&new, 0, माप(new));
 
 	/*
-	 * If you change siginfo_t structure, please be sure
+	 * If you change siginfo_t काष्ठाure, please be sure
 	 * this code is fixed accordingly.
 	 */
 	new.ssi_signo = kinfo->si_signo;
-	new.ssi_errno = kinfo->si_errno;
+	new.ssi_त्रुटि_सं = kinfo->si_त्रुटि_सं;
 	new.ssi_code  = kinfo->si_code;
-	switch (siginfo_layout(kinfo->si_signo, kinfo->si_code)) {
-	case SIL_KILL:
+	चयन (siginfo_layout(kinfo->si_signo, kinfo->si_code)) अणु
+	हाल SIL_KILL:
 		new.ssi_pid = kinfo->si_pid;
 		new.ssi_uid = kinfo->si_uid;
-		break;
-	case SIL_TIMER:
+		अवरोध;
+	हाल SIL_TIMER:
 		new.ssi_tid = kinfo->si_tid;
 		new.ssi_overrun = kinfo->si_overrun;
-		new.ssi_ptr = (long) kinfo->si_ptr;
-		new.ssi_int = kinfo->si_int;
-		break;
-	case SIL_POLL:
+		new.ssi_ptr = (दीर्घ) kinfo->si_ptr;
+		new.ssi_पूर्णांक = kinfo->si_पूर्णांक;
+		अवरोध;
+	हाल SIL_POLL:
 		new.ssi_band = kinfo->si_band;
 		new.ssi_fd   = kinfo->si_fd;
-		break;
-	case SIL_FAULT_BNDERR:
-	case SIL_FAULT_PKUERR:
-	case SIL_PERF_EVENT:
+		अवरोध;
+	हाल SIL_FAULT_BNDERR:
+	हाल SIL_FAULT_PKUERR:
+	हाल SIL_PERF_EVENT:
 		/*
-		 * Fall through to the SIL_FAULT case.  SIL_FAULT_BNDERR,
+		 * Fall through to the SIL_FAULT हाल.  SIL_FAULT_BNDERR,
 		 * SIL_FAULT_PKUERR, and SIL_PERF_EVENT are only
 		 * generated by faults that deliver them synchronously to
-		 * userspace.  In case someone injects one of these signals
-		 * and signalfd catches it treat it as SIL_FAULT.
+		 * userspace.  In हाल someone injects one of these संकेतs
+		 * and संकेतfd catches it treat it as SIL_FAULT.
 		 */
-	case SIL_FAULT:
-		new.ssi_addr = (long) kinfo->si_addr;
-		break;
-	case SIL_FAULT_TRAPNO:
-		new.ssi_addr = (long) kinfo->si_addr;
+	हाल SIL_FAULT:
+		new.ssi_addr = (दीर्घ) kinfo->si_addr;
+		अवरोध;
+	हाल SIL_FAULT_TRAPNO:
+		new.ssi_addr = (दीर्घ) kinfo->si_addr;
 		new.ssi_trapno = kinfo->si_trapno;
-		break;
-	case SIL_FAULT_MCEERR:
-		new.ssi_addr = (long) kinfo->si_addr;
-		new.ssi_addr_lsb = (short) kinfo->si_addr_lsb;
-		break;
-	case SIL_CHLD:
+		अवरोध;
+	हाल SIL_FAULT_MCEERR:
+		new.ssi_addr = (दीर्घ) kinfo->si_addr;
+		new.ssi_addr_lsb = (लघु) kinfo->si_addr_lsb;
+		अवरोध;
+	हाल SIL_CHLD:
 		new.ssi_pid    = kinfo->si_pid;
 		new.ssi_uid    = kinfo->si_uid;
 		new.ssi_status = kinfo->si_status;
-		new.ssi_utime  = kinfo->si_utime;
-		new.ssi_stime  = kinfo->si_stime;
-		break;
-	case SIL_RT:
+		new.ssi_uसमय  = kinfo->si_uसमय;
+		new.ssi_sसमय  = kinfo->si_sसमय;
+		अवरोध;
+	हाल SIL_RT:
 		/*
-		 * This case catches also the signals queued by sigqueue().
+		 * This हाल catches also the संकेतs queued by sigqueue().
 		 */
 		new.ssi_pid = kinfo->si_pid;
 		new.ssi_uid = kinfo->si_uid;
-		new.ssi_ptr = (long) kinfo->si_ptr;
-		new.ssi_int = kinfo->si_int;
-		break;
-	case SIL_SYS:
-		new.ssi_call_addr = (long) kinfo->si_call_addr;
+		new.ssi_ptr = (दीर्घ) kinfo->si_ptr;
+		new.ssi_पूर्णांक = kinfo->si_पूर्णांक;
+		अवरोध;
+	हाल SIL_SYS:
+		new.ssi_call_addr = (दीर्घ) kinfo->si_call_addr;
 		new.ssi_syscall   = kinfo->si_syscall;
 		new.ssi_arch      = kinfo->si_arch;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (copy_to_user(uinfo, &new, sizeof(struct signalfd_siginfo)))
-		return -EFAULT;
+	अगर (copy_to_user(uinfo, &new, माप(काष्ठा संकेतfd_siginfo)))
+		वापस -EFAULT;
 
-	return sizeof(*uinfo);
-}
+	वापस माप(*uinfo);
+पूर्ण
 
-static ssize_t signalfd_dequeue(struct signalfd_ctx *ctx, kernel_siginfo_t *info,
-				int nonblock)
-{
-	ssize_t ret;
-	DECLARE_WAITQUEUE(wait, current);
+अटल sमाप_प्रकार संकेतfd_dequeue(काष्ठा संकेतfd_ctx *ctx, kernel_siginfo_t *info,
+				पूर्णांक nonblock)
+अणु
+	sमाप_प्रकार ret;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	spin_lock_irq(&current->sighand->siglock);
-	ret = dequeue_signal(current, &ctx->sigmask, info);
-	switch (ret) {
-	case 0:
-		if (!nonblock)
-			break;
+	ret = dequeue_संकेत(current, &ctx->sigmask, info);
+	चयन (ret) अणु
+	हाल 0:
+		अगर (!nonblock)
+			अवरोध;
 		ret = -EAGAIN;
 		fallthrough;
-	default:
+	शेष:
 		spin_unlock_irq(&current->sighand->siglock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	add_wait_queue(&current->sighand->signalfd_wqh, &wait);
-	for (;;) {
+	add_रुको_queue(&current->sighand->संकेतfd_wqh, &रुको);
+	क्रम (;;) अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		ret = dequeue_signal(current, &ctx->sigmask, info);
-		if (ret != 0)
-			break;
-		if (signal_pending(current)) {
+		ret = dequeue_संकेत(current, &ctx->sigmask, info);
+		अगर (ret != 0)
+			अवरोध;
+		अगर (संकेत_pending(current)) अणु
 			ret = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock_irq(&current->sighand->siglock);
 		schedule();
 		spin_lock_irq(&current->sighand->siglock);
-	}
+	पूर्ण
 	spin_unlock_irq(&current->sighand->siglock);
 
-	remove_wait_queue(&current->sighand->signalfd_wqh, &wait);
+	हटाओ_रुको_queue(&current->sighand->संकेतfd_wqh, &रुको);
 	__set_current_state(TASK_RUNNING);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Returns a multiple of the size of a "struct signalfd_siginfo", or a negative
  * error code. The "count" parameter must be at least the size of a
  * "struct signalfd_siginfo".
  */
-static ssize_t signalfd_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार संकेतfd_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 			     loff_t *ppos)
-{
-	struct signalfd_ctx *ctx = file->private_data;
-	struct signalfd_siginfo __user *siginfo;
-	int nonblock = file->f_flags & O_NONBLOCK;
-	ssize_t ret, total = 0;
+अणु
+	काष्ठा संकेतfd_ctx *ctx = file->निजी_data;
+	काष्ठा संकेतfd_siginfo __user *siginfo;
+	पूर्णांक nonblock = file->f_flags & O_NONBLOCK;
+	sमाप_प्रकार ret, total = 0;
 	kernel_siginfo_t info;
 
-	count /= sizeof(struct signalfd_siginfo);
-	if (!count)
-		return -EINVAL;
+	count /= माप(काष्ठा संकेतfd_siginfo);
+	अगर (!count)
+		वापस -EINVAL;
 
-	siginfo = (struct signalfd_siginfo __user *) buf;
-	do {
-		ret = signalfd_dequeue(ctx, &info, nonblock);
-		if (unlikely(ret <= 0))
-			break;
-		ret = signalfd_copyinfo(siginfo, &info);
-		if (ret < 0)
-			break;
+	siginfo = (काष्ठा संकेतfd_siginfo __user *) buf;
+	करो अणु
+		ret = संकेतfd_dequeue(ctx, &info, nonblock);
+		अगर (unlikely(ret <= 0))
+			अवरोध;
+		ret = संकेतfd_copyinfo(siginfo, &info);
+		अगर (ret < 0)
+			अवरोध;
 		siginfo++;
 		total += ret;
 		nonblock = 1;
-	} while (--count);
+	पूर्ण जबतक (--count);
 
-	return total ? total: ret;
-}
+	वापस total ? total: ret;
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-static void signalfd_show_fdinfo(struct seq_file *m, struct file *f)
-{
-	struct signalfd_ctx *ctx = f->private_data;
+#अगर_घोषित CONFIG_PROC_FS
+अटल व्योम संकेतfd_show_fdinfo(काष्ठा seq_file *m, काष्ठा file *f)
+अणु
+	काष्ठा संकेतfd_ctx *ctx = f->निजी_data;
 	sigset_t sigmask;
 
 	sigmask = ctx->sigmask;
 	signotset(&sigmask);
 	render_sigset_t(m, "sigmask:\t", &sigmask);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static const struct file_operations signalfd_fops = {
-#ifdef CONFIG_PROC_FS
-	.show_fdinfo	= signalfd_show_fdinfo,
-#endif
-	.release	= signalfd_release,
-	.poll		= signalfd_poll,
-	.read		= signalfd_read,
+अटल स्थिर काष्ठा file_operations संकेतfd_fops = अणु
+#अगर_घोषित CONFIG_PROC_FS
+	.show_fdinfo	= संकेतfd_show_fdinfo,
+#पूर्ण_अगर
+	.release	= संकेतfd_release,
+	.poll		= संकेतfd_poll,
+	.पढ़ो		= संकेतfd_पढ़ो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static int do_signalfd4(int ufd, sigset_t *mask, int flags)
-{
-	struct signalfd_ctx *ctx;
+अटल पूर्णांक करो_संकेतfd4(पूर्णांक ufd, sigset_t *mask, पूर्णांक flags)
+अणु
+	काष्ठा संकेतfd_ctx *ctx;
 
-	/* Check the SFD_* constants for consistency.  */
+	/* Check the SFD_* स्थिरants क्रम consistency.  */
 	BUILD_BUG_ON(SFD_CLOEXEC != O_CLOEXEC);
 	BUILD_BUG_ON(SFD_NONBLOCK != O_NONBLOCK);
 
-	if (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK))
-		return -EINVAL;
+	अगर (flags & ~(SFD_CLOEXEC | SFD_NONBLOCK))
+		वापस -EINVAL;
 
-	sigdelsetmask(mask, sigmask(SIGKILL) | sigmask(SIGSTOP));
+	sigdअन्यथापंचांगask(mask, sigmask(SIGKILL) | sigmask(SIGSTOP));
 	signotset(mask);
 
-	if (ufd == -1) {
-		ctx = kmalloc(sizeof(*ctx), GFP_KERNEL);
-		if (!ctx)
-			return -ENOMEM;
+	अगर (ufd == -1) अणु
+		ctx = kदो_स्मृति(माप(*ctx), GFP_KERNEL);
+		अगर (!ctx)
+			वापस -ENOMEM;
 
 		ctx->sigmask = *mask;
 
@@ -284,80 +285,80 @@ static int do_signalfd4(int ufd, sigset_t *mask, int flags)
 		 * When we call this, the initialization must be complete, since
 		 * anon_inode_getfd() will install the fd.
 		 */
-		ufd = anon_inode_getfd("[signalfd]", &signalfd_fops, ctx,
+		ufd = anon_inode_getfd("[signalfd]", &संकेतfd_fops, ctx,
 				       O_RDWR | (flags & (O_CLOEXEC | O_NONBLOCK)));
-		if (ufd < 0)
-			kfree(ctx);
-	} else {
-		struct fd f = fdget(ufd);
-		if (!f.file)
-			return -EBADF;
-		ctx = f.file->private_data;
-		if (f.file->f_op != &signalfd_fops) {
+		अगर (ufd < 0)
+			kमुक्त(ctx);
+	पूर्ण अन्यथा अणु
+		काष्ठा fd f = fdget(ufd);
+		अगर (!f.file)
+			वापस -EBADF;
+		ctx = f.file->निजी_data;
+		अगर (f.file->f_op != &संकेतfd_fops) अणु
 			fdput(f);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		spin_lock_irq(&current->sighand->siglock);
 		ctx->sigmask = *mask;
 		spin_unlock_irq(&current->sighand->siglock);
 
-		wake_up(&current->sighand->signalfd_wqh);
+		wake_up(&current->sighand->संकेतfd_wqh);
 		fdput(f);
-	}
+	पूर्ण
 
-	return ufd;
-}
+	वापस ufd;
+पूर्ण
 
-SYSCALL_DEFINE4(signalfd4, int, ufd, sigset_t __user *, user_mask,
-		size_t, sizemask, int, flags)
-{
+SYSCALL_DEFINE4(संकेतfd4, पूर्णांक, ufd, sigset_t __user *, user_mask,
+		माप_प्रकार, sizemask, पूर्णांक, flags)
+अणु
 	sigset_t mask;
 
-	if (sizemask != sizeof(sigset_t))
-		return -EINVAL;
-	if (copy_from_user(&mask, user_mask, sizeof(mask)))
-		return -EFAULT;
-	return do_signalfd4(ufd, &mask, flags);
-}
+	अगर (sizemask != माप(sigset_t))
+		वापस -EINVAL;
+	अगर (copy_from_user(&mask, user_mask, माप(mask)))
+		वापस -EFAULT;
+	वापस करो_संकेतfd4(ufd, &mask, flags);
+पूर्ण
 
-SYSCALL_DEFINE3(signalfd, int, ufd, sigset_t __user *, user_mask,
-		size_t, sizemask)
-{
+SYSCALL_DEFINE3(संकेतfd, पूर्णांक, ufd, sigset_t __user *, user_mask,
+		माप_प्रकार, sizemask)
+अणु
 	sigset_t mask;
 
-	if (sizemask != sizeof(sigset_t))
-		return -EINVAL;
-	if (copy_from_user(&mask, user_mask, sizeof(mask)))
-		return -EFAULT;
-	return do_signalfd4(ufd, &mask, 0);
-}
+	अगर (sizemask != माप(sigset_t))
+		वापस -EINVAL;
+	अगर (copy_from_user(&mask, user_mask, माप(mask)))
+		वापस -EFAULT;
+	वापस करो_संकेतfd4(ufd, &mask, 0);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long do_compat_signalfd4(int ufd,
-			const compat_sigset_t __user *user_mask,
-			compat_size_t sigsetsize, int flags)
-{
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ करो_compat_संकेतfd4(पूर्णांक ufd,
+			स्थिर compat_sigset_t __user *user_mask,
+			compat_माप_प्रकार sigsetsize, पूर्णांक flags)
+अणु
 	sigset_t mask;
 
-	if (sigsetsize != sizeof(compat_sigset_t))
-		return -EINVAL;
-	if (get_compat_sigset(&mask, user_mask))
-		return -EFAULT;
-	return do_signalfd4(ufd, &mask, flags);
-}
+	अगर (sigsetsize != माप(compat_sigset_t))
+		वापस -EINVAL;
+	अगर (get_compat_sigset(&mask, user_mask))
+		वापस -EFAULT;
+	वापस करो_संकेतfd4(ufd, &mask, flags);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE4(signalfd4, int, ufd,
-		     const compat_sigset_t __user *, user_mask,
-		     compat_size_t, sigsetsize,
-		     int, flags)
-{
-	return do_compat_signalfd4(ufd, user_mask, sigsetsize, flags);
-}
+COMPAT_SYSCALL_DEFINE4(संकेतfd4, पूर्णांक, ufd,
+		     स्थिर compat_sigset_t __user *, user_mask,
+		     compat_माप_प्रकार, sigsetsize,
+		     पूर्णांक, flags)
+अणु
+	वापस करो_compat_संकेतfd4(ufd, user_mask, sigsetsize, flags);
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE3(signalfd, int, ufd,
-		     const compat_sigset_t __user *, user_mask,
-		     compat_size_t, sigsetsize)
-{
-	return do_compat_signalfd4(ufd, user_mask, sigsetsize, 0);
-}
-#endif
+COMPAT_SYSCALL_DEFINE3(संकेतfd, पूर्णांक, ufd,
+		     स्थिर compat_sigset_t __user *, user_mask,
+		     compat_माप_प्रकार, sigsetsize)
+अणु
+	वापस करो_compat_संकेतfd4(ufd, user_mask, sigsetsize, 0);
+पूर्ण
+#पूर्ण_अगर

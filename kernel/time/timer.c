@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Kernel internal timers
+ *  Kernel पूर्णांकernal समयrs
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  *
- *  1997-01-28  Modified by Finn Arne Gangstad to make timers scale better.
+ *  1997-01-28  Modअगरied by Finn Arne Gangstad to make समयrs scale better.
  *
- *  1997-09-10  Updated NTP code according to technical memorandum Jan '96
+ *  1997-09-10  Updated NTP code according to technical memoअक्रमum Jan '96
  *              "A Kernel Model for Precision Timekeeping" by Dave Mills
- *  1998-12-24  Fixed a xtime SMP race (we need the xtime_lock rw spinlock to
- *              serialize accesses to xtime/lost_ticks).
+ *  1998-12-24  Fixed a xसमय SMP race (we need the xसमय_lock rw spinlock to
+ *              serialize accesses to xसमय/lost_ticks).
  *                              Copyright (C) 1998  Andrea Arcangeli
  *  1999-03-10  Improved NTP compatibility by Ulrich Windl
  *  2002-05-31	Move sys_sysinfo here and make its locking sane, Robert Love
- *  2000-10-05  Implemented scalable SMP per-CPU timer handling.
+ *  2000-10-05  Implemented scalable SMP per-CPU समयr handling.
  *                              Copyright (C) 2000, 2001, 2002  Ingo Molnar
- *              Designed by David S. Miller, Alexey Kuznetsov and Ingo Molnar
+ *              Deचिन्हित by David S. Miller, Alexey Kuznetsov and Ingo Molnar
  */
 
-#include <linux/kernel_stat.h>
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/percpu.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/pid_namespace.h>
-#include <linux/notifier.h>
-#include <linux/thread_info.h>
-#include <linux/time.h>
-#include <linux/jiffies.h>
-#include <linux/posix-timers.h>
-#include <linux/cpu.h>
-#include <linux/syscalls.h>
-#include <linux/delay.h>
-#include <linux/tick.h>
-#include <linux/kallsyms.h>
-#include <linux/irq_work.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/sysctl.h>
-#include <linux/sched/nohz.h>
-#include <linux/sched/debug.h>
-#include <linux/slab.h>
-#include <linux/compat.h>
-#include <linux/random.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/irq_work.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/sysctl.h>
+#समावेश <linux/sched/nohz.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/अक्रमom.h>
 
-#include <linux/uaccess.h>
-#include <asm/unistd.h>
-#include <asm/div64.h>
-#include <asm/timex.h>
-#include <asm/io.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <यंत्र/समयx.h>
+#समावेश <यंत्र/पन.स>
 
-#include "tick-internal.h"
+#समावेश "tick-internal.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/timer.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/समयr.h>
 
-__visible u64 jiffies_64 __cacheline_aligned_in_smp = INITIAL_JIFFIES;
+__visible u64 jअगरfies_64 __cacheline_aligned_in_smp = INITIAL_JIFFIES;
 
-EXPORT_SYMBOL(jiffies_64);
+EXPORT_SYMBOL(jअगरfies_64);
 
 /*
- * The timer wheel has LVL_DEPTH array levels. Each level provides an array of
- * LVL_SIZE buckets. Each level is driven by its own clock and therefor each
- * level has a different granularity.
+ * The समयr wheel has LVL_DEPTH array levels. Each level provides an array of
+ * LVL_SIZE buckets. Each level is driven by its own घड़ी and thereक्रम each
+ * level has a dअगरferent granularity.
  *
  * The level granularity is:		LVL_CLK_DIV ^ lvl
- * The level clock frequency is:	HZ / (LVL_CLK_DIV ^ level)
+ * The level घड़ी frequency is:	HZ / (LVL_CLK_DIV ^ level)
  *
- * The array level of a newly armed timer depends on the relative expiry
- * time. The farther the expiry time is away the higher the array level and
- * therefor the granularity becomes.
+ * The array level of a newly armed समयr depends on the relative expiry
+ * समय. The farther the expiry समय is away the higher the array level and
+ * thereक्रम the granularity becomes.
  *
- * Contrary to the original timer wheel implementation, which aims for 'exact'
- * expiry of the timers, this implementation removes the need for recascading
- * the timers into the lower array levels. The previous 'classic' timer wheel
- * implementation of the kernel already violated the 'exact' expiry by adding
- * slack to the expiry time to provide batched expiration. The granularity
+ * Contrary to the original समयr wheel implementation, which aims क्रम 'exact'
+ * expiry of the समयrs, this implementation हटाओs the need क्रम recascading
+ * the समयrs पूर्णांकo the lower array levels. The previous 'classic' समयr wheel
+ * implementation of the kernel alपढ़ोy violated the 'exact' expiry by adding
+ * slack to the expiry समय to provide batched expiration. The granularity
  * levels provide implicit batching.
  *
- * This is an optimization of the original timer wheel implementation for the
- * majority of the timer wheel use cases: timeouts. The vast majority of
- * timeout timers (networking, disk I/O ...) are canceled before expiry. If
- * the timeout expires it indicates that normal operation is disturbed, so it
- * does not matter much whether the timeout comes with a slight delay.
+ * This is an optimization of the original समयr wheel implementation क्रम the
+ * majority of the समयr wheel use हालs: समयouts. The vast majority of
+ * समयout समयrs (networking, disk I/O ...) are canceled beक्रमe expiry. If
+ * the समयout expires it indicates that normal operation is disturbed, so it
+ * करोes not matter much whether the समयout comes with a slight delay.
  *
- * The only exception to this are networking timers with a small expiry
- * time. They rely on the granularity. Those fit into the first wheel level,
+ * The only exception to this are networking समयrs with a small expiry
+ * समय. They rely on the granularity. Those fit पूर्णांकo the first wheel level,
  * which has HZ granularity.
  *
- * We don't have cascading anymore. timers with a expiry time above the
- * capacity of the last wheel level are force expired at the maximum timeout
+ * We करोn't have cascading anymore. समयrs with a expiry समय above the
+ * capacity of the last wheel level are क्रमce expired at the maximum समयout
  * value of the last wheel level. From data sampling we know that the maximum
  * value observed is 5 days (network connection tracking), so this should not
  * be an issue.
  *
- * The currently chosen array constants values are a good compromise between
+ * The currently chosen array स्थिरants values are a good compromise between
  * array size and granularity.
  *
  * This results in the following granularity and range levels:
@@ -148,141 +149,141 @@ EXPORT_SYMBOL(jiffies_64);
  *  7	 448   20971520 ms (~5h) 167772160 ms - 1342177270 ms (~1d - ~15d)
  */
 
-/* Clock divisor for the next level */
-#define LVL_CLK_SHIFT	3
-#define LVL_CLK_DIV	(1UL << LVL_CLK_SHIFT)
-#define LVL_CLK_MASK	(LVL_CLK_DIV - 1)
-#define LVL_SHIFT(n)	((n) * LVL_CLK_SHIFT)
-#define LVL_GRAN(n)	(1UL << LVL_SHIFT(n))
+/* Clock भागisor क्रम the next level */
+#घोषणा LVL_CLK_SHIFT	3
+#घोषणा LVL_CLK_DIV	(1UL << LVL_CLK_SHIFT)
+#घोषणा LVL_CLK_MASK	(LVL_CLK_DIV - 1)
+#घोषणा LVL_SHIFT(n)	((n) * LVL_CLK_SHIFT)
+#घोषणा LVL_GRAN(n)	(1UL << LVL_SHIFT(n))
 
 /*
- * The time start value for each level to select the bucket at enqueue
- * time. We start from the last possible delta of the previous level
+ * The समय start value क्रम each level to select the bucket at enqueue
+ * समय. We start from the last possible delta of the previous level
  * so that we can later add an extra LVL_GRAN(n) to n (see calc_index()).
  */
-#define LVL_START(n)	((LVL_SIZE - 1) << (((n) - 1) * LVL_CLK_SHIFT))
+#घोषणा LVL_START(n)	((LVL_SIZE - 1) << (((n) - 1) * LVL_CLK_SHIFT))
 
-/* Size of each clock level */
-#define LVL_BITS	6
-#define LVL_SIZE	(1UL << LVL_BITS)
-#define LVL_MASK	(LVL_SIZE - 1)
-#define LVL_OFFS(n)	((n) * LVL_SIZE)
+/* Size of each घड़ी level */
+#घोषणा LVL_BITS	6
+#घोषणा LVL_SIZE	(1UL << LVL_BITS)
+#घोषणा LVL_MASK	(LVL_SIZE - 1)
+#घोषणा LVL_OFFS(n)	((n) * LVL_SIZE)
 
 /* Level depth */
-#if HZ > 100
+#अगर HZ > 100
 # define LVL_DEPTH	9
-# else
+# अन्यथा
 # define LVL_DEPTH	8
-#endif
+#पूर्ण_अगर
 
 /* The cutoff (max. capacity of the wheel) */
-#define WHEEL_TIMEOUT_CUTOFF	(LVL_START(LVL_DEPTH))
-#define WHEEL_TIMEOUT_MAX	(WHEEL_TIMEOUT_CUTOFF - LVL_GRAN(LVL_DEPTH - 1))
+#घोषणा WHEEL_TIMEOUT_CUTOFF	(LVL_START(LVL_DEPTH))
+#घोषणा WHEEL_TIMEOUT_MAX	(WHEEL_TIMEOUT_CUTOFF - LVL_GRAN(LVL_DEPTH - 1))
 
 /*
  * The resulting wheel size. If NOHZ is configured we allocate two
- * wheels so we have a separate storage for the deferrable timers.
+ * wheels so we have a separate storage क्रम the deferrable समयrs.
  */
-#define WHEEL_SIZE	(LVL_SIZE * LVL_DEPTH)
+#घोषणा WHEEL_SIZE	(LVL_SIZE * LVL_DEPTH)
 
-#ifdef CONFIG_NO_HZ_COMMON
+#अगर_घोषित CONFIG_NO_HZ_COMMON
 # define NR_BASES	2
 # define BASE_STD	0
 # define BASE_DEF	1
-#else
+#अन्यथा
 # define NR_BASES	1
 # define BASE_STD	0
 # define BASE_DEF	0
-#endif
+#पूर्ण_अगर
 
-struct timer_base {
+काष्ठा समयr_base अणु
 	raw_spinlock_t		lock;
-	struct timer_list	*running_timer;
-#ifdef CONFIG_PREEMPT_RT
+	काष्ठा समयr_list	*running_समयr;
+#अगर_घोषित CONFIG_PREEMPT_RT
 	spinlock_t		expiry_lock;
-	atomic_t		timer_waiters;
-#endif
-	unsigned long		clk;
-	unsigned long		next_expiry;
-	unsigned int		cpu;
+	atomic_t		समयr_रुकोers;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ		clk;
+	अचिन्हित दीर्घ		next_expiry;
+	अचिन्हित पूर्णांक		cpu;
 	bool			next_expiry_recalc;
 	bool			is_idle;
 	DECLARE_BITMAP(pending_map, WHEEL_SIZE);
-	struct hlist_head	vectors[WHEEL_SIZE];
-} ____cacheline_aligned;
+	काष्ठा hlist_head	vectors[WHEEL_SIZE];
+पूर्ण ____cacheline_aligned;
 
-static DEFINE_PER_CPU(struct timer_base, timer_bases[NR_BASES]);
+अटल DEFINE_PER_CPU(काष्ठा समयr_base, समयr_bases[NR_BASES]);
 
-#ifdef CONFIG_NO_HZ_COMMON
+#अगर_घोषित CONFIG_NO_HZ_COMMON
 
-static DEFINE_STATIC_KEY_FALSE(timers_nohz_active);
-static DEFINE_MUTEX(timer_keys_mutex);
+अटल DEFINE_STATIC_KEY_FALSE(समयrs_nohz_active);
+अटल DEFINE_MUTEX(समयr_keys_mutex);
 
-static void timer_update_keys(struct work_struct *work);
-static DECLARE_WORK(timer_update_work, timer_update_keys);
+अटल व्योम समयr_update_keys(काष्ठा work_काष्ठा *work);
+अटल DECLARE_WORK(समयr_update_work, समयr_update_keys);
 
-#ifdef CONFIG_SMP
-unsigned int sysctl_timer_migration = 1;
+#अगर_घोषित CONFIG_SMP
+अचिन्हित पूर्णांक sysctl_समयr_migration = 1;
 
-DEFINE_STATIC_KEY_FALSE(timers_migration_enabled);
+DEFINE_STATIC_KEY_FALSE(समयrs_migration_enabled);
 
-static void timers_update_migration(void)
-{
-	if (sysctl_timer_migration && tick_nohz_active)
-		static_branch_enable(&timers_migration_enabled);
-	else
-		static_branch_disable(&timers_migration_enabled);
-}
-#else
-static inline void timers_update_migration(void) { }
-#endif /* !CONFIG_SMP */
+अटल व्योम समयrs_update_migration(व्योम)
+अणु
+	अगर (sysctl_समयr_migration && tick_nohz_active)
+		अटल_branch_enable(&समयrs_migration_enabled);
+	अन्यथा
+		अटल_branch_disable(&समयrs_migration_enabled);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम समयrs_update_migration(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* !CONFIG_SMP */
 
-static void timer_update_keys(struct work_struct *work)
-{
-	mutex_lock(&timer_keys_mutex);
-	timers_update_migration();
-	static_branch_enable(&timers_nohz_active);
-	mutex_unlock(&timer_keys_mutex);
-}
+अटल व्योम समयr_update_keys(काष्ठा work_काष्ठा *work)
+अणु
+	mutex_lock(&समयr_keys_mutex);
+	समयrs_update_migration();
+	अटल_branch_enable(&समयrs_nohz_active);
+	mutex_unlock(&समयr_keys_mutex);
+पूर्ण
 
-void timers_update_nohz(void)
-{
-	schedule_work(&timer_update_work);
-}
+व्योम समयrs_update_nohz(व्योम)
+अणु
+	schedule_work(&समयr_update_work);
+पूर्ण
 
-int timer_migration_handler(struct ctl_table *table, int write,
-			    void *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret;
+पूर्णांक समयr_migration_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+			    व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 
-	mutex_lock(&timer_keys_mutex);
-	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
-	if (!ret && write)
-		timers_update_migration();
-	mutex_unlock(&timer_keys_mutex);
-	return ret;
-}
+	mutex_lock(&समयr_keys_mutex);
+	ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
+	अगर (!ret && ग_लिखो)
+		समयrs_update_migration();
+	mutex_unlock(&समयr_keys_mutex);
+	वापस ret;
+पूर्ण
 
-static inline bool is_timers_nohz_active(void)
-{
-	return static_branch_unlikely(&timers_nohz_active);
-}
-#else
-static inline bool is_timers_nohz_active(void) { return false; }
-#endif /* NO_HZ_COMMON */
+अटल अंतरभूत bool is_समयrs_nohz_active(व्योम)
+अणु
+	वापस अटल_branch_unlikely(&समयrs_nohz_active);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool is_समयrs_nohz_active(व्योम) अणु वापस false; पूर्ण
+#पूर्ण_अगर /* NO_HZ_COMMON */
 
-static unsigned long round_jiffies_common(unsigned long j, int cpu,
-		bool force_up)
-{
-	int rem;
-	unsigned long original = j;
+अटल अचिन्हित दीर्घ round_jअगरfies_common(अचिन्हित दीर्घ j, पूर्णांक cpu,
+		bool क्रमce_up)
+अणु
+	पूर्णांक rem;
+	अचिन्हित दीर्घ original = j;
 
 	/*
-	 * We don't want all cpus firing their timers at once hitting the
+	 * We करोn't want all cpus firing their समयrs at once hitting the
 	 * same lock or cachelines, so we skew each extra cpu with an extra
-	 * 3 jiffies. This 3 jiffies came originally from the mm/ code which
-	 * already did this.
-	 * The skew is done by adding 3*cpunr, then round, then subtract this
+	 * 3 jअगरfies. This 3 jअगरfies came originally from the mm/ code which
+	 * alपढ़ोy did this.
+	 * The skew is करोne by adding 3*cpunr, then round, then subtract this
 	 * extra offset again.
 	 */
 	j += cpu * 3;
@@ -290,1276 +291,1276 @@ static unsigned long round_jiffies_common(unsigned long j, int cpu,
 	rem = j % HZ;
 
 	/*
-	 * If the target jiffie is just after a whole second (which can happen
-	 * due to delays of the timer irq, long irq off times etc etc) then
-	 * we should round down to the whole second, not up. Use 1/4th second
-	 * as cutoff for this rounding as an extreme upper bound for this.
-	 * But never round down if @force_up is set.
+	 * If the target jअगरfie is just after a whole second (which can happen
+	 * due to delays of the समयr irq, दीर्घ irq off बार etc etc) then
+	 * we should round करोwn to the whole second, not up. Use 1/4th second
+	 * as cutoff क्रम this rounding as an extreme upper bound क्रम this.
+	 * But never round करोwn अगर @क्रमce_up is set.
 	 */
-	if (rem < HZ/4 && !force_up) /* round down */
+	अगर (rem < HZ/4 && !क्रमce_up) /* round करोwn */
 		j = j - rem;
-	else /* round up */
+	अन्यथा /* round up */
 		j = j - rem + HZ;
 
 	/* now that we have rounded, subtract the extra skew again */
 	j -= cpu * 3;
 
 	/*
-	 * Make sure j is still in the future. Otherwise return the
-	 * unmodified value.
+	 * Make sure j is still in the future. Otherwise वापस the
+	 * unmodअगरied value.
 	 */
-	return time_is_after_jiffies(j) ? j : original;
-}
+	वापस समय_is_after_jअगरfies(j) ? j : original;
+पूर्ण
 
 /**
- * __round_jiffies - function to round jiffies to a full second
- * @j: the time in (absolute) jiffies that should be rounded
- * @cpu: the processor number on which the timeout will happen
+ * __round_jअगरfies - function to round jअगरfies to a full second
+ * @j: the समय in (असलolute) jअगरfies that should be rounded
+ * @cpu: the processor number on which the समयout will happen
  *
- * __round_jiffies() rounds an absolute time in the future (in jiffies)
- * up or down to (approximately) full seconds. This is useful for timers
- * for which the exact time they fire does not matter too much, as long as
+ * __round_jअगरfies() rounds an असलolute समय in the future (in jअगरfies)
+ * up or करोwn to (approximately) full seconds. This is useful क्रम समयrs
+ * क्रम which the exact समय they fire करोes not matter too much, as दीर्घ as
  * they fire approximately every X seconds.
  *
- * By rounding these timers to whole seconds, all such timers will fire
- * at the same time, rather than at various times spread out. The goal
- * of this is to have the CPU wake up less, which saves power.
+ * By rounding these समयrs to whole seconds, all such समयrs will fire
+ * at the same समय, rather than at various बार spपढ़ो out. The goal
+ * of this is to have the CPU wake up less, which saves घातer.
  *
- * The exact rounding is skewed for each processor to avoid all
- * processors firing at the exact same time, which could lead
+ * The exact rounding is skewed क्रम each processor to aव्योम all
+ * processors firing at the exact same समय, which could lead
  * to lock contention or spurious cache line bouncing.
  *
- * The return value is the rounded version of the @j parameter.
+ * The वापस value is the rounded version of the @j parameter.
  */
-unsigned long __round_jiffies(unsigned long j, int cpu)
-{
-	return round_jiffies_common(j, cpu, false);
-}
-EXPORT_SYMBOL_GPL(__round_jiffies);
+अचिन्हित दीर्घ __round_jअगरfies(अचिन्हित दीर्घ j, पूर्णांक cpu)
+अणु
+	वापस round_jअगरfies_common(j, cpu, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(__round_jअगरfies);
 
 /**
- * __round_jiffies_relative - function to round jiffies to a full second
- * @j: the time in (relative) jiffies that should be rounded
- * @cpu: the processor number on which the timeout will happen
+ * __round_jअगरfies_relative - function to round jअगरfies to a full second
+ * @j: the समय in (relative) jअगरfies that should be rounded
+ * @cpu: the processor number on which the समयout will happen
  *
- * __round_jiffies_relative() rounds a time delta  in the future (in jiffies)
- * up or down to (approximately) full seconds. This is useful for timers
- * for which the exact time they fire does not matter too much, as long as
+ * __round_jअगरfies_relative() rounds a समय delta  in the future (in jअगरfies)
+ * up or करोwn to (approximately) full seconds. This is useful क्रम समयrs
+ * क्रम which the exact समय they fire करोes not matter too much, as दीर्घ as
  * they fire approximately every X seconds.
  *
- * By rounding these timers to whole seconds, all such timers will fire
- * at the same time, rather than at various times spread out. The goal
- * of this is to have the CPU wake up less, which saves power.
+ * By rounding these समयrs to whole seconds, all such समयrs will fire
+ * at the same समय, rather than at various बार spपढ़ो out. The goal
+ * of this is to have the CPU wake up less, which saves घातer.
  *
- * The exact rounding is skewed for each processor to avoid all
- * processors firing at the exact same time, which could lead
+ * The exact rounding is skewed क्रम each processor to aव्योम all
+ * processors firing at the exact same समय, which could lead
  * to lock contention or spurious cache line bouncing.
  *
- * The return value is the rounded version of the @j parameter.
+ * The वापस value is the rounded version of the @j parameter.
  */
-unsigned long __round_jiffies_relative(unsigned long j, int cpu)
-{
-	unsigned long j0 = jiffies;
+अचिन्हित दीर्घ __round_jअगरfies_relative(अचिन्हित दीर्घ j, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ j0 = jअगरfies;
 
-	/* Use j0 because jiffies might change while we run */
-	return round_jiffies_common(j + j0, cpu, false) - j0;
-}
-EXPORT_SYMBOL_GPL(__round_jiffies_relative);
+	/* Use j0 because jअगरfies might change जबतक we run */
+	वापस round_jअगरfies_common(j + j0, cpu, false) - j0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__round_jअगरfies_relative);
 
 /**
- * round_jiffies - function to round jiffies to a full second
- * @j: the time in (absolute) jiffies that should be rounded
+ * round_jअगरfies - function to round jअगरfies to a full second
+ * @j: the समय in (असलolute) jअगरfies that should be rounded
  *
- * round_jiffies() rounds an absolute time in the future (in jiffies)
- * up or down to (approximately) full seconds. This is useful for timers
- * for which the exact time they fire does not matter too much, as long as
+ * round_jअगरfies() rounds an असलolute समय in the future (in jअगरfies)
+ * up or करोwn to (approximately) full seconds. This is useful क्रम समयrs
+ * क्रम which the exact समय they fire करोes not matter too much, as दीर्घ as
  * they fire approximately every X seconds.
  *
- * By rounding these timers to whole seconds, all such timers will fire
- * at the same time, rather than at various times spread out. The goal
- * of this is to have the CPU wake up less, which saves power.
+ * By rounding these समयrs to whole seconds, all such समयrs will fire
+ * at the same समय, rather than at various बार spपढ़ो out. The goal
+ * of this is to have the CPU wake up less, which saves घातer.
  *
- * The return value is the rounded version of the @j parameter.
+ * The वापस value is the rounded version of the @j parameter.
  */
-unsigned long round_jiffies(unsigned long j)
-{
-	return round_jiffies_common(j, raw_smp_processor_id(), false);
-}
-EXPORT_SYMBOL_GPL(round_jiffies);
+अचिन्हित दीर्घ round_jअगरfies(अचिन्हित दीर्घ j)
+अणु
+	वापस round_jअगरfies_common(j, raw_smp_processor_id(), false);
+पूर्ण
+EXPORT_SYMBOL_GPL(round_jअगरfies);
 
 /**
- * round_jiffies_relative - function to round jiffies to a full second
- * @j: the time in (relative) jiffies that should be rounded
+ * round_jअगरfies_relative - function to round jअगरfies to a full second
+ * @j: the समय in (relative) jअगरfies that should be rounded
  *
- * round_jiffies_relative() rounds a time delta  in the future (in jiffies)
- * up or down to (approximately) full seconds. This is useful for timers
- * for which the exact time they fire does not matter too much, as long as
+ * round_jअगरfies_relative() rounds a समय delta  in the future (in jअगरfies)
+ * up or करोwn to (approximately) full seconds. This is useful क्रम समयrs
+ * क्रम which the exact समय they fire करोes not matter too much, as दीर्घ as
  * they fire approximately every X seconds.
  *
- * By rounding these timers to whole seconds, all such timers will fire
- * at the same time, rather than at various times spread out. The goal
- * of this is to have the CPU wake up less, which saves power.
+ * By rounding these समयrs to whole seconds, all such समयrs will fire
+ * at the same समय, rather than at various बार spपढ़ो out. The goal
+ * of this is to have the CPU wake up less, which saves घातer.
  *
- * The return value is the rounded version of the @j parameter.
+ * The वापस value is the rounded version of the @j parameter.
  */
-unsigned long round_jiffies_relative(unsigned long j)
-{
-	return __round_jiffies_relative(j, raw_smp_processor_id());
-}
-EXPORT_SYMBOL_GPL(round_jiffies_relative);
+अचिन्हित दीर्घ round_jअगरfies_relative(अचिन्हित दीर्घ j)
+अणु
+	वापस __round_jअगरfies_relative(j, raw_smp_processor_id());
+पूर्ण
+EXPORT_SYMBOL_GPL(round_jअगरfies_relative);
 
 /**
- * __round_jiffies_up - function to round jiffies up to a full second
- * @j: the time in (absolute) jiffies that should be rounded
- * @cpu: the processor number on which the timeout will happen
+ * __round_jअगरfies_up - function to round jअगरfies up to a full second
+ * @j: the समय in (असलolute) jअगरfies that should be rounded
+ * @cpu: the processor number on which the समयout will happen
  *
- * This is the same as __round_jiffies() except that it will never
- * round down.  This is useful for timeouts for which the exact time
- * of firing does not matter too much, as long as they don't fire too
+ * This is the same as __round_jअगरfies() except that it will never
+ * round करोwn.  This is useful क्रम समयouts क्रम which the exact समय
+ * of firing करोes not matter too much, as दीर्घ as they करोn't fire too
  * early.
  */
-unsigned long __round_jiffies_up(unsigned long j, int cpu)
-{
-	return round_jiffies_common(j, cpu, true);
-}
-EXPORT_SYMBOL_GPL(__round_jiffies_up);
+अचिन्हित दीर्घ __round_jअगरfies_up(अचिन्हित दीर्घ j, पूर्णांक cpu)
+अणु
+	वापस round_jअगरfies_common(j, cpu, true);
+पूर्ण
+EXPORT_SYMBOL_GPL(__round_jअगरfies_up);
 
 /**
- * __round_jiffies_up_relative - function to round jiffies up to a full second
- * @j: the time in (relative) jiffies that should be rounded
- * @cpu: the processor number on which the timeout will happen
+ * __round_jअगरfies_up_relative - function to round jअगरfies up to a full second
+ * @j: the समय in (relative) jअगरfies that should be rounded
+ * @cpu: the processor number on which the समयout will happen
  *
- * This is the same as __round_jiffies_relative() except that it will never
- * round down.  This is useful for timeouts for which the exact time
- * of firing does not matter too much, as long as they don't fire too
+ * This is the same as __round_jअगरfies_relative() except that it will never
+ * round करोwn.  This is useful क्रम समयouts क्रम which the exact समय
+ * of firing करोes not matter too much, as दीर्घ as they करोn't fire too
  * early.
  */
-unsigned long __round_jiffies_up_relative(unsigned long j, int cpu)
-{
-	unsigned long j0 = jiffies;
+अचिन्हित दीर्घ __round_jअगरfies_up_relative(अचिन्हित दीर्घ j, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ j0 = jअगरfies;
 
-	/* Use j0 because jiffies might change while we run */
-	return round_jiffies_common(j + j0, cpu, true) - j0;
-}
-EXPORT_SYMBOL_GPL(__round_jiffies_up_relative);
+	/* Use j0 because jअगरfies might change जबतक we run */
+	वापस round_jअगरfies_common(j + j0, cpu, true) - j0;
+पूर्ण
+EXPORT_SYMBOL_GPL(__round_jअगरfies_up_relative);
 
 /**
- * round_jiffies_up - function to round jiffies up to a full second
- * @j: the time in (absolute) jiffies that should be rounded
+ * round_jअगरfies_up - function to round jअगरfies up to a full second
+ * @j: the समय in (असलolute) jअगरfies that should be rounded
  *
- * This is the same as round_jiffies() except that it will never
- * round down.  This is useful for timeouts for which the exact time
- * of firing does not matter too much, as long as they don't fire too
+ * This is the same as round_jअगरfies() except that it will never
+ * round करोwn.  This is useful क्रम समयouts क्रम which the exact समय
+ * of firing करोes not matter too much, as दीर्घ as they करोn't fire too
  * early.
  */
-unsigned long round_jiffies_up(unsigned long j)
-{
-	return round_jiffies_common(j, raw_smp_processor_id(), true);
-}
-EXPORT_SYMBOL_GPL(round_jiffies_up);
+अचिन्हित दीर्घ round_jअगरfies_up(अचिन्हित दीर्घ j)
+अणु
+	वापस round_jअगरfies_common(j, raw_smp_processor_id(), true);
+पूर्ण
+EXPORT_SYMBOL_GPL(round_jअगरfies_up);
 
 /**
- * round_jiffies_up_relative - function to round jiffies up to a full second
- * @j: the time in (relative) jiffies that should be rounded
+ * round_jअगरfies_up_relative - function to round jअगरfies up to a full second
+ * @j: the समय in (relative) jअगरfies that should be rounded
  *
- * This is the same as round_jiffies_relative() except that it will never
- * round down.  This is useful for timeouts for which the exact time
- * of firing does not matter too much, as long as they don't fire too
+ * This is the same as round_jअगरfies_relative() except that it will never
+ * round करोwn.  This is useful क्रम समयouts क्रम which the exact समय
+ * of firing करोes not matter too much, as दीर्घ as they करोn't fire too
  * early.
  */
-unsigned long round_jiffies_up_relative(unsigned long j)
-{
-	return __round_jiffies_up_relative(j, raw_smp_processor_id());
-}
-EXPORT_SYMBOL_GPL(round_jiffies_up_relative);
+अचिन्हित दीर्घ round_jअगरfies_up_relative(अचिन्हित दीर्घ j)
+अणु
+	वापस __round_jअगरfies_up_relative(j, raw_smp_processor_id());
+पूर्ण
+EXPORT_SYMBOL_GPL(round_jअगरfies_up_relative);
 
 
-static inline unsigned int timer_get_idx(struct timer_list *timer)
-{
-	return (timer->flags & TIMER_ARRAYMASK) >> TIMER_ARRAYSHIFT;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक समयr_get_idx(काष्ठा समयr_list *समयr)
+अणु
+	वापस (समयr->flags & TIMER_ARRAYMASK) >> TIMER_ARRAYSHIFT;
+पूर्ण
 
-static inline void timer_set_idx(struct timer_list *timer, unsigned int idx)
-{
-	timer->flags = (timer->flags & ~TIMER_ARRAYMASK) |
+अटल अंतरभूत व्योम समयr_set_idx(काष्ठा समयr_list *समयr, अचिन्हित पूर्णांक idx)
+अणु
+	समयr->flags = (समयr->flags & ~TIMER_ARRAYMASK) |
 			idx << TIMER_ARRAYSHIFT;
-}
+पूर्ण
 
 /*
- * Helper function to calculate the array index for a given expiry
- * time.
+ * Helper function to calculate the array index क्रम a given expiry
+ * समय.
  */
-static inline unsigned calc_index(unsigned long expires, unsigned lvl,
-				  unsigned long *bucket_expiry)
-{
+अटल अंतरभूत अचिन्हित calc_index(अचिन्हित दीर्घ expires, अचिन्हित lvl,
+				  अचिन्हित दीर्घ *bucket_expiry)
+अणु
 
 	/*
-	 * The timer wheel has to guarantee that a timer does not fire
+	 * The समयr wheel has to guarantee that a समयr करोes not fire
 	 * early. Early expiry can happen due to:
 	 * - Timer is armed at the edge of a tick
-	 * - Truncation of the expiry time in the outer wheel levels
+	 * - Truncation of the expiry समय in the outer wheel levels
 	 *
 	 * Round up with level granularity to prevent this.
 	 */
 	expires = (expires + LVL_GRAN(lvl)) >> LVL_SHIFT(lvl);
 	*bucket_expiry = expires << LVL_SHIFT(lvl);
-	return LVL_OFFS(lvl) + (expires & LVL_MASK);
-}
+	वापस LVL_OFFS(lvl) + (expires & LVL_MASK);
+पूर्ण
 
-static int calc_wheel_index(unsigned long expires, unsigned long clk,
-			    unsigned long *bucket_expiry)
-{
-	unsigned long delta = expires - clk;
-	unsigned int idx;
+अटल पूर्णांक calc_wheel_index(अचिन्हित दीर्घ expires, अचिन्हित दीर्घ clk,
+			    अचिन्हित दीर्घ *bucket_expiry)
+अणु
+	अचिन्हित दीर्घ delta = expires - clk;
+	अचिन्हित पूर्णांक idx;
 
-	if (delta < LVL_START(1)) {
+	अगर (delta < LVL_START(1)) अणु
 		idx = calc_index(expires, 0, bucket_expiry);
-	} else if (delta < LVL_START(2)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(2)) अणु
 		idx = calc_index(expires, 1, bucket_expiry);
-	} else if (delta < LVL_START(3)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(3)) अणु
 		idx = calc_index(expires, 2, bucket_expiry);
-	} else if (delta < LVL_START(4)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(4)) अणु
 		idx = calc_index(expires, 3, bucket_expiry);
-	} else if (delta < LVL_START(5)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(5)) अणु
 		idx = calc_index(expires, 4, bucket_expiry);
-	} else if (delta < LVL_START(6)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(6)) अणु
 		idx = calc_index(expires, 5, bucket_expiry);
-	} else if (delta < LVL_START(7)) {
+	पूर्ण अन्यथा अगर (delta < LVL_START(7)) अणु
 		idx = calc_index(expires, 6, bucket_expiry);
-	} else if (LVL_DEPTH > 8 && delta < LVL_START(8)) {
+	पूर्ण अन्यथा अगर (LVL_DEPTH > 8 && delta < LVL_START(8)) अणु
 		idx = calc_index(expires, 7, bucket_expiry);
-	} else if ((long) delta < 0) {
+	पूर्ण अन्यथा अगर ((दीर्घ) delta < 0) अणु
 		idx = clk & LVL_MASK;
 		*bucket_expiry = clk;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Force expire obscene large timeouts to expire at the
+		 * Force expire obscene large समयouts to expire at the
 		 * capacity limit of the wheel.
 		 */
-		if (delta >= WHEEL_TIMEOUT_CUTOFF)
+		अगर (delta >= WHEEL_TIMEOUT_CUTOFF)
 			expires = clk + WHEEL_TIMEOUT_MAX;
 
 		idx = calc_index(expires, LVL_DEPTH - 1, bucket_expiry);
-	}
-	return idx;
-}
+	पूर्ण
+	वापस idx;
+पूर्ण
 
-static void
-trigger_dyntick_cpu(struct timer_base *base, struct timer_list *timer)
-{
-	if (!is_timers_nohz_active())
-		return;
+अटल व्योम
+trigger_dyntick_cpu(काष्ठा समयr_base *base, काष्ठा समयr_list *समयr)
+अणु
+	अगर (!is_समयrs_nohz_active())
+		वापस;
 
 	/*
 	 * TODO: This wants some optimizing similar to the code below, but we
-	 * will do that when we switch from push to pull for deferrable timers.
+	 * will करो that when we चयन from push to pull क्रम deferrable समयrs.
 	 */
-	if (timer->flags & TIMER_DEFERRABLE) {
-		if (tick_nohz_full_cpu(base->cpu))
+	अगर (समयr->flags & TIMER_DEFERRABLE) अणु
+		अगर (tick_nohz_full_cpu(base->cpu))
 			wake_up_nohz_cpu(base->cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * We might have to IPI the remote CPU if the base is idle and the
-	 * timer is not deferrable. If the other CPU is on the way to idle
+	 * We might have to IPI the remote CPU अगर the base is idle and the
+	 * समयr is not deferrable. If the other CPU is on the way to idle
 	 * then it can't set base->is_idle as we hold the base lock:
 	 */
-	if (base->is_idle)
+	अगर (base->is_idle)
 		wake_up_nohz_cpu(base->cpu);
-}
+पूर्ण
 
 /*
- * Enqueue the timer into the hash bucket, mark it pending in
- * the bitmap, store the index in the timer flags then wake up
- * the target CPU if needed.
+ * Enqueue the समयr पूर्णांकo the hash bucket, mark it pending in
+ * the biपंचांगap, store the index in the समयr flags then wake up
+ * the target CPU अगर needed.
  */
-static void enqueue_timer(struct timer_base *base, struct timer_list *timer,
-			  unsigned int idx, unsigned long bucket_expiry)
-{
+अटल व्योम enqueue_समयr(काष्ठा समयr_base *base, काष्ठा समयr_list *समयr,
+			  अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ bucket_expiry)
+अणु
 
-	hlist_add_head(&timer->entry, base->vectors + idx);
+	hlist_add_head(&समयr->entry, base->vectors + idx);
 	__set_bit(idx, base->pending_map);
-	timer_set_idx(timer, idx);
+	समयr_set_idx(समयr, idx);
 
-	trace_timer_start(timer, timer->expires, timer->flags);
+	trace_समयr_start(समयr, समयr->expires, समयr->flags);
 
 	/*
-	 * Check whether this is the new first expiring timer. The
-	 * effective expiry time of the timer is required here
-	 * (bucket_expiry) instead of timer->expires.
+	 * Check whether this is the new first expiring समयr. The
+	 * effective expiry समय of the समयr is required here
+	 * (bucket_expiry) instead of समयr->expires.
 	 */
-	if (time_before(bucket_expiry, base->next_expiry)) {
+	अगर (समय_beक्रमe(bucket_expiry, base->next_expiry)) अणु
 		/*
-		 * Set the next expiry time and kick the CPU so it
+		 * Set the next expiry समय and kick the CPU so it
 		 * can reevaluate the wheel:
 		 */
 		base->next_expiry = bucket_expiry;
 		base->next_expiry_recalc = false;
-		trigger_dyntick_cpu(base, timer);
-	}
-}
+		trigger_dyntick_cpu(base, समयr);
+	पूर्ण
+पूर्ण
 
-static void internal_add_timer(struct timer_base *base, struct timer_list *timer)
-{
-	unsigned long bucket_expiry;
-	unsigned int idx;
+अटल व्योम पूर्णांकernal_add_समयr(काष्ठा समयr_base *base, काष्ठा समयr_list *समयr)
+अणु
+	अचिन्हित दीर्घ bucket_expiry;
+	अचिन्हित पूर्णांक idx;
 
-	idx = calc_wheel_index(timer->expires, base->clk, &bucket_expiry);
-	enqueue_timer(base, timer, idx, bucket_expiry);
-}
+	idx = calc_wheel_index(समयr->expires, base->clk, &bucket_expiry);
+	enqueue_समयr(base, समयr, idx, bucket_expiry);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_OBJECTS_TIMERS
+#अगर_घोषित CONFIG_DEBUG_OBJECTS_TIMERS
 
-static const struct debug_obj_descr timer_debug_descr;
+अटल स्थिर काष्ठा debug_obj_descr समयr_debug_descr;
 
-static void *timer_debug_hint(void *addr)
-{
-	return ((struct timer_list *) addr)->function;
-}
+अटल व्योम *समयr_debug_hपूर्णांक(व्योम *addr)
+अणु
+	वापस ((काष्ठा समयr_list *) addr)->function;
+पूर्ण
 
-static bool timer_is_static_object(void *addr)
-{
-	struct timer_list *timer = addr;
+अटल bool समयr_is_अटल_object(व्योम *addr)
+अणु
+	काष्ठा समयr_list *समयr = addr;
 
-	return (timer->entry.pprev == NULL &&
-		timer->entry.next == TIMER_ENTRY_STATIC);
-}
+	वापस (समयr->entry.pprev == शून्य &&
+		समयr->entry.next == TIMER_ENTRY_STATIC);
+पूर्ण
 
 /*
  * fixup_init is called when:
  * - an active object is initialized
  */
-static bool timer_fixup_init(void *addr, enum debug_obj_state state)
-{
-	struct timer_list *timer = addr;
+अटल bool समयr_fixup_init(व्योम *addr, क्रमागत debug_obj_state state)
+अणु
+	काष्ठा समयr_list *समयr = addr;
 
-	switch (state) {
-	case ODEBUG_STATE_ACTIVE:
-		del_timer_sync(timer);
-		debug_object_init(timer, &timer_debug_descr);
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (state) अणु
+	हाल ODEBUG_STATE_ACTIVE:
+		del_समयr_sync(समयr);
+		debug_object_init(समयr, &समयr_debug_descr);
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-/* Stub timer callback for improperly used timers. */
-static void stub_timer(struct timer_list *unused)
-{
+/* Stub समयr callback क्रम improperly used समयrs. */
+अटल व्योम stub_समयr(काष्ठा समयr_list *unused)
+अणु
 	WARN_ON(1);
-}
+पूर्ण
 
 /*
  * fixup_activate is called when:
  * - an active object is activated
- * - an unknown non-static object is activated
+ * - an unknown non-अटल object is activated
  */
-static bool timer_fixup_activate(void *addr, enum debug_obj_state state)
-{
-	struct timer_list *timer = addr;
+अटल bool समयr_fixup_activate(व्योम *addr, क्रमागत debug_obj_state state)
+अणु
+	काष्ठा समयr_list *समयr = addr;
 
-	switch (state) {
-	case ODEBUG_STATE_NOTAVAILABLE:
-		timer_setup(timer, stub_timer, 0);
-		return true;
+	चयन (state) अणु
+	हाल ODEBUG_STATE_NOTAVAILABLE:
+		समयr_setup(समयr, stub_समयr, 0);
+		वापस true;
 
-	case ODEBUG_STATE_ACTIVE:
+	हाल ODEBUG_STATE_ACTIVE:
 		WARN_ON(1);
 		fallthrough;
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /*
- * fixup_free is called when:
- * - an active object is freed
+ * fixup_मुक्त is called when:
+ * - an active object is मुक्तd
  */
-static bool timer_fixup_free(void *addr, enum debug_obj_state state)
-{
-	struct timer_list *timer = addr;
+अटल bool समयr_fixup_मुक्त(व्योम *addr, क्रमागत debug_obj_state state)
+अणु
+	काष्ठा समयr_list *समयr = addr;
 
-	switch (state) {
-	case ODEBUG_STATE_ACTIVE:
-		del_timer_sync(timer);
-		debug_object_free(timer, &timer_debug_descr);
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (state) अणु
+	हाल ODEBUG_STATE_ACTIVE:
+		del_समयr_sync(समयr);
+		debug_object_मुक्त(समयr, &समयr_debug_descr);
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
 /*
- * fixup_assert_init is called when:
+ * fixup_निश्चित_init is called when:
  * - an untracked/uninit-ed object is found
  */
-static bool timer_fixup_assert_init(void *addr, enum debug_obj_state state)
-{
-	struct timer_list *timer = addr;
+अटल bool समयr_fixup_निश्चित_init(व्योम *addr, क्रमागत debug_obj_state state)
+अणु
+	काष्ठा समयr_list *समयr = addr;
 
-	switch (state) {
-	case ODEBUG_STATE_NOTAVAILABLE:
-		timer_setup(timer, stub_timer, 0);
-		return true;
-	default:
-		return false;
-	}
-}
+	चयन (state) अणु
+	हाल ODEBUG_STATE_NOTAVAILABLE:
+		समयr_setup(समयr, stub_समयr, 0);
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct debug_obj_descr timer_debug_descr = {
+अटल स्थिर काष्ठा debug_obj_descr समयr_debug_descr = अणु
 	.name			= "timer_list",
-	.debug_hint		= timer_debug_hint,
-	.is_static_object	= timer_is_static_object,
-	.fixup_init		= timer_fixup_init,
-	.fixup_activate		= timer_fixup_activate,
-	.fixup_free		= timer_fixup_free,
-	.fixup_assert_init	= timer_fixup_assert_init,
-};
+	.debug_hपूर्णांक		= समयr_debug_hपूर्णांक,
+	.is_अटल_object	= समयr_is_अटल_object,
+	.fixup_init		= समयr_fixup_init,
+	.fixup_activate		= समयr_fixup_activate,
+	.fixup_मुक्त		= समयr_fixup_मुक्त,
+	.fixup_निश्चित_init	= समयr_fixup_निश्चित_init,
+पूर्ण;
 
-static inline void debug_timer_init(struct timer_list *timer)
-{
-	debug_object_init(timer, &timer_debug_descr);
-}
+अटल अंतरभूत व्योम debug_समयr_init(काष्ठा समयr_list *समयr)
+अणु
+	debug_object_init(समयr, &समयr_debug_descr);
+पूर्ण
 
-static inline void debug_timer_activate(struct timer_list *timer)
-{
-	debug_object_activate(timer, &timer_debug_descr);
-}
+अटल अंतरभूत व्योम debug_समयr_activate(काष्ठा समयr_list *समयr)
+अणु
+	debug_object_activate(समयr, &समयr_debug_descr);
+पूर्ण
 
-static inline void debug_timer_deactivate(struct timer_list *timer)
-{
-	debug_object_deactivate(timer, &timer_debug_descr);
-}
+अटल अंतरभूत व्योम debug_समयr_deactivate(काष्ठा समयr_list *समयr)
+अणु
+	debug_object_deactivate(समयr, &समयr_debug_descr);
+पूर्ण
 
-static inline void debug_timer_assert_init(struct timer_list *timer)
-{
-	debug_object_assert_init(timer, &timer_debug_descr);
-}
+अटल अंतरभूत व्योम debug_समयr_निश्चित_init(काष्ठा समयr_list *समयr)
+अणु
+	debug_object_निश्चित_init(समयr, &समयr_debug_descr);
+पूर्ण
 
-static void do_init_timer(struct timer_list *timer,
-			  void (*func)(struct timer_list *),
-			  unsigned int flags,
-			  const char *name, struct lock_class_key *key);
+अटल व्योम करो_init_समयr(काष्ठा समयr_list *समयr,
+			  व्योम (*func)(काष्ठा समयr_list *),
+			  अचिन्हित पूर्णांक flags,
+			  स्थिर अक्षर *name, काष्ठा lock_class_key *key);
 
-void init_timer_on_stack_key(struct timer_list *timer,
-			     void (*func)(struct timer_list *),
-			     unsigned int flags,
-			     const char *name, struct lock_class_key *key)
-{
-	debug_object_init_on_stack(timer, &timer_debug_descr);
-	do_init_timer(timer, func, flags, name, key);
-}
-EXPORT_SYMBOL_GPL(init_timer_on_stack_key);
+व्योम init_समयr_on_stack_key(काष्ठा समयr_list *समयr,
+			     व्योम (*func)(काष्ठा समयr_list *),
+			     अचिन्हित पूर्णांक flags,
+			     स्थिर अक्षर *name, काष्ठा lock_class_key *key)
+अणु
+	debug_object_init_on_stack(समयr, &समयr_debug_descr);
+	करो_init_समयr(समयr, func, flags, name, key);
+पूर्ण
+EXPORT_SYMBOL_GPL(init_समयr_on_stack_key);
 
-void destroy_timer_on_stack(struct timer_list *timer)
-{
-	debug_object_free(timer, &timer_debug_descr);
-}
-EXPORT_SYMBOL_GPL(destroy_timer_on_stack);
+व्योम destroy_समयr_on_stack(काष्ठा समयr_list *समयr)
+अणु
+	debug_object_मुक्त(समयr, &समयr_debug_descr);
+पूर्ण
+EXPORT_SYMBOL_GPL(destroy_समयr_on_stack);
 
-#else
-static inline void debug_timer_init(struct timer_list *timer) { }
-static inline void debug_timer_activate(struct timer_list *timer) { }
-static inline void debug_timer_deactivate(struct timer_list *timer) { }
-static inline void debug_timer_assert_init(struct timer_list *timer) { }
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम debug_समयr_init(काष्ठा समयr_list *समयr) अणु पूर्ण
+अटल अंतरभूत व्योम debug_समयr_activate(काष्ठा समयr_list *समयr) अणु पूर्ण
+अटल अंतरभूत व्योम debug_समयr_deactivate(काष्ठा समयr_list *समयr) अणु पूर्ण
+अटल अंतरभूत व्योम debug_समयr_निश्चित_init(काष्ठा समयr_list *समयr) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline void debug_init(struct timer_list *timer)
-{
-	debug_timer_init(timer);
-	trace_timer_init(timer);
-}
+अटल अंतरभूत व्योम debug_init(काष्ठा समयr_list *समयr)
+अणु
+	debug_समयr_init(समयr);
+	trace_समयr_init(समयr);
+पूर्ण
 
-static inline void debug_deactivate(struct timer_list *timer)
-{
-	debug_timer_deactivate(timer);
-	trace_timer_cancel(timer);
-}
+अटल अंतरभूत व्योम debug_deactivate(काष्ठा समयr_list *समयr)
+अणु
+	debug_समयr_deactivate(समयr);
+	trace_समयr_cancel(समयr);
+पूर्ण
 
-static inline void debug_assert_init(struct timer_list *timer)
-{
-	debug_timer_assert_init(timer);
-}
+अटल अंतरभूत व्योम debug_निश्चित_init(काष्ठा समयr_list *समयr)
+अणु
+	debug_समयr_निश्चित_init(समयr);
+पूर्ण
 
-static void do_init_timer(struct timer_list *timer,
-			  void (*func)(struct timer_list *),
-			  unsigned int flags,
-			  const char *name, struct lock_class_key *key)
-{
-	timer->entry.pprev = NULL;
-	timer->function = func;
-	if (WARN_ON_ONCE(flags & ~TIMER_INIT_FLAGS))
+अटल व्योम करो_init_समयr(काष्ठा समयr_list *समयr,
+			  व्योम (*func)(काष्ठा समयr_list *),
+			  अचिन्हित पूर्णांक flags,
+			  स्थिर अक्षर *name, काष्ठा lock_class_key *key)
+अणु
+	समयr->entry.pprev = शून्य;
+	समयr->function = func;
+	अगर (WARN_ON_ONCE(flags & ~TIMER_INIT_FLAGS))
 		flags &= TIMER_INIT_FLAGS;
-	timer->flags = flags | raw_smp_processor_id();
-	lockdep_init_map(&timer->lockdep_map, name, key, 0);
-}
+	समयr->flags = flags | raw_smp_processor_id();
+	lockdep_init_map(&समयr->lockdep_map, name, key, 0);
+पूर्ण
 
 /**
- * init_timer_key - initialize a timer
- * @timer: the timer to be initialized
- * @func: timer callback function
- * @flags: timer flags
- * @name: name of the timer
- * @key: lockdep class key of the fake lock used for tracking timer
+ * init_समयr_key - initialize a समयr
+ * @समयr: the समयr to be initialized
+ * @func: समयr callback function
+ * @flags: समयr flags
+ * @name: name of the समयr
+ * @key: lockdep class key of the fake lock used क्रम tracking समयr
  *       sync lock dependencies
  *
- * init_timer_key() must be done to a timer prior calling *any* of the
- * other timer functions.
+ * init_समयr_key() must be करोne to a समयr prior calling *any* of the
+ * other समयr functions.
  */
-void init_timer_key(struct timer_list *timer,
-		    void (*func)(struct timer_list *), unsigned int flags,
-		    const char *name, struct lock_class_key *key)
-{
-	debug_init(timer);
-	do_init_timer(timer, func, flags, name, key);
-}
-EXPORT_SYMBOL(init_timer_key);
+व्योम init_समयr_key(काष्ठा समयr_list *समयr,
+		    व्योम (*func)(काष्ठा समयr_list *), अचिन्हित पूर्णांक flags,
+		    स्थिर अक्षर *name, काष्ठा lock_class_key *key)
+अणु
+	debug_init(समयr);
+	करो_init_समयr(समयr, func, flags, name, key);
+पूर्ण
+EXPORT_SYMBOL(init_समयr_key);
 
-static inline void detach_timer(struct timer_list *timer, bool clear_pending)
-{
-	struct hlist_node *entry = &timer->entry;
+अटल अंतरभूत व्योम detach_समयr(काष्ठा समयr_list *समयr, bool clear_pending)
+अणु
+	काष्ठा hlist_node *entry = &समयr->entry;
 
-	debug_deactivate(timer);
+	debug_deactivate(समयr);
 
 	__hlist_del(entry);
-	if (clear_pending)
-		entry->pprev = NULL;
+	अगर (clear_pending)
+		entry->pprev = शून्य;
 	entry->next = LIST_POISON2;
-}
+पूर्ण
 
-static int detach_if_pending(struct timer_list *timer, struct timer_base *base,
+अटल पूर्णांक detach_अगर_pending(काष्ठा समयr_list *समयr, काष्ठा समयr_base *base,
 			     bool clear_pending)
-{
-	unsigned idx = timer_get_idx(timer);
+अणु
+	अचिन्हित idx = समयr_get_idx(समयr);
 
-	if (!timer_pending(timer))
-		return 0;
+	अगर (!समयr_pending(समयr))
+		वापस 0;
 
-	if (hlist_is_singular_node(&timer->entry, base->vectors + idx)) {
+	अगर (hlist_is_singular_node(&समयr->entry, base->vectors + idx)) अणु
 		__clear_bit(idx, base->pending_map);
 		base->next_expiry_recalc = true;
-	}
+	पूर्ण
 
-	detach_timer(timer, clear_pending);
-	return 1;
-}
+	detach_समयr(समयr, clear_pending);
+	वापस 1;
+पूर्ण
 
-static inline struct timer_base *get_timer_cpu_base(u32 tflags, u32 cpu)
-{
-	struct timer_base *base = per_cpu_ptr(&timer_bases[BASE_STD], cpu);
-
-	/*
-	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
-	 * to use the deferrable base.
-	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
-		base = per_cpu_ptr(&timer_bases[BASE_DEF], cpu);
-	return base;
-}
-
-static inline struct timer_base *get_timer_this_cpu_base(u32 tflags)
-{
-	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
+अटल अंतरभूत काष्ठा समयr_base *get_समयr_cpu_base(u32 tflags, u32 cpu)
+अणु
+	काष्ठा समयr_base *base = per_cpu_ptr(&समयr_bases[BASE_STD], cpu);
 
 	/*
-	 * If the timer is deferrable and NO_HZ_COMMON is set then we need
+	 * If the समयr is deferrable and NO_HZ_COMMON is set then we need
 	 * to use the deferrable base.
 	 */
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
-		base = this_cpu_ptr(&timer_bases[BASE_DEF]);
-	return base;
-}
+	अगर (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
+		base = per_cpu_ptr(&समयr_bases[BASE_DEF], cpu);
+	वापस base;
+पूर्ण
 
-static inline struct timer_base *get_timer_base(u32 tflags)
-{
-	return get_timer_cpu_base(tflags, tflags & TIMER_CPUMASK);
-}
+अटल अंतरभूत काष्ठा समयr_base *get_समयr_this_cpu_base(u32 tflags)
+अणु
+	काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[BASE_STD]);
 
-static inline struct timer_base *
-get_target_base(struct timer_base *base, unsigned tflags)
-{
-#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
-	if (static_branch_likely(&timers_migration_enabled) &&
+	/*
+	 * If the समयr is deferrable and NO_HZ_COMMON is set then we need
+	 * to use the deferrable base.
+	 */
+	अगर (IS_ENABLED(CONFIG_NO_HZ_COMMON) && (tflags & TIMER_DEFERRABLE))
+		base = this_cpu_ptr(&समयr_bases[BASE_DEF]);
+	वापस base;
+पूर्ण
+
+अटल अंतरभूत काष्ठा समयr_base *get_समयr_base(u32 tflags)
+अणु
+	वापस get_समयr_cpu_base(tflags, tflags & TIMER_CPUMASK);
+पूर्ण
+
+अटल अंतरभूत काष्ठा समयr_base *
+get_target_base(काष्ठा समयr_base *base, अचिन्हित tflags)
+अणु
+#अगर defined(CONFIG_SMP) && defined(CONFIG_NO_HZ_COMMON)
+	अगर (अटल_branch_likely(&समयrs_migration_enabled) &&
 	    !(tflags & TIMER_PINNED))
-		return get_timer_cpu_base(tflags, get_nohz_timer_target());
-#endif
-	return get_timer_this_cpu_base(tflags);
-}
+		वापस get_समयr_cpu_base(tflags, get_nohz_समयr_target());
+#पूर्ण_अगर
+	वापस get_समयr_this_cpu_base(tflags);
+पूर्ण
 
-static inline void forward_timer_base(struct timer_base *base)
-{
-	unsigned long jnow = READ_ONCE(jiffies);
-
-	/*
-	 * No need to forward if we are close enough below jiffies.
-	 * Also while executing timers, base->clk is 1 offset ahead
-	 * of jiffies to avoid endless requeuing to current jiffies.
-	 */
-	if ((long)(jnow - base->clk) < 1)
-		return;
+अटल अंतरभूत व्योम क्रमward_समयr_base(काष्ठा समयr_base *base)
+अणु
+	अचिन्हित दीर्घ jnow = READ_ONCE(jअगरfies);
 
 	/*
-	 * If the next expiry value is > jiffies, then we fast forward to
-	 * jiffies otherwise we forward to the next expiry value.
+	 * No need to क्रमward अगर we are बंद enough below jअगरfies.
+	 * Also जबतक executing समयrs, base->clk is 1 offset ahead
+	 * of jअगरfies to aव्योम endless requeuing to current jअगरfies.
 	 */
-	if (time_after(base->next_expiry, jnow)) {
+	अगर ((दीर्घ)(jnow - base->clk) < 1)
+		वापस;
+
+	/*
+	 * If the next expiry value is > jअगरfies, then we fast क्रमward to
+	 * jअगरfies otherwise we क्रमward to the next expiry value.
+	 */
+	अगर (समय_after(base->next_expiry, jnow)) अणु
 		base->clk = jnow;
-	} else {
-		if (WARN_ON_ONCE(time_before(base->next_expiry, base->clk)))
-			return;
+	पूर्ण अन्यथा अणु
+		अगर (WARN_ON_ONCE(समय_beक्रमe(base->next_expiry, base->clk)))
+			वापस;
 		base->clk = base->next_expiry;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
- * We are using hashed locking: Holding per_cpu(timer_bases[x]).lock means
- * that all timers which are tied to this base are locked, and the base itself
+ * We are using hashed locking: Holding per_cpu(समयr_bases[x]).lock means
+ * that all समयrs which are tied to this base are locked, and the base itself
  * is locked too.
  *
- * So __run_timers/migrate_timers can safely modify all timers which could
+ * So __run_समयrs/migrate_समयrs can safely modअगरy all समयrs which could
  * be found in the base->vectors array.
  *
- * When a timer is migrating then the TIMER_MIGRATING flag is set and we need
- * to wait until the migration is done.
+ * When a समयr is migrating then the TIMER_MIGRATING flag is set and we need
+ * to रुको until the migration is करोne.
  */
-static struct timer_base *lock_timer_base(struct timer_list *timer,
-					  unsigned long *flags)
-	__acquires(timer->base->lock)
-{
-	for (;;) {
-		struct timer_base *base;
+अटल काष्ठा समयr_base *lock_समयr_base(काष्ठा समयr_list *समयr,
+					  अचिन्हित दीर्घ *flags)
+	__acquires(समयr->base->lock)
+अणु
+	क्रम (;;) अणु
+		काष्ठा समयr_base *base;
 		u32 tf;
 
 		/*
 		 * We need to use READ_ONCE() here, otherwise the compiler
-		 * might re-read @tf between the check for TIMER_MIGRATING
+		 * might re-पढ़ो @tf between the check क्रम TIMER_MIGRATING
 		 * and spin_lock().
 		 */
-		tf = READ_ONCE(timer->flags);
+		tf = READ_ONCE(समयr->flags);
 
-		if (!(tf & TIMER_MIGRATING)) {
-			base = get_timer_base(tf);
+		अगर (!(tf & TIMER_MIGRATING)) अणु
+			base = get_समयr_base(tf);
 			raw_spin_lock_irqsave(&base->lock, *flags);
-			if (timer->flags == tf)
-				return base;
+			अगर (समयr->flags == tf)
+				वापस base;
 			raw_spin_unlock_irqrestore(&base->lock, *flags);
-		}
+		पूर्ण
 		cpu_relax();
-	}
-}
+	पूर्ण
+पूर्ण
 
-#define MOD_TIMER_PENDING_ONLY		0x01
-#define MOD_TIMER_REDUCE		0x02
-#define MOD_TIMER_NOTPENDING		0x04
+#घोषणा MOD_TIMER_PENDING_ONLY		0x01
+#घोषणा MOD_TIMER_REDUCE		0x02
+#घोषणा MOD_TIMER_NOTPENDING		0x04
 
-static inline int
-__mod_timer(struct timer_list *timer, unsigned long expires, unsigned int options)
-{
-	unsigned long clk = 0, flags, bucket_expiry;
-	struct timer_base *base, *new_base;
-	unsigned int idx = UINT_MAX;
-	int ret = 0;
+अटल अंतरभूत पूर्णांक
+__mod_समयr(काष्ठा समयr_list *समयr, अचिन्हित दीर्घ expires, अचिन्हित पूर्णांक options)
+अणु
+	अचिन्हित दीर्घ clk = 0, flags, bucket_expiry;
+	काष्ठा समयr_base *base, *new_base;
+	अचिन्हित पूर्णांक idx = अच_पूर्णांक_उच्च;
+	पूर्णांक ret = 0;
 
-	BUG_ON(!timer->function);
+	BUG_ON(!समयr->function);
 
 	/*
-	 * This is a common optimization triggered by the networking code - if
-	 * the timer is re-modified to have the same timeout or ends up in the
-	 * same array bucket then just return:
+	 * This is a common optimization triggered by the networking code - अगर
+	 * the समयr is re-modअगरied to have the same समयout or ends up in the
+	 * same array bucket then just वापस:
 	 */
-	if (!(options & MOD_TIMER_NOTPENDING) && timer_pending(timer)) {
+	अगर (!(options & MOD_TIMER_NOTPENDING) && समयr_pending(समयr)) अणु
 		/*
-		 * The downside of this optimization is that it can result in
+		 * The करोwnside of this optimization is that it can result in
 		 * larger granularity than you would get from adding a new
-		 * timer with this expiry.
+		 * समयr with this expiry.
 		 */
-		long diff = timer->expires - expires;
+		दीर्घ dअगरf = समयr->expires - expires;
 
-		if (!diff)
-			return 1;
-		if (options & MOD_TIMER_REDUCE && diff <= 0)
-			return 1;
+		अगर (!dअगरf)
+			वापस 1;
+		अगर (options & MOD_TIMER_REDUCE && dअगरf <= 0)
+			वापस 1;
 
 		/*
-		 * We lock timer base and calculate the bucket index right
-		 * here. If the timer ends up in the same bucket, then we
-		 * just update the expiry time and avoid the whole
+		 * We lock समयr base and calculate the bucket index right
+		 * here. If the समयr ends up in the same bucket, then we
+		 * just update the expiry समय and aव्योम the whole
 		 * dequeue/enqueue dance.
 		 */
-		base = lock_timer_base(timer, &flags);
-		forward_timer_base(base);
+		base = lock_समयr_base(समयr, &flags);
+		क्रमward_समयr_base(base);
 
-		if (timer_pending(timer) && (options & MOD_TIMER_REDUCE) &&
-		    time_before_eq(timer->expires, expires)) {
+		अगर (समयr_pending(समयr) && (options & MOD_TIMER_REDUCE) &&
+		    समय_beक्रमe_eq(समयr->expires, expires)) अणु
 			ret = 1;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		clk = base->clk;
 		idx = calc_wheel_index(expires, clk, &bucket_expiry);
 
 		/*
 		 * Retrieve and compare the array index of the pending
-		 * timer. If it matches set the expiry to the new value so a
-		 * subsequent call will exit in the expires check above.
+		 * समयr. If it matches set the expiry to the new value so a
+		 * subsequent call will निकास in the expires check above.
 		 */
-		if (idx == timer_get_idx(timer)) {
-			if (!(options & MOD_TIMER_REDUCE))
-				timer->expires = expires;
-			else if (time_after(timer->expires, expires))
-				timer->expires = expires;
+		अगर (idx == समयr_get_idx(समयr)) अणु
+			अगर (!(options & MOD_TIMER_REDUCE))
+				समयr->expires = expires;
+			अन्यथा अगर (समय_after(समयr->expires, expires))
+				समयr->expires = expires;
 			ret = 1;
-			goto out_unlock;
-		}
-	} else {
-		base = lock_timer_base(timer, &flags);
-		forward_timer_base(base);
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		base = lock_समयr_base(समयr, &flags);
+		क्रमward_समयr_base(base);
+	पूर्ण
 
-	ret = detach_if_pending(timer, base, false);
-	if (!ret && (options & MOD_TIMER_PENDING_ONLY))
-		goto out_unlock;
+	ret = detach_अगर_pending(समयr, base, false);
+	अगर (!ret && (options & MOD_TIMER_PENDING_ONLY))
+		जाओ out_unlock;
 
-	new_base = get_target_base(base, timer->flags);
+	new_base = get_target_base(base, समयr->flags);
 
-	if (base != new_base) {
+	अगर (base != new_base) अणु
 		/*
-		 * We are trying to schedule the timer on the new base.
-		 * However we can't change timer's base while it is running,
-		 * otherwise del_timer_sync() can't detect that the timer's
+		 * We are trying to schedule the समयr on the new base.
+		 * However we can't change timer's base जबतक it is running,
+		 * otherwise del_समयr_sync() can't detect that the timer's
 		 * handler yet has not finished. This also guarantees that the
-		 * timer is serialized wrt itself.
+		 * समयr is serialized wrt itself.
 		 */
-		if (likely(base->running_timer != timer)) {
-			/* See the comment in lock_timer_base() */
-			timer->flags |= TIMER_MIGRATING;
+		अगर (likely(base->running_समयr != समयr)) अणु
+			/* See the comment in lock_समयr_base() */
+			समयr->flags |= TIMER_MIGRATING;
 
 			raw_spin_unlock(&base->lock);
 			base = new_base;
 			raw_spin_lock(&base->lock);
-			WRITE_ONCE(timer->flags,
-				   (timer->flags & ~TIMER_BASEMASK) | base->cpu);
-			forward_timer_base(base);
-		}
-	}
+			WRITE_ONCE(समयr->flags,
+				   (समयr->flags & ~TIMER_BASEMASK) | base->cpu);
+			क्रमward_समयr_base(base);
+		पूर्ण
+	पूर्ण
 
-	debug_timer_activate(timer);
+	debug_समयr_activate(समयr);
 
-	timer->expires = expires;
+	समयr->expires = expires;
 	/*
-	 * If 'idx' was calculated above and the base time did not advance
-	 * between calculating 'idx' and possibly switching the base, only
-	 * enqueue_timer() is required. Otherwise we need to (re)calculate
-	 * the wheel index via internal_add_timer().
+	 * If 'idx' was calculated above and the base समय did not advance
+	 * between calculating 'idx' and possibly चयनing the base, only
+	 * enqueue_समयr() is required. Otherwise we need to (re)calculate
+	 * the wheel index via पूर्णांकernal_add_समयr().
 	 */
-	if (idx != UINT_MAX && clk == base->clk)
-		enqueue_timer(base, timer, idx, bucket_expiry);
-	else
-		internal_add_timer(base, timer);
+	अगर (idx != अच_पूर्णांक_उच्च && clk == base->clk)
+		enqueue_समयr(base, समयr, idx, bucket_expiry);
+	अन्यथा
+		पूर्णांकernal_add_समयr(base, समयr);
 
 out_unlock:
 	raw_spin_unlock_irqrestore(&base->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mod_timer_pending - modify a pending timer's timeout
- * @timer: the pending timer to be modified
- * @expires: new timeout in jiffies
+ * mod_समयr_pending - modअगरy a pending समयr's समयout
+ * @समयr: the pending समयr to be modअगरied
+ * @expires: new समयout in jअगरfies
  *
- * mod_timer_pending() is the same for pending timers as mod_timer(),
- * but will not re-activate and modify already deleted timers.
+ * mod_समयr_pending() is the same क्रम pending समयrs as mod_समयr(),
+ * but will not re-activate and modअगरy alपढ़ोy deleted समयrs.
  *
- * It is useful for unserialized use of timers.
+ * It is useful क्रम unserialized use of समयrs.
  */
-int mod_timer_pending(struct timer_list *timer, unsigned long expires)
-{
-	return __mod_timer(timer, expires, MOD_TIMER_PENDING_ONLY);
-}
-EXPORT_SYMBOL(mod_timer_pending);
+पूर्णांक mod_समयr_pending(काष्ठा समयr_list *समयr, अचिन्हित दीर्घ expires)
+अणु
+	वापस __mod_समयr(समयr, expires, MOD_TIMER_PENDING_ONLY);
+पूर्ण
+EXPORT_SYMBOL(mod_समयr_pending);
 
 /**
- * mod_timer - modify a timer's timeout
- * @timer: the timer to be modified
- * @expires: new timeout in jiffies
+ * mod_समयr - modअगरy a समयr's समयout
+ * @समयr: the समयr to be modअगरied
+ * @expires: new समयout in jअगरfies
  *
- * mod_timer() is a more efficient way to update the expire field of an
- * active timer (if the timer is inactive it will be activated)
+ * mod_समयr() is a more efficient way to update the expire field of an
+ * active समयr (अगर the समयr is inactive it will be activated)
  *
- * mod_timer(timer, expires) is equivalent to:
+ * mod_समयr(समयr, expires) is equivalent to:
  *
- *     del_timer(timer); timer->expires = expires; add_timer(timer);
+ *     del_समयr(समयr); समयr->expires = expires; add_समयr(समयr);
  *
- * Note that if there are multiple unserialized concurrent users of the
- * same timer, then mod_timer() is the only safe way to modify the timeout,
- * since add_timer() cannot modify an already running timer.
+ * Note that अगर there are multiple unserialized concurrent users of the
+ * same समयr, then mod_समयr() is the only safe way to modअगरy the समयout,
+ * since add_समयr() cannot modअगरy an alपढ़ोy running समयr.
  *
- * The function returns whether it has modified a pending timer or not.
- * (ie. mod_timer() of an inactive timer returns 0, mod_timer() of an
- * active timer returns 1.)
+ * The function वापसs whether it has modअगरied a pending समयr or not.
+ * (ie. mod_समयr() of an inactive समयr वापसs 0, mod_समयr() of an
+ * active समयr वापसs 1.)
  */
-int mod_timer(struct timer_list *timer, unsigned long expires)
-{
-	return __mod_timer(timer, expires, 0);
-}
-EXPORT_SYMBOL(mod_timer);
+पूर्णांक mod_समयr(काष्ठा समयr_list *समयr, अचिन्हित दीर्घ expires)
+अणु
+	वापस __mod_समयr(समयr, expires, 0);
+पूर्ण
+EXPORT_SYMBOL(mod_समयr);
 
 /**
- * timer_reduce - Modify a timer's timeout if it would reduce the timeout
- * @timer:	The timer to be modified
- * @expires:	New timeout in jiffies
+ * समयr_reduce - Modअगरy a समयr's समयout अगर it would reduce the समयout
+ * @समयr:	The समयr to be modअगरied
+ * @expires:	New समयout in jअगरfies
  *
- * timer_reduce() is very similar to mod_timer(), except that it will only
- * modify a running timer if that would reduce the expiration time (it will
- * start a timer that isn't running).
+ * समयr_reduce() is very similar to mod_समयr(), except that it will only
+ * modअगरy a running समयr अगर that would reduce the expiration समय (it will
+ * start a समयr that isn't running).
  */
-int timer_reduce(struct timer_list *timer, unsigned long expires)
-{
-	return __mod_timer(timer, expires, MOD_TIMER_REDUCE);
-}
-EXPORT_SYMBOL(timer_reduce);
+पूर्णांक समयr_reduce(काष्ठा समयr_list *समयr, अचिन्हित दीर्घ expires)
+अणु
+	वापस __mod_समयr(समयr, expires, MOD_TIMER_REDUCE);
+पूर्ण
+EXPORT_SYMBOL(समयr_reduce);
 
 /**
- * add_timer - start a timer
- * @timer: the timer to be added
+ * add_समयr - start a समयr
+ * @समयr: the समयr to be added
  *
- * The kernel will do a ->function(@timer) callback from the
- * timer interrupt at the ->expires point in the future. The
- * current time is 'jiffies'.
+ * The kernel will करो a ->function(@समयr) callback from the
+ * समयr पूर्णांकerrupt at the ->expires poपूर्णांक in the future. The
+ * current समय is 'jiffies'.
  *
- * The timer's ->expires, ->function fields must be set prior calling this
+ * The समयr's ->expires, ->function fields must be set prior calling this
  * function.
  *
  * Timers with an ->expires field in the past will be executed in the next
- * timer tick.
+ * समयr tick.
  */
-void add_timer(struct timer_list *timer)
-{
-	BUG_ON(timer_pending(timer));
-	__mod_timer(timer, timer->expires, MOD_TIMER_NOTPENDING);
-}
-EXPORT_SYMBOL(add_timer);
+व्योम add_समयr(काष्ठा समयr_list *समयr)
+अणु
+	BUG_ON(समयr_pending(समयr));
+	__mod_समयr(समयr, समयr->expires, MOD_TIMER_NOTPENDING);
+पूर्ण
+EXPORT_SYMBOL(add_समयr);
 
 /**
- * add_timer_on - start a timer on a particular CPU
- * @timer: the timer to be added
+ * add_समयr_on - start a समयr on a particular CPU
+ * @समयr: the समयr to be added
  * @cpu: the CPU to start it on
  *
  * This is not very scalable on SMP. Double adds are not possible.
  */
-void add_timer_on(struct timer_list *timer, int cpu)
-{
-	struct timer_base *new_base, *base;
-	unsigned long flags;
+व्योम add_समयr_on(काष्ठा समयr_list *समयr, पूर्णांक cpu)
+अणु
+	काष्ठा समयr_base *new_base, *base;
+	अचिन्हित दीर्घ flags;
 
-	BUG_ON(timer_pending(timer) || !timer->function);
+	BUG_ON(समयr_pending(समयr) || !समयr->function);
 
-	new_base = get_timer_cpu_base(timer->flags, cpu);
+	new_base = get_समयr_cpu_base(समयr->flags, cpu);
 
 	/*
-	 * If @timer was on a different CPU, it should be migrated with the
+	 * If @समयr was on a dअगरferent CPU, it should be migrated with the
 	 * old base locked to prevent other operations proceeding with the
-	 * wrong base locked.  See lock_timer_base().
+	 * wrong base locked.  See lock_समयr_base().
 	 */
-	base = lock_timer_base(timer, &flags);
-	if (base != new_base) {
-		timer->flags |= TIMER_MIGRATING;
+	base = lock_समयr_base(समयr, &flags);
+	अगर (base != new_base) अणु
+		समयr->flags |= TIMER_MIGRATING;
 
 		raw_spin_unlock(&base->lock);
 		base = new_base;
 		raw_spin_lock(&base->lock);
-		WRITE_ONCE(timer->flags,
-			   (timer->flags & ~TIMER_BASEMASK) | cpu);
-	}
-	forward_timer_base(base);
+		WRITE_ONCE(समयr->flags,
+			   (समयr->flags & ~TIMER_BASEMASK) | cpu);
+	पूर्ण
+	क्रमward_समयr_base(base);
 
-	debug_timer_activate(timer);
-	internal_add_timer(base, timer);
+	debug_समयr_activate(समयr);
+	पूर्णांकernal_add_समयr(base, समयr);
 	raw_spin_unlock_irqrestore(&base->lock, flags);
-}
-EXPORT_SYMBOL_GPL(add_timer_on);
+पूर्ण
+EXPORT_SYMBOL_GPL(add_समयr_on);
 
 /**
- * del_timer - deactivate a timer.
- * @timer: the timer to be deactivated
+ * del_समयr - deactivate a समयr.
+ * @समयr: the समयr to be deactivated
  *
- * del_timer() deactivates a timer - this works on both active and inactive
- * timers.
+ * del_समयr() deactivates a समयr - this works on both active and inactive
+ * समयrs.
  *
- * The function returns whether it has deactivated a pending timer or not.
- * (ie. del_timer() of an inactive timer returns 0, del_timer() of an
- * active timer returns 1.)
+ * The function वापसs whether it has deactivated a pending समयr or not.
+ * (ie. del_समयr() of an inactive समयr वापसs 0, del_समयr() of an
+ * active समयr वापसs 1.)
  */
-int del_timer(struct timer_list *timer)
-{
-	struct timer_base *base;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक del_समयr(काष्ठा समयr_list *समयr)
+अणु
+	काष्ठा समयr_base *base;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	debug_assert_init(timer);
+	debug_निश्चित_init(समयr);
 
-	if (timer_pending(timer)) {
-		base = lock_timer_base(timer, &flags);
-		ret = detach_if_pending(timer, base, true);
+	अगर (समयr_pending(समयr)) अणु
+		base = lock_समयr_base(समयr, &flags);
+		ret = detach_अगर_pending(समयr, base, true);
 		raw_spin_unlock_irqrestore(&base->lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL(del_timer);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(del_समयr);
 
 /**
- * try_to_del_timer_sync - Try to deactivate a timer
- * @timer: timer to delete
+ * try_to_del_समयr_sync - Try to deactivate a समयr
+ * @समयr: समयr to delete
  *
- * This function tries to deactivate a timer. Upon successful (ret >= 0)
- * exit the timer is not queued and the handler is not running on any CPU.
+ * This function tries to deactivate a समयr. Upon successful (ret >= 0)
+ * निकास the समयr is not queued and the handler is not running on any CPU.
  */
-int try_to_del_timer_sync(struct timer_list *timer)
-{
-	struct timer_base *base;
-	unsigned long flags;
-	int ret = -1;
+पूर्णांक try_to_del_समयr_sync(काष्ठा समयr_list *समयr)
+अणु
+	काष्ठा समयr_base *base;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = -1;
 
-	debug_assert_init(timer);
+	debug_निश्चित_init(समयr);
 
-	base = lock_timer_base(timer, &flags);
+	base = lock_समयr_base(समयr, &flags);
 
-	if (base->running_timer != timer)
-		ret = detach_if_pending(timer, base, true);
+	अगर (base->running_समयr != समयr)
+		ret = detach_अगर_pending(समयr, base, true);
 
 	raw_spin_unlock_irqrestore(&base->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL(try_to_del_timer_sync);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(try_to_del_समयr_sync);
 
-bool timer_curr_running(struct timer_list *timer)
-{
-	int i;
+bool समयr_curr_running(काष्ठा समयr_list *समयr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NR_BASES; i++) {
-		struct timer_base *base = this_cpu_ptr(&timer_bases[i]);
+	क्रम (i = 0; i < NR_BASES; i++) अणु
+		काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[i]);
 
-		if (base->running_timer == timer)
-			return true;
-	}
+		अगर (base->running_समयr == समयr)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#ifdef CONFIG_PREEMPT_RT
-static __init void timer_base_init_expiry_lock(struct timer_base *base)
-{
+#अगर_घोषित CONFIG_PREEMPT_RT
+अटल __init व्योम समयr_base_init_expiry_lock(काष्ठा समयr_base *base)
+अणु
 	spin_lock_init(&base->expiry_lock);
-}
+पूर्ण
 
-static inline void timer_base_lock_expiry(struct timer_base *base)
-{
+अटल अंतरभूत व्योम समयr_base_lock_expiry(काष्ठा समयr_base *base)
+अणु
 	spin_lock(&base->expiry_lock);
-}
+पूर्ण
 
-static inline void timer_base_unlock_expiry(struct timer_base *base)
-{
+अटल अंतरभूत व्योम समयr_base_unlock_expiry(काष्ठा समयr_base *base)
+अणु
 	spin_unlock(&base->expiry_lock);
-}
+पूर्ण
 
 /*
- * The counterpart to del_timer_wait_running().
+ * The counterpart to del_समयr_रुको_running().
  *
- * If there is a waiter for base->expiry_lock, then it was waiting for the
- * timer callback to finish. Drop expiry_lock and reacquire it. That allows
- * the waiter to acquire the lock and make progress.
+ * If there is a रुकोer क्रम base->expiry_lock, then it was रुकोing क्रम the
+ * समयr callback to finish. Drop expiry_lock and reacquire it. That allows
+ * the रुकोer to acquire the lock and make progress.
  */
-static void timer_sync_wait_running(struct timer_base *base)
-{
-	if (atomic_read(&base->timer_waiters)) {
+अटल व्योम समयr_sync_रुको_running(काष्ठा समयr_base *base)
+अणु
+	अगर (atomic_पढ़ो(&base->समयr_रुकोers)) अणु
 		spin_unlock(&base->expiry_lock);
 		spin_lock(&base->expiry_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * This function is called on PREEMPT_RT kernels when the fast path
- * deletion of a timer failed because the timer callback function was
+ * deletion of a समयr failed because the समयr callback function was
  * running.
  *
- * This prevents priority inversion, if the softirq thread on a remote CPU
- * got preempted, and it prevents a life lock when the task which tries to
- * delete a timer preempted the softirq thread running the timer callback
+ * This prevents priority inversion, अगर the softirq thपढ़ो on a remote CPU
+ * got preempted, and it prevents a lअगरe lock when the task which tries to
+ * delete a समयr preempted the softirq thपढ़ो running the समयr callback
  * function.
  */
-static void del_timer_wait_running(struct timer_list *timer)
-{
+अटल व्योम del_समयr_रुको_running(काष्ठा समयr_list *समयr)
+अणु
 	u32 tf;
 
-	tf = READ_ONCE(timer->flags);
-	if (!(tf & (TIMER_MIGRATING | TIMER_IRQSAFE))) {
-		struct timer_base *base = get_timer_base(tf);
+	tf = READ_ONCE(समयr->flags);
+	अगर (!(tf & (TIMER_MIGRATING | TIMER_IRQSAFE))) अणु
+		काष्ठा समयr_base *base = get_समयr_base(tf);
 
 		/*
 		 * Mark the base as contended and grab the expiry lock,
-		 * which is held by the softirq across the timer
+		 * which is held by the softirq across the समयr
 		 * callback. Drop the lock immediately so the softirq can
-		 * expire the next timer. In theory the timer could already
+		 * expire the next समयr. In theory the समयr could alपढ़ोy
 		 * be running again, but that's more than unlikely and just
-		 * causes another wait loop.
+		 * causes another रुको loop.
 		 */
-		atomic_inc(&base->timer_waiters);
+		atomic_inc(&base->समयr_रुकोers);
 		spin_lock_bh(&base->expiry_lock);
-		atomic_dec(&base->timer_waiters);
+		atomic_dec(&base->समयr_रुकोers);
 		spin_unlock_bh(&base->expiry_lock);
-	}
-}
-#else
-static inline void timer_base_init_expiry_lock(struct timer_base *base) { }
-static inline void timer_base_lock_expiry(struct timer_base *base) { }
-static inline void timer_base_unlock_expiry(struct timer_base *base) { }
-static inline void timer_sync_wait_running(struct timer_base *base) { }
-static inline void del_timer_wait_running(struct timer_list *timer) { }
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम समयr_base_init_expiry_lock(काष्ठा समयr_base *base) अणु पूर्ण
+अटल अंतरभूत व्योम समयr_base_lock_expiry(काष्ठा समयr_base *base) अणु पूर्ण
+अटल अंतरभूत व्योम समयr_base_unlock_expiry(काष्ठा समयr_base *base) अणु पूर्ण
+अटल अंतरभूत व्योम समयr_sync_रुको_running(काष्ठा समयr_base *base) अणु पूर्ण
+अटल अंतरभूत व्योम del_समयr_रुको_running(काष्ठा समयr_list *समयr) अणु पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
+#अगर defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT)
 /**
- * del_timer_sync - deactivate a timer and wait for the handler to finish.
- * @timer: the timer to be deactivated
+ * del_समयr_sync - deactivate a समयr and रुको क्रम the handler to finish.
+ * @समयr: the समयr to be deactivated
  *
- * This function only differs from del_timer() on SMP: besides deactivating
- * the timer it also makes sure the handler has finished executing on other
+ * This function only dअगरfers from del_समयr() on SMP: besides deactivating
+ * the समयr it also makes sure the handler has finished executing on other
  * CPUs.
  *
- * Synchronization rules: Callers must prevent restarting of the timer,
+ * Synchronization rules: Callers must prevent restarting of the समयr,
  * otherwise this function is meaningless. It must not be called from
- * interrupt contexts unless the timer is an irqsafe one. The caller must
- * not hold locks which would prevent completion of the timer's
- * handler. The timer's handler must not call add_timer_on(). Upon exit the
- * timer is not queued and the handler is not running on any CPU.
+ * पूर्णांकerrupt contexts unless the समयr is an irqsafe one. The caller must
+ * not hold locks which would prevent completion of the समयr's
+ * handler. The समयr's handler must not call add_समयr_on(). Upon निकास the
+ * समयr is not queued and the handler is not running on any CPU.
  *
- * Note: For !irqsafe timers, you must not hold locks that are held in
- *   interrupt context while calling this function. Even if the lock has
- *   nothing to do with the timer in question.  Here's why::
+ * Note: For !irqsafe समयrs, you must not hold locks that are held in
+ *   पूर्णांकerrupt context जबतक calling this function. Even अगर the lock has
+ *   nothing to करो with the समयr in question.  Here's why::
  *
  *    CPU0                             CPU1
  *    ----                             ----
  *                                     <SOFTIRQ>
- *                                       call_timer_fn();
- *                                       base->running_timer = mytimer;
+ *                                       call_समयr_fn();
+ *                                       base->running_समयr = myसमयr;
  *    spin_lock_irq(somelock);
  *                                     <IRQ>
  *                                        spin_lock(somelock);
- *    del_timer_sync(mytimer);
- *    while (base->running_timer == mytimer);
+ *    del_समयr_sync(myसमयr);
+ *    जबतक (base->running_समयr == myसमयr);
  *
- * Now del_timer_sync() will never return and never release somelock.
- * The interrupt on the other CPU is waiting to grab somelock but
- * it has interrupted the softirq that CPU0 is waiting to finish.
+ * Now del_समयr_sync() will never वापस and never release somelock.
+ * The पूर्णांकerrupt on the other CPU is रुकोing to grab somelock but
+ * it has पूर्णांकerrupted the softirq that CPU0 is रुकोing to finish.
  *
- * The function returns whether it has deactivated a pending timer or not.
+ * The function वापसs whether it has deactivated a pending समयr or not.
  */
-int del_timer_sync(struct timer_list *timer)
-{
-	int ret;
+पूर्णांक del_समयr_sync(काष्ठा समयr_list *समयr)
+अणु
+	पूर्णांक ret;
 
-#ifdef CONFIG_LOCKDEP
-	unsigned long flags;
+#अगर_घोषित CONFIG_LOCKDEP
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * If lockdep gives a backtrace here, please reference
 	 * the synchronization rules above.
 	 */
 	local_irq_save(flags);
-	lock_map_acquire(&timer->lockdep_map);
-	lock_map_release(&timer->lockdep_map);
+	lock_map_acquire(&समयr->lockdep_map);
+	lock_map_release(&समयr->lockdep_map);
 	local_irq_restore(flags);
-#endif
+#पूर्ण_अगर
 	/*
-	 * don't use it in hardirq context, because it
+	 * करोn't use it in hardirq context, because it
 	 * could lead to deadlock.
 	 */
-	WARN_ON(in_irq() && !(timer->flags & TIMER_IRQSAFE));
+	WARN_ON(in_irq() && !(समयr->flags & TIMER_IRQSAFE));
 
 	/*
 	 * Must be able to sleep on PREEMPT_RT because of the slowpath in
-	 * del_timer_wait_running().
+	 * del_समयr_रुको_running().
 	 */
-	if (IS_ENABLED(CONFIG_PREEMPT_RT) && !(timer->flags & TIMER_IRQSAFE))
-		lockdep_assert_preemption_enabled();
+	अगर (IS_ENABLED(CONFIG_PREEMPT_RT) && !(समयr->flags & TIMER_IRQSAFE))
+		lockdep_निश्चित_preemption_enabled();
 
-	do {
-		ret = try_to_del_timer_sync(timer);
+	करो अणु
+		ret = try_to_del_समयr_sync(समयr);
 
-		if (unlikely(ret < 0)) {
-			del_timer_wait_running(timer);
+		अगर (unlikely(ret < 0)) अणु
+			del_समयr_रुको_running(समयr);
 			cpu_relax();
-		}
-	} while (ret < 0);
+		पूर्ण
+	पूर्ण जबतक (ret < 0);
 
-	return ret;
-}
-EXPORT_SYMBOL(del_timer_sync);
-#endif
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(del_समयr_sync);
+#पूर्ण_अगर
 
-static void call_timer_fn(struct timer_list *timer,
-			  void (*fn)(struct timer_list *),
-			  unsigned long baseclk)
-{
-	int count = preempt_count();
+अटल व्योम call_समयr_fn(काष्ठा समयr_list *समयr,
+			  व्योम (*fn)(काष्ठा समयr_list *),
+			  अचिन्हित दीर्घ baseclk)
+अणु
+	पूर्णांक count = preempt_count();
 
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 	/*
-	 * It is permissible to free the timer from inside the
-	 * function that is called from it, this we need to take into
-	 * account for lockdep too. To avoid bogus "held lock freed"
-	 * warnings as well as problems when looking into
-	 * timer->lockdep_map, make a copy and use that here.
+	 * It is permissible to मुक्त the समयr from inside the
+	 * function that is called from it, this we need to take पूर्णांकo
+	 * account क्रम lockdep too. To aव्योम bogus "held lock freed"
+	 * warnings as well as problems when looking पूर्णांकo
+	 * समयr->lockdep_map, make a copy and use that here.
 	 */
-	struct lockdep_map lockdep_map;
+	काष्ठा lockdep_map lockdep_map;
 
-	lockdep_copy_map(&lockdep_map, &timer->lockdep_map);
-#endif
+	lockdep_copy_map(&lockdep_map, &समयr->lockdep_map);
+#पूर्ण_अगर
 	/*
 	 * Couple the lock chain with the lock chain at
-	 * del_timer_sync() by acquiring the lock_map around the fn()
-	 * call here and in del_timer_sync().
+	 * del_समयr_sync() by acquiring the lock_map around the fn()
+	 * call here and in del_समयr_sync().
 	 */
 	lock_map_acquire(&lockdep_map);
 
-	trace_timer_expire_entry(timer, baseclk);
-	fn(timer);
-	trace_timer_expire_exit(timer);
+	trace_समयr_expire_entry(समयr, baseclk);
+	fn(समयr);
+	trace_समयr_expire_निकास(समयr);
 
 	lock_map_release(&lockdep_map);
 
-	if (count != preempt_count()) {
+	अगर (count != preempt_count()) अणु
 		WARN_ONCE(1, "timer: %pS preempt leak: %08x -> %08x\n",
 			  fn, count, preempt_count());
 		/*
 		 * Restore the preempt count. That gives us a decent
-		 * chance to survive and extract information. If the
+		 * chance to survive and extract inक्रमmation. If the
 		 * callback kept a lock held, bad luck, but not worse
 		 * than the BUG() we had.
 		 */
 		preempt_count_set(count);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void expire_timers(struct timer_base *base, struct hlist_head *head)
-{
+अटल व्योम expire_समयrs(काष्ठा समयr_base *base, काष्ठा hlist_head *head)
+अणु
 	/*
-	 * This value is required only for tracing. base->clk was
-	 * incremented directly before expire_timers was called. But expiry
+	 * This value is required only क्रम tracing. base->clk was
+	 * incremented directly beक्रमe expire_समयrs was called. But expiry
 	 * is related to the old base->clk value.
 	 */
-	unsigned long baseclk = base->clk - 1;
+	अचिन्हित दीर्घ baseclk = base->clk - 1;
 
-	while (!hlist_empty(head)) {
-		struct timer_list *timer;
-		void (*fn)(struct timer_list *);
+	जबतक (!hlist_empty(head)) अणु
+		काष्ठा समयr_list *समयr;
+		व्योम (*fn)(काष्ठा समयr_list *);
 
-		timer = hlist_entry(head->first, struct timer_list, entry);
+		समयr = hlist_entry(head->first, काष्ठा समयr_list, entry);
 
-		base->running_timer = timer;
-		detach_timer(timer, true);
+		base->running_समयr = समयr;
+		detach_समयr(समयr, true);
 
-		fn = timer->function;
+		fn = समयr->function;
 
-		if (timer->flags & TIMER_IRQSAFE) {
+		अगर (समयr->flags & TIMER_IRQSAFE) अणु
 			raw_spin_unlock(&base->lock);
-			call_timer_fn(timer, fn, baseclk);
-			base->running_timer = NULL;
+			call_समयr_fn(समयr, fn, baseclk);
+			base->running_समयr = शून्य;
 			raw_spin_lock(&base->lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			raw_spin_unlock_irq(&base->lock);
-			call_timer_fn(timer, fn, baseclk);
-			base->running_timer = NULL;
-			timer_sync_wait_running(base);
+			call_समयr_fn(समयr, fn, baseclk);
+			base->running_समयr = शून्य;
+			समयr_sync_रुको_running(base);
 			raw_spin_lock_irq(&base->lock);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int collect_expired_timers(struct timer_base *base,
-				  struct hlist_head *heads)
-{
-	unsigned long clk = base->clk = base->next_expiry;
-	struct hlist_head *vec;
-	int i, levels = 0;
-	unsigned int idx;
+अटल पूर्णांक collect_expired_समयrs(काष्ठा समयr_base *base,
+				  काष्ठा hlist_head *heads)
+अणु
+	अचिन्हित दीर्घ clk = base->clk = base->next_expiry;
+	काष्ठा hlist_head *vec;
+	पूर्णांक i, levels = 0;
+	अचिन्हित पूर्णांक idx;
 
-	for (i = 0; i < LVL_DEPTH; i++) {
+	क्रम (i = 0; i < LVL_DEPTH; i++) अणु
 		idx = (clk & LVL_MASK) + i * LVL_SIZE;
 
-		if (__test_and_clear_bit(idx, base->pending_map)) {
+		अगर (__test_and_clear_bit(idx, base->pending_map)) अणु
 			vec = base->vectors + idx;
 			hlist_move_list(vec, heads++);
 			levels++;
-		}
-		/* Is it time to look at the next level? */
-		if (clk & LVL_CLK_MASK)
-			break;
-		/* Shift clock for the next level granularity */
+		पूर्ण
+		/* Is it समय to look at the next level? */
+		अगर (clk & LVL_CLK_MASK)
+			अवरोध;
+		/* Shअगरt घड़ी क्रम the next level granularity */
 		clk >>= LVL_CLK_SHIFT;
-	}
-	return levels;
-}
+	पूर्ण
+	वापस levels;
+पूर्ण
 
 /*
  * Find the next pending bucket of a level. Search from level start (@offset)
- * + @clk upwards and if nothing there, search from start of the level
+ * + @clk upwards and अगर nothing there, search from start of the level
  * (@offset) up to @offset + clk.
  */
-static int next_pending_bucket(struct timer_base *base, unsigned offset,
-			       unsigned clk)
-{
-	unsigned pos, start = offset + clk;
-	unsigned end = offset + LVL_SIZE;
+अटल पूर्णांक next_pending_bucket(काष्ठा समयr_base *base, अचिन्हित offset,
+			       अचिन्हित clk)
+अणु
+	अचिन्हित pos, start = offset + clk;
+	अचिन्हित end = offset + LVL_SIZE;
 
 	pos = find_next_bit(base->pending_map, end, start);
-	if (pos < end)
-		return pos - start;
+	अगर (pos < end)
+		वापस pos - start;
 
 	pos = find_next_bit(base->pending_map, start, offset);
-	return pos < start ? pos + LVL_SIZE - start : -1;
-}
+	वापस pos < start ? pos + LVL_SIZE - start : -1;
+पूर्ण
 
 /*
- * Search the first expiring timer in the various clock levels. Caller must
+ * Search the first expiring समयr in the various घड़ी levels. Caller must
  * hold base->lock.
  */
-static unsigned long __next_timer_interrupt(struct timer_base *base)
-{
-	unsigned long clk, next, adj;
-	unsigned lvl, offset = 0;
+अटल अचिन्हित दीर्घ __next_समयr_पूर्णांकerrupt(काष्ठा समयr_base *base)
+अणु
+	अचिन्हित दीर्घ clk, next, adj;
+	अचिन्हित lvl, offset = 0;
 
 	next = base->clk + NEXT_TIMER_MAX_DELTA;
 	clk = base->clk;
-	for (lvl = 0; lvl < LVL_DEPTH; lvl++, offset += LVL_SIZE) {
-		int pos = next_pending_bucket(base, offset, clk & LVL_MASK);
-		unsigned long lvl_clk = clk & LVL_CLK_MASK;
+	क्रम (lvl = 0; lvl < LVL_DEPTH; lvl++, offset += LVL_SIZE) अणु
+		पूर्णांक pos = next_pending_bucket(base, offset, clk & LVL_MASK);
+		अचिन्हित दीर्घ lvl_clk = clk & LVL_CLK_MASK;
 
-		if (pos >= 0) {
-			unsigned long tmp = clk + (unsigned long) pos;
+		अगर (pos >= 0) अणु
+			अचिन्हित दीर्घ पंचांगp = clk + (अचिन्हित दीर्घ) pos;
 
-			tmp <<= LVL_SHIFT(lvl);
-			if (time_before(tmp, next))
-				next = tmp;
+			पंचांगp <<= LVL_SHIFT(lvl);
+			अगर (समय_beक्रमe(पंचांगp, next))
+				next = पंचांगp;
 
 			/*
-			 * If the next expiration happens before we reach
+			 * If the next expiration happens beक्रमe we reach
 			 * the next level, no need to check further.
 			 */
-			if (pos <= ((LVL_CLK_DIV - lvl_clk) & LVL_CLK_MASK))
-				break;
-		}
+			अगर (pos <= ((LVL_CLK_DIV - lvl_clk) & LVL_CLK_MASK))
+				अवरोध;
+		पूर्ण
 		/*
-		 * Clock for the next level. If the current level clock lower
+		 * Clock क्रम the next level. If the current level घड़ी lower
 		 * bits are zero, we look at the next level as is. If not we
 		 * need to advance it by one because that's going to be the
 		 * next expiring bucket in that level. base->clk is the next
-		 * expiring jiffie. So in case of:
+		 * expiring jअगरfie. So in हाल of:
 		 *
 		 * LVL5 LVL4 LVL3 LVL2 LVL1 LVL0
 		 *  0    0    0    0    0    0
@@ -1572,7 +1573,7 @@ static unsigned long __next_timer_interrupt(struct timer_base *base)
 		 * LVL0 has the next expiring bucket @index 2. The upper
 		 * levels have the next expiring bucket @index 1.
 		 *
-		 * In case that the propagation wraps the next level the same
+		 * In हाल that the propagation wraps the next level the same
 		 * rules apply:
 		 *
 		 * LVL5 LVL4 LVL3 LVL2 LVL1 LVL0
@@ -1584,506 +1585,506 @@ static unsigned long __next_timer_interrupt(struct timer_base *base)
 		 *  0    0    0    1    0
 		 *
 		 * So no propagation from LVL1 to LVL2 because that happened
-		 * with the add already, but then we need to propagate further
+		 * with the add alपढ़ोy, but then we need to propagate further
 		 * from LVL2 to LVL3.
 		 *
 		 * So the simple check whether the lower bits of the current
-		 * level are 0 or not is sufficient for all cases.
+		 * level are 0 or not is sufficient क्रम all हालs.
 		 */
 		adj = lvl_clk ? 1 : 0;
 		clk >>= LVL_CLK_SHIFT;
 		clk += adj;
-	}
+	पूर्ण
 
 	base->next_expiry_recalc = false;
 
-	return next;
-}
+	वापस next;
+पूर्ण
 
-#ifdef CONFIG_NO_HZ_COMMON
+#अगर_घोषित CONFIG_NO_HZ_COMMON
 /*
- * Check, if the next hrtimer event is before the next timer wheel
+ * Check, अगर the next hrसमयr event is beक्रमe the next समयr wheel
  * event:
  */
-static u64 cmp_next_hrtimer_event(u64 basem, u64 expires)
-{
-	u64 nextevt = hrtimer_get_next_event();
+अटल u64 cmp_next_hrसमयr_event(u64 basem, u64 expires)
+अणु
+	u64 nextevt = hrसमयr_get_next_event();
 
 	/*
-	 * If high resolution timers are enabled
-	 * hrtimer_get_next_event() returns KTIME_MAX.
+	 * If high resolution समयrs are enabled
+	 * hrसमयr_get_next_event() वापसs KTIME_MAX.
 	 */
-	if (expires <= nextevt)
-		return expires;
+	अगर (expires <= nextevt)
+		वापस expires;
 
 	/*
-	 * If the next timer is already expired, return the tick base
-	 * time so the tick is fired immediately.
+	 * If the next समयr is alपढ़ोy expired, वापस the tick base
+	 * समय so the tick is fired immediately.
 	 */
-	if (nextevt <= basem)
-		return basem;
+	अगर (nextevt <= basem)
+		वापस basem;
 
 	/*
-	 * Round up to the next jiffie. High resolution timers are
-	 * off, so the hrtimers are expired in the tick and we need to
-	 * make sure that this tick really expires the timer to avoid
+	 * Round up to the next jअगरfie. High resolution समयrs are
+	 * off, so the hrसमयrs are expired in the tick and we need to
+	 * make sure that this tick really expires the समयr to aव्योम
 	 * a ping pong of the nohz stop code.
 	 *
-	 * Use DIV_ROUND_UP_ULL to prevent gcc calling __divdi3
+	 * Use DIV_ROUND_UP_ULL to prevent gcc calling __भागdi3
 	 */
-	return DIV_ROUND_UP_ULL(nextevt, TICK_NSEC) * TICK_NSEC;
-}
+	वापस DIV_ROUND_UP_ULL(nextevt, TICK_NSEC) * TICK_NSEC;
+पूर्ण
 
 /**
- * get_next_timer_interrupt - return the time (clock mono) of the next timer
- * @basej:	base time jiffies
- * @basem:	base time clock monotonic
+ * get_next_समयr_पूर्णांकerrupt - वापस the समय (घड़ी mono) of the next समयr
+ * @basej:	base समय jअगरfies
+ * @basem:	base समय घड़ी monotonic
  *
- * Returns the tick aligned clock monotonic time of the next pending
- * timer or KTIME_MAX if no timer is pending.
+ * Returns the tick aligned घड़ी monotonic समय of the next pending
+ * समयr or KTIME_MAX अगर no समयr is pending.
  */
-u64 get_next_timer_interrupt(unsigned long basej, u64 basem)
-{
-	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
+u64 get_next_समयr_पूर्णांकerrupt(अचिन्हित दीर्घ basej, u64 basem)
+अणु
+	काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[BASE_STD]);
 	u64 expires = KTIME_MAX;
-	unsigned long nextevt;
+	अचिन्हित दीर्घ nextevt;
 	bool is_max_delta;
 
 	/*
-	 * Pretend that there is no timer pending if the cpu is offline.
-	 * Possible pending timers will be migrated later to an active cpu.
+	 * Pretend that there is no समयr pending अगर the cpu is offline.
+	 * Possible pending समयrs will be migrated later to an active cpu.
 	 */
-	if (cpu_is_offline(smp_processor_id()))
-		return expires;
+	अगर (cpu_is_offline(smp_processor_id()))
+		वापस expires;
 
 	raw_spin_lock(&base->lock);
-	if (base->next_expiry_recalc)
-		base->next_expiry = __next_timer_interrupt(base);
+	अगर (base->next_expiry_recalc)
+		base->next_expiry = __next_समयr_पूर्णांकerrupt(base);
 	nextevt = base->next_expiry;
 	is_max_delta = (nextevt == base->clk + NEXT_TIMER_MAX_DELTA);
 
 	/*
-	 * We have a fresh next event. Check whether we can forward the
-	 * base. We can only do that when @basej is past base->clk
-	 * otherwise we might rewind base->clk.
+	 * We have a fresh next event. Check whether we can क्रमward the
+	 * base. We can only करो that when @basej is past base->clk
+	 * otherwise we might शुरुआत base->clk.
 	 */
-	if (time_after(basej, base->clk)) {
-		if (time_after(nextevt, basej))
+	अगर (समय_after(basej, base->clk)) अणु
+		अगर (समय_after(nextevt, basej))
 			base->clk = basej;
-		else if (time_after(nextevt, base->clk))
+		अन्यथा अगर (समय_after(nextevt, base->clk))
 			base->clk = nextevt;
-	}
+	पूर्ण
 
-	if (time_before_eq(nextevt, basej)) {
+	अगर (समय_beक्रमe_eq(nextevt, basej)) अणु
 		expires = basem;
 		base->is_idle = false;
-	} else {
-		if (!is_max_delta)
+	पूर्ण अन्यथा अणु
+		अगर (!is_max_delta)
 			expires = basem + (u64)(nextevt - basej) * TICK_NSEC;
 		/*
 		 * If we expect to sleep more than a tick, mark the base idle.
-		 * Also the tick is stopped so any added timer must forward
+		 * Also the tick is stopped so any added समयr must क्रमward
 		 * the base clk itself to keep granularity small. This idle
-		 * logic is only maintained for the BASE_STD base, deferrable
-		 * timers may still see large granularity skew (by design).
+		 * logic is only मुख्यtained क्रम the BASE_STD base, deferrable
+		 * समयrs may still see large granularity skew (by design).
 		 */
-		if ((expires - basem) > TICK_NSEC)
+		अगर ((expires - basem) > TICK_NSEC)
 			base->is_idle = true;
-	}
+	पूर्ण
 	raw_spin_unlock(&base->lock);
 
-	return cmp_next_hrtimer_event(basem, expires);
-}
+	वापस cmp_next_hrसमयr_event(basem, expires);
+पूर्ण
 
 /**
- * timer_clear_idle - Clear the idle state of the timer base
+ * समयr_clear_idle - Clear the idle state of the समयr base
  *
- * Called with interrupts disabled
+ * Called with पूर्णांकerrupts disabled
  */
-void timer_clear_idle(void)
-{
-	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
+व्योम समयr_clear_idle(व्योम)
+अणु
+	काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[BASE_STD]);
 
 	/*
-	 * We do this unlocked. The worst outcome is a remote enqueue sending
-	 * a pointless IPI, but taking the lock would just make the window for
-	 * sending the IPI a few instructions smaller for the cost of taking
-	 * the lock in the exit from idle path.
+	 * We करो this unlocked. The worst outcome is a remote enqueue sending
+	 * a poपूर्णांकless IPI, but taking the lock would just make the winकरोw क्रम
+	 * sending the IPI a few inकाष्ठाions smaller क्रम the cost of taking
+	 * the lock in the निकास from idle path.
 	 */
 	base->is_idle = false;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * __run_timers - run all expired timers (if any) on this CPU.
- * @base: the timer vector to be processed.
+ * __run_समयrs - run all expired समयrs (अगर any) on this CPU.
+ * @base: the समयr vector to be processed.
  */
-static inline void __run_timers(struct timer_base *base)
-{
-	struct hlist_head heads[LVL_DEPTH];
-	int levels;
+अटल अंतरभूत व्योम __run_समयrs(काष्ठा समयr_base *base)
+अणु
+	काष्ठा hlist_head heads[LVL_DEPTH];
+	पूर्णांक levels;
 
-	if (time_before(jiffies, base->next_expiry))
-		return;
+	अगर (समय_beक्रमe(jअगरfies, base->next_expiry))
+		वापस;
 
-	timer_base_lock_expiry(base);
+	समयr_base_lock_expiry(base);
 	raw_spin_lock_irq(&base->lock);
 
-	while (time_after_eq(jiffies, base->clk) &&
-	       time_after_eq(jiffies, base->next_expiry)) {
-		levels = collect_expired_timers(base, heads);
+	जबतक (समय_after_eq(jअगरfies, base->clk) &&
+	       समय_after_eq(jअगरfies, base->next_expiry)) अणु
+		levels = collect_expired_समयrs(base, heads);
 		/*
-		 * The only possible reason for not finding any expired
-		 * timer at this clk is that all matching timers have been
+		 * The only possible reason क्रम not finding any expired
+		 * समयr at this clk is that all matching समयrs have been
 		 * dequeued.
 		 */
 		WARN_ON_ONCE(!levels && !base->next_expiry_recalc);
 		base->clk++;
-		base->next_expiry = __next_timer_interrupt(base);
+		base->next_expiry = __next_समयr_पूर्णांकerrupt(base);
 
-		while (levels--)
-			expire_timers(base, heads + levels);
-	}
+		जबतक (levels--)
+			expire_समयrs(base, heads + levels);
+	पूर्ण
 	raw_spin_unlock_irq(&base->lock);
-	timer_base_unlock_expiry(base);
-}
+	समयr_base_unlock_expiry(base);
+पूर्ण
 
 /*
- * This function runs timers and the timer-tq in bottom half context.
+ * This function runs समयrs and the समयr-tq in bottom half context.
  */
-static __latent_entropy void run_timer_softirq(struct softirq_action *h)
-{
-	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
+अटल __latent_entropy व्योम run_समयr_softirq(काष्ठा softirq_action *h)
+अणु
+	काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[BASE_STD]);
 
-	__run_timers(base);
-	if (IS_ENABLED(CONFIG_NO_HZ_COMMON))
-		__run_timers(this_cpu_ptr(&timer_bases[BASE_DEF]));
-}
+	__run_समयrs(base);
+	अगर (IS_ENABLED(CONFIG_NO_HZ_COMMON))
+		__run_समयrs(this_cpu_ptr(&समयr_bases[BASE_DEF]));
+पूर्ण
 
 /*
- * Called by the local, per-CPU timer interrupt on SMP.
+ * Called by the local, per-CPU समयr पूर्णांकerrupt on SMP.
  */
-static void run_local_timers(void)
-{
-	struct timer_base *base = this_cpu_ptr(&timer_bases[BASE_STD]);
+अटल व्योम run_local_समयrs(व्योम)
+अणु
+	काष्ठा समयr_base *base = this_cpu_ptr(&समयr_bases[BASE_STD]);
 
-	hrtimer_run_queues();
-	/* Raise the softirq only if required. */
-	if (time_before(jiffies, base->next_expiry)) {
-		if (!IS_ENABLED(CONFIG_NO_HZ_COMMON))
-			return;
+	hrसमयr_run_queues();
+	/* Raise the softirq only अगर required. */
+	अगर (समय_beक्रमe(jअगरfies, base->next_expiry)) अणु
+		अगर (!IS_ENABLED(CONFIG_NO_HZ_COMMON))
+			वापस;
 		/* CPU is awake, so check the deferrable base. */
 		base++;
-		if (time_before(jiffies, base->next_expiry))
-			return;
-	}
-	raise_softirq(TIMER_SOFTIRQ);
-}
+		अगर (समय_beक्रमe(jअगरfies, base->next_expiry))
+			वापस;
+	पूर्ण
+	उठाओ_softirq(TIMER_SOFTIRQ);
+पूर्ण
 
 /*
- * Called from the timer interrupt handler to charge one tick to the current
- * process.  user_tick is 1 if the tick is user time, 0 for system.
+ * Called from the समयr पूर्णांकerrupt handler to अक्षरge one tick to the current
+ * process.  user_tick is 1 अगर the tick is user समय, 0 क्रम प्रणाली.
  */
-void update_process_times(int user_tick)
-{
-	struct task_struct *p = current;
+व्योम update_process_बार(पूर्णांक user_tick)
+अणु
+	काष्ठा task_काष्ठा *p = current;
 
-	PRANDOM_ADD_NOISE(jiffies, user_tick, p, 0);
+	PRANDOM_ADD_NOISE(jअगरfies, user_tick, p, 0);
 
-	/* Note: this timer irq context must be accounted for as well. */
+	/* Note: this समयr irq context must be accounted क्रम as well. */
 	account_process_tick(p, user_tick);
-	run_local_timers();
-	rcu_sched_clock_irq(user_tick);
-#ifdef CONFIG_IRQ_WORK
-	if (in_irq())
+	run_local_समयrs();
+	rcu_sched_घड़ी_irq(user_tick);
+#अगर_घोषित CONFIG_IRQ_WORK
+	अगर (in_irq())
 		irq_work_tick();
-#endif
+#पूर्ण_अगर
 	scheduler_tick();
-	if (IS_ENABLED(CONFIG_POSIX_TIMERS))
-		run_posix_cpu_timers();
-}
+	अगर (IS_ENABLED(CONFIG_POSIX_TIMERS))
+		run_posix_cpu_समयrs();
+पूर्ण
 
 /*
- * Since schedule_timeout()'s timer is defined on the stack, it must store
+ * Since schedule_समयout()'s समयr is defined on the stack, it must store
  * the target task on the stack as well.
  */
-struct process_timer {
-	struct timer_list timer;
-	struct task_struct *task;
-};
+काष्ठा process_समयr अणु
+	काष्ठा समयr_list समयr;
+	काष्ठा task_काष्ठा *task;
+पूर्ण;
 
-static void process_timeout(struct timer_list *t)
-{
-	struct process_timer *timeout = from_timer(timeout, t, timer);
+अटल व्योम process_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा process_समयr *समयout = from_समयr(समयout, t, समयr);
 
-	wake_up_process(timeout->task);
-}
+	wake_up_process(समयout->task);
+पूर्ण
 
 /**
- * schedule_timeout - sleep until timeout
- * @timeout: timeout value in jiffies
+ * schedule_समयout - sleep until समयout
+ * @समयout: समयout value in jअगरfies
  *
- * Make the current task sleep until @timeout jiffies have elapsed.
+ * Make the current task sleep until @समयout jअगरfies have elapsed.
  * The function behavior depends on the current task state
  * (see also set_current_state() description):
  *
- * %TASK_RUNNING - the scheduler is called, but the task does not sleep
- * at all. That happens because sched_submit_work() does nothing for
+ * %TASK_RUNNING - the scheduler is called, but the task करोes not sleep
+ * at all. That happens because sched_submit_work() करोes nothing क्रम
  * tasks in %TASK_RUNNING state.
  *
- * %TASK_UNINTERRUPTIBLE - at least @timeout jiffies are guaranteed to
- * pass before the routine returns unless the current task is explicitly
+ * %TASK_UNINTERRUPTIBLE - at least @समयout jअगरfies are guaranteed to
+ * pass beक्रमe the routine वापसs unless the current task is explicitly
  * woken up, (e.g. by wake_up_process()).
  *
- * %TASK_INTERRUPTIBLE - the routine may return early if a signal is
+ * %TASK_INTERRUPTIBLE - the routine may वापस early अगर a संकेत is
  * delivered to the current task or the current task is explicitly woken
  * up.
  *
  * The current task state is guaranteed to be %TASK_RUNNING when this
- * routine returns.
+ * routine वापसs.
  *
- * Specifying a @timeout value of %MAX_SCHEDULE_TIMEOUT will schedule
- * the CPU away without a bound on the timeout. In this case the return
+ * Specअगरying a @समयout value of %MAX_SCHEDULE_TIMEOUT will schedule
+ * the CPU away without a bound on the समयout. In this हाल the वापस
  * value will be %MAX_SCHEDULE_TIMEOUT.
  *
- * Returns 0 when the timer has expired otherwise the remaining time in
- * jiffies will be returned. In all cases the return value is guaranteed
+ * Returns 0 when the समयr has expired otherwise the reमुख्यing समय in
+ * jअगरfies will be वापसed. In all हालs the वापस value is guaranteed
  * to be non-negative.
  */
-signed long __sched schedule_timeout(signed long timeout)
-{
-	struct process_timer timer;
-	unsigned long expire;
+चिन्हित दीर्घ __sched schedule_समयout(चिन्हित दीर्घ समयout)
+अणु
+	काष्ठा process_समयr समयr;
+	अचिन्हित दीर्घ expire;
 
-	switch (timeout)
-	{
-	case MAX_SCHEDULE_TIMEOUT:
+	चयन (समयout)
+	अणु
+	हाल MAX_SCHEDULE_TIMEOUT:
 		/*
-		 * These two special cases are useful to be comfortable
+		 * These two special हालs are useful to be comक्रमtable
 		 * in the caller. Nothing more. We could take
 		 * MAX_SCHEDULE_TIMEOUT from one of the negative value
-		 * but I' d like to return a valid offset (>=0) to allow
-		 * the caller to do everything it want with the retval.
+		 * but I' d like to वापस a valid offset (>=0) to allow
+		 * the caller to करो everything it want with the retval.
 		 */
 		schedule();
-		goto out;
-	default:
+		जाओ out;
+	शेष:
 		/*
 		 * Another bit of PARANOID. Note that the retval will be
-		 * 0 since no piece of kernel is supposed to do a check
-		 * for a negative retval of schedule_timeout() (since it
-		 * should never happens anyway). You just have the printk()
-		 * that will tell you if something is gone wrong and where.
+		 * 0 since no piece of kernel is supposed to करो a check
+		 * क्रम a negative retval of schedule_समयout() (since it
+		 * should never happens anyway). You just have the prपूर्णांकk()
+		 * that will tell you अगर something is gone wrong and where.
 		 */
-		if (timeout < 0) {
-			printk(KERN_ERR "schedule_timeout: wrong timeout "
-				"value %lx\n", timeout);
+		अगर (समयout < 0) अणु
+			prपूर्णांकk(KERN_ERR "schedule_timeout: wrong timeout "
+				"value %lx\n", समयout);
 			dump_stack();
 			current->state = TASK_RUNNING;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	expire = timeout + jiffies;
+	expire = समयout + jअगरfies;
 
-	timer.task = current;
-	timer_setup_on_stack(&timer.timer, process_timeout, 0);
-	__mod_timer(&timer.timer, expire, MOD_TIMER_NOTPENDING);
+	समयr.task = current;
+	समयr_setup_on_stack(&समयr.समयr, process_समयout, 0);
+	__mod_समयr(&समयr.समयr, expire, MOD_TIMER_NOTPENDING);
 	schedule();
-	del_singleshot_timer_sync(&timer.timer);
+	del_singleshot_समयr_sync(&समयr.समयr);
 
-	/* Remove the timer from the object tracker */
-	destroy_timer_on_stack(&timer.timer);
+	/* Remove the समयr from the object tracker */
+	destroy_समयr_on_stack(&समयr.समयr);
 
-	timeout = expire - jiffies;
+	समयout = expire - jअगरfies;
 
  out:
-	return timeout < 0 ? 0 : timeout;
-}
-EXPORT_SYMBOL(schedule_timeout);
+	वापस समयout < 0 ? 0 : समयout;
+पूर्ण
+EXPORT_SYMBOL(schedule_समयout);
 
 /*
- * We can use __set_current_state() here because schedule_timeout() calls
+ * We can use __set_current_state() here because schedule_समयout() calls
  * schedule() unconditionally.
  */
-signed long __sched schedule_timeout_interruptible(signed long timeout)
-{
+चिन्हित दीर्घ __sched schedule_समयout_पूर्णांकerruptible(चिन्हित दीर्घ समयout)
+अणु
 	__set_current_state(TASK_INTERRUPTIBLE);
-	return schedule_timeout(timeout);
-}
-EXPORT_SYMBOL(schedule_timeout_interruptible);
+	वापस schedule_समयout(समयout);
+पूर्ण
+EXPORT_SYMBOL(schedule_समयout_पूर्णांकerruptible);
 
-signed long __sched schedule_timeout_killable(signed long timeout)
-{
+चिन्हित दीर्घ __sched schedule_समयout_समाप्तable(चिन्हित दीर्घ समयout)
+अणु
 	__set_current_state(TASK_KILLABLE);
-	return schedule_timeout(timeout);
-}
-EXPORT_SYMBOL(schedule_timeout_killable);
+	वापस schedule_समयout(समयout);
+पूर्ण
+EXPORT_SYMBOL(schedule_समयout_समाप्तable);
 
-signed long __sched schedule_timeout_uninterruptible(signed long timeout)
-{
+चिन्हित दीर्घ __sched schedule_समयout_unपूर्णांकerruptible(चिन्हित दीर्घ समयout)
+अणु
 	__set_current_state(TASK_UNINTERRUPTIBLE);
-	return schedule_timeout(timeout);
-}
-EXPORT_SYMBOL(schedule_timeout_uninterruptible);
+	वापस schedule_समयout(समयout);
+पूर्ण
+EXPORT_SYMBOL(schedule_समयout_unपूर्णांकerruptible);
 
 /*
- * Like schedule_timeout_uninterruptible(), except this task will not contribute
+ * Like schedule_समयout_unपूर्णांकerruptible(), except this task will not contribute
  * to load average.
  */
-signed long __sched schedule_timeout_idle(signed long timeout)
-{
+चिन्हित दीर्घ __sched schedule_समयout_idle(चिन्हित दीर्घ समयout)
+अणु
 	__set_current_state(TASK_IDLE);
-	return schedule_timeout(timeout);
-}
-EXPORT_SYMBOL(schedule_timeout_idle);
+	वापस schedule_समयout(समयout);
+पूर्ण
+EXPORT_SYMBOL(schedule_समयout_idle);
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void migrate_timer_list(struct timer_base *new_base, struct hlist_head *head)
-{
-	struct timer_list *timer;
-	int cpu = new_base->cpu;
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम migrate_समयr_list(काष्ठा समयr_base *new_base, काष्ठा hlist_head *head)
+अणु
+	काष्ठा समयr_list *समयr;
+	पूर्णांक cpu = new_base->cpu;
 
-	while (!hlist_empty(head)) {
-		timer = hlist_entry(head->first, struct timer_list, entry);
-		detach_timer(timer, false);
-		timer->flags = (timer->flags & ~TIMER_BASEMASK) | cpu;
-		internal_add_timer(new_base, timer);
-	}
-}
+	जबतक (!hlist_empty(head)) अणु
+		समयr = hlist_entry(head->first, काष्ठा समयr_list, entry);
+		detach_समयr(समयr, false);
+		समयr->flags = (समयr->flags & ~TIMER_BASEMASK) | cpu;
+		पूर्णांकernal_add_समयr(new_base, समयr);
+	पूर्ण
+पूर्ण
 
-int timers_prepare_cpu(unsigned int cpu)
-{
-	struct timer_base *base;
-	int b;
+पूर्णांक समयrs_prepare_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा समयr_base *base;
+	पूर्णांक b;
 
-	for (b = 0; b < NR_BASES; b++) {
-		base = per_cpu_ptr(&timer_bases[b], cpu);
-		base->clk = jiffies;
+	क्रम (b = 0; b < NR_BASES; b++) अणु
+		base = per_cpu_ptr(&समयr_bases[b], cpu);
+		base->clk = jअगरfies;
 		base->next_expiry = base->clk + NEXT_TIMER_MAX_DELTA;
 		base->is_idle = false;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int timers_dead_cpu(unsigned int cpu)
-{
-	struct timer_base *old_base;
-	struct timer_base *new_base;
-	int b, i;
+पूर्णांक समयrs_dead_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा समयr_base *old_base;
+	काष्ठा समयr_base *new_base;
+	पूर्णांक b, i;
 
 	BUG_ON(cpu_online(cpu));
 
-	for (b = 0; b < NR_BASES; b++) {
-		old_base = per_cpu_ptr(&timer_bases[b], cpu);
-		new_base = get_cpu_ptr(&timer_bases[b]);
+	क्रम (b = 0; b < NR_BASES; b++) अणु
+		old_base = per_cpu_ptr(&समयr_bases[b], cpu);
+		new_base = get_cpu_ptr(&समयr_bases[b]);
 		/*
-		 * The caller is globally serialized and nobody else
+		 * The caller is globally serialized and nobody अन्यथा
 		 * takes two locks at once, deadlock is not possible.
 		 */
 		raw_spin_lock_irq(&new_base->lock);
 		raw_spin_lock_nested(&old_base->lock, SINGLE_DEPTH_NESTING);
 
 		/*
-		 * The current CPUs base clock might be stale. Update it
-		 * before moving the timers over.
+		 * The current CPUs base घड़ी might be stale. Update it
+		 * beक्रमe moving the समयrs over.
 		 */
-		forward_timer_base(new_base);
+		क्रमward_समयr_base(new_base);
 
-		BUG_ON(old_base->running_timer);
+		BUG_ON(old_base->running_समयr);
 
-		for (i = 0; i < WHEEL_SIZE; i++)
-			migrate_timer_list(new_base, old_base->vectors + i);
+		क्रम (i = 0; i < WHEEL_SIZE; i++)
+			migrate_समयr_list(new_base, old_base->vectors + i);
 
 		raw_spin_unlock(&old_base->lock);
 		raw_spin_unlock_irq(&new_base->lock);
-		put_cpu_ptr(&timer_bases);
-	}
-	return 0;
-}
+		put_cpu_ptr(&समयr_bases);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_HOTPLUG_CPU */
+#पूर्ण_अगर /* CONFIG_HOTPLUG_CPU */
 
-static void __init init_timer_cpu(int cpu)
-{
-	struct timer_base *base;
-	int i;
+अटल व्योम __init init_समयr_cpu(पूर्णांक cpu)
+अणु
+	काष्ठा समयr_base *base;
+	पूर्णांक i;
 
-	for (i = 0; i < NR_BASES; i++) {
-		base = per_cpu_ptr(&timer_bases[i], cpu);
+	क्रम (i = 0; i < NR_BASES; i++) अणु
+		base = per_cpu_ptr(&समयr_bases[i], cpu);
 		base->cpu = cpu;
 		raw_spin_lock_init(&base->lock);
-		base->clk = jiffies;
+		base->clk = jअगरfies;
 		base->next_expiry = base->clk + NEXT_TIMER_MAX_DELTA;
-		timer_base_init_expiry_lock(base);
-	}
-}
+		समयr_base_init_expiry_lock(base);
+	पूर्ण
+पूर्ण
 
-static void __init init_timer_cpus(void)
-{
-	int cpu;
+अटल व्योम __init init_समयr_cpus(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
-		init_timer_cpu(cpu);
-}
+	क्रम_each_possible_cpu(cpu)
+		init_समयr_cpu(cpu);
+पूर्ण
 
-void __init init_timers(void)
-{
-	init_timer_cpus();
-	posix_cputimers_init_work();
-	open_softirq(TIMER_SOFTIRQ, run_timer_softirq);
-}
+व्योम __init init_समयrs(व्योम)
+अणु
+	init_समयr_cpus();
+	posix_cpuसमयrs_init_work();
+	खोलो_softirq(TIMER_SOFTIRQ, run_समयr_softirq);
+पूर्ण
 
 /**
- * msleep - sleep safely even with waitqueue interruptions
- * @msecs: Time in milliseconds to sleep for
+ * msleep - sleep safely even with रुकोqueue पूर्णांकerruptions
+ * @msecs: Time in milliseconds to sleep क्रम
  */
-void msleep(unsigned int msecs)
-{
-	unsigned long timeout = msecs_to_jiffies(msecs) + 1;
+व्योम msleep(अचिन्हित पूर्णांक msecs)
+अणु
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(msecs) + 1;
 
-	while (timeout)
-		timeout = schedule_timeout_uninterruptible(timeout);
-}
+	जबतक (समयout)
+		समयout = schedule_समयout_unपूर्णांकerruptible(समयout);
+पूर्ण
 
 EXPORT_SYMBOL(msleep);
 
 /**
- * msleep_interruptible - sleep waiting for signals
- * @msecs: Time in milliseconds to sleep for
+ * msleep_पूर्णांकerruptible - sleep रुकोing क्रम संकेतs
+ * @msecs: Time in milliseconds to sleep क्रम
  */
-unsigned long msleep_interruptible(unsigned int msecs)
-{
-	unsigned long timeout = msecs_to_jiffies(msecs) + 1;
+अचिन्हित दीर्घ msleep_पूर्णांकerruptible(अचिन्हित पूर्णांक msecs)
+अणु
+	अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(msecs) + 1;
 
-	while (timeout && !signal_pending(current))
-		timeout = schedule_timeout_interruptible(timeout);
-	return jiffies_to_msecs(timeout);
-}
+	जबतक (समयout && !संकेत_pending(current))
+		समयout = schedule_समयout_पूर्णांकerruptible(समयout);
+	वापस jअगरfies_to_msecs(समयout);
+पूर्ण
 
-EXPORT_SYMBOL(msleep_interruptible);
+EXPORT_SYMBOL(msleep_पूर्णांकerruptible);
 
 /**
- * usleep_range - Sleep for an approximate time
- * @min: Minimum time in usecs to sleep
- * @max: Maximum time in usecs to sleep
+ * usleep_range - Sleep क्रम an approximate समय
+ * @min: Minimum समय in usecs to sleep
+ * @max: Maximum समय in usecs to sleep
  *
- * In non-atomic context where the exact wakeup time is flexible, use
+ * In non-atomic context where the exact wakeup समय is flexible, use
  * usleep_range() instead of udelay().  The sleep improves responsiveness
- * by avoiding the CPU-hogging busy-wait of udelay(), and the range reduces
- * power usage by allowing hrtimers to take advantage of an already-
- * scheduled interrupt instead of scheduling a new one just for this sleep.
+ * by aव्योमing the CPU-hogging busy-रुको of udelay(), and the range reduces
+ * घातer usage by allowing hrसमयrs to take advantage of an alपढ़ोy-
+ * scheduled पूर्णांकerrupt instead of scheduling a new one just क्रम this sleep.
  */
-void __sched usleep_range(unsigned long min, unsigned long max)
-{
-	ktime_t exp = ktime_add_us(ktime_get(), min);
+व्योम __sched usleep_range(अचिन्हित दीर्घ min, अचिन्हित दीर्घ max)
+अणु
+	kसमय_प्रकार exp = kसमय_add_us(kसमय_get(), min);
 	u64 delta = (u64)(max - min) * NSEC_PER_USEC;
 
-	for (;;) {
+	क्रम (;;) अणु
 		__set_current_state(TASK_UNINTERRUPTIBLE);
-		/* Do not return before the requested sleep time has elapsed */
-		if (!schedule_hrtimeout_range(&exp, delta, HRTIMER_MODE_ABS))
-			break;
-	}
-}
+		/* Do not वापस beक्रमe the requested sleep समय has elapsed */
+		अगर (!schedule_hrसमयout_range(&exp, delta, HRTIMER_MODE_ABS))
+			अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(usleep_range);

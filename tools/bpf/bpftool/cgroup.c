@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 // Copyright (C) 2017 Facebook
 // Author: Roman Gushchin <guro@fb.com>
 
-#define _XOPEN_SOURCE 500
-#include <errno.h>
-#include <fcntl.h>
-#include <ftw.h>
-#include <mntent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#घोषणा _XOPEN_SOURCE 500
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <ftw.h>
+#समावेश <mntent.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
 
-#include <bpf/bpf.h>
+#समावेश <bpf/bpf.h>
 
-#include "main.h"
+#समावेश "main.h"
 
-#define HELP_SPEC_ATTACH_FLAGS						\
+#घोषणा HELP_SPEC_ATTACH_FLAGS						\
 	"ATTACH_FLAGS := { multi | override }"
 
-#define HELP_SPEC_ATTACH_TYPES						       \
+#घोषणा HELP_SPEC_ATTACH_TYPES						       \
 	"       ATTACH_TYPE := { ingress | egress | sock_create |\n"	       \
 	"                        sock_ops | device | bind4 | bind6 |\n"	       \
 	"                        post_bind4 | post_bind6 | connect4 |\n"       \
@@ -31,467 +32,467 @@
 	"                        sysctl | getsockopt | setsockopt |\n"	       \
 	"                        sock_release }"
 
-static unsigned int query_flags;
+अटल अचिन्हित पूर्णांक query_flags;
 
-static enum bpf_attach_type parse_attach_type(const char *str)
-{
-	enum bpf_attach_type type;
+अटल क्रमागत bpf_attach_type parse_attach_type(स्थिर अक्षर *str)
+अणु
+	क्रमागत bpf_attach_type type;
 
-	for (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) {
-		if (attach_type_name[type] &&
+	क्रम (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) अणु
+		अगर (attach_type_name[type] &&
 		    is_prefix(str, attach_type_name[type]))
-			return type;
-	}
+			वापस type;
+	पूर्ण
 
-	return __MAX_BPF_ATTACH_TYPE;
-}
+	वापस __MAX_BPF_ATTACH_TYPE;
+पूर्ण
 
-static int show_bpf_prog(int id, enum bpf_attach_type attach_type,
-			 const char *attach_flags_str,
-			 int level)
-{
-	struct bpf_prog_info info = {};
-	__u32 info_len = sizeof(info);
-	int prog_fd;
+अटल पूर्णांक show_bpf_prog(पूर्णांक id, क्रमागत bpf_attach_type attach_type,
+			 स्थिर अक्षर *attach_flags_str,
+			 पूर्णांक level)
+अणु
+	काष्ठा bpf_prog_info info = अणुपूर्ण;
+	__u32 info_len = माप(info);
+	पूर्णांक prog_fd;
 
 	prog_fd = bpf_prog_get_fd_by_id(id);
-	if (prog_fd < 0)
-		return -1;
+	अगर (prog_fd < 0)
+		वापस -1;
 
-	if (bpf_obj_get_info_by_fd(prog_fd, &info, &info_len)) {
-		close(prog_fd);
-		return -1;
-	}
+	अगर (bpf_obj_get_info_by_fd(prog_fd, &info, &info_len)) अणु
+		बंद(prog_fd);
+		वापस -1;
+	पूर्ण
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_start_object(json_wtr);
-		jsonw_uint_field(json_wtr, "id", info.id);
-		if (attach_type < ARRAY_SIZE(attach_type_name))
+		jsonw_uपूर्णांक_field(json_wtr, "id", info.id);
+		अगर (attach_type < ARRAY_SIZE(attach_type_name))
 			jsonw_string_field(json_wtr, "attach_type",
 					   attach_type_name[attach_type]);
-		else
-			jsonw_uint_field(json_wtr, "attach_type", attach_type);
+		अन्यथा
+			jsonw_uपूर्णांक_field(json_wtr, "attach_type", attach_type);
 		jsonw_string_field(json_wtr, "attach_flags",
 				   attach_flags_str);
 		jsonw_string_field(json_wtr, "name", info.name);
 		jsonw_end_object(json_wtr);
-	} else {
-		printf("%s%-8u ", level ? "    " : "", info.id);
-		if (attach_type < ARRAY_SIZE(attach_type_name))
-			printf("%-15s", attach_type_name[attach_type]);
-		else
-			printf("type %-10u", attach_type);
-		printf(" %-15s %-15s\n", attach_flags_str, info.name);
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s%-8u ", level ? "    " : "", info.id);
+		अगर (attach_type < ARRAY_SIZE(attach_type_name))
+			म_लिखो("%-15s", attach_type_name[attach_type]);
+		अन्यथा
+			म_लिखो("type %-10u", attach_type);
+		म_लिखो(" %-15s %-15s\n", attach_flags_str, info.name);
+	पूर्ण
 
-	close(prog_fd);
-	return 0;
-}
+	बंद(prog_fd);
+	वापस 0;
+पूर्ण
 
-static int count_attached_bpf_progs(int cgroup_fd, enum bpf_attach_type type)
-{
+अटल पूर्णांक count_attached_bpf_progs(पूर्णांक cgroup_fd, क्रमागत bpf_attach_type type)
+अणु
 	__u32 prog_cnt = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = bpf_prog_query(cgroup_fd, type, query_flags, NULL,
-			     NULL, &prog_cnt);
-	if (ret)
-		return -1;
+	ret = bpf_prog_query(cgroup_fd, type, query_flags, शून्य,
+			     शून्य, &prog_cnt);
+	अगर (ret)
+		वापस -1;
 
-	return prog_cnt;
-}
+	वापस prog_cnt;
+पूर्ण
 
-static int cgroup_has_attached_progs(int cgroup_fd)
-{
-	enum bpf_attach_type type;
+अटल पूर्णांक cgroup_has_attached_progs(पूर्णांक cgroup_fd)
+अणु
+	क्रमागत bpf_attach_type type;
 	bool no_prog = true;
 
-	for (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) {
-		int count = count_attached_bpf_progs(cgroup_fd, type);
+	क्रम (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) अणु
+		पूर्णांक count = count_attached_bpf_progs(cgroup_fd, type);
 
-		if (count < 0 && errno != EINVAL)
-			return -1;
+		अगर (count < 0 && त्रुटि_सं != EINVAL)
+			वापस -1;
 
-		if (count > 0) {
+		अगर (count > 0) अणु
 			no_prog = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return no_prog ? 0 : 1;
-}
-static int show_attached_bpf_progs(int cgroup_fd, enum bpf_attach_type type,
-				   int level)
-{
-	const char *attach_flags_str;
-	__u32 prog_ids[1024] = {0};
+	वापस no_prog ? 0 : 1;
+पूर्ण
+अटल पूर्णांक show_attached_bpf_progs(पूर्णांक cgroup_fd, क्रमागत bpf_attach_type type,
+				   पूर्णांक level)
+अणु
+	स्थिर अक्षर *attach_flags_str;
+	__u32 prog_ids[1024] = अणु0पूर्ण;
 	__u32 prog_cnt, iter;
 	__u32 attach_flags;
-	char buf[32];
-	int ret;
+	अक्षर buf[32];
+	पूर्णांक ret;
 
 	prog_cnt = ARRAY_SIZE(prog_ids);
 	ret = bpf_prog_query(cgroup_fd, type, query_flags, &attach_flags,
 			     prog_ids, &prog_cnt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (prog_cnt == 0)
-		return 0;
+	अगर (prog_cnt == 0)
+		वापस 0;
 
-	switch (attach_flags) {
-	case BPF_F_ALLOW_MULTI:
+	चयन (attach_flags) अणु
+	हाल BPF_F_ALLOW_MULTI:
 		attach_flags_str = "multi";
-		break;
-	case BPF_F_ALLOW_OVERRIDE:
+		अवरोध;
+	हाल BPF_F_ALLOW_OVERRIDE:
 		attach_flags_str = "override";
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		attach_flags_str = "";
-		break;
-	default:
-		snprintf(buf, sizeof(buf), "unknown(%x)", attach_flags);
+		अवरोध;
+	शेष:
+		snम_लिखो(buf, माप(buf), "unknown(%x)", attach_flags);
 		attach_flags_str = buf;
-	}
+	पूर्ण
 
-	for (iter = 0; iter < prog_cnt; iter++)
+	क्रम (iter = 0; iter < prog_cnt; iter++)
 		show_bpf_prog(prog_ids[iter], type,
 			      attach_flags_str, level);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_show(int argc, char **argv)
-{
-	enum bpf_attach_type type;
-	int has_attached_progs;
-	const char *path;
-	int cgroup_fd;
-	int ret = -1;
+अटल पूर्णांक करो_show(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत bpf_attach_type type;
+	पूर्णांक has_attached_progs;
+	स्थिर अक्षर *path;
+	पूर्णांक cgroup_fd;
+	पूर्णांक ret = -1;
 
 	query_flags = 0;
 
-	if (!REQ_ARGS(1))
-		return -1;
+	अगर (!REQ_ARGS(1))
+		वापस -1;
 	path = GET_ARG();
 
-	while (argc) {
-		if (is_prefix(*argv, "effective")) {
-			if (query_flags & BPF_F_QUERY_EFFECTIVE) {
+	जबतक (argc) अणु
+		अगर (is_prefix(*argv, "effective")) अणु
+			अगर (query_flags & BPF_F_QUERY_EFFECTIVE) अणु
 				p_err("duplicated argument: %s", *argv);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			query_flags |= BPF_F_QUERY_EFFECTIVE;
 			NEXT_ARG();
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("expected no more arguments, 'effective', got: '%s'?",
 			      *argv);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	cgroup_fd = open(path, O_RDONLY);
-	if (cgroup_fd < 0) {
+	cgroup_fd = खोलो(path, O_RDONLY);
+	अगर (cgroup_fd < 0) अणु
 		p_err("can't open cgroup %s", path);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	has_attached_progs = cgroup_has_attached_progs(cgroup_fd);
-	if (has_attached_progs < 0) {
+	अगर (has_attached_progs < 0) अणु
 		p_err("can't query bpf programs attached to %s: %s",
-		      path, strerror(errno));
-		goto exit_cgroup;
-	} else if (!has_attached_progs) {
+		      path, म_त्रुटि(त्रुटि_सं));
+		जाओ निकास_cgroup;
+	पूर्ण अन्यथा अगर (!has_attached_progs) अणु
 		ret = 0;
-		goto exit_cgroup;
-	}
+		जाओ निकास_cgroup;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
-	else
-		printf("%-8s %-15s %-15s %-15s\n", "ID", "AttachType",
+	अन्यथा
+		म_लिखो("%-8s %-15s %-15s %-15s\n", "ID", "AttachType",
 		       "AttachFlags", "Name");
 
-	for (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) {
+	क्रम (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++) अणु
 		/*
 		 * Not all attach types may be supported, so it's expected,
 		 * that some requests will fail.
-		 * If we were able to get the show for at least one
-		 * attach type, let's return 0.
+		 * If we were able to get the show क्रम at least one
+		 * attach type, let's वापस 0.
 		 */
-		if (show_attached_bpf_progs(cgroup_fd, type, 0) == 0)
+		अगर (show_attached_bpf_progs(cgroup_fd, type, 0) == 0)
 			ret = 0;
-	}
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
-exit_cgroup:
-	close(cgroup_fd);
-exit:
-	return ret;
-}
+निकास_cgroup:
+	बंद(cgroup_fd);
+निकास:
+	वापस ret;
+पूर्ण
 
 /*
- * To distinguish nftw() errors and do_show_tree_fn() errors
- * and avoid duplicating error messages, let's return -2
- * from do_show_tree_fn() in case of error.
+ * To distinguish nftw() errors and करो_show_tree_fn() errors
+ * and aव्योम duplicating error messages, let's वापस -2
+ * from करो_show_tree_fn() in हाल of error.
  */
-#define NFTW_ERR		-1
-#define SHOW_TREE_FN_ERR	-2
-static int do_show_tree_fn(const char *fpath, const struct stat *sb,
-			   int typeflag, struct FTW *ftw)
-{
-	enum bpf_attach_type type;
-	int has_attached_progs;
-	int cgroup_fd;
+#घोषणा NFTW_ERR		-1
+#घोषणा SHOW_TREE_FN_ERR	-2
+अटल पूर्णांक करो_show_tree_fn(स्थिर अक्षर *fpath, स्थिर काष्ठा stat *sb,
+			   पूर्णांक typeflag, काष्ठा FTW *ftw)
+अणु
+	क्रमागत bpf_attach_type type;
+	पूर्णांक has_attached_progs;
+	पूर्णांक cgroup_fd;
 
-	if (typeflag != FTW_D)
-		return 0;
+	अगर (typeflag != FTW_D)
+		वापस 0;
 
-	cgroup_fd = open(fpath, O_RDONLY);
-	if (cgroup_fd < 0) {
-		p_err("can't open cgroup %s: %s", fpath, strerror(errno));
-		return SHOW_TREE_FN_ERR;
-	}
+	cgroup_fd = खोलो(fpath, O_RDONLY);
+	अगर (cgroup_fd < 0) अणु
+		p_err("can't open cgroup %s: %s", fpath, म_त्रुटि(त्रुटि_सं));
+		वापस SHOW_TREE_FN_ERR;
+	पूर्ण
 
 	has_attached_progs = cgroup_has_attached_progs(cgroup_fd);
-	if (has_attached_progs < 0) {
+	अगर (has_attached_progs < 0) अणु
 		p_err("can't query bpf programs attached to %s: %s",
-		      fpath, strerror(errno));
-		close(cgroup_fd);
-		return SHOW_TREE_FN_ERR;
-	} else if (!has_attached_progs) {
-		close(cgroup_fd);
-		return 0;
-	}
+		      fpath, म_त्रुटि(त्रुटि_सं));
+		बंद(cgroup_fd);
+		वापस SHOW_TREE_FN_ERR;
+	पूर्ण अन्यथा अगर (!has_attached_progs) अणु
+		बंद(cgroup_fd);
+		वापस 0;
+	पूर्ण
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_start_object(json_wtr);
 		jsonw_string_field(json_wtr, "cgroup", fpath);
 		jsonw_name(json_wtr, "programs");
 		jsonw_start_array(json_wtr);
-	} else {
-		printf("%s\n", fpath);
-	}
+	पूर्ण अन्यथा अणु
+		म_लिखो("%s\n", fpath);
+	पूर्ण
 
-	for (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++)
+	क्रम (type = 0; type < __MAX_BPF_ATTACH_TYPE; type++)
 		show_attached_bpf_progs(cgroup_fd, type, ftw->level);
 
-	if (errno == EINVAL)
-		/* Last attach type does not support query.
-		 * Do not report an error for this, especially because batch
+	अगर (त्रुटि_सं == EINVAL)
+		/* Last attach type करोes not support query.
+		 * Do not report an error क्रम this, especially because batch
 		 * mode would stop processing commands.
 		 */
-		errno = 0;
+		त्रुटि_सं = 0;
 
-	if (json_output) {
+	अगर (json_output) अणु
 		jsonw_end_array(json_wtr);
 		jsonw_end_object(json_wtr);
-	}
+	पूर्ण
 
-	close(cgroup_fd);
+	बंद(cgroup_fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *find_cgroup_root(void)
-{
-	struct mntent *mnt;
-	FILE *f;
+अटल अक्षर *find_cgroup_root(व्योम)
+अणु
+	काष्ठा mntent *mnt;
+	खाता *f;
 
-	f = fopen("/proc/mounts", "r");
-	if (f == NULL)
-		return NULL;
+	f = ख_खोलो("/proc/mounts", "r");
+	अगर (f == शून्य)
+		वापस शून्य;
 
-	while ((mnt = getmntent(f))) {
-		if (strcmp(mnt->mnt_type, "cgroup2") == 0) {
-			fclose(f);
-			return strdup(mnt->mnt_dir);
-		}
-	}
+	जबतक ((mnt = geपंचांगntent(f))) अणु
+		अगर (म_भेद(mnt->mnt_type, "cgroup2") == 0) अणु
+			ख_बंद(f);
+			वापस strdup(mnt->mnt_dir);
+		पूर्ण
+	पूर्ण
 
-	fclose(f);
-	return NULL;
-}
+	ख_बंद(f);
+	वापस शून्य;
+पूर्ण
 
-static int do_show_tree(int argc, char **argv)
-{
-	char *cgroup_root, *cgroup_alloced = NULL;
-	int ret;
+अटल पूर्णांक करो_show_tree(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर *cgroup_root, *cgroup_alloced = शून्य;
+	पूर्णांक ret;
 
 	query_flags = 0;
 
-	if (!argc) {
+	अगर (!argc) अणु
 		cgroup_alloced = find_cgroup_root();
-		if (!cgroup_alloced) {
+		अगर (!cgroup_alloced) अणु
 			p_err("cgroup v2 isn't mounted");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		cgroup_root = cgroup_alloced;
-	} else {
+	पूर्ण अन्यथा अणु
 		cgroup_root = GET_ARG();
 
-		while (argc) {
-			if (is_prefix(*argv, "effective")) {
-				if (query_flags & BPF_F_QUERY_EFFECTIVE) {
+		जबतक (argc) अणु
+			अगर (is_prefix(*argv, "effective")) अणु
+				अगर (query_flags & BPF_F_QUERY_EFFECTIVE) अणु
 					p_err("duplicated argument: %s", *argv);
-					return -1;
-				}
+					वापस -1;
+				पूर्ण
 				query_flags |= BPF_F_QUERY_EFFECTIVE;
 				NEXT_ARG();
-			} else {
+			पूर्ण अन्यथा अणु
 				p_err("expected no more arguments, 'effective', got: '%s'?",
 				      *argv);
-				return -1;
-			}
-		}
-	}
+				वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_start_array(json_wtr);
-	else
-		printf("%s\n"
+	अन्यथा
+		म_लिखो("%s\n"
 		       "%-8s %-15s %-15s %-15s\n",
 		       "CgroupPath",
 		       "ID", "AttachType", "AttachFlags", "Name");
 
-	switch (nftw(cgroup_root, do_show_tree_fn, 1024, FTW_MOUNT)) {
-	case NFTW_ERR:
+	चयन (nftw(cgroup_root, करो_show_tree_fn, 1024, FTW_MOUNT)) अणु
+	हाल NFTW_ERR:
 		p_err("can't iterate over %s: %s", cgroup_root,
-		      strerror(errno));
+		      म_त्रुटि(त्रुटि_सं));
 		ret = -1;
-		break;
-	case SHOW_TREE_FN_ERR:
+		अवरोध;
+	हाल SHOW_TREE_FN_ERR:
 		ret = -1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = 0;
-	}
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_end_array(json_wtr);
 
-	free(cgroup_alloced);
+	मुक्त(cgroup_alloced);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_attach(int argc, char **argv)
-{
-	enum bpf_attach_type attach_type;
-	int cgroup_fd, prog_fd;
-	int attach_flags = 0;
-	int ret = -1;
-	int i;
+अटल पूर्णांक करो_attach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	पूर्णांक cgroup_fd, prog_fd;
+	पूर्णांक attach_flags = 0;
+	पूर्णांक ret = -1;
+	पूर्णांक i;
 
-	if (argc < 4) {
+	अगर (argc < 4) अणु
 		p_err("too few parameters for cgroup attach");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	cgroup_fd = open(argv[0], O_RDONLY);
-	if (cgroup_fd < 0) {
+	cgroup_fd = खोलो(argv[0], O_RDONLY);
+	अगर (cgroup_fd < 0) अणु
 		p_err("can't open cgroup %s", argv[0]);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	attach_type = parse_attach_type(argv[1]);
-	if (attach_type == __MAX_BPF_ATTACH_TYPE) {
+	अगर (attach_type == __MAX_BPF_ATTACH_TYPE) अणु
 		p_err("invalid attach type");
-		goto exit_cgroup;
-	}
+		जाओ निकास_cgroup;
+	पूर्ण
 
 	argc -= 2;
 	argv = &argv[2];
 	prog_fd = prog_parse_fd(&argc, &argv);
-	if (prog_fd < 0)
-		goto exit_cgroup;
+	अगर (prog_fd < 0)
+		जाओ निकास_cgroup;
 
-	for (i = 0; i < argc; i++) {
-		if (is_prefix(argv[i], "multi")) {
+	क्रम (i = 0; i < argc; i++) अणु
+		अगर (is_prefix(argv[i], "multi")) अणु
 			attach_flags |= BPF_F_ALLOW_MULTI;
-		} else if (is_prefix(argv[i], "override")) {
+		पूर्ण अन्यथा अगर (is_prefix(argv[i], "override")) अणु
 			attach_flags |= BPF_F_ALLOW_OVERRIDE;
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("unknown option: %s", argv[i]);
-			goto exit_cgroup;
-		}
-	}
+			जाओ निकास_cgroup;
+		पूर्ण
+	पूर्ण
 
-	if (bpf_prog_attach(prog_fd, cgroup_fd, attach_type, attach_flags)) {
+	अगर (bpf_prog_attach(prog_fd, cgroup_fd, attach_type, attach_flags)) अणु
 		p_err("failed to attach program");
-		goto exit_prog;
-	}
+		जाओ निकास_prog;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
 
 	ret = 0;
 
-exit_prog:
-	close(prog_fd);
-exit_cgroup:
-	close(cgroup_fd);
-exit:
-	return ret;
-}
+निकास_prog:
+	बंद(prog_fd);
+निकास_cgroup:
+	बंद(cgroup_fd);
+निकास:
+	वापस ret;
+पूर्ण
 
-static int do_detach(int argc, char **argv)
-{
-	enum bpf_attach_type attach_type;
-	int prog_fd, cgroup_fd;
-	int ret = -1;
+अटल पूर्णांक करो_detach(पूर्णांक argc, अक्षर **argv)
+अणु
+	क्रमागत bpf_attach_type attach_type;
+	पूर्णांक prog_fd, cgroup_fd;
+	पूर्णांक ret = -1;
 
-	if (argc < 4) {
+	अगर (argc < 4) अणु
 		p_err("too few parameters for cgroup detach");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	cgroup_fd = open(argv[0], O_RDONLY);
-	if (cgroup_fd < 0) {
+	cgroup_fd = खोलो(argv[0], O_RDONLY);
+	अगर (cgroup_fd < 0) अणु
 		p_err("can't open cgroup %s", argv[0]);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	attach_type = parse_attach_type(argv[1]);
-	if (attach_type == __MAX_BPF_ATTACH_TYPE) {
+	अगर (attach_type == __MAX_BPF_ATTACH_TYPE) अणु
 		p_err("invalid attach type");
-		goto exit_cgroup;
-	}
+		जाओ निकास_cgroup;
+	पूर्ण
 
 	argc -= 2;
 	argv = &argv[2];
 	prog_fd = prog_parse_fd(&argc, &argv);
-	if (prog_fd < 0)
-		goto exit_cgroup;
+	अगर (prog_fd < 0)
+		जाओ निकास_cgroup;
 
-	if (bpf_prog_detach2(prog_fd, cgroup_fd, attach_type)) {
+	अगर (bpf_prog_detach2(prog_fd, cgroup_fd, attach_type)) अणु
 		p_err("failed to detach program");
-		goto exit_prog;
-	}
+		जाओ निकास_prog;
+	पूर्ण
 
-	if (json_output)
+	अगर (json_output)
 		jsonw_null(json_wtr);
 
 	ret = 0;
 
-exit_prog:
-	close(prog_fd);
-exit_cgroup:
-	close(cgroup_fd);
-exit:
-	return ret;
-}
+निकास_prog:
+	बंद(prog_fd);
+निकास_cgroup:
+	बंद(cgroup_fd);
+निकास:
+	वापस ret;
+पूर्ण
 
-static int do_help(int argc, char **argv)
-{
-	if (json_output) {
+अटल पूर्णांक करो_help(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (json_output) अणु
 		jsonw_null(json_wtr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"Usage: %1$s %2$s { show | list } CGROUP [**effective**]\n"
 		"       %1$s %2$s tree [CGROUP_ROOT] [**effective**]\n"
 		"       %1$s %2$s attach CGROUP ATTACH_TYPE PROG [ATTACH_FLAGS]\n"
@@ -505,20 +506,20 @@ static int do_help(int argc, char **argv)
 		"",
 		bin_name, argv[-2]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cmd cmds[] = {
-	{ "show",	do_show },
-	{ "list",	do_show },
-	{ "tree",       do_show_tree },
-	{ "attach",	do_attach },
-	{ "detach",	do_detach },
-	{ "help",	do_help },
-	{ 0 }
-};
+अटल स्थिर काष्ठा cmd cmds[] = अणु
+	अणु "show",	करो_show पूर्ण,
+	अणु "list",	करो_show पूर्ण,
+	अणु "tree",       करो_show_tree पूर्ण,
+	अणु "attach",	करो_attach पूर्ण,
+	अणु "detach",	करो_detach पूर्ण,
+	अणु "help",	करो_help पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-int do_cgroup(int argc, char **argv)
-{
-	return cmd_select(cmds, argc, argv, do_help);
-}
+पूर्णांक करो_cgroup(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस cmd_select(cmds, argc, argv, करो_help);
+पूर्ण

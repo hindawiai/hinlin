@@ -1,274 +1,275 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net-sysfs.c - network device class and attributes
  *
  * Copyright (c) 2003 Stephen Hemminger <shemminger@osdl.org>
  */
 
-#include <linux/capability.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/isolation.h>
-#include <linux/nsproxy.h>
-#include <net/sock.h>
-#include <net/net_namespace.h>
-#include <linux/rtnetlink.h>
-#include <linux/vmalloc.h>
-#include <linux/export.h>
-#include <linux/jiffies.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/of_net.h>
-#include <linux/cpu.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/isolation.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <net/sock.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/export.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/cpu.h>
 
-#include "net-sysfs.h"
+#समावेश "net-sysfs.h"
 
-#ifdef CONFIG_SYSFS
-static const char fmt_hex[] = "%#x\n";
-static const char fmt_dec[] = "%d\n";
-static const char fmt_ulong[] = "%lu\n";
-static const char fmt_u64[] = "%llu\n";
+#अगर_घोषित CONFIG_SYSFS
+अटल स्थिर अक्षर fmt_hex[] = "%#x\n";
+अटल स्थिर अक्षर fmt_dec[] = "%d\n";
+अटल स्थिर अक्षर fmt_uदीर्घ[] = "%lu\n";
+अटल स्थिर अक्षर fmt_u64[] = "%llu\n";
 
-static inline int dev_isalive(const struct net_device *dev)
-{
-	return dev->reg_state <= NETREG_REGISTERED;
-}
+अटल अंतरभूत पूर्णांक dev_isalive(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->reg_state <= NETREG_REGISTERED;
+पूर्ण
 
 /* use same locking rules as GIF* ioctl's */
-static ssize_t netdev_show(const struct device *dev,
-			   struct device_attribute *attr, char *buf,
-			   ssize_t (*format)(const struct net_device *, char *))
-{
-	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार netdev_show(स्थिर काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *buf,
+			   sमाप_प्रकार (*क्रमmat)(स्थिर काष्ठा net_device *, अक्षर *))
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	read_lock(&dev_base_lock);
-	if (dev_isalive(ndev))
-		ret = (*format)(ndev, buf);
-	read_unlock(&dev_base_lock);
+	पढ़ो_lock(&dev_base_lock);
+	अगर (dev_isalive(ndev))
+		ret = (*क्रमmat)(ndev, buf);
+	पढ़ो_unlock(&dev_base_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* generate a show function for simple field */
-#define NETDEVICE_SHOW(field, format_string)				\
-static ssize_t format_##field(const struct net_device *dev, char *buf)	\
-{									\
-	return sprintf(buf, format_string, dev->field);			\
-}									\
-static ssize_t field##_show(struct device *dev,				\
-			    struct device_attribute *attr, char *buf)	\
-{									\
-	return netdev_show(dev, attr, buf, format_##field);		\
-}									\
+/* generate a show function क्रम simple field */
+#घोषणा NETDEVICE_SHOW(field, क्रमmat_string)				\
+अटल sमाप_प्रकार क्रमmat_##field(स्थिर काष्ठा net_device *dev, अक्षर *buf)	\
+अणु									\
+	वापस प्र_लिखो(buf, क्रमmat_string, dev->field);			\
+पूर्ण									\
+अटल sमाप_प्रकार field##_show(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	वापस netdev_show(dev, attr, buf, क्रमmat_##field);		\
+पूर्ण									\
 
-#define NETDEVICE_SHOW_RO(field, format_string)				\
-NETDEVICE_SHOW(field, format_string);					\
-static DEVICE_ATTR_RO(field)
+#घोषणा NETDEVICE_SHOW_RO(field, क्रमmat_string)				\
+NETDEVICE_SHOW(field, क्रमmat_string);					\
+अटल DEVICE_ATTR_RO(field)
 
-#define NETDEVICE_SHOW_RW(field, format_string)				\
-NETDEVICE_SHOW(field, format_string);					\
-static DEVICE_ATTR_RW(field)
+#घोषणा NETDEVICE_SHOW_RW(field, क्रमmat_string)				\
+NETDEVICE_SHOW(field, क्रमmat_string);					\
+अटल DEVICE_ATTR_RW(field)
 
 /* use same locking and permission rules as SIF* ioctl's */
-static ssize_t netdev_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t len,
-			    int (*set)(struct net_device *, unsigned long))
-{
-	struct net_device *netdev = to_net_dev(dev);
-	struct net *net = dev_net(netdev);
-	unsigned long new;
-	int ret;
+अटल sमाप_प्रकार netdev_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार len,
+			    पूर्णांक (*set)(काष्ठा net_device *, अचिन्हित दीर्घ))
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	काष्ठा net *net = dev_net(netdev);
+	अचिन्हित दीर्घ new;
+	पूर्णांक ret;
 
-	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	ret = kstrtoul(buf, 0, &new);
-	if (ret)
-		goto err;
+	ret = kम_से_अदीर्घ(buf, 0, &new);
+	अगर (ret)
+		जाओ err;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev)) {
+	अगर (dev_isalive(netdev)) अणु
 		ret = (*set)(netdev, new);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = len;
-	}
+	पूर्ण
 	rtnl_unlock();
  err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 NETDEVICE_SHOW_RO(dev_id, fmt_hex);
 NETDEVICE_SHOW_RO(dev_port, fmt_dec);
 NETDEVICE_SHOW_RO(addr_assign_type, fmt_dec);
 NETDEVICE_SHOW_RO(addr_len, fmt_dec);
-NETDEVICE_SHOW_RO(ifindex, fmt_dec);
+NETDEVICE_SHOW_RO(अगरindex, fmt_dec);
 NETDEVICE_SHOW_RO(type, fmt_dec);
 NETDEVICE_SHOW_RO(link_mode, fmt_dec);
 
-static ssize_t iflink_show(struct device *dev, struct device_attribute *attr,
-			   char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
+अटल sमाप_प्रकार अगरlink_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
 
-	return sprintf(buf, fmt_dec, dev_get_iflink(ndev));
-}
-static DEVICE_ATTR_RO(iflink);
+	वापस प्र_लिखो(buf, fmt_dec, dev_get_अगरlink(ndev));
+पूर्ण
+अटल DEVICE_ATTR_RO(अगरlink);
 
-static ssize_t format_name_assign_type(const struct net_device *dev, char *buf)
-{
-	return sprintf(buf, fmt_dec, dev->name_assign_type);
-}
+अटल sमाप_प्रकार क्रमmat_name_assign_type(स्थिर काष्ठा net_device *dev, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, fmt_dec, dev->name_assign_type);
+पूर्ण
 
-static ssize_t name_assign_type_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार name_assign_type_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	if (ndev->name_assign_type != NET_NAME_UNKNOWN)
-		ret = netdev_show(dev, attr, buf, format_name_assign_type);
+	अगर (ndev->name_assign_type != NET_NAME_UNKNOWN)
+		ret = netdev_show(dev, attr, buf, क्रमmat_name_assign_type);
 
-	return ret;
-}
-static DEVICE_ATTR_RO(name_assign_type);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(name_assign_type);
 
 /* use same locking rules as GIFHWADDR ioctl's */
-static ssize_t address_show(struct device *dev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार address_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	read_lock(&dev_base_lock);
-	if (dev_isalive(ndev))
-		ret = sysfs_format_mac(buf, ndev->dev_addr, ndev->addr_len);
-	read_unlock(&dev_base_lock);
-	return ret;
-}
-static DEVICE_ATTR_RO(address);
+	पढ़ो_lock(&dev_base_lock);
+	अगर (dev_isalive(ndev))
+		ret = sysfs_क्रमmat_mac(buf, ndev->dev_addr, ndev->addr_len);
+	पढ़ो_unlock(&dev_base_lock);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(address);
 
-static ssize_t broadcast_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct net_device *ndev = to_net_dev(dev);
+अटल sमाप_प्रकार broadcast_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *ndev = to_net_dev(dev);
 
-	if (dev_isalive(ndev))
-		return sysfs_format_mac(buf, ndev->broadcast, ndev->addr_len);
-	return -EINVAL;
-}
-static DEVICE_ATTR_RO(broadcast);
+	अगर (dev_isalive(ndev))
+		वापस sysfs_क्रमmat_mac(buf, ndev->broadcast, ndev->addr_len);
+	वापस -EINVAL;
+पूर्ण
+अटल DEVICE_ATTR_RO(broadcast);
 
-static int change_carrier(struct net_device *dev, unsigned long new_carrier)
-{
-	if (!netif_running(dev))
-		return -EINVAL;
-	return dev_change_carrier(dev, (bool)new_carrier);
-}
+अटल पूर्णांक change_carrier(काष्ठा net_device *dev, अचिन्हित दीर्घ new_carrier)
+अणु
+	अगर (!netअगर_running(dev))
+		वापस -EINVAL;
+	वापस dev_change_carrier(dev, (bool)new_carrier);
+पूर्ण
 
-static ssize_t carrier_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, change_carrier);
-}
+अटल sमाप_प्रकार carrier_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, change_carrier);
+पूर्ण
 
-static ssize_t carrier_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार carrier_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	if (netif_running(netdev))
-		return sprintf(buf, fmt_dec, !!netif_carrier_ok(netdev));
+	अगर (netअगर_running(netdev))
+		वापस प्र_लिखो(buf, fmt_dec, !!netअगर_carrier_ok(netdev));
 
-	return -EINVAL;
-}
-static DEVICE_ATTR_RW(carrier);
+	वापस -EINVAL;
+पूर्ण
+अटल DEVICE_ATTR_RW(carrier);
 
-static ssize_t speed_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	int ret = -EINVAL;
+अटल sमाप_प्रकार speed_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	पूर्णांक ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (netif_running(netdev)) {
-		struct ethtool_link_ksettings cmd;
+	अगर (netअगर_running(netdev)) अणु
+		काष्ठा ethtool_link_ksettings cmd;
 
-		if (!__ethtool_get_link_ksettings(netdev, &cmd))
-			ret = sprintf(buf, fmt_dec, cmd.base.speed);
-	}
+		अगर (!__ethtool_get_link_ksettings(netdev, &cmd))
+			ret = प्र_लिखो(buf, fmt_dec, cmd.base.speed);
+	पूर्ण
 	rtnl_unlock();
-	return ret;
-}
-static DEVICE_ATTR_RO(speed);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(speed);
 
-static ssize_t duplex_show(struct device *dev,
-			   struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	int ret = -EINVAL;
+अटल sमाप_प्रकार duplex_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	पूर्णांक ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (netif_running(netdev)) {
-		struct ethtool_link_ksettings cmd;
+	अगर (netअगर_running(netdev)) अणु
+		काष्ठा ethtool_link_ksettings cmd;
 
-		if (!__ethtool_get_link_ksettings(netdev, &cmd)) {
-			const char *duplex;
+		अगर (!__ethtool_get_link_ksettings(netdev, &cmd)) अणु
+			स्थिर अक्षर *duplex;
 
-			switch (cmd.base.duplex) {
-			case DUPLEX_HALF:
+			चयन (cmd.base.duplex) अणु
+			हाल DUPLEX_HALF:
 				duplex = "half";
-				break;
-			case DUPLEX_FULL:
+				अवरोध;
+			हाल DUPLEX_FULL:
 				duplex = "full";
-				break;
-			default:
+				अवरोध;
+			शेष:
 				duplex = "unknown";
-				break;
-			}
-			ret = sprintf(buf, "%s\n", duplex);
-		}
-	}
+				अवरोध;
+			पूर्ण
+			ret = प्र_लिखो(buf, "%s\n", duplex);
+		पूर्ण
+	पूर्ण
 	rtnl_unlock();
-	return ret;
-}
-static DEVICE_ATTR_RO(duplex);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(duplex);
 
-static ssize_t testing_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार testing_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	if (netif_running(netdev))
-		return sprintf(buf, fmt_dec, !!netif_testing(netdev));
+	अगर (netअगर_running(netdev))
+		वापस प्र_लिखो(buf, fmt_dec, !!netअगर_testing(netdev));
 
-	return -EINVAL;
-}
-static DEVICE_ATTR_RO(testing);
+	वापस -EINVAL;
+पूर्ण
+अटल DEVICE_ATTR_RO(testing);
 
-static ssize_t dormant_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार करोrmant_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	if (netif_running(netdev))
-		return sprintf(buf, fmt_dec, !!netif_dormant(netdev));
+	अगर (netअगर_running(netdev))
+		वापस प्र_लिखो(buf, fmt_dec, !!netअगर_करोrmant(netdev));
 
-	return -EINVAL;
-}
-static DEVICE_ATTR_RO(dormant);
+	वापस -EINVAL;
+पूर्ण
+अटल DEVICE_ATTR_RO(करोrmant);
 
-static const char *const operstates[] = {
+अटल स्थिर अक्षर *स्थिर operstates[] = अणु
 	"unknown",
 	"notpresent", /* currently unused */
 	"down",
@@ -276,314 +277,314 @@ static const char *const operstates[] = {
 	"testing",
 	"dormant",
 	"up"
-};
+पूर्ण;
 
-static ssize_t operstate_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	const struct net_device *netdev = to_net_dev(dev);
-	unsigned char operstate;
+अटल sमाप_प्रकार operstate_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा net_device *netdev = to_net_dev(dev);
+	अचिन्हित अक्षर operstate;
 
-	read_lock(&dev_base_lock);
+	पढ़ो_lock(&dev_base_lock);
 	operstate = netdev->operstate;
-	if (!netif_running(netdev))
+	अगर (!netअगर_running(netdev))
 		operstate = IF_OPER_DOWN;
-	read_unlock(&dev_base_lock);
+	पढ़ो_unlock(&dev_base_lock);
 
-	if (operstate >= ARRAY_SIZE(operstates))
-		return -EINVAL; /* should not happen */
+	अगर (operstate >= ARRAY_SIZE(operstates))
+		वापस -EINVAL; /* should not happen */
 
-	return sprintf(buf, "%s\n", operstates[operstate]);
-}
-static DEVICE_ATTR_RO(operstate);
+	वापस प्र_लिखो(buf, "%s\n", operstates[operstate]);
+पूर्ण
+अटल DEVICE_ATTR_RO(operstate);
 
-static ssize_t carrier_changes_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार carrier_changes_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	return sprintf(buf, fmt_dec,
-		       atomic_read(&netdev->carrier_up_count) +
-		       atomic_read(&netdev->carrier_down_count));
-}
-static DEVICE_ATTR_RO(carrier_changes);
+	वापस प्र_लिखो(buf, fmt_dec,
+		       atomic_पढ़ो(&netdev->carrier_up_count) +
+		       atomic_पढ़ो(&netdev->carrier_करोwn_count));
+पूर्ण
+अटल DEVICE_ATTR_RO(carrier_changes);
 
-static ssize_t carrier_up_count_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार carrier_up_count_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	return sprintf(buf, fmt_dec, atomic_read(&netdev->carrier_up_count));
-}
-static DEVICE_ATTR_RO(carrier_up_count);
+	वापस प्र_लिखो(buf, fmt_dec, atomic_पढ़ो(&netdev->carrier_up_count));
+पूर्ण
+अटल DEVICE_ATTR_RO(carrier_up_count);
 
-static ssize_t carrier_down_count_show(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
+अटल sमाप_प्रकार carrier_करोwn_count_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
 
-	return sprintf(buf, fmt_dec, atomic_read(&netdev->carrier_down_count));
-}
-static DEVICE_ATTR_RO(carrier_down_count);
+	वापस प्र_लिखो(buf, fmt_dec, atomic_पढ़ो(&netdev->carrier_करोwn_count));
+पूर्ण
+अटल DEVICE_ATTR_RO(carrier_करोwn_count);
 
-/* read-write attributes */
+/* पढ़ो-ग_लिखो attributes */
 
-static int change_mtu(struct net_device *dev, unsigned long new_mtu)
-{
-	return dev_set_mtu(dev, (int)new_mtu);
-}
+अटल पूर्णांक change_mtu(काष्ठा net_device *dev, अचिन्हित दीर्घ new_mtu)
+अणु
+	वापस dev_set_mtu(dev, (पूर्णांक)new_mtu);
+पूर्ण
 
-static ssize_t mtu_store(struct device *dev, struct device_attribute *attr,
-			 const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, change_mtu);
-}
+अटल sमाप_प्रकार mtu_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, change_mtu);
+पूर्ण
 NETDEVICE_SHOW_RW(mtu, fmt_dec);
 
-static int change_flags(struct net_device *dev, unsigned long new_flags)
-{
-	return dev_change_flags(dev, (unsigned int)new_flags, NULL);
-}
+अटल पूर्णांक change_flags(काष्ठा net_device *dev, अचिन्हित दीर्घ new_flags)
+अणु
+	वापस dev_change_flags(dev, (अचिन्हित पूर्णांक)new_flags, शून्य);
+पूर्ण
 
-static ssize_t flags_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, change_flags);
-}
+अटल sमाप_प्रकार flags_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, change_flags);
+पूर्ण
 NETDEVICE_SHOW_RW(flags, fmt_hex);
 
-static ssize_t tx_queue_len_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t len)
-{
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+अटल sमाप_प्रकार tx_queue_len_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	return netdev_store(dev, attr, buf, len, dev_change_tx_queue_len);
-}
+	वापस netdev_store(dev, attr, buf, len, dev_change_tx_queue_len);
+पूर्ण
 NETDEVICE_SHOW_RW(tx_queue_len, fmt_dec);
 
-static int change_gro_flush_timeout(struct net_device *dev, unsigned long val)
-{
-	WRITE_ONCE(dev->gro_flush_timeout, val);
-	return 0;
-}
+अटल पूर्णांक change_gro_flush_समयout(काष्ठा net_device *dev, अचिन्हित दीर्घ val)
+अणु
+	WRITE_ONCE(dev->gro_flush_समयout, val);
+	वापस 0;
+पूर्ण
 
-static ssize_t gro_flush_timeout_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t len)
-{
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+अटल sमाप_प्रकार gro_flush_समयout_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	return netdev_store(dev, attr, buf, len, change_gro_flush_timeout);
-}
-NETDEVICE_SHOW_RW(gro_flush_timeout, fmt_ulong);
+	वापस netdev_store(dev, attr, buf, len, change_gro_flush_समयout);
+पूर्ण
+NETDEVICE_SHOW_RW(gro_flush_समयout, fmt_uदीर्घ);
 
-static int change_napi_defer_hard_irqs(struct net_device *dev, unsigned long val)
-{
+अटल पूर्णांक change_napi_defer_hard_irqs(काष्ठा net_device *dev, अचिन्हित दीर्घ val)
+अणु
 	WRITE_ONCE(dev->napi_defer_hard_irqs, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t napi_defer_hard_irqs_store(struct device *dev,
-					  struct device_attribute *attr,
-					  const char *buf, size_t len)
-{
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+अटल sमाप_प्रकार napi_defer_hard_irqs_store(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	return netdev_store(dev, attr, buf, len, change_napi_defer_hard_irqs);
-}
+	वापस netdev_store(dev, attr, buf, len, change_napi_defer_hard_irqs);
+पूर्ण
 NETDEVICE_SHOW_RW(napi_defer_hard_irqs, fmt_dec);
 
-static ssize_t ifalias_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t len)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	struct net *net = dev_net(netdev);
-	size_t count = len;
-	ssize_t ret = 0;
+अटल sमाप_प्रकार अगरalias_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	काष्ठा net *net = dev_net(netdev);
+	माप_प्रकार count = len;
+	sमाप_प्रकार ret = 0;
 
-	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	/* ignore trailing newline */
-	if (len >  0 && buf[len - 1] == '\n')
+	अगर (len >  0 && buf[len - 1] == '\n')
 		--count;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev)) {
+	अगर (dev_isalive(netdev)) अणु
 		ret = dev_set_alias(netdev, buf, count);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		ret = len;
 		netdev_state_change(netdev);
-	}
+	पूर्ण
 err:
 	rtnl_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ifalias_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	const struct net_device *netdev = to_net_dev(dev);
-	char tmp[IFALIASZ];
-	ssize_t ret = 0;
+अटल sमाप_प्रकार अगरalias_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा net_device *netdev = to_net_dev(dev);
+	अक्षर पंचांगp[IFALIASZ];
+	sमाप_प्रकार ret = 0;
 
-	ret = dev_get_alias(netdev, tmp, sizeof(tmp));
-	if (ret > 0)
-		ret = sprintf(buf, "%s\n", tmp);
-	return ret;
-}
-static DEVICE_ATTR_RW(ifalias);
+	ret = dev_get_alias(netdev, पंचांगp, माप(पंचांगp));
+	अगर (ret > 0)
+		ret = प्र_लिखो(buf, "%s\n", पंचांगp);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(अगरalias);
 
-static int change_group(struct net_device *dev, unsigned long new_group)
-{
-	dev_set_group(dev, (int)new_group);
-	return 0;
-}
+अटल पूर्णांक change_group(काष्ठा net_device *dev, अचिन्हित दीर्घ new_group)
+अणु
+	dev_set_group(dev, (पूर्णांक)new_group);
+	वापस 0;
+पूर्ण
 
-static ssize_t group_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, change_group);
-}
+अटल sमाप_प्रकार group_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, change_group);
+पूर्ण
 NETDEVICE_SHOW(group, fmt_dec);
-static DEVICE_ATTR(netdev_group, 0644, group_show, group_store);
+अटल DEVICE_ATTR(netdev_group, 0644, group_show, group_store);
 
-static int change_proto_down(struct net_device *dev, unsigned long proto_down)
-{
-	return dev_change_proto_down(dev, (bool)proto_down);
-}
+अटल पूर्णांक change_proto_करोwn(काष्ठा net_device *dev, अचिन्हित दीर्घ proto_करोwn)
+अणु
+	वापस dev_change_proto_करोwn(dev, (bool)proto_करोwn);
+पूर्ण
 
-static ssize_t proto_down_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, change_proto_down);
-}
-NETDEVICE_SHOW_RW(proto_down, fmt_dec);
+अटल sमाप_प्रकार proto_करोwn_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, change_proto_करोwn);
+पूर्ण
+NETDEVICE_SHOW_RW(proto_करोwn, fmt_dec);
 
-static ssize_t phys_port_id_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार phys_port_id_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev)) {
-		struct netdev_phys_item_id ppid;
+	अगर (dev_isalive(netdev)) अणु
+		काष्ठा netdev_phys_item_id ppid;
 
 		ret = dev_get_phys_port_id(netdev, &ppid);
-		if (!ret)
-			ret = sprintf(buf, "%*phN\n", ppid.id_len, ppid.id);
-	}
+		अगर (!ret)
+			ret = प्र_लिखो(buf, "%*phN\n", ppid.id_len, ppid.id);
+	पूर्ण
 	rtnl_unlock();
 
-	return ret;
-}
-static DEVICE_ATTR_RO(phys_port_id);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(phys_port_id);
 
-static ssize_t phys_port_name_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार phys_port_name_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev)) {
-		char name[IFNAMSIZ];
+	अगर (dev_isalive(netdev)) अणु
+		अक्षर name[IFNAMSIZ];
 
-		ret = dev_get_phys_port_name(netdev, name, sizeof(name));
-		if (!ret)
-			ret = sprintf(buf, "%s\n", name);
-	}
+		ret = dev_get_phys_port_name(netdev, name, माप(name));
+		अगर (!ret)
+			ret = प्र_लिखो(buf, "%s\n", name);
+	पूर्ण
 	rtnl_unlock();
 
-	return ret;
-}
-static DEVICE_ATTR_RO(phys_port_name);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(phys_port_name);
 
-static ssize_t phys_switch_id_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार phys_चयन_id_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev)) {
-		struct netdev_phys_item_id ppid = { };
+	अगर (dev_isalive(netdev)) अणु
+		काष्ठा netdev_phys_item_id ppid = अणु पूर्ण;
 
 		ret = dev_get_port_parent_id(netdev, &ppid, false);
-		if (!ret)
-			ret = sprintf(buf, "%*phN\n", ppid.id_len, ppid.id);
-	}
+		अगर (!ret)
+			ret = प्र_लिखो(buf, "%*phN\n", ppid.id_len, ppid.id);
+	पूर्ण
 	rtnl_unlock();
 
-	return ret;
-}
-static DEVICE_ATTR_RO(phys_switch_id);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(phys_चयन_id);
 
-static ssize_t threaded_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct net_device *netdev = to_net_dev(dev);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार thपढ़ोed_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा net_device *netdev = to_net_dev(dev);
+	sमाप_प्रकार ret = -EINVAL;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	if (dev_isalive(netdev))
-		ret = sprintf(buf, fmt_dec, netdev->threaded);
+	अगर (dev_isalive(netdev))
+		ret = प्र_लिखो(buf, fmt_dec, netdev->thपढ़ोed);
 
 	rtnl_unlock();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int modify_napi_threaded(struct net_device *dev, unsigned long val)
-{
-	int ret;
+अटल पूर्णांक modअगरy_napi_thपढ़ोed(काष्ठा net_device *dev, अचिन्हित दीर्घ val)
+अणु
+	पूर्णांक ret;
 
-	if (list_empty(&dev->napi_list))
-		return -EOPNOTSUPP;
+	अगर (list_empty(&dev->napi_list))
+		वापस -EOPNOTSUPP;
 
-	if (val != 0 && val != 1)
-		return -EOPNOTSUPP;
+	अगर (val != 0 && val != 1)
+		वापस -EOPNOTSUPP;
 
-	ret = dev_set_threaded(dev, val);
+	ret = dev_set_thपढ़ोed(dev, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t threaded_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t len)
-{
-	return netdev_store(dev, attr, buf, len, modify_napi_threaded);
-}
-static DEVICE_ATTR_RW(threaded);
+अटल sमाप_प्रकार thपढ़ोed_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	वापस netdev_store(dev, attr, buf, len, modअगरy_napi_thपढ़ोed);
+पूर्ण
+अटल DEVICE_ATTR_RW(thपढ़ोed);
 
-static struct attribute *net_class_attrs[] __ro_after_init = {
+अटल काष्ठा attribute *net_class_attrs[] __ro_after_init = अणु
 	&dev_attr_netdev_group.attr,
 	&dev_attr_type.attr,
 	&dev_attr_dev_id.attr,
 	&dev_attr_dev_port.attr,
-	&dev_attr_iflink.attr,
-	&dev_attr_ifindex.attr,
+	&dev_attr_अगरlink.attr,
+	&dev_attr_अगरindex.attr,
 	&dev_attr_name_assign_type.attr,
 	&dev_attr_addr_assign_type.attr,
 	&dev_attr_addr_len.attr,
@@ -592,59 +593,59 @@ static struct attribute *net_class_attrs[] __ro_after_init = {
 	&dev_attr_broadcast.attr,
 	&dev_attr_speed.attr,
 	&dev_attr_duplex.attr,
-	&dev_attr_dormant.attr,
+	&dev_attr_करोrmant.attr,
 	&dev_attr_testing.attr,
 	&dev_attr_operstate.attr,
 	&dev_attr_carrier_changes.attr,
-	&dev_attr_ifalias.attr,
+	&dev_attr_अगरalias.attr,
 	&dev_attr_carrier.attr,
 	&dev_attr_mtu.attr,
 	&dev_attr_flags.attr,
 	&dev_attr_tx_queue_len.attr,
-	&dev_attr_gro_flush_timeout.attr,
+	&dev_attr_gro_flush_समयout.attr,
 	&dev_attr_napi_defer_hard_irqs.attr,
 	&dev_attr_phys_port_id.attr,
 	&dev_attr_phys_port_name.attr,
-	&dev_attr_phys_switch_id.attr,
-	&dev_attr_proto_down.attr,
+	&dev_attr_phys_चयन_id.attr,
+	&dev_attr_proto_करोwn.attr,
 	&dev_attr_carrier_up_count.attr,
-	&dev_attr_carrier_down_count.attr,
-	&dev_attr_threaded.attr,
-	NULL,
-};
+	&dev_attr_carrier_करोwn_count.attr,
+	&dev_attr_thपढ़ोed.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(net_class);
 
 /* Show a given an attribute in the statistics group */
-static ssize_t netstat_show(const struct device *d,
-			    struct device_attribute *attr, char *buf,
-			    unsigned long offset)
-{
-	struct net_device *dev = to_net_dev(d);
-	ssize_t ret = -EINVAL;
+अटल sमाप_प्रकार netstat_show(स्थिर काष्ठा device *d,
+			    काष्ठा device_attribute *attr, अक्षर *buf,
+			    अचिन्हित दीर्घ offset)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
+	sमाप_प्रकार ret = -EINVAL;
 
-	WARN_ON(offset > sizeof(struct rtnl_link_stats64) ||
-		offset % sizeof(u64) != 0);
+	WARN_ON(offset > माप(काष्ठा rtnl_link_stats64) ||
+		offset % माप(u64) != 0);
 
-	read_lock(&dev_base_lock);
-	if (dev_isalive(dev)) {
-		struct rtnl_link_stats64 temp;
-		const struct rtnl_link_stats64 *stats = dev_get_stats(dev, &temp);
+	पढ़ो_lock(&dev_base_lock);
+	अगर (dev_isalive(dev)) अणु
+		काष्ठा rtnl_link_stats64 temp;
+		स्थिर काष्ठा rtnl_link_stats64 *stats = dev_get_stats(dev, &temp);
 
-		ret = sprintf(buf, fmt_u64, *(u64 *)(((u8 *)stats) + offset));
-	}
-	read_unlock(&dev_base_lock);
-	return ret;
-}
+		ret = प्र_लिखो(buf, fmt_u64, *(u64 *)(((u8 *)stats) + offset));
+	पूर्ण
+	पढ़ो_unlock(&dev_base_lock);
+	वापस ret;
+पूर्ण
 
-/* generate a read-only statistics attribute */
-#define NETSTAT_ENTRY(name)						\
-static ssize_t name##_show(struct device *d,				\
-			   struct device_attribute *attr, char *buf)	\
-{									\
-	return netstat_show(d, attr, buf,				\
-			    offsetof(struct rtnl_link_stats64, name));	\
-}									\
-static DEVICE_ATTR_RO(name)
+/* generate a पढ़ो-only statistics attribute */
+#घोषणा NETSTAT_ENTRY(name)						\
+अटल sमाप_प्रकार name##_show(काष्ठा device *d,				\
+			   काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	वापस netstat_show(d, attr, buf,				\
+			    दुरत्व(काष्ठा rtnl_link_stats64, name));	\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(name)
 
 NETSTAT_ENTRY(rx_packets);
 NETSTAT_ENTRY(tx_packets);
@@ -660,18 +661,18 @@ NETSTAT_ENTRY(rx_length_errors);
 NETSTAT_ENTRY(rx_over_errors);
 NETSTAT_ENTRY(rx_crc_errors);
 NETSTAT_ENTRY(rx_frame_errors);
-NETSTAT_ENTRY(rx_fifo_errors);
+NETSTAT_ENTRY(rx_fअगरo_errors);
 NETSTAT_ENTRY(rx_missed_errors);
-NETSTAT_ENTRY(tx_aborted_errors);
+NETSTAT_ENTRY(tx_पातed_errors);
 NETSTAT_ENTRY(tx_carrier_errors);
-NETSTAT_ENTRY(tx_fifo_errors);
+NETSTAT_ENTRY(tx_fअगरo_errors);
 NETSTAT_ENTRY(tx_heartbeat_errors);
-NETSTAT_ENTRY(tx_window_errors);
+NETSTAT_ENTRY(tx_winकरोw_errors);
 NETSTAT_ENTRY(rx_compressed);
 NETSTAT_ENTRY(tx_compressed);
 NETSTAT_ENTRY(rx_nohandler);
 
-static struct attribute *netstat_attrs[] __ro_after_init = {
+अटल काष्ठा attribute *netstat_attrs[] __ro_after_init = अणु
 	&dev_attr_rx_packets.attr,
 	&dev_attr_tx_packets.attr,
 	&dev_attr_rx_bytes.attr,
@@ -686,319 +687,319 @@ static struct attribute *netstat_attrs[] __ro_after_init = {
 	&dev_attr_rx_over_errors.attr,
 	&dev_attr_rx_crc_errors.attr,
 	&dev_attr_rx_frame_errors.attr,
-	&dev_attr_rx_fifo_errors.attr,
+	&dev_attr_rx_fअगरo_errors.attr,
 	&dev_attr_rx_missed_errors.attr,
-	&dev_attr_tx_aborted_errors.attr,
+	&dev_attr_tx_पातed_errors.attr,
 	&dev_attr_tx_carrier_errors.attr,
-	&dev_attr_tx_fifo_errors.attr,
+	&dev_attr_tx_fअगरo_errors.attr,
 	&dev_attr_tx_heartbeat_errors.attr,
-	&dev_attr_tx_window_errors.attr,
+	&dev_attr_tx_winकरोw_errors.attr,
 	&dev_attr_rx_compressed.attr,
 	&dev_attr_tx_compressed.attr,
 	&dev_attr_rx_nohandler.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group netstat_group = {
+अटल स्थिर काष्ठा attribute_group netstat_group = अणु
 	.name  = "statistics",
 	.attrs  = netstat_attrs,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_WIRELESS_EXT) || IS_ENABLED(CONFIG_CFG80211)
-static struct attribute *wireless_attrs[] = {
-	NULL
-};
+#अगर IS_ENABLED(CONFIG_WIRELESS_EXT) || IS_ENABLED(CONFIG_CFG80211)
+अटल काष्ठा attribute *wireless_attrs[] = अणु
+	शून्य
+पूर्ण;
 
-static const struct attribute_group wireless_group = {
+अटल स्थिर काष्ठा attribute_group wireless_group = अणु
 	.name = "wireless",
 	.attrs = wireless_attrs,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#else /* CONFIG_SYSFS */
-#define net_class_groups	NULL
-#endif /* CONFIG_SYSFS */
+#अन्यथा /* CONFIG_SYSFS */
+#घोषणा net_class_groups	शून्य
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-#ifdef CONFIG_SYSFS
-#define to_rx_queue_attr(_attr) \
-	container_of(_attr, struct rx_queue_attribute, attr)
+#अगर_घोषित CONFIG_SYSFS
+#घोषणा to_rx_queue_attr(_attr) \
+	container_of(_attr, काष्ठा rx_queue_attribute, attr)
 
-#define to_rx_queue(obj) container_of(obj, struct netdev_rx_queue, kobj)
+#घोषणा to_rx_queue(obj) container_of(obj, काष्ठा netdev_rx_queue, kobj)
 
-static ssize_t rx_queue_attr_show(struct kobject *kobj, struct attribute *attr,
-				  char *buf)
-{
-	const struct rx_queue_attribute *attribute = to_rx_queue_attr(attr);
-	struct netdev_rx_queue *queue = to_rx_queue(kobj);
+अटल sमाप_प्रकार rx_queue_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				  अक्षर *buf)
+अणु
+	स्थिर काष्ठा rx_queue_attribute *attribute = to_rx_queue_attr(attr);
+	काष्ठा netdev_rx_queue *queue = to_rx_queue(kobj);
 
-	if (!attribute->show)
-		return -EIO;
+	अगर (!attribute->show)
+		वापस -EIO;
 
-	return attribute->show(queue, buf);
-}
+	वापस attribute->show(queue, buf);
+पूर्ण
 
-static ssize_t rx_queue_attr_store(struct kobject *kobj, struct attribute *attr,
-				   const char *buf, size_t count)
-{
-	const struct rx_queue_attribute *attribute = to_rx_queue_attr(attr);
-	struct netdev_rx_queue *queue = to_rx_queue(kobj);
+अटल sमाप_प्रकार rx_queue_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	स्थिर काष्ठा rx_queue_attribute *attribute = to_rx_queue_attr(attr);
+	काष्ठा netdev_rx_queue *queue = to_rx_queue(kobj);
 
-	if (!attribute->store)
-		return -EIO;
+	अगर (!attribute->store)
+		वापस -EIO;
 
-	return attribute->store(queue, buf, count);
-}
+	वापस attribute->store(queue, buf, count);
+पूर्ण
 
-static const struct sysfs_ops rx_queue_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops rx_queue_sysfs_ops = अणु
 	.show = rx_queue_attr_show,
 	.store = rx_queue_attr_store,
-};
+पूर्ण;
 
-#ifdef CONFIG_RPS
-static ssize_t show_rps_map(struct netdev_rx_queue *queue, char *buf)
-{
-	struct rps_map *map;
+#अगर_घोषित CONFIG_RPS
+अटल sमाप_प्रकार show_rps_map(काष्ठा netdev_rx_queue *queue, अक्षर *buf)
+अणु
+	काष्ठा rps_map *map;
 	cpumask_var_t mask;
-	int i, len;
+	पूर्णांक i, len;
 
-	if (!zalloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!zalloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	map = rcu_dereference(queue->rps_map);
-	if (map)
-		for (i = 0; i < map->len; i++)
+	अगर (map)
+		क्रम (i = 0; i < map->len; i++)
 			cpumask_set_cpu(map->cpus[i], mask);
 
-	len = snprintf(buf, PAGE_SIZE, "%*pb\n", cpumask_pr_args(mask));
-	rcu_read_unlock();
-	free_cpumask_var(mask);
+	len = snम_लिखो(buf, PAGE_SIZE, "%*pb\n", cpumask_pr_args(mask));
+	rcu_पढ़ो_unlock();
+	मुक्त_cpumask_var(mask);
 
-	return len < PAGE_SIZE ? len : -EINVAL;
-}
+	वापस len < PAGE_SIZE ? len : -EINVAL;
+पूर्ण
 
-static ssize_t store_rps_map(struct netdev_rx_queue *queue,
-			     const char *buf, size_t len)
-{
-	struct rps_map *old_map, *map;
+अटल sमाप_प्रकार store_rps_map(काष्ठा netdev_rx_queue *queue,
+			     स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा rps_map *old_map, *map;
 	cpumask_var_t mask;
-	int err, cpu, i, hk_flags;
-	static DEFINE_MUTEX(rps_map_mutex);
+	पूर्णांक err, cpu, i, hk_flags;
+	अटल DEFINE_MUTEX(rps_map_mutex);
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 
-	err = bitmap_parse(buf, len, cpumask_bits(mask), nr_cpumask_bits);
-	if (err) {
-		free_cpumask_var(mask);
-		return err;
-	}
+	err = biपंचांगap_parse(buf, len, cpumask_bits(mask), nr_cpumask_bits);
+	अगर (err) अणु
+		मुक्त_cpumask_var(mask);
+		वापस err;
+	पूर्ण
 
-	if (!cpumask_empty(mask)) {
+	अगर (!cpumask_empty(mask)) अणु
 		hk_flags = HK_FLAG_DOMAIN | HK_FLAG_WQ;
 		cpumask_and(mask, mask, housekeeping_cpumask(hk_flags));
-		if (cpumask_empty(mask)) {
-			free_cpumask_var(mask);
-			return -EINVAL;
-		}
-	}
+		अगर (cpumask_empty(mask)) अणु
+			मुक्त_cpumask_var(mask);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	map = kzalloc(max_t(unsigned int,
+	map = kzalloc(max_t(अचिन्हित पूर्णांक,
 			    RPS_MAP_SIZE(cpumask_weight(mask)), L1_CACHE_BYTES),
 		      GFP_KERNEL);
-	if (!map) {
-		free_cpumask_var(mask);
-		return -ENOMEM;
-	}
+	अगर (!map) अणु
+		मुक्त_cpumask_var(mask);
+		वापस -ENOMEM;
+	पूर्ण
 
 	i = 0;
-	for_each_cpu_and(cpu, mask, cpu_online_mask)
+	क्रम_each_cpu_and(cpu, mask, cpu_online_mask)
 		map->cpus[i++] = cpu;
 
-	if (i) {
+	अगर (i) अणु
 		map->len = i;
-	} else {
-		kfree(map);
-		map = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		kमुक्त(map);
+		map = शून्य;
+	पूर्ण
 
 	mutex_lock(&rps_map_mutex);
-	old_map = rcu_dereference_protected(queue->rps_map,
+	old_map = rcu_dereference_रक्षित(queue->rps_map,
 					    mutex_is_locked(&rps_map_mutex));
-	rcu_assign_pointer(queue->rps_map, map);
+	rcu_assign_poपूर्णांकer(queue->rps_map, map);
 
-	if (map)
-		static_branch_inc(&rps_needed);
-	if (old_map)
-		static_branch_dec(&rps_needed);
+	अगर (map)
+		अटल_branch_inc(&rps_needed);
+	अगर (old_map)
+		अटल_branch_dec(&rps_needed);
 
 	mutex_unlock(&rps_map_mutex);
 
-	if (old_map)
-		kfree_rcu(old_map, rcu);
+	अगर (old_map)
+		kमुक्त_rcu(old_map, rcu);
 
-	free_cpumask_var(mask);
-	return len;
-}
+	मुक्त_cpumask_var(mask);
+	वापस len;
+पूर्ण
 
-static ssize_t show_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
-					   char *buf)
-{
-	struct rps_dev_flow_table *flow_table;
-	unsigned long val = 0;
+अटल sमाप_प्रकार show_rps_dev_flow_table_cnt(काष्ठा netdev_rx_queue *queue,
+					   अक्षर *buf)
+अणु
+	काष्ठा rps_dev_flow_table *flow_table;
+	अचिन्हित दीर्घ val = 0;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	flow_table = rcu_dereference(queue->rps_flow_table);
-	if (flow_table)
-		val = (unsigned long)flow_table->mask + 1;
-	rcu_read_unlock();
+	अगर (flow_table)
+		val = (अचिन्हित दीर्घ)flow_table->mask + 1;
+	rcu_पढ़ो_unlock();
 
-	return sprintf(buf, "%lu\n", val);
-}
+	वापस प्र_लिखो(buf, "%lu\n", val);
+पूर्ण
 
-static void rps_dev_flow_table_release(struct rcu_head *rcu)
-{
-	struct rps_dev_flow_table *table = container_of(rcu,
-	    struct rps_dev_flow_table, rcu);
-	vfree(table);
-}
+अटल व्योम rps_dev_flow_table_release(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा rps_dev_flow_table *table = container_of(rcu,
+	    काष्ठा rps_dev_flow_table, rcu);
+	vमुक्त(table);
+पूर्ण
 
-static ssize_t store_rps_dev_flow_table_cnt(struct netdev_rx_queue *queue,
-					    const char *buf, size_t len)
-{
-	unsigned long mask, count;
-	struct rps_dev_flow_table *table, *old_table;
-	static DEFINE_SPINLOCK(rps_dev_flow_lock);
-	int rc;
+अटल sमाप_प्रकार store_rps_dev_flow_table_cnt(काष्ठा netdev_rx_queue *queue,
+					    स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ mask, count;
+	काष्ठा rps_dev_flow_table *table, *old_table;
+	अटल DEFINE_SPINLOCK(rps_dev_flow_lock);
+	पूर्णांक rc;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	rc = kstrtoul(buf, 0, &count);
-	if (rc < 0)
-		return rc;
+	rc = kम_से_अदीर्घ(buf, 0, &count);
+	अगर (rc < 0)
+		वापस rc;
 
-	if (count) {
+	अगर (count) अणु
 		mask = count - 1;
-		/* mask = roundup_pow_of_two(count) - 1;
+		/* mask = roundup_घात_of_two(count) - 1;
 		 * without overflows...
 		 */
-		while ((mask | (mask >> 1)) != mask)
+		जबतक ((mask | (mask >> 1)) != mask)
 			mask |= (mask >> 1);
 		/* On 64 bit arches, must check mask fits in table->mask (u32),
 		 * and on 32bit arches, must check
-		 * RPS_DEV_FLOW_TABLE_SIZE(mask + 1) doesn't overflow.
+		 * RPS_DEV_FLOW_TABLE_SIZE(mask + 1) करोesn't overflow.
 		 */
-#if BITS_PER_LONG > 32
-		if (mask > (unsigned long)(u32)mask)
-			return -EINVAL;
-#else
-		if (mask > (ULONG_MAX - RPS_DEV_FLOW_TABLE_SIZE(1))
-				/ sizeof(struct rps_dev_flow)) {
-			/* Enforce a limit to prevent overflow */
-			return -EINVAL;
-		}
-#endif
-		table = vmalloc(RPS_DEV_FLOW_TABLE_SIZE(mask + 1));
-		if (!table)
-			return -ENOMEM;
+#अगर BITS_PER_LONG > 32
+		अगर (mask > (अचिन्हित दीर्घ)(u32)mask)
+			वापस -EINVAL;
+#अन्यथा
+		अगर (mask > (अच_दीर्घ_उच्च - RPS_DEV_FLOW_TABLE_SIZE(1))
+				/ माप(काष्ठा rps_dev_flow)) अणु
+			/* Enक्रमce a limit to prevent overflow */
+			वापस -EINVAL;
+		पूर्ण
+#पूर्ण_अगर
+		table = vदो_स्मृति(RPS_DEV_FLOW_TABLE_SIZE(mask + 1));
+		अगर (!table)
+			वापस -ENOMEM;
 
 		table->mask = mask;
-		for (count = 0; count <= mask; count++)
+		क्रम (count = 0; count <= mask; count++)
 			table->flows[count].cpu = RPS_NO_CPU;
-	} else {
-		table = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		table = शून्य;
+	पूर्ण
 
 	spin_lock(&rps_dev_flow_lock);
-	old_table = rcu_dereference_protected(queue->rps_flow_table,
+	old_table = rcu_dereference_रक्षित(queue->rps_flow_table,
 					      lockdep_is_held(&rps_dev_flow_lock));
-	rcu_assign_pointer(queue->rps_flow_table, table);
+	rcu_assign_poपूर्णांकer(queue->rps_flow_table, table);
 	spin_unlock(&rps_dev_flow_lock);
 
-	if (old_table)
+	अगर (old_table)
 		call_rcu(&old_table->rcu, rps_dev_flow_table_release);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct rx_queue_attribute rps_cpus_attribute __ro_after_init
+अटल काष्ठा rx_queue_attribute rps_cpus_attribute __ro_after_init
 	= __ATTR(rps_cpus, 0644, show_rps_map, store_rps_map);
 
-static struct rx_queue_attribute rps_dev_flow_table_cnt_attribute __ro_after_init
+अटल काष्ठा rx_queue_attribute rps_dev_flow_table_cnt_attribute __ro_after_init
 	= __ATTR(rps_flow_cnt, 0644,
 		 show_rps_dev_flow_table_cnt, store_rps_dev_flow_table_cnt);
-#endif /* CONFIG_RPS */
+#पूर्ण_अगर /* CONFIG_RPS */
 
-static struct attribute *rx_queue_default_attrs[] __ro_after_init = {
-#ifdef CONFIG_RPS
+अटल काष्ठा attribute *rx_queue_शेष_attrs[] __ro_after_init = अणु
+#अगर_घोषित CONFIG_RPS
 	&rps_cpus_attribute.attr,
 	&rps_dev_flow_table_cnt_attribute.attr,
-#endif
-	NULL
-};
-ATTRIBUTE_GROUPS(rx_queue_default);
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
+ATTRIBUTE_GROUPS(rx_queue_शेष);
 
-static void rx_queue_release(struct kobject *kobj)
-{
-	struct netdev_rx_queue *queue = to_rx_queue(kobj);
-#ifdef CONFIG_RPS
-	struct rps_map *map;
-	struct rps_dev_flow_table *flow_table;
+अटल व्योम rx_queue_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा netdev_rx_queue *queue = to_rx_queue(kobj);
+#अगर_घोषित CONFIG_RPS
+	काष्ठा rps_map *map;
+	काष्ठा rps_dev_flow_table *flow_table;
 
-	map = rcu_dereference_protected(queue->rps_map, 1);
-	if (map) {
-		RCU_INIT_POINTER(queue->rps_map, NULL);
-		kfree_rcu(map, rcu);
-	}
+	map = rcu_dereference_रक्षित(queue->rps_map, 1);
+	अगर (map) अणु
+		RCU_INIT_POINTER(queue->rps_map, शून्य);
+		kमुक्त_rcu(map, rcu);
+	पूर्ण
 
-	flow_table = rcu_dereference_protected(queue->rps_flow_table, 1);
-	if (flow_table) {
-		RCU_INIT_POINTER(queue->rps_flow_table, NULL);
+	flow_table = rcu_dereference_रक्षित(queue->rps_flow_table, 1);
+	अगर (flow_table) अणु
+		RCU_INIT_POINTER(queue->rps_flow_table, शून्य);
 		call_rcu(&flow_table->rcu, rps_dev_flow_table_release);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	memset(kobj, 0, sizeof(*kobj));
+	स_रखो(kobj, 0, माप(*kobj));
 	dev_put(queue->dev);
-}
+पूर्ण
 
-static const void *rx_queue_namespace(struct kobject *kobj)
-{
-	struct netdev_rx_queue *queue = to_rx_queue(kobj);
-	struct device *dev = &queue->dev->dev;
-	const void *ns = NULL;
+अटल स्थिर व्योम *rx_queue_namespace(काष्ठा kobject *kobj)
+अणु
+	काष्ठा netdev_rx_queue *queue = to_rx_queue(kobj);
+	काष्ठा device *dev = &queue->dev->dev;
+	स्थिर व्योम *ns = शून्य;
 
-	if (dev->class && dev->class->ns_type)
+	अगर (dev->class && dev->class->ns_type)
 		ns = dev->class->namespace(dev);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static void rx_queue_get_ownership(struct kobject *kobj,
+अटल व्योम rx_queue_get_ownership(काष्ठा kobject *kobj,
 				   kuid_t *uid, kgid_t *gid)
-{
-	const struct net *net = rx_queue_namespace(kobj);
+अणु
+	स्थिर काष्ठा net *net = rx_queue_namespace(kobj);
 
 	net_ns_get_ownership(net, uid, gid);
-}
+पूर्ण
 
-static struct kobj_type rx_queue_ktype __ro_after_init = {
+अटल काष्ठा kobj_type rx_queue_ktype __ro_after_init = अणु
 	.sysfs_ops = &rx_queue_sysfs_ops,
 	.release = rx_queue_release,
-	.default_groups = rx_queue_default_groups,
+	.शेष_groups = rx_queue_शेष_groups,
 	.namespace = rx_queue_namespace,
 	.get_ownership = rx_queue_get_ownership,
-};
+पूर्ण;
 
-static int rx_queue_add_kobject(struct net_device *dev, int index)
-{
-	struct netdev_rx_queue *queue = dev->_rx + index;
-	struct kobject *kobj = &queue->kobj;
-	int error = 0;
+अटल पूर्णांक rx_queue_add_kobject(काष्ठा net_device *dev, पूर्णांक index)
+अणु
+	काष्ठा netdev_rx_queue *queue = dev->_rx + index;
+	काष्ठा kobject *kobj = &queue->kobj;
+	पूर्णांक error = 0;
 
 	/* Kobject_put later will trigger rx_queue_release call which
 	 * decreases dev refcount: Take that reference here
@@ -1006,188 +1007,188 @@ static int rx_queue_add_kobject(struct net_device *dev, int index)
 	dev_hold(queue->dev);
 
 	kobj->kset = dev->queues_kset;
-	error = kobject_init_and_add(kobj, &rx_queue_ktype, NULL,
+	error = kobject_init_and_add(kobj, &rx_queue_ktype, शून्य,
 				     "rx-%u", index);
-	if (error)
-		goto err;
+	अगर (error)
+		जाओ err;
 
-	if (dev->sysfs_rx_queue_group) {
+	अगर (dev->sysfs_rx_queue_group) अणु
 		error = sysfs_create_group(kobj, dev->sysfs_rx_queue_group);
-		if (error)
-			goto err;
-	}
+		अगर (error)
+			जाओ err;
+	पूर्ण
 
 	kobject_uevent(kobj, KOBJ_ADD);
 
-	return error;
+	वापस error;
 
 err:
 	kobject_put(kobj);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rx_queue_change_owner(struct net_device *dev, int index, kuid_t kuid,
+अटल पूर्णांक rx_queue_change_owner(काष्ठा net_device *dev, पूर्णांक index, kuid_t kuid,
 				 kgid_t kgid)
-{
-	struct netdev_rx_queue *queue = dev->_rx + index;
-	struct kobject *kobj = &queue->kobj;
-	int error;
+अणु
+	काष्ठा netdev_rx_queue *queue = dev->_rx + index;
+	काष्ठा kobject *kobj = &queue->kobj;
+	पूर्णांक error;
 
 	error = sysfs_change_owner(kobj, kuid, kgid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	if (dev->sysfs_rx_queue_group)
+	अगर (dev->sysfs_rx_queue_group)
 		error = sysfs_group_change_owner(
 			kobj, dev->sysfs_rx_queue_group, kuid, kgid);
 
-	return error;
-}
-#endif /* CONFIG_SYSFS */
+	वापस error;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-int
-net_rx_queue_update_kobjects(struct net_device *dev, int old_num, int new_num)
-{
-#ifdef CONFIG_SYSFS
-	int i;
-	int error = 0;
+पूर्णांक
+net_rx_queue_update_kobjects(काष्ठा net_device *dev, पूर्णांक old_num, पूर्णांक new_num)
+अणु
+#अगर_घोषित CONFIG_SYSFS
+	पूर्णांक i;
+	पूर्णांक error = 0;
 
-#ifndef CONFIG_RPS
-	if (!dev->sysfs_rx_queue_group)
-		return 0;
-#endif
-	for (i = old_num; i < new_num; i++) {
+#अगर_अघोषित CONFIG_RPS
+	अगर (!dev->sysfs_rx_queue_group)
+		वापस 0;
+#पूर्ण_अगर
+	क्रम (i = old_num; i < new_num; i++) अणु
 		error = rx_queue_add_kobject(dev, i);
-		if (error) {
+		अगर (error) अणु
 			new_num = old_num;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	while (--i >= new_num) {
-		struct kobject *kobj = &dev->_rx[i].kobj;
+	जबतक (--i >= new_num) अणु
+		काष्ठा kobject *kobj = &dev->_rx[i].kobj;
 
-		if (!refcount_read(&dev_net(dev)->ns.count))
+		अगर (!refcount_पढ़ो(&dev_net(dev)->ns.count))
 			kobj->uevent_suppress = 1;
-		if (dev->sysfs_rx_queue_group)
-			sysfs_remove_group(kobj, dev->sysfs_rx_queue_group);
+		अगर (dev->sysfs_rx_queue_group)
+			sysfs_हटाओ_group(kobj, dev->sysfs_rx_queue_group);
 		kobject_put(kobj);
-	}
+	पूर्ण
 
-	return error;
-#else
-	return 0;
-#endif
-}
+	वापस error;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-static int net_rx_queue_change_owner(struct net_device *dev, int num,
+अटल पूर्णांक net_rx_queue_change_owner(काष्ठा net_device *dev, पूर्णांक num,
 				     kuid_t kuid, kgid_t kgid)
-{
-#ifdef CONFIG_SYSFS
-	int error = 0;
-	int i;
+अणु
+#अगर_घोषित CONFIG_SYSFS
+	पूर्णांक error = 0;
+	पूर्णांक i;
 
-#ifndef CONFIG_RPS
-	if (!dev->sysfs_rx_queue_group)
-		return 0;
-#endif
-	for (i = 0; i < num; i++) {
+#अगर_अघोषित CONFIG_RPS
+	अगर (!dev->sysfs_rx_queue_group)
+		वापस 0;
+#पूर्ण_अगर
+	क्रम (i = 0; i < num; i++) अणु
 		error = rx_queue_change_owner(dev, i, kuid, kgid);
-		if (error)
-			break;
-	}
+		अगर (error)
+			अवरोध;
+	पूर्ण
 
-	return error;
-#else
-	return 0;
-#endif
-}
+	वापस error;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 /*
- * netdev_queue sysfs structures and functions.
+ * netdev_queue sysfs काष्ठाures and functions.
  */
-struct netdev_queue_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct netdev_queue *queue, char *buf);
-	ssize_t (*store)(struct netdev_queue *queue,
-			 const char *buf, size_t len);
-};
-#define to_netdev_queue_attr(_attr) \
-	container_of(_attr, struct netdev_queue_attribute, attr)
+काष्ठा netdev_queue_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा netdev_queue *queue, अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा netdev_queue *queue,
+			 स्थिर अक्षर *buf, माप_प्रकार len);
+पूर्ण;
+#घोषणा to_netdev_queue_attr(_attr) \
+	container_of(_attr, काष्ठा netdev_queue_attribute, attr)
 
-#define to_netdev_queue(obj) container_of(obj, struct netdev_queue, kobj)
+#घोषणा to_netdev_queue(obj) container_of(obj, काष्ठा netdev_queue, kobj)
 
-static ssize_t netdev_queue_attr_show(struct kobject *kobj,
-				      struct attribute *attr, char *buf)
-{
-	const struct netdev_queue_attribute *attribute
+अटल sमाप_प्रकार netdev_queue_attr_show(काष्ठा kobject *kobj,
+				      काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	स्थिर काष्ठा netdev_queue_attribute *attribute
 		= to_netdev_queue_attr(attr);
-	struct netdev_queue *queue = to_netdev_queue(kobj);
+	काष्ठा netdev_queue *queue = to_netdev_queue(kobj);
 
-	if (!attribute->show)
-		return -EIO;
+	अगर (!attribute->show)
+		वापस -EIO;
 
-	return attribute->show(queue, buf);
-}
+	वापस attribute->show(queue, buf);
+पूर्ण
 
-static ssize_t netdev_queue_attr_store(struct kobject *kobj,
-				       struct attribute *attr,
-				       const char *buf, size_t count)
-{
-	const struct netdev_queue_attribute *attribute
+अटल sमाप_प्रकार netdev_queue_attr_store(काष्ठा kobject *kobj,
+				       काष्ठा attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	स्थिर काष्ठा netdev_queue_attribute *attribute
 		= to_netdev_queue_attr(attr);
-	struct netdev_queue *queue = to_netdev_queue(kobj);
+	काष्ठा netdev_queue *queue = to_netdev_queue(kobj);
 
-	if (!attribute->store)
-		return -EIO;
+	अगर (!attribute->store)
+		वापस -EIO;
 
-	return attribute->store(queue, buf, count);
-}
+	वापस attribute->store(queue, buf, count);
+पूर्ण
 
-static const struct sysfs_ops netdev_queue_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops netdev_queue_sysfs_ops = अणु
 	.show = netdev_queue_attr_show,
 	.store = netdev_queue_attr_store,
-};
+पूर्ण;
 
-static ssize_t tx_timeout_show(struct netdev_queue *queue, char *buf)
-{
-	unsigned long trans_timeout;
+अटल sमाप_प्रकार tx_समयout_show(काष्ठा netdev_queue *queue, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ trans_समयout;
 
 	spin_lock_irq(&queue->_xmit_lock);
-	trans_timeout = queue->trans_timeout;
+	trans_समयout = queue->trans_समयout;
 	spin_unlock_irq(&queue->_xmit_lock);
 
-	return sprintf(buf, fmt_ulong, trans_timeout);
-}
+	वापस प्र_लिखो(buf, fmt_uदीर्घ, trans_समयout);
+पूर्ण
 
-static unsigned int get_netdev_queue_index(struct netdev_queue *queue)
-{
-	struct net_device *dev = queue->dev;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक get_netdev_queue_index(काष्ठा netdev_queue *queue)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	अचिन्हित पूर्णांक i;
 
 	i = queue - dev->_tx;
 	BUG_ON(i >= dev->num_tx_queues);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static ssize_t traffic_class_show(struct netdev_queue *queue,
-				  char *buf)
-{
-	struct net_device *dev = queue->dev;
-	int num_tc, tc;
-	int index;
+अटल sमाप_प्रकार traffic_class_show(काष्ठा netdev_queue *queue,
+				  अक्षर *buf)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	पूर्णांक num_tc, tc;
+	पूर्णांक index;
 
-	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+	अगर (!netअगर_is_multiqueue(dev))
+		वापस -ENOENT;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
 	index = get_netdev_queue_index(queue);
 
-	/* If queue belongs to subordinate dev use its TC mapping */
+	/* If queue beदीर्घs to subordinate dev use its TC mapping */
 	dev = netdev_get_tx_queue(dev, index)->sb_dev ? : dev;
 
 	num_tc = dev->num_tc;
@@ -1195,149 +1196,149 @@ static ssize_t traffic_class_show(struct netdev_queue *queue,
 
 	rtnl_unlock();
 
-	if (tc < 0)
-		return -EINVAL;
+	अगर (tc < 0)
+		वापस -EINVAL;
 
 	/* We can report the traffic class one of two ways:
 	 * Subordinate device traffic classes are reported with the traffic
-	 * class first, and then the subordinate class so for example TC0 on
+	 * class first, and then the subordinate class so क्रम example TC0 on
 	 * subordinate device 2 will be reported as "0-2". If the queue
-	 * belongs to the root device it will be reported with just the
-	 * traffic class, so just "0" for TC 0 for example.
+	 * beदीर्घs to the root device it will be reported with just the
+	 * traffic class, so just "0" क्रम TC 0 क्रम example.
 	 */
-	return num_tc < 0 ? sprintf(buf, "%d%d\n", tc, num_tc) :
-			    sprintf(buf, "%d\n", tc);
-}
+	वापस num_tc < 0 ? प्र_लिखो(buf, "%d%d\n", tc, num_tc) :
+			    प्र_लिखो(buf, "%d\n", tc);
+पूर्ण
 
-#ifdef CONFIG_XPS
-static ssize_t tx_maxrate_show(struct netdev_queue *queue,
-			       char *buf)
-{
-	return sprintf(buf, "%lu\n", queue->tx_maxrate);
-}
+#अगर_घोषित CONFIG_XPS
+अटल sमाप_प्रकार tx_maxrate_show(काष्ठा netdev_queue *queue,
+			       अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%lu\n", queue->tx_maxrate);
+पूर्ण
 
-static ssize_t tx_maxrate_store(struct netdev_queue *queue,
-				const char *buf, size_t len)
-{
-	struct net_device *dev = queue->dev;
-	int err, index = get_netdev_queue_index(queue);
+अटल sमाप_प्रकार tx_maxrate_store(काष्ठा netdev_queue *queue,
+				स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	पूर्णांक err, index = get_netdev_queue_index(queue);
 	u32 rate = 0;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
 	err = kstrtou32(buf, 10, &rate);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
 	err = -EOPNOTSUPP;
-	if (dev->netdev_ops->ndo_set_tx_maxrate)
-		err = dev->netdev_ops->ndo_set_tx_maxrate(dev, index, rate);
+	अगर (dev->netdev_ops->nकरो_set_tx_maxrate)
+		err = dev->netdev_ops->nकरो_set_tx_maxrate(dev, index, rate);
 
 	rtnl_unlock();
-	if (!err) {
+	अगर (!err) अणु
 		queue->tx_maxrate = rate;
-		return len;
-	}
-	return err;
-}
+		वापस len;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static struct netdev_queue_attribute queue_tx_maxrate __ro_after_init
+अटल काष्ठा netdev_queue_attribute queue_tx_maxrate __ro_after_init
 	= __ATTR_RW(tx_maxrate);
-#endif
+#पूर्ण_अगर
 
-static struct netdev_queue_attribute queue_trans_timeout __ro_after_init
-	= __ATTR_RO(tx_timeout);
+अटल काष्ठा netdev_queue_attribute queue_trans_समयout __ro_after_init
+	= __ATTR_RO(tx_समयout);
 
-static struct netdev_queue_attribute queue_traffic_class __ro_after_init
+अटल काष्ठा netdev_queue_attribute queue_traffic_class __ro_after_init
 	= __ATTR_RO(traffic_class);
 
-#ifdef CONFIG_BQL
+#अगर_घोषित CONFIG_BQL
 /*
- * Byte queue limits sysfs structures and functions.
+ * Byte queue limits sysfs काष्ठाures and functions.
  */
-static ssize_t bql_show(char *buf, unsigned int value)
-{
-	return sprintf(buf, "%u\n", value);
-}
+अटल sमाप_प्रकार bql_show(अक्षर *buf, अचिन्हित पूर्णांक value)
+अणु
+	वापस प्र_लिखो(buf, "%u\n", value);
+पूर्ण
 
-static ssize_t bql_set(const char *buf, const size_t count,
-		       unsigned int *pvalue)
-{
-	unsigned int value;
-	int err;
+अटल sमाप_प्रकार bql_set(स्थिर अक्षर *buf, स्थिर माप_प्रकार count,
+		       अचिन्हित पूर्णांक *pvalue)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक err;
 
-	if (!strcmp(buf, "max") || !strcmp(buf, "max\n")) {
+	अगर (!म_भेद(buf, "max") || !म_भेद(buf, "max\n")) अणु
 		value = DQL_MAX_LIMIT;
-	} else {
-		err = kstrtouint(buf, 10, &value);
-		if (err < 0)
-			return err;
-		if (value > DQL_MAX_LIMIT)
-			return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		err = kstrtouपूर्णांक(buf, 10, &value);
+		अगर (err < 0)
+			वापस err;
+		अगर (value > DQL_MAX_LIMIT)
+			वापस -EINVAL;
+	पूर्ण
 
 	*pvalue = value;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t bql_show_hold_time(struct netdev_queue *queue,
-				  char *buf)
-{
-	struct dql *dql = &queue->dql;
+अटल sमाप_प्रकार bql_show_hold_समय(काष्ठा netdev_queue *queue,
+				  अक्षर *buf)
+अणु
+	काष्ठा dql *dql = &queue->dql;
 
-	return sprintf(buf, "%u\n", jiffies_to_msecs(dql->slack_hold_time));
-}
+	वापस प्र_लिखो(buf, "%u\n", jअगरfies_to_msecs(dql->slack_hold_समय));
+पूर्ण
 
-static ssize_t bql_set_hold_time(struct netdev_queue *queue,
-				 const char *buf, size_t len)
-{
-	struct dql *dql = &queue->dql;
-	unsigned int value;
-	int err;
+अटल sमाप_प्रकार bql_set_hold_समय(काष्ठा netdev_queue *queue,
+				 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा dql *dql = &queue->dql;
+	अचिन्हित पूर्णांक value;
+	पूर्णांक err;
 
-	err = kstrtouint(buf, 10, &value);
-	if (err < 0)
-		return err;
+	err = kstrtouपूर्णांक(buf, 10, &value);
+	अगर (err < 0)
+		वापस err;
 
-	dql->slack_hold_time = msecs_to_jiffies(value);
+	dql->slack_hold_समय = msecs_to_jअगरfies(value);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static struct netdev_queue_attribute bql_hold_time_attribute __ro_after_init
-	= __ATTR(hold_time, 0644,
-		 bql_show_hold_time, bql_set_hold_time);
+अटल काष्ठा netdev_queue_attribute bql_hold_समय_attribute __ro_after_init
+	= __ATTR(hold_समय, 0644,
+		 bql_show_hold_समय, bql_set_hold_समय);
 
-static ssize_t bql_show_inflight(struct netdev_queue *queue,
-				 char *buf)
-{
-	struct dql *dql = &queue->dql;
+अटल sमाप_प्रकार bql_show_inflight(काष्ठा netdev_queue *queue,
+				 अक्षर *buf)
+अणु
+	काष्ठा dql *dql = &queue->dql;
 
-	return sprintf(buf, "%u\n", dql->num_queued - dql->num_completed);
-}
+	वापस प्र_लिखो(buf, "%u\n", dql->num_queued - dql->num_completed);
+पूर्ण
 
-static struct netdev_queue_attribute bql_inflight_attribute __ro_after_init =
-	__ATTR(inflight, 0444, bql_show_inflight, NULL);
+अटल काष्ठा netdev_queue_attribute bql_inflight_attribute __ro_after_init =
+	__ATTR(inflight, 0444, bql_show_inflight, शून्य);
 
-#define BQL_ATTR(NAME, FIELD)						\
-static ssize_t bql_show_ ## NAME(struct netdev_queue *queue,		\
-				 char *buf)				\
-{									\
-	return bql_show(buf, queue->dql.FIELD);				\
-}									\
+#घोषणा BQL_ATTR(NAME, FIELD)						\
+अटल sमाप_प्रकार bql_show_ ## NAME(काष्ठा netdev_queue *queue,		\
+				 अक्षर *buf)				\
+अणु									\
+	वापस bql_show(buf, queue->dql.FIELD);				\
+पूर्ण									\
 									\
-static ssize_t bql_set_ ## NAME(struct netdev_queue *queue,		\
-				const char *buf, size_t len)		\
-{									\
-	return bql_set(buf, len, &queue->dql.FIELD);			\
-}									\
+अटल sमाप_प्रकार bql_set_ ## NAME(काष्ठा netdev_queue *queue,		\
+				स्थिर अक्षर *buf, माप_प्रकार len)		\
+अणु									\
+	वापस bql_set(buf, len, &queue->dql.FIELD);			\
+पूर्ण									\
 									\
-static struct netdev_queue_attribute bql_ ## NAME ## _attribute __ro_after_init \
+अटल काष्ठा netdev_queue_attribute bql_ ## NAME ## _attribute __ro_after_init \
 	= __ATTR(NAME, 0644,				\
 		 bql_show_ ## NAME, bql_set_ ## NAME)
 
@@ -1345,261 +1346,261 @@ BQL_ATTR(limit, limit);
 BQL_ATTR(limit_max, max_limit);
 BQL_ATTR(limit_min, min_limit);
 
-static struct attribute *dql_attrs[] __ro_after_init = {
+अटल काष्ठा attribute *dql_attrs[] __ro_after_init = अणु
 	&bql_limit_attribute.attr,
 	&bql_limit_max_attribute.attr,
 	&bql_limit_min_attribute.attr,
-	&bql_hold_time_attribute.attr,
+	&bql_hold_समय_attribute.attr,
 	&bql_inflight_attribute.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group dql_group = {
+अटल स्थिर काष्ठा attribute_group dql_group = अणु
 	.name  = "byte_queue_limits",
 	.attrs  = dql_attrs,
-};
-#endif /* CONFIG_BQL */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_BQL */
 
-#ifdef CONFIG_XPS
-static ssize_t xps_queue_show(struct net_device *dev, unsigned int index,
-			      int tc, char *buf, enum xps_map_type type)
-{
-	struct xps_dev_maps *dev_maps;
-	unsigned long *mask;
-	unsigned int nr_ids;
-	int j, len;
+#अगर_घोषित CONFIG_XPS
+अटल sमाप_प्रकार xps_queue_show(काष्ठा net_device *dev, अचिन्हित पूर्णांक index,
+			      पूर्णांक tc, अक्षर *buf, क्रमागत xps_map_type type)
+अणु
+	काष्ठा xps_dev_maps *dev_maps;
+	अचिन्हित दीर्घ *mask;
+	अचिन्हित पूर्णांक nr_ids;
+	पूर्णांक j, len;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	dev_maps = rcu_dereference(dev->xps_maps[type]);
 
-	/* Default to nr_cpu_ids/dev->num_rx_queues and do not just return 0
+	/* Default to nr_cpu_ids/dev->num_rx_queues and करो not just वापस 0
 	 * when dev_maps hasn't been allocated yet, to be backward compatible.
 	 */
 	nr_ids = dev_maps ? dev_maps->nr_ids :
 		 (type == XPS_CPUS ? nr_cpu_ids : dev->num_rx_queues);
 
-	mask = bitmap_zalloc(nr_ids, GFP_NOWAIT);
-	if (!mask) {
-		rcu_read_unlock();
-		return -ENOMEM;
-	}
+	mask = biपंचांगap_zalloc(nr_ids, GFP_NOWAIT);
+	अगर (!mask) अणु
+		rcu_पढ़ो_unlock();
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!dev_maps || tc >= dev_maps->num_tc)
-		goto out_no_maps;
+	अगर (!dev_maps || tc >= dev_maps->num_tc)
+		जाओ out_no_maps;
 
-	for (j = 0; j < nr_ids; j++) {
-		int i, tci = j * dev_maps->num_tc + tc;
-		struct xps_map *map;
+	क्रम (j = 0; j < nr_ids; j++) अणु
+		पूर्णांक i, tci = j * dev_maps->num_tc + tc;
+		काष्ठा xps_map *map;
 
 		map = rcu_dereference(dev_maps->attr_map[tci]);
-		if (!map)
-			continue;
+		अगर (!map)
+			जारी;
 
-		for (i = map->len; i--;) {
-			if (map->queues[i] == index) {
+		क्रम (i = map->len; i--;) अणु
+			अगर (map->queues[i] == index) अणु
 				set_bit(j, mask);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out_no_maps:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	len = bitmap_print_to_pagebuf(false, buf, mask, nr_ids);
-	bitmap_free(mask);
+	len = biपंचांगap_prपूर्णांक_to_pagebuf(false, buf, mask, nr_ids);
+	biपंचांगap_मुक्त(mask);
 
-	return len < PAGE_SIZE ? len : -EINVAL;
-}
+	वापस len < PAGE_SIZE ? len : -EINVAL;
+पूर्ण
 
-static ssize_t xps_cpus_show(struct netdev_queue *queue, char *buf)
-{
-	struct net_device *dev = queue->dev;
-	unsigned int index;
-	int len, tc;
+अटल sमाप_प्रकार xps_cpus_show(काष्ठा netdev_queue *queue, अक्षर *buf)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक len, tc;
 
-	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+	अगर (!netअगर_is_multiqueue(dev))
+		वापस -ENOENT;
 
 	index = get_netdev_queue_index(queue);
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
-	/* If queue belongs to subordinate dev use its map */
+	/* If queue beदीर्घs to subordinate dev use its map */
 	dev = netdev_get_tx_queue(dev, index)->sb_dev ? : dev;
 
 	tc = netdev_txq_to_tc(dev, index);
-	if (tc < 0) {
+	अगर (tc < 0) अणु
 		rtnl_unlock();
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Make sure the subordinate device can't be freed */
+	/* Make sure the subordinate device can't be मुक्तd */
 	get_device(&dev->dev);
 	rtnl_unlock();
 
 	len = xps_queue_show(dev, index, tc, buf, XPS_CPUS);
 
 	put_device(&dev->dev);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t xps_cpus_store(struct netdev_queue *queue,
-			      const char *buf, size_t len)
-{
-	struct net_device *dev = queue->dev;
-	unsigned int index;
+अटल sमाप_प्रकार xps_cpus_store(काष्ठा netdev_queue *queue,
+			      स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	अचिन्हित पूर्णांक index;
 	cpumask_var_t mask;
-	int err;
+	पूर्णांक err;
 
-	if (!netif_is_multiqueue(dev))
-		return -ENOENT;
+	अगर (!netअगर_is_multiqueue(dev))
+		वापस -ENOENT;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (!alloc_cpumask_var(&mask, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!alloc_cpumask_var(&mask, GFP_KERNEL))
+		वापस -ENOMEM;
 
 	index = get_netdev_queue_index(queue);
 
-	err = bitmap_parse(buf, len, cpumask_bits(mask), nr_cpumask_bits);
-	if (err) {
-		free_cpumask_var(mask);
-		return err;
-	}
+	err = biपंचांगap_parse(buf, len, cpumask_bits(mask), nr_cpumask_bits);
+	अगर (err) अणु
+		मुक्त_cpumask_var(mask);
+		वापस err;
+	पूर्ण
 
-	if (!rtnl_trylock()) {
-		free_cpumask_var(mask);
-		return restart_syscall();
-	}
+	अगर (!rtnl_trylock()) अणु
+		मुक्त_cpumask_var(mask);
+		वापस restart_syscall();
+	पूर्ण
 
-	err = netif_set_xps_queue(dev, mask, index);
+	err = netअगर_set_xps_queue(dev, mask, index);
 	rtnl_unlock();
 
-	free_cpumask_var(mask);
+	मुक्त_cpumask_var(mask);
 
-	return err ? : len;
-}
+	वापस err ? : len;
+पूर्ण
 
-static struct netdev_queue_attribute xps_cpus_attribute __ro_after_init
+अटल काष्ठा netdev_queue_attribute xps_cpus_attribute __ro_after_init
 	= __ATTR_RW(xps_cpus);
 
-static ssize_t xps_rxqs_show(struct netdev_queue *queue, char *buf)
-{
-	struct net_device *dev = queue->dev;
-	unsigned int index;
-	int tc;
+अटल sमाप_प्रकार xps_rxqs_show(काष्ठा netdev_queue *queue, अक्षर *buf)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक tc;
 
 	index = get_netdev_queue_index(queue);
 
-	if (!rtnl_trylock())
-		return restart_syscall();
+	अगर (!rtnl_trylock())
+		वापस restart_syscall();
 
 	tc = netdev_txq_to_tc(dev, index);
 	rtnl_unlock();
-	if (tc < 0)
-		return -EINVAL;
+	अगर (tc < 0)
+		वापस -EINVAL;
 
-	return xps_queue_show(dev, index, tc, buf, XPS_RXQS);
-}
+	वापस xps_queue_show(dev, index, tc, buf, XPS_RXQS);
+पूर्ण
 
-static ssize_t xps_rxqs_store(struct netdev_queue *queue, const char *buf,
-			      size_t len)
-{
-	struct net_device *dev = queue->dev;
-	struct net *net = dev_net(dev);
-	unsigned long *mask;
-	unsigned int index;
-	int err;
+अटल sमाप_प्रकार xps_rxqs_store(काष्ठा netdev_queue *queue, स्थिर अक्षर *buf,
+			      माप_प्रकार len)
+अणु
+	काष्ठा net_device *dev = queue->dev;
+	काष्ठा net *net = dev_net(dev);
+	अचिन्हित दीर्घ *mask;
+	अचिन्हित पूर्णांक index;
+	पूर्णांक err;
 
-	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	mask = bitmap_zalloc(dev->num_rx_queues, GFP_KERNEL);
-	if (!mask)
-		return -ENOMEM;
+	mask = biपंचांगap_zalloc(dev->num_rx_queues, GFP_KERNEL);
+	अगर (!mask)
+		वापस -ENOMEM;
 
 	index = get_netdev_queue_index(queue);
 
-	err = bitmap_parse(buf, len, mask, dev->num_rx_queues);
-	if (err) {
-		bitmap_free(mask);
-		return err;
-	}
+	err = biपंचांगap_parse(buf, len, mask, dev->num_rx_queues);
+	अगर (err) अणु
+		biपंचांगap_मुक्त(mask);
+		वापस err;
+	पूर्ण
 
-	if (!rtnl_trylock()) {
-		bitmap_free(mask);
-		return restart_syscall();
-	}
+	अगर (!rtnl_trylock()) अणु
+		biपंचांगap_मुक्त(mask);
+		वापस restart_syscall();
+	पूर्ण
 
-	cpus_read_lock();
-	err = __netif_set_xps_queue(dev, mask, index, XPS_RXQS);
-	cpus_read_unlock();
+	cpus_पढ़ो_lock();
+	err = __netअगर_set_xps_queue(dev, mask, index, XPS_RXQS);
+	cpus_पढ़ो_unlock();
 
 	rtnl_unlock();
 
-	bitmap_free(mask);
-	return err ? : len;
-}
+	biपंचांगap_मुक्त(mask);
+	वापस err ? : len;
+पूर्ण
 
-static struct netdev_queue_attribute xps_rxqs_attribute __ro_after_init
+अटल काष्ठा netdev_queue_attribute xps_rxqs_attribute __ro_after_init
 	= __ATTR_RW(xps_rxqs);
-#endif /* CONFIG_XPS */
+#पूर्ण_अगर /* CONFIG_XPS */
 
-static struct attribute *netdev_queue_default_attrs[] __ro_after_init = {
-	&queue_trans_timeout.attr,
+अटल काष्ठा attribute *netdev_queue_शेष_attrs[] __ro_after_init = अणु
+	&queue_trans_समयout.attr,
 	&queue_traffic_class.attr,
-#ifdef CONFIG_XPS
+#अगर_घोषित CONFIG_XPS
 	&xps_cpus_attribute.attr,
 	&xps_rxqs_attribute.attr,
 	&queue_tx_maxrate.attr,
-#endif
-	NULL
-};
-ATTRIBUTE_GROUPS(netdev_queue_default);
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
+ATTRIBUTE_GROUPS(netdev_queue_शेष);
 
-static void netdev_queue_release(struct kobject *kobj)
-{
-	struct netdev_queue *queue = to_netdev_queue(kobj);
+अटल व्योम netdev_queue_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा netdev_queue *queue = to_netdev_queue(kobj);
 
-	memset(kobj, 0, sizeof(*kobj));
+	स_रखो(kobj, 0, माप(*kobj));
 	dev_put(queue->dev);
-}
+पूर्ण
 
-static const void *netdev_queue_namespace(struct kobject *kobj)
-{
-	struct netdev_queue *queue = to_netdev_queue(kobj);
-	struct device *dev = &queue->dev->dev;
-	const void *ns = NULL;
+अटल स्थिर व्योम *netdev_queue_namespace(काष्ठा kobject *kobj)
+अणु
+	काष्ठा netdev_queue *queue = to_netdev_queue(kobj);
+	काष्ठा device *dev = &queue->dev->dev;
+	स्थिर व्योम *ns = शून्य;
 
-	if (dev->class && dev->class->ns_type)
+	अगर (dev->class && dev->class->ns_type)
 		ns = dev->class->namespace(dev);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static void netdev_queue_get_ownership(struct kobject *kobj,
+अटल व्योम netdev_queue_get_ownership(काष्ठा kobject *kobj,
 				       kuid_t *uid, kgid_t *gid)
-{
-	const struct net *net = netdev_queue_namespace(kobj);
+अणु
+	स्थिर काष्ठा net *net = netdev_queue_namespace(kobj);
 
 	net_ns_get_ownership(net, uid, gid);
-}
+पूर्ण
 
-static struct kobj_type netdev_queue_ktype __ro_after_init = {
+अटल काष्ठा kobj_type netdev_queue_ktype __ro_after_init = अणु
 	.sysfs_ops = &netdev_queue_sysfs_ops,
 	.release = netdev_queue_release,
-	.default_groups = netdev_queue_default_groups,
+	.शेष_groups = netdev_queue_शेष_groups,
 	.namespace = netdev_queue_namespace,
 	.get_ownership = netdev_queue_get_ownership,
-};
+पूर्ण;
 
-static int netdev_queue_add_kobject(struct net_device *dev, int index)
-{
-	struct netdev_queue *queue = dev->_tx + index;
-	struct kobject *kobj = &queue->kobj;
-	int error = 0;
+अटल पूर्णांक netdev_queue_add_kobject(काष्ठा net_device *dev, पूर्णांक index)
+अणु
+	काष्ठा netdev_queue *queue = dev->_tx + index;
+	काष्ठा kobject *kobj = &queue->kobj;
+	पूर्णांक error = 0;
 
 	/* Kobject_put later will trigger netdev_queue_release call
 	 * which decreases dev refcount: Take that reference here
@@ -1607,259 +1608,259 @@ static int netdev_queue_add_kobject(struct net_device *dev, int index)
 	dev_hold(queue->dev);
 
 	kobj->kset = dev->queues_kset;
-	error = kobject_init_and_add(kobj, &netdev_queue_ktype, NULL,
+	error = kobject_init_and_add(kobj, &netdev_queue_ktype, शून्य,
 				     "tx-%u", index);
-	if (error)
-		goto err;
+	अगर (error)
+		जाओ err;
 
-#ifdef CONFIG_BQL
+#अगर_घोषित CONFIG_BQL
 	error = sysfs_create_group(kobj, &dql_group);
-	if (error)
-		goto err;
-#endif
+	अगर (error)
+		जाओ err;
+#पूर्ण_अगर
 
 	kobject_uevent(kobj, KOBJ_ADD);
-	return 0;
+	वापस 0;
 
 err:
 	kobject_put(kobj);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int tx_queue_change_owner(struct net_device *ndev, int index,
+अटल पूर्णांक tx_queue_change_owner(काष्ठा net_device *ndev, पूर्णांक index,
 				 kuid_t kuid, kgid_t kgid)
-{
-	struct netdev_queue *queue = ndev->_tx + index;
-	struct kobject *kobj = &queue->kobj;
-	int error;
+अणु
+	काष्ठा netdev_queue *queue = ndev->_tx + index;
+	काष्ठा kobject *kobj = &queue->kobj;
+	पूर्णांक error;
 
 	error = sysfs_change_owner(kobj, kuid, kgid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-#ifdef CONFIG_BQL
+#अगर_घोषित CONFIG_BQL
 	error = sysfs_group_change_owner(kobj, &dql_group, kuid, kgid);
-#endif
-	return error;
-}
-#endif /* CONFIG_SYSFS */
+#पूर्ण_अगर
+	वापस error;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
-int
-netdev_queue_update_kobjects(struct net_device *dev, int old_num, int new_num)
-{
-#ifdef CONFIG_SYSFS
-	int i;
-	int error = 0;
+पूर्णांक
+netdev_queue_update_kobjects(काष्ठा net_device *dev, पूर्णांक old_num, पूर्णांक new_num)
+अणु
+#अगर_घोषित CONFIG_SYSFS
+	पूर्णांक i;
+	पूर्णांक error = 0;
 
-	for (i = old_num; i < new_num; i++) {
+	क्रम (i = old_num; i < new_num; i++) अणु
 		error = netdev_queue_add_kobject(dev, i);
-		if (error) {
+		अगर (error) अणु
 			new_num = old_num;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	while (--i >= new_num) {
-		struct netdev_queue *queue = dev->_tx + i;
+	जबतक (--i >= new_num) अणु
+		काष्ठा netdev_queue *queue = dev->_tx + i;
 
-		if (!refcount_read(&dev_net(dev)->ns.count))
+		अगर (!refcount_पढ़ो(&dev_net(dev)->ns.count))
 			queue->kobj.uevent_suppress = 1;
-#ifdef CONFIG_BQL
-		sysfs_remove_group(&queue->kobj, &dql_group);
-#endif
+#अगर_घोषित CONFIG_BQL
+		sysfs_हटाओ_group(&queue->kobj, &dql_group);
+#पूर्ण_अगर
 		kobject_put(&queue->kobj);
-	}
+	पूर्ण
 
-	return error;
-#else
-	return 0;
-#endif /* CONFIG_SYSFS */
-}
+	वापस error;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर /* CONFIG_SYSFS */
+पूर्ण
 
-static int net_tx_queue_change_owner(struct net_device *dev, int num,
+अटल पूर्णांक net_tx_queue_change_owner(काष्ठा net_device *dev, पूर्णांक num,
 				     kuid_t kuid, kgid_t kgid)
-{
-#ifdef CONFIG_SYSFS
-	int error = 0;
-	int i;
+अणु
+#अगर_घोषित CONFIG_SYSFS
+	पूर्णांक error = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		error = tx_queue_change_owner(dev, i, kuid, kgid);
-		if (error)
-			break;
-	}
+		अगर (error)
+			अवरोध;
+	पूर्ण
 
-	return error;
-#else
-	return 0;
-#endif /* CONFIG_SYSFS */
-}
+	वापस error;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर /* CONFIG_SYSFS */
+पूर्ण
 
-static int register_queue_kobjects(struct net_device *dev)
-{
-	int error = 0, txq = 0, rxq = 0, real_rx = 0, real_tx = 0;
+अटल पूर्णांक रेजिस्टर_queue_kobjects(काष्ठा net_device *dev)
+अणु
+	पूर्णांक error = 0, txq = 0, rxq = 0, real_rx = 0, real_tx = 0;
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 	dev->queues_kset = kset_create_and_add("queues",
-					       NULL, &dev->dev.kobj);
-	if (!dev->queues_kset)
-		return -ENOMEM;
+					       शून्य, &dev->dev.kobj);
+	अगर (!dev->queues_kset)
+		वापस -ENOMEM;
 	real_rx = dev->real_num_rx_queues;
-#endif
+#पूर्ण_अगर
 	real_tx = dev->real_num_tx_queues;
 
 	error = net_rx_queue_update_kobjects(dev, 0, real_rx);
-	if (error)
-		goto error;
+	अगर (error)
+		जाओ error;
 	rxq = real_rx;
 
 	error = netdev_queue_update_kobjects(dev, 0, real_tx);
-	if (error)
-		goto error;
+	अगर (error)
+		जाओ error;
 	txq = real_tx;
 
-	return 0;
+	वापस 0;
 
 error:
 	netdev_queue_update_kobjects(dev, txq, 0);
 	net_rx_queue_update_kobjects(dev, rxq, 0);
-#ifdef CONFIG_SYSFS
-	kset_unregister(dev->queues_kset);
-#endif
-	return error;
-}
+#अगर_घोषित CONFIG_SYSFS
+	kset_unरेजिस्टर(dev->queues_kset);
+#पूर्ण_अगर
+	वापस error;
+पूर्ण
 
-static int queue_change_owner(struct net_device *ndev, kuid_t kuid, kgid_t kgid)
-{
-	int error = 0, real_rx = 0, real_tx = 0;
+अटल पूर्णांक queue_change_owner(काष्ठा net_device *ndev, kuid_t kuid, kgid_t kgid)
+अणु
+	पूर्णांक error = 0, real_rx = 0, real_tx = 0;
 
-#ifdef CONFIG_SYSFS
-	if (ndev->queues_kset) {
+#अगर_घोषित CONFIG_SYSFS
+	अगर (ndev->queues_kset) अणु
 		error = sysfs_change_owner(&ndev->queues_kset->kobj, kuid, kgid);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 	real_rx = ndev->real_num_rx_queues;
-#endif
+#पूर्ण_अगर
 	real_tx = ndev->real_num_tx_queues;
 
 	error = net_rx_queue_change_owner(ndev, real_rx, kuid, kgid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = net_tx_queue_change_owner(ndev, real_tx, kuid, kgid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void remove_queue_kobjects(struct net_device *dev)
-{
-	int real_rx = 0, real_tx = 0;
+अटल व्योम हटाओ_queue_kobjects(काष्ठा net_device *dev)
+अणु
+	पूर्णांक real_rx = 0, real_tx = 0;
 
-#ifdef CONFIG_SYSFS
+#अगर_घोषित CONFIG_SYSFS
 	real_rx = dev->real_num_rx_queues;
-#endif
+#पूर्ण_अगर
 	real_tx = dev->real_num_tx_queues;
 
 	net_rx_queue_update_kobjects(dev, real_rx, 0);
 	netdev_queue_update_kobjects(dev, real_tx, 0);
-#ifdef CONFIG_SYSFS
-	kset_unregister(dev->queues_kset);
-#endif
-}
+#अगर_घोषित CONFIG_SYSFS
+	kset_unरेजिस्टर(dev->queues_kset);
+#पूर्ण_अगर
+पूर्ण
 
-static bool net_current_may_mount(void)
-{
-	struct net *net = current->nsproxy->net_ns;
+अटल bool net_current_may_mount(व्योम)
+अणु
+	काष्ठा net *net = current->nsproxy->net_ns;
 
-	return ns_capable(net->user_ns, CAP_SYS_ADMIN);
-}
+	वापस ns_capable(net->user_ns, CAP_SYS_ADMIN);
+पूर्ण
 
-static void *net_grab_current_ns(void)
-{
-	struct net *ns = current->nsproxy->net_ns;
-#ifdef CONFIG_NET_NS
-	if (ns)
+अटल व्योम *net_grab_current_ns(व्योम)
+अणु
+	काष्ठा net *ns = current->nsproxy->net_ns;
+#अगर_घोषित CONFIG_NET_NS
+	अगर (ns)
 		refcount_inc(&ns->passive);
-#endif
-	return ns;
-}
+#पूर्ण_अगर
+	वापस ns;
+पूर्ण
 
-static const void *net_initial_ns(void)
-{
-	return &init_net;
-}
+अटल स्थिर व्योम *net_initial_ns(व्योम)
+अणु
+	वापस &init_net;
+पूर्ण
 
-static const void *net_netlink_ns(struct sock *sk)
-{
-	return sock_net(sk);
-}
+अटल स्थिर व्योम *net_netlink_ns(काष्ठा sock *sk)
+अणु
+	वापस sock_net(sk);
+पूर्ण
 
-const struct kobj_ns_type_operations net_ns_type_operations = {
+स्थिर काष्ठा kobj_ns_type_operations net_ns_type_operations = अणु
 	.type = KOBJ_NS_TYPE_NET,
 	.current_may_mount = net_current_may_mount,
 	.grab_current_ns = net_grab_current_ns,
 	.netlink_ns = net_netlink_ns,
 	.initial_ns = net_initial_ns,
 	.drop_ns = net_drop_ns,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(net_ns_type_operations);
 
-static int netdev_uevent(struct device *d, struct kobj_uevent_env *env)
-{
-	struct net_device *dev = to_net_dev(d);
-	int retval;
+अटल पूर्णांक netdev_uevent(काष्ठा device *d, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
+	पूर्णांक retval;
 
-	/* pass interface to uevent. */
+	/* pass पूर्णांकerface to uevent. */
 	retval = add_uevent_var(env, "INTERFACE=%s", dev->name);
-	if (retval)
-		goto exit;
+	अगर (retval)
+		जाओ निकास;
 
-	/* pass ifindex to uevent.
-	 * ifindex is useful as it won't change (interface name may change)
+	/* pass अगरindex to uevent.
+	 * अगरindex is useful as it won't change (पूर्णांकerface name may change)
 	 * and is what RtNetlink uses natively.
 	 */
-	retval = add_uevent_var(env, "IFINDEX=%d", dev->ifindex);
+	retval = add_uevent_var(env, "IFINDEX=%d", dev->अगरindex);
 
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
 /*
- *	netdev_release -- destroy and free a dead device.
+ *	netdev_release -- destroy and मुक्त a dead device.
  *	Called when last reference to device kobject is gone.
  */
-static void netdev_release(struct device *d)
-{
-	struct net_device *dev = to_net_dev(d);
+अटल व्योम netdev_release(काष्ठा device *d)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
 
 	BUG_ON(dev->reg_state != NETREG_RELEASED);
 
-	/* no need to wait for rcu grace period:
-	 * device is dead and about to be freed.
+	/* no need to रुको क्रम rcu grace period:
+	 * device is dead and about to be मुक्तd.
 	 */
-	kfree(rcu_access_pointer(dev->ifalias));
-	netdev_freemem(dev);
-}
+	kमुक्त(rcu_access_poपूर्णांकer(dev->अगरalias));
+	netdev_मुक्तmem(dev);
+पूर्ण
 
-static const void *net_namespace(struct device *d)
-{
-	struct net_device *dev = to_net_dev(d);
+अटल स्थिर व्योम *net_namespace(काष्ठा device *d)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
 
-	return dev_net(dev);
-}
+	वापस dev_net(dev);
+पूर्ण
 
-static void net_get_ownership(struct device *d, kuid_t *uid, kgid_t *gid)
-{
-	struct net_device *dev = to_net_dev(d);
-	const struct net *net = dev_net(dev);
+अटल व्योम net_get_ownership(काष्ठा device *d, kuid_t *uid, kgid_t *gid)
+अणु
+	काष्ठा net_device *dev = to_net_dev(d);
+	स्थिर काष्ठा net *net = dev_net(dev);
 
 	net_ns_get_ownership(net, uid, gid);
-}
+पूर्ण
 
-static struct class net_class __ro_after_init = {
+अटल काष्ठा class net_class __ro_after_init = अणु
 	.name = "net",
 	.dev_release = netdev_release,
 	.dev_groups = net_class_groups,
@@ -1867,116 +1868,116 @@ static struct class net_class __ro_after_init = {
 	.ns_type = &net_ns_type_operations,
 	.namespace = net_namespace,
 	.get_ownership = net_get_ownership,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF_NET
-static int of_dev_node_match(struct device *dev, const void *data)
-{
-	for (; dev; dev = dev->parent) {
-		if (dev->of_node == data)
-			return 1;
-	}
+#अगर_घोषित CONFIG_OF_NET
+अटल पूर्णांक of_dev_node_match(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	क्रम (; dev; dev = dev->parent) अणु
+		अगर (dev->of_node == data)
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * of_find_net_device_by_node - lookup the net device for the device node
+ * of_find_net_device_by_node - lookup the net device क्रम the device node
  * @np: OF device node
  *
- * Looks up the net_device structure corresponding with the device node.
- * If successful, returns a pointer to the net_device with the embedded
- * struct device refcount incremented by one, or NULL on failure. The
- * refcount must be dropped when done with the net_device.
+ * Looks up the net_device काष्ठाure corresponding with the device node.
+ * If successful, वापसs a poपूर्णांकer to the net_device with the embedded
+ * काष्ठा device refcount incremented by one, or शून्य on failure. The
+ * refcount must be dropped when करोne with the net_device.
  */
-struct net_device *of_find_net_device_by_node(struct device_node *np)
-{
-	struct device *dev;
+काष्ठा net_device *of_find_net_device_by_node(काष्ठा device_node *np)
+अणु
+	काष्ठा device *dev;
 
-	dev = class_find_device(&net_class, NULL, np, of_dev_node_match);
-	if (!dev)
-		return NULL;
+	dev = class_find_device(&net_class, शून्य, np, of_dev_node_match);
+	अगर (!dev)
+		वापस शून्य;
 
-	return to_net_dev(dev);
-}
+	वापस to_net_dev(dev);
+पूर्ण
 EXPORT_SYMBOL(of_find_net_device_by_node);
-#endif
+#पूर्ण_अगर
 
 /* Delete sysfs entries but hold kobject reference until after all
  * netdev references are gone.
  */
-void netdev_unregister_kobject(struct net_device *ndev)
-{
-	struct device *dev = &ndev->dev;
+व्योम netdev_unरेजिस्टर_kobject(काष्ठा net_device *ndev)
+अणु
+	काष्ठा device *dev = &ndev->dev;
 
-	if (!refcount_read(&dev_net(ndev)->ns.count))
+	अगर (!refcount_पढ़ो(&dev_net(ndev)->ns.count))
 		dev_set_uevent_suppress(dev, 1);
 
 	kobject_get(&dev->kobj);
 
-	remove_queue_kobjects(ndev);
+	हटाओ_queue_kobjects(ndev);
 
-	pm_runtime_set_memalloc_noio(dev, false);
+	pm_runसमय_set_meदो_स्मृति_noio(dev, false);
 
 	device_del(dev);
-}
+पूर्ण
 
-/* Create sysfs entries for network device. */
-int netdev_register_kobject(struct net_device *ndev)
-{
-	struct device *dev = &ndev->dev;
-	const struct attribute_group **groups = ndev->sysfs_groups;
-	int error = 0;
+/* Create sysfs entries क्रम network device. */
+पूर्णांक netdev_रेजिस्टर_kobject(काष्ठा net_device *ndev)
+अणु
+	काष्ठा device *dev = &ndev->dev;
+	स्थिर काष्ठा attribute_group **groups = ndev->sysfs_groups;
+	पूर्णांक error = 0;
 
 	device_initialize(dev);
 	dev->class = &net_class;
-	dev->platform_data = ndev;
+	dev->platक्रमm_data = ndev;
 	dev->groups = groups;
 
 	dev_set_name(dev, "%s", ndev->name);
 
-#ifdef CONFIG_SYSFS
-	/* Allow for a device specific group */
-	if (*groups)
+#अगर_घोषित CONFIG_SYSFS
+	/* Allow क्रम a device specअगरic group */
+	अगर (*groups)
 		groups++;
 
 	*groups++ = &netstat_group;
 
-#if IS_ENABLED(CONFIG_WIRELESS_EXT) || IS_ENABLED(CONFIG_CFG80211)
-	if (ndev->ieee80211_ptr)
+#अगर IS_ENABLED(CONFIG_WIRELESS_EXT) || IS_ENABLED(CONFIG_CFG80211)
+	अगर (ndev->ieee80211_ptr)
 		*groups++ = &wireless_group;
-#if IS_ENABLED(CONFIG_WIRELESS_EXT)
-	else if (ndev->wireless_handlers)
+#अगर IS_ENABLED(CONFIG_WIRELESS_EXT)
+	अन्यथा अगर (ndev->wireless_handlers)
 		*groups++ = &wireless_group;
-#endif
-#endif
-#endif /* CONFIG_SYSFS */
+#पूर्ण_अगर
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_SYSFS */
 
 	error = device_add(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = register_queue_kobjects(ndev);
-	if (error) {
+	error = रेजिस्टर_queue_kobjects(ndev);
+	अगर (error) अणु
 		device_del(dev);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	pm_runtime_set_memalloc_noio(dev, true);
+	pm_runसमय_set_meदो_स्मृति_noio(dev, true);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* Change owner for sysfs entries when moving network devices across network
- * namespaces owned by different user namespaces.
+/* Change owner क्रम sysfs entries when moving network devices across network
+ * namespaces owned by dअगरferent user namespaces.
  */
-int netdev_change_owner(struct net_device *ndev, const struct net *net_old,
-			const struct net *net_new)
-{
-	struct device *dev = &ndev->dev;
+पूर्णांक netdev_change_owner(काष्ठा net_device *ndev, स्थिर काष्ठा net *net_old,
+			स्थिर काष्ठा net *net_new)
+अणु
+	काष्ठा device *dev = &ndev->dev;
 	kuid_t old_uid, new_uid;
 	kgid_t old_gid, new_gid;
-	int error;
+	पूर्णांक error;
 
 	net_ns_get_ownership(net_old, &old_uid, &old_gid);
 	net_ns_get_ownership(net_new, &new_uid, &new_gid);
@@ -1984,36 +1985,36 @@ int netdev_change_owner(struct net_device *ndev, const struct net *net_old,
 	/* The network namespace was changed but the owning user namespace is
 	 * identical so there's no need to change the owner of sysfs entries.
 	 */
-	if (uid_eq(old_uid, new_uid) && gid_eq(old_gid, new_gid))
-		return 0;
+	अगर (uid_eq(old_uid, new_uid) && gid_eq(old_gid, new_gid))
+		वापस 0;
 
 	error = device_change_owner(dev, new_uid, new_gid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = queue_change_owner(ndev, new_uid, new_gid);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int netdev_class_create_file_ns(const struct class_attribute *class_attr,
-				const void *ns)
-{
-	return class_create_file_ns(&net_class, class_attr, ns);
-}
+पूर्णांक netdev_class_create_file_ns(स्थिर काष्ठा class_attribute *class_attr,
+				स्थिर व्योम *ns)
+अणु
+	वापस class_create_file_ns(&net_class, class_attr, ns);
+पूर्ण
 EXPORT_SYMBOL(netdev_class_create_file_ns);
 
-void netdev_class_remove_file_ns(const struct class_attribute *class_attr,
-				 const void *ns)
-{
-	class_remove_file_ns(&net_class, class_attr, ns);
-}
-EXPORT_SYMBOL(netdev_class_remove_file_ns);
+व्योम netdev_class_हटाओ_file_ns(स्थिर काष्ठा class_attribute *class_attr,
+				 स्थिर व्योम *ns)
+अणु
+	class_हटाओ_file_ns(&net_class, class_attr, ns);
+पूर्ण
+EXPORT_SYMBOL(netdev_class_हटाओ_file_ns);
 
-int __init netdev_kobject_init(void)
-{
-	kobj_ns_type_register(&net_ns_type_operations);
-	return class_register(&net_class);
-}
+पूर्णांक __init netdev_kobject_init(व्योम)
+अणु
+	kobj_ns_type_रेजिस्टर(&net_ns_type_operations);
+	वापस class_रेजिस्टर(&net_class);
+पूर्ण

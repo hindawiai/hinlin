@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Broadcom Limited
  */
@@ -7,25 +8,25 @@
  * DOC: VC4 DPI module
  *
  * The VC4 DPI hardware supports MIPI DPI type 4 and Nokia ViSSI
- * signals.  On BCM2835, these can be routed out to GPIO0-27 with the
+ * संकेतs.  On BCM2835, these can be routed out to GPIO0-27 with the
  * ALT2 function.
  */
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/of_graph.h>
-#include <linux/of_platform.h>
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
-#define DPI_C			0x00
+#घोषणा DPI_C			0x00
 # define DPI_OUTPUT_ENABLE_MODE		BIT(16)
 
 /* The order field takes the incoming 24 bit RGB from the pixel valve
@@ -38,38 +39,38 @@
 # define DPI_ORDER_GRB			2
 # define DPI_ORDER_BRG			3
 
-/* The format field takes the ORDER-shuffled pixel valve data and
- * formats it onto the output lines.
+/* The क्रमmat field takes the ORDER-shuffled pixel valve data and
+ * क्रमmats it onto the output lines.
  */
 # define DPI_FORMAT_MASK		VC4_MASK(13, 11)
 # define DPI_FORMAT_SHIFT		11
-/* This define is named in the hardware, but actually just outputs 0. */
+/* This define is named in the hardware, but actually just outमाला_दो 0. */
 # define DPI_FORMAT_9BIT_666_RGB	0
-/* Outputs 00000000rrrrrggggggbbbbb */
+/* Outमाला_दो 00000000rrrrrggggggbbbbb */
 # define DPI_FORMAT_16BIT_565_RGB_1	1
-/* Outputs 000rrrrr00gggggg000bbbbb */
+/* Outमाला_दो 000rrrrr00gggggg000bbbbb */
 # define DPI_FORMAT_16BIT_565_RGB_2	2
-/* Outputs 00rrrrr000gggggg00bbbbb0 */
+/* Outमाला_दो 00rrrrr000gggggg00bbbbb0 */
 # define DPI_FORMAT_16BIT_565_RGB_3	3
-/* Outputs 000000rrrrrrggggggbbbbbb */
+/* Outमाला_दो 000000rrrrrrggggggbbbbbb */
 # define DPI_FORMAT_18BIT_666_RGB_1	4
-/* Outputs 00rrrrrr00gggggg00bbbbbb */
+/* Outमाला_दो 00rrrrrr00gggggg00bbbbbb */
 # define DPI_FORMAT_18BIT_666_RGB_2	5
-/* Outputs rrrrrrrrggggggggbbbbbbbb */
+/* Outमाला_दो rrrrrrrrggggggggbbbbbbbb */
 # define DPI_FORMAT_24BIT_888_RGB	6
 
-/* Reverses the polarity of the corresponding signal */
+/* Reverses the polarity of the corresponding संकेत */
 # define DPI_PIXEL_CLK_INVERT		BIT(10)
 # define DPI_HSYNC_INVERT		BIT(9)
 # define DPI_VSYNC_INVERT		BIT(8)
 # define DPI_OUTPUT_ENABLE_INVERT	BIT(7)
 
-/* Outputs the signal the falling clock edge instead of rising. */
+/* Outमाला_दो the संकेत the falling घड़ी edge instead of rising. */
 # define DPI_HSYNC_NEGATE		BIT(6)
 # define DPI_VSYNC_NEGATE		BIT(5)
 # define DPI_OUTPUT_ENABLE_NEGATE	BIT(4)
 
-/* Disables the signal */
+/* Disables the संकेत */
 # define DPI_HSYNC_DISABLE		BIT(3)
 # define DPI_VSYNC_DISABLE		BIT(2)
 # define DPI_OUTPUT_ENABLE_DISABLE	BIT(1)
@@ -77,241 +78,241 @@
 /* Power gate to the device, full reset at 0 -> 1 transition */
 # define DPI_ENABLE			BIT(0)
 
-/* All other registers besides DPI_C return the ID */
-#define DPI_ID			0x04
+/* All other रेजिस्टरs besides DPI_C वापस the ID */
+#घोषणा DPI_ID			0x04
 # define DPI_ID_VALUE		0x00647069
 
 /* General DPI hardware state. */
-struct vc4_dpi {
-	struct platform_device *pdev;
+काष्ठा vc4_dpi अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	struct drm_encoder *encoder;
+	काष्ठा drm_encoder *encoder;
 
-	void __iomem *regs;
+	व्योम __iomem *regs;
 
-	struct clk *pixel_clock;
-	struct clk *core_clock;
+	काष्ठा clk *pixel_घड़ी;
+	काष्ठा clk *core_घड़ी;
 
-	struct debugfs_regset32 regset;
-};
+	काष्ठा debugfs_regset32 regset;
+पूर्ण;
 
-#define DPI_READ(offset) readl(dpi->regs + (offset))
-#define DPI_WRITE(offset, val) writel(val, dpi->regs + (offset))
+#घोषणा DPI_READ(offset) पढ़ोl(dpi->regs + (offset))
+#घोषणा DPI_WRITE(offset, val) ग_लिखोl(val, dpi->regs + (offset))
 
-/* VC4 DPI encoder KMS struct */
-struct vc4_dpi_encoder {
-	struct vc4_encoder base;
-	struct vc4_dpi *dpi;
-};
+/* VC4 DPI encoder KMS काष्ठा */
+काष्ठा vc4_dpi_encoder अणु
+	काष्ठा vc4_encoder base;
+	काष्ठा vc4_dpi *dpi;
+पूर्ण;
 
-static inline struct vc4_dpi_encoder *
-to_vc4_dpi_encoder(struct drm_encoder *encoder)
-{
-	return container_of(encoder, struct vc4_dpi_encoder, base.base);
-}
+अटल अंतरभूत काष्ठा vc4_dpi_encoder *
+to_vc4_dpi_encoder(काष्ठा drm_encoder *encoder)
+अणु
+	वापस container_of(encoder, काष्ठा vc4_dpi_encoder, base.base);
+पूर्ण
 
-static const struct debugfs_reg32 dpi_regs[] = {
+अटल स्थिर काष्ठा debugfs_reg32 dpi_regs[] = अणु
 	VC4_REG32(DPI_C),
 	VC4_REG32(DPI_ID),
-};
+पूर्ण;
 
-static void vc4_dpi_encoder_disable(struct drm_encoder *encoder)
-{
-	struct vc4_dpi_encoder *vc4_encoder = to_vc4_dpi_encoder(encoder);
-	struct vc4_dpi *dpi = vc4_encoder->dpi;
+अटल व्योम vc4_dpi_encoder_disable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा vc4_dpi_encoder *vc4_encoder = to_vc4_dpi_encoder(encoder);
+	काष्ठा vc4_dpi *dpi = vc4_encoder->dpi;
 
-	clk_disable_unprepare(dpi->pixel_clock);
-}
+	clk_disable_unprepare(dpi->pixel_घड़ी);
+पूर्ण
 
-static void vc4_dpi_encoder_enable(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct drm_display_mode *mode = &encoder->crtc->mode;
-	struct vc4_dpi_encoder *vc4_encoder = to_vc4_dpi_encoder(encoder);
-	struct vc4_dpi *dpi = vc4_encoder->dpi;
-	struct drm_connector_list_iter conn_iter;
-	struct drm_connector *connector = NULL, *connector_scan;
+अटल व्योम vc4_dpi_encoder_enable(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा drm_display_mode *mode = &encoder->crtc->mode;
+	काष्ठा vc4_dpi_encoder *vc4_encoder = to_vc4_dpi_encoder(encoder);
+	काष्ठा vc4_dpi *dpi = vc4_encoder->dpi;
+	काष्ठा drm_connector_list_iter conn_iter;
+	काष्ठा drm_connector *connector = शून्य, *connector_scan;
 	u32 dpi_c = DPI_ENABLE | DPI_OUTPUT_ENABLE_MODE;
-	int ret;
+	पूर्णांक ret;
 
 	/* Look up the connector attached to DPI so we can get the
-	 * bus_format.  Ideally the bridge would tell us the
-	 * bus_format we want, but it doesn't yet, so assume that it's
-	 * uniform throughout the bridge chain.
+	 * bus_क्रमmat.  Ideally the bridge would tell us the
+	 * bus_क्रमmat we want, but it करोesn't yet, so assume that it's
+	 * unअगरorm throughout the bridge chain.
 	 */
 	drm_connector_list_iter_begin(dev, &conn_iter);
-	drm_for_each_connector_iter(connector_scan, &conn_iter) {
-		if (connector_scan->encoder == encoder) {
+	drm_क्रम_each_connector_iter(connector_scan, &conn_iter) अणु
+		अगर (connector_scan->encoder == encoder) अणु
 			connector = connector_scan;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	drm_connector_list_iter_end(&conn_iter);
 
-	if (connector && connector->display_info.num_bus_formats) {
-		u32 bus_format = connector->display_info.bus_formats[0];
+	अगर (connector && connector->display_info.num_bus_क्रमmats) अणु
+		u32 bus_क्रमmat = connector->display_info.bus_क्रमmats[0];
 
-		switch (bus_format) {
-		case MEDIA_BUS_FMT_RGB888_1X24:
+		चयन (bus_क्रमmat) अणु
+		हाल MEDIA_BUS_FMT_RGB888_1X24:
 			dpi_c |= VC4_SET_FIELD(DPI_FORMAT_24BIT_888_RGB,
 					       DPI_FORMAT);
-			break;
-		case MEDIA_BUS_FMT_BGR888_1X24:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_BGR888_1X24:
 			dpi_c |= VC4_SET_FIELD(DPI_FORMAT_24BIT_888_RGB,
 					       DPI_FORMAT);
 			dpi_c |= VC4_SET_FIELD(DPI_ORDER_BGR, DPI_ORDER);
-			break;
-		case MEDIA_BUS_FMT_RGB666_1X24_CPADHI:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB666_1X24_CPADHI:
 			dpi_c |= VC4_SET_FIELD(DPI_FORMAT_18BIT_666_RGB_2,
 					       DPI_FORMAT);
-			break;
-		case MEDIA_BUS_FMT_RGB666_1X18:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB666_1X18:
 			dpi_c |= VC4_SET_FIELD(DPI_FORMAT_18BIT_666_RGB_1,
 					       DPI_FORMAT);
-			break;
-		case MEDIA_BUS_FMT_RGB565_1X16:
+			अवरोध;
+		हाल MEDIA_BUS_FMT_RGB565_1X16:
 			dpi_c |= VC4_SET_FIELD(DPI_FORMAT_16BIT_565_RGB_3,
 					       DPI_FORMAT);
-			break;
-		default:
-			DRM_ERROR("Unknown media bus format %d\n", bus_format);
-			break;
-		}
-	} else {
-		/* Default to 24bit if no connector found. */
+			अवरोध;
+		शेष:
+			DRM_ERROR("Unknown media bus format %d\n", bus_क्रमmat);
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Default to 24bit अगर no connector found. */
 		dpi_c |= VC4_SET_FIELD(DPI_FORMAT_24BIT_888_RGB, DPI_FORMAT);
-	}
+	पूर्ण
 
-	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		dpi_c |= DPI_HSYNC_INVERT;
-	else if (!(mode->flags & DRM_MODE_FLAG_PHSYNC))
+	अन्यथा अगर (!(mode->flags & DRM_MODE_FLAG_PHSYNC))
 		dpi_c |= DPI_HSYNC_DISABLE;
 
-	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
+	अगर (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		dpi_c |= DPI_VSYNC_INVERT;
-	else if (!(mode->flags & DRM_MODE_FLAG_PVSYNC))
+	अन्यथा अगर (!(mode->flags & DRM_MODE_FLAG_PVSYNC))
 		dpi_c |= DPI_VSYNC_DISABLE;
 
 	DPI_WRITE(DPI_C, dpi_c);
 
-	ret = clk_set_rate(dpi->pixel_clock, mode->clock * 1000);
-	if (ret)
+	ret = clk_set_rate(dpi->pixel_घड़ी, mode->घड़ी * 1000);
+	अगर (ret)
 		DRM_ERROR("Failed to set clock rate: %d\n", ret);
 
-	ret = clk_prepare_enable(dpi->pixel_clock);
-	if (ret)
+	ret = clk_prepare_enable(dpi->pixel_घड़ी);
+	अगर (ret)
 		DRM_ERROR("Failed to set clock rate: %d\n", ret);
-}
+पूर्ण
 
-static enum drm_mode_status vc4_dpi_encoder_mode_valid(struct drm_encoder *encoder,
-						       const struct drm_display_mode *mode)
-{
-	if (mode->flags & DRM_MODE_FLAG_INTERLACE)
-		return MODE_NO_INTERLACE;
+अटल क्रमागत drm_mode_status vc4_dpi_encoder_mode_valid(काष्ठा drm_encoder *encoder,
+						       स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
+		वापस MODE_NO_INTERLACE;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static const struct drm_encoder_helper_funcs vc4_dpi_encoder_helper_funcs = {
+अटल स्थिर काष्ठा drm_encoder_helper_funcs vc4_dpi_encoder_helper_funcs = अणु
 	.disable = vc4_dpi_encoder_disable,
 	.enable = vc4_dpi_encoder_enable,
 	.mode_valid = vc4_dpi_encoder_mode_valid,
-};
+पूर्ण;
 
-static const struct of_device_id vc4_dpi_dt_match[] = {
-	{ .compatible = "brcm,bcm2835-dpi", .data = NULL },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id vc4_dpi_dt_match[] = अणु
+	अणु .compatible = "brcm,bcm2835-dpi", .data = शून्य पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /* Sets up the next link in the display chain, whether it's a panel or
  * a bridge.
  */
-static int vc4_dpi_init_bridge(struct vc4_dpi *dpi)
-{
-	struct device *dev = &dpi->pdev->dev;
-	struct drm_panel *panel;
-	struct drm_bridge *bridge;
-	int ret;
+अटल पूर्णांक vc4_dpi_init_bridge(काष्ठा vc4_dpi *dpi)
+अणु
+	काष्ठा device *dev = &dpi->pdev->dev;
+	काष्ठा drm_panel *panel;
+	काष्ठा drm_bridge *bridge;
+	पूर्णांक ret;
 
 	ret = drm_of_find_panel_or_bridge(dev->of_node, 0, 0,
 					  &panel, &bridge);
-	if (ret) {
+	अगर (ret) अणु
 		/* If nothing was connected in the DT, that's not an
 		 * error.
 		 */
-		if (ret == -ENODEV)
-			return 0;
-		else
-			return ret;
-	}
+		अगर (ret == -ENODEV)
+			वापस 0;
+		अन्यथा
+			वापस ret;
+	पूर्ण
 
-	if (panel)
+	अगर (panel)
 		bridge = drm_panel_bridge_add_typed(panel,
 						    DRM_MODE_CONNECTOR_DPI);
 
-	return drm_bridge_attach(dpi->encoder, bridge, NULL, 0);
-}
+	वापस drm_bridge_attach(dpi->encoder, bridge, शून्य, 0);
+पूर्ण
 
-static int vc4_dpi_bind(struct device *dev, struct device *master, void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct vc4_dev *vc4 = to_vc4_dev(drm);
-	struct vc4_dpi *dpi;
-	struct vc4_dpi_encoder *vc4_dpi_encoder;
-	int ret;
+अटल पूर्णांक vc4_dpi_bind(काष्ठा device *dev, काष्ठा device *master, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(drm);
+	काष्ठा vc4_dpi *dpi;
+	काष्ठा vc4_dpi_encoder *vc4_dpi_encoder;
+	पूर्णांक ret;
 
-	dpi = devm_kzalloc(dev, sizeof(*dpi), GFP_KERNEL);
-	if (!dpi)
-		return -ENOMEM;
+	dpi = devm_kzalloc(dev, माप(*dpi), GFP_KERNEL);
+	अगर (!dpi)
+		वापस -ENOMEM;
 
-	vc4_dpi_encoder = devm_kzalloc(dev, sizeof(*vc4_dpi_encoder),
+	vc4_dpi_encoder = devm_kzalloc(dev, माप(*vc4_dpi_encoder),
 				       GFP_KERNEL);
-	if (!vc4_dpi_encoder)
-		return -ENOMEM;
+	अगर (!vc4_dpi_encoder)
+		वापस -ENOMEM;
 	vc4_dpi_encoder->base.type = VC4_ENCODER_TYPE_DPI;
 	vc4_dpi_encoder->dpi = dpi;
 	dpi->encoder = &vc4_dpi_encoder->base.base;
 
 	dpi->pdev = pdev;
 	dpi->regs = vc4_ioremap_regs(pdev, 0);
-	if (IS_ERR(dpi->regs))
-		return PTR_ERR(dpi->regs);
+	अगर (IS_ERR(dpi->regs))
+		वापस PTR_ERR(dpi->regs);
 	dpi->regset.base = dpi->regs;
 	dpi->regset.regs = dpi_regs;
 	dpi->regset.nregs = ARRAY_SIZE(dpi_regs);
 
-	if (DPI_READ(DPI_ID) != DPI_ID_VALUE) {
+	अगर (DPI_READ(DPI_ID) != DPI_ID_VALUE) अणु
 		dev_err(dev, "Port returned 0x%08x for ID instead of 0x%08x\n",
 			DPI_READ(DPI_ID), DPI_ID_VALUE);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	dpi->core_clock = devm_clk_get(dev, "core");
-	if (IS_ERR(dpi->core_clock)) {
-		ret = PTR_ERR(dpi->core_clock);
-		if (ret != -EPROBE_DEFER)
+	dpi->core_घड़ी = devm_clk_get(dev, "core");
+	अगर (IS_ERR(dpi->core_घड़ी)) अणु
+		ret = PTR_ERR(dpi->core_घड़ी);
+		अगर (ret != -EPROBE_DEFER)
 			DRM_ERROR("Failed to get core clock: %d\n", ret);
-		return ret;
-	}
-	dpi->pixel_clock = devm_clk_get(dev, "pixel");
-	if (IS_ERR(dpi->pixel_clock)) {
-		ret = PTR_ERR(dpi->pixel_clock);
-		if (ret != -EPROBE_DEFER)
+		वापस ret;
+	पूर्ण
+	dpi->pixel_घड़ी = devm_clk_get(dev, "pixel");
+	अगर (IS_ERR(dpi->pixel_घड़ी)) अणु
+		ret = PTR_ERR(dpi->pixel_घड़ी);
+		अगर (ret != -EPROBE_DEFER)
 			DRM_ERROR("Failed to get pixel clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = clk_prepare_enable(dpi->core_clock);
-	if (ret)
+	ret = clk_prepare_enable(dpi->core_घड़ी);
+	अगर (ret)
 		DRM_ERROR("Failed to turn on core clock: %d\n", ret);
 
 	drm_simple_encoder_init(drm, dpi->encoder, DRM_MODE_ENCODER_DPI);
 	drm_encoder_helper_add(dpi->encoder, &vc4_dpi_encoder_helper_funcs);
 
 	ret = vc4_dpi_init_bridge(dpi);
-	if (ret)
-		goto err_destroy_encoder;
+	अगर (ret)
+		जाओ err_destroy_encoder;
 
 	dev_set_drvdata(dev, dpi);
 
@@ -319,51 +320,51 @@ static int vc4_dpi_bind(struct device *dev, struct device *master, void *data)
 
 	vc4_debugfs_add_regset32(drm, "dpi_regs", &dpi->regset);
 
-	return 0;
+	वापस 0;
 
 err_destroy_encoder:
 	drm_encoder_cleanup(dpi->encoder);
-	clk_disable_unprepare(dpi->core_clock);
-	return ret;
-}
+	clk_disable_unprepare(dpi->core_घड़ी);
+	वापस ret;
+पूर्ण
 
-static void vc4_dpi_unbind(struct device *dev, struct device *master,
-			   void *data)
-{
-	struct drm_device *drm = dev_get_drvdata(master);
-	struct vc4_dev *vc4 = to_vc4_dev(drm);
-	struct vc4_dpi *dpi = dev_get_drvdata(dev);
+अटल व्योम vc4_dpi_unbind(काष्ठा device *dev, काष्ठा device *master,
+			   व्योम *data)
+अणु
+	काष्ठा drm_device *drm = dev_get_drvdata(master);
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(drm);
+	काष्ठा vc4_dpi *dpi = dev_get_drvdata(dev);
 
-	drm_of_panel_bridge_remove(dev->of_node, 0, 0);
+	drm_of_panel_bridge_हटाओ(dev->of_node, 0, 0);
 
 	drm_encoder_cleanup(dpi->encoder);
 
-	clk_disable_unprepare(dpi->core_clock);
+	clk_disable_unprepare(dpi->core_घड़ी);
 
-	vc4->dpi = NULL;
-}
+	vc4->dpi = शून्य;
+पूर्ण
 
-static const struct component_ops vc4_dpi_ops = {
+अटल स्थिर काष्ठा component_ops vc4_dpi_ops = अणु
 	.bind   = vc4_dpi_bind,
 	.unbind = vc4_dpi_unbind,
-};
+पूर्ण;
 
-static int vc4_dpi_dev_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &vc4_dpi_ops);
-}
+अटल पूर्णांक vc4_dpi_dev_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &vc4_dpi_ops);
+पूर्ण
 
-static int vc4_dpi_dev_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक vc4_dpi_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &vc4_dpi_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct platform_driver vc4_dpi_driver = {
+काष्ठा platक्रमm_driver vc4_dpi_driver = अणु
 	.probe = vc4_dpi_dev_probe,
-	.remove = vc4_dpi_dev_remove,
-	.driver = {
+	.हटाओ = vc4_dpi_dev_हटाओ,
+	.driver = अणु
 		.name = "vc4_dpi",
 		.of_match_table = vc4_dpi_dt_match,
-	},
-};
+	पूर्ण,
+पूर्ण;

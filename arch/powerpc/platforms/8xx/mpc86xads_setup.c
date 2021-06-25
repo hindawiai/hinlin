@@ -1,12 +1,13 @@
-/*arch/powerpc/platforms/8xx/mpc86xads_setup.c
+<शैली गुरु>
+/*arch/घातerpc/platक्रमms/8xx/mpc86xads_setup.c
  *
- * Platform setup for the Freescale mpc86xads board
+ * Platक्रमm setup क्रम the Freescale mpc86xads board
  *
  * Vitaly Bordug <vbordug@ru.mvista.com>
  *
  * Copyright 2005 MontaVista Software Inc.
  *
- * Heavily modified by Scott Wood <scottwood@freescale.com>
+ * Heavily modअगरied by Scott Wood <scottwood@मुक्तscale.com>
  * Copyright 2007 Freescale Semiconductor, Inc.
  *
  * This file is licensed under the terms of the GNU General Public License
@@ -14,72 +15,72 @@
  * kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/of_address.h>
-#include <linux/of_fdt.h>
-#include <linux/of_platform.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/io.h>
-#include <asm/machdep.h>
-#include <asm/time.h>
-#include <asm/8xx_immap.h>
-#include <asm/cpm1.h>
-#include <asm/fs_pd.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/8xx_immap.h>
+#समावेश <यंत्र/cpm1.h>
+#समावेश <यंत्र/fs_pd.h>
+#समावेश <यंत्र/udbg.h>
 
-#include "mpc86xads.h"
-#include "mpc8xx.h"
+#समावेश "mpc86xads.h"
+#समावेश "mpc8xx.h"
 
-struct cpm_pin {
-	int port, pin, flags;
-};
+काष्ठा cpm_pin अणु
+	पूर्णांक port, pin, flags;
+पूर्ण;
 
-static struct cpm_pin mpc866ads_pins[] = {
+अटल काष्ठा cpm_pin mpc866ads_pins[] = अणु
 	/* SMC1 */
-	{CPM_PORTB, 24, CPM_PIN_INPUT}, /* RX */
-	{CPM_PORTB, 25, CPM_PIN_INPUT | CPM_PIN_SECONDARY}, /* TX */
+	अणुCPM_PORTB, 24, CPM_PIN_INPUTपूर्ण, /* RX */
+	अणुCPM_PORTB, 25, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण, /* TX */
 
 	/* SMC2 */
-	{CPM_PORTB, 21, CPM_PIN_INPUT}, /* RX */
-	{CPM_PORTB, 20, CPM_PIN_INPUT | CPM_PIN_SECONDARY}, /* TX */
+	अणुCPM_PORTB, 21, CPM_PIN_INPUTपूर्ण, /* RX */
+	अणुCPM_PORTB, 20, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण, /* TX */
 
 	/* SCC1 */
-	{CPM_PORTA, 6, CPM_PIN_INPUT}, /* CLK1 */
-	{CPM_PORTA, 7, CPM_PIN_INPUT}, /* CLK2 */
-	{CPM_PORTA, 14, CPM_PIN_INPUT}, /* TX */
-	{CPM_PORTA, 15, CPM_PIN_INPUT}, /* RX */
-	{CPM_PORTB, 19, CPM_PIN_INPUT | CPM_PIN_SECONDARY}, /* TENA */
-	{CPM_PORTC, 10, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIO}, /* RENA */
-	{CPM_PORTC, 11, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIO}, /* CLSN */
+	अणुCPM_PORTA, 6, CPM_PIN_INPUTपूर्ण, /* CLK1 */
+	अणुCPM_PORTA, 7, CPM_PIN_INPUTपूर्ण, /* CLK2 */
+	अणुCPM_PORTA, 14, CPM_PIN_INPUTपूर्ण, /* TX */
+	अणुCPM_PORTA, 15, CPM_PIN_INPUTपूर्ण, /* RX */
+	अणुCPM_PORTB, 19, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण, /* TENA */
+	अणुCPM_PORTC, 10, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIOपूर्ण, /* RENA */
+	अणुCPM_PORTC, 11, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_GPIOपूर्ण, /* CLSN */
 
 	/* MII */
-	{CPM_PORTD, 3, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 4, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 5, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 6, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 7, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 8, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 9, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 10, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 11, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 12, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 13, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 14, CPM_PIN_OUTPUT},
-	{CPM_PORTD, 15, CPM_PIN_OUTPUT},
+	अणुCPM_PORTD, 3, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 4, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 5, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 6, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 7, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 8, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 9, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 10, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 11, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 12, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 13, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 14, CPM_PIN_OUTPUTपूर्ण,
+	अणुCPM_PORTD, 15, CPM_PIN_OUTPUTपूर्ण,
 
 	/* I2C */
-	{CPM_PORTB, 26, CPM_PIN_INPUT | CPM_PIN_OPENDRAIN},
-	{CPM_PORTB, 27, CPM_PIN_INPUT | CPM_PIN_OPENDRAIN},
-};
+	अणुCPM_PORTB, 26, CPM_PIN_INPUT | CPM_PIN_OPENDRAINपूर्ण,
+	अणुCPM_PORTB, 27, CPM_PIN_INPUT | CPM_PIN_OPENDRAINपूर्ण,
+पूर्ण;
 
-static void __init init_ioports(void)
-{
-	int i;
+अटल व्योम __init init_ioports(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(mpc866ads_pins); i++) {
-		struct cpm_pin *pin = &mpc866ads_pins[i];
+	क्रम (i = 0; i < ARRAY_SIZE(mpc866ads_pins); i++) अणु
+		काष्ठा cpm_pin *pin = &mpc866ads_pins[i];
 		cpm1_set_pin(pin->port, pin->pin, pin->flags);
-	}
+	पूर्ण
 
 	cpm1_clk_setup(CPM_CLK_SMC1, CPM_BRG1, CPM_CLK_RTX);
 	cpm1_clk_setup(CPM_CLK_SMC2, CPM_BRG2, CPM_CLK_RTX);
@@ -88,55 +89,55 @@ static void __init init_ioports(void)
 
 	/* Set FEC1 and FEC2 to MII mode */
 	clrbits32(&mpc8xx_immr->im_cpm.cp_cptr, 0x00000180);
-}
+पूर्ण
 
-static void __init mpc86xads_setup_arch(void)
-{
-	struct device_node *np;
+अटल व्योम __init mpc86xads_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *np;
 	u32 __iomem *bcsr_io;
 
 	cpm_reset();
 	init_ioports();
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,mpc866ads-bcsr");
-	if (!np) {
-		printk(KERN_CRIT "Could not find fsl,mpc866ads-bcsr node\n");
-		return;
-	}
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,mpc866ads-bcsr");
+	अगर (!np) अणु
+		prपूर्णांकk(KERN_CRIT "Could not find fsl,mpc866ads-bcsr node\n");
+		वापस;
+	पूर्ण
 
 	bcsr_io = of_iomap(np, 0);
 	of_node_put(np);
 
-	if (bcsr_io == NULL) {
-		printk(KERN_CRIT "Could not remap BCSR\n");
-		return;
-	}
+	अगर (bcsr_io == शून्य) अणु
+		prपूर्णांकk(KERN_CRIT "Could not remap BCSR\n");
+		वापस;
+	पूर्ण
 
 	clrbits32(bcsr_io, BCSR1_RS232EN_1 | BCSR1_RS232EN_2 | BCSR1_ETHEN);
 	iounmap(bcsr_io);
-}
+पूर्ण
 
-static int __init mpc86xads_probe(void)
-{
-	return of_machine_is_compatible("fsl,mpc866ads");
-}
+अटल पूर्णांक __init mpc86xads_probe(व्योम)
+अणु
+	वापस of_machine_is_compatible("fsl,mpc866ads");
+पूर्ण
 
-static const struct of_device_id of_bus_ids[] __initconst = {
-	{ .name = "soc", },
-	{ .name = "cpm", },
-	{ .name = "localbus", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_bus_ids[] __initस्थिर = अणु
+	अणु .name = "soc", पूर्ण,
+	अणु .name = "cpm", पूर्ण,
+	अणु .name = "localbus", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int __init declare_of_platform_devices(void)
-{
-	of_platform_bus_probe(NULL, of_bus_ids, NULL);
+अटल पूर्णांक __init declare_of_platक्रमm_devices(व्योम)
+अणु
+	of_platक्रमm_bus_probe(शून्य, of_bus_ids, शून्य);
 
-	return 0;
-}
-machine_device_initcall(mpc86x_ads, declare_of_platform_devices);
+	वापस 0;
+पूर्ण
+machine_device_initcall(mpc86x_ads, declare_of_platक्रमm_devices);
 
-define_machine(mpc86x_ads) {
+define_machine(mpc86x_ads) अणु
 	.name			= "MPC86x ADS",
 	.probe			= mpc86xads_probe,
 	.setup_arch		= mpc86xads_setup_arch,
@@ -144,7 +145,7 @@ define_machine(mpc86x_ads) {
 	.get_irq		= mpc8xx_get_irq,
 	.restart		= mpc8xx_restart,
 	.calibrate_decr		= mpc8xx_calibrate_decr,
-	.set_rtc_time		= mpc8xx_set_rtc_time,
-	.get_rtc_time		= mpc8xx_get_rtc_time,
+	.set_rtc_समय		= mpc8xx_set_rtc_समय,
+	.get_rtc_समय		= mpc8xx_get_rtc_समय,
 	.progress		= udbg_progress,
-};
+पूर्ण;

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_DMI_H
-#define _ASM_X86_DMI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_DMI_H
+#घोषणा _ASM_X86_DMI_H
 
-#include <linux/compiler.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-static __always_inline __init void *dmi_alloc(unsigned len)
-{
-	return extend_brk(len, sizeof(int));
-}
+अटल __always_अंतरभूत __init व्योम *dmi_alloc(अचिन्हित len)
+अणु
+	वापस extend_brk(len, माप(पूर्णांक));
+पूर्ण
 
-/* Use early IO mappings for DMI because it's initialized early */
-#define dmi_early_remap		early_memremap
-#define dmi_early_unmap		early_memunmap
-#define dmi_remap(_x, _l)	memremap(_x, _l, MEMREMAP_WB)
-#define dmi_unmap(_x)		memunmap(_x)
+/* Use early IO mappings क्रम DMI because it's initialized early */
+#घोषणा dmi_early_remap		early_memremap
+#घोषणा dmi_early_unmap		early_memunmap
+#घोषणा dmi_remap(_x, _l)	memremap(_x, _l, MEMREMAP_WB)
+#घोषणा dmi_unmap(_x)		memunmap(_x)
 
-#endif /* _ASM_X86_DMI_H */
+#पूर्ण_अगर /* _ASM_X86_DMI_H */

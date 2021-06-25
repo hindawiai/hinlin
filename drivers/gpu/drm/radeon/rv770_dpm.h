@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,18 +21,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __RV770_DPM_H__
-#define __RV770_DPM_H__
+#अगर_अघोषित __RV770_DPM_H__
+#घोषणा __RV770_DPM_H__
 
-#include "radeon.h"
-#include "rv770_smc.h"
+#समावेश "radeon.h"
+#समावेश "rv770_smc.h"
 
-struct rv770_clock_registers {
+काष्ठा rv770_घड़ी_रेजिस्टरs अणु
 	u32 cg_spll_func_cntl;
 	u32 cg_spll_func_cntl_2;
 	u32 cg_spll_func_cntl_3;
-	u32 cg_spll_spread_spectrum;
-	u32 cg_spll_spread_spectrum_2;
+	u32 cg_spll_spपढ़ो_spectrum;
+	u32 cg_spll_spपढ़ो_spectrum_2;
 	u32 mpll_ad_func_cntl;
 	u32 mpll_ad_func_cntl_2;
 	u32 mpll_dq_func_cntl;
@@ -40,14 +41,14 @@ struct rv770_clock_registers {
 	u32 dll_cntl;
 	u32 mpll_ss1;
 	u32 mpll_ss2;
-};
+पूर्ण;
 
-struct rv730_clock_registers {
+काष्ठा rv730_घड़ी_रेजिस्टरs अणु
 	u32 cg_spll_func_cntl;
 	u32 cg_spll_func_cntl_2;
 	u32 cg_spll_func_cntl_3;
-	u32 cg_spll_spread_spectrum;
-	u32 cg_spll_spread_spectrum_2;
+	u32 cg_spll_spपढ़ो_spectrum;
+	u32 cg_spll_spपढ़ो_spectrum_2;
 	u32 mclk_pwrmgt_cntl;
 	u32 dll_cntl;
 	u32 mpll_func_cntl;
@@ -55,24 +56,24 @@ struct rv730_clock_registers {
 	u32 mpll_func_cntl3;
 	u32 mpll_ss;
 	u32 mpll_ss2;
-};
+पूर्ण;
 
-union r7xx_clock_registers {
-	struct rv770_clock_registers rv770;
-	struct rv730_clock_registers rv730;
-};
+जोड़ r7xx_घड़ी_रेजिस्टरs अणु
+	काष्ठा rv770_घड़ी_रेजिस्टरs rv770;
+	काष्ठा rv730_घड़ी_रेजिस्टरs rv730;
+पूर्ण;
 
-struct vddc_table_entry {
+काष्ठा vddc_table_entry अणु
 	u16 vddc;
 	u8 vddc_index;
 	u8 high_smio;
 	u32 low_smio;
-};
+पूर्ण;
 
-#define MAX_NO_OF_MVDD_VALUES 2
-#define MAX_NO_VREG_STEPS 32
+#घोषणा MAX_NO_OF_MVDD_VALUES 2
+#घोषणा MAX_NO_VREG_STEPS 32
 
-struct rv7xx_power_info {
+काष्ठा rv7xx_घातer_info अणु
 	/* flags */
 	bool mem_gddr5;
 	bool pcie_gen2;
@@ -84,16 +85,16 @@ struct rv7xx_power_info {
 	bool sclk_ss;
 	bool mclk_ss;
 	bool dynamic_ss;
-	bool gfx_clock_gating;
-	bool mg_clock_gating;
+	bool gfx_घड़ी_gating;
+	bool mg_घड़ी_gating;
 	bool mgcgtssm;
-	bool power_gating;
+	bool घातer_gating;
 	bool thermal_protection;
 	bool display_gap;
 	bool dcodt;
 	bool ulps;
-	/* registers */
-	union r7xx_clock_registers clk_regs;
+	/* रेजिस्टरs */
+	जोड़ r7xx_घड़ी_रेजिस्टरs clk_regs;
 	u32 s0_vid_lower_smio_cntl;
 	/* voltage */
 	u32 vddc_mask_low;
@@ -103,7 +104,7 @@ struct rv7xx_power_info {
 	u16 max_vddc;
 	u16 max_vddc_in_table;
 	u16 min_vddc_in_table;
-	struct vddc_table_entry vddc_table[MAX_NO_VREG_STEPS];
+	काष्ठा vddc_table_entry vddc_table[MAX_NO_VREG_STEPS];
 	u8 valid_vddc_entries;
 	/* dc odt */
 	u32 mclk_odt_threshold;
@@ -112,8 +113,8 @@ struct rv7xx_power_info {
 	/* stored values */
 	u32 boot_sclk;
 	u16 acpi_vddc;
-	u32 ref_div;
-	u32 active_auto_throttle_sources;
+	u32 ref_भाग;
+	u32 active_स्वतः_throttle_sources;
 	u32 mclk_stutter_mode_threshold;
 	u32 mclk_strobe_mode_threshold;
 	u32 mclk_edc_enable_threshold;
@@ -135,151 +136,151 @@ struct rv7xx_power_info {
 	u16 state_table_start;
 	u16 soft_regs_start;
 	u16 sram_end;
-	/* scratch structs */
+	/* scratch काष्ठाs */
 	RV770_SMC_STATETABLE smc_statetable;
-};
+पूर्ण;
 
-struct rv7xx_pl {
+काष्ठा rv7xx_pl अणु
 	u32 sclk;
 	u32 mclk;
 	u16 vddc;
 	u16 vddci; /* eg+ only */
 	u32 flags;
-	enum radeon_pcie_gen pcie_gen; /* si+ only */
-};
+	क्रमागत radeon_pcie_gen pcie_gen; /* si+ only */
+पूर्ण;
 
-struct rv7xx_ps {
-	struct rv7xx_pl high;
-	struct rv7xx_pl medium;
-	struct rv7xx_pl low;
+काष्ठा rv7xx_ps अणु
+	काष्ठा rv7xx_pl high;
+	काष्ठा rv7xx_pl medium;
+	काष्ठा rv7xx_pl low;
 	bool dc_compatible;
-};
+पूर्ण;
 
-#define RV770_RLP_DFLT                                10
-#define RV770_RMP_DFLT                                25
-#define RV770_LHP_DFLT                                25
-#define RV770_LMP_DFLT                                10
-#define RV770_VRC_DFLT                                0x003f
-#define RV770_ASI_DFLT                                1000
-#define RV770_HASI_DFLT                               200000
-#define RV770_MGCGTTLOCAL0_DFLT                       0x00100000
-#define RV7XX_MGCGTTLOCAL0_DFLT                       0
-#define RV770_MGCGTTLOCAL1_DFLT                       0xFFFF0000
-#define RV770_MGCGCGTSSMCTRL_DFLT                     0x55940000
+#घोषणा RV770_RLP_DFLT                                10
+#घोषणा RV770_RMP_DFLT                                25
+#घोषणा RV770_LHP_DFLT                                25
+#घोषणा RV770_LMP_DFLT                                10
+#घोषणा RV770_VRC_DFLT                                0x003f
+#घोषणा RV770_ASI_DFLT                                1000
+#घोषणा RV770_HASI_DFLT                               200000
+#घोषणा RV770_MGCGTTLOCAL0_DFLT                       0x00100000
+#घोषणा RV7XX_MGCGTTLOCAL0_DFLT                       0
+#घोषणा RV770_MGCGTTLOCAL1_DFLT                       0xFFFF0000
+#घोषणा RV770_MGCGCGTSSMCTRL_DFLT                     0x55940000
 
-#define MVDD_LOW_INDEX  0
-#define MVDD_HIGH_INDEX 1
+#घोषणा MVDD_LOW_INDEX  0
+#घोषणा MVDD_HIGH_INDEX 1
 
-#define MVDD_LOW_VALUE  0
-#define MVDD_HIGH_VALUE 0xffff
+#घोषणा MVDD_LOW_VALUE  0
+#घोषणा MVDD_HIGH_VALUE 0xffff
 
-#define RV770_DEFAULT_VCLK_FREQ  53300 /* 10 khz */
-#define RV770_DEFAULT_DCLK_FREQ  40000 /* 10 khz */
+#घोषणा RV770_DEFAULT_VCLK_FREQ  53300 /* 10 khz */
+#घोषणा RV770_DEFAULT_DCLK_FREQ  40000 /* 10 khz */
 
 /* rv730/rv710 */
-int rv730_populate_sclk_value(struct radeon_device *rdev,
-			      u32 engine_clock,
+पूर्णांक rv730_populate_sclk_value(काष्ठा radeon_device *rdev,
+			      u32 engine_घड़ी,
 			      RV770_SMC_SCLK_VALUE *sclk);
-int rv730_populate_mclk_value(struct radeon_device *rdev,
-			      u32 engine_clock, u32 memory_clock,
+पूर्णांक rv730_populate_mclk_value(काष्ठा radeon_device *rdev,
+			      u32 engine_घड़ी, u32 memory_घड़ी,
 			      LPRV7XX_SMC_MCLK_VALUE mclk);
-void rv730_read_clock_registers(struct radeon_device *rdev);
-int rv730_populate_smc_acpi_state(struct radeon_device *rdev,
+व्योम rv730_पढ़ो_घड़ी_रेजिस्टरs(काष्ठा radeon_device *rdev);
+पूर्णांक rv730_populate_smc_acpi_state(काष्ठा radeon_device *rdev,
 				  RV770_SMC_STATETABLE *table);
-int rv730_populate_smc_initial_state(struct radeon_device *rdev,
-				     struct radeon_ps *radeon_initial_state,
+पूर्णांक rv730_populate_smc_initial_state(काष्ठा radeon_device *rdev,
+				     काष्ठा radeon_ps *radeon_initial_state,
 				     RV770_SMC_STATETABLE *table);
-void rv730_program_memory_timing_parameters(struct radeon_device *rdev,
-					    struct radeon_ps *radeon_state);
-void rv730_power_gating_enable(struct radeon_device *rdev,
+व्योम rv730_program_memory_timing_parameters(काष्ठा radeon_device *rdev,
+					    काष्ठा radeon_ps *radeon_state);
+व्योम rv730_घातer_gating_enable(काष्ठा radeon_device *rdev,
 			       bool enable);
-void rv730_start_dpm(struct radeon_device *rdev);
-void rv730_stop_dpm(struct radeon_device *rdev);
-void rv730_program_dcodt(struct radeon_device *rdev, bool use_dcodt);
-void rv730_get_odt_values(struct radeon_device *rdev);
+व्योम rv730_start_dpm(काष्ठा radeon_device *rdev);
+व्योम rv730_stop_dpm(काष्ठा radeon_device *rdev);
+व्योम rv730_program_dcodt(काष्ठा radeon_device *rdev, bool use_dcodt);
+व्योम rv730_get_odt_values(काष्ठा radeon_device *rdev);
 
 /* rv740 */
-int rv740_populate_sclk_value(struct radeon_device *rdev, u32 engine_clock,
+पूर्णांक rv740_populate_sclk_value(काष्ठा radeon_device *rdev, u32 engine_घड़ी,
 			      RV770_SMC_SCLK_VALUE *sclk);
-int rv740_populate_mclk_value(struct radeon_device *rdev,
-			      u32 engine_clock, u32 memory_clock,
+पूर्णांक rv740_populate_mclk_value(काष्ठा radeon_device *rdev,
+			      u32 engine_घड़ी, u32 memory_घड़ी,
 			      RV7XX_SMC_MCLK_VALUE *mclk);
-void rv740_read_clock_registers(struct radeon_device *rdev);
-int rv740_populate_smc_acpi_state(struct radeon_device *rdev,
+व्योम rv740_पढ़ो_घड़ी_रेजिस्टरs(काष्ठा radeon_device *rdev);
+पूर्णांक rv740_populate_smc_acpi_state(काष्ठा radeon_device *rdev,
 				  RV770_SMC_STATETABLE *table);
-void rv740_enable_mclk_spread_spectrum(struct radeon_device *rdev,
+व्योम rv740_enable_mclk_spपढ़ो_spectrum(काष्ठा radeon_device *rdev,
 				       bool enable);
-u8 rv740_get_mclk_frequency_ratio(u32 memory_clock);
-u32 rv740_get_dll_speed(bool is_gddr5, u32 memory_clock);
-u32 rv740_get_decoded_reference_divider(u32 encoded_ref);
+u8 rv740_get_mclk_frequency_ratio(u32 memory_घड़ी);
+u32 rv740_get_dll_speed(bool is_gddr5, u32 memory_घड़ी);
+u32 rv740_get_decoded_reference_भागider(u32 encoded_ref);
 
 /* rv770 */
-u32 rv770_map_clkf_to_ibias(struct radeon_device *rdev, u32 clkf);
-int rv770_populate_vddc_value(struct radeon_device *rdev, u16 vddc,
+u32 rv770_map_clkf_to_ibias(काष्ठा radeon_device *rdev, u32 clkf);
+पूर्णांक rv770_populate_vddc_value(काष्ठा radeon_device *rdev, u16 vddc,
 			      RV770_SMC_VOLTAGE_VALUE *voltage);
-int rv770_populate_mvdd_value(struct radeon_device *rdev, u32 mclk,
+पूर्णांक rv770_populate_mvdd_value(काष्ठा radeon_device *rdev, u32 mclk,
 			      RV770_SMC_VOLTAGE_VALUE *voltage);
-u8 rv770_get_seq_value(struct radeon_device *rdev,
-		       struct rv7xx_pl *pl);
-int rv770_populate_initial_mvdd_value(struct radeon_device *rdev,
+u8 rv770_get_seq_value(काष्ठा radeon_device *rdev,
+		       काष्ठा rv7xx_pl *pl);
+पूर्णांक rv770_populate_initial_mvdd_value(काष्ठा radeon_device *rdev,
 				      RV770_SMC_VOLTAGE_VALUE *voltage);
-u32 rv770_calculate_memory_refresh_rate(struct radeon_device *rdev,
-					u32 engine_clock);
-void rv770_program_response_times(struct radeon_device *rdev);
-int rv770_populate_smc_sp(struct radeon_device *rdev,
-			  struct radeon_ps *radeon_state,
+u32 rv770_calculate_memory_refresh_rate(काष्ठा radeon_device *rdev,
+					u32 engine_घड़ी);
+व्योम rv770_program_response_बार(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_populate_smc_sp(काष्ठा radeon_device *rdev,
+			  काष्ठा radeon_ps *radeon_state,
 			  RV770_SMC_SWSTATE *smc_state);
-int rv770_populate_smc_t(struct radeon_device *rdev,
-			 struct radeon_ps *radeon_state,
+पूर्णांक rv770_populate_smc_t(काष्ठा radeon_device *rdev,
+			 काष्ठा radeon_ps *radeon_state,
 			 RV770_SMC_SWSTATE *smc_state);
-void rv770_read_voltage_smio_registers(struct radeon_device *rdev);
-void rv770_get_memory_type(struct radeon_device *rdev);
-void r7xx_start_smc(struct radeon_device *rdev);
-u8 rv770_get_memory_module_index(struct radeon_device *rdev);
-void rv770_get_max_vddc(struct radeon_device *rdev);
-void rv770_get_pcie_gen2_status(struct radeon_device *rdev);
-void rv770_enable_acpi_pm(struct radeon_device *rdev);
-void rv770_restore_cgcg(struct radeon_device *rdev);
-bool rv770_dpm_enabled(struct radeon_device *rdev);
-void rv770_enable_voltage_control(struct radeon_device *rdev,
+व्योम rv770_पढ़ो_voltage_smio_रेजिस्टरs(काष्ठा radeon_device *rdev);
+व्योम rv770_get_memory_type(काष्ठा radeon_device *rdev);
+व्योम r7xx_start_smc(काष्ठा radeon_device *rdev);
+u8 rv770_get_memory_module_index(काष्ठा radeon_device *rdev);
+व्योम rv770_get_max_vddc(काष्ठा radeon_device *rdev);
+व्योम rv770_get_pcie_gen2_status(काष्ठा radeon_device *rdev);
+व्योम rv770_enable_acpi_pm(काष्ठा radeon_device *rdev);
+व्योम rv770_restore_cgcg(काष्ठा radeon_device *rdev);
+bool rv770_dpm_enabled(काष्ठा radeon_device *rdev);
+व्योम rv770_enable_voltage_control(काष्ठा radeon_device *rdev,
 				  bool enable);
-void rv770_enable_backbias(struct radeon_device *rdev,
+व्योम rv770_enable_backbias(काष्ठा radeon_device *rdev,
 			   bool enable);
-void rv770_enable_thermal_protection(struct radeon_device *rdev,
+व्योम rv770_enable_thermal_protection(काष्ठा radeon_device *rdev,
 				     bool enable);
-void rv770_enable_auto_throttle_source(struct radeon_device *rdev,
-				       enum radeon_dpm_auto_throttle_src source,
+व्योम rv770_enable_स्वतः_throttle_source(काष्ठा radeon_device *rdev,
+				       क्रमागत radeon_dpm_स्वतः_throttle_src source,
 				       bool enable);
-void rv770_setup_bsp(struct radeon_device *rdev);
-void rv770_program_git(struct radeon_device *rdev);
-void rv770_program_tp(struct radeon_device *rdev);
-void rv770_program_tpp(struct radeon_device *rdev);
-void rv770_program_sstp(struct radeon_device *rdev);
-void rv770_program_engine_speed_parameters(struct radeon_device *rdev);
-void rv770_program_vc(struct radeon_device *rdev);
-void rv770_clear_vc(struct radeon_device *rdev);
-int rv770_upload_firmware(struct radeon_device *rdev);
-void rv770_stop_dpm(struct radeon_device *rdev);
-void r7xx_stop_smc(struct radeon_device *rdev);
-void rv770_reset_smio_status(struct radeon_device *rdev);
-int rv770_restrict_performance_levels_before_switch(struct radeon_device *rdev);
-int rv770_dpm_force_performance_level(struct radeon_device *rdev,
-				      enum radeon_dpm_forced_level level);
-int rv770_halt_smc(struct radeon_device *rdev);
-int rv770_resume_smc(struct radeon_device *rdev);
-int rv770_set_sw_state(struct radeon_device *rdev);
-int rv770_set_boot_state(struct radeon_device *rdev);
-int rv7xx_parse_power_table(struct radeon_device *rdev);
-void rv770_set_uvd_clock_before_set_eng_clock(struct radeon_device *rdev,
-					      struct radeon_ps *new_ps,
-					      struct radeon_ps *old_ps);
-void rv770_set_uvd_clock_after_set_eng_clock(struct radeon_device *rdev,
-					     struct radeon_ps *new_ps,
-					     struct radeon_ps *old_ps);
-void rv770_get_engine_memory_ss(struct radeon_device *rdev);
+व्योम rv770_setup_bsp(काष्ठा radeon_device *rdev);
+व्योम rv770_program_git(काष्ठा radeon_device *rdev);
+व्योम rv770_program_tp(काष्ठा radeon_device *rdev);
+व्योम rv770_program_tpp(काष्ठा radeon_device *rdev);
+व्योम rv770_program_sstp(काष्ठा radeon_device *rdev);
+व्योम rv770_program_engine_speed_parameters(काष्ठा radeon_device *rdev);
+व्योम rv770_program_vc(काष्ठा radeon_device *rdev);
+व्योम rv770_clear_vc(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_upload_firmware(काष्ठा radeon_device *rdev);
+व्योम rv770_stop_dpm(काष्ठा radeon_device *rdev);
+व्योम r7xx_stop_smc(काष्ठा radeon_device *rdev);
+व्योम rv770_reset_smio_status(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_restrict_perक्रमmance_levels_beक्रमe_चयन(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_dpm_क्रमce_perक्रमmance_level(काष्ठा radeon_device *rdev,
+				      क्रमागत radeon_dpm_क्रमced_level level);
+पूर्णांक rv770_halt_smc(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_resume_smc(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_set_sw_state(काष्ठा radeon_device *rdev);
+पूर्णांक rv770_set_boot_state(काष्ठा radeon_device *rdev);
+पूर्णांक rv7xx_parse_घातer_table(काष्ठा radeon_device *rdev);
+व्योम rv770_set_uvd_घड़ी_beक्रमe_set_eng_घड़ी(काष्ठा radeon_device *rdev,
+					      काष्ठा radeon_ps *new_ps,
+					      काष्ठा radeon_ps *old_ps);
+व्योम rv770_set_uvd_घड़ी_after_set_eng_घड़ी(काष्ठा radeon_device *rdev,
+					     काष्ठा radeon_ps *new_ps,
+					     काष्ठा radeon_ps *old_ps);
+व्योम rv770_get_engine_memory_ss(काष्ठा radeon_device *rdev);
 
 /* smc */
-int rv770_write_smc_soft_register(struct radeon_device *rdev,
+पूर्णांक rv770_ग_लिखो_smc_soft_रेजिस्टर(काष्ठा radeon_device *rdev,
 				  u16 reg_offset, u32 value);
 
-#endif
+#पूर्ण_अगर

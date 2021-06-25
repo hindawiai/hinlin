@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: (BSD-3-Clause OR GPL-2.0-only) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (BSD-3-Clause OR GPL-2.0-only) */
 /* Copyright(c) 2014 - 2020 Intel Corporation */
-#ifndef _ICP_QAT_FW_LA_H_
-#define _ICP_QAT_FW_LA_H_
-#include "icp_qat_fw.h"
+#अगर_अघोषित _ICP_QAT_FW_LA_H_
+#घोषणा _ICP_QAT_FW_LA_H_
+#समावेश "icp_qat_fw.h"
 
-enum icp_qat_fw_la_cmd_id {
+क्रमागत icp_qat_fw_la_cmd_id अणु
 	ICP_QAT_FW_LA_CMD_CIPHER = 0,
 	ICP_QAT_FW_LA_CMD_AUTH = 1,
 	ICP_QAT_FW_LA_CMD_CIPHER_HASH = 2,
@@ -18,68 +19,68 @@ enum icp_qat_fw_la_cmd_id {
 	ICP_QAT_FW_LA_CMD_AUTH_PRE_COMP = 10,
 	ICP_QAT_FW_LA_CMD_CIPHER_PRE_COMP = 11,
 	ICP_QAT_FW_LA_CMD_DELIMITER = 12
-};
+पूर्ण;
 
-#define ICP_QAT_FW_LA_ICV_VER_STATUS_PASS ICP_QAT_FW_COMN_STATUS_FLAG_OK
-#define ICP_QAT_FW_LA_ICV_VER_STATUS_FAIL ICP_QAT_FW_COMN_STATUS_FLAG_ERROR
-#define ICP_QAT_FW_LA_TRNG_STATUS_PASS ICP_QAT_FW_COMN_STATUS_FLAG_OK
-#define ICP_QAT_FW_LA_TRNG_STATUS_FAIL ICP_QAT_FW_COMN_STATUS_FLAG_ERROR
+#घोषणा ICP_QAT_FW_LA_ICV_VER_STATUS_PASS ICP_QAT_FW_COMN_STATUS_FLAG_OK
+#घोषणा ICP_QAT_FW_LA_ICV_VER_STATUS_FAIL ICP_QAT_FW_COMN_STATUS_FLAG_ERROR
+#घोषणा ICP_QAT_FW_LA_TRNG_STATUS_PASS ICP_QAT_FW_COMN_STATUS_FLAG_OK
+#घोषणा ICP_QAT_FW_LA_TRNG_STATUS_FAIL ICP_QAT_FW_COMN_STATUS_FLAG_ERROR
 
-struct icp_qat_fw_la_bulk_req {
-	struct icp_qat_fw_comn_req_hdr comn_hdr;
-	struct icp_qat_fw_comn_req_hdr_cd_pars cd_pars;
-	struct icp_qat_fw_comn_req_mid comn_mid;
-	struct icp_qat_fw_comn_req_rqpars serv_specif_rqpars;
-	struct icp_qat_fw_comn_req_cd_ctrl cd_ctrl;
-};
+काष्ठा icp_qat_fw_la_bulk_req अणु
+	काष्ठा icp_qat_fw_comn_req_hdr comn_hdr;
+	काष्ठा icp_qat_fw_comn_req_hdr_cd_pars cd_pars;
+	काष्ठा icp_qat_fw_comn_req_mid comn_mid;
+	काष्ठा icp_qat_fw_comn_req_rqpars serv_specअगर_rqpars;
+	काष्ठा icp_qat_fw_comn_req_cd_ctrl cd_ctrl;
+पूर्ण;
 
-#define ICP_QAT_FW_LA_USE_UCS_SLICE_TYPE 1
-#define QAT_LA_SLICE_TYPE_BITPOS 14
-#define QAT_LA_SLICE_TYPE_MASK 0x3
-#define ICP_QAT_FW_LA_GCM_IV_LEN_12_OCTETS 1
-#define ICP_QAT_FW_LA_GCM_IV_LEN_NOT_12_OCTETS 0
-#define QAT_FW_LA_ZUC_3G_PROTO_FLAG_BITPOS 12
-#define ICP_QAT_FW_LA_ZUC_3G_PROTO 1
-#define QAT_FW_LA_ZUC_3G_PROTO_FLAG_MASK 0x1
-#define QAT_LA_GCM_IV_LEN_FLAG_BITPOS 11
-#define QAT_LA_GCM_IV_LEN_FLAG_MASK 0x1
-#define ICP_QAT_FW_LA_DIGEST_IN_BUFFER 1
-#define ICP_QAT_FW_LA_NO_DIGEST_IN_BUFFER 0
-#define QAT_LA_DIGEST_IN_BUFFER_BITPOS	10
-#define QAT_LA_DIGEST_IN_BUFFER_MASK 0x1
-#define ICP_QAT_FW_LA_SNOW_3G_PROTO 4
-#define ICP_QAT_FW_LA_GCM_PROTO	2
-#define ICP_QAT_FW_LA_CCM_PROTO	1
-#define ICP_QAT_FW_LA_NO_PROTO 0
-#define QAT_LA_PROTO_BITPOS 7
-#define QAT_LA_PROTO_MASK 0x7
-#define ICP_QAT_FW_LA_CMP_AUTH_RES 1
-#define ICP_QAT_FW_LA_NO_CMP_AUTH_RES 0
-#define QAT_LA_CMP_AUTH_RES_BITPOS 6
-#define QAT_LA_CMP_AUTH_RES_MASK 0x1
-#define ICP_QAT_FW_LA_RET_AUTH_RES 1
-#define ICP_QAT_FW_LA_NO_RET_AUTH_RES 0
-#define QAT_LA_RET_AUTH_RES_BITPOS 5
-#define QAT_LA_RET_AUTH_RES_MASK 0x1
-#define ICP_QAT_FW_LA_UPDATE_STATE 1
-#define ICP_QAT_FW_LA_NO_UPDATE_STATE 0
-#define QAT_LA_UPDATE_STATE_BITPOS 4
-#define QAT_LA_UPDATE_STATE_MASK 0x1
-#define ICP_QAT_FW_CIPH_AUTH_CFG_OFFSET_IN_CD_SETUP 0
-#define ICP_QAT_FW_CIPH_AUTH_CFG_OFFSET_IN_SHRAM_CP 1
-#define QAT_LA_CIPH_AUTH_CFG_OFFSET_BITPOS 3
-#define QAT_LA_CIPH_AUTH_CFG_OFFSET_MASK 0x1
-#define ICP_QAT_FW_CIPH_IV_64BIT_PTR 0
-#define ICP_QAT_FW_CIPH_IV_16BYTE_DATA 1
-#define QAT_LA_CIPH_IV_FLD_BITPOS 2
-#define QAT_LA_CIPH_IV_FLD_MASK   0x1
-#define ICP_QAT_FW_LA_PARTIAL_NONE 0
-#define ICP_QAT_FW_LA_PARTIAL_START 1
-#define ICP_QAT_FW_LA_PARTIAL_MID 3
-#define ICP_QAT_FW_LA_PARTIAL_END 2
-#define QAT_LA_PARTIAL_BITPOS 0
-#define QAT_LA_PARTIAL_MASK 0x3
-#define ICP_QAT_FW_LA_FLAGS_BUILD(zuc_proto, gcm_iv_len, auth_rslt, proto, \
+#घोषणा ICP_QAT_FW_LA_USE_UCS_SLICE_TYPE 1
+#घोषणा QAT_LA_SLICE_TYPE_BITPOS 14
+#घोषणा QAT_LA_SLICE_TYPE_MASK 0x3
+#घोषणा ICP_QAT_FW_LA_GCM_IV_LEN_12_OCTETS 1
+#घोषणा ICP_QAT_FW_LA_GCM_IV_LEN_NOT_12_OCTETS 0
+#घोषणा QAT_FW_LA_ZUC_3G_PROTO_FLAG_BITPOS 12
+#घोषणा ICP_QAT_FW_LA_ZUC_3G_PROTO 1
+#घोषणा QAT_FW_LA_ZUC_3G_PROTO_FLAG_MASK 0x1
+#घोषणा QAT_LA_GCM_IV_LEN_FLAG_BITPOS 11
+#घोषणा QAT_LA_GCM_IV_LEN_FLAG_MASK 0x1
+#घोषणा ICP_QAT_FW_LA_DIGEST_IN_BUFFER 1
+#घोषणा ICP_QAT_FW_LA_NO_DIGEST_IN_BUFFER 0
+#घोषणा QAT_LA_DIGEST_IN_BUFFER_BITPOS	10
+#घोषणा QAT_LA_DIGEST_IN_BUFFER_MASK 0x1
+#घोषणा ICP_QAT_FW_LA_SNOW_3G_PROTO 4
+#घोषणा ICP_QAT_FW_LA_GCM_PROTO	2
+#घोषणा ICP_QAT_FW_LA_CCM_PROTO	1
+#घोषणा ICP_QAT_FW_LA_NO_PROTO 0
+#घोषणा QAT_LA_PROTO_BITPOS 7
+#घोषणा QAT_LA_PROTO_MASK 0x7
+#घोषणा ICP_QAT_FW_LA_CMP_AUTH_RES 1
+#घोषणा ICP_QAT_FW_LA_NO_CMP_AUTH_RES 0
+#घोषणा QAT_LA_CMP_AUTH_RES_BITPOS 6
+#घोषणा QAT_LA_CMP_AUTH_RES_MASK 0x1
+#घोषणा ICP_QAT_FW_LA_RET_AUTH_RES 1
+#घोषणा ICP_QAT_FW_LA_NO_RET_AUTH_RES 0
+#घोषणा QAT_LA_RET_AUTH_RES_BITPOS 5
+#घोषणा QAT_LA_RET_AUTH_RES_MASK 0x1
+#घोषणा ICP_QAT_FW_LA_UPDATE_STATE 1
+#घोषणा ICP_QAT_FW_LA_NO_UPDATE_STATE 0
+#घोषणा QAT_LA_UPDATE_STATE_BITPOS 4
+#घोषणा QAT_LA_UPDATE_STATE_MASK 0x1
+#घोषणा ICP_QAT_FW_CIPH_AUTH_CFG_OFFSET_IN_CD_SETUP 0
+#घोषणा ICP_QAT_FW_CIPH_AUTH_CFG_OFFSET_IN_SHRAM_CP 1
+#घोषणा QAT_LA_CIPH_AUTH_CFG_OFFSET_BITPOS 3
+#घोषणा QAT_LA_CIPH_AUTH_CFG_OFFSET_MASK 0x1
+#घोषणा ICP_QAT_FW_CIPH_IV_64BIT_PTR 0
+#घोषणा ICP_QAT_FW_CIPH_IV_16BYTE_DATA 1
+#घोषणा QAT_LA_CIPH_IV_FLD_BITPOS 2
+#घोषणा QAT_LA_CIPH_IV_FLD_MASK   0x1
+#घोषणा ICP_QAT_FW_LA_PARTIAL_NONE 0
+#घोषणा ICP_QAT_FW_LA_PARTIAL_START 1
+#घोषणा ICP_QAT_FW_LA_PARTIAL_MID 3
+#घोषणा ICP_QAT_FW_LA_PARTIAL_END 2
+#घोषणा QAT_LA_PARTIAL_BITPOS 0
+#घोषणा QAT_LA_PARTIAL_MASK 0x3
+#घोषणा ICP_QAT_FW_LA_FLAGS_BUILD(zuc_proto, gcm_iv_len, auth_rslt, proto, \
 	cmp_auth, ret_auth, update_state, \
 	ciph_iv, ciphcfg, partial) \
 	(((zuc_proto & QAT_FW_LA_ZUC_3G_PROTO_FLAG_MASK) << \
@@ -103,120 +104,120 @@ struct icp_qat_fw_la_bulk_req {
 	((partial & QAT_LA_PARTIAL_MASK) << \
 	QAT_LA_PARTIAL_BITPOS))
 
-#define ICP_QAT_FW_LA_CIPH_IV_FLD_FLAG_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_CIPH_IV_FLD_FLAG_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_CIPH_IV_FLD_BITPOS, \
 	QAT_LA_CIPH_IV_FLD_MASK)
 
-#define ICP_QAT_FW_LA_CIPH_AUTH_CFG_OFFSET_FLAG_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_CIPH_AUTH_CFG_OFFSET_FLAG_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_CIPH_AUTH_CFG_OFFSET_BITPOS, \
 	QAT_LA_CIPH_AUTH_CFG_OFFSET_MASK)
 
-#define ICP_QAT_FW_LA_ZUC_3G_PROTO_FLAG_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_ZUC_3G_PROTO_FLAG_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_FW_LA_ZUC_3G_PROTO_FLAG_BITPOS, \
 	QAT_FW_LA_ZUC_3G_PROTO_FLAG_MASK)
 
-#define ICP_QAT_FW_LA_GCM_IV_LEN_FLAG_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_GCM_IV_LEN_FLAG_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_GCM_IV_LEN_FLAG_BITPOS, \
 	QAT_LA_GCM_IV_LEN_FLAG_MASK)
 
-#define ICP_QAT_FW_LA_PROTO_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_PROTO_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_PROTO_BITPOS, QAT_LA_PROTO_MASK)
 
-#define ICP_QAT_FW_LA_CMP_AUTH_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_CMP_AUTH_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_CMP_AUTH_RES_BITPOS, \
 	QAT_LA_CMP_AUTH_RES_MASK)
 
-#define ICP_QAT_FW_LA_RET_AUTH_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_RET_AUTH_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_RET_AUTH_RES_BITPOS, \
 	QAT_LA_RET_AUTH_RES_MASK)
 
-#define ICP_QAT_FW_LA_DIGEST_IN_BUFFER_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_DIGEST_IN_BUFFER_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_DIGEST_IN_BUFFER_BITPOS, \
 	QAT_LA_DIGEST_IN_BUFFER_MASK)
 
-#define ICP_QAT_FW_LA_UPDATE_STATE_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_UPDATE_STATE_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_UPDATE_STATE_BITPOS, \
 	QAT_LA_UPDATE_STATE_MASK)
 
-#define ICP_QAT_FW_LA_PARTIAL_GET(flags) \
+#घोषणा ICP_QAT_FW_LA_PARTIAL_GET(flags) \
 	QAT_FIELD_GET(flags, QAT_LA_PARTIAL_BITPOS, \
 	QAT_LA_PARTIAL_MASK)
 
-#define ICP_QAT_FW_LA_CIPH_IV_FLD_FLAG_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_CIPH_IV_FLD_FLAG_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_CIPH_IV_FLD_BITPOS, \
 	QAT_LA_CIPH_IV_FLD_MASK)
 
-#define ICP_QAT_FW_LA_CIPH_AUTH_CFG_OFFSET_FLAG_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_CIPH_AUTH_CFG_OFFSET_FLAG_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_CIPH_AUTH_CFG_OFFSET_BITPOS, \
 	QAT_LA_CIPH_AUTH_CFG_OFFSET_MASK)
 
-#define ICP_QAT_FW_LA_ZUC_3G_PROTO_FLAG_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_ZUC_3G_PROTO_FLAG_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_FW_LA_ZUC_3G_PROTO_FLAG_BITPOS, \
 	QAT_FW_LA_ZUC_3G_PROTO_FLAG_MASK)
 
-#define ICP_QAT_FW_LA_GCM_IV_LEN_FLAG_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_GCM_IV_LEN_FLAG_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_GCM_IV_LEN_FLAG_BITPOS, \
 	QAT_LA_GCM_IV_LEN_FLAG_MASK)
 
-#define ICP_QAT_FW_LA_PROTO_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_PROTO_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_PROTO_BITPOS, \
 	QAT_LA_PROTO_MASK)
 
-#define ICP_QAT_FW_LA_CMP_AUTH_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_CMP_AUTH_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_CMP_AUTH_RES_BITPOS, \
 	QAT_LA_CMP_AUTH_RES_MASK)
 
-#define ICP_QAT_FW_LA_RET_AUTH_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_RET_AUTH_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_RET_AUTH_RES_BITPOS, \
 	QAT_LA_RET_AUTH_RES_MASK)
 
-#define ICP_QAT_FW_LA_DIGEST_IN_BUFFER_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_DIGEST_IN_BUFFER_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_DIGEST_IN_BUFFER_BITPOS, \
 	QAT_LA_DIGEST_IN_BUFFER_MASK)
 
-#define ICP_QAT_FW_LA_UPDATE_STATE_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_UPDATE_STATE_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_UPDATE_STATE_BITPOS, \
 	QAT_LA_UPDATE_STATE_MASK)
 
-#define ICP_QAT_FW_LA_PARTIAL_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_PARTIAL_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_PARTIAL_BITPOS, \
 	QAT_LA_PARTIAL_MASK)
 
-#define ICP_QAT_FW_LA_SLICE_TYPE_SET(flags, val) \
+#घोषणा ICP_QAT_FW_LA_SLICE_TYPE_SET(flags, val) \
 	QAT_FIELD_SET(flags, val, QAT_LA_SLICE_TYPE_BITPOS, \
 	QAT_LA_SLICE_TYPE_MASK)
 
-struct icp_qat_fw_cipher_req_hdr_cd_pars {
-	union {
-		struct {
+काष्ठा icp_qat_fw_cipher_req_hdr_cd_pars अणु
+	जोड़ अणु
+		काष्ठा अणु
 			__u64 content_desc_addr;
 			__u16 content_desc_resrvd1;
 			__u8 content_desc_params_sz;
 			__u8 content_desc_hdr_resrvd2;
 			__u32 content_desc_resrvd3;
-		} s;
-		struct {
+		पूर्ण s;
+		काष्ठा अणु
 			__u32 cipher_key_array[ICP_QAT_FW_NUM_LONGWORDS_4];
-		} s1;
-	} u;
-};
+		पूर्ण s1;
+	पूर्ण u;
+पूर्ण;
 
-struct icp_qat_fw_cipher_auth_req_hdr_cd_pars {
-	union {
-		struct {
+काष्ठा icp_qat_fw_cipher_auth_req_hdr_cd_pars अणु
+	जोड़ अणु
+		काष्ठा अणु
 			__u64 content_desc_addr;
 			__u16 content_desc_resrvd1;
 			__u8 content_desc_params_sz;
 			__u8 content_desc_hdr_resrvd2;
 			__u32 content_desc_resrvd3;
-		} s;
-		struct {
+		पूर्ण s;
+		काष्ठा अणु
 			__u32 cipher_key_array[ICP_QAT_FW_NUM_LONGWORDS_4];
-		} sl;
-	} u;
-};
+		पूर्ण sl;
+	पूर्ण u;
+पूर्ण;
 
-struct icp_qat_fw_cipher_cd_ctrl_hdr {
+काष्ठा icp_qat_fw_cipher_cd_ctrl_hdr अणु
 	__u8 cipher_state_sz;
 	__u8 cipher_key_sz;
 	__u8 cipher_cfg_offset;
@@ -225,9 +226,9 @@ struct icp_qat_fw_cipher_cd_ctrl_hdr {
 	__u8 resrvd1;
 	__u16 resrvd2;
 	__u32 resrvd3[ICP_QAT_FW_NUM_LONGWORDS_3];
-};
+पूर्ण;
 
-struct icp_qat_fw_auth_cd_ctrl_hdr {
+काष्ठा icp_qat_fw_auth_cd_ctrl_hdr अणु
 	__u32 resrvd1;
 	__u8 resrvd2;
 	__u8 hash_flags;
@@ -245,9 +246,9 @@ struct icp_qat_fw_auth_cd_ctrl_hdr {
 	__u8 outer_state1_sz;
 	__u8 outer_res_sz;
 	__u8 outer_prefix_offset;
-};
+पूर्ण;
 
-struct icp_qat_fw_cipher_auth_cd_ctrl_hdr {
+काष्ठा icp_qat_fw_cipher_auth_cd_ctrl_hdr अणु
 	__u8 cipher_state_sz;
 	__u8 cipher_key_sz;
 	__u8 cipher_cfg_offset;
@@ -268,100 +269,100 @@ struct icp_qat_fw_cipher_auth_cd_ctrl_hdr {
 	__u8 outer_state1_sz;
 	__u8 outer_res_sz;
 	__u8 outer_prefix_offset;
-};
+पूर्ण;
 
-#define ICP_QAT_FW_AUTH_HDR_FLAG_DO_NESTED 1
-#define ICP_QAT_FW_AUTH_HDR_FLAG_NO_NESTED 0
-#define ICP_QAT_FW_CCM_GCM_AAD_SZ_MAX	240
-#define ICP_QAT_FW_HASH_REQUEST_PARAMETERS_OFFSET \
-	(sizeof(struct icp_qat_fw_la_cipher_req_params_t))
-#define ICP_QAT_FW_CIPHER_REQUEST_PARAMETERS_OFFSET (0)
+#घोषणा ICP_QAT_FW_AUTH_HDR_FLAG_DO_NESTED 1
+#घोषणा ICP_QAT_FW_AUTH_HDR_FLAG_NO_NESTED 0
+#घोषणा ICP_QAT_FW_CCM_GCM_AAD_SZ_MAX	240
+#घोषणा ICP_QAT_FW_HASH_REQUEST_PARAMETERS_OFFSET \
+	(माप(काष्ठा icp_qat_fw_la_cipher_req_params_t))
+#घोषणा ICP_QAT_FW_CIPHER_REQUEST_PARAMETERS_OFFSET (0)
 
-struct icp_qat_fw_la_cipher_req_params {
+काष्ठा icp_qat_fw_la_cipher_req_params अणु
 	__u32 cipher_offset;
 	__u32 cipher_length;
-	union {
+	जोड़ अणु
 		__u32 cipher_IV_array[ICP_QAT_FW_NUM_LONGWORDS_4];
-		struct {
+		काष्ठा अणु
 			__u64 cipher_IV_ptr;
 			__u64 resrvd1;
-		} s;
-	} u;
-};
+		पूर्ण s;
+	पूर्ण u;
+पूर्ण;
 
-struct icp_qat_fw_la_auth_req_params {
+काष्ठा icp_qat_fw_la_auth_req_params अणु
 	__u32 auth_off;
 	__u32 auth_len;
-	union {
+	जोड़ अणु
 		__u64 auth_partial_st_prefix;
 		__u64 aad_adr;
-	} u1;
+	पूर्ण u1;
 	__u64 auth_res_addr;
-	union {
+	जोड़ अणु
 		__u8 inner_prefix_sz;
 		__u8 aad_sz;
-	} u2;
+	पूर्ण u2;
 	__u8 resrvd1;
 	__u8 hash_state_sz;
 	__u8 auth_res_sz;
-} __packed;
+पूर्ण __packed;
 
-struct icp_qat_fw_la_auth_req_params_resrvd_flds {
+काष्ठा icp_qat_fw_la_auth_req_params_resrvd_flds अणु
 	__u32 resrvd[ICP_QAT_FW_NUM_LONGWORDS_6];
-	union {
+	जोड़ अणु
 		__u8 inner_prefix_sz;
 		__u8 aad_sz;
-	} u2;
+	पूर्ण u2;
 	__u8 resrvd1;
 	__u16 resrvd2;
-};
+पूर्ण;
 
-struct icp_qat_fw_la_resp {
-	struct icp_qat_fw_comn_resp_hdr comn_resp;
+काष्ठा icp_qat_fw_la_resp अणु
+	काष्ठा icp_qat_fw_comn_resp_hdr comn_resp;
 	__u64 opaque_data;
 	__u32 resrvd[ICP_QAT_FW_NUM_LONGWORDS_4];
-};
+पूर्ण;
 
-#define ICP_QAT_FW_CIPHER_NEXT_ID_GET(cd_ctrl_hdr_t) \
+#घोषणा ICP_QAT_FW_CIPHER_NEXT_ID_GET(cd_ctrl_hdr_t) \
 	((((cd_ctrl_hdr_t)->next_curr_id_cipher) & \
 	  ICP_QAT_FW_COMN_NEXT_ID_MASK) >> (ICP_QAT_FW_COMN_NEXT_ID_BITPOS))
 
-#define ICP_QAT_FW_CIPHER_NEXT_ID_SET(cd_ctrl_hdr_t, val) \
-{ (cd_ctrl_hdr_t)->next_curr_id_cipher = \
+#घोषणा ICP_QAT_FW_CIPHER_NEXT_ID_SET(cd_ctrl_hdr_t, val) \
+अणु (cd_ctrl_hdr_t)->next_curr_id_cipher = \
 	((((cd_ctrl_hdr_t)->next_curr_id_cipher) \
 	& ICP_QAT_FW_COMN_CURR_ID_MASK) | \
 	((val << ICP_QAT_FW_COMN_NEXT_ID_BITPOS) \
-	& ICP_QAT_FW_COMN_NEXT_ID_MASK)) }
+	& ICP_QAT_FW_COMN_NEXT_ID_MASK)) पूर्ण
 
-#define ICP_QAT_FW_CIPHER_CURR_ID_GET(cd_ctrl_hdr_t) \
+#घोषणा ICP_QAT_FW_CIPHER_CURR_ID_GET(cd_ctrl_hdr_t) \
 	(((cd_ctrl_hdr_t)->next_curr_id_cipher) \
 	& ICP_QAT_FW_COMN_CURR_ID_MASK)
 
-#define ICP_QAT_FW_CIPHER_CURR_ID_SET(cd_ctrl_hdr_t, val) \
-{ (cd_ctrl_hdr_t)->next_curr_id_cipher = \
+#घोषणा ICP_QAT_FW_CIPHER_CURR_ID_SET(cd_ctrl_hdr_t, val) \
+अणु (cd_ctrl_hdr_t)->next_curr_id_cipher = \
 	((((cd_ctrl_hdr_t)->next_curr_id_cipher) \
 	& ICP_QAT_FW_COMN_NEXT_ID_MASK) | \
-	((val) & ICP_QAT_FW_COMN_CURR_ID_MASK)) }
+	((val) & ICP_QAT_FW_COMN_CURR_ID_MASK)) पूर्ण
 
-#define ICP_QAT_FW_AUTH_NEXT_ID_GET(cd_ctrl_hdr_t) \
+#घोषणा ICP_QAT_FW_AUTH_NEXT_ID_GET(cd_ctrl_hdr_t) \
 	((((cd_ctrl_hdr_t)->next_curr_id_auth) & ICP_QAT_FW_COMN_NEXT_ID_MASK) \
 	>> (ICP_QAT_FW_COMN_NEXT_ID_BITPOS))
 
-#define ICP_QAT_FW_AUTH_NEXT_ID_SET(cd_ctrl_hdr_t, val) \
-{ (cd_ctrl_hdr_t)->next_curr_id_auth = \
+#घोषणा ICP_QAT_FW_AUTH_NEXT_ID_SET(cd_ctrl_hdr_t, val) \
+अणु (cd_ctrl_hdr_t)->next_curr_id_auth = \
 	((((cd_ctrl_hdr_t)->next_curr_id_auth) \
 	& ICP_QAT_FW_COMN_CURR_ID_MASK) | \
 	((val << ICP_QAT_FW_COMN_NEXT_ID_BITPOS) \
-	& ICP_QAT_FW_COMN_NEXT_ID_MASK)) }
+	& ICP_QAT_FW_COMN_NEXT_ID_MASK)) पूर्ण
 
-#define ICP_QAT_FW_AUTH_CURR_ID_GET(cd_ctrl_hdr_t) \
+#घोषणा ICP_QAT_FW_AUTH_CURR_ID_GET(cd_ctrl_hdr_t) \
 	(((cd_ctrl_hdr_t)->next_curr_id_auth) \
 	& ICP_QAT_FW_COMN_CURR_ID_MASK)
 
-#define ICP_QAT_FW_AUTH_CURR_ID_SET(cd_ctrl_hdr_t, val) \
-{ (cd_ctrl_hdr_t)->next_curr_id_auth = \
+#घोषणा ICP_QAT_FW_AUTH_CURR_ID_SET(cd_ctrl_hdr_t, val) \
+अणु (cd_ctrl_hdr_t)->next_curr_id_auth = \
 	((((cd_ctrl_hdr_t)->next_curr_id_auth) \
 	& ICP_QAT_FW_COMN_NEXT_ID_MASK) | \
-	((val) & ICP_QAT_FW_COMN_CURR_ID_MASK)) }
+	((val) & ICP_QAT_FW_COMN_CURR_ID_MASK)) पूर्ण
 
-#endif
+#पूर्ण_अगर

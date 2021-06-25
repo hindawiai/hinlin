@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * NETLINK      Policy advertisement to userspace
  *
@@ -7,52 +8,52 @@
  * Copyright 2019 Intel Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <net/netlink.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <net/netlink.h>
 
-#define INITIAL_POLICIES_ALLOC	10
+#घोषणा INITIAL_POLICIES_ALLOC	10
 
-struct netlink_policy_dump_state {
-	unsigned int policy_idx;
-	unsigned int attr_idx;
-	unsigned int n_alloc;
-	struct {
-		const struct nla_policy *policy;
-		unsigned int maxtype;
-	} policies[];
-};
+काष्ठा netlink_policy_dump_state अणु
+	अचिन्हित पूर्णांक policy_idx;
+	अचिन्हित पूर्णांक attr_idx;
+	अचिन्हित पूर्णांक n_alloc;
+	काष्ठा अणु
+		स्थिर काष्ठा nla_policy *policy;
+		अचिन्हित पूर्णांक maxtype;
+	पूर्ण policies[];
+पूर्ण;
 
-static int add_policy(struct netlink_policy_dump_state **statep,
-		      const struct nla_policy *policy,
-		      unsigned int maxtype)
-{
-	struct netlink_policy_dump_state *state = *statep;
-	unsigned int n_alloc, i;
+अटल पूर्णांक add_policy(काष्ठा netlink_policy_dump_state **statep,
+		      स्थिर काष्ठा nla_policy *policy,
+		      अचिन्हित पूर्णांक maxtype)
+अणु
+	काष्ठा netlink_policy_dump_state *state = *statep;
+	अचिन्हित पूर्णांक n_alloc, i;
 
-	if (!policy || !maxtype)
-		return 0;
+	अगर (!policy || !maxtype)
+		वापस 0;
 
-	for (i = 0; i < state->n_alloc; i++) {
-		if (state->policies[i].policy == policy &&
+	क्रम (i = 0; i < state->n_alloc; i++) अणु
+		अगर (state->policies[i].policy == policy &&
 		    state->policies[i].maxtype == maxtype)
-			return 0;
+			वापस 0;
 
-		if (!state->policies[i].policy) {
+		अगर (!state->policies[i].policy) अणु
 			state->policies[i].policy = policy;
 			state->policies[i].maxtype = maxtype;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	n_alloc = state->n_alloc + INITIAL_POLICIES_ALLOC;
-	state = krealloc(state, struct_size(state, policies, n_alloc),
+	state = kपुनः_स्मृति(state, काष्ठा_size(state, policies, n_alloc),
 			 GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	अगर (!state)
+		वापस -ENOMEM;
 
-	memset(&state->policies[state->n_alloc], 0,
+	स_रखो(&state->policies[state->n_alloc], 0,
 	       flex_array_size(state, policies, n_alloc - state->n_alloc));
 
 	state->policies[state->n_alloc].policy = policy;
@@ -60,8 +61,8 @@ static int add_policy(struct netlink_policy_dump_state **statep,
 	state->n_alloc = n_alloc;
 	*statep = state;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * netlink_policy_dump_get_policy_idx - retrieve policy index
@@ -74,45 +75,45 @@ static int add_policy(struct netlink_policy_dump_state **statep,
  * Call this to find a policy index when you've added multiple and e.g.
  * need to tell userspace which command has which policy (by index).
  *
- * Note: this will WARN and return 0 if the policy isn't found, which
+ * Note: this will WARN and वापस 0 अगर the policy isn't found, which
  *	 means it wasn't added in the first place, which would be an
- *	 internal consistency bug.
+ *	 पूर्णांकernal consistency bug.
  */
-int netlink_policy_dump_get_policy_idx(struct netlink_policy_dump_state *state,
-				       const struct nla_policy *policy,
-				       unsigned int maxtype)
-{
-	unsigned int i;
+पूर्णांक netlink_policy_dump_get_policy_idx(काष्ठा netlink_policy_dump_state *state,
+				       स्थिर काष्ठा nla_policy *policy,
+				       अचिन्हित पूर्णांक maxtype)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (WARN_ON(!policy || !maxtype))
-                return 0;
+	अगर (WARN_ON(!policy || !maxtype))
+                वापस 0;
 
-	for (i = 0; i < state->n_alloc; i++) {
-		if (state->policies[i].policy == policy &&
+	क्रम (i = 0; i < state->n_alloc; i++) अणु
+		अगर (state->policies[i].policy == policy &&
 		    state->policies[i].maxtype == maxtype)
-			return i;
-	}
+			वापस i;
+	पूर्ण
 
 	WARN_ON(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct netlink_policy_dump_state *alloc_state(void)
-{
-	struct netlink_policy_dump_state *state;
+अटल काष्ठा netlink_policy_dump_state *alloc_state(व्योम)
+अणु
+	काष्ठा netlink_policy_dump_state *state;
 
-	state = kzalloc(struct_size(state, policies, INITIAL_POLICIES_ALLOC),
+	state = kzalloc(काष्ठा_size(state, policies, INITIAL_POLICIES_ALLOC),
 			GFP_KERNEL);
-	if (!state)
-		return ERR_PTR(-ENOMEM);
+	अगर (!state)
+		वापस ERR_PTR(-ENOMEM);
 	state->n_alloc = INITIAL_POLICIES_ALLOC;
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
 /**
  * netlink_policy_dump_add_policy - add a policy to the dump
- * @pstate: state to add to, may be reallocated, must be %NULL the first time
+ * @pstate: state to add to, may be पुनः_स्मृतिated, must be %शून्य the first समय
  * @policy: the new policy to add to the dump
  * @maxtype: the new policy's max attr type
  *
@@ -121,21 +122,21 @@ static struct netlink_policy_dump_state *alloc_state(void)
  * Call this to allocate a policy dump state, and to add policies to it. This
  * should be called from the dump start() callback.
  *
- * Note: on failures, any previously allocated state is freed.
+ * Note: on failures, any previously allocated state is मुक्तd.
  */
-int netlink_policy_dump_add_policy(struct netlink_policy_dump_state **pstate,
-				   const struct nla_policy *policy,
-				   unsigned int maxtype)
-{
-	struct netlink_policy_dump_state *state = *pstate;
-	unsigned int policy_idx;
-	int err;
+पूर्णांक netlink_policy_dump_add_policy(काष्ठा netlink_policy_dump_state **pstate,
+				   स्थिर काष्ठा nla_policy *policy,
+				   अचिन्हित पूर्णांक maxtype)
+अणु
+	काष्ठा netlink_policy_dump_state *state = *pstate;
+	अचिन्हित पूर्णांक policy_idx;
+	पूर्णांक err;
 
-	if (!state) {
+	अगर (!state) अणु
 		state = alloc_state();
-		if (IS_ERR(state))
-			return PTR_ERR(state);
-	}
+		अगर (IS_ERR(state))
+			वापस PTR_ERR(state);
+	पूर्ण
 
 	/*
 	 * walk the policies and nested ones first, and build
@@ -143,250 +144,250 @@ int netlink_policy_dump_add_policy(struct netlink_policy_dump_state **pstate,
 	 */
 
 	err = add_policy(&state, policy, maxtype);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (policy_idx = 0;
+	क्रम (policy_idx = 0;
 	     policy_idx < state->n_alloc && state->policies[policy_idx].policy;
-	     policy_idx++) {
-		const struct nla_policy *policy;
-		unsigned int type;
+	     policy_idx++) अणु
+		स्थिर काष्ठा nla_policy *policy;
+		अचिन्हित पूर्णांक type;
 
 		policy = state->policies[policy_idx].policy;
 
-		for (type = 0;
+		क्रम (type = 0;
 		     type <= state->policies[policy_idx].maxtype;
-		     type++) {
-			switch (policy[type].type) {
-			case NLA_NESTED:
-			case NLA_NESTED_ARRAY:
+		     type++) अणु
+			चयन (policy[type].type) अणु
+			हाल NLA_NESTED:
+			हाल NLA_NESTED_ARRAY:
 				err = add_policy(&state,
 						 policy[type].nested_policy,
 						 policy[type].len);
-				if (err)
-					return err;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+				अगर (err)
+					वापस err;
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	*pstate = state;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-netlink_policy_dump_finished(struct netlink_policy_dump_state *state)
-{
-	return state->policy_idx >= state->n_alloc ||
+अटल bool
+netlink_policy_dump_finished(काष्ठा netlink_policy_dump_state *state)
+अणु
+	वापस state->policy_idx >= state->n_alloc ||
 	       !state->policies[state->policy_idx].policy;
-}
+पूर्ण
 
 /**
  * netlink_policy_dump_loop - dumping loop indicator
  * @state: the policy dump state
  *
- * Returns: %true if the dump continues, %false otherwise
+ * Returns: %true अगर the dump जारीs, %false otherwise
  *
- * Note: this frees the dump state when finishing
+ * Note: this मुक्तs the dump state when finishing
  */
-bool netlink_policy_dump_loop(struct netlink_policy_dump_state *state)
-{
-	return !netlink_policy_dump_finished(state);
-}
+bool netlink_policy_dump_loop(काष्ठा netlink_policy_dump_state *state)
+अणु
+	वापस !netlink_policy_dump_finished(state);
+पूर्ण
 
-int netlink_policy_dump_attr_size_estimate(const struct nla_policy *pt)
-{
+पूर्णांक netlink_policy_dump_attr_size_estimate(स्थिर काष्ठा nla_policy *pt)
+अणु
 	/* nested + type */
-	int common = 2 * nla_attr_size(sizeof(u32));
+	पूर्णांक common = 2 * nla_attr_size(माप(u32));
 
-	switch (pt->type) {
-	case NLA_UNSPEC:
-	case NLA_REJECT:
-		/* these actually don't need any space */
-		return 0;
-	case NLA_NESTED:
-	case NLA_NESTED_ARRAY:
+	चयन (pt->type) अणु
+	हाल NLA_UNSPEC:
+	हाल NLA_REJECT:
+		/* these actually करोn't need any space */
+		वापस 0;
+	हाल NLA_NESTED:
+	हाल NLA_NESTED_ARRAY:
 		/* common, policy idx, policy maxattr */
-		return common + 2 * nla_attr_size(sizeof(u32));
-	case NLA_U8:
-	case NLA_U16:
-	case NLA_U32:
-	case NLA_U64:
-	case NLA_MSECS:
-	case NLA_S8:
-	case NLA_S16:
-	case NLA_S32:
-	case NLA_S64:
+		वापस common + 2 * nla_attr_size(माप(u32));
+	हाल NLA_U8:
+	हाल NLA_U16:
+	हाल NLA_U32:
+	हाल NLA_U64:
+	हाल NLA_MSECS:
+	हाल NLA_S8:
+	हाल NLA_S16:
+	हाल NLA_S32:
+	हाल NLA_S64:
 		/* maximum is common, u64 min/max with padding */
-		return common +
-		       2 * (nla_attr_size(0) + nla_attr_size(sizeof(u64)));
-	case NLA_BITFIELD32:
-		return common + nla_attr_size(sizeof(u32));
-	case NLA_STRING:
-	case NLA_NUL_STRING:
-	case NLA_BINARY:
+		वापस common +
+		       2 * (nla_attr_size(0) + nla_attr_size(माप(u64)));
+	हाल NLA_BITFIELD32:
+		वापस common + nla_attr_size(माप(u32));
+	हाल NLA_STRING:
+	हाल NLA_NUL_STRING:
+	हाल NLA_BINARY:
 		/* maximum is common, u32 min-length/max-length */
-		return common + 2 * nla_attr_size(sizeof(u32));
-	case NLA_FLAG:
-		return common;
-	}
+		वापस common + 2 * nla_attr_size(माप(u32));
+	हाल NLA_FLAG:
+		वापस common;
+	पूर्ण
 
 	/* this should then cause a warning later */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-__netlink_policy_dump_write_attr(struct netlink_policy_dump_state *state,
-				 struct sk_buff *skb,
-				 const struct nla_policy *pt,
-				 int nestattr)
-{
-	int estimate = netlink_policy_dump_attr_size_estimate(pt);
-	enum netlink_attribute_type type;
-	struct nlattr *attr;
+अटल पूर्णांक
+__netlink_policy_dump_ग_लिखो_attr(काष्ठा netlink_policy_dump_state *state,
+				 काष्ठा sk_buff *skb,
+				 स्थिर काष्ठा nla_policy *pt,
+				 पूर्णांक nestattr)
+अणु
+	पूर्णांक estimate = netlink_policy_dump_attr_size_estimate(pt);
+	क्रमागत netlink_attribute_type type;
+	काष्ठा nlattr *attr;
 
 	attr = nla_nest_start(skb, nestattr);
-	if (!attr)
-		return -ENOBUFS;
+	अगर (!attr)
+		वापस -ENOBUFS;
 
-	switch (pt->type) {
-	default:
-	case NLA_UNSPEC:
-	case NLA_REJECT:
+	चयन (pt->type) अणु
+	शेष:
+	हाल NLA_UNSPEC:
+	हाल NLA_REJECT:
 		/* skip - use NLA_MIN_LEN to advertise such */
 		nla_nest_cancel(skb, attr);
-		return -ENODATA;
-	case NLA_NESTED:
+		वापस -ENODATA;
+	हाल NLA_NESTED:
 		type = NL_ATTR_TYPE_NESTED;
 		fallthrough;
-	case NLA_NESTED_ARRAY:
-		if (pt->type == NLA_NESTED_ARRAY)
+	हाल NLA_NESTED_ARRAY:
+		अगर (pt->type == NLA_NESTED_ARRAY)
 			type = NL_ATTR_TYPE_NESTED_ARRAY;
-		if (state && pt->nested_policy && pt->len &&
+		अगर (state && pt->nested_policy && pt->len &&
 		    (nla_put_u32(skb, NL_POLICY_TYPE_ATTR_POLICY_IDX,
 				 netlink_policy_dump_get_policy_idx(state,
 								    pt->nested_policy,
 								    pt->len)) ||
 		     nla_put_u32(skb, NL_POLICY_TYPE_ATTR_POLICY_MAXTYPE,
 				 pt->len)))
-			goto nla_put_failure;
-		break;
-	case NLA_U8:
-	case NLA_U16:
-	case NLA_U32:
-	case NLA_U64:
-	case NLA_MSECS: {
-		struct netlink_range_validation range;
+			जाओ nla_put_failure;
+		अवरोध;
+	हाल NLA_U8:
+	हाल NLA_U16:
+	हाल NLA_U32:
+	हाल NLA_U64:
+	हाल NLA_MSECS: अणु
+		काष्ठा netlink_range_validation range;
 
-		if (pt->type == NLA_U8)
+		अगर (pt->type == NLA_U8)
 			type = NL_ATTR_TYPE_U8;
-		else if (pt->type == NLA_U16)
+		अन्यथा अगर (pt->type == NLA_U16)
 			type = NL_ATTR_TYPE_U16;
-		else if (pt->type == NLA_U32)
+		अन्यथा अगर (pt->type == NLA_U32)
 			type = NL_ATTR_TYPE_U32;
-		else
+		अन्यथा
 			type = NL_ATTR_TYPE_U64;
 
-		if (pt->validation_type == NLA_VALIDATE_MASK) {
-			if (nla_put_u64_64bit(skb, NL_POLICY_TYPE_ATTR_MASK,
+		अगर (pt->validation_type == NLA_VALIDATE_MASK) अणु
+			अगर (nla_put_u64_64bit(skb, NL_POLICY_TYPE_ATTR_MASK,
 					      pt->mask,
 					      NL_POLICY_TYPE_ATTR_PAD))
-				goto nla_put_failure;
-			break;
-		}
+				जाओ nla_put_failure;
+			अवरोध;
+		पूर्ण
 
-		nla_get_range_unsigned(pt, &range);
+		nla_get_range_अचिन्हित(pt, &range);
 
-		if (nla_put_u64_64bit(skb, NL_POLICY_TYPE_ATTR_MIN_VALUE_U,
+		अगर (nla_put_u64_64bit(skb, NL_POLICY_TYPE_ATTR_MIN_VALUE_U,
 				      range.min, NL_POLICY_TYPE_ATTR_PAD) ||
 		    nla_put_u64_64bit(skb, NL_POLICY_TYPE_ATTR_MAX_VALUE_U,
 				      range.max, NL_POLICY_TYPE_ATTR_PAD))
-			goto nla_put_failure;
-		break;
-	}
-	case NLA_S8:
-	case NLA_S16:
-	case NLA_S32:
-	case NLA_S64: {
-		struct netlink_range_validation_signed range;
+			जाओ nla_put_failure;
+		अवरोध;
+	पूर्ण
+	हाल NLA_S8:
+	हाल NLA_S16:
+	हाल NLA_S32:
+	हाल NLA_S64: अणु
+		काष्ठा netlink_range_validation_चिन्हित range;
 
-		if (pt->type == NLA_S8)
+		अगर (pt->type == NLA_S8)
 			type = NL_ATTR_TYPE_S8;
-		else if (pt->type == NLA_S16)
+		अन्यथा अगर (pt->type == NLA_S16)
 			type = NL_ATTR_TYPE_S16;
-		else if (pt->type == NLA_S32)
+		अन्यथा अगर (pt->type == NLA_S32)
 			type = NL_ATTR_TYPE_S32;
-		else
+		अन्यथा
 			type = NL_ATTR_TYPE_S64;
 
-		nla_get_range_signed(pt, &range);
+		nla_get_range_चिन्हित(pt, &range);
 
-		if (nla_put_s64(skb, NL_POLICY_TYPE_ATTR_MIN_VALUE_S,
+		अगर (nla_put_s64(skb, NL_POLICY_TYPE_ATTR_MIN_VALUE_S,
 				range.min, NL_POLICY_TYPE_ATTR_PAD) ||
 		    nla_put_s64(skb, NL_POLICY_TYPE_ATTR_MAX_VALUE_S,
 				range.max, NL_POLICY_TYPE_ATTR_PAD))
-			goto nla_put_failure;
-		break;
-	}
-	case NLA_BITFIELD32:
+			जाओ nla_put_failure;
+		अवरोध;
+	पूर्ण
+	हाल NLA_BITFIELD32:
 		type = NL_ATTR_TYPE_BITFIELD32;
-		if (nla_put_u32(skb, NL_POLICY_TYPE_ATTR_BITFIELD32_MASK,
+		अगर (nla_put_u32(skb, NL_POLICY_TYPE_ATTR_BITFIELD32_MASK,
 				pt->bitfield32_valid))
-			goto nla_put_failure;
-		break;
-	case NLA_STRING:
-	case NLA_NUL_STRING:
-	case NLA_BINARY:
-		if (pt->type == NLA_STRING)
+			जाओ nla_put_failure;
+		अवरोध;
+	हाल NLA_STRING:
+	हाल NLA_NUL_STRING:
+	हाल NLA_BINARY:
+		अगर (pt->type == NLA_STRING)
 			type = NL_ATTR_TYPE_STRING;
-		else if (pt->type == NLA_NUL_STRING)
+		अन्यथा अगर (pt->type == NLA_NUL_STRING)
 			type = NL_ATTR_TYPE_NUL_STRING;
-		else
+		अन्यथा
 			type = NL_ATTR_TYPE_BINARY;
 
-		if (pt->validation_type == NLA_VALIDATE_RANGE ||
-		    pt->validation_type == NLA_VALIDATE_RANGE_WARN_TOO_LONG) {
-			struct netlink_range_validation range;
+		अगर (pt->validation_type == NLA_VALIDATE_RANGE ||
+		    pt->validation_type == NLA_VALIDATE_RANGE_WARN_TOO_LONG) अणु
+			काष्ठा netlink_range_validation range;
 
-			nla_get_range_unsigned(pt, &range);
+			nla_get_range_अचिन्हित(pt, &range);
 
-			if (range.min &&
+			अगर (range.min &&
 			    nla_put_u32(skb, NL_POLICY_TYPE_ATTR_MIN_LENGTH,
 					range.min))
-				goto nla_put_failure;
+				जाओ nla_put_failure;
 
-			if (range.max < U16_MAX &&
+			अगर (range.max < U16_MAX &&
 			    nla_put_u32(skb, NL_POLICY_TYPE_ATTR_MAX_LENGTH,
 					range.max))
-				goto nla_put_failure;
-		} else if (pt->len &&
+				जाओ nla_put_failure;
+		पूर्ण अन्यथा अगर (pt->len &&
 			   nla_put_u32(skb, NL_POLICY_TYPE_ATTR_MAX_LENGTH,
-				       pt->len)) {
-			goto nla_put_failure;
-		}
-		break;
-	case NLA_FLAG:
+				       pt->len)) अणु
+			जाओ nla_put_failure;
+		पूर्ण
+		अवरोध;
+	हाल NLA_FLAG:
 		type = NL_ATTR_TYPE_FLAG;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (nla_put_u32(skb, NL_POLICY_TYPE_ATTR_TYPE, type))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, NL_POLICY_TYPE_ATTR_TYPE, type))
+		जाओ nla_put_failure;
 
 	nla_nest_end(skb, attr);
 	WARN_ON(attr->nla_len > estimate);
 
-	return 0;
+	वापस 0;
 nla_put_failure:
 	nla_nest_cancel(skb, attr);
-	return -ENOBUFS;
-}
+	वापस -ENOBUFS;
+पूर्ण
 
 /**
- * netlink_policy_dump_write_attr - write a given attribute policy
- * @skb: the message skb to write to
+ * netlink_policy_dump_ग_लिखो_attr - ग_लिखो a given attribute policy
+ * @skb: the message skb to ग_लिखो to
  * @pt: the attribute's policy
  * @nestattr: the nested attribute ID to use
  *
@@ -394,27 +395,27 @@ nla_put_failure:
  *	    special, indicating that there's no policy data and
  *	    the attribute is generally rejected.
  */
-int netlink_policy_dump_write_attr(struct sk_buff *skb,
-				   const struct nla_policy *pt,
-				   int nestattr)
-{
-	return __netlink_policy_dump_write_attr(NULL, skb, pt, nestattr);
-}
+पूर्णांक netlink_policy_dump_ग_लिखो_attr(काष्ठा sk_buff *skb,
+				   स्थिर काष्ठा nla_policy *pt,
+				   पूर्णांक nestattr)
+अणु
+	वापस __netlink_policy_dump_ग_लिखो_attr(शून्य, skb, pt, nestattr);
+पूर्ण
 
 /**
- * netlink_policy_dump_write - write current policy dump attributes
- * @skb: the message skb to write to
+ * netlink_policy_dump_ग_लिखो - ग_लिखो current policy dump attributes
+ * @skb: the message skb to ग_लिखो to
  * @state: the policy dump state
  *
  * Returns: 0 on success, an error code otherwise
  */
-int netlink_policy_dump_write(struct sk_buff *skb,
-			      struct netlink_policy_dump_state *state)
-{
-	const struct nla_policy *pt;
-	struct nlattr *policy;
+पूर्णांक netlink_policy_dump_ग_लिखो(काष्ठा sk_buff *skb,
+			      काष्ठा netlink_policy_dump_state *state)
+अणु
+	स्थिर काष्ठा nla_policy *pt;
+	काष्ठा nlattr *policy;
 	bool again;
-	int err;
+	पूर्णांक err;
 
 send_attribute:
 	again = false;
@@ -422,48 +423,48 @@ send_attribute:
 	pt = &state->policies[state->policy_idx].policy[state->attr_idx];
 
 	policy = nla_nest_start(skb, state->policy_idx);
-	if (!policy)
-		return -ENOBUFS;
+	अगर (!policy)
+		वापस -ENOBUFS;
 
-	err = __netlink_policy_dump_write_attr(state, skb, pt, state->attr_idx);
-	if (err == -ENODATA) {
+	err = __netlink_policy_dump_ग_लिखो_attr(state, skb, pt, state->attr_idx);
+	अगर (err == -ENODATA) अणु
 		nla_nest_cancel(skb, policy);
 		again = true;
-		goto next;
-	} else if (err) {
-		goto nla_put_failure;
-	}
+		जाओ next;
+	पूर्ण अन्यथा अगर (err) अणु
+		जाओ nla_put_failure;
+	पूर्ण
 
 	/* finish and move state to next attribute */
 	nla_nest_end(skb, policy);
 
 next:
 	state->attr_idx += 1;
-	if (state->attr_idx > state->policies[state->policy_idx].maxtype) {
+	अगर (state->attr_idx > state->policies[state->policy_idx].maxtype) अणु
 		state->attr_idx = 0;
 		state->policy_idx++;
-	}
+	पूर्ण
 
-	if (again) {
-		if (netlink_policy_dump_finished(state))
-			return -ENODATA;
-		goto send_attribute;
-	}
+	अगर (again) अणु
+		अगर (netlink_policy_dump_finished(state))
+			वापस -ENODATA;
+		जाओ send_attribute;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nla_nest_cancel(skb, policy);
-	return -ENOBUFS;
-}
+	वापस -ENOBUFS;
+पूर्ण
 
 /**
- * netlink_policy_dump_free - free policy dump state
- * @state: the policy dump state to free
+ * netlink_policy_dump_मुक्त - मुक्त policy dump state
+ * @state: the policy dump state to मुक्त
  *
- * Call this from the done() method to ensure dump state is freed.
+ * Call this from the करोne() method to ensure dump state is मुक्तd.
  */
-void netlink_policy_dump_free(struct netlink_policy_dump_state *state)
-{
-	kfree(state);
-}
+व्योम netlink_policy_dump_मुक्त(काष्ठा netlink_policy_dump_state *state)
+अणु
+	kमुक्त(state);
+पूर्ण

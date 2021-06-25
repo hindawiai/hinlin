@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2017-2018 Mellanox Technologies. All rights reserved.
  */
 
-#include <rdma/rdma_cm.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/restrack.h>
-#include <rdma/rdma_counter.h>
-#include <linux/mutex.h>
-#include <linux/sched/task.h>
-#include <linux/pid_namespace.h>
+#समावेश <rdma/rdma_cm.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/restrack.h>
+#समावेश <rdma/rdma_counter.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/pid_namespace.h>
 
-#include "cma_priv.h"
-#include "restrack.h"
+#समावेश "cma_priv.h"
+#समावेश "restrack.h"
 
 /**
  * rdma_restrack_init() - initialize and allocate resource tracking
@@ -20,26 +21,26 @@
  *
  * Return: 0 on success
  */
-int rdma_restrack_init(struct ib_device *dev)
-{
-	struct rdma_restrack_root *rt;
-	int i;
+पूर्णांक rdma_restrack_init(काष्ठा ib_device *dev)
+अणु
+	काष्ठा rdma_restrack_root *rt;
+	पूर्णांक i;
 
-	dev->res = kcalloc(RDMA_RESTRACK_MAX, sizeof(*rt), GFP_KERNEL);
-	if (!dev->res)
-		return -ENOMEM;
+	dev->res = kसुस्मृति(RDMA_RESTRACK_MAX, माप(*rt), GFP_KERNEL);
+	अगर (!dev->res)
+		वापस -ENOMEM;
 
 	rt = dev->res;
 
-	for (i = 0; i < RDMA_RESTRACK_MAX; i++)
+	क्रम (i = 0; i < RDMA_RESTRACK_MAX; i++)
 		xa_init_flags(&rt[i].xa, XA_FLAGS_ALLOC);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *type2str(enum rdma_restrack_type type)
-{
-	static const char * const names[RDMA_RESTRACK_MAX] = {
+अटल स्थिर अक्षर *type2str(क्रमागत rdma_restrack_type type)
+अणु
+	अटल स्थिर अक्षर * स्थिर names[RDMA_RESTRACK_MAX] = अणु
 		[RDMA_RESTRACK_PD] = "PD",
 		[RDMA_RESTRACK_CQ] = "CQ",
 		[RDMA_RESTRACK_QP] = "QP",
@@ -48,141 +49,141 @@ static const char *type2str(enum rdma_restrack_type type)
 		[RDMA_RESTRACK_CTX] = "CTX",
 		[RDMA_RESTRACK_COUNTER] = "COUNTER",
 		[RDMA_RESTRACK_SRQ] = "SRQ",
-	};
+	पूर्ण;
 
-	return names[type];
-};
+	वापस names[type];
+पूर्ण;
 
 /**
  * rdma_restrack_clean() - clean resource tracking
  * @dev:  IB device
  */
-void rdma_restrack_clean(struct ib_device *dev)
-{
-	struct rdma_restrack_root *rt = dev->res;
-	struct rdma_restrack_entry *e;
-	char buf[TASK_COMM_LEN];
+व्योम rdma_restrack_clean(काष्ठा ib_device *dev)
+अणु
+	काष्ठा rdma_restrack_root *rt = dev->res;
+	काष्ठा rdma_restrack_entry *e;
+	अक्षर buf[TASK_COMM_LEN];
 	bool found = false;
-	const char *owner;
-	int i;
+	स्थिर अक्षर *owner;
+	पूर्णांक i;
 
-	for (i = 0 ; i < RDMA_RESTRACK_MAX; i++) {
-		struct xarray *xa = &dev->res[i].xa;
+	क्रम (i = 0 ; i < RDMA_RESTRACK_MAX; i++) अणु
+		काष्ठा xarray *xa = &dev->res[i].xa;
 
-		if (!xa_empty(xa)) {
-			unsigned long index;
+		अगर (!xa_empty(xa)) अणु
+			अचिन्हित दीर्घ index;
 
-			if (!found) {
+			अगर (!found) अणु
 				pr_err("restrack: %s", CUT_HERE);
 				dev_err(&dev->dev, "BUG: RESTRACK detected leak of resources\n");
-			}
-			xa_for_each(xa, index, e) {
-				if (rdma_is_kernel_res(e)) {
+			पूर्ण
+			xa_क्रम_each(xa, index, e) अणु
+				अगर (rdma_is_kernel_res(e)) अणु
 					owner = e->kern_name;
-				} else {
+				पूर्ण अन्यथा अणु
 					/*
-					 * There is no need to call get_task_struct here,
-					 * because we can be here only if there are more
-					 * get_task_struct() call than put_task_struct().
+					 * There is no need to call get_task_काष्ठा here,
+					 * because we can be here only अगर there are more
+					 * get_task_काष्ठा() call than put_task_काष्ठा().
 					 */
 					get_task_comm(buf, e->task);
 					owner = buf;
-				}
+				पूर्ण
 
 				pr_err("restrack: %s %s object allocated by %s is not freed\n",
 				       rdma_is_kernel_res(e) ? "Kernel" :
 							       "User",
 				       type2str(e->type), owner);
-			}
+			पूर्ण
 			found = true;
-		}
+		पूर्ण
 		xa_destroy(xa);
-	}
-	if (found)
+	पूर्ण
+	अगर (found)
 		pr_err("restrack: %s", CUT_HERE);
 
-	kfree(rt);
-}
+	kमुक्त(rt);
+पूर्ण
 
 /**
- * rdma_restrack_count() - the current usage of specific object
+ * rdma_restrack_count() - the current usage of specअगरic object
  * @dev:  IB device
  * @type: actual type of object to operate
  */
-int rdma_restrack_count(struct ib_device *dev, enum rdma_restrack_type type)
-{
-	struct rdma_restrack_root *rt = &dev->res[type];
-	struct rdma_restrack_entry *e;
+पूर्णांक rdma_restrack_count(काष्ठा ib_device *dev, क्रमागत rdma_restrack_type type)
+अणु
+	काष्ठा rdma_restrack_root *rt = &dev->res[type];
+	काष्ठा rdma_restrack_entry *e;
 	XA_STATE(xas, &rt->xa, 0);
 	u32 cnt = 0;
 
 	xa_lock(&rt->xa);
-	xas_for_each(&xas, e, U32_MAX)
+	xas_क्रम_each(&xas, e, U32_MAX)
 		cnt++;
 	xa_unlock(&rt->xa);
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_count);
 
-static struct ib_device *res_to_dev(struct rdma_restrack_entry *res)
-{
-	switch (res->type) {
-	case RDMA_RESTRACK_PD:
-		return container_of(res, struct ib_pd, res)->device;
-	case RDMA_RESTRACK_CQ:
-		return container_of(res, struct ib_cq, res)->device;
-	case RDMA_RESTRACK_QP:
-		return container_of(res, struct ib_qp, res)->device;
-	case RDMA_RESTRACK_CM_ID:
-		return container_of(res, struct rdma_id_private,
+अटल काष्ठा ib_device *res_to_dev(काष्ठा rdma_restrack_entry *res)
+अणु
+	चयन (res->type) अणु
+	हाल RDMA_RESTRACK_PD:
+		वापस container_of(res, काष्ठा ib_pd, res)->device;
+	हाल RDMA_RESTRACK_CQ:
+		वापस container_of(res, काष्ठा ib_cq, res)->device;
+	हाल RDMA_RESTRACK_QP:
+		वापस container_of(res, काष्ठा ib_qp, res)->device;
+	हाल RDMA_RESTRACK_CM_ID:
+		वापस container_of(res, काष्ठा rdma_id_निजी,
 				    res)->id.device;
-	case RDMA_RESTRACK_MR:
-		return container_of(res, struct ib_mr, res)->device;
-	case RDMA_RESTRACK_CTX:
-		return container_of(res, struct ib_ucontext, res)->device;
-	case RDMA_RESTRACK_COUNTER:
-		return container_of(res, struct rdma_counter, res)->device;
-	case RDMA_RESTRACK_SRQ:
-		return container_of(res, struct ib_srq, res)->device;
-	default:
+	हाल RDMA_RESTRACK_MR:
+		वापस container_of(res, काष्ठा ib_mr, res)->device;
+	हाल RDMA_RESTRACK_CTX:
+		वापस container_of(res, काष्ठा ib_ucontext, res)->device;
+	हाल RDMA_RESTRACK_COUNTER:
+		वापस container_of(res, काष्ठा rdma_counter, res)->device;
+	हाल RDMA_RESTRACK_SRQ:
+		वापस container_of(res, काष्ठा ib_srq, res)->device;
+	शेष:
 		WARN_ONCE(true, "Wrong resource tracking type %u\n", res->type);
-		return NULL;
-	}
-}
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * rdma_restrack_attach_task() - attach the task onto this resource,
- * valid for user space restrack entries.
+ * valid क्रम user space restrack entries.
  * @res:  resource entry
  * @task: the task to attach
  */
-static void rdma_restrack_attach_task(struct rdma_restrack_entry *res,
-				      struct task_struct *task)
-{
-	if (WARN_ON_ONCE(!task))
-		return;
+अटल व्योम rdma_restrack_attach_task(काष्ठा rdma_restrack_entry *res,
+				      काष्ठा task_काष्ठा *task)
+अणु
+	अगर (WARN_ON_ONCE(!task))
+		वापस;
 
-	if (res->task)
-		put_task_struct(res->task);
-	get_task_struct(task);
+	अगर (res->task)
+		put_task_काष्ठा(res->task);
+	get_task_काष्ठा(task);
 	res->task = task;
 	res->user = true;
-}
+पूर्ण
 
 /**
- * rdma_restrack_set_name() - set the task for this resource
+ * rdma_restrack_set_name() - set the task क्रम this resource
  * @res:  resource entry
- * @caller: kernel name, the current task will be used if the caller is NULL.
+ * @caller: kernel name, the current task will be used अगर the caller is शून्य.
  */
-void rdma_restrack_set_name(struct rdma_restrack_entry *res, const char *caller)
-{
-	if (caller) {
+व्योम rdma_restrack_set_name(काष्ठा rdma_restrack_entry *res, स्थिर अक्षर *caller)
+अणु
+	अगर (caller) अणु
 		res->kern_name = caller;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rdma_restrack_attach_task(res, current);
-}
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_set_name);
 
 /**
@@ -191,85 +192,85 @@ EXPORT_SYMBOL(rdma_restrack_set_name);
  * @dst: destination resource entry
  * @parent: parent resource entry
  */
-void rdma_restrack_parent_name(struct rdma_restrack_entry *dst,
-			       const struct rdma_restrack_entry *parent)
-{
-	if (rdma_is_kernel_res(parent))
+व्योम rdma_restrack_parent_name(काष्ठा rdma_restrack_entry *dst,
+			       स्थिर काष्ठा rdma_restrack_entry *parent)
+अणु
+	अगर (rdma_is_kernel_res(parent))
 		dst->kern_name = parent->kern_name;
-	else
+	अन्यथा
 		rdma_restrack_attach_task(dst, parent->task);
-}
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_parent_name);
 
 /**
- * rdma_restrack_new() - Initializes new restrack entry to allow _put() interface
- * to release memory in fully automatic way.
+ * rdma_restrack_new() - Initializes new restrack entry to allow _put() पूर्णांकerface
+ * to release memory in fully स्वतःmatic way.
  * @res: Entry to initialize
  * @type: REstrack type
  */
-void rdma_restrack_new(struct rdma_restrack_entry *res,
-		       enum rdma_restrack_type type)
-{
+व्योम rdma_restrack_new(काष्ठा rdma_restrack_entry *res,
+		       क्रमागत rdma_restrack_type type)
+अणु
 	kref_init(&res->kref);
 	init_completion(&res->comp);
 	res->type = type;
-}
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_new);
 
 /**
  * rdma_restrack_add() - add object to the reource tracking database
  * @res:  resource entry
  */
-void rdma_restrack_add(struct rdma_restrack_entry *res)
-{
-	struct ib_device *dev = res_to_dev(res);
-	struct rdma_restrack_root *rt;
-	int ret = 0;
+व्योम rdma_restrack_add(काष्ठा rdma_restrack_entry *res)
+अणु
+	काष्ठा ib_device *dev = res_to_dev(res);
+	काष्ठा rdma_restrack_root *rt;
+	पूर्णांक ret = 0;
 
-	if (!dev)
-		return;
+	अगर (!dev)
+		वापस;
 
-	if (res->no_track)
-		goto out;
+	अगर (res->no_track)
+		जाओ out;
 
 	rt = &dev->res[res->type];
 
-	if (res->type == RDMA_RESTRACK_QP) {
-		/* Special case to ensure that LQPN points to right QP */
-		struct ib_qp *qp = container_of(res, struct ib_qp, res);
+	अगर (res->type == RDMA_RESTRACK_QP) अणु
+		/* Special हाल to ensure that LQPN poपूर्णांकs to right QP */
+		काष्ठा ib_qp *qp = container_of(res, काष्ठा ib_qp, res);
 
 		WARN_ONCE(qp->qp_num >> 24 || qp->port >> 8,
 			  "QP number 0x%0X and port 0x%0X", qp->qp_num,
 			  qp->port);
 		res->id = qp->qp_num;
-		if (qp->qp_type == IB_QPT_SMI || qp->qp_type == IB_QPT_GSI)
+		अगर (qp->qp_type == IB_QPT_SMI || qp->qp_type == IB_QPT_GSI)
 			res->id |= qp->port << 24;
 		ret = xa_insert(&rt->xa, res->id, res, GFP_KERNEL);
-		if (ret)
+		अगर (ret)
 			res->id = 0;
-	} else if (res->type == RDMA_RESTRACK_COUNTER) {
-		/* Special case to ensure that cntn points to right counter */
-		struct rdma_counter *counter;
+	पूर्ण अन्यथा अगर (res->type == RDMA_RESTRACK_COUNTER) अणु
+		/* Special हाल to ensure that cntn poपूर्णांकs to right counter */
+		काष्ठा rdma_counter *counter;
 
-		counter = container_of(res, struct rdma_counter, res);
+		counter = container_of(res, काष्ठा rdma_counter, res);
 		ret = xa_insert(&rt->xa, counter->id, res, GFP_KERNEL);
 		res->id = ret ? 0 : counter->id;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = xa_alloc_cyclic(&rt->xa, &res->id, res, xa_limit_32b,
 				      &rt->next_id, GFP_KERNEL);
 		ret = (ret < 0) ? ret : 0;
-	}
+	पूर्ण
 
 out:
-	if (!ret)
+	अगर (!ret)
 		res->valid = true;
-}
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_add);
 
-int __must_check rdma_restrack_get(struct rdma_restrack_entry *res)
-{
-	return kref_get_unless_zero(&res->kref);
-}
+पूर्णांक __must_check rdma_restrack_get(काष्ठा rdma_restrack_entry *res)
+अणु
+	वापस kref_get_unless_zero(&res->kref);
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_get);
 
 /**
@@ -278,78 +279,78 @@ EXPORT_SYMBOL(rdma_restrack_get);
  * @type: resource track type
  * @id: ID to take a look
  *
- * Return: Pointer to restrack entry or -ENOENT in case of error.
+ * Return: Poपूर्णांकer to restrack entry or -ENOENT in हाल of error.
  */
-struct rdma_restrack_entry *
-rdma_restrack_get_byid(struct ib_device *dev,
-		       enum rdma_restrack_type type, u32 id)
-{
-	struct rdma_restrack_root *rt = &dev->res[type];
-	struct rdma_restrack_entry *res;
+काष्ठा rdma_restrack_entry *
+rdma_restrack_get_byid(काष्ठा ib_device *dev,
+		       क्रमागत rdma_restrack_type type, u32 id)
+अणु
+	काष्ठा rdma_restrack_root *rt = &dev->res[type];
+	काष्ठा rdma_restrack_entry *res;
 
 	xa_lock(&rt->xa);
 	res = xa_load(&rt->xa, id);
-	if (!res || !rdma_restrack_get(res))
+	अगर (!res || !rdma_restrack_get(res))
 		res = ERR_PTR(-ENOENT);
 	xa_unlock(&rt->xa);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_get_byid);
 
-static void restrack_release(struct kref *kref)
-{
-	struct rdma_restrack_entry *res;
+अटल व्योम restrack_release(काष्ठा kref *kref)
+अणु
+	काष्ठा rdma_restrack_entry *res;
 
-	res = container_of(kref, struct rdma_restrack_entry, kref);
-	if (res->task) {
-		put_task_struct(res->task);
-		res->task = NULL;
-	}
+	res = container_of(kref, काष्ठा rdma_restrack_entry, kref);
+	अगर (res->task) अणु
+		put_task_काष्ठा(res->task);
+		res->task = शून्य;
+	पूर्ण
 	complete(&res->comp);
-}
+पूर्ण
 
-int rdma_restrack_put(struct rdma_restrack_entry *res)
-{
-	return kref_put(&res->kref, restrack_release);
-}
+पूर्णांक rdma_restrack_put(काष्ठा rdma_restrack_entry *res)
+अणु
+	वापस kref_put(&res->kref, restrack_release);
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_put);
 
 /**
  * rdma_restrack_del() - delete object from the reource tracking database
  * @res:  resource entry
  */
-void rdma_restrack_del(struct rdma_restrack_entry *res)
-{
-	struct rdma_restrack_entry *old;
-	struct rdma_restrack_root *rt;
-	struct ib_device *dev;
+व्योम rdma_restrack_del(काष्ठा rdma_restrack_entry *res)
+अणु
+	काष्ठा rdma_restrack_entry *old;
+	काष्ठा rdma_restrack_root *rt;
+	काष्ठा ib_device *dev;
 
-	if (!res->valid) {
-		if (res->task) {
-			put_task_struct(res->task);
-			res->task = NULL;
-		}
-		return;
-	}
+	अगर (!res->valid) अणु
+		अगर (res->task) अणु
+			put_task_काष्ठा(res->task);
+			res->task = शून्य;
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (res->no_track)
-		goto out;
+	अगर (res->no_track)
+		जाओ out;
 
 	dev = res_to_dev(res);
-	if (WARN_ON(!dev))
-		return;
+	अगर (WARN_ON(!dev))
+		वापस;
 
 	rt = &dev->res[res->type];
 
 	old = xa_erase(&rt->xa, res->id);
-	if (res->type == RDMA_RESTRACK_MR || res->type == RDMA_RESTRACK_QP)
-		return;
+	अगर (res->type == RDMA_RESTRACK_MR || res->type == RDMA_RESTRACK_QP)
+		वापस;
 	WARN_ON(old != res);
 
 out:
 	res->valid = false;
 	rdma_restrack_put(res);
-	wait_for_completion(&res->comp);
-}
+	रुको_क्रम_completion(&res->comp);
+पूर्ण
 EXPORT_SYMBOL(rdma_restrack_del);

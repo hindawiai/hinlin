@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_SYNPROXY_H
-#define _NF_CONNTRACK_SYNPROXY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_SYNPROXY_H
+#घोषणा _NF_CONNTRACK_SYNPROXY_H
 
-#include <net/netfilter/nf_conntrack_seqadj.h>
-#include <net/netns/generic.h>
+#समावेश <net/netfilter/nf_conntrack_seqadj.h>
+#समावेश <net/netns/generic.h>
 
-struct nf_conn_synproxy {
+काष्ठा nf_conn_synproxy अणु
 	u32	isn;
 	u32	its;
 	u32	tsoff;
-};
+पूर्ण;
 
-static inline struct nf_conn_synproxy *nfct_synproxy(const struct nf_conn *ct)
-{
-#if IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
-	return nf_ct_ext_find(ct, NF_CT_EXT_SYNPROXY);
-#else
-	return NULL;
-#endif
-}
+अटल अंतरभूत काष्ठा nf_conn_synproxy *nfct_synproxy(स्थिर काष्ठा nf_conn *ct)
+अणु
+#अगर IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
+	वापस nf_ct_ext_find(ct, NF_CT_EXT_SYNPROXY);
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static inline struct nf_conn_synproxy *nfct_synproxy_ext_add(struct nf_conn *ct)
-{
-#if IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
-	return nf_ct_ext_add(ct, NF_CT_EXT_SYNPROXY, GFP_ATOMIC);
-#else
-	return NULL;
-#endif
-}
+अटल अंतरभूत काष्ठा nf_conn_synproxy *nfct_synproxy_ext_add(काष्ठा nf_conn *ct)
+अणु
+#अगर IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
+	वापस nf_ct_ext_add(ct, NF_CT_EXT_SYNPROXY, GFP_ATOMIC);
+#अन्यथा
+	वापस शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static inline bool nf_ct_add_synproxy(struct nf_conn *ct,
-				      const struct nf_conn *tmpl)
-{
-#if IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
-	if (tmpl && nfct_synproxy(tmpl)) {
-		if (!nfct_seqadj_ext_add(ct))
-			return false;
+अटल अंतरभूत bool nf_ct_add_synproxy(काष्ठा nf_conn *ct,
+				      स्थिर काष्ठा nf_conn *पंचांगpl)
+अणु
+#अगर IS_ENABLED(CONFIG_NETFILTER_SYNPROXY)
+	अगर (पंचांगpl && nfct_synproxy(पंचांगpl)) अणु
+		अगर (!nfct_seqadj_ext_add(ct))
+			वापस false;
 
-		if (!nfct_synproxy_ext_add(ct))
-			return false;
-	}
-#endif
+		अगर (!nfct_synproxy_ext_add(ct))
+			वापस false;
+	पूर्ण
+#पूर्ण_अगर
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#endif /* _NF_CONNTRACK_SYNPROXY_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_SYNPROXY_H */

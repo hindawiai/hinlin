@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * NVM helpers
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/idr.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "tb.h"
+#समावेश "tb.h"
 
-static DEFINE_IDA(nvm_ida);
+अटल DEFINE_IDA(nvm_ida);
 
 /**
- * tb_nvm_alloc() - Allocate new NVM structure
+ * tb_nvm_alloc() - Allocate new NVM काष्ठाure
  * @dev: Device owning the NVM
  *
- * Allocates new NVM structure with unique @id and returns it. In case
- * of error returns ERR_PTR().
+ * Allocates new NVM काष्ठाure with unique @id and वापसs it. In हाल
+ * of error वापसs ERR_PTR().
  */
-struct tb_nvm *tb_nvm_alloc(struct device *dev)
-{
-	struct tb_nvm *nvm;
-	int ret;
+काष्ठा tb_nvm *tb_nvm_alloc(काष्ठा device *dev)
+अणु
+	काष्ठा tb_nvm *nvm;
+	पूर्णांक ret;
 
-	nvm = kzalloc(sizeof(*nvm), GFP_KERNEL);
-	if (!nvm)
-		return ERR_PTR(-ENOMEM);
+	nvm = kzalloc(माप(*nvm), GFP_KERNEL);
+	अगर (!nvm)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = ida_simple_get(&nvm_ida, 0, 0, GFP_KERNEL);
-	if (ret < 0) {
-		kfree(nvm);
-		return ERR_PTR(ret);
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(nvm);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	nvm->id = ret;
 	nvm->dev = dev;
 
-	return nvm;
-}
+	वापस nvm;
+पूर्ण
 
 /**
  * tb_nvm_add_active() - Adds active NVMem device to NVM
- * @nvm: NVM structure
+ * @nvm: NVM काष्ठाure
  * @size: Size of the active NVM in bytes
- * @reg_read: Pointer to the function to read the NVM (passed directly to the
+ * @reg_पढ़ो: Poपूर्णांकer to the function to पढ़ो the NVM (passed directly to the
  *	      NVMem device)
  *
- * Registers new active NVmem device for @nvm. The @reg_read is called
- * directly from NVMem so it must handle possible concurrent access if
- * needed. The first parameter passed to @reg_read is @nvm structure.
- * Returns %0 in success and negative errno otherwise.
+ * Registers new active NVmem device क्रम @nvm. The @reg_पढ़ो is called
+ * directly from NVMem so it must handle possible concurrent access अगर
+ * needed. The first parameter passed to @reg_पढ़ो is @nvm काष्ठाure.
+ * Returns %0 in success and negative त्रुटि_सं otherwise.
  */
-int tb_nvm_add_active(struct tb_nvm *nvm, size_t size, nvmem_reg_read_t reg_read)
-{
-	struct nvmem_config config;
-	struct nvmem_device *nvmem;
+पूर्णांक tb_nvm_add_active(काष्ठा tb_nvm *nvm, माप_प्रकार size, nvmem_reg_पढ़ो_t reg_पढ़ो)
+अणु
+	काष्ठा nvmem_config config;
+	काष्ठा nvmem_device *nvmem;
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 
 	config.name = "nvm_active";
-	config.reg_read = reg_read;
-	config.read_only = true;
+	config.reg_पढ़ो = reg_पढ़ो;
+	config.पढ़ो_only = true;
 	config.id = nvm->id;
 	config.stride = 4;
 	config.word_size = 4;
@@ -72,62 +73,62 @@ int tb_nvm_add_active(struct tb_nvm *nvm, size_t size, nvmem_reg_read_t reg_read
 	config.owner = THIS_MODULE;
 	config.priv = nvm;
 
-	nvmem = nvmem_register(&config);
-	if (IS_ERR(nvmem))
-		return PTR_ERR(nvmem);
+	nvmem = nvmem_रेजिस्टर(&config);
+	अगर (IS_ERR(nvmem))
+		वापस PTR_ERR(nvmem);
 
 	nvm->active = nvmem;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tb_nvm_write_buf() - Write data to @nvm buffer
- * @nvm: NVM structure
- * @offset: Offset where to write the data
- * @val: Data buffer to write
- * @bytes: Number of bytes to write
+ * tb_nvm_ग_लिखो_buf() - Write data to @nvm buffer
+ * @nvm: NVM काष्ठाure
+ * @offset: Offset where to ग_लिखो the data
+ * @val: Data buffer to ग_लिखो
+ * @bytes: Number of bytes to ग_लिखो
  *
- * Helper function to cache the new NVM image before it is actually
+ * Helper function to cache the new NVM image beक्रमe it is actually
  * written to the flash. Copies @bytes from @val to @nvm->buf starting
  * from @offset.
  */
-int tb_nvm_write_buf(struct tb_nvm *nvm, unsigned int offset, void *val,
-		     size_t bytes)
-{
-	if (!nvm->buf) {
-		nvm->buf = vmalloc(NVM_MAX_SIZE);
-		if (!nvm->buf)
-			return -ENOMEM;
-	}
+पूर्णांक tb_nvm_ग_लिखो_buf(काष्ठा tb_nvm *nvm, अचिन्हित पूर्णांक offset, व्योम *val,
+		     माप_प्रकार bytes)
+अणु
+	अगर (!nvm->buf) अणु
+		nvm->buf = vदो_स्मृति(NVM_MAX_SIZE);
+		अगर (!nvm->buf)
+			वापस -ENOMEM;
+	पूर्ण
 
 	nvm->flushed = false;
 	nvm->buf_data_size = offset + bytes;
-	memcpy(nvm->buf + offset, val, bytes);
-	return 0;
-}
+	स_नकल(nvm->buf + offset, val, bytes);
+	वापस 0;
+पूर्ण
 
 /**
  * tb_nvm_add_non_active() - Adds non-active NVMem device to NVM
- * @nvm: NVM structure
+ * @nvm: NVM काष्ठाure
  * @size: Size of the non-active NVM in bytes
- * @reg_write: Pointer to the function to write the NVM (passed directly
+ * @reg_ग_लिखो: Poपूर्णांकer to the function to ग_लिखो the NVM (passed directly
  *	       to the NVMem device)
  *
- * Registers new non-active NVmem device for @nvm. The @reg_write is called
- * directly from NVMem so it must handle possible concurrent access if
- * needed. The first parameter passed to @reg_write is @nvm structure.
- * Returns %0 in success and negative errno otherwise.
+ * Registers new non-active NVmem device क्रम @nvm. The @reg_ग_लिखो is called
+ * directly from NVMem so it must handle possible concurrent access अगर
+ * needed. The first parameter passed to @reg_ग_लिखो is @nvm काष्ठाure.
+ * Returns %0 in success and negative त्रुटि_सं otherwise.
  */
-int tb_nvm_add_non_active(struct tb_nvm *nvm, size_t size,
-			  nvmem_reg_write_t reg_write)
-{
-	struct nvmem_config config;
-	struct nvmem_device *nvmem;
+पूर्णांक tb_nvm_add_non_active(काष्ठा tb_nvm *nvm, माप_प्रकार size,
+			  nvmem_reg_ग_लिखो_t reg_ग_लिखो)
+अणु
+	काष्ठा nvmem_config config;
+	काष्ठा nvmem_device *nvmem;
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 
 	config.name = "nvm_non_active";
-	config.reg_write = reg_write;
+	config.reg_ग_लिखो = reg_ग_लिखो;
 	config.root_only = true;
 	config.id = nvm->id;
 	config.stride = 4;
@@ -137,34 +138,34 @@ int tb_nvm_add_non_active(struct tb_nvm *nvm, size_t size,
 	config.owner = THIS_MODULE;
 	config.priv = nvm;
 
-	nvmem = nvmem_register(&config);
-	if (IS_ERR(nvmem))
-		return PTR_ERR(nvmem);
+	nvmem = nvmem_रेजिस्टर(&config);
+	अगर (IS_ERR(nvmem))
+		वापस PTR_ERR(nvmem);
 
 	nvm->non_active = nvmem;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tb_nvm_free() - Release NVM and its resources
- * @nvm: NVM structure to release
+ * tb_nvm_मुक्त() - Release NVM and its resources
+ * @nvm: NVM काष्ठाure to release
  *
- * Releases NVM and the NVMem devices if they were registered.
+ * Releases NVM and the NVMem devices अगर they were रेजिस्टरed.
  */
-void tb_nvm_free(struct tb_nvm *nvm)
-{
-	if (nvm) {
-		if (nvm->non_active)
-			nvmem_unregister(nvm->non_active);
-		if (nvm->active)
-			nvmem_unregister(nvm->active);
-		vfree(nvm->buf);
-		ida_simple_remove(&nvm_ida, nvm->id);
-	}
-	kfree(nvm);
-}
+व्योम tb_nvm_मुक्त(काष्ठा tb_nvm *nvm)
+अणु
+	अगर (nvm) अणु
+		अगर (nvm->non_active)
+			nvmem_unरेजिस्टर(nvm->non_active);
+		अगर (nvm->active)
+			nvmem_unरेजिस्टर(nvm->active);
+		vमुक्त(nvm->buf);
+		ida_simple_हटाओ(&nvm_ida, nvm->id);
+	पूर्ण
+	kमुक्त(nvm);
+पूर्ण
 
-void tb_nvm_exit(void)
-{
+व्योम tb_nvm_निकास(व्योम)
+अणु
 	ida_destroy(&nvm_ida);
-}
+पूर्ण

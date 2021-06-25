@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ISHTP DMA I/F functions
  *
  * Copyright (c) 2003-2016, Intel Corporation.
  */
 
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include "ishtp-dev.h"
-#include "client.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश "ishtp-dev.h"
+#समावेश "client.h"
 
 /**
  * ishtp_cl_alloc_dma_buf() - Allocate DMA RX and TX buffer
  * @dev: ishtp device
  *
  * Allocate RX and TX DMA buffer once during bus setup.
- * It allocates 1MB, RX and TX DMA buffer, which are divided
- * into slots.
+ * It allocates 1MB, RX and TX DMA buffer, which are भागided
+ * पूर्णांकo slots.
  */
-void	ishtp_cl_alloc_dma_buf(struct ishtp_device *dev)
-{
+व्योम	ishtp_cl_alloc_dma_buf(काष्ठा ishtp_device *dev)
+अणु
 	dma_addr_t	h;
 
-	if (dev->ishtp_host_dma_tx_buf)
-		return;
+	अगर (dev->ishtp_host_dma_tx_buf)
+		वापस;
 
 	dev->ishtp_host_dma_tx_buf_size = 1024*1024;
 	dev->ishtp_host_dma_rx_buf_size = 1024*1024;
 
-	/* Allocate Tx buffer and init usage bitmap */
+	/* Allocate Tx buffer and init usage biपंचांगap */
 	dev->ishtp_host_dma_tx_buf = dma_alloc_coherent(dev->devc,
 					dev->ishtp_host_dma_tx_buf_size,
 					&h, GFP_KERNEL);
-	if (dev->ishtp_host_dma_tx_buf)
+	अगर (dev->ishtp_host_dma_tx_buf)
 		dev->ishtp_host_dma_tx_buf_phys = h;
 
 	dev->ishtp_dma_num_slots = dev->ishtp_host_dma_tx_buf_size /
 						DMA_SLOT_SIZE;
 
-	dev->ishtp_dma_tx_map = kcalloc(dev->ishtp_dma_num_slots,
-					sizeof(uint8_t),
+	dev->ishtp_dma_tx_map = kसुस्मृति(dev->ishtp_dma_num_slots,
+					माप(uपूर्णांक8_t),
 					GFP_KERNEL);
 	spin_lock_init(&dev->ishtp_dma_tx_lock);
 
@@ -51,81 +52,81 @@ void	ishtp_cl_alloc_dma_buf(struct ishtp_device *dev)
 					dev->ishtp_host_dma_rx_buf_size,
 					 &h, GFP_KERNEL);
 
-	if (dev->ishtp_host_dma_rx_buf)
+	अगर (dev->ishtp_host_dma_rx_buf)
 		dev->ishtp_host_dma_rx_buf_phys = h;
-}
+पूर्ण
 
 /**
- * ishtp_cl_free_dma_buf() - Free DMA RX and TX buffer
+ * ishtp_cl_मुक्त_dma_buf() - Free DMA RX and TX buffer
  * @dev: ishtp device
  *
  * Free DMA buffer when all clients are released. This is
  * only happens during error path in ISH built in driver
  * model
  */
-void	ishtp_cl_free_dma_buf(struct ishtp_device *dev)
-{
+व्योम	ishtp_cl_मुक्त_dma_buf(काष्ठा ishtp_device *dev)
+अणु
 	dma_addr_t	h;
 
-	if (dev->ishtp_host_dma_tx_buf) {
+	अगर (dev->ishtp_host_dma_tx_buf) अणु
 		h = dev->ishtp_host_dma_tx_buf_phys;
-		dma_free_coherent(dev->devc, dev->ishtp_host_dma_tx_buf_size,
+		dma_मुक्त_coherent(dev->devc, dev->ishtp_host_dma_tx_buf_size,
 				  dev->ishtp_host_dma_tx_buf, h);
-	}
+	पूर्ण
 
-	if (dev->ishtp_host_dma_rx_buf) {
+	अगर (dev->ishtp_host_dma_rx_buf) अणु
 		h = dev->ishtp_host_dma_rx_buf_phys;
-		dma_free_coherent(dev->devc, dev->ishtp_host_dma_rx_buf_size,
+		dma_मुक्त_coherent(dev->devc, dev->ishtp_host_dma_rx_buf_size,
 				  dev->ishtp_host_dma_rx_buf, h);
-	}
+	पूर्ण
 
-	kfree(dev->ishtp_dma_tx_map);
-	dev->ishtp_host_dma_tx_buf = NULL;
-	dev->ishtp_host_dma_rx_buf = NULL;
-	dev->ishtp_dma_tx_map = NULL;
-}
+	kमुक्त(dev->ishtp_dma_tx_map);
+	dev->ishtp_host_dma_tx_buf = शून्य;
+	dev->ishtp_host_dma_rx_buf = शून्य;
+	dev->ishtp_dma_tx_map = शून्य;
+पूर्ण
 
 /*
  * ishtp_cl_get_dma_send_buf() - Get a DMA memory slot
  * @dev:	ishtp device
  * @size:	Size of memory to get
  *
- * Find and return free address of "size" bytes in dma tx buffer.
+ * Find and वापस मुक्त address of "size" bytes in dma tx buffer.
  * the function will mark this address as "in-used" memory.
  *
- * Return: NULL when no free buffer else a buffer to copy
+ * Return: शून्य when no मुक्त buffer अन्यथा a buffer to copy
  */
-void *ishtp_cl_get_dma_send_buf(struct ishtp_device *dev,
-				uint32_t size)
-{
-	unsigned long	flags;
-	int i, j, free;
-	/* additional slot is needed if there is rem */
-	int required_slots = (size / DMA_SLOT_SIZE)
+व्योम *ishtp_cl_get_dma_send_buf(काष्ठा ishtp_device *dev,
+				uपूर्णांक32_t size)
+अणु
+	अचिन्हित दीर्घ	flags;
+	पूर्णांक i, j, मुक्त;
+	/* additional slot is needed अगर there is rem */
+	पूर्णांक required_slots = (size / DMA_SLOT_SIZE)
 		+ 1 * (size % DMA_SLOT_SIZE != 0);
 
 	spin_lock_irqsave(&dev->ishtp_dma_tx_lock, flags);
-	for (i = 0; i <= (dev->ishtp_dma_num_slots - required_slots); i++) {
-		free = 1;
-		for (j = 0; j < required_slots; j++)
-			if (dev->ishtp_dma_tx_map[i+j]) {
-				free = 0;
+	क्रम (i = 0; i <= (dev->ishtp_dma_num_slots - required_slots); i++) अणु
+		मुक्त = 1;
+		क्रम (j = 0; j < required_slots; j++)
+			अगर (dev->ishtp_dma_tx_map[i+j]) अणु
+				मुक्त = 0;
 				i += j;
-				break;
-			}
-		if (free) {
+				अवरोध;
+			पूर्ण
+		अगर (मुक्त) अणु
 			/* mark memory as "caught" */
-			for (j = 0; j < required_slots; j++)
+			क्रम (j = 0; j < required_slots; j++)
 				dev->ishtp_dma_tx_map[i+j] = 1;
 			spin_unlock_irqrestore(&dev->ishtp_dma_tx_lock, flags);
-			return (i * DMA_SLOT_SIZE) +
-				(unsigned char *)dev->ishtp_host_dma_tx_buf;
-		}
-	}
+			वापस (i * DMA_SLOT_SIZE) +
+				(अचिन्हित अक्षर *)dev->ishtp_host_dma_tx_buf;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&dev->ishtp_dma_tx_lock, flags);
 	dev_err(dev->devc, "No free DMA buffer to send msg\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * ishtp_cl_release_dma_acked_mem() - Release DMA memory slot
@@ -133,34 +134,34 @@ void *ishtp_cl_get_dma_send_buf(struct ishtp_device *dev,
  * @msg_addr:	message address of slot
  * @size:	Size of memory to get
  *
- * Release_dma_acked_mem - returnes the acked memory to free list.
- * (from msg_addr, size bytes long)
+ * Release_dma_acked_mem - वापसes the acked memory to मुक्त list.
+ * (from msg_addr, size bytes दीर्घ)
  */
-void ishtp_cl_release_dma_acked_mem(struct ishtp_device *dev,
-				    void *msg_addr,
-				    uint8_t size)
-{
-	unsigned long	flags;
-	int acked_slots = (size / DMA_SLOT_SIZE)
+व्योम ishtp_cl_release_dma_acked_mem(काष्ठा ishtp_device *dev,
+				    व्योम *msg_addr,
+				    uपूर्णांक8_t size)
+अणु
+	अचिन्हित दीर्घ	flags;
+	पूर्णांक acked_slots = (size / DMA_SLOT_SIZE)
 		+ 1 * (size % DMA_SLOT_SIZE != 0);
-	int i, j;
+	पूर्णांक i, j;
 
-	if ((msg_addr - dev->ishtp_host_dma_tx_buf) % DMA_SLOT_SIZE) {
+	अगर ((msg_addr - dev->ishtp_host_dma_tx_buf) % DMA_SLOT_SIZE) अणु
 		dev_err(dev->devc, "Bad DMA Tx ack address\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	i = (msg_addr - dev->ishtp_host_dma_tx_buf) / DMA_SLOT_SIZE;
 	spin_lock_irqsave(&dev->ishtp_dma_tx_lock, flags);
-	for (j = 0; j < acked_slots; j++) {
-		if ((i + j) >= dev->ishtp_dma_num_slots ||
-					!dev->ishtp_dma_tx_map[i+j]) {
-			/* no such slot, or memory is already free */
+	क्रम (j = 0; j < acked_slots; j++) अणु
+		अगर ((i + j) >= dev->ishtp_dma_num_slots ||
+					!dev->ishtp_dma_tx_map[i+j]) अणु
+			/* no such slot, or memory is alपढ़ोy मुक्त */
 			spin_unlock_irqrestore(&dev->ishtp_dma_tx_lock, flags);
 			dev_err(dev->devc, "Bad DMA Tx ack address\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		dev->ishtp_dma_tx_map[i+j] = 0;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dev->ishtp_dma_tx_lock, flags);
-}
+पूर्ण

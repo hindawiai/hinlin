@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Header for ni_labpc ISA/PCMCIA/PCI drivers
+ * Header क्रम ni_labpc ISA/PCMCIA/PCI drivers
  *
- * Copyright (C) 2003 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Copyright (C) 2003 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
-#ifndef _NI_LABPC_H
-#define _NI_LABPC_H
+#अगर_अघोषित _NI_LABPC_H
+#घोषणा _NI_LABPC_H
 
-enum transfer_type { fifo_not_empty_transfer, fifo_half_full_transfer,
+क्रमागत transfer_type अणु fअगरo_not_empty_transfer, fअगरo_half_full_transfer,
 	isa_dma_transfer
-};
+पूर्ण;
 
-struct labpc_boardinfo {
-	const char *name;
-	int ai_speed;			/* maximum input speed in ns */
-	unsigned ai_scan_up:1;		/* can auto scan up in ai channels */
-	unsigned has_ao:1;		/* has analog outputs */
-	unsigned is_labpc1200:1;	/* has extra regs compared to pc+ */
-};
+काष्ठा labpc_boardinfo अणु
+	स्थिर अक्षर *name;
+	पूर्णांक ai_speed;			/* maximum input speed in ns */
+	अचिन्हित ai_scan_up:1;		/* can स्वतः scan up in ai channels */
+	अचिन्हित has_ao:1;		/* has analog outमाला_दो */
+	अचिन्हित is_labpc1200:1;	/* has extra regs compared to pc+ */
+पूर्ण;
 
-struct labpc_private {
-	struct comedi_isadma *dma;
-	struct comedi_8254 *counter;
+काष्ठा labpc_निजी अणु
+	काष्ठा comedi_isadma *dma;
+	काष्ठा comedi_8254 *counter;
 
-	/*  number of data points left to be taken */
-	unsigned long long count;
-	/*  software copys of bits written to command registers */
-	unsigned int cmd1;
-	unsigned int cmd2;
-	unsigned int cmd3;
-	unsigned int cmd4;
-	unsigned int cmd5;
-	unsigned int cmd6;
-	/*  store last read of board status registers */
-	unsigned int stat1;
-	unsigned int stat2;
+	/*  number of data poपूर्णांकs left to be taken */
+	अचिन्हित दीर्घ दीर्घ count;
+	/*  software copys of bits written to command रेजिस्टरs */
+	अचिन्हित पूर्णांक cmd1;
+	अचिन्हित पूर्णांक cmd2;
+	अचिन्हित पूर्णांक cmd3;
+	अचिन्हित पूर्णांक cmd4;
+	अचिन्हित पूर्णांक cmd5;
+	अचिन्हित पूर्णांक cmd6;
+	/*  store last पढ़ो of board status रेजिस्टरs */
+	अचिन्हित पूर्णांक stat1;
+	अचिन्हित पूर्णांक stat2;
 
-	/* we are using dma/fifo-half-full/etc. */
-	enum transfer_type current_transfer;
+	/* we are using dma/fअगरo-half-full/etc. */
+	क्रमागत transfer_type current_transfer;
 	/*
-	 * function pointers so we can use inb/outb or readb/writeb as
+	 * function poपूर्णांकers so we can use inb/outb or पढ़ोb/ग_लिखोb as
 	 * appropriate
 	 */
-	unsigned int (*read_byte)(struct comedi_device *dev, unsigned long reg);
-	void (*write_byte)(struct comedi_device *dev,
-			   unsigned int byte, unsigned long reg);
-};
+	अचिन्हित पूर्णांक (*पढ़ो_byte)(काष्ठा comedi_device *dev, अचिन्हित दीर्घ reg);
+	व्योम (*ग_लिखो_byte)(काष्ठा comedi_device *dev,
+			   अचिन्हित पूर्णांक byte, अचिन्हित दीर्घ reg);
+पूर्ण;
 
-int labpc_common_attach(struct comedi_device *dev,
-			unsigned int irq, unsigned long isr_flags);
-void labpc_common_detach(struct comedi_device *dev);
+पूर्णांक labpc_common_attach(काष्ठा comedi_device *dev,
+			अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ isr_flags);
+व्योम labpc_common_detach(काष्ठा comedi_device *dev);
 
-#endif /* _NI_LABPC_H */
+#पूर्ण_अगर /* _NI_LABPC_H */

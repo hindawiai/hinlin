@@ -1,102 +1,103 @@
+<शैली गुरु>
 /*
  * Kernel Debugger Architecture Independent Main Code
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1999-2004 Silicon Graphics, Inc.  All Rights Reserved.
  * Copyright (C) 2000 Stephane Eranian <eranian@hpl.hp.com>
- * Xscale (R) modifications copyright (C) 2003 Intel Corporation.
+ * Xscale (R) modअगरications copyright (C) 2003 Intel Corporation.
  * Copyright (c) 2009 Wind River Systems, Inc.  All Rights Reserved.
  */
 
-#include <linux/ctype.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/kmsg_dump.h>
-#include <linux/reboot.h>
-#include <linux/sched.h>
-#include <linux/sched/loadavg.h>
-#include <linux/sched/stat.h>
-#include <linux/sched/debug.h>
-#include <linux/sysrq.h>
-#include <linux/smp.h>
-#include <linux/utsname.h>
-#include <linux/vmalloc.h>
-#include <linux/atomic.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/kallsyms.h>
-#include <linux/kgdb.h>
-#include <linux/kdb.h>
-#include <linux/list.h>
-#include <linux/notifier.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/nmi.h>
-#include <linux/time.h>
-#include <linux/ptrace.h>
-#include <linux/sysctl.h>
-#include <linux/cpu.h>
-#include <linux/kdebug.h>
-#include <linux/proc_fs.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include "kdb_private.h"
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kmsg_dump.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/loadavg.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/kdb.h>
+#समावेश <linux/list.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश "kdb_private.h"
 
-#undef	MODULE_PARAM_PREFIX
-#define	MODULE_PARAM_PREFIX "kdb."
+#अघोषित	MODULE_PARAM_PREFIX
+#घोषणा	MODULE_PARAM_PREFIX "kdb."
 
-static int kdb_cmd_enabled = CONFIG_KDB_DEFAULT_ENABLE;
-module_param_named(cmd_enable, kdb_cmd_enabled, int, 0600);
+अटल पूर्णांक kdb_cmd_enabled = CONFIG_KDB_DEFAULT_ENABLE;
+module_param_named(cmd_enable, kdb_cmd_enabled, पूर्णांक, 0600);
 
-char kdb_grep_string[KDB_GREP_STRLEN];
-int kdb_grepping_flag;
+अक्षर kdb_grep_string[KDB_GREP_STRLEN];
+पूर्णांक kdb_grepping_flag;
 EXPORT_SYMBOL(kdb_grepping_flag);
-int kdb_grep_leading;
-int kdb_grep_trailing;
+पूर्णांक kdb_grep_leading;
+पूर्णांक kdb_grep_trailing;
 
 /*
  * Kernel debugger state flags
  */
-unsigned int kdb_flags;
+अचिन्हित पूर्णांक kdb_flags;
 
 /*
  * kdb_lock protects updates to kdb_initial_cpu.  Used to
- * single thread processors through the kernel debugger.
+ * single thपढ़ो processors through the kernel debugger.
  */
-int kdb_initial_cpu = -1;	/* cpu number that owns kdb */
-int kdb_nextline = 1;
-int kdb_state;			/* General KDB state */
+पूर्णांक kdb_initial_cpu = -1;	/* cpu number that owns kdb */
+पूर्णांक kdb_nextline = 1;
+पूर्णांक kdb_state;			/* General KDB state */
 
-struct task_struct *kdb_current_task;
-struct pt_regs *kdb_current_regs;
+काष्ठा task_काष्ठा *kdb_current_task;
+काष्ठा pt_regs *kdb_current_regs;
 
-const char *kdb_diemsg;
-static int kdb_go_count;
-#ifdef CONFIG_KDB_CONTINUE_CATASTROPHIC
-static unsigned int kdb_continue_catastrophic =
+स्थिर अक्षर *kdb_diemsg;
+अटल पूर्णांक kdb_go_count;
+#अगर_घोषित CONFIG_KDB_CONTINUE_CATASTROPHIC
+अटल अचिन्हित पूर्णांक kdb_जारी_catastrophic =
 	CONFIG_KDB_CONTINUE_CATASTROPHIC;
-#else
-static unsigned int kdb_continue_catastrophic;
-#endif
+#अन्यथा
+अटल अचिन्हित पूर्णांक kdb_जारी_catastrophic;
+#पूर्ण_अगर
 
 /* kdb_cmds_head describes the available commands. */
-static LIST_HEAD(kdb_cmds_head);
+अटल LIST_HEAD(kdb_cmds_head);
 
-typedef struct _kdbmsg {
-	int	km_diag;	/* kdb diagnostic */
-	char	*km_msg;	/* Corresponding message text */
-} kdbmsg_t;
+प्रकार काष्ठा _kdbmsg अणु
+	पूर्णांक	km_diag;	/* kdb diagnostic */
+	अक्षर	*km_msg;	/* Corresponding message text */
+पूर्ण kdbmsg_t;
 
-#define KDBMSG(msgnum, text) \
-	{ KDB_##msgnum, text }
+#घोषणा KDBMSG(msgnum, text) \
+	अणु KDB_##msgnum, text पूर्ण
 
-static kdbmsg_t kdbmsgs[] = {
+अटल kdbmsg_t kdbmsgs[] = अणु
 	KDBMSG(NOTFOUND, "Command Not Found"),
 	KDBMSG(ARGCOUNT, "Improper argument count, see usage."),
 	KDBMSG(BADWIDTH, "Illegal value for BYTESPERWORD use 1, 2, 4 or 8, "
@@ -108,11 +109,11 @@ static kdbmsg_t kdbmsgs[] = {
 	KDBMSG(ENVFULL, "Environment full"),
 	KDBMSG(ENVBUFFULL, "Environment buffer full"),
 	KDBMSG(TOOMANYBPT, "Too many breakpoints defined"),
-#ifdef CONFIG_CPU_XSCALE
+#अगर_घोषित CONFIG_CPU_XSCALE
 	KDBMSG(TOOMANYDBREGS, "More breakpoints than ibcr registers defined"),
-#else
+#अन्यथा
 	KDBMSG(TOOMANYDBREGS, "More breakpoints than db registers defined"),
-#endif
+#पूर्ण_अगर
 	KDBMSG(DUPBPT, "Duplicate breakpoint address"),
 	KDBMSG(BPTNOTFOUND, "Breakpoint not found"),
 	KDBMSG(BADMODE, "Invalid IDMODE"),
@@ -124,174 +125,174 @@ static kdbmsg_t kdbmsgs[] = {
 	KDBMSG(NOBP, "No Breakpoint exists"),
 	KDBMSG(BADADDR, "Invalid address"),
 	KDBMSG(NOPERM, "Permission denied"),
-};
-#undef KDBMSG
+पूर्ण;
+#अघोषित KDBMSG
 
-static const int __nkdb_err = ARRAY_SIZE(kdbmsgs);
+अटल स्थिर पूर्णांक __nkdb_err = ARRAY_SIZE(kdbmsgs);
 
 
 /*
- * Initial environment.   This is all kept static and local to
- * this file.   We don't want to rely on the memory allocation
+ * Initial environment.   This is all kept अटल and local to
+ * this file.   We करोn't want to rely on the memory allocation
  * mechanisms in the kernel, so we use a very limited allocate-only
- * heap for new and altered environment variables.  The entire
+ * heap क्रम new and altered environment variables.  The entire
  * environment is limited to a fixed number of entries (add more
- * to __env[] if required) and a fixed amount of heap (add more to
- * KDB_ENVBUFSIZE if required).
+ * to __env[] अगर required) and a fixed amount of heap (add more to
+ * KDB_ENVबफ_मानE अगर required).
  */
 
-static char *__env[31] = {
-#if defined(CONFIG_SMP)
+अटल अक्षर *__env[31] = अणु
+#अगर defined(CONFIG_SMP)
 	"PROMPT=[%d]kdb> ",
-#else
+#अन्यथा
 	"PROMPT=kdb> ",
-#endif
+#पूर्ण_अगर
 	"MOREPROMPT=more> ",
 	"RADIX=16",
 	"MDCOUNT=8",		/* lines of md output */
 	KDB_PLATFORM_ENV,
 	"DTABCOUNT=30",
 	"NOSECT=1",
-};
+पूर्ण;
 
-static const int __nenv = ARRAY_SIZE(__env);
+अटल स्थिर पूर्णांक __nenv = ARRAY_SIZE(__env);
 
-struct task_struct *kdb_curr_task(int cpu)
-{
-	struct task_struct *p = curr_task(cpu);
-#ifdef	_TIF_MCA_INIT
-	if ((task_thread_info(p)->flags & _TIF_MCA_INIT) && KDB_TSK(cpu))
+काष्ठा task_काष्ठा *kdb_curr_task(पूर्णांक cpu)
+अणु
+	काष्ठा task_काष्ठा *p = curr_task(cpu);
+#अगर_घोषित	_TIF_MCA_INIT
+	अगर ((task_thपढ़ो_info(p)->flags & _TIF_MCA_INIT) && KDB_TSK(cpu))
 		p = krp->p;
-#endif
-	return p;
-}
+#पूर्ण_अगर
+	वापस p;
+पूर्ण
 
 /*
  * Check whether the flags of the current command and the permissions
  * of the kdb console has allow a command to be run.
  */
-static inline bool kdb_check_flags(kdb_cmdflags_t flags, int permissions,
+अटल अंतरभूत bool kdb_check_flags(kdb_cmdflags_t flags, पूर्णांक permissions,
 				   bool no_args)
-{
+अणु
 	/* permissions comes from userspace so needs massaging slightly */
 	permissions &= KDB_ENABLE_MASK;
 	permissions |= KDB_ENABLE_ALWAYS_SAFE;
 
 	/* some commands change group when launched with no arguments */
-	if (no_args)
+	अगर (no_args)
 		permissions |= permissions << KDB_ENABLE_NO_ARGS_SHIFT;
 
 	flags |= KDB_ENABLE_ALL;
 
-	return permissions & flags;
-}
+	वापस permissions & flags;
+पूर्ण
 
 /*
- * kdbgetenv - This function will return the character string value of
+ * kdbदो_पर्या - This function will वापस the अक्षरacter string value of
  *	an environment variable.
  * Parameters:
- *	match	A character string representing an environment variable.
+ *	match	A अक्षरacter string representing an environment variable.
  * Returns:
- *	NULL	No environment variable matches 'match'
- *	char*	Pointer to string value of environment variable.
+ *	शून्य	No environment variable matches 'match'
+ *	अक्षर*	Poपूर्णांकer to string value of environment variable.
  */
-char *kdbgetenv(const char *match)
-{
-	char **ep = __env;
-	int matchlen = strlen(match);
-	int i;
+अक्षर *kdbदो_पर्या(स्थिर अक्षर *match)
+अणु
+	अक्षर **ep = __env;
+	पूर्णांक matchlen = म_माप(match);
+	पूर्णांक i;
 
-	for (i = 0; i < __nenv; i++) {
-		char *e = *ep++;
+	क्रम (i = 0; i < __nenv; i++) अणु
+		अक्षर *e = *ep++;
 
-		if (!e)
-			continue;
+		अगर (!e)
+			जारी;
 
-		if ((strncmp(match, e, matchlen) == 0)
+		अगर ((म_भेदन(match, e, matchlen) == 0)
 		 && ((e[matchlen] == '\0')
-		   || (e[matchlen] == '='))) {
-			char *cp = strchr(e, '=');
-			return cp ? ++cp : "";
-		}
-	}
-	return NULL;
-}
+		   || (e[matchlen] == '='))) अणु
+			अक्षर *cp = म_अक्षर(e, '=');
+			वापस cp ? ++cp : "";
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
- * kdballocenv - This function is used to allocate bytes for
+ * kdballocenv - This function is used to allocate bytes क्रम
  *	environment entries.
  * Parameters:
- *	match	A character string representing a numeric value
- * Outputs:
- *	*value  the unsigned long representation of the env variable 'match'
+ *	match	A अक्षरacter string representing a numeric value
+ * Outमाला_दो:
+ *	*value  the अचिन्हित दीर्घ representation of the env variable 'match'
  * Returns:
  *	Zero on success, a kdb diagnostic on failure.
  * Remarks:
- *	We use a static environment buffer (envbuffer) to hold the values
+ *	We use a अटल environment buffer (envbuffer) to hold the values
  *	of dynamically generated environment variables (see kdb_set).  Buffer
- *	space once allocated is never free'd, so over time, the amount of space
- *	(currently 512 bytes) will be exhausted if env variables are changed
+ *	space once allocated is never मुक्त'd, so over समय, the amount of space
+ *	(currently 512 bytes) will be exhausted अगर env variables are changed
  *	frequently.
  */
-static char *kdballocenv(size_t bytes)
-{
-#define	KDB_ENVBUFSIZE	512
-	static char envbuffer[KDB_ENVBUFSIZE];
-	static int envbufsize;
-	char *ep = NULL;
+अटल अक्षर *kdballocenv(माप_प्रकार bytes)
+अणु
+#घोषणा	KDB_ENVबफ_मानE	512
+	अटल अक्षर envbuffer[KDB_ENVबफ_मानE];
+	अटल पूर्णांक envbufsize;
+	अक्षर *ep = शून्य;
 
-	if ((KDB_ENVBUFSIZE - envbufsize) >= bytes) {
+	अगर ((KDB_ENVबफ_मानE - envbufsize) >= bytes) अणु
 		ep = &envbuffer[envbufsize];
 		envbufsize += bytes;
-	}
-	return ep;
-}
+	पूर्ण
+	वापस ep;
+पूर्ण
 
 /*
- * kdbgetulenv - This function will return the value of an unsigned
- *	long-valued environment variable.
+ * kdbgetulenv - This function will वापस the value of an अचिन्हित
+ *	दीर्घ-valued environment variable.
  * Parameters:
- *	match	A character string representing a numeric value
- * Outputs:
- *	*value  the unsigned long represntation of the env variable 'match'
+ *	match	A अक्षरacter string representing a numeric value
+ * Outमाला_दो:
+ *	*value  the अचिन्हित दीर्घ represntation of the env variable 'match'
  * Returns:
  *	Zero on success, a kdb diagnostic on failure.
  */
-static int kdbgetulenv(const char *match, unsigned long *value)
-{
-	char *ep;
+अटल पूर्णांक kdbgetulenv(स्थिर अक्षर *match, अचिन्हित दीर्घ *value)
+अणु
+	अक्षर *ep;
 
-	ep = kdbgetenv(match);
-	if (!ep)
-		return KDB_NOTENV;
-	if (strlen(ep) == 0)
-		return KDB_NOENVVALUE;
+	ep = kdbदो_पर्या(match);
+	अगर (!ep)
+		वापस KDB_NOTENV;
+	अगर (म_माप(ep) == 0)
+		वापस KDB_NOENVVALUE;
 
-	*value = simple_strtoul(ep, NULL, 0);
+	*value = simple_म_से_अदीर्घ(ep, शून्य, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * kdbgetintenv - This function will return the value of an
- *	integer-valued environment variable.
+ * kdbgetपूर्णांकenv - This function will वापस the value of an
+ *	पूर्णांकeger-valued environment variable.
  * Parameters:
- *	match	A character string representing an integer-valued env variable
- * Outputs:
- *	*value  the integer representation of the environment variable 'match'
+ *	match	A अक्षरacter string representing an पूर्णांकeger-valued env variable
+ * Outमाला_दो:
+ *	*value  the पूर्णांकeger representation of the environment variable 'match'
  * Returns:
  *	Zero on success, a kdb diagnostic on failure.
  */
-int kdbgetintenv(const char *match, int *value)
-{
-	unsigned long val;
-	int diag;
+पूर्णांक kdbgetपूर्णांकenv(स्थिर अक्षर *match, पूर्णांक *value)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक diag;
 
 	diag = kdbgetulenv(match, &val);
-	if (!diag)
-		*value = (int) val;
-	return diag;
-}
+	अगर (!diag)
+		*value = (पूर्णांक) val;
+	वापस diag;
+पूर्ण
 
 /*
  * kdb_setenv() - Alter an existing environment variable or create a new one.
@@ -300,207 +301,207 @@ int kdbgetintenv(const char *match, int *value)
  *
  * Return: Zero on success, a kdb diagnostic on failure.
  */
-static int kdb_setenv(const char *var, const char *val)
-{
-	int i;
-	char *ep;
-	size_t varlen, vallen;
+अटल पूर्णांक kdb_setenv(स्थिर अक्षर *var, स्थिर अक्षर *val)
+अणु
+	पूर्णांक i;
+	अक्षर *ep;
+	माप_प्रकार varlen, vallen;
 
-	varlen = strlen(var);
-	vallen = strlen(val);
+	varlen = म_माप(var);
+	vallen = म_माप(val);
 	ep = kdballocenv(varlen + vallen + 2);
-	if (ep == (char *)0)
-		return KDB_ENVBUFFULL;
+	अगर (ep == (अक्षर *)0)
+		वापस KDB_ENVBUFFULL;
 
-	sprintf(ep, "%s=%s", var, val);
+	प्र_लिखो(ep, "%s=%s", var, val);
 
-	for (i = 0; i < __nenv; i++) {
-		if (__env[i]
-		 && ((strncmp(__env[i], var, varlen) == 0)
+	क्रम (i = 0; i < __nenv; i++) अणु
+		अगर (__env[i]
+		 && ((म_भेदन(__env[i], var, varlen) == 0)
 		   && ((__env[i][varlen] == '\0')
-		    || (__env[i][varlen] == '=')))) {
+		    || (__env[i][varlen] == '=')))) अणु
 			__env[i] = ep;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Wasn't existing variable.  Fit into slot.
+	 * Wasn't existing variable.  Fit पूर्णांकo slot.
 	 */
-	for (i = 0; i < __nenv-1; i++) {
-		if (__env[i] == (char *)0) {
+	क्रम (i = 0; i < __nenv-1; i++) अणु
+		अगर (__env[i] == (अक्षर *)0) अणु
 			__env[i] = ep;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return KDB_ENVFULL;
-}
+	वापस KDB_ENVFULL;
+पूर्ण
 
 /*
- * kdb_printenv() - Display the current environment variables.
+ * kdb_prपूर्णांकenv() - Display the current environment variables.
  */
-static void kdb_printenv(void)
-{
-	int i;
+अटल व्योम kdb_prपूर्णांकenv(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < __nenv; i++) {
-		if (__env[i])
-			kdb_printf("%s\n", __env[i]);
-	}
-}
+	क्रम (i = 0; i < __nenv; i++) अणु
+		अगर (__env[i])
+			kdb_म_लिखो("%s\n", __env[i]);
+	पूर्ण
+पूर्ण
 
 /*
- * kdbgetularg - This function will convert a numeric string into an
- *	unsigned long value.
+ * kdbgetularg - This function will convert a numeric string पूर्णांकo an
+ *	अचिन्हित दीर्घ value.
  * Parameters:
- *	arg	A character string representing a numeric value
- * Outputs:
- *	*value  the unsigned long represntation of arg.
+ *	arg	A अक्षरacter string representing a numeric value
+ * Outमाला_दो:
+ *	*value  the अचिन्हित दीर्घ represntation of arg.
  * Returns:
  *	Zero on success, a kdb diagnostic on failure.
  */
-int kdbgetularg(const char *arg, unsigned long *value)
-{
-	char *endp;
-	unsigned long val;
+पूर्णांक kdbgetularg(स्थिर अक्षर *arg, अचिन्हित दीर्घ *value)
+अणु
+	अक्षर *endp;
+	अचिन्हित दीर्घ val;
 
-	val = simple_strtoul(arg, &endp, 0);
+	val = simple_म_से_अदीर्घ(arg, &endp, 0);
 
-	if (endp == arg) {
+	अगर (endp == arg) अणु
 		/*
-		 * Also try base 16, for us folks too lazy to type the
+		 * Also try base 16, क्रम us folks too lazy to type the
 		 * leading 0x...
 		 */
-		val = simple_strtoul(arg, &endp, 16);
-		if (endp == arg)
-			return KDB_BADINT;
-	}
+		val = simple_म_से_अदीर्घ(arg, &endp, 16);
+		अगर (endp == arg)
+			वापस KDB_BADINT;
+	पूर्ण
 
 	*value = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kdbgetu64arg(const char *arg, u64 *value)
-{
-	char *endp;
+पूर्णांक kdbgetu64arg(स्थिर अक्षर *arg, u64 *value)
+अणु
+	अक्षर *endp;
 	u64 val;
 
-	val = simple_strtoull(arg, &endp, 0);
+	val = simple_म_से_अदीर्घl(arg, &endp, 0);
 
-	if (endp == arg) {
+	अगर (endp == arg) अणु
 
-		val = simple_strtoull(arg, &endp, 16);
-		if (endp == arg)
-			return KDB_BADINT;
-	}
+		val = simple_म_से_अदीर्घl(arg, &endp, 16);
+		अगर (endp == arg)
+			वापस KDB_BADINT;
+	पूर्ण
 
 	*value = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_set - This function implements the 'set' command.  Alter an
  *	existing environment variable or create a new one.
  */
-int kdb_set(int argc, const char **argv)
-{
+पूर्णांक kdb_set(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	/*
 	 * we can be invoked two ways:
 	 *   set var=value    argv[1]="var", argv[2]="value"
 	 *   set var = value  argv[1]="var", argv[2]="=", argv[3]="value"
-	 * - if the latter, shift 'em down.
+	 * - अगर the latter, shअगरt 'em करोwn.
 	 */
-	if (argc == 3) {
+	अगर (argc == 3) अणु
 		argv[2] = argv[3];
 		argc--;
-	}
+	पूर्ण
 
-	if (argc != 2)
-		return KDB_ARGCOUNT;
+	अगर (argc != 2)
+		वापस KDB_ARGCOUNT;
 
 	/*
 	 * Censor sensitive variables
 	 */
-	if (strcmp(argv[1], "PROMPT") == 0 &&
+	अगर (म_भेद(argv[1], "PROMPT") == 0 &&
 	    !kdb_check_flags(KDB_ENABLE_MEM_READ, kdb_cmd_enabled, false))
-		return KDB_NOPERM;
+		वापस KDB_NOPERM;
 
 	/*
-	 * Check for internal variables
+	 * Check क्रम पूर्णांकernal variables
 	 */
-	if (strcmp(argv[1], "KDBDEBUG") == 0) {
-		unsigned int debugflags;
-		char *cp;
+	अगर (म_भेद(argv[1], "KDBDEBUG") == 0) अणु
+		अचिन्हित पूर्णांक debugflags;
+		अक्षर *cp;
 
-		debugflags = simple_strtoul(argv[2], &cp, 0);
-		if (cp == argv[2] || debugflags & ~KDB_DEBUG_FLAG_MASK) {
-			kdb_printf("kdb: illegal debug flags '%s'\n",
+		debugflags = simple_म_से_अदीर्घ(argv[2], &cp, 0);
+		अगर (cp == argv[2] || debugflags & ~KDB_DEBUG_FLAG_MASK) अणु
+			kdb_म_लिखो("kdb: illegal debug flags '%s'\n",
 				    argv[2]);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		kdb_flags = (kdb_flags & ~KDB_DEBUG(MASK))
 			| (debugflags << KDB_DEBUG_FLAG_SHIFT);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Tokenizer squashed the '=' sign.  argv[1] is variable
 	 * name, argv[2] = value.
 	 */
-	return kdb_setenv(argv[1], argv[2]);
-}
+	वापस kdb_setenv(argv[1], argv[2]);
+पूर्ण
 
-static int kdb_check_regs(void)
-{
-	if (!kdb_current_regs) {
-		kdb_printf("No current kdb registers."
+अटल पूर्णांक kdb_check_regs(व्योम)
+अणु
+	अगर (!kdb_current_regs) अणु
+		kdb_म_लिखो("No current kdb registers."
 			   "  You may need to select another task\n");
-		return KDB_BADREG;
-	}
-	return 0;
-}
+		वापस KDB_BADREG;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * kdbgetaddrarg - This function is responsible for parsing an
- *	address-expression and returning the value of the expression,
+ * kdbgetaddrarg - This function is responsible क्रम parsing an
+ *	address-expression and वापसing the value of the expression,
  *	symbol name, and offset to the caller.
  *
  *	The argument may consist of a numeric value (decimal or
- *	hexidecimal), a symbol name, a register name (preceded by the
+ *	hexidecimal), a symbol name, a रेजिस्टर name (preceded by the
  *	percent sign), an environment variable with a numeric value
- *	(preceded by a dollar sign) or a simple arithmetic expression
- *	consisting of a symbol name, +/-, and a numeric constant value
+ *	(preceded by a करोllar sign) or a simple arithmetic expression
+ *	consisting of a symbol name, +/-, and a numeric स्थिरant value
  *	(offset).
  * Parameters:
  *	argc	- count of arguments in argv
  *	argv	- argument vector
  *	*nextarg - index to next unparsed argument in argv[]
- *	regs	- Register state at time of KDB entry
- * Outputs:
+ *	regs	- Register state at समय of KDB entry
+ * Outमाला_दो:
  *	*value	- receives the value of the address-expression
- *	*offset - receives the offset specified, if any
- *	*name   - receives the symbol name, if any
+ *	*offset - receives the offset specअगरied, अगर any
+ *	*name   - receives the symbol name, अगर any
  *	*nextarg - index to next unparsed argument in argv[]
  * Returns:
- *	zero is returned on success, a kdb diagnostic code is
- *      returned on error.
+ *	zero is वापसed on success, a kdb diagnostic code is
+ *      वापसed on error.
  */
-int kdbgetaddrarg(int argc, const char **argv, int *nextarg,
-		  unsigned long *value,  long *offset,
-		  char **name)
-{
-	unsigned long addr;
-	unsigned long off = 0;
-	int positive;
-	int diag;
-	int found = 0;
-	char *symname;
-	char symbol = '\0';
-	char *cp;
+पूर्णांक kdbgetaddrarg(पूर्णांक argc, स्थिर अक्षर **argv, पूर्णांक *nextarg,
+		  अचिन्हित दीर्घ *value,  दीर्घ *offset,
+		  अक्षर **name)
+अणु
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ off = 0;
+	पूर्णांक positive;
+	पूर्णांक diag;
+	पूर्णांक found = 0;
+	अक्षर *symname;
+	अक्षर symbol = '\0';
+	अक्षर *cp;
 	kdb_symtab_t symtab;
 
 	/*
@@ -508,388 +509,388 @@ int kdbgetaddrarg(int argc, const char **argv, int *nextarg,
 	 * and flow control then there are no reasonable grounds to
 	 * provide symbol lookup.
 	 */
-	if (!kdb_check_flags(KDB_ENABLE_MEM_READ | KDB_ENABLE_FLOW_CTRL,
+	अगर (!kdb_check_flags(KDB_ENABLE_MEM_READ | KDB_ENABLE_FLOW_CTRL,
 			     kdb_cmd_enabled, false))
-		return KDB_NOPERM;
+		वापस KDB_NOPERM;
 
 	/*
 	 * Process arguments which follow the following syntax:
 	 *
 	 *  symbol | numeric-address [+/- numeric-offset]
-	 *  %register
+	 *  %रेजिस्टर
 	 *  $environment-variable
 	 */
 
-	if (*nextarg > argc)
-		return KDB_ARGCOUNT;
+	अगर (*nextarg > argc)
+		वापस KDB_ARGCOUNT;
 
-	symname = (char *)argv[*nextarg];
+	symname = (अक्षर *)argv[*nextarg];
 
 	/*
 	 * If there is no whitespace between the symbol
 	 * or address and the '+' or '-' symbols, we
-	 * remember the character and replace it with a
+	 * remember the अक्षरacter and replace it with a
 	 * null so the symbol/value can be properly parsed
 	 */
 	cp = strpbrk(symname, "+-");
-	if (cp != NULL) {
+	अगर (cp != शून्य) अणु
 		symbol = *cp;
 		*cp++ = '\0';
-	}
+	पूर्ण
 
-	if (symname[0] == '$') {
+	अगर (symname[0] == '$') अणु
 		diag = kdbgetulenv(&symname[1], &addr);
-		if (diag)
-			return diag;
-	} else if (symname[0] == '%') {
+		अगर (diag)
+			वापस diag;
+	पूर्ण अन्यथा अगर (symname[0] == '%') अणु
 		diag = kdb_check_regs();
-		if (diag)
-			return diag;
-		/* Implement register values with % at a later time as it is
+		अगर (diag)
+			वापस diag;
+		/* Implement रेजिस्टर values with % at a later समय as it is
 		 * arch optional.
 		 */
-		return KDB_NOTIMP;
-	} else {
-		found = kdbgetsymval(symname, &symtab);
-		if (found) {
+		वापस KDB_NOTIMP;
+	पूर्ण अन्यथा अणु
+		found = kdbमाला_लोymval(symname, &symtab);
+		अगर (found) अणु
 			addr = symtab.sym_start;
-		} else {
+		पूर्ण अन्यथा अणु
 			diag = kdbgetularg(argv[*nextarg], &addr);
-			if (diag)
-				return diag;
-		}
-	}
+			अगर (diag)
+				वापस diag;
+		पूर्ण
+	पूर्ण
 
-	if (!found)
+	अगर (!found)
 		found = kdbnearsym(addr, &symtab);
 
 	(*nextarg)++;
 
-	if (name)
+	अगर (name)
 		*name = symname;
-	if (value)
+	अगर (value)
 		*value = addr;
-	if (offset && name && *name)
+	अगर (offset && name && *name)
 		*offset = addr - symtab.sym_start;
 
-	if ((*nextarg > argc)
+	अगर ((*nextarg > argc)
 	 && (symbol == '\0'))
-		return 0;
+		वापस 0;
 
 	/*
-	 * check for +/- and offset
+	 * check क्रम +/- and offset
 	 */
 
-	if (symbol == '\0') {
-		if ((argv[*nextarg][0] != '+')
-		 && (argv[*nextarg][0] != '-')) {
+	अगर (symbol == '\0') अणु
+		अगर ((argv[*nextarg][0] != '+')
+		 && (argv[*nextarg][0] != '-')) अणु
 			/*
 			 * Not our argument.  Return.
 			 */
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			positive = (argv[*nextarg][0] == '+');
 			(*nextarg)++;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		positive = (symbol == '+');
 
 	/*
 	 * Now there must be an offset!
 	 */
-	if ((*nextarg > argc)
-	 && (symbol == '\0')) {
-		return KDB_INVADDRFMT;
-	}
+	अगर ((*nextarg > argc)
+	 && (symbol == '\0')) अणु
+		वापस KDB_INVADDRFMT;
+	पूर्ण
 
-	if (!symbol) {
-		cp = (char *)argv[*nextarg];
+	अगर (!symbol) अणु
+		cp = (अक्षर *)argv[*nextarg];
 		(*nextarg)++;
-	}
+	पूर्ण
 
 	diag = kdbgetularg(cp, &off);
-	if (diag)
-		return diag;
+	अगर (diag)
+		वापस diag;
 
-	if (!positive)
+	अगर (!positive)
 		off = -off;
 
-	if (offset)
+	अगर (offset)
 		*offset += off;
 
-	if (value)
+	अगर (value)
 		*value += off;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kdb_cmderror(int diag)
-{
-	int i;
+अटल व्योम kdb_cmderror(पूर्णांक diag)
+अणु
+	पूर्णांक i;
 
-	if (diag >= 0) {
-		kdb_printf("no error detected (diagnostic is %d)\n", diag);
-		return;
-	}
+	अगर (diag >= 0) अणु
+		kdb_म_लिखो("no error detected (diagnostic is %d)\n", diag);
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < __nkdb_err; i++) {
-		if (kdbmsgs[i].km_diag == diag) {
-			kdb_printf("diag: %d: %s\n", diag, kdbmsgs[i].km_msg);
-			return;
-		}
-	}
+	क्रम (i = 0; i < __nkdb_err; i++) अणु
+		अगर (kdbmsgs[i].km_diag == diag) अणु
+			kdb_म_लिखो("diag: %d: %s\n", diag, kdbmsgs[i].km_msg);
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	kdb_printf("Unknown diag %d\n", -diag);
-}
+	kdb_म_लिखो("Unknown diag %d\n", -diag);
+पूर्ण
 
 /*
  * kdb_defcmd, kdb_defcmd2 - This function implements the 'defcmd'
  *	command which defines one command as a set of other commands,
  *	terminated by endefcmd.  kdb_defcmd processes the initial
- *	'defcmd' command, kdb_defcmd2 is invoked from kdb_parse for
+ *	'defcmd' command, kdb_defcmd2 is invoked from kdb_parse क्रम
  *	the following commands until 'endefcmd'.
- * Inputs:
+ * Inमाला_दो:
  *	argc	argument count
  *	argv	argument vector
  * Returns:
- *	zero for success, a kdb diagnostic if error
+ *	zero क्रम success, a kdb diagnostic अगर error
  */
-struct defcmd_set {
-	int count;
+काष्ठा defcmd_set अणु
+	पूर्णांक count;
 	bool usable;
-	char *name;
-	char *usage;
-	char *help;
-	char **command;
-};
-static struct defcmd_set *defcmd_set;
-static int defcmd_set_count;
-static bool defcmd_in_progress;
+	अक्षर *name;
+	अक्षर *usage;
+	अक्षर *help;
+	अक्षर **command;
+पूर्ण;
+अटल काष्ठा defcmd_set *defcmd_set;
+अटल पूर्णांक defcmd_set_count;
+अटल bool defcmd_in_progress;
 
 /* Forward references */
-static int kdb_exec_defcmd(int argc, const char **argv);
+अटल पूर्णांक kdb_exec_defcmd(पूर्णांक argc, स्थिर अक्षर **argv);
 
-static int kdb_defcmd2(const char *cmdstr, const char *argv0)
-{
-	struct defcmd_set *s = defcmd_set + defcmd_set_count - 1;
-	char **save_command = s->command;
-	if (strcmp(argv0, "endefcmd") == 0) {
+अटल पूर्णांक kdb_defcmd2(स्थिर अक्षर *cmdstr, स्थिर अक्षर *argv0)
+अणु
+	काष्ठा defcmd_set *s = defcmd_set + defcmd_set_count - 1;
+	अक्षर **save_command = s->command;
+	अगर (म_भेद(argv0, "endefcmd") == 0) अणु
 		defcmd_in_progress = false;
-		if (!s->count)
+		अगर (!s->count)
 			s->usable = false;
-		if (s->usable)
+		अगर (s->usable)
 			/* macros are always safe because when executed each
-			 * internal command re-enters kdb_parse() and is
-			 * safety checked individually.
+			 * पूर्णांकernal command re-enters kdb_parse() and is
+			 * safety checked inभागidually.
 			 */
-			kdb_register_flags(s->name, kdb_exec_defcmd, s->usage,
+			kdb_रेजिस्टर_flags(s->name, kdb_exec_defcmd, s->usage,
 					   s->help, 0,
 					   KDB_ENABLE_ALWAYS_SAFE);
-		return 0;
-	}
-	if (!s->usable)
-		return KDB_NOTIMP;
-	s->command = kcalloc(s->count + 1, sizeof(*(s->command)), GFP_KDB);
-	if (!s->command) {
-		kdb_printf("Could not allocate new kdb_defcmd table for %s\n",
+		वापस 0;
+	पूर्ण
+	अगर (!s->usable)
+		वापस KDB_NOTIMP;
+	s->command = kसुस्मृति(s->count + 1, माप(*(s->command)), GFP_KDB);
+	अगर (!s->command) अणु
+		kdb_म_लिखो("Could not allocate new kdb_defcmd table for %s\n",
 			   cmdstr);
 		s->usable = false;
-		return KDB_NOTIMP;
-	}
-	memcpy(s->command, save_command, s->count * sizeof(*(s->command)));
+		वापस KDB_NOTIMP;
+	पूर्ण
+	स_नकल(s->command, save_command, s->count * माप(*(s->command)));
 	s->command[s->count++] = kdb_strdup(cmdstr, GFP_KDB);
-	kfree(save_command);
-	return 0;
-}
+	kमुक्त(save_command);
+	वापस 0;
+पूर्ण
 
-static int kdb_defcmd(int argc, const char **argv)
-{
-	struct defcmd_set *save_defcmd_set = defcmd_set, *s;
-	if (defcmd_in_progress) {
-		kdb_printf("kdb: nested defcmd detected, assuming missing "
+अटल पूर्णांक kdb_defcmd(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा defcmd_set *save_defcmd_set = defcmd_set, *s;
+	अगर (defcmd_in_progress) अणु
+		kdb_म_लिखो("kdb: nested defcmd detected, assuming missing "
 			   "endefcmd\n");
 		kdb_defcmd2("endefcmd", "endefcmd");
-	}
-	if (argc == 0) {
-		int i;
-		for (s = defcmd_set; s < defcmd_set + defcmd_set_count; ++s) {
-			kdb_printf("defcmd %s \"%s\" \"%s\"\n", s->name,
+	पूर्ण
+	अगर (argc == 0) अणु
+		पूर्णांक i;
+		क्रम (s = defcmd_set; s < defcmd_set + defcmd_set_count; ++s) अणु
+			kdb_म_लिखो("defcmd %s \"%s\" \"%s\"\n", s->name,
 				   s->usage, s->help);
-			for (i = 0; i < s->count; ++i)
-				kdb_printf("%s", s->command[i]);
-			kdb_printf("endefcmd\n");
-		}
-		return 0;
-	}
-	if (argc != 3)
-		return KDB_ARGCOUNT;
-	if (in_dbg_master()) {
-		kdb_printf("Command only available during kdb_init()\n");
-		return KDB_NOTIMP;
-	}
-	defcmd_set = kmalloc_array(defcmd_set_count + 1, sizeof(*defcmd_set),
+			क्रम (i = 0; i < s->count; ++i)
+				kdb_म_लिखो("%s", s->command[i]);
+			kdb_म_लिखो("endefcmd\n");
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	अगर (argc != 3)
+		वापस KDB_ARGCOUNT;
+	अगर (in_dbg_master()) अणु
+		kdb_म_लिखो("Command only available during kdb_init()\n");
+		वापस KDB_NOTIMP;
+	पूर्ण
+	defcmd_set = kदो_स्मृति_array(defcmd_set_count + 1, माप(*defcmd_set),
 				   GFP_KDB);
-	if (!defcmd_set)
-		goto fail_defcmd;
-	memcpy(defcmd_set, save_defcmd_set,
-	       defcmd_set_count * sizeof(*defcmd_set));
+	अगर (!defcmd_set)
+		जाओ fail_defcmd;
+	स_नकल(defcmd_set, save_defcmd_set,
+	       defcmd_set_count * माप(*defcmd_set));
 	s = defcmd_set + defcmd_set_count;
-	memset(s, 0, sizeof(*s));
+	स_रखो(s, 0, माप(*s));
 	s->usable = true;
 	s->name = kdb_strdup(argv[1], GFP_KDB);
-	if (!s->name)
-		goto fail_name;
+	अगर (!s->name)
+		जाओ fail_name;
 	s->usage = kdb_strdup(argv[2], GFP_KDB);
-	if (!s->usage)
-		goto fail_usage;
+	अगर (!s->usage)
+		जाओ fail_usage;
 	s->help = kdb_strdup(argv[3], GFP_KDB);
-	if (!s->help)
-		goto fail_help;
-	if (s->usage[0] == '"') {
-		strcpy(s->usage, argv[2]+1);
-		s->usage[strlen(s->usage)-1] = '\0';
-	}
-	if (s->help[0] == '"') {
-		strcpy(s->help, argv[3]+1);
-		s->help[strlen(s->help)-1] = '\0';
-	}
+	अगर (!s->help)
+		जाओ fail_help;
+	अगर (s->usage[0] == '"') अणु
+		म_नकल(s->usage, argv[2]+1);
+		s->usage[म_माप(s->usage)-1] = '\0';
+	पूर्ण
+	अगर (s->help[0] == '"') अणु
+		म_नकल(s->help, argv[3]+1);
+		s->help[म_माप(s->help)-1] = '\0';
+	पूर्ण
 	++defcmd_set_count;
 	defcmd_in_progress = true;
-	kfree(save_defcmd_set);
-	return 0;
+	kमुक्त(save_defcmd_set);
+	वापस 0;
 fail_help:
-	kfree(s->usage);
+	kमुक्त(s->usage);
 fail_usage:
-	kfree(s->name);
+	kमुक्त(s->name);
 fail_name:
-	kfree(defcmd_set);
+	kमुक्त(defcmd_set);
 fail_defcmd:
-	kdb_printf("Could not allocate new defcmd_set entry for %s\n", argv[1]);
+	kdb_म_लिखो("Could not allocate new defcmd_set entry for %s\n", argv[1]);
 	defcmd_set = save_defcmd_set;
-	return KDB_NOTIMP;
-}
+	वापस KDB_NOTIMP;
+पूर्ण
 
 /*
  * kdb_exec_defcmd - Execute the set of commands associated with this
  *	defcmd name.
- * Inputs:
+ * Inमाला_दो:
  *	argc	argument count
  *	argv	argument vector
  * Returns:
- *	zero for success, a kdb diagnostic if error
+ *	zero क्रम success, a kdb diagnostic अगर error
  */
-static int kdb_exec_defcmd(int argc, const char **argv)
-{
-	int i, ret;
-	struct defcmd_set *s;
-	if (argc != 0)
-		return KDB_ARGCOUNT;
-	for (s = defcmd_set, i = 0; i < defcmd_set_count; ++i, ++s) {
-		if (strcmp(s->name, argv[0]) == 0)
-			break;
-	}
-	if (i == defcmd_set_count) {
-		kdb_printf("kdb_exec_defcmd: could not find commands for %s\n",
+अटल पूर्णांक kdb_exec_defcmd(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा defcmd_set *s;
+	अगर (argc != 0)
+		वापस KDB_ARGCOUNT;
+	क्रम (s = defcmd_set, i = 0; i < defcmd_set_count; ++i, ++s) अणु
+		अगर (म_भेद(s->name, argv[0]) == 0)
+			अवरोध;
+	पूर्ण
+	अगर (i == defcmd_set_count) अणु
+		kdb_म_लिखो("kdb_exec_defcmd: could not find commands for %s\n",
 			   argv[0]);
-		return KDB_NOTIMP;
-	}
-	for (i = 0; i < s->count; ++i) {
-		/* Recursive use of kdb_parse, do not use argv after
-		 * this point */
-		argv = NULL;
-		kdb_printf("[%s]kdb> %s\n", s->name, s->command[i]);
+		वापस KDB_NOTIMP;
+	पूर्ण
+	क्रम (i = 0; i < s->count; ++i) अणु
+		/* Recursive use of kdb_parse, करो not use argv after
+		 * this poपूर्णांक */
+		argv = शून्य;
+		kdb_म_लिखो("[%s]kdb> %s\n", s->name, s->command[i]);
 		ret = kdb_parse(s->command[i]);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Command history */
-#define KDB_CMD_HISTORY_COUNT	32
-#define CMD_BUFLEN		200	/* kdb_printf: max printline
+#घोषणा KDB_CMD_HISTORY_COUNT	32
+#घोषणा CMD_BUFLEN		200	/* kdb_म_लिखो: max prपूर्णांकline
 					 * size == 256 */
-static unsigned int cmd_head, cmd_tail;
-static unsigned int cmdptr;
-static char cmd_hist[KDB_CMD_HISTORY_COUNT][CMD_BUFLEN];
-static char cmd_cur[CMD_BUFLEN];
+अटल अचिन्हित पूर्णांक cmd_head, cmd_tail;
+अटल अचिन्हित पूर्णांक cmdptr;
+अटल अक्षर cmd_hist[KDB_CMD_HISTORY_COUNT][CMD_BUFLEN];
+अटल अक्षर cmd_cur[CMD_BUFLEN];
 
 /*
- * The "str" argument may point to something like  | grep xyz
+ * The "str" argument may poपूर्णांक to something like  | grep xyz
  */
-static void parse_grep(const char *str)
-{
-	int	len;
-	char	*cp = (char *)str, *cp2;
+अटल व्योम parse_grep(स्थिर अक्षर *str)
+अणु
+	पूर्णांक	len;
+	अक्षर	*cp = (अक्षर *)str, *cp2;
 
 	/* sanity check: we should have been called with the \ first */
-	if (*cp != '|')
-		return;
+	अगर (*cp != '|')
+		वापस;
 	cp++;
-	while (isspace(*cp))
+	जबतक (है_खाली(*cp))
 		cp++;
-	if (!str_has_prefix(cp, "grep ")) {
-		kdb_printf("invalid 'pipe', see grephelp\n");
-		return;
-	}
+	अगर (!str_has_prefix(cp, "grep ")) अणु
+		kdb_म_लिखो("invalid 'pipe', see grephelp\n");
+		वापस;
+	पूर्ण
 	cp += 5;
-	while (isspace(*cp))
+	जबतक (है_खाली(*cp))
 		cp++;
-	cp2 = strchr(cp, '\n');
-	if (cp2)
-		*cp2 = '\0'; /* remove the trailing newline */
-	len = strlen(cp);
-	if (len == 0) {
-		kdb_printf("invalid 'pipe', see grephelp\n");
-		return;
-	}
-	/* now cp points to a nonzero length search string */
-	if (*cp == '"') {
+	cp2 = म_अक्षर(cp, '\n');
+	अगर (cp2)
+		*cp2 = '\0'; /* हटाओ the trailing newline */
+	len = म_माप(cp);
+	अगर (len == 0) अणु
+		kdb_म_लिखो("invalid 'pipe', see grephelp\n");
+		वापस;
+	पूर्ण
+	/* now cp poपूर्णांकs to a nonzero length search string */
+	अगर (*cp == '"') अणु
 		/* allow it be "x y z" by removing the "'s - there must
 		   be two of them */
 		cp++;
-		cp2 = strchr(cp, '"');
-		if (!cp2) {
-			kdb_printf("invalid quoted string, see grephelp\n");
-			return;
-		}
+		cp2 = म_अक्षर(cp, '"');
+		अगर (!cp2) अणु
+			kdb_म_लिखो("invalid quoted string, see grephelp\n");
+			वापस;
+		पूर्ण
 		*cp2 = '\0'; /* end the string where the 2nd " was */
-	}
+	पूर्ण
 	kdb_grep_leading = 0;
-	if (*cp == '^') {
+	अगर (*cp == '^') अणु
 		kdb_grep_leading = 1;
 		cp++;
-	}
-	len = strlen(cp);
+	पूर्ण
+	len = म_माप(cp);
 	kdb_grep_trailing = 0;
-	if (*(cp+len-1) == '$') {
+	अगर (*(cp+len-1) == '$') अणु
 		kdb_grep_trailing = 1;
 		*(cp+len-1) = '\0';
-	}
-	len = strlen(cp);
-	if (!len)
-		return;
-	if (len >= KDB_GREP_STRLEN) {
-		kdb_printf("search string too long\n");
-		return;
-	}
-	strcpy(kdb_grep_string, cp);
+	पूर्ण
+	len = म_माप(cp);
+	अगर (!len)
+		वापस;
+	अगर (len >= KDB_GREP_STRLEN) अणु
+		kdb_म_लिखो("search string too long\n");
+		वापस;
+	पूर्ण
+	म_नकल(kdb_grep_string, cp);
 	kdb_grepping_flag++;
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * kdb_parse - Parse the command line, search the command table for a
+ * kdb_parse - Parse the command line, search the command table क्रम a
  *	matching command and invoke the command function.  This
- *	function may be called recursively, if it is, the second call
- *	will overwrite argv and cbuf.  It is the caller's
- *	responsibility to save their argv if they recursively call
+ *	function may be called recursively, अगर it is, the second call
+ *	will overग_लिखो argv and cbuf.  It is the caller's
+ *	responsibility to save their argv अगर they recursively call
  *	kdb_parse().
  * Parameters:
  *      cmdstr	The input command line to be parsed.
- *	regs	The registers at the time kdb was entered.
+ *	regs	The रेजिस्टरs at the समय kdb was entered.
  * Returns:
- *	Zero for success, a kdb diagnostic if failure.
+ *	Zero क्रम success, a kdb diagnostic अगर failure.
  * Remarks:
  *	Limited to 20 tokens.
  *
@@ -899,564 +900,564 @@ static void parse_grep(const char *str)
  *
  *	The algorithm used to tokenize the input string relies on
  *	there being at least one whitespace (or otherwise useless)
- *	character between tokens as the character immediately following
+ *	अक्षरacter between tokens as the अक्षरacter immediately following
  *	the token is altered in-place to a null-byte to terminate the
  *	token string.
  */
 
-#define MAXARGC	20
+#घोषणा MAXARGC	20
 
-int kdb_parse(const char *cmdstr)
-{
-	static char *argv[MAXARGC];
-	static int argc;
-	static char cbuf[CMD_BUFLEN+2];
-	char *cp;
-	char *cpp, quoted;
+पूर्णांक kdb_parse(स्थिर अक्षर *cmdstr)
+अणु
+	अटल अक्षर *argv[MAXARGC];
+	अटल पूर्णांक argc;
+	अटल अक्षर cbuf[CMD_BUFLEN+2];
+	अक्षर *cp;
+	अक्षर *cpp, quoted;
 	kdbtab_t *tp;
-	int escaped, ignore_errors = 0, check_grep = 0;
+	पूर्णांक escaped, ignore_errors = 0, check_grep = 0;
 
 	/*
 	 * First tokenize the command string.
 	 */
-	cp = (char *)cmdstr;
+	cp = (अक्षर *)cmdstr;
 
-	if (KDB_FLAG(CMD_INTERRUPT)) {
-		/* Previous command was interrupted, newline must not
+	अगर (KDB_FLAG(CMD_INTERRUPT)) अणु
+		/* Previous command was पूर्णांकerrupted, newline must not
 		 * repeat the command */
 		KDB_FLAG_CLEAR(CMD_INTERRUPT);
 		KDB_STATE_SET(PAGER);
 		argc = 0;	/* no repeat */
-	}
+	पूर्ण
 
-	if (*cp != '\n' && *cp != '\0') {
+	अगर (*cp != '\n' && *cp != '\0') अणु
 		argc = 0;
 		cpp = cbuf;
-		while (*cp) {
+		जबतक (*cp) अणु
 			/* skip whitespace */
-			while (isspace(*cp))
+			जबतक (है_खाली(*cp))
 				cp++;
-			if ((*cp == '\0') || (*cp == '\n') ||
+			अगर ((*cp == '\0') || (*cp == '\n') ||
 			    (*cp == '#' && !defcmd_in_progress))
-				break;
-			/* special case: check for | grep pattern */
-			if (*cp == '|') {
+				अवरोध;
+			/* special हाल: check क्रम | grep pattern */
+			अगर (*cp == '|') अणु
 				check_grep++;
-				break;
-			}
-			if (cpp >= cbuf + CMD_BUFLEN) {
-				kdb_printf("kdb_parse: command buffer "
+				अवरोध;
+			पूर्ण
+			अगर (cpp >= cbuf + CMD_BUFLEN) अणु
+				kdb_म_लिखो("kdb_parse: command buffer "
 					   "overflow, command ignored\n%s\n",
 					   cmdstr);
-				return KDB_NOTFOUND;
-			}
-			if (argc >= MAXARGC - 1) {
-				kdb_printf("kdb_parse: too many arguments, "
+				वापस KDB_NOTFOUND;
+			पूर्ण
+			अगर (argc >= MAXARGC - 1) अणु
+				kdb_म_लिखो("kdb_parse: too many arguments, "
 					   "command ignored\n%s\n", cmdstr);
-				return KDB_NOTFOUND;
-			}
+				वापस KDB_NOTFOUND;
+			पूर्ण
 			argv[argc++] = cpp;
 			escaped = 0;
 			quoted = '\0';
 			/* Copy to next unquoted and unescaped
 			 * whitespace or '=' */
-			while (*cp && *cp != '\n' &&
-			       (escaped || quoted || !isspace(*cp))) {
-				if (cpp >= cbuf + CMD_BUFLEN)
-					break;
-				if (escaped) {
+			जबतक (*cp && *cp != '\n' &&
+			       (escaped || quoted || !है_खाली(*cp))) अणु
+				अगर (cpp >= cbuf + CMD_BUFLEN)
+					अवरोध;
+				अगर (escaped) अणु
 					escaped = 0;
 					*cpp++ = *cp++;
-					continue;
-				}
-				if (*cp == '\\') {
+					जारी;
+				पूर्ण
+				अगर (*cp == '\\') अणु
 					escaped = 1;
 					++cp;
-					continue;
-				}
-				if (*cp == quoted)
+					जारी;
+				पूर्ण
+				अगर (*cp == quoted)
 					quoted = '\0';
-				else if (*cp == '\'' || *cp == '"')
+				अन्यथा अगर (*cp == '\'' || *cp == '"')
 					quoted = *cp;
 				*cpp = *cp++;
-				if (*cpp == '=' && !quoted)
-					break;
+				अगर (*cpp == '=' && !quoted)
+					अवरोध;
 				++cpp;
-			}
-			*cpp++ = '\0';	/* Squash a ws or '=' character */
-		}
-	}
-	if (!argc)
-		return 0;
-	if (check_grep)
+			पूर्ण
+			*cpp++ = '\0';	/* Squash a ws or '=' अक्षरacter */
+		पूर्ण
+	पूर्ण
+	अगर (!argc)
+		वापस 0;
+	अगर (check_grep)
 		parse_grep(cp);
-	if (defcmd_in_progress) {
-		int result = kdb_defcmd2(cmdstr, argv[0]);
-		if (!defcmd_in_progress) {
-			argc = 0;	/* avoid repeat on endefcmd */
+	अगर (defcmd_in_progress) अणु
+		पूर्णांक result = kdb_defcmd2(cmdstr, argv[0]);
+		अगर (!defcmd_in_progress) अणु
+			argc = 0;	/* aव्योम repeat on endefcmd */
 			*(argv[0]) = '\0';
-		}
-		return result;
-	}
-	if (argv[0][0] == '-' && argv[0][1] &&
-	    (argv[0][1] < '0' || argv[0][1] > '9')) {
+		पूर्ण
+		वापस result;
+	पूर्ण
+	अगर (argv[0][0] == '-' && argv[0][1] &&
+	    (argv[0][1] < '0' || argv[0][1] > '9')) अणु
 		ignore_errors = 1;
 		++argv[0];
-	}
+	पूर्ण
 
-	list_for_each_entry(tp, &kdb_cmds_head, list_node) {
+	list_क्रम_each_entry(tp, &kdb_cmds_head, list_node) अणु
 		/*
 		 * If this command is allowed to be abbreviated,
-		 * check to see if this is it.
+		 * check to see अगर this is it.
 		 */
-		if (tp->cmd_minlen && (strlen(argv[0]) <= tp->cmd_minlen) &&
-		    (strncmp(argv[0], tp->cmd_name, tp->cmd_minlen) == 0))
-			break;
+		अगर (tp->cmd_minlen && (म_माप(argv[0]) <= tp->cmd_minlen) &&
+		    (म_भेदन(argv[0], tp->cmd_name, tp->cmd_minlen) == 0))
+			अवरोध;
 
-		if (strcmp(argv[0], tp->cmd_name) == 0)
-			break;
-	}
+		अगर (म_भेद(argv[0], tp->cmd_name) == 0)
+			अवरोध;
+	पूर्ण
 
 	/*
-	 * If we don't find a command by this name, see if the first
-	 * few characters of this match any of the known commands.
+	 * If we करोn't find a command by this name, see अगर the first
+	 * few अक्षरacters of this match any of the known commands.
 	 * e.g., md1c20 should match md.
 	 */
-	if (list_entry_is_head(tp, &kdb_cmds_head, list_node)) {
-		list_for_each_entry(tp, &kdb_cmds_head, list_node) {
-			if (strncmp(argv[0], tp->cmd_name,
-				    strlen(tp->cmd_name)) == 0)
-				break;
-		}
-	}
+	अगर (list_entry_is_head(tp, &kdb_cmds_head, list_node)) अणु
+		list_क्रम_each_entry(tp, &kdb_cmds_head, list_node) अणु
+			अगर (म_भेदन(argv[0], tp->cmd_name,
+				    म_माप(tp->cmd_name)) == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!list_entry_is_head(tp, &kdb_cmds_head, list_node)) {
-		int result;
+	अगर (!list_entry_is_head(tp, &kdb_cmds_head, list_node)) अणु
+		पूर्णांक result;
 
-		if (!kdb_check_flags(tp->cmd_flags, kdb_cmd_enabled, argc <= 1))
-			return KDB_NOPERM;
+		अगर (!kdb_check_flags(tp->cmd_flags, kdb_cmd_enabled, argc <= 1))
+			वापस KDB_NOPERM;
 
 		KDB_STATE_SET(CMD);
-		result = (*tp->cmd_func)(argc-1, (const char **)argv);
-		if (result && ignore_errors && result > KDB_CMD_GO)
+		result = (*tp->cmd_func)(argc-1, (स्थिर अक्षर **)argv);
+		अगर (result && ignore_errors && result > KDB_CMD_GO)
 			result = 0;
 		KDB_STATE_CLEAR(CMD);
 
-		if (tp->cmd_flags & KDB_REPEAT_WITH_ARGS)
-			return result;
+		अगर (tp->cmd_flags & KDB_REPEAT_WITH_ARGS)
+			वापस result;
 
 		argc = tp->cmd_flags & KDB_REPEAT_NO_ARGS ? 1 : 0;
-		if (argv[argc])
+		अगर (argv[argc])
 			*(argv[argc]) = '\0';
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	/*
-	 * If the input with which we were presented does not
+	 * If the input with which we were presented करोes not
 	 * map to an existing command, attempt to parse it as an
-	 * address argument and display the result.   Useful for
+	 * address argument and display the result.   Useful क्रम
 	 * obtaining the address of a variable, or the nearest symbol
-	 * to an address contained in a register.
+	 * to an address contained in a रेजिस्टर.
 	 */
-	{
-		unsigned long value;
-		char *name = NULL;
-		long offset;
-		int nextarg = 0;
+	अणु
+		अचिन्हित दीर्घ value;
+		अक्षर *name = शून्य;
+		दीर्घ offset;
+		पूर्णांक nextarg = 0;
 
-		if (kdbgetaddrarg(0, (const char **)argv, &nextarg,
-				  &value, &offset, &name)) {
-			return KDB_NOTFOUND;
-		}
+		अगर (kdbgetaddrarg(0, (स्थिर अक्षर **)argv, &nextarg,
+				  &value, &offset, &name)) अणु
+			वापस KDB_NOTFOUND;
+		पूर्ण
 
-		kdb_printf("%s = ", argv[0]);
-		kdb_symbol_print(value, NULL, KDB_SP_DEFAULT);
-		kdb_printf("\n");
-		return 0;
-	}
-}
+		kdb_म_लिखो("%s = ", argv[0]);
+		kdb_symbol_prपूर्णांक(value, शून्य, KDB_SP_DEFAULT);
+		kdb_म_लिखो("\n");
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 
-static int handle_ctrl_cmd(char *cmd)
-{
-#define CTRL_P	16
-#define CTRL_N	14
+अटल पूर्णांक handle_ctrl_cmd(अक्षर *cmd)
+अणु
+#घोषणा CTRL_P	16
+#घोषणा CTRL_N	14
 
 	/* initial situation */
-	if (cmd_head == cmd_tail)
-		return 0;
-	switch (*cmd) {
-	case CTRL_P:
-		if (cmdptr != cmd_tail)
+	अगर (cmd_head == cmd_tail)
+		वापस 0;
+	चयन (*cmd) अणु
+	हाल CTRL_P:
+		अगर (cmdptr != cmd_tail)
 			cmdptr = (cmdptr + KDB_CMD_HISTORY_COUNT - 1) %
 				 KDB_CMD_HISTORY_COUNT;
 		strscpy(cmd_cur, cmd_hist[cmdptr], CMD_BUFLEN);
-		return 1;
-	case CTRL_N:
-		if (cmdptr != cmd_head)
+		वापस 1;
+	हाल CTRL_N:
+		अगर (cmdptr != cmd_head)
 			cmdptr = (cmdptr+1) % KDB_CMD_HISTORY_COUNT;
 		strscpy(cmd_cur, cmd_hist[cmdptr], CMD_BUFLEN);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_reboot - This function implements the 'reboot' command.  Reboot
- *	the system immediately, or loop for ever on failure.
+ *	the प्रणाली immediately, or loop क्रम ever on failure.
  */
-static int kdb_reboot(int argc, const char **argv)
-{
+अटल पूर्णांक kdb_reboot(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	emergency_restart();
-	kdb_printf("Hmm, kdb_reboot did not reboot, spinning here\n");
-	while (1)
+	kdb_म_लिखो("Hmm, kdb_reboot did not reboot, spinning here\n");
+	जबतक (1)
 		cpu_relax();
 	/* NOTREACHED */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kdb_dumpregs(struct pt_regs *regs)
-{
-	int old_lvl = console_loglevel;
+अटल व्योम kdb_dumpregs(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक old_lvl = console_loglevel;
 	console_loglevel = CONSOLE_LOGLEVEL_MOTORMOUTH;
-	kdb_trap_printk++;
+	kdb_trap_prपूर्णांकk++;
 	show_regs(regs);
-	kdb_trap_printk--;
-	kdb_printf("\n");
+	kdb_trap_prपूर्णांकk--;
+	kdb_म_लिखो("\n");
 	console_loglevel = old_lvl;
-}
+पूर्ण
 
-static void kdb_set_current_task(struct task_struct *p)
-{
+अटल व्योम kdb_set_current_task(काष्ठा task_काष्ठा *p)
+अणु
 	kdb_current_task = p;
 
-	if (kdb_task_has_cpu(p)) {
+	अगर (kdb_task_has_cpu(p)) अणु
 		kdb_current_regs = KDB_TSKREGS(kdb_process_cpu(p));
-		return;
-	}
-	kdb_current_regs = NULL;
-}
+		वापस;
+	पूर्ण
+	kdb_current_regs = शून्य;
+पूर्ण
 
-static void drop_newline(char *buf)
-{
-	size_t len = strlen(buf);
+अटल व्योम drop_newline(अक्षर *buf)
+अणु
+	माप_प्रकार len = म_माप(buf);
 
-	if (len == 0)
-		return;
-	if (*(buf + len - 1) == '\n')
+	अगर (len == 0)
+		वापस;
+	अगर (*(buf + len - 1) == '\n')
 		*(buf + len - 1) = '\0';
-}
+पूर्ण
 
 /*
- * kdb_local - The main code for kdb.  This routine is invoked on a
- *	specific processor, it is not global.  The main kdb() routine
- *	ensures that only one processor at a time is in this routine.
+ * kdb_local - The मुख्य code क्रम kdb.  This routine is invoked on a
+ *	specअगरic processor, it is not global.  The मुख्य kdb() routine
+ *	ensures that only one processor at a समय is in this routine.
  *	This code is called with the real reason code on the first
  *	entry to a kdb session, thereafter it is called with reason
- *	SWITCH, even if the user goes back to the original cpu.
- * Inputs:
+ *	SWITCH, even अगर the user goes back to the original cpu.
+ * Inमाला_दो:
  *	reason		The reason KDB was invoked
  *	error		The hardware-defined error code
- *	regs		The exception frame at time of fault/breakpoint.
- *	db_result	Result code from the break or debug point.
+ *	regs		The exception frame at समय of fault/अवरोधpoपूर्णांक.
+ *	db_result	Result code from the अवरोध or debug poपूर्णांक.
  * Returns:
- *	0	KDB was invoked for an event which it wasn't responsible
- *	1	KDB handled the event for which it was invoked.
+ *	0	KDB was invoked क्रम an event which it wasn't responsible
+ *	1	KDB handled the event क्रम which it was invoked.
  *	KDB_CMD_GO	User typed 'go'.
- *	KDB_CMD_CPU	User switched to another cpu.
+ *	KDB_CMD_CPU	User चयनed to another cpu.
  *	KDB_CMD_SS	Single step.
  */
-static int kdb_local(kdb_reason_t reason, int error, struct pt_regs *regs,
+अटल पूर्णांक kdb_local(kdb_reason_t reason, पूर्णांक error, काष्ठा pt_regs *regs,
 		     kdb_dbtrap_t db_result)
-{
-	char *cmdbuf;
-	int diag;
-	struct task_struct *kdb_current =
+अणु
+	अक्षर *cmdbuf;
+	पूर्णांक diag;
+	काष्ठा task_काष्ठा *kdb_current =
 		kdb_curr_task(raw_smp_processor_id());
 
 	KDB_DEBUG_STATE("kdb_local 1", reason);
 	kdb_go_count = 0;
-	if (reason == KDB_REASON_DEBUG) {
-		/* special case below */
-	} else {
-		kdb_printf("\nEntering kdb (current=0x%px, pid %d) ",
+	अगर (reason == KDB_REASON_DEBUG) अणु
+		/* special हाल below */
+	पूर्ण अन्यथा अणु
+		kdb_म_लिखो("\nEntering kdb (current=0x%px, pid %d) ",
 			   kdb_current, kdb_current ? kdb_current->pid : 0);
-#if defined(CONFIG_SMP)
-		kdb_printf("on processor %d ", raw_smp_processor_id());
-#endif
-	}
+#अगर defined(CONFIG_SMP)
+		kdb_म_लिखो("on processor %d ", raw_smp_processor_id());
+#पूर्ण_अगर
+	पूर्ण
 
-	switch (reason) {
-	case KDB_REASON_DEBUG:
-	{
+	चयन (reason) अणु
+	हाल KDB_REASON_DEBUG:
+	अणु
 		/*
 		 * If re-entering kdb after a single step
-		 * command, don't print the message.
+		 * command, करोn't prपूर्णांक the message.
 		 */
-		switch (db_result) {
-		case KDB_DB_BPT:
-			kdb_printf("\nEntering kdb (0x%px, pid %d) ",
+		चयन (db_result) अणु
+		हाल KDB_DB_BPT:
+			kdb_म_लिखो("\nEntering kdb (0x%px, pid %d) ",
 				   kdb_current, kdb_current->pid);
-#if defined(CONFIG_SMP)
-			kdb_printf("on processor %d ", raw_smp_processor_id());
-#endif
-			kdb_printf("due to Debug @ " kdb_machreg_fmt "\n",
-				   instruction_pointer(regs));
-			break;
-		case KDB_DB_SS:
-			break;
-		case KDB_DB_SSBPT:
+#अगर defined(CONFIG_SMP)
+			kdb_म_लिखो("on processor %d ", raw_smp_processor_id());
+#पूर्ण_अगर
+			kdb_म_लिखो("due to Debug @ " kdb_machreg_fmt "\n",
+				   inकाष्ठाion_poपूर्णांकer(regs));
+			अवरोध;
+		हाल KDB_DB_SS:
+			अवरोध;
+		हाल KDB_DB_SSBPT:
 			KDB_DEBUG_STATE("kdb_local 4", reason);
-			return 1;	/* kdba_db_trap did the work */
-		default:
-			kdb_printf("kdb: Bad result from kdba_db_trap: %d\n",
+			वापस 1;	/* kdba_db_trap did the work */
+		शेष:
+			kdb_म_लिखो("kdb: Bad result from kdba_db_trap: %d\n",
 				   db_result);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	}
-		break;
-	case KDB_REASON_ENTER:
-		if (KDB_STATE(KEYBOARD))
-			kdb_printf("due to Keyboard Entry\n");
-		else
-			kdb_printf("due to KDB_ENTER()\n");
-		break;
-	case KDB_REASON_KEYBOARD:
+	पूर्ण
+		अवरोध;
+	हाल KDB_REASON_ENTER:
+		अगर (KDB_STATE(KEYBOARD))
+			kdb_म_लिखो("due to Keyboard Entry\n");
+		अन्यथा
+			kdb_म_लिखो("due to KDB_ENTER()\n");
+		अवरोध;
+	हाल KDB_REASON_KEYBOARD:
 		KDB_STATE_SET(KEYBOARD);
-		kdb_printf("due to Keyboard Entry\n");
-		break;
-	case KDB_REASON_ENTER_SLAVE:
-		/* drop through, slaves only get released via cpu switch */
-	case KDB_REASON_SWITCH:
-		kdb_printf("due to cpu switch\n");
-		break;
-	case KDB_REASON_OOPS:
-		kdb_printf("Oops: %s\n", kdb_diemsg);
-		kdb_printf("due to oops @ " kdb_machreg_fmt "\n",
-			   instruction_pointer(regs));
+		kdb_म_लिखो("due to Keyboard Entry\n");
+		अवरोध;
+	हाल KDB_REASON_ENTER_SLAVE:
+		/* drop through, slaves only get released via cpu चयन */
+	हाल KDB_REASON_SWITCH:
+		kdb_म_लिखो("due to cpu switch\n");
+		अवरोध;
+	हाल KDB_REASON_OOPS:
+		kdb_म_लिखो("Oops: %s\n", kdb_diemsg);
+		kdb_म_लिखो("due to oops @ " kdb_machreg_fmt "\n",
+			   inकाष्ठाion_poपूर्णांकer(regs));
 		kdb_dumpregs(regs);
-		break;
-	case KDB_REASON_SYSTEM_NMI:
-		kdb_printf("due to System NonMaskable Interrupt\n");
-		break;
-	case KDB_REASON_NMI:
-		kdb_printf("due to NonMaskable Interrupt @ "
+		अवरोध;
+	हाल KDB_REASON_SYSTEM_NMI:
+		kdb_म_लिखो("due to System NonMaskable Interrupt\n");
+		अवरोध;
+	हाल KDB_REASON_NMI:
+		kdb_म_लिखो("due to NonMaskable Interrupt @ "
 			   kdb_machreg_fmt "\n",
-			   instruction_pointer(regs));
-		break;
-	case KDB_REASON_SSTEP:
-	case KDB_REASON_BREAK:
-		kdb_printf("due to %s @ " kdb_machreg_fmt "\n",
+			   inकाष्ठाion_poपूर्णांकer(regs));
+		अवरोध;
+	हाल KDB_REASON_SSTEP:
+	हाल KDB_REASON_BREAK:
+		kdb_म_लिखो("due to %s @ " kdb_machreg_fmt "\n",
 			   reason == KDB_REASON_BREAK ?
-			   "Breakpoint" : "SS trap", instruction_pointer(regs));
+			   "Breakpoint" : "SS trap", inकाष्ठाion_poपूर्णांकer(regs));
 		/*
-		 * Determine if this breakpoint is one that we
-		 * are interested in.
+		 * Determine अगर this अवरोधpoपूर्णांक is one that we
+		 * are पूर्णांकerested in.
 		 */
-		if (db_result != KDB_DB_BPT) {
-			kdb_printf("kdb: error return from kdba_bp_trap: %d\n",
+		अगर (db_result != KDB_DB_BPT) अणु
+			kdb_म_लिखो("kdb: error return from kdba_bp_trap: %d\n",
 				   db_result);
 			KDB_DEBUG_STATE("kdb_local 6", reason);
-			return 0;	/* Not for us, dismiss it */
-		}
-		break;
-	case KDB_REASON_RECURSE:
-		kdb_printf("due to Recursion @ " kdb_machreg_fmt "\n",
-			   instruction_pointer(regs));
-		break;
-	default:
-		kdb_printf("kdb: unexpected reason code: %d\n", reason);
+			वापस 0;	/* Not क्रम us, dismiss it */
+		पूर्ण
+		अवरोध;
+	हाल KDB_REASON_RECURSE:
+		kdb_म_लिखो("due to Recursion @ " kdb_machreg_fmt "\n",
+			   inकाष्ठाion_poपूर्णांकer(regs));
+		अवरोध;
+	शेष:
+		kdb_म_लिखो("kdb: unexpected reason code: %d\n", reason);
 		KDB_DEBUG_STATE("kdb_local 8", reason);
-		return 0;	/* Not for us, dismiss it */
-	}
+		वापस 0;	/* Not क्रम us, dismiss it */
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		/*
 		 * Initialize pager context.
 		 */
 		kdb_nextline = 1;
 		KDB_STATE_CLEAR(SUPPRESS);
 		kdb_grepping_flag = 0;
-		/* ensure the old search does not leak into '/' commands */
+		/* ensure the old search करोes not leak पूर्णांकo '/' commands */
 		kdb_grep_string[0] = '\0';
 
 		cmdbuf = cmd_cur;
 		*cmdbuf = '\0';
 		*(cmd_hist[cmd_head]) = '\0';
 
-do_full_getstr:
-		/* PROMPT can only be set if we have MEM_READ permission. */
-		snprintf(kdb_prompt_str, CMD_BUFLEN, kdbgetenv("PROMPT"),
+करो_full_माला_लोtr:
+		/* PROMPT can only be set अगर we have MEM_READ permission. */
+		snम_लिखो(kdb_prompt_str, CMD_BUFLEN, kdbदो_पर्या("PROMPT"),
 			 raw_smp_processor_id());
-		if (defcmd_in_progress)
-			strncat(kdb_prompt_str, "[defcmd]", CMD_BUFLEN);
+		अगर (defcmd_in_progress)
+			म_जोड़न(kdb_prompt_str, "[defcmd]", CMD_BUFLEN);
 
 		/*
 		 * Fetch command from keyboard
 		 */
-		cmdbuf = kdb_getstr(cmdbuf, CMD_BUFLEN, kdb_prompt_str);
-		if (*cmdbuf != '\n') {
-			if (*cmdbuf < 32) {
-				if (cmdptr == cmd_head) {
+		cmdbuf = kdb_माला_लोtr(cmdbuf, CMD_BUFLEN, kdb_prompt_str);
+		अगर (*cmdbuf != '\n') अणु
+			अगर (*cmdbuf < 32) अणु
+				अगर (cmdptr == cmd_head) अणु
 					strscpy(cmd_hist[cmd_head], cmd_cur,
 						CMD_BUFLEN);
 					*(cmd_hist[cmd_head] +
-					  strlen(cmd_hist[cmd_head])-1) = '\0';
-				}
-				if (!handle_ctrl_cmd(cmdbuf))
-					*(cmd_cur+strlen(cmd_cur)-1) = '\0';
+					  म_माप(cmd_hist[cmd_head])-1) = '\0';
+				पूर्ण
+				अगर (!handle_ctrl_cmd(cmdbuf))
+					*(cmd_cur+म_माप(cmd_cur)-1) = '\0';
 				cmdbuf = cmd_cur;
-				goto do_full_getstr;
-			} else {
+				जाओ करो_full_माला_लोtr;
+			पूर्ण अन्यथा अणु
 				strscpy(cmd_hist[cmd_head], cmd_cur,
 					CMD_BUFLEN);
-			}
+			पूर्ण
 
 			cmd_head = (cmd_head+1) % KDB_CMD_HISTORY_COUNT;
-			if (cmd_head == cmd_tail)
+			अगर (cmd_head == cmd_tail)
 				cmd_tail = (cmd_tail+1) % KDB_CMD_HISTORY_COUNT;
-		}
+		पूर्ण
 
 		cmdptr = cmd_head;
 		diag = kdb_parse(cmdbuf);
-		if (diag == KDB_NOTFOUND) {
+		अगर (diag == KDB_NOTFOUND) अणु
 			drop_newline(cmdbuf);
-			kdb_printf("Unknown kdb command: '%s'\n", cmdbuf);
+			kdb_म_लिखो("Unknown kdb command: '%s'\n", cmdbuf);
 			diag = 0;
-		}
-		if (diag == KDB_CMD_GO
+		पूर्ण
+		अगर (diag == KDB_CMD_GO
 		 || diag == KDB_CMD_CPU
 		 || diag == KDB_CMD_SS
 		 || diag == KDB_CMD_KGDB)
-			break;
+			अवरोध;
 
-		if (diag)
+		अगर (diag)
 			kdb_cmderror(diag);
-	}
+	पूर्ण
 	KDB_DEBUG_STATE("kdb_local 9", diag);
-	return diag;
-}
+	वापस diag;
+पूर्ण
 
 
 /*
- * kdb_print_state - Print the state data for the current processor
- *	for debugging.
- * Inputs:
- *	text		Identifies the debug point
- *	value		Any integer value to be printed, e.g. reason code.
+ * kdb_prपूर्णांक_state - Prपूर्णांक the state data क्रम the current processor
+ *	क्रम debugging.
+ * Inमाला_दो:
+ *	text		Identअगरies the debug poपूर्णांक
+ *	value		Any पूर्णांकeger value to be prपूर्णांकed, e.g. reason code.
  */
-void kdb_print_state(const char *text, int value)
-{
-	kdb_printf("state: %s cpu %d value %d initial %d state %x\n",
+व्योम kdb_prपूर्णांक_state(स्थिर अक्षर *text, पूर्णांक value)
+अणु
+	kdb_म_लिखो("state: %s cpu %d value %d initial %d state %x\n",
 		   text, raw_smp_processor_id(), value, kdb_initial_cpu,
 		   kdb_state);
-}
+पूर्ण
 
 /*
- * kdb_main_loop - After initial setup and assignment of the
+ * kdb_मुख्य_loop - After initial setup and assignment of the
  *	controlling cpu, all cpus are in this loop.  One cpu is in
  *	control and will issue the kdb prompt, the others will spin
- *	until 'go' or cpu switch.
+ *	until 'go' or cpu चयन.
  *
- *	To get a consistent view of the kernel stacks for all
- *	processes, this routine is invoked from the main kdb code via
- *	an architecture specific routine.  kdba_main_loop is
- *	responsible for making the kernel stacks consistent for all
- *	processes, there should be no difference between a blocked
+ *	To get a consistent view of the kernel stacks क्रम all
+ *	processes, this routine is invoked from the मुख्य kdb code via
+ *	an architecture specअगरic routine.  kdba_मुख्य_loop is
+ *	responsible क्रम making the kernel stacks consistent क्रम all
+ *	processes, there should be no dअगरference between a blocked
  *	process and a running process as far as kdb is concerned.
- * Inputs:
+ * Inमाला_दो:
  *	reason		The reason KDB was invoked
  *	error		The hardware-defined error code
  *	reason2		kdb's current reason code.
  *			Initially error but can change
  *			according to kdb state.
- *	db_result	Result code from break or debug point.
- *	regs		The exception frame at time of fault/breakpoint.
+ *	db_result	Result code from अवरोध or debug poपूर्णांक.
+ *	regs		The exception frame at समय of fault/अवरोधpoपूर्णांक.
  *			should always be valid.
  * Returns:
- *	0	KDB was invoked for an event which it wasn't responsible
- *	1	KDB handled the event for which it was invoked.
+ *	0	KDB was invoked क्रम an event which it wasn't responsible
+ *	1	KDB handled the event क्रम which it was invoked.
  */
-int kdb_main_loop(kdb_reason_t reason, kdb_reason_t reason2, int error,
-	      kdb_dbtrap_t db_result, struct pt_regs *regs)
-{
-	int result = 1;
+पूर्णांक kdb_मुख्य_loop(kdb_reason_t reason, kdb_reason_t reason2, पूर्णांक error,
+	      kdb_dbtrap_t db_result, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक result = 1;
 	/* Stay in kdb() until 'go', 'ss[b]' or an error */
-	while (1) {
+	जबतक (1) अणु
 		/*
 		 * All processors except the one that is in control
 		 * will spin here.
 		 */
 		KDB_DEBUG_STATE("kdb_main_loop 1", reason);
-		while (KDB_STATE(HOLD_CPU)) {
-			/* state KDB is turned off by kdb_cpu to see if the
+		जबतक (KDB_STATE(HOLD_CPU)) अणु
+			/* state KDB is turned off by kdb_cpu to see अगर the
 			 * other cpus are still live, each cpu in this loop
 			 * turns it back on.
 			 */
-			if (!KDB_STATE(KDB))
+			अगर (!KDB_STATE(KDB))
 				KDB_STATE_SET(KDB);
-		}
+		पूर्ण
 
 		KDB_STATE_CLEAR(SUPPRESS);
 		KDB_DEBUG_STATE("kdb_main_loop 2", reason);
-		if (KDB_STATE(LEAVING))
-			break;	/* Another cpu said 'go' */
+		अगर (KDB_STATE(LEAVING))
+			अवरोध;	/* Another cpu said 'go' */
 		/* Still using kdb, this processor is in control */
 		result = kdb_local(reason2, error, regs, db_result);
 		KDB_DEBUG_STATE("kdb_main_loop 3", result);
 
-		if (result == KDB_CMD_CPU)
-			break;
+		अगर (result == KDB_CMD_CPU)
+			अवरोध;
 
-		if (result == KDB_CMD_SS) {
+		अगर (result == KDB_CMD_SS) अणु
 			KDB_STATE_SET(DOING_SS);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (result == KDB_CMD_KGDB) {
-			if (!KDB_STATE(DOING_KGDB))
-				kdb_printf("Entering please attach debugger "
+		अगर (result == KDB_CMD_KGDB) अणु
+			अगर (!KDB_STATE(DOING_KGDB))
+				kdb_म_लिखो("Entering please attach debugger "
 					   "or use $D#44+ or $3#33\n");
-			break;
-		}
-		if (result && result != 1 && result != KDB_CMD_GO)
-			kdb_printf("\nUnexpected kdb_local return code %d\n",
+			अवरोध;
+		पूर्ण
+		अगर (result && result != 1 && result != KDB_CMD_GO)
+			kdb_म_लिखो("\nUnexpected kdb_local return code %d\n",
 				   result);
 		KDB_DEBUG_STATE("kdb_main_loop 4", reason);
-		break;
-	}
-	if (KDB_STATE(DOING_SS))
+		अवरोध;
+	पूर्ण
+	अगर (KDB_STATE(DOING_SS))
 		KDB_STATE_CLEAR(SSBPT);
 
-	/* Clean up any keyboard devices before leaving */
+	/* Clean up any keyboard devices beक्रमe leaving */
 	kdb_kbd_cleanup_state();
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  * kdb_mdr - This function implements the guts of the 'mdr', memory
- * read command.
+ * पढ़ो command.
  *	mdr  <addr arg>,<byte count>
- * Inputs:
+ * Inमाला_दो:
  *	addr	Start address
  *	count	Number of bytes
  * Returns:
- *	Always 0.  Any errors are detected and printed by kdb_getarea.
+ *	Always 0.  Any errors are detected and prपूर्णांकed by kdb_getarea.
  */
-static int kdb_mdr(unsigned long addr, unsigned int count)
-{
-	unsigned char c;
-	while (count--) {
-		if (kdb_getarea(c, addr))
-			return 0;
-		kdb_printf("%02x", c);
+अटल पूर्णांक kdb_mdr(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक count)
+अणु
+	अचिन्हित अक्षर c;
+	जबतक (count--) अणु
+		अगर (kdb_getarea(c, addr))
+			वापस 0;
+		kdb_म_लिखो("%02x", c);
 		addr++;
-	}
-	kdb_printf("\n");
-	return 0;
-}
+	पूर्ण
+	kdb_म_लिखो("\n");
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_md - This function implements the 'md', 'md1', 'md2', 'md4',
@@ -1465,265 +1466,265 @@ static int kdb_mdr(unsigned long addr, unsigned int count)
  *	md|mds  [<addr arg> [<line count> [<radix>]]]
  *	mdWcN	[<addr arg> [<line count> [<radix>]]]
  *		where W = is the width (1, 2, 4 or 8) and N is the count.
- *		for eg., md1c20 reads 20 bytes, 1 at a time.
+ *		क्रम eg., md1c20 पढ़ोs 20 bytes, 1 at a समय.
  *	mdr  <addr arg>,<byte count>
  */
-static void kdb_md_line(const char *fmtstr, unsigned long addr,
-			int symbolic, int nosect, int bytesperword,
-			int num, int repeat, int phys)
-{
-	/* print just one line of data */
+अटल व्योम kdb_md_line(स्थिर अक्षर *fmtstr, अचिन्हित दीर्घ addr,
+			पूर्णांक symbolic, पूर्णांक nosect, पूर्णांक bytesperword,
+			पूर्णांक num, पूर्णांक repeat, पूर्णांक phys)
+अणु
+	/* prपूर्णांक just one line of data */
 	kdb_symtab_t symtab;
-	char cbuf[32];
-	char *c = cbuf;
-	int i;
-	int j;
-	unsigned long word;
+	अक्षर cbuf[32];
+	अक्षर *c = cbuf;
+	पूर्णांक i;
+	पूर्णांक j;
+	अचिन्हित दीर्घ word;
 
-	memset(cbuf, '\0', sizeof(cbuf));
-	if (phys)
-		kdb_printf("phys " kdb_machreg_fmt0 " ", addr);
-	else
-		kdb_printf(kdb_machreg_fmt0 " ", addr);
+	स_रखो(cbuf, '\0', माप(cbuf));
+	अगर (phys)
+		kdb_म_लिखो("phys " kdb_machreg_fmt0 " ", addr);
+	अन्यथा
+		kdb_म_लिखो(kdb_machreg_fmt0 " ", addr);
 
-	for (i = 0; i < num && repeat--; i++) {
-		if (phys) {
-			if (kdb_getphysword(&word, addr, bytesperword))
-				break;
-		} else if (kdb_getword(&word, addr, bytesperword))
-			break;
-		kdb_printf(fmtstr, word);
-		if (symbolic)
+	क्रम (i = 0; i < num && repeat--; i++) अणु
+		अगर (phys) अणु
+			अगर (kdb_getphysword(&word, addr, bytesperword))
+				अवरोध;
+		पूर्ण अन्यथा अगर (kdb_getword(&word, addr, bytesperword))
+			अवरोध;
+		kdb_म_लिखो(fmtstr, word);
+		अगर (symbolic)
 			kdbnearsym(word, &symtab);
-		else
-			memset(&symtab, 0, sizeof(symtab));
-		if (symtab.sym_name) {
-			kdb_symbol_print(word, &symtab, 0);
-			if (!nosect) {
-				kdb_printf("\n");
-				kdb_printf("                       %s %s "
+		अन्यथा
+			स_रखो(&symtab, 0, माप(symtab));
+		अगर (symtab.sym_name) अणु
+			kdb_symbol_prपूर्णांक(word, &symtab, 0);
+			अगर (!nosect) अणु
+				kdb_म_लिखो("\n");
+				kdb_म_लिखो("                       %s %s "
 					   kdb_machreg_fmt " "
 					   kdb_machreg_fmt " "
 					   kdb_machreg_fmt, symtab.mod_name,
 					   symtab.sec_name, symtab.sec_start,
 					   symtab.sym_start, symtab.sym_end);
-			}
+			पूर्ण
 			addr += bytesperword;
-		} else {
-			union {
+		पूर्ण अन्यथा अणु
+			जोड़ अणु
 				u64 word;
-				unsigned char c[8];
-			} wc;
-			unsigned char *cp;
-#ifdef	__BIG_ENDIAN
+				अचिन्हित अक्षर c[8];
+			पूर्ण wc;
+			अचिन्हित अक्षर *cp;
+#अगर_घोषित	__BIG_ENDIAN
 			cp = wc.c + 8 - bytesperword;
-#else
+#अन्यथा
 			cp = wc.c;
-#endif
+#पूर्ण_अगर
 			wc.word = word;
-#define printable_char(c) \
-	({unsigned char __c = c; isascii(__c) && isprint(__c) ? __c : '.'; })
-			for (j = 0; j < bytesperword; j++)
-				*c++ = printable_char(*cp++);
+#घोषणा prपूर्णांकable_अक्षर(c) \
+	(अणुअचिन्हित अक्षर __c = c; isascii(__c) && है_छाप(__c) ? __c : '.'; पूर्ण)
+			क्रम (j = 0; j < bytesperword; j++)
+				*c++ = prपूर्णांकable_अक्षर(*cp++);
 			addr += bytesperword;
-#undef printable_char
-		}
-	}
-	kdb_printf("%*s %s\n", (int)((num-i)*(2*bytesperword + 1)+1),
+#अघोषित prपूर्णांकable_अक्षर
+		पूर्ण
+	पूर्ण
+	kdb_म_लिखो("%*s %s\n", (पूर्णांक)((num-i)*(2*bytesperword + 1)+1),
 		   " ", cbuf);
-}
+पूर्ण
 
-static int kdb_md(int argc, const char **argv)
-{
-	static unsigned long last_addr;
-	static int last_radix, last_bytesperword, last_repeat;
-	int radix = 16, mdcount = 8, bytesperword = KDB_WORD_SIZE, repeat;
-	int nosect = 0;
-	char fmtchar, fmtstr[64];
-	unsigned long addr;
-	unsigned long word;
-	long offset = 0;
-	int symbolic = 0;
-	int valid = 0;
-	int phys = 0;
-	int raw = 0;
+अटल पूर्णांक kdb_md(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अटल अचिन्हित दीर्घ last_addr;
+	अटल पूर्णांक last_radix, last_bytesperword, last_repeat;
+	पूर्णांक radix = 16, mdcount = 8, bytesperword = KDB_WORD_SIZE, repeat;
+	पूर्णांक nosect = 0;
+	अक्षर fmtअक्षर, fmtstr[64];
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ word;
+	दीर्घ offset = 0;
+	पूर्णांक symbolic = 0;
+	पूर्णांक valid = 0;
+	पूर्णांक phys = 0;
+	पूर्णांक raw = 0;
 
-	kdbgetintenv("MDCOUNT", &mdcount);
-	kdbgetintenv("RADIX", &radix);
-	kdbgetintenv("BYTESPERWORD", &bytesperword);
+	kdbgetपूर्णांकenv("MDCOUNT", &mdcount);
+	kdbgetपूर्णांकenv("RADIX", &radix);
+	kdbgetपूर्णांकenv("BYTESPERWORD", &bytesperword);
 
 	/* Assume 'md <addr>' and start with environment values */
 	repeat = mdcount * 16 / bytesperword;
 
-	if (strcmp(argv[0], "mdr") == 0) {
-		if (argc == 2 || (argc == 0 && last_addr != 0))
+	अगर (म_भेद(argv[0], "mdr") == 0) अणु
+		अगर (argc == 2 || (argc == 0 && last_addr != 0))
 			valid = raw = 1;
-		else
-			return KDB_ARGCOUNT;
-	} else if (isdigit(argv[0][2])) {
-		bytesperword = (int)(argv[0][2] - '0');
-		if (bytesperword == 0) {
+		अन्यथा
+			वापस KDB_ARGCOUNT;
+	पूर्ण अन्यथा अगर (है_अंक(argv[0][2])) अणु
+		bytesperword = (पूर्णांक)(argv[0][2] - '0');
+		अगर (bytesperword == 0) अणु
 			bytesperword = last_bytesperword;
-			if (bytesperword == 0)
+			अगर (bytesperword == 0)
 				bytesperword = 4;
-		}
+		पूर्ण
 		last_bytesperword = bytesperword;
 		repeat = mdcount * 16 / bytesperword;
-		if (!argv[0][3])
+		अगर (!argv[0][3])
 			valid = 1;
-		else if (argv[0][3] == 'c' && argv[0][4]) {
-			char *p;
-			repeat = simple_strtoul(argv[0] + 4, &p, 10);
+		अन्यथा अगर (argv[0][3] == 'c' && argv[0][4]) अणु
+			अक्षर *p;
+			repeat = simple_म_से_अदीर्घ(argv[0] + 4, &p, 10);
 			mdcount = ((repeat * bytesperword) + 15) / 16;
 			valid = !*p;
-		}
+		पूर्ण
 		last_repeat = repeat;
-	} else if (strcmp(argv[0], "md") == 0)
+	पूर्ण अन्यथा अगर (म_भेद(argv[0], "md") == 0)
 		valid = 1;
-	else if (strcmp(argv[0], "mds") == 0)
+	अन्यथा अगर (म_भेद(argv[0], "mds") == 0)
 		valid = 1;
-	else if (strcmp(argv[0], "mdp") == 0) {
+	अन्यथा अगर (म_भेद(argv[0], "mdp") == 0) अणु
 		phys = valid = 1;
-	}
-	if (!valid)
-		return KDB_NOTFOUND;
+	पूर्ण
+	अगर (!valid)
+		वापस KDB_NOTFOUND;
 
-	if (argc == 0) {
-		if (last_addr == 0)
-			return KDB_ARGCOUNT;
+	अगर (argc == 0) अणु
+		अगर (last_addr == 0)
+			वापस KDB_ARGCOUNT;
 		addr = last_addr;
 		radix = last_radix;
 		bytesperword = last_bytesperword;
 		repeat = last_repeat;
-		if (raw)
+		अगर (raw)
 			mdcount = repeat;
-		else
+		अन्यथा
 			mdcount = ((repeat * bytesperword) + 15) / 16;
-	}
+	पूर्ण
 
-	if (argc) {
-		unsigned long val;
-		int diag, nextarg = 1;
+	अगर (argc) अणु
+		अचिन्हित दीर्घ val;
+		पूर्णांक diag, nextarg = 1;
 		diag = kdbgetaddrarg(argc, argv, &nextarg, &addr,
-				     &offset, NULL);
-		if (diag)
-			return diag;
-		if (argc > nextarg+2)
-			return KDB_ARGCOUNT;
+				     &offset, शून्य);
+		अगर (diag)
+			वापस diag;
+		अगर (argc > nextarg+2)
+			वापस KDB_ARGCOUNT;
 
-		if (argc >= nextarg) {
+		अगर (argc >= nextarg) अणु
 			diag = kdbgetularg(argv[nextarg], &val);
-			if (!diag) {
-				mdcount = (int) val;
-				if (raw)
+			अगर (!diag) अणु
+				mdcount = (पूर्णांक) val;
+				अगर (raw)
 					repeat = mdcount;
-				else
+				अन्यथा
 					repeat = mdcount * 16 / bytesperword;
-			}
-		}
-		if (argc >= nextarg+1) {
+			पूर्ण
+		पूर्ण
+		अगर (argc >= nextarg+1) अणु
 			diag = kdbgetularg(argv[nextarg+1], &val);
-			if (!diag)
-				radix = (int) val;
-		}
-	}
+			अगर (!diag)
+				radix = (पूर्णांक) val;
+		पूर्ण
+	पूर्ण
 
-	if (strcmp(argv[0], "mdr") == 0) {
-		int ret;
+	अगर (म_भेद(argv[0], "mdr") == 0) अणु
+		पूर्णांक ret;
 		last_addr = addr;
 		ret = kdb_mdr(addr, mdcount);
 		last_addr += mdcount;
 		last_repeat = mdcount;
 		last_bytesperword = bytesperword; // to make REPEAT happy
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (radix) {
-	case 10:
-		fmtchar = 'd';
-		break;
-	case 16:
-		fmtchar = 'x';
-		break;
-	case 8:
-		fmtchar = 'o';
-		break;
-	default:
-		return KDB_BADRADIX;
-	}
+	चयन (radix) अणु
+	हाल 10:
+		fmtअक्षर = 'd';
+		अवरोध;
+	हाल 16:
+		fmtअक्षर = 'x';
+		अवरोध;
+	हाल 8:
+		fmtअक्षर = 'o';
+		अवरोध;
+	शेष:
+		वापस KDB_BADRADIX;
+	पूर्ण
 
 	last_radix = radix;
 
-	if (bytesperword > KDB_WORD_SIZE)
-		return KDB_BADWIDTH;
+	अगर (bytesperword > KDB_WORD_SIZE)
+		वापस KDB_BADWIDTH;
 
-	switch (bytesperword) {
-	case 8:
-		sprintf(fmtstr, "%%16.16l%c ", fmtchar);
-		break;
-	case 4:
-		sprintf(fmtstr, "%%8.8l%c ", fmtchar);
-		break;
-	case 2:
-		sprintf(fmtstr, "%%4.4l%c ", fmtchar);
-		break;
-	case 1:
-		sprintf(fmtstr, "%%2.2l%c ", fmtchar);
-		break;
-	default:
-		return KDB_BADWIDTH;
-	}
+	चयन (bytesperword) अणु
+	हाल 8:
+		प्र_लिखो(fmtstr, "%%16.16l%c ", fmtअक्षर);
+		अवरोध;
+	हाल 4:
+		प्र_लिखो(fmtstr, "%%8.8l%c ", fmtअक्षर);
+		अवरोध;
+	हाल 2:
+		प्र_लिखो(fmtstr, "%%4.4l%c ", fmtअक्षर);
+		अवरोध;
+	हाल 1:
+		प्र_लिखो(fmtstr, "%%2.2l%c ", fmtअक्षर);
+		अवरोध;
+	शेष:
+		वापस KDB_BADWIDTH;
+	पूर्ण
 
 	last_repeat = repeat;
 	last_bytesperword = bytesperword;
 
-	if (strcmp(argv[0], "mds") == 0) {
+	अगर (म_भेद(argv[0], "mds") == 0) अणु
 		symbolic = 1;
 		/* Do not save these changes as last_*, they are temporary mds
 		 * overrides.
 		 */
 		bytesperword = KDB_WORD_SIZE;
 		repeat = mdcount;
-		kdbgetintenv("NOSECT", &nosect);
-	}
+		kdbgetपूर्णांकenv("NOSECT", &nosect);
+	पूर्ण
 
-	/* Round address down modulo BYTESPERWORD */
+	/* Round address करोwn modulo BYTESPERWORD */
 
 	addr &= ~(bytesperword-1);
 
-	while (repeat > 0) {
-		unsigned long a;
-		int n, z, num = (symbolic ? 1 : (16 / bytesperword));
+	जबतक (repeat > 0) अणु
+		अचिन्हित दीर्घ a;
+		पूर्णांक n, z, num = (symbolic ? 1 : (16 / bytesperword));
 
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
-		for (a = addr, z = 0; z < repeat; a += bytesperword, ++z) {
-			if (phys) {
-				if (kdb_getphysword(&word, a, bytesperword)
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
+		क्रम (a = addr, z = 0; z < repeat; a += bytesperword, ++z) अणु
+			अगर (phys) अणु
+				अगर (kdb_getphysword(&word, a, bytesperword)
 						|| word)
-					break;
-			} else if (kdb_getword(&word, a, bytesperword) || word)
-				break;
-		}
+					अवरोध;
+			पूर्ण अन्यथा अगर (kdb_getword(&word, a, bytesperword) || word)
+				अवरोध;
+		पूर्ण
 		n = min(num, repeat);
 		kdb_md_line(fmtstr, addr, symbolic, nosect, bytesperword,
 			    num, repeat, phys);
 		addr += bytesperword * n;
 		repeat -= n;
 		z = (z + num - 1) / num;
-		if (z > 2) {
-			int s = num * (z-2);
-			kdb_printf(kdb_machreg_fmt0 "-" kdb_machreg_fmt0
+		अगर (z > 2) अणु
+			पूर्णांक s = num * (z-2);
+			kdb_म_लिखो(kdb_machreg_fmt0 "-" kdb_machreg_fmt0
 				   " zero suppressed\n",
 				addr, addr + bytesperword * s - 1);
 			addr += bytesperword * s;
 			repeat -= s;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	last_addr = addr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_mm - This function implements the 'mm' command.
@@ -1731,929 +1732,929 @@ static int kdb_md(int argc, const char **argv)
  * Remarks:
  *	mm works on machine words, mmW works on bytes.
  */
-static int kdb_mm(int argc, const char **argv)
-{
-	int diag;
-	unsigned long addr;
-	long offset = 0;
-	unsigned long contents;
-	int nextarg;
-	int width;
+अटल पूर्णांक kdb_mm(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक diag;
+	अचिन्हित दीर्घ addr;
+	दीर्घ offset = 0;
+	अचिन्हित दीर्घ contents;
+	पूर्णांक nextarg;
+	पूर्णांक width;
 
-	if (argv[0][2] && !isdigit(argv[0][2]))
-		return KDB_NOTFOUND;
+	अगर (argv[0][2] && !है_अंक(argv[0][2]))
+		वापस KDB_NOTFOUND;
 
-	if (argc < 2)
-		return KDB_ARGCOUNT;
+	अगर (argc < 2)
+		वापस KDB_ARGCOUNT;
 
 	nextarg = 1;
-	diag = kdbgetaddrarg(argc, argv, &nextarg, &addr, &offset, NULL);
-	if (diag)
-		return diag;
+	diag = kdbgetaddrarg(argc, argv, &nextarg, &addr, &offset, शून्य);
+	अगर (diag)
+		वापस diag;
 
-	if (nextarg > argc)
-		return KDB_ARGCOUNT;
-	diag = kdbgetaddrarg(argc, argv, &nextarg, &contents, NULL, NULL);
-	if (diag)
-		return diag;
+	अगर (nextarg > argc)
+		वापस KDB_ARGCOUNT;
+	diag = kdbgetaddrarg(argc, argv, &nextarg, &contents, शून्य, शून्य);
+	अगर (diag)
+		वापस diag;
 
-	if (nextarg != argc + 1)
-		return KDB_ARGCOUNT;
+	अगर (nextarg != argc + 1)
+		वापस KDB_ARGCOUNT;
 
 	width = argv[0][2] ? (argv[0][2] - '0') : (KDB_WORD_SIZE);
 	diag = kdb_putword(addr, contents, width);
-	if (diag)
-		return diag;
+	अगर (diag)
+		वापस diag;
 
-	kdb_printf(kdb_machreg_fmt " = " kdb_machreg_fmt "\n", addr, contents);
+	kdb_म_लिखो(kdb_machreg_fmt " = " kdb_machreg_fmt "\n", addr, contents);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_go - This function implements the 'go' command.
  *	go [address-expression]
  */
-static int kdb_go(int argc, const char **argv)
-{
-	unsigned long addr;
-	int diag;
-	int nextarg;
-	long offset;
+अटल पूर्णांक kdb_go(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित दीर्घ addr;
+	पूर्णांक diag;
+	पूर्णांक nextarg;
+	दीर्घ offset;
 
-	if (raw_smp_processor_id() != kdb_initial_cpu) {
-		kdb_printf("go must execute on the entry cpu, "
+	अगर (raw_smp_processor_id() != kdb_initial_cpu) अणु
+		kdb_म_लिखो("go must execute on the entry cpu, "
 			   "please use \"cpu %d\" and then execute go\n",
 			   kdb_initial_cpu);
-		return KDB_BADCPUNUM;
-	}
-	if (argc == 1) {
+		वापस KDB_BADCPUNUM;
+	पूर्ण
+	अगर (argc == 1) अणु
 		nextarg = 1;
 		diag = kdbgetaddrarg(argc, argv, &nextarg,
-				     &addr, &offset, NULL);
-		if (diag)
-			return diag;
-	} else if (argc) {
-		return KDB_ARGCOUNT;
-	}
+				     &addr, &offset, शून्य);
+		अगर (diag)
+			वापस diag;
+	पूर्ण अन्यथा अगर (argc) अणु
+		वापस KDB_ARGCOUNT;
+	पूर्ण
 
 	diag = KDB_CMD_GO;
-	if (KDB_FLAG(CATASTROPHIC)) {
-		kdb_printf("Catastrophic error detected\n");
-		kdb_printf("kdb_continue_catastrophic=%d, ",
-			kdb_continue_catastrophic);
-		if (kdb_continue_catastrophic == 0 && kdb_go_count++ == 0) {
-			kdb_printf("type go a second time if you really want "
+	अगर (KDB_FLAG(CATASTROPHIC)) अणु
+		kdb_म_लिखो("Catastrophic error detected\n");
+		kdb_म_लिखो("kdb_continue_catastrophic=%d, ",
+			kdb_जारी_catastrophic);
+		अगर (kdb_जारी_catastrophic == 0 && kdb_go_count++ == 0) अणु
+			kdb_म_लिखो("type go a second time if you really want "
 				   "to continue\n");
-			return 0;
-		}
-		if (kdb_continue_catastrophic == 2) {
-			kdb_printf("forcing reboot\n");
-			kdb_reboot(0, NULL);
-		}
-		kdb_printf("attempting to continue\n");
-	}
-	return diag;
-}
+			वापस 0;
+		पूर्ण
+		अगर (kdb_जारी_catastrophic == 2) अणु
+			kdb_म_लिखो("forcing reboot\n");
+			kdb_reboot(0, शून्य);
+		पूर्ण
+		kdb_म_लिखो("attempting to continue\n");
+	पूर्ण
+	वापस diag;
+पूर्ण
 
 /*
  * kdb_rd - This function implements the 'rd' command.
  */
-static int kdb_rd(int argc, const char **argv)
-{
-	int len = kdb_check_regs();
-#if DBG_MAX_REG_NUM > 0
-	int i;
-	char *rname;
-	int rsize;
+अटल पूर्णांक kdb_rd(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक len = kdb_check_regs();
+#अगर DBG_MAX_REG_NUM > 0
+	पूर्णांक i;
+	अक्षर *rname;
+	पूर्णांक rsize;
 	u64 reg64;
 	u32 reg32;
 	u16 reg16;
 	u8 reg8;
 
-	if (len)
-		return len;
+	अगर (len)
+		वापस len;
 
-	for (i = 0; i < DBG_MAX_REG_NUM; i++) {
+	क्रम (i = 0; i < DBG_MAX_REG_NUM; i++) अणु
 		rsize = dbg_reg_def[i].size * 2;
-		if (rsize > 16)
+		अगर (rsize > 16)
 			rsize = 2;
-		if (len + strlen(dbg_reg_def[i].name) + 4 + rsize > 80) {
+		अगर (len + म_माप(dbg_reg_def[i].name) + 4 + rsize > 80) अणु
 			len = 0;
-			kdb_printf("\n");
-		}
-		if (len)
-			len += kdb_printf("  ");
-		switch(dbg_reg_def[i].size * 8) {
-		case 8:
+			kdb_म_लिखो("\n");
+		पूर्ण
+		अगर (len)
+			len += kdb_म_लिखो("  ");
+		चयन(dbg_reg_def[i].size * 8) अणु
+		हाल 8:
 			rname = dbg_get_reg(i, &reg8, kdb_current_regs);
-			if (!rname)
-				break;
-			len += kdb_printf("%s: %02x", rname, reg8);
-			break;
-		case 16:
+			अगर (!rname)
+				अवरोध;
+			len += kdb_म_लिखो("%s: %02x", rname, reg8);
+			अवरोध;
+		हाल 16:
 			rname = dbg_get_reg(i, &reg16, kdb_current_regs);
-			if (!rname)
-				break;
-			len += kdb_printf("%s: %04x", rname, reg16);
-			break;
-		case 32:
+			अगर (!rname)
+				अवरोध;
+			len += kdb_म_लिखो("%s: %04x", rname, reg16);
+			अवरोध;
+		हाल 32:
 			rname = dbg_get_reg(i, &reg32, kdb_current_regs);
-			if (!rname)
-				break;
-			len += kdb_printf("%s: %08x", rname, reg32);
-			break;
-		case 64:
+			अगर (!rname)
+				अवरोध;
+			len += kdb_म_लिखो("%s: %08x", rname, reg32);
+			अवरोध;
+		हाल 64:
 			rname = dbg_get_reg(i, &reg64, kdb_current_regs);
-			if (!rname)
-				break;
-			len += kdb_printf("%s: %016llx", rname, reg64);
-			break;
-		default:
-			len += kdb_printf("%s: ??", dbg_reg_def[i].name);
-		}
-	}
-	kdb_printf("\n");
-#else
-	if (len)
-		return len;
+			अगर (!rname)
+				अवरोध;
+			len += kdb_म_लिखो("%s: %016llx", rname, reg64);
+			अवरोध;
+		शेष:
+			len += kdb_म_लिखो("%s: ??", dbg_reg_def[i].name);
+		पूर्ण
+	पूर्ण
+	kdb_म_लिखो("\n");
+#अन्यथा
+	अगर (len)
+		वापस len;
 
 	kdb_dumpregs(kdb_current_regs);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
- * kdb_rm - This function implements the 'rm' (register modify)  command.
- *	rm register-name new-contents
+ * kdb_rm - This function implements the 'rm' (रेजिस्टर modअगरy)  command.
+ *	rm रेजिस्टर-name new-contents
  * Remarks:
- *	Allows register modification with the same restrictions as gdb
+ *	Allows रेजिस्टर modअगरication with the same restrictions as gdb
  */
-static int kdb_rm(int argc, const char **argv)
-{
-#if DBG_MAX_REG_NUM > 0
-	int diag;
-	const char *rname;
-	int i;
+अटल पूर्णांक kdb_rm(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+#अगर DBG_MAX_REG_NUM > 0
+	पूर्णांक diag;
+	स्थिर अक्षर *rname;
+	पूर्णांक i;
 	u64 reg64;
 	u32 reg32;
 	u16 reg16;
 	u8 reg8;
 
-	if (argc != 2)
-		return KDB_ARGCOUNT;
+	अगर (argc != 2)
+		वापस KDB_ARGCOUNT;
 	/*
-	 * Allow presence or absence of leading '%' symbol.
+	 * Allow presence or असलence of leading '%' symbol.
 	 */
 	rname = argv[1];
-	if (*rname == '%')
+	अगर (*rname == '%')
 		rname++;
 
 	diag = kdbgetu64arg(argv[2], &reg64);
-	if (diag)
-		return diag;
+	अगर (diag)
+		वापस diag;
 
 	diag = kdb_check_regs();
-	if (diag)
-		return diag;
+	अगर (diag)
+		वापस diag;
 
 	diag = KDB_BADREG;
-	for (i = 0; i < DBG_MAX_REG_NUM; i++) {
-		if (strcmp(rname, dbg_reg_def[i].name) == 0) {
+	क्रम (i = 0; i < DBG_MAX_REG_NUM; i++) अणु
+		अगर (म_भेद(rname, dbg_reg_def[i].name) == 0) अणु
 			diag = 0;
-			break;
-		}
-	}
-	if (!diag) {
-		switch(dbg_reg_def[i].size * 8) {
-		case 8:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!diag) अणु
+		चयन(dbg_reg_def[i].size * 8) अणु
+		हाल 8:
 			reg8 = reg64;
 			dbg_set_reg(i, &reg8, kdb_current_regs);
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			reg16 = reg64;
 			dbg_set_reg(i, &reg16, kdb_current_regs);
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			reg32 = reg64;
 			dbg_set_reg(i, &reg32, kdb_current_regs);
-			break;
-		case 64:
+			अवरोध;
+		हाल 64:
 			dbg_set_reg(i, &reg64, kdb_current_regs);
-			break;
-		}
-	}
-	return diag;
-#else
-	kdb_printf("ERROR: Register set currently not implemented\n");
-    return 0;
-#endif
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस diag;
+#अन्यथा
+	kdb_म_लिखो("ERROR: Register set currently not implemented\n");
+    वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-#if defined(CONFIG_MAGIC_SYSRQ)
+#अगर defined(CONFIG_MAGIC_SYSRQ)
 /*
  * kdb_sr - This function implements the 'sr' (SYSRQ key) command
- *	which interfaces to the soi-disant MAGIC SYSRQ functionality.
+ *	which पूर्णांकerfaces to the soi-disant MAGIC SYSRQ functionality.
  *		sr <magic-sysrq-code>
  */
-static int kdb_sr(int argc, const char **argv)
-{
+अटल पूर्णांक kdb_sr(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	bool check_mask =
 	    !kdb_check_flags(KDB_ENABLE_ALL, kdb_cmd_enabled, false);
 
-	if (argc != 1)
-		return KDB_ARGCOUNT;
+	अगर (argc != 1)
+		वापस KDB_ARGCOUNT;
 
-	kdb_trap_printk++;
+	kdb_trap_prपूर्णांकk++;
 	__handle_sysrq(*argv[1], check_mask);
-	kdb_trap_printk--;
+	kdb_trap_prपूर्णांकk--;
 
-	return 0;
-}
-#endif	/* CONFIG_MAGIC_SYSRQ */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_MAGIC_SYSRQ */
 
 /*
  * kdb_ef - This function implements the 'regs' (display exception
  *	frame) command.  This command takes an address and expects to
- *	find an exception frame at that address, formats and prints
+ *	find an exception frame at that address, क्रमmats and prपूर्णांकs
  *	it.
  *		regs address-expression
  * Remarks:
- *	Not done yet.
+ *	Not करोne yet.
  */
-static int kdb_ef(int argc, const char **argv)
-{
-	int diag;
-	unsigned long addr;
-	long offset;
-	int nextarg;
+अटल पूर्णांक kdb_ef(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक diag;
+	अचिन्हित दीर्घ addr;
+	दीर्घ offset;
+	पूर्णांक nextarg;
 
-	if (argc != 1)
-		return KDB_ARGCOUNT;
+	अगर (argc != 1)
+		वापस KDB_ARGCOUNT;
 
 	nextarg = 1;
-	diag = kdbgetaddrarg(argc, argv, &nextarg, &addr, &offset, NULL);
-	if (diag)
-		return diag;
-	show_regs((struct pt_regs *)addr);
-	return 0;
-}
+	diag = kdbgetaddrarg(argc, argv, &nextarg, &addr, &offset, शून्य);
+	अगर (diag)
+		वापस diag;
+	show_regs((काष्ठा pt_regs *)addr);
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_MODULES)
+#अगर defined(CONFIG_MODULES)
 /*
  * kdb_lsmod - This function implements the 'lsmod' command.  Lists
  *	currently loaded kernel modules.
  *	Mostly taken from userland lsmod.
  */
-static int kdb_lsmod(int argc, const char **argv)
-{
-	struct module *mod;
+अटल पूर्णांक kdb_lsmod(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा module *mod;
 
-	if (argc != 0)
-		return KDB_ARGCOUNT;
+	अगर (argc != 0)
+		वापस KDB_ARGCOUNT;
 
-	kdb_printf("Module                  Size  modstruct     Used by\n");
-	list_for_each_entry(mod, kdb_modules, list) {
-		if (mod->state == MODULE_STATE_UNFORMED)
-			continue;
+	kdb_म_लिखो("Module                  Size  modstruct     Used by\n");
+	list_क्रम_each_entry(mod, kdb_modules, list) अणु
+		अगर (mod->state == MODULE_STATE_UNFORMED)
+			जारी;
 
-		kdb_printf("%-20s%8u  0x%px ", mod->name,
-			   mod->core_layout.size, (void *)mod);
-#ifdef CONFIG_MODULE_UNLOAD
-		kdb_printf("%4d ", module_refcount(mod));
-#endif
-		if (mod->state == MODULE_STATE_GOING)
-			kdb_printf(" (Unloading)");
-		else if (mod->state == MODULE_STATE_COMING)
-			kdb_printf(" (Loading)");
-		else
-			kdb_printf(" (Live)");
-		kdb_printf(" 0x%px", mod->core_layout.base);
+		kdb_म_लिखो("%-20s%8u  0x%px ", mod->name,
+			   mod->core_layout.size, (व्योम *)mod);
+#अगर_घोषित CONFIG_MODULE_UNLOAD
+		kdb_म_लिखो("%4d ", module_refcount(mod));
+#पूर्ण_अगर
+		अगर (mod->state == MODULE_STATE_GOING)
+			kdb_म_लिखो(" (Unloading)");
+		अन्यथा अगर (mod->state == MODULE_STATE_COMING)
+			kdb_म_लिखो(" (Loading)");
+		अन्यथा
+			kdb_म_लिखो(" (Live)");
+		kdb_म_लिखो(" 0x%px", mod->core_layout.base);
 
-#ifdef CONFIG_MODULE_UNLOAD
-		{
-			struct module_use *use;
-			kdb_printf(" [ ");
-			list_for_each_entry(use, &mod->source_list,
+#अगर_घोषित CONFIG_MODULE_UNLOAD
+		अणु
+			काष्ठा module_use *use;
+			kdb_म_लिखो(" [ ");
+			list_क्रम_each_entry(use, &mod->source_list,
 					    source_list)
-				kdb_printf("%s ", use->target->name);
-			kdb_printf("]\n");
-		}
-#endif
-	}
+				kdb_म_लिखो("%s ", use->target->name);
+			kdb_म_लिखो("]\n");
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif	/* CONFIG_MODULES */
+#पूर्ण_अगर	/* CONFIG_MODULES */
 
 /*
  * kdb_env - This function implements the 'env' command.  Display the
  *	current environment variables.
  */
 
-static int kdb_env(int argc, const char **argv)
-{
-	kdb_printenv();
+अटल पूर्णांक kdb_env(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	kdb_prपूर्णांकenv();
 
-	if (KDB_DEBUG(MASK))
-		kdb_printf("KDBDEBUG=0x%x\n",
+	अगर (KDB_DEBUG(MASK))
+		kdb_म_लिखो("KDBDEBUG=0x%x\n",
 			(kdb_flags & KDB_DEBUG(MASK)) >> KDB_DEBUG_FLAG_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PRINTK
+#अगर_घोषित CONFIG_PRINTK
 /*
  * kdb_dmesg - This function implements the 'dmesg' command to display
  *	the contents of the syslog buffer.
  *		dmesg [lines] [adjust]
  */
-static int kdb_dmesg(int argc, const char **argv)
-{
-	int diag;
-	int logging;
-	int lines = 0;
-	int adjust = 0;
-	int n = 0;
-	int skip = 0;
-	struct kmsg_dump_iter iter;
-	size_t len;
-	char buf[201];
+अटल पूर्णांक kdb_dmesg(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक diag;
+	पूर्णांक logging;
+	पूर्णांक lines = 0;
+	पूर्णांक adjust = 0;
+	पूर्णांक n = 0;
+	पूर्णांक skip = 0;
+	काष्ठा kmsg_dump_iter iter;
+	माप_प्रकार len;
+	अक्षर buf[201];
 
-	if (argc > 2)
-		return KDB_ARGCOUNT;
-	if (argc) {
-		char *cp;
-		lines = simple_strtol(argv[1], &cp, 0);
-		if (*cp)
+	अगर (argc > 2)
+		वापस KDB_ARGCOUNT;
+	अगर (argc) अणु
+		अक्षर *cp;
+		lines = simple_म_से_दीर्घ(argv[1], &cp, 0);
+		अगर (*cp)
 			lines = 0;
-		if (argc > 1) {
-			adjust = simple_strtoul(argv[2], &cp, 0);
-			if (*cp || adjust < 0)
+		अगर (argc > 1) अणु
+			adjust = simple_म_से_अदीर्घ(argv[2], &cp, 0);
+			अगर (*cp || adjust < 0)
 				adjust = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* disable LOGGING if set */
-	diag = kdbgetintenv("LOGGING", &logging);
-	if (!diag && logging) {
-		const char *setargs[] = { "set", "LOGGING", "0" };
+	/* disable LOGGING अगर set */
+	diag = kdbgetपूर्णांकenv("LOGGING", &logging);
+	अगर (!diag && logging) अणु
+		स्थिर अक्षर *setargs[] = अणु "set", "LOGGING", "0" पूर्ण;
 		kdb_set(2, setargs);
-	}
+	पूर्ण
 
-	kmsg_dump_rewind(&iter);
-	while (kmsg_dump_get_line(&iter, 1, NULL, 0, NULL))
+	kmsg_dump_शुरुआत(&iter);
+	जबतक (kmsg_dump_get_line(&iter, 1, शून्य, 0, शून्य))
 		n++;
 
-	if (lines < 0) {
-		if (adjust >= n)
-			kdb_printf("buffer only contains %d lines, nothing "
+	अगर (lines < 0) अणु
+		अगर (adjust >= n)
+			kdb_म_लिखो("buffer only contains %d lines, nothing "
 				   "printed\n", n);
-		else if (adjust - lines >= n)
-			kdb_printf("buffer only contains %d lines, last %d "
+		अन्यथा अगर (adjust - lines >= n)
+			kdb_म_लिखो("buffer only contains %d lines, last %d "
 				   "lines printed\n", n, n - adjust);
 		skip = adjust;
-		lines = abs(lines);
-	} else if (lines > 0) {
+		lines = असल(lines);
+	पूर्ण अन्यथा अगर (lines > 0) अणु
 		skip = n - lines - adjust;
-		lines = abs(lines);
-		if (adjust >= n) {
-			kdb_printf("buffer only contains %d lines, "
+		lines = असल(lines);
+		अगर (adjust >= n) अणु
+			kdb_म_लिखो("buffer only contains %d lines, "
 				   "nothing printed\n", n);
 			skip = n;
-		} else if (skip < 0) {
+		पूर्ण अन्यथा अगर (skip < 0) अणु
 			lines += skip;
 			skip = 0;
-			kdb_printf("buffer only contains %d lines, first "
+			kdb_म_लिखो("buffer only contains %d lines, first "
 				   "%d lines printed\n", n, lines);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		lines = n;
-	}
+	पूर्ण
 
-	if (skip >= n || skip < 0)
-		return 0;
+	अगर (skip >= n || skip < 0)
+		वापस 0;
 
-	kmsg_dump_rewind(&iter);
-	while (kmsg_dump_get_line(&iter, 1, buf, sizeof(buf), &len)) {
-		if (skip) {
+	kmsg_dump_शुरुआत(&iter);
+	जबतक (kmsg_dump_get_line(&iter, 1, buf, माप(buf), &len)) अणु
+		अगर (skip) अणु
 			skip--;
-			continue;
-		}
-		if (!lines--)
-			break;
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
+			जारी;
+		पूर्ण
+		अगर (!lines--)
+			अवरोध;
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
 
-		kdb_printf("%.*s\n", (int)len - 1, buf);
-	}
+		kdb_म_लिखो("%.*s\n", (पूर्णांक)len - 1, buf);
+	पूर्ण
 
-	return 0;
-}
-#endif /* CONFIG_PRINTK */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PRINTK */
 
 /* Make sure we balance enable/disable calls, must disable first. */
-static atomic_t kdb_nmi_disabled;
+अटल atomic_t kdb_nmi_disabled;
 
-static int kdb_disable_nmi(int argc, const char *argv[])
-{
-	if (atomic_read(&kdb_nmi_disabled))
-		return 0;
+अटल पूर्णांक kdb_disable_nmi(पूर्णांक argc, स्थिर अक्षर *argv[])
+अणु
+	अगर (atomic_पढ़ो(&kdb_nmi_disabled))
+		वापस 0;
 	atomic_set(&kdb_nmi_disabled, 1);
 	arch_kgdb_ops.enable_nmi(0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kdb_param_enable_nmi(const char *val, const struct kernel_param *kp)
-{
-	if (!atomic_add_unless(&kdb_nmi_disabled, -1, 0))
-		return -EINVAL;
+अटल पूर्णांक kdb_param_enable_nmi(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अगर (!atomic_add_unless(&kdb_nmi_disabled, -1, 0))
+		वापस -EINVAL;
 	arch_kgdb_ops.enable_nmi(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct kernel_param_ops kdb_param_ops_enable_nmi = {
+अटल स्थिर काष्ठा kernel_param_ops kdb_param_ops_enable_nmi = अणु
 	.set = kdb_param_enable_nmi,
-};
-module_param_cb(enable_nmi, &kdb_param_ops_enable_nmi, NULL, 0600);
+पूर्ण;
+module_param_cb(enable_nmi, &kdb_param_ops_enable_nmi, शून्य, 0600);
 
 /*
  * kdb_cpu - This function implements the 'cpu' command.
  *	cpu	[<cpunum>]
  * Returns:
- *	KDB_CMD_CPU for success, a kdb diagnostic if error
+ *	KDB_CMD_CPU क्रम success, a kdb diagnostic अगर error
  */
-static void kdb_cpu_status(void)
-{
-	int i, start_cpu, first_print = 1;
-	char state, prev_state = '?';
+अटल व्योम kdb_cpu_status(व्योम)
+अणु
+	पूर्णांक i, start_cpu, first_prपूर्णांक = 1;
+	अक्षर state, prev_state = '?';
 
-	kdb_printf("Currently on cpu %d\n", raw_smp_processor_id());
-	kdb_printf("Available cpus: ");
-	for (start_cpu = -1, i = 0; i < NR_CPUS; i++) {
-		if (!cpu_online(i)) {
+	kdb_म_लिखो("Currently on cpu %d\n", raw_smp_processor_id());
+	kdb_म_लिखो("Available cpus: ");
+	क्रम (start_cpu = -1, i = 0; i < NR_CPUS; i++) अणु
+		अगर (!cpu_online(i)) अणु
 			state = 'F';	/* cpu is offline */
-		} else if (!kgdb_info[i].enter_kgdb) {
+		पूर्ण अन्यथा अगर (!kgdb_info[i].enter_kgdb) अणु
 			state = 'D';	/* cpu is online but unresponsive */
-		} else {
+		पूर्ण अन्यथा अणु
 			state = ' ';	/* cpu is responding to kdb */
-			if (kdb_task_state_char(KDB_TSK(i)) == 'I')
+			अगर (kdb_task_state_अक्षर(KDB_TSK(i)) == 'I')
 				state = 'I';	/* idle task */
-		}
-		if (state != prev_state) {
-			if (prev_state != '?') {
-				if (!first_print)
-					kdb_printf(", ");
-				first_print = 0;
-				kdb_printf("%d", start_cpu);
-				if (start_cpu < i-1)
-					kdb_printf("-%d", i-1);
-				if (prev_state != ' ')
-					kdb_printf("(%c)", prev_state);
-			}
+		पूर्ण
+		अगर (state != prev_state) अणु
+			अगर (prev_state != '?') अणु
+				अगर (!first_prपूर्णांक)
+					kdb_म_लिखो(", ");
+				first_prपूर्णांक = 0;
+				kdb_म_लिखो("%d", start_cpu);
+				अगर (start_cpu < i-1)
+					kdb_म_लिखो("-%d", i-1);
+				अगर (prev_state != ' ')
+					kdb_म_लिखो("(%c)", prev_state);
+			पूर्ण
 			prev_state = state;
 			start_cpu = i;
-		}
-	}
-	/* print the trailing cpus, ignoring them if they are all offline */
-	if (prev_state != 'F') {
-		if (!first_print)
-			kdb_printf(", ");
-		kdb_printf("%d", start_cpu);
-		if (start_cpu < i-1)
-			kdb_printf("-%d", i-1);
-		if (prev_state != ' ')
-			kdb_printf("(%c)", prev_state);
-	}
-	kdb_printf("\n");
-}
+		पूर्ण
+	पूर्ण
+	/* prपूर्णांक the trailing cpus, ignoring them अगर they are all offline */
+	अगर (prev_state != 'F') अणु
+		अगर (!first_prपूर्णांक)
+			kdb_म_लिखो(", ");
+		kdb_म_लिखो("%d", start_cpu);
+		अगर (start_cpu < i-1)
+			kdb_म_लिखो("-%d", i-1);
+		अगर (prev_state != ' ')
+			kdb_म_लिखो("(%c)", prev_state);
+	पूर्ण
+	kdb_म_लिखो("\n");
+पूर्ण
 
-static int kdb_cpu(int argc, const char **argv)
-{
-	unsigned long cpunum;
-	int diag;
+अटल पूर्णांक kdb_cpu(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अचिन्हित दीर्घ cpunum;
+	पूर्णांक diag;
 
-	if (argc == 0) {
+	अगर (argc == 0) अणु
 		kdb_cpu_status();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (argc != 1)
-		return KDB_ARGCOUNT;
+	अगर (argc != 1)
+		वापस KDB_ARGCOUNT;
 
 	diag = kdbgetularg(argv[1], &cpunum);
-	if (diag)
-		return diag;
+	अगर (diag)
+		वापस diag;
 
 	/*
 	 * Validate cpunum
 	 */
-	if ((cpunum >= CONFIG_NR_CPUS) || !kgdb_info[cpunum].enter_kgdb)
-		return KDB_BADCPUNUM;
+	अगर ((cpunum >= CONFIG_NR_CPUS) || !kgdb_info[cpunum].enter_kgdb)
+		वापस KDB_BADCPUNUM;
 
-	dbg_switch_cpu = cpunum;
+	dbg_चयन_cpu = cpunum;
 
 	/*
 	 * Switch to other cpu
 	 */
-	return KDB_CMD_CPU;
-}
+	वापस KDB_CMD_CPU;
+पूर्ण
 
-/* The user may not realize that ps/bta with no parameters does not print idle
- * or sleeping system daemon processes, so tell them how many were suppressed.
+/* The user may not realize that ps/bta with no parameters करोes not prपूर्णांक idle
+ * or sleeping प्रणाली daemon processes, so tell them how many were suppressed.
  */
-void kdb_ps_suppressed(void)
-{
-	int idle = 0, daemon = 0;
-	unsigned long mask_I = kdb_task_state_string("I"),
+व्योम kdb_ps_suppressed(व्योम)
+अणु
+	पूर्णांक idle = 0, daemon = 0;
+	अचिन्हित दीर्घ mask_I = kdb_task_state_string("I"),
 		      mask_M = kdb_task_state_string("M");
-	unsigned long cpu;
-	const struct task_struct *p, *g;
-	for_each_online_cpu(cpu) {
+	अचिन्हित दीर्घ cpu;
+	स्थिर काष्ठा task_काष्ठा *p, *g;
+	क्रम_each_online_cpu(cpu) अणु
 		p = kdb_curr_task(cpu);
-		if (kdb_task_state(p, mask_I))
+		अगर (kdb_task_state(p, mask_I))
 			++idle;
-	}
-	for_each_process_thread(g, p) {
-		if (kdb_task_state(p, mask_M))
+	पूर्ण
+	क्रम_each_process_thपढ़ो(g, p) अणु
+		अगर (kdb_task_state(p, mask_M))
 			++daemon;
-	}
-	if (idle || daemon) {
-		if (idle)
-			kdb_printf("%d idle process%s (state I)%s\n",
+	पूर्ण
+	अगर (idle || daemon) अणु
+		अगर (idle)
+			kdb_म_लिखो("%d idle process%s (state I)%s\n",
 				   idle, idle == 1 ? "" : "es",
 				   daemon ? " and " : "");
-		if (daemon)
-			kdb_printf("%d sleeping system daemon (state M) "
+		अगर (daemon)
+			kdb_म_लिखो("%d sleeping system daemon (state M) "
 				   "process%s", daemon,
 				   daemon == 1 ? "" : "es");
-		kdb_printf(" suppressed,\nuse 'ps A' to see all.\n");
-	}
-}
+		kdb_म_लिखो(" suppressed,\nuse 'ps A' to see all.\n");
+	पूर्ण
+पूर्ण
 
 /*
  * kdb_ps - This function implements the 'ps' command which shows a
  *	list of the active processes.
  *		ps [DRSTCZEUIMA]   All processes, optionally filtered by state
  */
-void kdb_ps1(const struct task_struct *p)
-{
-	int cpu;
-	unsigned long tmp;
+व्योम kdb_ps1(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ पंचांगp;
 
-	if (!p ||
-	    copy_from_kernel_nofault(&tmp, (char *)p, sizeof(unsigned long)))
-		return;
+	अगर (!p ||
+	    copy_from_kernel_nofault(&पंचांगp, (अक्षर *)p, माप(अचिन्हित दीर्घ)))
+		वापस;
 
 	cpu = kdb_process_cpu(p);
-	kdb_printf("0x%px %8d %8d  %d %4d   %c  0x%px %c%s\n",
-		   (void *)p, p->pid, p->parent->pid,
+	kdb_म_लिखो("0x%px %8d %8d  %d %4d   %c  0x%px %c%s\n",
+		   (व्योम *)p, p->pid, p->parent->pid,
 		   kdb_task_has_cpu(p), kdb_process_cpu(p),
-		   kdb_task_state_char(p),
-		   (void *)(&p->thread),
+		   kdb_task_state_अक्षर(p),
+		   (व्योम *)(&p->thपढ़ो),
 		   p == kdb_curr_task(raw_smp_processor_id()) ? '*' : ' ',
 		   p->comm);
-	if (kdb_task_has_cpu(p)) {
-		if (!KDB_TSK(cpu)) {
-			kdb_printf("  Error: no saved data for this cpu\n");
-		} else {
-			if (KDB_TSK(cpu) != p)
-				kdb_printf("  Error: does not match running "
+	अगर (kdb_task_has_cpu(p)) अणु
+		अगर (!KDB_TSK(cpu)) अणु
+			kdb_म_लिखो("  Error: no saved data for this cpu\n");
+		पूर्ण अन्यथा अणु
+			अगर (KDB_TSK(cpu) != p)
+				kdb_म_लिखो("  Error: does not match running "
 				   "process table (0x%px)\n", KDB_TSK(cpu));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int kdb_ps(int argc, const char **argv)
-{
-	struct task_struct *g, *p;
-	unsigned long mask, cpu;
+अटल पूर्णांक kdb_ps(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
+	अचिन्हित दीर्घ mask, cpu;
 
-	if (argc == 0)
+	अगर (argc == 0)
 		kdb_ps_suppressed();
-	kdb_printf("%-*s      Pid   Parent [*] cpu State %-*s Command\n",
-		(int)(2*sizeof(void *))+2, "Task Addr",
-		(int)(2*sizeof(void *))+2, "Thread");
-	mask = kdb_task_state_string(argc ? argv[1] : NULL);
+	kdb_म_लिखो("%-*s      Pid   Parent [*] cpu State %-*s Command\n",
+		(पूर्णांक)(2*माप(व्योम *))+2, "Task Addr",
+		(पूर्णांक)(2*माप(व्योम *))+2, "Thread");
+	mask = kdb_task_state_string(argc ? argv[1] : शून्य);
 	/* Run the active tasks first */
-	for_each_online_cpu(cpu) {
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
 		p = kdb_curr_task(cpu);
-		if (kdb_task_state(p, mask))
+		अगर (kdb_task_state(p, mask))
 			kdb_ps1(p);
-	}
-	kdb_printf("\n");
+	पूर्ण
+	kdb_म_लिखो("\n");
 	/* Now the real tasks */
-	for_each_process_thread(g, p) {
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
-		if (kdb_task_state(p, mask))
+	क्रम_each_process_thपढ़ो(g, p) अणु
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
+		अगर (kdb_task_state(p, mask))
 			kdb_ps1(p);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * kdb_pid - This function implements the 'pid' command which switches
+ * kdb_pid - This function implements the 'pid' command which चयनes
  *	the currently active process.
  *		pid [<pid> | R]
  */
-static int kdb_pid(int argc, const char **argv)
-{
-	struct task_struct *p;
-	unsigned long val;
-	int diag;
+अटल पूर्णांक kdb_pid(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा task_काष्ठा *p;
+	अचिन्हित दीर्घ val;
+	पूर्णांक diag;
 
-	if (argc > 1)
-		return KDB_ARGCOUNT;
+	अगर (argc > 1)
+		वापस KDB_ARGCOUNT;
 
-	if (argc) {
-		if (strcmp(argv[1], "R") == 0) {
+	अगर (argc) अणु
+		अगर (म_भेद(argv[1], "R") == 0) अणु
 			p = KDB_TSK(kdb_initial_cpu);
-		} else {
+		पूर्ण अन्यथा अणु
 			diag = kdbgetularg(argv[1], &val);
-			if (diag)
-				return KDB_BADINT;
+			अगर (diag)
+				वापस KDB_BADINT;
 
 			p = find_task_by_pid_ns((pid_t)val,	&init_pid_ns);
-			if (!p) {
-				kdb_printf("No task with pid=%d\n", (pid_t)val);
-				return 0;
-			}
-		}
+			अगर (!p) अणु
+				kdb_म_लिखो("No task with pid=%d\n", (pid_t)val);
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		kdb_set_current_task(p);
-	}
-	kdb_printf("KDB current process is %s(pid=%d)\n",
+	पूर्ण
+	kdb_म_लिखो("KDB current process is %s(pid=%d)\n",
 		   kdb_current_task->comm,
 		   kdb_current_task->pid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kdb_kgdb(int argc, const char **argv)
-{
-	return KDB_CMD_KGDB;
-}
+अटल पूर्णांक kdb_kgdb(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	वापस KDB_CMD_KGDB;
+पूर्ण
 
 /*
  * kdb_help - This function implements the 'help' and '?' commands.
  */
-static int kdb_help(int argc, const char **argv)
-{
+अटल पूर्णांक kdb_help(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	kdbtab_t *kt;
 
-	kdb_printf("%-15.15s %-20.20s %s\n", "Command", "Usage", "Description");
-	kdb_printf("-----------------------------"
+	kdb_म_लिखो("%-15.15s %-20.20s %s\n", "Command", "Usage", "Description");
+	kdb_म_लिखो("-----------------------------"
 		   "-----------------------------\n");
-	list_for_each_entry(kt, &kdb_cmds_head, list_node) {
-		char *space = "";
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
-		if (!kdb_check_flags(kt->cmd_flags, kdb_cmd_enabled, true))
-			continue;
-		if (strlen(kt->cmd_usage) > 20)
+	list_क्रम_each_entry(kt, &kdb_cmds_head, list_node) अणु
+		अक्षर *space = "";
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
+		अगर (!kdb_check_flags(kt->cmd_flags, kdb_cmd_enabled, true))
+			जारी;
+		अगर (म_माप(kt->cmd_usage) > 20)
 			space = "\n                                    ";
-		kdb_printf("%-15.15s %-20s%s%s\n", kt->cmd_name,
+		kdb_म_लिखो("%-15.15s %-20s%s%s\n", kt->cmd_name,
 			   kt->cmd_usage, space, kt->cmd_help);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * kdb_kill - This function implements the 'kill' commands.
+ * kdb_समाप्त - This function implements the 'kill' commands.
  */
-static int kdb_kill(int argc, const char **argv)
-{
-	long sig, pid;
-	char *endp;
-	struct task_struct *p;
+अटल पूर्णांक kdb_समाप्त(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	दीर्घ sig, pid;
+	अक्षर *endp;
+	काष्ठा task_काष्ठा *p;
 
-	if (argc != 2)
-		return KDB_ARGCOUNT;
+	अगर (argc != 2)
+		वापस KDB_ARGCOUNT;
 
-	sig = simple_strtol(argv[1], &endp, 0);
-	if (*endp)
-		return KDB_BADINT;
-	if ((sig >= 0) || !valid_signal(-sig)) {
-		kdb_printf("Invalid signal parameter.<-signal>\n");
-		return 0;
-	}
+	sig = simple_म_से_दीर्घ(argv[1], &endp, 0);
+	अगर (*endp)
+		वापस KDB_BADINT;
+	अगर ((sig >= 0) || !valid_संकेत(-sig)) अणु
+		kdb_म_लिखो("Invalid signal parameter.<-signal>\n");
+		वापस 0;
+	पूर्ण
 	sig = -sig;
 
-	pid = simple_strtol(argv[2], &endp, 0);
-	if (*endp)
-		return KDB_BADINT;
-	if (pid <= 0) {
-		kdb_printf("Process ID must be large than 0.\n");
-		return 0;
-	}
+	pid = simple_म_से_दीर्घ(argv[2], &endp, 0);
+	अगर (*endp)
+		वापस KDB_BADINT;
+	अगर (pid <= 0) अणु
+		kdb_म_लिखो("Process ID must be large than 0.\n");
+		वापस 0;
+	पूर्ण
 
 	/* Find the process. */
 	p = find_task_by_pid_ns(pid, &init_pid_ns);
-	if (!p) {
-		kdb_printf("The specified process isn't found.\n");
-		return 0;
-	}
+	अगर (!p) अणु
+		kdb_म_लिखो("The specified process isn't found.\n");
+		वापस 0;
+	पूर्ण
 	p = p->group_leader;
 	kdb_send_sig(p, sig);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Most of this code has been lifted from kernel/timer.c::sys_sysinfo().
+ * Most of this code has been lअगरted from kernel/समयr.c::sys_sysinfo().
  * I cannot call that code directly from kdb, it has an unconditional
  * cli()/sti() and calls routines that take locks which can stop the debugger.
  */
-static void kdb_sysinfo(struct sysinfo *val)
-{
-	u64 uptime = ktime_get_mono_fast_ns();
+अटल व्योम kdb_sysinfo(काष्ठा sysinfo *val)
+अणु
+	u64 upसमय = kसमय_get_mono_fast_ns();
 
-	memset(val, 0, sizeof(*val));
-	val->uptime = div_u64(uptime, NSEC_PER_SEC);
+	स_रखो(val, 0, माप(*val));
+	val->upसमय = भाग_u64(upसमय, NSEC_PER_SEC);
 	val->loads[0] = avenrun[0];
 	val->loads[1] = avenrun[1];
 	val->loads[2] = avenrun[2];
-	val->procs = nr_threads-1;
+	val->procs = nr_thपढ़ोs-1;
 	si_meminfo(val);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * kdb_summary - This function implements the 'summary' command.
  */
-static int kdb_summary(int argc, const char **argv)
-{
-	time64_t now;
-	struct tm tm;
-	struct sysinfo val;
+अटल पूर्णांक kdb_summary(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	समय64_t now;
+	काष्ठा पंचांग पंचांग;
+	काष्ठा sysinfo val;
 
-	if (argc)
-		return KDB_ARGCOUNT;
+	अगर (argc)
+		वापस KDB_ARGCOUNT;
 
-	kdb_printf("sysname    %s\n", init_uts_ns.name.sysname);
-	kdb_printf("release    %s\n", init_uts_ns.name.release);
-	kdb_printf("version    %s\n", init_uts_ns.name.version);
-	kdb_printf("machine    %s\n", init_uts_ns.name.machine);
-	kdb_printf("nodename   %s\n", init_uts_ns.name.nodename);
-	kdb_printf("domainname %s\n", init_uts_ns.name.domainname);
+	kdb_म_लिखो("sysname    %s\n", init_uts_ns.name.sysname);
+	kdb_म_लिखो("release    %s\n", init_uts_ns.name.release);
+	kdb_म_लिखो("version    %s\n", init_uts_ns.name.version);
+	kdb_म_लिखो("machine    %s\n", init_uts_ns.name.machine);
+	kdb_म_लिखो("nodename   %s\n", init_uts_ns.name.nodename);
+	kdb_म_लिखो("domainname %s\n", init_uts_ns.name.करोमुख्यname);
 
-	now = __ktime_get_real_seconds();
-	time64_to_tm(now, 0, &tm);
-	kdb_printf("date       %04ld-%02d-%02d %02d:%02d:%02d "
+	now = __kसमय_get_real_seconds();
+	समय64_to_पंचांग(now, 0, &पंचांग);
+	kdb_म_लिखो("date       %04ld-%02d-%02d %02d:%02d:%02d "
 		   "tz_minuteswest %d\n",
-		1900+tm.tm_year, tm.tm_mon+1, tm.tm_mday,
-		tm.tm_hour, tm.tm_min, tm.tm_sec,
+		1900+पंचांग.पंचांग_year, पंचांग.पंचांग_mon+1, पंचांग.पंचांग_mday,
+		पंचांग.पंचांग_hour, पंचांग.पंचांग_min, पंचांग.पंचांग_sec,
 		sys_tz.tz_minuteswest);
 
 	kdb_sysinfo(&val);
-	kdb_printf("uptime     ");
-	if (val.uptime > (24*60*60)) {
-		int days = val.uptime / (24*60*60);
-		val.uptime %= (24*60*60);
-		kdb_printf("%d day%s ", days, days == 1 ? "" : "s");
-	}
-	kdb_printf("%02ld:%02ld\n", val.uptime/(60*60), (val.uptime/60)%60);
+	kdb_म_लिखो("uptime     ");
+	अगर (val.upसमय > (24*60*60)) अणु
+		पूर्णांक days = val.upसमय / (24*60*60);
+		val.upसमय %= (24*60*60);
+		kdb_म_लिखो("%d day%s ", days, days == 1 ? "" : "s");
+	पूर्ण
+	kdb_म_लिखो("%02ld:%02ld\n", val.upसमय/(60*60), (val.upसमय/60)%60);
 
-	kdb_printf("load avg   %ld.%02ld %ld.%02ld %ld.%02ld\n",
+	kdb_म_लिखो("load avg   %ld.%02ld %ld.%02ld %ld.%02ld\n",
 		LOAD_INT(val.loads[0]), LOAD_FRAC(val.loads[0]),
 		LOAD_INT(val.loads[1]), LOAD_FRAC(val.loads[1]),
 		LOAD_INT(val.loads[2]), LOAD_FRAC(val.loads[2]));
 
 	/* Display in kilobytes */
-#define K(x) ((x) << (PAGE_SHIFT - 10))
-	kdb_printf("\nMemTotal:       %8lu kB\nMemFree:        %8lu kB\n"
+#घोषणा K(x) ((x) << (PAGE_SHIFT - 10))
+	kdb_म_लिखो("\nMemTotal:       %8lu kB\nMemFree:        %8lu kB\n"
 		   "Buffers:        %8lu kB\n",
-		   K(val.totalram), K(val.freeram), K(val.bufferram));
-	return 0;
-}
+		   K(val.totalram), K(val.मुक्तram), K(val.bufferram));
+	वापस 0;
+पूर्ण
 
 /*
  * kdb_per_cpu - This function implements the 'per_cpu' command.
  */
-static int kdb_per_cpu(int argc, const char **argv)
-{
-	char fmtstr[64];
-	int cpu, diag, nextarg = 1;
-	unsigned long addr, symaddr, val, bytesperword = 0, whichcpu = ~0UL;
+अटल पूर्णांक kdb_per_cpu(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	अक्षर fmtstr[64];
+	पूर्णांक cpu, diag, nextarg = 1;
+	अचिन्हित दीर्घ addr, symaddr, val, bytesperword = 0, whichcpu = ~0UL;
 
-	if (argc < 1 || argc > 3)
-		return KDB_ARGCOUNT;
+	अगर (argc < 1 || argc > 3)
+		वापस KDB_ARGCOUNT;
 
-	diag = kdbgetaddrarg(argc, argv, &nextarg, &symaddr, NULL, NULL);
-	if (diag)
-		return diag;
+	diag = kdbgetaddrarg(argc, argv, &nextarg, &symaddr, शून्य, शून्य);
+	अगर (diag)
+		वापस diag;
 
-	if (argc >= 2) {
+	अगर (argc >= 2) अणु
 		diag = kdbgetularg(argv[2], &bytesperword);
-		if (diag)
-			return diag;
-	}
-	if (!bytesperword)
+		अगर (diag)
+			वापस diag;
+	पूर्ण
+	अगर (!bytesperword)
 		bytesperword = KDB_WORD_SIZE;
-	else if (bytesperword > KDB_WORD_SIZE)
-		return KDB_BADWIDTH;
-	sprintf(fmtstr, "%%0%dlx ", (int)(2*bytesperword));
-	if (argc >= 3) {
+	अन्यथा अगर (bytesperword > KDB_WORD_SIZE)
+		वापस KDB_BADWIDTH;
+	प्र_लिखो(fmtstr, "%%0%dlx ", (पूर्णांक)(2*bytesperword));
+	अगर (argc >= 3) अणु
 		diag = kdbgetularg(argv[3], &whichcpu);
-		if (diag)
-			return diag;
-		if (whichcpu >= nr_cpu_ids || !cpu_online(whichcpu)) {
-			kdb_printf("cpu %ld is not online\n", whichcpu);
-			return KDB_BADCPUNUM;
-		}
-	}
+		अगर (diag)
+			वापस diag;
+		अगर (whichcpu >= nr_cpu_ids || !cpu_online(whichcpu)) अणु
+			kdb_म_लिखो("cpu %ld is not online\n", whichcpu);
+			वापस KDB_BADCPUNUM;
+		पूर्ण
+	पूर्ण
 
 	/* Most architectures use __per_cpu_offset[cpu], some use
 	 * __per_cpu_offset(cpu), smp has no __per_cpu_offset.
 	 */
-#ifdef	__per_cpu_offset
-#define KDB_PCU(cpu) __per_cpu_offset(cpu)
-#else
-#ifdef	CONFIG_SMP
-#define KDB_PCU(cpu) __per_cpu_offset[cpu]
-#else
-#define KDB_PCU(cpu) 0
-#endif
-#endif
-	for_each_online_cpu(cpu) {
-		if (KDB_FLAG(CMD_INTERRUPT))
-			return 0;
+#अगर_घोषित	__per_cpu_offset
+#घोषणा KDB_PCU(cpu) __per_cpu_offset(cpu)
+#अन्यथा
+#अगर_घोषित	CONFIG_SMP
+#घोषणा KDB_PCU(cpu) __per_cpu_offset[cpu]
+#अन्यथा
+#घोषणा KDB_PCU(cpu) 0
+#पूर्ण_अगर
+#पूर्ण_अगर
+	क्रम_each_online_cpu(cpu) अणु
+		अगर (KDB_FLAG(CMD_INTERRUPT))
+			वापस 0;
 
-		if (whichcpu != ~0UL && whichcpu != cpu)
-			continue;
+		अगर (whichcpu != ~0UL && whichcpu != cpu)
+			जारी;
 		addr = symaddr + KDB_PCU(cpu);
 		diag = kdb_getword(&val, addr, bytesperword);
-		if (diag) {
-			kdb_printf("%5d " kdb_bfd_vma_fmt0 " - unable to "
+		अगर (diag) अणु
+			kdb_म_लिखो("%5d " kdb_bfd_vma_fmt0 " - unable to "
 				   "read, diag=%d\n", cpu, addr, diag);
-			continue;
-		}
-		kdb_printf("%5d ", cpu);
+			जारी;
+		पूर्ण
+		kdb_म_लिखो("%5d ", cpu);
 		kdb_md_line(fmtstr, addr,
 			bytesperword == KDB_WORD_SIZE,
 			1, bytesperword, 1, 1, 0);
-	}
-#undef KDB_PCU
-	return 0;
-}
+	पूर्ण
+#अघोषित KDB_PCU
+	वापस 0;
+पूर्ण
 
 /*
- * display help for the use of cmd | grep pattern
+ * display help क्रम the use of cmd | grep pattern
  */
-static int kdb_grep_help(int argc, const char **argv)
-{
-	kdb_printf("Usage of  cmd args | grep pattern:\n");
-	kdb_printf("  Any command's output may be filtered through an ");
-	kdb_printf("emulated 'pipe'.\n");
-	kdb_printf("  'grep' is just a key word.\n");
-	kdb_printf("  The pattern may include a very limited set of "
+अटल पूर्णांक kdb_grep_help(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	kdb_म_लिखो("Usage of  cmd args | grep pattern:\n");
+	kdb_म_लिखो("  Any command's output may be filtered through an ");
+	kdb_म_लिखो("emulated 'pipe'.\n");
+	kdb_म_लिखो("  'grep' is just a key word.\n");
+	kdb_म_लिखो("  The pattern may include a very limited set of "
 		   "metacharacters:\n");
-	kdb_printf("   pattern or ^pattern or pattern$ or ^pattern$\n");
-	kdb_printf("  And if there are spaces in the pattern, you may "
+	kdb_म_लिखो("   pattern or ^pattern or pattern$ or ^pattern$\न");
+	kdb_म_लिखो("  And if there are spaces in the pattern, you may "
 		   "quote it:\n");
-	kdb_printf("   \"pat tern\" or \"^pat tern\" or \"pat tern$\""
+	kdb_म_लिखो("   \"pat tern\" or \"^pat tern\" or \"pat tern$\""
 		   " or \"^pat tern$\"\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * kdb_register_flags - This function is used to register a kernel
+ * kdb_रेजिस्टर_flags - This function is used to रेजिस्टर a kernel
  * 	debugger command.
- * Inputs:
+ * Inमाला_दो:
  *	cmd	Command name
  *	func	Function to execute the command
  *	usage	A simple usage string showing arguments
  *	help	A simple help string describing command
- *	repeat	Does the command auto repeat on enter?
+ *	repeat	Does the command स्वतः repeat on enter?
  * Returns:
- *	zero for success, one if a duplicate command.
+ *	zero क्रम success, one अगर a duplicate command.
  */
-int kdb_register_flags(char *cmd,
+पूर्णांक kdb_रेजिस्टर_flags(अक्षर *cmd,
 		       kdb_func_t func,
-		       char *usage,
-		       char *help,
-		       short minlen,
+		       अक्षर *usage,
+		       अक्षर *help,
+		       लघु minlen,
 		       kdb_cmdflags_t flags)
-{
+अणु
 	kdbtab_t *kp;
 
-	list_for_each_entry(kp, &kdb_cmds_head, list_node) {
-		if (strcmp(kp->cmd_name, cmd) == 0) {
-			kdb_printf("Duplicate kdb command registered: "
+	list_क्रम_each_entry(kp, &kdb_cmds_head, list_node) अणु
+		अगर (म_भेद(kp->cmd_name, cmd) == 0) अणु
+			kdb_म_लिखो("Duplicate kdb command registered: "
 				"%s, func %px help %s\n", cmd, func, help);
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	kp = kmalloc(sizeof(*kp), GFP_KDB);
-	if (!kp) {
-		kdb_printf("Could not allocate new kdb_command table\n");
-		return 1;
-	}
+	kp = kदो_स्मृति(माप(*kp), GFP_KDB);
+	अगर (!kp) अणु
+		kdb_म_लिखो("Could not allocate new kdb_command table\n");
+		वापस 1;
+	पूर्ण
 
 	kp->cmd_name   = cmd;
 	kp->cmd_func   = func;
@@ -2665,328 +2666,328 @@ int kdb_register_flags(char *cmd,
 
 	list_add_tail(&kp->list_node, &kdb_cmds_head);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(kdb_register_flags);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(kdb_रेजिस्टर_flags);
 
 /*
- * kdb_register_table() - This function is used to register a kdb command
+ * kdb_रेजिस्टर_table() - This function is used to रेजिस्टर a kdb command
  *                        table.
- * @kp: pointer to kdb command table
+ * @kp: poपूर्णांकer to kdb command table
  * @len: length of kdb command table
  */
-void kdb_register_table(kdbtab_t *kp, size_t len)
-{
-	while (len--) {
+व्योम kdb_रेजिस्टर_table(kdbtab_t *kp, माप_प्रकार len)
+अणु
+	जबतक (len--) अणु
 		list_add_tail(&kp->list_node, &kdb_cmds_head);
 		kp++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * kdb_register - Compatibility register function for commands that do
- *	not need to specify a repeat state.  Equivalent to
- *	kdb_register_flags with flags set to 0.
- * Inputs:
+ * kdb_रेजिस्टर - Compatibility रेजिस्टर function क्रम commands that करो
+ *	not need to specअगरy a repeat state.  Equivalent to
+ *	kdb_रेजिस्टर_flags with flags set to 0.
+ * Inमाला_दो:
  *	cmd	Command name
  *	func	Function to execute the command
  *	usage	A simple usage string showing arguments
  *	help	A simple help string describing command
  * Returns:
- *	zero for success, one if a duplicate command.
+ *	zero क्रम success, one अगर a duplicate command.
  */
-int kdb_register(char *cmd,
+पूर्णांक kdb_रेजिस्टर(अक्षर *cmd,
 	     kdb_func_t func,
-	     char *usage,
-	     char *help,
-	     short minlen)
-{
-	return kdb_register_flags(cmd, func, usage, help, minlen, 0);
-}
-EXPORT_SYMBOL_GPL(kdb_register);
+	     अक्षर *usage,
+	     अक्षर *help,
+	     लघु minlen)
+अणु
+	वापस kdb_रेजिस्टर_flags(cmd, func, usage, help, minlen, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(kdb_रेजिस्टर);
 
 /*
- * kdb_unregister - This function is used to unregister a kernel
+ * kdb_unरेजिस्टर - This function is used to unरेजिस्टर a kernel
  *	debugger command.  It is generally called when a module which
  *	implements kdb commands is unloaded.
- * Inputs:
+ * Inमाला_दो:
  *	cmd	Command name
  * Returns:
- *	zero for success, one command not registered.
+ *	zero क्रम success, one command not रेजिस्टरed.
  */
-int kdb_unregister(char *cmd)
-{
+पूर्णांक kdb_unरेजिस्टर(अक्षर *cmd)
+अणु
 	kdbtab_t *kp;
 
 	/*
 	 *  find the command.
 	 */
-	list_for_each_entry(kp, &kdb_cmds_head, list_node) {
-		if (strcmp(kp->cmd_name, cmd) == 0) {
+	list_क्रम_each_entry(kp, &kdb_cmds_head, list_node) अणु
+		अगर (म_भेद(kp->cmd_name, cmd) == 0) अणु
 			list_del(&kp->list_node);
-			if (kp->is_dynamic)
-				kfree(kp);
-			return 0;
-		}
-	}
+			अगर (kp->is_dynamic)
+				kमुक्त(kp);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* Couldn't find it.  */
-	return 1;
-}
-EXPORT_SYMBOL_GPL(kdb_unregister);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL_GPL(kdb_unरेजिस्टर);
 
-static kdbtab_t maintab[] = {
-	{	.cmd_name = "md",
+अटल kdbtab_t मुख्यtab[] = अणु
+	अणु	.cmd_name = "md",
 		.cmd_func = kdb_md,
 		.cmd_usage = "<vaddr>",
 		.cmd_help = "Display Memory Contents, also mdWcN, e.g. md8c1",
 		.cmd_minlen = 1,
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_REPEAT_NO_ARGS,
-	},
-	{	.cmd_name = "mdr",
+	पूर्ण,
+	अणु	.cmd_name = "mdr",
 		.cmd_func = kdb_md,
 		.cmd_usage = "<vaddr> <bytes>",
 		.cmd_help = "Display Raw Memory",
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_REPEAT_NO_ARGS,
-	},
-	{	.cmd_name = "mdp",
+	पूर्ण,
+	अणु	.cmd_name = "mdp",
 		.cmd_func = kdb_md,
 		.cmd_usage = "<paddr> <bytes>",
 		.cmd_help = "Display Physical Memory",
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_REPEAT_NO_ARGS,
-	},
-	{	.cmd_name = "mds",
+	पूर्ण,
+	अणु	.cmd_name = "mds",
 		.cmd_func = kdb_md,
 		.cmd_usage = "<vaddr>",
 		.cmd_help = "Display Memory Symbolically",
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_REPEAT_NO_ARGS,
-	},
-	{	.cmd_name = "mm",
+	पूर्ण,
+	अणु	.cmd_name = "mm",
 		.cmd_func = kdb_mm,
 		.cmd_usage = "<vaddr> <contents>",
 		.cmd_help = "Modify Memory Contents",
 		.cmd_flags = KDB_ENABLE_MEM_WRITE | KDB_REPEAT_NO_ARGS,
-	},
-	{	.cmd_name = "go",
+	पूर्ण,
+	अणु	.cmd_name = "go",
 		.cmd_func = kdb_go,
 		.cmd_usage = "[<vaddr>]",
 		.cmd_help = "Continue Execution",
 		.cmd_minlen = 1,
 		.cmd_flags = KDB_ENABLE_REG_WRITE |
 			     KDB_ENABLE_ALWAYS_SAFE_NO_ARGS,
-	},
-	{	.cmd_name = "rd",
+	पूर्ण,
+	अणु	.cmd_name = "rd",
 		.cmd_func = kdb_rd,
 		.cmd_usage = "",
 		.cmd_help = "Display Registers",
 		.cmd_flags = KDB_ENABLE_REG_READ,
-	},
-	{	.cmd_name = "rm",
+	पूर्ण,
+	अणु	.cmd_name = "rm",
 		.cmd_func = kdb_rm,
 		.cmd_usage = "<reg> <contents>",
 		.cmd_help = "Modify Registers",
 		.cmd_flags = KDB_ENABLE_REG_WRITE,
-	},
-	{	.cmd_name = "ef",
+	पूर्ण,
+	अणु	.cmd_name = "ef",
 		.cmd_func = kdb_ef,
 		.cmd_usage = "<vaddr>",
 		.cmd_help = "Display exception frame",
 		.cmd_flags = KDB_ENABLE_MEM_READ,
-	},
-	{	.cmd_name = "bt",
+	पूर्ण,
+	अणु	.cmd_name = "bt",
 		.cmd_func = kdb_bt,
 		.cmd_usage = "[<vaddr>]",
 		.cmd_help = "Stack traceback",
 		.cmd_minlen = 1,
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_ENABLE_INSPECT_NO_ARGS,
-	},
-	{	.cmd_name = "btp",
+	पूर्ण,
+	अणु	.cmd_name = "btp",
 		.cmd_func = kdb_bt,
 		.cmd_usage = "<pid>",
 		.cmd_help = "Display stack for process <pid>",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-	{	.cmd_name = "bta",
+	पूर्ण,
+	अणु	.cmd_name = "bta",
 		.cmd_func = kdb_bt,
 		.cmd_usage = "[D|R|S|T|C|Z|E|U|I|M|A]",
 		.cmd_help = "Backtrace all processes matching state flag",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-	{	.cmd_name = "btc",
+	पूर्ण,
+	अणु	.cmd_name = "btc",
 		.cmd_func = kdb_bt,
 		.cmd_usage = "",
 		.cmd_help = "Backtrace current process on each cpu",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-	{	.cmd_name = "btt",
+	पूर्ण,
+	अणु	.cmd_name = "btt",
 		.cmd_func = kdb_bt,
 		.cmd_usage = "<vaddr>",
 		.cmd_help = "Backtrace process given its struct task address",
 		.cmd_flags = KDB_ENABLE_MEM_READ | KDB_ENABLE_INSPECT_NO_ARGS,
-	},
-	{	.cmd_name = "env",
+	पूर्ण,
+	अणु	.cmd_name = "env",
 		.cmd_func = kdb_env,
 		.cmd_usage = "",
 		.cmd_help = "Show environment variables",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "set",
+	पूर्ण,
+	अणु	.cmd_name = "set",
 		.cmd_func = kdb_set,
 		.cmd_usage = "",
 		.cmd_help = "Set environment variables",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "help",
+	पूर्ण,
+	अणु	.cmd_name = "help",
 		.cmd_func = kdb_help,
 		.cmd_usage = "",
 		.cmd_help = "Display Help Message",
 		.cmd_minlen = 1,
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "?",
+	पूर्ण,
+	अणु	.cmd_name = "?",
 		.cmd_func = kdb_help,
 		.cmd_usage = "",
 		.cmd_help = "Display Help Message",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "cpu",
+	पूर्ण,
+	अणु	.cmd_name = "cpu",
 		.cmd_func = kdb_cpu,
 		.cmd_usage = "<cpunum>",
 		.cmd_help = "Switch to new cpu",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE_NO_ARGS,
-	},
-	{	.cmd_name = "kgdb",
+	पूर्ण,
+	अणु	.cmd_name = "kgdb",
 		.cmd_func = kdb_kgdb,
 		.cmd_usage = "",
 		.cmd_help = "Enter kgdb mode",
 		.cmd_flags = 0,
-	},
-	{	.cmd_name = "ps",
+	पूर्ण,
+	अणु	.cmd_name = "ps",
 		.cmd_func = kdb_ps,
 		.cmd_usage = "[<flags>|A]",
 		.cmd_help = "Display active task list",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-	{	.cmd_name = "pid",
+	पूर्ण,
+	अणु	.cmd_name = "pid",
 		.cmd_func = kdb_pid,
 		.cmd_usage = "<pidnum>",
 		.cmd_help = "Switch to another task",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-	{	.cmd_name = "reboot",
+	पूर्ण,
+	अणु	.cmd_name = "reboot",
 		.cmd_func = kdb_reboot,
 		.cmd_usage = "",
 		.cmd_help = "Reboot the machine immediately",
 		.cmd_flags = KDB_ENABLE_REBOOT,
-	},
-#if defined(CONFIG_MODULES)
-	{	.cmd_name = "lsmod",
+	पूर्ण,
+#अगर defined(CONFIG_MODULES)
+	अणु	.cmd_name = "lsmod",
 		.cmd_func = kdb_lsmod,
 		.cmd_usage = "",
 		.cmd_help = "List loaded kernel modules",
 		.cmd_flags = KDB_ENABLE_INSPECT,
-	},
-#endif
-#if defined(CONFIG_MAGIC_SYSRQ)
-	{	.cmd_name = "sr",
+	पूर्ण,
+#पूर्ण_अगर
+#अगर defined(CONFIG_MAGIC_SYSRQ)
+	अणु	.cmd_name = "sr",
 		.cmd_func = kdb_sr,
 		.cmd_usage = "<key>",
 		.cmd_help = "Magic SysRq key",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-#endif
-#if defined(CONFIG_PRINTK)
-	{	.cmd_name = "dmesg",
+	पूर्ण,
+#पूर्ण_अगर
+#अगर defined(CONFIG_PRINTK)
+	अणु	.cmd_name = "dmesg",
 		.cmd_func = kdb_dmesg,
 		.cmd_usage = "[lines]",
 		.cmd_help = "Display syslog buffer",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-#endif
-	{	.cmd_name = "defcmd",
+	पूर्ण,
+#पूर्ण_अगर
+	अणु	.cmd_name = "defcmd",
 		.cmd_func = kdb_defcmd,
 		.cmd_usage = "name \"usage\" \"help\"",
 		.cmd_help = "Define a set of commands, down to endefcmd",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "kill",
-		.cmd_func = kdb_kill,
+	पूर्ण,
+	अणु	.cmd_name = "kill",
+		.cmd_func = kdb_समाप्त,
 		.cmd_usage = "<-signal> <pid>",
 		.cmd_help = "Send a signal to a process",
 		.cmd_flags = KDB_ENABLE_SIGNAL,
-	},
-	{	.cmd_name = "summary",
+	पूर्ण,
+	अणु	.cmd_name = "summary",
 		.cmd_func = kdb_summary,
 		.cmd_usage = "",
 		.cmd_help = "Summarize the system",
 		.cmd_minlen = 4,
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-	{	.cmd_name = "per_cpu",
+	पूर्ण,
+	अणु	.cmd_name = "per_cpu",
 		.cmd_func = kdb_per_cpu,
 		.cmd_usage = "<sym> [<bytes>] [<cpu>]",
 		.cmd_help = "Display per_cpu variables",
 		.cmd_minlen = 3,
 		.cmd_flags = KDB_ENABLE_MEM_READ,
-	},
-	{	.cmd_name = "grephelp",
+	पूर्ण,
+	अणु	.cmd_name = "grephelp",
 		.cmd_func = kdb_grep_help,
 		.cmd_usage = "",
 		.cmd_help = "Display help on | grep",
 		.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static kdbtab_t nmicmd = {
+अटल kdbtab_t nmicmd = अणु
 	.cmd_name = "disable_nmi",
 	.cmd_func = kdb_disable_nmi,
 	.cmd_usage = "",
 	.cmd_help = "Disable NMI entry to KDB",
 	.cmd_flags = KDB_ENABLE_ALWAYS_SAFE,
-};
+पूर्ण;
 
 /* Initialize the kdb command table. */
-static void __init kdb_inittab(void)
-{
-	kdb_register_table(maintab, ARRAY_SIZE(maintab));
-	if (arch_kgdb_ops.enable_nmi)
-		kdb_register_table(&nmicmd, 1);
-}
+अटल व्योम __init kdb_inittab(व्योम)
+अणु
+	kdb_रेजिस्टर_table(मुख्यtab, ARRAY_SIZE(मुख्यtab));
+	अगर (arch_kgdb_ops.enable_nmi)
+		kdb_रेजिस्टर_table(&nmicmd, 1);
+पूर्ण
 
 /* Execute any commands defined in kdb_cmds.  */
-static void __init kdb_cmd_init(void)
-{
-	int i, diag;
-	for (i = 0; kdb_cmds[i]; ++i) {
+अटल व्योम __init kdb_cmd_init(व्योम)
+अणु
+	पूर्णांक i, diag;
+	क्रम (i = 0; kdb_cmds[i]; ++i) अणु
 		diag = kdb_parse(kdb_cmds[i]);
-		if (diag)
-			kdb_printf("kdb command %s failed, kdb diag %d\n",
+		अगर (diag)
+			kdb_म_लिखो("kdb command %s failed, kdb diag %d\n",
 				kdb_cmds[i], diag);
-	}
-	if (defcmd_in_progress) {
-		kdb_printf("Incomplete 'defcmd' set, forcing endefcmd\n");
+	पूर्ण
+	अगर (defcmd_in_progress) अणु
+		kdb_म_लिखो("Incomplete 'defcmd' set, forcing endefcmd\n");
 		kdb_parse("endefcmd");
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Initialize kdb_printf, breakpoint tables and kdb state */
-void __init kdb_init(int lvl)
-{
-	static int kdb_init_lvl = KDB_NOT_INITIALIZED;
-	int i;
+/* Initialize kdb_म_लिखो, अवरोधpoपूर्णांक tables and kdb state */
+व्योम __init kdb_init(पूर्णांक lvl)
+अणु
+	अटल पूर्णांक kdb_init_lvl = KDB_NOT_INITIALIZED;
+	पूर्णांक i;
 
-	if (kdb_init_lvl == KDB_INIT_FULL || lvl <= kdb_init_lvl)
-		return;
-	for (i = kdb_init_lvl; i < lvl; i++) {
-		switch (i) {
-		case KDB_NOT_INITIALIZED:
+	अगर (kdb_init_lvl == KDB_INIT_FULL || lvl <= kdb_init_lvl)
+		वापस;
+	क्रम (i = kdb_init_lvl; i < lvl; i++) अणु
+		चयन (i) अणु
+		हाल KDB_NOT_INITIALIZED:
 			kdb_inittab();		/* Initialize Command Table */
-			kdb_initbptab();	/* Initialize Breakpoints */
-			break;
-		case KDB_INIT_EARLY:
+			kdb_initbptab();	/* Initialize Breakpoपूर्णांकs */
+			अवरोध;
+		हाल KDB_INIT_EARLY:
 			kdb_cmd_init();		/* Build kdb_cmds tables */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	kdb_init_lvl = lvl;
-}
+पूर्ण

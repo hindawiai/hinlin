@@ -1,548 +1,549 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/switchdev/switchdev.c - Switch device API
+ * net/चयनdev/चयनdev.c - Switch device API
  * Copyright (c) 2014-2015 Jiri Pirko <jiri@resnulli.us>
  * Copyright (c) 2014-2015 Scott Feldman <sfeldma@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/notifier.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_bridge.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/if_vlan.h>
-#include <linux/rtnetlink.h>
-#include <net/switchdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/चयनdev.h>
 
-static LIST_HEAD(deferred);
-static DEFINE_SPINLOCK(deferred_lock);
+अटल LIST_HEAD(deferred);
+अटल DEFINE_SPINLOCK(deferred_lock);
 
-typedef void switchdev_deferred_func_t(struct net_device *dev,
-				       const void *data);
+प्रकार व्योम चयनdev_deferred_func_t(काष्ठा net_device *dev,
+				       स्थिर व्योम *data);
 
-struct switchdev_deferred_item {
-	struct list_head list;
-	struct net_device *dev;
-	switchdev_deferred_func_t *func;
-	unsigned long data[];
-};
+काष्ठा चयनdev_deferred_item अणु
+	काष्ठा list_head list;
+	काष्ठा net_device *dev;
+	चयनdev_deferred_func_t *func;
+	अचिन्हित दीर्घ data[];
+पूर्ण;
 
-static struct switchdev_deferred_item *switchdev_deferred_dequeue(void)
-{
-	struct switchdev_deferred_item *dfitem;
+अटल काष्ठा चयनdev_deferred_item *चयनdev_deferred_dequeue(व्योम)
+अणु
+	काष्ठा चयनdev_deferred_item *dfitem;
 
 	spin_lock_bh(&deferred_lock);
-	if (list_empty(&deferred)) {
-		dfitem = NULL;
-		goto unlock;
-	}
+	अगर (list_empty(&deferred)) अणु
+		dfitem = शून्य;
+		जाओ unlock;
+	पूर्ण
 	dfitem = list_first_entry(&deferred,
-				  struct switchdev_deferred_item, list);
+				  काष्ठा चयनdev_deferred_item, list);
 	list_del(&dfitem->list);
 unlock:
 	spin_unlock_bh(&deferred_lock);
-	return dfitem;
-}
+	वापस dfitem;
+पूर्ण
 
 /**
- *	switchdev_deferred_process - Process ops in deferred queue
+ *	चयनdev_deferred_process - Process ops in deferred queue
  *
  *	Called to flush the ops currently queued in deferred ops queue.
  *	rtnl_lock must be held.
  */
-void switchdev_deferred_process(void)
-{
-	struct switchdev_deferred_item *dfitem;
+व्योम चयनdev_deferred_process(व्योम)
+अणु
+	काष्ठा चयनdev_deferred_item *dfitem;
 
 	ASSERT_RTNL();
 
-	while ((dfitem = switchdev_deferred_dequeue())) {
+	जबतक ((dfitem = चयनdev_deferred_dequeue())) अणु
 		dfitem->func(dfitem->dev, dfitem->data);
 		dev_put(dfitem->dev);
-		kfree(dfitem);
-	}
-}
-EXPORT_SYMBOL_GPL(switchdev_deferred_process);
+		kमुक्त(dfitem);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_deferred_process);
 
-static void switchdev_deferred_process_work(struct work_struct *work)
-{
+अटल व्योम चयनdev_deferred_process_work(काष्ठा work_काष्ठा *work)
+अणु
 	rtnl_lock();
-	switchdev_deferred_process();
+	चयनdev_deferred_process();
 	rtnl_unlock();
-}
+पूर्ण
 
-static DECLARE_WORK(deferred_process_work, switchdev_deferred_process_work);
+अटल DECLARE_WORK(deferred_process_work, चयनdev_deferred_process_work);
 
-static int switchdev_deferred_enqueue(struct net_device *dev,
-				      const void *data, size_t data_len,
-				      switchdev_deferred_func_t *func)
-{
-	struct switchdev_deferred_item *dfitem;
+अटल पूर्णांक चयनdev_deferred_enqueue(काष्ठा net_device *dev,
+				      स्थिर व्योम *data, माप_प्रकार data_len,
+				      चयनdev_deferred_func_t *func)
+अणु
+	काष्ठा चयनdev_deferred_item *dfitem;
 
-	dfitem = kmalloc(sizeof(*dfitem) + data_len, GFP_ATOMIC);
-	if (!dfitem)
-		return -ENOMEM;
+	dfitem = kदो_स्मृति(माप(*dfitem) + data_len, GFP_ATOMIC);
+	अगर (!dfitem)
+		वापस -ENOMEM;
 	dfitem->dev = dev;
 	dfitem->func = func;
-	memcpy(dfitem->data, data, data_len);
+	स_नकल(dfitem->data, data, data_len);
 	dev_hold(dev);
 	spin_lock_bh(&deferred_lock);
 	list_add_tail(&dfitem->list, &deferred);
 	spin_unlock_bh(&deferred_lock);
 	schedule_work(&deferred_process_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int switchdev_port_attr_notify(enum switchdev_notifier_type nt,
-				      struct net_device *dev,
-				      const struct switchdev_attr *attr,
-				      struct netlink_ext_ack *extack)
-{
-	int err;
-	int rc;
+अटल पूर्णांक चयनdev_port_attr_notअगरy(क्रमागत चयनdev_notअगरier_type nt,
+				      काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_attr *attr,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक err;
+	पूर्णांक rc;
 
-	struct switchdev_notifier_port_attr_info attr_info = {
+	काष्ठा चयनdev_notअगरier_port_attr_info attr_info = अणु
 		.attr = attr,
 		.handled = false,
-	};
+	पूर्ण;
 
-	rc = call_switchdev_blocking_notifiers(nt, dev,
+	rc = call_चयनdev_blocking_notअगरiers(nt, dev,
 					       &attr_info.info, extack);
-	err = notifier_to_errno(rc);
-	if (err) {
+	err = notअगरier_to_त्रुटि_सं(rc);
+	अगर (err) अणु
 		WARN_ON(!attr_info.handled);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!attr_info.handled)
-		return -EOPNOTSUPP;
+	अगर (!attr_info.handled)
+		वापस -EOPNOTSUPP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int switchdev_port_attr_set_now(struct net_device *dev,
-				       const struct switchdev_attr *attr,
-				       struct netlink_ext_ack *extack)
-{
-	return switchdev_port_attr_notify(SWITCHDEV_PORT_ATTR_SET, dev, attr,
+अटल पूर्णांक चयनdev_port_attr_set_now(काष्ठा net_device *dev,
+				       स्थिर काष्ठा चयनdev_attr *attr,
+				       काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस चयनdev_port_attr_notअगरy(SWITCHDEV_PORT_ATTR_SET, dev, attr,
 					  extack);
-}
+पूर्ण
 
-static void switchdev_port_attr_set_deferred(struct net_device *dev,
-					     const void *data)
-{
-	const struct switchdev_attr *attr = data;
-	int err;
+अटल व्योम चयनdev_port_attr_set_deferred(काष्ठा net_device *dev,
+					     स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा चयनdev_attr *attr = data;
+	पूर्णांक err;
 
-	err = switchdev_port_attr_set_now(dev, attr, NULL);
-	if (err && err != -EOPNOTSUPP)
+	err = चयनdev_port_attr_set_now(dev, attr, शून्य);
+	अगर (err && err != -EOPNOTSUPP)
 		netdev_err(dev, "failed (err=%d) to set attribute (id=%d)\n",
 			   err, attr->id);
-	if (attr->complete)
+	अगर (attr->complete)
 		attr->complete(dev, err, attr->complete_priv);
-}
+पूर्ण
 
-static int switchdev_port_attr_set_defer(struct net_device *dev,
-					 const struct switchdev_attr *attr)
-{
-	return switchdev_deferred_enqueue(dev, attr, sizeof(*attr),
-					  switchdev_port_attr_set_deferred);
-}
+अटल पूर्णांक चयनdev_port_attr_set_defer(काष्ठा net_device *dev,
+					 स्थिर काष्ठा चयनdev_attr *attr)
+अणु
+	वापस चयनdev_deferred_enqueue(dev, attr, माप(*attr),
+					  चयनdev_port_attr_set_deferred);
+पूर्ण
 
 /**
- *	switchdev_port_attr_set - Set port attribute
+ *	चयनdev_port_attr_set - Set port attribute
  *
  *	@dev: port device
  *	@attr: attribute to set
- *	@extack: netlink extended ack, for error message propagation
+ *	@extack: netlink extended ack, क्रम error message propagation
  *
  *	rtnl_lock must be held and must not be in atomic section,
- *	in case SWITCHDEV_F_DEFER flag is not set.
+ *	in हाल SWITCHDEV_F_DEFER flag is not set.
  */
-int switchdev_port_attr_set(struct net_device *dev,
-			    const struct switchdev_attr *attr,
-			    struct netlink_ext_ack *extack)
-{
-	if (attr->flags & SWITCHDEV_F_DEFER)
-		return switchdev_port_attr_set_defer(dev, attr);
+पूर्णांक चयनdev_port_attr_set(काष्ठा net_device *dev,
+			    स्थिर काष्ठा चयनdev_attr *attr,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (attr->flags & SWITCHDEV_F_DEFER)
+		वापस चयनdev_port_attr_set_defer(dev, attr);
 	ASSERT_RTNL();
-	return switchdev_port_attr_set_now(dev, attr, extack);
-}
-EXPORT_SYMBOL_GPL(switchdev_port_attr_set);
+	वापस चयनdev_port_attr_set_now(dev, attr, extack);
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_port_attr_set);
 
-static size_t switchdev_obj_size(const struct switchdev_obj *obj)
-{
-	switch (obj->id) {
-	case SWITCHDEV_OBJ_ID_PORT_VLAN:
-		return sizeof(struct switchdev_obj_port_vlan);
-	case SWITCHDEV_OBJ_ID_PORT_MDB:
-		return sizeof(struct switchdev_obj_port_mdb);
-	case SWITCHDEV_OBJ_ID_HOST_MDB:
-		return sizeof(struct switchdev_obj_port_mdb);
-	default:
+अटल माप_प्रकार चयनdev_obj_size(स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	चयन (obj->id) अणु
+	हाल SWITCHDEV_OBJ_ID_PORT_VLAN:
+		वापस माप(काष्ठा चयनdev_obj_port_vlan);
+	हाल SWITCHDEV_OBJ_ID_PORT_MDB:
+		वापस माप(काष्ठा चयनdev_obj_port_mdb);
+	हाल SWITCHDEV_OBJ_ID_HOST_MDB:
+		वापस माप(काष्ठा चयनdev_obj_port_mdb);
+	शेष:
 		BUG();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int switchdev_port_obj_notify(enum switchdev_notifier_type nt,
-				     struct net_device *dev,
-				     const struct switchdev_obj *obj,
-				     struct netlink_ext_ack *extack)
-{
-	int rc;
-	int err;
+अटल पूर्णांक चयनdev_port_obj_notअगरy(क्रमागत चयनdev_notअगरier_type nt,
+				     काष्ठा net_device *dev,
+				     स्थिर काष्ठा चयनdev_obj *obj,
+				     काष्ठा netlink_ext_ack *extack)
+अणु
+	पूर्णांक rc;
+	पूर्णांक err;
 
-	struct switchdev_notifier_port_obj_info obj_info = {
+	काष्ठा चयनdev_notअगरier_port_obj_info obj_info = अणु
 		.obj = obj,
 		.handled = false,
-	};
+	पूर्ण;
 
-	rc = call_switchdev_blocking_notifiers(nt, dev, &obj_info.info, extack);
-	err = notifier_to_errno(rc);
-	if (err) {
+	rc = call_चयनdev_blocking_notअगरiers(nt, dev, &obj_info.info, extack);
+	err = notअगरier_to_त्रुटि_सं(rc);
+	अगर (err) अणु
 		WARN_ON(!obj_info.handled);
-		return err;
-	}
-	if (!obj_info.handled)
-		return -EOPNOTSUPP;
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	अगर (!obj_info.handled)
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static void switchdev_port_obj_add_deferred(struct net_device *dev,
-					    const void *data)
-{
-	const struct switchdev_obj *obj = data;
-	int err;
+अटल व्योम चयनdev_port_obj_add_deferred(काष्ठा net_device *dev,
+					    स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा चयनdev_obj *obj = data;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
-	err = switchdev_port_obj_notify(SWITCHDEV_PORT_OBJ_ADD,
-					dev, obj, NULL);
-	if (err && err != -EOPNOTSUPP)
+	err = चयनdev_port_obj_notअगरy(SWITCHDEV_PORT_OBJ_ADD,
+					dev, obj, शून्य);
+	अगर (err && err != -EOPNOTSUPP)
 		netdev_err(dev, "failed (err=%d) to add object (id=%d)\n",
 			   err, obj->id);
-	if (obj->complete)
+	अगर (obj->complete)
 		obj->complete(dev, err, obj->complete_priv);
-}
+पूर्ण
 
-static int switchdev_port_obj_add_defer(struct net_device *dev,
-					const struct switchdev_obj *obj)
-{
-	return switchdev_deferred_enqueue(dev, obj, switchdev_obj_size(obj),
-					  switchdev_port_obj_add_deferred);
-}
+अटल पूर्णांक चयनdev_port_obj_add_defer(काष्ठा net_device *dev,
+					स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	वापस चयनdev_deferred_enqueue(dev, obj, चयनdev_obj_size(obj),
+					  चयनdev_port_obj_add_deferred);
+पूर्ण
 
 /**
- *	switchdev_port_obj_add - Add port object
+ *	चयनdev_port_obj_add - Add port object
  *
  *	@dev: port device
  *	@obj: object to add
  *	@extack: netlink extended ack
  *
  *	rtnl_lock must be held and must not be in atomic section,
- *	in case SWITCHDEV_F_DEFER flag is not set.
+ *	in हाल SWITCHDEV_F_DEFER flag is not set.
  */
-int switchdev_port_obj_add(struct net_device *dev,
-			   const struct switchdev_obj *obj,
-			   struct netlink_ext_ack *extack)
-{
-	if (obj->flags & SWITCHDEV_F_DEFER)
-		return switchdev_port_obj_add_defer(dev, obj);
+पूर्णांक चयनdev_port_obj_add(काष्ठा net_device *dev,
+			   स्थिर काष्ठा चयनdev_obj *obj,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (obj->flags & SWITCHDEV_F_DEFER)
+		वापस चयनdev_port_obj_add_defer(dev, obj);
 	ASSERT_RTNL();
-	return switchdev_port_obj_notify(SWITCHDEV_PORT_OBJ_ADD,
+	वापस चयनdev_port_obj_notअगरy(SWITCHDEV_PORT_OBJ_ADD,
 					 dev, obj, extack);
-}
-EXPORT_SYMBOL_GPL(switchdev_port_obj_add);
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_port_obj_add);
 
-static int switchdev_port_obj_del_now(struct net_device *dev,
-				      const struct switchdev_obj *obj)
-{
-	return switchdev_port_obj_notify(SWITCHDEV_PORT_OBJ_DEL,
-					 dev, obj, NULL);
-}
+अटल पूर्णांक चयनdev_port_obj_del_now(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	वापस चयनdev_port_obj_notअगरy(SWITCHDEV_PORT_OBJ_DEL,
+					 dev, obj, शून्य);
+पूर्ण
 
-static void switchdev_port_obj_del_deferred(struct net_device *dev,
-					    const void *data)
-{
-	const struct switchdev_obj *obj = data;
-	int err;
+अटल व्योम चयनdev_port_obj_del_deferred(काष्ठा net_device *dev,
+					    स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा चयनdev_obj *obj = data;
+	पूर्णांक err;
 
-	err = switchdev_port_obj_del_now(dev, obj);
-	if (err && err != -EOPNOTSUPP)
+	err = चयनdev_port_obj_del_now(dev, obj);
+	अगर (err && err != -EOPNOTSUPP)
 		netdev_err(dev, "failed (err=%d) to del object (id=%d)\n",
 			   err, obj->id);
-	if (obj->complete)
+	अगर (obj->complete)
 		obj->complete(dev, err, obj->complete_priv);
-}
+पूर्ण
 
-static int switchdev_port_obj_del_defer(struct net_device *dev,
-					const struct switchdev_obj *obj)
-{
-	return switchdev_deferred_enqueue(dev, obj, switchdev_obj_size(obj),
-					  switchdev_port_obj_del_deferred);
-}
+अटल पूर्णांक चयनdev_port_obj_del_defer(काष्ठा net_device *dev,
+					स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	वापस चयनdev_deferred_enqueue(dev, obj, चयनdev_obj_size(obj),
+					  चयनdev_port_obj_del_deferred);
+पूर्ण
 
 /**
- *	switchdev_port_obj_del - Delete port object
+ *	चयनdev_port_obj_del - Delete port object
  *
  *	@dev: port device
  *	@obj: object to delete
  *
  *	rtnl_lock must be held and must not be in atomic section,
- *	in case SWITCHDEV_F_DEFER flag is not set.
+ *	in हाल SWITCHDEV_F_DEFER flag is not set.
  */
-int switchdev_port_obj_del(struct net_device *dev,
-			   const struct switchdev_obj *obj)
-{
-	if (obj->flags & SWITCHDEV_F_DEFER)
-		return switchdev_port_obj_del_defer(dev, obj);
+पूर्णांक चयनdev_port_obj_del(काष्ठा net_device *dev,
+			   स्थिर काष्ठा चयनdev_obj *obj)
+अणु
+	अगर (obj->flags & SWITCHDEV_F_DEFER)
+		वापस चयनdev_port_obj_del_defer(dev, obj);
 	ASSERT_RTNL();
-	return switchdev_port_obj_del_now(dev, obj);
-}
-EXPORT_SYMBOL_GPL(switchdev_port_obj_del);
+	वापस चयनdev_port_obj_del_now(dev, obj);
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_port_obj_del);
 
-static ATOMIC_NOTIFIER_HEAD(switchdev_notif_chain);
-static BLOCKING_NOTIFIER_HEAD(switchdev_blocking_notif_chain);
+अटल ATOMIC_NOTIFIER_HEAD(चयनdev_notअगर_chain);
+अटल BLOCKING_NOTIFIER_HEAD(चयनdev_blocking_notअगर_chain);
 
 /**
- *	register_switchdev_notifier - Register notifier
- *	@nb: notifier_block
+ *	रेजिस्टर_चयनdev_notअगरier - Register notअगरier
+ *	@nb: notअगरier_block
  *
- *	Register switch device notifier.
+ *	Register चयन device notअगरier.
  */
-int register_switchdev_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&switchdev_notif_chain, nb);
-}
-EXPORT_SYMBOL_GPL(register_switchdev_notifier);
+पूर्णांक रेजिस्टर_चयनdev_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&चयनdev_notअगर_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_चयनdev_notअगरier);
 
 /**
- *	unregister_switchdev_notifier - Unregister notifier
- *	@nb: notifier_block
+ *	unरेजिस्टर_चयनdev_notअगरier - Unरेजिस्टर notअगरier
+ *	@nb: notअगरier_block
  *
- *	Unregister switch device notifier.
+ *	Unरेजिस्टर चयन device notअगरier.
  */
-int unregister_switchdev_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(&switchdev_notif_chain, nb);
-}
-EXPORT_SYMBOL_GPL(unregister_switchdev_notifier);
+पूर्णांक unरेजिस्टर_चयनdev_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&चयनdev_notअगर_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_चयनdev_notअगरier);
 
 /**
- *	call_switchdev_notifiers - Call notifiers
- *	@val: value passed unmodified to notifier function
+ *	call_चयनdev_notअगरiers - Call notअगरiers
+ *	@val: value passed unmodअगरied to notअगरier function
  *	@dev: port device
- *	@info: notifier information data
+ *	@info: notअगरier inक्रमmation data
  *	@extack: netlink extended ack
- *	Call all network notifier blocks.
+ *	Call all network notअगरier blocks.
  */
-int call_switchdev_notifiers(unsigned long val, struct net_device *dev,
-			     struct switchdev_notifier_info *info,
-			     struct netlink_ext_ack *extack)
-{
+पूर्णांक call_चयनdev_notअगरiers(अचिन्हित दीर्घ val, काष्ठा net_device *dev,
+			     काष्ठा चयनdev_notअगरier_info *info,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
 	info->dev = dev;
 	info->extack = extack;
-	return atomic_notifier_call_chain(&switchdev_notif_chain, val, info);
-}
-EXPORT_SYMBOL_GPL(call_switchdev_notifiers);
+	वापस atomic_notअगरier_call_chain(&चयनdev_notअगर_chain, val, info);
+पूर्ण
+EXPORT_SYMBOL_GPL(call_चयनdev_notअगरiers);
 
-int register_switchdev_blocking_notifier(struct notifier_block *nb)
-{
-	struct blocking_notifier_head *chain = &switchdev_blocking_notif_chain;
+पूर्णांक रेजिस्टर_चयनdev_blocking_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा blocking_notअगरier_head *chain = &चयनdev_blocking_notअगर_chain;
 
-	return blocking_notifier_chain_register(chain, nb);
-}
-EXPORT_SYMBOL_GPL(register_switchdev_blocking_notifier);
+	वापस blocking_notअगरier_chain_रेजिस्टर(chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_चयनdev_blocking_notअगरier);
 
-int unregister_switchdev_blocking_notifier(struct notifier_block *nb)
-{
-	struct blocking_notifier_head *chain = &switchdev_blocking_notif_chain;
+पूर्णांक unरेजिस्टर_चयनdev_blocking_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	काष्ठा blocking_notअगरier_head *chain = &चयनdev_blocking_notअगर_chain;
 
-	return blocking_notifier_chain_unregister(chain, nb);
-}
-EXPORT_SYMBOL_GPL(unregister_switchdev_blocking_notifier);
+	वापस blocking_notअगरier_chain_unरेजिस्टर(chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_चयनdev_blocking_notअगरier);
 
-int call_switchdev_blocking_notifiers(unsigned long val, struct net_device *dev,
-				      struct switchdev_notifier_info *info,
-				      struct netlink_ext_ack *extack)
-{
+पूर्णांक call_चयनdev_blocking_notअगरiers(अचिन्हित दीर्घ val, काष्ठा net_device *dev,
+				      काष्ठा चयनdev_notअगरier_info *info,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
 	info->dev = dev;
 	info->extack = extack;
-	return blocking_notifier_call_chain(&switchdev_blocking_notif_chain,
+	वापस blocking_notअगरier_call_chain(&चयनdev_blocking_notअगर_chain,
 					    val, info);
-}
-EXPORT_SYMBOL_GPL(call_switchdev_blocking_notifiers);
+पूर्ण
+EXPORT_SYMBOL_GPL(call_चयनdev_blocking_notअगरiers);
 
-static int __switchdev_handle_port_obj_add(struct net_device *dev,
-			struct switchdev_notifier_port_obj_info *port_obj_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*add_cb)(struct net_device *dev,
-				      const struct switchdev_obj *obj,
-				      struct netlink_ext_ack *extack))
-{
-	struct netlink_ext_ack *extack;
-	struct net_device *lower_dev;
-	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक __चयनdev_handle_port_obj_add(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_obj_info *port_obj_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*add_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_obj *obj,
+				      काष्ठा netlink_ext_ack *extack))
+अणु
+	काष्ठा netlink_ext_ack *extack;
+	काष्ठा net_device *lower_dev;
+	काष्ठा list_head *iter;
+	पूर्णांक err = -EOPNOTSUPP;
 
-	extack = switchdev_notifier_info_to_extack(&port_obj_info->info);
+	extack = चयनdev_notअगरier_info_to_extack(&port_obj_info->info);
 
-	if (check_cb(dev)) {
+	अगर (check_cb(dev)) अणु
 		err = add_cb(dev, port_obj_info->obj, extack);
-		if (err != -EOPNOTSUPP)
+		अगर (err != -EOPNOTSUPP)
 			port_obj_info->handled = true;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Switch ports might be stacked under e.g. a LAG. Ignore the
 	 * unsupported devices, another driver might be able to handle them. But
 	 * propagate to the callers any hard errors.
 	 *
-	 * If the driver does its own bookkeeping of stacked ports, it's not
+	 * If the driver करोes its own bookkeeping of stacked ports, it's not
 	 * necessary to go through this helper.
 	 */
-	netdev_for_each_lower_dev(dev, lower_dev, iter) {
-		if (netif_is_bridge_master(lower_dev))
-			continue;
+	netdev_क्रम_each_lower_dev(dev, lower_dev, iter) अणु
+		अगर (netअगर_is_bridge_master(lower_dev))
+			जारी;
 
-		err = __switchdev_handle_port_obj_add(lower_dev, port_obj_info,
+		err = __चयनdev_handle_port_obj_add(lower_dev, port_obj_info,
 						      check_cb, add_cb);
-		if (err && err != -EOPNOTSUPP)
-			return err;
-	}
+		अगर (err && err != -EOPNOTSUPP)
+			वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int switchdev_handle_port_obj_add(struct net_device *dev,
-			struct switchdev_notifier_port_obj_info *port_obj_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*add_cb)(struct net_device *dev,
-				      const struct switchdev_obj *obj,
-				      struct netlink_ext_ack *extack))
-{
-	int err;
+पूर्णांक चयनdev_handle_port_obj_add(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_obj_info *port_obj_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*add_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_obj *obj,
+				      काष्ठा netlink_ext_ack *extack))
+अणु
+	पूर्णांक err;
 
-	err = __switchdev_handle_port_obj_add(dev, port_obj_info, check_cb,
+	err = __चयनdev_handle_port_obj_add(dev, port_obj_info, check_cb,
 					      add_cb);
-	if (err == -EOPNOTSUPP)
+	अगर (err == -EOPNOTSUPP)
 		err = 0;
-	return err;
-}
-EXPORT_SYMBOL_GPL(switchdev_handle_port_obj_add);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_handle_port_obj_add);
 
-static int __switchdev_handle_port_obj_del(struct net_device *dev,
-			struct switchdev_notifier_port_obj_info *port_obj_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*del_cb)(struct net_device *dev,
-				      const struct switchdev_obj *obj))
-{
-	struct net_device *lower_dev;
-	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक __चयनdev_handle_port_obj_del(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_obj_info *port_obj_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*del_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_obj *obj))
+अणु
+	काष्ठा net_device *lower_dev;
+	काष्ठा list_head *iter;
+	पूर्णांक err = -EOPNOTSUPP;
 
-	if (check_cb(dev)) {
+	अगर (check_cb(dev)) अणु
 		err = del_cb(dev, port_obj_info->obj);
-		if (err != -EOPNOTSUPP)
+		अगर (err != -EOPNOTSUPP)
 			port_obj_info->handled = true;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Switch ports might be stacked under e.g. a LAG. Ignore the
 	 * unsupported devices, another driver might be able to handle them. But
 	 * propagate to the callers any hard errors.
 	 *
-	 * If the driver does its own bookkeeping of stacked ports, it's not
+	 * If the driver करोes its own bookkeeping of stacked ports, it's not
 	 * necessary to go through this helper.
 	 */
-	netdev_for_each_lower_dev(dev, lower_dev, iter) {
-		if (netif_is_bridge_master(lower_dev))
-			continue;
+	netdev_क्रम_each_lower_dev(dev, lower_dev, iter) अणु
+		अगर (netअगर_is_bridge_master(lower_dev))
+			जारी;
 
-		err = __switchdev_handle_port_obj_del(lower_dev, port_obj_info,
+		err = __चयनdev_handle_port_obj_del(lower_dev, port_obj_info,
 						      check_cb, del_cb);
-		if (err && err != -EOPNOTSUPP)
-			return err;
-	}
+		अगर (err && err != -EOPNOTSUPP)
+			वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int switchdev_handle_port_obj_del(struct net_device *dev,
-			struct switchdev_notifier_port_obj_info *port_obj_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*del_cb)(struct net_device *dev,
-				      const struct switchdev_obj *obj))
-{
-	int err;
+पूर्णांक चयनdev_handle_port_obj_del(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_obj_info *port_obj_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*del_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_obj *obj))
+अणु
+	पूर्णांक err;
 
-	err = __switchdev_handle_port_obj_del(dev, port_obj_info, check_cb,
+	err = __चयनdev_handle_port_obj_del(dev, port_obj_info, check_cb,
 					      del_cb);
-	if (err == -EOPNOTSUPP)
+	अगर (err == -EOPNOTSUPP)
 		err = 0;
-	return err;
-}
-EXPORT_SYMBOL_GPL(switchdev_handle_port_obj_del);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_handle_port_obj_del);
 
-static int __switchdev_handle_port_attr_set(struct net_device *dev,
-			struct switchdev_notifier_port_attr_info *port_attr_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*set_cb)(struct net_device *dev,
-				      const struct switchdev_attr *attr,
-				      struct netlink_ext_ack *extack))
-{
-	struct netlink_ext_ack *extack;
-	struct net_device *lower_dev;
-	struct list_head *iter;
-	int err = -EOPNOTSUPP;
+अटल पूर्णांक __चयनdev_handle_port_attr_set(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_attr_info *port_attr_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*set_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_attr *attr,
+				      काष्ठा netlink_ext_ack *extack))
+अणु
+	काष्ठा netlink_ext_ack *extack;
+	काष्ठा net_device *lower_dev;
+	काष्ठा list_head *iter;
+	पूर्णांक err = -EOPNOTSUPP;
 
-	extack = switchdev_notifier_info_to_extack(&port_attr_info->info);
+	extack = चयनdev_notअगरier_info_to_extack(&port_attr_info->info);
 
-	if (check_cb(dev)) {
+	अगर (check_cb(dev)) अणु
 		err = set_cb(dev, port_attr_info->attr, extack);
-		if (err != -EOPNOTSUPP)
+		अगर (err != -EOPNOTSUPP)
 			port_attr_info->handled = true;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Switch ports might be stacked under e.g. a LAG. Ignore the
 	 * unsupported devices, another driver might be able to handle them. But
 	 * propagate to the callers any hard errors.
 	 *
-	 * If the driver does its own bookkeeping of stacked ports, it's not
+	 * If the driver करोes its own bookkeeping of stacked ports, it's not
 	 * necessary to go through this helper.
 	 */
-	netdev_for_each_lower_dev(dev, lower_dev, iter) {
-		if (netif_is_bridge_master(lower_dev))
-			continue;
+	netdev_क्रम_each_lower_dev(dev, lower_dev, iter) अणु
+		अगर (netअगर_is_bridge_master(lower_dev))
+			जारी;
 
-		err = __switchdev_handle_port_attr_set(lower_dev, port_attr_info,
+		err = __चयनdev_handle_port_attr_set(lower_dev, port_attr_info,
 						       check_cb, set_cb);
-		if (err && err != -EOPNOTSUPP)
-			return err;
-	}
+		अगर (err && err != -EOPNOTSUPP)
+			वापस err;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int switchdev_handle_port_attr_set(struct net_device *dev,
-			struct switchdev_notifier_port_attr_info *port_attr_info,
-			bool (*check_cb)(const struct net_device *dev),
-			int (*set_cb)(struct net_device *dev,
-				      const struct switchdev_attr *attr,
-				      struct netlink_ext_ack *extack))
-{
-	int err;
+पूर्णांक चयनdev_handle_port_attr_set(काष्ठा net_device *dev,
+			काष्ठा चयनdev_notअगरier_port_attr_info *port_attr_info,
+			bool (*check_cb)(स्थिर काष्ठा net_device *dev),
+			पूर्णांक (*set_cb)(काष्ठा net_device *dev,
+				      स्थिर काष्ठा चयनdev_attr *attr,
+				      काष्ठा netlink_ext_ack *extack))
+अणु
+	पूर्णांक err;
 
-	err = __switchdev_handle_port_attr_set(dev, port_attr_info, check_cb,
+	err = __चयनdev_handle_port_attr_set(dev, port_attr_info, check_cb,
 					       set_cb);
-	if (err == -EOPNOTSUPP)
+	अगर (err == -EOPNOTSUPP)
 		err = 0;
-	return err;
-}
-EXPORT_SYMBOL_GPL(switchdev_handle_port_attr_set);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(चयनdev_handle_port_attr_set);

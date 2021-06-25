@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HiSilicon SoC reset code
  *
@@ -8,73 +9,73 @@
  * Author: Haojian Zhuang <haojian.zhuang@linaro.org>
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
 
-#include <asm/proc-fns.h>
+#समावेश <यंत्र/proc-fns.h>
 
-static void __iomem *base;
-static u32 reboot_offset;
+अटल व्योम __iomem *base;
+अटल u32 reboot_offset;
 
-static int hisi_restart_handler(struct notifier_block *this,
-				unsigned long mode, void *cmd)
-{
-	writel_relaxed(0xdeadbeef, base + reboot_offset);
+अटल पूर्णांक hisi_restart_handler(काष्ठा notअगरier_block *this,
+				अचिन्हित दीर्घ mode, व्योम *cmd)
+अणु
+	ग_लिखोl_relaxed(0xdeadbeef, base + reboot_offset);
 
-	while (1)
-		cpu_do_idle();
+	जबतक (1)
+		cpu_करो_idle();
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block hisi_restart_nb = {
-	.notifier_call = hisi_restart_handler,
+अटल काष्ठा notअगरier_block hisi_restart_nb = अणु
+	.notअगरier_call = hisi_restart_handler,
 	.priority = 128,
-};
+पूर्ण;
 
-static int hisi_reboot_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	int err;
+अटल पूर्णांक hisi_reboot_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक err;
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		WARN(1, "failed to map base address");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (of_property_read_u32(np, "reboot-offset", &reboot_offset) < 0) {
+	अगर (of_property_पढ़ो_u32(np, "reboot-offset", &reboot_offset) < 0) अणु
 		pr_err("failed to find reboot-offset property\n");
 		iounmap(base);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	err = register_restart_handler(&hisi_restart_nb);
-	if (err) {
+	err = रेजिस्टर_restart_handler(&hisi_restart_nb);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "cannot register restart handler (err=%d)\n",
 			err);
 		iounmap(base);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct of_device_id hisi_reboot_of_match[] = {
-	{ .compatible = "hisilicon,sysctrl" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id hisi_reboot_of_match[] = अणु
+	अणु .compatible = "hisilicon,sysctrl" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hisi_reboot_of_match);
 
-static struct platform_driver hisi_reboot_driver = {
+अटल काष्ठा platक्रमm_driver hisi_reboot_driver = अणु
 	.probe = hisi_reboot_probe,
-	.driver = {
+	.driver = अणु
 		.name = "hisi-reboot",
 		.of_match_table = hisi_reboot_of_match,
-	},
-};
-module_platform_driver(hisi_reboot_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(hisi_reboot_driver);

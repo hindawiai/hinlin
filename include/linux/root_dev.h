@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ROOT_DEV_H_
-#define _ROOT_DEV_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ROOT_DEV_H_
+#घोषणा _ROOT_DEV_H_
 
-#include <linux/major.h>
-#include <linux/types.h>
-#include <linux/kdev_t.h>
+#समावेश <linux/major.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kdev_t.h>
 
-enum {
+क्रमागत अणु
 	Root_NFS = MKDEV(UNNAMED_MAJOR, 255),
 	Root_CIFS = MKDEV(UNNAMED_MAJOR, 254),
 	Root_RAM0 = MKDEV(RAMDISK_MAJOR, 0),
@@ -18,8 +19,8 @@ enum {
 	Root_SDA2 = MKDEV(SCSI_DISK0_MAJOR, 2),
 	Root_HDC1 = MKDEV(IDE1_MAJOR, 1),
 	Root_SR0 = MKDEV(SCSI_CDROM_MAJOR, 0),
-};
+पूर्ण;
 
-extern dev_t ROOT_DEV;
+बाह्य dev_t ROOT_DEV;
 
-#endif
+#पूर्ण_अगर

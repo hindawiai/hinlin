@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
@@ -7,237 +8,237 @@
  *               Krzysztof Opasiak <k.opasiak@samsung.com>
  */
 
-#include <sys/stat.h>
+#समावेश <sys/स्थिति.स>
 
-#include <limits.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#समावेश <सीमा.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
 
-#include <fcntl.h>
-#include <getopt.h>
-#include <unistd.h>
-#include <errno.h>
+#समावेश <fcntl.h>
+#समावेश <getopt.h>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
 
-#include "vhci_driver.h"
-#include "usbip_common.h"
-#include "usbip_network.h"
-#include "usbip.h"
+#समावेश "vhci_driver.h"
+#समावेश "usbip_common.h"
+#समावेश "usbip_network.h"
+#समावेश "usbip.h"
 
-static const char usbip_attach_usage_string[] =
+अटल स्थिर अक्षर usbip_attach_usage_string[] =
 	"usbip attach <args>\n"
 	"    -r, --remote=<host>      The machine with exported USB devices\n"
 	"    -b, --busid=<busid>    Busid of the device on <host>\n"
 	"    -d, --device=<devid>    Id of the virtual UDC on <host>\n";
 
-void usbip_attach_usage(void)
-{
-	printf("usage: %s", usbip_attach_usage_string);
-}
+व्योम usbip_attach_usage(व्योम)
+अणु
+	म_लिखो("usage: %s", usbip_attach_usage_string);
+पूर्ण
 
-#define MAX_BUFF 100
-static int record_connection(char *host, char *port, char *busid, int rhport)
-{
-	int fd;
-	char path[PATH_MAX+1];
-	char buff[MAX_BUFF+1];
-	int ret;
+#घोषणा MAX_BUFF 100
+अटल पूर्णांक record_connection(अक्षर *host, अक्षर *port, अक्षर *busid, पूर्णांक rhport)
+अणु
+	पूर्णांक fd;
+	अक्षर path[PATH_MAX+1];
+	अक्षर buff[MAX_BUFF+1];
+	पूर्णांक ret;
 
-	ret = mkdir(VHCI_STATE_PATH, 0700);
-	if (ret < 0) {
-		/* if VHCI_STATE_PATH exists, then it better be a directory */
-		if (errno == EEXIST) {
-			struct stat s;
+	ret = सूची_गढ़ो(VHCI_STATE_PATH, 0700);
+	अगर (ret < 0) अणु
+		/* अगर VHCI_STATE_PATH exists, then it better be a directory */
+		अगर (त्रुटि_सं == EEXIST) अणु
+			काष्ठा stat s;
 
 			ret = stat(VHCI_STATE_PATH, &s);
-			if (ret < 0)
-				return -1;
-			if (!(s.st_mode & S_IFDIR))
-				return -1;
-		} else
-			return -1;
-	}
+			अगर (ret < 0)
+				वापस -1;
+			अगर (!(s.st_mode & S_IFसूची))
+				वापस -1;
+		पूर्ण अन्यथा
+			वापस -1;
+	पूर्ण
 
-	snprintf(path, PATH_MAX, VHCI_STATE_PATH"/port%d", rhport);
+	snम_लिखो(path, PATH_MAX, VHCI_STATE_PATH"/port%d", rhport);
 
-	fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
-	if (fd < 0)
-		return -1;
+	fd = खोलो(path, O_WRONLY|O_CREAT|O_TRUNC, S_IRWXU);
+	अगर (fd < 0)
+		वापस -1;
 
-	snprintf(buff, MAX_BUFF, "%s %s %s\n",
+	snम_लिखो(buff, MAX_BUFF, "%s %s %s\n",
 			host, port, busid);
 
-	ret = write(fd, buff, strlen(buff));
-	if (ret != (ssize_t) strlen(buff)) {
-		close(fd);
-		return -1;
-	}
+	ret = ग_लिखो(fd, buff, म_माप(buff));
+	अगर (ret != (sमाप_प्रकार) म_माप(buff)) अणु
+		बंद(fd);
+		वापस -1;
+	पूर्ण
 
-	close(fd);
+	बंद(fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int import_device(int sockfd, struct usbip_usb_device *udev)
-{
-	int rc;
-	int port;
-	uint32_t speed = udev->speed;
+अटल पूर्णांक import_device(पूर्णांक sockfd, काष्ठा usbip_usb_device *udev)
+अणु
+	पूर्णांक rc;
+	पूर्णांक port;
+	uपूर्णांक32_t speed = udev->speed;
 
-	rc = usbip_vhci_driver_open();
-	if (rc < 0) {
+	rc = usbip_vhci_driver_खोलो();
+	अगर (rc < 0) अणु
 		err("open vhci_driver");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	do {
-		port = usbip_vhci_get_free_port(speed);
-		if (port < 0) {
+	करो अणु
+		port = usbip_vhci_get_मुक्त_port(speed);
+		अगर (port < 0) अणु
 			err("no free port");
-			goto err_driver_close;
-		}
+			जाओ err_driver_बंद;
+		पूर्ण
 
 		dbg("got free port %d", port);
 
 		rc = usbip_vhci_attach_device(port, sockfd, udev->busnum,
 					      udev->devnum, udev->speed);
-		if (rc < 0 && errno != EBUSY) {
+		अगर (rc < 0 && त्रुटि_सं != EBUSY) अणु
 			err("import device");
-			goto err_driver_close;
-		}
-	} while (rc < 0);
+			जाओ err_driver_बंद;
+		पूर्ण
+	पूर्ण जबतक (rc < 0);
 
-	usbip_vhci_driver_close();
+	usbip_vhci_driver_बंद();
 
-	return port;
+	वापस port;
 
-err_driver_close:
-	usbip_vhci_driver_close();
+err_driver_बंद:
+	usbip_vhci_driver_बंद();
 err_out:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int query_import_device(int sockfd, char *busid)
-{
-	int rc;
-	struct op_import_request request;
-	struct op_import_reply   reply;
-	uint16_t code = OP_REP_IMPORT;
-	int status;
+अटल पूर्णांक query_import_device(पूर्णांक sockfd, अक्षर *busid)
+अणु
+	पूर्णांक rc;
+	काष्ठा op_import_request request;
+	काष्ठा op_import_reply   reply;
+	uपूर्णांक16_t code = OP_REP_IMPORT;
+	पूर्णांक status;
 
-	memset(&request, 0, sizeof(request));
-	memset(&reply, 0, sizeof(reply));
+	स_रखो(&request, 0, माप(request));
+	स_रखो(&reply, 0, माप(reply));
 
 	/* send a request */
 	rc = usbip_net_send_op_common(sockfd, OP_REQ_IMPORT, 0);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		err("send op_common");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	strncpy(request.busid, busid, SYSFS_BUS_ID_SIZE-1);
+	म_नकलन(request.busid, busid, SYSFS_BUS_ID_SIZE-1);
 
 	PACK_OP_IMPORT_REQUEST(0, &request);
 
-	rc = usbip_net_send(sockfd, (void *) &request, sizeof(request));
-	if (rc < 0) {
+	rc = usbip_net_send(sockfd, (व्योम *) &request, माप(request));
+	अगर (rc < 0) अणु
 		err("send op_import_request");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* receive a reply */
 	rc = usbip_net_recv_op_common(sockfd, &code, &status);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		err("Attach Request for %s failed - %s\n",
 		    busid, usbip_op_common_status_string(status));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	rc = usbip_net_recv(sockfd, (void *) &reply, sizeof(reply));
-	if (rc < 0) {
+	rc = usbip_net_recv(sockfd, (व्योम *) &reply, माप(reply));
+	अगर (rc < 0) अणु
 		err("recv op_import_reply");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	PACK_OP_IMPORT_REPLY(0, &reply);
 
 	/* check the reply */
-	if (strncmp(reply.udev.busid, busid, SYSFS_BUS_ID_SIZE)) {
+	अगर (म_भेदन(reply.udev.busid, busid, SYSFS_BUS_ID_SIZE)) अणु
 		err("recv different busid %s", reply.udev.busid);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/* import a device */
-	return import_device(sockfd, &reply.udev);
-}
+	वापस import_device(sockfd, &reply.udev);
+पूर्ण
 
-static int attach_device(char *host, char *busid)
-{
-	int sockfd;
-	int rc;
-	int rhport;
+अटल पूर्णांक attach_device(अक्षर *host, अक्षर *busid)
+अणु
+	पूर्णांक sockfd;
+	पूर्णांक rc;
+	पूर्णांक rhport;
 
 	sockfd = usbip_net_tcp_connect(host, usbip_port_string);
-	if (sockfd < 0) {
+	अगर (sockfd < 0) अणु
 		err("tcp connect");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	rhport = query_import_device(sockfd, busid);
-	if (rhport < 0)
-		return -1;
+	अगर (rhport < 0)
+		वापस -1;
 
-	close(sockfd);
+	बंद(sockfd);
 
 	rc = record_connection(host, usbip_port_string, busid, rhport);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		err("record connection");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int usbip_attach(int argc, char *argv[])
-{
-	static const struct option opts[] = {
-		{ "remote", required_argument, NULL, 'r' },
-		{ "busid",  required_argument, NULL, 'b' },
-		{ "device",  required_argument, NULL, 'd' },
-		{ NULL, 0,  NULL, 0 }
-	};
-	char *host = NULL;
-	char *busid = NULL;
-	int opt;
-	int ret = -1;
+पूर्णांक usbip_attach(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अटल स्थिर काष्ठा option opts[] = अणु
+		अणु "remote", required_argument, शून्य, 'r' पूर्ण,
+		अणु "busid",  required_argument, शून्य, 'b' पूर्ण,
+		अणु "device",  required_argument, शून्य, 'd' पूर्ण,
+		अणु शून्य, 0,  शून्य, 0 पूर्ण
+	पूर्ण;
+	अक्षर *host = शून्य;
+	अक्षर *busid = शून्य;
+	पूर्णांक opt;
+	पूर्णांक ret = -1;
 
-	for (;;) {
-		opt = getopt_long(argc, argv, "d:r:b:", opts, NULL);
+	क्रम (;;) अणु
+		opt = getopt_दीर्घ(argc, argv, "d:r:b:", opts, शून्य);
 
-		if (opt == -1)
-			break;
+		अगर (opt == -1)
+			अवरोध;
 
-		switch (opt) {
-		case 'r':
+		चयन (opt) अणु
+		हाल 'r':
 			host = optarg;
-			break;
-		case 'd':
-		case 'b':
+			अवरोध;
+		हाल 'd':
+		हाल 'b':
 			busid = optarg;
-			break;
-		default:
-			goto err_out;
-		}
-	}
+			अवरोध;
+		शेष:
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	if (!host || !busid)
-		goto err_out;
+	अगर (!host || !busid)
+		जाओ err_out;
 
 	ret = attach_device(host, busid);
-	goto out;
+	जाओ out;
 
 err_out:
 	usbip_attach_usage();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण

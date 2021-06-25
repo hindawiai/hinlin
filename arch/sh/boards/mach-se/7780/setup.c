@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/arch/sh/boards/se/7780/setup.c
  *
@@ -6,82 +7,82 @@
  *
  * Hitachi UL SolutionEngine 7780 Support.
  */
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <asm/machvec.h>
-#include <mach-se/mach/se7780.h>
-#include <asm/io.h>
-#include <asm/heartbeat.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <mach-se/mach/se7780.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/heartbeat.h>
 
 /* Heartbeat */
-static struct resource heartbeat_resource = {
+अटल काष्ठा resource heartbeat_resource = अणु
 	.start  = PA_LED,
 	.end    = PA_LED,
 	.flags  = IORESOURCE_MEM | IORESOURCE_MEM_16BIT,
-};
+पूर्ण;
 
-static struct platform_device heartbeat_device = {
+अटल काष्ठा platक्रमm_device heartbeat_device = अणु
 	.name           = "heartbeat",
 	.id             = -1,
 	.num_resources  = 1,
 	.resource       = &heartbeat_resource,
-};
+पूर्ण;
 
 /* SMC91x */
-static struct resource smc91x_eth_resources[] = {
-	[0] = {
+अटल काष्ठा resource smc91x_eth_resources[] = अणु
+	[0] = अणु
 		.name   = "smc91x-regs" ,
 		.start  = PA_LAN + 0x300,
 		.end    = PA_LAN + 0x300 + 0x10 ,
 		.flags  = IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start  = SMC_IRQ,
 		.end    = SMC_IRQ,
 		.flags  = IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device smc91x_eth_device = {
+अटल काष्ठा platक्रमm_device smc91x_eth_device = अणु
 	.name           = "smc91x",
 	.id             = 0,
-	.dev = {
-		.dma_mask               = NULL,         /* don't use dma */
+	.dev = अणु
+		.dma_mask               = शून्य,         /* करोn't use dma */
 		.coherent_dma_mask      = 0xffffffff,
-	},
+	पूर्ण,
 	.num_resources  = ARRAY_SIZE(smc91x_eth_resources),
 	.resource       = smc91x_eth_resources,
-};
+पूर्ण;
 
-static struct platform_device *se7780_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *se7780_devices[] __initdata = अणु
 	&heartbeat_device,
 	&smc91x_eth_device,
-};
+पूर्ण;
 
-static int __init se7780_devices_setup(void)
-{
-	return platform_add_devices(se7780_devices,
+अटल पूर्णांक __init se7780_devices_setup(व्योम)
+अणु
+	वापस platक्रमm_add_devices(se7780_devices,
 		ARRAY_SIZE(se7780_devices));
-}
+पूर्ण
 device_initcall(se7780_devices_setup);
 
-#define GPIO_PHCR        0xFFEA000E
-#define GPIO_PMSELR      0xFFEA0080
-#define GPIO_PECR        0xFFEA0008
+#घोषणा GPIO_PHCR        0xFFEA000E
+#घोषणा GPIO_PMSELR      0xFFEA0080
+#घोषणा GPIO_PECR        0xFFEA0008
 
-static void __init se7780_setup(char **cmdline_p)
-{
+अटल व्योम __init se7780_setup(अक्षर **cmdline_p)
+अणु
 	/* "SH-Linux" on LED Display */
-	__raw_writew( 'S' , PA_LED_DISP + (DISP_SEL0_ADDR << 1) );
-	__raw_writew( 'H' , PA_LED_DISP + (DISP_SEL1_ADDR << 1) );
-	__raw_writew( '-' , PA_LED_DISP + (DISP_SEL2_ADDR << 1) );
-	__raw_writew( 'L' , PA_LED_DISP + (DISP_SEL3_ADDR << 1) );
-	__raw_writew( 'i' , PA_LED_DISP + (DISP_SEL4_ADDR << 1) );
-	__raw_writew( 'n' , PA_LED_DISP + (DISP_SEL5_ADDR << 1) );
-	__raw_writew( 'u' , PA_LED_DISP + (DISP_SEL6_ADDR << 1) );
-	__raw_writew( 'x' , PA_LED_DISP + (DISP_SEL7_ADDR << 1) );
+	__raw_ग_लिखोw( 'S' , PA_LED_DISP + (DISP_SEL0_ADDR << 1) );
+	__raw_ग_लिखोw( 'H' , PA_LED_DISP + (DISP_SEL1_ADDR << 1) );
+	__raw_ग_लिखोw( '-' , PA_LED_DISP + (DISP_SEL2_ADDR << 1) );
+	__raw_ग_लिखोw( 'L' , PA_LED_DISP + (DISP_SEL3_ADDR << 1) );
+	__raw_ग_लिखोw( 'i' , PA_LED_DISP + (DISP_SEL4_ADDR << 1) );
+	__raw_ग_लिखोw( 'n' , PA_LED_DISP + (DISP_SEL5_ADDR << 1) );
+	__raw_ग_लिखोw( 'u' , PA_LED_DISP + (DISP_SEL6_ADDR << 1) );
+	__raw_ग_लिखोw( 'x' , PA_LED_DISP + (DISP_SEL7_ADDR << 1) );
 
-	printk(KERN_INFO "Hitachi UL Solutions Engine 7780SE03 support.\n");
+	prपूर्णांकk(KERN_INFO "Hitachi UL Solutions Engine 7780SE03 support.\n");
 
 	/*
 	 * PCI REQ/GNT setting
@@ -90,22 +91,22 @@ static void __init se7780_setup(char **cmdline_p)
 	 *   REQ2/GNT2 -> Serial ATA
 	 *   REQ3/GNT3 -> PCI slot
 	 */
-	__raw_writew(0x0213, FPGA_REQSEL);
+	__raw_ग_लिखोw(0x0213, FPGA_REQSEL);
 
 	/* GPIO setting */
-	__raw_writew(0x0000, GPIO_PECR);
-	__raw_writew(__raw_readw(GPIO_PHCR)&0xfff3, GPIO_PHCR);
-	__raw_writew(0x0c00, GPIO_PMSELR);
+	__raw_ग_लिखोw(0x0000, GPIO_PECR);
+	__raw_ग_लिखोw(__raw_पढ़ोw(GPIO_PHCR)&0xfff3, GPIO_PHCR);
+	__raw_ग_लिखोw(0x0c00, GPIO_PMSELR);
 
 	/* iVDR Power ON */
-	__raw_writew(0x0001, FPGA_IVDRPW);
-}
+	__raw_ग_लिखोw(0x0001, FPGA_IVDRPW);
+पूर्ण
 
 /*
  * The Machine Vector
  */
-static struct sh_machine_vector mv_se7780 __initmv = {
+अटल काष्ठा sh_machine_vector mv_se7780 __iniपंचांगv = अणु
 	.mv_name                = "Solution Engine 7780" ,
 	.mv_setup               = se7780_setup ,
 	.mv_init_irq		= init_se7780_IRQ,
-};
+पूर्ण;

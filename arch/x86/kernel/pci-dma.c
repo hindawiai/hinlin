@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/dma-map-ops.h>
-#include <linux/dma-direct.h>
-#include <linux/iommu.h>
-#include <linux/dmar.h>
-#include <linux/export.h>
-#include <linux/memblock.h>
-#include <linux/gfp.h>
-#include <linux/pci.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/dma-direct.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/export.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/pci.h>
 
-#include <asm/proto.h>
-#include <asm/dma.h>
-#include <asm/iommu.h>
-#include <asm/gart.h>
-#include <asm/x86_init.h>
-#include <asm/iommu_table.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/gart.h>
+#समावेश <यंत्र/x86_init.h>
+#समावेश <यंत्र/iommu_table.h>
 
-static bool disable_dac_quirk __read_mostly;
+अटल bool disable_dac_quirk __पढ़ो_mostly;
 
-const struct dma_map_ops *dma_ops;
+स्थिर काष्ठा dma_map_ops *dma_ops;
 EXPORT_SYMBOL(dma_ops);
 
-#ifdef CONFIG_IOMMU_DEBUG
-int panic_on_overflow __read_mostly = 1;
-int force_iommu __read_mostly = 1;
-#else
-int panic_on_overflow __read_mostly = 0;
-int force_iommu __read_mostly = 0;
-#endif
+#अगर_घोषित CONFIG_IOMMU_DEBUG
+पूर्णांक panic_on_overflow __पढ़ो_mostly = 1;
+पूर्णांक क्रमce_iommu __पढ़ो_mostly = 1;
+#अन्यथा
+पूर्णांक panic_on_overflow __पढ़ो_mostly = 0;
+पूर्णांक क्रमce_iommu __पढ़ो_mostly = 0;
+#पूर्ण_अगर
 
-int iommu_merge __read_mostly = 0;
+पूर्णांक iommu_merge __पढ़ो_mostly = 0;
 
-int no_iommu __read_mostly;
-/* Set this to 1 if there is a HW IOMMU in the system */
-int iommu_detected __read_mostly = 0;
+पूर्णांक no_iommu __पढ़ो_mostly;
+/* Set this to 1 अगर there is a HW IOMMU in the प्रणाली */
+पूर्णांक iommu_detected __पढ़ो_mostly = 0;
 
-extern struct iommu_table_entry __iommu_table[], __iommu_table_end[];
+बाह्य काष्ठा iommu_table_entry __iommu_table[], __iommu_table_end[];
 
-void __init pci_iommu_alloc(void)
-{
-	struct iommu_table_entry *p;
+व्योम __init pci_iommu_alloc(व्योम)
+अणु
+	काष्ठा iommu_table_entry *p;
 
 	sort_iommu_table(__iommu_table, __iommu_table_end);
 	check_iommu_entries(__iommu_table, __iommu_table_end);
 
-	for (p = __iommu_table; p < __iommu_table_end; p++) {
-		if (p && p->detect && p->detect() > 0) {
+	क्रम (p = __iommu_table; p < __iommu_table_end; p++) अणु
+		अगर (p && p->detect && p->detect() > 0) अणु
 			p->flags |= IOMMU_DETECTED;
-			if (p->early_init)
+			अगर (p->early_init)
 				p->early_init();
-			if (p->flags & IOMMU_FINISH_IF_DETECTED)
-				break;
-		}
-	}
-}
+			अगर (p->flags & IOMMU_FINISH_IF_DETECTED)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * See <Documentation/x86/x86_64/boot-options.rst> for the iommu kernel
- * parameter documentation.
+ * See <Documentation/x86/x86_64/boot-options.rst> क्रम the iommu kernel
+ * parameter करोcumentation.
  */
-static __init int iommu_setup(char *p)
-{
+अटल __init पूर्णांक iommu_setup(अक्षर *p)
+अणु
 	iommu_merge = 1;
 
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
-	while (*p) {
-		if (!strncmp(p, "off", 3))
+	जबतक (*p) अणु
+		अगर (!म_भेदन(p, "off", 3))
 			no_iommu = 1;
-		/* gart_parse_options has more force support */
-		if (!strncmp(p, "force", 5))
-			force_iommu = 1;
-		if (!strncmp(p, "noforce", 7)) {
+		/* gart_parse_options has more क्रमce support */
+		अगर (!म_भेदन(p, "force", 5))
+			क्रमce_iommu = 1;
+		अगर (!म_भेदन(p, "noforce", 7)) अणु
 			iommu_merge = 0;
-			force_iommu = 0;
-		}
+			क्रमce_iommu = 0;
+		पूर्ण
 
-		if (!strncmp(p, "biomerge", 8)) {
+		अगर (!म_भेदन(p, "biomerge", 8)) अणु
 			iommu_merge = 1;
-			force_iommu = 1;
-		}
-		if (!strncmp(p, "panic", 5))
+			क्रमce_iommu = 1;
+		पूर्ण
+		अगर (!म_भेदन(p, "panic", 5))
 			panic_on_overflow = 1;
-		if (!strncmp(p, "nopanic", 7))
+		अगर (!म_भेदन(p, "nopanic", 7))
 			panic_on_overflow = 0;
-		if (!strncmp(p, "merge", 5)) {
+		अगर (!म_भेदन(p, "merge", 5)) अणु
 			iommu_merge = 1;
-			force_iommu = 1;
-		}
-		if (!strncmp(p, "nomerge", 7))
+			क्रमce_iommu = 1;
+		पूर्ण
+		अगर (!म_भेदन(p, "nomerge", 7))
 			iommu_merge = 0;
-		if (!strncmp(p, "forcesac", 8))
+		अगर (!म_भेदन(p, "forcesac", 8))
 			pr_warn("forcesac option ignored.\n");
-		if (!strncmp(p, "allowdac", 8))
+		अगर (!म_भेदन(p, "allowdac", 8))
 			pr_warn("allowdac option ignored.\n");
-		if (!strncmp(p, "nodac", 5))
+		अगर (!म_भेदन(p, "nodac", 5))
 			pr_warn("nodac option ignored.\n");
-		if (!strncmp(p, "usedac", 6)) {
+		अगर (!म_भेदन(p, "usedac", 6)) अणु
 			disable_dac_quirk = true;
-			return 1;
-		}
-#ifdef CONFIG_SWIOTLB
-		if (!strncmp(p, "soft", 4))
+			वापस 1;
+		पूर्ण
+#अगर_घोषित CONFIG_SWIOTLB
+		अगर (!म_भेदन(p, "soft", 4))
 			swiotlb = 1;
-#endif
-		if (!strncmp(p, "pt", 2))
-			iommu_set_default_passthrough(true);
-		if (!strncmp(p, "nopt", 4))
-			iommu_set_default_translated(true);
+#पूर्ण_अगर
+		अगर (!म_भेदन(p, "pt", 2))
+			iommu_set_शेष_passthrough(true);
+		अगर (!म_भेदन(p, "nopt", 4))
+			iommu_set_शेष_translated(true);
 
 		gart_parse_options(p);
 
-		p += strcspn(p, ",");
-		if (*p == ',')
+		p += म_खोज(p, ",");
+		अगर (*p == ',')
 			++p;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 early_param("iommu", iommu_setup);
 
-static int __init pci_iommu_init(void)
-{
-	struct iommu_table_entry *p;
+अटल पूर्णांक __init pci_iommu_init(व्योम)
+अणु
+	काष्ठा iommu_table_entry *p;
 
 	x86_init.iommu.iommu_init();
 
-	for (p = __iommu_table; p < __iommu_table_end; p++) {
-		if (p && (p->flags & IOMMU_DETECTED) && p->late_init)
+	क्रम (p = __iommu_table; p < __iommu_table_end; p++) अणु
+		अगर (p && (p->flags & IOMMU_DETECTED) && p->late_init)
 			p->late_init();
-	}
+	पूर्ण
 
-	return 0;
-}
-/* Must execute after PCI subsystem */
+	वापस 0;
+पूर्ण
+/* Must execute after PCI subप्रणाली */
 rootfs_initcall(pci_iommu_init);
 
-#ifdef CONFIG_PCI
-/* Many VIA bridges seem to corrupt data for DAC. Disable it here */
+#अगर_घोषित CONFIG_PCI
+/* Many VIA bridges seem to corrupt data क्रम DAC. Disable it here */
 
-static int via_no_dac_cb(struct pci_dev *pdev, void *data)
-{
+अटल पूर्णांक via_no_dac_cb(काष्ठा pci_dev *pdev, व्योम *data)
+अणु
 	pdev->dev.bus_dma_limit = DMA_BIT_MASK(32);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void via_no_dac(struct pci_dev *dev)
-{
-	if (!disable_dac_quirk) {
+अटल व्योम via_no_dac(काष्ठा pci_dev *dev)
+अणु
+	अगर (!disable_dac_quirk) अणु
 		dev_info(&dev->dev, "disabling DAC on VIA PCI bridge\n");
-		pci_walk_bus(dev->subordinate, via_no_dac_cb, NULL);
-	}
-}
+		pci_walk_bus(dev->subordinate, via_no_dac_cb, शून्य);
+	पूर्ण
+पूर्ण
 DECLARE_PCI_FIXUP_CLASS_FINAL(PCI_VENDOR_ID_VIA, PCI_ANY_ID,
 				PCI_CLASS_BRIDGE_PCI, 8, via_no_dac);
-#endif
+#पूर्ण_अगर

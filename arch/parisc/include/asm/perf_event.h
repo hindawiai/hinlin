@@ -1,6 +1,7 @@
-#ifndef __ASM_PARISC_PERF_EVENT_H
-#define __ASM_PARISC_PERF_EVENT_H
+<शैली गुरु>
+#अगर_अघोषित __ASM_PARISC_PERF_EVENT_H
+#घोषणा __ASM_PARISC_PERF_EVENT_H
 
-/* Empty, just to avoid compiling error */
+/* Empty, just to aव्योम compiling error */
 
-#endif /* __ASM_PARISC_PERF_EVENT_H */
+#पूर्ण_अगर /* __ASM_PARISC_PERF_EVENT_H */

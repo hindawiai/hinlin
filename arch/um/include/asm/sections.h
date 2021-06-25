@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_SECTIONS_H
-#define __UM_SECTIONS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_SECTIONS_H
+#घोषणा __UM_SECTIONS_H
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-extern char __binary_start[];
-extern char __syscall_stub_start[], __syscall_stub_end[];
+बाह्य अक्षर __binary_start[];
+बाह्य अक्षर __syscall_stub_start[], __syscall_stub_end[];
 
-#endif
+#पूर्ण_अगर

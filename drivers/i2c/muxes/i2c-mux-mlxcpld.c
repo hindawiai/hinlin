@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*
  * Mellanox i2c mux driver
  *
  * Copyright (C) 2016-2020 Mellanox Technologies
  */
 
-#include <linux/device.h>
-#include <linux/i2c.h>
-#include <linux/i2c-mux.h>
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/platform_data/mlxcpld.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-mux.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/mlxcpld.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-/* mlxcpld_mux - mux control structure:
- * @last_val - last selected register value or -1 if mux deselected
+/* mlxcpld_mux - mux control काष्ठाure:
+ * @last_val - last selected रेजिस्टर value or -1 अगर mux deselected
  * @client - I2C device client
- * @pdata: platform data
+ * @pdata: platक्रमm data
  */
-struct mlxcpld_mux {
-	int last_val;
-	struct i2c_client *client;
-	struct mlxcpld_mux_plat_data pdata;
-};
+काष्ठा mlxcpld_mux अणु
+	पूर्णांक last_val;
+	काष्ठा i2c_client *client;
+	काष्ठा mlxcpld_mux_plat_data pdata;
+पूर्ण;
 
 /* MUX logic description.
- * Driver can support different mux control logic, according to CPLD
+ * Driver can support dअगरferent mux control logic, according to CPLD
  * implementation.
  *
  * Connectivity schema.
@@ -43,7 +44,7 @@ struct mlxcpld_mux {
  *     |        driver                   |                                    |
  *     |        *---------------*        |                              Devices
  *     |        * CPLD (i2c bus)* select |
- *     |        * registers for *--------*
+ *     |        * रेजिस्टरs क्रम *--------*
  *     |        * mux selection * deselect
  *     |        *---------------*
  *     |                 |
@@ -54,24 +55,24 @@ struct mlxcpld_mux {
  *
  */
 
-/* Write to mux register. Don't use i2c_transfer() and i2c_smbus_xfer()
- * for this as they will try to lock adapter a second time.
+/* Write to mux रेजिस्टर. Don't use i2c_transfer() and i2c_smbus_xfer()
+ * क्रम this as they will try to lock adapter a second समय.
  */
-static int mlxcpld_mux_reg_write(struct i2c_adapter *adap,
-				 struct mlxcpld_mux *mux, u32 val)
-{
-	struct i2c_client *client = mux->client;
-	union i2c_smbus_data data;
-	struct i2c_msg msg;
+अटल पूर्णांक mlxcpld_mux_reg_ग_लिखो(काष्ठा i2c_adapter *adap,
+				 काष्ठा mlxcpld_mux *mux, u32 val)
+अणु
+	काष्ठा i2c_client *client = mux->client;
+	जोड़ i2c_smbus_data data;
+	काष्ठा i2c_msg msg;
 	u8 buf[3];
 
-	switch (mux->pdata.reg_size) {
-	case 1:
+	चयन (mux->pdata.reg_size) अणु
+	हाल 1:
 		data.byte = val;
-		return __i2c_smbus_xfer(adap, client->addr, client->flags,
+		वापस __i2c_smbus_xfer(adap, client->addr, client->flags,
 					I2C_SMBUS_WRITE, mux->pdata.sel_reg_addr,
 					I2C_SMBUS_BYTE_DATA, &data);
-	case 2:
+	हाल 2:
 		buf[0] = mux->pdata.sel_reg_addr >> 8;
 		buf[1] = mux->pdata.sel_reg_addr;
 		buf[2] = val;
@@ -79,114 +80,114 @@ static int mlxcpld_mux_reg_write(struct i2c_adapter *adap,
 		msg.buf = buf;
 		msg.len = mux->pdata.reg_size + 1;
 		msg.flags = 0;
-		return __i2c_transfer(adap, &msg, 1);
-	default:
-		return -EINVAL;
-	}
-}
+		वापस __i2c_transfer(adap, &msg, 1);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int mlxcpld_mux_select_chan(struct i2c_mux_core *muxc, u32 chan)
-{
-	struct mlxcpld_mux *mux = i2c_mux_priv(muxc);
+अटल पूर्णांक mlxcpld_mux_select_chan(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	काष्ठा mlxcpld_mux *mux = i2c_mux_priv(muxc);
 	u32 regval = chan;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (mux->pdata.reg_size == 1)
+	अगर (mux->pdata.reg_size == 1)
 		regval += 1;
 
-	/* Only select the channel if its different from the last channel */
-	if (mux->last_val != regval) {
-		err = mlxcpld_mux_reg_write(muxc->parent, mux, regval);
+	/* Only select the channel अगर its dअगरferent from the last channel */
+	अगर (mux->last_val != regval) अणु
+		err = mlxcpld_mux_reg_ग_लिखो(muxc->parent, mux, regval);
 		mux->last_val = err < 0 ? -1 : regval;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlxcpld_mux_deselect(struct i2c_mux_core *muxc, u32 chan)
-{
-	struct mlxcpld_mux *mux = i2c_mux_priv(muxc);
+अटल पूर्णांक mlxcpld_mux_deselect(काष्ठा i2c_mux_core *muxc, u32 chan)
+अणु
+	काष्ठा mlxcpld_mux *mux = i2c_mux_priv(muxc);
 
 	/* Deselect active channel */
 	mux->last_val = -1;
 
-	return mlxcpld_mux_reg_write(muxc->parent, mux, 0);
-}
+	वापस mlxcpld_mux_reg_ग_लिखो(muxc->parent, mux, 0);
+पूर्ण
 
 /* Probe/reomove functions */
-static int mlxcpld_mux_probe(struct platform_device *pdev)
-{
-	struct mlxcpld_mux_plat_data *pdata = dev_get_platdata(&pdev->dev);
-	struct i2c_client *client = to_i2c_client(pdev->dev.parent);
-	struct i2c_mux_core *muxc;
-	struct mlxcpld_mux *data;
-	int num, err;
+अटल पूर्णांक mlxcpld_mux_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mlxcpld_mux_plat_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा i2c_client *client = to_i2c_client(pdev->dev.parent);
+	काष्ठा i2c_mux_core *muxc;
+	काष्ठा mlxcpld_mux *data;
+	पूर्णांक num, err;
 	u32 func;
 
-	if (!pdata)
-		return -EINVAL;
+	अगर (!pdata)
+		वापस -EINVAL;
 
-	switch (pdata->reg_size) {
-	case 1:
+	चयन (pdata->reg_size) अणु
+	हाल 1:
 		func = I2C_FUNC_SMBUS_WRITE_BYTE_DATA;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		func = I2C_FUNC_I2C;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!i2c_check_functionality(client->adapter, func))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(client->adapter, func))
+		वापस -ENODEV;
 
 	muxc = i2c_mux_alloc(client->adapter, &pdev->dev, pdata->num_adaps,
-			     sizeof(*data), 0, mlxcpld_mux_select_chan,
+			     माप(*data), 0, mlxcpld_mux_select_chan,
 			     mlxcpld_mux_deselect);
-	if (!muxc)
-		return -ENOMEM;
+	अगर (!muxc)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, muxc);
+	platक्रमm_set_drvdata(pdev, muxc);
 	data = i2c_mux_priv(muxc);
 	data->client = client;
-	memcpy(&data->pdata, pdata, sizeof(*pdata));
-	data->last_val = -1; /* force the first selection */
+	स_नकल(&data->pdata, pdata, माप(*pdata));
+	data->last_val = -1; /* क्रमce the first selection */
 
-	/* Create an adapter for each channel. */
-	for (num = 0; num < pdata->num_adaps; num++) {
+	/* Create an adapter क्रम each channel. */
+	क्रम (num = 0; num < pdata->num_adaps; num++) अणु
 		err = i2c_mux_add_adapter(muxc, 0, pdata->chan_ids[num], 0);
-		if (err)
-			goto virt_reg_failed;
-	}
+		अगर (err)
+			जाओ virt_reg_failed;
+	पूर्ण
 
-	/* Notify caller when all channels' adapters are created. */
-	if (pdata->completion_notify)
-		pdata->completion_notify(pdata->handle, muxc->parent, muxc->adapter);
+	/* Notअगरy caller when all channels' adapters are created. */
+	अगर (pdata->completion_notअगरy)
+		pdata->completion_notअगरy(pdata->handle, muxc->parent, muxc->adapter);
 
-	return 0;
+	वापस 0;
 
 virt_reg_failed:
 	i2c_mux_del_adapters(muxc);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlxcpld_mux_remove(struct platform_device *pdev)
-{
-	struct i2c_mux_core *muxc = platform_get_drvdata(pdev);
+अटल पूर्णांक mlxcpld_mux_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_mux_core *muxc = platक्रमm_get_drvdata(pdev);
 
 	i2c_mux_del_adapters(muxc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mlxcpld_mux_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mlxcpld_mux_driver = अणु
+	.driver = अणु
 		.name = "i2c-mux-mlxcpld",
-	},
+	पूर्ण,
 	.probe = mlxcpld_mux_probe,
-	.remove = mlxcpld_mux_remove,
-};
+	.हटाओ = mlxcpld_mux_हटाओ,
+पूर्ण;
 
-module_platform_driver(mlxcpld_mux_driver);
+module_platक्रमm_driver(mlxcpld_mux_driver);
 
 MODULE_AUTHOR("Michael Shych (michaels@mellanox.com)");
 MODULE_DESCRIPTION("Mellanox I2C-CPLD-MUX driver");

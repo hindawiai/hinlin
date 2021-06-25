@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_HTCPLD_H
-#define __LINUX_HTCPLD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_HTCPLD_H
+#घोषणा __LINUX_HTCPLD_H
 
-struct htcpld_chip_platform_data {
-	unsigned int addr;
-	unsigned int reset;
-	unsigned int num_gpios;
-	unsigned int gpio_out_base;
-	unsigned int gpio_in_base;
-	unsigned int irq_base;
-	unsigned int num_irqs;
-};
+काष्ठा htcpld_chip_platक्रमm_data अणु
+	अचिन्हित पूर्णांक addr;
+	अचिन्हित पूर्णांक reset;
+	अचिन्हित पूर्णांक num_gpios;
+	अचिन्हित पूर्णांक gpio_out_base;
+	अचिन्हित पूर्णांक gpio_in_base;
+	अचिन्हित पूर्णांक irq_base;
+	अचिन्हित पूर्णांक num_irqs;
+पूर्ण;
 
-struct htcpld_core_platform_data {
-	unsigned int                      int_reset_gpio_hi;
-	unsigned int                      int_reset_gpio_lo;
-	unsigned int                      i2c_adapter_id;
+काष्ठा htcpld_core_platक्रमm_data अणु
+	अचिन्हित पूर्णांक                      पूर्णांक_reset_gpio_hi;
+	अचिन्हित पूर्णांक                      पूर्णांक_reset_gpio_lo;
+	अचिन्हित पूर्णांक                      i2c_adapter_id;
 
-	struct htcpld_chip_platform_data  *chip;
-	unsigned int                      num_chip;
-};
+	काष्ठा htcpld_chip_platक्रमm_data  *chip;
+	अचिन्हित पूर्णांक                      num_chip;
+पूर्ण;
 
-#endif /* __LINUX_HTCPLD_H */
+#पूर्ण_अगर /* __LINUX_HTCPLD_H */
 

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ALPHA_SWAB_H
-#define _ALPHA_SWAB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ALPHA_SWAB_H
+#घोषणा _ALPHA_SWAB_H
 
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <asm/compiler.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/compiler.h>
 
-#ifdef __GNUC__
+#अगर_घोषित __GNUC__
 
-static inline __attribute_const__ __u32 __arch_swab32(__u32 x)
-{
+अटल अंतरभूत __attribute_स्थिर__ __u32 __arch_swab32(__u32 x)
+अणु
 	/*
-	 * Unfortunately, we can't use the 6 instruction sequence
+	 * Unक्रमtunately, we can't use the 6 inकाष्ठाion sequence
 	 * on ev6 since the latency of the UNPKBW is 3, which is
-	 * pretty hard to hide.  Just in case a future implementation
+	 * pretty hard to hide.  Just in हाल a future implementation
 	 * has a lower latency, here's the sequence (also by Mike Burrows)
 	 *
 	 * UNPKBW a0, v0       v0: 00AA00BB00CC00DD
@@ -34,10 +35,10 @@ static inline __attribute_const__ __u32 __arch_swab32(__u32 x)
 	t3 = t2 & 0x00FF00FF;		/* t3 : 0000000000CC00AA */
 	t1 = t0 + t3;			/* t1 : ssssssssDDCCBBAA */
 
-	return t1;
-}
-#define __arch_swab32 __arch_swab32
+	वापस t1;
+पूर्ण
+#घोषणा __arch_swab32 __arch_swab32
 
-#endif /* __GNUC__ */
+#पूर्ण_अगर /* __GNUC__ */
 
-#endif /* _ALPHA_SWAB_H */
+#पूर्ण_अगर /* _ALPHA_SWAB_H */

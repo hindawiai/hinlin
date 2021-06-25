@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_SW_H__
-#define __NVKM_SW_H__
-#include <core/engine.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_SW_H__
+#घोषणा __NVKM_SW_H__
+#समावेश <core/engine.h>
 
-struct nvkm_sw {
-	const struct nvkm_sw_func *func;
-	struct nvkm_engine engine;
+काष्ठा nvkm_sw अणु
+	स्थिर काष्ठा nvkm_sw_func *func;
+	काष्ठा nvkm_engine engine;
 
-	struct list_head chan;
-};
+	काष्ठा list_head chan;
+पूर्ण;
 
-bool nvkm_sw_mthd(struct nvkm_sw *sw, int chid, int subc, u32 mthd, u32 data);
+bool nvkm_sw_mthd(काष्ठा nvkm_sw *sw, पूर्णांक chid, पूर्णांक subc, u32 mthd, u32 data);
 
-int nv04_sw_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_sw **);
-int nv10_sw_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_sw **);
-int nv50_sw_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_sw **);
-int gf100_sw_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_sw **);
-#endif
+पूर्णांक nv04_sw_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_sw **);
+पूर्णांक nv10_sw_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_sw **);
+पूर्णांक nv50_sw_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_sw **);
+पूर्णांक gf100_sw_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_sw **);
+#पूर्ण_अगर

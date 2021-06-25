@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C)2003,2004 USAGI/WIDE Project
  *
@@ -6,300 +7,300 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
-#define pr_fmt(fmt) "IPv6: " fmt
+#घोषणा pr_fmt(fmt) "IPv6: " fmt
 
-#include <linux/icmpv6.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <net/ipv6.h>
-#include <net/protocol.h>
-#include <net/xfrm.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/protocol.h>
+#समावेश <net/xfrm.h>
 
-static struct xfrm6_tunnel __rcu *tunnel6_handlers __read_mostly;
-static struct xfrm6_tunnel __rcu *tunnel46_handlers __read_mostly;
-static struct xfrm6_tunnel __rcu *tunnelmpls6_handlers __read_mostly;
-static DEFINE_MUTEX(tunnel6_mutex);
+अटल काष्ठा xfrm6_tunnel __rcu *tunnel6_handlers __पढ़ो_mostly;
+अटल काष्ठा xfrm6_tunnel __rcu *tunnel46_handlers __पढ़ो_mostly;
+अटल काष्ठा xfrm6_tunnel __rcu *tunnelmpls6_handlers __पढ़ो_mostly;
+अटल DEFINE_MUTEX(tunnel6_mutex);
 
-static inline int xfrm6_tunnel_mpls_supported(void)
-{
-	return IS_ENABLED(CONFIG_MPLS);
-}
+अटल अंतरभूत पूर्णांक xfrm6_tunnel_mpls_supported(व्योम)
+अणु
+	वापस IS_ENABLED(CONFIG_MPLS);
+पूर्ण
 
-int xfrm6_tunnel_register(struct xfrm6_tunnel *handler, unsigned short family)
-{
-	struct xfrm6_tunnel __rcu **pprev;
-	struct xfrm6_tunnel *t;
-	int ret = -EEXIST;
-	int priority = handler->priority;
+पूर्णांक xfrm6_tunnel_रेजिस्टर(काष्ठा xfrm6_tunnel *handler, अचिन्हित लघु family)
+अणु
+	काष्ठा xfrm6_tunnel __rcu **pprev;
+	काष्ठा xfrm6_tunnel *t;
+	पूर्णांक ret = -EEXIST;
+	पूर्णांक priority = handler->priority;
 
 	mutex_lock(&tunnel6_mutex);
 
-	switch (family) {
-	case AF_INET6:
+	चयन (family) अणु
+	हाल AF_INET6:
 		pprev = &tunnel6_handlers;
-		break;
-	case AF_INET:
+		अवरोध;
+	हाल AF_INET:
 		pprev = &tunnel46_handlers;
-		break;
-	case AF_MPLS:
+		अवरोध;
+	हाल AF_MPLS:
 		pprev = &tunnelmpls6_handlers;
-		break;
-	default:
-		goto err;
-	}
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 
-	for (; (t = rcu_dereference_protected(*pprev,
-			lockdep_is_held(&tunnel6_mutex))) != NULL;
-	     pprev = &t->next) {
-		if (t->priority > priority)
-			break;
-		if (t->priority == priority)
-			goto err;
-	}
+	क्रम (; (t = rcu_dereference_रक्षित(*pprev,
+			lockdep_is_held(&tunnel6_mutex))) != शून्य;
+	     pprev = &t->next) अणु
+		अगर (t->priority > priority)
+			अवरोध;
+		अगर (t->priority == priority)
+			जाओ err;
+	पूर्ण
 
 	handler->next = *pprev;
-	rcu_assign_pointer(*pprev, handler);
+	rcu_assign_poपूर्णांकer(*pprev, handler);
 
 	ret = 0;
 
 err:
 	mutex_unlock(&tunnel6_mutex);
 
-	return ret;
-}
-EXPORT_SYMBOL(xfrm6_tunnel_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(xfrm6_tunnel_रेजिस्टर);
 
-int xfrm6_tunnel_deregister(struct xfrm6_tunnel *handler, unsigned short family)
-{
-	struct xfrm6_tunnel __rcu **pprev;
-	struct xfrm6_tunnel *t;
-	int ret = -ENOENT;
+पूर्णांक xfrm6_tunnel_deरेजिस्टर(काष्ठा xfrm6_tunnel *handler, अचिन्हित लघु family)
+अणु
+	काष्ठा xfrm6_tunnel __rcu **pprev;
+	काष्ठा xfrm6_tunnel *t;
+	पूर्णांक ret = -ENOENT;
 
 	mutex_lock(&tunnel6_mutex);
 
-	switch (family) {
-	case AF_INET6:
+	चयन (family) अणु
+	हाल AF_INET6:
 		pprev = &tunnel6_handlers;
-		break;
-	case AF_INET:
+		अवरोध;
+	हाल AF_INET:
 		pprev = &tunnel46_handlers;
-		break;
-	case AF_MPLS:
+		अवरोध;
+	हाल AF_MPLS:
 		pprev = &tunnelmpls6_handlers;
-		break;
-	default:
-		goto err;
-	}
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 
-	for (; (t = rcu_dereference_protected(*pprev,
-			lockdep_is_held(&tunnel6_mutex))) != NULL;
-	     pprev = &t->next) {
-		if (t == handler) {
+	क्रम (; (t = rcu_dereference_रक्षित(*pprev,
+			lockdep_is_held(&tunnel6_mutex))) != शून्य;
+	     pprev = &t->next) अणु
+		अगर (t == handler) अणु
 			*pprev = handler->next;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 err:
 	mutex_unlock(&tunnel6_mutex);
 
 	synchronize_net();
 
-	return ret;
-}
-EXPORT_SYMBOL(xfrm6_tunnel_deregister);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(xfrm6_tunnel_deरेजिस्टर);
 
-#define for_each_tunnel_rcu(head, handler)		\
-	for (handler = rcu_dereference(head);		\
-	     handler != NULL;				\
+#घोषणा क्रम_each_tunnel_rcu(head, handler)		\
+	क्रम (handler = rcu_dereference(head);		\
+	     handler != शून्य;				\
 	     handler = rcu_dereference(handler->next))	\
 
-static int tunnelmpls6_rcv(struct sk_buff *skb)
-{
-	struct xfrm6_tunnel *handler;
+अटल पूर्णांक tunnelmpls6_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
 
-	if (!pskb_may_pull(skb, sizeof(struct ipv6hdr)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा ipv6hdr)))
+		जाओ drop;
 
-	for_each_tunnel_rcu(tunnelmpls6_handlers, handler)
-		if (!handler->handler(skb))
-			return 0;
-
-	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
-
-drop:
-	kfree_skb(skb);
-	return 0;
-}
-
-static int tunnel6_rcv(struct sk_buff *skb)
-{
-	struct xfrm6_tunnel *handler;
-
-	if (!pskb_may_pull(skb, sizeof(struct ipv6hdr)))
-		goto drop;
-
-	for_each_tunnel_rcu(tunnel6_handlers, handler)
-		if (!handler->handler(skb))
-			return 0;
+	क्रम_each_tunnel_rcu(tunnelmpls6_handlers, handler)
+		अगर (!handler->handler(skb))
+			वापस 0;
 
 	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
 
 drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
-static int tunnel6_rcv_cb(struct sk_buff *skb, u8 proto, int err)
-{
-	struct xfrm6_tunnel __rcu *head;
-	struct xfrm6_tunnel *handler;
-	int ret;
+अटल पूर्णांक tunnel6_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
+
+	अगर (!pskb_may_pull(skb, माप(काष्ठा ipv6hdr)))
+		जाओ drop;
+
+	क्रम_each_tunnel_rcu(tunnel6_handlers, handler)
+		अगर (!handler->handler(skb))
+			वापस 0;
+
+	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
+
+drop:
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
+
+#अगर IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
+अटल पूर्णांक tunnel6_rcv_cb(काष्ठा sk_buff *skb, u8 proto, पूर्णांक err)
+अणु
+	काष्ठा xfrm6_tunnel __rcu *head;
+	काष्ठा xfrm6_tunnel *handler;
+	पूर्णांक ret;
 
 	head = (proto == IPPROTO_IPV6) ? tunnel6_handlers : tunnel46_handlers;
 
-	for_each_tunnel_rcu(head, handler) {
-		if (handler->cb_handler) {
+	क्रम_each_tunnel_rcu(head, handler) अणु
+		अगर (handler->cb_handler) अणु
 			ret = handler->cb_handler(skb, err);
-			if (ret <= 0)
-				return ret;
-		}
-	}
+			अगर (ret <= 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct xfrm_input_afinfo tunnel6_input_afinfo = {
+अटल स्थिर काष्ठा xfrm_input_afinfo tunnel6_input_afinfo = अणु
 	.family		=	AF_INET6,
 	.is_ipip	=	true,
 	.callback	=	tunnel6_rcv_cb,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int tunnel46_rcv(struct sk_buff *skb)
-{
-	struct xfrm6_tunnel *handler;
+अटल पूर्णांक tunnel46_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
 
-	if (!pskb_may_pull(skb, sizeof(struct iphdr)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा iphdr)))
+		जाओ drop;
 
-	for_each_tunnel_rcu(tunnel46_handlers, handler)
-		if (!handler->handler(skb))
-			return 0;
+	क्रम_each_tunnel_rcu(tunnel46_handlers, handler)
+		अगर (!handler->handler(skb))
+			वापस 0;
 
 	icmpv6_send(skb, ICMPV6_DEST_UNREACH, ICMPV6_PORT_UNREACH, 0);
 
 drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int tunnel6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_tunnel *handler;
+अटल पूर्णांक tunnel6_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
 
-	for_each_tunnel_rcu(tunnel6_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
+	क्रम_each_tunnel_rcu(tunnel6_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int tunnel46_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			 u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_tunnel *handler;
+अटल पूर्णांक tunnel46_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			 u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
 
-	for_each_tunnel_rcu(tunnel46_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
+	क्रम_each_tunnel_rcu(tunnel46_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static int tunnelmpls6_err(struct sk_buff *skb, struct inet6_skb_parm *opt,
-			   u8 type, u8 code, int offset, __be32 info)
-{
-	struct xfrm6_tunnel *handler;
+अटल पूर्णांक tunnelmpls6_err(काष्ठा sk_buff *skb, काष्ठा inet6_skb_parm *opt,
+			   u8 type, u8 code, पूर्णांक offset, __be32 info)
+अणु
+	काष्ठा xfrm6_tunnel *handler;
 
-	for_each_tunnel_rcu(tunnelmpls6_handlers, handler)
-		if (!handler->err_handler(skb, opt, type, code, offset, info))
-			return 0;
+	क्रम_each_tunnel_rcu(tunnelmpls6_handlers, handler)
+		अगर (!handler->err_handler(skb, opt, type, code, offset, info))
+			वापस 0;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-static const struct inet6_protocol tunnel6_protocol = {
+अटल स्थिर काष्ठा inet6_protocol tunnel6_protocol = अणु
 	.handler	= tunnel6_rcv,
 	.err_handler	= tunnel6_err,
 	.flags          = INET6_PROTO_NOPOLICY|INET6_PROTO_FINAL,
-};
+पूर्ण;
 
-static const struct inet6_protocol tunnel46_protocol = {
+अटल स्थिर काष्ठा inet6_protocol tunnel46_protocol = अणु
 	.handler	= tunnel46_rcv,
 	.err_handler	= tunnel46_err,
 	.flags          = INET6_PROTO_NOPOLICY|INET6_PROTO_FINAL,
-};
+पूर्ण;
 
-static const struct inet6_protocol tunnelmpls6_protocol = {
+अटल स्थिर काष्ठा inet6_protocol tunnelmpls6_protocol = अणु
 	.handler	= tunnelmpls6_rcv,
 	.err_handler	= tunnelmpls6_err,
 	.flags          = INET6_PROTO_NOPOLICY|INET6_PROTO_FINAL,
-};
+पूर्ण;
 
-static int __init tunnel6_init(void)
-{
-	if (inet6_add_protocol(&tunnel6_protocol, IPPROTO_IPV6)) {
+अटल पूर्णांक __init tunnel6_init(व्योम)
+अणु
+	अगर (inet6_add_protocol(&tunnel6_protocol, IPPROTO_IPV6)) अणु
 		pr_err("%s: can't add protocol\n", __func__);
-		return -EAGAIN;
-	}
-	if (inet6_add_protocol(&tunnel46_protocol, IPPROTO_IPIP)) {
+		वापस -EAGAIN;
+	पूर्ण
+	अगर (inet6_add_protocol(&tunnel46_protocol, IPPROTO_IPIP)) अणु
 		pr_err("%s: can't add protocol\n", __func__);
 		inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6);
-		return -EAGAIN;
-	}
-	if (xfrm6_tunnel_mpls_supported() &&
-	    inet6_add_protocol(&tunnelmpls6_protocol, IPPROTO_MPLS)) {
+		वापस -EAGAIN;
+	पूर्ण
+	अगर (xfrm6_tunnel_mpls_supported() &&
+	    inet6_add_protocol(&tunnelmpls6_protocol, IPPROTO_MPLS)) अणु
 		pr_err("%s: can't add protocol\n", __func__);
 		inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6);
 		inet6_del_protocol(&tunnel46_protocol, IPPROTO_IPIP);
-		return -EAGAIN;
-	}
-#if IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
-	if (xfrm_input_register_afinfo(&tunnel6_input_afinfo)) {
+		वापस -EAGAIN;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
+	अगर (xfrm_input_रेजिस्टर_afinfo(&tunnel6_input_afinfo)) अणु
 		pr_err("%s: can't add input afinfo\n", __func__);
 		inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6);
 		inet6_del_protocol(&tunnel46_protocol, IPPROTO_IPIP);
-		if (xfrm6_tunnel_mpls_supported())
+		अगर (xfrm6_tunnel_mpls_supported())
 			inet6_del_protocol(&tunnelmpls6_protocol, IPPROTO_MPLS);
-		return -EAGAIN;
-	}
-#endif
-	return 0;
-}
+		वापस -EAGAIN;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void __exit tunnel6_fini(void)
-{
-#if IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
-	if (xfrm_input_unregister_afinfo(&tunnel6_input_afinfo))
+अटल व्योम __निकास tunnel6_fini(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_INET6_XFRM_TUNNEL)
+	अगर (xfrm_input_unरेजिस्टर_afinfo(&tunnel6_input_afinfo))
 		pr_err("%s: can't remove input afinfo\n", __func__);
-#endif
-	if (inet6_del_protocol(&tunnel46_protocol, IPPROTO_IPIP))
+#पूर्ण_अगर
+	अगर (inet6_del_protocol(&tunnel46_protocol, IPPROTO_IPIP))
 		pr_err("%s: can't remove protocol\n", __func__);
-	if (inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6))
+	अगर (inet6_del_protocol(&tunnel6_protocol, IPPROTO_IPV6))
 		pr_err("%s: can't remove protocol\n", __func__);
-	if (xfrm6_tunnel_mpls_supported() &&
+	अगर (xfrm6_tunnel_mpls_supported() &&
 	    inet6_del_protocol(&tunnelmpls6_protocol, IPPROTO_MPLS))
 		pr_err("%s: can't remove protocol\n", __func__);
-}
+पूर्ण
 
 module_init(tunnel6_init);
-module_exit(tunnel6_fini);
+module_निकास(tunnel6_fini);
 MODULE_LICENSE("GPL");

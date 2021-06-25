@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Based upon linux/arch/m68k/mm/sun3mmu.c
  * Based upon linux/arch/ppc/mm/mmu_context.c
  *
- * Implementations of mm routines specific to the Coldfire MMU.
+ * Implementations of mm routines specअगरic to the Coldfire MMU.
  *
  * Copyright (c) 2008 Freescale Semiconductor, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/memblock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/memblock.h>
 
-#include <asm/setup.h>
-#include <asm/page.h>
-#include <asm/mmu_context.h>
-#include <asm/mcf_pgalloc.h>
-#include <asm/tlbflush.h>
-#include <asm/pgalloc.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mcf_pgभाग.स>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/pgभाग.स>
 
-#define KMAPAREA(x)	((x >= VMALLOC_START) && (x < KMAP_END))
+#घोषणा KMAPAREA(x)	((x >= VMALLOC_START) && (x < KMAP_END))
 
 mm_context_t next_mmu_context;
-unsigned long context_map[LAST_CONTEXT / BITS_PER_LONG + 1];
-atomic_t nr_free_contexts;
-struct mm_struct *context_mm[LAST_CONTEXT+1];
-unsigned long num_pages;
+अचिन्हित दीर्घ context_map[LAST_CONTEXT / BITS_PER_LONG + 1];
+atomic_t nr_मुक्त_contexts;
+काष्ठा mm_काष्ठा *context_mm[LAST_CONTEXT+1];
+अचिन्हित दीर्घ num_pages;
 
 /*
  * ColdFire paging_init derived from sun3.
  */
-void __init paging_init(void)
-{
+व्योम __init paging_init(व्योम)
+अणु
 	pgd_t *pg_dir;
 	pte_t *pg_table;
-	unsigned long address, size;
-	unsigned long next_pgtable, bootmem_end;
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
-	int i;
+	अचिन्हित दीर्घ address, size;
+	अचिन्हित दीर्घ next_pgtable, booपंचांगem_end;
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0 पूर्ण;
+	पूर्णांक i;
 
 	empty_zero_page = memblock_alloc(PAGE_SIZE, PAGE_SIZE);
-	if (!empty_zero_page)
+	अगर (!empty_zero_page)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
 	pg_dir = swapper_pg_dir;
-	memset(swapper_pg_dir, 0, sizeof(swapper_pg_dir));
+	स_रखो(swapper_pg_dir, 0, माप(swapper_pg_dir));
 
-	size = num_pages * sizeof(pte_t);
+	size = num_pages * माप(pte_t);
 	size = (size + PAGE_SIZE) & ~(PAGE_SIZE-1);
-	next_pgtable = (unsigned long) memblock_alloc(size, PAGE_SIZE);
-	if (!next_pgtable)
+	next_pgtable = (अचिन्हित दीर्घ) memblock_alloc(size, PAGE_SIZE);
+	अगर (!next_pgtable)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, size, PAGE_SIZE);
 
-	bootmem_end = (next_pgtable + size + PAGE_SIZE) & PAGE_MASK;
-	pg_dir += PAGE_OFFSET >> PGDIR_SHIFT;
+	booपंचांगem_end = (next_pgtable + size + PAGE_SIZE) & PAGE_MASK;
+	pg_dir += PAGE_OFFSET >> PGसूची_SHIFT;
 
 	address = PAGE_OFFSET;
-	while (address < (unsigned long)high_memory) {
+	जबतक (address < (अचिन्हित दीर्घ)high_memory) अणु
 		pg_table = (pte_t *) next_pgtable;
-		next_pgtable += PTRS_PER_PTE * sizeof(pte_t);
-		pgd_val(*pg_dir) = (unsigned long) pg_table;
+		next_pgtable += PTRS_PER_PTE * माप(pte_t);
+		pgd_val(*pg_dir) = (अचिन्हित दीर्घ) pg_table;
 		pg_dir++;
 
-		/* now change pg_table to kernel virtual addresses */
-		for (i = 0; i < PTRS_PER_PTE; ++i, ++pg_table) {
+		/* now change pg_table to kernel भव addresses */
+		क्रम (i = 0; i < PTRS_PER_PTE; ++i, ++pg_table) अणु
 			pte_t pte = pfn_pte(virt_to_pfn(address), PAGE_INIT);
-			if (address >= (unsigned long) high_memory)
+			अगर (address >= (अचिन्हित दीर्घ) high_memory)
 				pte_val(pte) = 0;
 
 			set_pte(pg_table, pte);
 			address += PAGE_SIZE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	current->mm = NULL;
+	current->mm = शून्य;
 	max_zone_pfn[ZONE_DMA] = PFN_DOWN(_ramend);
-	free_area_init(max_zone_pfn);
-}
+	मुक्त_area_init(max_zone_pfn);
+पूर्ण
 
-int cf_tlb_miss(struct pt_regs *regs, int write, int dtlb, int extension_word)
-{
-	unsigned long flags, mmuar, mmutr;
-	struct mm_struct *mm;
+पूर्णांक cf_tlb_miss(काष्ठा pt_regs *regs, पूर्णांक ग_लिखो, पूर्णांक dtlb, पूर्णांक extension_word)
+अणु
+	अचिन्हित दीर्घ flags, mmuar, mmutr;
+	काष्ठा mm_काष्ठा *mm;
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-	int asid;
+	पूर्णांक asid;
 
 	local_irq_save(flags);
 
-	mmuar = (dtlb) ? mmu_read(MMUAR) :
-		regs->pc + (extension_word * sizeof(long));
+	mmuar = (dtlb) ? mmu_पढ़ो(MMUAR) :
+		regs->pc + (extension_word * माप(दीर्घ));
 
 	mm = (!user_mode(regs) && KMAPAREA(mmuar)) ? &init_mm : current->mm;
-	if (!mm) {
+	अगर (!mm) अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pgd = pgd_offset(mm, mmuar);
-	if (pgd_none(*pgd))  {
+	अगर (pgd_none(*pgd))  अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	p4d = p4d_offset(pgd, mmuar);
-	if (p4d_none(*p4d)) {
+	अगर (p4d_none(*p4d)) अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pud = pud_offset(p4d, mmuar);
-	if (pud_none(*pud)) {
+	अगर (pud_none(*pud)) अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pmd = pmd_offset(pud, mmuar);
-	if (pmd_none(*pmd)) {
+	अगर (pmd_none(*pmd)) अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pte = (KMAPAREA(mmuar)) ? pte_offset_kernel(pmd, mmuar)
 				: pte_offset_map(pmd, mmuar);
-	if (pte_none(*pte) || !pte_present(*pte)) {
+	अगर (pte_none(*pte) || !pte_present(*pte)) अणु
 		local_irq_restore(flags);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (write) {
-		if (!pte_write(*pte)) {
+	अगर (ग_लिखो) अणु
+		अगर (!pte_ग_लिखो(*pte)) अणु
 			local_irq_restore(flags);
-			return -1;
-		}
-		set_pte(pte, pte_mkdirty(*pte));
-	}
+			वापस -1;
+		पूर्ण
+		set_pte(pte, pte_सूची_गढ़ोty(*pte));
+	पूर्ण
 
 	set_pte(pte, pte_mkyoung(*pte));
 	asid = mm->context & 0xff;
-	if (!pte_dirty(*pte) && !KMAPAREA(mmuar))
+	अगर (!pte_dirty(*pte) && !KMAPAREA(mmuar))
 		set_pte(pte, pte_wrprotect(*pte));
 
 	mmutr = (mmuar & PAGE_MASK) | (asid << MMUTR_IDN) | MMUTR_V;
-	if ((mmuar < TASK_UNMAPPED_BASE) || (mmuar >= TASK_SIZE))
+	अगर ((mmuar < TASK_UNMAPPED_BASE) || (mmuar >= TASK_SIZE))
 		mmutr |= (pte->pte & CF_PAGE_MMUTR_MASK) >> CF_PAGE_MMUTR_SHIFT;
-	mmu_write(MMUTR, mmutr);
+	mmu_ग_लिखो(MMUTR, mmutr);
 
-	mmu_write(MMUDR, (pte_val(*pte) & PAGE_MASK) |
+	mmu_ग_लिखो(MMUDR, (pte_val(*pte) & PAGE_MASK) |
 		((pte->pte) & CF_PAGE_MMUDR_MASK) | MMUDR_SZ_8KB | MMUDR_X);
 
-	if (dtlb)
-		mmu_write(MMUOR, MMUOR_ACC | MMUOR_UAA);
-	else
-		mmu_write(MMUOR, MMUOR_ITLB | MMUOR_ACC | MMUOR_UAA);
+	अगर (dtlb)
+		mmu_ग_लिखो(MMUOR, MMUOR_ACC | MMUOR_UAA);
+	अन्यथा
+		mmu_ग_लिखो(MMUOR, MMUOR_ITLB | MMUOR_ACC | MMUOR_UAA);
 
 	local_irq_restore(flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init cf_bootmem_alloc(void)
-{
-	unsigned long memstart;
+व्योम __init cf_booपंचांगem_alloc(व्योम)
+अणु
+	अचिन्हित दीर्घ memstart;
 
 	/* _rambase and _ramend will be naturally page aligned */
 	m68k_memory[0].addr = _rambase;
@@ -176,60 +177,60 @@ void __init cf_bootmem_alloc(void)
 
 	memblock_add_node(m68k_memory[0].addr, m68k_memory[0].size, 0);
 
-	/* compute total pages in system */
+	/* compute total pages in प्रणाली */
 	num_pages = PFN_DOWN(_ramend - _rambase);
 
 	/* page numbers */
 	memstart = PAGE_ALIGN(_ramstart);
 	min_low_pfn = PFN_DOWN(_rambase);
 	max_pfn = max_low_pfn = PFN_DOWN(_ramend);
-	high_memory = (void *)_ramend;
+	high_memory = (व्योम *)_ramend;
 
 	/* Reserve kernel text/data/bss */
 	memblock_reserve(_rambase, memstart - _rambase);
 
-	m68k_virt_to_node_shift = fls(_ramend - 1) - 6;
-	module_fixup(NULL, __start_fixup, __stop_fixup);
+	m68k_virt_to_node_shअगरt = fls(_ramend - 1) - 6;
+	module_fixup(शून्य, __start_fixup, __stop_fixup);
 
 	/* setup node data */
 	m68k_setup_node(0);
-}
+पूर्ण
 
 /*
  * Initialize the context management stuff.
  * The following was taken from arch/ppc/mmu_context.c
  */
-void __init cf_mmu_context_init(void)
-{
+व्योम __init cf_mmu_context_init(व्योम)
+अणु
 	/*
-	 * Some processors have too few contexts to reserve one for
-	 * init_mm, and require using context 0 for a normal task.
-	 * Other processors reserve the use of context zero for the kernel.
+	 * Some processors have too few contexts to reserve one क्रम
+	 * init_mm, and require using context 0 क्रम a normal task.
+	 * Other processors reserve the use of context zero क्रम the kernel.
 	 * This code assumes FIRST_CONTEXT < 32.
 	 */
 	context_map[0] = (1 << FIRST_CONTEXT) - 1;
 	next_mmu_context = FIRST_CONTEXT;
-	atomic_set(&nr_free_contexts, LAST_CONTEXT - FIRST_CONTEXT + 1);
-}
+	atomic_set(&nr_मुक्त_contexts, LAST_CONTEXT - FIRST_CONTEXT + 1);
+पूर्ण
 
 /*
  * Steal a context from a task that has one at the moment.
- * This isn't an LRU system, it just frees up each context in
- * turn (sort-of pseudo-random replacement :).  This would be the
- * place to implement an LRU scheme if anyone was motivated to do it.
+ * This isn't an LRU प्रणाली, it just मुक्तs up each context in
+ * turn (sort-of pseuकरो-अक्रमom replacement :).  This would be the
+ * place to implement an LRU scheme अगर anyone was motivated to करो it.
  *  -- paulus
  */
-void steal_context(void)
-{
-	struct mm_struct *mm;
+व्योम steal_context(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm;
 	/*
-	 * free up context `next_mmu_context'
-	 * if we shouldn't free context 0, don't...
+	 * मुक्त up context `next_mmu_context'
+	 * अगर we shouldn't free context 0, don't...
 	 */
-	if (next_mmu_context < FIRST_CONTEXT)
+	अगर (next_mmu_context < FIRST_CONTEXT)
 		next_mmu_context = FIRST_CONTEXT;
 	mm = context_mm[next_mmu_context];
 	flush_tlb_mm(mm);
 	destroy_context(mm);
-}
+पूर्ण
 

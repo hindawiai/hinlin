@@ -1,616 +1,617 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    Hypervisor filesystem for Linux on s390. Diag 204 and 224
+ *    Hypervisor fileप्रणाली क्रम Linux on s390. Diag 204 and 224
  *    implementation.
  *
  *    Copyright IBM Corp. 2006, 2008
  *    Author(s): Michael Holzheu <holzheu@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "hypfs"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "hypfs"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-#include <asm/diag.h>
-#include <asm/ebcdic.h>
-#include "hypfs.h"
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश "hypfs.h"
 
-#define TMP_SIZE 64		/* size of temporary buffers */
+#घोषणा TMP_SIZE 64		/* size of temporary buffers */
 
-#define DBFS_D204_HDR_VERSION	0
+#घोषणा DBFS_D204_HDR_VERSION	0
 
-static char *diag224_cpu_names;			/* diag 224 name table */
-static enum diag204_sc diag204_store_sc;	/* used subcode for store */
-static enum diag204_format diag204_info_type;	/* used diag 204 data format */
+अटल अक्षर *diag224_cpu_names;			/* diag 224 name table */
+अटल क्रमागत diag204_sc diag204_store_sc;	/* used subcode क्रम store */
+अटल क्रमागत diag204_क्रमmat diag204_info_type;	/* used diag 204 data क्रमmat */
 
-static void *diag204_buf;		/* 4K aligned buffer for diag204 data */
-static void *diag204_buf_vmalloc;	/* vmalloc pointer for diag204 data */
-static int diag204_buf_pages;		/* number of pages for diag204 data */
+अटल व्योम *diag204_buf;		/* 4K aligned buffer क्रम diag204 data */
+अटल व्योम *diag204_buf_vदो_स्मृति;	/* vदो_स्मृति poपूर्णांकer क्रम diag204 data */
+अटल पूर्णांक diag204_buf_pages;		/* number of pages क्रम diag204 data */
 
-static struct dentry *dbfs_d204_file;
+अटल काष्ठा dentry *dbfs_d204_file;
 
 /*
  * DIAG 204 member access functions.
  *
- * Since we have two different diag 204 data formats for old and new s390
- * machines, we do not access the structs directly, but use getter functions for
- * each struct member instead. This should make the code more readable.
+ * Since we have two dअगरferent diag 204 data क्रमmats क्रम old and new s390
+ * machines, we करो not access the काष्ठाs directly, but use getter functions क्रम
+ * each काष्ठा member instead. This should make the code more पढ़ोable.
  */
 
-/* Time information block */
+/* Time inक्रमmation block */
 
-static inline int info_blk_hdr__size(enum diag204_format type)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return sizeof(struct diag204_info_blk_hdr);
-	else /* DIAG204_INFO_EXT */
-		return sizeof(struct diag204_x_info_blk_hdr);
-}
+अटल अंतरभूत पूर्णांक info_blk_hdr__size(क्रमागत diag204_क्रमmat type)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस माप(काष्ठा diag204_info_blk_hdr);
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस माप(काष्ठा diag204_x_info_blk_hdr);
+पूर्ण
 
-static inline __u8 info_blk_hdr__npar(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_info_blk_hdr *)hdr)->npar;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_info_blk_hdr *)hdr)->npar;
-}
+अटल अंतरभूत __u8 info_blk_hdr__npar(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_info_blk_hdr *)hdr)->npar;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_info_blk_hdr *)hdr)->npar;
+पूर्ण
 
-static inline __u8 info_blk_hdr__flags(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_info_blk_hdr *)hdr)->flags;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_info_blk_hdr *)hdr)->flags;
-}
+अटल अंतरभूत __u8 info_blk_hdr__flags(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_info_blk_hdr *)hdr)->flags;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_info_blk_hdr *)hdr)->flags;
+पूर्ण
 
-static inline __u16 info_blk_hdr__pcpus(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_info_blk_hdr *)hdr)->phys_cpus;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_info_blk_hdr *)hdr)->phys_cpus;
-}
+अटल अंतरभूत __u16 info_blk_hdr__pcpus(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_info_blk_hdr *)hdr)->phys_cpus;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_info_blk_hdr *)hdr)->phys_cpus;
+पूर्ण
 
 /* Partition header */
 
-static inline int part_hdr__size(enum diag204_format type)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return sizeof(struct diag204_part_hdr);
-	else /* DIAG204_INFO_EXT */
-		return sizeof(struct diag204_x_part_hdr);
-}
+अटल अंतरभूत पूर्णांक part_hdr__size(क्रमागत diag204_क्रमmat type)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस माप(काष्ठा diag204_part_hdr);
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस माप(काष्ठा diag204_x_part_hdr);
+पूर्ण
 
-static inline __u8 part_hdr__rcpus(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_part_hdr *)hdr)->cpus;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_part_hdr *)hdr)->rcpus;
-}
+अटल अंतरभूत __u8 part_hdr__rcpus(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_part_hdr *)hdr)->cpus;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_part_hdr *)hdr)->rcpus;
+पूर्ण
 
-static inline void part_hdr__part_name(enum diag204_format type, void *hdr,
-				       char *name)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		memcpy(name, ((struct diag204_part_hdr *)hdr)->part_name,
+अटल अंतरभूत व्योम part_hdr__part_name(क्रमागत diag204_क्रमmat type, व्योम *hdr,
+				       अक्षर *name)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		स_नकल(name, ((काष्ठा diag204_part_hdr *)hdr)->part_name,
 		       DIAG204_LPAR_NAME_LEN);
-	else /* DIAG204_INFO_EXT */
-		memcpy(name, ((struct diag204_x_part_hdr *)hdr)->part_name,
+	अन्यथा /* DIAG204_INFO_EXT */
+		स_नकल(name, ((काष्ठा diag204_x_part_hdr *)hdr)->part_name,
 		       DIAG204_LPAR_NAME_LEN);
 	EBCASC(name, DIAG204_LPAR_NAME_LEN);
 	name[DIAG204_LPAR_NAME_LEN] = 0;
 	strim(name);
-}
+पूर्ण
 
 /* CPU info block */
 
-static inline int cpu_info__size(enum diag204_format type)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return sizeof(struct diag204_cpu_info);
-	else /* DIAG204_INFO_EXT */
-		return sizeof(struct diag204_x_cpu_info);
-}
+अटल अंतरभूत पूर्णांक cpu_info__size(क्रमागत diag204_क्रमmat type)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस माप(काष्ठा diag204_cpu_info);
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस माप(काष्ठा diag204_x_cpu_info);
+पूर्ण
 
-static inline __u8 cpu_info__ctidx(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_cpu_info *)hdr)->ctidx;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_cpu_info *)hdr)->ctidx;
-}
+अटल अंतरभूत __u8 cpu_info__ctidx(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_cpu_info *)hdr)->ctidx;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_cpu_info *)hdr)->ctidx;
+पूर्ण
 
-static inline __u16 cpu_info__cpu_addr(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_cpu_info *)hdr)->cpu_addr;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_cpu_info *)hdr)->cpu_addr;
-}
+अटल अंतरभूत __u16 cpu_info__cpu_addr(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_cpu_info *)hdr)->cpu_addr;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_cpu_info *)hdr)->cpu_addr;
+पूर्ण
 
-static inline __u64 cpu_info__acc_time(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_cpu_info *)hdr)->acc_time;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_cpu_info *)hdr)->acc_time;
-}
+अटल अंतरभूत __u64 cpu_info__acc_समय(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_cpu_info *)hdr)->acc_समय;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_cpu_info *)hdr)->acc_समय;
+पूर्ण
 
-static inline __u64 cpu_info__lp_time(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_cpu_info *)hdr)->lp_time;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_cpu_info *)hdr)->lp_time;
-}
+अटल अंतरभूत __u64 cpu_info__lp_समय(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_cpu_info *)hdr)->lp_समय;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_cpu_info *)hdr)->lp_समय;
+पूर्ण
 
-static inline __u64 cpu_info__online_time(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return 0;	/* online_time not available in simple info */
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_cpu_info *)hdr)->online_time;
-}
+अटल अंतरभूत __u64 cpu_info__online_समय(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस 0;	/* online_समय not available in simple info */
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_cpu_info *)hdr)->online_समय;
+पूर्ण
 
 /* Physical header */
 
-static inline int phys_hdr__size(enum diag204_format type)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return sizeof(struct diag204_phys_hdr);
-	else /* DIAG204_INFO_EXT */
-		return sizeof(struct diag204_x_phys_hdr);
-}
+अटल अंतरभूत पूर्णांक phys_hdr__size(क्रमागत diag204_क्रमmat type)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस माप(काष्ठा diag204_phys_hdr);
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस माप(काष्ठा diag204_x_phys_hdr);
+पूर्ण
 
-static inline __u8 phys_hdr__cpus(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_phys_hdr *)hdr)->cpus;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_phys_hdr *)hdr)->cpus;
-}
+अटल अंतरभूत __u8 phys_hdr__cpus(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_phys_hdr *)hdr)->cpus;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_phys_hdr *)hdr)->cpus;
+पूर्ण
 
 /* Physical CPU info block */
 
-static inline int phys_cpu__size(enum diag204_format type)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return sizeof(struct diag204_phys_cpu);
-	else /* DIAG204_INFO_EXT */
-		return sizeof(struct diag204_x_phys_cpu);
-}
+अटल अंतरभूत पूर्णांक phys_cpu__size(क्रमागत diag204_क्रमmat type)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस माप(काष्ठा diag204_phys_cpu);
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस माप(काष्ठा diag204_x_phys_cpu);
+पूर्ण
 
-static inline __u16 phys_cpu__cpu_addr(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_phys_cpu *)hdr)->cpu_addr;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_phys_cpu *)hdr)->cpu_addr;
-}
+अटल अंतरभूत __u16 phys_cpu__cpu_addr(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_phys_cpu *)hdr)->cpu_addr;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_phys_cpu *)hdr)->cpu_addr;
+पूर्ण
 
-static inline __u64 phys_cpu__mgm_time(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_phys_cpu *)hdr)->mgm_time;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_phys_cpu *)hdr)->mgm_time;
-}
+अटल अंतरभूत __u64 phys_cpu__mgm_समय(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_phys_cpu *)hdr)->mgm_समय;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_phys_cpu *)hdr)->mgm_समय;
+पूर्ण
 
-static inline __u64 phys_cpu__ctidx(enum diag204_format type, void *hdr)
-{
-	if (type == DIAG204_INFO_SIMPLE)
-		return ((struct diag204_phys_cpu *)hdr)->ctidx;
-	else /* DIAG204_INFO_EXT */
-		return ((struct diag204_x_phys_cpu *)hdr)->ctidx;
-}
+अटल अंतरभूत __u64 phys_cpu__ctidx(क्रमागत diag204_क्रमmat type, व्योम *hdr)
+अणु
+	अगर (type == DIAG204_INFO_SIMPLE)
+		वापस ((काष्ठा diag204_phys_cpu *)hdr)->ctidx;
+	अन्यथा /* DIAG204_INFO_EXT */
+		वापस ((काष्ठा diag204_x_phys_cpu *)hdr)->ctidx;
+पूर्ण
 
 /* Diagnose 204 functions */
 /*
- * For the old diag subcode 4 with simple data format we have to use real
- * memory. If we use subcode 6 or 7 with extended data format, we can (and
- * should) use vmalloc, since we need a lot of memory in that case. Currently
+ * For the old diag subcode 4 with simple data क्रमmat we have to use real
+ * memory. If we use subcode 6 or 7 with extended data क्रमmat, we can (and
+ * should) use vदो_स्मृति, since we need a lot of memory in that हाल. Currently
  * up to 93 pages!
  */
 
-static void diag204_free_buffer(void)
-{
-	if (!diag204_buf)
-		return;
-	if (diag204_buf_vmalloc) {
-		vfree(diag204_buf_vmalloc);
-		diag204_buf_vmalloc = NULL;
-	} else {
-		free_pages((unsigned long) diag204_buf, 0);
-	}
-	diag204_buf = NULL;
-}
+अटल व्योम diag204_मुक्त_buffer(व्योम)
+अणु
+	अगर (!diag204_buf)
+		वापस;
+	अगर (diag204_buf_vदो_स्मृति) अणु
+		vमुक्त(diag204_buf_vदो_स्मृति);
+		diag204_buf_vदो_स्मृति = शून्य;
+	पूर्ण अन्यथा अणु
+		मुक्त_pages((अचिन्हित दीर्घ) diag204_buf, 0);
+	पूर्ण
+	diag204_buf = शून्य;
+पूर्ण
 
-static void *page_align_ptr(void *ptr)
-{
-	return (void *) PAGE_ALIGN((unsigned long) ptr);
-}
+अटल व्योम *page_align_ptr(व्योम *ptr)
+अणु
+	वापस (व्योम *) PAGE_ALIGN((अचिन्हित दीर्घ) ptr);
+पूर्ण
 
-static void *diag204_alloc_vbuf(int pages)
-{
+अटल व्योम *diag204_alloc_vbuf(पूर्णांक pages)
+अणु
 	/* The buffer has to be page aligned! */
-	diag204_buf_vmalloc = vmalloc(array_size(PAGE_SIZE, (pages + 1)));
-	if (!diag204_buf_vmalloc)
-		return ERR_PTR(-ENOMEM);
-	diag204_buf = page_align_ptr(diag204_buf_vmalloc);
+	diag204_buf_vदो_स्मृति = vदो_स्मृति(array_size(PAGE_SIZE, (pages + 1)));
+	अगर (!diag204_buf_vदो_स्मृति)
+		वापस ERR_PTR(-ENOMEM);
+	diag204_buf = page_align_ptr(diag204_buf_vदो_स्मृति);
 	diag204_buf_pages = pages;
-	return diag204_buf;
-}
+	वापस diag204_buf;
+पूर्ण
 
-static void *diag204_alloc_rbuf(void)
-{
-	diag204_buf = (void*)__get_free_pages(GFP_KERNEL,0);
-	if (!diag204_buf)
-		return ERR_PTR(-ENOMEM);
+अटल व्योम *diag204_alloc_rbuf(व्योम)
+अणु
+	diag204_buf = (व्योम*)__get_मुक्त_pages(GFP_KERNEL,0);
+	अगर (!diag204_buf)
+		वापस ERR_PTR(-ENOMEM);
 	diag204_buf_pages = 1;
-	return diag204_buf;
-}
+	वापस diag204_buf;
+पूर्ण
 
-static void *diag204_get_buffer(enum diag204_format fmt, int *pages)
-{
-	if (diag204_buf) {
+अटल व्योम *diag204_get_buffer(क्रमागत diag204_क्रमmat fmt, पूर्णांक *pages)
+अणु
+	अगर (diag204_buf) अणु
 		*pages = diag204_buf_pages;
-		return diag204_buf;
-	}
-	if (fmt == DIAG204_INFO_SIMPLE) {
+		वापस diag204_buf;
+	पूर्ण
+	अगर (fmt == DIAG204_INFO_SIMPLE) अणु
 		*pages = 1;
-		return diag204_alloc_rbuf();
-	} else {/* DIAG204_INFO_EXT */
-		*pages = diag204((unsigned long)DIAG204_SUBC_RSI |
-				 (unsigned long)DIAG204_INFO_EXT, 0, NULL);
-		if (*pages <= 0)
-			return ERR_PTR(-ENOSYS);
-		else
-			return diag204_alloc_vbuf(*pages);
-	}
-}
+		वापस diag204_alloc_rbuf();
+	पूर्ण अन्यथा अणु/* DIAG204_INFO_EXT */
+		*pages = diag204((अचिन्हित दीर्घ)DIAG204_SUBC_RSI |
+				 (अचिन्हित दीर्घ)DIAG204_INFO_EXT, 0, शून्य);
+		अगर (*pages <= 0)
+			वापस ERR_PTR(-ENOSYS);
+		अन्यथा
+			वापस diag204_alloc_vbuf(*pages);
+	पूर्ण
+पूर्ण
 
 /*
  * diag204_probe() has to find out, which type of diagnose 204 implementation
  * we have on our machine. Currently there are three possible scanarios:
- *   - subcode 4   + simple data format (only one page)
- *   - subcode 4-6 + extended data format
- *   - subcode 4-7 + extended data format
+ *   - subcode 4   + simple data क्रमmat (only one page)
+ *   - subcode 4-6 + extended data क्रमmat
+ *   - subcode 4-7 + extended data क्रमmat
  *
  * Subcode 5 is used to retrieve the size of the data, provided by subcodes
  * 6 and 7. Subcode 7 basically has the same function as subcode 6. In addition
- * to subcode 6 it provides also information about secondary cpus.
- * In order to get as much information as possible, we first try
- * subcode 7, then 6 and if both fail, we use subcode 4.
+ * to subcode 6 it provides also inक्रमmation about secondary cpus.
+ * In order to get as much inक्रमmation as possible, we first try
+ * subcode 7, then 6 and अगर both fail, we use subcode 4.
  */
 
-static int diag204_probe(void)
-{
-	void *buf;
-	int pages, rc;
+अटल पूर्णांक diag204_probe(व्योम)
+अणु
+	व्योम *buf;
+	पूर्णांक pages, rc;
 
 	buf = diag204_get_buffer(DIAG204_INFO_EXT, &pages);
-	if (!IS_ERR(buf)) {
-		if (diag204((unsigned long)DIAG204_SUBC_STIB7 |
-			    (unsigned long)DIAG204_INFO_EXT, pages, buf) >= 0) {
+	अगर (!IS_ERR(buf)) अणु
+		अगर (diag204((अचिन्हित दीर्घ)DIAG204_SUBC_STIB7 |
+			    (अचिन्हित दीर्घ)DIAG204_INFO_EXT, pages, buf) >= 0) अणु
 			diag204_store_sc = DIAG204_SUBC_STIB7;
 			diag204_info_type = DIAG204_INFO_EXT;
-			goto out;
-		}
-		if (diag204((unsigned long)DIAG204_SUBC_STIB6 |
-			    (unsigned long)DIAG204_INFO_EXT, pages, buf) >= 0) {
+			जाओ out;
+		पूर्ण
+		अगर (diag204((अचिन्हित दीर्घ)DIAG204_SUBC_STIB6 |
+			    (अचिन्हित दीर्घ)DIAG204_INFO_EXT, pages, buf) >= 0) अणु
 			diag204_store_sc = DIAG204_SUBC_STIB6;
 			diag204_info_type = DIAG204_INFO_EXT;
-			goto out;
-		}
-		diag204_free_buffer();
-	}
+			जाओ out;
+		पूर्ण
+		diag204_मुक्त_buffer();
+	पूर्ण
 
 	/* subcodes 6 and 7 failed, now try subcode 4 */
 
 	buf = diag204_get_buffer(DIAG204_INFO_SIMPLE, &pages);
-	if (IS_ERR(buf)) {
+	अगर (IS_ERR(buf)) अणु
 		rc = PTR_ERR(buf);
-		goto fail_alloc;
-	}
-	if (diag204((unsigned long)DIAG204_SUBC_STIB4 |
-		    (unsigned long)DIAG204_INFO_SIMPLE, pages, buf) >= 0) {
+		जाओ fail_alloc;
+	पूर्ण
+	अगर (diag204((अचिन्हित दीर्घ)DIAG204_SUBC_STIB4 |
+		    (अचिन्हित दीर्घ)DIAG204_INFO_SIMPLE, pages, buf) >= 0) अणु
 		diag204_store_sc = DIAG204_SUBC_STIB4;
 		diag204_info_type = DIAG204_INFO_SIMPLE;
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		rc = -ENOSYS;
-		goto fail_store;
-	}
+		जाओ fail_store;
+	पूर्ण
 out:
 	rc = 0;
 fail_store:
-	diag204_free_buffer();
+	diag204_मुक्त_buffer();
 fail_alloc:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int diag204_do_store(void *buf, int pages)
-{
-	int rc;
+अटल पूर्णांक diag204_करो_store(व्योम *buf, पूर्णांक pages)
+अणु
+	पूर्णांक rc;
 
-	rc = diag204((unsigned long) diag204_store_sc |
-		     (unsigned long) diag204_info_type, pages, buf);
-	return rc < 0 ? -ENOSYS : 0;
-}
+	rc = diag204((अचिन्हित दीर्घ) diag204_store_sc |
+		     (अचिन्हित दीर्घ) diag204_info_type, pages, buf);
+	वापस rc < 0 ? -ENOSYS : 0;
+पूर्ण
 
-static void *diag204_store(void)
-{
-	void *buf;
-	int pages, rc;
+अटल व्योम *diag204_store(व्योम)
+अणु
+	व्योम *buf;
+	पूर्णांक pages, rc;
 
 	buf = diag204_get_buffer(diag204_info_type, &pages);
-	if (IS_ERR(buf))
-		goto out;
-	rc = diag204_do_store(buf, pages);
-	if (rc)
-		return ERR_PTR(rc);
+	अगर (IS_ERR(buf))
+		जाओ out;
+	rc = diag204_करो_store(buf, pages);
+	अगर (rc)
+		वापस ERR_PTR(rc);
 out:
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /* Diagnose 224 functions */
 
-static int diag224_get_name_table(void)
-{
+अटल पूर्णांक diag224_get_name_table(व्योम)
+अणु
 	/* memory must be below 2GB */
-	diag224_cpu_names = (char *) __get_free_page(GFP_KERNEL | GFP_DMA);
-	if (!diag224_cpu_names)
-		return -ENOMEM;
-	if (diag224(diag224_cpu_names)) {
-		free_page((unsigned long) diag224_cpu_names);
-		return -EOPNOTSUPP;
-	}
+	diag224_cpu_names = (अक्षर *) __get_मुक्त_page(GFP_KERNEL | GFP_DMA);
+	अगर (!diag224_cpu_names)
+		वापस -ENOMEM;
+	अगर (diag224(diag224_cpu_names)) अणु
+		मुक्त_page((अचिन्हित दीर्घ) diag224_cpu_names);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 	EBCASC(diag224_cpu_names + 16, (*diag224_cpu_names + 1) * 16);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void diag224_delete_name_table(void)
-{
-	free_page((unsigned long) diag224_cpu_names);
-}
+अटल व्योम diag224_delete_name_table(व्योम)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ) diag224_cpu_names);
+पूर्ण
 
-static int diag224_idx2name(int index, char *name)
-{
-	memcpy(name, diag224_cpu_names + ((index + 1) * DIAG204_CPU_NAME_LEN),
+अटल पूर्णांक diag224_idx2name(पूर्णांक index, अक्षर *name)
+अणु
+	स_नकल(name, diag224_cpu_names + ((index + 1) * DIAG204_CPU_NAME_LEN),
 	       DIAG204_CPU_NAME_LEN);
 	name[DIAG204_CPU_NAME_LEN] = 0;
 	strim(name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct dbfs_d204_hdr {
+काष्ठा dbfs_d204_hdr अणु
 	u64	len;		/* Length of d204 buffer without header */
 	u16	version;	/* Version of header */
 	u8	sc;		/* Used subcode */
-	char	reserved[53];
-} __attribute__ ((packed));
+	अक्षर	reserved[53];
+पूर्ण __attribute__ ((packed));
 
-struct dbfs_d204 {
-	struct dbfs_d204_hdr	hdr;	/* 64 byte header */
-	char			buf[];	/* d204 buffer */
-} __attribute__ ((packed));
+काष्ठा dbfs_d204 अणु
+	काष्ठा dbfs_d204_hdr	hdr;	/* 64 byte header */
+	अक्षर			buf[];	/* d204 buffer */
+पूर्ण __attribute__ ((packed));
 
-static int dbfs_d204_create(void **data, void **data_free_ptr, size_t *size)
-{
-	struct dbfs_d204 *d204;
-	int rc, buf_size;
-	void *base;
+अटल पूर्णांक dbfs_d204_create(व्योम **data, व्योम **data_मुक्त_ptr, माप_प्रकार *size)
+अणु
+	काष्ठा dbfs_d204 *d204;
+	पूर्णांक rc, buf_size;
+	व्योम *base;
 
-	buf_size = PAGE_SIZE * (diag204_buf_pages + 1) + sizeof(d204->hdr);
+	buf_size = PAGE_SIZE * (diag204_buf_pages + 1) + माप(d204->hdr);
 	base = vzalloc(buf_size);
-	if (!base)
-		return -ENOMEM;
-	d204 = page_align_ptr(base + sizeof(d204->hdr)) - sizeof(d204->hdr);
-	rc = diag204_do_store(d204->buf, diag204_buf_pages);
-	if (rc) {
-		vfree(base);
-		return rc;
-	}
+	अगर (!base)
+		वापस -ENOMEM;
+	d204 = page_align_ptr(base + माप(d204->hdr)) - माप(d204->hdr);
+	rc = diag204_करो_store(d204->buf, diag204_buf_pages);
+	अगर (rc) अणु
+		vमुक्त(base);
+		वापस rc;
+	पूर्ण
 	d204->hdr.version = DBFS_D204_HDR_VERSION;
 	d204->hdr.len = PAGE_SIZE * diag204_buf_pages;
 	d204->hdr.sc = diag204_store_sc;
 	*data = d204;
-	*data_free_ptr = base;
-	*size = d204->hdr.len + sizeof(struct dbfs_d204_hdr);
-	return 0;
-}
+	*data_मुक्त_ptr = base;
+	*size = d204->hdr.len + माप(काष्ठा dbfs_d204_hdr);
+	वापस 0;
+पूर्ण
 
-static struct hypfs_dbfs_file dbfs_file_d204 = {
+अटल काष्ठा hypfs_dbfs_file dbfs_file_d204 = अणु
 	.name		= "diag_204",
 	.data_create	= dbfs_d204_create,
-	.data_free	= vfree,
-};
+	.data_मुक्त	= vमुक्त,
+पूर्ण;
 
-__init int hypfs_diag_init(void)
-{
-	int rc;
+__init पूर्णांक hypfs_diag_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (diag204_probe()) {
+	अगर (diag204_probe()) अणु
 		pr_err("The hardware system does not support hypfs\n");
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
-	if (diag204_info_type == DIAG204_INFO_EXT)
+	अगर (diag204_info_type == DIAG204_INFO_EXT)
 		hypfs_dbfs_create_file(&dbfs_file_d204);
 
-	if (MACHINE_IS_LPAR) {
+	अगर (MACHINE_IS_LPAR) अणु
 		rc = diag224_get_name_table();
-		if (rc) {
+		अगर (rc) अणु
 			pr_err("The hardware system does not provide all "
 			       "functions required by hypfs\n");
-			debugfs_remove(dbfs_d204_file);
-			return rc;
-		}
-	}
-	return 0;
-}
+			debugfs_हटाओ(dbfs_d204_file);
+			वापस rc;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void hypfs_diag_exit(void)
-{
-	debugfs_remove(dbfs_d204_file);
+व्योम hypfs_diag_निकास(व्योम)
+अणु
+	debugfs_हटाओ(dbfs_d204_file);
 	diag224_delete_name_table();
-	diag204_free_buffer();
-	hypfs_dbfs_remove_file(&dbfs_file_d204);
-}
+	diag204_मुक्त_buffer();
+	hypfs_dbfs_हटाओ_file(&dbfs_file_d204);
+पूर्ण
 
 /*
- * Functions to create the directory structure
+ * Functions to create the directory काष्ठाure
  * *******************************************
  */
 
-static int hypfs_create_cpu_files(struct dentry *cpus_dir, void *cpu_info)
-{
-	struct dentry *cpu_dir;
-	char buffer[TMP_SIZE];
-	void *rc;
+अटल पूर्णांक hypfs_create_cpu_files(काष्ठा dentry *cpus_dir, व्योम *cpu_info)
+अणु
+	काष्ठा dentry *cpu_dir;
+	अक्षर buffer[TMP_SIZE];
+	व्योम *rc;
 
-	snprintf(buffer, TMP_SIZE, "%d", cpu_info__cpu_addr(diag204_info_type,
+	snम_लिखो(buffer, TMP_SIZE, "%d", cpu_info__cpu_addr(diag204_info_type,
 							    cpu_info));
-	cpu_dir = hypfs_mkdir(cpus_dir, buffer);
+	cpu_dir = hypfs_सूची_गढ़ो(cpus_dir, buffer);
 	rc = hypfs_create_u64(cpu_dir, "mgmtime",
-			      cpu_info__acc_time(diag204_info_type, cpu_info) -
-			      cpu_info__lp_time(diag204_info_type, cpu_info));
-	if (IS_ERR(rc))
-		return PTR_ERR(rc);
+			      cpu_info__acc_समय(diag204_info_type, cpu_info) -
+			      cpu_info__lp_समय(diag204_info_type, cpu_info));
+	अगर (IS_ERR(rc))
+		वापस PTR_ERR(rc);
 	rc = hypfs_create_u64(cpu_dir, "cputime",
-			      cpu_info__lp_time(diag204_info_type, cpu_info));
-	if (IS_ERR(rc))
-		return PTR_ERR(rc);
-	if (diag204_info_type == DIAG204_INFO_EXT) {
+			      cpu_info__lp_समय(diag204_info_type, cpu_info));
+	अगर (IS_ERR(rc))
+		वापस PTR_ERR(rc);
+	अगर (diag204_info_type == DIAG204_INFO_EXT) अणु
 		rc = hypfs_create_u64(cpu_dir, "onlinetime",
-				      cpu_info__online_time(diag204_info_type,
+				      cpu_info__online_समय(diag204_info_type,
 							    cpu_info));
-		if (IS_ERR(rc))
-			return PTR_ERR(rc);
-	}
+		अगर (IS_ERR(rc))
+			वापस PTR_ERR(rc);
+	पूर्ण
 	diag224_idx2name(cpu_info__ctidx(diag204_info_type, cpu_info), buffer);
 	rc = hypfs_create_str(cpu_dir, "type", buffer);
-	return PTR_ERR_OR_ZERO(rc);
-}
+	वापस PTR_ERR_OR_ZERO(rc);
+पूर्ण
 
-static void *hypfs_create_lpar_files(struct dentry *systems_dir, void *part_hdr)
-{
-	struct dentry *cpus_dir;
-	struct dentry *lpar_dir;
-	char lpar_name[DIAG204_LPAR_NAME_LEN + 1];
-	void *cpu_info;
-	int i;
+अटल व्योम *hypfs_create_lpar_files(काष्ठा dentry *प्रणालीs_dir, व्योम *part_hdr)
+अणु
+	काष्ठा dentry *cpus_dir;
+	काष्ठा dentry *lpar_dir;
+	अक्षर lpar_name[DIAG204_LPAR_NAME_LEN + 1];
+	व्योम *cpu_info;
+	पूर्णांक i;
 
 	part_hdr__part_name(diag204_info_type, part_hdr, lpar_name);
 	lpar_name[DIAG204_LPAR_NAME_LEN] = 0;
-	lpar_dir = hypfs_mkdir(systems_dir, lpar_name);
-	if (IS_ERR(lpar_dir))
-		return lpar_dir;
-	cpus_dir = hypfs_mkdir(lpar_dir, "cpus");
-	if (IS_ERR(cpus_dir))
-		return cpus_dir;
+	lpar_dir = hypfs_सूची_गढ़ो(प्रणालीs_dir, lpar_name);
+	अगर (IS_ERR(lpar_dir))
+		वापस lpar_dir;
+	cpus_dir = hypfs_सूची_गढ़ो(lpar_dir, "cpus");
+	अगर (IS_ERR(cpus_dir))
+		वापस cpus_dir;
 	cpu_info = part_hdr + part_hdr__size(diag204_info_type);
-	for (i = 0; i < part_hdr__rcpus(diag204_info_type, part_hdr); i++) {
-		int rc;
+	क्रम (i = 0; i < part_hdr__rcpus(diag204_info_type, part_hdr); i++) अणु
+		पूर्णांक rc;
 		rc = hypfs_create_cpu_files(cpus_dir, cpu_info);
-		if (rc)
-			return ERR_PTR(rc);
+		अगर (rc)
+			वापस ERR_PTR(rc);
 		cpu_info += cpu_info__size(diag204_info_type);
-	}
-	return cpu_info;
-}
+	पूर्ण
+	वापस cpu_info;
+पूर्ण
 
-static int hypfs_create_phys_cpu_files(struct dentry *cpus_dir, void *cpu_info)
-{
-	struct dentry *cpu_dir;
-	char buffer[TMP_SIZE];
-	void *rc;
+अटल पूर्णांक hypfs_create_phys_cpu_files(काष्ठा dentry *cpus_dir, व्योम *cpu_info)
+अणु
+	काष्ठा dentry *cpu_dir;
+	अक्षर buffer[TMP_SIZE];
+	व्योम *rc;
 
-	snprintf(buffer, TMP_SIZE, "%i", phys_cpu__cpu_addr(diag204_info_type,
+	snम_लिखो(buffer, TMP_SIZE, "%i", phys_cpu__cpu_addr(diag204_info_type,
 							    cpu_info));
-	cpu_dir = hypfs_mkdir(cpus_dir, buffer);
-	if (IS_ERR(cpu_dir))
-		return PTR_ERR(cpu_dir);
+	cpu_dir = hypfs_सूची_गढ़ो(cpus_dir, buffer);
+	अगर (IS_ERR(cpu_dir))
+		वापस PTR_ERR(cpu_dir);
 	rc = hypfs_create_u64(cpu_dir, "mgmtime",
-			      phys_cpu__mgm_time(diag204_info_type, cpu_info));
-	if (IS_ERR(rc))
-		return PTR_ERR(rc);
+			      phys_cpu__mgm_समय(diag204_info_type, cpu_info));
+	अगर (IS_ERR(rc))
+		वापस PTR_ERR(rc);
 	diag224_idx2name(phys_cpu__ctidx(diag204_info_type, cpu_info), buffer);
 	rc = hypfs_create_str(cpu_dir, "type", buffer);
-	return PTR_ERR_OR_ZERO(rc);
-}
+	वापस PTR_ERR_OR_ZERO(rc);
+पूर्ण
 
-static void *hypfs_create_phys_files(struct dentry *parent_dir, void *phys_hdr)
-{
-	int i;
-	void *cpu_info;
-	struct dentry *cpus_dir;
+अटल व्योम *hypfs_create_phys_files(काष्ठा dentry *parent_dir, व्योम *phys_hdr)
+अणु
+	पूर्णांक i;
+	व्योम *cpu_info;
+	काष्ठा dentry *cpus_dir;
 
-	cpus_dir = hypfs_mkdir(parent_dir, "cpus");
-	if (IS_ERR(cpus_dir))
-		return cpus_dir;
+	cpus_dir = hypfs_सूची_गढ़ो(parent_dir, "cpus");
+	अगर (IS_ERR(cpus_dir))
+		वापस cpus_dir;
 	cpu_info = phys_hdr + phys_hdr__size(diag204_info_type);
-	for (i = 0; i < phys_hdr__cpus(diag204_info_type, phys_hdr); i++) {
-		int rc;
+	क्रम (i = 0; i < phys_hdr__cpus(diag204_info_type, phys_hdr); i++) अणु
+		पूर्णांक rc;
 		rc = hypfs_create_phys_cpu_files(cpus_dir, cpu_info);
-		if (rc)
-			return ERR_PTR(rc);
+		अगर (rc)
+			वापस ERR_PTR(rc);
 		cpu_info += phys_cpu__size(diag204_info_type);
-	}
-	return cpu_info;
-}
+	पूर्ण
+	वापस cpu_info;
+पूर्ण
 
-int hypfs_diag_create_files(struct dentry *root)
-{
-	struct dentry *systems_dir, *hyp_dir;
-	void *time_hdr, *part_hdr;
-	int i, rc;
-	void *buffer, *ptr;
+पूर्णांक hypfs_diag_create_files(काष्ठा dentry *root)
+अणु
+	काष्ठा dentry *प्रणालीs_dir, *hyp_dir;
+	व्योम *समय_hdr, *part_hdr;
+	पूर्णांक i, rc;
+	व्योम *buffer, *ptr;
 
 	buffer = diag204_store();
-	if (IS_ERR(buffer))
-		return PTR_ERR(buffer);
+	अगर (IS_ERR(buffer))
+		वापस PTR_ERR(buffer);
 
-	systems_dir = hypfs_mkdir(root, "systems");
-	if (IS_ERR(systems_dir)) {
-		rc = PTR_ERR(systems_dir);
-		goto err_out;
-	}
-	time_hdr = (struct x_info_blk_hdr *)buffer;
-	part_hdr = time_hdr + info_blk_hdr__size(diag204_info_type);
-	for (i = 0; i < info_blk_hdr__npar(diag204_info_type, time_hdr); i++) {
-		part_hdr = hypfs_create_lpar_files(systems_dir, part_hdr);
-		if (IS_ERR(part_hdr)) {
+	प्रणालीs_dir = hypfs_सूची_गढ़ो(root, "systems");
+	अगर (IS_ERR(प्रणालीs_dir)) अणु
+		rc = PTR_ERR(प्रणालीs_dir);
+		जाओ err_out;
+	पूर्ण
+	समय_hdr = (काष्ठा x_info_blk_hdr *)buffer;
+	part_hdr = समय_hdr + info_blk_hdr__size(diag204_info_type);
+	क्रम (i = 0; i < info_blk_hdr__npar(diag204_info_type, समय_hdr); i++) अणु
+		part_hdr = hypfs_create_lpar_files(प्रणालीs_dir, part_hdr);
+		अगर (IS_ERR(part_hdr)) अणु
 			rc = PTR_ERR(part_hdr);
-			goto err_out;
-		}
-	}
-	if (info_blk_hdr__flags(diag204_info_type, time_hdr) &
-	    DIAG204_LPAR_PHYS_FLG) {
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
+	अगर (info_blk_hdr__flags(diag204_info_type, समय_hdr) &
+	    DIAG204_LPAR_PHYS_FLG) अणु
 		ptr = hypfs_create_phys_files(root, part_hdr);
-		if (IS_ERR(ptr)) {
+		अगर (IS_ERR(ptr)) अणु
 			rc = PTR_ERR(ptr);
-			goto err_out;
-		}
-	}
-	hyp_dir = hypfs_mkdir(root, "hyp");
-	if (IS_ERR(hyp_dir)) {
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
+	hyp_dir = hypfs_सूची_गढ़ो(root, "hyp");
+	अगर (IS_ERR(hyp_dir)) अणु
 		rc = PTR_ERR(hyp_dir);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	ptr = hypfs_create_str(hyp_dir, "type", "LPAR Hypervisor");
-	if (IS_ERR(ptr)) {
+	अगर (IS_ERR(ptr)) अणु
 		rc = PTR_ERR(ptr);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 	rc = 0;
 
 err_out:
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *	crc16.h - CRC-16 routine
  *
@@ -10,19 +11,19 @@
  * Copyright (c) 2005 Ben Gardner <bgardner@wabtec.com>
  */
 
-#ifndef __CRC16_H
-#define __CRC16_H
+#अगर_अघोषित __CRC16_H
+#घोषणा __CRC16_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern u16 const crc16_table[256];
+बाह्य u16 स्थिर crc16_table[256];
 
-extern u16 crc16(u16 crc, const u8 *buffer, size_t len);
+बाह्य u16 crc16(u16 crc, स्थिर u8 *buffer, माप_प्रकार len);
 
-static inline u16 crc16_byte(u16 crc, const u8 data)
-{
-	return (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
-}
+अटल अंतरभूत u16 crc16_byte(u16 crc, स्थिर u8 data)
+अणु
+	वापस (crc >> 8) ^ crc16_table[(crc ^ data) & 0xff];
+पूर्ण
 
-#endif /* __CRC16_H */
+#पूर्ण_अगर /* __CRC16_H */
 

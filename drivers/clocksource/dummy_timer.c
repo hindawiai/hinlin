@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/drivers/clocksource/dummy_timer.c
+ *  linux/drivers/घड़ीsource/dummy_समयr.c
  *
  *  Copyright (C) 2013 ARM Ltd.
  *  All Rights Reserved
  */
-#include <linux/clockchips.h>
-#include <linux/cpu.h>
-#include <linux/init.h>
-#include <linux/percpu.h>
-#include <linux/cpumask.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/cpumask.h>
 
-static DEFINE_PER_CPU(struct clock_event_device, dummy_timer_evt);
+अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, dummy_समयr_evt);
 
-static int dummy_timer_starting_cpu(unsigned int cpu)
-{
-	struct clock_event_device *evt = per_cpu_ptr(&dummy_timer_evt, cpu);
+अटल पूर्णांक dummy_समयr_starting_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा घड़ी_event_device *evt = per_cpu_ptr(&dummy_समयr_evt, cpu);
 
 	evt->name	= "dummy_timer";
 	evt->features	= CLOCK_EVT_FEAT_PERIODIC |
@@ -24,14 +25,14 @@ static int dummy_timer_starting_cpu(unsigned int cpu)
 	evt->rating	= 100;
 	evt->cpumask	= cpumask_of(cpu);
 
-	clockevents_register_device(evt);
-	return 0;
-}
+	घड़ीevents_रेजिस्टर_device(evt);
+	वापस 0;
+पूर्ण
 
-static int __init dummy_timer_register(void)
-{
-	return cpuhp_setup_state(CPUHP_AP_DUMMY_TIMER_STARTING,
+अटल पूर्णांक __init dummy_समयr_रेजिस्टर(व्योम)
+अणु
+	वापस cpuhp_setup_state(CPUHP_AP_DUMMY_TIMER_STARTING,
 				 "clockevents/dummy_timer:starting",
-				 dummy_timer_starting_cpu, NULL);
-}
-early_initcall(dummy_timer_register);
+				 dummy_समयr_starting_cpu, शून्य);
+पूर्ण
+early_initcall(dummy_समयr_रेजिस्टर);

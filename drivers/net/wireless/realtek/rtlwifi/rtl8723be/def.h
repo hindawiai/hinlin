@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2014  Realtek Corporation.*/
 
-#ifndef __RTL8723BE_DEF_H__
-#define __RTL8723BE_DEF_H__
+#अगर_अघोषित __RTL8723BE_DEF_H__
+#घोषणा __RTL8723BE_DEF_H__
 
-#define HAL_PRIME_CHNL_OFFSET_DONT_CARE		0
-#define HAL_PRIME_CHNL_OFFSET_LOWER		1
-#define HAL_PRIME_CHNL_OFFSET_UPPER		2
+#घोषणा HAL_PRIME_CHNL_OFFSET_DONT_CARE		0
+#घोषणा HAL_PRIME_CHNL_OFFSET_LOWER		1
+#घोषणा HAL_PRIME_CHNL_OFFSET_UPPER		2
 
 
-#define RX_MPDU_QUEUE				0
-#define CHIP_8723B				(BIT(1) | BIT(2))
-#define NORMAL_CHIP				BIT(3)
-#define CHIP_VENDOR_SMIC			BIT(8)
-/* Currently only for RTL8723B */
-#define EXT_VENDOR_ID				(BIT(18) | BIT(19))
+#घोषणा RX_MPDU_QUEUE				0
+#घोषणा CHIP_8723B				(BIT(1) | BIT(2))
+#घोषणा NORMAL_CHIP				BIT(3)
+#घोषणा CHIP_VENDOR_SMIC			BIT(8)
+/* Currently only क्रम RTL8723B */
+#घोषणा EXT_VENDOR_ID				(BIT(18) | BIT(19))
 
-enum rtl_desc_qsel {
+क्रमागत rtl_desc_qsel अणु
 	QSLT_BK = 0x2,
 	QSLT_BE = 0x0,
 	QSLT_VI = 0x5,
@@ -25,9 +26,9 @@ enum rtl_desc_qsel {
 	QSLT_HIGH = 0x11,
 	QSLT_MGNT = 0x12,
 	QSLT_CMD = 0x13,
-};
+पूर्ण;
 
-enum rtl_desc8723e_rate {
+क्रमागत rtl_desc8723e_rate अणु
 	DESC92C_RATE1M = 0x00,
 	DESC92C_RATE2M = 0x01,
 	DESC92C_RATE5_5M = 0x02,
@@ -58,5 +59,5 @@ enum rtl_desc8723e_rate {
 	DESC92C_RATEMCS13 = 0x19,
 	DESC92C_RATEMCS14 = 0x1a,
 	DESC92C_RATEMCS15 = 0x1b,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

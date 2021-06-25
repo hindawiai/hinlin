@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* atmdev.h - ATM device driver declarations and various related items */
-#ifndef LINUX_ATMDEV_H
-#define LINUX_ATMDEV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* aपंचांगdev.h - ATM device driver declarations and various related items */
+#अगर_अघोषित LINUX_ATMDEV_H
+#घोषणा LINUX_ATMDEV_H
 
 
-#include <linux/wait.h> /* wait_queue_head_t */
-#include <linux/time.h> /* struct timeval */
-#include <linux/net.h>
-#include <linux/bug.h>
-#include <linux/skbuff.h> /* struct sk_buff */
-#include <linux/uio.h>
-#include <net/sock.h>
-#include <linux/atomic.h>
-#include <linux/refcount.h>
-#include <uapi/linux/atmdev.h>
+#समावेश <linux/रुको.h> /* रुको_queue_head_t */
+#समावेश <linux/समय.स> /* काष्ठा समयval */
+#समावेश <linux/net.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/skbuff.h> /* काष्ठा sk_buff */
+#समावेश <linux/uपन.स>
+#समावेश <net/sock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/refcount.h>
+#समावेश <uapi/linux/aपंचांगdev.h>
 
-#ifdef CONFIG_PROC_FS
-#include <linux/proc_fs.h>
+#अगर_घोषित CONFIG_PROC_FS
+#समावेश <linux/proc_fs.h>
 
-extern struct proc_dir_entry *atm_proc_root;
-#endif
+बाह्य काष्ठा proc_dir_entry *aपंचांग_proc_root;
+#पूर्ण_अगर
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
-struct compat_atm_iobuf {
-	int length;
+#अगर_घोषित CONFIG_COMPAT
+#समावेश <linux/compat.h>
+काष्ठा compat_aपंचांग_iobuf अणु
+	पूर्णांक length;
 	compat_uptr_t buffer;
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-struct k_atm_aal_stats {
-#define __HANDLE_ITEM(i) atomic_t i
+काष्ठा k_aपंचांग_aal_stats अणु
+#घोषणा __HANDLE_ITEM(i) atomic_t i
 	__AAL_STAT_ITEMS
-#undef __HANDLE_ITEM
-};
+#अघोषित __HANDLE_ITEM
+पूर्ण;
 
 
-struct k_atm_dev_stats {
-	struct k_atm_aal_stats aal0;
-	struct k_atm_aal_stats aal34;
-	struct k_atm_aal_stats aal5;
-};
+काष्ठा k_aपंचांग_dev_stats अणु
+	काष्ठा k_aपंचांग_aal_stats aal0;
+	काष्ठा k_aपंचांग_aal_stats aal34;
+	काष्ठा k_aपंचांग_aal_stats aal5;
+पूर्ण;
 
-struct device;
+काष्ठा device;
 
-enum {
+क्रमागत अणु
 	ATM_VF_ADDR,		/* Address is in use. Set by anybody, cleared
 				   by device driver. */
-	ATM_VF_READY,		/* VC is ready to transfer data. Set by device
+	ATM_VF_READY,		/* VC is पढ़ोy to transfer data. Set by device
 				   driver, cleared by anybody. */
 	ATM_VF_PARTIAL,		/* resources are bound to PVC (partial PVC
 				   setup), controlled by socket layer */
-	ATM_VF_REGIS,		/* registered with demon, controlled by SVC
+	ATM_VF_REGIS,		/* रेजिस्टरed with demon, controlled by SVC
 				   socket layer */
 	ATM_VF_BOUND,		/* local SAP is set, controlled by SVC socket
 				   layer */
 	ATM_VF_RELEASED,	/* demon has indicated/requested release,
 				   controlled by SVC socket layer */
 	ATM_VF_HASQOS,		/* QOS parameters have been set */
-	ATM_VF_LISTEN,		/* socket is used for listening */
-	ATM_VF_META,		/* SVC socket isn't used for normal data
-				   traffic and doesn't depend on signaling
+	ATM_VF_LISTEN,		/* socket is used क्रम listening */
+	ATM_VF_META,		/* SVC socket isn't used क्रम normal data
+				   traffic and करोesn't depend on संकेतing
 				   to be available */
 	ATM_VF_SESSION,		/* VCC is p2mp session control descriptor */
 	ATM_VF_HASSAP,		/* SAP has been set */
-	ATM_VF_CLOSE,		/* asynchronous close - treat like VF_RELEASED*/
-	ATM_VF_WAITING,		/* waiting for reply from sigd */
+	ATM_VF_CLOSE,		/* asynchronous बंद - treat like VF_RELEASED*/
+	ATM_VF_WAITING,		/* रुकोing क्रम reply from sigd */
 	ATM_VF_IS_CLIP,		/* in use by CLIP protocol */
-};
+पूर्ण;
 
 
-#define ATM_VF2VS(flags) \
+#घोषणा ATM_VF2VS(flags) \
     (test_bit(ATM_VF_READY,&(flags)) ? ATM_VS_CONNECTED : \
      test_bit(ATM_VF_RELEASED,&(flags)) ? ATM_VS_CLOSING : \
      test_bit(ATM_VF_LISTEN,&(flags)) ? ATM_VS_LISTEN : \
@@ -78,249 +79,249 @@ enum {
      test_bit(ATM_VF_BOUND,&(flags)) ? ATM_VS_BOUND : ATM_VS_IDLE)
 
 
-enum {
-	ATM_DF_REMOVED,		/* device was removed from atm_devs list */
-};
+क्रमागत अणु
+	ATM_DF_REMOVED,		/* device was हटाओd from aपंचांग_devs list */
+पूर्ण;
 
 
-#define ATM_PHY_SIG_LOST    0	/* no carrier/light */
-#define ATM_PHY_SIG_UNKNOWN 1	/* carrier/light status is unknown */
-#define ATM_PHY_SIG_FOUND   2	/* carrier/light okay */
+#घोषणा ATM_PHY_SIG_LOST    0	/* no carrier/light */
+#घोषणा ATM_PHY_SIG_UNKNOWN 1	/* carrier/light status is unknown */
+#घोषणा ATM_PHY_SIG_FOUND   2	/* carrier/light okay */
 
-#define ATM_ATMOPT_CLP	1	/* set CLP bit */
+#घोषणा ATM_ATMOPT_CLP	1	/* set CLP bit */
 
-struct atm_vcc {
-	/* struct sock has to be the first member of atm_vcc */
-	struct sock	sk;
-	unsigned long	flags;		/* VCC flags (ATM_VF_*) */
-	short		vpi;		/* VPI and VCI (types must be equal */
+काष्ठा aपंचांग_vcc अणु
+	/* काष्ठा sock has to be the first member of aपंचांग_vcc */
+	काष्ठा sock	sk;
+	अचिन्हित दीर्घ	flags;		/* VCC flags (ATM_VF_*) */
+	लघु		vpi;		/* VPI and VCI (types must be equal */
 					/* with sockaddr) */
-	int 		vci;
-	unsigned long	aal_options;	/* AAL layer options */
-	unsigned long	atm_options;	/* ATM layer options */
-	struct atm_dev	*dev;		/* device back pointer */
-	struct atm_qos	qos;		/* QOS */
-	struct atm_sap	sap;		/* SAP */
-	void (*release_cb)(struct atm_vcc *vcc); /* release_sock callback */
-	void (*push)(struct atm_vcc *vcc,struct sk_buff *skb);
-	void (*pop)(struct atm_vcc *vcc,struct sk_buff *skb); /* optional */
-	int (*push_oam)(struct atm_vcc *vcc,void *cell);
-	int (*send)(struct atm_vcc *vcc,struct sk_buff *skb);
-	void		*dev_data;	/* per-device data */
-	void		*proto_data;	/* per-protocol data */
-	struct k_atm_aal_stats *stats;	/* pointer to AAL stats group */
-	struct module *owner;		/* owner of ->push function */
+	पूर्णांक 		vci;
+	अचिन्हित दीर्घ	aal_options;	/* AAL layer options */
+	अचिन्हित दीर्घ	aपंचांग_options;	/* ATM layer options */
+	काष्ठा aपंचांग_dev	*dev;		/* device back poपूर्णांकer */
+	काष्ठा aपंचांग_qos	qos;		/* QOS */
+	काष्ठा aपंचांग_sap	sap;		/* SAP */
+	व्योम (*release_cb)(काष्ठा aपंचांग_vcc *vcc); /* release_sock callback */
+	व्योम (*push)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb);
+	व्योम (*pop)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb); /* optional */
+	पूर्णांक (*push_oam)(काष्ठा aपंचांग_vcc *vcc,व्योम *cell);
+	पूर्णांक (*send)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb);
+	व्योम		*dev_data;	/* per-device data */
+	व्योम		*proto_data;	/* per-protocol data */
+	काष्ठा k_aपंचांग_aal_stats *stats;	/* poपूर्णांकer to AAL stats group */
+	काष्ठा module *owner;		/* owner of ->push function */
 	/* SVC part --- may move later ------------------------------------- */
-	short		itf;		/* interface number */
-	struct sockaddr_atmsvc local;
-	struct sockaddr_atmsvc remote;
-	/* Multipoint part ------------------------------------------------- */
-	struct atm_vcc	*session;	/* session VCC descriptor */
+	लघु		itf;		/* पूर्णांकerface number */
+	काष्ठा sockaddr_aपंचांगsvc local;
+	काष्ठा sockaddr_aपंचांगsvc remote;
+	/* Multipoपूर्णांक part ------------------------------------------------- */
+	काष्ठा aपंचांग_vcc	*session;	/* session VCC descriptor */
 	/* Other stuff ----------------------------------------------------- */
-	void		*user_back;	/* user backlink - not touched by */
+	व्योम		*user_back;	/* user backlink - not touched by */
 					/* native ATM stack. Currently used */
-					/* by CLIP and sch_atm. */
-};
+					/* by CLIP and sch_aपंचांग. */
+पूर्ण;
 
-static inline struct atm_vcc *atm_sk(struct sock *sk)
-{
-	return (struct atm_vcc *)sk;
-}
+अटल अंतरभूत काष्ठा aपंचांग_vcc *aपंचांग_sk(काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा aपंचांग_vcc *)sk;
+पूर्ण
 
-static inline struct atm_vcc *ATM_SD(struct socket *sock)
-{
-	return atm_sk(sock->sk);
-}
+अटल अंतरभूत काष्ठा aपंचांग_vcc *ATM_SD(काष्ठा socket *sock)
+अणु
+	वापस aपंचांग_sk(sock->sk);
+पूर्ण
 
-static inline struct sock *sk_atm(struct atm_vcc *vcc)
-{
-	return (struct sock *)vcc;
-}
+अटल अंतरभूत काष्ठा sock *sk_aपंचांग(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	वापस (काष्ठा sock *)vcc;
+पूर्ण
 
-struct atm_dev_addr {
-	struct sockaddr_atmsvc addr;	/* ATM address */
-	struct list_head entry;		/* next address */
-};
+काष्ठा aपंचांग_dev_addr अणु
+	काष्ठा sockaddr_aपंचांगsvc addr;	/* ATM address */
+	काष्ठा list_head entry;		/* next address */
+पूर्ण;
 
-enum atm_addr_type_t { ATM_ADDR_LOCAL, ATM_ADDR_LECS };
+क्रमागत aपंचांग_addr_type_t अणु ATM_ADDR_LOCAL, ATM_ADDR_LECS पूर्ण;
 
-struct atm_dev {
-	const struct atmdev_ops *ops;	/* device operations; NULL if unused */
-	const struct atmphy_ops *phy;	/* PHY operations, may be undefined */
-					/* (NULL) */
-	const char	*type;		/* device type name */
-	int		number;		/* device index */
-	void		*dev_data;	/* per-device data */
-	void		*phy_data;	/* private PHY data */
-	unsigned long	flags;		/* device flags (ATM_DF_*) */
-	struct list_head local;		/* local ATM addresses */
-	struct list_head lecs;		/* LECS ATM addresses learned via ILMI */
-	unsigned char	esi[ESI_LEN];	/* ESI ("MAC" addr) */
-	struct atm_cirange ci_range;	/* VPI/VCI range */
-	struct k_atm_dev_stats stats;	/* statistics */
-	char		signal;		/* signal status (ATM_PHY_SIG_*) */
-	int		link_rate;	/* link rate (default: OC3) */
+काष्ठा aपंचांग_dev अणु
+	स्थिर काष्ठा aपंचांगdev_ops *ops;	/* device operations; शून्य अगर unused */
+	स्थिर काष्ठा aपंचांगphy_ops *phy;	/* PHY operations, may be undefined */
+					/* (शून्य) */
+	स्थिर अक्षर	*type;		/* device type name */
+	पूर्णांक		number;		/* device index */
+	व्योम		*dev_data;	/* per-device data */
+	व्योम		*phy_data;	/* निजी PHY data */
+	अचिन्हित दीर्घ	flags;		/* device flags (ATM_DF_*) */
+	काष्ठा list_head local;		/* local ATM addresses */
+	काष्ठा list_head lecs;		/* LECS ATM addresses learned via ILMI */
+	अचिन्हित अक्षर	esi[ESI_LEN];	/* ESI ("MAC" addr) */
+	काष्ठा aपंचांग_cirange ci_range;	/* VPI/VCI range */
+	काष्ठा k_aपंचांग_dev_stats stats;	/* statistics */
+	अक्षर		संकेत;		/* संकेत status (ATM_PHY_SIG_*) */
+	पूर्णांक		link_rate;	/* link rate (शेष: OC3) */
 	refcount_t	refcnt;		/* reference count */
-	spinlock_t	lock;		/* protect internal members */
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *proc_entry; /* proc entry */
-	char *proc_name;		/* proc entry name */
-#endif
-	struct device class_dev;	/* sysfs device */
-	struct list_head dev_list;	/* linkage */
-};
+	spinlock_t	lock;		/* protect पूर्णांकernal members */
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry *proc_entry; /* proc entry */
+	अक्षर *proc_name;		/* proc entry name */
+#पूर्ण_अगर
+	काष्ठा device class_dev;	/* sysfs device */
+	काष्ठा list_head dev_list;	/* linkage */
+पूर्ण;
 
  
 /* OF: send_Oam Flags */
 
-#define ATM_OF_IMMED  1		/* Attempt immediate delivery */
-#define ATM_OF_INRATE 2		/* Attempt in-rate delivery */
+#घोषणा ATM_OF_IMMED  1		/* Attempt immediate delivery */
+#घोषणा ATM_OF_INRATE 2		/* Attempt in-rate delivery */
 
-struct atmdev_ops { /* only send is required */
-	void (*dev_close)(struct atm_dev *dev);
-	int (*open)(struct atm_vcc *vcc);
-	void (*close)(struct atm_vcc *vcc);
-	int (*ioctl)(struct atm_dev *dev,unsigned int cmd,void __user *arg);
-#ifdef CONFIG_COMPAT
-	int (*compat_ioctl)(struct atm_dev *dev,unsigned int cmd,
-			    void __user *arg);
-#endif
-	int (*send)(struct atm_vcc *vcc,struct sk_buff *skb);
-	int (*send_bh)(struct atm_vcc *vcc, struct sk_buff *skb);
-	int (*send_oam)(struct atm_vcc *vcc,void *cell,int flags);
-	void (*phy_put)(struct atm_dev *dev,unsigned char value,
-	    unsigned long addr);
-	unsigned char (*phy_get)(struct atm_dev *dev,unsigned long addr);
-	int (*change_qos)(struct atm_vcc *vcc,struct atm_qos *qos,int flags);
-	int (*proc_read)(struct atm_dev *dev,loff_t *pos,char *page);
-	struct module *owner;
-};
+काष्ठा aपंचांगdev_ops अणु /* only send is required */
+	व्योम (*dev_बंद)(काष्ठा aपंचांग_dev *dev);
+	पूर्णांक (*खोलो)(काष्ठा aपंचांग_vcc *vcc);
+	व्योम (*बंद)(काष्ठा aपंचांग_vcc *vcc);
+	पूर्णांक (*ioctl)(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg);
+#अगर_घोषित CONFIG_COMPAT
+	पूर्णांक (*compat_ioctl)(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,
+			    व्योम __user *arg);
+#पूर्ण_अगर
+	पूर्णांक (*send)(काष्ठा aपंचांग_vcc *vcc,काष्ठा sk_buff *skb);
+	पूर्णांक (*send_bh)(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb);
+	पूर्णांक (*send_oam)(काष्ठा aपंचांग_vcc *vcc,व्योम *cell,पूर्णांक flags);
+	व्योम (*phy_put)(काष्ठा aपंचांग_dev *dev,अचिन्हित अक्षर value,
+	    अचिन्हित दीर्घ addr);
+	अचिन्हित अक्षर (*phy_get)(काष्ठा aपंचांग_dev *dev,अचिन्हित दीर्घ addr);
+	पूर्णांक (*change_qos)(काष्ठा aपंचांग_vcc *vcc,काष्ठा aपंचांग_qos *qos,पूर्णांक flags);
+	पूर्णांक (*proc_पढ़ो)(काष्ठा aपंचांग_dev *dev,loff_t *pos,अक्षर *page);
+	काष्ठा module *owner;
+पूर्ण;
 
-struct atmphy_ops {
-	int (*start)(struct atm_dev *dev);
-	int (*ioctl)(struct atm_dev *dev,unsigned int cmd,void __user *arg);
-	void (*interrupt)(struct atm_dev *dev);
-	int (*stop)(struct atm_dev *dev);
-};
+काष्ठा aपंचांगphy_ops अणु
+	पूर्णांक (*start)(काष्ठा aपंचांग_dev *dev);
+	पूर्णांक (*ioctl)(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg);
+	व्योम (*पूर्णांकerrupt)(काष्ठा aपंचांग_dev *dev);
+	पूर्णांक (*stop)(काष्ठा aपंचांग_dev *dev);
+पूर्ण;
 
-struct atm_skb_data {
-	struct atm_vcc	*vcc;		/* ATM VCC */
-	unsigned long	atm_options;	/* ATM layer options */
-	unsigned int	acct_truesize;  /* truesize accounted to vcc */
-} __packed;
+काष्ठा aपंचांग_skb_data अणु
+	काष्ठा aपंचांग_vcc	*vcc;		/* ATM VCC */
+	अचिन्हित दीर्घ	aपंचांग_options;	/* ATM layer options */
+	अचिन्हित पूर्णांक	acct_truesize;  /* truesize accounted to vcc */
+पूर्ण __packed;
 
-#define VCC_HTABLE_SIZE 32
+#घोषणा VCC_HTABLE_SIZE 32
 
-extern struct hlist_head vcc_hash[VCC_HTABLE_SIZE];
-extern rwlock_t vcc_sklist_lock;
+बाह्य काष्ठा hlist_head vcc_hash[VCC_HTABLE_SIZE];
+बाह्य rwlock_t vcc_sklist_lock;
 
-#define ATM_SKB(skb) (((struct atm_skb_data *) (skb)->cb))
+#घोषणा ATM_SKB(skb) (((काष्ठा aपंचांग_skb_data *) (skb)->cb))
 
-struct atm_dev *atm_dev_register(const char *type, struct device *parent,
-				 const struct atmdev_ops *ops,
-				 int number, /* -1 == pick first available */
-				 unsigned long *flags);
-struct atm_dev *atm_dev_lookup(int number);
-void atm_dev_deregister(struct atm_dev *dev);
+काष्ठा aपंचांग_dev *aपंचांग_dev_रेजिस्टर(स्थिर अक्षर *type, काष्ठा device *parent,
+				 स्थिर काष्ठा aपंचांगdev_ops *ops,
+				 पूर्णांक number, /* -1 == pick first available */
+				 अचिन्हित दीर्घ *flags);
+काष्ठा aपंचांग_dev *aपंचांग_dev_lookup(पूर्णांक number);
+व्योम aपंचांग_dev_deरेजिस्टर(काष्ठा aपंचांग_dev *dev);
 
-/* atm_dev_signal_change
+/* aपंचांग_dev_संकेत_change
  *
- * Propagate lower layer signal change in atm_dev->signal to netdevice.
- * The event will be sent via a notifier call chain.
+ * Propagate lower layer संकेत change in aपंचांग_dev->संकेत to netdevice.
+ * The event will be sent via a notअगरier call chain.
  */
-void atm_dev_signal_change(struct atm_dev *dev, char signal);
+व्योम aपंचांग_dev_संकेत_change(काष्ठा aपंचांग_dev *dev, अक्षर संकेत);
 
-void vcc_insert_socket(struct sock *sk);
+व्योम vcc_insert_socket(काष्ठा sock *sk);
 
-void atm_dev_release_vccs(struct atm_dev *dev);
+व्योम aपंचांग_dev_release_vccs(काष्ठा aपंचांग_dev *dev);
 
-static inline void atm_account_tx(struct atm_vcc *vcc, struct sk_buff *skb)
-{
+अटल अंतरभूत व्योम aपंचांग_account_tx(काष्ठा aपंचांग_vcc *vcc, काष्ठा sk_buff *skb)
+अणु
 	/*
-	 * Because ATM skbs may not belong to a sock (and we don't
+	 * Because ATM skbs may not beदीर्घ to a sock (and we करोn't
 	 * necessarily want to), skb->truesize may be adjusted,
-	 * escaping the hack in pskb_expand_head() which avoids
-	 * doing so for some cases. So stash the value of truesize
-	 * at the time we accounted it, and atm_pop_raw() can use
-	 * that value later, in case it changes.
+	 * escaping the hack in pskb_expand_head() which aव्योमs
+	 * करोing so क्रम some हालs. So stash the value of truesize
+	 * at the समय we accounted it, and aपंचांग_pop_raw() can use
+	 * that value later, in हाल it changes.
 	 */
-	refcount_add(skb->truesize, &sk_atm(vcc)->sk_wmem_alloc);
+	refcount_add(skb->truesize, &sk_aपंचांग(vcc)->sk_wmem_alloc);
 	ATM_SKB(skb)->acct_truesize = skb->truesize;
-	ATM_SKB(skb)->atm_options = vcc->atm_options;
-}
+	ATM_SKB(skb)->aपंचांग_options = vcc->aपंचांग_options;
+पूर्ण
 
-static inline void atm_force_charge(struct atm_vcc *vcc,int truesize)
-{
-	atomic_add(truesize, &sk_atm(vcc)->sk_rmem_alloc);
-}
-
-
-static inline void atm_return(struct atm_vcc *vcc,int truesize)
-{
-	atomic_sub(truesize, &sk_atm(vcc)->sk_rmem_alloc);
-}
+अटल अंतरभूत व्योम aपंचांग_क्रमce_अक्षरge(काष्ठा aपंचांग_vcc *vcc,पूर्णांक truesize)
+अणु
+	atomic_add(truesize, &sk_aपंचांग(vcc)->sk_rmem_alloc);
+पूर्ण
 
 
-static inline int atm_may_send(struct atm_vcc *vcc,unsigned int size)
-{
-	return (size + refcount_read(&sk_atm(vcc)->sk_wmem_alloc)) <
-	       sk_atm(vcc)->sk_sndbuf;
-}
+अटल अंतरभूत व्योम aपंचांग_वापस(काष्ठा aपंचांग_vcc *vcc,पूर्णांक truesize)
+अणु
+	atomic_sub(truesize, &sk_aपंचांग(vcc)->sk_rmem_alloc);
+पूर्ण
 
 
-static inline void atm_dev_hold(struct atm_dev *dev)
-{
+अटल अंतरभूत पूर्णांक aपंचांग_may_send(काष्ठा aपंचांग_vcc *vcc,अचिन्हित पूर्णांक size)
+अणु
+	वापस (size + refcount_पढ़ो(&sk_aपंचांग(vcc)->sk_wmem_alloc)) <
+	       sk_aपंचांग(vcc)->sk_sndbuf;
+पूर्ण
+
+
+अटल अंतरभूत व्योम aपंचांग_dev_hold(काष्ठा aपंचांग_dev *dev)
+अणु
 	refcount_inc(&dev->refcnt);
-}
+पूर्ण
 
 
-static inline void atm_dev_put(struct atm_dev *dev)
-{
-	if (refcount_dec_and_test(&dev->refcnt)) {
+अटल अंतरभूत व्योम aपंचांग_dev_put(काष्ठा aपंचांग_dev *dev)
+अणु
+	अगर (refcount_dec_and_test(&dev->refcnt)) अणु
 		BUG_ON(!test_bit(ATM_DF_REMOVED, &dev->flags));
-		if (dev->ops->dev_close)
-			dev->ops->dev_close(dev);
+		अगर (dev->ops->dev_बंद)
+			dev->ops->dev_बंद(dev);
 		put_device(&dev->class_dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-int atm_charge(struct atm_vcc *vcc,int truesize);
-struct sk_buff *atm_alloc_charge(struct atm_vcc *vcc,int pdu_size,
+पूर्णांक aपंचांग_अक्षरge(काष्ठा aपंचांग_vcc *vcc,पूर्णांक truesize);
+काष्ठा sk_buff *aपंचांग_alloc_अक्षरge(काष्ठा aपंचांग_vcc *vcc,पूर्णांक pdu_size,
     gfp_t gfp_flags);
-int atm_pcr_goal(const struct atm_trafprm *tp);
+पूर्णांक aपंचांग_pcr_goal(स्थिर काष्ठा aपंचांग_trafprm *tp);
 
-void vcc_release_async(struct atm_vcc *vcc, int reply);
+व्योम vcc_release_async(काष्ठा aपंचांग_vcc *vcc, पूर्णांक reply);
 
-struct atm_ioctl {
-	struct module *owner;
-	/* A module reference is kept if appropriate over this call.
-	 * Return -ENOIOCTLCMD if you don't handle it. */
-	int (*ioctl)(struct socket *, unsigned int cmd, unsigned long arg);
-	struct list_head list;
-};
+काष्ठा aपंचांग_ioctl अणु
+	काष्ठा module *owner;
+	/* A module reference is kept अगर appropriate over this call.
+	 * Return -ENOIOCTLCMD अगर you करोn't handle it. */
+	पूर्णांक (*ioctl)(काष्ठा socket *, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * register_atm_ioctl - register handler for ioctl operations
+ * रेजिस्टर_aपंचांग_ioctl - रेजिस्टर handler क्रम ioctl operations
  *
  * Special (non-device) handlers of ioctl's should
- * register here. If you're a normal device, you should
- * set .ioctl in your atmdev_ops instead.
+ * रेजिस्टर here. If you're a normal device, you should
+ * set .ioctl in your aपंचांगdev_ops instead.
  */
-void register_atm_ioctl(struct atm_ioctl *);
+व्योम रेजिस्टर_aपंचांग_ioctl(काष्ठा aपंचांग_ioctl *);
 
 /**
- * deregister_atm_ioctl - remove the ioctl handler
+ * deरेजिस्टर_aपंचांग_ioctl - हटाओ the ioctl handler
  */
-void deregister_atm_ioctl(struct atm_ioctl *);
+व्योम deरेजिस्टर_aपंचांग_ioctl(काष्ठा aपंचांग_ioctl *);
 
 
-/* register_atmdevice_notifier - register atm_dev notify events
+/* रेजिस्टर_aपंचांगdevice_notअगरier - रेजिस्टर aपंचांग_dev notअगरy events
  *
- * Clients like br2684 will register notify events
- * Currently we notify of signal found/lost
+ * Clients like br2684 will रेजिस्टर notअगरy events
+ * Currently we notअगरy of संकेत found/lost
  */
-int register_atmdevice_notifier(struct notifier_block *nb);
-void unregister_atmdevice_notifier(struct notifier_block *nb);
+पूर्णांक रेजिस्टर_aपंचांगdevice_notअगरier(काष्ठा notअगरier_block *nb);
+व्योम unरेजिस्टर_aपंचांगdevice_notअगरier(काष्ठा notअगरier_block *nb);
 
-#endif
+#पूर्ण_अगर

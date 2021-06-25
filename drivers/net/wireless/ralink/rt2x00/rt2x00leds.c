@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -7,26 +8,26 @@
 
 /*
 	Module: rt2x00lib
-	Abstract: rt2x00 led specific routines.
+	Abstract: rt2x00 led specअगरic routines.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "rt2x00.h"
-#include "rt2x00lib.h"
+#समावेश "rt2x00.h"
+#समावेश "rt2x00lib.h"
 
-void rt2x00leds_led_quality(struct rt2x00_dev *rt2x00dev, int rssi)
-{
-	struct rt2x00_led *led = &rt2x00dev->led_qual;
-	unsigned int brightness;
+व्योम rt2x00leds_led_quality(काष्ठा rt2x00_dev *rt2x00dev, पूर्णांक rssi)
+अणु
+	काष्ठा rt2x00_led *led = &rt2x00dev->led_qual;
+	अचिन्हित पूर्णांक brightness;
 
-	if ((led->type != LED_TYPE_QUALITY) || !(led->flags & LED_REGISTERED))
-		return;
+	अगर ((led->type != LED_TYPE_QUALITY) || !(led->flags & LED_REGISTERED))
+		वापस;
 
 	/*
-	 * Led handling requires a positive value for the rssi,
-	 * to do that correctly we need to add the correction.
+	 * Led handling requires a positive value क्रम the rssi,
+	 * to करो that correctly we need to add the correction.
 	 */
 	rssi += rt2x00dev->rssi_offset;
 
@@ -34,200 +35,200 @@ void rt2x00leds_led_quality(struct rt2x00_dev *rt2x00dev, int rssi)
 	 * Get the rssi level, this is used to convert the rssi
 	 * to a LED value inside the range LED_OFF - LED_FULL.
 	 */
-	if (rssi <= 30)
+	अगर (rssi <= 30)
 		rssi = 0;
-	else if (rssi <= 39)
+	अन्यथा अगर (rssi <= 39)
 		rssi = 1;
-	else if (rssi <= 49)
+	अन्यथा अगर (rssi <= 49)
 		rssi = 2;
-	else if (rssi <= 53)
+	अन्यथा अगर (rssi <= 53)
 		rssi = 3;
-	else if (rssi <= 63)
+	अन्यथा अगर (rssi <= 63)
 		rssi = 4;
-	else
+	अन्यथा
 		rssi = 5;
 
 	/*
 	 * Note that we must _not_ send LED_OFF since the driver
 	 * is going to calculate the value and might use it in a
-	 * division.
+	 * भागision.
 	 */
 	brightness = ((LED_FULL / 6) * rssi) + 1;
-	if (brightness != led->led_dev.brightness) {
+	अगर (brightness != led->led_dev.brightness) अणु
 		led->led_dev.brightness_set(&led->led_dev, brightness);
 		led->led_dev.brightness = brightness;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rt2x00led_led_simple(struct rt2x00_led *led, bool enabled)
-{
-	unsigned int brightness = enabled ? LED_FULL : LED_OFF;
+अटल व्योम rt2x00led_led_simple(काष्ठा rt2x00_led *led, bool enabled)
+अणु
+	अचिन्हित पूर्णांक brightness = enabled ? LED_FULL : LED_OFF;
 
-	if (!(led->flags & LED_REGISTERED))
-		return;
+	अगर (!(led->flags & LED_REGISTERED))
+		वापस;
 
 	led->led_dev.brightness_set(&led->led_dev, brightness);
 	led->led_dev.brightness = brightness;
-}
+पूर्ण
 
-void rt2x00led_led_activity(struct rt2x00_dev *rt2x00dev, bool enabled)
-{
-	if (rt2x00dev->led_qual.type == LED_TYPE_ACTIVITY)
+व्योम rt2x00led_led_activity(काष्ठा rt2x00_dev *rt2x00dev, bool enabled)
+अणु
+	अगर (rt2x00dev->led_qual.type == LED_TYPE_ACTIVITY)
 		rt2x00led_led_simple(&rt2x00dev->led_qual, enabled);
-}
+पूर्ण
 
-void rt2x00leds_led_assoc(struct rt2x00_dev *rt2x00dev, bool enabled)
-{
-	if (rt2x00dev->led_assoc.type == LED_TYPE_ASSOC)
+व्योम rt2x00leds_led_assoc(काष्ठा rt2x00_dev *rt2x00dev, bool enabled)
+अणु
+	अगर (rt2x00dev->led_assoc.type == LED_TYPE_ASSOC)
 		rt2x00led_led_simple(&rt2x00dev->led_assoc, enabled);
-}
+पूर्ण
 
-void rt2x00leds_led_radio(struct rt2x00_dev *rt2x00dev, bool enabled)
-{
-	if (rt2x00dev->led_radio.type == LED_TYPE_RADIO)
+व्योम rt2x00leds_led_radio(काष्ठा rt2x00_dev *rt2x00dev, bool enabled)
+अणु
+	अगर (rt2x00dev->led_radio.type == LED_TYPE_RADIO)
 		rt2x00led_led_simple(&rt2x00dev->led_radio, enabled);
-}
+पूर्ण
 
-static int rt2x00leds_register_led(struct rt2x00_dev *rt2x00dev,
-				   struct rt2x00_led *led,
-				   const char *name)
-{
-	struct device *device = wiphy_dev(rt2x00dev->hw->wiphy);
-	int retval;
+अटल पूर्णांक rt2x00leds_रेजिस्टर_led(काष्ठा rt2x00_dev *rt2x00dev,
+				   काष्ठा rt2x00_led *led,
+				   स्थिर अक्षर *name)
+अणु
+	काष्ठा device *device = wiphy_dev(rt2x00dev->hw->wiphy);
+	पूर्णांक retval;
 
 	led->led_dev.name = name;
 	led->led_dev.brightness = LED_OFF;
 
-	retval = led_classdev_register(device, &led->led_dev);
-	if (retval) {
+	retval = led_classdev_रेजिस्टर(device, &led->led_dev);
+	अगर (retval) अणु
 		rt2x00_err(rt2x00dev, "Failed to register led handler\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	led->flags |= LED_REGISTERED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rt2x00leds_register(struct rt2x00_dev *rt2x00dev)
-{
-	char name[36];
-	int retval;
-	unsigned long on_period;
-	unsigned long off_period;
-	const char *phy_name = wiphy_name(rt2x00dev->hw->wiphy);
+व्योम rt2x00leds_रेजिस्टर(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	अक्षर name[36];
+	पूर्णांक retval;
+	अचिन्हित दीर्घ on_period;
+	अचिन्हित दीर्घ off_period;
+	स्थिर अक्षर *phy_name = wiphy_name(rt2x00dev->hw->wiphy);
 
-	if (rt2x00dev->led_radio.flags & LED_INITIALIZED) {
-		snprintf(name, sizeof(name), "%s-%s::radio",
+	अगर (rt2x00dev->led_radio.flags & LED_INITIALIZED) अणु
+		snम_लिखो(name, माप(name), "%s-%s::radio",
 			 rt2x00dev->ops->name, phy_name);
 
-		retval = rt2x00leds_register_led(rt2x00dev,
+		retval = rt2x00leds_रेजिस्टर_led(rt2x00dev,
 						 &rt2x00dev->led_radio,
 						 name);
-		if (retval)
-			goto exit_fail;
-	}
+		अगर (retval)
+			जाओ निकास_fail;
+	पूर्ण
 
-	if (rt2x00dev->led_assoc.flags & LED_INITIALIZED) {
-		snprintf(name, sizeof(name), "%s-%s::assoc",
+	अगर (rt2x00dev->led_assoc.flags & LED_INITIALIZED) अणु
+		snम_लिखो(name, माप(name), "%s-%s::assoc",
 			 rt2x00dev->ops->name, phy_name);
 
-		retval = rt2x00leds_register_led(rt2x00dev,
+		retval = rt2x00leds_रेजिस्टर_led(rt2x00dev,
 						 &rt2x00dev->led_assoc,
 						 name);
-		if (retval)
-			goto exit_fail;
-	}
+		अगर (retval)
+			जाओ निकास_fail;
+	पूर्ण
 
-	if (rt2x00dev->led_qual.flags & LED_INITIALIZED) {
-		snprintf(name, sizeof(name), "%s-%s::quality",
+	अगर (rt2x00dev->led_qual.flags & LED_INITIALIZED) अणु
+		snम_लिखो(name, माप(name), "%s-%s::quality",
 			 rt2x00dev->ops->name, phy_name);
 
-		retval = rt2x00leds_register_led(rt2x00dev,
+		retval = rt2x00leds_रेजिस्टर_led(rt2x00dev,
 						 &rt2x00dev->led_qual,
 						 name);
-		if (retval)
-			goto exit_fail;
-	}
+		अगर (retval)
+			जाओ निकास_fail;
+	पूर्ण
 
 	/*
-	 * Initialize blink time to default value:
+	 * Initialize blink समय to शेष value:
 	 * On period: 70ms
 	 * Off period: 30ms
 	 */
-	if (rt2x00dev->led_radio.led_dev.blink_set) {
+	अगर (rt2x00dev->led_radio.led_dev.blink_set) अणु
 		on_period = 70;
 		off_period = 30;
 		rt2x00dev->led_radio.led_dev.blink_set(
 		    &rt2x00dev->led_radio.led_dev, &on_period, &off_period);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
-exit_fail:
-	rt2x00leds_unregister(rt2x00dev);
-}
+निकास_fail:
+	rt2x00leds_unरेजिस्टर(rt2x00dev);
+पूर्ण
 
-static void rt2x00leds_unregister_led(struct rt2x00_led *led)
-{
-	led_classdev_unregister(&led->led_dev);
+अटल व्योम rt2x00leds_unरेजिस्टर_led(काष्ठा rt2x00_led *led)
+अणु
+	led_classdev_unरेजिस्टर(&led->led_dev);
 
 	/*
-	 * This might look weird, but when we are unregistering while
-	 * suspended the led is already off, and since we haven't
+	 * This might look weird, but when we are unरेजिस्टरing जबतक
+	 * suspended the led is alपढ़ोy off, and since we haven't
 	 * fully resumed yet, access to the device might not be
 	 * possible yet.
 	 */
-	if (!(led->led_dev.flags & LED_SUSPENDED))
+	अगर (!(led->led_dev.flags & LED_SUSPENDED))
 		led->led_dev.brightness_set(&led->led_dev, LED_OFF);
 
 	led->flags &= ~LED_REGISTERED;
-}
+पूर्ण
 
-void rt2x00leds_unregister(struct rt2x00_dev *rt2x00dev)
-{
-	if (rt2x00dev->led_qual.flags & LED_REGISTERED)
-		rt2x00leds_unregister_led(&rt2x00dev->led_qual);
-	if (rt2x00dev->led_assoc.flags & LED_REGISTERED)
-		rt2x00leds_unregister_led(&rt2x00dev->led_assoc);
-	if (rt2x00dev->led_radio.flags & LED_REGISTERED)
-		rt2x00leds_unregister_led(&rt2x00dev->led_radio);
-}
+व्योम rt2x00leds_unरेजिस्टर(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	अगर (rt2x00dev->led_qual.flags & LED_REGISTERED)
+		rt2x00leds_unरेजिस्टर_led(&rt2x00dev->led_qual);
+	अगर (rt2x00dev->led_assoc.flags & LED_REGISTERED)
+		rt2x00leds_unरेजिस्टर_led(&rt2x00dev->led_assoc);
+	अगर (rt2x00dev->led_radio.flags & LED_REGISTERED)
+		rt2x00leds_unरेजिस्टर_led(&rt2x00dev->led_radio);
+पूर्ण
 
-static inline void rt2x00leds_suspend_led(struct rt2x00_led *led)
-{
+अटल अंतरभूत व्योम rt2x00leds_suspend_led(काष्ठा rt2x00_led *led)
+अणु
 	led_classdev_suspend(&led->led_dev);
 
 	/* This shouldn't be needed, but just to be safe */
 	led->led_dev.brightness_set(&led->led_dev, LED_OFF);
 	led->led_dev.brightness = LED_OFF;
-}
+पूर्ण
 
-void rt2x00leds_suspend(struct rt2x00_dev *rt2x00dev)
-{
-	if (rt2x00dev->led_qual.flags & LED_REGISTERED)
+व्योम rt2x00leds_suspend(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	अगर (rt2x00dev->led_qual.flags & LED_REGISTERED)
 		rt2x00leds_suspend_led(&rt2x00dev->led_qual);
-	if (rt2x00dev->led_assoc.flags & LED_REGISTERED)
+	अगर (rt2x00dev->led_assoc.flags & LED_REGISTERED)
 		rt2x00leds_suspend_led(&rt2x00dev->led_assoc);
-	if (rt2x00dev->led_radio.flags & LED_REGISTERED)
+	अगर (rt2x00dev->led_radio.flags & LED_REGISTERED)
 		rt2x00leds_suspend_led(&rt2x00dev->led_radio);
-}
+पूर्ण
 
-static inline void rt2x00leds_resume_led(struct rt2x00_led *led)
-{
+अटल अंतरभूत व्योम rt2x00leds_resume_led(काष्ठा rt2x00_led *led)
+अणु
 	led_classdev_resume(&led->led_dev);
 
 	/* Device might have enabled the LEDS during resume */
 	led->led_dev.brightness_set(&led->led_dev, LED_OFF);
 	led->led_dev.brightness = LED_OFF;
-}
+पूर्ण
 
-void rt2x00leds_resume(struct rt2x00_dev *rt2x00dev)
-{
-	if (rt2x00dev->led_radio.flags & LED_REGISTERED)
+व्योम rt2x00leds_resume(काष्ठा rt2x00_dev *rt2x00dev)
+अणु
+	अगर (rt2x00dev->led_radio.flags & LED_REGISTERED)
 		rt2x00leds_resume_led(&rt2x00dev->led_radio);
-	if (rt2x00dev->led_assoc.flags & LED_REGISTERED)
+	अगर (rt2x00dev->led_assoc.flags & LED_REGISTERED)
 		rt2x00leds_resume_led(&rt2x00dev->led_assoc);
-	if (rt2x00dev->led_qual.flags & LED_REGISTERED)
+	अगर (rt2x00dev->led_qual.flags & LED_REGISTERED)
 		rt2x00leds_resume_led(&rt2x00dev->led_qual);
-}
+पूर्ण

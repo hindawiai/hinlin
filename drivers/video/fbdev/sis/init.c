@@ -1,18 +1,19 @@
+<शैली गुरु>
 /* $XFree86$ */
-/* $XdotOrg$ */
+/* $XकरोtOrg$ */
 /*
- * Mode initializing code (CRT1 section) for
- * for SiS 300/305/540/630/730,
+ * Mode initializing code (CRT1 section) क्रम
+ * क्रम SiS 300/305/540/630/730,
  *     SiS 315/550/[M]650/651/[M]661[FGM]X/[M]74x[GX]/330/[M]76x[GX],
  *     XGI Volari V3XT/V5/V8, Z7
- * (Universal module for Linux kernel framebuffer and X.org/XFree86 4.x)
+ * (Universal module क्रम Linux kernel framebuffer and X.org/XFree86 4.x)
  *
  * Copyright (C) 2001-2005 by Thomas Winischhofer, Vienna, Austria
  *
  * If distributed as part of the Linux kernel, the following license terms
  * apply:
  *
- * * This program is free software; you can redistribute it and/or modify
+ * * This program is मुक्त software; you can redistribute it and/or modअगरy
  * * it under the terms of the GNU General Public License as published by
  * * the Free Software Foundation; either version 2 of the named License,
  * * or any later version.
@@ -20,29 +21,29 @@
  * * This program is distributed in the hope that it will be useful,
  * * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * * GNU General Public License for more details.
+ * * GNU General Public License क्रम more details.
  * *
  * * You should have received a copy of the GNU General Public License
- * * along with this program; if not, write to the Free Software
+ * * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  * * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA
  *
  * Otherwise, the following license terms apply:
  *
- * * Redistribution and use in source and binary forms, with or without
- * * modification, are permitted provided that the following conditions
+ * * Redistribution and use in source and binary क्रमms, with or without
+ * * modअगरication, are permitted provided that the following conditions
  * * are met:
  * * 1) Redistributions of source code must retain the above copyright
  * *    notice, this list of conditions and the following disclaimer.
- * * 2) Redistributions in binary form must reproduce the above copyright
+ * * 2) Redistributions in binary क्रमm must reproduce the above copyright
  * *    notice, this list of conditions and the following disclaimer in the
- * *    documentation and/or other materials provided with the distribution.
- * * 3) The name of the author may not be used to endorse or promote products
- * *    derived from this software without specific prior written permission.
+ * *    करोcumentation and/or other materials provided with the distribution.
+ * * 3) The name of the author may not be used to enकरोrse or promote products
+ * *    derived from this software without specअगरic prior written permission.
  * *
  * * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT, INसूचीECT,
  * * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -52,32 +53,32 @@
  *
  * Author: 	Thomas Winischhofer <thomas@winischhofer.net>
  *
- * Formerly based on non-functional code-fragements for 300 series by SiS, Inc.
+ * Formerly based on non-functional code-fragements क्रम 300 series by SiS, Inc.
  * Used by permission.
  */
 
-#include "init.h"
+#समावेश "init.h"
 
-#ifdef CONFIG_FB_SIS_300
-#include "300vtbl.h"
-#endif
+#अगर_घोषित CONFIG_FB_SIS_300
+#समावेश "300vtbl.h"
+#पूर्ण_अगर
 
-#ifdef CONFIG_FB_SIS_315
-#include "310vtbl.h"
-#endif
+#अगर_घोषित CONFIG_FB_SIS_315
+#समावेश "310vtbl.h"
+#पूर्ण_अगर
 
-#if defined(ALLOC_PRAGMA)
-#pragma alloc_text(PAGE,SiSSetMode)
-#endif
+#अगर defined(ALLOC_PRAGMA)
+#आशय alloc_text(PAGE,SiSSetMode)
+#पूर्ण_अगर
 
 /*********************************************/
 /*         POINTER INITIALIZATION            */
 /*********************************************/
 
-#if defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
-static void
-InitCommonPointer(struct SiS_Private *SiS_Pr)
-{
+#अगर defined(CONFIG_FB_SIS_300) || defined(CONFIG_FB_SIS_315)
+अटल व्योम
+InitCommonPoपूर्णांकer(काष्ठा SiS_Private *SiS_Pr)
+अणु
    SiS_Pr->SiS_SModeIDTable  = SiS_SModeIDTable;
    SiS_Pr->SiS_StResInfo     = SiS_StResInfo;
    SiS_Pr->SiS_ModeResInfo   = SiS_ModeResInfo;
@@ -91,10 +92,10 @@ InitCommonPointer(struct SiS_Private *SiS_Pr)
    SiS_Pr->SiS_HiTVExtTiming  = SiS_HiTVExtTiming;
    SiS_Pr->SiS_HiTVGroup3Data = SiS_HiTVGroup3Data;
    SiS_Pr->SiS_HiTVGroup3Simu = SiS_HiTVGroup3Simu;
-#if 0
+#अगर 0
    SiS_Pr->SiS_HiTVTextTiming = SiS_HiTVTextTiming;
    SiS_Pr->SiS_HiTVGroup3Text = SiS_HiTVGroup3Text;
-#endif
+#पूर्ण_अगर
 
    SiS_Pr->SiS_StPALData   = SiS_StPALData;
    SiS_Pr->SiS_ExtPALData  = SiS_ExtPALData;
@@ -141,38 +142,38 @@ InitCommonPointer(struct SiS_Private *SiS_Pr)
    SiS_Pr->SiS_LVDSCRT1320x240_3_H   = SiS_LVDSCRT1320x240_3_H;
    SiS_Pr->SiS_LVDSCRT1640x480_1     = SiS_LVDSCRT1640x480_1;
    SiS_Pr->SiS_LVDSCRT1640x480_1_H   = SiS_LVDSCRT1640x480_1_H;
-#if 0
+#अगर 0
    SiS_Pr->SiS_LVDSCRT11024x600_1    = SiS_LVDSCRT11024x600_1;
    SiS_Pr->SiS_LVDSCRT11024x600_1_H  = SiS_LVDSCRT11024x600_1_H;
    SiS_Pr->SiS_LVDSCRT11024x600_2    = SiS_LVDSCRT11024x600_2;
    SiS_Pr->SiS_LVDSCRT11024x600_2_H  = SiS_LVDSCRT11024x600_2_H;
-#endif
+#पूर्ण_अगर
 
    SiS_Pr->SiS_CHTVUNTSCData = SiS_CHTVUNTSCData;
    SiS_Pr->SiS_CHTVONTSCData = SiS_CHTVONTSCData;
 
    SiS_Pr->SiS_PanelMinLVDS   = Panel_800x600;    /* lowest value LVDS/LCDA */
    SiS_Pr->SiS_PanelMin301    = Panel_1024x768;   /* lowest value 301 */
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_FB_SIS_300
-static void
-InitTo300Pointer(struct SiS_Private *SiS_Pr)
-{
-   InitCommonPointer(SiS_Pr);
+#अगर_घोषित CONFIG_FB_SIS_300
+अटल व्योम
+InitTo300Poपूर्णांकer(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   InitCommonPoपूर्णांकer(SiS_Pr);
 
    SiS_Pr->SiS_VBModeIDTable = SiS300_VBModeIDTable;
    SiS_Pr->SiS_EModeIDTable  = SiS300_EModeIDTable;
    SiS_Pr->SiS_RefIndex      = SiS300_RefIndex;
    SiS_Pr->SiS_CRT1Table     = SiS300_CRT1Table;
-   if(SiS_Pr->ChipType == SIS_300) {
+   अगर(SiS_Pr->ChipType == SIS_300) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS300_MCLKData_300; /* 300 */
-   } else {
+   पूर्ण अन्यथा अणु
       SiS_Pr->SiS_MCLKData_0 = SiS300_MCLKData_630; /* 630, 730 */
-   }
+   पूर्ण
    SiS_Pr->SiS_VCLKData      = SiS300_VCLKData;
-   SiS_Pr->SiS_VBVCLKData    = (struct SiS_VBVCLKData *)SiS300_VCLKData;
+   SiS_Pr->SiS_VBVCLKData    = (काष्ठा SiS_VBVCLKData *)SiS300_VCLKData;
 
    SiS_Pr->SiS_SR15  = SiS300_SR15;
 
@@ -230,38 +231,38 @@ InitTo300Pointer(struct SiS_Private *SiS_Pr)
    SiS_Pr->SiS_CHTVVCLKUPALN = SiS300_CHTVVCLKUPAL;   /* not supported on 300 series */
    SiS_Pr->SiS_CHTVVCLKOPALN = SiS300_CHTVVCLKOPAL;   /* not supported on 300 series */
    SiS_Pr->SiS_CHTVVCLKSOPAL = SiS300_CHTVVCLKSOPAL;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_FB_SIS_315
-static void
-InitTo310Pointer(struct SiS_Private *SiS_Pr)
-{
-   InitCommonPointer(SiS_Pr);
+#अगर_घोषित CONFIG_FB_SIS_315
+अटल व्योम
+InitTo310Poपूर्णांकer(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   InitCommonPoपूर्णांकer(SiS_Pr);
 
    SiS_Pr->SiS_EModeIDTable  = SiS310_EModeIDTable;
    SiS_Pr->SiS_RefIndex      = SiS310_RefIndex;
    SiS_Pr->SiS_CRT1Table     = SiS310_CRT1Table;
-   if(SiS_Pr->ChipType >= SIS_340) {
+   अगर(SiS_Pr->ChipType >= SIS_340) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_340;  /* 340 + XGI */
-   } else if(SiS_Pr->ChipType >= SIS_761) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_761) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_761;  /* 761 - preliminary */
-   } else if(SiS_Pr->ChipType >= SIS_760) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_760) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_760;  /* 760 */
-   } else if(SiS_Pr->ChipType >= SIS_661) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_661) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_660;  /* 661/741 */
-   } else if(SiS_Pr->ChipType == SIS_330) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType == SIS_330) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_330;  /* 330 */
-   } else if(SiS_Pr->ChipType > SIS_315PRO) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType > SIS_315PRO) अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_650;  /* 550, 650, 740 */
-   } else {
+   पूर्ण अन्यथा अणु
       SiS_Pr->SiS_MCLKData_0 = SiS310_MCLKData_0_315;  /* 315 */
-   }
-   if(SiS_Pr->ChipType >= SIS_340) {
+   पूर्ण
+   अगर(SiS_Pr->ChipType >= SIS_340) अणु
       SiS_Pr->SiS_MCLKData_1 = SiS310_MCLKData_1_340;
-   } else {
+   पूर्ण अन्यथा अणु
       SiS_Pr->SiS_MCLKData_1 = SiS310_MCLKData_1;
-   }
+   पूर्ण
    SiS_Pr->SiS_VCLKData      = SiS310_VCLKData;
    SiS_Pr->SiS_VBVCLKData    = SiS310_VBVCLKData;
 
@@ -310,676 +311,676 @@ InitTo310Pointer(struct SiS_Private *SiS_Pr)
    SiS_Pr->SiS_CHTVVCLKUPALN = SiS310_CHTVVCLKUPALN;
    SiS_Pr->SiS_CHTVVCLKOPALN = SiS310_CHTVVCLKOPALN;
    SiS_Pr->SiS_CHTVVCLKSOPAL = SiS310_CHTVVCLKOPAL;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 bool
-SiSInitPtr(struct SiS_Private *SiS_Pr)
-{
-   if(SiS_Pr->ChipType < SIS_315H) {
-#ifdef CONFIG_FB_SIS_300
-      InitTo300Pointer(SiS_Pr);
-#else
-      return false;
-#endif
-   } else {
-#ifdef CONFIG_FB_SIS_315
-      InitTo310Pointer(SiS_Pr);
-#else
-      return false;
-#endif
-   }
-   return true;
-}
+SiSInitPtr(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अगर(SiS_Pr->ChipType < SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+      InitTo300Poपूर्णांकer(SiS_Pr);
+#अन्यथा
+      वापस false;
+#पूर्ण_अगर
+   पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+      InitTo310Poपूर्णांकer(SiS_Pr);
+#अन्यथा
+      वापस false;
+#पूर्ण_अगर
+   पूर्ण
+   वापस true;
+पूर्ण
 
 /*********************************************/
 /*            HELPER: Get ModeID             */
 /*********************************************/
 
-static
-unsigned short
-SiS_GetModeID(int VGAEngine, unsigned int VBFlags, int HDisplay, int VDisplay,
-		int Depth, bool FSTN, int LCDwidth, int LCDheight)
-{
-   unsigned short ModeIndex = 0;
+अटल
+अचिन्हित लघु
+SiS_GetModeID(पूर्णांक VGAEngine, अचिन्हित पूर्णांक VBFlags, पूर्णांक HDisplay, पूर्णांक VDisplay,
+		पूर्णांक Depth, bool FSTN, पूर्णांक LCDwidth, पूर्णांक LCDheight)
+अणु
+   अचिन्हित लघु ModeIndex = 0;
 
-   switch(HDisplay)
-   {
-	case 320:
-		if(VDisplay == 200) ModeIndex = ModeIndex_320x200[Depth];
-		else if(VDisplay == 240) {
-			if((VBFlags & CRT2_LCD) && (FSTN))
+   चयन(HDisplay)
+   अणु
+	हाल 320:
+		अगर(VDisplay == 200) ModeIndex = ModeIndex_320x200[Depth];
+		अन्यथा अगर(VDisplay == 240) अणु
+			अगर((VBFlags & CRT2_LCD) && (FSTN))
 				ModeIndex = ModeIndex_320x240_FSTN[Depth];
-			else
+			अन्यथा
 				ModeIndex = ModeIndex_320x240[Depth];
-		}
-		break;
-	case 400:
-		if((!(VBFlags & CRT1_LCDA)) || ((LCDwidth >= 800) && (LCDwidth >= 600))) {
-			if(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
-		}
-		break;
-	case 512:
-		if((!(VBFlags & CRT1_LCDA)) || ((LCDwidth >= 1024) && (LCDwidth >= 768))) {
-			if(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
-		}
-		break;
-	case 640:
-		if(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
-		else if(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
-		break;
-	case 720:
-		if(VDisplay == 480)      ModeIndex = ModeIndex_720x480[Depth];
-		else if(VDisplay == 576) ModeIndex = ModeIndex_720x576[Depth];
-		break;
-	case 768:
-		if(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
-		break;
-	case 800:
-		if(VDisplay == 600)      ModeIndex = ModeIndex_800x600[Depth];
-		else if(VDisplay == 480) ModeIndex = ModeIndex_800x480[Depth];
-		break;
-	case 848:
-		if(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
-		break;
-	case 856:
-		if(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
-		break;
-	case 960:
-		if(VGAEngine == SIS_315_VGA) {
-			if(VDisplay == 540)      ModeIndex = ModeIndex_960x540[Depth];
-			else if(VDisplay == 600) ModeIndex = ModeIndex_960x600[Depth];
-		}
-		break;
-	case 1024:
-		if(VDisplay == 576)      ModeIndex = ModeIndex_1024x576[Depth];
-		else if(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
-		else if(VGAEngine == SIS_300_VGA) {
-			if(VDisplay == 600) ModeIndex = ModeIndex_1024x600[Depth];
-		}
-		break;
-	case 1152:
-		if(VDisplay == 864) ModeIndex = ModeIndex_1152x864[Depth];
-		if(VGAEngine == SIS_300_VGA) {
-			if(VDisplay == 768) ModeIndex = ModeIndex_1152x768[Depth];
-		}
-		break;
-	case 1280:
-		switch(VDisplay) {
-			case 720:
+		पूर्ण
+		अवरोध;
+	हाल 400:
+		अगर((!(VBFlags & CRT1_LCDA)) || ((LCDwidth >= 800) && (LCDwidth >= 600))) अणु
+			अगर(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 512:
+		अगर((!(VBFlags & CRT1_LCDA)) || ((LCDwidth >= 1024) && (LCDwidth >= 768))) अणु
+			अगर(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 640:
+		अगर(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
+		अन्यथा अगर(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
+		अवरोध;
+	हाल 720:
+		अगर(VDisplay == 480)      ModeIndex = ModeIndex_720x480[Depth];
+		अन्यथा अगर(VDisplay == 576) ModeIndex = ModeIndex_720x576[Depth];
+		अवरोध;
+	हाल 768:
+		अगर(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
+		अवरोध;
+	हाल 800:
+		अगर(VDisplay == 600)      ModeIndex = ModeIndex_800x600[Depth];
+		अन्यथा अगर(VDisplay == 480) ModeIndex = ModeIndex_800x480[Depth];
+		अवरोध;
+	हाल 848:
+		अगर(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
+		अवरोध;
+	हाल 856:
+		अगर(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
+		अवरोध;
+	हाल 960:
+		अगर(VGAEngine == SIS_315_VGA) अणु
+			अगर(VDisplay == 540)      ModeIndex = ModeIndex_960x540[Depth];
+			अन्यथा अगर(VDisplay == 600) ModeIndex = ModeIndex_960x600[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 1024:
+		अगर(VDisplay == 576)      ModeIndex = ModeIndex_1024x576[Depth];
+		अन्यथा अगर(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
+		अन्यथा अगर(VGAEngine == SIS_300_VGA) अणु
+			अगर(VDisplay == 600) ModeIndex = ModeIndex_1024x600[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 1152:
+		अगर(VDisplay == 864) ModeIndex = ModeIndex_1152x864[Depth];
+		अगर(VGAEngine == SIS_300_VGA) अणु
+			अगर(VDisplay == 768) ModeIndex = ModeIndex_1152x768[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 1280:
+		चयन(VDisplay) अणु
+			हाल 720:
 				ModeIndex = ModeIndex_1280x720[Depth];
-				break;
-			case 768:
-				if(VGAEngine == SIS_300_VGA) {
+				अवरोध;
+			हाल 768:
+				अगर(VGAEngine == SIS_300_VGA) अणु
 					ModeIndex = ModeIndex_300_1280x768[Depth];
-				} else {
+				पूर्ण अन्यथा अणु
 					ModeIndex = ModeIndex_310_1280x768[Depth];
-				}
-				break;
-			case 800:
-				if(VGAEngine == SIS_315_VGA) {
+				पूर्ण
+				अवरोध;
+			हाल 800:
+				अगर(VGAEngine == SIS_315_VGA) अणु
 					ModeIndex = ModeIndex_1280x800[Depth];
-				}
-				break;
-			case 854:
-				if(VGAEngine == SIS_315_VGA) {
+				पूर्ण
+				अवरोध;
+			हाल 854:
+				अगर(VGAEngine == SIS_315_VGA) अणु
 					ModeIndex = ModeIndex_1280x854[Depth];
-				}
-				break;
-			case 960:
+				पूर्ण
+				अवरोध;
+			हाल 960:
 				ModeIndex = ModeIndex_1280x960[Depth];
-				break;
-			case 1024:
+				अवरोध;
+			हाल 1024:
 				ModeIndex = ModeIndex_1280x1024[Depth];
-				break;
-		}
-		break;
-	case 1360:
-		if(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
-		if(VGAEngine == SIS_300_VGA) {
-			if(VDisplay == 1024) ModeIndex = ModeIndex_300_1360x1024[Depth];
-		}
-		break;
-	case 1400:
-		if(VGAEngine == SIS_315_VGA) {
-			if(VDisplay == 1050) {
+				अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 1360:
+		अगर(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
+		अगर(VGAEngine == SIS_300_VGA) अणु
+			अगर(VDisplay == 1024) ModeIndex = ModeIndex_300_1360x1024[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 1400:
+		अगर(VGAEngine == SIS_315_VGA) अणु
+			अगर(VDisplay == 1050) अणु
 				ModeIndex = ModeIndex_1400x1050[Depth];
-			}
-		}
-		break;
-	case 1600:
-		if(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
-		break;
-	case 1680:
-		if(VGAEngine == SIS_315_VGA) {
-			if(VDisplay == 1050) ModeIndex = ModeIndex_1680x1050[Depth];
-		}
-		break;
-	case 1920:
-		if(VDisplay == 1440) ModeIndex = ModeIndex_1920x1440[Depth];
-		else if(VGAEngine == SIS_315_VGA) {
-			if(VDisplay == 1080) ModeIndex = ModeIndex_1920x1080[Depth];
-		}
-		break;
-	case 2048:
-		if(VDisplay == 1536) {
-			if(VGAEngine == SIS_300_VGA) {
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल 1600:
+		अगर(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
+		अवरोध;
+	हाल 1680:
+		अगर(VGAEngine == SIS_315_VGA) अणु
+			अगर(VDisplay == 1050) ModeIndex = ModeIndex_1680x1050[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 1920:
+		अगर(VDisplay == 1440) ModeIndex = ModeIndex_1920x1440[Depth];
+		अन्यथा अगर(VGAEngine == SIS_315_VGA) अणु
+			अगर(VDisplay == 1080) ModeIndex = ModeIndex_1920x1080[Depth];
+		पूर्ण
+		अवरोध;
+	हाल 2048:
+		अगर(VDisplay == 1536) अणु
+			अगर(VGAEngine == SIS_300_VGA) अणु
 				ModeIndex = ModeIndex_300_2048x1536[Depth];
-			} else {
+			पूर्ण अन्यथा अणु
 				ModeIndex = ModeIndex_310_2048x1536[Depth];
-			}
-		}
-		break;
-   }
+			पूर्ण
+		पूर्ण
+		अवरोध;
+   पूर्ण
 
-   return ModeIndex;
-}
+   वापस ModeIndex;
+पूर्ण
 
-unsigned short
-SiS_GetModeID_LCD(int VGAEngine, unsigned int VBFlags, int HDisplay, int VDisplay,
-		int Depth, bool FSTN, unsigned short CustomT, int LCDwidth, int LCDheight,
-		unsigned int VBFlags2)
-{
-   unsigned short ModeIndex = 0;
+अचिन्हित लघु
+SiS_GetModeID_LCD(पूर्णांक VGAEngine, अचिन्हित पूर्णांक VBFlags, पूर्णांक HDisplay, पूर्णांक VDisplay,
+		पूर्णांक Depth, bool FSTN, अचिन्हित लघु CustomT, पूर्णांक LCDwidth, पूर्णांक LCDheight,
+		अचिन्हित पूर्णांक VBFlags2)
+अणु
+   अचिन्हित लघु ModeIndex = 0;
 
-   if(VBFlags2 & (VB2_LVDS | VB2_30xBDH)) {
+   अगर(VBFlags2 & (VB2_LVDS | VB2_30xBDH)) अणु
 
-      switch(HDisplay)
-      {
-	case 320:
-	     if((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) {
-		if(VDisplay == 200) {
-		   if(!FSTN) ModeIndex = ModeIndex_320x200[Depth];
-		} else if(VDisplay == 240) {
-		   if(!FSTN) ModeIndex = ModeIndex_320x240[Depth];
-		   else if(VGAEngine == SIS_315_VGA) {
+      चयन(HDisplay)
+      अणु
+	हाल 320:
+	     अगर((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) अणु
+		अगर(VDisplay == 200) अणु
+		   अगर(!FSTN) ModeIndex = ModeIndex_320x200[Depth];
+		पूर्ण अन्यथा अगर(VDisplay == 240) अणु
+		   अगर(!FSTN) ModeIndex = ModeIndex_320x240[Depth];
+		   अन्यथा अगर(VGAEngine == SIS_315_VGA) अणु
 		      ModeIndex = ModeIndex_320x240_FSTN[Depth];
-		   }
-		}
-	     }
-	     break;
-	case 400:
-	     if((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) {
-		if(!((VGAEngine == SIS_300_VGA) && (VBFlags2 & VB2_TRUMPION))) {
-		   if(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
-		}
-	     }
-	     break;
-	case 512:
-	     if((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) {
-		if(!((VGAEngine == SIS_300_VGA) && (VBFlags2 & VB2_TRUMPION))) {
-		   if(LCDwidth >= 1024 && LCDwidth != 1152 && LCDheight >= 768) {
-		      if(VDisplay == 384) {
+		   पूर्ण
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 400:
+	     अगर((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) अणु
+		अगर(!((VGAEngine == SIS_300_VGA) && (VBFlags2 & VB2_TRUMPION))) अणु
+		   अगर(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 512:
+	     अगर((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856)) अणु
+		अगर(!((VGAEngine == SIS_300_VGA) && (VBFlags2 & VB2_TRUMPION))) अणु
+		   अगर(LCDwidth >= 1024 && LCDwidth != 1152 && LCDheight >= 768) अणु
+		      अगर(VDisplay == 384) अणु
 		         ModeIndex = ModeIndex_512x384[Depth];
-		      }
-		   }
-		}
-	     }
-	     break;
-	case 640:
-	     if(VDisplay == 480) ModeIndex = ModeIndex_640x480[Depth];
-	     else if(VDisplay == 400) {
-		if((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856))
+		      पूर्ण
+		   पूर्ण
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 640:
+	     अगर(VDisplay == 480) ModeIndex = ModeIndex_640x480[Depth];
+	     अन्यथा अगर(VDisplay == 400) अणु
+		अगर((CustomT != CUT_PANEL848) && (CustomT != CUT_PANEL856))
 		   ModeIndex = ModeIndex_640x400[Depth];
-	     }
-	     break;
-	case 800:
-	     if(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
-	     break;
-	case 848:
-	     if(CustomT == CUT_PANEL848) {
-	        if(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
-	     }
-	     break;
-	case 856:
-	     if(CustomT == CUT_PANEL856) {
-	        if(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
-	     }
-	     break;
-	case 1024:
-	     if(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
-	     else if(VGAEngine == SIS_300_VGA) {
-		if((VDisplay == 600) && (LCDheight == 600)) {
+	     पूर्ण
+	     अवरोध;
+	हाल 800:
+	     अगर(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
+	     अवरोध;
+	हाल 848:
+	     अगर(CustomT == CUT_PANEL848) अणु
+	        अगर(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 856:
+	     अगर(CustomT == CUT_PANEL856) अणु
+	        अगर(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1024:
+	     अगर(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
+	     अन्यथा अगर(VGAEngine == SIS_300_VGA) अणु
+		अगर((VDisplay == 600) && (LCDheight == 600)) अणु
 		   ModeIndex = ModeIndex_1024x600[Depth];
-		}
-	     }
-	     break;
-	case 1152:
-	     if(VGAEngine == SIS_300_VGA) {
-		if((VDisplay == 768) && (LCDheight == 768)) {
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1152:
+	     अगर(VGAEngine == SIS_300_VGA) अणु
+		अगर((VDisplay == 768) && (LCDheight == 768)) अणु
 		   ModeIndex = ModeIndex_1152x768[Depth];
-		}
-	     }
-	     break;
-        case 1280:
-	     if(VDisplay == 1024) ModeIndex = ModeIndex_1280x1024[Depth];
-	     else if(VGAEngine == SIS_315_VGA) {
-		if((VDisplay == 768) && (LCDheight == 768)) {
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+        हाल 1280:
+	     अगर(VDisplay == 1024) ModeIndex = ModeIndex_1280x1024[Depth];
+	     अन्यथा अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर((VDisplay == 768) && (LCDheight == 768)) अणु
 		   ModeIndex = ModeIndex_310_1280x768[Depth];
-		}
-	     }
-	     break;
-	case 1360:
-	     if(VGAEngine == SIS_300_VGA) {
-		if(CustomT == CUT_BARCO1366) {
-		   if(VDisplay == 1024) ModeIndex = ModeIndex_300_1360x1024[Depth];
-		}
-	     }
-	     if(CustomT == CUT_PANEL848) {
-		if(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
-	     }
-	     break;
-	case 1400:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 1050) ModeIndex = ModeIndex_1400x1050[Depth];
-	     }
-	     break;
-	case 1600:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
-	     }
-	     break;
-      }
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1360:
+	     अगर(VGAEngine == SIS_300_VGA) अणु
+		अगर(CustomT == CUT_BARCO1366) अणु
+		   अगर(VDisplay == 1024) ModeIndex = ModeIndex_300_1360x1024[Depth];
+		पूर्ण
+	     पूर्ण
+	     अगर(CustomT == CUT_PANEL848) अणु
+		अगर(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1400:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 1050) ModeIndex = ModeIndex_1400x1050[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1600:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
+	     पूर्ण
+	     अवरोध;
+      पूर्ण
 
-   } else if(VBFlags2 & VB2_SISBRIDGE) {
+   पूर्ण अन्यथा अगर(VBFlags2 & VB2_SISBRIDGE) अणु
 
-      switch(HDisplay)
-      {
-	case 320:
-	     if(VDisplay == 200)      ModeIndex = ModeIndex_320x200[Depth];
-	     else if(VDisplay == 240) ModeIndex = ModeIndex_320x240[Depth];
-	     break;
-	case 400:
-	     if(LCDwidth >= 800 && LCDheight >= 600) {
-		if(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
-	     }
-	     break;
-	case 512:
-	     if(LCDwidth >= 1024 && LCDheight >= 768 && LCDwidth != 1152) {
-		if(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
-	     }
-	     break;
-	case 640:
-	     if(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
-	     else if(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
-	     break;
-	case 720:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 480)      ModeIndex = ModeIndex_720x480[Depth];
-		else if(VDisplay == 576) ModeIndex = ModeIndex_720x576[Depth];
-	     }
-	     break;
-	case 768:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
-	     }
-	     break;
-	case 800:
-	     if(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 480) ModeIndex = ModeIndex_800x480[Depth];
-	     }
-	     break;
-	case 848:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
-	     }
-	     break;
-	case 856:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
-	     }
-	     break;
-	case 960:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 540)      ModeIndex = ModeIndex_960x540[Depth];
-		else if(VDisplay == 600) ModeIndex = ModeIndex_960x600[Depth];
-	     }
-	     break;
-	case 1024:
-	     if(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 576) ModeIndex = ModeIndex_1024x576[Depth];
-	     }
-	     break;
-	case 1152:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 864) ModeIndex = ModeIndex_1152x864[Depth];
-	     }
-	     break;
-	case 1280:
-	     switch(VDisplay) {
-	     case 720:
+      चयन(HDisplay)
+      अणु
+	हाल 320:
+	     अगर(VDisplay == 200)      ModeIndex = ModeIndex_320x200[Depth];
+	     अन्यथा अगर(VDisplay == 240) ModeIndex = ModeIndex_320x240[Depth];
+	     अवरोध;
+	हाल 400:
+	     अगर(LCDwidth >= 800 && LCDheight >= 600) अणु
+		अगर(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 512:
+	     अगर(LCDwidth >= 1024 && LCDheight >= 768 && LCDwidth != 1152) अणु
+		अगर(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 640:
+	     अगर(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
+	     अन्यथा अगर(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
+	     अवरोध;
+	हाल 720:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 480)      ModeIndex = ModeIndex_720x480[Depth];
+		अन्यथा अगर(VDisplay == 576) ModeIndex = ModeIndex_720x576[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 768:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 800:
+	     अगर(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 480) ModeIndex = ModeIndex_800x480[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 848:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 480) ModeIndex = ModeIndex_848x480[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 856:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 480) ModeIndex = ModeIndex_856x480[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 960:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 540)      ModeIndex = ModeIndex_960x540[Depth];
+		अन्यथा अगर(VDisplay == 600) ModeIndex = ModeIndex_960x600[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1024:
+	     अगर(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 576) ModeIndex = ModeIndex_1024x576[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1152:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 864) ModeIndex = ModeIndex_1152x864[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1280:
+	     चयन(VDisplay) अणु
+	     हाल 720:
 		ModeIndex = ModeIndex_1280x720[Depth];
-		break;
-	     case 768:
-		if(VGAEngine == SIS_300_VGA) {
+		अवरोध;
+	     हाल 768:
+		अगर(VGAEngine == SIS_300_VGA) अणु
 		   ModeIndex = ModeIndex_300_1280x768[Depth];
-		} else {
+		पूर्ण अन्यथा अणु
 		   ModeIndex = ModeIndex_310_1280x768[Depth];
-		}
-		break;
-	     case 800:
-		if(VGAEngine == SIS_315_VGA) {
+		पूर्ण
+		अवरोध;
+	     हाल 800:
+		अगर(VGAEngine == SIS_315_VGA) अणु
 		   ModeIndex = ModeIndex_1280x800[Depth];
-		}
-		break;
-	     case 854:
-		if(VGAEngine == SIS_315_VGA) {
+		पूर्ण
+		अवरोध;
+	     हाल 854:
+		अगर(VGAEngine == SIS_315_VGA) अणु
 		   ModeIndex = ModeIndex_1280x854[Depth];
-		}
-		break;
-	     case 960:
+		पूर्ण
+		अवरोध;
+	     हाल 960:
 		ModeIndex = ModeIndex_1280x960[Depth];
-		break;
-	     case 1024:
+		अवरोध;
+	     हाल 1024:
 		ModeIndex = ModeIndex_1280x1024[Depth];
-		break;
-	     }
-	     break;
-	case 1360:
-	     if(VGAEngine == SIS_315_VGA) {  /* OVER1280 only? */
-		if(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
-	     }
-	     break;
-	case 1400:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VBFlags2 & VB2_LCDOVER1280BRIDGE) {
-		   if(VDisplay == 1050) ModeIndex = ModeIndex_1400x1050[Depth];
-		}
-	     }
-	     break;
-	case 1600:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VBFlags2 & VB2_LCDOVER1280BRIDGE) {
-		   if(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
-		}
-	     }
-	     break;
-#ifndef VB_FORBID_CRT2LCD_OVER_1600
-	case 1680:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VBFlags2 & VB2_LCDOVER1280BRIDGE) {
-		   if(VDisplay == 1050) ModeIndex = ModeIndex_1680x1050[Depth];
-		}
-	     }
-	     break;
-	case 1920:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VBFlags2 & VB2_LCDOVER1600BRIDGE) {
-		   if(VDisplay == 1440) ModeIndex = ModeIndex_1920x1440[Depth];
-		}
-	     }
-	     break;
-	case 2048:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VBFlags2 & VB2_LCDOVER1600BRIDGE) {
-		   if(VDisplay == 1536) ModeIndex = ModeIndex_310_2048x1536[Depth];
-		}
-	     }
-	     break;
-#endif
-      }
-   }
+		अवरोध;
+	     पूर्ण
+	     अवरोध;
+	हाल 1360:
+	     अगर(VGAEngine == SIS_315_VGA) अणु  /* OVER1280 only? */
+		अगर(VDisplay == 768) ModeIndex = ModeIndex_1360x768[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 1400:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VBFlags2 & VB2_LCDOVER1280BRIDGE) अणु
+		   अगर(VDisplay == 1050) ModeIndex = ModeIndex_1400x1050[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1600:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VBFlags2 & VB2_LCDOVER1280BRIDGE) अणु
+		   अगर(VDisplay == 1200) ModeIndex = ModeIndex_1600x1200[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+#अगर_अघोषित VB_FORBID_CRT2LCD_OVER_1600
+	हाल 1680:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VBFlags2 & VB2_LCDOVER1280BRIDGE) अणु
+		   अगर(VDisplay == 1050) ModeIndex = ModeIndex_1680x1050[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1920:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VBFlags2 & VB2_LCDOVER1600BRIDGE) अणु
+		   अगर(VDisplay == 1440) ModeIndex = ModeIndex_1920x1440[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 2048:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VBFlags2 & VB2_LCDOVER1600BRIDGE) अणु
+		   अगर(VDisplay == 1536) ModeIndex = ModeIndex_310_2048x1536[Depth];
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+#पूर्ण_अगर
+      पूर्ण
+   पूर्ण
 
-   return ModeIndex;
-}
+   वापस ModeIndex;
+पूर्ण
 
-unsigned short
-SiS_GetModeID_TV(int VGAEngine, unsigned int VBFlags, int HDisplay, int VDisplay, int Depth,
-			unsigned int VBFlags2)
-{
-   unsigned short ModeIndex = 0;
+अचिन्हित लघु
+SiS_GetModeID_TV(पूर्णांक VGAEngine, अचिन्हित पूर्णांक VBFlags, पूर्णांक HDisplay, पूर्णांक VDisplay, पूर्णांक Depth,
+			अचिन्हित पूर्णांक VBFlags2)
+अणु
+   अचिन्हित लघु ModeIndex = 0;
 
-   if(VBFlags2 & VB2_CHRONTEL) {
+   अगर(VBFlags2 & VB2_CHRONTEL) अणु
 
-      switch(HDisplay)
-      {
-	case 512:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
-	     }
-	     break;
-	case 640:
-	     if(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
-	     else if(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
-	     break;
-	case 800:
-	     if(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
-	     break;
-	case 1024:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
-	     }
-	     break;
-      }
+      चयन(HDisplay)
+      अणु
+	हाल 512:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 640:
+	     अगर(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
+	     अन्यथा अगर(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
+	     अवरोध;
+	हाल 800:
+	     अगर(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
+	     अवरोध;
+	हाल 1024:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 768) ModeIndex = ModeIndex_1024x768[Depth];
+	     पूर्ण
+	     अवरोध;
+      पूर्ण
 
-   } else if(VBFlags2 & VB2_SISTVBRIDGE) {
+   पूर्ण अन्यथा अगर(VBFlags2 & VB2_SISTVBRIDGE) अणु
 
-      switch(HDisplay)
-      {
-	case 320:
-	     if(VDisplay == 200)      ModeIndex = ModeIndex_320x200[Depth];
-	     else if(VDisplay == 240) ModeIndex = ModeIndex_320x240[Depth];
-	     break;
-	case 400:
-	     if(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
-	     break;
-	case 512:
-	     if( ((VBFlags & TV_YPBPR) && (VBFlags & (TV_YPBPR750P | TV_YPBPR1080I))) ||
+      चयन(HDisplay)
+      अणु
+	हाल 320:
+	     अगर(VDisplay == 200)      ModeIndex = ModeIndex_320x200[Depth];
+	     अन्यथा अगर(VDisplay == 240) ModeIndex = ModeIndex_320x240[Depth];
+	     अवरोध;
+	हाल 400:
+	     अगर(VDisplay == 300) ModeIndex = ModeIndex_400x300[Depth];
+	     अवरोध;
+	हाल 512:
+	     अगर( ((VBFlags & TV_YPBPR) && (VBFlags & (TV_YPBPR750P | TV_YPBPR1080I))) ||
 		 (VBFlags & TV_HIVISION) 					      ||
-		 ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL)) ) {
-		if(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
-	     }
-	     break;
-	case 640:
-	     if(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
-	     else if(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
-	     break;
-	case 720:
-	     if((!(VBFlags & TV_HIVISION)) && (!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I)))) {
-		if(VDisplay == 480) {
+		 ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL)) ) अणु
+		अगर(VDisplay == 384) ModeIndex = ModeIndex_512x384[Depth];
+	     पूर्ण
+	     अवरोध;
+	हाल 640:
+	     अगर(VDisplay == 480)      ModeIndex = ModeIndex_640x480[Depth];
+	     अन्यथा अगर(VDisplay == 400) ModeIndex = ModeIndex_640x400[Depth];
+	     अवरोध;
+	हाल 720:
+	     अगर((!(VBFlags & TV_HIVISION)) && (!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I)))) अणु
+		अगर(VDisplay == 480) अणु
 		   ModeIndex = ModeIndex_720x480[Depth];
-		} else if(VDisplay == 576) {
-		   if( ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P)) ||
+		पूर्ण अन्यथा अगर(VDisplay == 576) अणु
+		   अगर( ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P)) ||
 		       ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL)) )
 		      ModeIndex = ModeIndex_720x576[Depth];
-		}
-	     }
-             break;
-	case 768:
-	     if((!(VBFlags & TV_HIVISION)) && (!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I)))) {
-		if( ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P)) ||
-		    ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL)) ) {
-		   if(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
-		}
-             }
-	     break;
-	case 800:
-	     if(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
-	     else if(VDisplay == 480) {
-		if(!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P))) {
+		पूर्ण
+	     पूर्ण
+             अवरोध;
+	हाल 768:
+	     अगर((!(VBFlags & TV_HIVISION)) && (!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I)))) अणु
+		अगर( ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P)) ||
+		    ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL)) ) अणु
+		   अगर(VDisplay == 576) ModeIndex = ModeIndex_768x576[Depth];
+		पूर्ण
+             पूर्ण
+	     अवरोध;
+	हाल 800:
+	     अगर(VDisplay == 600) ModeIndex = ModeIndex_800x600[Depth];
+	     अन्यथा अगर(VDisplay == 480) अणु
+		अगर(!((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR750P))) अणु
 		   ModeIndex = ModeIndex_800x480[Depth];
-		}
-	     }
-	     break;
-	case 960:
-	     if(VGAEngine == SIS_315_VGA) {
-		if(VDisplay == 600) {
-		   if((VBFlags & TV_HIVISION) || ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I))) {
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 960:
+	     अगर(VGAEngine == SIS_315_VGA) अणु
+		अगर(VDisplay == 600) अणु
+		   अगर((VBFlags & TV_HIVISION) || ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I))) अणु
 		      ModeIndex = ModeIndex_960x600[Depth];
-		   }
-		}
-	     }
-	     break;
-	case 1024:
-	     if(VDisplay == 768) {
-		if(VBFlags2 & VB2_30xBLV) {
+		   पूर्ण
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1024:
+	     अगर(VDisplay == 768) अणु
+		अगर(VBFlags2 & VB2_30xBLV) अणु
 		   ModeIndex = ModeIndex_1024x768[Depth];
-		}
-	     } else if(VDisplay == 576) {
-		if( (VBFlags & TV_HIVISION) ||
+		पूर्ण
+	     पूर्ण अन्यथा अगर(VDisplay == 576) अणु
+		अगर( (VBFlags & TV_HIVISION) ||
 		    ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I)) ||
 		    ((VBFlags2 & VB2_30xBLV) &&
-		     ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL))) ) {
+		     ((!(VBFlags & (TV_YPBPR | TV_PALM))) && (VBFlags & TV_PAL))) ) अणु
 		   ModeIndex = ModeIndex_1024x576[Depth];
-		}
-	     }
-	     break;
-	case 1280:
-	     if(VDisplay == 720) {
-		if((VBFlags & TV_HIVISION) ||
-		   ((VBFlags & TV_YPBPR) && (VBFlags & (TV_YPBPR1080I | TV_YPBPR750P)))) {
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+	हाल 1280:
+	     अगर(VDisplay == 720) अणु
+		अगर((VBFlags & TV_HIVISION) ||
+		   ((VBFlags & TV_YPBPR) && (VBFlags & (TV_YPBPR1080I | TV_YPBPR750P)))) अणु
 		   ModeIndex = ModeIndex_1280x720[Depth];
-		}
-	     } else if(VDisplay == 1024) {
-		if((VBFlags & TV_HIVISION) ||
-		   ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I))) {
+		पूर्ण
+	     पूर्ण अन्यथा अगर(VDisplay == 1024) अणु
+		अगर((VBFlags & TV_HIVISION) ||
+		   ((VBFlags & TV_YPBPR) && (VBFlags & TV_YPBPR1080I))) अणु
 		   ModeIndex = ModeIndex_1280x1024[Depth];
-		}
-	     }
-	     break;
-      }
-   }
-   return ModeIndex;
-}
+		पूर्ण
+	     पूर्ण
+	     अवरोध;
+      पूर्ण
+   पूर्ण
+   वापस ModeIndex;
+पूर्ण
 
-unsigned short
-SiS_GetModeID_VGA2(int VGAEngine, unsigned int VBFlags, int HDisplay, int VDisplay, int Depth,
-			unsigned int VBFlags2)
-{
-   if(!(VBFlags2 & VB2_SISVGA2BRIDGE)) return 0;
+अचिन्हित लघु
+SiS_GetModeID_VGA2(पूर्णांक VGAEngine, अचिन्हित पूर्णांक VBFlags, पूर्णांक HDisplay, पूर्णांक VDisplay, पूर्णांक Depth,
+			अचिन्हित पूर्णांक VBFlags2)
+अणु
+   अगर(!(VBFlags2 & VB2_SISVGA2BRIDGE)) वापस 0;
 
-   if(HDisplay >= 1920) return 0;
+   अगर(HDisplay >= 1920) वापस 0;
 
-   switch(HDisplay)
-   {
-	case 1600:
-		if(VDisplay == 1200) {
-			if(VGAEngine != SIS_315_VGA) return 0;
-			if(!(VBFlags2 & VB2_30xB)) return 0;
-		}
-		break;
-	case 1680:
-		if(VDisplay == 1050) {
-			if(VGAEngine != SIS_315_VGA) return 0;
-			if(!(VBFlags2 & VB2_30xB)) return 0;
-		}
-		break;
-   }
+   चयन(HDisplay)
+   अणु
+	हाल 1600:
+		अगर(VDisplay == 1200) अणु
+			अगर(VGAEngine != SIS_315_VGA) वापस 0;
+			अगर(!(VBFlags2 & VB2_30xB)) वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल 1680:
+		अगर(VDisplay == 1050) अणु
+			अगर(VGAEngine != SIS_315_VGA) वापस 0;
+			अगर(!(VBFlags2 & VB2_30xB)) वापस 0;
+		पूर्ण
+		अवरोध;
+   पूर्ण
 
-   return SiS_GetModeID(VGAEngine, 0, HDisplay, VDisplay, Depth, false, 0, 0);
-}
+   वापस SiS_GetModeID(VGAEngine, 0, HDisplay, VDisplay, Depth, false, 0, 0);
+पूर्ण
 
 
 /*********************************************/
 /*          HELPER: SetReg, GetReg           */
 /*********************************************/
 
-void
+व्योम
 SiS_SetReg(SISIOADDRESS port, u8 index, u8 data)
-{
+अणु
 	outb(index, port);
 	outb(data, port + 1);
-}
+पूर्ण
 
-void
+व्योम
 SiS_SetRegByte(SISIOADDRESS port, u8 data)
-{
+अणु
 	outb(data, port);
-}
+पूर्ण
 
-void
+व्योम
 SiS_SetRegShort(SISIOADDRESS port, u16 data)
-{
+अणु
 	outw(data, port);
-}
+पूर्ण
 
-void
+व्योम
 SiS_SetRegLong(SISIOADDRESS port, u32 data)
-{
+अणु
 	outl(data, port);
-}
+पूर्ण
 
 u8
 SiS_GetReg(SISIOADDRESS port, u8 index)
-{
+अणु
 	outb(index, port);
-	return inb(port + 1);
-}
+	वापस inb(port + 1);
+पूर्ण
 
 u8
 SiS_GetRegByte(SISIOADDRESS port)
-{
-	return inb(port);
-}
+अणु
+	वापस inb(port);
+पूर्ण
 
 u16
 SiS_GetRegShort(SISIOADDRESS port)
-{
-	return inw(port);
-}
+अणु
+	वापस inw(port);
+पूर्ण
 
 u32
 SiS_GetRegLong(SISIOADDRESS port)
-{
-	return inl(port);
-}
+अणु
+	वापस inl(port);
+पूर्ण
 
-void
+व्योम
 SiS_SetRegANDOR(SISIOADDRESS Port, u8 Index, u8 DataAND, u8 DataOR)
-{
+अणु
    u8 temp;
 
    temp = SiS_GetReg(Port, Index);
    temp = (temp & (DataAND)) | DataOR;
    SiS_SetReg(Port, Index, temp);
-}
+पूर्ण
 
-void
+व्योम
 SiS_SetRegAND(SISIOADDRESS Port, u8 Index, u8 DataAND)
-{
+अणु
    u8 temp;
 
    temp = SiS_GetReg(Port, Index);
    temp &= DataAND;
    SiS_SetReg(Port, Index, temp);
-}
+पूर्ण
 
-void
+व्योम
 SiS_SetRegOR(SISIOADDRESS Port, u8 Index, u8 DataOR)
-{
+अणु
    u8 temp;
 
    temp = SiS_GetReg(Port, Index);
    temp |= DataOR;
    SiS_SetReg(Port, Index, temp);
-}
+पूर्ण
 
 /*********************************************/
 /*      HELPER: DisplayOn, DisplayOff        */
 /*********************************************/
 
-void
-SiS_DisplayOn(struct SiS_Private *SiS_Pr)
-{
+व्योम
+SiS_DisplayOn(काष्ठा SiS_Private *SiS_Pr)
+अणु
    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x01,0xDF);
-}
+पूर्ण
 
-void
-SiS_DisplayOff(struct SiS_Private *SiS_Pr)
-{
+व्योम
+SiS_DisplayOff(काष्ठा SiS_Private *SiS_Pr)
+अणु
    SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x01,0x20);
-}
+पूर्ण
 
 
 /*********************************************/
 /*        HELPER: Init Port Addresses        */
 /*********************************************/
 
-void
-SiSRegInit(struct SiS_Private *SiS_Pr, SISIOADDRESS BaseAddr)
-{
+व्योम
+SiSRegInit(काष्ठा SiS_Private *SiS_Pr, SISIOADDRESS BaseAddr)
+अणु
    SiS_Pr->SiS_P3c4 = BaseAddr + 0x14;
    SiS_Pr->SiS_P3d4 = BaseAddr + 0x24;
    SiS_Pr->SiS_P3c0 = BaseAddr + 0x10;
@@ -1002,93 +1003,93 @@ SiSRegInit(struct SiS_Private *SiS_Pr, SISIOADDRESS BaseAddr)
    SiS_Pr->SiS_DDC_Port  = BaseAddr + 0x14;
    SiS_Pr->SiS_VidCapt   = BaseAddr + SIS_VIDEO_CAPTURE;
    SiS_Pr->SiS_VidPlay   = BaseAddr + SIS_VIDEO_PLAYBACK;
-}
+पूर्ण
 
 /*********************************************/
 /*             HELPER: GetSysFlags           */
 /*********************************************/
 
-static void
-SiS_GetSysFlags(struct SiS_Private *SiS_Pr)
-{
-   unsigned char cr5f, temp1, temp2;
+अटल व्योम
+SiS_GetSysFlags(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर cr5f, temp1, temp2;
 
-   /* 661 and newer: NEVER write non-zero to SR11[7:4] */
-   /* (SR11 is used for DDC and in enable/disablebridge) */
+   /* 661 and newer: NEVER ग_लिखो non-zero to SR11[7:4] */
+   /* (SR11 is used क्रम DDC and in enable/disablebridge) */
    SiS_Pr->SiS_SensibleSR11 = false;
    SiS_Pr->SiS_MyCR63 = 0x63;
-   if(SiS_Pr->ChipType >= SIS_330) {
+   अगर(SiS_Pr->ChipType >= SIS_330) अणु
       SiS_Pr->SiS_MyCR63 = 0x53;
-      if(SiS_Pr->ChipType >= SIS_661) {
+      अगर(SiS_Pr->ChipType >= SIS_661) अणु
          SiS_Pr->SiS_SensibleSR11 = true;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    /* You should use the macros, not these flags directly */
 
    SiS_Pr->SiS_SysFlags = 0;
-   if(SiS_Pr->ChipType == SIS_650) {
+   अगर(SiS_Pr->ChipType == SIS_650) अणु
       cr5f = SiS_GetReg(SiS_Pr->SiS_P3d4,0x5f) & 0xf0;
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x5c,0x07);
       temp1 = SiS_GetReg(SiS_Pr->SiS_P3d4,0x5c) & 0xf8;
       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x5c,0xf8);
       temp2 = SiS_GetReg(SiS_Pr->SiS_P3d4,0x5c) & 0xf8;
-      if((!temp1) || (temp2)) {
-	 switch(cr5f) {
-	    case 0x80:
-	    case 0x90:
-	    case 0xc0:
+      अगर((!temp1) || (temp2)) अणु
+	 चयन(cr5f) अणु
+	    हाल 0x80:
+	    हाल 0x90:
+	    हाल 0xc0:
 	       SiS_Pr->SiS_SysFlags |= SF_IsM650;
-	       break;
-	    case 0xa0:
-	    case 0xb0:
-	    case 0xe0:
+	       अवरोध;
+	    हाल 0xa0:
+	    हाल 0xb0:
+	    हाल 0xe0:
 	       SiS_Pr->SiS_SysFlags |= SF_Is651;
-	       break;
-	 }
-      } else {
-	 switch(cr5f) {
-	    case 0x90:
+	       अवरोध;
+	 पूर्ण
+      पूर्ण अन्यथा अणु
+	 चयन(cr5f) अणु
+	    हाल 0x90:
 	       temp1 = SiS_GetReg(SiS_Pr->SiS_P3d4,0x5c) & 0xf8;
-	       switch(temp1) {
-		  case 0x00: SiS_Pr->SiS_SysFlags |= SF_IsM652; break;
-		  case 0x40: SiS_Pr->SiS_SysFlags |= SF_IsM653; break;
-		  default:   SiS_Pr->SiS_SysFlags |= SF_IsM650; break;
-	       }
-	       break;
-	    case 0xb0:
+	       चयन(temp1) अणु
+		  हाल 0x00: SiS_Pr->SiS_SysFlags |= SF_IsM652; अवरोध;
+		  हाल 0x40: SiS_Pr->SiS_SysFlags |= SF_IsM653; अवरोध;
+		  शेष:   SiS_Pr->SiS_SysFlags |= SF_IsM650; अवरोध;
+	       पूर्ण
+	       अवरोध;
+	    हाल 0xb0:
 	       SiS_Pr->SiS_SysFlags |= SF_Is652;
-	       break;
-	    default:
+	       अवरोध;
+	    शेष:
 	       SiS_Pr->SiS_SysFlags |= SF_IsM650;
-	       break;
-	 }
-      }
-   }
+	       अवरोध;
+	 पूर्ण
+      पूर्ण
+   पूर्ण
 
-   if(SiS_Pr->ChipType >= SIS_760 && SiS_Pr->ChipType <= SIS_761) {
-      if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x78) & 0x30) {
+   अगर(SiS_Pr->ChipType >= SIS_760 && SiS_Pr->ChipType <= SIS_761) अणु
+      अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x78) & 0x30) अणु
          SiS_Pr->SiS_SysFlags |= SF_760LFB;
-      }
-      if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x79) & 0xf0) {
+      पूर्ण
+      अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x79) & 0xf0) अणु
          SiS_Pr->SiS_SysFlags |= SF_760UMA;
-      }
-   }
-}
+      पूर्ण
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*         HELPER: Init PCI & Engines        */
 /*********************************************/
 
-static void
-SiSInitPCIetc(struct SiS_Private *SiS_Pr)
-{
-   switch(SiS_Pr->ChipType) {
-#ifdef CONFIG_FB_SIS_300
-   case SIS_300:
-   case SIS_540:
-   case SIS_630:
-   case SIS_730:
+अटल व्योम
+SiSInitPCIetc(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   चयन(SiS_Pr->ChipType) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+   हाल SIS_300:
+   हाल SIS_540:
+   हाल SIS_630:
+   हाल SIS_730:
       /* Set - PCI LINEAR ADDRESSING ENABLE (0x80)
        *     - RELOCATED VGA IO ENABLED (0x20)
        *     - MMIO ENABLED (0x01)
@@ -1101,34 +1102,34 @@ SiSInitPCIetc(struct SiS_Private *SiS_Pr)
        *  - Enable 3D command parser (0x08) ?
        */
       SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x1E,0x5A);
-      break;
-#endif
-#ifdef CONFIG_FB_SIS_315
-   case SIS_315H:
-   case SIS_315:
-   case SIS_315PRO:
-   case SIS_650:
-   case SIS_740:
-   case SIS_330:
-   case SIS_661:
-   case SIS_741:
-   case SIS_660:
-   case SIS_760:
-   case SIS_761:
-   case SIS_340:
-   case XGI_40:
+      अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_SIS_315
+   हाल SIS_315H:
+   हाल SIS_315:
+   हाल SIS_315PRO:
+   हाल SIS_650:
+   हाल SIS_740:
+   हाल SIS_330:
+   हाल SIS_661:
+   हाल SIS_741:
+   हाल SIS_660:
+   हाल SIS_760:
+   हाल SIS_761:
+   हाल SIS_340:
+   हाल XGI_40:
       /* See above */
       SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x20,0xa1);
-      /*  - Enable 3D G/L transformation engine (0x80)
+      /*  - Enable 3D G/L transक्रमmation engine (0x80)
        *  - Enable 2D (0x40)
        *  - Enable 3D vertex command fetch (0x10)
        *  - Enable 3D command parser (0x08)
        *  - Enable 3D (0x02)
        */
       SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x1E,0xDA);
-      break;
-   case XGI_20:
-   case SIS_550:
+      अवरोध;
+   हाल XGI_20:
+   हाल SIS_550:
       /* See above */
       SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x20,0xa1);
       /* No 3D engine ! */
@@ -1136,22 +1137,22 @@ SiSInitPCIetc(struct SiS_Private *SiS_Pr)
        *  - disable 3D
        */
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x1E,0x60,0x40);
-      break;
-#endif
-   default:
-      break;
-   }
-}
+      अवरोध;
+#पूर्ण_अगर
+   शेष:
+      अवरोध;
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*             HELPER: SetLVDSetc            */
 /*********************************************/
 
-static
-void
-SiSSetLVDSetc(struct SiS_Private *SiS_Pr)
-{
-   unsigned short temp;
+अटल
+व्योम
+SiSSetLVDSetc(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित लघु temp;
 
    SiS_Pr->SiS_IF_DEF_LVDS = 0;
    SiS_Pr->SiS_IF_DEF_TRUMPION = 0;
@@ -1160,192 +1161,192 @@ SiSSetLVDSetc(struct SiS_Private *SiS_Pr)
 
    SiS_Pr->SiS_ChrontelInit = 0;
 
-   if(SiS_Pr->ChipType == XGI_20) return;
+   अगर(SiS_Pr->ChipType == XGI_20) वापस;
 
-   /* Check for SiS30x first */
+   /* Check क्रम SiS30x first */
    temp = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x00);
-   if((temp == 1) || (temp == 2)) return;
+   अगर((temp == 1) || (temp == 2)) वापस;
 
-   switch(SiS_Pr->ChipType) {
-#ifdef CONFIG_FB_SIS_300
-   case SIS_540:
-   case SIS_630:
-   case SIS_730:
+   चयन(SiS_Pr->ChipType) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+   हाल SIS_540:
+   हाल SIS_630:
+   हाल SIS_730:
 	temp = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x37) & 0x0e) >> 1;
-	if((temp >= 2) && (temp <= 5))	SiS_Pr->SiS_IF_DEF_LVDS = 1;
-	if(temp == 3)			SiS_Pr->SiS_IF_DEF_TRUMPION = 1;
-	if((temp == 4) || (temp == 5)) {
-		/* Save power status (and error check) - UNUSED */
+	अगर((temp >= 2) && (temp <= 5))	SiS_Pr->SiS_IF_DEF_LVDS = 1;
+	अगर(temp == 3)			SiS_Pr->SiS_IF_DEF_TRUMPION = 1;
+	अगर((temp == 4) || (temp == 5)) अणु
+		/* Save घातer status (and error check) - UNUSED */
 		SiS_Pr->SiS_Backup70xx = SiS_GetCH700x(SiS_Pr, 0x0e);
 		SiS_Pr->SiS_IF_DEF_CH70xx = 1;
-	}
-	break;
-#endif
-#ifdef CONFIG_FB_SIS_315
-   case SIS_550:
-   case SIS_650:
-   case SIS_740:
-   case SIS_330:
+	पूर्ण
+	अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FB_SIS_315
+   हाल SIS_550:
+   हाल SIS_650:
+   हाल SIS_740:
+   हाल SIS_330:
 	temp = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x37) & 0x0e) >> 1;
-	if((temp >= 2) && (temp <= 3))	SiS_Pr->SiS_IF_DEF_LVDS = 1;
-	if(temp == 3)			SiS_Pr->SiS_IF_DEF_CH70xx = 2;
-	break;
-   case SIS_661:
-   case SIS_741:
-   case SIS_660:
-   case SIS_760:
-   case SIS_761:
-   case SIS_340:
-   case XGI_20:
-   case XGI_40:
+	अगर((temp >= 2) && (temp <= 3))	SiS_Pr->SiS_IF_DEF_LVDS = 1;
+	अगर(temp == 3)			SiS_Pr->SiS_IF_DEF_CH70xx = 2;
+	अवरोध;
+   हाल SIS_661:
+   हाल SIS_741:
+   हाल SIS_660:
+   हाल SIS_760:
+   हाल SIS_761:
+   हाल SIS_340:
+   हाल XGI_20:
+   हाल XGI_40:
 	temp = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x38) & 0xe0) >> 5;
-	if((temp >= 2) && (temp <= 3)) 	SiS_Pr->SiS_IF_DEF_LVDS = 1;
-	if(temp == 3)			SiS_Pr->SiS_IF_DEF_CH70xx = 2;
-	if(temp == 4)			SiS_Pr->SiS_IF_DEF_CONEX = 1;  /* Not yet supported */
-	break;
-#endif
-   default:
-	break;
-   }
-}
+	अगर((temp >= 2) && (temp <= 3)) 	SiS_Pr->SiS_IF_DEF_LVDS = 1;
+	अगर(temp == 3)			SiS_Pr->SiS_IF_DEF_CH70xx = 2;
+	अगर(temp == 4)			SiS_Pr->SiS_IF_DEF_CONEX = 1;  /* Not yet supported */
+	अवरोध;
+#पूर्ण_अगर
+   शेष:
+	अवरोध;
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*          HELPER: Enable DSTN/FSTN         */
 /*********************************************/
 
-void
-SiS_SetEnableDstn(struct SiS_Private *SiS_Pr, int enable)
-{
+व्योम
+SiS_SetEnableDstn(काष्ठा SiS_Private *SiS_Pr, पूर्णांक enable)
+अणु
    SiS_Pr->SiS_IF_DEF_DSTN = enable ? 1 : 0;
-}
+पूर्ण
 
-void
-SiS_SetEnableFstn(struct SiS_Private *SiS_Pr, int enable)
-{
+व्योम
+SiS_SetEnableFstn(काष्ठा SiS_Private *SiS_Pr, पूर्णांक enable)
+अणु
    SiS_Pr->SiS_IF_DEF_FSTN = enable ? 1 : 0;
-}
+पूर्ण
 
 /*********************************************/
 /*            HELPER: Get modeflag           */
 /*********************************************/
 
-unsigned short
-SiS_GetModeFlag(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex)
-{
-   if(SiS_Pr->UseCustomMode) {
-      return SiS_Pr->CModeFlag;
-   } else if(ModeNo <= 0x13) {
-      return SiS_Pr->SiS_SModeIDTable[ModeIdIndex].St_ModeFlag;
-   } else {
-      return SiS_Pr->SiS_EModeIDTable[ModeIdIndex].Ext_ModeFlag;
-   }
-}
+अचिन्हित लघु
+SiS_GetModeFlag(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex)
+अणु
+   अगर(SiS_Pr->UseCustomMode) अणु
+      वापस SiS_Pr->CModeFlag;
+   पूर्ण अन्यथा अगर(ModeNo <= 0x13) अणु
+      वापस SiS_Pr->SiS_SModeIDTable[ModeIdIndex].St_ModeFlag;
+   पूर्ण अन्यथा अणु
+      वापस SiS_Pr->SiS_EModeIDTable[ModeIdIndex].Ext_ModeFlag;
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*        HELPER: Determine ROM usage        */
 /*********************************************/
 
 bool
-SiSDetermineROMLayout661(struct SiS_Private *SiS_Pr)
-{
-   unsigned char  *ROMAddr  = SiS_Pr->VirtualRomBase;
-   unsigned short romversoffs, romvmaj = 1, romvmin = 0;
+SiSDetermineROMLayout661(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर  *ROMAddr  = SiS_Pr->VirtualRomBase;
+   अचिन्हित लघु romversoffs, romvmaj = 1, romvmin = 0;
 
-   if(SiS_Pr->ChipType >= XGI_20) {
-      /* XGI ROMs don't qualify */
-      return false;
-   } else if(SiS_Pr->ChipType >= SIS_761) {
+   अगर(SiS_Pr->ChipType >= XGI_20) अणु
+      /* XGI ROMs करोn't qualअगरy */
+      वापस false;
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_761) अणु
       /* I very much assume 761, 340 and newer will use new layout */
-      return true;
-   } else if(SiS_Pr->ChipType >= SIS_661) {
-      if((ROMAddr[0x1a] == 'N') &&
+      वापस true;
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_661) अणु
+      अगर((ROMAddr[0x1a] == 'N') &&
 	 (ROMAddr[0x1b] == 'e') &&
 	 (ROMAddr[0x1c] == 'w') &&
-	 (ROMAddr[0x1d] == 'V')) {
-	 return true;
-      }
+	 (ROMAddr[0x1d] == 'V')) अणु
+	 वापस true;
+      पूर्ण
       romversoffs = ROMAddr[0x16] | (ROMAddr[0x17] << 8);
-      if(romversoffs) {
-	 if((ROMAddr[romversoffs+1] == '.') || (ROMAddr[romversoffs+4] == '.')) {
+      अगर(romversoffs) अणु
+	 अगर((ROMAddr[romversoffs+1] == '.') || (ROMAddr[romversoffs+4] == '.')) अणु
 	    romvmaj = ROMAddr[romversoffs] - '0';
 	    romvmin = ((ROMAddr[romversoffs+2] -'0') * 10) + (ROMAddr[romversoffs+3] - '0');
-	 }
-      }
-      if((romvmaj != 0) || (romvmin >= 92)) {
-	 return true;
-      }
-   } else if(IS_SIS650740) {
-      if((ROMAddr[0x1a] == 'N') &&
+	 पूर्ण
+      पूर्ण
+      अगर((romvmaj != 0) || (romvmin >= 92)) अणु
+	 वापस true;
+      पूर्ण
+   पूर्ण अन्यथा अगर(IS_SIS650740) अणु
+      अगर((ROMAddr[0x1a] == 'N') &&
 	 (ROMAddr[0x1b] == 'e') &&
 	 (ROMAddr[0x1c] == 'w') &&
-	 (ROMAddr[0x1d] == 'V')) {
-	 return true;
-      }
-   }
-   return false;
-}
+	 (ROMAddr[0x1d] == 'V')) अणु
+	 वापस true;
+      पूर्ण
+   पूर्ण
+   वापस false;
+पूर्ण
 
-static void
-SiSDetermineROMUsage(struct SiS_Private *SiS_Pr)
-{
-   unsigned char  *ROMAddr  = SiS_Pr->VirtualRomBase;
-   unsigned short romptr = 0;
+अटल व्योम
+SiSDetermineROMUsage(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर  *ROMAddr  = SiS_Pr->VirtualRomBase;
+   अचिन्हित लघु romptr = 0;
 
    SiS_Pr->SiS_UseROM = false;
    SiS_Pr->SiS_ROMNew = false;
    SiS_Pr->SiS_PWDOffset = 0;
 
-   if(SiS_Pr->ChipType >= XGI_20) return;
+   अगर(SiS_Pr->ChipType >= XGI_20) वापस;
 
-   if((ROMAddr) && (SiS_Pr->UseROM)) {
-      if(SiS_Pr->ChipType == SIS_300) {
-	 /* 300: We check if the code starts below 0x220 by
-	  * checking the jmp instruction at the beginning
+   अगर((ROMAddr) && (SiS_Pr->UseROM)) अणु
+      अगर(SiS_Pr->ChipType == SIS_300) अणु
+	 /* 300: We check अगर the code starts below 0x220 by
+	  * checking the jmp inकाष्ठाion at the beginning
 	  * of the BIOS image.
 	  */
-	 if((ROMAddr[3] == 0xe9) && ((ROMAddr[5] << 8) | ROMAddr[4]) > 0x21a)
+	 अगर((ROMAddr[3] == 0xe9) && ((ROMAddr[5] << 8) | ROMAddr[4]) > 0x21a)
 	    SiS_Pr->SiS_UseROM = true;
-      } else if(SiS_Pr->ChipType < SIS_315H) {
+      पूर्ण अन्यथा अगर(SiS_Pr->ChipType < SIS_315H) अणु
 	 /* Sony's VAIO BIOS 1.09 follows the standard, so perhaps
-	  * the others do as well
+	  * the others करो as well
 	  */
 	 SiS_Pr->SiS_UseROM = true;
-      } else {
+      पूर्ण अन्यथा अणु
 	 /* 315/330 series stick to the standard(s) */
 	 SiS_Pr->SiS_UseROM = true;
-	 if((SiS_Pr->SiS_ROMNew = SiSDetermineROMLayout661(SiS_Pr))) {
+	 अगर((SiS_Pr->SiS_ROMNew = SiSDetermineROMLayout661(SiS_Pr))) अणु
 	    SiS_Pr->SiS_EMIOffset = 14;
 	    SiS_Pr->SiS_PWDOffset = 17;
 	    SiS_Pr->SiS661LCD2TableSize = 36;
 	    /* Find out about LCD data table entry size */
-	    if((romptr = SISGETROMW(0x0102))) {
-	       if(ROMAddr[romptr + (32 * 16)] == 0xff)
+	    अगर((romptr = SISGETROMW(0x0102))) अणु
+	       अगर(ROMAddr[romptr + (32 * 16)] == 0xff)
 		  SiS_Pr->SiS661LCD2TableSize = 32;
-	       else if(ROMAddr[romptr + (34 * 16)] == 0xff)
+	       अन्यथा अगर(ROMAddr[romptr + (34 * 16)] == 0xff)
 		  SiS_Pr->SiS661LCD2TableSize = 34;
-	       else if(ROMAddr[romptr + (36 * 16)] == 0xff)	   /* 0.94, 2.05.00+ */
+	       अन्यथा अगर(ROMAddr[romptr + (36 * 16)] == 0xff)	   /* 0.94, 2.05.00+ */
 		  SiS_Pr->SiS661LCD2TableSize = 36;
-	       else if( (ROMAddr[romptr + (38 * 16)] == 0xff) ||   /* 2.00.00 - 2.02.00 */
-		 	(ROMAddr[0x6F] & 0x01) ) {		   /* 2.03.00 - <2.05.00 */
-		  SiS_Pr->SiS661LCD2TableSize = 38;		   /* UMC data layout abandoned at 2.05.00 */
+	       अन्यथा अगर( (ROMAddr[romptr + (38 * 16)] == 0xff) ||   /* 2.00.00 - 2.02.00 */
+		 	(ROMAddr[0x6F] & 0x01) ) अणु		   /* 2.03.00 - <2.05.00 */
+		  SiS_Pr->SiS661LCD2TableSize = 38;		   /* UMC data layout abanकरोned at 2.05.00 */
 		  SiS_Pr->SiS_EMIOffset = 16;
 		  SiS_Pr->SiS_PWDOffset = 19;
-	       }
-	    }
-	 }
-      }
-   }
-}
+	       पूर्ण
+	    पूर्ण
+	 पूर्ण
+      पूर्ण
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*        HELPER: SET SEGMENT REGISTERS      */
 /*********************************************/
 
-static void
-SiS_SetSegRegLower(struct SiS_Private *SiS_Pr, unsigned short value)
-{
-   unsigned short temp;
+अटल व्योम
+SiS_SetSegRegLower(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु value)
+अणु
+   अचिन्हित लघु temp;
 
    value &= 0x00ff;
    temp = SiS_GetRegByte(SiS_Pr->SiS_P3cb) & 0xf0;
@@ -1354,12 +1355,12 @@ SiS_SetSegRegLower(struct SiS_Private *SiS_Pr, unsigned short value)
    temp = SiS_GetRegByte(SiS_Pr->SiS_P3cd) & 0xf0;
    temp |= (value & 0x0f);
    SiS_SetRegByte(SiS_Pr->SiS_P3cd, temp);
-}
+पूर्ण
 
-static void
-SiS_SetSegRegUpper(struct SiS_Private *SiS_Pr, unsigned short value)
-{
-   unsigned short temp;
+अटल व्योम
+SiS_SetSegRegUpper(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु value)
+अणु
+   अचिन्हित लघु temp;
 
    value &= 0x00ff;
    temp = SiS_GetRegByte(SiS_Pr->SiS_P3cb) & 0x0f;
@@ -1368,328 +1369,328 @@ SiS_SetSegRegUpper(struct SiS_Private *SiS_Pr, unsigned short value)
    temp = SiS_GetRegByte(SiS_Pr->SiS_P3cd) & 0x0f;
    temp |= (value << 4);
    SiS_SetRegByte(SiS_Pr->SiS_P3cd, temp);
-}
+पूर्ण
 
-static void
-SiS_SetSegmentReg(struct SiS_Private *SiS_Pr, unsigned short value)
-{
+अटल व्योम
+SiS_SetSegmentReg(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु value)
+अणु
    SiS_SetSegRegLower(SiS_Pr, value);
    SiS_SetSegRegUpper(SiS_Pr, value);
-}
+पूर्ण
 
-static void
-SiS_ResetSegmentReg(struct SiS_Private *SiS_Pr)
-{
+अटल व्योम
+SiS_ResetSegmentReg(काष्ठा SiS_Private *SiS_Pr)
+अणु
    SiS_SetSegmentReg(SiS_Pr, 0);
-}
+पूर्ण
 
-static void
-SiS_SetSegmentRegOver(struct SiS_Private *SiS_Pr, unsigned short value)
-{
-   unsigned short temp = value >> 8;
+अटल व्योम
+SiS_SetSegmentRegOver(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु value)
+अणु
+   अचिन्हित लघु temp = value >> 8;
 
    temp &= 0x07;
    temp |= (temp << 4);
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x1d,temp);
    SiS_SetSegmentReg(SiS_Pr, value);
-}
+पूर्ण
 
-static void
-SiS_ResetSegmentRegOver(struct SiS_Private *SiS_Pr)
-{
+अटल व्योम
+SiS_ResetSegmentRegOver(काष्ठा SiS_Private *SiS_Pr)
+अणु
    SiS_SetSegmentRegOver(SiS_Pr, 0);
-}
+पूर्ण
 
-static void
-SiS_ResetSegmentRegisters(struct SiS_Private *SiS_Pr)
-{
-   if((IS_SIS65x) || (SiS_Pr->ChipType >= SIS_661)) {
+अटल व्योम
+SiS_ResetSegmentRegisters(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अगर((IS_SIS65x) || (SiS_Pr->ChipType >= SIS_661)) अणु
       SiS_ResetSegmentReg(SiS_Pr);
       SiS_ResetSegmentRegOver(SiS_Pr);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*             HELPER: GetVBType             */
 /*********************************************/
 
-static
-void
-SiS_GetVBType(struct SiS_Private *SiS_Pr)
-{
-   unsigned short flag = 0, rev = 0, nolcd = 0;
-   unsigned short p4_0f, p4_25, p4_27;
+अटल
+व्योम
+SiS_GetVBType(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित लघु flag = 0, rev = 0, nolcd = 0;
+   अचिन्हित लघु p4_0f, p4_25, p4_27;
 
    SiS_Pr->SiS_VBType = 0;
 
-   if((SiS_Pr->SiS_IF_DEF_LVDS) || (SiS_Pr->SiS_IF_DEF_CONEX))
-      return;
+   अगर((SiS_Pr->SiS_IF_DEF_LVDS) || (SiS_Pr->SiS_IF_DEF_CONEX))
+      वापस;
 
-   if(SiS_Pr->ChipType == XGI_20)
-      return;
+   अगर(SiS_Pr->ChipType == XGI_20)
+      वापस;
 
    flag = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x00);
 
-   if(flag > 3)
-      return;
+   अगर(flag > 3)
+      वापस;
 
    rev = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x01);
 
-   if(flag >= 2) {
+   अगर(flag >= 2) अणु
       SiS_Pr->SiS_VBType = VB_SIS302B;
-   } else if(flag == 1) {
-      if(rev >= 0xC0) {
+   पूर्ण अन्यथा अगर(flag == 1) अणु
+      अगर(rev >= 0xC0) अणु
 	 SiS_Pr->SiS_VBType = VB_SIS301C;
-      } else if(rev >= 0xB0) {
+      पूर्ण अन्यथा अगर(rev >= 0xB0) अणु
 	 SiS_Pr->SiS_VBType = VB_SIS301B;
-	 /* Check if 30xB DH version (no LCD support, use Panel Link instead) */
+	 /* Check अगर 30xB DH version (no LCD support, use Panel Link instead) */
 	 nolcd = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x23);
-	 if(!(nolcd & 0x02)) SiS_Pr->SiS_VBType |= VB_NoLCD;
-      } else {
+	 अगर(!(nolcd & 0x02)) SiS_Pr->SiS_VBType |= VB_NoLCD;
+      पूर्ण अन्यथा अणु
 	 SiS_Pr->SiS_VBType = VB_SIS301;
-      }
-   }
-   if(SiS_Pr->SiS_VBType & (VB_SIS301B | VB_SIS301C | VB_SIS302B)) {
-      if(rev >= 0xE0) {
+      पूर्ण
+   पूर्ण
+   अगर(SiS_Pr->SiS_VBType & (VB_SIS301B | VB_SIS301C | VB_SIS302B)) अणु
+      अगर(rev >= 0xE0) अणु
 	 flag = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x39);
-	 if(flag == 0xff) SiS_Pr->SiS_VBType = VB_SIS302LV;
-	 else 	 	  SiS_Pr->SiS_VBType = VB_SIS301C;  /* VB_SIS302ELV; */
-      } else if(rev >= 0xD0) {
+	 अगर(flag == 0xff) SiS_Pr->SiS_VBType = VB_SIS302LV;
+	 अन्यथा 	 	  SiS_Pr->SiS_VBType = VB_SIS301C;  /* VB_SIS302ELV; */
+      पूर्ण अन्यथा अगर(rev >= 0xD0) अणु
 	 SiS_Pr->SiS_VBType = VB_SIS301LV;
-      }
-   }
-   if(SiS_Pr->SiS_VBType & (VB_SIS301C | VB_SIS301LV | VB_SIS302LV | VB_SIS302ELV)) {
+      पूर्ण
+   पूर्ण
+   अगर(SiS_Pr->SiS_VBType & (VB_SIS301C | VB_SIS301LV | VB_SIS302LV | VB_SIS302ELV)) अणु
       p4_0f = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x0f);
       p4_25 = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x25);
       p4_27 = SiS_GetReg(SiS_Pr->SiS_Part4Port,0x27);
       SiS_SetRegAND(SiS_Pr->SiS_Part4Port,0x0f,0x7f);
       SiS_SetRegOR(SiS_Pr->SiS_Part4Port,0x25,0x08);
       SiS_SetRegAND(SiS_Pr->SiS_Part4Port,0x27,0xfd);
-      if(SiS_GetReg(SiS_Pr->SiS_Part4Port,0x26) & 0x08) {
+      अगर(SiS_GetReg(SiS_Pr->SiS_Part4Port,0x26) & 0x08) अणु
          SiS_Pr->SiS_VBType |= VB_UMC;
-      }
+      पूर्ण
       SiS_SetReg(SiS_Pr->SiS_Part4Port,0x27,p4_27);
       SiS_SetReg(SiS_Pr->SiS_Part4Port,0x25,p4_25);
       SiS_SetReg(SiS_Pr->SiS_Part4Port,0x0f,p4_0f);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*           HELPER: Check RAM size          */
 /*********************************************/
 
-static bool
-SiS_CheckMemorySize(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex)
-{
-   unsigned short AdapterMemSize = SiS_Pr->VideoMemorySize / (1024*1024);
-   unsigned short modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
-   unsigned short memorysize = ((modeflag & MemoryInfoFlag) >> MemorySizeShift) + 1;
+अटल bool
+SiS_CheckMemorySize(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु AdapterMemSize = SiS_Pr->VideoMemorySize / (1024*1024);
+   अचिन्हित लघु modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
+   अचिन्हित लघु memorysize = ((modeflag & MemoryInfoFlag) >> MemorySizeShअगरt) + 1;
 
-   if(!AdapterMemSize) return true;
+   अगर(!AdapterMemSize) वापस true;
 
-   if(AdapterMemSize < memorysize) return false;
-   return true;
-}
+   अगर(AdapterMemSize < memorysize) वापस false;
+   वापस true;
+पूर्ण
 
 /*********************************************/
 /*           HELPER: Get DRAM type           */
 /*********************************************/
 
-#ifdef CONFIG_FB_SIS_315
-static unsigned char
-SiS_Get310DRAMType(struct SiS_Private *SiS_Pr)
-{
-   unsigned char data;
+#अगर_घोषित CONFIG_FB_SIS_315
+अटल अचिन्हित अक्षर
+SiS_Get310DRAMType(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर data;
 
-   if((*SiS_Pr->pSiS_SoftSetting) & SoftDRAMType) {
+   अगर((*SiS_Pr->pSiS_SoftSetting) & SoftDRAMType) अणु
       data = (*SiS_Pr->pSiS_SoftSetting) & 0x03;
-   } else {
-      if(SiS_Pr->ChipType >= XGI_20) {
+   पूर्ण अन्यथा अणु
+      अगर(SiS_Pr->ChipType >= XGI_20) अणु
          /* Do I need this? SR17 seems to be zero anyway... */
 	 data = 0;
-      } else if(SiS_Pr->ChipType >= SIS_340) {
+      पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_340) अणु
 	 /* TODO */
 	 data = 0;
-      } else if(SiS_Pr->ChipType >= SIS_661) {
-	 if(SiS_Pr->SiS_ROMNew) {
+      पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_661) अणु
+	 अगर(SiS_Pr->SiS_ROMNew) अणु
 	    data = ((SiS_GetReg(SiS_Pr->SiS_P3d4,0x78) & 0xc0) >> 6);
-	 } else {
+	 पूर्ण अन्यथा अणु
 	    data = SiS_GetReg(SiS_Pr->SiS_P3d4,0x78) & 0x07;
-	 }
-      } else if(IS_SIS550650740) {
+	 पूर्ण
+      पूर्ण अन्यथा अगर(IS_SIS550650740) अणु
 	 data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x13) & 0x07;
-      } else {	/* 315, 330 */
+      पूर्ण अन्यथा अणु	/* 315, 330 */
 	 data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x3a) & 0x03;
-	 if(SiS_Pr->ChipType == SIS_330) {
-	    if(data > 1) {
-	       switch(SiS_GetReg(SiS_Pr->SiS_P3d4,0x5f) & 0x30) {
-	       case 0x00: data = 1; break;
-	       case 0x10: data = 3; break;
-	       case 0x20: data = 3; break;
-	       case 0x30: data = 2; break;
-	       }
-	    } else {
+	 अगर(SiS_Pr->ChipType == SIS_330) अणु
+	    अगर(data > 1) अणु
+	       चयन(SiS_GetReg(SiS_Pr->SiS_P3d4,0x5f) & 0x30) अणु
+	       हाल 0x00: data = 1; अवरोध;
+	       हाल 0x10: data = 3; अवरोध;
+	       हाल 0x20: data = 3; अवरोध;
+	       हाल 0x30: data = 2; अवरोध;
+	       पूर्ण
+	    पूर्ण अन्यथा अणु
 	       data = 0;
-	    }
-	 }
-      }
-   }
+	    पूर्ण
+	 पूर्ण
+      पूर्ण
+   पूर्ण
 
-   return data;
-}
+   वापस data;
+पूर्ण
 
-static unsigned short
-SiS_GetMCLK(struct SiS_Private *SiS_Pr)
-{
-   unsigned char  *ROMAddr = SiS_Pr->VirtualRomBase;
-   unsigned short index;
+अटल अचिन्हित लघु
+SiS_GetMCLK(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर  *ROMAddr = SiS_Pr->VirtualRomBase;
+   अचिन्हित लघु index;
 
    index = SiS_Get310DRAMType(SiS_Pr);
-   if(SiS_Pr->ChipType >= SIS_661) {
-      if(SiS_Pr->SiS_ROMNew) {
-	 return((unsigned short)(SISGETROMW((0x90 + (index * 5) + 3))));
-      }
-      return(SiS_Pr->SiS_MCLKData_0[index].CLOCK);
-   } else if(index >= 4) {
-      return(SiS_Pr->SiS_MCLKData_1[index - 4].CLOCK);
-   } else {
-      return(SiS_Pr->SiS_MCLKData_0[index].CLOCK);
-   }
-}
-#endif
+   अगर(SiS_Pr->ChipType >= SIS_661) अणु
+      अगर(SiS_Pr->SiS_ROMNew) अणु
+	 वापस((अचिन्हित लघु)(SISGETROMW((0x90 + (index * 5) + 3))));
+      पूर्ण
+      वापस(SiS_Pr->SiS_MCLKData_0[index].CLOCK);
+   पूर्ण अन्यथा अगर(index >= 4) अणु
+      वापस(SiS_Pr->SiS_MCLKData_1[index - 4].CLOCK);
+   पूर्ण अन्यथा अणु
+      वापस(SiS_Pr->SiS_MCLKData_0[index].CLOCK);
+   पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*********************************************/
 /*           HELPER: ClearBuffer             */
 /*********************************************/
 
-static void
-SiS_ClearBuffer(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
-{
-   unsigned char  SISIOMEMTYPE *memaddr = SiS_Pr->VideoMemoryAddress;
-   unsigned int   memsize = SiS_Pr->VideoMemorySize;
-   unsigned short SISIOMEMTYPE *pBuffer;
-   int i;
+अटल व्योम
+SiS_ClearBuffer(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo)
+अणु
+   अचिन्हित अक्षर  SISIOMEMTYPE *memaddr = SiS_Pr->VideoMemoryAddress;
+   अचिन्हित पूर्णांक   memsize = SiS_Pr->VideoMemorySize;
+   अचिन्हित लघु SISIOMEMTYPE *pBuffer;
+   पूर्णांक i;
 
-   if(!memaddr || !memsize) return;
+   अगर(!memaddr || !memsize) वापस;
 
-   if(SiS_Pr->SiS_ModeType >= ModeEGA) {
-      if(ModeNo > 0x13) {
-	 memset_io(memaddr, 0, memsize);
-      } else {
-	 pBuffer = (unsigned short SISIOMEMTYPE *)memaddr;
-	 for(i = 0; i < 0x4000; i++) writew(0x0000, &pBuffer[i]);
-      }
-   } else if(SiS_Pr->SiS_ModeType < ModeCGA) {
-      pBuffer = (unsigned short SISIOMEMTYPE *)memaddr;
-      for(i = 0; i < 0x4000; i++) writew(0x0720, &pBuffer[i]);
-   } else {
-      memset_io(memaddr, 0, 0x8000);
-   }
-}
+   अगर(SiS_Pr->SiS_ModeType >= ModeEGA) अणु
+      अगर(ModeNo > 0x13) अणु
+	 स_रखो_io(memaddr, 0, memsize);
+      पूर्ण अन्यथा अणु
+	 pBuffer = (अचिन्हित लघु SISIOMEMTYPE *)memaddr;
+	 क्रम(i = 0; i < 0x4000; i++) ग_लिखोw(0x0000, &pBuffer[i]);
+      पूर्ण
+   पूर्ण अन्यथा अगर(SiS_Pr->SiS_ModeType < ModeCGA) अणु
+      pBuffer = (अचिन्हित लघु SISIOMEMTYPE *)memaddr;
+      क्रम(i = 0; i < 0x4000; i++) ग_लिखोw(0x0720, &pBuffer[i]);
+   पूर्ण अन्यथा अणु
+      स_रखो_io(memaddr, 0, 0x8000);
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*           HELPER: SearchModeID            */
 /*********************************************/
 
 bool
-SiS_SearchModeID(struct SiS_Private *SiS_Pr, unsigned short *ModeNo,
-		unsigned short *ModeIdIndex)
-{
-   unsigned char VGAINFO = SiS_Pr->SiS_VGAINFO;
+SiS_SearchModeID(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु *ModeNo,
+		अचिन्हित लघु *ModeIdIndex)
+अणु
+   अचिन्हित अक्षर VGAINFO = SiS_Pr->SiS_VGAINFO;
 
-   if((*ModeNo) <= 0x13) {
+   अगर((*ModeNo) <= 0x13) अणु
 
-      if((*ModeNo) <= 0x05) (*ModeNo) |= 0x01;
+      अगर((*ModeNo) <= 0x05) (*ModeNo) |= 0x01;
 
-      for((*ModeIdIndex) = 0; ;(*ModeIdIndex)++) {
-	 if(SiS_Pr->SiS_SModeIDTable[(*ModeIdIndex)].St_ModeID == (*ModeNo)) break;
-	 if(SiS_Pr->SiS_SModeIDTable[(*ModeIdIndex)].St_ModeID == 0xFF) return false;
-      }
+      क्रम((*ModeIdIndex) = 0; ;(*ModeIdIndex)++) अणु
+	 अगर(SiS_Pr->SiS_SModeIDTable[(*ModeIdIndex)].St_ModeID == (*ModeNo)) अवरोध;
+	 अगर(SiS_Pr->SiS_SModeIDTable[(*ModeIdIndex)].St_ModeID == 0xFF) वापस false;
+      पूर्ण
 
-      if((*ModeNo) == 0x07) {
-	  if(VGAINFO & 0x10) (*ModeIdIndex)++;   /* 400 lines */
-	  /* else 350 lines */
-      }
-      if((*ModeNo) <= 0x03) {
-	 if(!(VGAINFO & 0x80)) (*ModeIdIndex)++;
-	 if(VGAINFO & 0x10)    (*ModeIdIndex)++; /* 400 lines  */
-	 /* else 350 lines  */
-      }
-      /* else 200 lines  */
+      अगर((*ModeNo) == 0x07) अणु
+	  अगर(VGAINFO & 0x10) (*ModeIdIndex)++;   /* 400 lines */
+	  /* अन्यथा 350 lines */
+      पूर्ण
+      अगर((*ModeNo) <= 0x03) अणु
+	 अगर(!(VGAINFO & 0x80)) (*ModeIdIndex)++;
+	 अगर(VGAINFO & 0x10)    (*ModeIdIndex)++; /* 400 lines  */
+	 /* अन्यथा 350 lines  */
+      पूर्ण
+      /* अन्यथा 200 lines  */
 
-   } else {
+   पूर्ण अन्यथा अणु
 
-      for((*ModeIdIndex) = 0; ;(*ModeIdIndex)++) {
-	 if(SiS_Pr->SiS_EModeIDTable[(*ModeIdIndex)].Ext_ModeID == (*ModeNo)) break;
-	 if(SiS_Pr->SiS_EModeIDTable[(*ModeIdIndex)].Ext_ModeID == 0xFF) return false;
-      }
+      क्रम((*ModeIdIndex) = 0; ;(*ModeIdIndex)++) अणु
+	 अगर(SiS_Pr->SiS_EModeIDTable[(*ModeIdIndex)].Ext_ModeID == (*ModeNo)) अवरोध;
+	 अगर(SiS_Pr->SiS_EModeIDTable[(*ModeIdIndex)].Ext_ModeID == 0xFF) वापस false;
+      पूर्ण
 
-   }
-   return true;
-}
+   पूर्ण
+   वापस true;
+पूर्ण
 
 /*********************************************/
 /*            HELPER: GetModePtr             */
 /*********************************************/
 
-unsigned short
-SiS_GetModePtr(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short ModeIdIndex)
-{
-   unsigned short index;
+अचिन्हित लघु
+SiS_GetModePtr(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo, अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु index;
 
-   if(ModeNo <= 0x13) {
+   अगर(ModeNo <= 0x13) अणु
       index = SiS_Pr->SiS_SModeIDTable[ModeIdIndex].St_StTableIndex;
-   } else {
-      if(SiS_Pr->SiS_ModeType <= ModeEGA) index = 0x1B;
-      else index = 0x0F;
-   }
-   return index;
-}
+   पूर्ण अन्यथा अणु
+      अगर(SiS_Pr->SiS_ModeType <= ModeEGA) index = 0x1B;
+      अन्यथा index = 0x0F;
+   पूर्ण
+   वापस index;
+पूर्ण
 
 /*********************************************/
 /*         HELPERS: Get some indices         */
 /*********************************************/
 
-unsigned short
-SiS_GetRefCRTVCLK(struct SiS_Private *SiS_Pr, unsigned short Index, int UseWide)
-{
-   if(SiS_Pr->SiS_RefIndex[Index].Ext_InfoFlag & HaveWideTiming) {
-      if(UseWide == 1) {
-         return SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK_WIDE;
-      } else {
-         return SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK_NORM;
-      }
-   } else {
-      return SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK;
-   }
-}
+अचिन्हित लघु
+SiS_GetRefCRTVCLK(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु Index, पूर्णांक UseWide)
+अणु
+   अगर(SiS_Pr->SiS_RefIndex[Index].Ext_InfoFlag & HaveWideTiming) अणु
+      अगर(UseWide == 1) अणु
+         वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK_WIDE;
+      पूर्ण अन्यथा अणु
+         वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK_NORM;
+      पूर्ण
+   पूर्ण अन्यथा अणु
+      वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRTVCLK;
+   पूर्ण
+पूर्ण
 
-unsigned short
-SiS_GetRefCRT1CRTC(struct SiS_Private *SiS_Pr, unsigned short Index, int UseWide)
-{
-   if(SiS_Pr->SiS_RefIndex[Index].Ext_InfoFlag & HaveWideTiming) {
-      if(UseWide == 1) {
-         return SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC_WIDE;
-      } else {
-         return SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC_NORM;
-      }
-   } else {
-      return SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC;
-   }
-}
+अचिन्हित लघु
+SiS_GetRefCRT1CRTC(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु Index, पूर्णांक UseWide)
+अणु
+   अगर(SiS_Pr->SiS_RefIndex[Index].Ext_InfoFlag & HaveWideTiming) अणु
+      अगर(UseWide == 1) अणु
+         वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC_WIDE;
+      पूर्ण अन्यथा अणु
+         वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC_NORM;
+      पूर्ण
+   पूर्ण अन्यथा अणु
+      वापस SiS_Pr->SiS_RefIndex[Index].Ext_CRT1CRTC;
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*           HELPER: LowModeTests            */
 /*********************************************/
 
-static bool
-SiS_DoLowModeTest(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
-{
-   unsigned short temp, temp1, temp2;
+अटल bool
+SiS_DoLowModeTest(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo)
+अणु
+   अचिन्हित लघु temp, temp1, temp2;
 
-   if((ModeNo != 0x03) && (ModeNo != 0x10) && (ModeNo != 0x12))
-      return true;
+   अगर((ModeNo != 0x03) && (ModeNo != 0x10) && (ModeNo != 0x12))
+      वापस true;
    temp = SiS_GetReg(SiS_Pr->SiS_P3d4,0x11);
    SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x11,0x80);
    temp1 = SiS_GetReg(SiS_Pr->SiS_P3d4,0x00);
@@ -1697,272 +1698,272 @@ SiS_DoLowModeTest(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
    temp2 = SiS_GetReg(SiS_Pr->SiS_P3d4,0x00);
    SiS_SetReg(SiS_Pr->SiS_P3d4,0x00,temp1);
    SiS_SetReg(SiS_Pr->SiS_P3d4,0x11,temp);
-   if((SiS_Pr->ChipType >= SIS_315H) ||
-      (SiS_Pr->ChipType == SIS_300)) {
-      if(temp2 == 0x55) return false;
-      else return true;
-   } else {
-      if(temp2 != 0x55) return true;
-      else {
+   अगर((SiS_Pr->ChipType >= SIS_315H) ||
+      (SiS_Pr->ChipType == SIS_300)) अणु
+      अगर(temp2 == 0x55) वापस false;
+      अन्यथा वापस true;
+   पूर्ण अन्यथा अणु
+      अगर(temp2 != 0x55) वापस true;
+      अन्यथा अणु
 	 SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x35,0x01);
-	 return false;
-      }
-   }
-}
+	 वापस false;
+      पूर्ण
+   पूर्ण
+पूर्ण
 
-static void
-SiS_SetLowModeTest(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
-{
-   if(SiS_DoLowModeTest(SiS_Pr, ModeNo)) {
+अटल व्योम
+SiS_SetLowModeTest(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo)
+अणु
+   अगर(SiS_DoLowModeTest(SiS_Pr, ModeNo)) अणु
       SiS_Pr->SiS_SetFlag |= LowModeTests;
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*        HELPER: OPEN/CLOSE CRT1 CRTC       */
 /*********************************************/
 
-static void
-SiS_OpenCRTC(struct SiS_Private *SiS_Pr)
-{
-   if(IS_SIS650) {
+अटल व्योम
+SiS_OpenCRTC(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अगर(IS_SIS650) अणु
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x51,0x1f);
-      if(IS_SIS651) SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x20);
+      अगर(IS_SIS651) SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x20);
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x56,0xe7);
-   } else if(IS_SIS661741660760) {
+   पूर्ण अन्यथा अगर(IS_SIS661741660760) अणु
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x61,0xf7);
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x51,0x1f);
       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x56,0xe7);
-      if(!SiS_Pr->SiS_ROMNew) {
+      अगर(!SiS_Pr->SiS_ROMNew) अणु
 	 SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x3a,0xef);
-      }
-   }
-}
+      पूर्ण
+   पूर्ण
+पूर्ण
 
-static void
-SiS_CloseCRTC(struct SiS_Private *SiS_Pr)
-{
-#if 0 /* This locks some CRTC registers. We don't want that. */
-   unsigned short temp1 = 0, temp2 = 0;
+अटल व्योम
+SiS_CloseCRTC(काष्ठा SiS_Private *SiS_Pr)
+अणु
+#अगर 0 /* This locks some CRTC रेजिस्टरs. We करोn't want that. */
+   अचिन्हित लघु temp1 = 0, temp2 = 0;
 
-   if(IS_SIS661741660760) {
-      if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) {
+   अगर(IS_SIS661741660760) अणु
+      अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) अणु
          temp1 = 0xa0; temp2 = 0x08;
-      }
+      पूर्ण
       SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x51,0x1f,temp1);
       SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x56,0xe7,temp2);
-   }
-#endif
-}
+   पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void
-SiS_HandleCRT1(struct SiS_Private *SiS_Pr)
-{
+अटल व्योम
+SiS_HandleCRT1(काष्ठा SiS_Private *SiS_Pr)
+अणु
    /* Enable CRT1 gating */
    SiS_SetRegAND(SiS_Pr->SiS_P3d4,SiS_Pr->SiS_MyCR63,0xbf);
-#if 0
-   if(!(SiS_GetReg(SiS_Pr->SiS_P3c4,0x15) & 0x01)) {
-      if((SiS_GetReg(SiS_Pr->SiS_P3c4,0x15) & 0x0a) ||
-         (SiS_GetReg(SiS_Pr->SiS_P3c4,0x16) & 0x01)) {
+#अगर 0
+   अगर(!(SiS_GetReg(SiS_Pr->SiS_P3c4,0x15) & 0x01)) अणु
+      अगर((SiS_GetReg(SiS_Pr->SiS_P3c4,0x15) & 0x0a) ||
+         (SiS_GetReg(SiS_Pr->SiS_P3c4,0x16) & 0x01)) अणु
          SiS_SetRegOR(SiS_Pr->SiS_P3d4,SiS_Pr->SiS_MyCR63,0x40);
-      }
-   }
-#endif
-}
+      पूर्ण
+   पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*********************************************/
 /*           HELPER: GetColorDepth           */
 /*********************************************/
 
-unsigned short
-SiS_GetColorDepth(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex)
-{
-   static const unsigned short ColorDepth[6] = { 1, 2, 4, 4, 6, 8 };
-   unsigned short modeflag;
-   short index;
+अचिन्हित लघु
+SiS_GetColorDepth(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex)
+अणु
+   अटल स्थिर अचिन्हित लघु ColorDepth[6] = अणु 1, 2, 4, 4, 6, 8 पूर्ण;
+   अचिन्हित लघु modeflag;
+   लघु index;
 
    /* Do NOT check UseCustomMode, will skrew up FIFO */
-   if(ModeNo == 0xfe) {
+   अगर(ModeNo == 0xfe) अणु
       modeflag = SiS_Pr->CModeFlag;
-   } else if(ModeNo <= 0x13) {
+   पूर्ण अन्यथा अगर(ModeNo <= 0x13) अणु
       modeflag = SiS_Pr->SiS_SModeIDTable[ModeIdIndex].St_ModeFlag;
-   } else {
+   पूर्ण अन्यथा अणु
       modeflag = SiS_Pr->SiS_EModeIDTable[ModeIdIndex].Ext_ModeFlag;
-   }
+   पूर्ण
 
    index = (modeflag & ModeTypeMask) - ModeEGA;
-   if(index < 0) index = 0;
-   return ColorDepth[index];
-}
+   अगर(index < 0) index = 0;
+   वापस ColorDepth[index];
+पूर्ण
 
 /*********************************************/
 /*             HELPER: GetOffset             */
 /*********************************************/
 
-unsigned short
-SiS_GetOffset(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex, unsigned short RRTI)
-{
-   unsigned short xres, temp, colordepth, infoflag;
+अचिन्हित लघु
+SiS_GetOffset(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु xres, temp, colordepth, infoflag;
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       infoflag = SiS_Pr->CInfoFlag;
       xres = SiS_Pr->CHDisplay;
-   } else {
+   पूर्ण अन्यथा अणु
       infoflag = SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag;
       xres = SiS_Pr->SiS_RefIndex[RRTI].XRes;
-   }
+   पूर्ण
 
    colordepth = SiS_GetColorDepth(SiS_Pr, ModeNo, ModeIdIndex);
 
    temp = xres / 16;
-   if(infoflag & InterlaceMode) temp <<= 1;
+   अगर(infoflag & InterlaceMode) temp <<= 1;
    temp *= colordepth;
-   if(xres % 16) temp += (colordepth >> 1);
+   अगर(xres % 16) temp += (colordepth >> 1);
 
-   return temp;
-}
+   वापस temp;
+पूर्ण
 
 /*********************************************/
 /*                   SEQ                     */
 /*********************************************/
 
-static void
-SiS_SetSeqRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
-{
-   unsigned char SRdata;
-   int i;
+अटल व्योम
+SiS_SetSeqRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु StandTableIndex)
+अणु
+   अचिन्हित अक्षर SRdata;
+   पूर्णांक i;
 
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x00,0x03);
 
    /* or "display off"  */
    SRdata = SiS_Pr->SiS_StandTable[StandTableIndex].SR[0] | 0x20;
 
-   /* determine whether to force x8 dotclock */
-   if((SiS_Pr->SiS_VBType & VB_SISVB) || (SiS_Pr->SiS_IF_DEF_LVDS)) {
+   /* determine whether to क्रमce x8 करोtघड़ी */
+   अगर((SiS_Pr->SiS_VBType & VB_SISVB) || (SiS_Pr->SiS_IF_DEF_LVDS)) अणु
 
-      if(SiS_Pr->SiS_VBInfo & (SetCRT2ToLCD | SetCRT2ToTV)) {
-         if(SiS_Pr->SiS_VBInfo & SetInSlaveMode)    SRdata |= 0x01;
-      } else if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) SRdata |= 0x01;
+      अगर(SiS_Pr->SiS_VBInfo & (SetCRT2ToLCD | SetCRT2ToTV)) अणु
+         अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode)    SRdata |= 0x01;
+      पूर्ण अन्यथा अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) SRdata |= 0x01;
 
-   }
+   पूर्ण
 
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x01,SRdata);
 
-   for(i = 2; i <= 4; i++) {
+   क्रम(i = 2; i <= 4; i++) अणु
       SRdata = SiS_Pr->SiS_StandTable[StandTableIndex].SR[i - 1];
       SiS_SetReg(SiS_Pr->SiS_P3c4,i,SRdata);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*                  MISC                     */
 /*********************************************/
 
-static void
-SiS_SetMiscRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
-{
-   unsigned char Miscdata;
+अटल व्योम
+SiS_SetMiscRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु StandTableIndex)
+अणु
+   अचिन्हित अक्षर Miscdata;
 
    Miscdata = SiS_Pr->SiS_StandTable[StandTableIndex].MISC;
 
-   if(SiS_Pr->ChipType < SIS_661) {
-      if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {
-	 if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) {
+   अगर(SiS_Pr->ChipType < SIS_661) अणु
+      अगर(SiS_Pr->SiS_VBType & VB_SIS30xBLV) अणु
+	 अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) अणु
 	   Miscdata |= 0x0C;
-	 }
-      }
-   }
+	 पूर्ण
+      पूर्ण
+   पूर्ण
 
    SiS_SetRegByte(SiS_Pr->SiS_P3c2,Miscdata);
-}
+पूर्ण
 
 /*********************************************/
 /*                  CRTC                     */
 /*********************************************/
 
-static void
-SiS_SetCRTCRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
-{
-   unsigned char  CRTCdata;
-   unsigned short i;
+अटल व्योम
+SiS_SetCRTCRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु StandTableIndex)
+अणु
+   अचिन्हित अक्षर  CRTCdata;
+   अचिन्हित लघु i;
 
    /* Unlock CRTC */
    SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x11,0x7f);
 
-   for(i = 0; i <= 0x18; i++) {
+   क्रम(i = 0; i <= 0x18; i++) अणु
       CRTCdata = SiS_Pr->SiS_StandTable[StandTableIndex].CRTC[i];
       SiS_SetReg(SiS_Pr->SiS_P3d4,i,CRTCdata);
-   }
+   पूर्ण
 
-   if(SiS_Pr->ChipType >= SIS_661) {
+   अगर(SiS_Pr->ChipType >= SIS_661) अणु
       SiS_OpenCRTC(SiS_Pr);
-      for(i = 0x13; i <= 0x14; i++) {
+      क्रम(i = 0x13; i <= 0x14; i++) अणु
 	 CRTCdata = SiS_Pr->SiS_StandTable[StandTableIndex].CRTC[i];
 	 SiS_SetReg(SiS_Pr->SiS_P3d4,i,CRTCdata);
-      }
-   } else if( ( (SiS_Pr->ChipType == SIS_630) ||
+      पूर्ण
+   पूर्ण अन्यथा अगर( ( (SiS_Pr->ChipType == SIS_630) ||
 	        (SiS_Pr->ChipType == SIS_730) )  &&
-	      (SiS_Pr->ChipRevision >= 0x30) ) {
-      if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) {
-	 if(SiS_Pr->SiS_VBInfo & (SetCRT2ToLCD | SetCRT2ToTV)) {
+	      (SiS_Pr->ChipRevision >= 0x30) ) अणु
+      अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) अणु
+	 अगर(SiS_Pr->SiS_VBInfo & (SetCRT2ToLCD | SetCRT2ToTV)) अणु
 	    SiS_SetReg(SiS_Pr->SiS_P3d4,0x18,0xFE);
-	 }
-      }
-   }
-}
+	 पूर्ण
+      पूर्ण
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*                   ATT                     */
 /*********************************************/
 
-static void
-SiS_SetATTRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
-{
-   unsigned char  ARdata;
-   unsigned short i;
+अटल व्योम
+SiS_SetATTRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु StandTableIndex)
+अणु
+   अचिन्हित अक्षर  ARdata;
+   अचिन्हित लघु i;
 
-   for(i = 0; i <= 0x13; i++) {
+   क्रम(i = 0; i <= 0x13; i++) अणु
       ARdata = SiS_Pr->SiS_StandTable[StandTableIndex].ATTR[i];
 
-      if(i == 0x13) {
-	 /* Pixel shift. If screen on LCD or TV is shifted left or right,
+      अगर(i == 0x13) अणु
+	 /* Pixel shअगरt. If screen on LCD or TV is shअगरted left or right,
 	  * this might be the cause.
 	  */
-	 if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {
-	    if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) ARdata = 0;
-	 }
-	 if(SiS_Pr->SiS_IF_DEF_LVDS == 1) {
-	    if(SiS_Pr->SiS_IF_DEF_CH70xx != 0) {
-	       if(SiS_Pr->SiS_VBInfo & SetCRT2ToTV) {
-		  if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
-	       }
-	    }
-	 }
-	 if(SiS_Pr->ChipType >= SIS_661) {
-	    if(SiS_Pr->SiS_VBInfo & (SetCRT2ToTV | SetCRT2ToLCD)) {
-	       if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
-	    }
-	 } else if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCD) {
-	    if(SiS_Pr->ChipType >= SIS_315H) {
-	       if(IS_SIS550650740660) {
-		  /* 315, 330 don't do this */
-		  if(SiS_Pr->SiS_VBType & VB_SIS30xB) {
-		     if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
-		  } else {
+	 अगर(SiS_Pr->SiS_VBType & VB_SIS30xBLV) अणु
+	    अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) ARdata = 0;
+	 पूर्ण
+	 अगर(SiS_Pr->SiS_IF_DEF_LVDS == 1) अणु
+	    अगर(SiS_Pr->SiS_IF_DEF_CH70xx != 0) अणु
+	       अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToTV) अणु
+		  अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
+	       पूर्ण
+	    पूर्ण
+	 पूर्ण
+	 अगर(SiS_Pr->ChipType >= SIS_661) अणु
+	    अगर(SiS_Pr->SiS_VBInfo & (SetCRT2ToTV | SetCRT2ToLCD)) अणु
+	       अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
+	    पूर्ण
+	 पूर्ण अन्यथा अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCD) अणु
+	    अगर(SiS_Pr->ChipType >= SIS_315H) अणु
+	       अगर(IS_SIS550650740660) अणु
+		  /* 315, 330 करोn't करो this */
+		  अगर(SiS_Pr->SiS_VBType & VB_SIS30xB) अणु
+		     अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
+		  पूर्ण अन्यथा अणु
 		     ARdata = 0;
-		  }
-	       }
-	    } else {
-	       if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
-	    }
-	 }
-      }
+		  पूर्ण
+	       पूर्ण
+	    पूर्ण अन्यथा अणु
+	       अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) ARdata = 0;
+	    पूर्ण
+	 पूर्ण
+      पूर्ण
       SiS_GetRegByte(SiS_Pr->SiS_P3da);		/* reset 3da  */
       SiS_SetRegByte(SiS_Pr->SiS_P3c0,i);	/* set index  */
       SiS_SetRegByte(SiS_Pr->SiS_P3c0,ARdata);	/* set data   */
-   }
+   पूर्ण
 
    SiS_GetRegByte(SiS_Pr->SiS_P3da);		/* reset 3da  */
    SiS_SetRegByte(SiS_Pr->SiS_P3c0,0x14);	/* set index  */
@@ -1971,69 +1972,69 @@ SiS_SetATTRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
    SiS_GetRegByte(SiS_Pr->SiS_P3da);
    SiS_SetRegByte(SiS_Pr->SiS_P3c0,0x20);	/* Enable Attribute  */
    SiS_GetRegByte(SiS_Pr->SiS_P3da);
-}
+पूर्ण
 
 /*********************************************/
 /*                   GRC                     */
 /*********************************************/
 
-static void
-SiS_SetGRCRegs(struct SiS_Private *SiS_Pr, unsigned short StandTableIndex)
-{
-   unsigned char  GRdata;
-   unsigned short i;
+अटल व्योम
+SiS_SetGRCRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु StandTableIndex)
+अणु
+   अचिन्हित अक्षर  GRdata;
+   अचिन्हित लघु i;
 
-   for(i = 0; i <= 0x08; i++) {
+   क्रम(i = 0; i <= 0x08; i++) अणु
       GRdata = SiS_Pr->SiS_StandTable[StandTableIndex].GRC[i];
       SiS_SetReg(SiS_Pr->SiS_P3ce,i,GRdata);
-   }
+   पूर्ण
 
-   if(SiS_Pr->SiS_ModeType > ModeVGA) {
+   अगर(SiS_Pr->SiS_ModeType > ModeVGA) अणु
       /* 256 color disable */
       SiS_SetRegAND(SiS_Pr->SiS_P3ce,0x05,0xBF);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*          CLEAR EXTENDED REGISTERS         */
 /*********************************************/
 
-static void
-SiS_ClearExt1Regs(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
-{
-   unsigned short i;
+अटल व्योम
+SiS_ClearExt1Regs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo)
+अणु
+   अचिन्हित लघु i;
 
-   for(i = 0x0A; i <= 0x0E; i++) {
+   क्रम(i = 0x0A; i <= 0x0E; i++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3c4,i,0x00);
-   }
+   पूर्ण
 
-   if(SiS_Pr->ChipType >= SIS_315H) {
+   अगर(SiS_Pr->ChipType >= SIS_315H) अणु
       SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x37,0xFE);
-      if(ModeNo <= 0x13) {
-	 if(ModeNo == 0x06 || ModeNo >= 0x0e) {
+      अगर(ModeNo <= 0x13) अणु
+	 अगर(ModeNo == 0x06 || ModeNo >= 0x0e) अणु
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x0e,0x20);
-	 }
-      }
-   }
-}
+	 पूर्ण
+      पूर्ण
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*                 RESET VCLK                */
 /*********************************************/
 
-static void
-SiS_ResetCRT1VCLK(struct SiS_Private *SiS_Pr)
-{
-   if(SiS_Pr->ChipType >= SIS_315H) {
-      if(SiS_Pr->ChipType < SIS_661) {
-	 if(SiS_Pr->SiS_IF_DEF_LVDS == 0) return;
-      }
-   } else {
-      if((SiS_Pr->SiS_IF_DEF_LVDS == 0) &&
-	 (!(SiS_Pr->SiS_VBType & VB_SIS30xBLV)) ) {
-	 return;
-      }
-   }
+अटल व्योम
+SiS_ResetCRT1VCLK(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अगर(SiS_Pr->ChipType >= SIS_315H) अणु
+      अगर(SiS_Pr->ChipType < SIS_661) अणु
+	 अगर(SiS_Pr->SiS_IF_DEF_LVDS == 0) वापस;
+      पूर्ण
+   पूर्ण अन्यथा अणु
+      अगर((SiS_Pr->SiS_IF_DEF_LVDS == 0) &&
+	 (!(SiS_Pr->SiS_VBType & VB_SIS30xBLV)) ) अणु
+	 वापस;
+      पूर्ण
+   पूर्ण
 
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x31,0xcf,0x20);
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2B,SiS_Pr->SiS_VCLKData[1].SR2B);
@@ -2043,95 +2044,95 @@ SiS_ResetCRT1VCLK(struct SiS_Private *SiS_Pr)
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2B,SiS_Pr->SiS_VCLKData[0].SR2B);
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2C,SiS_Pr->SiS_VCLKData[0].SR2C);
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2D,0x80);
-}
+पूर्ण
 
 /*********************************************/
 /*                  SYNC                     */
 /*********************************************/
 
-static void
-SiS_SetCRT1Sync(struct SiS_Private *SiS_Pr, unsigned short RRTI)
-{
-   unsigned short sync;
+अटल व्योम
+SiS_SetCRT1Sync(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु sync;
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       sync = SiS_Pr->CInfoFlag >> 8;
-   } else {
+   पूर्ण अन्यथा अणु
       sync = SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag >> 8;
-   }
+   पूर्ण
 
    sync &= 0xC0;
    sync |= 0x2f;
    SiS_SetRegByte(SiS_Pr->SiS_P3c2,sync);
-}
+पूर्ण
 
 /*********************************************/
 /*                  CRTC/2                   */
 /*********************************************/
 
-static void
-SiS_SetCRT1CRTC(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex, unsigned short RRTI)
-{
-   unsigned short temp, i, j, modeflag;
-   unsigned char  *crt1data = NULL;
+अटल व्योम
+SiS_SetCRT1CRTC(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु temp, i, j, modeflag;
+   अचिन्हित अक्षर  *crt1data = शून्य;
 
    modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
 
       crt1data = &SiS_Pr->CCRT1CRTC[0];
 
-   } else {
+   पूर्ण अन्यथा अणु
 
       temp = SiS_GetRefCRT1CRTC(SiS_Pr, RRTI, SiS_Pr->SiS_UseWide);
 
-      /* Alternate for 1600x1200 LCDA */
-      if((temp == 0x20) && (SiS_Pr->Alternate1600x1200)) temp = 0x57;
+      /* Alternate क्रम 1600x1200 LCDA */
+      अगर((temp == 0x20) && (SiS_Pr->Alternate1600x1200)) temp = 0x57;
 
-      crt1data = (unsigned char *)&SiS_Pr->SiS_CRT1Table[temp].CR[0];
+      crt1data = (अचिन्हित अक्षर *)&SiS_Pr->SiS_CRT1Table[temp].CR[0];
 
-   }
+   पूर्ण
 
    /* unlock cr0-7 */
    SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x11,0x7f);
 
-   for(i = 0, j = 0; i <= 7; i++, j++) {
+   क्रम(i = 0, j = 0; i <= 7; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,crt1data[i]);
-   }
-   for(j = 0x10; i <= 10; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x10; i <= 10; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,crt1data[i]);
-   }
-   for(j = 0x15; i <= 12; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x15; i <= 12; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,crt1data[i]);
-   }
-   for(j = 0x0A; i <= 15; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x0A; i <= 15; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3c4,j,crt1data[i]);
-   }
+   पूर्ण
 
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x0E,crt1data[16] & 0xE0);
 
    temp = (crt1data[16] & 0x01) << 5;
-   if(modeflag & DoubleScanMode) temp |= 0x80;
+   अगर(modeflag & DoubleScanMode) temp |= 0x80;
    SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x09,0x5F,temp);
 
-   if(SiS_Pr->SiS_ModeType > ModeVGA) {
+   अगर(SiS_Pr->SiS_ModeType > ModeVGA) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,0x14,0x4F);
-   }
+   पूर्ण
 
-#ifdef CONFIG_FB_SIS_315
-   if(SiS_Pr->ChipType == XGI_20) {
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर(SiS_Pr->ChipType == XGI_20) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,0x04,crt1data[4] - 1);
-      if(!(temp = crt1data[5] & 0x1f)) {
+      अगर(!(temp = crt1data[5] & 0x1f)) अणु
          SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x0c,0xfb);
-      }
+      पूर्ण
       SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x05,0xe0,((temp - 1) & 0x1f));
       temp = (crt1data[16] >> 5) + 3;
-      if(temp > 7) temp -= 7;
+      अगर(temp > 7) temp -= 7;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x0e,0x1f,(temp << 5));
-   }
-#endif
-}
+   पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*********************************************/
 /*               OFFSET & PITCH              */
@@ -2139,17 +2140,17 @@ SiS_SetCRT1CRTC(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
 /*  (partly overruled by SetPitch() in XF86) */
 /*********************************************/
 
-static void
-SiS_SetCRT1Offset(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex, unsigned short RRTI)
-{
-   unsigned short temp, DisplayUnit, infoflag;
+अटल व्योम
+SiS_SetCRT1Offset(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु temp, DisplayUnit, infoflag;
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       infoflag = SiS_Pr->CInfoFlag;
-   } else {
+   पूर्ण अन्यथा अणु
       infoflag = SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag;
-   }
+   पूर्ण
 
    DisplayUnit = SiS_GetOffset(SiS_Pr, ModeNo, ModeIdIndex, RRTI);
 
@@ -2158,163 +2159,163 @@ SiS_SetCRT1Offset(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
 
    SiS_SetReg(SiS_Pr->SiS_P3d4,0x13,DisplayUnit & 0xFF);
 
-   if(infoflag & InterlaceMode) DisplayUnit >>= 1;
+   अगर(infoflag & InterlaceMode) DisplayUnit >>= 1;
 
    DisplayUnit <<= 5;
    temp = (DisplayUnit >> 8) + 1;
-   if(DisplayUnit & 0xff) temp++;
-   if(SiS_Pr->ChipType == XGI_20) {
-      if(ModeNo == 0x4a || ModeNo == 0x49) temp--;
-   }
+   अगर(DisplayUnit & 0xff) temp++;
+   अगर(SiS_Pr->ChipType == XGI_20) अणु
+      अगर(ModeNo == 0x4a || ModeNo == 0x49) temp--;
+   पूर्ण
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x10,temp);
-}
+पूर्ण
 
 /*********************************************/
 /*                  VCLK                     */
 /*********************************************/
 
-static void
-SiS_SetCRT1VCLK(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex, unsigned short RRTI)
-{
-   unsigned short index = 0, clka, clkb;
+अटल व्योम
+SiS_SetCRT1VCLK(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु index = 0, clka, clkb;
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       clka = SiS_Pr->CSR2B;
       clkb = SiS_Pr->CSR2C;
-   } else {
+   पूर्ण अन्यथा अणु
       index = SiS_GetVCLK2Ptr(SiS_Pr, ModeNo, ModeIdIndex, RRTI);
-      if((SiS_Pr->SiS_VBType & VB_SIS30xBLV) &&
-	 (SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) {
-	 /* Alternate for 1600x1200 LCDA */
-	 if((index == 0x21) && (SiS_Pr->Alternate1600x1200)) index = 0x72;
+      अगर((SiS_Pr->SiS_VBType & VB_SIS30xBLV) &&
+	 (SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) अणु
+	 /* Alternate क्रम 1600x1200 LCDA */
+	 अगर((index == 0x21) && (SiS_Pr->Alternate1600x1200)) index = 0x72;
 	 clka = SiS_Pr->SiS_VBVCLKData[index].Part4_A;
 	 clkb = SiS_Pr->SiS_VBVCLKData[index].Part4_B;
-      } else {
+      पूर्ण अन्यथा अणु
 	 clka = SiS_Pr->SiS_VCLKData[index].SR2B;
 	 clkb = SiS_Pr->SiS_VCLKData[index].SR2C;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x31,0xCF);
 
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2b,clka);
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2c,clkb);
 
-   if(SiS_Pr->ChipType >= SIS_315H) {
-#ifdef CONFIG_FB_SIS_315
+   अगर(SiS_Pr->ChipType >= SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_315
       SiS_SetReg(SiS_Pr->SiS_P3c4,0x2D,0x01);
-      if(SiS_Pr->ChipType == XGI_20) {
-         unsigned short mf = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
-	 if(mf & HalfDCLK) {
+      अगर(SiS_Pr->ChipType == XGI_20) अणु
+         अचिन्हित लघु mf = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
+	 अगर(mf & HalfDCLK) अणु
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2b,SiS_GetReg(SiS_Pr->SiS_P3c4,0x2b));
 	    clkb = SiS_GetReg(SiS_Pr->SiS_P3c4,0x2c);
 	    clkb = (((clkb & 0x1f) << 1) + 1) | (clkb & 0xe0);
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2c,clkb);
-	 }
-      }
-#endif
-   } else {
+	 पूर्ण
+      पूर्ण
+#पूर्ण_अगर
+   पूर्ण अन्यथा अणु
       SiS_SetReg(SiS_Pr->SiS_P3c4,0x2D,0x80);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*                  FIFO                     */
 /*********************************************/
 
-#ifdef CONFIG_FB_SIS_300
-void
-SiS_GetFIFOThresholdIndex300(struct SiS_Private *SiS_Pr, unsigned short *idx1,
-		unsigned short *idx2)
-{
-   unsigned short temp1, temp2;
-   static const unsigned char ThTiming[8] = {
+#अगर_घोषित CONFIG_FB_SIS_300
+व्योम
+SiS_GetFIFOThresholdIndex300(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु *idx1,
+		अचिन्हित लघु *idx2)
+अणु
+   अचिन्हित लघु temp1, temp2;
+   अटल स्थिर अचिन्हित अक्षर ThTiming[8] = अणु
 		1, 2, 2, 3, 0, 1, 1, 2
-   };
+   पूर्ण;
 
    temp1 = temp2 = (SiS_GetReg(SiS_Pr->SiS_P3c4,0x18) & 0x62) >> 1;
-   (*idx2) = (unsigned short)(ThTiming[((temp2 >> 3) | temp1) & 0x07]);
-   (*idx1) = (unsigned short)(SiS_GetReg(SiS_Pr->SiS_P3c4,0x16) >> 6) & 0x03;
-   (*idx1) |= (unsigned short)(((SiS_GetReg(SiS_Pr->SiS_P3c4,0x14) >> 4) & 0x0c));
+   (*idx2) = (अचिन्हित लघु)(ThTiming[((temp2 >> 3) | temp1) & 0x07]);
+   (*idx1) = (अचिन्हित लघु)(SiS_GetReg(SiS_Pr->SiS_P3c4,0x16) >> 6) & 0x03;
+   (*idx1) |= (अचिन्हित लघु)(((SiS_GetReg(SiS_Pr->SiS_P3c4,0x14) >> 4) & 0x0c));
    (*idx1) <<= 1;
-}
+पूर्ण
 
-static unsigned short
-SiS_GetFIFOThresholdA300(unsigned short idx1, unsigned short idx2)
-{
-   static const unsigned char ThLowA[8 * 3] = {
+अटल अचिन्हित लघु
+SiS_GetFIFOThresholdA300(अचिन्हित लघु idx1, अचिन्हित लघु idx2)
+अणु
+   अटल स्थिर अचिन्हित अक्षर ThLowA[8 * 3] = अणु
 		61, 3,52, 5,68, 7,100,11,
 		43, 3,42, 5,54, 7, 78,11,
 		34, 3,37, 5,47, 7, 67,11
-   };
+   पूर्ण;
 
-   return (unsigned short)((ThLowA[idx1 + 1] * idx2) + ThLowA[idx1]);
-}
+   वापस (अचिन्हित लघु)((ThLowA[idx1 + 1] * idx2) + ThLowA[idx1]);
+पूर्ण
 
-unsigned short
-SiS_GetFIFOThresholdB300(unsigned short idx1, unsigned short idx2)
-{
-   static const unsigned char ThLowB[8 * 3] = {
+अचिन्हित लघु
+SiS_GetFIFOThresholdB300(अचिन्हित लघु idx1, अचिन्हित लघु idx2)
+अणु
+   अटल स्थिर अचिन्हित अक्षर ThLowB[8 * 3] = अणु
 		81, 4,72, 6,88, 8,120,12,
 		55, 4,54, 6,66, 8, 90,12,
 		42, 4,45, 6,55, 8, 75,12
-   };
+   पूर्ण;
 
-   return (unsigned short)((ThLowB[idx1 + 1] * idx2) + ThLowB[idx1]);
-}
+   वापस (अचिन्हित लघु)((ThLowB[idx1 + 1] * idx2) + ThLowB[idx1]);
+पूर्ण
 
-static unsigned short
-SiS_DoCalcDelay(struct SiS_Private *SiS_Pr, unsigned short MCLK, unsigned short VCLK,
-		unsigned short colordepth, unsigned short key)
-{
-   unsigned short idx1, idx2;
-   unsigned int   longtemp = VCLK * colordepth;
+अटल अचिन्हित लघु
+SiS_DoCalcDelay(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु MCLK, अचिन्हित लघु VCLK,
+		अचिन्हित लघु colordepth, अचिन्हित लघु key)
+अणु
+   अचिन्हित लघु idx1, idx2;
+   अचिन्हित पूर्णांक   दीर्घtemp = VCLK * colordepth;
 
    SiS_GetFIFOThresholdIndex300(SiS_Pr, &idx1, &idx2);
 
-   if(key == 0) {
-      longtemp *= SiS_GetFIFOThresholdA300(idx1, idx2);
-   } else {
-      longtemp *= SiS_GetFIFOThresholdB300(idx1, idx2);
-   }
-   idx1 = longtemp % (MCLK * 16);
-   longtemp /= (MCLK * 16);
-   if(idx1) longtemp++;
-   return (unsigned short)longtemp;
-}
+   अगर(key == 0) अणु
+      दीर्घtemp *= SiS_GetFIFOThresholdA300(idx1, idx2);
+   पूर्ण अन्यथा अणु
+      दीर्घtemp *= SiS_GetFIFOThresholdB300(idx1, idx2);
+   पूर्ण
+   idx1 = दीर्घtemp % (MCLK * 16);
+   दीर्घtemp /= (MCLK * 16);
+   अगर(idx1) दीर्घtemp++;
+   वापस (अचिन्हित लघु)दीर्घtemp;
+पूर्ण
 
-static unsigned short
-SiS_CalcDelay(struct SiS_Private *SiS_Pr, unsigned short VCLK,
-		unsigned short colordepth, unsigned short MCLK)
-{
-   unsigned short temp1, temp2;
+अटल अचिन्हित लघु
+SiS_CalcDelay(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु VCLK,
+		अचिन्हित लघु colordepth, अचिन्हित लघु MCLK)
+अणु
+   अचिन्हित लघु temp1, temp2;
 
    temp2 = SiS_DoCalcDelay(SiS_Pr, MCLK, VCLK, colordepth, 0);
    temp1 = SiS_DoCalcDelay(SiS_Pr, MCLK, VCLK, colordepth, 1);
-   if(temp1 < 4) temp1 = 4;
+   अगर(temp1 < 4) temp1 = 4;
    temp1 -= 4;
-   if(temp2 < temp1) temp2 = temp1;
-   return temp2;
-}
+   अगर(temp2 < temp1) temp2 = temp1;
+   वापस temp2;
+पूर्ण
 
-static void
-SiS_SetCRT1FIFO_300(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short RefreshRateTableIndex)
-{
-   unsigned short ThresholdLow = 0;
-   unsigned short temp, index, VCLK, MCLK, colorth;
-   static const unsigned short colortharray[6] = { 1, 1, 2, 2, 3, 4 };
+अटल व्योम
+SiS_SetCRT1FIFO_300(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु RefreshRateTableIndex)
+अणु
+   अचिन्हित लघु ThresholdLow = 0;
+   अचिन्हित लघु temp, index, VCLK, MCLK, colorth;
+   अटल स्थिर अचिन्हित लघु colortharray[6] = अणु 1, 1, 2, 2, 3, 4 पूर्ण;
 
-   if(ModeNo > 0x13) {
+   अगर(ModeNo > 0x13) अणु
 
       /* Get VCLK  */
-      if(SiS_Pr->UseCustomMode) {
+      अगर(SiS_Pr->UseCustomMode) अणु
 	 VCLK = SiS_Pr->CSRClock;
-      } else {
+      पूर्ण अन्यथा अणु
 	 index = SiS_GetRefCRTVCLK(SiS_Pr, RefreshRateTableIndex, SiS_Pr->SiS_UseWide);
 	 VCLK = SiS_Pr->SiS_VCLKData[index].CLOCK;
-      }
+      पूर्ण
 
       /* Get half colordepth */
       colorth = colortharray[(SiS_Pr->SiS_ModeType - ModeEGA)];
@@ -2326,24 +2327,24 @@ SiS_SetCRT1FIFO_300(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
       temp = SiS_GetReg(SiS_Pr->SiS_P3d4,0x35) & 0xc3;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x16,0x3c,temp);
 
-      do {
+      करो अणु
 	 ThresholdLow = SiS_CalcDelay(SiS_Pr, VCLK, colorth, MCLK) + 1;
-	 if(ThresholdLow < 0x13) break;
+	 अगर(ThresholdLow < 0x13) अवरोध;
 	 SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x16,0xfc);
 	 ThresholdLow = 0x13;
 	 temp = SiS_GetReg(SiS_Pr->SiS_P3c4,0x16) >> 6;
-	 if(!temp) break;
+	 अगर(!temp) अवरोध;
 	 SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x16,0x3f,((temp - 1) << 6));
-      } while(0);
+      पूर्ण जबतक(0);
 
-   } else ThresholdLow = 2;
+   पूर्ण अन्यथा ThresholdLow = 2;
 
    /* Write CRT/CPU threshold low, CRT/Engine threshold high */
    temp = (ThresholdLow << 4) | 0x0f;
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x08,temp);
 
    temp = (ThresholdLow & 0x10) << 1;
-   if(ModeNo > 0x13) temp |= 0x40;
+   अगर(ModeNo > 0x13) temp |= 0x40;
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x0f,0x9f,temp);
 
    /* What is this? */
@@ -2351,14 +2352,14 @@ SiS_SetCRT1FIFO_300(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
 
    /* Write CRT/CPU threshold high */
    temp = ThresholdLow + 3;
-   if(temp > 0x0f) temp = 0x0f;
+   अगर(temp > 0x0f) temp = 0x0f;
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x09,temp);
-}
+पूर्ण
 
-unsigned short
-SiS_GetLatencyFactor630(struct SiS_Private *SiS_Pr, unsigned short index)
-{
-   static const unsigned char LatencyFactor[] = {
+अचिन्हित लघु
+SiS_GetLatencyFactor630(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु index)
+अणु
+   अटल स्थिर अचिन्हित अक्षर LatencyFactor[] = अणु
 		97, 88, 86, 79, 77,  0,       /* 64  bit    BQ=2   */
 		 0, 87, 85, 78, 76, 54,       /* 64  bit    BQ=1   */
 		97, 88, 86, 79, 77,  0,       /* 128 bit    BQ=2   */
@@ -2367,81 +2368,81 @@ SiS_GetLatencyFactor630(struct SiS_Private *SiS_Pr, unsigned short index)
 		 0, 70, 68, 61, 59, 37,       /* 64  bit    BQ=1   */
 		86, 77, 75, 68, 66,  0,       /* 128 bit    BQ=2   */
 		 0, 68, 66, 59, 57, 37        /* 128 bit    BQ=1   */
-   };
-   static const unsigned char LatencyFactor730[] = {
+   पूर्ण;
+   अटल स्थिर अचिन्हित अक्षर LatencyFactor730[] = अणु
 		 69, 63, 61,
 		 86, 79, 77,
 		103, 96, 94,
 		120,113,111,
 		137,130,128
-   };
+   पूर्ण;
 
-   if(SiS_Pr->ChipType == SIS_730) {
-      return (unsigned short)LatencyFactor730[index];
-   } else {
-      return (unsigned short)LatencyFactor[index];
-   }
-}
+   अगर(SiS_Pr->ChipType == SIS_730) अणु
+      वापस (अचिन्हित लघु)LatencyFactor730[index];
+   पूर्ण अन्यथा अणु
+      वापस (अचिन्हित लघु)LatencyFactor[index];
+   पूर्ण
+पूर्ण
 
-static unsigned short
-SiS_CalcDelay2(struct SiS_Private *SiS_Pr, unsigned char key)
-{
-   unsigned short index;
+अटल अचिन्हित लघु
+SiS_CalcDelay2(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर key)
+अणु
+   अचिन्हित लघु index;
 
-   if(SiS_Pr->ChipType == SIS_730) {
+   अगर(SiS_Pr->ChipType == SIS_730) अणु
       index = ((key & 0x0f) * 3) + ((key & 0xc0) >> 6);
-   } else {
+   पूर्ण अन्यथा अणु
       index = (key & 0xe0) >> 5;
-      if(key & 0x10)    index +=  6;
-      if(!(key & 0x01)) index += 24;
-      if(SiS_GetReg(SiS_Pr->SiS_P3c4,0x14) & 0x80) index += 12;
-   }
-   return SiS_GetLatencyFactor630(SiS_Pr, index);
-}
+      अगर(key & 0x10)    index +=  6;
+      अगर(!(key & 0x01)) index += 24;
+      अगर(SiS_GetReg(SiS_Pr->SiS_P3c4,0x14) & 0x80) index += 12;
+   पूर्ण
+   वापस SiS_GetLatencyFactor630(SiS_Pr, index);
+पूर्ण
 
-static void
-SiS_SetCRT1FIFO_630(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-                    unsigned short RefreshRateTableIndex)
-{
-   unsigned short  ThresholdLow = 0;
-   unsigned short  i, data, VCLK, MCLK16, colorth = 0;
-   unsigned int    templ, datal;
-   const unsigned char *queuedata = NULL;
-   static const unsigned char FQBQData[21] = {
+अटल व्योम
+SiS_SetCRT1FIFO_630(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+                    अचिन्हित लघु RefreshRateTableIndex)
+अणु
+   अचिन्हित लघु  ThresholdLow = 0;
+   अचिन्हित लघु  i, data, VCLK, MCLK16, colorth = 0;
+   अचिन्हित पूर्णांक    templ, datal;
+   स्थिर अचिन्हित अक्षर *queuedata = शून्य;
+   अटल स्थिर अचिन्हित अक्षर FQBQData[21] = अणु
 		0x01,0x21,0x41,0x61,0x81,
 		0x31,0x51,0x71,0x91,0xb1,
 		0x00,0x20,0x40,0x60,0x80,
 		0x30,0x50,0x70,0x90,0xb0,
 		0xff
-   };
-   static const unsigned char FQBQData730[16] = {
+   पूर्ण;
+   अटल स्थिर अचिन्हित अक्षर FQBQData730[16] = अणु
 		0x34,0x74,0xb4,
 		0x23,0x63,0xa3,
 		0x12,0x52,0x92,
 		0x01,0x41,0x81,
 		0x00,0x40,0x80,
 		0xff
-   };
-   static const unsigned short colortharray[6] = {
+   पूर्ण;
+   अटल स्थिर अचिन्हित लघु colortharray[6] = अणु
 		1, 1, 2, 2, 3, 4
-   };
+   पूर्ण;
 
    i = 0;
 
-	if (SiS_Pr->ChipType == SIS_730)
+	अगर (SiS_Pr->ChipType == SIS_730)
 		queuedata = &FQBQData730[0];
-	else
+	अन्यथा
 		queuedata = &FQBQData[0];
 
-   if(ModeNo > 0x13) {
+   अगर(ModeNo > 0x13) अणु
 
       /* Get VCLK  */
-      if(SiS_Pr->UseCustomMode) {
+      अगर(SiS_Pr->UseCustomMode) अणु
 	 VCLK = SiS_Pr->CSRClock;
-      } else {
+      पूर्ण अन्यथा अणु
 	 data = SiS_GetRefCRTVCLK(SiS_Pr, RefreshRateTableIndex, SiS_Pr->SiS_UseWide);
 	 VCLK = SiS_Pr->SiS_VCLKData[data].CLOCK;
-      }
+      पूर्ण
 
       /* Get MCLK * 16 */
       data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x1A) & 0x07;
@@ -2450,31 +2451,31 @@ SiS_SetCRT1FIFO_630(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
       /* Get half colordepth */
       colorth = colortharray[(SiS_Pr->SiS_ModeType - ModeEGA)];
 
-      do {
+      करो अणु
 	 templ = SiS_CalcDelay2(SiS_Pr, queuedata[i]) * VCLK * colorth;
 
 	 datal = templ % MCLK16;
 	 templ = (templ / MCLK16) + 1;
-	 if(datal) templ++;
+	 अगर(datal) templ++;
 
-	 if(templ > 0x13) {
-	    if(queuedata[i + 1] == 0xFF) {
+	 अगर(templ > 0x13) अणु
+	    अगर(queuedata[i + 1] == 0xFF) अणु
 	       ThresholdLow = 0x13;
-	       break;
-	    }
+	       अवरोध;
+	    पूर्ण
 	    i++;
-	 } else {
+	 पूर्ण अन्यथा अणु
 	    ThresholdLow = templ;
-	    break;
-	 }
-      } while(queuedata[i] != 0xFF);
+	    अवरोध;
+	 पूर्ण
+      पूर्ण जबतक(queuedata[i] != 0xFF);
 
-   } else {
+   पूर्ण अन्यथा अणु
 
-      if(SiS_Pr->ChipType != SIS_730) i = 9;
+      अगर(SiS_Pr->ChipType != SIS_730) i = 9;
       ThresholdLow = 0x02;
 
-   }
+   पूर्ण
 
    /* Write CRT/CPU threshold low, CRT/Engine threshold high */
    data = ((ThresholdLow & 0x0f) << 4) | 0x0f;
@@ -2488,476 +2489,476 @@ SiS_SetCRT1FIFO_630(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
 
    /* Write CRT/CPU threshold high (gap = 3) */
    data = ThresholdLow + 3;
-   if(data > 0x0f) data = 0x0f;
+   अगर(data > 0x0f) data = 0x0f;
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x09,0x80,data);
 
-  /* Write foreground and background queue */
-   templ = sisfb_read_nbridge_pci_dword(SiS_Pr, 0x50);
+  /* Write क्रमeground and background queue */
+   templ = sisfb_पढ़ो_nbridge_pci_dword(SiS_Pr, 0x50);
 
-   if(SiS_Pr->ChipType == SIS_730) {
+   अगर(SiS_Pr->ChipType == SIS_730) अणु
 
       templ &= 0xfffff9ff;
       templ |= ((queuedata[i] & 0xc0) << 3);
 
-   } else {
+   पूर्ण अन्यथा अणु
 
       templ &= 0xf0ffffff;
-      if( (ModeNo <= 0x13) &&
+      अगर( (ModeNo <= 0x13) &&
           (SiS_Pr->ChipType == SIS_630) &&
-	  (SiS_Pr->ChipRevision >= 0x30) ) {
+	  (SiS_Pr->ChipRevision >= 0x30) ) अणु
 	 templ |= 0x0b000000;
-      } else {
+      पूर्ण अन्यथा अणु
          templ |= ((queuedata[i] & 0xf0) << 20);
-      }
+      पूर्ण
 
-   }
+   पूर्ण
 
-   sisfb_write_nbridge_pci_dword(SiS_Pr, 0x50, templ);
-   templ = sisfb_read_nbridge_pci_dword(SiS_Pr, 0xA0);
+   sisfb_ग_लिखो_nbridge_pci_dword(SiS_Pr, 0x50, templ);
+   templ = sisfb_पढ़ो_nbridge_pci_dword(SiS_Pr, 0xA0);
 
-   /* GUI grant timer (PCI config 0xA3) */
-   if(SiS_Pr->ChipType == SIS_730) {
+   /* GUI grant समयr (PCI config 0xA3) */
+   अगर(SiS_Pr->ChipType == SIS_730) अणु
 
       templ &= 0x00ffffff;
       datal = queuedata[i] << 8;
       templ |= (((datal & 0x0f00) | ((datal & 0x3000) >> 8)) << 20);
 
-   } else {
+   पूर्ण अन्यथा अणु
 
       templ &= 0xf0ffffff;
       templ |= ((queuedata[i] & 0x0f) << 24);
 
-   }
+   पूर्ण
 
-   sisfb_write_nbridge_pci_dword(SiS_Pr, 0xA0, templ);
-}
-#endif /* CONFIG_FB_SIS_300 */
+   sisfb_ग_लिखो_nbridge_pci_dword(SiS_Pr, 0xA0, templ);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FB_SIS_300 */
 
-#ifdef CONFIG_FB_SIS_315
-static void
-SiS_SetCRT1FIFO_310(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short ModeIdIndex)
-{
-   unsigned short modeflag;
+#अगर_घोषित CONFIG_FB_SIS_315
+अटल व्योम
+SiS_SetCRT1FIFO_310(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo, अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु modeflag;
 
-   /* disable auto-threshold */
+   /* disable स्वतः-threshold */
    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x3D,0xFE);
 
    modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
 
    SiS_SetReg(SiS_Pr->SiS_P3c4,0x08,0xAE);
    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x09,0xF0);
-   if(ModeNo > 0x13) {
-      if(SiS_Pr->ChipType >= XGI_20) {
+   अगर(ModeNo > 0x13) अणु
+      अगर(SiS_Pr->ChipType >= XGI_20) अणु
 	 SiS_SetReg(SiS_Pr->SiS_P3c4,0x08,0x34);
 	 SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x3D,0x01);
-      } else if(SiS_Pr->ChipType >= SIS_661) {
-	 if(!(modeflag & HalfDCLK)) {
+      पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_661) अणु
+	 अगर(!(modeflag & HalfDCLK)) अणु
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x08,0x34);
 	    SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x3D,0x01);
-	 }
-      } else {
-	 if((!(modeflag & DoubleScanMode)) || (!(modeflag & HalfDCLK))) {
+	 पूर्ण
+      पूर्ण अन्यथा अणु
+	 अगर((!(modeflag & DoubleScanMode)) || (!(modeflag & HalfDCLK))) अणु
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x08,0x34);
 	    SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x3D,0x01);
-	 }
-      }
-   }
-}
-#endif
+	 पूर्ण
+      पूर्ण
+   पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*********************************************/
 /*              MODE REGISTERS               */
 /*********************************************/
 
-static void
-SiS_SetVCLKState(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short RefreshRateTableIndex, unsigned short ModeIdIndex)
-{
-   unsigned short data = 0, VCLK = 0, index = 0;
+अटल व्योम
+SiS_SetVCLKState(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु RefreshRateTableIndex, अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु data = 0, VCLK = 0, index = 0;
 
-   if(ModeNo > 0x13) {
-      if(SiS_Pr->UseCustomMode) {
+   अगर(ModeNo > 0x13) अणु
+      अगर(SiS_Pr->UseCustomMode) अणु
          VCLK = SiS_Pr->CSRClock;
-      } else {
+      पूर्ण अन्यथा अणु
          index = SiS_GetVCLK2Ptr(SiS_Pr, ModeNo, ModeIdIndex, RefreshRateTableIndex);
          VCLK = SiS_Pr->SiS_VCLKData[index].CLOCK;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
-   if(SiS_Pr->ChipType < SIS_315H) {
-#ifdef CONFIG_FB_SIS_300
-      if(VCLK > 150) data |= 0x80;
+   अगर(SiS_Pr->ChipType < SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+      अगर(VCLK > 150) data |= 0x80;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x07,0x7B,data);
 
       data = 0x00;
-      if(VCLK >= 150) data |= 0x08;
+      अगर(VCLK >= 150) data |= 0x08;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x32,0xF7,data);
-#endif
-   } else if(SiS_Pr->ChipType < XGI_20) {
-#ifdef CONFIG_FB_SIS_315
-      if(VCLK >= 166) data |= 0x0c;
+#पूर्ण_अगर
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType < XGI_20) अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+      अगर(VCLK >= 166) data |= 0x0c;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x32,0xf3,data);
 
-      if(VCLK >= 166) {
+      अगर(VCLK >= 166) अणु
          SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x1f,0xe7);
-      }
-#endif
-   } else {
-#ifdef CONFIG_FB_SIS_315
-      if(VCLK >= 200) data |= 0x0c;
-      if(SiS_Pr->ChipType == XGI_20) data &= ~0x04;
+      पूर्ण
+#पूर्ण_अगर
+   पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+      अगर(VCLK >= 200) data |= 0x0c;
+      अगर(SiS_Pr->ChipType == XGI_20) data &= ~0x04;
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x32,0xf3,data);
-      if(SiS_Pr->ChipType != XGI_20) {
+      अगर(SiS_Pr->ChipType != XGI_20) अणु
          data = SiS_GetReg(SiS_Pr->SiS_P3c4,0x1f) & 0xe7;
-	 if(VCLK < 200) data |= 0x10;
+	 अगर(VCLK < 200) data |= 0x10;
 	 SiS_SetReg(SiS_Pr->SiS_P3c4,0x1f,data);
-      }
-#endif
-   }
+      पूर्ण
+#पूर्ण_अगर
+   पूर्ण
 
    /* DAC speed */
-   if(SiS_Pr->ChipType >= SIS_661) {
+   अगर(SiS_Pr->ChipType >= SIS_661) अणु
 
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x07,0xE8,0x10);
 
-   } else {
+   पूर्ण अन्यथा अणु
 
       data = 0x03;
-      if(VCLK >= 260)      data = 0x00;
-      else if(VCLK >= 160) data = 0x01;
-      else if(VCLK >= 135) data = 0x02;
+      अगर(VCLK >= 260)      data = 0x00;
+      अन्यथा अगर(VCLK >= 160) data = 0x01;
+      अन्यथा अगर(VCLK >= 135) data = 0x02;
 
-      if(SiS_Pr->ChipType == SIS_540) {
+      अगर(SiS_Pr->ChipType == SIS_540) अणु
          /* Was == 203 or < 234 which made no sense */
-         if (VCLK < 234) data = 0x02;
-      }
+         अगर (VCLK < 234) data = 0x02;
+      पूर्ण
 
-      if(SiS_Pr->ChipType < SIS_315H) {
+      अगर(SiS_Pr->ChipType < SIS_315H) अणु
          SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x07,0xFC,data);
-      } else {
-         if(SiS_Pr->ChipType > SIS_315PRO) {
-            if(ModeNo > 0x13) data &= 0xfc;
-         }
+      पूर्ण अन्यथा अणु
+         अगर(SiS_Pr->ChipType > SIS_315PRO) अणु
+            अगर(ModeNo > 0x13) data &= 0xfc;
+         पूर्ण
          SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x07,0xF8,data);
-      }
+      पूर्ण
 
-   }
-}
+   पूर्ण
+पूर्ण
 
-static void
-SiS_SetCRT1ModeRegs(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex, unsigned short RRTI)
-{
-   unsigned short data, infoflag = 0, modeflag;
-#ifdef CONFIG_FB_SIS_315
-   unsigned char  *ROMAddr  = SiS_Pr->VirtualRomBase;
-   unsigned short data2, data3;
-#endif
+अटल व्योम
+SiS_SetCRT1ModeRegs(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex, अचिन्हित लघु RRTI)
+अणु
+   अचिन्हित लघु data, infoflag = 0, modeflag;
+#अगर_घोषित CONFIG_FB_SIS_315
+   अचिन्हित अक्षर  *ROMAddr  = SiS_Pr->VirtualRomBase;
+   अचिन्हित लघु data2, data3;
+#पूर्ण_अगर
 
    modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       infoflag = SiS_Pr->CInfoFlag;
-   } else {
-      if(ModeNo > 0x13) {
+   पूर्ण अन्यथा अणु
+      अगर(ModeNo > 0x13) अणु
 	 infoflag = SiS_Pr->SiS_RefIndex[RRTI].Ext_InfoFlag;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    /* Disable DPMS */
    SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x1F,0x3F);
 
    data = 0;
-   if(ModeNo > 0x13) {
-      if(SiS_Pr->SiS_ModeType > ModeEGA) {
+   अगर(ModeNo > 0x13) अणु
+      अगर(SiS_Pr->SiS_ModeType > ModeEGA) अणु
          data |= 0x02;
          data |= ((SiS_Pr->SiS_ModeType - ModeVGA) << 2);
-      }
-      if(infoflag & InterlaceMode) data |= 0x20;
-   }
+      पूर्ण
+      अगर(infoflag & InterlaceMode) data |= 0x20;
+   पूर्ण
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x06,0xC0,data);
 
-   if(SiS_Pr->ChipType != SIS_300) {
+   अगर(SiS_Pr->ChipType != SIS_300) अणु
       data = 0;
-      if(infoflag & InterlaceMode) {
+      अगर(infoflag & InterlaceMode) अणु
 	 /* data = (Hsync / 8) - ((Htotal / 8) / 2) + 3 */
-	 int hrs = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x04) |
+	 पूर्णांक hrs = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x04) |
 		    ((SiS_GetReg(SiS_Pr->SiS_P3c4,0x0b) & 0xc0) << 2)) - 3;
-	 int hto = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x00) |
+	 पूर्णांक hto = (SiS_GetReg(SiS_Pr->SiS_P3d4,0x00) |
 		    ((SiS_GetReg(SiS_Pr->SiS_P3c4,0x0b) & 0x03) << 8)) + 5;
 	 data = hrs - (hto >> 1) + 3;
-      }
+      पूर्ण
       SiS_SetReg(SiS_Pr->SiS_P3d4,0x19,data);
       SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x1a,0xFC,((data >> 8) & 0x03));
-   }
+   पूर्ण
 
-   if(modeflag & HalfDCLK) {
+   अगर(modeflag & HalfDCLK) अणु
       SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x01,0x08);
-   }
+   पूर्ण
 
    data = 0;
-   if(modeflag & LineCompareOff) data = 0x08;
-   if(SiS_Pr->ChipType == SIS_300) {
+   अगर(modeflag & LineCompareOff) data = 0x08;
+   अगर(SiS_Pr->ChipType == SIS_300) अणु
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x0F,0xF7,data);
-   } else {
-      if(SiS_Pr->ChipType >= XGI_20) data |= 0x20;
-      if(SiS_Pr->SiS_ModeType == ModeEGA) {
-	 if(ModeNo > 0x13) {
+   पूर्ण अन्यथा अणु
+      अगर(SiS_Pr->ChipType >= XGI_20) data |= 0x20;
+      अगर(SiS_Pr->SiS_ModeType == ModeEGA) अणु
+	 अगर(ModeNo > 0x13) अणु
 	    data |= 0x40;
-	 }
-      }
+	 पूर्ण
+      पूर्ण
       SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x0F,0xB7,data);
-   }
+   पूर्ण
 
-#ifdef CONFIG_FB_SIS_315
-   if(SiS_Pr->ChipType >= SIS_315H) {
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर(SiS_Pr->ChipType >= SIS_315H) अणु
       SiS_SetRegAND(SiS_Pr->SiS_P3c4,0x31,0xfb);
-   }
+   पूर्ण
 
-   if(SiS_Pr->ChipType == SIS_315PRO) {
+   अगर(SiS_Pr->ChipType == SIS_315PRO) अणु
 
       data = SiS_Pr->SiS_SR15[(2 * 4) + SiS_Get310DRAMType(SiS_Pr)];
-      if(SiS_Pr->SiS_ModeType == ModeText) {
+      अगर(SiS_Pr->SiS_ModeType == ModeText) अणु
 	 data &= 0xc7;
-      } else {
+      पूर्ण अन्यथा अणु
 	 data2 = SiS_GetOffset(SiS_Pr, ModeNo, ModeIdIndex, RRTI) >> 1;
-	 if(infoflag & InterlaceMode) data2 >>= 1;
+	 अगर(infoflag & InterlaceMode) data2 >>= 1;
 	 data3 = SiS_GetColorDepth(SiS_Pr, ModeNo, ModeIdIndex) >> 1;
-	 if(data3) data2 /= data3;
-	 if(data2 >= 0x50) {
+	 अगर(data3) data2 /= data3;
+	 अगर(data2 >= 0x50) अणु
 	    data &= 0x0f;
 	    data |= 0x50;
-	 }
-      }
+	 पूर्ण
+      पूर्ण
       SiS_SetReg(SiS_Pr->SiS_P3c4,0x17,data);
 
-   } else if((SiS_Pr->ChipType == SIS_330) || (SiS_Pr->SiS_SysFlags & SF_760LFB)) {
+   पूर्ण अन्यथा अगर((SiS_Pr->ChipType == SIS_330) || (SiS_Pr->SiS_SysFlags & SF_760LFB)) अणु
 
       data = SiS_Get310DRAMType(SiS_Pr);
-      if(SiS_Pr->ChipType == SIS_330) {
+      अगर(SiS_Pr->ChipType == SIS_330) अणु
 	 data = SiS_Pr->SiS_SR15[(2 * 4) + data];
-      } else {
-	 if(SiS_Pr->SiS_ROMNew)	     data = ROMAddr[0xf6];
-	 else if(SiS_Pr->SiS_UseROM) data = ROMAddr[0x100 + data];
-	 else			     data = 0xba;
-      }
-      if(SiS_Pr->SiS_ModeType <= ModeEGA) {
+      पूर्ण अन्यथा अणु
+	 अगर(SiS_Pr->SiS_ROMNew)	     data = ROMAddr[0xf6];
+	 अन्यथा अगर(SiS_Pr->SiS_UseROM) data = ROMAddr[0x100 + data];
+	 अन्यथा			     data = 0xba;
+      पूर्ण
+      अगर(SiS_Pr->SiS_ModeType <= ModeEGA) अणु
 	 data &= 0xc7;
-      } else {
-	 if(SiS_Pr->UseCustomMode) {
+      पूर्ण अन्यथा अणु
+	 अगर(SiS_Pr->UseCustomMode) अणु
 	    data2 = SiS_Pr->CSRClock;
-	 } else {
+	 पूर्ण अन्यथा अणु
 	    data2 = SiS_GetVCLK2Ptr(SiS_Pr, ModeNo, ModeIdIndex, RRTI);
 	    data2 = SiS_Pr->SiS_VCLKData[data2].CLOCK;
-	 }
+	 पूर्ण
 
 	 data3 = SiS_GetColorDepth(SiS_Pr, ModeNo, ModeIdIndex) >> 1;
-	 if(data3) data2 *= data3;
+	 अगर(data3) data2 *= data3;
 
-	 data2 = ((unsigned int)(SiS_GetMCLK(SiS_Pr) * 1024)) / data2;
+	 data2 = ((अचिन्हित पूर्णांक)(SiS_GetMCLK(SiS_Pr) * 1024)) / data2;
 
-	 if(SiS_Pr->ChipType == SIS_330) {
-	    if(SiS_Pr->SiS_ModeType != Mode16Bpp) {
-	       if     (data2 >= 0x19c) data = 0xba;
-	       else if(data2 >= 0x140) data = 0x7a;
-	       else if(data2 >= 0x101) data = 0x3a;
-	       else if(data2 >= 0xf5)  data = 0x32;
-	       else if(data2 >= 0xe2)  data = 0x2a;
-	       else if(data2 >= 0xc4)  data = 0x22;
-	       else if(data2 >= 0xac)  data = 0x1a;
-	       else if(data2 >= 0x9e)  data = 0x12;
-	       else if(data2 >= 0x8e)  data = 0x0a;
-	       else                    data = 0x02;
-	    } else {
-	       if(data2 >= 0x127)      data = 0xba;
-	       else                    data = 0x7a;
-	    }
-	 } else {  /* 76x+LFB */
-	    if     (data2 >= 0x190) data = 0xba;
-	    else if(data2 >= 0xff)  data = 0x7a;
-	    else if(data2 >= 0xd3)  data = 0x3a;
-	    else if(data2 >= 0xa9)  data = 0x1a;
-	    else if(data2 >= 0x93)  data = 0x0a;
-	    else                    data = 0x02;
-	 }
-      }
+	 अगर(SiS_Pr->ChipType == SIS_330) अणु
+	    अगर(SiS_Pr->SiS_ModeType != Mode16Bpp) अणु
+	       अगर     (data2 >= 0x19c) data = 0xba;
+	       अन्यथा अगर(data2 >= 0x140) data = 0x7a;
+	       अन्यथा अगर(data2 >= 0x101) data = 0x3a;
+	       अन्यथा अगर(data2 >= 0xf5)  data = 0x32;
+	       अन्यथा अगर(data2 >= 0xe2)  data = 0x2a;
+	       अन्यथा अगर(data2 >= 0xc4)  data = 0x22;
+	       अन्यथा अगर(data2 >= 0xac)  data = 0x1a;
+	       अन्यथा अगर(data2 >= 0x9e)  data = 0x12;
+	       अन्यथा अगर(data2 >= 0x8e)  data = 0x0a;
+	       अन्यथा                    data = 0x02;
+	    पूर्ण अन्यथा अणु
+	       अगर(data2 >= 0x127)      data = 0xba;
+	       अन्यथा                    data = 0x7a;
+	    पूर्ण
+	 पूर्ण अन्यथा अणु  /* 76x+LFB */
+	    अगर     (data2 >= 0x190) data = 0xba;
+	    अन्यथा अगर(data2 >= 0xff)  data = 0x7a;
+	    अन्यथा अगर(data2 >= 0xd3)  data = 0x3a;
+	    अन्यथा अगर(data2 >= 0xa9)  data = 0x1a;
+	    अन्यथा अगर(data2 >= 0x93)  data = 0x0a;
+	    अन्यथा                    data = 0x02;
+	 पूर्ण
+      पूर्ण
       SiS_SetReg(SiS_Pr->SiS_P3c4,0x17,data);
 
-   }
+   पूर्ण
       /* XGI: Nothing. */
       /* TODO: Check SiS340 */
-#endif
+#पूर्ण_अगर
 
    data = 0x60;
-   if(SiS_Pr->SiS_ModeType != ModeText) {
+   अगर(SiS_Pr->SiS_ModeType != ModeText) अणु
       data ^= 0x60;
-      if(SiS_Pr->SiS_ModeType != ModeEGA) {
+      अगर(SiS_Pr->SiS_ModeType != ModeEGA) अणु
          data ^= 0xA0;
-      }
-   }
+      पूर्ण
+   पूर्ण
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x21,0x1F,data);
 
    SiS_SetVCLKState(SiS_Pr, ModeNo, RRTI, ModeIdIndex);
 
-#ifdef CONFIG_FB_SIS_315
-   if(((SiS_Pr->ChipType >= SIS_315H) && (SiS_Pr->ChipType < SIS_661)) ||
-       (SiS_Pr->ChipType == XGI_40)) {
-      if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) {
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर(((SiS_Pr->ChipType >= SIS_315H) && (SiS_Pr->ChipType < SIS_661)) ||
+       (SiS_Pr->ChipType == XGI_40)) अणु
+      अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) अणु
          SiS_SetReg(SiS_Pr->SiS_P3d4,0x52,0x2c);
-      } else {
+      पूर्ण अन्यथा अणु
          SiS_SetReg(SiS_Pr->SiS_P3d4,0x52,0x6c);
-      }
-   } else if(SiS_Pr->ChipType == XGI_20) {
-      if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) {
+      पूर्ण
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType == XGI_20) अणु
+      अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) अणु
          SiS_SetReg(SiS_Pr->SiS_P3d4,0x52,0x33);
-      } else {
+      पूर्ण अन्यथा अणु
          SiS_SetReg(SiS_Pr->SiS_P3d4,0x52,0x73);
-      }
+      पूर्ण
       SiS_SetReg(SiS_Pr->SiS_P3d4,0x51,0x02);
-   }
-#endif
-}
+   पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_FB_SIS_315
-static void
-SiS_SetupDualChip(struct SiS_Private *SiS_Pr)
-{
-#if 0
+#अगर_घोषित CONFIG_FB_SIS_315
+अटल व्योम
+SiS_SetupDualChip(काष्ठा SiS_Private *SiS_Pr)
+अणु
+#अगर 0
    /* TODO: Find out about IOAddress2 */
    SISIOADDRESS P2_3c2 = SiS_Pr->IOAddress2 + 0x12;
    SISIOADDRESS P2_3c4 = SiS_Pr->IOAddress2 + 0x14;
    SISIOADDRESS P2_3ce = SiS_Pr->IOAddress2 + 0x1e;
-   int i;
+   पूर्णांक i;
 
-   if((SiS_Pr->ChipRevision != 0) ||
+   अगर((SiS_Pr->ChipRevision != 0) ||
       (!(SiS_GetReg(SiS_Pr->SiS_P3c4,0x3a) & 0x04)))
-      return;
+      वापस;
 
-   for(i = 0; i <= 4; i++) {					/* SR00 - SR04 */
+   क्रम(i = 0; i <= 4; i++) अणु					/* SR00 - SR04 */
       SiS_SetReg(P2_3c4,i,SiS_GetReg(SiS_Pr->SiS_P3c4,i));
-   }
-   for(i = 0; i <= 8; i++) {					/* GR00 - GR08 */
+   पूर्ण
+   क्रम(i = 0; i <= 8; i++) अणु					/* GR00 - GR08 */
       SiS_SetReg(P2_3ce,i,SiS_GetReg(SiS_Pr->SiS_P3ce,i));
-   }
+   पूर्ण
    SiS_SetReg(P2_3c4,0x05,0x86);
    SiS_SetReg(P2_3c4,0x06,SiS_GetReg(SiS_Pr->SiS_P3c4,0x06));	/* SR06 */
    SiS_SetReg(P2_3c4,0x21,SiS_GetReg(SiS_Pr->SiS_P3c4,0x21));	/* SR21 */
    SiS_SetRegByte(P2_3c2,SiS_GetRegByte(SiS_Pr->SiS_P3cc));	/* MISC */
    SiS_SetReg(P2_3c4,0x05,0x00);
-#endif
-}
-#endif
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
 /*********************************************/
 /*                 LOAD DAC                  */
 /*********************************************/
 
-static void
-SiS_WriteDAC(struct SiS_Private *SiS_Pr, SISIOADDRESS DACData, unsigned short shiftflag,
-             unsigned short dl, unsigned short ah, unsigned short al, unsigned short dh)
-{
-   unsigned short d1, d2, d3;
+अटल व्योम
+SiS_WriteDAC(काष्ठा SiS_Private *SiS_Pr, SISIOADDRESS DACData, अचिन्हित लघु shअगरtflag,
+             अचिन्हित लघु dl, अचिन्हित लघु ah, अचिन्हित लघु al, अचिन्हित लघु dh)
+अणु
+   अचिन्हित लघु d1, d2, d3;
 
-   switch(dl) {
-   case  0: d1 = dh; d2 = ah; d3 = al; break;
-   case  1: d1 = ah; d2 = al; d3 = dh; break;
-   default: d1 = al; d2 = dh; d3 = ah;
-   }
-   SiS_SetRegByte(DACData, (d1 << shiftflag));
-   SiS_SetRegByte(DACData, (d2 << shiftflag));
-   SiS_SetRegByte(DACData, (d3 << shiftflag));
-}
+   चयन(dl) अणु
+   हाल  0: d1 = dh; d2 = ah; d3 = al; अवरोध;
+   हाल  1: d1 = ah; d2 = al; d3 = dh; अवरोध;
+   शेष: d1 = al; d2 = dh; d3 = ah;
+   पूर्ण
+   SiS_SetRegByte(DACData, (d1 << shअगरtflag));
+   SiS_SetRegByte(DACData, (d2 << shअगरtflag));
+   SiS_SetRegByte(DACData, (d3 << shअगरtflag));
+पूर्ण
 
-void
-SiS_LoadDAC(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short ModeIdIndex)
-{
-   unsigned short data, data2, time, i, j, k, m, n, o;
-   unsigned short si, di, bx, sf;
+व्योम
+SiS_LoadDAC(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo, अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु data, data2, समय, i, j, k, m, n, o;
+   अचिन्हित लघु si, di, bx, sf;
    SISIOADDRESS DACAddr, DACData;
-   const unsigned char *table = NULL;
+   स्थिर अचिन्हित अक्षर *table = शून्य;
 
    data = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex) & DACInfoFlag;
 
-   j = time = 64;
-   if(data == 0x00)      table = SiS_MDA_DAC;
-   else if(data == 0x08) table = SiS_CGA_DAC;
-   else if(data == 0x10) table = SiS_EGA_DAC;
-   else if(data == 0x18) {
+   j = समय = 64;
+   अगर(data == 0x00)      table = SiS_MDA_DAC;
+   अन्यथा अगर(data == 0x08) table = SiS_CGA_DAC;
+   अन्यथा अगर(data == 0x10) table = SiS_EGA_DAC;
+   अन्यथा अगर(data == 0x18) अणु
       j = 16;
-      time = 256;
+      समय = 256;
       table = SiS_VGA_DAC;
-   }
+   पूर्ण
 
-   if( ( (SiS_Pr->SiS_VBInfo & SetCRT2ToLCD) &&        /* 301B-DH LCD */
+   अगर( ( (SiS_Pr->SiS_VBInfo & SetCRT2ToLCD) &&        /* 301B-DH LCD */
          (SiS_Pr->SiS_VBType & VB_NoLCD) )        ||
        (SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)       ||   /* LCDA */
-       (!(SiS_Pr->SiS_SetFlag & ProgrammingCRT2)) ) {  /* Programming CRT1 */
+       (!(SiS_Pr->SiS_SetFlag & ProgrammingCRT2)) ) अणु  /* Programming CRT1 */
       SiS_SetRegByte(SiS_Pr->SiS_P3c6,0xFF);
       DACAddr = SiS_Pr->SiS_P3c8;
       DACData = SiS_Pr->SiS_P3c9;
       sf = 0;
-   } else {
+   पूर्ण अन्यथा अणु
       DACAddr = SiS_Pr->SiS_Part5Port;
       DACData = SiS_Pr->SiS_Part5Port + 1;
       sf = 2;
-   }
+   पूर्ण
 
    SiS_SetRegByte(DACAddr,0x00);
 
-   for(i = 0; i < j; i++) {
+   क्रम(i = 0; i < j; i++) अणु
       data = table[i];
-      for(k = 0; k < 3; k++) {
+      क्रम(k = 0; k < 3; k++) अणु
 	data2 = 0;
-	if(data & 0x01) data2 += 0x2A;
-	if(data & 0x02) data2 += 0x15;
+	अगर(data & 0x01) data2 += 0x2A;
+	अगर(data & 0x02) data2 += 0x15;
 	SiS_SetRegByte(DACData, (data2 << sf));
 	data >>= 2;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
-   if(time == 256) {
-      for(i = 16; i < 32; i++) {
+   अगर(समय == 256) अणु
+      क्रम(i = 16; i < 32; i++) अणु
 	 data = table[i] << sf;
-	 for(k = 0; k < 3; k++) SiS_SetRegByte(DACData, data);
-      }
+	 क्रम(k = 0; k < 3; k++) SiS_SetRegByte(DACData, data);
+      पूर्ण
       si = 32;
-      for(m = 0; m < 9; m++) {
+      क्रम(m = 0; m < 9; m++) अणु
 	 di = si;
 	 bx = si + 4;
-	 for(n = 0; n < 3; n++) {
-	    for(o = 0; o < 5; o++) {
+	 क्रम(n = 0; n < 3; n++) अणु
+	    क्रम(o = 0; o < 5; o++) अणु
 	       SiS_WriteDAC(SiS_Pr, DACData, sf, n, table[di], table[bx], table[si]);
 	       si++;
-	    }
+	    पूर्ण
 	    si -= 2;
-	    for(o = 0; o < 3; o++) {
+	    क्रम(o = 0; o < 3; o++) अणु
 	       SiS_WriteDAC(SiS_Pr, DACData, sf, n, table[di], table[si], table[bx]);
 	       si--;
-	    }
-	 }            /* for n < 3 */
+	    पूर्ण
+	 पूर्ण            /* क्रम n < 3 */
 	 si += 5;
-      }               /* for m < 9 */
-   }
-}
+      पूर्ण               /* क्रम m < 9 */
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*         SET CRT1 REGISTER GROUP           */
 /*********************************************/
 
-static void
-SiS_SetCRT1Group(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned short ModeIdIndex)
-{
-   unsigned short StandTableIndex, RefreshRateTableIndex;
+अटल व्योम
+SiS_SetCRT1Group(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo, अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु StandTableIndex, RefreshRateTableIndex;
 
    SiS_Pr->SiS_CRT1Mode = ModeNo;
 
    StandTableIndex = SiS_GetModePtr(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(SiS_Pr->SiS_SetFlag & LowModeTests) {
-      if(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2)) {
+   अगर(SiS_Pr->SiS_SetFlag & LowModeTests) अणु
+      अगर(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2)) अणु
          SiS_DisableBridge(SiS_Pr);
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    SiS_ResetSegmentRegisters(SiS_Pr);
 
@@ -2972,220 +2973,220 @@ SiS_SetCRT1Group(struct SiS_Private *SiS_Pr, unsigned short ModeNo, unsigned sho
    SiS_Pr->SiS_SelectCRT2Rate = 0;
    SiS_Pr->SiS_SetFlag &= (~ProgrammingCRT2);
 
-   if(SiS_Pr->SiS_VBInfo & SetSimuScanMode) {
-      if(SiS_Pr->SiS_VBInfo & SetInSlaveMode) {
+   अगर(SiS_Pr->SiS_VBInfo & SetSimuScanMode) अणु
+      अगर(SiS_Pr->SiS_VBInfo & SetInSlaveMode) अणु
          SiS_Pr->SiS_SetFlag |= ProgrammingCRT2;
-      }
-   }
+      पूर्ण
+   पूर्ण
 
-   if(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) {
+   अगर(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA) अणु
       SiS_Pr->SiS_SetFlag |= ProgrammingCRT2;
-   }
+   पूर्ण
 
    RefreshRateTableIndex = SiS_GetRatePtr(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(!(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) {
+   अगर(!(SiS_Pr->SiS_VBInfo & SetCRT2ToLCDA)) अणु
       SiS_Pr->SiS_SetFlag &= ~ProgrammingCRT2;
-   }
+   पूर्ण
 
-   if(RefreshRateTableIndex != 0xFFFF) {
+   अगर(RefreshRateTableIndex != 0xFFFF) अणु
       SiS_SetCRT1Sync(SiS_Pr, RefreshRateTableIndex);
       SiS_SetCRT1CRTC(SiS_Pr, ModeNo, ModeIdIndex, RefreshRateTableIndex);
       SiS_SetCRT1Offset(SiS_Pr, ModeNo, ModeIdIndex, RefreshRateTableIndex);
       SiS_SetCRT1VCLK(SiS_Pr, ModeNo, ModeIdIndex, RefreshRateTableIndex);
-   }
+   पूर्ण
 
-   switch(SiS_Pr->ChipType) {
-#ifdef CONFIG_FB_SIS_300
-   case SIS_300:
+   चयन(SiS_Pr->ChipType) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+   हाल SIS_300:
       SiS_SetCRT1FIFO_300(SiS_Pr, ModeNo, RefreshRateTableIndex);
-      break;
-   case SIS_540:
-   case SIS_630:
-   case SIS_730:
+      अवरोध;
+   हाल SIS_540:
+   हाल SIS_630:
+   हाल SIS_730:
       SiS_SetCRT1FIFO_630(SiS_Pr, ModeNo, RefreshRateTableIndex);
-      break;
-#endif
-   default:
-#ifdef CONFIG_FB_SIS_315
-      if(SiS_Pr->ChipType == XGI_20) {
-         unsigned char sr2b = 0, sr2c = 0;
-         switch(ModeNo) {
-	 case 0x00:
-	 case 0x01: sr2b = 0x4e; sr2c = 0xe9; break;
-	 case 0x04:
-	 case 0x05:
-	 case 0x0d: sr2b = 0x1b; sr2c = 0xe3; break;
-	 }
-	 if(sr2b) {
+      अवरोध;
+#पूर्ण_अगर
+   शेष:
+#अगर_घोषित CONFIG_FB_SIS_315
+      अगर(SiS_Pr->ChipType == XGI_20) अणु
+         अचिन्हित अक्षर sr2b = 0, sr2c = 0;
+         चयन(ModeNo) अणु
+	 हाल 0x00:
+	 हाल 0x01: sr2b = 0x4e; sr2c = 0xe9; अवरोध;
+	 हाल 0x04:
+	 हाल 0x05:
+	 हाल 0x0d: sr2b = 0x1b; sr2c = 0xe3; अवरोध;
+	 पूर्ण
+	 अगर(sr2b) अणु
             SiS_SetReg(SiS_Pr->SiS_P3c4,0x2b,sr2b);
 	    SiS_SetReg(SiS_Pr->SiS_P3c4,0x2c,sr2c);
 	    SiS_SetRegByte(SiS_Pr->SiS_P3c2,(SiS_GetRegByte(SiS_Pr->SiS_P3cc) | 0x0c));
-	 }
-      }
+	 पूर्ण
+      पूर्ण
       SiS_SetCRT1FIFO_310(SiS_Pr, ModeNo, ModeIdIndex);
-#endif
-      break;
-   }
+#पूर्ण_अगर
+      अवरोध;
+   पूर्ण
 
    SiS_SetCRT1ModeRegs(SiS_Pr, ModeNo, ModeIdIndex, RefreshRateTableIndex);
 
-#ifdef CONFIG_FB_SIS_315
-   if(SiS_Pr->ChipType == XGI_40) {
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर(SiS_Pr->ChipType == XGI_40) अणु
       SiS_SetupDualChip(SiS_Pr);
-   }
-#endif
+   पूर्ण
+#पूर्ण_अगर
 
    SiS_LoadDAC(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(SiS_Pr->SiS_flag_clearbuffer) {
+   अगर(SiS_Pr->SiS_flag_clearbuffer) अणु
       SiS_ClearBuffer(SiS_Pr, ModeNo);
-   }
+   पूर्ण
 
-   if(!(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2 | SetCRT2ToLCDA))) {
+   अगर(!(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2 | SetCRT2ToLCDA))) अणु
       SiS_WaitRetrace1(SiS_Pr);
       SiS_DisplayOn(SiS_Pr);
-   }
-}
+   पूर्ण
+पूर्ण
 
 /*********************************************/
 /*       HELPER: VIDEO BRIDGE PROG CLK       */
 /*********************************************/
 
-static void
-SiS_InitVB(struct SiS_Private *SiS_Pr)
-{
-   unsigned char *ROMAddr = SiS_Pr->VirtualRomBase;
+अटल व्योम
+SiS_InitVB(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   अचिन्हित अक्षर *ROMAddr = SiS_Pr->VirtualRomBase;
 
    SiS_Pr->Init_P4_0E = 0;
-   if(SiS_Pr->SiS_ROMNew) {
+   अगर(SiS_Pr->SiS_ROMNew) अणु
       SiS_Pr->Init_P4_0E = ROMAddr[0x82];
-   } else if(SiS_Pr->ChipType >= XGI_40) {
-      if(SiS_Pr->SiS_XGIROM) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= XGI_40) अणु
+      अगर(SiS_Pr->SiS_XGIROM) अणु
          SiS_Pr->Init_P4_0E = ROMAddr[0x80];
-      }
-   }
-}
+      पूर्ण
+   पूर्ण
+पूर्ण
 
-static void
-SiS_ResetVB(struct SiS_Private *SiS_Pr)
-{
-#ifdef CONFIG_FB_SIS_315
-   unsigned char  *ROMAddr = SiS_Pr->VirtualRomBase;
-   unsigned short temp;
+अटल व्योम
+SiS_ResetVB(काष्ठा SiS_Private *SiS_Pr)
+अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+   अचिन्हित अक्षर  *ROMAddr = SiS_Pr->VirtualRomBase;
+   अचिन्हित लघु temp;
 
-   /* VB programming clock */
-   if(SiS_Pr->SiS_UseROM) {
-      if(SiS_Pr->ChipType < SIS_330) {
+   /* VB programming घड़ी */
+   अगर(SiS_Pr->SiS_UseROM) अणु
+      अगर(SiS_Pr->ChipType < SIS_330) अणु
 	 temp = ROMAddr[VB310Data_1_2_Offset] | 0x40;
-	 if(SiS_Pr->SiS_ROMNew) temp = ROMAddr[0x80] | 0x40;
+	 अगर(SiS_Pr->SiS_ROMNew) temp = ROMAddr[0x80] | 0x40;
 	 SiS_SetReg(SiS_Pr->SiS_Part1Port,0x02,temp);
-      } else if(SiS_Pr->ChipType >= SIS_661 && SiS_Pr->ChipType < XGI_20) {
+      पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= SIS_661 && SiS_Pr->ChipType < XGI_20) अणु
 	 temp = ROMAddr[0x7e] | 0x40;
-	 if(SiS_Pr->SiS_ROMNew) temp = ROMAddr[0x80] | 0x40;
+	 अगर(SiS_Pr->SiS_ROMNew) temp = ROMAddr[0x80] | 0x40;
 	 SiS_SetReg(SiS_Pr->SiS_Part1Port,0x02,temp);
-      }
-   } else if(SiS_Pr->ChipType >= XGI_40) {
+      पूर्ण
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType >= XGI_40) अणु
       temp = 0x40;
-      if(SiS_Pr->SiS_XGIROM) temp |= ROMAddr[0x7e];
-      /* Can we do this on any chipset? */
+      अगर(SiS_Pr->SiS_XGIROM) temp |= ROMAddr[0x7e];
+      /* Can we करो this on any chipset? */
       SiS_SetReg(SiS_Pr->SiS_Part1Port,0x02,temp);
-   }
-#endif
-}
+   पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*********************************************/
 /*    HELPER: SET VIDEO/CAPTURE REGISTERS    */
 /*********************************************/
 
-static void
-SiS_StrangeStuff(struct SiS_Private *SiS_Pr)
-{
-   /* SiS65x and XGI set up some sort of "lock mode" for text
+अटल व्योम
+SiS_StrangeStuff(काष्ठा SiS_Private *SiS_Pr)
+अणु
+   /* SiS65x and XGI set up some sort of "lock mode" क्रम text
     * which locks CRT2 in some way to CRT1 timing. Disable
     * this here.
     */
-#ifdef CONFIG_FB_SIS_315
-   if((IS_SIS651) || (IS_SISM650) ||
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर((IS_SIS651) || (IS_SISM650) ||
       SiS_Pr->ChipType == SIS_340 ||
-      SiS_Pr->ChipType == XGI_40) {
+      SiS_Pr->ChipType == XGI_40) अणु
       SiS_SetReg(SiS_Pr->SiS_VidCapt, 0x3f, 0x00);   /* Fiddle with capture regs */
       SiS_SetReg(SiS_Pr->SiS_VidCapt, 0x00, 0x00);
-      SiS_SetReg(SiS_Pr->SiS_VidPlay, 0x00, 0x86);   /* (BIOS does NOT unlock) */
+      SiS_SetReg(SiS_Pr->SiS_VidPlay, 0x00, 0x86);   /* (BIOS करोes NOT unlock) */
       SiS_SetRegAND(SiS_Pr->SiS_VidPlay, 0x30, 0xfe); /* Fiddle with video regs */
       SiS_SetRegAND(SiS_Pr->SiS_VidPlay, 0x3f, 0xef);
-   }
-   /* !!! This does not support modes < 0x13 !!! */
-#endif
-}
+   पूर्ण
+   /* !!! This करोes not support modes < 0x13 !!! */
+#पूर्ण_अगर
+पूर्ण
 
 /*********************************************/
 /*     HELPER: SET AGP TIMING FOR SiS760     */
 /*********************************************/
 
-static void
-SiS_Handle760(struct SiS_Private *SiS_Pr)
-{
-#ifdef CONFIG_FB_SIS_315
-   unsigned int somebase;
-   unsigned char temp1, temp2, temp3;
+अटल व्योम
+SiS_Handle760(काष्ठा SiS_Private *SiS_Pr)
+अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+   अचिन्हित पूर्णांक somebase;
+   अचिन्हित अक्षर temp1, temp2, temp3;
 
-   if( (SiS_Pr->ChipType != SIS_760)                         ||
+   अगर( (SiS_Pr->ChipType != SIS_760)                         ||
        ((SiS_GetReg(SiS_Pr->SiS_P3d4, 0x5c) & 0xf8) != 0x80) ||
        (!(SiS_Pr->SiS_SysFlags & SF_760LFB))                 ||
        (!(SiS_Pr->SiS_SysFlags & SF_760UMA)) )
-      return;
+      वापस;
 
-   somebase = sisfb_read_mio_pci_word(SiS_Pr, 0x74);
+   somebase = sisfb_पढ़ो_mio_pci_word(SiS_Pr, 0x74);
    somebase &= 0xffff;
 
-   if(somebase == 0) return;
+   अगर(somebase == 0) वापस;
 
    temp3 = SiS_GetRegByte((somebase + 0x85)) & 0xb7;
 
-   if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) {
+   अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x31) & 0x40) अणु
       temp1 = 0x21;
       temp2 = 0x03;
       temp3 |= 0x08;
-   } else {
+   पूर्ण अन्यथा अणु
       temp1 = 0x25;
       temp2 = 0x0b;
-   }
+   पूर्ण
 
-   sisfb_write_nbridge_pci_byte(SiS_Pr, 0x7e, temp1);
-   sisfb_write_nbridge_pci_byte(SiS_Pr, 0x8d, temp2);
+   sisfb_ग_लिखो_nbridge_pci_byte(SiS_Pr, 0x7e, temp1);
+   sisfb_ग_लिखो_nbridge_pci_byte(SiS_Pr, 0x8d, temp2);
 
    SiS_SetRegByte((somebase + 0x85), temp3);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*********************************************/
 /*                 SiSSetMode()              */
 /*********************************************/
 
 bool
-SiSSetMode(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
-{
+SiSSetMode(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo)
+अणु
    SISIOADDRESS BaseAddr = SiS_Pr->IOAddress;
-   unsigned short RealModeNo, ModeIdIndex;
-   unsigned char  backupreg = 0;
-   unsigned short KeepLockReg;
+   अचिन्हित लघु RealModeNo, ModeIdIndex;
+   अचिन्हित अक्षर  backupreg = 0;
+   अचिन्हित लघु KeepLockReg;
 
    SiS_Pr->UseCustomMode = false;
    SiS_Pr->CRT1UsesCustomMode = false;
 
    SiS_Pr->SiS_flag_clearbuffer = 0;
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       ModeNo = 0xfe;
-   } else {
-      if(!(ModeNo & 0x80)) SiS_Pr->SiS_flag_clearbuffer = 1;
+   पूर्ण अन्यथा अणु
+      अगर(!(ModeNo & 0x80)) SiS_Pr->SiS_flag_clearbuffer = 1;
       ModeNo &= 0x7f;
-   }
+   पूर्ण
 
-   /* Don't use FSTN mode for CRT1 */
+   /* Don't use FSTN mode क्रम CRT1 */
    RealModeNo = ModeNo;
-   if(ModeNo == 0x5b) ModeNo = 0x56;
+   अगर(ModeNo == 0x5b) ModeNo = 0x56;
 
    SiSInitPtr(SiS_Pr);
    SiSRegInit(SiS_Pr, BaseAddr);
@@ -3202,28 +3203,28 @@ SiSSetMode(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
 
    SiS_UnLockCRT2(SiS_Pr);
 
-   if(!SiS_Pr->UseCustomMode) {
-      if(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) return false;
-   } else {
+   अगर(!SiS_Pr->UseCustomMode) अणु
+      अगर(!(SiS_SearchModeID(SiS_Pr, &ModeNo, &ModeIdIndex))) वापस false;
+   पूर्ण अन्यथा अणु
       ModeIdIndex = 0;
-   }
+   पूर्ण
 
    SiS_GetVBType(SiS_Pr);
 
-   /* Init/restore some VB registers */
+   /* Init/restore some VB रेजिस्टरs */
    SiS_InitVB(SiS_Pr);
-   if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {
-      if(SiS_Pr->ChipType >= SIS_315H) {
+   अगर(SiS_Pr->SiS_VBType & VB_SIS30xBLV) अणु
+      अगर(SiS_Pr->ChipType >= SIS_315H) अणु
          SiS_ResetVB(SiS_Pr);
 	 SiS_SetRegOR(SiS_Pr->SiS_P3c4,0x32,0x10);
 	 SiS_SetRegOR(SiS_Pr->SiS_Part2Port,0x00,0x0c);
          backupreg = SiS_GetReg(SiS_Pr->SiS_P3d4,0x38);
-      } else {
+      पूर्ण अन्यथा अणु
          backupreg = SiS_GetReg(SiS_Pr->SiS_P3d4,0x35);
-      }
-   }
+      पूर्ण
+   पूर्ण
 
-   /* Get VB information (connectors, connected devices) */
+   /* Get VB inक्रमmation (connectors, connected devices) */
    SiS_GetVBInfo(SiS_Pr, ModeNo, ModeIdIndex, (SiS_Pr->UseCustomMode) ? 0 : 1);
    SiS_SetYPbPr(SiS_Pr);
    SiS_SetTVMode(SiS_Pr, ModeNo, ModeIdIndex);
@@ -3231,35 +3232,35 @@ SiSSetMode(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
    SiS_SetLowModeTest(SiS_Pr, ModeNo);
 
    /* Check memory size (kernel framebuffer driver only) */
-   if(!SiS_CheckMemorySize(SiS_Pr, ModeNo, ModeIdIndex)) {
-      return false;
-   }
+   अगर(!SiS_CheckMemorySize(SiS_Pr, ModeNo, ModeIdIndex)) अणु
+      वापस false;
+   पूर्ण
 
    SiS_OpenCRTC(SiS_Pr);
 
-   if(SiS_Pr->UseCustomMode) {
+   अगर(SiS_Pr->UseCustomMode) अणु
       SiS_Pr->CRT1UsesCustomMode = true;
       SiS_Pr->CSRClock_CRT1 = SiS_Pr->CSRClock;
       SiS_Pr->CModeFlag_CRT1 = SiS_Pr->CModeFlag;
-   } else {
+   पूर्ण अन्यथा अणु
       SiS_Pr->CRT1UsesCustomMode = false;
-   }
+   पूर्ण
 
    /* Set mode on CRT1 */
-   if( (SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SetCRT2ToLCDA)) ||
-       (!(SiS_Pr->SiS_VBInfo & SwitchCRT2)) ) {
+   अगर( (SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SetCRT2ToLCDA)) ||
+       (!(SiS_Pr->SiS_VBInfo & SwitchCRT2)) ) अणु
       SiS_SetCRT1Group(SiS_Pr, ModeNo, ModeIdIndex);
-   }
+   पूर्ण
 
    /* Set mode on CRT2 */
-   if(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2 | SetCRT2ToLCDA)) {
-      if( (SiS_Pr->SiS_VBType & VB_SISVB)    ||
+   अगर(SiS_Pr->SiS_VBInfo & (SetSimuScanMode | SwitchCRT2 | SetCRT2ToLCDA)) अणु
+      अगर( (SiS_Pr->SiS_VBType & VB_SISVB)    ||
 	  (SiS_Pr->SiS_IF_DEF_LVDS     == 1) ||
 	  (SiS_Pr->SiS_IF_DEF_CH70xx   != 0) ||
-	  (SiS_Pr->SiS_IF_DEF_TRUMPION != 0) ) {
+	  (SiS_Pr->SiS_IF_DEF_TRUMPION != 0) ) अणु
 	 SiS_SetCRT2Group(SiS_Pr, RealModeNo);
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    SiS_HandleCRT1(SiS_Pr);
 
@@ -3268,66 +3269,66 @@ SiSSetMode(struct SiS_Private *SiS_Pr, unsigned short ModeNo)
    SiS_DisplayOn(SiS_Pr);
    SiS_SetRegByte(SiS_Pr->SiS_P3c6,0xFF);
 
-#ifdef CONFIG_FB_SIS_315
-   if(SiS_Pr->ChipType >= SIS_315H) {
-      if(SiS_Pr->SiS_IF_DEF_LVDS == 1) {
-	 if(!(SiS_IsDualEdge(SiS_Pr))) {
+#अगर_घोषित CONFIG_FB_SIS_315
+   अगर(SiS_Pr->ChipType >= SIS_315H) अणु
+      अगर(SiS_Pr->SiS_IF_DEF_LVDS == 1) अणु
+	 अगर(!(SiS_IsDualEdge(SiS_Pr))) अणु
 	    SiS_SetRegAND(SiS_Pr->SiS_Part1Port,0x13,0xfb);
-	 }
-      }
-   }
-#endif
+	 पूर्ण
+      पूर्ण
+   पूर्ण
+#पूर्ण_अगर
 
-   if(SiS_Pr->SiS_VBType & VB_SIS30xBLV) {
-      if(SiS_Pr->ChipType >= SIS_315H) {
-#ifdef CONFIG_FB_SIS_315
-	 if(!SiS_Pr->SiS_ROMNew) {
-	    if(SiS_IsVAMode(SiS_Pr)) {
+   अगर(SiS_Pr->SiS_VBType & VB_SIS30xBLV) अणु
+      अगर(SiS_Pr->ChipType >= SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+	 अगर(!SiS_Pr->SiS_ROMNew) अणु
+	    अगर(SiS_IsVAMode(SiS_Pr)) अणु
 	       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x35,0x01);
-	    } else {
+	    पूर्ण अन्यथा अणु
 	       SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x35,0xFE);
-	    }
-	 }
+	    पूर्ण
+	 पूर्ण
 
 	 SiS_SetReg(SiS_Pr->SiS_P3d4,0x38,backupreg);
 
-	 if((IS_SIS650) && (SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & 0xfc)) {
-	    if((ModeNo == 0x03) || (ModeNo == 0x10)) {
+	 अगर((IS_SIS650) && (SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & 0xfc)) अणु
+	    अगर((ModeNo == 0x03) || (ModeNo == 0x10)) अणु
 	       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x51,0x80);
 	       SiS_SetRegOR(SiS_Pr->SiS_P3d4,0x56,0x08);
-	    }
-	 }
+	    पूर्ण
+	 पूर्ण
 
-	 if(SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & SetCRT2ToLCD) {
+	 अगर(SiS_GetReg(SiS_Pr->SiS_P3d4,0x30) & SetCRT2ToLCD) अणु
 	    SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x38,0xfc);
-	 }
-#endif
-      } else if((SiS_Pr->ChipType == SIS_630) ||
-	        (SiS_Pr->ChipType == SIS_730)) {
+	 पूर्ण
+#पूर्ण_अगर
+      पूर्ण अन्यथा अगर((SiS_Pr->ChipType == SIS_630) ||
+	        (SiS_Pr->ChipType == SIS_730)) अणु
 	 SiS_SetReg(SiS_Pr->SiS_P3d4,0x35,backupreg);
-      }
-   }
+      पूर्ण
+   पूर्ण
 
    SiS_CloseCRTC(SiS_Pr);
 
    SiS_Handle760(SiS_Pr);
 
-   /* We never lock registers in XF86 */
-   if(KeepLockReg != 0xA1) SiS_SetReg(SiS_Pr->SiS_P3c4,0x05,0x00);
+   /* We never lock रेजिस्टरs in XF86 */
+   अगर(KeepLockReg != 0xA1) SiS_SetReg(SiS_Pr->SiS_P3c4,0x05,0x00);
 
-   return true;
-}
+   वापस true;
+पूर्ण
 
-#ifndef GETBITSTR
-#define GENBITSMASK(mask)   	GENMASK(1?mask,0?mask)
-#define GETBITS(var,mask)   	(((var) & GENBITSMASK(mask)) >> (0?mask))
-#define GETBITSTR(val,from,to)  ((GETBITS(val,from)) << (0?to))
-#endif
+#अगर_अघोषित GETBITSTR
+#घोषणा GENBITSMASK(mask)   	GENMASK(1?mask,0?mask)
+#घोषणा GETBITS(var,mask)   	(((var) & GENBITSMASK(mask)) >> (0?mask))
+#घोषणा GETBITSTR(val,from,to)  ((GETBITS(val,from)) << (0?to))
+#पूर्ण_अगर
 
-void
-SiS_CalcCRRegisters(struct SiS_Private *SiS_Pr, int depth)
-{
-   int x = 1; /* Fix sync */
+व्योम
+SiS_CalcCRRegisters(काष्ठा SiS_Private *SiS_Pr, पूर्णांक depth)
+अणु
+   पूर्णांक x = 1; /* Fix sync */
 
    SiS_Pr->CCRT1CRTC[0]  =  ((SiS_Pr->CHTotal >> 3) - 5) & 0xff;		/* CR0 */
    SiS_Pr->CCRT1CRTC[1]  =  (SiS_Pr->CHDisplay >> 3) - 1;			/* CR1 */
@@ -3349,10 +3350,10 @@ SiS_CalcCRRegisters(struct SiS_Private *SiS_Pr, int depth)
 
    SiS_Pr->CCRT1CRTC[16] = ((((SiS_Pr->CVBlankStart - 1) & 0x200) >> 4) >> 5); 	/* CR9 */
 
-   if(depth != 8) {
-      if(SiS_Pr->CHDisplay >= 1600)      SiS_Pr->CCRT1CRTC[16] |= 0x60;		/* SRE */
-      else if(SiS_Pr->CHDisplay >= 640)  SiS_Pr->CCRT1CRTC[16] |= 0x40;
-   }
+   अगर(depth != 8) अणु
+      अगर(SiS_Pr->CHDisplay >= 1600)      SiS_Pr->CCRT1CRTC[16] |= 0x60;		/* SRE */
+      अन्यथा अगर(SiS_Pr->CHDisplay >= 640)  SiS_Pr->CCRT1CRTC[16] |= 0x40;
+   पूर्ण
 
    SiS_Pr->CCRT1CRTC[8] =  (SiS_Pr->CVSyncStart  - x) & 0xFF;			/* CR10 */
    SiS_Pr->CCRT1CRTC[9] =  ((SiS_Pr->CVSyncEnd   - x) & 0x0F) | 0x80;		/* CR11 */
@@ -3378,22 +3379,22 @@ SiS_CalcCRRegisters(struct SiS_Private *SiS_Pr, int depth)
    SiS_Pr->CCRT1CRTC[15] =							/* SRC */
 			GETBITSTR((SiS_Pr->CHBlankEnd >> 3) - 1, 7:6, 1:0) |
 			GETBITSTR((SiS_Pr->CHSyncEnd  >> 3) + 3, 5:5, 2:2) ;
-}
+पूर्ण
 
-void
-SiS_CalcLCDACRT1Timing(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
-		unsigned short ModeIdIndex)
-{
-   unsigned short modeflag, tempax, tempbx = 0, remaining = 0;
-   unsigned short VGAHDE = SiS_Pr->SiS_VGAHDE;
-   int i, j;
+व्योम
+SiS_CalcLCDACRT1Timing(काष्ठा SiS_Private *SiS_Pr, अचिन्हित लघु ModeNo,
+		अचिन्हित लघु ModeIdIndex)
+अणु
+   अचिन्हित लघु modeflag, tempax, tempbx = 0, reमुख्यing = 0;
+   अचिन्हित लघु VGAHDE = SiS_Pr->SiS_VGAHDE;
+   पूर्णांक i, j;
 
    /* 1:1 data: use data set by setcrt1crtc() */
-   if(SiS_Pr->SiS_LCDInfo & LCDPass11) return;
+   अगर(SiS_Pr->SiS_LCDInfo & LCDPass11) वापस;
 
    modeflag = SiS_GetModeFlag(SiS_Pr, ModeNo, ModeIdIndex);
 
-   if(modeflag & HalfDCLK) VGAHDE >>= 1;
+   अगर(modeflag & HalfDCLK) VGAHDE >>= 1;
 
    SiS_Pr->CHDisplay = VGAHDE;
    SiS_Pr->CHBlankStart = VGAHDE;
@@ -3401,155 +3402,155 @@ SiS_CalcLCDACRT1Timing(struct SiS_Private *SiS_Pr, unsigned short ModeNo,
    SiS_Pr->CVDisplay = SiS_Pr->SiS_VGAVDE;
    SiS_Pr->CVBlankStart = SiS_Pr->SiS_VGAVDE;
 
-   if(SiS_Pr->ChipType < SIS_315H) {
-#ifdef CONFIG_FB_SIS_300
+   अगर(SiS_Pr->ChipType < SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
       tempbx = SiS_Pr->SiS_VGAHT;
-      if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+      अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
          tempbx = SiS_Pr->PanelHT;
-      }
-      if(modeflag & HalfDCLK) tempbx >>= 1;
-      remaining = tempbx % 8;
-#endif
-   } else {
-#ifdef CONFIG_FB_SIS_315
-      /* OK for LCDA, LVDS */
+      पूर्ण
+      अगर(modeflag & HalfDCLK) tempbx >>= 1;
+      reमुख्यing = tempbx % 8;
+#पूर्ण_अगर
+   पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_FB_SIS_315
+      /* OK क्रम LCDA, LVDS */
       tempbx = SiS_Pr->PanelHT - SiS_Pr->PanelXRes;
       tempax = SiS_Pr->SiS_VGAHDE;  /* not /2 ! */
-      if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+      अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
          tempax = SiS_Pr->PanelXRes;
-      }
+      पूर्ण
       tempbx += tempax;
-      if(modeflag & HalfDCLK) tempbx -= VGAHDE;
-#endif
-   }
+      अगर(modeflag & HalfDCLK) tempbx -= VGAHDE;
+#पूर्ण_अगर
+   पूर्ण
    SiS_Pr->CHTotal = SiS_Pr->CHBlankEnd = tempbx;
 
-   if(SiS_Pr->ChipType < SIS_315H) {
-#ifdef CONFIG_FB_SIS_300
-      if(SiS_Pr->SiS_VGAHDE == SiS_Pr->PanelXRes) {
+   अगर(SiS_Pr->ChipType < SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+      अगर(SiS_Pr->SiS_VGAHDE == SiS_Pr->PanelXRes) अणु
 	 SiS_Pr->CHSyncStart = SiS_Pr->SiS_VGAHDE + ((SiS_Pr->PanelHRS + 1) & ~1);
 	 SiS_Pr->CHSyncEnd = SiS_Pr->CHSyncStart + SiS_Pr->PanelHRE;
-	 if(modeflag & HalfDCLK) {
+	 अगर(modeflag & HalfDCLK) अणु
 	    SiS_Pr->CHSyncStart >>= 1;
 	    SiS_Pr->CHSyncEnd >>= 1;
-	 }
-      } else if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+	 पूर्ण
+      पूर्ण अन्यथा अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
 	 tempax = (SiS_Pr->PanelXRes - SiS_Pr->SiS_VGAHDE) >> 1;
 	 tempbx = (SiS_Pr->PanelHRS + 1) & ~1;
-	 if(modeflag & HalfDCLK) {
+	 अगर(modeflag & HalfDCLK) अणु
 	    tempax >>= 1;
 	    tempbx >>= 1;
-	 }
+	 पूर्ण
 	 SiS_Pr->CHSyncStart = (VGAHDE + tempax + tempbx + 7) & ~7;
 	 tempax = SiS_Pr->PanelHRE + 7;
-	 if(modeflag & HalfDCLK) tempax >>= 1;
+	 अगर(modeflag & HalfDCLK) tempax >>= 1;
 	 SiS_Pr->CHSyncEnd = (SiS_Pr->CHSyncStart + tempax) & ~7;
-      } else {
+      पूर्ण अन्यथा अणु
 	 SiS_Pr->CHSyncStart = SiS_Pr->SiS_VGAHDE;
-	 if(modeflag & HalfDCLK) {
+	 अगर(modeflag & HalfDCLK) अणु
 	    SiS_Pr->CHSyncStart >>= 1;
 	    tempax = ((SiS_Pr->CHTotal - SiS_Pr->CHSyncStart) / 3) << 1;
 	    SiS_Pr->CHSyncEnd = SiS_Pr->CHSyncStart + tempax;
-	 } else {
+	 पूर्ण अन्यथा अणु
 	    SiS_Pr->CHSyncEnd = (SiS_Pr->CHSyncStart + (SiS_Pr->CHTotal / 10) + 7) & ~7;
 	    SiS_Pr->CHSyncStart += 8;
-	 }
-      }
-#endif
-   } else {
-#ifdef CONFIG_FB_SIS_315
+	 पूर्ण
+      पूर्ण
+#पूर्ण_अगर
+   पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_FB_SIS_315
       tempax = VGAHDE;
-      if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+      अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
 	 tempbx = SiS_Pr->PanelXRes;
-	 if(modeflag & HalfDCLK) tempbx >>= 1;
+	 अगर(modeflag & HalfDCLK) tempbx >>= 1;
 	 tempax += ((tempbx - tempax) >> 1);
-      }
+      पूर्ण
       tempax += SiS_Pr->PanelHRS;
       SiS_Pr->CHSyncStart = tempax;
       tempax += SiS_Pr->PanelHRE;
       SiS_Pr->CHSyncEnd = tempax;
-#endif
-   }
+#पूर्ण_अगर
+   पूर्ण
 
    tempbx = SiS_Pr->PanelVT - SiS_Pr->PanelYRes;
    tempax = SiS_Pr->SiS_VGAVDE;
-   if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+   अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
       tempax = SiS_Pr->PanelYRes;
-   } else if(SiS_Pr->ChipType < SIS_315H) {
-#ifdef CONFIG_FB_SIS_300
-      /* Stupid hack for 640x400/320x200 */
-      if(SiS_Pr->SiS_LCDResInfo == Panel_1024x768) {
-	 if((tempax + tempbx) == 438) tempbx += 16;
-      } else if((SiS_Pr->SiS_LCDResInfo == Panel_800x600) ||
-		(SiS_Pr->SiS_LCDResInfo == Panel_1024x600)) {
+   पूर्ण अन्यथा अगर(SiS_Pr->ChipType < SIS_315H) अणु
+#अगर_घोषित CONFIG_FB_SIS_300
+      /* Stupid hack क्रम 640x400/320x200 */
+      अगर(SiS_Pr->SiS_LCDResInfo == Panel_1024x768) अणु
+	 अगर((tempax + tempbx) == 438) tempbx += 16;
+      पूर्ण अन्यथा अगर((SiS_Pr->SiS_LCDResInfo == Panel_800x600) ||
+		(SiS_Pr->SiS_LCDResInfo == Panel_1024x600)) अणु
 	 tempax = 0;
 	 tempbx = SiS_Pr->SiS_VGAVT;
-      }
-#endif
-   }
+      पूर्ण
+#पूर्ण_अगर
+   पूर्ण
    SiS_Pr->CVTotal = SiS_Pr->CVBlankEnd = tempbx + tempax;
 
    tempax = SiS_Pr->SiS_VGAVDE;
-   if(SiS_Pr->SiS_LCDInfo & DontExpandLCD) {
+   अगर(SiS_Pr->SiS_LCDInfo & DontExpandLCD) अणु
       tempax += (SiS_Pr->PanelYRes - tempax) >> 1;
-   }
+   पूर्ण
    tempax += SiS_Pr->PanelVRS;
    SiS_Pr->CVSyncStart = tempax;
    tempax += SiS_Pr->PanelVRE;
    SiS_Pr->CVSyncEnd = tempax;
-   if(SiS_Pr->ChipType < SIS_315H) {
+   अगर(SiS_Pr->ChipType < SIS_315H) अणु
       SiS_Pr->CVSyncStart--;
       SiS_Pr->CVSyncEnd--;
-   }
+   पूर्ण
 
    SiS_CalcCRRegisters(SiS_Pr, 8);
    SiS_Pr->CCRT1CRTC[15] &= ~0xF8;
-   SiS_Pr->CCRT1CRTC[15] |= (remaining << 4);
+   SiS_Pr->CCRT1CRTC[15] |= (reमुख्यing << 4);
    SiS_Pr->CCRT1CRTC[16] &= ~0xE0;
 
    SiS_SetRegAND(SiS_Pr->SiS_P3d4,0x11,0x7f);
 
-   for(i = 0, j = 0; i <= 7; i++, j++) {
+   क्रम(i = 0, j = 0; i <= 7; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,SiS_Pr->CCRT1CRTC[i]);
-   }
-   for(j = 0x10; i <= 10; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x10; i <= 10; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,SiS_Pr->CCRT1CRTC[i]);
-   }
-   for(j = 0x15; i <= 12; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x15; i <= 12; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3d4,j,SiS_Pr->CCRT1CRTC[i]);
-   }
-   for(j = 0x0A; i <= 15; i++, j++) {
+   पूर्ण
+   क्रम(j = 0x0A; i <= 15; i++, j++) अणु
       SiS_SetReg(SiS_Pr->SiS_P3c4,j,SiS_Pr->CCRT1CRTC[i]);
-   }
+   पूर्ण
 
    tempax = SiS_Pr->CCRT1CRTC[16] & 0xE0;
    SiS_SetRegANDOR(SiS_Pr->SiS_P3c4,0x0E,0x1F,tempax);
 
    tempax = (SiS_Pr->CCRT1CRTC[16] & 0x01) << 5;
-   if(modeflag & DoubleScanMode) tempax |= 0x80;
+   अगर(modeflag & DoubleScanMode) tempax |= 0x80;
    SiS_SetRegANDOR(SiS_Pr->SiS_P3d4,0x09,0x5F,tempax);
 
-}
+पूर्ण
 
-void
-SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
-			int xres, int yres,
-			struct fb_var_screeninfo *var, bool writeres
+व्योम
+SiS_Generic_ConvertCRData(काष्ठा SiS_Private *SiS_Pr, अचिन्हित अक्षर *crdata,
+			पूर्णांक xres, पूर्णांक yres,
+			काष्ठा fb_var_screeninfo *var, bool ग_लिखोres
 )
-{
-   unsigned short HRE, HBE, HRS, HDE;
-   unsigned short VRE, VBE, VRS, VDE;
-   unsigned char  sr_data, cr_data;
-   int            B, C, D, E, F, temp;
+अणु
+   अचिन्हित लघु HRE, HBE, HRS, HDE;
+   अचिन्हित लघु VRE, VBE, VRS, VDE;
+   अचिन्हित अक्षर  sr_data, cr_data;
+   पूर्णांक            B, C, D, E, F, temp;
 
    sr_data = crdata[14];
 
    /* Horizontal display enable end */
-   HDE = crdata[1] | ((unsigned short)(sr_data & 0x0C) << 6);
+   HDE = crdata[1] | ((अचिन्हित लघु)(sr_data & 0x0C) << 6);
    E = HDE + 1;
 
    /* Horizontal retrace (=sync) start */
-   HRS = crdata[4] | ((unsigned short)(sr_data & 0xC0) << 2);
+   HRS = crdata[4] | ((अचिन्हित लघु)(sr_data & 0xC0) << 2);
    F = HRS - E - 3;
 
    sr_data = crdata[15];
@@ -3557,8 +3558,8 @@ SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
 
    /* Horizontal blank end */
    HBE = (crdata[3] & 0x1f) |
-         ((unsigned short)(cr_data & 0x80) >> 2) |
-         ((unsigned short)(sr_data & 0x03) << 6);
+         ((अचिन्हित लघु)(cr_data & 0x80) >> 2) |
+         ((अचिन्हित लघु)(sr_data & 0x03) << 6);
 
    /* Horizontal retrace (=sync) end */
    HRE = (cr_data & 0x1f) | ((sr_data & 0x04) << 3);
@@ -3571,7 +3572,7 @@ SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
 
    D = B - F - C;
 
-   if(writeres) var->xres = xres = E * 8;
+   अगर(ग_लिखोres) var->xres = xres = E * 8;
    var->left_margin = D * 8;
    var->right_margin = F * 8;
    var->hsync_len = C * 8;
@@ -3582,20 +3583,20 @@ SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
 
    /* Vertical display enable end */
    VDE = crdata[10] |
-	 ((unsigned short)(cr_data & 0x02) << 7) |
-	 ((unsigned short)(cr_data & 0x40) << 3) |
-	 ((unsigned short)(sr_data & 0x02) << 9);
+	 ((अचिन्हित लघु)(cr_data & 0x02) << 7) |
+	 ((अचिन्हित लघु)(cr_data & 0x40) << 3) |
+	 ((अचिन्हित लघु)(sr_data & 0x02) << 9);
    E = VDE + 1;
 
    /* Vertical retrace (=sync) start */
    VRS = crdata[8] |
-	 ((unsigned short)(cr_data & 0x04) << 6) |
-	 ((unsigned short)(cr_data & 0x80) << 2) |
-	 ((unsigned short)(sr_data & 0x08) << 7);
+	 ((अचिन्हित लघु)(cr_data & 0x04) << 6) |
+	 ((अचिन्हित लघु)(cr_data & 0x80) << 2) |
+	 ((अचिन्हित लघु)(sr_data & 0x08) << 7);
    F = VRS + 1 - E;
 
    /* Vertical blank end */
-   VBE = crdata[12] | ((unsigned short)(sr_data & 0x10) << 4);
+   VBE = crdata[12] | ((अचिन्हित लघु)(sr_data & 0x10) << 4);
    temp = VBE - ((E - 1) & 511);
    B = (temp > 0) ? temp : (temp + 512);
 
@@ -3606,25 +3607,25 @@ SiS_Generic_ConvertCRData(struct SiS_Private *SiS_Pr, unsigned char *crdata,
 
    D = B - F - C;
 
-   if(writeres) var->yres = yres = E;
+   अगर(ग_लिखोres) var->yres = yres = E;
    var->upper_margin = D;
    var->lower_margin = F;
    var->vsync_len = C;
 
-   if((xres == 320) && ((yres == 200) || (yres == 240))) {
-	/* Terrible hack, but correct CRTC data for
+   अगर((xres == 320) && ((yres == 200) || (yres == 240))) अणु
+	/* Terrible hack, but correct CRTC data क्रम
 	 * these modes only produces a black screen...
-	 * (HRE is 0, leading into a too large C and
-	 * a negative D. The CRT controller does not
+	 * (HRE is 0, leading पूर्णांकo a too large C and
+	 * a negative D. The CRT controller करोes not
 	 * seem to like correcting HRE to 50)
 	 */
       var->left_margin = (400 - 376);
       var->right_margin = (328 - 320);
       var->hsync_len = (376 - 328);
 
-   }
+   पूर्ण
 
-}
+पूर्ण
 
 
 

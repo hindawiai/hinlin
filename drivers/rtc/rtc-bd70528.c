@@ -1,652 +1,653 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 //
 // Copyright (C) 2018 ROHM Semiconductors
 //
-// RTC driver for ROHM BD70528 PMIC
+// RTC driver क्रम ROHM BD70528 PMIC
 
-#include <linux/bcd.h>
-#include <linux/mfd/rohm-bd70528.h>
-#include <linux/mfd/rohm-bd71815.h>
-#include <linux/mfd/rohm-bd71828.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/rtc.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/mfd/rohm-bd70528.h>
+#समावेश <linux/mfd/rohm-bd71815.h>
+#समावेश <linux/mfd/rohm-bd71828.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/rtc.h>
 
 /*
  * On BD71828 and BD71815 the ALM0 MASK is 14 bytes after the ALM0
  * block start
  */
-#define BD718XX_ALM_EN_OFFSET 14
+#घोषणा BD718XX_ALM_EN_OFFSET 14
 
 /*
- * We read regs RTC_SEC => RTC_YEAR
- * this struct is ordered according to chip registers.
- * Keep it u8 only (or packed) to avoid padding issues.
+ * We पढ़ो regs RTC_SEC => RTC_YEAR
+ * this काष्ठा is ordered according to chip रेजिस्टरs.
+ * Keep it u8 only (or packed) to aव्योम padding issues.
  */
-struct bd70528_rtc_day {
+काष्ठा bd70528_rtc_day अणु
 	u8 sec;
 	u8 min;
 	u8 hour;
-} __packed;
+पूर्ण __packed;
 
-struct bd70528_rtc_data {
-	struct bd70528_rtc_day time;
+काष्ठा bd70528_rtc_data अणु
+	काष्ठा bd70528_rtc_day समय;
 	u8 week;
 	u8 day;
 	u8 month;
 	u8 year;
-} __packed;
+पूर्ण __packed;
 
-struct bd70528_rtc_wake {
-	struct bd70528_rtc_day time;
+काष्ठा bd70528_rtc_wake अणु
+	काष्ठा bd70528_rtc_day समय;
 	u8 ctrl;
-} __packed;
+पूर्ण __packed;
 
-struct bd71828_rtc_alm {
-	struct bd70528_rtc_data alm0;
-	struct bd70528_rtc_data alm1;
+काष्ठा bd71828_rtc_alm अणु
+	काष्ठा bd70528_rtc_data alm0;
+	काष्ठा bd70528_rtc_data alm1;
 	u8 alm_mask;
 	u8 alm1_mask;
-} __packed;
+पूर्ण __packed;
 
-struct bd70528_rtc_alm {
-	struct bd70528_rtc_data data;
+काष्ठा bd70528_rtc_alm अणु
+	काष्ठा bd70528_rtc_data data;
 	u8 alm_mask;
 	u8 alm_repeat;
-} __packed;
+पूर्ण __packed;
 
-struct bd70528_rtc {
-	struct rohm_regmap_dev *parent;
-	struct regmap *regmap;
-	struct device *dev;
-	u8 reg_time_start;
+काष्ठा bd70528_rtc अणु
+	काष्ठा rohm_regmap_dev *parent;
+	काष्ठा regmap *regmap;
+	काष्ठा device *dev;
+	u8 reg_समय_start;
 	u8 bd718xx_alm_block_start;
-	bool has_rtc_timers;
-};
+	bool has_rtc_समयrs;
+पूर्ण;
 
-static int bd70528_set_wake(struct rohm_regmap_dev *bd70528,
-			    int enable, int *old_state)
-{
-	int ret;
-	unsigned int ctrl_reg;
+अटल पूर्णांक bd70528_set_wake(काष्ठा rohm_regmap_dev *bd70528,
+			    पूर्णांक enable, पूर्णांक *old_state)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक ctrl_reg;
 
-	ret = regmap_read(bd70528->regmap, BD70528_REG_WAKE_EN, &ctrl_reg);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(bd70528->regmap, BD70528_REG_WAKE_EN, &ctrl_reg);
+	अगर (ret)
+		वापस ret;
 
-	if (old_state) {
-		if (ctrl_reg & BD70528_MASK_WAKE_EN)
+	अगर (old_state) अणु
+		अगर (ctrl_reg & BD70528_MASK_WAKE_EN)
 			*old_state |= BD70528_WAKE_STATE_BIT;
-		else
+		अन्यथा
 			*old_state &= ~BD70528_WAKE_STATE_BIT;
 
-		if (!enable == !(*old_state & BD70528_WAKE_STATE_BIT))
-			return 0;
-	}
+		अगर (!enable == !(*old_state & BD70528_WAKE_STATE_BIT))
+			वापस 0;
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		ctrl_reg |= BD70528_MASK_WAKE_EN;
-	else
+	अन्यथा
 		ctrl_reg &= ~BD70528_MASK_WAKE_EN;
 
-	return regmap_write(bd70528->regmap, BD70528_REG_WAKE_EN,
+	वापस regmap_ग_लिखो(bd70528->regmap, BD70528_REG_WAKE_EN,
 			    ctrl_reg);
-}
+पूर्ण
 
-static int bd70528_set_elapsed_tmr(struct rohm_regmap_dev *bd70528,
-				   int enable, int *old_state)
-{
-	int ret;
-	unsigned int ctrl_reg;
+अटल पूर्णांक bd70528_set_elapsed_पंचांगr(काष्ठा rohm_regmap_dev *bd70528,
+				   पूर्णांक enable, पूर्णांक *old_state)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक ctrl_reg;
 
 	/*
 	 * TBD
-	 * What is the purpose of elapsed timer ?
-	 * Is the timeout registers counting down, or is the disable - re-enable
-	 * going to restart the elapsed-time counting? If counting is restarted
-	 * the timeout should be decreased by the amount of time that has
-	 * elapsed since starting the timer. Maybe we should store the monotonic
-	 * clock value when timer is started so that if RTC is set while timer
-	 * is armed we could do the compensation. This is a hack if RTC/system
-	 * clk are drifting. OTOH, RTC controlled via I2C is in any case
+	 * What is the purpose of elapsed समयr ?
+	 * Is the समयout रेजिस्टरs counting करोwn, or is the disable - re-enable
+	 * going to restart the elapsed-समय counting? If counting is restarted
+	 * the समयout should be decreased by the amount of समय that has
+	 * elapsed since starting the समयr. Maybe we should store the monotonic
+	 * घड़ी value when समयr is started so that अगर RTC is set जबतक समयr
+	 * is armed we could करो the compensation. This is a hack अगर RTC/प्रणाली
+	 * clk are drअगरting. OTOH, RTC controlled via I2C is in any हाल
 	 * inaccurate...
 	 */
-	ret = regmap_read(bd70528->regmap, BD70528_REG_ELAPSED_TIMER_EN,
+	ret = regmap_पढ़ो(bd70528->regmap, BD70528_REG_ELAPSED_TIMER_EN,
 			  &ctrl_reg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (old_state) {
-		if (ctrl_reg & BD70528_MASK_ELAPSED_TIMER_EN)
+	अगर (old_state) अणु
+		अगर (ctrl_reg & BD70528_MASK_ELAPSED_TIMER_EN)
 			*old_state |= BD70528_ELAPSED_STATE_BIT;
-		else
+		अन्यथा
 			*old_state &= ~BD70528_ELAPSED_STATE_BIT;
 
-		if ((!enable) == (!(*old_state & BD70528_ELAPSED_STATE_BIT)))
-			return 0;
-	}
+		अगर ((!enable) == (!(*old_state & BD70528_ELAPSED_STATE_BIT)))
+			वापस 0;
+	पूर्ण
 
-	if (enable)
+	अगर (enable)
 		ctrl_reg |= BD70528_MASK_ELAPSED_TIMER_EN;
-	else
+	अन्यथा
 		ctrl_reg &= ~BD70528_MASK_ELAPSED_TIMER_EN;
 
-	return regmap_write(bd70528->regmap, BD70528_REG_ELAPSED_TIMER_EN,
+	वापस regmap_ग_लिखो(bd70528->regmap, BD70528_REG_ELAPSED_TIMER_EN,
 			    ctrl_reg);
-}
+पूर्ण
 
-static int bd70528_set_rtc_based_timers(struct bd70528_rtc *r, int new_state,
-					int *old_state)
-{
-	int ret;
+अटल पूर्णांक bd70528_set_rtc_based_समयrs(काष्ठा bd70528_rtc *r, पूर्णांक new_state,
+					पूर्णांक *old_state)
+अणु
+	पूर्णांक ret;
 
 	ret = bd70528_wdt_set(r->parent, new_state & BD70528_WDT_STATE_BIT,
 			      old_state);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(r->dev,
 			"Failed to disable WDG for RTC setting (%d)\n", ret);
-		return ret;
-	}
-	ret = bd70528_set_elapsed_tmr(r->parent,
+		वापस ret;
+	पूर्ण
+	ret = bd70528_set_elapsed_पंचांगr(r->parent,
 				      new_state & BD70528_ELAPSED_STATE_BIT,
 				      old_state);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(r->dev,
 			"Failed to disable 'elapsed timer' for RTC setting\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = bd70528_set_wake(r->parent, new_state & BD70528_WAKE_STATE_BIT,
 			       old_state);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(r->dev,
 			"Failed to disable 'wake timer' for RTC setting\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd70528_re_enable_rtc_based_timers(struct bd70528_rtc *r,
-					      int old_state)
-{
-	if (!r->has_rtc_timers)
-		return 0;
+अटल पूर्णांक bd70528_re_enable_rtc_based_समयrs(काष्ठा bd70528_rtc *r,
+					      पूर्णांक old_state)
+अणु
+	अगर (!r->has_rtc_समयrs)
+		वापस 0;
 
-	return bd70528_set_rtc_based_timers(r, old_state, NULL);
-}
+	वापस bd70528_set_rtc_based_समयrs(r, old_state, शून्य);
+पूर्ण
 
-static int bd70528_disable_rtc_based_timers(struct bd70528_rtc *r,
-					    int *old_state)
-{
-	if (!r->has_rtc_timers)
-		return 0;
+अटल पूर्णांक bd70528_disable_rtc_based_समयrs(काष्ठा bd70528_rtc *r,
+					    पूर्णांक *old_state)
+अणु
+	अगर (!r->has_rtc_समयrs)
+		वापस 0;
 
-	return bd70528_set_rtc_based_timers(r, 0, old_state);
-}
+	वापस bd70528_set_rtc_based_समयrs(r, 0, old_state);
+पूर्ण
 
-static inline void tmday2rtc(struct rtc_time *t, struct bd70528_rtc_day *d)
-{
+अटल अंतरभूत व्योम पंचांगday2rtc(काष्ठा rtc_समय *t, काष्ठा bd70528_rtc_day *d)
+अणु
 	d->sec &= ~BD70528_MASK_RTC_SEC;
 	d->min &= ~BD70528_MASK_RTC_MINUTE;
 	d->hour &= ~BD70528_MASK_RTC_HOUR;
-	d->sec |= bin2bcd(t->tm_sec);
-	d->min |= bin2bcd(t->tm_min);
-	d->hour |= bin2bcd(t->tm_hour);
-}
+	d->sec |= bin2bcd(t->पंचांग_sec);
+	d->min |= bin2bcd(t->पंचांग_min);
+	d->hour |= bin2bcd(t->पंचांग_hour);
+पूर्ण
 
-static inline void tm2rtc(struct rtc_time *t, struct bd70528_rtc_data *r)
-{
+अटल अंतरभूत व्योम पंचांग2rtc(काष्ठा rtc_समय *t, काष्ठा bd70528_rtc_data *r)
+अणु
 	r->day &= ~BD70528_MASK_RTC_DAY;
 	r->week &= ~BD70528_MASK_RTC_WEEK;
 	r->month &= ~BD70528_MASK_RTC_MONTH;
 	/*
 	 * PM and 24H bits are not used by Wake - thus we clear them
-	 * here and not in tmday2rtc() which is also used by wake.
+	 * here and not in पंचांगday2rtc() which is also used by wake.
 	 */
-	r->time.hour &= ~(BD70528_MASK_RTC_HOUR_PM | BD70528_MASK_RTC_HOUR_24H);
+	r->समय.सour &= ~(BD70528_MASK_RTC_HOUR_PM | BD70528_MASK_RTC_HOUR_24H);
 
-	tmday2rtc(t, &r->time);
+	पंचांगday2rtc(t, &r->समय);
 	/*
-	 * We do always set time in 24H mode.
+	 * We करो always set समय in 24H mode.
 	 */
-	r->time.hour |= BD70528_MASK_RTC_HOUR_24H;
-	r->day |= bin2bcd(t->tm_mday);
-	r->week |= bin2bcd(t->tm_wday);
-	r->month |= bin2bcd(t->tm_mon + 1);
-	r->year = bin2bcd(t->tm_year - 100);
-}
+	r->समय.सour |= BD70528_MASK_RTC_HOUR_24H;
+	r->day |= bin2bcd(t->पंचांग_mday);
+	r->week |= bin2bcd(t->पंचांग_wday);
+	r->month |= bin2bcd(t->पंचांग_mon + 1);
+	r->year = bin2bcd(t->पंचांग_year - 100);
+पूर्ण
 
-static inline void rtc2tm(struct bd70528_rtc_data *r, struct rtc_time *t)
-{
-	t->tm_sec = bcd2bin(r->time.sec & BD70528_MASK_RTC_SEC);
-	t->tm_min = bcd2bin(r->time.min & BD70528_MASK_RTC_MINUTE);
-	t->tm_hour = bcd2bin(r->time.hour & BD70528_MASK_RTC_HOUR);
+अटल अंतरभूत व्योम rtc2पंचांग(काष्ठा bd70528_rtc_data *r, काष्ठा rtc_समय *t)
+अणु
+	t->पंचांग_sec = bcd2bin(r->समय.sec & BD70528_MASK_RTC_SEC);
+	t->पंचांग_min = bcd2bin(r->समय.min & BD70528_MASK_RTC_MINUTE);
+	t->पंचांग_hour = bcd2bin(r->समय.सour & BD70528_MASK_RTC_HOUR);
 	/*
 	 * If RTC is in 12H mode, then bit BD70528_MASK_RTC_HOUR_PM
 	 * is not BCD value but tells whether it is AM or PM
 	 */
-	if (!(r->time.hour & BD70528_MASK_RTC_HOUR_24H)) {
-		t->tm_hour %= 12;
-		if (r->time.hour & BD70528_MASK_RTC_HOUR_PM)
-			t->tm_hour += 12;
-	}
-	t->tm_mday = bcd2bin(r->day & BD70528_MASK_RTC_DAY);
-	t->tm_mon = bcd2bin(r->month & BD70528_MASK_RTC_MONTH) - 1;
-	t->tm_year = 100 + bcd2bin(r->year & BD70528_MASK_RTC_YEAR);
-	t->tm_wday = bcd2bin(r->week & BD70528_MASK_RTC_WEEK);
-}
+	अगर (!(r->समय.सour & BD70528_MASK_RTC_HOUR_24H)) अणु
+		t->पंचांग_hour %= 12;
+		अगर (r->समय.सour & BD70528_MASK_RTC_HOUR_PM)
+			t->पंचांग_hour += 12;
+	पूर्ण
+	t->पंचांग_mday = bcd2bin(r->day & BD70528_MASK_RTC_DAY);
+	t->पंचांग_mon = bcd2bin(r->month & BD70528_MASK_RTC_MONTH) - 1;
+	t->पंचांग_year = 100 + bcd2bin(r->year & BD70528_MASK_RTC_YEAR);
+	t->पंचांग_wday = bcd2bin(r->week & BD70528_MASK_RTC_WEEK);
+पूर्ण
 
-static int bd71828_set_alarm(struct device *dev, struct rtc_wkalrm *a)
-{
-	int ret;
-	struct bd71828_rtc_alm alm;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd71828_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *a)
+अणु
+	पूर्णांक ret;
+	काष्ठा bd71828_rtc_alm alm;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	ret = regmap_bulk_read(r->regmap, r->bd718xx_alm_block_start, &alm,
-			       sizeof(alm));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(r->regmap, r->bd718xx_alm_block_start, &alm,
+			       माप(alm));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read alarm regs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	tm2rtc(&a->time, &alm.alm0);
+	पंचांग2rtc(&a->समय, &alm.alm0);
 
-	if (!a->enabled)
+	अगर (!a->enabled)
 		alm.alm_mask &= ~BD70528_MASK_ALM_EN;
-	else
+	अन्यथा
 		alm.alm_mask |= BD70528_MASK_ALM_EN;
 
-	ret = regmap_bulk_write(r->regmap, r->bd718xx_alm_block_start, &alm,
-				sizeof(alm));
-	if (ret)
+	ret = regmap_bulk_ग_लिखो(r->regmap, r->bd718xx_alm_block_start, &alm,
+				माप(alm));
+	अगर (ret)
 		dev_err(dev, "Failed to set alarm time\n");
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static int bd70528_set_alarm(struct device *dev, struct rtc_wkalrm *a)
-{
-	struct bd70528_rtc_wake wake;
-	struct bd70528_rtc_alm alm;
-	int ret;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd70528_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *a)
+अणु
+	काष्ठा bd70528_rtc_wake wake;
+	काष्ठा bd70528_rtc_alm alm;
+	पूर्णांक ret;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	ret = regmap_bulk_read(r->regmap, BD70528_REG_RTC_WAKE_START, &wake,
-			       sizeof(wake));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(r->regmap, BD70528_REG_RTC_WAKE_START, &wake,
+			       माप(wake));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read wake regs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = regmap_bulk_read(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
-			       sizeof(alm));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
+			       माप(alm));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read alarm regs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	tm2rtc(&a->time, &alm.data);
-	tmday2rtc(&a->time, &wake.time);
+	पंचांग2rtc(&a->समय, &alm.data);
+	पंचांगday2rtc(&a->समय, &wake.समय);
 
-	if (a->enabled) {
+	अगर (a->enabled) अणु
 		alm.alm_mask &= ~BD70528_MASK_ALM_EN;
 		wake.ctrl |= BD70528_MASK_WAKE_EN;
-	} else {
+	पूर्ण अन्यथा अणु
 		alm.alm_mask |= BD70528_MASK_ALM_EN;
 		wake.ctrl &= ~BD70528_MASK_WAKE_EN;
-	}
+	पूर्ण
 
-	ret = regmap_bulk_write(r->regmap, BD70528_REG_RTC_WAKE_START, &wake,
-				sizeof(wake));
-	if (ret) {
+	ret = regmap_bulk_ग_लिखो(r->regmap, BD70528_REG_RTC_WAKE_START, &wake,
+				माप(wake));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to set wake time\n");
-		return ret;
-	}
-	ret = regmap_bulk_write(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
-				sizeof(alm));
-	if (ret)
+		वापस ret;
+	पूर्ण
+	ret = regmap_bulk_ग_लिखो(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
+				माप(alm));
+	अगर (ret)
 		dev_err(dev, "Failed to set alarm time\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd71828_read_alarm(struct device *dev, struct rtc_wkalrm *a)
-{
-	int ret;
-	struct bd71828_rtc_alm alm;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd71828_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *a)
+अणु
+	पूर्णांक ret;
+	काष्ठा bd71828_rtc_alm alm;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	ret = regmap_bulk_read(r->regmap, r->bd718xx_alm_block_start, &alm,
-			       sizeof(alm));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(r->regmap, r->bd718xx_alm_block_start, &alm,
+			       माप(alm));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read alarm regs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc2tm(&alm.alm0, &a->time);
-	a->time.tm_mday = -1;
-	a->time.tm_mon = -1;
-	a->time.tm_year = -1;
+	rtc2पंचांग(&alm.alm0, &a->समय);
+	a->समय.पंचांग_mday = -1;
+	a->समय.पंचांग_mon = -1;
+	a->समय.पंचांग_year = -1;
 	a->enabled = !!(alm.alm_mask & BD70528_MASK_ALM_EN);
 	a->pending = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bd70528_read_alarm(struct device *dev, struct rtc_wkalrm *a)
-{
-	struct bd70528_rtc_alm alm;
-	int ret;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd70528_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *a)
+अणु
+	काष्ठा bd70528_rtc_alm alm;
+	पूर्णांक ret;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	ret = regmap_bulk_read(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
-			       sizeof(alm));
-	if (ret) {
+	ret = regmap_bulk_पढ़ो(r->regmap, BD70528_REG_RTC_ALM_START, &alm,
+			       माप(alm));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read alarm regs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc2tm(&alm.data, &a->time);
-	a->time.tm_mday = -1;
-	a->time.tm_mon = -1;
-	a->time.tm_year = -1;
+	rtc2पंचांग(&alm.data, &a->समय);
+	a->समय.पंचांग_mday = -1;
+	a->समय.पंचांग_mon = -1;
+	a->समय.पंचांग_year = -1;
 	a->enabled = !(alm.alm_mask & BD70528_MASK_ALM_EN);
 	a->pending = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bd70528_set_time_locked(struct device *dev, struct rtc_time *t)
-{
-	int ret, tmpret, old_states;
-	struct bd70528_rtc_data rtc_data;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd70528_set_समय_locked(काष्ठा device *dev, काष्ठा rtc_समय *t)
+अणु
+	पूर्णांक ret, पंचांगpret, old_states;
+	काष्ठा bd70528_rtc_data rtc_data;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	ret = bd70528_disable_rtc_based_timers(r, &old_states);
-	if (ret)
-		return ret;
+	ret = bd70528_disable_rtc_based_समयrs(r, &old_states);
+	अगर (ret)
+		वापस ret;
 
-	tmpret = regmap_bulk_read(r->regmap, r->reg_time_start, &rtc_data,
-				  sizeof(rtc_data));
-	if (tmpret) {
+	पंचांगpret = regmap_bulk_पढ़ो(r->regmap, r->reg_समय_start, &rtc_data,
+				  माप(rtc_data));
+	अगर (पंचांगpret) अणु
 		dev_err(dev, "Failed to read RTC time registers\n");
-		goto renable_out;
-	}
-	tm2rtc(t, &rtc_data);
+		जाओ renable_out;
+	पूर्ण
+	पंचांग2rtc(t, &rtc_data);
 
-	tmpret = regmap_bulk_write(r->regmap, r->reg_time_start, &rtc_data,
-				   sizeof(rtc_data));
-	if (tmpret) {
+	पंचांगpret = regmap_bulk_ग_लिखो(r->regmap, r->reg_समय_start, &rtc_data,
+				   माप(rtc_data));
+	अगर (पंचांगpret) अणु
 		dev_err(dev, "Failed to set RTC time\n");
-		goto renable_out;
-	}
+		जाओ renable_out;
+	पूर्ण
 
 renable_out:
-	ret = bd70528_re_enable_rtc_based_timers(r, old_states);
-	if (tmpret)
-		ret = tmpret;
+	ret = bd70528_re_enable_rtc_based_समयrs(r, old_states);
+	अगर (पंचांगpret)
+		ret = पंचांगpret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd71828_set_time(struct device *dev, struct rtc_time *t)
-{
-	return bd70528_set_time_locked(dev, t);
-}
+अटल पूर्णांक bd71828_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *t)
+अणु
+	वापस bd70528_set_समय_locked(dev, t);
+पूर्ण
 
-static int bd70528_set_time(struct device *dev, struct rtc_time *t)
-{
-	int ret;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd70528_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *t)
+अणु
+	पूर्णांक ret;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
 	bd70528_wdt_lock(r->parent);
-	ret = bd70528_set_time_locked(dev, t);
+	ret = bd70528_set_समय_locked(dev, t);
 	bd70528_wdt_unlock(r->parent);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd70528_get_time(struct device *dev, struct rtc_time *t)
-{
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
-	struct bd70528_rtc_data rtc_data;
-	int ret;
+अटल पूर्णांक bd70528_get_समय(काष्ठा device *dev, काष्ठा rtc_समय *t)
+अणु
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
+	काष्ठा bd70528_rtc_data rtc_data;
+	पूर्णांक ret;
 
-	/* read the RTC date and time registers all at once */
-	ret = regmap_bulk_read(r->regmap, r->reg_time_start, &rtc_data,
-			       sizeof(rtc_data));
-	if (ret) {
+	/* पढ़ो the RTC date and समय रेजिस्टरs all at once */
+	ret = regmap_bulk_पढ़ो(r->regmap, r->reg_समय_start, &rtc_data,
+			       माप(rtc_data));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to read RTC time (err %d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	rtc2tm(&rtc_data, t);
+	rtc2पंचांग(&rtc_data, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bd70528_alm_enable(struct device *dev, unsigned int enabled)
-{
-	int ret;
-	unsigned int enableval = BD70528_MASK_ALM_EN;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
+अटल पूर्णांक bd70528_alm_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक enableval = BD70528_MASK_ALM_EN;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
 
-	if (enabled)
+	अगर (enabled)
 		enableval = 0;
 
 	bd70528_wdt_lock(r->parent);
-	ret = bd70528_set_wake(r->parent, enabled, NULL);
-	if (ret) {
+	ret = bd70528_set_wake(r->parent, enabled, शून्य);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to change wake state\n");
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	ret = regmap_update_bits(r->regmap, BD70528_REG_RTC_ALM_MASK,
 				 BD70528_MASK_ALM_EN, enableval);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to change alarm state\n");
 
 out_unlock:
 	bd70528_wdt_unlock(r->parent);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bd71828_alm_enable(struct device *dev, unsigned int enabled)
-{
-	int ret;
-	struct bd70528_rtc *r = dev_get_drvdata(dev);
-	unsigned int enableval = BD70528_MASK_ALM_EN;
+अटल पूर्णांक bd71828_alm_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	पूर्णांक ret;
+	काष्ठा bd70528_rtc *r = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक enableval = BD70528_MASK_ALM_EN;
 
-	if (!enabled)
+	अगर (!enabled)
 		enableval = 0;
 
 	ret = regmap_update_bits(r->regmap, r->bd718xx_alm_block_start +
 				 BD718XX_ALM_EN_OFFSET, BD70528_MASK_ALM_EN,
 				 enableval);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "Failed to change alarm state\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct rtc_class_ops bd70528_rtc_ops = {
-	.read_time		= bd70528_get_time,
-	.set_time		= bd70528_set_time,
-	.read_alarm		= bd70528_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops bd70528_rtc_ops = अणु
+	.पढ़ो_समय		= bd70528_get_समय,
+	.set_समय		= bd70528_set_समय,
+	.पढ़ो_alarm		= bd70528_पढ़ो_alarm,
 	.set_alarm		= bd70528_set_alarm,
 	.alarm_irq_enable	= bd70528_alm_enable,
-};
+पूर्ण;
 
-static const struct rtc_class_ops bd71828_rtc_ops = {
-	.read_time		= bd70528_get_time,
-	.set_time		= bd71828_set_time,
-	.read_alarm		= bd71828_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops bd71828_rtc_ops = अणु
+	.पढ़ो_समय		= bd70528_get_समय,
+	.set_समय		= bd71828_set_समय,
+	.पढ़ो_alarm		= bd71828_पढ़ो_alarm,
 	.set_alarm		= bd71828_set_alarm,
 	.alarm_irq_enable	= bd71828_alm_enable,
-};
+पूर्ण;
 
-static irqreturn_t alm_hndlr(int irq, void *data)
-{
-	struct rtc_device *rtc = data;
+अटल irqवापस_t alm_hndlr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा rtc_device *rtc = data;
 
 	rtc_update_irq(rtc, 1, RTC_IRQF | RTC_AF | RTC_PF);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int bd70528_probe(struct platform_device *pdev)
-{
-	struct bd70528_rtc *bd_rtc;
-	const struct rtc_class_ops *rtc_ops;
-	const char *irq_name;
-	int ret;
-	struct rtc_device *rtc;
-	int irq;
-	unsigned int hr;
-	bool enable_main_irq = false;
+अटल पूर्णांक bd70528_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bd70528_rtc *bd_rtc;
+	स्थिर काष्ठा rtc_class_ops *rtc_ops;
+	स्थिर अक्षर *irq_name;
+	पूर्णांक ret;
+	काष्ठा rtc_device *rtc;
+	पूर्णांक irq;
+	अचिन्हित पूर्णांक hr;
+	bool enable_मुख्य_irq = false;
 	u8 hour_reg;
-	enum rohm_chip_type chip = platform_get_device_id(pdev)->driver_data;
+	क्रमागत rohm_chip_type chip = platक्रमm_get_device_id(pdev)->driver_data;
 
-	bd_rtc = devm_kzalloc(&pdev->dev, sizeof(*bd_rtc), GFP_KERNEL);
-	if (!bd_rtc)
-		return -ENOMEM;
+	bd_rtc = devm_kzalloc(&pdev->dev, माप(*bd_rtc), GFP_KERNEL);
+	अगर (!bd_rtc)
+		वापस -ENOMEM;
 
-	bd_rtc->regmap = dev_get_regmap(pdev->dev.parent, NULL);
-	if (!bd_rtc->regmap) {
+	bd_rtc->regmap = dev_get_regmap(pdev->dev.parent, शून्य);
+	अगर (!bd_rtc->regmap) अणु
 		dev_err(&pdev->dev, "No regmap\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bd_rtc->dev = &pdev->dev;
 
-	switch (chip) {
-	case ROHM_CHIP_TYPE_BD70528:
+	चयन (chip) अणु
+	हाल ROHM_CHIP_TYPE_BD70528:
 		bd_rtc->parent = dev_get_drvdata(pdev->dev.parent);
-		if (!bd_rtc->parent) {
+		अगर (!bd_rtc->parent) अणु
 			dev_err(&pdev->dev, "No MFD data\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		irq_name = "bd70528-rtc-alm";
-		bd_rtc->has_rtc_timers = true;
-		bd_rtc->reg_time_start = BD70528_REG_RTC_START;
+		bd_rtc->has_rtc_समयrs = true;
+		bd_rtc->reg_समय_start = BD70528_REG_RTC_START;
 		hour_reg = BD70528_REG_RTC_HOUR;
-		enable_main_irq = true;
+		enable_मुख्य_irq = true;
 		rtc_ops = &bd70528_rtc_ops;
-		break;
-	case ROHM_CHIP_TYPE_BD71815:
+		अवरोध;
+	हाल ROHM_CHIP_TYPE_BD71815:
 		irq_name = "bd71815-rtc-alm-0";
-		bd_rtc->reg_time_start = BD71815_REG_RTC_START;
+		bd_rtc->reg_समय_start = BD71815_REG_RTC_START;
 
 		/*
 		 * See also BD718XX_ALM_EN_OFFSET:
-		 * This works for BD71828 and BD71815 as they have same offset
+		 * This works क्रम BD71828 and BD71815 as they have same offset
 		 * between ALM0 start and ALM0_MASK. If new ICs are to be
 		 * added this requires proper check as ALM0_MASK is not located
-		 * at the end of ALM0 block - but after all ALM blocks so if
-		 * amount of ALMs differ the offset to enable/disable is likely
+		 * at the end of ALM0 block - but after all ALM blocks so अगर
+		 * amount of ALMs dअगरfer the offset to enable/disable is likely
 		 * to be incorrect and enable/disable must be given as own
 		 * reg address here.
 		 */
 		bd_rtc->bd718xx_alm_block_start = BD71815_REG_RTC_ALM_START;
 		hour_reg = BD71815_REG_HOUR;
 		rtc_ops = &bd71828_rtc_ops;
-		break;
-	case ROHM_CHIP_TYPE_BD71828:
+		अवरोध;
+	हाल ROHM_CHIP_TYPE_BD71828:
 		irq_name = "bd71828-rtc-alm-0";
-		bd_rtc->reg_time_start = BD71828_REG_RTC_START;
+		bd_rtc->reg_समय_start = BD71828_REG_RTC_START;
 		bd_rtc->bd718xx_alm_block_start = BD71828_REG_RTC_ALM_START;
 		hour_reg = BD71828_REG_RTC_HOUR;
 		rtc_ops = &bd71828_rtc_ops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev, "Unknown chip\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	irq = platform_get_irq_byname(pdev, irq_name);
+	irq = platक्रमm_get_irq_byname(pdev, irq_name);
 
-	if (irq < 0)
-		return irq;
+	अगर (irq < 0)
+		वापस irq;
 
-	platform_set_drvdata(pdev, bd_rtc);
+	platक्रमm_set_drvdata(pdev, bd_rtc);
 
-	ret = regmap_read(bd_rtc->regmap, hour_reg, &hr);
+	ret = regmap_पढ़ो(bd_rtc->regmap, hour_reg, &hr);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to reag RTC clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!(hr & BD70528_MASK_RTC_HOUR_24H)) {
-		struct rtc_time t;
+	अगर (!(hr & BD70528_MASK_RTC_HOUR_24H)) अणु
+		काष्ठा rtc_समय t;
 
-		ret = rtc_ops->read_time(&pdev->dev, &t);
+		ret = rtc_ops->पढ़ो_समय(&pdev->dev, &t);
 
-		if (!ret)
-			ret = rtc_ops->set_time(&pdev->dev, &t);
+		अगर (!ret)
+			ret = rtc_ops->set_समय(&pdev->dev, &t);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"Setting 24H clock for RTC failed\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	device_set_wakeup_capable(&pdev->dev, true);
 	device_wakeup_enable(&pdev->dev);
 
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc)) {
+	अगर (IS_ERR(rtc)) अणु
 		dev_err(&pdev->dev, "RTC device creation failed\n");
-		return PTR_ERR(rtc);
-	}
+		वापस PTR_ERR(rtc);
+	पूर्ण
 
 	rtc->range_min = RTC_TIMESTAMP_BEGIN_2000;
 	rtc->range_max = RTC_TIMESTAMP_END_2099;
 	rtc->ops = rtc_ops;
 
-	/* Request alarm IRQ prior to registerig the RTC */
-	ret = devm_request_threaded_irq(&pdev->dev, irq, NULL, &alm_hndlr,
+	/* Request alarm IRQ prior to रेजिस्टरig the RTC */
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य, &alm_hndlr,
 					IRQF_ONESHOT, "bd70528-rtc", rtc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 *  BD70528 irq controller is not touching the main mask register.
-	 *  So enable the RTC block interrupts at main level. We can just
+	 *  BD70528 irq controller is not touching the मुख्य mask रेजिस्टर.
+	 *  So enable the RTC block पूर्णांकerrupts at मुख्य level. We can just
 	 *  leave them enabled as irq-controller should disable irqs
-	 *  from sub-registers when IRQ is disabled or freed.
+	 *  from sub-रेजिस्टरs when IRQ is disabled or मुक्तd.
 	 */
-	if (enable_main_irq) {
+	अगर (enable_मुख्य_irq) अणु
 		ret = regmap_update_bits(bd_rtc->regmap,
 				 BD70528_REG_INT_MAIN_MASK,
 				 BD70528_INT_RTC_MASK, 0);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "Failed to enable RTC interrupts\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return devm_rtc_register_device(rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(rtc);
+पूर्ण
 
-static const struct platform_device_id bd718x7_rtc_id[] = {
-	{ "bd70528-rtc", ROHM_CHIP_TYPE_BD70528 },
-	{ "bd71828-rtc", ROHM_CHIP_TYPE_BD71828 },
-	{ "bd71815-rtc", ROHM_CHIP_TYPE_BD71815 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, bd718x7_rtc_id);
+अटल स्थिर काष्ठा platक्रमm_device_id bd718x7_rtc_id[] = अणु
+	अणु "bd70528-rtc", ROHM_CHIP_TYPE_BD70528 पूर्ण,
+	अणु "bd71828-rtc", ROHM_CHIP_TYPE_BD71828 पूर्ण,
+	अणु "bd71815-rtc", ROHM_CHIP_TYPE_BD71815 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, bd718x7_rtc_id);
 
-static struct platform_driver bd70528_rtc = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bd70528_rtc = अणु
+	.driver = अणु
 		.name = "bd70528-rtc"
-	},
+	पूर्ण,
 	.probe = bd70528_probe,
 	.id_table = bd718x7_rtc_id,
-};
+पूर्ण;
 
-module_platform_driver(bd70528_rtc);
+module_platक्रमm_driver(bd70528_rtc);
 
 MODULE_AUTHOR("Matti Vaittinen <matti.vaittinen@fi.rohmeurope.com>");
 MODULE_DESCRIPTION("ROHM BD70528 and BD71828 PMIC RTC driver");

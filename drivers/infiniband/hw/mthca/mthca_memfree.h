@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Cisco Systems.  All rights reserved.
@@ -6,20 +7,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,124 +33,124 @@
  * SOFTWARE.
  */
 
-#ifndef MTHCA_MEMFREE_H
-#define MTHCA_MEMFREE_H
+#अगर_अघोषित MTHCA_MEMFREE_H
+#घोषणा MTHCA_MEMFREE_H
 
-#include <linux/list.h>
-#include <linux/mutex.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
 
-#define MTHCA_ICM_CHUNK_LEN \
-	((256 - sizeof (struct list_head) - 2 * sizeof (int)) /		\
-	 (sizeof (struct scatterlist)))
+#घोषणा MTHCA_ICM_CHUNK_LEN \
+	((256 - माप (काष्ठा list_head) - 2 * माप (पूर्णांक)) /		\
+	 (माप (काष्ठा scatterlist)))
 
-enum {
+क्रमागत अणु
 	MTHCA_ICM_PAGE_SHIFT	= 12,
 	MTHCA_ICM_PAGE_SIZE	= 1 << MTHCA_ICM_PAGE_SHIFT,
 	MTHCA_DB_REC_PER_PAGE	= MTHCA_ICM_PAGE_SIZE / 8
-};
+पूर्ण;
 
-struct mthca_icm_chunk {
-	struct list_head   list;
-	int                npages;
-	int                nsg;
-	struct scatterlist mem[MTHCA_ICM_CHUNK_LEN];
-};
+काष्ठा mthca_icm_chunk अणु
+	काष्ठा list_head   list;
+	पूर्णांक                npages;
+	पूर्णांक                nsg;
+	काष्ठा scatterlist mem[MTHCA_ICM_CHUNK_LEN];
+पूर्ण;
 
-struct mthca_icm {
-	struct list_head chunk_list;
-	int              refcount;
-};
+काष्ठा mthca_icm अणु
+	काष्ठा list_head chunk_list;
+	पूर्णांक              refcount;
+पूर्ण;
 
-struct mthca_icm_table {
+काष्ठा mthca_icm_table अणु
 	u64               virt;
-	int               num_icm;
-	int               num_obj;
-	int               obj_size;
-	int               lowmem;
-	int               coherent;
-	struct mutex      mutex;
-	struct mthca_icm *icm[];
-};
+	पूर्णांक               num_icm;
+	पूर्णांक               num_obj;
+	पूर्णांक               obj_size;
+	पूर्णांक               lowmem;
+	पूर्णांक               coherent;
+	काष्ठा mutex      mutex;
+	काष्ठा mthca_icm *icm[];
+पूर्ण;
 
-struct mthca_icm_iter {
-	struct mthca_icm       *icm;
-	struct mthca_icm_chunk *chunk;
-	int                     page_idx;
-};
+काष्ठा mthca_icm_iter अणु
+	काष्ठा mthca_icm       *icm;
+	काष्ठा mthca_icm_chunk *chunk;
+	पूर्णांक                     page_idx;
+पूर्ण;
 
-struct mthca_dev;
+काष्ठा mthca_dev;
 
-struct mthca_icm *mthca_alloc_icm(struct mthca_dev *dev, int npages,
-				  gfp_t gfp_mask, int coherent);
-void mthca_free_icm(struct mthca_dev *dev, struct mthca_icm *icm, int coherent);
+काष्ठा mthca_icm *mthca_alloc_icm(काष्ठा mthca_dev *dev, पूर्णांक npages,
+				  gfp_t gfp_mask, पूर्णांक coherent);
+व्योम mthca_मुक्त_icm(काष्ठा mthca_dev *dev, काष्ठा mthca_icm *icm, पूर्णांक coherent);
 
-struct mthca_icm_table *mthca_alloc_icm_table(struct mthca_dev *dev,
-					      u64 virt, int obj_size,
-					      int nobj, int reserved,
-					      int use_lowmem, int use_coherent);
-void mthca_free_icm_table(struct mthca_dev *dev, struct mthca_icm_table *table);
-int mthca_table_get(struct mthca_dev *dev, struct mthca_icm_table *table, int obj);
-void mthca_table_put(struct mthca_dev *dev, struct mthca_icm_table *table, int obj);
-void *mthca_table_find(struct mthca_icm_table *table, int obj, dma_addr_t *dma_handle);
-int mthca_table_get_range(struct mthca_dev *dev, struct mthca_icm_table *table,
-			  int start, int end);
-void mthca_table_put_range(struct mthca_dev *dev, struct mthca_icm_table *table,
-			   int start, int end);
+काष्ठा mthca_icm_table *mthca_alloc_icm_table(काष्ठा mthca_dev *dev,
+					      u64 virt, पूर्णांक obj_size,
+					      पूर्णांक nobj, पूर्णांक reserved,
+					      पूर्णांक use_lowmem, पूर्णांक use_coherent);
+व्योम mthca_मुक्त_icm_table(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table);
+पूर्णांक mthca_table_get(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table, पूर्णांक obj);
+व्योम mthca_table_put(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table, पूर्णांक obj);
+व्योम *mthca_table_find(काष्ठा mthca_icm_table *table, पूर्णांक obj, dma_addr_t *dma_handle);
+पूर्णांक mthca_table_get_range(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table,
+			  पूर्णांक start, पूर्णांक end);
+व्योम mthca_table_put_range(काष्ठा mthca_dev *dev, काष्ठा mthca_icm_table *table,
+			   पूर्णांक start, पूर्णांक end);
 
-static inline void mthca_icm_first(struct mthca_icm *icm,
-				   struct mthca_icm_iter *iter)
-{
+अटल अंतरभूत व्योम mthca_icm_first(काष्ठा mthca_icm *icm,
+				   काष्ठा mthca_icm_iter *iter)
+अणु
 	iter->icm      = icm;
 	iter->chunk    = list_empty(&icm->chunk_list) ?
-		NULL : list_entry(icm->chunk_list.next,
-				  struct mthca_icm_chunk, list);
+		शून्य : list_entry(icm->chunk_list.next,
+				  काष्ठा mthca_icm_chunk, list);
 	iter->page_idx = 0;
-}
+पूर्ण
 
-static inline int mthca_icm_last(struct mthca_icm_iter *iter)
-{
-	return !iter->chunk;
-}
+अटल अंतरभूत पूर्णांक mthca_icm_last(काष्ठा mthca_icm_iter *iter)
+अणु
+	वापस !iter->chunk;
+पूर्ण
 
-static inline void mthca_icm_next(struct mthca_icm_iter *iter)
-{
-	if (++iter->page_idx >= iter->chunk->nsg) {
-		if (iter->chunk->list.next == &iter->icm->chunk_list) {
-			iter->chunk = NULL;
-			return;
-		}
+अटल अंतरभूत व्योम mthca_icm_next(काष्ठा mthca_icm_iter *iter)
+अणु
+	अगर (++iter->page_idx >= iter->chunk->nsg) अणु
+		अगर (iter->chunk->list.next == &iter->icm->chunk_list) अणु
+			iter->chunk = शून्य;
+			वापस;
+		पूर्ण
 
 		iter->chunk = list_entry(iter->chunk->list.next,
-					 struct mthca_icm_chunk, list);
+					 काष्ठा mthca_icm_chunk, list);
 		iter->page_idx = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline dma_addr_t mthca_icm_addr(struct mthca_icm_iter *iter)
-{
-	return sg_dma_address(&iter->chunk->mem[iter->page_idx]);
-}
+अटल अंतरभूत dma_addr_t mthca_icm_addr(काष्ठा mthca_icm_iter *iter)
+अणु
+	वापस sg_dma_address(&iter->chunk->mem[iter->page_idx]);
+पूर्ण
 
-static inline unsigned long mthca_icm_size(struct mthca_icm_iter *iter)
-{
-	return sg_dma_len(&iter->chunk->mem[iter->page_idx]);
-}
+अटल अंतरभूत अचिन्हित दीर्घ mthca_icm_size(काष्ठा mthca_icm_iter *iter)
+अणु
+	वापस sg_dma_len(&iter->chunk->mem[iter->page_idx]);
+पूर्ण
 
-struct mthca_db_page {
+काष्ठा mthca_db_page अणु
 	DECLARE_BITMAP(used, MTHCA_DB_REC_PER_PAGE);
 	__be64    *db_rec;
 	dma_addr_t mapping;
-};
+पूर्ण;
 
-struct mthca_db_table {
-	int 	       	      npages;
-	int 	       	      max_group1;
-	int 	       	      min_group2;
-	struct mthca_db_page *page;
-	struct mutex          mutex;
-};
+काष्ठा mthca_db_table अणु
+	पूर्णांक 	       	      npages;
+	पूर्णांक 	       	      max_group1;
+	पूर्णांक 	       	      min_group2;
+	काष्ठा mthca_db_page *page;
+	काष्ठा mutex          mutex;
+पूर्ण;
 
-enum mthca_db_type {
+क्रमागत mthca_db_type अणु
 	MTHCA_DB_TYPE_INVALID   = 0x0,
 	MTHCA_DB_TYPE_CQ_SET_CI = 0x1,
 	MTHCA_DB_TYPE_CQ_ARM    = 0x2,
@@ -157,23 +158,23 @@ enum mthca_db_type {
 	MTHCA_DB_TYPE_RQ        = 0x4,
 	MTHCA_DB_TYPE_SRQ       = 0x5,
 	MTHCA_DB_TYPE_GROUP_SEP = 0x7
-};
+पूर्ण;
 
-struct mthca_user_db_table;
-struct mthca_uar;
+काष्ठा mthca_user_db_table;
+काष्ठा mthca_uar;
 
-int mthca_map_user_db(struct mthca_dev *dev, struct mthca_uar *uar,
-		      struct mthca_user_db_table *db_tab, int index, u64 uaddr);
-void mthca_unmap_user_db(struct mthca_dev *dev, struct mthca_uar *uar,
-			 struct mthca_user_db_table *db_tab, int index);
-struct mthca_user_db_table *mthca_init_user_db_tab(struct mthca_dev *dev);
-void mthca_cleanup_user_db_tab(struct mthca_dev *dev, struct mthca_uar *uar,
-			       struct mthca_user_db_table *db_tab);
+पूर्णांक mthca_map_user_db(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
+		      काष्ठा mthca_user_db_table *db_tab, पूर्णांक index, u64 uaddr);
+व्योम mthca_unmap_user_db(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
+			 काष्ठा mthca_user_db_table *db_tab, पूर्णांक index);
+काष्ठा mthca_user_db_table *mthca_init_user_db_tab(काष्ठा mthca_dev *dev);
+व्योम mthca_cleanup_user_db_tab(काष्ठा mthca_dev *dev, काष्ठा mthca_uar *uar,
+			       काष्ठा mthca_user_db_table *db_tab);
 
-int mthca_init_db_tab(struct mthca_dev *dev);
-void mthca_cleanup_db_tab(struct mthca_dev *dev);
-int mthca_alloc_db(struct mthca_dev *dev, enum mthca_db_type type,
+पूर्णांक mthca_init_db_tab(काष्ठा mthca_dev *dev);
+व्योम mthca_cleanup_db_tab(काष्ठा mthca_dev *dev);
+पूर्णांक mthca_alloc_db(काष्ठा mthca_dev *dev, क्रमागत mthca_db_type type,
 		   u32 qn, __be32 **db);
-void mthca_free_db(struct mthca_dev *dev, int type, int db_index);
+व्योम mthca_मुक्त_db(काष्ठा mthca_dev *dev, पूर्णांक type, पूर्णांक db_index);
 
-#endif /* MTHCA_MEMFREE_H */
+#पूर्ण_अगर /* MTHCA_MEMFREE_H */

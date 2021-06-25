@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * builtin-bench.c
  *
@@ -10,313 +11,313 @@
 /*
  * Available benchmark collection list:
  *
- *  sched ... scheduler and IPC performance
- *  syscall ... System call performance
- *  mem   ... memory access performance
- *  numa  ... NUMA scheduling and MM performance
- *  futex ... Futex performance
- *  epoll ... Event poll performance
+ *  sched ... scheduler and IPC perक्रमmance
+ *  syscall ... System call perक्रमmance
+ *  mem   ... memory access perक्रमmance
+ *  numa  ... NUMA scheduling and MM perक्रमmance
+ *  futex ... Futex perक्रमmance
+ *  epoll ... Event poll perक्रमmance
  */
-#include <subcmd/parse-options.h>
-#include "builtin.h"
-#include "bench/bench.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "builtin.h"
+#समावेश "bench/bench.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/prctl.h>
-#include <linux/zalloc.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/prctl.h>
+#समावेश <linux/zभाग.स>
 
-typedef int (*bench_fn_t)(int argc, const char **argv);
+प्रकार पूर्णांक (*bench_fn_t)(पूर्णांक argc, स्थिर अक्षर **argv);
 
-struct bench {
-	const char	*name;
-	const char	*summary;
+काष्ठा bench अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*summary;
 	bench_fn_t	fn;
-};
+पूर्ण;
 
-#ifdef HAVE_LIBNUMA_SUPPORT
-static struct bench numa_benchmarks[] = {
-	{ "mem",	"Benchmark for NUMA workloads",			bench_numa		},
-	{ "all",	"Run all NUMA benchmarks",			NULL			},
-	{ NULL,		NULL,						NULL			}
-};
-#endif
+#अगर_घोषित HAVE_LIBNUMA_SUPPORT
+अटल काष्ठा bench numa_benchmarks[] = अणु
+	अणु "mem",	"Benchmark for NUMA workloads",			bench_numa		पूर्ण,
+	अणु "all",	"Run all NUMA benchmarks",			शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
+#पूर्ण_अगर
 
-static struct bench sched_benchmarks[] = {
-	{ "messaging",	"Benchmark for scheduling and IPC",		bench_sched_messaging	},
-	{ "pipe",	"Benchmark for pipe() between two processes",	bench_sched_pipe	},
-	{ "all",	"Run all scheduler benchmarks",		NULL			},
-	{ NULL,		NULL,						NULL			}
-};
+अटल काष्ठा bench sched_benchmarks[] = अणु
+	अणु "messaging",	"Benchmark for scheduling and IPC",		bench_sched_messaging	पूर्ण,
+	अणु "pipe",	"Benchmark for pipe() between two processes",	bench_sched_pipe	पूर्ण,
+	अणु "all",	"Run all scheduler benchmarks",		शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
 
-static struct bench syscall_benchmarks[] = {
-	{ "basic",	"Benchmark for basic getppid(2) calls",		bench_syscall_basic	},
-	{ "all",	"Run all syscall benchmarks",			NULL			},
-	{ NULL,		NULL,						NULL			},
-};
+अटल काष्ठा bench syscall_benchmarks[] = अणु
+	अणु "basic",	"Benchmark for basic getppid(2) calls",		bench_syscall_basic	पूर्ण,
+	अणु "all",	"Run all syscall benchmarks",			शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण,
+पूर्ण;
 
-static struct bench mem_benchmarks[] = {
-	{ "memcpy",	"Benchmark for memcpy() functions",		bench_mem_memcpy	},
-	{ "memset",	"Benchmark for memset() functions",		bench_mem_memset	},
-	{ "find_bit",	"Benchmark for find_bit() functions",		bench_mem_find_bit	},
-	{ "all",	"Run all memory access benchmarks",		NULL			},
-	{ NULL,		NULL,						NULL			}
-};
+अटल काष्ठा bench mem_benchmarks[] = अणु
+	अणु "memcpy",	"Benchmark for memcpy() functions",		bench_mem_स_नकल	पूर्ण,
+	अणु "memset",	"Benchmark for memset() functions",		bench_mem_स_रखो	पूर्ण,
+	अणु "find_bit",	"Benchmark for find_bit() functions",		bench_mem_find_bit	पूर्ण,
+	अणु "all",	"Run all memory access benchmarks",		शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
 
-static struct bench futex_benchmarks[] = {
-	{ "hash",	"Benchmark for futex hash table",               bench_futex_hash	},
-	{ "wake",	"Benchmark for futex wake calls",               bench_futex_wake	},
-	{ "wake-parallel", "Benchmark for parallel futex wake calls",   bench_futex_wake_parallel },
-	{ "requeue",	"Benchmark for futex requeue calls",            bench_futex_requeue	},
+अटल काष्ठा bench futex_benchmarks[] = अणु
+	अणु "hash",	"Benchmark for futex hash table",               bench_futex_hash	पूर्ण,
+	अणु "wake",	"Benchmark for futex wake calls",               bench_futex_wake	पूर्ण,
+	अणु "wake-parallel", "Benchmark for parallel futex wake calls",   bench_futex_wake_parallel पूर्ण,
+	अणु "requeue",	"Benchmark for futex requeue calls",            bench_futex_requeue	पूर्ण,
 	/* pi-futexes */
-	{ "lock-pi",	"Benchmark for futex lock_pi calls",            bench_futex_lock_pi	},
-	{ "all",	"Run all futex benchmarks",			NULL			},
-	{ NULL,		NULL,						NULL			}
-};
+	अणु "lock-pi",	"Benchmark for futex lock_pi calls",            bench_futex_lock_pi	पूर्ण,
+	अणु "all",	"Run all futex benchmarks",			शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
 
-#ifdef HAVE_EVENTFD_SUPPORT
-static struct bench epoll_benchmarks[] = {
-	{ "wait",	"Benchmark epoll concurrent epoll_waits",       bench_epoll_wait	},
-	{ "ctl",	"Benchmark epoll concurrent epoll_ctls",        bench_epoll_ctl		},
-	{ "all",	"Run all futex benchmarks",			NULL			},
-	{ NULL,		NULL,						NULL			}
-};
-#endif // HAVE_EVENTFD_SUPPORT
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+अटल काष्ठा bench epoll_benchmarks[] = अणु
+	अणु "wait",	"Benchmark epoll concurrent epoll_waits",       bench_epoll_रुको	पूर्ण,
+	अणु "ctl",	"Benchmark epoll concurrent epoll_ctls",        bench_epoll_ctl		पूर्ण,
+	अणु "all",	"Run all futex benchmarks",			शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
+#पूर्ण_अगर // HAVE_EVENTFD_SUPPORT
 
-static struct bench internals_benchmarks[] = {
-	{ "synthesize", "Benchmark perf event synthesis",	bench_synthesize	},
-	{ "kallsyms-parse", "Benchmark kallsyms parsing",	bench_kallsyms_parse	},
-	{ "inject-build-id", "Benchmark build-id injection",	bench_inject_build_id	},
-	{ NULL,		NULL,					NULL			}
-};
+अटल काष्ठा bench पूर्णांकernals_benchmarks[] = अणु
+	अणु "synthesize", "Benchmark perf event synthesis",	bench_synthesize	पूर्ण,
+	अणु "kallsyms-parse", "Benchmark kallsyms parsing",	bench_kallsyms_parse	पूर्ण,
+	अणु "inject-build-id", "Benchmark build-id injection",	bench_inject_build_id	पूर्ण,
+	अणु शून्य,		शून्य,					शून्य			पूर्ण
+पूर्ण;
 
-struct collection {
-	const char	*name;
-	const char	*summary;
-	struct bench	*benchmarks;
-};
+काष्ठा collection अणु
+	स्थिर अक्षर	*name;
+	स्थिर अक्षर	*summary;
+	काष्ठा bench	*benchmarks;
+पूर्ण;
 
-static struct collection collections[] = {
-	{ "sched",	"Scheduler and IPC benchmarks",			sched_benchmarks	},
-	{ "syscall",	"System call benchmarks",			syscall_benchmarks	},
-	{ "mem",	"Memory access benchmarks",			mem_benchmarks		},
-#ifdef HAVE_LIBNUMA_SUPPORT
-	{ "numa",	"NUMA scheduling and MM benchmarks",		numa_benchmarks		},
-#endif
-	{"futex",       "Futex stressing benchmarks",                   futex_benchmarks        },
-#ifdef HAVE_EVENTFD_SUPPORT
-	{"epoll",       "Epoll stressing benchmarks",                   epoll_benchmarks        },
-#endif
-	{ "internals",	"Perf-internals benchmarks",			internals_benchmarks	},
-	{ "all",	"All benchmarks",				NULL			},
-	{ NULL,		NULL,						NULL			}
-};
+अटल काष्ठा collection collections[] = अणु
+	अणु "sched",	"Scheduler and IPC benchmarks",			sched_benchmarks	पूर्ण,
+	अणु "syscall",	"System call benchmarks",			syscall_benchmarks	पूर्ण,
+	अणु "mem",	"Memory access benchmarks",			mem_benchmarks		पूर्ण,
+#अगर_घोषित HAVE_LIBNUMA_SUPPORT
+	अणु "numa",	"NUMA scheduling and MM benchmarks",		numa_benchmarks		पूर्ण,
+#पूर्ण_अगर
+	अणु"futex",       "Futex stressing benchmarks",                   futex_benchmarks        पूर्ण,
+#अगर_घोषित HAVE_EVENTFD_SUPPORT
+	अणु"epoll",       "Epoll stressing benchmarks",                   epoll_benchmarks        पूर्ण,
+#पूर्ण_अगर
+	अणु "internals",	"Perf-internals benchmarks",			पूर्णांकernals_benchmarks	पूर्ण,
+	अणु "all",	"All benchmarks",				शून्य			पूर्ण,
+	अणु शून्य,		शून्य,						शून्य			पूर्ण
+पूर्ण;
 
 /* Iterate over all benchmark collections: */
-#define for_each_collection(coll) \
-	for (coll = collections; coll->name; coll++)
+#घोषणा क्रम_each_collection(coll) \
+	क्रम (coll = collections; coll->name; coll++)
 
 /* Iterate over all benchmarks within a collection: */
-#define for_each_bench(coll, bench) \
-	for (bench = coll->benchmarks; bench && bench->name; bench++)
+#घोषणा क्रम_each_bench(coll, bench) \
+	क्रम (bench = coll->benchmarks; bench && bench->name; bench++)
 
-static void dump_benchmarks(struct collection *coll)
-{
-	struct bench *bench;
+अटल व्योम dump_benchmarks(काष्ठा collection *coll)
+अणु
+	काष्ठा bench *bench;
 
-	printf("\n        # List of available benchmarks for collection '%s':\n\n", coll->name);
+	म_लिखो("\n        # List of available benchmarks for collection '%s':\n\n", coll->name);
 
-	for_each_bench(coll, bench)
-		printf("%14s: %s\n", bench->name, bench->summary);
+	क्रम_each_bench(coll, bench)
+		म_लिखो("%14s: %s\n", bench->name, bench->summary);
 
-	printf("\n");
-}
+	म_लिखो("\n");
+पूर्ण
 
-static const char *bench_format_str;
+अटल स्थिर अक्षर *bench_क्रमmat_str;
 
-/* Output/formatting style, exported to benchmark modules: */
-int bench_format = BENCH_FORMAT_DEFAULT;
-unsigned int bench_repeat = 10; /* default number of times to repeat the run */
+/* Output/क्रमmatting style, exported to benchmark modules: */
+पूर्णांक bench_क्रमmat = BENCH_FORMAT_DEFAULT;
+अचिन्हित पूर्णांक bench_repeat = 10; /* शेष number of बार to repeat the run */
 
-static const struct option bench_options[] = {
-	OPT_STRING('f', "format", &bench_format_str, "default|simple", "Specify the output formatting style"),
+अटल स्थिर काष्ठा option bench_options[] = अणु
+	OPT_STRING('f', "format", &bench_क्रमmat_str, "default|simple", "Specify the output formatting style"),
 	OPT_UINTEGER('r', "repeat",  &bench_repeat,   "Specify amount of times to repeat the run"),
 	OPT_END()
-};
+पूर्ण;
 
-static const char * const bench_usage[] = {
+अटल स्थिर अक्षर * स्थिर bench_usage[] = अणु
 	"perf bench [<common options>] <collection> <benchmark> [<options>]",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void print_usage(void)
-{
-	struct collection *coll;
-	int i;
+अटल व्योम prपूर्णांक_usage(व्योम)
+अणु
+	काष्ठा collection *coll;
+	पूर्णांक i;
 
-	printf("Usage: \n");
-	for (i = 0; bench_usage[i]; i++)
-		printf("\t%s\n", bench_usage[i]);
-	printf("\n");
+	म_लिखो("Usage: \n");
+	क्रम (i = 0; bench_usage[i]; i++)
+		म_लिखो("\t%s\n", bench_usage[i]);
+	म_लिखो("\n");
 
-	printf("        # List of all available benchmark collections:\n\n");
+	म_लिखो("        # List of all available benchmark collections:\n\n");
 
-	for_each_collection(coll)
-		printf("%14s: %s\n", coll->name, coll->summary);
-	printf("\n");
-}
+	क्रम_each_collection(coll)
+		म_लिखो("%14s: %s\n", coll->name, coll->summary);
+	म_लिखो("\n");
+पूर्ण
 
-static int bench_str2int(const char *str)
-{
-	if (!str)
-		return BENCH_FORMAT_DEFAULT;
+अटल पूर्णांक bench_str2पूर्णांक(स्थिर अक्षर *str)
+अणु
+	अगर (!str)
+		वापस BENCH_FORMAT_DEFAULT;
 
-	if (!strcmp(str, BENCH_FORMAT_DEFAULT_STR))
-		return BENCH_FORMAT_DEFAULT;
-	else if (!strcmp(str, BENCH_FORMAT_SIMPLE_STR))
-		return BENCH_FORMAT_SIMPLE;
+	अगर (!म_भेद(str, BENCH_FORMAT_DEFAULT_STR))
+		वापस BENCH_FORMAT_DEFAULT;
+	अन्यथा अगर (!म_भेद(str, BENCH_FORMAT_SIMPLE_STR))
+		वापस BENCH_FORMAT_SIMPLE;
 
-	return BENCH_FORMAT_UNKNOWN;
-}
+	वापस BENCH_FORMAT_UNKNOWN;
+पूर्ण
 
 /*
- * Run a specific benchmark but first rename the running task's ->comm[]
+ * Run a specअगरic benchmark but first नाम the running task's ->comm[]
  * to something meaningful:
  */
-static int run_bench(const char *coll_name, const char *bench_name, bench_fn_t fn,
-		     int argc, const char **argv)
-{
-	int size;
-	char *name;
-	int ret;
+अटल पूर्णांक run_bench(स्थिर अक्षर *coll_name, स्थिर अक्षर *bench_name, bench_fn_t fn,
+		     पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	पूर्णांक size;
+	अक्षर *name;
+	पूर्णांक ret;
 
-	size = strlen(coll_name) + 1 + strlen(bench_name) + 1;
+	size = म_माप(coll_name) + 1 + म_माप(bench_name) + 1;
 
 	name = zalloc(size);
 	BUG_ON(!name);
 
-	scnprintf(name, size, "%s-%s", coll_name, bench_name);
+	scnम_लिखो(name, size, "%s-%s", coll_name, bench_name);
 
 	prctl(PR_SET_NAME, name);
 	argv[0] = name;
 
 	ret = fn(argc, argv);
 
-	free(name);
+	मुक्त(name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void run_collection(struct collection *coll)
-{
-	struct bench *bench;
-	const char *argv[2];
+अटल व्योम run_collection(काष्ठा collection *coll)
+अणु
+	काष्ठा bench *bench;
+	स्थिर अक्षर *argv[2];
 
-	argv[1] = NULL;
+	argv[1] = शून्य;
 	/*
 	 * TODO:
 	 *
-	 * Preparing preset parameters for
+	 * Preparing preset parameters क्रम
 	 * embedded, ordinary PC, HPC, etc...
 	 * would be helpful.
 	 */
-	for_each_bench(coll, bench) {
-		if (!bench->fn)
-			break;
-		printf("# Running %s/%s benchmark...\n", coll->name, bench->name);
-		fflush(stdout);
+	क्रम_each_bench(coll, bench) अणु
+		अगर (!bench->fn)
+			अवरोध;
+		म_लिखो("# Running %s/%s benchmark...\n", coll->name, bench->name);
+		ख_साफ(मानक_निकास);
 
 		argv[1] = bench->name;
 		run_bench(coll->name, bench->name, bench->fn, 1, argv);
-		printf("\n");
-	}
-}
+		म_लिखो("\n");
+	पूर्ण
+पूर्ण
 
-static void run_all_collections(void)
-{
-	struct collection *coll;
+अटल व्योम run_all_collections(व्योम)
+अणु
+	काष्ठा collection *coll;
 
-	for_each_collection(coll)
+	क्रम_each_collection(coll)
 		run_collection(coll);
-}
+पूर्ण
 
-int cmd_bench(int argc, const char **argv)
-{
-	struct collection *coll;
-	int ret = 0;
+पूर्णांक cmd_bench(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा collection *coll;
+	पूर्णांक ret = 0;
 
-	if (argc < 2) {
-		/* No collection specified. */
-		print_usage();
-		goto end;
-	}
+	अगर (argc < 2) अणु
+		/* No collection specअगरied. */
+		prपूर्णांक_usage();
+		जाओ end;
+	पूर्ण
 
 	argc = parse_options(argc, argv, bench_options, bench_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	bench_format = bench_str2int(bench_format_str);
-	if (bench_format == BENCH_FORMAT_UNKNOWN) {
-		printf("Unknown format descriptor: '%s'\n", bench_format_str);
-		goto end;
-	}
+	bench_क्रमmat = bench_str2पूर्णांक(bench_क्रमmat_str);
+	अगर (bench_क्रमmat == BENCH_FORMAT_UNKNOWN) अणु
+		म_लिखो("Unknown format descriptor: '%s'\n", bench_क्रमmat_str);
+		जाओ end;
+	पूर्ण
 
-	if (bench_repeat == 0) {
-		printf("Invalid repeat option: Must specify a positive value\n");
-		goto end;
-	}
+	अगर (bench_repeat == 0) अणु
+		म_लिखो("Invalid repeat option: Must specify a positive value\n");
+		जाओ end;
+	पूर्ण
 
-	if (argc < 1) {
-		print_usage();
-		goto end;
-	}
+	अगर (argc < 1) अणु
+		prपूर्णांक_usage();
+		जाओ end;
+	पूर्ण
 
-	if (!strcmp(argv[0], "all")) {
+	अगर (!म_भेद(argv[0], "all")) अणु
 		run_all_collections();
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	for_each_collection(coll) {
-		struct bench *bench;
+	क्रम_each_collection(coll) अणु
+		काष्ठा bench *bench;
 
-		if (strcmp(coll->name, argv[0]))
-			continue;
+		अगर (म_भेद(coll->name, argv[0]))
+			जारी;
 
-		if (argc < 2) {
-			/* No bench specified. */
+		अगर (argc < 2) अणु
+			/* No bench specअगरied. */
 			dump_benchmarks(coll);
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
-		if (!strcmp(argv[1], "all")) {
+		अगर (!म_भेद(argv[1], "all")) अणु
 			run_collection(coll);
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
-		for_each_bench(coll, bench) {
-			if (strcmp(bench->name, argv[1]))
-				continue;
+		क्रम_each_bench(coll, bench) अणु
+			अगर (म_भेद(bench->name, argv[1]))
+				जारी;
 
-			if (bench_format == BENCH_FORMAT_DEFAULT)
-				printf("# Running '%s/%s' benchmark:\n", coll->name, bench->name);
-			fflush(stdout);
+			अगर (bench_क्रमmat == BENCH_FORMAT_DEFAULT)
+				म_लिखो("# Running '%s/%s' benchmark:\n", coll->name, bench->name);
+			ख_साफ(मानक_निकास);
 			ret = run_bench(coll->name, bench->name, bench->fn, argc-1, argv+1);
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
-		if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+		अगर (!म_भेद(argv[1], "-h") || !म_भेद(argv[1], "--help")) अणु
 			dump_benchmarks(coll);
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
-		printf("Unknown benchmark: '%s' for collection '%s'\n", argv[1], argv[0]);
+		म_लिखो("Unknown benchmark: '%s' for collection '%s'\n", argv[1], argv[0]);
 		ret = 1;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	printf("Unknown collection: '%s'\n", argv[0]);
+	म_लिखो("Unknown collection: '%s'\n", argv[0]);
 	ret = 1;
 
 end:
-	return ret;
-}
+	वापस ret;
+पूर्ण

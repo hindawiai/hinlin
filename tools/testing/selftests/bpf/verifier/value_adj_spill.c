@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"map element value is preserved across register spilling",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -14,15 +15,15 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_1, 0),
 	BPF_ST_MEM(BPF_DW, BPF_REG_3, 0, 42),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr_unpriv = "R0 leaks addr",
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
-},
-{
+पूर्ण,
+अणु
 	"map element value or null is marked on register spilling",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -35,9 +36,9 @@
 	BPF_LDX_MEM(BPF_DW, BPF_REG_3, BPF_REG_1, 0),
 	BPF_ST_MEM(BPF_DW, BPF_REG_3, 0, 42),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr_unpriv = "R0 leaks addr",
 	.result = ACCEPT,
 	.result_unpriv = REJECT,
-},
+पूर्ण,

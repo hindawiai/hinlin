@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/net/sunrpc/svcauth.c
  *
- * The generic interface for RPC authentication on the server side.
+ * The generic पूर्णांकerface क्रम RPC authentication on the server side.
  *
  * Copyright (C) 1995, 1996 Olaf Kirch <okir@monad.swb.de>
  *
@@ -10,223 +11,223 @@
  * 19-Apr-2000 Chris Evans      - Security fix
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/sunrpc/types.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/sunrpc/svcsock.h>
-#include <linux/sunrpc/svcauth.h>
-#include <linux/err.h>
-#include <linux/hash.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sunrpc/types.h>
+#समावेश <linux/sunrpc/xdr.h>
+#समावेश <linux/sunrpc/svcsock.h>
+#समावेश <linux/sunrpc/svcauth.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hash.h>
 
-#include <trace/events/sunrpc.h>
+#समावेश <trace/events/sunrpc.h>
 
-#include "sunrpc.h"
+#समावेश "sunrpc.h"
 
-#define RPCDBG_FACILITY	RPCDBG_AUTH
+#घोषणा RPCDBG_FACILITY	RPCDBG_AUTH
 
 
 /*
  * Table of authenticators
  */
-extern struct auth_ops svcauth_null;
-extern struct auth_ops svcauth_unix;
+बाह्य काष्ठा auth_ops svcauth_null;
+बाह्य काष्ठा auth_ops svcauth_unix;
 
-static struct auth_ops __rcu *authtab[RPC_AUTH_MAXFLAVOR] = {
-	[RPC_AUTH_NULL] = (struct auth_ops __force __rcu *)&svcauth_null,
-	[RPC_AUTH_UNIX] = (struct auth_ops __force __rcu *)&svcauth_unix,
-};
+अटल काष्ठा auth_ops __rcu *authtab[RPC_AUTH_MAXFLAVOR] = अणु
+	[RPC_AUTH_शून्य] = (काष्ठा auth_ops __क्रमce __rcu *)&svcauth_null,
+	[RPC_AUTH_UNIX] = (काष्ठा auth_ops __क्रमce __rcu *)&svcauth_unix,
+पूर्ण;
 
-static struct auth_ops *
+अटल काष्ठा auth_ops *
 svc_get_auth_ops(rpc_authflavor_t flavor)
-{
-	struct auth_ops		*aops;
+अणु
+	काष्ठा auth_ops		*aops;
 
-	if (flavor >= RPC_AUTH_MAXFLAVOR)
-		return NULL;
-	rcu_read_lock();
+	अगर (flavor >= RPC_AUTH_MAXFLAVOR)
+		वापस शून्य;
+	rcu_पढ़ो_lock();
 	aops = rcu_dereference(authtab[flavor]);
-	if (aops != NULL && !try_module_get(aops->owner))
-		aops = NULL;
-	rcu_read_unlock();
-	return aops;
-}
+	अगर (aops != शून्य && !try_module_get(aops->owner))
+		aops = शून्य;
+	rcu_पढ़ो_unlock();
+	वापस aops;
+पूर्ण
 
-static void
-svc_put_auth_ops(struct auth_ops *aops)
-{
+अटल व्योम
+svc_put_auth_ops(काष्ठा auth_ops *aops)
+अणु
 	module_put(aops->owner);
-}
+पूर्ण
 
-int
-svc_authenticate(struct svc_rqst *rqstp, __be32 *authp)
-{
+पूर्णांक
+svc_authenticate(काष्ठा svc_rqst *rqstp, __be32 *authp)
+अणु
 	rpc_authflavor_t	flavor;
-	struct auth_ops		*aops;
+	काष्ठा auth_ops		*aops;
 
 	*authp = rpc_auth_ok;
 
 	flavor = svc_getnl(&rqstp->rq_arg.head[0]);
 
-	dprintk("svc: svc_authenticate (%d)\n", flavor);
+	dprपूर्णांकk("svc: svc_authenticate (%d)\n", flavor);
 
 	aops = svc_get_auth_ops(flavor);
-	if (aops == NULL) {
+	अगर (aops == शून्य) अणु
 		*authp = rpc_autherr_badcred;
-		return SVC_DENIED;
-	}
+		वापस SVC_DENIED;
+	पूर्ण
 
 	rqstp->rq_auth_slack = 0;
 	init_svc_cred(&rqstp->rq_cred);
 
 	rqstp->rq_authop = aops;
-	return aops->accept(rqstp, authp);
-}
+	वापस aops->accept(rqstp, authp);
+पूर्ण
 EXPORT_SYMBOL_GPL(svc_authenticate);
 
-int svc_set_client(struct svc_rqst *rqstp)
-{
-	rqstp->rq_client = NULL;
-	return rqstp->rq_authop->set_client(rqstp);
-}
+पूर्णांक svc_set_client(काष्ठा svc_rqst *rqstp)
+अणु
+	rqstp->rq_client = शून्य;
+	वापस rqstp->rq_authop->set_client(rqstp);
+पूर्ण
 EXPORT_SYMBOL_GPL(svc_set_client);
 
 /* A request, which was authenticated, has now executed.
- * Time to finalise the credentials and verifier
+ * Time to finalise the credentials and verअगरier
  * and release and resources
  */
-int svc_authorise(struct svc_rqst *rqstp)
-{
-	struct auth_ops *aops = rqstp->rq_authop;
-	int rv = 0;
+पूर्णांक svc_authorise(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा auth_ops *aops = rqstp->rq_authop;
+	पूर्णांक rv = 0;
 
-	rqstp->rq_authop = NULL;
+	rqstp->rq_authop = शून्य;
 
-	if (aops) {
+	अगर (aops) अणु
 		rv = aops->release(rqstp);
 		svc_put_auth_ops(aops);
-	}
-	return rv;
-}
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-int
-svc_auth_register(rpc_authflavor_t flavor, struct auth_ops *aops)
-{
-	struct auth_ops *old;
-	int rv = -EINVAL;
+पूर्णांक
+svc_auth_रेजिस्टर(rpc_authflavor_t flavor, काष्ठा auth_ops *aops)
+अणु
+	काष्ठा auth_ops *old;
+	पूर्णांक rv = -EINVAL;
 
-	if (flavor < RPC_AUTH_MAXFLAVOR) {
-		old = cmpxchg((struct auth_ops ** __force)&authtab[flavor], NULL, aops);
-		if (old == NULL || old == aops)
+	अगर (flavor < RPC_AUTH_MAXFLAVOR) अणु
+		old = cmpxchg((काष्ठा auth_ops ** __क्रमce)&authtab[flavor], शून्य, aops);
+		अगर (old == शून्य || old == aops)
 			rv = 0;
-	}
-	return rv;
-}
-EXPORT_SYMBOL_GPL(svc_auth_register);
+	पूर्ण
+	वापस rv;
+पूर्ण
+EXPORT_SYMBOL_GPL(svc_auth_रेजिस्टर);
 
-void
-svc_auth_unregister(rpc_authflavor_t flavor)
-{
-	if (flavor < RPC_AUTH_MAXFLAVOR)
-		rcu_assign_pointer(authtab[flavor], NULL);
-}
-EXPORT_SYMBOL_GPL(svc_auth_unregister);
+व्योम
+svc_auth_unरेजिस्टर(rpc_authflavor_t flavor)
+अणु
+	अगर (flavor < RPC_AUTH_MAXFLAVOR)
+		rcu_assign_poपूर्णांकer(authtab[flavor], शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(svc_auth_unरेजिस्टर);
 
 /**************************************************
  * 'auth_domains' are stored in a hash table indexed by name.
  * When the last reference to an 'auth_domain' is dropped,
- * the object is unhashed and freed.
- * If auth_domain_lookup fails to find an entry, it will return
+ * the object is unhashed and मुक्तd.
+ * If auth_करोमुख्य_lookup fails to find an entry, it will वापस
  * it's second argument 'new'.  If this is non-null, it will
- * have been atomically linked into the table.
+ * have been atomically linked पूर्णांकo the table.
  */
 
-#define	DN_HASHBITS	6
-#define	DN_HASHMAX	(1<<DN_HASHBITS)
+#घोषणा	DN_HASHBITS	6
+#घोषणा	DN_HASHMAX	(1<<DN_HASHBITS)
 
-static struct hlist_head	auth_domain_table[DN_HASHMAX];
-static DEFINE_SPINLOCK(auth_domain_lock);
+अटल काष्ठा hlist_head	auth_करोमुख्य_table[DN_HASHMAX];
+अटल DEFINE_SPINLOCK(auth_करोमुख्य_lock);
 
-static void auth_domain_release(struct kref *kref)
-	__releases(&auth_domain_lock)
-{
-	struct auth_domain *dom = container_of(kref, struct auth_domain, ref);
+अटल व्योम auth_करोमुख्य_release(काष्ठा kref *kref)
+	__releases(&auth_करोमुख्य_lock)
+अणु
+	काष्ठा auth_करोमुख्य *करोm = container_of(kref, काष्ठा auth_करोमुख्य, ref);
 
-	hlist_del_rcu(&dom->hash);
-	dom->flavour->domain_release(dom);
-	spin_unlock(&auth_domain_lock);
-}
+	hlist_del_rcu(&करोm->hash);
+	करोm->flavour->करोमुख्य_release(करोm);
+	spin_unlock(&auth_करोमुख्य_lock);
+पूर्ण
 
-void auth_domain_put(struct auth_domain *dom)
-{
-	kref_put_lock(&dom->ref, auth_domain_release, &auth_domain_lock);
-}
-EXPORT_SYMBOL_GPL(auth_domain_put);
+व्योम auth_करोमुख्य_put(काष्ठा auth_करोमुख्य *करोm)
+अणु
+	kref_put_lock(&करोm->ref, auth_करोमुख्य_release, &auth_करोमुख्य_lock);
+पूर्ण
+EXPORT_SYMBOL_GPL(auth_करोमुख्य_put);
 
-struct auth_domain *
-auth_domain_lookup(char *name, struct auth_domain *new)
-{
-	struct auth_domain *hp;
-	struct hlist_head *head;
+काष्ठा auth_करोमुख्य *
+auth_करोमुख्य_lookup(अक्षर *name, काष्ठा auth_करोमुख्य *new)
+अणु
+	काष्ठा auth_करोमुख्य *hp;
+	काष्ठा hlist_head *head;
 
-	head = &auth_domain_table[hash_str(name, DN_HASHBITS)];
+	head = &auth_करोमुख्य_table[hash_str(name, DN_HASHBITS)];
 
-	spin_lock(&auth_domain_lock);
+	spin_lock(&auth_करोमुख्य_lock);
 
-	hlist_for_each_entry(hp, head, hash) {
-		if (strcmp(hp->name, name)==0) {
+	hlist_क्रम_each_entry(hp, head, hash) अणु
+		अगर (म_भेद(hp->name, name)==0) अणु
 			kref_get(&hp->ref);
-			spin_unlock(&auth_domain_lock);
-			return hp;
-		}
-	}
-	if (new)
+			spin_unlock(&auth_करोमुख्य_lock);
+			वापस hp;
+		पूर्ण
+	पूर्ण
+	अगर (new)
 		hlist_add_head_rcu(&new->hash, head);
-	spin_unlock(&auth_domain_lock);
-	return new;
-}
-EXPORT_SYMBOL_GPL(auth_domain_lookup);
+	spin_unlock(&auth_करोमुख्य_lock);
+	वापस new;
+पूर्ण
+EXPORT_SYMBOL_GPL(auth_करोमुख्य_lookup);
 
-struct auth_domain *auth_domain_find(char *name)
-{
-	struct auth_domain *hp;
-	struct hlist_head *head;
+काष्ठा auth_करोमुख्य *auth_करोमुख्य_find(अक्षर *name)
+अणु
+	काष्ठा auth_करोमुख्य *hp;
+	काष्ठा hlist_head *head;
 
-	head = &auth_domain_table[hash_str(name, DN_HASHBITS)];
+	head = &auth_करोमुख्य_table[hash_str(name, DN_HASHBITS)];
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(hp, head, hash) {
-		if (strcmp(hp->name, name)==0) {
-			if (!kref_get_unless_zero(&hp->ref))
-				hp = NULL;
-			rcu_read_unlock();
-			return hp;
-		}
-	}
-	rcu_read_unlock();
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(auth_domain_find);
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(hp, head, hash) अणु
+		अगर (म_भेद(hp->name, name)==0) अणु
+			अगर (!kref_get_unless_zero(&hp->ref))
+				hp = शून्य;
+			rcu_पढ़ो_unlock();
+			वापस hp;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(auth_करोमुख्य_find);
 
 /**
- * auth_domain_cleanup - check that the auth_domain table is empty
+ * auth_करोमुख्य_cleanup - check that the auth_करोमुख्य table is empty
  *
- * On module unload the auth_domain_table must be empty.  To make it
- * easier to catch bugs which don't clean up domains properly, we
- * warn if anything remains in the table at cleanup time.
+ * On module unload the auth_करोमुख्य_table must be empty.  To make it
+ * easier to catch bugs which करोn't clean up करोमुख्यs properly, we
+ * warn अगर anything reमुख्यs in the table at cleanup समय.
  *
- * Note that we cannot proactively remove the domains at this stage.
- * The ->release() function might be in a module that has already been
+ * Note that we cannot proactively हटाओ the करोमुख्यs at this stage.
+ * The ->release() function might be in a module that has alपढ़ोy been
  * unloaded.
  */
 
-void auth_domain_cleanup(void)
-{
-	int h;
-	struct auth_domain *hp;
+व्योम auth_करोमुख्य_cleanup(व्योम)
+अणु
+	पूर्णांक h;
+	काष्ठा auth_करोमुख्य *hp;
 
-	for (h = 0; h < DN_HASHMAX; h++)
-		hlist_for_each_entry(hp, &auth_domain_table[h], hash)
+	क्रम (h = 0; h < DN_HASHMAX; h++)
+		hlist_क्रम_each_entry(hp, &auth_करोमुख्य_table[h], hash)
 			pr_warn("svc: domain %s still present at module unload.\n",
 				hp->name);
-}
+पूर्ण

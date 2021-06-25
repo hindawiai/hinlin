@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2015, Michael Neuling, IBM Corp.
  *
  * Edited: Rashmica Gupta, Nov 2015
  *
- * This test does a fork syscall inside a transaction. Basic sniff test
- * to see if we can enter the kernel during a transaction.
+ * This test करोes a विभाजन syscall inside a transaction. Basic snअगरf test
+ * to see अगर we can enter the kernel during a transaction.
  */
 
-#include <errno.h>
-#include <inttypes.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-int test_fork(void)
-{
-	SKIP_IF(!have_htm());
+पूर्णांक test_विभाजन(व्योम)
+अणु
+	SKIP_IF(!have_hपंचांग());
 
-	asm __volatile__(
+	यंत्र __अस्थिर__(
 		"tbegin.;"
 		"blt    1f; "
-		"li     0, 2;"  /* fork syscall */
+		"li     0, 2;"  /* विभाजन syscall */
 		"sc  ;"
 		"tend.;"
 		"1: ;"
@@ -33,10 +34,10 @@ int test_fork(void)
 	/* If we reach here, we've passed.  Otherwise we've probably crashed
 	 * the kernel */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(test_fork, "tm_fork");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(test_विभाजन, "tm_fork");
+पूर्ण

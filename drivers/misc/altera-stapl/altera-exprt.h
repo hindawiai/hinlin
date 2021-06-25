@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * altera-exprt.h
  *
@@ -9,11 +10,11 @@
  * Copyright (C) 2010 Igor M. Liplianin <liplianin@netup.ru>
  */
 
-#ifndef ALTERA_EXPRT_H
-#define ALTERA_EXPRT_H
+#अगर_अघोषित ALTERA_EXPRT_H
+#घोषणा ALTERA_EXPRT_H
 
 
 u32 altera_shrink(u8 *in, u32 in_length, u8 *out, u32 out_length, s32 version);
-int netup_jtag_io_lpt(void *device, int tms, int tdi, int read_tdo);
+पूर्णांक netup_jtag_io_lpt(व्योम *device, पूर्णांक पंचांगs, पूर्णांक tdi, पूर्णांक पढ़ो_tकरो);
 
-#endif /* ALTERA_EXPRT_H */
+#पूर्ण_अगर /* ALTERA_EXPRT_H */

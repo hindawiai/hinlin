@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * timbuart.c timberdale FPGA UART driver
  * Copyright (c) 2009 Intel Corporation
@@ -8,379 +9,379 @@
  * Timberdale FPGA UART
  */
 
-#include <linux/pci.h>
-#include <linux/interrupt.h>
-#include <linux/serial_core.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include "timbuart.h"
+#समावेश "timbuart.h"
 
-struct timbuart_port {
-	struct uart_port	port;
-	struct tasklet_struct	tasklet;
-	int			usedma;
+काष्ठा timbuart_port अणु
+	काष्ठा uart_port	port;
+	काष्ठा tasklet_काष्ठा	tasklet;
+	पूर्णांक			usedma;
 	u32			last_ier;
-	struct platform_device  *dev;
-};
+	काष्ठा platक्रमm_device  *dev;
+पूर्ण;
 
-static int baudrates[] = {9600, 19200, 38400, 57600, 115200, 230400, 460800,
-	921600, 1843200, 3250000};
+अटल पूर्णांक baudrates[] = अणु9600, 19200, 38400, 57600, 115200, 230400, 460800,
+	921600, 1843200, 3250000पूर्ण;
 
-static void timbuart_mctrl_check(struct uart_port *port, u32 isr, u32 *ier);
+अटल व्योम timbuart_mctrl_check(काष्ठा uart_port *port, u32 isr, u32 *ier);
 
-static irqreturn_t timbuart_handleinterrupt(int irq, void *devid);
+अटल irqवापस_t timbuart_handleपूर्णांकerrupt(पूर्णांक irq, व्योम *devid);
 
-static void timbuart_stop_rx(struct uart_port *port)
-{
-	/* spin lock held by upper layer, disable all RX interrupts */
-	u32 ier = ioread32(port->membase + TIMBUART_IER) & ~RXFLAGS;
-	iowrite32(ier, port->membase + TIMBUART_IER);
-}
+अटल व्योम timbuart_stop_rx(काष्ठा uart_port *port)
+अणु
+	/* spin lock held by upper layer, disable all RX पूर्णांकerrupts */
+	u32 ier = ioपढ़ो32(port->membase + TIMBUART_IER) & ~RXFLAGS;
+	ioग_लिखो32(ier, port->membase + TIMBUART_IER);
+पूर्ण
 
-static void timbuart_stop_tx(struct uart_port *port)
-{
-	/* spinlock held by upper layer, disable TX interrupt */
-	u32 ier = ioread32(port->membase + TIMBUART_IER) & ~TXBAE;
-	iowrite32(ier, port->membase + TIMBUART_IER);
-}
+अटल व्योम timbuart_stop_tx(काष्ठा uart_port *port)
+अणु
+	/* spinlock held by upper layer, disable TX पूर्णांकerrupt */
+	u32 ier = ioपढ़ो32(port->membase + TIMBUART_IER) & ~TXBAE;
+	ioग_लिखो32(ier, port->membase + TIMBUART_IER);
+पूर्ण
 
-static void timbuart_start_tx(struct uart_port *port)
-{
-	struct timbuart_port *uart =
-		container_of(port, struct timbuart_port, port);
+अटल व्योम timbuart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा timbuart_port *uart =
+		container_of(port, काष्ठा timbuart_port, port);
 
-	/* do not transfer anything here -> fire off the tasklet */
+	/* करो not transfer anything here -> fire off the tasklet */
 	tasklet_schedule(&uart->tasklet);
-}
+पूर्ण
 
-static unsigned int timbuart_tx_empty(struct uart_port *port)
-{
-	u32 isr = ioread32(port->membase + TIMBUART_ISR);
+अटल अचिन्हित पूर्णांक timbuart_tx_empty(काष्ठा uart_port *port)
+अणु
+	u32 isr = ioपढ़ो32(port->membase + TIMBUART_ISR);
 
-	return (isr & TXBE) ? TIOCSER_TEMT : 0;
-}
+	वापस (isr & TXBE) ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static void timbuart_flush_buffer(struct uart_port *port)
-{
-	if (!timbuart_tx_empty(port)) {
-		u8 ctl = ioread8(port->membase + TIMBUART_CTRL) |
+अटल व्योम timbuart_flush_buffer(काष्ठा uart_port *port)
+अणु
+	अगर (!timbuart_tx_empty(port)) अणु
+		u8 ctl = ioपढ़ो8(port->membase + TIMBUART_CTRL) |
 			TIMBUART_CTRL_FLSHTX;
 
-		iowrite8(ctl, port->membase + TIMBUART_CTRL);
-		iowrite32(TXBF, port->membase + TIMBUART_ISR);
-	}
-}
+		ioग_लिखो8(ctl, port->membase + TIMBUART_CTRL);
+		ioग_लिखो32(TXBF, port->membase + TIMBUART_ISR);
+	पूर्ण
+पूर्ण
 
-static void timbuart_rx_chars(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
+अटल व्योम timbuart_rx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
 
-	while (ioread32(port->membase + TIMBUART_ISR) & RXDP) {
-		u8 ch = ioread8(port->membase + TIMBUART_RXFIFO);
+	जबतक (ioपढ़ो32(port->membase + TIMBUART_ISR) & RXDP) अणु
+		u8 ch = ioपढ़ो8(port->membase + TIMBUART_RXFIFO);
 		port->icount.rx++;
-		tty_insert_flip_char(tport, ch, TTY_NORMAL);
-	}
+		tty_insert_flip_अक्षर(tport, ch, TTY_NORMAL);
+	पूर्ण
 
 	tty_flip_buffer_push(tport);
 
 	dev_dbg(port->dev, "%s - total read %d bytes\n",
 		__func__, port->icount.rx);
-}
+पूर्ण
 
-static void timbuart_tx_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
+अटल व्योम timbuart_tx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
-	while (!(ioread32(port->membase + TIMBUART_ISR) & TXBF) &&
-		!uart_circ_empty(xmit)) {
-		iowrite8(xmit->buf[xmit->tail],
+	जबतक (!(ioपढ़ो32(port->membase + TIMBUART_ISR) & TXBF) &&
+		!uart_circ_empty(xmit)) अणु
+		ioग_लिखो8(xmit->buf[xmit->tail],
 			port->membase + TIMBUART_TXFIFO);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-	}
+	पूर्ण
 
 	dev_dbg(port->dev,
 		"%s - total written %d bytes, CTL: %x, RTS: %x, baud: %x\n",
 		 __func__,
 		port->icount.tx,
-		ioread8(port->membase + TIMBUART_CTRL),
+		ioपढ़ो8(port->membase + TIMBUART_CTRL),
 		port->mctrl & TIOCM_RTS,
-		ioread8(port->membase + TIMBUART_BAUDRATE));
-}
+		ioपढ़ो8(port->membase + TIMBUART_BAUDRATE));
+पूर्ण
 
-static void timbuart_handle_tx_port(struct uart_port *port, u32 isr, u32 *ier)
-{
-	struct timbuart_port *uart =
-		container_of(port, struct timbuart_port, port);
-	struct circ_buf *xmit = &port->state->xmit;
+अटल व्योम timbuart_handle_tx_port(काष्ठा uart_port *port, u32 isr, u32 *ier)
+अणु
+	काष्ठा timbuart_port *uart =
+		container_of(port, काष्ठा timbuart_port, port);
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		return;
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		वापस;
 
-	if (port->x_char)
-		return;
+	अगर (port->x_अक्षर)
+		वापस;
 
-	if (isr & TXFLAGS) {
-		timbuart_tx_chars(port);
-		/* clear all TX interrupts */
-		iowrite32(TXFLAGS, port->membase + TIMBUART_ISR);
+	अगर (isr & TXFLAGS) अणु
+		timbuart_tx_अक्षरs(port);
+		/* clear all TX पूर्णांकerrupts */
+		ioग_लिखो32(TXFLAGS, port->membase + TIMBUART_ISR);
 
-		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-			uart_write_wakeup(port);
-	} else
-		/* Re-enable any tx interrupt */
+		अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+			uart_ग_लिखो_wakeup(port);
+	पूर्ण अन्यथा
+		/* Re-enable any tx पूर्णांकerrupt */
 		*ier |= uart->last_ier & TXFLAGS;
 
-	/* enable interrupts if there are chars in the transmit buffer,
-	 * Or if we delivered some bytes and want the almost empty interrupt
-	 * we wake up the upper layer later when we got the interrupt
-	 * to give it some time to go out...
+	/* enable पूर्णांकerrupts अगर there are अक्षरs in the transmit buffer,
+	 * Or अगर we delivered some bytes and want the almost empty पूर्णांकerrupt
+	 * we wake up the upper layer later when we got the पूर्णांकerrupt
+	 * to give it some समय to go out...
 	 */
-	if (!uart_circ_empty(xmit))
+	अगर (!uart_circ_empty(xmit))
 		*ier |= TXBAE;
 
 	dev_dbg(port->dev, "%s - leaving\n", __func__);
-}
+पूर्ण
 
-static void timbuart_handle_rx_port(struct uart_port *port, u32 isr, u32 *ier)
-{
-	if (isr & RXFLAGS) {
+अटल व्योम timbuart_handle_rx_port(काष्ठा uart_port *port, u32 isr, u32 *ier)
+अणु
+	अगर (isr & RXFLAGS) अणु
 		/* Some RX status is set */
-		if (isr & RXBF) {
-			u8 ctl = ioread8(port->membase + TIMBUART_CTRL) |
+		अगर (isr & RXBF) अणु
+			u8 ctl = ioपढ़ो8(port->membase + TIMBUART_CTRL) |
 				TIMBUART_CTRL_FLSHRX;
-			iowrite8(ctl, port->membase + TIMBUART_CTRL);
+			ioग_लिखो8(ctl, port->membase + TIMBUART_CTRL);
 			port->icount.overrun++;
-		} else if (isr & (RXDP))
-			timbuart_rx_chars(port);
+		पूर्ण अन्यथा अगर (isr & (RXDP))
+			timbuart_rx_अक्षरs(port);
 
-		/* ack all RX interrupts */
-		iowrite32(RXFLAGS, port->membase + TIMBUART_ISR);
-	}
+		/* ack all RX पूर्णांकerrupts */
+		ioग_लिखो32(RXFLAGS, port->membase + TIMBUART_ISR);
+	पूर्ण
 
-	/* always have the RX interrupts enabled */
+	/* always have the RX पूर्णांकerrupts enabled */
 	*ier |= RXBAF | RXBF | RXTT;
 
 	dev_dbg(port->dev, "%s - leaving\n", __func__);
-}
+पूर्ण
 
-static void timbuart_tasklet(struct tasklet_struct *t)
-{
-	struct timbuart_port *uart = from_tasklet(uart, t, tasklet);
+अटल व्योम timbuart_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा timbuart_port *uart = from_tasklet(uart, t, tasklet);
 	u32 isr, ier = 0;
 
 	spin_lock(&uart->port.lock);
 
-	isr = ioread32(uart->port.membase + TIMBUART_ISR);
+	isr = ioपढ़ो32(uart->port.membase + TIMBUART_ISR);
 	dev_dbg(uart->port.dev, "%s ISR: %x\n", __func__, isr);
 
-	if (!uart->usedma)
+	अगर (!uart->usedma)
 		timbuart_handle_tx_port(&uart->port, isr, &ier);
 
 	timbuart_mctrl_check(&uart->port, isr, &ier);
 
-	if (!uart->usedma)
+	अगर (!uart->usedma)
 		timbuart_handle_rx_port(&uart->port, isr, &ier);
 
-	iowrite32(ier, uart->port.membase + TIMBUART_IER);
+	ioग_लिखो32(ier, uart->port.membase + TIMBUART_IER);
 
 	spin_unlock(&uart->port.lock);
 	dev_dbg(uart->port.dev, "%s leaving\n", __func__);
-}
+पूर्ण
 
-static unsigned int timbuart_get_mctrl(struct uart_port *port)
-{
-	u8 cts = ioread8(port->membase + TIMBUART_CTRL);
+अटल अचिन्हित पूर्णांक timbuart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	u8 cts = ioपढ़ो8(port->membase + TIMBUART_CTRL);
 	dev_dbg(port->dev, "%s - cts %x\n", __func__, cts);
 
-	if (cts & TIMBUART_CTRL_CTS)
-		return TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
-	else
-		return TIOCM_DSR | TIOCM_CAR;
-}
+	अगर (cts & TIMBUART_CTRL_CTS)
+		वापस TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+	अन्यथा
+		वापस TIOCM_DSR | TIOCM_CAR;
+पूर्ण
 
-static void timbuart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
+अटल व्योम timbuart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
 	dev_dbg(port->dev, "%s - %x\n", __func__, mctrl);
 
-	if (mctrl & TIOCM_RTS)
-		iowrite8(TIMBUART_CTRL_RTS, port->membase + TIMBUART_CTRL);
-	else
-		iowrite8(0, port->membase + TIMBUART_CTRL);
-}
+	अगर (mctrl & TIOCM_RTS)
+		ioग_लिखो8(TIMBUART_CTRL_RTS, port->membase + TIMBUART_CTRL);
+	अन्यथा
+		ioग_लिखो8(0, port->membase + TIMBUART_CTRL);
+पूर्ण
 
-static void timbuart_mctrl_check(struct uart_port *port, u32 isr, u32 *ier)
-{
-	unsigned int cts;
+अटल व्योम timbuart_mctrl_check(काष्ठा uart_port *port, u32 isr, u32 *ier)
+अणु
+	अचिन्हित पूर्णांक cts;
 
-	if (isr & CTS_DELTA) {
+	अगर (isr & CTS_DELTA) अणु
 		/* ack */
-		iowrite32(CTS_DELTA, port->membase + TIMBUART_ISR);
+		ioग_लिखो32(CTS_DELTA, port->membase + TIMBUART_ISR);
 		cts = timbuart_get_mctrl(port);
 		uart_handle_cts_change(port, cts & TIOCM_CTS);
-		wake_up_interruptible(&port->state->port.delta_msr_wait);
-	}
+		wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
+	पूर्ण
 
 	*ier |= CTS_DELTA;
-}
+पूर्ण
 
-static void timbuart_break_ctl(struct uart_port *port, int ctl)
-{
+अटल व्योम timbuart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक ctl)
+अणु
 	/* N/A */
-}
+पूर्ण
 
-static int timbuart_startup(struct uart_port *port)
-{
-	struct timbuart_port *uart =
-		container_of(port, struct timbuart_port, port);
+अटल पूर्णांक timbuart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा timbuart_port *uart =
+		container_of(port, काष्ठा timbuart_port, port);
 
 	dev_dbg(port->dev, "%s\n", __func__);
 
-	iowrite8(TIMBUART_CTRL_FLSHRX, port->membase + TIMBUART_CTRL);
-	iowrite32(0x1ff, port->membase + TIMBUART_ISR);
-	/* Enable all but TX interrupts */
-	iowrite32(RXBAF | RXBF | RXTT | CTS_DELTA,
+	ioग_लिखो8(TIMBUART_CTRL_FLSHRX, port->membase + TIMBUART_CTRL);
+	ioग_लिखो32(0x1ff, port->membase + TIMBUART_ISR);
+	/* Enable all but TX पूर्णांकerrupts */
+	ioग_लिखो32(RXBAF | RXBF | RXTT | CTS_DELTA,
 		port->membase + TIMBUART_IER);
 
-	return request_irq(port->irq, timbuart_handleinterrupt, IRQF_SHARED,
+	वापस request_irq(port->irq, timbuart_handleपूर्णांकerrupt, IRQF_SHARED,
 		"timb-uart", uart);
-}
+पूर्ण
 
-static void timbuart_shutdown(struct uart_port *port)
-{
-	struct timbuart_port *uart =
-		container_of(port, struct timbuart_port, port);
+अटल व्योम timbuart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा timbuart_port *uart =
+		container_of(port, काष्ठा timbuart_port, port);
 	dev_dbg(port->dev, "%s\n", __func__);
-	free_irq(port->irq, uart);
-	iowrite32(0, port->membase + TIMBUART_IER);
+	मुक्त_irq(port->irq, uart);
+	ioग_लिखो32(0, port->membase + TIMBUART_IER);
 
 	timbuart_flush_buffer(port);
-}
+पूर्ण
 
-static int get_bindex(int baud)
-{
-	int i;
+अटल पूर्णांक get_bindex(पूर्णांक baud)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(baudrates); i++)
-		if (baud <= baudrates[i])
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(baudrates); i++)
+		अगर (baud <= baudrates[i])
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void timbuart_set_termios(struct uart_port *port,
-	struct ktermios *termios,
-	struct ktermios *old)
-{
-	unsigned int baud;
-	short bindex;
-	unsigned long flags;
+अटल व्योम timbuart_set_termios(काष्ठा uart_port *port,
+	काष्ठा ktermios *termios,
+	काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक baud;
+	लघु bindex;
+	अचिन्हित दीर्घ flags;
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
 	bindex = get_bindex(baud);
 	dev_dbg(port->dev, "%s - bindex %d\n", __func__, bindex);
 
-	if (bindex < 0)
+	अगर (bindex < 0)
 		bindex = 0;
 	baud = baudrates[bindex];
 
-	/* The serial layer calls into this once with old = NULL when setting
+	/* The serial layer calls पूर्णांकo this once with old = शून्य when setting
 	   up initially */
-	if (old)
+	अगर (old)
 		tty_termios_copy_hw(termios, old);
 	tty_termios_encode_baud_rate(termios, baud, baud);
 
 	spin_lock_irqsave(&port->lock, flags);
-	iowrite8((u8)bindex, port->membase + TIMBUART_BAUDRATE);
-	uart_update_timeout(port, termios->c_cflag, baud);
+	ioग_लिखो8((u8)bindex, port->membase + TIMBUART_BAUDRATE);
+	uart_update_समयout(port, termios->c_cflag, baud);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *timbuart_type(struct uart_port *port)
-{
-	return port->type == PORT_UNKNOWN ? "timbuart" : NULL;
-}
+अटल स्थिर अक्षर *timbuart_type(काष्ठा uart_port *port)
+अणु
+	वापस port->type == PORT_UNKNOWN ? "timbuart" : शून्य;
+पूर्ण
 
-/* We do not request/release mappings of the registers here,
- * currently it's done in the proble function.
+/* We करो not request/release mappings of the रेजिस्टरs here,
+ * currently it's करोne in the proble function.
  */
-static void timbuart_release_port(struct uart_port *port)
-{
-	struct platform_device *pdev = to_platform_device(port->dev);
-	int size =
-		resource_size(platform_get_resource(pdev, IORESOURCE_MEM, 0));
+अटल व्योम timbuart_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
+	पूर्णांक size =
+		resource_size(platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0));
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		iounmap(port->membase);
-		port->membase = NULL;
-	}
+		port->membase = शून्य;
+	पूर्ण
 
 	release_mem_region(port->mapbase, size);
-}
+पूर्ण
 
-static int timbuart_request_port(struct uart_port *port)
-{
-	struct platform_device *pdev = to_platform_device(port->dev);
-	int size =
-		resource_size(platform_get_resource(pdev, IORESOURCE_MEM, 0));
+अटल पूर्णांक timbuart_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
+	पूर्णांक size =
+		resource_size(platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0));
 
-	if (!request_mem_region(port->mapbase, size, "timb-uart"))
-		return -EBUSY;
+	अगर (!request_mem_region(port->mapbase, size, "timb-uart"))
+		वापस -EBUSY;
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		port->membase = ioremap(port->mapbase, size);
-		if (port->membase == NULL) {
+		अगर (port->membase == शून्य) अणु
 			release_mem_region(port->mapbase, size);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t timbuart_handleinterrupt(int irq, void *devid)
-{
-	struct timbuart_port *uart = (struct timbuart_port *)devid;
+अटल irqवापस_t timbuart_handleपूर्णांकerrupt(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा timbuart_port *uart = (काष्ठा timbuart_port *)devid;
 
-	if (ioread8(uart->port.membase + TIMBUART_IPR)) {
-		uart->last_ier = ioread32(uart->port.membase + TIMBUART_IER);
+	अगर (ioपढ़ो8(uart->port.membase + TIMBUART_IPR)) अणु
+		uart->last_ier = ioपढ़ो32(uart->port.membase + TIMBUART_IER);
 
-		/* disable interrupts, the tasklet enables them again */
-		iowrite32(0, uart->port.membase + TIMBUART_IER);
+		/* disable पूर्णांकerrupts, the tasklet enables them again */
+		ioग_लिखो32(0, uart->port.membase + TIMBUART_IER);
 
 		/* fire off bottom half */
 		tasklet_schedule(&uart->tasklet);
 
-		return IRQ_HANDLED;
-	} else
-		return IRQ_NONE;
-}
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा
+		वापस IRQ_NONE;
+पूर्ण
 
 /*
- * Configure/autoconfigure the port.
+ * Configure/स्वतःconfigure the port.
  */
-static void timbuart_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+अटल व्योम timbuart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_TIMBUART;
 		timbuart_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int timbuart_verify_port(struct uart_port *port,
-	struct serial_struct *ser)
-{
-	/* we don't want the core code to modify any port params */
-	return -EINVAL;
-}
+अटल पूर्णांक timbuart_verअगरy_port(काष्ठा uart_port *port,
+	काष्ठा serial_काष्ठा *ser)
+अणु
+	/* we करोn't want the core code to modअगरy any port params */
+	वापस -EINVAL;
+पूर्ण
 
-static const struct uart_ops timbuart_ops = {
+अटल स्थिर काष्ठा uart_ops timbuart_ops = अणु
 	.tx_empty = timbuart_tx_empty,
 	.set_mctrl = timbuart_set_mctrl,
 	.get_mctrl = timbuart_get_mctrl,
@@ -388,45 +389,45 @@ static const struct uart_ops timbuart_ops = {
 	.start_tx = timbuart_start_tx,
 	.flush_buffer = timbuart_flush_buffer,
 	.stop_rx = timbuart_stop_rx,
-	.break_ctl = timbuart_break_ctl,
+	.अवरोध_ctl = timbuart_अवरोध_ctl,
 	.startup = timbuart_startup,
-	.shutdown = timbuart_shutdown,
+	.shutकरोwn = timbuart_shutकरोwn,
 	.set_termios = timbuart_set_termios,
 	.type = timbuart_type,
 	.release_port = timbuart_release_port,
 	.request_port = timbuart_request_port,
 	.config_port = timbuart_config_port,
-	.verify_port = timbuart_verify_port
-};
+	.verअगरy_port = timbuart_verअगरy_port
+पूर्ण;
 
-static struct uart_driver timbuart_driver = {
+अटल काष्ठा uart_driver timbuart_driver = अणु
 	.owner = THIS_MODULE,
 	.driver_name = "timberdale_uart",
 	.dev_name = "ttyTU",
 	.major = TIMBUART_MAJOR,
 	.minor = TIMBUART_MINOR,
 	.nr = 1
-};
+पूर्ण;
 
-static int timbuart_probe(struct platform_device *dev)
-{
-	int err, irq;
-	struct timbuart_port *uart;
-	struct resource *iomem;
+अटल पूर्णांक timbuart_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	पूर्णांक err, irq;
+	काष्ठा timbuart_port *uart;
+	काष्ठा resource *iomem;
 
 	dev_dbg(&dev->dev, "%s\n", __func__);
 
-	uart = kzalloc(sizeof(*uart), GFP_KERNEL);
-	if (!uart) {
+	uart = kzalloc(माप(*uart), GFP_KERNEL);
+	अगर (!uart) अणु
 		err = -EINVAL;
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
 	uart->usedma = 0;
 
 	uart->port.uartclk = 3250000 * 16;
-	uart->port.fifosize  = TIMBUART_FIFO_SIZE;
-	uart->port.regshift  = 2;
+	uart->port.fअगरosize  = TIMBUART_FIFO_SIZE;
+	uart->port.regshअगरt  = 2;
 	uart->port.iotype  = UPIO_MEM;
 	uart->port.ops = &timbuart_ops;
 	uart->port.irq = 0;
@@ -434,67 +435,67 @@ static int timbuart_probe(struct platform_device *dev)
 	uart->port.line  = 0;
 	uart->port.dev	= &dev->dev;
 
-	iomem = platform_get_resource(dev, IORESOURCE_MEM, 0);
-	if (!iomem) {
+	iomem = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
+	अगर (!iomem) अणु
 		err = -ENOMEM;
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 	uart->port.mapbase = iomem->start;
-	uart->port.membase = NULL;
+	uart->port.membase = शून्य;
 
-	irq = platform_get_irq(dev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(dev, 0);
+	अगर (irq < 0) अणु
 		err = -EINVAL;
-		goto err_register;
-	}
+		जाओ err_रेजिस्टर;
+	पूर्ण
 	uart->port.irq = irq;
 
 	tasklet_setup(&uart->tasklet, timbuart_tasklet);
 
-	err = uart_register_driver(&timbuart_driver);
-	if (err)
-		goto err_register;
+	err = uart_रेजिस्टर_driver(&timbuart_driver);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
 	err = uart_add_one_port(&timbuart_driver, &uart->port);
-	if (err)
-		goto err_add_port;
+	अगर (err)
+		जाओ err_add_port;
 
-	platform_set_drvdata(dev, uart);
+	platक्रमm_set_drvdata(dev, uart);
 
-	return 0;
+	वापस 0;
 
 err_add_port:
-	uart_unregister_driver(&timbuart_driver);
-err_register:
-	kfree(uart);
+	uart_unरेजिस्टर_driver(&timbuart_driver);
+err_रेजिस्टर:
+	kमुक्त(uart);
 err_mem:
-	printk(KERN_ERR "timberdale: Failed to register Timberdale UART: %d\n",
+	prपूर्णांकk(KERN_ERR "timberdale: Failed to register Timberdale UART: %d\n",
 		err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int timbuart_remove(struct platform_device *dev)
-{
-	struct timbuart_port *uart = platform_get_drvdata(dev);
+अटल पूर्णांक timbuart_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा timbuart_port *uart = platक्रमm_get_drvdata(dev);
 
-	tasklet_kill(&uart->tasklet);
-	uart_remove_one_port(&timbuart_driver, &uart->port);
-	uart_unregister_driver(&timbuart_driver);
-	kfree(uart);
+	tasklet_समाप्त(&uart->tasklet);
+	uart_हटाओ_one_port(&timbuart_driver, &uart->port);
+	uart_unरेजिस्टर_driver(&timbuart_driver);
+	kमुक्त(uart);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver timbuart_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver timbuart_platक्रमm_driver = अणु
+	.driver = अणु
 		.name	= "timb-uart",
-	},
+	पूर्ण,
 	.probe		= timbuart_probe,
-	.remove		= timbuart_remove,
-};
+	.हटाओ		= timbuart_हटाओ,
+पूर्ण;
 
-module_platform_driver(timbuart_platform_driver);
+module_platक्रमm_driver(timbuart_platक्रमm_driver);
 
 MODULE_DESCRIPTION("Timberdale UART driver");
 MODULE_LICENSE("GPL v2");

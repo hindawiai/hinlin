@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_EVLIST_H
-#define __LIBPERF_EVLIST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_EVLIST_H
+#घोषणा __LIBPERF_EVLIST_H
 
-#include <perf/core.h>
-#include <stdbool.h>
+#समावेश <perf/core.h>
+#समावेश <stdbool.h>
 
-struct perf_evlist;
-struct perf_evsel;
-struct perf_cpu_map;
-struct perf_thread_map;
+काष्ठा perf_evlist;
+काष्ठा perf_evsel;
+काष्ठा perf_cpu_map;
+काष्ठा perf_thपढ़ो_map;
 
-LIBPERF_API void perf_evlist__add(struct perf_evlist *evlist,
-				  struct perf_evsel *evsel);
-LIBPERF_API void perf_evlist__remove(struct perf_evlist *evlist,
-				     struct perf_evsel *evsel);
-LIBPERF_API struct perf_evlist *perf_evlist__new(void);
-LIBPERF_API void perf_evlist__delete(struct perf_evlist *evlist);
-LIBPERF_API struct perf_evsel* perf_evlist__next(struct perf_evlist *evlist,
-						 struct perf_evsel *evsel);
-LIBPERF_API int perf_evlist__open(struct perf_evlist *evlist);
-LIBPERF_API void perf_evlist__close(struct perf_evlist *evlist);
-LIBPERF_API void perf_evlist__enable(struct perf_evlist *evlist);
-LIBPERF_API void perf_evlist__disable(struct perf_evlist *evlist);
+LIBPERF_API व्योम perf_evlist__add(काष्ठा perf_evlist *evlist,
+				  काष्ठा perf_evsel *evsel);
+LIBPERF_API व्योम perf_evlist__हटाओ(काष्ठा perf_evlist *evlist,
+				     काष्ठा perf_evsel *evsel);
+LIBPERF_API काष्ठा perf_evlist *perf_evlist__new(व्योम);
+LIBPERF_API व्योम perf_evlist__delete(काष्ठा perf_evlist *evlist);
+LIBPERF_API काष्ठा perf_evsel* perf_evlist__next(काष्ठा perf_evlist *evlist,
+						 काष्ठा perf_evsel *evsel);
+LIBPERF_API पूर्णांक perf_evlist__खोलो(काष्ठा perf_evlist *evlist);
+LIBPERF_API व्योम perf_evlist__बंद(काष्ठा perf_evlist *evlist);
+LIBPERF_API व्योम perf_evlist__enable(काष्ठा perf_evlist *evlist);
+LIBPERF_API व्योम perf_evlist__disable(काष्ठा perf_evlist *evlist);
 
-#define perf_evlist__for_each_evsel(evlist, pos)	\
-	for ((pos) = perf_evlist__next((evlist), NULL);	\
-	     (pos) != NULL;				\
+#घोषणा perf_evlist__क्रम_each_evsel(evlist, pos)	\
+	क्रम ((pos) = perf_evlist__next((evlist), शून्य);	\
+	     (pos) != शून्य;				\
 	     (pos) = perf_evlist__next((evlist), (pos)))
 
-LIBPERF_API void perf_evlist__set_maps(struct perf_evlist *evlist,
-				       struct perf_cpu_map *cpus,
-				       struct perf_thread_map *threads);
-LIBPERF_API int perf_evlist__poll(struct perf_evlist *evlist, int timeout);
-LIBPERF_API int perf_evlist__filter_pollfd(struct perf_evlist *evlist,
-					   short revents_and_mask);
+LIBPERF_API व्योम perf_evlist__set_maps(काष्ठा perf_evlist *evlist,
+				       काष्ठा perf_cpu_map *cpus,
+				       काष्ठा perf_thपढ़ो_map *thपढ़ोs);
+LIBPERF_API पूर्णांक perf_evlist__poll(काष्ठा perf_evlist *evlist, पूर्णांक समयout);
+LIBPERF_API पूर्णांक perf_evlist__filter_pollfd(काष्ठा perf_evlist *evlist,
+					   लघु revents_and_mask);
 
-LIBPERF_API int perf_evlist__mmap(struct perf_evlist *evlist, int pages);
-LIBPERF_API void perf_evlist__munmap(struct perf_evlist *evlist);
+LIBPERF_API पूर्णांक perf_evlist__mmap(काष्ठा perf_evlist *evlist, पूर्णांक pages);
+LIBPERF_API व्योम perf_evlist__munmap(काष्ठा perf_evlist *evlist);
 
-LIBPERF_API struct perf_mmap *perf_evlist__next_mmap(struct perf_evlist *evlist,
-						     struct perf_mmap *map,
-						     bool overwrite);
-#define perf_evlist__for_each_mmap(evlist, pos, overwrite)		\
-	for ((pos) = perf_evlist__next_mmap((evlist), NULL, overwrite);	\
-	     (pos) != NULL;						\
-	     (pos) = perf_evlist__next_mmap((evlist), (pos), overwrite))
+LIBPERF_API काष्ठा perf_mmap *perf_evlist__next_mmap(काष्ठा perf_evlist *evlist,
+						     काष्ठा perf_mmap *map,
+						     bool overग_लिखो);
+#घोषणा perf_evlist__क्रम_each_mmap(evlist, pos, overग_लिखो)		\
+	क्रम ((pos) = perf_evlist__next_mmap((evlist), शून्य, overग_लिखो);	\
+	     (pos) != शून्य;						\
+	     (pos) = perf_evlist__next_mmap((evlist), (pos), overग_लिखो))
 
-#endif /* __LIBPERF_EVLIST_H */
+#पूर्ण_अगर /* __LIBPERF_EVLIST_H */

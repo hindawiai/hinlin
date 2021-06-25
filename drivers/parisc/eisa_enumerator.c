@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * eisa_enumerator.c - provide support for EISA adapters in PA-RISC machines
+ * eisa_क्रमागतerator.c - provide support क्रम EISA adapters in PA-RISC machines
  *
  * Copyright (c) 2002 Daniel Engstrom <5116@telia.com>
  */
 
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <asm/byteorder.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include <asm/eisa_bus.h>
-#include <asm/eisa_eeprom.h>
+#समावेश <यंत्र/eisa_bus.h>
+#समावेश <यंत्र/eisa_eeprom.h>
 
 
 /*
- * Todo:
+ * Toकरो:
  * 
  * PORT init with MASK attr and other size than byte
  * MEMORY with other decode than 20 bit
@@ -26,68 +27,68 @@
  * FREEFORM stuff
  */
 
-#define EPI 0xc80
-#define NUM_SLOT 16
-#define SLOT2PORT(x) (x<<12)
+#घोषणा EPI 0xc80
+#घोषणा NUM_SLOT 16
+#घोषणा SLOT2PORT(x) (x<<12)
 
 
 /* macros to handle unaligned accesses and 
  * byte swapping. The data in the EEPROM is
  * little-endian on the big-endian PAROSC */
-#define get_8(x) (*(u_int8_t*)(x))
+#घोषणा get_8(x) (*(u_पूर्णांक8_t*)(x))
 
-static inline u_int16_t get_16(const unsigned char *x)
-{ 
-	return (x[1] << 8) | x[0];
-}
+अटल अंतरभूत u_पूर्णांक16_t get_16(स्थिर अचिन्हित अक्षर *x)
+अणु 
+	वापस (x[1] << 8) | x[0];
+पूर्ण
 
-static inline u_int32_t get_32(const unsigned char *x)
-{
-	return (x[3] << 24) | (x[2] << 16) | (x[1] << 8) | x[0];
-}
+अटल अंतरभूत u_पूर्णांक32_t get_32(स्थिर अचिन्हित अक्षर *x)
+अणु
+	वापस (x[3] << 24) | (x[2] << 16) | (x[1] << 8) | x[0];
+पूर्ण
 
-static inline u_int32_t get_24(const unsigned char *x)
-{
-	return (x[2] << 24) | (x[1] << 16) | (x[0] << 8);
-}
+अटल अंतरभूत u_पूर्णांक32_t get_24(स्थिर अचिन्हित अक्षर *x)
+अणु
+	वापस (x[2] << 24) | (x[1] << 16) | (x[0] << 8);
+पूर्ण
 
-static void print_eisa_id(char *s, u_int32_t id)
-{
-	char vendor[4];
-	int rev;
-	int device;
+अटल व्योम prपूर्णांक_eisa_id(अक्षर *s, u_पूर्णांक32_t id)
+अणु
+	अक्षर venकरोr[4];
+	पूर्णांक rev;
+	पूर्णांक device;
 	
 	rev = id & 0xff;
 	id >>= 8;
 	device = id & 0xff;
 	id >>= 8;
-	vendor[3] = '\0';
-	vendor[2] = '@' + (id & 0x1f);
+	venकरोr[3] = '\0';
+	venकरोr[2] = '@' + (id & 0x1f);
 	id >>= 5;	
-	vendor[1] = '@' + (id & 0x1f);
+	venकरोr[1] = '@' + (id & 0x1f);
 	id >>= 5;	
-	vendor[0] = '@' + (id & 0x1f);
+	venकरोr[0] = '@' + (id & 0x1f);
 	id >>= 5;	
 	
-	sprintf(s, "%s%02X%02X", vendor, device, rev);
-}
+	प्र_लिखो(s, "%s%02X%02X", venकरोr, device, rev);
+पूर्ण
        
-static int configure_memory(const unsigned char *buf, 
-		       struct resource *mem_parent,
-		       char *name)
-{
-	int len;
-	u_int8_t c;
-	int i;
-	struct resource *res;
+अटल पूर्णांक configure_memory(स्थिर अचिन्हित अक्षर *buf, 
+		       काष्ठा resource *mem_parent,
+		       अक्षर *name)
+अणु
+	पूर्णांक len;
+	u_पूर्णांक8_t c;
+	पूर्णांक i;
+	काष्ठा resource *res;
 	
 	len=0;
 	
-	for (i=0;i<HPEE_MEMORY_MAX_ENT;i++) {
+	क्रम (i=0;i<HPEE_MEMORY_MAX_ENT;i++) अणु
 		c = get_8(buf+len);
 		
-		if (NULL != (res = kzalloc(sizeof(struct resource), GFP_KERNEL))) {
-			int result;
+		अगर (शून्य != (res = kzalloc(माप(काष्ठा resource), GFP_KERNEL))) अणु
+			पूर्णांक result;
 			
 			res->name = name;
 			res->start = mem_parent->start + get_24(buf+len+2);
@@ -95,185 +96,185 @@ static int configure_memory(const unsigned char *buf,
 			res->flags = IORESOURCE_MEM;
 			pr_cont("memory %pR ", res);
 			result = request_resource(mem_parent, res);
-			if (result < 0) {
-				printk(KERN_ERR "EISA Enumerator: failed to claim EISA Bus address space!\n");
-				return result;
-			}
-		}
+			अगर (result < 0) अणु
+				prपूर्णांकk(KERN_ERR "EISA Enumerator: failed to claim EISA Bus address space!\n");
+				वापस result;
+			पूर्ण
+		पूर्ण
 		 	
 		len+=7;      
 	
-		if (!(c & HPEE_MEMORY_MORE)) {
-			break;
-		}
-	}
+		अगर (!(c & HPEE_MEMORY_MORE)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
-static int configure_irq(const unsigned char *buf)
-{
-	int len;
-	u_int8_t c;
-	int i;
+अटल पूर्णांक configure_irq(स्थिर अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक len;
+	u_पूर्णांक8_t c;
+	पूर्णांक i;
 	
 	len=0;
 	
-	for (i=0;i<HPEE_IRQ_MAX_ENT;i++) {
+	क्रम (i=0;i<HPEE_IRQ_MAX_ENT;i++) अणु
 		c = get_8(buf+len);
 		
 		pr_cont("IRQ %d ", c & HPEE_IRQ_CHANNEL_MASK);
-		if (c & HPEE_IRQ_TRIG_LEVEL) {
+		अगर (c & HPEE_IRQ_TRIG_LEVEL) अणु
 			eisa_make_irq_level(c & HPEE_IRQ_CHANNEL_MASK);
-		} else {
+		पूर्ण अन्यथा अणु
 			eisa_make_irq_edge(c & HPEE_IRQ_CHANNEL_MASK);
-		}
+		पूर्ण
 		
 		len+=2; 
-		/* hpux seems to allow for
+		/* hpux seems to allow क्रम
 		 * two bytes of irq data but only defines one of
 		 * them, I think */
-		if  (!(c & HPEE_IRQ_MORE)) {
-			break;
-		}
-	}
+		अगर  (!(c & HPEE_IRQ_MORE)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
-static int configure_dma(const unsigned char *buf)
-{
-	int len;
-	u_int8_t c;
-	int i;
+अटल पूर्णांक configure_dma(स्थिर अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक len;
+	u_पूर्णांक8_t c;
+	पूर्णांक i;
 	
 	len=0;
 	
-	for (i=0;i<HPEE_DMA_MAX_ENT;i++) {
+	क्रम (i=0;i<HPEE_DMA_MAX_ENT;i++) अणु
 		c = get_8(buf+len);
 		pr_cont("DMA %d ", c&HPEE_DMA_CHANNEL_MASK);
 		/* fixme: maybe initialize the dma channel withthe timing ? */
 		len+=2;      
-		if (!(c & HPEE_DMA_MORE)) {
-			break;
-		}
-	}
+		अगर (!(c & HPEE_DMA_MORE)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int configure_port(const unsigned char *buf, struct resource *io_parent,
-		     char *board)
-{
-	int len;
-	u_int8_t c;
-	int i;
-	struct resource *res;
-	int result;
+अटल पूर्णांक configure_port(स्थिर अचिन्हित अक्षर *buf, काष्ठा resource *io_parent,
+		     अक्षर *board)
+अणु
+	पूर्णांक len;
+	u_पूर्णांक8_t c;
+	पूर्णांक i;
+	काष्ठा resource *res;
+	पूर्णांक result;
 	
 	len=0;
 	
-	for (i=0;i<HPEE_PORT_MAX_ENT;i++) {
+	क्रम (i=0;i<HPEE_PORT_MAX_ENT;i++) अणु
 		c = get_8(buf+len);
 		
-		if (NULL != (res = kzalloc(sizeof(struct resource), GFP_KERNEL))) {
+		अगर (शून्य != (res = kzalloc(माप(काष्ठा resource), GFP_KERNEL))) अणु
 			res->name = board;
 			res->start = get_16(buf+len+1);
 			res->end = get_16(buf+len+1)+(c&HPEE_PORT_SIZE_MASK)+1;
 			res->flags = IORESOURCE_IO;
 			pr_cont("ioports %pR ", res);
 			result = request_resource(io_parent, res);
-			if (result < 0) {
-				printk(KERN_ERR "EISA Enumerator: failed to claim EISA Bus address space!\n");
-				return result;
-			}
-		}
+			अगर (result < 0) अणु
+				prपूर्णांकk(KERN_ERR "EISA Enumerator: failed to claim EISA Bus address space!\n");
+				वापस result;
+			पूर्ण
+		पूर्ण
 
 		len+=3;      
-		if (!(c & HPEE_PORT_MORE)) {
-			break;
-		}
-	}
+		अगर (!(c & HPEE_PORT_MORE)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
-/* byte 1 and 2 is the port number to write
- * and at byte 3 the value to write starts.
+/* byte 1 and 2 is the port number to ग_लिखो
+ * and at byte 3 the value to ग_लिखो starts.
  * I assume that there are and- and or- masks
  * here when HPEE_PORT_INIT_MASK is set but I have 
  * not yet encountered this. */
-static int configure_port_init(const unsigned char *buf)
-{
-	int len=0;
-	u_int8_t c;
+अटल पूर्णांक configure_port_init(स्थिर अचिन्हित अक्षर *buf)
+अणु
+	पूर्णांक len=0;
+	u_पूर्णांक8_t c;
 	
-	while (len<HPEE_PORT_INIT_MAX_LEN) {
-		int s=0;
+	जबतक (len<HPEE_PORT_INIT_MAX_LEN) अणु
+		पूर्णांक s=0;
 		c = get_8(buf+len);
 		
-		switch (c & HPEE_PORT_INIT_WIDTH_MASK)  {
-		 case HPEE_PORT_INIT_WIDTH_BYTE:
+		चयन (c & HPEE_PORT_INIT_WIDTH_MASK)  अणु
+		 हाल HPEE_PORT_INIT_WIDTH_BYTE:
 			s=1;
-			if (c & HPEE_PORT_INIT_MASK) {
-				printk(KERN_WARNING "port_init: unverified mask attribute\n");
+			अगर (c & HPEE_PORT_INIT_MASK) अणु
+				prपूर्णांकk(KERN_WARNING "port_init: unverified mask attribute\n");
 				outb((inb(get_16(buf+len+1) & 
 					  get_8(buf+len+3)) | 
 				      get_8(buf+len+4)), get_16(buf+len+1));
 				      
-			} else {
+			पूर्ण अन्यथा अणु
 				outb(get_8(buf+len+3), get_16(buf+len+1));
 				      
-			}
-			break;
-		 case HPEE_PORT_INIT_WIDTH_WORD:
+			पूर्ण
+			अवरोध;
+		 हाल HPEE_PORT_INIT_WIDTH_WORD:
 			s=2;
-			if (c & HPEE_PORT_INIT_MASK) {
- 				printk(KERN_WARNING "port_init: unverified mask attribute\n");
+			अगर (c & HPEE_PORT_INIT_MASK) अणु
+ 				prपूर्णांकk(KERN_WARNING "port_init: unverified mask attribute\n");
 				       outw((inw(get_16(buf+len+1)) &
 					     get_16(buf+len+3)) |
 					    get_16(buf+len+5), 
 					    get_16(buf+len+1));
-			} else {
+			पूर्ण अन्यथा अणु
 				outw(cpu_to_le16(get_16(buf+len+3)), get_16(buf+len+1));
-			}
-			break;
-		 case HPEE_PORT_INIT_WIDTH_DWORD:
+			पूर्ण
+			अवरोध;
+		 हाल HPEE_PORT_INIT_WIDTH_DWORD:
 			s=4;
-			if (c & HPEE_PORT_INIT_MASK) {
- 				printk(KERN_WARNING "port_init: unverified mask attribute\n");
+			अगर (c & HPEE_PORT_INIT_MASK) अणु
+ 				prपूर्णांकk(KERN_WARNING "port_init: unverified mask attribute\n");
 				outl((inl(get_16(buf+len+1) &
 					  get_32(buf+len+3)) |
 				      get_32(buf+len+7)), get_16(buf+len+1));
-			} else {
+			पूर्ण अन्यथा अणु
 				outl(cpu_to_le32(get_32(buf+len+3)), get_16(buf+len+1));
-			}
+			पूर्ण
 
-			break;
-		 default:
-			printk(KERN_ERR "Invalid port init word %02x\n", c);
-			return 0;
-		}
+			अवरोध;
+		 शेष:
+			prपूर्णांकk(KERN_ERR "Invalid port init word %02x\n", c);
+			वापस 0;
+		पूर्ण
 		
-		if (c & HPEE_PORT_INIT_MASK) {   
+		अगर (c & HPEE_PORT_INIT_MASK) अणु   
 			s*=2;
-		}
+		पूर्ण
 		
 		len+=s+3;
-		if (!(c & HPEE_PORT_INIT_MORE)) {
-			break;
-		}
-	}
+		अगर (!(c & HPEE_PORT_INIT_MORE)) अणु
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int configure_choise(const unsigned char *buf, u_int8_t *info)
-{
-	int len;
+अटल पूर्णांक configure_choise(स्थिर अचिन्हित अक्षर *buf, u_पूर्णांक8_t *info)
+अणु
+	पूर्णांक len;
 	
 	/* theis record contain the value of the functions
 	 * configuration choises and an info byte which 
@@ -282,235 +283,235 @@ static int configure_choise(const unsigned char *buf, u_int8_t *info)
 	len = get_8(buf);
 	*info=get_8(buf+len+1);
 	 
-	return len+2;
-}
+	वापस len+2;
+पूर्ण
 
-static int configure_type_string(const unsigned char *buf) 
-{
-	int len;
+अटल पूर्णांक configure_type_string(स्थिर अचिन्हित अक्षर *buf) 
+अणु
+	पूर्णांक len;
 	
 	/* just skip past the type field */
 	len = get_8(buf);
-	if (len > 80) {
-		printk(KERN_ERR "eisa_enumerator: type info field too long (%d, max is 80)\n", len);
-	}
+	अगर (len > 80) अणु
+		prपूर्णांकk(KERN_ERR "eisa_enumerator: type info field too long (%d, max is 80)\n", len);
+	पूर्ण
 	
-	return 1+len;
-}
+	वापस 1+len;
+पूर्ण
 
-static int configure_function(const unsigned char *buf, int *more) 
-{
+अटल पूर्णांक configure_function(स्थिर अचिन्हित अक्षर *buf, पूर्णांक *more) 
+अणु
 	/* the init field seems to be a two-byte field
-	 * which is non-zero if there are an other function following
+	 * which is non-zero अगर there are an other function following
 	 * I think it is the length of the function def 
 	 */
 	*more = get_16(buf);
 	
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static int parse_slot_config(int slot,
-			     const unsigned char *buf,
-			     struct eeprom_eisa_slot_info *es, 
-			     struct resource *io_parent,
-			     struct resource *mem_parent)
-{
-	int res=0;
-	int function_len;
-	unsigned int pos=0;
-	unsigned int maxlen;
-	int num_func=0;
-	u_int8_t flags;
-	int p0;
+अटल पूर्णांक parse_slot_config(पूर्णांक slot,
+			     स्थिर अचिन्हित अक्षर *buf,
+			     काष्ठा eeprom_eisa_slot_info *es, 
+			     काष्ठा resource *io_parent,
+			     काष्ठा resource *mem_parent)
+अणु
+	पूर्णांक res=0;
+	पूर्णांक function_len;
+	अचिन्हित पूर्णांक pos=0;
+	अचिन्हित पूर्णांक maxlen;
+	पूर्णांक num_func=0;
+	u_पूर्णांक8_t flags;
+	पूर्णांक p0;
 	
-	char *board;
-	int id_string_used=0;
+	अक्षर *board;
+	पूर्णांक id_string_used=0;
 	
-	if (NULL == (board = kmalloc(8, GFP_KERNEL))) {
-		return -1;
-	}
-	print_eisa_id(board, es->eisa_slot_id);
-	printk(KERN_INFO "EISA slot %d: %s %s ", 
+	अगर (शून्य == (board = kदो_स्मृति(8, GFP_KERNEL))) अणु
+		वापस -1;
+	पूर्ण
+	prपूर्णांक_eisa_id(board, es->eisa_slot_id);
+	prपूर्णांकk(KERN_INFO "EISA slot %d: %s %s ", 
 	       slot, board, es->flags&HPEE_FLAG_BOARD_IS_ISA ? "ISA" : "EISA");
 	
 	maxlen = es->config_data_length < HPEE_MAX_LENGTH ?
 			 es->config_data_length : HPEE_MAX_LENGTH;
-	while ((pos < maxlen) && (num_func <= es->num_functions)) {
+	जबतक ((pos < maxlen) && (num_func <= es->num_functions)) अणु
 		pos+=configure_function(buf+pos, &function_len); 
 		
-		if (!function_len) {
-			break;
-		}
+		अगर (!function_len) अणु
+			अवरोध;
+		पूर्ण
 		num_func++;
 		p0 = pos;
 		pos += configure_choise(buf+pos, &flags);
 
-		if (flags & HPEE_FUNCTION_INFO_F_DISABLED) {
+		अगर (flags & HPEE_FUNCTION_INFO_F_DISABLED) अणु
 			/* function disabled, skip silently */
 			pos = p0 + function_len;
-			continue;
-		}
-		if (flags & HPEE_FUNCTION_INFO_CFG_FREE_FORM) {
+			जारी;
+		पूर्ण
+		अगर (flags & HPEE_FUNCTION_INFO_CFG_FREE_FORM) अणु
 			/* I have no idea how to handle this */
-			printk("function %d have free-form configuration, skipping ",
+			prपूर्णांकk("function %d have free-form configuration, skipping ",
 				num_func);
 			pos = p0 + function_len;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* the ordering of the sections need
 		 * more investigation.
-		 * Currently I think that memory comaed before IRQ
+		 * Currently I think that memory comaed beक्रमe IRQ
 		 * I assume the order is LSB to MSB in the 
 		 * info flags 
 		 * eg type, memory, irq, dma, port, HPEE_PORT_init 
 		 */
 
-		if (flags & HPEE_FUNCTION_INFO_HAVE_TYPE) {
+		अगर (flags & HPEE_FUNCTION_INFO_HAVE_TYPE) अणु
 			pos += configure_type_string(buf+pos);
-		}
+		पूर्ण
 		
-		if (flags & HPEE_FUNCTION_INFO_HAVE_MEMORY) {
+		अगर (flags & HPEE_FUNCTION_INFO_HAVE_MEMORY) अणु
 			id_string_used=1;
 			pos += configure_memory(buf+pos, mem_parent, board);
-		} 
+		पूर्ण 
 		
-		if (flags & HPEE_FUNCTION_INFO_HAVE_IRQ) {
+		अगर (flags & HPEE_FUNCTION_INFO_HAVE_IRQ) अणु
 			pos += configure_irq(buf+pos);
-		} 
+		पूर्ण 
 		
-		if (flags & HPEE_FUNCTION_INFO_HAVE_DMA) {
+		अगर (flags & HPEE_FUNCTION_INFO_HAVE_DMA) अणु
 			pos += configure_dma(buf+pos);
-		} 
+		पूर्ण 
 		
-		if (flags & HPEE_FUNCTION_INFO_HAVE_PORT) {
+		अगर (flags & HPEE_FUNCTION_INFO_HAVE_PORT) अणु
 			id_string_used=1;
 			pos += configure_port(buf+pos, io_parent, board);
-		} 
+		पूर्ण 
 		
-		if (flags &  HPEE_FUNCTION_INFO_HAVE_PORT_INIT) {
+		अगर (flags &  HPEE_FUNCTION_INFO_HAVE_PORT_INIT) अणु
 			pos += configure_port_init(buf+pos);
-		}
+		पूर्ण
 		
-		if (p0 + function_len < pos) {
-			printk(KERN_ERR "eisa_enumerator: function %d length mis-match "
+		अगर (p0 + function_len < pos) अणु
+			prपूर्णांकk(KERN_ERR "eisa_enumerator: function %d length mis-match "
 			       "got %d, expected %d\n",
 			       num_func, pos-p0, function_len);
 			res=-1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pos = p0 + function_len;
-	}
+	पूर्ण
 	pr_cont("\n");
-	if (!id_string_used) {
-		kfree(board);
-	}
+	अगर (!id_string_used) अणु
+		kमुक्त(board);
+	पूर्ण
 	
-	if (pos != es->config_data_length) {
-		printk(KERN_ERR "eisa_enumerator: config data length mis-match got %d, expected %d\n",
+	अगर (pos != es->config_data_length) अणु
+		prपूर्णांकk(KERN_ERR "eisa_enumerator: config data length mis-match got %d, expected %d\n",
 			pos, es->config_data_length);
 		res=-1;
-	}
+	पूर्ण
 	
-	if (num_func != es->num_functions) {
-		printk(KERN_ERR "eisa_enumerator: number of functions mis-match got %d, expected %d\n",
+	अगर (num_func != es->num_functions) अणु
+		prपूर्णांकk(KERN_ERR "eisa_enumerator: number of functions mis-match got %d, expected %d\n",
 			num_func, es->num_functions);
 		res=-2;
-	}
+	पूर्ण
 	
-	return res;
+	वापस res;
 	
-}
+पूर्ण
 
-static int init_slot(int slot, struct eeprom_eisa_slot_info *es)
-{
-	unsigned int id;
+अटल पूर्णांक init_slot(पूर्णांक slot, काष्ठा eeprom_eisa_slot_info *es)
+अणु
+	अचिन्हित पूर्णांक id;
 	
-	char id_string[8];
+	अक्षर id_string[8];
 	
-	if (!(es->slot_info&HPEE_SLOT_INFO_NO_READID)) {
-		/* try to read the id of the board in the slot */
+	अगर (!(es->slot_info&HPEE_SLOT_INFO_NO_READID)) अणु
+		/* try to पढ़ो the id of the board in the slot */
 		id = le32_to_cpu(inl(SLOT2PORT(slot)+EPI));
 		
-		if (0xffffffff == id) {
+		अगर (0xffffffff == id) अणु
 			/* Maybe we didn't expect a card to be here... */
-			if (es->eisa_slot_id == 0xffffffff)
-				return -1;
+			अगर (es->eisa_slot_id == 0xffffffff)
+				वापस -1;
 			
-			/* this board is not here or it does not 
-			 * support readid 
+			/* this board is not here or it करोes not 
+			 * support पढ़ोid 
 			 */
-			printk(KERN_ERR "EISA slot %d a configured board was not detected (", 
+			prपूर्णांकk(KERN_ERR "EISA slot %d a configured board was not detected (", 
 			       slot);
 			
-			print_eisa_id(id_string, es->eisa_slot_id);
-			printk(" expected %s)\n", id_string);
+			prपूर्णांक_eisa_id(id_string, es->eisa_slot_id);
+			prपूर्णांकk(" expected %s)\n", id_string);
 		
-			return -1;	
+			वापस -1;	
 
-		}
-		if (es->eisa_slot_id != id) {
-			print_eisa_id(id_string, id);
-			printk(KERN_ERR "EISA slot %d id mis-match: got %s", 
+		पूर्ण
+		अगर (es->eisa_slot_id != id) अणु
+			prपूर्णांक_eisa_id(id_string, id);
+			prपूर्णांकk(KERN_ERR "EISA slot %d id mis-match: got %s", 
 			       slot, id_string);
 			
-			print_eisa_id(id_string, es->eisa_slot_id);
-			printk(" expected %s\n", id_string);
+			prपूर्णांक_eisa_id(id_string, es->eisa_slot_id);
+			prपूर्णांकk(" expected %s\n", id_string);
 		
-			return -1;	
+			वापस -1;	
 			
-		}
-	}
+		पूर्ण
+	पूर्ण
 	
-	/* now: we need to enable the board if 
+	/* now: we need to enable the board अगर 
 	 * it supports enabling and run through
-	 * the port init sction if present
-	 * and finally record any interrupt polarity
+	 * the port init sction अगर present
+	 * and finally record any पूर्णांकerrupt polarity
 	 */
-	if (es->slot_features & HPEE_SLOT_FEATURES_ENABLE) {
+	अगर (es->slot_features & HPEE_SLOT_FEATURES_ENABLE) अणु
 		/* enable board */
 		outb(0x01| inb(SLOT2PORT(slot)+EPI+4),
 		     SLOT2PORT(slot)+EPI+4);
-	}
+	पूर्ण
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int eisa_enumerator(unsigned long eeprom_addr,
-		    struct resource *io_parent, struct resource *mem_parent) 
-{
-	int i;
-	struct eeprom_header *eh;
-	static char eeprom_buf[HPEE_MAX_LENGTH];
+पूर्णांक eisa_क्रमागतerator(अचिन्हित दीर्घ eeprom_addr,
+		    काष्ठा resource *io_parent, काष्ठा resource *mem_parent) 
+अणु
+	पूर्णांक i;
+	काष्ठा eeprom_header *eh;
+	अटल अक्षर eeprom_buf[HPEE_MAX_LENGTH];
 	
-	for (i=0; i < HPEE_MAX_LENGTH; i++) {
-		eeprom_buf[i] = gsc_readb(eeprom_addr+i);
-	}
+	क्रम (i=0; i < HPEE_MAX_LENGTH; i++) अणु
+		eeprom_buf[i] = gsc_पढ़ोb(eeprom_addr+i);
+	पूर्ण
 	
-	printk(KERN_INFO "Enumerating EISA bus\n");
+	prपूर्णांकk(KERN_INFO "Enumerating EISA bus\n");
 		    	
-	eh = (struct eeprom_header*)(eeprom_buf);
-	for (i=0;i<eh->num_slots;i++) {
-		struct eeprom_eisa_slot_info *es;
+	eh = (काष्ठा eeprom_header*)(eeprom_buf);
+	क्रम (i=0;i<eh->num_slots;i++) अणु
+		काष्ठा eeprom_eisa_slot_info *es;
 		
-		es = (struct eeprom_eisa_slot_info*)
+		es = (काष्ठा eeprom_eisa_slot_info*)
 			(&eeprom_buf[HPEE_SLOT_INFO(i)]);
 	        
-		if (-1==init_slot(i+1, es)) {
-			continue;
-		}
+		अगर (-1==init_slot(i+1, es)) अणु
+			जारी;
+		पूर्ण
 		
-		if (es->config_data_offset < HPEE_MAX_LENGTH) {
-			if (parse_slot_config(i+1, &eeprom_buf[es->config_data_offset],
-					      es, io_parent, mem_parent)) {
-				return -1;
-			}
-		} else {
-			printk (KERN_WARNING "EISA EEPROM offset 0x%x out of range\n",es->config_data_offset);
-			return -1;
-		}
-	}
-	return eh->num_slots;
-}
+		अगर (es->config_data_offset < HPEE_MAX_LENGTH) अणु
+			अगर (parse_slot_config(i+1, &eeprom_buf[es->config_data_offset],
+					      es, io_parent, mem_parent)) अणु
+				वापस -1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk (KERN_WARNING "EISA EEPROM offset 0x%x out of range\n",es->config_data_offset);
+			वापस -1;
+		पूर्ण
+	पूर्ण
+	वापस eh->num_slots;
+पूर्ण
 

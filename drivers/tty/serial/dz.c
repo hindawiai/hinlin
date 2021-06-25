@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * dz.c: Serial port driver for DECstations equipped
+ * dz.c: Serial port driver क्रम DECstations equipped
  *       with the DZ chipset.
  *
- * Copyright (C) 1998 Olivier A. D. Lebaillif
+ * Copyright (C) 1998 Olivier A. D. Lebaillअगर
  *
- * Email: olivier.lebaillif@ifrsys.com
+ * Email: olivier.lebaillअगर@अगरrsys.com
  *
  * Copyright (C) 2004, 2006, 2007  Maciej W. Rozycki
  *
  * [31-AUG-98] triemer
- * Changed IRQ to use Harald's dec internals interrupts.h
- * removed base_addr code - moving address assignment to setup.c
+ * Changed IRQ to use Harald's dec पूर्णांकernals पूर्णांकerrupts.h
+ * हटाओd base_addr code - moving address assignment to setup.c
  * Changed name of dz_init to rs_init to be consistent with tc code
- * [13-NOV-98] triemer fixed code to receive characters
+ * [13-NOV-98] triemer fixed code to receive अक्षरacters
  *    after patches by harald to irq code.
- * [09-JAN-99] triemer minor fix for schedule - due to removal of timeout
+ * [09-JAN-99] triemer minor fix क्रम schedule - due to removal of समयout
  *            field from "current" - somewhere between 2.1.121 and 2.1.131
  Qua Jun 27 15:02:26 BRT 2001
- * [27-JUN-2001] Arnaldo Carvalho de Melo <acme@conectiva.com.br> - cleanups
+ * [27-JUN-2001] Arnalकरो Carvalho de Melo <acme@conectiva.com.br> - cleanups
  *
  * Parts (C) 1999 David Airlie, airlied@linux.ie
  * [07-SEP-99] Bugfixes
@@ -27,139 +28,139 @@
  * Converted to new serial core
  */
 
-#undef DEBUG_DZ
+#अघोषित DEBUG_DZ
 
-#include <linux/bitops.h>
-#include <linux/compiler.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/major.h>
-#include <linux/module.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/sysrq.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/major.h>
+#समावेश <linux/module.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#include <linux/atomic.h>
-#include <asm/bootinfo.h>
-#include <asm/io.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/पन.स>
 
-#include <asm/dec/interrupts.h>
-#include <asm/dec/kn01.h>
-#include <asm/dec/kn02.h>
-#include <asm/dec/machtype.h>
-#include <asm/dec/prom.h>
-#include <asm/dec/system.h>
+#समावेश <यंत्र/dec/पूर्णांकerrupts.h>
+#समावेश <यंत्र/dec/kn01.h>
+#समावेश <यंत्र/dec/kn02.h>
+#समावेश <यंत्र/dec/machtype.h>
+#समावेश <यंत्र/dec/prom.h>
+#समावेश <यंत्र/dec/प्रणाली.h>
 
-#include "dz.h"
+#समावेश "dz.h"
 
 
 MODULE_DESCRIPTION("DECstation DZ serial driver");
 MODULE_LICENSE("GPL");
 
 
-static char dz_name[] __initdata = "DECstation DZ serial driver version ";
-static char dz_version[] __initdata = "1.04";
+अटल अक्षर dz_name[] __initdata = "DECstation DZ serial driver version ";
+अटल अक्षर dz_version[] __initdata = "1.04";
 
-struct dz_port {
-	struct dz_mux		*mux;
-	struct uart_port	port;
-	unsigned int		cflag;
-};
+काष्ठा dz_port अणु
+	काष्ठा dz_mux		*mux;
+	काष्ठा uart_port	port;
+	अचिन्हित पूर्णांक		cflag;
+पूर्ण;
 
-struct dz_mux {
-	struct dz_port		dport[DZ_NB_PORT];
+काष्ठा dz_mux अणु
+	काष्ठा dz_port		dport[DZ_NB_PORT];
 	atomic_t		map_guard;
 	atomic_t		irq_guard;
-	int			initialised;
-};
+	पूर्णांक			initialised;
+पूर्ण;
 
-static struct dz_mux dz_mux;
+अटल काष्ठा dz_mux dz_mux;
 
-static inline struct dz_port *to_dport(struct uart_port *uport)
-{
-	return container_of(uport, struct dz_port, port);
-}
+अटल अंतरभूत काष्ठा dz_port *to_dport(काष्ठा uart_port *uport)
+अणु
+	वापस container_of(uport, काष्ठा dz_port, port);
+पूर्ण
 
 /*
  * ------------------------------------------------------------
  * dz_in () and dz_out ()
  *
- * These routines are used to access the registers of the DZ
- * chip, hiding relocation differences between implementation.
+ * These routines are used to access the रेजिस्टरs of the DZ
+ * chip, hiding relocation dअगरferences between implementation.
  * ------------------------------------------------------------
  */
 
-static u16 dz_in(struct dz_port *dport, unsigned offset)
-{
-	void __iomem *addr = dport->port.membase + offset;
+अटल u16 dz_in(काष्ठा dz_port *dport, अचिन्हित offset)
+अणु
+	व्योम __iomem *addr = dport->port.membase + offset;
 
-	return readw(addr);
-}
+	वापस पढ़ोw(addr);
+पूर्ण
 
-static void dz_out(struct dz_port *dport, unsigned offset, u16 value)
-{
-	void __iomem *addr = dport->port.membase + offset;
+अटल व्योम dz_out(काष्ठा dz_port *dport, अचिन्हित offset, u16 value)
+अणु
+	व्योम __iomem *addr = dport->port.membase + offset;
 
-	writew(value, addr);
-}
+	ग_लिखोw(value, addr);
+पूर्ण
 
 /*
  * ------------------------------------------------------------
  * rs_stop () and rs_start ()
  *
- * These routines are called before setting or resetting
- * tty->stopped. They enable or disable transmitter interrupts,
+ * These routines are called beक्रमe setting or resetting
+ * tty->stopped. They enable or disable transmitter पूर्णांकerrupts,
  * as necessary.
  * ------------------------------------------------------------
  */
 
-static void dz_stop_tx(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
-	u16 tmp, mask = 1 << dport->port.line;
+अटल व्योम dz_stop_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	u16 पंचांगp, mask = 1 << dport->port.line;
 
-	tmp = dz_in(dport, DZ_TCR);	/* read the TX flag */
-	tmp &= ~mask;			/* clear the TX flag */
-	dz_out(dport, DZ_TCR, tmp);
-}
+	पंचांगp = dz_in(dport, DZ_TCR);	/* पढ़ो the TX flag */
+	पंचांगp &= ~mask;			/* clear the TX flag */
+	dz_out(dport, DZ_TCR, पंचांगp);
+पूर्ण
 
-static void dz_start_tx(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
-	u16 tmp, mask = 1 << dport->port.line;
+अटल व्योम dz_start_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	u16 पंचांगp, mask = 1 << dport->port.line;
 
-	tmp = dz_in(dport, DZ_TCR);	/* read the TX flag */
-	tmp |= mask;			/* set the TX flag */
-	dz_out(dport, DZ_TCR, tmp);
-}
+	पंचांगp = dz_in(dport, DZ_TCR);	/* पढ़ो the TX flag */
+	पंचांगp |= mask;			/* set the TX flag */
+	dz_out(dport, DZ_TCR, पंचांगp);
+पूर्ण
 
-static void dz_stop_rx(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
+अटल व्योम dz_stop_rx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
 
 	dport->cflag &= ~DZ_RXENAB;
 	dz_out(dport, DZ_LPR, dport->cflag);
-}
+पूर्ण
 
 /*
  * ------------------------------------------------------------
  *
- * Here start the interrupt handling routines.  All of the following
- * subroutines are declared as inline and are folded into
- * dz_interrupt.  They were separated out for readability's sake.
+ * Here start the पूर्णांकerrupt handling routines.  All of the following
+ * subroutines are declared as अंतरभूत and are folded पूर्णांकo
+ * dz_पूर्णांकerrupt.  They were separated out क्रम पढ़ोability's sake.
  *
- * Note: dz_interrupt() is a "fast" interrupt, which means that it
- * runs with interrupts turned off.  People who may want to modify
- * dz_interrupt() should try to keep the interrupt handler as fast as
- * possible.  After you are done making modifications, it is not a bad
- * idea to do:
+ * Note: dz_पूर्णांकerrupt() is a "fast" पूर्णांकerrupt, which means that it
+ * runs with पूर्णांकerrupts turned off.  People who may want to modअगरy
+ * dz_पूर्णांकerrupt() should try to keep the पूर्णांकerrupt handler as fast as
+ * possible.  After you are करोne making modअगरications, it is not a bad
+ * idea to करो:
  *
  *	make drivers/serial/dz.s
  *
@@ -170,223 +171,223 @@ static void dz_stop_rx(struct uart_port *uport)
 
 /*
  * ------------------------------------------------------------
- * receive_char ()
+ * receive_अक्षर ()
  *
- * This routine deals with inputs from any lines.
+ * This routine deals with inमाला_दो from any lines.
  * ------------------------------------------------------------
  */
-static inline void dz_receive_chars(struct dz_mux *mux)
-{
-	struct uart_port *uport;
-	struct dz_port *dport = &mux->dport[0];
-	struct uart_icount *icount;
-	int lines_rx[DZ_NB_PORT] = { [0 ... DZ_NB_PORT - 1] = 0 };
-	unsigned char ch, flag;
+अटल अंतरभूत व्योम dz_receive_अक्षरs(काष्ठा dz_mux *mux)
+अणु
+	काष्ठा uart_port *uport;
+	काष्ठा dz_port *dport = &mux->dport[0];
+	काष्ठा uart_icount *icount;
+	पूर्णांक lines_rx[DZ_NB_PORT] = अणु [0 ... DZ_NB_PORT - 1] = 0 पूर्ण;
+	अचिन्हित अक्षर ch, flag;
 	u16 status;
-	int i;
+	पूर्णांक i;
 
-	while ((status = dz_in(dport, DZ_RBUF)) & DZ_DVAL) {
+	जबतक ((status = dz_in(dport, DZ_RBUF)) & DZ_DVAL) अणु
 		dport = &mux->dport[LINE(status)];
 		uport = &dport->port;
 
-		ch = UCHAR(status);		/* grab the char */
+		ch = UCHAR(status);		/* grab the अक्षर */
 		flag = TTY_NORMAL;
 
 		icount = &uport->icount;
 		icount->rx++;
 
-		if (unlikely(status & (DZ_OERR | DZ_FERR | DZ_PERR))) {
+		अगर (unlikely(status & (DZ_OERR | DZ_FERR | DZ_PERR))) अणु
 
 			/*
 			 * There is no separate BREAK status bit, so treat
-			 * null characters with framing errors as BREAKs;
+			 * null अक्षरacters with framing errors as BREAKs;
 			 * normally, otherwise.  For this move the Framing
 			 * Error bit to a simulated BREAK bit.
 			 */
-			if (!ch) {
+			अगर (!ch) अणु
 				status |= (status & DZ_FERR) >>
 					  (ffs(DZ_FERR) - ffs(DZ_BREAK));
 				status &= ~DZ_FERR;
-			}
+			पूर्ण
 
 			/* Handle SysRq/SAK & keep track of the statistics. */
-			if (status & DZ_BREAK) {
+			अगर (status & DZ_BREAK) अणु
 				icount->brk++;
-				if (uart_handle_break(uport))
-					continue;
-			} else if (status & DZ_FERR)
+				अगर (uart_handle_अवरोध(uport))
+					जारी;
+			पूर्ण अन्यथा अगर (status & DZ_FERR)
 				icount->frame++;
-			else if (status & DZ_PERR)
+			अन्यथा अगर (status & DZ_PERR)
 				icount->parity++;
-			if (status & DZ_OERR)
+			अगर (status & DZ_OERR)
 				icount->overrun++;
 
-			status &= uport->read_status_mask;
-			if (status & DZ_BREAK)
+			status &= uport->पढ़ो_status_mask;
+			अगर (status & DZ_BREAK)
 				flag = TTY_BREAK;
-			else if (status & DZ_FERR)
+			अन्यथा अगर (status & DZ_FERR)
 				flag = TTY_FRAME;
-			else if (status & DZ_PERR)
+			अन्यथा अगर (status & DZ_PERR)
 				flag = TTY_PARITY;
 
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(uport, ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(uport, ch))
+			जारी;
 
-		uart_insert_char(uport, status, DZ_OERR, ch, flag);
+		uart_insert_अक्षर(uport, status, DZ_OERR, ch, flag);
 		lines_rx[LINE(status)] = 1;
-	}
-	for (i = 0; i < DZ_NB_PORT; i++)
-		if (lines_rx[i])
+	पूर्ण
+	क्रम (i = 0; i < DZ_NB_PORT; i++)
+		अगर (lines_rx[i])
 			tty_flip_buffer_push(&mux->dport[i].port.state->port);
-}
+पूर्ण
 
 /*
  * ------------------------------------------------------------
- * transmit_char ()
+ * transmit_अक्षर ()
  *
- * This routine deals with outputs to any lines.
+ * This routine deals with outमाला_दो to any lines.
  * ------------------------------------------------------------
  */
-static inline void dz_transmit_chars(struct dz_mux *mux)
-{
-	struct dz_port *dport = &mux->dport[0];
-	struct circ_buf *xmit;
-	unsigned char tmp;
+अटल अंतरभूत व्योम dz_transmit_अक्षरs(काष्ठा dz_mux *mux)
+अणु
+	काष्ठा dz_port *dport = &mux->dport[0];
+	काष्ठा circ_buf *xmit;
+	अचिन्हित अक्षर पंचांगp;
 	u16 status;
 
 	status = dz_in(dport, DZ_CSR);
 	dport = &mux->dport[LINE(status)];
 	xmit = &dport->port.state->xmit;
 
-	if (dport->port.x_char) {		/* XON/XOFF chars */
-		dz_out(dport, DZ_TDR, dport->port.x_char);
+	अगर (dport->port.x_अक्षर) अणु		/* XON/XOFF अक्षरs */
+		dz_out(dport, DZ_TDR, dport->port.x_अक्षर);
 		dport->port.icount.tx++;
-		dport->port.x_char = 0;
-		return;
-	}
-	/* If nothing to do or stopped or hardware stopped. */
-	if (uart_circ_empty(xmit) || uart_tx_stopped(&dport->port)) {
+		dport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
+	/* If nothing to करो or stopped or hardware stopped. */
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(&dport->port)) अणु
 		spin_lock(&dport->port.lock);
 		dz_stop_tx(&dport->port);
 		spin_unlock(&dport->port.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If something to do... (remember the dz has no output fifo,
-	 * so we go one char at a time) :-<
+	 * If something to करो... (remember the dz has no output fअगरo,
+	 * so we go one अक्षर at a समय) :-<
 	 */
-	tmp = xmit->buf[xmit->tail];
+	पंचांगp = xmit->buf[xmit->tail];
 	xmit->tail = (xmit->tail + 1) & (DZ_XMIT_SIZE - 1);
-	dz_out(dport, DZ_TDR, tmp);
+	dz_out(dport, DZ_TDR, पंचांगp);
 	dport->port.icount.tx++;
 
-	if (uart_circ_chars_pending(xmit) < DZ_WAKEUP_CHARS)
-		uart_write_wakeup(&dport->port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < DZ_WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(&dport->port);
 
-	/* Are we are done. */
-	if (uart_circ_empty(xmit)) {
+	/* Are we are करोne. */
+	अगर (uart_circ_empty(xmit)) अणु
 		spin_lock(&dport->port.lock);
 		dz_stop_tx(&dport->port);
 		spin_unlock(&dport->port.lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * ------------------------------------------------------------
  * check_modem_status()
  *
- * DS 3100 & 5100: Only valid for the MODEM line, duh!
- * DS 5000/200: Valid for the MODEM and PRINTER line.
+ * DS 3100 & 5100: Only valid क्रम the MODEM line, duh!
+ * DS 5000/200: Valid क्रम the MODEM and PRINTER line.
  * ------------------------------------------------------------
  */
-static inline void check_modem_status(struct dz_port *dport)
-{
+अटल अंतरभूत व्योम check_modem_status(काष्ठा dz_port *dport)
+अणु
 	/*
 	 * FIXME:
-	 * 1. No status change interrupt; use a timer.
+	 * 1. No status change पूर्णांकerrupt; use a समयr.
 	 * 2. Handle the 3100/5000 as appropriate. --macro
 	 */
 	u16 status;
 
-	/* If not the modem line just return.  */
-	if (dport->port.line != DZ_MODEM)
-		return;
+	/* If not the modem line just वापस.  */
+	अगर (dport->port.line != DZ_MODEM)
+		वापस;
 
 	status = dz_in(dport, DZ_MSR);
 
-	/* it's easy, since DSR2 is the only bit in the register */
-	if (status)
+	/* it's easy, since DSR2 is the only bit in the रेजिस्टर */
+	अगर (status)
 		dport->port.icount.dsr++;
-}
+पूर्ण
 
 /*
  * ------------------------------------------------------------
- * dz_interrupt ()
+ * dz_पूर्णांकerrupt ()
  *
- * this is the main interrupt routine for the DZ chip.
+ * this is the मुख्य पूर्णांकerrupt routine क्रम the DZ chip.
  * It deals with the multiple ports.
  * ------------------------------------------------------------
  */
-static irqreturn_t dz_interrupt(int irq, void *dev_id)
-{
-	struct dz_mux *mux = dev_id;
-	struct dz_port *dport = &mux->dport[0];
+अटल irqवापस_t dz_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dz_mux *mux = dev_id;
+	काष्ठा dz_port *dport = &mux->dport[0];
 	u16 status;
 
 	/* get the reason why we just got an irq */
 	status = dz_in(dport, DZ_CSR);
 
-	if ((status & (DZ_RDONE | DZ_RIE)) == (DZ_RDONE | DZ_RIE))
-		dz_receive_chars(mux);
+	अगर ((status & (DZ_RDONE | DZ_RIE)) == (DZ_RDONE | DZ_RIE))
+		dz_receive_अक्षरs(mux);
 
-	if ((status & (DZ_TRDY | DZ_TIE)) == (DZ_TRDY | DZ_TIE))
-		dz_transmit_chars(mux);
+	अगर ((status & (DZ_TRDY | DZ_TIE)) == (DZ_TRDY | DZ_TIE))
+		dz_transmit_अक्षरs(mux);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * -------------------------------------------------------------------
- * Here ends the DZ interrupt routines.
+ * Here ends the DZ पूर्णांकerrupt routines.
  * -------------------------------------------------------------------
  */
 
-static unsigned int dz_get_mctrl(struct uart_port *uport)
-{
+अटल अचिन्हित पूर्णांक dz_get_mctrl(काष्ठा uart_port *uport)
+अणु
 	/*
 	 * FIXME: Handle the 3100/5000 as appropriate. --macro
 	 */
-	struct dz_port *dport = to_dport(uport);
-	unsigned int mctrl = TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित पूर्णांक mctrl = TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
 
-	if (dport->port.line == DZ_MODEM) {
-		if (dz_in(dport, DZ_MSR) & DZ_MODEM_DSR)
+	अगर (dport->port.line == DZ_MODEM) अणु
+		अगर (dz_in(dport, DZ_MSR) & DZ_MODEM_DSR)
 			mctrl &= ~TIOCM_DSR;
-	}
+	पूर्ण
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static void dz_set_mctrl(struct uart_port *uport, unsigned int mctrl)
-{
+अटल व्योम dz_set_mctrl(काष्ठा uart_port *uport, अचिन्हित पूर्णांक mctrl)
+अणु
 	/*
 	 * FIXME: Handle the 3100/5000 as appropriate. --macro
 	 */
-	struct dz_port *dport = to_dport(uport);
-	u16 tmp;
+	काष्ठा dz_port *dport = to_dport(uport);
+	u16 पंचांगp;
 
-	if (dport->port.line == DZ_MODEM) {
-		tmp = dz_in(dport, DZ_TCR);
-		if (mctrl & TIOCM_DTR)
-			tmp &= ~DZ_MODEM_DTR;
-		else
-			tmp |= DZ_MODEM_DTR;
-		dz_out(dport, DZ_TCR, tmp);
-	}
-}
+	अगर (dport->port.line == DZ_MODEM) अणु
+		पंचांगp = dz_in(dport, DZ_TCR);
+		अगर (mctrl & TIOCM_DTR)
+			पंचांगp &= ~DZ_MODEM_DTR;
+		अन्यथा
+			पंचांगp |= DZ_MODEM_DTR;
+		dz_out(dport, DZ_TCR, पंचांगp);
+	पूर्ण
+पूर्ण
 
 /*
  * -------------------------------------------------------------------
@@ -395,69 +396,69 @@ static void dz_set_mctrl(struct uart_port *uport, unsigned int mctrl)
  * various initialization tasks
  * -------------------------------------------------------------------
  */
-static int dz_startup(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
-	struct dz_mux *mux = dport->mux;
-	unsigned long flags;
-	int irq_guard;
-	int ret;
-	u16 tmp;
+अटल पूर्णांक dz_startup(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	काष्ठा dz_mux *mux = dport->mux;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq_guard;
+	पूर्णांक ret;
+	u16 पंचांगp;
 
-	irq_guard = atomic_add_return(1, &mux->irq_guard);
-	if (irq_guard != 1)
-		return 0;
+	irq_guard = atomic_add_वापस(1, &mux->irq_guard);
+	अगर (irq_guard != 1)
+		वापस 0;
 
-	ret = request_irq(dport->port.irq, dz_interrupt,
+	ret = request_irq(dport->port.irq, dz_पूर्णांकerrupt,
 			  IRQF_SHARED, "dz", mux);
-	if (ret) {
+	अगर (ret) अणु
 		atomic_add(-1, &mux->irq_guard);
-		printk(KERN_ERR "dz: Cannot get IRQ %d!\n", dport->port.irq);
-		return ret;
-	}
+		prपूर्णांकk(KERN_ERR "dz: Cannot get IRQ %d!\n", dport->port.irq);
+		वापस ret;
+	पूर्ण
 
 	spin_lock_irqsave(&dport->port.lock, flags);
 
-	/* Enable interrupts.  */
-	tmp = dz_in(dport, DZ_CSR);
-	tmp |= DZ_RIE | DZ_TIE;
-	dz_out(dport, DZ_CSR, tmp);
+	/* Enable पूर्णांकerrupts.  */
+	पंचांगp = dz_in(dport, DZ_CSR);
+	पंचांगp |= DZ_RIE | DZ_TIE;
+	dz_out(dport, DZ_CSR, पंचांगp);
 
 	spin_unlock_irqrestore(&dport->port.lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * -------------------------------------------------------------------
- * shutdown ()
+ * shutकरोwn ()
  *
- * This routine will shutdown a serial port; interrupts are disabled, and
- * DTR is dropped if the hangup on close termio flag is on.
+ * This routine will shutकरोwn a serial port; पूर्णांकerrupts are disabled, and
+ * DTR is dropped अगर the hangup on बंद termio flag is on.
  * -------------------------------------------------------------------
  */
-static void dz_shutdown(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
-	struct dz_mux *mux = dport->mux;
-	unsigned long flags;
-	int irq_guard;
-	u16 tmp;
+अटल व्योम dz_shutकरोwn(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	काष्ठा dz_mux *mux = dport->mux;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक irq_guard;
+	u16 पंचांगp;
 
 	spin_lock_irqsave(&dport->port.lock, flags);
 	dz_stop_tx(&dport->port);
 	spin_unlock_irqrestore(&dport->port.lock, flags);
 
-	irq_guard = atomic_add_return(-1, &mux->irq_guard);
-	if (!irq_guard) {
-		/* Disable interrupts.  */
-		tmp = dz_in(dport, DZ_CSR);
-		tmp &= ~(DZ_RIE | DZ_TIE);
-		dz_out(dport, DZ_CSR, tmp);
+	irq_guard = atomic_add_वापस(-1, &mux->irq_guard);
+	अगर (!irq_guard) अणु
+		/* Disable पूर्णांकerrupts.  */
+		पंचांगp = dz_in(dport, DZ_CSR);
+		पंचांगp &= ~(DZ_RIE | DZ_TIE);
+		dz_out(dport, DZ_CSR, पंचांगp);
 
-		free_irq(dport->port.irq, mux);
-	}
-}
+		मुक्त_irq(dport->port.irq, mux);
+	पूर्ण
+पूर्ण
 
 /*
  * -------------------------------------------------------------------
@@ -465,349 +466,349 @@ static void dz_shutdown(struct uart_port *uport)
  *
  * Purpose: Let user call ioctl() to get info when the UART physically
  *          is emptied.  On bus types like RS485, the transmitter must
- *          release the bus after transmitting. This must be done when
- *          the transmit shift register is empty, not be done when the
- *          transmit holding register is empty.  This functionality
+ *          release the bus after transmitting. This must be करोne when
+ *          the transmit shअगरt रेजिस्टर is empty, not be करोne when the
+ *          transmit holding रेजिस्टर is empty.  This functionality
  *          allows an RS485 driver to be written in user space.
  * -------------------------------------------------------------------
  */
-static unsigned int dz_tx_empty(struct uart_port *uport)
-{
-	struct dz_port *dport = to_dport(uport);
-	unsigned short tmp, mask = 1 << dport->port.line;
+अटल अचिन्हित पूर्णांक dz_tx_empty(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित लघु पंचांगp, mask = 1 << dport->port.line;
 
-	tmp = dz_in(dport, DZ_TCR);
-	tmp &= mask;
+	पंचांगp = dz_in(dport, DZ_TCR);
+	पंचांगp &= mask;
 
-	return tmp ? 0 : TIOCSER_TEMT;
-}
+	वापस पंचांगp ? 0 : TIOCSER_TEMT;
+पूर्ण
 
-static void dz_break_ctl(struct uart_port *uport, int break_state)
-{
+अटल व्योम dz_अवरोध_ctl(काष्ठा uart_port *uport, पूर्णांक अवरोध_state)
+अणु
 	/*
 	 * FIXME: Can't access BREAK bits in TDR easily;
-	 * reuse the code for polled TX. --macro
+	 * reuse the code क्रम polled TX. --macro
 	 */
-	struct dz_port *dport = to_dport(uport);
-	unsigned long flags;
-	unsigned short tmp, mask = 1 << dport->port.line;
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित लघु पंचांगp, mask = 1 << dport->port.line;
 
 	spin_lock_irqsave(&uport->lock, flags);
-	tmp = dz_in(dport, DZ_TCR);
-	if (break_state)
-		tmp |= mask;
-	else
-		tmp &= ~mask;
-	dz_out(dport, DZ_TCR, tmp);
+	पंचांगp = dz_in(dport, DZ_TCR);
+	अगर (अवरोध_state)
+		पंचांगp |= mask;
+	अन्यथा
+		पंचांगp &= ~mask;
+	dz_out(dport, DZ_TCR, पंचांगp);
 	spin_unlock_irqrestore(&uport->lock, flags);
-}
+पूर्ण
 
-static int dz_encode_baud_rate(unsigned int baud)
-{
-	switch (baud) {
-	case 50:
-		return DZ_B50;
-	case 75:
-		return DZ_B75;
-	case 110:
-		return DZ_B110;
-	case 134:
-		return DZ_B134;
-	case 150:
-		return DZ_B150;
-	case 300:
-		return DZ_B300;
-	case 600:
-		return DZ_B600;
-	case 1200:
-		return DZ_B1200;
-	case 1800:
-		return DZ_B1800;
-	case 2000:
-		return DZ_B2000;
-	case 2400:
-		return DZ_B2400;
-	case 3600:
-		return DZ_B3600;
-	case 4800:
-		return DZ_B4800;
-	case 7200:
-		return DZ_B7200;
-	case 9600:
-		return DZ_B9600;
-	default:
-		return -1;
-	}
-}
+अटल पूर्णांक dz_encode_baud_rate(अचिन्हित पूर्णांक baud)
+अणु
+	चयन (baud) अणु
+	हाल 50:
+		वापस DZ_B50;
+	हाल 75:
+		वापस DZ_B75;
+	हाल 110:
+		वापस DZ_B110;
+	हाल 134:
+		वापस DZ_B134;
+	हाल 150:
+		वापस DZ_B150;
+	हाल 300:
+		वापस DZ_B300;
+	हाल 600:
+		वापस DZ_B600;
+	हाल 1200:
+		वापस DZ_B1200;
+	हाल 1800:
+		वापस DZ_B1800;
+	हाल 2000:
+		वापस DZ_B2000;
+	हाल 2400:
+		वापस DZ_B2400;
+	हाल 3600:
+		वापस DZ_B3600;
+	हाल 4800:
+		वापस DZ_B4800;
+	हाल 7200:
+		वापस DZ_B7200;
+	हाल 9600:
+		वापस DZ_B9600;
+	शेष:
+		वापस -1;
+	पूर्ण
+पूर्ण
 
 
-static void dz_reset(struct dz_port *dport)
-{
-	struct dz_mux *mux = dport->mux;
+अटल व्योम dz_reset(काष्ठा dz_port *dport)
+अणु
+	काष्ठा dz_mux *mux = dport->mux;
 
-	if (mux->initialised)
-		return;
+	अगर (mux->initialised)
+		वापस;
 
 	dz_out(dport, DZ_CSR, DZ_CLR);
-	while (dz_in(dport, DZ_CSR) & DZ_CLR);
+	जबतक (dz_in(dport, DZ_CSR) & DZ_CLR);
 	iob();
 
 	/* Enable scanning.  */
 	dz_out(dport, DZ_CSR, DZ_MSE);
 
 	mux->initialised = 1;
-}
+पूर्ण
 
-static void dz_set_termios(struct uart_port *uport, struct ktermios *termios,
-			   struct ktermios *old_termios)
-{
-	struct dz_port *dport = to_dport(uport);
-	unsigned long flags;
-	unsigned int cflag, baud;
-	int bflag;
+अटल व्योम dz_set_termios(काष्ठा uart_port *uport, काष्ठा ktermios *termios,
+			   काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक cflag, baud;
+	पूर्णांक bflag;
 
 	cflag = dport->port.line;
 
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		cflag |= DZ_CS5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		cflag |= DZ_CS6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		cflag |= DZ_CS7;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		cflag |= DZ_CS8;
-	}
+	पूर्ण
 
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		cflag |= DZ_CSTOPB;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		cflag |= DZ_PARENB;
-	if (termios->c_cflag & PARODD)
+	अगर (termios->c_cflag & PARODD)
 		cflag |= DZ_PARODD;
 
 	baud = uart_get_baud_rate(uport, termios, old_termios, 50, 9600);
 	bflag = dz_encode_baud_rate(baud);
-	if (bflag < 0)	{			/* Try to keep unchanged.  */
-		baud = uart_get_baud_rate(uport, old_termios, NULL, 50, 9600);
+	अगर (bflag < 0)	अणु			/* Try to keep unchanged.  */
+		baud = uart_get_baud_rate(uport, old_termios, शून्य, 50, 9600);
 		bflag = dz_encode_baud_rate(baud);
-		if (bflag < 0)	{		/* Resort to 9600.  */
+		अगर (bflag < 0)	अणु		/* Resort to 9600.  */
 			baud = 9600;
 			bflag = DZ_B9600;
-		}
+		पूर्ण
 		tty_termios_encode_baud_rate(termios, baud, baud);
-	}
+	पूर्ण
 	cflag |= bflag;
 
-	if (termios->c_cflag & CREAD)
+	अगर (termios->c_cflag & CREAD)
 		cflag |= DZ_RXENAB;
 
 	spin_lock_irqsave(&dport->port.lock, flags);
 
-	uart_update_timeout(uport, termios->c_cflag, baud);
+	uart_update_समयout(uport, termios->c_cflag, baud);
 
 	dz_out(dport, DZ_LPR, cflag);
 	dport->cflag = cflag;
 
 	/* setup accept flag */
-	dport->port.read_status_mask = DZ_OERR;
-	if (termios->c_iflag & INPCK)
-		dport->port.read_status_mask |= DZ_FERR | DZ_PERR;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		dport->port.read_status_mask |= DZ_BREAK;
+	dport->port.पढ़ो_status_mask = DZ_OERR;
+	अगर (termios->c_अगरlag & INPCK)
+		dport->port.पढ़ो_status_mask |= DZ_FERR | DZ_PERR;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		dport->port.पढ़ो_status_mask |= DZ_BREAK;
 
-	/* characters to ignore */
+	/* अक्षरacters to ignore */
 	uport->ignore_status_mask = 0;
-	if ((termios->c_iflag & (IGNPAR | IGNBRK)) == (IGNPAR | IGNBRK))
+	अगर ((termios->c_अगरlag & (IGNPAR | IGNBRK)) == (IGNPAR | IGNBRK))
 		dport->port.ignore_status_mask |= DZ_OERR;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		dport->port.ignore_status_mask |= DZ_FERR | DZ_PERR;
-	if (termios->c_iflag & IGNBRK)
+	अगर (termios->c_अगरlag & IGNBRK)
 		dport->port.ignore_status_mask |= DZ_BREAK;
 
 	spin_unlock_irqrestore(&dport->port.lock, flags);
-}
+पूर्ण
 
 /*
  * Hack alert!
  * Required solely so that the initial PROM-based console
  * works undisturbed in parallel with this one.
  */
-static void dz_pm(struct uart_port *uport, unsigned int state,
-		  unsigned int oldstate)
-{
-	struct dz_port *dport = to_dport(uport);
-	unsigned long flags;
+अटल व्योम dz_pm(काष्ठा uart_port *uport, अचिन्हित पूर्णांक state,
+		  अचिन्हित पूर्णांक oldstate)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dport->port.lock, flags);
-	if (state < 3)
+	अगर (state < 3)
 		dz_start_tx(&dport->port);
-	else
+	अन्यथा
 		dz_stop_tx(&dport->port);
 	spin_unlock_irqrestore(&dport->port.lock, flags);
-}
+पूर्ण
 
 
-static const char *dz_type(struct uart_port *uport)
-{
-	return "DZ";
-}
+अटल स्थिर अक्षर *dz_type(काष्ठा uart_port *uport)
+अणु
+	वापस "DZ";
+पूर्ण
 
-static void dz_release_port(struct uart_port *uport)
-{
-	struct dz_mux *mux = to_dport(uport)->mux;
-	int map_guard;
+अटल व्योम dz_release_port(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_mux *mux = to_dport(uport)->mux;
+	पूर्णांक map_guard;
 
 	iounmap(uport->membase);
-	uport->membase = NULL;
+	uport->membase = शून्य;
 
-	map_guard = atomic_add_return(-1, &mux->map_guard);
-	if (!map_guard)
+	map_guard = atomic_add_वापस(-1, &mux->map_guard);
+	अगर (!map_guard)
 		release_mem_region(uport->mapbase, dec_kn_slot_size);
-}
+पूर्ण
 
-static int dz_map_port(struct uart_port *uport)
-{
-	if (!uport->membase)
+अटल पूर्णांक dz_map_port(काष्ठा uart_port *uport)
+अणु
+	अगर (!uport->membase)
 		uport->membase = ioremap(uport->mapbase,
 						 dec_kn_slot_size);
-	if (!uport->membase) {
-		printk(KERN_ERR "dz: Cannot map MMIO\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
+	अगर (!uport->membase) अणु
+		prपूर्णांकk(KERN_ERR "dz: Cannot map MMIO\n");
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dz_request_port(struct uart_port *uport)
-{
-	struct dz_mux *mux = to_dport(uport)->mux;
-	int map_guard;
-	int ret;
+अटल पूर्णांक dz_request_port(काष्ठा uart_port *uport)
+अणु
+	काष्ठा dz_mux *mux = to_dport(uport)->mux;
+	पूर्णांक map_guard;
+	पूर्णांक ret;
 
-	map_guard = atomic_add_return(1, &mux->map_guard);
-	if (map_guard == 1) {
-		if (!request_mem_region(uport->mapbase, dec_kn_slot_size,
-					"dz")) {
+	map_guard = atomic_add_वापस(1, &mux->map_guard);
+	अगर (map_guard == 1) अणु
+		अगर (!request_mem_region(uport->mapbase, dec_kn_slot_size,
+					"dz")) अणु
 			atomic_add(-1, &mux->map_guard);
-			printk(KERN_ERR
+			prपूर्णांकk(KERN_ERR
 			       "dz: Unable to reserve MMIO resource\n");
-			return -EBUSY;
-		}
-	}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
 	ret = dz_map_port(uport);
-	if (ret) {
-		map_guard = atomic_add_return(-1, &mux->map_guard);
-		if (!map_guard)
+	अगर (ret) अणु
+		map_guard = atomic_add_वापस(-1, &mux->map_guard);
+		अगर (!map_guard)
 			release_mem_region(uport->mapbase, dec_kn_slot_size);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void dz_config_port(struct uart_port *uport, int flags)
-{
-	struct dz_port *dport = to_dport(uport);
+अटल व्योम dz_config_port(काष्ठा uart_port *uport, पूर्णांक flags)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
 
-	if (flags & UART_CONFIG_TYPE) {
-		if (dz_request_port(uport))
-			return;
+	अगर (flags & UART_CONFIG_TYPE) अणु
+		अगर (dz_request_port(uport))
+			वापस;
 
 		uport->type = PORT_DZ;
 
 		dz_reset(dport);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Verify the new serial_struct (for TIOCSSERIAL).
+ * Verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
  */
-static int dz_verify_port(struct uart_port *uport, struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक dz_verअगरy_port(काष्ठा uart_port *uport, काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_DZ)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_DZ)
 		ret = -EINVAL;
-	if (ser->irq != uport->irq)
+	अगर (ser->irq != uport->irq)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct uart_ops dz_ops = {
+अटल स्थिर काष्ठा uart_ops dz_ops = अणु
 	.tx_empty	= dz_tx_empty,
 	.get_mctrl	= dz_get_mctrl,
 	.set_mctrl	= dz_set_mctrl,
 	.stop_tx	= dz_stop_tx,
 	.start_tx	= dz_start_tx,
 	.stop_rx	= dz_stop_rx,
-	.break_ctl	= dz_break_ctl,
+	.अवरोध_ctl	= dz_अवरोध_ctl,
 	.startup	= dz_startup,
-	.shutdown	= dz_shutdown,
+	.shutकरोwn	= dz_shutकरोwn,
 	.set_termios	= dz_set_termios,
 	.pm		= dz_pm,
 	.type		= dz_type,
 	.release_port	= dz_release_port,
 	.request_port	= dz_request_port,
 	.config_port	= dz_config_port,
-	.verify_port	= dz_verify_port,
-};
+	.verअगरy_port	= dz_verअगरy_port,
+पूर्ण;
 
-static void __init dz_init_ports(void)
-{
-	static int first = 1;
-	unsigned long base;
-	int line;
+अटल व्योम __init dz_init_ports(व्योम)
+अणु
+	अटल पूर्णांक first = 1;
+	अचिन्हित दीर्घ base;
+	पूर्णांक line;
 
-	if (!first)
-		return;
+	अगर (!first)
+		वापस;
 	first = 0;
 
-	if (mips_machtype == MACH_DS23100 || mips_machtype == MACH_DS5100)
+	अगर (mips_machtype == MACH_DS23100 || mips_machtype == MACH_DS5100)
 		base = dec_kn_slot_base + KN01_DZ11;
-	else
+	अन्यथा
 		base = dec_kn_slot_base + KN02_DZ11;
 
-	for (line = 0; line < DZ_NB_PORT; line++) {
-		struct dz_port *dport = &dz_mux.dport[line];
-		struct uart_port *uport = &dport->port;
+	क्रम (line = 0; line < DZ_NB_PORT; line++) अणु
+		काष्ठा dz_port *dport = &dz_mux.dport[line];
+		काष्ठा uart_port *uport = &dport->port;
 
 		dport->mux	= &dz_mux;
 
-		uport->irq	= dec_interrupt[DEC_IRQ_DZ11];
-		uport->fifosize	= 1;
+		uport->irq	= dec_पूर्णांकerrupt[DEC_IRQ_DZ11];
+		uport->fअगरosize	= 1;
 		uport->iotype	= UPIO_MEM;
 		uport->flags	= UPF_BOOT_AUTOCONF;
 		uport->ops	= &dz_ops;
 		uport->line	= line;
 		uport->mapbase	= base;
 		uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_DZ_CONSOLE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SERIAL_DZ_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_DZ_CONSOLE
 /*
  * -------------------------------------------------------------------
- * dz_console_putchar() -- transmit a character
+ * dz_console_अक्षर_दो() -- transmit a अक्षरacter
  *
  * Polled transmission.  This is tricky.  We need to mask transmit
- * interrupts so that they do not interfere, enable the transmitter
- * for the line requested and then wait till the transmit scanner
- * requests data for this line.  But it may request data for another
- * line first, in which case we have to disable its transmitter and
- * repeat waiting till our line pops up.  Only then the character may
+ * पूर्णांकerrupts so that they करो not पूर्णांकerfere, enable the transmitter
+ * क्रम the line requested and then रुको till the transmit scanner
+ * requests data क्रम this line.  But it may request data क्रम another
+ * line first, in which हाल we have to disable its transmitter and
+ * repeat रुकोing till our line pops up.  Only then the अक्षरacter may
  * be transmitted.  Finally, the state of the transmitter mask is
  * restored.  Welcome to the world of PDP-11!
  * -------------------------------------------------------------------
  */
-static void dz_console_putchar(struct uart_port *uport, int ch)
-{
-	struct dz_port *dport = to_dport(uport);
-	unsigned long flags;
-	unsigned short csr, tcr, trdy, mask;
-	int loops = 10000;
+अटल व्योम dz_console_अक्षर_दो(काष्ठा uart_port *uport, पूर्णांक ch)
+अणु
+	काष्ठा dz_port *dport = to_dport(uport);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित लघु csr, tcr, trdy, mask;
+	पूर्णांक loops = 10000;
 
 	spin_lock_irqsave(&dport->port.lock, flags);
 	csr = dz_in(dport, DZ_CSR);
@@ -819,99 +820,99 @@ static void dz_console_putchar(struct uart_port *uport, int ch)
 	iob();
 	spin_unlock_irqrestore(&dport->port.lock, flags);
 
-	do {
+	करो अणु
 		trdy = dz_in(dport, DZ_CSR);
-		if (!(trdy & DZ_TRDY))
-			continue;
+		अगर (!(trdy & DZ_TRDY))
+			जारी;
 		trdy = (trdy & DZ_TLINE) >> 8;
-		if (trdy == dport->port.line)
-			break;
+		अगर (trdy == dport->port.line)
+			अवरोध;
 		mask &= ~(1 << trdy);
 		dz_out(dport, DZ_TCR, mask);
 		iob();
 		udelay(2);
-	} while (--loops);
+	पूर्ण जबतक (--loops);
 
-	if (loops)				/* Cannot send otherwise. */
+	अगर (loops)				/* Cannot send otherwise. */
 		dz_out(dport, DZ_TDR, ch);
 
 	dz_out(dport, DZ_TCR, tcr);
 	dz_out(dport, DZ_CSR, csr);
-}
+पूर्ण
 
 /*
  * -------------------------------------------------------------------
- * dz_console_print ()
+ * dz_console_prपूर्णांक ()
  *
- * dz_console_print is registered for printk.
+ * dz_console_prपूर्णांक is रेजिस्टरed क्रम prपूर्णांकk.
  * The console must be locked when we get here.
  * -------------------------------------------------------------------
  */
-static void dz_console_print(struct console *co,
-			     const char *str,
-			     unsigned int count)
-{
-	struct dz_port *dport = &dz_mux.dport[co->index];
-#ifdef DEBUG_DZ
-	prom_printf((char *) str);
-#endif
-	uart_console_write(&dport->port, str, count, dz_console_putchar);
-}
+अटल व्योम dz_console_prपूर्णांक(काष्ठा console *co,
+			     स्थिर अक्षर *str,
+			     अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा dz_port *dport = &dz_mux.dport[co->index];
+#अगर_घोषित DEBUG_DZ
+	prom_म_लिखो((अक्षर *) str);
+#पूर्ण_अगर
+	uart_console_ग_लिखो(&dport->port, str, count, dz_console_अक्षर_दो);
+पूर्ण
 
-static int __init dz_console_setup(struct console *co, char *options)
-{
-	struct dz_port *dport = &dz_mux.dport[co->index];
-	struct uart_port *uport = &dport->port;
-	int baud = 9600;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int ret;
+अटल पूर्णांक __init dz_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा dz_port *dport = &dz_mux.dport[co->index];
+	काष्ठा uart_port *uport = &dport->port;
+	पूर्णांक baud = 9600;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक ret;
 
 	ret = dz_map_port(uport);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_init(&dport->port.lock);	/* For dz_pm().  */
 
 	dz_reset(dport);
 	dz_pm(uport, 0, -1);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(&dport->port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(&dport->port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver dz_reg;
-static struct console dz_console = {
+अटल काष्ठा uart_driver dz_reg;
+अटल काष्ठा console dz_console = अणु
 	.name	= "ttyS",
-	.write	= dz_console_print,
+	.ग_लिखो	= dz_console_prपूर्णांक,
 	.device	= uart_console_device,
 	.setup	= dz_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &dz_reg,
-};
+पूर्ण;
 
-static int __init dz_serial_console_init(void)
-{
-	if (!IOASIC) {
+अटल पूर्णांक __init dz_serial_console_init(व्योम)
+अणु
+	अगर (!IOASIC) अणु
 		dz_init_ports();
-		register_console(&dz_console);
-		return 0;
-	} else
-		return -ENXIO;
-}
+		रेजिस्टर_console(&dz_console);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -ENXIO;
+पूर्ण
 
 console_initcall(dz_serial_console_init);
 
-#define SERIAL_DZ_CONSOLE	&dz_console
-#else
-#define SERIAL_DZ_CONSOLE	NULL
-#endif /* CONFIG_SERIAL_DZ_CONSOLE */
+#घोषणा SERIAL_DZ_CONSOLE	&dz_console
+#अन्यथा
+#घोषणा SERIAL_DZ_CONSOLE	शून्य
+#पूर्ण_अगर /* CONFIG_SERIAL_DZ_CONSOLE */
 
-static struct uart_driver dz_reg = {
+अटल काष्ठा uart_driver dz_reg = अणु
 	.owner			= THIS_MODULE,
 	.driver_name		= "serial",
 	.dev_name		= "ttyS",
@@ -919,27 +920,27 @@ static struct uart_driver dz_reg = {
 	.minor			= 64,
 	.nr			= DZ_NB_PORT,
 	.cons			= SERIAL_DZ_CONSOLE,
-};
+पूर्ण;
 
-static int __init dz_init(void)
-{
-	int ret, i;
+अटल पूर्णांक __init dz_init(व्योम)
+अणु
+	पूर्णांक ret, i;
 
-	if (IOASIC)
-		return -ENXIO;
+	अगर (IOASIC)
+		वापस -ENXIO;
 
-	printk("%s%s\n", dz_name, dz_version);
+	prपूर्णांकk("%s%s\n", dz_name, dz_version);
 
 	dz_init_ports();
 
-	ret = uart_register_driver(&dz_reg);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&dz_reg);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < DZ_NB_PORT; i++)
+	क्रम (i = 0; i < DZ_NB_PORT; i++)
 		uart_add_one_port(&dz_reg, &dz_mux.dport[i].port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(dz_init);

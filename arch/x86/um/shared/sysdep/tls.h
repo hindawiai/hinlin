@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SYSDEP_TLS_H
-#define _SYSDEP_TLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SYSDEP_TLS_H
+#घोषणा _SYSDEP_TLS_H
 
-#ifdef __UM_HOST__
+#अगर_घोषित __UM_HOST__
 
-/* Change name to avoid conflicts with the original one from <asm/ldt.h>, which
+/* Change name to aव्योम conflicts with the original one from <यंत्र/ldt.h>, which
  * may be named user_desc (but in 2.4 and in header matching its API was named
- * modify_ldt_ldt_s). */
+ * modअगरy_ldt_ldt_s). */
 
-typedef struct um_dup_user_desc {
-	unsigned int  entry_number;
-	unsigned int  base_addr;
-	unsigned int  limit;
-	unsigned int  seg_32bit:1;
-	unsigned int  contents:2;
-	unsigned int  read_exec_only:1;
-	unsigned int  limit_in_pages:1;
-	unsigned int  seg_not_present:1;
-	unsigned int  useable:1;
-#ifdef __x86_64__
-	unsigned int  lm:1;
-#endif
-} user_desc_t;
+प्रकार काष्ठा um_dup_user_desc अणु
+	अचिन्हित पूर्णांक  entry_number;
+	अचिन्हित पूर्णांक  base_addr;
+	अचिन्हित पूर्णांक  limit;
+	अचिन्हित पूर्णांक  seg_32bit:1;
+	अचिन्हित पूर्णांक  contents:2;
+	अचिन्हित पूर्णांक  पढ़ो_exec_only:1;
+	अचिन्हित पूर्णांक  limit_in_pages:1;
+	अचिन्हित पूर्णांक  seg_not_present:1;
+	अचिन्हित पूर्णांक  useable:1;
+#अगर_घोषित __x86_64__
+	अचिन्हित पूर्णांक  lm:1;
+#पूर्ण_अगर
+पूर्ण user_desc_t;
 
-#else /* __UM_HOST__ */
+#अन्यथा /* __UM_HOST__ */
 
-typedef struct user_desc user_desc_t;
+प्रकार काष्ठा user_desc user_desc_t;
 
-#endif /* __UM_HOST__ */
+#पूर्ण_अगर /* __UM_HOST__ */
 
-extern int os_set_thread_area(user_desc_t *info, int pid);
-extern int os_get_thread_area(user_desc_t *info, int pid);
+बाह्य पूर्णांक os_set_thपढ़ो_area(user_desc_t *info, पूर्णांक pid);
+बाह्य पूर्णांक os_get_thपढ़ो_area(user_desc_t *info, पूर्णांक pid);
 
-#ifdef __i386__
-#define GDT_ENTRY_TLS_MIN_I386 6
-#define GDT_ENTRY_TLS_MIN_X86_64 12
-#endif
+#अगर_घोषित __i386__
+#घोषणा GDT_ENTRY_TLS_MIN_I386 6
+#घोषणा GDT_ENTRY_TLS_MIN_X86_64 12
+#पूर्ण_अगर
 
-#endif /* _SYSDEP_TLS_H */
+#पूर्ण_अगर /* _SYSDEP_TLS_H */

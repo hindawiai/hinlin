@@ -1,69 +1,70 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003 by Ralf Baechle
  */
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/memblock.h>
-#include <linux/highmem.h>
-#include <asm/fixmap.h>
-#include <asm/pgalloc.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/tlbflush.h>
 
-void pgd_init(unsigned long page)
-{
-	unsigned long *p = (unsigned long *) page;
-	int i;
+व्योम pgd_init(अचिन्हित दीर्घ page)
+अणु
+	अचिन्हित दीर्घ *p = (अचिन्हित दीर्घ *) page;
+	पूर्णांक i;
 
-	for (i = 0; i < USER_PTRS_PER_PGD; i+=8) {
-		p[i + 0] = (unsigned long) invalid_pte_table;
-		p[i + 1] = (unsigned long) invalid_pte_table;
-		p[i + 2] = (unsigned long) invalid_pte_table;
-		p[i + 3] = (unsigned long) invalid_pte_table;
-		p[i + 4] = (unsigned long) invalid_pte_table;
-		p[i + 5] = (unsigned long) invalid_pte_table;
-		p[i + 6] = (unsigned long) invalid_pte_table;
-		p[i + 7] = (unsigned long) invalid_pte_table;
-	}
-}
+	क्रम (i = 0; i < USER_PTRS_PER_PGD; i+=8) अणु
+		p[i + 0] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 1] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 2] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 3] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 4] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 5] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 6] = (अचिन्हित दीर्घ) invalid_pte_table;
+		p[i + 7] = (अचिन्हित दीर्घ) invalid_pte_table;
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_TRANSPARENT_HUGEPAGE)
-pmd_t mk_pmd(struct page *page, pgprot_t prot)
-{
+#अगर defined(CONFIG_TRANSPARENT_HUGEPAGE)
+pmd_t mk_pmd(काष्ठा page *page, pgprot_t prot)
+अणु
 	pmd_t pmd;
 
 	pmd_val(pmd) = (page_to_pfn(page) << _PFN_SHIFT) | pgprot_val(prot);
 
-	return pmd;
-}
+	वापस pmd;
+पूर्ण
 
 
-void set_pmd_at(struct mm_struct *mm, unsigned long addr,
+व्योम set_pmd_at(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr,
 		pmd_t *pmdp, pmd_t pmd)
-{
+अणु
 	*pmdp = pmd;
-}
-#endif /* defined(CONFIG_TRANSPARENT_HUGEPAGE) */
+पूर्ण
+#पूर्ण_अगर /* defined(CONFIG_TRANSPARENT_HUGEPAGE) */
 
-void __init pagetable_init(void)
-{
-	unsigned long vaddr;
+व्योम __init pagetable_init(व्योम)
+अणु
+	अचिन्हित दीर्घ vaddr;
 	pgd_t *pgd_base;
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 	pte_t *pte;
-#endif
+#पूर्ण_अगर
 
 	/* Initialize the entire pgd.  */
-	pgd_init((unsigned long)swapper_pg_dir);
-	pgd_init((unsigned long)swapper_pg_dir
-		 + sizeof(pgd_t) * USER_PTRS_PER_PGD);
+	pgd_init((अचिन्हित दीर्घ)swapper_pg_dir);
+	pgd_init((अचिन्हित दीर्घ)swapper_pg_dir
+		 + माप(pgd_t) * USER_PTRS_PER_PGD);
 
 	pgd_base = swapper_pg_dir;
 
@@ -73,7 +74,7 @@ void __init pagetable_init(void)
 	vaddr = __fix_to_virt(__end_of_fixed_addresses - 1);
 	fixrange_init(vaddr & PMD_MASK, vaddr + FIXADDR_SIZE, pgd_base);
 
-#ifdef CONFIG_HIGHMEM
+#अगर_घोषित CONFIG_HIGHMEM
 	/*
 	 * Permanent kmaps:
 	 */
@@ -86,5 +87,5 @@ void __init pagetable_init(void)
 	pmd = pmd_offset(pud, vaddr);
 	pte = pte_offset_kernel(pmd, vaddr);
 	pkmap_page_table = pte;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

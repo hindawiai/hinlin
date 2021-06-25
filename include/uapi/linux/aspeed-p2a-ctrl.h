@@ -1,62 +1,63 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Copyright 2019 Google Inc
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  *
- * Provides a simple driver to control the ASPEED P2A interface which allows
- * the host to read and write to various regions of the BMC's memory.
+ * Provides a simple driver to control the ASPEED P2A पूर्णांकerface which allows
+ * the host to पढ़ो and ग_लिखो to various regions of the BMC's memory.
  */
 
-#ifndef _UAPI_LINUX_ASPEED_P2A_CTRL_H
-#define _UAPI_LINUX_ASPEED_P2A_CTRL_H
+#अगर_अघोषित _UAPI_LINUX_ASPEED_P2A_CTRL_H
+#घोषणा _UAPI_LINUX_ASPEED_P2A_CTRL_H
 
-#include <linux/ioctl.h>
-#include <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/types.h>
 
-#define ASPEED_P2A_CTRL_READ_ONLY 0
-#define ASPEED_P2A_CTRL_READWRITE 1
+#घोषणा ASPEED_P2A_CTRL_READ_ONLY 0
+#घोषणा ASPEED_P2A_CTRL_READWRITE 1
 
 /*
- * This driver provides a mechanism for enabling or disabling the read-write
- * property of specific windows into the ASPEED BMC's memory.
+ * This driver provides a mechanism क्रम enabling or disabling the पढ़ो-ग_लिखो
+ * property of specअगरic winकरोws पूर्णांकo the ASPEED BMC's memory.
  *
- * A user can map a region of the BMC's memory as read-only or read-write, with
- * the caveat that once any region is mapped, all regions are unlocked for
- * reading.
+ * A user can map a region of the BMC's memory as पढ़ो-only or पढ़ो-ग_लिखो, with
+ * the caveat that once any region is mapped, all regions are unlocked क्रम
+ * पढ़ोing.
  */
 
 /*
- * Unlock a region of BMC physical memory for access from the host.
+ * Unlock a region of BMC physical memory क्रम access from the host.
  *
- * Also used to read back the optional memory-region configuration for the
+ * Also used to पढ़ो back the optional memory-region configuration क्रम the
  * driver.
  */
-struct aspeed_p2a_ctrl_mapping {
+काष्ठा aspeed_p2a_ctrl_mapping अणु
 	__u64 addr;
 	__u32 length;
 	__u32 flags;
-};
+पूर्ण;
 
-#define __ASPEED_P2A_CTRL_IOCTL_MAGIC 0xb3
+#घोषणा __ASPEED_P2A_CTRL_IOCTL_MAGIC 0xb3
 
 /*
  * This IOCTL is meant to configure a region or regions of memory given a
- * starting address and length to be readable by the host, or
- * readable-writeable.
+ * starting address and length to be पढ़ोable by the host, or
+ * पढ़ोable-ग_लिखोable.
  */
-#define ASPEED_P2A_CTRL_IOCTL_SET_WINDOW _IOW(__ASPEED_P2A_CTRL_IOCTL_MAGIC, \
-		0x00, struct aspeed_p2a_ctrl_mapping)
+#घोषणा ASPEED_P2A_CTRL_IOCTL_SET_WINDOW _IOW(__ASPEED_P2A_CTRL_IOCTL_MAGIC, \
+		0x00, काष्ठा aspeed_p2a_ctrl_mapping)
 
 /*
- * This IOCTL is meant to read back to the user the base address and length of
- * the memory-region specified to the driver for use with mmap.
+ * This IOCTL is meant to पढ़ो back to the user the base address and length of
+ * the memory-region specअगरied to the driver क्रम use with mmap.
  */
-#define ASPEED_P2A_CTRL_IOCTL_GET_MEMORY_CONFIG \
+#घोषणा ASPEED_P2A_CTRL_IOCTL_GET_MEMORY_CONFIG \
 	_IOWR(__ASPEED_P2A_CTRL_IOCTL_MAGIC, \
-		0x01, struct aspeed_p2a_ctrl_mapping)
+		0x01, काष्ठा aspeed_p2a_ctrl_mapping)
 
-#endif /* _UAPI_LINUX_ASPEED_P2A_CTRL_H */
+#पूर्ण_अगर /* _UAPI_LINUX_ASPEED_P2A_CTRL_H */

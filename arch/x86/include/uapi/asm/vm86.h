@@ -1,130 +1,131 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASM_X86_VM86_H
-#define _UAPI_ASM_X86_VM86_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASM_X86_VM86_H
+#घोषणा _UAPI_ASM_X86_VM86_H
 
 /*
  * I'm guessing at the VIF/VIP flag usage, but hope that this is how
- * the Pentium uses them. Linux will return from vm86 mode when both
+ * the Pentium uses them. Linux will वापस from vm86 mode when both
  * VIF and VIP is set.
  *
- * On a Pentium, we could probably optimize the virtual flags directly
- * in the eflags register instead of doing it "by hand" in vflags...
+ * On a Pentium, we could probably optimize the भव flags directly
+ * in the eflags रेजिस्टर instead of करोing it "by hand" in vflags...
  *
  * Linus
  */
 
-#include <asm/processor-flags.h>
+#समावेश <यंत्र/processor-flags.h>
 
-#define BIOSSEG		0x0f000
+#घोषणा BIOSSEG		0x0f000
 
-#define CPU_086		0
-#define CPU_186		1
-#define CPU_286		2
-#define CPU_386		3
-#define CPU_486		4
-#define CPU_586		5
-
-/*
- * Return values for the 'vm86()' system call
- */
-#define VM86_TYPE(retval)	((retval) & 0xff)
-#define VM86_ARG(retval)	((retval) >> 8)
-
-#define VM86_SIGNAL	0	/* return due to signal */
-#define VM86_UNKNOWN	1	/* unhandled GP fault
-				   - IO-instruction or similar */
-#define VM86_INTx	2	/* int3/int x instruction (ARG = x) */
-#define VM86_STI	3	/* sti/popf/iret instruction enabled
-				   virtual interrupts */
+#घोषणा CPU_086		0
+#घोषणा CPU_186		1
+#घोषणा CPU_286		2
+#घोषणा CPU_386		3
+#घोषणा CPU_486		4
+#घोषणा CPU_586		5
 
 /*
- * Additional return values when invoking new vm86()
+ * Return values क्रम the 'vm86()' प्रणाली call
  */
-#define VM86_PICRETURN	4	/* return due to pending PIC request */
-#define VM86_TRAP	6	/* return due to DOS-debugger request */
+#घोषणा VM86_TYPE(retval)	((retval) & 0xff)
+#घोषणा VM86_ARG(retval)	((retval) >> 8)
+
+#घोषणा VM86_SIGNAL	0	/* वापस due to संकेत */
+#घोषणा VM86_UNKNOWN	1	/* unhandled GP fault
+				   - IO-inकाष्ठाion or similar */
+#घोषणा VM86_INTx	2	/* पूर्णांक3/पूर्णांक x inकाष्ठाion (ARG = x) */
+#घोषणा VM86_STI	3	/* sti/popf/iret inकाष्ठाion enabled
+				   भव पूर्णांकerrupts */
+
+/*
+ * Additional वापस values when invoking new vm86()
+ */
+#घोषणा VM86_PICRETURN	4	/* वापस due to pending PIC request */
+#घोषणा VM86_TRAP	6	/* वापस due to DOS-debugger request */
 
 /*
  * function codes when invoking new vm86()
  */
-#define VM86_PLUS_INSTALL_CHECK	0
-#define VM86_ENTER		1
-#define VM86_ENTER_NO_BYPASS	2
-#define	VM86_REQUEST_IRQ	3
-#define VM86_FREE_IRQ		4
-#define VM86_GET_IRQ_BITS	5
-#define VM86_GET_AND_RESET_IRQ	6
+#घोषणा VM86_PLUS_INSTALL_CHECK	0
+#घोषणा VM86_ENTER		1
+#घोषणा VM86_ENTER_NO_BYPASS	2
+#घोषणा	VM86_REQUEST_IRQ	3
+#घोषणा VM86_FREE_IRQ		4
+#घोषणा VM86_GET_IRQ_BITS	5
+#घोषणा VM86_GET_AND_RESET_IRQ	6
 
 /*
  * This is the stack-layout seen by the user space program when we have
- * done a translation of "SAVE_ALL" from vm86 mode. The real kernel layout
+ * करोne a translation of "SAVE_ALL" from vm86 mode. The real kernel layout
  * is 'kernel_vm86_regs' (see below).
  */
 
-struct vm86_regs {
+काष्ठा vm86_regs अणु
 /*
- * normal regs, with special meaning for the segment descriptors..
+ * normal regs, with special meaning क्रम the segment descriptors..
  */
-	long ebx;
-	long ecx;
-	long edx;
-	long esi;
-	long edi;
-	long ebp;
-	long eax;
-	long __null_ds;
-	long __null_es;
-	long __null_fs;
-	long __null_gs;
-	long orig_eax;
-	long eip;
-	unsigned short cs, __csh;
-	long eflags;
-	long esp;
-	unsigned short ss, __ssh;
+	दीर्घ ebx;
+	दीर्घ ecx;
+	दीर्घ edx;
+	दीर्घ esi;
+	दीर्घ edi;
+	दीर्घ ebp;
+	दीर्घ eax;
+	दीर्घ __null_ds;
+	दीर्घ __null_es;
+	दीर्घ __null_fs;
+	दीर्घ __null_gs;
+	दीर्घ orig_eax;
+	दीर्घ eip;
+	अचिन्हित लघु cs, __csh;
+	दीर्घ eflags;
+	दीर्घ esp;
+	अचिन्हित लघु ss, __ssh;
 /*
- * these are specific to v86 mode:
+ * these are specअगरic to v86 mode:
  */
-	unsigned short es, __esh;
-	unsigned short ds, __dsh;
-	unsigned short fs, __fsh;
-	unsigned short gs, __gsh;
-};
+	अचिन्हित लघु es, __esh;
+	अचिन्हित लघु ds, __dsh;
+	अचिन्हित लघु fs, __fsh;
+	अचिन्हित लघु gs, __gsh;
+पूर्ण;
 
-struct revectored_struct {
-	unsigned long __map[8];			/* 256 bits */
-};
+काष्ठा revectored_काष्ठा अणु
+	अचिन्हित दीर्घ __map[8];			/* 256 bits */
+पूर्ण;
 
-struct vm86_struct {
-	struct vm86_regs regs;
-	unsigned long flags;
-	unsigned long screen_bitmap;		/* unused, preserved by vm86() */
-	unsigned long cpu_type;
-	struct revectored_struct int_revectored;
-	struct revectored_struct int21_revectored;
-};
+काष्ठा vm86_काष्ठा अणु
+	काष्ठा vm86_regs regs;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ screen_biपंचांगap;		/* unused, preserved by vm86() */
+	अचिन्हित दीर्घ cpu_type;
+	काष्ठा revectored_काष्ठा पूर्णांक_revectored;
+	काष्ठा revectored_काष्ठा पूर्णांक21_revectored;
+पूर्ण;
 
 /*
  * flags masks
  */
-#define VM86_SCREEN_BITMAP	0x0001        /* no longer supported */
+#घोषणा VM86_SCREEN_BITMAP	0x0001        /* no दीर्घer supported */
 
-struct vm86plus_info_struct {
-	unsigned long force_return_for_pic:1;
-	unsigned long vm86dbg_active:1;       /* for debugger */
-	unsigned long vm86dbg_TFpendig:1;     /* for debugger */
-	unsigned long unused:28;
-	unsigned long is_vm86pus:1;	      /* for vm86 internal use */
-	unsigned char vm86dbg_intxxtab[32];   /* for debugger */
-};
-struct vm86plus_struct {
-	struct vm86_regs regs;
-	unsigned long flags;
-	unsigned long screen_bitmap;
-	unsigned long cpu_type;
-	struct revectored_struct int_revectored;
-	struct revectored_struct int21_revectored;
-	struct vm86plus_info_struct vm86plus;
-};
+काष्ठा vm86plus_info_काष्ठा अणु
+	अचिन्हित दीर्घ क्रमce_वापस_क्रम_pic:1;
+	अचिन्हित दीर्घ vm86dbg_active:1;       /* क्रम debugger */
+	अचिन्हित दीर्घ vm86dbg_TFpendig:1;     /* क्रम debugger */
+	अचिन्हित दीर्घ unused:28;
+	अचिन्हित दीर्घ is_vm86pus:1;	      /* क्रम vm86 पूर्णांकernal use */
+	अचिन्हित अक्षर vm86dbg_पूर्णांकxxtab[32];   /* क्रम debugger */
+पूर्ण;
+काष्ठा vm86plus_काष्ठा अणु
+	काष्ठा vm86_regs regs;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ screen_biपंचांगap;
+	अचिन्हित दीर्घ cpu_type;
+	काष्ठा revectored_काष्ठा पूर्णांक_revectored;
+	काष्ठा revectored_काष्ठा पूर्णांक21_revectored;
+	काष्ठा vm86plus_info_काष्ठा vm86plus;
+पूर्ण;
 
 
-#endif /* _UAPI_ASM_X86_VM86_H */
+#पूर्ण_अगर /* _UAPI_ASM_X86_VM86_H */

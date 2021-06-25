@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *  Universal interface for Audio Codec '97
+ *  Universal पूर्णांकerface क्रम Audio Codec '97
  *
- *  For more details look to AC '97 component specification revision 2.2
- *  by Intel Corporation (http://developer.intel.com).
+ *  For more details look to AC '97 component specअगरication revision 2.2
+ *  by Intel Corporation (http://developer.पूर्णांकel.com).
  */
 
-#define AC97_SINGLE_VALUE(reg,shift,mask,invert) \
-	((reg) | ((shift) << 8) | ((shift) << 12) | ((mask) << 16) | \
+#घोषणा AC97_SINGLE_VALUE(reg,shअगरt,mask,invert) \
+	((reg) | ((shअगरt) << 8) | ((shअगरt) << 12) | ((mask) << 16) | \
 	 ((invert) << 24))
-#define AC97_PAGE_SINGLE_VALUE(reg,shift,mask,invert,page) \
-	(AC97_SINGLE_VALUE(reg,shift,mask,invert) | (1<<25) | ((page) << 26))
-#define AC97_SINGLE(xname, reg, shift, mask, invert) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+#घोषणा AC97_PAGE_SINGLE_VALUE(reg,shअगरt,mask,invert,page) \
+	(AC97_SINGLE_VALUE(reg,shअगरt,mask,invert) | (1<<25) | ((page) << 26))
+#घोषणा AC97_SINGLE(xname, reg, shअगरt, mask, invert) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
   .info = snd_ac97_info_volsw,		\
   .get = snd_ac97_get_volsw, .put = snd_ac97_put_volsw, \
-  .private_value =  AC97_SINGLE_VALUE(reg, shift, mask, invert) }
-#define AC97_PAGE_SINGLE(xname, reg, shift, mask, invert, page)		\
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+  .निजी_value =  AC97_SINGLE_VALUE(reg, shअगरt, mask, invert) पूर्ण
+#घोषणा AC97_PAGE_SINGLE(xname, reg, shअगरt, mask, invert, page)		\
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
   .info = snd_ac97_info_volsw,		\
   .get = snd_ac97_get_volsw, .put = snd_ac97_put_volsw, \
-  .private_value =  AC97_PAGE_SINGLE_VALUE(reg, shift, mask, invert, page) }
-#define AC97_DOUBLE(xname, reg, shift_left, shift_right, mask, invert) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
+  .निजी_value =  AC97_PAGE_SINGLE_VALUE(reg, shअगरt, mask, invert, page) पूर्ण
+#घोषणा AC97_DOUBLE(xname, reg, shअगरt_left, shअगरt_right, mask, invert) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), \
   .info = snd_ac97_info_volsw,		\
   .get = snd_ac97_get_volsw, .put = snd_ac97_put_volsw, \
-  .private_value = (reg) | ((shift_left) << 8) | ((shift_right) << 12) | ((mask) << 16) | ((invert) << 24) }
+  .निजी_value = (reg) | ((shअगरt_left) << 8) | ((shअगरt_right) << 12) | ((mask) << 16) | ((invert) << 24) पूर्ण
 
-/* enum control */
-struct ac97_enum {
-	unsigned char reg;
-	unsigned char shift_l;
-	unsigned char shift_r;
-	unsigned short mask;
-	const char * const *texts;
-};
+/* क्रमागत control */
+काष्ठा ac97_क्रमागत अणु
+	अचिन्हित अक्षर reg;
+	अचिन्हित अक्षर shअगरt_l;
+	अचिन्हित अक्षर shअगरt_r;
+	अचिन्हित लघु mask;
+	स्थिर अक्षर * स्थिर *texts;
+पूर्ण;
 
-#define AC97_ENUM_DOUBLE(xreg, xshift_l, xshift_r, xmask, xtexts) \
-{ .reg = xreg, .shift_l = xshift_l, .shift_r = xshift_r, \
-  .mask = xmask, .texts = xtexts }
-#define AC97_ENUM_SINGLE(xreg, xshift, xmask, xtexts) \
-	AC97_ENUM_DOUBLE(xreg, xshift, xshift, xmask, xtexts)
-#define AC97_ENUM(xname, xenum) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
-  .info = snd_ac97_info_enum_double,		    \
-  .get = snd_ac97_get_enum_double, .put = snd_ac97_put_enum_double, \
-  .private_value = (unsigned long)&xenum }
+#घोषणा AC97_ENUM_DOUBLE(xreg, xshअगरt_l, xshअगरt_r, xmask, xtexts) \
+अणु .reg = xreg, .shअगरt_l = xshअगरt_l, .shअगरt_r = xshअगरt_r, \
+  .mask = xmask, .texts = xtexts पूर्ण
+#घोषणा AC97_ENUM_SINGLE(xreg, xshअगरt, xmask, xtexts) \
+	AC97_ENUM_DOUBLE(xreg, xshअगरt, xshअगरt, xmask, xtexts)
+#घोषणा AC97_ENUM(xname, xक्रमागत) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname, \
+  .info = snd_ac97_info_क्रमागत_द्विगुन,		    \
+  .get = snd_ac97_get_क्रमागत_द्विगुन, .put = snd_ac97_put_क्रमागत_द्विगुन, \
+  .निजी_value = (अचिन्हित दीर्घ)&xक्रमागत पूर्ण
 
 /* ac97_codec.c */
-static const struct snd_kcontrol_new snd_ac97_controls_3d[];
-static const struct snd_kcontrol_new snd_ac97_controls_spdif[];
-static struct snd_kcontrol *snd_ac97_cnew(const struct snd_kcontrol_new *_template,
-					  struct snd_ac97 * ac97);
-static int snd_ac97_info_volsw(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_info *uinfo);
-static int snd_ac97_get_volsw(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol);
-static int snd_ac97_put_volsw(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol);
-static int snd_ac97_try_bit(struct snd_ac97 * ac97, int reg, int bit);
-static int snd_ac97_remove_ctl(struct snd_ac97 *ac97, const char *name,
-			       const char *suffix);
-static int snd_ac97_rename_ctl(struct snd_ac97 *ac97, const char *src,
-			       const char *dst, const char *suffix);
-static int snd_ac97_swap_ctl(struct snd_ac97 *ac97, const char *s1,
-			     const char *s2, const char *suffix);
-static void snd_ac97_rename_vol_ctl(struct snd_ac97 *ac97, const char *src,
-				    const char *dst);
-#ifdef CONFIG_PM
-static void snd_ac97_restore_status(struct snd_ac97 *ac97);
-static void snd_ac97_restore_iec958(struct snd_ac97 *ac97);
-#endif
-static int snd_ac97_info_enum_double(struct snd_kcontrol *kcontrol,
-				     struct snd_ctl_elem_info *uinfo);
-static int snd_ac97_get_enum_double(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol);
-static int snd_ac97_put_enum_double(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_value *ucontrol);
+अटल स्थिर काष्ठा snd_kcontrol_new snd_ac97_controls_3d[];
+अटल स्थिर काष्ठा snd_kcontrol_new snd_ac97_controls_spdअगर[];
+अटल काष्ठा snd_kcontrol *snd_ac97_cnew(स्थिर काष्ठा snd_kcontrol_new *_ढाँचा,
+					  काष्ठा snd_ac97 * ac97);
+अटल पूर्णांक snd_ac97_info_volsw(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_info *uinfo);
+अटल पूर्णांक snd_ac97_get_volsw(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol);
+अटल पूर्णांक snd_ac97_put_volsw(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol);
+अटल पूर्णांक snd_ac97_try_bit(काष्ठा snd_ac97 * ac97, पूर्णांक reg, पूर्णांक bit);
+अटल पूर्णांक snd_ac97_हटाओ_ctl(काष्ठा snd_ac97 *ac97, स्थिर अक्षर *name,
+			       स्थिर अक्षर *suffix);
+अटल पूर्णांक snd_ac97_नाम_ctl(काष्ठा snd_ac97 *ac97, स्थिर अक्षर *src,
+			       स्थिर अक्षर *dst, स्थिर अक्षर *suffix);
+अटल पूर्णांक snd_ac97_swap_ctl(काष्ठा snd_ac97 *ac97, स्थिर अक्षर *s1,
+			     स्थिर अक्षर *s2, स्थिर अक्षर *suffix);
+अटल व्योम snd_ac97_नाम_vol_ctl(काष्ठा snd_ac97 *ac97, स्थिर अक्षर *src,
+				    स्थिर अक्षर *dst);
+#अगर_घोषित CONFIG_PM
+अटल व्योम snd_ac97_restore_status(काष्ठा snd_ac97 *ac97);
+अटल व्योम snd_ac97_restore_iec958(काष्ठा snd_ac97 *ac97);
+#पूर्ण_अगर
+अटल पूर्णांक snd_ac97_info_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				     काष्ठा snd_ctl_elem_info *uinfo);
+अटल पूर्णांक snd_ac97_get_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol);
+अटल पूर्णांक snd_ac97_put_क्रमागत_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_value *ucontrol);

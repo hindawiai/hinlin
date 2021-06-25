@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * configfs_example_macros.c - This file is a demonstration module
- *      containing a number of configfs subsystems.  It uses the helper
+ *      containing a number of configfs subप्रणालीs.  It uses the helper
  *      macros defined by configfs.h
  *
  * Based on sysfs:
@@ -10,102 +11,102 @@
  * configfs Copyright (C) 2005 Oracle.  All rights reserved.
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/configfs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/configfs.h>
 
 /*
  * 01-childless
  *
- * This first example is a childless subsystem.  It cannot create
+ * This first example is a childless subप्रणाली.  It cannot create
  * any config_items.  It just has attributes.
  *
- * Note that we are enclosing the configfs_subsystem inside a container.
- * This is not necessary if a subsystem has no attributes directly
- * on the subsystem.  See the next example, 02-simple-children, for
- * such a subsystem.
+ * Note that we are enclosing the configfs_subप्रणाली inside a container.
+ * This is not necessary अगर a subप्रणाली has no attributes directly
+ * on the subप्रणाली.  See the next example, 02-simple-children, क्रम
+ * such a subप्रणाली.
  */
 
-struct childless {
-	struct configfs_subsystem subsys;
-	int showme;
-	int storeme;
-};
+काष्ठा childless अणु
+	काष्ठा configfs_subप्रणाली subsys;
+	पूर्णांक showme;
+	पूर्णांक storeme;
+पूर्ण;
 
-static inline struct childless *to_childless(struct config_item *item)
-{
-	return container_of(to_configfs_subsystem(to_config_group(item)),
-			    struct childless, subsys);
-}
+अटल अंतरभूत काष्ठा childless *to_childless(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_configfs_subप्रणाली(to_config_group(item)),
+			    काष्ठा childless, subsys);
+पूर्ण
 
-static ssize_t childless_showme_show(struct config_item *item, char *page)
-{
-	struct childless *childless = to_childless(item);
-	ssize_t pos;
+अटल sमाप_प्रकार childless_showme_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा childless *childless = to_childless(item);
+	sमाप_प्रकार pos;
 
-	pos = sprintf(page, "%d\n", childless->showme);
+	pos = प्र_लिखो(page, "%d\n", childless->showme);
 	childless->showme++;
 
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static ssize_t childless_storeme_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%d\n", to_childless(item)->storeme);
-}
+अटल sमाप_प्रकार childless_storeme_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", to_childless(item)->storeme);
+पूर्ण
 
-static ssize_t childless_storeme_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct childless *childless = to_childless(item);
-	int ret;
+अटल sमाप_प्रकार childless_storeme_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा childless *childless = to_childless(item);
+	पूर्णांक ret;
 
-	ret = kstrtoint(page, 10, &childless->storeme);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(page, 10, &childless->storeme);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t childless_description_show(struct config_item *item, char *page)
-{
-	return sprintf(page,
+अटल sमाप_प्रकार childless_description_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page,
 "[01-childless]\n"
 "\n"
 "The childless subsystem is the simplest possible subsystem in\n"
 "configfs.  It does not support the creation of child config_items.\n"
 "It only has a few attributes.  In fact, it isn't much different\n"
 "than a directory in /proc.\n");
-}
+पूर्ण
 
 CONFIGFS_ATTR_RO(childless_, showme);
 CONFIGFS_ATTR(childless_, storeme);
 CONFIGFS_ATTR_RO(childless_, description);
 
-static struct configfs_attribute *childless_attrs[] = {
+अटल काष्ठा configfs_attribute *childless_attrs[] = अणु
 	&childless_attr_showme,
 	&childless_attr_storeme,
 	&childless_attr_description,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type childless_type = {
+अटल स्थिर काष्ठा config_item_type childless_type = अणु
 	.ct_attrs	= childless_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct childless childless_subsys = {
-	.subsys = {
-		.su_group = {
-			.cg_item = {
+अटल काष्ठा childless childless_subsys = अणु
+	.subsys = अणु
+		.su_group = अणु
+			.cg_item = अणु
 				.ci_namebuf = "01-childless",
 				.ci_type = &childless_type,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* ----------------------------------------------------------------- */
 
@@ -113,135 +114,135 @@ static struct childless childless_subsys = {
  * 02-simple-children
  *
  * This example merely has a simple one-attribute child.  Note that
- * there is no extra attribute structure, as the child's attribute is
- * known from the get-go.  Also, there is no container for the
- * subsystem, as it has no attributes of its own.
+ * there is no extra attribute काष्ठाure, as the child's attribute is
+ * known from the get-go.  Also, there is no container क्रम the
+ * subप्रणाली, as it has no attributes of its own.
  */
 
-struct simple_child {
-	struct config_item item;
-	int storeme;
-};
+काष्ठा simple_child अणु
+	काष्ठा config_item item;
+	पूर्णांक storeme;
+पूर्ण;
 
-static inline struct simple_child *to_simple_child(struct config_item *item)
-{
-	return container_of(item, struct simple_child, item);
-}
+अटल अंतरभूत काष्ठा simple_child *to_simple_child(काष्ठा config_item *item)
+अणु
+	वापस container_of(item, काष्ठा simple_child, item);
+पूर्ण
 
-static ssize_t simple_child_storeme_show(struct config_item *item, char *page)
-{
-	return sprintf(page, "%d\n", to_simple_child(item)->storeme);
-}
+अटल sमाप_प्रकार simple_child_storeme_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस प्र_लिखो(page, "%d\n", to_simple_child(item)->storeme);
+पूर्ण
 
-static ssize_t simple_child_storeme_store(struct config_item *item,
-		const char *page, size_t count)
-{
-	struct simple_child *simple_child = to_simple_child(item);
-	int ret;
+अटल sमाप_प्रकार simple_child_storeme_store(काष्ठा config_item *item,
+		स्थिर अक्षर *page, माप_प्रकार count)
+अणु
+	काष्ठा simple_child *simple_child = to_simple_child(item);
+	पूर्णांक ret;
 
-	ret = kstrtoint(page, 10, &simple_child->storeme);
-	if (ret)
-		return ret;
+	ret = kstrtoपूर्णांक(page, 10, &simple_child->storeme);
+	अगर (ret)
+		वापस ret;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 CONFIGFS_ATTR(simple_child_, storeme);
 
-static struct configfs_attribute *simple_child_attrs[] = {
+अटल काष्ठा configfs_attribute *simple_child_attrs[] = अणु
 	&simple_child_attr_storeme,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void simple_child_release(struct config_item *item)
-{
-	kfree(to_simple_child(item));
-}
+अटल व्योम simple_child_release(काष्ठा config_item *item)
+अणु
+	kमुक्त(to_simple_child(item));
+पूर्ण
 
-static struct configfs_item_operations simple_child_item_ops = {
+अटल काष्ठा configfs_item_operations simple_child_item_ops = अणु
 	.release	= simple_child_release,
-};
+पूर्ण;
 
-static const struct config_item_type simple_child_type = {
+अटल स्थिर काष्ठा config_item_type simple_child_type = अणु
 	.ct_item_ops	= &simple_child_item_ops,
 	.ct_attrs	= simple_child_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-struct simple_children {
-	struct config_group group;
-};
+काष्ठा simple_children अणु
+	काष्ठा config_group group;
+पूर्ण;
 
-static inline struct simple_children *to_simple_children(struct config_item *item)
-{
-	return container_of(to_config_group(item),
-			    struct simple_children, group);
-}
+अटल अंतरभूत काष्ठा simple_children *to_simple_children(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item),
+			    काष्ठा simple_children, group);
+पूर्ण
 
-static struct config_item *simple_children_make_item(struct config_group *group,
-		const char *name)
-{
-	struct simple_child *simple_child;
+अटल काष्ठा config_item *simple_children_make_item(काष्ठा config_group *group,
+		स्थिर अक्षर *name)
+अणु
+	काष्ठा simple_child *simple_child;
 
-	simple_child = kzalloc(sizeof(struct simple_child), GFP_KERNEL);
-	if (!simple_child)
-		return ERR_PTR(-ENOMEM);
+	simple_child = kzalloc(माप(काष्ठा simple_child), GFP_KERNEL);
+	अगर (!simple_child)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_item_init_type_name(&simple_child->item, name,
 				   &simple_child_type);
 
-	return &simple_child->item;
-}
+	वापस &simple_child->item;
+पूर्ण
 
-static ssize_t simple_children_description_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page,
+अटल sमाप_प्रकार simple_children_description_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page,
 "[02-simple-children]\n"
 "\n"
 "This subsystem allows the creation of child config_items.  These\n"
 "items have only one attribute that is readable and writeable.\n");
-}
+पूर्ण
 
 CONFIGFS_ATTR_RO(simple_children_, description);
 
-static struct configfs_attribute *simple_children_attrs[] = {
+अटल काष्ठा configfs_attribute *simple_children_attrs[] = अणु
 	&simple_children_attr_description,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void simple_children_release(struct config_item *item)
-{
-	kfree(to_simple_children(item));
-}
+अटल व्योम simple_children_release(काष्ठा config_item *item)
+अणु
+	kमुक्त(to_simple_children(item));
+पूर्ण
 
-static struct configfs_item_operations simple_children_item_ops = {
+अटल काष्ठा configfs_item_operations simple_children_item_ops = अणु
 	.release	= simple_children_release,
-};
+पूर्ण;
 
 /*
  * Note that, since no extra work is required on ->drop_item(),
  * no ->drop_item() is provided.
  */
-static struct configfs_group_operations simple_children_group_ops = {
+अटल काष्ठा configfs_group_operations simple_children_group_ops = अणु
 	.make_item	= simple_children_make_item,
-};
+पूर्ण;
 
-static const struct config_item_type simple_children_type = {
+अटल स्थिर काष्ठा config_item_type simple_children_type = अणु
 	.ct_item_ops	= &simple_children_item_ops,
 	.ct_group_ops	= &simple_children_group_ops,
 	.ct_attrs	= simple_children_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct configfs_subsystem simple_children_subsys = {
-	.su_group = {
-		.cg_item = {
+अटल काष्ठा configfs_subप्रणाली simple_children_subsys = अणु
+	.su_group = अणु
+		.cg_item = अणु
 			.ci_namebuf = "02-simple-children",
 			.ci_type = &simple_children_type,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* ----------------------------------------------------------------- */
 
@@ -249,119 +250,119 @@ static struct configfs_subsystem simple_children_subsys = {
  * 03-group-children
  *
  * This example reuses the simple_children group from above.  However,
- * the simple_children group is not the subsystem itself, it is a
- * child of the subsystem.  Creation of a group in the subsystem creates
+ * the simple_children group is not the subप्रणाली itself, it is a
+ * child of the subप्रणाली.  Creation of a group in the subप्रणाली creates
  * a new simple_children group.  That group can then have simple_child
  * children of its own.
  */
 
-static struct config_group *group_children_make_group(
-		struct config_group *group, const char *name)
-{
-	struct simple_children *simple_children;
+अटल काष्ठा config_group *group_children_make_group(
+		काष्ठा config_group *group, स्थिर अक्षर *name)
+अणु
+	काष्ठा simple_children *simple_children;
 
-	simple_children = kzalloc(sizeof(struct simple_children),
+	simple_children = kzalloc(माप(काष्ठा simple_children),
 				  GFP_KERNEL);
-	if (!simple_children)
-		return ERR_PTR(-ENOMEM);
+	अगर (!simple_children)
+		वापस ERR_PTR(-ENOMEM);
 
 	config_group_init_type_name(&simple_children->group, name,
 				    &simple_children_type);
 
-	return &simple_children->group;
-}
+	वापस &simple_children->group;
+पूर्ण
 
-static ssize_t group_children_description_show(struct config_item *item,
-		char *page)
-{
-	return sprintf(page,
+अटल sमाप_प्रकार group_children_description_show(काष्ठा config_item *item,
+		अक्षर *page)
+अणु
+	वापस प्र_लिखो(page,
 "[03-group-children]\n"
 "\n"
 "This subsystem allows the creation of child config_groups.  These\n"
 "groups are like the subsystem simple-children.\n");
-}
+पूर्ण
 
 CONFIGFS_ATTR_RO(group_children_, description);
 
-static struct configfs_attribute *group_children_attrs[] = {
+अटल काष्ठा configfs_attribute *group_children_attrs[] = अणु
 	&group_children_attr_description,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
  * Note that, since no extra work is required on ->drop_item(),
  * no ->drop_item() is provided.
  */
-static struct configfs_group_operations group_children_group_ops = {
+अटल काष्ठा configfs_group_operations group_children_group_ops = अणु
 	.make_group	= group_children_make_group,
-};
+पूर्ण;
 
-static const struct config_item_type group_children_type = {
+अटल स्थिर काष्ठा config_item_type group_children_type = अणु
 	.ct_group_ops	= &group_children_group_ops,
 	.ct_attrs	= group_children_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct configfs_subsystem group_children_subsys = {
-	.su_group = {
-		.cg_item = {
+अटल काष्ठा configfs_subप्रणाली group_children_subsys = अणु
+	.su_group = अणु
+		.cg_item = अणु
 			.ci_namebuf = "03-group-children",
 			.ci_type = &group_children_type,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /* ----------------------------------------------------------------- */
 
 /*
- * We're now done with our subsystem definitions.
+ * We're now करोne with our subप्रणाली definitions.
  * For convenience in this module, here's a list of them all.  It
- * allows the init function to easily register them.  Most modules
- * will only have one subsystem, and will only call register_subsystem
+ * allows the init function to easily रेजिस्टर them.  Most modules
+ * will only have one subप्रणाली, and will only call रेजिस्टर_subप्रणाली
  * on it directly.
  */
-static struct configfs_subsystem *example_subsys[] = {
+अटल काष्ठा configfs_subप्रणाली *example_subsys[] = अणु
 	&childless_subsys.subsys,
 	&simple_children_subsys,
 	&group_children_subsys,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int __init configfs_example_init(void)
-{
-	struct configfs_subsystem *subsys;
-	int ret, i;
+अटल पूर्णांक __init configfs_example_init(व्योम)
+अणु
+	काष्ठा configfs_subप्रणाली *subsys;
+	पूर्णांक ret, i;
 
-	for (i = 0; example_subsys[i]; i++) {
+	क्रम (i = 0; example_subsys[i]; i++) अणु
 		subsys = example_subsys[i];
 
 		config_group_init(&subsys->su_group);
 		mutex_init(&subsys->su_mutex);
-		ret = configfs_register_subsystem(subsys);
-		if (ret) {
+		ret = configfs_रेजिस्टर_subप्रणाली(subsys);
+		अगर (ret) अणु
 			pr_err("Error %d while registering subsystem %s\n",
 			       ret, subsys->su_group.cg_item.ci_namebuf);
-			goto out_unregister;
-		}
-	}
+			जाओ out_unरेजिस्टर;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_unregister:
-	for (i--; i >= 0; i--)
-		configfs_unregister_subsystem(example_subsys[i]);
+out_unरेजिस्टर:
+	क्रम (i--; i >= 0; i--)
+		configfs_unरेजिस्टर_subप्रणाली(example_subsys[i]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit configfs_example_exit(void)
-{
-	int i;
+अटल व्योम __निकास configfs_example_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; example_subsys[i]; i++)
-		configfs_unregister_subsystem(example_subsys[i]);
-}
+	क्रम (i = 0; example_subsys[i]; i++)
+		configfs_unरेजिस्टर_subप्रणाली(example_subsys[i]);
+पूर्ण
 
 module_init(configfs_example_init);
-module_exit(configfs_example_exit);
+module_निकास(configfs_example_निकास);
 MODULE_LICENSE("GPL");

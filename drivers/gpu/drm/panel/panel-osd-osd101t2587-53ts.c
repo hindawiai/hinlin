@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com
  *  Author: Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <drm/drm_crtc.h>
-#include <drm/drm_device.h>
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_panel.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-struct osd101t2587_panel {
-	struct drm_panel base;
-	struct mipi_dsi_device *dsi;
+काष्ठा osd101t2587_panel अणु
+	काष्ठा drm_panel base;
+	काष्ठा mipi_dsi_device *dsi;
 
-	struct regulator *supply;
+	काष्ठा regulator *supply;
 
 	bool prepared;
 	bool enabled;
 
-	const struct drm_display_mode *default_mode;
-};
+	स्थिर काष्ठा drm_display_mode *शेष_mode;
+पूर्ण;
 
-static inline struct osd101t2587_panel *ti_osd_panel(struct drm_panel *panel)
-{
-	return container_of(panel, struct osd101t2587_panel, base);
-}
+अटल अंतरभूत काष्ठा osd101t2587_panel *ti_osd_panel(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा osd101t2587_panel, base);
+पूर्ण
 
-static int osd101t2587_panel_disable(struct drm_panel *panel)
-{
-	struct osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
-	int ret;
+अटल पूर्णांक osd101t2587_panel_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
+	पूर्णांक ret;
 
-	if (!osd101t2587->enabled)
-		return 0;
+	अगर (!osd101t2587->enabled)
+		वापस 0;
 
-	ret = mipi_dsi_shutdown_peripheral(osd101t2587->dsi);
+	ret = mipi_dsi_shutकरोwn_peripheral(osd101t2587->dsi);
 
 	osd101t2587->enabled = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int osd101t2587_panel_unprepare(struct drm_panel *panel)
-{
-	struct osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
+अटल पूर्णांक osd101t2587_panel_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
 
-	if (!osd101t2587->prepared)
-		return 0;
+	अगर (!osd101t2587->prepared)
+		वापस 0;
 
 	regulator_disable(osd101t2587->supply);
 	osd101t2587->prepared = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int osd101t2587_panel_prepare(struct drm_panel *panel)
-{
-	struct osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
-	int ret;
+अटल पूर्णांक osd101t2587_panel_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
+	पूर्णांक ret;
 
-	if (osd101t2587->prepared)
-		return 0;
+	अगर (osd101t2587->prepared)
+		वापस 0;
 
 	ret = regulator_enable(osd101t2587->supply);
-	if (!ret)
+	अगर (!ret)
 		osd101t2587->prepared = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int osd101t2587_panel_enable(struct drm_panel *panel)
-{
-	struct osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
-	int ret;
+अटल पूर्णांक osd101t2587_panel_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
+	पूर्णांक ret;
 
-	if (osd101t2587->enabled)
-		return 0;
+	अगर (osd101t2587->enabled)
+		वापस 0;
 
 	ret = mipi_dsi_turn_on_peripheral(osd101t2587->dsi);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	osd101t2587->enabled = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_display_mode default_mode_osd101t2587 = {
-	.clock = 164400,
+अटल स्थिर काष्ठा drm_display_mode शेष_mode_osd101t2587 = अणु
+	.घड़ी = 164400,
 	.hdisplay = 1920,
 	.hsync_start = 1920 + 152,
 	.hsync_end = 1920 + 152 + 52,
@@ -103,22 +104,22 @@ static const struct drm_display_mode default_mode_osd101t2587 = {
 	.vsync_end = 1200 + 24 + 6,
 	.vtotal = 1200 + 24 + 6 + 48,
 	.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
-};
+पूर्ण;
 
-static int osd101t2587_panel_get_modes(struct drm_panel *panel,
-				       struct drm_connector *connector)
-{
-	struct osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
-	struct drm_display_mode *mode;
+अटल पूर्णांक osd101t2587_panel_get_modes(काष्ठा drm_panel *panel,
+				       काष्ठा drm_connector *connector)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = ti_osd_panel(panel);
+	काष्ठा drm_display_mode *mode;
 
-	mode = drm_mode_duplicate(connector->dev, osd101t2587->default_mode);
-	if (!mode) {
+	mode = drm_mode_duplicate(connector->dev, osd101t2587->शेष_mode);
+	अगर (!mode) अणु
 		dev_err(panel->dev, "failed to add mode %ux%ux@%u\n",
-			osd101t2587->default_mode->hdisplay,
-			osd101t2587->default_mode->vdisplay,
-			drm_mode_vrefresh(osd101t2587->default_mode));
-		return -ENOMEM;
-	}
+			osd101t2587->शेष_mode->hdisplay,
+			osd101t2587->शेष_mode->vdisplay,
+			drm_mode_vrefresh(osd101t2587->शेष_mode));
+		वापस -ENOMEM;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 
@@ -127,121 +128,121 @@ static int osd101t2587_panel_get_modes(struct drm_panel *panel,
 	connector->display_info.width_mm = 217;
 	connector->display_info.height_mm = 136;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_panel_funcs osd101t2587_panel_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs osd101t2587_panel_funcs = अणु
 	.disable = osd101t2587_panel_disable,
 	.unprepare = osd101t2587_panel_unprepare,
 	.prepare = osd101t2587_panel_prepare,
 	.enable = osd101t2587_panel_enable,
 	.get_modes = osd101t2587_panel_get_modes,
-};
+पूर्ण;
 
-static const struct of_device_id osd101t2587_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id osd101t2587_of_match[] = अणु
+	अणु
 		.compatible = "osddisplays,osd101t2587-53ts",
-		.data = &default_mode_osd101t2587,
-	}, {
+		.data = &शेष_mode_osd101t2587,
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, osd101t2587_of_match);
 
-static int osd101t2587_panel_add(struct osd101t2587_panel *osd101t2587)
-{
-	struct device *dev = &osd101t2587->dsi->dev;
-	int ret;
+अटल पूर्णांक osd101t2587_panel_add(काष्ठा osd101t2587_panel *osd101t2587)
+अणु
+	काष्ठा device *dev = &osd101t2587->dsi->dev;
+	पूर्णांक ret;
 
 	osd101t2587->supply = devm_regulator_get(dev, "power");
-	if (IS_ERR(osd101t2587->supply))
-		return PTR_ERR(osd101t2587->supply);
+	अगर (IS_ERR(osd101t2587->supply))
+		वापस PTR_ERR(osd101t2587->supply);
 
 	drm_panel_init(&osd101t2587->base, &osd101t2587->dsi->dev,
 		       &osd101t2587_panel_funcs, DRM_MODE_CONNECTOR_DSI);
 
 	ret = drm_panel_of_backlight(&osd101t2587->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_panel_add(&osd101t2587->base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int osd101t2587_panel_probe(struct mipi_dsi_device *dsi)
-{
-	struct osd101t2587_panel *osd101t2587;
-	const struct of_device_id *id;
-	int ret;
+अटल पूर्णांक osd101t2587_panel_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587;
+	स्थिर काष्ठा of_device_id *id;
+	पूर्णांक ret;
 
 	id = of_match_node(osd101t2587_of_match, dsi->dev.of_node);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
 	dsi->lanes = 4;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
 	dsi->mode_flags = MIPI_DSI_MODE_VIDEO |
 			  MIPI_DSI_MODE_VIDEO_BURST |
 			  MIPI_DSI_MODE_VIDEO_SYNC_PULSE |
 			  MIPI_DSI_MODE_EOT_PACKET;
 
-	osd101t2587 = devm_kzalloc(&dsi->dev, sizeof(*osd101t2587), GFP_KERNEL);
-	if (!osd101t2587)
-		return -ENOMEM;
+	osd101t2587 = devm_kzalloc(&dsi->dev, माप(*osd101t2587), GFP_KERNEL);
+	अगर (!osd101t2587)
+		वापस -ENOMEM;
 
 	mipi_dsi_set_drvdata(dsi, osd101t2587);
 
 	osd101t2587->dsi = dsi;
-	osd101t2587->default_mode = id->data;
+	osd101t2587->शेष_mode = id->data;
 
 	ret = osd101t2587_panel_add(osd101t2587);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = mipi_dsi_attach(dsi);
-	if (ret)
-		drm_panel_remove(&osd101t2587->base);
+	अगर (ret)
+		drm_panel_हटाओ(&osd101t2587->base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int osd101t2587_panel_remove(struct mipi_dsi_device *dsi)
-{
-	struct osd101t2587_panel *osd101t2587 = mipi_dsi_get_drvdata(dsi);
-	int ret;
+अटल पूर्णांक osd101t2587_panel_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = mipi_dsi_get_drvdata(dsi);
+	पूर्णांक ret;
 
 	ret = drm_panel_disable(&osd101t2587->base);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_warn(&dsi->dev, "failed to disable panel: %d\n", ret);
 
 	drm_panel_unprepare(&osd101t2587->base);
-	drm_panel_remove(&osd101t2587->base);
+	drm_panel_हटाओ(&osd101t2587->base);
 
 	ret = mipi_dsi_detach(dsi);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&dsi->dev, "failed to detach from DSI host: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void osd101t2587_panel_shutdown(struct mipi_dsi_device *dsi)
-{
-	struct osd101t2587_panel *osd101t2587 = mipi_dsi_get_drvdata(dsi);
+अटल व्योम osd101t2587_panel_shutकरोwn(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा osd101t2587_panel *osd101t2587 = mipi_dsi_get_drvdata(dsi);
 
 	drm_panel_disable(&osd101t2587->base);
 	drm_panel_unprepare(&osd101t2587->base);
-}
+पूर्ण
 
-static struct mipi_dsi_driver osd101t2587_panel_driver = {
-	.driver = {
+अटल काष्ठा mipi_dsi_driver osd101t2587_panel_driver = अणु
+	.driver = अणु
 		.name = "panel-osd-osd101t2587-53ts",
 		.of_match_table = osd101t2587_of_match,
-	},
+	पूर्ण,
 	.probe = osd101t2587_panel_probe,
-	.remove = osd101t2587_panel_remove,
-	.shutdown = osd101t2587_panel_shutdown,
-};
+	.हटाओ = osd101t2587_panel_हटाओ,
+	.shutकरोwn = osd101t2587_panel_shutकरोwn,
+पूर्ण;
 module_mipi_dsi_driver(osd101t2587_panel_driver);
 
 MODULE_AUTHOR("Peter Ujfalusi <peter.ujfalusi@ti.com>");

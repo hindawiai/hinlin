@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include <drm/drm_drv.h>
-#include <drm/drm_fourcc.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fourcc.h>
 
-#include "bochs.h"
+#समावेश "bochs.h"
 
 /* ---------------------------------------------------------------------- */
 
-static void bochs_vga_writeb(struct bochs_device *bochs, u16 ioport, u8 val)
-{
-	if (WARN_ON(ioport < 0x3c0 || ioport > 0x3df))
-		return;
+अटल व्योम bochs_vga_ग_लिखोb(काष्ठा bochs_device *bochs, u16 ioport, u8 val)
+अणु
+	अगर (WARN_ON(ioport < 0x3c0 || ioport > 0x3df))
+		वापस;
 
-	if (bochs->mmio) {
-		int offset = ioport - 0x3c0 + 0x400;
-		writeb(val, bochs->mmio + offset);
-	} else {
+	अगर (bochs->mmio) अणु
+		पूर्णांक offset = ioport - 0x3c0 + 0x400;
+		ग_लिखोb(val, bochs->mmio + offset);
+	पूर्ण अन्यथा अणु
 		outb(val, ioport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u16 bochs_dispi_read(struct bochs_device *bochs, u16 reg)
-{
+अटल u16 bochs_dispi_पढ़ो(काष्ठा bochs_device *bochs, u16 reg)
+अणु
 	u16 ret = 0;
 
-	if (bochs->mmio) {
-		int offset = 0x500 + (reg << 1);
-		ret = readw(bochs->mmio + offset);
-	} else {
+	अगर (bochs->mmio) अणु
+		पूर्णांक offset = 0x500 + (reg << 1);
+		ret = पढ़ोw(bochs->mmio + offset);
+	पूर्ण अन्यथा अणु
 		outw(reg, VBE_DISPI_IOPORT_INDEX);
 		ret = inw(VBE_DISPI_IOPORT_DATA);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void bochs_dispi_write(struct bochs_device *bochs, u16 reg, u16 val)
-{
-	if (bochs->mmio) {
-		int offset = 0x500 + (reg << 1);
-		writew(val, bochs->mmio + offset);
-	} else {
+अटल व्योम bochs_dispi_ग_लिखो(काष्ठा bochs_device *bochs, u16 reg, u16 val)
+अणु
+	अगर (bochs->mmio) अणु
+		पूर्णांक offset = 0x500 + (reg << 1);
+		ग_लिखोw(val, bochs->mmio + offset);
+	पूर्ण अन्यथा अणु
 		outw(reg, VBE_DISPI_IOPORT_INDEX);
 		outw(val, VBE_DISPI_IOPORT_DATA);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bochs_hw_set_big_endian(struct bochs_device *bochs)
-{
-	if (bochs->qext_size < 8)
-		return;
+अटल व्योम bochs_hw_set_big_endian(काष्ठा bochs_device *bochs)
+अणु
+	अगर (bochs->qext_size < 8)
+		वापस;
 
-	writel(0xbebebebe, bochs->mmio + 0x604);
-}
+	ग_लिखोl(0xbebebebe, bochs->mmio + 0x604);
+पूर्ण
 
-static void bochs_hw_set_little_endian(struct bochs_device *bochs)
-{
-	if (bochs->qext_size < 8)
-		return;
+अटल व्योम bochs_hw_set_little_endian(काष्ठा bochs_device *bochs)
+अणु
+	अगर (bochs->qext_size < 8)
+		वापस;
 
-	writel(0x1e1e1e1e, bochs->mmio + 0x604);
-}
+	ग_लिखोl(0x1e1e1e1e, bochs->mmio + 0x604);
+पूर्ण
 
-#ifdef __BIG_ENDIAN
-#define bochs_hw_set_native_endian(_b) bochs_hw_set_big_endian(_b)
-#else
-#define bochs_hw_set_native_endian(_b) bochs_hw_set_little_endian(_b)
-#endif
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा bochs_hw_set_native_endian(_b) bochs_hw_set_big_endian(_b)
+#अन्यथा
+#घोषणा bochs_hw_set_native_endian(_b) bochs_hw_set_little_endian(_b)
+#पूर्ण_अगर
 
-static int bochs_get_edid_block(void *data, u8 *buf,
-				unsigned int block, size_t len)
-{
-	struct bochs_device *bochs = data;
-	size_t i, start = block * EDID_LENGTH;
+अटल पूर्णांक bochs_get_edid_block(व्योम *data, u8 *buf,
+				अचिन्हित पूर्णांक block, माप_प्रकार len)
+अणु
+	काष्ठा bochs_device *bochs = data;
+	माप_प्रकार i, start = block * EDID_LENGTH;
 
-	if (start + len > 0x400 /* vga register offset */)
-		return -1;
+	अगर (start + len > 0x400 /* vga रेजिस्टर offset */)
+		वापस -1;
 
-	for (i = 0; i < len; i++) {
-		buf[i] = readb(bochs->mmio + start + i);
-	}
-	return 0;
-}
+	क्रम (i = 0; i < len; i++) अणु
+		buf[i] = पढ़ोb(bochs->mmio + start + i);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int bochs_hw_load_edid(struct bochs_device *bochs)
-{
+पूर्णांक bochs_hw_load_edid(काष्ठा bochs_device *bochs)
+अणु
 	u8 header[8];
 
-	if (!bochs->mmio)
-		return -1;
+	अगर (!bochs->mmio)
+		वापस -1;
 
 	/* check header to detect whenever edid support is enabled in qemu */
 	bochs_get_edid_block(bochs, header, 0, ARRAY_SIZE(header));
-	if (drm_edid_header_is_valid(header) != 8)
-		return -1;
+	अगर (drm_edid_header_is_valid(header) != 8)
+		वापस -1;
 
-	kfree(bochs->edid);
-	bochs->edid = drm_do_get_edid(&bochs->connector,
+	kमुक्त(bochs->edid);
+	bochs->edid = drm_करो_get_edid(&bochs->connector,
 				      bochs_get_edid_block, bochs);
-	if (bochs->edid == NULL)
-		return -1;
+	अगर (bochs->edid == शून्य)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bochs_hw_init(struct drm_device *dev)
-{
-	struct bochs_device *bochs = dev->dev_private;
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	unsigned long addr, size, mem, ioaddr, iosize;
+पूर्णांक bochs_hw_init(काष्ठा drm_device *dev)
+अणु
+	काष्ठा bochs_device *bochs = dev->dev_निजी;
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	अचिन्हित दीर्घ addr, size, mem, ioaddr, iosize;
 	u16 id;
 
-	if (pdev->resource[2].flags & IORESOURCE_MEM) {
-		/* mmio bar with vga and bochs registers present */
-		if (pci_request_region(pdev, 2, "bochs-drm") != 0) {
+	अगर (pdev->resource[2].flags & IORESOURCE_MEM) अणु
+		/* mmio bar with vga and bochs रेजिस्टरs present */
+		अगर (pci_request_region(pdev, 2, "bochs-drm") != 0) अणु
 			DRM_ERROR("Cannot request mmio region\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		ioaddr = pci_resource_start(pdev, 2);
 		iosize = pci_resource_len(pdev, 2);
 		bochs->mmio = ioremap(ioaddr, iosize);
-		if (bochs->mmio == NULL) {
+		अगर (bochs->mmio == शून्य) अणु
 			DRM_ERROR("Cannot map mmio region\n");
-			return -ENOMEM;
-		}
-	} else {
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ioaddr = VBE_DISPI_IOPORT_INDEX;
 		iosize = 2;
-		if (!request_region(ioaddr, iosize, "bochs-drm")) {
+		अगर (!request_region(ioaddr, iosize, "bochs-drm")) अणु
 			DRM_ERROR("Cannot request ioports\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		bochs->ioports = 1;
-	}
+	पूर्ण
 
-	id = bochs_dispi_read(bochs, VBE_DISPI_INDEX_ID);
-	mem = bochs_dispi_read(bochs, VBE_DISPI_INDEX_VIDEO_MEMORY_64K)
+	id = bochs_dispi_पढ़ो(bochs, VBE_DISPI_INDEX_ID);
+	mem = bochs_dispi_पढ़ो(bochs, VBE_DISPI_INDEX_VIDEO_MEMORY_64K)
 		* 64 * 1024;
-	if ((id & 0xfff0) != VBE_DISPI_ID0) {
+	अगर ((id & 0xfff0) != VBE_DISPI_ID0) अणु
 		DRM_ERROR("ID mismatch\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if ((pdev->resource[0].flags & IORESOURCE_MEM) == 0)
-		return -ENODEV;
+	अगर ((pdev->resource[0].flags & IORESOURCE_MEM) == 0)
+		वापस -ENODEV;
 	addr = pci_resource_start(pdev, 0);
 	size = pci_resource_len(pdev, 0);
-	if (addr == 0)
-		return -ENODEV;
-	if (size != mem) {
+	अगर (addr == 0)
+		वापस -ENODEV;
+	अगर (size != mem) अणु
 		DRM_ERROR("Size mismatch: pci=%ld, bochs=%ld\n",
 			size, mem);
 		size = min(size, mem);
-	}
+	पूर्ण
 
-	if (pci_request_region(pdev, 0, "bochs-drm") != 0)
+	अगर (pci_request_region(pdev, 0, "bochs-drm") != 0)
 		DRM_WARN("Cannot request framebuffer, boot fb still active?\n");
 
 	bochs->fb_map = ioremap(addr, size);
-	if (bochs->fb_map == NULL) {
+	अगर (bochs->fb_map == शून्य) अणु
 		DRM_ERROR("Cannot map framebuffer\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	bochs->fb_base = addr;
 	bochs->fb_size = size;
 
@@ -174,116 +175,116 @@ int bochs_hw_init(struct drm_device *dev)
 		 bochs->ioports ? "ioports" : "mmio",
 		 ioaddr);
 
-	if (bochs->mmio && pdev->revision >= 2) {
-		bochs->qext_size = readl(bochs->mmio + 0x600);
-		if (bochs->qext_size < 4 || bochs->qext_size > iosize) {
+	अगर (bochs->mmio && pdev->revision >= 2) अणु
+		bochs->qext_size = पढ़ोl(bochs->mmio + 0x600);
+		अगर (bochs->qext_size < 4 || bochs->qext_size > iosize) अणु
 			bochs->qext_size = 0;
-			goto noext;
-		}
+			जाओ noext;
+		पूर्ण
 		DRM_DEBUG("Found qemu ext regs, size %ld\n",
 			  bochs->qext_size);
 		bochs_hw_set_native_endian(bochs);
-	}
+	पूर्ण
 
 noext:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void bochs_hw_fini(struct drm_device *dev)
-{
-	struct bochs_device *bochs = dev->dev_private;
+व्योम bochs_hw_fini(काष्ठा drm_device *dev)
+अणु
+	काष्ठा bochs_device *bochs = dev->dev_निजी;
 
-	/* TODO: shot down existing vram mappings */
+	/* TODO: shot करोwn existing vram mappings */
 
-	if (bochs->mmio)
+	अगर (bochs->mmio)
 		iounmap(bochs->mmio);
-	if (bochs->ioports)
+	अगर (bochs->ioports)
 		release_region(VBE_DISPI_IOPORT_INDEX, 2);
-	if (bochs->fb_map)
+	अगर (bochs->fb_map)
 		iounmap(bochs->fb_map);
 	pci_release_regions(to_pci_dev(dev->dev));
-	kfree(bochs->edid);
-}
+	kमुक्त(bochs->edid);
+पूर्ण
 
-void bochs_hw_setmode(struct bochs_device *bochs,
-		      struct drm_display_mode *mode)
-{
-	int idx;
+व्योम bochs_hw_seपंचांगode(काष्ठा bochs_device *bochs,
+		      काष्ठा drm_display_mode *mode)
+अणु
+	पूर्णांक idx;
 
-	if (!drm_dev_enter(bochs->dev, &idx))
-		return;
+	अगर (!drm_dev_enter(bochs->dev, &idx))
+		वापस;
 
 	bochs->xres = mode->hdisplay;
 	bochs->yres = mode->vdisplay;
 	bochs->bpp = 32;
 	bochs->stride = mode->hdisplay * (bochs->bpp / 8);
-	bochs->yres_virtual = bochs->fb_size / bochs->stride;
+	bochs->yres_भव = bochs->fb_size / bochs->stride;
 
 	DRM_DEBUG_DRIVER("%dx%d @ %d bpp, vy %d\n",
 			 bochs->xres, bochs->yres, bochs->bpp,
-			 bochs->yres_virtual);
+			 bochs->yres_भव);
 
-	bochs_vga_writeb(bochs, 0x3c0, 0x20); /* unblank */
+	bochs_vga_ग_लिखोb(bochs, 0x3c0, 0x20); /* unblank */
 
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_ENABLE,      0);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_BPP,         bochs->bpp);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_XRES,        bochs->xres);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_YRES,        bochs->yres);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_BANK,        0);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_VIRT_WIDTH,  bochs->xres);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_VIRT_HEIGHT,
-			  bochs->yres_virtual);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_X_OFFSET,    0);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_Y_OFFSET,    0);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_ENABLE,      0);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_BPP,         bochs->bpp);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_XRES,        bochs->xres);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_YRES,        bochs->yres);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_BANK,        0);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_VIRT_WIDTH,  bochs->xres);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_VIRT_HEIGHT,
+			  bochs->yres_भव);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_X_OFFSET,    0);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_Y_OFFSET,    0);
 
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_ENABLE,
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_ENABLE,
 			  VBE_DISPI_ENABLED | VBE_DISPI_LFB_ENABLED);
 
-	drm_dev_exit(idx);
-}
+	drm_dev_निकास(idx);
+पूर्ण
 
-void bochs_hw_setformat(struct bochs_device *bochs,
-			const struct drm_format_info *format)
-{
-	int idx;
+व्योम bochs_hw_setक्रमmat(काष्ठा bochs_device *bochs,
+			स्थिर काष्ठा drm_क्रमmat_info *क्रमmat)
+अणु
+	पूर्णांक idx;
 
-	if (!drm_dev_enter(bochs->dev, &idx))
-		return;
+	अगर (!drm_dev_enter(bochs->dev, &idx))
+		वापस;
 
 	DRM_DEBUG_DRIVER("format %c%c%c%c\n",
-			 (format->format >>  0) & 0xff,
-			 (format->format >>  8) & 0xff,
-			 (format->format >> 16) & 0xff,
-			 (format->format >> 24) & 0xff);
+			 (क्रमmat->क्रमmat >>  0) & 0xff,
+			 (क्रमmat->क्रमmat >>  8) & 0xff,
+			 (क्रमmat->क्रमmat >> 16) & 0xff,
+			 (क्रमmat->क्रमmat >> 24) & 0xff);
 
-	switch (format->format) {
-	case DRM_FORMAT_XRGB8888:
+	चयन (क्रमmat->क्रमmat) अणु
+	हाल DRM_FORMAT_XRGB8888:
 		bochs_hw_set_little_endian(bochs);
-		break;
-	case DRM_FORMAT_BGRX8888:
+		अवरोध;
+	हाल DRM_FORMAT_BGRX8888:
 		bochs_hw_set_big_endian(bochs);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* should not happen */
 		DRM_ERROR("%s: Huh? Got framebuffer format 0x%x",
-			  __func__, format->format);
-		break;
-	}
+			  __func__, क्रमmat->क्रमmat);
+		अवरोध;
+	पूर्ण
 
-	drm_dev_exit(idx);
-}
+	drm_dev_निकास(idx);
+पूर्ण
 
-void bochs_hw_setbase(struct bochs_device *bochs,
-		      int x, int y, int stride, u64 addr)
-{
-	unsigned long offset;
-	unsigned int vx, vy, vwidth, idx;
+व्योम bochs_hw_setbase(काष्ठा bochs_device *bochs,
+		      पूर्णांक x, पूर्णांक y, पूर्णांक stride, u64 addr)
+अणु
+	अचिन्हित दीर्घ offset;
+	अचिन्हित पूर्णांक vx, vy, vwidth, idx;
 
-	if (!drm_dev_enter(bochs->dev, &idx))
-		return;
+	अगर (!drm_dev_enter(bochs->dev, &idx))
+		वापस;
 
 	bochs->stride = stride;
-	offset = (unsigned long)addr +
+	offset = (अचिन्हित दीर्घ)addr +
 		y * bochs->stride +
 		x * (bochs->bpp / 8);
 	vy = offset / bochs->stride;
@@ -292,9 +293,9 @@ void bochs_hw_setbase(struct bochs_device *bochs,
 
 	DRM_DEBUG_DRIVER("x %d, y %d, addr %llx -> offset %lx, vx %d, vy %d\n",
 			 x, y, addr, offset, vx, vy);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_VIRT_WIDTH, vwidth);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_X_OFFSET, vx);
-	bochs_dispi_write(bochs, VBE_DISPI_INDEX_Y_OFFSET, vy);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_VIRT_WIDTH, vwidth);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_X_OFFSET, vx);
+	bochs_dispi_ग_लिखो(bochs, VBE_DISPI_INDEX_Y_OFFSET, vy);
 
-	drm_dev_exit(idx);
-}
+	drm_dev_निकास(idx);
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     Copyright (c) 2002,2003 Alexander Malysh <amalysh@web.de>
 
@@ -12,250 +13,250 @@
 	SIS 730
 	SIS 964
 
-   Notable differences between chips:
+   Notable dअगरferences between chips:
 	+------------------------+--------------------+-------------------+
 	|                        |     SIS630/730     |      SIS964       |
 	+------------------------+--------------------+-------------------+
 	| Clock                  | 14kHz/56kHz        | 55.56kHz/27.78kHz |
-	| SMBus registers offset | 0x80               | 0xE0              |
+	| SMBus रेजिस्टरs offset | 0x80               | 0xE0              |
 	| SMB_CNT                | Bit 1 = Slave Busy | Bit 1 = Bus probe |
 	|         (not used yet) | Bit 3 is reserved  | Bit 3 = Last byte |
 	| SMB_PCOUNT		 | Offset + 0x06      | Offset + 0x14     |
 	| SMB_COUNT              | 4:0 bits           | 5:0 bits          |
 	+------------------------+--------------------+-------------------+
-	(Other differences don't affect the functions provided by the driver)
+	(Other dअगरferences करोn't affect the functions provided by the driver)
 
-   Note: we assume there can only be one device, with one SMBus interface.
+   Note: we assume there can only be one device, with one SMBus पूर्णांकerface.
 */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/ioport.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पन.स>
 
 /* SIS964 id is defined here as we are the only file using it */
-#define PCI_DEVICE_ID_SI_964	0x0964
+#घोषणा PCI_DEVICE_ID_SI_964	0x0964
 
-/* SIS630/730/964 SMBus registers */
-#define SMB_STS			0x00	/* status */
-#define SMB_CNT			0x02	/* control */
-#define SMBHOST_CNT		0x03	/* host control */
-#define SMB_ADDR		0x04	/* address */
-#define SMB_CMD			0x05	/* command */
-#define SMB_COUNT		0x07	/* byte count */
-#define SMB_BYTE		0x08	/* ~0x8F data byte field */
+/* SIS630/730/964 SMBus रेजिस्टरs */
+#घोषणा SMB_STS			0x00	/* status */
+#घोषणा SMB_CNT			0x02	/* control */
+#घोषणा SMBHOST_CNT		0x03	/* host control */
+#घोषणा SMB_ADDR		0x04	/* address */
+#घोषणा SMB_CMD			0x05	/* command */
+#घोषणा SMB_COUNT		0x07	/* byte count */
+#घोषणा SMB_BYTE		0x08	/* ~0x8F data byte field */
 
-/* SMB_STS register */
-#define BYTE_DONE_STS		0x10	/* Byte Done Status / Block Array */
-#define SMBCOL_STS		0x04	/* Collision */
-#define SMBERR_STS		0x02	/* Device error */
+/* SMB_STS रेजिस्टर */
+#घोषणा BYTE_DONE_STS		0x10	/* Byte Done Status / Block Array */
+#घोषणा SMBCOL_STS		0x04	/* Collision */
+#घोषणा SMBERR_STS		0x02	/* Device error */
 
-/* SMB_CNT register */
-#define MSTO_EN			0x40	/* Host Master Timeout Enable */
-#define SMBCLK_SEL		0x20	/* Host master clock selection */
-#define SMB_PROBE		0x02	/* Bus Probe/Slave busy */
-#define SMB_HOSTBUSY		0x01	/* Host Busy */
+/* SMB_CNT रेजिस्टर */
+#घोषणा MSTO_EN			0x40	/* Host Master Timeout Enable */
+#घोषणा SMBCLK_SEL		0x20	/* Host master घड़ी selection */
+#घोषणा SMB_PROBE		0x02	/* Bus Probe/Slave busy */
+#घोषणा SMB_HOSTBUSY		0x01	/* Host Busy */
 
-/* SMBHOST_CNT register */
-#define SMB_KILL		0x20	/* Kill */
-#define SMB_START		0x10	/* Start */
+/* SMBHOST_CNT रेजिस्टर */
+#घोषणा SMB_KILL		0x20	/* Kill */
+#घोषणा SMB_START		0x10	/* Start */
 
-/* register count for request_region
- * As we don't use SMB_PCOUNT, 20 is ok for SiS630 and SiS964
+/* रेजिस्टर count क्रम request_region
+ * As we करोn't use SMB_PCOUNT, 20 is ok क्रम SiS630 and SiS964
  */
-#define SIS630_SMB_IOREGION	20
+#घोषणा SIS630_SMB_IOREGION	20
 
-/* PCI address constants */
-/* acpi base address register  */
-#define SIS630_ACPI_BASE_REG	0x74
-/* bios control register */
-#define SIS630_BIOS_CTL_REG	0x40
+/* PCI address स्थिरants */
+/* acpi base address रेजिस्टर  */
+#घोषणा SIS630_ACPI_BASE_REG	0x74
+/* bios control रेजिस्टर */
+#घोषणा SIS630_BIOS_CTL_REG	0x40
 
 /* Other settings */
-#define MAX_TIMEOUT		500
+#घोषणा MAX_TIMEOUT		500
 
-/* SIS630 constants */
-#define SIS630_QUICK		0x00
-#define SIS630_BYTE		0x01
-#define SIS630_BYTE_DATA	0x02
-#define SIS630_WORD_DATA	0x03
-#define SIS630_PCALL		0x04
-#define SIS630_BLOCK_DATA	0x05
+/* SIS630 स्थिरants */
+#घोषणा SIS630_QUICK		0x00
+#घोषणा SIS630_BYTE		0x01
+#घोषणा SIS630_BYTE_DATA	0x02
+#घोषणा SIS630_WORD_DATA	0x03
+#घोषणा SIS630_PCALL		0x04
+#घोषणा SIS630_BLOCK_DATA	0x05
 
-static struct pci_driver sis630_driver;
+अटल काष्ठा pci_driver sis630_driver;
 
 /* insmod parameters */
-static bool high_clock;
-static bool force;
-module_param(high_clock, bool, 0);
-MODULE_PARM_DESC(high_clock,
+अटल bool high_घड़ी;
+अटल bool क्रमce;
+module_param(high_घड़ी, bool, 0);
+MODULE_PARM_DESC(high_घड़ी,
 	"Set Host Master Clock to 56KHz (default 14KHz) (SIS630/730 only).");
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force, "Forcibly enable the SIS630. DANGEROUS!");
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Forcibly enable the SIS630. DANGEROUS!");
 
 /* SMBus base adress */
-static unsigned short smbus_base;
+अटल अचिन्हित लघु smbus_base;
 
 /* supported chips */
-static int supported[] = {
+अटल पूर्णांक supported[] = अणु
 	PCI_DEVICE_ID_SI_630,
 	PCI_DEVICE_ID_SI_730,
 	PCI_DEVICE_ID_SI_760,
 	0 /* terminates the list */
-};
+पूर्ण;
 
-static inline u8 sis630_read(u8 reg)
-{
-	return inb(smbus_base + reg);
-}
+अटल अंतरभूत u8 sis630_पढ़ो(u8 reg)
+अणु
+	वापस inb(smbus_base + reg);
+पूर्ण
 
-static inline void sis630_write(u8 reg, u8 data)
-{
+अटल अंतरभूत व्योम sis630_ग_लिखो(u8 reg, u8 data)
+अणु
 	outb(data, smbus_base + reg);
-}
+पूर्ण
 
-static int sis630_transaction_start(struct i2c_adapter *adap, int size,
-				    u8 *oldclock)
-{
-	int temp;
+अटल पूर्णांक sis630_transaction_start(काष्ठा i2c_adapter *adap, पूर्णांक size,
+				    u8 *oldघड़ी)
+अणु
+	पूर्णांक temp;
 
-	/* Make sure the SMBus host is ready to start transmitting. */
-	temp = sis630_read(SMB_CNT);
-	if ((temp & (SMB_PROBE | SMB_HOSTBUSY)) != 0x00) {
+	/* Make sure the SMBus host is पढ़ोy to start transmitting. */
+	temp = sis630_पढ़ो(SMB_CNT);
+	अगर ((temp & (SMB_PROBE | SMB_HOSTBUSY)) != 0x00) अणु
 		dev_dbg(&adap->dev, "SMBus busy (%02x). Resetting...\n", temp);
-		/* kill smbus transaction */
-		sis630_write(SMBHOST_CNT, SMB_KILL);
+		/* समाप्त smbus transaction */
+		sis630_ग_लिखो(SMBHOST_CNT, SMB_KILL);
 
-		temp = sis630_read(SMB_CNT);
-		if (temp & (SMB_PROBE | SMB_HOSTBUSY)) {
+		temp = sis630_पढ़ो(SMB_CNT);
+		अगर (temp & (SMB_PROBE | SMB_HOSTBUSY)) अणु
 			dev_dbg(&adap->dev, "Failed! (%02x)\n", temp);
-			return -EBUSY;
-		} else {
+			वापस -EBUSY;
+		पूर्ण अन्यथा अणु
 			dev_dbg(&adap->dev, "Successful!\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* save old clock, so we can prevent machine for hung */
-	*oldclock = sis630_read(SMB_CNT);
+	/* save old घड़ी, so we can prevent machine क्रम hung */
+	*oldघड़ी = sis630_पढ़ो(SMB_CNT);
 
-	dev_dbg(&adap->dev, "saved clock 0x%02x\n", *oldclock);
+	dev_dbg(&adap->dev, "saved clock 0x%02x\n", *oldघड़ी);
 
-	/* disable timeout interrupt,
-	 * set Host Master Clock to 56KHz if requested */
-	if (high_clock)
-		sis630_write(SMB_CNT, SMBCLK_SEL);
-	else
-		sis630_write(SMB_CNT, (*oldclock & ~MSTO_EN));
+	/* disable समयout पूर्णांकerrupt,
+	 * set Host Master Clock to 56KHz अगर requested */
+	अगर (high_घड़ी)
+		sis630_ग_लिखो(SMB_CNT, SMBCLK_SEL);
+	अन्यथा
+		sis630_ग_लिखो(SMB_CNT, (*oldघड़ी & ~MSTO_EN));
 
 	/* clear all sticky bits */
-	temp = sis630_read(SMB_STS);
-	sis630_write(SMB_STS, temp & 0x1e);
+	temp = sis630_पढ़ो(SMB_STS);
+	sis630_ग_लिखो(SMB_STS, temp & 0x1e);
 
 	/* start the transaction by setting bit 4 and size */
-	sis630_write(SMBHOST_CNT, SMB_START | (size & 0x07));
+	sis630_ग_लिखो(SMBHOST_CNT, SMB_START | (size & 0x07));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sis630_transaction_wait(struct i2c_adapter *adap, int size)
-{
-	int temp, result = 0, timeout = 0;
+अटल पूर्णांक sis630_transaction_रुको(काष्ठा i2c_adapter *adap, पूर्णांक size)
+अणु
+	पूर्णांक temp, result = 0, समयout = 0;
 
-	/* We will always wait for a fraction of a second! */
-	do {
+	/* We will always रुको क्रम a fraction of a second! */
+	करो अणु
 		msleep(1);
-		temp = sis630_read(SMB_STS);
-		/* check if block transmitted */
-		if (size == SIS630_BLOCK_DATA && (temp & BYTE_DONE_STS))
-			break;
-	} while (!(temp & 0x0e) && (timeout++ < MAX_TIMEOUT));
+		temp = sis630_पढ़ो(SMB_STS);
+		/* check अगर block transmitted */
+		अगर (size == SIS630_BLOCK_DATA && (temp & BYTE_DONE_STS))
+			अवरोध;
+	पूर्ण जबतक (!(temp & 0x0e) && (समयout++ < MAX_TIMEOUT));
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout > MAX_TIMEOUT) {
+	अगर (समयout > MAX_TIMEOUT) अणु
 		dev_dbg(&adap->dev, "SMBus Timeout!\n");
 		result = -ETIMEDOUT;
-	}
+	पूर्ण
 
-	if (temp & SMBERR_STS) {
+	अगर (temp & SMBERR_STS) अणु
 		dev_dbg(&adap->dev, "Error: Failed bus transaction\n");
 		result = -ENXIO;
-	}
+	पूर्ण
 
-	if (temp & SMBCOL_STS) {
+	अगर (temp & SMBCOL_STS) अणु
 		dev_err(&adap->dev, "Bus collision!\n");
 		result = -EAGAIN;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void sis630_transaction_end(struct i2c_adapter *adap, u8 oldclock)
-{
+अटल व्योम sis630_transaction_end(काष्ठा i2c_adapter *adap, u8 oldघड़ी)
+अणु
 	/* clear all status "sticky" bits */
-	sis630_write(SMB_STS, 0xFF);
+	sis630_ग_लिखो(SMB_STS, 0xFF);
 
 	dev_dbg(&adap->dev,
-		"SMB_CNT before clock restore 0x%02x\n", sis630_read(SMB_CNT));
+		"SMB_CNT before clock restore 0x%02x\n", sis630_पढ़ो(SMB_CNT));
 
 	/*
-	 * restore old Host Master Clock if high_clock is set
-	 * and oldclock was not 56KHz
+	 * restore old Host Master Clock अगर high_घड़ी is set
+	 * and oldघड़ी was not 56KHz
 	 */
-	if (high_clock && !(oldclock & SMBCLK_SEL))
-		sis630_write(SMB_CNT, sis630_read(SMB_CNT) & ~SMBCLK_SEL);
+	अगर (high_घड़ी && !(oldघड़ी & SMBCLK_SEL))
+		sis630_ग_लिखो(SMB_CNT, sis630_पढ़ो(SMB_CNT) & ~SMBCLK_SEL);
 
 	dev_dbg(&adap->dev,
-		"SMB_CNT after clock restore 0x%02x\n", sis630_read(SMB_CNT));
-}
+		"SMB_CNT after clock restore 0x%02x\n", sis630_पढ़ो(SMB_CNT));
+पूर्ण
 
-static int sis630_transaction(struct i2c_adapter *adap, int size)
-{
-	int result = 0;
-	u8 oldclock = 0;
+अटल पूर्णांक sis630_transaction(काष्ठा i2c_adapter *adap, पूर्णांक size)
+अणु
+	पूर्णांक result = 0;
+	u8 oldघड़ी = 0;
 
-	result = sis630_transaction_start(adap, size, &oldclock);
-	if (!result) {
-		result = sis630_transaction_wait(adap, size);
-		sis630_transaction_end(adap, oldclock);
-	}
+	result = sis630_transaction_start(adap, size, &oldघड़ी);
+	अगर (!result) अणु
+		result = sis630_transaction_रुको(adap, size);
+		sis630_transaction_end(adap, oldघड़ी);
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int sis630_block_data(struct i2c_adapter *adap,
-			     union i2c_smbus_data *data, int read_write)
-{
-	int i, len = 0, rc = 0;
-	u8 oldclock = 0;
+अटल पूर्णांक sis630_block_data(काष्ठा i2c_adapter *adap,
+			     जोड़ i2c_smbus_data *data, पूर्णांक पढ़ो_ग_लिखो)
+अणु
+	पूर्णांक i, len = 0, rc = 0;
+	u8 oldघड़ी = 0;
 
-	if (read_write == I2C_SMBUS_WRITE) {
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 		len = data->block[0];
-		if (len < 0)
+		अगर (len < 0)
 			len = 0;
-		else if (len > 32)
+		अन्यथा अगर (len > 32)
 			len = 32;
-		sis630_write(SMB_COUNT, len);
-		for (i = 1; i <= len; i++) {
+		sis630_ग_लिखो(SMB_COUNT, len);
+		क्रम (i = 1; i <= len; i++) अणु
 			dev_dbg(&adap->dev,
 				"set data 0x%02x\n", data->block[i]);
 			/* set data */
-			sis630_write(SMB_BYTE + (i - 1) % 8, data->block[i]);
-			if (i == 8 || (len < 8 && i == len)) {
+			sis630_ग_लिखो(SMB_BYTE + (i - 1) % 8, data->block[i]);
+			अगर (i == 8 || (len < 8 && i == len)) अणु
 				dev_dbg(&adap->dev,
 					"start trans len=%d i=%d\n", len, i);
 				/* first transaction */
 				rc = sis630_transaction_start(adap,
-						SIS630_BLOCK_DATA, &oldclock);
-				if (rc)
-					return rc;
-			} else if ((i - 1) % 8 == 7 || i == len) {
+						SIS630_BLOCK_DATA, &oldघड़ी);
+				अगर (rc)
+					वापस rc;
+			पूर्ण अन्यथा अगर ((i - 1) % 8 == 7 || i == len) अणु
 				dev_dbg(&adap->dev,
 					"trans_wait len=%d i=%d\n", len, i);
-				if (i > 8) {
+				अगर (i > 8) अणु
 					dev_dbg(&adap->dev,
 						"clear smbary_sts"
 						" len=%d i=%d\n", len, i);
@@ -264,283 +265,283 @@ static int sis630_block_data(struct i2c_adapter *adap,
 					   we must clear sticky bit.
 					   clear SMBARY_STS
 					*/
-					sis630_write(SMB_STS, BYTE_DONE_STS);
-				}
-				rc = sis630_transaction_wait(adap,
+					sis630_ग_लिखो(SMB_STS, BYTE_DONE_STS);
+				पूर्ण
+				rc = sis630_transaction_रुको(adap,
 						SIS630_BLOCK_DATA);
-				if (rc) {
+				अगर (rc) अणु
 					dev_dbg(&adap->dev,
 						"trans_wait failed\n");
-					break;
-				}
-			}
-		}
-	} else {
-		/* read request */
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* पढ़ो request */
 		data->block[0] = len = 0;
 		rc = sis630_transaction_start(adap,
-				SIS630_BLOCK_DATA, &oldclock);
-		if (rc)
-			return rc;
-		do {
-			rc = sis630_transaction_wait(adap, SIS630_BLOCK_DATA);
-			if (rc) {
+				SIS630_BLOCK_DATA, &oldघड़ी);
+		अगर (rc)
+			वापस rc;
+		करो अणु
+			rc = sis630_transaction_रुको(adap, SIS630_BLOCK_DATA);
+			अगर (rc) अणु
 				dev_dbg(&adap->dev, "trans_wait failed\n");
-				break;
-			}
-			/* if this first transaction then read byte count */
-			if (len == 0)
-				data->block[0] = sis630_read(SMB_COUNT);
+				अवरोध;
+			पूर्ण
+			/* अगर this first transaction then पढ़ो byte count */
+			अगर (len == 0)
+				data->block[0] = sis630_पढ़ो(SMB_COUNT);
 
 			/* just to be sure */
-			if (data->block[0] > 32)
+			अगर (data->block[0] > 32)
 				data->block[0] = 32;
 
 			dev_dbg(&adap->dev,
 				"block data read len=0x%x\n", data->block[0]);
 
-			for (i = 0; i < 8 && len < data->block[0]; i++, len++) {
+			क्रम (i = 0; i < 8 && len < data->block[0]; i++, len++) अणु
 				dev_dbg(&adap->dev,
 					"read i=%d len=%d\n", i, len);
-				data->block[len + 1] = sis630_read(SMB_BYTE +
+				data->block[len + 1] = sis630_पढ़ो(SMB_BYTE +
 								   i);
-			}
+			पूर्ण
 
 			dev_dbg(&adap->dev,
 				"clear smbary_sts len=%d i=%d\n", len, i);
 
 			/* clear SMBARY_STS */
-			sis630_write(SMB_STS, BYTE_DONE_STS);
-		} while (len < data->block[0]);
-	}
+			sis630_ग_लिखो(SMB_STS, BYTE_DONE_STS);
+		पूर्ण जबतक (len < data->block[0]);
+	पूर्ण
 
-	sis630_transaction_end(adap, oldclock);
+	sis630_transaction_end(adap, oldघड़ी);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Return negative errno on error. */
-static s32 sis630_access(struct i2c_adapter *adap, u16 addr,
-			 unsigned short flags, char read_write,
-			 u8 command, int size, union i2c_smbus_data *data)
-{
-	int status;
+/* Return negative त्रुटि_सं on error. */
+अटल s32 sis630_access(काष्ठा i2c_adapter *adap, u16 addr,
+			 अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
+			 u8 command, पूर्णांक size, जोड़ i2c_smbus_data *data)
+अणु
+	पूर्णांक status;
 
-	switch (size) {
-	case I2C_SMBUS_QUICK:
-		sis630_write(SMB_ADDR,
-			     ((addr & 0x7f) << 1) | (read_write & 0x01));
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
+		sis630_ग_लिखो(SMB_ADDR,
+			     ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
 		size = SIS630_QUICK;
-		break;
-	case I2C_SMBUS_BYTE:
-		sis630_write(SMB_ADDR,
-			     ((addr & 0x7f) << 1) | (read_write & 0x01));
-		if (read_write == I2C_SMBUS_WRITE)
-			sis630_write(SMB_CMD, command);
+		अवरोध;
+	हाल I2C_SMBUS_BYTE:
+		sis630_ग_लिखो(SMB_ADDR,
+			     ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
+			sis630_ग_लिखो(SMB_CMD, command);
 		size = SIS630_BYTE;
-		break;
-	case I2C_SMBUS_BYTE_DATA:
-		sis630_write(SMB_ADDR,
-			     ((addr & 0x7f) << 1) | (read_write & 0x01));
-		sis630_write(SMB_CMD, command);
-		if (read_write == I2C_SMBUS_WRITE)
-			sis630_write(SMB_BYTE, data->byte);
+		अवरोध;
+	हाल I2C_SMBUS_BYTE_DATA:
+		sis630_ग_लिखो(SMB_ADDR,
+			     ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		sis630_ग_लिखो(SMB_CMD, command);
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
+			sis630_ग_लिखो(SMB_BYTE, data->byte);
 		size = SIS630_BYTE_DATA;
-		break;
-	case I2C_SMBUS_PROC_CALL:
-	case I2C_SMBUS_WORD_DATA:
-		sis630_write(SMB_ADDR,
-			     ((addr & 0x7f) << 1) | (read_write & 0x01));
-		sis630_write(SMB_CMD, command);
-		if (read_write == I2C_SMBUS_WRITE) {
-			sis630_write(SMB_BYTE, data->word & 0xff);
-			sis630_write(SMB_BYTE + 1, (data->word & 0xff00) >> 8);
-		}
+		अवरोध;
+	हाल I2C_SMBUS_PROC_CALL:
+	हाल I2C_SMBUS_WORD_DATA:
+		sis630_ग_लिखो(SMB_ADDR,
+			     ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		sis630_ग_लिखो(SMB_CMD, command);
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+			sis630_ग_लिखो(SMB_BYTE, data->word & 0xff);
+			sis630_ग_लिखो(SMB_BYTE + 1, (data->word & 0xff00) >> 8);
+		पूर्ण
 		size = (size == I2C_SMBUS_PROC_CALL ?
 			SIS630_PCALL : SIS630_WORD_DATA);
-		break;
-	case I2C_SMBUS_BLOCK_DATA:
-		sis630_write(SMB_ADDR,
-			     ((addr & 0x7f) << 1) | (read_write & 0x01));
-		sis630_write(SMB_CMD, command);
+		अवरोध;
+	हाल I2C_SMBUS_BLOCK_DATA:
+		sis630_ग_लिखो(SMB_ADDR,
+			     ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		sis630_ग_लिखो(SMB_CMD, command);
 		size = SIS630_BLOCK_DATA;
-		return sis630_block_data(adap, data, read_write);
-	default:
+		वापस sis630_block_data(adap, data, पढ़ो_ग_लिखो);
+	शेष:
 		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	status = sis630_transaction(adap, size);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if ((size != SIS630_PCALL) &&
-		((read_write == I2C_SMBUS_WRITE) || (size == SIS630_QUICK))) {
-		return 0;
-	}
+	अगर ((size != SIS630_PCALL) &&
+		((पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) || (size == SIS630_QUICK))) अणु
+		वापस 0;
+	पूर्ण
 
-	switch (size) {
-	case SIS630_BYTE:
-	case SIS630_BYTE_DATA:
-		data->byte = sis630_read(SMB_BYTE);
-		break;
-	case SIS630_PCALL:
-	case SIS630_WORD_DATA:
-		data->word = sis630_read(SMB_BYTE) +
-			     (sis630_read(SMB_BYTE + 1) << 8);
-		break;
-	}
+	चयन (size) अणु
+	हाल SIS630_BYTE:
+	हाल SIS630_BYTE_DATA:
+		data->byte = sis630_पढ़ो(SMB_BYTE);
+		अवरोध;
+	हाल SIS630_PCALL:
+	हाल SIS630_WORD_DATA:
+		data->word = sis630_पढ़ो(SMB_BYTE) +
+			     (sis630_पढ़ो(SMB_BYTE + 1) << 8);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 sis630_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
+अटल u32 sis630_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 		I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
 		I2C_FUNC_SMBUS_PROC_CALL | I2C_FUNC_SMBUS_BLOCK_DATA;
-}
+पूर्ण
 
-static int sis630_setup(struct pci_dev *sis630_dev)
-{
-	unsigned char b;
-	struct pci_dev *dummy = NULL;
-	int retval, i;
+अटल पूर्णांक sis630_setup(काष्ठा pci_dev *sis630_dev)
+अणु
+	अचिन्हित अक्षर b;
+	काष्ठा pci_dev *dummy = शून्य;
+	पूर्णांक retval, i;
 	/* acpi base address */
-	unsigned short acpi_base;
+	अचिन्हित लघु acpi_base;
 
-	/* check for supported SiS devices */
-	for (i = 0; supported[i] > 0; i++) {
+	/* check क्रम supported SiS devices */
+	क्रम (i = 0; supported[i] > 0; i++) अणु
 		dummy = pci_get_device(PCI_VENDOR_ID_SI, supported[i], dummy);
-		if (dummy)
-			break; /* found */
-	}
+		अगर (dummy)
+			अवरोध; /* found */
+	पूर्ण
 
-	if (dummy) {
+	अगर (dummy) अणु
 		pci_dev_put(dummy);
-	} else if (force) {
+	पूर्ण अन्यथा अगर (क्रमce) अणु
 		dev_err(&sis630_dev->dev,
 			"WARNING: Can't detect SIS630 compatible device, but "
 			"loading because of force option enabled\n");
-	} else {
-		return -ENODEV;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
 	   Enable ACPI first , so we can accsess reg 74-75
-	   in acpi io space and read acpi base addr
+	   in acpi io space and पढ़ो acpi base addr
 	*/
-	if (pci_read_config_byte(sis630_dev, SIS630_BIOS_CTL_REG, &b)) {
+	अगर (pci_पढ़ो_config_byte(sis630_dev, SIS630_BIOS_CTL_REG, &b)) अणु
 		dev_err(&sis630_dev->dev, "Error: Can't read bios ctl reg\n");
 		retval = -ENODEV;
-		goto exit;
-	}
-	/* if ACPI already enabled , do nothing */
-	if (!(b & 0x80) &&
-	    pci_write_config_byte(sis630_dev, SIS630_BIOS_CTL_REG, b | 0x80)) {
+		जाओ निकास;
+	पूर्ण
+	/* अगर ACPI alपढ़ोy enabled , करो nothing */
+	अगर (!(b & 0x80) &&
+	    pci_ग_लिखो_config_byte(sis630_dev, SIS630_BIOS_CTL_REG, b | 0x80)) अणु
 		dev_err(&sis630_dev->dev, "Error: Can't enable ACPI\n");
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* Determine the ACPI base address */
-	if (pci_read_config_word(sis630_dev,
-				 SIS630_ACPI_BASE_REG, &acpi_base)) {
+	अगर (pci_पढ़ो_config_word(sis630_dev,
+				 SIS630_ACPI_BASE_REG, &acpi_base)) अणु
 		dev_err(&sis630_dev->dev,
 			"Error: Can't determine ACPI base address\n");
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	dev_dbg(&sis630_dev->dev, "ACPI base at 0x%04hx\n", acpi_base);
 
-	if (supported[i] == PCI_DEVICE_ID_SI_760)
+	अगर (supported[i] == PCI_DEVICE_ID_SI_760)
 		smbus_base = acpi_base + 0xE0;
-	else
+	अन्यथा
 		smbus_base = acpi_base + 0x80;
 
 	dev_dbg(&sis630_dev->dev, "SMBus base at 0x%04hx\n", smbus_base);
 
 	retval = acpi_check_region(smbus_base + SMB_STS, SIS630_SMB_IOREGION,
 				   sis630_driver.name);
-	if (retval)
-		goto exit;
+	अगर (retval)
+		जाओ निकास;
 
 	/* Everything is happy, let's grab the memory and set things up. */
-	if (!request_region(smbus_base + SMB_STS, SIS630_SMB_IOREGION,
-			    sis630_driver.name)) {
+	अगर (!request_region(smbus_base + SMB_STS, SIS630_SMB_IOREGION,
+			    sis630_driver.name)) अणु
 		dev_err(&sis630_dev->dev,
 			"I/O Region 0x%04x-0x%04x for SMBus already in use.\n",
 			smbus_base + SMB_STS,
 			smbus_base + SMB_STS + SIS630_SMB_IOREGION - 1);
 		retval = -EBUSY;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	retval = 0;
 
-exit:
-	if (retval)
+निकास:
+	अगर (retval)
 		smbus_base = 0;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
-static const struct i2c_algorithm smbus_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm smbus_algorithm = अणु
 	.smbus_xfer	= sis630_access,
 	.functionality	= sis630_func,
-};
+पूर्ण;
 
-static struct i2c_adapter sis630_adapter = {
+अटल काष्ठा i2c_adapter sis630_adapter = अणु
 	.owner		= THIS_MODULE,
 	.class		= I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo		= &smbus_algorithm,
 	.retries	= 3
-};
+पूर्ण;
 
-static const struct pci_device_id sis630_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_503) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_LPC) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_964) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id sis630_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_503) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_LPC) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_964) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, sis630_ids);
 
-static int sis630_probe(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	if (sis630_setup(dev)) {
+अटल पूर्णांक sis630_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	अगर (sis630_setup(dev)) अणु
 		dev_err(&dev->dev,
 			"SIS630 compatible bus not detected, "
 			"module not inserted.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* set up the sysfs linkage to our parent device */
 	sis630_adapter.dev.parent = &dev->dev;
 
-	snprintf(sis630_adapter.name, sizeof(sis630_adapter.name),
+	snम_लिखो(sis630_adapter.name, माप(sis630_adapter.name),
 		 "SMBus SIS630 adapter at %04x", smbus_base + SMB_STS);
 
-	return i2c_add_adapter(&sis630_adapter);
-}
+	वापस i2c_add_adapter(&sis630_adapter);
+पूर्ण
 
-static void sis630_remove(struct pci_dev *dev)
-{
-	if (smbus_base) {
+अटल व्योम sis630_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	अगर (smbus_base) अणु
 		i2c_del_adapter(&sis630_adapter);
 		release_region(smbus_base + SMB_STS, SIS630_SMB_IOREGION);
 		smbus_base = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static struct pci_driver sis630_driver = {
+अटल काष्ठा pci_driver sis630_driver = अणु
 	.name		= "sis630_smbus",
 	.id_table	= sis630_ids,
 	.probe		= sis630_probe,
-	.remove		= sis630_remove,
-};
+	.हटाओ		= sis630_हटाओ,
+पूर्ण;
 
 module_pci_driver(sis630_driver);
 

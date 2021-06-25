@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,63 +20,63 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "channv50.h"
+#समावेश "channv50.h"
 
-#include <subdev/timer.h>
+#समावेश <subdev/समयr.h>
 
-static int
-gv100_disp_curs_idle(struct nv50_disp_chan *chan)
-{
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const u32 soff = (chan->chid.ctrl - 1) * 0x04;
+अटल पूर्णांक
+gv100_disp_curs_idle(काष्ठा nv50_disp_chan *chan)
+अणु
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर u32 soff = (chan->chid.ctrl - 1) * 0x04;
 	nvkm_msec(device, 2000,
 		u32 stat = nvkm_rd32(device, 0x610664 + soff);
-		if ((stat & 0x00070000) == 0x00040000)
-			return 0;
+		अगर ((stat & 0x00070000) == 0x00040000)
+			वापस 0;
 	);
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
-static void
-gv100_disp_curs_intr(struct nv50_disp_chan *chan, bool en)
-{
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const u32 mask = 0x00010000 << chan->head;
-	const u32 data = en ? mask : 0;
+अटल व्योम
+gv100_disp_curs_पूर्णांकr(काष्ठा nv50_disp_chan *chan, bool en)
+अणु
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर u32 mask = 0x00010000 << chan->head;
+	स्थिर u32 data = en ? mask : 0;
 	nvkm_mask(device, 0x611dac, mask, data);
-}
+पूर्ण
 
-static void
-gv100_disp_curs_fini(struct nv50_disp_chan *chan)
-{
-	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
-	const u32 hoff = chan->chid.ctrl * 4;
+अटल व्योम
+gv100_disp_curs_fini(काष्ठा nv50_disp_chan *chan)
+अणु
+	काष्ठा nvkm_device *device = chan->disp->base.engine.subdev.device;
+	स्थिर u32 hoff = chan->chid.ctrl * 4;
 	nvkm_mask(device, 0x6104e0 + hoff, 0x00000010, 0x00000010);
 	gv100_disp_curs_idle(chan);
 	nvkm_mask(device, 0x6104e0 + hoff, 0x00000001, 0x00000000);
-}
+पूर्ण
 
-static int
-gv100_disp_curs_init(struct nv50_disp_chan *chan)
-{
-	struct nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल पूर्णांक
+gv100_disp_curs_init(काष्ठा nv50_disp_chan *chan)
+अणु
+	काष्ठा nvkm_subdev *subdev = &chan->disp->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	nvkm_wr32(device, 0x6104e0 + chan->chid.ctrl * 4, 0x00000001);
-	return gv100_disp_curs_idle(chan);
-}
+	वापस gv100_disp_curs_idle(chan);
+पूर्ण
 
-static const struct nv50_disp_chan_func
-gv100_disp_curs = {
+अटल स्थिर काष्ठा nv50_disp_chan_func
+gv100_disp_curs = अणु
 	.init = gv100_disp_curs_init,
 	.fini = gv100_disp_curs_fini,
-	.intr = gv100_disp_curs_intr,
+	.पूर्णांकr = gv100_disp_curs_पूर्णांकr,
 	.user = gv100_disp_chan_user,
-};
+पूर्ण;
 
-int
-gv100_disp_curs_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
-		    struct nv50_disp *disp, struct nvkm_object **pobject)
-{
-	return nv50_disp_curs_new_(&gv100_disp_curs, disp, 73, 73,
+पूर्णांक
+gv100_disp_curs_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *argv, u32 argc,
+		    काष्ठा nv50_disp *disp, काष्ठा nvkm_object **pobject)
+अणु
+	वापस nv50_disp_curs_new_(&gv100_disp_curs, disp, 73, 73,
 				   oclass, argv, argc, pobject);
-}
+पूर्ण

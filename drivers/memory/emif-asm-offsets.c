@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * TI AM33XX EMIF PM Assembly Offsets
  *
  * Copyright (C) 2016-2017 Texas Instruments Inc.
  */
-#include <linux/ti-emif-sram.h>
+#समावेश <linux/ti-emअगर-sram.h>
 
-int main(void)
-{
-	ti_emif_asm_offsets();
+पूर्णांक मुख्य(व्योम)
+अणु
+	ti_emअगर_यंत्र_offsets();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

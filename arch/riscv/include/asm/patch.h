@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2020 SiFive
  */
 
-#ifndef _ASM_RISCV_PATCH_H
-#define _ASM_RISCV_PATCH_H
+#अगर_अघोषित _ASM_RISCV_PATCH_H
+#घोषणा _ASM_RISCV_PATCH_H
 
-int patch_text_nosync(void *addr, const void *insns, size_t len);
-int patch_text(void *addr, u32 insn);
+पूर्णांक patch_text_nosync(व्योम *addr, स्थिर व्योम *insns, माप_प्रकार len);
+पूर्णांक patch_text(व्योम *addr, u32 insn);
 
-#endif /* _ASM_RISCV_PATCH_H */
+#पूर्ण_अगर /* _ASM_RISCV_PATCH_H */

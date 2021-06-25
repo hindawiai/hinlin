@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __HAL_COM_PHYCFG_H__
-#define __HAL_COM_PHYCFG_H__
+#अगर_अघोषित __HAL_COM_PHYCFG_H__
+#घोषणा __HAL_COM_PHYCFG_H__
 
-#define		PathA		0x0	/*  Useless */
-#define		PathB		0x1
-#define		PathC		0x2
-#define		PathD		0x3
+#घोषणा		PathA		0x0	/*  Useless */
+#घोषणा		PathB		0x1
+#घोषणा		PathC		0x2
+#घोषणा		PathD		0x3
 
-enum rate_section {
+क्रमागत rate_section अणु
 	CCK = 0,
 	OFDM,
 	HT_MCS0_MCS7,
@@ -23,36 +24,36 @@ enum rate_section {
 	VHT_2SSMCS0_2SSMCS9,
 	VHT_3SSMCS0_3SSMCS9,
 	VHT_4SSMCS0_4SSMCS9,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	RF_1TX = 0,
 	RF_2TX,
 	RF_3TX,
 	RF_4TX,
 	RF_MAX_TX_NUM,
 	RF_TX_NUM_NONIMPLEMENT,
-};
+पूर्ण;
 
-#define MAX_POWER_INDEX			0x3F
+#घोषणा MAX_POWER_INDEX			0x3F
 
-enum {
+क्रमागत अणु
 	TXPWR_LMT_FCC = 0,
 	TXPWR_LMT_MKK,
 	TXPWR_LMT_ETSI,
 	TXPWR_LMT_WW,
 	TXPWR_LMT_MAX_REGULATION_NUM,
-};
+पूर्ण;
 
-/*------------------------------Define structure----------------------------*/
-struct bb_register_def {
-	u32 rfintfs;			/*  set software control: */
+/*------------------------------Define काष्ठाure----------------------------*/
+काष्ठा bb_रेजिस्टर_def अणु
+	u32 rfपूर्णांकfs;			/*  set software control: */
 					/* 	0x870~0x877[8 bytes] */
 
-	u32 rfintfo;			/*  output data: */
+	u32 rfपूर्णांकfo;			/*  output data: */
 					/* 	0x860~0x86f [16 bytes] */
 
-	u32 rfintfe;			/*  output enable: */
+	u32 rfपूर्णांकfe;			/*  output enable: */
 					/* 	0x860~0x86f [16 bytes] */
 
 	u32 rf3wireOffset;		/*  LSSI data: */
@@ -62,33 +63,33 @@ struct bb_register_def {
 					/* 	0x824~0x827, 0x82c~0x82f,
 					 *	0x834~0x837, 0x83c~0x83f
 					 */
-	u32 rfLSSIReadBack;		/* LSSI RF readback data SI mode */
+	u32 rfLSSIReadBack;		/* LSSI RF पढ़ोback data SI mode */
 					/* 	0x8a0~0x8af [16 bytes] */
 
-	u32 rfLSSIReadBackPi;		/* LSSI RF readback data PI mode
-					 *	0x8b8-8bc for Path A and B */
+	u32 rfLSSIReadBackPi;		/* LSSI RF पढ़ोback data PI mode
+					 *	0x8b8-8bc क्रम Path A and B */
 
-};
+पूर्ण;
 
 u8
 PHY_GetTxPowerByRateBase(
-struct adapter *Adapter,
+काष्ठा adapter *Adapter,
 u8 		Band,
 u8 		RfPath,
 u8 		TxNum,
-enum rate_section	RateSection
+क्रमागत rate_section	RateSection
 	);
 
 u8
 PHY_GetRateSectionIndexOfTxPowerByRate(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u32 		RegAddr,
 u32 		BitMask
 	);
 
-void
+व्योम
 PHY_GetRateValuesOfTxPowerByRate(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u32 		RegAddr,
 u32 		BitMask,
 u32 		Value,
@@ -102,9 +103,9 @@ PHY_GetRateIndexOfTxPowerByRate(
 u8 Rate
 	);
 
-void
+व्योम
 PHY_SetTxPowerIndexByRateSection(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u8 		RFPath,
 u8 		Channel,
 u8 		RateSection
@@ -112,16 +113,16 @@ u8 		RateSection
 
 s8
 PHY_GetTxPowerByRate(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u8 	Band,
 u8 	RFPath,
 u8 	TxNum,
 u8 	RateIndex
 	);
 
-void
+व्योम
 PHY_SetTxPowerByRate(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u8 	Band,
 u8 	RFPath,
 u8 	TxNum,
@@ -129,31 +130,31 @@ u8 	Rate,
 s8			Value
 	);
 
-void
+व्योम
 PHY_SetTxPowerLevelByPath(
-struct adapter *Adapter,
+काष्ठा adapter *Adapter,
 u8 	channel,
 u8 	path
 	);
 
-void
+व्योम
 PHY_SetTxPowerIndexByRateArray(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u8 		RFPath,
-enum channel_width	BandWidth,
+क्रमागत channel_width	BandWidth,
 u8 		Channel,
 u8		*Rates,
 u8 		RateArraySize
 	);
 
-void
+व्योम
 PHY_InitTxPowerByRate(
-struct adapter *padapter
+काष्ठा adapter *padapter
 	);
 
-void
+व्योम
 PHY_StoreTxPowerByRate(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u32 		Band,
 u32 		RfPath,
 u32 		TxNum,
@@ -162,31 +163,31 @@ u32 		BitMask,
 u32 		Data
 	);
 
-void
+व्योम
 PHY_TxPowerByRateConfiguration(
-	struct adapter *padapter
+	काष्ठा adapter *padapter
 	);
 
 u8
 PHY_GetTxPowerIndexBase(
-struct adapter *padapter,
+काष्ठा adapter *padapter,
 u8 		RFPath,
 u8 		Rate,
-enum channel_width	BandWidth,
+क्रमागत channel_width	BandWidth,
 u8 		Channel,
 	bool		*bIn24G
 	);
 
-s8 phy_get_tx_pwr_lmt(struct adapter *adapter, u32 RegPwrTblSel,
-			enum band_type Band, enum channel_width Bandwidth,
+s8 phy_get_tx_pwr_lmt(काष्ठा adapter *adapter, u32 RegPwrTblSel,
+			क्रमागत band_type Band, क्रमागत channel_width Bandwidth,
 u8 		RfPath,
 u8 		DataRate,
 u8 		Channel
 	);
 
-void
+व्योम
 PHY_SetTxPowerLimit(
-struct adapter *Adapter,
+काष्ठा adapter *Adapter,
 u8 			*Regulation,
 u8 			*Band,
 u8 			*Bandwidth,
@@ -196,27 +197,27 @@ u8 			*Channel,
 u8 			*PowerLimit
 	);
 
-void
+व्योम
 PHY_ConvertTxPowerLimitToPowerIndex(
-struct adapter *Adapter
+काष्ठा adapter *Adapter
 	);
 
-void
+व्योम
 PHY_InitTxPowerLimit(
-struct adapter *Adapter
+काष्ठा adapter *Adapter
 	);
 
 s8
 PHY_GetTxPowerTrackingOffset(
-	struct adapter *padapter,
+	काष्ठा adapter *padapter,
 	u8 	Rate,
 	u8 	RFPath
 	);
 
-void
+व्योम
 Hal_ChannelPlanToRegulation(
-struct adapter *Adapter,
+काष्ठा adapter *Adapter,
 u16 			ChannelPlan
 	);
 
-#endif /* __HAL_COMMON_H__ */
+#पूर्ण_अगर /* __HAL_COMMON_H__ */

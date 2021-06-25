@@ -1,204 +1,205 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2018 Intel Corporation. All rights reserved. */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/ndctl.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/mm.h>
-#include <linux/cred.h>
-#include <linux/key.h>
-#include <linux/key-type.h>
-#include <keys/user-type.h>
-#include <keys/encrypted-type.h>
-#include "nd-core.h"
-#include "nd.h"
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/ndctl.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/key.h>
+#समावेश <linux/key-type.h>
+#समावेश <keys/user-type.h>
+#समावेश <keys/encrypted-type.h>
+#समावेश "nd-core.h"
+#समावेश "nd.h"
 
-#define NVDIMM_BASE_KEY		0
-#define NVDIMM_NEW_KEY		1
+#घोषणा NVDIMM_BASE_KEY		0
+#घोषणा NVDIMM_NEW_KEY		1
 
-static bool key_revalidate = true;
+अटल bool key_revalidate = true;
 module_param(key_revalidate, bool, 0444);
 MODULE_PARM_DESC(key_revalidate, "Require key validation at init.");
 
-static const char zero_key[NVDIMM_PASSPHRASE_LEN];
+अटल स्थिर अक्षर zero_key[NVDIMM_PASSPHRASE_LEN];
 
-static void *key_data(struct key *key)
-{
-	struct encrypted_key_payload *epayload = dereference_key_locked(key);
+अटल व्योम *key_data(काष्ठा key *key)
+अणु
+	काष्ठा encrypted_key_payload *epayload = dereference_key_locked(key);
 
-	lockdep_assert_held_read(&key->sem);
+	lockdep_निश्चित_held_पढ़ो(&key->sem);
 
-	return epayload->decrypted_data;
-}
+	वापस epayload->decrypted_data;
+पूर्ण
 
-static void nvdimm_put_key(struct key *key)
-{
-	if (!key)
-		return;
+अटल व्योम nvdimm_put_key(काष्ठा key *key)
+अणु
+	अगर (!key)
+		वापस;
 
-	up_read(&key->sem);
+	up_पढ़ो(&key->sem);
 	key_put(key);
-}
+पूर्ण
 
 /*
- * Retrieve kernel key for DIMM and request from user space if
- * necessary. Returns a key held for read and must be put by
- * nvdimm_put_key() before the usage goes out of scope.
+ * Retrieve kernel key क्रम DIMM and request from user space अगर
+ * necessary. Returns a key held क्रम पढ़ो and must be put by
+ * nvdimm_put_key() beक्रमe the usage goes out of scope.
  */
-static struct key *nvdimm_request_key(struct nvdimm *nvdimm)
-{
-	struct key *key = NULL;
-	static const char NVDIMM_PREFIX[] = "nvdimm:";
-	char desc[NVDIMM_KEY_DESC_LEN + sizeof(NVDIMM_PREFIX)];
-	struct device *dev = &nvdimm->dev;
+अटल काष्ठा key *nvdimm_request_key(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा key *key = शून्य;
+	अटल स्थिर अक्षर NVDIMM_PREFIX[] = "nvdimm:";
+	अक्षर desc[NVDIMM_KEY_DESC_LEN + माप(NVDIMM_PREFIX)];
+	काष्ठा device *dev = &nvdimm->dev;
 
-	sprintf(desc, "%s%s", NVDIMM_PREFIX, nvdimm->dimm_id);
+	प्र_लिखो(desc, "%s%s", NVDIMM_PREFIX, nvdimm->dimm_id);
 	key = request_key(&key_type_encrypted, desc, "");
-	if (IS_ERR(key)) {
-		if (PTR_ERR(key) == -ENOKEY)
+	अगर (IS_ERR(key)) अणु
+		अगर (PTR_ERR(key) == -ENOKEY)
 			dev_dbg(dev, "request_key() found no key\n");
-		else
+		अन्यथा
 			dev_dbg(dev, "request_key() upcall failed\n");
-		key = NULL;
-	} else {
-		struct encrypted_key_payload *epayload;
+		key = शून्य;
+	पूर्ण अन्यथा अणु
+		काष्ठा encrypted_key_payload *epayload;
 
-		down_read(&key->sem);
+		करोwn_पढ़ो(&key->sem);
 		epayload = dereference_key_locked(key);
-		if (epayload->decrypted_datalen != NVDIMM_PASSPHRASE_LEN) {
-			up_read(&key->sem);
+		अगर (epayload->decrypted_datalen != NVDIMM_PASSPHRASE_LEN) अणु
+			up_पढ़ो(&key->sem);
 			key_put(key);
-			key = NULL;
-		}
-	}
+			key = शून्य;
+		पूर्ण
+	पूर्ण
 
-	return key;
-}
+	वापस key;
+पूर्ण
 
-static const void *nvdimm_get_key_payload(struct nvdimm *nvdimm,
-		struct key **key)
-{
+अटल स्थिर व्योम *nvdimm_get_key_payload(काष्ठा nvdimm *nvdimm,
+		काष्ठा key **key)
+अणु
 	*key = nvdimm_request_key(nvdimm);
-	if (!*key)
-		return zero_key;
+	अगर (!*key)
+		वापस zero_key;
 
-	return key_data(*key);
-}
+	वापस key_data(*key);
+पूर्ण
 
-static struct key *nvdimm_lookup_user_key(struct nvdimm *nvdimm,
-		key_serial_t id, int subclass)
-{
+अटल काष्ठा key *nvdimm_lookup_user_key(काष्ठा nvdimm *nvdimm,
+		key_serial_t id, पूर्णांक subclass)
+अणु
 	key_ref_t keyref;
-	struct key *key;
-	struct encrypted_key_payload *epayload;
-	struct device *dev = &nvdimm->dev;
+	काष्ठा key *key;
+	काष्ठा encrypted_key_payload *epayload;
+	काष्ठा device *dev = &nvdimm->dev;
 
 	keyref = lookup_user_key(id, 0, KEY_NEED_SEARCH);
-	if (IS_ERR(keyref))
-		return NULL;
+	अगर (IS_ERR(keyref))
+		वापस शून्य;
 
 	key = key_ref_to_ptr(keyref);
-	if (key->type != &key_type_encrypted) {
+	अगर (key->type != &key_type_encrypted) अणु
 		key_put(key);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	dev_dbg(dev, "%s: key found: %#x\n", __func__, key_serial(key));
 
-	down_read_nested(&key->sem, subclass);
+	करोwn_पढ़ो_nested(&key->sem, subclass);
 	epayload = dereference_key_locked(key);
-	if (epayload->decrypted_datalen != NVDIMM_PASSPHRASE_LEN) {
-		up_read(&key->sem);
+	अगर (epayload->decrypted_datalen != NVDIMM_PASSPHRASE_LEN) अणु
+		up_पढ़ो(&key->sem);
 		key_put(key);
-		key = NULL;
-	}
-	return key;
-}
+		key = शून्य;
+	पूर्ण
+	वापस key;
+पूर्ण
 
-static const void *nvdimm_get_user_key_payload(struct nvdimm *nvdimm,
-		key_serial_t id, int subclass, struct key **key)
-{
-	*key = NULL;
-	if (id == 0) {
-		if (subclass == NVDIMM_BASE_KEY)
-			return zero_key;
-		else
-			return NULL;
-	}
+अटल स्थिर व्योम *nvdimm_get_user_key_payload(काष्ठा nvdimm *nvdimm,
+		key_serial_t id, पूर्णांक subclass, काष्ठा key **key)
+अणु
+	*key = शून्य;
+	अगर (id == 0) अणु
+		अगर (subclass == NVDIMM_BASE_KEY)
+			वापस zero_key;
+		अन्यथा
+			वापस शून्य;
+	पूर्ण
 
 	*key = nvdimm_lookup_user_key(nvdimm, id, subclass);
-	if (!*key)
-		return NULL;
+	अगर (!*key)
+		वापस शून्य;
 
-	return key_data(*key);
-}
+	वापस key_data(*key);
+पूर्ण
 
 
-static int nvdimm_key_revalidate(struct nvdimm *nvdimm)
-{
-	struct key *key;
-	int rc;
-	const void *data;
+अटल पूर्णांक nvdimm_key_revalidate(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा key *key;
+	पूर्णांक rc;
+	स्थिर व्योम *data;
 
-	if (!nvdimm->sec.ops->change_key)
-		return -EOPNOTSUPP;
+	अगर (!nvdimm->sec.ops->change_key)
+		वापस -EOPNOTSUPP;
 
 	data = nvdimm_get_key_payload(nvdimm, &key);
 
 	/*
 	 * Send the same key to the hardware as new and old key to
-	 * verify that the key is good.
+	 * verअगरy that the key is good.
 	 */
 	rc = nvdimm->sec.ops->change_key(nvdimm, data, data, NVDIMM_USER);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		nvdimm_put_key(key);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	nvdimm_put_key(key);
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __nvdimm_security_unlock(struct nvdimm *nvdimm)
-{
-	struct device *dev = &nvdimm->dev;
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct key *key;
-	const void *data;
-	int rc;
+अटल पूर्णांक __nvdimm_security_unlock(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा key *key;
+	स्थिर व्योम *data;
+	पूर्णांक rc;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->unlock
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->unlock
 			|| !nvdimm->sec.flags)
-		return -EIO;
+		वापस -EIO;
 
-	/* No need to go further if security is disabled */
-	if (test_bit(NVDIMM_SECURITY_DISABLED, &nvdimm->sec.flags))
-		return 0;
+	/* No need to go further अगर security is disabled */
+	अगर (test_bit(NVDIMM_SECURITY_DISABLED, &nvdimm->sec.flags))
+		वापस 0;
 
-	if (test_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags)) {
+	अगर (test_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags)) अणु
 		dev_dbg(dev, "Security operation in progress.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * If the pre-OS has unlocked the DIMM, attempt to send the key
-	 * from request_key() to the hardware for verification.  Failure
+	 * from request_key() to the hardware क्रम verअगरication.  Failure
 	 * to revalidate the key against the hardware results in a
-	 * freeze of the security configuration. I.e. if the OS does not
+	 * मुक्तze of the security configuration. I.e. अगर the OS करोes not
 	 * have the key, security is being managed pre-OS.
 	 */
-	if (test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.flags)) {
-		if (!key_revalidate)
-			return 0;
+	अगर (test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.flags)) अणु
+		अगर (!key_revalidate)
+			वापस 0;
 
-		return nvdimm_key_revalidate(nvdimm);
-	} else
+		वापस nvdimm_key_revalidate(nvdimm);
+	पूर्ण अन्यथा
 		data = nvdimm_get_key_payload(nvdimm, &key);
 
 	rc = nvdimm->sec.ops->unlock(nvdimm, data);
@@ -207,61 +208,61 @@ static int __nvdimm_security_unlock(struct nvdimm *nvdimm)
 
 	nvdimm_put_key(key);
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int nvdimm_security_unlock(struct device *dev)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	int rc;
+पूर्णांक nvdimm_security_unlock(काष्ठा device *dev)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	पूर्णांक rc;
 
 	nvdimm_bus_lock(dev);
 	rc = __nvdimm_security_unlock(nvdimm);
 	nvdimm_bus_unlock(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int check_security_state(struct nvdimm *nvdimm)
-{
-	struct device *dev = &nvdimm->dev;
+अटल पूर्णांक check_security_state(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
 
-	if (test_bit(NVDIMM_SECURITY_FROZEN, &nvdimm->sec.flags)) {
+	अगर (test_bit(NVDIMM_SECURITY_FROZEN, &nvdimm->sec.flags)) अणु
 		dev_dbg(dev, "Incorrect security state: %#lx\n",
 				nvdimm->sec.flags);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (test_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags)) {
+	अगर (test_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags)) अणु
 		dev_dbg(dev, "Security operation in progress.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int security_disable(struct nvdimm *nvdimm, unsigned int keyid)
-{
-	struct device *dev = &nvdimm->dev;
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct key *key;
-	int rc;
-	const void *data;
+अटल पूर्णांक security_disable(काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक keyid)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा key *key;
+	पूर्णांक rc;
+	स्थिर व्योम *data;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->disable
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->disable
 			|| !nvdimm->sec.flags)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	rc = check_security_state(nvdimm);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	data = nvdimm_get_user_key_payload(nvdimm, keyid,
 			NVDIMM_BASE_KEY, &key);
-	if (!data)
-		return -ENOKEY;
+	अगर (!data)
+		वापस -ENOKEY;
 
 	rc = nvdimm->sec.ops->disable(nvdimm, data);
 	dev_dbg(dev, "key: %d disable: %s\n", key_serial(key),
@@ -269,41 +270,41 @@ static int security_disable(struct nvdimm *nvdimm, unsigned int keyid)
 
 	nvdimm_put_key(key);
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int security_update(struct nvdimm *nvdimm, unsigned int keyid,
-		unsigned int new_keyid,
-		enum nvdimm_passphrase_type pass_type)
-{
-	struct device *dev = &nvdimm->dev;
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct key *key, *newkey;
-	int rc;
-	const void *data, *newdata;
+अटल पूर्णांक security_update(काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक keyid,
+		अचिन्हित पूर्णांक new_keyid,
+		क्रमागत nvdimm_passphrase_type pass_type)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा key *key, *newkey;
+	पूर्णांक rc;
+	स्थिर व्योम *data, *newdata;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->change_key
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->change_key
 			|| !nvdimm->sec.flags)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	rc = check_security_state(nvdimm);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	data = nvdimm_get_user_key_payload(nvdimm, keyid,
 			NVDIMM_BASE_KEY, &key);
-	if (!data)
-		return -ENOKEY;
+	अगर (!data)
+		वापस -ENOKEY;
 
 	newdata = nvdimm_get_user_key_payload(nvdimm, new_keyid,
 			NVDIMM_NEW_KEY, &newkey);
-	if (!newdata) {
+	अगर (!newdata) अणु
 		nvdimm_put_key(key);
-		return -ENOKEY;
-	}
+		वापस -ENOKEY;
+	पूर्ण
 
 	rc = nvdimm->sec.ops->change_key(nvdimm, data, newdata, pass_type);
 	dev_dbg(dev, "key: %d %d update%s: %s\n",
@@ -313,46 +314,46 @@ static int security_update(struct nvdimm *nvdimm, unsigned int keyid,
 
 	nvdimm_put_key(newkey);
 	nvdimm_put_key(key);
-	if (pass_type == NVDIMM_MASTER)
+	अगर (pass_type == NVDIMM_MASTER)
 		nvdimm->sec.ext_flags = nvdimm_security_flags(nvdimm,
 				NVDIMM_MASTER);
-	else
+	अन्यथा
 		nvdimm->sec.flags = nvdimm_security_flags(nvdimm,
 				NVDIMM_USER);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int security_erase(struct nvdimm *nvdimm, unsigned int keyid,
-		enum nvdimm_passphrase_type pass_type)
-{
-	struct device *dev = &nvdimm->dev;
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct key *key = NULL;
-	int rc;
-	const void *data;
+अटल पूर्णांक security_erase(काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक keyid,
+		क्रमागत nvdimm_passphrase_type pass_type)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा key *key = शून्य;
+	पूर्णांक rc;
+	स्थिर व्योम *data;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->erase
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->erase
 			|| !nvdimm->sec.flags)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	rc = check_security_state(nvdimm);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (!test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.ext_flags)
-			&& pass_type == NVDIMM_MASTER) {
+	अगर (!test_bit(NVDIMM_SECURITY_UNLOCKED, &nvdimm->sec.ext_flags)
+			&& pass_type == NVDIMM_MASTER) अणु
 		dev_dbg(dev,
 			"Attempt to secure erase in wrong master state.\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	data = nvdimm_get_user_key_payload(nvdimm, keyid,
 			NVDIMM_BASE_KEY, &key);
-	if (!data)
-		return -ENOKEY;
+	अगर (!data)
+		वापस -ENOKEY;
 
 	rc = nvdimm->sec.ops->erase(nvdimm, data, pass_type);
 	dev_dbg(dev, "key: %d erase%s: %s\n", key_serial(key),
@@ -361,121 +362,121 @@ static int security_erase(struct nvdimm *nvdimm, unsigned int keyid,
 
 	nvdimm_put_key(key);
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int security_overwrite(struct nvdimm *nvdimm, unsigned int keyid)
-{
-	struct device *dev = &nvdimm->dev;
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
-	struct key *key = NULL;
-	int rc;
-	const void *data;
+अटल पूर्णांक security_overग_लिखो(काष्ठा nvdimm *nvdimm, अचिन्हित पूर्णांक keyid)
+अणु
+	काष्ठा device *dev = &nvdimm->dev;
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(dev);
+	काष्ठा key *key = शून्य;
+	पूर्णांक rc;
+	स्थिर व्योम *data;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->overwrite
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->overग_लिखो
 			|| !nvdimm->sec.flags)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (dev->driver == NULL) {
+	अगर (dev->driver == शून्य) अणु
 		dev_dbg(dev, "Unable to overwrite while DIMM active.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = check_security_state(nvdimm);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	data = nvdimm_get_user_key_payload(nvdimm, keyid,
 			NVDIMM_BASE_KEY, &key);
-	if (!data)
-		return -ENOKEY;
+	अगर (!data)
+		वापस -ENOKEY;
 
-	rc = nvdimm->sec.ops->overwrite(nvdimm, data);
+	rc = nvdimm->sec.ops->overग_लिखो(nvdimm, data);
 	dev_dbg(dev, "key: %d overwrite submission: %s\n", key_serial(key),
 			rc == 0 ? "success" : "fail");
 
 	nvdimm_put_key(key);
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		set_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags);
 		set_bit(NDD_WORK_PENDING, &nvdimm->flags);
 		set_bit(NVDIMM_SECURITY_OVERWRITE, &nvdimm->sec.flags);
 		/*
-		 * Make sure we don't lose device while doing overwrite
+		 * Make sure we करोn't lose device जबतक करोing overग_लिखो
 		 * query.
 		 */
 		get_device(dev);
-		queue_delayed_work(system_wq, &nvdimm->dwork, 0);
-	}
+		queue_delayed_work(प्रणाली_wq, &nvdimm->dwork, 0);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void __nvdimm_security_overwrite_query(struct nvdimm *nvdimm)
-{
-	struct nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nvdimm->dev);
-	int rc;
-	unsigned int tmo;
+व्योम __nvdimm_security_overग_लिखो_query(काष्ठा nvdimm *nvdimm)
+अणु
+	काष्ठा nvdimm_bus *nvdimm_bus = walk_to_nvdimm_bus(&nvdimm->dev);
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक पंचांगo;
 
 	/* The bus lock should be held at the top level of the call stack */
-	lockdep_assert_held(&nvdimm_bus->reconfig_mutex);
+	lockdep_निश्चित_held(&nvdimm_bus->reconfig_mutex);
 
 	/*
-	 * Abort and release device if we no longer have the overwrite
+	 * Abort and release device अगर we no दीर्घer have the overग_लिखो
 	 * flag set. It means the work has been canceled.
 	 */
-	if (!test_bit(NDD_WORK_PENDING, &nvdimm->flags))
-		return;
+	अगर (!test_bit(NDD_WORK_PENDING, &nvdimm->flags))
+		वापस;
 
-	tmo = nvdimm->sec.overwrite_tmo;
+	पंचांगo = nvdimm->sec.overग_लिखो_पंचांगo;
 
-	if (!nvdimm->sec.ops || !nvdimm->sec.ops->query_overwrite
+	अगर (!nvdimm->sec.ops || !nvdimm->sec.ops->query_overग_लिखो
 			|| !nvdimm->sec.flags)
-		return;
+		वापस;
 
-	rc = nvdimm->sec.ops->query_overwrite(nvdimm);
-	if (rc == -EBUSY) {
+	rc = nvdimm->sec.ops->query_overग_लिखो(nvdimm);
+	अगर (rc == -EBUSY) अणु
 
 		/* setup delayed work again */
-		tmo += 10;
-		queue_delayed_work(system_wq, &nvdimm->dwork, tmo * HZ);
-		nvdimm->sec.overwrite_tmo = min(15U * 60U, tmo);
-		return;
-	}
+		पंचांगo += 10;
+		queue_delayed_work(प्रणाली_wq, &nvdimm->dwork, पंचांगo * HZ);
+		nvdimm->sec.overग_लिखो_पंचांगo = min(15U * 60U, पंचांगo);
+		वापस;
+	पूर्ण
 
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_dbg(&nvdimm->dev, "overwrite failed\n");
-	else
+	अन्यथा
 		dev_dbg(&nvdimm->dev, "overwrite completed\n");
 
 	/*
-	 * Mark the overwrite work done and update dimm security flags,
-	 * then send a sysfs event notification to wake up userspace
-	 * poll threads to picked up the changed state.
+	 * Mark the overग_लिखो work करोne and update dimm security flags,
+	 * then send a sysfs event notअगरication to wake up userspace
+	 * poll thपढ़ोs to picked up the changed state.
 	 */
-	nvdimm->sec.overwrite_tmo = 0;
+	nvdimm->sec.overग_लिखो_पंचांगo = 0;
 	clear_bit(NDD_SECURITY_OVERWRITE, &nvdimm->flags);
 	clear_bit(NDD_WORK_PENDING, &nvdimm->flags);
 	nvdimm->sec.flags = nvdimm_security_flags(nvdimm, NVDIMM_USER);
 	nvdimm->sec.ext_flags = nvdimm_security_flags(nvdimm, NVDIMM_MASTER);
-	if (nvdimm->sec.overwrite_state)
-		sysfs_notify_dirent(nvdimm->sec.overwrite_state);
+	अगर (nvdimm->sec.overग_लिखो_state)
+		sysfs_notअगरy_dirent(nvdimm->sec.overग_लिखो_state);
 	put_device(&nvdimm->dev);
-}
+पूर्ण
 
-void nvdimm_security_overwrite_query(struct work_struct *work)
-{
-	struct nvdimm *nvdimm =
+व्योम nvdimm_security_overग_लिखो_query(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा nvdimm *nvdimm =
 		container_of(work, typeof(*nvdimm), dwork.work);
 
 	nvdimm_bus_lock(&nvdimm->dev);
-	__nvdimm_security_overwrite_query(nvdimm);
+	__nvdimm_security_overग_लिखो_query(nvdimm);
 	nvdimm_bus_unlock(&nvdimm->dev);
-}
+पूर्ण
 
-#define OPS							\
+#घोषणा OPS							\
 	C( OP_FREEZE,		"freeze",		1),	\
 	C( OP_DISABLE,		"disable",		2),	\
 	C( OP_UPDATE,		"update",		3),	\
@@ -483,76 +484,76 @@ void nvdimm_security_overwrite_query(struct work_struct *work)
 	C( OP_OVERWRITE,	"overwrite",		2),	\
 	C( OP_MASTER_UPDATE,	"master_update",	3),	\
 	C( OP_MASTER_ERASE,	"master_erase",		2)
-#undef C
-#define C(a, b, c) a
-enum nvdimmsec_op_ids { OPS };
-#undef C
-#define C(a, b, c) { b, c }
-static struct {
-	const char *name;
-	int args;
-} ops[] = { OPS };
-#undef C
+#अघोषित C
+#घोषणा C(a, b, c) a
+क्रमागत nvdimmsec_op_ids अणु OPS पूर्ण;
+#अघोषित C
+#घोषणा C(a, b, c) अणु b, c पूर्ण
+अटल काष्ठा अणु
+	स्थिर अक्षर *name;
+	पूर्णांक args;
+पूर्ण ops[] = अणु OPS पूर्ण;
+#अघोषित C
 
-#define SEC_CMD_SIZE 32
-#define KEY_ID_SIZE 10
+#घोषणा SEC_CMD_SIZE 32
+#घोषणा KEY_ID_SIZE 10
 
-ssize_t nvdimm_security_store(struct device *dev, const char *buf, size_t len)
-{
-	struct nvdimm *nvdimm = to_nvdimm(dev);
-	ssize_t rc;
-	char cmd[SEC_CMD_SIZE+1], keystr[KEY_ID_SIZE+1],
+sमाप_प्रकार nvdimm_security_store(काष्ठा device *dev, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा nvdimm *nvdimm = to_nvdimm(dev);
+	sमाप_प्रकार rc;
+	अक्षर cmd[SEC_CMD_SIZE+1], keystr[KEY_ID_SIZE+1],
 		nkeystr[KEY_ID_SIZE+1];
-	unsigned int key, newkey;
-	int i;
+	अचिन्हित पूर्णांक key, newkey;
+	पूर्णांक i;
 
-	rc = sscanf(buf, "%"__stringify(SEC_CMD_SIZE)"s"
-			" %"__stringify(KEY_ID_SIZE)"s"
-			" %"__stringify(KEY_ID_SIZE)"s",
+	rc = माला_पूछो(buf, "%"__stringअगरy(SEC_CMD_SIZE)"s"
+			" %"__stringअगरy(KEY_ID_SIZE)"s"
+			" %"__stringअगरy(KEY_ID_SIZE)"s",
 			cmd, keystr, nkeystr);
-	if (rc < 1)
-		return -EINVAL;
-	for (i = 0; i < ARRAY_SIZE(ops); i++)
-		if (sysfs_streq(cmd, ops[i].name))
-			break;
-	if (i >= ARRAY_SIZE(ops))
-		return -EINVAL;
-	if (ops[i].args > 1)
-		rc = kstrtouint(keystr, 0, &key);
-	if (rc >= 0 && ops[i].args > 2)
-		rc = kstrtouint(nkeystr, 0, &newkey);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 1)
+		वापस -EINVAL;
+	क्रम (i = 0; i < ARRAY_SIZE(ops); i++)
+		अगर (sysfs_streq(cmd, ops[i].name))
+			अवरोध;
+	अगर (i >= ARRAY_SIZE(ops))
+		वापस -EINVAL;
+	अगर (ops[i].args > 1)
+		rc = kstrtouपूर्णांक(keystr, 0, &key);
+	अगर (rc >= 0 && ops[i].args > 2)
+		rc = kstrtouपूर्णांक(nkeystr, 0, &newkey);
+	अगर (rc < 0)
+		वापस rc;
 
-	if (i == OP_FREEZE) {
+	अगर (i == OP_FREEZE) अणु
 		dev_dbg(dev, "freeze\n");
-		rc = nvdimm_security_freeze(nvdimm);
-	} else if (i == OP_DISABLE) {
+		rc = nvdimm_security_मुक्तze(nvdimm);
+	पूर्ण अन्यथा अगर (i == OP_DISABLE) अणु
 		dev_dbg(dev, "disable %u\n", key);
 		rc = security_disable(nvdimm, key);
-	} else if (i == OP_UPDATE || i == OP_MASTER_UPDATE) {
+	पूर्ण अन्यथा अगर (i == OP_UPDATE || i == OP_MASTER_UPDATE) अणु
 		dev_dbg(dev, "%s %u %u\n", ops[i].name, key, newkey);
 		rc = security_update(nvdimm, key, newkey, i == OP_UPDATE
 				? NVDIMM_USER : NVDIMM_MASTER);
-	} else if (i == OP_ERASE || i == OP_MASTER_ERASE) {
+	पूर्ण अन्यथा अगर (i == OP_ERASE || i == OP_MASTER_ERASE) अणु
 		dev_dbg(dev, "%s %u\n", ops[i].name, key);
-		if (atomic_read(&nvdimm->busy)) {
+		अगर (atomic_पढ़ो(&nvdimm->busy)) अणु
 			dev_dbg(dev, "Unable to secure erase while DIMM active.\n");
-			return -EBUSY;
-		}
+			वापस -EBUSY;
+		पूर्ण
 		rc = security_erase(nvdimm, key, i == OP_ERASE
 				? NVDIMM_USER : NVDIMM_MASTER);
-	} else if (i == OP_OVERWRITE) {
+	पूर्ण अन्यथा अगर (i == OP_OVERWRITE) अणु
 		dev_dbg(dev, "overwrite %u\n", key);
-		if (atomic_read(&nvdimm->busy)) {
+		अगर (atomic_पढ़ो(&nvdimm->busy)) अणु
 			dev_dbg(dev, "Unable to overwrite while DIMM active.\n");
-			return -EBUSY;
-		}
-		rc = security_overwrite(nvdimm, key);
-	} else
-		return -EINVAL;
+			वापस -EBUSY;
+		पूर्ण
+		rc = security_overग_लिखो(nvdimm, key);
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	if (rc == 0)
+	अगर (rc == 0)
 		rc = len;
-	return rc;
-}
+	वापस rc;
+पूर्ण

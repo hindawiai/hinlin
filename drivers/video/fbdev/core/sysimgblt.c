@@ -1,252 +1,253 @@
+<शैली गुरु>
 /*
  *  Generic 1-bit or 8-bit source to 1-32 bit destination expansion
- *  for frame buffer located in system RAM with packed pixels of any depth.
+ *  क्रम frame buffer located in प्रणाली RAM with packed pixels of any depth.
  *
  *  Based almost entirely on cfbimgblt.c
  *
  *      Copyright (C)  April 2007 Antonino Daplas <adaplas@pol.net>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/fb.h>
-#include <asm/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fb.h>
+#समावेश <यंत्र/types.h>
 
-#define DEBUG
+#घोषणा DEBUG
 
-#ifdef DEBUG
-#define DPRINTK(fmt, args...) printk(KERN_DEBUG "%s: " fmt,__func__,## args)
-#else
-#define DPRINTK(fmt, args...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DPRINTK(fmt, args...) prपूर्णांकk(KERN_DEBUG "%s: " fmt,__func__,## args)
+#अन्यथा
+#घोषणा DPRINTK(fmt, args...)
+#पूर्ण_अगर
 
-static const u32 cfb_tab8_be[] = {
+अटल स्थिर u32 cfb_tab8_be[] = अणु
     0x00000000,0x000000ff,0x0000ff00,0x0000ffff,
     0x00ff0000,0x00ff00ff,0x00ffff00,0x00ffffff,
     0xff000000,0xff0000ff,0xff00ff00,0xff00ffff,
     0xffff0000,0xffff00ff,0xffffff00,0xffffffff
-};
+पूर्ण;
 
-static const u32 cfb_tab8_le[] = {
+अटल स्थिर u32 cfb_tab8_le[] = अणु
     0x00000000,0xff000000,0x00ff0000,0xffff0000,
     0x0000ff00,0xff00ff00,0x00ffff00,0xffffff00,
     0x000000ff,0xff0000ff,0x00ff00ff,0xffff00ff,
     0x0000ffff,0xff00ffff,0x00ffffff,0xffffffff
-};
+पूर्ण;
 
-static const u32 cfb_tab16_be[] = {
+अटल स्थिर u32 cfb_tab16_be[] = अणु
     0x00000000, 0x0000ffff, 0xffff0000, 0xffffffff
-};
+पूर्ण;
 
-static const u32 cfb_tab16_le[] = {
+अटल स्थिर u32 cfb_tab16_le[] = अणु
     0x00000000, 0xffff0000, 0x0000ffff, 0xffffffff
-};
+पूर्ण;
 
-static const u32 cfb_tab32[] = {
+अटल स्थिर u32 cfb_tab32[] = अणु
 	0x00000000, 0xffffffff
-};
+पूर्ण;
 
-static void color_imageblit(const struct fb_image *image, struct fb_info *p,
-			    void *dst1, u32 start_index, u32 pitch_index)
-{
+अटल व्योम color_imageblit(स्थिर काष्ठा fb_image *image, काष्ठा fb_info *p,
+			    व्योम *dst1, u32 start_index, u32 pitch_index)
+अणु
 	/* Draw the penguin */
 	u32 *dst, *dst2;
-	u32 color = 0, val, shift;
-	int i, n, bpp = p->var.bits_per_pixel;
+	u32 color = 0, val, shअगरt;
+	पूर्णांक i, n, bpp = p->var.bits_per_pixel;
 	u32 null_bits = 32 - bpp;
-	u32 *palette = (u32 *) p->pseudo_palette;
-	const u8 *src = image->data;
+	u32 *palette = (u32 *) p->pseuकरो_palette;
+	स्थिर u8 *src = image->data;
 
 	dst2 = dst1;
-	for (i = image->height; i--; ) {
+	क्रम (i = image->height; i--; ) अणु
 		n = image->width;
 		dst = dst1;
-		shift = 0;
+		shअगरt = 0;
 		val = 0;
 
-		if (start_index) {
+		अगर (start_index) अणु
 			u32 start_mask = ~(FB_SHIFT_HIGH(p, ~(u32)0,
 							 start_index));
 			val = *dst & start_mask;
-			shift = start_index;
-		}
-		while (n--) {
-			if (p->fix.visual == FB_VISUAL_TRUECOLOR ||
-			    p->fix.visual == FB_VISUAL_DIRECTCOLOR )
+			shअगरt = start_index;
+		पूर्ण
+		जबतक (n--) अणु
+			अगर (p->fix.visual == FB_VISUAL_TRUECOLOR ||
+			    p->fix.visual == FB_VISUAL_सूचीECTCOLOR )
 				color = palette[*src];
-			else
+			अन्यथा
 				color = *src;
 			color <<= FB_LEFT_POS(p, bpp);
-			val |= FB_SHIFT_HIGH(p, color, shift);
-			if (shift >= null_bits) {
+			val |= FB_SHIFT_HIGH(p, color, shअगरt);
+			अगर (shअगरt >= null_bits) अणु
 				*dst++ = val;
 
-				val = (shift == null_bits) ? 0 :
-					FB_SHIFT_LOW(p, color, 32 - shift);
-			}
-			shift += bpp;
-			shift &= (32 - 1);
+				val = (shअगरt == null_bits) ? 0 :
+					FB_SHIFT_LOW(p, color, 32 - shअगरt);
+			पूर्ण
+			shअगरt += bpp;
+			shअगरt &= (32 - 1);
 			src++;
-		}
-		if (shift) {
-			u32 end_mask = FB_SHIFT_HIGH(p, ~(u32)0, shift);
+		पूर्ण
+		अगर (shअगरt) अणु
+			u32 end_mask = FB_SHIFT_HIGH(p, ~(u32)0, shअगरt);
 
 			*dst &= end_mask;
 			*dst |= val;
-		}
+		पूर्ण
 		dst1 += p->fix.line_length;
-		if (pitch_index) {
+		अगर (pitch_index) अणु
 			dst2 += p->fix.line_length;
-			dst1 = (u8 *)((long)dst2 & ~(sizeof(u32) - 1));
+			dst1 = (u8 *)((दीर्घ)dst2 & ~(माप(u32) - 1));
 
 			start_index += pitch_index;
 			start_index &= 32 - 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void slow_imageblit(const struct fb_image *image, struct fb_info *p,
-				  void *dst1, u32 fgcolor, u32 bgcolor,
+अटल व्योम slow_imageblit(स्थिर काष्ठा fb_image *image, काष्ठा fb_info *p,
+				  व्योम *dst1, u32 fgcolor, u32 bgcolor,
 				  u32 start_index, u32 pitch_index)
-{
-	u32 shift, color = 0, bpp = p->var.bits_per_pixel;
+अणु
+	u32 shअगरt, color = 0, bpp = p->var.bits_per_pixel;
 	u32 *dst, *dst2;
 	u32 val, pitch = p->fix.line_length;
 	u32 null_bits = 32 - bpp;
 	u32 spitch = (image->width+7)/8;
-	const u8 *src = image->data, *s;
+	स्थिर u8 *src = image->data, *s;
 	u32 i, j, l;
 
 	dst2 = dst1;
 	fgcolor <<= FB_LEFT_POS(p, bpp);
 	bgcolor <<= FB_LEFT_POS(p, bpp);
 
-	for (i = image->height; i--; ) {
-		shift = val = 0;
+	क्रम (i = image->height; i--; ) अणु
+		shअगरt = val = 0;
 		l = 8;
 		j = image->width;
 		dst = dst1;
 		s = src;
 
-		/* write leading bits */
-		if (start_index) {
+		/* ग_लिखो leading bits */
+		अगर (start_index) अणु
 			u32 start_mask = ~(FB_SHIFT_HIGH(p, ~(u32)0,
 							 start_index));
 			val = *dst & start_mask;
-			shift = start_index;
-		}
+			shअगरt = start_index;
+		पूर्ण
 
-		while (j--) {
+		जबतक (j--) अणु
 			l--;
 			color = (*s & (1 << l)) ? fgcolor : bgcolor;
-			val |= FB_SHIFT_HIGH(p, color, shift);
+			val |= FB_SHIFT_HIGH(p, color, shअगरt);
 
-			/* Did the bitshift spill bits to the next long? */
-			if (shift >= null_bits) {
+			/* Did the bitshअगरt spill bits to the next दीर्घ? */
+			अगर (shअगरt >= null_bits) अणु
 				*dst++ = val;
-				val = (shift == null_bits) ? 0 :
-					FB_SHIFT_LOW(p, color, 32 - shift);
-			}
-			shift += bpp;
-			shift &= (32 - 1);
-			if (!l) { l = 8; s++; }
-		}
+				val = (shअगरt == null_bits) ? 0 :
+					FB_SHIFT_LOW(p, color, 32 - shअगरt);
+			पूर्ण
+			shअगरt += bpp;
+			shअगरt &= (32 - 1);
+			अगर (!l) अणु l = 8; s++; पूर्ण
+		पूर्ण
 
-		/* write trailing bits */
- 		if (shift) {
-			u32 end_mask = FB_SHIFT_HIGH(p, ~(u32)0, shift);
+		/* ग_लिखो trailing bits */
+ 		अगर (shअगरt) अणु
+			u32 end_mask = FB_SHIFT_HIGH(p, ~(u32)0, shअगरt);
 
 			*dst &= end_mask;
 			*dst |= val;
-		}
+		पूर्ण
 
 		dst1 += pitch;
 		src += spitch;
-		if (pitch_index) {
+		अगर (pitch_index) अणु
 			dst2 += pitch;
-			dst1 = (u8 *)((long)dst2 & ~(sizeof(u32) - 1));
+			dst1 = (u8 *)((दीर्घ)dst2 & ~(माप(u32) - 1));
 			start_index += pitch_index;
 			start_index &= 32 - 1;
-		}
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * fast_imageblit - optimized monochrome color expansion
  *
- * Only if:  bits_per_pixel == 8, 16, or 32
- *           image->width is divisible by pixel/dword (ppw);
- *           fix->line_legth is divisible by 4;
+ * Only अगर:  bits_per_pixel == 8, 16, or 32
+ *           image->width is भागisible by pixel/dword (ppw);
+ *           fix->line_legth is भागisible by 4;
  *           beginning and end of a scanline is dword aligned
  */
-static void fast_imageblit(const struct fb_image *image, struct fb_info *p,
-				  void *dst1, u32 fgcolor, u32 bgcolor)
-{
+अटल व्योम fast_imageblit(स्थिर काष्ठा fb_image *image, काष्ठा fb_info *p,
+				  व्योम *dst1, u32 fgcolor, u32 bgcolor)
+अणु
 	u32 fgx = fgcolor, bgx = bgcolor, bpp = p->var.bits_per_pixel;
 	u32 ppw = 32/bpp, spitch = (image->width + 7)/8;
-	u32 bit_mask, end_mask, eorx, shift;
-	const char *s = image->data, *src;
+	u32 bit_mask, end_mask, eorx, shअगरt;
+	स्थिर अक्षर *s = image->data, *src;
 	u32 *dst;
-	const u32 *tab = NULL;
-	int i, j, k;
+	स्थिर u32 *tab = शून्य;
+	पूर्णांक i, j, k;
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		tab = fb_be_math(p) ? cfb_tab8_be : cfb_tab8_le;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		tab = fb_be_math(p) ? cfb_tab16_be : cfb_tab16_le;
-		break;
-	case 32:
-	default:
+		अवरोध;
+	हाल 32:
+	शेष:
 		tab = cfb_tab32;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	for (i = ppw-1; i--; ) {
+	क्रम (i = ppw-1; i--; ) अणु
 		fgx <<= bpp;
 		bgx <<= bpp;
 		fgx |= fgcolor;
 		bgx |= bgcolor;
-	}
+	पूर्ण
 
 	bit_mask = (1 << ppw) - 1;
 	eorx = fgx ^ bgx;
 	k = image->width/ppw;
 
-	for (i = image->height; i--; ) {
+	क्रम (i = image->height; i--; ) अणु
 		dst = dst1;
-		shift = 8;
+		shअगरt = 8;
 		src = s;
 
-		for (j = k; j--; ) {
-			shift -= ppw;
-			end_mask = tab[(*src >> shift) & bit_mask];
+		क्रम (j = k; j--; ) अणु
+			shअगरt -= ppw;
+			end_mask = tab[(*src >> shअगरt) & bit_mask];
 			*dst++ = (end_mask & eorx) ^ bgx;
-			if (!shift) {
-				shift = 8;
+			अगर (!shअगरt) अणु
+				shअगरt = 8;
 				src++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		dst1 += p->fix.line_length;
 		s += spitch;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void sys_imageblit(struct fb_info *p, const struct fb_image *image)
-{
+व्योम sys_imageblit(काष्ठा fb_info *p, स्थिर काष्ठा fb_image *image)
+अणु
 	u32 fgcolor, bgcolor, start_index, bitstart, pitch_index = 0;
-	u32 bpl = sizeof(u32), bpp = p->var.bits_per_pixel;
+	u32 bpl = माप(u32), bpp = p->var.bits_per_pixel;
 	u32 width = image->width;
 	u32 dx = image->dx, dy = image->dy;
-	void *dst1;
+	व्योम *dst1;
 
-	if (p->state != FBINFO_STATE_RUNNING)
-		return;
+	अगर (p->state != FBINFO_STATE_RUNNING)
+		वापस;
 
 	bitstart = (dy * p->fix.line_length * 8) + (dx * bpp);
 	start_index = bitstart & (32 - 1);
@@ -254,31 +255,31 @@ void sys_imageblit(struct fb_info *p, const struct fb_image *image)
 
 	bitstart /= 8;
 	bitstart &= ~(bpl - 1);
-	dst1 = (void __force *)p->screen_base + bitstart;
+	dst1 = (व्योम __क्रमce *)p->screen_base + bitstart;
 
-	if (p->fbops->fb_sync)
+	अगर (p->fbops->fb_sync)
 		p->fbops->fb_sync(p);
 
-	if (image->depth == 1) {
-		if (p->fix.visual == FB_VISUAL_TRUECOLOR ||
-		    p->fix.visual == FB_VISUAL_DIRECTCOLOR) {
-			fgcolor = ((u32*)(p->pseudo_palette))[image->fg_color];
-			bgcolor = ((u32*)(p->pseudo_palette))[image->bg_color];
-		} else {
+	अगर (image->depth == 1) अणु
+		अगर (p->fix.visual == FB_VISUAL_TRUECOLOR ||
+		    p->fix.visual == FB_VISUAL_सूचीECTCOLOR) अणु
+			fgcolor = ((u32*)(p->pseuकरो_palette))[image->fg_color];
+			bgcolor = ((u32*)(p->pseuकरो_palette))[image->bg_color];
+		पूर्ण अन्यथा अणु
 			fgcolor = image->fg_color;
 			bgcolor = image->bg_color;
-		}
+		पूर्ण
 
-		if (32 % bpp == 0 && !start_index && !pitch_index &&
+		अगर (32 % bpp == 0 && !start_index && !pitch_index &&
 		    ((width & (32/bpp-1)) == 0) &&
 		    bpp >= 8 && bpp <= 32)
 			fast_imageblit(image, p, dst1, fgcolor, bgcolor);
-		else
+		अन्यथा
 			slow_imageblit(image, p, dst1, fgcolor, bgcolor,
 					start_index, pitch_index);
-	} else
+	पूर्ण अन्यथा
 		color_imageblit(image, p, dst1, start_index, pitch_index);
-}
+पूर्ण
 
 EXPORT_SYMBOL(sys_imageblit);
 

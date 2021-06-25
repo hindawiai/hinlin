@@ -1,239 +1,240 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014 Redpine Signals Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <net/rsi_91x.h>
-#include "rsi_usb.h"
-#include "rsi_hal.h"
-#include "rsi_coex.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <net/rsi_91x.h>
+#समावेश "rsi_usb.h"
+#समावेश "rsi_hal.h"
+#समावेश "rsi_coex.h"
 
 /* Default operating mode is wlan STA + BT */
-static u16 dev_oper_mode = DEV_OPMODE_STA_BT_DUAL;
-module_param(dev_oper_mode, ushort, 0444);
+अटल u16 dev_oper_mode = DEV_OPMODE_STA_BT_DUAL;
+module_param(dev_oper_mode, uलघु, 0444);
 MODULE_PARM_DESC(dev_oper_mode,
 		 "1[Wi-Fi], 4[BT], 8[BT LE], 5[Wi-Fi STA + BT classic]\n"
 		 "9[Wi-Fi STA + BT LE], 13[Wi-Fi STA + BT classic + BT LE]\n"
 		 "6[AP + BT classic], 14[AP + BT classic + BT LE]");
 
-static int rsi_rx_urb_submit(struct rsi_hw *adapter, u8 ep_num, gfp_t flags);
+अटल पूर्णांक rsi_rx_urb_submit(काष्ठा rsi_hw *adapter, u8 ep_num, gfp_t flags);
 
 /**
- * rsi_usb_card_write() - This function writes to the USB Card.
- * @adapter: Pointer to the adapter structure.
- * @buf: Pointer to the buffer from where the data has to be taken.
+ * rsi_usb_card_ग_लिखो() - This function ग_लिखोs to the USB Card.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @buf: Poपूर्णांकer to the buffer from where the data has to be taken.
  * @len: Length to be written.
- * @endpoint: Type of endpoint.
+ * @endpoपूर्णांक: Type of endpoपूर्णांक.
  *
  * Return: status: 0 on success, a negative error code on failure.
  */
-static int rsi_usb_card_write(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_usb_card_ग_लिखो(काष्ठा rsi_hw *adapter,
 			      u8 *buf,
 			      u16 len,
-			      u8 endpoint)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	int status;
+			      u8 endpoपूर्णांक)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	पूर्णांक status;
 	u8 *seg = dev->tx_buffer;
-	int transfer;
-	int ep = dev->bulkout_endpoint_addr[endpoint - 1];
+	पूर्णांक transfer;
+	पूर्णांक ep = dev->bulkout_endpoपूर्णांक_addr[endpoपूर्णांक - 1];
 
-	memset(seg, 0, len + RSI_USB_TX_HEAD_ROOM);
-	memcpy(seg + RSI_USB_TX_HEAD_ROOM, buf, len);
+	स_रखो(seg, 0, len + RSI_USB_TX_HEAD_ROOM);
+	स_नकल(seg + RSI_USB_TX_HEAD_ROOM, buf, len);
 	len += RSI_USB_TX_HEAD_ROOM;
 	transfer = len;
 	status = usb_bulk_msg(dev->usbdev,
 			      usb_sndbulkpipe(dev->usbdev, ep),
-			      (void *)seg,
-			      (int)len,
+			      (व्योम *)seg,
+			      (पूर्णांक)len,
 			      &transfer,
 			      HZ * 5);
 
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"Card write failed with error code :%10d\n", status);
-		dev->write_fail = 1;
-	}
-	return status;
-}
+		dev->ग_लिखो_fail = 1;
+	पूर्ण
+	वापस status;
+पूर्ण
 
 /**
- * rsi_write_multiple() - This function writes multiple bytes of information
+ * rsi_ग_लिखो_multiple() - This function ग_लिखोs multiple bytes of inक्रमmation
  *			  to the USB card.
- * @adapter: Pointer to the adapter structure.
- * @endpoint: Type of endpoint.
- * @data: Pointer to the data that has to be written.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @endpoपूर्णांक: Type of endpoपूर्णांक.
+ * @data: Poपूर्णांकer to the data that has to be written.
  * @count: Number of multiple bytes to be written.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-static int rsi_write_multiple(struct rsi_hw *adapter,
-			      u8 endpoint,
+अटल पूर्णांक rsi_ग_लिखो_multiple(काष्ठा rsi_hw *adapter,
+			      u8 endpoपूर्णांक,
 			      u8 *data,
 			      u32 count)
-{
-	struct rsi_91x_usbdev *dev;
+अणु
+	काष्ठा rsi_91x_usbdev *dev;
 
-	if (!adapter)
-		return -ENODEV;
+	अगर (!adapter)
+		वापस -ENODEV;
 
-	if (endpoint == 0)
-		return -EINVAL;
+	अगर (endpoपूर्णांक == 0)
+		वापस -EINVAL;
 
-	dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	if (dev->write_fail)
-		return -ENETDOWN;
+	dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	अगर (dev->ग_लिखो_fail)
+		वापस -ENETDOWN;
 
-	return rsi_usb_card_write(adapter, data, count, endpoint);
-}
+	वापस rsi_usb_card_ग_लिखो(adapter, data, count, endpoपूर्णांक);
+पूर्ण
 
 /**
- * rsi_find_bulk_in_and_out_endpoints() - This function initializes the bulk
- *					  endpoints to the device.
- * @interface: Pointer to the USB interface structure.
- * @adapter: Pointer to the adapter structure.
+ * rsi_find_bulk_in_and_out_endpoपूर्णांकs() - This function initializes the bulk
+ *					  endpoपूर्णांकs to the device.
+ * @पूर्णांकerface: Poपूर्णांकer to the USB पूर्णांकerface काष्ठाure.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  *
  * Return: ret_val: 0 on success, -ENOMEM on failure.
  */
-static int rsi_find_bulk_in_and_out_endpoints(struct usb_interface *interface,
-					      struct rsi_hw *adapter)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	struct usb_host_interface *iface_desc;
-	struct usb_endpoint_descriptor *endpoint;
+अटल पूर्णांक rsi_find_bulk_in_and_out_endpoपूर्णांकs(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+					      काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
 	__le16 buffer_size;
-	int ii, bin_found = 0, bout_found = 0;
+	पूर्णांक ii, bin_found = 0, bout_found = 0;
 
-	iface_desc = interface->cur_altsetting;
+	अगरace_desc = पूर्णांकerface->cur_altsetting;
 
-	for (ii = 0; ii < iface_desc->desc.bNumEndpoints; ++ii) {
-		endpoint = &(iface_desc->endpoint[ii].desc);
+	क्रम (ii = 0; ii < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++ii) अणु
+		endpoपूर्णांक = &(अगरace_desc->endpoपूर्णांक[ii].desc);
 
-		if (!dev->bulkin_endpoint_addr[bin_found] &&
-		    (endpoint->bEndpointAddress & USB_DIR_IN) &&
-		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		    USB_ENDPOINT_XFER_BULK)) {
-			buffer_size = endpoint->wMaxPacketSize;
+		अगर (!dev->bulkin_endpoपूर्णांक_addr[bin_found] &&
+		    (endpoपूर्णांक->bEndpoपूर्णांकAddress & USB_सूची_IN) &&
+		    ((endpoपूर्णांक->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		    USB_ENDPOINT_XFER_BULK)) अणु
+			buffer_size = endpoपूर्णांक->wMaxPacketSize;
 			dev->bulkin_size[bin_found] = buffer_size;
-			dev->bulkin_endpoint_addr[bin_found] =
-				endpoint->bEndpointAddress;
+			dev->bulkin_endpoपूर्णांक_addr[bin_found] =
+				endpoपूर्णांक->bEndpoपूर्णांकAddress;
 			bin_found++;
-		}
+		पूर्ण
 
-		if (!dev->bulkout_endpoint_addr[bout_found] &&
-		    !(endpoint->bEndpointAddress & USB_DIR_IN) &&
-		    ((endpoint->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
-		    USB_ENDPOINT_XFER_BULK)) {
-			buffer_size = endpoint->wMaxPacketSize;
-			dev->bulkout_endpoint_addr[bout_found] =
-				endpoint->bEndpointAddress;
+		अगर (!dev->bulkout_endpoपूर्णांक_addr[bout_found] &&
+		    !(endpoपूर्णांक->bEndpoपूर्णांकAddress & USB_सूची_IN) &&
+		    ((endpoपूर्णांक->bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) ==
+		    USB_ENDPOINT_XFER_BULK)) अणु
+			buffer_size = endpoपूर्णांक->wMaxPacketSize;
+			dev->bulkout_endpoपूर्णांक_addr[bout_found] =
+				endpoपूर्णांक->bEndpoपूर्णांकAddress;
 			dev->bulkout_size[bout_found] = buffer_size;
 			bout_found++;
-		}
+		पूर्ण
 
-		if (bin_found >= MAX_BULK_EP || bout_found >= MAX_BULK_EP)
-			break;
-	}
+		अगर (bin_found >= MAX_BULK_EP || bout_found >= MAX_BULK_EP)
+			अवरोध;
+	पूर्ण
 
-	if (!(dev->bulkin_endpoint_addr[0] && dev->bulkout_endpoint_addr[0])) {
-		dev_err(&interface->dev, "missing wlan bulk endpoints\n");
-		return -EINVAL;
-	}
+	अगर (!(dev->bulkin_endpoपूर्णांक_addr[0] && dev->bulkout_endpoपूर्णांक_addr[0])) अणु
+		dev_err(&पूर्णांकerface->dev, "missing wlan bulk endpoints\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (adapter->priv->coex_mode > 1) {
-		if (!dev->bulkin_endpoint_addr[1]) {
-			dev_err(&interface->dev, "missing bt bulk-in endpoint\n");
-			return -EINVAL;
-		}
-	}
+	अगर (adapter->priv->coex_mode > 1) अणु
+		अगर (!dev->bulkin_endpoपूर्णांक_addr[1]) अणु
+			dev_err(&पूर्णांकerface->dev, "missing bt bulk-in endpoint\n");
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define RSI_USB_REQ_OUT	(USB_TYPE_VENDOR | USB_DIR_OUT | USB_RECIP_DEVICE)
-#define RSI_USB_REQ_IN	(USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE)
+#घोषणा RSI_USB_REQ_OUT	(USB_TYPE_VENDOR | USB_सूची_OUT | USB_RECIP_DEVICE)
+#घोषणा RSI_USB_REQ_IN	(USB_TYPE_VENDOR | USB_सूची_IN | USB_RECIP_DEVICE)
 
-/* rsi_usb_reg_read() - This function reads data from given register address.
- * @usbdev: Pointer to the usb_device structure.
- * @reg: Address of the register to be read.
- * @value: Value to be read.
- * @len: length of data to be read.
+/* rsi_usb_reg_पढ़ो() - This function पढ़ोs data from given रेजिस्टर address.
+ * @usbdev: Poपूर्णांकer to the usb_device काष्ठाure.
+ * @reg: Address of the रेजिस्टर to be पढ़ो.
+ * @value: Value to be पढ़ो.
+ * @len: length of data to be पढ़ो.
  *
  * Return: status: 0 on success, a negative error code on failure.
  */
-static int rsi_usb_reg_read(struct usb_device *usbdev,
+अटल पूर्णांक rsi_usb_reg_पढ़ो(काष्ठा usb_device *usbdev,
 			    u32 reg,
 			    u16 *value,
 			    u16 len)
-{
+अणु
 	u8 *buf;
-	int status = -ENOMEM;
+	पूर्णांक status = -ENOMEM;
 
-	if (len > RSI_USB_CTRL_BUF_SIZE)
-		return -EINVAL;
+	अगर (len > RSI_USB_CTRL_BUF_SIZE)
+		वापस -EINVAL;
 
-	buf  = kmalloc(RSI_USB_CTRL_BUF_SIZE, GFP_KERNEL);
-	if (!buf)
-		return status;
+	buf  = kदो_स्मृति(RSI_USB_CTRL_BUF_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		वापस status;
 
 	status = usb_control_msg(usbdev,
 				 usb_rcvctrlpipe(usbdev, 0),
 				 USB_VENDOR_REGISTER_READ,
 				 RSI_USB_REQ_IN,
 				 ((reg & 0xffff0000) >> 16), (reg & 0xffff),
-				 (void *)buf,
+				 (व्योम *)buf,
 				 len,
 				 USB_CTRL_GET_TIMEOUT);
 
 	*value = (buf[0] | (buf[1] << 8));
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Reg read failed with error code :%d\n",
 			__func__, status);
-	}
-	kfree(buf);
+	पूर्ण
+	kमुक्त(buf);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_usb_reg_write() - This function writes the given data into the given
- *			 register address.
- * @usbdev: Pointer to the usb_device structure.
- * @reg: Address of the register.
- * @value: Value to write.
+ * rsi_usb_reg_ग_लिखो() - This function ग_लिखोs the given data पूर्णांकo the given
+ *			 रेजिस्टर address.
+ * @usbdev: Poपूर्णांकer to the usb_device काष्ठाure.
+ * @reg: Address of the रेजिस्टर.
+ * @value: Value to ग_लिखो.
  * @len: Length of data to be written.
  *
  * Return: status: 0 on success, a negative error code on failure.
  */
-static int rsi_usb_reg_write(struct usb_device *usbdev,
+अटल पूर्णांक rsi_usb_reg_ग_लिखो(काष्ठा usb_device *usbdev,
 			     u32 reg,
 			     u32 value,
 			     u16 len)
-{
+अणु
 	u8 *usb_reg_buf;
-	int status = -ENOMEM;
+	पूर्णांक status = -ENOMEM;
 
-	if (len > RSI_USB_CTRL_BUF_SIZE)
-		return -EINVAL;
+	अगर (len > RSI_USB_CTRL_BUF_SIZE)
+		वापस -EINVAL;
 
-	usb_reg_buf  = kmalloc(RSI_USB_CTRL_BUF_SIZE, GFP_KERNEL);
-	if (!usb_reg_buf)
-		return status;
+	usb_reg_buf  = kदो_स्मृति(RSI_USB_CTRL_BUF_SIZE, GFP_KERNEL);
+	अगर (!usb_reg_buf)
+		वापस status;
 
 	usb_reg_buf[0] = (cpu_to_le32(value) & 0x00ff);
 	usb_reg_buf[1] = (cpu_to_le32(value) & 0xff00) >> 8;
@@ -246,95 +247,95 @@ static int rsi_usb_reg_write(struct usb_device *usbdev,
 				 RSI_USB_REQ_OUT,
 				 ((cpu_to_le32(reg) & 0xffff0000) >> 16),
 				 (cpu_to_le32(reg) & 0xffff),
-				 (void *)usb_reg_buf,
+				 (व्योम *)usb_reg_buf,
 				 len,
 				 USB_CTRL_SET_TIMEOUT);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		rsi_dbg(ERR_ZONE,
 			"%s: Reg write failed with error code :%d\n",
 			__func__, status);
-	}
-	kfree(usb_reg_buf);
+	पूर्ण
+	kमुक्त(usb_reg_buf);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_rx_done_handler() - This function is called when a packet is received
- *			   from USB stack. This is callback to receive done.
+ * rsi_rx_करोne_handler() - This function is called when a packet is received
+ *			   from USB stack. This is callback to receive करोne.
  * @urb: Received URB.
  *
  * Return: None.
  */
-static void rsi_rx_done_handler(struct urb *urb)
-{
-	struct rx_usb_ctrl_block *rx_cb = urb->context;
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)rx_cb->data;
-	int status = -EINVAL;
+अटल व्योम rsi_rx_करोne_handler(काष्ठा urb *urb)
+अणु
+	काष्ठा rx_usb_ctrl_block *rx_cb = urb->context;
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)rx_cb->data;
+	पूर्णांक status = -EINVAL;
 
-	if (urb->status) {
-		dev_kfree_skb(rx_cb->rx_skb);
-		return;
-	}
+	अगर (urb->status) अणु
+		dev_kमुक्त_skb(rx_cb->rx_skb);
+		वापस;
+	पूर्ण
 
-	if (urb->actual_length <= 0 ||
-	    urb->actual_length > rx_cb->rx_skb->len) {
+	अगर (urb->actual_length <= 0 ||
+	    urb->actual_length > rx_cb->rx_skb->len) अणु
 		rsi_dbg(INFO_ZONE, "%s: Invalid packet length = %d\n",
 			__func__, urb->actual_length);
-		goto out;
-	}
-	if (skb_queue_len(&dev->rx_q) >= RSI_MAX_RX_PKTS) {
+		जाओ out;
+	पूर्ण
+	अगर (skb_queue_len(&dev->rx_q) >= RSI_MAX_RX_PKTS) अणु
 		rsi_dbg(INFO_ZONE, "Max RX packets reached\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	skb_trim(rx_cb->rx_skb, urb->actual_length);
 	skb_queue_tail(&dev->rx_q, rx_cb->rx_skb);
 
-	rsi_set_event(&dev->rx_thread.event);
+	rsi_set_event(&dev->rx_thपढ़ो.event);
 	status = 0;
 
 out:
-	if (rsi_rx_urb_submit(dev->priv, rx_cb->ep_num, GFP_ATOMIC))
+	अगर (rsi_rx_urb_submit(dev->priv, rx_cb->ep_num, GFP_ATOMIC))
 		rsi_dbg(ERR_ZONE, "%s: Failed in urb submission", __func__);
 
-	if (status)
-		dev_kfree_skb(rx_cb->rx_skb);
-}
+	अगर (status)
+		dev_kमुक्त_skb(rx_cb->rx_skb);
+पूर्ण
 
-static void rsi_rx_urb_kill(struct rsi_hw *adapter, u8 ep_num)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	struct rx_usb_ctrl_block *rx_cb = &dev->rx_cb[ep_num - 1];
-	struct urb *urb = rx_cb->rx_urb;
+अटल व्योम rsi_rx_urb_समाप्त(काष्ठा rsi_hw *adapter, u8 ep_num)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	काष्ठा rx_usb_ctrl_block *rx_cb = &dev->rx_cb[ep_num - 1];
+	काष्ठा urb *urb = rx_cb->rx_urb;
 
-	usb_kill_urb(urb);
-}
+	usb_समाप्त_urb(urb);
+पूर्ण
 
 /**
  * rsi_rx_urb_submit() - This function submits the given URB to the USB stack.
- * @adapter: Pointer to the adapter structure.
- * @ep_num: Endpoint number.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @ep_num: Endpoपूर्णांक number.
  * @mem_flags: The type of memory to allocate.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-static int rsi_rx_urb_submit(struct rsi_hw *adapter, u8 ep_num, gfp_t mem_flags)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	struct rx_usb_ctrl_block *rx_cb = &dev->rx_cb[ep_num - 1];
-	struct urb *urb = rx_cb->rx_urb;
-	int status;
-	struct sk_buff *skb;
+अटल पूर्णांक rsi_rx_urb_submit(काष्ठा rsi_hw *adapter, u8 ep_num, gfp_t mem_flags)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	काष्ठा rx_usb_ctrl_block *rx_cb = &dev->rx_cb[ep_num - 1];
+	काष्ठा urb *urb = rx_cb->rx_urb;
+	पूर्णांक status;
+	काष्ठा sk_buff *skb;
 	u8 dword_align_bytes = 0;
 
-#define RSI_MAX_RX_USB_PKT_SIZE	3000
+#घोषणा RSI_MAX_RX_USB_PKT_SIZE	3000
 	skb = dev_alloc_skb(RSI_MAX_RX_USB_PKT_SIZE);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 	skb_reserve(skb, MAX_DWORD_ALIGN_BYTES);
 	skb_put(skb, RSI_MAX_RX_USB_PKT_SIZE - MAX_DWORD_ALIGN_BYTES);
-	dword_align_bytes = (unsigned long)skb->data & 0x3f;
-	if (dword_align_bytes > 0)
+	dword_align_bytes = (अचिन्हित दीर्घ)skb->data & 0x3f;
+	अगर (dword_align_bytes > 0)
 		skb_push(skb, dword_align_bytes);
 	urb->transfer_buffer = skb->data;
 	rx_cb->rx_skb = skb;
@@ -342,587 +343,587 @@ static int rsi_rx_urb_submit(struct rsi_hw *adapter, u8 ep_num, gfp_t mem_flags)
 	usb_fill_bulk_urb(urb,
 			  dev->usbdev,
 			  usb_rcvbulkpipe(dev->usbdev,
-			  dev->bulkin_endpoint_addr[ep_num - 1]),
+			  dev->bulkin_endpoपूर्णांक_addr[ep_num - 1]),
 			  urb->transfer_buffer,
 			  skb->len,
-			  rsi_rx_done_handler,
+			  rsi_rx_करोne_handler,
 			  rx_cb);
 
 	status = usb_submit_urb(urb, mem_flags);
-	if (status) {
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed in urb submission\n", __func__);
-		dev_kfree_skb(skb);
-	}
+		dev_kमुक्त_skb(skb);
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int rsi_usb_read_register_multiple(struct rsi_hw *adapter, u32 addr,
+अटल पूर्णांक rsi_usb_पढ़ो_रेजिस्टर_multiple(काष्ठा rsi_hw *adapter, u32 addr,
 					  u8 *data, u16 count)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
 	u8 *buf;
 	u16 transfer;
-	int status;
+	पूर्णांक status;
 
-	if (!addr)
-		return -EINVAL;
+	अगर (!addr)
+		वापस -EINVAL;
 
 	buf = kzalloc(RSI_USB_BUF_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (count) {
+	जबतक (count) अणु
 		transfer = min_t(u16, count, RSI_USB_BUF_SIZE);
 		status = usb_control_msg(dev->usbdev,
 					 usb_rcvctrlpipe(dev->usbdev, 0),
 					 USB_VENDOR_REGISTER_READ,
 					 RSI_USB_REQ_IN,
 					 ((addr & 0xffff0000) >> 16),
-					 (addr & 0xffff), (void *)buf,
+					 (addr & 0xffff), (व्योम *)buf,
 					 transfer, USB_CTRL_GET_TIMEOUT);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"Reg read failed with error code :%d\n",
 				 status);
-			kfree(buf);
-			return status;
-		}
-		memcpy(data, buf, transfer);
+			kमुक्त(buf);
+			वापस status;
+		पूर्ण
+		स_नकल(data, buf, transfer);
 		count -= transfer;
 		data += transfer;
 		addr += transfer;
-	}
-	kfree(buf);
-	return 0;
-}
+	पूर्ण
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
 /**
- * rsi_usb_write_register_multiple() - This function writes multiple bytes of
- *				       information to multiple registers.
- * @adapter: Pointer to the adapter structure.
- * @addr: Address of the register.
- * @data: Pointer to the data that has to be written.
- * @count: Number of multiple bytes to be written on to the registers.
+ * rsi_usb_ग_लिखो_रेजिस्टर_multiple() - This function ग_लिखोs multiple bytes of
+ *				       inक्रमmation to multiple रेजिस्टरs.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @addr: Address of the रेजिस्टर.
+ * @data: Poपूर्णांकer to the data that has to be written.
+ * @count: Number of multiple bytes to be written on to the रेजिस्टरs.
  *
  * Return: status: 0 on success, a negative error code on failure.
  */
-static int rsi_usb_write_register_multiple(struct rsi_hw *adapter, u32 addr,
+अटल पूर्णांक rsi_usb_ग_लिखो_रेजिस्टर_multiple(काष्ठा rsi_hw *adapter, u32 addr,
 					   u8 *data, u16 count)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
 	u8 *buf;
 	u16 transfer;
-	int status = 0;
+	पूर्णांक status = 0;
 
 	buf = kzalloc(RSI_USB_BUF_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	while (count) {
+	जबतक (count) अणु
 		transfer = min_t(u16, count, RSI_USB_BUF_SIZE);
-		memcpy(buf, data, transfer);
+		स_नकल(buf, data, transfer);
 		status = usb_control_msg(dev->usbdev,
 					 usb_sndctrlpipe(dev->usbdev, 0),
 					 USB_VENDOR_REGISTER_WRITE,
 					 RSI_USB_REQ_OUT,
 					 ((addr & 0xffff0000) >> 16),
 					 (addr & 0xffff),
-					 (void *)buf,
+					 (व्योम *)buf,
 					 transfer,
 					 USB_CTRL_SET_TIMEOUT);
-		if (status < 0) {
+		अगर (status < 0) अणु
 			rsi_dbg(ERR_ZONE,
 				"Reg write failed with error code :%d\n",
 				status);
-			kfree(buf);
-			return status;
-		}
+			kमुक्त(buf);
+			वापस status;
+		पूर्ण
 		count -= transfer;
 		data += transfer;
 		addr += transfer;
-	}
+	पूर्ण
 
-	kfree(buf);
-	return 0;
-}
+	kमुक्त(buf);
+	वापस 0;
+पूर्ण
 
 /**
- *rsi_usb_host_intf_write_pkt() - This function writes the packet to the
+ *rsi_usb_host_पूर्णांकf_ग_लिखो_pkt() - This function ग_लिखोs the packet to the
  *				   USB card.
- * @adapter: Pointer to the adapter structure.
- * @pkt: Pointer to the data to be written on to the card.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @pkt: Poपूर्णांकer to the data to be written on to the card.
  * @len: Length of the data to be written on to the card.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-static int rsi_usb_host_intf_write_pkt(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_usb_host_पूर्णांकf_ग_लिखो_pkt(काष्ठा rsi_hw *adapter,
 				       u8 *pkt,
 				       u32 len)
-{
+अणु
 	u32 queueno = ((pkt[1] >> 4) & 0x7);
-	u8 endpoint;
+	u8 endpoपूर्णांक;
 
-	endpoint = ((queueno == RSI_WIFI_MGMT_Q || queueno == RSI_WIFI_DATA_Q ||
+	endpoपूर्णांक = ((queueno == RSI_WIFI_MGMT_Q || queueno == RSI_WIFI_DATA_Q ||
 		     queueno == RSI_COEX_Q) ? WLAN_EP : BT_EP);
 
-	return rsi_write_multiple(adapter,
-				  endpoint,
+	वापस rsi_ग_लिखो_multiple(adapter,
+				  endpoपूर्णांक,
 				  (u8 *)pkt,
 				  len);
-}
+पूर्ण
 
-static int rsi_usb_master_reg_read(struct rsi_hw *adapter, u32 reg,
+अटल पूर्णांक rsi_usb_master_reg_पढ़ो(काष्ठा rsi_hw *adapter, u32 reg,
 				   u32 *value, u16 len)
-{
-	struct usb_device *usbdev =
-		((struct rsi_91x_usbdev *)adapter->rsi_dev)->usbdev;
+अणु
+	काष्ठा usb_device *usbdev =
+		((काष्ठा rsi_91x_usbdev *)adapter->rsi_dev)->usbdev;
 	u16 temp;
-	int ret;
+	पूर्णांक ret;
 
-	ret = rsi_usb_reg_read(usbdev, reg, &temp, len);
-	if (ret < 0)
-		return ret;
+	ret = rsi_usb_reg_पढ़ो(usbdev, reg, &temp, len);
+	अगर (ret < 0)
+		वापस ret;
 	*value = temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_usb_master_reg_write(struct rsi_hw *adapter,
-				    unsigned long reg,
-				    unsigned long value, u16 len)
-{
-	struct usb_device *usbdev =
-		((struct rsi_91x_usbdev *)adapter->rsi_dev)->usbdev;
+अटल पूर्णांक rsi_usb_master_reg_ग_लिखो(काष्ठा rsi_hw *adapter,
+				    अचिन्हित दीर्घ reg,
+				    अचिन्हित दीर्घ value, u16 len)
+अणु
+	काष्ठा usb_device *usbdev =
+		((काष्ठा rsi_91x_usbdev *)adapter->rsi_dev)->usbdev;
 
-	return rsi_usb_reg_write(usbdev, reg, value, len);
-}
+	वापस rsi_usb_reg_ग_लिखो(usbdev, reg, value, len);
+पूर्ण
 
-static int rsi_usb_load_data_master_write(struct rsi_hw *adapter,
+अटल पूर्णांक rsi_usb_load_data_master_ग_लिखो(काष्ठा rsi_hw *adapter,
 					  u32 base_address,
-					  u32 instructions_sz, u16 block_size,
+					  u32 inकाष्ठाions_sz, u16 block_size,
 					  u8 *ta_firmware)
-{
+अणु
 	u16 num_blocks;
 	u32 cur_indx, i;
 	u8 temp_buf[256];
-	int status;
+	पूर्णांक status;
 
-	num_blocks = instructions_sz / block_size;
+	num_blocks = inकाष्ठाions_sz / block_size;
 	rsi_dbg(INFO_ZONE, "num_blocks: %d\n", num_blocks);
 
-	for (cur_indx = 0, i = 0; i < num_blocks; i++, cur_indx += block_size) {
-		memcpy(temp_buf, ta_firmware + cur_indx, block_size);
-		status = rsi_usb_write_register_multiple(adapter, base_address,
+	क्रम (cur_indx = 0, i = 0; i < num_blocks; i++, cur_indx += block_size) अणु
+		स_नकल(temp_buf, ta_firmware + cur_indx, block_size);
+		status = rsi_usb_ग_लिखो_रेजिस्टर_multiple(adapter, base_address,
 							 (u8 *)(temp_buf),
 							 block_size);
-		if (status < 0)
-			return status;
+		अगर (status < 0)
+			वापस status;
 
 		rsi_dbg(INFO_ZONE, "%s: loading block: %d\n", __func__, i);
 		base_address += block_size;
-	}
+	पूर्ण
 
-	if (instructions_sz % block_size) {
-		memset(temp_buf, 0, block_size);
-		memcpy(temp_buf, ta_firmware + cur_indx,
-		       instructions_sz % block_size);
-		status = rsi_usb_write_register_multiple
+	अगर (inकाष्ठाions_sz % block_size) अणु
+		स_रखो(temp_buf, 0, block_size);
+		स_नकल(temp_buf, ta_firmware + cur_indx,
+		       inकाष्ठाions_sz % block_size);
+		status = rsi_usb_ग_लिखो_रेजिस्टर_multiple
 						(adapter, base_address,
 						 (u8 *)temp_buf,
-						 instructions_sz % block_size);
-		if (status < 0)
-			return status;
+						 inकाष्ठाions_sz % block_size);
+		अगर (status < 0)
+			वापस status;
 		rsi_dbg(INFO_ZONE,
 			"Written Last Block in Address 0x%x Successfully\n",
 			cur_indx);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct rsi_host_intf_ops usb_host_intf_ops = {
-	.write_pkt		= rsi_usb_host_intf_write_pkt,
-	.read_reg_multiple	= rsi_usb_read_register_multiple,
-	.write_reg_multiple	= rsi_usb_write_register_multiple,
-	.master_reg_read	= rsi_usb_master_reg_read,
-	.master_reg_write	= rsi_usb_master_reg_write,
-	.load_data_master_write	= rsi_usb_load_data_master_write,
-};
+अटल काष्ठा rsi_host_पूर्णांकf_ops usb_host_पूर्णांकf_ops = अणु
+	.ग_लिखो_pkt		= rsi_usb_host_पूर्णांकf_ग_लिखो_pkt,
+	.पढ़ो_reg_multiple	= rsi_usb_पढ़ो_रेजिस्टर_multiple,
+	.ग_लिखो_reg_multiple	= rsi_usb_ग_लिखो_रेजिस्टर_multiple,
+	.master_reg_पढ़ो	= rsi_usb_master_reg_पढ़ो,
+	.master_reg_ग_लिखो	= rsi_usb_master_reg_ग_लिखो,
+	.load_data_master_ग_लिखो	= rsi_usb_load_data_master_ग_लिखो,
+पूर्ण;
 
 /**
- * rsi_deinit_usb_interface() - This function deinitializes the usb interface.
- * @adapter: Pointer to the adapter structure.
+ * rsi_deinit_usb_पूर्णांकerface() - This function deinitializes the usb पूर्णांकerface.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
  *
  * Return: None.
  */
-static void rsi_deinit_usb_interface(struct rsi_hw *adapter)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
+अटल व्योम rsi_deinit_usb_पूर्णांकerface(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
 
-	rsi_kill_thread(&dev->rx_thread);
+	rsi_समाप्त_thपढ़ो(&dev->rx_thपढ़ो);
 
-	usb_free_urb(dev->rx_cb[0].rx_urb);
-	if (adapter->priv->coex_mode > 1)
-		usb_free_urb(dev->rx_cb[1].rx_urb);
+	usb_मुक्त_urb(dev->rx_cb[0].rx_urb);
+	अगर (adapter->priv->coex_mode > 1)
+		usb_मुक्त_urb(dev->rx_cb[1].rx_urb);
 
-	kfree(dev->tx_buffer);
-}
+	kमुक्त(dev->tx_buffer);
+पूर्ण
 
-static int rsi_usb_init_rx(struct rsi_hw *adapter)
-{
-	struct rsi_91x_usbdev *dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
-	struct rx_usb_ctrl_block *rx_cb;
+अटल पूर्णांक rsi_usb_init_rx(काष्ठा rsi_hw *adapter)
+अणु
+	काष्ठा rsi_91x_usbdev *dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
+	काष्ठा rx_usb_ctrl_block *rx_cb;
 	u8 idx, num_rx_cb;
 
 	num_rx_cb = (adapter->priv->coex_mode > 1 ? 2 : 1);
 
-	for (idx = 0; idx < num_rx_cb; idx++) {
+	क्रम (idx = 0; idx < num_rx_cb; idx++) अणु
 		rx_cb = &dev->rx_cb[idx];
 
 		rx_cb->rx_urb = usb_alloc_urb(0, GFP_KERNEL);
-		if (!rx_cb->rx_urb) {
+		अगर (!rx_cb->rx_urb) अणु
 			rsi_dbg(ERR_ZONE, "Failed alloc rx urb[%d]\n", idx);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		rx_cb->ep_num = idx + 1;
-		rx_cb->data = (void *)dev;
-	}
+		rx_cb->data = (व्योम *)dev;
+	पूर्ण
 	skb_queue_head_init(&dev->rx_q);
-	rsi_init_event(&dev->rx_thread.event);
-	if (rsi_create_kthread(adapter->priv, &dev->rx_thread,
-			       rsi_usb_rx_thread, "RX-Thread")) {
+	rsi_init_event(&dev->rx_thपढ़ो.event);
+	अगर (rsi_create_kthपढ़ो(adapter->priv, &dev->rx_thपढ़ो,
+			       rsi_usb_rx_thपढ़ो, "RX-Thread")) अणु
 		rsi_dbg(ERR_ZONE, "%s: Unable to init rx thrd\n", __func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	usb_free_urb(dev->rx_cb[0].rx_urb);
-	if (adapter->priv->coex_mode > 1)
-		usb_free_urb(dev->rx_cb[1].rx_urb);
+	usb_मुक्त_urb(dev->rx_cb[0].rx_urb);
+	अगर (adapter->priv->coex_mode > 1)
+		usb_मुक्त_urb(dev->rx_cb[1].rx_urb);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
- * rsi_init_usb_interface() - This function initializes the usb interface.
- * @adapter: Pointer to the adapter structure.
- * @pfunction: Pointer to USB interface structure.
+ * rsi_init_usb_पूर्णांकerface() - This function initializes the usb पूर्णांकerface.
+ * @adapter: Poपूर्णांकer to the adapter काष्ठाure.
+ * @pfunction: Poपूर्णांकer to USB पूर्णांकerface काष्ठाure.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-static int rsi_init_usb_interface(struct rsi_hw *adapter,
-				  struct usb_interface *pfunction)
-{
-	struct rsi_91x_usbdev *rsi_dev;
-	int status;
+अटल पूर्णांक rsi_init_usb_पूर्णांकerface(काष्ठा rsi_hw *adapter,
+				  काष्ठा usb_पूर्णांकerface *pfunction)
+अणु
+	काष्ठा rsi_91x_usbdev *rsi_dev;
+	पूर्णांक status;
 
-	rsi_dev = kzalloc(sizeof(*rsi_dev), GFP_KERNEL);
-	if (!rsi_dev)
-		return -ENOMEM;
+	rsi_dev = kzalloc(माप(*rsi_dev), GFP_KERNEL);
+	अगर (!rsi_dev)
+		वापस -ENOMEM;
 
 	adapter->rsi_dev = rsi_dev;
-	rsi_dev->usbdev = interface_to_usbdev(pfunction);
-	rsi_dev->priv = (void *)adapter;
+	rsi_dev->usbdev = पूर्णांकerface_to_usbdev(pfunction);
+	rsi_dev->priv = (व्योम *)adapter;
 
-	if (rsi_find_bulk_in_and_out_endpoints(pfunction, adapter)) {
+	अगर (rsi_find_bulk_in_and_out_endpoपूर्णांकs(pfunction, adapter)) अणु
 		status = -EINVAL;
-		goto fail_eps;
-	}
+		जाओ fail_eps;
+	पूर्ण
 
 	adapter->device = &pfunction->dev;
-	usb_set_intfdata(pfunction, adapter);
+	usb_set_पूर्णांकfdata(pfunction, adapter);
 
-	rsi_dev->tx_buffer = kmalloc(2048, GFP_KERNEL);
-	if (!rsi_dev->tx_buffer) {
+	rsi_dev->tx_buffer = kदो_स्मृति(2048, GFP_KERNEL);
+	अगर (!rsi_dev->tx_buffer) अणु
 		status = -ENOMEM;
-		goto fail_eps;
-	}
+		जाओ fail_eps;
+	पूर्ण
 
-	if (rsi_usb_init_rx(adapter)) {
+	अगर (rsi_usb_init_rx(adapter)) अणु
 		rsi_dbg(ERR_ZONE, "Failed to init RX handle\n");
 		status = -ENOMEM;
-		goto fail_rx;
-	}
+		जाओ fail_rx;
+	पूर्ण
 
 	rsi_dev->tx_blk_size = 252;
 	adapter->block_size = rsi_dev->tx_blk_size;
 
 	/* Initializing function callbacks */
 	adapter->check_hw_queue_status = rsi_usb_check_queue_status;
-	adapter->determine_event_timeout = rsi_usb_event_timeout;
-	adapter->rsi_host_intf = RSI_HOST_INTF_USB;
-	adapter->host_intf_ops = &usb_host_intf_ops;
+	adapter->determine_event_समयout = rsi_usb_event_समयout;
+	adapter->rsi_host_पूर्णांकf = RSI_HOST_INTF_USB;
+	adapter->host_पूर्णांकf_ops = &usb_host_पूर्णांकf_ops;
 
-#ifdef CONFIG_RSI_DEBUGFS
+#अगर_घोषित CONFIG_RSI_DEBUGFS
 	/* In USB, one less than the MAX_DEBUGFS_ENTRIES entries is required */
 	adapter->num_debugfs_entries = (MAX_DEBUGFS_ENTRIES - 1);
-#endif
+#पूर्ण_अगर
 
 	rsi_dbg(INIT_ZONE, "%s: Enabled the interface\n", __func__);
-	return 0;
+	वापस 0;
 
 fail_rx:
-	kfree(rsi_dev->tx_buffer);
+	kमुक्त(rsi_dev->tx_buffer);
 
 fail_eps:
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int usb_ulp_read_write(struct rsi_hw *adapter, u16 addr, u32 data,
+अटल पूर्णांक usb_ulp_पढ़ो_ग_लिखो(काष्ठा rsi_hw *adapter, u16 addr, u32 data,
 			      u16 len_in_bits)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = rsi_usb_master_reg_write
+	ret = rsi_usb_master_reg_ग_लिखो
 			(adapter, RSI_GSPI_DATA_REG1,
 			 ((addr << 6) | ((data >> 16) & 0xffff)), 2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = rsi_usb_master_reg_write(adapter, RSI_GSPI_DATA_REG0,
+	ret = rsi_usb_master_reg_ग_लिखो(adapter, RSI_GSPI_DATA_REG0,
 				       (data & 0xffff), 2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Initializing GSPI for ULP read/writes */
-	rsi_usb_master_reg_write(adapter, RSI_GSPI_CTRL_REG0,
+	/* Initializing GSPI क्रम ULP पढ़ो/ग_लिखोs */
+	rsi_usb_master_reg_ग_लिखो(adapter, RSI_GSPI_CTRL_REG0,
 				 RSI_GSPI_CTRL_REG0_VALUE, 2);
 
-	ret = rsi_usb_master_reg_write(adapter, RSI_GSPI_CTRL_REG1,
+	ret = rsi_usb_master_reg_ग_लिखो(adapter, RSI_GSPI_CTRL_REG1,
 				       ((len_in_bits - 1) | RSI_GSPI_TRIG), 2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	msleep(20);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsi_reset_card(struct rsi_hw *adapter)
-{
-	int ret;
+अटल पूर्णांक rsi_reset_card(काष्ठा rsi_hw *adapter)
+अणु
+	पूर्णांक ret;
 
 	rsi_dbg(INFO_ZONE, "Resetting Card...\n");
-	rsi_usb_master_reg_write(adapter, RSI_TA_HOLD_REG, 0xE, 4);
+	rsi_usb_master_reg_ग_लिखो(adapter, RSI_TA_HOLD_REG, 0xE, 4);
 
-	/* This msleep will ensure Thread-Arch processor to go to hold
+	/* This msleep will ensure Thपढ़ो-Arch processor to go to hold
 	 * and any pending dma transfers to rf in device to finish.
 	 */
 	msleep(100);
 
-	ret = rsi_usb_master_reg_write(adapter, SWBL_REGOUT,
+	ret = rsi_usb_master_reg_ग_लिखो(adapter, SWBL_REGOUT,
 				       RSI_FW_WDT_DISABLE_REQ,
 				       RSI_COMMON_REG_SIZE);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		rsi_dbg(ERR_ZONE, "Disabling firmware watchdog timer failed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (adapter->device_model != RSI_DEV_9116) {
-		ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_1,
+	अगर (adapter->device_model != RSI_DEV_9116) अणु
+		ret = usb_ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_TIMER_1,
 					 RSI_ULP_WRITE_2, 32);
-		if (ret < 0)
-			goto fail;
-		ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_2,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = usb_ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_TIMER_2,
 					 RSI_ULP_WRITE_0, 32);
-		if (ret < 0)
-			goto fail;
-		ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_DELAY_TIMER_1,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = usb_ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_DELAY_TIMER_1,
 					 RSI_ULP_WRITE_50, 32);
-		if (ret < 0)
-			goto fail;
-		ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_DELAY_TIMER_2,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = usb_ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_DELAY_TIMER_2,
 					 RSI_ULP_WRITE_0, 32);
-		if (ret < 0)
-			goto fail;
-		ret = usb_ulp_read_write(adapter, RSI_WATCH_DOG_TIMER_ENABLE,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = usb_ulp_पढ़ो_ग_लिखो(adapter, RSI_WATCH_DOG_TIMER_ENABLE,
 					 RSI_ULP_TIMER_ENABLE, 32);
-		if (ret < 0)
-			goto fail;
-	} else {
-		ret = rsi_usb_master_reg_write(adapter,
+		अगर (ret < 0)
+			जाओ fail;
+	पूर्ण अन्यथा अणु
+		ret = rsi_usb_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_INTERRUPT_TIMER,
 					       NWP_WWD_INT_TIMER_CLKS,
 					       RSI_9116_REG_SIZE);
-		if (ret < 0)
-			goto fail;
-		ret = rsi_usb_master_reg_write(adapter,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = rsi_usb_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_SYSTEM_RESET_TIMER,
 					       NWP_WWD_SYS_RESET_TIMER_CLKS,
 					       RSI_9116_REG_SIZE);
-		if (ret < 0)
-			goto fail;
-		ret = rsi_usb_master_reg_write(adapter,
+		अगर (ret < 0)
+			जाओ fail;
+		ret = rsi_usb_master_reg_ग_लिखो(adapter,
 					       NWP_WWD_MODE_AND_RSTART,
 					       NWP_WWD_TIMER_DISABLE,
 					       RSI_9116_REG_SIZE);
-		if (ret < 0)
-			goto fail;
-	}
+		अगर (ret < 0)
+			जाओ fail;
+	पूर्ण
 
 	rsi_dbg(INFO_ZONE, "Reset card done\n");
-	return ret;
+	वापस ret;
 
 fail:
 	rsi_dbg(ERR_ZONE, "Reset card failed\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * rsi_probe() - This function is called by kernel when the driver provided
- *		 Vendor and device IDs are matched. All the initialization
- *		 work is done here.
- * @pfunction: Pointer to the USB interface structure.
- * @id: Pointer to the usb_device_id structure.
+ *		 Venकरोr and device IDs are matched. All the initialization
+ *		 work is करोne here.
+ * @pfunction: Poपूर्णांकer to the USB पूर्णांकerface काष्ठाure.
+ * @id: Poपूर्णांकer to the usb_device_id काष्ठाure.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-static int rsi_probe(struct usb_interface *pfunction,
-		     const struct usb_device_id *id)
-{
-	struct rsi_hw *adapter;
-	struct rsi_91x_usbdev *dev;
+अटल पूर्णांक rsi_probe(काष्ठा usb_पूर्णांकerface *pfunction,
+		     स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा rsi_hw *adapter;
+	काष्ठा rsi_91x_usbdev *dev;
 	u16 fw_status;
-	int status;
+	पूर्णांक status;
 
 	rsi_dbg(INIT_ZONE, "%s: Init function called\n", __func__);
 
 	adapter = rsi_91x_init(dev_oper_mode);
-	if (!adapter) {
+	अगर (!adapter) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to init os intf ops\n",
 			__func__);
-		return -ENOMEM;
-	}
-	adapter->rsi_host_intf = RSI_HOST_INTF_USB;
+		वापस -ENOMEM;
+	पूर्ण
+	adapter->rsi_host_पूर्णांकf = RSI_HOST_INTF_USB;
 
-	status = rsi_init_usb_interface(adapter, pfunction);
-	if (status) {
+	status = rsi_init_usb_पूर्णांकerface(adapter, pfunction);
+	अगर (status) अणु
 		rsi_dbg(ERR_ZONE, "%s: Failed to init usb interface\n",
 			__func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	rsi_dbg(ERR_ZONE, "%s: Initialized os intf ops\n", __func__);
 
-	if (id->idProduct == RSI_USB_PID_9113) {
+	अगर (id->idProduct == RSI_USB_PID_9113) अणु
 		rsi_dbg(INIT_ZONE, "%s: 9113 module detected\n", __func__);
 		adapter->device_model = RSI_DEV_9113;
-	} else if (id->idProduct == RSI_USB_PID_9116) {
+	पूर्ण अन्यथा अगर (id->idProduct == RSI_USB_PID_9116) अणु
 		rsi_dbg(INIT_ZONE, "%s: 9116 module detected\n", __func__);
 		adapter->device_model = RSI_DEV_9116;
-	} else {
+	पूर्ण अन्यथा अणु
 		rsi_dbg(ERR_ZONE, "%s: Unsupported RSI device id 0x%x\n",
 			__func__, id->idProduct);
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	dev = (struct rsi_91x_usbdev *)adapter->rsi_dev;
+	dev = (काष्ठा rsi_91x_usbdev *)adapter->rsi_dev;
 
-	status = rsi_usb_reg_read(dev->usbdev, FW_STATUS_REG, &fw_status, 2);
-	if (status < 0)
-		goto err1;
-	else
+	status = rsi_usb_reg_पढ़ो(dev->usbdev, FW_STATUS_REG, &fw_status, 2);
+	अगर (status < 0)
+		जाओ err1;
+	अन्यथा
 		fw_status &= 1;
 
-	if (!fw_status) {
+	अगर (!fw_status) अणु
 		rsi_dbg(INIT_ZONE, "Loading firmware...\n");
 		status = rsi_hal_device_init(adapter);
-		if (status) {
+		अगर (status) अणु
 			rsi_dbg(ERR_ZONE, "%s: Failed in device init\n",
 				__func__);
-			goto err1;
-		}
+			जाओ err1;
+		पूर्ण
 		rsi_dbg(INIT_ZONE, "%s: Device Init Done\n", __func__);
-	}
+	पूर्ण
 
 	status = rsi_rx_urb_submit(adapter, WLAN_EP, GFP_KERNEL);
-	if (status)
-		goto err1;
+	अगर (status)
+		जाओ err1;
 
-	if (adapter->priv->coex_mode > 1) {
+	अगर (adapter->priv->coex_mode > 1) अणु
 		status = rsi_rx_urb_submit(adapter, BT_EP, GFP_KERNEL);
-		if (status)
-			goto err_kill_wlan_urb;
-	}
+		अगर (status)
+			जाओ err_समाप्त_wlan_urb;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_kill_wlan_urb:
-	rsi_rx_urb_kill(adapter, WLAN_EP);
+err_समाप्त_wlan_urb:
+	rsi_rx_urb_समाप्त(adapter, WLAN_EP);
 err1:
-	rsi_deinit_usb_interface(adapter);
+	rsi_deinit_usb_पूर्णांकerface(adapter);
 err:
 	rsi_91x_deinit(adapter);
 	rsi_dbg(ERR_ZONE, "%s: Failed in probe...Exiting\n", __func__);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /**
- * rsi_disconnect() - This function performs the reverse of the probe function,
- *		      it deinitialize the driver structure.
- * @pfunction: Pointer to the USB interface structure.
+ * rsi_disconnect() - This function perक्रमms the reverse of the probe function,
+ *		      it deinitialize the driver काष्ठाure.
+ * @pfunction: Poपूर्णांकer to the USB पूर्णांकerface काष्ठाure.
  *
  * Return: None.
  */
-static void rsi_disconnect(struct usb_interface *pfunction)
-{
-	struct rsi_hw *adapter = usb_get_intfdata(pfunction);
+अटल व्योम rsi_disconnect(काष्ठा usb_पूर्णांकerface *pfunction)
+अणु
+	काष्ठा rsi_hw *adapter = usb_get_पूर्णांकfdata(pfunction);
 
-	if (!adapter)
-		return;
+	अगर (!adapter)
+		वापस;
 
 	rsi_mac80211_detach(adapter);
 
-	if (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
-	    adapter->priv->bt_adapter) {
+	अगर (IS_ENABLED(CONFIG_RSI_COEX) && adapter->priv->coex_mode > 1 &&
+	    adapter->priv->bt_adapter) अणु
 		rsi_bt_ops.detach(adapter->priv->bt_adapter);
-		adapter->priv->bt_adapter = NULL;
-	}
+		adapter->priv->bt_adapter = शून्य;
+	पूर्ण
 
-	if (adapter->priv->coex_mode > 1)
-		rsi_rx_urb_kill(adapter, BT_EP);
-	rsi_rx_urb_kill(adapter, WLAN_EP);
+	अगर (adapter->priv->coex_mode > 1)
+		rsi_rx_urb_समाप्त(adapter, BT_EP);
+	rsi_rx_urb_समाप्त(adapter, WLAN_EP);
 
 	rsi_reset_card(adapter);
-	rsi_deinit_usb_interface(adapter);
+	rsi_deinit_usb_पूर्णांकerface(adapter);
 	rsi_91x_deinit(adapter);
 
 	rsi_dbg(INFO_ZONE, "%s: Deinitialization completed\n", __func__);
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int rsi_suspend(struct usb_interface *intf, pm_message_t message)
-{
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक rsi_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
+अणु
 	/* Not yet implemented */
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static int rsi_resume(struct usb_interface *intf)
-{
+अटल पूर्णांक rsi_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
 	/* Not yet implemented */
-	return -ENOSYS;
-}
-#endif
+	वापस -ENOSYS;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct usb_device_id rsi_dev_table[] = {
-	{ USB_DEVICE(RSI_USB_VENDOR_ID, RSI_USB_PID_9113) },
-	{ USB_DEVICE(RSI_USB_VENDOR_ID, RSI_USB_PID_9116) },
-	{ /* Blank */},
-};
+अटल स्थिर काष्ठा usb_device_id rsi_dev_table[] = अणु
+	अणु USB_DEVICE(RSI_USB_VENDOR_ID, RSI_USB_PID_9113) पूर्ण,
+	अणु USB_DEVICE(RSI_USB_VENDOR_ID, RSI_USB_PID_9116) पूर्ण,
+	अणु /* Blank */पूर्ण,
+पूर्ण;
 
-static struct usb_driver rsi_driver = {
+अटल काष्ठा usb_driver rsi_driver = अणु
 	.name       = "RSI-USB WLAN",
 	.probe      = rsi_probe,
 	.disconnect = rsi_disconnect,
 	.id_table   = rsi_dev_table,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend    = rsi_suspend,
 	.resume     = rsi_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_usb_driver(rsi_driver);
 

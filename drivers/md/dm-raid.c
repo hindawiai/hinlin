@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2010-2011 Neil Brown
  * Copyright (C) 2010-2018 Red Hat, Inc. All rights reserved.
@@ -5,120 +6,120 @@
  * This file is released under the GPL.
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include "md.h"
-#include "raid1.h"
-#include "raid5.h"
-#include "raid10.h"
-#include "md-bitmap.h"
+#समावेश "md.h"
+#समावेश "raid1.h"
+#समावेश "raid5.h"
+#समावेश "raid10.h"
+#समावेश "md-bitmap.h"
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
-#define DM_MSG_PREFIX "raid"
-#define	MAX_RAID_DEVICES	253 /* md-raid kernel limit */
+#घोषणा DM_MSG_PREFIX "raid"
+#घोषणा	MAX_RAID_DEVICES	253 /* md-raid kernel limit */
 
 /*
- * Minimum sectors of free reshape space per raid device
+ * Minimum sectors of मुक्त reshape space per raid device
  */
-#define	MIN_FREE_RESHAPE_SPACE to_sector(4*4096)
+#घोषणा	MIN_FREE_RESHAPE_SPACE to_sector(4*4096)
 
 /*
  * Minimum journal space 4 MiB in sectors.
  */
-#define	MIN_RAID456_JOURNAL_SPACE (4*2048)
+#घोषणा	MIN_RAID456_JOURNAL_SPACE (4*2048)
 
-static bool devices_handle_discard_safely = false;
+अटल bool devices_handle_discard_safely = false;
 
 /*
  * The following flags are used by dm-raid.c to set up the array state.
- * They must be cleared before md_run is called.
+ * They must be cleared beक्रमe md_run is called.
  */
-#define FirstUse 10		/* rdev flag */
+#घोषणा FirstUse 10		/* rdev flag */
 
-struct raid_dev {
+काष्ठा raid_dev अणु
 	/*
 	 * Two DM devices, one to hold metadata and one to hold the
-	 * actual data/parity.	The reason for this is to not confuse
+	 * actual data/parity.	The reason क्रम this is to not confuse
 	 * ti->len and give more flexibility in altering size and
-	 * characteristics.
+	 * अक्षरacteristics.
 	 *
-	 * While it is possible for this device to be associated
-	 * with a different physical device than the data_dev, it
-	 * is intended for it to be the same.
+	 * While it is possible क्रम this device to be associated
+	 * with a dअगरferent physical device than the data_dev, it
+	 * is पूर्णांकended क्रम it to be the same.
 	 *    |--------- Physical Device ---------|
 	 *    |- meta_dev -|------ data_dev ------|
 	 */
-	struct dm_dev *meta_dev;
-	struct dm_dev *data_dev;
-	struct md_rdev rdev;
-};
+	काष्ठा dm_dev *meta_dev;
+	काष्ठा dm_dev *data_dev;
+	काष्ठा md_rdev rdev;
+पूर्ण;
 
 /*
- * Bits for establishing rs->ctr_flags
+ * Bits क्रम establishing rs->ctr_flags
  *
  * 1 = no flag value
  * 2 = flag with value
  */
-#define __CTR_FLAG_SYNC			0  /* 1 */ /* Not with raid0! */
-#define __CTR_FLAG_NOSYNC		1  /* 1 */ /* Not with raid0! */
-#define __CTR_FLAG_REBUILD		2  /* 2 */ /* Not with raid0! */
-#define __CTR_FLAG_DAEMON_SLEEP		3  /* 2 */ /* Not with raid0! */
-#define __CTR_FLAG_MIN_RECOVERY_RATE	4  /* 2 */ /* Not with raid0! */
-#define __CTR_FLAG_MAX_RECOVERY_RATE	5  /* 2 */ /* Not with raid0! */
-#define __CTR_FLAG_MAX_WRITE_BEHIND	6  /* 2 */ /* Only with raid1! */
-#define __CTR_FLAG_WRITE_MOSTLY		7  /* 2 */ /* Only with raid1! */
-#define __CTR_FLAG_STRIPE_CACHE		8  /* 2 */ /* Only with raid4/5/6! */
-#define __CTR_FLAG_REGION_SIZE		9  /* 2 */ /* Not with raid0! */
-#define __CTR_FLAG_RAID10_COPIES	10 /* 2 */ /* Only with raid10 */
-#define __CTR_FLAG_RAID10_FORMAT	11 /* 2 */ /* Only with raid10 */
-/* New for v1.9.0 */
-#define __CTR_FLAG_DELTA_DISKS		12 /* 2 */ /* Only with reshapable raid1/4/5/6/10! */
-#define __CTR_FLAG_DATA_OFFSET		13 /* 2 */ /* Only with reshapable raid4/5/6/10! */
-#define __CTR_FLAG_RAID10_USE_NEAR_SETS 14 /* 2 */ /* Only with raid10! */
+#घोषणा __CTR_FLAG_SYNC			0  /* 1 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_NOSYNC		1  /* 1 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_REBUILD		2  /* 2 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_DAEMON_SLEEP		3  /* 2 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_MIN_RECOVERY_RATE	4  /* 2 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_MAX_RECOVERY_RATE	5  /* 2 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_MAX_WRITE_BEHIND	6  /* 2 */ /* Only with raid1! */
+#घोषणा __CTR_FLAG_WRITE_MOSTLY		7  /* 2 */ /* Only with raid1! */
+#घोषणा __CTR_FLAG_STRIPE_CACHE		8  /* 2 */ /* Only with raid4/5/6! */
+#घोषणा __CTR_FLAG_REGION_SIZE		9  /* 2 */ /* Not with raid0! */
+#घोषणा __CTR_FLAG_RAID10_COPIES	10 /* 2 */ /* Only with raid10 */
+#घोषणा __CTR_FLAG_RAID10_FORMAT	11 /* 2 */ /* Only with raid10 */
+/* New क्रम v1.9.0 */
+#घोषणा __CTR_FLAG_DELTA_DISKS		12 /* 2 */ /* Only with reshapable raid1/4/5/6/10! */
+#घोषणा __CTR_FLAG_DATA_OFFSET		13 /* 2 */ /* Only with reshapable raid4/5/6/10! */
+#घोषणा __CTR_FLAG_RAID10_USE_NEAR_SETS 14 /* 2 */ /* Only with raid10! */
 
-/* New for v1.10.0 */
-#define __CTR_FLAG_JOURNAL_DEV		15 /* 2 */ /* Only with raid4/5/6 (journal device)! */
+/* New क्रम v1.10.0 */
+#घोषणा __CTR_FLAG_JOURNAL_DEV		15 /* 2 */ /* Only with raid4/5/6 (journal device)! */
 
-/* New for v1.11.1 */
-#define __CTR_FLAG_JOURNAL_MODE		16 /* 2 */ /* Only with raid4/5/6 (journal mode)! */
+/* New क्रम v1.11.1 */
+#घोषणा __CTR_FLAG_JOURNAL_MODE		16 /* 2 */ /* Only with raid4/5/6 (journal mode)! */
 
 /*
- * Flags for rs->ctr_flags field.
+ * Flags क्रम rs->ctr_flags field.
  */
-#define CTR_FLAG_SYNC			(1 << __CTR_FLAG_SYNC)
-#define CTR_FLAG_NOSYNC			(1 << __CTR_FLAG_NOSYNC)
-#define CTR_FLAG_REBUILD		(1 << __CTR_FLAG_REBUILD)
-#define CTR_FLAG_DAEMON_SLEEP		(1 << __CTR_FLAG_DAEMON_SLEEP)
-#define CTR_FLAG_MIN_RECOVERY_RATE	(1 << __CTR_FLAG_MIN_RECOVERY_RATE)
-#define CTR_FLAG_MAX_RECOVERY_RATE	(1 << __CTR_FLAG_MAX_RECOVERY_RATE)
-#define CTR_FLAG_MAX_WRITE_BEHIND	(1 << __CTR_FLAG_MAX_WRITE_BEHIND)
-#define CTR_FLAG_WRITE_MOSTLY		(1 << __CTR_FLAG_WRITE_MOSTLY)
-#define CTR_FLAG_STRIPE_CACHE		(1 << __CTR_FLAG_STRIPE_CACHE)
-#define CTR_FLAG_REGION_SIZE		(1 << __CTR_FLAG_REGION_SIZE)
-#define CTR_FLAG_RAID10_COPIES		(1 << __CTR_FLAG_RAID10_COPIES)
-#define CTR_FLAG_RAID10_FORMAT		(1 << __CTR_FLAG_RAID10_FORMAT)
-#define CTR_FLAG_DELTA_DISKS		(1 << __CTR_FLAG_DELTA_DISKS)
-#define CTR_FLAG_DATA_OFFSET		(1 << __CTR_FLAG_DATA_OFFSET)
-#define CTR_FLAG_RAID10_USE_NEAR_SETS	(1 << __CTR_FLAG_RAID10_USE_NEAR_SETS)
-#define CTR_FLAG_JOURNAL_DEV		(1 << __CTR_FLAG_JOURNAL_DEV)
-#define CTR_FLAG_JOURNAL_MODE		(1 << __CTR_FLAG_JOURNAL_MODE)
+#घोषणा CTR_FLAG_SYNC			(1 << __CTR_FLAG_SYNC)
+#घोषणा CTR_FLAG_NOSYNC			(1 << __CTR_FLAG_NOSYNC)
+#घोषणा CTR_FLAG_REBUILD		(1 << __CTR_FLAG_REBUILD)
+#घोषणा CTR_FLAG_DAEMON_SLEEP		(1 << __CTR_FLAG_DAEMON_SLEEP)
+#घोषणा CTR_FLAG_MIN_RECOVERY_RATE	(1 << __CTR_FLAG_MIN_RECOVERY_RATE)
+#घोषणा CTR_FLAG_MAX_RECOVERY_RATE	(1 << __CTR_FLAG_MAX_RECOVERY_RATE)
+#घोषणा CTR_FLAG_MAX_WRITE_BEHIND	(1 << __CTR_FLAG_MAX_WRITE_BEHIND)
+#घोषणा CTR_FLAG_WRITE_MOSTLY		(1 << __CTR_FLAG_WRITE_MOSTLY)
+#घोषणा CTR_FLAG_STRIPE_CACHE		(1 << __CTR_FLAG_STRIPE_CACHE)
+#घोषणा CTR_FLAG_REGION_SIZE		(1 << __CTR_FLAG_REGION_SIZE)
+#घोषणा CTR_FLAG_RAID10_COPIES		(1 << __CTR_FLAG_RAID10_COPIES)
+#घोषणा CTR_FLAG_RAID10_FORMAT		(1 << __CTR_FLAG_RAID10_FORMAT)
+#घोषणा CTR_FLAG_DELTA_DISKS		(1 << __CTR_FLAG_DELTA_DISKS)
+#घोषणा CTR_FLAG_DATA_OFFSET		(1 << __CTR_FLAG_DATA_OFFSET)
+#घोषणा CTR_FLAG_RAID10_USE_NEAR_SETS	(1 << __CTR_FLAG_RAID10_USE_NEAR_SETS)
+#घोषणा CTR_FLAG_JOURNAL_DEV		(1 << __CTR_FLAG_JOURNAL_DEV)
+#घोषणा CTR_FLAG_JOURNAL_MODE		(1 << __CTR_FLAG_JOURNAL_MODE)
 
 /*
- * Definitions of various constructor flags to
+ * Definitions of various स्थिरructor flags to
  * be used in checks of valid / invalid flags
  * per raid level.
  */
 /* Define all any sync flags */
-#define	CTR_FLAGS_ANY_SYNC		(CTR_FLAG_SYNC | CTR_FLAG_NOSYNC)
+#घोषणा	CTR_FLAGS_ANY_SYNC		(CTR_FLAG_SYNC | CTR_FLAG_NOSYNC)
 
-/* Define flags for options without argument (e.g. 'nosync') */
-#define	CTR_FLAG_OPTIONS_NO_ARGS	(CTR_FLAGS_ANY_SYNC | \
+/* Define flags क्रम options without argument (e.g. 'nosync') */
+#घोषणा	CTR_FLAG_OPTIONS_NO_ARGS	(CTR_FLAGS_ANY_SYNC | \
 					 CTR_FLAG_RAID10_USE_NEAR_SETS)
 
-/* Define flags for options with one argument (e.g. 'delta_disks +2') */
-#define CTR_FLAG_OPTIONS_ONE_ARG (CTR_FLAG_REBUILD | \
+/* Define flags क्रम options with one argument (e.g. 'delta_disks +2') */
+#घोषणा CTR_FLAG_OPTIONS_ONE_ARG (CTR_FLAG_REBUILD | \
 				  CTR_FLAG_WRITE_MOSTLY | \
 				  CTR_FLAG_DAEMON_SLEEP | \
 				  CTR_FLAG_MIN_RECOVERY_RATE | \
@@ -135,11 +136,11 @@ struct raid_dev {
 
 /* Valid options definitions per raid level... */
 
-/* "raid0" does only accept data offset */
-#define RAID0_VALID_FLAGS	(CTR_FLAG_DATA_OFFSET)
+/* "raid0" करोes only accept data offset */
+#घोषणा RAID0_VALID_FLAGS	(CTR_FLAG_DATA_OFFSET)
 
-/* "raid1" does not accept stripe cache, data offset, delta_disks or any raid10 options */
-#define RAID1_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
+/* "raid1" करोes not accept stripe cache, data offset, delta_disks or any raid10 options */
+#घोषणा RAID1_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
 				 CTR_FLAG_REBUILD | \
 				 CTR_FLAG_WRITE_MOSTLY | \
 				 CTR_FLAG_DAEMON_SLEEP | \
@@ -150,8 +151,8 @@ struct raid_dev {
 				 CTR_FLAG_DELTA_DISKS | \
 				 CTR_FLAG_DATA_OFFSET)
 
-/* "raid10" does not accept any raid1 or stripe cache options */
-#define RAID10_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
+/* "raid10" करोes not accept any raid1 or stripe cache options */
+#घोषणा RAID10_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
 				 CTR_FLAG_REBUILD | \
 				 CTR_FLAG_DAEMON_SLEEP | \
 				 CTR_FLAG_MIN_RECOVERY_RATE | \
@@ -164,13 +165,13 @@ struct raid_dev {
 				 CTR_FLAG_RAID10_USE_NEAR_SETS)
 
 /*
- * "raid4/5/6" do not accept any raid1 or raid10 specific options
+ * "raid4/5/6" करो not accept any raid1 or raid10 specअगरic options
  *
- * "raid6" does not accept "nosync", because it is not guaranteed
+ * "raid6" करोes not accept "nosync", because it is not guaranteed
  * that both parity and q-syndrome are being written properly with
- * any writes
+ * any ग_लिखोs
  */
-#define RAID45_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
+#घोषणा RAID45_VALID_FLAGS	(CTR_FLAGS_ANY_SYNC | \
 				 CTR_FLAG_REBUILD | \
 				 CTR_FLAG_DAEMON_SLEEP | \
 				 CTR_FLAG_MIN_RECOVERY_RATE | \
@@ -182,7 +183,7 @@ struct raid_dev {
 				 CTR_FLAG_JOURNAL_DEV | \
 				 CTR_FLAG_JOURNAL_MODE)
 
-#define RAID6_VALID_FLAGS	(CTR_FLAG_SYNC | \
+#घोषणा RAID6_VALID_FLAGS	(CTR_FLAG_SYNC | \
 				 CTR_FLAG_REBUILD | \
 				 CTR_FLAG_DAEMON_SLEEP | \
 				 CTR_FLAG_MIN_RECOVERY_RATE | \
@@ -196,557 +197,557 @@ struct raid_dev {
 /* ...valid options definitions per raid level */
 
 /*
- * Flags for rs->runtime_flags field
+ * Flags क्रम rs->runसमय_flags field
  * (RT_FLAG prefix meaning "runtime flag")
  *
- * These are all internal and used to define runtime state,
+ * These are all पूर्णांकernal and used to define runसमय state,
  * e.g. to prevent another resume from preresume processing
  * the raid set all over again.
  */
-#define RT_FLAG_RS_PRERESUMED		0
-#define RT_FLAG_RS_RESUMED		1
-#define RT_FLAG_RS_BITMAP_LOADED	2
-#define RT_FLAG_UPDATE_SBS		3
-#define RT_FLAG_RESHAPE_RS		4
-#define RT_FLAG_RS_SUSPENDED		5
-#define RT_FLAG_RS_IN_SYNC		6
-#define RT_FLAG_RS_RESYNCING		7
-#define RT_FLAG_RS_GROW			8
+#घोषणा RT_FLAG_RS_PRERESUMED		0
+#घोषणा RT_FLAG_RS_RESUMED		1
+#घोषणा RT_FLAG_RS_BITMAP_LOADED	2
+#घोषणा RT_FLAG_UPDATE_SBS		3
+#घोषणा RT_FLAG_RESHAPE_RS		4
+#घोषणा RT_FLAG_RS_SUSPENDED		5
+#घोषणा RT_FLAG_RS_IN_SYNC		6
+#घोषणा RT_FLAG_RS_RESYNCING		7
+#घोषणा RT_FLAG_RS_GROW			8
 
-/* Array elements of 64 bit needed for rebuild/failed disk bits */
-#define DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (sizeof(uint64_t) * 8 - 1)) / sizeof(uint64_t) / 8)
+/* Array elements of 64 bit needed क्रम rebuild/failed disk bits */
+#घोषणा DISKS_ARRAY_ELEMS ((MAX_RAID_DEVICES + (माप(uपूर्णांक64_t) * 8 - 1)) / माप(uपूर्णांक64_t) / 8)
 
 /*
  * raid set level, layout and chunk sectors backup/restore
  */
-struct rs_layout {
-	int new_level;
-	int new_layout;
-	int new_chunk_sectors;
-};
+काष्ठा rs_layout अणु
+	पूर्णांक new_level;
+	पूर्णांक new_layout;
+	पूर्णांक new_chunk_sectors;
+पूर्ण;
 
-struct raid_set {
-	struct dm_target *ti;
+काष्ठा raid_set अणु
+	काष्ठा dm_target *ti;
 
-	uint32_t stripe_cache_entries;
-	unsigned long ctr_flags;
-	unsigned long runtime_flags;
+	uपूर्णांक32_t stripe_cache_entries;
+	अचिन्हित दीर्घ ctr_flags;
+	अचिन्हित दीर्घ runसमय_flags;
 
-	uint64_t rebuild_disks[DISKS_ARRAY_ELEMS];
+	uपूर्णांक64_t rebuild_disks[DISKS_ARRAY_ELEMS];
 
-	int raid_disks;
-	int delta_disks;
-	int data_offset;
-	int raid10_copies;
-	int requested_bitmap_chunk_sectors;
+	पूर्णांक raid_disks;
+	पूर्णांक delta_disks;
+	पूर्णांक data_offset;
+	पूर्णांक raid10_copies;
+	पूर्णांक requested_biपंचांगap_chunk_sectors;
 
-	struct mddev md;
-	struct raid_type *raid_type;
+	काष्ठा mddev md;
+	काष्ठा raid_type *raid_type;
 
 	sector_t array_sectors;
 	sector_t dev_sectors;
 
 	/* Optional raid4/5/6 journal device */
-	struct journal_dev {
-		struct dm_dev *dev;
-		struct md_rdev rdev;
-		int mode;
-	} journal_dev;
+	काष्ठा journal_dev अणु
+		काष्ठा dm_dev *dev;
+		काष्ठा md_rdev rdev;
+		पूर्णांक mode;
+	पूर्ण journal_dev;
 
-	struct raid_dev dev[];
-};
+	काष्ठा raid_dev dev[];
+पूर्ण;
 
-static void rs_config_backup(struct raid_set *rs, struct rs_layout *l)
-{
-	struct mddev *mddev = &rs->md;
+अटल व्योम rs_config_backup(काष्ठा raid_set *rs, काष्ठा rs_layout *l)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
 
 	l->new_level = mddev->new_level;
 	l->new_layout = mddev->new_layout;
 	l->new_chunk_sectors = mddev->new_chunk_sectors;
-}
+पूर्ण
 
-static void rs_config_restore(struct raid_set *rs, struct rs_layout *l)
-{
-	struct mddev *mddev = &rs->md;
+अटल व्योम rs_config_restore(काष्ठा raid_set *rs, काष्ठा rs_layout *l)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
 
 	mddev->new_level = l->new_level;
 	mddev->new_layout = l->new_layout;
 	mddev->new_chunk_sectors = l->new_chunk_sectors;
-}
+पूर्ण
 
-/* raid10 algorithms (i.e. formats) */
-#define	ALGORITHM_RAID10_DEFAULT	0
-#define	ALGORITHM_RAID10_NEAR		1
-#define	ALGORITHM_RAID10_OFFSET		2
-#define	ALGORITHM_RAID10_FAR		3
+/* raid10 algorithms (i.e. क्रमmats) */
+#घोषणा	ALGORITHM_RAID10_DEFAULT	0
+#घोषणा	ALGORITHM_RAID10_NEAR		1
+#घोषणा	ALGORITHM_RAID10_OFFSET		2
+#घोषणा	ALGORITHM_RAID10_FAR		3
 
 /* Supported raid types and properties. */
-static struct raid_type {
-	const char *name;		/* RAID algorithm. */
-	const char *descr;		/* Descriptor text for logging. */
-	const unsigned int parity_devs;	/* # of parity devices. */
-	const unsigned int minimal_devs;/* minimal # of devices in set. */
-	const unsigned int level;	/* RAID level. */
-	const unsigned int algorithm;	/* RAID algorithm. */
-} raid_types[] = {
-	{"raid0",	  "raid0 (striping)",			    0, 2, 0,  0 /* NONE */},
-	{"raid1",	  "raid1 (mirroring)",			    0, 2, 1,  0 /* NONE */},
-	{"raid10_far",	  "raid10 far (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_FAR},
-	{"raid10_offset", "raid10 offset (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_OFFSET},
-	{"raid10_near",	  "raid10 near (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_NEAR},
-	{"raid10",	  "raid10 (striped mirrors)",		    0, 2, 10, ALGORITHM_RAID10_DEFAULT},
-	{"raid4",	  "raid4 (dedicated first parity disk)",    1, 2, 5,  ALGORITHM_PARITY_0}, /* raid4 layout = raid5_0 */
-	{"raid5_n",	  "raid5 (dedicated last parity disk)",	    1, 2, 5,  ALGORITHM_PARITY_N},
-	{"raid5_ls",	  "raid5 (left symmetric)",		    1, 2, 5,  ALGORITHM_LEFT_SYMMETRIC},
-	{"raid5_rs",	  "raid5 (right symmetric)",		    1, 2, 5,  ALGORITHM_RIGHT_SYMMETRIC},
-	{"raid5_la",	  "raid5 (left asymmetric)",		    1, 2, 5,  ALGORITHM_LEFT_ASYMMETRIC},
-	{"raid5_ra",	  "raid5 (right asymmetric)",		    1, 2, 5,  ALGORITHM_RIGHT_ASYMMETRIC},
-	{"raid6_zr",	  "raid6 (zero restart)",		    2, 4, 6,  ALGORITHM_ROTATING_ZERO_RESTART},
-	{"raid6_nr",	  "raid6 (N restart)",			    2, 4, 6,  ALGORITHM_ROTATING_N_RESTART},
-	{"raid6_nc",	  "raid6 (N continue)",			    2, 4, 6,  ALGORITHM_ROTATING_N_CONTINUE},
-	{"raid6_n_6",	  "raid6 (dedicated parity/Q n/6)",	    2, 4, 6,  ALGORITHM_PARITY_N_6},
-	{"raid6_ls_6",	  "raid6 (left symmetric dedicated Q 6)",   2, 4, 6,  ALGORITHM_LEFT_SYMMETRIC_6},
-	{"raid6_rs_6",	  "raid6 (right symmetric dedicated Q 6)",  2, 4, 6,  ALGORITHM_RIGHT_SYMMETRIC_6},
-	{"raid6_la_6",	  "raid6 (left asymmetric dedicated Q 6)",  2, 4, 6,  ALGORITHM_LEFT_ASYMMETRIC_6},
-	{"raid6_ra_6",	  "raid6 (right asymmetric dedicated Q 6)", 2, 4, 6,  ALGORITHM_RIGHT_ASYMMETRIC_6}
-};
+अटल काष्ठा raid_type अणु
+	स्थिर अक्षर *name;		/* RAID algorithm. */
+	स्थिर अक्षर *descr;		/* Descriptor text क्रम logging. */
+	स्थिर अचिन्हित पूर्णांक parity_devs;	/* # of parity devices. */
+	स्थिर अचिन्हित पूर्णांक minimal_devs;/* minimal # of devices in set. */
+	स्थिर अचिन्हित पूर्णांक level;	/* RAID level. */
+	स्थिर अचिन्हित पूर्णांक algorithm;	/* RAID algorithm. */
+पूर्ण raid_types[] = अणु
+	अणु"raid0",	  "raid0 (striping)",			    0, 2, 0,  0 /* NONE */पूर्ण,
+	अणु"raid1",	  "raid1 (mirroring)",			    0, 2, 1,  0 /* NONE */पूर्ण,
+	अणु"raid10_far",	  "raid10 far (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_FARपूर्ण,
+	अणु"raid10_offset", "raid10 offset (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_OFFSETपूर्ण,
+	अणु"raid10_near",	  "raid10 near (striped mirrors)",	    0, 2, 10, ALGORITHM_RAID10_NEARपूर्ण,
+	अणु"raid10",	  "raid10 (striped mirrors)",		    0, 2, 10, ALGORITHM_RAID10_DEFAULTपूर्ण,
+	अणु"raid4",	  "raid4 (dedicated first parity disk)",    1, 2, 5,  ALGORITHM_PARITY_0पूर्ण, /* raid4 layout = raid5_0 */
+	अणु"raid5_n",	  "raid5 (dedicated last parity disk)",	    1, 2, 5,  ALGORITHM_PARITY_Nपूर्ण,
+	अणु"raid5_ls",	  "raid5 (left symmetric)",		    1, 2, 5,  ALGORITHM_LEFT_SYMMETRICपूर्ण,
+	अणु"raid5_rs",	  "raid5 (right symmetric)",		    1, 2, 5,  ALGORITHM_RIGHT_SYMMETRICपूर्ण,
+	अणु"raid5_la",	  "raid5 (left asymmetric)",		    1, 2, 5,  ALGORITHM_LEFT_ASYMMETRICपूर्ण,
+	अणु"raid5_ra",	  "raid5 (right asymmetric)",		    1, 2, 5,  ALGORITHM_RIGHT_ASYMMETRICपूर्ण,
+	अणु"raid6_zr",	  "raid6 (zero restart)",		    2, 4, 6,  ALGORITHM_ROTATING_ZERO_RESTARTपूर्ण,
+	अणु"raid6_nr",	  "raid6 (N restart)",			    2, 4, 6,  ALGORITHM_ROTATING_N_RESTARTपूर्ण,
+	अणु"raid6_nc",	  "raid6 (N continue)",			    2, 4, 6,  ALGORITHM_ROTATING_N_CONTINUEपूर्ण,
+	अणु"raid6_n_6",	  "raid6 (dedicated parity/Q n/6)",	    2, 4, 6,  ALGORITHM_PARITY_N_6पूर्ण,
+	अणु"raid6_ls_6",	  "raid6 (left symmetric dedicated Q 6)",   2, 4, 6,  ALGORITHM_LEFT_SYMMETRIC_6पूर्ण,
+	अणु"raid6_rs_6",	  "raid6 (right symmetric dedicated Q 6)",  2, 4, 6,  ALGORITHM_RIGHT_SYMMETRIC_6पूर्ण,
+	अणु"raid6_la_6",	  "raid6 (left asymmetric dedicated Q 6)",  2, 4, 6,  ALGORITHM_LEFT_ASYMMETRIC_6पूर्ण,
+	अणु"raid6_ra_6",	  "raid6 (right asymmetric dedicated Q 6)", 2, 4, 6,  ALGORITHM_RIGHT_ASYMMETRIC_6पूर्ण
+पूर्ण;
 
-/* True, if @v is in inclusive range [@min, @max] */
-static bool __within_range(long v, long min, long max)
-{
-	return v >= min && v <= max;
-}
+/* True, अगर @v is in inclusive range [@min, @max] */
+अटल bool __within_range(दीर्घ v, दीर्घ min, दीर्घ max)
+अणु
+	वापस v >= min && v <= max;
+पूर्ण
 
 /* All table line arguments are defined here */
-static struct arg_name_flag {
-	const unsigned long flag;
-	const char *name;
-} __arg_name_flags[] = {
-	{ CTR_FLAG_SYNC, "sync"},
-	{ CTR_FLAG_NOSYNC, "nosync"},
-	{ CTR_FLAG_REBUILD, "rebuild"},
-	{ CTR_FLAG_DAEMON_SLEEP, "daemon_sleep"},
-	{ CTR_FLAG_MIN_RECOVERY_RATE, "min_recovery_rate"},
-	{ CTR_FLAG_MAX_RECOVERY_RATE, "max_recovery_rate"},
-	{ CTR_FLAG_MAX_WRITE_BEHIND, "max_write_behind"},
-	{ CTR_FLAG_WRITE_MOSTLY, "write_mostly"},
-	{ CTR_FLAG_STRIPE_CACHE, "stripe_cache"},
-	{ CTR_FLAG_REGION_SIZE, "region_size"},
-	{ CTR_FLAG_RAID10_COPIES, "raid10_copies"},
-	{ CTR_FLAG_RAID10_FORMAT, "raid10_format"},
-	{ CTR_FLAG_DATA_OFFSET, "data_offset"},
-	{ CTR_FLAG_DELTA_DISKS, "delta_disks"},
-	{ CTR_FLAG_RAID10_USE_NEAR_SETS, "raid10_use_near_sets"},
-	{ CTR_FLAG_JOURNAL_DEV, "journal_dev" },
-	{ CTR_FLAG_JOURNAL_MODE, "journal_mode" },
-};
+अटल काष्ठा arg_name_flag अणु
+	स्थिर अचिन्हित दीर्घ flag;
+	स्थिर अक्षर *name;
+पूर्ण __arg_name_flags[] = अणु
+	अणु CTR_FLAG_SYNC, "sync"पूर्ण,
+	अणु CTR_FLAG_NOSYNC, "nosync"पूर्ण,
+	अणु CTR_FLAG_REBUILD, "rebuild"पूर्ण,
+	अणु CTR_FLAG_DAEMON_SLEEP, "daemon_sleep"पूर्ण,
+	अणु CTR_FLAG_MIN_RECOVERY_RATE, "min_recovery_rate"पूर्ण,
+	अणु CTR_FLAG_MAX_RECOVERY_RATE, "max_recovery_rate"पूर्ण,
+	अणु CTR_FLAG_MAX_WRITE_BEHIND, "max_write_behind"पूर्ण,
+	अणु CTR_FLAG_WRITE_MOSTLY, "write_mostly"पूर्ण,
+	अणु CTR_FLAG_STRIPE_CACHE, "stripe_cache"पूर्ण,
+	अणु CTR_FLAG_REGION_SIZE, "region_size"पूर्ण,
+	अणु CTR_FLAG_RAID10_COPIES, "raid10_copies"पूर्ण,
+	अणु CTR_FLAG_RAID10_FORMAT, "raid10_format"पूर्ण,
+	अणु CTR_FLAG_DATA_OFFSET, "data_offset"पूर्ण,
+	अणु CTR_FLAG_DELTA_DISKS, "delta_disks"पूर्ण,
+	अणु CTR_FLAG_RAID10_USE_NEAR_SETS, "raid10_use_near_sets"पूर्ण,
+	अणु CTR_FLAG_JOURNAL_DEV, "journal_dev" पूर्ण,
+	अणु CTR_FLAG_JOURNAL_MODE, "journal_mode" पूर्ण,
+पूर्ण;
 
-/* Return argument name string for given @flag */
-static const char *dm_raid_arg_name_by_flag(const uint32_t flag)
-{
-	if (hweight32(flag) == 1) {
-		struct arg_name_flag *anf = __arg_name_flags + ARRAY_SIZE(__arg_name_flags);
+/* Return argument name string क्रम given @flag */
+अटल स्थिर अक्षर *dm_raid_arg_name_by_flag(स्थिर uपूर्णांक32_t flag)
+अणु
+	अगर (hweight32(flag) == 1) अणु
+		काष्ठा arg_name_flag *anf = __arg_name_flags + ARRAY_SIZE(__arg_name_flags);
 
-		while (anf-- > __arg_name_flags)
-			if (flag & anf->flag)
-				return anf->name;
+		जबतक (anf-- > __arg_name_flags)
+			अगर (flag & anf->flag)
+				वापस anf->name;
 
-	} else
+	पूर्ण अन्यथा
 		DMERR("%s called with more than one flag!", __func__);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Define correlation of raid456 journal cache modes and dm-raid target line parameters */
-static struct {
-	const int mode;
-	const char *param;
-} _raid456_journal_mode[] = {
-	{ R5C_JOURNAL_MODE_WRITE_THROUGH , "writethrough" },
-	{ R5C_JOURNAL_MODE_WRITE_BACK    , "writeback" }
-};
+अटल काष्ठा अणु
+	स्थिर पूर्णांक mode;
+	स्थिर अक्षर *param;
+पूर्ण _raid456_journal_mode[] = अणु
+	अणु R5C_JOURNAL_MODE_WRITE_THROUGH , "writethrough" पूर्ण,
+	अणु R5C_JOURNAL_MODE_WRITE_BACK    , "writeback" पूर्ण
+पूर्ण;
 
-/* Return MD raid4/5/6 journal mode for dm @journal_mode one */
-static int dm_raid_journal_mode_to_md(const char *mode)
-{
-	int m = ARRAY_SIZE(_raid456_journal_mode);
+/* Return MD raid4/5/6 journal mode क्रम dm @journal_mode one */
+अटल पूर्णांक dm_raid_journal_mode_to_md(स्थिर अक्षर *mode)
+अणु
+	पूर्णांक m = ARRAY_SIZE(_raid456_journal_mode);
 
-	while (m--)
-		if (!strcasecmp(mode, _raid456_journal_mode[m].param))
-			return _raid456_journal_mode[m].mode;
+	जबतक (m--)
+		अगर (!strहालcmp(mode, _raid456_journal_mode[m].param))
+			वापस _raid456_journal_mode[m].mode;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Return dm-raid raid4/5/6 journal mode string for @mode */
-static const char *md_journal_mode_to_dm_raid(const int mode)
-{
-	int m = ARRAY_SIZE(_raid456_journal_mode);
+/* Return dm-raid raid4/5/6 journal mode string क्रम @mode */
+अटल स्थिर अक्षर *md_journal_mode_to_dm_raid(स्थिर पूर्णांक mode)
+अणु
+	पूर्णांक m = ARRAY_SIZE(_raid456_journal_mode);
 
-	while (m--)
-		if (mode == _raid456_journal_mode[m].mode)
-			return _raid456_journal_mode[m].param;
+	जबतक (m--)
+		अगर (mode == _raid456_journal_mode[m].mode)
+			वापस _raid456_journal_mode[m].param;
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
 /*
- * Bool helpers to test for various raid levels of a raid set.
+ * Bool helpers to test क्रम various raid levels of a raid set.
  * It's level as reported by the superblock rather than
- * the requested raid_type passed to the constructor.
+ * the requested raid_type passed to the स्थिरructor.
  */
-/* Return true, if raid set in @rs is raid0 */
-static bool rs_is_raid0(struct raid_set *rs)
-{
-	return !rs->md.level;
-}
+/* Return true, अगर raid set in @rs is raid0 */
+अटल bool rs_is_raid0(काष्ठा raid_set *rs)
+अणु
+	वापस !rs->md.level;
+पूर्ण
 
-/* Return true, if raid set in @rs is raid1 */
-static bool rs_is_raid1(struct raid_set *rs)
-{
-	return rs->md.level == 1;
-}
+/* Return true, अगर raid set in @rs is raid1 */
+अटल bool rs_is_raid1(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.level == 1;
+पूर्ण
 
-/* Return true, if raid set in @rs is raid10 */
-static bool rs_is_raid10(struct raid_set *rs)
-{
-	return rs->md.level == 10;
-}
+/* Return true, अगर raid set in @rs is raid10 */
+अटल bool rs_is_raid10(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.level == 10;
+पूर्ण
 
-/* Return true, if raid set in @rs is level 6 */
-static bool rs_is_raid6(struct raid_set *rs)
-{
-	return rs->md.level == 6;
-}
+/* Return true, अगर raid set in @rs is level 6 */
+अटल bool rs_is_raid6(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.level == 6;
+पूर्ण
 
-/* Return true, if raid set in @rs is level 4, 5 or 6 */
-static bool rs_is_raid456(struct raid_set *rs)
-{
-	return __within_range(rs->md.level, 4, 6);
-}
+/* Return true, अगर raid set in @rs is level 4, 5 or 6 */
+अटल bool rs_is_raid456(काष्ठा raid_set *rs)
+अणु
+	वापस __within_range(rs->md.level, 4, 6);
+पूर्ण
 
-/* Return true, if raid set in @rs is reshapable */
-static bool __is_raid10_far(int layout);
-static bool rs_is_reshapable(struct raid_set *rs)
-{
-	return rs_is_raid456(rs) ||
+/* Return true, अगर raid set in @rs is reshapable */
+अटल bool __is_raid10_far(पूर्णांक layout);
+अटल bool rs_is_reshapable(काष्ठा raid_set *rs)
+अणु
+	वापस rs_is_raid456(rs) ||
 	       (rs_is_raid10(rs) && !__is_raid10_far(rs->md.new_layout));
-}
+पूर्ण
 
-/* Return true, if raid set in @rs is recovering */
-static bool rs_is_recovering(struct raid_set *rs)
-{
-	return rs->md.recovery_cp < rs->md.dev_sectors;
-}
+/* Return true, अगर raid set in @rs is recovering */
+अटल bool rs_is_recovering(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.recovery_cp < rs->md.dev_sectors;
+पूर्ण
 
-/* Return true, if raid set in @rs is reshaping */
-static bool rs_is_reshaping(struct raid_set *rs)
-{
-	return rs->md.reshape_position != MaxSector;
-}
+/* Return true, अगर raid set in @rs is reshaping */
+अटल bool rs_is_reshaping(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.reshape_position != MaxSector;
+पूर्ण
 
 /*
- * bool helpers to test for various raid levels of a raid type @rt
+ * bool helpers to test क्रम various raid levels of a raid type @rt
  */
 
-/* Return true, if raid type in @rt is raid0 */
-static bool rt_is_raid0(struct raid_type *rt)
-{
-	return !rt->level;
-}
+/* Return true, अगर raid type in @rt is raid0 */
+अटल bool rt_is_raid0(काष्ठा raid_type *rt)
+अणु
+	वापस !rt->level;
+पूर्ण
 
-/* Return true, if raid type in @rt is raid1 */
-static bool rt_is_raid1(struct raid_type *rt)
-{
-	return rt->level == 1;
-}
+/* Return true, अगर raid type in @rt is raid1 */
+अटल bool rt_is_raid1(काष्ठा raid_type *rt)
+अणु
+	वापस rt->level == 1;
+पूर्ण
 
-/* Return true, if raid type in @rt is raid10 */
-static bool rt_is_raid10(struct raid_type *rt)
-{
-	return rt->level == 10;
-}
+/* Return true, अगर raid type in @rt is raid10 */
+अटल bool rt_is_raid10(काष्ठा raid_type *rt)
+अणु
+	वापस rt->level == 10;
+पूर्ण
 
-/* Return true, if raid type in @rt is raid4/5 */
-static bool rt_is_raid45(struct raid_type *rt)
-{
-	return __within_range(rt->level, 4, 5);
-}
+/* Return true, अगर raid type in @rt is raid4/5 */
+अटल bool rt_is_raid45(काष्ठा raid_type *rt)
+अणु
+	वापस __within_range(rt->level, 4, 5);
+पूर्ण
 
-/* Return true, if raid type in @rt is raid6 */
-static bool rt_is_raid6(struct raid_type *rt)
-{
-	return rt->level == 6;
-}
+/* Return true, अगर raid type in @rt is raid6 */
+अटल bool rt_is_raid6(काष्ठा raid_type *rt)
+अणु
+	वापस rt->level == 6;
+पूर्ण
 
-/* Return true, if raid type in @rt is raid4/5/6 */
-static bool rt_is_raid456(struct raid_type *rt)
-{
-	return __within_range(rt->level, 4, 6);
-}
+/* Return true, अगर raid type in @rt is raid4/5/6 */
+अटल bool rt_is_raid456(काष्ठा raid_type *rt)
+अणु
+	वापस __within_range(rt->level, 4, 6);
+पूर्ण
 /* END: raid level bools */
 
-/* Return valid ctr flags for the raid level of @rs */
-static unsigned long __valid_flags(struct raid_set *rs)
-{
-	if (rt_is_raid0(rs->raid_type))
-		return RAID0_VALID_FLAGS;
-	else if (rt_is_raid1(rs->raid_type))
-		return RAID1_VALID_FLAGS;
-	else if (rt_is_raid10(rs->raid_type))
-		return RAID10_VALID_FLAGS;
-	else if (rt_is_raid45(rs->raid_type))
-		return RAID45_VALID_FLAGS;
-	else if (rt_is_raid6(rs->raid_type))
-		return RAID6_VALID_FLAGS;
+/* Return valid ctr flags क्रम the raid level of @rs */
+अटल अचिन्हित दीर्घ __valid_flags(काष्ठा raid_set *rs)
+अणु
+	अगर (rt_is_raid0(rs->raid_type))
+		वापस RAID0_VALID_FLAGS;
+	अन्यथा अगर (rt_is_raid1(rs->raid_type))
+		वापस RAID1_VALID_FLAGS;
+	अन्यथा अगर (rt_is_raid10(rs->raid_type))
+		वापस RAID10_VALID_FLAGS;
+	अन्यथा अगर (rt_is_raid45(rs->raid_type))
+		वापस RAID45_VALID_FLAGS;
+	अन्यथा अगर (rt_is_raid6(rs->raid_type))
+		वापस RAID6_VALID_FLAGS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check for valid flags set on @rs
+ * Check क्रम valid flags set on @rs
  *
  * Has to be called after parsing of the ctr flags!
  */
-static int rs_check_for_valid_flags(struct raid_set *rs)
-{
-	if (rs->ctr_flags & ~__valid_flags(rs)) {
+अटल पूर्णांक rs_check_क्रम_valid_flags(काष्ठा raid_set *rs)
+अणु
+	अगर (rs->ctr_flags & ~__valid_flags(rs)) अणु
 		rs->ti->error = "Invalid flags combination";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* MD raid10 bit definitions and helpers */
-#define RAID10_OFFSET			(1 << 16) /* stripes with data copies area adjacent on devices */
-#define RAID10_BROCKEN_USE_FAR_SETS	(1 << 17) /* Broken in raid10.c: use sets instead of whole stripe rotation */
-#define RAID10_USE_FAR_SETS		(1 << 18) /* Use sets instead of whole stripe rotation */
-#define RAID10_FAR_COPIES_SHIFT		8	  /* raid10 # far copies shift (2nd byte of layout) */
+#घोषणा RAID10_OFFSET			(1 << 16) /* stripes with data copies area adjacent on devices */
+#घोषणा RAID10_BROCKEN_USE_FAR_SETS	(1 << 17) /* Broken in raid10.c: use sets instead of whole stripe rotation */
+#घोषणा RAID10_USE_FAR_SETS		(1 << 18) /* Use sets instead of whole stripe rotation */
+#घोषणा RAID10_FAR_COPIES_SHIFT		8	  /* raid10 # far copies shअगरt (2nd byte of layout) */
 
-/* Return md raid10 near copies for @layout */
-static unsigned int __raid10_near_copies(int layout)
-{
-	return layout & 0xFF;
-}
+/* Return md raid10 near copies क्रम @layout */
+अटल अचिन्हित पूर्णांक __raid10_near_copies(पूर्णांक layout)
+अणु
+	वापस layout & 0xFF;
+पूर्ण
 
-/* Return md raid10 far copies for @layout */
-static unsigned int __raid10_far_copies(int layout)
-{
-	return __raid10_near_copies(layout >> RAID10_FAR_COPIES_SHIFT);
-}
+/* Return md raid10 far copies क्रम @layout */
+अटल अचिन्हित पूर्णांक __raid10_far_copies(पूर्णांक layout)
+अणु
+	वापस __raid10_near_copies(layout >> RAID10_FAR_COPIES_SHIFT);
+पूर्ण
 
-/* Return true if md raid10 offset for @layout */
-static bool __is_raid10_offset(int layout)
-{
-	return !!(layout & RAID10_OFFSET);
-}
+/* Return true अगर md raid10 offset क्रम @layout */
+अटल bool __is_raid10_offset(पूर्णांक layout)
+अणु
+	वापस !!(layout & RAID10_OFFSET);
+पूर्ण
 
-/* Return true if md raid10 near for @layout */
-static bool __is_raid10_near(int layout)
-{
-	return !__is_raid10_offset(layout) && __raid10_near_copies(layout) > 1;
-}
+/* Return true अगर md raid10 near क्रम @layout */
+अटल bool __is_raid10_near(पूर्णांक layout)
+अणु
+	वापस !__is_raid10_offset(layout) && __raid10_near_copies(layout) > 1;
+पूर्ण
 
-/* Return true if md raid10 far for @layout */
-static bool __is_raid10_far(int layout)
-{
-	return !__is_raid10_offset(layout) && __raid10_far_copies(layout) > 1;
-}
+/* Return true अगर md raid10 far क्रम @layout */
+अटल bool __is_raid10_far(पूर्णांक layout)
+अणु
+	वापस !__is_raid10_offset(layout) && __raid10_far_copies(layout) > 1;
+पूर्ण
 
-/* Return md raid10 layout string for @layout */
-static const char *raid10_md_layout_to_format(int layout)
-{
+/* Return md raid10 layout string क्रम @layout */
+अटल स्थिर अक्षर *raid10_md_layout_to_क्रमmat(पूर्णांक layout)
+अणु
 	/*
-	 * Bit 16 stands for "offset"
+	 * Bit 16 stands क्रम "offset"
 	 * (i.e. adjacent stripes hold copies)
 	 *
-	 * Refer to MD's raid10.c for details
+	 * Refer to MD's raid10.c क्रम details
 	 */
-	if (__is_raid10_offset(layout))
-		return "offset";
+	अगर (__is_raid10_offset(layout))
+		वापस "offset";
 
-	if (__raid10_near_copies(layout) > 1)
-		return "near";
+	अगर (__raid10_near_copies(layout) > 1)
+		वापस "near";
 
-	if (__raid10_far_copies(layout) > 1)
-		return "far";
+	अगर (__raid10_far_copies(layout) > 1)
+		वापस "far";
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-/* Return md raid10 algorithm for @name */
-static int raid10_name_to_format(const char *name)
-{
-	if (!strcasecmp(name, "near"))
-		return ALGORITHM_RAID10_NEAR;
-	else if (!strcasecmp(name, "offset"))
-		return ALGORITHM_RAID10_OFFSET;
-	else if (!strcasecmp(name, "far"))
-		return ALGORITHM_RAID10_FAR;
+/* Return md raid10 algorithm क्रम @name */
+अटल पूर्णांक raid10_name_to_क्रमmat(स्थिर अक्षर *name)
+अणु
+	अगर (!strहालcmp(name, "near"))
+		वापस ALGORITHM_RAID10_NEAR;
+	अन्यथा अगर (!strहालcmp(name, "offset"))
+		वापस ALGORITHM_RAID10_OFFSET;
+	अन्यथा अगर (!strहालcmp(name, "far"))
+		वापस ALGORITHM_RAID10_FAR;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Return md raid10 copies for @layout */
-static unsigned int raid10_md_layout_to_copies(int layout)
-{
-	return max(__raid10_near_copies(layout), __raid10_far_copies(layout));
-}
+/* Return md raid10 copies क्रम @layout */
+अटल अचिन्हित पूर्णांक raid10_md_layout_to_copies(पूर्णांक layout)
+अणु
+	वापस max(__raid10_near_copies(layout), __raid10_far_copies(layout));
+पूर्ण
 
-/* Return md raid10 format id for @format string */
-static int raid10_format_to_md_layout(struct raid_set *rs,
-				      unsigned int algorithm,
-				      unsigned int copies)
-{
-	unsigned int n = 1, f = 1, r = 0;
+/* Return md raid10 क्रमmat id क्रम @क्रमmat string */
+अटल पूर्णांक raid10_क्रमmat_to_md_layout(काष्ठा raid_set *rs,
+				      अचिन्हित पूर्णांक algorithm,
+				      अचिन्हित पूर्णांक copies)
+अणु
+	अचिन्हित पूर्णांक n = 1, f = 1, r = 0;
 
 	/*
 	 * MD resilienece flaw:
 	 *
-	 * enabling use_far_sets for far/offset formats causes copies
+	 * enabling use_far_sets क्रम far/offset क्रमmats causes copies
 	 * to be colocated on the same devs together with their origins!
 	 *
-	 * -> disable it for now in the definition above
+	 * -> disable it क्रम now in the definition above
 	 */
-	if (algorithm == ALGORITHM_RAID10_DEFAULT ||
+	अगर (algorithm == ALGORITHM_RAID10_DEFAULT ||
 	    algorithm == ALGORITHM_RAID10_NEAR)
 		n = copies;
 
-	else if (algorithm == ALGORITHM_RAID10_OFFSET) {
+	अन्यथा अगर (algorithm == ALGORITHM_RAID10_OFFSET) अणु
 		f = copies;
 		r = RAID10_OFFSET;
-		if (!test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags))
+		अगर (!test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags))
 			r |= RAID10_USE_FAR_SETS;
 
-	} else if (algorithm == ALGORITHM_RAID10_FAR) {
+	पूर्ण अन्यथा अगर (algorithm == ALGORITHM_RAID10_FAR) अणु
 		f = copies;
-		if (!test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags))
+		अगर (!test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags))
 			r |= RAID10_USE_FAR_SETS;
 
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	return r | (f << RAID10_FAR_COPIES_SHIFT) | n;
-}
+	वापस r | (f << RAID10_FAR_COPIES_SHIFT) | n;
+पूर्ण
 /* END: MD raid10 bit definitions and helpers */
 
-/* Check for any of the raid10 algorithms */
-static bool __got_raid10(struct raid_type *rtp, const int layout)
-{
-	if (rtp->level == 10) {
-		switch (rtp->algorithm) {
-		case ALGORITHM_RAID10_DEFAULT:
-		case ALGORITHM_RAID10_NEAR:
-			return __is_raid10_near(layout);
-		case ALGORITHM_RAID10_OFFSET:
-			return __is_raid10_offset(layout);
-		case ALGORITHM_RAID10_FAR:
-			return __is_raid10_far(layout);
-		default:
-			break;
-		}
-	}
+/* Check क्रम any of the raid10 algorithms */
+अटल bool __got_raid10(काष्ठा raid_type *rtp, स्थिर पूर्णांक layout)
+अणु
+	अगर (rtp->level == 10) अणु
+		चयन (rtp->algorithm) अणु
+		हाल ALGORITHM_RAID10_DEFAULT:
+		हाल ALGORITHM_RAID10_NEAR:
+			वापस __is_raid10_near(layout);
+		हाल ALGORITHM_RAID10_OFFSET:
+			वापस __is_raid10_offset(layout);
+		हाल ALGORITHM_RAID10_FAR:
+			वापस __is_raid10_far(layout);
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Return raid_type for @name */
-static struct raid_type *get_raid_type(const char *name)
-{
-	struct raid_type *rtp = raid_types + ARRAY_SIZE(raid_types);
+/* Return raid_type क्रम @name */
+अटल काष्ठा raid_type *get_raid_type(स्थिर अक्षर *name)
+अणु
+	काष्ठा raid_type *rtp = raid_types + ARRAY_SIZE(raid_types);
 
-	while (rtp-- > raid_types)
-		if (!strcasecmp(rtp->name, name))
-			return rtp;
+	जबतक (rtp-- > raid_types)
+		अगर (!strहालcmp(rtp->name, name))
+			वापस rtp;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* Return raid_type for @name based derived from @level and @layout */
-static struct raid_type *get_raid_type_by_ll(const int level, const int layout)
-{
-	struct raid_type *rtp = raid_types + ARRAY_SIZE(raid_types);
+/* Return raid_type क्रम @name based derived from @level and @layout */
+अटल काष्ठा raid_type *get_raid_type_by_ll(स्थिर पूर्णांक level, स्थिर पूर्णांक layout)
+अणु
+	काष्ठा raid_type *rtp = raid_types + ARRAY_SIZE(raid_types);
 
-	while (rtp-- > raid_types) {
+	जबतक (rtp-- > raid_types) अणु
 		/* RAID10 special checks based on @layout flags/properties */
-		if (rtp->level == level &&
+		अगर (rtp->level == level &&
 		    (__got_raid10(rtp, layout) || rtp->algorithm == layout))
-			return rtp;
-	}
+			वापस rtp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Adjust rdev sectors */
-static void rs_set_rdev_sectors(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
-	struct md_rdev *rdev;
+अटल व्योम rs_set_rdev_sectors(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा md_rdev *rdev;
 
 	/*
 	 * raid10 sets rdev->sector to the device size, which
-	 * is unintended in case of out-of-place reshaping
+	 * is unपूर्णांकended in हाल of out-of-place reshaping
 	 */
-	rdev_for_each(rdev, mddev)
-		if (!test_bit(Journal, &rdev->flags))
+	rdev_क्रम_each(rdev, mddev)
+		अगर (!test_bit(Journal, &rdev->flags))
 			rdev->sectors = mddev->dev_sectors;
-}
+पूर्ण
 
 /*
- * Change bdev capacity of @rs in case of a disk add/remove reshape
+ * Change bdev capacity of @rs in हाल of a disk add/हटाओ reshape
  */
-static void rs_set_capacity(struct raid_set *rs)
-{
-	struct gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
+अटल व्योम rs_set_capacity(काष्ठा raid_set *rs)
+अणु
+	काष्ठा gendisk *gendisk = dm_disk(dm_table_get_md(rs->ti->table));
 
-	set_capacity_and_notify(gendisk, rs->md.array_sectors);
-}
+	set_capacity_and_notअगरy(gendisk, rs->md.array_sectors);
+पूर्ण
 
 /*
  * Set the mddev properties in @rs to the current
  * ones retrieved from the freshest superblock
  */
-static void rs_set_cur(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
+अटल व्योम rs_set_cur(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
 
 	mddev->new_level = mddev->level;
 	mddev->new_layout = mddev->layout;
 	mddev->new_chunk_sectors = mddev->chunk_sectors;
-}
+पूर्ण
 
 /*
  * Set the mddev properties in @rs to the new
  * ones requested by the ctr
  */
-static void rs_set_new(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
+अटल व्योम rs_set_new(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
 
 	mddev->level = mddev->new_level;
 	mddev->layout = mddev->new_layout;
 	mddev->chunk_sectors = mddev->new_chunk_sectors;
 	mddev->raid_disks = rs->raid_disks;
 	mddev->delta_disks = 0;
-}
+पूर्ण
 
-static struct raid_set *raid_set_alloc(struct dm_target *ti, struct raid_type *raid_type,
-				       unsigned int raid_devs)
-{
-	unsigned int i;
-	struct raid_set *rs;
+अटल काष्ठा raid_set *raid_set_alloc(काष्ठा dm_target *ti, काष्ठा raid_type *raid_type,
+				       अचिन्हित पूर्णांक raid_devs)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा raid_set *rs;
 
-	if (raid_devs <= raid_type->parity_devs) {
+	अगर (raid_devs <= raid_type->parity_devs) अणु
 		ti->error = "Insufficient number of devices";
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	rs = kzalloc(struct_size(rs, dev, raid_devs), GFP_KERNEL);
-	if (!rs) {
+	rs = kzalloc(काष्ठा_size(rs, dev, raid_devs), GFP_KERNEL);
+	अगर (!rs) अणु
 		ti->error = "Cannot allocate raid context";
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	mddev_init(&rs->md);
 
@@ -764,46 +765,46 @@ static struct raid_set *raid_set_alloc(struct dm_target *ti, struct raid_type *r
 	rs->md.delta_disks = 0;
 	rs->md.recovery_cp = MaxSector;
 
-	for (i = 0; i < raid_devs; i++)
+	क्रम (i = 0; i < raid_devs; i++)
 		md_rdev_init(&rs->dev[i].rdev);
 
 	/*
-	 * Remaining items to be initialized by further RAID params:
+	 * Reमुख्यing items to be initialized by further RAID params:
 	 *  rs->md.persistent
-	 *  rs->md.external
+	 *  rs->md.बाह्यal
 	 *  rs->md.chunk_sectors
 	 *  rs->md.new_chunk_sectors
 	 *  rs->md.dev_sectors
 	 */
 
-	return rs;
-}
+	वापस rs;
+पूर्ण
 
 /* Free all @rs allocations */
-static void raid_set_free(struct raid_set *rs)
-{
-	int i;
+अटल व्योम raid_set_मुक्त(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक i;
 
-	if (rs->journal_dev.dev) {
+	अगर (rs->journal_dev.dev) अणु
 		md_rdev_clear(&rs->journal_dev.rdev);
 		dm_put_device(rs->ti, rs->journal_dev.dev);
-	}
+	पूर्ण
 
-	for (i = 0; i < rs->raid_disks; i++) {
-		if (rs->dev[i].meta_dev)
+	क्रम (i = 0; i < rs->raid_disks; i++) अणु
+		अगर (rs->dev[i].meta_dev)
 			dm_put_device(rs->ti, rs->dev[i].meta_dev);
 		md_rdev_clear(&rs->dev[i].rdev);
-		if (rs->dev[i].data_dev)
+		अगर (rs->dev[i].data_dev)
 			dm_put_device(rs->ti, rs->dev[i].data_dev);
-	}
+	पूर्ण
 
-	kfree(rs);
-}
+	kमुक्त(rs);
+पूर्ण
 
 /*
  * For every device we have two words
- *  <meta_dev>: meta device name or '-' if missing
- *  <data_dev>: data device name or '-' if missing
+ *  <meta_dev>: meta device name or '-' अगर missing
+ *  <data_dev>: data device name or '-' अगर missing
  *
  * The following are permitted:
  *    - -
@@ -814,26 +815,26 @@ static void raid_set_free(struct raid_set *rs)
  *    <meta_dev> -
  *
  * This code parses those words.  If there is a failure,
- * the caller must use raid_set_free() to unwind the operations.
+ * the caller must use raid_set_मुक्त() to unwind the operations.
  */
-static int parse_dev_params(struct raid_set *rs, struct dm_arg_set *as)
-{
-	int i;
-	int rebuild = 0;
-	int metadata_available = 0;
-	int r = 0;
-	const char *arg;
+अटल पूर्णांक parse_dev_params(काष्ठा raid_set *rs, काष्ठा dm_arg_set *as)
+अणु
+	पूर्णांक i;
+	पूर्णांक rebuild = 0;
+	पूर्णांक metadata_available = 0;
+	पूर्णांक r = 0;
+	स्थिर अक्षर *arg;
 
 	/* Put off the number of raid devices argument to get to dev pairs */
-	arg = dm_shift_arg(as);
-	if (!arg)
-		return -EINVAL;
+	arg = dm_shअगरt_arg(as);
+	अगर (!arg)
+		वापस -EINVAL;
 
-	for (i = 0; i < rs->raid_disks; i++) {
+	क्रम (i = 0; i < rs->raid_disks; i++) अणु
 		rs->dev[i].rdev.raid_disk = i;
 
-		rs->dev[i].meta_dev = NULL;
-		rs->dev[i].data_dev = NULL;
+		rs->dev[i].meta_dev = शून्य;
+		rs->dev[i].data_dev = शून्य;
 
 		/*
 		 * There are no offsets initially.
@@ -843,255 +844,255 @@ static int parse_dev_params(struct raid_set *rs, struct dm_arg_set *as)
 		rs->dev[i].rdev.new_data_offset = 0;
 		rs->dev[i].rdev.mddev = &rs->md;
 
-		arg = dm_shift_arg(as);
-		if (!arg)
-			return -EINVAL;
+		arg = dm_shअगरt_arg(as);
+		अगर (!arg)
+			वापस -EINVAL;
 
-		if (strcmp(arg, "-")) {
+		अगर (म_भेद(arg, "-")) अणु
 			r = dm_get_device(rs->ti, arg, dm_table_get_mode(rs->ti->table),
 					  &rs->dev[i].meta_dev);
-			if (r) {
+			अगर (r) अणु
 				rs->ti->error = "RAID metadata device lookup failure";
-				return r;
-			}
+				वापस r;
+			पूर्ण
 
 			rs->dev[i].rdev.sb_page = alloc_page(GFP_KERNEL);
-			if (!rs->dev[i].rdev.sb_page) {
+			अगर (!rs->dev[i].rdev.sb_page) अणु
 				rs->ti->error = "Failed to allocate superblock page";
-				return -ENOMEM;
-			}
-		}
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
 
-		arg = dm_shift_arg(as);
-		if (!arg)
-			return -EINVAL;
+		arg = dm_shअगरt_arg(as);
+		अगर (!arg)
+			वापस -EINVAL;
 
-		if (!strcmp(arg, "-")) {
-			if (!test_bit(In_sync, &rs->dev[i].rdev.flags) &&
-			    (!rs->dev[i].rdev.recovery_offset)) {
+		अगर (!म_भेद(arg, "-")) अणु
+			अगर (!test_bit(In_sync, &rs->dev[i].rdev.flags) &&
+			    (!rs->dev[i].rdev.recovery_offset)) अणु
 				rs->ti->error = "Drive designated for rebuild not specified";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (rs->dev[i].meta_dev) {
+			अगर (rs->dev[i].meta_dev) अणु
 				rs->ti->error = "No data device supplied with metadata device";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		r = dm_get_device(rs->ti, arg, dm_table_get_mode(rs->ti->table),
 				  &rs->dev[i].data_dev);
-		if (r) {
+		अगर (r) अणु
 			rs->ti->error = "RAID device lookup failure";
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-		if (rs->dev[i].meta_dev) {
+		अगर (rs->dev[i].meta_dev) अणु
 			metadata_available = 1;
 			rs->dev[i].rdev.meta_bdev = rs->dev[i].meta_dev->bdev;
-		}
+		पूर्ण
 		rs->dev[i].rdev.bdev = rs->dev[i].data_dev->bdev;
 		list_add_tail(&rs->dev[i].rdev.same_set, &rs->md.disks);
-		if (!test_bit(In_sync, &rs->dev[i].rdev.flags))
+		अगर (!test_bit(In_sync, &rs->dev[i].rdev.flags))
 			rebuild++;
-	}
+	पूर्ण
 
-	if (rs->journal_dev.dev)
+	अगर (rs->journal_dev.dev)
 		list_add_tail(&rs->journal_dev.rdev.same_set, &rs->md.disks);
 
-	if (metadata_available) {
-		rs->md.external = 0;
+	अगर (metadata_available) अणु
+		rs->md.बाह्यal = 0;
 		rs->md.persistent = 1;
 		rs->md.major_version = 2;
-	} else if (rebuild && !rs->md.recovery_cp) {
+	पूर्ण अन्यथा अगर (rebuild && !rs->md.recovery_cp) अणु
 		/*
-		 * Without metadata, we will not be able to tell if the array
-		 * is in-sync or not - we must assume it is not.  Therefore,
+		 * Without metadata, we will not be able to tell अगर the array
+		 * is in-sync or not - we must assume it is not.  Thereक्रमe,
 		 * it is impossible to rebuild a drive.
 		 *
-		 * Even if there is metadata, the on-disk information may
+		 * Even अगर there is metadata, the on-disk inक्रमmation may
 		 * indicate that the array is not in-sync and it will then
-		 * fail at that time.
+		 * fail at that समय.
 		 *
-		 * User could specify 'nosync' option if desperate.
+		 * User could specअगरy 'nosync' option अगर desperate.
 		 */
 		rs->ti->error = "Unable to rebuild drive while array is not in-sync";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * validate_region_size
  * @rs
- * @region_size:  region size in sectors.  If 0, pick a size (4MiB default).
+ * @region_size:  region size in sectors.  If 0, pick a size (4MiB शेष).
  *
- * Set rs->md.bitmap_info.chunksize (which really refers to 'region size').
- * Ensure that (ti->len/region_size < 2^21) - required by MD bitmap.
+ * Set rs->md.biपंचांगap_info.chunksize (which really refers to 'region size').
+ * Ensure that (ti->len/region_size < 2^21) - required by MD biपंचांगap.
  *
  * Returns: 0 on success, -EINVAL on failure.
  */
-static int validate_region_size(struct raid_set *rs, unsigned long region_size)
-{
-	unsigned long min_region_size = rs->ti->len / (1 << 21);
+अटल पूर्णांक validate_region_size(काष्ठा raid_set *rs, अचिन्हित दीर्घ region_size)
+अणु
+	अचिन्हित दीर्घ min_region_size = rs->ti->len / (1 << 21);
 
-	if (rs_is_raid0(rs))
-		return 0;
+	अगर (rs_is_raid0(rs))
+		वापस 0;
 
-	if (!region_size) {
+	अगर (!region_size) अणु
 		/*
-		 * Choose a reasonable default.	 All figures in sectors.
+		 * Choose a reasonable शेष.	 All figures in sectors.
 		 */
-		if (min_region_size > (1 << 13)) {
-			/* If not a power of 2, make it the next power of 2 */
-			region_size = roundup_pow_of_two(min_region_size);
+		अगर (min_region_size > (1 << 13)) अणु
+			/* If not a घातer of 2, make it the next घातer of 2 */
+			region_size = roundup_घात_of_two(min_region_size);
 			DMINFO("Choosing default region size of %lu sectors",
 			       region_size);
-		} else {
+		पूर्ण अन्यथा अणु
 			DMINFO("Choosing default region size of 4MiB");
 			region_size = 1 << 13; /* sectors */
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Validate user-supplied value.
 		 */
-		if (region_size > rs->ti->len) {
+		अगर (region_size > rs->ti->len) अणु
 			rs->ti->error = "Supplied region size is too large";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (region_size < min_region_size) {
+		अगर (region_size < min_region_size) अणु
 			DMERR("Supplied region_size (%lu sectors) below minimum (%lu)",
 			      region_size, min_region_size);
 			rs->ti->error = "Supplied region size is too small";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!is_power_of_2(region_size)) {
+		अगर (!is_घातer_of_2(region_size)) अणु
 			rs->ti->error = "Region size is not a power of 2";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (region_size < rs->md.chunk_sectors) {
+		अगर (region_size < rs->md.chunk_sectors) अणु
 			rs->ti->error = "Region size is smaller than the chunk size";
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Convert sectors to bytes.
 	 */
-	rs->md.bitmap_info.chunksize = to_bytes(region_size);
+	rs->md.biपंचांगap_info.chunksize = to_bytes(region_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * validate_raid_redundancy
  * @rs
  *
- * Determine if there are enough devices in the array that haven't
- * failed (or are being rebuilt) to form a usable array.
+ * Determine अगर there are enough devices in the array that haven't
+ * failed (or are being rebuilt) to क्रमm a usable array.
  *
  * Returns: 0 on success, -EINVAL on failure.
  */
-static int validate_raid_redundancy(struct raid_set *rs)
-{
-	unsigned int i, rebuild_cnt = 0;
-	unsigned int rebuilds_per_group = 0, copies;
-	unsigned int group_size, last_group_start;
+अटल पूर्णांक validate_raid_redundancy(काष्ठा raid_set *rs)
+अणु
+	अचिन्हित पूर्णांक i, rebuild_cnt = 0;
+	अचिन्हित पूर्णांक rebuilds_per_group = 0, copies;
+	अचिन्हित पूर्णांक group_size, last_group_start;
 
-	for (i = 0; i < rs->md.raid_disks; i++)
-		if (!test_bit(In_sync, &rs->dev[i].rdev.flags) ||
+	क्रम (i = 0; i < rs->md.raid_disks; i++)
+		अगर (!test_bit(In_sync, &rs->dev[i].rdev.flags) ||
 		    !rs->dev[i].rdev.sb_page)
 			rebuild_cnt++;
 
-	switch (rs->md.level) {
-	case 0:
-		break;
-	case 1:
-		if (rebuild_cnt >= rs->md.raid_disks)
-			goto too_many;
-		break;
-	case 4:
-	case 5:
-	case 6:
-		if (rebuild_cnt > rs->raid_type->parity_devs)
-			goto too_many;
-		break;
-	case 10:
+	चयन (rs->md.level) अणु
+	हाल 0:
+		अवरोध;
+	हाल 1:
+		अगर (rebuild_cnt >= rs->md.raid_disks)
+			जाओ too_many;
+		अवरोध;
+	हाल 4:
+	हाल 5:
+	हाल 6:
+		अगर (rebuild_cnt > rs->raid_type->parity_devs)
+			जाओ too_many;
+		अवरोध;
+	हाल 10:
 		copies = raid10_md_layout_to_copies(rs->md.new_layout);
-		if (copies < 2) {
+		अगर (copies < 2) अणु
 			DMERR("Bogus raid10 data copies < 2!");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (rebuild_cnt < copies)
-			break;
+		अगर (rebuild_cnt < copies)
+			अवरोध;
 
 		/*
-		 * It is possible to have a higher rebuild count for RAID10,
-		 * as long as the failed devices occur in different mirror
-		 * groups (i.e. different stripes).
+		 * It is possible to have a higher rebuild count क्रम RAID10,
+		 * as दीर्घ as the failed devices occur in dअगरferent mirror
+		 * groups (i.e. dअगरferent stripes).
 		 *
-		 * When checking "near" format, make sure no adjacent devices
+		 * When checking "near" क्रमmat, make sure no adjacent devices
 		 * have failed beyond what can be handled.  In addition to the
-		 * simple case where the number of devices is a multiple of the
-		 * number of copies, we must also handle cases where the number
+		 * simple हाल where the number of devices is a multiple of the
+		 * number of copies, we must also handle हालs where the number
 		 * of devices is not a multiple of the number of copies.
 		 * E.g.	   dev1 dev2 dev3 dev4 dev5
 		 *	    A	 A    B	   B	C
 		 *	    C	 D    D	   E	E
 		 */
-		if (__is_raid10_near(rs->md.new_layout)) {
-			for (i = 0; i < rs->md.raid_disks; i++) {
-				if (!(i % copies))
+		अगर (__is_raid10_near(rs->md.new_layout)) अणु
+			क्रम (i = 0; i < rs->md.raid_disks; i++) अणु
+				अगर (!(i % copies))
 					rebuilds_per_group = 0;
-				if ((!rs->dev[i].rdev.sb_page ||
+				अगर ((!rs->dev[i].rdev.sb_page ||
 				    !test_bit(In_sync, &rs->dev[i].rdev.flags)) &&
 				    (++rebuilds_per_group >= copies))
-					goto too_many;
-			}
-			break;
-		}
+					जाओ too_many;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * When checking "far" and "offset" formats, we need to ensure
+		 * When checking "far" and "offset" क्रमmats, we need to ensure
 		 * that the device that holds its copy is not also dead or
-		 * being rebuilt.  (Note that "far" and "offset" formats only
-		 * support two copies right now.  These formats also only ever
+		 * being rebuilt.  (Note that "far" and "offset" क्रमmats only
+		 * support two copies right now.  These क्रमmats also only ever
 		 * use the 'use_far_sets' variant.)
 		 *
 		 * This check is somewhat complicated by the need to account
-		 * for arrays that are not a multiple of (far) copies.	This
+		 * क्रम arrays that are not a multiple of (far) copies.	This
 		 * results in the need to treat the last (potentially larger)
-		 * set differently.
+		 * set dअगरferently.
 		 */
 		group_size = (rs->md.raid_disks / copies);
 		last_group_start = (rs->md.raid_disks / group_size) - 1;
 		last_group_start *= group_size;
-		for (i = 0; i < rs->md.raid_disks; i++) {
-			if (!(i % copies) && !(i > last_group_start))
+		क्रम (i = 0; i < rs->md.raid_disks; i++) अणु
+			अगर (!(i % copies) && !(i > last_group_start))
 				rebuilds_per_group = 0;
-			if ((!rs->dev[i].rdev.sb_page ||
+			अगर ((!rs->dev[i].rdev.sb_page ||
 			     !test_bit(In_sync, &rs->dev[i].rdev.flags)) &&
 			    (++rebuilds_per_group >= copies))
-					goto too_many;
-		}
-		break;
-	default:
-		if (rebuild_cnt)
-			return -EINVAL;
-	}
+					जाओ too_many;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अगर (rebuild_cnt)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 too_many:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Possible arguments are...
@@ -1099,562 +1100,562 @@ too_many:
  *
  * Argument definitions
  *    <chunk_size>			The number of sectors per disk that
- *					will form the "stripe"
+ *					will क्रमm the "stripe"
  *    [[no]sync]			Force or prevent recovery of the
  *					entire array
  *    [rebuild <idx>]			Rebuild the drive indicated by the index
- *    [daemon_sleep <ms>]		Time between bitmap daemon work to
+ *    [daemon_sleep <ms>]		Time between biपंचांगap daemon work to
  *					clear bits
  *    [min_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
  *    [max_recovery_rate <kB/sec/disk>]	Throttle RAID initialization
- *    [write_mostly <idx>]		Indicate a write mostly drive via index
- *    [max_write_behind <sectors>]	See '-write-behind=' (man mdadm)
- *    [stripe_cache <sectors>]		Stripe cache size for higher RAIDs
- *    [region_size <sectors>]		Defines granularity of bitmap
+ *    [ग_लिखो_mostly <idx>]		Indicate a ग_लिखो mostly drive via index
+ *    [max_ग_लिखो_behind <sectors>]	See '-write-behind=' (man mdadm)
+ *    [stripe_cache <sectors>]		Stripe cache size क्रम higher RAIDs
+ *    [region_size <sectors>]		Defines granularity of biपंचांगap
  *    [journal_dev <dev>]		raid4/5/6 journaling deviice
- *    					(i.e. write hole closing log)
+ *    					(i.e. ग_लिखो hole closing log)
  *
  * RAID10-only options:
  *    [raid10_copies <# copies>]	Number of copies.  (Default: 2)
- *    [raid10_format <near|far|offset>] Layout algorithm.  (Default: near)
+ *    [raid10_क्रमmat <near|far|offset>] Layout algorithm.  (Default: near)
  */
-static int parse_raid_params(struct raid_set *rs, struct dm_arg_set *as,
-			     unsigned int num_raid_params)
-{
-	int value, raid10_format = ALGORITHM_RAID10_DEFAULT;
-	unsigned int raid10_copies = 2;
-	unsigned int i, write_mostly = 0;
-	unsigned int region_size = 0;
+अटल पूर्णांक parse_raid_params(काष्ठा raid_set *rs, काष्ठा dm_arg_set *as,
+			     अचिन्हित पूर्णांक num_raid_params)
+अणु
+	पूर्णांक value, raid10_क्रमmat = ALGORITHM_RAID10_DEFAULT;
+	अचिन्हित पूर्णांक raid10_copies = 2;
+	अचिन्हित पूर्णांक i, ग_लिखो_mostly = 0;
+	अचिन्हित पूर्णांक region_size = 0;
 	sector_t max_io_len;
-	const char *arg, *key;
-	struct raid_dev *rd;
-	struct raid_type *rt = rs->raid_type;
+	स्थिर अक्षर *arg, *key;
+	काष्ठा raid_dev *rd;
+	काष्ठा raid_type *rt = rs->raid_type;
 
-	arg = dm_shift_arg(as);
-	num_raid_params--; /* Account for chunk_size argument */
+	arg = dm_shअगरt_arg(as);
+	num_raid_params--; /* Account क्रम chunk_size argument */
 
-	if (kstrtoint(arg, 10, &value) < 0) {
+	अगर (kstrtoपूर्णांक(arg, 10, &value) < 0) अणु
 		rs->ti->error = "Bad numerical argument given for chunk_size";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * First, parse the in-order required arguments
 	 * "chunk_size" is the only argument of this type.
 	 */
-	if (rt_is_raid1(rt)) {
-		if (value)
+	अगर (rt_is_raid1(rt)) अणु
+		अगर (value)
 			DMERR("Ignoring chunk size parameter for RAID 1");
 		value = 0;
-	} else if (!is_power_of_2(value)) {
+	पूर्ण अन्यथा अगर (!is_घातer_of_2(value)) अणु
 		rs->ti->error = "Chunk size must be a power of 2";
-		return -EINVAL;
-	} else if (value < 8) {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (value < 8) अणु
 		rs->ti->error = "Chunk size value is too small";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rs->md.new_chunk_sectors = rs->md.chunk_sectors = value;
 
 	/*
-	 * We set each individual device as In_sync with a completed
+	 * We set each inभागidual device as In_sync with a completed
 	 * 'recovery_offset'.  If there has been a device failure or
-	 * replacement then one of the following cases applies:
+	 * replacement then one of the following हालs applies:
 	 *
-	 *   1) User specifies 'rebuild'.
-	 *	- Device is reset when param is read.
+	 *   1) User specअगरies 'rebuild'.
+	 *	- Device is reset when param is पढ़ो.
 	 *   2) A new device is supplied.
 	 *	- No matching superblock found, resets device.
-	 *   3) Device failure was transient and returns on reload.
-	 *	- Failure noticed, resets device for bitmap replay.
+	 *   3) Device failure was transient and वापसs on reload.
+	 *	- Failure noticed, resets device क्रम biपंचांगap replay.
 	 *   4) Device hadn't completed recovery after previous failure.
-	 *	- Superblock is read and overrides recovery_offset.
+	 *	- Superblock is पढ़ो and overrides recovery_offset.
 	 *
 	 * What is found in the superblocks of the devices is always
-	 * authoritative, unless 'rebuild' or '[no]sync' was specified.
+	 * authoritative, unless 'rebuild' or '[no]sync' was specअगरied.
 	 */
-	for (i = 0; i < rs->raid_disks; i++) {
+	क्रम (i = 0; i < rs->raid_disks; i++) अणु
 		set_bit(In_sync, &rs->dev[i].rdev.flags);
 		rs->dev[i].rdev.recovery_offset = MaxSector;
-	}
+	पूर्ण
 
 	/*
 	 * Second, parse the unordered optional arguments
 	 */
-	for (i = 0; i < num_raid_params; i++) {
-		key = dm_shift_arg(as);
-		if (!key) {
+	क्रम (i = 0; i < num_raid_params; i++) अणु
+		key = dm_shअगरt_arg(as);
+		अगर (!key) अणु
 			rs->ti->error = "Not enough raid parameters given";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_NOSYNC))) {
-			if (test_and_set_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_NOSYNC))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one 'nosync' argument allowed";
-				return -EINVAL;
-			}
-			continue;
-		}
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_SYNC))) {
-			if (test_and_set_bit(__CTR_FLAG_SYNC, &rs->ctr_flags)) {
+				वापस -EINVAL;
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_SYNC))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_SYNC, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one 'sync' argument allowed";
-				return -EINVAL;
-			}
-			continue;
-		}
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_USE_NEAR_SETS))) {
-			if (test_and_set_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags)) {
+				वापस -EINVAL;
+			पूर्ण
+			जारी;
+		पूर्ण
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_USE_NEAR_SETS))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one 'raid10_use_new_sets' argument allowed";
-				return -EINVAL;
-			}
-			continue;
-		}
+				वापस -EINVAL;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		arg = dm_shift_arg(as);
-		i++; /* Account for the argument pairs */
-		if (!arg) {
+		arg = dm_shअगरt_arg(as);
+		i++; /* Account क्रम the argument pairs */
+		अगर (!arg) अणु
 			rs->ti->error = "Wrong number of raid parameters given";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
 		 * Parameters that take a string value are checked here.
 		 */
-		/* "raid10_format {near|offset|far} */
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_FORMAT))) {
-			if (test_and_set_bit(__CTR_FLAG_RAID10_FORMAT, &rs->ctr_flags)) {
+		/* "raid10_क्रमmat अणुnear|offset|farपूर्ण */
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_FORMAT))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_RAID10_FORMAT, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one 'raid10_format' argument pair allowed";
-				return -EINVAL;
-			}
-			if (!rt_is_raid10(rt)) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (!rt_is_raid10(rt)) अणु
 				rs->ti->error = "'raid10_format' is an invalid parameter for this RAID type";
-				return -EINVAL;
-			}
-			raid10_format = raid10_name_to_format(arg);
-			if (raid10_format < 0) {
+				वापस -EINVAL;
+			पूर्ण
+			raid10_क्रमmat = raid10_name_to_क्रमmat(arg);
+			अगर (raid10_क्रमmat < 0) अणु
 				rs->ti->error = "Invalid 'raid10_format' value given";
-				return raid10_format;
-			}
-			continue;
-		}
+				वापस raid10_क्रमmat;
+			पूर्ण
+			जारी;
+		पूर्ण
 
 		/* "journal_dev <dev>" */
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_DEV))) {
-			int r;
-			struct md_rdev *jdev;
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_DEV))) अणु
+			पूर्णांक r;
+			काष्ठा md_rdev *jdev;
 
-			if (test_and_set_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
+			अगर (test_and_set_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one raid4/5/6 set journaling device allowed";
-				return -EINVAL;
-			}
-			if (!rt_is_raid456(rt)) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (!rt_is_raid456(rt)) अणु
 				rs->ti->error = "'journal_dev' is an invalid parameter for this RAID type";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			r = dm_get_device(rs->ti, arg, dm_table_get_mode(rs->ti->table),
 					  &rs->journal_dev.dev);
-			if (r) {
+			अगर (r) अणु
 				rs->ti->error = "raid4/5/6 journal device lookup failure";
-				return r;
-			}
+				वापस r;
+			पूर्ण
 			jdev = &rs->journal_dev.rdev;
 			md_rdev_init(jdev);
 			jdev->mddev = &rs->md;
 			jdev->bdev = rs->journal_dev.dev->bdev;
-			jdev->sectors = to_sector(i_size_read(jdev->bdev->bd_inode));
-			if (jdev->sectors < MIN_RAID456_JOURNAL_SPACE) {
+			jdev->sectors = to_sector(i_size_पढ़ो(jdev->bdev->bd_inode));
+			अगर (jdev->sectors < MIN_RAID456_JOURNAL_SPACE) अणु
 				rs->ti->error = "No space for raid4/5/6 journal";
-				return -ENOSPC;
-			}
+				वापस -ENOSPC;
+			पूर्ण
 			rs->journal_dev.mode = R5C_JOURNAL_MODE_WRITE_THROUGH;
 			set_bit(Journal, &jdev->flags);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* "journal_mode <mode>" ("journal_dev" mandatory!) */
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_MODE))) {
-			int r;
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_MODE))) अणु
+			पूर्णांक r;
 
-			if (!test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
+			अगर (!test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) अणु
 				rs->ti->error = "raid4/5/6 'journal_mode' is invalid without 'journal_dev'";
-				return -EINVAL;
-			}
-			if (test_and_set_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags)) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (test_and_set_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one raid4/5/6 'journal_mode' argument allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			r = dm_raid_journal_mode_to_md(arg);
-			if (r < 0) {
+			अगर (r < 0) अणु
 				rs->ti->error = "Invalid 'journal_mode' argument";
-				return r;
-			}
+				वापस r;
+			पूर्ण
 			rs->journal_dev.mode = r;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * Parameters with number values from here on.
 		 */
-		if (kstrtoint(arg, 10, &value) < 0) {
+		अगर (kstrtoपूर्णांक(arg, 10, &value) < 0) अणु
 			rs->ti->error = "Bad numerical argument given in raid params";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD))) {
+		अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD))) अणु
 			/*
 			 * "rebuild" is being passed in by userspace to provide
 			 * indexes of replaced devices and to set up additional
 			 * devices on raid level takeover.
 			 */
-			if (!__within_range(value, 0, rs->raid_disks - 1)) {
+			अगर (!__within_range(value, 0, rs->raid_disks - 1)) अणु
 				rs->ti->error = "Invalid rebuild index given";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (test_and_set_bit(value, (void *) rs->rebuild_disks)) {
+			अगर (test_and_set_bit(value, (व्योम *) rs->rebuild_disks)) अणु
 				rs->ti->error = "rebuild for this index already given";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			rd = rs->dev + value;
 			clear_bit(In_sync, &rd->rdev.flags);
 			clear_bit(Faulty, &rd->rdev.flags);
 			rd->rdev.recovery_offset = 0;
 			set_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags);
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY))) {
-			if (!rt_is_raid1(rt)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY))) अणु
+			अगर (!rt_is_raid1(rt)) अणु
 				rs->ti->error = "write_mostly option is only valid for RAID1";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (!__within_range(value, 0, rs->md.raid_disks - 1)) {
+			अगर (!__within_range(value, 0, rs->md.raid_disks - 1)) अणु
 				rs->ti->error = "Invalid write_mostly index given";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			write_mostly++;
+			ग_लिखो_mostly++;
 			set_bit(WriteMostly, &rs->dev[value].rdev.flags);
 			set_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags);
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_WRITE_BEHIND))) {
-			if (!rt_is_raid1(rt)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_WRITE_BEHIND))) अणु
+			अगर (!rt_is_raid1(rt)) अणु
 				rs->ti->error = "max_write_behind option is only valid for RAID1";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (test_and_set_bit(__CTR_FLAG_MAX_WRITE_BEHIND, &rs->ctr_flags)) {
+			अगर (test_and_set_bit(__CTR_FLAG_MAX_WRITE_BEHIND, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one max_write_behind argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			/*
-			 * In device-mapper, we specify things in sectors, but
+			 * In device-mapper, we specअगरy things in sectors, but
 			 * MD records this value in kB
 			 */
-			if (value < 0 || value / 2 > COUNTER_MAX) {
+			अगर (value < 0 || value / 2 > COUNTER_MAX) अणु
 				rs->ti->error = "Max write-behind limit out of range";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			rs->md.bitmap_info.max_write_behind = value / 2;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP))) {
-			if (test_and_set_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags)) {
+			rs->md.biपंचांगap_info.max_ग_लिखो_behind = value / 2;
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one daemon_sleep argument pair allowed";
-				return -EINVAL;
-			}
-			if (value < 0) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (value < 0) अणु
 				rs->ti->error = "daemon sleep period out of range";
-				return -EINVAL;
-			}
-			rs->md.bitmap_info.daemon_sleep = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DATA_OFFSET))) {
+				वापस -EINVAL;
+			पूर्ण
+			rs->md.biपंचांगap_info.daemon_sleep = value;
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DATA_OFFSET))) अणु
 			/* Userspace passes new data_offset after having extended the the data image LV */
-			if (test_and_set_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags)) {
+			अगर (test_and_set_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one data_offset argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			/* Ensure sensible data offset */
-			if (value < 0 ||
-			    (value && (value < MIN_FREE_RESHAPE_SPACE || value % to_sector(PAGE_SIZE)))) {
+			अगर (value < 0 ||
+			    (value && (value < MIN_FREE_RESHAPE_SPACE || value % to_sector(PAGE_SIZE)))) अणु
 				rs->ti->error = "Bogus data_offset value";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			rs->data_offset = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DELTA_DISKS))) {
-			/* Define the +/-# of disks to add to/remove from the given raid set */
-			if (test_and_set_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_DELTA_DISKS))) अणु
+			/* Define the +/-# of disks to add to/हटाओ from the given raid set */
+			अगर (test_and_set_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one delta_disks argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			/* Ensure MAX_RAID_DEVICES and raid type minimal_devs! */
-			if (!__within_range(abs(value), 1, MAX_RAID_DEVICES - rt->minimal_devs)) {
+			अगर (!__within_range(असल(value), 1, MAX_RAID_DEVICES - rt->minimal_devs)) अणु
 				rs->ti->error = "Too many delta_disk requested";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			rs->delta_disks = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_STRIPE_CACHE))) {
-			if (test_and_set_bit(__CTR_FLAG_STRIPE_CACHE, &rs->ctr_flags)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_STRIPE_CACHE))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_STRIPE_CACHE, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one stripe_cache argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (!rt_is_raid456(rt)) {
+			अगर (!rt_is_raid456(rt)) अणु
 				rs->ti->error = "Inappropriate argument: stripe_cache";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (value < 0) {
+			अगर (value < 0) अणु
 				rs->ti->error = "Bogus stripe cache entries value";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			rs->stripe_cache_entries = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE))) {
-			if (test_and_set_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one min_recovery_rate argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (value < 0) {
+			अगर (value < 0) अणु
 				rs->ti->error = "min_recovery_rate out of range";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			rs->md.sync_speed_min = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE))) {
-			if (test_and_set_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one max_recovery_rate argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (value < 0) {
+			अगर (value < 0) अणु
 				rs->ti->error = "max_recovery_rate out of range";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			rs->md.sync_speed_max = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REGION_SIZE))) {
-			if (test_and_set_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags)) {
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_REGION_SIZE))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one region_size argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			region_size = value;
-			rs->requested_bitmap_chunk_sectors = value;
-		} else if (!strcasecmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_COPIES))) {
-			if (test_and_set_bit(__CTR_FLAG_RAID10_COPIES, &rs->ctr_flags)) {
+			rs->requested_biपंचांगap_chunk_sectors = value;
+		पूर्ण अन्यथा अगर (!strहालcmp(key, dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_COPIES))) अणु
+			अगर (test_and_set_bit(__CTR_FLAG_RAID10_COPIES, &rs->ctr_flags)) अणु
 				rs->ti->error = "Only one raid10_copies argument pair allowed";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (!__within_range(value, 2, rs->md.raid_disks)) {
+			अगर (!__within_range(value, 2, rs->md.raid_disks)) अणु
 				rs->ti->error = "Bad value for 'raid10_copies'";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			raid10_copies = value;
-		} else {
+		पूर्ण अन्यथा अणु
 			DMERR("Unable to parse RAID parameter: %s", key);
 			rs->ti->error = "Unable to parse RAID parameter";
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) &&
-	    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
+	अगर (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) &&
+	    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) अणु
 		rs->ti->error = "sync and nosync are mutually exclusive";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) &&
+	अगर (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) &&
 	    (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags) ||
-	     test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))) {
+	     test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))) अणु
 		rs->ti->error = "sync/nosync and rebuild are mutually exclusive";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (write_mostly >= rs->md.raid_disks) {
+	अगर (ग_लिखो_mostly >= rs->md.raid_disks) अणु
 		rs->ti->error = "Can't set all raid1 devices to write_mostly";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rs->md.sync_speed_max &&
-	    rs->md.sync_speed_min > rs->md.sync_speed_max) {
+	अगर (rs->md.sync_speed_max &&
+	    rs->md.sync_speed_min > rs->md.sync_speed_max) अणु
 		rs->ti->error = "Bogus recovery rates";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (validate_region_size(rs, region_size))
-		return -EINVAL;
+	अगर (validate_region_size(rs, region_size))
+		वापस -EINVAL;
 
-	if (rs->md.chunk_sectors)
+	अगर (rs->md.chunk_sectors)
 		max_io_len = rs->md.chunk_sectors;
-	else
+	अन्यथा
 		max_io_len = region_size;
 
-	if (dm_set_target_max_io_len(rs->ti, max_io_len))
-		return -EINVAL;
+	अगर (dm_set_target_max_io_len(rs->ti, max_io_len))
+		वापस -EINVAL;
 
-	if (rt_is_raid10(rt)) {
-		if (raid10_copies > rs->md.raid_disks) {
+	अगर (rt_is_raid10(rt)) अणु
+		अगर (raid10_copies > rs->md.raid_disks) अणु
 			rs->ti->error = "Not enough devices to satisfy specification";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		rs->md.new_layout = raid10_format_to_md_layout(rs, raid10_format, raid10_copies);
-		if (rs->md.new_layout < 0) {
+		rs->md.new_layout = raid10_क्रमmat_to_md_layout(rs, raid10_क्रमmat, raid10_copies);
+		अगर (rs->md.new_layout < 0) अणु
 			rs->ti->error = "Error getting raid10 format";
-			return rs->md.new_layout;
-		}
+			वापस rs->md.new_layout;
+		पूर्ण
 
 		rt = get_raid_type_by_ll(10, rs->md.new_layout);
-		if (!rt) {
+		अगर (!rt) अणु
 			rs->ti->error = "Failed to recognize new raid10 layout";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if ((rt->algorithm == ALGORITHM_RAID10_DEFAULT ||
+		अगर ((rt->algorithm == ALGORITHM_RAID10_DEFAULT ||
 		     rt->algorithm == ALGORITHM_RAID10_NEAR) &&
-		    test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags)) {
+		    test_bit(__CTR_FLAG_RAID10_USE_NEAR_SETS, &rs->ctr_flags)) अणु
 			rs->ti->error = "RAID10 format 'near' and 'raid10_use_near_sets' are incompatible";
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	rs->raid10_copies = raid10_copies;
 
 	/* Assume there are no metadata devices until the drives are parsed */
 	rs->md.persistent = 0;
-	rs->md.external = 1;
+	rs->md.बाह्यal = 1;
 
-	/* Check, if any invalid ctr arguments have been passed in for the raid level */
-	return rs_check_for_valid_flags(rs);
-}
+	/* Check, अगर any invalid ctr arguments have been passed in क्रम the raid level */
+	वापस rs_check_क्रम_valid_flags(rs);
+पूर्ण
 
 /* Set raid4/5/6 cache size */
-static int rs_set_raid456_stripe_cache(struct raid_set *rs)
-{
-	int r;
-	struct r5conf *conf;
-	struct mddev *mddev = &rs->md;
-	uint32_t min_stripes = max(mddev->chunk_sectors, mddev->new_chunk_sectors) / 2;
-	uint32_t nr_stripes = rs->stripe_cache_entries;
+अटल पूर्णांक rs_set_raid456_stripe_cache(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक r;
+	काष्ठा r5conf *conf;
+	काष्ठा mddev *mddev = &rs->md;
+	uपूर्णांक32_t min_stripes = max(mddev->chunk_sectors, mddev->new_chunk_sectors) / 2;
+	uपूर्णांक32_t nr_stripes = rs->stripe_cache_entries;
 
-	if (!rt_is_raid456(rs->raid_type)) {
+	अगर (!rt_is_raid456(rs->raid_type)) अणु
 		rs->ti->error = "Inappropriate raid level; cannot change stripe_cache size";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nr_stripes < min_stripes) {
+	अगर (nr_stripes < min_stripes) अणु
 		DMINFO("Adjusting requested %u stripe cache entries to %u to suit stripe size",
 		       nr_stripes, min_stripes);
 		nr_stripes = min_stripes;
-	}
+	पूर्ण
 
-	conf = mddev->private;
-	if (!conf) {
+	conf = mddev->निजी;
+	अगर (!conf) अणु
 		rs->ti->error = "Cannot change stripe_cache size on inactive RAID set";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Try setting number of stripes in raid456 stripe cache */
-	if (conf->min_nr_stripes != nr_stripes) {
+	अगर (conf->min_nr_stripes != nr_stripes) अणु
 		r = raid5_set_cache_size(mddev, nr_stripes);
-		if (r) {
+		अगर (r) अणु
 			rs->ti->error = "Failed to set raid4/5/6 stripe cache size";
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		DMINFO("%u stripe cache entries", nr_stripes);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Return # of data stripes as kept in mddev as of @rs (i.e. as of superblock) */
-static unsigned int mddev_data_stripes(struct raid_set *rs)
-{
-	return rs->md.raid_disks - rs->raid_type->parity_devs;
-}
+अटल अचिन्हित पूर्णांक mddev_data_stripes(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.raid_disks - rs->raid_type->parity_devs;
+पूर्ण
 
 /* Return # of data stripes of @rs (i.e. as of ctr) */
-static unsigned int rs_data_stripes(struct raid_set *rs)
-{
-	return rs->raid_disks - rs->raid_type->parity_devs;
-}
+अटल अचिन्हित पूर्णांक rs_data_stripes(काष्ठा raid_set *rs)
+अणु
+	वापस rs->raid_disks - rs->raid_type->parity_devs;
+पूर्ण
 
 /*
  * Retrieve rdev->sectors from any valid raid device of @rs
  * to allow userpace to pass in arbitray "- -" device tupples.
  */
-static sector_t __rdev_sectors(struct raid_set *rs)
-{
-	int i;
+अटल sector_t __rdev_sectors(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < rs->md.raid_disks; i++) {
-		struct md_rdev *rdev = &rs->dev[i].rdev;
+	क्रम (i = 0; i < rs->md.raid_disks; i++) अणु
+		काष्ठा md_rdev *rdev = &rs->dev[i].rdev;
 
-		if (!test_bit(Journal, &rdev->flags) &&
+		अगर (!test_bit(Journal, &rdev->flags) &&
 		    rdev->bdev && rdev->sectors)
-			return rdev->sectors;
-	}
+			वापस rdev->sectors;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Check that calculated dev_sectors fits all component devices. */
-static int _check_data_dev_sectors(struct raid_set *rs)
-{
+अटल पूर्णांक _check_data_dev_sectors(काष्ठा raid_set *rs)
+अणु
 	sector_t ds = ~0;
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each(rdev, &rs->md)
-		if (!test_bit(Journal, &rdev->flags) && rdev->bdev) {
-			ds = min(ds, to_sector(i_size_read(rdev->bdev->bd_inode)));
-			if (ds < rs->md.dev_sectors) {
+	rdev_क्रम_each(rdev, &rs->md)
+		अगर (!test_bit(Journal, &rdev->flags) && rdev->bdev) अणु
+			ds = min(ds, to_sector(i_size_पढ़ो(rdev->bdev->bd_inode)));
+			अगर (ds < rs->md.dev_sectors) अणु
 				rs->ti->error = "Component device(s) too small";
-				return -EINVAL;
-			}
-		}
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Calculate the sectors per device and per array used for @rs */
-static int rs_set_dev_and_array_sectors(struct raid_set *rs, sector_t sectors, bool use_mddev)
-{
-	int delta_disks;
-	unsigned int data_stripes;
+/* Calculate the sectors per device and per array used क्रम @rs */
+अटल पूर्णांक rs_set_dev_and_array_sectors(काष्ठा raid_set *rs, sector_t sectors, bool use_mddev)
+अणु
+	पूर्णांक delta_disks;
+	अचिन्हित पूर्णांक data_stripes;
 	sector_t array_sectors = sectors, dev_sectors = sectors;
-	struct mddev *mddev = &rs->md;
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (use_mddev) {
+	अगर (use_mddev) अणु
 		delta_disks = mddev->delta_disks;
 		data_stripes = mddev_data_stripes(rs);
-	} else {
+	पूर्ण अन्यथा अणु
 		delta_disks = rs->delta_disks;
 		data_stripes = rs_data_stripes(rs);
-	}
+	पूर्ण
 
-	/* Special raid1 case w/o delta_disks support (yet) */
-	if (rt_is_raid1(rs->raid_type))
+	/* Special raid1 हाल w/o delta_disks support (yet) */
+	अगर (rt_is_raid1(rs->raid_type))
 		;
-	else if (rt_is_raid10(rs->raid_type)) {
-		if (rs->raid10_copies < 2 ||
-		    delta_disks < 0) {
+	अन्यथा अगर (rt_is_raid10(rs->raid_type)) अणु
+		अगर (rs->raid10_copies < 2 ||
+		    delta_disks < 0) अणु
 			rs->ti->error = "Bogus raid10 data copies or delta disks";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		dev_sectors *= rs->raid10_copies;
-		if (sector_div(dev_sectors, data_stripes))
-			goto bad;
+		अगर (sector_भाग(dev_sectors, data_stripes))
+			जाओ bad;
 
 		array_sectors = (data_stripes + delta_disks) * dev_sectors;
-		if (sector_div(array_sectors, rs->raid10_copies))
-			goto bad;
+		अगर (sector_भाग(array_sectors, rs->raid10_copies))
+			जाओ bad;
 
-	} else if (sector_div(dev_sectors, data_stripes))
-		goto bad;
+	पूर्ण अन्यथा अगर (sector_भाग(dev_sectors, data_stripes))
+		जाओ bad;
 
-	else
+	अन्यथा
 		/* Striped layouts */
 		array_sectors = (data_stripes + delta_disks) * dev_sectors;
 
@@ -1662,265 +1663,265 @@ static int rs_set_dev_and_array_sectors(struct raid_set *rs, sector_t sectors, b
 	mddev->dev_sectors = dev_sectors;
 	rs_set_rdev_sectors(rs);
 
-	return _check_data_dev_sectors(rs);
+	वापस _check_data_dev_sectors(rs);
 bad:
 	rs->ti->error = "Target length not divisible by number of data devices";
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* Setup recovery on @rs */
-static void rs_setup_recovery(struct raid_set *rs, sector_t dev_sectors)
-{
-	/* raid0 does not recover */
-	if (rs_is_raid0(rs))
+अटल व्योम rs_setup_recovery(काष्ठा raid_set *rs, sector_t dev_sectors)
+अणु
+	/* raid0 करोes not recover */
+	अगर (rs_is_raid0(rs))
 		rs->md.recovery_cp = MaxSector;
 	/*
 	 * A raid6 set has to be recovered either
-	 * completely or for the grown part to
+	 * completely or क्रम the grown part to
 	 * ensure proper parity and Q-Syndrome
 	 */
-	else if (rs_is_raid6(rs))
+	अन्यथा अगर (rs_is_raid6(rs))
 		rs->md.recovery_cp = dev_sectors;
 	/*
 	 * Other raid set types may skip recovery
 	 * depending on the 'nosync' flag.
 	 */
-	else
+	अन्यथा
 		rs->md.recovery_cp = test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)
 				     ? MaxSector : dev_sectors;
-}
+पूर्ण
 
-static void do_table_event(struct work_struct *ws)
-{
-	struct raid_set *rs = container_of(ws, struct raid_set, md.event_work);
+अटल व्योम करो_table_event(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा raid_set *rs = container_of(ws, काष्ठा raid_set, md.event_work);
 
 	smp_rmb(); /* Make sure we access most actual mddev properties */
-	if (!rs_is_reshaping(rs)) {
-		if (rs_is_raid10(rs))
+	अगर (!rs_is_reshaping(rs)) अणु
+		अगर (rs_is_raid10(rs))
 			rs_set_rdev_sectors(rs);
 		rs_set_capacity(rs);
-	}
+	पूर्ण
 	dm_table_event(rs->ti->table);
-}
+पूर्ण
 
 /*
- * Make sure a valid takover (level switch) is being requested on @rs
+ * Make sure a valid takover (level चयन) is being requested on @rs
  *
  * Conversions of raid sets from one MD personality to another
- * have to conform to restrictions which are enforced here.
+ * have to conक्रमm to restrictions which are enक्रमced here.
  */
-static int rs_check_takeover(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
-	unsigned int near_copies;
+अटल पूर्णांक rs_check_takeover(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
+	अचिन्हित पूर्णांक near_copies;
 
-	if (rs->md.degraded) {
+	अगर (rs->md.degraded) अणु
 		rs->ti->error = "Can't takeover degraded raid set";
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	if (rs_is_reshaping(rs)) {
+	अगर (rs_is_reshaping(rs)) अणु
 		rs->ti->error = "Can't takeover reshaping raid set";
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
-	switch (mddev->level) {
-	case 0:
+	चयन (mddev->level) अणु
+	हाल 0:
 		/* raid0 -> raid1/5 with one disk */
-		if ((mddev->new_level == 1 || mddev->new_level == 5) &&
+		अगर ((mddev->new_level == 1 || mddev->new_level == 5) &&
 		    mddev->raid_disks == 1)
-			return 0;
+			वापस 0;
 
 		/* raid0 -> raid10 */
-		if (mddev->new_level == 10 &&
+		अगर (mddev->new_level == 10 &&
 		    !(rs->raid_disks % mddev->raid_disks))
-			return 0;
+			वापस 0;
 
 		/* raid0 with multiple disks -> raid4/5/6 */
-		if (__within_range(mddev->new_level, 4, 6) &&
+		अगर (__within_range(mddev->new_level, 4, 6) &&
 		    mddev->new_layout == ALGORITHM_PARITY_N &&
 		    mddev->raid_disks > 1)
-			return 0;
+			वापस 0;
 
-		break;
+		अवरोध;
 
-	case 10:
+	हाल 10:
 		/* Can't takeover raid10_offset! */
-		if (__is_raid10_offset(mddev->layout))
-			break;
+		अगर (__is_raid10_offset(mddev->layout))
+			अवरोध;
 
 		near_copies = __raid10_near_copies(mddev->layout);
 
 		/* raid10* -> raid0 */
-		if (mddev->new_level == 0) {
-			/* Can takeover raid10_near with raid disks divisable by data copies! */
-			if (near_copies > 1 &&
-			    !(mddev->raid_disks % near_copies)) {
+		अगर (mddev->new_level == 0) अणु
+			/* Can takeover raid10_near with raid disks भागisable by data copies! */
+			अगर (near_copies > 1 &&
+			    !(mddev->raid_disks % near_copies)) अणु
 				mddev->raid_disks /= near_copies;
 				mddev->delta_disks = mddev->raid_disks;
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			/* Can takeover raid10_far */
-			if (near_copies == 1 &&
+			अगर (near_copies == 1 &&
 			    __raid10_far_copies(mddev->layout) > 1)
-				return 0;
+				वापस 0;
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* raid10_{near,far} -> raid1 */
-		if (mddev->new_level == 1 &&
+		/* raid10_अणुnear,farपूर्ण -> raid1 */
+		अगर (mddev->new_level == 1 &&
 		    max(near_copies, __raid10_far_copies(mddev->layout)) == mddev->raid_disks)
-			return 0;
+			वापस 0;
 
-		/* raid10_{near,far} with 2 disks -> raid4/5 */
-		if (__within_range(mddev->new_level, 4, 5) &&
+		/* raid10_अणुnear,farपूर्ण with 2 disks -> raid4/5 */
+		अगर (__within_range(mddev->new_level, 4, 5) &&
 		    mddev->raid_disks == 2)
-			return 0;
-		break;
+			वापस 0;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		/* raid1 with 2 disks -> raid4/5 */
-		if (__within_range(mddev->new_level, 4, 5) &&
-		    mddev->raid_disks == 2) {
+		अगर (__within_range(mddev->new_level, 4, 5) &&
+		    mddev->raid_disks == 2) अणु
 			mddev->degraded = 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* raid1 -> raid0 */
-		if (mddev->new_level == 0 &&
+		अगर (mddev->new_level == 0 &&
 		    mddev->raid_disks == 1)
-			return 0;
+			वापस 0;
 
 		/* raid1 -> raid10 */
-		if (mddev->new_level == 10)
-			return 0;
-		break;
+		अगर (mddev->new_level == 10)
+			वापस 0;
+		अवरोध;
 
-	case 4:
+	हाल 4:
 		/* raid4 -> raid0 */
-		if (mddev->new_level == 0)
-			return 0;
+		अगर (mddev->new_level == 0)
+			वापस 0;
 
 		/* raid4 -> raid1/5 with 2 disks */
-		if ((mddev->new_level == 1 || mddev->new_level == 5) &&
+		अगर ((mddev->new_level == 1 || mddev->new_level == 5) &&
 		    mddev->raid_disks == 2)
-			return 0;
+			वापस 0;
 
 		/* raid4 -> raid5/6 with parity N */
-		if (__within_range(mddev->new_level, 5, 6) &&
+		अगर (__within_range(mddev->new_level, 5, 6) &&
 		    mddev->layout == ALGORITHM_PARITY_N)
-			return 0;
-		break;
+			वापस 0;
+		अवरोध;
 
-	case 5:
+	हाल 5:
 		/* raid5 with parity N -> raid0 */
-		if (mddev->new_level == 0 &&
+		अगर (mddev->new_level == 0 &&
 		    mddev->layout == ALGORITHM_PARITY_N)
-			return 0;
+			वापस 0;
 
 		/* raid5 with parity N -> raid4 */
-		if (mddev->new_level == 4 &&
+		अगर (mddev->new_level == 4 &&
 		    mddev->layout == ALGORITHM_PARITY_N)
-			return 0;
+			वापस 0;
 
 		/* raid5 with 2 disks -> raid1/4/10 */
-		if ((mddev->new_level == 1 || mddev->new_level == 4 || mddev->new_level == 10) &&
+		अगर ((mddev->new_level == 1 || mddev->new_level == 4 || mddev->new_level == 10) &&
 		    mddev->raid_disks == 2)
-			return 0;
+			वापस 0;
 
 		/* raid5_* ->  raid6_*_6 with Q-Syndrome N (e.g. raid5_ra -> raid6_ra_6 */
-		if (mddev->new_level == 6 &&
+		अगर (mddev->new_level == 6 &&
 		    ((mddev->layout == ALGORITHM_PARITY_N && mddev->new_layout == ALGORITHM_PARITY_N) ||
 		      __within_range(mddev->new_layout, ALGORITHM_LEFT_ASYMMETRIC_6, ALGORITHM_RIGHT_SYMMETRIC_6)))
-			return 0;
-		break;
+			वापस 0;
+		अवरोध;
 
-	case 6:
+	हाल 6:
 		/* raid6 with parity N -> raid0 */
-		if (mddev->new_level == 0 &&
+		अगर (mddev->new_level == 0 &&
 		    mddev->layout == ALGORITHM_PARITY_N)
-			return 0;
+			वापस 0;
 
 		/* raid6 with parity N -> raid4 */
-		if (mddev->new_level == 4 &&
+		अगर (mddev->new_level == 4 &&
 		    mddev->layout == ALGORITHM_PARITY_N)
-			return 0;
+			वापस 0;
 
 		/* raid6_*_n with Q-Syndrome N -> raid5_* */
-		if (mddev->new_level == 5 &&
+		अगर (mddev->new_level == 5 &&
 		    ((mddev->layout == ALGORITHM_PARITY_N && mddev->new_layout == ALGORITHM_PARITY_N) ||
 		     __within_range(mddev->new_layout, ALGORITHM_LEFT_ASYMMETRIC, ALGORITHM_RIGHT_SYMMETRIC)))
-			return 0;
-		break;
+			वापस 0;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	rs->ti->error = "takeover not possible";
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* True if @rs requested to be taken over */
-static bool rs_takeover_requested(struct raid_set *rs)
-{
-	return rs->md.new_level != rs->md.level;
-}
+/* True अगर @rs requested to be taken over */
+अटल bool rs_takeover_requested(काष्ठा raid_set *rs)
+अणु
+	वापस rs->md.new_level != rs->md.level;
+पूर्ण
 
-/* True if layout is set to reshape. */
-static bool rs_is_layout_change(struct raid_set *rs, bool use_mddev)
-{
-	return (use_mddev ? rs->md.delta_disks : rs->delta_disks) ||
+/* True अगर layout is set to reshape. */
+अटल bool rs_is_layout_change(काष्ठा raid_set *rs, bool use_mddev)
+अणु
+	वापस (use_mddev ? rs->md.delta_disks : rs->delta_disks) ||
 	       rs->md.new_layout != rs->md.layout ||
 	       rs->md.new_chunk_sectors != rs->md.chunk_sectors;
-}
+पूर्ण
 
-/* True if @rs is requested to reshape by ctr */
-static bool rs_reshape_requested(struct raid_set *rs)
-{
+/* True अगर @rs is requested to reshape by ctr */
+अटल bool rs_reshape_requested(काष्ठा raid_set *rs)
+अणु
 	bool change;
-	struct mddev *mddev = &rs->md;
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (rs_takeover_requested(rs))
-		return false;
+	अगर (rs_takeover_requested(rs))
+		वापस false;
 
-	if (rs_is_raid0(rs))
-		return false;
+	अगर (rs_is_raid0(rs))
+		वापस false;
 
 	change = rs_is_layout_change(rs, false);
 
-	/* Historical case to support raid1 reshape without delta disks */
-	if (rs_is_raid1(rs)) {
-		if (rs->delta_disks)
-			return !!rs->delta_disks;
+	/* Historical हाल to support raid1 reshape without delta disks */
+	अगर (rs_is_raid1(rs)) अणु
+		अगर (rs->delta_disks)
+			वापस !!rs->delta_disks;
 
-		return !change &&
+		वापस !change &&
 		       mddev->raid_disks != rs->raid_disks;
-	}
+	पूर्ण
 
-	if (rs_is_raid10(rs))
-		return change &&
+	अगर (rs_is_raid10(rs))
+		वापस change &&
 		       !__is_raid10_far(mddev->new_layout) &&
 		       rs->delta_disks >= 0;
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
 /*  Features */
-#define	FEATURE_FLAG_SUPPORTS_V190	0x1 /* Supports extended superblock */
+#घोषणा	FEATURE_FLAG_SUPPORTS_V190	0x1 /* Supports extended superblock */
 
-/* State flags for sb->flags */
-#define	SB_FLAG_RESHAPE_ACTIVE		0x1
-#define	SB_FLAG_RESHAPE_BACKWARDS	0x2
+/* State flags क्रम sb->flags */
+#घोषणा	SB_FLAG_RESHAPE_ACTIVE		0x1
+#घोषणा	SB_FLAG_RESHAPE_BACKWARDS	0x2
 
 /*
- * This structure is never routinely used by userspace, unlike md superblocks.
+ * This काष्ठाure is never routinely used by userspace, unlike md superblocks.
  * Devices with this superblock should only ever be accessed via device-mapper.
  */
-#define DM_RAID_MAGIC 0x64526D44
-struct dm_raid_superblock {
+#घोषणा DM_RAID_MAGIC 0x64526D44
+काष्ठा dm_raid_superblock अणु
 	__le32 magic;		/* "DmRd" */
 	__le32 compat_features;	/* Used to indicate compatible features (like 1.9.0 ondisk metadata extension) */
 
@@ -1933,7 +1934,7 @@ struct dm_raid_superblock {
 
 	/*
 	 * This offset tracks the progress of the repair or replacement of
-	 * an individual drive.
+	 * an inभागidual drive.
 	 */
 	__le64 disk_recovery_offset;
 
@@ -1944,7 +1945,7 @@ struct dm_raid_superblock {
 	__le64 array_resync_offset;
 
 	/*
-	 * raid characteristics
+	 * raid अक्षरacteristics
 	 */
 	__le32 level;
 	__le32 layout;
@@ -1956,7 +1957,7 @@ struct dm_raid_superblock {
 	 * FEATURE_FLAG_SUPPORTS_V190 in the compat_features member indicates that those exist
 	 */
 
-	__le32 flags; /* Flags defining array states for reshaping */
+	__le32 flags; /* Flags defining array states क्रम reshaping */
 
 	/*
 	 * This offset tracks the progress of a raid
@@ -1965,7 +1966,7 @@ struct dm_raid_superblock {
 	__le64 reshape_position;
 
 	/*
-	 * These define the properties of the array in case of an interrupted reshape
+	 * These define the properties of the array in हाल of an पूर्णांकerrupted reshape
 	 */
 	__le32 new_level;
 	__le32 new_layout;
@@ -1987,106 +1988,106 @@ struct dm_raid_superblock {
 
 	/*
 	 * Additonal Bit field of devices indicating failures to support
-	 * up to 256 devices with the 1.9.0 on-disk metadata format
+	 * up to 256 devices with the 1.9.0 on-disk metadata क्रमmat
 	 */
 	__le64 extended_failed_devices[DISKS_ARRAY_ELEMS - 1];
 
 	__le32 incompat_features;	/* Used to indicate any incompatible features */
 
 	/* Always set rest up to logical block size to 0 when writing (see get_metadata_device() below). */
-} __packed;
+पूर्ण __packed;
 
 /*
- * Check for reshape constraints on raid set @rs:
+ * Check क्रम reshape स्थिरraपूर्णांकs on raid set @rs:
  *
  * - reshape function non-existent
  * - degraded set
  * - ongoing recovery
  * - ongoing reshape
  *
- * Returns 0 if none or -EPERM if given constraint
+ * Returns 0 अगर none or -EPERM अगर given स्थिरraपूर्णांक
  * and error message reference in @errmsg
  */
-static int rs_check_reshape(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
+अटल पूर्णांक rs_check_reshape(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (!mddev->pers || !mddev->pers->check_reshape)
+	अगर (!mddev->pers || !mddev->pers->check_reshape)
 		rs->ti->error = "Reshape not supported";
-	else if (mddev->degraded)
+	अन्यथा अगर (mddev->degraded)
 		rs->ti->error = "Can't reshape degraded raid set";
-	else if (rs_is_recovering(rs))
+	अन्यथा अगर (rs_is_recovering(rs))
 		rs->ti->error = "Convert request on recovering raid set prohibited";
-	else if (rs_is_reshaping(rs))
+	अन्यथा अगर (rs_is_reshaping(rs))
 		rs->ti->error = "raid set already reshaping!";
-	else if (!(rs_is_raid1(rs) || rs_is_raid10(rs) || rs_is_raid456(rs)))
+	अन्यथा अगर (!(rs_is_raid1(rs) || rs_is_raid10(rs) || rs_is_raid456(rs)))
 		rs->ti->error = "Reshaping only supported for raid1/4/5/6/10";
-	else
-		return 0;
+	अन्यथा
+		वापस 0;
 
-	return -EPERM;
-}
+	वापस -EPERM;
+पूर्ण
 
-static int read_disk_sb(struct md_rdev *rdev, int size, bool force_reload)
-{
+अटल पूर्णांक पढ़ो_disk_sb(काष्ठा md_rdev *rdev, पूर्णांक size, bool क्रमce_reload)
+अणु
 	BUG_ON(!rdev->sb_page);
 
-	if (rdev->sb_loaded && !force_reload)
-		return 0;
+	अगर (rdev->sb_loaded && !क्रमce_reload)
+		वापस 0;
 
 	rdev->sb_loaded = 0;
 
-	if (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true)) {
+	अगर (!sync_page_io(rdev, 0, size, rdev->sb_page, REQ_OP_READ, 0, true)) अणु
 		DMERR("Failed to read superblock of device at position %d",
 		      rdev->raid_disk);
 		md_error(rdev->mddev, rdev);
 		set_bit(Faulty, &rdev->flags);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	rdev->sb_loaded = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sb_retrieve_failed_devices(struct dm_raid_superblock *sb, uint64_t *failed_devices)
-{
+अटल व्योम sb_retrieve_failed_devices(काष्ठा dm_raid_superblock *sb, uपूर्णांक64_t *failed_devices)
+अणु
 	failed_devices[0] = le64_to_cpu(sb->failed_devices);
-	memset(failed_devices + 1, 0, sizeof(sb->extended_failed_devices));
+	स_रखो(failed_devices + 1, 0, माप(sb->extended_failed_devices));
 
-	if (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190) {
-		int i = ARRAY_SIZE(sb->extended_failed_devices);
+	अगर (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190) अणु
+		पूर्णांक i = ARRAY_SIZE(sb->extended_failed_devices);
 
-		while (i--)
+		जबतक (i--)
 			failed_devices[i+1] = le64_to_cpu(sb->extended_failed_devices[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sb_update_failed_devices(struct dm_raid_superblock *sb, uint64_t *failed_devices)
-{
-	int i = ARRAY_SIZE(sb->extended_failed_devices);
+अटल व्योम sb_update_failed_devices(काष्ठा dm_raid_superblock *sb, uपूर्णांक64_t *failed_devices)
+अणु
+	पूर्णांक i = ARRAY_SIZE(sb->extended_failed_devices);
 
 	sb->failed_devices = cpu_to_le64(failed_devices[0]);
-	while (i--)
+	जबतक (i--)
 		sb->extended_failed_devices[i] = cpu_to_le64(failed_devices[i+1]);
-}
+पूर्ण
 
 /*
  * Synchronize the superblock members with the raid set properties
  *
  * All superblock data is little endian.
  */
-static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
-{
+अटल व्योम super_sync(काष्ठा mddev *mddev, काष्ठा md_rdev *rdev)
+अणु
 	bool update_failed_devices = false;
-	unsigned int i;
-	uint64_t failed_devices[DISKS_ARRAY_ELEMS];
-	struct dm_raid_superblock *sb;
-	struct raid_set *rs = container_of(mddev, struct raid_set, md);
+	अचिन्हित पूर्णांक i;
+	uपूर्णांक64_t failed_devices[DISKS_ARRAY_ELEMS];
+	काष्ठा dm_raid_superblock *sb;
+	काष्ठा raid_set *rs = container_of(mddev, काष्ठा raid_set, md);
 
 	/* No metadata device, no superblock */
-	if (!rdev->meta_bdev)
-		return;
+	अगर (!rdev->meta_bdev)
+		वापस;
 
 	BUG_ON(!rdev->sb_page);
 
@@ -2094,13 +2095,13 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
 
 	sb_retrieve_failed_devices(sb, failed_devices);
 
-	for (i = 0; i < rs->raid_disks; i++)
-		if (!rs->dev[i].data_dev || test_bit(Faulty, &rs->dev[i].rdev.flags)) {
+	क्रम (i = 0; i < rs->raid_disks; i++)
+		अगर (!rs->dev[i].data_dev || test_bit(Faulty, &rs->dev[i].rdev.flags)) अणु
 			update_failed_devices = true;
-			set_bit(i, (void *) failed_devices);
-		}
+			set_bit(i, (व्योम *) failed_devices);
+		पूर्ण
 
-	if (update_failed_devices)
+	अगर (update_failed_devices)
 		sb_update_failed_devices(sb, failed_devices);
 
 	sb->magic = cpu_to_le32(DM_RAID_MAGIC);
@@ -2131,16 +2132,16 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
 
 	smp_rmb(); /* Make sure we access most recent reshape position */
 	sb->reshape_position = cpu_to_le64(mddev->reshape_position);
-	if (le64_to_cpu(sb->reshape_position) != MaxSector) {
+	अगर (le64_to_cpu(sb->reshape_position) != MaxSector) अणु
 		/* Flag ongoing reshape */
 		sb->flags |= cpu_to_le32(SB_FLAG_RESHAPE_ACTIVE);
 
-		if (mddev->delta_disks < 0 || mddev->reshape_backwards)
+		अगर (mddev->delta_disks < 0 || mddev->reshape_backwards)
 			sb->flags |= cpu_to_le32(SB_FLAG_RESHAPE_BACKWARDS);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Clear reshape flags */
 		sb->flags &= ~(cpu_to_le32(SB_FLAG_RESHAPE_ACTIVE|SB_FLAG_RESHAPE_BACKWARDS));
-	}
+	पूर्ण
 
 	sb->array_sectors = cpu_to_le64(mddev->array_sectors);
 	sb->data_offset = cpu_to_le64(rdev->data_offset);
@@ -2149,37 +2150,37 @@ static void super_sync(struct mddev *mddev, struct md_rdev *rdev)
 	sb->incompat_features = cpu_to_le32(0);
 
 	/* Zero out the rest of the payload after the size of the superblock */
-	memset(sb + 1, 0, rdev->sb_size - sizeof(*sb));
-}
+	स_रखो(sb + 1, 0, rdev->sb_size - माप(*sb));
+पूर्ण
 
 /*
  * super_load
  *
- * This function creates a superblock if one is not found on the device
- * and will decide which superblock to use if there's a choice.
+ * This function creates a superblock अगर one is not found on the device
+ * and will decide which superblock to use अगर there's a choice.
  *
- * Return: 1 if use rdev, 0 if use refdev, -Exxx otherwise
+ * Return: 1 अगर use rdev, 0 अगर use refdev, -Exxx otherwise
  */
-static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
-{
-	int r;
-	struct dm_raid_superblock *sb;
-	struct dm_raid_superblock *refsb;
-	uint64_t events_sb, events_refsb;
+अटल पूर्णांक super_load(काष्ठा md_rdev *rdev, काष्ठा md_rdev *refdev)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_raid_superblock *sb;
+	काष्ठा dm_raid_superblock *refsb;
+	uपूर्णांक64_t events_sb, events_refsb;
 
-	r = read_disk_sb(rdev, rdev->sb_size, false);
-	if (r)
-		return r;
+	r = पढ़ो_disk_sb(rdev, rdev->sb_size, false);
+	अगर (r)
+		वापस r;
 
 	sb = page_address(rdev->sb_page);
 
 	/*
-	 * Two cases that we want to write new superblocks and rebuild:
+	 * Two हालs that we want to ग_लिखो new superblocks and rebuild:
 	 * 1) New device (no matching magic number)
-	 * 2) Device specified for rebuild (!In_sync w/ offset == 0)
+	 * 2) Device specअगरied क्रम rebuild (!In_sync w/ offset == 0)
 	 */
-	if ((sb->magic != cpu_to_le32(DM_RAID_MAGIC)) ||
-	    (!test_bit(In_sync, &rdev->flags) && !rdev->recovery_offset)) {
+	अगर ((sb->magic != cpu_to_le32(DM_RAID_MAGIC)) ||
+	    (!test_bit(In_sync, &rdev->flags) && !rdev->recovery_offset)) अणु
 		super_sync(rdev->mddev, rdev);
 
 		set_bit(FirstUse, &rdev->flags);
@@ -2188,38 +2189,38 @@ static int super_load(struct md_rdev *rdev, struct md_rdev *refdev)
 		/* Force writing of superblocks to disk */
 		set_bit(MD_SB_CHANGE_DEVS, &rdev->mddev->sb_flags);
 
-		/* Any superblock is better than none, choose that if given */
-		return refdev ? 0 : 1;
-	}
+		/* Any superblock is better than none, choose that अगर given */
+		वापस refdev ? 0 : 1;
+	पूर्ण
 
-	if (!refdev)
-		return 1;
+	अगर (!refdev)
+		वापस 1;
 
 	events_sb = le64_to_cpu(sb->events);
 
 	refsb = page_address(refdev->sb_page);
 	events_refsb = le64_to_cpu(refsb->events);
 
-	return (events_sb > events_refsb) ? 1 : 0;
-}
+	वापस (events_sb > events_refsb) ? 1 : 0;
+पूर्ण
 
-static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
-{
-	int role;
-	unsigned int d;
-	struct mddev *mddev = &rs->md;
-	uint64_t events_sb;
-	uint64_t failed_devices[DISKS_ARRAY_ELEMS];
-	struct dm_raid_superblock *sb;
-	uint32_t new_devs = 0, rebuild_and_new = 0, rebuilds = 0;
-	struct md_rdev *r;
-	struct dm_raid_superblock *sb2;
+अटल पूर्णांक super_init_validation(काष्ठा raid_set *rs, काष्ठा md_rdev *rdev)
+अणु
+	पूर्णांक role;
+	अचिन्हित पूर्णांक d;
+	काष्ठा mddev *mddev = &rs->md;
+	uपूर्णांक64_t events_sb;
+	uपूर्णांक64_t failed_devices[DISKS_ARRAY_ELEMS];
+	काष्ठा dm_raid_superblock *sb;
+	uपूर्णांक32_t new_devs = 0, rebuild_and_new = 0, rebuilds = 0;
+	काष्ठा md_rdev *r;
+	काष्ठा dm_raid_superblock *sb2;
 
 	sb = page_address(rdev->sb_page);
 	events_sb = le64_to_cpu(sb->events);
 
 	/*
-	 * Initialise to 1 if this is a new superblock.
+	 * Initialise to 1 अगर this is a new superblock.
 	 */
 	mddev->events = events_sb ? : 1;
 
@@ -2234,7 +2235,7 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
 	 * Reshaping is supported, e.g. reshape_position is valid
 	 * in superblock and superblock content is authoritative.
 	 */
-	if (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190) {
+	अगर (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190) अणु
 		/* Superblock is authoritative wrt given raid set layout! */
 		mddev->new_level = le32_to_cpu(sb->new_level);
 		mddev->new_layout = le32_to_cpu(sb->new_layout);
@@ -2242,198 +2243,198 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
 		mddev->delta_disks = le32_to_cpu(sb->delta_disks);
 		mddev->array_sectors = le64_to_cpu(sb->array_sectors);
 
-		/* raid was reshaping and got interrupted */
-		if (le32_to_cpu(sb->flags) & SB_FLAG_RESHAPE_ACTIVE) {
-			if (test_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags)) {
+		/* raid was reshaping and got पूर्णांकerrupted */
+		अगर (le32_to_cpu(sb->flags) & SB_FLAG_RESHAPE_ACTIVE) अणु
+			अगर (test_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags)) अणु
 				DMERR("Reshape requested but raid set is still reshaping");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (mddev->delta_disks < 0 ||
+			अगर (mddev->delta_disks < 0 ||
 			    (!mddev->delta_disks && (le32_to_cpu(sb->flags) & SB_FLAG_RESHAPE_BACKWARDS)))
 				mddev->reshape_backwards = 1;
-			else
+			अन्यथा
 				mddev->reshape_backwards = 0;
 
 			mddev->reshape_position = le64_to_cpu(sb->reshape_position);
 			rs->raid_type = get_raid_type_by_ll(mddev->level, mddev->layout);
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * No takeover/reshaping, because we don't have the extended v1.9.0 metadata
+		 * No takeover/reshaping, because we करोn't have the extended v1.9.0 metadata
 		 */
-		struct raid_type *rt_cur = get_raid_type_by_ll(mddev->level, mddev->layout);
-		struct raid_type *rt_new = get_raid_type_by_ll(mddev->new_level, mddev->new_layout);
+		काष्ठा raid_type *rt_cur = get_raid_type_by_ll(mddev->level, mddev->layout);
+		काष्ठा raid_type *rt_new = get_raid_type_by_ll(mddev->new_level, mddev->new_layout);
 
-		if (rs_takeover_requested(rs)) {
-			if (rt_cur && rt_new)
+		अगर (rs_takeover_requested(rs)) अणु
+			अगर (rt_cur && rt_new)
 				DMERR("Takeover raid sets from %s to %s not yet supported by metadata. (raid level change)",
 				      rt_cur->name, rt_new->name);
-			else
+			अन्यथा
 				DMERR("Takeover raid sets not yet supported by metadata. (raid level change)");
-			return -EINVAL;
-		} else if (rs_reshape_requested(rs)) {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (rs_reshape_requested(rs)) अणु
 			DMERR("Reshaping raid sets not yet supported by metadata. (raid layout change keeping level)");
-			if (mddev->layout != mddev->new_layout) {
-				if (rt_cur && rt_new)
+			अगर (mddev->layout != mddev->new_layout) अणु
+				अगर (rt_cur && rt_new)
 					DMERR("	 current layout %s vs new layout %s",
 					      rt_cur->name, rt_new->name);
-				else
+				अन्यथा
 					DMERR("	 current layout 0x%X vs new layout 0x%X",
 					      le32_to_cpu(sb->layout), mddev->new_layout);
-			}
-			if (mddev->chunk_sectors != mddev->new_chunk_sectors)
+			पूर्ण
+			अगर (mddev->chunk_sectors != mddev->new_chunk_sectors)
 				DMERR("	 current stripe sectors %u vs new stripe sectors %u",
 				      mddev->chunk_sectors, mddev->new_chunk_sectors);
-			if (rs->delta_disks)
+			अगर (rs->delta_disks)
 				DMERR("	 current %u disks vs new %u disks",
 				      mddev->raid_disks, mddev->raid_disks + rs->delta_disks);
-			if (rs_is_raid10(rs)) {
+			अगर (rs_is_raid10(rs)) अणु
 				DMERR("	 Old layout: %s w/ %u copies",
-				      raid10_md_layout_to_format(mddev->layout),
+				      raid10_md_layout_to_क्रमmat(mddev->layout),
 				      raid10_md_layout_to_copies(mddev->layout));
 				DMERR("	 New layout: %s w/ %u copies",
-				      raid10_md_layout_to_format(mddev->new_layout),
+				      raid10_md_layout_to_क्रमmat(mddev->new_layout),
 				      raid10_md_layout_to_copies(mddev->new_layout));
-			}
-			return -EINVAL;
-		}
+			पूर्ण
+			वापस -EINVAL;
+		पूर्ण
 
 		DMINFO("Discovered old metadata format; upgrading to extended metadata format");
-	}
+	पूर्ण
 
-	if (!test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
+	अगर (!test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
 		mddev->recovery_cp = le64_to_cpu(sb->array_resync_offset);
 
 	/*
-	 * During load, we set FirstUse if a new superblock was written.
+	 * During load, we set FirstUse अगर a new superblock was written.
 	 * There are two reasons we might not have a superblock:
-	 * 1) The raid set is brand new - in which case, all of the
+	 * 1) The raid set is bअक्रम new - in which हाल, all of the
 	 *    devices must have their In_sync bit set.	Also,
-	 *    recovery_cp must be 0, unless forced.
+	 *    recovery_cp must be 0, unless क्रमced.
 	 * 2) This is a new device being added to an old raid set
 	 *    and the new device needs to be rebuilt - in which
-	 *    case the In_sync bit will /not/ be set and
+	 *    हाल the In_sync bit will /not/ be set and
 	 *    recovery_cp must be MaxSector.
 	 * 3) This is/are a new device(s) being added to an old
 	 *    raid set during takeover to a higher raid level
-	 *    to provide capacity for redundancy or during reshape
+	 *    to provide capacity क्रम redundancy or during reshape
 	 *    to add capacity to grow the raid set.
 	 */
 	d = 0;
-	rdev_for_each(r, mddev) {
-		if (test_bit(Journal, &rdev->flags))
-			continue;
+	rdev_क्रम_each(r, mddev) अणु
+		अगर (test_bit(Journal, &rdev->flags))
+			जारी;
 
-		if (test_bit(FirstUse, &r->flags))
+		अगर (test_bit(FirstUse, &r->flags))
 			new_devs++;
 
-		if (!test_bit(In_sync, &r->flags)) {
+		अगर (!test_bit(In_sync, &r->flags)) अणु
 			DMINFO("Device %d specified for rebuild; clearing superblock",
 				r->raid_disk);
 			rebuilds++;
 
-			if (test_bit(FirstUse, &r->flags))
+			अगर (test_bit(FirstUse, &r->flags))
 				rebuild_and_new++;
-		}
+		पूर्ण
 
 		d++;
-	}
+	पूर्ण
 
-	if (new_devs == rs->raid_disks || !rebuilds) {
+	अगर (new_devs == rs->raid_disks || !rebuilds) अणु
 		/* Replace a broken device */
-		if (new_devs == rs->raid_disks) {
+		अगर (new_devs == rs->raid_disks) अणु
 			DMINFO("Superblocks created for new raid set");
 			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
-		} else if (new_devs != rebuilds &&
-			   new_devs != rs->delta_disks) {
+		पूर्ण अन्यथा अगर (new_devs != rebuilds &&
+			   new_devs != rs->delta_disks) अणु
 			DMERR("New device injected into existing raid set without "
 			      "'delta_disks' or 'rebuild' parameter specified");
-			return -EINVAL;
-		}
-	} else if (new_devs && new_devs != rebuilds) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (new_devs && new_devs != rebuilds) अणु
 		DMERR("%u 'rebuild' devices cannot be injected into"
 		      " a raid set with %u other first-time devices",
 		      rebuilds, new_devs);
-		return -EINVAL;
-	} else if (rebuilds) {
-		if (rebuild_and_new && rebuilds != rebuild_and_new) {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (rebuilds) अणु
+		अगर (rebuild_and_new && rebuilds != rebuild_and_new) अणु
 			DMERR("new device%s provided without 'rebuild'",
 			      new_devs > 1 ? "s" : "");
-			return -EINVAL;
-		} else if (!test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) && rs_is_recovering(rs)) {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (!test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) && rs_is_recovering(rs)) अणु
 			DMERR("'rebuild' specified while raid set is not in-sync (recovery_cp=%llu)",
-			      (unsigned long long) mddev->recovery_cp);
-			return -EINVAL;
-		} else if (rs_is_reshaping(rs)) {
+			      (अचिन्हित दीर्घ दीर्घ) mddev->recovery_cp);
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (rs_is_reshaping(rs)) अणु
 			DMERR("'rebuild' specified while raid set is being reshaped (reshape_position=%llu)",
-			      (unsigned long long) mddev->reshape_position);
-			return -EINVAL;
-		}
-	}
+			      (अचिन्हित दीर्घ दीर्घ) mddev->reshape_position);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Now we set the Faulty bit for those devices that are
+	 * Now we set the Faulty bit क्रम those devices that are
 	 * recorded in the superblock as failed.
 	 */
 	sb_retrieve_failed_devices(sb, failed_devices);
-	rdev_for_each(r, mddev) {
-		if (test_bit(Journal, &rdev->flags) ||
+	rdev_क्रम_each(r, mddev) अणु
+		अगर (test_bit(Journal, &rdev->flags) ||
 		    !r->sb_page)
-			continue;
+			जारी;
 		sb2 = page_address(r->sb_page);
 		sb2->failed_devices = 0;
-		memset(sb2->extended_failed_devices, 0, sizeof(sb2->extended_failed_devices));
+		स_रखो(sb2->extended_failed_devices, 0, माप(sb2->extended_failed_devices));
 
 		/*
-		 * Check for any device re-ordering.
+		 * Check क्रम any device re-ordering.
 		 */
-		if (!test_bit(FirstUse, &r->flags) && (r->raid_disk >= 0)) {
+		अगर (!test_bit(FirstUse, &r->flags) && (r->raid_disk >= 0)) अणु
 			role = le32_to_cpu(sb2->array_position);
-			if (role < 0)
-				continue;
+			अगर (role < 0)
+				जारी;
 
-			if (role != r->raid_disk) {
-				if (rs_is_raid10(rs) && __is_raid10_near(mddev->layout)) {
-					if (mddev->raid_disks % __raid10_near_copies(mddev->layout) ||
-					    rs->raid_disks % rs->raid10_copies) {
+			अगर (role != r->raid_disk) अणु
+				अगर (rs_is_raid10(rs) && __is_raid10_near(mddev->layout)) अणु
+					अगर (mddev->raid_disks % __raid10_near_copies(mddev->layout) ||
+					    rs->raid_disks % rs->raid10_copies) अणु
 						rs->ti->error =
 							"Cannot change raid10 near set to odd # of devices!";
-						return -EINVAL;
-					}
+						वापस -EINVAL;
+					पूर्ण
 
 					sb2->array_position = cpu_to_le32(r->raid_disk);
 
-				} else if (!(rs_is_raid10(rs) && rt_is_raid0(rs->raid_type)) &&
+				पूर्ण अन्यथा अगर (!(rs_is_raid10(rs) && rt_is_raid0(rs->raid_type)) &&
 					   !(rs_is_raid0(rs) && rt_is_raid10(rs->raid_type)) &&
-					   !rt_is_raid1(rs->raid_type)) {
+					   !rt_is_raid1(rs->raid_type)) अणु
 					rs->ti->error = "Cannot change device positions in raid set";
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				DMINFO("raid device #%d now at position #%d", role, r->raid_disk);
-			}
+			पूर्ण
 
 			/*
-			 * Partial recovery is performed on
-			 * returning failed devices.
+			 * Partial recovery is perक्रमmed on
+			 * वापसing failed devices.
 			 */
-			if (test_bit(role, (void *) failed_devices))
+			अगर (test_bit(role, (व्योम *) failed_devices))
 				set_bit(Faulty, &r->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
-{
-	struct mddev *mddev = &rs->md;
-	struct dm_raid_superblock *sb;
+अटल पूर्णांक super_validate(काष्ठा raid_set *rs, काष्ठा md_rdev *rdev)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा dm_raid_superblock *sb;
 
-	if (rs_is_raid0(rs) || !rdev->sb_page || rdev->raid_disk < 0)
-		return 0;
+	अगर (rs_is_raid0(rs) || !rdev->sb_page || rdev->raid_disk < 0)
+		वापस 0;
 
 	sb = page_address(rdev->sb_page);
 
@@ -2441,180 +2442,180 @@ static int super_validate(struct raid_set *rs, struct md_rdev *rdev)
 	 * If mddev->events is not set, we know we have not yet initialized
 	 * the array.
 	 */
-	if (!mddev->events && super_init_validation(rs, rdev))
-		return -EINVAL;
+	अगर (!mddev->events && super_init_validation(rs, rdev))
+		वापस -EINVAL;
 
-	if (le32_to_cpu(sb->compat_features) &&
-	    le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) {
+	अगर (le32_to_cpu(sb->compat_features) &&
+	    le32_to_cpu(sb->compat_features) != FEATURE_FLAG_SUPPORTS_V190) अणु
 		rs->ti->error = "Unable to assemble array: Unknown flag(s) in compatible feature flags";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sb->incompat_features) {
+	अगर (sb->incompat_features) अणु
 		rs->ti->error = "Unable to assemble array: No incompatible feature flags supported yet";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Enable bitmap creation on @rs unless no metadevs or raid0 or journaled raid4/5/6 set. */
-	mddev->bitmap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
-	mddev->bitmap_info.default_offset = mddev->bitmap_info.offset;
+	/* Enable biपंचांगap creation on @rs unless no metadevs or raid0 or journaled raid4/5/6 set. */
+	mddev->biपंचांगap_info.offset = (rt_is_raid0(rs->raid_type) || rs->journal_dev.dev) ? 0 : to_sector(4096);
+	mddev->biपंचांगap_info.शेष_offset = mddev->biपंचांगap_info.offset;
 
-	if (!test_and_clear_bit(FirstUse, &rdev->flags)) {
+	अगर (!test_and_clear_bit(FirstUse, &rdev->flags)) अणु
 		/*
-		 * Retrieve rdev size stored in superblock to be prepared for shrink.
+		 * Retrieve rdev size stored in superblock to be prepared क्रम shrink.
 		 * Check extended superblock members are present otherwise the size
 		 * will not be set!
 		 */
-		if (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190)
+		अगर (le32_to_cpu(sb->compat_features) & FEATURE_FLAG_SUPPORTS_V190)
 			rdev->sectors = le64_to_cpu(sb->sectors);
 
 		rdev->recovery_offset = le64_to_cpu(sb->disk_recovery_offset);
-		if (rdev->recovery_offset == MaxSector)
+		अगर (rdev->recovery_offset == MaxSector)
 			set_bit(In_sync, &rdev->flags);
 		/*
 		 * If no reshape in progress -> we're recovering single
 		 * disk(s) and have to set the device(s) to out-of-sync
 		 */
-		else if (!rs_is_reshaping(rs))
-			clear_bit(In_sync, &rdev->flags); /* Mandatory for recovery */
-	}
+		अन्यथा अगर (!rs_is_reshaping(rs))
+			clear_bit(In_sync, &rdev->flags); /* Mandatory क्रम recovery */
+	पूर्ण
 
 	/*
-	 * If a device comes back, set it as not In_sync and no longer faulty.
+	 * If a device comes back, set it as not In_sync and no दीर्घer faulty.
 	 */
-	if (test_and_clear_bit(Faulty, &rdev->flags)) {
+	अगर (test_and_clear_bit(Faulty, &rdev->flags)) अणु
 		rdev->recovery_offset = 0;
 		clear_bit(In_sync, &rdev->flags);
 		rdev->saved_raid_disk = rdev->raid_disk;
-	}
+	पूर्ण
 
 	/* Reshape support -> restore repective data offsets */
 	rdev->data_offset = le64_to_cpu(sb->data_offset);
 	rdev->new_data_offset = le64_to_cpu(sb->new_data_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Analyse superblocks and select the freshest.
  */
-static int analyse_superblocks(struct dm_target *ti, struct raid_set *rs)
-{
-	int r;
-	struct md_rdev *rdev, *freshest;
-	struct mddev *mddev = &rs->md;
+अटल पूर्णांक analyse_superblocks(काष्ठा dm_target *ti, काष्ठा raid_set *rs)
+अणु
+	पूर्णांक r;
+	काष्ठा md_rdev *rdev, *freshest;
+	काष्ठा mddev *mddev = &rs->md;
 
-	freshest = NULL;
-	rdev_for_each(rdev, mddev) {
-		if (test_bit(Journal, &rdev->flags))
-			continue;
+	freshest = शून्य;
+	rdev_क्रम_each(rdev, mddev) अणु
+		अगर (test_bit(Journal, &rdev->flags))
+			जारी;
 
-		if (!rdev->meta_bdev)
-			continue;
+		अगर (!rdev->meta_bdev)
+			जारी;
 
-		/* Set superblock offset/size for metadata device. */
+		/* Set superblock offset/size क्रम metadata device. */
 		rdev->sb_start = 0;
 		rdev->sb_size = bdev_logical_block_size(rdev->meta_bdev);
-		if (rdev->sb_size < sizeof(struct dm_raid_superblock) || rdev->sb_size > PAGE_SIZE) {
+		अगर (rdev->sb_size < माप(काष्ठा dm_raid_superblock) || rdev->sb_size > PAGE_SIZE) अणु
 			DMERR("superblock size of a logical block is no longer valid");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
 		 * Skipping super_load due to CTR_FLAG_SYNC will cause
 		 * the array to undergo initialization again as
-		 * though it were new.	This is the intended effect
+		 * though it were new.	This is the पूर्णांकended effect
 		 * of the "sync" directive.
 		 *
 		 * With reshaping capability added, we must ensure that
 		 * that the "sync" directive is disallowed during the reshape.
 		 */
-		if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags))
-			continue;
+		अगर (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags))
+			जारी;
 
 		r = super_load(rdev, freshest);
 
-		switch (r) {
-		case 1:
+		चयन (r) अणु
+		हाल 1:
 			freshest = rdev;
-			break;
-		case 0:
-			break;
-		default:
-			/* This is a failure to read the superblock from the metadata device. */
+			अवरोध;
+		हाल 0:
+			अवरोध;
+		शेष:
+			/* This is a failure to पढ़ो the superblock from the metadata device. */
 			/*
 			 * We have to keep any raid0 data/metadata device pairs or
 			 * the MD raid0 personality will fail to start the array.
 			 */
-			if (rs_is_raid0(rs))
-				continue;
+			अगर (rs_is_raid0(rs))
+				जारी;
 
 			/*
 			 * We keep the dm_devs to be able to emit the device tuple
 			 * properly on the table line in raid_status() (rather than
-			 * mistakenly acting as if '- -' got passed into the constructor).
+			 * mistakenly acting as अगर '- -' got passed पूर्णांकo the स्थिरructor).
 			 *
-			 * The rdev has to stay on the same_set list to allow for
+			 * The rdev has to stay on the same_set list to allow क्रम
 			 * the attempt to restore faulty devices on second resume.
 			 */
 			rdev->raid_disk = rdev->saved_raid_disk = -1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!freshest)
-		return 0;
+	अगर (!freshest)
+		वापस 0;
 
 	/*
 	 * Validation of the freshest device provides the source of
-	 * validation for the remaining devices.
+	 * validation क्रम the reमुख्यing devices.
 	 */
 	rs->ti->error = "Unable to assemble array: Invalid superblocks";
-	if (super_validate(rs, freshest))
-		return -EINVAL;
+	अगर (super_validate(rs, freshest))
+		वापस -EINVAL;
 
-	if (validate_raid_redundancy(rs)) {
+	अगर (validate_raid_redundancy(rs)) अणु
 		rs->ti->error = "Insufficient redundancy to activate array";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rdev_for_each(rdev, mddev)
-		if (!test_bit(Journal, &rdev->flags) &&
+	rdev_क्रम_each(rdev, mddev)
+		अगर (!test_bit(Journal, &rdev->flags) &&
 		    rdev != freshest &&
 		    super_validate(rs, rdev))
-			return -EINVAL;
-	return 0;
-}
+			वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
  * Adjust data_offset and new_data_offset on all disk members of @rs
- * for out of place reshaping if requested by contructor
+ * क्रम out of place reshaping अगर requested by contructor
  *
- * We need free space at the beginning of each raid disk for forward
- * and at the end for backward reshapes which userspace has to provide
+ * We need मुक्त space at the beginning of each raid disk क्रम क्रमward
+ * and at the end क्रम backward reshapes which userspace has to provide
  * via remapping/reordering of space.
  */
-static int rs_adjust_data_offsets(struct raid_set *rs)
-{
+अटल पूर्णांक rs_adjust_data_offsets(काष्ठा raid_set *rs)
+अणु
 	sector_t data_offset = 0, new_data_offset = 0;
-	struct md_rdev *rdev;
+	काष्ठा md_rdev *rdev;
 
-	/* Constructor did not request data offset change */
-	if (!test_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags)) {
-		if (!rs_is_reshapable(rs))
-			goto out;
+	/* Conकाष्ठाor did not request data offset change */
+	अगर (!test_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags)) अणु
+		अगर (!rs_is_reshapable(rs))
+			जाओ out;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* HM FIXME: get In_Sync raid_dev? */
 	rdev = &rs->dev[0].rdev;
 
-	if (rs->delta_disks < 0) {
+	अगर (rs->delta_disks < 0) अणु
 		/*
 		 * Removing disks (reshaping backwards):
 		 *
-		 * - before reshape: data is at offset 0 and free space
+		 * - beक्रमe reshape: data is at offset 0 and मुक्त space
 		 *		     is at end of each component LV
 		 *
 		 * - after reshape: data is at offset rs->data_offset != 0 on each component LV
@@ -2622,258 +2623,258 @@ static int rs_adjust_data_offsets(struct raid_set *rs)
 		data_offset = 0;
 		new_data_offset = rs->data_offset;
 
-	} else if (rs->delta_disks > 0) {
+	पूर्ण अन्यथा अगर (rs->delta_disks > 0) अणु
 		/*
-		 * Adding disks (reshaping forwards):
+		 * Adding disks (reshaping क्रमwards):
 		 *
-		 * - before reshape: data is at offset rs->data_offset != 0 and
-		 *		     free space is at begin of each component LV
+		 * - beक्रमe reshape: data is at offset rs->data_offset != 0 and
+		 *		     मुक्त space is at begin of each component LV
 		 *
 		 * - after reshape: data is at offset 0 on each component LV
 		 */
 		data_offset = rs->data_offset;
 		new_data_offset = 0;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * User space passes in 0 for data offset after having removed reshape space
+		 * User space passes in 0 क्रम data offset after having हटाओd reshape space
 		 *
 		 * - or - (data offset != 0)
 		 *
 		 * Changing RAID layout or chunk size -> toggle offsets
 		 *
-		 * - before reshape: data is at offset rs->data_offset 0 and
-		 *		     free space is at end of each component LV
+		 * - beक्रमe reshape: data is at offset rs->data_offset 0 and
+		 *		     मुक्त space is at end of each component LV
 		 *		     -or-
 		 *                   data is at offset rs->data_offset != 0 and
-		 *		     free space is at begin of each component LV
+		 *		     मुक्त space is at begin of each component LV
 		 *
-		 * - after reshape: data is at offset 0 if it was at offset != 0
-		 *                  or at offset != 0 if it was at offset 0
+		 * - after reshape: data is at offset 0 अगर it was at offset != 0
+		 *                  or at offset != 0 अगर it was at offset 0
 		 *                  on each component LV
 		 *
 		 */
 		data_offset = rs->data_offset ? rdev->data_offset : 0;
 		new_data_offset = data_offset ? 0 : rs->data_offset;
-		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
-	}
+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
+	पूर्ण
 
 	/*
-	 * Make sure we got a minimum amount of free sectors per device
+	 * Make sure we got a minimum amount of मुक्त sectors per device
 	 */
-	if (rs->data_offset &&
-	    to_sector(i_size_read(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) {
+	अगर (rs->data_offset &&
+	    to_sector(i_size_पढ़ो(rdev->bdev->bd_inode)) - rs->md.dev_sectors < MIN_FREE_RESHAPE_SPACE) अणु
 		rs->ti->error = data_offset ? "No space for forward reshape" :
 					      "No space for backward reshape";
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 out:
 	/*
-	 * Raise recovery_cp in case data_offset != 0 to
-	 * avoid false recovery positives in the constructor.
+	 * Raise recovery_cp in हाल data_offset != 0 to
+	 * aव्योम false recovery positives in the स्थिरructor.
 	 */
-	if (rs->md.recovery_cp < rs->md.dev_sectors)
+	अगर (rs->md.recovery_cp < rs->md.dev_sectors)
 		rs->md.recovery_cp += rs->dev[0].rdev.data_offset;
 
 	/* Adjust data offsets on all rdevs but on any raid4/5/6 journal device */
-	rdev_for_each(rdev, &rs->md) {
-		if (!test_bit(Journal, &rdev->flags)) {
+	rdev_क्रम_each(rdev, &rs->md) अणु
+		अगर (!test_bit(Journal, &rdev->flags)) अणु
 			rdev->data_offset = data_offset;
 			rdev->new_data_offset = new_data_offset;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Userpace reordered disks -> adjust raid_disk indexes in @rs */
-static void __reorder_raid_disk_indexes(struct raid_set *rs)
-{
-	int i = 0;
-	struct md_rdev *rdev;
+अटल व्योम __reorder_raid_disk_indexes(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा md_rdev *rdev;
 
-	rdev_for_each(rdev, &rs->md) {
-		if (!test_bit(Journal, &rdev->flags)) {
+	rdev_क्रम_each(rdev, &rs->md) अणु
+		अगर (!test_bit(Journal, &rdev->flags)) अणु
 			rdev->raid_disk = i++;
 			rdev->saved_raid_disk = rdev->new_raid_disk = -1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Setup @rs for takeover by a different raid level
+ * Setup @rs क्रम takeover by a dअगरferent raid level
  */
-static int rs_setup_takeover(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
-	struct md_rdev *rdev;
-	unsigned int d = mddev->raid_disks = rs->raid_disks;
+अटल पूर्णांक rs_setup_takeover(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा md_rdev *rdev;
+	अचिन्हित पूर्णांक d = mddev->raid_disks = rs->raid_disks;
 	sector_t new_data_offset = rs->dev[0].rdev.data_offset ? 0 : rs->data_offset;
 
-	if (rt_is_raid10(rs->raid_type)) {
-		if (rs_is_raid0(rs)) {
+	अगर (rt_is_raid10(rs->raid_type)) अणु
+		अगर (rs_is_raid0(rs)) अणु
 			/* Userpace reordered disks -> adjust raid_disk indexes */
 			__reorder_raid_disk_indexes(rs);
 
 			/* raid0 -> raid10_far layout */
-			mddev->layout = raid10_format_to_md_layout(rs, ALGORITHM_RAID10_FAR,
+			mddev->layout = raid10_क्रमmat_to_md_layout(rs, ALGORITHM_RAID10_FAR,
 								   rs->raid10_copies);
-		} else if (rs_is_raid1(rs))
+		पूर्ण अन्यथा अगर (rs_is_raid1(rs))
 			/* raid1 -> raid10_near layout */
-			mddev->layout = raid10_format_to_md_layout(rs, ALGORITHM_RAID10_NEAR,
+			mddev->layout = raid10_क्रमmat_to_md_layout(rs, ALGORITHM_RAID10_NEAR,
 								   rs->raid_disks);
-		else
-			return -EINVAL;
+		अन्यथा
+			वापस -EINVAL;
 
-	}
+	पूर्ण
 
 	clear_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
 	mddev->recovery_cp = MaxSector;
 
-	while (d--) {
+	जबतक (d--) अणु
 		rdev = &rs->dev[d].rdev;
 
-		if (test_bit(d, (void *) rs->rebuild_disks)) {
+		अगर (test_bit(d, (व्योम *) rs->rebuild_disks)) अणु
 			clear_bit(In_sync, &rdev->flags);
 			clear_bit(Faulty, &rdev->flags);
 			mddev->recovery_cp = rdev->recovery_offset = 0;
-			/* Bitmap has to be created when we do an "up" takeover */
+			/* Biपंचांगap has to be created when we करो an "up" takeover */
 			set_bit(MD_ARRAY_FIRST_USE, &mddev->flags);
-		}
+		पूर्ण
 
 		rdev->new_data_offset = new_data_offset;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Prepare @rs for reshape */
-static int rs_prepare_reshape(struct raid_set *rs)
-{
+/* Prepare @rs क्रम reshape */
+अटल पूर्णांक rs_prepare_reshape(काष्ठा raid_set *rs)
+अणु
 	bool reshape;
-	struct mddev *mddev = &rs->md;
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (rs_is_raid10(rs)) {
-		if (rs->raid_disks != mddev->raid_disks &&
+	अगर (rs_is_raid10(rs)) अणु
+		अगर (rs->raid_disks != mddev->raid_disks &&
 		    __is_raid10_near(mddev->layout) &&
 		    rs->raid10_copies &&
-		    rs->raid10_copies != __raid10_near_copies(mddev->layout)) {
+		    rs->raid10_copies != __raid10_near_copies(mddev->layout)) अणु
 			/*
 			 * raid disk have to be multiple of data copies to allow this conversion,
 			 *
 			 * This is actually not a reshape it is a
 			 * rebuild of any additional mirrors per group
 			 */
-			if (rs->raid_disks % rs->raid10_copies) {
+			अगर (rs->raid_disks % rs->raid10_copies) अणु
 				rs->ti->error = "Can't reshape raid10 mirror groups";
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			/* Userpace reordered disks to add/remove mirrors -> adjust raid_disk indexes */
+			/* Userpace reordered disks to add/हटाओ mirrors -> adjust raid_disk indexes */
 			__reorder_raid_disk_indexes(rs);
-			mddev->layout = raid10_format_to_md_layout(rs, ALGORITHM_RAID10_NEAR,
+			mddev->layout = raid10_क्रमmat_to_md_layout(rs, ALGORITHM_RAID10_NEAR,
 								   rs->raid10_copies);
 			mddev->new_layout = mddev->layout;
 			reshape = false;
-		} else
+		पूर्ण अन्यथा
 			reshape = true;
 
-	} else if (rs_is_raid456(rs))
+	पूर्ण अन्यथा अगर (rs_is_raid456(rs))
 		reshape = true;
 
-	else if (rs_is_raid1(rs)) {
-		if (rs->delta_disks) {
+	अन्यथा अगर (rs_is_raid1(rs)) अणु
+		अगर (rs->delta_disks) अणु
 			/* Process raid1 via delta_disks */
 			mddev->degraded = rs->delta_disks < 0 ? -rs->delta_disks : rs->delta_disks;
 			reshape = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Process raid1 without delta_disks */
 			mddev->raid_disks = rs->raid_disks;
 			reshape = false;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rs->ti->error = "Called with bogus raid type";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (reshape) {
-		set_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags);
-		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
-	} else if (mddev->raid_disks < rs->raid_disks)
-		/* Create new superblocks and bitmaps, if any new disks */
-		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+	अगर (reshape) अणु
+		set_bit(RT_FLAG_RESHAPE_RS, &rs->runसमय_flags);
+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
+	पूर्ण अन्यथा अगर (mddev->raid_disks < rs->raid_disks)
+		/* Create new superblocks and biपंचांगaps, अगर any new disks */
+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Get reshape sectors from data_offsets or raid set */
-static sector_t _get_reshape_sectors(struct raid_set *rs)
-{
-	struct md_rdev *rdev;
+अटल sector_t _get_reshape_sectors(काष्ठा raid_set *rs)
+अणु
+	काष्ठा md_rdev *rdev;
 	sector_t reshape_sectors = 0;
 
-	rdev_for_each(rdev, &rs->md)
-		if (!test_bit(Journal, &rdev->flags)) {
+	rdev_क्रम_each(rdev, &rs->md)
+		अगर (!test_bit(Journal, &rdev->flags)) अणु
 			reshape_sectors = (rdev->data_offset > rdev->new_data_offset) ?
 					rdev->data_offset - rdev->new_data_offset :
 					rdev->new_data_offset - rdev->data_offset;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	return max(reshape_sectors, (sector_t) rs->data_offset);
-}
+	वापस max(reshape_sectors, (sector_t) rs->data_offset);
+पूर्ण
 
 /*
  * Reshape:
  * - change raid layout
  * - change chunk size
  * - add disks
- * - remove disks
+ * - हटाओ disks
  */
-static int rs_setup_reshape(struct raid_set *rs)
-{
-	int r = 0;
-	unsigned int cur_raid_devs, d;
+अटल पूर्णांक rs_setup_reshape(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक r = 0;
+	अचिन्हित पूर्णांक cur_raid_devs, d;
 	sector_t reshape_sectors = _get_reshape_sectors(rs);
-	struct mddev *mddev = &rs->md;
-	struct md_rdev *rdev;
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा md_rdev *rdev;
 
 	mddev->delta_disks = rs->delta_disks;
 	cur_raid_devs = mddev->raid_disks;
 
 	/* Ignore impossible layout change whilst adding/removing disks */
-	if (mddev->delta_disks &&
-	    mddev->layout != mddev->new_layout) {
+	अगर (mddev->delta_disks &&
+	    mddev->layout != mddev->new_layout) अणु
 		DMINFO("Ignoring invalid layout change with delta_disks=%d", rs->delta_disks);
 		mddev->new_layout = mddev->layout;
-	}
+	पूर्ण
 
 	/*
 	 * Adjust array size:
 	 *
-	 * - in case of adding disk(s), array size has
+	 * - in हाल of adding disk(s), array size has
 	 *   to grow after the disk adding reshape,
 	 *   which'll hapen in the event handler;
-	 *   reshape will happen forward, so space has to
+	 *   reshape will happen क्रमward, so space has to
 	 *   be available at the beginning of each disk
 	 *
-	 * - in case of removing disk(s), array size
-	 *   has to shrink before starting the reshape,
+	 * - in हाल of removing disk(s), array size
+	 *   has to shrink beक्रमe starting the reshape,
 	 *   which'll happen here;
 	 *   reshape will happen backward, so space has to
 	 *   be available at the end of each disk
 	 *
 	 * - data_offset and new_data_offset are
-	 *   adjusted for aforementioned out of place
+	 *   adjusted क्रम aक्रमementioned out of place
 	 *   reshaping based on userspace passing in
 	 *   the "data_offset <sectors>" key/value
-	 *   pair via the constructor
+	 *   pair via the स्थिरructor
 	 */
 
 	/* Add disk(s) */
-	if (rs->delta_disks > 0) {
-		/* Prepare disks for check in raid4/5/6/10 {check|start}_reshape */
-		for (d = cur_raid_devs; d < rs->raid_disks; d++) {
+	अगर (rs->delta_disks > 0) अणु
+		/* Prepare disks क्रम check in raid4/5/6/10 अणुcheck|startपूर्ण_reshape */
+		क्रम (d = cur_raid_devs; d < rs->raid_disks; d++) अणु
 			rdev = &rs->dev[d].rdev;
 			clear_bit(In_sync, &rdev->flags);
 
@@ -2886,184 +2887,184 @@ static int rs_setup_reshape(struct raid_set *rs)
 
 			rdev->sectors = mddev->dev_sectors;
 			rdev->recovery_offset = rs_is_raid1(rs) ? 0 : MaxSector;
-		}
+		पूर्ण
 
-		mddev->reshape_backwards = 0; /* adding disk(s) -> forward reshape */
+		mddev->reshape_backwards = 0; /* adding disk(s) -> क्रमward reshape */
 
 	/* Remove disk(s) */
-	} else if (rs->delta_disks < 0) {
+	पूर्ण अन्यथा अगर (rs->delta_disks < 0) अणु
 		r = rs_set_dev_and_array_sectors(rs, rs->ti->len, true);
 		mddev->reshape_backwards = 1; /* removing disk(s) -> backward reshape */
 
 	/* Change layout and/or chunk size */
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Reshape layout (e.g. raid5_ls -> raid5_n) and/or chunk size:
 		 *
-		 * keeping number of disks and do layout change ->
+		 * keeping number of disks and करो layout change ->
 		 *
 		 * toggle reshape_backward depending on data_offset:
 		 *
-		 * - free space upfront -> reshape forward
+		 * - मुक्त space upfront -> reshape क्रमward
 		 *
-		 * - free space at the end -> reshape backward
+		 * - मुक्त space at the end -> reshape backward
 		 *
 		 *
-		 * This utilizes free reshape space avoiding the need
-		 * for userspace to move (parts of) LV segments in
-		 * case of layout/chunksize change  (for disk
+		 * This utilizes मुक्त reshape space aव्योमing the need
+		 * क्रम userspace to move (parts of) LV segments in
+		 * हाल of layout/chunksize change  (क्रम disk
 		 * adding/removing reshape space has to be at
 		 * the proper address (see above with delta_disks):
 		 *
 		 * add disk(s)   -> begin
-		 * remove disk(s)-> end
+		 * हटाओ disk(s)-> end
 		 */
 		mddev->reshape_backwards = rs->dev[0].rdev.data_offset ? 0 : 1;
-	}
+	पूर्ण
 
 	/*
-	 * Adjust device size for forward reshape
+	 * Adjust device size क्रम क्रमward reshape
 	 * because md_finish_reshape() reduces it.
 	 */
-	if (!mddev->reshape_backwards)
-		rdev_for_each(rdev, &rs->md)
-			if (!test_bit(Journal, &rdev->flags))
+	अगर (!mddev->reshape_backwards)
+		rdev_क्रम_each(rdev, &rs->md)
+			अगर (!test_bit(Journal, &rdev->flags))
 				rdev->sectors += reshape_sectors;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * If the md resync thread has updated superblock with max reshape position
+ * If the md resync thपढ़ो has updated superblock with max reshape position
  * at the end of a reshape but not (yet) reset the layout configuration
  * changes -> reset the latter.
  */
-static void rs_reset_inconclusive_reshape(struct raid_set *rs)
-{
-	if (!rs_is_reshaping(rs) && rs_is_layout_change(rs, true)) {
+अटल व्योम rs_reset_inconclusive_reshape(काष्ठा raid_set *rs)
+अणु
+	अगर (!rs_is_reshaping(rs) && rs_is_layout_change(rs, true)) अणु
 		rs_set_cur(rs);
 		rs->md.delta_disks = 0;
 		rs->md.reshape_backwards = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Enable/disable discard support on RAID set depending on
  * RAID level and discard properties of underlying RAID members.
  */
-static void configure_discard_support(struct raid_set *rs)
-{
-	int i;
+अटल व्योम configure_discard_support(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक i;
 	bool raid456;
-	struct dm_target *ti = rs->ti;
+	काष्ठा dm_target *ti = rs->ti;
 
 	/*
-	 * XXX: RAID level 4,5,6 require zeroing for safety.
+	 * XXX: RAID level 4,5,6 require zeroing क्रम safety.
 	 */
 	raid456 = rs_is_raid456(rs);
 
-	for (i = 0; i < rs->raid_disks; i++) {
-		struct request_queue *q;
+	क्रम (i = 0; i < rs->raid_disks; i++) अणु
+		काष्ठा request_queue *q;
 
-		if (!rs->dev[i].rdev.bdev)
-			continue;
+		अगर (!rs->dev[i].rdev.bdev)
+			जारी;
 
 		q = bdev_get_queue(rs->dev[i].rdev.bdev);
-		if (!q || !blk_queue_discard(q))
-			return;
+		अगर (!q || !blk_queue_discard(q))
+			वापस;
 
-		if (raid456) {
-			if (!devices_handle_discard_safely) {
+		अगर (raid456) अणु
+			अगर (!devices_handle_discard_safely) अणु
 				DMERR("raid456 discard support disabled due to discard_zeroes_data uncertainty.");
 				DMERR("Set dm-raid.devices_handle_discard_safely=Y to override.");
-				return;
-			}
-		}
-	}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ti->num_discard_bios = 1;
-}
+पूर्ण
 
 /*
- * Construct a RAID0/1/10/4/5/6 mapping:
+ * Conकाष्ठा a RAID0/1/10/4/5/6 mapping:
  * Args:
- *	<raid_type> <#raid_params> <raid_params>{0,}	\
- *	<#raid_devs> [<meta_dev1> <dev1>]{1,}
+ *	<raid_type> <#raid_params> <raid_params>अणु0,पूर्ण	\
+ *	<#raid_devs> [<meta_dev1> <dev1>]अणु1,पूर्ण
  *
- * <raid_params> varies by <raid_type>.	 See 'parse_raid_params' for
+ * <raid_params> varies by <raid_type>.	 See 'parse_raid_params' क्रम
  * details on possible <raid_params>.
  *
- * Userspace is free to initialize the metadata devices, hence the superblocks to
- * enforce recreation based on the passed in table parameters.
+ * Userspace is मुक्त to initialize the metadata devices, hence the superblocks to
+ * enक्रमce recreation based on the passed in table parameters.
  *
  */
-static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	int r;
+अटल पूर्णांक raid_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक r;
 	bool resize = false;
-	struct raid_type *rt;
-	unsigned int num_raid_params, num_raid_devs;
+	काष्ठा raid_type *rt;
+	अचिन्हित पूर्णांक num_raid_params, num_raid_devs;
 	sector_t sb_array_sectors, rdev_sectors, reshape_sectors;
-	struct raid_set *rs = NULL;
-	const char *arg;
-	struct rs_layout rs_layout;
-	struct dm_arg_set as = { argc, argv }, as_nrd;
-	struct dm_arg _args[] = {
-		{ 0, as.argc, "Cannot understand number of raid parameters" },
-		{ 1, 254, "Cannot understand number of raid devices parameters" }
-	};
+	काष्ठा raid_set *rs = शून्य;
+	स्थिर अक्षर *arg;
+	काष्ठा rs_layout rs_layout;
+	काष्ठा dm_arg_set as = अणु argc, argv पूर्ण, as_nrd;
+	काष्ठा dm_arg _args[] = अणु
+		अणु 0, as.argc, "Cannot understand number of raid parameters" पूर्ण,
+		अणु 1, 254, "Cannot understand number of raid devices parameters" पूर्ण
+	पूर्ण;
 
-	arg = dm_shift_arg(&as);
-	if (!arg) {
+	arg = dm_shअगरt_arg(&as);
+	अगर (!arg) अणु
 		ti->error = "No arguments";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rt = get_raid_type(arg);
-	if (!rt) {
+	अगर (!rt) अणु
 		ti->error = "Unrecognised raid_type";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Must have <#raid_params> */
-	if (dm_read_arg_group(_args, &as, &num_raid_params, &ti->error))
-		return -EINVAL;
+	अगर (dm_पढ़ो_arg_group(_args, &as, &num_raid_params, &ti->error))
+		वापस -EINVAL;
 
 	/* number of raid device tupples <meta_dev data_dev> */
 	as_nrd = as;
 	dm_consume_args(&as_nrd, num_raid_params);
 	_args[1].max = (as_nrd.argc - 1) / 2;
-	if (dm_read_arg(_args + 1, &as_nrd, &num_raid_devs, &ti->error))
-		return -EINVAL;
+	अगर (dm_पढ़ो_arg(_args + 1, &as_nrd, &num_raid_devs, &ti->error))
+		वापस -EINVAL;
 
-	if (!__within_range(num_raid_devs, 1, MAX_RAID_DEVICES)) {
+	अगर (!__within_range(num_raid_devs, 1, MAX_RAID_DEVICES)) अणु
 		ti->error = "Invalid number of supplied raid devices";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rs = raid_set_alloc(ti, rt, num_raid_devs);
-	if (IS_ERR(rs))
-		return PTR_ERR(rs);
+	अगर (IS_ERR(rs))
+		वापस PTR_ERR(rs);
 
 	r = parse_raid_params(rs, &as, num_raid_params);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	r = parse_dev_params(rs, &as);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	rs->md.sync_super = super_sync;
 
 	/*
 	 * Calculate ctr requested array and device sizes to allow
-	 * for superblock analysis needing device sizes defined.
+	 * क्रम superblock analysis needing device sizes defined.
 	 *
-	 * Any existing superblock will overwrite the array and device sizes
+	 * Any existing superblock will overग_लिखो the array and device sizes
 	 */
 	r = rs_set_dev_and_array_sectors(rs, rs->ti->len, false);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	/* Memorize just calculated, potentially larger sizes to grow the raid set in preresume */
 	rs->array_sectors = rs->md.array_sectors;
@@ -3072,171 +3073,171 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	/*
 	 * Backup any new raid set level, layout, ...
 	 * requested to be able to compare to superblock
-	 * members for conversion decisions.
+	 * members क्रम conversion decisions.
 	 */
 	rs_config_backup(rs, &rs_layout);
 
 	r = analyse_superblocks(ti, rs);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	/* All in-core metadata now as of current superblocks after calling analyse_superblocks() */
 	sb_array_sectors = rs->md.array_sectors;
 	rdev_sectors = __rdev_sectors(rs);
-	if (!rdev_sectors) {
+	अगर (!rdev_sectors) अणु
 		ti->error = "Invalid rdev size";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 
 	reshape_sectors = _get_reshape_sectors(rs);
-	if (rs->dev_sectors != rdev_sectors) {
+	अगर (rs->dev_sectors != rdev_sectors) अणु
 		resize = (rs->dev_sectors != rdev_sectors - reshape_sectors);
-		if (rs->dev_sectors > rdev_sectors - reshape_sectors)
-			set_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
-	}
+		अगर (rs->dev_sectors > rdev_sectors - reshape_sectors)
+			set_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags);
+	पूर्ण
 
-	INIT_WORK(&rs->md.event_work, do_table_event);
-	ti->private = rs;
+	INIT_WORK(&rs->md.event_work, करो_table_event);
+	ti->निजी = rs;
 	ti->num_flush_bios = 1;
 
-	/* Restore any requested new layout for conversion decision */
+	/* Restore any requested new layout क्रम conversion decision */
 	rs_config_restore(rs, &rs_layout);
 
 	/*
 	 * Now that we have any superblock metadata available,
-	 * check for new, recovering, reshaping, to be taken over,
+	 * check क्रम new, recovering, reshaping, to be taken over,
 	 * to be reshaped or an existing, unchanged raid set to
 	 * run in sequence.
 	 */
-	if (test_bit(MD_ARRAY_FIRST_USE, &rs->md.flags)) {
+	अगर (test_bit(MD_ARRAY_FIRST_USE, &rs->md.flags)) अणु
 		/* A new raid6 set has to be recovered to ensure proper parity and Q-Syndrome */
-		if (rs_is_raid6(rs) &&
-		    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) {
+		अगर (rs_is_raid6(rs) &&
+		    test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags)) अणु
 			ti->error = "'nosync' not allowed for new raid6 set";
 			r = -EINVAL;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 		rs_setup_recovery(rs, 0);
-		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
 		rs_set_new(rs);
-	} else if (rs_is_recovering(rs)) {
+	पूर्ण अन्यथा अगर (rs_is_recovering(rs)) अणु
 		/* A recovering raid set may be resized */
-		goto size_check;
-	} else if (rs_is_reshaping(rs)) {
+		जाओ size_check;
+	पूर्ण अन्यथा अगर (rs_is_reshaping(rs)) अणु
 		/* Have to reject size change request during reshape */
-		if (resize) {
+		अगर (resize) अणु
 			ti->error = "Can't resize a reshaping raid set";
 			r = -EPERM;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 		/* skip setup rs */
-	} else if (rs_takeover_requested(rs)) {
-		if (rs_is_reshaping(rs)) {
+	पूर्ण अन्यथा अगर (rs_takeover_requested(rs)) अणु
+		अगर (rs_is_reshaping(rs)) अणु
 			ti->error = "Can't takeover a reshaping raid set";
 			r = -EPERM;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		/* We can't takeover a journaled raid4/5/6 */
-		if (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
+		अगर (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) अणु
 			ti->error = "Can't takeover a journaled raid4/5/6 set";
 			r = -EPERM;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		/*
 		 * If a takeover is needed, userspace sets any additional
-		 * devices to rebuild and we can check for a valid request here.
+		 * devices to rebuild and we can check क्रम a valid request here.
 		 *
 		 * If acceptible, set the level to the new requested
 		 * one, prohibit requesting recovery, allow the raid
 		 * set to run and store superblocks during resume.
 		 */
 		r = rs_check_takeover(rs);
-		if (r)
-			goto bad;
+		अगर (r)
+			जाओ bad;
 
 		r = rs_setup_takeover(rs);
-		if (r)
-			goto bad;
+		अगर (r)
+			जाओ bad;
 
-		set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+		set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
 		/* Takeover ain't recovery, so disable recovery */
 		rs_setup_recovery(rs, MaxSector);
 		rs_set_new(rs);
-	} else if (rs_reshape_requested(rs)) {
+	पूर्ण अन्यथा अगर (rs_reshape_requested(rs)) अणु
 		/* Only request grow on raid set size extensions, not on reshapes. */
-		clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
+		clear_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags);
 
 		/*
-		 * No need to check for 'ongoing' takeover here, because takeover
+		 * No need to check क्रम 'ongoing' takeover here, because takeover
 		 * is an instant operation as oposed to an ongoing reshape.
 		 */
 
 		/* We can't reshape a journaled raid4/5/6 */
-		if (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) {
+		अगर (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags)) अणु
 			ti->error = "Can't reshape a journaled raid4/5/6 set";
 			r = -EPERM;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
-		/* Out-of-place space has to be available to allow for a reshape unless raid1! */
-		if (reshape_sectors || rs_is_raid1(rs)) {
+		/* Out-of-place space has to be available to allow क्रम a reshape unless raid1! */
+		अगर (reshape_sectors || rs_is_raid1(rs)) अणु
 			/*
-			  * We can only prepare for a reshape here, because the
+			  * We can only prepare क्रम a reshape here, because the
 			  * raid set needs to run to provide the repective reshape
 			  * check functions via its MD personality instance.
 			  *
-			  * So do the reshape check after md_run() succeeded.
+			  * So करो the reshape check after md_run() succeeded.
 			  */
 			r = rs_prepare_reshape(rs);
-			if (r)
-				goto bad;
+			अगर (r)
+				जाओ bad;
 
 			/* Reshaping ain't recovery, so disable recovery */
 			rs_setup_recovery(rs, MaxSector);
-		}
+		पूर्ण
 		rs_set_cur(rs);
-	} else {
+	पूर्ण अन्यथा अणु
 size_check:
 		/* May not set recovery when a device rebuild is requested */
-		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) {
-			clear_bit(RT_FLAG_RS_GROW, &rs->runtime_flags);
-			set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
+		अगर (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags)) अणु
+			clear_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags);
+			set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
 			rs_setup_recovery(rs, MaxSector);
-		} else if (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags)) {
+		पूर्ण अन्यथा अगर (test_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags)) अणु
 			/*
 			 * Set raid set to current size, i.e. size as of
 			 * superblocks to grow to larger size in preresume.
 			 */
 			r = rs_set_dev_and_array_sectors(rs, sb_array_sectors, false);
-			if (r)
-				goto bad;
+			अगर (r)
+				जाओ bad;
 
 			rs_setup_recovery(rs, rs->md.recovery_cp < rs->md.dev_sectors ? rs->md.recovery_cp : rs->md.dev_sectors);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* This is no size change or it is shrinking, update size and record in superblocks */
 			r = rs_set_dev_and_array_sectors(rs, rs->ti->len, false);
-			if (r)
-				goto bad;
+			अगर (r)
+				जाओ bad;
 
-			if (sb_array_sectors > rs->array_sectors)
-				set_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags);
-		}
+			अगर (sb_array_sectors > rs->array_sectors)
+				set_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags);
+		पूर्ण
 		rs_set_cur(rs);
-	}
+	पूर्ण
 
-	/* If constructor requested it, change data and new_data offsets */
+	/* If स्थिरructor requested it, change data and new_data offsets */
 	r = rs_adjust_data_offsets(rs);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	/* Catch any inconclusive reshape superblock content. */
 	rs_reset_inconclusive_reshape(rs);
 
-	/* Start raid set read-only and assumed clean to change in raid_resume() */
+	/* Start raid set पढ़ो-only and assumed clean to change in raid_resume() */
 	rs->md.ro = 1;
 	rs->md.in_sync = 1;
 
@@ -3244,65 +3245,65 @@ size_check:
 	set_bit(MD_RECOVERY_FROZEN, &rs->md.recovery);
 
 	/* Has to be held on running the array */
-	mddev_lock_nointr(&rs->md);
+	mddev_lock_noपूर्णांकr(&rs->md);
 	r = md_run(&rs->md);
-	rs->md.in_sync = 0; /* Assume already marked dirty */
-	if (r) {
+	rs->md.in_sync = 0; /* Assume alपढ़ोy marked dirty */
+	अगर (r) अणु
 		ti->error = "Failed to run raid array";
 		mddev_unlock(&rs->md);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	r = md_start(&rs->md);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Failed to start raid array";
 		mddev_unlock(&rs->md);
-		goto bad_md_start;
-	}
+		जाओ bad_md_start;
+	पूर्ण
 
 	/* If raid4/5/6 journal mode explicitly requested (only possible with journal dev) -> set it */
-	if (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags)) {
+	अगर (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags)) अणु
 		r = r5c_journal_mode_set(&rs->md, rs->journal_dev.mode);
-		if (r) {
+		अगर (r) अणु
 			ti->error = "Failed to set raid4/5/6 journal mode";
 			mddev_unlock(&rs->md);
-			goto bad_journal_mode_set;
-		}
-	}
+			जाओ bad_journal_mode_set;
+		पूर्ण
+	पूर्ण
 
 	mddev_suspend(&rs->md);
-	set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags);
+	set_bit(RT_FLAG_RS_SUSPENDED, &rs->runसमय_flags);
 
 	/* Try to adjust the raid4/5/6 stripe cache size to the stripe size */
-	if (rs_is_raid456(rs)) {
+	अगर (rs_is_raid456(rs)) अणु
 		r = rs_set_raid456_stripe_cache(rs);
-		if (r)
-			goto bad_stripe_cache;
-	}
+		अगर (r)
+			जाओ bad_stripe_cache;
+	पूर्ण
 
-	/* Now do an early reshape check */
-	if (test_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
+	/* Now करो an early reshape check */
+	अगर (test_bit(RT_FLAG_RESHAPE_RS, &rs->runसमय_flags)) अणु
 		r = rs_check_reshape(rs);
-		if (r)
-			goto bad_check_reshape;
+		अगर (r)
+			जाओ bad_check_reshape;
 
-		/* Restore new, ctr requested layout to perform check */
+		/* Restore new, ctr requested layout to perक्रमm check */
 		rs_config_restore(rs, &rs_layout);
 
-		if (rs->md.pers->start_reshape) {
+		अगर (rs->md.pers->start_reshape) अणु
 			r = rs->md.pers->check_reshape(&rs->md);
-			if (r) {
+			अगर (r) अणु
 				ti->error = "Reshape check failed";
-				goto bad_check_reshape;
-			}
-		}
-	}
+				जाओ bad_check_reshape;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Disable/enable discard support on raid set. */
 	configure_discard_support(rs);
 
 	mddev_unlock(&rs->md);
-	return 0;
+	वापस 0;
 
 bad_md_start:
 bad_journal_mode_set:
@@ -3310,46 +3311,46 @@ bad_stripe_cache:
 bad_check_reshape:
 	md_stop(&rs->md);
 bad:
-	raid_set_free(rs);
+	raid_set_मुक्त(rs);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void raid_dtr(struct dm_target *ti)
-{
-	struct raid_set *rs = ti->private;
+अटल व्योम raid_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
 
 	md_stop(&rs->md);
-	raid_set_free(rs);
-}
+	raid_set_मुक्त(rs);
+पूर्ण
 
-static int raid_map(struct dm_target *ti, struct bio *bio)
-{
-	struct raid_set *rs = ti->private;
-	struct mddev *mddev = &rs->md;
+अटल पूर्णांक raid_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	काष्ठा mddev *mddev = &rs->md;
 
 	/*
 	 * If we're reshaping to add disk(s)), ti->len and
-	 * mddev->array_sectors will differ during the process
+	 * mddev->array_sectors will dअगरfer during the process
 	 * (ti->len > mddev->array_sectors), so we have to requeue
 	 * bios with addresses > mddev->array_sectors here or
 	 * there will occur accesses past EOD of the component
 	 * data images thus erroring the raid set.
 	 */
-	if (unlikely(bio_end_sector(bio) > mddev->array_sectors))
-		return DM_MAPIO_REQUEUE;
+	अगर (unlikely(bio_end_sector(bio) > mddev->array_sectors))
+		वापस DM_MAPIO_REQUEUE;
 
 	md_handle_request(mddev, bio);
 
-	return DM_MAPIO_SUBMITTED;
-}
+	वापस DM_MAPIO_SUBMITTED;
+पूर्ण
 
-/* Return sync state string for @state */
-enum sync_state { st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle };
-static const char *sync_str(enum sync_state state)
-{
+/* Return sync state string क्रम @state */
+क्रमागत sync_state अणु st_frozen, st_reshape, st_resync, st_check, st_repair, st_recover, st_idle पूर्ण;
+अटल स्थिर अक्षर *sync_str(क्रमागत sync_state state)
+अणु
 	/* Has to be in above sync_state order! */
-	static const char *sync_strs[] = {
+	अटल स्थिर अक्षर *sync_strs[] = अणु
 		"frozen",
 		"reshape",
 		"resync",
@@ -3357,193 +3358,193 @@ static const char *sync_str(enum sync_state state)
 		"repair",
 		"recover",
 		"idle"
-	};
+	पूर्ण;
 
-	return __within_range(state, 0, ARRAY_SIZE(sync_strs) - 1) ? sync_strs[state] : "undef";
-};
+	वापस __within_range(state, 0, ARRAY_SIZE(sync_strs) - 1) ? sync_strs[state] : "undef";
+पूर्ण;
 
-/* Return enum sync_state for @mddev derived from @recovery flags */
-static enum sync_state decipher_sync_action(struct mddev *mddev, unsigned long recovery)
-{
-	if (test_bit(MD_RECOVERY_FROZEN, &recovery))
-		return st_frozen;
+/* Return क्रमागत sync_state क्रम @mddev derived from @recovery flags */
+अटल क्रमागत sync_state decipher_sync_action(काष्ठा mddev *mddev, अचिन्हित दीर्घ recovery)
+अणु
+	अगर (test_bit(MD_RECOVERY_FROZEN, &recovery))
+		वापस st_frozen;
 
-	/* The MD sync thread can be done with io or be interrupted but still be running */
-	if (!test_bit(MD_RECOVERY_DONE, &recovery) &&
+	/* The MD sync thपढ़ो can be करोne with io or be पूर्णांकerrupted but still be running */
+	अगर (!test_bit(MD_RECOVERY_DONE, &recovery) &&
 	    (test_bit(MD_RECOVERY_RUNNING, &recovery) ||
-	     (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery)))) {
-		if (test_bit(MD_RECOVERY_RESHAPE, &recovery))
-			return st_reshape;
+	     (!mddev->ro && test_bit(MD_RECOVERY_NEEDED, &recovery)))) अणु
+		अगर (test_bit(MD_RECOVERY_RESHAPE, &recovery))
+			वापस st_reshape;
 
-		if (test_bit(MD_RECOVERY_SYNC, &recovery)) {
-			if (!test_bit(MD_RECOVERY_REQUESTED, &recovery))
-				return st_resync;
-			if (test_bit(MD_RECOVERY_CHECK, &recovery))
-				return st_check;
-			return st_repair;
-		}
+		अगर (test_bit(MD_RECOVERY_SYNC, &recovery)) अणु
+			अगर (!test_bit(MD_RECOVERY_REQUESTED, &recovery))
+				वापस st_resync;
+			अगर (test_bit(MD_RECOVERY_CHECK, &recovery))
+				वापस st_check;
+			वापस st_repair;
+		पूर्ण
 
-		if (test_bit(MD_RECOVERY_RECOVER, &recovery))
-			return st_recover;
+		अगर (test_bit(MD_RECOVERY_RECOVER, &recovery))
+			वापस st_recover;
 
-		if (mddev->reshape_position != MaxSector)
-			return st_reshape;
-	}
+		अगर (mddev->reshape_position != MaxSector)
+			वापस st_reshape;
+	पूर्ण
 
-	return st_idle;
-}
+	वापस st_idle;
+पूर्ण
 
 /*
- * Return status string for @rdev
+ * Return status string क्रम @rdev
  *
- * Status characters:
+ * Status अक्षरacters:
  *
  *  'D' = Dead/Failed raid set component or raid4/5/6 journal device
  *  'a' = Alive but not in-sync raid set component _or_ alive raid4/5/6 'write_back' journal device
  *  'A' = Alive and in-sync raid set component _or_ alive raid4/5/6 'write_through' journal device
- *  '-' = Non-existing device (i.e. uspace passed '- -' into the ctr)
+ *  '-' = Non-existing device (i.e. uspace passed '- -' पूर्णांकo the ctr)
  */
-static const char *__raid_dev_status(struct raid_set *rs, struct md_rdev *rdev)
-{
-	if (!rdev->bdev)
-		return "-";
-	else if (test_bit(Faulty, &rdev->flags))
-		return "D";
-	else if (test_bit(Journal, &rdev->flags))
-		return (rs->journal_dev.mode == R5C_JOURNAL_MODE_WRITE_THROUGH) ? "A" : "a";
-	else if (test_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags) ||
-		 (!test_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags) &&
+अटल स्थिर अक्षर *__raid_dev_status(काष्ठा raid_set *rs, काष्ठा md_rdev *rdev)
+अणु
+	अगर (!rdev->bdev)
+		वापस "-";
+	अन्यथा अगर (test_bit(Faulty, &rdev->flags))
+		वापस "D";
+	अन्यथा अगर (test_bit(Journal, &rdev->flags))
+		वापस (rs->journal_dev.mode == R5C_JOURNAL_MODE_WRITE_THROUGH) ? "A" : "a";
+	अन्यथा अगर (test_bit(RT_FLAG_RS_RESYNCING, &rs->runसमय_flags) ||
+		 (!test_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags) &&
 		  !test_bit(In_sync, &rdev->flags)))
-		return "a";
-	else
-		return "A";
-}
+		वापस "a";
+	अन्यथा
+		वापस "A";
+पूर्ण
 
-/* Helper to return resync/reshape progress for @rs and runtime flags for raid set in sync / resynching */
-static sector_t rs_get_progress(struct raid_set *rs, unsigned long recovery,
-				enum sync_state state, sector_t resync_max_sectors)
-{
+/* Helper to वापस resync/reshape progress क्रम @rs and runसमय flags क्रम raid set in sync / resynching */
+अटल sector_t rs_get_progress(काष्ठा raid_set *rs, अचिन्हित दीर्घ recovery,
+				क्रमागत sync_state state, sector_t resync_max_sectors)
+अणु
 	sector_t r;
-	struct mddev *mddev = &rs->md;
+	काष्ठा mddev *mddev = &rs->md;
 
-	clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
-	clear_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+	clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
+	clear_bit(RT_FLAG_RS_RESYNCING, &rs->runसमय_flags);
 
-	if (rs_is_raid0(rs)) {
+	अगर (rs_is_raid0(rs)) अणु
 		r = resync_max_sectors;
-		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+		set_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
 
-	} else {
-		if (state == st_idle && !test_bit(MD_RECOVERY_INTR, &recovery))
+	पूर्ण अन्यथा अणु
+		अगर (state == st_idle && !test_bit(MD_RECOVERY_INTR, &recovery))
 			r = mddev->recovery_cp;
-		else
+		अन्यथा
 			r = mddev->curr_resync_completed;
 
-		if (state == st_idle && r >= resync_max_sectors) {
+		अगर (state == st_idle && r >= resync_max_sectors) अणु
 			/*
 			 * Sync complete.
 			 */
-			/* In case we have finished recovering, the array is in sync. */
-			if (test_bit(MD_RECOVERY_RECOVER, &recovery))
-				set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+			/* In हाल we have finished recovering, the array is in sync. */
+			अगर (test_bit(MD_RECOVERY_RECOVER, &recovery))
+				set_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
 
-		} else if (state == st_recover)
+		पूर्ण अन्यथा अगर (state == st_recover)
 			/*
-			 * In case we are recovering, the array is not in sync
-			 * and health chars should show the recovering legs.
+			 * In हाल we are recovering, the array is not in sync
+			 * and health अक्षरs should show the recovering legs.
 			 *
-			 * Already retrieved recovery offset from curr_resync_completed above.
+			 * Alपढ़ोy retrieved recovery offset from curr_resync_completed above.
 			 */
 			;
 
-		else if (state == st_resync || state == st_reshape)
+		अन्यथा अगर (state == st_resync || state == st_reshape)
 			/*
 			 * If "resync/reshape" is occurring, the raid set
 			 * is or may be out of sync hence the health
-			 * characters shall be 'a'.
+			 * अक्षरacters shall be 'a'.
 			 */
-			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+			set_bit(RT_FLAG_RS_RESYNCING, &rs->runसमय_flags);
 
-		else if (state == st_check || state == st_repair)
+		अन्यथा अगर (state == st_check || state == st_repair)
 			/*
 			 * If "check" or "repair" is occurring, the raid set has
-			 * undergone an initial sync and the health characters
+			 * undergone an initial sync and the health अक्षरacters
 			 * should not be 'a' anymore.
 			 */
-			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
+			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
 
-		else if (test_bit(MD_RECOVERY_NEEDED, &recovery))
+		अन्यथा अगर (test_bit(MD_RECOVERY_NEEDED, &recovery))
 			/*
-			 * We are idle and recovery is needed, prevent 'A' chars race
-			 * caused by components still set to in-sync by constructor.
+			 * We are idle and recovery is needed, prevent 'A' अक्षरs race
+			 * caused by components still set to in-sync by स्थिरructor.
 			 */
-			set_bit(RT_FLAG_RS_RESYNCING, &rs->runtime_flags);
+			set_bit(RT_FLAG_RS_RESYNCING, &rs->runसमय_flags);
 
-		else {
+		अन्यथा अणु
 			/*
-			 * We are idle and the raid set may be doing an initial
-			 * sync, or it may be rebuilding individual components.
+			 * We are idle and the raid set may be करोing an initial
+			 * sync, or it may be rebuilding inभागidual components.
 			 * If all the devices are In_sync, then it is the raid set
 			 * that is being initialized.
 			 */
-			struct md_rdev *rdev;
+			काष्ठा md_rdev *rdev;
 
-			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
-			rdev_for_each(rdev, mddev)
-				if (!test_bit(Journal, &rdev->flags) &&
-				    !test_bit(In_sync, &rdev->flags)) {
-					clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runtime_flags);
-					break;
-				}
-		}
-	}
+			set_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
+			rdev_क्रम_each(rdev, mddev)
+				अगर (!test_bit(Journal, &rdev->flags) &&
+				    !test_bit(In_sync, &rdev->flags)) अणु
+					clear_bit(RT_FLAG_RS_IN_SYNC, &rs->runसमय_flags);
+					अवरोध;
+				पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return min(r, resync_max_sectors);
-}
+	वापस min(r, resync_max_sectors);
+पूर्ण
 
-/* Helper to return @dev name or "-" if !@dev */
-static const char *__get_dev_name(struct dm_dev *dev)
-{
-	return dev ? dev->name : "-";
-}
+/* Helper to वापस @dev name or "-" अगर !@dev */
+अटल स्थिर अक्षर *__get_dev_name(काष्ठा dm_dev *dev)
+अणु
+	वापस dev ? dev->name : "-";
+पूर्ण
 
-static void raid_status(struct dm_target *ti, status_type_t type,
-			unsigned int status_flags, char *result, unsigned int maxlen)
-{
-	struct raid_set *rs = ti->private;
-	struct mddev *mddev = &rs->md;
-	struct r5conf *conf = mddev->private;
-	int i, max_nr_stripes = conf ? conf->max_nr_stripes : 0;
-	unsigned long recovery;
-	unsigned int raid_param_cnt = 1; /* at least 1 for chunksize */
-	unsigned int sz = 0;
-	unsigned int rebuild_writemostly_count = 0;
+अटल व्योम raid_status(काष्ठा dm_target *ti, status_type_t type,
+			अचिन्हित पूर्णांक status_flags, अक्षर *result, अचिन्हित पूर्णांक maxlen)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा r5conf *conf = mddev->निजी;
+	पूर्णांक i, max_nr_stripes = conf ? conf->max_nr_stripes : 0;
+	अचिन्हित दीर्घ recovery;
+	अचिन्हित पूर्णांक raid_param_cnt = 1; /* at least 1 क्रम chunksize */
+	अचिन्हित पूर्णांक sz = 0;
+	अचिन्हित पूर्णांक rebuild_ग_लिखोmostly_count = 0;
 	sector_t progress, resync_max_sectors, resync_mismatches;
-	enum sync_state state;
-	struct raid_type *rt;
+	क्रमागत sync_state state;
+	काष्ठा raid_type *rt;
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		/* *Should* always succeed */
 		rt = get_raid_type_by_ll(mddev->new_level, mddev->new_layout);
-		if (!rt)
-			return;
+		अगर (!rt)
+			वापस;
 
 		DMEMIT("%s %d ", rt->name, mddev->raid_disks);
 
-		/* Access most recent mddev properties for status output */
+		/* Access most recent mddev properties क्रम status output */
 		smp_rmb();
-		/* Get sensible max sectors even if raid set not yet started */
-		resync_max_sectors = test_bit(RT_FLAG_RS_PRERESUMED, &rs->runtime_flags) ?
+		/* Get sensible max sectors even अगर raid set not yet started */
+		resync_max_sectors = test_bit(RT_FLAG_RS_PRERESUMED, &rs->runसमय_flags) ?
 				      mddev->resync_max_sectors : mddev->dev_sectors;
 		recovery = rs->md.recovery;
 		state = decipher_sync_action(mddev, recovery);
 		progress = rs_get_progress(rs, recovery, state, resync_max_sectors);
-		resync_mismatches = (mddev->last_sync_action && !strcasecmp(mddev->last_sync_action, "check")) ?
-				    atomic64_read(&mddev->resync_mismatches) : 0;
+		resync_mismatches = (mddev->last_sync_action && !strहालcmp(mddev->last_sync_action, "check")) ?
+				    atomic64_पढ़ो(&mddev->resync_mismatches) : 0;
 
-		/* HM FIXME: do we want another state char for raid0? It shows 'D'/'A'/'-' now */
-		for (i = 0; i < rs->raid_disks; i++)
+		/* HM FIXME: करो we want another state अक्षर क्रम raid0? It shows 'D'/'A'/'-' now */
+		क्रम (i = 0; i < rs->raid_disks; i++)
 			DMEMIT(__raid_dev_status(rs, &rs->dev[i].rdev));
 
 		/*
@@ -3552,21 +3553,21 @@ static void raid_status(struct dm_target *ti, status_type_t type,
 		 *   - Initializing the raid set
 		 *   - Rebuilding a subset of devices of the raid set
 		 *  The user can distinguish between the two by referring
-		 *  to the status characters.
+		 *  to the status अक्षरacters.
 		 *
 		 *  The reshape ratio shows the progress of
 		 *  changing the raid layout or the number of
 		 *  disks of a raid set
 		 */
-		DMEMIT(" %llu/%llu", (unsigned long long) progress,
-				     (unsigned long long) resync_max_sectors);
+		DMEMIT(" %llu/%llu", (अचिन्हित दीर्घ दीर्घ) progress,
+				     (अचिन्हित दीर्घ दीर्घ) resync_max_sectors);
 
 		/*
 		 * v1.5.0+:
 		 *
 		 * Sync action:
-		 *   See Documentation/admin-guide/device-mapper/dm-raid.rst for
-		 *   information on each of these states.
+		 *   See Documentation/admin-guide/device-mapper/dm-raid.rst क्रम
+		 *   inक्रमmation on each of these states.
 		 */
 		DMEMIT(" %s", sync_str(state));
 
@@ -3575,350 +3576,350 @@ static void raid_status(struct dm_target *ti, status_type_t type,
 		 *
 		 * resync_mismatches/mismatch_cnt
 		 *   This field shows the number of discrepancies found when
-		 *   performing a "check" of the raid set.
+		 *   perक्रमming a "check" of the raid set.
 		 */
-		DMEMIT(" %llu", (unsigned long long) resync_mismatches);
+		DMEMIT(" %llu", (अचिन्हित दीर्घ दीर्घ) resync_mismatches);
 
 		/*
 		 * v1.9.0+:
 		 *
-		 * data_offset (needed for out of space reshaping)
-		 *   This field shows the data offset into the data
+		 * data_offset (needed क्रम out of space reshaping)
+		 *   This field shows the data offset पूर्णांकo the data
 		 *   image LV where the first stripes data starts.
 		 *
 		 * We keep data_offset equal on all raid disks of the set,
 		 * so retrieving it from the first raid disk is sufficient.
 		 */
-		DMEMIT(" %llu", (unsigned long long) rs->dev[0].rdev.data_offset);
+		DMEMIT(" %llu", (अचिन्हित दीर्घ दीर्घ) rs->dev[0].rdev.data_offset);
 
 		/*
 		 * v1.10.0+:
 		 */
 		DMEMIT(" %s", test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags) ?
 			      __raid_dev_status(rs, &rs->journal_dev.rdev) : "-");
-		break;
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
-		/* Report the table line string you would use to construct this raid set */
+	हाल STATUSTYPE_TABLE:
+		/* Report the table line string you would use to स्थिरruct this raid set */
 
 		/*
-		 * Count any rebuild or writemostly argument pairs and subtract the
-		 * hweight count being added below of any rebuild and writemostly ctr flags.
+		 * Count any rebuild or ग_लिखोmostly argument pairs and subtract the
+		 * hweight count being added below of any rebuild and ग_लिखोmostly ctr flags.
 		 */
-		for (i = 0; i < rs->raid_disks; i++) {
-			rebuild_writemostly_count += (test_bit(i, (void *) rs->rebuild_disks) ? 2 : 0) +
+		क्रम (i = 0; i < rs->raid_disks; i++) अणु
+			rebuild_ग_लिखोmostly_count += (test_bit(i, (व्योम *) rs->rebuild_disks) ? 2 : 0) +
 						     (test_bit(WriteMostly, &rs->dev[i].rdev.flags) ? 2 : 0);
-		}
-		rebuild_writemostly_count -= (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) ? 2 : 0) +
+		पूर्ण
+		rebuild_ग_लिखोmostly_count -= (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags) ? 2 : 0) +
 					     (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags) ? 2 : 0);
-		/* Calculate raid parameter count based on ^ rebuild/writemostly argument counts and ctr flags set. */
-		raid_param_cnt += rebuild_writemostly_count +
+		/* Calculate raid parameter count based on ^ rebuild/ग_लिखोmostly argument counts and ctr flags set. */
+		raid_param_cnt += rebuild_ग_लिखोmostly_count +
 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_NO_ARGS) +
 				  hweight32(rs->ctr_flags & CTR_FLAG_OPTIONS_ONE_ARG) * 2;
 		/* Emit table line */
-		/* This has to be in the documented order for userspace! */
+		/* This has to be in the करोcumented order क्रम userspace! */
 		DMEMIT("%s %u %u", rs->raid_type->name, raid_param_cnt, mddev->new_chunk_sectors);
-		if (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_SYNC, &rs->ctr_flags))
 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_SYNC));
-		if (test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_NOSYNC, &rs->ctr_flags))
 			DMEMIT(" %s", dm_raid_arg_name_by_flag(CTR_FLAG_NOSYNC));
-		if (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags))
-			for (i = 0; i < rs->raid_disks; i++)
-				if (test_bit(i, (void *) rs->rebuild_disks))
+		अगर (test_bit(__CTR_FLAG_REBUILD, &rs->ctr_flags))
+			क्रम (i = 0; i < rs->raid_disks; i++)
+				अगर (test_bit(i, (व्योम *) rs->rebuild_disks))
 					DMEMIT(" %s %u", dm_raid_arg_name_by_flag(CTR_FLAG_REBUILD), i);
-		if (test_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_DAEMON_SLEEP, &rs->ctr_flags))
 			DMEMIT(" %s %lu", dm_raid_arg_name_by_flag(CTR_FLAG_DAEMON_SLEEP),
-					  mddev->bitmap_info.daemon_sleep);
-		if (test_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags))
+					  mddev->biपंचांगap_info.daemon_sleep);
+		अगर (test_bit(__CTR_FLAG_MIN_RECOVERY_RATE, &rs->ctr_flags))
 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_MIN_RECOVERY_RATE),
 					 mddev->sync_speed_min);
-		if (test_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_MAX_RECOVERY_RATE, &rs->ctr_flags))
 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_MAX_RECOVERY_RATE),
 					 mddev->sync_speed_max);
-		if (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags))
-			for (i = 0; i < rs->raid_disks; i++)
-				if (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
+		अगर (test_bit(__CTR_FLAG_WRITE_MOSTLY, &rs->ctr_flags))
+			क्रम (i = 0; i < rs->raid_disks; i++)
+				अगर (test_bit(WriteMostly, &rs->dev[i].rdev.flags))
 					DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_WRITE_MOSTLY),
 					       rs->dev[i].rdev.raid_disk);
-		if (test_bit(__CTR_FLAG_MAX_WRITE_BEHIND, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_MAX_WRITE_BEHIND, &rs->ctr_flags))
 			DMEMIT(" %s %lu", dm_raid_arg_name_by_flag(CTR_FLAG_MAX_WRITE_BEHIND),
-					  mddev->bitmap_info.max_write_behind);
-		if (test_bit(__CTR_FLAG_STRIPE_CACHE, &rs->ctr_flags))
+					  mddev->biपंचांगap_info.max_ग_लिखो_behind);
+		अगर (test_bit(__CTR_FLAG_STRIPE_CACHE, &rs->ctr_flags))
 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_STRIPE_CACHE),
 					 max_nr_stripes);
-		if (test_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_REGION_SIZE, &rs->ctr_flags))
 			DMEMIT(" %s %llu", dm_raid_arg_name_by_flag(CTR_FLAG_REGION_SIZE),
-					   (unsigned long long) to_sector(mddev->bitmap_info.chunksize));
-		if (test_bit(__CTR_FLAG_RAID10_COPIES, &rs->ctr_flags))
+					   (अचिन्हित दीर्घ दीर्घ) to_sector(mddev->biपंचांगap_info.chunksize));
+		अगर (test_bit(__CTR_FLAG_RAID10_COPIES, &rs->ctr_flags))
 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_COPIES),
 					 raid10_md_layout_to_copies(mddev->layout));
-		if (test_bit(__CTR_FLAG_RAID10_FORMAT, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_RAID10_FORMAT, &rs->ctr_flags))
 			DMEMIT(" %s %s", dm_raid_arg_name_by_flag(CTR_FLAG_RAID10_FORMAT),
-					 raid10_md_layout_to_format(mddev->layout));
-		if (test_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags))
+					 raid10_md_layout_to_क्रमmat(mddev->layout));
+		अगर (test_bit(__CTR_FLAG_DELTA_DISKS, &rs->ctr_flags))
 			DMEMIT(" %s %d", dm_raid_arg_name_by_flag(CTR_FLAG_DELTA_DISKS),
 					 max(rs->delta_disks, mddev->delta_disks));
-		if (test_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_DATA_OFFSET, &rs->ctr_flags))
 			DMEMIT(" %s %llu", dm_raid_arg_name_by_flag(CTR_FLAG_DATA_OFFSET),
-					   (unsigned long long) rs->data_offset);
-		if (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags))
+					   (अचिन्हित दीर्घ दीर्घ) rs->data_offset);
+		अगर (test_bit(__CTR_FLAG_JOURNAL_DEV, &rs->ctr_flags))
 			DMEMIT(" %s %s", dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_DEV),
 					__get_dev_name(rs->journal_dev.dev));
-		if (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags))
+		अगर (test_bit(__CTR_FLAG_JOURNAL_MODE, &rs->ctr_flags))
 			DMEMIT(" %s %s", dm_raid_arg_name_by_flag(CTR_FLAG_JOURNAL_MODE),
 					 md_journal_mode_to_dm_raid(rs->journal_dev.mode));
 		DMEMIT(" %d", rs->raid_disks);
-		for (i = 0; i < rs->raid_disks; i++)
+		क्रम (i = 0; i < rs->raid_disks; i++)
 			DMEMIT(" %s %s", __get_dev_name(rs->dev[i].meta_dev),
 					 __get_dev_name(rs->dev[i].data_dev));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int raid_message(struct dm_target *ti, unsigned int argc, char **argv,
-			char *result, unsigned maxlen)
-{
-	struct raid_set *rs = ti->private;
-	struct mddev *mddev = &rs->md;
+अटल पूर्णांक raid_message(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv,
+			अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (!mddev->pers || !mddev->pers->sync_request)
-		return -EINVAL;
+	अगर (!mddev->pers || !mddev->pers->sync_request)
+		वापस -EINVAL;
 
-	if (!strcasecmp(argv[0], "frozen"))
+	अगर (!strहालcmp(argv[0], "frozen"))
 		set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-	else
+	अन्यथा
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 
-	if (!strcasecmp(argv[0], "idle") || !strcasecmp(argv[0], "frozen")) {
-		if (mddev->sync_thread) {
+	अगर (!strहालcmp(argv[0], "idle") || !strहालcmp(argv[0], "frozen")) अणु
+		अगर (mddev->sync_thपढ़ो) अणु
 			set_bit(MD_RECOVERY_INTR, &mddev->recovery);
-			md_reap_sync_thread(mddev);
-		}
-	} else if (decipher_sync_action(mddev, mddev->recovery) != st_idle)
-		return -EBUSY;
-	else if (!strcasecmp(argv[0], "resync"))
+			md_reap_sync_thपढ़ो(mddev);
+		पूर्ण
+	पूर्ण अन्यथा अगर (decipher_sync_action(mddev, mddev->recovery) != st_idle)
+		वापस -EBUSY;
+	अन्यथा अगर (!strहालcmp(argv[0], "resync"))
 		; /* MD_RECOVERY_NEEDED set below */
-	else if (!strcasecmp(argv[0], "recover"))
+	अन्यथा अगर (!strहालcmp(argv[0], "recover"))
 		set_bit(MD_RECOVERY_RECOVER, &mddev->recovery);
-	else {
-		if (!strcasecmp(argv[0], "check")) {
+	अन्यथा अणु
+		अगर (!strहालcmp(argv[0], "check")) अणु
 			set_bit(MD_RECOVERY_CHECK, &mddev->recovery);
 			set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 			set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
-		} else if (!strcasecmp(argv[0], "repair")) {
+		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "repair")) अणु
 			set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 			set_bit(MD_RECOVERY_SYNC, &mddev->recovery);
-		} else
-			return -EINVAL;
-	}
-	if (mddev->ro == 2) {
-		/* A write to sync_action is enough to justify
-		 * canceling read-auto mode
+		पूर्ण अन्यथा
+			वापस -EINVAL;
+	पूर्ण
+	अगर (mddev->ro == 2) अणु
+		/* A ग_लिखो to sync_action is enough to justअगरy
+		 * canceling पढ़ो-स्वतः mode
 		 */
 		mddev->ro = 0;
-		if (!mddev->suspended && mddev->sync_thread)
-			md_wakeup_thread(mddev->sync_thread);
-	}
+		अगर (!mddev->suspended && mddev->sync_thपढ़ो)
+			md_wakeup_thपढ़ो(mddev->sync_thपढ़ो);
+	पूर्ण
 	set_bit(MD_RECOVERY_NEEDED, &mddev->recovery);
-	if (!mddev->suspended && mddev->thread)
-		md_wakeup_thread(mddev->thread);
+	अगर (!mddev->suspended && mddev->thपढ़ो)
+		md_wakeup_thपढ़ो(mddev->thपढ़ो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int raid_iterate_devices(struct dm_target *ti,
-				iterate_devices_callout_fn fn, void *data)
-{
-	struct raid_set *rs = ti->private;
-	unsigned int i;
-	int r = 0;
+अटल पूर्णांक raid_iterate_devices(काष्ठा dm_target *ti,
+				iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक r = 0;
 
-	for (i = 0; !r && i < rs->md.raid_disks; i++)
-		if (rs->dev[i].data_dev)
+	क्रम (i = 0; !r && i < rs->md.raid_disks; i++)
+		अगर (rs->dev[i].data_dev)
 			r = fn(ti,
 				 rs->dev[i].data_dev,
 				 0, /* No offset on data devs */
 				 rs->md.dev_sectors,
 				 data);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void raid_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	struct raid_set *rs = ti->private;
-	unsigned int chunk_size_bytes = to_bytes(rs->md.chunk_sectors);
+अटल व्योम raid_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	अचिन्हित पूर्णांक chunk_size_bytes = to_bytes(rs->md.chunk_sectors);
 
 	blk_limits_io_min(limits, chunk_size_bytes);
 	blk_limits_io_opt(limits, chunk_size_bytes * mddev_data_stripes(rs));
-}
+पूर्ण
 
-static void raid_postsuspend(struct dm_target *ti)
-{
-	struct raid_set *rs = ti->private;
+अटल व्योम raid_postsuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
 
-	if (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
-		/* Writes have to be stopped before suspending to avoid deadlocks. */
-		if (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
-			md_stop_writes(&rs->md);
+	अगर (!test_and_set_bit(RT_FLAG_RS_SUSPENDED, &rs->runसमय_flags)) अणु
+		/* Writes have to be stopped beक्रमe suspending to aव्योम deadlocks. */
+		अगर (!test_bit(MD_RECOVERY_FROZEN, &rs->md.recovery))
+			md_stop_ग_लिखोs(&rs->md);
 
-		mddev_lock_nointr(&rs->md);
+		mddev_lock_noपूर्णांकr(&rs->md);
 		mddev_suspend(&rs->md);
 		mddev_unlock(&rs->md);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void attempt_restore_of_faulty_devices(struct raid_set *rs)
-{
-	int i;
-	uint64_t cleared_failed_devices[DISKS_ARRAY_ELEMS];
-	unsigned long flags;
+अटल व्योम attempt_restore_of_faulty_devices(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक i;
+	uपूर्णांक64_t cleared_failed_devices[DISKS_ARRAY_ELEMS];
+	अचिन्हित दीर्घ flags;
 	bool cleared = false;
-	struct dm_raid_superblock *sb;
-	struct mddev *mddev = &rs->md;
-	struct md_rdev *r;
+	काष्ठा dm_raid_superblock *sb;
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा md_rdev *r;
 
-	/* RAID personalities have to provide hot add/remove methods or we need to bail out. */
-	if (!mddev->pers || !mddev->pers->hot_add_disk || !mddev->pers->hot_remove_disk)
-		return;
+	/* RAID personalities have to provide hot add/हटाओ methods or we need to bail out. */
+	अगर (!mddev->pers || !mddev->pers->hot_add_disk || !mddev->pers->hot_हटाओ_disk)
+		वापस;
 
-	memset(cleared_failed_devices, 0, sizeof(cleared_failed_devices));
+	स_रखो(cleared_failed_devices, 0, माप(cleared_failed_devices));
 
-	for (i = 0; i < mddev->raid_disks; i++) {
+	क्रम (i = 0; i < mddev->raid_disks; i++) अणु
 		r = &rs->dev[i].rdev;
 		/* HM FIXME: enhance journal device recovery processing */
-		if (test_bit(Journal, &r->flags))
-			continue;
+		अगर (test_bit(Journal, &r->flags))
+			जारी;
 
-		if (test_bit(Faulty, &r->flags) &&
-		    r->meta_bdev && !read_disk_sb(r, r->sb_size, true)) {
+		अगर (test_bit(Faulty, &r->flags) &&
+		    r->meta_bdev && !पढ़ो_disk_sb(r, r->sb_size, true)) अणु
 			DMINFO("Faulty %s device #%d has readable super block."
 			       "  Attempting to revive it.",
 			       rs->raid_type->name, i);
 
 			/*
-			 * Faulty bit may be set, but sometimes the array can
-			 * be suspended before the personalities can respond
+			 * Faulty bit may be set, but someबार the array can
+			 * be suspended beक्रमe the personalities can respond
 			 * by removing the device from the array (i.e. calling
-			 * 'hot_remove_disk').	If they haven't yet removed
+			 * 'hot_remove_disk').	If they haven't yet हटाओd
 			 * the failed device, its 'raid_disk' number will be
 			 * '>= 0' - meaning we must call this function
 			 * ourselves.
 			 */
 			flags = r->flags;
-			clear_bit(In_sync, &r->flags); /* Mandatory for hot remove. */
-			if (r->raid_disk >= 0) {
-				if (mddev->pers->hot_remove_disk(mddev, r)) {
+			clear_bit(In_sync, &r->flags); /* Mandatory क्रम hot हटाओ. */
+			अगर (r->raid_disk >= 0) अणु
+				अगर (mddev->pers->hot_हटाओ_disk(mddev, r)) अणु
 					/* Failed to revive this device, try next */
 					r->flags = flags;
-					continue;
-				}
-			} else
+					जारी;
+				पूर्ण
+			पूर्ण अन्यथा
 				r->raid_disk = r->saved_raid_disk = i;
 
 			clear_bit(Faulty, &r->flags);
 			clear_bit(WriteErrorSeen, &r->flags);
 
-			if (mddev->pers->hot_add_disk(mddev, r)) {
+			अगर (mddev->pers->hot_add_disk(mddev, r)) अणु
 				/* Failed to revive this device, try next */
 				r->raid_disk = r->saved_raid_disk = -1;
 				r->flags = flags;
-			} else {
+			पूर्ण अन्यथा अणु
 				clear_bit(In_sync, &r->flags);
 				r->recovery_offset = 0;
-				set_bit(i, (void *) cleared_failed_devices);
+				set_bit(i, (व्योम *) cleared_failed_devices);
 				cleared = true;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* If any failed devices could be cleared, update all sbs failed_devices bits */
-	if (cleared) {
-		uint64_t failed_devices[DISKS_ARRAY_ELEMS];
+	अगर (cleared) अणु
+		uपूर्णांक64_t failed_devices[DISKS_ARRAY_ELEMS];
 
-		rdev_for_each(r, &rs->md) {
-			if (test_bit(Journal, &r->flags))
-				continue;
+		rdev_क्रम_each(r, &rs->md) अणु
+			अगर (test_bit(Journal, &r->flags))
+				जारी;
 
 			sb = page_address(r->sb_page);
 			sb_retrieve_failed_devices(sb, failed_devices);
 
-			for (i = 0; i < DISKS_ARRAY_ELEMS; i++)
+			क्रम (i = 0; i < DISKS_ARRAY_ELEMS; i++)
 				failed_devices[i] &= ~cleared_failed_devices[i];
 
 			sb_update_failed_devices(sb, failed_devices);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __load_dirty_region_bitmap(struct raid_set *rs)
-{
-	int r = 0;
+अटल पूर्णांक __load_dirty_region_biपंचांगap(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक r = 0;
 
-	/* Try loading the bitmap unless "raid0", which does not have one */
-	if (!rs_is_raid0(rs) &&
-	    !test_and_set_bit(RT_FLAG_RS_BITMAP_LOADED, &rs->runtime_flags)) {
-		r = md_bitmap_load(&rs->md);
-		if (r)
+	/* Try loading the biपंचांगap unless "raid0", which करोes not have one */
+	अगर (!rs_is_raid0(rs) &&
+	    !test_and_set_bit(RT_FLAG_RS_BITMAP_LOADED, &rs->runसमय_flags)) अणु
+		r = md_biपंचांगap_load(&rs->md);
+		अगर (r)
 			DMERR("Failed to load bitmap");
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-/* Enforce updating all superblocks */
-static void rs_update_sbs(struct raid_set *rs)
-{
-	struct mddev *mddev = &rs->md;
-	int ro = mddev->ro;
+/* Enक्रमce updating all superblocks */
+अटल व्योम rs_update_sbs(काष्ठा raid_set *rs)
+अणु
+	काष्ठा mddev *mddev = &rs->md;
+	पूर्णांक ro = mddev->ro;
 
 	set_bit(MD_SB_CHANGE_DEVS, &mddev->sb_flags);
 	mddev->ro = 0;
 	md_update_sb(mddev, 1);
 	mddev->ro = ro;
-}
+पूर्ण
 
 /*
  * Reshape changes raid algorithm of @rs to new one within personality
- * (e.g. raid6_zr -> raid6_nc), changes stripe size, adds/removes
+ * (e.g. raid6_zr -> raid6_nc), changes stripe size, adds/हटाओs
  * disks from a raid set thus growing/shrinking it or resizes the set
  *
- * Call mddev_lock_nointr() before!
+ * Call mddev_lock_noपूर्णांकr() beक्रमe!
  */
-static int rs_start_reshape(struct raid_set *rs)
-{
-	int r;
-	struct mddev *mddev = &rs->md;
-	struct md_personality *pers = mddev->pers;
+अटल पूर्णांक rs_start_reshape(काष्ठा raid_set *rs)
+अणु
+	पूर्णांक r;
+	काष्ठा mddev *mddev = &rs->md;
+	काष्ठा md_personality *pers = mddev->pers;
 
-	/* Don't allow the sync thread to work until the table gets reloaded. */
+	/* Don't allow the sync thपढ़ो to work until the table माला_लो reloaded. */
 	set_bit(MD_RECOVERY_WAIT, &mddev->recovery);
 
 	r = rs_setup_reshape(rs);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/*
-	 * Check any reshape constraints enforced by the personalility
+	 * Check any reshape स्थिरraपूर्णांकs enक्रमced by the personalility
 	 *
-	 * May as well already kick the reshape off so that * pers->start_reshape() becomes optional.
+	 * May as well alपढ़ोy kick the reshape off so that * pers->start_reshape() becomes optional.
 	 */
 	r = pers->check_reshape(mddev);
-	if (r) {
+	अगर (r) अणु
 		rs->ti->error = "pers->check_reshape() failed";
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	/*
 	 * Personality may not provide start reshape method in which
-	 * case check_reshape above has already covered everything
+	 * हाल check_reshape above has alपढ़ोy covered everything
 	 */
-	if (pers->start_reshape) {
+	अगर (pers->start_reshape) अणु
 		r = pers->start_reshape(mddev);
-		if (r) {
+		अगर (r) अणु
 			rs->ti->error = "pers->start_reshape() failed";
-			return r;
-		}
-	}
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Now reshape got set up, update superblocks to
@@ -3927,109 +3928,109 @@ static int rs_start_reshape(struct raid_set *rs)
 	 */
 	rs_update_sbs(rs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int raid_preresume(struct dm_target *ti)
-{
-	int r;
-	struct raid_set *rs = ti->private;
-	struct mddev *mddev = &rs->md;
+अटल पूर्णांक raid_preresume(काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	काष्ठा raid_set *rs = ti->निजी;
+	काष्ठा mddev *mddev = &rs->md;
 
-	/* This is a resume after a suspend of the set -> it's already started. */
-	if (test_and_set_bit(RT_FLAG_RS_PRERESUMED, &rs->runtime_flags))
-		return 0;
+	/* This is a resume after a suspend of the set -> it's alपढ़ोy started. */
+	अगर (test_and_set_bit(RT_FLAG_RS_PRERESUMED, &rs->runसमय_flags))
+		वापस 0;
 
 	/*
-	 * The superblocks need to be updated on disk if the
+	 * The superblocks need to be updated on disk अगर the
 	 * array is new or new devices got added (thus zeroed
-	 * out by userspace) or __load_dirty_region_bitmap
-	 * will overwrite them in core with old data or fail.
+	 * out by userspace) or __load_dirty_region_biपंचांगap
+	 * will overग_लिखो them in core with old data or fail.
 	 */
-	if (test_bit(RT_FLAG_UPDATE_SBS, &rs->runtime_flags))
+	अगर (test_bit(RT_FLAG_UPDATE_SBS, &rs->runसमय_flags))
 		rs_update_sbs(rs);
 
-	/* Load the bitmap from disk unless raid0 */
-	r = __load_dirty_region_bitmap(rs);
-	if (r)
-		return r;
+	/* Load the biपंचांगap from disk unless raid0 */
+	r = __load_dirty_region_biपंचांगap(rs);
+	अगर (r)
+		वापस r;
 
 	/* We are extending the raid set size, adjust mddev/md_rdev sizes and set capacity. */
-	if (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags)) {
+	अगर (test_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags)) अणु
 		mddev->array_sectors = rs->array_sectors;
 		mddev->dev_sectors = rs->dev_sectors;
 		rs_set_rdev_sectors(rs);
 		rs_set_capacity(rs);
-	}
+	पूर्ण
 
-	/* Resize bitmap to adjust to changed region size (aka MD bitmap chunksize) or grown device size */
-        if (test_bit(RT_FLAG_RS_BITMAP_LOADED, &rs->runtime_flags) && mddev->bitmap &&
-	    (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags) ||
-	     (rs->requested_bitmap_chunk_sectors &&
-	       mddev->bitmap_info.chunksize != to_bytes(rs->requested_bitmap_chunk_sectors)))) {
-		int chunksize = to_bytes(rs->requested_bitmap_chunk_sectors) ?: mddev->bitmap_info.chunksize;
+	/* Resize biपंचांगap to adjust to changed region size (aka MD biपंचांगap chunksize) or grown device size */
+        अगर (test_bit(RT_FLAG_RS_BITMAP_LOADED, &rs->runसमय_flags) && mddev->biपंचांगap &&
+	    (test_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags) ||
+	     (rs->requested_biपंचांगap_chunk_sectors &&
+	       mddev->biपंचांगap_info.chunksize != to_bytes(rs->requested_biपंचांगap_chunk_sectors)))) अणु
+		पूर्णांक chunksize = to_bytes(rs->requested_biपंचांगap_chunk_sectors) ?: mddev->biपंचांगap_info.chunksize;
 
-		r = md_bitmap_resize(mddev->bitmap, mddev->dev_sectors, chunksize, 0);
-		if (r)
+		r = md_biपंचांगap_resize(mddev->biपंचांगap, mddev->dev_sectors, chunksize, 0);
+		अगर (r)
 			DMERR("Failed to resize bitmap");
-	}
+	पूर्ण
 
-	/* Check for any resize/reshape on @rs and adjust/initiate */
-	/* Be prepared for mddev_resume() in raid_resume() */
+	/* Check क्रम any resize/reshape on @rs and adjust/initiate */
+	/* Be prepared क्रम mddev_resume() in raid_resume() */
 	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
-	if (mddev->recovery_cp && mddev->recovery_cp < MaxSector) {
+	अगर (mddev->recovery_cp && mddev->recovery_cp < MaxSector) अणु
 		set_bit(MD_RECOVERY_REQUESTED, &mddev->recovery);
 		mddev->resync_min = mddev->recovery_cp;
-		if (test_bit(RT_FLAG_RS_GROW, &rs->runtime_flags))
+		अगर (test_bit(RT_FLAG_RS_GROW, &rs->runसमय_flags))
 			mddev->resync_max_sectors = mddev->dev_sectors;
-	}
+	पूर्ण
 
-	/* Check for any reshape request unless new raid set */
-	if (test_bit(RT_FLAG_RESHAPE_RS, &rs->runtime_flags)) {
+	/* Check क्रम any reshape request unless new raid set */
+	अगर (test_bit(RT_FLAG_RESHAPE_RS, &rs->runसमय_flags)) अणु
 		/* Initiate a reshape. */
 		rs_set_rdev_sectors(rs);
-		mddev_lock_nointr(mddev);
+		mddev_lock_noपूर्णांकr(mddev);
 		r = rs_start_reshape(rs);
 		mddev_unlock(mddev);
-		if (r)
+		अगर (r)
 			DMWARN("Failed to check/start reshape, continuing without change");
 		r = 0;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void raid_resume(struct dm_target *ti)
-{
-	struct raid_set *rs = ti->private;
-	struct mddev *mddev = &rs->md;
+अटल व्योम raid_resume(काष्ठा dm_target *ti)
+अणु
+	काष्ठा raid_set *rs = ti->निजी;
+	काष्ठा mddev *mddev = &rs->md;
 
-	if (test_and_set_bit(RT_FLAG_RS_RESUMED, &rs->runtime_flags)) {
+	अगर (test_and_set_bit(RT_FLAG_RS_RESUMED, &rs->runसमय_flags)) अणु
 		/*
-		 * A secondary resume while the device is active.
+		 * A secondary resume जबतक the device is active.
 		 * Take this opportunity to check whether any failed
 		 * devices are reachable again.
 		 */
 		attempt_restore_of_faulty_devices(rs);
-	}
+	पूर्ण
 
-	if (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runtime_flags)) {
-		/* Only reduce raid set size before running a disk removing reshape. */
-		if (mddev->delta_disks < 0)
+	अगर (test_and_clear_bit(RT_FLAG_RS_SUSPENDED, &rs->runसमय_flags)) अणु
+		/* Only reduce raid set size beक्रमe running a disk removing reshape. */
+		अगर (mddev->delta_disks < 0)
 			rs_set_capacity(rs);
 
-		mddev_lock_nointr(mddev);
+		mddev_lock_noपूर्णांकr(mddev);
 		clear_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
 		mddev->ro = 0;
 		mddev->in_sync = 0;
 		mddev_resume(mddev);
 		mddev_unlock(mddev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct target_type raid_target = {
+अटल काष्ठा target_type raid_target = अणु
 	.name = "raid",
-	.version = {1, 15, 1},
+	.version = अणु1, 15, 1पूर्ण,
 	.module = THIS_MODULE,
 	.ctr = raid_ctr,
 	.dtr = raid_dtr,
@@ -4037,28 +4038,28 @@ static struct target_type raid_target = {
 	.status = raid_status,
 	.message = raid_message,
 	.iterate_devices = raid_iterate_devices,
-	.io_hints = raid_io_hints,
+	.io_hपूर्णांकs = raid_io_hपूर्णांकs,
 	.postsuspend = raid_postsuspend,
 	.preresume = raid_preresume,
 	.resume = raid_resume,
-};
+पूर्ण;
 
-static int __init dm_raid_init(void)
-{
+अटल पूर्णांक __init dm_raid_init(व्योम)
+अणु
 	DMINFO("Loading target version %u.%u.%u",
 	       raid_target.version[0],
 	       raid_target.version[1],
 	       raid_target.version[2]);
-	return dm_register_target(&raid_target);
-}
+	वापस dm_रेजिस्टर_target(&raid_target);
+पूर्ण
 
-static void __exit dm_raid_exit(void)
-{
-	dm_unregister_target(&raid_target);
-}
+अटल व्योम __निकास dm_raid_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&raid_target);
+पूर्ण
 
 module_init(dm_raid_init);
-module_exit(dm_raid_exit);
+module_निकास(dm_raid_निकास);
 
 module_param(devices_handle_discard_safely, bool, 0644);
 MODULE_PARM_DESC(devices_handle_discard_safely,

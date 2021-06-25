@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2020 Western Digital Corporation or its affiliates.
  */
-#ifndef _ASM_EFI_H
-#define _ASM_EFI_H
+#अगर_अघोषित _ASM_EFI_H
+#घोषणा _ASM_EFI_H
 
-#include <asm/csr.h>
-#include <asm/io.h>
-#include <asm/mmu_context.h>
-#include <asm/ptrace.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/csr.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#ifdef CONFIG_EFI
-extern void efi_init(void);
-#else
-#define efi_init()
-#endif
+#अगर_घोषित CONFIG_EFI
+बाह्य व्योम efi_init(व्योम);
+#अन्यथा
+#घोषणा efi_init()
+#पूर्ण_अगर
 
-int efi_create_mapping(struct mm_struct *mm, efi_memory_desc_t *md);
-int efi_set_mapping_permissions(struct mm_struct *mm, efi_memory_desc_t *md);
+पूर्णांक efi_create_mapping(काष्ठा mm_काष्ठा *mm, efi_memory_desc_t *md);
+पूर्णांक efi_set_mapping_permissions(काष्ठा mm_काष्ठा *mm, efi_memory_desc_t *md);
 
-#define arch_efi_call_virt_setup()      efi_virtmap_load()
-#define arch_efi_call_virt_teardown()   efi_virtmap_unload()
+#घोषणा arch_efi_call_virt_setup()      efi_virपंचांगap_load()
+#घोषणा arch_efi_call_virt_tearकरोwn()   efi_virपंचांगap_unload()
 
-#define arch_efi_call_virt(p, f, args...) p->f(args)
+#घोषणा arch_efi_call_virt(p, f, args...) p->f(args)
 
-#define ARCH_EFI_IRQ_FLAGS_MASK (SR_IE | SR_SPIE)
+#घोषणा ARCH_EFI_IRQ_FLAGS_MASK (SR_IE | SR_SPIE)
 
 /* Load initrd at enough distance from DRAM start */
-static inline unsigned long efi_get_max_initrd_addr(unsigned long image_addr)
-{
-	return image_addr + SZ_256M;
-}
+अटल अंतरभूत अचिन्हित दीर्घ efi_get_max_initrd_addr(अचिन्हित दीर्घ image_addr)
+अणु
+	वापस image_addr + SZ_256M;
+पूर्ण
 
-#define alloc_screen_info(x...)		(&screen_info)
+#घोषणा alloc_screen_info(x...)		(&screen_info)
 
-static inline void free_screen_info(struct screen_info *si)
-{
-}
+अटल अंतरभूत व्योम मुक्त_screen_info(काष्ठा screen_info *si)
+अणु
+पूर्ण
 
-static inline void efifb_setup_from_dmi(struct screen_info *si, const char *opt)
-{
-}
+अटल अंतरभूत व्योम efअगरb_setup_from_dmi(काष्ठा screen_info *si, स्थिर अक्षर *opt)
+अणु
+पूर्ण
 
-void efi_virtmap_load(void);
-void efi_virtmap_unload(void);
+व्योम efi_virपंचांगap_load(व्योम);
+व्योम efi_virपंचांगap_unload(व्योम);
 
-#endif /* _ASM_EFI_H */
+#पूर्ण_अगर /* _ASM_EFI_H */

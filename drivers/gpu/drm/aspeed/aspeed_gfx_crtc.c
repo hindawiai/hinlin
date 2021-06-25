@@ -1,242 +1,243 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright 2018 IBM Corporation
 
-#include <linux/clk.h>
-#include <linux/reset.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/regmap.h>
 
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_device.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "aspeed_gfx.h"
+#समावेश "aspeed_gfx.h"
 
-static struct aspeed_gfx *
-drm_pipe_to_aspeed_gfx(struct drm_simple_display_pipe *pipe)
-{
-	return container_of(pipe, struct aspeed_gfx, pipe);
-}
+अटल काष्ठा aspeed_gfx *
+drm_pipe_to_aspeed_gfx(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	वापस container_of(pipe, काष्ठा aspeed_gfx, pipe);
+पूर्ण
 
-static int aspeed_gfx_set_pixel_fmt(struct aspeed_gfx *priv, u32 *bpp)
-{
-	struct drm_crtc *crtc = &priv->pipe.crtc;
-	struct drm_device *drm = crtc->dev;
-	const u32 format = crtc->primary->state->fb->format->format;
+अटल पूर्णांक aspeed_gfx_set_pixel_fmt(काष्ठा aspeed_gfx *priv, u32 *bpp)
+अणु
+	काष्ठा drm_crtc *crtc = &priv->pipe.crtc;
+	काष्ठा drm_device *drm = crtc->dev;
+	स्थिर u32 क्रमmat = crtc->primary->state->fb->क्रमmat->क्रमmat;
 	u32 ctrl1;
 
-	ctrl1 = readl(priv->base + CRT_CTRL1);
+	ctrl1 = पढ़ोl(priv->base + CRT_CTRL1);
 	ctrl1 &= ~CRT_CTRL_COLOR_MASK;
 
-	switch (format) {
-	case DRM_FORMAT_RGB565:
+	चयन (क्रमmat) अणु
+	हाल DRM_FORMAT_RGB565:
 		dev_dbg(drm->dev, "Setting up RGB565 mode\n");
 		ctrl1 |= CRT_CTRL_COLOR_RGB565;
 		*bpp = 16;
-		break;
-	case DRM_FORMAT_XRGB8888:
+		अवरोध;
+	हाल DRM_FORMAT_XRGB8888:
 		dev_dbg(drm->dev, "Setting up XRGB8888 mode\n");
 		ctrl1 |= CRT_CTRL_COLOR_XRGB8888;
 		*bpp = 32;
-		break;
-	default:
-		dev_err(drm->dev, "Unhandled pixel format %08x\n", format);
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		dev_err(drm->dev, "Unhandled pixel format %08x\n", क्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	writel(ctrl1, priv->base + CRT_CTRL1);
+	ग_लिखोl(ctrl1, priv->base + CRT_CTRL1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aspeed_gfx_enable_controller(struct aspeed_gfx *priv)
-{
-	u32 ctrl1 = readl(priv->base + CRT_CTRL1);
-	u32 ctrl2 = readl(priv->base + CRT_CTRL2);
+अटल व्योम aspeed_gfx_enable_controller(काष्ठा aspeed_gfx *priv)
+अणु
+	u32 ctrl1 = पढ़ोl(priv->base + CRT_CTRL1);
+	u32 ctrl2 = पढ़ोl(priv->base + CRT_CTRL2);
 
-	/* Set DAC source for display output to Graphics CRT (GFX) */
+	/* Set DAC source क्रम display output to Graphics CRT (GFX) */
 	regmap_update_bits(priv->scu, priv->dac_reg, BIT(16), BIT(16));
 
-	writel(ctrl1 | CRT_CTRL_EN, priv->base + CRT_CTRL1);
-	writel(ctrl2 | CRT_CTRL_DAC_EN, priv->base + CRT_CTRL2);
-}
+	ग_लिखोl(ctrl1 | CRT_CTRL_EN, priv->base + CRT_CTRL1);
+	ग_लिखोl(ctrl2 | CRT_CTRL_DAC_EN, priv->base + CRT_CTRL2);
+पूर्ण
 
-static void aspeed_gfx_disable_controller(struct aspeed_gfx *priv)
-{
-	u32 ctrl1 = readl(priv->base + CRT_CTRL1);
-	u32 ctrl2 = readl(priv->base + CRT_CTRL2);
+अटल व्योम aspeed_gfx_disable_controller(काष्ठा aspeed_gfx *priv)
+अणु
+	u32 ctrl1 = पढ़ोl(priv->base + CRT_CTRL1);
+	u32 ctrl2 = पढ़ोl(priv->base + CRT_CTRL2);
 
-	writel(ctrl1 & ~CRT_CTRL_EN, priv->base + CRT_CTRL1);
-	writel(ctrl2 & ~CRT_CTRL_DAC_EN, priv->base + CRT_CTRL2);
+	ग_लिखोl(ctrl1 & ~CRT_CTRL_EN, priv->base + CRT_CTRL1);
+	ग_लिखोl(ctrl2 & ~CRT_CTRL_DAC_EN, priv->base + CRT_CTRL2);
 
 	regmap_update_bits(priv->scu, priv->dac_reg, BIT(16), 0);
-}
+पूर्ण
 
-static void aspeed_gfx_crtc_mode_set_nofb(struct aspeed_gfx *priv)
-{
-	struct drm_display_mode *m = &priv->pipe.crtc.state->adjusted_mode;
+अटल व्योम aspeed_gfx_crtc_mode_set_nofb(काष्ठा aspeed_gfx *priv)
+अणु
+	काष्ठा drm_display_mode *m = &priv->pipe.crtc.state->adjusted_mode;
 	u32 ctrl1, d_offset, t_count, bpp;
-	int err;
+	पूर्णांक err;
 
 	err = aspeed_gfx_set_pixel_fmt(priv, &bpp);
-	if (err)
-		return;
+	अगर (err)
+		वापस;
 
-#if 0
-	/* TODO: we have only been able to test with the 40MHz USB clock. The
-	 * clock is fixed, so we cannot adjust it here. */
-	clk_set_rate(priv->pixel_clk, m->crtc_clock * 1000);
-#endif
+#अगर 0
+	/* TODO: we have only been able to test with the 40MHz USB घड़ी. The
+	 * घड़ी is fixed, so we cannot adjust it here. */
+	clk_set_rate(priv->pixel_clk, m->crtc_घड़ी * 1000);
+#पूर्ण_अगर
 
-	ctrl1 = readl(priv->base + CRT_CTRL1);
+	ctrl1 = पढ़ोl(priv->base + CRT_CTRL1);
 	ctrl1 &= ~(CRT_CTRL_INTERLACED |
 			CRT_CTRL_HSYNC_NEGATIVE |
 			CRT_CTRL_VSYNC_NEGATIVE);
 
-	if (m->flags & DRM_MODE_FLAG_INTERLACE)
+	अगर (m->flags & DRM_MODE_FLAG_INTERLACE)
 		ctrl1 |= CRT_CTRL_INTERLACED;
 
-	if (!(m->flags & DRM_MODE_FLAG_PHSYNC))
+	अगर (!(m->flags & DRM_MODE_FLAG_PHSYNC))
 		ctrl1 |= CRT_CTRL_HSYNC_NEGATIVE;
 
-	if (!(m->flags & DRM_MODE_FLAG_PVSYNC))
+	अगर (!(m->flags & DRM_MODE_FLAG_PVSYNC))
 		ctrl1 |= CRT_CTRL_VSYNC_NEGATIVE;
 
-	writel(ctrl1, priv->base + CRT_CTRL1);
+	ग_लिखोl(ctrl1, priv->base + CRT_CTRL1);
 
 	/* Horizontal timing */
-	writel(CRT_H_TOTAL(m->htotal - 1) | CRT_H_DE(m->hdisplay - 1),
+	ग_लिखोl(CRT_H_TOTAL(m->htotal - 1) | CRT_H_DE(m->hdisplay - 1),
 			priv->base + CRT_HORIZ0);
-	writel(CRT_H_RS_START(m->hsync_start - 1) | CRT_H_RS_END(m->hsync_end),
+	ग_लिखोl(CRT_H_RS_START(m->hsync_start - 1) | CRT_H_RS_END(m->hsync_end),
 			priv->base + CRT_HORIZ1);
 
 
 	/* Vertical timing */
-	writel(CRT_V_TOTAL(m->vtotal - 1) | CRT_V_DE(m->vdisplay - 1),
+	ग_लिखोl(CRT_V_TOTAL(m->vtotal - 1) | CRT_V_DE(m->vdisplay - 1),
 			priv->base + CRT_VERT0);
-	writel(CRT_V_RS_START(m->vsync_start) | CRT_V_RS_END(m->vsync_end),
+	ग_लिखोl(CRT_V_RS_START(m->vsync_start) | CRT_V_RS_END(m->vsync_end),
 			priv->base + CRT_VERT1);
 
 	/*
-	 * Display Offset: address difference between consecutive scan lines
+	 * Display Offset: address dअगरference between consecutive scan lines
 	 * Terminal Count: memory size of one scan line
 	 */
 	d_offset = m->hdisplay * bpp / 8;
 	t_count = DIV_ROUND_UP(m->hdisplay * bpp, priv->scan_line_max);
 
-	writel(CRT_DISP_OFFSET(d_offset) | CRT_TERM_COUNT(t_count),
+	ग_लिखोl(CRT_DISP_OFFSET(d_offset) | CRT_TERM_COUNT(t_count),
 			priv->base + CRT_OFFSET);
 
 	/*
 	 * Threshold: FIFO thresholds of refill and stop (16 byte chunks
 	 * per line, rounded up)
 	 */
-	writel(priv->throd_val, priv->base + CRT_THROD);
-}
+	ग_लिखोl(priv->throd_val, priv->base + CRT_THROD);
+पूर्ण
 
-static void aspeed_gfx_pipe_enable(struct drm_simple_display_pipe *pipe,
-			      struct drm_crtc_state *crtc_state,
-			      struct drm_plane_state *plane_state)
-{
-	struct aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
-	struct drm_crtc *crtc = &pipe->crtc;
+अटल व्योम aspeed_gfx_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
+			      काष्ठा drm_crtc_state *crtc_state,
+			      काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
 
 	aspeed_gfx_crtc_mode_set_nofb(priv);
 	aspeed_gfx_enable_controller(priv);
 	drm_crtc_vblank_on(crtc);
-}
+पूर्ण
 
-static void aspeed_gfx_pipe_disable(struct drm_simple_display_pipe *pipe)
-{
-	struct aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
-	struct drm_crtc *crtc = &pipe->crtc;
+अटल व्योम aspeed_gfx_pipe_disable(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
 
 	drm_crtc_vblank_off(crtc);
 	aspeed_gfx_disable_controller(priv);
-}
+पूर्ण
 
-static void aspeed_gfx_pipe_update(struct drm_simple_display_pipe *pipe,
-				   struct drm_plane_state *plane_state)
-{
-	struct aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
-	struct drm_crtc *crtc = &pipe->crtc;
-	struct drm_framebuffer *fb = pipe->plane.state->fb;
-	struct drm_pending_vblank_event *event;
-	struct drm_gem_cma_object *gem;
+अटल व्योम aspeed_gfx_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
+				   काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
+	काष्ठा drm_framebuffer *fb = pipe->plane.state->fb;
+	काष्ठा drm_pending_vblank_event *event;
+	काष्ठा drm_gem_cma_object *gem;
 
 	spin_lock_irq(&crtc->dev->event_lock);
 	event = crtc->state->event;
-	if (event) {
-		crtc->state->event = NULL;
+	अगर (event) अणु
+		crtc->state->event = शून्य;
 
-		if (drm_crtc_vblank_get(crtc) == 0)
+		अगर (drm_crtc_vblank_get(crtc) == 0)
 			drm_crtc_arm_vblank_event(crtc, event);
-		else
+		अन्यथा
 			drm_crtc_send_vblank_event(crtc, event);
-	}
+	पूर्ण
 	spin_unlock_irq(&crtc->dev->event_lock);
 
-	if (!fb)
-		return;
+	अगर (!fb)
+		वापस;
 
 	gem = drm_fb_cma_get_gem_obj(fb, 0);
-	if (!gem)
-		return;
-	writel(gem->paddr, priv->base + CRT_ADDR);
-}
+	अगर (!gem)
+		वापस;
+	ग_लिखोl(gem->paddr, priv->base + CRT_ADDR);
+पूर्ण
 
-static int aspeed_gfx_enable_vblank(struct drm_simple_display_pipe *pipe)
-{
-	struct aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
-	u32 reg = readl(priv->base + CRT_CTRL1);
+अटल पूर्णांक aspeed_gfx_enable_vblank(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
+	u32 reg = पढ़ोl(priv->base + CRT_CTRL1);
 
 	/* Clear pending VBLANK IRQ */
-	writel(reg | CRT_CTRL_VERTICAL_INTR_STS, priv->base + CRT_CTRL1);
+	ग_लिखोl(reg | CRT_CTRL_VERTICAL_INTR_STS, priv->base + CRT_CTRL1);
 
 	reg |= CRT_CTRL_VERTICAL_INTR_EN;
-	writel(reg, priv->base + CRT_CTRL1);
+	ग_लिखोl(reg, priv->base + CRT_CTRL1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void aspeed_gfx_disable_vblank(struct drm_simple_display_pipe *pipe)
-{
-	struct aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
-	u32 reg = readl(priv->base + CRT_CTRL1);
+अटल व्योम aspeed_gfx_disable_vblank(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा aspeed_gfx *priv = drm_pipe_to_aspeed_gfx(pipe);
+	u32 reg = पढ़ोl(priv->base + CRT_CTRL1);
 
 	reg &= ~CRT_CTRL_VERTICAL_INTR_EN;
-	writel(reg, priv->base + CRT_CTRL1);
+	ग_लिखोl(reg, priv->base + CRT_CTRL1);
 
 	/* Clear pending VBLANK IRQ */
-	writel(reg | CRT_CTRL_VERTICAL_INTR_STS, priv->base + CRT_CTRL1);
-}
+	ग_लिखोl(reg | CRT_CTRL_VERTICAL_INTR_STS, priv->base + CRT_CTRL1);
+पूर्ण
 
-static const struct drm_simple_display_pipe_funcs aspeed_gfx_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs aspeed_gfx_funcs = अणु
 	.enable		= aspeed_gfx_pipe_enable,
 	.disable	= aspeed_gfx_pipe_disable,
 	.update		= aspeed_gfx_pipe_update,
 	.prepare_fb	= drm_gem_simple_display_pipe_prepare_fb,
 	.enable_vblank	= aspeed_gfx_enable_vblank,
 	.disable_vblank	= aspeed_gfx_disable_vblank,
-};
+पूर्ण;
 
-static const uint32_t aspeed_gfx_formats[] = {
+अटल स्थिर uपूर्णांक32_t aspeed_gfx_क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
 	DRM_FORMAT_RGB565,
-};
+पूर्ण;
 
-int aspeed_gfx_create_pipe(struct drm_device *drm)
-{
-	struct aspeed_gfx *priv = to_aspeed_gfx(drm);
+पूर्णांक aspeed_gfx_create_pipe(काष्ठा drm_device *drm)
+अणु
+	काष्ठा aspeed_gfx *priv = to_aspeed_gfx(drm);
 
-	return drm_simple_display_pipe_init(drm, &priv->pipe, &aspeed_gfx_funcs,
-					    aspeed_gfx_formats,
-					    ARRAY_SIZE(aspeed_gfx_formats),
-					    NULL,
+	वापस drm_simple_display_pipe_init(drm, &priv->pipe, &aspeed_gfx_funcs,
+					    aspeed_gfx_क्रमmats,
+					    ARRAY_SIZE(aspeed_gfx_क्रमmats),
+					    शून्य,
 					    &priv->connector);
-}
+पूर्ण

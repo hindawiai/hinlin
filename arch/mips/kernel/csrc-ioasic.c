@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  DEC I/O ASIC's counter clocksource
+ *  DEC I/O ASIC's counter घड़ीsource
  *
  *  Copyright (C) 2008	Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/clocksource.h>
-#include <linux/sched_clock.h>
-#include <linux/init.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/init.h>
 
-#include <asm/ds1287.h>
-#include <asm/time.h>
-#include <asm/dec/ioasic.h>
-#include <asm/dec/ioasic_addrs.h>
+#समावेश <यंत्र/ds1287.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/dec/ioasic.h>
+#समावेश <यंत्र/dec/ioasic_addrs.h>
 
-static u64 dec_ioasic_hpt_read(struct clocksource *cs)
-{
-	return ioasic_read(IO_REG_FCTR);
-}
+अटल u64 dec_ioasic_hpt_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस ioasic_पढ़ो(IO_REG_FCTR);
+पूर्ण
 
-static struct clocksource clocksource_dec = {
+अटल काष्ठा घड़ीsource घड़ीsource_dec = अणु
 	.name		= "dec-ioasic",
-	.read		= dec_ioasic_hpt_read,
+	.पढ़ो		= dec_ioasic_hpt_पढ़ो,
 	.mask		= CLOCKSOURCE_MASK(32),
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
-static u64 notrace dec_ioasic_read_sched_clock(void)
-{
-	return ioasic_read(IO_REG_FCTR);
-}
+अटल u64 notrace dec_ioasic_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस ioasic_पढ़ो(IO_REG_FCTR);
+पूर्ण
 
-int __init dec_ioasic_clocksource_init(void)
-{
-	unsigned int freq;
+पूर्णांक __init dec_ioasic_घड़ीsource_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक freq;
 	u32 start, end;
-	int i = HZ / 8;
+	पूर्णांक i = HZ / 8;
 
-	ds1287_timer_state();
-	while (!ds1287_timer_state())
+	ds1287_समयr_state();
+	जबतक (!ds1287_समयr_state())
 		;
 
-	start = dec_ioasic_hpt_read(&clocksource_dec);
+	start = dec_ioasic_hpt_पढ़ो(&घड़ीsource_dec);
 
-	while (i--)
-		while (!ds1287_timer_state())
+	जबतक (i--)
+		जबतक (!ds1287_समयr_state())
 			;
 
-	end = dec_ioasic_hpt_read(&clocksource_dec);
+	end = dec_ioasic_hpt_पढ़ो(&घड़ीsource_dec);
 
 	freq = (end - start) * 8;
 
 	/* An early revision of the I/O ASIC didn't have the counter.  */
-	if (!freq)
-		return -ENXIO;
+	अगर (!freq)
+		वापस -ENXIO;
 
-	printk(KERN_INFO "I/O ASIC clock frequency %dHz\n", freq);
+	prपूर्णांकk(KERN_INFO "I/O ASIC clock frequency %dHz\n", freq);
 
-	clocksource_dec.rating = 200 + freq / 10000000;
-	clocksource_register_hz(&clocksource_dec, freq);
+	घड़ीsource_dec.rating = 200 + freq / 10000000;
+	घड़ीsource_रेजिस्टर_hz(&घड़ीsource_dec, freq);
 
-	sched_clock_register(dec_ioasic_read_sched_clock, 32, freq);
+	sched_घड़ी_रेजिस्टर(dec_ioasic_पढ़ो_sched_घड़ी, 32, freq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

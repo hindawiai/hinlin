@@ -1,195 +1,196 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * MIPI Display Bus Interface (DBI) LCD controller support
  *
- * Copyright 2016 Noralf Trønnes
+ * Copyright 2016 Noralf Trथचnnes
  */
 
-#ifndef __LINUX_MIPI_DBI_H
-#define __LINUX_MIPI_DBI_H
+#अगर_अघोषित __LINUX_MIPI_DBI_H
+#घोषणा __LINUX_MIPI_DBI_H
 
-#include <linux/mutex.h>
-#include <drm/drm_device.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <linux/mutex.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-struct drm_rect;
-struct spi_device;
-struct gpio_desc;
-struct regulator;
+काष्ठा drm_rect;
+काष्ठा spi_device;
+काष्ठा gpio_desc;
+काष्ठा regulator;
 
 /**
- * struct mipi_dbi - MIPI DBI interface
+ * काष्ठा mipi_dbi - MIPI DBI पूर्णांकerface
  */
-struct mipi_dbi {
+काष्ठा mipi_dbi अणु
 	/**
 	 * @cmdlock: Command lock
 	 */
-	struct mutex cmdlock;
+	काष्ठा mutex cmdlock;
 
 	/**
-	 * @command: Bus specific callback executing commands.
+	 * @command: Bus specअगरic callback executing commands.
 	 */
-	int (*command)(struct mipi_dbi *dbi, u8 *cmd, u8 *param, size_t num);
+	पूर्णांक (*command)(काष्ठा mipi_dbi *dbi, u8 *cmd, u8 *param, माप_प्रकार num);
 
 	/**
-	 * @read_commands: Array of read commands terminated by a zero entry.
-	 *                 Reading is disabled if this is NULL.
+	 * @पढ़ो_commands: Array of पढ़ो commands terminated by a zero entry.
+	 *                 Reading is disabled अगर this is शून्य.
 	 */
-	const u8 *read_commands;
+	स्थिर u8 *पढ़ो_commands;
 
 	/**
-	 * @swap_bytes: Swap bytes in buffer before transfer
+	 * @swap_bytes: Swap bytes in buffer beक्रमe transfer
 	 */
 	bool swap_bytes;
 
 	/**
 	 * @reset: Optional reset gpio
 	 */
-	struct gpio_desc *reset;
+	काष्ठा gpio_desc *reset;
 
-	/* Type C specific */
+	/* Type C specअगरic */
 
 	/**
 	 * @spi: SPI device
 	 */
-	struct spi_device *spi;
+	काष्ठा spi_device *spi;
 
 	/**
 	 * @dc: Optional D/C gpio.
 	 */
-	struct gpio_desc *dc;
+	काष्ठा gpio_desc *dc;
 
 	/**
-	 * @tx_buf9: Buffer used for Option 1 9-bit conversion
+	 * @tx_buf9: Buffer used क्रम Option 1 9-bit conversion
 	 */
-	void *tx_buf9;
+	व्योम *tx_buf9;
 
 	/**
 	 * @tx_buf9_len: Size of tx_buf9.
 	 */
-	size_t tx_buf9_len;
-};
+	माप_प्रकार tx_buf9_len;
+पूर्ण;
 
 /**
- * struct mipi_dbi_dev - MIPI DBI device
+ * काष्ठा mipi_dbi_dev - MIPI DBI device
  */
-struct mipi_dbi_dev {
+काष्ठा mipi_dbi_dev अणु
 	/**
 	 * @drm: DRM device
 	 */
-	struct drm_device drm;
+	काष्ठा drm_device drm;
 
 	/**
-	 * @pipe: Display pipe structure
+	 * @pipe: Display pipe काष्ठाure
 	 */
-	struct drm_simple_display_pipe pipe;
+	काष्ठा drm_simple_display_pipe pipe;
 
 	/**
 	 * @connector: Connector
 	 */
-	struct drm_connector connector;
+	काष्ठा drm_connector connector;
 
 	/**
 	 * @mode: Fixed display mode
 	 */
-	struct drm_display_mode mode;
+	काष्ठा drm_display_mode mode;
 
 	/**
-	 * @tx_buf: Buffer used for transfer (copy clip rect area)
+	 * @tx_buf: Buffer used क्रम transfer (copy clip rect area)
 	 */
 	u16 *tx_buf;
 
 	/**
 	 * @rotation: initial rotation in degrees Counter Clock Wise
 	 */
-	unsigned int rotation;
+	अचिन्हित पूर्णांक rotation;
 
 	/**
 	 * @left_offset: Horizontal offset of the display relative to the
 	 *               controller's driver array
 	 */
-	unsigned int left_offset;
+	अचिन्हित पूर्णांक left_offset;
 
 	/**
 	 * @top_offset: Vertical offset of the display relative to the
 	 *              controller's driver array
 	 */
-	unsigned int top_offset;
+	अचिन्हित पूर्णांक top_offset;
 
 	/**
 	 * @backlight: backlight device (optional)
 	 */
-	struct backlight_device *backlight;
+	काष्ठा backlight_device *backlight;
 
 	/**
-	 * @regulator: power regulator (optional)
+	 * @regulator: घातer regulator (optional)
 	 */
-	struct regulator *regulator;
+	काष्ठा regulator *regulator;
 
 	/**
-	 * @dbi: MIPI DBI interface
+	 * @dbi: MIPI DBI पूर्णांकerface
 	 */
-	struct mipi_dbi dbi;
-};
+	काष्ठा mipi_dbi dbi;
+पूर्ण;
 
-static inline struct mipi_dbi_dev *drm_to_mipi_dbi_dev(struct drm_device *drm)
-{
-	return container_of(drm, struct mipi_dbi_dev, drm);
-}
+अटल अंतरभूत काष्ठा mipi_dbi_dev *drm_to_mipi_dbi_dev(काष्ठा drm_device *drm)
+अणु
+	वापस container_of(drm, काष्ठा mipi_dbi_dev, drm);
+पूर्ण
 
-int mipi_dbi_spi_init(struct spi_device *spi, struct mipi_dbi *dbi,
-		      struct gpio_desc *dc);
-int mipi_dbi_dev_init_with_formats(struct mipi_dbi_dev *dbidev,
-				   const struct drm_simple_display_pipe_funcs *funcs,
-				   const uint32_t *formats, unsigned int format_count,
-				   const struct drm_display_mode *mode,
-				   unsigned int rotation, size_t tx_buf_size);
-int mipi_dbi_dev_init(struct mipi_dbi_dev *dbidev,
-		      const struct drm_simple_display_pipe_funcs *funcs,
-		      const struct drm_display_mode *mode, unsigned int rotation);
-void mipi_dbi_pipe_update(struct drm_simple_display_pipe *pipe,
-			  struct drm_plane_state *old_state);
-void mipi_dbi_enable_flush(struct mipi_dbi_dev *dbidev,
-			   struct drm_crtc_state *crtc_state,
-			   struct drm_plane_state *plan_state);
-void mipi_dbi_pipe_disable(struct drm_simple_display_pipe *pipe);
-void mipi_dbi_hw_reset(struct mipi_dbi *dbi);
-bool mipi_dbi_display_is_on(struct mipi_dbi *dbi);
-int mipi_dbi_poweron_reset(struct mipi_dbi_dev *dbidev);
-int mipi_dbi_poweron_conditional_reset(struct mipi_dbi_dev *dbidev);
+पूर्णांक mipi_dbi_spi_init(काष्ठा spi_device *spi, काष्ठा mipi_dbi *dbi,
+		      काष्ठा gpio_desc *dc);
+पूर्णांक mipi_dbi_dev_init_with_क्रमmats(काष्ठा mipi_dbi_dev *dbidev,
+				   स्थिर काष्ठा drm_simple_display_pipe_funcs *funcs,
+				   स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
+				   स्थिर काष्ठा drm_display_mode *mode,
+				   अचिन्हित पूर्णांक rotation, माप_प्रकार tx_buf_size);
+पूर्णांक mipi_dbi_dev_init(काष्ठा mipi_dbi_dev *dbidev,
+		      स्थिर काष्ठा drm_simple_display_pipe_funcs *funcs,
+		      स्थिर काष्ठा drm_display_mode *mode, अचिन्हित पूर्णांक rotation);
+व्योम mipi_dbi_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
+			  काष्ठा drm_plane_state *old_state);
+व्योम mipi_dbi_enable_flush(काष्ठा mipi_dbi_dev *dbidev,
+			   काष्ठा drm_crtc_state *crtc_state,
+			   काष्ठा drm_plane_state *plan_state);
+व्योम mipi_dbi_pipe_disable(काष्ठा drm_simple_display_pipe *pipe);
+व्योम mipi_dbi_hw_reset(काष्ठा mipi_dbi *dbi);
+bool mipi_dbi_display_is_on(काष्ठा mipi_dbi *dbi);
+पूर्णांक mipi_dbi_घातeron_reset(काष्ठा mipi_dbi_dev *dbidev);
+पूर्णांक mipi_dbi_घातeron_conditional_reset(काष्ठा mipi_dbi_dev *dbidev);
 
-u32 mipi_dbi_spi_cmd_max_speed(struct spi_device *spi, size_t len);
-int mipi_dbi_spi_transfer(struct spi_device *spi, u32 speed_hz,
-			  u8 bpw, const void *buf, size_t len);
+u32 mipi_dbi_spi_cmd_max_speed(काष्ठा spi_device *spi, माप_प्रकार len);
+पूर्णांक mipi_dbi_spi_transfer(काष्ठा spi_device *spi, u32 speed_hz,
+			  u8 bpw, स्थिर व्योम *buf, माप_प्रकार len);
 
-int mipi_dbi_command_read(struct mipi_dbi *dbi, u8 cmd, u8 *val);
-int mipi_dbi_command_buf(struct mipi_dbi *dbi, u8 cmd, u8 *data, size_t len);
-int mipi_dbi_command_stackbuf(struct mipi_dbi *dbi, u8 cmd, const u8 *data,
-			      size_t len);
-int mipi_dbi_buf_copy(void *dst, struct drm_framebuffer *fb,
-		      struct drm_rect *clip, bool swap);
+पूर्णांक mipi_dbi_command_पढ़ो(काष्ठा mipi_dbi *dbi, u8 cmd, u8 *val);
+पूर्णांक mipi_dbi_command_buf(काष्ठा mipi_dbi *dbi, u8 cmd, u8 *data, माप_प्रकार len);
+पूर्णांक mipi_dbi_command_stackbuf(काष्ठा mipi_dbi *dbi, u8 cmd, स्थिर u8 *data,
+			      माप_प्रकार len);
+पूर्णांक mipi_dbi_buf_copy(व्योम *dst, काष्ठा drm_framebuffer *fb,
+		      काष्ठा drm_rect *clip, bool swap);
 /**
  * mipi_dbi_command - MIPI DCS command with optional parameter(s)
- * @dbi: MIPI DBI structure
+ * @dbi: MIPI DBI काष्ठाure
  * @cmd: Command
  * @seq: Optional parameter(s)
  *
- * Send MIPI DCS command to the controller. Use mipi_dbi_command_read() for
- * get/read.
+ * Send MIPI DCS command to the controller. Use mipi_dbi_command_पढ़ो() क्रम
+ * get/पढ़ो.
  *
  * Returns:
  * Zero on success, negative error code on failure.
  */
-#define mipi_dbi_command(dbi, cmd, seq...) \
-({ \
-	const u8 d[] = { seq }; \
+#घोषणा mipi_dbi_command(dbi, cmd, seq...) \
+(अणु \
+	स्थिर u8 d[] = अणु seq पूर्ण; \
 	mipi_dbi_command_stackbuf(dbi, cmd, d, ARRAY_SIZE(d)); \
-})
+पूर्ण)
 
-#ifdef CONFIG_DEBUG_FS
-void mipi_dbi_debugfs_init(struct drm_minor *minor);
-#else
-#define mipi_dbi_debugfs_init		NULL
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम mipi_dbi_debugfs_init(काष्ठा drm_minor *minor);
+#अन्यथा
+#घोषणा mipi_dbi_debugfs_init		शून्य
+#पूर्ण_अगर
 
-#endif /* __LINUX_MIPI_DBI_H */
+#पूर्ण_अगर /* __LINUX_MIPI_DBI_H */

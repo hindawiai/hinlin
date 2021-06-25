@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2003-2008 Chelsio, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -29,10 +30,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _CXGB3_OFFLOAD_CTL_DEFS_H
-#define _CXGB3_OFFLOAD_CTL_DEFS_H
+#अगर_अघोषित _CXGB3_OFFLOAD_CTL_DEFS_H
+#घोषणा _CXGB3_OFFLOAD_CTL_DEFS_H
 
-enum {
+क्रमागत अणु
 	GET_MAX_OUTSTANDING_WR 	= 0,
 	GET_TX_MAX_CHUNK	= 1,
 	GET_TID_RANGE		= 2,
@@ -60,130 +61,130 @@ enum {
 	GET_ISCSI_IPV4ADDR	= 51,
 
 	GET_EMBEDDED_INFO	= 70,
-};
+पूर्ण;
 
 /*
  * Structure used to describe a TID range.  Valid TIDs are [base, base+num).
  */
-struct tid_range {
-	unsigned int base;	/* first TID */
-	unsigned int num;	/* number of TIDs in range */
-};
+काष्ठा tid_range अणु
+	अचिन्हित पूर्णांक base;	/* first TID */
+	अचिन्हित पूर्णांक num;	/* number of TIDs in range */
+पूर्ण;
 
 /*
  * Structure used to request the size and contents of the MTU table.
  */
-struct mtutab {
-	unsigned int size;	/* # of entries in the MTU table */
-	const unsigned short *mtus;	/* the MTU table values */
-};
+काष्ठा mtutab अणु
+	अचिन्हित पूर्णांक size;	/* # of entries in the MTU table */
+	स्थिर अचिन्हित लघु *mtus;	/* the MTU table values */
+पूर्ण;
 
-struct net_device;
+काष्ठा net_device;
 
 /*
  * Structure used to request the adapter net_device owning a given MAC address.
  */
-struct iff_mac {
-	struct net_device *dev;	/* the net_device */
-	const unsigned char *mac_addr;	/* MAC address to lookup */
+काष्ठा अगरf_mac अणु
+	काष्ठा net_device *dev;	/* the net_device */
+	स्थिर अचिन्हित अक्षर *mac_addr;	/* MAC address to lookup */
 	u16 vlan_tag;
-};
+पूर्ण;
 
 /* Structure used to request a port's iSCSI IPv4 address */
-struct iscsi_ipv4addr {
-	struct net_device *dev;	/* the net_device */
-	__be32 ipv4addr;	/* the return iSCSI IPv4 address */
-};
+काष्ठा iscsi_ipv4addr अणु
+	काष्ठा net_device *dev;	/* the net_device */
+	__be32 ipv4addr;	/* the वापस iSCSI IPv4 address */
+पूर्ण;
 
-struct pci_dev;
+काष्ठा pci_dev;
 
 /*
  * Structure used to request the TCP DDP parameters.
  */
-struct ddp_params {
-	unsigned int llimit;	/* TDDP region start address */
-	unsigned int ulimit;	/* TDDP region end address */
-	unsigned int tag_mask;	/* TDDP tag mask */
-	struct pci_dev *pdev;
-};
+काष्ठा ddp_params अणु
+	अचिन्हित पूर्णांक llimit;	/* TDDP region start address */
+	अचिन्हित पूर्णांक ulimit;	/* TDDP region end address */
+	अचिन्हित पूर्णांक tag_mask;	/* TDDP tag mask */
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-struct adap_ports {
-	unsigned int nports;	/* number of ports on this adapter */
-	struct net_device *lldevs[2];
-};
+काष्ठा adap_ports अणु
+	अचिन्हित पूर्णांक nports;	/* number of ports on this adapter */
+	काष्ठा net_device *lldevs[2];
+पूर्ण;
 
 /*
- * Structure used to return information to the iscsi layer.
+ * Structure used to वापस inक्रमmation to the iscsi layer.
  */
-struct ulp_iscsi_info {
-	unsigned int offset;
-	unsigned int llimit;
-	unsigned int ulimit;
-	unsigned int tagmask;
+काष्ठा ulp_iscsi_info अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित पूर्णांक llimit;
+	अचिन्हित पूर्णांक ulimit;
+	अचिन्हित पूर्णांक tagmask;
 	u8 pgsz_factor[4];
-	unsigned int max_rxsz;
-	unsigned int max_txsz;
-	struct pci_dev *pdev;
-};
+	अचिन्हित पूर्णांक max_rxsz;
+	अचिन्हित पूर्णांक max_txsz;
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
 /*
- * Structure used to return information to the RDMA layer.
+ * Structure used to वापस inक्रमmation to the RDMA layer.
  */
-struct rdma_info {
-	unsigned int tpt_base;	/* TPT base address */
-	unsigned int tpt_top;	/* TPT last entry address */
-	unsigned int pbl_base;	/* PBL base address */
-	unsigned int pbl_top;	/* PBL last entry address */
-	unsigned int rqt_base;	/* RQT base address */
-	unsigned int rqt_top;	/* RQT last entry address */
-	unsigned int udbell_len;	/* user doorbell region length */
-	unsigned long udbell_physbase;	/* user doorbell physical start addr */
-	void __iomem *kdb_addr;	/* kernel doorbell register address */
-	struct pci_dev *pdev;	/* associated PCI device */
-};
+काष्ठा rdma_info अणु
+	अचिन्हित पूर्णांक tpt_base;	/* TPT base address */
+	अचिन्हित पूर्णांक tpt_top;	/* TPT last entry address */
+	अचिन्हित पूर्णांक pbl_base;	/* PBL base address */
+	अचिन्हित पूर्णांक pbl_top;	/* PBL last entry address */
+	अचिन्हित पूर्णांक rqt_base;	/* RQT base address */
+	अचिन्हित पूर्णांक rqt_top;	/* RQT last entry address */
+	अचिन्हित पूर्णांक udbell_len;	/* user करोorbell region length */
+	अचिन्हित दीर्घ udbell_physbase;	/* user करोorbell physical start addr */
+	व्योम __iomem *kdb_addr;	/* kernel करोorbell रेजिस्टर address */
+	काष्ठा pci_dev *pdev;	/* associated PCI device */
+पूर्ण;
 
 /*
  * Structure used to request an operation on an RDMA completion queue.
  */
-struct rdma_cq_op {
-	unsigned int id;
-	unsigned int op;
-	unsigned int credits;
-};
+काष्ठा rdma_cq_op अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक op;
+	अचिन्हित पूर्णांक credits;
+पूर्ण;
 
 /*
  * Structure used to setup RDMA completion queues.
  */
-struct rdma_cq_setup {
-	unsigned int id;
-	unsigned long long base_addr;
-	unsigned int size;
-	unsigned int credits;
-	unsigned int credit_thres;
-	unsigned int ovfl_mode;
-};
+काष्ठा rdma_cq_setup अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ दीर्घ base_addr;
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक credits;
+	अचिन्हित पूर्णांक credit_thres;
+	अचिन्हित पूर्णांक ovfl_mode;
+पूर्ण;
 
 /*
  * Structure used to setup the RDMA control egress context.
  */
-struct rdma_ctrlqp_setup {
-	unsigned long long base_addr;
-	unsigned int size;
-};
+काष्ठा rdma_ctrlqp_setup अणु
+	अचिन्हित दीर्घ दीर्घ base_addr;
+	अचिन्हित पूर्णांक size;
+पूर्ण;
 
 /*
- * Offload TX/RX page information.
+ * Offload TX/RX page inक्रमmation.
  */
-struct ofld_page_info {
-	unsigned int page_size;  /* Page size, should be a power of 2 */
-	unsigned int num;        /* Number of pages */
-};
+काष्ठा ofld_page_info अणु
+	अचिन्हित पूर्णांक page_size;  /* Page size, should be a घातer of 2 */
+	अचिन्हित पूर्णांक num;        /* Number of pages */
+पूर्ण;
 
 /*
  * Structure used to get firmware and protocol engine versions.
  */
-struct ch_embedded_info {
+काष्ठा ch_embedded_info अणु
 	u32 fw_vers;
 	u32 tp_vers;
-};
-#endif				/* _CXGB3_OFFLOAD_CTL_DEFS_H */
+पूर्ण;
+#पूर्ण_अगर				/* _CXGB3_OFFLOAD_CTL_DEFS_H */

@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Pinctrl driver for NXP LPC18xx/LPC43xx System Control Unit (SCU)
+ * Pinctrl driver क्रम NXP LPC18xx/LPC43xx System Control Unit (SCU)
  *
  * Copyright (C) 2015 Joachim Eastwood <manabian@gmail.com>
  *
@@ -8,70 +9,70 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
 
-#include "core.h"
-#include "pinctrl-utils.h"
+#समावेश "core.h"
+#समावेश "pinctrl-utils.h"
 
-/* LPC18XX SCU analog function registers */
-#define LPC18XX_SCU_REG_ENAIO0		0xc88
-#define LPC18XX_SCU_REG_ENAIO1		0xc8c
-#define LPC18XX_SCU_REG_ENAIO2		0xc90
-#define LPC18XX_SCU_REG_ENAIO2_DAC	BIT(0)
+/* LPC18XX SCU analog function रेजिस्टरs */
+#घोषणा LPC18XX_SCU_REG_ENAIO0		0xc88
+#घोषणा LPC18XX_SCU_REG_ENAIO1		0xc8c
+#घोषणा LPC18XX_SCU_REG_ENAIO2		0xc90
+#घोषणा LPC18XX_SCU_REG_ENAIO2_DAC	BIT(0)
 
-/* LPC18XX SCU pin register definitions */
-#define LPC18XX_SCU_PIN_MODE_MASK	0x7
-#define LPC18XX_SCU_PIN_EPD		BIT(3)
-#define LPC18XX_SCU_PIN_EPUN		BIT(4)
-#define LPC18XX_SCU_PIN_EHS		BIT(5)
-#define LPC18XX_SCU_PIN_EZI		BIT(6)
-#define LPC18XX_SCU_PIN_ZIF		BIT(7)
-#define LPC18XX_SCU_PIN_EHD_MASK	0x300
-#define LPC18XX_SCU_PIN_EHD_POS		8
+/* LPC18XX SCU pin रेजिस्टर definitions */
+#घोषणा LPC18XX_SCU_PIN_MODE_MASK	0x7
+#घोषणा LPC18XX_SCU_PIN_EPD		BIT(3)
+#घोषणा LPC18XX_SCU_PIN_EPUN		BIT(4)
+#घोषणा LPC18XX_SCU_PIN_EHS		BIT(5)
+#घोषणा LPC18XX_SCU_PIN_EZI		BIT(6)
+#घोषणा LPC18XX_SCU_PIN_ZIF		BIT(7)
+#घोषणा LPC18XX_SCU_PIN_EHD_MASK	0x300
+#घोषणा LPC18XX_SCU_PIN_EHD_POS		8
 
-#define LPC18XX_SCU_USB1_EPD		BIT(2)
-#define LPC18XX_SCU_USB1_EPWR		BIT(4)
+#घोषणा LPC18XX_SCU_USB1_EPD		BIT(2)
+#घोषणा LPC18XX_SCU_USB1_EPWR		BIT(4)
 
-#define LPC18XX_SCU_I2C0_EFP		BIT(0)
-#define LPC18XX_SCU_I2C0_EHD		BIT(2)
-#define LPC18XX_SCU_I2C0_EZI		BIT(3)
-#define LPC18XX_SCU_I2C0_ZIF		BIT(7)
-#define LPC18XX_SCU_I2C0_SCL_SHIFT	0
-#define LPC18XX_SCU_I2C0_SDA_SHIFT	8
+#घोषणा LPC18XX_SCU_I2C0_EFP		BIT(0)
+#घोषणा LPC18XX_SCU_I2C0_EHD		BIT(2)
+#घोषणा LPC18XX_SCU_I2C0_EZI		BIT(3)
+#घोषणा LPC18XX_SCU_I2C0_ZIF		BIT(7)
+#घोषणा LPC18XX_SCU_I2C0_SCL_SHIFT	0
+#घोषणा LPC18XX_SCU_I2C0_SDA_SHIFT	8
 
-#define LPC18XX_SCU_FUNC_PER_PIN	8
+#घोषणा LPC18XX_SCU_FUNC_PER_PIN	8
 
-/* LPC18XX SCU pin interrupt select registers */
-#define LPC18XX_SCU_PINTSEL0		0xe00
-#define LPC18XX_SCU_PINTSEL1		0xe04
-#define LPC18XX_SCU_PINTSEL_VAL_MASK	0xff
-#define LPC18XX_SCU_PINTSEL_PORT_SHIFT	5
-#define LPC18XX_SCU_IRQ_PER_PINTSEL	4
-#define LPC18XX_GPIO_PINS_PER_PORT	32
-#define LPC18XX_GPIO_PIN_INT_MAX	8
+/* LPC18XX SCU pin पूर्णांकerrupt select रेजिस्टरs */
+#घोषणा LPC18XX_SCU_PINTSEL0		0xe00
+#घोषणा LPC18XX_SCU_PINTSEL1		0xe04
+#घोषणा LPC18XX_SCU_PINTSEL_VAL_MASK	0xff
+#घोषणा LPC18XX_SCU_PINTSEL_PORT_SHIFT	5
+#घोषणा LPC18XX_SCU_IRQ_PER_PINTSEL	4
+#घोषणा LPC18XX_GPIO_PINS_PER_PORT	32
+#घोषणा LPC18XX_GPIO_PIN_पूर्णांक_उच्च	8
 
-#define LPC18XX_SCU_PINTSEL_VAL(val, n) \
+#घोषणा LPC18XX_SCU_PINTSEL_VAL(val, n) \
 	((val) << (((n) % LPC18XX_SCU_IRQ_PER_PINTSEL) * 8))
 
 /* LPC18xx pin types */
-enum {
+क्रमागत अणु
 	TYPE_ND,	/* Normal-drive */
 	TYPE_HD,	/* High-drive */
 	TYPE_HS,	/* High-speed */
 	TYPE_I2C0,
 	TYPE_USB1,
-};
+पूर्ण;
 
 /* LPC18xx pin functions */
-enum {
+क्रमागत अणु
 	FUNC_R,		/* Reserved */
 	FUNC_ADC,
 	FUNC_ADCTRIG,
@@ -123,9 +124,9 @@ enum {
 	FUNC_USB0,
 	FUNC_USB1,
 	FUNC_MAX
-};
+पूर्ण;
 
-static const char *const lpc18xx_function_names[] = {
+अटल स्थिर अक्षर *स्थिर lpc18xx_function_names[] = अणु
 	[FUNC_R]		= "reserved",
 	[FUNC_ADC]		= "adc",
 	[FUNC_ADCTRIG]		= "adctrig",
@@ -176,61 +177,61 @@ static const char *const lpc18xx_function_names[] = {
 	[FUNC_UART3]		= "uart3",
 	[FUNC_USB0]		= "usb0",
 	[FUNC_USB1]		= "usb1",
-};
+पूर्ण;
 
-struct lpc18xx_pmx_func {
-	const char **groups;
-	unsigned ngroups;
-};
+काष्ठा lpc18xx_pmx_func अणु
+	स्थिर अक्षर **groups;
+	अचिन्हित ngroups;
+पूर्ण;
 
-struct lpc18xx_scu_data {
-	struct pinctrl_dev *pctl;
-	void __iomem *base;
-	struct clk *clk;
-	struct lpc18xx_pmx_func func[FUNC_MAX];
-};
+काष्ठा lpc18xx_scu_data अणु
+	काष्ठा pinctrl_dev *pctl;
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	काष्ठा lpc18xx_pmx_func func[FUNC_MAX];
+पूर्ण;
 
-struct lpc18xx_pin_caps {
-	unsigned int offset;
-	unsigned char functions[LPC18XX_SCU_FUNC_PER_PIN];
-	unsigned char analog;
-	unsigned char type;
-};
+काष्ठा lpc18xx_pin_caps अणु
+	अचिन्हित पूर्णांक offset;
+	अचिन्हित अक्षर functions[LPC18XX_SCU_FUNC_PER_PIN];
+	अचिन्हित अक्षर analog;
+	अचिन्हित अक्षर type;
+पूर्ण;
 
 /* Analog pins are required to have both bias and input disabled */
-#define LPC18XX_SCU_ANALOG_PIN_CFG	0x10
+#घोषणा LPC18XX_SCU_ANALOG_PIN_CFG	0x10
 
 /* Macros to maniupluate analog member in lpc18xx_pin_caps */
-#define LPC18XX_ANALOG_PIN		BIT(7)
-#define LPC18XX_ANALOG_ADC(a)		((a >> 5) & 0x3)
-#define LPC18XX_ANALOG_BIT_MASK		0x1f
-#define ADC0				(LPC18XX_ANALOG_PIN | (0x00 << 5))
-#define ADC1				(LPC18XX_ANALOG_PIN | (0x01 << 5))
-#define DAC				LPC18XX_ANALOG_PIN
+#घोषणा LPC18XX_ANALOG_PIN		BIT(7)
+#घोषणा LPC18XX_ANALOG_ADC(a)		((a >> 5) & 0x3)
+#घोषणा LPC18XX_ANALOG_BIT_MASK		0x1f
+#घोषणा ADC0				(LPC18XX_ANALOG_PIN | (0x00 << 5))
+#घोषणा ADC1				(LPC18XX_ANALOG_PIN | (0x01 << 5))
+#घोषणा DAC				LPC18XX_ANALOG_PIN
 
-#define LPC_P(port, pin, f0, f1, f2, f3, f4, f5, f6, f7, a, t)	\
-static struct lpc18xx_pin_caps lpc18xx_pin_p##port##_##pin = {	\
+#घोषणा LPC_P(port, pin, f0, f1, f2, f3, f4, f5, f6, f7, a, t)	\
+अटल काष्ठा lpc18xx_pin_caps lpc18xx_pin_p##port##_##pin = अणु	\
 	.offset = 0x##port * 32 * 4 + pin * 4,			\
-	.functions = {						\
+	.functions = अणु						\
 			FUNC_##f0, FUNC_##f1, FUNC_##f2,	\
 			FUNC_##f3, FUNC_##f4, FUNC_##f5,	\
 			FUNC_##f6, FUNC_##f7,			\
-	},							\
+	पूर्ण,							\
 	.analog = a,						\
 	.type = TYPE_##t,					\
-}
+पूर्ण
 
-#define LPC_N(pname, off, f0, f1, f2, f3, f4, f5, f6, f7, a, t)	\
-static struct lpc18xx_pin_caps lpc18xx_pin_##pname = {		\
+#घोषणा LPC_N(pname, off, f0, f1, f2, f3, f4, f5, f6, f7, a, t)	\
+अटल काष्ठा lpc18xx_pin_caps lpc18xx_pin_##pname = अणु		\
 	.offset = off,						\
-	.functions = {						\
+	.functions = अणु						\
 			FUNC_##f0, FUNC_##f1, FUNC_##f2,	\
 			FUNC_##f3, FUNC_##f4, FUNC_##f5,	\
 			FUNC_##f6, FUNC_##f7,			\
-	},							\
+	पूर्ण,							\
 	.analog = a,						\
 	.type = TYPE_##t,					\
-}
+पूर्ण
 
 
 /* Pinmuxing table taken from data sheet */
@@ -420,14 +421,14 @@ LPC_N(usb1_dp,  0xc80, R,      R,     R,     R,      R,      R,      R,         
 LPC_N(i2c0_scl, 0xc84, R,      R,     R,     R,      R,      R,      R,          R,   0, I2C0);
 LPC_N(i2c0_sda, 0xc84, R,      R,     R,     R,      R,      R,      R,          R,   0, I2C0);
 
-#define LPC18XX_PIN_P(port, pin) {			\
+#घोषणा LPC18XX_PIN_P(port, pin) अणु			\
 	.number = 0x##port * 32 + pin,			\
 	.name = "p"#port"_"#pin,			\
 	.drv_data = &lpc18xx_pin_p##port##_##pin 	\
-}
+पूर्ण
 
-/* Pin numbers for special pins */
-enum {
+/* Pin numbers क्रम special pins */
+क्रमागत अणु
 	PIN_CLK0 = 600,
 	PIN_CLK1,
 	PIN_CLK2,
@@ -436,15 +437,15 @@ enum {
 	PIN_USB1_DP,
 	PIN_I2C0_SCL,
 	PIN_I2C0_SDA,
-};
+पूर्ण;
 
-#define LPC18XX_PIN(pname, n) {				\
+#घोषणा LPC18XX_PIN(pname, n) अणु				\
 	.number = n,					\
 	.name = #pname,					\
 	.drv_data = &lpc18xx_pin_##pname 		\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc lpc18xx_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc lpc18xx_pins[] = अणु
 	LPC18XX_PIN_P(0,0),
 	LPC18XX_PIN_P(0,1),
 	LPC18XX_PIN_P(1,0),
@@ -628,634 +629,634 @@ static const struct pinctrl_pin_desc lpc18xx_pins[] = {
 	LPC18XX_PIN(usb1_dp,  PIN_USB1_DP),
 	LPC18XX_PIN(i2c0_scl, PIN_I2C0_SCL),
 	LPC18XX_PIN(i2c0_sda, PIN_I2C0_SDA),
-};
+पूर्ण;
 
-/* PIN_CONFIG_GPIO_PIN_INT: route gpio to the gpio pin interrupt controller */
-#define PIN_CONFIG_GPIO_PIN_INT		(PIN_CONFIG_END + 1)
+/* PIN_CONFIG_GPIO_PIN_INT: route gpio to the gpio pin पूर्णांकerrupt controller */
+#घोषणा PIN_CONFIG_GPIO_PIN_INT		(PIN_CONFIG_END + 1)
 
-static const struct pinconf_generic_params lpc18xx_params[] = {
-	{"nxp,gpio-pin-interrupt", PIN_CONFIG_GPIO_PIN_INT, 0},
-};
+अटल स्थिर काष्ठा pinconf_generic_params lpc18xx_params[] = अणु
+	अणु"nxp,gpio-pin-interrupt", PIN_CONFIG_GPIO_PIN_INT, 0पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-static const struct pin_config_item lpc18xx_conf_items[ARRAY_SIZE(lpc18xx_params)] = {
-	PCONFDUMP(PIN_CONFIG_GPIO_PIN_INT, "gpio pin int", NULL, true),
-};
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल स्थिर काष्ठा pin_config_item lpc18xx_conf_items[ARRAY_SIZE(lpc18xx_params)] = अणु
+	PCONFDUMP(PIN_CONFIG_GPIO_PIN_INT, "gpio pin int", शून्य, true),
+पूर्ण;
+#पूर्ण_अगर
 
-static int lpc18xx_pconf_get_usb1(enum pin_config_param param, int *arg, u32 reg)
-{
-	switch (param) {
-	case PIN_CONFIG_MODE_LOW_POWER:
-		if (reg & LPC18XX_SCU_USB1_EPWR)
+अटल पूर्णांक lpc18xx_pconf_get_usb1(क्रमागत pin_config_param param, पूर्णांक *arg, u32 reg)
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_MODE_LOW_POWER:
+		अगर (reg & LPC18XX_SCU_USB1_EPWR)
 			*arg = 0;
-		else
+		अन्यथा
 			*arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (reg & LPC18XX_SCU_USB1_EPD)
-			return -EINVAL;
-		break;
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (reg & LPC18XX_SCU_USB1_EPD)
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (reg & LPC18XX_SCU_USB1_EPD)
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (reg & LPC18XX_SCU_USB1_EPD)
 			*arg = 1;
-		else
-			return -EINVAL;
-		break;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_get_i2c0(enum pin_config_param param, int *arg, u32 reg,
-				  unsigned pin)
-{
-	u8 shift;
+अटल पूर्णांक lpc18xx_pconf_get_i2c0(क्रमागत pin_config_param param, पूर्णांक *arg, u32 reg,
+				  अचिन्हित pin)
+अणु
+	u8 shअगरt;
 
-	if (pin == PIN_I2C0_SCL)
-		shift = LPC18XX_SCU_I2C0_SCL_SHIFT;
-	else
-		shift = LPC18XX_SCU_I2C0_SDA_SHIFT;
+	अगर (pin == PIN_I2C0_SCL)
+		shअगरt = LPC18XX_SCU_I2C0_SCL_SHIFT;
+	अन्यथा
+		shअगरt = LPC18XX_SCU_I2C0_SDA_SHIFT;
 
-	switch (param) {
-	case PIN_CONFIG_INPUT_ENABLE:
-		if (reg & (LPC18XX_SCU_I2C0_EZI << shift))
+	चयन (param) अणु
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		अगर (reg & (LPC18XX_SCU_I2C0_EZI << shअगरt))
 			*arg = 1;
-		else
-			return -EINVAL;
-		break;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
-		if (reg & (LPC18XX_SCU_I2C0_EHD << shift))
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (reg & (LPC18XX_SCU_I2C0_EHD << shअगरt))
 			*arg = 1;
-		else
+		अन्यथा
 			*arg = 0;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT:
-		if (reg & (LPC18XX_SCU_I2C0_EFP << shift))
+	हाल PIN_CONFIG_INPUT_SCHMITT:
+		अगर (reg & (LPC18XX_SCU_I2C0_EFP << shअगरt))
 			*arg = 3;
-		else
+		अन्यथा
 			*arg = 50;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (reg & (LPC18XX_SCU_I2C0_ZIF << shift))
-			return -EINVAL;
-		else
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (reg & (LPC18XX_SCU_I2C0_ZIF << shअगरt))
+			वापस -EINVAL;
+		अन्यथा
 			*arg = 1;
-		break;
+		अवरोध;
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pin_to_gpio(struct pinctrl_dev *pctldev, unsigned pin)
-{
-	struct pinctrl_gpio_range *range;
+अटल पूर्णांक lpc18xx_pin_to_gpio(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin)
+अणु
+	काष्ठा pinctrl_gpio_range *range;
 
 	range = pinctrl_find_gpio_range_from_pin_nolock(pctldev, pin);
-	if (!range)
-		return -EINVAL;
+	अगर (!range)
+		वापस -EINVAL;
 
-	return pin - range->pin_base + range->base;
-}
+	वापस pin - range->pin_base + range->base;
+पूर्ण
 
-static int lpc18xx_get_pintsel(void __iomem *addr, u32 val, int *arg)
-{
+अटल पूर्णांक lpc18xx_get_pपूर्णांकsel(व्योम __iomem *addr, u32 val, पूर्णांक *arg)
+अणु
 	u32 reg_val;
-	int i;
+	पूर्णांक i;
 
-	reg_val = readl(addr);
-	for (i = 0; i < LPC18XX_SCU_IRQ_PER_PINTSEL; i++) {
-		if ((reg_val & LPC18XX_SCU_PINTSEL_VAL_MASK) == val)
-			return 0;
+	reg_val = पढ़ोl(addr);
+	क्रम (i = 0; i < LPC18XX_SCU_IRQ_PER_PINTSEL; i++) अणु
+		अगर ((reg_val & LPC18XX_SCU_PINTSEL_VAL_MASK) == val)
+			वापस 0;
 
 		reg_val >>= BITS_PER_BYTE;
 		*arg += 1;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static u32 lpc18xx_gpio_to_pintsel_val(int gpio)
-{
-	unsigned int gpio_port, gpio_pin;
+अटल u32 lpc18xx_gpio_to_pपूर्णांकsel_val(पूर्णांक gpio)
+अणु
+	अचिन्हित पूर्णांक gpio_port, gpio_pin;
 
 	gpio_port = gpio / LPC18XX_GPIO_PINS_PER_PORT;
 	gpio_pin  = gpio % LPC18XX_GPIO_PINS_PER_PORT;
 
-	return gpio_pin | (gpio_port << LPC18XX_SCU_PINTSEL_PORT_SHIFT);
-}
+	वापस gpio_pin | (gpio_port << LPC18XX_SCU_PINTSEL_PORT_SHIFT);
+पूर्ण
 
-static int lpc18xx_pconf_get_gpio_pin_int(struct pinctrl_dev *pctldev,
-					  int *arg, unsigned pin)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
-	int gpio, ret;
+अटल पूर्णांक lpc18xx_pconf_get_gpio_pin_पूर्णांक(काष्ठा pinctrl_dev *pctldev,
+					  पूर्णांक *arg, अचिन्हित pin)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक gpio, ret;
 	u32 val;
 
 	gpio = lpc18xx_pin_to_gpio(pctldev, pin);
-	if (gpio < 0)
-		return -ENOTSUPP;
+	अगर (gpio < 0)
+		वापस -ENOTSUPP;
 
-	val = lpc18xx_gpio_to_pintsel_val(gpio);
+	val = lpc18xx_gpio_to_pपूर्णांकsel_val(gpio);
 
 	/*
-	 * Check if this pin has been enabled as a interrupt in any of the two
-	 * PINTSEL registers. *arg indicates which interrupt number (0-7).
+	 * Check अगर this pin has been enabled as a पूर्णांकerrupt in any of the two
+	 * PINTSEL रेजिस्टरs. *arg indicates which पूर्णांकerrupt number (0-7).
 	 */
 	*arg = 0;
-	ret = lpc18xx_get_pintsel(scu->base + LPC18XX_SCU_PINTSEL0, val, arg);
-	if (ret == 0)
-		return ret;
+	ret = lpc18xx_get_pपूर्णांकsel(scu->base + LPC18XX_SCU_PINTSEL0, val, arg);
+	अगर (ret == 0)
+		वापस ret;
 
-	return lpc18xx_get_pintsel(scu->base + LPC18XX_SCU_PINTSEL1, val, arg);
-}
+	वापस lpc18xx_get_pपूर्णांकsel(scu->base + LPC18XX_SCU_PINTSEL1, val, arg);
+पूर्ण
 
-static int lpc18xx_pconf_get_pin(struct pinctrl_dev *pctldev, unsigned param,
-				 int *arg, u32 reg, unsigned pin,
-				 struct lpc18xx_pin_caps *pin_cap)
-{
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if ((!(reg & LPC18XX_SCU_PIN_EPD)) && (reg & LPC18XX_SCU_PIN_EPUN))
+अटल पूर्णांक lpc18xx_pconf_get_pin(काष्ठा pinctrl_dev *pctldev, अचिन्हित param,
+				 पूर्णांक *arg, u32 reg, अचिन्हित pin,
+				 काष्ठा lpc18xx_pin_caps *pin_cap)
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर ((!(reg & LPC18XX_SCU_PIN_EPD)) && (reg & LPC18XX_SCU_PIN_EPUN))
 			;
-		else
-			return -EINVAL;
-		break;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (reg & LPC18XX_SCU_PIN_EPUN)
-			return -EINVAL;
-		else
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (reg & LPC18XX_SCU_PIN_EPUN)
+			वापस -EINVAL;
+		अन्यथा
 			*arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (reg & LPC18XX_SCU_PIN_EPD)
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (reg & LPC18XX_SCU_PIN_EPD)
 			*arg = 1;
-		else
-			return -EINVAL;
-		break;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_ENABLE:
-		if (reg & LPC18XX_SCU_PIN_EZI)
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		अगर (reg & LPC18XX_SCU_PIN_EZI)
 			*arg = 1;
-		else
-			return -EINVAL;
-		break;
+		अन्यथा
+			वापस -EINVAL;
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
-		if (pin_cap->type == TYPE_HD)
-			return -ENOTSUPP;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (pin_cap->type == TYPE_HD)
+			वापस -ENOTSUPP;
 
-		if (reg & LPC18XX_SCU_PIN_EHS)
+		अगर (reg & LPC18XX_SCU_PIN_EHS)
 			*arg = 1;
-		else
+		अन्यथा
 			*arg = 0;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (reg & LPC18XX_SCU_PIN_ZIF)
-			return -EINVAL;
-		else
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (reg & LPC18XX_SCU_PIN_ZIF)
+			वापस -EINVAL;
+		अन्यथा
 			*arg = 1;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		if (pin_cap->type != TYPE_HD)
-			return -ENOTSUPP;
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		अगर (pin_cap->type != TYPE_HD)
+			वापस -ENOTSUPP;
 
 		*arg = (reg & LPC18XX_SCU_PIN_EHD_MASK) >> LPC18XX_SCU_PIN_EHD_POS;
-		switch (*arg) {
-		case 3: *arg += 5;
+		चयन (*arg) अणु
+		हाल 3: *arg += 5;
 			fallthrough;
-		case 2: *arg += 5;
+		हाल 2: *arg += 5;
 			fallthrough;
-		case 1: *arg += 3;
+		हाल 1: *arg += 3;
 			fallthrough;
-		case 0: *arg += 4;
-		}
-		break;
+		हाल 0: *arg += 4;
+		पूर्ण
+		अवरोध;
 
-	case PIN_CONFIG_GPIO_PIN_INT:
-		return lpc18xx_pconf_get_gpio_pin_int(pctldev, arg, pin);
+	हाल PIN_CONFIG_GPIO_PIN_INT:
+		वापस lpc18xx_pconf_get_gpio_pin_पूर्णांक(pctldev, arg, pin);
 
-	default:
-		return -ENOTSUPP;
-	}
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct lpc18xx_pin_caps *lpc18xx_get_pin_caps(unsigned pin)
-{
-	int i;
+अटल काष्ठा lpc18xx_pin_caps *lpc18xx_get_pin_caps(अचिन्हित pin)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(lpc18xx_pins); i++) {
-		if (lpc18xx_pins[i].number == pin)
-			return lpc18xx_pins[i].drv_data;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(lpc18xx_pins); i++) अणु
+		अगर (lpc18xx_pins[i].number == pin)
+			वापस lpc18xx_pins[i].drv_data;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int lpc18xx_pconf_get(struct pinctrl_dev *pctldev, unsigned pin,
-			     unsigned long *config)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	struct lpc18xx_pin_caps *pin_cap;
-	int ret, arg = 0;
+अटल पूर्णांक lpc18xx_pconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			     अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	काष्ठा lpc18xx_pin_caps *pin_cap;
+	पूर्णांक ret, arg = 0;
 	u32 reg;
 
 	pin_cap = lpc18xx_get_pin_caps(pin);
-	if (!pin_cap)
-		return -EINVAL;
+	अगर (!pin_cap)
+		वापस -EINVAL;
 
-	reg = readl(scu->base + pin_cap->offset);
+	reg = पढ़ोl(scu->base + pin_cap->offset);
 
-	if (pin_cap->type == TYPE_I2C0)
+	अगर (pin_cap->type == TYPE_I2C0)
 		ret = lpc18xx_pconf_get_i2c0(param, &arg, reg, pin);
-	else if (pin_cap->type == TYPE_USB1)
+	अन्यथा अगर (pin_cap->type == TYPE_USB1)
 		ret = lpc18xx_pconf_get_usb1(param, &arg, reg);
-	else
+	अन्यथा
 		ret = lpc18xx_pconf_get_pin(pctldev, param, &arg, reg, pin, pin_cap);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*config = pinconf_to_config_packed(param, (u16)arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_set_usb1(struct pinctrl_dev *pctldev,
-				  enum pin_config_param param,
+अटल पूर्णांक lpc18xx_pconf_set_usb1(काष्ठा pinctrl_dev *pctldev,
+				  क्रमागत pin_config_param param,
 				  u32 param_val, u32 *reg)
-{
-	switch (param) {
-	case PIN_CONFIG_MODE_LOW_POWER:
-		if (param_val)
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_MODE_LOW_POWER:
+		अगर (param_val)
 			*reg &= ~LPC18XX_SCU_USB1_EPWR;
-		else
+		अन्यथा
 			*reg |= LPC18XX_SCU_USB1_EPWR;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_DISABLE:
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		*reg &= ~LPC18XX_SCU_USB1_EPD;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		*reg |= LPC18XX_SCU_USB1_EPD;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(pctldev->dev, "Property not supported\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_set_i2c0(struct pinctrl_dev *pctldev,
-				  enum pin_config_param param,
+अटल पूर्णांक lpc18xx_pconf_set_i2c0(काष्ठा pinctrl_dev *pctldev,
+				  क्रमागत pin_config_param param,
 				  u32 param_val, u32 *reg,
-				  unsigned pin)
-{
-	u8 shift;
+				  अचिन्हित pin)
+अणु
+	u8 shअगरt;
 
-	if (pin == PIN_I2C0_SCL)
-		shift = LPC18XX_SCU_I2C0_SCL_SHIFT;
-	else
-		shift = LPC18XX_SCU_I2C0_SDA_SHIFT;
+	अगर (pin == PIN_I2C0_SCL)
+		shअगरt = LPC18XX_SCU_I2C0_SCL_SHIFT;
+	अन्यथा
+		shअगरt = LPC18XX_SCU_I2C0_SDA_SHIFT;
 
-	switch (param) {
-	case PIN_CONFIG_INPUT_ENABLE:
-		if (param_val)
-			*reg |= (LPC18XX_SCU_I2C0_EZI << shift);
-		else
-			*reg &= ~(LPC18XX_SCU_I2C0_EZI << shift);
-		break;
+	चयन (param) अणु
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		अगर (param_val)
+			*reg |= (LPC18XX_SCU_I2C0_EZI << shअगरt);
+		अन्यथा
+			*reg &= ~(LPC18XX_SCU_I2C0_EZI << shअगरt);
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
-		if (param_val)
-			*reg |= (LPC18XX_SCU_I2C0_EHD << shift);
-		else
-			*reg &= ~(LPC18XX_SCU_I2C0_EHD << shift);
-		break;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (param_val)
+			*reg |= (LPC18XX_SCU_I2C0_EHD << shअगरt);
+		अन्यथा
+			*reg &= ~(LPC18XX_SCU_I2C0_EHD << shअगरt);
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT:
-		if (param_val == 3)
-			*reg |= (LPC18XX_SCU_I2C0_EFP << shift);
-		else if (param_val == 50)
-			*reg &= ~(LPC18XX_SCU_I2C0_EFP << shift);
-		else
-			return -ENOTSUPP;
-		break;
+	हाल PIN_CONFIG_INPUT_SCHMITT:
+		अगर (param_val == 3)
+			*reg |= (LPC18XX_SCU_I2C0_EFP << shअगरt);
+		अन्यथा अगर (param_val == 50)
+			*reg &= ~(LPC18XX_SCU_I2C0_EFP << shअगरt);
+		अन्यथा
+			वापस -ENOTSUPP;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (param_val)
-			*reg &= ~(LPC18XX_SCU_I2C0_ZIF << shift);
-		else
-			*reg |= (LPC18XX_SCU_I2C0_ZIF << shift);
-		break;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (param_val)
+			*reg &= ~(LPC18XX_SCU_I2C0_ZIF << shअगरt);
+		अन्यथा
+			*reg |= (LPC18XX_SCU_I2C0_ZIF << shअगरt);
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(pctldev->dev, "Property not supported\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_set_gpio_pin_int(struct pinctrl_dev *pctldev,
-					  u32 param_val, unsigned pin)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lpc18xx_pconf_set_gpio_pin_पूर्णांक(काष्ठा pinctrl_dev *pctldev,
+					  u32 param_val, अचिन्हित pin)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
 	u32 val, reg_val, reg_offset = LPC18XX_SCU_PINTSEL0;
-	int gpio;
+	पूर्णांक gpio;
 
-	if (param_val >= LPC18XX_GPIO_PIN_INT_MAX)
-		return -EINVAL;
+	अगर (param_val >= LPC18XX_GPIO_PIN_पूर्णांक_उच्च)
+		वापस -EINVAL;
 
 	gpio = lpc18xx_pin_to_gpio(pctldev, pin);
-	if (gpio < 0)
-		return -ENOTSUPP;
+	अगर (gpio < 0)
+		वापस -ENOTSUPP;
 
-	val = lpc18xx_gpio_to_pintsel_val(gpio);
+	val = lpc18xx_gpio_to_pपूर्णांकsel_val(gpio);
 
-	reg_offset += (param_val / LPC18XX_SCU_IRQ_PER_PINTSEL) * sizeof(u32);
+	reg_offset += (param_val / LPC18XX_SCU_IRQ_PER_PINTSEL) * माप(u32);
 
-	reg_val = readl(scu->base + reg_offset);
+	reg_val = पढ़ोl(scu->base + reg_offset);
 	reg_val &= ~LPC18XX_SCU_PINTSEL_VAL(LPC18XX_SCU_PINTSEL_VAL_MASK, param_val);
 	reg_val |= LPC18XX_SCU_PINTSEL_VAL(val, param_val);
-	writel(reg_val, scu->base + reg_offset);
+	ग_लिखोl(reg_val, scu->base + reg_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_set_pin(struct pinctrl_dev *pctldev, unsigned param,
-				 u32 param_val, u32 *reg, unsigned pin,
-				 struct lpc18xx_pin_caps *pin_cap)
-{
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+अटल पूर्णांक lpc18xx_pconf_set_pin(काष्ठा pinctrl_dev *pctldev, अचिन्हित param,
+				 u32 param_val, u32 *reg, अचिन्हित pin,
+				 काष्ठा lpc18xx_pin_caps *pin_cap)
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		*reg &= ~LPC18XX_SCU_PIN_EPD;
 		*reg |= LPC18XX_SCU_PIN_EPUN;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		*reg &= ~LPC18XX_SCU_PIN_EPUN;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		*reg |= LPC18XX_SCU_PIN_EPD;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_ENABLE:
-		if (param_val)
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		अगर (param_val)
 			*reg |= LPC18XX_SCU_PIN_EZI;
-		else
+		अन्यथा
 			*reg &= ~LPC18XX_SCU_PIN_EZI;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_SLEW_RATE:
-		if (pin_cap->type == TYPE_HD) {
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (pin_cap->type == TYPE_HD) अणु
 			dev_err(pctldev->dev, "Slew rate unsupported on high-drive pins\n");
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 
-		if (param_val == 0)
+		अगर (param_val == 0)
 			*reg &= ~LPC18XX_SCU_PIN_EHS;
-		else
+		अन्यथा
 			*reg |= LPC18XX_SCU_PIN_EHS;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (param_val)
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (param_val)
 			*reg &= ~LPC18XX_SCU_PIN_ZIF;
-		else
+		अन्यथा
 			*reg |= LPC18XX_SCU_PIN_ZIF;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		if (pin_cap->type != TYPE_HD) {
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		अगर (pin_cap->type != TYPE_HD) अणु
 			dev_err(pctldev->dev, "Drive strength available only on high-drive pins\n");
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 		*reg &= ~LPC18XX_SCU_PIN_EHD_MASK;
 
-		switch (param_val) {
-		case 20: param_val -= 5;
+		चयन (param_val) अणु
+		हाल 20: param_val -= 5;
 			fallthrough;
-		case 14: param_val -= 5;
+		हाल 14: param_val -= 5;
 			fallthrough;
-		case  8: param_val -= 3;
+		हाल  8: param_val -= 3;
 			fallthrough;
-		case  4: param_val -= 4;
-			 break;
-		default:
+		हाल  4: param_val -= 4;
+			 अवरोध;
+		शेष:
 			dev_err(pctldev->dev, "Drive strength %u unsupported\n", param_val);
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 		*reg |= param_val << LPC18XX_SCU_PIN_EHD_POS;
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_GPIO_PIN_INT:
-		return lpc18xx_pconf_set_gpio_pin_int(pctldev, param_val, pin);
+	हाल PIN_CONFIG_GPIO_PIN_INT:
+		वापस lpc18xx_pconf_set_gpio_pin_पूर्णांक(pctldev, param_val, pin);
 
-	default:
+	शेष:
 		dev_err(pctldev->dev, "Property not supported\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pconf_set(struct pinctrl_dev *pctldev, unsigned pin,
-			     unsigned long *configs, unsigned num_configs)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
-	struct lpc18xx_pin_caps *pin_cap;
-	enum pin_config_param param;
+अटल पूर्णांक lpc18xx_pconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			     अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा lpc18xx_pin_caps *pin_cap;
+	क्रमागत pin_config_param param;
 	u32 param_val;
 	u32 reg;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	pin_cap = lpc18xx_get_pin_caps(pin);
-	if (!pin_cap)
-		return -EINVAL;
+	अगर (!pin_cap)
+		वापस -EINVAL;
 
-	reg = readl(scu->base + pin_cap->offset);
+	reg = पढ़ोl(scu->base + pin_cap->offset);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		param_val = pinconf_to_config_argument(configs[i]);
 
-		if (pin_cap->type == TYPE_I2C0)
+		अगर (pin_cap->type == TYPE_I2C0)
 			ret = lpc18xx_pconf_set_i2c0(pctldev, param, param_val, &reg, pin);
-		else if (pin_cap->type == TYPE_USB1)
+		अन्यथा अगर (pin_cap->type == TYPE_USB1)
 			ret = lpc18xx_pconf_set_usb1(pctldev, param, param_val, &reg);
-		else
+		अन्यथा
 			ret = lpc18xx_pconf_set_pin(pctldev, param, param_val, &reg, pin, pin_cap);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	writel(reg, scu->base + pin_cap->offset);
+	ग_लिखोl(reg, scu->base + pin_cap->offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops lpc18xx_pconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops lpc18xx_pconf_ops = अणु
 	.is_generic	= true,
 	.pin_config_get	= lpc18xx_pconf_get,
 	.pin_config_set	= lpc18xx_pconf_set,
-};
+पूर्ण;
 
-static int lpc18xx_pmx_get_funcs_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(lpc18xx_function_names);
-}
+अटल पूर्णांक lpc18xx_pmx_get_funcs_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(lpc18xx_function_names);
+पूर्ण
 
-static const char *lpc18xx_pmx_get_func_name(struct pinctrl_dev *pctldev,
-					     unsigned function)
-{
-	return lpc18xx_function_names[function];
-}
+अटल स्थिर अक्षर *lpc18xx_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					     अचिन्हित function)
+अणु
+	वापस lpc18xx_function_names[function];
+पूर्ण
 
-static int lpc18xx_pmx_get_func_groups(struct pinctrl_dev *pctldev,
-				       unsigned function,
-				       const char *const **groups,
-				       unsigned *const num_groups)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक lpc18xx_pmx_get_func_groups(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित function,
+				       स्थिर अक्षर *स्थिर **groups,
+				       अचिन्हित *स्थिर num_groups)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups  = scu->func[function].groups;
 	*num_groups = scu->func[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_pmx_set(struct pinctrl_dev *pctldev, unsigned function,
-			   unsigned group)
-{
-	struct lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
-	struct lpc18xx_pin_caps *pin = lpc18xx_pins[group].drv_data;
-	int func;
+अटल पूर्णांक lpc18xx_pmx_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित function,
+			   अचिन्हित group)
+अणु
+	काष्ठा lpc18xx_scu_data *scu = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा lpc18xx_pin_caps *pin = lpc18xx_pins[group].drv_data;
+	पूर्णांक func;
 	u32 reg;
 
-	/* Dedicated USB1 and I2C0 pins doesn't support muxing */
-	if (pin->type == TYPE_USB1) {
-		if (function == FUNC_USB1)
-			return 0;
+	/* Dedicated USB1 and I2C0 pins करोesn't support muxing */
+	अगर (pin->type == TYPE_USB1) अणु
+		अगर (function == FUNC_USB1)
+			वापस 0;
 
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (pin->type == TYPE_I2C0) {
-		if (function == FUNC_I2C0)
-			return 0;
+	अगर (pin->type == TYPE_I2C0) अणु
+		अगर (function == FUNC_I2C0)
+			वापस 0;
 
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (function == FUNC_ADC && (pin->analog & LPC18XX_ANALOG_PIN)) {
+	अगर (function == FUNC_ADC && (pin->analog & LPC18XX_ANALOG_PIN)) अणु
 		u32 offset;
 
-		writel(LPC18XX_SCU_ANALOG_PIN_CFG, scu->base + pin->offset);
+		ग_लिखोl(LPC18XX_SCU_ANALOG_PIN_CFG, scu->base + pin->offset);
 
-		if (LPC18XX_ANALOG_ADC(pin->analog) == 0)
+		अगर (LPC18XX_ANALOG_ADC(pin->analog) == 0)
 			offset = LPC18XX_SCU_REG_ENAIO0;
-		else
+		अन्यथा
 			offset = LPC18XX_SCU_REG_ENAIO1;
 
-		reg = readl(scu->base + offset);
+		reg = पढ़ोl(scu->base + offset);
 		reg |= pin->analog & LPC18XX_ANALOG_BIT_MASK;
-		writel(reg, scu->base + offset);
+		ग_लिखोl(reg, scu->base + offset);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (function == FUNC_DAC && (pin->analog & LPC18XX_ANALOG_PIN)) {
-		writel(LPC18XX_SCU_ANALOG_PIN_CFG, scu->base + pin->offset);
+	अगर (function == FUNC_DAC && (pin->analog & LPC18XX_ANALOG_PIN)) अणु
+		ग_लिखोl(LPC18XX_SCU_ANALOG_PIN_CFG, scu->base + pin->offset);
 
-		reg = readl(scu->base + LPC18XX_SCU_REG_ENAIO2);
+		reg = पढ़ोl(scu->base + LPC18XX_SCU_REG_ENAIO2);
 		reg |= LPC18XX_SCU_REG_ENAIO2_DAC;
-		writel(reg, scu->base + LPC18XX_SCU_REG_ENAIO2);
+		ग_लिखोl(reg, scu->base + LPC18XX_SCU_REG_ENAIO2);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (func = 0; func < LPC18XX_SCU_FUNC_PER_PIN; func++) {
-		if (function == pin->functions[func])
-			break;
-	}
+	क्रम (func = 0; func < LPC18XX_SCU_FUNC_PER_PIN; func++) अणु
+		अगर (function == pin->functions[func])
+			अवरोध;
+	पूर्ण
 
-	if (func >= LPC18XX_SCU_FUNC_PER_PIN)
-		goto fail;
+	अगर (func >= LPC18XX_SCU_FUNC_PER_PIN)
+		जाओ fail;
 
-	reg = readl(scu->base + pin->offset);
+	reg = पढ़ोl(scu->base + pin->offset);
 	reg &= ~LPC18XX_SCU_PIN_MODE_MASK;
-	writel(reg | func, scu->base + pin->offset);
+	ग_लिखोl(reg | func, scu->base + pin->offset);
 
-	return 0;
+	वापस 0;
 fail:
 	dev_err(pctldev->dev, "Pin %s can't be %s\n", lpc18xx_pins[group].name,
 						      lpc18xx_function_names[function]);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct pinmux_ops lpc18xx_pmx_ops = {
+अटल स्थिर काष्ठा pinmux_ops lpc18xx_pmx_ops = अणु
 	.get_functions_count	= lpc18xx_pmx_get_funcs_count,
 	.get_function_name	= lpc18xx_pmx_get_func_name,
 	.get_function_groups	= lpc18xx_pmx_get_func_groups,
 	.set_mux		= lpc18xx_pmx_set,
-};
+पूर्ण;
 
-static int lpc18xx_pctl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(lpc18xx_pins);
-}
+अटल पूर्णांक lpc18xx_pctl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(lpc18xx_pins);
+पूर्ण
 
-static const char *lpc18xx_pctl_get_group_name(struct pinctrl_dev *pctldev,
-					       unsigned group)
-{
-	return lpc18xx_pins[group].name;
-}
+अटल स्थिर अक्षर *lpc18xx_pctl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					       अचिन्हित group)
+अणु
+	वापस lpc18xx_pins[group].name;
+पूर्ण
 
-static int lpc18xx_pctl_get_group_pins(struct pinctrl_dev *pctldev,
-				       unsigned group,
-				       const unsigned **pins,
-				       unsigned *num_pins)
-{
+अटल पूर्णांक lpc18xx_pctl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित group,
+				       स्थिर अचिन्हित **pins,
+				       अचिन्हित *num_pins)
+अणु
 	*pins = &lpc18xx_pins[group].number;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops lpc18xx_pctl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops lpc18xx_pctl_ops = अणु
 	.get_groups_count	= lpc18xx_pctl_get_groups_count,
 	.get_group_name		= lpc18xx_pctl_get_group_name,
 	.get_group_pins		= lpc18xx_pctl_get_group_pins,
 	.dt_node_to_map		= pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map		= pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map		= pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static struct pinctrl_desc lpc18xx_scu_desc = {
+अटल काष्ठा pinctrl_desc lpc18xx_scu_desc = अणु
 	.name = "lpc18xx/43xx-scu",
 	.pins = lpc18xx_pins,
 	.npins = ARRAY_SIZE(lpc18xx_pins),
@@ -1264,117 +1265,117 @@ static struct pinctrl_desc lpc18xx_scu_desc = {
 	.confops = &lpc18xx_pconf_ops,
 	.num_custom_params = ARRAY_SIZE(lpc18xx_params),
 	.custom_params = lpc18xx_params,
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	.custom_conf_items = lpc18xx_conf_items,
-#endif
+#पूर्ण_अगर
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static bool lpc18xx_valid_pin_function(unsigned pin, unsigned function)
-{
-	struct lpc18xx_pin_caps *p = lpc18xx_pins[pin].drv_data;
-	int i;
+अटल bool lpc18xx_valid_pin_function(अचिन्हित pin, अचिन्हित function)
+अणु
+	काष्ठा lpc18xx_pin_caps *p = lpc18xx_pins[pin].drv_data;
+	पूर्णांक i;
 
-	if (function == FUNC_DAC && p->analog == DAC)
-		return true;
+	अगर (function == FUNC_DAC && p->analog == DAC)
+		वापस true;
 
-	if (function == FUNC_ADC && p->analog)
-		return true;
+	अगर (function == FUNC_ADC && p->analog)
+		वापस true;
 
-	if (function == FUNC_I2C0 && p->type == TYPE_I2C0)
-		return true;
+	अगर (function == FUNC_I2C0 && p->type == TYPE_I2C0)
+		वापस true;
 
-	if (function == FUNC_USB1 && p->type == TYPE_USB1)
-		return true;
+	अगर (function == FUNC_USB1 && p->type == TYPE_USB1)
+		वापस true;
 
-	for (i = 0; i < LPC18XX_SCU_FUNC_PER_PIN; i++) {
-		if (function == p->functions[i])
-			return true;
-	}
+	क्रम (i = 0; i < LPC18XX_SCU_FUNC_PER_PIN; i++) अणु
+		अगर (function == p->functions[i])
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int lpc18xx_create_group_func_map(struct device *dev,
-					 struct lpc18xx_scu_data *scu)
-{
+अटल पूर्णांक lpc18xx_create_group_func_map(काष्ठा device *dev,
+					 काष्ठा lpc18xx_scu_data *scu)
+अणु
 	u16 pins[ARRAY_SIZE(lpc18xx_pins)];
-	int func, ngroups, i;
+	पूर्णांक func, ngroups, i;
 
-	for (func = 0; func < FUNC_MAX; func++) {
-		for (ngroups = 0, i = 0; i < ARRAY_SIZE(lpc18xx_pins); i++) {
-			if (lpc18xx_valid_pin_function(i, func))
+	क्रम (func = 0; func < FUNC_MAX; func++) अणु
+		क्रम (ngroups = 0, i = 0; i < ARRAY_SIZE(lpc18xx_pins); i++) अणु
+			अगर (lpc18xx_valid_pin_function(i, func))
 				pins[ngroups++] = i;
-		}
+		पूर्ण
 
 		scu->func[func].ngroups = ngroups;
-		scu->func[func].groups = devm_kcalloc(dev,
-						      ngroups, sizeof(char *),
+		scu->func[func].groups = devm_kसुस्मृति(dev,
+						      ngroups, माप(अक्षर *),
 						      GFP_KERNEL);
-		if (!scu->func[func].groups)
-			return -ENOMEM;
+		अगर (!scu->func[func].groups)
+			वापस -ENOMEM;
 
-		for (i = 0; i < ngroups; i++)
+		क्रम (i = 0; i < ngroups; i++)
 			scu->func[func].groups[i] = lpc18xx_pins[pins[i]].name;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpc18xx_scu_probe(struct platform_device *pdev)
-{
-	struct lpc18xx_scu_data *scu;
-	int ret;
+अटल पूर्णांक lpc18xx_scu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpc18xx_scu_data *scu;
+	पूर्णांक ret;
 
-	scu = devm_kzalloc(&pdev->dev, sizeof(*scu), GFP_KERNEL);
-	if (!scu)
-		return -ENOMEM;
+	scu = devm_kzalloc(&pdev->dev, माप(*scu), GFP_KERNEL);
+	अगर (!scu)
+		वापस -ENOMEM;
 
-	scu->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(scu->base))
-		return PTR_ERR(scu->base);
+	scu->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(scu->base))
+		वापस PTR_ERR(scu->base);
 
-	scu->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(scu->clk)) {
+	scu->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(scu->clk)) अणु
 		dev_err(&pdev->dev, "Input clock not found.\n");
-		return PTR_ERR(scu->clk);
-	}
+		वापस PTR_ERR(scu->clk);
+	पूर्ण
 
 	ret = lpc18xx_create_group_func_map(&pdev->dev, scu);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to create group func map.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(scu->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to enable clock.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, scu);
+	platक्रमm_set_drvdata(pdev, scu);
 
-	scu->pctl = devm_pinctrl_register(&pdev->dev, &lpc18xx_scu_desc, scu);
-	if (IS_ERR(scu->pctl)) {
+	scu->pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, &lpc18xx_scu_desc, scu);
+	अगर (IS_ERR(scu->pctl)) अणु
 		dev_err(&pdev->dev, "Could not register pinctrl driver\n");
 		clk_disable_unprepare(scu->clk);
-		return PTR_ERR(scu->pctl);
-	}
+		वापस PTR_ERR(scu->pctl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id lpc18xx_scu_match[] = {
-	{ .compatible = "nxp,lpc1850-scu" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id lpc18xx_scu_match[] = अणु
+	अणु .compatible = "nxp,lpc1850-scu" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver lpc18xx_scu_driver = {
+अटल काष्ठा platक्रमm_driver lpc18xx_scu_driver = अणु
 	.probe		= lpc18xx_scu_probe,
-	.driver = {
+	.driver = अणु
 		.name		= "lpc18xx-scu",
 		.of_match_table	= lpc18xx_scu_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(lpc18xx_scu_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(lpc18xx_scu_driver);

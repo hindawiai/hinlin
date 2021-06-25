@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Mapping of DWARF debug register numbers into register names.
+ * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
  *
  * Copyright (C) 2010 Matt Fleming <matt@console-pimps.org>
  */
 
-#include <stddef.h>
-#include <dwarf-regs.h>
+#समावेश <मानकघोष.स>
+#समावेश <dwarf-regs.h>
 
 /*
  * Generic dwarf analysis helpers
  */
 
-#define SH_MAX_REGS 18
-const char *sh_regs_table[SH_MAX_REGS] = {
+#घोषणा SH_MAX_REGS 18
+स्थिर अक्षर *sh_regs_table[SH_MAX_REGS] = अणु
 	"r0",
 	"r1",
 	"r2",
@@ -32,10 +33,10 @@ const char *sh_regs_table[SH_MAX_REGS] = {
 	"r15",
 	"pc",
 	"pr",
-};
+पूर्ण;
 
-/* Return architecture dependent register string (for kprobe-tracer) */
-const char *get_arch_regstr(unsigned int n)
-{
-	return (n < SH_MAX_REGS) ? sh_regs_table[n] : NULL;
-}
+/* Return architecture dependent रेजिस्टर string (क्रम kprobe-tracer) */
+स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
+अणु
+	वापस (n < SH_MAX_REGS) ? sh_regs_table[n] : शून्य;
+पूर्ण

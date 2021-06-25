@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Renesas R-Car E2 System Controller
  *
  * Copyright (C) 2016 Glider bvba
  */
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#include <dt-bindings/power/r8a7794-sysc.h>
+#समावेश <dt-bindings/घातer/r8a7794-sysc.h>
 
-#include "rcar-sysc.h"
+#समावेश "rcar-sysc.h"
 
-static const struct rcar_sysc_area r8a7794_areas[] __initconst = {
-	{ "always-on",	    0, 0, R8A7794_PD_ALWAYS_ON,	-1, PD_ALWAYS_ON },
-	{ "ca7-scu",	0x100, 0, R8A7794_PD_CA7_SCU,	R8A7794_PD_ALWAYS_ON,
-	  PD_SCU },
-	{ "ca7-cpu0",	0x1c0, 0, R8A7794_PD_CA7_CPU0,	R8A7794_PD_CA7_SCU,
-	  PD_CPU_NOCR },
-	{ "ca7-cpu1",	0x1c0, 1, R8A7794_PD_CA7_CPU1,	R8A7794_PD_CA7_SCU,
-	  PD_CPU_NOCR },
-	{ "sh-4a",	 0x80, 0, R8A7794_PD_SH_4A,	R8A7794_PD_ALWAYS_ON },
-	{ "sgx",	 0xc0, 0, R8A7794_PD_SGX,	R8A7794_PD_ALWAYS_ON },
-};
+अटल स्थिर काष्ठा rcar_sysc_area r8a7794_areas[] __initस्थिर = अणु
+	अणु "always-on",	    0, 0, R8A7794_PD_ALWAYS_ON,	-1, PD_ALWAYS_ON पूर्ण,
+	अणु "ca7-scu",	0x100, 0, R8A7794_PD_CA7_SCU,	R8A7794_PD_ALWAYS_ON,
+	  PD_SCU पूर्ण,
+	अणु "ca7-cpu0",	0x1c0, 0, R8A7794_PD_CA7_CPU0,	R8A7794_PD_CA7_SCU,
+	  PD_CPU_NOCR पूर्ण,
+	अणु "ca7-cpu1",	0x1c0, 1, R8A7794_PD_CA7_CPU1,	R8A7794_PD_CA7_SCU,
+	  PD_CPU_NOCR पूर्ण,
+	अणु "sh-4a",	 0x80, 0, R8A7794_PD_SH_4A,	R8A7794_PD_ALWAYS_ON पूर्ण,
+	अणु "sgx",	 0xc0, 0, R8A7794_PD_SGX,	R8A7794_PD_ALWAYS_ON पूर्ण,
+पूर्ण;
 
-const struct rcar_sysc_info r8a7794_sysc_info __initconst = {
+स्थिर काष्ठा rcar_sysc_info r8a7794_sysc_info __initस्थिर = अणु
 	.areas = r8a7794_areas,
 	.num_areas = ARRAY_SIZE(r8a7794_areas),
-};
+पूर्ण;

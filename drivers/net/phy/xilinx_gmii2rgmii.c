@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Xilinx GMII2RGMII Converter driver
  *
  * Copyright (C) 2016 Xilinx, Inc.
@@ -8,107 +9,107 @@
  * Author: Kedareswara rao Appana <appanad@xilinx.com>
  *
  * Description:
- * This driver is developed for Xilinx GMII2RGMII Converter
+ * This driver is developed क्रम Xilinx GMII2RGMII Converter
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/mii.h>
-#include <linux/mdio.h>
-#include <linux/phy.h>
-#include <linux/of_mdio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/of_mdपन.स>
 
-#define XILINX_GMII2RGMII_REG		0x10
-#define XILINX_GMII2RGMII_SPEED_MASK	(BMCR_SPEED1000 | BMCR_SPEED100)
+#घोषणा XILINX_GMII2RGMII_REG		0x10
+#घोषणा XILINX_GMII2RGMII_SPEED_MASK	(BMCR_SPEED1000 | BMCR_SPEED100)
 
-struct gmii2rgmii {
-	struct phy_device *phy_dev;
-	struct phy_driver *phy_drv;
-	struct phy_driver conv_phy_drv;
-	struct mdio_device *mdio;
-};
+काष्ठा gmii2rgmii अणु
+	काष्ठा phy_device *phy_dev;
+	काष्ठा phy_driver *phy_drv;
+	काष्ठा phy_driver conv_phy_drv;
+	काष्ठा mdio_device *mdio;
+पूर्ण;
 
-static int xgmiitorgmii_read_status(struct phy_device *phydev)
-{
-	struct gmii2rgmii *priv = mdiodev_get_drvdata(&phydev->mdio);
-	struct mii_bus *bus = priv->mdio->bus;
-	int addr = priv->mdio->addr;
+अटल पूर्णांक xgmiitorgmii_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा gmii2rgmii *priv = mdiodev_get_drvdata(&phydev->mdio);
+	काष्ठा mii_bus *bus = priv->mdio->bus;
+	पूर्णांक addr = priv->mdio->addr;
 	u16 val = 0;
-	int err;
+	पूर्णांक err;
 
-	if (priv->phy_drv->read_status)
-		err = priv->phy_drv->read_status(phydev);
-	else
-		err = genphy_read_status(phydev);
-	if (err < 0)
-		return err;
+	अगर (priv->phy_drv->पढ़ो_status)
+		err = priv->phy_drv->पढ़ो_status(phydev);
+	अन्यथा
+		err = genphy_पढ़ो_status(phydev);
+	अगर (err < 0)
+		वापस err;
 
-	val = mdiobus_read(bus, addr, XILINX_GMII2RGMII_REG);
+	val = mdiobus_पढ़ो(bus, addr, XILINX_GMII2RGMII_REG);
 	val &= ~XILINX_GMII2RGMII_SPEED_MASK;
 
-	if (phydev->speed == SPEED_1000)
+	अगर (phydev->speed == SPEED_1000)
 		val |= BMCR_SPEED1000;
-	else if (phydev->speed == SPEED_100)
+	अन्यथा अगर (phydev->speed == SPEED_100)
 		val |= BMCR_SPEED100;
-	else
+	अन्यथा
 		val |= BMCR_SPEED10;
 
-	mdiobus_write(bus, addr, XILINX_GMII2RGMII_REG, val);
+	mdiobus_ग_लिखो(bus, addr, XILINX_GMII2RGMII_REG, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgmiitorgmii_probe(struct mdio_device *mdiodev)
-{
-	struct device *dev = &mdiodev->dev;
-	struct device_node *np = dev->of_node, *phy_node;
-	struct gmii2rgmii *priv;
+अटल पूर्णांक xgmiitorgmii_probe(काष्ठा mdio_device *mdiodev)
+अणु
+	काष्ठा device *dev = &mdiodev->dev;
+	काष्ठा device_node *np = dev->of_node, *phy_node;
+	काष्ठा gmii2rgmii *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	phy_node = of_parse_phandle(np, "phy-handle", 0);
-	if (!phy_node) {
+	अगर (!phy_node) अणु
 		dev_err(dev, "Couldn't parse phy-handle\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	priv->phy_dev = of_phy_find_device(phy_node);
 	of_node_put(phy_node);
-	if (!priv->phy_dev) {
+	अगर (!priv->phy_dev) अणु
 		dev_info(dev, "Couldn't find phydev\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
-	if (!priv->phy_dev->drv) {
+	अगर (!priv->phy_dev->drv) अणु
 		dev_info(dev, "Attached phy not ready\n");
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	priv->mdio = mdiodev;
 	priv->phy_drv = priv->phy_dev->drv;
-	memcpy(&priv->conv_phy_drv, priv->phy_dev->drv,
-	       sizeof(struct phy_driver));
-	priv->conv_phy_drv.read_status = xgmiitorgmii_read_status;
+	स_नकल(&priv->conv_phy_drv, priv->phy_dev->drv,
+	       माप(काष्ठा phy_driver));
+	priv->conv_phy_drv.पढ़ो_status = xgmiitorgmii_पढ़ो_status;
 	mdiodev_set_drvdata(&priv->phy_dev->mdio, priv);
 	priv->phy_dev->drv = &priv->conv_phy_drv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id xgmiitorgmii_of_match[] = {
-	{ .compatible = "xlnx,gmii-to-rgmii-1.0" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xgmiitorgmii_of_match[] = अणु
+	अणु .compatible = "xlnx,gmii-to-rgmii-1.0" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xgmiitorgmii_of_match);
 
-static struct mdio_driver xgmiitorgmii_driver = {
+अटल काष्ठा mdio_driver xgmiitorgmii_driver = अणु
 	.probe	= xgmiitorgmii_probe,
-	.mdiodrv.driver = {
+	.mdiodrv.driver = अणु
 		.name = "xgmiitorgmii",
 		.of_match_table = xgmiitorgmii_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 mdio_module_driver(xgmiitorgmii_driver);
 

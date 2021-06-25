@@ -1,83 +1,84 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Device Tree binding constants for Actions Semi S500 Clock Management Unit
+ * Device Tree binding स्थिरants क्रम Actions Semi S500 Clock Management Unit
  *
  * Copyright (c) 2014 Actions Semi Inc.
  * Copyright (c) 2018 LSI-TEC - Caninos Loucos
  */
 
-#ifndef __DT_BINDINGS_CLOCK_S500_CMU_H
-#define __DT_BINDINGS_CLOCK_S500_CMU_H
+#अगर_अघोषित __DT_BINDINGS_CLOCK_S500_CMU_H
+#घोषणा __DT_BINDINGS_CLOCK_S500_CMU_H
 
-#define CLK_NONE		0
+#घोषणा CLK_NONE		0
 
-/* fixed rate clocks */
-#define CLK_LOSC		1
-#define CLK_HOSC		2
+/* fixed rate घड़ीs */
+#घोषणा CLK_LOSC		1
+#घोषणा CLK_HOSC		2
 
-/* pll clocks */
-#define CLK_CORE_PLL		3
-#define CLK_DEV_PLL		4
-#define CLK_DDR_PLL		5
-#define CLK_NAND_PLL		6
-#define CLK_DISPLAY_PLL		7
-#define CLK_ETHERNET_PLL	8
-#define CLK_AUDIO_PLL		9
+/* pll घड़ीs */
+#घोषणा CLK_CORE_PLL		3
+#घोषणा CLK_DEV_PLL		4
+#घोषणा CLK_DDR_PLL		5
+#घोषणा CLK_न_अंकD_PLL		6
+#घोषणा CLK_DISPLAY_PLL		7
+#घोषणा CLK_ETHERNET_PLL	8
+#घोषणा CLK_AUDIO_PLL		9
 
-/* system clock */
-#define CLK_DEV			10
-#define CLK_H			11
-#define CLK_AHBPREDIV		12
-#define CLK_AHB			13
-#define CLK_DE			14
-#define CLK_BISP		15
-#define CLK_VCE			16
-#define CLK_VDE			17
+/* प्रणाली घड़ी */
+#घोषणा CLK_DEV			10
+#घोषणा CLK_H			11
+#घोषणा CLK_AHBPREDIV		12
+#घोषणा CLK_AHB			13
+#घोषणा CLK_DE			14
+#घोषणा CLK_BISP		15
+#घोषणा CLK_VCE			16
+#घोषणा CLK_VDE			17
 
-/* peripheral device clock */
-#define CLK_TIMER		18
-#define CLK_I2C0		19
-#define CLK_I2C1		20
-#define CLK_I2C2		21
-#define CLK_I2C3		22
-#define CLK_PWM0		23
-#define CLK_PWM1		24
-#define CLK_PWM2		25
-#define CLK_PWM3		26
-#define CLK_PWM4		27
-#define CLK_PWM5		28
-#define CLK_SD0			29
-#define CLK_SD1			30
-#define CLK_SD2			31
-#define CLK_SENSOR0		32
-#define CLK_SENSOR1		33
-#define CLK_SPI0		34
-#define CLK_SPI1		35
-#define CLK_SPI2		36
-#define CLK_SPI3		37
-#define CLK_UART0		38
-#define CLK_UART1		39
-#define CLK_UART2		40
-#define CLK_UART3		41
-#define CLK_UART4		42
-#define CLK_UART5		43
-#define CLK_UART6		44
-#define CLK_DE1			45
-#define CLK_DE2			46
-#define CLK_I2SRX		47
-#define CLK_I2STX		48
-#define CLK_HDMI_AUDIO		49
-#define CLK_HDMI		50
-#define CLK_SPDIF		51
-#define CLK_NAND		52
-#define CLK_ECC			53
-#define CLK_RMII_REF		54
-#define CLK_GPIO		55
+/* peripheral device घड़ी */
+#घोषणा CLK_TIMER		18
+#घोषणा CLK_I2C0		19
+#घोषणा CLK_I2C1		20
+#घोषणा CLK_I2C2		21
+#घोषणा CLK_I2C3		22
+#घोषणा CLK_PWM0		23
+#घोषणा CLK_PWM1		24
+#घोषणा CLK_PWM2		25
+#घोषणा CLK_PWM3		26
+#घोषणा CLK_PWM4		27
+#घोषणा CLK_PWM5		28
+#घोषणा CLK_SD0			29
+#घोषणा CLK_SD1			30
+#घोषणा CLK_SD2			31
+#घोषणा CLK_SENSOR0		32
+#घोषणा CLK_SENSOR1		33
+#घोषणा CLK_SPI0		34
+#घोषणा CLK_SPI1		35
+#घोषणा CLK_SPI2		36
+#घोषणा CLK_SPI3		37
+#घोषणा CLK_UART0		38
+#घोषणा CLK_UART1		39
+#घोषणा CLK_UART2		40
+#घोषणा CLK_UART3		41
+#घोषणा CLK_UART4		42
+#घोषणा CLK_UART5		43
+#घोषणा CLK_UART6		44
+#घोषणा CLK_DE1			45
+#घोषणा CLK_DE2			46
+#घोषणा CLK_I2SRX		47
+#घोषणा CLK_I2STX		48
+#घोषणा CLK_HDMI_AUDIO		49
+#घोषणा CLK_HDMI		50
+#घोषणा CLK_SPDIF		51
+#घोषणा CLK_न_अंकD		52
+#घोषणा CLK_ECC			53
+#घोषणा CLK_RMII_REF		54
+#घोषणा CLK_GPIO		55
 
-/* system clock (part 2) */
-#define CLK_APB			56
-#define CLK_DMAC		57
+/* प्रणाली घड़ी (part 2) */
+#घोषणा CLK_APB			56
+#घोषणा CLK_DMAC		57
 
-#define CLK_NR_CLKS		(CLK_DMAC + 1)
+#घोषणा CLK_NR_CLKS		(CLK_DMAC + 1)
 
-#endif /* __DT_BINDINGS_CLOCK_S500_CMU_H */
+#पूर्ण_अगर /* __DT_BINDINGS_CLOCK_S500_CMU_H */

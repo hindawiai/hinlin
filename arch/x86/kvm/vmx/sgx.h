@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KVM_X86_SGX_H
-#define __KVM_X86_SGX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KVM_X86_SGX_H
+#घोषणा __KVM_X86_SGX_H
 
-#include <linux/kvm_host.h>
+#समावेश <linux/kvm_host.h>
 
-#include "capabilities.h"
-#include "vmx_ops.h"
+#समावेश "capabilities.h"
+#समावेश "vmx_ops.h"
 
-#ifdef CONFIG_X86_SGX_KVM
-extern bool __read_mostly enable_sgx;
+#अगर_घोषित CONFIG_X86_SGX_KVM
+बाह्य bool __पढ़ो_mostly enable_sgx;
 
-int handle_encls(struct kvm_vcpu *vcpu);
+पूर्णांक handle_encls(काष्ठा kvm_vcpu *vcpu);
 
-void setup_default_sgx_lepubkeyhash(void);
-void vcpu_setup_sgx_lepubkeyhash(struct kvm_vcpu *vcpu);
+व्योम setup_शेष_sgx_lepubkeyhash(व्योम);
+व्योम vcpu_setup_sgx_lepubkeyhash(काष्ठा kvm_vcpu *vcpu);
 
-void vmx_write_encls_bitmap(struct kvm_vcpu *vcpu, struct vmcs12 *vmcs12);
-#else
-#define enable_sgx 0
+व्योम vmx_ग_लिखो_encls_biपंचांगap(काष्ठा kvm_vcpu *vcpu, काष्ठा vmcs12 *vmcs12);
+#अन्यथा
+#घोषणा enable_sgx 0
 
-static inline void setup_default_sgx_lepubkeyhash(void) { }
-static inline void vcpu_setup_sgx_lepubkeyhash(struct kvm_vcpu *vcpu) { }
+अटल अंतरभूत व्योम setup_शेष_sgx_lepubkeyhash(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम vcpu_setup_sgx_lepubkeyhash(काष्ठा kvm_vcpu *vcpu) अणु पूर्ण
 
-static inline void vmx_write_encls_bitmap(struct kvm_vcpu *vcpu,
-					  struct vmcs12 *vmcs12)
-{
-	/* Nothing to do if hardware doesn't support SGX */
-	if (cpu_has_vmx_encls_vmexit())
-		vmcs_write64(ENCLS_EXITING_BITMAP, -1ull);
-}
-#endif
+अटल अंतरभूत व्योम vmx_ग_लिखो_encls_biपंचांगap(काष्ठा kvm_vcpu *vcpu,
+					  काष्ठा vmcs12 *vmcs12)
+अणु
+	/* Nothing to करो अगर hardware करोesn't support SGX */
+	अगर (cpu_has_vmx_encls_vmनिकास())
+		vmcs_ग_लिखो64(ENCLS_EXITING_BITMAP, -1ull);
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __KVM_X86_SGX_H */
+#पूर्ण_अगर /* __KVM_X86_SGX_H */

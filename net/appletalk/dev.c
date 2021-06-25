@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Moved here from drivers/net/net_init.c, which is:
  *	Written 1993,1994,1995 by Donald Becker.
  */
 
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/if_ltalk.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर_ltalk.h>
 
-static void ltalk_setup(struct net_device *dev)
-{
-	/* Fill in the fields of the device structure with localtalk-generic values. */
+अटल व्योम ltalk_setup(काष्ठा net_device *dev)
+अणु
+	/* Fill in the fields of the device काष्ठाure with localtalk-generic values. */
 
 	dev->type		= ARPHRD_LOCALTLK;
 	dev->hard_header_len 	= LTALK_HLEN;
@@ -23,24 +24,24 @@ static void ltalk_setup(struct net_device *dev)
 	dev->broadcast[0]	= 0xFF;
 
 	dev->flags		= IFF_BROADCAST|IFF_MULTICAST|IFF_NOARP;
-}
+पूर्ण
 
 /**
  * alloc_ltalkdev - Allocates and sets up an localtalk device
- * @sizeof_priv: Size of additional driver-private structure to be allocated
- *	for this localtalk device
+ * @माप_priv: Size of additional driver-निजी काष्ठाure to be allocated
+ *	क्रम this localtalk device
  *
- * Fill in the fields of the device structure with localtalk-generic
- * values. Basically does everything except registering the device.
+ * Fill in the fields of the device काष्ठाure with localtalk-generic
+ * values. Basically करोes everything except रेजिस्टरing the device.
  *
- * Constructs a new net device, complete with a private data area of
- * size @sizeof_priv.  A 32-byte (not bit) alignment is enforced for
- * this private data area.
+ * Conकाष्ठाs a new net device, complete with a निजी data area of
+ * size @माप_priv.  A 32-byte (not bit) alignment is enक्रमced क्रम
+ * this निजी data area.
  */
 
-struct net_device *alloc_ltalkdev(int sizeof_priv)
-{
-	return alloc_netdev(sizeof_priv, "lt%d", NET_NAME_UNKNOWN,
+काष्ठा net_device *alloc_ltalkdev(पूर्णांक माप_priv)
+अणु
+	वापस alloc_netdev(माप_priv, "lt%d", NET_NAME_UNKNOWN,
 			    ltalk_setup);
-}
+पूर्ण
 EXPORT_SYMBOL(alloc_ltalkdev);

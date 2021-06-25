@@ -1,196 +1,197 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Linux/PA-RISC Project (http://www.parisc-linux.org/)
  *
- * Floating-point emulation code
+ * Floating-poपूर्णांक emulation code
  *  Copyright (C) 2001 Hewlett-Packard (Paul Bame) <bame@debian.org>
  */
 
-#ifdef __NO_PA_HDRS
-    PA header file -- do not include this header file for non-PA builds.
-#endif
+#अगर_घोषित __NO_PA_HDRS
+    PA header file -- करो not include this header file क्रम non-PA builds.
+#पूर्ण_अगर
 
 /*
- * Some more constants
+ * Some more स्थिरants
  */
-#define SGL_FX_MAX_EXP 30
-#define DBL_FX_MAX_EXP 62
-#define QUAD_FX_MAX_EXP 126
+#घोषणा SGL_FX_MAX_EXP 30
+#घोषणा DBL_FX_MAX_EXP 62
+#घोषणा QUAD_FX_MAX_EXP 126
 
-#define Dintp1(object) (object)
-#define Dintp2(object) (object)
+#घोषणा Dपूर्णांकp1(object) (object)
+#घोषणा Dपूर्णांकp2(object) (object)
 
-#define Duintp1(object) (object)
-#define Duintp2(object) (object)
+#घोषणा Duपूर्णांकp1(object) (object)
+#घोषणा Duपूर्णांकp2(object) (object)
 
-#define Qintp0(object) (object)
-#define Qintp1(object) (object)
-#define Qintp2(object) (object)
-#define Qintp3(object) (object)
+#घोषणा Qपूर्णांकp0(object) (object)
+#घोषणा Qपूर्णांकp1(object) (object)
+#घोषणा Qपूर्णांकp2(object) (object)
+#घोषणा Qपूर्णांकp3(object) (object)
 
 
 /*
- * These macros will be used specifically by the convert instructions.
+ * These macros will be used specअगरically by the convert inकाष्ठाions.
  *
  *
- * Single format macros
+ * Single क्रमmat macros
  */
 
-#define Sgl_to_dbl_exponent(src_exponent,dest)			\
+#घोषणा Sgl_to_dbl_exponent(src_exponent,dest)			\
     Deposit_dexponent(dest,src_exponent+(DBL_BIAS-SGL_BIAS))
 
-#define Sgl_to_dbl_mantissa(src_mantissa,destA,destB)	\
+#घोषणा Sgl_to_dbl_mantissa(src_mantissa,destA,destB)	\
     Deposit_dmantissap1(destA,src_mantissa>>3);		\
     Dmantissap2(destB) = src_mantissa << 29
 
-#define Sgl_isinexact_to_fix(sgl_value,exponent)	\
+#घोषणा Sgl_isinexact_to_fix(sgl_value,exponent)	\
     ((exponent < (SGL_P - 1)) ?				\
      (Sall(sgl_value) << (SGL_EXP_LENGTH + 1 + exponent)) : FALSE)
 
-#define Int_isinexact_to_sgl(int_value)	((int_value << 33 - SGL_EXP_LENGTH) != 0)
+#घोषणा Int_isinexact_to_sgl(पूर्णांक_value)	((पूर्णांक_value << 33 - SGL_EXP_LENGTH) != 0)
 
-#define Sgl_roundnearest_from_int(int_value,sgl_value)			\
-    if (int_value & 1<<(SGL_EXP_LENGTH - 2))   /* round bit */		\
-	if (((int_value << 34 - SGL_EXP_LENGTH) != 0) || Slow(sgl_value)) \
+#घोषणा Sgl_roundnearest_from_पूर्णांक(पूर्णांक_value,sgl_value)			\
+    अगर (पूर्णांक_value & 1<<(SGL_EXP_LENGTH - 2))   /* round bit */		\
+	अगर (((पूर्णांक_value << 34 - SGL_EXP_LENGTH) != 0) || Slow(sgl_value)) \
 		Sall(sgl_value)++
 
-#define Dint_isinexact_to_sgl(dint_valueA,dint_valueB)		\
-    (((Dintp1(dint_valueA) << 33 - SGL_EXP_LENGTH) != 0) || Dintp2(dint_valueB))
+#घोषणा Dपूर्णांक_isinexact_to_sgl(dपूर्णांक_valueA,dपूर्णांक_valueB)		\
+    (((Dपूर्णांकp1(dपूर्णांक_valueA) << 33 - SGL_EXP_LENGTH) != 0) || Dपूर्णांकp2(dपूर्णांक_valueB))
 
-#define Sgl_roundnearest_from_dint(dint_valueA,dint_valueB,sgl_value)	\
-    if (Dintp1(dint_valueA) & 1<<(SGL_EXP_LENGTH - 2)) 			\
-	if (((Dintp1(dint_valueA) << 34 - SGL_EXP_LENGTH) != 0) ||	\
-    	Dintp2(dint_valueB) || Slow(sgl_value)) Sall(sgl_value)++
+#घोषणा Sgl_roundnearest_from_dपूर्णांक(dपूर्णांक_valueA,dपूर्णांक_valueB,sgl_value)	\
+    अगर (Dपूर्णांकp1(dपूर्णांक_valueA) & 1<<(SGL_EXP_LENGTH - 2)) 			\
+	अगर (((Dपूर्णांकp1(dपूर्णांक_valueA) << 34 - SGL_EXP_LENGTH) != 0) ||	\
+    	Dपूर्णांकp2(dपूर्णांक_valueB) || Slow(sgl_value)) Sall(sgl_value)++
 
-#define Dint_isinexact_to_dbl(dint_value) 	\
-    (Dintp2(dint_value) << 33 - DBL_EXP_LENGTH)
+#घोषणा Dपूर्णांक_isinexact_to_dbl(dपूर्णांक_value) 	\
+    (Dपूर्णांकp2(dपूर्णांक_value) << 33 - DBL_EXP_LENGTH)
 
-#define Dbl_roundnearest_from_dint(dint_opndB,dbl_opndA,dbl_opndB) 	\
-    if (Dintp2(dint_opndB) & 1<<(DBL_EXP_LENGTH - 2))			\
-       if ((Dintp2(dint_opndB) << 34 - DBL_EXP_LENGTH) || Dlowp2(dbl_opndB))  \
-          if ((++Dallp2(dbl_opndB))==0) Dallp1(dbl_opndA)++
+#घोषणा Dbl_roundnearest_from_dपूर्णांक(dपूर्णांक_opndB,dbl_opndA,dbl_opndB) 	\
+    अगर (Dपूर्णांकp2(dपूर्णांक_opndB) & 1<<(DBL_EXP_LENGTH - 2))			\
+       अगर ((Dपूर्णांकp2(dपूर्णांक_opndB) << 34 - DBL_EXP_LENGTH) || Dlowp2(dbl_opndB))  \
+          अगर ((++Dallp2(dbl_opndB))==0) Dallp1(dbl_opndA)++
 
-#define Sgl_isone_roundbit(sgl_value,exponent)			\
+#घोषणा Sgl_isone_roundbit(sgl_value,exponent)			\
     ((Sall(sgl_value) << (SGL_EXP_LENGTH + 1 + exponent)) >> 31)
 
-#define Sgl_isone_stickybit(sgl_value,exponent)		\
+#घोषणा Sgl_isone_stickybit(sgl_value,exponent)		\
     (exponent < (SGL_P - 2) ?				\
      Sall(sgl_value) << (SGL_EXP_LENGTH + 2 + exponent) : FALSE)
 
 
 /* 
- * Double format macros
+ * Double क्रमmat macros
  */
 
-#define Dbl_to_sgl_exponent(src_exponent,dest)			\
+#घोषणा Dbl_to_sgl_exponent(src_exponent,dest)			\
     dest = src_exponent + (SGL_BIAS - DBL_BIAS)
 
-#define Dbl_to_sgl_mantissa(srcA,srcB,dest,inexact,guard,sticky,odd)	\
-    Shiftdouble(Dmantissap1(srcA),Dmantissap2(srcB),29,dest); 	\
+#घोषणा Dbl_to_sgl_mantissa(srcA,srcB,dest,inexact,guard,sticky,odd)	\
+    Shअगरtद्विगुन(Dmantissap1(srcA),Dmantissap2(srcB),29,dest); 	\
     guard = Dbit3p2(srcB);					\
     sticky = Dallp2(srcB)<<4;					\
     inexact = guard | sticky;					\
     odd = Dbit2p2(srcB)
 
-#define Dbl_to_sgl_denormalized(srcA,srcB,exp,dest,inexact,guard,sticky,odd,tiny) \
+#घोषणा Dbl_to_sgl_denormalized(srcA,srcB,exp,dest,inexact,guard,sticky,odd,tiny) \
     Deposit_dexponent(srcA,1);						\
     tiny = TRUE;							\
-    if (exp >= -2) {							\
-	if (exp == 0) {							\
+    अगर (exp >= -2) अणु							\
+	अगर (exp == 0) अणु							\
 	    inexact = Dallp2(srcB) << 3;				\
 	    guard = inexact >> 31;					\
 	    sticky = inexact << 1;					\
-	    Shiftdouble(Dmantissap1(srcA),Dmantissap2(srcB),29,dest);	\
+	    Shअगरtद्विगुन(Dmantissap1(srcA),Dmantissap2(srcB),29,dest);	\
 	    odd = dest << 31;						\
-	    if (inexact) {						\
-		switch(Rounding_mode()) {				\
-		    case ROUNDPLUS:					\
-			if (Dbl_iszero_sign(srcA)) {			\
+	    अगर (inexact) अणु						\
+		चयन(Rounding_mode()) अणु				\
+		    हाल ROUNDPLUS:					\
+			अगर (Dbl_iszero_sign(srcA)) अणु			\
 			    dest++;					\
-			    if (Sgl_isone_hidden(dest))	\
+			    अगर (Sgl_isone_hidden(dest))	\
 				tiny = FALSE;				\
 			    dest--;					\
-			}						\
-			break;						\
-		    case ROUNDMINUS:					\
-			if (Dbl_isone_sign(srcA)) {			\
+			पूर्ण						\
+			अवरोध;						\
+		    हाल ROUNDMINUS:					\
+			अगर (Dbl_isone_sign(srcA)) अणु			\
 			    dest++;					\
-			    if (Sgl_isone_hidden(dest))	\
+			    अगर (Sgl_isone_hidden(dest))	\
 				tiny = FALSE;				\
 			    dest--;					\
-			}						\
-			break;						\
-		    case ROUNDNEAREST:					\
-			if (guard && (sticky || odd)) {			\
+			पूर्ण						\
+			अवरोध;						\
+		    हाल ROUNDNEAREST:					\
+			अगर (guard && (sticky || odd)) अणु			\
 			    dest++;					\
-			    if (Sgl_isone_hidden(dest))	\
+			    अगर (Sgl_isone_hidden(dest))	\
 				tiny = FALSE;				\
 			    dest--;					\
-			}						\
-			break;						\
-		}							\
-	    }								\
-		/* shift right by one to get correct result */		\
+			पूर्ण						\
+			अवरोध;						\
+		पूर्ण							\
+	    पूर्ण								\
+		/* shअगरt right by one to get correct result */		\
 		guard = odd;						\
 		sticky = inexact;					\
 		inexact |= guard;					\
 		dest >>= 1;						\
     		Deposit_dsign(srcA,0);					\
-    	        Shiftdouble(Dallp1(srcA),Dallp2(srcB),30,dest);		\
+    	        Shअगरtद्विगुन(Dallp1(srcA),Dallp2(srcB),30,dest);		\
 	        odd = dest << 31;					\
-	}								\
-	else {								\
+	पूर्ण								\
+	अन्यथा अणु								\
     	    inexact = Dallp2(srcB) << (2 + exp);			\
     	    guard = inexact >> 31;					\
     	    sticky = inexact << 1; 					\
     	    Deposit_dsign(srcA,0);					\
-    	    if (exp == -2) dest = Dallp1(srcA);				\
-    	    else Variable_shift_double(Dallp1(srcA),Dallp2(srcB),30-exp,dest); \
+    	    अगर (exp == -2) dest = Dallp1(srcA);				\
+    	    अन्यथा Variable_shअगरt_द्विगुन(Dallp1(srcA),Dallp2(srcB),30-exp,dest); \
     	    odd = dest << 31;						\
-	}								\
-    }									\
-    else {								\
+	पूर्ण								\
+    पूर्ण									\
+    अन्यथा अणु								\
     	Deposit_dsign(srcA,0);						\
-    	if (exp > (1 - SGL_P)) {					\
+    	अगर (exp > (1 - SGL_P)) अणु					\
     	    dest = Dallp1(srcA) >> (- 2 - exp);				\
     	    inexact = Dallp1(srcA) << (34 + exp);			\
     	    guard = inexact >> 31;					\
     	    sticky = (inexact << 1) | Dallp2(srcB);			\
     	    inexact |= Dallp2(srcB); 					\
     	    odd = dest << 31;						\
-    	}								\
-    	else {								\
+    	पूर्ण								\
+    	अन्यथा अणु								\
     	    dest = 0;							\
     	    inexact = Dallp1(srcA) | Dallp2(srcB);			\
-    	    if (exp == (1 - SGL_P)) {					\
+    	    अगर (exp == (1 - SGL_P)) अणु					\
     	    	guard = Dhidden(srcA);					\
     	    	sticky = Dmantissap1(srcA) | Dallp2(srcB); 		\
-    	    }								\
-    	    else {							\
+    	    पूर्ण								\
+    	    अन्यथा अणु							\
     	    	guard = 0;						\
     	    	sticky = inexact;					\
-    	    }								\
+    	    पूर्ण								\
     	    odd = 0;							\
-    	}								\
-    }									\
+    	पूर्ण								\
+    पूर्ण									\
     exp = 0
 
-#define Dbl_isinexact_to_fix(dbl_valueA,dbl_valueB,exponent)		\
+#घोषणा Dbl_isinexact_to_fix(dbl_valueA,dbl_valueB,exponent)		\
     (exponent < (DBL_P-33) ? 						\
      Dallp2(dbl_valueB) || Dallp1(dbl_valueA) << (DBL_EXP_LENGTH+1+exponent) : \
      (exponent < (DBL_P-1) ? Dallp2(dbl_valueB) << (exponent + (33-DBL_P)) :   \
       FALSE))
 
-#define Dbl_isoverflow_to_int(exponent,dbl_valueA,dbl_valueB)		\
+#घोषणा Dbl_isoverflow_to_पूर्णांक(exponent,dbl_valueA,dbl_valueB)		\
     ((exponent > SGL_FX_MAX_EXP + 1) || Dsign(dbl_valueA)==0 ||		\
      Dmantissap1(dbl_valueA)!=0 || (Dallp2(dbl_valueB)>>21)!=0 ) 
 
-#define Dbl_isone_roundbit(dbl_valueA,dbl_valueB,exponent)              \
+#घोषणा Dbl_isone_roundbit(dbl_valueA,dbl_valueB,exponent)              \
     ((exponent < (DBL_P - 33) ?						\
       Dallp1(dbl_valueA) >> ((30 - DBL_EXP_LENGTH) - exponent) :	\
       Dallp2(dbl_valueB) >> ((DBL_P - 2) - exponent)) & 1)
 
-#define Dbl_isone_stickybit(dbl_valueA,dbl_valueB,exponent)		\
+#घोषणा Dbl_isone_stickybit(dbl_valueA,dbl_valueB,exponent)		\
     (exponent < (DBL_P-34) ? 						\
      (Dallp2(dbl_valueB) || Dallp1(dbl_valueA)<<(DBL_EXP_LENGTH+2+exponent)) : \
      (exponent<(DBL_P-2) ? (Dallp2(dbl_valueB) << (exponent + (34-DBL_P))) : \
@@ -199,165 +200,165 @@
 
 /* Int macros */
 
-#define Int_from_sgl_mantissa(sgl_value,exponent)	\
+#घोषणा Int_from_sgl_mantissa(sgl_value,exponent)	\
     Sall(sgl_value) = 				\
-    	(unsigned)(Sall(sgl_value) << SGL_EXP_LENGTH)>>(31 - exponent)
+    	(अचिन्हित)(Sall(sgl_value) << SGL_EXP_LENGTH)>>(31 - exponent)
 
-#define Int_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent)	\
-    Shiftdouble(Dallp1(dbl_valueA),Dallp2(dbl_valueB),22,Dallp1(dbl_valueA)); \
-    if (exponent < 31) Dallp1(dbl_valueA) >>= 30 - exponent;	\
-    else Dallp1(dbl_valueA) <<= 1
+#घोषणा Int_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent)	\
+    Shअगरtद्विगुन(Dallp1(dbl_valueA),Dallp2(dbl_valueB),22,Dallp1(dbl_valueA)); \
+    अगर (exponent < 31) Dallp1(dbl_valueA) >>= 30 - exponent;	\
+    अन्यथा Dallp1(dbl_valueA) <<= 1
 
-#define Int_negate(int_value) int_value = -int_value
-
-
-/* Dint macros */
-
-#define Dint_from_sgl_mantissa(sgl_value,exponent,dresultA,dresultB)	\
-    {Sall(sgl_value) <<= SGL_EXP_LENGTH;  /*  left-justify  */		\
-    if (exponent <= 31) {						\
-    	Dintp1(dresultA) = 0;						\
-    	Dintp2(dresultB) = (unsigned)Sall(sgl_value) >> (31 - exponent); \
-    }									\
-    else {								\
-    	Dintp1(dresultA) = Sall(sgl_value) >> (63 - exponent);		\
-    	Dintp2(dresultB) = Sall(sgl_value) << (exponent - 31);		\
-    }}
+#घोषणा Int_negate(पूर्णांक_value) पूर्णांक_value = -पूर्णांक_value
 
 
-#define Dint_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) \
-    {if (exponent < 32) {						\
-    	Dintp1(destA) = 0;						\
-    	if (exponent <= 20)						\
-    	    Dintp2(destB) = Dallp1(dbl_valueA) >> 20-exponent;		\
-    	else Variable_shift_double(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
-	     52-exponent,Dintp2(destB));					\
-    }									\
-    else {								\
-    	if (exponent <= 52) {						\
-    	    Dintp1(destA) = Dallp1(dbl_valueA) >> 52-exponent;		\
-	    if (exponent == 52) Dintp2(destB) = Dallp2(dbl_valueB);	\
-	    else Variable_shift_double(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
-	    52-exponent,Dintp2(destB));					\
-        }								\
-    	else {								\
-    	    Variable_shift_double(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
-	    84-exponent,Dintp1(destA));					\
-    	    Dintp2(destB) = Dallp2(dbl_valueB) << exponent-52;		\
-    	}								\
-    }}
+/* Dपूर्णांक macros */
 
-#define Dint_setzero(dresultA,dresultB) 	\
-    Dintp1(dresultA) = 0; 	\
-    Dintp2(dresultB) = 0
+#घोषणा Dपूर्णांक_from_sgl_mantissa(sgl_value,exponent,dresultA,dresultB)	\
+    अणुSall(sgl_value) <<= SGL_EXP_LENGTH;  /*  left-justअगरy  */		\
+    अगर (exponent <= 31) अणु						\
+    	Dपूर्णांकp1(dresultA) = 0;						\
+    	Dपूर्णांकp2(dresultB) = (अचिन्हित)Sall(sgl_value) >> (31 - exponent); \
+    पूर्ण									\
+    अन्यथा अणु								\
+    	Dपूर्णांकp1(dresultA) = Sall(sgl_value) >> (63 - exponent);		\
+    	Dपूर्णांकp2(dresultB) = Sall(sgl_value) << (exponent - 31);		\
+    पूर्णपूर्ण
 
-#define Dint_setone_sign(dresultA,dresultB)		\
-    Dintp1(dresultA) = ~Dintp1(dresultA);		\
-    if ((Dintp2(dresultB) = -Dintp2(dresultB)) == 0) Dintp1(dresultA)++
 
-#define Dint_set_minint(dresultA,dresultB)		\
-    Dintp1(dresultA) = (unsigned int)1<<31;		\
-    Dintp2(dresultB) = 0
+#घोषणा Dपूर्णांक_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) \
+    अणुअगर (exponent < 32) अणु						\
+    	Dपूर्णांकp1(destA) = 0;						\
+    	अगर (exponent <= 20)						\
+    	    Dपूर्णांकp2(destB) = Dallp1(dbl_valueA) >> 20-exponent;		\
+    	अन्यथा Variable_shअगरt_द्विगुन(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
+	     52-exponent,Dपूर्णांकp2(destB));					\
+    पूर्ण									\
+    अन्यथा अणु								\
+    	अगर (exponent <= 52) अणु						\
+    	    Dपूर्णांकp1(destA) = Dallp1(dbl_valueA) >> 52-exponent;		\
+	    अगर (exponent == 52) Dपूर्णांकp2(destB) = Dallp2(dbl_valueB);	\
+	    अन्यथा Variable_shअगरt_द्विगुन(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
+	    52-exponent,Dपूर्णांकp2(destB));					\
+        पूर्ण								\
+    	अन्यथा अणु								\
+    	    Variable_shअगरt_द्विगुन(Dallp1(dbl_valueA),Dallp2(dbl_valueB), \
+	    84-exponent,Dपूर्णांकp1(destA));					\
+    	    Dपूर्णांकp2(destB) = Dallp2(dbl_valueB) << exponent-52;		\
+    	पूर्ण								\
+    पूर्णपूर्ण
 
-#define Dint_isone_lowp2(dresultB)  (Dintp2(dresultB) & 01)
+#घोषणा Dपूर्णांक_setzero(dresultA,dresultB) 	\
+    Dपूर्णांकp1(dresultA) = 0; 	\
+    Dपूर्णांकp2(dresultB) = 0
 
-#define Dint_increment(dresultA,dresultB) 		\
-    if ((++Dintp2(dresultB))==0) Dintp1(dresultA)++
+#घोषणा Dपूर्णांक_setone_sign(dresultA,dresultB)		\
+    Dपूर्णांकp1(dresultA) = ~Dपूर्णांकp1(dresultA);		\
+    अगर ((Dपूर्णांकp2(dresultB) = -Dपूर्णांकp2(dresultB)) == 0) Dपूर्णांकp1(dresultA)++
 
-#define Dint_decrement(dresultA,dresultB) 		\
-    if ((Dintp2(dresultB)--)==0) Dintp1(dresultA)--
+#घोषणा Dपूर्णांक_set_minपूर्णांक(dresultA,dresultB)		\
+    Dपूर्णांकp1(dresultA) = (अचिन्हित पूर्णांक)1<<31;		\
+    Dपूर्णांकp2(dresultB) = 0
 
-#define Dint_negate(dresultA,dresultB)			\
-    Dintp1(dresultA) = ~Dintp1(dresultA);		\
-    if ((Dintp2(dresultB) = -Dintp2(dresultB))==0) Dintp1(dresultA)++
+#घोषणा Dपूर्णांक_isone_lowp2(dresultB)  (Dपूर्णांकp2(dresultB) & 01)
 
-#define Dint_copyfromptr(src,destA,destB) \
-     Dintp1(destA) = src->wd0;		\
-     Dintp2(destB) = src->wd1
-#define Dint_copytoptr(srcA,srcB,dest)	\
-    dest->wd0 = Dintp1(srcA);		\
-    dest->wd1 = Dintp2(srcB)
+#घोषणा Dपूर्णांक_increment(dresultA,dresultB) 		\
+    अगर ((++Dपूर्णांकp2(dresultB))==0) Dपूर्णांकp1(dresultA)++
+
+#घोषणा Dपूर्णांक_decrement(dresultA,dresultB) 		\
+    अगर ((Dपूर्णांकp2(dresultB)--)==0) Dपूर्णांकp1(dresultA)--
+
+#घोषणा Dपूर्णांक_negate(dresultA,dresultB)			\
+    Dपूर्णांकp1(dresultA) = ~Dपूर्णांकp1(dresultA);		\
+    अगर ((Dपूर्णांकp2(dresultB) = -Dपूर्णांकp2(dresultB))==0) Dपूर्णांकp1(dresultA)++
+
+#घोषणा Dपूर्णांक_copyfromptr(src,destA,destB) \
+     Dपूर्णांकp1(destA) = src->wd0;		\
+     Dपूर्णांकp2(destB) = src->wd1
+#घोषणा Dपूर्णांक_copytoptr(srcA,srcB,dest)	\
+    dest->wd0 = Dपूर्णांकp1(srcA);		\
+    dest->wd1 = Dपूर्णांकp2(srcB)
 
 
 /* other macros  */
 
-#define Find_ms_one_bit(value, position)	\
-    {						\
-	int var;				\
-	for (var=8; var >=1; var >>= 1) {	\
-	    if (value >> 32 - position)		\
+#घोषणा Find_ms_one_bit(value, position)	\
+    अणु						\
+	पूर्णांक var;				\
+	क्रम (var=8; var >=1; var >>= 1) अणु	\
+	    अगर (value >> 32 - position)		\
 		position -= var;		\
-		else position += var;		\
-	}					\
-	if ((value >> 32 - position) == 0)	\
+		अन्यथा position += var;		\
+	पूर्ण					\
+	अगर ((value >> 32 - position) == 0)	\
 	    position--;				\
-	else position -= 2;			\
-    }
+	अन्यथा position -= 2;			\
+    पूर्ण
 
 
 /*
- * Unsigned int macros
+ * Unचिन्हित पूर्णांक macros
  */
-#define Duint_copyfromptr(src,destA,destB) \
-    Dint_copyfromptr(src,destA,destB)
-#define Duint_copytoptr(srcA,srcB,dest)	\
-    Dint_copytoptr(srcA,srcB,dest)
+#घोषणा Duपूर्णांक_copyfromptr(src,destA,destB) \
+    Dपूर्णांक_copyfromptr(src,destA,destB)
+#घोषणा Duपूर्णांक_copytoptr(srcA,srcB,dest)	\
+    Dपूर्णांक_copytoptr(srcA,srcB,dest)
 
-#define Suint_isinexact_to_sgl(int_value) \
-    (int_value << 32 - SGL_EXP_LENGTH)
+#घोषणा Suपूर्णांक_isinexact_to_sgl(पूर्णांक_value) \
+    (पूर्णांक_value << 32 - SGL_EXP_LENGTH)
 
-#define Sgl_roundnearest_from_suint(suint_value,sgl_value)		\
-    if (suint_value & 1<<(SGL_EXP_LENGTH - 1))   /* round bit */	\
-    	if ((suint_value << 33 - SGL_EXP_LENGTH) || Slow(sgl_value))	\
+#घोषणा Sgl_roundnearest_from_suपूर्णांक(suपूर्णांक_value,sgl_value)		\
+    अगर (suपूर्णांक_value & 1<<(SGL_EXP_LENGTH - 1))   /* round bit */	\
+    	अगर ((suपूर्णांक_value << 33 - SGL_EXP_LENGTH) || Slow(sgl_value))	\
 		Sall(sgl_value)++
 
-#define Duint_isinexact_to_sgl(duint_valueA,duint_valueB)	\
-    ((Duintp1(duint_valueA) << 32 - SGL_EXP_LENGTH) || Duintp2(duint_valueB))
+#घोषणा Duपूर्णांक_isinexact_to_sgl(duपूर्णांक_valueA,duपूर्णांक_valueB)	\
+    ((Duपूर्णांकp1(duपूर्णांक_valueA) << 32 - SGL_EXP_LENGTH) || Duपूर्णांकp2(duपूर्णांक_valueB))
 
-#define Sgl_roundnearest_from_duint(duint_valueA,duint_valueB,sgl_value) \
-    if (Duintp1(duint_valueA) & 1<<(SGL_EXP_LENGTH - 1))		\
-    	if ((Duintp1(duint_valueA) << 33 - SGL_EXP_LENGTH) ||		\
-    	Duintp2(duint_valueB) || Slow(sgl_value)) Sall(sgl_value)++
+#घोषणा Sgl_roundnearest_from_duपूर्णांक(duपूर्णांक_valueA,duपूर्णांक_valueB,sgl_value) \
+    अगर (Duपूर्णांकp1(duपूर्णांक_valueA) & 1<<(SGL_EXP_LENGTH - 1))		\
+    	अगर ((Duपूर्णांकp1(duपूर्णांक_valueA) << 33 - SGL_EXP_LENGTH) ||		\
+    	Duपूर्णांकp2(duपूर्णांक_valueB) || Slow(sgl_value)) Sall(sgl_value)++
 
-#define Duint_isinexact_to_dbl(duint_value) 	\
-    (Duintp2(duint_value) << 32 - DBL_EXP_LENGTH)
+#घोषणा Duपूर्णांक_isinexact_to_dbl(duपूर्णांक_value) 	\
+    (Duपूर्णांकp2(duपूर्णांक_value) << 32 - DBL_EXP_LENGTH)
 
-#define Dbl_roundnearest_from_duint(duint_opndB,dbl_opndA,dbl_opndB) 	\
-    if (Duintp2(duint_opndB) & 1<<(DBL_EXP_LENGTH - 1))			\
-       if ((Duintp2(duint_opndB) << 33 - DBL_EXP_LENGTH) || Dlowp2(dbl_opndB)) \
-          if ((++Dallp2(dbl_opndB))==0) Dallp1(dbl_opndA)++
+#घोषणा Dbl_roundnearest_from_duपूर्णांक(duपूर्णांक_opndB,dbl_opndA,dbl_opndB) 	\
+    अगर (Duपूर्णांकp2(duपूर्णांक_opndB) & 1<<(DBL_EXP_LENGTH - 1))			\
+       अगर ((Duपूर्णांकp2(duपूर्णांक_opndB) << 33 - DBL_EXP_LENGTH) || Dlowp2(dbl_opndB)) \
+          अगर ((++Dallp2(dbl_opndB))==0) Dallp1(dbl_opndA)++
 
-#define Suint_from_sgl_mantissa(src,exponent,result)	\
-    Sall(result) = (unsigned)(Sall(src) << SGL_EXP_LENGTH)>>(31 - exponent)
+#घोषणा Suपूर्णांक_from_sgl_mantissa(src,exponent,result)	\
+    Sall(result) = (अचिन्हित)(Sall(src) << SGL_EXP_LENGTH)>>(31 - exponent)
 
-#define Sgl_isinexact_to_unsigned(sgl_value,exponent)	\
+#घोषणा Sgl_isinexact_to_अचिन्हित(sgl_value,exponent)	\
     Sgl_isinexact_to_fix(sgl_value,exponent)
 
-#define Duint_from_sgl_mantissa(sgl_value,exponent,dresultA,dresultB)	\
-  {unsigned int val = Sall(sgl_value) << SGL_EXP_LENGTH;		\
-    if (exponent <= 31) {						\
-	Dintp1(dresultA) = 0;						\
-	Dintp2(dresultB) = val >> (31 - exponent);			\
-    }									\
-    else {								\
-	Dintp1(dresultA) = val >> (63 - exponent);			\
-	Dintp2(dresultB) = exponent <= 62 ? val << (exponent - 31) : 0;	\
-    }									\
-  }
+#घोषणा Duपूर्णांक_from_sgl_mantissa(sgl_value,exponent,dresultA,dresultB)	\
+  अणुअचिन्हित पूर्णांक val = Sall(sgl_value) << SGL_EXP_LENGTH;		\
+    अगर (exponent <= 31) अणु						\
+	Dपूर्णांकp1(dresultA) = 0;						\
+	Dपूर्णांकp2(dresultB) = val >> (31 - exponent);			\
+    पूर्ण									\
+    अन्यथा अणु								\
+	Dपूर्णांकp1(dresultA) = val >> (63 - exponent);			\
+	Dपूर्णांकp2(dresultB) = exponent <= 62 ? val << (exponent - 31) : 0;	\
+    पूर्ण									\
+  पूर्ण
 
-#define Duint_setzero(dresultA,dresultB) 	\
-    Dint_setzero(dresultA,dresultB)
+#घोषणा Duपूर्णांक_setzero(dresultA,dresultB) 	\
+    Dपूर्णांक_setzero(dresultA,dresultB)
 
-#define Duint_increment(dresultA,dresultB) Dint_increment(dresultA,dresultB) 
+#घोषणा Duपूर्णांक_increment(dresultA,dresultB) Dपूर्णांक_increment(dresultA,dresultB) 
 
-#define Duint_isone_lowp2(dresultB)  Dint_isone_lowp2(dresultB)
+#घोषणा Duपूर्णांक_isone_lowp2(dresultB)  Dपूर्णांक_isone_lowp2(dresultB)
 
-#define Suint_from_dbl_mantissa(srcA,srcB,exponent,dest) \
-    Shiftdouble(Dallp1(srcA),Dallp2(srcB),21,dest); \
-    dest = (unsigned)dest >> 31 - exponent
+#घोषणा Suपूर्णांक_from_dbl_mantissa(srcA,srcB,exponent,dest) \
+    Shअगरtद्विगुन(Dallp1(srcA),Dallp2(srcB),21,dest); \
+    dest = (अचिन्हित)dest >> 31 - exponent
 
-#define Dbl_isinexact_to_unsigned(dbl_valueA,dbl_valueB,exponent) \
+#घोषणा Dbl_isinexact_to_अचिन्हित(dbl_valueA,dbl_valueB,exponent) \
     Dbl_isinexact_to_fix(dbl_valueA,dbl_valueB,exponent)
 
-#define Duint_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) \
-    Dint_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) 
+#घोषणा Duपूर्णांक_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) \
+    Dपूर्णांक_from_dbl_mantissa(dbl_valueA,dbl_valueB,exponent,destA,destB) 

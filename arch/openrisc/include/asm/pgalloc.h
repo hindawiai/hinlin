@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,66 +13,66 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_PGALLOC_H
-#define __ASM_OPENRISC_PGALLOC_H
+#अगर_अघोषित __ASM_OPENRISC_PGALLOC_H
+#घोषणा __ASM_OPENRISC_PGALLOC_H
 
-#include <asm/page.h>
-#include <linux/threads.h>
-#include <linux/mm.h>
-#include <linux/memblock.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/memblock.h>
 
-#define __HAVE_ARCH_PTE_ALLOC_ONE_KERNEL
-#include <asm-generic/pgalloc.h>
+#घोषणा __HAVE_ARCH_PTE_ALLOC_ONE_KERNEL
+#समावेश <यंत्र-generic/pgभाग.स>
 
-extern int mem_init_done;
+बाह्य पूर्णांक mem_init_करोne;
 
-#define pmd_populate_kernel(mm, pmd, pte) \
+#घोषणा pmd_populate_kernel(mm, pmd, pte) \
 	set_pmd(pmd, __pmd(_KERNPG_TABLE + __pa(pte)))
 
-static inline void pmd_populate(struct mm_struct *mm, pmd_t *pmd,
-				struct page *pte)
-{
+अटल अंतरभूत व्योम pmd_populate(काष्ठा mm_काष्ठा *mm, pmd_t *pmd,
+				काष्ठा page *pte)
+अणु
 	set_pmd(pmd, __pmd(_KERNPG_TABLE +
-		     ((unsigned long)page_to_pfn(pte) <<
-		     (unsigned long) PAGE_SHIFT)));
-}
+		     ((अचिन्हित दीर्घ)page_to_pfn(pte) <<
+		     (अचिन्हित दीर्घ) PAGE_SHIFT)));
+पूर्ण
 
 /*
- * Allocate and free page tables.
+ * Allocate and मुक्त page tables.
  */
-static inline pgd_t *pgd_alloc(struct mm_struct *mm)
-{
-	pgd_t *ret = (pgd_t *)__get_free_page(GFP_KERNEL);
+अटल अंतरभूत pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	pgd_t *ret = (pgd_t *)__get_मुक्त_page(GFP_KERNEL);
 
-	if (ret) {
-		memset(ret, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));
-		memcpy(ret + USER_PTRS_PER_PGD,
+	अगर (ret) अणु
+		स_रखो(ret, 0, USER_PTRS_PER_PGD * माप(pgd_t));
+		स_नकल(ret + USER_PTRS_PER_PGD,
 		       swapper_pg_dir + USER_PTRS_PER_PGD,
-		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
+		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * माप(pgd_t));
 
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-#if 0
+#अगर 0
 /* FIXME: This seems to be the preferred style, but we are using
  * current_pgd (from mm->pgd) to load kernel pages so we need it
- * initialized.  This needs to be looked into.
+ * initialized.  This needs to be looked पूर्णांकo.
  */
-extern inline pgd_t *pgd_alloc(struct mm_struct *mm)
-{
-	return (pgd_t *)get_zeroed_page(GFP_KERNEL);
-}
-#endif
+बाह्य अंतरभूत pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस (pgd_t *)get_zeroed_page(GFP_KERNEL);
+पूर्ण
+#पूर्ण_अगर
 
-extern pte_t *pte_alloc_one_kernel(struct mm_struct *mm);
+बाह्य pte_t *pte_alloc_one_kernel(काष्ठा mm_काष्ठा *mm);
 
-#define __pte_free_tlb(tlb, pte, addr)	\
-do {					\
+#घोषणा __pte_मुक्त_tlb(tlb, pte, addr)	\
+करो अणु					\
 	pgtable_pte_page_dtor(pte);	\
-	tlb_remove_page((tlb), (pte));	\
-} while (0)
+	tlb_हटाओ_page((tlb), (pte));	\
+पूर्ण जबतक (0)
 
-#define pmd_pgtable(pmd) pmd_page(pmd)
+#घोषणा pmd_pgtable(pmd) pmd_page(pmd)
 
-#endif
+#पूर्ण_अगर

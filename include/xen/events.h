@@ -1,140 +1,141 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_EVENTS_H
-#define _XEN_EVENTS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_EVENTS_H
+#घोषणा _XEN_EVENTS_H
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#ifdef CONFIG_PCI_MSI
-#include <linux/msi.h>
-#endif
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#अगर_घोषित CONFIG_PCI_MSI
+#समावेश <linux/msi.h>
+#पूर्ण_अगर
 
-#include <xen/interface/event_channel.h>
-#include <asm/xen/hypercall.h>
-#include <asm/xen/events.h>
+#समावेश <xen/पूर्णांकerface/event_channel.h>
+#समावेश <यंत्र/xen/hypercall.h>
+#समावेश <यंत्र/xen/events.h>
 
-struct xenbus_device;
+काष्ठा xenbus_device;
 
-unsigned xen_evtchn_nr_channels(void);
+अचिन्हित xen_evtchn_nr_channels(व्योम);
 
-int bind_evtchn_to_irq(evtchn_port_t evtchn);
-int bind_evtchn_to_irqhandler(evtchn_port_t evtchn,
+पूर्णांक bind_evtchn_to_irq(evtchn_port_t evtchn);
+पूर्णांक bind_evtchn_to_irqhandler(evtchn_port_t evtchn,
 			      irq_handler_t handler,
-			      unsigned long irqflags, const char *devname,
-			      void *dev_id);
-int bind_evtchn_to_irqhandler_lateeoi(evtchn_port_t evtchn,
+			      अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname,
+			      व्योम *dev_id);
+पूर्णांक bind_evtchn_to_irqhandler_lateeoi(evtchn_port_t evtchn,
 			      irq_handler_t handler,
-			      unsigned long irqflags, const char *devname,
-			      void *dev_id);
-int bind_virq_to_irq(unsigned int virq, unsigned int cpu, bool percpu);
-int bind_virq_to_irqhandler(unsigned int virq, unsigned int cpu,
+			      अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname,
+			      व्योम *dev_id);
+पूर्णांक bind_virq_to_irq(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu, bool percpu);
+पूर्णांक bind_virq_to_irqhandler(अचिन्हित पूर्णांक virq, अचिन्हित पूर्णांक cpu,
 			    irq_handler_t handler,
-			    unsigned long irqflags, const char *devname,
-			    void *dev_id);
-int bind_ipi_to_irqhandler(enum ipi_vector ipi,
-			   unsigned int cpu,
+			    अचिन्हित दीर्घ irqflags, स्थिर अक्षर *devname,
+			    व्योम *dev_id);
+पूर्णांक bind_ipi_to_irqhandler(क्रमागत ipi_vector ipi,
+			   अचिन्हित पूर्णांक cpu,
 			   irq_handler_t handler,
-			   unsigned long irqflags,
-			   const char *devname,
-			   void *dev_id);
-int bind_interdomain_evtchn_to_irq_lateeoi(struct xenbus_device *dev,
+			   अचिन्हित दीर्घ irqflags,
+			   स्थिर अक्षर *devname,
+			   व्योम *dev_id);
+पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irq_lateeoi(काष्ठा xenbus_device *dev,
 					   evtchn_port_t remote_port);
-int bind_interdomain_evtchn_to_irqhandler_lateeoi(struct xenbus_device *dev,
+पूर्णांक bind_पूर्णांकerकरोमुख्य_evtchn_to_irqhandler_lateeoi(काष्ठा xenbus_device *dev,
 						  evtchn_port_t remote_port,
 						  irq_handler_t handler,
-						  unsigned long irqflags,
-						  const char *devname,
-						  void *dev_id);
+						  अचिन्हित दीर्घ irqflags,
+						  स्थिर अक्षर *devname,
+						  व्योम *dev_id);
 
 /*
- * Common unbind function for all event sources. Takes IRQ to unbind from.
- * Automatically closes the underlying event channel (even for bindings
+ * Common unbind function क्रम all event sources. Takes IRQ to unbind from.
+ * Automatically बंदs the underlying event channel (even क्रम bindings
  * made with bind_evtchn_to_irqhandler()).
  */
-void unbind_from_irqhandler(unsigned int irq, void *dev_id);
+व्योम unbind_from_irqhandler(अचिन्हित पूर्णांक irq, व्योम *dev_id);
 
 /*
- * Send late EOI for an IRQ bound to an event channel via one of the *_lateeoi
+ * Send late EOI क्रम an IRQ bound to an event channel via one of the *_lateeoi
  * functions above.
  */
-void xen_irq_lateeoi(unsigned int irq, unsigned int eoi_flags);
+व्योम xen_irq_lateeoi(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक eoi_flags);
 /* Signal an event was spurious, i.e. there was no action resulting from it. */
-#define XEN_EOI_FLAG_SPURIOUS	0x00000001
+#घोषणा XEN_EOI_FLAG_SPURIOUS	0x00000001
 
-#define XEN_IRQ_PRIORITY_MAX     EVTCHN_FIFO_PRIORITY_MAX
-#define XEN_IRQ_PRIORITY_DEFAULT EVTCHN_FIFO_PRIORITY_DEFAULT
-#define XEN_IRQ_PRIORITY_MIN     EVTCHN_FIFO_PRIORITY_MIN
-int xen_set_irq_priority(unsigned irq, unsigned priority);
+#घोषणा XEN_IRQ_PRIORITY_MAX     EVTCHN_FIFO_PRIORITY_MAX
+#घोषणा XEN_IRQ_PRIORITY_DEFAULT EVTCHN_FIFO_PRIORITY_DEFAULT
+#घोषणा XEN_IRQ_PRIORITY_MIN     EVTCHN_FIFO_PRIORITY_MIN
+पूर्णांक xen_set_irq_priority(अचिन्हित irq, अचिन्हित priority);
 
 /*
  * Allow extra references to event channels exposed to userspace by evtchn
  */
-int evtchn_make_refcounted(evtchn_port_t evtchn);
-int evtchn_get(evtchn_port_t evtchn);
-void evtchn_put(evtchn_port_t evtchn);
+पूर्णांक evtchn_make_refcounted(evtchn_port_t evtchn);
+पूर्णांक evtchn_get(evtchn_port_t evtchn);
+व्योम evtchn_put(evtchn_port_t evtchn);
 
-void xen_send_IPI_one(unsigned int cpu, enum ipi_vector vector);
-void rebind_evtchn_irq(evtchn_port_t evtchn, int irq);
-int xen_set_affinity_evtchn(struct irq_desc *desc, unsigned int tcpu);
+व्योम xen_send_IPI_one(अचिन्हित पूर्णांक cpu, क्रमागत ipi_vector vector);
+व्योम rebind_evtchn_irq(evtchn_port_t evtchn, पूर्णांक irq);
+पूर्णांक xen_set_affinity_evtchn(काष्ठा irq_desc *desc, अचिन्हित पूर्णांक tcpu);
 
-static inline void notify_remote_via_evtchn(evtchn_port_t port)
-{
-	struct evtchn_send send = { .port = port };
-	(void)HYPERVISOR_event_channel_op(EVTCHNOP_send, &send);
-}
+अटल अंतरभूत व्योम notअगरy_remote_via_evtchn(evtchn_port_t port)
+अणु
+	काष्ठा evtchn_send send = अणु .port = port पूर्ण;
+	(व्योम)HYPERVISOR_event_channel_op(EVTCHNOP_send, &send);
+पूर्ण
 
-void notify_remote_via_irq(int irq);
+व्योम notअगरy_remote_via_irq(पूर्णांक irq);
 
-void xen_irq_resume(void);
+व्योम xen_irq_resume(व्योम);
 
-/* Clear an irq's pending state, in preparation for polling on it */
-void xen_clear_irq_pending(int irq);
-void xen_set_irq_pending(int irq);
-bool xen_test_irq_pending(int irq);
+/* Clear an irq's pending state, in preparation क्रम polling on it */
+व्योम xen_clear_irq_pending(पूर्णांक irq);
+व्योम xen_set_irq_pending(पूर्णांक irq);
+bool xen_test_irq_pending(पूर्णांक irq);
 
-/* Poll waiting for an irq to become pending.  In the usual case, the
-   irq will be disabled so it won't deliver an interrupt. */
-void xen_poll_irq(int irq);
+/* Poll रुकोing क्रम an irq to become pending.  In the usual हाल, the
+   irq will be disabled so it won't deliver an पूर्णांकerrupt. */
+व्योम xen_poll_irq(पूर्णांक irq);
 
-/* Poll waiting for an irq to become pending with a timeout.  In the usual case,
- * the irq will be disabled so it won't deliver an interrupt. */
-void xen_poll_irq_timeout(int irq, u64 timeout);
+/* Poll रुकोing क्रम an irq to become pending with a समयout.  In the usual हाल,
+ * the irq will be disabled so it won't deliver an पूर्णांकerrupt. */
+व्योम xen_poll_irq_समयout(पूर्णांक irq, u64 समयout);
 
 /* Determine the IRQ which is bound to an event channel */
-unsigned int irq_from_evtchn(evtchn_port_t evtchn);
-int irq_from_virq(unsigned int cpu, unsigned int virq);
-evtchn_port_t evtchn_from_irq(unsigned irq);
+अचिन्हित पूर्णांक irq_from_evtchn(evtchn_port_t evtchn);
+पूर्णांक irq_from_virq(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक virq);
+evtchn_port_t evtchn_from_irq(अचिन्हित irq);
 
-int xen_set_callback_via(uint64_t via);
-void xen_evtchn_do_upcall(struct pt_regs *regs);
-void xen_hvm_evtchn_do_upcall(void);
+पूर्णांक xen_set_callback_via(uपूर्णांक64_t via);
+व्योम xen_evtchn_करो_upcall(काष्ठा pt_regs *regs);
+व्योम xen_hvm_evtchn_करो_upcall(व्योम);
 
-/* Bind a pirq for a physical interrupt to an irq. */
-int xen_bind_pirq_gsi_to_irq(unsigned gsi,
-			     unsigned pirq, int shareable, char *name);
+/* Bind a pirq क्रम a physical पूर्णांकerrupt to an irq. */
+पूर्णांक xen_bind_pirq_gsi_to_irq(अचिन्हित gsi,
+			     अचिन्हित pirq, पूर्णांक shareable, अक्षर *name);
 
-#ifdef CONFIG_PCI_MSI
-/* Allocate a pirq for a MSI style physical interrupt. */
-int xen_allocate_pirq_msi(struct pci_dev *dev, struct msi_desc *msidesc);
+#अगर_घोषित CONFIG_PCI_MSI
+/* Allocate a pirq क्रम a MSI style physical पूर्णांकerrupt. */
+पूर्णांक xen_allocate_pirq_msi(काष्ठा pci_dev *dev, काष्ठा msi_desc *msidesc);
 /* Bind an PSI pirq to an irq. */
-int xen_bind_pirq_msi_to_irq(struct pci_dev *dev, struct msi_desc *msidesc,
-			     int pirq, int nvec, const char *name, domid_t domid);
-#endif
+पूर्णांक xen_bind_pirq_msi_to_irq(काष्ठा pci_dev *dev, काष्ठा msi_desc *msidesc,
+			     पूर्णांक pirq, पूर्णांक nvec, स्थिर अक्षर *name, करोmid_t करोmid);
+#पूर्ण_अगर
 
-/* De-allocates the above mentioned physical interrupt. */
-int xen_destroy_irq(int irq);
+/* De-allocates the above mentioned physical पूर्णांकerrupt. */
+पूर्णांक xen_destroy_irq(पूर्णांक irq);
 
 /* Return irq from pirq */
-int xen_irq_from_pirq(unsigned pirq);
+पूर्णांक xen_irq_from_pirq(अचिन्हित pirq);
 
 /* Return the pirq allocated to the irq. */
-int xen_pirq_from_irq(unsigned irq);
+पूर्णांक xen_pirq_from_irq(अचिन्हित irq);
 
 /* Return the irq allocated to the gsi */
-int xen_irq_from_gsi(unsigned gsi);
+पूर्णांक xen_irq_from_gsi(अचिन्हित gsi);
 
-/* Determine whether to ignore this IRQ if it is passed to a guest. */
-int xen_test_irq_shared(int irq);
+/* Determine whether to ignore this IRQ अगर it is passed to a guest. */
+पूर्णांक xen_test_irq_shared(पूर्णांक irq);
 
-/* initialize Xen IRQ subsystem */
-void xen_init_IRQ(void);
-#endif	/* _XEN_EVENTS_H */
+/* initialize Xen IRQ subप्रणाली */
+व्योम xen_init_IRQ(व्योम);
+#पूर्ण_अगर	/* _XEN_EVENTS_H */

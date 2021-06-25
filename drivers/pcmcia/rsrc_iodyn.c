@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * rsrc_iodyn.c -- Resource management routines for MEM-static sockets.
+ * rsrc_iodyn.c -- Resource management routines क्रम MEM-अटल sockets.
  *
  * The initial developer of the original code is David A. Hinds
- * <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ * <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  *
  * (C) 1999		David A. Hinds
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-#include <pcmcia/ss.h>
-#include <pcmcia/cistpl.h>
-#include "cs_internal.h"
+#समावेश <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश "cs_internal.h"
 
 
-struct pcmcia_align_data {
-	unsigned long	mask;
-	unsigned long	offset;
-};
+काष्ठा pcmcia_align_data अणु
+	अचिन्हित दीर्घ	mask;
+	अचिन्हित दीर्घ	offset;
+पूर्ण;
 
-static resource_size_t pcmcia_align(void *align_data,
-				const struct resource *res,
-				resource_size_t size, resource_size_t align)
-{
-	struct pcmcia_align_data *data = align_data;
-	resource_size_t start;
+अटल resource_माप_प्रकार pcmcia_align(व्योम *align_data,
+				स्थिर काष्ठा resource *res,
+				resource_माप_प्रकार size, resource_माप_प्रकार align)
+अणु
+	काष्ठा pcmcia_align_data *data = align_data;
+	resource_माप_प्रकार start;
 
 	start = (res->start & ~data->mask) + data->offset;
-	if (start < res->start)
+	अगर (start < res->start)
 		start += data->mask + 1;
 
-#ifdef CONFIG_X86
-	if (res->flags & IORESOURCE_IO) {
-		if (start & 0x300)
+#अगर_घोषित CONFIG_X86
+	अगर (res->flags & IORESOURCE_IO) अणु
+		अगर (start & 0x300)
 			start = (start + 0x3ff) & ~0x3ff;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_M68K
-	if (res->flags & IORESOURCE_IO) {
-		if ((res->start + size - 1) >= 1024)
+#अगर_घोषित CONFIG_M68K
+	अगर (res->flags & IORESOURCE_IO) अणु
+		अगर ((res->start + size - 1) >= 1024)
 			start = res->end;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return start;
-}
+	वापस start;
+पूर्ण
 
 
-static struct resource *__iodyn_find_io_region(struct pcmcia_socket *s,
-					unsigned long base, int num,
-					unsigned long align)
-{
-	struct resource *res = pcmcia_make_resource(0, num, IORESOURCE_IO,
+अटल काष्ठा resource *__iodyn_find_io_region(काष्ठा pcmcia_socket *s,
+					अचिन्हित दीर्घ base, पूर्णांक num,
+					अचिन्हित दीर्घ align)
+अणु
+	काष्ठा resource *res = pcmcia_make_resource(0, num, IORESOURCE_IO,
 						dev_name(&s->dev));
-	struct pcmcia_align_data data;
-	unsigned long min = base;
-	int ret;
+	काष्ठा pcmcia_align_data data;
+	अचिन्हित दीर्घ min = base;
+	पूर्णांक ret;
 
 	data.mask = align - 1;
 	data.offset = base & data.mask;
 
-#ifdef CONFIG_PCI
-	if (s->cb_dev) {
+#अगर_घोषित CONFIG_PCI
+	अगर (s->cb_dev) अणु
 		ret = pci_bus_alloc_resource(s->cb_dev->bus, res, num, 1,
 					     min, 0, pcmcia_align, &data);
-	} else
-#endif
+	पूर्ण अन्यथा
+#पूर्ण_अगर
 		ret = allocate_resource(&ioport_resource, res, num, min, ~0UL,
 					1, pcmcia_align, &data);
 
-	if (ret != 0) {
-		kfree(res);
-		res = NULL;
-	}
-	return res;
-}
+	अगर (ret != 0) अणु
+		kमुक्त(res);
+		res = शून्य;
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static int iodyn_find_io(struct pcmcia_socket *s, unsigned int attr,
-			unsigned int *base, unsigned int num,
-			unsigned int align, struct resource **parent)
-{
-	int i, ret = 0;
+अटल पूर्णांक iodyn_find_io(काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक attr,
+			अचिन्हित पूर्णांक *base, अचिन्हित पूर्णांक num,
+			अचिन्हित पूर्णांक align, काष्ठा resource **parent)
+अणु
+	पूर्णांक i, ret = 0;
 
-	/* Check for an already-allocated window that must conflict with
-	 * what was asked for.  It is a hack because it does not catch all
+	/* Check क्रम an alपढ़ोy-allocated winकरोw that must conflict with
+	 * what was asked क्रम.  It is a hack because it करोes not catch all
 	 * potential conflicts, just the most obvious ones.
 	 */
-	for (i = 0; i < MAX_IO_WIN; i++) {
-		if (!s->io[i].res)
-			continue;
+	क्रम (i = 0; i < MAX_IO_WIN; i++) अणु
+		अगर (!s->io[i].res)
+			जारी;
 
-		if (!*base)
-			continue;
+		अगर (!*base)
+			जारी;
 
-		if ((s->io[i].res->start & (align-1)) == *base)
-			return -EBUSY;
-	}
+		अगर ((s->io[i].res->start & (align-1)) == *base)
+			वापस -EBUSY;
+	पूर्ण
 
-	for (i = 0; i < MAX_IO_WIN; i++) {
-		struct resource *res = s->io[i].res;
-		unsigned int try;
+	क्रम (i = 0; i < MAX_IO_WIN; i++) अणु
+		काष्ठा resource *res = s->io[i].res;
+		अचिन्हित पूर्णांक try;
 
-		if (res && (res->flags & IORESOURCE_BITS) !=
+		अगर (res && (res->flags & IORESOURCE_BITS) !=
 			(attr & IORESOURCE_BITS))
-			continue;
+			जारी;
 
-		if (!res) {
-			if (align == 0)
+		अगर (!res) अणु
+			अगर (align == 0)
 				align = 0x10000;
 
 			res = s->io[i].res = __iodyn_find_io_region(s, *base,
 								num, align);
-			if (!res)
-				return -EINVAL;
+			अगर (!res)
+				वापस -EINVAL;
 
 			*base = res->start;
 			s->io[i].res->flags =
@@ -125,44 +126,44 @@ static int iodyn_find_io(struct pcmcia_socket *s, unsigned int attr,
 					(attr & IORESOURCE_BITS));
 			s->io[i].InUse = num;
 			*parent = res;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* Try to extend top of window */
+		/* Try to extend top of winकरोw */
 		try = res->end + 1;
-		if ((*base == 0) || (*base == try)) {
-			if (adjust_resource(s->io[i].res, res->start,
+		अगर ((*base == 0) || (*base == try)) अणु
+			अगर (adjust_resource(s->io[i].res, res->start,
 					    resource_size(res) + num))
-				continue;
+				जारी;
 			*base = try;
 			s->io[i].InUse += num;
 			*parent = res;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		/* Try to extend bottom of window */
+		/* Try to extend bottom of winकरोw */
 		try = res->start - num;
-		if ((*base == 0) || (*base == try)) {
-			if (adjust_resource(s->io[i].res,
+		अगर ((*base == 0) || (*base == try)) अणु
+			अगर (adjust_resource(s->io[i].res,
 					    res->start - num,
 					    resource_size(res) + num))
-				continue;
+				जारी;
 			*base = try;
 			s->io[i].InUse += num;
 			*parent = res;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
-struct pccard_resource_ops pccard_iodyn_ops = {
-	.validate_mem = NULL,
+काष्ठा pccard_resource_ops pccard_iodyn_ops = अणु
+	.validate_mem = शून्य,
 	.find_io = iodyn_find_io,
-	.find_mem = NULL,
-	.init = static_init,
-	.exit = NULL,
-};
+	.find_mem = शून्य,
+	.init = अटल_init,
+	.निकास = शून्य,
+पूर्ण;
 EXPORT_SYMBOL(pccard_iodyn_ops);

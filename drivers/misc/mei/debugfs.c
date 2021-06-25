@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2012-2016, Intel Corporation. All rights reserved
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
 
-#include <linux/mei.h>
+#समावेश <linux/mei.h>
 
-#include "mei_dev.h"
-#include "client.h"
-#include "hw.h"
+#समावेश "mei_dev.h"
+#समावेश "client.h"
+#समावेश "hw.h"
 
-static int mei_dbgfs_meclients_show(struct seq_file *m, void *unused)
-{
-	struct mei_device *dev = m->private;
-	struct mei_me_client *me_cl;
-	int i = 0;
+अटल पूर्णांक mei_dbgfs_meclients_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा mei_device *dev = m->निजी;
+	काष्ठा mei_me_client *me_cl;
+	पूर्णांक i = 0;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	down_read(&dev->me_clients_rwsem);
+	करोwn_पढ़ो(&dev->me_clients_rwsem);
 
-	seq_puts(m, "  |id|fix|         UUID                       |con|msg len|sb|refc|vt|\n");
+	seq_माला_दो(m, "  |id|fix|         UUID                       |con|msg len|sb|refc|vt|\n");
 
-	/*  if the driver is not enabled the list won't be consistent */
-	if (dev->dev_state != MEI_DEV_ENABLED)
-		goto out;
+	/*  अगर the driver is not enabled the list won't be consistent */
+	अगर (dev->dev_state != MEI_DEV_ENABLED)
+		जाओ out;
 
-	list_for_each_entry(me_cl, &dev->me_clients, list) {
-		if (!mei_me_cl_get(me_cl))
-			continue;
+	list_क्रम_each_entry(me_cl, &dev->me_clients, list) अणु
+		अगर (!mei_me_cl_get(me_cl))
+			जारी;
 
-		seq_printf(m, "%2d|%2d|%3d|%pUl|%3d|%7d|%2d|%4d|%2d|\n",
+		seq_म_लिखो(m, "%2d|%2d|%3d|%pUl|%3d|%7d|%2d|%4d|%2d|\n",
 			   i++, me_cl->client_id,
 			   me_cl->props.fixed_address,
 			   &me_cl->props.protocol_name,
 			   me_cl->props.max_number_of_connections,
 			   me_cl->props.max_msg_length,
 			   me_cl->props.single_recv_buf,
-			   kref_read(&me_cl->refcnt),
+			   kref_पढ़ो(&me_cl->refcnt),
 			   me_cl->props.vt_supported);
 		mei_me_cl_put(me_cl);
-	}
+	पूर्ण
 
 out:
-	up_read(&dev->me_clients_rwsem);
-	return 0;
-}
+	up_पढ़ो(&dev->me_clients_rwsem);
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mei_dbgfs_meclients);
 
-static int mei_dbgfs_active_show(struct seq_file *m, void *unused)
-{
-	struct mei_device *dev = m->private;
-	struct mei_cl *cl;
-	int i = 0;
+अटल पूर्णांक mei_dbgfs_active_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा mei_device *dev = m->निजी;
+	काष्ठा mei_cl *cl;
+	पूर्णांक i = 0;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	mutex_lock(&dev->device_lock);
 
-	seq_puts(m, "   |me|host|state|rd|wr|wrq\n");
+	seq_माला_दो(m, "   |me|host|state|rd|wr|wrq\n");
 
-	/*  if the driver is not enabled the list won't be consistent */
-	if (dev->dev_state != MEI_DEV_ENABLED)
-		goto out;
+	/*  अगर the driver is not enabled the list won't be consistent */
+	अगर (dev->dev_state != MEI_DEV_ENABLED)
+		जाओ out;
 
-	list_for_each_entry(cl, &dev->file_list, link) {
+	list_क्रम_each_entry(cl, &dev->file_list, link) अणु
 
-		seq_printf(m, "%3d|%2d|%4d|%5d|%2d|%2d|%3u\n",
+		seq_म_लिखो(m, "%3d|%2d|%4d|%5d|%2d|%2d|%3u\n",
 			   i, mei_cl_me_id(cl), cl->host_client_id, cl->state,
 			   !list_empty(&cl->rd_completed), cl->writing_state,
 			   cl->tx_cb_queued);
 		i++;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&dev->device_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mei_dbgfs_active);
 
-static int mei_dbgfs_devstate_show(struct seq_file *m, void *unused)
-{
-	struct mei_device *dev = m->private;
+अटल पूर्णांक mei_dbgfs_devstate_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा mei_device *dev = m->निजी;
 
-	seq_printf(m, "dev: %s\n", mei_dev_state_str(dev->dev_state));
-	seq_printf(m, "hbm: %s\n", mei_hbm_state_str(dev->hbm_state));
+	seq_म_लिखो(m, "dev: %s\n", mei_dev_state_str(dev->dev_state));
+	seq_म_लिखो(m, "hbm: %s\n", mei_hbm_state_str(dev->hbm_state));
 
-	if (dev->hbm_state >= MEI_HBM_ENUM_CLIENTS &&
-	    dev->hbm_state <= MEI_HBM_STARTED) {
-		seq_puts(m, "hbm features:\n");
-		seq_printf(m, "\tPG: %01d\n", dev->hbm_f_pg_supported);
-		seq_printf(m, "\tDC: %01d\n", dev->hbm_f_dc_supported);
-		seq_printf(m, "\tIE: %01d\n", dev->hbm_f_ie_supported);
-		seq_printf(m, "\tDOT: %01d\n", dev->hbm_f_dot_supported);
-		seq_printf(m, "\tEV: %01d\n", dev->hbm_f_ev_supported);
-		seq_printf(m, "\tFA: %01d\n", dev->hbm_f_fa_supported);
-		seq_printf(m, "\tOS: %01d\n", dev->hbm_f_os_supported);
-		seq_printf(m, "\tDR: %01d\n", dev->hbm_f_dr_supported);
-		seq_printf(m, "\tVT: %01d\n", dev->hbm_f_vt_supported);
-		seq_printf(m, "\tCAP: %01d\n", dev->hbm_f_cap_supported);
-		seq_printf(m, "\tCD: %01d\n", dev->hbm_f_cd_supported);
-	}
+	अगर (dev->hbm_state >= MEI_HBM_ENUM_CLIENTS &&
+	    dev->hbm_state <= MEI_HBM_STARTED) अणु
+		seq_माला_दो(m, "hbm features:\n");
+		seq_म_लिखो(m, "\tPG: %01d\n", dev->hbm_f_pg_supported);
+		seq_म_लिखो(m, "\tDC: %01d\n", dev->hbm_f_dc_supported);
+		seq_म_लिखो(m, "\tIE: %01d\n", dev->hbm_f_ie_supported);
+		seq_म_लिखो(m, "\tDOT: %01d\n", dev->hbm_f_करोt_supported);
+		seq_म_लिखो(m, "\tEV: %01d\n", dev->hbm_f_ev_supported);
+		seq_म_लिखो(m, "\tFA: %01d\n", dev->hbm_f_fa_supported);
+		seq_म_लिखो(m, "\tOS: %01d\n", dev->hbm_f_os_supported);
+		seq_म_लिखो(m, "\tDR: %01d\n", dev->hbm_f_dr_supported);
+		seq_म_लिखो(m, "\tVT: %01d\n", dev->hbm_f_vt_supported);
+		seq_म_लिखो(m, "\tCAP: %01d\n", dev->hbm_f_cap_supported);
+		seq_म_लिखो(m, "\tCD: %01d\n", dev->hbm_f_cd_supported);
+	पूर्ण
 
-	seq_printf(m, "pg:  %s, %s\n",
+	seq_म_लिखो(m, "pg:  %s, %s\n",
 		   mei_pg_is_enabled(dev) ? "ENABLED" : "DISABLED",
 		   mei_pg_state_str(mei_pg_state(dev)));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(mei_dbgfs_devstate);
 
-static ssize_t mei_dbgfs_write_allow_fa(struct file *file,
-					const char __user *user_buf,
-					size_t count, loff_t *ppos)
-{
-	struct mei_device *dev;
-	int ret;
+अटल sमाप_प्रकार mei_dbgfs_ग_लिखो_allow_fa(काष्ठा file *file,
+					स्थिर अक्षर __user *user_buf,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mei_device *dev;
+	पूर्णांक ret;
 
-	dev = container_of(file->private_data,
-			   struct mei_device, allow_fixed_address);
+	dev = container_of(file->निजी_data,
+			   काष्ठा mei_device, allow_fixed_address);
 
-	ret = debugfs_write_file_bool(file, user_buf, count, ppos);
-	if (ret < 0)
-		return ret;
+	ret = debugfs_ग_लिखो_file_bool(file, user_buf, count, ppos);
+	अगर (ret < 0)
+		वापस ret;
 	dev->override_fixed_address = true;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations mei_dbgfs_allow_fa_fops = {
-	.open = simple_open,
-	.read = debugfs_read_file_bool,
-	.write = mei_dbgfs_write_allow_fa,
+अटल स्थिर काष्ठा file_operations mei_dbgfs_allow_fa_fops = अणु
+	.खोलो = simple_खोलो,
+	.पढ़ो = debugfs_पढ़ो_file_bool,
+	.ग_लिखो = mei_dbgfs_ग_लिखो_allow_fa,
 	.llseek = generic_file_llseek,
-};
+पूर्ण;
 
 /**
- * mei_dbgfs_deregister - Remove the debugfs files and directories
+ * mei_dbgfs_deरेजिस्टर - Remove the debugfs files and directories
  *
- * @dev: the mei device structure
+ * @dev: the mei device काष्ठाure
  */
-void mei_dbgfs_deregister(struct mei_device *dev)
-{
-	if (!dev->dbgfs_dir)
-		return;
-	debugfs_remove_recursive(dev->dbgfs_dir);
-	dev->dbgfs_dir = NULL;
-}
+व्योम mei_dbgfs_deरेजिस्टर(काष्ठा mei_device *dev)
+अणु
+	अगर (!dev->dbgfs_dir)
+		वापस;
+	debugfs_हटाओ_recursive(dev->dbgfs_dir);
+	dev->dbgfs_dir = शून्य;
+पूर्ण
 
 /**
- * mei_dbgfs_register - Add the debugfs files
+ * mei_dbgfs_रेजिस्टर - Add the debugfs files
  *
- * @dev: the mei device structure
+ * @dev: the mei device काष्ठाure
  * @name: the mei device name
  */
-void mei_dbgfs_register(struct mei_device *dev, const char *name)
-{
-	struct dentry *dir;
+व्योम mei_dbgfs_रेजिस्टर(काष्ठा mei_device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा dentry *dir;
 
-	dir = debugfs_create_dir(name, NULL);
+	dir = debugfs_create_dir(name, शून्य);
 	dev->dbgfs_dir = dir;
 
 	debugfs_create_file("meclients", S_IRUSR, dir, dev,
@@ -175,4 +176,4 @@ void mei_dbgfs_register(struct mei_device *dev, const char *name)
 	debugfs_create_file("allow_fixed_address", S_IRUSR | S_IWUSR, dir,
 			    &dev->allow_fixed_address,
 			    &mei_dbgfs_allow_fa_fops);
-}
+पूर्ण

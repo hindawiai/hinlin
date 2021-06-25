@@ -1,60 +1,61 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2017-2018 Intel Corporation
+ * Copyright तऊ 2017-2018 Intel Corporation
  */
 
-#ifndef _INTEL_WOPCM_H_
-#define _INTEL_WOPCM_H_
+#अगर_अघोषित _INTEL_WOPCM_H_
+#घोषणा _INTEL_WOPCM_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
- * struct intel_wopcm - Overall WOPCM info and WOPCM regions.
+ * काष्ठा पूर्णांकel_wopcm - Overall WOPCM info and WOPCM regions.
  * @size: Size of overall WOPCM.
  * @guc: GuC WOPCM Region info.
  * @guc.base: GuC WOPCM base which is offset from WOPCM base.
  * @guc.size: Size of the GuC WOPCM region.
  */
-struct intel_wopcm {
+काष्ठा पूर्णांकel_wopcm अणु
 	u32 size;
-	struct {
+	काष्ठा अणु
 		u32 base;
 		u32 size;
-	} guc;
-};
+	पूर्ण guc;
+पूर्ण;
 
 /**
- * intel_wopcm_guc_base()
- * @wopcm:	intel_wopcm structure
+ * पूर्णांकel_wopcm_guc_base()
+ * @wopcm:	पूर्णांकel_wopcm काष्ठाure
  *
- * Returns the base of the WOPCM shadowed region.
+ * Returns the base of the WOPCM shaकरोwed region.
  *
  * Returns:
- * 0 if GuC is not present or not in use.
+ * 0 अगर GuC is not present or not in use.
  * Otherwise, the GuC WOPCM base.
  */
-static inline u32 intel_wopcm_guc_base(struct intel_wopcm *wopcm)
-{
-	return wopcm->guc.base;
-}
+अटल अंतरभूत u32 पूर्णांकel_wopcm_guc_base(काष्ठा पूर्णांकel_wopcm *wopcm)
+अणु
+	वापस wopcm->guc.base;
+पूर्ण
 
 /**
- * intel_wopcm_guc_size()
- * @wopcm:	intel_wopcm structure
+ * पूर्णांकel_wopcm_guc_size()
+ * @wopcm:	पूर्णांकel_wopcm काष्ठाure
  *
- * Returns size of the WOPCM shadowed region.
+ * Returns size of the WOPCM shaकरोwed region.
  *
  * Returns:
- * 0 if GuC is not present or not in use.
+ * 0 अगर GuC is not present or not in use.
  * Otherwise, the GuC WOPCM size.
  */
-static inline u32 intel_wopcm_guc_size(struct intel_wopcm *wopcm)
-{
-	return wopcm->guc.size;
-}
+अटल अंतरभूत u32 पूर्णांकel_wopcm_guc_size(काष्ठा पूर्णांकel_wopcm *wopcm)
+अणु
+	वापस wopcm->guc.size;
+पूर्ण
 
-void intel_wopcm_init_early(struct intel_wopcm *wopcm);
-void intel_wopcm_init(struct intel_wopcm *wopcm);
+व्योम पूर्णांकel_wopcm_init_early(काष्ठा पूर्णांकel_wopcm *wopcm);
+व्योम पूर्णांकel_wopcm_init(काष्ठा पूर्णांकel_wopcm *wopcm);
 
-#endif
+#पूर्ण_अगर

@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#include <sys/socket.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <sys/socket.h>
+#समावेश <bpf/bpf_helpers.h>
 
-int get_set_sk_priority(void *ctx)
-{
-	int prio;
+पूर्णांक get_set_sk_priority(व्योम *ctx)
+अणु
+	पूर्णांक prio;
 
-	/* Verify that context allows calling bpf_getsockopt and
-	 * bpf_setsockopt by reading and writing back socket
+	/* Verअगरy that context allows calling bpf_माला_लोockopt and
+	 * bpf_setsockopt by पढ़ोing and writing back socket
 	 * priority.
 	 */
 
-	if (bpf_getsockopt(ctx, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-		return 0;
-	if (bpf_setsockopt(ctx, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-		return 0;
+	अगर (bpf_माला_लोockopt(ctx, SOL_SOCKET, SO_PRIORITY, &prio, माप(prio)))
+		वापस 0;
+	अगर (bpf_setsockopt(ctx, SOL_SOCKET, SO_PRIORITY, &prio, माप(prio)))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

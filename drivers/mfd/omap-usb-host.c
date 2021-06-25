@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**
- * omap-usb-host.c - The USBHS core driver for OMAP EHCI & OHCI
+ * omap-usb-host.c - The USBHS core driver क्रम OMAP EHCI & OHCI
  *
  * Copyright (C) 2011-2013 Texas Instruments Incorporated - https://www.ti.com
  * Author: Keshava Munegowda <keshava_mgowda@ti.com>
  * Author: Roger Quadros <rogerq@ti.com>
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/gpio.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/usb-omap.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/usb-omap.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/err.h>
 
-#include "omap-usb.h"
+#समावेश "omap-usb.h"
 
-#define USBHS_DRIVER_NAME	"usbhs_omap"
-#define OMAP_EHCI_DEVICE	"ehci-omap"
-#define OMAP_OHCI_DEVICE	"ohci-omap3"
+#घोषणा USBHS_DRIVER_NAME	"usbhs_omap"
+#घोषणा OMAP_EHCI_DEVICE	"ehci-omap"
+#घोषणा OMAP_OHCI_DEVICE	"ohci-omap3"
 
 /* OMAP USBHOST Register addresses  */
 
 /* UHH Register Set */
-#define	OMAP_UHH_REVISION				(0x00)
-#define	OMAP_UHH_SYSCONFIG				(0x10)
-#define	OMAP_UHH_SYSCONFIG_MIDLEMODE			(1 << 12)
-#define	OMAP_UHH_SYSCONFIG_CACTIVITY			(1 << 8)
-#define	OMAP_UHH_SYSCONFIG_SIDLEMODE			(1 << 3)
-#define	OMAP_UHH_SYSCONFIG_ENAWAKEUP			(1 << 2)
-#define	OMAP_UHH_SYSCONFIG_SOFTRESET			(1 << 1)
-#define	OMAP_UHH_SYSCONFIG_AUTOIDLE			(1 << 0)
+#घोषणा	OMAP_UHH_REVISION				(0x00)
+#घोषणा	OMAP_UHH_SYSCONFIG				(0x10)
+#घोषणा	OMAP_UHH_SYSCONFIG_MIDLEMODE			(1 << 12)
+#घोषणा	OMAP_UHH_SYSCONFIG_CACTIVITY			(1 << 8)
+#घोषणा	OMAP_UHH_SYSCONFIG_SIDLEMODE			(1 << 3)
+#घोषणा	OMAP_UHH_SYSCONFIG_ENAWAKEUP			(1 << 2)
+#घोषणा	OMAP_UHH_SYSCONFIG_SOFTRESET			(1 << 1)
+#घोषणा	OMAP_UHH_SYSCONFIG_AUTOIDLE			(1 << 0)
 
-#define	OMAP_UHH_SYSSTATUS				(0x14)
-#define	OMAP_UHH_HOSTCONFIG				(0x40)
-#define	OMAP_UHH_HOSTCONFIG_ULPI_BYPASS			(1 << 0)
-#define	OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS		(1 << 0)
-#define	OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS		(1 << 11)
-#define	OMAP_UHH_HOSTCONFIG_ULPI_P3_BYPASS		(1 << 12)
-#define OMAP_UHH_HOSTCONFIG_INCR4_BURST_EN		(1 << 2)
-#define OMAP_UHH_HOSTCONFIG_INCR8_BURST_EN		(1 << 3)
-#define OMAP_UHH_HOSTCONFIG_INCR16_BURST_EN		(1 << 4)
-#define OMAP_UHH_HOSTCONFIG_INCRX_ALIGN_EN		(1 << 5)
-#define OMAP_UHH_HOSTCONFIG_P1_CONNECT_STATUS		(1 << 8)
-#define OMAP_UHH_HOSTCONFIG_P2_CONNECT_STATUS		(1 << 9)
-#define OMAP_UHH_HOSTCONFIG_P3_CONNECT_STATUS		(1 << 10)
-#define OMAP4_UHH_HOSTCONFIG_APP_START_CLK		(1 << 31)
+#घोषणा	OMAP_UHH_SYSSTATUS				(0x14)
+#घोषणा	OMAP_UHH_HOSTCONFIG				(0x40)
+#घोषणा	OMAP_UHH_HOSTCONFIG_ULPI_BYPASS			(1 << 0)
+#घोषणा	OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS		(1 << 0)
+#घोषणा	OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS		(1 << 11)
+#घोषणा	OMAP_UHH_HOSTCONFIG_ULPI_P3_BYPASS		(1 << 12)
+#घोषणा OMAP_UHH_HOSTCONFIG_INCR4_BURST_EN		(1 << 2)
+#घोषणा OMAP_UHH_HOSTCONFIG_INCR8_BURST_EN		(1 << 3)
+#घोषणा OMAP_UHH_HOSTCONFIG_INCR16_BURST_EN		(1 << 4)
+#घोषणा OMAP_UHH_HOSTCONFIG_INCRX_ALIGN_EN		(1 << 5)
+#घोषणा OMAP_UHH_HOSTCONFIG_P1_CONNECT_STATUS		(1 << 8)
+#घोषणा OMAP_UHH_HOSTCONFIG_P2_CONNECT_STATUS		(1 << 9)
+#घोषणा OMAP_UHH_HOSTCONFIG_P3_CONNECT_STATUS		(1 << 10)
+#घोषणा OMAP4_UHH_HOSTCONFIG_APP_START_CLK		(1 << 31)
 
-/* OMAP4-specific defines */
-#define OMAP4_UHH_SYSCONFIG_IDLEMODE_CLEAR		(3 << 2)
-#define OMAP4_UHH_SYSCONFIG_NOIDLE			(1 << 2)
-#define OMAP4_UHH_SYSCONFIG_STDBYMODE_CLEAR		(3 << 4)
-#define OMAP4_UHH_SYSCONFIG_NOSTDBY			(1 << 4)
-#define OMAP4_UHH_SYSCONFIG_SOFTRESET			(1 << 0)
+/* OMAP4-specअगरic defines */
+#घोषणा OMAP4_UHH_SYSCONFIG_IDLEMODE_CLEAR		(3 << 2)
+#घोषणा OMAP4_UHH_SYSCONFIG_NOIDLE			(1 << 2)
+#घोषणा OMAP4_UHH_SYSCONFIG_STDBYMODE_CLEAR		(3 << 4)
+#घोषणा OMAP4_UHH_SYSCONFIG_NOSTDBY			(1 << 4)
+#घोषणा OMAP4_UHH_SYSCONFIG_SOFTRESET			(1 << 0)
 
-#define OMAP4_P1_MODE_CLEAR				(3 << 16)
-#define OMAP4_P1_MODE_TLL				(1 << 16)
-#define OMAP4_P1_MODE_HSIC				(3 << 16)
-#define OMAP4_P2_MODE_CLEAR				(3 << 18)
-#define OMAP4_P2_MODE_TLL				(1 << 18)
-#define OMAP4_P2_MODE_HSIC				(3 << 18)
+#घोषणा OMAP4_P1_MODE_CLEAR				(3 << 16)
+#घोषणा OMAP4_P1_MODE_TLL				(1 << 16)
+#घोषणा OMAP4_P1_MODE_HSIC				(3 << 16)
+#घोषणा OMAP4_P2_MODE_CLEAR				(3 << 18)
+#घोषणा OMAP4_P2_MODE_TLL				(1 << 18)
+#घोषणा OMAP4_P2_MODE_HSIC				(3 << 18)
 
-#define	OMAP_UHH_DEBUG_CSR				(0x44)
+#घोषणा	OMAP_UHH_DEBUG_CSR				(0x44)
 
 /* Values of UHH_REVISION - Note: these are not given in the TRM */
-#define OMAP_USBHS_REV1		0x00000010	/* OMAP3 */
-#define OMAP_USBHS_REV2		0x50700100	/* OMAP4 */
+#घोषणा OMAP_USBHS_REV1		0x00000010	/* OMAP3 */
+#घोषणा OMAP_USBHS_REV2		0x50700100	/* OMAP4 */
 
-#define is_omap_usbhs_rev1(x)	(x->usbhs_rev == OMAP_USBHS_REV1)
-#define is_omap_usbhs_rev2(x)	(x->usbhs_rev == OMAP_USBHS_REV2)
+#घोषणा is_omap_usbhs_rev1(x)	(x->usbhs_rev == OMAP_USBHS_REV1)
+#घोषणा is_omap_usbhs_rev2(x)	(x->usbhs_rev == OMAP_USBHS_REV2)
 
-#define is_ehci_phy_mode(x)	(x == OMAP_EHCI_PORT_MODE_PHY)
-#define is_ehci_tll_mode(x)	(x == OMAP_EHCI_PORT_MODE_TLL)
-#define is_ehci_hsic_mode(x)	(x == OMAP_EHCI_PORT_MODE_HSIC)
+#घोषणा is_ehci_phy_mode(x)	(x == OMAP_EHCI_PORT_MODE_PHY)
+#घोषणा is_ehci_tll_mode(x)	(x == OMAP_EHCI_PORT_MODE_TLL)
+#घोषणा is_ehci_hsic_mode(x)	(x == OMAP_EHCI_PORT_MODE_HSIC)
 
 
-struct usbhs_hcd_omap {
-	int				nports;
-	struct clk			**utmi_clk;
-	struct clk			**hsic60m_clk;
-	struct clk			**hsic480m_clk;
+काष्ठा usbhs_hcd_omap अणु
+	पूर्णांक				nports;
+	काष्ठा clk			**uपंचांगi_clk;
+	काष्ठा clk			**hsic60m_clk;
+	काष्ठा clk			**hsic480m_clk;
 
-	struct clk			*xclk60mhsp1_ck;
-	struct clk			*xclk60mhsp2_ck;
-	struct clk			*utmi_p1_gfclk;
-	struct clk			*utmi_p2_gfclk;
-	struct clk			*init_60m_fclk;
-	struct clk			*ehci_logic_fck;
+	काष्ठा clk			*xclk60mhsp1_ck;
+	काष्ठा clk			*xclk60mhsp2_ck;
+	काष्ठा clk			*uपंचांगi_p1_gfclk;
+	काष्ठा clk			*uपंचांगi_p2_gfclk;
+	काष्ठा clk			*init_60m_fclk;
+	काष्ठा clk			*ehci_logic_fck;
 
-	void __iomem			*uhh_base;
+	व्योम __iomem			*uhh_base;
 
-	struct usbhs_omap_platform_data	*pdata;
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata;
 
 	u32				usbhs_rev;
-};
+पूर्ण;
 /*-------------------------------------------------------------------------*/
 
-static const char usbhs_driver_name[] = USBHS_DRIVER_NAME;
-static u64 usbhs_dmamask = DMA_BIT_MASK(32);
+अटल स्थिर अक्षर usbhs_driver_name[] = USBHS_DRIVER_NAME;
+अटल u64 usbhs_dmamask = DMA_BIT_MASK(32);
 
 /*-------------------------------------------------------------------------*/
 
-static inline void usbhs_write(void __iomem *base, u32 reg, u32 val)
-{
-	writel_relaxed(val, base + reg);
-}
+अटल अंतरभूत व्योम usbhs_ग_लिखो(व्योम __iomem *base, u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, base + reg);
+पूर्ण
 
-static inline u32 usbhs_read(void __iomem *base, u32 reg)
-{
-	return readl_relaxed(base + reg);
-}
+अटल अंतरभूत u32 usbhs_पढ़ो(व्योम __iomem *base, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(base + reg);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Map 'enum usbhs_omap_port_mode' found in <linux/platform_data/usb-omap.h>
+ * Map 'enum usbhs_omap_port_mode' found in <linux/platक्रमm_data/usb-omap.h>
  * to the device tree binding portN-mode found in
  * 'Documentation/devicetree/bindings/mfd/omap-usb-host.txt'
  */
-static const char * const port_modes[] = {
+अटल स्थिर अक्षर * स्थिर port_modes[] = अणु
 	[OMAP_USBHS_PORT_MODE_UNUSED]	= "",
 	[OMAP_EHCI_PORT_MODE_PHY]	= "ehci-phy",
 	[OMAP_EHCI_PORT_MODE_TLL]	= "ehci-tll",
@@ -140,308 +141,308 @@ static const char * const port_modes[] = {
 	[OMAP_OHCI_PORT_MODE_TLL_4PIN_DPDM]	= "ohci-tll-4pin-dpdm",
 	[OMAP_OHCI_PORT_MODE_TLL_2PIN_DATSE0]	= "ohci-tll-2pin-datse0",
 	[OMAP_OHCI_PORT_MODE_TLL_2PIN_DPDM]	= "ohci-tll-2pin-dpdm",
-};
+पूर्ण;
 
-static struct platform_device *omap_usbhs_alloc_child(const char *name,
-			struct resource	*res, int num_resources, void *pdata,
-			size_t pdata_size, struct device *dev)
-{
-	struct platform_device	*child;
-	int			ret;
+अटल काष्ठा platक्रमm_device *omap_usbhs_alloc_child(स्थिर अक्षर *name,
+			काष्ठा resource	*res, पूर्णांक num_resources, व्योम *pdata,
+			माप_प्रकार pdata_size, काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device	*child;
+	पूर्णांक			ret;
 
-	child = platform_device_alloc(name, 0);
+	child = platक्रमm_device_alloc(name, 0);
 
-	if (!child) {
+	अगर (!child) अणु
 		dev_err(dev, "platform_device_alloc %s failed\n", name);
-		goto err_end;
-	}
+		जाओ err_end;
+	पूर्ण
 
-	ret = platform_device_add_resources(child, res, num_resources);
-	if (ret) {
+	ret = platक्रमm_device_add_resources(child, res, num_resources);
+	अगर (ret) अणु
 		dev_err(dev, "platform_device_add_resources failed\n");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
-	ret = platform_device_add_data(child, pdata, pdata_size);
-	if (ret) {
+	ret = platक्रमm_device_add_data(child, pdata, pdata_size);
+	अगर (ret) अणु
 		dev_err(dev, "platform_device_add_data failed\n");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
 	child->dev.dma_mask		= &usbhs_dmamask;
 	dma_set_coherent_mask(&child->dev, DMA_BIT_MASK(32));
 	child->dev.parent		= dev;
 
-	ret = platform_device_add(child);
-	if (ret) {
+	ret = platक्रमm_device_add(child);
+	अगर (ret) अणु
 		dev_err(dev, "platform_device_add failed\n");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
-	return child;
+	वापस child;
 
 err_alloc:
-	platform_device_put(child);
+	platक्रमm_device_put(child);
 
 err_end:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int omap_usbhs_alloc_children(struct platform_device *pdev)
-{
-	struct device				*dev = &pdev->dev;
-	struct usbhs_omap_platform_data		*pdata = dev_get_platdata(dev);
-	struct platform_device			*ehci;
-	struct platform_device			*ohci;
-	struct resource				*res;
-	struct resource				resources[2];
-	int					ret;
+अटल पूर्णांक omap_usbhs_alloc_children(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device				*dev = &pdev->dev;
+	काष्ठा usbhs_omap_platक्रमm_data		*pdata = dev_get_platdata(dev);
+	काष्ठा platक्रमm_device			*ehci;
+	काष्ठा platक्रमm_device			*ohci;
+	काष्ठा resource				*res;
+	काष्ठा resource				resources[2];
+	पूर्णांक					ret;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ehci");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "ehci");
+	अगर (!res) अणु
 		dev_err(dev, "EHCI get resource IORESOURCE_MEM failed\n");
 		ret = -ENODEV;
-		goto err_end;
-	}
+		जाओ err_end;
+	पूर्ण
 	resources[0] = *res;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "ehci-irq");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "ehci-irq");
+	अगर (!res) अणु
 		dev_err(dev, " EHCI get resource IORESOURCE_IRQ failed\n");
 		ret = -ENODEV;
-		goto err_end;
-	}
+		जाओ err_end;
+	पूर्ण
 	resources[1] = *res;
 
 	ehci = omap_usbhs_alloc_child(OMAP_EHCI_DEVICE, resources, 2, pdata,
-		sizeof(*pdata), dev);
+		माप(*pdata), dev);
 
-	if (!ehci) {
+	अगर (!ehci) अणु
 		dev_err(dev, "omap_usbhs_alloc_child failed\n");
 		ret = -ENOMEM;
-		goto err_end;
-	}
+		जाओ err_end;
+	पूर्ण
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "ohci");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "ohci");
+	अगर (!res) अणु
 		dev_err(dev, "OHCI get resource IORESOURCE_MEM failed\n");
 		ret = -ENODEV;
-		goto err_ehci;
-	}
+		जाओ err_ehci;
+	पूर्ण
 	resources[0] = *res;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "ohci-irq");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "ohci-irq");
+	अगर (!res) अणु
 		dev_err(dev, "OHCI get resource IORESOURCE_IRQ failed\n");
 		ret = -ENODEV;
-		goto err_ehci;
-	}
+		जाओ err_ehci;
+	पूर्ण
 	resources[1] = *res;
 
 	ohci = omap_usbhs_alloc_child(OMAP_OHCI_DEVICE, resources, 2, pdata,
-		sizeof(*pdata), dev);
-	if (!ohci) {
+		माप(*pdata), dev);
+	अगर (!ohci) अणु
 		dev_err(dev, "omap_usbhs_alloc_child failed\n");
 		ret = -ENOMEM;
-		goto err_ehci;
-	}
+		जाओ err_ehci;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_ehci:
-	platform_device_unregister(ehci);
+	platक्रमm_device_unरेजिस्टर(ehci);
 
 err_end:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool is_ohci_port(enum usbhs_omap_port_mode pmode)
-{
-	switch (pmode) {
-	case OMAP_OHCI_PORT_MODE_PHY_6PIN_DATSE0:
-	case OMAP_OHCI_PORT_MODE_PHY_6PIN_DPDM:
-	case OMAP_OHCI_PORT_MODE_PHY_3PIN_DATSE0:
-	case OMAP_OHCI_PORT_MODE_PHY_4PIN_DPDM:
-	case OMAP_OHCI_PORT_MODE_TLL_6PIN_DATSE0:
-	case OMAP_OHCI_PORT_MODE_TLL_6PIN_DPDM:
-	case OMAP_OHCI_PORT_MODE_TLL_3PIN_DATSE0:
-	case OMAP_OHCI_PORT_MODE_TLL_4PIN_DPDM:
-	case OMAP_OHCI_PORT_MODE_TLL_2PIN_DATSE0:
-	case OMAP_OHCI_PORT_MODE_TLL_2PIN_DPDM:
-		return true;
+अटल bool is_ohci_port(क्रमागत usbhs_omap_port_mode pmode)
+अणु
+	चयन (pmode) अणु
+	हाल OMAP_OHCI_PORT_MODE_PHY_6PIN_DATSE0:
+	हाल OMAP_OHCI_PORT_MODE_PHY_6PIN_DPDM:
+	हाल OMAP_OHCI_PORT_MODE_PHY_3PIN_DATSE0:
+	हाल OMAP_OHCI_PORT_MODE_PHY_4PIN_DPDM:
+	हाल OMAP_OHCI_PORT_MODE_TLL_6PIN_DATSE0:
+	हाल OMAP_OHCI_PORT_MODE_TLL_6PIN_DPDM:
+	हाल OMAP_OHCI_PORT_MODE_TLL_3PIN_DATSE0:
+	हाल OMAP_OHCI_PORT_MODE_TLL_4PIN_DPDM:
+	हाल OMAP_OHCI_PORT_MODE_TLL_2PIN_DATSE0:
+	हाल OMAP_OHCI_PORT_MODE_TLL_2PIN_DPDM:
+		वापस true;
 
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int usbhs_runtime_resume(struct device *dev)
-{
-	struct usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
-	struct usbhs_omap_platform_data	*pdata = omap->pdata;
-	int i, r;
+अटल पूर्णांक usbhs_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata = omap->pdata;
+	पूर्णांक i, r;
 
 	dev_dbg(dev, "usbhs_runtime_resume\n");
 
 	omap_tll_enable(pdata);
 
-	if (!IS_ERR(omap->ehci_logic_fck))
+	अगर (!IS_ERR(omap->ehci_logic_fck))
 		clk_prepare_enable(omap->ehci_logic_fck);
 
-	for (i = 0; i < omap->nports; i++) {
-		switch (pdata->port_mode[i]) {
-		case OMAP_EHCI_PORT_MODE_HSIC:
-			if (!IS_ERR(omap->hsic60m_clk[i])) {
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		चयन (pdata->port_mode[i]) अणु
+		हाल OMAP_EHCI_PORT_MODE_HSIC:
+			अगर (!IS_ERR(omap->hsic60m_clk[i])) अणु
 				r = clk_prepare_enable(omap->hsic60m_clk[i]);
-				if (r) {
+				अगर (r) अणु
 					dev_err(dev,
 					 "Can't enable port %d hsic60m clk:%d\n",
 					 i, r);
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (!IS_ERR(omap->hsic480m_clk[i])) {
+			अगर (!IS_ERR(omap->hsic480m_clk[i])) अणु
 				r = clk_prepare_enable(omap->hsic480m_clk[i]);
-				if (r) {
+				अगर (r) अणु
 					dev_err(dev,
 					 "Can't enable port %d hsic480m clk:%d\n",
 					 i, r);
-				}
-			}
-			fallthrough;	/* as HSIC mode needs utmi_clk */
+				पूर्ण
+			पूर्ण
+			fallthrough;	/* as HSIC mode needs uपंचांगi_clk */
 
-		case OMAP_EHCI_PORT_MODE_TLL:
-			if (!IS_ERR(omap->utmi_clk[i])) {
-				r = clk_prepare_enable(omap->utmi_clk[i]);
-				if (r) {
+		हाल OMAP_EHCI_PORT_MODE_TLL:
+			अगर (!IS_ERR(omap->uपंचांगi_clk[i])) अणु
+				r = clk_prepare_enable(omap->uपंचांगi_clk[i]);
+				अगर (r) अणु
 					dev_err(dev,
 					 "Can't enable port %d clk : %d\n",
 					 i, r);
-				}
-			}
-			break;
-		default:
-			break;
-		}
-	}
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int usbhs_runtime_suspend(struct device *dev)
-{
-	struct usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
-	struct usbhs_omap_platform_data	*pdata = omap->pdata;
-	int i;
+अटल पूर्णांक usbhs_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata = omap->pdata;
+	पूर्णांक i;
 
 	dev_dbg(dev, "usbhs_runtime_suspend\n");
 
-	for (i = 0; i < omap->nports; i++) {
-		switch (pdata->port_mode[i]) {
-		case OMAP_EHCI_PORT_MODE_HSIC:
-			if (!IS_ERR(omap->hsic60m_clk[i]))
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		चयन (pdata->port_mode[i]) अणु
+		हाल OMAP_EHCI_PORT_MODE_HSIC:
+			अगर (!IS_ERR(omap->hsic60m_clk[i]))
 				clk_disable_unprepare(omap->hsic60m_clk[i]);
 
-			if (!IS_ERR(omap->hsic480m_clk[i]))
+			अगर (!IS_ERR(omap->hsic480m_clk[i]))
 				clk_disable_unprepare(omap->hsic480m_clk[i]);
-			fallthrough;	/* as utmi_clks were used in HSIC mode */
+			fallthrough;	/* as uपंचांगi_clks were used in HSIC mode */
 
-		case OMAP_EHCI_PORT_MODE_TLL:
-			if (!IS_ERR(omap->utmi_clk[i]))
-				clk_disable_unprepare(omap->utmi_clk[i]);
-			break;
-		default:
-			break;
-		}
-	}
+		हाल OMAP_EHCI_PORT_MODE_TLL:
+			अगर (!IS_ERR(omap->uपंचांगi_clk[i]))
+				clk_disable_unprepare(omap->uपंचांगi_clk[i]);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(omap->ehci_logic_fck))
+	अगर (!IS_ERR(omap->ehci_logic_fck))
 		clk_disable_unprepare(omap->ehci_logic_fck);
 
 	omap_tll_disable(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned omap_usbhs_rev1_hostconfig(struct usbhs_hcd_omap *omap,
-						unsigned reg)
-{
-	struct usbhs_omap_platform_data	*pdata = omap->pdata;
-	int i;
+अटल अचिन्हित omap_usbhs_rev1_hostconfig(काष्ठा usbhs_hcd_omap *omap,
+						अचिन्हित reg)
+अणु
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata = omap->pdata;
+	पूर्णांक i;
 
-	for (i = 0; i < omap->nports; i++) {
-		switch (pdata->port_mode[i]) {
-		case OMAP_USBHS_PORT_MODE_UNUSED:
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		चयन (pdata->port_mode[i]) अणु
+		हाल OMAP_USBHS_PORT_MODE_UNUSED:
 			reg &= ~(OMAP_UHH_HOSTCONFIG_P1_CONNECT_STATUS << i);
-			break;
-		case OMAP_EHCI_PORT_MODE_PHY:
-			if (pdata->single_ulpi_bypass)
-				break;
+			अवरोध;
+		हाल OMAP_EHCI_PORT_MODE_PHY:
+			अगर (pdata->single_ulpi_bypass)
+				अवरोध;
 
-			if (i == 0)
+			अगर (i == 0)
 				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS;
-			else
+			अन्यथा
 				reg &= ~(OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS
 								<< (i-1));
-			break;
-		default:
-			if (pdata->single_ulpi_bypass)
-				break;
+			अवरोध;
+		शेष:
+			अगर (pdata->single_ulpi_bypass)
+				अवरोध;
 
-			if (i == 0)
+			अगर (i == 0)
 				reg |= OMAP_UHH_HOSTCONFIG_ULPI_P1_BYPASS;
-			else
+			अन्यथा
 				reg |= OMAP_UHH_HOSTCONFIG_ULPI_P2_BYPASS
 								<< (i-1);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (pdata->single_ulpi_bypass) {
-		/* bypass ULPI only if none of the ports use PHY mode */
+	अगर (pdata->single_ulpi_bypass) अणु
+		/* bypass ULPI only अगर none of the ports use PHY mode */
 		reg |= OMAP_UHH_HOSTCONFIG_ULPI_BYPASS;
 
-		for (i = 0; i < omap->nports; i++) {
-			if (is_ehci_phy_mode(pdata->port_mode[i])) {
+		क्रम (i = 0; i < omap->nports; i++) अणु
+			अगर (is_ehci_phy_mode(pdata->port_mode[i])) अणु
 				reg &= ~OMAP_UHH_HOSTCONFIG_ULPI_BYPASS;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static unsigned omap_usbhs_rev2_hostconfig(struct usbhs_hcd_omap *omap,
-						unsigned reg)
-{
-	struct usbhs_omap_platform_data	*pdata = omap->pdata;
-	int i;
+अटल अचिन्हित omap_usbhs_rev2_hostconfig(काष्ठा usbhs_hcd_omap *omap,
+						अचिन्हित reg)
+अणु
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata = omap->pdata;
+	पूर्णांक i;
 
-	for (i = 0; i < omap->nports; i++) {
-		/* Clear port mode fields for PHY mode */
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		/* Clear port mode fields क्रम PHY mode */
 		reg &= ~(OMAP4_P1_MODE_CLEAR << 2 * i);
 
-		if (is_ehci_tll_mode(pdata->port_mode[i]) ||
+		अगर (is_ehci_tll_mode(pdata->port_mode[i]) ||
 				(is_ohci_port(pdata->port_mode[i])))
 			reg |= OMAP4_P1_MODE_TLL << 2 * i;
-		else if (is_ehci_hsic_mode(pdata->port_mode[i]))
+		अन्यथा अगर (is_ehci_hsic_mode(pdata->port_mode[i]))
 			reg |= OMAP4_P1_MODE_HSIC << 2 * i;
-	}
+	पूर्ण
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static void omap_usbhs_init(struct device *dev)
-{
-	struct usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
-	unsigned			reg;
+अटल व्योम omap_usbhs_init(काष्ठा device *dev)
+अणु
+	काष्ठा usbhs_hcd_omap		*omap = dev_get_drvdata(dev);
+	अचिन्हित			reg;
 
 	dev_dbg(dev, "starting TI HSUSB Controller\n");
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
-	reg = usbhs_read(omap->uhh_base, OMAP_UHH_HOSTCONFIG);
+	reg = usbhs_पढ़ो(omap->uhh_base, OMAP_UHH_HOSTCONFIG);
 	/* setup ULPI bypass and burst configurations */
 	reg |= (OMAP_UHH_HOSTCONFIG_INCR4_BURST_EN
 			| OMAP_UHH_HOSTCONFIG_INCR8_BURST_EN
@@ -449,406 +450,406 @@ static void omap_usbhs_init(struct device *dev)
 	reg |= OMAP4_UHH_HOSTCONFIG_APP_START_CLK;
 	reg &= ~OMAP_UHH_HOSTCONFIG_INCRX_ALIGN_EN;
 
-	switch (omap->usbhs_rev) {
-	case OMAP_USBHS_REV1:
+	चयन (omap->usbhs_rev) अणु
+	हाल OMAP_USBHS_REV1:
 		reg = omap_usbhs_rev1_hostconfig(omap, reg);
-		break;
+		अवरोध;
 
-	case OMAP_USBHS_REV2:
+	हाल OMAP_USBHS_REV2:
 		reg = omap_usbhs_rev2_hostconfig(omap, reg);
-		break;
+		अवरोध;
 
-	default:	/* newer revisions */
+	शेष:	/* newer revisions */
 		reg = omap_usbhs_rev2_hostconfig(omap, reg);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	usbhs_write(omap->uhh_base, OMAP_UHH_HOSTCONFIG, reg);
+	usbhs_ग_लिखो(omap->uhh_base, OMAP_UHH_HOSTCONFIG, reg);
 	dev_dbg(dev, "UHH setup done, uhh_hostconfig=%x\n", reg);
 
-	pm_runtime_put_sync(dev);
-}
+	pm_runसमय_put_sync(dev);
+पूर्ण
 
-static int usbhs_omap_get_dt_pdata(struct device *dev,
-					struct usbhs_omap_platform_data *pdata)
-{
-	int ret, i;
-	struct device_node *node = dev->of_node;
+अटल पूर्णांक usbhs_omap_get_dt_pdata(काष्ठा device *dev,
+					काष्ठा usbhs_omap_platक्रमm_data *pdata)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा device_node *node = dev->of_node;
 
-	ret = of_property_read_u32(node, "num-ports", &pdata->nports);
-	if (ret)
+	ret = of_property_पढ़ो_u32(node, "num-ports", &pdata->nports);
+	अगर (ret)
 		pdata->nports = 0;
 
-	if (pdata->nports > OMAP3_HS_USB_PORTS) {
+	अगर (pdata->nports > OMAP3_HS_USB_PORTS) अणु
 		dev_warn(dev, "Too many num_ports <%d> in device tree. Max %d\n",
 				pdata->nports, OMAP3_HS_USB_PORTS);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* get port modes */
-	for (i = 0; i < OMAP3_HS_USB_PORTS; i++) {
-		char prop[11];
-		const char *mode;
+	क्रम (i = 0; i < OMAP3_HS_USB_PORTS; i++) अणु
+		अक्षर prop[11];
+		स्थिर अक्षर *mode;
 
 		pdata->port_mode[i] = OMAP_USBHS_PORT_MODE_UNUSED;
 
-		snprintf(prop, sizeof(prop), "port%d-mode", i + 1);
-		ret = of_property_read_string(node, prop, &mode);
-		if (ret < 0)
-			continue;
+		snम_लिखो(prop, माप(prop), "port%d-mode", i + 1);
+		ret = of_property_पढ़ो_string(node, prop, &mode);
+		अगर (ret < 0)
+			जारी;
 
 		/* get 'enum usbhs_omap_port_mode' from port mode string */
 		ret = match_string(port_modes, ARRAY_SIZE(port_modes), mode);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(dev, "Invalid port%d-mode \"%s\" in device tree\n",
 					i, mode);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		dev_dbg(dev, "port%d-mode: %s -> %d\n", i, mode, ret);
 		pdata->port_mode[i] = ret;
-	}
+	पूर्ण
 
 	/* get flags */
-	pdata->single_ulpi_bypass = of_property_read_bool(node,
+	pdata->single_ulpi_bypass = of_property_पढ़ो_bool(node,
 						"single-ulpi-bypass");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id usbhs_child_match_table[] = {
-	{ .compatible = "ti,ehci-omap", },
-	{ .compatible = "ti,ohci-omap3", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id usbhs_child_match_table[] = अणु
+	अणु .compatible = "ti,ehci-omap", पूर्ण,
+	अणु .compatible = "ti,ohci-omap3", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 /**
  * usbhs_omap_probe - initialize TI-based HCDs
  *
- * Allocates basic resources for this USB host controller.
+ * Allocates basic resources क्रम this USB host controller.
  *
- * @pdev: Pointer to this device's platform device structure
+ * @pdev: Poपूर्णांकer to this device's platक्रमm device काष्ठाure
  */
-static int usbhs_omap_probe(struct platform_device *pdev)
-{
-	struct device			*dev =  &pdev->dev;
-	struct usbhs_omap_platform_data	*pdata = dev_get_platdata(dev);
-	struct usbhs_hcd_omap		*omap;
-	struct resource			*res;
-	int				ret = 0;
-	int				i;
+अटल पूर्णांक usbhs_omap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device			*dev =  &pdev->dev;
+	काष्ठा usbhs_omap_platक्रमm_data	*pdata = dev_get_platdata(dev);
+	काष्ठा usbhs_hcd_omap		*omap;
+	काष्ठा resource			*res;
+	पूर्णांक				ret = 0;
+	पूर्णांक				i;
 	bool				need_logic_fck;
 
-	if (dev->of_node) {
-		/* For DT boot we populate platform data from OF node */
-		pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-		if (!pdata)
-			return -ENOMEM;
+	अगर (dev->of_node) अणु
+		/* For DT boot we populate platक्रमm data from OF node */
+		pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+		अगर (!pdata)
+			वापस -ENOMEM;
 
 		ret = usbhs_omap_get_dt_pdata(dev, pdata);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		dev->platform_data = pdata;
-	}
+		dev->platक्रमm_data = pdata;
+	पूर्ण
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(dev, "Missing platform data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pdata->nports > OMAP3_HS_USB_PORTS) {
+	अगर (pdata->nports > OMAP3_HS_USB_PORTS) अणु
 		dev_info(dev, "Too many num_ports <%d> in platform_data. Max %d\n",
 				pdata->nports, OMAP3_HS_USB_PORTS);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	omap = devm_kzalloc(dev, sizeof(*omap), GFP_KERNEL);
-	if (!omap) {
+	omap = devm_kzalloc(dev, माप(*omap), GFP_KERNEL);
+	अगर (!omap) अणु
 		dev_err(dev, "Memory allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	omap->uhh_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(omap->uhh_base))
-		return PTR_ERR(omap->uhh_base);
+	अगर (IS_ERR(omap->uhh_base))
+		वापस PTR_ERR(omap->uhh_base);
 
 	omap->pdata = pdata;
 
-	/* Initialize the TLL subsystem */
+	/* Initialize the TLL subप्रणाली */
 	omap_tll_init(pdata);
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	platform_set_drvdata(pdev, omap);
-	pm_runtime_get_sync(dev);
+	platक्रमm_set_drvdata(pdev, omap);
+	pm_runसमय_get_sync(dev);
 
-	omap->usbhs_rev = usbhs_read(omap->uhh_base, OMAP_UHH_REVISION);
+	omap->usbhs_rev = usbhs_पढ़ो(omap->uhh_base, OMAP_UHH_REVISION);
 
-	/* we need to call runtime suspend before we update omap->nports
+	/* we need to call runसमय suspend beक्रमe we update omap->nports
 	 * to prevent unbalanced clk_disable()
 	 */
-	pm_runtime_put_sync(dev);
+	pm_runसमय_put_sync(dev);
 
 	/*
-	 * If platform data contains nports then use that
-	 * else make out number of ports from USBHS revision
+	 * If platक्रमm data contains nports then use that
+	 * अन्यथा make out number of ports from USBHS revision
 	 */
-	if (pdata->nports) {
+	अगर (pdata->nports) अणु
 		omap->nports = pdata->nports;
-	} else {
-		switch (omap->usbhs_rev) {
-		case OMAP_USBHS_REV1:
+	पूर्ण अन्यथा अणु
+		चयन (omap->usbhs_rev) अणु
+		हाल OMAP_USBHS_REV1:
 			omap->nports = 3;
-			break;
-		case OMAP_USBHS_REV2:
+			अवरोध;
+		हाल OMAP_USBHS_REV2:
 			omap->nports = 2;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			omap->nports = OMAP3_HS_USB_PORTS;
 			dev_dbg(dev,
 			 "USB HOST Rev:0x%x not recognized, assuming %d ports\n",
 			 omap->usbhs_rev, omap->nports);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pdata->nports = omap->nports;
-	}
+	पूर्ण
 
-	i = sizeof(struct clk *) * omap->nports;
-	omap->utmi_clk = devm_kzalloc(dev, i, GFP_KERNEL);
+	i = माप(काष्ठा clk *) * omap->nports;
+	omap->uपंचांगi_clk = devm_kzalloc(dev, i, GFP_KERNEL);
 	omap->hsic480m_clk = devm_kzalloc(dev, i, GFP_KERNEL);
 	omap->hsic60m_clk = devm_kzalloc(dev, i, GFP_KERNEL);
 
-	if (!omap->utmi_clk || !omap->hsic480m_clk || !omap->hsic60m_clk) {
+	अगर (!omap->uपंचांगi_clk || !omap->hsic480m_clk || !omap->hsic60m_clk) अणु
 		dev_err(dev, "Memory allocation failed\n");
 		ret = -ENOMEM;
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
-	/* Set all clocks as invalid to begin with */
+	/* Set all घड़ीs as invalid to begin with */
 	omap->ehci_logic_fck = ERR_PTR(-ENODEV);
 	omap->init_60m_fclk = ERR_PTR(-ENODEV);
-	omap->utmi_p1_gfclk = ERR_PTR(-ENODEV);
-	omap->utmi_p2_gfclk = ERR_PTR(-ENODEV);
+	omap->uपंचांगi_p1_gfclk = ERR_PTR(-ENODEV);
+	omap->uपंचांगi_p2_gfclk = ERR_PTR(-ENODEV);
 	omap->xclk60mhsp1_ck = ERR_PTR(-ENODEV);
 	omap->xclk60mhsp2_ck = ERR_PTR(-ENODEV);
 
-	for (i = 0; i < omap->nports; i++) {
-		omap->utmi_clk[i] = ERR_PTR(-ENODEV);
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		omap->uपंचांगi_clk[i] = ERR_PTR(-ENODEV);
 		omap->hsic480m_clk[i] = ERR_PTR(-ENODEV);
 		omap->hsic60m_clk[i] = ERR_PTR(-ENODEV);
-	}
+	पूर्ण
 
-	/* for OMAP3 i.e. USBHS REV1 */
-	if (omap->usbhs_rev == OMAP_USBHS_REV1) {
+	/* क्रम OMAP3 i.e. USBHS REV1 */
+	अगर (omap->usbhs_rev == OMAP_USBHS_REV1) अणु
 		need_logic_fck = false;
-		for (i = 0; i < omap->nports; i++) {
-			if (is_ehci_phy_mode(pdata->port_mode[i]) ||
+		क्रम (i = 0; i < omap->nports; i++) अणु
+			अगर (is_ehci_phy_mode(pdata->port_mode[i]) ||
 			    is_ehci_tll_mode(pdata->port_mode[i]) ||
 			    is_ehci_hsic_mode(pdata->port_mode[i]))
 
 				need_logic_fck |= true;
-		}
+		पूर्ण
 
-		if (need_logic_fck) {
+		अगर (need_logic_fck) अणु
 			omap->ehci_logic_fck = devm_clk_get(dev,
 							    "usbhost_120m_fck");
-			if (IS_ERR(omap->ehci_logic_fck)) {
+			अगर (IS_ERR(omap->ehci_logic_fck)) अणु
 				ret = PTR_ERR(omap->ehci_logic_fck);
 				dev_err(dev, "usbhost_120m_fck failed:%d\n",
 					ret);
-				goto err_mem;
-			}
-		}
-		goto initialize;
-	}
+				जाओ err_mem;
+			पूर्ण
+		पूर्ण
+		जाओ initialize;
+	पूर्ण
 
-	/* for OMAP4+ i.e. USBHS REV2+ */
-	omap->utmi_p1_gfclk = devm_clk_get(dev, "utmi_p1_gfclk");
-	if (IS_ERR(omap->utmi_p1_gfclk)) {
-		ret = PTR_ERR(omap->utmi_p1_gfclk);
+	/* क्रम OMAP4+ i.e. USBHS REV2+ */
+	omap->uपंचांगi_p1_gfclk = devm_clk_get(dev, "utmi_p1_gfclk");
+	अगर (IS_ERR(omap->uपंचांगi_p1_gfclk)) अणु
+		ret = PTR_ERR(omap->uपंचांगi_p1_gfclk);
 		dev_err(dev, "utmi_p1_gfclk failed error:%d\n", ret);
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
-	omap->utmi_p2_gfclk = devm_clk_get(dev, "utmi_p2_gfclk");
-	if (IS_ERR(omap->utmi_p2_gfclk)) {
-		ret = PTR_ERR(omap->utmi_p2_gfclk);
+	omap->uपंचांगi_p2_gfclk = devm_clk_get(dev, "utmi_p2_gfclk");
+	अगर (IS_ERR(omap->uपंचांगi_p2_gfclk)) अणु
+		ret = PTR_ERR(omap->uपंचांगi_p2_gfclk);
 		dev_err(dev, "utmi_p2_gfclk failed error:%d\n", ret);
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
 	omap->xclk60mhsp1_ck = devm_clk_get(dev, "refclk_60m_ext_p1");
-	if (IS_ERR(omap->xclk60mhsp1_ck)) {
+	अगर (IS_ERR(omap->xclk60mhsp1_ck)) अणु
 		ret = PTR_ERR(omap->xclk60mhsp1_ck);
 		dev_err(dev, "refclk_60m_ext_p1 failed error:%d\n", ret);
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
 	omap->xclk60mhsp2_ck = devm_clk_get(dev, "refclk_60m_ext_p2");
-	if (IS_ERR(omap->xclk60mhsp2_ck)) {
+	अगर (IS_ERR(omap->xclk60mhsp2_ck)) अणु
 		ret = PTR_ERR(omap->xclk60mhsp2_ck);
 		dev_err(dev, "refclk_60m_ext_p2 failed error:%d\n", ret);
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
 	omap->init_60m_fclk = devm_clk_get(dev, "refclk_60m_int");
-	if (IS_ERR(omap->init_60m_fclk)) {
+	अगर (IS_ERR(omap->init_60m_fclk)) अणु
 		ret = PTR_ERR(omap->init_60m_fclk);
 		dev_err(dev, "refclk_60m_int failed error:%d\n", ret);
-		goto err_mem;
-	}
+		जाओ err_mem;
+	पूर्ण
 
-	for (i = 0; i < omap->nports; i++) {
-		char clkname[30];
+	क्रम (i = 0; i < omap->nports; i++) अणु
+		अक्षर clkname[30];
 
-		/* clock names are indexed from 1*/
-		snprintf(clkname, sizeof(clkname),
+		/* घड़ी names are indexed from 1*/
+		snम_लिखो(clkname, माप(clkname),
 				"usb_host_hs_utmi_p%d_clk", i + 1);
 
-		/* If a clock is not found we won't bail out as not all
-		 * platforms have all clocks and we can function without
+		/* If a घड़ी is not found we won't bail out as not all
+		 * platक्रमms have all घड़ीs and we can function without
 		 * them
 		 */
-		omap->utmi_clk[i] = devm_clk_get(dev, clkname);
-		if (IS_ERR(omap->utmi_clk[i])) {
-			ret = PTR_ERR(omap->utmi_clk[i]);
+		omap->uपंचांगi_clk[i] = devm_clk_get(dev, clkname);
+		अगर (IS_ERR(omap->uपंचांगi_clk[i])) अणु
+			ret = PTR_ERR(omap->uपंचांगi_clk[i]);
 			dev_err(dev, "Failed to get clock : %s : %d\n",
 				clkname, ret);
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 
-		snprintf(clkname, sizeof(clkname),
+		snम_लिखो(clkname, माप(clkname),
 				"usb_host_hs_hsic480m_p%d_clk", i + 1);
 		omap->hsic480m_clk[i] = devm_clk_get(dev, clkname);
-		if (IS_ERR(omap->hsic480m_clk[i])) {
+		अगर (IS_ERR(omap->hsic480m_clk[i])) अणु
 			ret = PTR_ERR(omap->hsic480m_clk[i]);
 			dev_err(dev, "Failed to get clock : %s : %d\n",
 				clkname, ret);
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 
-		snprintf(clkname, sizeof(clkname),
+		snम_लिखो(clkname, माप(clkname),
 				"usb_host_hs_hsic60m_p%d_clk", i + 1);
 		omap->hsic60m_clk[i] = devm_clk_get(dev, clkname);
-		if (IS_ERR(omap->hsic60m_clk[i])) {
+		अगर (IS_ERR(omap->hsic60m_clk[i])) अणु
 			ret = PTR_ERR(omap->hsic60m_clk[i]);
 			dev_err(dev, "Failed to get clock : %s : %d\n",
 				clkname, ret);
-			goto err_mem;
-		}
-	}
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण
 
-	if (is_ehci_phy_mode(pdata->port_mode[0])) {
-		ret = clk_set_parent(omap->utmi_p1_gfclk,
+	अगर (is_ehci_phy_mode(pdata->port_mode[0])) अणु
+		ret = clk_set_parent(omap->uपंचांगi_p1_gfclk,
 					omap->xclk60mhsp1_ck);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(dev, "xclk60mhsp1_ck set parent failed: %d\n",
 				ret);
-			goto err_mem;
-		}
-	} else if (is_ehci_tll_mode(pdata->port_mode[0])) {
-		ret = clk_set_parent(omap->utmi_p1_gfclk,
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_ehci_tll_mode(pdata->port_mode[0])) अणु
+		ret = clk_set_parent(omap->uपंचांगi_p1_gfclk,
 					omap->init_60m_fclk);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(dev, "P0 init_60m_fclk set parent failed: %d\n",
 				ret);
-			goto err_mem;
-		}
-	}
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण
 
-	if (is_ehci_phy_mode(pdata->port_mode[1])) {
-		ret = clk_set_parent(omap->utmi_p2_gfclk,
+	अगर (is_ehci_phy_mode(pdata->port_mode[1])) अणु
+		ret = clk_set_parent(omap->uपंचांगi_p2_gfclk,
 					omap->xclk60mhsp2_ck);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(dev, "xclk60mhsp2_ck set parent failed: %d\n",
 				ret);
-			goto err_mem;
-		}
-	} else if (is_ehci_tll_mode(pdata->port_mode[1])) {
-		ret = clk_set_parent(omap->utmi_p2_gfclk,
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण अन्यथा अगर (is_ehci_tll_mode(pdata->port_mode[1])) अणु
+		ret = clk_set_parent(omap->uपंचांगi_p2_gfclk,
 						omap->init_60m_fclk);
-		if (ret != 0) {
+		अगर (ret != 0) अणु
 			dev_err(dev, "P1 init_60m_fclk set parent failed: %d\n",
 				ret);
-			goto err_mem;
-		}
-	}
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण
 
 initialize:
 	omap_usbhs_init(dev);
 
-	if (dev->of_node) {
-		ret = of_platform_populate(dev->of_node,
-				usbhs_child_match_table, NULL, dev);
+	अगर (dev->of_node) अणु
+		ret = of_platक्रमm_populate(dev->of_node,
+				usbhs_child_match_table, शून्य, dev);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "Failed to create DT children: %d\n", ret);
-			goto err_mem;
-		}
+			जाओ err_mem;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = omap_usbhs_alloc_children(pdev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "omap_usbhs_alloc_children failed: %d\n",
 						ret);
-			goto err_mem;
-		}
-	}
+			जाओ err_mem;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_mem:
-	pm_runtime_disable(dev);
+	pm_runसमय_disable(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int usbhs_omap_remove_child(struct device *dev, void *data)
-{
+अटल पूर्णांक usbhs_omap_हटाओ_child(काष्ठा device *dev, व्योम *data)
+अणु
 	dev_info(dev, "unregistering\n");
-	platform_device_unregister(to_platform_device(dev));
-	return 0;
-}
+	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
+	वापस 0;
+पूर्ण
 
 /**
- * usbhs_omap_remove - shutdown processing for UHH & TLL HCDs
- * @pdev: USB Host Controller being removed
+ * usbhs_omap_हटाओ - shutकरोwn processing क्रम UHH & TLL HCDs
+ * @pdev: USB Host Controller being हटाओd
  *
  * Reverses the effect of usbhs_omap_probe().
  */
-static int usbhs_omap_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक usbhs_omap_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
 
-	/* remove children */
-	device_for_each_child(&pdev->dev, NULL, usbhs_omap_remove_child);
-	return 0;
-}
+	/* हटाओ children */
+	device_क्रम_each_child(&pdev->dev, शून्य, usbhs_omap_हटाओ_child);
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops usbhsomap_dev_pm_ops = {
-	.runtime_suspend	= usbhs_runtime_suspend,
-	.runtime_resume		= usbhs_runtime_resume,
-};
+अटल स्थिर काष्ठा dev_pm_ops usbhsomap_dev_pm_ops = अणु
+	.runसमय_suspend	= usbhs_runसमय_suspend,
+	.runसमय_resume		= usbhs_runसमय_resume,
+पूर्ण;
 
-static const struct of_device_id usbhs_omap_dt_ids[] = {
-	{ .compatible = "ti,usbhs-host" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id usbhs_omap_dt_ids[] = अणु
+	अणु .compatible = "ti,usbhs-host" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, usbhs_omap_dt_ids);
 
 
-static struct platform_driver usbhs_omap_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver usbhs_omap_driver = अणु
+	.driver = अणु
 		.name		= usbhs_driver_name,
 		.pm		= &usbhsomap_dev_pm_ops,
 		.of_match_table = usbhs_omap_dt_ids,
-	},
+	पूर्ण,
 	.probe		= usbhs_omap_probe,
-	.remove		= usbhs_omap_remove,
-};
+	.हटाओ		= usbhs_omap_हटाओ,
+पूर्ण;
 
 MODULE_AUTHOR("Keshava Munegowda <keshava_mgowda@ti.com>");
 MODULE_AUTHOR("Roger Quadros <rogerq@ti.com>");
@@ -856,22 +857,22 @@ MODULE_ALIAS("platform:" USBHS_DRIVER_NAME);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("usb host common core driver for omap EHCI and OHCI");
 
-static int omap_usbhs_drvinit(void)
-{
-	return platform_driver_register(&usbhs_omap_driver);
-}
+अटल पूर्णांक omap_usbhs_drvinit(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&usbhs_omap_driver);
+पूर्ण
 
 /*
- * init before ehci and ohci drivers;
- * The usbhs core driver should be initialized much before
+ * init beक्रमe ehci and ohci drivers;
+ * The usbhs core driver should be initialized much beक्रमe
  * the omap ehci and ohci probe functions are called.
  * This usbhs core driver should be initialized after
  * usb tll driver
  */
 fs_initcall_sync(omap_usbhs_drvinit);
 
-static void omap_usbhs_drvexit(void)
-{
-	platform_driver_unregister(&usbhs_omap_driver);
-}
-module_exit(omap_usbhs_drvexit);
+अटल व्योम omap_usbhs_drvनिकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&usbhs_omap_driver);
+पूर्ण
+module_निकास(omap_usbhs_drvनिकास);

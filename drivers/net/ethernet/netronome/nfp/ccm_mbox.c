@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2019 Netronome Systems, Inc. */
 
-#include <linux/bitfield.h>
-#include <linux/io.h>
-#include <linux/skbuff.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/skbuff.h>
 
-#include "ccm.h"
-#include "nfp_net.h"
+#समावेश "ccm.h"
+#समावेश "nfp_net.h"
 
-/* CCM messages via the mailbox.  CMSGs get wrapped into simple TLVs
- * and copied into the mailbox.  Multiple messages can be copied to
- * form a batch.  Threads come in with CMSG formed in an skb, then
- * enqueue that skb onto the request queue.  If threads skb is first
- * in queue this thread will handle the mailbox operation.  It copies
- * up to 64 messages into the mailbox (making sure that both requests
- * and replies will fit.  After FW is done processing the batch it
- * copies the data out and wakes waiting threads.
- * If a thread is waiting it either gets its the message completed
- * (response is copied into the same skb as the request, overwriting
+/* CCM messages via the mailbox.  CMSGs get wrapped पूर्णांकo simple TLVs
+ * and copied पूर्णांकo the mailbox.  Multiple messages can be copied to
+ * क्रमm a batch.  Thपढ़ोs come in with CMSG क्रमmed in an skb, then
+ * enqueue that skb onto the request queue.  If thपढ़ोs skb is first
+ * in queue this thपढ़ो will handle the mailbox operation.  It copies
+ * up to 64 messages पूर्णांकo the mailbox (making sure that both requests
+ * and replies will fit.  After FW is करोne processing the batch it
+ * copies the data out and wakes रुकोing thपढ़ोs.
+ * If a thपढ़ो is रुकोing it either माला_लो its the message completed
+ * (response is copied पूर्णांकo the same skb as the request, overwriting
  * it), or becomes the first in queue.
- * Completions and next-to-run are signaled via the control buffer
+ * Completions and next-to-run are संकेतed via the control buffer
  * to limit potential cache line bounces.
  */
 
-#define NFP_CCM_MBOX_BATCH_LIMIT	64
-#define NFP_CCM_TIMEOUT			(NFP_NET_POLL_TIMEOUT * 1000)
-#define NFP_CCM_MAX_QLEN		1024
+#घोषणा NFP_CCM_MBOX_BATCH_LIMIT	64
+#घोषणा NFP_CCM_TIMEOUT			(NFP_NET_POLL_TIMEOUT * 1000)
+#घोषणा NFP_CCM_MAX_QLEN		1024
 
-enum nfp_net_mbox_cmsg_state {
+क्रमागत nfp_net_mbox_cmsg_state अणु
 	NFP_NET_MBOX_CMSG_STATE_QUEUED,
 	NFP_NET_MBOX_CMSG_STATE_NEXT,
 	NFP_NET_MBOX_CMSG_STATE_BUSY,
 	NFP_NET_MBOX_CMSG_STATE_REPLY_FOUND,
 	NFP_NET_MBOX_CMSG_STATE_DONE,
-};
+पूर्ण;
 
 /**
- * struct nfp_ccm_mbox_skb_cb - CCM mailbox specific info
+ * काष्ठा nfp_ccm_mbox_skb_cb - CCM mailbox specअगरic info
  * @state:	processing state (/stage) of the message
- * @err:	error encountered during processing if any
+ * @err:	error encountered during processing अगर any
  * @max_len:	max(request_len, reply_len)
- * @exp_reply:	expected reply length (0 means don't validate)
- * @posted:	the message was posted and nobody waits for the reply
+ * @exp_reply:	expected reply length (0 means करोn't validate)
+ * @posted:	the message was posted and nobody रुकोs क्रम the reply
  */
-struct nfp_ccm_mbox_cmsg_cb {
-	enum nfp_net_mbox_cmsg_state state;
-	int err;
-	unsigned int max_len;
-	unsigned int exp_reply;
+काष्ठा nfp_ccm_mbox_cmsg_cb अणु
+	क्रमागत nfp_net_mbox_cmsg_state state;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक max_len;
+	अचिन्हित पूर्णांक exp_reply;
 	bool posted;
-};
+पूर्ण;
 
-static u32 nfp_ccm_mbox_max_msg(struct nfp_net *nn)
-{
-	return round_down(nn->tlv_caps.mbox_len, 4) -
+अटल u32 nfp_ccm_mbox_max_msg(काष्ठा nfp_net *nn)
+अणु
+	वापस round_करोwn(nn->tlv_caps.mbox_len, 4) -
 		NFP_NET_CFG_MBOX_SIMPLE_VAL - /* common mbox command header */
 		4 * 2; /* Msg TLV plus End TLV headers */
-}
+पूर्ण
 
-static void
-nfp_ccm_mbox_msg_init(struct sk_buff *skb, unsigned int exp_reply, int max_len)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल व्योम
+nfp_ccm_mbox_msg_init(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक exp_reply, पूर्णांक max_len)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
 	cb->state = NFP_NET_MBOX_CMSG_STATE_QUEUED;
 	cb->err = 0;
 	cb->max_len = max_len;
 	cb->exp_reply = exp_reply;
 	cb->posted = false;
-}
+पूर्ण
 
-static int nfp_ccm_mbox_maxlen(const struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल पूर्णांक nfp_ccm_mbox_maxlen(स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	return cb->max_len;
-}
+	वापस cb->max_len;
+पूर्ण
 
-static bool nfp_ccm_mbox_done(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल bool nfp_ccm_mbox_करोne(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	return cb->state == NFP_NET_MBOX_CMSG_STATE_DONE;
-}
+	वापस cb->state == NFP_NET_MBOX_CMSG_STATE_DONE;
+पूर्ण
 
-static bool nfp_ccm_mbox_in_progress(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल bool nfp_ccm_mbox_in_progress(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	return cb->state != NFP_NET_MBOX_CMSG_STATE_QUEUED &&
+	वापस cb->state != NFP_NET_MBOX_CMSG_STATE_QUEUED &&
 	       cb->state != NFP_NET_MBOX_CMSG_STATE_NEXT;
-}
+पूर्ण
 
-static void nfp_ccm_mbox_set_busy(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल व्योम nfp_ccm_mbox_set_busy(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
 	cb->state = NFP_NET_MBOX_CMSG_STATE_BUSY;
-}
+पूर्ण
 
-static bool nfp_ccm_mbox_is_posted(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल bool nfp_ccm_mbox_is_posted(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	return cb->posted;
-}
+	वापस cb->posted;
+पूर्ण
 
-static void nfp_ccm_mbox_mark_posted(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल व्योम nfp_ccm_mbox_mark_posted(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
 	cb->posted = true;
-}
+पूर्ण
 
-static bool nfp_ccm_mbox_is_first(struct nfp_net *nn, struct sk_buff *skb)
-{
-	return skb_queue_is_first(&nn->mbox_cmsg.queue, skb);
-}
+अटल bool nfp_ccm_mbox_is_first(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb)
+अणु
+	वापस skb_queue_is_first(&nn->mbox_cmsg.queue, skb);
+पूर्ण
 
-static bool nfp_ccm_mbox_should_run(struct nfp_net *nn, struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल bool nfp_ccm_mbox_should_run(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	return cb->state == NFP_NET_MBOX_CMSG_STATE_NEXT;
-}
+	वापस cb->state == NFP_NET_MBOX_CMSG_STATE_NEXT;
+पूर्ण
 
-static void nfp_ccm_mbox_mark_next_runner(struct nfp_net *nn)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb;
-	struct sk_buff *skb;
+अटल व्योम nfp_ccm_mbox_mark_next_runner(काष्ठा nfp_net *nn)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb;
+	काष्ठा sk_buff *skb;
 
 	skb = skb_peek(&nn->mbox_cmsg.queue);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	cb = (void *)skb->cb;
+	cb = (व्योम *)skb->cb;
 	cb->state = NFP_NET_MBOX_CMSG_STATE_NEXT;
-	if (cb->posted)
+	अगर (cb->posted)
 		queue_work(nn->mbox_cmsg.workq, &nn->mbox_cmsg.runq_work);
-}
+पूर्ण
 
-static void
-nfp_ccm_mbox_write_tlv(struct nfp_net *nn, u32 off, u32 type, u32 len)
-{
-	nn_writel(nn, off,
+अटल व्योम
+nfp_ccm_mbox_ग_लिखो_tlv(काष्ठा nfp_net *nn, u32 off, u32 type, u32 len)
+अणु
+	nn_ग_लिखोl(nn, off,
 		  FIELD_PREP(NFP_NET_MBOX_TLV_TYPE, type) |
 		  FIELD_PREP(NFP_NET_MBOX_TLV_LEN, len));
-}
+पूर्ण
 
-static void nfp_ccm_mbox_copy_in(struct nfp_net *nn, struct sk_buff *last)
-{
-	struct sk_buff *skb;
-	int reserve, i, cnt;
+अटल व्योम nfp_ccm_mbox_copy_in(काष्ठा nfp_net *nn, काष्ठा sk_buff *last)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक reserve, i, cnt;
 	__be32 *data;
 	u32 off, len;
 
 	off = nn->tlv_caps.mbox_off + NFP_NET_CFG_MBOX_SIMPLE_VAL;
 	skb = __skb_peek(&nn->mbox_cmsg.queue);
-	while (true) {
-		nfp_ccm_mbox_write_tlv(nn, off, NFP_NET_MBOX_TLV_TYPE_MSG,
+	जबतक (true) अणु
+		nfp_ccm_mbox_ग_लिखो_tlv(nn, off, NFP_NET_MBOX_TLV_TYPE_MSG,
 				       skb->len);
 		off += 4;
 
 		/* Write data word by word, skb->data should be aligned */
 		data = (__be32 *)skb->data;
 		cnt = skb->len / 4;
-		for (i = 0 ; i < cnt; i++) {
-			nn_writel(nn, off, be32_to_cpu(data[i]));
+		क्रम (i = 0 ; i < cnt; i++) अणु
+			nn_ग_लिखोl(nn, off, be32_to_cpu(data[i]));
 			off += 4;
-		}
-		if (skb->len & 3) {
-			__be32 tmp = 0;
+		पूर्ण
+		अगर (skb->len & 3) अणु
+			__be32 पंचांगp = 0;
 
-			memcpy(&tmp, &data[i], skb->len & 3);
-			nn_writel(nn, off, be32_to_cpu(tmp));
+			स_नकल(&पंचांगp, &data[i], skb->len & 3);
+			nn_ग_लिखोl(nn, off, be32_to_cpu(पंचांगp));
 			off += 4;
-		}
+		पूर्ण
 
-		/* Reserve space if reply is bigger */
+		/* Reserve space अगर reply is bigger */
 		len = round_up(skb->len, 4);
 		reserve = nfp_ccm_mbox_maxlen(skb) - len;
-		if (reserve > 0) {
-			nfp_ccm_mbox_write_tlv(nn, off,
+		अगर (reserve > 0) अणु
+			nfp_ccm_mbox_ग_लिखो_tlv(nn, off,
 					       NFP_NET_MBOX_TLV_TYPE_RESV,
 					       reserve);
 			off += 4 + reserve;
-		}
+		पूर्ण
 
-		if (skb == last)
-			break;
+		अगर (skb == last)
+			अवरोध;
 		skb = skb_queue_next(&nn->mbox_cmsg.queue, skb);
-	}
+	पूर्ण
 
-	nfp_ccm_mbox_write_tlv(nn, off, NFP_NET_MBOX_TLV_TYPE_END, 0);
-}
+	nfp_ccm_mbox_ग_लिखो_tlv(nn, off, NFP_NET_MBOX_TLV_TYPE_END, 0);
+पूर्ण
 
-static struct sk_buff *
-nfp_ccm_mbox_find_req(struct nfp_net *nn, __be16 tag, struct sk_buff *last)
-{
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *
+nfp_ccm_mbox_find_req(काष्ठा nfp_net *nn, __be16 tag, काष्ठा sk_buff *last)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = __skb_peek(&nn->mbox_cmsg.queue);
-	while (true) {
-		if (__nfp_ccm_get_tag(skb) == tag)
-			return skb;
+	जबतक (true) अणु
+		अगर (__nfp_ccm_get_tag(skb) == tag)
+			वापस skb;
 
-		if (skb == last)
-			return NULL;
+		अगर (skb == last)
+			वापस शून्य;
 		skb = skb_queue_next(&nn->mbox_cmsg.queue, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nfp_ccm_mbox_copy_out(struct nfp_net *nn, struct sk_buff *last)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb;
+अटल व्योम nfp_ccm_mbox_copy_out(काष्ठा nfp_net *nn, काष्ठा sk_buff *last)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb;
 	u8 __iomem *data, *end;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 
 	data = nn->dp.ctrl_bar + nn->tlv_caps.mbox_off +
 		NFP_NET_CFG_MBOX_SIMPLE_VAL;
 	end = data + nn->tlv_caps.mbox_len;
 
-	while (true) {
-		unsigned int length, offset, type;
-		struct nfp_ccm_hdr hdr;
+	जबतक (true) अणु
+		अचिन्हित पूर्णांक length, offset, type;
+		काष्ठा nfp_ccm_hdr hdr;
 		u32 tlv_hdr;
 
-		tlv_hdr = readl(data);
+		tlv_hdr = पढ़ोl(data);
 		type = FIELD_GET(NFP_NET_MBOX_TLV_TYPE, tlv_hdr);
 		length = FIELD_GET(NFP_NET_MBOX_TLV_LEN, tlv_hdr);
 		offset = data - nn->dp.ctrl_bar;
@@ -234,74 +235,74 @@ static void nfp_ccm_mbox_copy_out(struct nfp_net *nn, struct sk_buff *last)
 		/* Advance past the header */
 		data += 4;
 
-		if (data + length > end) {
+		अगर (data + length > end) अणु
 			nn_dp_warn(&nn->dp, "mailbox oversized TLV type:%d offset:%u len:%u\n",
 				   type, offset, length);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (type == NFP_NET_MBOX_TLV_TYPE_END)
-			break;
-		if (type == NFP_NET_MBOX_TLV_TYPE_RESV)
-			goto next_tlv;
-		if (type != NFP_NET_MBOX_TLV_TYPE_MSG &&
-		    type != NFP_NET_MBOX_TLV_TYPE_MSG_NOSUP) {
+		अगर (type == NFP_NET_MBOX_TLV_TYPE_END)
+			अवरोध;
+		अगर (type == NFP_NET_MBOX_TLV_TYPE_RESV)
+			जाओ next_tlv;
+		अगर (type != NFP_NET_MBOX_TLV_TYPE_MSG &&
+		    type != NFP_NET_MBOX_TLV_TYPE_MSG_NOSUP) अणु
 			nn_dp_warn(&nn->dp, "mailbox unknown TLV type:%d offset:%u len:%u\n",
 				   type, offset, length);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (length < 4) {
+		अगर (length < 4) अणु
 			nn_dp_warn(&nn->dp, "mailbox msg too short to contain header TLV type:%d offset:%u len:%u\n",
 				   type, offset, length);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		hdr.raw = cpu_to_be32(readl(data));
+		hdr.raw = cpu_to_be32(पढ़ोl(data));
 
 		skb = nfp_ccm_mbox_find_req(nn, hdr.tag, last);
-		if (!skb) {
+		अगर (!skb) अणु
 			nn_dp_warn(&nn->dp, "mailbox request not found:%u\n",
 				   be16_to_cpu(hdr.tag));
-			break;
-		}
-		cb = (void *)skb->cb;
+			अवरोध;
+		पूर्ण
+		cb = (व्योम *)skb->cb;
 
-		if (type == NFP_NET_MBOX_TLV_TYPE_MSG_NOSUP) {
+		अगर (type == NFP_NET_MBOX_TLV_TYPE_MSG_NOSUP) अणु
 			nn_dp_warn(&nn->dp,
 				   "mailbox msg not supported type:%d\n",
 				   nfp_ccm_get_type(skb));
 			cb->err = -EIO;
-			goto next_tlv;
-		}
+			जाओ next_tlv;
+		पूर्ण
 
-		if (hdr.type != __NFP_CCM_REPLY(nfp_ccm_get_type(skb))) {
+		अगर (hdr.type != __NFP_CCM_REPLY(nfp_ccm_get_type(skb))) अणु
 			nn_dp_warn(&nn->dp, "mailbox msg reply wrong type:%u expected:%lu\n",
 				   hdr.type,
 				   __NFP_CCM_REPLY(nfp_ccm_get_type(skb)));
 			cb->err = -EIO;
-			goto next_tlv;
-		}
-		if (cb->exp_reply && length != cb->exp_reply) {
+			जाओ next_tlv;
+		पूर्ण
+		अगर (cb->exp_reply && length != cb->exp_reply) अणु
 			nn_dp_warn(&nn->dp, "mailbox msg reply wrong size type:%u expected:%u have:%u\n",
 				   hdr.type, length, cb->exp_reply);
 			cb->err = -EIO;
-			goto next_tlv;
-		}
-		if (length > cb->max_len) {
+			जाओ next_tlv;
+		पूर्ण
+		अगर (length > cb->max_len) अणु
 			nn_dp_warn(&nn->dp, "mailbox msg oversized reply type:%u max:%u have:%u\n",
 				   hdr.type, cb->max_len, length);
 			cb->err = -EIO;
-			goto next_tlv;
-		}
+			जाओ next_tlv;
+		पूर्ण
 
-		if (!cb->posted) {
+		अगर (!cb->posted) अणु
 			__be32 *skb_data;
-			int i, cnt;
+			पूर्णांक i, cnt;
 
-			if (length <= skb->len)
+			अगर (length <= skb->len)
 				__skb_trim(skb, length);
-			else
+			अन्यथा
 				skb_put(skb, length - skb->len);
 
 			/* We overcopy here slightly, but that's okay,
@@ -309,93 +310,93 @@ static void nfp_ccm_mbox_copy_out(struct nfp_net *nn, struct sk_buff *last)
 			 * be ignored (beyond skb->len).
 			 */
 			skb_data = (__be32 *)skb->data;
-			memcpy(skb_data, &hdr, 4);
+			स_नकल(skb_data, &hdr, 4);
 
 			cnt = DIV_ROUND_UP(length, 4);
-			for (i = 1 ; i < cnt; i++)
-				skb_data[i] = cpu_to_be32(readl(data + i * 4));
-		}
+			क्रम (i = 1 ; i < cnt; i++)
+				skb_data[i] = cpu_to_be32(पढ़ोl(data + i * 4));
+		पूर्ण
 
 		cb->state = NFP_NET_MBOX_CMSG_STATE_REPLY_FOUND;
 next_tlv:
 		data += round_up(length, 4);
-		if (data + 4 > end) {
+		अगर (data + 4 > end) अणु
 			nn_dp_warn(&nn->dp,
 				   "reached end of MBOX without END TLV\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	smp_wmb(); /* order the skb->data vs. cb->state */
 	spin_lock_bh(&nn->mbox_cmsg.queue.lock);
-	do {
+	करो अणु
 		skb = __skb_dequeue(&nn->mbox_cmsg.queue);
-		cb = (void *)skb->cb;
+		cb = (व्योम *)skb->cb;
 
-		if (cb->state != NFP_NET_MBOX_CMSG_STATE_REPLY_FOUND) {
+		अगर (cb->state != NFP_NET_MBOX_CMSG_STATE_REPLY_FOUND) अणु
 			cb->err = -ENOENT;
 			smp_wmb(); /* order the cb->err vs. cb->state */
-		}
+		पूर्ण
 		cb->state = NFP_NET_MBOX_CMSG_STATE_DONE;
 
-		if (cb->posted) {
-			if (cb->err)
+		अगर (cb->posted) अणु
+			अगर (cb->err)
 				nn_dp_warn(&nn->dp,
 					   "mailbox posted msg failed type:%u err:%d\n",
 					   nfp_ccm_get_type(skb), cb->err);
 			dev_consume_skb_any(skb);
-		}
-	} while (skb != last);
+		पूर्ण
+	पूर्ण जबतक (skb != last);
 
 	nfp_ccm_mbox_mark_next_runner(nn);
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
-}
+पूर्ण
 
-static void
-nfp_ccm_mbox_mark_all_err(struct nfp_net *nn, struct sk_buff *last, int err)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb;
-	struct sk_buff *skb;
+अटल व्योम
+nfp_ccm_mbox_mark_all_err(काष्ठा nfp_net *nn, काष्ठा sk_buff *last, पूर्णांक err)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb;
+	काष्ठा sk_buff *skb;
 
 	spin_lock_bh(&nn->mbox_cmsg.queue.lock);
-	do {
+	करो अणु
 		skb = __skb_dequeue(&nn->mbox_cmsg.queue);
-		cb = (void *)skb->cb;
+		cb = (व्योम *)skb->cb;
 
 		cb->err = err;
 		smp_wmb(); /* order the cb->err vs. cb->state */
 		cb->state = NFP_NET_MBOX_CMSG_STATE_DONE;
-	} while (skb != last);
+	पूर्ण जबतक (skb != last);
 
 	nfp_ccm_mbox_mark_next_runner(nn);
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
-}
+पूर्ण
 
-static void nfp_ccm_mbox_run_queue_unlock(struct nfp_net *nn)
+अटल व्योम nfp_ccm_mbox_run_queue_unlock(काष्ठा nfp_net *nn)
 	__releases(&nn->mbox_cmsg.queue.lock)
-{
-	int space = nn->tlv_caps.mbox_len - NFP_NET_CFG_MBOX_SIMPLE_VAL;
-	struct sk_buff *skb, *last;
-	int cnt, err;
+अणु
+	पूर्णांक space = nn->tlv_caps.mbox_len - NFP_NET_CFG_MBOX_SIMPLE_VAL;
+	काष्ठा sk_buff *skb, *last;
+	पूर्णांक cnt, err;
 
-	space -= 4; /* for End TLV */
+	space -= 4; /* क्रम End TLV */
 
 	/* First skb must fit, because it's ours and we checked it fits */
 	cnt = 1;
 	last = skb = __skb_peek(&nn->mbox_cmsg.queue);
 	space -= 4 + nfp_ccm_mbox_maxlen(skb);
 
-	while (!skb_queue_is_last(&nn->mbox_cmsg.queue, last)) {
+	जबतक (!skb_queue_is_last(&nn->mbox_cmsg.queue, last)) अणु
 		skb = skb_queue_next(&nn->mbox_cmsg.queue, last);
 		space -= 4 + nfp_ccm_mbox_maxlen(skb);
-		if (space < 0)
-			break;
+		अगर (space < 0)
+			अवरोध;
 		last = skb;
 		nfp_ccm_mbox_set_busy(skb);
 		cnt++;
-		if (cnt == NFP_CCM_MBOX_BATCH_LIMIT)
-			break;
-	}
+		अगर (cnt == NFP_CCM_MBOX_BATCH_LIMIT)
+			अवरोध;
+	पूर्ण
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
 
 	/* Now we own all skb's marked in progress, new requests may arrive
@@ -407,337 +408,337 @@ static void nfp_ccm_mbox_run_queue_unlock(struct nfp_net *nn)
 	nfp_ccm_mbox_copy_in(nn, last);
 
 	err = nfp_net_mbox_reconfig(nn, NFP_NET_CFG_MBOX_CMD_TLV_CMSG);
-	if (!err)
+	अगर (!err)
 		nfp_ccm_mbox_copy_out(nn, last);
-	else
+	अन्यथा
 		nfp_ccm_mbox_mark_all_err(nn, last, -EIO);
 
 	nn_ctrl_bar_unlock(nn);
 
 	wake_up_all(&nn->mbox_cmsg.wq);
-}
+पूर्ण
 
-static int nfp_ccm_mbox_skb_return(struct sk_buff *skb)
-{
-	struct nfp_ccm_mbox_cmsg_cb *cb = (void *)skb->cb;
+अटल पूर्णांक nfp_ccm_mbox_skb_वापस(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfp_ccm_mbox_cmsg_cb *cb = (व्योम *)skb->cb;
 
-	if (cb->err)
-		dev_kfree_skb_any(skb);
-	return cb->err;
-}
+	अगर (cb->err)
+		dev_kमुक्त_skb_any(skb);
+	वापस cb->err;
+पूर्ण
 
-/* If wait timed out but the command is already in progress we have
- * to wait until it finishes.  Runners has ownership of the skbs marked
+/* If रुको समयd out but the command is alपढ़ोy in progress we have
+ * to रुको until it finishes.  Runners has ownership of the skbs marked
  * as busy.
  */
-static int
-nfp_ccm_mbox_unlink_unlock(struct nfp_net *nn, struct sk_buff *skb,
-			   enum nfp_ccm_type type)
+अटल पूर्णांक
+nfp_ccm_mbox_unlink_unlock(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+			   क्रमागत nfp_ccm_type type)
 	__releases(&nn->mbox_cmsg.queue.lock)
-{
+अणु
 	bool was_first;
 
-	if (nfp_ccm_mbox_in_progress(skb)) {
+	अगर (nfp_ccm_mbox_in_progress(skb)) अणु
 		spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
 
-		wait_event(nn->mbox_cmsg.wq, nfp_ccm_mbox_done(skb));
+		रुको_event(nn->mbox_cmsg.wq, nfp_ccm_mbox_करोne(skb));
 		smp_rmb(); /* pairs with smp_wmb() after data is written */
-		return nfp_ccm_mbox_skb_return(skb);
-	}
+		वापस nfp_ccm_mbox_skb_वापस(skb);
+	पूर्ण
 
 	was_first = nfp_ccm_mbox_should_run(nn, skb);
 	__skb_unlink(skb, &nn->mbox_cmsg.queue);
-	if (was_first)
+	अगर (was_first)
 		nfp_ccm_mbox_mark_next_runner(nn);
 
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
 
-	if (was_first)
+	अगर (was_first)
 		wake_up_all(&nn->mbox_cmsg.wq);
 
 	nn_dp_warn(&nn->dp, "time out waiting for mbox response to 0x%02x\n",
 		   type);
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int
-nfp_ccm_mbox_msg_prepare(struct nfp_net *nn, struct sk_buff *skb,
-			 enum nfp_ccm_type type,
-			 unsigned int reply_size, unsigned int max_reply_size,
+अटल पूर्णांक
+nfp_ccm_mbox_msg_prepare(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+			 क्रमागत nfp_ccm_type type,
+			 अचिन्हित पूर्णांक reply_size, अचिन्हित पूर्णांक max_reply_size,
 			 gfp_t flags)
-{
-	const unsigned int mbox_max = nfp_ccm_mbox_max_msg(nn);
-	unsigned int max_len;
-	ssize_t undersize;
-	int err;
+अणु
+	स्थिर अचिन्हित पूर्णांक mbox_max = nfp_ccm_mbox_max_msg(nn);
+	अचिन्हित पूर्णांक max_len;
+	sमाप_प्रकार undersize;
+	पूर्णांक err;
 
-	if (unlikely(!(nn->tlv_caps.mbox_cmsg_types & BIT(type)))) {
+	अगर (unlikely(!(nn->tlv_caps.mbox_cmsg_types & BIT(type)))) अणु
 		nn_dp_warn(&nn->dp,
 			   "message type %d not supported by mailbox\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* If the reply size is unknown assume it will take the entire
-	 * mailbox, the callers should do their best for this to never
+	 * mailbox, the callers should करो their best क्रम this to never
 	 * happen.
 	 */
-	if (!max_reply_size)
+	अगर (!max_reply_size)
 		max_reply_size = mbox_max;
 	max_reply_size = round_up(max_reply_size, 4);
 
-	/* Make sure we can fit the entire reply into the skb,
-	 * and that we don't have to slow down the mbox handler
+	/* Make sure we can fit the entire reply पूर्णांकo the skb,
+	 * and that we करोn't have to slow करोwn the mbox handler
 	 * with allocations.
 	 */
-	undersize = max_reply_size - (skb_end_pointer(skb) - skb->data);
-	if (undersize > 0) {
+	undersize = max_reply_size - (skb_end_poपूर्णांकer(skb) - skb->data);
+	अगर (undersize > 0) अणु
 		err = pskb_expand_head(skb, 0, undersize, flags);
-		if (err) {
+		अगर (err) अणु
 			nn_dp_warn(&nn->dp,
 				   "can't allocate reply buffer for mailbox\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	/* Make sure that request and response both fit into the mailbox */
+	/* Make sure that request and response both fit पूर्णांकo the mailbox */
 	max_len = max(max_reply_size, round_up(skb->len, 4));
-	if (max_len > mbox_max) {
+	अगर (max_len > mbox_max) अणु
 		nn_dp_warn(&nn->dp,
 			   "message too big for tha mailbox: %u/%u vs %u\n",
 			   skb->len, max_reply_size, mbox_max);
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 
 	nfp_ccm_mbox_msg_init(skb, reply_size, max_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_ccm_mbox_msg_enqueue(struct nfp_net *nn, struct sk_buff *skb,
-			 enum nfp_ccm_type type, bool critical)
-{
-	struct nfp_ccm_hdr *hdr;
+अटल पूर्णांक
+nfp_ccm_mbox_msg_enqueue(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+			 क्रमागत nfp_ccm_type type, bool critical)
+अणु
+	काष्ठा nfp_ccm_hdr *hdr;
 
-	assert_spin_locked(&nn->mbox_cmsg.queue.lock);
+	निश्चित_spin_locked(&nn->mbox_cmsg.queue.lock);
 
-	if (!critical && nn->mbox_cmsg.queue.qlen >= NFP_CCM_MAX_QLEN) {
+	अगर (!critical && nn->mbox_cmsg.queue.qlen >= NFP_CCM_MAX_QLEN) अणु
 		nn_dp_warn(&nn->dp, "mailbox request queue too long\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	hdr = (void *)skb->data;
+	hdr = (व्योम *)skb->data;
 	hdr->ver = NFP_CCM_ABI_VERSION;
 	hdr->type = type;
 	hdr->tag = cpu_to_be16(nn->mbox_cmsg.tag++);
 
 	__skb_queue_tail(&nn->mbox_cmsg.queue, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __nfp_ccm_mbox_communicate(struct nfp_net *nn, struct sk_buff *skb,
-			       enum nfp_ccm_type type,
-			       unsigned int reply_size,
-			       unsigned int max_reply_size, bool critical)
-{
-	int err;
+पूर्णांक __nfp_ccm_mbox_communicate(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+			       क्रमागत nfp_ccm_type type,
+			       अचिन्हित पूर्णांक reply_size,
+			       अचिन्हित पूर्णांक max_reply_size, bool critical)
+अणु
+	पूर्णांक err;
 
 	err = nfp_ccm_mbox_msg_prepare(nn, skb, type, reply_size,
 				       max_reply_size, GFP_KERNEL);
-	if (err)
-		goto err_free_skb;
+	अगर (err)
+		जाओ err_मुक्त_skb;
 
 	spin_lock_bh(&nn->mbox_cmsg.queue.lock);
 
 	err = nfp_ccm_mbox_msg_enqueue(nn, skb, type, critical);
-	if (err)
-		goto err_unlock;
+	अगर (err)
+		जाओ err_unlock;
 
 	/* First in queue takes the mailbox lock and processes the batch */
-	if (!nfp_ccm_mbox_is_first(nn, skb)) {
+	अगर (!nfp_ccm_mbox_is_first(nn, skb)) अणु
 		bool to;
 
 		spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
 
-		to = !wait_event_timeout(nn->mbox_cmsg.wq,
-					 nfp_ccm_mbox_done(skb) ||
+		to = !रुको_event_समयout(nn->mbox_cmsg.wq,
+					 nfp_ccm_mbox_करोne(skb) ||
 					 nfp_ccm_mbox_should_run(nn, skb),
-					 msecs_to_jiffies(NFP_CCM_TIMEOUT));
+					 msecs_to_jअगरfies(NFP_CCM_TIMEOUT));
 
-		/* fast path for those completed by another thread */
-		if (nfp_ccm_mbox_done(skb)) {
+		/* fast path क्रम those completed by another thपढ़ो */
+		अगर (nfp_ccm_mbox_करोne(skb)) अणु
 			smp_rmb(); /* pairs with wmb after data is written */
-			return nfp_ccm_mbox_skb_return(skb);
-		}
+			वापस nfp_ccm_mbox_skb_वापस(skb);
+		पूर्ण
 
 		spin_lock_bh(&nn->mbox_cmsg.queue.lock);
 
-		if (!nfp_ccm_mbox_is_first(nn, skb)) {
+		अगर (!nfp_ccm_mbox_is_first(nn, skb)) अणु
 			WARN_ON(!to);
 
 			err = nfp_ccm_mbox_unlink_unlock(nn, skb, type);
-			if (err)
-				goto err_free_skb;
-			return 0;
-		}
-	}
+			अगर (err)
+				जाओ err_मुक्त_skb;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* run queue expects the lock held */
 	nfp_ccm_mbox_run_queue_unlock(nn);
-	return nfp_ccm_mbox_skb_return(skb);
+	वापस nfp_ccm_mbox_skb_वापस(skb);
 
 err_unlock:
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
-err_free_skb:
-	dev_kfree_skb_any(skb);
-	return err;
-}
+err_मुक्त_skb:
+	dev_kमुक्त_skb_any(skb);
+	वापस err;
+पूर्ण
 
-int nfp_ccm_mbox_communicate(struct nfp_net *nn, struct sk_buff *skb,
-			     enum nfp_ccm_type type,
-			     unsigned int reply_size,
-			     unsigned int max_reply_size)
-{
-	return __nfp_ccm_mbox_communicate(nn, skb, type, reply_size,
+पूर्णांक nfp_ccm_mbox_communicate(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+			     क्रमागत nfp_ccm_type type,
+			     अचिन्हित पूर्णांक reply_size,
+			     अचिन्हित पूर्णांक max_reply_size)
+अणु
+	वापस __nfp_ccm_mbox_communicate(nn, skb, type, reply_size,
 					  max_reply_size, false);
-}
+पूर्ण
 
-static void nfp_ccm_mbox_post_runq_work(struct work_struct *work)
-{
-	struct sk_buff *skb;
-	struct nfp_net *nn;
+अटल व्योम nfp_ccm_mbox_post_runq_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा nfp_net *nn;
 
-	nn = container_of(work, struct nfp_net, mbox_cmsg.runq_work);
+	nn = container_of(work, काष्ठा nfp_net, mbox_cmsg.runq_work);
 
 	spin_lock_bh(&nn->mbox_cmsg.queue.lock);
 
 	skb = __skb_peek(&nn->mbox_cmsg.queue);
-	if (WARN_ON(!skb || !nfp_ccm_mbox_is_posted(skb) ||
-		    !nfp_ccm_mbox_should_run(nn, skb))) {
+	अगर (WARN_ON(!skb || !nfp_ccm_mbox_is_posted(skb) ||
+		    !nfp_ccm_mbox_should_run(nn, skb))) अणु
 		spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	nfp_ccm_mbox_run_queue_unlock(nn);
-}
+पूर्ण
 
-static void nfp_ccm_mbox_post_wait_work(struct work_struct *work)
-{
-	struct sk_buff *skb;
-	struct nfp_net *nn;
-	int err;
+अटल व्योम nfp_ccm_mbox_post_रुको_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा nfp_net *nn;
+	पूर्णांक err;
 
-	nn = container_of(work, struct nfp_net, mbox_cmsg.wait_work);
+	nn = container_of(work, काष्ठा nfp_net, mbox_cmsg.रुको_work);
 
 	skb = skb_peek(&nn->mbox_cmsg.queue);
-	if (WARN_ON(!skb || !nfp_ccm_mbox_is_posted(skb)))
-		/* Should never happen so it's unclear what to do here.. */
-		goto exit_unlock_wake;
+	अगर (WARN_ON(!skb || !nfp_ccm_mbox_is_posted(skb)))
+		/* Should never happen so it's unclear what to करो here.. */
+		जाओ निकास_unlock_wake;
 
-	err = nfp_net_mbox_reconfig_wait_posted(nn);
-	if (!err)
+	err = nfp_net_mbox_reconfig_रुको_posted(nn);
+	अगर (!err)
 		nfp_ccm_mbox_copy_out(nn, skb);
-	else
+	अन्यथा
 		nfp_ccm_mbox_mark_all_err(nn, skb, -EIO);
-exit_unlock_wake:
+निकास_unlock_wake:
 	nn_ctrl_bar_unlock(nn);
 	wake_up_all(&nn->mbox_cmsg.wq);
-}
+पूर्ण
 
-int nfp_ccm_mbox_post(struct nfp_net *nn, struct sk_buff *skb,
-		      enum nfp_ccm_type type, unsigned int max_reply_size)
-{
-	int err;
+पूर्णांक nfp_ccm_mbox_post(काष्ठा nfp_net *nn, काष्ठा sk_buff *skb,
+		      क्रमागत nfp_ccm_type type, अचिन्हित पूर्णांक max_reply_size)
+अणु
+	पूर्णांक err;
 
 	err = nfp_ccm_mbox_msg_prepare(nn, skb, type, 0, max_reply_size,
 				       GFP_ATOMIC);
-	if (err)
-		goto err_free_skb;
+	अगर (err)
+		जाओ err_मुक्त_skb;
 
 	nfp_ccm_mbox_mark_posted(skb);
 
 	spin_lock_bh(&nn->mbox_cmsg.queue.lock);
 
 	err = nfp_ccm_mbox_msg_enqueue(nn, skb, type, false);
-	if (err)
-		goto err_unlock;
+	अगर (err)
+		जाओ err_unlock;
 
-	if (nfp_ccm_mbox_is_first(nn, skb)) {
-		if (nn_ctrl_bar_trylock(nn)) {
+	अगर (nfp_ccm_mbox_is_first(nn, skb)) अणु
+		अगर (nn_ctrl_bar_trylock(nn)) अणु
 			nfp_ccm_mbox_copy_in(nn, skb);
 			nfp_net_mbox_reconfig_post(nn,
 						   NFP_NET_CFG_MBOX_CMD_TLV_CMSG);
 			queue_work(nn->mbox_cmsg.workq,
-				   &nn->mbox_cmsg.wait_work);
-		} else {
+				   &nn->mbox_cmsg.रुको_work);
+		पूर्ण अन्यथा अणु
 			nfp_ccm_mbox_mark_next_runner(nn);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
 
-	return 0;
+	वापस 0;
 
 err_unlock:
 	spin_unlock_bh(&nn->mbox_cmsg.queue.lock);
-err_free_skb:
-	dev_kfree_skb_any(skb);
-	return err;
-}
+err_मुक्त_skb:
+	dev_kमुक्त_skb_any(skb);
+	वापस err;
+पूर्ण
 
-struct sk_buff *
-nfp_ccm_mbox_msg_alloc(struct nfp_net *nn, unsigned int req_size,
-		       unsigned int reply_size, gfp_t flags)
-{
-	unsigned int max_size;
-	struct sk_buff *skb;
+काष्ठा sk_buff *
+nfp_ccm_mbox_msg_alloc(काष्ठा nfp_net *nn, अचिन्हित पूर्णांक req_size,
+		       अचिन्हित पूर्णांक reply_size, gfp_t flags)
+अणु
+	अचिन्हित पूर्णांक max_size;
+	काष्ठा sk_buff *skb;
 
-	if (!reply_size)
+	अगर (!reply_size)
 		max_size = nfp_ccm_mbox_max_msg(nn);
-	else
+	अन्यथा
 		max_size = max(req_size, reply_size);
 	max_size = round_up(max_size, 4);
 
 	skb = alloc_skb(max_size, flags);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	skb_put(skb, req_size);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-bool nfp_ccm_mbox_fits(struct nfp_net *nn, unsigned int size)
-{
-	return nfp_ccm_mbox_max_msg(nn) >= size;
-}
+bool nfp_ccm_mbox_fits(काष्ठा nfp_net *nn, अचिन्हित पूर्णांक size)
+अणु
+	वापस nfp_ccm_mbox_max_msg(nn) >= size;
+पूर्ण
 
-int nfp_ccm_mbox_init(struct nfp_net *nn)
-{
-	return 0;
-}
+पूर्णांक nfp_ccm_mbox_init(काष्ठा nfp_net *nn)
+अणु
+	वापस 0;
+पूर्ण
 
-void nfp_ccm_mbox_clean(struct nfp_net *nn)
-{
+व्योम nfp_ccm_mbox_clean(काष्ठा nfp_net *nn)
+अणु
 	drain_workqueue(nn->mbox_cmsg.workq);
-}
+पूर्ण
 
-int nfp_ccm_mbox_alloc(struct nfp_net *nn)
-{
+पूर्णांक nfp_ccm_mbox_alloc(काष्ठा nfp_net *nn)
+अणु
 	skb_queue_head_init(&nn->mbox_cmsg.queue);
-	init_waitqueue_head(&nn->mbox_cmsg.wq);
-	INIT_WORK(&nn->mbox_cmsg.wait_work, nfp_ccm_mbox_post_wait_work);
+	init_रुकोqueue_head(&nn->mbox_cmsg.wq);
+	INIT_WORK(&nn->mbox_cmsg.रुको_work, nfp_ccm_mbox_post_रुको_work);
 	INIT_WORK(&nn->mbox_cmsg.runq_work, nfp_ccm_mbox_post_runq_work);
 
 	nn->mbox_cmsg.workq = alloc_workqueue("nfp-ccm-mbox", WQ_UNBOUND, 0);
-	if (!nn->mbox_cmsg.workq)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!nn->mbox_cmsg.workq)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void nfp_ccm_mbox_free(struct nfp_net *nn)
-{
+व्योम nfp_ccm_mbox_मुक्त(काष्ठा nfp_net *nn)
+अणु
 	destroy_workqueue(nn->mbox_cmsg.workq);
 	WARN_ON(!skb_queue_empty(&nn->mbox_cmsg.queue));
-}
+पूर्ण

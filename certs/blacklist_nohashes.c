@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "blacklist.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "blacklist.h"
 
-const char __initconst *const blacklist_hashes[] = {
-	NULL
-};
+स्थिर अक्षर __initस्थिर *स्थिर blacklist_hashes[] = अणु
+	शून्य
+पूर्ण;

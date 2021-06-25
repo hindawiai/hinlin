@@ -1,449 +1,450 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * AD7816 digital temperature sensor driver supporting AD7816/7/8
  *
  * Copyright 2010 Analog Devices Inc.
  */
 
-#include <linux/interrupt.h>
-#include <linux/gpio/consumer.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/list.h>
-#include <linux/spi/spi.h>
-#include <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/module.h>
 
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/events.h>
 
 /*
  * AD7816 config masks
  */
-#define AD7816_FULL			0x1
-#define AD7816_PD			0x2
-#define AD7816_CS_MASK			0x7
-#define AD7816_CS_MAX			0x4
+#घोषणा AD7816_FULL			0x1
+#घोषणा AD7816_PD			0x2
+#घोषणा AD7816_CS_MASK			0x7
+#घोषणा AD7816_CS_MAX			0x4
 
 /*
  * AD7816 temperature masks
  */
-#define AD7816_VALUE_OFFSET		6
-#define AD7816_BOUND_VALUE_BASE		0x8
-#define AD7816_BOUND_VALUE_MIN		-95
-#define AD7816_BOUND_VALUE_MAX		152
-#define AD7816_TEMP_FLOAT_OFFSET	2
-#define AD7816_TEMP_FLOAT_MASK		0x3
+#घोषणा AD7816_VALUE_OFFSET		6
+#घोषणा AD7816_BOUND_VALUE_BASE		0x8
+#घोषणा AD7816_BOUND_VALUE_MIN		-95
+#घोषणा AD7816_BOUND_VALUE_MAX		152
+#घोषणा AD7816_TEMP_FLOAT_OFFSET	2
+#घोषणा AD7816_TEMP_FLOAT_MASK		0x3
 
 /*
- * struct ad7816_chip_info - chip specific information
+ * काष्ठा ad7816_chip_info - chip specअगरic inक्रमmation
  */
 
-struct ad7816_chip_info {
-	kernel_ulong_t id;
-	struct spi_device *spi_dev;
-	struct gpio_desc *rdwr_pin;
-	struct gpio_desc *convert_pin;
-	struct gpio_desc *busy_pin;
+काष्ठा ad7816_chip_info अणु
+	kernel_uदीर्घ_t id;
+	काष्ठा spi_device *spi_dev;
+	काष्ठा gpio_desc *rdwr_pin;
+	काष्ठा gpio_desc *convert_pin;
+	काष्ठा gpio_desc *busy_pin;
 	u8  oti_data[AD7816_CS_MAX + 1];
 	u8  channel_id;	/* 0 always be temperature */
 	u8  mode;
-};
+पूर्ण;
 
-enum ad7816_type {
+क्रमागत ad7816_type अणु
 	ID_AD7816,
 	ID_AD7817,
 	ID_AD7818,
-};
+पूर्ण;
 
 /*
  * ad7816 data access by SPI
  */
-static int ad7816_spi_read(struct ad7816_chip_info *chip, u16 *data)
-{
-	struct spi_device *spi_dev = chip->spi_dev;
-	int ret;
+अटल पूर्णांक ad7816_spi_पढ़ो(काष्ठा ad7816_chip_info *chip, u16 *data)
+अणु
+	काष्ठा spi_device *spi_dev = chip->spi_dev;
+	पूर्णांक ret;
 	__be16 buf;
 
 	gpiod_set_value(chip->rdwr_pin, 1);
 	gpiod_set_value(chip->rdwr_pin, 0);
-	ret = spi_write(spi_dev, &chip->channel_id, sizeof(chip->channel_id));
-	if (ret < 0) {
+	ret = spi_ग_लिखो(spi_dev, &chip->channel_id, माप(chip->channel_id));
+	अगर (ret < 0) अणु
 		dev_err(&spi_dev->dev, "SPI channel setting error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	gpiod_set_value(chip->rdwr_pin, 1);
 
-	if (chip->mode == AD7816_PD) { /* operating mode 2 */
+	अगर (chip->mode == AD7816_PD) अणु /* operating mode 2 */
 		gpiod_set_value(chip->convert_pin, 1);
 		gpiod_set_value(chip->convert_pin, 0);
-	} else { /* operating mode 1 */
+	पूर्ण अन्यथा अणु /* operating mode 1 */
 		gpiod_set_value(chip->convert_pin, 0);
 		gpiod_set_value(chip->convert_pin, 1);
-	}
+	पूर्ण
 
-	if (chip->id == ID_AD7816 || chip->id == ID_AD7817) {
-		while (gpiod_get_value(chip->busy_pin))
+	अगर (chip->id == ID_AD7816 || chip->id == ID_AD7817) अणु
+		जबतक (gpiod_get_value(chip->busy_pin))
 			cpu_relax();
-	}
+	पूर्ण
 
 	gpiod_set_value(chip->rdwr_pin, 0);
 	gpiod_set_value(chip->rdwr_pin, 1);
-	ret = spi_read(spi_dev, &buf, sizeof(*data));
-	if (ret < 0) {
+	ret = spi_पढ़ो(spi_dev, &buf, माप(*data));
+	अगर (ret < 0) अणु
 		dev_err(&spi_dev->dev, "SPI data read error\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	*data = be16_to_cpu(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ad7816_spi_write(struct ad7816_chip_info *chip, u8 data)
-{
-	struct spi_device *spi_dev = chip->spi_dev;
-	int ret;
+अटल पूर्णांक ad7816_spi_ग_लिखो(काष्ठा ad7816_chip_info *chip, u8 data)
+अणु
+	काष्ठा spi_device *spi_dev = chip->spi_dev;
+	पूर्णांक ret;
 
 	gpiod_set_value(chip->rdwr_pin, 1);
 	gpiod_set_value(chip->rdwr_pin, 0);
-	ret = spi_write(spi_dev, &data, sizeof(data));
-	if (ret < 0)
+	ret = spi_ग_लिखो(spi_dev, &data, माप(data));
+	अगर (ret < 0)
 		dev_err(&spi_dev->dev, "SPI oti data write error\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ad7816_show_mode(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
+अटल sमाप_प्रकार ad7816_show_mode(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
 
-	if (chip->mode)
-		return sprintf(buf, "power-save\n");
-	return sprintf(buf, "full\n");
-}
+	अगर (chip->mode)
+		वापस प्र_लिखो(buf, "power-save\n");
+	वापस प्र_लिखो(buf, "full\n");
+पूर्ण
 
-static ssize_t ad7816_store_mode(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf,
-				 size_t len)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
+अटल sमाप_प्रकार ad7816_store_mode(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf,
+				 माप_प्रकार len)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
 
-	if (strcmp(buf, "full")) {
+	अगर (म_भेद(buf, "full")) अणु
 		gpiod_set_value(chip->rdwr_pin, 1);
 		chip->mode = AD7816_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		gpiod_set_value(chip->rdwr_pin, 0);
 		chip->mode = AD7816_PD;
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static IIO_DEVICE_ATTR(mode, 0644,
+अटल IIO_DEVICE_ATTR(mode, 0644,
 		ad7816_show_mode,
 		ad7816_store_mode,
 		0);
 
-static ssize_t ad7816_show_available_modes(struct device *dev,
-					   struct device_attribute *attr,
-					   char *buf)
-{
-	return sprintf(buf, "full\npower-save\n");
-}
+अटल sमाप_प्रकार ad7816_show_available_modes(काष्ठा device *dev,
+					   काष्ठा device_attribute *attr,
+					   अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "full\npower-save\n");
+पूर्ण
 
-static IIO_DEVICE_ATTR(available_modes, 0444, ad7816_show_available_modes,
-			NULL, 0);
+अटल IIO_DEVICE_ATTR(available_modes, 0444, ad7816_show_available_modes,
+			शून्य, 0);
 
-static ssize_t ad7816_show_channel(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
+अटल sमाप_प्रकार ad7816_show_channel(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
 
-	return sprintf(buf, "%d\n", chip->channel_id);
-}
+	वापस प्र_लिखो(buf, "%d\n", chip->channel_id);
+पूर्ण
 
-static ssize_t ad7816_store_channel(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf,
-				    size_t len)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
-	unsigned long data;
-	int ret;
+अटल sमाप_प्रकार ad7816_store_channel(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf,
+				    माप_प्रकार len)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
+	अचिन्हित दीर्घ data;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 10, &data);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 10, &data);
+	अगर (ret)
+		वापस ret;
 
-	if (data > AD7816_CS_MAX && data != AD7816_CS_MASK) {
+	अगर (data > AD7816_CS_MAX && data != AD7816_CS_MASK) अणु
 		dev_err(&chip->spi_dev->dev, "Invalid channel id %lu for %s.\n",
 			data, indio_dev->name);
-		return -EINVAL;
-	} else if (strcmp(indio_dev->name, "ad7818") == 0 && data > 1) {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (म_भेद(indio_dev->name, "ad7818") == 0 && data > 1) अणु
 		dev_err(&chip->spi_dev->dev,
 			"Invalid channel id %lu for ad7818.\n", data);
-		return -EINVAL;
-	} else if (strcmp(indio_dev->name, "ad7816") == 0 && data > 0) {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (म_भेद(indio_dev->name, "ad7816") == 0 && data > 0) अणु
 		dev_err(&chip->spi_dev->dev,
 			"Invalid channel id %lu for ad7816.\n", data);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	chip->channel_id = data;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static IIO_DEVICE_ATTR(channel, 0644,
+अटल IIO_DEVICE_ATTR(channel, 0644,
 		ad7816_show_channel,
 		ad7816_store_channel,
 		0);
 
-static ssize_t ad7816_show_value(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
+अटल sमाप_प्रकार ad7816_show_value(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
 	u16 data;
 	s8 value;
-	int ret;
+	पूर्णांक ret;
 
-	ret = ad7816_spi_read(chip, &data);
-	if (ret)
-		return -EIO;
+	ret = ad7816_spi_पढ़ो(chip, &data);
+	अगर (ret)
+		वापस -EIO;
 
 	data >>= AD7816_VALUE_OFFSET;
 
-	if (chip->channel_id == 0) {
+	अगर (chip->channel_id == 0) अणु
 		value = (s8)((data >> AD7816_TEMP_FLOAT_OFFSET) - 103);
 		data &= AD7816_TEMP_FLOAT_MASK;
-		if (value < 0)
+		अगर (value < 0)
 			data = BIT(AD7816_TEMP_FLOAT_OFFSET) - data;
-		return sprintf(buf, "%d.%.2d\n", value, data * 25);
-	}
-	return sprintf(buf, "%u\n", data);
-}
+		वापस प्र_लिखो(buf, "%d.%.2d\n", value, data * 25);
+	पूर्ण
+	वापस प्र_लिखो(buf, "%u\n", data);
+पूर्ण
 
-static IIO_DEVICE_ATTR(value, 0444, ad7816_show_value, NULL, 0);
+अटल IIO_DEVICE_ATTR(value, 0444, ad7816_show_value, शून्य, 0);
 
-static struct attribute *ad7816_attributes[] = {
+अटल काष्ठा attribute *ad7816_attributes[] = अणु
 	&iio_dev_attr_available_modes.dev_attr.attr,
 	&iio_dev_attr_mode.dev_attr.attr,
 	&iio_dev_attr_channel.dev_attr.attr,
 	&iio_dev_attr_value.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ad7816_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ad7816_attribute_group = अणु
 	.attrs = ad7816_attributes,
-};
+पूर्ण;
 
 /*
  * temperature bound events
  */
 
-#define IIO_EVENT_CODE_AD7816_OTI IIO_UNMOD_EVENT_CODE(IIO_TEMP,	\
+#घोषणा IIO_EVENT_CODE_AD7816_OTI IIO_UNMOD_EVENT_CODE(IIO_TEMP,	\
 						       0,		\
 						       IIO_EV_TYPE_THRESH, \
-						       IIO_EV_DIR_FALLING)
+						       IIO_EV_सूची_FALLING)
 
-static irqreturn_t ad7816_event_handler(int irq, void *private)
-{
-	iio_push_event(private, IIO_EVENT_CODE_AD7816_OTI,
-		       iio_get_time_ns(private));
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t ad7816_event_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	iio_push_event(निजी, IIO_EVENT_CODE_AD7816_OTI,
+		       iio_get_समय_ns(निजी));
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static ssize_t ad7816_show_oti(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
-	int value;
+अटल sमाप_प्रकार ad7816_show_oti(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
+	पूर्णांक value;
 
-	if (chip->channel_id > AD7816_CS_MAX) {
+	अगर (chip->channel_id > AD7816_CS_MAX) अणु
 		dev_err(dev, "Invalid oti channel id %d.\n", chip->channel_id);
-		return -EINVAL;
-	} else if (chip->channel_id == 0) {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (chip->channel_id == 0) अणु
 		value = AD7816_BOUND_VALUE_MIN +
 			(chip->oti_data[chip->channel_id] -
 			AD7816_BOUND_VALUE_BASE);
-		return sprintf(buf, "%d\n", value);
-	}
-	return sprintf(buf, "%u\n", chip->oti_data[chip->channel_id]);
-}
+		वापस प्र_लिखो(buf, "%d\n", value);
+	पूर्ण
+	वापस प्र_लिखो(buf, "%u\n", chip->oti_data[chip->channel_id]);
+पूर्ण
 
-static inline ssize_t ad7816_set_oti(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf,
-				     size_t len)
-{
-	struct iio_dev *indio_dev = dev_to_iio_dev(dev);
-	struct ad7816_chip_info *chip = iio_priv(indio_dev);
-	long value;
+अटल अंतरभूत sमाप_प्रकार ad7816_set_oti(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf,
+				     माप_प्रकार len)
+अणु
+	काष्ठा iio_dev *indio_dev = dev_to_iio_dev(dev);
+	काष्ठा ad7816_chip_info *chip = iio_priv(indio_dev);
+	दीर्घ value;
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = kstrtol(buf, 10, &value);
-	if (ret)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 10, &value);
+	अगर (ret)
+		वापस ret;
 
-	if (chip->channel_id > AD7816_CS_MAX) {
+	अगर (chip->channel_id > AD7816_CS_MAX) अणु
 		dev_err(dev, "Invalid oti channel id %d.\n", chip->channel_id);
-		return -EINVAL;
-	} else if (chip->channel_id == 0) {
-		if (value < AD7816_BOUND_VALUE_MIN ||
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (chip->channel_id == 0) अणु
+		अगर (value < AD7816_BOUND_VALUE_MIN ||
 		    value > AD7816_BOUND_VALUE_MAX)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		data = (u8)(value - AD7816_BOUND_VALUE_MIN +
 			AD7816_BOUND_VALUE_BASE);
-	} else {
-		if (value < AD7816_BOUND_VALUE_BASE || value > 255)
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (value < AD7816_BOUND_VALUE_BASE || value > 255)
+			वापस -EINVAL;
 
 		data = (u8)value;
-	}
+	पूर्ण
 
-	ret = ad7816_spi_write(chip, data);
-	if (ret)
-		return -EIO;
+	ret = ad7816_spi_ग_लिखो(chip, data);
+	अगर (ret)
+		वापस -EIO;
 
 	chip->oti_data[chip->channel_id] = data;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static IIO_DEVICE_ATTR(oti, 0644,
+अटल IIO_DEVICE_ATTR(oti, 0644,
 		       ad7816_show_oti, ad7816_set_oti, 0);
 
-static struct attribute *ad7816_event_attributes[] = {
+अटल काष्ठा attribute *ad7816_event_attributes[] = अणु
 	&iio_dev_attr_oti.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group ad7816_event_attribute_group = {
+अटल स्थिर काष्ठा attribute_group ad7816_event_attribute_group = अणु
 	.attrs = ad7816_event_attributes,
 	.name = "events",
-};
+पूर्ण;
 
-static const struct iio_info ad7816_info = {
+अटल स्थिर काष्ठा iio_info ad7816_info = अणु
 	.attrs = &ad7816_attribute_group,
 	.event_attrs = &ad7816_event_attribute_group,
-};
+पूर्ण;
 
 /*
- * device probe and remove
+ * device probe and हटाओ
  */
 
-static int ad7816_probe(struct spi_device *spi_dev)
-{
-	struct ad7816_chip_info *chip;
-	struct iio_dev *indio_dev;
-	int i, ret;
+अटल पूर्णांक ad7816_probe(काष्ठा spi_device *spi_dev)
+अणु
+	काष्ठा ad7816_chip_info *chip;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक i, ret;
 
-	indio_dev = devm_iio_device_alloc(&spi_dev->dev, sizeof(*chip));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&spi_dev->dev, माप(*chip));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 	chip = iio_priv(indio_dev);
-	/* this is only used for device removal purposes */
+	/* this is only used क्रम device removal purposes */
 	dev_set_drvdata(&spi_dev->dev, indio_dev);
 
 	chip->spi_dev = spi_dev;
-	for (i = 0; i <= AD7816_CS_MAX; i++)
+	क्रम (i = 0; i <= AD7816_CS_MAX; i++)
 		chip->oti_data[i] = 203;
 
 	chip->id = spi_get_device_id(spi_dev)->driver_data;
 	chip->rdwr_pin = devm_gpiod_get(&spi_dev->dev, "rdwr", GPIOD_OUT_HIGH);
-	if (IS_ERR(chip->rdwr_pin)) {
+	अगर (IS_ERR(chip->rdwr_pin)) अणु
 		ret = PTR_ERR(chip->rdwr_pin);
 		dev_err(&spi_dev->dev, "Failed to request rdwr GPIO: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	chip->convert_pin = devm_gpiod_get(&spi_dev->dev, "convert",
 					   GPIOD_OUT_HIGH);
-	if (IS_ERR(chip->convert_pin)) {
+	अगर (IS_ERR(chip->convert_pin)) अणु
 		ret = PTR_ERR(chip->convert_pin);
 		dev_err(&spi_dev->dev, "Failed to request convert GPIO: %d\n",
 			ret);
-		return ret;
-	}
-	if (chip->id == ID_AD7816 || chip->id == ID_AD7817) {
+		वापस ret;
+	पूर्ण
+	अगर (chip->id == ID_AD7816 || chip->id == ID_AD7817) अणु
 		chip->busy_pin = devm_gpiod_get(&spi_dev->dev, "busy",
 						GPIOD_IN);
-		if (IS_ERR(chip->busy_pin)) {
+		अगर (IS_ERR(chip->busy_pin)) अणु
 			ret = PTR_ERR(chip->busy_pin);
 			dev_err(&spi_dev->dev, "Failed to request busy GPIO: %d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	indio_dev->name = spi_get_device_id(spi_dev)->name;
 	indio_dev->info = &ad7816_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	if (spi_dev->irq) {
+	अगर (spi_dev->irq) अणु
 		/* Only low trigger is supported in ad7816/7/8 */
-		ret = devm_request_threaded_irq(&spi_dev->dev, spi_dev->irq,
-						NULL,
+		ret = devm_request_thपढ़ोed_irq(&spi_dev->dev, spi_dev->irq,
+						शून्य,
 						&ad7816_event_handler,
 						IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 						indio_dev->name,
 						indio_dev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = devm_iio_device_register(&spi_dev->dev, indio_dev);
-	if (ret)
-		return ret;
+	ret = devm_iio_device_रेजिस्टर(&spi_dev->dev, indio_dev);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(&spi_dev->dev, "%s temperature sensor and ADC registered.\n",
 		 indio_dev->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ad7816_of_match[] = {
-	{ .compatible = "adi,ad7816", },
-	{ .compatible = "adi,ad7817", },
-	{ .compatible = "adi,ad7818", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ad7816_of_match[] = अणु
+	अणु .compatible = "adi,ad7816", पूर्ण,
+	अणु .compatible = "adi,ad7817", पूर्ण,
+	अणु .compatible = "adi,ad7818", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ad7816_of_match);
 
-static const struct spi_device_id ad7816_id[] = {
-	{ "ad7816", ID_AD7816 },
-	{ "ad7817", ID_AD7817 },
-	{ "ad7818", ID_AD7818 },
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id ad7816_id[] = अणु
+	अणु "ad7816", ID_AD7816 पूर्ण,
+	अणु "ad7817", ID_AD7817 पूर्ण,
+	अणु "ad7818", ID_AD7818 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(spi, ad7816_id);
 
-static struct spi_driver ad7816_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ad7816_driver = अणु
+	.driver = अणु
 		.name = "ad7816",
 		.of_match_table = ad7816_of_match,
-	},
+	पूर्ण,
 	.probe = ad7816_probe,
 	.id_table = ad7816_id,
-};
+पूर्ण;
 module_spi_driver(ad7816_driver);
 
 MODULE_AUTHOR("Sonic Zhang <sonic.zhang@analog.com>");

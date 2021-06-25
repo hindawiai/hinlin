@@ -1,325 +1,326 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2018 Netronome Systems, Inc. */
 
-#include <linux/bitfield.h>
-#include <linux/bitmap.h>
-#include <linux/etherdevice.h>
-#include <linux/lockdep.h>
-#include <linux/netdevice.h>
-#include <linux/rcupdate.h>
-#include <linux/rtnetlink.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/slab.h>
 
-#include "../nfpcore/nfp.h"
-#include "../nfpcore/nfp_cpp.h"
-#include "../nfpcore/nfp_nsp.h"
-#include "../nfp_app.h"
-#include "../nfp_main.h"
-#include "../nfp_net.h"
-#include "../nfp_net_repr.h"
-#include "../nfp_port.h"
-#include "main.h"
+#समावेश "../nfpcore/nfp.h"
+#समावेश "../nfpcore/nfp_cpp.h"
+#समावेश "../nfpcore/nfp_nsp.h"
+#समावेश "../nfp_app.h"
+#समावेश "../nfp_main.h"
+#समावेश "../nfp_net.h"
+#समावेश "../nfp_net_repr.h"
+#समावेश "../nfp_port.h"
+#समावेश "main.h"
 
-static u32 nfp_abm_portid(enum nfp_repr_type rtype, unsigned int id)
-{
-	return FIELD_PREP(NFP_ABM_PORTID_TYPE, rtype) |
+अटल u32 nfp_abm_portid(क्रमागत nfp_repr_type rtype, अचिन्हित पूर्णांक id)
+अणु
+	वापस FIELD_PREP(NFP_ABM_PORTID_TYPE, rtype) |
 	       FIELD_PREP(NFP_ABM_PORTID_ID, id);
-}
+पूर्ण
 
-static int
-nfp_abm_setup_tc(struct nfp_app *app, struct net_device *netdev,
-		 enum tc_setup_type type, void *type_data)
-{
-	struct nfp_repr *repr = netdev_priv(netdev);
-	struct nfp_port *port;
+अटल पूर्णांक
+nfp_abm_setup_tc(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+		 क्रमागत tc_setup_type type, व्योम *type_data)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(netdev);
+	काष्ठा nfp_port *port;
 
 	port = nfp_port_from_netdev(netdev);
-	if (!port || port->type != NFP_PORT_PF_PORT)
-		return -EOPNOTSUPP;
+	अगर (!port || port->type != NFP_PORT_PF_PORT)
+		वापस -EOPNOTSUPP;
 
-	switch (type) {
-	case TC_SETUP_ROOT_QDISC:
-		return nfp_abm_setup_root(netdev, repr->app_priv, type_data);
-	case TC_SETUP_QDISC_MQ:
-		return nfp_abm_setup_tc_mq(netdev, repr->app_priv, type_data);
-	case TC_SETUP_QDISC_RED:
-		return nfp_abm_setup_tc_red(netdev, repr->app_priv, type_data);
-	case TC_SETUP_QDISC_GRED:
-		return nfp_abm_setup_tc_gred(netdev, repr->app_priv, type_data);
-	case TC_SETUP_BLOCK:
-		return nfp_abm_setup_cls_block(netdev, repr, type_data);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (type) अणु
+	हाल TC_SETUP_ROOT_QDISC:
+		वापस nfp_abm_setup_root(netdev, repr->app_priv, type_data);
+	हाल TC_SETUP_QDISC_MQ:
+		वापस nfp_abm_setup_tc_mq(netdev, repr->app_priv, type_data);
+	हाल TC_SETUP_QDISC_RED:
+		वापस nfp_abm_setup_tc_red(netdev, repr->app_priv, type_data);
+	हाल TC_SETUP_QDISC_GRED:
+		वापस nfp_abm_setup_tc_gred(netdev, repr->app_priv, type_data);
+	हाल TC_SETUP_BLOCK:
+		वापस nfp_abm_setup_cls_block(netdev, repr, type_data);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static struct net_device *
-nfp_abm_repr_get(struct nfp_app *app, u32 port_id, bool *redir_egress)
-{
-	enum nfp_repr_type rtype;
-	struct nfp_reprs *reprs;
+अटल काष्ठा net_device *
+nfp_abm_repr_get(काष्ठा nfp_app *app, u32 port_id, bool *redir_egress)
+अणु
+	क्रमागत nfp_repr_type rtype;
+	काष्ठा nfp_reprs *reprs;
 	u8 port;
 
 	rtype = FIELD_GET(NFP_ABM_PORTID_TYPE, port_id);
 	port = FIELD_GET(NFP_ABM_PORTID_ID, port_id);
 
 	reprs = rcu_dereference(app->reprs[rtype]);
-	if (!reprs)
-		return NULL;
+	अगर (!reprs)
+		वापस शून्य;
 
-	if (port >= reprs->num_reprs)
-		return NULL;
+	अगर (port >= reprs->num_reprs)
+		वापस शून्य;
 
-	return rcu_dereference(reprs->reprs[port]);
-}
+	वापस rcu_dereference(reprs->reprs[port]);
+पूर्ण
 
-static int
-nfp_abm_spawn_repr(struct nfp_app *app, struct nfp_abm_link *alink,
-		   enum nfp_port_type ptype)
-{
-	struct net_device *netdev;
-	enum nfp_repr_type rtype;
-	struct nfp_reprs *reprs;
-	struct nfp_repr *repr;
-	struct nfp_port *port;
-	unsigned int txqs;
-	int err;
+अटल पूर्णांक
+nfp_abm_spawn_repr(काष्ठा nfp_app *app, काष्ठा nfp_abm_link *alink,
+		   क्रमागत nfp_port_type ptype)
+अणु
+	काष्ठा net_device *netdev;
+	क्रमागत nfp_repr_type rtype;
+	काष्ठा nfp_reprs *reprs;
+	काष्ठा nfp_repr *repr;
+	काष्ठा nfp_port *port;
+	अचिन्हित पूर्णांक txqs;
+	पूर्णांक err;
 
-	if (ptype == NFP_PORT_PHYS_PORT) {
+	अगर (ptype == NFP_PORT_PHYS_PORT) अणु
 		rtype = NFP_REPR_TYPE_PHYS_PORT;
 		txqs = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		rtype = NFP_REPR_TYPE_PF;
 		txqs = alink->vnic->max_rx_rings;
-	}
+	पूर्ण
 
 	netdev = nfp_repr_alloc_mqs(app, txqs, 1);
-	if (!netdev)
-		return -ENOMEM;
+	अगर (!netdev)
+		वापस -ENOMEM;
 	repr = netdev_priv(netdev);
 	repr->app_priv = alink;
 
 	port = nfp_port_alloc(app, ptype, netdev);
-	if (IS_ERR(port)) {
+	अगर (IS_ERR(port)) अणु
 		err = PTR_ERR(port);
-		goto err_free_repr;
-	}
+		जाओ err_मुक्त_repr;
+	पूर्ण
 
-	if (ptype == NFP_PORT_PHYS_PORT) {
-		port->eth_forced = true;
+	अगर (ptype == NFP_PORT_PHYS_PORT) अणु
+		port->eth_क्रमced = true;
 		err = nfp_port_init_phy_port(app->pf, app, port, alink->id);
-		if (err)
-			goto err_free_port;
-	} else {
+		अगर (err)
+			जाओ err_मुक्त_port;
+	पूर्ण अन्यथा अणु
 		port->pf_id = alink->abm->pf_id;
 		port->pf_split = app->pf->max_data_vnics > 1;
 		port->pf_split_id = alink->id;
 		port->vnic = alink->vnic->dp.ctrl_bar;
-	}
+	पूर्ण
 
 	SET_NETDEV_DEV(netdev, &alink->vnic->pdev->dev);
-	eth_hw_addr_random(netdev);
+	eth_hw_addr_अक्रमom(netdev);
 
 	err = nfp_repr_init(app, netdev, nfp_abm_portid(rtype, alink->id),
 			    port, alink->vnic->dp.netdev);
-	if (err)
-		goto err_free_port;
+	अगर (err)
+		जाओ err_मुक्त_port;
 
 	reprs = nfp_reprs_get_locked(app, rtype);
 	WARN(nfp_repr_get_locked(app, reprs, alink->id), "duplicate repr");
 	rtnl_lock();
-	rcu_assign_pointer(reprs->reprs[alink->id], netdev);
+	rcu_assign_poपूर्णांकer(reprs->reprs[alink->id], netdev);
 	rtnl_unlock();
 
 	nfp_info(app->cpp, "%s Port %d Representor(%s) created\n",
 		 ptype == NFP_PORT_PF_PORT ? "PCIe" : "Phys",
 		 alink->id, netdev->name);
 
-	return 0;
+	वापस 0;
 
-err_free_port:
-	nfp_port_free(port);
-err_free_repr:
-	nfp_repr_free(netdev);
-	return err;
-}
+err_मुक्त_port:
+	nfp_port_मुक्त(port);
+err_मुक्त_repr:
+	nfp_repr_मुक्त(netdev);
+	वापस err;
+पूर्ण
 
-static void
-nfp_abm_kill_repr(struct nfp_app *app, struct nfp_abm_link *alink,
-		  enum nfp_repr_type rtype)
-{
-	struct net_device *netdev;
-	struct nfp_reprs *reprs;
+अटल व्योम
+nfp_abm_समाप्त_repr(काष्ठा nfp_app *app, काष्ठा nfp_abm_link *alink,
+		  क्रमागत nfp_repr_type rtype)
+अणु
+	काष्ठा net_device *netdev;
+	काष्ठा nfp_reprs *reprs;
 
 	reprs = nfp_reprs_get_locked(app, rtype);
 	netdev = nfp_repr_get_locked(app, reprs, alink->id);
-	if (!netdev)
-		return;
+	अगर (!netdev)
+		वापस;
 	rtnl_lock();
-	rcu_assign_pointer(reprs->reprs[alink->id], NULL);
+	rcu_assign_poपूर्णांकer(reprs->reprs[alink->id], शून्य);
 	rtnl_unlock();
 	synchronize_rcu();
-	/* Cast to make sure nfp_repr_clean_and_free() takes a nfp_repr */
-	nfp_repr_clean_and_free((struct nfp_repr *)netdev_priv(netdev));
-}
+	/* Cast to make sure nfp_repr_clean_and_मुक्त() takes a nfp_repr */
+	nfp_repr_clean_and_मुक्त((काष्ठा nfp_repr *)netdev_priv(netdev));
+पूर्ण
 
-static void
-nfp_abm_kill_reprs(struct nfp_abm *abm, struct nfp_abm_link *alink)
-{
-	nfp_abm_kill_repr(abm->app, alink, NFP_REPR_TYPE_PF);
-	nfp_abm_kill_repr(abm->app, alink, NFP_REPR_TYPE_PHYS_PORT);
-}
+अटल व्योम
+nfp_abm_समाप्त_reprs(काष्ठा nfp_abm *abm, काष्ठा nfp_abm_link *alink)
+अणु
+	nfp_abm_समाप्त_repr(abm->app, alink, NFP_REPR_TYPE_PF);
+	nfp_abm_समाप्त_repr(abm->app, alink, NFP_REPR_TYPE_PHYS_PORT);
+पूर्ण
 
-static void nfp_abm_kill_reprs_all(struct nfp_abm *abm)
-{
-	struct nfp_pf *pf = abm->app->pf;
-	struct nfp_net *nn;
+अटल व्योम nfp_abm_समाप्त_reprs_all(काष्ठा nfp_abm *abm)
+अणु
+	काष्ठा nfp_pf *pf = abm->app->pf;
+	काष्ठा nfp_net *nn;
 
-	list_for_each_entry(nn, &pf->vnics, vnic_list)
-		nfp_abm_kill_reprs(abm, (struct nfp_abm_link *)nn->app_priv);
-}
+	list_क्रम_each_entry(nn, &pf->vnics, vnic_list)
+		nfp_abm_समाप्त_reprs(abm, (काष्ठा nfp_abm_link *)nn->app_priv);
+पूर्ण
 
-static enum devlink_eswitch_mode nfp_abm_eswitch_mode_get(struct nfp_app *app)
-{
-	struct nfp_abm *abm = app->priv;
+अटल क्रमागत devlink_eचयन_mode nfp_abm_eचयन_mode_get(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_abm *abm = app->priv;
 
-	return abm->eswitch_mode;
-}
+	वापस abm->eचयन_mode;
+पूर्ण
 
-static int nfp_abm_eswitch_set_legacy(struct nfp_abm *abm)
-{
-	nfp_abm_kill_reprs_all(abm);
+अटल पूर्णांक nfp_abm_eचयन_set_legacy(काष्ठा nfp_abm *abm)
+अणु
+	nfp_abm_समाप्त_reprs_all(abm);
 	nfp_abm_ctrl_qm_disable(abm);
 
-	abm->eswitch_mode = DEVLINK_ESWITCH_MODE_LEGACY;
-	return 0;
-}
+	abm->eचयन_mode = DEVLINK_ESWITCH_MODE_LEGACY;
+	वापस 0;
+पूर्ण
 
-static void nfp_abm_eswitch_clean_up(struct nfp_abm *abm)
-{
-	if (abm->eswitch_mode != DEVLINK_ESWITCH_MODE_LEGACY)
-		WARN_ON(nfp_abm_eswitch_set_legacy(abm));
-}
+अटल व्योम nfp_abm_eचयन_clean_up(काष्ठा nfp_abm *abm)
+अणु
+	अगर (abm->eचयन_mode != DEVLINK_ESWITCH_MODE_LEGACY)
+		WARN_ON(nfp_abm_eचयन_set_legacy(abm));
+पूर्ण
 
-static int nfp_abm_eswitch_set_switchdev(struct nfp_abm *abm)
-{
-	struct nfp_app *app = abm->app;
-	struct nfp_pf *pf = app->pf;
-	struct nfp_net *nn;
-	int err;
+अटल पूर्णांक nfp_abm_eचयन_set_चयनdev(काष्ठा nfp_abm *abm)
+अणु
+	काष्ठा nfp_app *app = abm->app;
+	काष्ठा nfp_pf *pf = app->pf;
+	काष्ठा nfp_net *nn;
+	पूर्णांक err;
 
-	if (!abm->red_support)
-		return -EOPNOTSUPP;
+	अगर (!abm->red_support)
+		वापस -EOPNOTSUPP;
 
 	err = nfp_abm_ctrl_qm_enable(abm);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	list_for_each_entry(nn, &pf->vnics, vnic_list) {
-		struct nfp_abm_link *alink = nn->app_priv;
+	list_क्रम_each_entry(nn, &pf->vnics, vnic_list) अणु
+		काष्ठा nfp_abm_link *alink = nn->app_priv;
 
 		err = nfp_abm_spawn_repr(app, alink, NFP_PORT_PHYS_PORT);
-		if (err)
-			goto err_kill_all_reprs;
+		अगर (err)
+			जाओ err_समाप्त_all_reprs;
 
 		err = nfp_abm_spawn_repr(app, alink, NFP_PORT_PF_PORT);
-		if (err)
-			goto err_kill_all_reprs;
-	}
+		अगर (err)
+			जाओ err_समाप्त_all_reprs;
+	पूर्ण
 
-	abm->eswitch_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
-	return 0;
+	abm->eचयन_mode = DEVLINK_ESWITCH_MODE_SWITCHDEV;
+	वापस 0;
 
-err_kill_all_reprs:
-	nfp_abm_kill_reprs_all(abm);
+err_समाप्त_all_reprs:
+	nfp_abm_समाप्त_reprs_all(abm);
 	nfp_abm_ctrl_qm_disable(abm);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nfp_abm_eswitch_mode_set(struct nfp_app *app, u16 mode)
-{
-	struct nfp_abm *abm = app->priv;
+अटल पूर्णांक nfp_abm_eचयन_mode_set(काष्ठा nfp_app *app, u16 mode)
+अणु
+	काष्ठा nfp_abm *abm = app->priv;
 
-	if (abm->eswitch_mode == mode)
-		return 0;
+	अगर (abm->eचयन_mode == mode)
+		वापस 0;
 
-	switch (mode) {
-	case DEVLINK_ESWITCH_MODE_LEGACY:
-		return nfp_abm_eswitch_set_legacy(abm);
-	case DEVLINK_ESWITCH_MODE_SWITCHDEV:
-		return nfp_abm_eswitch_set_switchdev(abm);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (mode) अणु
+	हाल DEVLINK_ESWITCH_MODE_LEGACY:
+		वापस nfp_abm_eचयन_set_legacy(abm);
+	हाल DEVLINK_ESWITCH_MODE_SWITCHDEV:
+		वापस nfp_abm_eचयन_set_चयनdev(abm);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static void
-nfp_abm_vnic_set_mac(struct nfp_pf *pf, struct nfp_abm *abm, struct nfp_net *nn,
-		     unsigned int id)
-{
-	struct nfp_eth_table_port *eth_port = &pf->eth_tbl->ports[id];
+अटल व्योम
+nfp_abm_vnic_set_mac(काष्ठा nfp_pf *pf, काष्ठा nfp_abm *abm, काष्ठा nfp_net *nn,
+		     अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port = &pf->eth_tbl->ports[id];
 	u8 mac_addr[ETH_ALEN];
-	struct nfp_nsp *nsp;
-	char hwinfo[32];
-	int err;
+	काष्ठा nfp_nsp *nsp;
+	अक्षर hwinfo[32];
+	पूर्णांक err;
 
-	if (id > pf->eth_tbl->count) {
+	अगर (id > pf->eth_tbl->count) अणु
 		nfp_warn(pf->cpp, "No entry for persistent MAC address\n");
-		eth_hw_addr_random(nn->dp.netdev);
-		return;
-	}
+		eth_hw_addr_अक्रमom(nn->dp.netdev);
+		वापस;
+	पूर्ण
 
-	snprintf(hwinfo, sizeof(hwinfo), "eth%u.mac.pf%u",
+	snम_लिखो(hwinfo, माप(hwinfo), "eth%u.mac.pf%u",
 		 eth_port->eth_index, abm->pf_id);
 
-	nsp = nfp_nsp_open(pf->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(pf->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		nfp_warn(pf->cpp, "Failed to access the NSP for persistent MAC address: %ld\n",
 			 PTR_ERR(nsp));
-		eth_hw_addr_random(nn->dp.netdev);
-		return;
-	}
+		eth_hw_addr_अक्रमom(nn->dp.netdev);
+		वापस;
+	पूर्ण
 
-	if (!nfp_nsp_has_hwinfo_lookup(nsp)) {
+	अगर (!nfp_nsp_has_hwinfo_lookup(nsp)) अणु
 		nfp_warn(pf->cpp, "NSP doesn't support PF MAC generation\n");
-		eth_hw_addr_random(nn->dp.netdev);
-		nfp_nsp_close(nsp);
-		return;
-	}
+		eth_hw_addr_अक्रमom(nn->dp.netdev);
+		nfp_nsp_बंद(nsp);
+		वापस;
+	पूर्ण
 
-	err = nfp_nsp_hwinfo_lookup(nsp, hwinfo, sizeof(hwinfo));
-	nfp_nsp_close(nsp);
-	if (err) {
+	err = nfp_nsp_hwinfo_lookup(nsp, hwinfo, माप(hwinfo));
+	nfp_nsp_बंद(nsp);
+	अगर (err) अणु
 		nfp_warn(pf->cpp, "Reading persistent MAC address failed: %d\n",
 			 err);
-		eth_hw_addr_random(nn->dp.netdev);
-		return;
-	}
+		eth_hw_addr_अक्रमom(nn->dp.netdev);
+		वापस;
+	पूर्ण
 
-	if (sscanf(hwinfo, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+	अगर (माला_पूछो(hwinfo, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
 		   &mac_addr[0], &mac_addr[1], &mac_addr[2],
-		   &mac_addr[3], &mac_addr[4], &mac_addr[5]) != 6) {
+		   &mac_addr[3], &mac_addr[4], &mac_addr[5]) != 6) अणु
 		nfp_warn(pf->cpp, "Can't parse persistent MAC address (%s)\n",
 			 hwinfo);
-		eth_hw_addr_random(nn->dp.netdev);
-		return;
-	}
+		eth_hw_addr_अक्रमom(nn->dp.netdev);
+		वापस;
+	पूर्ण
 
 	ether_addr_copy(nn->dp.netdev->dev_addr, mac_addr);
 	ether_addr_copy(nn->dp.netdev->perm_addr, mac_addr);
-}
+पूर्ण
 
-static int
-nfp_abm_vnic_alloc(struct nfp_app *app, struct nfp_net *nn, unsigned int id)
-{
-	struct nfp_eth_table_port *eth_port = &app->pf->eth_tbl->ports[id];
-	struct nfp_abm *abm = app->priv;
-	struct nfp_abm_link *alink;
-	int err;
+अटल पूर्णांक
+nfp_abm_vnic_alloc(काष्ठा nfp_app *app, काष्ठा nfp_net *nn, अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port = &app->pf->eth_tbl->ports[id];
+	काष्ठा nfp_abm *abm = app->priv;
+	काष्ठा nfp_abm_link *alink;
+	पूर्णांक err;
 
-	alink = kzalloc(sizeof(*alink), GFP_KERNEL);
-	if (!alink)
-		return -ENOMEM;
+	alink = kzalloc(माप(*alink), GFP_KERNEL);
+	अगर (!alink)
+		वापस -ENOMEM;
 	nn->app_priv = alink;
 	alink->abm = abm;
 	alink->vnic = nn;
@@ -328,212 +329,212 @@ nfp_abm_vnic_alloc(struct nfp_app *app, struct nfp_net *nn, unsigned int id)
 
 	INIT_LIST_HEAD(&alink->dscp_map);
 
-	err = nfp_abm_ctrl_read_params(alink);
-	if (err)
-		goto err_free_alink;
+	err = nfp_abm_ctrl_पढ़ो_params(alink);
+	अगर (err)
+		जाओ err_मुक्त_alink;
 
 	alink->prio_map = kzalloc(abm->prio_map_len, GFP_KERNEL);
-	if (!alink->prio_map) {
+	अगर (!alink->prio_map) अणु
 		err = -ENOMEM;
-		goto err_free_alink;
-	}
+		जाओ err_मुक्त_alink;
+	पूर्ण
 
-	/* This is a multi-host app, make sure MAC/PHY is up, but don't
+	/* This is a multi-host app, make sure MAC/PHY is up, but करोn't
 	 * make the MAC/PHY state follow the state of any of the ports.
 	 */
 	err = nfp_eth_set_configured(app->cpp, eth_port->index, true);
-	if (err < 0)
-		goto err_free_priomap;
+	अगर (err < 0)
+		जाओ err_मुक्त_priomap;
 
-	netif_keep_dst(nn->dp.netdev);
+	netअगर_keep_dst(nn->dp.netdev);
 
 	nfp_abm_vnic_set_mac(app->pf, abm, nn, id);
 	INIT_RADIX_TREE(&alink->qdiscs, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
-err_free_priomap:
-	kfree(alink->prio_map);
-err_free_alink:
-	kfree(alink);
-	return err;
-}
+err_मुक्त_priomap:
+	kमुक्त(alink->prio_map);
+err_मुक्त_alink:
+	kमुक्त(alink);
+	वापस err;
+पूर्ण
 
-static void nfp_abm_vnic_free(struct nfp_app *app, struct nfp_net *nn)
-{
-	struct nfp_abm_link *alink = nn->app_priv;
+अटल व्योम nfp_abm_vnic_मुक्त(काष्ठा nfp_app *app, काष्ठा nfp_net *nn)
+अणु
+	काष्ठा nfp_abm_link *alink = nn->app_priv;
 
-	nfp_abm_kill_reprs(alink->abm, alink);
+	nfp_abm_समाप्त_reprs(alink->abm, alink);
 	WARN(!radix_tree_empty(&alink->qdiscs), "left over qdiscs\n");
-	kfree(alink->prio_map);
-	kfree(alink);
-}
+	kमुक्त(alink->prio_map);
+	kमुक्त(alink);
+पूर्ण
 
-static int nfp_abm_vnic_init(struct nfp_app *app, struct nfp_net *nn)
-{
-	struct nfp_abm_link *alink = nn->app_priv;
+अटल पूर्णांक nfp_abm_vnic_init(काष्ठा nfp_app *app, काष्ठा nfp_net *nn)
+अणु
+	काष्ठा nfp_abm_link *alink = nn->app_priv;
 
-	if (nfp_abm_has_prio(alink->abm))
-		return nfp_abm_ctrl_prio_map_update(alink, alink->prio_map);
-	return 0;
-}
+	अगर (nfp_abm_has_prio(alink->abm))
+		वापस nfp_abm_ctrl_prio_map_update(alink, alink->prio_map);
+	वापस 0;
+पूर्ण
 
-static u64 *
-nfp_abm_port_get_stats(struct nfp_app *app, struct nfp_port *port, u64 *data)
-{
-	struct nfp_repr *repr = netdev_priv(port->netdev);
-	struct nfp_abm_link *alink;
-	unsigned int i;
+अटल u64 *
+nfp_abm_port_get_stats(काष्ठा nfp_app *app, काष्ठा nfp_port *port, u64 *data)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(port->netdev);
+	काष्ठा nfp_abm_link *alink;
+	अचिन्हित पूर्णांक i;
 
-	if (port->type != NFP_PORT_PF_PORT)
-		return data;
+	अगर (port->type != NFP_PORT_PF_PORT)
+		वापस data;
 	alink = repr->app_priv;
-	for (i = 0; i < alink->vnic->dp.num_r_vecs; i++) {
+	क्रम (i = 0; i < alink->vnic->dp.num_r_vecs; i++) अणु
 		*data++ = nfp_abm_ctrl_stat_non_sto(alink, i);
 		*data++ = nfp_abm_ctrl_stat_sto(alink, i);
-	}
-	return data;
-}
+	पूर्ण
+	वापस data;
+पूर्ण
 
-static int
-nfp_abm_port_get_stats_count(struct nfp_app *app, struct nfp_port *port)
-{
-	struct nfp_repr *repr = netdev_priv(port->netdev);
-	struct nfp_abm_link *alink;
+अटल पूर्णांक
+nfp_abm_port_get_stats_count(काष्ठा nfp_app *app, काष्ठा nfp_port *port)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(port->netdev);
+	काष्ठा nfp_abm_link *alink;
 
-	if (port->type != NFP_PORT_PF_PORT)
-		return 0;
+	अगर (port->type != NFP_PORT_PF_PORT)
+		वापस 0;
 	alink = repr->app_priv;
-	return alink->vnic->dp.num_r_vecs * 2;
-}
+	वापस alink->vnic->dp.num_r_vecs * 2;
+पूर्ण
 
-static u8 *
-nfp_abm_port_get_stats_strings(struct nfp_app *app, struct nfp_port *port,
+अटल u8 *
+nfp_abm_port_get_stats_strings(काष्ठा nfp_app *app, काष्ठा nfp_port *port,
 			       u8 *data)
-{
-	struct nfp_repr *repr = netdev_priv(port->netdev);
-	struct nfp_abm_link *alink;
-	unsigned int i;
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(port->netdev);
+	काष्ठा nfp_abm_link *alink;
+	अचिन्हित पूर्णांक i;
 
-	if (port->type != NFP_PORT_PF_PORT)
-		return data;
+	अगर (port->type != NFP_PORT_PF_PORT)
+		वापस data;
 	alink = repr->app_priv;
-	for (i = 0; i < alink->vnic->dp.num_r_vecs; i++) {
-		ethtool_sprintf(&data, "q%u_no_wait", i);
-		ethtool_sprintf(&data, "q%u_delayed", i);
-	}
-	return data;
-}
+	क्रम (i = 0; i < alink->vnic->dp.num_r_vecs; i++) अणु
+		ethtool_प्र_लिखो(&data, "q%u_no_wait", i);
+		ethtool_प्र_लिखो(&data, "q%u_delayed", i);
+	पूर्ण
+	वापस data;
+पूर्ण
 
-static int nfp_abm_fw_init_reset(struct nfp_abm *abm)
-{
-	unsigned int i;
+अटल पूर्णांक nfp_abm_fw_init_reset(काष्ठा nfp_abm *abm)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!abm->red_support)
-		return 0;
+	अगर (!abm->red_support)
+		वापस 0;
 
-	for (i = 0; i < abm->num_bands * NFP_NET_MAX_RX_RINGS; i++) {
-		__nfp_abm_ctrl_set_q_lvl(abm, i, NFP_ABM_LVL_INFINITY);
+	क्रम (i = 0; i < abm->num_bands * NFP_NET_MAX_RX_RINGS; i++) अणु
+		__nfp_abm_ctrl_set_q_lvl(abm, i, NFP_ABM_LVL_अनन्त);
 		__nfp_abm_ctrl_set_q_act(abm, i, NFP_ABM_ACT_DROP);
-	}
+	पूर्ण
 
-	return nfp_abm_ctrl_qm_disable(abm);
-}
+	वापस nfp_abm_ctrl_qm_disable(abm);
+पूर्ण
 
-static int nfp_abm_init(struct nfp_app *app)
-{
-	struct nfp_pf *pf = app->pf;
-	struct nfp_reprs *reprs;
-	struct nfp_abm *abm;
-	int err;
+अटल पूर्णांक nfp_abm_init(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_pf *pf = app->pf;
+	काष्ठा nfp_reprs *reprs;
+	काष्ठा nfp_abm *abm;
+	पूर्णांक err;
 
-	if (!pf->eth_tbl) {
+	अगर (!pf->eth_tbl) अणु
 		nfp_err(pf->cpp, "ABM NIC requires ETH table\n");
-		return -EINVAL;
-	}
-	if (pf->max_data_vnics != pf->eth_tbl->count) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (pf->max_data_vnics != pf->eth_tbl->count) अणु
 		nfp_err(pf->cpp, "ETH entries don't match vNICs (%d vs %d)\n",
 			pf->max_data_vnics, pf->eth_tbl->count);
-		return -EINVAL;
-	}
-	if (!pf->mac_stats_bar) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!pf->mac_stats_bar) अणु
 		nfp_warn(app->cpp, "ABM NIC requires mac_stats symbol\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	abm = kzalloc(sizeof(*abm), GFP_KERNEL);
-	if (!abm)
-		return -ENOMEM;
+	abm = kzalloc(माप(*abm), GFP_KERNEL);
+	अगर (!abm)
+		वापस -ENOMEM;
 	app->priv = abm;
 	abm->app = app;
 
 	err = nfp_abm_ctrl_find_addrs(abm);
-	if (err)
-		goto err_free_abm;
+	अगर (err)
+		जाओ err_मुक्त_abm;
 
 	err = -ENOMEM;
 	abm->num_thresholds = array_size(abm->num_bands, NFP_NET_MAX_RX_RINGS);
-	abm->threshold_undef = bitmap_zalloc(abm->num_thresholds, GFP_KERNEL);
-	if (!abm->threshold_undef)
-		goto err_free_abm;
+	abm->threshold_undef = biपंचांगap_zalloc(abm->num_thresholds, GFP_KERNEL);
+	अगर (!abm->threshold_undef)
+		जाओ err_मुक्त_abm;
 
-	abm->thresholds = kvcalloc(abm->num_thresholds,
-				   sizeof(*abm->thresholds), GFP_KERNEL);
-	if (!abm->thresholds)
-		goto err_free_thresh_umap;
+	abm->thresholds = kvसुस्मृति(abm->num_thresholds,
+				   माप(*abm->thresholds), GFP_KERNEL);
+	अगर (!abm->thresholds)
+		जाओ err_मुक्त_thresh_umap;
 
-	abm->actions = kvcalloc(abm->num_thresholds, sizeof(*abm->actions),
+	abm->actions = kvसुस्मृति(abm->num_thresholds, माप(*abm->actions),
 				GFP_KERNEL);
-	if (!abm->actions)
-		goto err_free_thresh;
+	अगर (!abm->actions)
+		जाओ err_मुक्त_thresh;
 
 	/* We start in legacy mode, make sure advanced queuing is disabled */
 	err = nfp_abm_fw_init_reset(abm);
-	if (err)
-		goto err_free_act;
+	अगर (err)
+		जाओ err_मुक्त_act;
 
 	err = -ENOMEM;
 	reprs = nfp_reprs_alloc(pf->max_data_vnics);
-	if (!reprs)
-		goto err_free_act;
+	अगर (!reprs)
+		जाओ err_मुक्त_act;
 	RCU_INIT_POINTER(app->reprs[NFP_REPR_TYPE_PHYS_PORT], reprs);
 
 	reprs = nfp_reprs_alloc(pf->max_data_vnics);
-	if (!reprs)
-		goto err_free_phys;
+	अगर (!reprs)
+		जाओ err_मुक्त_phys;
 	RCU_INIT_POINTER(app->reprs[NFP_REPR_TYPE_PF], reprs);
 
-	return 0;
+	वापस 0;
 
-err_free_phys:
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
-err_free_act:
-	kvfree(abm->actions);
-err_free_thresh:
-	kvfree(abm->thresholds);
-err_free_thresh_umap:
-	bitmap_free(abm->threshold_undef);
-err_free_abm:
-	kfree(abm);
-	app->priv = NULL;
-	return err;
-}
+err_मुक्त_phys:
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
+err_मुक्त_act:
+	kvमुक्त(abm->actions);
+err_मुक्त_thresh:
+	kvमुक्त(abm->thresholds);
+err_मुक्त_thresh_umap:
+	biपंचांगap_मुक्त(abm->threshold_undef);
+err_मुक्त_abm:
+	kमुक्त(abm);
+	app->priv = शून्य;
+	वापस err;
+पूर्ण
 
-static void nfp_abm_clean(struct nfp_app *app)
-{
-	struct nfp_abm *abm = app->priv;
+अटल व्योम nfp_abm_clean(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_abm *abm = app->priv;
 
-	nfp_abm_eswitch_clean_up(abm);
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PF);
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
-	bitmap_free(abm->threshold_undef);
-	kvfree(abm->actions);
-	kvfree(abm->thresholds);
-	kfree(abm);
-	app->priv = NULL;
-}
+	nfp_abm_eचयन_clean_up(abm);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PF);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
+	biपंचांगap_मुक्त(abm->threshold_undef);
+	kvमुक्त(abm->actions);
+	kvमुक्त(abm->thresholds);
+	kमुक्त(abm);
+	app->priv = शून्य;
+पूर्ण
 
-const struct nfp_app_type app_abm = {
+स्थिर काष्ठा nfp_app_type app_abm = अणु
 	.id		= NFP_APP_ACTIVE_BUFFER_MGMT_NIC,
 	.name		= "abm",
 
@@ -541,7 +542,7 @@ const struct nfp_app_type app_abm = {
 	.clean		= nfp_abm_clean,
 
 	.vnic_alloc	= nfp_abm_vnic_alloc,
-	.vnic_free	= nfp_abm_vnic_free,
+	.vnic_मुक्त	= nfp_abm_vnic_मुक्त,
 	.vnic_init	= nfp_abm_vnic_init,
 
 	.port_get_stats		= nfp_abm_port_get_stats,
@@ -550,8 +551,8 @@ const struct nfp_app_type app_abm = {
 
 	.setup_tc	= nfp_abm_setup_tc,
 
-	.eswitch_mode_get	= nfp_abm_eswitch_mode_get,
-	.eswitch_mode_set	= nfp_abm_eswitch_mode_set,
+	.eचयन_mode_get	= nfp_abm_eचयन_mode_get,
+	.eचयन_mode_set	= nfp_abm_eचयन_mode_set,
 
 	.dev_get	= nfp_abm_repr_get,
-};
+पूर्ण;

@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * A module for stripping a specific TCP option from TCP packets.
+ * A module क्रम stripping a specअगरic TCP option from TCP packets.
  *
  * Copyright (C) 2007 Sven Schnelle <svens@bitebene.org>
- * Copyright © CC Computer Consultants GmbH, 2007
+ * Copyright तऊ CC Computer Consultants GmbH, 2007
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
-#include <net/ipv6.h>
-#include <net/tcp.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_TCPOPTSTRIP.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/tcp.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/tcp.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_TCPOPTSTRIP.h>
 
-static inline unsigned int optlen(const u_int8_t *opt, unsigned int offset)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक optlen(स्थिर u_पूर्णांक8_t *opt, अचिन्हित पूर्णांक offset)
+अणु
 	/* Beware zero-length options: make finite progress */
-	if (opt[offset] <= TCPOPT_NOP || opt[offset+1] == 0)
-		return 1;
-	else
-		return opt[offset+1];
-}
+	अगर (opt[offset] <= TCPOPT_NOP || opt[offset+1] == 0)
+		वापस 1;
+	अन्यथा
+		वापस opt[offset+1];
+पूर्ण
 
-static unsigned int
-tcpoptstrip_mangle_packet(struct sk_buff *skb,
-			  const struct xt_action_param *par,
-			  unsigned int tcphoff)
-{
-	const struct xt_tcpoptstrip_target_info *info = par->targinfo;
-	struct tcphdr *tcph, _th;
-	unsigned int optl, i, j;
-	u_int16_t n, o;
-	u_int8_t *opt;
-	int tcp_hdrlen;
+अटल अचिन्हित पूर्णांक
+tcpoptstrip_mangle_packet(काष्ठा sk_buff *skb,
+			  स्थिर काष्ठा xt_action_param *par,
+			  अचिन्हित पूर्णांक tcphoff)
+अणु
+	स्थिर काष्ठा xt_tcpoptstrip_target_info *info = par->targinfo;
+	काष्ठा tcphdr *tcph, _th;
+	अचिन्हित पूर्णांक optl, i, j;
+	u_पूर्णांक16_t n, o;
+	u_पूर्णांक8_t *opt;
+	पूर्णांक tcp_hdrlen;
 
 	/* This is a fragment, no TCP header is available */
-	if (par->fragoff != 0)
-		return XT_CONTINUE;
+	अगर (par->fragoff != 0)
+		वापस XT_CONTINUE;
 
-	tcph = skb_header_pointer(skb, tcphoff, sizeof(_th), &_th);
-	if (!tcph)
-		return NF_DROP;
+	tcph = skb_header_poपूर्णांकer(skb, tcphoff, माप(_th), &_th);
+	अगर (!tcph)
+		वापस NF_DROP;
 
-	tcp_hdrlen = tcph->doff * 4;
-	if (tcp_hdrlen < sizeof(struct tcphdr))
-		return NF_DROP;
+	tcp_hdrlen = tcph->करोff * 4;
+	अगर (tcp_hdrlen < माप(काष्ठा tcphdr))
+		वापस NF_DROP;
 
-	if (skb_ensure_writable(skb, tcphoff + tcp_hdrlen))
-		return NF_DROP;
+	अगर (skb_ensure_writable(skb, tcphoff + tcp_hdrlen))
+		वापस NF_DROP;
 
 	/* must reload tcph, might have been moved */
-	tcph = (struct tcphdr *)(skb_network_header(skb) + tcphoff);
+	tcph = (काष्ठा tcphdr *)(skb_network_header(skb) + tcphoff);
 	opt  = (u8 *)tcph;
 
 	/*
-	 * Walk through all TCP options - if we find some option to remove,
+	 * Walk through all TCP options - अगर we find some option to हटाओ,
 	 * set all octets to %TCPOPT_NOP and adjust checksum.
 	 */
-	for (i = sizeof(struct tcphdr); i < tcp_hdrlen - 1; i += optl) {
+	क्रम (i = माप(काष्ठा tcphdr); i < tcp_hdrlen - 1; i += optl) अणु
 		optl = optlen(opt, i);
 
-		if (i + optl > tcp_hdrlen)
-			break;
+		अगर (i + optl > tcp_hdrlen)
+			अवरोध;
 
-		if (!tcpoptstrip_test_bit(info->strip_bmap, opt[i]))
-			continue;
+		अगर (!tcpoptstrip_test_bit(info->strip_bmap, opt[i]))
+			जारी;
 
-		for (j = 0; j < optl; ++j) {
+		क्रम (j = 0; j < optl; ++j) अणु
 			o = opt[i+j];
 			n = TCPOPT_NOP;
-			if ((i + j) % 2 == 0) {
+			अगर ((i + j) % 2 == 0) अणु
 				o <<= 8;
 				n <<= 8;
-			}
+			पूर्ण
 			inet_proto_csum_replace2(&tcph->check, skb, htons(o),
 						 htons(n), false);
-		}
-		memset(opt + i, TCPOPT_NOP, optl);
-	}
+		पूर्ण
+		स_रखो(opt + i, TCPOPT_NOP, optl);
+	पूर्ण
 
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static unsigned int
-tcpoptstrip_tg4(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	return tcpoptstrip_mangle_packet(skb, par, ip_hdrlen(skb));
-}
+अटल अचिन्हित पूर्णांक
+tcpoptstrip_tg4(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	वापस tcpoptstrip_mangle_packet(skb, par, ip_hdrlen(skb));
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IP6_NF_MANGLE)
-static unsigned int
-tcpoptstrip_tg6(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	struct ipv6hdr *ipv6h = ipv6_hdr(skb);
-	int tcphoff;
-	u_int8_t nexthdr;
+#अगर IS_ENABLED(CONFIG_IP6_NF_MANGLE)
+अटल अचिन्हित पूर्णांक
+tcpoptstrip_tg6(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	काष्ठा ipv6hdr *ipv6h = ipv6_hdr(skb);
+	पूर्णांक tcphoff;
+	u_पूर्णांक8_t nexthdr;
 	__be16 frag_off;
 
 	nexthdr = ipv6h->nexthdr;
-	tcphoff = ipv6_skip_exthdr(skb, sizeof(*ipv6h), &nexthdr, &frag_off);
-	if (tcphoff < 0)
-		return NF_DROP;
+	tcphoff = ipv6_skip_exthdr(skb, माप(*ipv6h), &nexthdr, &frag_off);
+	अगर (tcphoff < 0)
+		वापस NF_DROP;
 
-	return tcpoptstrip_mangle_packet(skb, par, tcphoff);
-}
-#endif
+	वापस tcpoptstrip_mangle_packet(skb, par, tcphoff);
+पूर्ण
+#पूर्ण_अगर
 
-static struct xt_target tcpoptstrip_tg_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_target tcpoptstrip_tg_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name       = "TCPOPTSTRIP",
 		.family     = NFPROTO_IPV4,
 		.table      = "mangle",
 		.proto      = IPPROTO_TCP,
 		.target     = tcpoptstrip_tg4,
-		.targetsize = sizeof(struct xt_tcpoptstrip_target_info),
+		.tarमाला_लोize = माप(काष्ठा xt_tcpoptstrip_target_info),
 		.me         = THIS_MODULE,
-	},
-#if IS_ENABLED(CONFIG_IP6_NF_MANGLE)
-	{
+	पूर्ण,
+#अगर IS_ENABLED(CONFIG_IP6_NF_MANGLE)
+	अणु
 		.name       = "TCPOPTSTRIP",
 		.family     = NFPROTO_IPV6,
 		.table      = "mangle",
 		.proto      = IPPROTO_TCP,
 		.target     = tcpoptstrip_tg6,
-		.targetsize = sizeof(struct xt_tcpoptstrip_target_info),
+		.tarमाला_लोize = माप(काष्ठा xt_tcpoptstrip_target_info),
 		.me         = THIS_MODULE,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init tcpoptstrip_tg_init(void)
-{
-	return xt_register_targets(tcpoptstrip_tg_reg,
+अटल पूर्णांक __init tcpoptstrip_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_tarमाला_लो(tcpoptstrip_tg_reg,
 				   ARRAY_SIZE(tcpoptstrip_tg_reg));
-}
+पूर्ण
 
-static void __exit tcpoptstrip_tg_exit(void)
-{
-	xt_unregister_targets(tcpoptstrip_tg_reg,
+अटल व्योम __निकास tcpoptstrip_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(tcpoptstrip_tg_reg,
 			      ARRAY_SIZE(tcpoptstrip_tg_reg));
-}
+पूर्ण
 
 module_init(tcpoptstrip_tg_init);
-module_exit(tcpoptstrip_tg_exit);
+module_निकास(tcpoptstrip_tg_निकास);
 MODULE_AUTHOR("Sven Schnelle <svens@bitebene.org>, Jan Engelhardt <jengelh@medozas.de>");
 MODULE_DESCRIPTION("Xtables: TCP option stripping");
 MODULE_LICENSE("GPL");

@@ -1,878 +1,879 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * security/tomoyo/file.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include "common.h"
-#include <linux/slab.h>
+#समावेश "common.h"
+#समावेश <linux/slab.h>
 
 /*
  * Mapping table from "enum tomoyo_path_acl_index" to "enum tomoyo_mac_index".
  */
-static const u8 tomoyo_p2mac[TOMOYO_MAX_PATH_OPERATION] = {
-	[TOMOYO_TYPE_EXECUTE]    = TOMOYO_MAC_FILE_EXECUTE,
-	[TOMOYO_TYPE_READ]       = TOMOYO_MAC_FILE_OPEN,
-	[TOMOYO_TYPE_WRITE]      = TOMOYO_MAC_FILE_OPEN,
-	[TOMOYO_TYPE_APPEND]     = TOMOYO_MAC_FILE_OPEN,
-	[TOMOYO_TYPE_UNLINK]     = TOMOYO_MAC_FILE_UNLINK,
-	[TOMOYO_TYPE_GETATTR]    = TOMOYO_MAC_FILE_GETATTR,
-	[TOMOYO_TYPE_RMDIR]      = TOMOYO_MAC_FILE_RMDIR,
-	[TOMOYO_TYPE_TRUNCATE]   = TOMOYO_MAC_FILE_TRUNCATE,
-	[TOMOYO_TYPE_SYMLINK]    = TOMOYO_MAC_FILE_SYMLINK,
-	[TOMOYO_TYPE_CHROOT]     = TOMOYO_MAC_FILE_CHROOT,
-	[TOMOYO_TYPE_UMOUNT]     = TOMOYO_MAC_FILE_UMOUNT,
-};
+अटल स्थिर u8 tomoyo_p2mac[TOMOYO_MAX_PATH_OPERATION] = अणु
+	[TOMOYO_TYPE_EXECUTE]    = TOMOYO_MAC_खाता_EXECUTE,
+	[TOMOYO_TYPE_READ]       = TOMOYO_MAC_खाता_OPEN,
+	[TOMOYO_TYPE_WRITE]      = TOMOYO_MAC_खाता_OPEN,
+	[TOMOYO_TYPE_APPEND]     = TOMOYO_MAC_खाता_OPEN,
+	[TOMOYO_TYPE_UNLINK]     = TOMOYO_MAC_खाता_UNLINK,
+	[TOMOYO_TYPE_GETATTR]    = TOMOYO_MAC_खाता_GETATTR,
+	[TOMOYO_TYPE_RMसूची]      = TOMOYO_MAC_खाता_RMसूची,
+	[TOMOYO_TYPE_TRUNCATE]   = TOMOYO_MAC_खाता_TRUNCATE,
+	[TOMOYO_TYPE_SYMLINK]    = TOMOYO_MAC_खाता_SYMLINK,
+	[TOMOYO_TYPE_CHROOT]     = TOMOYO_MAC_खाता_CHROOT,
+	[TOMOYO_TYPE_UMOUNT]     = TOMOYO_MAC_खाता_UMOUNT,
+पूर्ण;
 
 /*
  * Mapping table from "enum tomoyo_mkdev_acl_index" to "enum tomoyo_mac_index".
  */
-const u8 tomoyo_pnnn2mac[TOMOYO_MAX_MKDEV_OPERATION] = {
-	[TOMOYO_TYPE_MKBLOCK] = TOMOYO_MAC_FILE_MKBLOCK,
-	[TOMOYO_TYPE_MKCHAR]  = TOMOYO_MAC_FILE_MKCHAR,
-};
+स्थिर u8 tomoyo_pnnn2mac[TOMOYO_MAX_MKDEV_OPERATION] = अणु
+	[TOMOYO_TYPE_MKBLOCK] = TOMOYO_MAC_खाता_MKBLOCK,
+	[TOMOYO_TYPE_MKCHAR]  = TOMOYO_MAC_खाता_MKCHAR,
+पूर्ण;
 
 /*
  * Mapping table from "enum tomoyo_path2_acl_index" to "enum tomoyo_mac_index".
  */
-const u8 tomoyo_pp2mac[TOMOYO_MAX_PATH2_OPERATION] = {
-	[TOMOYO_TYPE_LINK]       = TOMOYO_MAC_FILE_LINK,
-	[TOMOYO_TYPE_RENAME]     = TOMOYO_MAC_FILE_RENAME,
-	[TOMOYO_TYPE_PIVOT_ROOT] = TOMOYO_MAC_FILE_PIVOT_ROOT,
-};
+स्थिर u8 tomoyo_pp2mac[TOMOYO_MAX_PATH2_OPERATION] = अणु
+	[TOMOYO_TYPE_LINK]       = TOMOYO_MAC_खाता_LINK,
+	[TOMOYO_TYPE_RENAME]     = TOMOYO_MAC_खाता_RENAME,
+	[TOMOYO_TYPE_PIVOT_ROOT] = TOMOYO_MAC_खाता_PIVOT_ROOT,
+पूर्ण;
 
 /*
  * Mapping table from "enum tomoyo_path_number_acl_index" to
  * "enum tomoyo_mac_index".
  */
-const u8 tomoyo_pn2mac[TOMOYO_MAX_PATH_NUMBER_OPERATION] = {
-	[TOMOYO_TYPE_CREATE] = TOMOYO_MAC_FILE_CREATE,
-	[TOMOYO_TYPE_MKDIR]  = TOMOYO_MAC_FILE_MKDIR,
-	[TOMOYO_TYPE_MKFIFO] = TOMOYO_MAC_FILE_MKFIFO,
-	[TOMOYO_TYPE_MKSOCK] = TOMOYO_MAC_FILE_MKSOCK,
-	[TOMOYO_TYPE_IOCTL]  = TOMOYO_MAC_FILE_IOCTL,
-	[TOMOYO_TYPE_CHMOD]  = TOMOYO_MAC_FILE_CHMOD,
-	[TOMOYO_TYPE_CHOWN]  = TOMOYO_MAC_FILE_CHOWN,
-	[TOMOYO_TYPE_CHGRP]  = TOMOYO_MAC_FILE_CHGRP,
-};
+स्थिर u8 tomoyo_pn2mac[TOMOYO_MAX_PATH_NUMBER_OPERATION] = अणु
+	[TOMOYO_TYPE_CREATE] = TOMOYO_MAC_खाता_CREATE,
+	[TOMOYO_TYPE_MKसूची]  = TOMOYO_MAC_खाता_MKसूची,
+	[TOMOYO_TYPE_MKFIFO] = TOMOYO_MAC_खाता_MKFIFO,
+	[TOMOYO_TYPE_MKSOCK] = TOMOYO_MAC_खाता_MKSOCK,
+	[TOMOYO_TYPE_IOCTL]  = TOMOYO_MAC_खाता_IOCTL,
+	[TOMOYO_TYPE_CHMOD]  = TOMOYO_MAC_खाता_CHMOD,
+	[TOMOYO_TYPE_CHOWN]  = TOMOYO_MAC_खाता_CHOWN,
+	[TOMOYO_TYPE_CHGRP]  = TOMOYO_MAC_खाता_CHGRP,
+पूर्ण;
 
 /**
- * tomoyo_put_name_union - Drop reference on "struct tomoyo_name_union".
+ * tomoyo_put_name_जोड़ - Drop reference on "struct tomoyo_name_union".
  *
- * @ptr: Pointer to "struct tomoyo_name_union".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_name_union".
  *
  * Returns nothing.
  */
-void tomoyo_put_name_union(struct tomoyo_name_union *ptr)
-{
+व्योम tomoyo_put_name_जोड़(काष्ठा tomoyo_name_जोड़ *ptr)
+अणु
 	tomoyo_put_group(ptr->group);
 	tomoyo_put_name(ptr->filename);
-}
+पूर्ण
 
 /**
- * tomoyo_compare_name_union - Check whether a name matches "struct tomoyo_name_union" or not.
+ * tomoyo_compare_name_जोड़ - Check whether a name matches "struct tomoyo_name_union" or not.
  *
- * @name: Pointer to "struct tomoyo_path_info".
- * @ptr:  Pointer to "struct tomoyo_name_union".
+ * @name: Poपूर्णांकer to "struct tomoyo_path_info".
+ * @ptr:  Poपूर्णांकer to "struct tomoyo_name_union".
  *
- * Returns "struct tomoyo_path_info" if @name matches @ptr, NULL otherwise.
+ * Returns "struct tomoyo_path_info" अगर @name matches @ptr, शून्य otherwise.
  */
-const struct tomoyo_path_info *
-tomoyo_compare_name_union(const struct tomoyo_path_info *name,
-			  const struct tomoyo_name_union *ptr)
-{
-	if (ptr->group)
-		return tomoyo_path_matches_group(name, ptr->group);
-	if (tomoyo_path_matches_pattern(name, ptr->filename))
-		return ptr->filename;
-	return NULL;
-}
+स्थिर काष्ठा tomoyo_path_info *
+tomoyo_compare_name_जोड़(स्थिर काष्ठा tomoyo_path_info *name,
+			  स्थिर काष्ठा tomoyo_name_जोड़ *ptr)
+अणु
+	अगर (ptr->group)
+		वापस tomoyo_path_matches_group(name, ptr->group);
+	अगर (tomoyo_path_matches_pattern(name, ptr->filename))
+		वापस ptr->filename;
+	वापस शून्य;
+पूर्ण
 
 /**
- * tomoyo_put_number_union - Drop reference on "struct tomoyo_number_union".
+ * tomoyo_put_number_जोड़ - Drop reference on "struct tomoyo_number_union".
  *
- * @ptr: Pointer to "struct tomoyo_number_union".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_number_union".
  *
  * Returns nothing.
  */
-void tomoyo_put_number_union(struct tomoyo_number_union *ptr)
-{
+व्योम tomoyo_put_number_जोड़(काष्ठा tomoyo_number_जोड़ *ptr)
+अणु
 	tomoyo_put_group(ptr->group);
-}
+पूर्ण
 
 /**
- * tomoyo_compare_number_union - Check whether a value matches "struct tomoyo_number_union" or not.
+ * tomoyo_compare_number_जोड़ - Check whether a value matches "struct tomoyo_number_union" or not.
  *
  * @value: Number to check.
- * @ptr:   Pointer to "struct tomoyo_number_union".
+ * @ptr:   Poपूर्णांकer to "struct tomoyo_number_union".
  *
- * Returns true if @value matches @ptr, false otherwise.
+ * Returns true अगर @value matches @ptr, false otherwise.
  */
-bool tomoyo_compare_number_union(const unsigned long value,
-				 const struct tomoyo_number_union *ptr)
-{
-	if (ptr->group)
-		return tomoyo_number_matches_group(value, value, ptr->group);
-	return value >= ptr->values[0] && value <= ptr->values[1];
-}
+bool tomoyo_compare_number_जोड़(स्थिर अचिन्हित दीर्घ value,
+				 स्थिर काष्ठा tomoyo_number_जोड़ *ptr)
+अणु
+	अगर (ptr->group)
+		वापस tomoyo_number_matches_group(value, value, ptr->group);
+	वापस value >= ptr->values[0] && value <= ptr->values[1];
+पूर्ण
 
 /**
- * tomoyo_add_slash - Add trailing '/' if needed.
+ * tomoyo_add_slash - Add trailing '/' अगर needed.
  *
- * @buf: Pointer to "struct tomoyo_path_info".
+ * @buf: Poपूर्णांकer to "struct tomoyo_path_info".
  *
  * Returns nothing.
  *
- * @buf must be generated by tomoyo_encode() because this function does not
- * allocate memory for adding '/'.
+ * @buf must be generated by tomoyo_encode() because this function करोes not
+ * allocate memory क्रम adding '/'.
  */
-static void tomoyo_add_slash(struct tomoyo_path_info *buf)
-{
-	if (buf->is_dir)
-		return;
+अटल व्योम tomoyo_add_slash(काष्ठा tomoyo_path_info *buf)
+अणु
+	अगर (buf->is_dir)
+		वापस;
 	/*
-	 * This is OK because tomoyo_encode() reserves space for appending "/".
+	 * This is OK because tomoyo_encode() reserves space क्रम appending "/".
 	 */
-	strcat((char *) buf->name, "/");
+	म_जोड़ो((अक्षर *) buf->name, "/");
 	tomoyo_fill_path_info(buf);
-}
+पूर्ण
 
 /**
  * tomoyo_get_realpath - Get realpath.
  *
- * @buf:  Pointer to "struct tomoyo_path_info".
- * @path: Pointer to "struct path".
+ * @buf:  Poपूर्णांकer to "struct tomoyo_path_info".
+ * @path: Poपूर्णांकer to "struct path".
  *
  * Returns true on success, false otherwise.
  */
-static bool tomoyo_get_realpath(struct tomoyo_path_info *buf, const struct path *path)
-{
+अटल bool tomoyo_get_realpath(काष्ठा tomoyo_path_info *buf, स्थिर काष्ठा path *path)
+अणु
 	buf->name = tomoyo_realpath_from_path(path);
-	if (buf->name) {
+	अगर (buf->name) अणु
 		tomoyo_fill_path_info(buf);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
  * tomoyo_audit_path_log - Audit path request log.
  *
- * @r: Pointer to "struct tomoyo_request_info".
+ * @r: Poपूर्णांकer to "struct tomoyo_request_info".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_audit_path_log(struct tomoyo_request_info *r)
-{
-	return tomoyo_supervisor(r, "file %s %s\n", tomoyo_path_keyword
+अटल पूर्णांक tomoyo_audit_path_log(काष्ठा tomoyo_request_info *r)
+अणु
+	वापस tomoyo_supervisor(r, "file %s %s\n", tomoyo_path_keyword
 				 [r->param.path.operation],
 				 r->param.path.filename->name);
-}
+पूर्ण
 
 /**
  * tomoyo_audit_path2_log - Audit path/path request log.
  *
- * @r: Pointer to "struct tomoyo_request_info".
+ * @r: Poपूर्णांकer to "struct tomoyo_request_info".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_audit_path2_log(struct tomoyo_request_info *r)
-{
-	return tomoyo_supervisor(r, "file %s %s %s\n", tomoyo_mac_keywords
+अटल पूर्णांक tomoyo_audit_path2_log(काष्ठा tomoyo_request_info *r)
+अणु
+	वापस tomoyo_supervisor(r, "file %s %s %s\n", tomoyo_mac_keywords
 				 [tomoyo_pp2mac[r->param.path2.operation]],
 				 r->param.path2.filename1->name,
 				 r->param.path2.filename2->name);
-}
+पूर्ण
 
 /**
  * tomoyo_audit_mkdev_log - Audit path/number/number/number request log.
  *
- * @r: Pointer to "struct tomoyo_request_info".
+ * @r: Poपूर्णांकer to "struct tomoyo_request_info".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_audit_mkdev_log(struct tomoyo_request_info *r)
-{
-	return tomoyo_supervisor(r, "file %s %s 0%o %u %u\n",
+अटल पूर्णांक tomoyo_audit_mkdev_log(काष्ठा tomoyo_request_info *r)
+अणु
+	वापस tomoyo_supervisor(r, "file %s %s 0%o %u %u\n",
 				 tomoyo_mac_keywords
 				 [tomoyo_pnnn2mac[r->param.mkdev.operation]],
 				 r->param.mkdev.filename->name,
 				 r->param.mkdev.mode, r->param.mkdev.major,
 				 r->param.mkdev.minor);
-}
+पूर्ण
 
 /**
  * tomoyo_audit_path_number_log - Audit path/number request log.
  *
- * @r: Pointer to "struct tomoyo_request_info".
+ * @r: Poपूर्णांकer to "struct tomoyo_request_info".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_audit_path_number_log(struct tomoyo_request_info *r)
-{
-	const u8 type = r->param.path_number.operation;
+अटल पूर्णांक tomoyo_audit_path_number_log(काष्ठा tomoyo_request_info *r)
+अणु
+	स्थिर u8 type = r->param.path_number.operation;
 	u8 radix;
-	char buffer[64];
+	अक्षर buffer[64];
 
-	switch (type) {
-	case TOMOYO_TYPE_CREATE:
-	case TOMOYO_TYPE_MKDIR:
-	case TOMOYO_TYPE_MKFIFO:
-	case TOMOYO_TYPE_MKSOCK:
-	case TOMOYO_TYPE_CHMOD:
+	चयन (type) अणु
+	हाल TOMOYO_TYPE_CREATE:
+	हाल TOMOYO_TYPE_MKसूची:
+	हाल TOMOYO_TYPE_MKFIFO:
+	हाल TOMOYO_TYPE_MKSOCK:
+	हाल TOMOYO_TYPE_CHMOD:
 		radix = TOMOYO_VALUE_TYPE_OCTAL;
-		break;
-	case TOMOYO_TYPE_IOCTL:
+		अवरोध;
+	हाल TOMOYO_TYPE_IOCTL:
 		radix = TOMOYO_VALUE_TYPE_HEXADECIMAL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		radix = TOMOYO_VALUE_TYPE_DECIMAL;
-		break;
-	}
-	tomoyo_print_ulong(buffer, sizeof(buffer), r->param.path_number.number,
+		अवरोध;
+	पूर्ण
+	tomoyo_prपूर्णांक_uदीर्घ(buffer, माप(buffer), r->param.path_number.number,
 			   radix);
-	return tomoyo_supervisor(r, "file %s %s %s\n", tomoyo_mac_keywords
+	वापस tomoyo_supervisor(r, "file %s %s %s\n", tomoyo_mac_keywords
 				 [tomoyo_pn2mac[type]],
 				 r->param.path_number.filename->name, buffer);
-}
+पूर्ण
 
 /**
- * tomoyo_check_path_acl - Check permission for path operation.
+ * tomoyo_check_path_acl - Check permission क्रम path operation.
  *
- * @r:   Pointer to "struct tomoyo_request_info".
- * @ptr: Pointer to "struct tomoyo_acl_info".
+ * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if granted, false otherwise.
+ * Returns true अगर granted, false otherwise.
  *
- * To be able to use wildcard for domain transition, this function sets
- * matching entry on success. Since the caller holds tomoyo_read_lock(),
+ * To be able to use wildcard क्रम करोमुख्य transition, this function sets
+ * matching entry on success. Since the caller holds tomoyo_पढ़ो_lock(),
  * it is safe to set matching entry.
  */
-static bool tomoyo_check_path_acl(struct tomoyo_request_info *r,
-				  const struct tomoyo_acl_info *ptr)
-{
-	const struct tomoyo_path_acl *acl = container_of(ptr, typeof(*acl),
+अटल bool tomoyo_check_path_acl(काष्ठा tomoyo_request_info *r,
+				  स्थिर काष्ठा tomoyo_acl_info *ptr)
+अणु
+	स्थिर काष्ठा tomoyo_path_acl *acl = container_of(ptr, typeof(*acl),
 							 head);
 
-	if (acl->perm & (1 << r->param.path.operation)) {
+	अगर (acl->perm & (1 << r->param.path.operation)) अणु
 		r->param.path.matched_path =
-			tomoyo_compare_name_union(r->param.path.filename,
+			tomoyo_compare_name_जोड़(r->param.path.filename,
 						  &acl->name);
-		return r->param.path.matched_path != NULL;
-	}
-	return false;
-}
+		वापस r->param.path.matched_path != शून्य;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * tomoyo_check_path_number_acl - Check permission for path number operation.
+ * tomoyo_check_path_number_acl - Check permission क्रम path number operation.
  *
- * @r:   Pointer to "struct tomoyo_request_info".
- * @ptr: Pointer to "struct tomoyo_acl_info".
+ * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if granted, false otherwise.
+ * Returns true अगर granted, false otherwise.
  */
-static bool tomoyo_check_path_number_acl(struct tomoyo_request_info *r,
-					 const struct tomoyo_acl_info *ptr)
-{
-	const struct tomoyo_path_number_acl *acl =
+अटल bool tomoyo_check_path_number_acl(काष्ठा tomoyo_request_info *r,
+					 स्थिर काष्ठा tomoyo_acl_info *ptr)
+अणु
+	स्थिर काष्ठा tomoyo_path_number_acl *acl =
 		container_of(ptr, typeof(*acl), head);
 
-	return (acl->perm & (1 << r->param.path_number.operation)) &&
-		tomoyo_compare_number_union(r->param.path_number.number,
+	वापस (acl->perm & (1 << r->param.path_number.operation)) &&
+		tomoyo_compare_number_जोड़(r->param.path_number.number,
 					    &acl->number) &&
-		tomoyo_compare_name_union(r->param.path_number.filename,
+		tomoyo_compare_name_जोड़(r->param.path_number.filename,
 					  &acl->name);
-}
+पूर्ण
 
 /**
- * tomoyo_check_path2_acl - Check permission for path path operation.
+ * tomoyo_check_path2_acl - Check permission क्रम path path operation.
  *
- * @r:   Pointer to "struct tomoyo_request_info".
- * @ptr: Pointer to "struct tomoyo_acl_info".
+ * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if granted, false otherwise.
+ * Returns true अगर granted, false otherwise.
  */
-static bool tomoyo_check_path2_acl(struct tomoyo_request_info *r,
-				   const struct tomoyo_acl_info *ptr)
-{
-	const struct tomoyo_path2_acl *acl =
+अटल bool tomoyo_check_path2_acl(काष्ठा tomoyo_request_info *r,
+				   स्थिर काष्ठा tomoyo_acl_info *ptr)
+अणु
+	स्थिर काष्ठा tomoyo_path2_acl *acl =
 		container_of(ptr, typeof(*acl), head);
 
-	return (acl->perm & (1 << r->param.path2.operation)) &&
-		tomoyo_compare_name_union(r->param.path2.filename1, &acl->name1)
-		&& tomoyo_compare_name_union(r->param.path2.filename2,
+	वापस (acl->perm & (1 << r->param.path2.operation)) &&
+		tomoyo_compare_name_जोड़(r->param.path2.filename1, &acl->name1)
+		&& tomoyo_compare_name_जोड़(r->param.path2.filename2,
 					     &acl->name2);
-}
+पूर्ण
 
 /**
- * tomoyo_check_mkdev_acl - Check permission for path number number number operation.
+ * tomoyo_check_mkdev_acl - Check permission क्रम path number number number operation.
  *
- * @r:   Pointer to "struct tomoyo_request_info".
- * @ptr: Pointer to "struct tomoyo_acl_info".
+ * @r:   Poपूर्णांकer to "struct tomoyo_request_info".
+ * @ptr: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if granted, false otherwise.
+ * Returns true अगर granted, false otherwise.
  */
-static bool tomoyo_check_mkdev_acl(struct tomoyo_request_info *r,
-				   const struct tomoyo_acl_info *ptr)
-{
-	const struct tomoyo_mkdev_acl *acl =
+अटल bool tomoyo_check_mkdev_acl(काष्ठा tomoyo_request_info *r,
+				   स्थिर काष्ठा tomoyo_acl_info *ptr)
+अणु
+	स्थिर काष्ठा tomoyo_mkdev_acl *acl =
 		container_of(ptr, typeof(*acl), head);
 
-	return (acl->perm & (1 << r->param.mkdev.operation)) &&
-		tomoyo_compare_number_union(r->param.mkdev.mode,
+	वापस (acl->perm & (1 << r->param.mkdev.operation)) &&
+		tomoyo_compare_number_जोड़(r->param.mkdev.mode,
 					    &acl->mode) &&
-		tomoyo_compare_number_union(r->param.mkdev.major,
+		tomoyo_compare_number_जोड़(r->param.mkdev.major,
 					    &acl->major) &&
-		tomoyo_compare_number_union(r->param.mkdev.minor,
+		tomoyo_compare_number_जोड़(r->param.mkdev.minor,
 					    &acl->minor) &&
-		tomoyo_compare_name_union(r->param.mkdev.filename,
+		tomoyo_compare_name_जोड़(r->param.mkdev.filename,
 					  &acl->name);
-}
+पूर्ण
 
 /**
- * tomoyo_same_path_acl - Check for duplicated "struct tomoyo_path_acl" entry.
+ * tomoyo_same_path_acl - Check क्रम duplicated "struct tomoyo_path_acl" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b except permission bits, false otherwise.
+ * Returns true अगर @a == @b except permission bits, false otherwise.
  */
-static bool tomoyo_same_path_acl(const struct tomoyo_acl_info *a,
-				 const struct tomoyo_acl_info *b)
-{
-	const struct tomoyo_path_acl *p1 = container_of(a, typeof(*p1), head);
-	const struct tomoyo_path_acl *p2 = container_of(b, typeof(*p2), head);
+अटल bool tomoyo_same_path_acl(स्थिर काष्ठा tomoyo_acl_info *a,
+				 स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	स्थिर काष्ठा tomoyo_path_acl *p1 = container_of(a, typeof(*p1), head);
+	स्थिर काष्ठा tomoyo_path_acl *p2 = container_of(b, typeof(*p2), head);
 
-	return tomoyo_same_name_union(&p1->name, &p2->name);
-}
+	वापस tomoyo_same_name_जोड़(&p1->name, &p2->name);
+पूर्ण
 
 /**
  * tomoyo_merge_path_acl - Merge duplicated "struct tomoyo_path_acl" entry.
  *
- * @a:         Pointer to "struct tomoyo_acl_info".
- * @b:         Pointer to "struct tomoyo_acl_info".
- * @is_delete: True for @a &= ~@b, false for @a |= @b.
+ * @a:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @is_delete: True क्रम @a &= ~@b, false क्रम @a |= @b.
  *
- * Returns true if @a is empty, false otherwise.
+ * Returns true अगर @a is empty, false otherwise.
  */
-static bool tomoyo_merge_path_acl(struct tomoyo_acl_info *a,
-				  struct tomoyo_acl_info *b,
-				  const bool is_delete)
-{
-	u16 * const a_perm = &container_of(a, struct tomoyo_path_acl, head)
+अटल bool tomoyo_merge_path_acl(काष्ठा tomoyo_acl_info *a,
+				  काष्ठा tomoyo_acl_info *b,
+				  स्थिर bool is_delete)
+अणु
+	u16 * स्थिर a_perm = &container_of(a, काष्ठा tomoyo_path_acl, head)
 		->perm;
 	u16 perm = READ_ONCE(*a_perm);
-	const u16 b_perm = container_of(b, struct tomoyo_path_acl, head)->perm;
+	स्थिर u16 b_perm = container_of(b, काष्ठा tomoyo_path_acl, head)->perm;
 
-	if (is_delete)
+	अगर (is_delete)
 		perm &= ~b_perm;
-	else
+	अन्यथा
 		perm |= b_perm;
 	WRITE_ONCE(*a_perm, perm);
-	return !perm;
-}
+	वापस !perm;
+पूर्ण
 
 /**
  * tomoyo_update_path_acl - Update "struct tomoyo_path_acl" list.
  *
  * @perm:  Permission.
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static int tomoyo_update_path_acl(const u16 perm,
-				  struct tomoyo_acl_param *param)
-{
-	struct tomoyo_path_acl e = {
+अटल पूर्णांक tomoyo_update_path_acl(स्थिर u16 perm,
+				  काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_path_acl e = अणु
 		.head.type = TOMOYO_TYPE_PATH_ACL,
 		.perm = perm
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
-	if (!tomoyo_parse_name_union(param, &e.name))
+	अगर (!tomoyo_parse_name_जोड़(param, &e.name))
 		error = -EINVAL;
-	else
-		error = tomoyo_update_domain(&e.head, sizeof(e), param,
+	अन्यथा
+		error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
 					     tomoyo_same_path_acl,
 					     tomoyo_merge_path_acl);
-	tomoyo_put_name_union(&e.name);
-	return error;
-}
+	tomoyo_put_name_जोड़(&e.name);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_same_mkdev_acl - Check for duplicated "struct tomoyo_mkdev_acl" entry.
+ * tomoyo_same_mkdev_acl - Check क्रम duplicated "struct tomoyo_mkdev_acl" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b except permission bits, false otherwise.
+ * Returns true अगर @a == @b except permission bits, false otherwise.
  */
-static bool tomoyo_same_mkdev_acl(const struct tomoyo_acl_info *a,
-					 const struct tomoyo_acl_info *b)
-{
-	const struct tomoyo_mkdev_acl *p1 = container_of(a, typeof(*p1), head);
-	const struct tomoyo_mkdev_acl *p2 = container_of(b, typeof(*p2), head);
+अटल bool tomoyo_same_mkdev_acl(स्थिर काष्ठा tomoyo_acl_info *a,
+					 स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	स्थिर काष्ठा tomoyo_mkdev_acl *p1 = container_of(a, typeof(*p1), head);
+	स्थिर काष्ठा tomoyo_mkdev_acl *p2 = container_of(b, typeof(*p2), head);
 
-	return tomoyo_same_name_union(&p1->name, &p2->name) &&
-		tomoyo_same_number_union(&p1->mode, &p2->mode) &&
-		tomoyo_same_number_union(&p1->major, &p2->major) &&
-		tomoyo_same_number_union(&p1->minor, &p2->minor);
-}
+	वापस tomoyo_same_name_जोड़(&p1->name, &p2->name) &&
+		tomoyo_same_number_जोड़(&p1->mode, &p2->mode) &&
+		tomoyo_same_number_जोड़(&p1->major, &p2->major) &&
+		tomoyo_same_number_जोड़(&p1->minor, &p2->minor);
+पूर्ण
 
 /**
  * tomoyo_merge_mkdev_acl - Merge duplicated "struct tomoyo_mkdev_acl" entry.
  *
- * @a:         Pointer to "struct tomoyo_acl_info".
- * @b:         Pointer to "struct tomoyo_acl_info".
- * @is_delete: True for @a &= ~@b, false for @a |= @b.
+ * @a:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @is_delete: True क्रम @a &= ~@b, false क्रम @a |= @b.
  *
- * Returns true if @a is empty, false otherwise.
+ * Returns true अगर @a is empty, false otherwise.
  */
-static bool tomoyo_merge_mkdev_acl(struct tomoyo_acl_info *a,
-				   struct tomoyo_acl_info *b,
-				   const bool is_delete)
-{
-	u8 *const a_perm = &container_of(a, struct tomoyo_mkdev_acl,
+अटल bool tomoyo_merge_mkdev_acl(काष्ठा tomoyo_acl_info *a,
+				   काष्ठा tomoyo_acl_info *b,
+				   स्थिर bool is_delete)
+अणु
+	u8 *स्थिर a_perm = &container_of(a, काष्ठा tomoyo_mkdev_acl,
 					 head)->perm;
 	u8 perm = READ_ONCE(*a_perm);
-	const u8 b_perm = container_of(b, struct tomoyo_mkdev_acl, head)
+	स्थिर u8 b_perm = container_of(b, काष्ठा tomoyo_mkdev_acl, head)
 		->perm;
 
-	if (is_delete)
+	अगर (is_delete)
 		perm &= ~b_perm;
-	else
+	अन्यथा
 		perm |= b_perm;
 	WRITE_ONCE(*a_perm, perm);
-	return !perm;
-}
+	वापस !perm;
+पूर्ण
 
 /**
  * tomoyo_update_mkdev_acl - Update "struct tomoyo_mkdev_acl" list.
  *
  * @perm:  Permission.
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static int tomoyo_update_mkdev_acl(const u8 perm,
-				   struct tomoyo_acl_param *param)
-{
-	struct tomoyo_mkdev_acl e = {
+अटल पूर्णांक tomoyo_update_mkdev_acl(स्थिर u8 perm,
+				   काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_mkdev_acl e = अणु
 		.head.type = TOMOYO_TYPE_MKDEV_ACL,
 		.perm = perm
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
-	if (!tomoyo_parse_name_union(param, &e.name) ||
-	    !tomoyo_parse_number_union(param, &e.mode) ||
-	    !tomoyo_parse_number_union(param, &e.major) ||
-	    !tomoyo_parse_number_union(param, &e.minor))
+	अगर (!tomoyo_parse_name_जोड़(param, &e.name) ||
+	    !tomoyo_parse_number_जोड़(param, &e.mode) ||
+	    !tomoyo_parse_number_जोड़(param, &e.major) ||
+	    !tomoyo_parse_number_जोड़(param, &e.minor))
 		error = -EINVAL;
-	else
-		error = tomoyo_update_domain(&e.head, sizeof(e), param,
+	अन्यथा
+		error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
 					     tomoyo_same_mkdev_acl,
 					     tomoyo_merge_mkdev_acl);
-	tomoyo_put_name_union(&e.name);
-	tomoyo_put_number_union(&e.mode);
-	tomoyo_put_number_union(&e.major);
-	tomoyo_put_number_union(&e.minor);
-	return error;
-}
+	tomoyo_put_name_जोड़(&e.name);
+	tomoyo_put_number_जोड़(&e.mode);
+	tomoyo_put_number_जोड़(&e.major);
+	tomoyo_put_number_जोड़(&e.minor);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_same_path2_acl - Check for duplicated "struct tomoyo_path2_acl" entry.
+ * tomoyo_same_path2_acl - Check क्रम duplicated "struct tomoyo_path2_acl" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b except permission bits, false otherwise.
+ * Returns true अगर @a == @b except permission bits, false otherwise.
  */
-static bool tomoyo_same_path2_acl(const struct tomoyo_acl_info *a,
-				  const struct tomoyo_acl_info *b)
-{
-	const struct tomoyo_path2_acl *p1 = container_of(a, typeof(*p1), head);
-	const struct tomoyo_path2_acl *p2 = container_of(b, typeof(*p2), head);
+अटल bool tomoyo_same_path2_acl(स्थिर काष्ठा tomoyo_acl_info *a,
+				  स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	स्थिर काष्ठा tomoyo_path2_acl *p1 = container_of(a, typeof(*p1), head);
+	स्थिर काष्ठा tomoyo_path2_acl *p2 = container_of(b, typeof(*p2), head);
 
-	return tomoyo_same_name_union(&p1->name1, &p2->name1) &&
-		tomoyo_same_name_union(&p1->name2, &p2->name2);
-}
+	वापस tomoyo_same_name_जोड़(&p1->name1, &p2->name1) &&
+		tomoyo_same_name_जोड़(&p1->name2, &p2->name2);
+पूर्ण
 
 /**
  * tomoyo_merge_path2_acl - Merge duplicated "struct tomoyo_path2_acl" entry.
  *
- * @a:         Pointer to "struct tomoyo_acl_info".
- * @b:         Pointer to "struct tomoyo_acl_info".
- * @is_delete: True for @a &= ~@b, false for @a |= @b.
+ * @a:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @is_delete: True क्रम @a &= ~@b, false क्रम @a |= @b.
  *
- * Returns true if @a is empty, false otherwise.
+ * Returns true अगर @a is empty, false otherwise.
  */
-static bool tomoyo_merge_path2_acl(struct tomoyo_acl_info *a,
-				   struct tomoyo_acl_info *b,
-				   const bool is_delete)
-{
-	u8 * const a_perm = &container_of(a, struct tomoyo_path2_acl, head)
+अटल bool tomoyo_merge_path2_acl(काष्ठा tomoyo_acl_info *a,
+				   काष्ठा tomoyo_acl_info *b,
+				   स्थिर bool is_delete)
+अणु
+	u8 * स्थिर a_perm = &container_of(a, काष्ठा tomoyo_path2_acl, head)
 		->perm;
 	u8 perm = READ_ONCE(*a_perm);
-	const u8 b_perm = container_of(b, struct tomoyo_path2_acl, head)->perm;
+	स्थिर u8 b_perm = container_of(b, काष्ठा tomoyo_path2_acl, head)->perm;
 
-	if (is_delete)
+	अगर (is_delete)
 		perm &= ~b_perm;
-	else
+	अन्यथा
 		perm |= b_perm;
 	WRITE_ONCE(*a_perm, perm);
-	return !perm;
-}
+	वापस !perm;
+पूर्ण
 
 /**
  * tomoyo_update_path2_acl - Update "struct tomoyo_path2_acl" list.
  *
  * @perm:  Permission.
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static int tomoyo_update_path2_acl(const u8 perm,
-				   struct tomoyo_acl_param *param)
-{
-	struct tomoyo_path2_acl e = {
+अटल पूर्णांक tomoyo_update_path2_acl(स्थिर u8 perm,
+				   काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_path2_acl e = अणु
 		.head.type = TOMOYO_TYPE_PATH2_ACL,
 		.perm = perm
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
-	if (!tomoyo_parse_name_union(param, &e.name1) ||
-	    !tomoyo_parse_name_union(param, &e.name2))
+	अगर (!tomoyo_parse_name_जोड़(param, &e.name1) ||
+	    !tomoyo_parse_name_जोड़(param, &e.name2))
 		error = -EINVAL;
-	else
-		error = tomoyo_update_domain(&e.head, sizeof(e), param,
+	अन्यथा
+		error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
 					     tomoyo_same_path2_acl,
 					     tomoyo_merge_path2_acl);
-	tomoyo_put_name_union(&e.name1);
-	tomoyo_put_name_union(&e.name2);
-	return error;
-}
+	tomoyo_put_name_जोड़(&e.name1);
+	tomoyo_put_name_जोड़(&e.name2);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_path_permission - Check permission for single path operation.
+ * tomoyo_path_permission - Check permission क्रम single path operation.
  *
- * @r:         Pointer to "struct tomoyo_request_info".
+ * @r:         Poपूर्णांकer to "struct tomoyo_request_info".
  * @operation: Type of operation.
  * @filename:  Filename to check.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static int tomoyo_path_permission(struct tomoyo_request_info *r, u8 operation,
-				  const struct tomoyo_path_info *filename)
-{
-	int error;
+अटल पूर्णांक tomoyo_path_permission(काष्ठा tomoyo_request_info *r, u8 operation,
+				  स्थिर काष्ठा tomoyo_path_info *filename)
+अणु
+	पूर्णांक error;
 
 	r->type = tomoyo_p2mac[operation];
-	r->mode = tomoyo_get_mode(r->domain->ns, r->profile, r->type);
-	if (r->mode == TOMOYO_CONFIG_DISABLED)
-		return 0;
+	r->mode = tomoyo_get_mode(r->करोमुख्य->ns, r->profile, r->type);
+	अगर (r->mode == TOMOYO_CONFIG_DISABLED)
+		वापस 0;
 	r->param_type = TOMOYO_TYPE_PATH_ACL;
 	r->param.path.filename = filename;
 	r->param.path.operation = operation;
-	do {
+	करो अणु
 		tomoyo_check_acl(r, tomoyo_check_path_acl);
 		error = tomoyo_audit_path_log(r);
-	} while (error == TOMOYO_RETRY_REQUEST);
-	return error;
-}
+	पूर्ण जबतक (error == TOMOYO_RETRY_REQUEST);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_execute_permission - Check permission for execute operation.
+ * tomoyo_execute_permission - Check permission क्रम execute operation.
  *
- * @r:         Pointer to "struct tomoyo_request_info".
+ * @r:         Poपूर्णांकer to "struct tomoyo_request_info".
  * @filename:  Filename to check.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_execute_permission(struct tomoyo_request_info *r,
-			      const struct tomoyo_path_info *filename)
-{
+पूर्णांक tomoyo_execute_permission(काष्ठा tomoyo_request_info *r,
+			      स्थिर काष्ठा tomoyo_path_info *filename)
+अणु
 	/*
-	 * Unlike other permission checks, this check is done regardless of
-	 * profile mode settings in order to check for domain transition
+	 * Unlike other permission checks, this check is करोne regardless of
+	 * profile mode settings in order to check क्रम करोमुख्य transition
 	 * preference.
 	 */
-	r->type = TOMOYO_MAC_FILE_EXECUTE;
-	r->mode = tomoyo_get_mode(r->domain->ns, r->profile, r->type);
+	r->type = TOMOYO_MAC_खाता_EXECUTE;
+	r->mode = tomoyo_get_mode(r->करोमुख्य->ns, r->profile, r->type);
 	r->param_type = TOMOYO_TYPE_PATH_ACL;
 	r->param.path.filename = filename;
 	r->param.path.operation = TOMOYO_TYPE_EXECUTE;
 	tomoyo_check_acl(r, tomoyo_check_path_acl);
 	r->ee->transition = r->matched_acl && r->matched_acl->cond ?
-		r->matched_acl->cond->transit : NULL;
-	if (r->mode != TOMOYO_CONFIG_DISABLED)
-		return tomoyo_audit_path_log(r);
-	return 0;
-}
+		r->matched_acl->cond->transit : शून्य;
+	अगर (r->mode != TOMOYO_CONFIG_DISABLED)
+		वापस tomoyo_audit_path_log(r);
+	वापस 0;
+पूर्ण
 
 /**
- * tomoyo_same_path_number_acl - Check for duplicated "struct tomoyo_path_number_acl" entry.
+ * tomoyo_same_path_number_acl - Check क्रम duplicated "struct tomoyo_path_number_acl" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b except permission bits, false otherwise.
+ * Returns true अगर @a == @b except permission bits, false otherwise.
  */
-static bool tomoyo_same_path_number_acl(const struct tomoyo_acl_info *a,
-					const struct tomoyo_acl_info *b)
-{
-	const struct tomoyo_path_number_acl *p1 = container_of(a, typeof(*p1),
+अटल bool tomoyo_same_path_number_acl(स्थिर काष्ठा tomoyo_acl_info *a,
+					स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	स्थिर काष्ठा tomoyo_path_number_acl *p1 = container_of(a, typeof(*p1),
 							       head);
-	const struct tomoyo_path_number_acl *p2 = container_of(b, typeof(*p2),
+	स्थिर काष्ठा tomoyo_path_number_acl *p2 = container_of(b, typeof(*p2),
 							       head);
 
-	return tomoyo_same_name_union(&p1->name, &p2->name) &&
-		tomoyo_same_number_union(&p1->number, &p2->number);
-}
+	वापस tomoyo_same_name_जोड़(&p1->name, &p2->name) &&
+		tomoyo_same_number_जोड़(&p1->number, &p2->number);
+पूर्ण
 
 /**
  * tomoyo_merge_path_number_acl - Merge duplicated "struct tomoyo_path_number_acl" entry.
  *
- * @a:         Pointer to "struct tomoyo_acl_info".
- * @b:         Pointer to "struct tomoyo_acl_info".
- * @is_delete: True for @a &= ~@b, false for @a |= @b.
+ * @a:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b:         Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @is_delete: True क्रम @a &= ~@b, false क्रम @a |= @b.
  *
- * Returns true if @a is empty, false otherwise.
+ * Returns true अगर @a is empty, false otherwise.
  */
-static bool tomoyo_merge_path_number_acl(struct tomoyo_acl_info *a,
-					 struct tomoyo_acl_info *b,
-					 const bool is_delete)
-{
-	u8 * const a_perm = &container_of(a, struct tomoyo_path_number_acl,
+अटल bool tomoyo_merge_path_number_acl(काष्ठा tomoyo_acl_info *a,
+					 काष्ठा tomoyo_acl_info *b,
+					 स्थिर bool is_delete)
+अणु
+	u8 * स्थिर a_perm = &container_of(a, काष्ठा tomoyo_path_number_acl,
 					  head)->perm;
 	u8 perm = READ_ONCE(*a_perm);
-	const u8 b_perm = container_of(b, struct tomoyo_path_number_acl, head)
+	स्थिर u8 b_perm = container_of(b, काष्ठा tomoyo_path_number_acl, head)
 		->perm;
 
-	if (is_delete)
+	अगर (is_delete)
 		perm &= ~b_perm;
-	else
+	अन्यथा
 		perm |= b_perm;
 	WRITE_ONCE(*a_perm, perm);
-	return !perm;
-}
+	वापस !perm;
+पूर्ण
 
 /**
  * tomoyo_update_path_number_acl - Update ioctl/chmod/chown/chgrp ACL.
  *
  * @perm:  Permission.
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_update_path_number_acl(const u8 perm,
-					 struct tomoyo_acl_param *param)
-{
-	struct tomoyo_path_number_acl e = {
+अटल पूर्णांक tomoyo_update_path_number_acl(स्थिर u8 perm,
+					 काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_path_number_acl e = अणु
 		.head.type = TOMOYO_TYPE_PATH_NUMBER_ACL,
 		.perm = perm
-	};
-	int error;
+	पूर्ण;
+	पूर्णांक error;
 
-	if (!tomoyo_parse_name_union(param, &e.name) ||
-	    !tomoyo_parse_number_union(param, &e.number))
+	अगर (!tomoyo_parse_name_जोड़(param, &e.name) ||
+	    !tomoyo_parse_number_जोड़(param, &e.number))
 		error = -EINVAL;
-	else
-		error = tomoyo_update_domain(&e.head, sizeof(e), param,
+	अन्यथा
+		error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
 					     tomoyo_same_path_number_acl,
 					     tomoyo_merge_path_number_acl);
-	tomoyo_put_name_union(&e.name);
-	tomoyo_put_number_union(&e.number);
-	return error;
-}
+	tomoyo_put_name_जोड़(&e.name);
+	tomoyo_put_number_जोड़(&e.number);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_path_number_perm - Check permission for "create", "mkdir", "mkfifo", "mksock", "ioctl", "chmod", "chown", "chgrp".
+ * tomoyo_path_number_perm - Check permission क्रम "create", "mkdir", "mkfifo", "mksock", "ioctl", "chmod", "chown", "chgrp".
  *
  * @type:   Type of operation.
- * @path:   Pointer to "struct path".
+ * @path:   Poपूर्णांकer to "struct path".
  * @number: Number.
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_path_number_perm(const u8 type, const struct path *path,
-			    unsigned long number)
-{
-	struct tomoyo_request_info r;
-	struct tomoyo_obj_info obj = {
-		.path1 = { .mnt = path->mnt, .dentry = path->dentry },
-	};
-	int error = -ENOMEM;
-	struct tomoyo_path_info buf;
-	int idx;
+पूर्णांक tomoyo_path_number_perm(स्थिर u8 type, स्थिर काष्ठा path *path,
+			    अचिन्हित दीर्घ number)
+अणु
+	काष्ठा tomoyo_request_info r;
+	काष्ठा tomoyo_obj_info obj = अणु
+		.path1 = अणु .mnt = path->mnt, .dentry = path->dentry पूर्ण,
+	पूर्ण;
+	पूर्णांक error = -ENOMEM;
+	काष्ठा tomoyo_path_info buf;
+	पूर्णांक idx;
 
-	if (tomoyo_init_request_info(&r, NULL, tomoyo_pn2mac[type])
+	अगर (tomoyo_init_request_info(&r, शून्य, tomoyo_pn2mac[type])
 	    == TOMOYO_CONFIG_DISABLED || !path->dentry)
-		return 0;
-	idx = tomoyo_read_lock();
-	if (!tomoyo_get_realpath(&buf, path))
-		goto out;
+		वापस 0;
+	idx = tomoyo_पढ़ो_lock();
+	अगर (!tomoyo_get_realpath(&buf, path))
+		जाओ out;
 	r.obj = &obj;
-	if (type == TOMOYO_TYPE_MKDIR)
+	अगर (type == TOMOYO_TYPE_MKसूची)
 		tomoyo_add_slash(&buf);
 	r.param_type = TOMOYO_TYPE_PATH_NUMBER_ACL;
 	r.param.path_number.operation = type;
 	r.param.path_number.filename = &buf;
 	r.param.path_number.number = number;
-	do {
+	करो अणु
 		tomoyo_check_acl(&r, tomoyo_check_path_number_acl);
 		error = tomoyo_audit_path_number_log(&r);
-	} while (error == TOMOYO_RETRY_REQUEST);
-	kfree(buf.name);
+	पूर्ण जबतक (error == TOMOYO_RETRY_REQUEST);
+	kमुक्त(buf.name);
  out:
-	tomoyo_read_unlock(idx);
-	if (r.mode != TOMOYO_CONFIG_ENFORCING)
+	tomoyo_पढ़ो_unlock(idx);
+	अगर (r.mode != TOMOYO_CONFIG_ENFORCING)
 		error = 0;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_check_open_permission - Check permission for "read" and "write".
+ * tomoyo_check_खोलो_permission - Check permission क्रम "read" and "write".
  *
- * @domain: Pointer to "struct tomoyo_domain_info".
- * @path:   Pointer to "struct path".
- * @flag:   Flags for open().
+ * @करोमुख्य: Poपूर्णांकer to "struct tomoyo_domain_info".
+ * @path:   Poपूर्णांकer to "struct path".
+ * @flag:   Flags क्रम खोलो().
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_check_open_permission(struct tomoyo_domain_info *domain,
-				 const struct path *path, const int flag)
-{
-	const u8 acc_mode = ACC_MODE(flag);
-	int error = 0;
-	struct tomoyo_path_info buf;
-	struct tomoyo_request_info r;
-	struct tomoyo_obj_info obj = {
-		.path1 = { .mnt = path->mnt, .dentry = path->dentry },
-	};
-	int idx;
+पूर्णांक tomoyo_check_खोलो_permission(काष्ठा tomoyo_करोमुख्य_info *करोमुख्य,
+				 स्थिर काष्ठा path *path, स्थिर पूर्णांक flag)
+अणु
+	स्थिर u8 acc_mode = ACC_MODE(flag);
+	पूर्णांक error = 0;
+	काष्ठा tomoyo_path_info buf;
+	काष्ठा tomoyo_request_info r;
+	काष्ठा tomoyo_obj_info obj = अणु
+		.path1 = अणु .mnt = path->mnt, .dentry = path->dentry पूर्ण,
+	पूर्ण;
+	पूर्णांक idx;
 
-	buf.name = NULL;
+	buf.name = शून्य;
 	r.mode = TOMOYO_CONFIG_DISABLED;
-	idx = tomoyo_read_lock();
-	if (acc_mode &&
-	    tomoyo_init_request_info(&r, domain, TOMOYO_MAC_FILE_OPEN)
-	    != TOMOYO_CONFIG_DISABLED) {
-		if (!tomoyo_get_realpath(&buf, path)) {
+	idx = tomoyo_पढ़ो_lock();
+	अगर (acc_mode &&
+	    tomoyo_init_request_info(&r, करोमुख्य, TOMOYO_MAC_खाता_OPEN)
+	    != TOMOYO_CONFIG_DISABLED) अणु
+		अगर (!tomoyo_get_realpath(&buf, path)) अणु
 			error = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		r.obj = &obj;
-		if (acc_mode & MAY_READ)
+		अगर (acc_mode & MAY_READ)
 			error = tomoyo_path_permission(&r, TOMOYO_TYPE_READ,
 						       &buf);
-		if (!error && (acc_mode & MAY_WRITE))
+		अगर (!error && (acc_mode & MAY_WRITE))
 			error = tomoyo_path_permission(&r, (flag & O_APPEND) ?
 						       TOMOYO_TYPE_APPEND :
 						       TOMOYO_TYPE_WRITE,
 						       &buf);
-	}
+	पूर्ण
  out:
-	kfree(buf.name);
-	tomoyo_read_unlock(idx);
-	if (r.mode != TOMOYO_CONFIG_ENFORCING)
+	kमुक्त(buf.name);
+	tomoyo_पढ़ो_unlock(idx);
+	अगर (r.mode != TOMOYO_CONFIG_ENFORCING)
 		error = 0;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_path_perm - Check permission for "unlink", "rmdir", "truncate", "symlink", "append", "chroot" and "unmount".
+ * tomoyo_path_perm - Check permission क्रम "unlink", "rmdir", "truncate", "symlink", "append", "chroot" and "unmount".
  *
  * @operation: Type of operation.
- * @path:      Pointer to "struct path".
- * @target:    Symlink's target if @operation is TOMOYO_TYPE_SYMLINK,
- *             NULL otherwise.
+ * @path:      Poपूर्णांकer to "struct path".
+ * @target:    Symlink's target अगर @operation is TOMOYO_TYPE_SYMLINK,
+ *             शून्य otherwise.
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_path_perm(const u8 operation, const struct path *path, const char *target)
-{
-	struct tomoyo_request_info r;
-	struct tomoyo_obj_info obj = {
-		.path1 = { .mnt = path->mnt, .dentry = path->dentry },
-	};
-	int error;
-	struct tomoyo_path_info buf;
-	bool is_enforce;
-	struct tomoyo_path_info symlink_target;
-	int idx;
+पूर्णांक tomoyo_path_perm(स्थिर u8 operation, स्थिर काष्ठा path *path, स्थिर अक्षर *target)
+अणु
+	काष्ठा tomoyo_request_info r;
+	काष्ठा tomoyo_obj_info obj = अणु
+		.path1 = अणु .mnt = path->mnt, .dentry = path->dentry पूर्ण,
+	पूर्ण;
+	पूर्णांक error;
+	काष्ठा tomoyo_path_info buf;
+	bool is_enक्रमce;
+	काष्ठा tomoyo_path_info symlink_target;
+	पूर्णांक idx;
 
-	if (tomoyo_init_request_info(&r, NULL, tomoyo_p2mac[operation])
+	अगर (tomoyo_init_request_info(&r, शून्य, tomoyo_p2mac[operation])
 	    == TOMOYO_CONFIG_DISABLED)
-		return 0;
-	is_enforce = (r.mode == TOMOYO_CONFIG_ENFORCING);
+		वापस 0;
+	is_enक्रमce = (r.mode == TOMOYO_CONFIG_ENFORCING);
 	error = -ENOMEM;
-	buf.name = NULL;
-	idx = tomoyo_read_lock();
-	if (!tomoyo_get_realpath(&buf, path))
-		goto out;
+	buf.name = शून्य;
+	idx = tomoyo_पढ़ो_lock();
+	अगर (!tomoyo_get_realpath(&buf, path))
+		जाओ out;
 	r.obj = &obj;
-	switch (operation) {
-	case TOMOYO_TYPE_RMDIR:
-	case TOMOYO_TYPE_CHROOT:
+	चयन (operation) अणु
+	हाल TOMOYO_TYPE_RMसूची:
+	हाल TOMOYO_TYPE_CHROOT:
 		tomoyo_add_slash(&buf);
-		break;
-	case TOMOYO_TYPE_SYMLINK:
+		अवरोध;
+	हाल TOMOYO_TYPE_SYMLINK:
 		symlink_target.name = tomoyo_encode(target);
-		if (!symlink_target.name)
-			goto out;
+		अगर (!symlink_target.name)
+			जाओ out;
 		tomoyo_fill_path_info(&symlink_target);
 		obj.symlink_target = &symlink_target;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	error = tomoyo_path_permission(&r, operation, &buf);
-	if (operation == TOMOYO_TYPE_SYMLINK)
-		kfree(symlink_target.name);
+	अगर (operation == TOMOYO_TYPE_SYMLINK)
+		kमुक्त(symlink_target.name);
  out:
-	kfree(buf.name);
-	tomoyo_read_unlock(idx);
-	if (!is_enforce)
+	kमुक्त(buf.name);
+	tomoyo_पढ़ो_unlock(idx);
+	अगर (!is_enक्रमce)
 		error = 0;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_mkdev_perm - Check permission for "mkblock" and "mkchar".
+ * tomoyo_mkdev_perm - Check permission क्रम "mkblock" and "mkchar".
  *
  * @operation: Type of operation. (TOMOYO_TYPE_MKCHAR or TOMOYO_TYPE_MKBLOCK)
- * @path:      Pointer to "struct path".
+ * @path:      Poपूर्णांकer to "struct path".
  * @mode:      Create mode.
  * @dev:       Device number.
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_mkdev_perm(const u8 operation, const struct path *path,
-		      const unsigned int mode, unsigned int dev)
-{
-	struct tomoyo_request_info r;
-	struct tomoyo_obj_info obj = {
-		.path1 = { .mnt = path->mnt, .dentry = path->dentry },
-	};
-	int error = -ENOMEM;
-	struct tomoyo_path_info buf;
-	int idx;
+पूर्णांक tomoyo_mkdev_perm(स्थिर u8 operation, स्थिर काष्ठा path *path,
+		      स्थिर अचिन्हित पूर्णांक mode, अचिन्हित पूर्णांक dev)
+अणु
+	काष्ठा tomoyo_request_info r;
+	काष्ठा tomoyo_obj_info obj = अणु
+		.path1 = अणु .mnt = path->mnt, .dentry = path->dentry पूर्ण,
+	पूर्ण;
+	पूर्णांक error = -ENOMEM;
+	काष्ठा tomoyo_path_info buf;
+	पूर्णांक idx;
 
-	if (tomoyo_init_request_info(&r, NULL, tomoyo_pnnn2mac[operation])
+	अगर (tomoyo_init_request_info(&r, शून्य, tomoyo_pnnn2mac[operation])
 	    == TOMOYO_CONFIG_DISABLED)
-		return 0;
-	idx = tomoyo_read_lock();
+		वापस 0;
+	idx = tomoyo_पढ़ो_lock();
 	error = -ENOMEM;
-	if (tomoyo_get_realpath(&buf, path)) {
+	अगर (tomoyo_get_realpath(&buf, path)) अणु
 		r.obj = &obj;
 		dev = new_decode_dev(dev);
 		r.param_type = TOMOYO_TYPE_MKDEV_ACL;
@@ -883,163 +884,163 @@ int tomoyo_mkdev_perm(const u8 operation, const struct path *path,
 		r.param.mkdev.minor = MINOR(dev);
 		tomoyo_check_acl(&r, tomoyo_check_mkdev_acl);
 		error = tomoyo_audit_mkdev_log(&r);
-		kfree(buf.name);
-	}
-	tomoyo_read_unlock(idx);
-	if (r.mode != TOMOYO_CONFIG_ENFORCING)
+		kमुक्त(buf.name);
+	पूर्ण
+	tomoyo_पढ़ो_unlock(idx);
+	अगर (r.mode != TOMOYO_CONFIG_ENFORCING)
 		error = 0;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_path2_perm - Check permission for "rename", "link" and "pivot_root".
+ * tomoyo_path2_perm - Check permission क्रम "rename", "link" and "pivot_root".
  *
  * @operation: Type of operation.
- * @path1:      Pointer to "struct path".
- * @path2:      Pointer to "struct path".
+ * @path1:      Poपूर्णांकer to "struct path".
+ * @path2:      Poपूर्णांकer to "struct path".
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_path2_perm(const u8 operation, const struct path *path1,
-		      const struct path *path2)
-{
-	int error = -ENOMEM;
-	struct tomoyo_path_info buf1;
-	struct tomoyo_path_info buf2;
-	struct tomoyo_request_info r;
-	struct tomoyo_obj_info obj = {
-		.path1 = { .mnt = path1->mnt, .dentry = path1->dentry },
-		.path2 = { .mnt = path2->mnt, .dentry = path2->dentry }
-	};
-	int idx;
+पूर्णांक tomoyo_path2_perm(स्थिर u8 operation, स्थिर काष्ठा path *path1,
+		      स्थिर काष्ठा path *path2)
+अणु
+	पूर्णांक error = -ENOMEM;
+	काष्ठा tomoyo_path_info buf1;
+	काष्ठा tomoyo_path_info buf2;
+	काष्ठा tomoyo_request_info r;
+	काष्ठा tomoyo_obj_info obj = अणु
+		.path1 = अणु .mnt = path1->mnt, .dentry = path1->dentry पूर्ण,
+		.path2 = अणु .mnt = path2->mnt, .dentry = path2->dentry पूर्ण
+	पूर्ण;
+	पूर्णांक idx;
 
-	if (tomoyo_init_request_info(&r, NULL, tomoyo_pp2mac[operation])
+	अगर (tomoyo_init_request_info(&r, शून्य, tomoyo_pp2mac[operation])
 	    == TOMOYO_CONFIG_DISABLED)
-		return 0;
-	buf1.name = NULL;
-	buf2.name = NULL;
-	idx = tomoyo_read_lock();
-	if (!tomoyo_get_realpath(&buf1, path1) ||
+		वापस 0;
+	buf1.name = शून्य;
+	buf2.name = शून्य;
+	idx = tomoyo_पढ़ो_lock();
+	अगर (!tomoyo_get_realpath(&buf1, path1) ||
 	    !tomoyo_get_realpath(&buf2, path2))
-		goto out;
-	switch (operation) {
-	case TOMOYO_TYPE_RENAME:
-	case TOMOYO_TYPE_LINK:
-		if (!d_is_dir(path1->dentry))
-			break;
+		जाओ out;
+	चयन (operation) अणु
+	हाल TOMOYO_TYPE_RENAME:
+	हाल TOMOYO_TYPE_LINK:
+		अगर (!d_is_dir(path1->dentry))
+			अवरोध;
 		fallthrough;
-	case TOMOYO_TYPE_PIVOT_ROOT:
+	हाल TOMOYO_TYPE_PIVOT_ROOT:
 		tomoyo_add_slash(&buf1);
 		tomoyo_add_slash(&buf2);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	r.obj = &obj;
 	r.param_type = TOMOYO_TYPE_PATH2_ACL;
 	r.param.path2.operation = operation;
 	r.param.path2.filename1 = &buf1;
 	r.param.path2.filename2 = &buf2;
-	do {
+	करो अणु
 		tomoyo_check_acl(&r, tomoyo_check_path2_acl);
 		error = tomoyo_audit_path2_log(&r);
-	} while (error == TOMOYO_RETRY_REQUEST);
+	पूर्ण जबतक (error == TOMOYO_RETRY_REQUEST);
  out:
-	kfree(buf1.name);
-	kfree(buf2.name);
-	tomoyo_read_unlock(idx);
-	if (r.mode != TOMOYO_CONFIG_ENFORCING)
+	kमुक्त(buf1.name);
+	kमुक्त(buf2.name);
+	tomoyo_पढ़ो_unlock(idx);
+	अगर (r.mode != TOMOYO_CONFIG_ENFORCING)
 		error = 0;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_same_mount_acl - Check for duplicated "struct tomoyo_mount_acl" entry.
+ * tomoyo_same_mount_acl - Check क्रम duplicated "struct tomoyo_mount_acl" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns true अगर @a == @b, false otherwise.
  */
-static bool tomoyo_same_mount_acl(const struct tomoyo_acl_info *a,
-				  const struct tomoyo_acl_info *b)
-{
-	const struct tomoyo_mount_acl *p1 = container_of(a, typeof(*p1), head);
-	const struct tomoyo_mount_acl *p2 = container_of(b, typeof(*p2), head);
+अटल bool tomoyo_same_mount_acl(स्थिर काष्ठा tomoyo_acl_info *a,
+				  स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	स्थिर काष्ठा tomoyo_mount_acl *p1 = container_of(a, typeof(*p1), head);
+	स्थिर काष्ठा tomoyo_mount_acl *p2 = container_of(b, typeof(*p2), head);
 
-	return tomoyo_same_name_union(&p1->dev_name, &p2->dev_name) &&
-		tomoyo_same_name_union(&p1->dir_name, &p2->dir_name) &&
-		tomoyo_same_name_union(&p1->fs_type, &p2->fs_type) &&
-		tomoyo_same_number_union(&p1->flags, &p2->flags);
-}
+	वापस tomoyo_same_name_जोड़(&p1->dev_name, &p2->dev_name) &&
+		tomoyo_same_name_जोड़(&p1->dir_name, &p2->dir_name) &&
+		tomoyo_same_name_जोड़(&p1->fs_type, &p2->fs_type) &&
+		tomoyo_same_number_जोड़(&p1->flags, &p2->flags);
+पूर्ण
 
 /**
  * tomoyo_update_mount_acl - Write "struct tomoyo_mount_acl" list.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static int tomoyo_update_mount_acl(struct tomoyo_acl_param *param)
-{
-	struct tomoyo_mount_acl e = { .head.type = TOMOYO_TYPE_MOUNT_ACL };
-	int error;
+अटल पूर्णांक tomoyo_update_mount_acl(काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_mount_acl e = अणु .head.type = TOMOYO_TYPE_MOUNT_ACL पूर्ण;
+	पूर्णांक error;
 
-	if (!tomoyo_parse_name_union(param, &e.dev_name) ||
-	    !tomoyo_parse_name_union(param, &e.dir_name) ||
-	    !tomoyo_parse_name_union(param, &e.fs_type) ||
-	    !tomoyo_parse_number_union(param, &e.flags))
+	अगर (!tomoyo_parse_name_जोड़(param, &e.dev_name) ||
+	    !tomoyo_parse_name_जोड़(param, &e.dir_name) ||
+	    !tomoyo_parse_name_जोड़(param, &e.fs_type) ||
+	    !tomoyo_parse_number_जोड़(param, &e.flags))
 		error = -EINVAL;
-	else
-		error = tomoyo_update_domain(&e.head, sizeof(e), param,
-					     tomoyo_same_mount_acl, NULL);
-	tomoyo_put_name_union(&e.dev_name);
-	tomoyo_put_name_union(&e.dir_name);
-	tomoyo_put_name_union(&e.fs_type);
-	tomoyo_put_number_union(&e.flags);
-	return error;
-}
+	अन्यथा
+		error = tomoyo_update_करोमुख्य(&e.head, माप(e), param,
+					     tomoyo_same_mount_acl, शून्य);
+	tomoyo_put_name_जोड़(&e.dev_name);
+	tomoyo_put_name_जोड़(&e.dir_name);
+	tomoyo_put_name_जोड़(&e.fs_type);
+	tomoyo_put_number_जोड़(&e.flags);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_write_file - Update file related list.
+ * tomoyo_ग_लिखो_file - Update file related list.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_write_file(struct tomoyo_acl_param *param)
-{
+पूर्णांक tomoyo_ग_लिखो_file(काष्ठा tomoyo_acl_param *param)
+अणु
 	u16 perm = 0;
 	u8 type;
-	const char *operation = tomoyo_read_token(param);
+	स्थिर अक्षर *operation = tomoyo_पढ़ो_token(param);
 
-	for (type = 0; type < TOMOYO_MAX_PATH_OPERATION; type++)
-		if (tomoyo_permstr(operation, tomoyo_path_keyword[type]))
+	क्रम (type = 0; type < TOMOYO_MAX_PATH_OPERATION; type++)
+		अगर (tomoyo_permstr(operation, tomoyo_path_keyword[type]))
 			perm |= 1 << type;
-	if (perm)
-		return tomoyo_update_path_acl(perm, param);
-	for (type = 0; type < TOMOYO_MAX_PATH2_OPERATION; type++)
-		if (tomoyo_permstr(operation,
+	अगर (perm)
+		वापस tomoyo_update_path_acl(perm, param);
+	क्रम (type = 0; type < TOMOYO_MAX_PATH2_OPERATION; type++)
+		अगर (tomoyo_permstr(operation,
 				   tomoyo_mac_keywords[tomoyo_pp2mac[type]]))
 			perm |= 1 << type;
-	if (perm)
-		return tomoyo_update_path2_acl(perm, param);
-	for (type = 0; type < TOMOYO_MAX_PATH_NUMBER_OPERATION; type++)
-		if (tomoyo_permstr(operation,
+	अगर (perm)
+		वापस tomoyo_update_path2_acl(perm, param);
+	क्रम (type = 0; type < TOMOYO_MAX_PATH_NUMBER_OPERATION; type++)
+		अगर (tomoyo_permstr(operation,
 				   tomoyo_mac_keywords[tomoyo_pn2mac[type]]))
 			perm |= 1 << type;
-	if (perm)
-		return tomoyo_update_path_number_acl(perm, param);
-	for (type = 0; type < TOMOYO_MAX_MKDEV_OPERATION; type++)
-		if (tomoyo_permstr(operation,
+	अगर (perm)
+		वापस tomoyo_update_path_number_acl(perm, param);
+	क्रम (type = 0; type < TOMOYO_MAX_MKDEV_OPERATION; type++)
+		अगर (tomoyo_permstr(operation,
 				   tomoyo_mac_keywords[tomoyo_pnnn2mac[type]]))
 			perm |= 1 << type;
-	if (perm)
-		return tomoyo_update_mkdev_acl(perm, param);
-	if (tomoyo_permstr(operation,
-			   tomoyo_mac_keywords[TOMOYO_MAC_FILE_MOUNT]))
-		return tomoyo_update_mount_acl(param);
-	return -EINVAL;
-}
+	अगर (perm)
+		वापस tomoyo_update_mkdev_acl(perm, param);
+	अगर (tomoyo_permstr(operation,
+			   tomoyo_mac_keywords[TOMOYO_MAC_खाता_MOUNT]))
+		वापस tomoyo_update_mount_acl(param);
+	वापस -EINVAL;
+पूर्ण

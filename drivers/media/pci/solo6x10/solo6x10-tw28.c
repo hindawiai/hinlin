@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2010-2013 Bluecherry, LLC <https://www.bluecherrydvr.com>
  *
@@ -9,24 +10,24 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
 
-#include "solo6x10.h"
-#include "solo6x10-tw28.h"
+#समावेश "solo6x10.h"
+#समावेश "solo6x10-tw28.h"
 
-#define DEFAULT_HDELAY_NTSC		(32 - 8)
-#define DEFAULT_HACTIVE_NTSC		(720 + 16)
-#define DEFAULT_VDELAY_NTSC		(7 - 2)
-#define DEFAULT_VACTIVE_NTSC		(240 + 4)
+#घोषणा DEFAULT_HDELAY_NTSC		(32 - 8)
+#घोषणा DEFAULT_HACTIVE_NTSC		(720 + 16)
+#घोषणा DEFAULT_VDELAY_NTSC		(7 - 2)
+#घोषणा DEFAULT_VACTIVE_NTSC		(240 + 4)
 
-#define DEFAULT_HDELAY_PAL		(32 + 4)
-#define DEFAULT_HACTIVE_PAL		(864-DEFAULT_HDELAY_PAL)
-#define DEFAULT_VDELAY_PAL		(6)
-#define DEFAULT_VACTIVE_PAL		(312-DEFAULT_VDELAY_PAL)
+#घोषणा DEFAULT_HDELAY_PAL		(32 + 4)
+#घोषणा DEFAULT_HACTIVE_PAL		(864-DEFAULT_HDELAY_PAL)
+#घोषणा DEFAULT_VDELAY_PAL		(6)
+#घोषणा DEFAULT_VACTIVE_PAL		(312-DEFAULT_VDELAY_PAL)
 
 
-static const u8 tbl_tw2864_ntsc_template[] = {
+अटल स्थिर u8 tbl_tw2864_ntsc_ढाँचा[] = अणु
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x02, /* 0x00 */
 	0x12, 0xf5, 0x0c, 0xd0, 0x00, 0x00, 0x00, 0x7f,
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x02, /* 0x10 */
@@ -59,9 +60,9 @@ static const u8 tbl_tw2864_ntsc_template[] = {
 	0x11, 0x00, 0x00, 0x11, 0x00, 0x00, 0x11, 0x00,
 	0x83, 0xb5, 0x09, 0x78, 0x85, 0x00, 0x01, 0x20, /* 0xf0 */
 	0x64, 0x11, 0x40, 0xaf, 0xff, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u8 tbl_tw2864_pal_template[] = {
+अटल स्थिर u8 tbl_tw2864_pal_ढाँचा[] = अणु
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x12, /* 0x00 */
 	0x18, 0xf5, 0x0c, 0xd0, 0x00, 0x00, 0x01, 0x7f,
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x12, /* 0x10 */
@@ -94,9 +95,9 @@ static const u8 tbl_tw2864_pal_template[] = {
 	0x11, 0x00, 0x00, 0x11, 0x00, 0x00, 0x11, 0x00,
 	0x83, 0xb5, 0x09, 0x00, 0xa0, 0x00, 0x01, 0x20, /* 0xf0 */
 	0x64, 0x11, 0x40, 0xaf, 0xff, 0x00, 0x00, 0x00,
-};
+पूर्ण;
 
-static const u8 tbl_tw2865_ntsc_template[] = {
+अटल स्थिर u8 tbl_tw2865_ntsc_ढाँचा[] = अणु
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x02, /* 0x00 */
 	0x12, 0xff, 0x09, 0xd0, 0x00, 0x00, 0x00, 0x7f,
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x02, /* 0x10 */
@@ -129,9 +130,9 @@ static const u8 tbl_tw2865_ntsc_template[] = {
 	0x11, 0x00, 0x00, 0x11, 0x00, 0x00, 0x11, 0x00,
 	0x83, 0xB5, 0x09, 0x78, 0x85, 0x00, 0x01, 0x20, /* 0xf0 */
 	0x64, 0x51, 0x40, 0xaf, 0xFF, 0xF0, 0x00, 0xC0,
-};
+पूर्ण;
 
-static const u8 tbl_tw2865_pal_template[] = {
+अटल स्थिर u8 tbl_tw2865_pal_ढाँचा[] = अणु
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x12, /* 0x00 */
 	0x11, 0xff, 0x01, 0xc3, 0x00, 0x00, 0x01, 0x7f,
 	0x00, 0xf0, 0x70, 0x30, 0x80, 0x80, 0x00, 0x12, /* 0x10 */
@@ -164,195 +165,195 @@ static const u8 tbl_tw2865_pal_template[] = {
 	0x11, 0x00, 0x00, 0x11, 0x00, 0x00, 0x11, 0x00,
 	0x83, 0xB5, 0x09, 0x00, 0xA0, 0x00, 0x01, 0x20, /* 0xf0 */
 	0x64, 0x51, 0x40, 0xaf, 0xFF, 0xF0, 0x00, 0xC0,
-};
+पूर्ण;
 
-#define is_tw286x(__solo, __id) (!(__solo->tw2815 & (1 << __id)))
+#घोषणा is_tw286x(__solo, __id) (!(__solo->tw2815 & (1 << __id)))
 
-static u8 tw_readbyte(struct solo_dev *solo_dev, int chip_id, u8 tw6x_off,
+अटल u8 tw_पढ़ोbyte(काष्ठा solo_dev *solo_dev, पूर्णांक chip_id, u8 tw6x_off,
 		      u8 tw_off)
-{
-	if (is_tw286x(solo_dev, chip_id))
-		return solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+अणु
+	अगर (is_tw286x(solo_dev, chip_id))
+		वापस solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 					 TW_CHIP_OFFSET_ADDR(chip_id),
 					 tw6x_off);
-	else
-		return solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+	अन्यथा
+		वापस solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 					 TW_CHIP_OFFSET_ADDR(chip_id),
 					 tw_off);
-}
+पूर्ण
 
-static void tw_writebyte(struct solo_dev *solo_dev, int chip_id,
+अटल व्योम tw_ग_लिखोbyte(काष्ठा solo_dev *solo_dev, पूर्णांक chip_id,
 			 u8 tw6x_off, u8 tw_off, u8 val)
-{
-	if (is_tw286x(solo_dev, chip_id))
-		solo_i2c_writebyte(solo_dev, SOLO_I2C_TW,
+अणु
+	अगर (is_tw286x(solo_dev, chip_id))
+		solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW,
 				   TW_CHIP_OFFSET_ADDR(chip_id),
 				   tw6x_off, val);
-	else
-		solo_i2c_writebyte(solo_dev, SOLO_I2C_TW,
+	अन्यथा
+		solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW,
 				   TW_CHIP_OFFSET_ADDR(chip_id),
 				   tw_off, val);
-}
+पूर्ण
 
-static void tw_write_and_verify(struct solo_dev *solo_dev, u8 addr, u8 off,
+अटल व्योम tw_ग_लिखो_and_verअगरy(काष्ठा solo_dev *solo_dev, u8 addr, u8 off,
 				u8 val)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 5; i++) {
-		u8 rval = solo_i2c_readbyte(solo_dev, SOLO_I2C_TW, addr, off);
+	क्रम (i = 0; i < 5; i++) अणु
+		u8 rval = solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW, addr, off);
 
-		if (rval == val)
-			return;
+		अगर (rval == val)
+			वापस;
 
-		solo_i2c_writebyte(solo_dev, SOLO_I2C_TW, addr, off, val);
-		msleep_interruptible(1);
-	}
+		solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW, addr, off, val);
+		msleep_पूर्णांकerruptible(1);
+	पूर्ण
 
-/*	printk("solo6x10/tw28: Error writing register: %02x->%02x [%02x]\n", */
+/*	prपूर्णांकk("solo6x10/tw28: Error writing register: %02x->%02x [%02x]\n", */
 /*		addr, off, val); */
-}
+पूर्ण
 
-static int tw2865_setup(struct solo_dev *solo_dev, u8 dev_addr)
-{
+अटल पूर्णांक tw2865_setup(काष्ठा solo_dev *solo_dev, u8 dev_addr)
+अणु
 	u8 tbl_tw2865_common[256];
-	int i;
+	पूर्णांक i;
 
-	if (solo_dev->video_type == SOLO_VO_FMT_TYPE_PAL)
-		memcpy(tbl_tw2865_common, tbl_tw2865_pal_template,
-		       sizeof(tbl_tw2865_common));
-	else
-		memcpy(tbl_tw2865_common, tbl_tw2865_ntsc_template,
-		       sizeof(tbl_tw2865_common));
+	अगर (solo_dev->video_type == SOLO_VO_FMT_TYPE_PAL)
+		स_नकल(tbl_tw2865_common, tbl_tw2865_pal_ढाँचा,
+		       माप(tbl_tw2865_common));
+	अन्यथा
+		स_नकल(tbl_tw2865_common, tbl_tw2865_ntsc_ढाँचा,
+		       माप(tbl_tw2865_common));
 
 	/* ALINK Mode */
-	if (solo_dev->nr_chans == 4) {
+	अगर (solo_dev->nr_chans == 4) अणु
 		tbl_tw2865_common[0xd2] = 0x01;
 		tbl_tw2865_common[0xcf] = 0x00;
-	} else if (solo_dev->nr_chans == 8) {
+	पूर्ण अन्यथा अगर (solo_dev->nr_chans == 8) अणु
 		tbl_tw2865_common[0xd2] = 0x02;
-		if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+		अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 			tbl_tw2865_common[0xcf] = 0x80;
-	} else if (solo_dev->nr_chans == 16) {
+	पूर्ण अन्यथा अगर (solo_dev->nr_chans == 16) अणु
 		tbl_tw2865_common[0xd2] = 0x03;
-		if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+		अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 			tbl_tw2865_common[0xcf] = 0x83;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(2))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(2))
 			tbl_tw2865_common[0xcf] = 0x83;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(3))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(3))
 			tbl_tw2865_common[0xcf] = 0x80;
-	}
+	पूर्ण
 
-	for (i = 0; i < 0xff; i++) {
-		/* Skip read only registers */
-		switch (i) {
-		case 0xb8 ... 0xc1:
-		case 0xc4 ... 0xc7:
-		case 0xfd:
-			continue;
-		}
-		switch (i & ~0x30) {
-		case 0x00:
-		case 0x0c ... 0x0d:
-			continue;
-		}
+	क्रम (i = 0; i < 0xff; i++) अणु
+		/* Skip पढ़ो only रेजिस्टरs */
+		चयन (i) अणु
+		हाल 0xb8 ... 0xc1:
+		हाल 0xc4 ... 0xc7:
+		हाल 0xfd:
+			जारी;
+		पूर्ण
+		चयन (i & ~0x30) अणु
+		हाल 0x00:
+		हाल 0x0c ... 0x0d:
+			जारी;
+		पूर्ण
 
-		tw_write_and_verify(solo_dev, dev_addr, i,
+		tw_ग_लिखो_and_verअगरy(solo_dev, dev_addr, i,
 				    tbl_tw2865_common[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw2864_setup(struct solo_dev *solo_dev, u8 dev_addr)
-{
+अटल पूर्णांक tw2864_setup(काष्ठा solo_dev *solo_dev, u8 dev_addr)
+अणु
 	u8 tbl_tw2864_common[256];
-	int i;
+	पूर्णांक i;
 
-	if (solo_dev->video_type == SOLO_VO_FMT_TYPE_PAL)
-		memcpy(tbl_tw2864_common, tbl_tw2864_pal_template,
-		       sizeof(tbl_tw2864_common));
-	else
-		memcpy(tbl_tw2864_common, tbl_tw2864_ntsc_template,
-		       sizeof(tbl_tw2864_common));
+	अगर (solo_dev->video_type == SOLO_VO_FMT_TYPE_PAL)
+		स_नकल(tbl_tw2864_common, tbl_tw2864_pal_ढाँचा,
+		       माप(tbl_tw2864_common));
+	अन्यथा
+		स_नकल(tbl_tw2864_common, tbl_tw2864_ntsc_ढाँचा,
+		       माप(tbl_tw2864_common));
 
-	if (solo_dev->tw2865 == 0) {
+	अगर (solo_dev->tw2865 == 0) अणु
 		/* IRQ Mode */
-		if (solo_dev->nr_chans == 4) {
+		अगर (solo_dev->nr_chans == 4) अणु
 			tbl_tw2864_common[0xd2] = 0x01;
 			tbl_tw2864_common[0xcf] = 0x00;
-		} else if (solo_dev->nr_chans == 8) {
+		पूर्ण अन्यथा अगर (solo_dev->nr_chans == 8) अणु
 			tbl_tw2864_common[0xd2] = 0x02;
-			if (dev_addr == TW_CHIP_OFFSET_ADDR(0))
+			अगर (dev_addr == TW_CHIP_OFFSET_ADDR(0))
 				tbl_tw2864_common[0xcf] = 0x43;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 				tbl_tw2864_common[0xcf] = 0x40;
-		} else if (solo_dev->nr_chans == 16) {
+		पूर्ण अन्यथा अगर (solo_dev->nr_chans == 16) अणु
 			tbl_tw2864_common[0xd2] = 0x03;
-			if (dev_addr == TW_CHIP_OFFSET_ADDR(0))
+			अगर (dev_addr == TW_CHIP_OFFSET_ADDR(0))
 				tbl_tw2864_common[0xcf] = 0x43;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 				tbl_tw2864_common[0xcf] = 0x43;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(2))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(2))
 				tbl_tw2864_common[0xcf] = 0x43;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(3))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(3))
 				tbl_tw2864_common[0xcf] = 0x40;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* ALINK Mode. Assumes that the first tw28xx is a
 		 * 2865 and these are in cascade. */
-		for (i = 0; i <= 4; i++)
+		क्रम (i = 0; i <= 4; i++)
 			tbl_tw2864_common[0x08 | i << 4] = 0x12;
 
-		if (solo_dev->nr_chans == 8) {
+		अगर (solo_dev->nr_chans == 8) अणु
 			tbl_tw2864_common[0xd2] = 0x02;
-			if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+			अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 				tbl_tw2864_common[0xcf] = 0x80;
-		} else if (solo_dev->nr_chans == 16) {
+		पूर्ण अन्यथा अगर (solo_dev->nr_chans == 16) अणु
 			tbl_tw2864_common[0xd2] = 0x03;
-			if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+			अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 				tbl_tw2864_common[0xcf] = 0x83;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(2))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(2))
 				tbl_tw2864_common[0xcf] = 0x83;
-			else if (dev_addr == TW_CHIP_OFFSET_ADDR(3))
+			अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(3))
 				tbl_tw2864_common[0xcf] = 0x80;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 0xff; i++) {
-		/* Skip read only registers */
-		switch (i) {
-		case 0xb8 ... 0xc1:
-		case 0xfd:
-			continue;
-		}
-		switch (i & ~0x30) {
-		case 0x00:
-		case 0x0c:
-		case 0x0d:
-			continue;
-		}
+	क्रम (i = 0; i < 0xff; i++) अणु
+		/* Skip पढ़ो only रेजिस्टरs */
+		चयन (i) अणु
+		हाल 0xb8 ... 0xc1:
+		हाल 0xfd:
+			जारी;
+		पूर्ण
+		चयन (i & ~0x30) अणु
+		हाल 0x00:
+		हाल 0x0c:
+		हाल 0x0d:
+			जारी;
+		पूर्ण
 
-		tw_write_and_verify(solo_dev, dev_addr, i,
+		tw_ग_लिखो_and_verअगरy(solo_dev, dev_addr, i,
 				    tbl_tw2864_common[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw2815_setup(struct solo_dev *solo_dev, u8 dev_addr)
-{
-	u8 tbl_ntsc_tw2815_common[] = {
+अटल पूर्णांक tw2815_setup(काष्ठा solo_dev *solo_dev, u8 dev_addr)
+अणु
+	u8 tbl_ntsc_tw2815_common[] = अणु
 		0x00, 0xc8, 0x20, 0xd0, 0x06, 0xf0, 0x08, 0x80,
 		0x80, 0x80, 0x80, 0x02, 0x06, 0x00, 0x11,
-	};
+	पूर्ण;
 
-	u8 tbl_pal_tw2815_common[] = {
+	u8 tbl_pal_tw2815_common[] = अणु
 		0x00, 0x88, 0x20, 0xd0, 0x05, 0x20, 0x28, 0x80,
 		0x80, 0x80, 0x80, 0x82, 0x06, 0x00, 0x11,
-	};
+	पूर्ण;
 
-	u8 tbl_tw2815_sfr[] = {
+	u8 tbl_tw2815_sfr[] = अणु
 		0x00, 0x00, 0x00, 0xc0, 0x45, 0xa0, 0xd0, 0x2f, /* 0x00 */
 		0x64, 0x80, 0x80, 0x82, 0x82, 0x00, 0x00, 0x00,
 		0x00, 0x0f, 0x05, 0x00, 0x00, 0x80, 0x06, 0x00, /* 0x10 */
@@ -360,10 +361,10 @@ static int tw2815_setup(struct solo_dev *solo_dev, u8 dev_addr)
 		0x88, 0x88, 0xc0, 0x00, 0x20, 0x64, 0xa8, 0xec, /* 0x20 */
 		0x31, 0x75, 0xb9, 0xfd, 0x00, 0x00, 0x88, 0x88,
 		0x88, 0x11, 0x00, 0x88, 0x88, 0x00,		/* 0x30 */
-	};
+	पूर्ण;
 	u8 *tbl_tw2815_common;
-	int i;
-	int ch;
+	पूर्णांक i;
+	पूर्णांक ch;
 
 	tbl_ntsc_tw2815_common[0x06] = 0;
 
@@ -411,37 +412,37 @@ static int tw2815_setup(struct solo_dev *solo_dev, u8 dev_addr)
 	    (solo_dev->video_type == SOLO_VO_FMT_TYPE_NTSC) ?
 	     tbl_ntsc_tw2815_common : tbl_pal_tw2815_common;
 
-	/* Dual ITU-R BT.656 format */
+	/* Dual ITU-R BT.656 क्रमmat */
 	tbl_tw2815_common[0x0d] |= 0x04;
 
 	/* Audio configuration */
 	tbl_tw2815_sfr[0x62 - 0x40] &= ~(3 << 6);
 
-	if (solo_dev->nr_chans == 4) {
+	अगर (solo_dev->nr_chans == 4) अणु
 		tbl_tw2815_sfr[0x63 - 0x40] |= 1;
 		tbl_tw2815_sfr[0x62 - 0x40] |= 3 << 6;
-	} else if (solo_dev->nr_chans == 8) {
+	पूर्ण अन्यथा अगर (solo_dev->nr_chans == 8) अणु
 		tbl_tw2815_sfr[0x63 - 0x40] |= 2;
-		if (dev_addr == TW_CHIP_OFFSET_ADDR(0))
+		अगर (dev_addr == TW_CHIP_OFFSET_ADDR(0))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 1 << 6;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 2 << 6;
-	} else if (solo_dev->nr_chans == 16) {
+	पूर्ण अन्यथा अगर (solo_dev->nr_chans == 16) अणु
 		tbl_tw2815_sfr[0x63 - 0x40] |= 3;
-		if (dev_addr == TW_CHIP_OFFSET_ADDR(0))
+		अगर (dev_addr == TW_CHIP_OFFSET_ADDR(0))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 1 << 6;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(1))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(1))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 0 << 6;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(2))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(2))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 0 << 6;
-		else if (dev_addr == TW_CHIP_OFFSET_ADDR(3))
+		अन्यथा अगर (dev_addr == TW_CHIP_OFFSET_ADDR(3))
 			tbl_tw2815_sfr[0x62 - 0x40] |= 2 << 6;
-	}
+	पूर्ण
 
 	/* Output mode of R_ADATM pin (0 mixing, 1 record) */
 	/* tbl_tw2815_sfr[0x63 - 0x40] |= 0 << 2; */
 
-	/* 8KHz, used to be 16KHz, but changed for remote client compat */
+	/* 8KHz, used to be 16KHz, but changed क्रम remote client compat */
 	tbl_tw2815_sfr[0x62 - 0x40] |= 0 << 2;
 	tbl_tw2815_sfr[0x6c - 0x40] |= 0 << 2;
 
@@ -459,76 +460,76 @@ static int tw2815_setup(struct solo_dev *solo_dev, u8 dev_addr)
 
 	/* End of audio configuration */
 
-	for (ch = 0; ch < 4; ch++) {
+	क्रम (ch = 0; ch < 4; ch++) अणु
 		tbl_tw2815_common[0x0d] &= ~3;
-		switch (ch) {
-		case 0:
+		चयन (ch) अणु
+		हाल 0:
 			tbl_tw2815_common[0x0d] |= 0x21;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			tbl_tw2815_common[0x0d] |= 0x20;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			tbl_tw2815_common[0x0d] |= 0x23;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			tbl_tw2815_common[0x0d] |= 0x22;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; i < 0x0f; i++) {
-			if (i == 0x00)
-				continue;	/* read-only */
-			solo_i2c_writebyte(solo_dev, SOLO_I2C_TW,
+		क्रम (i = 0; i < 0x0f; i++) अणु
+			अगर (i == 0x00)
+				जारी;	/* पढ़ो-only */
+			solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW,
 					   dev_addr, (ch * 0x10) + i,
 					   tbl_tw2815_common[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0x40; i < 0x76; i++) {
-		/* Skip read-only and nop registers */
-		if (i == 0x40 || i == 0x59 || i == 0x5a ||
+	क्रम (i = 0x40; i < 0x76; i++) अणु
+		/* Skip पढ़ो-only and nop रेजिस्टरs */
+		अगर (i == 0x40 || i == 0x59 || i == 0x5a ||
 		    i == 0x5d || i == 0x5e || i == 0x5f)
-			continue;
+			जारी;
 
-		solo_i2c_writebyte(solo_dev, SOLO_I2C_TW, dev_addr, i,
+		solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW, dev_addr, i,
 				       tbl_tw2815_sfr[i - 0x40]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define FIRST_ACTIVE_LINE	0x0008
-#define LAST_ACTIVE_LINE	0x0102
+#घोषणा FIRST_ACTIVE_LINE	0x0008
+#घोषणा LAST_ACTIVE_LINE	0x0102
 
-static void saa712x_write_regs(struct solo_dev *dev, const u8 *vals,
-		int start, int n)
-{
-	for (; start < n; start++, vals++) {
-		/* Skip read-only registers */
-		switch (start) {
-		/* case 0x00 ... 0x25: */
-		case 0x2e ... 0x37:
-		case 0x60:
-		case 0x7d:
-			continue;
-		}
-		solo_i2c_writebyte(dev, SOLO_I2C_SAA, 0x46, start, *vals);
-	}
-}
+अटल व्योम saa712x_ग_लिखो_regs(काष्ठा solo_dev *dev, स्थिर u8 *vals,
+		पूर्णांक start, पूर्णांक n)
+अणु
+	क्रम (; start < n; start++, vals++) अणु
+		/* Skip पढ़ो-only रेजिस्टरs */
+		चयन (start) अणु
+		/* हाल 0x00 ... 0x25: */
+		हाल 0x2e ... 0x37:
+		हाल 0x60:
+		हाल 0x7d:
+			जारी;
+		पूर्ण
+		solo_i2c_ग_लिखोbyte(dev, SOLO_I2C_SAA, 0x46, start, *vals);
+	पूर्ण
+पूर्ण
 
-#define SAA712x_reg7c (0x80 | ((LAST_ACTIVE_LINE & 0x100) >> 2) \
+#घोषणा SAA712x_reg7c (0x80 | ((LAST_ACTIVE_LINE & 0x100) >> 2) \
 		| ((FIRST_ACTIVE_LINE & 0x100) >> 4))
 
-static void saa712x_setup(struct solo_dev *dev)
-{
-	const int reg_start = 0x26;
-	static const u8 saa7128_regs_ntsc[] = {
+अटल व्योम saa712x_setup(काष्ठा solo_dev *dev)
+अणु
+	स्थिर पूर्णांक reg_start = 0x26;
+	अटल स्थिर u8 saa7128_regs_ntsc[] = अणु
 	/* :0x26 */
 		0x0d, 0x00,
 	/* :0x28 */
 		0x59, 0x1d, 0x75, 0x3f, 0x06, 0x3f,
-	/* :0x2e XXX: read-only */
+	/* :0x2e XXX: पढ़ो-only */
 		0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* :0x38 */
@@ -546,12 +547,12 @@ static void saa712x_setup(struct solo_dev *dev)
 		0x41, 0xc3, 0x00, 0x3e, 0xb8, 0x02, 0x00, 0x00,
 		0x00, 0x00, FIRST_ACTIVE_LINE, LAST_ACTIVE_LINE & 0xff,
 		SAA712x_reg7c, 0x00, 0xff, 0xff,
-	}, saa7128_regs_pal[] = {
+	पूर्ण, saa7128_regs_pal[] = अणु
 	/* :0x26 */
 		0x0d, 0x00,
 	/* :0x28 */
 		0xe1, 0x1d, 0x75, 0x3f, 0x06, 0x3f,
-	/* :0x2e XXX: read-only */
+	/* :0x2e XXX: पढ़ो-only */
 		0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	/* :0x38 */
@@ -569,265 +570,265 @@ static void saa712x_setup(struct solo_dev *dev)
 		0x41, 0xc3, 0x00, 0x3e, 0xb8, 0x02, 0x00, 0x00,
 		0x00, 0x00, 0x12, 0x30,
 		SAA712x_reg7c | 0x40, 0x00, 0xff, 0xff,
-	};
+	पूर्ण;
 
-	if (dev->video_type == SOLO_VO_FMT_TYPE_PAL)
-		saa712x_write_regs(dev, saa7128_regs_pal, reg_start,
-				sizeof(saa7128_regs_pal));
-	else
-		saa712x_write_regs(dev, saa7128_regs_ntsc, reg_start,
-				sizeof(saa7128_regs_ntsc));
-}
+	अगर (dev->video_type == SOLO_VO_FMT_TYPE_PAL)
+		saa712x_ग_लिखो_regs(dev, saa7128_regs_pal, reg_start,
+				माप(saa7128_regs_pal));
+	अन्यथा
+		saa712x_ग_लिखो_regs(dev, saa7128_regs_ntsc, reg_start,
+				माप(saa7128_regs_ntsc));
+पूर्ण
 
-int solo_tw28_init(struct solo_dev *solo_dev)
-{
-	int i;
+पूर्णांक solo_tw28_init(काष्ठा solo_dev *solo_dev)
+अणु
+	पूर्णांक i;
 	u8 value;
 
 	solo_dev->tw28_cnt = 0;
 
 	/* Detect techwell chip type(s) */
-	for (i = 0; i < solo_dev->nr_chans / 4; i++) {
-		value = solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+	क्रम (i = 0; i < solo_dev->nr_chans / 4; i++) अणु
+		value = solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 					  TW_CHIP_OFFSET_ADDR(i), 0xFF);
 
-		switch (value >> 3) {
-		case 0x18:
+		चयन (value >> 3) अणु
+		हाल 0x18:
 			solo_dev->tw2865 |= 1 << i;
 			solo_dev->tw28_cnt++;
-			break;
-		case 0x0c:
-		case 0x0d:
+			अवरोध;
+		हाल 0x0c:
+		हाल 0x0d:
 			solo_dev->tw2864 |= 1 << i;
 			solo_dev->tw28_cnt++;
-			break;
-		default:
-			value = solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+			अवरोध;
+		शेष:
+			value = solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 						  TW_CHIP_OFFSET_ADDR(i),
 						  0x59);
-			if ((value >> 3) == 0x04) {
+			अगर ((value >> 3) == 0x04) अणु
 				solo_dev->tw2815 |= 1 << i;
 				solo_dev->tw28_cnt++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (solo_dev->tw28_cnt != (solo_dev->nr_chans >> 2)) {
+	अगर (solo_dev->tw28_cnt != (solo_dev->nr_chans >> 2)) अणु
 		dev_err(&solo_dev->pdev->dev,
 			"Could not initialize any techwell chips\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	saa712x_setup(solo_dev);
 
-	for (i = 0; i < solo_dev->tw28_cnt; i++) {
-		if ((solo_dev->tw2865 & (1 << i)))
+	क्रम (i = 0; i < solo_dev->tw28_cnt; i++) अणु
+		अगर ((solo_dev->tw2865 & (1 << i)))
 			tw2865_setup(solo_dev, TW_CHIP_OFFSET_ADDR(i));
-		else if ((solo_dev->tw2864 & (1 << i)))
+		अन्यथा अगर ((solo_dev->tw2864 & (1 << i)))
 			tw2864_setup(solo_dev, TW_CHIP_OFFSET_ADDR(i));
-		else
+		अन्यथा
 			tw2815_setup(solo_dev, TW_CHIP_OFFSET_ADDR(i));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * We accessed the video status signal in the Techwell chip through
- * iic/i2c because the video status reported by register REG_VI_STATUS1
- * (address 0x012C) of the SOLO6010 chip doesn't give the correct video
- * status signal values.
+ * We accessed the video status संकेत in the Techwell chip through
+ * iic/i2c because the video status reported by रेजिस्टर REG_VI_STATUS1
+ * (address 0x012C) of the SOLO6010 chip करोesn't give the correct video
+ * status संकेत values.
  */
-int tw28_get_video_status(struct solo_dev *solo_dev, u8 ch)
-{
+पूर्णांक tw28_get_video_status(काष्ठा solo_dev *solo_dev, u8 ch)
+अणु
 	u8 val, chip_num;
 
 	/* Get the right chip and on-chip channel */
 	chip_num = ch / 4;
 	ch %= 4;
 
-	val = tw_readbyte(solo_dev, chip_num, TW286x_AV_STAT_ADDR,
+	val = tw_पढ़ोbyte(solo_dev, chip_num, TW286x_AV_STAT_ADDR,
 			  TW_AV_STAT_ADDR) & 0x0f;
 
-	return val & (1 << ch) ? 1 : 0;
-}
+	वापस val & (1 << ch) ? 1 : 0;
+पूर्ण
 
-#if 0
-/* Status of audio from up to 4 techwell chips are combined into 1 variable.
- * See techwell datasheet for details. */
-u16 tw28_get_audio_status(struct solo_dev *solo_dev)
-{
+#अगर 0
+/* Status of audio from up to 4 techwell chips are combined पूर्णांकo 1 variable.
+ * See techwell datasheet क्रम details. */
+u16 tw28_get_audio_status(काष्ठा solo_dev *solo_dev)
+अणु
 	u8 val;
 	u16 status = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < solo_dev->tw28_cnt; i++) {
-		val = (tw_readbyte(solo_dev, i, TW286x_AV_STAT_ADDR,
+	क्रम (i = 0; i < solo_dev->tw28_cnt; i++) अणु
+		val = (tw_पढ़ोbyte(solo_dev, i, TW286x_AV_STAT_ADDR,
 				   TW_AV_STAT_ADDR) & 0xf0) >> 4;
 		status |= val << (i * 4);
-	}
+	पूर्ण
 
-	return status;
-}
-#endif
+	वापस status;
+पूर्ण
+#पूर्ण_अगर
 
-bool tw28_has_sharpness(struct solo_dev *solo_dev, u8 ch)
-{
-	return is_tw286x(solo_dev, ch / 4);
-}
+bool tw28_has_sharpness(काष्ठा solo_dev *solo_dev, u8 ch)
+अणु
+	वापस is_tw286x(solo_dev, ch / 4);
+पूर्ण
 
-int tw28_set_ctrl_val(struct solo_dev *solo_dev, u32 ctrl, u8 ch,
+पूर्णांक tw28_set_ctrl_val(काष्ठा solo_dev *solo_dev, u32 ctrl, u8 ch,
 		      s32 val)
-{
-	char sval;
+अणु
+	अक्षर sval;
 	u8 chip_num;
 
 	/* Get the right chip and on-chip channel */
 	chip_num = ch / 4;
 	ch %= 4;
 
-	if (val > 255 || val < 0)
-		return -ERANGE;
+	अगर (val > 255 || val < 0)
+		वापस -दुस्फल;
 
-	switch (ctrl) {
-	case V4L2_CID_SHARPNESS:
+	चयन (ctrl) अणु
+	हाल V4L2_CID_SHARPNESS:
 		/* Only 286x has sharpness */
-		if (is_tw286x(solo_dev, chip_num)) {
-			u8 v = solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+		अगर (is_tw286x(solo_dev, chip_num)) अणु
+			u8 v = solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 						 TW_CHIP_OFFSET_ADDR(chip_num),
 						 TW286x_SHARPNESS(chip_num));
 			v &= 0xf0;
 			v |= val;
-			solo_i2c_writebyte(solo_dev, SOLO_I2C_TW,
+			solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW,
 					   TW_CHIP_OFFSET_ADDR(chip_num),
 					   TW286x_SHARPNESS(chip_num), v);
-		} else {
-			return -EINVAL;
-		}
-		break;
+		पूर्ण अन्यथा अणु
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
 
-	case V4L2_CID_HUE:
-		if (is_tw286x(solo_dev, chip_num))
+	हाल V4L2_CID_HUE:
+		अगर (is_tw286x(solo_dev, chip_num))
 			sval = val - 128;
-		else
-			sval = (char)val;
-		tw_writebyte(solo_dev, chip_num, TW286x_HUE_ADDR(ch),
+		अन्यथा
+			sval = (अक्षर)val;
+		tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_HUE_ADDR(ch),
 			     TW_HUE_ADDR(ch), sval);
 
-		break;
+		अवरोध;
 
-	case V4L2_CID_SATURATION:
-		/* 286x chips have a U and V component for saturation */
-		if (is_tw286x(solo_dev, chip_num)) {
-			solo_i2c_writebyte(solo_dev, SOLO_I2C_TW,
+	हाल V4L2_CID_SATURATION:
+		/* 286x chips have a U and V component क्रम saturation */
+		अगर (is_tw286x(solo_dev, chip_num)) अणु
+			solo_i2c_ग_लिखोbyte(solo_dev, SOLO_I2C_TW,
 					   TW_CHIP_OFFSET_ADDR(chip_num),
 					   TW286x_SATURATIONU_ADDR(ch), val);
-		}
-		tw_writebyte(solo_dev, chip_num, TW286x_SATURATIONV_ADDR(ch),
+		पूर्ण
+		tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_SATURATIONV_ADDR(ch),
 			     TW_SATURATION_ADDR(ch), val);
 
-		break;
+		अवरोध;
 
-	case V4L2_CID_CONTRAST:
-		tw_writebyte(solo_dev, chip_num, TW286x_CONTRAST_ADDR(ch),
+	हाल V4L2_CID_CONTRAST:
+		tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_CONTRAST_ADDR(ch),
 			     TW_CONTRAST_ADDR(ch), val);
-		break;
+		अवरोध;
 
-	case V4L2_CID_BRIGHTNESS:
-		if (is_tw286x(solo_dev, chip_num))
+	हाल V4L2_CID_BRIGHTNESS:
+		अगर (is_tw286x(solo_dev, chip_num))
 			sval = val - 128;
-		else
-			sval = (char)val;
-		tw_writebyte(solo_dev, chip_num, TW286x_BRIGHTNESS_ADDR(ch),
+		अन्यथा
+			sval = (अक्षर)val;
+		tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_BRIGHTNESS_ADDR(ch),
 			     TW_BRIGHTNESS_ADDR(ch), sval);
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tw28_get_ctrl_val(struct solo_dev *solo_dev, u32 ctrl, u8 ch,
+पूर्णांक tw28_get_ctrl_val(काष्ठा solo_dev *solo_dev, u32 ctrl, u8 ch,
 		      s32 *val)
-{
+अणु
 	u8 rval, chip_num;
 
 	/* Get the right chip and on-chip channel */
 	chip_num = ch / 4;
 	ch %= 4;
 
-	switch (ctrl) {
-	case V4L2_CID_SHARPNESS:
+	चयन (ctrl) अणु
+	हाल V4L2_CID_SHARPNESS:
 		/* Only 286x has sharpness */
-		if (is_tw286x(solo_dev, chip_num)) {
-			rval = solo_i2c_readbyte(solo_dev, SOLO_I2C_TW,
+		अगर (is_tw286x(solo_dev, chip_num)) अणु
+			rval = solo_i2c_पढ़ोbyte(solo_dev, SOLO_I2C_TW,
 						 TW_CHIP_OFFSET_ADDR(chip_num),
 						 TW286x_SHARPNESS(chip_num));
 			*val = rval & 0x0f;
-		} else
+		पूर्ण अन्यथा
 			*val = 0;
-		break;
-	case V4L2_CID_HUE:
-		rval = tw_readbyte(solo_dev, chip_num, TW286x_HUE_ADDR(ch),
+		अवरोध;
+	हाल V4L2_CID_HUE:
+		rval = tw_पढ़ोbyte(solo_dev, chip_num, TW286x_HUE_ADDR(ch),
 				   TW_HUE_ADDR(ch));
-		if (is_tw286x(solo_dev, chip_num))
-			*val = (s32)((char)rval) + 128;
-		else
+		अगर (is_tw286x(solo_dev, chip_num))
+			*val = (s32)((अक्षर)rval) + 128;
+		अन्यथा
 			*val = rval;
-		break;
-	case V4L2_CID_SATURATION:
-		*val = tw_readbyte(solo_dev, chip_num,
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
+		*val = tw_पढ़ोbyte(solo_dev, chip_num,
 				   TW286x_SATURATIONU_ADDR(ch),
 				   TW_SATURATION_ADDR(ch));
-		break;
-	case V4L2_CID_CONTRAST:
-		*val = tw_readbyte(solo_dev, chip_num,
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
+		*val = tw_पढ़ोbyte(solo_dev, chip_num,
 				   TW286x_CONTRAST_ADDR(ch),
 				   TW_CONTRAST_ADDR(ch));
-		break;
-	case V4L2_CID_BRIGHTNESS:
-		rval = tw_readbyte(solo_dev, chip_num,
+		अवरोध;
+	हाल V4L2_CID_BRIGHTNESS:
+		rval = tw_पढ़ोbyte(solo_dev, chip_num,
 				   TW286x_BRIGHTNESS_ADDR(ch),
 				   TW_BRIGHTNESS_ADDR(ch));
-		if (is_tw286x(solo_dev, chip_num))
-			*val = (s32)((char)rval) + 128;
-		else
+		अगर (is_tw286x(solo_dev, chip_num))
+			*val = (s32)((अक्षर)rval) + 128;
+		अन्यथा
 			*val = rval;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 0
+#अगर 0
 /*
- * For audio output volume, the output channel is only 1. In this case we
- * don't need to offset TW_CHIP_OFFSET_ADDR. The TW_CHIP_OFFSET_ADDR used
+ * For audio output volume, the output channel is only 1. In this हाल we
+ * करोn't need to offset TW_CHIP_OFFSET_ADDR. The TW_CHIP_OFFSET_ADDR used
  * is the base address of the techwell chip.
  */
-void tw2815_Set_AudioOutVol(struct solo_dev *solo_dev, unsigned int u_val)
-{
-	unsigned int val;
-	unsigned int chip_num;
+व्योम tw2815_Set_AudioOutVol(काष्ठा solo_dev *solo_dev, अचिन्हित पूर्णांक u_val)
+अणु
+	अचिन्हित पूर्णांक val;
+	अचिन्हित पूर्णांक chip_num;
 
 	chip_num = (solo_dev->nr_chans - 1) / 4;
 
-	val = tw_readbyte(solo_dev, chip_num, TW286x_AUDIO_OUTPUT_VOL_ADDR,
+	val = tw_पढ़ोbyte(solo_dev, chip_num, TW286x_AUDIO_OUTPUT_VOL_ADDR,
 			  TW_AUDIO_OUTPUT_VOL_ADDR);
 
 	u_val = (val & 0x0f) | (u_val << 4);
 
-	tw_writebyte(solo_dev, chip_num, TW286x_AUDIO_OUTPUT_VOL_ADDR,
+	tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_AUDIO_OUTPUT_VOL_ADDR,
 		     TW_AUDIO_OUTPUT_VOL_ADDR, u_val);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-u8 tw28_get_audio_gain(struct solo_dev *solo_dev, u8 ch)
-{
+u8 tw28_get_audio_gain(काष्ठा solo_dev *solo_dev, u8 ch)
+अणु
 	u8 val;
 	u8 chip_num;
 
@@ -835,15 +836,15 @@ u8 tw28_get_audio_gain(struct solo_dev *solo_dev, u8 ch)
 	chip_num = ch / 4;
 	ch %= 4;
 
-	val = tw_readbyte(solo_dev, chip_num,
+	val = tw_पढ़ोbyte(solo_dev, chip_num,
 			  TW286x_AUDIO_INPUT_GAIN_ADDR(ch),
 			  TW_AUDIO_INPUT_GAIN_ADDR(ch));
 
-	return (ch % 2) ? (val >> 4) : (val & 0x0f);
-}
+	वापस (ch % 2) ? (val >> 4) : (val & 0x0f);
+पूर्ण
 
-void tw28_set_audio_gain(struct solo_dev *solo_dev, u8 ch, u8 val)
-{
+व्योम tw28_set_audio_gain(काष्ठा solo_dev *solo_dev, u8 ch, u8 val)
+अणु
 	u8 old_val;
 	u8 chip_num;
 
@@ -851,13 +852,13 @@ void tw28_set_audio_gain(struct solo_dev *solo_dev, u8 ch, u8 val)
 	chip_num = ch / 4;
 	ch %= 4;
 
-	old_val = tw_readbyte(solo_dev, chip_num,
+	old_val = tw_पढ़ोbyte(solo_dev, chip_num,
 			      TW286x_AUDIO_INPUT_GAIN_ADDR(ch),
 			      TW_AUDIO_INPUT_GAIN_ADDR(ch));
 
 	val = (old_val & ((ch % 2) ? 0x0f : 0xf0)) |
 		((ch % 2) ? (val << 4) : val);
 
-	tw_writebyte(solo_dev, chip_num, TW286x_AUDIO_INPUT_GAIN_ADDR(ch),
+	tw_ग_लिखोbyte(solo_dev, chip_num, TW286x_AUDIO_INPUT_GAIN_ADDR(ch),
 		     TW_AUDIO_INPUT_GAIN_ADDR(ch), val);
-}
+पूर्ण

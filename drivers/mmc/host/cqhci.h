@@ -1,203 +1,204 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
-#ifndef LINUX_MMC_CQHCI_H
-#define LINUX_MMC_CQHCI_H
+#अगर_अघोषित LINUX_MMC_CQHCI_H
+#घोषणा LINUX_MMC_CQHCI_H
 
-#include <linux/compiler.h>
-#include <linux/bitops.h>
-#include <linux/spinlock_types.h>
-#include <linux/types.h>
-#include <linux/completion.h>
-#include <linux/wait.h>
-#include <linux/irqreturn.h>
-#include <asm/io.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <यंत्र/पन.स>
 
-/* registers */
+/* रेजिस्टरs */
 /* version */
-#define CQHCI_VER			0x00
-#define CQHCI_VER_MAJOR(x)		(((x) & GENMASK(11, 8)) >> 8)
-#define CQHCI_VER_MINOR1(x)		(((x) & GENMASK(7, 4)) >> 4)
-#define CQHCI_VER_MINOR2(x)		((x) & GENMASK(3, 0))
+#घोषणा CQHCI_VER			0x00
+#घोषणा CQHCI_VER_MAJOR(x)		(((x) & GENMASK(11, 8)) >> 8)
+#घोषणा CQHCI_VER_MINOR1(x)		(((x) & GENMASK(7, 4)) >> 4)
+#घोषणा CQHCI_VER_MINOR2(x)		((x) & GENMASK(3, 0))
 
 /* capabilities */
-#define CQHCI_CAP			0x04
-#define CQHCI_CAP_CS			0x10000000 /* Crypto Support */
+#घोषणा CQHCI_CAP			0x04
+#घोषणा CQHCI_CAP_CS			0x10000000 /* Crypto Support */
 
 /* configuration */
-#define CQHCI_CFG			0x08
-#define CQHCI_DCMD			0x00001000
-#define CQHCI_TASK_DESC_SZ		0x00000100
-#define CQHCI_CRYPTO_GENERAL_ENABLE	0x00000002
-#define CQHCI_ENABLE			0x00000001
+#घोषणा CQHCI_CFG			0x08
+#घोषणा CQHCI_DCMD			0x00001000
+#घोषणा CQHCI_TASK_DESC_SZ		0x00000100
+#घोषणा CQHCI_CRYPTO_GENERAL_ENABLE	0x00000002
+#घोषणा CQHCI_ENABLE			0x00000001
 
 /* control */
-#define CQHCI_CTL			0x0C
-#define CQHCI_CLEAR_ALL_TASKS		0x00000100
-#define CQHCI_HALT			0x00000001
+#घोषणा CQHCI_CTL			0x0C
+#घोषणा CQHCI_CLEAR_ALL_TASKS		0x00000100
+#घोषणा CQHCI_HALT			0x00000001
 
-/* interrupt status */
-#define CQHCI_IS			0x10
-#define CQHCI_IS_HAC			BIT(0)
-#define CQHCI_IS_TCC			BIT(1)
-#define CQHCI_IS_RED			BIT(2)
-#define CQHCI_IS_TCL			BIT(3)
-#define CQHCI_IS_GCE			BIT(4) /* General Crypto Error */
-#define CQHCI_IS_ICCE			BIT(5) /* Invalid Crypto Config Error */
+/* पूर्णांकerrupt status */
+#घोषणा CQHCI_IS			0x10
+#घोषणा CQHCI_IS_HAC			BIT(0)
+#घोषणा CQHCI_IS_TCC			BIT(1)
+#घोषणा CQHCI_IS_RED			BIT(2)
+#घोषणा CQHCI_IS_TCL			BIT(3)
+#घोषणा CQHCI_IS_GCE			BIT(4) /* General Crypto Error */
+#घोषणा CQHCI_IS_ICCE			BIT(5) /* Invalid Crypto Config Error */
 
-#define CQHCI_IS_MASK (CQHCI_IS_TCC | CQHCI_IS_RED | \
+#घोषणा CQHCI_IS_MASK (CQHCI_IS_TCC | CQHCI_IS_RED | \
 		       CQHCI_IS_GCE | CQHCI_IS_ICCE)
 
-/* interrupt status enable */
-#define CQHCI_ISTE			0x14
+/* पूर्णांकerrupt status enable */
+#घोषणा CQHCI_ISTE			0x14
 
-/* interrupt signal enable */
-#define CQHCI_ISGE			0x18
+/* पूर्णांकerrupt संकेत enable */
+#घोषणा CQHCI_ISGE			0x18
 
-/* interrupt coalescing */
-#define CQHCI_IC			0x1C
-#define CQHCI_IC_ENABLE			BIT(31)
-#define CQHCI_IC_RESET			BIT(16)
-#define CQHCI_IC_ICCTHWEN		BIT(15)
-#define CQHCI_IC_ICCTH(x)		(((x) & 0x1F) << 8)
-#define CQHCI_IC_ICTOVALWEN		BIT(7)
-#define CQHCI_IC_ICTOVAL(x)		((x) & 0x7F)
+/* पूर्णांकerrupt coalescing */
+#घोषणा CQHCI_IC			0x1C
+#घोषणा CQHCI_IC_ENABLE			BIT(31)
+#घोषणा CQHCI_IC_RESET			BIT(16)
+#घोषणा CQHCI_IC_ICCTHWEN		BIT(15)
+#घोषणा CQHCI_IC_ICCTH(x)		(((x) & 0x1F) << 8)
+#घोषणा CQHCI_IC_ICTOVALWEN		BIT(7)
+#घोषणा CQHCI_IC_ICTOVAL(x)		((x) & 0x7F)
 
 /* task list base address */
-#define CQHCI_TDLBA			0x20
+#घोषणा CQHCI_TDLBA			0x20
 
 /* task list base address upper */
-#define CQHCI_TDLBAU			0x24
+#घोषणा CQHCI_TDLBAU			0x24
 
-/* door-bell */
-#define CQHCI_TDBR			0x28
+/* करोor-bell */
+#घोषणा CQHCI_TDBR			0x28
 
-/* task completion notification */
-#define CQHCI_TCN			0x2C
+/* task completion notअगरication */
+#घोषणा CQHCI_TCN			0x2C
 
 /* device queue status */
-#define CQHCI_DQS			0x30
+#घोषणा CQHCI_DQS			0x30
 
 /* device pending tasks */
-#define CQHCI_DPT			0x34
+#घोषणा CQHCI_DPT			0x34
 
 /* task clear */
-#define CQHCI_TCLR			0x38
+#घोषणा CQHCI_TCLR			0x38
 
 /* task descriptor processing error */
-#define CQHCI_TDPE			0x3c
+#घोषणा CQHCI_TDPE			0x3c
 
 /* send status config 1 */
-#define CQHCI_SSC1			0x40
-#define CQHCI_SSC1_CBC_MASK		GENMASK(19, 16)
+#घोषणा CQHCI_SSC1			0x40
+#घोषणा CQHCI_SSC1_CBC_MASK		GENMASK(19, 16)
 
 /* send status config 2 */
-#define CQHCI_SSC2			0x44
+#घोषणा CQHCI_SSC2			0x44
 
-/* response for dcmd */
-#define CQHCI_CRDCT			0x48
+/* response क्रम dcmd */
+#घोषणा CQHCI_CRDCT			0x48
 
 /* response mode error mask */
-#define CQHCI_RMEM			0x50
+#घोषणा CQHCI_RMEM			0x50
 
 /* task error info */
-#define CQHCI_TERRI			0x54
+#घोषणा CQHCI_TERRI			0x54
 
-#define CQHCI_TERRI_C_INDEX(x)		((x) & GENMASK(5, 0))
-#define CQHCI_TERRI_C_TASK(x)		(((x) & GENMASK(12, 8)) >> 8)
-#define CQHCI_TERRI_C_VALID(x)		((x) & BIT(15))
-#define CQHCI_TERRI_D_INDEX(x)		(((x) & GENMASK(21, 16)) >> 16)
-#define CQHCI_TERRI_D_TASK(x)		(((x) & GENMASK(28, 24)) >> 24)
-#define CQHCI_TERRI_D_VALID(x)		((x) & BIT(31))
+#घोषणा CQHCI_TERRI_C_INDEX(x)		((x) & GENMASK(5, 0))
+#घोषणा CQHCI_TERRI_C_TASK(x)		(((x) & GENMASK(12, 8)) >> 8)
+#घोषणा CQHCI_TERRI_C_VALID(x)		((x) & BIT(15))
+#घोषणा CQHCI_TERRI_D_INDEX(x)		(((x) & GENMASK(21, 16)) >> 16)
+#घोषणा CQHCI_TERRI_D_TASK(x)		(((x) & GENMASK(28, 24)) >> 24)
+#घोषणा CQHCI_TERRI_D_VALID(x)		((x) & BIT(31))
 
 /* command response index */
-#define CQHCI_CRI			0x58
+#घोषणा CQHCI_CRI			0x58
 
 /* command response argument */
-#define CQHCI_CRA			0x5C
+#घोषणा CQHCI_CRA			0x5C
 
 /* crypto capabilities */
-#define CQHCI_CCAP			0x100
-#define CQHCI_CRYPTOCAP			0x104
+#घोषणा CQHCI_CCAP			0x100
+#घोषणा CQHCI_CRYPTOCAP			0x104
 
-#define CQHCI_INT_ALL			0xF
-#define CQHCI_IC_DEFAULT_ICCTH		31
-#define CQHCI_IC_DEFAULT_ICTOVAL	1
+#घोषणा CQHCI_INT_ALL			0xF
+#घोषणा CQHCI_IC_DEFAULT_ICCTH		31
+#घोषणा CQHCI_IC_DEFAULT_ICTOVAL	1
 
 /* attribute fields */
-#define CQHCI_VALID(x)			(((x) & 1) << 0)
-#define CQHCI_END(x)			(((x) & 1) << 1)
-#define CQHCI_INT(x)			(((x) & 1) << 2)
-#define CQHCI_ACT(x)			(((x) & 0x7) << 3)
+#घोषणा CQHCI_VALID(x)			(((x) & 1) << 0)
+#घोषणा CQHCI_END(x)			(((x) & 1) << 1)
+#घोषणा CQHCI_INT(x)			(((x) & 1) << 2)
+#घोषणा CQHCI_ACT(x)			(((x) & 0x7) << 3)
 
 /* data command task descriptor fields */
-#define CQHCI_FORCED_PROG(x)		(((x) & 1) << 6)
-#define CQHCI_CONTEXT(x)		(((x) & 0xF) << 7)
-#define CQHCI_DATA_TAG(x)		(((x) & 1) << 11)
-#define CQHCI_DATA_DIR(x)		(((x) & 1) << 12)
-#define CQHCI_PRIORITY(x)		(((x) & 1) << 13)
-#define CQHCI_QBAR(x)			(((x) & 1) << 14)
-#define CQHCI_REL_WRITE(x)		(((x) & 1) << 15)
-#define CQHCI_BLK_COUNT(x)		(((x) & 0xFFFF) << 16)
-#define CQHCI_BLK_ADDR(x)		(((x) & 0xFFFFFFFF) << 32)
+#घोषणा CQHCI_FORCED_PROG(x)		(((x) & 1) << 6)
+#घोषणा CQHCI_CONTEXT(x)		(((x) & 0xF) << 7)
+#घोषणा CQHCI_DATA_TAG(x)		(((x) & 1) << 11)
+#घोषणा CQHCI_DATA_सूची(x)		(((x) & 1) << 12)
+#घोषणा CQHCI_PRIORITY(x)		(((x) & 1) << 13)
+#घोषणा CQHCI_QBAR(x)			(((x) & 1) << 14)
+#घोषणा CQHCI_REL_WRITE(x)		(((x) & 1) << 15)
+#घोषणा CQHCI_BLK_COUNT(x)		(((x) & 0xFFFF) << 16)
+#घोषणा CQHCI_BLK_ADDR(x)		(((x) & 0xFFFFFFFF) << 32)
 
 /* direct command task descriptor fields */
-#define CQHCI_CMD_INDEX(x)		(((x) & 0x3F) << 16)
-#define CQHCI_CMD_TIMING(x)		(((x) & 1) << 22)
-#define CQHCI_RESP_TYPE(x)		(((x) & 0x3) << 23)
+#घोषणा CQHCI_CMD_INDEX(x)		(((x) & 0x3F) << 16)
+#घोषणा CQHCI_CMD_TIMING(x)		(((x) & 1) << 22)
+#घोषणा CQHCI_RESP_TYPE(x)		(((x) & 0x3) << 23)
 
-/* crypto task descriptor fields (for bits 64-127 of task descriptor) */
-#define CQHCI_CRYPTO_ENABLE_BIT		(1ULL << 47)
-#define CQHCI_CRYPTO_KEYSLOT(x)		((u64)(x) << 32)
+/* crypto task descriptor fields (क्रम bits 64-127 of task descriptor) */
+#घोषणा CQHCI_CRYPTO_ENABLE_BIT		(1ULL << 47)
+#घोषणा CQHCI_CRYPTO_KEYSLOT(x)		((u64)(x) << 32)
 
 /* transfer descriptor fields */
-#define CQHCI_DAT_LENGTH(x)		(((x) & 0xFFFF) << 16)
-#define CQHCI_DAT_ADDR_LO(x)		(((x) & 0xFFFFFFFF) << 32)
-#define CQHCI_DAT_ADDR_HI(x)		(((x) & 0xFFFFFFFF) << 0)
+#घोषणा CQHCI_DAT_LENGTH(x)		(((x) & 0xFFFF) << 16)
+#घोषणा CQHCI_DAT_ADDR_LO(x)		(((x) & 0xFFFFFFFF) << 32)
+#घोषणा CQHCI_DAT_ADDR_HI(x)		(((x) & 0xFFFFFFFF) << 0)
 
 /* CCAP - Crypto Capability 100h */
-union cqhci_crypto_capabilities {
+जोड़ cqhci_crypto_capabilities अणु
 	__le32 reg_val;
-	struct {
+	काष्ठा अणु
 		u8 num_crypto_cap;
 		u8 config_count;
 		u8 reserved;
 		u8 config_array_ptr;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-enum cqhci_crypto_key_size {
+क्रमागत cqhci_crypto_key_size अणु
 	CQHCI_CRYPTO_KEY_SIZE_INVALID	= 0,
 	CQHCI_CRYPTO_KEY_SIZE_128	= 1,
 	CQHCI_CRYPTO_KEY_SIZE_192	= 2,
 	CQHCI_CRYPTO_KEY_SIZE_256	= 3,
 	CQHCI_CRYPTO_KEY_SIZE_512	= 4,
-};
+पूर्ण;
 
-enum cqhci_crypto_alg {
+क्रमागत cqhci_crypto_alg अणु
 	CQHCI_CRYPTO_ALG_AES_XTS		= 0,
 	CQHCI_CRYPTO_ALG_BITLOCKER_AES_CBC	= 1,
 	CQHCI_CRYPTO_ALG_AES_ECB		= 2,
 	CQHCI_CRYPTO_ALG_ESSIV_AES_CBC		= 3,
-};
+पूर्ण;
 
 /* x-CRYPTOCAP - Crypto Capability X */
-union cqhci_crypto_cap_entry {
+जोड़ cqhci_crypto_cap_entry अणु
 	__le32 reg_val;
-	struct {
+	काष्ठा अणु
 		u8 algorithm_id;
 		u8 sdus_mask; /* Supported data unit size mask */
 		u8 key_size;
 		u8 reserved;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-#define CQHCI_CRYPTO_CONFIGURATION_ENABLE (1 << 7)
-#define CQHCI_CRYPTO_KEY_MAX_SIZE 64
+#घोषणा CQHCI_CRYPTO_CONFIGURATION_ENABLE (1 << 7)
+#घोषणा CQHCI_CRYPTO_KEY_MAX_SIZE 64
 /* x-CRYPTOCFG - Crypto Configuration X */
-union cqhci_crypto_cfg_entry {
+जोड़ cqhci_crypto_cfg_entry अणु
 	__le32 reg_val[32];
-	struct {
+	काष्ठा अणु
 		u8 crypto_key[CQHCI_CRYPTO_KEY_MAX_SIZE];
 		u8 data_unit_size;
 		u8 crypto_cap_idx;
@@ -207,45 +208,45 @@ union cqhci_crypto_cfg_entry {
 		u8 reserved_2;
 		u8 vsb[2];
 		u8 reserved_3[56];
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct cqhci_host_ops;
-struct mmc_host;
-struct mmc_request;
-struct cqhci_slot;
+काष्ठा cqhci_host_ops;
+काष्ठा mmc_host;
+काष्ठा mmc_request;
+काष्ठा cqhci_slot;
 
-struct cqhci_host {
-	const struct cqhci_host_ops *ops;
-	void __iomem *mmio;
-	struct mmc_host *mmc;
+काष्ठा cqhci_host अणु
+	स्थिर काष्ठा cqhci_host_ops *ops;
+	व्योम __iomem *mmio;
+	काष्ठा mmc_host *mmc;
 
 	spinlock_t lock;
 
 	/* relative card address of device */
-	unsigned int rca;
+	अचिन्हित पूर्णांक rca;
 
 	/* 64 bit DMA */
 	bool dma64;
-	int num_slots;
-	int qcnt;
+	पूर्णांक num_slots;
+	पूर्णांक qcnt;
 
 	u32 dcmd_slot;
 	u32 caps;
-#define CQHCI_TASK_DESC_SZ_128		0x1
+#घोषणा CQHCI_TASK_DESC_SZ_128		0x1
 
 	u32 quirks;
-#define CQHCI_QUIRK_SHORT_TXFR_DESC_SZ	0x1
+#घोषणा CQHCI_QUIRK_SHORT_TXFR_DESC_SZ	0x1
 
 	bool enabled;
 	bool halted;
-	bool init_done;
+	bool init_करोne;
 	bool activated;
-	bool waiting_for_idle;
+	bool रुकोing_क्रम_idle;
 	bool recovery_halt;
 
-	size_t desc_size;
-	size_t data_size;
+	माप_प्रकार desc_size;
+	माप_प्रकार data_size;
 
 	u8 *desc_base;
 
@@ -265,60 +266,60 @@ struct cqhci_host {
 	dma_addr_t desc_dma_base;
 	dma_addr_t trans_desc_dma_base;
 
-	struct completion halt_comp;
-	wait_queue_head_t wait_queue;
-	struct cqhci_slot *slot;
+	काष्ठा completion halt_comp;
+	रुको_queue_head_t रुको_queue;
+	काष्ठा cqhci_slot *slot;
 
-#ifdef CONFIG_MMC_CRYPTO
-	union cqhci_crypto_capabilities crypto_capabilities;
-	union cqhci_crypto_cap_entry *crypto_cap_array;
-	u32 crypto_cfg_register;
-#endif
-};
+#अगर_घोषित CONFIG_MMC_CRYPTO
+	जोड़ cqhci_crypto_capabilities crypto_capabilities;
+	जोड़ cqhci_crypto_cap_entry *crypto_cap_array;
+	u32 crypto_cfg_रेजिस्टर;
+#पूर्ण_अगर
+पूर्ण;
 
-struct cqhci_host_ops {
-	void (*dumpregs)(struct mmc_host *mmc);
-	void (*write_l)(struct cqhci_host *host, u32 val, int reg);
-	u32 (*read_l)(struct cqhci_host *host, int reg);
-	void (*enable)(struct mmc_host *mmc);
-	void (*disable)(struct mmc_host *mmc, bool recovery);
-	void (*update_dcmd_desc)(struct mmc_host *mmc, struct mmc_request *mrq,
+काष्ठा cqhci_host_ops अणु
+	व्योम (*dumpregs)(काष्ठा mmc_host *mmc);
+	व्योम (*ग_लिखो_l)(काष्ठा cqhci_host *host, u32 val, पूर्णांक reg);
+	u32 (*पढ़ो_l)(काष्ठा cqhci_host *host, पूर्णांक reg);
+	व्योम (*enable)(काष्ठा mmc_host *mmc);
+	व्योम (*disable)(काष्ठा mmc_host *mmc, bool recovery);
+	व्योम (*update_dcmd_desc)(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq,
 				 u64 *data);
-	void (*pre_enable)(struct mmc_host *mmc);
-	void (*post_disable)(struct mmc_host *mmc);
-#ifdef CONFIG_MMC_CRYPTO
-	int (*program_key)(struct cqhci_host *cq_host,
-			   const union cqhci_crypto_cfg_entry *cfg, int slot);
-#endif
-};
+	व्योम (*pre_enable)(काष्ठा mmc_host *mmc);
+	व्योम (*post_disable)(काष्ठा mmc_host *mmc);
+#अगर_घोषित CONFIG_MMC_CRYPTO
+	पूर्णांक (*program_key)(काष्ठा cqhci_host *cq_host,
+			   स्थिर जोड़ cqhci_crypto_cfg_entry *cfg, पूर्णांक slot);
+#पूर्ण_अगर
+पूर्ण;
 
-static inline void cqhci_writel(struct cqhci_host *host, u32 val, int reg)
-{
-	if (unlikely(host->ops->write_l))
-		host->ops->write_l(host, val, reg);
-	else
-		writel_relaxed(val, host->mmio + reg);
-}
+अटल अंतरभूत व्योम cqhci_ग_लिखोl(काष्ठा cqhci_host *host, u32 val, पूर्णांक reg)
+अणु
+	अगर (unlikely(host->ops->ग_लिखो_l))
+		host->ops->ग_लिखो_l(host, val, reg);
+	अन्यथा
+		ग_लिखोl_relaxed(val, host->mmio + reg);
+पूर्ण
 
-static inline u32 cqhci_readl(struct cqhci_host *host, int reg)
-{
-	if (unlikely(host->ops->read_l))
-		return host->ops->read_l(host, reg);
-	else
-		return readl_relaxed(host->mmio + reg);
-}
+अटल अंतरभूत u32 cqhci_पढ़ोl(काष्ठा cqhci_host *host, पूर्णांक reg)
+अणु
+	अगर (unlikely(host->ops->पढ़ो_l))
+		वापस host->ops->पढ़ो_l(host, reg);
+	अन्यथा
+		वापस पढ़ोl_relaxed(host->mmio + reg);
+पूर्ण
 
-struct platform_device;
+काष्ठा platक्रमm_device;
 
-irqreturn_t cqhci_irq(struct mmc_host *mmc, u32 intmask, int cmd_error,
-		      int data_error);
-int cqhci_init(struct cqhci_host *cq_host, struct mmc_host *mmc, bool dma64);
-struct cqhci_host *cqhci_pltfm_init(struct platform_device *pdev);
-int cqhci_deactivate(struct mmc_host *mmc);
-static inline int cqhci_suspend(struct mmc_host *mmc)
-{
-	return cqhci_deactivate(mmc);
-}
-int cqhci_resume(struct mmc_host *mmc);
+irqवापस_t cqhci_irq(काष्ठा mmc_host *mmc, u32 पूर्णांकmask, पूर्णांक cmd_error,
+		      पूर्णांक data_error);
+पूर्णांक cqhci_init(काष्ठा cqhci_host *cq_host, काष्ठा mmc_host *mmc, bool dma64);
+काष्ठा cqhci_host *cqhci_pltfm_init(काष्ठा platक्रमm_device *pdev);
+पूर्णांक cqhci_deactivate(काष्ठा mmc_host *mmc);
+अटल अंतरभूत पूर्णांक cqhci_suspend(काष्ठा mmc_host *mmc)
+अणु
+	वापस cqhci_deactivate(mmc);
+पूर्ण
+पूर्णांक cqhci_resume(काष्ठा mmc_host *mmc);
 
-#endif
+#पूर्ण_अगर

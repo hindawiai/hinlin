@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef	__IRQCHIP_MMP_H
-#define	__IRQCHIP_MMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित	__IRQCHIP_MMP_H
+#घोषणा	__IRQCHIP_MMP_H
 
-extern struct irq_chip icu_irq_chip;
+बाह्य काष्ठा irq_chip icu_irq_chip;
 
-#endif	/* __IRQCHIP_MMP_H */
+#पूर्ण_अगर	/* __IRQCHIP_MMP_H */

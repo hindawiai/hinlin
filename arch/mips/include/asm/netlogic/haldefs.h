@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
- * Copyright 2003-2011 NetLogic Microsystems, Inc. (NetLogic). All rights
+ * Copyright 2003-2011 NetLogic Microप्रणालीs, Inc. (NetLogic). All rights
  * reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the NetLogic
+ * COPYING in the मुख्य directory of this source tree, or the NetLogic
  * license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY NETLOGIC ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL NETLOGIC OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,53 +33,53 @@
  * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __NLM_HAL_HALDEFS_H__
-#define __NLM_HAL_HALDEFS_H__
+#अगर_अघोषित __NLM_HAL_HALDEFS_H__
+#घोषणा __NLM_HAL_HALDEFS_H__
 
-#include <linux/irqflags.h>	/* for local_irq_disable */
+#समावेश <linux/irqflags.h>	/* क्रम local_irq_disable */
 
 /*
- * This file contains platform specific memory mapped IO implementation
- * and will provide a way to read 32/64 bit memory mapped registers in
+ * This file contains platक्रमm specअगरic memory mapped IO implementation
+ * and will provide a way to पढ़ो 32/64 bit memory mapped रेजिस्टरs in
  * all ABIs
  */
-static inline uint32_t
-nlm_read_reg(uint64_t base, uint32_t reg)
-{
-	volatile uint32_t *addr = (volatile uint32_t *)(long)base + reg;
+अटल अंतरभूत uपूर्णांक32_t
+nlm_पढ़ो_reg(uपूर्णांक64_t base, uपूर्णांक32_t reg)
+अणु
+	अस्थिर uपूर्णांक32_t *addr = (अस्थिर uपूर्णांक32_t *)(दीर्घ)base + reg;
 
-	return *addr;
-}
+	वापस *addr;
+पूर्ण
 
-static inline void
-nlm_write_reg(uint64_t base, uint32_t reg, uint32_t val)
-{
-	volatile uint32_t *addr = (volatile uint32_t *)(long)base + reg;
+अटल अंतरभूत व्योम
+nlm_ग_लिखो_reg(uपूर्णांक64_t base, uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
+	अस्थिर uपूर्णांक32_t *addr = (अस्थिर uपूर्णांक32_t *)(दीर्घ)base + reg;
 
 	*addr = val;
-}
+पूर्ण
 
 /*
- * For o32 compilation, we have to disable interrupts to access 64 bit
- * registers
+ * For o32 compilation, we have to disable पूर्णांकerrupts to access 64 bit
+ * रेजिस्टरs
  *
- * We need to disable interrupts because we save just the lower 32 bits of
- * registers in  interrupt handling. So if we get hit by an interrupt while
- * using the upper 32 bits of a register, we lose.
+ * We need to disable पूर्णांकerrupts because we save just the lower 32 bits of
+ * रेजिस्टरs in  पूर्णांकerrupt handling. So अगर we get hit by an पूर्णांकerrupt जबतक
+ * using the upper 32 bits of a रेजिस्टर, we lose.
  */
 
-static inline uint64_t
-nlm_read_reg64(uint64_t base, uint32_t reg)
-{
-	uint64_t addr = base + (reg >> 1) * sizeof(uint64_t);
-	volatile uint64_t *ptr = (volatile uint64_t *)(long)addr;
-	uint64_t val;
+अटल अंतरभूत uपूर्णांक64_t
+nlm_पढ़ो_reg64(uपूर्णांक64_t base, uपूर्णांक32_t reg)
+अणु
+	uपूर्णांक64_t addr = base + (reg >> 1) * माप(uपूर्णांक64_t);
+	अस्थिर uपूर्णांक64_t *ptr = (अस्थिर uपूर्णांक64_t *)(दीर्घ)addr;
+	uपूर्णांक64_t val;
 
-	if (sizeof(unsigned long) == 4) {
-		unsigned long flags;
+	अगर (माप(अचिन्हित दीर्घ) == 4) अणु
+		अचिन्हित दीर्घ flags;
 
 		local_irq_save(flags);
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 			".set	push"			"\n\t"
 			".set	mips64"			"\n\t"
 			"ld	%L0, %1"		"\n\t"
@@ -88,24 +89,24 @@ nlm_read_reg64(uint64_t base, uint32_t reg)
 			: "=r" (val)
 			: "m" (*ptr));
 		local_irq_restore(flags);
-	} else
+	पूर्ण अन्यथा
 		val = *ptr;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void
-nlm_write_reg64(uint64_t base, uint32_t reg, uint64_t val)
-{
-	uint64_t addr = base + (reg >> 1) * sizeof(uint64_t);
-	volatile uint64_t *ptr = (volatile uint64_t *)(long)addr;
+अटल अंतरभूत व्योम
+nlm_ग_लिखो_reg64(uपूर्णांक64_t base, uपूर्णांक32_t reg, uपूर्णांक64_t val)
+अणु
+	uपूर्णांक64_t addr = base + (reg >> 1) * माप(uपूर्णांक64_t);
+	अस्थिर uपूर्णांक64_t *ptr = (अस्थिर uपूर्णांक64_t *)(दीर्घ)addr;
 
-	if (sizeof(unsigned long) == 4) {
-		unsigned long flags;
-		uint64_t tmp;
+	अगर (माप(अचिन्हित दीर्घ) == 4) अणु
+		अचिन्हित दीर्घ flags;
+		uपूर्णांक64_t पंचांगp;
 
 		local_irq_save(flags);
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 			".set	push"			"\n\t"
 			".set	mips64"			"\n\t"
 			"dsll32	%L0, %L0, 0"		"\n\t"
@@ -114,58 +115,58 @@ nlm_write_reg64(uint64_t base, uint32_t reg, uint64_t val)
 			"or	%L0, %L0, %M0"		"\n\t"
 			"sd	%L0, %2"		"\n\t"
 			".set	pop"			"\n"
-			: "=r" (tmp)
+			: "=r" (पंचांगp)
 			: "0" (val), "m" (*ptr));
 		local_irq_restore(flags);
-	} else
+	पूर्ण अन्यथा
 		*ptr = val;
-}
+पूर्ण
 
 /*
  * Routines to store 32/64 bit values to 64 bit addresses,
- * used when going thru XKPHYS to access registers
+ * used when going thru XKPHYS to access रेजिस्टरs
  */
-static inline uint32_t
-nlm_read_reg_xkphys(uint64_t base, uint32_t reg)
-{
-	return nlm_read_reg(base, reg);
-}
+अटल अंतरभूत uपूर्णांक32_t
+nlm_पढ़ो_reg_xkphys(uपूर्णांक64_t base, uपूर्णांक32_t reg)
+अणु
+	वापस nlm_पढ़ो_reg(base, reg);
+पूर्ण
 
-static inline void
-nlm_write_reg_xkphys(uint64_t base, uint32_t reg, uint32_t val)
-{
-	nlm_write_reg(base, reg, val);
-}
+अटल अंतरभूत व्योम
+nlm_ग_लिखो_reg_xkphys(uपूर्णांक64_t base, uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
+	nlm_ग_लिखो_reg(base, reg, val);
+पूर्ण
 
-static inline uint64_t
-nlm_read_reg64_xkphys(uint64_t base, uint32_t reg)
-{
-	return nlm_read_reg64(base, reg);
-}
+अटल अंतरभूत uपूर्णांक64_t
+nlm_पढ़ो_reg64_xkphys(uपूर्णांक64_t base, uपूर्णांक32_t reg)
+अणु
+	वापस nlm_पढ़ो_reg64(base, reg);
+पूर्ण
 
-static inline void
-nlm_write_reg64_xkphys(uint64_t base, uint32_t reg, uint64_t val)
-{
-	nlm_write_reg64(base, reg, val);
-}
+अटल अंतरभूत व्योम
+nlm_ग_लिखो_reg64_xkphys(uपूर्णांक64_t base, uपूर्णांक32_t reg, uपूर्णांक64_t val)
+अणु
+	nlm_ग_लिखो_reg64(base, reg, val);
+पूर्ण
 
 /* Location where IO base is mapped */
-extern uint64_t nlm_io_base;
+बाह्य uपूर्णांक64_t nlm_io_base;
 
-#if defined(CONFIG_CPU_XLP)
-static inline uint64_t
-nlm_pcicfg_base(uint32_t devoffset)
-{
-	return nlm_io_base + devoffset;
-}
+#अगर defined(CONFIG_CPU_XLP)
+अटल अंतरभूत uपूर्णांक64_t
+nlm_pcicfg_base(uपूर्णांक32_t devoffset)
+अणु
+	वापस nlm_io_base + devoffset;
+पूर्ण
 
-#elif defined(CONFIG_CPU_XLR)
+#या_अगर defined(CONFIG_CPU_XLR)
 
-static inline uint64_t
-nlm_mmio_base(uint32_t devoffset)
-{
-	return nlm_io_base + devoffset;
-}
-#endif
+अटल अंतरभूत uपूर्णांक64_t
+nlm_mmio_base(uपूर्णांक32_t devoffset)
+अणु
+	वापस nlm_io_base + devoffset;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

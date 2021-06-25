@@ -1,759 +1,760 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 // Copyright (c) 2017 Synopsys, Inc. and/or its affiliates.
-// stmmac Support for 5.xx Ethernet QoS cores
+// sपंचांगmac Support क्रम 5.xx Ethernet QoS cores
 
-#include <linux/bitops.h>
-#include <linux/iopoll.h>
-#include "common.h"
-#include "dwmac4.h"
-#include "dwmac5.h"
-#include "stmmac.h"
-#include "stmmac_ptp.h"
+#समावेश <linux/bitops.h>
+#समावेश <linux/iopoll.h>
+#समावेश "common.h"
+#समावेश "dwmac4.h"
+#समावेश "dwmac5.h"
+#समावेश "stmmac.h"
+#समावेश "stmmac_ptp.h"
 
-struct dwmac5_error_desc {
+काष्ठा dwmac5_error_desc अणु
 	bool valid;
-	const char *desc;
-	const char *detailed_desc;
-};
+	स्थिर अक्षर *desc;
+	स्थिर अक्षर *detailed_desc;
+पूर्ण;
 
-#define STAT_OFF(field)		offsetof(struct stmmac_safety_stats, field)
+#घोषणा STAT_OFF(field)		दुरत्व(काष्ठा sपंचांगmac_safety_stats, field)
 
-static void dwmac5_log_error(struct net_device *ndev, u32 value, bool corr,
-		const char *module_name, const struct dwmac5_error_desc *desc,
-		unsigned long field_offset, struct stmmac_safety_stats *stats)
-{
-	unsigned long loc, mask;
+अटल व्योम dwmac5_log_error(काष्ठा net_device *ndev, u32 value, bool corr,
+		स्थिर अक्षर *module_name, स्थिर काष्ठा dwmac5_error_desc *desc,
+		अचिन्हित दीर्घ field_offset, काष्ठा sपंचांगmac_safety_stats *stats)
+अणु
+	अचिन्हित दीर्घ loc, mask;
 	u8 *bptr = (u8 *)stats;
-	unsigned long *ptr;
+	अचिन्हित दीर्घ *ptr;
 
-	ptr = (unsigned long *)(bptr + field_offset);
+	ptr = (अचिन्हित दीर्घ *)(bptr + field_offset);
 
 	mask = value;
-	for_each_set_bit(loc, &mask, 32) {
+	क्रम_each_set_bit(loc, &mask, 32) अणु
 		netdev_err(ndev, "Found %s error in %s: '%s: %s'\n", corr ?
 				"correctable" : "uncorrectable", module_name,
 				desc[loc].desc, desc[loc].detailed_desc);
 
 		/* Update counters */
 		ptr[loc]++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct dwmac5_error_desc dwmac5_mac_errors[32]= {
-	{ true, "ATPES", "Application Transmit Interface Parity Check Error" },
-	{ true, "TPES", "TSO Data Path Parity Check Error" },
-	{ true, "RDPES", "Read Descriptor Parity Check Error" },
-	{ true, "MPES", "MTL Data Path Parity Check Error" },
-	{ true, "MTSPES", "MTL TX Status Data Path Parity Check Error" },
-	{ true, "ARPES", "Application Receive Interface Data Path Parity Check Error" },
-	{ true, "CWPES", "CSR Write Data Path Parity Check Error" },
-	{ true, "ASRPES", "AXI Slave Read Data Path Parity Check Error" },
-	{ true, "TTES", "TX FSM Timeout Error" },
-	{ true, "RTES", "RX FSM Timeout Error" },
-	{ true, "CTES", "CSR FSM Timeout Error" },
-	{ true, "ATES", "APP FSM Timeout Error" },
-	{ true, "PTES", "PTP FSM Timeout Error" },
-	{ true, "T125ES", "TX125 FSM Timeout Error" },
-	{ true, "R125ES", "RX125 FSM Timeout Error" },
-	{ true, "RVCTES", "REV MDC FSM Timeout Error" },
-	{ true, "MSTTES", "Master Read/Write Timeout Error" },
-	{ true, "SLVTES", "Slave Read/Write Timeout Error" },
-	{ true, "ATITES", "Application Timeout on ATI Interface Error" },
-	{ true, "ARITES", "Application Timeout on ARI Interface Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 20 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 21 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 22 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 23 */
-	{ true, "FSMPES", "FSM State Parity Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 25 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 26 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 27 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 28 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 29 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 30 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 31 */
-};
+अटल स्थिर काष्ठा dwmac5_error_desc dwmac5_mac_errors[32]= अणु
+	अणु true, "ATPES", "Application Transmit Interface Parity Check Error" पूर्ण,
+	अणु true, "TPES", "TSO Data Path Parity Check Error" पूर्ण,
+	अणु true, "RDPES", "Read Descriptor Parity Check Error" पूर्ण,
+	अणु true, "MPES", "MTL Data Path Parity Check Error" पूर्ण,
+	अणु true, "MTSPES", "MTL TX Status Data Path Parity Check Error" पूर्ण,
+	अणु true, "ARPES", "Application Receive Interface Data Path Parity Check Error" पूर्ण,
+	अणु true, "CWPES", "CSR Write Data Path Parity Check Error" पूर्ण,
+	अणु true, "ASRPES", "AXI Slave Read Data Path Parity Check Error" पूर्ण,
+	अणु true, "TTES", "TX FSM Timeout Error" पूर्ण,
+	अणु true, "RTES", "RX FSM Timeout Error" पूर्ण,
+	अणु true, "CTES", "CSR FSM Timeout Error" पूर्ण,
+	अणु true, "ATES", "APP FSM Timeout Error" पूर्ण,
+	अणु true, "PTES", "PTP FSM Timeout Error" पूर्ण,
+	अणु true, "T125ES", "TX125 FSM Timeout Error" पूर्ण,
+	अणु true, "R125ES", "RX125 FSM Timeout Error" पूर्ण,
+	अणु true, "RVCTES", "REV MDC FSM Timeout Error" पूर्ण,
+	अणु true, "MSTTES", "Master Read/Write Timeout Error" पूर्ण,
+	अणु true, "SLVTES", "Slave Read/Write Timeout Error" पूर्ण,
+	अणु true, "ATITES", "Application Timeout on ATI Interface Error" पूर्ण,
+	अणु true, "ARITES", "Application Timeout on ARI Interface Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 20 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 21 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 22 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 23 */
+	अणु true, "FSMPES", "FSM State Parity Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 25 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 26 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 27 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 28 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 29 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 30 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 31 */
+पूर्ण;
 
-static void dwmac5_handle_mac_err(struct net_device *ndev,
-		void __iomem *ioaddr, bool correctable,
-		struct stmmac_safety_stats *stats)
-{
+अटल व्योम dwmac5_handle_mac_err(काष्ठा net_device *ndev,
+		व्योम __iomem *ioaddr, bool correctable,
+		काष्ठा sपंचांगmac_safety_stats *stats)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + MAC_DPP_FSM_INT_STATUS);
-	writel(value, ioaddr + MAC_DPP_FSM_INT_STATUS);
+	value = पढ़ोl(ioaddr + MAC_DPP_FSM_INT_STATUS);
+	ग_लिखोl(value, ioaddr + MAC_DPP_FSM_INT_STATUS);
 
 	dwmac5_log_error(ndev, value, correctable, "MAC", dwmac5_mac_errors,
 			STAT_OFF(mac_errors), stats);
-}
+पूर्ण
 
-static const struct dwmac5_error_desc dwmac5_mtl_errors[32]= {
-	{ true, "TXCES", "MTL TX Memory Error" },
-	{ true, "TXAMS", "MTL TX Memory Address Mismatch Error" },
-	{ true, "TXUES", "MTL TX Memory Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 3 */
-	{ true, "RXCES", "MTL RX Memory Error" },
-	{ true, "RXAMS", "MTL RX Memory Address Mismatch Error" },
-	{ true, "RXUES", "MTL RX Memory Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 7 */
-	{ true, "ECES", "MTL EST Memory Error" },
-	{ true, "EAMS", "MTL EST Memory Address Mismatch Error" },
-	{ true, "EUES", "MTL EST Memory Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 11 */
-	{ true, "RPCES", "MTL RX Parser Memory Error" },
-	{ true, "RPAMS", "MTL RX Parser Memory Address Mismatch Error" },
-	{ true, "RPUES", "MTL RX Parser Memory Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 15 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 16 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 17 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 18 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 19 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 20 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 21 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 22 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 23 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 24 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 25 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 26 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 27 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 28 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 29 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 30 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 31 */
-};
+अटल स्थिर काष्ठा dwmac5_error_desc dwmac5_mtl_errors[32]= अणु
+	अणु true, "TXCES", "MTL TX Memory Error" पूर्ण,
+	अणु true, "TXAMS", "MTL TX Memory Address Mismatch Error" पूर्ण,
+	अणु true, "TXUES", "MTL TX Memory Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 3 */
+	अणु true, "RXCES", "MTL RX Memory Error" पूर्ण,
+	अणु true, "RXAMS", "MTL RX Memory Address Mismatch Error" पूर्ण,
+	अणु true, "RXUES", "MTL RX Memory Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 7 */
+	अणु true, "ECES", "MTL EST Memory Error" पूर्ण,
+	अणु true, "EAMS", "MTL EST Memory Address Mismatch Error" पूर्ण,
+	अणु true, "EUES", "MTL EST Memory Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 11 */
+	अणु true, "RPCES", "MTL RX Parser Memory Error" पूर्ण,
+	अणु true, "RPAMS", "MTL RX Parser Memory Address Mismatch Error" पूर्ण,
+	अणु true, "RPUES", "MTL RX Parser Memory Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 15 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 16 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 17 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 18 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 19 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 20 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 21 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 22 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 23 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 24 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 25 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 26 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 27 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 28 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 29 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 30 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 31 */
+पूर्ण;
 
-static void dwmac5_handle_mtl_err(struct net_device *ndev,
-		void __iomem *ioaddr, bool correctable,
-		struct stmmac_safety_stats *stats)
-{
+अटल व्योम dwmac5_handle_mtl_err(काष्ठा net_device *ndev,
+		व्योम __iomem *ioaddr, bool correctable,
+		काष्ठा sपंचांगmac_safety_stats *stats)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + MTL_ECC_INT_STATUS);
-	writel(value, ioaddr + MTL_ECC_INT_STATUS);
+	value = पढ़ोl(ioaddr + MTL_ECC_INT_STATUS);
+	ग_लिखोl(value, ioaddr + MTL_ECC_INT_STATUS);
 
 	dwmac5_log_error(ndev, value, correctable, "MTL", dwmac5_mtl_errors,
 			STAT_OFF(mtl_errors), stats);
-}
+पूर्ण
 
-static const struct dwmac5_error_desc dwmac5_dma_errors[32]= {
-	{ true, "TCES", "DMA TSO Memory Error" },
-	{ true, "TAMS", "DMA TSO Memory Address Mismatch Error" },
-	{ true, "TUES", "DMA TSO Memory Error" },
-	{ false, "UNKNOWN", "Unknown Error" }, /* 3 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 4 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 5 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 6 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 7 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 8 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 9 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 10 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 11 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 12 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 13 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 14 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 15 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 16 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 17 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 18 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 19 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 20 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 21 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 22 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 23 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 24 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 25 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 26 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 27 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 28 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 29 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 30 */
-	{ false, "UNKNOWN", "Unknown Error" }, /* 31 */
-};
+अटल स्थिर काष्ठा dwmac5_error_desc dwmac5_dma_errors[32]= अणु
+	अणु true, "TCES", "DMA TSO Memory Error" पूर्ण,
+	अणु true, "TAMS", "DMA TSO Memory Address Mismatch Error" पूर्ण,
+	अणु true, "TUES", "DMA TSO Memory Error" पूर्ण,
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 3 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 4 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 5 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 6 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 7 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 8 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 9 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 10 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 11 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 12 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 13 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 14 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 15 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 16 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 17 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 18 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 19 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 20 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 21 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 22 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 23 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 24 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 25 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 26 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 27 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 28 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 29 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 30 */
+	अणु false, "UNKNOWN", "Unknown Error" पूर्ण, /* 31 */
+पूर्ण;
 
-static void dwmac5_handle_dma_err(struct net_device *ndev,
-		void __iomem *ioaddr, bool correctable,
-		struct stmmac_safety_stats *stats)
-{
+अटल व्योम dwmac5_handle_dma_err(काष्ठा net_device *ndev,
+		व्योम __iomem *ioaddr, bool correctable,
+		काष्ठा sपंचांगmac_safety_stats *stats)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + DMA_ECC_INT_STATUS);
-	writel(value, ioaddr + DMA_ECC_INT_STATUS);
+	value = पढ़ोl(ioaddr + DMA_ECC_INT_STATUS);
+	ग_लिखोl(value, ioaddr + DMA_ECC_INT_STATUS);
 
 	dwmac5_log_error(ndev, value, correctable, "DMA", dwmac5_dma_errors,
 			STAT_OFF(dma_errors), stats);
-}
+पूर्ण
 
-int dwmac5_safety_feat_config(void __iomem *ioaddr, unsigned int asp)
-{
+पूर्णांक dwmac5_safety_feat_config(व्योम __iomem *ioaddr, अचिन्हित पूर्णांक asp)
+अणु
 	u32 value;
 
-	if (!asp)
-		return -EINVAL;
+	अगर (!asp)
+		वापस -EINVAL;
 
 	/* 1. Enable Safety Features */
-	value = readl(ioaddr + MTL_ECC_CONTROL);
+	value = पढ़ोl(ioaddr + MTL_ECC_CONTROL);
 	value |= MEEAO; /* MTL ECC Error Addr Status Override */
 	value |= TSOEE; /* TSO ECC */
 	value |= MRXPEE; /* MTL RX Parser ECC */
 	value |= MESTEE; /* MTL EST ECC */
 	value |= MRXEE; /* MTL RX FIFO ECC */
 	value |= MTXEE; /* MTL TX FIFO ECC */
-	writel(value, ioaddr + MTL_ECC_CONTROL);
+	ग_लिखोl(value, ioaddr + MTL_ECC_CONTROL);
 
 	/* 2. Enable MTL Safety Interrupts */
-	value = readl(ioaddr + MTL_ECC_INT_ENABLE);
+	value = पढ़ोl(ioaddr + MTL_ECC_INT_ENABLE);
 	value |= RPCEIE; /* RX Parser Memory Correctable Error */
 	value |= ECEIE; /* EST Memory Correctable Error */
 	value |= RXCEIE; /* RX Memory Correctable Error */
 	value |= TXCEIE; /* TX Memory Correctable Error */
-	writel(value, ioaddr + MTL_ECC_INT_ENABLE);
+	ग_लिखोl(value, ioaddr + MTL_ECC_INT_ENABLE);
 
 	/* 3. Enable DMA Safety Interrupts */
-	value = readl(ioaddr + DMA_ECC_INT_ENABLE);
+	value = पढ़ोl(ioaddr + DMA_ECC_INT_ENABLE);
 	value |= TCEIE; /* TSO Memory Correctable Error */
-	writel(value, ioaddr + DMA_ECC_INT_ENABLE);
+	ग_लिखोl(value, ioaddr + DMA_ECC_INT_ENABLE);
 
-	/* Only ECC Protection for External Memory feature is selected */
-	if (asp <= 0x1)
-		return 0;
+	/* Only ECC Protection क्रम External Memory feature is selected */
+	अगर (asp <= 0x1)
+		वापस 0;
 
-	/* 5. Enable Parity and Timeout for FSM */
-	value = readl(ioaddr + MAC_FSM_CONTROL);
+	/* 5. Enable Parity and Timeout क्रम FSM */
+	value = पढ़ोl(ioaddr + MAC_FSM_CONTROL);
 	value |= PRTYEN; /* FSM Parity Feature */
 	value |= TMOUTEN; /* FSM Timeout Feature */
-	writel(value, ioaddr + MAC_FSM_CONTROL);
+	ग_लिखोl(value, ioaddr + MAC_FSM_CONTROL);
 
 	/* 4. Enable Data Parity Protection */
-	value = readl(ioaddr + MTL_DPP_CONTROL);
+	value = पढ़ोl(ioaddr + MTL_DPP_CONTROL);
 	value |= EDPP;
-	writel(value, ioaddr + MTL_DPP_CONTROL);
+	ग_लिखोl(value, ioaddr + MTL_DPP_CONTROL);
 
 	/*
 	 * All the Automotive Safety features are selected without the "Parity
-	 * Port Enable for external interface" feature.
+	 * Port Enable क्रम बाह्यal पूर्णांकerface" feature.
 	 */
-	if (asp <= 0x2)
-		return 0;
+	अगर (asp <= 0x2)
+		वापस 0;
 
 	value |= EPSI;
-	writel(value, ioaddr + MTL_DPP_CONTROL);
-	return 0;
-}
+	ग_लिखोl(value, ioaddr + MTL_DPP_CONTROL);
+	वापस 0;
+पूर्ण
 
-int dwmac5_safety_feat_irq_status(struct net_device *ndev,
-		void __iomem *ioaddr, unsigned int asp,
-		struct stmmac_safety_stats *stats)
-{
+पूर्णांक dwmac5_safety_feat_irq_status(काष्ठा net_device *ndev,
+		व्योम __iomem *ioaddr, अचिन्हित पूर्णांक asp,
+		काष्ठा sपंचांगmac_safety_stats *stats)
+अणु
 	bool err, corr;
 	u32 mtl, dma;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!asp)
-		return -EINVAL;
+	अगर (!asp)
+		वापस -EINVAL;
 
-	mtl = readl(ioaddr + MTL_SAFETY_INT_STATUS);
-	dma = readl(ioaddr + DMA_SAFETY_INT_STATUS);
+	mtl = पढ़ोl(ioaddr + MTL_SAFETY_INT_STATUS);
+	dma = पढ़ोl(ioaddr + DMA_SAFETY_INT_STATUS);
 
 	err = (mtl & MCSIS) || (dma & MCSIS);
 	corr = false;
-	if (err) {
+	अगर (err) अणु
 		dwmac5_handle_mac_err(ndev, ioaddr, corr, stats);
 		ret |= !corr;
-	}
+	पूर्ण
 
 	err = (mtl & (MEUIS | MECIS)) || (dma & (MSUIS | MSCIS));
 	corr = (mtl & MECIS) || (dma & MSCIS);
-	if (err) {
+	अगर (err) अणु
 		dwmac5_handle_mtl_err(ndev, ioaddr, corr, stats);
 		ret |= !corr;
-	}
+	पूर्ण
 
 	err = dma & (DEUIS | DECIS);
 	corr = dma & DECIS;
-	if (err) {
+	अगर (err) अणु
 		dwmac5_handle_dma_err(ndev, ioaddr, corr, stats);
 		ret |= !corr;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dwmac5_error {
-	const struct dwmac5_error_desc *desc;
-} dwmac5_all_errors[] = {
-	{ dwmac5_mac_errors },
-	{ dwmac5_mtl_errors },
-	{ dwmac5_dma_errors },
-};
+अटल स्थिर काष्ठा dwmac5_error अणु
+	स्थिर काष्ठा dwmac5_error_desc *desc;
+पूर्ण dwmac5_all_errors[] = अणु
+	अणु dwmac5_mac_errors पूर्ण,
+	अणु dwmac5_mtl_errors पूर्ण,
+	अणु dwmac5_dma_errors पूर्ण,
+पूर्ण;
 
-int dwmac5_safety_feat_dump(struct stmmac_safety_stats *stats,
-			int index, unsigned long *count, const char **desc)
-{
-	int module = index / 32, offset = index % 32;
-	unsigned long *ptr = (unsigned long *)stats;
+पूर्णांक dwmac5_safety_feat_dump(काष्ठा sपंचांगmac_safety_stats *stats,
+			पूर्णांक index, अचिन्हित दीर्घ *count, स्थिर अक्षर **desc)
+अणु
+	पूर्णांक module = index / 32, offset = index % 32;
+	अचिन्हित दीर्घ *ptr = (अचिन्हित दीर्घ *)stats;
 
-	if (module >= ARRAY_SIZE(dwmac5_all_errors))
-		return -EINVAL;
-	if (!dwmac5_all_errors[module].desc[offset].valid)
-		return -EINVAL;
-	if (count)
+	अगर (module >= ARRAY_SIZE(dwmac5_all_errors))
+		वापस -EINVAL;
+	अगर (!dwmac5_all_errors[module].desc[offset].valid)
+		वापस -EINVAL;
+	अगर (count)
 		*count = *(ptr + index);
-	if (desc)
+	अगर (desc)
 		*desc = dwmac5_all_errors[module].desc[offset].desc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwmac5_rxp_disable(void __iomem *ioaddr)
-{
+अटल पूर्णांक dwmac5_rxp_disable(व्योम __iomem *ioaddr)
+अणु
 	u32 val;
 
-	val = readl(ioaddr + MTL_OPERATION_MODE);
+	val = पढ़ोl(ioaddr + MTL_OPERATION_MODE);
 	val &= ~MTL_FRPE;
-	writel(val, ioaddr + MTL_OPERATION_MODE);
+	ग_लिखोl(val, ioaddr + MTL_OPERATION_MODE);
 
-	return readl_poll_timeout(ioaddr + MTL_RXP_CONTROL_STATUS, val,
+	वापस पढ़ोl_poll_समयout(ioaddr + MTL_RXP_CONTROL_STATUS, val,
 			val & RXPI, 1, 10000);
-}
+पूर्ण
 
-static void dwmac5_rxp_enable(void __iomem *ioaddr)
-{
+अटल व्योम dwmac5_rxp_enable(व्योम __iomem *ioaddr)
+अणु
 	u32 val;
 
-	val = readl(ioaddr + MTL_OPERATION_MODE);
+	val = पढ़ोl(ioaddr + MTL_OPERATION_MODE);
 	val |= MTL_FRPE;
-	writel(val, ioaddr + MTL_OPERATION_MODE);
-}
+	ग_लिखोl(val, ioaddr + MTL_OPERATION_MODE);
+पूर्ण
 
-static int dwmac5_rxp_update_single_entry(void __iomem *ioaddr,
-					  struct stmmac_tc_entry *entry,
-					  int pos)
-{
-	int ret, i;
+अटल पूर्णांक dwmac5_rxp_update_single_entry(व्योम __iomem *ioaddr,
+					  काष्ठा sपंचांगmac_tc_entry *entry,
+					  पूर्णांक pos)
+अणु
+	पूर्णांक ret, i;
 
-	for (i = 0; i < (sizeof(entry->val) / sizeof(u32)); i++) {
-		int real_pos = pos * (sizeof(entry->val) / sizeof(u32)) + i;
+	क्रम (i = 0; i < (माप(entry->val) / माप(u32)); i++) अणु
+		पूर्णांक real_pos = pos * (माप(entry->val) / माप(u32)) + i;
 		u32 val;
 
-		/* Wait for ready */
-		ret = readl_poll_timeout(ioaddr + MTL_RXP_IACC_CTRL_STATUS,
+		/* Wait क्रम पढ़ोy */
+		ret = पढ़ोl_poll_समयout(ioaddr + MTL_RXP_IACC_CTRL_STATUS,
 				val, !(val & STARTBUSY), 1, 10000);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* Write data */
 		val = *((u32 *)&entry->val + i);
-		writel(val, ioaddr + MTL_RXP_IACC_DATA);
+		ग_लिखोl(val, ioaddr + MTL_RXP_IACC_DATA);
 
 		/* Write pos */
 		val = real_pos & ADDR;
-		writel(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
+		ग_लिखोl(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
 
 		/* Write OP */
 		val |= WRRDN;
-		writel(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
+		ग_लिखोl(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
 
 		/* Start Write */
 		val |= STARTBUSY;
-		writel(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
+		ग_लिखोl(val, ioaddr + MTL_RXP_IACC_CTRL_STATUS);
 
-		/* Wait for done */
-		ret = readl_poll_timeout(ioaddr + MTL_RXP_IACC_CTRL_STATUS,
+		/* Wait क्रम करोne */
+		ret = पढ़ोl_poll_समयout(ioaddr + MTL_RXP_IACC_CTRL_STATUS,
 				val, !(val & STARTBUSY), 1, 10000);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct stmmac_tc_entry *
-dwmac5_rxp_get_next_entry(struct stmmac_tc_entry *entries, unsigned int count,
+अटल काष्ठा sपंचांगmac_tc_entry *
+dwmac5_rxp_get_next_entry(काष्ठा sपंचांगmac_tc_entry *entries, अचिन्हित पूर्णांक count,
 			  u32 curr_prio)
-{
-	struct stmmac_tc_entry *entry;
+अणु
+	काष्ठा sपंचांगmac_tc_entry *entry;
 	u32 min_prio = ~0x0;
-	int i, min_prio_idx;
+	पूर्णांक i, min_prio_idx;
 	bool found = false;
 
-	for (i = count - 1; i >= 0; i--) {
+	क्रम (i = count - 1; i >= 0; i--) अणु
 		entry = &entries[i];
 
 		/* Do not update unused entries */
-		if (!entry->in_use)
-			continue;
-		/* Do not update already updated entries (i.e. fragments) */
-		if (entry->in_hw)
-			continue;
+		अगर (!entry->in_use)
+			जारी;
+		/* Do not update alपढ़ोy updated entries (i.e. fragments) */
+		अगर (entry->in_hw)
+			जारी;
 		/* Let last entry be updated last */
-		if (entry->is_last)
-			continue;
-		/* Do not return fragments */
-		if (entry->is_frag)
-			continue;
-		/* Check if we already checked this prio */
-		if (entry->prio < curr_prio)
-			continue;
-		/* Check if this is the minimum prio */
-		if (entry->prio < min_prio) {
+		अगर (entry->is_last)
+			जारी;
+		/* Do not वापस fragments */
+		अगर (entry->is_frag)
+			जारी;
+		/* Check अगर we alपढ़ोy checked this prio */
+		अगर (entry->prio < curr_prio)
+			जारी;
+		/* Check अगर this is the minimum prio */
+		अगर (entry->prio < min_prio) अणु
 			min_prio = entry->prio;
 			min_prio_idx = i;
 			found = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (found)
-		return &entries[min_prio_idx];
-	return NULL;
-}
+	अगर (found)
+		वापस &entries[min_prio_idx];
+	वापस शून्य;
+पूर्ण
 
-int dwmac5_rxp_config(void __iomem *ioaddr, struct stmmac_tc_entry *entries,
-		      unsigned int count)
-{
-	struct stmmac_tc_entry *entry, *frag;
-	int i, ret, nve = 0;
+पूर्णांक dwmac5_rxp_config(व्योम __iomem *ioaddr, काष्ठा sपंचांगmac_tc_entry *entries,
+		      अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा sपंचांगmac_tc_entry *entry, *frag;
+	पूर्णांक i, ret, nve = 0;
 	u32 curr_prio = 0;
 	u32 old_val, val;
 
 	/* Force disable RX */
-	old_val = readl(ioaddr + GMAC_CONFIG);
+	old_val = पढ़ोl(ioaddr + GMAC_CONFIG);
 	val = old_val & ~GMAC_CONFIG_RE;
-	writel(val, ioaddr + GMAC_CONFIG);
+	ग_लिखोl(val, ioaddr + GMAC_CONFIG);
 
 	/* Disable RX Parser */
 	ret = dwmac5_rxp_disable(ioaddr);
-	if (ret)
-		goto re_enable;
+	अगर (ret)
+		जाओ re_enable;
 
 	/* Set all entries as NOT in HW */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		entry = &entries[i];
 		entry->in_hw = false;
-	}
+	पूर्ण
 
 	/* Update entries by reverse order */
-	while (1) {
+	जबतक (1) अणु
 		entry = dwmac5_rxp_get_next_entry(entries, count, curr_prio);
-		if (!entry)
-			break;
+		अगर (!entry)
+			अवरोध;
 
 		curr_prio = entry->prio;
 		frag = entry->frag_ptr;
 
 		/* Set special fragment requirements */
-		if (frag) {
+		अगर (frag) अणु
 			entry->val.af = 0;
 			entry->val.rf = 0;
 			entry->val.nc = 1;
 			entry->val.ok_index = nve + 2;
-		}
+		पूर्ण
 
 		ret = dwmac5_rxp_update_single_entry(ioaddr, entry, nve);
-		if (ret)
-			goto re_enable;
+		अगर (ret)
+			जाओ re_enable;
 
 		entry->table_pos = nve++;
 		entry->in_hw = true;
 
-		if (frag && !frag->in_hw) {
+		अगर (frag && !frag->in_hw) अणु
 			ret = dwmac5_rxp_update_single_entry(ioaddr, frag, nve);
-			if (ret)
-				goto re_enable;
+			अगर (ret)
+				जाओ re_enable;
 			frag->table_pos = nve++;
 			frag->in_hw = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!nve)
-		goto re_enable;
+	अगर (!nve)
+		जाओ re_enable;
 
 	/* Update all pass entry */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		entry = &entries[i];
-		if (!entry->is_last)
-			continue;
+		अगर (!entry->is_last)
+			जारी;
 
 		ret = dwmac5_rxp_update_single_entry(ioaddr, entry, nve);
-		if (ret)
-			goto re_enable;
+		अगर (ret)
+			जाओ re_enable;
 
 		entry->table_pos = nve++;
-	}
+	पूर्ण
 
 	/* Assume n. of parsable entries == n. of valid entries */
 	val = (nve << 16) & NPE;
 	val |= nve & NVE;
-	writel(val, ioaddr + MTL_RXP_CONTROL_STATUS);
+	ग_लिखोl(val, ioaddr + MTL_RXP_CONTROL_STATUS);
 
 	/* Enable RX Parser */
 	dwmac5_rxp_enable(ioaddr);
 
 re_enable:
 	/* Re-enable RX */
-	writel(old_val, ioaddr + GMAC_CONFIG);
-	return ret;
-}
+	ग_लिखोl(old_val, ioaddr + GMAC_CONFIG);
+	वापस ret;
+पूर्ण
 
-int dwmac5_flex_pps_config(void __iomem *ioaddr, int index,
-			   struct stmmac_pps_cfg *cfg, bool enable,
-			   u32 sub_second_inc, u32 systime_flags)
-{
-	u32 tnsec = readl(ioaddr + MAC_PPSx_TARGET_TIME_NSEC(index));
-	u32 val = readl(ioaddr + MAC_PPS_CONTROL);
+पूर्णांक dwmac5_flex_pps_config(व्योम __iomem *ioaddr, पूर्णांक index,
+			   काष्ठा sपंचांगmac_pps_cfg *cfg, bool enable,
+			   u32 sub_second_inc, u32 sysसमय_flags)
+अणु
+	u32 tnsec = पढ़ोl(ioaddr + MAC_PPSx_TARGET_TIME_NSEC(index));
+	u32 val = पढ़ोl(ioaddr + MAC_PPS_CONTROL);
 	u64 period;
 
-	if (!cfg->available)
-		return -EINVAL;
-	if (tnsec & TRGTBUSY0)
-		return -EBUSY;
-	if (!sub_second_inc || !systime_flags)
-		return -EINVAL;
+	अगर (!cfg->available)
+		वापस -EINVAL;
+	अगर (tnsec & TRGTBUSY0)
+		वापस -EBUSY;
+	अगर (!sub_second_inc || !sysसमय_flags)
+		वापस -EINVAL;
 
 	val &= ~PPSx_MASK(index);
 
-	if (!enable) {
+	अगर (!enable) अणु
 		val |= PPSCMDx(index, 0x5);
 		val |= PPSEN0;
-		writel(val, ioaddr + MAC_PPS_CONTROL);
-		return 0;
-	}
+		ग_लिखोl(val, ioaddr + MAC_PPS_CONTROL);
+		वापस 0;
+	पूर्ण
 
 	val |= PPSCMDx(index, 0x2);
 	val |= TRGTMODSELx(index, 0x2);
 	val |= PPSEN0;
 
-	writel(cfg->start.tv_sec, ioaddr + MAC_PPSx_TARGET_TIME_SEC(index));
+	ग_लिखोl(cfg->start.tv_sec, ioaddr + MAC_PPSx_TARGET_TIME_SEC(index));
 
-	if (!(systime_flags & PTP_TCR_TSCTRLSSR))
+	अगर (!(sysसमय_flags & PTP_TCR_TSCTRLSSR))
 		cfg->start.tv_nsec = (cfg->start.tv_nsec * 1000) / 465;
-	writel(cfg->start.tv_nsec, ioaddr + MAC_PPSx_TARGET_TIME_NSEC(index));
+	ग_लिखोl(cfg->start.tv_nsec, ioaddr + MAC_PPSx_TARGET_TIME_NSEC(index));
 
 	period = cfg->period.tv_sec * 1000000000;
 	period += cfg->period.tv_nsec;
 
-	do_div(period, sub_second_inc);
+	करो_भाग(period, sub_second_inc);
 
-	if (period <= 1)
-		return -EINVAL;
+	अगर (period <= 1)
+		वापस -EINVAL;
 
-	writel(period - 1, ioaddr + MAC_PPSx_INTERVAL(index));
+	ग_लिखोl(period - 1, ioaddr + MAC_PPSx_INTERVAL(index));
 
 	period >>= 1;
-	if (period <= 1)
-		return -EINVAL;
+	अगर (period <= 1)
+		वापस -EINVAL;
 
-	writel(period - 1, ioaddr + MAC_PPSx_WIDTH(index));
+	ग_लिखोl(period - 1, ioaddr + MAC_PPSx_WIDTH(index));
 
 	/* Finally, activate it */
-	writel(val, ioaddr + MAC_PPS_CONTROL);
-	return 0;
-}
+	ग_लिखोl(val, ioaddr + MAC_PPS_CONTROL);
+	वापस 0;
+पूर्ण
 
-static int dwmac5_est_write(void __iomem *ioaddr, u32 reg, u32 val, bool gcl)
-{
+अटल पूर्णांक dwmac5_est_ग_लिखो(व्योम __iomem *ioaddr, u32 reg, u32 val, bool gcl)
+अणु
 	u32 ctrl;
 
-	writel(val, ioaddr + MTL_EST_GCL_DATA);
+	ग_लिखोl(val, ioaddr + MTL_EST_GCL_DATA);
 
 	ctrl = (reg << ADDR_SHIFT);
 	ctrl |= gcl ? 0 : GCRR;
 
-	writel(ctrl, ioaddr + MTL_EST_GCL_CONTROL);
+	ग_लिखोl(ctrl, ioaddr + MTL_EST_GCL_CONTROL);
 
 	ctrl |= SRWO;
-	writel(ctrl, ioaddr + MTL_EST_GCL_CONTROL);
+	ग_लिखोl(ctrl, ioaddr + MTL_EST_GCL_CONTROL);
 
-	return readl_poll_timeout(ioaddr + MTL_EST_GCL_CONTROL,
+	वापस पढ़ोl_poll_समयout(ioaddr + MTL_EST_GCL_CONTROL,
 				  ctrl, !(ctrl & SRWO), 100, 5000);
-}
+पूर्ण
 
-int dwmac5_est_configure(void __iomem *ioaddr, struct stmmac_est *cfg,
-			 unsigned int ptp_rate)
-{
-	int i, ret = 0x0;
+पूर्णांक dwmac5_est_configure(व्योम __iomem *ioaddr, काष्ठा sपंचांगmac_est *cfg,
+			 अचिन्हित पूर्णांक ptp_rate)
+अणु
+	पूर्णांक i, ret = 0x0;
 	u32 ctrl;
 
-	ret |= dwmac5_est_write(ioaddr, BTR_LOW, cfg->btr[0], false);
-	ret |= dwmac5_est_write(ioaddr, BTR_HIGH, cfg->btr[1], false);
-	ret |= dwmac5_est_write(ioaddr, TER, cfg->ter, false);
-	ret |= dwmac5_est_write(ioaddr, LLR, cfg->gcl_size, false);
-	ret |= dwmac5_est_write(ioaddr, CTR_LOW, cfg->ctr[0], false);
-	ret |= dwmac5_est_write(ioaddr, CTR_HIGH, cfg->ctr[1], false);
-	if (ret)
-		return ret;
+	ret |= dwmac5_est_ग_लिखो(ioaddr, BTR_LOW, cfg->btr[0], false);
+	ret |= dwmac5_est_ग_लिखो(ioaddr, BTR_HIGH, cfg->btr[1], false);
+	ret |= dwmac5_est_ग_लिखो(ioaddr, TER, cfg->ter, false);
+	ret |= dwmac5_est_ग_लिखो(ioaddr, LLR, cfg->gcl_size, false);
+	ret |= dwmac5_est_ग_लिखो(ioaddr, CTR_LOW, cfg->ctr[0], false);
+	ret |= dwmac5_est_ग_लिखो(ioaddr, CTR_HIGH, cfg->ctr[1], false);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < cfg->gcl_size; i++) {
-		ret = dwmac5_est_write(ioaddr, i, cfg->gcl[i], true);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i < cfg->gcl_size; i++) अणु
+		ret = dwmac5_est_ग_लिखो(ioaddr, i, cfg->gcl[i], true);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ctrl = readl(ioaddr + MTL_EST_CONTROL);
+	ctrl = पढ़ोl(ioaddr + MTL_EST_CONTROL);
 	ctrl &= ~PTOV;
 	ctrl |= ((1000000000 / ptp_rate) * 6) << PTOV_SHIFT;
-	if (cfg->enable)
+	अगर (cfg->enable)
 		ctrl |= EEST | SSWL;
-	else
+	अन्यथा
 		ctrl &= ~EEST;
 
-	writel(ctrl, ioaddr + MTL_EST_CONTROL);
+	ग_लिखोl(ctrl, ioaddr + MTL_EST_CONTROL);
 
-	/* Configure EST interrupt */
-	if (cfg->enable)
+	/* Configure EST पूर्णांकerrupt */
+	अगर (cfg->enable)
 		ctrl = (IECGCE | IEHS | IEHF | IEBE | IECC);
-	else
+	अन्यथा
 		ctrl = 0;
 
-	writel(ctrl, ioaddr + MTL_EST_INT_EN);
+	ग_लिखोl(ctrl, ioaddr + MTL_EST_INT_EN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dwmac5_est_irq_status(void __iomem *ioaddr, struct net_device *dev,
-			  struct stmmac_extra_stats *x, u32 txqcnt)
-{
+व्योम dwmac5_est_irq_status(व्योम __iomem *ioaddr, काष्ठा net_device *dev,
+			  काष्ठा sपंचांगmac_extra_stats *x, u32 txqcnt)
+अणु
 	u32 status, value, feqn, hbfq, hbfs, btrl;
 	u32 txqcnt_mask = (1 << txqcnt) - 1;
 
-	status = readl(ioaddr + MTL_EST_STATUS);
+	status = पढ़ोl(ioaddr + MTL_EST_STATUS);
 
 	value = (CGCE | HLBS | HLBF | BTRE | SWLC);
 
-	/* Return if there is no error */
-	if (!(status & value))
-		return;
+	/* Return अगर there is no error */
+	अगर (!(status & value))
+		वापस;
 
-	if (status & CGCE) {
+	अगर (status & CGCE) अणु
 		/* Clear Interrupt */
-		writel(CGCE, ioaddr + MTL_EST_STATUS);
+		ग_लिखोl(CGCE, ioaddr + MTL_EST_STATUS);
 
 		x->mtl_est_cgce++;
-	}
+	पूर्ण
 
-	if (status & HLBS) {
-		value = readl(ioaddr + MTL_EST_SCH_ERR);
+	अगर (status & HLBS) अणु
+		value = पढ़ोl(ioaddr + MTL_EST_SCH_ERR);
 		value &= txqcnt_mask;
 
 		x->mtl_est_hlbs++;
 
 		/* Clear Interrupt */
-		writel(value, ioaddr + MTL_EST_SCH_ERR);
+		ग_लिखोl(value, ioaddr + MTL_EST_SCH_ERR);
 
 		/* Collecting info to shows all the queues that has HLBS
 		 * issue. The only way to clear this is to clear the
 		 * statistic
 		 */
-		if (net_ratelimit())
+		अगर (net_ratelimit())
 			netdev_err(dev, "EST: HLB(sched) Queue 0x%x\n", value);
-	}
+	पूर्ण
 
-	if (status & HLBF) {
-		value = readl(ioaddr + MTL_EST_FRM_SZ_ERR);
+	अगर (status & HLBF) अणु
+		value = पढ़ोl(ioaddr + MTL_EST_FRM_SZ_ERR);
 		feqn = value & txqcnt_mask;
 
-		value = readl(ioaddr + MTL_EST_FRM_SZ_CAP);
+		value = पढ़ोl(ioaddr + MTL_EST_FRM_SZ_CAP);
 		hbfq = (value & SZ_CAP_HBFQ_MASK(txqcnt)) >> SZ_CAP_HBFQ_SHIFT;
 		hbfs = value & SZ_CAP_HBFS_MASK;
 
 		x->mtl_est_hlbf++;
 
 		/* Clear Interrupt */
-		writel(feqn, ioaddr + MTL_EST_FRM_SZ_ERR);
+		ग_लिखोl(feqn, ioaddr + MTL_EST_FRM_SZ_ERR);
 
-		if (net_ratelimit())
+		अगर (net_ratelimit())
 			netdev_err(dev, "EST: HLB(size) Queue %u Size %u\n",
 				   hbfq, hbfs);
-	}
+	पूर्ण
 
-	if (status & BTRE) {
-		if ((status & BTRL) == BTRL_MAX)
+	अगर (status & BTRE) अणु
+		अगर ((status & BTRL) == BTRL_MAX)
 			x->mtl_est_btrlm++;
-		else
+		अन्यथा
 			x->mtl_est_btre++;
 
 		btrl = (status & BTRL) >> BTRL_SHIFT;
 
-		if (net_ratelimit())
+		अगर (net_ratelimit())
 			netdev_info(dev, "EST: BTR Error Loop Count %u\n",
 				    btrl);
 
-		writel(BTRE, ioaddr + MTL_EST_STATUS);
-	}
+		ग_लिखोl(BTRE, ioaddr + MTL_EST_STATUS);
+	पूर्ण
 
-	if (status & SWLC) {
-		writel(SWLC, ioaddr + MTL_EST_STATUS);
+	अगर (status & SWLC) अणु
+		ग_लिखोl(SWLC, ioaddr + MTL_EST_STATUS);
 		netdev_info(dev, "EST: SWOL has been switched\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dwmac5_fpe_configure(void __iomem *ioaddr, u32 num_txq, u32 num_rxq,
+व्योम dwmac5_fpe_configure(व्योम __iomem *ioaddr, u32 num_txq, u32 num_rxq,
 			  bool enable)
-{
+अणु
 	u32 value;
 
-	if (!enable) {
-		value = readl(ioaddr + MAC_FPE_CTRL_STS);
+	अगर (!enable) अणु
+		value = पढ़ोl(ioaddr + MAC_FPE_CTRL_STS);
 
 		value &= ~EFPE;
 
-		writel(value, ioaddr + MAC_FPE_CTRL_STS);
-		return;
-	}
+		ग_लिखोl(value, ioaddr + MAC_FPE_CTRL_STS);
+		वापस;
+	पूर्ण
 
-	value = readl(ioaddr + GMAC_RXQ_CTRL1);
+	value = पढ़ोl(ioaddr + GMAC_RXQ_CTRL1);
 	value &= ~GMAC_RXQCTRL_FPRQ;
 	value |= (num_rxq - 1) << GMAC_RXQCTRL_FPRQ_SHIFT;
-	writel(value, ioaddr + GMAC_RXQ_CTRL1);
+	ग_लिखोl(value, ioaddr + GMAC_RXQ_CTRL1);
 
-	value = readl(ioaddr + MAC_FPE_CTRL_STS);
+	value = पढ़ोl(ioaddr + MAC_FPE_CTRL_STS);
 	value |= EFPE;
-	writel(value, ioaddr + MAC_FPE_CTRL_STS);
-}
+	ग_लिखोl(value, ioaddr + MAC_FPE_CTRL_STS);
+पूर्ण
 
-int dwmac5_fpe_irq_status(void __iomem *ioaddr, struct net_device *dev)
-{
+पूर्णांक dwmac5_fpe_irq_status(व्योम __iomem *ioaddr, काष्ठा net_device *dev)
+अणु
 	u32 value;
-	int status;
+	पूर्णांक status;
 
 	status = FPE_EVENT_UNKNOWN;
 
-	value = readl(ioaddr + MAC_FPE_CTRL_STS);
+	value = पढ़ोl(ioaddr + MAC_FPE_CTRL_STS);
 
-	if (value & TRSP) {
+	अगर (value & TRSP) अणु
 		status |= FPE_EVENT_TRSP;
 		netdev_info(dev, "FPE: Respond mPacket is transmitted\n");
-	}
+	पूर्ण
 
-	if (value & TVER) {
+	अगर (value & TVER) अणु
 		status |= FPE_EVENT_TVER;
 		netdev_info(dev, "FPE: Verify mPacket is transmitted\n");
-	}
+	पूर्ण
 
-	if (value & RRSP) {
+	अगर (value & RRSP) अणु
 		status |= FPE_EVENT_RRSP;
 		netdev_info(dev, "FPE: Respond mPacket is received\n");
-	}
+	पूर्ण
 
-	if (value & RVER) {
+	अगर (value & RVER) अणु
 		status |= FPE_EVENT_RVER;
 		netdev_info(dev, "FPE: Verify mPacket is received\n");
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void dwmac5_fpe_send_mpacket(void __iomem *ioaddr, enum stmmac_mpacket_type type)
-{
+व्योम dwmac5_fpe_send_mpacket(व्योम __iomem *ioaddr, क्रमागत sपंचांगmac_mpacket_type type)
+अणु
 	u32 value;
 
-	value = readl(ioaddr + MAC_FPE_CTRL_STS);
+	value = पढ़ोl(ioaddr + MAC_FPE_CTRL_STS);
 
-	if (type == MPACKET_VERIFY) {
+	अगर (type == MPACKET_VERIFY) अणु
 		value &= ~SRSP;
 		value |= SVER;
-	} else {
+	पूर्ण अन्यथा अणु
 		value &= ~SVER;
 		value |= SRSP;
-	}
+	पूर्ण
 
-	writel(value, ioaddr + MAC_FPE_CTRL_STS);
-}
+	ग_लिखोl(value, ioaddr + MAC_FPE_CTRL_STS);
+पूर्ण

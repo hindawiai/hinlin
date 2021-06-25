@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_SOC_DOVE_PMU_H
-#define LINUX_SOC_DOVE_PMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_SOC_DOVE_PMU_H
+#घोषणा LINUX_SOC_DOVE_PMU_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct dove_pmu_domain_initdata {
+काष्ठा करोve_pmu_करोमुख्य_initdata अणु
 	u32 pwr_mask;
 	u32 rst_mask;
 	u32 iso_mask;
-	const char *name;
-};
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct dove_pmu_initdata {
-	void __iomem *pmc_base;
-	void __iomem *pmu_base;
-	int irq;
-	int irq_domain_start;
-	const struct dove_pmu_domain_initdata *domains;
-};
+काष्ठा करोve_pmu_initdata अणु
+	व्योम __iomem *pmc_base;
+	व्योम __iomem *pmu_base;
+	पूर्णांक irq;
+	पूर्णांक irq_करोमुख्य_start;
+	स्थिर काष्ठा करोve_pmu_करोमुख्य_initdata *करोमुख्यs;
+पूर्ण;
 
-int dove_init_pmu_legacy(const struct dove_pmu_initdata *);
+पूर्णांक करोve_init_pmu_legacy(स्थिर काष्ठा करोve_pmu_initdata *);
 
-int dove_init_pmu(void);
+पूर्णांक करोve_init_pmu(व्योम);
 
-#endif
+#पूर्ण_अगर

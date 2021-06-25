@@ -1,380 +1,381 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * System Control and Management Interface (SCMI) Voltage Protocol
  *
  * Copyright (C) 2020-2021 ARM Ltd.
  */
 
-#include <linux/module.h>
-#include <linux/scmi_protocol.h>
+#समावेश <linux/module.h>
+#समावेश <linux/scmi_protocol.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#define VOLTAGE_DOMS_NUM_MASK		GENMASK(15, 0)
-#define REMAINING_LEVELS_MASK		GENMASK(31, 16)
-#define RETURNED_LEVELS_MASK		GENMASK(11, 0)
+#घोषणा VOLTAGE_DOMS_NUM_MASK		GENMASK(15, 0)
+#घोषणा REMAINING_LEVELS_MASK		GENMASK(31, 16)
+#घोषणा RETURNED_LEVELS_MASK		GENMASK(11, 0)
 
-enum scmi_voltage_protocol_cmd {
+क्रमागत scmi_voltage_protocol_cmd अणु
 	VOLTAGE_DOMAIN_ATTRIBUTES = 0x3,
 	VOLTAGE_DESCRIBE_LEVELS = 0x4,
 	VOLTAGE_CONFIG_SET = 0x5,
 	VOLTAGE_CONFIG_GET = 0x6,
 	VOLTAGE_LEVEL_SET = 0x7,
 	VOLTAGE_LEVEL_GET = 0x8,
-};
+पूर्ण;
 
-#define NUM_VOLTAGE_DOMAINS(x)	((u16)(FIELD_GET(VOLTAGE_DOMS_NUM_MASK, (x))))
+#घोषणा NUM_VOLTAGE_DOMAINS(x)	((u16)(FIELD_GET(VOLTAGE_DOMS_NUM_MASK, (x))))
 
-struct scmi_msg_resp_domain_attributes {
+काष्ठा scmi_msg_resp_करोमुख्य_attributes अणु
 	__le32 attr;
 	u8 name[SCMI_MAX_STR_SIZE];
-};
+पूर्ण;
 
-struct scmi_msg_cmd_describe_levels {
-	__le32 domain_id;
+काष्ठा scmi_msg_cmd_describe_levels अणु
+	__le32 करोमुख्य_id;
 	__le32 level_index;
-};
+पूर्ण;
 
-struct scmi_msg_resp_describe_levels {
+काष्ठा scmi_msg_resp_describe_levels अणु
 	__le32 flags;
-#define NUM_REMAINING_LEVELS(f)	((u16)(FIELD_GET(REMAINING_LEVELS_MASK, (f))))
-#define NUM_RETURNED_LEVELS(f)	((u16)(FIELD_GET(RETURNED_LEVELS_MASK, (f))))
-#define SUPPORTS_SEGMENTED_LEVELS(f)	((f) & BIT(12))
+#घोषणा NUM_REMAINING_LEVELS(f)	((u16)(FIELD_GET(REMAINING_LEVELS_MASK, (f))))
+#घोषणा NUM_RETURNED_LEVELS(f)	((u16)(FIELD_GET(RETURNED_LEVELS_MASK, (f))))
+#घोषणा SUPPORTS_SEGMENTED_LEVELS(f)	((f) & BIT(12))
 	__le32 voltage[];
-};
+पूर्ण;
 
-struct scmi_msg_cmd_config_set {
-	__le32 domain_id;
+काष्ठा scmi_msg_cmd_config_set अणु
+	__le32 करोमुख्य_id;
 	__le32 config;
-};
+पूर्ण;
 
-struct scmi_msg_cmd_level_set {
-	__le32 domain_id;
+काष्ठा scmi_msg_cmd_level_set अणु
+	__le32 करोमुख्य_id;
 	__le32 flags;
 	__le32 voltage_level;
-};
+पूर्ण;
 
-struct voltage_info {
-	unsigned int version;
-	unsigned int num_domains;
-	struct scmi_voltage_info *domains;
-};
+काष्ठा voltage_info अणु
+	अचिन्हित पूर्णांक version;
+	अचिन्हित पूर्णांक num_करोमुख्यs;
+	काष्ठा scmi_voltage_info *करोमुख्यs;
+पूर्ण;
 
-static int scmi_protocol_attributes_get(const struct scmi_protocol_handle *ph,
-					struct voltage_info *vinfo)
-{
-	int ret;
-	struct scmi_xfer *t;
+अटल पूर्णांक scmi_protocol_attributes_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+					काष्ठा voltage_info *vinfo)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
 
 	ret = ph->xops->xfer_get_init(ph, PROTOCOL_ATTRIBUTES, 0,
-				      sizeof(__le32), &t);
-	if (ret)
-		return ret;
+				      माप(__le32), &t);
+	अगर (ret)
+		वापस ret;
 
-	ret = ph->xops->do_xfer(ph, t);
-	if (!ret)
-		vinfo->num_domains =
+	ret = ph->xops->करो_xfer(ph, t);
+	अगर (!ret)
+		vinfo->num_करोमुख्यs =
 			NUM_VOLTAGE_DOMAINS(get_unaligned_le32(t->rx.buf));
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_init_voltage_levels(struct device *dev,
-				    struct scmi_voltage_info *v,
-				    u32 num_returned, u32 num_remaining,
+अटल पूर्णांक scmi_init_voltage_levels(काष्ठा device *dev,
+				    काष्ठा scmi_voltage_info *v,
+				    u32 num_वापसed, u32 num_reमुख्यing,
 				    bool segmented)
-{
+अणु
 	u32 num_levels;
 
-	num_levels = num_returned + num_remaining;
+	num_levels = num_वापसed + num_reमुख्यing;
 	/*
 	 * segmented levels entries are represented by a single triplet
-	 * returned all in one go.
+	 * वापसed all in one go.
 	 */
-	if (!num_levels ||
-	    (segmented && (num_remaining || num_returned != 3))) {
+	अगर (!num_levels ||
+	    (segmented && (num_reमुख्यing || num_वापसed != 3))) अणु
 		dev_err(dev,
 			"Invalid level descriptor(%d/%d/%d) for voltage dom %d\n",
-			num_levels, num_returned, num_remaining, v->id);
-		return -EINVAL;
-	}
+			num_levels, num_वापसed, num_reमुख्यing, v->id);
+		वापस -EINVAL;
+	पूर्ण
 
-	v->levels_uv = devm_kcalloc(dev, num_levels, sizeof(u32), GFP_KERNEL);
-	if (!v->levels_uv)
-		return -ENOMEM;
+	v->levels_uv = devm_kसुस्मृति(dev, num_levels, माप(u32), GFP_KERNEL);
+	अगर (!v->levels_uv)
+		वापस -ENOMEM;
 
 	v->num_levels = num_levels;
 	v->segmented = segmented;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scmi_voltage_descriptors_get(const struct scmi_protocol_handle *ph,
-					struct voltage_info *vinfo)
-{
-	int ret, dom;
-	struct scmi_xfer *td, *tl;
-	struct device *dev = ph->dev;
-	struct scmi_msg_resp_domain_attributes *resp_dom;
-	struct scmi_msg_resp_describe_levels *resp_levels;
+अटल पूर्णांक scmi_voltage_descriptors_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+					काष्ठा voltage_info *vinfo)
+अणु
+	पूर्णांक ret, करोm;
+	काष्ठा scmi_xfer *td, *tl;
+	काष्ठा device *dev = ph->dev;
+	काष्ठा scmi_msg_resp_करोमुख्य_attributes *resp_करोm;
+	काष्ठा scmi_msg_resp_describe_levels *resp_levels;
 
 	ret = ph->xops->xfer_get_init(ph, VOLTAGE_DOMAIN_ATTRIBUTES,
-				      sizeof(__le32), sizeof(*resp_dom), &td);
-	if (ret)
-		return ret;
-	resp_dom = td->rx.buf;
+				      माप(__le32), माप(*resp_करोm), &td);
+	अगर (ret)
+		वापस ret;
+	resp_करोm = td->rx.buf;
 
 	ret = ph->xops->xfer_get_init(ph, VOLTAGE_DESCRIBE_LEVELS,
-				      sizeof(__le64), 0, &tl);
-	if (ret)
-		goto outd;
+				      माप(__le64), 0, &tl);
+	अगर (ret)
+		जाओ outd;
 	resp_levels = tl->rx.buf;
 
-	for (dom = 0; dom < vinfo->num_domains; dom++) {
+	क्रम (करोm = 0; करोm < vinfo->num_करोमुख्यs; करोm++) अणु
 		u32 desc_index = 0;
-		u16 num_returned = 0, num_remaining = 0;
-		struct scmi_msg_cmd_describe_levels *cmd;
-		struct scmi_voltage_info *v;
+		u16 num_वापसed = 0, num_reमुख्यing = 0;
+		काष्ठा scmi_msg_cmd_describe_levels *cmd;
+		काष्ठा scmi_voltage_info *v;
 
-		/* Retrieve domain attributes at first ... */
-		put_unaligned_le32(dom, td->tx.buf);
-		ret = ph->xops->do_xfer(ph, td);
-		/* Skip domain on comms error */
-		if (ret)
-			continue;
+		/* Retrieve करोमुख्य attributes at first ... */
+		put_unaligned_le32(करोm, td->tx.buf);
+		ret = ph->xops->करो_xfer(ph, td);
+		/* Skip करोमुख्य on comms error */
+		अगर (ret)
+			जारी;
 
-		v = vinfo->domains + dom;
-		v->id = dom;
-		v->attributes = le32_to_cpu(resp_dom->attr);
-		strlcpy(v->name, resp_dom->name, SCMI_MAX_STR_SIZE);
+		v = vinfo->करोमुख्यs + करोm;
+		v->id = करोm;
+		v->attributes = le32_to_cpu(resp_करोm->attr);
+		strlcpy(v->name, resp_करोm->name, SCMI_MAX_STR_SIZE);
 
 		cmd = tl->tx.buf;
-		/* ...then retrieve domain levels descriptions */
-		do {
+		/* ...then retrieve करोमुख्य levels descriptions */
+		करो अणु
 			u32 flags;
-			int cnt;
+			पूर्णांक cnt;
 
-			cmd->domain_id = cpu_to_le32(v->id);
+			cmd->करोमुख्य_id = cpu_to_le32(v->id);
 			cmd->level_index = desc_index;
-			ret = ph->xops->do_xfer(ph, tl);
-			if (ret)
-				break;
+			ret = ph->xops->करो_xfer(ph, tl);
+			अगर (ret)
+				अवरोध;
 
 			flags = le32_to_cpu(resp_levels->flags);
-			num_returned = NUM_RETURNED_LEVELS(flags);
-			num_remaining = NUM_REMAINING_LEVELS(flags);
+			num_वापसed = NUM_RETURNED_LEVELS(flags);
+			num_reमुख्यing = NUM_REMAINING_LEVELS(flags);
 
-			/* Allocate space for num_levels if not already done */
-			if (!v->num_levels) {
+			/* Allocate space क्रम num_levels अगर not alपढ़ोy करोne */
+			अगर (!v->num_levels) अणु
 				ret = scmi_init_voltage_levels(dev, v,
-							       num_returned,
-							       num_remaining,
+							       num_वापसed,
+							       num_reमुख्यing,
 					      SUPPORTS_SEGMENTED_LEVELS(flags));
-				if (ret)
-					break;
-			}
+				अगर (ret)
+					अवरोध;
+			पूर्ण
 
-			if (desc_index + num_returned > v->num_levels) {
+			अगर (desc_index + num_वापसed > v->num_levels) अणु
 				dev_err(ph->dev,
 					"No. of voltage levels can't exceed %d\n",
 					v->num_levels);
 				ret = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			for (cnt = 0; cnt < num_returned; cnt++) {
+			क्रम (cnt = 0; cnt < num_वापसed; cnt++) अणु
 				s32 val;
 
 				val =
 				    (s32)le32_to_cpu(resp_levels->voltage[cnt]);
 				v->levels_uv[desc_index + cnt] = val;
-				if (val < 0)
+				अगर (val < 0)
 					v->negative_volts_allowed = true;
-			}
+			पूर्ण
 
-			desc_index += num_returned;
+			desc_index += num_वापसed;
 
 			ph->xops->reset_rx_to_maxsz(ph, tl);
-			/* check both to avoid infinite loop due to buggy fw */
-		} while (num_returned && num_remaining);
+			/* check both to aव्योम infinite loop due to buggy fw */
+		पूर्ण जबतक (num_वापसed && num_reमुख्यing);
 
-		if (ret) {
+		अगर (ret) अणु
 			v->num_levels = 0;
-			devm_kfree(dev, v->levels_uv);
-		}
+			devm_kमुक्त(dev, v->levels_uv);
+		पूर्ण
 
 		ph->xops->reset_rx_to_maxsz(ph, td);
-	}
+	पूर्ण
 
 	ph->xops->xfer_put(ph, tl);
 outd:
 	ph->xops->xfer_put(ph, td);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __scmi_voltage_get_u32(const struct scmi_protocol_handle *ph,
-				  u8 cmd_id, u32 domain_id, u32 *value)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct voltage_info *vinfo = ph->get_priv(ph);
+अटल पूर्णांक __scmi_voltage_get_u32(स्थिर काष्ठा scmi_protocol_handle *ph,
+				  u8 cmd_id, u32 करोमुख्य_id, u32 *value)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा voltage_info *vinfo = ph->get_priv(ph);
 
-	if (domain_id >= vinfo->num_domains)
-		return -EINVAL;
+	अगर (करोमुख्य_id >= vinfo->num_करोमुख्यs)
+		वापस -EINVAL;
 
-	ret = ph->xops->xfer_get_init(ph, cmd_id, sizeof(__le32), 0, &t);
-	if (ret)
-		return ret;
+	ret = ph->xops->xfer_get_init(ph, cmd_id, माप(__le32), 0, &t);
+	अगर (ret)
+		वापस ret;
 
-	put_unaligned_le32(domain_id, t->tx.buf);
-	ret = ph->xops->do_xfer(ph, t);
-	if (!ret)
+	put_unaligned_le32(करोमुख्य_id, t->tx.buf);
+	ret = ph->xops->करो_xfer(ph, t);
+	अगर (!ret)
 		*value = get_unaligned_le32(t->rx.buf);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_voltage_config_set(const struct scmi_protocol_handle *ph,
-				   u32 domain_id, u32 config)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct voltage_info *vinfo = ph->get_priv(ph);
-	struct scmi_msg_cmd_config_set *cmd;
+अटल पूर्णांक scmi_voltage_config_set(स्थिर काष्ठा scmi_protocol_handle *ph,
+				   u32 करोमुख्य_id, u32 config)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा voltage_info *vinfo = ph->get_priv(ph);
+	काष्ठा scmi_msg_cmd_config_set *cmd;
 
-	if (domain_id >= vinfo->num_domains)
-		return -EINVAL;
+	अगर (करोमुख्य_id >= vinfo->num_करोमुख्यs)
+		वापस -EINVAL;
 
 	ret = ph->xops->xfer_get_init(ph, VOLTAGE_CONFIG_SET,
-				     sizeof(*cmd), 0, &t);
-	if (ret)
-		return ret;
+				     माप(*cmd), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	cmd = t->tx.buf;
-	cmd->domain_id = cpu_to_le32(domain_id);
+	cmd->करोमुख्य_id = cpu_to_le32(करोमुख्य_id);
 	cmd->config = cpu_to_le32(config & GENMASK(3, 0));
 
-	ret = ph->xops->do_xfer(ph, t);
+	ret = ph->xops->करो_xfer(ph, t);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_voltage_config_get(const struct scmi_protocol_handle *ph,
-				   u32 domain_id, u32 *config)
-{
-	return __scmi_voltage_get_u32(ph, VOLTAGE_CONFIG_GET,
-				      domain_id, config);
-}
+अटल पूर्णांक scmi_voltage_config_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+				   u32 करोमुख्य_id, u32 *config)
+अणु
+	वापस __scmi_voltage_get_u32(ph, VOLTAGE_CONFIG_GET,
+				      करोमुख्य_id, config);
+पूर्ण
 
-static int scmi_voltage_level_set(const struct scmi_protocol_handle *ph,
-				  u32 domain_id, u32 flags, s32 volt_uV)
-{
-	int ret;
-	struct scmi_xfer *t;
-	struct voltage_info *vinfo = ph->get_priv(ph);
-	struct scmi_msg_cmd_level_set *cmd;
+अटल पूर्णांक scmi_voltage_level_set(स्थिर काष्ठा scmi_protocol_handle *ph,
+				  u32 करोमुख्य_id, u32 flags, s32 volt_uV)
+अणु
+	पूर्णांक ret;
+	काष्ठा scmi_xfer *t;
+	काष्ठा voltage_info *vinfo = ph->get_priv(ph);
+	काष्ठा scmi_msg_cmd_level_set *cmd;
 
-	if (domain_id >= vinfo->num_domains)
-		return -EINVAL;
+	अगर (करोमुख्य_id >= vinfo->num_करोमुख्यs)
+		वापस -EINVAL;
 
 	ret = ph->xops->xfer_get_init(ph, VOLTAGE_LEVEL_SET,
-				      sizeof(*cmd), 0, &t);
-	if (ret)
-		return ret;
+				      माप(*cmd), 0, &t);
+	अगर (ret)
+		वापस ret;
 
 	cmd = t->tx.buf;
-	cmd->domain_id = cpu_to_le32(domain_id);
+	cmd->करोमुख्य_id = cpu_to_le32(करोमुख्य_id);
 	cmd->flags = cpu_to_le32(flags);
 	cmd->voltage_level = cpu_to_le32(volt_uV);
 
-	ret = ph->xops->do_xfer(ph, t);
+	ret = ph->xops->करो_xfer(ph, t);
 
 	ph->xops->xfer_put(ph, t);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scmi_voltage_level_get(const struct scmi_protocol_handle *ph,
-				  u32 domain_id, s32 *volt_uV)
-{
-	return __scmi_voltage_get_u32(ph, VOLTAGE_LEVEL_GET,
-				      domain_id, (u32 *)volt_uV);
-}
+अटल पूर्णांक scmi_voltage_level_get(स्थिर काष्ठा scmi_protocol_handle *ph,
+				  u32 करोमुख्य_id, s32 *volt_uV)
+अणु
+	वापस __scmi_voltage_get_u32(ph, VOLTAGE_LEVEL_GET,
+				      करोमुख्य_id, (u32 *)volt_uV);
+पूर्ण
 
-static const struct scmi_voltage_info * __must_check
-scmi_voltage_info_get(const struct scmi_protocol_handle *ph, u32 domain_id)
-{
-	struct voltage_info *vinfo = ph->get_priv(ph);
+अटल स्थिर काष्ठा scmi_voltage_info * __must_check
+scmi_voltage_info_get(स्थिर काष्ठा scmi_protocol_handle *ph, u32 करोमुख्य_id)
+अणु
+	काष्ठा voltage_info *vinfo = ph->get_priv(ph);
 
-	if (domain_id >= vinfo->num_domains ||
-	    !vinfo->domains[domain_id].num_levels)
-		return NULL;
+	अगर (करोमुख्य_id >= vinfo->num_करोमुख्यs ||
+	    !vinfo->करोमुख्यs[करोमुख्य_id].num_levels)
+		वापस शून्य;
 
-	return vinfo->domains + domain_id;
-}
+	वापस vinfo->करोमुख्यs + करोमुख्य_id;
+पूर्ण
 
-static int scmi_voltage_domains_num_get(const struct scmi_protocol_handle *ph)
-{
-	struct voltage_info *vinfo = ph->get_priv(ph);
+अटल पूर्णांक scmi_voltage_करोमुख्यs_num_get(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
+	काष्ठा voltage_info *vinfo = ph->get_priv(ph);
 
-	return vinfo->num_domains;
-}
+	वापस vinfo->num_करोमुख्यs;
+पूर्ण
 
-static struct scmi_voltage_proto_ops voltage_proto_ops = {
-	.num_domains_get = scmi_voltage_domains_num_get,
+अटल काष्ठा scmi_voltage_proto_ops voltage_proto_ops = अणु
+	.num_करोमुख्यs_get = scmi_voltage_करोमुख्यs_num_get,
 	.info_get = scmi_voltage_info_get,
 	.config_set = scmi_voltage_config_set,
 	.config_get = scmi_voltage_config_get,
 	.level_set = scmi_voltage_level_set,
 	.level_get = scmi_voltage_level_get,
-};
+पूर्ण;
 
-static int scmi_voltage_protocol_init(const struct scmi_protocol_handle *ph)
-{
-	int ret;
+अटल पूर्णांक scmi_voltage_protocol_init(स्थिर काष्ठा scmi_protocol_handle *ph)
+अणु
+	पूर्णांक ret;
 	u32 version;
-	struct voltage_info *vinfo;
+	काष्ठा voltage_info *vinfo;
 
 	ret = ph->xops->version_get(ph, &version);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev_dbg(ph->dev, "Voltage Version %d.%d\n",
 		PROTOCOL_REV_MAJOR(version), PROTOCOL_REV_MINOR(version));
 
-	vinfo = devm_kzalloc(ph->dev, sizeof(*vinfo), GFP_KERNEL);
-	if (!vinfo)
-		return -ENOMEM;
+	vinfo = devm_kzalloc(ph->dev, माप(*vinfo), GFP_KERNEL);
+	अगर (!vinfo)
+		वापस -ENOMEM;
 	vinfo->version = version;
 
 	ret = scmi_protocol_attributes_get(ph, vinfo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (vinfo->num_domains) {
-		vinfo->domains = devm_kcalloc(ph->dev, vinfo->num_domains,
-					      sizeof(*vinfo->domains),
+	अगर (vinfo->num_करोमुख्यs) अणु
+		vinfo->करोमुख्यs = devm_kसुस्मृति(ph->dev, vinfo->num_करोमुख्यs,
+					      माप(*vinfo->करोमुख्यs),
 					      GFP_KERNEL);
-		if (!vinfo->domains)
-			return -ENOMEM;
+		अगर (!vinfo->करोमुख्यs)
+			वापस -ENOMEM;
 		ret = scmi_voltage_descriptors_get(ph, vinfo);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		dev_warn(ph->dev, "No Voltage domains found.\n");
-	}
+	पूर्ण
 
-	return ph->set_priv(ph, vinfo);
-}
+	वापस ph->set_priv(ph, vinfo);
+पूर्ण
 
-static const struct scmi_protocol scmi_voltage = {
+अटल स्थिर काष्ठा scmi_protocol scmi_voltage = अणु
 	.id = SCMI_PROTOCOL_VOLTAGE,
 	.owner = THIS_MODULE,
 	.instance_init = &scmi_voltage_protocol_init,
 	.ops = &voltage_proto_ops,
-};
+पूर्ण;
 
 DEFINE_SCMI_PROTOCOL_REGISTER_UNREGISTER(voltage, scmi_voltage)

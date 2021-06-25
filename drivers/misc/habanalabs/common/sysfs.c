@@ -1,417 +1,418 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "habanalabs.h"
+#समावेश "habanalabs.h"
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-long hl_get_frequency(struct hl_device *hdev, u32 pll_index,
+दीर्घ hl_get_frequency(काष्ठा hl_device *hdev, u32 pll_index,
 								bool curr)
-{
-	struct cpucp_packet pkt;
+अणु
+	काष्ठा cpucp_packet pkt;
 	u32 used_pll_idx;
 	u64 result;
-	int rc;
+	पूर्णांक rc;
 
 	rc = get_used_pll_index(hdev, pll_index, &used_pll_idx);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
-	if (curr)
+	अगर (curr)
 		pkt.ctl = cpu_to_le32(CPUCP_PACKET_FREQUENCY_CURR_GET <<
 						CPUCP_PKT_CTL_OPCODE_SHIFT);
-	else
+	अन्यथा
 		pkt.ctl = cpu_to_le32(CPUCP_PACKET_FREQUENCY_GET <<
 						CPUCP_PKT_CTL_OPCODE_SHIFT);
 	pkt.pll_index = cpu_to_le32((u32)used_pll_idx);
 
-	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, sizeof(pkt),
+	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, माप(pkt),
 						0, &result);
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(hdev->dev,
 			"Failed to get frequency of PLL %d, error %d\n",
 			used_pll_idx, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return (long) result;
-}
+	वापस (दीर्घ) result;
+पूर्ण
 
-void hl_set_frequency(struct hl_device *hdev, u32 pll_index,
+व्योम hl_set_frequency(काष्ठा hl_device *hdev, u32 pll_index,
 								u64 freq)
-{
-	struct cpucp_packet pkt;
+अणु
+	काष्ठा cpucp_packet pkt;
 	u32 used_pll_idx;
-	int rc;
+	पूर्णांक rc;
 
 	rc = get_used_pll_index(hdev, pll_index, &used_pll_idx);
-	if (rc)
-		return;
+	अगर (rc)
+		वापस;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
 	pkt.ctl = cpu_to_le32(CPUCP_PACKET_FREQUENCY_SET <<
 					CPUCP_PKT_CTL_OPCODE_SHIFT);
 	pkt.pll_index = cpu_to_le32((u32)used_pll_idx);
 	pkt.value = cpu_to_le64(freq);
 
-	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, sizeof(pkt),
-						0, NULL);
+	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, माप(pkt),
+						0, शून्य);
 
-	if (rc)
+	अगर (rc)
 		dev_err(hdev->dev,
 			"Failed to set frequency to PLL %d, error %d\n",
 			used_pll_idx, rc);
-}
+पूर्ण
 
-u64 hl_get_max_power(struct hl_device *hdev)
-{
-	struct cpucp_packet pkt;
+u64 hl_get_max_घातer(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा cpucp_packet pkt;
 	u64 result;
-	int rc;
+	पूर्णांक rc;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
 	pkt.ctl = cpu_to_le32(CPUCP_PACKET_MAX_POWER_GET <<
 				CPUCP_PKT_CTL_OPCODE_SHIFT);
 
-	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, sizeof(pkt),
+	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, माप(pkt),
 						0, &result);
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(hdev->dev, "Failed to get max power, error %d\n", rc);
-		return (u64) rc;
-	}
+		वापस (u64) rc;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-void hl_set_max_power(struct hl_device *hdev)
-{
-	struct cpucp_packet pkt;
-	int rc;
+व्योम hl_set_max_घातer(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा cpucp_packet pkt;
+	पूर्णांक rc;
 
-	memset(&pkt, 0, sizeof(pkt));
+	स_रखो(&pkt, 0, माप(pkt));
 
 	pkt.ctl = cpu_to_le32(CPUCP_PACKET_MAX_POWER_SET <<
 				CPUCP_PKT_CTL_OPCODE_SHIFT);
-	pkt.value = cpu_to_le64(hdev->max_power);
+	pkt.value = cpu_to_le64(hdev->max_घातer);
 
-	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, sizeof(pkt),
-						0, NULL);
+	rc = hdev->asic_funcs->send_cpu_message(hdev, (u32 *) &pkt, माप(pkt),
+						0, शून्य);
 
-	if (rc)
+	अगर (rc)
 		dev_err(hdev->dev, "Failed to set max power, error %d\n", rc);
-}
+पूर्ण
 
-static ssize_t uboot_ver_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार uboot_ver_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", hdev->asic_prop.uboot_ver);
-}
+	वापस प्र_लिखो(buf, "%s\n", hdev->asic_prop.uboot_ver);
+पूर्ण
 
-static ssize_t armcp_kernel_ver_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार armcp_kernel_ver_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s", hdev->asic_prop.cpucp_info.kernel_version);
-}
+	वापस प्र_लिखो(buf, "%s", hdev->asic_prop.cpucp_info.kernel_version);
+पूर्ण
 
-static ssize_t armcp_ver_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार armcp_ver_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", hdev->asic_prop.cpucp_info.cpucp_version);
-}
+	वापस प्र_लिखो(buf, "%s\n", hdev->asic_prop.cpucp_info.cpucp_version);
+पूर्ण
 
-static ssize_t cpld_ver_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार cpld_ver_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "0x%08x\n",
+	वापस प्र_लिखो(buf, "0x%08x\n",
 			hdev->asic_prop.cpucp_info.cpld_version);
-}
+पूर्ण
 
-static ssize_t cpucp_kernel_ver_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार cpucp_kernel_ver_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s", hdev->asic_prop.cpucp_info.kernel_version);
-}
+	वापस प्र_लिखो(buf, "%s", hdev->asic_prop.cpucp_info.kernel_version);
+पूर्ण
 
-static ssize_t cpucp_ver_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार cpucp_ver_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", hdev->asic_prop.cpucp_info.cpucp_version);
-}
+	वापस प्र_लिखो(buf, "%s\n", hdev->asic_prop.cpucp_info.cpucp_version);
+पूर्ण
 
-static ssize_t infineon_ver_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार infineon_ver_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "0x%04x\n",
+	वापस प्र_लिखो(buf, "0x%04x\n",
 			hdev->asic_prop.cpucp_info.infineon_version);
-}
+पूर्ण
 
-static ssize_t fuse_ver_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार fuse_ver_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", hdev->asic_prop.cpucp_info.fuse_version);
-}
+	वापस प्र_लिखो(buf, "%s\n", hdev->asic_prop.cpucp_info.fuse_version);
+पूर्ण
 
-static ssize_t thermal_ver_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार thermal_ver_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s", hdev->asic_prop.cpucp_info.thermal_version);
-}
+	वापस प्र_लिखो(buf, "%s", hdev->asic_prop.cpucp_info.thermal_version);
+पूर्ण
 
-static ssize_t preboot_btl_ver_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार preboot_btl_ver_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", hdev->asic_prop.preboot_ver);
-}
+	वापस प्र_लिखो(buf, "%s\n", hdev->asic_prop.preboot_ver);
+पूर्ण
 
-static ssize_t soft_reset_store(struct device *dev,
-				struct device_attribute *attr, const char *buf,
-				size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
-	int rc;
+अटल sमाप_प्रकार soft_reset_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!hdev->supports_soft_reset) {
+	अगर (!hdev->supports_soft_reset) अणु
 		dev_err(hdev->dev, "Device does not support soft-reset\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_warn(hdev->dev, "Soft-Reset requested through sysfs\n");
 
 	hl_device_reset(hdev, 0);
 
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t hard_reset_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
-	int rc;
+अटल sमाप_प्रकार hard_reset_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
+	पूर्णांक rc;
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_warn(hdev->dev, "Hard-Reset requested through sysfs\n");
 
 	hl_device_reset(hdev, HL_RESET_HARD);
 
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t device_type_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	char *str;
+अटल sमाप_प्रकार device_type_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	अक्षर *str;
 
-	switch (hdev->asic_type) {
-	case ASIC_GOYA:
+	चयन (hdev->asic_type) अणु
+	हाल ASIC_GOYA:
 		str = "GOYA";
-		break;
-	case ASIC_GAUDI:
+		अवरोध;
+	हाल ASIC_GAUDI:
 		str = "GAUDI";
-		break;
-	case ASIC_GAUDI_SEC:
+		अवरोध;
+	हाल ASIC_GAUDI_SEC:
 		str = "GAUDI SEC";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hdev->dev, "Unrecognized ASIC type %d\n",
 				hdev->asic_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return sprintf(buf, "%s\n", str);
-}
+	वापस प्र_लिखो(buf, "%s\n", str);
+पूर्ण
 
-static ssize_t pci_addr_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार pci_addr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%04x:%02x:%02x.%x\n",
-			pci_domain_nr(hdev->pdev->bus),
+	वापस प्र_लिखो(buf, "%04x:%02x:%02x.%x\n",
+			pci_करोमुख्य_nr(hdev->pdev->bus),
 			hdev->pdev->bus->number,
 			PCI_SLOT(hdev->pdev->devfn),
 			PCI_FUNC(hdev->pdev->devfn));
-}
+पूर्ण
 
-static ssize_t status_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	char *str;
+अटल sमाप_प्रकार status_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	अक्षर *str;
 
-	if (atomic_read(&hdev->in_reset))
+	अगर (atomic_पढ़ो(&hdev->in_reset))
 		str = "In reset";
-	else if (hdev->disabled)
+	अन्यथा अगर (hdev->disabled)
 		str = "Malfunction";
-	else if (hdev->needs_reset)
+	अन्यथा अगर (hdev->needs_reset)
 		str = "Needs Reset";
-	else
+	अन्यथा
 		str = "Operational";
 
-	return sprintf(buf, "%s\n", str);
-}
+	वापस प्र_लिखो(buf, "%s\n", str);
+पूर्ण
 
-static ssize_t soft_reset_cnt_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार soft_reset_cnt_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", hdev->soft_reset_cnt);
-}
+	वापस प्र_लिखो(buf, "%d\n", hdev->soft_reset_cnt);
+पूर्ण
 
-static ssize_t hard_reset_cnt_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार hard_reset_cnt_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%d\n", hdev->hard_reset_cnt);
-}
+	वापस प्र_लिखो(buf, "%d\n", hdev->hard_reset_cnt);
+पूर्ण
 
-static ssize_t max_power_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long val;
+अटल sमाप_प्रकार max_घातer_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ val;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
-	val = hl_get_max_power(hdev);
+	val = hl_get_max_घातer(hdev);
 
-	return sprintf(buf, "%lu\n", val);
-}
+	वापस प्र_लिखो(buf, "%lu\n", val);
+पूर्ण
 
-static ssize_t max_power_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	unsigned long value;
-	int rc;
+अटल sमाप_प्रकार max_घातer_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ value;
+	पूर्णांक rc;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	hdev->max_power = value;
-	hl_set_max_power(hdev);
+	hdev->max_घातer = value;
+	hl_set_max_घातer(hdev);
 
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t eeprom_read_handler(struct file *filp, struct kobject *kobj,
-			struct bin_attribute *attr, char *buf, loff_t offset,
-			size_t max_size)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	char *data;
-	int rc;
+अटल sमाप_प्रकार eeprom_पढ़ो_handler(काष्ठा file *filp, काष्ठा kobject *kobj,
+			काष्ठा bin_attribute *attr, अक्षर *buf, loff_t offset,
+			माप_प्रकार max_size)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	अक्षर *data;
+	पूर्णांक rc;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
-	if (!max_size)
-		return -EINVAL;
+	अगर (!max_size)
+		वापस -EINVAL;
 
 	data = kzalloc(max_size, GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	rc = hdev->asic_funcs->get_eeprom_data(hdev, data, max_size);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	memcpy(buf, data, max_size);
+	स_नकल(buf, data, max_size);
 
 out:
-	kfree(data);
+	kमुक्त(data);
 
-	return max_size;
-}
+	वापस max_size;
+पूर्ण
 
-static DEVICE_ATTR_RO(armcp_kernel_ver);
-static DEVICE_ATTR_RO(armcp_ver);
-static DEVICE_ATTR_RO(cpld_ver);
-static DEVICE_ATTR_RO(cpucp_kernel_ver);
-static DEVICE_ATTR_RO(cpucp_ver);
-static DEVICE_ATTR_RO(device_type);
-static DEVICE_ATTR_RO(fuse_ver);
-static DEVICE_ATTR_WO(hard_reset);
-static DEVICE_ATTR_RO(hard_reset_cnt);
-static DEVICE_ATTR_RO(infineon_ver);
-static DEVICE_ATTR_RW(max_power);
-static DEVICE_ATTR_RO(pci_addr);
-static DEVICE_ATTR_RO(preboot_btl_ver);
-static DEVICE_ATTR_WO(soft_reset);
-static DEVICE_ATTR_RO(soft_reset_cnt);
-static DEVICE_ATTR_RO(status);
-static DEVICE_ATTR_RO(thermal_ver);
-static DEVICE_ATTR_RO(uboot_ver);
+अटल DEVICE_ATTR_RO(armcp_kernel_ver);
+अटल DEVICE_ATTR_RO(armcp_ver);
+अटल DEVICE_ATTR_RO(cpld_ver);
+अटल DEVICE_ATTR_RO(cpucp_kernel_ver);
+अटल DEVICE_ATTR_RO(cpucp_ver);
+अटल DEVICE_ATTR_RO(device_type);
+अटल DEVICE_ATTR_RO(fuse_ver);
+अटल DEVICE_ATTR_WO(hard_reset);
+अटल DEVICE_ATTR_RO(hard_reset_cnt);
+अटल DEVICE_ATTR_RO(infineon_ver);
+अटल DEVICE_ATTR_RW(max_घातer);
+अटल DEVICE_ATTR_RO(pci_addr);
+अटल DEVICE_ATTR_RO(preboot_btl_ver);
+अटल DEVICE_ATTR_WO(soft_reset);
+अटल DEVICE_ATTR_RO(soft_reset_cnt);
+अटल DEVICE_ATTR_RO(status);
+अटल DEVICE_ATTR_RO(thermal_ver);
+अटल DEVICE_ATTR_RO(uboot_ver);
 
-static struct bin_attribute bin_attr_eeprom = {
-	.attr = {.name = "eeprom", .mode = (0444)},
+अटल काष्ठा bin_attribute bin_attr_eeprom = अणु
+	.attr = अणु.name = "eeprom", .mode = (0444)पूर्ण,
 	.size = PAGE_SIZE,
-	.read = eeprom_read_handler
-};
+	.पढ़ो = eeprom_पढ़ो_handler
+पूर्ण;
 
-static struct attribute *hl_dev_attrs[] = {
+अटल काष्ठा attribute *hl_dev_attrs[] = अणु
 	&dev_attr_armcp_kernel_ver.attr,
 	&dev_attr_armcp_ver.attr,
 	&dev_attr_cpld_ver.attr,
@@ -422,7 +423,7 @@ static struct attribute *hl_dev_attrs[] = {
 	&dev_attr_hard_reset.attr,
 	&dev_attr_hard_reset_cnt.attr,
 	&dev_attr_infineon_ver.attr,
-	&dev_attr_max_power.attr,
+	&dev_attr_max_घातer.attr,
 	&dev_attr_pci_addr.attr,
 	&dev_attr_preboot_btl_ver.attr,
 	&dev_attr_soft_reset.attr,
@@ -430,51 +431,51 @@ static struct attribute *hl_dev_attrs[] = {
 	&dev_attr_status.attr,
 	&dev_attr_thermal_ver.attr,
 	&dev_attr_uboot_ver.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct bin_attribute *hl_dev_bin_attrs[] = {
+अटल काष्ठा bin_attribute *hl_dev_bin_attrs[] = अणु
 	&bin_attr_eeprom,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group hl_dev_attr_group = {
+अटल काष्ठा attribute_group hl_dev_attr_group = अणु
 	.attrs = hl_dev_attrs,
 	.bin_attrs = hl_dev_bin_attrs,
-};
+पूर्ण;
 
-static struct attribute_group hl_dev_clks_attr_group;
+अटल काष्ठा attribute_group hl_dev_clks_attr_group;
 
-static const struct attribute_group *hl_dev_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *hl_dev_attr_groups[] = अणु
 	&hl_dev_attr_group,
 	&hl_dev_clks_attr_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-int hl_sysfs_init(struct hl_device *hdev)
-{
-	int rc;
+पूर्णांक hl_sysfs_init(काष्ठा hl_device *hdev)
+अणु
+	पूर्णांक rc;
 
-	if (hdev->asic_type == ASIC_GOYA)
+	अगर (hdev->asic_type == ASIC_GOYA)
 		hdev->pm_mng_profile = PM_AUTO;
-	else
+	अन्यथा
 		hdev->pm_mng_profile = PM_MANUAL;
 
-	hdev->max_power = hdev->asic_prop.max_power_default;
+	hdev->max_घातer = hdev->asic_prop.max_घातer_शेष;
 
 	hdev->asic_funcs->add_device_attr(hdev, &hl_dev_clks_attr_group);
 
 	rc = device_add_groups(hdev->dev, hl_dev_attr_groups);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(hdev->dev,
 			"Failed to add groups to device, error %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hl_sysfs_fini(struct hl_device *hdev)
-{
-	device_remove_groups(hdev->dev, hl_dev_attr_groups);
-}
+व्योम hl_sysfs_fini(काष्ठा hl_device *hdev)
+अणु
+	device_हटाओ_groups(hdev->dev, hl_dev_attr_groups);
+पूर्ण

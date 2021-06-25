@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,236 +22,236 @@
  *
  */
 
-#ifndef KFD_DEVICE_QUEUE_MANAGER_H_
-#define KFD_DEVICE_QUEUE_MANAGER_H_
+#अगर_अघोषित KFD_DEVICE_QUEUE_MANAGER_H_
+#घोषणा KFD_DEVICE_QUEUE_MANAGER_H_
 
-#include <linux/rwsem.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/sched/mm.h>
-#include "kfd_priv.h"
-#include "kfd_mqd_manager.h"
+#समावेश <linux/rwsem.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched/mm.h>
+#समावेश "kfd_priv.h"
+#समावेश "kfd_mqd_manager.h"
 
 
-#define VMID_NUM 16
+#घोषणा VMID_NUM 16
 
-struct device_process_node {
-	struct qcm_process_device *qpd;
-	struct list_head list;
-};
+काष्ठा device_process_node अणु
+	काष्ठा qcm_process_device *qpd;
+	काष्ठा list_head list;
+पूर्ण;
 
 /**
- * struct device_queue_manager_ops
+ * काष्ठा device_queue_manager_ops
  *
  * @create_queue: Queue creation routine.
  *
- * @destroy_queue: Queue destruction routine.
+ * @destroy_queue: Queue deकाष्ठाion routine.
  *
  * @update_queue: Queue update routine.
  *
  * @exeute_queues: Dispatches the queues list to the H/W.
  *
- * @register_process: This routine associates a specific process with device.
+ * @रेजिस्टर_process: This routine associates a specअगरic process with device.
  *
- * @unregister_process: destroys the associations between process to device.
+ * @unरेजिस्टर_process: destroys the associations between process to device.
  *
- * @initialize: Initializes the pipelines and memory module for that device.
+ * @initialize: Initializes the pipelines and memory module क्रम that device.
  *
- * @start: Initializes the resources/modules the the device needs for queues
+ * @start: Initializes the resources/modules the the device needs क्रम queues
  * execution. This function is called on device initialization and after the
- * system woke up after suspension.
+ * प्रणाली woke up after suspension.
  *
  * @stop: This routine stops execution of all the active queue running on the
- * H/W and basically this function called on system suspend.
+ * H/W and basically this function called on प्रणाली suspend.
  *
  * @uninitialize: Destroys all the device queue manager resources allocated in
  * initialize routine.
  *
- * @create_kernel_queue: Creates kernel queue. Used for debug queue.
+ * @create_kernel_queue: Creates kernel queue. Used क्रम debug queue.
  *
- * @destroy_kernel_queue: Destroys kernel queue. Used for debug queue.
+ * @destroy_kernel_queue: Destroys kernel queue. Used क्रम debug queue.
  *
- * @set_cache_memory_policy: Sets memory policy (cached/ non cached) for the
+ * @set_cache_memory_policy: Sets memory policy (cached/ non cached) क्रम the
  * memory apertures.
  *
- * @process_termination: Clears all process queues belongs to that device.
+ * @process_termination: Clears all process queues beदीर्घs to that device.
  *
  * @evict_process_queues: Evict all active queues of a process
  *
  * @restore_process_queues: Restore all evicted queues queues of a process
  *
  * @get_wave_state: Retrieves context save state and optionally copies the
- * control stack, if kept in the MQD, to the given userspace address.
+ * control stack, अगर kept in the MQD, to the given userspace address.
  */
 
-struct device_queue_manager_ops {
-	int	(*create_queue)(struct device_queue_manager *dqm,
-				struct queue *q,
-				struct qcm_process_device *qpd);
+काष्ठा device_queue_manager_ops अणु
+	पूर्णांक	(*create_queue)(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q,
+				काष्ठा qcm_process_device *qpd);
 
-	int	(*destroy_queue)(struct device_queue_manager *dqm,
-				struct qcm_process_device *qpd,
-				struct queue *q);
+	पूर्णांक	(*destroy_queue)(काष्ठा device_queue_manager *dqm,
+				काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q);
 
-	int	(*update_queue)(struct device_queue_manager *dqm,
-				struct queue *q);
+	पूर्णांक	(*update_queue)(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q);
 
-	int	(*register_process)(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd);
+	पूर्णांक	(*रेजिस्टर_process)(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd);
 
-	int	(*unregister_process)(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd);
+	पूर्णांक	(*unरेजिस्टर_process)(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd);
 
-	int	(*initialize)(struct device_queue_manager *dqm);
-	int	(*start)(struct device_queue_manager *dqm);
-	int	(*stop)(struct device_queue_manager *dqm);
-	void	(*pre_reset)(struct device_queue_manager *dqm);
-	void	(*uninitialize)(struct device_queue_manager *dqm);
-	int	(*create_kernel_queue)(struct device_queue_manager *dqm,
-					struct kernel_queue *kq,
-					struct qcm_process_device *qpd);
+	पूर्णांक	(*initialize)(काष्ठा device_queue_manager *dqm);
+	पूर्णांक	(*start)(काष्ठा device_queue_manager *dqm);
+	पूर्णांक	(*stop)(काष्ठा device_queue_manager *dqm);
+	व्योम	(*pre_reset)(काष्ठा device_queue_manager *dqm);
+	व्योम	(*uninitialize)(काष्ठा device_queue_manager *dqm);
+	पूर्णांक	(*create_kernel_queue)(काष्ठा device_queue_manager *dqm,
+					काष्ठा kernel_queue *kq,
+					काष्ठा qcm_process_device *qpd);
 
-	void	(*destroy_kernel_queue)(struct device_queue_manager *dqm,
-					struct kernel_queue *kq,
-					struct qcm_process_device *qpd);
+	व्योम	(*destroy_kernel_queue)(काष्ठा device_queue_manager *dqm,
+					काष्ठा kernel_queue *kq,
+					काष्ठा qcm_process_device *qpd);
 
-	bool	(*set_cache_memory_policy)(struct device_queue_manager *dqm,
-					   struct qcm_process_device *qpd,
-					   enum cache_policy default_policy,
-					   enum cache_policy alternate_policy,
-					   void __user *alternate_aperture_base,
-					   uint64_t alternate_aperture_size);
+	bool	(*set_cache_memory_policy)(काष्ठा device_queue_manager *dqm,
+					   काष्ठा qcm_process_device *qpd,
+					   क्रमागत cache_policy शेष_policy,
+					   क्रमागत cache_policy alternate_policy,
+					   व्योम __user *alternate_aperture_base,
+					   uपूर्णांक64_t alternate_aperture_size);
 
-	int (*process_termination)(struct device_queue_manager *dqm,
-			struct qcm_process_device *qpd);
+	पूर्णांक (*process_termination)(काष्ठा device_queue_manager *dqm,
+			काष्ठा qcm_process_device *qpd);
 
-	int (*evict_process_queues)(struct device_queue_manager *dqm,
-				    struct qcm_process_device *qpd);
-	int (*restore_process_queues)(struct device_queue_manager *dqm,
-				      struct qcm_process_device *qpd);
+	पूर्णांक (*evict_process_queues)(काष्ठा device_queue_manager *dqm,
+				    काष्ठा qcm_process_device *qpd);
+	पूर्णांक (*restore_process_queues)(काष्ठा device_queue_manager *dqm,
+				      काष्ठा qcm_process_device *qpd);
 
-	int	(*get_wave_state)(struct device_queue_manager *dqm,
-				  struct queue *q,
-				  void __user *ctl_stack,
+	पूर्णांक	(*get_wave_state)(काष्ठा device_queue_manager *dqm,
+				  काष्ठा queue *q,
+				  व्योम __user *ctl_stack,
 				  u32 *ctl_stack_used_size,
 				  u32 *save_area_used_size);
-};
+पूर्ण;
 
-struct device_queue_manager_asic_ops {
-	int	(*update_qpd)(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd);
-	bool	(*set_cache_memory_policy)(struct device_queue_manager *dqm,
-					   struct qcm_process_device *qpd,
-					   enum cache_policy default_policy,
-					   enum cache_policy alternate_policy,
-					   void __user *alternate_aperture_base,
-					   uint64_t alternate_aperture_size);
-	void	(*init_sdma_vm)(struct device_queue_manager *dqm,
-				struct queue *q,
-				struct qcm_process_device *qpd);
-	struct mqd_manager *	(*mqd_manager_init)(enum KFD_MQD_TYPE type,
-				 struct kfd_dev *dev);
-};
+काष्ठा device_queue_manager_asic_ops अणु
+	पूर्णांक	(*update_qpd)(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd);
+	bool	(*set_cache_memory_policy)(काष्ठा device_queue_manager *dqm,
+					   काष्ठा qcm_process_device *qpd,
+					   क्रमागत cache_policy शेष_policy,
+					   क्रमागत cache_policy alternate_policy,
+					   व्योम __user *alternate_aperture_base,
+					   uपूर्णांक64_t alternate_aperture_size);
+	व्योम	(*init_sdma_vm)(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q,
+				काष्ठा qcm_process_device *qpd);
+	काष्ठा mqd_manager *	(*mqd_manager_init)(क्रमागत KFD_MQD_TYPE type,
+				 काष्ठा kfd_dev *dev);
+पूर्ण;
 
 /**
- * struct device_queue_manager
+ * काष्ठा device_queue_manager
  *
- * This struct is a base class for the kfd queues scheduler in the
+ * This काष्ठा is a base class क्रम the kfd queues scheduler in the
  * device level. The device base class should expose the basic operations
- * for queue creation and queue destruction. This base class hides the
- * scheduling mode of the driver and the specific implementation of the
+ * क्रम queue creation and queue deकाष्ठाion. This base class hides the
+ * scheduling mode of the driver and the specअगरic implementation of the
  * concrete device. This class is the only class in the queues scheduler
  * that configures the H/W.
  *
  */
 
-struct device_queue_manager {
-	struct device_queue_manager_ops ops;
-	struct device_queue_manager_asic_ops asic_ops;
+काष्ठा device_queue_manager अणु
+	काष्ठा device_queue_manager_ops ops;
+	काष्ठा device_queue_manager_asic_ops asic_ops;
 
-	struct mqd_manager	*mqd_mgrs[KFD_MQD_TYPE_MAX];
-	struct packet_manager	packets;
-	struct kfd_dev		*dev;
-	struct mutex		lock_hidden; /* use dqm_lock/unlock(dqm) */
-	struct list_head	queues;
-	unsigned int		saved_flags;
-	unsigned int		processes_count;
-	unsigned int		active_queue_count;
-	unsigned int		active_cp_queue_count;
-	unsigned int		gws_queue_count;
-	unsigned int		total_queue_count;
-	unsigned int		next_pipe_to_allocate;
-	unsigned int		*allocated_queues;
-	uint64_t		sdma_bitmap;
-	uint64_t		xgmi_sdma_bitmap;
-	/* the pasid mapping for each kfd vmid */
-	uint16_t		vmid_pasid[VMID_NUM];
-	uint64_t		pipelines_addr;
-	uint64_t		fence_gpu_addr;
-	uint64_t		*fence_addr;
-	struct kfd_mem_obj	*fence_mem;
+	काष्ठा mqd_manager	*mqd_mgrs[KFD_MQD_TYPE_MAX];
+	काष्ठा packet_manager	packets;
+	काष्ठा kfd_dev		*dev;
+	काष्ठा mutex		lock_hidden; /* use dqm_lock/unlock(dqm) */
+	काष्ठा list_head	queues;
+	अचिन्हित पूर्णांक		saved_flags;
+	अचिन्हित पूर्णांक		processes_count;
+	अचिन्हित पूर्णांक		active_queue_count;
+	अचिन्हित पूर्णांक		active_cp_queue_count;
+	अचिन्हित पूर्णांक		gws_queue_count;
+	अचिन्हित पूर्णांक		total_queue_count;
+	अचिन्हित पूर्णांक		next_pipe_to_allocate;
+	अचिन्हित पूर्णांक		*allocated_queues;
+	uपूर्णांक64_t		sdma_biपंचांगap;
+	uपूर्णांक64_t		xgmi_sdma_biपंचांगap;
+	/* the pasid mapping क्रम each kfd vmid */
+	uपूर्णांक16_t		vmid_pasid[VMID_NUM];
+	uपूर्णांक64_t		pipelines_addr;
+	uपूर्णांक64_t		fence_gpu_addr;
+	uपूर्णांक64_t		*fence_addr;
+	काष्ठा kfd_mem_obj	*fence_mem;
 	bool			active_runlist;
-	int			sched_policy;
+	पूर्णांक			sched_policy;
 
 	/* hw exception  */
 	bool			is_hws_hang;
 	bool			is_resetting;
-	struct work_struct	hw_exception_work;
-	struct kfd_mem_obj	hiq_sdma_mqd;
+	काष्ठा work_काष्ठा	hw_exception_work;
+	काष्ठा kfd_mem_obj	hiq_sdma_mqd;
 	bool			sched_running;
-};
+पूर्ण;
 
-void device_queue_manager_init_cik(
-		struct device_queue_manager_asic_ops *asic_ops);
-void device_queue_manager_init_cik_hawaii(
-		struct device_queue_manager_asic_ops *asic_ops);
-void device_queue_manager_init_vi(
-		struct device_queue_manager_asic_ops *asic_ops);
-void device_queue_manager_init_vi_tonga(
-		struct device_queue_manager_asic_ops *asic_ops);
-void device_queue_manager_init_v9(
-		struct device_queue_manager_asic_ops *asic_ops);
-void device_queue_manager_init_v10_navi10(
-		struct device_queue_manager_asic_ops *asic_ops);
-void program_sh_mem_settings(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd);
-unsigned int get_cp_queues_num(struct device_queue_manager *dqm);
-unsigned int get_queues_per_pipe(struct device_queue_manager *dqm);
-unsigned int get_pipes_per_mec(struct device_queue_manager *dqm);
-unsigned int get_num_sdma_queues(struct device_queue_manager *dqm);
-unsigned int get_num_xgmi_sdma_queues(struct device_queue_manager *dqm);
+व्योम device_queue_manager_init_cik(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम device_queue_manager_init_cik_hawaii(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम device_queue_manager_init_vi(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम device_queue_manager_init_vi_tonga(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम device_queue_manager_init_v9(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम device_queue_manager_init_v10_navi10(
+		काष्ठा device_queue_manager_asic_ops *asic_ops);
+व्योम program_sh_mem_settings(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd);
+अचिन्हित पूर्णांक get_cp_queues_num(काष्ठा device_queue_manager *dqm);
+अचिन्हित पूर्णांक get_queues_per_pipe(काष्ठा device_queue_manager *dqm);
+अचिन्हित पूर्णांक get_pipes_per_mec(काष्ठा device_queue_manager *dqm);
+अचिन्हित पूर्णांक get_num_sdma_queues(काष्ठा device_queue_manager *dqm);
+अचिन्हित पूर्णांक get_num_xgmi_sdma_queues(काष्ठा device_queue_manager *dqm);
 
-static inline unsigned int get_sh_mem_bases_32(struct kfd_process_device *pdd)
-{
-	return (pdd->lds_base >> 16) & 0xFF;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक get_sh_mem_bases_32(काष्ठा kfd_process_device *pdd)
+अणु
+	वापस (pdd->lds_base >> 16) & 0xFF;
+पूर्ण
 
-static inline unsigned int
-get_sh_mem_bases_nybble_64(struct kfd_process_device *pdd)
-{
-	return (pdd->lds_base >> 60) & 0x0E;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+get_sh_mem_bases_nybble_64(काष्ठा kfd_process_device *pdd)
+अणु
+	वापस (pdd->lds_base >> 60) & 0x0E;
+पूर्ण
 
-/* The DQM lock can be taken in MMU notifiers. Make sure no reclaim-FS
- * happens while holding this lock anywhere to prevent deadlocks when
- * an MMU notifier runs in reclaim-FS context.
+/* The DQM lock can be taken in MMU notअगरiers. Make sure no reclaim-FS
+ * happens जबतक holding this lock anywhere to prevent deadlocks when
+ * an MMU notअगरier runs in reclaim-FS context.
  */
-static inline void dqm_lock(struct device_queue_manager *dqm)
-{
+अटल अंतरभूत व्योम dqm_lock(काष्ठा device_queue_manager *dqm)
+अणु
 	mutex_lock(&dqm->lock_hidden);
-	dqm->saved_flags = memalloc_noreclaim_save();
-}
-static inline void dqm_unlock(struct device_queue_manager *dqm)
-{
-	memalloc_noreclaim_restore(dqm->saved_flags);
+	dqm->saved_flags = meदो_स्मृति_noreclaim_save();
+पूर्ण
+अटल अंतरभूत व्योम dqm_unlock(काष्ठा device_queue_manager *dqm)
+अणु
+	meदो_स्मृति_noreclaim_restore(dqm->saved_flags);
 	mutex_unlock(&dqm->lock_hidden);
-}
+पूर्ण
 
-static inline int read_sdma_queue_counter(uint64_t __user *q_rptr, uint64_t *val)
-{
+अटल अंतरभूत पूर्णांक पढ़ो_sdma_queue_counter(uपूर्णांक64_t __user *q_rptr, uपूर्णांक64_t *val)
+अणु
         /*
          * SDMA activity counter is stored at queue's RPTR + 0x8 location.
          */
-	return get_user(*val, q_rptr + 1);
-}
-#endif /* KFD_DEVICE_QUEUE_MANAGER_H_ */
+	वापस get_user(*val, q_rptr + 1);
+पूर्ण
+#पूर्ण_अगर /* KFD_DEVICE_QUEUE_MANAGER_H_ */

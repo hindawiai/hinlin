@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * This file contains definitions from Hyper-V Hypervisor Top-Level Functional
- * Specification (TLFS):
- * https://docs.microsoft.com/en-us/virtualization/hyper-v-on-windows/reference/tlfs
+ * Specअगरication (TLFS):
+ * https://करोcs.microsoft.com/en-us/भवization/hyper-v-on-winकरोws/reference/tlfs
  */
 
-#ifndef _ASM_GENERIC_HYPERV_TLFS_H
-#define _ASM_GENERIC_HYPERV_TLFS_H
+#अगर_अघोषित _ASM_GENERIC_HYPERV_TLFS_H
+#घोषणा _ASM_GENERIC_HYPERV_TLFS_H
 
-#include <linux/types.h>
-#include <linux/bits.h>
-#include <linux/time64.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/समय64.h>
 
 /*
  * While not explicitly listed in the TLFS, Hyper-V always runs with a page size
@@ -19,230 +20,230 @@
  * guest physical pages and guest physical page addresses, since the guest page
  * size may not be 4096 on all architectures.
  */
-#define HV_HYP_PAGE_SHIFT      12
-#define HV_HYP_PAGE_SIZE       BIT(HV_HYP_PAGE_SHIFT)
-#define HV_HYP_PAGE_MASK       (~(HV_HYP_PAGE_SIZE - 1))
+#घोषणा HV_HYP_PAGE_SHIFT      12
+#घोषणा HV_HYP_PAGE_SIZE       BIT(HV_HYP_PAGE_SHIFT)
+#घोषणा HV_HYP_PAGE_MASK       (~(HV_HYP_PAGE_SIZE - 1))
 
 /*
  * Hyper-V provides two categories of flags relevant to guest VMs.  The
- * "Features" category indicates specific functionality that is available
+ * "Features" category indicates specअगरic functionality that is available
  * to guests on this particular instance of Hyper-V. The "Features"
  * are presented in four groups, each of which is 32 bits. The group A
  * and B definitions are common across architectures and are listed here.
  * However, not all flags are relevant on all architectures.
  *
  * Groups C and D vary across architectures and are listed in the
- * architecture specific portion of hyperv-tlfs.h. Some of these flags exist
- * on multiple architectures, but the bit positions are different so they
+ * architecture specअगरic portion of hyperv-tlfs.h. Some of these flags exist
+ * on multiple architectures, but the bit positions are dअगरferent so they
  * cannot appear in the generic portion of hyperv-tlfs.h.
  *
  * The "Enlightenments" category provides recommendations on whether to use
- * specific enlightenments that are available. The Enlighenments are a single
+ * specअगरic enlightenments that are available. The Enlighenments are a single
  * group of 32 bits, but they vary across architectures and are listed in
- * the architecture specific portion of hyperv-tlfs.h.
+ * the architecture specअगरic portion of hyperv-tlfs.h.
  */
 
 /*
  * Group A Features.
  */
 
-/* VP Runtime register available */
-#define HV_MSR_VP_RUNTIME_AVAILABLE		BIT(0)
+/* VP Runसमय रेजिस्टर available */
+#घोषणा HV_MSR_VP_RUNTIME_AVAILABLE		BIT(0)
 /* Partition Reference Counter available*/
-#define HV_MSR_TIME_REF_COUNT_AVAILABLE		BIT(1)
-/* Basic SynIC register available */
-#define HV_MSR_SYNIC_AVAILABLE			BIT(2)
-/* Synthetic Timer registers available */
-#define HV_MSR_SYNTIMER_AVAILABLE		BIT(3)
-/* Virtual APIC assist and VP assist page registers available */
-#define HV_MSR_APIC_ACCESS_AVAILABLE		BIT(4)
-/* Hypercall and Guest OS ID registers available*/
-#define HV_MSR_HYPERCALL_AVAILABLE		BIT(5)
-/* Access virtual processor index register available*/
-#define HV_MSR_VP_INDEX_AVAILABLE		BIT(6)
-/* Virtual system reset register available*/
-#define HV_MSR_RESET_AVAILABLE			BIT(7)
-/* Access statistics page registers available */
-#define HV_MSR_STAT_PAGES_AVAILABLE		BIT(8)
-/* Partition reference TSC register is available */
-#define HV_MSR_REFERENCE_TSC_AVAILABLE		BIT(9)
-/* Partition Guest IDLE register is available */
-#define HV_MSR_GUEST_IDLE_AVAILABLE		BIT(10)
-/* Partition local APIC and TSC frequency registers available */
-#define HV_ACCESS_FREQUENCY_MSRS		BIT(11)
+#घोषणा HV_MSR_TIME_REF_COUNT_AVAILABLE		BIT(1)
+/* Basic SynIC रेजिस्टर available */
+#घोषणा HV_MSR_SYNIC_AVAILABLE			BIT(2)
+/* Synthetic Timer रेजिस्टरs available */
+#घोषणा HV_MSR_SYNTIMER_AVAILABLE		BIT(3)
+/* Virtual APIC assist and VP assist page रेजिस्टरs available */
+#घोषणा HV_MSR_APIC_ACCESS_AVAILABLE		BIT(4)
+/* Hypercall and Guest OS ID रेजिस्टरs available*/
+#घोषणा HV_MSR_HYPERCALL_AVAILABLE		BIT(5)
+/* Access भव processor index रेजिस्टर available*/
+#घोषणा HV_MSR_VP_INDEX_AVAILABLE		BIT(6)
+/* Virtual प्रणाली reset रेजिस्टर available*/
+#घोषणा HV_MSR_RESET_AVAILABLE			BIT(7)
+/* Access statistics page रेजिस्टरs available */
+#घोषणा HV_MSR_STAT_PAGES_AVAILABLE		BIT(8)
+/* Partition reference TSC रेजिस्टर is available */
+#घोषणा HV_MSR_REFERENCE_TSC_AVAILABLE		BIT(9)
+/* Partition Guest IDLE रेजिस्टर is available */
+#घोषणा HV_MSR_GUEST_IDLE_AVAILABLE		BIT(10)
+/* Partition local APIC and TSC frequency रेजिस्टरs available */
+#घोषणा HV_ACCESS_FREQUENCY_MSRS		BIT(11)
 /* AccessReenlightenmentControls privilege */
-#define HV_ACCESS_REENLIGHTENMENT		BIT(13)
+#घोषणा HV_ACCESS_REENLIGHTENMENT		BIT(13)
 /* AccessTscInvariantControls privilege */
-#define HV_ACCESS_TSC_INVARIANT			BIT(15)
+#घोषणा HV_ACCESS_TSC_INVARIANT			BIT(15)
 
 /*
  * Group B features.
  */
-#define HV_CREATE_PARTITIONS			BIT(0)
-#define HV_ACCESS_PARTITION_ID			BIT(1)
-#define HV_ACCESS_MEMORY_POOL			BIT(2)
-#define HV_ADJUST_MESSAGE_BUFFERS		BIT(3)
-#define HV_POST_MESSAGES			BIT(4)
-#define HV_SIGNAL_EVENTS			BIT(5)
-#define HV_CREATE_PORT				BIT(6)
-#define HV_CONNECT_PORT				BIT(7)
-#define HV_ACCESS_STATS				BIT(8)
-#define HV_DEBUGGING				BIT(11)
-#define HV_CPU_MANAGEMENT			BIT(12)
-#define HV_ENABLE_EXTENDED_HYPERCALLS		BIT(20)
-#define HV_ISOLATION				BIT(22)
+#घोषणा HV_CREATE_PARTITIONS			BIT(0)
+#घोषणा HV_ACCESS_PARTITION_ID			BIT(1)
+#घोषणा HV_ACCESS_MEMORY_POOL			BIT(2)
+#घोषणा HV_ADJUST_MESSAGE_BUFFERS		BIT(3)
+#घोषणा HV_POST_MESSAGES			BIT(4)
+#घोषणा HV_SIGNAL_EVENTS			BIT(5)
+#घोषणा HV_CREATE_PORT				BIT(6)
+#घोषणा HV_CONNECT_PORT				BIT(7)
+#घोषणा HV_ACCESS_STATS				BIT(8)
+#घोषणा HV_DEBUGGING				BIT(11)
+#घोषणा HV_CPU_MANAGEMENT			BIT(12)
+#घोषणा HV_ENABLE_EXTENDED_HYPERCALLS		BIT(20)
+#घोषणा HV_ISOLATION				BIT(22)
 
 /*
  * TSC page layout.
  */
-struct ms_hyperv_tsc_page {
-	volatile u32 tsc_sequence;
+काष्ठा ms_hyperv_tsc_page अणु
+	अस्थिर u32 tsc_sequence;
 	u32 reserved1;
-	volatile u64 tsc_scale;
-	volatile s64 tsc_offset;
-} __packed;
+	अस्थिर u64 tsc_scale;
+	अस्थिर s64 tsc_offset;
+पूर्ण __packed;
 
 /*
- * The guest OS needs to register the guest ID with the hypervisor.
- * The guest ID is a 64 bit entity and the structure of this ID is
- * specified in the Hyper-V specification:
+ * The guest OS needs to रेजिस्टर the guest ID with the hypervisor.
+ * The guest ID is a 64 bit entity and the काष्ठाure of this ID is
+ * specअगरied in the Hyper-V specअगरication:
  *
- * msdn.microsoft.com/en-us/library/windows/hardware/ff542653%28v=vs.85%29.aspx
+ * msdn.microsoft.com/en-us/library/winकरोws/hardware/ff542653%28v=vs.85%29.aspx
  *
- * While the current guideline does not specify how Linux guest ID(s)
- * need to be generated, our plan is to publish the guidelines for
- * Linux and other guest operating systems that currently are hosted
- * on Hyper-V. The implementation here conforms to this yet
+ * While the current guideline करोes not specअगरy how Linux guest ID(s)
+ * need to be generated, our plan is to publish the guidelines क्रम
+ * Linux and other guest operating प्रणालीs that currently are hosted
+ * on Hyper-V. The implementation here conक्रमms to this yet
  * unpublished guidelines.
  *
  *
  * Bit(s)
- * 63 - Indicates if the OS is Open Source or not; 1 is Open Source
+ * 63 - Indicates अगर the OS is Open Source or not; 1 is Open Source
  * 62:56 - Os Type; Linux is 0x100
- * 55:48 - Distro specific identification
+ * 55:48 - Distro specअगरic identअगरication
  * 47:16 - Linux kernel version number
- * 15:0  - Distro specific identification
+ * 15:0  - Distro specअगरic identअगरication
  *
  *
  */
 
-#define HV_LINUX_VENDOR_ID              0x8100
+#घोषणा HV_LINUX_VENDOR_ID              0x8100
 
 /*
- * Crash notification flags.
+ * Crash notअगरication flags.
  */
-#define HV_CRASH_CTL_CRASH_NOTIFY_MSG		BIT_ULL(62)
-#define HV_CRASH_CTL_CRASH_NOTIFY		BIT_ULL(63)
+#घोषणा HV_CRASH_CTL_CRASH_NOTIFY_MSG		BIT_ULL(62)
+#घोषणा HV_CRASH_CTL_CRASH_NOTIFY		BIT_ULL(63)
 
 /* Declare the various hypercall operations. */
-#define HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE	0x0002
-#define HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST	0x0003
-#define HVCALL_NOTIFY_LONG_SPIN_WAIT		0x0008
-#define HVCALL_SEND_IPI				0x000b
-#define HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE_EX	0x0013
-#define HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST_EX	0x0014
-#define HVCALL_SEND_IPI_EX			0x0015
-#define HVCALL_GET_PARTITION_ID			0x0046
-#define HVCALL_DEPOSIT_MEMORY			0x0048
-#define HVCALL_CREATE_VP			0x004e
-#define HVCALL_GET_VP_REGISTERS			0x0050
-#define HVCALL_SET_VP_REGISTERS			0x0051
-#define HVCALL_POST_MESSAGE			0x005c
-#define HVCALL_SIGNAL_EVENT			0x005d
-#define HVCALL_POST_DEBUG_DATA			0x0069
-#define HVCALL_RETRIEVE_DEBUG_DATA		0x006a
-#define HVCALL_RESET_DEBUG_SESSION		0x006b
-#define HVCALL_ADD_LOGICAL_PROCESSOR		0x0076
-#define HVCALL_MAP_DEVICE_INTERRUPT		0x007c
-#define HVCALL_UNMAP_DEVICE_INTERRUPT		0x007d
-#define HVCALL_RETARGET_INTERRUPT		0x007e
-#define HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_SPACE 0x00af
-#define HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_LIST 0x00b0
+#घोषणा HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE	0x0002
+#घोषणा HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST	0x0003
+#घोषणा HVCALL_NOTIFY_LONG_SPIN_WAIT		0x0008
+#घोषणा HVCALL_SEND_IPI				0x000b
+#घोषणा HVCALL_FLUSH_VIRTUAL_ADDRESS_SPACE_EX	0x0013
+#घोषणा HVCALL_FLUSH_VIRTUAL_ADDRESS_LIST_EX	0x0014
+#घोषणा HVCALL_SEND_IPI_EX			0x0015
+#घोषणा HVCALL_GET_PARTITION_ID			0x0046
+#घोषणा HVCALL_DEPOSIT_MEMORY			0x0048
+#घोषणा HVCALL_CREATE_VP			0x004e
+#घोषणा HVCALL_GET_VP_REGISTERS			0x0050
+#घोषणा HVCALL_SET_VP_REGISTERS			0x0051
+#घोषणा HVCALL_POST_MESSAGE			0x005c
+#घोषणा HVCALL_SIGNAL_EVENT			0x005d
+#घोषणा HVCALL_POST_DEBUG_DATA			0x0069
+#घोषणा HVCALL_RETRIEVE_DEBUG_DATA		0x006a
+#घोषणा HVCALL_RESET_DEBUG_SESSION		0x006b
+#घोषणा HVCALL_ADD_LOGICAL_PROCESSOR		0x0076
+#घोषणा HVCALL_MAP_DEVICE_INTERRUPT		0x007c
+#घोषणा HVCALL_UNMAP_DEVICE_INTERRUPT		0x007d
+#घोषणा HVCALL_RETARGET_INTERRUPT		0x007e
+#घोषणा HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_SPACE 0x00af
+#घोषणा HVCALL_FLUSH_GUEST_PHYSICAL_ADDRESS_LIST 0x00b0
 
 /* Extended hypercalls */
-#define HV_EXT_CALL_QUERY_CAPABILITIES		0x8001
-#define HV_EXT_CALL_MEMORY_HEAT_HINT		0x8003
+#घोषणा HV_EXT_CALL_QUERY_CAPABILITIES		0x8001
+#घोषणा HV_EXT_CALL_MEMORY_HEAT_HINT		0x8003
 
-#define HV_FLUSH_ALL_PROCESSORS			BIT(0)
-#define HV_FLUSH_ALL_VIRTUAL_ADDRESS_SPACES	BIT(1)
-#define HV_FLUSH_NON_GLOBAL_MAPPINGS_ONLY	BIT(2)
-#define HV_FLUSH_USE_EXTENDED_RANGE_FORMAT	BIT(3)
+#घोषणा HV_FLUSH_ALL_PROCESSORS			BIT(0)
+#घोषणा HV_FLUSH_ALL_VIRTUAL_ADDRESS_SPACES	BIT(1)
+#घोषणा HV_FLUSH_NON_GLOBAL_MAPPINGS_ONLY	BIT(2)
+#घोषणा HV_FLUSH_USE_EXTENDED_RANGE_FORMAT	BIT(3)
 
 /* Extended capability bits */
-#define HV_EXT_CAPABILITY_MEMORY_COLD_DISCARD_HINT BIT(8)
+#घोषणा HV_EXT_CAPABILITY_MEMORY_COLD_DISCARD_HINT BIT(8)
 
-enum HV_GENERIC_SET_FORMAT {
+क्रमागत HV_GENERIC_SET_FORMAT अणु
 	HV_GENERIC_SET_SPARSE_4K,
 	HV_GENERIC_SET_ALL,
-};
+पूर्ण;
 
-#define HV_PARTITION_ID_SELF		((u64)-1)
-#define HV_VP_INDEX_SELF		((u32)-2)
+#घोषणा HV_PARTITION_ID_SELF		((u64)-1)
+#घोषणा HV_VP_INDEX_SELF		((u32)-2)
 
-#define HV_HYPERCALL_RESULT_MASK	GENMASK_ULL(15, 0)
-#define HV_HYPERCALL_FAST_BIT		BIT(16)
-#define HV_HYPERCALL_VARHEAD_OFFSET	17
-#define HV_HYPERCALL_REP_COMP_OFFSET	32
-#define HV_HYPERCALL_REP_COMP_1		BIT_ULL(32)
-#define HV_HYPERCALL_REP_COMP_MASK	GENMASK_ULL(43, 32)
-#define HV_HYPERCALL_REP_START_OFFSET	48
-#define HV_HYPERCALL_REP_START_MASK	GENMASK_ULL(59, 48)
+#घोषणा HV_HYPERCALL_RESULT_MASK	GENMASK_ULL(15, 0)
+#घोषणा HV_HYPERCALL_FAST_BIT		BIT(16)
+#घोषणा HV_HYPERCALL_VARHEAD_OFFSET	17
+#घोषणा HV_HYPERCALL_REP_COMP_OFFSET	32
+#घोषणा HV_HYPERCALL_REP_COMP_1		BIT_ULL(32)
+#घोषणा HV_HYPERCALL_REP_COMP_MASK	GENMASK_ULL(43, 32)
+#घोषणा HV_HYPERCALL_REP_START_OFFSET	48
+#घोषणा HV_HYPERCALL_REP_START_MASK	GENMASK_ULL(59, 48)
 
 /* hypercall status code */
-#define HV_STATUS_SUCCESS			0
-#define HV_STATUS_INVALID_HYPERCALL_CODE	2
-#define HV_STATUS_INVALID_HYPERCALL_INPUT	3
-#define HV_STATUS_INVALID_ALIGNMENT		4
-#define HV_STATUS_INVALID_PARAMETER		5
-#define HV_STATUS_OPERATION_DENIED		8
-#define HV_STATUS_INSUFFICIENT_MEMORY		11
-#define HV_STATUS_INVALID_PORT_ID		17
-#define HV_STATUS_INVALID_CONNECTION_ID		18
-#define HV_STATUS_INSUFFICIENT_BUFFERS		19
+#घोषणा HV_STATUS_SUCCESS			0
+#घोषणा HV_STATUS_INVALID_HYPERCALL_CODE	2
+#घोषणा HV_STATUS_INVALID_HYPERCALL_INPUT	3
+#घोषणा HV_STATUS_INVALID_ALIGNMENT		4
+#घोषणा HV_STATUS_INVALID_PARAMETER		5
+#घोषणा HV_STATUS_OPERATION_DENIED		8
+#घोषणा HV_STATUS_INSUFFICIENT_MEMORY		11
+#घोषणा HV_STATUS_INVALID_PORT_ID		17
+#घोषणा HV_STATUS_INVALID_CONNECTION_ID		18
+#घोषणा HV_STATUS_INSUFFICIENT_BUFFERS		19
 
 /*
- * The Hyper-V TimeRefCount register and the TSC
- * page provide a guest VM clock with 100ns tick rate
+ * The Hyper-V TimeRefCount रेजिस्टर and the TSC
+ * page provide a guest VM घड़ी with 100ns tick rate
  */
-#define HV_CLOCK_HZ (NSEC_PER_SEC/100)
+#घोषणा HV_CLOCK_HZ (NSEC_PER_SEC/100)
 
-/* Define the number of synthetic interrupt sources. */
-#define HV_SYNIC_SINT_COUNT		(16)
+/* Define the number of synthetic पूर्णांकerrupt sources. */
+#घोषणा HV_SYNIC_SINT_COUNT		(16)
 /* Define the expected SynIC version. */
-#define HV_SYNIC_VERSION_1		(0x1)
+#घोषणा HV_SYNIC_VERSION_1		(0x1)
 /* Valid SynIC vectors are 16-255. */
-#define HV_SYNIC_FIRST_VALID_VECTOR	(16)
+#घोषणा HV_SYNIC_FIRST_VALID_VECTOR	(16)
 
-#define HV_SYNIC_CONTROL_ENABLE		(1ULL << 0)
-#define HV_SYNIC_SIMP_ENABLE		(1ULL << 0)
-#define HV_SYNIC_SIEFP_ENABLE		(1ULL << 0)
-#define HV_SYNIC_SINT_MASKED		(1ULL << 16)
-#define HV_SYNIC_SINT_AUTO_EOI		(1ULL << 17)
-#define HV_SYNIC_SINT_VECTOR_MASK	(0xFF)
+#घोषणा HV_SYNIC_CONTROL_ENABLE		(1ULL << 0)
+#घोषणा HV_SYNIC_SIMP_ENABLE		(1ULL << 0)
+#घोषणा HV_SYNIC_SIEFP_ENABLE		(1ULL << 0)
+#घोषणा HV_SYNIC_SINT_MASKED		(1ULL << 16)
+#घोषणा HV_SYNIC_SINT_AUTO_EOI		(1ULL << 17)
+#घोषणा HV_SYNIC_SINT_VECTOR_MASK	(0xFF)
 
-#define HV_SYNIC_STIMER_COUNT		(4)
+#घोषणा HV_SYNIC_STIMER_COUNT		(4)
 
-/* Define synthetic interrupt controller message constants. */
-#define HV_MESSAGE_SIZE			(256)
-#define HV_MESSAGE_PAYLOAD_BYTE_COUNT	(240)
-#define HV_MESSAGE_PAYLOAD_QWORD_COUNT	(30)
+/* Define synthetic पूर्णांकerrupt controller message स्थिरants. */
+#घोषणा HV_MESSAGE_SIZE			(256)
+#घोषणा HV_MESSAGE_PAYLOAD_BYTE_COUNT	(240)
+#घोषणा HV_MESSAGE_PAYLOAD_QWORD_COUNT	(30)
 
 /*
  * Define hypervisor message types. Some of the message types
- * are x86/x64 specific, but there's no good way to separate
- * them out into the arch-specific version of hyperv-tlfs.h
- * because C doesn't provide a way to extend enum types.
+ * are x86/x64 specअगरic, but there's no good way to separate
+ * them out पूर्णांकo the arch-specअगरic version of hyperv-tlfs.h
+ * because C करोesn't provide a way to extend क्रमागत types.
  * Keeping them all in the arch neutral hyperv-tlfs.h seems
  * the least messy compromise.
  */
-enum hv_message_type {
+क्रमागत hv_message_type अणु
 	HVMSG_NONE			= 0x00000000,
 
 	/* Memory access messages. */
 	HVMSG_UNMAPPED_GPA		= 0x80000000,
 	HVMSG_GPA_INTERCEPT		= 0x80000001,
 
-	/* Timer notification messages. */
+	/* Timer notअगरication messages. */
 	HVMSG_TIMER_EXPIRED		= 0x80000010,
 
 	/* Error messages. */
@@ -253,244 +254,244 @@ enum hv_message_type {
 	/* Trace buffer complete messages. */
 	HVMSG_EVENTLOG_BUFFERCOMPLETE	= 0x80000040,
 
-	/* Platform-specific processor intercept messages. */
+	/* Platक्रमm-specअगरic processor पूर्णांकercept messages. */
 	HVMSG_X64_IOPORT_INTERCEPT	= 0x80010000,
 	HVMSG_X64_MSR_INTERCEPT		= 0x80010001,
 	HVMSG_X64_CPUID_INTERCEPT	= 0x80010002,
 	HVMSG_X64_EXCEPTION_INTERCEPT	= 0x80010003,
 	HVMSG_X64_APIC_EOI		= 0x80010004,
 	HVMSG_X64_LEGACY_FP_ERROR	= 0x80010005
-};
+पूर्ण;
 
-/* Define synthetic interrupt controller message flags. */
-union hv_message_flags {
+/* Define synthetic पूर्णांकerrupt controller message flags. */
+जोड़ hv_message_flags अणु
 	__u8 asu8;
-	struct {
+	काष्ठा अणु
 		__u8 msg_pending:1;
 		__u8 reserved:7;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-/* Define port identifier type. */
-union hv_port_id {
+/* Define port identअगरier type. */
+जोड़ hv_port_id अणु
 	__u32 asu32;
-	struct {
+	काष्ठा अणु
 		__u32 id:24;
 		__u32 reserved:8;
-	} __packed u;
-};
+	पूर्ण __packed u;
+पूर्ण;
 
-/* Define synthetic interrupt controller message header. */
-struct hv_message_header {
+/* Define synthetic पूर्णांकerrupt controller message header. */
+काष्ठा hv_message_header अणु
 	__u32 message_type;
 	__u8 payload_size;
-	union hv_message_flags message_flags;
+	जोड़ hv_message_flags message_flags;
 	__u8 reserved[2];
-	union {
+	जोड़ अणु
 		__u64 sender;
-		union hv_port_id port;
-	};
-} __packed;
+		जोड़ hv_port_id port;
+	पूर्ण;
+पूर्ण __packed;
 
-/* Define synthetic interrupt controller message format. */
-struct hv_message {
-	struct hv_message_header header;
-	union {
+/* Define synthetic पूर्णांकerrupt controller message क्रमmat. */
+काष्ठा hv_message अणु
+	काष्ठा hv_message_header header;
+	जोड़ अणु
 		__u64 payload[HV_MESSAGE_PAYLOAD_QWORD_COUNT];
-	} u;
-} __packed;
+	पूर्ण u;
+पूर्ण __packed;
 
-/* Define the synthetic interrupt message page layout. */
-struct hv_message_page {
-	struct hv_message sint_message[HV_SYNIC_SINT_COUNT];
-} __packed;
+/* Define the synthetic पूर्णांकerrupt message page layout. */
+काष्ठा hv_message_page अणु
+	काष्ठा hv_message sपूर्णांक_message[HV_SYNIC_SINT_COUNT];
+पूर्ण __packed;
 
-/* Define timer message payload structure. */
-struct hv_timer_message_payload {
-	__u32 timer_index;
+/* Define समयr message payload काष्ठाure. */
+काष्ठा hv_समयr_message_payload अणु
+	__u32 समयr_index;
 	__u32 reserved;
-	__u64 expiration_time;	/* When the timer expired */
-	__u64 delivery_time;	/* When the message was delivered */
-} __packed;
+	__u64 expiration_समय;	/* When the समयr expired */
+	__u64 delivery_समय;	/* When the message was delivered */
+पूर्ण __packed;
 
 
-/* Define synthetic interrupt controller flag constants. */
-#define HV_EVENT_FLAGS_COUNT		(256 * 8)
-#define HV_EVENT_FLAGS_LONG_COUNT	(256 / sizeof(unsigned long))
+/* Define synthetic पूर्णांकerrupt controller flag स्थिरants. */
+#घोषणा HV_EVENT_FLAGS_COUNT		(256 * 8)
+#घोषणा HV_EVENT_FLAGS_LONG_COUNT	(256 / माप(अचिन्हित दीर्घ))
 
 /*
- * Synthetic timer configuration.
+ * Synthetic समयr configuration.
  */
-union hv_stimer_config {
-	u64 as_uint64;
-	struct {
+जोड़ hv_sसमयr_config अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 enable:1;
 		u64 periodic:1;
 		u64 lazy:1;
-		u64 auto_enable:1;
+		u64 स्वतः_enable:1;
 		u64 apic_vector:8;
 		u64 direct_mode:1;
 		u64 reserved_z0:3;
-		u64 sintx:4;
+		u64 sपूर्णांकx:4;
 		u64 reserved_z1:44;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
 
-/* Define the synthetic interrupt controller event flags format. */
-union hv_synic_event_flags {
-	unsigned long flags[HV_EVENT_FLAGS_LONG_COUNT];
-};
+/* Define the synthetic पूर्णांकerrupt controller event flags क्रमmat. */
+जोड़ hv_synic_event_flags अणु
+	अचिन्हित दीर्घ flags[HV_EVENT_FLAGS_LONG_COUNT];
+पूर्ण;
 
-/* Define SynIC control register. */
-union hv_synic_scontrol {
-	u64 as_uint64;
-	struct {
+/* Define SynIC control रेजिस्टर. */
+जोड़ hv_synic_scontrol अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 enable:1;
 		u64 reserved:63;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-/* Define synthetic interrupt source. */
-union hv_synic_sint {
-	u64 as_uint64;
-	struct {
+/* Define synthetic पूर्णांकerrupt source. */
+जोड़ hv_synic_sपूर्णांक अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 vector:8;
 		u64 reserved1:8;
 		u64 masked:1;
-		u64 auto_eoi:1;
+		u64 स्वतः_eoi:1;
 		u64 polling:1;
 		u64 reserved2:45;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-/* Define the format of the SIMP register */
-union hv_synic_simp {
-	u64 as_uint64;
-	struct {
+/* Define the क्रमmat of the SIMP रेजिस्टर */
+जोड़ hv_synic_simp अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 simp_enabled:1;
 		u64 preserved:11;
 		u64 base_simp_gpa:52;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-/* Define the format of the SIEFP register */
-union hv_synic_siefp {
-	u64 as_uint64;
-	struct {
+/* Define the क्रमmat of the SIEFP रेजिस्टर */
+जोड़ hv_synic_siefp अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
 		u64 siefp_enabled:1;
 		u64 preserved:11;
 		u64 base_siefp_gpa:52;
-	} __packed;
-};
+	पूर्ण __packed;
+पूर्ण;
 
-struct hv_vpset {
-	u64 format;
+काष्ठा hv_vpset अणु
+	u64 क्रमmat;
 	u64 valid_bank_mask;
 	u64 bank_contents[];
-} __packed;
+पूर्ण __packed;
 
 /* HvCallSendSyntheticClusterIpi hypercall */
-struct hv_send_ipi {
+काष्ठा hv_send_ipi अणु
 	u32 vector;
 	u32 reserved;
 	u64 cpu_mask;
-} __packed;
+पूर्ण __packed;
 
 /* HvCallSendSyntheticClusterIpiEx hypercall */
-struct hv_send_ipi_ex {
+काष्ठा hv_send_ipi_ex अणु
 	u32 vector;
 	u32 reserved;
-	struct hv_vpset vp_set;
-} __packed;
+	काष्ठा hv_vpset vp_set;
+पूर्ण __packed;
 
 /* HvFlushGuestPhysicalAddressSpace hypercalls */
-struct hv_guest_mapping_flush {
+काष्ठा hv_guest_mapping_flush अणु
 	u64 address_space;
 	u64 flags;
-} __packed;
+पूर्ण __packed;
 
 /*
  *  HV_MAX_FLUSH_PAGES = "additional_pages" + 1. It's limited
- *  by the bitwidth of "additional_pages" in union hv_gpa_page_range.
+ *  by the bitwidth of "additional_pages" in जोड़ hv_gpa_page_range.
  */
-#define HV_MAX_FLUSH_PAGES (2048)
-#define HV_GPA_PAGE_RANGE_PAGE_SIZE_2MB		0
-#define HV_GPA_PAGE_RANGE_PAGE_SIZE_1GB		1
+#घोषणा HV_MAX_FLUSH_PAGES (2048)
+#घोषणा HV_GPA_PAGE_RANGE_PAGE_SIZE_2MB		0
+#घोषणा HV_GPA_PAGE_RANGE_PAGE_SIZE_1GB		1
 
-/* HvFlushGuestPhysicalAddressList, HvExtCallMemoryHeatHint hypercall */
-union hv_gpa_page_range {
+/* HvFlushGuestPhysicalAddressList, HvExtCallMemoryHeatHपूर्णांक hypercall */
+जोड़ hv_gpa_page_range अणु
 	u64 address_space;
-	struct {
+	काष्ठा अणु
 		u64 additional_pages:11;
 		u64 largepage:1;
 		u64 basepfn:52;
-	} page;
-	struct {
+	पूर्ण page;
+	काष्ठा अणु
 		u64 reserved:12;
 		u64 page_size:1;
 		u64 reserved1:8;
 		u64 base_large_pfn:43;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
 /*
  * All input flush parameters should be in single page. The max flush
- * count is equal with how many entries of union hv_gpa_page_range can
- * be populated into the input parameter page.
+ * count is equal with how many entries of जोड़ hv_gpa_page_range can
+ * be populated पूर्णांकo the input parameter page.
  */
-#define HV_MAX_FLUSH_REP_COUNT ((HV_HYP_PAGE_SIZE - 2 * sizeof(u64)) /	\
-				sizeof(union hv_gpa_page_range))
+#घोषणा HV_MAX_FLUSH_REP_COUNT ((HV_HYP_PAGE_SIZE - 2 * माप(u64)) /	\
+				माप(जोड़ hv_gpa_page_range))
 
-struct hv_guest_mapping_flush_list {
+काष्ठा hv_guest_mapping_flush_list अणु
 	u64 address_space;
 	u64 flags;
-	union hv_gpa_page_range gpa_list[HV_MAX_FLUSH_REP_COUNT];
-};
+	जोड़ hv_gpa_page_range gpa_list[HV_MAX_FLUSH_REP_COUNT];
+पूर्ण;
 
 /* HvFlushVirtualAddressSpace, HvFlushVirtualAddressList hypercalls */
-struct hv_tlb_flush {
+काष्ठा hv_tlb_flush अणु
 	u64 address_space;
 	u64 flags;
 	u64 processor_mask;
-	u64 gva_list[];
-} __packed;
+	u64 gबहु_सूची[];
+पूर्ण __packed;
 
 /* HvFlushVirtualAddressSpaceEx, HvFlushVirtualAddressListEx hypercalls */
-struct hv_tlb_flush_ex {
+काष्ठा hv_tlb_flush_ex अणु
 	u64 address_space;
 	u64 flags;
-	struct hv_vpset hv_vp_set;
-	u64 gva_list[];
-} __packed;
+	काष्ठा hv_vpset hv_vp_set;
+	u64 gबहु_सूची[];
+पूर्ण __packed;
 
 /* HvGetPartitionId hypercall (output only) */
-struct hv_get_partition_id {
+काष्ठा hv_get_partition_id अणु
 	u64 partition_id;
-} __packed;
+पूर्ण __packed;
 
 /* HvDepositMemory hypercall */
-struct hv_deposit_memory {
+काष्ठा hv_deposit_memory अणु
 	u64 partition_id;
 	u64 gpa_page_list[];
-} __packed;
+पूर्ण __packed;
 
-struct hv_proximity_domain_flags {
+काष्ठा hv_proximity_करोमुख्य_flags अणु
 	u32 proximity_preferred : 1;
 	u32 reserved : 30;
 	u32 proximity_info_valid : 1;
-} __packed;
+पूर्ण __packed;
 
-/* Not a union in windows but useful for zeroing */
-union hv_proximity_domain_info {
-	struct {
-		u32 domain_id;
-		struct hv_proximity_domain_flags flags;
-	};
-	u64 as_uint64;
-} __packed;
+/* Not a जोड़ in winकरोws but useful क्रम zeroing */
+जोड़ hv_proximity_करोमुख्य_info अणु
+	काष्ठा अणु
+		u32 करोमुख्य_id;
+		काष्ठा hv_proximity_करोमुख्य_flags flags;
+	पूर्ण;
+	u64 as_uपूर्णांक64;
+पूर्ण __packed;
 
-struct hv_lp_startup_status {
+काष्ठा hv_lp_startup_status अणु
 	u64 hv_status;
 	u64 substatus1;
 	u64 substatus2;
@@ -498,246 +499,246 @@ struct hv_lp_startup_status {
 	u64 substatus4;
 	u64 substatus5;
 	u64 substatus6;
-} __packed;
+पूर्ण __packed;
 
 /* HvAddLogicalProcessor hypercall */
-struct hv_add_logical_processor_in {
+काष्ठा hv_add_logical_processor_in अणु
 	u32 lp_index;
 	u32 apic_id;
-	union hv_proximity_domain_info proximity_domain_info;
+	जोड़ hv_proximity_करोमुख्य_info proximity_करोमुख्य_info;
 	u64 flags;
-} __packed;
+पूर्ण __packed;
 
-struct hv_add_logical_processor_out {
-	struct hv_lp_startup_status startup_status;
-} __packed;
+काष्ठा hv_add_logical_processor_out अणु
+	काष्ठा hv_lp_startup_status startup_status;
+पूर्ण __packed;
 
-enum HV_SUBNODE_TYPE
-{
+क्रमागत HV_SUBNODE_TYPE
+अणु
     HvSubnodeAny = 0,
     HvSubnodeSocket = 1,
     HvSubnodeAmdNode = 2,
     HvSubnodeL3 = 3,
     HvSubnodeCount = 4,
     HvSubnodeInvalid = -1
-};
+पूर्ण;
 
 /* HvCreateVp hypercall */
-struct hv_create_vp {
+काष्ठा hv_create_vp अणु
 	u64 partition_id;
 	u32 vp_index;
 	u8 padding[3];
 	u8 subnode_type;
 	u64 subnode_id;
-	union hv_proximity_domain_info proximity_domain_info;
+	जोड़ hv_proximity_करोमुख्य_info proximity_करोमुख्य_info;
 	u64 flags;
-} __packed;
+पूर्ण __packed;
 
-enum hv_interrupt_source {
+क्रमागत hv_पूर्णांकerrupt_source अणु
 	HV_INTERRUPT_SOURCE_MSI = 1, /* MSI and MSI-X */
 	HV_INTERRUPT_SOURCE_IOAPIC,
-};
+पूर्ण;
 
-union hv_msi_address_register {
-	u32 as_uint32;
-	struct {
+जोड़ hv_msi_address_रेजिस्टर अणु
+	u32 as_uपूर्णांक32;
+	काष्ठा अणु
 		u32 reserved1:2;
 		u32 destination_mode:1;
-		u32 redirection_hint:1;
+		u32 redirection_hपूर्णांक:1;
 		u32 reserved2:8;
 		u32 destination_id:8;
 		u32 msi_base:12;
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-union hv_msi_data_register {
-	u32 as_uint32;
-	struct {
+जोड़ hv_msi_data_रेजिस्टर अणु
+	u32 as_uपूर्णांक32;
+	काष्ठा अणु
 		u32 vector:8;
 		u32 delivery_mode:3;
 		u32 reserved1:3;
-		u32 level_assert:1;
+		u32 level_निश्चित:1;
 		u32 trigger_mode:1;
 		u32 reserved2:16;
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
 /* HvRetargetDeviceInterrupt hypercall */
-union hv_msi_entry {
-	u64 as_uint64;
-	struct {
-		union hv_msi_address_register address;
-		union hv_msi_data_register data;
-	} __packed;
-};
+जोड़ hv_msi_entry अणु
+	u64 as_uपूर्णांक64;
+	काष्ठा अणु
+		जोड़ hv_msi_address_रेजिस्टर address;
+		जोड़ hv_msi_data_रेजिस्टर data;
+	पूर्ण __packed;
+पूर्ण;
 
-union hv_ioapic_rte {
-	u64 as_uint64;
+जोड़ hv_ioapic_rte अणु
+	u64 as_uपूर्णांक64;
 
-	struct {
+	काष्ठा अणु
 		u32 vector:8;
 		u32 delivery_mode:3;
 		u32 destination_mode:1;
 		u32 delivery_status:1;
-		u32 interrupt_polarity:1;
+		u32 पूर्णांकerrupt_polarity:1;
 		u32 remote_irr:1;
 		u32 trigger_mode:1;
-		u32 interrupt_mask:1;
+		u32 पूर्णांकerrupt_mask:1;
 		u32 reserved1:15;
 
 		u32 reserved2:24;
 		u32 destination_id:8;
-	};
+	पूर्ण;
 
-	struct {
-		u32 low_uint32;
-		u32 high_uint32;
-	};
-} __packed;
+	काष्ठा अणु
+		u32 low_uपूर्णांक32;
+		u32 high_uपूर्णांक32;
+	पूर्ण;
+पूर्ण __packed;
 
-struct hv_interrupt_entry {
+काष्ठा hv_पूर्णांकerrupt_entry अणु
 	u32 source;
 	u32 reserved1;
-	union {
-		union hv_msi_entry msi_entry;
-		union hv_ioapic_rte ioapic_rte;
-	};
-} __packed;
+	जोड़ अणु
+		जोड़ hv_msi_entry msi_entry;
+		जोड़ hv_ioapic_rte ioapic_rte;
+	पूर्ण;
+पूर्ण __packed;
 
 /*
- * flags for hv_device_interrupt_target.flags
+ * flags क्रम hv_device_पूर्णांकerrupt_target.flags
  */
-#define HV_DEVICE_INTERRUPT_TARGET_MULTICAST		1
-#define HV_DEVICE_INTERRUPT_TARGET_PROCESSOR_SET	2
+#घोषणा HV_DEVICE_INTERRUPT_TARGET_MULTICAST		1
+#घोषणा HV_DEVICE_INTERRUPT_TARGET_PROCESSOR_SET	2
 
-struct hv_device_interrupt_target {
+काष्ठा hv_device_पूर्णांकerrupt_target अणु
 	u32 vector;
 	u32 flags;
-	union {
+	जोड़ अणु
 		u64 vp_mask;
-		struct hv_vpset vp_set;
-	};
-} __packed;
+		काष्ठा hv_vpset vp_set;
+	पूर्ण;
+पूर्ण __packed;
 
-struct hv_retarget_device_interrupt {
+काष्ठा hv_retarget_device_पूर्णांकerrupt अणु
 	u64 partition_id;		/* use "self" */
 	u64 device_id;
-	struct hv_interrupt_entry int_entry;
+	काष्ठा hv_पूर्णांकerrupt_entry पूर्णांक_entry;
 	u64 reserved2;
-	struct hv_device_interrupt_target int_target;
-} __packed __aligned(8);
+	काष्ठा hv_device_पूर्णांकerrupt_target पूर्णांक_target;
+पूर्ण __packed __aligned(8);
 
 
 /* HvGetVpRegisters hypercall input with variable size reg name list*/
-struct hv_get_vp_registers_input {
-	struct {
+काष्ठा hv_get_vp_रेजिस्टरs_input अणु
+	काष्ठा अणु
 		u64 partitionid;
 		u32 vpindex;
 		u8  inputvtl;
 		u8  padding[3];
-	} header;
-	struct input {
+	पूर्ण header;
+	काष्ठा input अणु
 		u32 name0;
 		u32 name1;
-	} element[];
-} __packed;
+	पूर्ण element[];
+पूर्ण __packed;
 
 
-/* HvGetVpRegisters returns an array of these output elements */
-struct hv_get_vp_registers_output {
-	union {
-		struct {
+/* HvGetVpRegisters वापसs an array of these output elements */
+काष्ठा hv_get_vp_रेजिस्टरs_output अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 a;
 			u32 b;
 			u32 c;
 			u32 d;
-		} as32 __packed;
-		struct {
+		पूर्ण as32 __packed;
+		काष्ठा अणु
 			u64 low;
 			u64 high;
-		} as64 __packed;
-	};
-};
+		पूर्ण as64 __packed;
+	पूर्ण;
+पूर्ण;
 
 /* HvSetVpRegisters hypercall with variable size reg name/value list*/
-struct hv_set_vp_registers_input {
-	struct {
+काष्ठा hv_set_vp_रेजिस्टरs_input अणु
+	काष्ठा अणु
 		u64 partitionid;
 		u32 vpindex;
 		u8  inputvtl;
 		u8  padding[3];
-	} header;
-	struct {
+	पूर्ण header;
+	काष्ठा अणु
 		u32 name;
 		u32 padding1;
 		u64 padding2;
 		u64 valuelow;
 		u64 valuehigh;
-	} element[];
-} __packed;
+	पूर्ण element[];
+पूर्ण __packed;
 
-enum hv_device_type {
+क्रमागत hv_device_type अणु
 	HV_DEVICE_TYPE_LOGICAL = 0,
 	HV_DEVICE_TYPE_PCI = 1,
 	HV_DEVICE_TYPE_IOAPIC = 2,
 	HV_DEVICE_TYPE_ACPI = 3,
-};
+पूर्ण;
 
-typedef u16 hv_pci_rid;
-typedef u16 hv_pci_segment;
-typedef u64 hv_logical_device_id;
-union hv_pci_bdf {
-	u16 as_uint16;
+प्रकार u16 hv_pci_rid;
+प्रकार u16 hv_pci_segment;
+प्रकार u64 hv_logical_device_id;
+जोड़ hv_pci_bdf अणु
+	u16 as_uपूर्णांक16;
 
-	struct {
+	काष्ठा अणु
 		u8 function:3;
 		u8 device:5;
 		u8 bus;
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-union hv_pci_bus_range {
-	u16 as_uint16;
+जोड़ hv_pci_bus_range अणु
+	u16 as_uपूर्णांक16;
 
-	struct {
+	काष्ठा अणु
 		u8 subordinate_bus;
 		u8 secondary_bus;
-	};
-} __packed;
+	पूर्ण;
+पूर्ण __packed;
 
-union hv_device_id {
-	u64 as_uint64;
+जोड़ hv_device_id अणु
+	u64 as_uपूर्णांक64;
 
-	struct {
+	काष्ठा अणु
 		u64 reserved0:62;
 		u64 device_type:2;
-	};
+	पूर्ण;
 
 	/* HV_DEVICE_TYPE_LOGICAL */
-	struct {
+	काष्ठा अणु
 		u64 id:62;
 		u64 device_type:2;
-	} logical;
+	पूर्ण logical;
 
 	/* HV_DEVICE_TYPE_PCI */
-	struct {
-		union {
+	काष्ठा अणु
+		जोड़ अणु
 			hv_pci_rid rid;
-			union hv_pci_bdf bdf;
-		};
+			जोड़ hv_pci_bdf bdf;
+		पूर्ण;
 
 		hv_pci_segment segment;
-		union hv_pci_bus_range shadow_bus_range;
+		जोड़ hv_pci_bus_range shaकरोw_bus_range;
 
 		u16 phantom_function_bits:2;
-		u16 source_shadow:1;
+		u16 source_shaकरोw:1;
 
 		u16 rsvdz0:11;
 		u16 device_type:2;
-	} pci;
+	पूर्ण pci;
 
 	/* HV_DEVICE_TYPE_IOAPIC */
-	struct {
+	काष्ठा अणु
 		u8 ioapic_id;
 		u8 rsvdz0;
 		u16 rsvdz1;
@@ -745,64 +746,64 @@ union hv_device_id {
 
 		u16 rsvdz3:14;
 		u16 device_type:2;
-	} ioapic;
+	पूर्ण ioapic;
 
 	/* HV_DEVICE_TYPE_ACPI */
-	struct {
+	काष्ठा अणु
 		u32 input_mapping_base;
 		u32 input_mapping_count:30;
 		u32 device_type:2;
-	} acpi;
-} __packed;
+	पूर्ण acpi;
+पूर्ण __packed;
 
-enum hv_interrupt_trigger_mode {
+क्रमागत hv_पूर्णांकerrupt_trigger_mode अणु
 	HV_INTERRUPT_TRIGGER_MODE_EDGE = 0,
 	HV_INTERRUPT_TRIGGER_MODE_LEVEL = 1,
-};
+पूर्ण;
 
-struct hv_device_interrupt_descriptor {
-	u32 interrupt_type;
+काष्ठा hv_device_पूर्णांकerrupt_descriptor अणु
+	u32 पूर्णांकerrupt_type;
 	u32 trigger_mode;
 	u32 vector_count;
 	u32 reserved;
-	struct hv_device_interrupt_target target;
-} __packed;
+	काष्ठा hv_device_पूर्णांकerrupt_target target;
+पूर्ण __packed;
 
-struct hv_input_map_device_interrupt {
+काष्ठा hv_input_map_device_पूर्णांकerrupt अणु
 	u64 partition_id;
 	u64 device_id;
 	u64 flags;
-	struct hv_interrupt_entry logical_interrupt_entry;
-	struct hv_device_interrupt_descriptor interrupt_descriptor;
-} __packed;
+	काष्ठा hv_पूर्णांकerrupt_entry logical_पूर्णांकerrupt_entry;
+	काष्ठा hv_device_पूर्णांकerrupt_descriptor पूर्णांकerrupt_descriptor;
+पूर्ण __packed;
 
-struct hv_output_map_device_interrupt {
-	struct hv_interrupt_entry interrupt_entry;
-} __packed;
+काष्ठा hv_output_map_device_पूर्णांकerrupt अणु
+	काष्ठा hv_पूर्णांकerrupt_entry पूर्णांकerrupt_entry;
+पूर्ण __packed;
 
-struct hv_input_unmap_device_interrupt {
+काष्ठा hv_input_unmap_device_पूर्णांकerrupt अणु
 	u64 partition_id;
 	u64 device_id;
-	struct hv_interrupt_entry interrupt_entry;
-} __packed;
+	काष्ठा hv_पूर्णांकerrupt_entry पूर्णांकerrupt_entry;
+पूर्ण __packed;
 
-#define HV_SOURCE_SHADOW_NONE               0x0
-#define HV_SOURCE_SHADOW_BRIDGE_BUS_RANGE   0x1
+#घोषणा HV_SOURCE_SHADOW_NONE               0x0
+#घोषणा HV_SOURCE_SHADOW_BRIDGE_BUS_RANGE   0x1
 
 /*
  * The whole argument should fit in a page to be able to pass to the hypervisor
  * in one hypercall.
  */
-#define HV_MEMORY_HINT_MAX_GPA_PAGE_RANGES  \
-	((HV_HYP_PAGE_SIZE - sizeof(struct hv_memory_hint)) / \
-		sizeof(union hv_gpa_page_range))
+#घोषणा HV_MEMORY_Hपूर्णांक_उच्च_GPA_PAGE_RANGES  \
+	((HV_HYP_PAGE_SIZE - माप(काष्ठा hv_memory_hपूर्णांक)) / \
+		माप(जोड़ hv_gpa_page_range))
 
-/* HvExtCallMemoryHeatHint hypercall */
-#define HV_EXT_MEMORY_HEAT_HINT_TYPE_COLD_DISCARD	2
-struct hv_memory_hint {
+/* HvExtCallMemoryHeatHपूर्णांक hypercall */
+#घोषणा HV_EXT_MEMORY_HEAT_HINT_TYPE_COLD_DISCARD	2
+काष्ठा hv_memory_hपूर्णांक अणु
 	u64 type:2;
 	u64 reserved:62;
-	union hv_gpa_page_range ranges[];
-} __packed;
+	जोड़ hv_gpa_page_range ranges[];
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

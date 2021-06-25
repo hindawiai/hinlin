@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Modified 1998-2001, 2003
+ * Modअगरied 1998-2001, 2003
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  *
- * Unfortunately, this file is being included by bits/signal.h in
- * glibc-2.x.  Hence the #ifdef __KERNEL__ ugliness.
+ * Unक्रमtunately, this file is being included by bits/संकेत.स in
+ * glibc-2.x.  Hence the #अगर_घोषित __KERNEL__ ugliness.
  */
-#ifndef _UAPI_ASM_IA64_SIGNAL_H
-#define _UAPI_ASM_IA64_SIGNAL_H
+#अगर_अघोषित _UAPI_ASM_IA64_SIGNAL_H
+#घोषणा _UAPI_ASM_IA64_SIGNAL_H
 
 
-#define SIGHUP		 1
-#define SIGINT		 2
-#define SIGQUIT		 3
-#define SIGILL		 4
-#define SIGTRAP		 5
-#define SIGABRT		 6
-#define SIGIOT		 6
-#define SIGBUS		 7
-#define SIGFPE		 8
-#define SIGKILL		 9
-#define SIGUSR1		10
-#define SIGSEGV		11
-#define SIGUSR2		12
-#define SIGPIPE		13
-#define SIGALRM		14
-#define SIGTERM		15
-#define SIGSTKFLT	16
-#define SIGCHLD		17
-#define SIGCONT		18
-#define SIGSTOP		19
-#define SIGTSTP		20
-#define SIGTTIN		21
-#define SIGTTOU		22
-#define SIGURG		23
-#define SIGXCPU		24
-#define SIGXFSZ		25
-#define SIGVTALRM	26
-#define SIGPROF		27
-#define SIGWINCH	28
-#define SIGIO		29
-#define SIGPOLL		SIGIO
+#घोषणा SIGHUP		 1
+#घोषणा संक_विघ्न		 2
+#घोषणा SIGQUIT		 3
+#घोषणा संक_अवैध		 4
+#घोषणा SIGTRAP		 5
+#घोषणा SIGABRT		 6
+#घोषणा SIGIOT		 6
+#घोषणा SIGBUS		 7
+#घोषणा संक_भ_त्रुटि		 8
+#घोषणा SIGKILL		 9
+#घोषणा SIGUSR1		10
+#घोषणा संक_अंश		11
+#घोषणा SIGUSR2		12
+#घोषणा SIGPIPE		13
+#घोषणा SIGALRM		14
+#घोषणा संक_इति		15
+#घोषणा SIGSTKFLT	16
+#घोषणा SIGCHLD		17
+#घोषणा SIGCONT		18
+#घोषणा SIGSTOP		19
+#घोषणा SIGTSTP		20
+#घोषणा SIGTTIN		21
+#घोषणा SIGTTOU		22
+#घोषणा SIGURG		23
+#घोषणा SIGXCPU		24
+#घोषणा SIGXFSZ		25
+#घोषणा SIGVTALRM	26
+#घोषणा SIGPROF		27
+#घोषणा SIGWINCH	28
+#घोषणा SIGIO		29
+#घोषणा SIGPOLL		SIGIO
 /*
-#define SIGLOST		29
+#घोषणा SIGLOST		29
 */
-#define SIGPWR		30
-#define SIGSYS		31
-/* signal 31 is no longer "unused", but the SIGUNUSED macro remains for backwards compatibility */
-#define	SIGUNUSED	31
+#घोषणा SIGPWR		30
+#घोषणा SIGSYS		31
+/* संकेत 31 is no दीर्घer "unused", but the SIGUNUSED macro reमुख्यs क्रम backwards compatibility */
+#घोषणा	SIGUNUSED	31
 
-/* These should not be considered constants from userland.  */
-#define SIGRTMIN	32
-#define SIGRTMAX	_NSIG
+/* These should not be considered स्थिरants from userland.  */
+#घोषणा SIGRTMIN	32
+#घोषणा SIGRTMAX	_NSIG
 
-#define SA_RESTORER	0x04000000
+#घोषणा SA_RESTORER	0x04000000
 
 /*
  * The minimum stack size needs to be fairly large because we want to
- * be sure that an app compiled for today's CPUs will continue to run
- * on all future CPU models.  The CPU model matters because the signal
- * frame needs to have space for the complete machine state, including
- * all physical stacked registers.  The number of physical stacked
- * registers is CPU model dependent, but given that the width of
+ * be sure that an app compiled क्रम today's CPUs will जारी to run
+ * on all future CPU models.  The CPU model matters because the संकेत
+ * frame needs to have space क्रम the complete machine state, including
+ * all physical stacked रेजिस्टरs.  The number of physical stacked
+ * रेजिस्टरs is CPU model dependent, but given that the width of
  * ar.rsc.loadrs is 14 bits, we can assume that they'll never take up
  * more than 16KB of space.
  */
-#if 1
+#अगर 1
   /*
    * This is a stupid typo: the value was _meant_ to be 131072 (0x20000), but I typed it
    * in wrong. ;-(  To preserve backwards compatibility, we leave the kernel at the
    * incorrect value and fix libc only.
    */
-# define MINSIGSTKSZ	131027	/* min. stack size for sigaltstack() */
-#else
-# define MINSIGSTKSZ	131072	/* min. stack size for sigaltstack() */
-#endif
-#define SIGSTKSZ	262144	/* default stack size for sigaltstack() */
+# define MINSIGSTKSZ	131027	/* min. stack size क्रम sigaltstack() */
+#अन्यथा
+# define MINSIGSTKSZ	131072	/* min. stack size क्रम sigaltstack() */
+#पूर्ण_अगर
+#घोषणा SIGSTKSZ	262144	/* शेष stack size क्रम sigaltstack() */
 
 
-#include <asm-generic/signal-defs.h>
+#समावेश <यंत्र-generic/संकेत-defs.h>
 
-# ifndef __ASSEMBLY__
+# अगरndef __ASSEMBLY__
 
 #  include <linux/types.h>
 
-/* Avoid too many header ordering problems.  */
-struct siginfo;
+/* Aव्योम too many header ordering problems.  */
+काष्ठा siginfo;
 
-typedef struct sigaltstack {
-	void __user *ss_sp;
-	int ss_flags;
-	size_t ss_size;
-} stack_t;
+प्रकार काष्ठा sigaltstack अणु
+	व्योम __user *ss_sp;
+	पूर्णांक ss_flags;
+	माप_प्रकार ss_size;
+पूर्ण stack_t;
 
 
-# endif /* !__ASSEMBLY__ */
-#endif /* _UAPI_ASM_IA64_SIGNAL_H */
+# endअगर /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* _UAPI_ASM_IA64_SIGNAL_H */

@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Shared Memory Communications over RDMA (SMC-R) and RoCE
  *
  * Manage RMBE
- * copy new RMBE data into user space
+ * copy new RMBE data पूर्णांकo user space
  *
  * Copyright IBM Corp. 2016
  *
  * Author(s):  Ursula Braun <ubraun@linux.vnet.ibm.com>
  */
 
-#include <linux/net.h>
-#include <linux/rcupdate.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/net.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/sock.h>
+#समावेश <net/sock.h>
 
-#include "smc.h"
-#include "smc_core.h"
-#include "smc_cdc.h"
-#include "smc_tx.h" /* smc_tx_consumer_update() */
-#include "smc_rx.h"
+#समावेश "smc.h"
+#समावेश "smc_core.h"
+#समावेश "smc_cdc.h"
+#समावेश "smc_tx.h" /* smc_tx_consumer_update() */
+#समावेश "smc_rx.h"
 
-/* callback implementation to wakeup consumers blocked with smc_rx_wait().
+/* callback implementation to wakeup consumers blocked with smc_rx_रुको().
  * indirectly called by smc_cdc_msg_recv_action().
  */
-static void smc_rx_wake_up(struct sock *sk)
-{
-	struct socket_wq *wq;
+अटल व्योम smc_rx_wake_up(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	/* derived from sock_def_readable() */
-	/* called already in smc_listen_work() */
-	rcu_read_lock();
+	/* derived from sock_def_पढ़ोable() */
+	/* called alपढ़ोy in smc_listen_work() */
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN | EPOLLPRI |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLIN | EPOLLPRI |
 						EPOLLRDNORM | EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
-	if ((sk->sk_shutdown == SHUTDOWN_MASK) ||
+	अगर ((sk->sk_shutकरोwn == SHUTDOWN_MASK) ||
 	    (sk->sk_state == SMC_CLOSED))
 		sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_HUP);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /* Update consumer cursor
  *   @conn   connection to update
  *   @cons   consumer cursor
  *   @len    number of Bytes consumed
  *   Returns:
- *   1 if we should end our receive, 0 otherwise
+ *   1 अगर we should end our receive, 0 otherwise
  */
-static int smc_rx_update_consumer(struct smc_sock *smc,
-				  union smc_host_cursor cons, size_t len)
-{
-	struct smc_connection *conn = &smc->conn;
-	struct sock *sk = &smc->sk;
-	bool force = false;
-	int diff, rc = 0;
+अटल पूर्णांक smc_rx_update_consumer(काष्ठा smc_sock *smc,
+				  जोड़ smc_host_cursor cons, माप_प्रकार len)
+अणु
+	काष्ठा smc_connection *conn = &smc->conn;
+	काष्ठा sock *sk = &smc->sk;
+	bool क्रमce = false;
+	पूर्णांक dअगरf, rc = 0;
 
 	smc_curs_add(conn->rmb_desc->len, &cons, len);
 
 	/* did we process urgent data? */
-	if (conn->urg_state == SMC_URG_VALID || conn->urg_rx_skip_pend) {
-		diff = smc_curs_comp(conn->rmb_desc->len, &cons,
+	अगर (conn->urg_state == SMC_URG_VALID || conn->urg_rx_skip_pend) अणु
+		dअगरf = smc_curs_comp(conn->rmb_desc->len, &cons,
 				     &conn->urg_curs);
-		if (sock_flag(sk, SOCK_URGINLINE)) {
-			if (diff == 0) {
-				force = true;
+		अगर (sock_flag(sk, SOCK_URGINLINE)) अणु
+			अगर (dअगरf == 0) अणु
+				क्रमce = true;
 				rc = 1;
 				conn->urg_state = SMC_URG_READ;
-			}
-		} else {
-			if (diff == 1) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (dअगरf == 1) अणु
 				/* skip urgent byte */
-				force = true;
+				क्रमce = true;
 				smc_curs_add(conn->rmb_desc->len, &cons, 1);
 				conn->urg_rx_skip_pend = false;
-			} else if (diff < -1)
-				/* we read past urgent byte */
+			पूर्ण अन्यथा अगर (dअगरf < -1)
+				/* we पढ़ो past urgent byte */
 				conn->urg_state = SMC_URG_READ;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	smc_curs_copy(&conn->local_tx_ctrl.cons, &cons, conn);
 
-	/* send consumer cursor update if required */
-	/* similar to advertising new TCP rcv_wnd if required */
-	smc_tx_consumer_update(conn, force);
+	/* send consumer cursor update अगर required */
+	/* similar to advertising new TCP rcv_wnd अगर required */
+	smc_tx_consumer_update(conn, क्रमce);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void smc_rx_update_cons(struct smc_sock *smc, size_t len)
-{
-	struct smc_connection *conn = &smc->conn;
-	union smc_host_cursor cons;
+अटल व्योम smc_rx_update_cons(काष्ठा smc_sock *smc, माप_प्रकार len)
+अणु
+	काष्ठा smc_connection *conn = &smc->conn;
+	जोड़ smc_host_cursor cons;
 
 	smc_curs_copy(&cons, &conn->local_tx_ctrl.cons, conn);
 	smc_rx_update_consumer(smc, cons, len);
-}
+पूर्ण
 
-struct smc_spd_priv {
-	struct smc_sock *smc;
-	size_t		 len;
-};
+काष्ठा smc_spd_priv अणु
+	काष्ठा smc_sock *smc;
+	माप_प्रकार		 len;
+पूर्ण;
 
-static void smc_rx_pipe_buf_release(struct pipe_inode_info *pipe,
-				    struct pipe_buffer *buf)
-{
-	struct smc_spd_priv *priv = (struct smc_spd_priv *)buf->private;
-	struct smc_sock *smc = priv->smc;
-	struct smc_connection *conn;
-	struct sock *sk = &smc->sk;
+अटल व्योम smc_rx_pipe_buf_release(काष्ठा pipe_inode_info *pipe,
+				    काष्ठा pipe_buffer *buf)
+अणु
+	काष्ठा smc_spd_priv *priv = (काष्ठा smc_spd_priv *)buf->निजी;
+	काष्ठा smc_sock *smc = priv->smc;
+	काष्ठा smc_connection *conn;
+	काष्ठा sock *sk = &smc->sk;
 
-	if (sk->sk_state == SMC_CLOSED ||
+	अगर (sk->sk_state == SMC_CLOSED ||
 	    sk->sk_state == SMC_PEERFINCLOSEWAIT ||
 	    sk->sk_state == SMC_APPFINCLOSEWAIT)
-		goto out;
+		जाओ out;
 	conn = &smc->conn;
 	lock_sock(sk);
 	smc_rx_update_cons(smc, priv->len);
 	release_sock(sk);
-	if (atomic_sub_and_test(priv->len, &conn->splice_pending))
+	अगर (atomic_sub_and_test(priv->len, &conn->splice_pending))
 		smc_rx_wake_up(sk);
 out:
-	kfree(priv);
+	kमुक्त(priv);
 	put_page(buf->page);
 	sock_put(sk);
-}
+पूर्ण
 
-static const struct pipe_buf_operations smc_pipe_ops = {
+अटल स्थिर काष्ठा pipe_buf_operations smc_pipe_ops = अणु
 	.release = smc_rx_pipe_buf_release,
 	.get = generic_pipe_buf_get
-};
+पूर्ण;
 
-static void smc_rx_spd_release(struct splice_pipe_desc *spd,
-			       unsigned int i)
-{
+अटल व्योम smc_rx_spd_release(काष्ठा splice_pipe_desc *spd,
+			       अचिन्हित पूर्णांक i)
+अणु
 	put_page(spd->pages[i]);
-}
+पूर्ण
 
-static int smc_rx_splice(struct pipe_inode_info *pipe, char *src, size_t len,
-			 struct smc_sock *smc)
-{
-	struct splice_pipe_desc spd;
-	struct partial_page partial;
-	struct smc_spd_priv *priv;
-	int bytes;
+अटल पूर्णांक smc_rx_splice(काष्ठा pipe_inode_info *pipe, अक्षर *src, माप_प्रकार len,
+			 काष्ठा smc_sock *smc)
+अणु
+	काष्ठा splice_pipe_desc spd;
+	काष्ठा partial_page partial;
+	काष्ठा smc_spd_priv *priv;
+	पूर्णांक bytes;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	priv->len = len;
 	priv->smc = smc;
-	partial.offset = src - (char *)smc->conn.rmb_desc->cpu_addr;
+	partial.offset = src - (अक्षर *)smc->conn.rmb_desc->cpu_addr;
 	partial.len = len;
-	partial.private = (unsigned long)priv;
+	partial.निजी = (अचिन्हित दीर्घ)priv;
 
 	spd.nr_pages_max = 1;
 	spd.nr_pages = 1;
@@ -165,280 +166,280 @@ static int smc_rx_splice(struct pipe_inode_info *pipe, char *src, size_t len,
 	spd.spd_release = smc_rx_spd_release;
 
 	bytes = splice_to_pipe(pipe, &spd);
-	if (bytes > 0) {
+	अगर (bytes > 0) अणु
 		sock_hold(&smc->sk);
 		get_page(smc->conn.rmb_desc->pages);
 		atomic_add(bytes, &smc->conn.splice_pending);
-	}
+	पूर्ण
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-static int smc_rx_data_available_and_no_splice_pend(struct smc_connection *conn)
-{
-	return atomic_read(&conn->bytes_to_rcv) &&
-	       !atomic_read(&conn->splice_pending);
-}
+अटल पूर्णांक smc_rx_data_available_and_no_splice_pend(काष्ठा smc_connection *conn)
+अणु
+	वापस atomic_पढ़ो(&conn->bytes_to_rcv) &&
+	       !atomic_पढ़ो(&conn->splice_pending);
+पूर्ण
 
-/* blocks rcvbuf consumer until >=len bytes available or timeout or interrupted
+/* blocks rcvbuf consumer until >=len bytes available or समयout or पूर्णांकerrupted
  *   @smc    smc socket
- *   @timeo  pointer to max seconds to wait, pointer to value 0 for no timeout
- *   @fcrit  add'l criterion to evaluate as function pointer
+ *   @समयo  poपूर्णांकer to max seconds to रुको, poपूर्णांकer to value 0 क्रम no समयout
+ *   @fcrit  add'l criterion to evaluate as function poपूर्णांकer
  * Returns:
- * 1 if at least 1 byte available in rcvbuf or if socket error/shutdown.
- * 0 otherwise (nothing in rcvbuf nor timeout, e.g. interrupted).
+ * 1 अगर at least 1 byte available in rcvbuf or अगर socket error/shutकरोwn.
+ * 0 otherwise (nothing in rcvbuf nor समयout, e.g. पूर्णांकerrupted).
  */
-int smc_rx_wait(struct smc_sock *smc, long *timeo,
-		int (*fcrit)(struct smc_connection *conn))
-{
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
-	struct smc_connection *conn = &smc->conn;
-	struct smc_cdc_conn_state_flags *cflags =
+पूर्णांक smc_rx_रुको(काष्ठा smc_sock *smc, दीर्घ *समयo,
+		पूर्णांक (*fcrit)(काष्ठा smc_connection *conn))
+अणु
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
+	काष्ठा smc_connection *conn = &smc->conn;
+	काष्ठा smc_cdc_conn_state_flags *cflags =
 					&conn->local_tx_ctrl.conn_state_flags;
-	struct sock *sk = &smc->sk;
-	int rc;
+	काष्ठा sock *sk = &smc->sk;
+	पूर्णांक rc;
 
-	if (fcrit(conn))
-		return 1;
+	अगर (fcrit(conn))
+		वापस 1;
 	sk_set_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	add_wait_queue(sk_sleep(sk), &wait);
-	rc = sk_wait_event(sk, timeo,
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	rc = sk_रुको_event(sk, समयo,
 			   sk->sk_err ||
-			   cflags->peer_conn_abort ||
-			   sk->sk_shutdown & RCV_SHUTDOWN ||
-			   conn->killed ||
+			   cflags->peer_conn_पात ||
+			   sk->sk_shutकरोwn & RCV_SHUTDOWN ||
+			   conn->समाप्तed ||
 			   fcrit(conn),
-			   &wait);
-	remove_wait_queue(sk_sleep(sk), &wait);
+			   &रुको);
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 	sk_clear_bit(SOCKWQ_ASYNC_WAITDATA, sk);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int smc_rx_recv_urg(struct smc_sock *smc, struct msghdr *msg, int len,
-			   int flags)
-{
-	struct smc_connection *conn = &smc->conn;
-	union smc_host_cursor cons;
-	struct sock *sk = &smc->sk;
-	int rc = 0;
+अटल पूर्णांक smc_rx_recv_urg(काष्ठा smc_sock *smc, काष्ठा msghdr *msg, पूर्णांक len,
+			   पूर्णांक flags)
+अणु
+	काष्ठा smc_connection *conn = &smc->conn;
+	जोड़ smc_host_cursor cons;
+	काष्ठा sock *sk = &smc->sk;
+	पूर्णांक rc = 0;
 
-	if (sock_flag(sk, SOCK_URGINLINE) ||
+	अगर (sock_flag(sk, SOCK_URGINLINE) ||
 	    !(conn->urg_state == SMC_URG_VALID) ||
 	    conn->urg_state == SMC_URG_READ)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (conn->urg_state == SMC_URG_VALID) {
-		if (!(flags & MSG_PEEK))
+	अगर (conn->urg_state == SMC_URG_VALID) अणु
+		अगर (!(flags & MSG_PEEK))
 			smc->conn.urg_state = SMC_URG_READ;
 		msg->msg_flags |= MSG_OOB;
-		if (len > 0) {
-			if (!(flags & MSG_TRUNC))
-				rc = memcpy_to_msg(msg, &conn->urg_rx_byte, 1);
+		अगर (len > 0) अणु
+			अगर (!(flags & MSG_TRUNC))
+				rc = स_नकल_to_msg(msg, &conn->urg_rx_byte, 1);
 			len = 1;
 			smc_curs_copy(&cons, &conn->local_tx_ctrl.cons, conn);
-			if (smc_curs_diff(conn->rmb_desc->len, &cons,
+			अगर (smc_curs_dअगरf(conn->rmb_desc->len, &cons,
 					  &conn->urg_curs) > 1)
 				conn->urg_rx_skip_pend = true;
-			/* Urgent Byte was already accounted for, but trigger
-			 * skipping the urgent byte in non-inline case
+			/* Urgent Byte was alपढ़ोy accounted क्रम, but trigger
+			 * skipping the urgent byte in non-अंतरभूत हाल
 			 */
-			if (!(flags & MSG_PEEK))
+			अगर (!(flags & MSG_PEEK))
 				smc_rx_update_consumer(smc, cons, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			msg->msg_flags |= MSG_TRUNC;
-		}
+		पूर्ण
 
-		return rc ? -EFAULT : len;
-	}
+		वापस rc ? -EFAULT : len;
+	पूर्ण
 
-	if (sk->sk_state == SMC_CLOSED || sk->sk_shutdown & RCV_SHUTDOWN)
-		return 0;
+	अगर (sk->sk_state == SMC_CLOSED || sk->sk_shutकरोwn & RCV_SHUTDOWN)
+		वापस 0;
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static bool smc_rx_recvmsg_data_available(struct smc_sock *smc)
-{
-	struct smc_connection *conn = &smc->conn;
+अटल bool smc_rx_recvmsg_data_available(काष्ठा smc_sock *smc)
+अणु
+	काष्ठा smc_connection *conn = &smc->conn;
 
-	if (smc_rx_data_available(conn))
-		return true;
-	else if (conn->urg_state == SMC_URG_VALID)
+	अगर (smc_rx_data_available(conn))
+		वापस true;
+	अन्यथा अगर (conn->urg_state == SMC_URG_VALID)
 		/* we received a single urgent Byte - skip */
 		smc_rx_update_cons(smc, 0);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* smc_rx_recvmsg - receive data from RMBE
  * @msg:	copy data to receive buffer
- * @pipe:	copy data to pipe if set - indicates splice() call
+ * @pipe:	copy data to pipe अगर set - indicates splice() call
  *
- * rcvbuf consumer: main API called by socket layer.
+ * rcvbuf consumer: मुख्य API called by socket layer.
  * Called under sk lock.
  */
-int smc_rx_recvmsg(struct smc_sock *smc, struct msghdr *msg,
-		   struct pipe_inode_info *pipe, size_t len, int flags)
-{
-	size_t copylen, read_done = 0, read_remaining = len;
-	size_t chunk_len, chunk_off, chunk_len_sum;
-	struct smc_connection *conn = &smc->conn;
-	int (*func)(struct smc_connection *conn);
-	union smc_host_cursor cons;
-	int readable, chunk;
-	char *rcvbuf_base;
-	struct sock *sk;
-	int splbytes;
-	long timeo;
-	int target;		/* Read at least these many bytes */
-	int rc;
+पूर्णांक smc_rx_recvmsg(काष्ठा smc_sock *smc, काष्ठा msghdr *msg,
+		   काष्ठा pipe_inode_info *pipe, माप_प्रकार len, पूर्णांक flags)
+अणु
+	माप_प्रकार copylen, पढ़ो_करोne = 0, पढ़ो_reमुख्यing = len;
+	माप_प्रकार chunk_len, chunk_off, chunk_len_sum;
+	काष्ठा smc_connection *conn = &smc->conn;
+	पूर्णांक (*func)(काष्ठा smc_connection *conn);
+	जोड़ smc_host_cursor cons;
+	पूर्णांक पढ़ोable, chunk;
+	अक्षर *rcvbuf_base;
+	काष्ठा sock *sk;
+	पूर्णांक splbytes;
+	दीर्घ समयo;
+	पूर्णांक target;		/* Read at least these many bytes */
+	पूर्णांक rc;
 
-	if (unlikely(flags & MSG_ERRQUEUE))
-		return -EINVAL; /* future work for sk.sk_family == AF_SMC */
+	अगर (unlikely(flags & MSG_ERRQUEUE))
+		वापस -EINVAL; /* future work क्रम sk.sk_family == AF_SMC */
 
 	sk = &smc->sk;
-	if (sk->sk_state == SMC_LISTEN)
-		return -ENOTCONN;
-	if (flags & MSG_OOB)
-		return smc_rx_recv_urg(smc, msg, len, flags);
-	timeo = sock_rcvtimeo(sk, flags & MSG_DONTWAIT);
+	अगर (sk->sk_state == SMC_LISTEN)
+		वापस -ENOTCONN;
+	अगर (flags & MSG_OOB)
+		वापस smc_rx_recv_urg(smc, msg, len, flags);
+	समयo = sock_rcvसमयo(sk, flags & MSG_DONTWAIT);
 	target = sock_rcvlowat(sk, flags & MSG_WAITALL, len);
 
 	/* we currently use 1 RMBE per RMB, so RMBE == RMB base addr */
 	rcvbuf_base = conn->rx_off + conn->rmb_desc->cpu_addr;
 
-	do { /* while (read_remaining) */
-		if (read_done >= target || (pipe && read_done))
-			break;
+	करो अणु /* जबतक (पढ़ो_reमुख्यing) */
+		अगर (पढ़ो_करोne >= target || (pipe && पढ़ो_करोne))
+			अवरोध;
 
-		if (conn->killed)
-			break;
+		अगर (conn->समाप्तed)
+			अवरोध;
 
-		if (smc_rx_recvmsg_data_available(smc))
-			goto copy;
+		अगर (smc_rx_recvmsg_data_available(smc))
+			जाओ copy;
 
-		if (sk->sk_shutdown & RCV_SHUTDOWN) {
+		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN) अणु
 			/* smc_cdc_msg_recv_action() could have run after
 			 * above smc_rx_recvmsg_data_available()
 			 */
-			if (smc_rx_recvmsg_data_available(smc))
-				goto copy;
-			break;
-		}
+			अगर (smc_rx_recvmsg_data_available(smc))
+				जाओ copy;
+			अवरोध;
+		पूर्ण
 
-		if (read_done) {
-			if (sk->sk_err ||
+		अगर (पढ़ो_करोne) अणु
+			अगर (sk->sk_err ||
 			    sk->sk_state == SMC_CLOSED ||
-			    !timeo ||
-			    signal_pending(current))
-				break;
-		} else {
-			if (sk->sk_err) {
-				read_done = sock_error(sk);
-				break;
-			}
-			if (sk->sk_state == SMC_CLOSED) {
-				if (!sock_flag(sk, SOCK_DONE)) {
-					/* This occurs when user tries to read
+			    !समयo ||
+			    संकेत_pending(current))
+				अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर (sk->sk_err) अणु
+				पढ़ो_करोne = sock_error(sk);
+				अवरोध;
+			पूर्ण
+			अगर (sk->sk_state == SMC_CLOSED) अणु
+				अगर (!sock_flag(sk, SOCK_DONE)) अणु
+					/* This occurs when user tries to पढ़ो
 					 * from never connected socket.
 					 */
-					read_done = -ENOTCONN;
-					break;
-				}
-				break;
-			}
-			if (signal_pending(current)) {
-				read_done = sock_intr_errno(timeo);
-				break;
-			}
-			if (!timeo)
-				return -EAGAIN;
-		}
+					पढ़ो_करोne = -ENOTCONN;
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अगर (संकेत_pending(current)) अणु
+				पढ़ो_करोne = sock_पूर्णांकr_त्रुटि_सं(समयo);
+				अवरोध;
+			पूर्ण
+			अगर (!समयo)
+				वापस -EAGAIN;
+		पूर्ण
 
-		if (!smc_rx_data_available(conn)) {
-			smc_rx_wait(smc, &timeo, smc_rx_data_available);
-			continue;
-		}
+		अगर (!smc_rx_data_available(conn)) अणु
+			smc_rx_रुको(smc, &समयo, smc_rx_data_available);
+			जारी;
+		पूर्ण
 
 copy:
-		/* initialize variables for 1st iteration of subsequent loop */
-		/* could be just 1 byte, even after waiting on data above */
-		readable = atomic_read(&conn->bytes_to_rcv);
-		splbytes = atomic_read(&conn->splice_pending);
-		if (!readable || (msg && splbytes)) {
-			if (splbytes)
+		/* initialize variables क्रम 1st iteration of subsequent loop */
+		/* could be just 1 byte, even after रुकोing on data above */
+		पढ़ोable = atomic_पढ़ो(&conn->bytes_to_rcv);
+		splbytes = atomic_पढ़ो(&conn->splice_pending);
+		अगर (!पढ़ोable || (msg && splbytes)) अणु
+			अगर (splbytes)
 				func = smc_rx_data_available_and_no_splice_pend;
-			else
+			अन्यथा
 				func = smc_rx_data_available;
-			smc_rx_wait(smc, &timeo, func);
-			continue;
-		}
+			smc_rx_रुको(smc, &समयo, func);
+			जारी;
+		पूर्ण
 
 		smc_curs_copy(&cons, &conn->local_tx_ctrl.cons, conn);
 		/* subsequent splice() calls pick up where previous left */
-		if (splbytes)
+		अगर (splbytes)
 			smc_curs_add(conn->rmb_desc->len, &cons, splbytes);
-		if (conn->urg_state == SMC_URG_VALID &&
+		अगर (conn->urg_state == SMC_URG_VALID &&
 		    sock_flag(&smc->sk, SOCK_URGINLINE) &&
-		    readable > 1)
-			readable--;	/* always stop at urgent Byte */
-		/* not more than what user space asked for */
-		copylen = min_t(size_t, read_remaining, readable);
-		/* determine chunks where to read from rcvbuf */
-		/* either unwrapped case, or 1st chunk of wrapped case */
-		chunk_len = min_t(size_t, copylen, conn->rmb_desc->len -
+		    पढ़ोable > 1)
+			पढ़ोable--;	/* always stop at urgent Byte */
+		/* not more than what user space asked क्रम */
+		copylen = min_t(माप_प्रकार, पढ़ो_reमुख्यing, पढ़ोable);
+		/* determine chunks where to पढ़ो from rcvbuf */
+		/* either unwrapped हाल, or 1st chunk of wrapped हाल */
+		chunk_len = min_t(माप_प्रकार, copylen, conn->rmb_desc->len -
 				  cons.count);
 		chunk_len_sum = chunk_len;
 		chunk_off = cons.count;
-		smc_rmb_sync_sg_for_cpu(conn);
-		for (chunk = 0; chunk < 2; chunk++) {
-			if (!(flags & MSG_TRUNC)) {
-				if (msg) {
-					rc = memcpy_to_msg(msg, rcvbuf_base +
+		smc_rmb_sync_sg_क्रम_cpu(conn);
+		क्रम (chunk = 0; chunk < 2; chunk++) अणु
+			अगर (!(flags & MSG_TRUNC)) अणु
+				अगर (msg) अणु
+					rc = स_नकल_to_msg(msg, rcvbuf_base +
 							   chunk_off,
 							   chunk_len);
-				} else {
+				पूर्ण अन्यथा अणु
 					rc = smc_rx_splice(pipe, rcvbuf_base +
 							chunk_off, chunk_len,
 							smc);
-				}
-				if (rc < 0) {
-					if (!read_done)
-						read_done = -EFAULT;
-					smc_rmb_sync_sg_for_device(conn);
-					goto out;
-				}
-			}
-			read_remaining -= chunk_len;
-			read_done += chunk_len;
+				पूर्ण
+				अगर (rc < 0) अणु
+					अगर (!पढ़ो_करोne)
+						पढ़ो_करोne = -EFAULT;
+					smc_rmb_sync_sg_क्रम_device(conn);
+					जाओ out;
+				पूर्ण
+			पूर्ण
+			पढ़ो_reमुख्यing -= chunk_len;
+			पढ़ो_करोne += chunk_len;
 
-			if (chunk_len_sum == copylen)
-				break; /* either on 1st or 2nd iteration */
+			अगर (chunk_len_sum == copylen)
+				अवरोध; /* either on 1st or 2nd iteration */
 			/* prepare next (== 2nd) iteration */
-			chunk_len = copylen - chunk_len; /* remainder */
+			chunk_len = copylen - chunk_len; /* reमुख्यder */
 			chunk_len_sum += chunk_len;
 			chunk_off = 0; /* modulo offset in recv ring buffer */
-		}
-		smc_rmb_sync_sg_for_device(conn);
+		पूर्ण
+		smc_rmb_sync_sg_क्रम_device(conn);
 
 		/* update cursors */
-		if (!(flags & MSG_PEEK)) {
+		अगर (!(flags & MSG_PEEK)) अणु
 			/* increased in recv tasklet smc_cdc_msg_rcv() */
-			smp_mb__before_atomic();
+			smp_mb__beक्रमe_atomic();
 			atomic_sub(copylen, &conn->bytes_to_rcv);
 			/* guarantee 0 <= bytes_to_rcv <= rmb_desc->len */
 			smp_mb__after_atomic();
-			if (msg && smc_rx_update_consumer(smc, cons, copylen))
-				goto out;
-		}
-	} while (read_remaining);
+			अगर (msg && smc_rx_update_consumer(smc, cons, copylen))
+				जाओ out;
+		पूर्ण
+	पूर्ण जबतक (पढ़ो_reमुख्यing);
 out:
-	return read_done;
-}
+	वापस पढ़ो_करोne;
+पूर्ण
 
 /* Initialize receive properties on connection establishment. NB: not __init! */
-void smc_rx_init(struct smc_sock *smc)
-{
-	smc->sk.sk_data_ready = smc_rx_wake_up;
+व्योम smc_rx_init(काष्ठा smc_sock *smc)
+अणु
+	smc->sk.sk_data_पढ़ोy = smc_rx_wake_up;
 	atomic_set(&smc->conn.splice_pending, 0);
 	smc->conn.urg_state = SMC_URG_READ;
-}
+पूर्ण

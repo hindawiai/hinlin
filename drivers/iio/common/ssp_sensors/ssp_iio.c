@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (C) 2014, Samsung Electronics Co. Ltd. All Rights Reserved.
  */
 
-#include <linux/iio/common/ssp_sensors.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include "ssp_iio_sensor.h"
+#समावेश <linux/iio/common/ssp_sensors.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश "ssp_iio_sensor.h"
 
 /**
- * ssp_common_buffer_postenable() - generic postenable callback for ssp buffer
+ * ssp_common_buffer_postenable() - generic postenable callback क्रम ssp buffer
  *
  * @indio_dev:		iio device
  *
- * Returns 0 or negative value in case of error
+ * Returns 0 or negative value in हाल of error
  */
-int ssp_common_buffer_postenable(struct iio_dev *indio_dev)
-{
-	struct ssp_sensor_data *spd = iio_priv(indio_dev);
-	struct ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
+पूर्णांक ssp_common_buffer_postenable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा ssp_sensor_data *spd = iio_priv(indio_dev);
+	काष्ठा ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
 
 	/* the allocation is made in post because scan size is known in this
 	 * moment
 	 * */
-	spd->buffer = kmalloc(indio_dev->scan_bytes, GFP_KERNEL | GFP_DMA);
-	if (!spd->buffer)
-		return -ENOMEM;
+	spd->buffer = kदो_स्मृति(indio_dev->scan_bytes, GFP_KERNEL | GFP_DMA);
+	अगर (!spd->buffer)
+		वापस -ENOMEM;
 
-	return ssp_enable_sensor(data, spd->type,
+	वापस ssp_enable_sensor(data, spd->type,
 				 ssp_get_sensor_delay(data, spd->type));
-}
+पूर्ण
 EXPORT_SYMBOL(ssp_common_buffer_postenable);
 
 /**
- * ssp_common_buffer_postdisable() - generic postdisable callback for ssp buffer
+ * ssp_common_buffer_postdisable() - generic postdisable callback क्रम ssp buffer
  *
  * @indio_dev:		iio device
  *
- * Returns 0 or negative value in case of error
+ * Returns 0 or negative value in हाल of error
  */
-int ssp_common_buffer_postdisable(struct iio_dev *indio_dev)
-{
-	int ret;
-	struct ssp_sensor_data *spd = iio_priv(indio_dev);
-	struct ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
+पूर्णांक ssp_common_buffer_postdisable(काष्ठा iio_dev *indio_dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा ssp_sensor_data *spd = iio_priv(indio_dev);
+	काष्ठा ssp_data *data = dev_get_drvdata(indio_dev->dev.parent->parent);
 
 	ret = ssp_disable_sensor(data, spd->type);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	kfree(spd->buffer);
+	kमुक्त(spd->buffer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ssp_common_buffer_postdisable);
 
 /**
- * ssp_common_process_data() - Common process data callback for ssp sensors
+ * ssp_common_process_data() - Common process data callback क्रम ssp sensors
  *
  * @indio_dev:		iio device
  * @buf:		source buffer
  * @len:		sensor data length
- * @timestamp:		system timestamp
+ * @बारtamp:		प्रणाली बारtamp
  *
- * Returns 0 or negative value in case of error
+ * Returns 0 or negative value in हाल of error
  */
-int ssp_common_process_data(struct iio_dev *indio_dev, void *buf,
-			    unsigned int len, int64_t timestamp)
-{
-	__le32 time;
-	int64_t calculated_time = 0;
-	struct ssp_sensor_data *spd = iio_priv(indio_dev);
+पूर्णांक ssp_common_process_data(काष्ठा iio_dev *indio_dev, व्योम *buf,
+			    अचिन्हित पूर्णांक len, पूर्णांक64_t बारtamp)
+अणु
+	__le32 समय;
+	पूर्णांक64_t calculated_समय = 0;
+	काष्ठा ssp_sensor_data *spd = iio_priv(indio_dev);
 
-	if (indio_dev->scan_bytes == 0)
-		return 0;
+	अगर (indio_dev->scan_bytes == 0)
+		वापस 0;
 
 	/*
 	 * it always sends full set of samples, remember about available masks
 	 */
-	memcpy(spd->buffer, buf, len);
+	स_नकल(spd->buffer, buf, len);
 
-	if (indio_dev->scan_timestamp) {
-		memcpy(&time, &((char *)buf)[len], SSP_TIME_SIZE);
-		calculated_time =
-			timestamp + (int64_t)le32_to_cpu(time) * 1000000;
-	}
+	अगर (indio_dev->scan_बारtamp) अणु
+		स_नकल(&समय, &((अक्षर *)buf)[len], SSP_TIME_SIZE);
+		calculated_समय =
+			बारtamp + (पूर्णांक64_t)le32_to_cpu(समय) * 1000000;
+	पूर्ण
 
-	return iio_push_to_buffers_with_timestamp(indio_dev, spd->buffer,
-						  calculated_time);
-}
+	वापस iio_push_to_buffers_with_बारtamp(indio_dev, spd->buffer,
+						  calculated_समय);
+पूर्ण
 EXPORT_SYMBOL(ssp_common_process_data);
 
 MODULE_AUTHOR("Karol Wrona <k.wrona@samsung.com>");

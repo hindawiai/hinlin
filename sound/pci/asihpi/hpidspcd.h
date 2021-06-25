@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /***********************************************************************/
 /*
 
@@ -6,23 +7,23 @@
     Copyright (C) 1997-2011  AudioScience Inc. <support@audioscience.com>
 
 
-\file
-Functions for reading DSP code to load into DSP
+\पile
+Functions क्रम पढ़ोing DSP code to load पूर्णांकo DSP
 
 */
 /***********************************************************************/
-#ifndef _HPIDSPCD_H_
-#define _HPIDSPCD_H_
+#अगर_अघोषित _HPIDSPCD_H_
+#घोषणा _HPIDSPCD_H_
 
-#include "hpi_internal.h"
+#समावेश "hpi_internal.h"
 
-/** Header structure for dsp firmware file
- This structure must match that used in s2bin.c for generation of asidsp.bin
+/** Header काष्ठाure क्रम dsp firmware file
+ This काष्ठाure must match that used in s2bin.c क्रम generation of asidsp.bin
  */
-/*#ifndef DISABLE_PRAGMA_PACK1 */
-/*#pragma pack(push, 1) */
-/*#endif */
-struct code_header {
+/*#अगर_अघोषित DISABLE_PRAGMA_PACK1 */
+/*#आशय pack(push, 1) */
+/*#पूर्ण_अगर */
+काष्ठा code_header अणु
 	/** Size in bytes including header */
 	u32 size;
 	/** File type tag "CODE" == 0x45444F43 */
@@ -33,63 +34,63 @@ struct code_header {
 	u32 version;
 	/** Data checksum */
 	u32 checksum;
-};
-/*#ifndef DISABLE_PRAGMA_PACK1 */
-/*#pragma pack(pop) */
-/*#endif */
+पूर्ण;
+/*#अगर_अघोषित DISABLE_PRAGMA_PACK1 */
+/*#आशय pack(pop) */
+/*#पूर्ण_अगर */
 
 /*? Don't need the pragmas? */
-compile_time_assert((sizeof(struct code_header) == 20), code_header_size);
+compile_समय_निश्चित((माप(काष्ठा code_header) == 20), code_header_size);
 
-/** Descriptor for dspcode from firmware loader */
-struct dsp_code {
+/** Descriptor क्रम dspcode from firmware loader */
+काष्ठा dsp_code अणु
 	/** copy of  file header */
-	struct code_header header;
+	काष्ठा code_header header;
 	/** Expected number of words in the whole dsp code,INCL header */
 	u32 block_length;
-	/** Number of words read so far */
+	/** Number of words पढ़ो so far */
 	u32 word_count;
 
-	/** internal state of DSP code reader */
-	struct dsp_code_private *pvt;
-};
+	/** पूर्णांकernal state of DSP code पढ़ोer */
+	काष्ठा dsp_code_निजी *pvt;
+पूर्ण;
 
 /** Prepare *psDspCode to refer to the requested adapter's firmware.
 Code file name is obtained from HpiOs_GetDspCodePath
 
-\return 0 for success, or error code if requested code is not available
+\लeturn 0 क्रम success, or error code अगर requested code is not available
 */
-short hpi_dsp_code_open(
-	/** Code identifier, usually adapter family */
-	u32 adapter, void *pci_dev,
-	/** Pointer to DSP code control structure */
-	struct dsp_code *ps_dsp_code,
-	/** Pointer to dword to receive OS specific error code */
+लघु hpi_dsp_code_खोलो(
+	/** Code identअगरier, usually adapter family */
+	u32 adapter, व्योम *pci_dev,
+	/** Poपूर्णांकer to DSP code control काष्ठाure */
+	काष्ठा dsp_code *ps_dsp_code,
+	/** Poपूर्णांकer to dword to receive OS specअगरic error code */
 	u32 *pos_error_code);
 
 /** Close the DSP code file */
-void hpi_dsp_code_close(struct dsp_code *ps_dsp_code);
+व्योम hpi_dsp_code_बंद(काष्ठा dsp_code *ps_dsp_code);
 
-/** Rewind to the beginning of the DSP code file (for verify) */
-void hpi_dsp_code_rewind(struct dsp_code *ps_dsp_code);
+/** Rewind to the beginning of the DSP code file (क्रम verअगरy) */
+व्योम hpi_dsp_code_शुरुआत(काष्ठा dsp_code *ps_dsp_code);
 
 /** Read one word from the dsp code file
-	\return 0 for success, or error code if eof, or block length exceeded
+	\लeturn 0 क्रम success, or error code अगर eof, or block length exceeded
 */
-short hpi_dsp_code_read_word(struct dsp_code *ps_dsp_code,
+लघु hpi_dsp_code_पढ़ो_word(काष्ठा dsp_code *ps_dsp_code,
 				      /**< DSP code descriptor */
-	u32 *pword /**< Where to store the read word */
+	u32 *pword /**< Where to store the पढ़ो word */
 	);
 
-/** Get a block of dsp code into an internal buffer, and provide a pointer to
-that buffer. (If dsp code is already an array in memory, it is referenced,
+/** Get a block of dsp code पूर्णांकo an पूर्णांकernal buffer, and provide a poपूर्णांकer to
+that buffer. (If dsp code is alपढ़ोy an array in memory, it is referenced,
 not copied.)
 
-\return Error if requested number of words are not available
+\लeturn Error अगर requested number of words are not available
 */
-short hpi_dsp_code_read_block(size_t words_requested,
-	struct dsp_code *ps_dsp_code,
-	/* Pointer to store (Pointer to code buffer) */
+लघु hpi_dsp_code_पढ़ो_block(माप_प्रकार words_requested,
+	काष्ठा dsp_code *ps_dsp_code,
+	/* Poपूर्णांकer to store (Poपूर्णांकer to code buffer) */
 	u32 **ppblock);
 
-#endif
+#पूर्ण_अगर

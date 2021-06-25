@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASMARM_VGA_H
-#define ASMARM_VGA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASMARM_VGA_H
+#घोषणा ASMARM_VGA_H
 
-#include <linux/io.h>
+#समावेश <linux/पन.स>
 
-extern unsigned long vga_base;
+बाह्य अचिन्हित दीर्घ vga_base;
 
-#define VGA_MAP_MEM(x,s)	(vga_base + (x))
+#घोषणा VGA_MAP_MEM(x,s)	(vga_base + (x))
 
-#define vga_readb(x)	(*((volatile unsigned char *)x))
-#define vga_writeb(x,y)	(*((volatile unsigned char *)y) = (x))
+#घोषणा vga_पढ़ोb(x)	(*((अस्थिर अचिन्हित अक्षर *)x))
+#घोषणा vga_ग_लिखोb(x,y)	(*((अस्थिर अचिन्हित अक्षर *)y) = (x))
 
-#endif
+#पूर्ण_अगर

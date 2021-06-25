@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_MMIOWB_H
-#define _ASM_POWERPC_MMIOWB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_MMIOWB_H
+#घोषणा _ASM_POWERPC_MMIOWB_H
 
-#ifdef CONFIG_MMIOWB
+#अगर_घोषित CONFIG_MMIOWB
 
-#include <linux/compiler.h>
-#include <asm/barrier.h>
-#include <asm/paca.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/paca.h>
 
-#define arch_mmiowb_state()	(&local_paca->mmiowb_state)
-#define mmiowb()		mb()
+#घोषणा arch_mmiowb_state()	(&local_paca->mmiowb_state)
+#घोषणा mmiowb()		mb()
 
-#endif /* CONFIG_MMIOWB */
+#पूर्ण_अगर /* CONFIG_MMIOWB */
 
-#include <asm-generic/mmiowb.h>
+#समावेश <यंत्र-generic/mmiowb.h>
 
-#endif	/* _ASM_POWERPC_MMIOWB_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_MMIOWB_H */

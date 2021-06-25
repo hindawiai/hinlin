@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SuperH HSPI bus driver
  *
@@ -7,99 +8,99 @@
  * Based on spi-sh.c:
  * Based on pxa2xx_spi.c:
  * Copyright (C) 2011 Renesas Solutions Corp.
- * Copyright (C) 2005 Stephen Street / StreetFire Sound Labs
+ * Copyright (C) 2005 Stephen Street / StreetFire Sound Lअसल
  */
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/io.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/sh_hspi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/sh_hspi.h>
 
-#define SPCR	0x00
-#define SPSR	0x04
-#define SPSCR	0x08
-#define SPTBR	0x0C
-#define SPRBR	0x10
-#define SPCR2	0x14
+#घोषणा SPCR	0x00
+#घोषणा SPSR	0x04
+#घोषणा SPSCR	0x08
+#घोषणा SPTBR	0x0C
+#घोषणा SPRBR	0x10
+#घोषणा SPCR2	0x14
 
 /* SPSR */
-#define RXFL	(1 << 2)
+#घोषणा RXFL	(1 << 2)
 
-struct hspi_priv {
-	void __iomem *addr;
-	struct spi_controller *ctlr;
-	struct device *dev;
-	struct clk *clk;
-};
+काष्ठा hspi_priv अणु
+	व्योम __iomem *addr;
+	काष्ठा spi_controller *ctlr;
+	काष्ठा device *dev;
+	काष्ठा clk *clk;
+पूर्ण;
 
 /*
  *		basic function
  */
-static void hspi_write(struct hspi_priv *hspi, int reg, u32 val)
-{
-	iowrite32(val, hspi->addr + reg);
-}
+अटल व्योम hspi_ग_लिखो(काष्ठा hspi_priv *hspi, पूर्णांक reg, u32 val)
+अणु
+	ioग_लिखो32(val, hspi->addr + reg);
+पूर्ण
 
-static u32 hspi_read(struct hspi_priv *hspi, int reg)
-{
-	return ioread32(hspi->addr + reg);
-}
+अटल u32 hspi_पढ़ो(काष्ठा hspi_priv *hspi, पूर्णांक reg)
+अणु
+	वापस ioपढ़ो32(hspi->addr + reg);
+पूर्ण
 
-static void hspi_bit_set(struct hspi_priv *hspi, int reg, u32 mask, u32 set)
-{
-	u32 val = hspi_read(hspi, reg);
+अटल व्योम hspi_bit_set(काष्ठा hspi_priv *hspi, पूर्णांक reg, u32 mask, u32 set)
+अणु
+	u32 val = hspi_पढ़ो(hspi, reg);
 
 	val &= ~mask;
 	val |= set & mask;
 
-	hspi_write(hspi, reg, val);
-}
+	hspi_ग_लिखो(hspi, reg, val);
+पूर्ण
 
 /*
  *		transfer function
  */
-static int hspi_status_check_timeout(struct hspi_priv *hspi, u32 mask, u32 val)
-{
-	int t = 256;
+अटल पूर्णांक hspi_status_check_समयout(काष्ठा hspi_priv *hspi, u32 mask, u32 val)
+अणु
+	पूर्णांक t = 256;
 
-	while (t--) {
-		if ((mask & hspi_read(hspi, SPSR)) == val)
-			return 0;
+	जबतक (t--) अणु
+		अगर ((mask & hspi_पढ़ो(hspi, SPSR)) == val)
+			वापस 0;
 
 		udelay(10);
-	}
+	पूर्ण
 
 	dev_err(hspi->dev, "timeout\n");
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /*
  *		spi master function
  */
 
-#define hspi_hw_cs_enable(hspi)		hspi_hw_cs_ctrl(hspi, 0)
-#define hspi_hw_cs_disable(hspi)	hspi_hw_cs_ctrl(hspi, 1)
-static void hspi_hw_cs_ctrl(struct hspi_priv *hspi, int hi)
-{
+#घोषणा hspi_hw_cs_enable(hspi)		hspi_hw_cs_ctrl(hspi, 0)
+#घोषणा hspi_hw_cs_disable(hspi)	hspi_hw_cs_ctrl(hspi, 1)
+अटल व्योम hspi_hw_cs_ctrl(काष्ठा hspi_priv *hspi, पूर्णांक hi)
+अणु
 	hspi_bit_set(hspi, SPSCR, (1 << 6), (hi) << 6);
-}
+पूर्ण
 
-static void hspi_hw_setup(struct hspi_priv *hspi,
-			  struct spi_message *msg,
-			  struct spi_transfer *t)
-{
-	struct spi_device *spi = msg->spi;
-	struct device *dev = hspi->dev;
-	u32 spcr, idiv_clk;
-	u32 rate, best_rate, min, tmp;
+अटल व्योम hspi_hw_setup(काष्ठा hspi_priv *hspi,
+			  काष्ठा spi_message *msg,
+			  काष्ठा spi_transfer *t)
+अणु
+	काष्ठा spi_device *spi = msg->spi;
+	काष्ठा device *dev = hspi->dev;
+	u32 spcr, iभाग_clk;
+	u32 rate, best_rate, min, पंचांगp;
 
 	/*
 	 * find best IDIV/CLKCx settings
@@ -107,136 +108,136 @@ static void hspi_hw_setup(struct hspi_priv *hspi,
 	min = ~0;
 	best_rate = 0;
 	spcr = 0;
-	for (idiv_clk = 0x00; idiv_clk <= 0x3F; idiv_clk++) {
+	क्रम (iभाग_clk = 0x00; iभाग_clk <= 0x3F; iभाग_clk++) अणु
 		rate = clk_get_rate(hspi->clk);
 
 		/* IDIV calculation */
-		if (idiv_clk & (1 << 5))
+		अगर (iभाग_clk & (1 << 5))
 			rate /= 128;
-		else
+		अन्यथा
 			rate /= 16;
 
 		/* CLKCx calculation */
-		rate /= (((idiv_clk & 0x1F) + 1) * 2);
+		rate /= (((iभाग_clk & 0x1F) + 1) * 2);
 
 		/* save best settings */
-		tmp = abs(t->speed_hz - rate);
-		if (tmp < min) {
-			min = tmp;
-			spcr = idiv_clk;
+		पंचांगp = असल(t->speed_hz - rate);
+		अगर (पंचांगp < min) अणु
+			min = पंचांगp;
+			spcr = iभाग_clk;
 			best_rate = rate;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (spi->mode & SPI_CPHA)
+	अगर (spi->mode & SPI_CPHA)
 		spcr |= 1 << 7;
-	if (spi->mode & SPI_CPOL)
+	अगर (spi->mode & SPI_CPOL)
 		spcr |= 1 << 6;
 
 	dev_dbg(dev, "speed %d/%d\n", t->speed_hz, best_rate);
 
-	hspi_write(hspi, SPCR, spcr);
-	hspi_write(hspi, SPSR, 0x0);
-	hspi_write(hspi, SPSCR, 0x21);	/* master mode / CS control */
-}
+	hspi_ग_लिखो(hspi, SPCR, spcr);
+	hspi_ग_लिखो(hspi, SPSR, 0x0);
+	hspi_ग_लिखो(hspi, SPSCR, 0x21);	/* master mode / CS control */
+पूर्ण
 
-static int hspi_transfer_one_message(struct spi_controller *ctlr,
-				     struct spi_message *msg)
-{
-	struct hspi_priv *hspi = spi_controller_get_devdata(ctlr);
-	struct spi_transfer *t;
+अटल पूर्णांक hspi_transfer_one_message(काष्ठा spi_controller *ctlr,
+				     काष्ठा spi_message *msg)
+अणु
+	काष्ठा hspi_priv *hspi = spi_controller_get_devdata(ctlr);
+	काष्ठा spi_transfer *t;
 	u32 tx;
 	u32 rx;
-	int ret, i;
-	unsigned int cs_change;
-	const int nsecs = 50;
+	पूर्णांक ret, i;
+	अचिन्हित पूर्णांक cs_change;
+	स्थिर पूर्णांक nsecs = 50;
 
 	dev_dbg(hspi->dev, "%s\n", __func__);
 
 	cs_change = 1;
 	ret = 0;
-	list_for_each_entry(t, &msg->transfers, transfer_list) {
+	list_क्रम_each_entry(t, &msg->transfers, transfer_list) अणु
 
-		if (cs_change) {
+		अगर (cs_change) अणु
 			hspi_hw_setup(hspi, msg, t);
 			hspi_hw_cs_enable(hspi);
 			ndelay(nsecs);
-		}
+		पूर्ण
 		cs_change = t->cs_change;
 
-		for (i = 0; i < t->len; i++) {
+		क्रम (i = 0; i < t->len; i++) अणु
 
-			/* wait remains */
-			ret = hspi_status_check_timeout(hspi, 0x1, 0);
-			if (ret < 0)
-				break;
+			/* रुको reमुख्यs */
+			ret = hspi_status_check_समयout(hspi, 0x1, 0);
+			अगर (ret < 0)
+				अवरोध;
 
 			tx = 0;
-			if (t->tx_buf)
+			अगर (t->tx_buf)
 				tx = (u32)((u8 *)t->tx_buf)[i];
 
-			hspi_write(hspi, SPTBR, tx);
+			hspi_ग_लिखो(hspi, SPTBR, tx);
 
-			/* wait receive */
-			ret = hspi_status_check_timeout(hspi, 0x4, 0x4);
-			if (ret < 0)
-				break;
+			/* रुको receive */
+			ret = hspi_status_check_समयout(hspi, 0x4, 0x4);
+			अगर (ret < 0)
+				अवरोध;
 
-			rx = hspi_read(hspi, SPRBR);
-			if (t->rx_buf)
+			rx = hspi_पढ़ो(hspi, SPRBR);
+			अगर (t->rx_buf)
 				((u8 *)t->rx_buf)[i] = (u8)rx;
 
-		}
+		पूर्ण
 
 		msg->actual_length += t->len;
 
 		spi_transfer_delay_exec(t);
 
-		if (cs_change) {
+		अगर (cs_change) अणु
 			ndelay(nsecs);
 			hspi_hw_cs_disable(hspi);
 			ndelay(nsecs);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	msg->status = ret;
-	if (!cs_change) {
+	अगर (!cs_change) अणु
 		ndelay(nsecs);
 		hspi_hw_cs_disable(hspi);
-	}
+	पूर्ण
 	spi_finalize_current_message(ctlr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hspi_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct spi_controller *ctlr;
-	struct hspi_priv *hspi;
-	struct clk *clk;
-	int ret;
+अटल पूर्णांक hspi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा spi_controller *ctlr;
+	काष्ठा hspi_priv *hspi;
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
 	/* get base addr */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "invalid resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ctlr = spi_alloc_master(&pdev->dev, sizeof(*hspi));
-	if (!ctlr)
-		return -ENOMEM;
+	ctlr = spi_alloc_master(&pdev->dev, माप(*hspi));
+	अगर (!ctlr)
+		वापस -ENOMEM;
 
-	clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&pdev->dev, "couldn't get clock\n");
 		ret = -EINVAL;
-		goto error0;
-	}
+		जाओ error0;
+	पूर्ण
 
 	hspi = spi_controller_get_devdata(ctlr);
-	platform_set_drvdata(pdev, hspi);
+	platक्रमm_set_drvdata(pdev, hspi);
 
 	/* init hspi */
 	hspi->ctlr	= ctlr;
@@ -244,64 +245,64 @@ static int hspi_probe(struct platform_device *pdev)
 	hspi->clk	= clk;
 	hspi->addr	= devm_ioremap(hspi->dev,
 				       res->start, resource_size(res));
-	if (!hspi->addr) {
+	अगर (!hspi->addr) अणु
 		ret = -ENOMEM;
-		goto error1;
-	}
+		जाओ error1;
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	ctlr->bus_num = pdev->id;
 	ctlr->mode_bits	= SPI_CPOL | SPI_CPHA;
 	ctlr->dev.of_node = pdev->dev.of_node;
-	ctlr->auto_runtime_pm = true;
+	ctlr->स्वतः_runसमय_pm = true;
 	ctlr->transfer_one_message = hspi_transfer_one_message;
 	ctlr->bits_per_word_mask = SPI_BPW_MASK(8);
 
-	ret = devm_spi_register_controller(&pdev->dev, ctlr);
-	if (ret < 0) {
+	ret = devm_spi_रेजिस्टर_controller(&pdev->dev, ctlr);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "devm_spi_register_controller error.\n");
-		goto error2;
-	}
+		जाओ error2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  error2:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
  error1:
 	clk_put(clk);
  error0:
 	spi_controller_put(ctlr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hspi_remove(struct platform_device *pdev)
-{
-	struct hspi_priv *hspi = platform_get_drvdata(pdev);
+अटल पूर्णांक hspi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा hspi_priv *hspi = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
 	clk_put(hspi->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id hspi_of_match[] = {
-	{ .compatible = "renesas,hspi", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id hspi_of_match[] = अणु
+	अणु .compatible = "renesas,hspi", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hspi_of_match);
 
-static struct platform_driver hspi_driver = {
+अटल काष्ठा platक्रमm_driver hspi_driver = अणु
 	.probe = hspi_probe,
-	.remove = hspi_remove,
-	.driver = {
+	.हटाओ = hspi_हटाओ,
+	.driver = अणु
 		.name = "sh-hspi",
 		.of_match_table = hspi_of_match,
-	},
-};
-module_platform_driver(hspi_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(hspi_driver);
 
 MODULE_DESCRIPTION("SuperH HSPI bus driver");
 MODULE_LICENSE("GPL v2");

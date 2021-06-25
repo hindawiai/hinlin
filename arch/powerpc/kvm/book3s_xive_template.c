@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2017 Benjamin Herrenschmidt, IBM Corporation
  */
 
 /* File to be included by other .c files */
 
-#define XGLUE(a,b) a##b
-#define GLUE(a,b) XGLUE(a,b)
+#घोषणा XGLUE(a,b) a##b
+#घोषणा GLUE(a,b) XGLUE(a,b)
 
-/* Dummy interrupt used when taking interrupts out of a queue in H_CPPR */
-#define XICS_DUMMY	1
+/* Dummy पूर्णांकerrupt used when taking पूर्णांकerrupts out of a queue in H_CPPR */
+#घोषणा XICS_DUMMY	1
 
-static void GLUE(X_PFX,ack_pending)(struct kvmppc_xive_vcpu *xc)
-{
+अटल व्योम GLUE(X_PFX,ack_pending)(काष्ठा kvmppc_xive_vcpu *xc)
+अणु
 	u8 cppr;
 	u16 ack;
 
@@ -22,8 +23,8 @@ static void GLUE(X_PFX,ack_pending)(struct kvmppc_xive_vcpu *xc)
 	 */
 	eieio();
 
-	/* Perform the acknowledge OS to register cycle. */
-	ack = be16_to_cpu(__x_readw(__x_tima + TM_SPC_ACK_OS_REG));
+	/* Perक्रमm the acknowledge OS to रेजिस्टर cycle. */
+	ack = be16_to_cpu(__x_पढ़ोw(__x_tima + TM_SPC_ACK_OS_REG));
 
 	/* Synchronize subsequent queue accesses */
 	mb();
@@ -31,242 +32,242 @@ static void GLUE(X_PFX,ack_pending)(struct kvmppc_xive_vcpu *xc)
 	/* XXX Check grouping level */
 
 	/* Anything ? */
-	if (!((ack >> 8) & TM_QW1_NSR_EO))
-		return;
+	अगर (!((ack >> 8) & TM_QW1_NSR_EO))
+		वापस;
 
-	/* Grab CPPR of the most favored pending interrupt */
+	/* Grab CPPR of the most favored pending पूर्णांकerrupt */
 	cppr = ack & 0xff;
-	if (cppr < 8)
+	अगर (cppr < 8)
 		xc->pending |= 1 << cppr;
 
-#ifdef XIVE_RUNTIME_CHECKS
+#अगर_घोषित XIVE_RUNTIME_CHECKS
 	/* Check consistency */
-	if (cppr >= xc->hw_cppr)
+	अगर (cppr >= xc->hw_cppr)
 		pr_warn("KVM-XIVE: CPU %d odd ack CPPR, got %d at %d\n",
 			smp_processor_id(), cppr, xc->hw_cppr);
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * Update our image of the HW CPPR. We don't yet modify
-	 * xc->cppr, this will be done as we scan for interrupts
+	 * Update our image of the HW CPPR. We करोn't yet modअगरy
+	 * xc->cppr, this will be करोne as we scan क्रम पूर्णांकerrupts
 	 * in the queues.
 	 */
 	xc->hw_cppr = cppr;
-}
+पूर्ण
 
-static u8 GLUE(X_PFX,esb_load)(struct xive_irq_data *xd, u32 offset)
-{
+अटल u8 GLUE(X_PFX,esb_load)(काष्ठा xive_irq_data *xd, u32 offset)
+अणु
 	u64 val;
 
-	if (offset == XIVE_ESB_SET_PQ_10 && xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
+	अगर (offset == XIVE_ESB_SET_PQ_10 && xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
 		offset |= XIVE_ESB_LD_ST_MO;
 
-	val =__x_readq(__x_eoi_page(xd) + offset);
-#ifdef __LITTLE_ENDIAN__
+	val =__x_पढ़ोq(__x_eoi_page(xd) + offset);
+#अगर_घोषित __LITTLE_ENDIAN__
 	val >>= 64-8;
-#endif
-	return (u8)val;
-}
+#पूर्ण_अगर
+	वापस (u8)val;
+पूर्ण
 
 
-static void GLUE(X_PFX,source_eoi)(u32 hw_irq, struct xive_irq_data *xd)
-{
+अटल व्योम GLUE(X_PFX,source_eoi)(u32 hw_irq, काष्ठा xive_irq_data *xd)
+अणु
 	/* If the XIVE supports the new "store EOI facility, use it */
-	if (xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
-		__x_writeq(0, __x_eoi_page(xd) + XIVE_ESB_STORE_EOI);
-	else if (xd->flags & XIVE_IRQ_FLAG_LSI) {
+	अगर (xd->flags & XIVE_IRQ_FLAG_STORE_EOI)
+		__x_ग_लिखोq(0, __x_eoi_page(xd) + XIVE_ESB_STORE_EOI);
+	अन्यथा अगर (xd->flags & XIVE_IRQ_FLAG_LSI) अणु
 		/*
 		 * For LSIs the HW EOI cycle is used rather than PQ bits,
-		 * as they are automatically re-triggred in HW when still
+		 * as they are स्वतःmatically re-triggred in HW when still
 		 * pending.
 		 */
-		__x_readq(__x_eoi_page(xd) + XIVE_ESB_LOAD_EOI);
-	} else {
-		uint64_t eoi_val;
+		__x_पढ़ोq(__x_eoi_page(xd) + XIVE_ESB_LOAD_EOI);
+	पूर्ण अन्यथा अणु
+		uपूर्णांक64_t eoi_val;
 
 		/*
-		 * Otherwise for EOI, we use the special MMIO that does
-		 * a clear of both P and Q and returns the old Q,
-		 * except for LSIs where we use the "EOI cycle" special
+		 * Otherwise क्रम EOI, we use the special MMIO that करोes
+		 * a clear of both P and Q and वापसs the old Q,
+		 * except क्रम LSIs where we use the "EOI cycle" special
 		 * load.
 		 *
-		 * This allows us to then do a re-trigger if Q was set
-		 * rather than synthetizing an interrupt in software
+		 * This allows us to then करो a re-trigger अगर Q was set
+		 * rather than synthetizing an पूर्णांकerrupt in software
 		 */
 		eoi_val = GLUE(X_PFX,esb_load)(xd, XIVE_ESB_SET_PQ_00);
 
-		/* Re-trigger if needed */
-		if ((eoi_val & 1) && __x_trig_page(xd))
-			__x_writeq(0, __x_trig_page(xd));
-	}
-}
+		/* Re-trigger अगर needed */
+		अगर ((eoi_val & 1) && __x_trig_page(xd))
+			__x_ग_लिखोq(0, __x_trig_page(xd));
+	पूर्ण
+पूर्ण
 
-enum {
+क्रमागत अणु
 	scan_fetch,
 	scan_poll,
 	scan_eoi,
-};
+पूर्ण;
 
-static u32 GLUE(X_PFX,scan_interrupts)(struct kvmppc_xive_vcpu *xc,
-				       u8 pending, int scan_type)
-{
+अटल u32 GLUE(X_PFX,scan_पूर्णांकerrupts)(काष्ठा kvmppc_xive_vcpu *xc,
+				       u8 pending, पूर्णांक scan_type)
+अणु
 	u32 hirq = 0;
 	u8 prio = 0xff;
 
 	/* Find highest pending priority */
-	while ((xc->mfrr != 0xff || pending != 0) && hirq == 0) {
-		struct xive_q *q;
+	जबतक ((xc->mfrr != 0xff || pending != 0) && hirq == 0) अणु
+		काष्ठा xive_q *q;
 		u32 idx, toggle;
 		__be32 *qpage;
 
 		/*
-		 * If pending is 0 this will return 0xff which is what
+		 * If pending is 0 this will वापस 0xff which is what
 		 * we want
 		 */
 		prio = ffs(pending) - 1;
 
 		/* Don't scan past the guest cppr */
-		if (prio >= xc->cppr || prio > 7) {
-			if (xc->mfrr < xc->cppr) {
+		अगर (prio >= xc->cppr || prio > 7) अणु
+			अगर (xc->mfrr < xc->cppr) अणु
 				prio = xc->mfrr;
 				hirq = XICS_IPI;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		/* Grab queue and pointers */
+		/* Grab queue and poपूर्णांकers */
 		q = &xc->queues[prio];
 		idx = q->idx;
 		toggle = q->toggle;
 
 		/*
-		 * Snapshot the queue page. The test further down for EOI
-		 * must use the same "copy" that was used by __xive_read_eq
-		 * since qpage can be set concurrently and we don't want
+		 * Snapshot the queue page. The test further करोwn क्रम EOI
+		 * must use the same "copy" that was used by __xive_पढ़ो_eq
+		 * since qpage can be set concurrently and we करोn't want
 		 * to miss an EOI.
 		 */
 		qpage = READ_ONCE(q->qpage);
 
 skip_ipi:
 		/*
-		 * Try to fetch from the queue. Will return 0 for a
+		 * Try to fetch from the queue. Will वापस 0 क्रम a
 		 * non-queueing priority (ie, qpage = 0).
 		 */
-		hirq = __xive_read_eq(qpage, q->msk, &idx, &toggle);
+		hirq = __xive_पढ़ो_eq(qpage, q->msk, &idx, &toggle);
 
 		/*
-		 * If this was a signal for an MFFR change done by
-		 * H_IPI we skip it. Additionally, if we were fetching
+		 * If this was a संकेत क्रम an MFFR change करोne by
+		 * H_IPI we skip it. Additionally, अगर we were fetching
 		 * we EOI it now, thus re-enabling reception of a new
-		 * such signal.
+		 * such संकेत.
 		 *
-		 * We also need to do that if prio is 0 and we had no
-		 * page for the queue. In this case, we have non-queued
+		 * We also need to करो that अगर prio is 0 and we had no
+		 * page क्रम the queue. In this हाल, we have non-queued
 		 * IPI that needs to be EOId.
 		 *
-		 * This is safe because if we have another pending MFRR
+		 * This is safe because अगर we have another pending MFRR
 		 * change that wasn't observed above, the Q bit will have
 		 * been set and another occurrence of the IPI will trigger.
 		 */
-		if (hirq == XICS_IPI || (prio == 0 && !qpage)) {
-			if (scan_type == scan_fetch) {
+		अगर (hirq == XICS_IPI || (prio == 0 && !qpage)) अणु
+			अगर (scan_type == scan_fetch) अणु
 				GLUE(X_PFX,source_eoi)(xc->vp_ipi,
 						       &xc->vp_ipi_data);
 				q->idx = idx;
 				q->toggle = toggle;
-			}
+			पूर्ण
 			/* Loop back on same queue with updated idx/toggle */
-#ifdef XIVE_RUNTIME_CHECKS
+#अगर_घोषित XIVE_RUNTIME_CHECKS
 			WARN_ON(hirq && hirq != XICS_IPI);
-#endif
-			if (hirq)
-				goto skip_ipi;
-		}
+#पूर्ण_अगर
+			अगर (hirq)
+				जाओ skip_ipi;
+		पूर्ण
 
-		/* If it's the dummy interrupt, continue searching */
-		if (hirq == XICS_DUMMY)
-			goto skip_ipi;
+		/* If it's the dummy पूर्णांकerrupt, जारी searching */
+		अगर (hirq == XICS_DUMMY)
+			जाओ skip_ipi;
 
-		/* Clear the pending bit if the queue is now empty */
-		if (!hirq) {
+		/* Clear the pending bit अगर the queue is now empty */
+		अगर (!hirq) अणु
 			pending &= ~(1 << prio);
 
 			/*
-			 * Check if the queue count needs adjusting due to
-			 * interrupts being moved away.
+			 * Check अगर the queue count needs adjusting due to
+			 * पूर्णांकerrupts being moved away.
 			 */
-			if (atomic_read(&q->pending_count)) {
-				int p = atomic_xchg(&q->pending_count, 0);
-				if (p) {
-#ifdef XIVE_RUNTIME_CHECKS
-					WARN_ON(p > atomic_read(&q->count));
-#endif
+			अगर (atomic_पढ़ो(&q->pending_count)) अणु
+				पूर्णांक p = atomic_xchg(&q->pending_count, 0);
+				अगर (p) अणु
+#अगर_घोषित XIVE_RUNTIME_CHECKS
+					WARN_ON(p > atomic_पढ़ो(&q->count));
+#पूर्ण_अगर
 					atomic_sub(p, &q->count);
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * If the most favoured prio we found pending is less
-		 * favored (or equal) than a pending IPI, we return
+		 * favored (or equal) than a pending IPI, we वापस
 		 * the IPI instead.
 		 */
-		if (prio >= xc->mfrr && xc->mfrr < xc->cppr) {
+		अगर (prio >= xc->mfrr && xc->mfrr < xc->cppr) अणु
 			prio = xc->mfrr;
 			hirq = XICS_IPI;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* If fetching, update queue pointers */
-		if (scan_type == scan_fetch) {
+		/* If fetching, update queue poपूर्णांकers */
+		अगर (scan_type == scan_fetch) अणु
 			q->idx = idx;
 			q->toggle = toggle;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* If we are just taking a "peek", do nothing else */
-	if (scan_type == scan_poll)
-		return hirq;
+	/* If we are just taking a "peek", करो nothing अन्यथा */
+	अगर (scan_type == scan_poll)
+		वापस hirq;
 
 	/* Update the pending bits */
 	xc->pending = pending;
 
 	/*
-	 * If this is an EOI that's it, no CPPR adjustment done here,
+	 * If this is an EOI that's it, no CPPR adjusपंचांगent करोne here,
 	 * all we needed was cleanup the stale pending bits and check
-	 * if there's anything left.
+	 * अगर there's anything left.
 	 */
-	if (scan_type == scan_eoi)
-		return hirq;
+	अगर (scan_type == scan_eoi)
+		वापस hirq;
 
 	/*
-	 * If we found an interrupt, adjust what the guest CPPR should
-	 * be as if we had just fetched that interrupt from HW.
+	 * If we found an पूर्णांकerrupt, adjust what the guest CPPR should
+	 * be as अगर we had just fetched that पूर्णांकerrupt from HW.
 	 *
 	 * Note: This can only make xc->cppr smaller as the previous
-	 * loop will only exit with hirq != 0 if prio is lower than
-	 * the current xc->cppr. Thus we don't need to re-check xc->mfrr
-	 * for pending IPIs.
+	 * loop will only निकास with hirq != 0 अगर prio is lower than
+	 * the current xc->cppr. Thus we करोn't need to re-check xc->mfrr
+	 * क्रम pending IPIs.
 	 */
-	if (hirq)
+	अगर (hirq)
 		xc->cppr = prio;
 	/*
 	 * If it was an IPI the HW CPPR might have been lowered too much
-	 * as the HW interrupt we use for IPIs is routed to priority 0.
+	 * as the HW पूर्णांकerrupt we use क्रम IPIs is routed to priority 0.
 	 *
 	 * We re-sync it here.
 	 */
-	if (xc->cppr != xc->hw_cppr) {
+	अगर (xc->cppr != xc->hw_cppr) अणु
 		xc->hw_cppr = xc->cppr;
-		__x_writeb(xc->cppr, __x_tima + TM_QW1_OS + TM_CPPR);
-	}
+		__x_ग_लिखोb(xc->cppr, __x_tima + TM_QW1_OS + TM_CPPR);
+	पूर्ण
 
-	return hirq;
-}
+	वापस hirq;
+पूर्ण
 
-X_STATIC unsigned long GLUE(X_PFX,h_xirr)(struct kvm_vcpu *vcpu)
-{
-	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+X_STATIC अचिन्हित दीर्घ GLUE(X_PFX,h_xirr)(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
 	u8 old_cppr;
 	u32 hirq;
 
@@ -283,41 +284,41 @@ X_STATIC unsigned long GLUE(X_PFX,h_xirr)(struct kvm_vcpu *vcpu)
 	/* Grab previous CPPR and reverse map it */
 	old_cppr = xive_prio_to_guest(xc->cppr);
 
-	/* Scan for actual interrupts */
-	hirq = GLUE(X_PFX,scan_interrupts)(xc, xc->pending, scan_fetch);
+	/* Scan क्रम actual पूर्णांकerrupts */
+	hirq = GLUE(X_PFX,scan_पूर्णांकerrupts)(xc, xc->pending, scan_fetch);
 
 	pr_devel(" got hirq=0x%x hw_cppr=%d cppr=%d\n",
 		 hirq, xc->hw_cppr, xc->cppr);
 
-#ifdef XIVE_RUNTIME_CHECKS
+#अगर_घोषित XIVE_RUNTIME_CHECKS
 	/* That should never hit */
-	if (hirq & 0xff000000)
+	अगर (hirq & 0xff000000)
 		pr_warn("XIVE: Weird guest interrupt number 0x%08x\n", hirq);
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * XXX We could check if the interrupt is masked here and
-	 * filter it. If we chose to do so, we would need to do:
+	 * XXX We could check अगर the पूर्णांकerrupt is masked here and
+	 * filter it. If we chose to करो so, we would need to करो:
 	 *
-	 *    if (masked) {
+	 *    अगर (masked) अणु
 	 *        lock();
-	 *        if (masked) {
+	 *        अगर (masked) अणु
 	 *            old_Q = true;
 	 *            hirq = 0;
-	 *        }
+	 *        पूर्ण
 	 *        unlock();
-	 *    }
+	 *    पूर्ण
 	 */
 
-	/* Return interrupt and old CPPR in GPR4 */
+	/* Return पूर्णांकerrupt and old CPPR in GPR4 */
 	vcpu->arch.regs.gpr[4] = hirq | (old_cppr << 24);
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण
 
-X_STATIC unsigned long GLUE(X_PFX,h_ipoll)(struct kvm_vcpu *vcpu, unsigned long server)
-{
-	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+X_STATIC अचिन्हित दीर्घ GLUE(X_PFX,h_ipoll)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server)
+अणु
+	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
 	u8 pending = xc->pending;
 	u32 hirq;
 
@@ -325,102 +326,102 @@ X_STATIC unsigned long GLUE(X_PFX,h_ipoll)(struct kvm_vcpu *vcpu, unsigned long 
 
 	xc->GLUE(X_STAT_PFX,h_ipoll)++;
 
-	/* Grab the target VCPU if not the current one */
-	if (xc->server_num != server) {
+	/* Grab the target VCPU अगर not the current one */
+	अगर (xc->server_num != server) अणु
 		vcpu = kvmppc_xive_find_server(vcpu->kvm, server);
-		if (!vcpu)
-			return H_PARAMETER;
+		अगर (!vcpu)
+			वापस H_PARAMETER;
 		xc = vcpu->arch.xive_vcpu;
 
 		/* Scan all priorities */
 		pending = 0xff;
-	} else {
-		/* Grab pending interrupt if any */
-		__be64 qw1 = __x_readq(__x_tima + TM_QW1_OS);
+	पूर्ण अन्यथा अणु
+		/* Grab pending पूर्णांकerrupt अगर any */
+		__be64 qw1 = __x_पढ़ोq(__x_tima + TM_QW1_OS);
 		u8 pipr = be64_to_cpu(qw1) & 0xff;
-		if (pipr < 8)
+		अगर (pipr < 8)
 			pending |= 1 << pipr;
-	}
+	पूर्ण
 
-	hirq = GLUE(X_PFX,scan_interrupts)(xc, pending, scan_poll);
+	hirq = GLUE(X_PFX,scan_पूर्णांकerrupts)(xc, pending, scan_poll);
 
-	/* Return interrupt and old CPPR in GPR4 */
+	/* Return पूर्णांकerrupt and old CPPR in GPR4 */
 	vcpu->arch.regs.gpr[4] = hirq | (xc->cppr << 24);
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण
 
-static void GLUE(X_PFX,push_pending_to_hw)(struct kvmppc_xive_vcpu *xc)
-{
+अटल व्योम GLUE(X_PFX,push_pending_to_hw)(काष्ठा kvmppc_xive_vcpu *xc)
+अणु
 	u8 pending, prio;
 
 	pending = xc->pending;
-	if (xc->mfrr != 0xff) {
-		if (xc->mfrr < 8)
+	अगर (xc->mfrr != 0xff) अणु
+		अगर (xc->mfrr < 8)
 			pending |= 1 << xc->mfrr;
-		else
+		अन्यथा
 			pending |= 0x80;
-	}
-	if (!pending)
-		return;
+	पूर्ण
+	अगर (!pending)
+		वापस;
 	prio = ffs(pending) - 1;
 
-	__x_writeb(prio, __x_tima + TM_SPC_SET_OS_PENDING);
-}
+	__x_ग_लिखोb(prio, __x_tima + TM_SPC_SET_OS_PENDING);
+पूर्ण
 
-static void GLUE(X_PFX,scan_for_rerouted_irqs)(struct kvmppc_xive *xive,
-					       struct kvmppc_xive_vcpu *xc)
-{
-	unsigned int prio;
+अटल व्योम GLUE(X_PFX,scan_क्रम_rerouted_irqs)(काष्ठा kvmppc_xive *xive,
+					       काष्ठा kvmppc_xive_vcpu *xc)
+अणु
+	अचिन्हित पूर्णांक prio;
 
 	/* For each priority that is now masked */
-	for (prio = xc->cppr; prio < KVMPPC_XIVE_Q_COUNT; prio++) {
-		struct xive_q *q = &xc->queues[prio];
-		struct kvmppc_xive_irq_state *state;
-		struct kvmppc_xive_src_block *sb;
+	क्रम (prio = xc->cppr; prio < KVMPPC_XIVE_Q_COUNT; prio++) अणु
+		काष्ठा xive_q *q = &xc->queues[prio];
+		काष्ठा kvmppc_xive_irq_state *state;
+		काष्ठा kvmppc_xive_src_block *sb;
 		u32 idx, toggle, entry, irq, hw_num;
-		struct xive_irq_data *xd;
+		काष्ठा xive_irq_data *xd;
 		__be32 *qpage;
 		u16 src;
 
 		idx = q->idx;
 		toggle = q->toggle;
 		qpage = READ_ONCE(q->qpage);
-		if (!qpage)
-			continue;
+		अगर (!qpage)
+			जारी;
 
-		/* For each interrupt in the queue */
-		for (;;) {
+		/* For each पूर्णांकerrupt in the queue */
+		क्रम (;;) अणु
 			entry = be32_to_cpup(qpage + idx);
 
 			/* No more ? */
-			if ((entry >> 31) == toggle)
-				break;
+			अगर ((entry >> 31) == toggle)
+				अवरोध;
 			irq = entry & 0x7fffffff;
 
 			/* Skip dummies and IPIs */
-			if (irq == XICS_DUMMY || irq == XICS_IPI)
-				goto next;
+			अगर (irq == XICS_DUMMY || irq == XICS_IPI)
+				जाओ next;
 			sb = kvmppc_xive_find_source(xive, irq, &src);
-			if (!sb)
-				goto next;
+			अगर (!sb)
+				जाओ next;
 			state = &sb->irq_state[src];
 
 			/* Has it been rerouted ? */
-			if (xc->server_num == state->act_server)
-				goto next;
+			अगर (xc->server_num == state->act_server)
+				जाओ next;
 
 			/*
-			 * Allright, it *has* been re-routed, kill it from
+			 * Allright, it *has* been re-routed, समाप्त it from
 			 * the queue.
 			 */
 			qpage[idx] = cpu_to_be32((entry & 0x80000000) | XICS_DUMMY);
 
-			/* Find the HW interrupt */
+			/* Find the HW पूर्णांकerrupt */
 			kvmppc_xive_select_irq(state, &hw_num, &xd);
 
-			/* If it's not an LSI, set PQ to 11 the EOI will force a resend */
-			if (!(xd->flags & XIVE_IRQ_FLAG_LSI))
+			/* If it's not an LSI, set PQ to 11 the EOI will क्रमce a resend */
+			अगर (!(xd->flags & XIVE_IRQ_FLAG_LSI))
 				GLUE(X_PFX,esb_load)(xd, XIVE_ESB_SET_PQ_11);
 
 			/* EOI the source */
@@ -428,16 +429,16 @@ static void GLUE(X_PFX,scan_for_rerouted_irqs)(struct kvmppc_xive *xive,
 
 		next:
 			idx = (idx + 1) & q->msk;
-			if (idx == 0)
+			अगर (idx == 0)
 				toggle ^= 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-X_STATIC int GLUE(X_PFX,h_cppr)(struct kvm_vcpu *vcpu, unsigned long cppr)
-{
-	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	struct kvmppc_xive *xive = vcpu->kvm->arch.xive;
+X_STATIC पूर्णांक GLUE(X_PFX,h_cppr)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ cppr)
+अणु
+	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	काष्ठा kvmppc_xive *xive = vcpu->kvm->arch.xive;
 	u8 old_cppr;
 
 	pr_devel("H_CPPR(cppr=%ld)\n", cppr);
@@ -453,57 +454,57 @@ X_STATIC int GLUE(X_PFX,h_cppr)(struct kvm_vcpu *vcpu, unsigned long cppr)
 
 	/*
 	 * Order the above update of xc->cppr with the subsequent
-	 * read of xc->mfrr inside push_pending_to_hw()
+	 * पढ़ो of xc->mfrr inside push_pending_to_hw()
 	 */
 	smp_mb();
 
-	if (cppr > old_cppr) {
+	अगर (cppr > old_cppr) अणु
 		/*
-		 * We are masking less, we need to look for pending things
+		 * We are masking less, we need to look क्रम pending things
 		 * to deliver and set VP pending bits accordingly to trigger
-		 * a new interrupt otherwise we might miss MFRR changes for
-		 * which we have optimized out sending an IPI signal.
+		 * a new पूर्णांकerrupt otherwise we might miss MFRR changes क्रम
+		 * which we have optimized out sending an IPI संकेत.
 		 */
 		GLUE(X_PFX,push_pending_to_hw)(xc);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We are masking more, we need to check the queue for any
-		 * interrupt that has been routed to another CPU, take
+		 * We are masking more, we need to check the queue क्रम any
+		 * पूर्णांकerrupt that has been routed to another CPU, take
 		 * it out (replace it with the dummy) and retrigger it.
 		 *
-		 * This is necessary since those interrupts may otherwise
+		 * This is necessary since those पूर्णांकerrupts may otherwise
 		 * never be processed, at least not until this CPU restores
 		 * its CPPR.
 		 *
-		 * This is in theory racy vs. HW adding new interrupts to
-		 * the queue. In practice this works because the interesting
-		 * cases are when the guest has done a set_xive() to move the
-		 * interrupt away, which flushes the xive, followed by the
-		 * target CPU doing a H_CPPR. So any new interrupt coming into
+		 * This is in theory racy vs. HW adding new पूर्णांकerrupts to
+		 * the queue. In practice this works because the पूर्णांकeresting
+		 * हालs are when the guest has करोne a set_xive() to move the
+		 * पूर्णांकerrupt away, which flushes the xive, followed by the
+		 * target CPU करोing a H_CPPR. So any new पूर्णांकerrupt coming पूर्णांकo
 		 * the queue must still be routed to us and isn't a source
 		 * of concern.
 		 */
-		GLUE(X_PFX,scan_for_rerouted_irqs)(xive, xc);
-	}
+		GLUE(X_PFX,scan_क्रम_rerouted_irqs)(xive, xc);
+	पूर्ण
 
 	/* Apply new CPPR */
 	xc->hw_cppr = cppr;
-	__x_writeb(cppr, __x_tima + TM_QW1_OS + TM_CPPR);
+	__x_ग_लिखोb(cppr, __x_tima + TM_QW1_OS + TM_CPPR);
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण
 
-X_STATIC int GLUE(X_PFX,h_eoi)(struct kvm_vcpu *vcpu, unsigned long xirr)
-{
-	struct kvmppc_xive *xive = vcpu->kvm->arch.xive;
-	struct kvmppc_xive_src_block *sb;
-	struct kvmppc_xive_irq_state *state;
-	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
-	struct xive_irq_data *xd;
+X_STATIC पूर्णांक GLUE(X_PFX,h_eoi)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ xirr)
+अणु
+	काष्ठा kvmppc_xive *xive = vcpu->kvm->arch.xive;
+	काष्ठा kvmppc_xive_src_block *sb;
+	काष्ठा kvmppc_xive_irq_state *state;
+	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+	काष्ठा xive_irq_data *xd;
 	u8 new_cppr = xirr >> 24;
 	u32 irq = xirr & 0x00ffffff, hw_num;
 	u16 src;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	pr_devel("H_EOI(xirr=%08lx)\n", xirr);
 
@@ -512,30 +513,30 @@ X_STATIC int GLUE(X_PFX,h_eoi)(struct kvm_vcpu *vcpu, unsigned long xirr)
 	xc->cppr = xive_prio_from_guest(new_cppr);
 
 	/*
-	 * IPIs are synthetized from MFRR and thus don't need
-	 * any special EOI handling. The underlying interrupt
-	 * used to signal MFRR changes is EOId when fetched from
+	 * IPIs are synthetized from MFRR and thus करोn't need
+	 * any special EOI handling. The underlying पूर्णांकerrupt
+	 * used to संकेत MFRR changes is EOId when fetched from
 	 * the queue.
 	 */
-	if (irq == XICS_IPI || irq == 0) {
+	अगर (irq == XICS_IPI || irq == 0) अणु
 		/*
 		 * This barrier orders the setting of xc->cppr vs.
-		 * subsquent test of xc->mfrr done inside
-		 * scan_interrupts and push_pending_to_hw
+		 * subsquent test of xc->mfrr करोne inside
+		 * scan_पूर्णांकerrupts and push_pending_to_hw
 		 */
 		smp_mb();
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 
-	/* Find interrupt source */
+	/* Find पूर्णांकerrupt source */
 	sb = kvmppc_xive_find_source(xive, irq, &src);
-	if (!sb) {
+	अगर (!sb) अणु
 		pr_devel(" source not found !\n");
 		rc = H_PARAMETER;
 		/* Same as above */
 		smp_mb();
-		goto bail;
-	}
+		जाओ bail;
+	पूर्ण
 	state = &sb->irq_state[src];
 	kvmppc_xive_select_irq(state, &hw_num, &xd);
 
@@ -544,42 +545,42 @@ X_STATIC int GLUE(X_PFX,h_eoi)(struct kvm_vcpu *vcpu, unsigned long xirr)
 	/*
 	 * This barrier orders both setting of in_eoi above vs,
 	 * subsequent test of guest_priority, and the setting
-	 * of xc->cppr vs. subsquent test of xc->mfrr done inside
-	 * scan_interrupts and push_pending_to_hw
+	 * of xc->cppr vs. subsquent test of xc->mfrr करोne inside
+	 * scan_पूर्णांकerrupts and push_pending_to_hw
 	 */
 	smp_mb();
 
 again:
-	if (state->guest_priority == MASKED) {
+	अगर (state->guest_priority == MASKED) अणु
 		arch_spin_lock(&sb->lock);
-		if (state->guest_priority != MASKED) {
+		अगर (state->guest_priority != MASKED) अणु
 			arch_spin_unlock(&sb->lock);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 		pr_devel(" EOI on saved P...\n");
 
-		/* Clear old_p, that will cause unmask to perform an EOI */
+		/* Clear old_p, that will cause unmask to perक्रमm an EOI */
 		state->old_p = false;
 
 		arch_spin_unlock(&sb->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_devel(" EOI on source...\n");
 
-		/* Perform EOI on the source */
+		/* Perक्रमm EOI on the source */
 		GLUE(X_PFX,source_eoi)(hw_num, xd);
 
 		/* If it's an emulated LSI, check level and resend */
-		if (state->lsi && state->asserted)
-			__x_writeq(0, __x_trig_page(xd));
+		अगर (state->lsi && state->निश्चितed)
+			__x_ग_लिखोq(0, __x_trig_page(xd));
 
-	}
+	पूर्ण
 
 	/*
 	 * This barrier orders the above guest_priority check
 	 * and spin_lock/unlock with clearing in_eoi below.
 	 *
 	 * It also has to be a full mb() as it must ensure
-	 * the MMIOs done in source_eoi() are completed before
+	 * the MMIOs करोne in source_eoi() are completed beक्रमe
 	 * state->in_eoi is visible.
 	 */
 	mb();
@@ -587,21 +588,21 @@ again:
 bail:
 
 	/* Re-evaluate pending IRQs and update HW */
-	GLUE(X_PFX,scan_interrupts)(xc, xc->pending, scan_eoi);
+	GLUE(X_PFX,scan_पूर्णांकerrupts)(xc, xc->pending, scan_eoi);
 	GLUE(X_PFX,push_pending_to_hw)(xc);
 	pr_devel(" after scan pending=%02x\n", xc->pending);
 
 	/* Apply new CPPR */
 	xc->hw_cppr = xc->cppr;
-	__x_writeb(xc->cppr, __x_tima + TM_QW1_OS + TM_CPPR);
+	__x_ग_लिखोb(xc->cppr, __x_tima + TM_QW1_OS + TM_CPPR);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-X_STATIC int GLUE(X_PFX,h_ipi)(struct kvm_vcpu *vcpu, unsigned long server,
-			       unsigned long mfrr)
-{
-	struct kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
+X_STATIC पूर्णांक GLUE(X_PFX,h_ipi)(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ server,
+			       अचिन्हित दीर्घ mfrr)
+अणु
+	काष्ठा kvmppc_xive_vcpu *xc = vcpu->arch.xive_vcpu;
 
 	pr_devel("H_IPI(server=%08lx,mfrr=%ld)\n", server, mfrr);
 
@@ -609,11 +610,11 @@ X_STATIC int GLUE(X_PFX,h_ipi)(struct kvm_vcpu *vcpu, unsigned long server,
 
 	/* Find target */
 	vcpu = kvmppc_xive_find_server(vcpu->kvm, server);
-	if (!vcpu)
-		return H_PARAMETER;
+	अगर (!vcpu)
+		वापस H_PARAMETER;
 	xc = vcpu->arch.xive_vcpu;
 
-	/* Locklessly write over MFRR */
+	/* Locklessly ग_लिखो over MFRR */
 	xc->mfrr = mfrr;
 
 	/*
@@ -621,16 +622,16 @@ X_STATIC int GLUE(X_PFX,h_ipi)(struct kvm_vcpu *vcpu, unsigned long server,
 	 * to the IPI must happen after the above mfrr update is
 	 * globally visible so that:
 	 *
-	 * - Synchronize with another CPU doing an H_EOI or a H_CPPR
-	 *   updating xc->cppr then reading xc->mfrr.
+	 * - Synchronize with another CPU करोing an H_EOI or a H_CPPR
+	 *   updating xc->cppr then पढ़ोing xc->mfrr.
 	 *
 	 * - The target of the IPI sees the xc->mfrr update
 	 */
 	mb();
 
-	/* Shoot the IPI if most favored than target cppr */
-	if (mfrr < xc->cppr)
-		__x_writeq(0, __x_trig_page(&xc->vp_ipi_data));
+	/* Shoot the IPI अगर most favored than target cppr */
+	अगर (mfrr < xc->cppr)
+		__x_ग_लिखोq(0, __x_trig_page(&xc->vp_ipi_data));
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,77 +20,77 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "wimm.h"
-#include "atom.h"
-#include "wndw.h"
+#समावेश "wimm.h"
+#समावेश "atom.h"
+#समावेश "wndw.h"
 
-#include <nvif/clc37b.h>
-#include <nvif/pushc37b.h>
+#समावेश <nvअगर/clc37b.h>
+#समावेश <nvअगर/pushc37b.h>
 
-#include <nvhw/class/clc37b.h>
+#समावेश <nvhw/class/clc37b.h>
 
-static int
-wimmc37b_update(struct nv50_wndw *wndw, u32 *interlock)
-{
-	struct nvif_push *push = wndw->wimm.push;
-	int ret;
+अटल पूर्णांक
+wimmc37b_update(काष्ठा nv50_wndw *wndw, u32 *पूर्णांकerlock)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wimm.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC37B, UPDATE, 0x00000001 |
 		  NVVAL(NVC37B, UPDATE, INTERLOCK_WITH_WINDOW,
-			!!(interlock[NV50_DISP_INTERLOCK_WNDW] & wndw->interlock.data)));
-	return PUSH_KICK(push);
-}
+			!!(पूर्णांकerlock[NV50_DISP_INTERLOCK_WNDW] & wndw->पूर्णांकerlock.data)));
+	वापस PUSH_KICK(push);
+पूर्ण
 
-static int
-wimmc37b_point(struct nv50_wndw *wndw, struct nv50_wndw_atom *asyw)
-{
-	struct nvif_push *push = wndw->wimm.push;
-	int ret;
+अटल पूर्णांक
+wimmc37b_poपूर्णांक(काष्ठा nv50_wndw *wndw, काष्ठा nv50_wndw_atom *asyw)
+अणु
+	काष्ठा nvअगर_push *push = wndw->wimm.push;
+	पूर्णांक ret;
 
-	if ((ret = PUSH_WAIT(push, 2)))
-		return ret;
+	अगर ((ret = PUSH_WAIT(push, 2)))
+		वापस ret;
 
 	PUSH_MTHD(push, NVC37B, SET_POINT_OUT(0),
-		  NVVAL(NVC37B, SET_POINT_OUT, X, asyw->point.x) |
-		  NVVAL(NVC37B, SET_POINT_OUT, Y, asyw->point.y));
-	return 0;
-}
+		  NVVAL(NVC37B, SET_POINT_OUT, X, asyw->poपूर्णांक.x) |
+		  NVVAL(NVC37B, SET_POINT_OUT, Y, asyw->poपूर्णांक.y));
+	वापस 0;
+पूर्ण
 
-static const struct nv50_wimm_func
-wimmc37b = {
-	.point = wimmc37b_point,
+अटल स्थिर काष्ठा nv50_wimm_func
+wimmc37b = अणु
+	.poपूर्णांक = wimmc37b_poपूर्णांक,
 	.update = wimmc37b_update,
-};
+पूर्ण;
 
-static int
-wimmc37b_init_(const struct nv50_wimm_func *func, struct nouveau_drm *drm,
-	       s32 oclass, struct nv50_wndw *wndw)
-{
-	struct nvc37b_window_imm_channel_dma_v0 args = {
+अटल पूर्णांक
+wimmc37b_init_(स्थिर काष्ठा nv50_wimm_func *func, काष्ठा nouveau_drm *drm,
+	       s32 oclass, काष्ठा nv50_wndw *wndw)
+अणु
+	काष्ठा nvc37b_winकरोw_imm_channel_dma_v0 args = अणु
 		.pushbuf = 0xb0007b00 | wndw->id,
 		.index = wndw->id,
-	};
-	struct nv50_disp *disp = nv50_disp(drm->dev);
-	int ret;
+	पूर्ण;
+	काष्ठा nv50_disp *disp = nv50_disp(drm->dev);
+	पूर्णांक ret;
 
 	ret = nv50_dmac_create(&drm->client.device, &disp->disp->object,
-			       &oclass, 0, &args, sizeof(args), -1,
+			       &oclass, 0, &args, माप(args), -1,
 			       &wndw->wimm);
-	if (ret) {
+	अगर (ret) अणु
 		NV_ERROR(drm, "wimm%04x allocation failed: %d\n", oclass, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	wndw->interlock.wimm = wndw->interlock.data;
+	wndw->पूर्णांकerlock.wimm = wndw->पूर्णांकerlock.data;
 	wndw->immd = func;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-wimmc37b_init(struct nouveau_drm *drm, s32 oclass, struct nv50_wndw *wndw)
-{
-	return wimmc37b_init_(&wimmc37b, drm, oclass, wndw);
-}
+पूर्णांक
+wimmc37b_init(काष्ठा nouveau_drm *drm, s32 oclass, काष्ठा nv50_wndw *wndw)
+अणु
+	वापस wimmc37b_init_(&wimmc37b, drm, oclass, wndw);
+पूर्ण

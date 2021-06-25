@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2018 Chelsio Communications, Inc. */
 
-#ifndef __CHCR_IPSEC_H__
-#define __CHCR_IPSEC_H__
+#अगर_अघोषित __CHCR_IPSEC_H__
+#घोषणा __CHCR_IPSEC_H__
 
-#include <crypto/algapi.h>
-#include "t4_hw.h"
-#include "cxgb4.h"
-#include "t4_msg.h"
-#include "cxgb4_uld.h"
+#समावेश <crypto/algapi.h>
+#समावेश "t4_hw.h"
+#समावेश "cxgb4.h"
+#समावेश "t4_msg.h"
+#समावेश "cxgb4_uld.h"
 
-#include "chcr_core.h"
-#include "chcr_algo.h"
-#include "chcr_crypto.h"
+#समावेश "chcr_core.h"
+#समावेश "chcr_algo.h"
+#समावेश "chcr_crypto.h"
 
-#define CHIPSEC_DRV_MODULE_NAME "ch_ipsec"
-#define CHIPSEC_DRV_VERSION "1.0.0.0-ko"
-#define CHIPSEC_DRV_DESC "Chelsio T6 Crypto Ipsec offload Driver"
+#घोषणा CHIPSEC_DRV_MODULE_NAME "ch_ipsec"
+#घोषणा CHIPSEC_DRV_VERSION "1.0.0.0-ko"
+#घोषणा CHIPSEC_DRV_DESC "Chelsio T6 Crypto Ipsec offload Driver"
 
-struct ipsec_uld_ctx {
-	struct list_head entry;
-	struct cxgb4_lld_info lldi;
-};
+काष्ठा ipsec_uld_ctx अणु
+	काष्ठा list_head entry;
+	काष्ठा cxgb4_lld_info lldi;
+पूर्ण;
 
-struct chcr_ipsec_req {
-	struct ulp_txpkt ulptx;
-	struct ulptx_idata sc_imm;
-	struct cpl_tx_sec_pdu sec_cpl;
-	struct _key_ctx key_ctx;
-};
+काष्ठा chcr_ipsec_req अणु
+	काष्ठा ulp_txpkt ulptx;
+	काष्ठा ulptx_idata sc_imm;
+	काष्ठा cpl_tx_sec_pdu sec_cpl;
+	काष्ठा _key_ctx key_ctx;
+पूर्ण;
 
-struct chcr_ipsec_wr {
-	struct fw_ulptx_wr wreq;
-	struct chcr_ipsec_req req;
-};
+काष्ठा chcr_ipsec_wr अणु
+	काष्ठा fw_ulptx_wr wreq;
+	काष्ठा chcr_ipsec_req req;
+पूर्ण;
 
-#define ESN_IV_INSERT_OFFSET 12
-struct chcr_ipsec_aadiv {
+#घोषणा ESN_IV_INSERT_OFFSET 12
+काष्ठा chcr_ipsec_aaभाग अणु
 	__be32 spi;
 	u8 seq_no[8];
 	u8 iv[8];
-};
+पूर्ण;
 
-struct ipsec_sa_entry {
-	int hmac_ctrl;
+काष्ठा ipsec_sa_entry अणु
+	पूर्णांक hmac_ctrl;
 	u16 esn;
 	u16 resv;
-	unsigned int enckey_len;
-	unsigned int kctx_len;
-	unsigned int authsize;
+	अचिन्हित पूर्णांक enckey_len;
+	अचिन्हित पूर्णांक kctx_len;
+	अचिन्हित पूर्णांक authsize;
 	__be32 key_ctx_hdr;
-	char salt[MAX_SALT];
-	char key[2 * AES_MAX_KEY_SIZE];
-};
+	अक्षर salt[MAX_SALT];
+	अक्षर key[2 * AES_MAX_KEY_SIZE];
+पूर्ण;
 
-#endif /* __CHCR_IPSEC_H__ */
+#पूर्ण_अगर /* __CHCR_IPSEC_H__ */
 

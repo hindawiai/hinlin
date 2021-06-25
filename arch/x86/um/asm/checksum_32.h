@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  * Licensed under the GPL
  */
 
-#ifndef __UM_SYSDEP_CHECKSUM_H
-#define __UM_SYSDEP_CHECKSUM_H
+#अगर_अघोषित __UM_SYSDEP_CHECKSUM_H
+#घोषणा __UM_SYSDEP_CHECKSUM_H
 
-static inline __sum16 ip_compute_csum(const void *buff, int len)
-{
-    return csum_fold (csum_partial(buff, len, 0));
-}
+अटल अंतरभूत __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len)
+अणु
+    वापस csum_fold (csum_partial(buff, len, 0));
+पूर्ण
 
-#define _HAVE_ARCH_IPV6_CSUM
-static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
-					  const struct in6_addr *daddr,
+#घोषणा _HAVE_ARCH_IPV6_CSUM
+अटल __अंतरभूत__ __sum16 csum_ipv6_magic(स्थिर काष्ठा in6_addr *saddr,
+					  स्थिर काष्ठा in6_addr *daddr,
 					  __u32 len, __u8 proto,
 					  __wsum sum)
-{
-	__asm__(
+अणु
+	__यंत्र__(
 		"addl 0(%1), %0		;\n"
 		"adcl 4(%1), %0		;\n"
 		"adcl 8(%1), %0		;\n"
@@ -32,7 +33,7 @@ static __inline__ __sum16 csum_ipv6_magic(const struct in6_addr *saddr,
 		: "r" (saddr), "r" (daddr),
 		  "r"(htonl(len)), "r"(htonl(proto)), "0"(sum));
 
-	return csum_fold(sum);
-}
+	वापस csum_fold(sum);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

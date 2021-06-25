@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/acpi.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/clocksource.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/घड़ीsource.h>
 
-extern struct of_device_id __timer_of_table[];
+बाह्य काष्ठा of_device_id __समयr_of_table[];
 
-static const struct of_device_id __timer_of_table_sentinel
+अटल स्थिर काष्ठा of_device_id __समयr_of_table_sentinel
 	__used __section("__timer_of_table_end");
 
-void __init timer_probe(void)
-{
-	struct device_node *np;
-	const struct of_device_id *match;
+व्योम __init समयr_probe(व्योम)
+अणु
+	काष्ठा device_node *np;
+	स्थिर काष्ठा of_device_id *match;
 	of_init_fn_1_ret init_func_ret;
-	unsigned timers = 0;
-	int ret;
+	अचिन्हित समयrs = 0;
+	पूर्णांक ret;
 
-	for_each_matching_node_and_match(np, __timer_of_table, &match) {
-		if (!of_device_is_available(np))
-			continue;
+	क्रम_each_matching_node_and_match(np, __समयr_of_table, &match) अणु
+		अगर (!of_device_is_available(np))
+			जारी;
 
 		init_func_ret = match->data;
 
 		ret = init_func_ret(np);
-		if (ret) {
-			if (ret != -EPROBE_DEFER)
+		अगर (ret) अणु
+			अगर (ret != -EPROBE_DEFER)
 				pr_err("Failed to initialize '%pOF': %d\n", np,
 				       ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		timers++;
-	}
+		समयrs++;
+	पूर्ण
 
-	timers += acpi_probe_device_table(timer);
+	समयrs += acpi_probe_device_table(समयr);
 
-	if (!timers)
+	अगर (!समयrs)
 		pr_crit("%s: no matching timers found\n", __func__);
-}
+पूर्ण

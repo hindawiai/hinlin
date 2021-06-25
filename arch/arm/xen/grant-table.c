@@ -1,20 +1,21 @@
+<शैली गुरु>
 /******************************************************************************
  * grant_table.c
- * ARM specific part
+ * ARM specअगरic part
  *
- * Granting foreign access to our memory reservation.
+ * Granting क्रमeign access to our memory reservation.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -29,30 +30,30 @@
  * IN THE SOFTWARE.
  */
 
-#include <xen/interface/xen.h>
-#include <xen/page.h>
-#include <xen/grant_table.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/page.h>
+#समावेश <xen/grant_table.h>
 
-int arch_gnttab_map_shared(xen_pfn_t *frames, unsigned long nr_gframes,
-			   unsigned long max_nr_gframes,
-			   void **__shared)
-{
-	return -ENOSYS;
-}
+पूर्णांक arch_gnttab_map_shared(xen_pfn_t *frames, अचिन्हित दीर्घ nr_gframes,
+			   अचिन्हित दीर्घ max_nr_gframes,
+			   व्योम **__shared)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-void arch_gnttab_unmap(void *shared, unsigned long nr_gframes)
-{
-	return;
-}
+व्योम arch_gnttab_unmap(व्योम *shared, अचिन्हित दीर्घ nr_gframes)
+अणु
+	वापस;
+पूर्ण
 
-int arch_gnttab_map_status(uint64_t *frames, unsigned long nr_gframes,
-			   unsigned long max_nr_gframes,
+पूर्णांक arch_gnttab_map_status(uपूर्णांक64_t *frames, अचिन्हित दीर्घ nr_gframes,
+			   अचिन्हित दीर्घ max_nr_gframes,
 			   grant_status_t **__shared)
-{
-	return -ENOSYS;
-}
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-int arch_gnttab_init(unsigned long nr_shared, unsigned long nr_status)
-{
-	return 0;
-}
+पूर्णांक arch_gnttab_init(अचिन्हित दीर्घ nr_shared, अचिन्हित दीर्घ nr_status)
+अणु
+	वापस 0;
+पूर्ण

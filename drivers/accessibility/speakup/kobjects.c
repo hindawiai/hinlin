@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Speakup kobject implementation
  *
@@ -6,944 +7,944 @@
  *
  * This code is based on kobject-example.c, which came with linux 2.6.x.
  *
- * Copyright (C) 2004-2007 Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright (C) 2004-2007 Greg Kroah-Harपंचांगan <greg@kroah.com>
  * Copyright (C) 2007 Novell Inc.
  *
  * Released under the GPL version 2 only.
  *
  */
-#include <linux/slab.h>		/* For kmalloc. */
-#include <linux/kernel.h>
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/string_helpers.h>
-#include <linux/sysfs.h>
-#include <linux/ctype.h>
+#समावेश <linux/slab.h>		/* For kदो_स्मृति. */
+#समावेश <linux/kernel.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/string_helpers.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/प्रकार.स>
 
-#include "speakup.h"
-#include "spk_priv.h"
+#समावेश "speakup.h"
+#समावेश "spk_priv.h"
 
 /*
- * This is called when a user reads the characters or chartab sys file.
+ * This is called when a user पढ़ोs the अक्षरacters or अक्षरtab sys file.
  */
-static ssize_t chars_chartab_show(struct kobject *kobj,
-				  struct kobj_attribute *attr, char *buf)
-{
-	int i;
-	int len = 0;
-	char *cp;
-	char *buf_pointer = buf;
-	size_t bufsize = PAGE_SIZE;
-	unsigned long flags;
+अटल sमाप_प्रकार अक्षरs_अक्षरtab_show(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक i;
+	पूर्णांक len = 0;
+	अक्षर *cp;
+	अक्षर *buf_poपूर्णांकer = buf;
+	माप_प्रकार bufsize = PAGE_SIZE;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	*buf_pointer = '\0';
-	for (i = 0; i < 256; i++) {
-		if (bufsize <= 1)
-			break;
-		if (strcmp("characters", attr->attr.name) == 0) {
-			len = scnprintf(buf_pointer, bufsize, "%d\t%s\n",
-					i, spk_characters[i]);
-		} else {	/* show chartab entry */
-			if (IS_TYPE(i, B_CTL))
+	*buf_poपूर्णांकer = '\0';
+	क्रम (i = 0; i < 256; i++) अणु
+		अगर (bufsize <= 1)
+			अवरोध;
+		अगर (म_भेद("characters", attr->attr.name) == 0) अणु
+			len = scnम_लिखो(buf_poपूर्णांकer, bufsize, "%d\t%s\n",
+					i, spk_अक्षरacters[i]);
+		पूर्ण अन्यथा अणु	/* show अक्षरtab entry */
+			अगर (IS_TYPE(i, B_CTL))
 				cp = "B_CTL";
-			else if (IS_TYPE(i, WDLM))
+			अन्यथा अगर (IS_TYPE(i, WDLM))
 				cp = "WDLM";
-			else if (IS_TYPE(i, A_PUNC))
+			अन्यथा अगर (IS_TYPE(i, A_PUNC))
 				cp = "A_PUNC";
-			else if (IS_TYPE(i, PUNC))
+			अन्यथा अगर (IS_TYPE(i, PUNC))
 				cp = "PUNC";
-			else if (IS_TYPE(i, NUM))
+			अन्यथा अगर (IS_TYPE(i, NUM))
 				cp = "NUM";
-			else if (IS_TYPE(i, A_CAP))
+			अन्यथा अगर (IS_TYPE(i, A_CAP))
 				cp = "A_CAP";
-			else if (IS_TYPE(i, ALPHA))
+			अन्यथा अगर (IS_TYPE(i, ALPHA))
 				cp = "ALPHA";
-			else if (IS_TYPE(i, B_CAPSYM))
+			अन्यथा अगर (IS_TYPE(i, B_CAPSYM))
 				cp = "B_CAPSYM";
-			else if (IS_TYPE(i, B_SYM))
+			अन्यथा अगर (IS_TYPE(i, B_SYM))
 				cp = "B_SYM";
-			else
+			अन्यथा
 				cp = "0";
 			len =
-			    scnprintf(buf_pointer, bufsize, "%d\t%s\n", i, cp);
-		}
+			    scnम_लिखो(buf_poपूर्णांकer, bufsize, "%d\t%s\n", i, cp);
+		पूर्ण
 		bufsize -= len;
-		buf_pointer += len;
-	}
+		buf_poपूर्णांकer += len;
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return buf_pointer - buf;
-}
+	वापस buf_poपूर्णांकer - buf;
+पूर्ण
 
 /*
- * Print informational messages or warnings after updating
- * character descriptions or chartab entries.
+ * Prपूर्णांक inक्रमmational messages or warnings after updating
+ * अक्षरacter descriptions or अक्षरtab entries.
  */
-static void report_char_chartab_status(int reset, int received, int used,
-				       int rejected, int do_characters)
-{
-	static char const *object_type[] = {
+अटल व्योम report_अक्षर_अक्षरtab_status(पूर्णांक reset, पूर्णांक received, पूर्णांक used,
+				       पूर्णांक rejected, पूर्णांक करो_अक्षरacters)
+अणु
+	अटल अक्षर स्थिर *object_type[] = अणु
 		"character class entries",
 		"character descriptions",
-	};
-	int len;
-	char buf[80];
+	पूर्ण;
+	पूर्णांक len;
+	अक्षर buf[80];
 
-	if (reset) {
-		pr_info("%s reset to defaults\n", object_type[do_characters]);
-	} else if (received) {
-		len = snprintf(buf, sizeof(buf),
+	अगर (reset) अणु
+		pr_info("%s reset to defaults\n", object_type[करो_अक्षरacters]);
+	पूर्ण अन्यथा अगर (received) अणु
+		len = snम_लिखो(buf, माप(buf),
 			       " updated %d of %d %s\n",
-			       used, received, object_type[do_characters]);
-		if (rejected)
-			snprintf(buf + (len - 1), sizeof(buf) - (len - 1),
+			       used, received, object_type[करो_अक्षरacters]);
+		अगर (rejected)
+			snम_लिखो(buf + (len - 1), माप(buf) - (len - 1),
 				 " with %d reject%s\n",
 				 rejected, rejected > 1 ? "s" : "");
 		pr_info("%s", buf);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * This is called when a user changes the characters or chartab parameters.
+ * This is called when a user changes the अक्षरacters or अक्षरtab parameters.
  */
-static ssize_t chars_chartab_store(struct kobject *kobj,
-				   struct kobj_attribute *attr,
-				   const char *buf, size_t count)
-{
-	char *cp = (char *)buf;
-	char *end = cp + count; /* the null at the end of the buffer */
-	char *linefeed = NULL;
-	char keyword[MAX_DESC_LEN + 1];
-	char *outptr = NULL;	/* Will hold keyword or desc. */
-	char *temp = NULL;
-	char *desc = NULL;
-	ssize_t retval = count;
-	unsigned long flags;
-	unsigned long index = 0;
-	int charclass = 0;
-	int received = 0;
-	int used = 0;
-	int rejected = 0;
-	int reset = 0;
-	int do_characters = !strcmp(attr->attr.name, "characters");
-	size_t desc_length = 0;
-	int i;
+अटल sमाप_प्रकार अक्षरs_अक्षरtab_store(काष्ठा kobject *kobj,
+				   काष्ठा kobj_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अक्षर *cp = (अक्षर *)buf;
+	अक्षर *end = cp + count; /* the null at the end of the buffer */
+	अक्षर *linefeed = शून्य;
+	अक्षर keyword[MAX_DESC_LEN + 1];
+	अक्षर *outptr = शून्य;	/* Will hold keyword or desc. */
+	अक्षर *temp = शून्य;
+	अक्षर *desc = शून्य;
+	sमाप_प्रकार retval = count;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ index = 0;
+	पूर्णांक अक्षरclass = 0;
+	पूर्णांक received = 0;
+	पूर्णांक used = 0;
+	पूर्णांक rejected = 0;
+	पूर्णांक reset = 0;
+	पूर्णांक करो_अक्षरacters = !म_भेद(attr->attr.name, "characters");
+	माप_प्रकार desc_length = 0;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	while (cp < end) {
-		while ((cp < end) && (*cp == ' ' || *cp == '\t'))
+	जबतक (cp < end) अणु
+		जबतक ((cp < end) && (*cp == ' ' || *cp == '\t'))
 			cp++;
 
-		if (cp == end)
-			break;
-		if ((*cp == '\n') || strchr("dDrR", *cp)) {
+		अगर (cp == end)
+			अवरोध;
+		अगर ((*cp == '\n') || म_अक्षर("dDrR", *cp)) अणु
 			reset = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		received++;
 
-		linefeed = strchr(cp, '\n');
-		if (!linefeed) {
+		linefeed = म_अक्षर(cp, '\n');
+		अगर (!linefeed) अणु
 			rejected++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!isdigit(*cp)) {
+		अगर (!है_अंक(*cp)) अणु
 			rejected++;
 			cp = linefeed + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Do not replace with kstrtoul:
+		 * Do not replace with kम_से_अदीर्घ:
 		 * here we need temp to be updated
 		 */
-		index = simple_strtoul(cp, &temp, 10);
-		if (index > 255) {
+		index = simple_म_से_अदीर्घ(cp, &temp, 10);
+		अगर (index > 255) अणु
 			rejected++;
 			cp = linefeed + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		while ((temp < linefeed) && (*temp == ' ' || *temp == '\t'))
+		जबतक ((temp < linefeed) && (*temp == ' ' || *temp == '\t'))
 			temp++;
 
 		desc_length = linefeed - temp;
-		if (desc_length > MAX_DESC_LEN) {
+		अगर (desc_length > MAX_DESC_LEN) अणु
 			rejected++;
 			cp = linefeed + 1;
-			continue;
-		}
-		if (do_characters) {
-			desc = kmalloc(desc_length + 1, GFP_ATOMIC);
-			if (!desc) {
+			जारी;
+		पूर्ण
+		अगर (करो_अक्षरacters) अणु
+			desc = kदो_स्मृति(desc_length + 1, GFP_ATOMIC);
+			अगर (!desc) अणु
 				retval = -ENOMEM;
 				reset = 1;	/* just reset on error. */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			outptr = desc;
-		} else {
+		पूर्ण अन्यथा अणु
 			outptr = keyword;
-		}
+		पूर्ण
 
-		for (i = 0; i < desc_length; i++)
+		क्रम (i = 0; i < desc_length; i++)
 			outptr[i] = temp[i];
 		outptr[desc_length] = '\0';
 
-		if (do_characters) {
-			if (spk_characters[index] != spk_default_chars[index])
-				kfree(spk_characters[index]);
-			spk_characters[index] = desc;
+		अगर (करो_अक्षरacters) अणु
+			अगर (spk_अक्षरacters[index] != spk_शेष_अक्षरs[index])
+				kमुक्त(spk_अक्षरacters[index]);
+			spk_अक्षरacters[index] = desc;
 			used++;
-		} else {
-			charclass = spk_chartab_get_value(keyword);
-			if (charclass == 0) {
+		पूर्ण अन्यथा अणु
+			अक्षरclass = spk_अक्षरtab_get_value(keyword);
+			अगर (अक्षरclass == 0) अणु
 				rejected++;
 				cp = linefeed + 1;
-				continue;
-			}
-			if (charclass != spk_chartab[index]) {
-				spk_chartab[index] = charclass;
+				जारी;
+			पूर्ण
+			अगर (अक्षरclass != spk_अक्षरtab[index]) अणु
+				spk_अक्षरtab[index] = अक्षरclass;
 				used++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		cp = linefeed + 1;
-	}
+	पूर्ण
 
-	if (reset) {
-		if (do_characters)
-			spk_reset_default_chars();
-		else
-			spk_reset_default_chartab();
-	}
+	अगर (reset) अणु
+		अगर (करो_अक्षरacters)
+			spk_reset_शेष_अक्षरs();
+		अन्यथा
+			spk_reset_शेष_अक्षरtab();
+	पूर्ण
 
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	report_char_chartab_status(reset, received, used, rejected,
-				   do_characters);
-	return retval;
-}
+	report_अक्षर_अक्षरtab_status(reset, received, used, rejected,
+				   करो_अक्षरacters);
+	वापस retval;
+पूर्ण
 
 /*
- * This is called when a user reads the keymap parameter.
+ * This is called when a user पढ़ोs the keymap parameter.
  */
-static ssize_t keymap_show(struct kobject *kobj, struct kobj_attribute *attr,
-			   char *buf)
-{
-	char *cp = buf;
-	int i;
-	int n;
-	int num_keys;
-	int nstates;
-	u_char *cp1;
-	u_char ch;
-	unsigned long flags;
+अटल sमाप_प्रकार keymap_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			   अक्षर *buf)
+अणु
+	अक्षर *cp = buf;
+	पूर्णांक i;
+	पूर्णांक n;
+	पूर्णांक num_keys;
+	पूर्णांक nstates;
+	u_अक्षर *cp1;
+	u_अक्षर ch;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 	cp1 = spk_key_buf + SHIFT_TBL_SIZE;
-	num_keys = (int)(*cp1);
-	nstates = (int)cp1[1];
-	cp += sprintf(cp, "%d, %d, %d,\n", KEY_MAP_VER, num_keys, nstates);
-	cp1 += 2; /* now pointing at shift states */
-	/* dump num_keys+1 as first row is shift states + flags,
+	num_keys = (पूर्णांक)(*cp1);
+	nstates = (पूर्णांक)cp1[1];
+	cp += प्र_लिखो(cp, "%d, %d, %d,\n", KEY_MAP_VER, num_keys, nstates);
+	cp1 += 2; /* now poपूर्णांकing at shअगरt states */
+	/* dump num_keys+1 as first row is shअगरt states + flags,
 	 * each subsequent row is key + states
 	 */
-	for (n = 0; n <= num_keys; n++) {
-		for (i = 0; i <= nstates; i++) {
+	क्रम (n = 0; n <= num_keys; n++) अणु
+		क्रम (i = 0; i <= nstates; i++) अणु
 			ch = *cp1++;
-			cp += sprintf(cp, "%d,", (int)ch);
+			cp += प्र_लिखो(cp, "%d,", (पूर्णांक)ch);
 			*cp++ = (i < nstates) ? SPACE : '\n';
-		}
-	}
-	cp += sprintf(cp, "0, %d\n", KEY_MAP_VER);
+		पूर्ण
+	पूर्ण
+	cp += प्र_लिखो(cp, "0, %d\n", KEY_MAP_VER);
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return (int)(cp - buf);
-}
+	वापस (पूर्णांक)(cp - buf);
+पूर्ण
 
 /*
  * This is called when a user changes the keymap parameter.
  */
-static ssize_t keymap_store(struct kobject *kobj, struct kobj_attribute *attr,
-			    const char *buf, size_t count)
-{
-	int i;
-	ssize_t ret = count;
-	char *in_buff = NULL;
-	char *cp;
-	u_char *cp1;
-	unsigned long flags;
+अटल sमाप_प्रकार keymap_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक i;
+	sमाप_प्रकार ret = count;
+	अक्षर *in_buff = शून्य;
+	अक्षर *cp;
+	u_अक्षर *cp1;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 	in_buff = kmemdup(buf, count + 1, GFP_ATOMIC);
-	if (!in_buff) {
+	अगर (!in_buff) अणु
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		return -ENOMEM;
-	}
-	if (strchr("dDrR", *in_buff)) {
-		spk_set_key_info(spk_key_defaults, spk_key_buf);
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (म_अक्षर("dDrR", *in_buff)) अणु
+		spk_set_key_info(spk_key_शेषs, spk_key_buf);
 		pr_info("keymap set to default values\n");
-		kfree(in_buff);
+		kमुक्त(in_buff);
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		return count;
-	}
-	if (in_buff[count - 1] == '\n')
+		वापस count;
+	पूर्ण
+	अगर (in_buff[count - 1] == '\n')
 		in_buff[count - 1] = '\0';
 	cp = in_buff;
-	cp1 = (u_char *)in_buff;
-	for (i = 0; i < 3; i++) {
-		cp = spk_s2uchar(cp, cp1);
+	cp1 = (u_अक्षर *)in_buff;
+	क्रम (i = 0; i < 3; i++) अणु
+		cp = spk_s2uअक्षर(cp, cp1);
 		cp1++;
-	}
-	i = (int)cp1[-2] + 1;
-	i *= (int)cp1[-1] + 1;
+	पूर्ण
+	i = (पूर्णांक)cp1[-2] + 1;
+	i *= (पूर्णांक)cp1[-1] + 1;
 	i += 2; /* 0 and last map ver */
-	if (cp1[-3] != KEY_MAP_VER || cp1[-1] > 10 ||
-	    i + SHIFT_TBL_SIZE + 4 >= sizeof(spk_key_buf)) {
+	अगर (cp1[-3] != KEY_MAP_VER || cp1[-1] > 10 ||
+	    i + SHIFT_TBL_SIZE + 4 >= माप(spk_key_buf)) अणु
 		pr_warn("i %d %d %d %d\n", i,
-			(int)cp1[-3], (int)cp1[-2], (int)cp1[-1]);
-		kfree(in_buff);
+			(पूर्णांक)cp1[-3], (पूर्णांक)cp1[-2], (पूर्णांक)cp1[-1]);
+		kमुक्त(in_buff);
 		spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-		return -EINVAL;
-	}
-	while (--i >= 0) {
-		cp = spk_s2uchar(cp, cp1);
+		वापस -EINVAL;
+	पूर्ण
+	जबतक (--i >= 0) अणु
+		cp = spk_s2uअक्षर(cp, cp1);
 		cp1++;
-		if (!(*cp))
-			break;
-	}
-	if (i != 0 || cp1[-1] != KEY_MAP_VER || cp1[-2] != 0) {
+		अगर (!(*cp))
+			अवरोध;
+	पूर्ण
+	अगर (i != 0 || cp1[-1] != KEY_MAP_VER || cp1[-2] != 0) अणु
 		ret = -EINVAL;
 		pr_warn("end %d %d %d %d\n", i,
-			(int)cp1[-3], (int)cp1[-2], (int)cp1[-1]);
-	} else {
-		if (spk_set_key_info(in_buff, spk_key_buf)) {
-			spk_set_key_info(spk_key_defaults, spk_key_buf);
+			(पूर्णांक)cp1[-3], (पूर्णांक)cp1[-2], (पूर्णांक)cp1[-1]);
+	पूर्ण अन्यथा अणु
+		अगर (spk_set_key_info(in_buff, spk_key_buf)) अणु
+			spk_set_key_info(spk_key_शेषs, spk_key_buf);
 			ret = -EINVAL;
 			pr_warn("set key failed\n");
-		}
-	}
-	kfree(in_buff);
+		पूर्ण
+	पूर्ण
+	kमुक्त(in_buff);
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This is called when a user changes the value of the silent parameter.
  */
-static ssize_t silent_store(struct kobject *kobj, struct kobj_attribute *attr,
-			    const char *buf, size_t count)
-{
-	int len;
-	struct vc_data *vc = vc_cons[fg_console].d;
-	char ch = 0;
-	char shut;
-	unsigned long flags;
+अटल sमाप_प्रकार silent_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक len;
+	काष्ठा vc_data *vc = vc_cons[fg_console].d;
+	अक्षर ch = 0;
+	अक्षर shut;
+	अचिन्हित दीर्घ flags;
 
-	len = strlen(buf);
-	if (len > 0 && len < 3) {
+	len = म_माप(buf);
+	अगर (len > 0 && len < 3) अणु
 		ch = buf[0];
-		if (ch == '\n')
+		अगर (ch == '\n')
 			ch = '0';
-	}
-	if (ch < '0' || ch > '7') {
+	पूर्ण
+	अगर (ch < '0' || ch > '7') अणु
 		pr_warn("silent value '%c' not in range (0,7)\n", ch);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	if (ch & 2) {
+	अगर (ch & 2) अणु
 		shut = 1;
-		spk_do_flush();
-	} else {
+		spk_करो_flush();
+	पूर्ण अन्यथा अणु
 		shut = 0;
-	}
-	if (ch & 4)
+	पूर्ण
+	अगर (ch & 4)
 		shut |= 0x40;
-	if (ch & 1)
+	अगर (ch & 1)
 		spk_shut_up |= shut;
-	else
+	अन्यथा
 		spk_shut_up &= ~shut;
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * This is called when a user reads the synth setting.
+ * This is called when a user पढ़ोs the synth setting.
  */
-static ssize_t synth_show(struct kobject *kobj, struct kobj_attribute *attr,
-			  char *buf)
-{
-	int rv;
+अटल sमाप_प्रकार synth_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  अक्षर *buf)
+अणु
+	पूर्णांक rv;
 
-	if (!synth)
-		rv = sprintf(buf, "%s\n", "none");
-	else
-		rv = sprintf(buf, "%s\n", synth->name);
-	return rv;
-}
+	अगर (!synth)
+		rv = प्र_लिखो(buf, "%s\n", "none");
+	अन्यथा
+		rv = प्र_लिखो(buf, "%s\n", synth->name);
+	वापस rv;
+पूर्ण
 
 /*
  * This is called when a user requests to change synthesizers.
  */
-static ssize_t synth_store(struct kobject *kobj, struct kobj_attribute *attr,
-			   const char *buf, size_t count)
-{
-	int len;
-	char new_synth_name[10];
+अटल sमाप_प्रकार synth_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक len;
+	अक्षर new_synth_name[10];
 
-	len = strlen(buf);
-	if (len < 2 || len > 9)
-		return -EINVAL;
-	memcpy(new_synth_name, buf, len);
-	if (new_synth_name[len - 1] == '\n')
+	len = म_माप(buf);
+	अगर (len < 2 || len > 9)
+		वापस -EINVAL;
+	स_नकल(new_synth_name, buf, len);
+	अगर (new_synth_name[len - 1] == '\n')
 		len--;
 	new_synth_name[len] = '\0';
 	spk_strlwr(new_synth_name);
-	if (synth && !strcmp(new_synth_name, synth->name)) {
+	अगर (synth && !म_भेद(new_synth_name, synth->name)) अणु
 		pr_warn("%s already in use\n", new_synth_name);
-	} else if (synth_init(new_synth_name) != 0) {
+	पूर्ण अन्यथा अगर (synth_init(new_synth_name) != 0) अणु
 		pr_warn("failed to init synth %s\n", new_synth_name);
-		return -ENODEV;
-	}
-	return count;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस count;
+पूर्ण
 
 /*
  * This is called when text is sent to the synth via the synth_direct file.
  */
-static ssize_t synth_direct_store(struct kobject *kobj,
-				  struct kobj_attribute *attr,
-				  const char *buf, size_t count)
-{
-	u_char tmp[256];
-	int len;
-	int bytes;
-	const char *ptr = buf;
-	unsigned long flags;
+अटल sमाप_प्रकार synth_direct_store(काष्ठा kobject *kobj,
+				  काष्ठा kobj_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	u_अक्षर पंचांगp[256];
+	पूर्णांक len;
+	पूर्णांक bytes;
+	स्थिर अक्षर *ptr = buf;
+	अचिन्हित दीर्घ flags;
 
-	if (!synth)
-		return -EPERM;
+	अगर (!synth)
+		वापस -EPERM;
 
-	len = strlen(buf);
+	len = म_माप(buf);
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	while (len > 0) {
-		bytes = min_t(size_t, len, 250);
-		strncpy(tmp, ptr, bytes);
-		tmp[bytes] = '\0';
-		string_unescape_any_inplace(tmp);
-		synth_printf("%s", tmp);
+	जबतक (len > 0) अणु
+		bytes = min_t(माप_प्रकार, len, 250);
+		म_नकलन(पंचांगp, ptr, bytes);
+		पंचांगp[bytes] = '\0';
+		string_unescape_any_inplace(पंचांगp);
+		synth_म_लिखो("%s", पंचांगp);
 		ptr += bytes;
 		len -= bytes;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * This function is called when a user reads the version.
+ * This function is called when a user पढ़ोs the version.
  */
-static ssize_t version_show(struct kobject *kobj, struct kobj_attribute *attr,
-			    char *buf)
-{
-	char *cp;
+अटल sमाप_प्रकार version_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			    अक्षर *buf)
+अणु
+	अक्षर *cp;
 
 	cp = buf;
-	cp += sprintf(cp, "Speakup version %s\n", SPEAKUP_VERSION);
-	if (synth)
-		cp += sprintf(cp, "%s synthesizer driver version %s\n",
+	cp += प्र_लिखो(cp, "Speakup version %s\n", SPEAKUP_VERSION);
+	अगर (synth)
+		cp += प्र_लिखो(cp, "%s synthesizer driver version %s\n",
 		synth->name, synth->version);
-	return cp - buf;
-}
+	वापस cp - buf;
+पूर्ण
 
 /*
- * This is called when a user reads the punctuation settings.
+ * This is called when a user पढ़ोs the punctuation settings.
  */
-static ssize_t punc_show(struct kobject *kobj, struct kobj_attribute *attr,
-			 char *buf)
-{
-	int i;
-	char *cp = buf;
-	struct st_var_header *p_header;
-	struct punc_var_t *var;
-	struct st_bits_data *pb;
-	short mask;
-	unsigned long flags;
+अटल sमाप_प्रकार punc_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			 अक्षर *buf)
+अणु
+	पूर्णांक i;
+	अक्षर *cp = buf;
+	काष्ठा st_var_header *p_header;
+	काष्ठा punc_var_t *var;
+	काष्ठा st_bits_data *pb;
+	लघु mask;
+	अचिन्हित दीर्घ flags;
 
 	p_header = spk_var_header_by_name(attr->attr.name);
-	if (!p_header) {
+	अगर (!p_header) अणु
 		pr_warn("p_header is null, attr->attr.name is %s\n",
 			attr->attr.name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	var = spk_get_punc_var(p_header->var_id);
-	if (!var) {
+	अगर (!var) अणु
 		pr_warn("var is null, p_header->var_id is %i\n",
 			p_header->var_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	pb = (struct st_bits_data *)&spk_punc_info[var->value];
+	pb = (काष्ठा st_bits_data *)&spk_punc_info[var->value];
 	mask = pb->mask;
-	for (i = 33; i < 128; i++) {
-		if (!(spk_chartab[i] & mask))
-			continue;
-		*cp++ = (char)i;
-	}
+	क्रम (i = 33; i < 128; i++) अणु
+		अगर (!(spk_अक्षरtab[i] & mask))
+			जारी;
+		*cp++ = (अक्षर)i;
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return cp - buf;
-}
+	वापस cp - buf;
+पूर्ण
 
 /*
  * This is called when a user changes the punctuation settings.
  */
-static ssize_t punc_store(struct kobject *kobj, struct kobj_attribute *attr,
-			  const char *buf, size_t count)
-{
-	int x;
-	struct st_var_header *p_header;
-	struct punc_var_t *var;
-	char punc_buf[100];
-	unsigned long flags;
+अटल sमाप_प्रकार punc_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक x;
+	काष्ठा st_var_header *p_header;
+	काष्ठा punc_var_t *var;
+	अक्षर punc_buf[100];
+	अचिन्हित दीर्घ flags;
 
-	x = strlen(buf);
-	if (x < 1 || x > 99)
-		return -EINVAL;
+	x = म_माप(buf);
+	अगर (x < 1 || x > 99)
+		वापस -EINVAL;
 
 	p_header = spk_var_header_by_name(attr->attr.name);
-	if (!p_header) {
+	अगर (!p_header) अणु
 		pr_warn("p_header is null, attr->attr.name is %s\n",
 			attr->attr.name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	var = spk_get_punc_var(p_header->var_id);
-	if (!var) {
+	अगर (!var) अणु
 		pr_warn("var is null, p_header->var_id is %i\n",
 			p_header->var_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(punc_buf, buf, x);
+	स_नकल(punc_buf, buf, x);
 
-	while (x && punc_buf[x - 1] == '\n')
+	जबतक (x && punc_buf[x - 1] == '\n')
 		x--;
 	punc_buf[x] = '\0';
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 
-	if (*punc_buf == 'd' || *punc_buf == 'r')
-		x = spk_set_mask_bits(NULL, var->value, 3);
-	else
+	अगर (*punc_buf == 'd' || *punc_buf == 'r')
+		x = spk_set_mask_bits(शून्य, var->value, 3);
+	अन्यथा
 		x = spk_set_mask_bits(punc_buf, var->value, 3);
 
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /*
- * This function is called when a user reads one of the variable parameters.
+ * This function is called when a user पढ़ोs one of the variable parameters.
  */
-ssize_t spk_var_show(struct kobject *kobj, struct kobj_attribute *attr,
-		     char *buf)
-{
-	int rv = 0;
-	struct st_var_header *param;
-	struct var_t *var;
-	char *cp1;
-	char *cp;
-	char ch;
-	unsigned long flags;
+sमाप_प्रकार spk_var_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+		     अक्षर *buf)
+अणु
+	पूर्णांक rv = 0;
+	काष्ठा st_var_header *param;
+	काष्ठा var_t *var;
+	अक्षर *cp1;
+	अक्षर *cp;
+	अक्षर ch;
+	अचिन्हित दीर्घ flags;
 
 	param = spk_var_header_by_name(attr->attr.name);
-	if (!param)
-		return -EINVAL;
+	अगर (!param)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	var = (struct var_t *)param->data;
-	switch (param->var_type) {
-	case VAR_NUM:
-	case VAR_TIME:
-		if (var)
-			rv = sprintf(buf, "%i\n", var->u.n.value);
-		else
-			rv = sprintf(buf, "0\n");
-		break;
-	case VAR_STRING:
-		if (var) {
+	var = (काष्ठा var_t *)param->data;
+	चयन (param->var_type) अणु
+	हाल VAR_NUM:
+	हाल VAR_TIME:
+		अगर (var)
+			rv = प्र_लिखो(buf, "%i\n", var->u.n.value);
+		अन्यथा
+			rv = प्र_लिखो(buf, "0\n");
+		अवरोध;
+	हाल VAR_STRING:
+		अगर (var) अणु
 			cp1 = buf;
 			*cp1++ = '"';
-			for (cp = (char *)param->p_val; (ch = *cp); cp++) {
-				if (ch >= ' ' && ch < '~')
+			क्रम (cp = (अक्षर *)param->p_val; (ch = *cp); cp++) अणु
+				अगर (ch >= ' ' && ch < '~')
 					*cp1++ = ch;
-				else
-					cp1 += sprintf(cp1, "\\x%02x", ch);
-			}
+				अन्यथा
+					cp1 += प्र_लिखो(cp1, "\\x%02x", ch);
+			पूर्ण
 			*cp1++ = '"';
 			*cp1++ = '\n';
 			*cp1 = '\0';
 			rv = cp1 - buf;
-		} else {
-			rv = sprintf(buf, "\"\"\n");
-		}
-		break;
-	default:
-		rv = sprintf(buf, "Bad parameter  %s, type %i\n",
+		पूर्ण अन्यथा अणु
+			rv = प्र_लिखो(buf, "\"\"\n");
+		पूर्ण
+		अवरोध;
+	शेष:
+		rv = प्र_लिखो(buf, "Bad parameter  %s, type %i\n",
 			     param->name, param->var_type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 EXPORT_SYMBOL_GPL(spk_var_show);
 
 /*
- * Used to reset either default_pitch or default_vol.
+ * Used to reset either शेष_pitch or शेष_vol.
  */
-static inline void spk_reset_default_value(char *header_name,
-					   int *synth_default_value, int idx)
-{
-	struct st_var_header *param;
+अटल अंतरभूत व्योम spk_reset_शेष_value(अक्षर *header_name,
+					   पूर्णांक *synth_शेष_value, पूर्णांक idx)
+अणु
+	काष्ठा st_var_header *param;
 
-	if (synth && synth_default_value) {
+	अगर (synth && synth_शेष_value) अणु
 		param = spk_var_header_by_name(header_name);
-		if (param)  {
-			spk_set_num_var(synth_default_value[idx],
+		अगर (param)  अणु
+			spk_set_num_var(synth_शेष_value[idx],
 					param, E_NEW_DEFAULT);
 			spk_set_num_var(0, param, E_DEFAULT);
 			pr_info("%s reset to default value\n", param->name);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * This function is called when a user echos a value to one of the
  * variable parameters.
  */
-ssize_t spk_var_store(struct kobject *kobj, struct kobj_attribute *attr,
-		      const char *buf, size_t count)
-{
-	struct st_var_header *param;
-	int ret;
-	int len;
-	char *cp;
-	struct var_t *var_data;
-	long value;
-	unsigned long flags;
+sमाप_प्रकार spk_var_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+		      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा st_var_header *param;
+	पूर्णांक ret;
+	पूर्णांक len;
+	अक्षर *cp;
+	काष्ठा var_t *var_data;
+	दीर्घ value;
+	अचिन्हित दीर्घ flags;
 
 	param = spk_var_header_by_name(attr->attr.name);
-	if (!param)
-		return -EINVAL;
-	if (!param->data)
-		return 0;
+	अगर (!param)
+		वापस -EINVAL;
+	अगर (!param->data)
+		वापस 0;
 	ret = 0;
-	cp = (char *)buf;
+	cp = (अक्षर *)buf;
 	string_unescape_any_inplace(cp);
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
-	switch (param->var_type) {
-	case VAR_NUM:
-	case VAR_TIME:
-		if (*cp == 'd' || *cp == 'r' || *cp == '\0')
+	चयन (param->var_type) अणु
+	हाल VAR_NUM:
+	हाल VAR_TIME:
+		अगर (*cp == 'd' || *cp == 'r' || *cp == '\0')
 			len = E_DEFAULT;
-		else if (*cp == '+' || *cp == '-')
+		अन्यथा अगर (*cp == '+' || *cp == '-')
 			len = E_INC;
-		else
+		अन्यथा
 			len = E_SET;
-		if (kstrtol(cp, 10, &value) == 0)
+		अगर (kम_से_दीर्घ(cp, 10, &value) == 0)
 			ret = spk_set_num_var(value, param, len);
-		else
+		अन्यथा
 			pr_warn("overflow or parsing error has occurred");
-		if (ret == -ERANGE) {
+		अगर (ret == -दुस्फल) अणु
 			var_data = param->data;
 			pr_warn("value for %s out of range, expect %d to %d\n",
 				param->name,
 				var_data->u.n.low, var_data->u.n.high);
-		}
+		पूर्ण
 
 	       /*
-		* If voice was just changed, we might need to reset our default
+		* If voice was just changed, we might need to reset our शेष
 		* pitch and volume.
 		*/
-		if (param->var_id == VOICE && synth &&
-		    (ret == 0 || ret == -ERESTART)) {
+		अगर (param->var_id == VOICE && synth &&
+		    (ret == 0 || ret == -ERESTART)) अणु
 			var_data = param->data;
 			value = var_data->u.n.value;
-			spk_reset_default_value("pitch", synth->default_pitch,
+			spk_reset_शेष_value("pitch", synth->शेष_pitch,
 						value);
-			spk_reset_default_value("vol", synth->default_vol,
+			spk_reset_शेष_value("vol", synth->शेष_vol,
 						value);
-		}
-		break;
-	case VAR_STRING:
-		len = strlen(cp);
-		if ((len >= 1) && (cp[len - 1] == '\n'))
+		पूर्ण
+		अवरोध;
+	हाल VAR_STRING:
+		len = म_माप(cp);
+		अगर ((len >= 1) && (cp[len - 1] == '\n'))
 			--len;
-		if ((len >= 2) && (cp[0] == '"') && (cp[len - 1] == '"')) {
+		अगर ((len >= 2) && (cp[0] == '"') && (cp[len - 1] == '"')) अणु
 			++cp;
 			len -= 2;
-		}
+		पूर्ण
 		cp[len] = '\0';
 		ret = spk_set_string_var(cp, param, len);
-		if (ret == -E2BIG)
+		अगर (ret == -E2BIG)
 			pr_warn("value too long for %s\n",
 				param->name);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("%s unknown type %d\n",
-			param->name, (int)param->var_type);
-	break;
-	}
+			param->name, (पूर्णांक)param->var_type);
+	अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
 
-	if (ret == -ERESTART)
+	अगर (ret == -ERESTART)
 		pr_info("%s reset to default value\n", param->name);
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(spk_var_store);
 
 /*
- * Functions for reading and writing lists of i18n messages.  Incomplete.
+ * Functions क्रम पढ़ोing and writing lists of i18n messages.  Incomplete.
  */
 
-static ssize_t message_show_helper(char *buf, enum msg_index_t first,
-				   enum msg_index_t last)
-{
-	size_t bufsize = PAGE_SIZE;
-	char *buf_pointer = buf;
-	int printed;
-	enum msg_index_t cursor;
-	int index = 0;
-	*buf_pointer = '\0'; /* buf_pointer always looking at a NUL byte. */
+अटल sमाप_प्रकार message_show_helper(अक्षर *buf, क्रमागत msg_index_t first,
+				   क्रमागत msg_index_t last)
+अणु
+	माप_प्रकार bufsize = PAGE_SIZE;
+	अक्षर *buf_poपूर्णांकer = buf;
+	पूर्णांक prपूर्णांकed;
+	क्रमागत msg_index_t cursor;
+	पूर्णांक index = 0;
+	*buf_poपूर्णांकer = '\0'; /* buf_poपूर्णांकer always looking at a NUL byte. */
 
-	for (cursor = first; cursor <= last; cursor++, index++) {
-		if (bufsize <= 1)
-			break;
-		printed = scnprintf(buf_pointer, bufsize, "%d\t%s\n",
+	क्रम (cursor = first; cursor <= last; cursor++, index++) अणु
+		अगर (bufsize <= 1)
+			अवरोध;
+		prपूर्णांकed = scnम_लिखो(buf_poपूर्णांकer, bufsize, "%d\t%s\n",
 				    index, spk_msg_get(cursor));
-		buf_pointer += printed;
-		bufsize -= printed;
-	}
+		buf_poपूर्णांकer += prपूर्णांकed;
+		bufsize -= prपूर्णांकed;
+	पूर्ण
 
-	return buf_pointer - buf;
-}
+	वापस buf_poपूर्णांकer - buf;
+पूर्ण
 
-static void report_msg_status(int reset, int received, int used,
-			      int rejected, char *groupname)
-{
-	int len;
-	char buf[160];
+अटल व्योम report_msg_status(पूर्णांक reset, पूर्णांक received, पूर्णांक used,
+			      पूर्णांक rejected, अक्षर *groupname)
+अणु
+	पूर्णांक len;
+	अक्षर buf[160];
 
-	if (reset) {
+	अगर (reset) अणु
 		pr_info("i18n messages from group %s reset to defaults\n",
 			groupname);
-	} else if (received) {
-		len = snprintf(buf, sizeof(buf),
+	पूर्ण अन्यथा अगर (received) अणु
+		len = snम_लिखो(buf, माप(buf),
 			       " updated %d of %d i18n messages from group %s\n",
 				       used, received, groupname);
-		if (rejected)
-			snprintf(buf + (len - 1), sizeof(buf) - (len - 1),
+		अगर (rejected)
+			snम_लिखो(buf + (len - 1), माप(buf) - (len - 1),
 				 " with %d reject%s\n",
 				 rejected, rejected > 1 ? "s" : "");
 		pr_info("%s", buf);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t message_store_helper(const char *buf, size_t count,
-				    struct msg_group_t *group)
-{
-	char *cp = (char *)buf;
-	char *end = cp + count;
-	char *linefeed = NULL;
-	char *temp = NULL;
-	ssize_t msg_stored = 0;
-	ssize_t retval = count;
-	size_t desc_length = 0;
-	unsigned long index = 0;
-	int received = 0;
-	int used = 0;
-	int rejected = 0;
-	int reset = 0;
-	enum msg_index_t firstmessage = group->start;
-	enum msg_index_t lastmessage = group->end;
-	enum msg_index_t curmessage;
+अटल sमाप_प्रकार message_store_helper(स्थिर अक्षर *buf, माप_प्रकार count,
+				    काष्ठा msg_group_t *group)
+अणु
+	अक्षर *cp = (अक्षर *)buf;
+	अक्षर *end = cp + count;
+	अक्षर *linefeed = शून्य;
+	अक्षर *temp = शून्य;
+	sमाप_प्रकार msg_stored = 0;
+	sमाप_प्रकार retval = count;
+	माप_प्रकार desc_length = 0;
+	अचिन्हित दीर्घ index = 0;
+	पूर्णांक received = 0;
+	पूर्णांक used = 0;
+	पूर्णांक rejected = 0;
+	पूर्णांक reset = 0;
+	क्रमागत msg_index_t firsपंचांगessage = group->start;
+	क्रमागत msg_index_t lasपंचांगessage = group->end;
+	क्रमागत msg_index_t curmessage;
 
-	while (cp < end) {
-		while ((cp < end) && (*cp == ' ' || *cp == '\t'))
+	जबतक (cp < end) अणु
+		जबतक ((cp < end) && (*cp == ' ' || *cp == '\t'))
 			cp++;
 
-		if (cp == end)
-			break;
-		if (strchr("dDrR", *cp)) {
+		अगर (cp == end)
+			अवरोध;
+		अगर (म_अक्षर("dDrR", *cp)) अणु
 			reset = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		received++;
 
-		linefeed = strchr(cp, '\n');
-		if (!linefeed) {
+		linefeed = म_अक्षर(cp, '\n');
+		अगर (!linefeed) अणु
 			rejected++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!isdigit(*cp)) {
+		अगर (!है_अंक(*cp)) अणु
 			rejected++;
 			cp = linefeed + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Do not replace with kstrtoul:
+		 * Do not replace with kम_से_अदीर्घ:
 		 * here we need temp to be updated
 		 */
-		index = simple_strtoul(cp, &temp, 10);
+		index = simple_म_से_अदीर्घ(cp, &temp, 10);
 
-		while ((temp < linefeed) && (*temp == ' ' || *temp == '\t'))
+		जबतक ((temp < linefeed) && (*temp == ' ' || *temp == '\t'))
 			temp++;
 
 		desc_length = linefeed - temp;
-		curmessage = firstmessage + index;
+		curmessage = firsपंचांगessage + index;
 
 		/*
-		 * Note the check (curmessage < firstmessage).  It is not
+		 * Note the check (curmessage < firsपंचांगessage).  It is not
 		 * redundant.  Suppose that the user gave us an index
-		 * equal to ULONG_MAX - 1.  If firstmessage > 1, then
-		 * firstmessage + index < firstmessage!
+		 * equal to अच_दीर्घ_उच्च - 1.  If firsपंचांगessage > 1, then
+		 * firsपंचांगessage + index < firsपंचांगessage!
 		 */
 
-		if ((curmessage < firstmessage) || (curmessage > lastmessage)) {
+		अगर ((curmessage < firsपंचांगessage) || (curmessage > lasपंचांगessage)) अणु
 			rejected++;
 			cp = linefeed + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		msg_stored = spk_msg_set(curmessage, temp, desc_length);
-		if (msg_stored < 0) {
+		अगर (msg_stored < 0) अणु
 			retval = msg_stored;
-			if (msg_stored == -ENOMEM)
+			अगर (msg_stored == -ENOMEM)
 				reset = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		used++;
 
 		cp = linefeed + 1;
-	}
+	पूर्ण
 
-	if (reset)
+	अगर (reset)
 		spk_reset_msg_group(group);
 
 	report_msg_status(reset, received, used, rejected, group->name);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t message_show(struct kobject *kobj,
-			    struct kobj_attribute *attr, char *buf)
-{
-	ssize_t retval = 0;
-	struct msg_group_t *group = spk_find_msg_group(attr->attr.name);
-	unsigned long flags;
+अटल sमाप_प्रकार message_show(काष्ठा kobject *kobj,
+			    काष्ठा kobj_attribute *attr, अक्षर *buf)
+अणु
+	sमाप_प्रकार retval = 0;
+	काष्ठा msg_group_t *group = spk_find_msg_group(attr->attr.name);
+	अचिन्हित दीर्घ flags;
 
-	if (WARN_ON(!group))
-		return -EINVAL;
+	अगर (WARN_ON(!group))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&speakup_info.spinlock, flags);
 	retval = message_show_helper(buf, group->start, group->end);
 	spin_unlock_irqrestore(&speakup_info.spinlock, flags);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static ssize_t message_store(struct kobject *kobj, struct kobj_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct msg_group_t *group = spk_find_msg_group(attr->attr.name);
+अटल sमाप_प्रकार message_store(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा msg_group_t *group = spk_find_msg_group(attr->attr.name);
 
-	if (WARN_ON(!group))
-		return -EINVAL;
+	अगर (WARN_ON(!group))
+		वापस -EINVAL;
 
-	return message_store_helper(buf, count, group);
-}
+	वापस message_store_helper(buf, count, group);
+पूर्ण
 
 /*
  * Declare the attributes.
  */
-static struct kobj_attribute keymap_attribute =
+अटल काष्ठा kobj_attribute keymap_attribute =
 	__ATTR_RW(keymap);
-static struct kobj_attribute silent_attribute =
+अटल काष्ठा kobj_attribute silent_attribute =
 	__ATTR_WO(silent);
-static struct kobj_attribute synth_attribute =
+अटल काष्ठा kobj_attribute synth_attribute =
 	__ATTR_RW(synth);
-static struct kobj_attribute synth_direct_attribute =
+अटल काष्ठा kobj_attribute synth_direct_attribute =
 	__ATTR_WO(synth_direct);
-static struct kobj_attribute version_attribute =
+अटल काष्ठा kobj_attribute version_attribute =
 	__ATTR_RO(version);
 
-static struct kobj_attribute delimiters_attribute =
+अटल काष्ठा kobj_attribute delimiters_attribute =
 	__ATTR(delimiters, 0644, punc_show, punc_store);
-static struct kobj_attribute ex_num_attribute =
+अटल काष्ठा kobj_attribute ex_num_attribute =
 	__ATTR(ex_num, 0644, punc_show, punc_store);
-static struct kobj_attribute punc_all_attribute =
+अटल काष्ठा kobj_attribute punc_all_attribute =
 	__ATTR(punc_all, 0644, punc_show, punc_store);
-static struct kobj_attribute punc_most_attribute =
+अटल काष्ठा kobj_attribute punc_most_attribute =
 	__ATTR(punc_most, 0644, punc_show, punc_store);
-static struct kobj_attribute punc_some_attribute =
+अटल काष्ठा kobj_attribute punc_some_attribute =
 	__ATTR(punc_some, 0644, punc_show, punc_store);
-static struct kobj_attribute repeats_attribute =
+अटल काष्ठा kobj_attribute repeats_attribute =
 	__ATTR(repeats, 0644, punc_show, punc_store);
 
-static struct kobj_attribute attrib_bleep_attribute =
+अटल काष्ठा kobj_attribute attrib_bleep_attribute =
 	__ATTR(attrib_bleep, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute bell_pos_attribute =
+अटल काष्ठा kobj_attribute bell_pos_attribute =
 	__ATTR(bell_pos, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute bleep_time_attribute =
-	__ATTR(bleep_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute bleeps_attribute =
+अटल काष्ठा kobj_attribute bleep_समय_attribute =
+	__ATTR(bleep_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute bleeps_attribute =
 	__ATTR(bleeps, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute cursor_time_attribute =
-	__ATTR(cursor_time, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute key_echo_attribute =
+अटल काष्ठा kobj_attribute cursor_समय_attribute =
+	__ATTR(cursor_समय, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute key_echo_attribute =
 	__ATTR(key_echo, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute no_interrupt_attribute =
-	__ATTR(no_interrupt, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute punc_level_attribute =
+अटल काष्ठा kobj_attribute no_पूर्णांकerrupt_attribute =
+	__ATTR(no_पूर्णांकerrupt, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute punc_level_attribute =
 	__ATTR(punc_level, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute reading_punc_attribute =
-	__ATTR(reading_punc, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute say_control_attribute =
+अटल काष्ठा kobj_attribute पढ़ोing_punc_attribute =
+	__ATTR(पढ़ोing_punc, 0644, spk_var_show, spk_var_store);
+अटल काष्ठा kobj_attribute say_control_attribute =
 	__ATTR(say_control, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute say_word_ctl_attribute =
+अटल काष्ठा kobj_attribute say_word_ctl_attribute =
 	__ATTR(say_word_ctl, 0644, spk_var_show, spk_var_store);
-static struct kobj_attribute spell_delay_attribute =
+अटल काष्ठा kobj_attribute spell_delay_attribute =
 	__ATTR(spell_delay, 0644, spk_var_show, spk_var_store);
 
 /*
  * These attributes are i18n related.
  */
-static struct kobj_attribute announcements_attribute =
+अटल काष्ठा kobj_attribute announcements_attribute =
 	__ATTR(announcements, 0644, message_show, message_store);
-static struct kobj_attribute characters_attribute =
-	__ATTR(characters, 0644, chars_chartab_show,
-	       chars_chartab_store);
-static struct kobj_attribute chartab_attribute =
-	__ATTR(chartab, 0644, chars_chartab_show,
-	       chars_chartab_store);
-static struct kobj_attribute ctl_keys_attribute =
+अटल काष्ठा kobj_attribute अक्षरacters_attribute =
+	__ATTR(अक्षरacters, 0644, अक्षरs_अक्षरtab_show,
+	       अक्षरs_अक्षरtab_store);
+अटल काष्ठा kobj_attribute अक्षरtab_attribute =
+	__ATTR(अक्षरtab, 0644, अक्षरs_अक्षरtab_show,
+	       अक्षरs_अक्षरtab_store);
+अटल काष्ठा kobj_attribute ctl_keys_attribute =
 	__ATTR(ctl_keys, 0644, message_show, message_store);
-static struct kobj_attribute colors_attribute =
+अटल काष्ठा kobj_attribute colors_attribute =
 	__ATTR(colors, 0644, message_show, message_store);
-static struct kobj_attribute formatted_attribute =
-	__ATTR(formatted, 0644, message_show, message_store);
-static struct kobj_attribute function_names_attribute =
+अटल काष्ठा kobj_attribute क्रमmatted_attribute =
+	__ATTR(क्रमmatted, 0644, message_show, message_store);
+अटल काष्ठा kobj_attribute function_names_attribute =
 	__ATTR(function_names, 0644, message_show, message_store);
-static struct kobj_attribute key_names_attribute =
+अटल काष्ठा kobj_attribute key_names_attribute =
 	__ATTR(key_names, 0644, message_show, message_store);
-static struct kobj_attribute states_attribute =
+अटल काष्ठा kobj_attribute states_attribute =
 	__ATTR(states, 0644, message_show, message_store);
 
 /*
  * Create groups of attributes so that we can create and destroy them all
  * at once.
  */
-static struct attribute *main_attrs[] = {
+अटल काष्ठा attribute *मुख्य_attrs[] = अणु
 	&keymap_attribute.attr,
 	&silent_attribute.attr,
 	&synth_attribute.attr,
@@ -957,100 +958,100 @@ static struct attribute *main_attrs[] = {
 	&repeats_attribute.attr,
 	&attrib_bleep_attribute.attr,
 	&bell_pos_attribute.attr,
-	&bleep_time_attribute.attr,
+	&bleep_समय_attribute.attr,
 	&bleeps_attribute.attr,
-	&cursor_time_attribute.attr,
+	&cursor_समय_attribute.attr,
 	&key_echo_attribute.attr,
-	&no_interrupt_attribute.attr,
+	&no_पूर्णांकerrupt_attribute.attr,
 	&punc_level_attribute.attr,
-	&reading_punc_attribute.attr,
+	&पढ़ोing_punc_attribute.attr,
 	&say_control_attribute.attr,
 	&say_word_ctl_attribute.attr,
 	&spell_delay_attribute.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *i18n_attrs[] = {
+अटल काष्ठा attribute *i18n_attrs[] = अणु
 	&announcements_attribute.attr,
-	&characters_attribute.attr,
-	&chartab_attribute.attr,
+	&अक्षरacters_attribute.attr,
+	&अक्षरtab_attribute.attr,
 	&ctl_keys_attribute.attr,
 	&colors_attribute.attr,
-	&formatted_attribute.attr,
+	&क्रमmatted_attribute.attr,
 	&function_names_attribute.attr,
 	&key_names_attribute.attr,
 	&states_attribute.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
  * An unnamed attribute group will put all of the attributes directly in
- * the kobject directory.  If we specify a name, a subdirectory will be
- * created for the attributes with the directory being the name of the
+ * the kobject directory.  If we specअगरy a name, a subdirectory will be
+ * created क्रम the attributes with the directory being the name of the
  * attribute group.
  */
-static const struct attribute_group main_attr_group = {
-	.attrs = main_attrs,
-};
+अटल स्थिर काष्ठा attribute_group मुख्य_attr_group = अणु
+	.attrs = मुख्य_attrs,
+पूर्ण;
 
-static const struct attribute_group i18n_attr_group = {
+अटल स्थिर काष्ठा attribute_group i18n_attr_group = अणु
 	.attrs = i18n_attrs,
 	.name = "i18n",
-};
+पूर्ण;
 
-static struct kobject *accessibility_kobj;
-struct kobject *speakup_kobj;
+अटल काष्ठा kobject *accessibility_kobj;
+काष्ठा kobject *speakup_kobj;
 
-int speakup_kobj_init(void)
-{
-	int retval;
+पूर्णांक speakup_kobj_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	/*
 	 * Create a simple kobject with the name of "accessibility",
 	 * located under /sys/
 	 *
 	 * As this is a simple directory, no uevent will be sent to
-	 * userspace.  That is why this function should not be used for
+	 * userspace.  That is why this function should not be used क्रम
 	 * any type of dynamic kobjects, where the name and number are
-	 * not known ahead of time.
+	 * not known ahead of समय.
 	 */
-	accessibility_kobj = kobject_create_and_add("accessibility", NULL);
-	if (!accessibility_kobj) {
+	accessibility_kobj = kobject_create_and_add("accessibility", शून्य);
+	अगर (!accessibility_kobj) अणु
 		retval = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	speakup_kobj = kobject_create_and_add("speakup", accessibility_kobj);
-	if (!speakup_kobj) {
+	अगर (!speakup_kobj) अणु
 		retval = -ENOMEM;
-		goto err_acc;
-	}
+		जाओ err_acc;
+	पूर्ण
 
 	/* Create the files associated with this kobject */
-	retval = sysfs_create_group(speakup_kobj, &main_attr_group);
-	if (retval)
-		goto err_speakup;
+	retval = sysfs_create_group(speakup_kobj, &मुख्य_attr_group);
+	अगर (retval)
+		जाओ err_speakup;
 
 	retval = sysfs_create_group(speakup_kobj, &i18n_attr_group);
-	if (retval)
-		goto err_group;
+	अगर (retval)
+		जाओ err_group;
 
-	goto out;
+	जाओ out;
 
 err_group:
-	sysfs_remove_group(speakup_kobj, &main_attr_group);
+	sysfs_हटाओ_group(speakup_kobj, &मुख्य_attr_group);
 err_speakup:
 	kobject_put(speakup_kobj);
 err_acc:
 	kobject_put(accessibility_kobj);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void speakup_kobj_exit(void)
-{
-	sysfs_remove_group(speakup_kobj, &i18n_attr_group);
-	sysfs_remove_group(speakup_kobj, &main_attr_group);
+व्योम speakup_kobj_निकास(व्योम)
+अणु
+	sysfs_हटाओ_group(speakup_kobj, &i18n_attr_group);
+	sysfs_हटाओ_group(speakup_kobj, &मुख्य_attr_group);
 	kobject_put(speakup_kobj);
 	kobject_put(accessibility_kobj);
-}
+पूर्ण

@@ -1,284 +1,285 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2007-2017 Nicira, Inc.
  */
 
-#ifndef FLOW_H
-#define FLOW_H 1
+#अगर_अघोषित FLOW_H
+#घोषणा FLOW_H 1
 
-#include <linux/cache.h>
-#include <linux/kernel.h>
-#include <linux/netlink.h>
-#include <linux/openvswitch.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <linux/rcupdate.h>
-#include <linux/if_ether.h>
-#include <linux/in6.h>
-#include <linux/jiffies.h>
-#include <linux/time.h>
-#include <linux/cpumask.h>
-#include <net/inet_ecn.h>
-#include <net/ip_tunnels.h>
-#include <net/dst_metadata.h>
-#include <net/nsh.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/खोलोvचयन.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/cpumask.h>
+#समावेश <net/inet_ecn.h>
+#समावेश <net/ip_tunnels.h>
+#समावेश <net/dst_metadata.h>
+#समावेश <net/nsh.h>
 
-struct sk_buff;
+काष्ठा sk_buff;
 
-enum sw_flow_mac_proto {
+क्रमागत sw_flow_mac_proto अणु
 	MAC_PROTO_NONE = 0,
 	MAC_PROTO_ETHERNET,
-};
-#define SW_FLOW_KEY_INVALID	0x80
-#define MPLS_LABEL_DEPTH       3
+पूर्ण;
+#घोषणा SW_FLOW_KEY_INVALID	0x80
+#घोषणा MPLS_LABEL_DEPTH       3
 
-/* Store options at the end of the array if they are less than the
+/* Store options at the end of the array अगर they are less than the
  * maximum size. This allows us to get the benefits of variable length
- * matching for small options.
+ * matching क्रम small options.
  */
-#define TUN_METADATA_OFFSET(opt_len) \
-	(sizeof_field(struct sw_flow_key, tun_opts) - opt_len)
-#define TUN_METADATA_OPTS(flow_key, opt_len) \
-	((void *)((flow_key)->tun_opts + TUN_METADATA_OFFSET(opt_len)))
+#घोषणा TUN_METADATA_OFFSET(opt_len) \
+	(माप_field(काष्ठा sw_flow_key, tun_opts) - opt_len)
+#घोषणा TUN_METADATA_OPTS(flow_key, opt_len) \
+	((व्योम *)((flow_key)->tun_opts + TUN_METADATA_OFFSET(opt_len)))
 
-struct ovs_tunnel_info {
-	struct metadata_dst	*tun_dst;
-};
+काष्ठा ovs_tunnel_info अणु
+	काष्ठा metadata_dst	*tun_dst;
+पूर्ण;
 
-struct vlan_head {
+काष्ठा vlan_head अणु
 	__be16 tpid; /* Vlan type. Generally 802.1q or 802.1ad.*/
-	__be16 tci;  /* 0 if no VLAN, VLAN_CFI_MASK set otherwise. */
-};
+	__be16 tci;  /* 0 अगर no VLAN, VLAN_CFI_MASK set otherwise. */
+पूर्ण;
 
-#define OVS_SW_FLOW_KEY_METADATA_SIZE			\
-	(offsetof(struct sw_flow_key, recirc_id) +	\
-	sizeof_field(struct sw_flow_key, recirc_id))
+#घोषणा OVS_SW_FLOW_KEY_METADATA_SIZE			\
+	(दुरत्व(काष्ठा sw_flow_key, recirc_id) +	\
+	माप_field(काष्ठा sw_flow_key, recirc_id))
 
-struct ovs_key_nsh {
-	struct ovs_nsh_key_base base;
+काष्ठा ovs_key_nsh अणु
+	काष्ठा ovs_nsh_key_base base;
 	__be32 context[NSH_MD1_CONTEXT_SIZE];
-};
+पूर्ण;
 
-struct sw_flow_key {
+काष्ठा sw_flow_key अणु
 	u8 tun_opts[IP_TUNNEL_OPTS_MAX];
 	u8 tun_opts_len;
-	struct ip_tunnel_key tun_key;	/* Encapsulating tunnel key. */
-	struct {
+	काष्ठा ip_tunnel_key tun_key;	/* Encapsulating tunnel key. */
+	काष्ठा अणु
 		u32	priority;	/* Packet QoS priority. */
 		u32	skb_mark;	/* SKB mark. */
-		u16	in_port;	/* Input switch port (or DP_MAX_PORTS). */
-	} __packed phy; /* Safe when right after 'tun_key'. */
+		u16	in_port;	/* Input चयन port (or DP_MAX_PORTS). */
+	पूर्ण __packed phy; /* Safe when right after 'tun_key'. */
 	u8 mac_proto;			/* MAC layer protocol (e.g. Ethernet). */
 	u8 tun_proto;			/* Protocol of encapsulating tunnel. */
 	u32 ovs_flow_hash;		/* Datapath computed hash value.  */
 	u32 recirc_id;			/* Recirculation ID.  */
-	struct {
+	काष्ठा अणु
 		u8     src[ETH_ALEN];	/* Ethernet source address. */
 		u8     dst[ETH_ALEN];	/* Ethernet destination address. */
-		struct vlan_head vlan;
-		struct vlan_head cvlan;
+		काष्ठा vlan_head vlan;
+		काष्ठा vlan_head cvlan;
 		__be16 type;		/* Ethernet frame type. */
-	} eth;
+	पूर्ण eth;
 	/* Filling a hole of two bytes. */
 	u8 ct_state;
 	u8 ct_orig_proto;		/* CT original direction tuple IP
 					 * protocol.
 					 */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u8     proto;	/* IP protocol or lower 8 bits of ARP opcode. */
 			u8     tos;	    /* IP ToS. */
 			u8     ttl;	    /* IP TTL/hop limit. */
 			u8     frag;	/* One of OVS_FRAG_TYPE_*. */
-		} ip;
-	};
+		पूर्ण ip;
+	पूर्ण;
 	u16 ct_zone;			/* Conntrack zone. */
-	struct {
+	काष्ठा अणु
 		__be16 src;		/* TCP/UDP/SCTP source port. */
 		__be16 dst;		/* TCP/UDP/SCTP destination port. */
 		__be16 flags;		/* TCP flags. */
-	} tp;
-	union {
-		struct {
-			struct {
+	पूर्ण tp;
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा अणु
 				__be32 src;	/* IP source address. */
 				__be32 dst;	/* IP destination address. */
-			} addr;
-			union {
-				struct {
+			पूर्ण addr;
+			जोड़ अणु
+				काष्ठा अणु
 					__be32 src;
 					__be32 dst;
-				} ct_orig;	/* Conntrack original direction fields. */
-				struct {
+				पूर्ण ct_orig;	/* Conntrack original direction fields. */
+				काष्ठा अणु
 					u8 sha[ETH_ALEN];	/* ARP source hardware address. */
 					u8 tha[ETH_ALEN];	/* ARP target hardware address. */
-				} arp;
-			};
-		} ipv4;
-		struct {
-			struct {
-				struct in6_addr src;	/* IPv6 source address. */
-				struct in6_addr dst;	/* IPv6 destination address. */
-			} addr;
+				पूर्ण arp;
+			पूर्ण;
+		पूर्ण ipv4;
+		काष्ठा अणु
+			काष्ठा अणु
+				काष्ठा in6_addr src;	/* IPv6 source address. */
+				काष्ठा in6_addr dst;	/* IPv6 destination address. */
+			पूर्ण addr;
 			__be32 label;			/* IPv6 flow label. */
-			union {
-				struct {
-					struct in6_addr src;
-					struct in6_addr dst;
-				} ct_orig;	/* Conntrack original direction fields. */
-				struct {
-					struct in6_addr target;	/* ND target address. */
+			जोड़ अणु
+				काष्ठा अणु
+					काष्ठा in6_addr src;
+					काष्ठा in6_addr dst;
+				पूर्ण ct_orig;	/* Conntrack original direction fields. */
+				काष्ठा अणु
+					काष्ठा in6_addr target;	/* ND target address. */
 					u8 sll[ETH_ALEN];	/* ND source link layer address. */
 					u8 tll[ETH_ALEN];	/* ND target link layer address. */
-				} nd;
-			};
-		} ipv6;
-		struct {
-			u32 num_labels_mask;    /* labels present bitmap of effective length MPLS_LABEL_DEPTH */
+				पूर्ण nd;
+			पूर्ण;
+		पूर्ण ipv6;
+		काष्ठा अणु
+			u32 num_labels_mask;    /* labels present biपंचांगap of effective length MPLS_LABEL_DEPTH */
 			__be32 lse[MPLS_LABEL_DEPTH];     /* label stack entry  */
-		} mpls;
+		पूर्ण mpls;
 
-		struct ovs_key_nsh nsh;         /* network service header */
-	};
-	struct {
+		काष्ठा ovs_key_nsh nsh;         /* network service header */
+	पूर्ण;
+	काष्ठा अणु
 		/* Connection tracking fields not packed above. */
-		struct {
+		काष्ठा अणु
 			__be16 src;	/* CT orig tuple tp src port. */
 			__be16 dst;	/* CT orig tuple tp dst port. */
-		} orig_tp;
+		पूर्ण orig_tp;
 		u32 mark;
-		struct ovs_key_ct_labels labels;
-	} ct;
+		काष्ठा ovs_key_ct_labels labels;
+	पूर्ण ct;
 
-} __aligned(BITS_PER_LONG/8); /* Ensure that we can do comparisons as longs. */
+पूर्ण __aligned(BITS_PER_LONG/8); /* Ensure that we can करो comparisons as दीर्घs. */
 
-static inline bool sw_flow_key_is_nd(const struct sw_flow_key *key)
-{
-	return key->eth.type == htons(ETH_P_IPV6) &&
+अटल अंतरभूत bool sw_flow_key_is_nd(स्थिर काष्ठा sw_flow_key *key)
+अणु
+	वापस key->eth.type == htons(ETH_P_IPV6) &&
 		key->ip.proto == NEXTHDR_ICMP &&
 		key->tp.dst == 0 &&
 		(key->tp.src == htons(NDISC_NEIGHBOUR_SOLICITATION) ||
 		 key->tp.src == htons(NDISC_NEIGHBOUR_ADVERTISEMENT));
-}
+पूर्ण
 
-struct sw_flow_key_range {
-	unsigned short int start;
-	unsigned short int end;
-};
+काष्ठा sw_flow_key_range अणु
+	अचिन्हित लघु पूर्णांक start;
+	अचिन्हित लघु पूर्णांक end;
+पूर्ण;
 
-struct sw_flow_mask {
-	int ref_count;
-	struct rcu_head rcu;
-	struct sw_flow_key_range range;
-	struct sw_flow_key key;
-};
+काष्ठा sw_flow_mask अणु
+	पूर्णांक ref_count;
+	काष्ठा rcu_head rcu;
+	काष्ठा sw_flow_key_range range;
+	काष्ठा sw_flow_key key;
+पूर्ण;
 
-struct sw_flow_match {
-	struct sw_flow_key *key;
-	struct sw_flow_key_range range;
-	struct sw_flow_mask *mask;
-};
+काष्ठा sw_flow_match अणु
+	काष्ठा sw_flow_key *key;
+	काष्ठा sw_flow_key_range range;
+	काष्ठा sw_flow_mask *mask;
+पूर्ण;
 
-#define MAX_UFID_LENGTH 16 /* 128 bits */
+#घोषणा MAX_UFID_LENGTH 16 /* 128 bits */
 
-struct sw_flow_id {
+काष्ठा sw_flow_id अणु
 	u32 ufid_len;
-	union {
+	जोड़ अणु
 		u32 ufid[MAX_UFID_LENGTH / 4];
-		struct sw_flow_key *unmasked_key;
-	};
-};
+		काष्ठा sw_flow_key *unmasked_key;
+	पूर्ण;
+पूर्ण;
 
-struct sw_flow_actions {
-	struct rcu_head rcu;
-	size_t orig_len;	/* From flow_cmd_new netlink actions size */
+काष्ठा sw_flow_actions अणु
+	काष्ठा rcu_head rcu;
+	माप_प्रकार orig_len;	/* From flow_cmd_new netlink actions size */
 	u32 actions_len;
-	struct nlattr actions[];
-};
+	काष्ठा nlattr actions[];
+पूर्ण;
 
-struct sw_flow_stats {
+काष्ठा sw_flow_stats अणु
 	u64 packet_count;		/* Number of packets matched. */
 	u64 byte_count;			/* Number of bytes matched. */
-	unsigned long used;		/* Last used time (in jiffies). */
-	spinlock_t lock;		/* Lock for atomic stats update. */
+	अचिन्हित दीर्घ used;		/* Last used समय (in jअगरfies). */
+	spinlock_t lock;		/* Lock क्रम atomic stats update. */
 	__be16 tcp_flags;		/* Union of seen TCP flags. */
-};
+पूर्ण;
 
-struct sw_flow {
-	struct rcu_head rcu;
-	struct {
-		struct hlist_node node[2];
+काष्ठा sw_flow अणु
+	काष्ठा rcu_head rcu;
+	काष्ठा अणु
+		काष्ठा hlist_node node[2];
 		u32 hash;
-	} flow_table, ufid_table;
-	int stats_last_writer;		/* CPU id of the last writer on
+	पूर्ण flow_table, ufid_table;
+	पूर्णांक stats_last_ग_लिखोr;		/* CPU id of the last ग_लिखोr on
 					 * 'stats[0]'.
 					 */
-	struct sw_flow_key key;
-	struct sw_flow_id id;
-	struct cpumask cpu_used_mask;
-	struct sw_flow_mask *mask;
-	struct sw_flow_actions __rcu *sf_acts;
-	struct sw_flow_stats __rcu *stats[]; /* One for each CPU.  First one
-					   * is allocated at flow creation time,
+	काष्ठा sw_flow_key key;
+	काष्ठा sw_flow_id id;
+	काष्ठा cpumask cpu_used_mask;
+	काष्ठा sw_flow_mask *mask;
+	काष्ठा sw_flow_actions __rcu *sf_acts;
+	काष्ठा sw_flow_stats __rcu *stats[]; /* One क्रम each CPU.  First one
+					   * is allocated at flow creation समय,
 					   * the rest are allocated on demand
-					   * while holding the 'stats[0].lock'.
+					   * जबतक holding the 'stats[0].lock'.
 					   */
-};
+पूर्ण;
 
-struct arp_eth_header {
-	__be16      ar_hrd;	/* format of hardware address   */
-	__be16      ar_pro;	/* format of protocol address   */
-	unsigned char   ar_hln;	/* length of hardware address   */
-	unsigned char   ar_pln;	/* length of protocol address   */
+काष्ठा arp_eth_header अणु
+	__be16      ar_hrd;	/* क्रमmat of hardware address   */
+	__be16      ar_pro;	/* क्रमmat of protocol address   */
+	अचिन्हित अक्षर   ar_hln;	/* length of hardware address   */
+	अचिन्हित अक्षर   ar_pln;	/* length of protocol address   */
 	__be16      ar_op;	/* ARP opcode (command)     */
 
-	/* Ethernet+IPv4 specific members. */
-	unsigned char       ar_sha[ETH_ALEN];	/* sender hardware address  */
-	unsigned char       ar_sip[4];		/* sender IP address        */
-	unsigned char       ar_tha[ETH_ALEN];	/* target hardware address  */
-	unsigned char       ar_tip[4];		/* target IP address        */
-} __packed;
+	/* Ethernet+IPv4 specअगरic members. */
+	अचिन्हित अक्षर       ar_sha[ETH_ALEN];	/* sender hardware address  */
+	अचिन्हित अक्षर       ar_sip[4];		/* sender IP address        */
+	अचिन्हित अक्षर       ar_tha[ETH_ALEN];	/* target hardware address  */
+	अचिन्हित अक्षर       ar_tip[4];		/* target IP address        */
+पूर्ण __packed;
 
-static inline u8 ovs_key_mac_proto(const struct sw_flow_key *key)
-{
-	return key->mac_proto & ~SW_FLOW_KEY_INVALID;
-}
+अटल अंतरभूत u8 ovs_key_mac_proto(स्थिर काष्ठा sw_flow_key *key)
+अणु
+	वापस key->mac_proto & ~SW_FLOW_KEY_INVALID;
+पूर्ण
 
-static inline u16 __ovs_mac_header_len(u8 mac_proto)
-{
-	return mac_proto == MAC_PROTO_ETHERNET ? ETH_HLEN : 0;
-}
+अटल अंतरभूत u16 __ovs_mac_header_len(u8 mac_proto)
+अणु
+	वापस mac_proto == MAC_PROTO_ETHERNET ? ETH_HLEN : 0;
+पूर्ण
 
-static inline u16 ovs_mac_header_len(const struct sw_flow_key *key)
-{
-	return __ovs_mac_header_len(ovs_key_mac_proto(key));
-}
+अटल अंतरभूत u16 ovs_mac_header_len(स्थिर काष्ठा sw_flow_key *key)
+अणु
+	वापस __ovs_mac_header_len(ovs_key_mac_proto(key));
+पूर्ण
 
-static inline bool ovs_identifier_is_ufid(const struct sw_flow_id *sfid)
-{
-	return sfid->ufid_len;
-}
+अटल अंतरभूत bool ovs_identअगरier_is_ufid(स्थिर काष्ठा sw_flow_id *sfid)
+अणु
+	वापस sfid->ufid_len;
+पूर्ण
 
-static inline bool ovs_identifier_is_key(const struct sw_flow_id *sfid)
-{
-	return !ovs_identifier_is_ufid(sfid);
-}
+अटल अंतरभूत bool ovs_identअगरier_is_key(स्थिर काष्ठा sw_flow_id *sfid)
+अणु
+	वापस !ovs_identअगरier_is_ufid(sfid);
+पूर्ण
 
-void ovs_flow_stats_update(struct sw_flow *, __be16 tcp_flags,
-			   const struct sk_buff *);
-void ovs_flow_stats_get(const struct sw_flow *, struct ovs_flow_stats *,
-			unsigned long *used, __be16 *tcp_flags);
-void ovs_flow_stats_clear(struct sw_flow *);
-u64 ovs_flow_used_time(unsigned long flow_jiffies);
+व्योम ovs_flow_stats_update(काष्ठा sw_flow *, __be16 tcp_flags,
+			   स्थिर काष्ठा sk_buff *);
+व्योम ovs_flow_stats_get(स्थिर काष्ठा sw_flow *, काष्ठा ovs_flow_stats *,
+			अचिन्हित दीर्घ *used, __be16 *tcp_flags);
+व्योम ovs_flow_stats_clear(काष्ठा sw_flow *);
+u64 ovs_flow_used_समय(अचिन्हित दीर्घ flow_jअगरfies);
 
-int ovs_flow_key_update(struct sk_buff *skb, struct sw_flow_key *key);
-int ovs_flow_key_update_l3l4(struct sk_buff *skb, struct sw_flow_key *key);
-int ovs_flow_key_extract(const struct ip_tunnel_info *tun_info,
-			 struct sk_buff *skb,
-			 struct sw_flow_key *key);
+पूर्णांक ovs_flow_key_update(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key);
+पूर्णांक ovs_flow_key_update_l3l4(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key);
+पूर्णांक ovs_flow_key_extract(स्थिर काष्ठा ip_tunnel_info *tun_info,
+			 काष्ठा sk_buff *skb,
+			 काष्ठा sw_flow_key *key);
 /* Extract key from packet coming from userspace. */
-int ovs_flow_key_extract_userspace(struct net *net, const struct nlattr *attr,
-				   struct sk_buff *skb,
-				   struct sw_flow_key *key, bool log);
+पूर्णांक ovs_flow_key_extract_userspace(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+				   काष्ठा sk_buff *skb,
+				   काष्ठा sw_flow_key *key, bool log);
 
-#endif /* flow.h */
+#पूर्ण_अगर /* flow.h */

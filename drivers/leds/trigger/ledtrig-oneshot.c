@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * One-shot LED Trigger
  *
  * Copyright 2012, Fabio Baltieri <fabio.baltieri@gmail.com>
  *
- * Based on ledtrig-timer.c by Richard Purdie <rpurdie@openedhand.com>
+ * Based on ledtrig-समयr.c by Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/leds.h>
-#include "../leds.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/leds.h>
+#समावेश "../leds.h"
 
-#define DEFAULT_DELAY 100
+#घोषणा DEFAULT_DELAY 100
 
-struct oneshot_trig_data {
-	unsigned int invert;
-};
+काष्ठा oneshot_trig_data अणु
+	अचिन्हित पूर्णांक invert;
+पूर्ण;
 
-static ssize_t led_shot(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	struct oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
+अटल sमाप_प्रकार led_shot(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	काष्ठा oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
 
 	led_blink_set_oneshot(led_cdev,
 			&led_cdev->blink_delay_on, &led_cdev->blink_delay_off,
 			oneshot_data->invert);
 
 	/* content is ignored */
-	return size;
-}
-static ssize_t led_invert_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
+	वापस size;
+पूर्ण
+अटल sमाप_प्रकार led_invert_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
 
-	return sprintf(buf, "%u\n", oneshot_data->invert);
-}
+	वापस प्र_लिखो(buf, "%u\n", oneshot_data->invert);
+पूर्ण
 
-static ssize_t led_invert_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	struct oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
-	unsigned long state;
-	int ret;
+अटल sमाप_प्रकार led_invert_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	काष्ठा oneshot_trig_data *oneshot_data = led_trigger_get_drvdata(dev);
+	अचिन्हित दीर्घ state;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &state);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &state);
+	अगर (ret)
+		वापस ret;
 
 	oneshot_data->invert = !!state;
 
-	if (oneshot_data->invert)
+	अगर (oneshot_data->invert)
 		led_set_brightness_nosleep(led_cdev, LED_FULL);
-	else
+	अन्यथा
 		led_set_brightness_nosleep(led_cdev, LED_OFF);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t led_delay_on_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
+अटल sमाप_प्रकार led_delay_on_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
 
-	return sprintf(buf, "%lu\n", led_cdev->blink_delay_on);
-}
+	वापस प्र_लिखो(buf, "%lu\n", led_cdev->blink_delay_on);
+पूर्ण
 
-static ssize_t led_delay_on_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	unsigned long state;
-	int ret;
+अटल sमाप_प्रकार led_delay_on_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	अचिन्हित दीर्घ state;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &state);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &state);
+	अगर (ret)
+		वापस ret;
 
 	led_cdev->blink_delay_on = state;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t led_delay_off_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
+अटल sमाप_प्रकार led_delay_off_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
 
-	return sprintf(buf, "%lu\n", led_cdev->blink_delay_off);
-}
+	वापस प्र_लिखो(buf, "%lu\n", led_cdev->blink_delay_off);
+पूर्ण
 
-static ssize_t led_delay_off_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	struct led_classdev *led_cdev = led_trigger_get_led(dev);
-	unsigned long state;
-	int ret;
+अटल sमाप_प्रकार led_delay_off_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा led_classdev *led_cdev = led_trigger_get_led(dev);
+	अचिन्हित दीर्घ state;
+	पूर्णांक ret;
 
-	ret = kstrtoul(buf, 0, &state);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &state);
+	अगर (ret)
+		वापस ret;
 
 	led_cdev->blink_delay_off = state;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR(delay_on, 0644, led_delay_on_show, led_delay_on_store);
-static DEVICE_ATTR(delay_off, 0644, led_delay_off_show, led_delay_off_store);
-static DEVICE_ATTR(invert, 0644, led_invert_show, led_invert_store);
-static DEVICE_ATTR(shot, 0200, NULL, led_shot);
+अटल DEVICE_ATTR(delay_on, 0644, led_delay_on_show, led_delay_on_store);
+अटल DEVICE_ATTR(delay_off, 0644, led_delay_off_show, led_delay_off_store);
+अटल DEVICE_ATTR(invert, 0644, led_invert_show, led_invert_store);
+अटल DEVICE_ATTR(shot, 0200, शून्य, led_shot);
 
-static struct attribute *oneshot_trig_attrs[] = {
+अटल काष्ठा attribute *oneshot_trig_attrs[] = अणु
 	&dev_attr_delay_on.attr,
 	&dev_attr_delay_off.attr,
 	&dev_attr_invert.attr,
 	&dev_attr_shot.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(oneshot_trig);
 
-static void pattern_init(struct led_classdev *led_cdev)
-{
+अटल व्योम pattern_init(काष्ठा led_classdev *led_cdev)
+अणु
 	u32 *pattern;
-	unsigned int size = 0;
+	अचिन्हित पूर्णांक size = 0;
 
-	pattern = led_get_default_pattern(led_cdev, &size);
-	if (!pattern)
-		goto out_default;
+	pattern = led_get_शेष_pattern(led_cdev, &size);
+	अगर (!pattern)
+		जाओ out_शेष;
 
-	if (size != 2) {
+	अगर (size != 2) अणु
 		dev_warn(led_cdev->dev,
 			 "Expected 2 but got %u values for delays pattern\n",
 			 size);
-		goto out_default;
-	}
+		जाओ out_शेष;
+	पूर्ण
 
 	led_cdev->blink_delay_on = pattern[0];
 	led_cdev->blink_delay_off = pattern[1];
-	kfree(pattern);
+	kमुक्त(pattern);
 
-	return;
+	वापस;
 
-out_default:
-	kfree(pattern);
+out_शेष:
+	kमुक्त(pattern);
 	led_cdev->blink_delay_on = DEFAULT_DELAY;
 	led_cdev->blink_delay_off = DEFAULT_DELAY;
-}
+पूर्ण
 
-static int oneshot_trig_activate(struct led_classdev *led_cdev)
-{
-	struct oneshot_trig_data *oneshot_data;
+अटल पूर्णांक oneshot_trig_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा oneshot_trig_data *oneshot_data;
 
-	oneshot_data = kzalloc(sizeof(*oneshot_data), GFP_KERNEL);
-	if (!oneshot_data)
-		return -ENOMEM;
+	oneshot_data = kzalloc(माप(*oneshot_data), GFP_KERNEL);
+	अगर (!oneshot_data)
+		वापस -ENOMEM;
 
 	led_set_trigger_data(led_cdev, oneshot_data);
 
-	if (led_cdev->flags & LED_INIT_DEFAULT_TRIGGER) {
+	अगर (led_cdev->flags & LED_INIT_DEFAULT_TRIGGER) अणु
 		pattern_init(led_cdev);
 		/*
 		 * Mark as initialized even on pattern_init() error because
 		 * any consecutive call to it would produce the same error.
 		 */
 		led_cdev->flags &= ~LED_INIT_DEFAULT_TRIGGER;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oneshot_trig_deactivate(struct led_classdev *led_cdev)
-{
-	struct oneshot_trig_data *oneshot_data = led_get_trigger_data(led_cdev);
+अटल व्योम oneshot_trig_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा oneshot_trig_data *oneshot_data = led_get_trigger_data(led_cdev);
 
-	kfree(oneshot_data);
+	kमुक्त(oneshot_data);
 
 	/* Stop blinking */
 	led_set_brightness(led_cdev, LED_OFF);
-}
+पूर्ण
 
-static struct led_trigger oneshot_led_trigger = {
+अटल काष्ठा led_trigger oneshot_led_trigger = अणु
 	.name     = "oneshot",
 	.activate = oneshot_trig_activate,
 	.deactivate = oneshot_trig_deactivate,
 	.groups = oneshot_trig_groups,
-};
+पूर्ण;
 module_led_trigger(oneshot_led_trigger);
 
 MODULE_AUTHOR("Fabio Baltieri <fabio.baltieri@gmail.com>");

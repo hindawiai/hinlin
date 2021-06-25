@@ -1,127 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2021, Linaro Ltd <loic.poulain@linaro.org> */
 
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/idr.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/wwan.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/wwan.h>
 
-#define WWAN_MAX_MINORS 256 /* 256 minors allowed with register_chrdev() */
+#घोषणा WWAN_MAX_MINORS 256 /* 256 minors allowed with रेजिस्टर_chrdev() */
 
-static DEFINE_MUTEX(wwan_register_lock); /* WWAN device create|remove lock */
-static DEFINE_IDA(minors); /* minors for WWAN port chardevs */
-static DEFINE_IDA(wwan_dev_ids); /* for unique WWAN device IDs */
-static struct class *wwan_class;
-static int wwan_major;
+अटल DEFINE_MUTEX(wwan_रेजिस्टर_lock); /* WWAN device create|हटाओ lock */
+अटल DEFINE_IDA(minors); /* minors क्रम WWAN port अक्षरdevs */
+अटल DEFINE_IDA(wwan_dev_ids); /* क्रम unique WWAN device IDs */
+अटल काष्ठा class *wwan_class;
+अटल पूर्णांक wwan_major;
 
-#define to_wwan_dev(d) container_of(d, struct wwan_device, dev)
-#define to_wwan_port(d) container_of(d, struct wwan_port, dev)
+#घोषणा to_wwan_dev(d) container_of(d, काष्ठा wwan_device, dev)
+#घोषणा to_wwan_port(d) container_of(d, काष्ठा wwan_port, dev)
 
 /* WWAN port flags */
-#define WWAN_PORT_TX_OFF	0
+#घोषणा WWAN_PORT_TX_OFF	0
 
 /**
- * struct wwan_device - The structure that defines a WWAN device
+ * काष्ठा wwan_device - The काष्ठाure that defines a WWAN device
  *
  * @id: WWAN device unique ID.
  * @dev: Underlying device.
  * @port_id: Current available port ID to pick.
  */
-struct wwan_device {
-	unsigned int id;
-	struct device dev;
+काष्ठा wwan_device अणु
+	अचिन्हित पूर्णांक id;
+	काष्ठा device dev;
 	atomic_t port_id;
-};
+पूर्ण;
 
 /**
- * struct wwan_port - The structure that defines a WWAN port
+ * काष्ठा wwan_port - The काष्ठाure that defines a WWAN port
  * @type: Port type
  * @start_count: Port start counter
  * @flags: Store port state and capabilities
- * @ops: Pointer to WWAN port operations
+ * @ops: Poपूर्णांकer to WWAN port operations
  * @ops_lock: Protect port ops
  * @dev: Underlying device
  * @rxq: Buffer inbound queue
- * @waitqueue: The waitqueue for port fops (read/write/poll)
+ * @रुकोqueue: The रुकोqueue क्रम port fops (पढ़ो/ग_लिखो/poll)
  */
-struct wwan_port {
-	enum wwan_port_type type;
-	unsigned int start_count;
-	unsigned long flags;
-	const struct wwan_port_ops *ops;
-	struct mutex ops_lock; /* Serialize ops + protect against removal */
-	struct device dev;
-	struct sk_buff_head rxq;
-	wait_queue_head_t waitqueue;
-};
+काष्ठा wwan_port अणु
+	क्रमागत wwan_port_type type;
+	अचिन्हित पूर्णांक start_count;
+	अचिन्हित दीर्घ flags;
+	स्थिर काष्ठा wwan_port_ops *ops;
+	काष्ठा mutex ops_lock; /* Serialize ops + protect against removal */
+	काष्ठा device dev;
+	काष्ठा sk_buff_head rxq;
+	रुको_queue_head_t रुकोqueue;
+पूर्ण;
 
-static void wwan_dev_destroy(struct device *dev)
-{
-	struct wwan_device *wwandev = to_wwan_dev(dev);
+अटल व्योम wwan_dev_destroy(काष्ठा device *dev)
+अणु
+	काष्ठा wwan_device *wwandev = to_wwan_dev(dev);
 
-	ida_free(&wwan_dev_ids, wwandev->id);
-	kfree(wwandev);
-}
+	ida_मुक्त(&wwan_dev_ids, wwandev->id);
+	kमुक्त(wwandev);
+पूर्ण
 
-static const struct device_type wwan_dev_type = {
+अटल स्थिर काष्ठा device_type wwan_dev_type = अणु
 	.name    = "wwan_dev",
 	.release = wwan_dev_destroy,
-};
+पूर्ण;
 
-static int wwan_dev_parent_match(struct device *dev, const void *parent)
-{
-	return (dev->type == &wwan_dev_type && dev->parent == parent);
-}
+अटल पूर्णांक wwan_dev_parent_match(काष्ठा device *dev, स्थिर व्योम *parent)
+अणु
+	वापस (dev->type == &wwan_dev_type && dev->parent == parent);
+पूर्ण
 
-static struct wwan_device *wwan_dev_get_by_parent(struct device *parent)
-{
-	struct device *dev;
+अटल काष्ठा wwan_device *wwan_dev_get_by_parent(काष्ठा device *parent)
+अणु
+	काष्ठा device *dev;
 
-	dev = class_find_device(wwan_class, NULL, parent, wwan_dev_parent_match);
-	if (!dev)
-		return ERR_PTR(-ENODEV);
+	dev = class_find_device(wwan_class, शून्य, parent, wwan_dev_parent_match);
+	अगर (!dev)
+		वापस ERR_PTR(-ENODEV);
 
-	return to_wwan_dev(dev);
-}
+	वापस to_wwan_dev(dev);
+पूर्ण
 
-/* This function allocates and registers a new WWAN device OR if a WWAN device
- * already exist for the given parent, it gets a reference and return it.
- * This function is not exported (for now), it is called indirectly via
+/* This function allocates and रेजिस्टरs a new WWAN device OR अगर a WWAN device
+ * alपढ़ोy exist क्रम the given parent, it माला_लो a reference and वापस it.
+ * This function is not exported (क्रम now), it is called indirectly via
  * wwan_create_port().
  */
-static struct wwan_device *wwan_create_dev(struct device *parent)
-{
-	struct wwan_device *wwandev;
-	int err, id;
+अटल काष्ठा wwan_device *wwan_create_dev(काष्ठा device *parent)
+अणु
+	काष्ठा wwan_device *wwandev;
+	पूर्णांक err, id;
 
-	/* The 'find-alloc-register' operation must be protected against
+	/* The 'find-alloc-register' operation must be रक्षित against
 	 * concurrent execution, a WWAN device is possibly shared between
-	 * multiple callers or concurrently unregistered from wwan_remove_dev().
+	 * multiple callers or concurrently unरेजिस्टरed from wwan_हटाओ_dev().
 	 */
-	mutex_lock(&wwan_register_lock);
+	mutex_lock(&wwan_रेजिस्टर_lock);
 
-	/* If wwandev already exists, return it */
+	/* If wwandev alपढ़ोy exists, वापस it */
 	wwandev = wwan_dev_get_by_parent(parent);
-	if (!IS_ERR(wwandev))
-		goto done_unlock;
+	अगर (!IS_ERR(wwandev))
+		जाओ करोne_unlock;
 
 	id = ida_alloc(&wwan_dev_ids, GFP_KERNEL);
-	if (id < 0)
-		goto done_unlock;
+	अगर (id < 0)
+		जाओ करोne_unlock;
 
-	wwandev = kzalloc(sizeof(*wwandev), GFP_KERNEL);
-	if (!wwandev) {
-		ida_free(&wwan_dev_ids, id);
-		goto done_unlock;
-	}
+	wwandev = kzalloc(माप(*wwandev), GFP_KERNEL);
+	अगर (!wwandev) अणु
+		ida_मुक्त(&wwan_dev_ids, id);
+		जाओ करोne_unlock;
+	पूर्ण
 
 	wwandev->dev.parent = parent;
 	wwandev->dev.class = wwan_class;
@@ -129,122 +130,122 @@ static struct wwan_device *wwan_create_dev(struct device *parent)
 	wwandev->id = id;
 	dev_set_name(&wwandev->dev, "wwan%d", wwandev->id);
 
-	err = device_register(&wwandev->dev);
-	if (err) {
+	err = device_रेजिस्टर(&wwandev->dev);
+	अगर (err) अणु
 		put_device(&wwandev->dev);
-		wwandev = NULL;
-	}
+		wwandev = शून्य;
+	पूर्ण
 
-done_unlock:
-	mutex_unlock(&wwan_register_lock);
+करोne_unlock:
+	mutex_unlock(&wwan_रेजिस्टर_lock);
 
-	return wwandev;
-}
+	वापस wwandev;
+पूर्ण
 
-static int is_wwan_child(struct device *dev, void *data)
-{
-	return dev->class == wwan_class;
-}
+अटल पूर्णांक is_wwan_child(काष्ठा device *dev, व्योम *data)
+अणु
+	वापस dev->class == wwan_class;
+पूर्ण
 
-static void wwan_remove_dev(struct wwan_device *wwandev)
-{
-	int ret;
+अटल व्योम wwan_हटाओ_dev(काष्ठा wwan_device *wwandev)
+अणु
+	पूर्णांक ret;
 
 	/* Prevent concurrent picking from wwan_create_dev */
-	mutex_lock(&wwan_register_lock);
+	mutex_lock(&wwan_रेजिस्टर_lock);
 
-	/* WWAN device is created and registered (get+add) along with its first
+	/* WWAN device is created and रेजिस्टरed (get+add) aदीर्घ with its first
 	 * child port, and subsequent port registrations only grab a reference
-	 * (get). The WWAN device must then be unregistered (del+put) along with
+	 * (get). The WWAN device must then be unरेजिस्टरed (del+put) aदीर्घ with
 	 * its latest port, and reference simply dropped (put) otherwise.
 	 */
-	ret = device_for_each_child(&wwandev->dev, NULL, is_wwan_child);
-	if (!ret)
-		device_unregister(&wwandev->dev);
-	else
+	ret = device_क्रम_each_child(&wwandev->dev, शून्य, is_wwan_child);
+	अगर (!ret)
+		device_unरेजिस्टर(&wwandev->dev);
+	अन्यथा
 		put_device(&wwandev->dev);
 
-	mutex_unlock(&wwan_register_lock);
-}
+	mutex_unlock(&wwan_रेजिस्टर_lock);
+पूर्ण
 
 /* ------- WWAN port management ------- */
 
-static void wwan_port_destroy(struct device *dev)
-{
-	struct wwan_port *port = to_wwan_port(dev);
+अटल व्योम wwan_port_destroy(काष्ठा device *dev)
+अणु
+	काष्ठा wwan_port *port = to_wwan_port(dev);
 
-	ida_free(&minors, MINOR(port->dev.devt));
+	ida_मुक्त(&minors, MINOR(port->dev.devt));
 	skb_queue_purge(&port->rxq);
 	mutex_destroy(&port->ops_lock);
-	kfree(port);
-}
+	kमुक्त(port);
+पूर्ण
 
-static const struct device_type wwan_port_dev_type = {
+अटल स्थिर काष्ठा device_type wwan_port_dev_type = अणु
 	.name = "wwan_port",
 	.release = wwan_port_destroy,
-};
+पूर्ण;
 
-static int wwan_port_minor_match(struct device *dev, const void *minor)
-{
-	return (dev->type == &wwan_port_dev_type &&
-		MINOR(dev->devt) == *(unsigned int *)minor);
-}
+अटल पूर्णांक wwan_port_minor_match(काष्ठा device *dev, स्थिर व्योम *minor)
+अणु
+	वापस (dev->type == &wwan_port_dev_type &&
+		MINOR(dev->devt) == *(अचिन्हित पूर्णांक *)minor);
+पूर्ण
 
-static struct wwan_port *wwan_port_get_by_minor(unsigned int minor)
-{
-	struct device *dev;
+अटल काष्ठा wwan_port *wwan_port_get_by_minor(अचिन्हित पूर्णांक minor)
+अणु
+	काष्ठा device *dev;
 
-	dev = class_find_device(wwan_class, NULL, &minor, wwan_port_minor_match);
-	if (!dev)
-		return ERR_PTR(-ENODEV);
+	dev = class_find_device(wwan_class, शून्य, &minor, wwan_port_minor_match);
+	अगर (!dev)
+		वापस ERR_PTR(-ENODEV);
 
-	return to_wwan_port(dev);
-}
+	वापस to_wwan_port(dev);
+पूर्ण
 
-/* Keep aligned with wwan_port_type enum */
-static const char * const wwan_port_type_str[] = {
+/* Keep aligned with wwan_port_type क्रमागत */
+अटल स्थिर अक्षर * स्थिर wwan_port_type_str[] = अणु
 	"AT",
 	"MBIM",
 	"QMI",
 	"QCDM",
 	"FIREHOSE"
-};
+पूर्ण;
 
-struct wwan_port *wwan_create_port(struct device *parent,
-				   enum wwan_port_type type,
-				   const struct wwan_port_ops *ops,
-				   void *drvdata)
-{
-	struct wwan_device *wwandev;
-	struct wwan_port *port;
-	int minor, err = -ENOMEM;
+काष्ठा wwan_port *wwan_create_port(काष्ठा device *parent,
+				   क्रमागत wwan_port_type type,
+				   स्थिर काष्ठा wwan_port_ops *ops,
+				   व्योम *drvdata)
+अणु
+	काष्ठा wwan_device *wwandev;
+	काष्ठा wwan_port *port;
+	पूर्णांक minor, err = -ENOMEM;
 
-	if (type >= WWAN_PORT_MAX || !ops)
-		return ERR_PTR(-EINVAL);
+	अगर (type >= WWAN_PORT_MAX || !ops)
+		वापस ERR_PTR(-EINVAL);
 
 	/* A port is always a child of a WWAN device, retrieve (allocate or
 	 * pick) the WWAN device based on the provided parent device.
 	 */
 	wwandev = wwan_create_dev(parent);
-	if (IS_ERR(wwandev))
-		return ERR_CAST(wwandev);
+	अगर (IS_ERR(wwandev))
+		वापस ERR_CAST(wwandev);
 
-	/* A port is exposed as character device, get a minor */
+	/* A port is exposed as अक्षरacter device, get a minor */
 	minor = ida_alloc_range(&minors, 0, WWAN_MAX_MINORS - 1, GFP_KERNEL);
-	if (minor < 0)
-		goto error_wwandev_remove;
+	अगर (minor < 0)
+		जाओ error_wwandev_हटाओ;
 
-	port = kzalloc(sizeof(*port), GFP_KERNEL);
-	if (!port) {
-		ida_free(&minors, minor);
-		goto error_wwandev_remove;
-	}
+	port = kzalloc(माप(*port), GFP_KERNEL);
+	अगर (!port) अणु
+		ida_मुक्त(&minors, minor);
+		जाओ error_wwandev_हटाओ;
+	पूर्ण
 
 	port->type = type;
 	port->ops = ops;
 	mutex_init(&port->ops_lock);
 	skb_queue_head_init(&port->rxq);
-	init_waitqueue_head(&port->waitqueue);
+	init_रुकोqueue_head(&port->रुकोqueue);
 
 	port->dev.parent = &wwandev->dev;
 	port->dev.class = wwan_class;
@@ -254,300 +255,300 @@ struct wwan_port *wwan_create_port(struct device *parent,
 
 	/* create unique name based on wwan device id, port index and type */
 	dev_set_name(&port->dev, "wwan%up%u%s", wwandev->id,
-		     atomic_inc_return(&wwandev->port_id),
+		     atomic_inc_वापस(&wwandev->port_id),
 		     wwan_port_type_str[port->type]);
 
-	err = device_register(&port->dev);
-	if (err)
-		goto error_put_device;
+	err = device_रेजिस्टर(&port->dev);
+	अगर (err)
+		जाओ error_put_device;
 
-	return port;
+	वापस port;
 
 error_put_device:
 	put_device(&port->dev);
-error_wwandev_remove:
-	wwan_remove_dev(wwandev);
+error_wwandev_हटाओ:
+	wwan_हटाओ_dev(wwandev);
 
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL_GPL(wwan_create_port);
 
-void wwan_remove_port(struct wwan_port *port)
-{
-	struct wwan_device *wwandev = to_wwan_dev(port->dev.parent);
+व्योम wwan_हटाओ_port(काष्ठा wwan_port *port)
+अणु
+	काष्ठा wwan_device *wwandev = to_wwan_dev(port->dev.parent);
 
 	mutex_lock(&port->ops_lock);
-	if (port->start_count)
+	अगर (port->start_count)
 		port->ops->stop(port);
-	port->ops = NULL; /* Prevent any new port operations (e.g. from fops) */
+	port->ops = शून्य; /* Prevent any new port operations (e.g. from fops) */
 	mutex_unlock(&port->ops_lock);
 
-	wake_up_interruptible(&port->waitqueue);
+	wake_up_पूर्णांकerruptible(&port->रुकोqueue);
 
 	skb_queue_purge(&port->rxq);
-	dev_set_drvdata(&port->dev, NULL);
-	device_unregister(&port->dev);
+	dev_set_drvdata(&port->dev, शून्य);
+	device_unरेजिस्टर(&port->dev);
 
 	/* Release related wwan device */
-	wwan_remove_dev(wwandev);
-}
-EXPORT_SYMBOL_GPL(wwan_remove_port);
+	wwan_हटाओ_dev(wwandev);
+पूर्ण
+EXPORT_SYMBOL_GPL(wwan_हटाओ_port);
 
-void wwan_port_rx(struct wwan_port *port, struct sk_buff *skb)
-{
+व्योम wwan_port_rx(काष्ठा wwan_port *port, काष्ठा sk_buff *skb)
+अणु
 	skb_queue_tail(&port->rxq, skb);
-	wake_up_interruptible(&port->waitqueue);
-}
+	wake_up_पूर्णांकerruptible(&port->रुकोqueue);
+पूर्ण
 EXPORT_SYMBOL_GPL(wwan_port_rx);
 
-void wwan_port_txon(struct wwan_port *port)
-{
+व्योम wwan_port_txon(काष्ठा wwan_port *port)
+अणु
 	clear_bit(WWAN_PORT_TX_OFF, &port->flags);
-	wake_up_interruptible(&port->waitqueue);
-}
+	wake_up_पूर्णांकerruptible(&port->रुकोqueue);
+पूर्ण
 EXPORT_SYMBOL_GPL(wwan_port_txon);
 
-void wwan_port_txoff(struct wwan_port *port)
-{
+व्योम wwan_port_txoff(काष्ठा wwan_port *port)
+अणु
 	set_bit(WWAN_PORT_TX_OFF, &port->flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(wwan_port_txoff);
 
-void *wwan_port_get_drvdata(struct wwan_port *port)
-{
-	return dev_get_drvdata(&port->dev);
-}
+व्योम *wwan_port_get_drvdata(काष्ठा wwan_port *port)
+अणु
+	वापस dev_get_drvdata(&port->dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(wwan_port_get_drvdata);
 
-static int wwan_port_op_start(struct wwan_port *port)
-{
-	int ret = 0;
+अटल पूर्णांक wwan_port_op_start(काष्ठा wwan_port *port)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&port->ops_lock);
-	if (!port->ops) { /* Port got unplugged */
+	अगर (!port->ops) अणु /* Port got unplugged */
 		ret = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	/* If port is already started, don't start again */
-	if (!port->start_count)
+	/* If port is alपढ़ोy started, करोn't start again */
+	अगर (!port->start_count)
 		ret = port->ops->start(port);
 
-	if (!ret)
+	अगर (!ret)
 		port->start_count++;
 
 out_unlock:
 	mutex_unlock(&port->ops_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wwan_port_op_stop(struct wwan_port *port)
-{
+अटल व्योम wwan_port_op_stop(काष्ठा wwan_port *port)
+अणु
 	mutex_lock(&port->ops_lock);
 	port->start_count--;
-	if (port->ops && !port->start_count)
+	अगर (port->ops && !port->start_count)
 		port->ops->stop(port);
 	mutex_unlock(&port->ops_lock);
-}
+पूर्ण
 
-static int wwan_port_op_tx(struct wwan_port *port, struct sk_buff *skb)
-{
-	int ret;
+अटल पूर्णांक wwan_port_op_tx(काष्ठा wwan_port *port, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&port->ops_lock);
-	if (!port->ops) { /* Port got unplugged */
+	अगर (!port->ops) अणु /* Port got unplugged */
 		ret = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	ret = port->ops->tx(port, skb);
 
 out_unlock:
 	mutex_unlock(&port->ops_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool is_read_blocked(struct wwan_port *port)
-{
-	return skb_queue_empty(&port->rxq) && port->ops;
-}
+अटल bool is_पढ़ो_blocked(काष्ठा wwan_port *port)
+अणु
+	वापस skb_queue_empty(&port->rxq) && port->ops;
+पूर्ण
 
-static bool is_write_blocked(struct wwan_port *port)
-{
-	return test_bit(WWAN_PORT_TX_OFF, &port->flags) && port->ops;
-}
+अटल bool is_ग_लिखो_blocked(काष्ठा wwan_port *port)
+अणु
+	वापस test_bit(WWAN_PORT_TX_OFF, &port->flags) && port->ops;
+पूर्ण
 
-static int wwan_wait_rx(struct wwan_port *port, bool nonblock)
-{
-	if (!is_read_blocked(port))
-		return 0;
+अटल पूर्णांक wwan_रुको_rx(काष्ठा wwan_port *port, bool nonblock)
+अणु
+	अगर (!is_पढ़ो_blocked(port))
+		वापस 0;
 
-	if (nonblock)
-		return -EAGAIN;
+	अगर (nonblock)
+		वापस -EAGAIN;
 
-	if (wait_event_interruptible(port->waitqueue, !is_read_blocked(port)))
-		return -ERESTARTSYS;
+	अगर (रुको_event_पूर्णांकerruptible(port->रुकोqueue, !is_पढ़ो_blocked(port)))
+		वापस -ERESTARTSYS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wwan_wait_tx(struct wwan_port *port, bool nonblock)
-{
-	if (!is_write_blocked(port))
-		return 0;
+अटल पूर्णांक wwan_रुको_tx(काष्ठा wwan_port *port, bool nonblock)
+अणु
+	अगर (!is_ग_लिखो_blocked(port))
+		वापस 0;
 
-	if (nonblock)
-		return -EAGAIN;
+	अगर (nonblock)
+		वापस -EAGAIN;
 
-	if (wait_event_interruptible(port->waitqueue, !is_write_blocked(port)))
-		return -ERESTARTSYS;
+	अगर (रुको_event_पूर्णांकerruptible(port->रुकोqueue, !is_ग_लिखो_blocked(port)))
+		वापस -ERESTARTSYS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wwan_port_fops_open(struct inode *inode, struct file *file)
-{
-	struct wwan_port *port;
-	int err = 0;
+अटल पूर्णांक wwan_port_fops_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा wwan_port *port;
+	पूर्णांक err = 0;
 
 	port = wwan_port_get_by_minor(iminor(inode));
-	if (IS_ERR(port))
-		return PTR_ERR(port);
+	अगर (IS_ERR(port))
+		वापस PTR_ERR(port);
 
-	file->private_data = port;
-	stream_open(inode, file);
+	file->निजी_data = port;
+	stream_खोलो(inode, file);
 
 	err = wwan_port_op_start(port);
-	if (err)
+	अगर (err)
 		put_device(&port->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int wwan_port_fops_release(struct inode *inode, struct file *filp)
-{
-	struct wwan_port *port = filp->private_data;
+अटल पूर्णांक wwan_port_fops_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा wwan_port *port = filp->निजी_data;
 
 	wwan_port_op_stop(port);
 	put_device(&port->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t wwan_port_fops_read(struct file *filp, char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	struct wwan_port *port = filp->private_data;
-	struct sk_buff *skb;
-	size_t copied;
-	int ret;
+अटल sमाप_प्रकार wwan_port_fops_पढ़ो(काष्ठा file *filp, अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wwan_port *port = filp->निजी_data;
+	काष्ठा sk_buff *skb;
+	माप_प्रकार copied;
+	पूर्णांक ret;
 
-	ret = wwan_wait_rx(port, !!(filp->f_flags & O_NONBLOCK));
-	if (ret)
-		return ret;
+	ret = wwan_रुको_rx(port, !!(filp->f_flags & O_NONBLOCK));
+	अगर (ret)
+		वापस ret;
 
 	skb = skb_dequeue(&port->rxq);
-	if (!skb)
-		return -EIO;
+	अगर (!skb)
+		वापस -EIO;
 
-	copied = min_t(size_t, count, skb->len);
-	if (copy_to_user(buf, skb->data, copied)) {
-		kfree_skb(skb);
-		return -EFAULT;
-	}
+	copied = min_t(माप_प्रकार, count, skb->len);
+	अगर (copy_to_user(buf, skb->data, copied)) अणु
+		kमुक्त_skb(skb);
+		वापस -EFAULT;
+	पूर्ण
 	skb_pull(skb, copied);
 
 	/* skb is not fully consumed, keep it in the queue */
-	if (skb->len)
+	अगर (skb->len)
 		skb_queue_head(&port->rxq, skb);
-	else
+	अन्यथा
 		consume_skb(skb);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static ssize_t wwan_port_fops_write(struct file *filp, const char __user *buf,
-				    size_t count, loff_t *offp)
-{
-	struct wwan_port *port = filp->private_data;
-	struct sk_buff *skb;
-	int ret;
+अटल sमाप_प्रकार wwan_port_fops_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
+				    माप_प्रकार count, loff_t *offp)
+अणु
+	काष्ठा wwan_port *port = filp->निजी_data;
+	काष्ठा sk_buff *skb;
+	पूर्णांक ret;
 
-	ret = wwan_wait_tx(port, !!(filp->f_flags & O_NONBLOCK));
-	if (ret)
-		return ret;
+	ret = wwan_रुको_tx(port, !!(filp->f_flags & O_NONBLOCK));
+	अगर (ret)
+		वापस ret;
 
 	skb = alloc_skb(count, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	if (copy_from_user(skb_put(skb, count), buf, count)) {
-		kfree_skb(skb);
-		return -EFAULT;
-	}
+	अगर (copy_from_user(skb_put(skb, count), buf, count)) अणु
+		kमुक्त_skb(skb);
+		वापस -EFAULT;
+	पूर्ण
 
 	ret = wwan_port_op_tx(port, skb);
-	if (ret) {
-		kfree_skb(skb);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त_skb(skb);
+		वापस ret;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static __poll_t wwan_port_fops_poll(struct file *filp, poll_table *wait)
-{
-	struct wwan_port *port = filp->private_data;
+अटल __poll_t wwan_port_fops_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा wwan_port *port = filp->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(filp, &port->waitqueue, wait);
+	poll_रुको(filp, &port->रुकोqueue, रुको);
 
-	if (!is_write_blocked(port))
+	अगर (!is_ग_लिखो_blocked(port))
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	if (!is_read_blocked(port))
+	अगर (!is_पढ़ो_blocked(port))
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (!port->ops)
+	अगर (!port->ops)
 		mask |= EPOLLHUP | EPOLLERR;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct file_operations wwan_port_fops = {
+अटल स्थिर काष्ठा file_operations wwan_port_fops = अणु
 	.owner = THIS_MODULE,
-	.open = wwan_port_fops_open,
+	.खोलो = wwan_port_fops_खोलो,
 	.release = wwan_port_fops_release,
-	.read = wwan_port_fops_read,
-	.write = wwan_port_fops_write,
+	.पढ़ो = wwan_port_fops_पढ़ो,
+	.ग_लिखो = wwan_port_fops_ग_लिखो,
 	.poll = wwan_port_fops_poll,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static int __init wwan_init(void)
-{
+अटल पूर्णांक __init wwan_init(व्योम)
+अणु
 	wwan_class = class_create(THIS_MODULE, "wwan");
-	if (IS_ERR(wwan_class))
-		return PTR_ERR(wwan_class);
+	अगर (IS_ERR(wwan_class))
+		वापस PTR_ERR(wwan_class);
 
-	/* chrdev used for wwan ports */
-	wwan_major = register_chrdev(0, "wwan_port", &wwan_port_fops);
-	if (wwan_major < 0) {
+	/* chrdev used क्रम wwan ports */
+	wwan_major = रेजिस्टर_chrdev(0, "wwan_port", &wwan_port_fops);
+	अगर (wwan_major < 0) अणु
 		class_destroy(wwan_class);
-		return wwan_major;
-	}
+		वापस wwan_major;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit wwan_exit(void)
-{
-	unregister_chrdev(wwan_major, "wwan_port");
+अटल व्योम __निकास wwan_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev(wwan_major, "wwan_port");
 	class_destroy(wwan_class);
-}
+पूर्ण
 
 module_init(wwan_init);
-module_exit(wwan_exit);
+module_निकास(wwan_निकास);
 
 MODULE_AUTHOR("Loic Poulain <loic.poulain@linaro.org>");
 MODULE_DESCRIPTION("WWAN core");

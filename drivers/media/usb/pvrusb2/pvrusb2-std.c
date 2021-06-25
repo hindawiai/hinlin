@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
 
-#include "pvrusb2-std.h"
-#include "pvrusb2-debug.h"
-#include <asm/string.h>
-#include <linux/slab.h>
+#समावेश "pvrusb2-std.h"
+#समावेश "pvrusb2-debug.h"
+#समावेश <यंत्र/माला.स>
+#समावेश <linux/slab.h>
 
-struct std_name {
-	const char *name;
+काष्ठा std_name अणु
+	स्थिर अक्षर *name;
 	v4l2_std_id id;
-};
+पूर्ण;
 
 
-#define CSTD_PAL \
+#घोषणा CSTD_PAL \
 	(V4L2_STD_PAL_B| \
 	 V4L2_STD_PAL_B1| \
 	 V4L2_STD_PAL_G| \
@@ -29,17 +30,17 @@ struct std_name {
 	 V4L2_STD_PAL_Nc| \
 	 V4L2_STD_PAL_60)
 
-#define CSTD_NTSC \
+#घोषणा CSTD_NTSC \
 	(V4L2_STD_NTSC_M| \
 	 V4L2_STD_NTSC_M_JP| \
 	 V4L2_STD_NTSC_M_KR| \
 	 V4L2_STD_NTSC_443)
 
-#define CSTD_ATSC \
+#घोषणा CSTD_ATSC \
 	(V4L2_STD_ATSC_8_VSB| \
 	 V4L2_STD_ATSC_16_VSB)
 
-#define CSTD_SECAM \
+#घोषणा CSTD_SECAM \
 	(V4L2_STD_SECAM_B| \
 	 V4L2_STD_SECAM_D| \
 	 V4L2_STD_SECAM_G| \
@@ -49,173 +50,173 @@ struct std_name {
 	 V4L2_STD_SECAM_L| \
 	 V4L2_STD_SECAM_LC)
 
-#define TSTD_B   (V4L2_STD_PAL_B|V4L2_STD_SECAM_B)
-#define TSTD_B1  (V4L2_STD_PAL_B1)
-#define TSTD_D   (V4L2_STD_PAL_D|V4L2_STD_SECAM_D)
-#define TSTD_D1  (V4L2_STD_PAL_D1)
-#define TSTD_G   (V4L2_STD_PAL_G|V4L2_STD_SECAM_G)
-#define TSTD_H   (V4L2_STD_PAL_H|V4L2_STD_SECAM_H)
-#define TSTD_I   (V4L2_STD_PAL_I)
-#define TSTD_K   (V4L2_STD_PAL_K|V4L2_STD_SECAM_K)
-#define TSTD_K1  (V4L2_STD_SECAM_K1)
-#define TSTD_L   (V4L2_STD_SECAM_L)
-#define TSTD_M   (V4L2_STD_PAL_M|V4L2_STD_NTSC_M)
-#define TSTD_N   (V4L2_STD_PAL_N)
-#define TSTD_Nc  (V4L2_STD_PAL_Nc)
-#define TSTD_60  (V4L2_STD_PAL_60)
+#घोषणा TSTD_B   (V4L2_STD_PAL_B|V4L2_STD_SECAM_B)
+#घोषणा TSTD_B1  (V4L2_STD_PAL_B1)
+#घोषणा TSTD_D   (V4L2_STD_PAL_D|V4L2_STD_SECAM_D)
+#घोषणा TSTD_D1  (V4L2_STD_PAL_D1)
+#घोषणा TSTD_G   (V4L2_STD_PAL_G|V4L2_STD_SECAM_G)
+#घोषणा TSTD_H   (V4L2_STD_PAL_H|V4L2_STD_SECAM_H)
+#घोषणा TSTD_I   (V4L2_STD_PAL_I)
+#घोषणा TSTD_K   (V4L2_STD_PAL_K|V4L2_STD_SECAM_K)
+#घोषणा TSTD_K1  (V4L2_STD_SECAM_K1)
+#घोषणा TSTD_L   (V4L2_STD_SECAM_L)
+#घोषणा TSTD_M   (V4L2_STD_PAL_M|V4L2_STD_NTSC_M)
+#घोषणा TSTD_N   (V4L2_STD_PAL_N)
+#घोषणा TSTD_Nc  (V4L2_STD_PAL_Nc)
+#घोषणा TSTD_60  (V4L2_STD_PAL_60)
 
-#define CSTD_ALL (CSTD_PAL|CSTD_NTSC|CSTD_ATSC|CSTD_SECAM)
+#घोषणा CSTD_ALL (CSTD_PAL|CSTD_NTSC|CSTD_ATSC|CSTD_SECAM)
 
-/* Mapping of standard bits to color system */
-static const struct std_name std_groups[] = {
-	{"PAL",CSTD_PAL},
-	{"NTSC",CSTD_NTSC},
-	{"SECAM",CSTD_SECAM},
-	{"ATSC",CSTD_ATSC},
-};
+/* Mapping of standard bits to color प्रणाली */
+अटल स्थिर काष्ठा std_name std_groups[] = अणु
+	अणु"PAL",CSTD_PALपूर्ण,
+	अणु"NTSC",CSTD_NTSCपूर्ण,
+	अणु"SECAM",CSTD_SECAMपूर्ण,
+	अणु"ATSC",CSTD_ATSCपूर्ण,
+पूर्ण;
 
-/* Mapping of standard bits to modulation system */
-static const struct std_name std_items[] = {
-	{"B",TSTD_B},
-	{"B1",TSTD_B1},
-	{"D",TSTD_D},
-	{"D1",TSTD_D1},
-	{"G",TSTD_G},
-	{"H",TSTD_H},
-	{"I",TSTD_I},
-	{"K",TSTD_K},
-	{"K1",TSTD_K1},
-	{"L",TSTD_L},
-	{"LC",V4L2_STD_SECAM_LC},
-	{"M",TSTD_M},
-	{"Mj",V4L2_STD_NTSC_M_JP},
-	{"443",V4L2_STD_NTSC_443},
-	{"Mk",V4L2_STD_NTSC_M_KR},
-	{"N",TSTD_N},
-	{"Nc",TSTD_Nc},
-	{"60",TSTD_60},
-	{"8VSB",V4L2_STD_ATSC_8_VSB},
-	{"16VSB",V4L2_STD_ATSC_16_VSB},
-};
+/* Mapping of standard bits to modulation प्रणाली */
+अटल स्थिर काष्ठा std_name std_items[] = अणु
+	अणु"B",TSTD_Bपूर्ण,
+	अणु"B1",TSTD_B1पूर्ण,
+	अणु"D",TSTD_Dपूर्ण,
+	अणु"D1",TSTD_D1पूर्ण,
+	अणु"G",TSTD_Gपूर्ण,
+	अणु"H",TSTD_Hपूर्ण,
+	अणु"I",TSTD_Iपूर्ण,
+	अणु"K",TSTD_Kपूर्ण,
+	अणु"K1",TSTD_K1पूर्ण,
+	अणु"L",TSTD_Lपूर्ण,
+	अणु"LC",V4L2_STD_SECAM_LCपूर्ण,
+	अणु"M",TSTD_Mपूर्ण,
+	अणु"Mj",V4L2_STD_NTSC_M_JPपूर्ण,
+	अणु"443",V4L2_STD_NTSC_443पूर्ण,
+	अणु"Mk",V4L2_STD_NTSC_M_KRपूर्ण,
+	अणु"N",TSTD_Nपूर्ण,
+	अणु"Nc",TSTD_Ncपूर्ण,
+	अणु"60",TSTD_60पूर्ण,
+	अणु"8VSB",V4L2_STD_ATSC_8_VSBपूर्ण,
+	अणु"16VSB",V4L2_STD_ATSC_16_VSBपूर्ण,
+पूर्ण;
 
 
-// Search an array of std_name structures and return a pointer to the
+// Search an array of std_name काष्ठाures and वापस a poपूर्णांकer to the
 // element with the matching name.
-static const struct std_name *find_std_name(const struct std_name *arrPtr,
-					    unsigned int arrSize,
-					    const char *bufPtr,
-					    unsigned int bufSize)
-{
-	unsigned int idx;
-	const struct std_name *p;
-	for (idx = 0; idx < arrSize; idx++) {
+अटल स्थिर काष्ठा std_name *find_std_name(स्थिर काष्ठा std_name *arrPtr,
+					    अचिन्हित पूर्णांक arrSize,
+					    स्थिर अक्षर *bufPtr,
+					    अचिन्हित पूर्णांक bufSize)
+अणु
+	अचिन्हित पूर्णांक idx;
+	स्थिर काष्ठा std_name *p;
+	क्रम (idx = 0; idx < arrSize; idx++) अणु
 		p = arrPtr + idx;
-		if (strlen(p->name) != bufSize) continue;
-		if (!memcmp(bufPtr,p->name,bufSize)) return p;
-	}
-	return NULL;
-}
+		अगर (म_माप(p->name) != bufSize) जारी;
+		अगर (!स_भेद(bufPtr,p->name,bufSize)) वापस p;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
-int pvr2_std_str_to_id(v4l2_std_id *idPtr,const char *bufPtr,
-		       unsigned int bufSize)
-{
+पूर्णांक pvr2_std_str_to_id(v4l2_std_id *idPtr,स्थिर अक्षर *bufPtr,
+		       अचिन्हित पूर्णांक bufSize)
+अणु
 	v4l2_std_id id = 0;
 	v4l2_std_id cmsk = 0;
 	v4l2_std_id t;
-	int mMode = 0;
-	unsigned int cnt;
-	char ch;
-	const struct std_name *sp;
+	पूर्णांक mMode = 0;
+	अचिन्हित पूर्णांक cnt;
+	अक्षर ch;
+	स्थिर काष्ठा std_name *sp;
 
-	while (bufSize) {
-		if (!mMode) {
+	जबतक (bufSize) अणु
+		अगर (!mMode) अणु
 			cnt = 0;
-			while ((cnt < bufSize) && (bufPtr[cnt] != '-')) cnt++;
-			if (cnt >= bufSize) return 0; // No more characters
+			जबतक ((cnt < bufSize) && (bufPtr[cnt] != '-')) cnt++;
+			अगर (cnt >= bufSize) वापस 0; // No more अक्षरacters
 			sp = find_std_name(std_groups, ARRAY_SIZE(std_groups),
 					   bufPtr,cnt);
-			if (!sp) return 0; // Illegal color system name
+			अगर (!sp) वापस 0; // Illegal color प्रणाली name
 			cnt++;
 			bufPtr += cnt;
 			bufSize -= cnt;
 			mMode = !0;
 			cmsk = sp->id;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		cnt = 0;
-		while (cnt < bufSize) {
+		जबतक (cnt < bufSize) अणु
 			ch = bufPtr[cnt];
-			if (ch == ';') {
+			अगर (ch == ';') अणु
 				mMode = 0;
-				break;
-			}
-			if (ch == '/') break;
+				अवरोध;
+			पूर्ण
+			अगर (ch == '/') अवरोध;
 			cnt++;
-		}
+		पूर्ण
 		sp = find_std_name(std_items, ARRAY_SIZE(std_items),
 				   bufPtr,cnt);
-		if (!sp) return 0; // Illegal modulation system ID
+		अगर (!sp) वापस 0; // Illegal modulation प्रणाली ID
 		t = sp->id & cmsk;
-		if (!t) return 0; // Specific color + modulation system illegal
+		अगर (!t) वापस 0; // Specअगरic color + modulation प्रणाली illegal
 		id |= t;
-		if (cnt < bufSize) cnt++;
+		अगर (cnt < bufSize) cnt++;
 		bufPtr += cnt;
 		bufSize -= cnt;
-	}
+	पूर्ण
 
-	if (idPtr) *idPtr = id;
-	return !0;
-}
+	अगर (idPtr) *idPtr = id;
+	वापस !0;
+पूर्ण
 
 
-unsigned int pvr2_std_id_to_str(char *bufPtr, unsigned int bufSize,
+अचिन्हित पूर्णांक pvr2_std_id_to_str(अक्षर *bufPtr, अचिन्हित पूर्णांक bufSize,
 				v4l2_std_id id)
-{
-	unsigned int idx1,idx2;
-	const struct std_name *ip,*gp;
-	int gfl,cfl;
-	unsigned int c1,c2;
+अणु
+	अचिन्हित पूर्णांक idx1,idx2;
+	स्थिर काष्ठा std_name *ip,*gp;
+	पूर्णांक gfl,cfl;
+	अचिन्हित पूर्णांक c1,c2;
 	cfl = 0;
 	c1 = 0;
-	for (idx1 = 0; idx1 < ARRAY_SIZE(std_groups); idx1++) {
+	क्रम (idx1 = 0; idx1 < ARRAY_SIZE(std_groups); idx1++) अणु
 		gp = std_groups + idx1;
 		gfl = 0;
-		for (idx2 = 0; idx2 < ARRAY_SIZE(std_items); idx2++) {
+		क्रम (idx2 = 0; idx2 < ARRAY_SIZE(std_items); idx2++) अणु
 			ip = std_items + idx2;
-			if (!(gp->id & ip->id & id)) continue;
-			if (!gfl) {
-				if (cfl) {
-					c2 = scnprintf(bufPtr,bufSize,";");
+			अगर (!(gp->id & ip->id & id)) जारी;
+			अगर (!gfl) अणु
+				अगर (cfl) अणु
+					c2 = scnम_लिखो(bufPtr,bufSize,";");
 					c1 += c2;
 					bufSize -= c2;
 					bufPtr += c2;
-				}
+				पूर्ण
 				cfl = !0;
-				c2 = scnprintf(bufPtr,bufSize,
+				c2 = scnम_लिखो(bufPtr,bufSize,
 					       "%s-",gp->name);
 				gfl = !0;
-			} else {
-				c2 = scnprintf(bufPtr,bufSize,"/");
-			}
+			पूर्ण अन्यथा अणु
+				c2 = scnम_लिखो(bufPtr,bufSize,"/");
+			पूर्ण
 			c1 += c2;
 			bufSize -= c2;
 			bufPtr += c2;
-			c2 = scnprintf(bufPtr,bufSize,
+			c2 = scnम_लिखो(bufPtr,bufSize,
 				       ip->name);
 			c1 += c2;
 			bufSize -= c2;
 			bufPtr += c2;
-		}
-	}
-	return c1;
-}
+		पूर्ण
+	पूर्ण
+	वापस c1;
+पूर्ण
 
 
-// Template data for possible enumerated video standards.  Here we group
+// Template data क्रम possible क्रमागतerated video standards.  Here we group
 // standards which share common frame rates and resolution.
-static struct v4l2_standard generic_standards[] = {
-	{
+अटल काष्ठा v4l2_standard generic_standards[] = अणु
+	अणु
 		.id             = (TSTD_B|TSTD_B1|
 				   TSTD_D|TSTD_D1|
 				   TSTD_G|
@@ -226,160 +227,160 @@ static struct v4l2_standard generic_standards[] = {
 				   V4L2_STD_SECAM_LC |
 				   TSTD_N|TSTD_Nc),
 		.frameperiod    =
-		{
+		अणु
 			.numerator  = 1,
 			.denominator= 25
-		},
+		पूर्ण,
 		.framelines     = 625,
-		.reserved       = {0,0,0,0}
-	}, {
+		.reserved       = अणु0,0,0,0पूर्ण
+	पूर्ण, अणु
 		.id             = (TSTD_M|
 				   V4L2_STD_NTSC_M_JP|
 				   V4L2_STD_NTSC_M_KR),
 		.frameperiod    =
-		{
+		अणु
 			.numerator  = 1001,
 			.denominator= 30000
-		},
+		पूर्ण,
 		.framelines     = 525,
-		.reserved       = {0,0,0,0}
-	}, { // This is a total wild guess
+		.reserved       = अणु0,0,0,0पूर्ण
+	पूर्ण, अणु // This is a total wild guess
 		.id             = (TSTD_60),
 		.frameperiod    =
-		{
+		अणु
 			.numerator  = 1001,
 			.denominator= 30000
-		},
+		पूर्ण,
 		.framelines     = 525,
-		.reserved       = {0,0,0,0}
-	}, { // This is total wild guess
+		.reserved       = अणु0,0,0,0पूर्ण
+	पूर्ण, अणु // This is total wild guess
 		.id             = V4L2_STD_NTSC_443,
 		.frameperiod    =
-		{
+		अणु
 			.numerator  = 1001,
 			.denominator= 30000
-		},
+		पूर्ण,
 		.framelines     = 525,
-		.reserved       = {0,0,0,0}
-	}
-};
+		.reserved       = अणु0,0,0,0पूर्ण
+	पूर्ण
+पूर्ण;
 
-static struct v4l2_standard *match_std(v4l2_std_id id)
-{
-	unsigned int idx;
-	for (idx = 0; idx < ARRAY_SIZE(generic_standards); idx++) {
-		if (generic_standards[idx].id & id) {
-			return generic_standards + idx;
-		}
-	}
-	return NULL;
-}
+अटल काष्ठा v4l2_standard *match_std(v4l2_std_id id)
+अणु
+	अचिन्हित पूर्णांक idx;
+	क्रम (idx = 0; idx < ARRAY_SIZE(generic_standards); idx++) अणु
+		अगर (generic_standards[idx].id & id) अणु
+			वापस generic_standards + idx;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int pvr2_std_fill(struct v4l2_standard *std,v4l2_std_id id)
-{
-	struct v4l2_standard *template;
-	int idx;
-	unsigned int bcnt;
-	template = match_std(id);
-	if (!template) return 0;
+अटल पूर्णांक pvr2_std_fill(काष्ठा v4l2_standard *std,v4l2_std_id id)
+अणु
+	काष्ठा v4l2_standard *ढाँचा;
+	पूर्णांक idx;
+	अचिन्हित पूर्णांक bcnt;
+	ढाँचा = match_std(id);
+	अगर (!ढाँचा) वापस 0;
 	idx = std->index;
-	memcpy(std,template,sizeof(*template));
+	स_नकल(std,ढाँचा,माप(*ढाँचा));
 	std->index = idx;
 	std->id = id;
-	bcnt = pvr2_std_id_to_str(std->name,sizeof(std->name)-1,id);
+	bcnt = pvr2_std_id_to_str(std->name,माप(std->name)-1,id);
 	std->name[bcnt] = 0;
 	pvr2_trace(PVR2_TRACE_STD,"Set up standard idx=%u name=%s",
 		   std->index,std->name);
-	return !0;
-}
+	वापस !0;
+पूर्ण
 
-/* These are special cases of combined standards that we should enumerate
-   separately if the component pieces are present. */
-static v4l2_std_id std_mixes[] = {
+/* These are special हालs of combined standards that we should क्रमागतerate
+   separately अगर the component pieces are present. */
+अटल v4l2_std_id std_mixes[] = अणु
 	V4L2_STD_PAL_B | V4L2_STD_PAL_G,
 	V4L2_STD_PAL_D | V4L2_STD_PAL_K,
 	V4L2_STD_SECAM_B | V4L2_STD_SECAM_G,
 	V4L2_STD_SECAM_D | V4L2_STD_SECAM_K,
-};
+पूर्ण;
 
-struct v4l2_standard *pvr2_std_create_enum(unsigned int *countptr,
+काष्ठा v4l2_standard *pvr2_std_create_क्रमागत(अचिन्हित पूर्णांक *countptr,
 					   v4l2_std_id id)
-{
-	unsigned int std_cnt = 0;
-	unsigned int idx,bcnt,idx2;
+अणु
+	अचिन्हित पूर्णांक std_cnt = 0;
+	अचिन्हित पूर्णांक idx,bcnt,idx2;
 	v4l2_std_id idmsk,cmsk,fmsk;
-	struct v4l2_standard *stddefs;
+	काष्ठा v4l2_standard *stddefs;
 
-	if (pvrusb2_debug & PVR2_TRACE_STD) {
-		char buf[100];
-		bcnt = pvr2_std_id_to_str(buf,sizeof(buf),id);
+	अगर (pvrusb2_debug & PVR2_TRACE_STD) अणु
+		अक्षर buf[100];
+		bcnt = pvr2_std_id_to_str(buf,माप(buf),id);
 		pvr2_trace(
 			PVR2_TRACE_STD,"Mapping standards mask=0x%x (%.*s)",
-			(int)id,bcnt,buf);
-	}
+			(पूर्णांक)id,bcnt,buf);
+	पूर्ण
 
 	*countptr = 0;
 	std_cnt = 0;
 	fmsk = 0;
-	for (idmsk = 1, cmsk = id; cmsk; idmsk <<= 1) {
-		if (!(idmsk & cmsk)) continue;
+	क्रम (idmsk = 1, cmsk = id; cmsk; idmsk <<= 1) अणु
+		अगर (!(idmsk & cmsk)) जारी;
 		cmsk &= ~idmsk;
-		if (match_std(idmsk)) {
+		अगर (match_std(idmsk)) अणु
 			std_cnt++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		fmsk |= idmsk;
-	}
+	पूर्ण
 
-	for (idx2 = 0; idx2 < ARRAY_SIZE(std_mixes); idx2++) {
-		if ((id & std_mixes[idx2]) == std_mixes[idx2]) std_cnt++;
-	}
+	क्रम (idx2 = 0; idx2 < ARRAY_SIZE(std_mixes); idx2++) अणु
+		अगर ((id & std_mixes[idx2]) == std_mixes[idx2]) std_cnt++;
+	पूर्ण
 
 	/* Don't complain about ATSC standard values */
 	fmsk &= ~CSTD_ATSC;
 
-	if (fmsk) {
-		char buf[100];
-		bcnt = pvr2_std_id_to_str(buf,sizeof(buf),fmsk);
+	अगर (fmsk) अणु
+		अक्षर buf[100];
+		bcnt = pvr2_std_id_to_str(buf,माप(buf),fmsk);
 		pvr2_trace(
 			PVR2_TRACE_ERROR_LEGS,
 			"***WARNING*** Failed to classify the following standard(s): %.*s",
 			bcnt,buf);
-	}
+	पूर्ण
 
 	pvr2_trace(PVR2_TRACE_STD,"Setting up %u unique standard(s)",
 		   std_cnt);
-	if (!std_cnt) return NULL; // paranoia
+	अगर (!std_cnt) वापस शून्य; // paranoia
 
-	stddefs = kcalloc(std_cnt, sizeof(struct v4l2_standard),
+	stddefs = kसुस्मृति(std_cnt, माप(काष्ठा v4l2_standard),
 			  GFP_KERNEL);
-	if (!stddefs)
-		return NULL;
+	अगर (!stddefs)
+		वापस शून्य;
 
-	for (idx = 0; idx < std_cnt; idx++)
+	क्रम (idx = 0; idx < std_cnt; idx++)
 		stddefs[idx].index = idx;
 
 	idx = 0;
 
-	/* Enumerate potential special cases */
-	for (idx2 = 0; (idx2 < ARRAY_SIZE(std_mixes)) && (idx < std_cnt);
-	     idx2++) {
-		if (!(id & std_mixes[idx2])) continue;
-		if (pvr2_std_fill(stddefs+idx,std_mixes[idx2])) idx++;
-	}
-	/* Now enumerate individual pieces */
-	for (idmsk = 1, cmsk = id; cmsk && (idx < std_cnt); idmsk <<= 1) {
-		if (!(idmsk & cmsk)) continue;
+	/* Enumerate potential special हालs */
+	क्रम (idx2 = 0; (idx2 < ARRAY_SIZE(std_mixes)) && (idx < std_cnt);
+	     idx2++) अणु
+		अगर (!(id & std_mixes[idx2])) जारी;
+		अगर (pvr2_std_fill(stddefs+idx,std_mixes[idx2])) idx++;
+	पूर्ण
+	/* Now क्रमागतerate inभागidual pieces */
+	क्रम (idmsk = 1, cmsk = id; cmsk && (idx < std_cnt); idmsk <<= 1) अणु
+		अगर (!(idmsk & cmsk)) जारी;
 		cmsk &= ~idmsk;
-		if (!pvr2_std_fill(stddefs+idx,idmsk)) continue;
+		अगर (!pvr2_std_fill(stddefs+idx,idmsk)) जारी;
 		idx++;
-	}
+	पूर्ण
 
 	*countptr = std_cnt;
-	return stddefs;
-}
+	वापस stddefs;
+पूर्ण
 
-v4l2_std_id pvr2_std_get_usable(void)
-{
-	return CSTD_ALL;
-}
+v4l2_std_id pvr2_std_get_usable(व्योम)
+अणु
+	वापस CSTD_ALL;
+पूर्ण

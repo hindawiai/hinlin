@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*****************************************************************************
  *                                                                           *
  * File: gmac.h                                                              *
@@ -7,12 +8,12 @@
  *  Generic MAC functionality.                                               *
  *  part of the Chelsio 10Gb Ethernet Driver.                                *
  *                                                                           *
- * This program is free software; you can redistribute it and/or modify      *
+ * This program is मुक्त software; you can redistribute it and/or modअगरy      *
  * it under the terms of the GNU General Public License, version 2, as       *
  * published by the Free Software Foundation.                                *
  *                                                                           *
- * You should have received a copy of the GNU General Public License along   *
- * with this program; if not, see <http://www.gnu.org/licenses/>.            *
+ * You should have received a copy of the GNU General Public License aदीर्घ   *
+ * with this program; अगर not, see <http://www.gnu.org/licenses/>.            *
  *                                                                           *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED    *
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF      *
@@ -23,12 +24,12 @@
  * Copyright (c) 2003 - 2005 Chelsio Communications, Inc.                    *
  * All rights reserved.                                                      *
  *                                                                           *
- * Maintainers: maintainers@chelsio.com                                      *
+ * Maपूर्णांकainers: मुख्यtainers@chelsio.com                                      *
  *                                                                           *
  * Authors: Dimitrios Michailidis   <dm@chelsio.com>                         *
  *          Tina Yang               <tainay@chelsio.com>                     *
  *          Felix Marti             <felix@chelsio.com>                      *
- *          Scott Bardone           <sbardone@chelsio.com>                   *
+ *          Scott Barकरोne           <sbarकरोne@chelsio.com>                   *
  *          Kurt Ottaway            <kottaway@chelsio.com>                   *
  *          Frank DiMambro          <frank@chelsio.com>                      *
  *                                                                           *
@@ -36,22 +37,22 @@
  *                                                                           *
  ****************************************************************************/
 
-#ifndef _CXGB_GMAC_H_
-#define _CXGB_GMAC_H_
+#अगर_अघोषित _CXGB_GMAC_H_
+#घोषणा _CXGB_GMAC_H_
 
-#include "common.h"
+#समावेश "common.h"
 
-enum {
+क्रमागत अणु
 	MAC_STATS_UPDATE_FAST,
 	MAC_STATS_UPDATE_FULL
-};
+पूर्ण;
 
-enum {
-	MAC_DIRECTION_RX = 1,
-	MAC_DIRECTION_TX = 2
-};
+क्रमागत अणु
+	MAC_सूचीECTION_RX = 1,
+	MAC_सूचीECTION_TX = 2
+पूर्ण;
 
-struct cmac_statistics {
+काष्ठा cmac_statistics अणु
 	/* Transmit */
 	u64 TxOctetsOK;
 	u64 TxOctetsBad;
@@ -91,51 +92,51 @@ struct cmac_statistics {
 	u64 RxFrameTooLongErrors;
 	u64 RxJumboFramesOK;
 	u64 RxJumboOctetsOK;
-};
+पूर्ण;
 
-struct cmac_ops {
-	void (*destroy)(struct cmac *);
-	int (*reset)(struct cmac *);
-	int (*interrupt_enable)(struct cmac *);
-	int (*interrupt_disable)(struct cmac *);
-	int (*interrupt_clear)(struct cmac *);
-	int (*interrupt_handler)(struct cmac *);
+काष्ठा cmac_ops अणु
+	व्योम (*destroy)(काष्ठा cmac *);
+	पूर्णांक (*reset)(काष्ठा cmac *);
+	पूर्णांक (*पूर्णांकerrupt_enable)(काष्ठा cmac *);
+	पूर्णांक (*पूर्णांकerrupt_disable)(काष्ठा cmac *);
+	पूर्णांक (*पूर्णांकerrupt_clear)(काष्ठा cmac *);
+	पूर्णांक (*पूर्णांकerrupt_handler)(काष्ठा cmac *);
 
-	int (*enable)(struct cmac *, int);
-	int (*disable)(struct cmac *, int);
+	पूर्णांक (*enable)(काष्ठा cmac *, पूर्णांक);
+	पूर्णांक (*disable)(काष्ठा cmac *, पूर्णांक);
 
-	int (*loopback_enable)(struct cmac *);
-	int (*loopback_disable)(struct cmac *);
+	पूर्णांक (*loopback_enable)(काष्ठा cmac *);
+	पूर्णांक (*loopback_disable)(काष्ठा cmac *);
 
-	int (*set_mtu)(struct cmac *, int mtu);
-	int (*set_rx_mode)(struct cmac *, struct t1_rx_mode *rm);
+	पूर्णांक (*set_mtu)(काष्ठा cmac *, पूर्णांक mtu);
+	पूर्णांक (*set_rx_mode)(काष्ठा cmac *, काष्ठा t1_rx_mode *rm);
 
-	int (*set_speed_duplex_fc)(struct cmac *, int speed, int duplex, int fc);
-	int (*get_speed_duplex_fc)(struct cmac *, int *speed, int *duplex,
-				   int *fc);
+	पूर्णांक (*set_speed_duplex_fc)(काष्ठा cmac *, पूर्णांक speed, पूर्णांक duplex, पूर्णांक fc);
+	पूर्णांक (*get_speed_duplex_fc)(काष्ठा cmac *, पूर्णांक *speed, पूर्णांक *duplex,
+				   पूर्णांक *fc);
 
-	const struct cmac_statistics *(*statistics_update)(struct cmac *, int);
+	स्थिर काष्ठा cmac_statistics *(*statistics_update)(काष्ठा cmac *, पूर्णांक);
 
-	int (*macaddress_get)(struct cmac *, u8 mac_addr[6]);
-	int (*macaddress_set)(struct cmac *, u8 mac_addr[6]);
-};
+	पूर्णांक (*macaddress_get)(काष्ठा cmac *, u8 mac_addr[6]);
+	पूर्णांक (*macaddress_set)(काष्ठा cmac *, u8 mac_addr[6]);
+पूर्ण;
 
-typedef struct _cmac_instance cmac_instance;
+प्रकार काष्ठा _cmac_instance cmac_instance;
 
-struct cmac {
-	struct cmac_statistics stats;
+काष्ठा cmac अणु
+	काष्ठा cmac_statistics stats;
 	adapter_t *adapter;
-	const struct cmac_ops *ops;
+	स्थिर काष्ठा cmac_ops *ops;
 	cmac_instance *instance;
-};
+पूर्ण;
 
-struct gmac {
-	unsigned int stats_update_period;
-	struct cmac *(*create)(adapter_t *adapter, int index);
-	int (*reset)(adapter_t *);
-};
+काष्ठा gmac अणु
+	अचिन्हित पूर्णांक stats_update_period;
+	काष्ठा cmac *(*create)(adapter_t *adapter, पूर्णांक index);
+	पूर्णांक (*reset)(adapter_t *);
+पूर्ण;
 
-extern const struct gmac t1_pm3393_ops;
-extern const struct gmac t1_vsc7326_ops;
+बाह्य स्थिर काष्ठा gmac t1_pm3393_ops;
+बाह्य स्थिर काष्ठा gmac t1_vsc7326_ops;
 
-#endif /* _CXGB_GMAC_H_ */
+#पूर्ण_अगर /* _CXGB_GMAC_H_ */

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  NSA Security-Enhanced Linux (SELinux) security module
  *
- *  This file contains the SELinux security data structures for kernel objects.
+ *  This file contains the SELinux security data काष्ठाures क्रम kernel objects.
  *
  *  Author(s):  Stephen Smalley, <sds@tycho.nsa.gov>
  *		Chris Vance, <cvance@nai.com>
@@ -13,185 +14,185 @@
  *  Copyright (C) 2003 Red Hat, Inc., James Morris <jmorris@redhat.com>
  *  Copyright (C) 2016 Mellanox Technologies
  */
-#ifndef _SELINUX_OBJSEC_H_
-#define _SELINUX_OBJSEC_H_
+#अगर_अघोषित _SELINUX_OBJSEC_H_
+#घोषणा _SELINUX_OBJSEC_H_
 
-#include <linux/list.h>
-#include <linux/sched.h>
-#include <linux/fs.h>
-#include <linux/binfmts.h>
-#include <linux/in.h>
-#include <linux/spinlock.h>
-#include <linux/lsm_hooks.h>
-#include <linux/msg.h>
-#include <net/net_namespace.h>
-#include "flask.h"
-#include "avc.h"
+#समावेश <linux/list.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/in.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/lsm_hooks.h>
+#समावेश <linux/msg.h>
+#समावेश <net/net_namespace.h>
+#समावेश "flask.h"
+#समावेश "avc.h"
 
-struct task_security_struct {
+काष्ठा task_security_काष्ठा अणु
 	u32 osid;		/* SID prior to last execve */
 	u32 sid;		/* current SID */
 	u32 exec_sid;		/* exec SID */
 	u32 create_sid;		/* fscreate SID */
 	u32 keycreate_sid;	/* keycreate SID */
 	u32 sockcreate_sid;	/* fscreate SID */
-} __randomize_layout;
+पूर्ण __अक्रमomize_layout;
 
-enum label_initialized {
+क्रमागत label_initialized अणु
 	LABEL_INVALID,		/* invalid or not initialized */
 	LABEL_INITIALIZED,	/* initialized */
 	LABEL_PENDING
-};
+पूर्ण;
 
-struct inode_security_struct {
-	struct inode *inode;	/* back pointer to inode object */
-	struct list_head list;	/* list of inode_security_struct */
+काष्ठा inode_security_काष्ठा अणु
+	काष्ठा inode *inode;	/* back poपूर्णांकer to inode object */
+	काष्ठा list_head list;	/* list of inode_security_काष्ठा */
 	u32 task_sid;		/* SID of creating task */
 	u32 sid;		/* SID of this object */
 	u16 sclass;		/* security class of this object */
-	unsigned char initialized;	/* initialization flag */
+	अचिन्हित अक्षर initialized;	/* initialization flag */
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct file_security_struct {
-	u32 sid;		/* SID of open file description */
-	u32 fown_sid;		/* SID of file owner (for SIGIO) */
-	u32 isid;		/* SID of inode at the time of file open */
-	u32 pseqno;		/* Policy seqno at the time of file open */
-};
+काष्ठा file_security_काष्ठा अणु
+	u32 sid;		/* SID of खोलो file description */
+	u32 fown_sid;		/* SID of file owner (क्रम SIGIO) */
+	u32 isid;		/* SID of inode at the समय of file खोलो */
+	u32 pseqno;		/* Policy seqno at the समय of file खोलो */
+पूर्ण;
 
-struct superblock_security_struct {
-	u32 sid;			/* SID of file system superblock */
-	u32 def_sid;			/* default SID for labeling */
-	u32 mntpoint_sid;		/* SECURITY_FS_USE_MNTPOINT context for files */
-	unsigned short behavior;	/* labeling behavior */
-	unsigned short flags;		/* which mount options were specified */
-	struct mutex lock;
-	struct list_head isec_head;
+काष्ठा superblock_security_काष्ठा अणु
+	u32 sid;			/* SID of file प्रणाली superblock */
+	u32 def_sid;			/* शेष SID क्रम labeling */
+	u32 mntpoपूर्णांक_sid;		/* SECURITY_FS_USE_MNTPOINT context क्रम files */
+	अचिन्हित लघु behavior;	/* labeling behavior */
+	अचिन्हित लघु flags;		/* which mount options were specअगरied */
+	काष्ठा mutex lock;
+	काष्ठा list_head isec_head;
 	spinlock_t isec_lock;
-};
+पूर्ण;
 
-struct msg_security_struct {
+काष्ठा msg_security_काष्ठा अणु
 	u32 sid;	/* SID of message */
-};
+पूर्ण;
 
-struct ipc_security_struct {
+काष्ठा ipc_security_काष्ठा अणु
 	u16 sclass;	/* security class of this object */
 	u32 sid;	/* SID of IPC resource */
-};
+पूर्ण;
 
-struct netif_security_struct {
-	struct net *ns;			/* network namespace */
-	int ifindex;			/* device index */
-	u32 sid;			/* SID for this interface */
-};
+काष्ठा netअगर_security_काष्ठा अणु
+	काष्ठा net *ns;			/* network namespace */
+	पूर्णांक अगरindex;			/* device index */
+	u32 sid;			/* SID क्रम this पूर्णांकerface */
+पूर्ण;
 
-struct netnode_security_struct {
-	union {
+काष्ठा netnode_security_काष्ठा अणु
+	जोड़ अणु
 		__be32 ipv4;		/* IPv4 node address */
-		struct in6_addr ipv6;	/* IPv6 node address */
-	} addr;
-	u32 sid;			/* SID for this node */
+		काष्ठा in6_addr ipv6;	/* IPv6 node address */
+	पूर्ण addr;
+	u32 sid;			/* SID क्रम this node */
 	u16 family;			/* address family */
-};
+पूर्ण;
 
-struct netport_security_struct {
-	u32 sid;			/* SID for this node */
+काष्ठा netport_security_काष्ठा अणु
+	u32 sid;			/* SID क्रम this node */
 	u16 port;			/* port number */
 	u8 protocol;			/* transport protocol */
-};
+पूर्ण;
 
-struct sk_security_struct {
-#ifdef CONFIG_NETLABEL
-	enum {				/* NetLabel state */
+काष्ठा sk_security_काष्ठा अणु
+#अगर_घोषित CONFIG_NETLABEL
+	क्रमागत अणु				/* NetLabel state */
 		NLBL_UNSET = 0,
 		NLBL_REQUIRE,
 		NLBL_LABELED,
 		NLBL_REQSKB,
 		NLBL_CONNLABELED,
-	} nlbl_state;
-	struct netlbl_lsm_secattr *nlbl_secattr; /* NetLabel sec attributes */
-#endif
+	पूर्ण nlbl_state;
+	काष्ठा netlbl_lsm_secattr *nlbl_secattr; /* NetLabel sec attributes */
+#पूर्ण_अगर
 	u32 sid;			/* SID of this object */
 	u32 peer_sid;			/* SID of peer */
 	u16 sclass;			/* sock security class */
-	enum {				/* SCTP association state */
+	क्रमागत अणु				/* SCTP association state */
 		SCTP_ASSOC_UNSET = 0,
 		SCTP_ASSOC_SET,
-	} sctp_assoc_state;
-};
+	पूर्ण sctp_assoc_state;
+पूर्ण;
 
-struct tun_security_struct {
-	u32 sid;			/* SID for the tun device sockets */
-};
+काष्ठा tun_security_काष्ठा अणु
+	u32 sid;			/* SID क्रम the tun device sockets */
+पूर्ण;
 
-struct key_security_struct {
+काष्ठा key_security_काष्ठा अणु
 	u32 sid;	/* SID of key */
-};
+पूर्ण;
 
-struct ib_security_struct {
+काष्ठा ib_security_काष्ठा अणु
 	u32 sid;        /* SID of the queue pair or MAD agent */
-};
+पूर्ण;
 
-struct pkey_security_struct {
+काष्ठा pkey_security_काष्ठा अणु
 	u64	subnet_prefix; /* Port subnet prefix */
 	u16	pkey;	/* PKey number */
 	u32	sid;	/* SID of pkey */
-};
+पूर्ण;
 
-struct bpf_security_struct {
+काष्ठा bpf_security_काष्ठा अणु
 	u32 sid;  /* SID of bpf obj creator */
-};
+पूर्ण;
 
-struct perf_event_security_struct {
+काष्ठा perf_event_security_काष्ठा अणु
 	u32 sid;  /* SID of perf_event obj creator */
-};
+पूर्ण;
 
-extern struct lsm_blob_sizes selinux_blob_sizes;
-static inline struct task_security_struct *selinux_cred(const struct cred *cred)
-{
-	return cred->security + selinux_blob_sizes.lbs_cred;
-}
+बाह्य काष्ठा lsm_blob_sizes selinux_blob_sizes;
+अटल अंतरभूत काष्ठा task_security_काष्ठा *selinux_cred(स्थिर काष्ठा cred *cred)
+अणु
+	वापस cred->security + selinux_blob_sizes.lbs_cred;
+पूर्ण
 
-static inline struct file_security_struct *selinux_file(const struct file *file)
-{
-	return file->f_security + selinux_blob_sizes.lbs_file;
-}
+अटल अंतरभूत काष्ठा file_security_काष्ठा *selinux_file(स्थिर काष्ठा file *file)
+अणु
+	वापस file->f_security + selinux_blob_sizes.lbs_file;
+पूर्ण
 
-static inline struct inode_security_struct *selinux_inode(
-						const struct inode *inode)
-{
-	if (unlikely(!inode->i_security))
-		return NULL;
-	return inode->i_security + selinux_blob_sizes.lbs_inode;
-}
+अटल अंतरभूत काष्ठा inode_security_काष्ठा *selinux_inode(
+						स्थिर काष्ठा inode *inode)
+अणु
+	अगर (unlikely(!inode->i_security))
+		वापस शून्य;
+	वापस inode->i_security + selinux_blob_sizes.lbs_inode;
+पूर्ण
 
-static inline struct msg_security_struct *selinux_msg_msg(
-						const struct msg_msg *msg_msg)
-{
-	return msg_msg->security + selinux_blob_sizes.lbs_msg_msg;
-}
+अटल अंतरभूत काष्ठा msg_security_काष्ठा *selinux_msg_msg(
+						स्थिर काष्ठा msg_msg *msg_msg)
+अणु
+	वापस msg_msg->security + selinux_blob_sizes.lbs_msg_msg;
+पूर्ण
 
-static inline struct ipc_security_struct *selinux_ipc(
-						const struct kern_ipc_perm *ipc)
-{
-	return ipc->security + selinux_blob_sizes.lbs_ipc;
-}
+अटल अंतरभूत काष्ठा ipc_security_काष्ठा *selinux_ipc(
+						स्थिर काष्ठा kern_ipc_perm *ipc)
+अणु
+	वापस ipc->security + selinux_blob_sizes.lbs_ipc;
+पूर्ण
 
 /*
  * get the subjective security ID of the current task
  */
-static inline u32 current_sid(void)
-{
-	const struct task_security_struct *tsec = selinux_cred(current_cred());
+अटल अंतरभूत u32 current_sid(व्योम)
+अणु
+	स्थिर काष्ठा task_security_काष्ठा *tsec = selinux_cred(current_cred());
 
-	return tsec->sid;
-}
+	वापस tsec->sid;
+पूर्ण
 
-static inline struct superblock_security_struct *selinux_superblock(
-					const struct super_block *superblock)
-{
-	return superblock->s_security + selinux_blob_sizes.lbs_superblock;
-}
+अटल अंतरभूत काष्ठा superblock_security_काष्ठा *selinux_superblock(
+					स्थिर काष्ठा super_block *superblock)
+अणु
+	वापस superblock->s_security + selinux_blob_sizes.lbs_superblock;
+पूर्ण
 
-#endif /* _SELINUX_OBJSEC_H_ */
+#पूर्ण_अगर /* _SELINUX_OBJSEC_H_ */

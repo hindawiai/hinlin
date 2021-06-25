@@ -1,107 +1,108 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * ipmi_si.h
  *
- * Interface from the device-specific interfaces (OF, DMI, ACPI, PCI,
- * etc) to the base ipmi system interface code.
+ * Interface from the device-specअगरic पूर्णांकerfaces (OF, DMI, ACPI, PCI,
+ * etc) to the base ipmi प्रणाली पूर्णांकerface code.
  */
 
-#ifndef __IPMI_SI_H__
-#define __IPMI_SI_H__
+#अगर_अघोषित __IPMI_SI_H__
+#घोषणा __IPMI_SI_H__
 
-#include <linux/ipmi.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
+#समावेश <linux/ipmi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define SI_DEVICE_NAME "ipmi_si"
+#घोषणा SI_DEVICE_NAME "ipmi_si"
 
-#define DEFAULT_REGSPACING	1
-#define DEFAULT_REGSIZE		1
+#घोषणा DEFAULT_REGSPACING	1
+#घोषणा DEFAULT_REGSIZE		1
 
-/* Numbers in this enumerator should be mapped to si_to_str[] */
-enum si_type {
+/* Numbers in this क्रमागतerator should be mapped to si_to_str[] */
+क्रमागत si_type अणु
 	SI_TYPE_INVALID, SI_KCS, SI_SMIC, SI_BT, SI_TYPE_MAX
-};
+पूर्ण;
 
-/* Array is defined in the ipmi_si_intf.c */
-extern const char *const si_to_str[];
+/* Array is defined in the ipmi_si_पूर्णांकf.c */
+बाह्य स्थिर अक्षर *स्थिर si_to_str[];
 
-enum ipmi_addr_space {
+क्रमागत ipmi_addr_space अणु
 	IPMI_IO_ADDR_SPACE, IPMI_MEM_ADDR_SPACE
-};
+पूर्ण;
 
 /*
- * The structure for doing I/O in the state machine.  The state
- * machine doesn't have the actual I/O routines, they are done through
- * this interface.
+ * The काष्ठाure क्रम करोing I/O in the state machine.  The state
+ * machine करोesn't have the actual I/O routines, they are करोne through
+ * this पूर्णांकerface.
  */
-struct si_sm_io {
-	unsigned char (*inputb)(const struct si_sm_io *io, unsigned int offset);
-	void (*outputb)(const struct si_sm_io *io,
-			unsigned int  offset,
-			unsigned char b);
+काष्ठा si_sm_io अणु
+	अचिन्हित अक्षर (*inputb)(स्थिर काष्ठा si_sm_io *io, अचिन्हित पूर्णांक offset);
+	व्योम (*outputb)(स्थिर काष्ठा si_sm_io *io,
+			अचिन्हित पूर्णांक  offset,
+			अचिन्हित अक्षर b);
 
 	/*
 	 * Generic info used by the actual handling routines, the
 	 * state machine shouldn't touch these.
 	 */
-	void __iomem *addr;
-	unsigned int regspacing;
-	unsigned int regsize;
-	unsigned int regshift;
-	enum ipmi_addr_space addr_space;
-	unsigned long addr_data;
-	enum ipmi_addr_src addr_source; /* ACPI, PCI, SMBIOS, hardcode, etc. */
-	union ipmi_smi_info_union addr_info;
+	व्योम __iomem *addr;
+	अचिन्हित पूर्णांक regspacing;
+	अचिन्हित पूर्णांक regsize;
+	अचिन्हित पूर्णांक regshअगरt;
+	क्रमागत ipmi_addr_space addr_space;
+	अचिन्हित दीर्घ addr_data;
+	क्रमागत ipmi_addr_src addr_source; /* ACPI, PCI, SMBIOS, hardcode, etc. */
+	जोड़ ipmi_smi_info_जोड़ addr_info;
 
-	int (*io_setup)(struct si_sm_io *info);
-	void (*io_cleanup)(struct si_sm_io *info);
-	unsigned int io_size;
+	पूर्णांक (*io_setup)(काष्ठा si_sm_io *info);
+	व्योम (*io_cleanup)(काष्ठा si_sm_io *info);
+	अचिन्हित पूर्णांक io_size;
 
-	int irq;
-	int (*irq_setup)(struct si_sm_io *io);
-	void *irq_handler_data;
-	void (*irq_cleanup)(struct si_sm_io *io);
+	पूर्णांक irq;
+	पूर्णांक (*irq_setup)(काष्ठा si_sm_io *io);
+	व्योम *irq_handler_data;
+	व्योम (*irq_cleanup)(काष्ठा si_sm_io *io);
 
 	u8 slave_addr;
-	enum si_type si_type;
-	struct device *dev;
-};
+	क्रमागत si_type si_type;
+	काष्ठा device *dev;
+पूर्ण;
 
-int ipmi_si_add_smi(struct si_sm_io *io);
-irqreturn_t ipmi_si_irq_handler(int irq, void *data);
-void ipmi_irq_start_cleanup(struct si_sm_io *io);
-int ipmi_std_irq_setup(struct si_sm_io *io);
-void ipmi_irq_finish_setup(struct si_sm_io *io);
-int ipmi_si_remove_by_dev(struct device *dev);
-struct device *ipmi_si_remove_by_data(int addr_space, enum si_type si_type,
-				      unsigned long addr);
-void ipmi_hardcode_init(void);
-void ipmi_si_hardcode_exit(void);
-void ipmi_si_hotmod_exit(void);
-int ipmi_si_hardcode_match(int addr_space, unsigned long addr);
-void ipmi_si_platform_init(void);
-void ipmi_si_platform_shutdown(void);
-void ipmi_remove_platform_device_by_name(char *name);
+पूर्णांक ipmi_si_add_smi(काष्ठा si_sm_io *io);
+irqवापस_t ipmi_si_irq_handler(पूर्णांक irq, व्योम *data);
+व्योम ipmi_irq_start_cleanup(काष्ठा si_sm_io *io);
+पूर्णांक ipmi_std_irq_setup(काष्ठा si_sm_io *io);
+व्योम ipmi_irq_finish_setup(काष्ठा si_sm_io *io);
+पूर्णांक ipmi_si_हटाओ_by_dev(काष्ठा device *dev);
+काष्ठा device *ipmi_si_हटाओ_by_data(पूर्णांक addr_space, क्रमागत si_type si_type,
+				      अचिन्हित दीर्घ addr);
+व्योम ipmi_hardcode_init(व्योम);
+व्योम ipmi_si_hardcode_निकास(व्योम);
+व्योम ipmi_si_hoपंचांगod_निकास(व्योम);
+पूर्णांक ipmi_si_hardcode_match(पूर्णांक addr_space, अचिन्हित दीर्घ addr);
+व्योम ipmi_si_platक्रमm_init(व्योम);
+व्योम ipmi_si_platक्रमm_shutकरोwn(व्योम);
+व्योम ipmi_हटाओ_platक्रमm_device_by_name(अक्षर *name);
 
-extern struct platform_driver ipmi_platform_driver;
+बाह्य काष्ठा platक्रमm_driver ipmi_platक्रमm_driver;
 
-#ifdef CONFIG_PCI
-void ipmi_si_pci_init(void);
-void ipmi_si_pci_shutdown(void);
-#else
-static inline void ipmi_si_pci_init(void) { }
-static inline void ipmi_si_pci_shutdown(void) { }
-#endif
-#ifdef CONFIG_PARISC
-void ipmi_si_parisc_init(void);
-void ipmi_si_parisc_shutdown(void);
-#else
-static inline void ipmi_si_parisc_init(void) { }
-static inline void ipmi_si_parisc_shutdown(void) { }
-#endif
+#अगर_घोषित CONFIG_PCI
+व्योम ipmi_si_pci_init(व्योम);
+व्योम ipmi_si_pci_shutकरोwn(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ipmi_si_pci_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम ipmi_si_pci_shutकरोwn(व्योम) अणु पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PARISC
+व्योम ipmi_si_parisc_init(व्योम);
+व्योम ipmi_si_parisc_shutकरोwn(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ipmi_si_parisc_init(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम ipmi_si_parisc_shutकरोwn(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-int ipmi_si_port_setup(struct si_sm_io *io);
-int ipmi_si_mem_setup(struct si_sm_io *io);
+पूर्णांक ipmi_si_port_setup(काष्ठा si_sm_io *io);
+पूर्णांक ipmi_si_mem_setup(काष्ठा si_sm_io *io);
 
-#endif /* __IPMI_SI_H__ */
+#पूर्ण_अगर /* __IPMI_SI_H__ */

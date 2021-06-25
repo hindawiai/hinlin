@@ -1,118 +1,119 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Hardware monitoring driver for IR35221
+ * Hardware monitoring driver क्रम IR35221
  *
  * Copyright (C) IBM Corporation 2017.
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include "pmbus.h"
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश "pmbus.h"
 
-#define IR35221_MFR_VIN_PEAK		0xc5
-#define IR35221_MFR_VOUT_PEAK		0xc6
-#define IR35221_MFR_IOUT_PEAK		0xc7
-#define IR35221_MFR_TEMP_PEAK		0xc8
-#define IR35221_MFR_VIN_VALLEY		0xc9
-#define IR35221_MFR_VOUT_VALLEY		0xca
-#define IR35221_MFR_IOUT_VALLEY		0xcb
-#define IR35221_MFR_TEMP_VALLEY		0xcc
+#घोषणा IR35221_MFR_VIN_PEAK		0xc5
+#घोषणा IR35221_MFR_VOUT_PEAK		0xc6
+#घोषणा IR35221_MFR_IOUT_PEAK		0xc7
+#घोषणा IR35221_MFR_TEMP_PEAK		0xc8
+#घोषणा IR35221_MFR_VIN_VALLEY		0xc9
+#घोषणा IR35221_MFR_VOUT_VALLEY		0xca
+#घोषणा IR35221_MFR_IOUT_VALLEY		0xcb
+#घोषणा IR35221_MFR_TEMP_VALLEY		0xcc
 
-static int ir35221_read_word_data(struct i2c_client *client, int page,
-				  int phase, int reg)
-{
-	int ret;
+अटल पूर्णांक ir35221_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				  पूर्णांक phase, पूर्णांक reg)
+अणु
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_READ_VIN_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_READ_VIN_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_VIN_PEAK);
-		break;
-	case PMBUS_VIRT_READ_VOUT_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_VOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_VOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_IOUT_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_IOUT_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_IOUT_PEAK);
-		break;
-	case PMBUS_VIRT_READ_TEMP_MAX:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_MAX:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_TEMP_PEAK);
-		break;
-	case PMBUS_VIRT_READ_VIN_MIN:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_VIN_MIN:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_VIN_VALLEY);
-		break;
-	case PMBUS_VIRT_READ_VOUT_MIN:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_VOUT_MIN:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_VOUT_VALLEY);
-		break;
-	case PMBUS_VIRT_READ_IOUT_MIN:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_IOUT_MIN:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_IOUT_VALLEY);
-		break;
-	case PMBUS_VIRT_READ_TEMP_MIN:
-		ret = pmbus_read_word_data(client, page, phase,
+		अवरोध;
+	हाल PMBUS_VIRT_READ_TEMP_MIN:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   IR35221_MFR_TEMP_VALLEY);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ir35221_probe(struct i2c_client *client)
-{
-	struct pmbus_driver_info *info;
+अटल पूर्णांक ir35221_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pmbus_driver_info *info;
 	u8 buf[I2C_SMBUS_BLOCK_MAX];
-	int ret;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(client->adapter,
+	अगर (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_READ_BYTE_DATA
 				| I2C_FUNC_SMBUS_READ_WORD_DATA
 				| I2C_FUNC_SMBUS_READ_BLOCK_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	ret = i2c_smbus_read_block_data(client, PMBUS_MFR_ID, buf);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_block_data(client, PMBUS_MFR_ID, buf);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to read PMBUS_MFR_ID\n");
-		return ret;
-	}
-	if (ret != 2 || strncmp(buf, "RI", strlen("RI"))) {
+		वापस ret;
+	पूर्ण
+	अगर (ret != 2 || म_भेदन(buf, "RI", म_माप("RI"))) अणु
 		dev_err(&client->dev, "MFR_ID unrecognised\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = i2c_smbus_read_block_data(client, PMBUS_MFR_MODEL, buf);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_block_data(client, PMBUS_MFR_MODEL, buf);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to read PMBUS_MFR_MODEL\n");
-		return ret;
-	}
-	if (ret != 2 || !(buf[0] == 0x6c && buf[1] == 0x00)) {
+		वापस ret;
+	पूर्ण
+	अगर (ret != 2 || !(buf[0] == 0x6c && buf[1] == 0x00)) अणु
 		dev_err(&client->dev, "MFR_MODEL unrecognised\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	info = devm_kzalloc(&client->dev, sizeof(struct pmbus_driver_info),
+	info = devm_kzalloc(&client->dev, माप(काष्ठा pmbus_driver_info),
 			    GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
-	info->read_word_data = ir35221_read_word_data;
+	info->पढ़ो_word_data = ir35221_पढ़ो_word_data;
 
 	info->pages = 2;
-	info->format[PSC_VOLTAGE_IN] = linear;
-	info->format[PSC_VOLTAGE_OUT] = linear;
-	info->format[PSC_CURRENT_IN] = linear;
-	info->format[PSC_CURRENT_OUT] = linear;
-	info->format[PSC_POWER] = linear;
-	info->format[PSC_TEMPERATURE] = linear;
+	info->क्रमmat[PSC_VOLTAGE_IN] = linear;
+	info->क्रमmat[PSC_VOLTAGE_OUT] = linear;
+	info->क्रमmat[PSC_CURRENT_IN] = linear;
+	info->क्रमmat[PSC_CURRENT_OUT] = linear;
+	info->क्रमmat[PSC_POWER] = linear;
+	info->क्रमmat[PSC_TEMPERATURE] = linear;
 
 	info->func[0] = PMBUS_HAVE_VIN
 		| PMBUS_HAVE_VOUT | PMBUS_HAVE_IIN
@@ -122,23 +123,23 @@ static int ir35221_probe(struct i2c_client *client)
 		| PMBUS_HAVE_STATUS_INPUT | PMBUS_HAVE_STATUS_TEMP;
 	info->func[1] = info->func[0];
 
-	return pmbus_do_probe(client, info);
-}
+	वापस pmbus_करो_probe(client, info);
+पूर्ण
 
-static const struct i2c_device_id ir35221_id[] = {
-	{"ir35221", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id ir35221_id[] = अणु
+	अणु"ir35221", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, ir35221_id);
 
-static struct i2c_driver ir35221_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ir35221_driver = अणु
+	.driver = अणु
 		.name	= "ir35221",
-	},
+	पूर्ण,
 	.probe_new	= ir35221_probe,
 	.id_table	= ir35221_id,
-};
+पूर्ण;
 
 module_i2c_driver(ir35221_driver);
 

@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2008 Paul Mundt
  */
-#include <linux/init.h>
-#include <linux/gpio.h>
-#include <cpu/sh7785.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpपन.स>
+#समावेश <cpu/sh7785.h>
 
-void __init highlander_plat_pinmux_setup(void)
-{
+व्योम __init highlander_plat_pinmux_setup(व्योम)
+अणु
 	/* SCIF0 */
-	gpio_request(GPIO_FN_SCIF0_CTS, NULL);
-	gpio_request(GPIO_FN_SCIF0_RTS, NULL);
-	gpio_request(GPIO_FN_SCIF0_SCK, NULL);
-	gpio_request(GPIO_FN_SCIF0_RXD, NULL);
-	gpio_request(GPIO_FN_SCIF0_TXD, NULL);
-}
+	gpio_request(GPIO_FN_SCIF0_CTS, शून्य);
+	gpio_request(GPIO_FN_SCIF0_RTS, शून्य);
+	gpio_request(GPIO_FN_SCIF0_SCK, शून्य);
+	gpio_request(GPIO_FN_SCIF0_RXD, शून्य);
+	gpio_request(GPIO_FN_SCIF0_TXD, शून्य);
+पूर्ण

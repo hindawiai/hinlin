@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/vgacon.c -- Low level VGA based console driver
  *
@@ -19,136 +20,136 @@
  *	Colour palette handling, by Simon Tatham
  *	17-Jun-95 <sgt20@cam.ac.uk>
  *
- *	if 512 char mode is already enabled don't re-enable it,
+ *	अगर 512 अक्षर mode is alपढ़ोy enabled करोn't re-enable it,
  *	because it causes screen to flicker, by Mitja Horvat
  *	5-May-96 <mitja.horvat@guest.arnes.si>
  *
  *	Use 2 outw instead of 4 outb_p to reduce erroneous text
  *	flashing on RHS of screen during heavy console scrolling .
- *	Oct 1996, Paul Gortmaker.
+ *	Oct 1996, Paul Gorपंचांगaker.
  *
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/console.h>
-#include <linux/string.h>
-#include <linux/kd.h>
-#include <linux/slab.h>
-#include <linux/vt_kern.h>
-#include <linux/sched.h>
-#include <linux/selection.h>
-#include <linux/spinlock.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/screen_info.h>
-#include <video/vga.h>
-#include <asm/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/console.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/selection.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/screen_info.h>
+#समावेश <video/vga.h>
+#समावेश <यंत्र/पन.स>
 
-static DEFINE_RAW_SPINLOCK(vga_lock);
-static int cursor_size_lastfrom;
-static int cursor_size_lastto;
-static u32 vgacon_xres;
-static u32 vgacon_yres;
-static struct vgastate vgastate;
+अटल DEFINE_RAW_SPINLOCK(vga_lock);
+अटल पूर्णांक cursor_size_lastfrom;
+अटल पूर्णांक cursor_size_lastto;
+अटल u32 vgacon_xres;
+अटल u32 vgacon_yres;
+अटल काष्ठा vgastate vgastate;
 
-#define BLANK 0x0020
+#घोषणा BLANK 0x0020
 
-#define VGA_FONTWIDTH       8   /* VGA does not support fontwidths != 8 */
+#घोषणा VGA_FONTWIDTH       8   /* VGA करोes not support fontwidths != 8 */
 /*
  *  Interface used by the world
  */
 
-static const char *vgacon_startup(void);
-static void vgacon_init(struct vc_data *c, int init);
-static void vgacon_deinit(struct vc_data *c);
-static void vgacon_cursor(struct vc_data *c, int mode);
-static int vgacon_switch(struct vc_data *c);
-static int vgacon_blank(struct vc_data *c, int blank, int mode_switch);
-static void vgacon_scrolldelta(struct vc_data *c, int lines);
-static int vgacon_set_origin(struct vc_data *c);
-static void vgacon_save_screen(struct vc_data *c);
-static void vgacon_invert_region(struct vc_data *c, u16 * p, int count);
-static struct uni_pagedir *vgacon_uni_pagedir;
-static int vgacon_refcount;
+अटल स्थिर अक्षर *vgacon_startup(व्योम);
+अटल व्योम vgacon_init(काष्ठा vc_data *c, पूर्णांक init);
+अटल व्योम vgacon_deinit(काष्ठा vc_data *c);
+अटल व्योम vgacon_cursor(काष्ठा vc_data *c, पूर्णांक mode);
+अटल पूर्णांक vgacon_चयन(काष्ठा vc_data *c);
+अटल पूर्णांक vgacon_blank(काष्ठा vc_data *c, पूर्णांक blank, पूर्णांक mode_चयन);
+अटल व्योम vgacon_scrolldelta(काष्ठा vc_data *c, पूर्णांक lines);
+अटल पूर्णांक vgacon_set_origin(काष्ठा vc_data *c);
+अटल व्योम vgacon_save_screen(काष्ठा vc_data *c);
+अटल व्योम vgacon_invert_region(काष्ठा vc_data *c, u16 * p, पूर्णांक count);
+अटल काष्ठा uni_pagedir *vgacon_uni_pagedir;
+अटल पूर्णांक vgacon_refcount;
 
 /* Description of the hardware situation */
-static unsigned long	vga_vram_base		__read_mostly;	/* Base of video memory */
-static unsigned long	vga_vram_end		__read_mostly;	/* End of video memory */
-static unsigned int	vga_vram_size		__read_mostly;	/* Size of video memory */
-static u16		vga_video_port_reg	__read_mostly;	/* Video register select port */
-static u16		vga_video_port_val	__read_mostly;	/* Video register value port */
-static unsigned int	vga_video_num_columns;			/* Number of text columns */
-static unsigned int	vga_video_num_lines;			/* Number of text lines */
-static bool		vga_can_do_color;			/* Do we support colors? */
-static unsigned int	vga_default_font_height __read_mostly;	/* Height of default screen font */
-static unsigned char	vga_video_type		__read_mostly;	/* Card type */
-static int		vga_vesa_blanked;
-static bool 		vga_palette_blanked;
-static bool 		vga_is_gfx;
-static bool 		vga_512_chars;
-static int 		vga_video_font_height;
-static int 		vga_scan_lines		__read_mostly;
-static unsigned int 	vga_rolled_over; /* last vc_origin offset before wrap */
+अटल अचिन्हित दीर्घ	vga_vram_base		__पढ़ो_mostly;	/* Base of video memory */
+अटल अचिन्हित दीर्घ	vga_vram_end		__पढ़ो_mostly;	/* End of video memory */
+अटल अचिन्हित पूर्णांक	vga_vram_size		__पढ़ो_mostly;	/* Size of video memory */
+अटल u16		vga_video_port_reg	__पढ़ो_mostly;	/* Video रेजिस्टर select port */
+अटल u16		vga_video_port_val	__पढ़ो_mostly;	/* Video रेजिस्टर value port */
+अटल अचिन्हित पूर्णांक	vga_video_num_columns;			/* Number of text columns */
+अटल अचिन्हित पूर्णांक	vga_video_num_lines;			/* Number of text lines */
+अटल bool		vga_can_करो_color;			/* Do we support colors? */
+अटल अचिन्हित पूर्णांक	vga_शेष_font_height __पढ़ो_mostly;	/* Height of शेष screen font */
+अटल अचिन्हित अक्षर	vga_video_type		__पढ़ो_mostly;	/* Card type */
+अटल पूर्णांक		vga_vesa_blanked;
+अटल bool 		vga_palette_blanked;
+अटल bool 		vga_is_gfx;
+अटल bool 		vga_512_अक्षरs;
+अटल पूर्णांक 		vga_video_font_height;
+अटल पूर्णांक 		vga_scan_lines		__पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक 	vga_rolled_over; /* last vc_origin offset beक्रमe wrap */
 
-static bool vgacon_text_mode_force;
-static bool vga_hardscroll_enabled;
-static bool vga_hardscroll_user_enable = true;
+अटल bool vgacon_text_mode_क्रमce;
+अटल bool vga_hardscroll_enabled;
+अटल bool vga_hardscroll_user_enable = true;
 
-bool vgacon_text_force(void)
-{
-	return vgacon_text_mode_force;
-}
-EXPORT_SYMBOL(vgacon_text_force);
+bool vgacon_text_क्रमce(व्योम)
+अणु
+	वापस vgacon_text_mode_क्रमce;
+पूर्ण
+EXPORT_SYMBOL(vgacon_text_क्रमce);
 
-static int __init text_mode(char *str)
-{
-	vgacon_text_mode_force = true;
+अटल पूर्णांक __init text_mode(अक्षर *str)
+अणु
+	vgacon_text_mode_क्रमce = true;
 
 	pr_warn("You have booted with nomodeset. This means your GPU drivers are DISABLED\n");
 	pr_warn("Any video related functionality will be severely degraded, and you may not even be able to suspend the system properly\n");
 	pr_warn("Unless you actually understand what nomodeset does, you should reboot without enabling it\n");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* force text mode - used by kernel modesetting */
+/* क्रमce text mode - used by kernel modesetting */
 __setup("nomodeset", text_mode);
 
-static int __init no_scroll(char *str)
-{
+अटल पूर्णांक __init no_scroll(अक्षर *str)
+अणु
 	/*
-	 * Disabling scrollback is required for the Braillex ib80-piezo
-	 * Braille reader made by F.H. Papenmeier (Germany).
+	 * Disabling scrollback is required क्रम the Braillex ib80-piezo
+	 * Braille पढ़ोer made by F.H. Papenmeier (Germany).
 	 * Use the "no-scroll" bootflag.
 	 */
 	vga_hardscroll_user_enable = vga_hardscroll_enabled = false;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("no-scroll", no_scroll);
 
 /*
  * By replacing the four outb_p with two back to back outw, we can reduce
- * the window of opportunity to see text mislocated to the RHS of the
+ * the winकरोw of opportunity to see text mislocated to the RHS of the
  * console during heavy scrolling activity. However there is the remote
  * possibility that some pre-dinosaur hardware won't like the back to back
  * I/O. Since the Xservers get away with it, we should be able to as well.
  */
-static inline void write_vga(unsigned char reg, unsigned int val)
-{
-	unsigned int v1, v2;
-	unsigned long flags;
+अटल अंतरभूत व्योम ग_लिखो_vga(अचिन्हित अक्षर reg, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक v1, v2;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * ddprintk might set the console position from interrupt
-	 * handlers, thus the write has to be IRQ-atomic.
+	 * ddprपूर्णांकk might set the console position from पूर्णांकerrupt
+	 * handlers, thus the ग_लिखो has to be IRQ-atomic.
 	 */
 	raw_spin_lock_irqsave(&vga_lock, flags);
 	v1 = reg + (val & 0xff00);
@@ -156,87 +157,87 @@ static inline void write_vga(unsigned char reg, unsigned int val)
 	outw(v1, vga_video_port_reg);
 	outw(v2, vga_video_port_reg);
 	raw_spin_unlock_irqrestore(&vga_lock, flags);
-}
+पूर्ण
 
-static inline void vga_set_mem_top(struct vc_data *c)
-{
-	write_vga(12, (c->vc_visible_origin - vga_vram_base) / 2);
-}
+अटल अंतरभूत व्योम vga_set_mem_top(काष्ठा vc_data *c)
+अणु
+	ग_लिखो_vga(12, (c->vc_visible_origin - vga_vram_base) / 2);
+पूर्ण
 
-static void vgacon_restore_screen(struct vc_data *c)
-{
-	if (c->vc_origin != c->vc_visible_origin)
+अटल व्योम vgacon_restore_screen(काष्ठा vc_data *c)
+अणु
+	अगर (c->vc_origin != c->vc_visible_origin)
 		vgacon_scrolldelta(c, 0);
-}
+पूर्ण
 
-static void vgacon_scrolldelta(struct vc_data *c, int lines)
-{
-	vc_scrolldelta_helper(c, lines, vga_rolled_over, (void *)vga_vram_base,
+अटल व्योम vgacon_scrolldelta(काष्ठा vc_data *c, पूर्णांक lines)
+अणु
+	vc_scrolldelta_helper(c, lines, vga_rolled_over, (व्योम *)vga_vram_base,
 			vga_vram_size);
 	vga_set_mem_top(c);
-}
+पूर्ण
 
-static const char *vgacon_startup(void)
-{
-	const char *display_desc = NULL;
+अटल स्थिर अक्षर *vgacon_startup(व्योम)
+अणु
+	स्थिर अक्षर *display_desc = शून्य;
 	u16 saved1, saved2;
-	volatile u16 *p;
+	अस्थिर u16 *p;
 
-	if (screen_info.orig_video_isVGA == VIDEO_TYPE_VLFB ||
-	    screen_info.orig_video_isVGA == VIDEO_TYPE_EFI) {
+	अगर (screen_info.orig_video_isVGA == VIDEO_TYPE_VLFB ||
+	    screen_info.orig_video_isVGA == VIDEO_TYPE_EFI) अणु
 	      no_vga:
-#ifdef CONFIG_DUMMY_CONSOLE
-		conswitchp = &dummy_con;
-		return conswitchp->con_startup();
-#else
-		return NULL;
-#endif
-	}
+#अगर_घोषित CONFIG_DUMMY_CONSOLE
+		conचयनp = &dummy_con;
+		वापस conचयनp->con_startup();
+#अन्यथा
+		वापस शून्य;
+#पूर्ण_अगर
+	पूर्ण
 
 	/* boot_params.screen_info reasonably initialized? */
-	if ((screen_info.orig_video_lines == 0) ||
+	अगर ((screen_info.orig_video_lines == 0) ||
 	    (screen_info.orig_video_cols  == 0))
-		goto no_vga;
+		जाओ no_vga;
 
 	/* VGA16 modes are not handled by VGACON */
-	if ((screen_info.orig_video_mode == 0x0D) ||	/* 320x200/4 */
+	अगर ((screen_info.orig_video_mode == 0x0D) ||	/* 320x200/4 */
 	    (screen_info.orig_video_mode == 0x0E) ||	/* 640x200/4 */
 	    (screen_info.orig_video_mode == 0x10) ||	/* 640x350/4 */
 	    (screen_info.orig_video_mode == 0x12) ||	/* 640x480/4 */
 	    (screen_info.orig_video_mode == 0x6A))	/* 800x600/4 (VESA) */
-		goto no_vga;
+		जाओ no_vga;
 
 	vga_video_num_lines = screen_info.orig_video_lines;
 	vga_video_num_columns = screen_info.orig_video_cols;
-	vgastate.vgabase = NULL;
+	vgastate.vgabase = शून्य;
 
-	if (screen_info.orig_video_mode == 7) {
+	अगर (screen_info.orig_video_mode == 7) अणु
 		/* Monochrome display */
 		vga_vram_base = 0xb0000;
 		vga_video_port_reg = VGA_CRT_IM;
 		vga_video_port_val = VGA_CRT_DM;
-		if ((screen_info.orig_video_ega_bx & 0xff) != 0x10) {
-			static struct resource ega_console_resource =
-			    { .name	= "ega",
+		अगर ((screen_info.orig_video_ega_bx & 0xff) != 0x10) अणु
+			अटल काष्ठा resource ega_console_resource =
+			    अणु .name	= "ega",
 			      .flags	= IORESOURCE_IO,
 			      .start	= 0x3B0,
-			      .end	= 0x3BF };
+			      .end	= 0x3BF पूर्ण;
 			vga_video_type = VIDEO_TYPE_EGAM;
 			vga_vram_size = 0x8000;
 			display_desc = "EGA+";
 			request_resource(&ioport_resource,
 					 &ega_console_resource);
-		} else {
-			static struct resource mda1_console_resource =
-			    { .name	= "mda",
+		पूर्ण अन्यथा अणु
+			अटल काष्ठा resource mda1_console_resource =
+			    अणु .name	= "mda",
 			      .flags	= IORESOURCE_IO,
 			      .start	= 0x3B0,
-			      .end	= 0x3BB };
-			static struct resource mda2_console_resource =
-			    { .name	= "mda",
+			      .end	= 0x3BB पूर्ण;
+			अटल काष्ठा resource mda2_console_resource =
+			    अणु .name	= "mda",
 			      .flags	= IORESOURCE_IO,
 			      .start	= 0x3BF,
-			      .end	= 0x3BF };
+			      .end	= 0x3BF पूर्ण;
 			vga_video_type = VIDEO_TYPE_MDA;
 			vga_vram_size = 0x2000;
 			display_desc = "*MDA";
@@ -245,243 +246,243 @@ static const char *vgacon_startup(void)
 			request_resource(&ioport_resource,
 					 &mda2_console_resource);
 			vga_video_font_height = 14;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* If not, it is color. */
-		vga_can_do_color = true;
+		vga_can_करो_color = true;
 		vga_vram_base = 0xb8000;
 		vga_video_port_reg = VGA_CRT_IC;
 		vga_video_port_val = VGA_CRT_DC;
-		if ((screen_info.orig_video_ega_bx & 0xff) != 0x10) {
-			int i;
+		अगर ((screen_info.orig_video_ega_bx & 0xff) != 0x10) अणु
+			पूर्णांक i;
 
 			vga_vram_size = 0x8000;
 
-			if (!screen_info.orig_video_isVGA) {
-				static struct resource ega_console_resource =
-				    { .name	= "ega",
+			अगर (!screen_info.orig_video_isVGA) अणु
+				अटल काष्ठा resource ega_console_resource =
+				    अणु .name	= "ega",
 				      .flags	= IORESOURCE_IO,
 				      .start	= 0x3C0,
-				      .end	= 0x3DF };
+				      .end	= 0x3DF पूर्ण;
 				vga_video_type = VIDEO_TYPE_EGAC;
 				display_desc = "EGA";
 				request_resource(&ioport_resource,
 						 &ega_console_resource);
-			} else {
-				static struct resource vga_console_resource =
-				    { .name	= "vga+",
+			पूर्ण अन्यथा अणु
+				अटल काष्ठा resource vga_console_resource =
+				    अणु .name	= "vga+",
 				      .flags	= IORESOURCE_IO,
 				      .start	= 0x3C0,
-				      .end	= 0x3DF };
+				      .end	= 0x3DF पूर्ण;
 				vga_video_type = VIDEO_TYPE_VGAC;
 				display_desc = "VGA+";
 				request_resource(&ioport_resource,
 						 &vga_console_resource);
 
 				/*
-				 * Normalise the palette registers, to point
+				 * Normalise the palette रेजिस्टरs, to poपूर्णांक
 				 * the 16 screen colours to the first 16
 				 * DAC entries.
 				 */
 
-				for (i = 0; i < 16; i++) {
+				क्रम (i = 0; i < 16; i++) अणु
 					inb_p(VGA_IS1_RC);
 					outb_p(i, VGA_ATT_W);
 					outb_p(i, VGA_ATT_W);
-				}
+				पूर्ण
 				outb_p(0x20, VGA_ATT_W);
 
 				/*
-				 * Now set the DAC registers back to their
-				 * default values
+				 * Now set the DAC रेजिस्टरs back to their
+				 * शेष values
 				 */
-				for (i = 0; i < 16; i++) {
+				क्रम (i = 0; i < 16; i++) अणु
 					outb_p(color_table[i], VGA_PEL_IW);
-					outb_p(default_red[i], VGA_PEL_D);
-					outb_p(default_grn[i], VGA_PEL_D);
-					outb_p(default_blu[i], VGA_PEL_D);
-				}
-			}
-		} else {
-			static struct resource cga_console_resource =
-			    { .name	= "cga",
+					outb_p(शेष_red[i], VGA_PEL_D);
+					outb_p(शेष_grn[i], VGA_PEL_D);
+					outb_p(शेष_blu[i], VGA_PEL_D);
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अटल काष्ठा resource cga_console_resource =
+			    अणु .name	= "cga",
 			      .flags	= IORESOURCE_IO,
 			      .start	= 0x3D4,
-			      .end	= 0x3D5 };
+			      .end	= 0x3D5 पूर्ण;
 			vga_video_type = VIDEO_TYPE_CGA;
 			vga_vram_size = 0x2000;
 			display_desc = "*CGA";
 			request_resource(&ioport_resource,
 					 &cga_console_resource);
 			vga_video_font_height = 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	vga_vram_base = VGA_MAP_MEM(vga_vram_base, vga_vram_size);
 	vga_vram_end = vga_vram_base + vga_vram_size;
 
 	/*
-	 *      Find out if there is a graphics card present.
+	 *      Find out अगर there is a graphics card present.
 	 *      Are there smarter methods around?
 	 */
-	p = (volatile u16 *) vga_vram_base;
-	saved1 = scr_readw(p);
-	saved2 = scr_readw(p + 1);
-	scr_writew(0xAA55, p);
-	scr_writew(0x55AA, p + 1);
-	if (scr_readw(p) != 0xAA55 || scr_readw(p + 1) != 0x55AA) {
-		scr_writew(saved1, p);
-		scr_writew(saved2, p + 1);
-		goto no_vga;
-	}
-	scr_writew(0x55AA, p);
-	scr_writew(0xAA55, p + 1);
-	if (scr_readw(p) != 0x55AA || scr_readw(p + 1) != 0xAA55) {
-		scr_writew(saved1, p);
-		scr_writew(saved2, p + 1);
-		goto no_vga;
-	}
-	scr_writew(saved1, p);
-	scr_writew(saved2, p + 1);
+	p = (अस्थिर u16 *) vga_vram_base;
+	saved1 = scr_पढ़ोw(p);
+	saved2 = scr_पढ़ोw(p + 1);
+	scr_ग_लिखोw(0xAA55, p);
+	scr_ग_लिखोw(0x55AA, p + 1);
+	अगर (scr_पढ़ोw(p) != 0xAA55 || scr_पढ़ोw(p + 1) != 0x55AA) अणु
+		scr_ग_लिखोw(saved1, p);
+		scr_ग_लिखोw(saved2, p + 1);
+		जाओ no_vga;
+	पूर्ण
+	scr_ग_लिखोw(0x55AA, p);
+	scr_ग_लिखोw(0xAA55, p + 1);
+	अगर (scr_पढ़ोw(p) != 0x55AA || scr_पढ़ोw(p + 1) != 0xAA55) अणु
+		scr_ग_लिखोw(saved1, p);
+		scr_ग_लिखोw(saved2, p + 1);
+		जाओ no_vga;
+	पूर्ण
+	scr_ग_लिखोw(saved1, p);
+	scr_ग_लिखोw(saved2, p + 1);
 
-	if (vga_video_type == VIDEO_TYPE_EGAC
+	अगर (vga_video_type == VIDEO_TYPE_EGAC
 	    || vga_video_type == VIDEO_TYPE_VGAC
-	    || vga_video_type == VIDEO_TYPE_EGAM) {
+	    || vga_video_type == VIDEO_TYPE_EGAM) अणु
 		vga_hardscroll_enabled = vga_hardscroll_user_enable;
-		vga_default_font_height = screen_info.orig_video_points;
-		vga_video_font_height = screen_info.orig_video_points;
+		vga_शेष_font_height = screen_info.orig_video_poपूर्णांकs;
+		vga_video_font_height = screen_info.orig_video_poपूर्णांकs;
 		/* This may be suboptimal but is a safe bet - go with it */
 		vga_scan_lines =
 		    vga_video_font_height * vga_video_num_lines;
-	}
+	पूर्ण
 
 	vgacon_xres = screen_info.orig_video_cols * VGA_FONTWIDTH;
 	vgacon_yres = vga_scan_lines;
 
-	return display_desc;
-}
+	वापस display_desc;
+पूर्ण
 
-static void vgacon_init(struct vc_data *c, int init)
-{
-	struct uni_pagedir *p;
+अटल व्योम vgacon_init(काष्ठा vc_data *c, पूर्णांक init)
+अणु
+	काष्ठा uni_pagedir *p;
 
 	/*
-	 * We cannot be loaded as a module, therefore init is always 1,
+	 * We cannot be loaded as a module, thereक्रमe init is always 1,
 	 * but vgacon_init can be called more than once, and init will
 	 * not be 1.
 	 */
-	c->vc_can_do_color = vga_can_do_color;
+	c->vc_can_करो_color = vga_can_करो_color;
 
-	/* set dimensions manually if init != 0 since vc_resize() will fail */
-	if (init) {
+	/* set dimensions manually अगर init != 0 since vc_resize() will fail */
+	अगर (init) अणु
 		c->vc_cols = vga_video_num_columns;
 		c->vc_rows = vga_video_num_lines;
-	} else
+	पूर्ण अन्यथा
 		vc_resize(c, vga_video_num_columns, vga_video_num_lines);
 
 	c->vc_scan_lines = vga_scan_lines;
 	c->vc_font.height = c->vc_cell_height = vga_video_font_height;
 	c->vc_complement_mask = 0x7700;
-	if (vga_512_chars)
+	अगर (vga_512_अक्षरs)
 		c->vc_hi_font_mask = 0x0800;
 	p = *c->vc_uni_pagedir_loc;
-	if (c->vc_uni_pagedir_loc != &vgacon_uni_pagedir) {
-		con_free_unimap(c);
+	अगर (c->vc_uni_pagedir_loc != &vgacon_uni_pagedir) अणु
+		con_मुक्त_unimap(c);
 		c->vc_uni_pagedir_loc = &vgacon_uni_pagedir;
 		vgacon_refcount++;
-	}
-	if (!vgacon_uni_pagedir && p)
-		con_set_default_unimap(c);
+	पूर्ण
+	अगर (!vgacon_uni_pagedir && p)
+		con_set_शेष_unimap(c);
 
-	/* Only set the default if the user didn't deliberately override it */
-	if (global_cursor_default == -1)
-		global_cursor_default =
+	/* Only set the शेष अगर the user didn't deliberately override it */
+	अगर (global_cursor_शेष == -1)
+		global_cursor_शेष =
 			!(screen_info.flags & VIDEO_FLAGS_NOCURSOR);
-}
+पूर्ण
 
-static void vgacon_deinit(struct vc_data *c)
-{
+अटल व्योम vgacon_deinit(काष्ठा vc_data *c)
+अणु
 	/* When closing the active console, reset video origin */
-	if (con_is_visible(c)) {
+	अगर (con_is_visible(c)) अणु
 		c->vc_visible_origin = vga_vram_base;
 		vga_set_mem_top(c);
-	}
+	पूर्ण
 
-	if (!--vgacon_refcount)
-		con_free_unimap(c);
+	अगर (!--vgacon_refcount)
+		con_मुक्त_unimap(c);
 	c->vc_uni_pagedir_loc = &c->vc_uni_pagedir;
-	con_set_default_unimap(c);
-}
+	con_set_शेष_unimap(c);
+पूर्ण
 
-static u8 vgacon_build_attr(struct vc_data *c, u8 color,
-			    enum vc_intensity intensity,
+अटल u8 vgacon_build_attr(काष्ठा vc_data *c, u8 color,
+			    क्रमागत vc_पूर्णांकensity पूर्णांकensity,
 			    bool blink, bool underline, bool reverse,
 			    bool italic)
-{
+अणु
 	u8 attr = color;
 
-	if (vga_can_do_color) {
-		if (italic)
+	अगर (vga_can_करो_color) अणु
+		अगर (italic)
 			attr = (attr & 0xF0) | c->vc_itcolor;
-		else if (underline)
+		अन्यथा अगर (underline)
 			attr = (attr & 0xf0) | c->vc_ulcolor;
-		else if (intensity == VCI_HALF_BRIGHT)
+		अन्यथा अगर (पूर्णांकensity == VCI_HALF_BRIGHT)
 			attr = (attr & 0xf0) | c->vc_halfcolor;
-	}
-	if (reverse)
+	पूर्ण
+	अगर (reverse)
 		attr =
 		    ((attr) & 0x88) | ((((attr) >> 4) | ((attr) << 4)) &
 				       0x77);
-	if (blink)
+	अगर (blink)
 		attr ^= 0x80;
-	if (intensity == VCI_BOLD)
+	अगर (पूर्णांकensity == VCI_BOLD)
 		attr ^= 0x08;
-	if (!vga_can_do_color) {
-		if (italic)
+	अगर (!vga_can_करो_color) अणु
+		अगर (italic)
 			attr = (attr & 0xF8) | 0x02;
-		else if (underline)
+		अन्यथा अगर (underline)
 			attr = (attr & 0xf8) | 0x01;
-		else if (intensity == VCI_HALF_BRIGHT)
+		अन्यथा अगर (पूर्णांकensity == VCI_HALF_BRIGHT)
 			attr = (attr & 0xf0) | 0x08;
-	}
-	return attr;
-}
+	पूर्ण
+	वापस attr;
+पूर्ण
 
-static void vgacon_invert_region(struct vc_data *c, u16 * p, int count)
-{
-	const bool col = vga_can_do_color;
+अटल व्योम vgacon_invert_region(काष्ठा vc_data *c, u16 * p, पूर्णांक count)
+अणु
+	स्थिर bool col = vga_can_करो_color;
 
-	while (count--) {
-		u16 a = scr_readw(p);
-		if (col)
+	जबतक (count--) अणु
+		u16 a = scr_पढ़ोw(p);
+		अगर (col)
 			a = ((a) & 0x88ff) | (((a) & 0x7000) >> 4) |
 			    (((a) & 0x0700) << 4);
-		else
+		अन्यथा
 			a ^= ((a & 0x0700) == 0x0100) ? 0x7000 : 0x7700;
-		scr_writew(a, p++);
-	}
-}
+		scr_ग_लिखोw(a, p++);
+	पूर्ण
+पूर्ण
 
-static void vgacon_set_cursor_size(int xpos, int from, int to)
-{
-	unsigned long flags;
-	int curs, cure;
+अटल व्योम vgacon_set_cursor_size(पूर्णांक xpos, पूर्णांक from, पूर्णांक to)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक curs, cure;
 
-	if ((from == cursor_size_lastfrom) && (to == cursor_size_lastto))
-		return;
+	अगर ((from == cursor_size_lastfrom) && (to == cursor_size_lastto))
+		वापस;
 	cursor_size_lastfrom = from;
 	cursor_size_lastto = to;
 
 	raw_spin_lock_irqsave(&vga_lock, flags);
-	if (vga_video_type >= VIDEO_TYPE_VGAC) {
+	अगर (vga_video_type >= VIDEO_TYPE_VGAC) अणु
 		outb_p(VGA_CRTC_CURSOR_START, vga_video_port_reg);
 		curs = inb_p(vga_video_port_val);
 		outb_p(VGA_CRTC_CURSOR_END, vga_video_port_reg);
 		cure = inb_p(vga_video_port_val);
-	} else {
+	पूर्ण अन्यथा अणु
 		curs = 0;
 		cure = 0;
-	}
+	पूर्ण
 
 	curs = (curs & 0xc0) | from;
 	cure = (cure & 0xe0) | to;
@@ -491,29 +492,29 @@ static void vgacon_set_cursor_size(int xpos, int from, int to)
 	outb_p(VGA_CRTC_CURSOR_END, vga_video_port_reg);
 	outb_p(cure, vga_video_port_val);
 	raw_spin_unlock_irqrestore(&vga_lock, flags);
-}
+पूर्ण
 
-static void vgacon_cursor(struct vc_data *c, int mode)
-{
-	if (c->vc_mode != KD_TEXT)
-		return;
+अटल व्योम vgacon_cursor(काष्ठा vc_data *c, पूर्णांक mode)
+अणु
+	अगर (c->vc_mode != KD_TEXT)
+		वापस;
 
 	vgacon_restore_screen(c);
 
-	switch (mode) {
-	case CM_ERASE:
-		write_vga(14, (c->vc_pos - vga_vram_base) / 2);
-	        if (vga_video_type >= VIDEO_TYPE_VGAC)
+	चयन (mode) अणु
+	हाल CM_ERASE:
+		ग_लिखो_vga(14, (c->vc_pos - vga_vram_base) / 2);
+	        अगर (vga_video_type >= VIDEO_TYPE_VGAC)
 			vgacon_set_cursor_size(c->state.x, 31, 30);
-		else
+		अन्यथा
 			vgacon_set_cursor_size(c->state.x, 31, 31);
-		break;
+		अवरोध;
 
-	case CM_MOVE:
-	case CM_DRAW:
-		write_vga(14, (c->vc_pos - vga_vram_base) / 2);
-		switch (CUR_SIZE(c->vc_cursor_type)) {
-		case CUR_UNDERLINE:
+	हाल CM_MOVE:
+	हाल CM_DRAW:
+		ग_लिखो_vga(14, (c->vc_pos - vga_vram_base) / 2);
+		चयन (CUR_SIZE(c->vc_cursor_type)) अणु
+		हाल CUR_UNDERLINE:
 			vgacon_set_cursor_size(c->state.x,
 					       c->vc_cell_height -
 					       (c->vc_cell_height <
@@ -521,65 +522,65 @@ static void vgacon_cursor(struct vc_data *c, int mode)
 					       c->vc_cell_height -
 					       (c->vc_cell_height <
 						10 ? 1 : 2));
-			break;
-		case CUR_TWO_THIRDS:
+			अवरोध;
+		हाल CUR_TWO_THIRDS:
 			vgacon_set_cursor_size(c->state.x,
 					       c->vc_cell_height / 3,
 					       c->vc_cell_height -
 					       (c->vc_cell_height <
 						10 ? 1 : 2));
-			break;
-		case CUR_LOWER_THIRD:
+			अवरोध;
+		हाल CUR_LOWER_THIRD:
 			vgacon_set_cursor_size(c->state.x,
 					       (c->vc_cell_height * 2) / 3,
 					       c->vc_cell_height -
 					       (c->vc_cell_height <
 						10 ? 1 : 2));
-			break;
-		case CUR_LOWER_HALF:
+			अवरोध;
+		हाल CUR_LOWER_HALF:
 			vgacon_set_cursor_size(c->state.x,
 					       c->vc_cell_height / 2,
 					       c->vc_cell_height -
 					       (c->vc_cell_height <
 						10 ? 1 : 2));
-			break;
-		case CUR_NONE:
-			if (vga_video_type >= VIDEO_TYPE_VGAC)
+			अवरोध;
+		हाल CUR_NONE:
+			अगर (vga_video_type >= VIDEO_TYPE_VGAC)
 				vgacon_set_cursor_size(c->state.x, 31, 30);
-			else
+			अन्यथा
 				vgacon_set_cursor_size(c->state.x, 31, 31);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			vgacon_set_cursor_size(c->state.x, 1,
 					       c->vc_cell_height);
-			break;
-		}
-		break;
-	}
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int vgacon_doresize(struct vc_data *c,
-		unsigned int width, unsigned int height)
-{
-	unsigned long flags;
-	unsigned int scanlines = height * c->vc_cell_height;
+अटल पूर्णांक vgacon_करोresize(काष्ठा vc_data *c,
+		अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक scanlines = height * c->vc_cell_height;
 	u8 scanlines_lo = 0, r7 = 0, vsync_end = 0, mode, max_scan;
 
 	raw_spin_lock_irqsave(&vga_lock, flags);
 
 	vgacon_xres = width * VGA_FONTWIDTH;
 	vgacon_yres = height * c->vc_cell_height;
-	if (vga_video_type >= VIDEO_TYPE_VGAC) {
+	अगर (vga_video_type >= VIDEO_TYPE_VGAC) अणु
 		outb_p(VGA_CRTC_MAX_SCAN, vga_video_port_reg);
 		max_scan = inb_p(vga_video_port_val);
 
-		if (max_scan & 0x80)
+		अगर (max_scan & 0x80)
 			scanlines <<= 1;
 
 		outb_p(VGA_CRTC_MODE, vga_video_port_reg);
 		mode = inb_p(vga_video_port_val);
 
-		if (mode & 0x04)
+		अगर (mode & 0x04)
 			scanlines >>= 1;
 
 		scanlines -= 1;
@@ -588,43 +589,43 @@ static int vgacon_doresize(struct vc_data *c,
 		outb_p(VGA_CRTC_OVERFLOW, vga_video_port_reg);
 		r7 = inb_p(vga_video_port_val) & ~0x42;
 
-		if (scanlines & 0x100)
+		अगर (scanlines & 0x100)
 			r7 |= 0x02;
-		if (scanlines & 0x200)
+		अगर (scanlines & 0x200)
 			r7 |= 0x40;
 
-		/* deprotect registers */
+		/* deprotect रेजिस्टरs */
 		outb_p(VGA_CRTC_V_SYNC_END, vga_video_port_reg);
 		vsync_end = inb_p(vga_video_port_val);
 		outb_p(VGA_CRTC_V_SYNC_END, vga_video_port_reg);
 		outb_p(vsync_end & ~0x80, vga_video_port_val);
-	}
+	पूर्ण
 
 	outb_p(VGA_CRTC_H_DISP, vga_video_port_reg);
 	outb_p(width - 1, vga_video_port_val);
 	outb_p(VGA_CRTC_OFFSET, vga_video_port_reg);
 	outb_p(width >> 1, vga_video_port_val);
 
-	if (vga_video_type >= VIDEO_TYPE_VGAC) {
+	अगर (vga_video_type >= VIDEO_TYPE_VGAC) अणु
 		outb_p(VGA_CRTC_V_DISP_END, vga_video_port_reg);
 		outb_p(scanlines_lo, vga_video_port_val);
 		outb_p(VGA_CRTC_OVERFLOW, vga_video_port_reg);
 		outb_p(r7,vga_video_port_val);
 
-		/* reprotect registers */
+		/* reprotect रेजिस्टरs */
 		outb_p(VGA_CRTC_V_SYNC_END, vga_video_port_reg);
 		outb_p(vsync_end, vga_video_port_val);
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&vga_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vgacon_switch(struct vc_data *c)
-{
-	int x = c->vc_cols * VGA_FONTWIDTH;
-	int y = c->vc_rows * c->vc_cell_height;
-	int rows = screen_info.orig_video_lines * vga_default_font_height/
+अटल पूर्णांक vgacon_चयन(काष्ठा vc_data *c)
+अणु
+	पूर्णांक x = c->vc_cols * VGA_FONTWIDTH;
+	पूर्णांक y = c->vc_rows * c->vc_cell_height;
+	पूर्णांक rows = screen_info.orig_video_lines * vga_शेष_font_height/
 		c->vc_cell_height;
 	/*
 	 * We need to save screen size here as it's the only way
@@ -635,64 +636,64 @@ static int vgacon_switch(struct vc_data *c)
 	vga_video_num_lines = c->vc_rows;
 
 	/* We can only copy out the size of the video buffer here,
-	 * otherwise we get into VGA BIOS */
+	 * otherwise we get पूर्णांकo VGA BIOS */
 
-	if (!vga_is_gfx) {
-		scr_memcpyw((u16 *) c->vc_origin, (u16 *) c->vc_screenbuf,
+	अगर (!vga_is_gfx) अणु
+		scr_स_नकलw((u16 *) c->vc_origin, (u16 *) c->vc_screenbuf,
 			    c->vc_screenbuf_size > vga_vram_size ?
 				vga_vram_size : c->vc_screenbuf_size);
 
-		if ((vgacon_xres != x || vgacon_yres != y) &&
+		अगर ((vgacon_xres != x || vgacon_yres != y) &&
 		    (!(vga_video_num_columns % 2) &&
 		     vga_video_num_columns <= screen_info.orig_video_cols &&
 		     vga_video_num_lines <= rows))
-			vgacon_doresize(c, c->vc_cols, c->vc_rows);
-	}
+			vgacon_करोresize(c, c->vc_cols, c->vc_rows);
+	पूर्ण
 
-	return 0;		/* Redrawing not needed */
-}
+	वापस 0;		/* Redrawing not needed */
+पूर्ण
 
-static void vga_set_palette(struct vc_data *vc, const unsigned char *table)
-{
-	int i, j;
+अटल व्योम vga_set_palette(काष्ठा vc_data *vc, स्थिर अचिन्हित अक्षर *table)
+अणु
+	पूर्णांक i, j;
 
 	vga_w(vgastate.vgabase, VGA_PEL_MSK, 0xff);
-	for (i = j = 0; i < 16; i++) {
+	क्रम (i = j = 0; i < 16; i++) अणु
 		vga_w(vgastate.vgabase, VGA_PEL_IW, table[i]);
 		vga_w(vgastate.vgabase, VGA_PEL_D, vc->vc_palette[j++] >> 2);
 		vga_w(vgastate.vgabase, VGA_PEL_D, vc->vc_palette[j++] >> 2);
 		vga_w(vgastate.vgabase, VGA_PEL_D, vc->vc_palette[j++] >> 2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vgacon_set_palette(struct vc_data *vc, const unsigned char *table)
-{
-	if (vga_video_type != VIDEO_TYPE_VGAC || vga_palette_blanked
+अटल व्योम vgacon_set_palette(काष्ठा vc_data *vc, स्थिर अचिन्हित अक्षर *table)
+अणु
+	अगर (vga_video_type != VIDEO_TYPE_VGAC || vga_palette_blanked
 	    || !con_is_visible(vc))
-		return;
+		वापस;
 	vga_set_palette(vc, table);
-}
+पूर्ण
 
-/* structure holding original VGA register settings */
-static struct {
-	unsigned char SeqCtrlIndex;	/* Sequencer Index reg.   */
-	unsigned char CrtCtrlIndex;	/* CRT-Contr. Index reg.  */
-	unsigned char CrtMiscIO;	/* Miscellaneous register */
-	unsigned char HorizontalTotal;	/* CRT-Controller:00h */
-	unsigned char HorizDisplayEnd;	/* CRT-Controller:01h */
-	unsigned char StartHorizRetrace;	/* CRT-Controller:04h */
-	unsigned char EndHorizRetrace;	/* CRT-Controller:05h */
-	unsigned char Overflow;	/* CRT-Controller:07h */
-	unsigned char StartVertRetrace;	/* CRT-Controller:10h */
-	unsigned char EndVertRetrace;	/* CRT-Controller:11h */
-	unsigned char ModeControl;	/* CRT-Controller:17h */
-	unsigned char ClockingMode;	/* Seq-Controller:01h */
-} vga_state;
+/* काष्ठाure holding original VGA रेजिस्टर settings */
+अटल काष्ठा अणु
+	अचिन्हित अक्षर SeqCtrlIndex;	/* Sequencer Index reg.   */
+	अचिन्हित अक्षर CrtCtrlIndex;	/* CRT-Contr. Index reg.  */
+	अचिन्हित अक्षर CrtMiscIO;	/* Miscellaneous रेजिस्टर */
+	अचिन्हित अक्षर HorizontalTotal;	/* CRT-Controller:00h */
+	अचिन्हित अक्षर HorizDisplayEnd;	/* CRT-Controller:01h */
+	अचिन्हित अक्षर StartHorizRetrace;	/* CRT-Controller:04h */
+	अचिन्हित अक्षर EndHorizRetrace;	/* CRT-Controller:05h */
+	अचिन्हित अक्षर Overflow;	/* CRT-Controller:07h */
+	अचिन्हित अक्षर StartVertRetrace;	/* CRT-Controller:10h */
+	अचिन्हित अक्षर EndVertRetrace;	/* CRT-Controller:11h */
+	अचिन्हित अक्षर ModeControl;	/* CRT-Controller:17h */
+	अचिन्हित अक्षर ClockingMode;	/* Seq-Controller:01h */
+पूर्ण vga_state;
 
-static void vga_vesa_blank(struct vgastate *state, int mode)
-{
-	/* save original values of VGA controller registers */
-	if (!vga_vesa_blanked) {
+अटल व्योम vga_vesa_blank(काष्ठा vgastate *state, पूर्णांक mode)
+अणु
+	/* save original values of VGA controller रेजिस्टरs */
+	अगर (!vga_vesa_blanked) अणु
 		raw_spin_lock_irq(&vga_lock);
 		vga_state.SeqCtrlIndex = vga_r(state->vgabase, VGA_SEQ_I);
 		vga_state.CrtCtrlIndex = inb_p(vga_video_port_reg);
@@ -716,15 +717,15 @@ static void vga_vesa_blank(struct vgastate *state, int mode)
 		outb_p(0x17, vga_video_port_reg);	/* ModeControl */
 		vga_state.ModeControl = inb_p(vga_video_port_val);
 		vga_state.ClockingMode = vga_rseq(state->vgabase, VGA_SEQ_CLOCK_MODE);
-	}
+	पूर्ण
 
 	/* assure that video is enabled */
-	/* "0x20" is VIDEO_ENABLE_bit in register 01 of sequencer */
+	/* "0x20" is VIDEO_ENABLE_bit in रेजिस्टर 01 of sequencer */
 	raw_spin_lock_irq(&vga_lock);
 	vga_wseq(state->vgabase, VGA_SEQ_CLOCK_MODE, vga_state.ClockingMode | 0x20);
 
-	/* test for vertical retrace in process.... */
-	if ((vga_state.CrtMiscIO & 0x80) == 0x80)
+	/* test क्रम vertical retrace in process.... */
+	अगर ((vga_state.CrtMiscIO & 0x80) == 0x80)
 		vga_w(state->vgabase, VGA_MIS_W, vga_state.CrtMiscIO & 0xEF);
 
 	/*
@@ -732,16 +733,16 @@ static void vga_vesa_blank(struct vgastate *state, int mode)
 	 * <Start of vertical Retrace> to maximum (incl. overflow)
 	 * Result: turn off vertical sync (VSync) pulse.
 	 */
-	if (mode & VESA_VSYNC_SUSPEND) {
+	अगर (mode & VESA_VSYNC_SUSPEND) अणु
 		outb_p(0x10, vga_video_port_reg);	/* StartVertRetrace */
 		outb_p(0xff, vga_video_port_val);	/* maximum value */
 		outb_p(0x11, vga_video_port_reg);	/* EndVertRetrace */
 		outb_p(0x40, vga_video_port_val);	/* minimum (bits 0..3)  */
 		outb_p(0x07, vga_video_port_reg);	/* Overflow */
 		outb_p(vga_state.Overflow | 0x84, vga_video_port_val);	/* bits 9,10 of vert. retrace */
-	}
+	पूर्ण
 
-	if (mode & VESA_HSYNC_SUSPEND) {
+	अगर (mode & VESA_HSYNC_SUSPEND) अणु
 		/*
 		 * Set <End of horizontal retrace> to minimum (0) and
 		 *  <Start of horizontal Retrace> to maximum
@@ -751,17 +752,17 @@ static void vga_vesa_blank(struct vgastate *state, int mode)
 		outb_p(0xff, vga_video_port_val);	/* maximum */
 		outb_p(0x05, vga_video_port_reg);	/* EndHorizRetrace */
 		outb_p(0x00, vga_video_port_val);	/* minimum (0) */
-	}
+	पूर्ण
 
-	/* restore both index registers */
+	/* restore both index रेजिस्टरs */
 	vga_w(state->vgabase, VGA_SEQ_I, vga_state.SeqCtrlIndex);
 	outb_p(vga_state.CrtCtrlIndex, vga_video_port_reg);
 	raw_spin_unlock_irq(&vga_lock);
-}
+पूर्ण
 
-static void vga_vesa_unblank(struct vgastate *state)
-{
-	/* restore original values of VGA controller registers */
+अटल व्योम vga_vesa_unblank(काष्ठा vgastate *state)
+अणु
+	/* restore original values of VGA controller रेजिस्टरs */
 	raw_spin_lock_irq(&vga_lock);
 	vga_w(state->vgabase, VGA_MIS_W, vga_state.CrtMiscIO);
 
@@ -784,62 +785,62 @@ static void vga_vesa_unblank(struct vgastate *state)
 	/* ClockingMode */
 	vga_wseq(state->vgabase, VGA_SEQ_CLOCK_MODE, vga_state.ClockingMode);
 
-	/* restore index/control registers */
+	/* restore index/control रेजिस्टरs */
 	vga_w(state->vgabase, VGA_SEQ_I, vga_state.SeqCtrlIndex);
 	outb_p(vga_state.CrtCtrlIndex, vga_video_port_reg);
 	raw_spin_unlock_irq(&vga_lock);
-}
+पूर्ण
 
-static void vga_pal_blank(struct vgastate *state)
-{
-	int i;
+अटल व्योम vga_pal_blank(काष्ठा vgastate *state)
+अणु
+	पूर्णांक i;
 
 	vga_w(state->vgabase, VGA_PEL_MSK, 0xff);
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		vga_w(state->vgabase, VGA_PEL_IW, i);
 		vga_w(state->vgabase, VGA_PEL_D, 0);
 		vga_w(state->vgabase, VGA_PEL_D, 0);
 		vga_w(state->vgabase, VGA_PEL_D, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int vgacon_blank(struct vc_data *c, int blank, int mode_switch)
-{
-	switch (blank) {
-	case 0:		/* Unblank */
-		if (vga_vesa_blanked) {
+अटल पूर्णांक vgacon_blank(काष्ठा vc_data *c, पूर्णांक blank, पूर्णांक mode_चयन)
+अणु
+	चयन (blank) अणु
+	हाल 0:		/* Unblank */
+		अगर (vga_vesa_blanked) अणु
 			vga_vesa_unblank(&vgastate);
 			vga_vesa_blanked = 0;
-		}
-		if (vga_palette_blanked) {
+		पूर्ण
+		अगर (vga_palette_blanked) अणु
 			vga_set_palette(c, color_table);
 			vga_palette_blanked = false;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		vga_is_gfx = false;
 		/* Tell console.c that it has to restore the screen itself */
-		return 1;
-	case 1:		/* Normal blanking */
-	case -1:	/* Obsolete */
-		if (!mode_switch && vga_video_type == VIDEO_TYPE_VGAC) {
+		वापस 1;
+	हाल 1:		/* Normal blanking */
+	हाल -1:	/* Obsolete */
+		अगर (!mode_चयन && vga_video_type == VIDEO_TYPE_VGAC) अणु
 			vga_pal_blank(&vgastate);
 			vga_palette_blanked = true;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		vgacon_set_origin(c);
-		scr_memsetw((void *) vga_vram_base, BLANK,
+		scr_स_रखोw((व्योम *) vga_vram_base, BLANK,
 			    c->vc_screenbuf_size);
-		if (mode_switch)
+		अगर (mode_चयन)
 			vga_is_gfx = true;
-		return 1;
-	default:		/* VESA blanking */
-		if (vga_video_type == VIDEO_TYPE_VGAC) {
+		वापस 1;
+	शेष:		/* VESA blanking */
+		अगर (vga_video_type == VIDEO_TYPE_VGAC) अणु
 			vga_vesa_blank(&vgastate, blank - 1);
 			vga_vesa_blanked = blank;
-		}
-		return 0;
-	}
-}
+		पूर्ण
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
  * PIO_FONT support.
@@ -847,46 +848,46 @@ static int vgacon_blank(struct vc_data *c, int blank, int mode_switch)
  * The font loading code goes back to the codepage package by
  * Joel Hoffman (joel@wam.umd.edu). (He reports that the original
  * reference is: "From: p. 307 of _Programmer's Guide to PC & PS/2
- * Video Systems_ by Richard Wilton. 1987.  Microsoft Press".)
+ * Video Systems_ by Riअक्षरd Wilton. 1987.  Microsoft Press".)
  *
- * Change for certain monochrome monitors by Yury Shevchuck
- * (sizif@botik.yaroslavl.su).
+ * Change क्रम certain monochrome monitors by Yury Shevchuck
+ * (sizअगर@botik.yaroslavl.su).
  */
 
-#define colourmap 0xa0000
+#घोषणा colourmap 0xa0000
 /* Pauline Middelink <middelin@polyware.iaf.nl> reports that we
-   should use 0xA0000 for the bwmap as well.. */
-#define blackwmap 0xa0000
-#define cmapsz 8192
+   should use 0xA0000 क्रम the bwmap as well.. */
+#घोषणा blackwmap 0xa0000
+#घोषणा cmapsz 8192
 
-static int vgacon_do_font_op(struct vgastate *state, char *arg, int set,
+अटल पूर्णांक vgacon_करो_font_op(काष्ठा vgastate *state, अक्षर *arg, पूर्णांक set,
 		bool ch512)
-{
-	unsigned short video_port_status = vga_video_port_reg + 6;
-	int font_select = 0x00, beg, i;
-	char *charmap;
+अणु
+	अचिन्हित लघु video_port_status = vga_video_port_reg + 6;
+	पूर्णांक font_select = 0x00, beg, i;
+	अक्षर *अक्षरmap;
 	bool clear_attribs = false;
-	if (vga_video_type != VIDEO_TYPE_EGAM) {
-		charmap = (char *) VGA_MAP_MEM(colourmap, 0);
+	अगर (vga_video_type != VIDEO_TYPE_EGAM) अणु
+		अक्षरmap = (अक्षर *) VGA_MAP_MEM(colourmap, 0);
 		beg = 0x0e;
-	} else {
-		charmap = (char *) VGA_MAP_MEM(blackwmap, 0);
+	पूर्ण अन्यथा अणु
+		अक्षरmap = (अक्षर *) VGA_MAP_MEM(blackwmap, 0);
 		beg = 0x0a;
-	}
+	पूर्ण
 
 	/*
-	 * All fonts are loaded in slot 0 (0:1 for 512 ch)
+	 * All fonts are loaded in slot 0 (0:1 क्रम 512 ch)
 	 */
 
-	if (!arg)
-		return -EINVAL;	/* Return to default font not supported */
+	अगर (!arg)
+		वापस -EINVAL;	/* Return to शेष font not supported */
 
 	font_select = ch512 ? 0x04 : 0x00;
 
 	raw_spin_lock_irq(&vga_lock);
 	/* First, the Sequencer */
 	vga_wseq(state->vgabase, VGA_SEQ_RESET, 0x1);
-	/* CPU writes only to map 2 */
+	/* CPU ग_लिखोs only to map 2 */
 	vga_wseq(state->vgabase, VGA_SEQ_PLANE_WRITE, 0x04);	
 	/* Sequential addressing */
 	vga_wseq(state->vgabase, VGA_SEQ_MEMORY_MODE, 0x07);	
@@ -901,125 +902,125 @@ static int vgacon_do_font_op(struct vgastate *state, char *arg, int set,
 	vga_wgfx(state->vgabase, VGA_GFX_MISC, 0x00);
 	raw_spin_unlock_irq(&vga_lock);
 
-	if (arg) {
-		if (set)
-			for (i = 0; i < cmapsz; i++) {
-				vga_writeb(arg[i], charmap + i);
+	अगर (arg) अणु
+		अगर (set)
+			क्रम (i = 0; i < cmapsz; i++) अणु
+				vga_ग_लिखोb(arg[i], अक्षरmap + i);
 				cond_resched();
-			}
-		else
-			for (i = 0; i < cmapsz; i++) {
-				arg[i] = vga_readb(charmap + i);
+			पूर्ण
+		अन्यथा
+			क्रम (i = 0; i < cmapsz; i++) अणु
+				arg[i] = vga_पढ़ोb(अक्षरmap + i);
 				cond_resched();
-			}
+			पूर्ण
 
 		/*
-		 * In 512-character mode, the character map is not contiguous if
-		 * we want to remain EGA compatible -- which we do
+		 * In 512-अक्षरacter mode, the अक्षरacter map is not contiguous अगर
+		 * we want to reमुख्य EGA compatible -- which we करो
 		 */
 
-		if (ch512) {
-			charmap += 2 * cmapsz;
+		अगर (ch512) अणु
+			अक्षरmap += 2 * cmapsz;
 			arg += cmapsz;
-			if (set)
-				for (i = 0; i < cmapsz; i++) {
-					vga_writeb(arg[i], charmap + i);
+			अगर (set)
+				क्रम (i = 0; i < cmapsz; i++) अणु
+					vga_ग_लिखोb(arg[i], अक्षरmap + i);
 					cond_resched();
-				}
-			else
-				for (i = 0; i < cmapsz; i++) {
-					arg[i] = vga_readb(charmap + i);
+				पूर्ण
+			अन्यथा
+				क्रम (i = 0; i < cmapsz; i++) अणु
+					arg[i] = vga_पढ़ोb(अक्षरmap + i);
 					cond_resched();
-				}
-		}
-	}
+				पूर्ण
+		पूर्ण
+	पूर्ण
 
 	raw_spin_lock_irq(&vga_lock);
 	/* First, the sequencer, Synchronous reset */
 	vga_wseq(state->vgabase, VGA_SEQ_RESET, 0x01);	
-	/* CPU writes to maps 0 and 1 */
+	/* CPU ग_लिखोs to maps 0 and 1 */
 	vga_wseq(state->vgabase, VGA_SEQ_PLANE_WRITE, 0x03);
 	/* odd-even addressing */
 	vga_wseq(state->vgabase, VGA_SEQ_MEMORY_MODE, 0x03);
 	/* Character Map Select */
-	if (set)
+	अगर (set)
 		vga_wseq(state->vgabase, VGA_SEQ_CHARACTER_MAP, font_select);
 	/* clear synchronous reset */
 	vga_wseq(state->vgabase, VGA_SEQ_RESET, 0x03);
 
-	/* Now, the graphics controller, select map 0 for CPU */
+	/* Now, the graphics controller, select map 0 क्रम CPU */
 	vga_wgfx(state->vgabase, VGA_GFX_PLANE_READ, 0x00);
 	/* enable even-odd addressing */
 	vga_wgfx(state->vgabase, VGA_GFX_MODE, 0x10);
 	/* map starts at b800:0 or b000:0 */
 	vga_wgfx(state->vgabase, VGA_GFX_MISC, beg);
 
-	/* if 512 char mode is already enabled don't re-enable it. */
-	if ((set) && (ch512 != vga_512_chars)) {
-		vga_512_chars = ch512;
-		/* 256-char: enable intensity bit
-		   512-char: disable intensity bit */
+	/* अगर 512 अक्षर mode is alपढ़ोy enabled करोn't re-enable it. */
+	अगर ((set) && (ch512 != vga_512_अक्षरs)) अणु
+		vga_512_अक्षरs = ch512;
+		/* 256-अक्षर: enable पूर्णांकensity bit
+		   512-अक्षर: disable पूर्णांकensity bit */
 		inb_p(video_port_status);	/* clear address flip-flop */
-		/* color plane enable register */
+		/* color plane enable रेजिस्टर */
 		vga_wattr(state->vgabase, VGA_ATC_PLANE_ENABLE, ch512 ? 0x07 : 0x0f);
-		/* Wilton (1987) mentions the following; I don't know what
+		/* Wilton (1987) mentions the following; I करोn't know what
 		   it means, but it works, and it appears necessary */
 		inb_p(video_port_status);
 		vga_wattr(state->vgabase, VGA_AR_ENABLE_DISPLAY, 0);	
 		clear_attribs = true;
-	}
+	पूर्ण
 	raw_spin_unlock_irq(&vga_lock);
 
-	if (clear_attribs) {
-		for (i = 0; i < MAX_NR_CONSOLES; i++) {
-			struct vc_data *c = vc_cons[i].d;
-			if (c && c->vc_sw == &vga_con) {
-				/* force hi font mask to 0, so we always clear
+	अगर (clear_attribs) अणु
+		क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+			काष्ठा vc_data *c = vc_cons[i].d;
+			अगर (c && c->vc_sw == &vga_con) अणु
+				/* क्रमce hi font mask to 0, so we always clear
 				   the bit on either transition */
 				c->vc_hi_font_mask = 0x00;
 				clear_buffer_attributes(c);
 				c->vc_hi_font_mask = ch512 ? 0x0800 : 0;
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Adjust the screen to fit a font of a certain height
  */
-static int vgacon_adjust_height(struct vc_data *vc, unsigned fontheight)
-{
-	unsigned char ovr, vde, fsr;
-	int rows, maxscan, i;
+अटल पूर्णांक vgacon_adjust_height(काष्ठा vc_data *vc, अचिन्हित fontheight)
+अणु
+	अचिन्हित अक्षर ovr, vde, fsr;
+	पूर्णांक rows, maxscan, i;
 
 	rows = vc->vc_scan_lines / fontheight;	/* Number of video rows we end up with */
 	maxscan = rows * fontheight - 1;	/* Scan lines to actually display-1 */
 
-	/* Reprogram the CRTC for the new font size
-	   Note: the attempt to read the overflow register will fail
-	   on an EGA, but using 0xff for the previous value appears to
-	   be OK for EGA text modes in the range 257-512 scan lines, so I
-	   guess we don't need to worry about it.
+	/* Reprogram the CRTC क्रम the new font size
+	   Note: the attempt to पढ़ो the overflow रेजिस्टर will fail
+	   on an EGA, but using 0xff क्रम the previous value appears to
+	   be OK क्रम EGA text modes in the range 257-512 scan lines, so I
+	   guess we करोn't need to worry about it.
 
-	   The same applies for the spill bits in the font size and cursor
-	   registers; they are write-only on EGA, but it appears that they
-	   are all don't care bits on EGA, so I guess it doesn't matter. */
+	   The same applies क्रम the spill bits in the font size and cursor
+	   रेजिस्टरs; they are ग_लिखो-only on EGA, but it appears that they
+	   are all करोn't care bits on EGA, so I guess it doesn't matter. */
 
 	raw_spin_lock_irq(&vga_lock);
-	outb_p(0x07, vga_video_port_reg);	/* CRTC overflow register */
+	outb_p(0x07, vga_video_port_reg);	/* CRTC overflow रेजिस्टर */
 	ovr = inb_p(vga_video_port_val);
-	outb_p(0x09, vga_video_port_reg);	/* Font size register */
+	outb_p(0x09, vga_video_port_reg);	/* Font size रेजिस्टर */
 	fsr = inb_p(vga_video_port_val);
 	raw_spin_unlock_irq(&vga_lock);
 
 	vde = maxscan & 0xff;	/* Vertical display end reg */
-	ovr = (ovr & 0xbd) +	/* Overflow register */
+	ovr = (ovr & 0xbd) +	/* Overflow रेजिस्टर */
 	    ((maxscan & 0x100) >> 7) + ((maxscan & 0x200) >> 3);
-	fsr = (fsr & 0xe0) + (fontheight - 1);	/*  Font size register */
+	fsr = (fsr & 0xe0) + (fontheight - 1);	/*  Font size रेजिस्टर */
 
 	raw_spin_lock_irq(&vga_lock);
-	outb_p(0x07, vga_video_port_reg);	/* CRTC overflow register */
+	outb_p(0x07, vga_video_port_reg);	/* CRTC overflow रेजिस्टर */
 	outb_p(ovr, vga_video_port_val);
 	outb_p(0x09, vga_video_port_reg);	/* Font size */
 	outb_p(fsr, vga_video_port_val);
@@ -1028,100 +1029,100 @@ static int vgacon_adjust_height(struct vc_data *vc, unsigned fontheight)
 	raw_spin_unlock_irq(&vga_lock);
 	vga_video_font_height = fontheight;
 
-	for (i = 0; i < MAX_NR_CONSOLES; i++) {
-		struct vc_data *c = vc_cons[i].d;
+	क्रम (i = 0; i < MAX_NR_CONSOLES; i++) अणु
+		काष्ठा vc_data *c = vc_cons[i].d;
 
-		if (c && c->vc_sw == &vga_con) {
-			if (con_is_visible(c)) {
-			        /* void size to cause regs to be rewritten */
+		अगर (c && c->vc_sw == &vga_con) अणु
+			अगर (con_is_visible(c)) अणु
+			        /* व्योम size to cause regs to be rewritten */
 				cursor_size_lastfrom = 0;
 				cursor_size_lastto = 0;
 				c->vc_sw->con_cursor(c, CM_DRAW);
-			}
+			पूर्ण
 			c->vc_font.height = c->vc_cell_height = fontheight;
 			vc_resize(c, 0, rows);	/* Adjust console size */
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vgacon_font_set(struct vc_data *c, struct console_font *font,
-			   unsigned int flags)
-{
-	unsigned charcount = font->charcount;
-	int rc;
+अटल पूर्णांक vgacon_font_set(काष्ठा vc_data *c, काष्ठा console_font *font,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	अचिन्हित अक्षरcount = font->अक्षरcount;
+	पूर्णांक rc;
 
-	if (vga_video_type < VIDEO_TYPE_EGAM)
-		return -EINVAL;
+	अगर (vga_video_type < VIDEO_TYPE_EGAM)
+		वापस -EINVAL;
 
-	if (font->width != VGA_FONTWIDTH ||
-	    (charcount != 256 && charcount != 512))
-		return -EINVAL;
+	अगर (font->width != VGA_FONTWIDTH ||
+	    (अक्षरcount != 256 && अक्षरcount != 512))
+		वापस -EINVAL;
 
-	rc = vgacon_do_font_op(&vgastate, font->data, 1, charcount == 512);
-	if (rc)
-		return rc;
+	rc = vgacon_करो_font_op(&vgastate, font->data, 1, अक्षरcount == 512);
+	अगर (rc)
+		वापस rc;
 
-	if (!(flags & KD_FONT_FLAG_DONT_RECALC))
+	अगर (!(flags & KD_FONT_FLAG_DONT_RECALC))
 		rc = vgacon_adjust_height(c, font->height);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int vgacon_font_get(struct vc_data *c, struct console_font *font)
-{
-	if (vga_video_type < VIDEO_TYPE_EGAM)
-		return -EINVAL;
+अटल पूर्णांक vgacon_font_get(काष्ठा vc_data *c, काष्ठा console_font *font)
+अणु
+	अगर (vga_video_type < VIDEO_TYPE_EGAM)
+		वापस -EINVAL;
 
 	font->width = VGA_FONTWIDTH;
 	font->height = c->vc_font.height;
-	font->charcount = vga_512_chars ? 512 : 256;
-	if (!font->data)
-		return 0;
-	return vgacon_do_font_op(&vgastate, font->data, 0, vga_512_chars);
-}
+	font->अक्षरcount = vga_512_अक्षरs ? 512 : 256;
+	अगर (!font->data)
+		वापस 0;
+	वापस vgacon_करो_font_op(&vgastate, font->data, 0, vga_512_अक्षरs);
+पूर्ण
 
-static int vgacon_resize(struct vc_data *c, unsigned int width,
-			 unsigned int height, unsigned int user)
-{
-	if ((width << 1) * height > vga_vram_size)
-		return -EINVAL;
+अटल पूर्णांक vgacon_resize(काष्ठा vc_data *c, अचिन्हित पूर्णांक width,
+			 अचिन्हित पूर्णांक height, अचिन्हित पूर्णांक user)
+अणु
+	अगर ((width << 1) * height > vga_vram_size)
+		वापस -EINVAL;
 
-	if (user) {
+	अगर (user) अणु
 		/*
-		 * Ho ho!  Someone (svgatextmode, eh?) may have reprogrammed
-		 * the video mode!  Set the new defaults then and go away.
+		 * Ho ho!  Someone (svgatexपंचांगode, eh?) may have reprogrammed
+		 * the video mode!  Set the new शेषs then and go away.
 		 */
 		screen_info.orig_video_cols = width;
 		screen_info.orig_video_lines = height;
-		vga_default_font_height = c->vc_cell_height;
-		return 0;
-	}
-	if (width % 2 || width > screen_info.orig_video_cols ||
-	    height > (screen_info.orig_video_lines * vga_default_font_height)/
+		vga_शेष_font_height = c->vc_cell_height;
+		वापस 0;
+	पूर्ण
+	अगर (width % 2 || width > screen_info.orig_video_cols ||
+	    height > (screen_info.orig_video_lines * vga_शेष_font_height)/
 	    c->vc_cell_height)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (con_is_visible(c) && !vga_is_gfx) /* who knows */
-		vgacon_doresize(c, width, height);
-	return 0;
-}
+	अगर (con_is_visible(c) && !vga_is_gfx) /* who knows */
+		vgacon_करोresize(c, width, height);
+	वापस 0;
+पूर्ण
 
-static int vgacon_set_origin(struct vc_data *c)
-{
-	if (vga_is_gfx ||	/* We don't play origin tricks in graphic modes */
-	    (console_blanked && !vga_palette_blanked))	/* Nor we write to blanked screens */
-		return 0;
+अटल पूर्णांक vgacon_set_origin(काष्ठा vc_data *c)
+अणु
+	अगर (vga_is_gfx ||	/* We करोn't play origin tricks in graphic modes */
+	    (console_blanked && !vga_palette_blanked))	/* Nor we ग_लिखो to blanked screens */
+		वापस 0;
 	c->vc_origin = c->vc_visible_origin = vga_vram_base;
 	vga_set_mem_top(c);
 	vga_rolled_over = 0;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void vgacon_save_screen(struct vc_data *c)
-{
-	static int vga_bootup_console = 0;
+अटल व्योम vgacon_save_screen(काष्ठा vc_data *c)
+अणु
+	अटल पूर्णांक vga_bootup_console = 0;
 
-	if (!vga_bootup_console) {
+	अगर (!vga_bootup_console) अणु
 		/* This is a gross hack, but here is the only place we can
 		 * set bootup console parameters without messing up generic
 		 * console initialization routines.
@@ -1129,85 +1130,85 @@ static void vgacon_save_screen(struct vc_data *c)
 		vga_bootup_console = 1;
 		c->state.x = screen_info.orig_x;
 		c->state.y = screen_info.orig_y;
-	}
+	पूर्ण
 
 	/* We can't copy in more than the size of the video buffer,
 	 * or we'll be copying in VGA BIOS */
 
-	if (!vga_is_gfx)
-		scr_memcpyw((u16 *) c->vc_screenbuf, (u16 *) c->vc_origin,
+	अगर (!vga_is_gfx)
+		scr_स_नकलw((u16 *) c->vc_screenbuf, (u16 *) c->vc_origin,
 			    c->vc_screenbuf_size > vga_vram_size ? vga_vram_size : c->vc_screenbuf_size);
-}
+पूर्ण
 
-static bool vgacon_scroll(struct vc_data *c, unsigned int t, unsigned int b,
-		enum con_scroll dir, unsigned int lines)
-{
-	unsigned long oldo;
-	unsigned int delta;
+अटल bool vgacon_scroll(काष्ठा vc_data *c, अचिन्हित पूर्णांक t, अचिन्हित पूर्णांक b,
+		क्रमागत con_scroll dir, अचिन्हित पूर्णांक lines)
+अणु
+	अचिन्हित दीर्घ olकरो;
+	अचिन्हित पूर्णांक delta;
 
-	if (t || b != c->vc_rows || vga_is_gfx || c->vc_mode != KD_TEXT)
-		return false;
+	अगर (t || b != c->vc_rows || vga_is_gfx || c->vc_mode != KD_TEXT)
+		वापस false;
 
-	if (!vga_hardscroll_enabled || lines >= c->vc_rows / 2)
-		return false;
+	अगर (!vga_hardscroll_enabled || lines >= c->vc_rows / 2)
+		वापस false;
 
 	vgacon_restore_screen(c);
-	oldo = c->vc_origin;
+	olकरो = c->vc_origin;
 	delta = lines * c->vc_size_row;
-	if (dir == SM_UP) {
-		if (c->vc_scr_end + delta >= vga_vram_end) {
-			scr_memcpyw((u16 *) vga_vram_base,
-				    (u16 *) (oldo + delta),
+	अगर (dir == SM_UP) अणु
+		अगर (c->vc_scr_end + delta >= vga_vram_end) अणु
+			scr_स_नकलw((u16 *) vga_vram_base,
+				    (u16 *) (olकरो + delta),
 				    c->vc_screenbuf_size - delta);
 			c->vc_origin = vga_vram_base;
-			vga_rolled_over = oldo - vga_vram_base;
-		} else
+			vga_rolled_over = olकरो - vga_vram_base;
+		पूर्ण अन्यथा
 			c->vc_origin += delta;
-		scr_memsetw((u16 *) (c->vc_origin + c->vc_screenbuf_size -
-				     delta), c->vc_video_erase_char,
+		scr_स_रखोw((u16 *) (c->vc_origin + c->vc_screenbuf_size -
+				     delta), c->vc_video_erase_अक्षर,
 			    delta);
-	} else {
-		if (oldo - delta < vga_vram_base) {
-			scr_memmovew((u16 *) (vga_vram_end -
+	पूर्ण अन्यथा अणु
+		अगर (olकरो - delta < vga_vram_base) अणु
+			scr_स_हटाओw((u16 *) (vga_vram_end -
 					      c->vc_screenbuf_size +
-					      delta), (u16 *) oldo,
+					      delta), (u16 *) olकरो,
 				     c->vc_screenbuf_size - delta);
 			c->vc_origin = vga_vram_end - c->vc_screenbuf_size;
 			vga_rolled_over = 0;
-		} else
+		पूर्ण अन्यथा
 			c->vc_origin -= delta;
 		c->vc_scr_end = c->vc_origin + c->vc_screenbuf_size;
-		scr_memsetw((u16 *) (c->vc_origin), c->vc_video_erase_char,
+		scr_स_रखोw((u16 *) (c->vc_origin), c->vc_video_erase_अक्षर,
 			    delta);
-	}
+	पूर्ण
 	c->vc_scr_end = c->vc_origin + c->vc_screenbuf_size;
 	c->vc_visible_origin = c->vc_origin;
 	vga_set_mem_top(c);
-	c->vc_pos = (c->vc_pos - oldo) + c->vc_origin;
-	return true;
-}
+	c->vc_pos = (c->vc_pos - olकरो) + c->vc_origin;
+	वापस true;
+पूर्ण
 
 /*
- *  The console `switch' structure for the VGA based console
+ *  The console `चयन' काष्ठाure क्रम the VGA based console
  */
 
-static void vgacon_clear(struct vc_data *vc, int sy, int sx, int height,
-			 int width) { }
-static void vgacon_putc(struct vc_data *vc, int c, int ypos, int xpos) { }
-static void vgacon_putcs(struct vc_data *vc, const unsigned short *s,
-			 int count, int ypos, int xpos) { }
+अटल व्योम vgacon_clear(काष्ठा vc_data *vc, पूर्णांक sy, पूर्णांक sx, पूर्णांक height,
+			 पूर्णांक width) अणु पूर्ण
+अटल व्योम vgacon_अ_दो(काष्ठा vc_data *vc, पूर्णांक c, पूर्णांक ypos, पूर्णांक xpos) अणु पूर्ण
+अटल व्योम vgacon_अ_दोs(काष्ठा vc_data *vc, स्थिर अचिन्हित लघु *s,
+			 पूर्णांक count, पूर्णांक ypos, पूर्णांक xpos) अणु पूर्ण
 
-const struct consw vga_con = {
+स्थिर काष्ठा consw vga_con = अणु
 	.owner = THIS_MODULE,
 	.con_startup = vgacon_startup,
 	.con_init = vgacon_init,
 	.con_deinit = vgacon_deinit,
 	.con_clear = vgacon_clear,
-	.con_putc = vgacon_putc,
-	.con_putcs = vgacon_putcs,
+	.con_अ_दो = vgacon_अ_दो,
+	.con_अ_दोs = vgacon_अ_दोs,
 	.con_cursor = vgacon_cursor,
 	.con_scroll = vgacon_scroll,
-	.con_switch = vgacon_switch,
+	.con_चयन = vgacon_चयन,
 	.con_blank = vgacon_blank,
 	.con_font_set = vgacon_font_set,
 	.con_font_get = vgacon_font_get,
@@ -1218,7 +1219,7 @@ const struct consw vga_con = {
 	.con_save_screen = vgacon_save_screen,
 	.con_build_attr = vgacon_build_attr,
 	.con_invert_region = vgacon_invert_region,
-};
+पूर्ण;
 EXPORT_SYMBOL(vga_con);
 
 MODULE_LICENSE("GPL");

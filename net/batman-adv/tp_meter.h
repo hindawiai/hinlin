@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Edo Monticelli, Antonio Quartulli
+ * Eकरो Monticelli, Antonio Quartulli
  */
 
-#ifndef _NET_BATMAN_ADV_TP_METER_H_
-#define _NET_BATMAN_ADV_TP_METER_H_
+#अगर_अघोषित _NET_BATMAN_ADV_TP_METER_H_
+#घोषणा _NET_BATMAN_ADV_TP_METER_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/skbuff.h>
-#include <linux/types.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
 
-void batadv_tp_meter_init(void);
-void batadv_tp_start(struct batadv_priv *bat_priv, const u8 *dst,
+व्योम batadv_tp_meter_init(व्योम);
+व्योम batadv_tp_start(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
 		     u32 test_length, u32 *cookie);
-void batadv_tp_stop(struct batadv_priv *bat_priv, const u8 *dst,
-		    u8 return_value);
-void batadv_tp_meter_recv(struct batadv_priv *bat_priv, struct sk_buff *skb);
+व्योम batadv_tp_stop(काष्ठा batadv_priv *bat_priv, स्थिर u8 *dst,
+		    u8 वापस_value);
+व्योम batadv_tp_meter_recv(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb);
 
-#endif /* _NET_BATMAN_ADV_TP_METER_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_TP_METER_H_ */

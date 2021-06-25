@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: Hanyi Wu <hanyi.wu@mediatek.com>
@@ -7,148 +8,148 @@
  *         Louis Yu <louis.yu@mediatek.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/nvmem-consumer.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/thermal.h>
-#include <linux/reset.h>
-#include <linux/types.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/thermal.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/types.h>
 
 /* AUXADC Registers */
-#define AUXADC_CON1_SET_V	0x008
-#define AUXADC_CON1_CLR_V	0x00c
-#define AUXADC_CON2_V		0x010
-#define AUXADC_DATA(channel)	(0x14 + (channel) * 4)
+#घोषणा AUXADC_CON1_SET_V	0x008
+#घोषणा AUXADC_CON1_CLR_V	0x00c
+#घोषणा AUXADC_CON2_V		0x010
+#घोषणा AUXADC_DATA(channel)	(0x14 + (channel) * 4)
 
-#define APMIXED_SYS_TS_CON1	0x604
+#घोषणा APMIXED_SYS_TS_CON1	0x604
 
 /* Thermal Controller Registers */
-#define TEMP_MONCTL0		0x000
-#define TEMP_MONCTL1		0x004
-#define TEMP_MONCTL2		0x008
-#define TEMP_MONIDET0		0x014
-#define TEMP_MONIDET1		0x018
-#define TEMP_MSRCTL0		0x038
-#define TEMP_MSRCTL1		0x03c
-#define TEMP_AHBPOLL		0x040
-#define TEMP_AHBTO		0x044
-#define TEMP_ADCPNP0		0x048
-#define TEMP_ADCPNP1		0x04c
-#define TEMP_ADCPNP2		0x050
-#define TEMP_ADCPNP3		0x0b4
+#घोषणा TEMP_MONCTL0		0x000
+#घोषणा TEMP_MONCTL1		0x004
+#घोषणा TEMP_MONCTL2		0x008
+#घोषणा TEMP_MONIDET0		0x014
+#घोषणा TEMP_MONIDET1		0x018
+#घोषणा TEMP_MSRCTL0		0x038
+#घोषणा TEMP_MSRCTL1		0x03c
+#घोषणा TEMP_AHBPOLL		0x040
+#घोषणा TEMP_AHBTO		0x044
+#घोषणा TEMP_ADCPNP0		0x048
+#घोषणा TEMP_ADCPNP1		0x04c
+#घोषणा TEMP_ADCPNP2		0x050
+#घोषणा TEMP_ADCPNP3		0x0b4
 
-#define TEMP_ADCMUX		0x054
-#define TEMP_ADCEN		0x060
-#define TEMP_PNPMUXADDR		0x064
-#define TEMP_ADCMUXADDR		0x068
-#define TEMP_ADCENADDR		0x074
-#define TEMP_ADCVALIDADDR	0x078
-#define TEMP_ADCVOLTADDR	0x07c
-#define TEMP_RDCTRL		0x080
-#define TEMP_ADCVALIDMASK	0x084
-#define TEMP_ADCVOLTAGESHIFT	0x088
-#define TEMP_ADCWRITECTRL	0x08c
-#define TEMP_MSR0		0x090
-#define TEMP_MSR1		0x094
-#define TEMP_MSR2		0x098
-#define TEMP_MSR3		0x0B8
+#घोषणा TEMP_ADCMUX		0x054
+#घोषणा TEMP_ADCEN		0x060
+#घोषणा TEMP_PNPMUXADDR		0x064
+#घोषणा TEMP_ADCMUXADDR		0x068
+#घोषणा TEMP_ADCENADDR		0x074
+#घोषणा TEMP_ADCVALIDADDR	0x078
+#घोषणा TEMP_ADCVOLTADDR	0x07c
+#घोषणा TEMP_RDCTRL		0x080
+#घोषणा TEMP_ADCVALIDMASK	0x084
+#घोषणा TEMP_ADCVOLTAGESHIFT	0x088
+#घोषणा TEMP_ADCWRITECTRL	0x08c
+#घोषणा TEMP_MSR0		0x090
+#घोषणा TEMP_MSR1		0x094
+#घोषणा TEMP_MSR2		0x098
+#घोषणा TEMP_MSR3		0x0B8
 
-#define TEMP_SPARE0		0x0f0
+#घोषणा TEMP_SPARE0		0x0f0
 
-#define TEMP_ADCPNP0_1          0x148
-#define TEMP_ADCPNP1_1          0x14c
-#define TEMP_ADCPNP2_1          0x150
-#define TEMP_MSR0_1             0x190
-#define TEMP_MSR1_1             0x194
-#define TEMP_MSR2_1             0x198
-#define TEMP_ADCPNP3_1          0x1b4
-#define TEMP_MSR3_1             0x1B8
+#घोषणा TEMP_ADCPNP0_1          0x148
+#घोषणा TEMP_ADCPNP1_1          0x14c
+#घोषणा TEMP_ADCPNP2_1          0x150
+#घोषणा TEMP_MSR0_1             0x190
+#घोषणा TEMP_MSR1_1             0x194
+#घोषणा TEMP_MSR2_1             0x198
+#घोषणा TEMP_ADCPNP3_1          0x1b4
+#घोषणा TEMP_MSR3_1             0x1B8
 
-#define PTPCORESEL		0x400
+#घोषणा PTPCORESEL		0x400
 
-#define TEMP_MONCTL1_PERIOD_UNIT(x)	((x) & 0x3ff)
+#घोषणा TEMP_MONCTL1_PERIOD_UNIT(x)	((x) & 0x3ff)
 
-#define TEMP_MONCTL2_FILTER_INTERVAL(x)	(((x) & 0x3ff) << 16)
-#define TEMP_MONCTL2_SENSOR_INTERVAL(x)	((x) & 0x3ff)
+#घोषणा TEMP_MONCTL2_FILTER_INTERVAL(x)	(((x) & 0x3ff) << 16)
+#घोषणा TEMP_MONCTL2_SENSOR_INTERVAL(x)	((x) & 0x3ff)
 
-#define TEMP_AHBPOLL_ADC_POLL_INTERVAL(x)	(x)
+#घोषणा TEMP_AHBPOLL_ADC_POLL_INTERVAL(x)	(x)
 
-#define TEMP_ADCWRITECTRL_ADC_PNP_WRITE		BIT(0)
-#define TEMP_ADCWRITECTRL_ADC_MUX_WRITE		BIT(1)
+#घोषणा TEMP_ADCWRITECTRL_ADC_PNP_WRITE		BIT(0)
+#घोषणा TEMP_ADCWRITECTRL_ADC_MUX_WRITE		BIT(1)
 
-#define TEMP_ADCVALIDMASK_VALID_HIGH		BIT(5)
-#define TEMP_ADCVALIDMASK_VALID_POS(bit)	(bit)
+#घोषणा TEMP_ADCVALIDMASK_VALID_HIGH		BIT(5)
+#घोषणा TEMP_ADCVALIDMASK_VALID_POS(bit)	(bit)
 
 /* MT8173 thermal sensors */
-#define MT8173_TS1	0
-#define MT8173_TS2	1
-#define MT8173_TS3	2
-#define MT8173_TS4	3
-#define MT8173_TSABB	4
+#घोषणा MT8173_TS1	0
+#घोषणा MT8173_TS2	1
+#घोषणा MT8173_TS3	2
+#घोषणा MT8173_TS4	3
+#घोषणा MT8173_TSABB	4
 
-/* AUXADC channel 11 is used for the temperature sensors */
-#define MT8173_TEMP_AUXADC_CHANNEL	11
+/* AUXADC channel 11 is used क्रम the temperature sensors */
+#घोषणा MT8173_TEMP_AUXADC_CHANNEL	11
 
 /* The total number of temperature sensors in the MT8173 */
-#define MT8173_NUM_SENSORS		5
+#घोषणा MT8173_NUM_SENSORS		5
 
 /* The number of banks in the MT8173 */
-#define MT8173_NUM_ZONES		4
+#घोषणा MT8173_NUM_ZONES		4
 
-/* The number of sensing points per bank */
-#define MT8173_NUM_SENSORS_PER_ZONE	4
+/* The number of sensing poपूर्णांकs per bank */
+#घोषणा MT8173_NUM_SENSORS_PER_ZONE	4
 
 /* The number of controller in the MT8173 */
-#define MT8173_NUM_CONTROLLER		1
+#घोषणा MT8173_NUM_CONTROLLER		1
 
 /* The calibration coefficient of sensor  */
-#define MT8173_CALIBRATION	165
+#घोषणा MT8173_CALIBRATION	165
 
 /*
  * Layout of the fuses providing the calibration data
- * These macros could be used for MT8183, MT8173, MT2701, and MT2712.
+ * These macros could be used क्रम MT8183, MT8173, MT2701, and MT2712.
  * MT8183 has 6 sensors and needs 6 VTS calibration data.
  * MT8173 has 5 sensors and needs 5 VTS calibration data.
  * MT2701 has 3 sensors and needs 3 VTS calibration data.
  * MT2712 has 4 sensors and needs 4 VTS calibration data.
  */
-#define CALIB_BUF0_VALID_V1		BIT(0)
-#define CALIB_BUF1_ADC_GE_V1(x)		(((x) >> 22) & 0x3ff)
-#define CALIB_BUF0_VTS_TS1_V1(x)	(((x) >> 17) & 0x1ff)
-#define CALIB_BUF0_VTS_TS2_V1(x)	(((x) >> 8) & 0x1ff)
-#define CALIB_BUF1_VTS_TS3_V1(x)	(((x) >> 0) & 0x1ff)
-#define CALIB_BUF2_VTS_TS4_V1(x)	(((x) >> 23) & 0x1ff)
-#define CALIB_BUF2_VTS_TS5_V1(x)	(((x) >> 5) & 0x1ff)
-#define CALIB_BUF2_VTS_TSABB_V1(x)	(((x) >> 14) & 0x1ff)
-#define CALIB_BUF0_DEGC_CALI_V1(x)	(((x) >> 1) & 0x3f)
-#define CALIB_BUF0_O_SLOPE_V1(x)	(((x) >> 26) & 0x3f)
-#define CALIB_BUF0_O_SLOPE_SIGN_V1(x)	(((x) >> 7) & 0x1)
-#define CALIB_BUF1_ID_V1(x)		(((x) >> 9) & 0x1)
+#घोषणा CALIB_BUF0_VALID_V1		BIT(0)
+#घोषणा CALIB_BUF1_ADC_GE_V1(x)		(((x) >> 22) & 0x3ff)
+#घोषणा CALIB_BUF0_VTS_TS1_V1(x)	(((x) >> 17) & 0x1ff)
+#घोषणा CALIB_BUF0_VTS_TS2_V1(x)	(((x) >> 8) & 0x1ff)
+#घोषणा CALIB_BUF1_VTS_TS3_V1(x)	(((x) >> 0) & 0x1ff)
+#घोषणा CALIB_BUF2_VTS_TS4_V1(x)	(((x) >> 23) & 0x1ff)
+#घोषणा CALIB_BUF2_VTS_TS5_V1(x)	(((x) >> 5) & 0x1ff)
+#घोषणा CALIB_BUF2_VTS_TSABB_V1(x)	(((x) >> 14) & 0x1ff)
+#घोषणा CALIB_BUF0_DEGC_CALI_V1(x)	(((x) >> 1) & 0x3f)
+#घोषणा CALIB_BUF0_O_SLOPE_V1(x)	(((x) >> 26) & 0x3f)
+#घोषणा CALIB_BUF0_O_SLOPE_SIGN_V1(x)	(((x) >> 7) & 0x1)
+#घोषणा CALIB_BUF1_ID_V1(x)		(((x) >> 9) & 0x1)
 
 /*
  * Layout of the fuses providing the calibration data
- * These macros could be used for MT7622.
+ * These macros could be used क्रम MT7622.
  */
-#define CALIB_BUF0_ADC_OE_V2(x)		(((x) >> 22) & 0x3ff)
-#define CALIB_BUF0_ADC_GE_V2(x)		(((x) >> 12) & 0x3ff)
-#define CALIB_BUF0_DEGC_CALI_V2(x)	(((x) >> 6) & 0x3f)
-#define CALIB_BUF0_O_SLOPE_V2(x)	(((x) >> 0) & 0x3f)
-#define CALIB_BUF1_VTS_TS1_V2(x)	(((x) >> 23) & 0x1ff)
-#define CALIB_BUF1_VTS_TS2_V2(x)	(((x) >> 14) & 0x1ff)
-#define CALIB_BUF1_VTS_TSABB_V2(x)	(((x) >> 5) & 0x1ff)
-#define CALIB_BUF1_VALID_V2(x)		(((x) >> 4) & 0x1)
-#define CALIB_BUF1_O_SLOPE_SIGN_V2(x)	(((x) >> 3) & 0x1)
+#घोषणा CALIB_BUF0_ADC_OE_V2(x)		(((x) >> 22) & 0x3ff)
+#घोषणा CALIB_BUF0_ADC_GE_V2(x)		(((x) >> 12) & 0x3ff)
+#घोषणा CALIB_BUF0_DEGC_CALI_V2(x)	(((x) >> 6) & 0x3f)
+#घोषणा CALIB_BUF0_O_SLOPE_V2(x)	(((x) >> 0) & 0x3f)
+#घोषणा CALIB_BUF1_VTS_TS1_V2(x)	(((x) >> 23) & 0x1ff)
+#घोषणा CALIB_BUF1_VTS_TS2_V2(x)	(((x) >> 14) & 0x1ff)
+#घोषणा CALIB_BUF1_VTS_TSABB_V2(x)	(((x) >> 5) & 0x1ff)
+#घोषणा CALIB_BUF1_VALID_V2(x)		(((x) >> 4) & 0x1)
+#घोषणा CALIB_BUF1_O_SLOPE_SIGN_V2(x)	(((x) >> 3) & 0x1)
 
-enum {
+क्रमागत अणु
 	VTS1,
 	VTS2,
 	VTS3,
@@ -156,129 +157,129 @@ enum {
 	VTS5,
 	VTSABB,
 	MAX_NUM_VTS,
-};
+पूर्ण;
 
-enum mtk_thermal_version {
+क्रमागत mtk_thermal_version अणु
 	MTK_THERMAL_V1 = 1,
 	MTK_THERMAL_V2,
-};
+पूर्ण;
 
 /* MT2701 thermal sensors */
-#define MT2701_TS1	0
-#define MT2701_TS2	1
-#define MT2701_TSABB	2
+#घोषणा MT2701_TS1	0
+#घोषणा MT2701_TS2	1
+#घोषणा MT2701_TSABB	2
 
-/* AUXADC channel 11 is used for the temperature sensors */
-#define MT2701_TEMP_AUXADC_CHANNEL	11
+/* AUXADC channel 11 is used क्रम the temperature sensors */
+#घोषणा MT2701_TEMP_AUXADC_CHANNEL	11
 
 /* The total number of temperature sensors in the MT2701 */
-#define MT2701_NUM_SENSORS	3
+#घोषणा MT2701_NUM_SENSORS	3
 
-/* The number of sensing points per bank */
-#define MT2701_NUM_SENSORS_PER_ZONE	3
+/* The number of sensing poपूर्णांकs per bank */
+#घोषणा MT2701_NUM_SENSORS_PER_ZONE	3
 
 /* The number of controller in the MT2701 */
-#define MT2701_NUM_CONTROLLER		1
+#घोषणा MT2701_NUM_CONTROLLER		1
 
 /* The calibration coefficient of sensor  */
-#define MT2701_CALIBRATION	165
+#घोषणा MT2701_CALIBRATION	165
 
 /* MT2712 thermal sensors */
-#define MT2712_TS1	0
-#define MT2712_TS2	1
-#define MT2712_TS3	2
-#define MT2712_TS4	3
+#घोषणा MT2712_TS1	0
+#घोषणा MT2712_TS2	1
+#घोषणा MT2712_TS3	2
+#घोषणा MT2712_TS4	3
 
-/* AUXADC channel 11 is used for the temperature sensors */
-#define MT2712_TEMP_AUXADC_CHANNEL	11
+/* AUXADC channel 11 is used क्रम the temperature sensors */
+#घोषणा MT2712_TEMP_AUXADC_CHANNEL	11
 
 /* The total number of temperature sensors in the MT2712 */
-#define MT2712_NUM_SENSORS	4
+#घोषणा MT2712_NUM_SENSORS	4
 
-/* The number of sensing points per bank */
-#define MT2712_NUM_SENSORS_PER_ZONE	4
+/* The number of sensing poपूर्णांकs per bank */
+#घोषणा MT2712_NUM_SENSORS_PER_ZONE	4
 
 /* The number of controller in the MT2712 */
-#define MT2712_NUM_CONTROLLER		1
+#घोषणा MT2712_NUM_CONTROLLER		1
 
 /* The calibration coefficient of sensor  */
-#define MT2712_CALIBRATION	165
+#घोषणा MT2712_CALIBRATION	165
 
-#define MT7622_TEMP_AUXADC_CHANNEL	11
-#define MT7622_NUM_SENSORS		1
-#define MT7622_NUM_ZONES		1
-#define MT7622_NUM_SENSORS_PER_ZONE	1
-#define MT7622_TS1	0
-#define MT7622_NUM_CONTROLLER		1
+#घोषणा MT7622_TEMP_AUXADC_CHANNEL	11
+#घोषणा MT7622_NUM_SENSORS		1
+#घोषणा MT7622_NUM_ZONES		1
+#घोषणा MT7622_NUM_SENSORS_PER_ZONE	1
+#घोषणा MT7622_TS1	0
+#घोषणा MT7622_NUM_CONTROLLER		1
 
 /* The maximum number of banks */
-#define MAX_NUM_ZONES		8
+#घोषणा MAX_NUM_ZONES		8
 
 /* The calibration coefficient of sensor  */
-#define MT7622_CALIBRATION	165
+#घोषणा MT7622_CALIBRATION	165
 
 /* MT8183 thermal sensors */
-#define MT8183_TS1	0
-#define MT8183_TS2	1
-#define MT8183_TS3	2
-#define MT8183_TS4	3
-#define MT8183_TS5	4
-#define MT8183_TSABB	5
+#घोषणा MT8183_TS1	0
+#घोषणा MT8183_TS2	1
+#घोषणा MT8183_TS3	2
+#घोषणा MT8183_TS4	3
+#घोषणा MT8183_TS5	4
+#घोषणा MT8183_TSABB	5
 
-/* AUXADC channel  is used for the temperature sensors */
-#define MT8183_TEMP_AUXADC_CHANNEL	11
+/* AUXADC channel  is used क्रम the temperature sensors */
+#घोषणा MT8183_TEMP_AUXADC_CHANNEL	11
 
 /* The total number of temperature sensors in the MT8183 */
-#define MT8183_NUM_SENSORS	6
+#घोषणा MT8183_NUM_SENSORS	6
 
 /* The number of banks in the MT8183 */
-#define MT8183_NUM_ZONES               1
+#घोषणा MT8183_NUM_ZONES               1
 
-/* The number of sensing points per bank */
-#define MT8183_NUM_SENSORS_PER_ZONE	 6
+/* The number of sensing poपूर्णांकs per bank */
+#घोषणा MT8183_NUM_SENSORS_PER_ZONE	 6
 
 /* The number of controller in the MT8183 */
-#define MT8183_NUM_CONTROLLER		2
+#घोषणा MT8183_NUM_CONTROLLER		2
 
 /* The calibration coefficient of sensor  */
-#define MT8183_CALIBRATION	153
+#घोषणा MT8183_CALIBRATION	153
 
-struct mtk_thermal;
+काष्ठा mtk_thermal;
 
-struct thermal_bank_cfg {
-	unsigned int num_sensors;
-	const int *sensors;
-};
+काष्ठा thermal_bank_cfg अणु
+	अचिन्हित पूर्णांक num_sensors;
+	स्थिर पूर्णांक *sensors;
+पूर्ण;
 
-struct mtk_thermal_bank {
-	struct mtk_thermal *mt;
-	int id;
-};
+काष्ठा mtk_thermal_bank अणु
+	काष्ठा mtk_thermal *mt;
+	पूर्णांक id;
+पूर्ण;
 
-struct mtk_thermal_data {
+काष्ठा mtk_thermal_data अणु
 	s32 num_banks;
 	s32 num_sensors;
 	s32 auxadc_channel;
-	const int *vts_index;
-	const int *sensor_mux_values;
-	const int *msr;
-	const int *adcpnp;
-	const int cali_val;
-	const int num_controller;
-	const int *controller_offset;
-	bool need_switch_bank;
-	struct thermal_bank_cfg bank_data[MAX_NUM_ZONES];
-	enum mtk_thermal_version version;
-};
+	स्थिर पूर्णांक *vts_index;
+	स्थिर पूर्णांक *sensor_mux_values;
+	स्थिर पूर्णांक *msr;
+	स्थिर पूर्णांक *adcpnp;
+	स्थिर पूर्णांक cali_val;
+	स्थिर पूर्णांक num_controller;
+	स्थिर पूर्णांक *controller_offset;
+	bool need_चयन_bank;
+	काष्ठा thermal_bank_cfg bank_data[MAX_NUM_ZONES];
+	क्रमागत mtk_thermal_version version;
+पूर्ण;
 
-struct mtk_thermal {
-	struct device *dev;
-	void __iomem *thermal_base;
+काष्ठा mtk_thermal अणु
+	काष्ठा device *dev;
+	व्योम __iomem *thermal_base;
 
-	struct clk *clk_peri_therm;
-	struct clk *clk_auxadc;
-	/* lock: for getting and putting banks */
-	struct mutex lock;
+	काष्ठा clk *clk_peri_therm;
+	काष्ठा clk *clk_auxadc;
+	/* lock: क्रम getting and putting banks */
+	काष्ठा mutex lock;
 
 	/* Calibration values */
 	s32 adc_ge;
@@ -288,116 +289,116 @@ struct mtk_thermal {
 	s32 o_slope_sign;
 	s32 vts[MAX_NUM_VTS];
 
-	const struct mtk_thermal_data *conf;
-	struct mtk_thermal_bank banks[MAX_NUM_ZONES];
-};
+	स्थिर काष्ठा mtk_thermal_data *conf;
+	काष्ठा mtk_thermal_bank banks[MAX_NUM_ZONES];
+पूर्ण;
 
 /* MT8183 thermal sensor data */
-static const int mt8183_bank_data[MT8183_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt8183_bank_data[MT8183_NUM_SENSORS] = अणु
 	MT8183_TS1, MT8183_TS2, MT8183_TS3, MT8183_TS4, MT8183_TS5, MT8183_TSABB
-};
+पूर्ण;
 
-static const int mt8183_msr[MT8183_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt8183_msr[MT8183_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_MSR0_1, TEMP_MSR1_1, TEMP_MSR2_1, TEMP_MSR1, TEMP_MSR0, TEMP_MSR3_1
-};
+पूर्ण;
 
-static const int mt8183_adcpnp[MT8183_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt8183_adcpnp[MT8183_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_ADCPNP0_1, TEMP_ADCPNP1_1, TEMP_ADCPNP2_1,
 	TEMP_ADCPNP1, TEMP_ADCPNP0, TEMP_ADCPNP3_1
-};
+पूर्ण;
 
-static const int mt8183_mux_values[MT8183_NUM_SENSORS] = { 0, 1, 2, 3, 4, 0 };
-static const int mt8183_tc_offset[MT8183_NUM_CONTROLLER] = {0x0, 0x100};
+अटल स्थिर पूर्णांक mt8183_mux_values[MT8183_NUM_SENSORS] = अणु 0, 1, 2, 3, 4, 0 पूर्ण;
+अटल स्थिर पूर्णांक mt8183_tc_offset[MT8183_NUM_CONTROLLER] = अणु0x0, 0x100पूर्ण;
 
-static const int mt8183_vts_index[MT8183_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt8183_vts_index[MT8183_NUM_SENSORS] = अणु
 	VTS1, VTS2, VTS3, VTS4, VTS5, VTSABB
-};
+पूर्ण;
 
 /* MT8173 thermal sensor data */
-static const int mt8173_bank_data[MT8173_NUM_ZONES][3] = {
-	{ MT8173_TS2, MT8173_TS3 },
-	{ MT8173_TS2, MT8173_TS4 },
-	{ MT8173_TS1, MT8173_TS2, MT8173_TSABB },
-	{ MT8173_TS2 },
-};
+अटल स्थिर पूर्णांक mt8173_bank_data[MT8173_NUM_ZONES][3] = अणु
+	अणु MT8173_TS2, MT8173_TS3 पूर्ण,
+	अणु MT8173_TS2, MT8173_TS4 पूर्ण,
+	अणु MT8173_TS1, MT8173_TS2, MT8173_TSABB पूर्ण,
+	अणु MT8173_TS2 पूर्ण,
+पूर्ण;
 
-static const int mt8173_msr[MT8173_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt8173_msr[MT8173_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_MSR0, TEMP_MSR1, TEMP_MSR2, TEMP_MSR3
-};
+पूर्ण;
 
-static const int mt8173_adcpnp[MT8173_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt8173_adcpnp[MT8173_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_ADCPNP0, TEMP_ADCPNP1, TEMP_ADCPNP2, TEMP_ADCPNP3
-};
+पूर्ण;
 
-static const int mt8173_mux_values[MT8173_NUM_SENSORS] = { 0, 1, 2, 3, 16 };
-static const int mt8173_tc_offset[MT8173_NUM_CONTROLLER] = { 0x0, };
+अटल स्थिर पूर्णांक mt8173_mux_values[MT8173_NUM_SENSORS] = अणु 0, 1, 2, 3, 16 पूर्ण;
+अटल स्थिर पूर्णांक mt8173_tc_offset[MT8173_NUM_CONTROLLER] = अणु 0x0, पूर्ण;
 
-static const int mt8173_vts_index[MT8173_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt8173_vts_index[MT8173_NUM_SENSORS] = अणु
 	VTS1, VTS2, VTS3, VTS4, VTSABB
-};
+पूर्ण;
 
 /* MT2701 thermal sensor data */
-static const int mt2701_bank_data[MT2701_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt2701_bank_data[MT2701_NUM_SENSORS] = अणु
 	MT2701_TS1, MT2701_TS2, MT2701_TSABB
-};
+पूर्ण;
 
-static const int mt2701_msr[MT2701_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt2701_msr[MT2701_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_MSR0, TEMP_MSR1, TEMP_MSR2
-};
+पूर्ण;
 
-static const int mt2701_adcpnp[MT2701_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt2701_adcpnp[MT2701_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_ADCPNP0, TEMP_ADCPNP1, TEMP_ADCPNP2
-};
+पूर्ण;
 
-static const int mt2701_mux_values[MT2701_NUM_SENSORS] = { 0, 1, 16 };
-static const int mt2701_tc_offset[MT2701_NUM_CONTROLLER] = { 0x0, };
+अटल स्थिर पूर्णांक mt2701_mux_values[MT2701_NUM_SENSORS] = अणु 0, 1, 16 पूर्ण;
+अटल स्थिर पूर्णांक mt2701_tc_offset[MT2701_NUM_CONTROLLER] = अणु 0x0, पूर्ण;
 
-static const int mt2701_vts_index[MT2701_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt2701_vts_index[MT2701_NUM_SENSORS] = अणु
 	VTS1, VTS2, VTS3
-};
+पूर्ण;
 
 /* MT2712 thermal sensor data */
-static const int mt2712_bank_data[MT2712_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt2712_bank_data[MT2712_NUM_SENSORS] = अणु
 	MT2712_TS1, MT2712_TS2, MT2712_TS3, MT2712_TS4
-};
+पूर्ण;
 
-static const int mt2712_msr[MT2712_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt2712_msr[MT2712_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_MSR0, TEMP_MSR1, TEMP_MSR2, TEMP_MSR3
-};
+पूर्ण;
 
-static const int mt2712_adcpnp[MT2712_NUM_SENSORS_PER_ZONE] = {
+अटल स्थिर पूर्णांक mt2712_adcpnp[MT2712_NUM_SENSORS_PER_ZONE] = अणु
 	TEMP_ADCPNP0, TEMP_ADCPNP1, TEMP_ADCPNP2, TEMP_ADCPNP3
-};
+पूर्ण;
 
-static const int mt2712_mux_values[MT2712_NUM_SENSORS] = { 0, 1, 2, 3 };
-static const int mt2712_tc_offset[MT2712_NUM_CONTROLLER] = { 0x0, };
+अटल स्थिर पूर्णांक mt2712_mux_values[MT2712_NUM_SENSORS] = अणु 0, 1, 2, 3 पूर्ण;
+अटल स्थिर पूर्णांक mt2712_tc_offset[MT2712_NUM_CONTROLLER] = अणु 0x0, पूर्ण;
 
-static const int mt2712_vts_index[MT2712_NUM_SENSORS] = {
+अटल स्थिर पूर्णांक mt2712_vts_index[MT2712_NUM_SENSORS] = अणु
 	VTS1, VTS2, VTS3, VTS4
-};
+पूर्ण;
 
 /* MT7622 thermal sensor data */
-static const int mt7622_bank_data[MT7622_NUM_SENSORS] = { MT7622_TS1, };
-static const int mt7622_msr[MT7622_NUM_SENSORS_PER_ZONE] = { TEMP_MSR0, };
-static const int mt7622_adcpnp[MT7622_NUM_SENSORS_PER_ZONE] = { TEMP_ADCPNP0, };
-static const int mt7622_mux_values[MT7622_NUM_SENSORS] = { 0, };
-static const int mt7622_vts_index[MT7622_NUM_SENSORS] = { VTS1 };
-static const int mt7622_tc_offset[MT7622_NUM_CONTROLLER] = { 0x0, };
+अटल स्थिर पूर्णांक mt7622_bank_data[MT7622_NUM_SENSORS] = अणु MT7622_TS1, पूर्ण;
+अटल स्थिर पूर्णांक mt7622_msr[MT7622_NUM_SENSORS_PER_ZONE] = अणु TEMP_MSR0, पूर्ण;
+अटल स्थिर पूर्णांक mt7622_adcpnp[MT7622_NUM_SENSORS_PER_ZONE] = अणु TEMP_ADCPNP0, पूर्ण;
+अटल स्थिर पूर्णांक mt7622_mux_values[MT7622_NUM_SENSORS] = अणु 0, पूर्ण;
+अटल स्थिर पूर्णांक mt7622_vts_index[MT7622_NUM_SENSORS] = अणु VTS1 पूर्ण;
+अटल स्थिर पूर्णांक mt7622_tc_offset[MT7622_NUM_CONTROLLER] = अणु 0x0, पूर्ण;
 
 /*
- * The MT8173 thermal controller has four banks. Each bank can read up to
+ * The MT8173 thermal controller has four banks. Each bank can पढ़ो up to
  * four temperature sensors simultaneously. The MT8173 has a total of 5
  * temperature sensors. We use each bank to measure a certain area of the
  * SoC. Since TS2 is located centrally in the SoC it is influenced by multiple
- * areas, hence is used in different banks.
+ * areas, hence is used in dअगरferent banks.
  *
- * The thermal core only gets the maximum temperature of all banks, so
+ * The thermal core only माला_लो the maximum temperature of all banks, so
  * the bank concept wouldn't be necessary here. However, the SVS (Smart
  * Voltage Scaling) unit makes its decisions based on the same bank
- * data, and this indeed needs the temperatures of the individual banks
- * for making better decisions.
+ * data, and this indeed needs the temperatures of the inभागidual banks
+ * क्रम making better decisions.
  */
-static const struct mtk_thermal_data mt8173_thermal_data = {
+अटल स्थिर काष्ठा mtk_thermal_data mt8173_thermal_data = अणु
 	.auxadc_channel = MT8173_TEMP_AUXADC_CHANNEL,
 	.num_banks = MT8173_NUM_ZONES,
 	.num_sensors = MT8173_NUM_SENSORS,
@@ -405,39 +406,39 @@ static const struct mtk_thermal_data mt8173_thermal_data = {
 	.cali_val = MT8173_CALIBRATION,
 	.num_controller = MT8173_NUM_CONTROLLER,
 	.controller_offset = mt8173_tc_offset,
-	.need_switch_bank = true,
-	.bank_data = {
-		{
+	.need_चयन_bank = true,
+	.bank_data = अणु
+		अणु
 			.num_sensors = 2,
 			.sensors = mt8173_bank_data[0],
-		}, {
+		पूर्ण, अणु
 			.num_sensors = 2,
 			.sensors = mt8173_bank_data[1],
-		}, {
+		पूर्ण, अणु
 			.num_sensors = 3,
 			.sensors = mt8173_bank_data[2],
-		}, {
+		पूर्ण, अणु
 			.num_sensors = 1,
 			.sensors = mt8173_bank_data[3],
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.msr = mt8173_msr,
 	.adcpnp = mt8173_adcpnp,
 	.sensor_mux_values = mt8173_mux_values,
 	.version = MTK_THERMAL_V1,
-};
+पूर्ण;
 
 /*
- * The MT2701 thermal controller has one bank, which can read up to
+ * The MT2701 thermal controller has one bank, which can पढ़ो up to
  * three temperature sensors simultaneously. The MT2701 has a total of 3
  * temperature sensors.
  *
- * The thermal core only gets the maximum temperature of this one bank,
+ * The thermal core only माला_लो the maximum temperature of this one bank,
  * so the bank concept wouldn't be necessary here. However, the SVS (Smart
  * Voltage Scaling) unit makes its decisions based on the same bank
  * data.
  */
-static const struct mtk_thermal_data mt2701_thermal_data = {
+अटल स्थिर काष्ठा mtk_thermal_data mt2701_thermal_data = अणु
 	.auxadc_channel = MT2701_TEMP_AUXADC_CHANNEL,
 	.num_banks = 1,
 	.num_sensors = MT2701_NUM_SENSORS,
@@ -445,30 +446,30 @@ static const struct mtk_thermal_data mt2701_thermal_data = {
 	.cali_val = MT2701_CALIBRATION,
 	.num_controller = MT2701_NUM_CONTROLLER,
 	.controller_offset = mt2701_tc_offset,
-	.need_switch_bank = true,
-	.bank_data = {
-		{
+	.need_चयन_bank = true,
+	.bank_data = अणु
+		अणु
 			.num_sensors = 3,
 			.sensors = mt2701_bank_data,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.msr = mt2701_msr,
 	.adcpnp = mt2701_adcpnp,
 	.sensor_mux_values = mt2701_mux_values,
 	.version = MTK_THERMAL_V1,
-};
+पूर्ण;
 
 /*
- * The MT2712 thermal controller has one bank, which can read up to
+ * The MT2712 thermal controller has one bank, which can पढ़ो up to
  * four temperature sensors simultaneously. The MT2712 has a total of 4
  * temperature sensors.
  *
- * The thermal core only gets the maximum temperature of this one bank,
+ * The thermal core only माला_लो the maximum temperature of this one bank,
  * so the bank concept wouldn't be necessary here. However, the SVS (Smart
  * Voltage Scaling) unit makes its decisions based on the same bank
  * data.
  */
-static const struct mtk_thermal_data mt2712_thermal_data = {
+अटल स्थिर काष्ठा mtk_thermal_data mt2712_thermal_data = अणु
 	.auxadc_channel = MT2712_TEMP_AUXADC_CHANNEL,
 	.num_banks = 1,
 	.num_sensors = MT2712_NUM_SENSORS,
@@ -476,24 +477,24 @@ static const struct mtk_thermal_data mt2712_thermal_data = {
 	.cali_val = MT2712_CALIBRATION,
 	.num_controller = MT2712_NUM_CONTROLLER,
 	.controller_offset = mt2712_tc_offset,
-	.need_switch_bank = true,
-	.bank_data = {
-		{
+	.need_चयन_bank = true,
+	.bank_data = अणु
+		अणु
 			.num_sensors = 4,
 			.sensors = mt2712_bank_data,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.msr = mt2712_msr,
 	.adcpnp = mt2712_adcpnp,
 	.sensor_mux_values = mt2712_mux_values,
 	.version = MTK_THERMAL_V1,
-};
+पूर्ण;
 
 /*
- * MT7622 have only one sensing point which uses AUXADC Channel 11 for raw data
+ * MT7622 have only one sensing poपूर्णांक which uses AUXADC Channel 11 क्रम raw data
  * access.
  */
-static const struct mtk_thermal_data mt7622_thermal_data = {
+अटल स्थिर काष्ठा mtk_thermal_data mt7622_thermal_data = अणु
 	.auxadc_channel = MT7622_TEMP_AUXADC_CHANNEL,
 	.num_banks = MT7622_NUM_ZONES,
 	.num_sensors = MT7622_NUM_SENSORS,
@@ -501,31 +502,31 @@ static const struct mtk_thermal_data mt7622_thermal_data = {
 	.cali_val = MT7622_CALIBRATION,
 	.num_controller = MT7622_NUM_CONTROLLER,
 	.controller_offset = mt7622_tc_offset,
-	.need_switch_bank = true,
-	.bank_data = {
-		{
+	.need_चयन_bank = true,
+	.bank_data = अणु
+		अणु
 			.num_sensors = 1,
 			.sensors = mt7622_bank_data,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.msr = mt7622_msr,
 	.adcpnp = mt7622_adcpnp,
 	.sensor_mux_values = mt7622_mux_values,
 	.version = MTK_THERMAL_V2,
-};
+पूर्ण;
 
 /*
- * The MT8183 thermal controller has one bank for the current SW framework.
+ * The MT8183 thermal controller has one bank क्रम the current SW framework.
  * The MT8183 has a total of 6 temperature sensors.
  * There are two thermal controller to control the six sensor.
  * The first one bind 2 sensor, and the other bind 4 sensors.
- * The thermal core only gets the maximum temperature of all sensor, so
+ * The thermal core only माला_लो the maximum temperature of all sensor, so
  * the bank concept wouldn't be necessary here. However, the SVS (Smart
  * Voltage Scaling) unit makes its decisions based on the same bank
- * data, and this indeed needs the temperatures of the individual banks
- * for making better decisions.
+ * data, and this indeed needs the temperatures of the inभागidual banks
+ * क्रम making better decisions.
  */
-static const struct mtk_thermal_data mt8183_thermal_data = {
+अटल स्थिर काष्ठा mtk_thermal_data mt8183_thermal_data = अणु
 	.auxadc_channel = MT8183_TEMP_AUXADC_CHANNEL,
 	.num_banks = MT8183_NUM_ZONES,
 	.num_sensors = MT8183_NUM_SENSORS,
@@ -533,19 +534,19 @@ static const struct mtk_thermal_data mt8183_thermal_data = {
 	.cali_val = MT8183_CALIBRATION,
 	.num_controller = MT8183_NUM_CONTROLLER,
 	.controller_offset = mt8183_tc_offset,
-	.need_switch_bank = false,
-	.bank_data = {
-		{
+	.need_चयन_bank = false,
+	.bank_data = अणु
+		अणु
 			.num_sensors = 6,
 			.sensors = mt8183_bank_data,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 
 	.msr = mt8183_msr,
 	.adcpnp = mt8183_adcpnp,
 	.sensor_mux_values = mt8183_mux_values,
 	.version = MTK_THERMAL_V1,
-};
+पूर्ण;
 
 /**
  * raw_to_mcelsius - convert a raw ADC value to mcelsius
@@ -553,75 +554,75 @@ static const struct mtk_thermal_data mt8183_thermal_data = {
  * @sensno:	sensor number
  * @raw:	raw ADC value
  *
- * This converts the raw ADC value to mcelsius using the SoC specific
- * calibration constants
+ * This converts the raw ADC value to mcelsius using the SoC specअगरic
+ * calibration स्थिरants
  */
-static int raw_to_mcelsius_v1(struct mtk_thermal *mt, int sensno, s32 raw)
-{
-	s32 tmp;
+अटल पूर्णांक raw_to_mcelsius_v1(काष्ठा mtk_thermal *mt, पूर्णांक sensno, s32 raw)
+अणु
+	s32 पंचांगp;
 
 	raw &= 0xfff;
 
-	tmp = 203450520 << 3;
-	tmp /= mt->conf->cali_val + mt->o_slope;
-	tmp /= 10000 + mt->adc_ge;
-	tmp *= raw - mt->vts[sensno] - 3350;
-	tmp >>= 3;
+	पंचांगp = 203450520 << 3;
+	पंचांगp /= mt->conf->cali_val + mt->o_slope;
+	पंचांगp /= 10000 + mt->adc_ge;
+	पंचांगp *= raw - mt->vts[sensno] - 3350;
+	पंचांगp >>= 3;
 
-	return mt->degc_cali * 500 - tmp;
-}
+	वापस mt->degc_cali * 500 - पंचांगp;
+पूर्ण
 
-static int raw_to_mcelsius_v2(struct mtk_thermal *mt, int sensno, s32 raw)
-{
-	s32 format_1;
-	s32 format_2;
+अटल पूर्णांक raw_to_mcelsius_v2(काष्ठा mtk_thermal *mt, पूर्णांक sensno, s32 raw)
+अणु
+	s32 क्रमmat_1;
+	s32 क्रमmat_2;
 	s32 g_oe;
 	s32 g_gain;
 	s32 g_x_roomt;
-	s32 tmp;
+	s32 पंचांगp;
 
-	if (raw == 0)
-		return 0;
+	अगर (raw == 0)
+		वापस 0;
 
 	raw &= 0xfff;
 	g_gain = 10000 + (((mt->adc_ge - 512) * 10000) >> 12);
 	g_oe = mt->adc_oe - 512;
-	format_1 = mt->vts[VTS2] + 3105 - g_oe;
-	format_2 = (mt->degc_cali * 10) >> 1;
-	g_x_roomt = (((format_1 * 10000) >> 12) * 10000) / g_gain;
+	क्रमmat_1 = mt->vts[VTS2] + 3105 - g_oe;
+	क्रमmat_2 = (mt->degc_cali * 10) >> 1;
+	g_x_roomt = (((क्रमmat_1 * 10000) >> 12) * 10000) / g_gain;
 
-	tmp = (((((raw - g_oe) * 10000) >> 12) * 10000) / g_gain) - g_x_roomt;
-	tmp = tmp * 10 * 100 / 11;
+	पंचांगp = (((((raw - g_oe) * 10000) >> 12) * 10000) / g_gain) - g_x_roomt;
+	पंचांगp = पंचांगp * 10 * 100 / 11;
 
-	if (mt->o_slope_sign == 0)
-		tmp = tmp / (165 - mt->o_slope);
-	else
-		tmp = tmp / (165 + mt->o_slope);
+	अगर (mt->o_slope_sign == 0)
+		पंचांगp = पंचांगp / (165 - mt->o_slope);
+	अन्यथा
+		पंचांगp = पंचांगp / (165 + mt->o_slope);
 
-	return (format_2 - tmp) * 100;
-}
+	वापस (क्रमmat_2 - पंचांगp) * 100;
+पूर्ण
 
 /**
  * mtk_thermal_get_bank - get bank
  * @bank:	The bank
  *
- * The bank registers are banked, we have to select a bank in the
- * PTPCORESEL register to access it.
+ * The bank रेजिस्टरs are banked, we have to select a bank in the
+ * PTPCORESEL रेजिस्टर to access it.
  */
-static void mtk_thermal_get_bank(struct mtk_thermal_bank *bank)
-{
-	struct mtk_thermal *mt = bank->mt;
+अटल व्योम mtk_thermal_get_bank(काष्ठा mtk_thermal_bank *bank)
+अणु
+	काष्ठा mtk_thermal *mt = bank->mt;
 	u32 val;
 
-	if (mt->conf->need_switch_bank) {
+	अगर (mt->conf->need_चयन_bank) अणु
 		mutex_lock(&mt->lock);
 
-		val = readl(mt->thermal_base + PTPCORESEL);
+		val = पढ़ोl(mt->thermal_base + PTPCORESEL);
 		val &= ~0xf;
 		val |= bank->id;
-		writel(val, mt->thermal_base + PTPCORESEL);
-	}
-}
+		ग_लिखोl(val, mt->thermal_base + PTPCORESEL);
+	पूर्ण
+पूर्ण
 
 /**
  * mtk_thermal_put_bank - release bank
@@ -629,13 +630,13 @@ static void mtk_thermal_get_bank(struct mtk_thermal_bank *bank)
  *
  * release a bank previously taken with mtk_thermal_get_bank,
  */
-static void mtk_thermal_put_bank(struct mtk_thermal_bank *bank)
-{
-	struct mtk_thermal *mt = bank->mt;
+अटल व्योम mtk_thermal_put_bank(काष्ठा mtk_thermal_bank *bank)
+अणु
+	काष्ठा mtk_thermal *mt = bank->mt;
 
-	if (mt->conf->need_switch_bank)
+	अगर (mt->conf->need_चयन_bank)
 		mutex_unlock(&mt->lock);
-}
+पूर्ण
 
 /**
  * mtk_thermal_bank_temperature - get the temperature of a bank
@@ -644,234 +645,234 @@ static void mtk_thermal_put_bank(struct mtk_thermal_bank *bank)
  * The temperature of a bank is considered the maximum temperature of
  * the sensors associated to the bank.
  */
-static int mtk_thermal_bank_temperature(struct mtk_thermal_bank *bank)
-{
-	struct mtk_thermal *mt = bank->mt;
-	const struct mtk_thermal_data *conf = mt->conf;
-	int i, temp = INT_MIN, max = INT_MIN;
+अटल पूर्णांक mtk_thermal_bank_temperature(काष्ठा mtk_thermal_bank *bank)
+अणु
+	काष्ठा mtk_thermal *mt = bank->mt;
+	स्थिर काष्ठा mtk_thermal_data *conf = mt->conf;
+	पूर्णांक i, temp = पूर्णांक_न्यून, max = पूर्णांक_न्यून;
 	u32 raw;
 
-	for (i = 0; i < conf->bank_data[bank->id].num_sensors; i++) {
-		raw = readl(mt->thermal_base + conf->msr[i]);
+	क्रम (i = 0; i < conf->bank_data[bank->id].num_sensors; i++) अणु
+		raw = पढ़ोl(mt->thermal_base + conf->msr[i]);
 
-		if (mt->conf->version == MTK_THERMAL_V1) {
+		अगर (mt->conf->version == MTK_THERMAL_V1) अणु
 			temp = raw_to_mcelsius_v1(
 				mt, conf->bank_data[bank->id].sensors[i], raw);
-		} else {
+		पूर्ण अन्यथा अणु
 			temp = raw_to_mcelsius_v2(
 				mt, conf->bank_data[bank->id].sensors[i], raw);
-		}
+		पूर्ण
 
 		/*
-		 * The first read of a sensor often contains very high bogus
-		 * temperature value. Filter these out so that the system does
-		 * not immediately shut down.
+		 * The first पढ़ो of a sensor often contains very high bogus
+		 * temperature value. Filter these out so that the प्रणाली करोes
+		 * not immediately shut करोwn.
 		 */
-		if (temp > 200000)
+		अगर (temp > 200000)
 			temp = 0;
 
-		if (temp > max)
+		अगर (temp > max)
 			max = temp;
-	}
+	पूर्ण
 
-	return max;
-}
+	वापस max;
+पूर्ण
 
-static int mtk_read_temp(void *data, int *temperature)
-{
-	struct mtk_thermal *mt = data;
-	int i;
-	int tempmax = INT_MIN;
+अटल पूर्णांक mtk_पढ़ो_temp(व्योम *data, पूर्णांक *temperature)
+अणु
+	काष्ठा mtk_thermal *mt = data;
+	पूर्णांक i;
+	पूर्णांक tempmax = पूर्णांक_न्यून;
 
-	for (i = 0; i < mt->conf->num_banks; i++) {
-		struct mtk_thermal_bank *bank = &mt->banks[i];
+	क्रम (i = 0; i < mt->conf->num_banks; i++) अणु
+		काष्ठा mtk_thermal_bank *bank = &mt->banks[i];
 
 		mtk_thermal_get_bank(bank);
 
 		tempmax = max(tempmax, mtk_thermal_bank_temperature(bank));
 
 		mtk_thermal_put_bank(bank);
-	}
+	पूर्ण
 
 	*temperature = tempmax;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct thermal_zone_of_device_ops mtk_thermal_ops = {
-	.get_temp = mtk_read_temp,
-};
+अटल स्थिर काष्ठा thermal_zone_of_device_ops mtk_thermal_ops = अणु
+	.get_temp = mtk_पढ़ो_temp,
+पूर्ण;
 
-static void mtk_thermal_init_bank(struct mtk_thermal *mt, int num,
+अटल व्योम mtk_thermal_init_bank(काष्ठा mtk_thermal *mt, पूर्णांक num,
 				  u32 apmixed_phys_base, u32 auxadc_phys_base,
-				  int ctrl_id)
-{
-	struct mtk_thermal_bank *bank = &mt->banks[num];
-	const struct mtk_thermal_data *conf = mt->conf;
-	int i;
+				  पूर्णांक ctrl_id)
+अणु
+	काष्ठा mtk_thermal_bank *bank = &mt->banks[num];
+	स्थिर काष्ठा mtk_thermal_data *conf = mt->conf;
+	पूर्णांक i;
 
-	int offset = mt->conf->controller_offset[ctrl_id];
-	void __iomem *controller_base = mt->thermal_base + offset;
+	पूर्णांक offset = mt->conf->controller_offset[ctrl_id];
+	व्योम __iomem *controller_base = mt->thermal_base + offset;
 
 	bank->id = num;
 	bank->mt = mt;
 
 	mtk_thermal_get_bank(bank);
 
-	/* bus clock 66M counting unit is 12 * 15.15ns * 256 = 46.540us */
-	writel(TEMP_MONCTL1_PERIOD_UNIT(12), controller_base + TEMP_MONCTL1);
+	/* bus घड़ी 66M counting unit is 12 * 15.15ns * 256 = 46.540us */
+	ग_लिखोl(TEMP_MONCTL1_PERIOD_UNIT(12), controller_base + TEMP_MONCTL1);
 
 	/*
-	 * filt interval is 1 * 46.540us = 46.54us,
-	 * sen interval is 429 * 46.540us = 19.96ms
+	 * filt पूर्णांकerval is 1 * 46.540us = 46.54us,
+	 * sen पूर्णांकerval is 429 * 46.540us = 19.96ms
 	 */
-	writel(TEMP_MONCTL2_FILTER_INTERVAL(1) |
+	ग_लिखोl(TEMP_MONCTL2_FILTER_INTERVAL(1) |
 			TEMP_MONCTL2_SENSOR_INTERVAL(429),
 			controller_base + TEMP_MONCTL2);
 
 	/* poll is set to 10u */
-	writel(TEMP_AHBPOLL_ADC_POLL_INTERVAL(768),
+	ग_लिखोl(TEMP_AHBPOLL_ADC_POLL_INTERVAL(768),
 	       controller_base + TEMP_AHBPOLL);
 
 	/* temperature sampling control, 1 sample */
-	writel(0x0, controller_base + TEMP_MSRCTL0);
+	ग_लिखोl(0x0, controller_base + TEMP_MSRCTL0);
 
-	/* exceed this polling time, IRQ would be inserted */
-	writel(0xffffffff, controller_base + TEMP_AHBTO);
+	/* exceed this polling समय, IRQ would be inserted */
+	ग_लिखोl(0xffffffff, controller_base + TEMP_AHBTO);
 
-	/* number of interrupts per event, 1 is enough */
-	writel(0x0, controller_base + TEMP_MONIDET0);
-	writel(0x0, controller_base + TEMP_MONIDET1);
+	/* number of पूर्णांकerrupts per event, 1 is enough */
+	ग_लिखोl(0x0, controller_base + TEMP_MONIDET0);
+	ग_लिखोl(0x0, controller_base + TEMP_MONIDET1);
 
 	/*
-	 * The MT8173 thermal controller does not have its own ADC. Instead it
-	 * uses AHB bus accesses to control the AUXADC. To do this the thermal
+	 * The MT8173 thermal controller करोes not have its own ADC. Instead it
+	 * uses AHB bus accesses to control the AUXADC. To करो this the thermal
 	 * controller has to be programmed with the physical addresses of the
-	 * AUXADC registers and with the various bit positions in the AUXADC.
-	 * Also the thermal controller controls a mux in the APMIXEDSYS register
+	 * AUXADC रेजिस्टरs and with the various bit positions in the AUXADC.
+	 * Also the thermal controller controls a mux in the APMIXEDSYS रेजिस्टर
 	 * space.
 	 */
 
 	/*
 	 * this value will be stored to TEMP_PNPMUXADDR (TEMP_SPARE0)
-	 * automatically by hw
+	 * स्वतःmatically by hw
 	 */
-	writel(BIT(conf->auxadc_channel), controller_base + TEMP_ADCMUX);
+	ग_लिखोl(BIT(conf->auxadc_channel), controller_base + TEMP_ADCMUX);
 
-	/* AHB address for auxadc mux selection */
-	writel(auxadc_phys_base + AUXADC_CON1_CLR_V,
+	/* AHB address क्रम auxadc mux selection */
+	ग_लिखोl(auxadc_phys_base + AUXADC_CON1_CLR_V,
 	       controller_base + TEMP_ADCMUXADDR);
 
-	if (mt->conf->version == MTK_THERMAL_V1) {
-		/* AHB address for pnp sensor mux selection */
-		writel(apmixed_phys_base + APMIXED_SYS_TS_CON1,
+	अगर (mt->conf->version == MTK_THERMAL_V1) अणु
+		/* AHB address क्रम pnp sensor mux selection */
+		ग_लिखोl(apmixed_phys_base + APMIXED_SYS_TS_CON1,
 		       controller_base + TEMP_PNPMUXADDR);
-	}
+	पूर्ण
 
-	/* AHB value for auxadc enable */
-	writel(BIT(conf->auxadc_channel), controller_base + TEMP_ADCEN);
+	/* AHB value क्रम auxadc enable */
+	ग_लिखोl(BIT(conf->auxadc_channel), controller_base + TEMP_ADCEN);
 
-	/* AHB address for auxadc enable (channel 0 immediate mode selected) */
-	writel(auxadc_phys_base + AUXADC_CON1_SET_V,
+	/* AHB address क्रम auxadc enable (channel 0 immediate mode selected) */
+	ग_लिखोl(auxadc_phys_base + AUXADC_CON1_SET_V,
 	       controller_base + TEMP_ADCENADDR);
 
-	/* AHB address for auxadc valid bit */
-	writel(auxadc_phys_base + AUXADC_DATA(conf->auxadc_channel),
+	/* AHB address क्रम auxadc valid bit */
+	ग_लिखोl(auxadc_phys_base + AUXADC_DATA(conf->auxadc_channel),
 	       controller_base + TEMP_ADCVALIDADDR);
 
-	/* AHB address for auxadc voltage output */
-	writel(auxadc_phys_base + AUXADC_DATA(conf->auxadc_channel),
+	/* AHB address क्रम auxadc voltage output */
+	ग_लिखोl(auxadc_phys_base + AUXADC_DATA(conf->auxadc_channel),
 	       controller_base + TEMP_ADCVOLTADDR);
 
-	/* read valid & voltage are at the same register */
-	writel(0x0, controller_base + TEMP_RDCTRL);
+	/* पढ़ो valid & voltage are at the same रेजिस्टर */
+	ग_लिखोl(0x0, controller_base + TEMP_RDCTRL);
 
 	/* indicate where the valid bit is */
-	writel(TEMP_ADCVALIDMASK_VALID_HIGH | TEMP_ADCVALIDMASK_VALID_POS(12),
+	ग_लिखोl(TEMP_ADCVALIDMASK_VALID_HIGH | TEMP_ADCVALIDMASK_VALID_POS(12),
 	       controller_base + TEMP_ADCVALIDMASK);
 
-	/* no shift */
-	writel(0x0, controller_base + TEMP_ADCVOLTAGESHIFT);
+	/* no shअगरt */
+	ग_लिखोl(0x0, controller_base + TEMP_ADCVOLTAGESHIFT);
 
-	/* enable auxadc mux write transaction */
-	writel(TEMP_ADCWRITECTRL_ADC_MUX_WRITE,
+	/* enable auxadc mux ग_लिखो transaction */
+	ग_लिखोl(TEMP_ADCWRITECTRL_ADC_MUX_WRITE,
 		controller_base + TEMP_ADCWRITECTRL);
 
-	for (i = 0; i < conf->bank_data[num].num_sensors; i++)
-		writel(conf->sensor_mux_values[conf->bank_data[num].sensors[i]],
+	क्रम (i = 0; i < conf->bank_data[num].num_sensors; i++)
+		ग_लिखोl(conf->sensor_mux_values[conf->bank_data[num].sensors[i]],
 		       mt->thermal_base + conf->adcpnp[i]);
 
-	writel((1 << conf->bank_data[num].num_sensors) - 1,
+	ग_लिखोl((1 << conf->bank_data[num].num_sensors) - 1,
 	       controller_base + TEMP_MONCTL0);
 
-	writel(TEMP_ADCWRITECTRL_ADC_PNP_WRITE |
+	ग_लिखोl(TEMP_ADCWRITECTRL_ADC_PNP_WRITE |
 	       TEMP_ADCWRITECTRL_ADC_MUX_WRITE,
 	       controller_base + TEMP_ADCWRITECTRL);
 
 	mtk_thermal_put_bank(bank);
-}
+पूर्ण
 
-static u64 of_get_phys_base(struct device_node *np)
-{
+अटल u64 of_get_phys_base(काष्ठा device_node *np)
+अणु
 	u64 size64;
-	const __be32 *regaddr_p;
+	स्थिर __be32 *regaddr_p;
 
-	regaddr_p = of_get_address(np, 0, &size64, NULL);
-	if (!regaddr_p)
-		return OF_BAD_ADDR;
+	regaddr_p = of_get_address(np, 0, &size64, शून्य);
+	अगर (!regaddr_p)
+		वापस OF_BAD_ADDR;
 
-	return of_translate_address(np, regaddr_p);
-}
+	वापस of_translate_address(np, regaddr_p);
+पूर्ण
 
-static int mtk_thermal_extract_efuse_v1(struct mtk_thermal *mt, u32 *buf)
-{
-	int i;
+अटल पूर्णांक mtk_thermal_extract_efuse_v1(काष्ठा mtk_thermal *mt, u32 *buf)
+अणु
+	पूर्णांक i;
 
-	if (!(buf[0] & CALIB_BUF0_VALID_V1))
-		return -EINVAL;
+	अगर (!(buf[0] & CALIB_BUF0_VALID_V1))
+		वापस -EINVAL;
 
 	mt->adc_ge = CALIB_BUF1_ADC_GE_V1(buf[1]);
 
-	for (i = 0; i < mt->conf->num_sensors; i++) {
-		switch (mt->conf->vts_index[i]) {
-		case VTS1:
+	क्रम (i = 0; i < mt->conf->num_sensors; i++) अणु
+		चयन (mt->conf->vts_index[i]) अणु
+		हाल VTS1:
 			mt->vts[VTS1] = CALIB_BUF0_VTS_TS1_V1(buf[0]);
-			break;
-		case VTS2:
+			अवरोध;
+		हाल VTS2:
 			mt->vts[VTS2] = CALIB_BUF0_VTS_TS2_V1(buf[0]);
-			break;
-		case VTS3:
+			अवरोध;
+		हाल VTS3:
 			mt->vts[VTS3] = CALIB_BUF1_VTS_TS3_V1(buf[1]);
-			break;
-		case VTS4:
+			अवरोध;
+		हाल VTS4:
 			mt->vts[VTS4] = CALIB_BUF2_VTS_TS4_V1(buf[2]);
-			break;
-		case VTS5:
+			अवरोध;
+		हाल VTS5:
 			mt->vts[VTS5] = CALIB_BUF2_VTS_TS5_V1(buf[2]);
-			break;
-		case VTSABB:
+			अवरोध;
+		हाल VTSABB:
 			mt->vts[VTSABB] =
 				CALIB_BUF2_VTS_TSABB_V1(buf[2]);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	mt->degc_cali = CALIB_BUF0_DEGC_CALI_V1(buf[0]);
-	if (CALIB_BUF1_ID_V1(buf[1]) &
+	अगर (CALIB_BUF1_ID_V1(buf[1]) &
 	    CALIB_BUF0_O_SLOPE_SIGN_V1(buf[0]))
 		mt->o_slope = -CALIB_BUF0_O_SLOPE_V1(buf[0]);
-	else
+	अन्यथा
 		mt->o_slope = CALIB_BUF0_O_SLOPE_V1(buf[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_thermal_extract_efuse_v2(struct mtk_thermal *mt, u32 *buf)
-{
-	if (!CALIB_BUF1_VALID_V2(buf[1]))
-		return -EINVAL;
+अटल पूर्णांक mtk_thermal_extract_efuse_v2(काष्ठा mtk_thermal *mt, u32 *buf)
+अणु
+	अगर (!CALIB_BUF1_VALID_V2(buf[1]))
+		वापस -EINVAL;
 
 	mt->adc_oe = CALIB_BUF0_ADC_OE_V2(buf[0]);
 	mt->adc_ge = CALIB_BUF0_ADC_GE_V2(buf[0]);
@@ -882,241 +883,241 @@ static int mtk_thermal_extract_efuse_v2(struct mtk_thermal *mt, u32 *buf)
 	mt->vts[VTSABB] = CALIB_BUF1_VTS_TSABB_V2(buf[1]);
 	mt->o_slope_sign = CALIB_BUF1_O_SLOPE_SIGN_V2(buf[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_thermal_get_calibration_data(struct device *dev,
-					    struct mtk_thermal *mt)
-{
-	struct nvmem_cell *cell;
+अटल पूर्णांक mtk_thermal_get_calibration_data(काष्ठा device *dev,
+					    काष्ठा mtk_thermal *mt)
+अणु
+	काष्ठा nvmem_cell *cell;
 	u32 *buf;
-	size_t len;
-	int i, ret = 0;
+	माप_प्रकार len;
+	पूर्णांक i, ret = 0;
 
-	/* Start with default values */
+	/* Start with शेष values */
 	mt->adc_ge = 512;
-	for (i = 0; i < mt->conf->num_sensors; i++)
+	क्रम (i = 0; i < mt->conf->num_sensors; i++)
 		mt->vts[i] = 260;
 	mt->degc_cali = 40;
 	mt->o_slope = 0;
 
 	cell = nvmem_cell_get(dev, "calibration-data");
-	if (IS_ERR(cell)) {
-		if (PTR_ERR(cell) == -EPROBE_DEFER)
-			return PTR_ERR(cell);
-		return 0;
-	}
+	अगर (IS_ERR(cell)) अणु
+		अगर (PTR_ERR(cell) == -EPROBE_DEFER)
+			वापस PTR_ERR(cell);
+		वापस 0;
+	पूर्ण
 
-	buf = (u32 *)nvmem_cell_read(cell, &len);
+	buf = (u32 *)nvmem_cell_पढ़ो(cell, &len);
 
 	nvmem_cell_put(cell);
 
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	if (len < 3 * sizeof(u32)) {
+	अगर (len < 3 * माप(u32)) अणु
 		dev_warn(dev, "invalid calibration data\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mt->conf->version == MTK_THERMAL_V1)
+	अगर (mt->conf->version == MTK_THERMAL_V1)
 		ret = mtk_thermal_extract_efuse_v1(mt, buf);
-	else
+	अन्यथा
 		ret = mtk_thermal_extract_efuse_v2(mt, buf);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(dev, "Device not calibrated, using default calibration values\n");
 		ret = 0;
-	}
+	पूर्ण
 
 out:
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id mtk_thermal_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mtk_thermal_of_match[] = अणु
+	अणु
 		.compatible = "mediatek,mt8173-thermal",
-		.data = (void *)&mt8173_thermal_data,
-	},
-	{
+		.data = (व्योम *)&mt8173_thermal_data,
+	पूर्ण,
+	अणु
 		.compatible = "mediatek,mt2701-thermal",
-		.data = (void *)&mt2701_thermal_data,
-	},
-	{
+		.data = (व्योम *)&mt2701_thermal_data,
+	पूर्ण,
+	अणु
 		.compatible = "mediatek,mt2712-thermal",
-		.data = (void *)&mt2712_thermal_data,
-	},
-	{
+		.data = (व्योम *)&mt2712_thermal_data,
+	पूर्ण,
+	अणु
 		.compatible = "mediatek,mt7622-thermal",
-		.data = (void *)&mt7622_thermal_data,
-	},
-	{
+		.data = (व्योम *)&mt7622_thermal_data,
+	पूर्ण,
+	अणु
 		.compatible = "mediatek,mt8183-thermal",
-		.data = (void *)&mt8183_thermal_data,
-	}, {
-	},
-};
+		.data = (व्योम *)&mt8183_thermal_data,
+	पूर्ण, अणु
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_thermal_of_match);
 
-static void mtk_thermal_turn_on_buffer(void __iomem *apmixed_base)
-{
-	int tmp;
+अटल व्योम mtk_thermal_turn_on_buffer(व्योम __iomem *apmixed_base)
+अणु
+	पूर्णांक पंचांगp;
 
-	tmp = readl(apmixed_base + APMIXED_SYS_TS_CON1);
-	tmp &= ~(0x37);
-	tmp |= 0x1;
-	writel(tmp, apmixed_base + APMIXED_SYS_TS_CON1);
+	पंचांगp = पढ़ोl(apmixed_base + APMIXED_SYS_TS_CON1);
+	पंचांगp &= ~(0x37);
+	पंचांगp |= 0x1;
+	ग_लिखोl(पंचांगp, apmixed_base + APMIXED_SYS_TS_CON1);
 	udelay(200);
-}
+पूर्ण
 
-static void mtk_thermal_release_periodic_ts(struct mtk_thermal *mt,
-					    void __iomem *auxadc_base)
-{
-	int tmp;
+अटल व्योम mtk_thermal_release_periodic_ts(काष्ठा mtk_thermal *mt,
+					    व्योम __iomem *auxadc_base)
+अणु
+	पूर्णांक पंचांगp;
 
-	writel(0x800, auxadc_base + AUXADC_CON1_SET_V);
-	writel(0x1, mt->thermal_base + TEMP_MONCTL0);
-	tmp = readl(mt->thermal_base + TEMP_MSRCTL1);
-	writel((tmp & (~0x10e)), mt->thermal_base + TEMP_MSRCTL1);
-}
+	ग_लिखोl(0x800, auxadc_base + AUXADC_CON1_SET_V);
+	ग_लिखोl(0x1, mt->thermal_base + TEMP_MONCTL0);
+	पंचांगp = पढ़ोl(mt->thermal_base + TEMP_MSRCTL1);
+	ग_लिखोl((पंचांगp & (~0x10e)), mt->thermal_base + TEMP_MSRCTL1);
+पूर्ण
 
-static int mtk_thermal_probe(struct platform_device *pdev)
-{
-	int ret, i, ctrl_id;
-	struct device_node *auxadc, *apmixedsys, *np = pdev->dev.of_node;
-	struct mtk_thermal *mt;
-	struct resource *res;
+अटल पूर्णांक mtk_thermal_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret, i, ctrl_id;
+	काष्ठा device_node *auxadc, *apmixedsys, *np = pdev->dev.of_node;
+	काष्ठा mtk_thermal *mt;
+	काष्ठा resource *res;
 	u64 auxadc_phys_base, apmixed_phys_base;
-	struct thermal_zone_device *tzdev;
-	void __iomem *apmixed_base, *auxadc_base;
+	काष्ठा thermal_zone_device *tzdev;
+	व्योम __iomem *apmixed_base, *auxadc_base;
 
-	mt = devm_kzalloc(&pdev->dev, sizeof(*mt), GFP_KERNEL);
-	if (!mt)
-		return -ENOMEM;
+	mt = devm_kzalloc(&pdev->dev, माप(*mt), GFP_KERNEL);
+	अगर (!mt)
+		वापस -ENOMEM;
 
 	mt->conf = of_device_get_match_data(&pdev->dev);
 
 	mt->clk_peri_therm = devm_clk_get(&pdev->dev, "therm");
-	if (IS_ERR(mt->clk_peri_therm))
-		return PTR_ERR(mt->clk_peri_therm);
+	अगर (IS_ERR(mt->clk_peri_therm))
+		वापस PTR_ERR(mt->clk_peri_therm);
 
 	mt->clk_auxadc = devm_clk_get(&pdev->dev, "auxadc");
-	if (IS_ERR(mt->clk_auxadc))
-		return PTR_ERR(mt->clk_auxadc);
+	अगर (IS_ERR(mt->clk_auxadc))
+		वापस PTR_ERR(mt->clk_auxadc);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	mt->thermal_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(mt->thermal_base))
-		return PTR_ERR(mt->thermal_base);
+	अगर (IS_ERR(mt->thermal_base))
+		वापस PTR_ERR(mt->thermal_base);
 
 	ret = mtk_thermal_get_calibration_data(&pdev->dev, mt);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_init(&mt->lock);
 
 	mt->dev = &pdev->dev;
 
 	auxadc = of_parse_phandle(np, "mediatek,auxadc", 0);
-	if (!auxadc) {
+	अगर (!auxadc) अणु
 		dev_err(&pdev->dev, "missing auxadc node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	auxadc_base = of_iomap(auxadc, 0);
 	auxadc_phys_base = of_get_phys_base(auxadc);
 
 	of_node_put(auxadc);
 
-	if (auxadc_phys_base == OF_BAD_ADDR) {
+	अगर (auxadc_phys_base == OF_BAD_ADDR) अणु
 		dev_err(&pdev->dev, "Can't get auxadc phys address\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	apmixedsys = of_parse_phandle(np, "mediatek,apmixedsys", 0);
-	if (!apmixedsys) {
+	अगर (!apmixedsys) अणु
 		dev_err(&pdev->dev, "missing apmixedsys node\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	apmixed_base = of_iomap(apmixedsys, 0);
 	apmixed_phys_base = of_get_phys_base(apmixedsys);
 
 	of_node_put(apmixedsys);
 
-	if (apmixed_phys_base == OF_BAD_ADDR) {
+	अगर (apmixed_phys_base == OF_BAD_ADDR) अणु
 		dev_err(&pdev->dev, "Can't get auxadc phys address\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = device_reset_optional(&pdev->dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(mt->clk_auxadc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't enable auxadc clk: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(mt->clk_peri_therm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't enable peri clk: %d\n", ret);
-		goto err_disable_clk_auxadc;
-	}
+		जाओ err_disable_clk_auxadc;
+	पूर्ण
 
-	if (mt->conf->version == MTK_THERMAL_V2) {
+	अगर (mt->conf->version == MTK_THERMAL_V2) अणु
 		mtk_thermal_turn_on_buffer(apmixed_base);
 		mtk_thermal_release_periodic_ts(mt, auxadc_base);
-	}
+	पूर्ण
 
-	for (ctrl_id = 0; ctrl_id < mt->conf->num_controller ; ctrl_id++)
-		for (i = 0; i < mt->conf->num_banks; i++)
+	क्रम (ctrl_id = 0; ctrl_id < mt->conf->num_controller ; ctrl_id++)
+		क्रम (i = 0; i < mt->conf->num_banks; i++)
 			mtk_thermal_init_bank(mt, i, apmixed_phys_base,
 					      auxadc_phys_base, ctrl_id);
 
-	platform_set_drvdata(pdev, mt);
+	platक्रमm_set_drvdata(pdev, mt);
 
-	tzdev = devm_thermal_zone_of_sensor_register(&pdev->dev, 0, mt,
+	tzdev = devm_thermal_zone_of_sensor_रेजिस्टर(&pdev->dev, 0, mt,
 						     &mtk_thermal_ops);
-	if (IS_ERR(tzdev)) {
+	अगर (IS_ERR(tzdev)) अणु
 		ret = PTR_ERR(tzdev);
-		goto err_disable_clk_peri_therm;
-	}
+		जाओ err_disable_clk_peri_therm;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_clk_peri_therm:
 	clk_disable_unprepare(mt->clk_peri_therm);
 err_disable_clk_auxadc:
 	clk_disable_unprepare(mt->clk_auxadc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_thermal_remove(struct platform_device *pdev)
-{
-	struct mtk_thermal *mt = platform_get_drvdata(pdev);
+अटल पूर्णांक mtk_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_thermal *mt = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(mt->clk_peri_therm);
 	clk_disable_unprepare(mt->clk_auxadc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mtk_thermal_driver = {
+अटल काष्ठा platक्रमm_driver mtk_thermal_driver = अणु
 	.probe = mtk_thermal_probe,
-	.remove = mtk_thermal_remove,
-	.driver = {
+	.हटाओ = mtk_thermal_हटाओ,
+	.driver = अणु
 		.name = "mtk-thermal",
 		.of_match_table = mtk_thermal_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mtk_thermal_driver);
+module_platक्रमm_driver(mtk_thermal_driver);
 
 MODULE_AUTHOR("Michael Kao <michael.kao@mediatek.com>");
 MODULE_AUTHOR("Louis Yu <louis.yu@mediatek.com>");

@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#ifndef CFMUXL_H_
-#define CFMUXL_H_
-#include <net/caif/caif_layer.h>
+#अगर_अघोषित CFMUXL_H_
+#घोषणा CFMUXL_H_
+#समावेश <net/caअगर/caअगर_layer.h>
 
-struct cfsrvl;
-struct cffrml;
+काष्ठा cfsrvl;
+काष्ठा cffrml;
 
-struct cflayer *cfmuxl_create(void);
-int cfmuxl_set_uplayer(struct cflayer *layr, struct cflayer *up, u8 linkid);
-struct cflayer *cfmuxl_remove_dnlayer(struct cflayer *layr, u8 phyid);
-int cfmuxl_set_dnlayer(struct cflayer *layr, struct cflayer *up, u8 phyid);
-struct cflayer *cfmuxl_remove_uplayer(struct cflayer *layr, u8 linkid);
+काष्ठा cflayer *cfmuxl_create(व्योम);
+पूर्णांक cfmuxl_set_uplayer(काष्ठा cflayer *layr, काष्ठा cflayer *up, u8 linkid);
+काष्ठा cflayer *cfmuxl_हटाओ_dnlayer(काष्ठा cflayer *layr, u8 phyid);
+पूर्णांक cfmuxl_set_dnlayer(काष्ठा cflayer *layr, काष्ठा cflayer *up, u8 phyid);
+काष्ठा cflayer *cfmuxl_हटाओ_uplayer(काष्ठा cflayer *layr, u8 linkid);
 
-#endif				/* CFMUXL_H_ */
+#पूर्ण_अगर				/* CFMUXL_H_ */

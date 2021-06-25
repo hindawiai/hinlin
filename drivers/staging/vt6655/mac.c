@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -12,8 +13,8 @@
  * Date: May 21, 1996
  *
  * Functions:
- *      MACbIsRegBitsOff - Test if All test Bits Off
- *      MACbIsIntDisable - Test if MAC interrupt disable
+ *      MACbIsRegBitsOff - Test अगर All test Bits Off
+ *      MACbIsIntDisable - Test अगर MAC पूर्णांकerrupt disable
  *      MACvSetShortRetryLimit - Set 802.11 Short Retry limit
  *      MACvSetLongRetryLimit - Set 802.11 Long Retry limit
  *      MACvSetLoopbackMode - Set MAC Loopback Mode
@@ -23,7 +24,7 @@
  *      MACbSafeRxOff - Turn Off MAC Rx
  *      MACbSafeTxOff - Turn Off MAC Tx
  *      MACbSafeStop - Stop MAC function
- *      MACbShutdown - Shut down MAC
+ *      MACbShutकरोwn - Shut करोwn MAC
  *      MACvInitialize - Initialize MAC
  *      MACvSetCurrRxDescAddr - Set Rx Descriptors Address
  *      MACvSetCurrTx0DescAddr - Set Tx0 Descriptors Address
@@ -38,54 +39,54 @@
  *
  */
 
-#include "tmacro.h"
-#include "mac.h"
+#समावेश "tmacro.h"
+#समावेश "mac.h"
 
 /*
  * Description:
- *      Test if all test bits off
+ *      Test अगर all test bits off
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *      byRegOfs    - Offset of MAC Register
  *      byTestBits  - Test bits
  *  Out:
  *      none
  *
- * Return Value: true if all test bits Off; otherwise false
+ * Return Value: true अगर all test bits Off; otherwise false
  *
  */
-bool MACbIsRegBitsOff(struct vnt_private *priv, unsigned char byRegOfs,
-		      unsigned char byTestBits)
-{
-	void __iomem *io_base = priv->PortOffset;
+bool MACbIsRegBitsOff(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byRegOfs,
+		      अचिन्हित अक्षर byTestBits)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
-	return !(ioread8(io_base + byRegOfs) & byTestBits);
-}
+	वापस !(ioपढ़ो8(io_base + byRegOfs) & byTestBits);
+पूर्ण
 
 /*
  * Description:
- *      Test if MAC interrupt disable
+ *      Test अगर MAC पूर्णांकerrupt disable
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if interrupt is disable; otherwise false
+ * Return Value: true अगर पूर्णांकerrupt is disable; otherwise false
  *
  */
-bool MACbIsIntDisable(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
+bool MACbIsIntDisable(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
-	if (ioread32(io_base + MAC_REG_IMR))
-		return false;
+	अगर (ioपढ़ो32(io_base + MAC_REG_IMR))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -93,7 +94,7 @@ bool MACbIsIntDisable(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *      byRetryLimit- Retry Limit
  *  Out:
  *      none
@@ -101,13 +102,13 @@ bool MACbIsIntDisable(struct vnt_private *priv)
  * Return Value: none
  *
  */
-void MACvSetShortRetryLimit(struct vnt_private *priv,
-			    unsigned char byRetryLimit)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvSetShortRetryLimit(काष्ठा vnt_निजी *priv,
+			    अचिन्हित अक्षर byRetryLimit)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 	/* set SRT */
-	iowrite8(byRetryLimit, io_base + MAC_REG_SRT);
-}
+	ioग_लिखो8(byRetryLimit, io_base + MAC_REG_SRT);
+पूर्ण
 
 /*
  * Description:
@@ -115,7 +116,7 @@ void MACvSetShortRetryLimit(struct vnt_private *priv,
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *      byRetryLimit- Retry Limit
  *  Out:
  *      none
@@ -123,13 +124,13 @@ void MACvSetShortRetryLimit(struct vnt_private *priv,
  * Return Value: none
  *
  */
-void MACvSetLongRetryLimit(struct vnt_private *priv,
-			   unsigned char byRetryLimit)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvSetLongRetryLimit(काष्ठा vnt_निजी *priv,
+			   अचिन्हित अक्षर byRetryLimit)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 	/* set LRT */
-	iowrite8(byRetryLimit, io_base + MAC_REG_LRT);
-}
+	ioग_लिखो8(byRetryLimit, io_base + MAC_REG_LRT);
+पूर्ण
 
 /*
  * Description:
@@ -137,7 +138,7 @@ void MACvSetLongRetryLimit(struct vnt_private *priv,
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *      byLoopbackMode  - Loopback Mode
  *  Out:
  *      none
@@ -145,52 +146,52 @@ void MACvSetLongRetryLimit(struct vnt_private *priv,
  * Return Value: none
  *
  */
-void MACvSetLoopbackMode(struct vnt_private *priv, unsigned char byLoopbackMode)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvSetLoopbackMode(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर byLoopbackMode)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
 	byLoopbackMode <<= 6;
 	/* set TCR */
-	iowrite8((ioread8(io_base + MAC_REG_TEST) & 0x3f) | byLoopbackMode,
+	ioग_लिखो8((ioपढ़ो8(io_base + MAC_REG_TEST) & 0x3f) | byLoopbackMode,
 		 io_base + MAC_REG_TEST);
-}
+पूर्ण
 
 /*
  * Description:
- *      Save MAC registers to context buffer
+ *      Save MAC रेजिस्टरs to context buffer
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      cxt_buf   - Context buffer
  *
  * Return Value: none
  *
  */
-void MACvSaveContext(struct vnt_private *priv, unsigned char *cxt_buf)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvSaveContext(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर *cxt_buf)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
-	/* read page0 register */
-	memcpy_fromio(cxt_buf, io_base, MAC_MAX_CONTEXT_SIZE_PAGE0);
+	/* पढ़ो page0 रेजिस्टर */
+	स_नकल_fromio(cxt_buf, io_base, MAC_MAX_CONTEXT_SIZE_PAGE0);
 
 	MACvSelectPage1(io_base);
 
-	/* read page1 register */
-	memcpy_fromio(cxt_buf + MAC_MAX_CONTEXT_SIZE_PAGE0, io_base,
+	/* पढ़ो page1 रेजिस्टर */
+	स_नकल_fromio(cxt_buf + MAC_MAX_CONTEXT_SIZE_PAGE0, io_base,
 		      MAC_MAX_CONTEXT_SIZE_PAGE1);
 
 	MACvSelectPage0(io_base);
-}
+पूर्ण
 
 /*
  * Description:
- *      Restore MAC registers from context buffer
+ *      Restore MAC रेजिस्टरs from context buffer
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *      cxt_buf   - Context buffer
  *  Out:
  *      none
@@ -198,43 +199,43 @@ void MACvSaveContext(struct vnt_private *priv, unsigned char *cxt_buf)
  * Return Value: none
  *
  */
-void MACvRestoreContext(struct vnt_private *priv, unsigned char *cxt_buf)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvRestoreContext(काष्ठा vnt_निजी *priv, अचिन्हित अक्षर *cxt_buf)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
 	MACvSelectPage1(io_base);
 	/* restore page1 */
-	memcpy_toio(io_base, cxt_buf + MAC_MAX_CONTEXT_SIZE_PAGE0,
+	स_नकल_toio(io_base, cxt_buf + MAC_MAX_CONTEXT_SIZE_PAGE0,
 		    MAC_MAX_CONTEXT_SIZE_PAGE1);
 
 	MACvSelectPage0(io_base);
 
 	/* restore RCR,TCR,IMR... */
-	memcpy_toio(io_base + MAC_REG_RCR, cxt_buf + MAC_REG_RCR,
+	स_नकल_toio(io_base + MAC_REG_RCR, cxt_buf + MAC_REG_RCR,
 		    MAC_REG_ISR - MAC_REG_RCR);
 
 	/* restore MAC Config. */
-	memcpy_toio(io_base + MAC_REG_LRT, cxt_buf + MAC_REG_LRT,
+	स_नकल_toio(io_base + MAC_REG_LRT, cxt_buf + MAC_REG_LRT,
 		    MAC_REG_PAGE1SEL - MAC_REG_LRT);
 
-	iowrite8(*(cxt_buf + MAC_REG_CFG), io_base + MAC_REG_CFG);
+	ioग_लिखो8(*(cxt_buf + MAC_REG_CFG), io_base + MAC_REG_CFG);
 
 	/* restore PS Config. */
-	memcpy_toio(io_base + MAC_REG_PSCFG, cxt_buf + MAC_REG_PSCFG,
+	स_नकल_toio(io_base + MAC_REG_PSCFG, cxt_buf + MAC_REG_PSCFG,
 		    MAC_REG_BBREGCTL - MAC_REG_PSCFG);
 
 	/* restore CURR_RX_DESC_ADDR, CURR_TX_DESC_ADDR */
-	iowrite32(*(u32 *)(cxt_buf + MAC_REG_TXDMAPTR0),
+	ioग_लिखो32(*(u32 *)(cxt_buf + MAC_REG_TXDMAPTR0),
 		  io_base + MAC_REG_TXDMAPTR0);
-	iowrite32(*(u32 *)(cxt_buf + MAC_REG_AC0DMAPTR),
+	ioग_लिखो32(*(u32 *)(cxt_buf + MAC_REG_AC0DMAPTR),
 		  io_base + MAC_REG_AC0DMAPTR);
-	iowrite32(*(u32 *)(cxt_buf + MAC_REG_BCNDMAPTR),
+	ioग_लिखो32(*(u32 *)(cxt_buf + MAC_REG_BCNDMAPTR),
 		  io_base + MAC_REG_BCNDMAPTR);
-	iowrite32(*(u32 *)(cxt_buf + MAC_REG_RXDMAPTR0),
+	ioग_लिखो32(*(u32 *)(cxt_buf + MAC_REG_RXDMAPTR0),
 		  io_base + MAC_REG_RXDMAPTR0);
-	iowrite32(*(u32 *)(cxt_buf + MAC_REG_RXDMAPTR1),
+	ioग_लिखो32(*(u32 *)(cxt_buf + MAC_REG_RXDMAPTR1),
 		  io_base + MAC_REG_RXDMAPTR1);
-}
+पूर्ण
 
 /*
  * Description:
@@ -242,62 +243,62 @@ void MACvRestoreContext(struct vnt_private *priv, unsigned char *cxt_buf)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if Reset Success; otherwise false
+ * Return Value: true अगर Reset Success; otherwise false
  *
  */
-bool MACbSoftwareReset(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
+bool MACbSoftwareReset(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
 
-	/* turn on HOSTCR_SOFTRST, just write 0x01 to reset */
-	iowrite8(0x01, io_base + MAC_REG_HOSTCR);
+	/* turn on HOSTCR_SOFTRST, just ग_लिखो 0x01 to reset */
+	ioग_लिखो8(0x01, io_base + MAC_REG_HOSTCR);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_HOSTCR) & HOSTCR_SOFTRST))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT)
-		return false;
-	return true;
-}
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_HOSTCR) & HOSTCR_SOFTRST))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT)
+		वापस false;
+	वापस true;
+पूर्ण
 
 /*
  * Description:
- *      save some important register's value, then do reset, then restore
- *	register's value
+ *      save some important रेजिस्टर's value, then करो reset, then restore
+ *	रेजिस्टर's value
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if success; otherwise false
+ * Return Value: true अगर success; otherwise false
  *
  */
-bool MACbSafeSoftwareReset(struct vnt_private *priv)
-{
-	unsigned char abyTmpRegData[MAC_MAX_CONTEXT_SIZE_PAGE0 + MAC_MAX_CONTEXT_SIZE_PAGE1];
+bool MACbSafeSoftwareReset(काष्ठा vnt_निजी *priv)
+अणु
+	अचिन्हित अक्षर abyTmpRegData[MAC_MAX_CONTEXT_SIZE_PAGE0 + MAC_MAX_CONTEXT_SIZE_PAGE1];
 	bool bRetVal;
 
 	/* PATCH....
-	 * save some important register's value, then do
-	 * reset, then restore register's value
+	 * save some important रेजिस्टर's value, then करो
+	 * reset, then restore रेजिस्टर's value
 	 */
 	/* save MAC context */
 	MACvSaveContext(priv, abyTmpRegData);
-	/* do reset */
+	/* करो reset */
 	bRetVal = MACbSoftwareReset(priv);
 	/* restore MAC context, except CR0 */
 	MACvRestoreContext(priv, abyTmpRegData);
 
-	return bRetVal;
-}
+	वापस bRetVal;
+पूर्ण
 
 /*
  * Description:
@@ -305,53 +306,53 @@ bool MACbSafeSoftwareReset(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if success; otherwise false
+ * Return Value: true अगर success; otherwise false
  *
  */
-bool MACbSafeRxOff(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
+bool MACbSafeRxOff(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
 
-	/* turn off wow temp for turn off Rx safely */
+	/* turn off wow temp क्रम turn off Rx safely */
 
 	/* Clear RX DMA0,1 */
-	iowrite32(DMACTL_CLRRUN, io_base + MAC_REG_RXDMACTL0);
-	iowrite32(DMACTL_CLRRUN, io_base + MAC_REG_RXDMACTL1);
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread32(io_base + MAC_REG_RXDMACTL0) & DMACTL_RUN))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+	ioग_लिखो32(DMACTL_CLRRUN, io_base + MAC_REG_RXDMACTL0);
+	ioग_लिखो32(DMACTL_CLRRUN, io_base + MAC_REG_RXDMACTL1);
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो32(io_base + MAC_REG_RXDMACTL0) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x10)\n");
-		return false;
-	}
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread32(io_base + MAC_REG_RXDMACTL1) & DMACTL_RUN))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+		वापस false;
+	पूर्ण
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो32(io_base + MAC_REG_RXDMACTL1) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x11)\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* try to safe shutdown RX */
+	/* try to safe shutकरोwn RX */
 	MACvRegBitsOff(io_base, MAC_REG_HOSTCR, HOSTCR_RXON);
-	/* W_MAX_TIMEOUT is the timeout period */
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_HOSTCR) & HOSTCR_RXONST))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+	/* W_MAX_TIMEOUT is the समयout period */
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_HOSTCR) & HOSTCR_RXONST))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x12)\n");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -359,55 +360,55 @@ bool MACbSafeRxOff(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if success; otherwise false
+ * Return Value: true अगर success; otherwise false
  *
  */
-bool MACbSafeTxOff(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
+bool MACbSafeTxOff(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
 
 	/* Clear TX DMA */
 	/* Tx0 */
-	iowrite32(DMACTL_CLRRUN, io_base + MAC_REG_TXDMACTL0);
+	ioग_लिखो32(DMACTL_CLRRUN, io_base + MAC_REG_TXDMACTL0);
 	/* AC0 */
-	iowrite32(DMACTL_CLRRUN, io_base + MAC_REG_AC0DMACTL);
+	ioग_लिखो32(DMACTL_CLRRUN, io_base + MAC_REG_AC0DMACTL);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread32(io_base + MAC_REG_TXDMACTL0) & DMACTL_RUN))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो32(io_base + MAC_REG_TXDMACTL0) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x20)\n");
-		return false;
-	}
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread32(io_base + MAC_REG_AC0DMACTL) & DMACTL_RUN))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+		वापस false;
+	पूर्ण
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो32(io_base + MAC_REG_AC0DMACTL) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x21)\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* try to safe shutdown TX */
+	/* try to safe shutकरोwn TX */
 	MACvRegBitsOff(io_base, MAC_REG_HOSTCR, HOSTCR_TXON);
 
-	/* W_MAX_TIMEOUT is the timeout period */
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_HOSTCR) & HOSTCR_TXONST))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+	/* W_MAX_TIMEOUT is the समयout period */
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_HOSTCR) & HOSTCR_TXONST))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x24)\n");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -415,34 +416,34 @@ bool MACbSafeTxOff(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if success; otherwise false
+ * Return Value: true अगर success; otherwise false
  *
  */
-bool MACbSafeStop(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
+bool MACbSafeStop(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
 	MACvRegBitsOff(io_base, MAC_REG_TCR, TCR_AUTOBCNTX);
 
-	if (!MACbSafeRxOff(priv)) {
+	अगर (!MACbSafeRxOff(priv)) अणु
 		pr_debug(" MACbSafeRxOff == false)\n");
 		MACbSafeSoftwareReset(priv);
-		return false;
-	}
-	if (!MACbSafeTxOff(priv)) {
+		वापस false;
+	पूर्ण
+	अगर (!MACbSafeTxOff(priv)) अणु
 		pr_debug(" MACbSafeTxOff == false)\n");
 		MACbSafeSoftwareReset(priv);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	MACvRegBitsOff(io_base, MAC_REG_HOSTCR, HOSTCR_MACEN);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -450,27 +451,27 @@ bool MACbSafeStop(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
- * Return Value: true if success; otherwise false
+ * Return Value: true अगर success; otherwise false
  *
  */
-bool MACbShutdown(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
+bool MACbShutकरोwn(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 	/* disable MAC IMR */
 	MACvIntDisable(io_base);
 	MACvSetLoopbackMode(priv, MAC_LB_INTERNAL);
 	/* stop the adapter */
-	if (!MACbSafeStop(priv)) {
+	अगर (!MACbSafeStop(priv)) अणु
 		MACvSetLoopbackMode(priv, MAC_LB_NONE);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	MACvSetLoopbackMode(priv, MAC_LB_NONE);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -478,30 +479,30 @@ bool MACbShutdown(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
+ *      io_base    - Base Address क्रम MAC
  *  Out:
  *      none
  *
  * Return Value: none
  *
  */
-void MACvInitialize(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvInitialize(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 	/* clear sticky bits */
 	MACvClearStckDS(io_base);
-	/* disable force PME-enable */
-	iowrite8(PME_OVR, io_base + MAC_REG_PMC1);
+	/* disable क्रमce PME-enable */
+	ioग_लिखो8(PME_OVR, io_base + MAC_REG_PMC1);
 	/* only 3253 A */
 
-	/* do reset */
+	/* करो reset */
 	MACbSoftwareReset(priv);
 
 	/* reset TSF counter */
-	iowrite8(TFTCTL_TSFCNTRST, io_base + MAC_REG_TFTCTL);
+	ioग_लिखो8(TFTCTL_TSFCNTRST, io_base + MAC_REG_TFTCTL);
 	/* enable TSF counter */
-	iowrite8(TFTCTL_TSFCNTREN, io_base + MAC_REG_TFTCTL);
-}
+	ioग_लिखो8(TFTCTL_TSFCNTREN, io_base + MAC_REG_TFTCTL);
+पूर्ण
 
 /*
  * Description:
@@ -509,7 +510,7 @@ void MACvInitialize(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *      curr_desc_addr  - Descriptor Address
  *  Out:
  *      none
@@ -517,25 +518,25 @@ void MACvInitialize(struct vnt_private *priv)
  * Return Value: none
  *
  */
-void MACvSetCurrRx0DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
-	unsigned char org_dma_ctl;
+व्योम MACvSetCurrRx0DescAddr(काष्ठा vnt_निजी *priv, u32 curr_desc_addr)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
+	अचिन्हित अक्षर org_dma_ctl;
 
-	org_dma_ctl = ioread8(io_base + MAC_REG_RXDMACTL0);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL0 + 2);
+	org_dma_ctl = ioपढ़ो8(io_base + MAC_REG_RXDMACTL0);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL0 + 2);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_RXDMACTL0) & DMACTL_RUN))
-			break;
-	}
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_RXDMACTL0) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
 
-	iowrite32(curr_desc_addr, io_base + MAC_REG_RXDMAPTR0);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL0);
-}
+	ioग_लिखो32(curr_desc_addr, io_base + MAC_REG_RXDMAPTR0);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL0);
+पूर्ण
 
 /*
  * Description:
@@ -543,7 +544,7 @@ void MACvSetCurrRx0DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *      curr_desc_addr  - Descriptor Address
  *  Out:
  *      none
@@ -551,25 +552,25 @@ void MACvSetCurrRx0DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
  * Return Value: none
  *
  */
-void MACvSetCurrRx1DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
-	unsigned char org_dma_ctl;
+व्योम MACvSetCurrRx1DescAddr(काष्ठा vnt_निजी *priv, u32 curr_desc_addr)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
+	अचिन्हित अक्षर org_dma_ctl;
 
-	org_dma_ctl = ioread8(io_base + MAC_REG_RXDMACTL1);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL1 + 2);
+	org_dma_ctl = ioपढ़ो8(io_base + MAC_REG_RXDMACTL1);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL1 + 2);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_RXDMACTL1) & DMACTL_RUN))
-			break;
-	}
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_RXDMACTL1) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
 
-	iowrite32(curr_desc_addr, io_base + MAC_REG_RXDMAPTR1);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL1);
-}
+	ioग_लिखो32(curr_desc_addr, io_base + MAC_REG_RXDMAPTR1);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_RXDMACTL1);
+पूर्ण
 
 /*
  * Description:
@@ -577,7 +578,7 @@ void MACvSetCurrRx1DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *      curr_desc_addr  - Descriptor Address
  *  Out:
  *      none
@@ -585,26 +586,26 @@ void MACvSetCurrRx1DescAddr(struct vnt_private *priv, u32 curr_desc_addr)
  * Return Value: none
  *
  */
-void MACvSetCurrTx0DescAddrEx(struct vnt_private *priv,
+व्योम MACvSetCurrTx0DescAddrEx(काष्ठा vnt_निजी *priv,
 			      u32 curr_desc_addr)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
-	unsigned char org_dma_ctl;
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
+	अचिन्हित अक्षर org_dma_ctl;
 
-	org_dma_ctl = ioread8(io_base + MAC_REG_TXDMACTL0);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_TXDMACTL0 + 2);
+	org_dma_ctl = ioपढ़ो8(io_base + MAC_REG_TXDMACTL0);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_TXDMACTL0 + 2);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_TXDMACTL0) & DMACTL_RUN))
-			break;
-	}
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_TXDMACTL0) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
 
-	iowrite32(curr_desc_addr, io_base + MAC_REG_TXDMAPTR0);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_TXDMACTL0);
-}
+	ioग_लिखो32(curr_desc_addr, io_base + MAC_REG_TXDMAPTR0);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_TXDMACTL0);
+पूर्ण
 
 /*
  * Description:
@@ -612,7 +613,7 @@ void MACvSetCurrTx0DescAddrEx(struct vnt_private *priv,
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *      curr_desc_addr  - Descriptor Address
  *  Out:
  *      none
@@ -621,36 +622,36 @@ void MACvSetCurrTx0DescAddrEx(struct vnt_private *priv,
  *
  */
 /* TxDMA1 = AC0DMA */
-void MACvSetCurrAC0DescAddrEx(struct vnt_private *priv,
+व्योम MACvSetCurrAC0DescAddrEx(काष्ठा vnt_निजी *priv,
 			      u32 curr_desc_addr)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short ww;
-	unsigned char org_dma_ctl;
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु ww;
+	अचिन्हित अक्षर org_dma_ctl;
 
-	org_dma_ctl = ioread8(io_base + MAC_REG_AC0DMACTL);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_AC0DMACTL + 2);
+	org_dma_ctl = ioपढ़ो8(io_base + MAC_REG_AC0DMACTL);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_AC0DMACTL + 2);
 
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (!(ioread8(io_base + MAC_REG_AC0DMACTL) & DMACTL_RUN))
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT)
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (!(ioपढ़ो8(io_base + MAC_REG_AC0DMACTL) & DMACTL_RUN))
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT)
 		pr_debug(" DBG_PORT80(0x26)\n");
-	iowrite32(curr_desc_addr, io_base + MAC_REG_AC0DMAPTR);
-	if (org_dma_ctl & DMACTL_RUN)
-		iowrite8(DMACTL_RUN, io_base + MAC_REG_AC0DMACTL);
-}
+	ioग_लिखो32(curr_desc_addr, io_base + MAC_REG_AC0DMAPTR);
+	अगर (org_dma_ctl & DMACTL_RUN)
+		ioग_लिखो8(DMACTL_RUN, io_base + MAC_REG_AC0DMACTL);
+पूर्ण
 
-void MACvSetCurrTXDescAddr(int iTxType, struct vnt_private *priv,
+व्योम MACvSetCurrTXDescAddr(पूर्णांक iTxType, काष्ठा vnt_निजी *priv,
 			   u32 curr_desc_addr)
-{
-	if (iTxType == TYPE_AC0DMA)
+अणु
+	अगर (iTxType == TYPE_AC0DMA)
 		MACvSetCurrAC0DescAddrEx(priv, curr_desc_addr);
-	else if (iTxType == TYPE_TXDMA0)
+	अन्यथा अगर (iTxType == TYPE_TXDMA0)
 		MACvSetCurrTx0DescAddrEx(priv, curr_desc_addr);
-}
+पूर्ण
 
 /*
  * Description:
@@ -658,94 +659,94 @@ void MACvSetCurrTXDescAddr(int iTxType, struct vnt_private *priv,
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
- *      uDelay      - Delay time (timer resolution is 4 us)
+ *      io_base    - Base Address क्रम MAC
+ *      uDelay      - Delay समय (समयr resolution is 4 us)
  *  Out:
  *      none
  *
  * Return Value: none
  *
  */
-void MACvTimer0MicroSDelay(struct vnt_private *priv, unsigned int uDelay)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned char byValue;
-	unsigned int uu, ii;
+व्योम MACvTimer0MicroSDelay(काष्ठा vnt_निजी *priv, अचिन्हित पूर्णांक uDelay)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित अक्षर byValue;
+	अचिन्हित पूर्णांक uu, ii;
 
-	iowrite8(0, io_base + MAC_REG_TMCTL0);
-	iowrite32(uDelay, io_base + MAC_REG_TMDATA0);
-	iowrite8((TMCTL_TMD | TMCTL_TE), io_base + MAC_REG_TMCTL0);
-	for (ii = 0; ii < 66; ii++) {  /* assume max PCI clock is 66Mhz */
-		for (uu = 0; uu < uDelay; uu++) {
-			byValue = ioread8(io_base + MAC_REG_TMCTL0);
-			if ((byValue == 0) ||
-			    (byValue & TMCTL_TSUSP)) {
-				iowrite8(0, io_base + MAC_REG_TMCTL0);
-				return;
-			}
-		}
-	}
-	iowrite8(0, io_base + MAC_REG_TMCTL0);
-}
+	ioग_लिखो8(0, io_base + MAC_REG_TMCTL0);
+	ioग_लिखो32(uDelay, io_base + MAC_REG_TMDATA0);
+	ioग_लिखो8((TMCTL_TMD | TMCTL_TE), io_base + MAC_REG_TMCTL0);
+	क्रम (ii = 0; ii < 66; ii++) अणु  /* assume max PCI घड़ी is 66Mhz */
+		क्रम (uu = 0; uu < uDelay; uu++) अणु
+			byValue = ioपढ़ो8(io_base + MAC_REG_TMCTL0);
+			अगर ((byValue == 0) ||
+			    (byValue & TMCTL_TSUSP)) अणु
+				ioग_लिखो8(0, io_base + MAC_REG_TMCTL0);
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	ioग_लिखो8(0, io_base + MAC_REG_TMCTL0);
+पूर्ण
 
 /*
  * Description:
- *      Micro Second One shot timer via MAC
+ *      Micro Second One shot समयr via MAC
  *
  * Parameters:
  *  In:
- *      io_base    - Base Address for MAC
- *      uDelay      - Delay time
+ *      io_base    - Base Address क्रम MAC
+ *      uDelay      - Delay समय
  *  Out:
  *      none
  *
  * Return Value: none
  *
  */
-void MACvOneShotTimer1MicroSec(struct vnt_private *priv,
-			       unsigned int uDelayTime)
-{
-	void __iomem *io_base = priv->PortOffset;
+व्योम MACvOneShotTimer1MicroSec(काष्ठा vnt_निजी *priv,
+			       अचिन्हित पूर्णांक uDelayTime)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
-	iowrite8(0, io_base + MAC_REG_TMCTL1);
-	iowrite32(uDelayTime, io_base + MAC_REG_TMDATA1);
-	iowrite8((TMCTL_TMD | TMCTL_TE), io_base + MAC_REG_TMCTL1);
-}
+	ioग_लिखो8(0, io_base + MAC_REG_TMCTL1);
+	ioग_लिखो32(uDelayTime, io_base + MAC_REG_TMDATA1);
+	ioग_लिखो8((TMCTL_TMD | TMCTL_TE), io_base + MAC_REG_TMCTL1);
+पूर्ण
 
-void MACvSetMISCFifo(struct vnt_private *priv, unsigned short offset,
+व्योम MACvSetMISCFअगरo(काष्ठा vnt_निजी *priv, अचिन्हित लघु offset,
 		     u32 data)
-{
-	void __iomem *io_base = priv->PortOffset;
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
 
-	if (offset > 273)
-		return;
-	iowrite16(offset, io_base + MAC_REG_MISCFFNDEX);
-	iowrite32(data, io_base + MAC_REG_MISCFFDATA);
-	iowrite16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
-}
+	अगर (offset > 273)
+		वापस;
+	ioग_लिखो16(offset, io_base + MAC_REG_MISCFFNDEX);
+	ioग_लिखो32(data, io_base + MAC_REG_MISCFFDATA);
+	ioग_लिखो16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
+पूर्ण
 
-bool MACbPSWakeup(struct vnt_private *priv)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned int ww;
+bool MACbPSWakeup(काष्ठा vnt_निजी *priv)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित पूर्णांक ww;
 	/* Read PSCTL */
-	if (MACbIsRegBitsOff(priv, MAC_REG_PSCTL, PSCTL_PS))
-		return true;
+	अगर (MACbIsRegBitsOff(priv, MAC_REG_PSCTL, PSCTL_PS))
+		वापस true;
 
 	/* Disable PS */
 	MACvRegBitsOff(io_base, MAC_REG_PSCTL, PSCTL_PSEN);
 
-	/* Check if SyncFlushOK */
-	for (ww = 0; ww < W_MAX_TIMEOUT; ww++) {
-		if (ioread8(io_base + MAC_REG_PSCTL) & PSCTL_WAKEDONE)
-			break;
-	}
-	if (ww == W_MAX_TIMEOUT) {
+	/* Check अगर SyncFlushOK */
+	क्रम (ww = 0; ww < W_MAX_TIMEOUT; ww++) अणु
+		अगर (ioपढ़ो8(io_base + MAC_REG_PSCTL) & PSCTL_WAKEDONE)
+			अवरोध;
+	पूर्ण
+	अगर (ww == W_MAX_TIMEOUT) अणु
 		pr_debug(" DBG_PORT80(0x33)\n");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /*
  * Description:
@@ -753,7 +754,7 @@ bool MACbPSWakeup(struct vnt_private *priv)
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *
  *  Out:
  *      none
@@ -762,18 +763,18 @@ bool MACbPSWakeup(struct vnt_private *priv)
  *
  */
 
-void MACvSetKeyEntry(struct vnt_private *priv, unsigned short wKeyCtl,
-		     unsigned int uEntryIdx, unsigned int uKeyIdx,
-		     unsigned char *pbyAddr, u32 *pdwKey,
-		     unsigned char byLocalID)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short offset;
+व्योम MACvSetKeyEntry(काष्ठा vnt_निजी *priv, अचिन्हित लघु wKeyCtl,
+		     अचिन्हित पूर्णांक uEntryIdx, अचिन्हित पूर्णांक uKeyIdx,
+		     अचिन्हित अक्षर *pbyAddr, u32 *pdwKey,
+		     अचिन्हित अक्षर byLocalID)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु offset;
 	u32 data;
-	int     ii;
+	पूर्णांक     ii;
 
-	if (byLocalID <= 1)
-		return;
+	अगर (byLocalID <= 1)
+		वापस;
 
 	pr_debug("%s\n", __func__);
 	offset = MISCFIFO_KEYETRY0;
@@ -786,9 +787,9 @@ void MACvSetKeyEntry(struct vnt_private *priv, unsigned short wKeyCtl,
 	pr_debug("1. offset: %d, Data: %X, KeyCtl:%X\n",
 		 offset, data, wKeyCtl);
 
-	iowrite16(offset, io_base + MAC_REG_MISCFFNDEX);
-	iowrite32(data, io_base + MAC_REG_MISCFFDATA);
-	iowrite16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
+	ioग_लिखो16(offset, io_base + MAC_REG_MISCFFNDEX);
+	ioग_लिखो32(data, io_base + MAC_REG_MISCFFDATA);
+	ioग_लिखो16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
 	offset++;
 
 	data = 0;
@@ -801,21 +802,21 @@ void MACvSetKeyEntry(struct vnt_private *priv, unsigned short wKeyCtl,
 	data |= *pbyAddr;
 	pr_debug("2. offset: %d, Data: %X\n", offset, data);
 
-	iowrite16(offset, io_base + MAC_REG_MISCFFNDEX);
-	iowrite32(data, io_base + MAC_REG_MISCFFDATA);
-	iowrite16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
+	ioग_लिखो16(offset, io_base + MAC_REG_MISCFFNDEX);
+	ioग_लिखो32(data, io_base + MAC_REG_MISCFFDATA);
+	ioग_लिखो16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
 	offset++;
 
 	offset += (uKeyIdx * 4);
-	for (ii = 0; ii < 4; ii++) {
+	क्रम (ii = 0; ii < 4; ii++) अणु
 		/* always push 128 bits */
 		pr_debug("3.(%d) offset: %d, Data: %X\n",
 			 ii, offset + ii, *pdwKey);
-		iowrite16(offset + ii, io_base + MAC_REG_MISCFFNDEX);
-		iowrite32(*pdwKey++, io_base + MAC_REG_MISCFFDATA);
-		iowrite16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
-	}
-}
+		ioग_लिखो16(offset + ii, io_base + MAC_REG_MISCFFNDEX);
+		ioग_लिखो32(*pdwKey++, io_base + MAC_REG_MISCFFDATA);
+		ioग_लिखो16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
+	पूर्ण
+पूर्ण
 
 /*
  * Description:
@@ -823,7 +824,7 @@ void MACvSetKeyEntry(struct vnt_private *priv, unsigned short wKeyCtl,
  *
  * Parameters:
  *  In:
- *      io_base        - Base Address for MAC
+ *      io_base        - Base Address क्रम MAC
  *
  *  Out:
  *      none
@@ -831,15 +832,15 @@ void MACvSetKeyEntry(struct vnt_private *priv, unsigned short wKeyCtl,
  * Return Value: none
  *
  */
-void MACvDisableKeyEntry(struct vnt_private *priv, unsigned int uEntryIdx)
-{
-	void __iomem *io_base = priv->PortOffset;
-	unsigned short offset;
+व्योम MACvDisableKeyEntry(काष्ठा vnt_निजी *priv, अचिन्हित पूर्णांक uEntryIdx)
+अणु
+	व्योम __iomem *io_base = priv->PortOffset;
+	अचिन्हित लघु offset;
 
 	offset = MISCFIFO_KEYETRY0;
 	offset += (uEntryIdx * MISCFIFO_KEYENTRYSIZE);
 
-	iowrite16(offset, io_base + MAC_REG_MISCFFNDEX);
-	iowrite32(0, io_base + MAC_REG_MISCFFDATA);
-	iowrite16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
-}
+	ioग_लिखो16(offset, io_base + MAC_REG_MISCFFNDEX);
+	ioग_लिखो32(0, io_base + MAC_REG_MISCFFDATA);
+	ioग_लिखो16(MISCFFCTL_WRITE, io_base + MAC_REG_MISCFFCTL);
+पूर्ण

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Fundamental kernel parameters.
  *
- * Based on <asm-i386/param.h>.
+ * Based on <यंत्र-i386/param.h>.
  *
- * Modified 1998, 1999, 2002-2003
+ * Modअगरied 1998, 1999, 2002-2003
  *	David Mosberger-Tang <davidm@hpl.hp.com>, Hewlett-Packard Co
  */
-#ifndef _ASM_IA64_PARAM_H
-#define _ASM_IA64_PARAM_H
+#अगर_अघोषित _ASM_IA64_PARAM_H
+#घोषणा _ASM_IA64_PARAM_H
 
-#include <uapi/asm/param.h>
+#समावेश <uapi/यंत्र/param.h>
 
 # define HZ		CONFIG_HZ
 # define USER_HZ	HZ
-# define CLOCKS_PER_SEC	HZ	/* frequency at which times() counts */
-#endif /* _ASM_IA64_PARAM_H */
+# define CLOCKS_PER_SEC	HZ	/* frequency at which बार() counts */
+#पूर्ण_अगर /* _ASM_IA64_PARAM_H */

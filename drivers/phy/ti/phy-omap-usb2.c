@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * omap-usb2.c - USB PHY, talking to USB controller on TI SoCs.
  *
@@ -6,388 +7,388 @@
  * Author: Kishon Vijay Abraham I <kishon@ti.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/phy/omap_control_phy.h>
-#include <linux/phy/omap_usb.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/sys_soc.h>
-#include <linux/usb/phy_companion.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/phy/omap_control_phy.h>
+#समावेश <linux/phy/omap_usb.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <linux/usb/phy_companion.h>
 
-#define USB2PHY_ANA_CONFIG1		0x4c
-#define USB2PHY_DISCON_BYP_LATCH	BIT(31)
+#घोषणा USB2PHY_ANA_CONFIG1		0x4c
+#घोषणा USB2PHY_DISCON_BYP_LATCH	BIT(31)
 
-#define USB2PHY_CHRG_DET			0x14
-#define USB2PHY_CHRG_DET_USE_CHG_DET_REG	BIT(29)
-#define USB2PHY_CHRG_DET_DIS_CHG_DET		BIT(28)
+#घोषणा USB2PHY_CHRG_DET			0x14
+#घोषणा USB2PHY_CHRG_DET_USE_CHG_DET_REG	BIT(29)
+#घोषणा USB2PHY_CHRG_DET_DIS_CHG_DET		BIT(28)
 
-/* SoC Specific USB2_OTG register definitions */
-#define AM654_USB2_OTG_PD		BIT(8)
-#define AM654_USB2_VBUS_DET_EN		BIT(5)
-#define AM654_USB2_VBUSVALID_DET_EN	BIT(4)
+/* SoC Specअगरic USB2_OTG रेजिस्टर definitions */
+#घोषणा AM654_USB2_OTG_PD		BIT(8)
+#घोषणा AM654_USB2_VBUS_DET_EN		BIT(5)
+#घोषणा AM654_USB2_VBUSVALID_DET_EN	BIT(4)
 
-#define OMAP_DEV_PHY_PD		BIT(0)
-#define OMAP_USB2_PHY_PD	BIT(28)
+#घोषणा OMAP_DEV_PHY_PD		BIT(0)
+#घोषणा OMAP_USB2_PHY_PD	BIT(28)
 
-#define AM437X_USB2_PHY_PD		BIT(0)
-#define AM437X_USB2_OTG_PD		BIT(1)
-#define AM437X_USB2_OTGVDET_EN		BIT(19)
-#define AM437X_USB2_OTGSESSEND_EN	BIT(20)
+#घोषणा AM437X_USB2_PHY_PD		BIT(0)
+#घोषणा AM437X_USB2_OTG_PD		BIT(1)
+#घोषणा AM437X_USB2_OTGVDET_EN		BIT(19)
+#घोषणा AM437X_USB2_OTGSESSEND_EN	BIT(20)
 
 /* Driver Flags */
-#define OMAP_USB2_HAS_START_SRP			BIT(0)
-#define OMAP_USB2_HAS_SET_VBUS			BIT(1)
-#define OMAP_USB2_CALIBRATE_FALSE_DISCONNECT	BIT(2)
-#define OMAP_USB2_DISABLE_CHRG_DET		BIT(3)
+#घोषणा OMAP_USB2_HAS_START_SRP			BIT(0)
+#घोषणा OMAP_USB2_HAS_SET_VBUS			BIT(1)
+#घोषणा OMAP_USB2_CALIBRATE_FALSE_DISCONNECT	BIT(2)
+#घोषणा OMAP_USB2_DISABLE_CHRG_DET		BIT(3)
 
-struct omap_usb {
-	struct usb_phy		phy;
-	struct phy_companion	*comparator;
-	void __iomem		*pll_ctrl_base;
-	void __iomem		*phy_base;
-	struct device		*dev;
-	struct device		*control_dev;
-	struct clk		*wkupclk;
-	struct clk		*optclk;
+काष्ठा omap_usb अणु
+	काष्ठा usb_phy		phy;
+	काष्ठा phy_companion	*comparator;
+	व्योम __iomem		*pll_ctrl_base;
+	व्योम __iomem		*phy_base;
+	काष्ठा device		*dev;
+	काष्ठा device		*control_dev;
+	काष्ठा clk		*wkupclk;
+	काष्ठा clk		*optclk;
 	u8			flags;
-	struct regmap		*syscon_phy_power; /* ctrl. reg. acces */
-	unsigned int		power_reg; /* power reg. index within syscon */
+	काष्ठा regmap		*syscon_phy_घातer; /* ctrl. reg. acces */
+	अचिन्हित पूर्णांक		घातer_reg; /* घातer reg. index within syscon */
 	u32			mask;
-	u32			power_on;
-	u32			power_off;
-};
+	u32			घातer_on;
+	u32			घातer_off;
+पूर्ण;
 
-#define	phy_to_omapusb(x)	container_of((x), struct omap_usb, phy)
+#घोषणा	phy_to_omapusb(x)	container_of((x), काष्ठा omap_usb, phy)
 
-struct usb_phy_data {
-	const char *label;
+काष्ठा usb_phy_data अणु
+	स्थिर अक्षर *label;
 	u8 flags;
 	u32 mask;
-	u32 power_on;
-	u32 power_off;
-};
+	u32 घातer_on;
+	u32 घातer_off;
+पूर्ण;
 
-static inline u32 omap_usb_readl(void __iomem *addr, unsigned int offset)
-{
-	return __raw_readl(addr + offset);
-}
+अटल अंतरभूत u32 omap_usb_पढ़ोl(व्योम __iomem *addr, अचिन्हित पूर्णांक offset)
+अणु
+	वापस __raw_पढ़ोl(addr + offset);
+पूर्ण
 
-static inline void omap_usb_writel(void __iomem *addr, unsigned int offset,
+अटल अंतरभूत व्योम omap_usb_ग_लिखोl(व्योम __iomem *addr, अचिन्हित पूर्णांक offset,
 				   u32 data)
-{
-	__raw_writel(data, addr + offset);
-}
+अणु
+	__raw_ग_लिखोl(data, addr + offset);
+पूर्ण
 
 /**
- * omap_usb2_set_comparator - links the comparator present in the system with
+ * omap_usb2_set_comparator - links the comparator present in the प्रणाली with
  *	this phy
- * @comparator - the companion phy(comparator) for this phy
+ * @comparator - the companion phy(comparator) क्रम this phy
  *
  * The phy companion driver should call this API passing the phy_companion
  * filled with set_vbus and start_srp to be used by usb phy.
  *
  * For use by phy companion driver
  */
-int omap_usb2_set_comparator(struct phy_companion *comparator)
-{
-	struct omap_usb	*phy;
-	struct usb_phy	*x = usb_get_phy(USB_PHY_TYPE_USB2);
+पूर्णांक omap_usb2_set_comparator(काष्ठा phy_companion *comparator)
+अणु
+	काष्ठा omap_usb	*phy;
+	काष्ठा usb_phy	*x = usb_get_phy(USB_PHY_TYPE_USB2);
 
-	if (IS_ERR(x))
-		return -ENODEV;
+	अगर (IS_ERR(x))
+		वापस -ENODEV;
 
 	phy = phy_to_omapusb(x);
 	phy->comparator = comparator;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(omap_usb2_set_comparator);
 
-static int omap_usb_set_vbus(struct usb_otg *otg, bool enabled)
-{
-	struct omap_usb *phy = phy_to_omapusb(otg->usb_phy);
+अटल पूर्णांक omap_usb_set_vbus(काष्ठा usb_otg *otg, bool enabled)
+अणु
+	काष्ठा omap_usb *phy = phy_to_omapusb(otg->usb_phy);
 
-	if (!phy->comparator)
-		return -ENODEV;
+	अगर (!phy->comparator)
+		वापस -ENODEV;
 
-	return phy->comparator->set_vbus(phy->comparator, enabled);
-}
+	वापस phy->comparator->set_vbus(phy->comparator, enabled);
+पूर्ण
 
-static int omap_usb_start_srp(struct usb_otg *otg)
-{
-	struct omap_usb *phy = phy_to_omapusb(otg->usb_phy);
+अटल पूर्णांक omap_usb_start_srp(काष्ठा usb_otg *otg)
+अणु
+	काष्ठा omap_usb *phy = phy_to_omapusb(otg->usb_phy);
 
-	if (!phy->comparator)
-		return -ENODEV;
+	अगर (!phy->comparator)
+		वापस -ENODEV;
 
-	return phy->comparator->start_srp(phy->comparator);
-}
+	वापस phy->comparator->start_srp(phy->comparator);
+पूर्ण
 
-static int omap_usb_set_host(struct usb_otg *otg, struct usb_bus *host)
-{
+अटल पूर्णांक omap_usb_set_host(काष्ठा usb_otg *otg, काष्ठा usb_bus *host)
+अणु
 	otg->host = host;
-	if (!host)
+	अगर (!host)
 		otg->state = OTG_STATE_UNDEFINED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_usb_set_peripheral(struct usb_otg *otg,
-				   struct usb_gadget *gadget)
-{
+अटल पूर्णांक omap_usb_set_peripheral(काष्ठा usb_otg *otg,
+				   काष्ठा usb_gadget *gadget)
+अणु
 	otg->gadget = gadget;
-	if (!gadget)
+	अगर (!gadget)
 		otg->state = OTG_STATE_UNDEFINED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_usb_phy_power(struct omap_usb *phy, int on)
-{
+अटल पूर्णांक omap_usb_phy_घातer(काष्ठा omap_usb *phy, पूर्णांक on)
+अणु
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (!phy->syscon_phy_power) {
-		omap_control_phy_power(phy->control_dev, on);
-		return 0;
-	}
+	अगर (!phy->syscon_phy_घातer) अणु
+		omap_control_phy_घातer(phy->control_dev, on);
+		वापस 0;
+	पूर्ण
 
-	if (on)
-		val = phy->power_on;
-	else
-		val = phy->power_off;
+	अगर (on)
+		val = phy->घातer_on;
+	अन्यथा
+		val = phy->घातer_off;
 
-	ret = regmap_update_bits(phy->syscon_phy_power, phy->power_reg,
+	ret = regmap_update_bits(phy->syscon_phy_घातer, phy->घातer_reg,
 				 phy->mask, val);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_usb_power_off(struct phy *x)
-{
-	struct omap_usb *phy = phy_get_drvdata(x);
+अटल पूर्णांक omap_usb_घातer_off(काष्ठा phy *x)
+अणु
+	काष्ठा omap_usb *phy = phy_get_drvdata(x);
 
-	return omap_usb_phy_power(phy, false);
-}
+	वापस omap_usb_phy_घातer(phy, false);
+पूर्ण
 
-static int omap_usb_power_on(struct phy *x)
-{
-	struct omap_usb *phy = phy_get_drvdata(x);
+अटल पूर्णांक omap_usb_घातer_on(काष्ठा phy *x)
+अणु
+	काष्ठा omap_usb *phy = phy_get_drvdata(x);
 
-	return omap_usb_phy_power(phy, true);
-}
+	वापस omap_usb_phy_घातer(phy, true);
+पूर्ण
 
-static int omap_usb2_disable_clocks(struct omap_usb *phy)
-{
+अटल पूर्णांक omap_usb2_disable_घड़ीs(काष्ठा omap_usb *phy)
+अणु
 	clk_disable_unprepare(phy->wkupclk);
-	if (!IS_ERR(phy->optclk))
+	अगर (!IS_ERR(phy->optclk))
 		clk_disable_unprepare(phy->optclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_usb2_enable_clocks(struct omap_usb *phy)
-{
-	int ret;
+अटल पूर्णांक omap_usb2_enable_घड़ीs(काष्ठा omap_usb *phy)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(phy->wkupclk);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(phy->dev, "Failed to enable wkupclk %d\n", ret);
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	if (!IS_ERR(phy->optclk)) {
+	अगर (!IS_ERR(phy->optclk)) अणु
 		ret = clk_prepare_enable(phy->optclk);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(phy->dev, "Failed to enable optclk %d\n", ret);
-			goto err1;
-		}
-	}
+			जाओ err1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err1:
 	clk_disable(phy->wkupclk);
 
 err0:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_usb_init(struct phy *x)
-{
-	struct omap_usb *phy = phy_get_drvdata(x);
+अटल पूर्णांक omap_usb_init(काष्ठा phy *x)
+अणु
+	काष्ठा omap_usb *phy = phy_get_drvdata(x);
 	u32 val;
 
-	omap_usb2_enable_clocks(phy);
+	omap_usb2_enable_घड़ीs(phy);
 
-	if (phy->flags & OMAP_USB2_CALIBRATE_FALSE_DISCONNECT) {
+	अगर (phy->flags & OMAP_USB2_CALIBRATE_FALSE_DISCONNECT) अणु
 		/*
 		 *
-		 * Reduce the sensitivity of internal PHY by enabling the
-		 * DISCON_BYP_LATCH of the USB2PHY_ANA_CONFIG1 register. This
+		 * Reduce the sensitivity of पूर्णांकernal PHY by enabling the
+		 * DISCON_BYP_LATCH of the USB2PHY_ANA_CONFIG1 रेजिस्टर. This
 		 * resolves issues with certain devices which can otherwise
 		 * be prone to false disconnects.
 		 *
 		 */
-		val = omap_usb_readl(phy->phy_base, USB2PHY_ANA_CONFIG1);
+		val = omap_usb_पढ़ोl(phy->phy_base, USB2PHY_ANA_CONFIG1);
 		val |= USB2PHY_DISCON_BYP_LATCH;
-		omap_usb_writel(phy->phy_base, USB2PHY_ANA_CONFIG1, val);
-	}
+		omap_usb_ग_लिखोl(phy->phy_base, USB2PHY_ANA_CONFIG1, val);
+	पूर्ण
 
-	if (phy->flags & OMAP_USB2_DISABLE_CHRG_DET) {
-		val = omap_usb_readl(phy->phy_base, USB2PHY_CHRG_DET);
+	अगर (phy->flags & OMAP_USB2_DISABLE_CHRG_DET) अणु
+		val = omap_usb_पढ़ोl(phy->phy_base, USB2PHY_CHRG_DET);
 		val |= USB2PHY_CHRG_DET_USE_CHG_DET_REG |
 		       USB2PHY_CHRG_DET_DIS_CHG_DET;
-		omap_usb_writel(phy->phy_base, USB2PHY_CHRG_DET, val);
-	}
+		omap_usb_ग_लिखोl(phy->phy_base, USB2PHY_CHRG_DET, val);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_usb_exit(struct phy *x)
-{
-	struct omap_usb *phy = phy_get_drvdata(x);
+अटल पूर्णांक omap_usb_निकास(काष्ठा phy *x)
+अणु
+	काष्ठा omap_usb *phy = phy_get_drvdata(x);
 
-	return omap_usb2_disable_clocks(phy);
-}
+	वापस omap_usb2_disable_घड़ीs(phy);
+पूर्ण
 
-static const struct phy_ops ops = {
+अटल स्थिर काष्ठा phy_ops ops = अणु
 	.init		= omap_usb_init,
-	.exit		= omap_usb_exit,
-	.power_on	= omap_usb_power_on,
-	.power_off	= omap_usb_power_off,
+	.निकास		= omap_usb_निकास,
+	.घातer_on	= omap_usb_घातer_on,
+	.घातer_off	= omap_usb_घातer_off,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static const struct usb_phy_data omap_usb2_data = {
+अटल स्थिर काष्ठा usb_phy_data omap_usb2_data = अणु
 	.label = "omap_usb2",
 	.flags = OMAP_USB2_HAS_START_SRP | OMAP_USB2_HAS_SET_VBUS,
 	.mask = OMAP_DEV_PHY_PD,
-	.power_off = OMAP_DEV_PHY_PD,
-};
+	.घातer_off = OMAP_DEV_PHY_PD,
+पूर्ण;
 
-static const struct usb_phy_data omap5_usb2_data = {
+अटल स्थिर काष्ठा usb_phy_data omap5_usb2_data = अणु
 	.label = "omap5_usb2",
 	.flags = 0,
 	.mask = OMAP_DEV_PHY_PD,
-	.power_off = OMAP_DEV_PHY_PD,
-};
+	.घातer_off = OMAP_DEV_PHY_PD,
+पूर्ण;
 
-static const struct usb_phy_data dra7x_usb2_data = {
+अटल स्थिर काष्ठा usb_phy_data dra7x_usb2_data = अणु
 	.label = "dra7x_usb2",
 	.flags = OMAP_USB2_CALIBRATE_FALSE_DISCONNECT,
 	.mask = OMAP_DEV_PHY_PD,
-	.power_off = OMAP_DEV_PHY_PD,
-};
+	.घातer_off = OMAP_DEV_PHY_PD,
+पूर्ण;
 
-static const struct usb_phy_data dra7x_usb2_phy2_data = {
+अटल स्थिर काष्ठा usb_phy_data dra7x_usb2_phy2_data = अणु
 	.label = "dra7x_usb2_phy2",
 	.flags = OMAP_USB2_CALIBRATE_FALSE_DISCONNECT,
 	.mask = OMAP_USB2_PHY_PD,
-	.power_off = OMAP_USB2_PHY_PD,
-};
+	.घातer_off = OMAP_USB2_PHY_PD,
+पूर्ण;
 
-static const struct usb_phy_data am437x_usb2_data = {
+अटल स्थिर काष्ठा usb_phy_data am437x_usb2_data = अणु
 	.label = "am437x_usb2",
 	.flags =  0,
 	.mask = AM437X_USB2_PHY_PD | AM437X_USB2_OTG_PD |
 		AM437X_USB2_OTGVDET_EN | AM437X_USB2_OTGSESSEND_EN,
-	.power_on = AM437X_USB2_OTGVDET_EN | AM437X_USB2_OTGSESSEND_EN,
-	.power_off = AM437X_USB2_PHY_PD | AM437X_USB2_OTG_PD,
-};
+	.घातer_on = AM437X_USB2_OTGVDET_EN | AM437X_USB2_OTGSESSEND_EN,
+	.घातer_off = AM437X_USB2_PHY_PD | AM437X_USB2_OTG_PD,
+पूर्ण;
 
-static const struct usb_phy_data am654_usb2_data = {
+अटल स्थिर काष्ठा usb_phy_data am654_usb2_data = अणु
 	.label = "am654_usb2",
 	.flags = OMAP_USB2_CALIBRATE_FALSE_DISCONNECT,
 	.mask = AM654_USB2_OTG_PD | AM654_USB2_VBUS_DET_EN |
 		AM654_USB2_VBUSVALID_DET_EN,
-	.power_on = AM654_USB2_VBUS_DET_EN | AM654_USB2_VBUSVALID_DET_EN,
-	.power_off = AM654_USB2_OTG_PD,
-};
+	.घातer_on = AM654_USB2_VBUS_DET_EN | AM654_USB2_VBUSVALID_DET_EN,
+	.घातer_off = AM654_USB2_OTG_PD,
+पूर्ण;
 
-static const struct of_device_id omap_usb2_id_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id omap_usb2_id_table[] = अणु
+	अणु
 		.compatible = "ti,omap-usb2",
 		.data = &omap_usb2_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,omap5-usb2",
 		.data = &omap5_usb2_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,dra7x-usb2",
 		.data = &dra7x_usb2_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,dra7x-usb2-phy2",
 		.data = &dra7x_usb2_phy2_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,am437x-usb2",
 		.data = &am437x_usb2_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "ti,am654-usb2",
 		.data = &am654_usb2_data,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap_usb2_id_table);
 
-static void omap_usb2_init_errata(struct omap_usb *phy)
-{
-	static const struct soc_device_attribute am65x_sr10_soc_devices[] = {
-		{ .family = "AM65X", .revision = "SR1.0" },
-		{ /* sentinel */ }
-	};
+अटल व्योम omap_usb2_init_errata(काष्ठा omap_usb *phy)
+अणु
+	अटल स्थिर काष्ठा soc_device_attribute am65x_sr10_soc_devices[] = अणु
+		अणु .family = "AM65X", .revision = "SR1.0" पूर्ण,
+		अणु /* sentinel */ पूर्ण
+	पूर्ण;
 
 	/*
 	 * Errata i2075: USB2PHY: USB2PHY Charger Detect is Enabled by
 	 * Default Without VBUS Presence.
 	 *
 	 * AM654x SR1.0 has a silicon bug due to which D+ is pulled high after
-	 * POR, which could cause enumeration failure with some USB hubs.
+	 * POR, which could cause क्रमागतeration failure with some USB hubs.
 	 * Disabling the USB2_PHY Charger Detect function will put D+
-	 * into the normal state.
+	 * पूर्णांकo the normal state.
 	 */
-	if (soc_device_match(am65x_sr10_soc_devices))
+	अगर (soc_device_match(am65x_sr10_soc_devices))
 		phy->flags |= OMAP_USB2_DISABLE_CHRG_DET;
-}
+पूर्ण
 
-static int omap_usb2_probe(struct platform_device *pdev)
-{
-	struct omap_usb	*phy;
-	struct phy *generic_phy;
-	struct phy_provider *phy_provider;
-	struct usb_otg *otg;
-	struct device_node *node = pdev->dev.of_node;
-	struct device_node *control_node;
-	struct platform_device *control_pdev;
-	const struct of_device_id *of_id;
-	struct usb_phy_data *phy_data;
+अटल पूर्णांक omap_usb2_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_usb	*phy;
+	काष्ठा phy *generic_phy;
+	काष्ठा phy_provider *phy_provider;
+	काष्ठा usb_otg *otg;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device_node *control_node;
+	काष्ठा platक्रमm_device *control_pdev;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा usb_phy_data *phy_data;
 
 	of_id = of_match_device(omap_usb2_id_table, &pdev->dev);
 
-	if (!of_id)
-		return -EINVAL;
+	अगर (!of_id)
+		वापस -EINVAL;
 
-	phy_data = (struct usb_phy_data *)of_id->data;
+	phy_data = (काष्ठा usb_phy_data *)of_id->data;
 
-	phy = devm_kzalloc(&pdev->dev, sizeof(*phy), GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	phy = devm_kzalloc(&pdev->dev, माप(*phy), GFP_KERNEL);
+	अगर (!phy)
+		वापस -ENOMEM;
 
-	otg = devm_kzalloc(&pdev->dev, sizeof(*otg), GFP_KERNEL);
-	if (!otg)
-		return -ENOMEM;
+	otg = devm_kzalloc(&pdev->dev, माप(*otg), GFP_KERNEL);
+	अगर (!otg)
+		वापस -ENOMEM;
 
 	phy->dev		= &pdev->dev;
 
@@ -396,136 +397,136 @@ static int omap_usb2_probe(struct platform_device *pdev)
 	phy->phy.otg		= otg;
 	phy->phy.type		= USB_PHY_TYPE_USB2;
 	phy->mask		= phy_data->mask;
-	phy->power_on		= phy_data->power_on;
-	phy->power_off		= phy_data->power_off;
+	phy->घातer_on		= phy_data->घातer_on;
+	phy->घातer_off		= phy_data->घातer_off;
 	phy->flags		= phy_data->flags;
 
 	omap_usb2_init_errata(phy);
 
-	phy->phy_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(phy->phy_base))
-		return PTR_ERR(phy->phy_base);
+	phy->phy_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(phy->phy_base))
+		वापस PTR_ERR(phy->phy_base);
 
-	phy->syscon_phy_power = syscon_regmap_lookup_by_phandle(node,
+	phy->syscon_phy_घातer = syscon_regmap_lookup_by_phandle(node,
 								"syscon-phy-power");
-	if (IS_ERR(phy->syscon_phy_power)) {
+	अगर (IS_ERR(phy->syscon_phy_घातer)) अणु
 		dev_dbg(&pdev->dev,
 			"can't get syscon-phy-power, using control device\n");
-		phy->syscon_phy_power = NULL;
+		phy->syscon_phy_घातer = शून्य;
 
 		control_node = of_parse_phandle(node, "ctrl-module", 0);
-		if (!control_node) {
+		अगर (!control_node) अणु
 			dev_err(&pdev->dev,
 				"Failed to get control device phandle\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		control_pdev = of_find_device_by_node(control_node);
-		if (!control_pdev) {
+		अगर (!control_pdev) अणु
 			dev_err(&pdev->dev, "Failed to get control device\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		phy->control_dev = &control_pdev->dev;
-	} else {
-		if (of_property_read_u32_index(node,
+	पूर्ण अन्यथा अणु
+		अगर (of_property_पढ़ो_u32_index(node,
 					       "syscon-phy-power", 1,
-					       &phy->power_reg)) {
+					       &phy->घातer_reg)) अणु
 			dev_err(&pdev->dev,
 				"couldn't get power reg. offset\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	phy->wkupclk = devm_clk_get(phy->dev, "wkupclk");
-	if (IS_ERR(phy->wkupclk)) {
-		if (PTR_ERR(phy->wkupclk) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(phy->wkupclk)) अणु
+		अगर (PTR_ERR(phy->wkupclk) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 
 		dev_warn(&pdev->dev, "unable to get wkupclk %ld, trying old name\n",
 			 PTR_ERR(phy->wkupclk));
 		phy->wkupclk = devm_clk_get(phy->dev, "usb_phy_cm_clk32k");
 
-		if (IS_ERR(phy->wkupclk)) {
-			if (PTR_ERR(phy->wkupclk) != -EPROBE_DEFER)
+		अगर (IS_ERR(phy->wkupclk)) अणु
+			अगर (PTR_ERR(phy->wkupclk) != -EPROBE_DEFER)
 				dev_err(&pdev->dev, "unable to get usb_phy_cm_clk32k\n");
-			return PTR_ERR(phy->wkupclk);
-		}
+			वापस PTR_ERR(phy->wkupclk);
+		पूर्ण
 
 		dev_warn(&pdev->dev,
 			 "found usb_phy_cm_clk32k, please fix DTS\n");
-	}
+	पूर्ण
 
 	phy->optclk = devm_clk_get(phy->dev, "refclk");
-	if (IS_ERR(phy->optclk)) {
-		if (PTR_ERR(phy->optclk) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(phy->optclk)) अणु
+		अगर (PTR_ERR(phy->optclk) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 
 		dev_dbg(&pdev->dev, "unable to get refclk, trying old name\n");
 		phy->optclk = devm_clk_get(phy->dev, "usb_otg_ss_refclk960m");
 
-		if (IS_ERR(phy->optclk)) {
-			if (PTR_ERR(phy->optclk) != -EPROBE_DEFER) {
+		अगर (IS_ERR(phy->optclk)) अणु
+			अगर (PTR_ERR(phy->optclk) != -EPROBE_DEFER) अणु
 				dev_dbg(&pdev->dev,
 					"unable to get usb_otg_ss_refclk960m\n");
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_warn(&pdev->dev,
 				 "found usb_otg_ss_refclk960m, please fix DTS\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	otg->set_host = omap_usb_set_host;
 	otg->set_peripheral = omap_usb_set_peripheral;
-	if (phy_data->flags & OMAP_USB2_HAS_SET_VBUS)
+	अगर (phy_data->flags & OMAP_USB2_HAS_SET_VBUS)
 		otg->set_vbus = omap_usb_set_vbus;
-	if (phy_data->flags & OMAP_USB2_HAS_START_SRP)
+	अगर (phy_data->flags & OMAP_USB2_HAS_START_SRP)
 		otg->start_srp = omap_usb_start_srp;
 	otg->usb_phy = &phy->phy;
 
-	platform_set_drvdata(pdev, phy);
-	pm_runtime_enable(phy->dev);
+	platक्रमm_set_drvdata(pdev, phy);
+	pm_runसमय_enable(phy->dev);
 
-	generic_phy = devm_phy_create(phy->dev, NULL, &ops);
-	if (IS_ERR(generic_phy)) {
-		pm_runtime_disable(phy->dev);
-		return PTR_ERR(generic_phy);
-	}
+	generic_phy = devm_phy_create(phy->dev, शून्य, &ops);
+	अगर (IS_ERR(generic_phy)) अणु
+		pm_runसमय_disable(phy->dev);
+		वापस PTR_ERR(generic_phy);
+	पूर्ण
 
 	phy_set_drvdata(generic_phy, phy);
-	omap_usb_power_off(generic_phy);
+	omap_usb_घातer_off(generic_phy);
 
-	phy_provider = devm_of_phy_provider_register(phy->dev,
+	phy_provider = devm_of_phy_provider_रेजिस्टर(phy->dev,
 						     of_phy_simple_xlate);
-	if (IS_ERR(phy_provider)) {
-		pm_runtime_disable(phy->dev);
-		return PTR_ERR(phy_provider);
-	}
+	अगर (IS_ERR(phy_provider)) अणु
+		pm_runसमय_disable(phy->dev);
+		वापस PTR_ERR(phy_provider);
+	पूर्ण
 
 	usb_add_phy_dev(&phy->phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_usb2_remove(struct platform_device *pdev)
-{
-	struct omap_usb	*phy = platform_get_drvdata(pdev);
+अटल पूर्णांक omap_usb2_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_usb	*phy = platक्रमm_get_drvdata(pdev);
 
-	usb_remove_phy(&phy->phy);
-	pm_runtime_disable(phy->dev);
+	usb_हटाओ_phy(&phy->phy);
+	pm_runसमय_disable(phy->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver omap_usb2_driver = {
+अटल काष्ठा platक्रमm_driver omap_usb2_driver = अणु
 	.probe		= omap_usb2_probe,
-	.remove		= omap_usb2_remove,
-	.driver		= {
+	.हटाओ		= omap_usb2_हटाओ,
+	.driver		= अणु
 		.name	= "omap-usb2",
 		.of_match_table = omap_usb2_id_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(omap_usb2_driver);
+module_platक्रमm_driver(omap_usb2_driver);
 
 MODULE_ALIAS("platform:omap_usb2");
 MODULE_AUTHOR("Texas Instruments Inc.");

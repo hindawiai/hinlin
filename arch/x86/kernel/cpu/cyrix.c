@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <asm/dma.h>
-#include <linux/io.h>
-#include <asm/processor-cyrix.h>
-#include <asm/processor-flags.h>
-#include <linux/timer.h>
-#include <asm/pci-direct.h>
-#include <asm/tsc.h>
-#include <asm/cpufeature.h>
-#include <linux/sched.h>
-#include <linux/sched/clock.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/processor-cyrix.h>
+#समावेश <यंत्र/processor-flags.h>
+#समावेश <linux/समयr.h>
+#समावेश <यंत्र/pci-direct.h>
+#समावेश <यंत्र/tsc.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/घड़ी.h>
 
-#include "cpu.h"
+#समावेश "cpu.h"
 
 /*
- * Read NSC/Cyrix DEVID registers (DIR) to get more detailed info. about the CPU
+ * Read NSC/Cyrix DEVID रेजिस्टरs (सूची) to get more detailed info. about the CPU
  */
-static void __do_cyrix_devid(unsigned char *dir0, unsigned char *dir1)
-{
-	unsigned char ccr2, ccr3;
+अटल व्योम __करो_cyrix_devid(अचिन्हित अक्षर *dir0, अचिन्हित अक्षर *dir1)
+अणु
+	अचिन्हित अक्षर ccr2, ccr3;
 
-	/* we test for DEVID by checking whether CCR3 is writable */
+	/* we test क्रम DEVID by checking whether CCR3 is writable */
 	ccr3 = getCx86(CX86_CCR3);
 	setCx86(CX86_CCR3, ccr3 ^ 0x80);
 	getCx86(0xc0);   /* dummy to change bus */
 
-	if (getCx86(CX86_CCR3) == ccr3) {       /* no DEVID regs. */
+	अगर (getCx86(CX86_CCR3) == ccr3) अणु       /* no DEVID regs. */
 		ccr2 = getCx86(CX86_CCR2);
 		setCx86(CX86_CCR2, ccr2 ^ 0x04);
 		getCx86(0xc0);  /* dummy */
 
-		if (getCx86(CX86_CCR2) == ccr2) /* old Cx486SLC/DLC */
+		अगर (getCx86(CX86_CCR2) == ccr2) /* old Cx486SLC/DLC */
 			*dir0 = 0xfd;
-		else {                          /* Cx486S A step */
+		अन्यथा अणु                          /* Cx486S A step */
 			setCx86(CX86_CCR2, ccr2);
 			*dir0 = 0xfe;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		setCx86(CX86_CCR3, ccr3);  /* restore CCR3 */
 
-		/* read DIR0 and DIR1 CPU registers */
-		*dir0 = getCx86(CX86_DIR0);
-		*dir1 = getCx86(CX86_DIR1);
-	}
-}
+		/* पढ़ो सूची0 and सूची1 CPU रेजिस्टरs */
+		*dir0 = getCx86(CX86_सूची0);
+		*dir1 = getCx86(CX86_सूची1);
+	पूर्ण
+पूर्ण
 
-static void do_cyrix_devid(unsigned char *dir0, unsigned char *dir1)
-{
-	unsigned long flags;
+अटल व्योम करो_cyrix_devid(अचिन्हित अक्षर *dir0, अचिन्हित अक्षर *dir1)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	__do_cyrix_devid(dir0, dir1);
+	__करो_cyrix_devid(dir0, dir1);
 	local_irq_restore(flags);
-}
+पूर्ण
 /*
  * Cx86_dir0_msb is a HACK needed by check_cx686_cpuid/slop in bugs.h in
- * order to identify the Cyrix CPU model after we're out of setup.c
+ * order to identअगरy the Cyrix CPU model after we're out of setup.c
  *
- * Actually since bugs.h doesn't even reference this perhaps someone should
- * fix the documentation ???
+ * Actually since bugs.h करोesn't even reference this perhaps someone should
+ * fix the करोcumentation ???
  */
-static unsigned char Cx86_dir0_msb = 0;
+अटल अचिन्हित अक्षर Cx86_dir0_msb = 0;
 
-static const char Cx86_model[][9] = {
+अटल स्थिर अक्षर Cx86_model[][9] = अणु
 	"Cx486", "Cx486", "5x86 ", "6x86", "MediaGX ", "6x86MX ",
 	"M II ", "Unknown"
-};
-static const char Cx486_name[][5] = {
+पूर्ण;
+अटल स्थिर अक्षर Cx486_name[][5] = अणु
 	"SLC", "DLC", "SLC2", "DLC2", "SRx", "DRx",
 	"SRx2", "DRx2"
-};
-static const char Cx486S_name[][4] = {
+पूर्ण;
+अटल स्थिर अक्षर Cx486S_name[][4] = अणु
 	"S", "S2", "Se", "S2e"
-};
-static const char Cx486D_name[][4] = {
+पूर्ण;
+अटल स्थिर अक्षर Cx486D_name[][4] = अणु
 	"DX", "DX2", "?", "?", "?", "DX4"
-};
-static char Cx86_cb[] = "?.5x Core/Bus Clock";
-static const char cyrix_model_mult1[] = "12??43";
-static const char cyrix_model_mult2[] = "12233445";
+पूर्ण;
+अटल अक्षर Cx86_cb[] = "?.5x Core/Bus Clock";
+अटल स्थिर अक्षर cyrix_model_mult1[] = "12??43";
+अटल स्थिर अक्षर cyrix_model_mult2[] = "12233445";
 
 /*
  * Reset the slow-loop (SLOP) bit on the 686(L) which is set by some old
- * BIOSes for compatibility with DOS games.  This makes the udelay loop
- * work correctly, and improves performance.
+ * BIOSes क्रम compatibility with DOS games.  This makes the udelay loop
+ * work correctly, and improves perक्रमmance.
  *
- * FIXME: our newer udelay uses the tsc. We don't need to frob with SLOP
+ * FIXME: our newer udelay uses the tsc. We करोn't need to frob with SLOP
  */
 
-static void check_cx686_slop(struct cpuinfo_x86 *c)
-{
-	unsigned long flags;
+अटल व्योम check_cx686_slop(काष्ठा cpuinfo_x86 *c)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (Cx86_dir0_msb == 3) {
-		unsigned char ccr3, ccr5;
+	अगर (Cx86_dir0_msb == 3) अणु
+		अचिन्हित अक्षर ccr3, ccr5;
 
 		local_irq_save(flags);
 		ccr3 = getCx86(CX86_CCR3);
 		setCx86(CX86_CCR3, (ccr3 & 0x0f) | 0x10); /* enable MAPEN */
 		ccr5 = getCx86(CX86_CCR5);
-		if (ccr5 & 2)
+		अगर (ccr5 & 2)
 			setCx86(CX86_CCR5, ccr5 & 0xfd);  /* reset SLOP */
 		setCx86(CX86_CCR3, ccr3);                 /* disable MAPEN */
 		local_irq_restore(flags);
 
-		if (ccr5 & 2) { /* possible wrong calibration done */
+		अगर (ccr5 & 2) अणु /* possible wrong calibration करोne */
 			pr_info("Recalibrating delay loop with SLOP bit reset\n");
 			calibrate_delay();
-			c->loops_per_jiffy = loops_per_jiffy;
-		}
-	}
-}
+			c->loops_per_jअगरfy = loops_per_jअगरfy;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-static void set_cx86_reorder(void)
-{
+अटल व्योम set_cx86_reorder(व्योम)
+अणु
 	u8 ccr3;
 
 	pr_info("Enable Memory access reorder on Cyrix/NSC processor.\n");
@@ -128,31 +129,31 @@ static void set_cx86_reorder(void)
 	/* set load/store serialize from 1GB to 4GB */
 	ccr3 |= 0xe0;
 	setCx86(CX86_CCR3, ccr3);
-}
+पूर्ण
 
-static void set_cx86_memwb(void)
-{
+अटल व्योम set_cx86_memwb(व्योम)
+अणु
 	pr_info("Enable Memory-Write-back mode on Cyrix/NSC processor.\n");
 
 	/* CCR2 bit 2: unlock NW bit */
 	setCx86(CX86_CCR2, getCx86(CX86_CCR2) & ~0x04);
 	/* set 'Not Write-through' */
-	write_cr0(read_cr0() | X86_CR0_NW);
+	ग_लिखो_cr0(पढ़ो_cr0() | X86_CR0_NW);
 	/* CCR2 bit 2: lock NW bit and set WT1 */
 	setCx86(CX86_CCR2, getCx86(CX86_CCR2) | 0x14);
-}
+पूर्ण
 
 /*
  *	Configure later MediaGX and/or Geode processor.
  */
 
-static void geode_configure(void)
-{
-	unsigned long flags;
+अटल व्योम geode_configure(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 	u8 ccr3;
 	local_irq_save(flags);
 
-	/* Suspend on halt power saving and enable #SUSP pin */
+	/* Suspend on halt घातer saving and enable #SUSP pin */
 	setCx86(CX86_CCR2, getCx86(CX86_CCR2) | 0x88);
 
 	ccr3 = getCx86(CX86_CCR3);
@@ -167,134 +168,134 @@ static void geode_configure(void)
 	set_cx86_reorder();
 
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void early_init_cyrix(struct cpuinfo_x86 *c)
-{
-	unsigned char dir0, dir0_msn, dir1 = 0;
+अटल व्योम early_init_cyrix(काष्ठा cpuinfo_x86 *c)
+अणु
+	अचिन्हित अक्षर dir0, dir0_msn, dir1 = 0;
 
-	__do_cyrix_devid(&dir0, &dir1);
-	dir0_msn = dir0 >> 4; /* identifies CPU "family"   */
+	__करो_cyrix_devid(&dir0, &dir1);
+	dir0_msn = dir0 >> 4; /* identअगरies CPU "family"   */
 
-	switch (dir0_msn) {
-	case 3: /* 6x86/6x86L */
+	चयन (dir0_msn) अणु
+	हाल 3: /* 6x86/6x86L */
 		/* Emulate MTRRs using Cyrix's ARRs. */
 		set_cpu_cap(c, X86_FEATURE_CYRIX_ARR);
-		break;
-	case 5: /* 6x86MX/M II */
+		अवरोध;
+	हाल 5: /* 6x86MX/M II */
 		/* Emulate MTRRs using Cyrix's ARRs. */
 		set_cpu_cap(c, X86_FEATURE_CYRIX_ARR);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void init_cyrix(struct cpuinfo_x86 *c)
-{
-	unsigned char dir0, dir0_msn, dir0_lsn, dir1 = 0;
-	char *buf = c->x86_model_id;
-	const char *p = NULL;
+अटल व्योम init_cyrix(काष्ठा cpuinfo_x86 *c)
+अणु
+	अचिन्हित अक्षर dir0, dir0_msn, dir0_lsn, dir1 = 0;
+	अक्षर *buf = c->x86_model_id;
+	स्थिर अक्षर *p = शून्य;
 
 	/*
-	 * Bit 31 in normal CPUID used for nonstandard 3DNow ID;
+	 * Bit 31 in normal CPUID used क्रम nonstandard 3DNow ID;
 	 * 3DNow is IDd by bit 31 in extended CPUID (1*32+31) anyway
 	 */
 	clear_cpu_cap(c, 0*32+31);
 
-	/* Cyrix used bit 24 in extended (AMD) CPUID for Cyrix MMX extensions */
-	if (test_cpu_cap(c, 1*32+24)) {
+	/* Cyrix used bit 24 in extended (AMD) CPUID क्रम Cyrix MMX extensions */
+	अगर (test_cpu_cap(c, 1*32+24)) अणु
 		clear_cpu_cap(c, 1*32+24);
 		set_cpu_cap(c, X86_FEATURE_CXMMX);
-	}
+	पूर्ण
 
-	do_cyrix_devid(&dir0, &dir1);
+	करो_cyrix_devid(&dir0, &dir1);
 
 	check_cx686_slop(c);
 
-	Cx86_dir0_msb = dir0_msn = dir0 >> 4; /* identifies CPU "family"   */
-	dir0_lsn = dir0 & 0xf;                /* model or clock multiplier */
+	Cx86_dir0_msb = dir0_msn = dir0 >> 4; /* identअगरies CPU "family"   */
+	dir0_lsn = dir0 & 0xf;                /* model or घड़ी multiplier */
 
-	/* common case step number/rev -- exceptions handled below */
+	/* common हाल step number/rev -- exceptions handled below */
 	c->x86_model = (dir1 >> 4) + 1;
 	c->x86_stepping = dir1 & 0xf;
 
 	/* Now cook; the original recipe is by Channing Corn, from Cyrix.
-	 * We do the same thing for each generation: we work out
+	 * We करो the same thing क्रम each generation: we work out
 	 * the model, multiplier and stepping.  Black magic included,
-	 * to make the silicon step/rev numbers match the printed ones.
+	 * to make the silicon step/rev numbers match the prपूर्णांकed ones.
 	 */
 
-	switch (dir0_msn) {
-		unsigned char tmp;
+	चयन (dir0_msn) अणु
+		अचिन्हित अक्षर पंचांगp;
 
-	case 0: /* Cx486SLC/DLC/SRx/DRx */
+	हाल 0: /* Cx486SLC/DLC/SRx/DRx */
 		p = Cx486_name[dir0_lsn & 7];
-		break;
+		अवरोध;
 
-	case 1: /* Cx486S/DX/DX2/DX4 */
+	हाल 1: /* Cx486S/DX/DX2/DX4 */
 		p = (dir0_lsn & 8) ? Cx486D_name[dir0_lsn & 5]
 			: Cx486S_name[dir0_lsn & 3];
-		break;
+		अवरोध;
 
-	case 2: /* 5x86 */
+	हाल 2: /* 5x86 */
 		Cx86_cb[2] = cyrix_model_mult1[dir0_lsn & 5];
 		p = Cx86_cb+2;
-		break;
+		अवरोध;
 
-	case 3: /* 6x86/6x86L */
+	हाल 3: /* 6x86/6x86L */
 		Cx86_cb[1] = ' ';
 		Cx86_cb[2] = cyrix_model_mult1[dir0_lsn & 5];
-		if (dir1 > 0x21) { /* 686L */
+		अगर (dir1 > 0x21) अणु /* 686L */
 			Cx86_cb[0] = 'L';
 			p = Cx86_cb;
 			(c->x86_model)++;
-		} else             /* 686 */
+		पूर्ण अन्यथा             /* 686 */
 			p = Cx86_cb+1;
 		/* Emulate MTRRs using Cyrix's ARRs. */
 		set_cpu_cap(c, X86_FEATURE_CYRIX_ARR);
 		/* 6x86's contain this bug */
 		set_cpu_bug(c, X86_BUG_COMA);
-		break;
+		अवरोध;
 
-	case 4: /* MediaGX/GXm or Geode GXM/GXLV/GX1 */
-	case 11: /* GX1 with inverted Device ID */
-#ifdef CONFIG_PCI
-	{
-		u32 vendor, device;
+	हाल 4: /* MediaGX/GXm or Geode GXM/GXLV/GX1 */
+	हाल 11: /* GX1 with inverted Device ID */
+#अगर_घोषित CONFIG_PCI
+	अणु
+		u32 venकरोr, device;
 		/*
 		 * It isn't really a PCI quirk directly, but the cure is the
 		 * same. The MediaGX has deep magic SMM stuff that handles the
-		 * SB emulation. It throws away the fifo on disable_dma() which
+		 * SB emulation. It throws away the fअगरo on disable_dma() which
 		 * is wrong and ruins the audio.
 		 *
 		 *  Bug2: VSA1 has a wrap bug so that using maximum sized DMA
 		 *  causes bad things. According to NatSemi VSA2 has another
-		 *  bug to do with 'hlt'. I've not seen any boards using VSA2
-		 *  and X doesn't seem to support it either so who cares 8).
+		 *  bug to करो with 'hlt'. I've not seen any boards using VSA2
+		 *  and X करोesn't seem to support it either so who cares 8).
 		 *  VSA1 we work around however.
 		 */
 
 		pr_info("Working around Cyrix MediaGX virtual DMA bugs.\n");
 		isa_dma_bridge_buggy = 2;
 
-		/* We do this before the PCI layer is running. However we
+		/* We करो this beक्रमe the PCI layer is running. However we
 		   are safe here as we know the bridge must be a Cyrix
 		   companion and must be present */
-		vendor = read_pci_config_16(0, 0, 0x12, PCI_VENDOR_ID);
-		device = read_pci_config_16(0, 0, 0x12, PCI_DEVICE_ID);
+		venकरोr = पढ़ो_pci_config_16(0, 0, 0x12, PCI_VENDOR_ID);
+		device = पढ़ो_pci_config_16(0, 0, 0x12, PCI_DEVICE_ID);
 
 		/*
 		 *  The 5510/5520 companion chips have a funky PIT.
 		 */
-		if (vendor == PCI_VENDOR_ID_CYRIX &&
+		अगर (venकरोr == PCI_VENDOR_ID_CYRIX &&
 			(device == PCI_DEVICE_ID_CYRIX_5510 ||
 					device == PCI_DEVICE_ID_CYRIX_5520))
 			mark_tsc_unstable("cyrix 5510/5520 detected");
-	}
-#endif
-		c->x86_cache_size = 16;	/* Yep 16K integrated cache that's it */
+	पूर्ण
+#पूर्ण_अगर
+		c->x86_cache_size = 16;	/* Yep 16K पूर्णांकegrated cache that's it */
 
 		/* GXm supports extended cpuid levels 'ala' AMD */
-		if (c->cpuid_level == 2) {
+		अगर (c->cpuid_level == 2) अणु
 			/* Enable cxMMX extensions (GX1 Datasheet 54) */
 			setCx86(CX86_CCR7, getCx86(CX86_CCR7) | 1);
 
@@ -304,133 +305,133 @@ static void init_cyrix(struct cpuinfo_x86 *c)
 			 *  ?  : 0x7x
 			 * GX1 : 0x8x          GX1  datasheet 56
 			 */
-			if ((0x30 <= dir1 && dir1 <= 0x6f) ||
+			अगर ((0x30 <= dir1 && dir1 <= 0x6f) ||
 					(0x80 <= dir1 && dir1 <= 0x8f))
 				geode_configure();
-			return;
-		} else { /* MediaGX */
+			वापस;
+		पूर्ण अन्यथा अणु /* MediaGX */
 			Cx86_cb[2] = (dir0_lsn & 1) ? '3' : '4';
 			p = Cx86_cb+2;
 			c->x86_model = (dir1 & 0x20) ? 1 : 2;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case 5: /* 6x86MX/M II */
-		if (dir1 > 7) {
+	हाल 5: /* 6x86MX/M II */
+		अगर (dir1 > 7) अणु
 			dir0_msn++;  /* M II */
 			/* Enable MMX extensions (App note 108) */
 			setCx86(CX86_CCR7, getCx86(CX86_CCR7)|1);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* A 6x86MX - it has the bug. */
 			set_cpu_bug(c, X86_BUG_COMA);
-		}
-		tmp = (!(dir0_lsn & 7) || dir0_lsn & 1) ? 2 : 0;
-		Cx86_cb[tmp] = cyrix_model_mult2[dir0_lsn & 7];
-		p = Cx86_cb+tmp;
-		if (((dir1 & 0x0f) > 4) || ((dir1 & 0xf0) == 0x20))
+		पूर्ण
+		पंचांगp = (!(dir0_lsn & 7) || dir0_lsn & 1) ? 2 : 0;
+		Cx86_cb[पंचांगp] = cyrix_model_mult2[dir0_lsn & 7];
+		p = Cx86_cb+पंचांगp;
+		अगर (((dir1 & 0x0f) > 4) || ((dir1 & 0xf0) == 0x20))
 			(c->x86_model)++;
 		/* Emulate MTRRs using Cyrix's ARRs. */
 		set_cpu_cap(c, X86_FEATURE_CYRIX_ARR);
-		break;
+		अवरोध;
 
-	case 0xf:  /* Cyrix 486 without DEVID registers */
-		switch (dir0_lsn) {
-		case 0xd:  /* either a 486SLC or DLC w/o DEVID */
+	हाल 0xf:  /* Cyrix 486 without DEVID रेजिस्टरs */
+		चयन (dir0_lsn) अणु
+		हाल 0xd:  /* either a 486SLC or DLC w/o DEVID */
 			dir0_msn = 0;
 			p = Cx486_name[!!boot_cpu_has(X86_FEATURE_FPU)];
-			break;
+			अवरोध;
 
-		case 0xe:  /* a 486S A step */
+		हाल 0xe:  /* a 486S A step */
 			dir0_msn = 0;
 			p = Cx486S_name[0];
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:  /* unknown (shouldn't happen, we know everyone ;-) */
+	शेष:  /* unknown (shouldn't happen, we know everyone ;-) */
 		dir0_msn = 7;
-		break;
-	}
-	strcpy(buf, Cx86_model[dir0_msn & 7]);
-	if (p)
-		strcat(buf, p);
-	return;
-}
+		अवरोध;
+	पूर्ण
+	म_नकल(buf, Cx86_model[dir0_msn & 7]);
+	अगर (p)
+		म_जोड़ो(buf, p);
+	वापस;
+पूर्ण
 
 /*
- * Handle National Semiconductor branded processors
+ * Handle National Semiconductor bअक्रमed processors
  */
-static void init_nsc(struct cpuinfo_x86 *c)
-{
+अटल व्योम init_nsc(काष्ठा cpuinfo_x86 *c)
+अणु
 	/*
-	 * There may be GX1 processors in the wild that are branded
+	 * There may be GX1 processors in the wild that are bअक्रमed
 	 * NSC and not Cyrix.
 	 *
 	 * This function only handles the GX processor, and kicks every
-	 * thing else to the Cyrix init function above - that should
-	 * cover any processors that might have been branded differently
+	 * thing अन्यथा to the Cyrix init function above - that should
+	 * cover any processors that might have been bअक्रमed dअगरferently
 	 * after NSC acquired Cyrix.
 	 *
-	 * If this breaks your GX1 horribly, please e-mail
+	 * If this अवरोधs your GX1 horribly, please e-mail
 	 * info-linux@ldcmail.amd.com to tell us.
 	 */
 
 	/* Handle the GX (Formally known as the GX2) */
 
-	if (c->x86 == 5 && c->x86_model == 5)
+	अगर (c->x86 == 5 && c->x86_model == 5)
 		cpu_detect_cache_sizes(c);
-	else
+	अन्यथा
 		init_cyrix(c);
-}
+पूर्ण
 
 /*
  * Cyrix CPUs without cpuid or with cpuid not yet enabled can be detected
- * by the fact that they preserve the flags across the division of 5/2.
+ * by the fact that they preserve the flags across the भागision of 5/2.
  * PII and PPro exhibit this behavior too, but they have cpuid available.
  */
 
 /*
- * Perform the Cyrix 5/2 test. A Cyrix won't change
- * the flags, while other 486 chips will.
+ * Perक्रमm the Cyrix 5/2 test. A Cyrix won't change
+ * the flags, जबतक other 486 chips will.
  */
-static inline int test_cyrix_52div(void)
-{
-	unsigned int test;
+अटल अंतरभूत पूर्णांक test_cyrix_52भाग(व्योम)
+अणु
+	अचिन्हित पूर्णांक test;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	     "sahf\n\t"		/* clear flags (%eax = 0x0005) */
-	     "div %b2\n\t"	/* divide 5 by 2 */
-	     "lahf"		/* store flags into %ah */
+	     "div %b2\n\t"	/* भागide 5 by 2 */
+	     "lahf"		/* store flags पूर्णांकo %ah */
 	     : "=a" (test)
 	     : "0" (5), "q" (2)
 	     : "cc");
 
-	/* AH is 0x02 on Cyrix after the divide.. */
-	return (unsigned char) (test >> 8) == 0x02;
-}
+	/* AH is 0x02 on Cyrix after the भागide.. */
+	वापस (अचिन्हित अक्षर) (test >> 8) == 0x02;
+पूर्ण
 
-static void cyrix_identify(struct cpuinfo_x86 *c)
-{
+अटल व्योम cyrix_identअगरy(काष्ठा cpuinfo_x86 *c)
+अणु
 	/* Detect Cyrix with disabled CPUID */
-	if (c->x86 == 4 && test_cyrix_52div()) {
-		unsigned char dir0, dir1;
+	अगर (c->x86 == 4 && test_cyrix_52भाग()) अणु
+		अचिन्हित अक्षर dir0, dir1;
 
-		strcpy(c->x86_vendor_id, "CyrixInstead");
-		c->x86_vendor = X86_VENDOR_CYRIX;
+		म_नकल(c->x86_venकरोr_id, "CyrixInstead");
+		c->x86_venकरोr = X86_VENDOR_CYRIX;
 
 		/* Actually enable cpuid on the older cyrix */
 
 		/* Retrieve CPU revisions */
 
-		do_cyrix_devid(&dir0, &dir1);
+		करो_cyrix_devid(&dir0, &dir1);
 
 		dir0 >>= 4;
 
 		/* Check it is an affected model */
 
-		if (dir0 == 5 || dir0 == 3) {
-			unsigned char ccr3;
-			unsigned long flags;
+		अगर (dir0 == 5 || dir0 == 3) अणु
+			अचिन्हित अक्षर ccr3;
+			अचिन्हित दीर्घ flags;
 			pr_info("Enabling CPUID on Cyrix processor.\n");
 			local_irq_save(flags);
 			ccr3 = getCx86(CX86_CCR3);
@@ -441,26 +442,26 @@ static void cyrix_identify(struct cpuinfo_x86 *c)
 			/* disable MAPEN */
 			setCx86(CX86_CCR3, ccr3);
 			local_irq_restore(flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static const struct cpu_dev cyrix_cpu_dev = {
-	.c_vendor	= "Cyrix",
-	.c_ident	= { "CyrixInstead" },
+अटल स्थिर काष्ठा cpu_dev cyrix_cpu_dev = अणु
+	.c_venकरोr	= "Cyrix",
+	.c_ident	= अणु "CyrixInstead" पूर्ण,
 	.c_early_init	= early_init_cyrix,
 	.c_init		= init_cyrix,
-	.c_identify	= cyrix_identify,
-	.c_x86_vendor	= X86_VENDOR_CYRIX,
-};
+	.c_identअगरy	= cyrix_identअगरy,
+	.c_x86_venकरोr	= X86_VENDOR_CYRIX,
+पूर्ण;
 
-cpu_dev_register(cyrix_cpu_dev);
+cpu_dev_रेजिस्टर(cyrix_cpu_dev);
 
-static const struct cpu_dev nsc_cpu_dev = {
-	.c_vendor	= "NSC",
-	.c_ident	= { "Geode by NSC" },
+अटल स्थिर काष्ठा cpu_dev nsc_cpu_dev = अणु
+	.c_venकरोr	= "NSC",
+	.c_ident	= अणु "Geode by NSC" पूर्ण,
 	.c_init		= init_nsc,
-	.c_x86_vendor	= X86_VENDOR_NSC,
-};
+	.c_x86_venकरोr	= X86_VENDOR_NSC,
+पूर्ण;
 
-cpu_dev_register(nsc_cpu_dev);
+cpu_dev_रेजिस्टर(nsc_cpu_dev);

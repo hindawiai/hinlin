@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe host controller driver for Kirin Phone SoCs
+ * PCIe host controller driver क्रम Kirin Phone SoCs
  *
  * Copyright (C) 2017 HiSilicon Electronics Co., Ltd.
  *		https://www.huawei.com
@@ -8,240 +9,240 @@
  * Author: Xiaowei Song <songxiaowei@huawei.com>
  */
 
-#include <linux/compiler.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_address.h>
-#include <linux/of_gpio.h>
-#include <linux/of_pci.h>
-#include <linux/pci.h>
-#include <linux/pci_regs.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/resource.h>
-#include <linux/types.h>
-#include "pcie-designware.h"
+#समावेश <linux/compiler.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_regs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/types.h>
+#समावेश "pcie-designware.h"
 
-#define to_kirin_pcie(x) dev_get_drvdata((x)->dev)
+#घोषणा to_kirin_pcie(x) dev_get_drvdata((x)->dev)
 
-#define REF_CLK_FREQ			100000000
+#घोषणा REF_CLK_FREQ			100000000
 
-/* PCIe ELBI registers */
-#define SOC_PCIECTRL_CTRL0_ADDR		0x000
-#define SOC_PCIECTRL_CTRL1_ADDR		0x004
-#define SOC_PCIEPHY_CTRL2_ADDR		0x008
-#define SOC_PCIEPHY_CTRL3_ADDR		0x00c
-#define PCIE_ELBI_SLV_DBI_ENABLE	(0x1 << 21)
+/* PCIe ELBI रेजिस्टरs */
+#घोषणा SOC_PCIECTRL_CTRL0_ADDR		0x000
+#घोषणा SOC_PCIECTRL_CTRL1_ADDR		0x004
+#घोषणा SOC_PCIEPHY_CTRL2_ADDR		0x008
+#घोषणा SOC_PCIEPHY_CTRL3_ADDR		0x00c
+#घोषणा PCIE_ELBI_SLV_DBI_ENABLE	(0x1 << 21)
 
 /* info located in APB */
-#define PCIE_APP_LTSSM_ENABLE	0x01c
-#define PCIE_APB_PHY_CTRL0	0x0
-#define PCIE_APB_PHY_CTRL1	0x4
-#define PCIE_APB_PHY_STATUS0	0x400
-#define PCIE_LINKUP_ENABLE	(0x8020)
-#define PCIE_LTSSM_ENABLE_BIT	(0x1 << 11)
-#define PIPE_CLK_STABLE		(0x1 << 19)
-#define PHY_REF_PAD_BIT		(0x1 << 8)
-#define PHY_PWR_DOWN_BIT	(0x1 << 22)
-#define PHY_RST_ACK_BIT		(0x1 << 16)
+#घोषणा PCIE_APP_LTSSM_ENABLE	0x01c
+#घोषणा PCIE_APB_PHY_CTRL0	0x0
+#घोषणा PCIE_APB_PHY_CTRL1	0x4
+#घोषणा PCIE_APB_PHY_STATUS0	0x400
+#घोषणा PCIE_LINKUP_ENABLE	(0x8020)
+#घोषणा PCIE_LTSSM_ENABLE_BIT	(0x1 << 11)
+#घोषणा PIPE_CLK_STABLE		(0x1 << 19)
+#घोषणा PHY_REF_PAD_BIT		(0x1 << 8)
+#घोषणा PHY_PWR_DOWN_BIT	(0x1 << 22)
+#घोषणा PHY_RST_ACK_BIT		(0x1 << 16)
 
 /* info located in sysctrl */
-#define SCTRL_PCIE_CMOS_OFFSET	0x60
-#define SCTRL_PCIE_CMOS_BIT	0x10
-#define SCTRL_PCIE_ISO_OFFSET	0x44
-#define SCTRL_PCIE_ISO_BIT	0x30
-#define SCTRL_PCIE_HPCLK_OFFSET	0x190
-#define SCTRL_PCIE_HPCLK_BIT	0x184000
-#define SCTRL_PCIE_OE_OFFSET	0x14a
-#define PCIE_DEBOUNCE_PARAM	0xF0F400
-#define PCIE_OE_BYPASS		(0x3 << 28)
+#घोषणा SCTRL_PCIE_CMOS_OFFSET	0x60
+#घोषणा SCTRL_PCIE_CMOS_BIT	0x10
+#घोषणा SCTRL_PCIE_ISO_OFFSET	0x44
+#घोषणा SCTRL_PCIE_ISO_BIT	0x30
+#घोषणा SCTRL_PCIE_HPCLK_OFFSET	0x190
+#घोषणा SCTRL_PCIE_HPCLK_BIT	0x184000
+#घोषणा SCTRL_PCIE_OE_OFFSET	0x14a
+#घोषणा PCIE_DEBOUNCE_PARAM	0xF0F400
+#घोषणा PCIE_OE_BYPASS		(0x3 << 28)
 
 /* peri_crg ctrl */
-#define CRGCTRL_PCIE_ASSERT_OFFSET	0x88
-#define CRGCTRL_PCIE_ASSERT_BIT		0x8c000000
+#घोषणा CRGCTRL_PCIE_ASSERT_OFFSET	0x88
+#घोषणा CRGCTRL_PCIE_ASSERT_BIT		0x8c000000
 
-/* Time for delay */
-#define REF_2_PERST_MIN		20000
-#define REF_2_PERST_MAX		25000
-#define PERST_2_ACCESS_MIN	10000
-#define PERST_2_ACCESS_MAX	12000
-#define LINK_WAIT_MIN		900
-#define LINK_WAIT_MAX		1000
-#define PIPE_CLK_WAIT_MIN	550
-#define PIPE_CLK_WAIT_MAX	600
-#define TIME_CMOS_MIN		100
-#define TIME_CMOS_MAX		105
-#define TIME_PHY_PD_MIN		10
-#define TIME_PHY_PD_MAX		11
+/* Time क्रम delay */
+#घोषणा REF_2_PERST_MIN		20000
+#घोषणा REF_2_PERST_MAX		25000
+#घोषणा PERST_2_ACCESS_MIN	10000
+#घोषणा PERST_2_ACCESS_MAX	12000
+#घोषणा LINK_WAIT_MIN		900
+#घोषणा LINK_WAIT_MAX		1000
+#घोषणा PIPE_CLK_WAIT_MIN	550
+#घोषणा PIPE_CLK_WAIT_MAX	600
+#घोषणा TIME_CMOS_MIN		100
+#घोषणा TIME_CMOS_MAX		105
+#घोषणा TIME_PHY_PD_MIN		10
+#घोषणा TIME_PHY_PD_MAX		11
 
-struct kirin_pcie {
-	struct dw_pcie	*pci;
-	void __iomem	*apb_base;
-	void __iomem	*phy_base;
-	struct regmap	*crgctrl;
-	struct regmap	*sysctrl;
-	struct clk	*apb_sys_clk;
-	struct clk	*apb_phy_clk;
-	struct clk	*phy_ref_clk;
-	struct clk	*pcie_aclk;
-	struct clk	*pcie_aux_clk;
-	int		gpio_id_reset;
-};
+काष्ठा kirin_pcie अणु
+	काष्ठा dw_pcie	*pci;
+	व्योम __iomem	*apb_base;
+	व्योम __iomem	*phy_base;
+	काष्ठा regmap	*crgctrl;
+	काष्ठा regmap	*sysctrl;
+	काष्ठा clk	*apb_sys_clk;
+	काष्ठा clk	*apb_phy_clk;
+	काष्ठा clk	*phy_ref_clk;
+	काष्ठा clk	*pcie_aclk;
+	काष्ठा clk	*pcie_aux_clk;
+	पूर्णांक		gpio_id_reset;
+पूर्ण;
 
 /* Registers in PCIeCTRL */
-static inline void kirin_apb_ctrl_writel(struct kirin_pcie *kirin_pcie,
+अटल अंतरभूत व्योम kirin_apb_ctrl_ग_लिखोl(काष्ठा kirin_pcie *kirin_pcie,
 					 u32 val, u32 reg)
-{
-	writel(val, kirin_pcie->apb_base + reg);
-}
+अणु
+	ग_लिखोl(val, kirin_pcie->apb_base + reg);
+पूर्ण
 
-static inline u32 kirin_apb_ctrl_readl(struct kirin_pcie *kirin_pcie, u32 reg)
-{
-	return readl(kirin_pcie->apb_base + reg);
-}
+अटल अंतरभूत u32 kirin_apb_ctrl_पढ़ोl(काष्ठा kirin_pcie *kirin_pcie, u32 reg)
+अणु
+	वापस पढ़ोl(kirin_pcie->apb_base + reg);
+पूर्ण
 
 /* Registers in PCIePHY */
-static inline void kirin_apb_phy_writel(struct kirin_pcie *kirin_pcie,
+अटल अंतरभूत व्योम kirin_apb_phy_ग_लिखोl(काष्ठा kirin_pcie *kirin_pcie,
 					u32 val, u32 reg)
-{
-	writel(val, kirin_pcie->phy_base + reg);
-}
+अणु
+	ग_लिखोl(val, kirin_pcie->phy_base + reg);
+पूर्ण
 
-static inline u32 kirin_apb_phy_readl(struct kirin_pcie *kirin_pcie, u32 reg)
-{
-	return readl(kirin_pcie->phy_base + reg);
-}
+अटल अंतरभूत u32 kirin_apb_phy_पढ़ोl(काष्ठा kirin_pcie *kirin_pcie, u32 reg)
+अणु
+	वापस पढ़ोl(kirin_pcie->phy_base + reg);
+पूर्ण
 
-static long kirin_pcie_get_clk(struct kirin_pcie *kirin_pcie,
-			       struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
+अटल दीर्घ kirin_pcie_get_clk(काष्ठा kirin_pcie *kirin_pcie,
+			       काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
 	kirin_pcie->phy_ref_clk = devm_clk_get(dev, "pcie_phy_ref");
-	if (IS_ERR(kirin_pcie->phy_ref_clk))
-		return PTR_ERR(kirin_pcie->phy_ref_clk);
+	अगर (IS_ERR(kirin_pcie->phy_ref_clk))
+		वापस PTR_ERR(kirin_pcie->phy_ref_clk);
 
 	kirin_pcie->pcie_aux_clk = devm_clk_get(dev, "pcie_aux");
-	if (IS_ERR(kirin_pcie->pcie_aux_clk))
-		return PTR_ERR(kirin_pcie->pcie_aux_clk);
+	अगर (IS_ERR(kirin_pcie->pcie_aux_clk))
+		वापस PTR_ERR(kirin_pcie->pcie_aux_clk);
 
 	kirin_pcie->apb_phy_clk = devm_clk_get(dev, "pcie_apb_phy");
-	if (IS_ERR(kirin_pcie->apb_phy_clk))
-		return PTR_ERR(kirin_pcie->apb_phy_clk);
+	अगर (IS_ERR(kirin_pcie->apb_phy_clk))
+		वापस PTR_ERR(kirin_pcie->apb_phy_clk);
 
 	kirin_pcie->apb_sys_clk = devm_clk_get(dev, "pcie_apb_sys");
-	if (IS_ERR(kirin_pcie->apb_sys_clk))
-		return PTR_ERR(kirin_pcie->apb_sys_clk);
+	अगर (IS_ERR(kirin_pcie->apb_sys_clk))
+		वापस PTR_ERR(kirin_pcie->apb_sys_clk);
 
 	kirin_pcie->pcie_aclk = devm_clk_get(dev, "pcie_aclk");
-	if (IS_ERR(kirin_pcie->pcie_aclk))
-		return PTR_ERR(kirin_pcie->pcie_aclk);
+	अगर (IS_ERR(kirin_pcie->pcie_aclk))
+		वापस PTR_ERR(kirin_pcie->pcie_aclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long kirin_pcie_get_resource(struct kirin_pcie *kirin_pcie,
-				    struct platform_device *pdev)
-{
+अटल दीर्घ kirin_pcie_get_resource(काष्ठा kirin_pcie *kirin_pcie,
+				    काष्ठा platक्रमm_device *pdev)
+अणु
 	kirin_pcie->apb_base =
-		devm_platform_ioremap_resource_byname(pdev, "apb");
-	if (IS_ERR(kirin_pcie->apb_base))
-		return PTR_ERR(kirin_pcie->apb_base);
+		devm_platक्रमm_ioremap_resource_byname(pdev, "apb");
+	अगर (IS_ERR(kirin_pcie->apb_base))
+		वापस PTR_ERR(kirin_pcie->apb_base);
 
 	kirin_pcie->phy_base =
-		devm_platform_ioremap_resource_byname(pdev, "phy");
-	if (IS_ERR(kirin_pcie->phy_base))
-		return PTR_ERR(kirin_pcie->phy_base);
+		devm_platक्रमm_ioremap_resource_byname(pdev, "phy");
+	अगर (IS_ERR(kirin_pcie->phy_base))
+		वापस PTR_ERR(kirin_pcie->phy_base);
 
 	kirin_pcie->crgctrl =
 		syscon_regmap_lookup_by_compatible("hisilicon,hi3660-crgctrl");
-	if (IS_ERR(kirin_pcie->crgctrl))
-		return PTR_ERR(kirin_pcie->crgctrl);
+	अगर (IS_ERR(kirin_pcie->crgctrl))
+		वापस PTR_ERR(kirin_pcie->crgctrl);
 
 	kirin_pcie->sysctrl =
 		syscon_regmap_lookup_by_compatible("hisilicon,hi3660-sctrl");
-	if (IS_ERR(kirin_pcie->sysctrl))
-		return PTR_ERR(kirin_pcie->sysctrl);
+	अगर (IS_ERR(kirin_pcie->sysctrl))
+		वापस PTR_ERR(kirin_pcie->sysctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kirin_pcie_phy_init(struct kirin_pcie *kirin_pcie)
-{
-	struct device *dev = kirin_pcie->pci->dev;
+अटल पूर्णांक kirin_pcie_phy_init(काष्ठा kirin_pcie *kirin_pcie)
+अणु
+	काष्ठा device *dev = kirin_pcie->pci->dev;
 	u32 reg_val;
 
-	reg_val = kirin_apb_phy_readl(kirin_pcie, PCIE_APB_PHY_CTRL1);
+	reg_val = kirin_apb_phy_पढ़ोl(kirin_pcie, PCIE_APB_PHY_CTRL1);
 	reg_val &= ~PHY_REF_PAD_BIT;
-	kirin_apb_phy_writel(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL1);
+	kirin_apb_phy_ग_लिखोl(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL1);
 
-	reg_val = kirin_apb_phy_readl(kirin_pcie, PCIE_APB_PHY_CTRL0);
+	reg_val = kirin_apb_phy_पढ़ोl(kirin_pcie, PCIE_APB_PHY_CTRL0);
 	reg_val &= ~PHY_PWR_DOWN_BIT;
-	kirin_apb_phy_writel(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL0);
+	kirin_apb_phy_ग_लिखोl(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL0);
 	usleep_range(TIME_PHY_PD_MIN, TIME_PHY_PD_MAX);
 
-	reg_val = kirin_apb_phy_readl(kirin_pcie, PCIE_APB_PHY_CTRL1);
+	reg_val = kirin_apb_phy_पढ़ोl(kirin_pcie, PCIE_APB_PHY_CTRL1);
 	reg_val &= ~PHY_RST_ACK_BIT;
-	kirin_apb_phy_writel(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL1);
+	kirin_apb_phy_ग_लिखोl(kirin_pcie, reg_val, PCIE_APB_PHY_CTRL1);
 
 	usleep_range(PIPE_CLK_WAIT_MIN, PIPE_CLK_WAIT_MAX);
-	reg_val = kirin_apb_phy_readl(kirin_pcie, PCIE_APB_PHY_STATUS0);
-	if (reg_val & PIPE_CLK_STABLE) {
+	reg_val = kirin_apb_phy_पढ़ोl(kirin_pcie, PCIE_APB_PHY_STATUS0);
+	अगर (reg_val & PIPE_CLK_STABLE) अणु
 		dev_err(dev, "PIPE clk is not stable\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kirin_pcie_oe_enable(struct kirin_pcie *kirin_pcie)
-{
+अटल व्योम kirin_pcie_oe_enable(काष्ठा kirin_pcie *kirin_pcie)
+अणु
 	u32 val;
 
-	regmap_read(kirin_pcie->sysctrl, SCTRL_PCIE_OE_OFFSET, &val);
+	regmap_पढ़ो(kirin_pcie->sysctrl, SCTRL_PCIE_OE_OFFSET, &val);
 	val |= PCIE_DEBOUNCE_PARAM;
 	val &= ~PCIE_OE_BYPASS;
-	regmap_write(kirin_pcie->sysctrl, SCTRL_PCIE_OE_OFFSET, val);
-}
+	regmap_ग_लिखो(kirin_pcie->sysctrl, SCTRL_PCIE_OE_OFFSET, val);
+पूर्ण
 
-static int kirin_pcie_clk_ctrl(struct kirin_pcie *kirin_pcie, bool enable)
-{
-	int ret = 0;
+अटल पूर्णांक kirin_pcie_clk_ctrl(काष्ठा kirin_pcie *kirin_pcie, bool enable)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!enable)
-		goto close_clk;
+	अगर (!enable)
+		जाओ बंद_clk;
 
 	ret = clk_set_rate(kirin_pcie->phy_ref_clk, REF_CLK_FREQ);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(kirin_pcie->phy_ref_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_prepare_enable(kirin_pcie->apb_sys_clk);
-	if (ret)
-		goto apb_sys_fail;
+	अगर (ret)
+		जाओ apb_sys_fail;
 
 	ret = clk_prepare_enable(kirin_pcie->apb_phy_clk);
-	if (ret)
-		goto apb_phy_fail;
+	अगर (ret)
+		जाओ apb_phy_fail;
 
 	ret = clk_prepare_enable(kirin_pcie->pcie_aclk);
-	if (ret)
-		goto aclk_fail;
+	अगर (ret)
+		जाओ aclk_fail;
 
 	ret = clk_prepare_enable(kirin_pcie->pcie_aux_clk);
-	if (ret)
-		goto aux_clk_fail;
+	अगर (ret)
+		जाओ aux_clk_fail;
 
-	return 0;
+	वापस 0;
 
-close_clk:
+बंद_clk:
 	clk_disable_unprepare(kirin_pcie->pcie_aux_clk);
 aux_clk_fail:
 	clk_disable_unprepare(kirin_pcie->pcie_aclk);
@@ -252,192 +253,192 @@ apb_phy_fail:
 apb_sys_fail:
 	clk_disable_unprepare(kirin_pcie->phy_ref_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kirin_pcie_power_on(struct kirin_pcie *kirin_pcie)
-{
-	int ret;
+अटल पूर्णांक kirin_pcie_घातer_on(काष्ठा kirin_pcie *kirin_pcie)
+अणु
+	पूर्णांक ret;
 
-	/* Power supply for Host */
-	regmap_write(kirin_pcie->sysctrl,
+	/* Power supply क्रम Host */
+	regmap_ग_लिखो(kirin_pcie->sysctrl,
 		     SCTRL_PCIE_CMOS_OFFSET, SCTRL_PCIE_CMOS_BIT);
 	usleep_range(TIME_CMOS_MIN, TIME_CMOS_MAX);
 	kirin_pcie_oe_enable(kirin_pcie);
 
 	ret = kirin_pcie_clk_ctrl(kirin_pcie, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* ISO disable, PCIeCtrl, PHY assert and clk gate clear */
-	regmap_write(kirin_pcie->sysctrl,
+	/* ISO disable, PCIeCtrl, PHY निश्चित and clk gate clear */
+	regmap_ग_लिखो(kirin_pcie->sysctrl,
 		     SCTRL_PCIE_ISO_OFFSET, SCTRL_PCIE_ISO_BIT);
-	regmap_write(kirin_pcie->crgctrl,
+	regmap_ग_लिखो(kirin_pcie->crgctrl,
 		     CRGCTRL_PCIE_ASSERT_OFFSET, CRGCTRL_PCIE_ASSERT_BIT);
-	regmap_write(kirin_pcie->sysctrl,
+	regmap_ग_लिखो(kirin_pcie->sysctrl,
 		     SCTRL_PCIE_HPCLK_OFFSET, SCTRL_PCIE_HPCLK_BIT);
 
 	ret = kirin_pcie_phy_init(kirin_pcie);
-	if (ret)
-		goto close_clk;
+	अगर (ret)
+		जाओ बंद_clk;
 
-	/* perst assert Endpoint */
-	if (!gpio_request(kirin_pcie->gpio_id_reset, "pcie_perst")) {
+	/* perst निश्चित Endpoपूर्णांक */
+	अगर (!gpio_request(kirin_pcie->gpio_id_reset, "pcie_perst")) अणु
 		usleep_range(REF_2_PERST_MIN, REF_2_PERST_MAX);
 		ret = gpio_direction_output(kirin_pcie->gpio_id_reset, 1);
-		if (ret)
-			goto close_clk;
+		अगर (ret)
+			जाओ बंद_clk;
 		usleep_range(PERST_2_ACCESS_MIN, PERST_2_ACCESS_MAX);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-close_clk:
+बंद_clk:
 	kirin_pcie_clk_ctrl(kirin_pcie, false);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void kirin_pcie_sideband_dbi_w_mode(struct kirin_pcie *kirin_pcie,
+अटल व्योम kirin_pcie_sideband_dbi_w_mode(काष्ठा kirin_pcie *kirin_pcie,
 					   bool on)
-{
+अणु
 	u32 val;
 
-	val = kirin_apb_ctrl_readl(kirin_pcie, SOC_PCIECTRL_CTRL0_ADDR);
-	if (on)
+	val = kirin_apb_ctrl_पढ़ोl(kirin_pcie, SOC_PCIECTRL_CTRL0_ADDR);
+	अगर (on)
 		val = val | PCIE_ELBI_SLV_DBI_ENABLE;
-	else
+	अन्यथा
 		val = val & ~PCIE_ELBI_SLV_DBI_ENABLE;
 
-	kirin_apb_ctrl_writel(kirin_pcie, val, SOC_PCIECTRL_CTRL0_ADDR);
-}
+	kirin_apb_ctrl_ग_लिखोl(kirin_pcie, val, SOC_PCIECTRL_CTRL0_ADDR);
+पूर्ण
 
-static void kirin_pcie_sideband_dbi_r_mode(struct kirin_pcie *kirin_pcie,
+अटल व्योम kirin_pcie_sideband_dbi_r_mode(काष्ठा kirin_pcie *kirin_pcie,
 					   bool on)
-{
+अणु
 	u32 val;
 
-	val = kirin_apb_ctrl_readl(kirin_pcie, SOC_PCIECTRL_CTRL1_ADDR);
-	if (on)
+	val = kirin_apb_ctrl_पढ़ोl(kirin_pcie, SOC_PCIECTRL_CTRL1_ADDR);
+	अगर (on)
 		val = val | PCIE_ELBI_SLV_DBI_ENABLE;
-	else
+	अन्यथा
 		val = val & ~PCIE_ELBI_SLV_DBI_ENABLE;
 
-	kirin_apb_ctrl_writel(kirin_pcie, val, SOC_PCIECTRL_CTRL1_ADDR);
-}
+	kirin_apb_ctrl_ग_लिखोl(kirin_pcie, val, SOC_PCIECTRL_CTRL1_ADDR);
+पूर्ण
 
-static int kirin_pcie_rd_own_conf(struct pci_bus *bus, unsigned int devfn,
-				  int where, int size, u32 *val)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
+अटल पूर्णांक kirin_pcie_rd_own_conf(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				  पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
 
-	if (PCI_SLOT(devfn)) {
+	अगर (PCI_SLOT(devfn)) अणु
 		*val = ~0;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	पूर्ण
 
-	*val = dw_pcie_read_dbi(pci, where, size);
-	return PCIBIOS_SUCCESSFUL;
-}
+	*val = dw_pcie_पढ़ो_dbi(pci, where, size);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int kirin_pcie_wr_own_conf(struct pci_bus *bus, unsigned int devfn,
-				  int where, int size, u32 val)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
+अटल पूर्णांक kirin_pcie_wr_own_conf(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+				  पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_pp(bus->sysdata);
 
-	if (PCI_SLOT(devfn))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (PCI_SLOT(devfn))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	dw_pcie_write_dbi(pci, where, size, val);
-	return PCIBIOS_SUCCESSFUL;
-}
+	dw_pcie_ग_लिखो_dbi(pci, where, size, val);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static struct pci_ops kirin_pci_ops = {
-	.read = kirin_pcie_rd_own_conf,
-	.write = kirin_pcie_wr_own_conf,
-};
+अटल काष्ठा pci_ops kirin_pci_ops = अणु
+	.पढ़ो = kirin_pcie_rd_own_conf,
+	.ग_लिखो = kirin_pcie_wr_own_conf,
+पूर्ण;
 
-static u32 kirin_pcie_read_dbi(struct dw_pcie *pci, void __iomem *base,
-			       u32 reg, size_t size)
-{
-	struct kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
+अटल u32 kirin_pcie_पढ़ो_dbi(काष्ठा dw_pcie *pci, व्योम __iomem *base,
+			       u32 reg, माप_प्रकार size)
+अणु
+	काष्ठा kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
 	u32 ret;
 
 	kirin_pcie_sideband_dbi_r_mode(kirin_pcie, true);
-	dw_pcie_read(base + reg, size, &ret);
+	dw_pcie_पढ़ो(base + reg, size, &ret);
 	kirin_pcie_sideband_dbi_r_mode(kirin_pcie, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void kirin_pcie_write_dbi(struct dw_pcie *pci, void __iomem *base,
-				 u32 reg, size_t size, u32 val)
-{
-	struct kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
+अटल व्योम kirin_pcie_ग_लिखो_dbi(काष्ठा dw_pcie *pci, व्योम __iomem *base,
+				 u32 reg, माप_प्रकार size, u32 val)
+अणु
+	काष्ठा kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
 
 	kirin_pcie_sideband_dbi_w_mode(kirin_pcie, true);
-	dw_pcie_write(base + reg, size, val);
+	dw_pcie_ग_लिखो(base + reg, size, val);
 	kirin_pcie_sideband_dbi_w_mode(kirin_pcie, false);
-}
+पूर्ण
 
-static int kirin_pcie_link_up(struct dw_pcie *pci)
-{
-	struct kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
-	u32 val = kirin_apb_ctrl_readl(kirin_pcie, PCIE_APB_PHY_STATUS0);
+अटल पूर्णांक kirin_pcie_link_up(काष्ठा dw_pcie *pci)
+अणु
+	काष्ठा kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
+	u32 val = kirin_apb_ctrl_पढ़ोl(kirin_pcie, PCIE_APB_PHY_STATUS0);
 
-	if ((val & PCIE_LINKUP_ENABLE) == PCIE_LINKUP_ENABLE)
-		return 1;
+	अगर ((val & PCIE_LINKUP_ENABLE) == PCIE_LINKUP_ENABLE)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kirin_pcie_start_link(struct dw_pcie *pci)
-{
-	struct kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
+अटल पूर्णांक kirin_pcie_start_link(काष्ठा dw_pcie *pci)
+अणु
+	काष्ठा kirin_pcie *kirin_pcie = to_kirin_pcie(pci);
 
-	/* assert LTSSM enable */
-	kirin_apb_ctrl_writel(kirin_pcie, PCIE_LTSSM_ENABLE_BIT,
+	/* निश्चित LTSSM enable */
+	kirin_apb_ctrl_ग_लिखोl(kirin_pcie, PCIE_LTSSM_ENABLE_BIT,
 			      PCIE_APP_LTSSM_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kirin_pcie_host_init(struct pcie_port *pp)
-{
+अटल पूर्णांक kirin_pcie_host_init(काष्ठा pcie_port *pp)
+अणु
 	pp->bridge->ops = &kirin_pci_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_ops kirin_dw_pcie_ops = {
-	.read_dbi = kirin_pcie_read_dbi,
-	.write_dbi = kirin_pcie_write_dbi,
+अटल स्थिर काष्ठा dw_pcie_ops kirin_dw_pcie_ops = अणु
+	.पढ़ो_dbi = kirin_pcie_पढ़ो_dbi,
+	.ग_लिखो_dbi = kirin_pcie_ग_लिखो_dbi,
 	.link_up = kirin_pcie_link_up,
 	.start_link = kirin_pcie_start_link,
-};
+पूर्ण;
 
-static const struct dw_pcie_host_ops kirin_pcie_host_ops = {
+अटल स्थिर काष्ठा dw_pcie_host_ops kirin_pcie_host_ops = अणु
 	.host_init = kirin_pcie_host_init,
-};
+पूर्ण;
 
-static int kirin_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct kirin_pcie *kirin_pcie;
-	struct dw_pcie *pci;
-	int ret;
+अटल पूर्णांक kirin_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा kirin_pcie *kirin_pcie;
+	काष्ठा dw_pcie *pci;
+	पूर्णांक ret;
 
-	if (!dev->of_node) {
+	अगर (!dev->of_node) अणु
 		dev_err(dev, "NULL node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	kirin_pcie = devm_kzalloc(dev, sizeof(struct kirin_pcie), GFP_KERNEL);
-	if (!kirin_pcie)
-		return -ENOMEM;
+	kirin_pcie = devm_kzalloc(dev, माप(काष्ठा kirin_pcie), GFP_KERNEL);
+	अगर (!kirin_pcie)
+		वापस -ENOMEM;
 
-	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
-	if (!pci)
-		return -ENOMEM;
+	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
+	अगर (!pci)
+		वापस -ENOMEM;
 
 	pci->dev = dev;
 	pci->ops = &kirin_dw_pcie_ops;
@@ -445,42 +446,42 @@ static int kirin_pcie_probe(struct platform_device *pdev)
 	kirin_pcie->pci = pci;
 
 	ret = kirin_pcie_get_clk(kirin_pcie, pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = kirin_pcie_get_resource(kirin_pcie, pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	kirin_pcie->gpio_id_reset = of_get_named_gpio(dev->of_node,
 						      "reset-gpios", 0);
-	if (kirin_pcie->gpio_id_reset == -EPROBE_DEFER) {
-		return -EPROBE_DEFER;
-	} else if (!gpio_is_valid(kirin_pcie->gpio_id_reset)) {
+	अगर (kirin_pcie->gpio_id_reset == -EPROBE_DEFER) अणु
+		वापस -EPROBE_DEFER;
+	पूर्ण अन्यथा अगर (!gpio_is_valid(kirin_pcie->gpio_id_reset)) अणु
 		dev_err(dev, "unable to get a valid gpio pin\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = kirin_pcie_power_on(kirin_pcie);
-	if (ret)
-		return ret;
+	ret = kirin_pcie_घातer_on(kirin_pcie);
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, kirin_pcie);
+	platक्रमm_set_drvdata(pdev, kirin_pcie);
 
-	return dw_pcie_host_init(&pci->pp);
-}
+	वापस dw_pcie_host_init(&pci->pp);
+पूर्ण
 
-static const struct of_device_id kirin_pcie_match[] = {
-	{ .compatible = "hisilicon,kirin960-pcie" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id kirin_pcie_match[] = अणु
+	अणु .compatible = "hisilicon,kirin960-pcie" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver kirin_pcie_driver = {
+अटल काष्ठा platक्रमm_driver kirin_pcie_driver = अणु
 	.probe			= kirin_pcie_probe,
-	.driver			= {
+	.driver			= अणु
 		.name			= "kirin-pcie",
 		.of_match_table = kirin_pcie_match,
 		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(kirin_pcie_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(kirin_pcie_driver);

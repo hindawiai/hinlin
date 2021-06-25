@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2015 Red Hat, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining
+ * a copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -23,101 +24,101 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/moduleparam.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/moduleparam.h>
 
-#include "virtgpu_drv.h"
+#समावेश "virtgpu_drv.h"
 
-static int virtio_gpu_virglrenderer_workaround = 1;
-module_param_named(virglhack, virtio_gpu_virglrenderer_workaround, int, 0400);
+अटल पूर्णांक virtio_gpu_virglrenderer_workaround = 1;
+module_param_named(virglhack, virtio_gpu_virglrenderer_workaround, पूर्णांक, 0400);
 
-int virtio_gpu_resource_id_get(struct virtio_gpu_device *vgdev, uint32_t *resid)
-{
-	if (virtio_gpu_virglrenderer_workaround) {
+पूर्णांक virtio_gpu_resource_id_get(काष्ठा virtio_gpu_device *vgdev, uपूर्णांक32_t *resid)
+अणु
+	अगर (virtio_gpu_virglrenderer_workaround) अणु
 		/*
-		 * Hack to avoid re-using resource IDs.
+		 * Hack to aव्योम re-using resource IDs.
 		 *
 		 * virglrenderer versions up to (and including) 0.7.0
 		 * can't deal with that.  virglrenderer commit
 		 * "f91a9dd35715 Fix unlinking resources from hash
 		 * table." (Feb 2019) fixes the bug.
 		 */
-		static atomic_t seqno = ATOMIC_INIT(0);
-		int handle = atomic_inc_return(&seqno);
+		अटल atomic_t seqno = ATOMIC_INIT(0);
+		पूर्णांक handle = atomic_inc_वापस(&seqno);
 		*resid = handle + 1;
-	} else {
-		int handle = ida_alloc(&vgdev->resource_ida, GFP_KERNEL);
-		if (handle < 0)
-			return handle;
+	पूर्ण अन्यथा अणु
+		पूर्णांक handle = ida_alloc(&vgdev->resource_ida, GFP_KERNEL);
+		अगर (handle < 0)
+			वापस handle;
 		*resid = handle + 1;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void virtio_gpu_resource_id_put(struct virtio_gpu_device *vgdev, uint32_t id)
-{
-	if (!virtio_gpu_virglrenderer_workaround) {
-		ida_free(&vgdev->resource_ida, id - 1);
-	}
-}
+अटल व्योम virtio_gpu_resource_id_put(काष्ठा virtio_gpu_device *vgdev, uपूर्णांक32_t id)
+अणु
+	अगर (!virtio_gpu_virglrenderer_workaround) अणु
+		ida_मुक्त(&vgdev->resource_ida, id - 1);
+	पूर्ण
+पूर्ण
 
-void virtio_gpu_cleanup_object(struct virtio_gpu_object *bo)
-{
-	struct virtio_gpu_device *vgdev = bo->base.base.dev->dev_private;
+व्योम virtio_gpu_cleanup_object(काष्ठा virtio_gpu_object *bo)
+अणु
+	काष्ठा virtio_gpu_device *vgdev = bo->base.base.dev->dev_निजी;
 
 	virtio_gpu_resource_id_put(vgdev, bo->hw_res_handle);
-	if (virtio_gpu_is_shmem(bo)) {
-		struct virtio_gpu_object_shmem *shmem = to_virtio_gpu_shmem(bo);
+	अगर (virtio_gpu_is_shmem(bo)) अणु
+		काष्ठा virtio_gpu_object_shmem *shmem = to_virtio_gpu_shmem(bo);
 
-		if (shmem->pages) {
-			if (shmem->mapped) {
+		अगर (shmem->pages) अणु
+			अगर (shmem->mapped) अणु
 				dma_unmap_sgtable(vgdev->vdev->dev.parent,
 					     shmem->pages, DMA_TO_DEVICE, 0);
 				shmem->mapped = 0;
-			}
+			पूर्ण
 
-			sg_free_table(shmem->pages);
-			kfree(shmem->pages);
-			shmem->pages = NULL;
+			sg_मुक्त_table(shmem->pages);
+			kमुक्त(shmem->pages);
+			shmem->pages = शून्य;
 			drm_gem_shmem_unpin(&bo->base.base);
-		}
+		पूर्ण
 
-		drm_gem_shmem_free_object(&bo->base.base);
-	} else if (virtio_gpu_is_vram(bo)) {
-		struct virtio_gpu_object_vram *vram = to_virtio_gpu_vram(bo);
+		drm_gem_shmem_मुक्त_object(&bo->base.base);
+	पूर्ण अन्यथा अगर (virtio_gpu_is_vram(bo)) अणु
+		काष्ठा virtio_gpu_object_vram *vram = to_virtio_gpu_vram(bo);
 
 		spin_lock(&vgdev->host_visible_lock);
-		if (drm_mm_node_allocated(&vram->vram_node))
-			drm_mm_remove_node(&vram->vram_node);
+		अगर (drm_mm_node_allocated(&vram->vram_node))
+			drm_mm_हटाओ_node(&vram->vram_node);
 
 		spin_unlock(&vgdev->host_visible_lock);
 
-		drm_gem_free_mmap_offset(&vram->base.base.base);
+		drm_gem_मुक्त_mmap_offset(&vram->base.base.base);
 		drm_gem_object_release(&vram->base.base.base);
-		kfree(vram);
-	}
-}
+		kमुक्त(vram);
+	पूर्ण
+पूर्ण
 
-static void virtio_gpu_free_object(struct drm_gem_object *obj)
-{
-	struct virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
-	struct virtio_gpu_device *vgdev = bo->base.base.dev->dev_private;
+अटल व्योम virtio_gpu_मुक्त_object(काष्ठा drm_gem_object *obj)
+अणु
+	काष्ठा virtio_gpu_object *bo = gem_to_virtio_gpu_obj(obj);
+	काष्ठा virtio_gpu_device *vgdev = bo->base.base.dev->dev_निजी;
 
-	if (bo->created) {
+	अगर (bo->created) अणु
 		virtio_gpu_cmd_unref_resource(vgdev, bo);
-		virtio_gpu_notify(vgdev);
+		virtio_gpu_notअगरy(vgdev);
 		/* completion handler calls virtio_gpu_cleanup_object() */
-		return;
-	}
+		वापस;
+	पूर्ण
 	virtio_gpu_cleanup_object(bo);
-}
+पूर्ण
 
-static const struct drm_gem_object_funcs virtio_gpu_shmem_funcs = {
-	.free = virtio_gpu_free_object,
-	.open = virtio_gpu_gem_object_open,
-	.close = virtio_gpu_gem_object_close,
+अटल स्थिर काष्ठा drm_gem_object_funcs virtio_gpu_shmem_funcs = अणु
+	.मुक्त = virtio_gpu_मुक्त_object,
+	.खोलो = virtio_gpu_gem_object_खोलो,
+	.बंद = virtio_gpu_gem_object_बंद,
 
-	.print_info = drm_gem_shmem_print_info,
+	.prपूर्णांक_info = drm_gem_shmem_prपूर्णांक_info,
 	.export = virtgpu_gem_prime_export,
 	.pin = drm_gem_shmem_pin,
 	.unpin = drm_gem_shmem_unpin,
@@ -125,155 +126,155 @@ static const struct drm_gem_object_funcs virtio_gpu_shmem_funcs = {
 	.vmap = drm_gem_shmem_vmap,
 	.vunmap = drm_gem_shmem_vunmap,
 	.mmap = drm_gem_shmem_mmap,
-};
+पूर्ण;
 
-bool virtio_gpu_is_shmem(struct virtio_gpu_object *bo)
-{
-	return bo->base.base.funcs == &virtio_gpu_shmem_funcs;
-}
+bool virtio_gpu_is_shmem(काष्ठा virtio_gpu_object *bo)
+अणु
+	वापस bo->base.base.funcs == &virtio_gpu_shmem_funcs;
+पूर्ण
 
-struct drm_gem_object *virtio_gpu_create_object(struct drm_device *dev,
-						size_t size)
-{
-	struct virtio_gpu_object_shmem *shmem;
-	struct drm_gem_shmem_object *dshmem;
+काष्ठा drm_gem_object *virtio_gpu_create_object(काष्ठा drm_device *dev,
+						माप_प्रकार size)
+अणु
+	काष्ठा virtio_gpu_object_shmem *shmem;
+	काष्ठा drm_gem_shmem_object *dshmem;
 
-	shmem = kzalloc(sizeof(*shmem), GFP_KERNEL);
-	if (!shmem)
-		return NULL;
+	shmem = kzalloc(माप(*shmem), GFP_KERNEL);
+	अगर (!shmem)
+		वापस शून्य;
 
 	dshmem = &shmem->base.base;
 	dshmem->base.funcs = &virtio_gpu_shmem_funcs;
-	return &dshmem->base;
-}
+	वापस &dshmem->base;
+पूर्ण
 
-static int virtio_gpu_object_shmem_init(struct virtio_gpu_device *vgdev,
-					struct virtio_gpu_object *bo,
-					struct virtio_gpu_mem_entry **ents,
-					unsigned int *nents)
-{
+अटल पूर्णांक virtio_gpu_object_shmem_init(काष्ठा virtio_gpu_device *vgdev,
+					काष्ठा virtio_gpu_object *bo,
+					काष्ठा virtio_gpu_mem_entry **ents,
+					अचिन्हित पूर्णांक *nents)
+अणु
 	bool use_dma_api = !virtio_has_dma_quirk(vgdev->vdev);
-	struct virtio_gpu_object_shmem *shmem = to_virtio_gpu_shmem(bo);
-	struct scatterlist *sg;
-	int si, ret;
+	काष्ठा virtio_gpu_object_shmem *shmem = to_virtio_gpu_shmem(bo);
+	काष्ठा scatterlist *sg;
+	पूर्णांक si, ret;
 
 	ret = drm_gem_shmem_pin(&bo->base.base);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	/*
 	 * virtio_gpu uses drm_gem_shmem_get_sg_table instead of
 	 * drm_gem_shmem_get_pages_sgt because virtio has it's own set of
-	 * dma-ops. This is discouraged for other drivers, but should be fine
-	 * since virtio_gpu doesn't support dma-buf import from other devices.
+	 * dma-ops. This is discouraged क्रम other drivers, but should be fine
+	 * since virtio_gpu करोesn't support dma-buf import from other devices.
 	 */
 	shmem->pages = drm_gem_shmem_get_sg_table(&bo->base.base);
-	if (!shmem->pages) {
+	अगर (!shmem->pages) अणु
 		drm_gem_shmem_unpin(&bo->base.base);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (use_dma_api) {
+	अगर (use_dma_api) अणु
 		ret = dma_map_sgtable(vgdev->vdev->dev.parent,
 				      shmem->pages, DMA_TO_DEVICE, 0);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		*nents = shmem->mapped = shmem->pages->nents;
-	} else {
+	पूर्ण अन्यथा अणु
 		*nents = shmem->pages->orig_nents;
-	}
+	पूर्ण
 
-	*ents = kvmalloc_array(*nents,
-			       sizeof(struct virtio_gpu_mem_entry),
+	*ents = kvदो_स्मृति_array(*nents,
+			       माप(काष्ठा virtio_gpu_mem_entry),
 			       GFP_KERNEL);
-	if (!(*ents)) {
+	अगर (!(*ents)) अणु
 		DRM_ERROR("failed to allocate ent list\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (use_dma_api) {
-		for_each_sgtable_dma_sg(shmem->pages, sg, si) {
+	अगर (use_dma_api) अणु
+		क्रम_each_sgtable_dma_sg(shmem->pages, sg, si) अणु
 			(*ents)[si].addr = cpu_to_le64(sg_dma_address(sg));
 			(*ents)[si].length = cpu_to_le32(sg_dma_len(sg));
 			(*ents)[si].padding = 0;
-		}
-	} else {
-		for_each_sgtable_sg(shmem->pages, sg, si) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम_each_sgtable_sg(shmem->pages, sg, si) अणु
 			(*ents)[si].addr = cpu_to_le64(sg_phys(sg));
 			(*ents)[si].length = cpu_to_le32(sg->length);
 			(*ents)[si].padding = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int virtio_gpu_object_create(struct virtio_gpu_device *vgdev,
-			     struct virtio_gpu_object_params *params,
-			     struct virtio_gpu_object **bo_ptr,
-			     struct virtio_gpu_fence *fence)
-{
-	struct virtio_gpu_object_array *objs = NULL;
-	struct drm_gem_shmem_object *shmem_obj;
-	struct virtio_gpu_object *bo;
-	struct virtio_gpu_mem_entry *ents;
-	unsigned int nents;
-	int ret;
+पूर्णांक virtio_gpu_object_create(काष्ठा virtio_gpu_device *vgdev,
+			     काष्ठा virtio_gpu_object_params *params,
+			     काष्ठा virtio_gpu_object **bo_ptr,
+			     काष्ठा virtio_gpu_fence *fence)
+अणु
+	काष्ठा virtio_gpu_object_array *objs = शून्य;
+	काष्ठा drm_gem_shmem_object *shmem_obj;
+	काष्ठा virtio_gpu_object *bo;
+	काष्ठा virtio_gpu_mem_entry *ents;
+	अचिन्हित पूर्णांक nents;
+	पूर्णांक ret;
 
-	*bo_ptr = NULL;
+	*bo_ptr = शून्य;
 
 	params->size = roundup(params->size, PAGE_SIZE);
 	shmem_obj = drm_gem_shmem_create(vgdev->ddev, params->size);
-	if (IS_ERR(shmem_obj))
-		return PTR_ERR(shmem_obj);
+	अगर (IS_ERR(shmem_obj))
+		वापस PTR_ERR(shmem_obj);
 	bo = gem_to_virtio_gpu_obj(&shmem_obj->base);
 
 	ret = virtio_gpu_resource_id_get(vgdev, &bo->hw_res_handle);
-	if (ret < 0)
-		goto err_free_gem;
+	अगर (ret < 0)
+		जाओ err_मुक्त_gem;
 
 	bo->dumb = params->dumb;
 
-	if (fence) {
+	अगर (fence) अणु
 		ret = -ENOMEM;
 		objs = virtio_gpu_array_alloc(1);
-		if (!objs)
-			goto err_put_id;
+		अगर (!objs)
+			जाओ err_put_id;
 		virtio_gpu_array_add_obj(objs, &bo->base.base);
 
 		ret = virtio_gpu_array_lock_resv(objs);
-		if (ret != 0)
-			goto err_put_objs;
-	}
+		अगर (ret != 0)
+			जाओ err_put_objs;
+	पूर्ण
 
 	ret = virtio_gpu_object_shmem_init(vgdev, bo, &ents, &nents);
-	if (ret != 0) {
-		virtio_gpu_array_put_free(objs);
-		virtio_gpu_free_object(&shmem_obj->base);
-		return ret;
-	}
+	अगर (ret != 0) अणु
+		virtio_gpu_array_put_मुक्त(objs);
+		virtio_gpu_मुक्त_object(&shmem_obj->base);
+		वापस ret;
+	पूर्ण
 
-	if (params->blob) {
+	अगर (params->blob) अणु
 		virtio_gpu_cmd_resource_create_blob(vgdev, bo, params,
 						    ents, nents);
-	} else if (params->virgl) {
+	पूर्ण अन्यथा अगर (params->virgl) अणु
 		virtio_gpu_cmd_resource_create_3d(vgdev, bo, params,
 						  objs, fence);
 		virtio_gpu_object_attach(vgdev, bo, ents, nents);
-	} else {
+	पूर्ण अन्यथा अणु
 		virtio_gpu_cmd_create_resource(vgdev, bo, params,
 					       objs, fence);
 		virtio_gpu_object_attach(vgdev, bo, ents, nents);
-	}
+	पूर्ण
 
 	*bo_ptr = bo;
-	return 0;
+	वापस 0;
 
 err_put_objs:
-	virtio_gpu_array_put_free(objs);
+	virtio_gpu_array_put_मुक्त(objs);
 err_put_id:
 	virtio_gpu_resource_id_put(vgdev, bo->hw_res_handle);
-err_free_gem:
-	drm_gem_shmem_free_object(&shmem_obj->base);
-	return ret;
-}
+err_मुक्त_gem:
+	drm_gem_shmem_मुक्त_object(&shmem_obj->base);
+	वापस ret;
+पूर्ण

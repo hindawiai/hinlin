@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * lib/lshrdi3.c
  */
 
-#include <linux/module.h>
-#include <linux/libgcc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/libgcc.h>
 
-long long notrace __lshrdi3(long long u, word_type b)
-{
-	DWunion uu, w;
+दीर्घ दीर्घ notrace __lshrdi3(दीर्घ दीर्घ u, word_type b)
+अणु
+	DWजोड़ uu, w;
 	word_type bm;
 
-	if (b == 0)
-		return u;
+	अगर (b == 0)
+		वापस u;
 
 	uu.ll = u;
 	bm = 32 - b;
 
-	if (bm <= 0) {
+	अगर (bm <= 0) अणु
 		w.s.high = 0;
-		w.s.low = (unsigned int) uu.s.high >> -bm;
-	} else {
-		const unsigned int carries = (unsigned int) uu.s.high << bm;
+		w.s.low = (अचिन्हित पूर्णांक) uu.s.high >> -bm;
+	पूर्ण अन्यथा अणु
+		स्थिर अचिन्हित पूर्णांक carries = (अचिन्हित पूर्णांक) uu.s.high << bm;
 
-		w.s.high = (unsigned int) uu.s.high >> b;
-		w.s.low = ((unsigned int) uu.s.low >> b) | carries;
-	}
+		w.s.high = (अचिन्हित पूर्णांक) uu.s.high >> b;
+		w.s.low = ((अचिन्हित पूर्णांक) uu.s.low >> b) | carries;
+	पूर्ण
 
-	return w.ll;
-}
+	वापस w.ll;
+पूर्ण
 EXPORT_SYMBOL(__lshrdi3);

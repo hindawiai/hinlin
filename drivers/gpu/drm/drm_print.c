@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2016 Red Hat
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,24 +24,24 @@
  * Rob Clark <robdclark@gmail.com>
  */
 
-#define DEBUG /* for pr_debug() */
+#घोषणा DEBUG /* क्रम pr_debug() */
 
-#include <stdarg.h>
+#समावेश <मानकतर्क.स>
 
-#include <linux/io.h>
-#include <linux/moduleparam.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
 /*
  * __drm_debug: Enable debug output.
- * Bitmask of DRM_UT_x. See include/drm/drm_print.h for details.
+ * Biपंचांगask of DRM_UT_x. See include/drm/drm_prपूर्णांक.h क्रम details.
  */
-unsigned int __drm_debug;
+अचिन्हित पूर्णांक __drm_debug;
 EXPORT_SYMBOL(__drm_debug);
 
 MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug category.\n"
@@ -52,293 +53,293 @@ MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug cat
 "\t\tBit 5 (0x20)  will enable VBL messages (vblank code)\n"
 "\t\tBit 7 (0x80)  will enable LEASE messages (leasing code)\n"
 "\t\tBit 8 (0x100) will enable DP messages (displayport code)");
-module_param_named(debug, __drm_debug, int, 0600);
+module_param_named(debug, __drm_debug, पूर्णांक, 0600);
 
-void __drm_puts_coredump(struct drm_printer *p, const char *str)
-{
-	struct drm_print_iterator *iterator = p->arg;
-	ssize_t len;
+व्योम __drm_माला_दो_coredump(काष्ठा drm_prपूर्णांकer *p, स्थिर अक्षर *str)
+अणु
+	काष्ठा drm_prपूर्णांक_iterator *iterator = p->arg;
+	sमाप_प्रकार len;
 
-	if (!iterator->remain)
-		return;
+	अगर (!iterator->reमुख्य)
+		वापस;
 
-	if (iterator->offset < iterator->start) {
-		ssize_t copy;
+	अगर (iterator->offset < iterator->start) अणु
+		sमाप_प्रकार copy;
 
-		len = strlen(str);
+		len = म_माप(str);
 
-		if (iterator->offset + len <= iterator->start) {
+		अगर (iterator->offset + len <= iterator->start) अणु
 			iterator->offset += len;
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		copy = len - (iterator->start - iterator->offset);
 
-		if (copy > iterator->remain)
-			copy = iterator->remain;
+		अगर (copy > iterator->reमुख्य)
+			copy = iterator->reमुख्य;
 
 		/* Copy out the bit of the string that we need */
-		memcpy(iterator->data,
+		स_नकल(iterator->data,
 			str + (iterator->start - iterator->offset), copy);
 
 		iterator->offset = iterator->start + copy;
-		iterator->remain -= copy;
-	} else {
-		ssize_t pos = iterator->offset - iterator->start;
+		iterator->reमुख्य -= copy;
+	पूर्ण अन्यथा अणु
+		sमाप_प्रकार pos = iterator->offset - iterator->start;
 
-		len = min_t(ssize_t, strlen(str), iterator->remain);
+		len = min_t(sमाप_प्रकार, म_माप(str), iterator->reमुख्य);
 
-		memcpy(iterator->data + pos, str, len);
+		स_नकल(iterator->data + pos, str, len);
 
 		iterator->offset += len;
-		iterator->remain -= len;
-	}
-}
-EXPORT_SYMBOL(__drm_puts_coredump);
+		iterator->reमुख्य -= len;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__drm_माला_दो_coredump);
 
-void __drm_printfn_coredump(struct drm_printer *p, struct va_format *vaf)
-{
-	struct drm_print_iterator *iterator = p->arg;
-	size_t len;
-	char *buf;
+व्योम __drm_म_लिखोn_coredump(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
+	काष्ठा drm_prपूर्णांक_iterator *iterator = p->arg;
+	माप_प्रकार len;
+	अक्षर *buf;
 
-	if (!iterator->remain)
-		return;
+	अगर (!iterator->reमुख्य)
+		वापस;
 
 	/* Figure out how big the string will be */
-	len = snprintf(NULL, 0, "%pV", vaf);
+	len = snम_लिखो(शून्य, 0, "%pV", vaf);
 
-	/* This is the easiest path, we've already advanced beyond the offset */
-	if (iterator->offset + len <= iterator->start) {
+	/* This is the easiest path, we've alपढ़ोy advanced beyond the offset */
+	अगर (iterator->offset + len <= iterator->start) अणु
 		iterator->offset += len;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Then check if we can directly copy into the target buffer */
-	if ((iterator->offset >= iterator->start) && (len < iterator->remain)) {
-		ssize_t pos = iterator->offset - iterator->start;
+	/* Then check अगर we can directly copy पूर्णांकo the target buffer */
+	अगर ((iterator->offset >= iterator->start) && (len < iterator->reमुख्य)) अणु
+		sमाप_प्रकार pos = iterator->offset - iterator->start;
 
-		snprintf(((char *) iterator->data) + pos,
-			iterator->remain, "%pV", vaf);
+		snम_लिखो(((अक्षर *) iterator->data) + pos,
+			iterator->reमुख्य, "%pV", vaf);
 
 		iterator->offset += len;
-		iterator->remain -= len;
+		iterator->reमुख्य -= len;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Finally, hit the slow path and make a temporary string to copy over
-	 * using _drm_puts_coredump
+	 * using _drm_माला_दो_coredump
 	 */
-	buf = kmalloc(len + 1, GFP_KERNEL | __GFP_NOWARN | __GFP_NORETRY);
-	if (!buf)
-		return;
+	buf = kदो_स्मृति(len + 1, GFP_KERNEL | __GFP_NOWARN | __GFP_NORETRY);
+	अगर (!buf)
+		वापस;
 
-	snprintf(buf, len + 1, "%pV", vaf);
-	__drm_puts_coredump(p, (const char *) buf);
+	snम_लिखो(buf, len + 1, "%pV", vaf);
+	__drm_माला_दो_coredump(p, (स्थिर अक्षर *) buf);
 
-	kfree(buf);
-}
-EXPORT_SYMBOL(__drm_printfn_coredump);
+	kमुक्त(buf);
+पूर्ण
+EXPORT_SYMBOL(__drm_म_लिखोn_coredump);
 
-void __drm_puts_seq_file(struct drm_printer *p, const char *str)
-{
-	seq_puts(p->arg, str);
-}
-EXPORT_SYMBOL(__drm_puts_seq_file);
+व्योम __drm_माला_दो_seq_file(काष्ठा drm_prपूर्णांकer *p, स्थिर अक्षर *str)
+अणु
+	seq_माला_दो(p->arg, str);
+पूर्ण
+EXPORT_SYMBOL(__drm_माला_दो_seq_file);
 
-void __drm_printfn_seq_file(struct drm_printer *p, struct va_format *vaf)
-{
-	seq_printf(p->arg, "%pV", vaf);
-}
-EXPORT_SYMBOL(__drm_printfn_seq_file);
+व्योम __drm_म_लिखोn_seq_file(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
+	seq_म_लिखो(p->arg, "%pV", vaf);
+पूर्ण
+EXPORT_SYMBOL(__drm_म_लिखोn_seq_file);
 
-void __drm_printfn_info(struct drm_printer *p, struct va_format *vaf)
-{
+व्योम __drm_म_लिखोn_info(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
 	dev_info(p->arg, "[" DRM_NAME "] %pV", vaf);
-}
-EXPORT_SYMBOL(__drm_printfn_info);
+पूर्ण
+EXPORT_SYMBOL(__drm_म_लिखोn_info);
 
-void __drm_printfn_debug(struct drm_printer *p, struct va_format *vaf)
-{
+व्योम __drm_म_लिखोn_debug(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
 	pr_debug("%s %pV", p->prefix, vaf);
-}
-EXPORT_SYMBOL(__drm_printfn_debug);
+पूर्ण
+EXPORT_SYMBOL(__drm_म_लिखोn_debug);
 
-void __drm_printfn_err(struct drm_printer *p, struct va_format *vaf)
-{
+व्योम __drm_म_लिखोn_err(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
 	pr_err("*ERROR* %s %pV", p->prefix, vaf);
-}
-EXPORT_SYMBOL(__drm_printfn_err);
+पूर्ण
+EXPORT_SYMBOL(__drm_म_लिखोn_err);
 
 /**
- * drm_puts - print a const string to a &drm_printer stream
- * @p: the &drm printer
- * @str: const string
+ * drm_माला_दो - prपूर्णांक a स्थिर string to a &drm_prपूर्णांकer stream
+ * @p: the &drm prपूर्णांकer
+ * @str: स्थिर string
  *
- * Allow &drm_printer types that have a constant string
+ * Allow &drm_prपूर्णांकer types that have a स्थिरant string
  * option to use it.
  */
-void drm_puts(struct drm_printer *p, const char *str)
-{
-	if (p->puts)
-		p->puts(p, str);
-	else
-		drm_printf(p, "%s", str);
-}
-EXPORT_SYMBOL(drm_puts);
+व्योम drm_माला_दो(काष्ठा drm_prपूर्णांकer *p, स्थिर अक्षर *str)
+अणु
+	अगर (p->माला_दो)
+		p->माला_दो(p, str);
+	अन्यथा
+		drm_म_लिखो(p, "%s", str);
+पूर्ण
+EXPORT_SYMBOL(drm_माला_दो);
 
 /**
- * drm_printf - print to a &drm_printer stream
- * @p: the &drm_printer
- * @f: format string
+ * drm_म_लिखो - prपूर्णांक to a &drm_prपूर्णांकer stream
+ * @p: the &drm_prपूर्णांकer
+ * @f: क्रमmat string
  */
-void drm_printf(struct drm_printer *p, const char *f, ...)
-{
-	va_list args;
+व्योम drm_म_लिखो(काष्ठा drm_prपूर्णांकer *p, स्थिर अक्षर *f, ...)
+अणु
+	बहु_सूची args;
 
-	va_start(args, f);
-	drm_vprintf(p, f, &args);
-	va_end(args);
-}
-EXPORT_SYMBOL(drm_printf);
+	बहु_शुरू(args, f);
+	drm_भ_लिखो(p, f, &args);
+	बहु_पूर्ण(args);
+पूर्ण
+EXPORT_SYMBOL(drm_म_लिखो);
 
 /**
- * drm_print_bits - print bits to a &drm_printer stream
+ * drm_prपूर्णांक_bits - prपूर्णांक bits to a &drm_prपूर्णांकer stream
  *
- * Print bits (in flag fields for example) in human readable form.
+ * Prपूर्णांक bits (in flag fields क्रम example) in human पढ़ोable क्रमm.
  *
- * @p: the &drm_printer
+ * @p: the &drm_prपूर्णांकer
  * @value: field value.
  * @bits: Array with bit names.
  * @nbits: Size of bit names array.
  */
-void drm_print_bits(struct drm_printer *p, unsigned long value,
-		    const char * const bits[], unsigned int nbits)
-{
+व्योम drm_prपूर्णांक_bits(काष्ठा drm_prपूर्णांकer *p, अचिन्हित दीर्घ value,
+		    स्थिर अक्षर * स्थिर bits[], अचिन्हित पूर्णांक nbits)
+अणु
 	bool first = true;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (WARN_ON_ONCE(nbits > BITS_PER_TYPE(value)))
+	अगर (WARN_ON_ONCE(nbits > BITS_PER_TYPE(value)))
 		nbits = BITS_PER_TYPE(value);
 
-	for_each_set_bit(i, &value, nbits) {
-		if (WARN_ON_ONCE(!bits[i]))
-			continue;
-		drm_printf(p, "%s%s", first ? "" : ",",
+	क्रम_each_set_bit(i, &value, nbits) अणु
+		अगर (WARN_ON_ONCE(!bits[i]))
+			जारी;
+		drm_म_लिखो(p, "%s%s", first ? "" : ",",
 			   bits[i]);
 		first = false;
-	}
-	if (first)
-		drm_printf(p, "(none)");
-}
-EXPORT_SYMBOL(drm_print_bits);
+	पूर्ण
+	अगर (first)
+		drm_म_लिखो(p, "(none)");
+पूर्ण
+EXPORT_SYMBOL(drm_prपूर्णांक_bits);
 
-void drm_dev_printk(const struct device *dev, const char *level,
-		    const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम drm_dev_prपूर्णांकk(स्थिर काष्ठा device *dev, स्थिर अक्षर *level,
+		    स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
-	vaf.fmt = format;
+	बहु_शुरू(args, क्रमmat);
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
-	if (dev)
-		dev_printk(level, dev, "[" DRM_NAME ":%ps] %pV",
-			   __builtin_return_address(0), &vaf);
-	else
-		printk("%s" "[" DRM_NAME ":%ps] %pV",
-		       level, __builtin_return_address(0), &vaf);
+	अगर (dev)
+		dev_prपूर्णांकk(level, dev, "[" DRM_NAME ":%ps] %pV",
+			   __builtin_वापस_address(0), &vaf);
+	अन्यथा
+		prपूर्णांकk("%s" "[" DRM_NAME ":%ps] %pV",
+		       level, __builtin_वापस_address(0), &vaf);
 
-	va_end(args);
-}
-EXPORT_SYMBOL(drm_dev_printk);
+	बहु_पूर्ण(args);
+पूर्ण
+EXPORT_SYMBOL(drm_dev_prपूर्णांकk);
 
-void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
-		 const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम drm_dev_dbg(स्थिर काष्ठा device *dev, क्रमागत drm_debug_category category,
+		 स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (!drm_debug_enabled(category))
-		return;
+	अगर (!drm_debug_enabled(category))
+		वापस;
 
-	va_start(args, format);
-	vaf.fmt = format;
+	बहु_शुरू(args, क्रमmat);
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
-	if (dev)
-		dev_printk(KERN_DEBUG, dev, "[" DRM_NAME ":%ps] %pV",
-			   __builtin_return_address(0), &vaf);
-	else
-		printk(KERN_DEBUG "[" DRM_NAME ":%ps] %pV",
-		       __builtin_return_address(0), &vaf);
+	अगर (dev)
+		dev_prपूर्णांकk(KERN_DEBUG, dev, "[" DRM_NAME ":%ps] %pV",
+			   __builtin_वापस_address(0), &vaf);
+	अन्यथा
+		prपूर्णांकk(KERN_DEBUG "[" DRM_NAME ":%ps] %pV",
+		       __builtin_वापस_address(0), &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(drm_dev_dbg);
 
-void __drm_dbg(enum drm_debug_category category, const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम __drm_dbg(क्रमागत drm_debug_category category, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	if (!drm_debug_enabled(category))
-		return;
+	अगर (!drm_debug_enabled(category))
+		वापस;
 
-	va_start(args, format);
-	vaf.fmt = format;
+	बहु_शुरू(args, क्रमmat);
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
-	printk(KERN_DEBUG "[" DRM_NAME ":%ps] %pV",
-	       __builtin_return_address(0), &vaf);
+	prपूर्णांकk(KERN_DEBUG "[" DRM_NAME ":%ps] %pV",
+	       __builtin_वापस_address(0), &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(__drm_dbg);
 
-void __drm_err(const char *format, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम __drm_err(स्थिर अक्षर *क्रमmat, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, format);
-	vaf.fmt = format;
+	बहु_शुरू(args, क्रमmat);
+	vaf.fmt = क्रमmat;
 	vaf.va = &args;
 
-	printk(KERN_ERR "[" DRM_NAME ":%ps] *ERROR* %pV",
-	       __builtin_return_address(0), &vaf);
+	prपूर्णांकk(KERN_ERR "[" DRM_NAME ":%ps] *ERROR* %pV",
+	       __builtin_वापस_address(0), &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 EXPORT_SYMBOL(__drm_err);
 
 /**
- * drm_print_regset32 - print the contents of registers to a
- * &drm_printer stream.
+ * drm_prपूर्णांक_regset32 - prपूर्णांक the contents of रेजिस्टरs to a
+ * &drm_prपूर्णांकer stream.
  *
- * @p: the &drm printer
- * @regset: the list of registers to print.
+ * @p: the &drm prपूर्णांकer
+ * @regset: the list of रेजिस्टरs to prपूर्णांक.
  *
  * Often in driver debug, it's useful to be able to either capture the
- * contents of registers in the steady state using debugfs or at
- * specific points during operation.  This lets the driver have a
- * single list of registers for both.
+ * contents of रेजिस्टरs in the steady state using debugfs or at
+ * specअगरic poपूर्णांकs during operation.  This lets the driver have a
+ * single list of रेजिस्टरs क्रम both.
  */
-void drm_print_regset32(struct drm_printer *p, struct debugfs_regset32 *regset)
-{
-	int namelen = 0;
-	int i;
+व्योम drm_prपूर्णांक_regset32(काष्ठा drm_prपूर्णांकer *p, काष्ठा debugfs_regset32 *regset)
+अणु
+	पूर्णांक namelen = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < regset->nregs; i++)
-		namelen = max(namelen, (int)strlen(regset->regs[i].name));
+	क्रम (i = 0; i < regset->nregs; i++)
+		namelen = max(namelen, (पूर्णांक)म_माप(regset->regs[i].name));
 
-	for (i = 0; i < regset->nregs; i++) {
-		drm_printf(p, "%*s = 0x%08x\n",
+	क्रम (i = 0; i < regset->nregs; i++) अणु
+		drm_म_लिखो(p, "%*s = 0x%08x\n",
 			   namelen, regset->regs[i].name,
-			   readl(regset->base + regset->regs[i].offset));
-	}
-}
-EXPORT_SYMBOL(drm_print_regset32);
+			   पढ़ोl(regset->base + regset->regs[i].offset));
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(drm_prपूर्णांक_regset32);

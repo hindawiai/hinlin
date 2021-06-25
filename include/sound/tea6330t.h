@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __SOUND_TEA6330T_H
-#define __SOUND_TEA6330T_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __SOUND_TEA6330T_H
+#घोषणा __SOUND_TEA6330T_H
 
 /*
- *  Routines for control of TEA6330T circuit.
- *  Sound fader control circuit for car radios.
+ *  Routines क्रम control of TEA6330T circuit.
+ *  Sound fader control circuit क्रम car radios.
  */
 
-#include <sound/i2c.h>		/* generic i2c support */
+#समावेश <sound/i2c.h>		/* generic i2c support */
 
-int snd_tea6330t_detect(struct snd_i2c_bus *bus, int equalizer);
-int snd_tea6330t_update_mixer(struct snd_card *card, struct snd_i2c_bus *bus,
-			      int equalizer, int fader);
+पूर्णांक snd_tea6330t_detect(काष्ठा snd_i2c_bus *bus, पूर्णांक equalizer);
+पूर्णांक snd_tea6330t_update_mixer(काष्ठा snd_card *card, काष्ठा snd_i2c_bus *bus,
+			      पूर्णांक equalizer, पूर्णांक fader);
 
-#endif /* __SOUND_TEA6330T_H */
+#पूर्ण_अगर /* __SOUND_TEA6330T_H */

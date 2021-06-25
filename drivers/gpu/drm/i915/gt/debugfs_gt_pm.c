@@ -1,630 +1,631 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/seq_file.h>
+#समावेश <linux/seq_file.h>
 
-#include "debugfs_gt.h"
-#include "debugfs_gt_pm.h"
-#include "i915_drv.h"
-#include "intel_gt.h"
-#include "intel_gt_clock_utils.h"
-#include "intel_gt_pm.h"
-#include "intel_llc.h"
-#include "intel_rc6.h"
-#include "intel_rps.h"
-#include "intel_runtime_pm.h"
-#include "intel_sideband.h"
-#include "intel_uncore.h"
+#समावेश "debugfs_gt.h"
+#समावेश "debugfs_gt_pm.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_gt.h"
+#समावेश "intel_gt_clock_utils.h"
+#समावेश "intel_gt_pm.h"
+#समावेश "intel_llc.h"
+#समावेश "intel_rc6.h"
+#समावेश "intel_rps.h"
+#समावेश "intel_runtime_pm.h"
+#समावेश "intel_sideband.h"
+#समावेश "intel_uncore.h"
 
-static int fw_domains_show(struct seq_file *m, void *data)
-{
-	struct intel_gt *gt = m->private;
-	struct intel_uncore *uncore = gt->uncore;
-	struct intel_uncore_forcewake_domain *fw_domain;
-	unsigned int tmp;
+अटल पूर्णांक fw_करोमुख्यs_show(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	काष्ठा पूर्णांकel_uncore_क्रमcewake_करोमुख्य *fw_करोमुख्य;
+	अचिन्हित पूर्णांक पंचांगp;
 
-	seq_printf(m, "user.bypass_count = %u\n",
-		   uncore->user_forcewake_count);
+	seq_म_लिखो(m, "user.bypass_count = %u\n",
+		   uncore->user_क्रमcewake_count);
 
-	for_each_fw_domain(fw_domain, uncore, tmp)
-		seq_printf(m, "%s.wake_count = %u\n",
-			   intel_uncore_forcewake_domain_to_str(fw_domain->id),
-			   READ_ONCE(fw_domain->wake_count));
+	क्रम_each_fw_करोमुख्य(fw_करोमुख्य, uncore, पंचांगp)
+		seq_म_लिखो(m, "%s.wake_count = %u\n",
+			   पूर्णांकel_uncore_क्रमcewake_करोमुख्य_to_str(fw_करोमुख्य->id),
+			   READ_ONCE(fw_करोमुख्य->wake_count));
 
-	return 0;
-}
-DEFINE_GT_DEBUGFS_ATTRIBUTE(fw_domains);
+	वापस 0;
+पूर्ण
+DEFINE_GT_DEBUGFS_ATTRIBUTE(fw_करोमुख्यs);
 
-static void print_rc6_res(struct seq_file *m,
-			  const char *title,
-			  const i915_reg_t reg)
-{
-	struct intel_gt *gt = m->private;
-	intel_wakeref_t wakeref;
+अटल व्योम prपूर्णांक_rc6_res(काष्ठा seq_file *m,
+			  स्थिर अक्षर *title,
+			  स्थिर i915_reg_t reg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	पूर्णांकel_wakeref_t wakeref;
 
-	with_intel_runtime_pm(gt->uncore->rpm, wakeref)
-		seq_printf(m, "%s %u (%llu us)\n", title,
-			   intel_uncore_read(gt->uncore, reg),
-			   intel_rc6_residency_us(&gt->rc6, reg));
-}
+	with_पूर्णांकel_runसमय_pm(gt->uncore->rpm, wakeref)
+		seq_म_लिखो(m, "%s %u (%llu us)\n", title,
+			   पूर्णांकel_uncore_पढ़ो(gt->uncore, reg),
+			   पूर्णांकel_rc6_residency_us(&gt->rc6, reg));
+पूर्ण
 
-static int vlv_drpc(struct seq_file *m)
-{
-	struct intel_gt *gt = m->private;
-	struct intel_uncore *uncore = gt->uncore;
+अटल पूर्णांक vlv_drpc(काष्ठा seq_file *m)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 	u32 rcctl1, pw_status;
 
-	pw_status = intel_uncore_read(uncore, VLV_GTLC_PW_STATUS);
-	rcctl1 = intel_uncore_read(uncore, GEN6_RC_CONTROL);
+	pw_status = पूर्णांकel_uncore_पढ़ो(uncore, VLV_GTLC_PW_STATUS);
+	rcctl1 = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RC_CONTROL);
 
-	seq_printf(m, "RC6 Enabled: %s\n",
+	seq_म_लिखो(m, "RC6 Enabled: %s\n",
 		   yesno(rcctl1 & (GEN7_RC_CTL_TO_MODE |
 					GEN6_RC_CTL_EI_MODE(1))));
-	seq_printf(m, "Render Power Well: %s\n",
+	seq_म_लिखो(m, "Render Power Well: %s\n",
 		   (pw_status & VLV_GTLC_PW_RENDER_STATUS_MASK) ? "Up" : "Down");
-	seq_printf(m, "Media Power Well: %s\n",
+	seq_म_लिखो(m, "Media Power Well: %s\n",
 		   (pw_status & VLV_GTLC_PW_MEDIA_STATUS_MASK) ? "Up" : "Down");
 
-	print_rc6_res(m, "Render RC6 residency since boot:", VLV_GT_RENDER_RC6);
-	print_rc6_res(m, "Media RC6 residency since boot:", VLV_GT_MEDIA_RC6);
+	prपूर्णांक_rc6_res(m, "Render RC6 residency since boot:", VLV_GT_RENDER_RC6);
+	prपूर्णांक_rc6_res(m, "Media RC6 residency since boot:", VLV_GT_MEDIA_RC6);
 
-	return fw_domains_show(m, NULL);
-}
+	वापस fw_करोमुख्यs_show(m, शून्य);
+पूर्ण
 
-static int gen6_drpc(struct seq_file *m)
-{
-	struct intel_gt *gt = m->private;
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_uncore *uncore = gt->uncore;
+अटल पूर्णांक gen6_drpc(काष्ठा seq_file *m)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 	u32 gt_core_status, rcctl1, rc6vids = 0;
-	u32 gen9_powergate_enable = 0, gen9_powergate_status = 0;
+	u32 gen9_घातergate_enable = 0, gen9_घातergate_status = 0;
 
-	gt_core_status = intel_uncore_read_fw(uncore, GEN6_GT_CORE_STATUS);
+	gt_core_status = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_GT_CORE_STATUS);
 
-	rcctl1 = intel_uncore_read(uncore, GEN6_RC_CONTROL);
-	if (INTEL_GEN(i915) >= 9) {
-		gen9_powergate_enable =
-			intel_uncore_read(uncore, GEN9_PG_ENABLE);
-		gen9_powergate_status =
-			intel_uncore_read(uncore, GEN9_PWRGT_DOMAIN_STATUS);
-	}
+	rcctl1 = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RC_CONTROL);
+	अगर (INTEL_GEN(i915) >= 9) अणु
+		gen9_घातergate_enable =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN9_PG_ENABLE);
+		gen9_घातergate_status =
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN9_PWRGT_DOMAIN_STATUS);
+	पूर्ण
 
-	if (INTEL_GEN(i915) <= 7)
-		sandybridge_pcode_read(i915, GEN6_PCODE_READ_RC6VIDS,
-				       &rc6vids, NULL);
+	अगर (INTEL_GEN(i915) <= 7)
+		sandybridge_pcode_पढ़ो(i915, GEN6_PCODE_READ_RC6VIDS,
+				       &rc6vids, शून्य);
 
-	seq_printf(m, "RC1e Enabled: %s\n",
+	seq_म_लिखो(m, "RC1e Enabled: %s\n",
 		   yesno(rcctl1 & GEN6_RC_CTL_RC1e_ENABLE));
-	seq_printf(m, "RC6 Enabled: %s\n",
+	seq_म_लिखो(m, "RC6 Enabled: %s\n",
 		   yesno(rcctl1 & GEN6_RC_CTL_RC6_ENABLE));
-	if (INTEL_GEN(i915) >= 9) {
-		seq_printf(m, "Render Well Gating Enabled: %s\n",
-			   yesno(gen9_powergate_enable & GEN9_RENDER_PG_ENABLE));
-		seq_printf(m, "Media Well Gating Enabled: %s\n",
-			   yesno(gen9_powergate_enable & GEN9_MEDIA_PG_ENABLE));
-	}
-	seq_printf(m, "Deep RC6 Enabled: %s\n",
+	अगर (INTEL_GEN(i915) >= 9) अणु
+		seq_म_लिखो(m, "Render Well Gating Enabled: %s\n",
+			   yesno(gen9_घातergate_enable & GEN9_RENDER_PG_ENABLE));
+		seq_म_लिखो(m, "Media Well Gating Enabled: %s\n",
+			   yesno(gen9_घातergate_enable & GEN9_MEDIA_PG_ENABLE));
+	पूर्ण
+	seq_म_लिखो(m, "Deep RC6 Enabled: %s\n",
 		   yesno(rcctl1 & GEN6_RC_CTL_RC6p_ENABLE));
-	seq_printf(m, "Deepest RC6 Enabled: %s\n",
+	seq_म_लिखो(m, "Deepest RC6 Enabled: %s\n",
 		   yesno(rcctl1 & GEN6_RC_CTL_RC6pp_ENABLE));
-	seq_puts(m, "Current RC state: ");
-	switch (gt_core_status & GEN6_RCn_MASK) {
-	case GEN6_RC0:
-		if (gt_core_status & GEN6_CORE_CPD_STATE_MASK)
-			seq_puts(m, "Core Power Down\n");
-		else
-			seq_puts(m, "on\n");
-		break;
-	case GEN6_RC3:
-		seq_puts(m, "RC3\n");
-		break;
-	case GEN6_RC6:
-		seq_puts(m, "RC6\n");
-		break;
-	case GEN6_RC7:
-		seq_puts(m, "RC7\n");
-		break;
-	default:
-		seq_puts(m, "Unknown\n");
-		break;
-	}
+	seq_माला_दो(m, "Current RC state: ");
+	चयन (gt_core_status & GEN6_RCn_MASK) अणु
+	हाल GEN6_RC0:
+		अगर (gt_core_status & GEN6_CORE_CPD_STATE_MASK)
+			seq_माला_दो(m, "Core Power Down\n");
+		अन्यथा
+			seq_माला_दो(m, "on\n");
+		अवरोध;
+	हाल GEN6_RC3:
+		seq_माला_दो(m, "RC3\n");
+		अवरोध;
+	हाल GEN6_RC6:
+		seq_माला_दो(m, "RC6\n");
+		अवरोध;
+	हाल GEN6_RC7:
+		seq_माला_दो(m, "RC7\n");
+		अवरोध;
+	शेष:
+		seq_माला_दो(m, "Unknown\n");
+		अवरोध;
+	पूर्ण
 
-	seq_printf(m, "Core Power Down: %s\n",
+	seq_म_लिखो(m, "Core Power Down: %s\n",
 		   yesno(gt_core_status & GEN6_CORE_CPD_STATE_MASK));
-	if (INTEL_GEN(i915) >= 9) {
-		seq_printf(m, "Render Power Well: %s\n",
-			   (gen9_powergate_status &
+	अगर (INTEL_GEN(i915) >= 9) अणु
+		seq_म_लिखो(m, "Render Power Well: %s\n",
+			   (gen9_घातergate_status &
 			    GEN9_PWRGT_RENDER_STATUS_MASK) ? "Up" : "Down");
-		seq_printf(m, "Media Power Well: %s\n",
-			   (gen9_powergate_status &
+		seq_म_लिखो(m, "Media Power Well: %s\n",
+			   (gen9_घातergate_status &
 			    GEN9_PWRGT_MEDIA_STATUS_MASK) ? "Up" : "Down");
-	}
+	पूर्ण
 
 	/* Not exactly sure what this is */
-	print_rc6_res(m, "RC6 \"Locked to RPn\" residency since boot:",
+	prपूर्णांक_rc6_res(m, "RC6 \"Locked to RPn\" residency since boot:",
 		      GEN6_GT_GFX_RC6_LOCKED);
-	print_rc6_res(m, "RC6 residency since boot:", GEN6_GT_GFX_RC6);
-	print_rc6_res(m, "RC6+ residency since boot:", GEN6_GT_GFX_RC6p);
-	print_rc6_res(m, "RC6++ residency since boot:", GEN6_GT_GFX_RC6pp);
+	prपूर्णांक_rc6_res(m, "RC6 residency since boot:", GEN6_GT_GFX_RC6);
+	prपूर्णांक_rc6_res(m, "RC6+ residency since boot:", GEN6_GT_GFX_RC6p);
+	prपूर्णांक_rc6_res(m, "RC6++ residency since boot:", GEN6_GT_GFX_RC6pp);
 
-	if (INTEL_GEN(i915) <= 7) {
-		seq_printf(m, "RC6   voltage: %dmV\n",
+	अगर (INTEL_GEN(i915) <= 7) अणु
+		seq_म_लिखो(m, "RC6   voltage: %dmV\n",
 			   GEN6_DECODE_RC6_VID(((rc6vids >> 0) & 0xff)));
-		seq_printf(m, "RC6+  voltage: %dmV\n",
+		seq_म_लिखो(m, "RC6+  voltage: %dmV\n",
 			   GEN6_DECODE_RC6_VID(((rc6vids >> 8) & 0xff)));
-		seq_printf(m, "RC6++ voltage: %dmV\n",
+		seq_म_लिखो(m, "RC6++ voltage: %dmV\n",
 			   GEN6_DECODE_RC6_VID(((rc6vids >> 16) & 0xff)));
-	}
+	पूर्ण
 
-	return fw_domains_show(m, NULL);
-}
+	वापस fw_करोमुख्यs_show(m, शून्य);
+पूर्ण
 
-static int ilk_drpc(struct seq_file *m)
-{
-	struct intel_gt *gt = m->private;
-	struct intel_uncore *uncore = gt->uncore;
+अटल पूर्णांक ilk_drpc(काष्ठा seq_file *m)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 	u32 rgvmodectl, rstdbyctl;
 	u16 crstandvid;
 
-	rgvmodectl = intel_uncore_read(uncore, MEMMODECTL);
-	rstdbyctl = intel_uncore_read(uncore, RSTDBYCTL);
-	crstandvid = intel_uncore_read16(uncore, CRSTANDVID);
+	rgvmodectl = पूर्णांकel_uncore_पढ़ो(uncore, MEMMODECTL);
+	rstdbyctl = पूर्णांकel_uncore_पढ़ो(uncore, RSTDBYCTL);
+	crstandvid = पूर्णांकel_uncore_पढ़ो16(uncore, CRSTANDVID);
 
-	seq_printf(m, "HD boost: %s\n", yesno(rgvmodectl & MEMMODE_BOOST_EN));
-	seq_printf(m, "Boost freq: %d\n",
+	seq_म_लिखो(m, "HD boost: %s\n", yesno(rgvmodectl & MEMMODE_BOOST_EN));
+	seq_म_लिखो(m, "Boost freq: %d\n",
 		   (rgvmodectl & MEMMODE_BOOST_FREQ_MASK) >>
 		   MEMMODE_BOOST_FREQ_SHIFT);
-	seq_printf(m, "HW control enabled: %s\n",
+	seq_म_लिखो(m, "HW control enabled: %s\n",
 		   yesno(rgvmodectl & MEMMODE_HWIDLE_EN));
-	seq_printf(m, "SW control enabled: %s\n",
+	seq_म_लिखो(m, "SW control enabled: %s\n",
 		   yesno(rgvmodectl & MEMMODE_SWMODE_EN));
-	seq_printf(m, "Gated voltage change: %s\n",
+	seq_म_लिखो(m, "Gated voltage change: %s\n",
 		   yesno(rgvmodectl & MEMMODE_RCLK_GATE));
-	seq_printf(m, "Starting frequency: P%d\n",
+	seq_म_लिखो(m, "Starting frequency: P%d\n",
 		   (rgvmodectl & MEMMODE_FSTART_MASK) >> MEMMODE_FSTART_SHIFT);
-	seq_printf(m, "Max P-state: P%d\n",
+	seq_म_लिखो(m, "Max P-state: P%d\n",
 		   (rgvmodectl & MEMMODE_FMAX_MASK) >> MEMMODE_FMAX_SHIFT);
-	seq_printf(m, "Min P-state: P%d\n", (rgvmodectl & MEMMODE_FMIN_MASK));
-	seq_printf(m, "RS1 VID: %d\n", (crstandvid & 0x3f));
-	seq_printf(m, "RS2 VID: %d\n", ((crstandvid >> 8) & 0x3f));
-	seq_printf(m, "Render standby enabled: %s\n",
+	seq_म_लिखो(m, "Min P-state: P%d\n", (rgvmodectl & MEMMODE_FMIN_MASK));
+	seq_म_लिखो(m, "RS1 VID: %d\n", (crstandvid & 0x3f));
+	seq_म_लिखो(m, "RS2 VID: %d\n", ((crstandvid >> 8) & 0x3f));
+	seq_म_लिखो(m, "Render standby enabled: %s\n",
 		   yesno(!(rstdbyctl & RCX_SW_EXIT)));
-	seq_puts(m, "Current RS state: ");
-	switch (rstdbyctl & RSX_STATUS_MASK) {
-	case RSX_STATUS_ON:
-		seq_puts(m, "on\n");
-		break;
-	case RSX_STATUS_RC1:
-		seq_puts(m, "RC1\n");
-		break;
-	case RSX_STATUS_RC1E:
-		seq_puts(m, "RC1E\n");
-		break;
-	case RSX_STATUS_RS1:
-		seq_puts(m, "RS1\n");
-		break;
-	case RSX_STATUS_RS2:
-		seq_puts(m, "RS2 (RC6)\n");
-		break;
-	case RSX_STATUS_RS3:
-		seq_puts(m, "RC3 (RC6+)\n");
-		break;
-	default:
-		seq_puts(m, "unknown\n");
-		break;
-	}
+	seq_माला_दो(m, "Current RS state: ");
+	चयन (rstdbyctl & RSX_STATUS_MASK) अणु
+	हाल RSX_STATUS_ON:
+		seq_माला_दो(m, "on\n");
+		अवरोध;
+	हाल RSX_STATUS_RC1:
+		seq_माला_दो(m, "RC1\n");
+		अवरोध;
+	हाल RSX_STATUS_RC1E:
+		seq_माला_दो(m, "RC1E\n");
+		अवरोध;
+	हाल RSX_STATUS_RS1:
+		seq_माला_दो(m, "RS1\n");
+		अवरोध;
+	हाल RSX_STATUS_RS2:
+		seq_माला_दो(m, "RS2 (RC6)\n");
+		अवरोध;
+	हाल RSX_STATUS_RS3:
+		seq_माला_दो(m, "RC3 (RC6+)\n");
+		अवरोध;
+	शेष:
+		seq_माला_दो(m, "unknown\n");
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drpc_show(struct seq_file *m, void *unused)
-{
-	struct intel_gt *gt = m->private;
-	struct drm_i915_private *i915 = gt->i915;
-	intel_wakeref_t wakeref;
-	int err = -ENODEV;
+अटल पूर्णांक drpc_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांक err = -ENODEV;
 
-	with_intel_runtime_pm(gt->uncore->rpm, wakeref) {
-		if (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915))
+	with_पूर्णांकel_runसमय_pm(gt->uncore->rpm, wakeref) अणु
+		अगर (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915))
 			err = vlv_drpc(m);
-		else if (INTEL_GEN(i915) >= 6)
+		अन्यथा अगर (INTEL_GEN(i915) >= 6)
 			err = gen6_drpc(m);
-		else
+		अन्यथा
 			err = ilk_drpc(m);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 DEFINE_GT_DEBUGFS_ATTRIBUTE(drpc);
 
-static int frequency_show(struct seq_file *m, void *unused)
-{
-	struct intel_gt *gt = m->private;
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_uncore *uncore = gt->uncore;
-	struct intel_rps *rps = &gt->rps;
-	intel_wakeref_t wakeref;
+अटल पूर्णांक frequency_show(काष्ठा seq_file *m, व्योम *unused)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	पूर्णांकel_wakeref_t wakeref;
 
-	wakeref = intel_runtime_pm_get(uncore->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(uncore->rpm);
 
-	if (IS_GEN(i915, 5)) {
-		u16 rgvswctl = intel_uncore_read16(uncore, MEMSWCTL);
-		u16 rgvstat = intel_uncore_read16(uncore, MEMSTAT_ILK);
+	अगर (IS_GEN(i915, 5)) अणु
+		u16 rgvswctl = पूर्णांकel_uncore_पढ़ो16(uncore, MEMSWCTL);
+		u16 rgvstat = पूर्णांकel_uncore_पढ़ो16(uncore, MEMSTAT_ILK);
 
-		seq_printf(m, "Requested P-state: %d\n", (rgvswctl >> 8) & 0xf);
-		seq_printf(m, "Requested VID: %d\n", rgvswctl & 0x3f);
-		seq_printf(m, "Current VID: %d\n", (rgvstat & MEMSTAT_VID_MASK) >>
+		seq_म_लिखो(m, "Requested P-state: %d\n", (rgvswctl >> 8) & 0xf);
+		seq_म_लिखो(m, "Requested VID: %d\n", rgvswctl & 0x3f);
+		seq_म_लिखो(m, "Current VID: %d\n", (rgvstat & MEMSTAT_VID_MASK) >>
 			   MEMSTAT_VID_SHIFT);
-		seq_printf(m, "Current P-state: %d\n",
+		seq_म_लिखो(m, "Current P-state: %d\n",
 			   (rgvstat & MEMSTAT_PSTATE_MASK) >> MEMSTAT_PSTATE_SHIFT);
-	} else if (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915)) {
+	पूर्ण अन्यथा अगर (IS_VALLEYVIEW(i915) || IS_CHERRYVIEW(i915)) अणु
 		u32 rpmodectl, freq_sts;
 
-		rpmodectl = intel_uncore_read(uncore, GEN6_RP_CONTROL);
-		seq_printf(m, "Video Turbo Mode: %s\n",
+		rpmodectl = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CONTROL);
+		seq_म_लिखो(m, "Video Turbo Mode: %s\n",
 			   yesno(rpmodectl & GEN6_RP_MEDIA_TURBO));
-		seq_printf(m, "HW control enabled: %s\n",
+		seq_म_लिखो(m, "HW control enabled: %s\n",
 			   yesno(rpmodectl & GEN6_RP_ENABLE));
-		seq_printf(m, "SW control enabled: %s\n",
+		seq_म_लिखो(m, "SW control enabled: %s\n",
 			   yesno((rpmodectl & GEN6_RP_MEDIA_MODE_MASK) ==
 				 GEN6_RP_MEDIA_SW_MODE));
 
 		vlv_punit_get(i915);
-		freq_sts = vlv_punit_read(i915, PUNIT_REG_GPU_FREQ_STS);
+		freq_sts = vlv_punit_पढ़ो(i915, PUNIT_REG_GPU_FREQ_STS);
 		vlv_punit_put(i915);
 
-		seq_printf(m, "PUNIT_REG_GPU_FREQ_STS: 0x%08x\n", freq_sts);
-		seq_printf(m, "DDR freq: %d MHz\n", i915->mem_freq);
+		seq_म_लिखो(m, "PUNIT_REG_GPU_FREQ_STS: 0x%08x\n", freq_sts);
+		seq_म_लिखो(m, "DDR freq: %d MHz\n", i915->mem_freq);
 
-		seq_printf(m, "actual GPU freq: %d MHz\n",
-			   intel_gpu_freq(rps, (freq_sts >> 8) & 0xff));
+		seq_म_लिखो(m, "actual GPU freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, (freq_sts >> 8) & 0xff));
 
-		seq_printf(m, "current GPU freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->cur_freq));
+		seq_म_लिखो(m, "current GPU freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->cur_freq));
 
-		seq_printf(m, "max GPU freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->max_freq));
+		seq_म_लिखो(m, "max GPU freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->max_freq));
 
-		seq_printf(m, "min GPU freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->min_freq));
+		seq_म_लिखो(m, "min GPU freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->min_freq));
 
-		seq_printf(m, "idle GPU freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->idle_freq));
+		seq_म_लिखो(m, "idle GPU freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->idle_freq));
 
-		seq_printf(m, "efficient (RPe) frequency: %d MHz\n",
-			   intel_gpu_freq(rps, rps->efficient_freq));
-	} else if (INTEL_GEN(i915) >= 6) {
+		seq_म_लिखो(m, "efficient (RPe) frequency: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->efficient_freq));
+	पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 6) अणु
 		u32 rp_state_limits;
 		u32 gt_perf_status;
 		u32 rp_state_cap;
 		u32 rpmodectl, rpinclimit, rpdeclimit;
 		u32 rpstat, cagf, reqf;
 		u32 rpcurupei, rpcurup, rpprevup;
-		u32 rpcurdownei, rpcurdown, rpprevdown;
-		u32 rpupei, rpupt, rpdownei, rpdownt;
+		u32 rpcurकरोwnei, rpcurकरोwn, rpprevकरोwn;
+		u32 rpupei, rpupt, rpकरोwnei, rpकरोwnt;
 		u32 pm_ier, pm_imr, pm_isr, pm_iir, pm_mask;
-		int max_freq;
+		पूर्णांक max_freq;
 
-		rp_state_limits = intel_uncore_read(uncore, GEN6_RP_STATE_LIMITS);
-		if (IS_GEN9_LP(i915)) {
-			rp_state_cap = intel_uncore_read(uncore, BXT_RP_STATE_CAP);
-			gt_perf_status = intel_uncore_read(uncore, BXT_GT_PERF_STATUS);
-		} else {
-			rp_state_cap = intel_uncore_read(uncore, GEN6_RP_STATE_CAP);
-			gt_perf_status = intel_uncore_read(uncore, GEN6_GT_PERF_STATUS);
-		}
+		rp_state_limits = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_STATE_LIMITS);
+		अगर (IS_GEN9_LP(i915)) अणु
+			rp_state_cap = पूर्णांकel_uncore_पढ़ो(uncore, BXT_RP_STATE_CAP);
+			gt_perf_status = पूर्णांकel_uncore_पढ़ो(uncore, BXT_GT_PERF_STATUS);
+		पूर्ण अन्यथा अणु
+			rp_state_cap = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_STATE_CAP);
+			gt_perf_status = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_GT_PERF_STATUS);
+		पूर्ण
 
-		/* RPSTAT1 is in the GT power well */
-		intel_uncore_forcewake_get(uncore, FORCEWAKE_ALL);
+		/* RPSTAT1 is in the GT घातer well */
+		पूर्णांकel_uncore_क्रमcewake_get(uncore, FORCEWAKE_ALL);
 
-		reqf = intel_uncore_read(uncore, GEN6_RPNSWREQ);
-		if (INTEL_GEN(i915) >= 9) {
+		reqf = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RPNSWREQ);
+		अगर (INTEL_GEN(i915) >= 9) अणु
 			reqf >>= 23;
-		} else {
+		पूर्ण अन्यथा अणु
 			reqf &= ~GEN6_TURBO_DISABLE;
-			if (IS_HASWELL(i915) || IS_BROADWELL(i915))
+			अगर (IS_HASWELL(i915) || IS_BROADWELL(i915))
 				reqf >>= 24;
-			else
+			अन्यथा
 				reqf >>= 25;
-		}
-		reqf = intel_gpu_freq(rps, reqf);
+		पूर्ण
+		reqf = पूर्णांकel_gpu_freq(rps, reqf);
 
-		rpmodectl = intel_uncore_read(uncore, GEN6_RP_CONTROL);
-		rpinclimit = intel_uncore_read(uncore, GEN6_RP_UP_THRESHOLD);
-		rpdeclimit = intel_uncore_read(uncore, GEN6_RP_DOWN_THRESHOLD);
+		rpmodectl = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CONTROL);
+		rpinclimit = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_THRESHOLD);
+		rpdeclimit = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_THRESHOLD);
 
-		rpstat = intel_uncore_read(uncore, GEN6_RPSTAT1);
-		rpcurupei = intel_uncore_read(uncore, GEN6_RP_CUR_UP_EI) & GEN6_CURICONT_MASK;
-		rpcurup = intel_uncore_read(uncore, GEN6_RP_CUR_UP) & GEN6_CURBSYTAVG_MASK;
-		rpprevup = intel_uncore_read(uncore, GEN6_RP_PREV_UP) & GEN6_CURBSYTAVG_MASK;
-		rpcurdownei = intel_uncore_read(uncore, GEN6_RP_CUR_DOWN_EI) & GEN6_CURIAVG_MASK;
-		rpcurdown = intel_uncore_read(uncore, GEN6_RP_CUR_DOWN) & GEN6_CURBSYTAVG_MASK;
-		rpprevdown = intel_uncore_read(uncore, GEN6_RP_PREV_DOWN) & GEN6_CURBSYTAVG_MASK;
+		rpstat = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RPSTAT1);
+		rpcurupei = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CUR_UP_EI) & GEN6_CURICONT_MASK;
+		rpcurup = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CUR_UP) & GEN6_CURBSYTAVG_MASK;
+		rpprevup = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_PREV_UP) & GEN6_CURBSYTAVG_MASK;
+		rpcurकरोwnei = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CUR_DOWN_EI) & GEN6_CURIAVG_MASK;
+		rpcurकरोwn = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_CUR_DOWN) & GEN6_CURBSYTAVG_MASK;
+		rpprevकरोwn = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_PREV_DOWN) & GEN6_CURBSYTAVG_MASK;
 
-		rpupei = intel_uncore_read(uncore, GEN6_RP_UP_EI);
-		rpupt = intel_uncore_read(uncore, GEN6_RP_UP_THRESHOLD);
+		rpupei = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_EI);
+		rpupt = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_THRESHOLD);
 
-		rpdownei = intel_uncore_read(uncore, GEN6_RP_DOWN_EI);
-		rpdownt = intel_uncore_read(uncore, GEN6_RP_DOWN_THRESHOLD);
+		rpकरोwnei = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_EI);
+		rpकरोwnt = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_THRESHOLD);
 
-		cagf = intel_rps_read_actual_frequency(rps);
+		cagf = पूर्णांकel_rps_पढ़ो_actual_frequency(rps);
 
-		intel_uncore_forcewake_put(uncore, FORCEWAKE_ALL);
+		पूर्णांकel_uncore_क्रमcewake_put(uncore, FORCEWAKE_ALL);
 
-		if (INTEL_GEN(i915) >= 11) {
-			pm_ier = intel_uncore_read(uncore, GEN11_GPM_WGBOXPERF_INTR_ENABLE);
-			pm_imr = intel_uncore_read(uncore, GEN11_GPM_WGBOXPERF_INTR_MASK);
+		अगर (INTEL_GEN(i915) >= 11) अणु
+			pm_ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN11_GPM_WGBOXPERF_INTR_ENABLE);
+			pm_imr = पूर्णांकel_uncore_पढ़ो(uncore, GEN11_GPM_WGBOXPERF_INTR_MASK);
 			/*
-			 * The equivalent to the PM ISR & IIR cannot be read
-			 * without affecting the current state of the system
+			 * The equivalent to the PM ISR & IIR cannot be पढ़ो
+			 * without affecting the current state of the प्रणाली
 			 */
 			pm_isr = 0;
 			pm_iir = 0;
-		} else if (INTEL_GEN(i915) >= 8) {
-			pm_ier = intel_uncore_read(uncore, GEN8_GT_IER(2));
-			pm_imr = intel_uncore_read(uncore, GEN8_GT_IMR(2));
-			pm_isr = intel_uncore_read(uncore, GEN8_GT_ISR(2));
-			pm_iir = intel_uncore_read(uncore, GEN8_GT_IIR(2));
-		} else {
-			pm_ier = intel_uncore_read(uncore, GEN6_PMIER);
-			pm_imr = intel_uncore_read(uncore, GEN6_PMIMR);
-			pm_isr = intel_uncore_read(uncore, GEN6_PMISR);
-			pm_iir = intel_uncore_read(uncore, GEN6_PMIIR);
-		}
-		pm_mask = intel_uncore_read(uncore, GEN6_PMINTRMSK);
+		पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 8) अणु
+			pm_ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_GT_IER(2));
+			pm_imr = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_GT_IMR(2));
+			pm_isr = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_GT_ISR(2));
+			pm_iir = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_GT_IIR(2));
+		पूर्ण अन्यथा अणु
+			pm_ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_PMIER);
+			pm_imr = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_PMIMR);
+			pm_isr = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_PMISR);
+			pm_iir = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_PMIIR);
+		पूर्ण
+		pm_mask = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_PMINTRMSK);
 
-		seq_printf(m, "Video Turbo Mode: %s\n",
+		seq_म_लिखो(m, "Video Turbo Mode: %s\n",
 			   yesno(rpmodectl & GEN6_RP_MEDIA_TURBO));
-		seq_printf(m, "HW control enabled: %s\n",
+		seq_म_लिखो(m, "HW control enabled: %s\n",
 			   yesno(rpmodectl & GEN6_RP_ENABLE));
-		seq_printf(m, "SW control enabled: %s\n",
+		seq_म_लिखो(m, "SW control enabled: %s\n",
 			   yesno((rpmodectl & GEN6_RP_MEDIA_MODE_MASK) ==
 				 GEN6_RP_MEDIA_SW_MODE));
 
-		seq_printf(m, "PM IER=0x%08x IMR=0x%08x, MASK=0x%08x\n",
+		seq_म_लिखो(m, "PM IER=0x%08x IMR=0x%08x, MASK=0x%08x\n",
 			   pm_ier, pm_imr, pm_mask);
-		if (INTEL_GEN(i915) <= 10)
-			seq_printf(m, "PM ISR=0x%08x IIR=0x%08x\n",
+		अगर (INTEL_GEN(i915) <= 10)
+			seq_म_लिखो(m, "PM ISR=0x%08x IIR=0x%08x\n",
 				   pm_isr, pm_iir);
-		seq_printf(m, "pm_intrmsk_mbz: 0x%08x\n",
-			   rps->pm_intrmsk_mbz);
-		seq_printf(m, "GT_PERF_STATUS: 0x%08x\n", gt_perf_status);
-		seq_printf(m, "Render p-state ratio: %d\n",
+		seq_म_लिखो(m, "pm_intrmsk_mbz: 0x%08x\n",
+			   rps->pm_पूर्णांकrmsk_mbz);
+		seq_म_लिखो(m, "GT_PERF_STATUS: 0x%08x\n", gt_perf_status);
+		seq_म_लिखो(m, "Render p-state ratio: %d\n",
 			   (gt_perf_status & (INTEL_GEN(i915) >= 9 ? 0x1ff00 : 0xff00)) >> 8);
-		seq_printf(m, "Render p-state VID: %d\n",
+		seq_म_लिखो(m, "Render p-state VID: %d\n",
 			   gt_perf_status & 0xff);
-		seq_printf(m, "Render p-state limit: %d\n",
+		seq_म_लिखो(m, "Render p-state limit: %d\n",
 			   rp_state_limits & 0xff);
-		seq_printf(m, "RPSTAT1: 0x%08x\n", rpstat);
-		seq_printf(m, "RPMODECTL: 0x%08x\n", rpmodectl);
-		seq_printf(m, "RPINCLIMIT: 0x%08x\n", rpinclimit);
-		seq_printf(m, "RPDECLIMIT: 0x%08x\n", rpdeclimit);
-		seq_printf(m, "RPNSWREQ: %dMHz\n", reqf);
-		seq_printf(m, "CAGF: %dMHz\n", cagf);
-		seq_printf(m, "RP CUR UP EI: %d (%lldns)\n",
+		seq_म_लिखो(m, "RPSTAT1: 0x%08x\n", rpstat);
+		seq_म_लिखो(m, "RPMODECTL: 0x%08x\n", rpmodectl);
+		seq_म_लिखो(m, "RPINCLIMIT: 0x%08x\n", rpinclimit);
+		seq_म_लिखो(m, "RPDECLIMIT: 0x%08x\n", rpdeclimit);
+		seq_म_लिखो(m, "RPNSWREQ: %dMHz\n", reqf);
+		seq_म_लिखो(m, "CAGF: %dMHz\n", cagf);
+		seq_म_लिखो(m, "RP CUR UP EI: %d (%lldns)\n",
 			   rpcurupei,
-			   intel_gt_pm_interval_to_ns(gt, rpcurupei));
-		seq_printf(m, "RP CUR UP: %d (%lldns)\n",
-			   rpcurup, intel_gt_pm_interval_to_ns(gt, rpcurup));
-		seq_printf(m, "RP PREV UP: %d (%lldns)\n",
-			   rpprevup, intel_gt_pm_interval_to_ns(gt, rpprevup));
-		seq_printf(m, "Up threshold: %d%%\n",
-			   rps->power.up_threshold);
-		seq_printf(m, "RP UP EI: %d (%lldns)\n",
-			   rpupei, intel_gt_pm_interval_to_ns(gt, rpupei));
-		seq_printf(m, "RP UP THRESHOLD: %d (%lldns)\n",
-			   rpupt, intel_gt_pm_interval_to_ns(gt, rpupt));
+			   पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpcurupei));
+		seq_म_लिखो(m, "RP CUR UP: %d (%lldns)\n",
+			   rpcurup, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpcurup));
+		seq_म_लिखो(m, "RP PREV UP: %d (%lldns)\n",
+			   rpprevup, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpprevup));
+		seq_म_लिखो(m, "Up threshold: %d%%\n",
+			   rps->घातer.up_threshold);
+		seq_म_लिखो(m, "RP UP EI: %d (%lldns)\n",
+			   rpupei, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpupei));
+		seq_म_लिखो(m, "RP UP THRESHOLD: %d (%lldns)\n",
+			   rpupt, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpupt));
 
-		seq_printf(m, "RP CUR DOWN EI: %d (%lldns)\n",
-			   rpcurdownei,
-			   intel_gt_pm_interval_to_ns(gt, rpcurdownei));
-		seq_printf(m, "RP CUR DOWN: %d (%lldns)\n",
-			   rpcurdown,
-			   intel_gt_pm_interval_to_ns(gt, rpcurdown));
-		seq_printf(m, "RP PREV DOWN: %d (%lldns)\n",
-			   rpprevdown,
-			   intel_gt_pm_interval_to_ns(gt, rpprevdown));
-		seq_printf(m, "Down threshold: %d%%\n",
-			   rps->power.down_threshold);
-		seq_printf(m, "RP DOWN EI: %d (%lldns)\n",
-			   rpdownei, intel_gt_pm_interval_to_ns(gt, rpdownei));
-		seq_printf(m, "RP DOWN THRESHOLD: %d (%lldns)\n",
-			   rpdownt, intel_gt_pm_interval_to_ns(gt, rpdownt));
+		seq_म_लिखो(m, "RP CUR DOWN EI: %d (%lldns)\n",
+			   rpcurकरोwnei,
+			   पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpcurकरोwnei));
+		seq_म_लिखो(m, "RP CUR DOWN: %d (%lldns)\n",
+			   rpcurकरोwn,
+			   पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpcurकरोwn));
+		seq_म_लिखो(m, "RP PREV DOWN: %d (%lldns)\n",
+			   rpprevकरोwn,
+			   पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpprevकरोwn));
+		seq_म_लिखो(m, "Down threshold: %d%%\n",
+			   rps->घातer.करोwn_threshold);
+		seq_म_लिखो(m, "RP DOWN EI: %d (%lldns)\n",
+			   rpकरोwnei, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpकरोwnei));
+		seq_म_लिखो(m, "RP DOWN THRESHOLD: %d (%lldns)\n",
+			   rpकरोwnt, पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, rpकरोwnt));
 
 		max_freq = (IS_GEN9_LP(i915) ? rp_state_cap >> 0 :
 			    rp_state_cap >> 16) & 0xff;
 		max_freq *= (IS_GEN9_BC(i915) ||
 			     INTEL_GEN(i915) >= 10 ? GEN9_FREQ_SCALER : 1);
-		seq_printf(m, "Lowest (RPN) frequency: %dMHz\n",
-			   intel_gpu_freq(rps, max_freq));
+		seq_म_लिखो(m, "Lowest (RPN) frequency: %dMHz\n",
+			   पूर्णांकel_gpu_freq(rps, max_freq));
 
 		max_freq = (rp_state_cap & 0xff00) >> 8;
 		max_freq *= (IS_GEN9_BC(i915) ||
 			     INTEL_GEN(i915) >= 10 ? GEN9_FREQ_SCALER : 1);
-		seq_printf(m, "Nominal (RP1) frequency: %dMHz\n",
-			   intel_gpu_freq(rps, max_freq));
+		seq_म_लिखो(m, "Nominal (RP1) frequency: %dMHz\n",
+			   पूर्णांकel_gpu_freq(rps, max_freq));
 
 		max_freq = (IS_GEN9_LP(i915) ? rp_state_cap >> 16 :
 			    rp_state_cap >> 0) & 0xff;
 		max_freq *= (IS_GEN9_BC(i915) ||
 			     INTEL_GEN(i915) >= 10 ? GEN9_FREQ_SCALER : 1);
-		seq_printf(m, "Max non-overclocked (RP0) frequency: %dMHz\n",
-			   intel_gpu_freq(rps, max_freq));
-		seq_printf(m, "Max overclocked frequency: %dMHz\n",
-			   intel_gpu_freq(rps, rps->max_freq));
+		seq_म_लिखो(m, "Max non-overclocked (RP0) frequency: %dMHz\n",
+			   पूर्णांकel_gpu_freq(rps, max_freq));
+		seq_म_लिखो(m, "Max overclocked frequency: %dMHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->max_freq));
 
-		seq_printf(m, "Current freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->cur_freq));
-		seq_printf(m, "Actual freq: %d MHz\n", cagf);
-		seq_printf(m, "Idle freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->idle_freq));
-		seq_printf(m, "Min freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->min_freq));
-		seq_printf(m, "Boost freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->boost_freq));
-		seq_printf(m, "Max freq: %d MHz\n",
-			   intel_gpu_freq(rps, rps->max_freq));
-		seq_printf(m,
+		seq_म_लिखो(m, "Current freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->cur_freq));
+		seq_म_लिखो(m, "Actual freq: %d MHz\n", cagf);
+		seq_म_लिखो(m, "Idle freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->idle_freq));
+		seq_म_लिखो(m, "Min freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->min_freq));
+		seq_म_लिखो(m, "Boost freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->boost_freq));
+		seq_म_लिखो(m, "Max freq: %d MHz\n",
+			   पूर्णांकel_gpu_freq(rps, rps->max_freq));
+		seq_म_लिखो(m,
 			   "efficient (RPe) frequency: %d MHz\n",
-			   intel_gpu_freq(rps, rps->efficient_freq));
-	} else {
-		seq_puts(m, "no P-state info available\n");
-	}
+			   पूर्णांकel_gpu_freq(rps, rps->efficient_freq));
+	पूर्ण अन्यथा अणु
+		seq_माला_दो(m, "no P-state info available\n");
+	पूर्ण
 
-	seq_printf(m, "Current CD clock frequency: %d kHz\n", i915->cdclk.hw.cdclk);
-	seq_printf(m, "Max CD clock frequency: %d kHz\n", i915->max_cdclk_freq);
-	seq_printf(m, "Max pixel clock frequency: %d kHz\n", i915->max_dotclk_freq);
+	seq_म_लिखो(m, "Current CD clock frequency: %d kHz\n", i915->cdclk.hw.cdclk);
+	seq_म_लिखो(m, "Max CD clock frequency: %d kHz\n", i915->max_cdclk_freq);
+	seq_म_लिखो(m, "Max pixel clock frequency: %d kHz\n", i915->max_करोtclk_freq);
 
-	intel_runtime_pm_put(uncore->rpm, wakeref);
+	पूर्णांकel_runसमय_pm_put(uncore->rpm, wakeref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_GT_DEBUGFS_ATTRIBUTE(frequency);
 
-static int llc_show(struct seq_file *m, void *data)
-{
-	struct intel_gt *gt = m->private;
-	struct drm_i915_private *i915 = gt->i915;
-	const bool edram = INTEL_GEN(i915) > 8;
-	struct intel_rps *rps = &gt->rps;
-	unsigned int max_gpu_freq, min_gpu_freq;
-	intel_wakeref_t wakeref;
-	int gpu_freq, ia_freq;
+अटल पूर्णांक llc_show(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	स्थिर bool edram = INTEL_GEN(i915) > 8;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	अचिन्हित पूर्णांक max_gpu_freq, min_gpu_freq;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांक gpu_freq, ia_freq;
 
-	seq_printf(m, "LLC: %s\n", yesno(HAS_LLC(i915)));
-	seq_printf(m, "%s: %uMB\n", edram ? "eDRAM" : "eLLC",
+	seq_म_लिखो(m, "LLC: %s\n", yesno(HAS_LLC(i915)));
+	seq_म_लिखो(m, "%s: %uMB\n", edram ? "eDRAM" : "eLLC",
 		   i915->edram_size_mb);
 
 	min_gpu_freq = rps->min_freq;
 	max_gpu_freq = rps->max_freq;
-	if (IS_GEN9_BC(i915) || INTEL_GEN(i915) >= 10) {
+	अगर (IS_GEN9_BC(i915) || INTEL_GEN(i915) >= 10) अणु
 		/* Convert GT frequency to 50 HZ units */
 		min_gpu_freq /= GEN9_FREQ_SCALER;
 		max_gpu_freq /= GEN9_FREQ_SCALER;
-	}
+	पूर्ण
 
-	seq_puts(m, "GPU freq (MHz)\tEffective CPU freq (MHz)\tEffective Ring freq (MHz)\n");
+	seq_माला_दो(m, "GPU freq (MHz)\tEffective CPU freq (MHz)\tEffective Ring freq (MHz)\n");
 
-	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
-	for (gpu_freq = min_gpu_freq; gpu_freq <= max_gpu_freq; gpu_freq++) {
+	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
+	क्रम (gpu_freq = min_gpu_freq; gpu_freq <= max_gpu_freq; gpu_freq++) अणु
 		ia_freq = gpu_freq;
-		sandybridge_pcode_read(i915,
+		sandybridge_pcode_पढ़ो(i915,
 				       GEN6_PCODE_READ_MIN_FREQ_TABLE,
-				       &ia_freq, NULL);
-		seq_printf(m, "%d\t\t%d\t\t\t\t%d\n",
-			   intel_gpu_freq(rps,
+				       &ia_freq, शून्य);
+		seq_म_लिखो(m, "%d\t\t%d\t\t\t\t%d\n",
+			   पूर्णांकel_gpu_freq(rps,
 					  (gpu_freq *
 					   (IS_GEN9_BC(i915) ||
 					    INTEL_GEN(i915) >= 10 ?
 					    GEN9_FREQ_SCALER : 1))),
 			   ((ia_freq >> 0) & 0xff) * 100,
 			   ((ia_freq >> 8) & 0xff) * 100);
-	}
-	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+	पूर्ण
+	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool llc_eval(void *data)
-{
-	struct intel_gt *gt = data;
+अटल bool llc_eval(व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = data;
 
-	return HAS_LLC(gt->i915);
-}
+	वापस HAS_LLC(gt->i915);
+पूर्ण
 
 DEFINE_GT_DEBUGFS_ATTRIBUTE(llc);
 
-static const char *rps_power_to_str(unsigned int power)
-{
-	static const char * const strings[] = {
+अटल स्थिर अक्षर *rps_घातer_to_str(अचिन्हित पूर्णांक घातer)
+अणु
+	अटल स्थिर अक्षर * स्थिर strings[] = अणु
 		[LOW_POWER] = "low power",
 		[BETWEEN] = "mixed",
 		[HIGH_POWER] = "high power",
-	};
+	पूर्ण;
 
-	if (power >= ARRAY_SIZE(strings) || !strings[power])
-		return "unknown";
+	अगर (घातer >= ARRAY_SIZE(strings) || !strings[घातer])
+		वापस "unknown";
 
-	return strings[power];
-}
+	वापस strings[घातer];
+पूर्ण
 
-static int rps_boost_show(struct seq_file *m, void *data)
-{
-	struct intel_gt *gt = m->private;
-	struct drm_i915_private *i915 = gt->i915;
-	struct intel_rps *rps = &gt->rps;
+अटल पूर्णांक rps_boost_show(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = m->निजी;
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
 
-	seq_printf(m, "RPS enabled? %s\n", yesno(intel_rps_is_enabled(rps)));
-	seq_printf(m, "RPS active? %s\n", yesno(intel_rps_is_active(rps)));
-	seq_printf(m, "GPU busy? %s, %llums\n",
+	seq_म_लिखो(m, "RPS enabled? %s\n", yesno(पूर्णांकel_rps_is_enabled(rps)));
+	seq_म_लिखो(m, "RPS active? %s\n", yesno(पूर्णांकel_rps_is_active(rps)));
+	seq_म_लिखो(m, "GPU busy? %s, %llums\n",
 		   yesno(gt->awake),
-		   ktime_to_ms(intel_gt_get_awake_time(gt)));
-	seq_printf(m, "Boosts outstanding? %d\n",
-		   atomic_read(&rps->num_waiters));
-	seq_printf(m, "Interactive? %d\n", READ_ONCE(rps->power.interactive));
-	seq_printf(m, "Frequency requested %d, actual %d\n",
-		   intel_gpu_freq(rps, rps->cur_freq),
-		   intel_rps_read_actual_frequency(rps));
-	seq_printf(m, "  min hard:%d, soft:%d; max soft:%d, hard:%d\n",
-		   intel_gpu_freq(rps, rps->min_freq),
-		   intel_gpu_freq(rps, rps->min_freq_softlimit),
-		   intel_gpu_freq(rps, rps->max_freq_softlimit),
-		   intel_gpu_freq(rps, rps->max_freq));
-	seq_printf(m, "  idle:%d, efficient:%d, boost:%d\n",
-		   intel_gpu_freq(rps, rps->idle_freq),
-		   intel_gpu_freq(rps, rps->efficient_freq),
-		   intel_gpu_freq(rps, rps->boost_freq));
+		   kसमय_प्रकारo_ms(पूर्णांकel_gt_get_awake_समय(gt)));
+	seq_म_लिखो(m, "Boosts outstanding? %d\n",
+		   atomic_पढ़ो(&rps->num_रुकोers));
+	seq_म_लिखो(m, "Interactive? %d\n", READ_ONCE(rps->घातer.पूर्णांकeractive));
+	seq_म_लिखो(m, "Frequency requested %d, actual %d\n",
+		   पूर्णांकel_gpu_freq(rps, rps->cur_freq),
+		   पूर्णांकel_rps_पढ़ो_actual_frequency(rps));
+	seq_म_लिखो(m, "  min hard:%d, soft:%d; max soft:%d, hard:%d\n",
+		   पूर्णांकel_gpu_freq(rps, rps->min_freq),
+		   पूर्णांकel_gpu_freq(rps, rps->min_freq_softlimit),
+		   पूर्णांकel_gpu_freq(rps, rps->max_freq_softlimit),
+		   पूर्णांकel_gpu_freq(rps, rps->max_freq));
+	seq_म_लिखो(m, "  idle:%d, efficient:%d, boost:%d\n",
+		   पूर्णांकel_gpu_freq(rps, rps->idle_freq),
+		   पूर्णांकel_gpu_freq(rps, rps->efficient_freq),
+		   पूर्णांकel_gpu_freq(rps, rps->boost_freq));
 
-	seq_printf(m, "Wait boosts: %d\n", READ_ONCE(rps->boosts));
+	seq_म_लिखो(m, "Wait boosts: %d\n", READ_ONCE(rps->boosts));
 
-	if (INTEL_GEN(i915) >= 6 && intel_rps_is_active(rps)) {
-		struct intel_uncore *uncore = gt->uncore;
+	अगर (INTEL_GEN(i915) >= 6 && पूर्णांकel_rps_is_active(rps)) अणु
+		काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
 		u32 rpup, rpupei;
-		u32 rpdown, rpdownei;
+		u32 rpकरोwn, rpकरोwnei;
 
-		intel_uncore_forcewake_get(uncore, FORCEWAKE_ALL);
-		rpup = intel_uncore_read_fw(uncore, GEN6_RP_CUR_UP) & GEN6_RP_EI_MASK;
-		rpupei = intel_uncore_read_fw(uncore, GEN6_RP_CUR_UP_EI) & GEN6_RP_EI_MASK;
-		rpdown = intel_uncore_read_fw(uncore, GEN6_RP_CUR_DOWN) & GEN6_RP_EI_MASK;
-		rpdownei = intel_uncore_read_fw(uncore, GEN6_RP_CUR_DOWN_EI) & GEN6_RP_EI_MASK;
-		intel_uncore_forcewake_put(uncore, FORCEWAKE_ALL);
+		पूर्णांकel_uncore_क्रमcewake_get(uncore, FORCEWAKE_ALL);
+		rpup = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_RP_CUR_UP) & GEN6_RP_EI_MASK;
+		rpupei = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_RP_CUR_UP_EI) & GEN6_RP_EI_MASK;
+		rpकरोwn = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_RP_CUR_DOWN) & GEN6_RP_EI_MASK;
+		rpकरोwnei = पूर्णांकel_uncore_पढ़ो_fw(uncore, GEN6_RP_CUR_DOWN_EI) & GEN6_RP_EI_MASK;
+		पूर्णांकel_uncore_क्रमcewake_put(uncore, FORCEWAKE_ALL);
 
-		seq_printf(m, "\nRPS Autotuning (current \"%s\" window):\n",
-			   rps_power_to_str(rps->power.mode));
-		seq_printf(m, "  Avg. up: %d%% [above threshold? %d%%]\n",
+		seq_म_लिखो(m, "\nRPS Autotuning (current \"%s\" window):\n",
+			   rps_घातer_to_str(rps->घातer.mode));
+		seq_म_लिखो(m, "  Avg. up: %d%% [above threshold? %d%%]\n",
 			   rpup && rpupei ? 100 * rpup / rpupei : 0,
-			   rps->power.up_threshold);
-		seq_printf(m, "  Avg. down: %d%% [below threshold? %d%%]\n",
-			   rpdown && rpdownei ? 100 * rpdown / rpdownei : 0,
-			   rps->power.down_threshold);
-	} else {
-		seq_puts(m, "\nRPS Autotuning inactive\n");
-	}
+			   rps->घातer.up_threshold);
+		seq_म_लिखो(m, "  Avg. down: %d%% [below threshold? %d%%]\n",
+			   rpकरोwn && rpकरोwnei ? 100 * rpकरोwn / rpकरोwnei : 0,
+			   rps->घातer.करोwn_threshold);
+	पूर्ण अन्यथा अणु
+		seq_माला_दो(m, "\nRPS Autotuning inactive\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool rps_eval(void *data)
-{
-	struct intel_gt *gt = data;
+अटल bool rps_eval(व्योम *data)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = data;
 
-	return HAS_RPS(gt->i915);
-}
+	वापस HAS_RPS(gt->i915);
+पूर्ण
 
 DEFINE_GT_DEBUGFS_ATTRIBUTE(rps_boost);
 
-void debugfs_gt_pm_register(struct intel_gt *gt, struct dentry *root)
-{
-	static const struct debugfs_gt_file files[] = {
-		{ "drpc", &drpc_fops, NULL },
-		{ "frequency", &frequency_fops, NULL },
-		{ "forcewake", &fw_domains_fops, NULL },
-		{ "llc", &llc_fops, llc_eval },
-		{ "rps_boost", &rps_boost_fops, rps_eval },
-	};
+व्योम debugfs_gt_pm_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt, काष्ठा dentry *root)
+अणु
+	अटल स्थिर काष्ठा debugfs_gt_file files[] = अणु
+		अणु "drpc", &drpc_fops, शून्य पूर्ण,
+		अणु "frequency", &frequency_fops, शून्य पूर्ण,
+		अणु "forcewake", &fw_करोमुख्यs_fops, शून्य पूर्ण,
+		अणु "llc", &llc_fops, llc_eval पूर्ण,
+		अणु "rps_boost", &rps_boost_fops, rps_eval पूर्ण,
+	पूर्ण;
 
-	intel_gt_debugfs_register_files(root, files, ARRAY_SIZE(files), gt);
-}
+	पूर्णांकel_gt_debugfs_रेजिस्टर_files(root, files, ARRAY_SIZE(files), gt);
+पूर्ण

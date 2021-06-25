@@ -1,465 +1,466 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * Support for Kernel relocation at boot time
+ * Support क्रम Kernel relocation at boot समय
  *
  * Copyright (C) 2015, Imagination Technologies Ltd.
  * Authors: Matt Redfearn (matt.redfearn@mips.com)
  */
-#include <asm/bootinfo.h>
-#include <asm/cacheflush.h>
-#include <asm/fw/fw.h>
-#include <asm/sections.h>
-#include <asm/setup.h>
-#include <asm/timex.h>
-#include <linux/elf.h>
-#include <linux/kernel.h>
-#include <linux/libfdt.h>
-#include <linux/of_fdt.h>
-#include <linux/sched/task.h>
-#include <linux/start_kernel.h>
-#include <linux/string.h>
-#include <linux/printk.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/समयx.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/start_kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/prपूर्णांकk.h>
 
-#define RELOCATED(x) ((void *)((long)x + offset))
+#घोषणा RELOCATED(x) ((व्योम *)((दीर्घ)x + offset))
 
-extern u32 _relocation_start[];	/* End kernel image / start relocation table */
-extern u32 _relocation_end[];	/* End relocation table */
+बाह्य u32 _relocation_start[];	/* End kernel image / start relocation table */
+बाह्य u32 _relocation_end[];	/* End relocation table */
 
-extern long __start___ex_table;	/* Start exception table */
-extern long __stop___ex_table;	/* End exception table */
+बाह्य दीर्घ __start___ex_table;	/* Start exception table */
+बाह्य दीर्घ __stop___ex_table;	/* End exception table */
 
-extern void __weak plat_fdt_relocated(void *new_location);
+बाह्य व्योम __weak plat_fdt_relocated(व्योम *new_location);
 
 /*
- * This function may be defined for a platform to perform any post-relocation
+ * This function may be defined क्रम a platक्रमm to perक्रमm any post-relocation
  * fixup necessary.
- * Return non-zero to abort relocation
+ * Return non-zero to पात relocation
  */
-int __weak plat_post_relocation(long offset)
-{
-	return 0;
-}
+पूर्णांक __weak plat_post_relocation(दीर्घ offset)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline u32 __init get_synci_step(void)
-{
+अटल अंतरभूत u32 __init get_synci_step(व्योम)
+अणु
 	u32 res;
 
-	__asm__("rdhwr  %0, $1" : "=r" (res));
+	__यंत्र__("rdhwr  %0, $1" : "=r" (res));
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void __init sync_icache(void *kbase, unsigned long kernel_length)
-{
-	void *kend = kbase + kernel_length;
+अटल व्योम __init sync_icache(व्योम *kbase, अचिन्हित दीर्घ kernel_length)
+अणु
+	व्योम *kend = kbase + kernel_length;
 	u32 step = get_synci_step();
 
-	do {
-		__asm__ __volatile__(
+	करो अणु
+		__यंत्र__ __अस्थिर__(
 			"synci  0(%0)"
 			: /* no output */
 			: "r" (kbase));
 
 		kbase += step;
-	} while (step && kbase < kend);
+	पूर्ण जबतक (step && kbase < kend);
 
 	/* Completion barrier */
 	__sync();
-}
+पूर्ण
 
-static void __init apply_r_mips_64_rel(u32 *loc_new, long offset)
-{
+अटल व्योम __init apply_r_mips_64_rel(u32 *loc_new, दीर्घ offset)
+अणु
 	*(u64 *)loc_new += offset;
-}
+पूर्ण
 
-static void __init apply_r_mips_32_rel(u32 *loc_new, long offset)
-{
+अटल व्योम __init apply_r_mips_32_rel(u32 *loc_new, दीर्घ offset)
+अणु
 	*loc_new += offset;
-}
+पूर्ण
 
-static int __init apply_r_mips_26_rel(u32 *loc_orig, u32 *loc_new, long offset)
-{
-	unsigned long target_addr = (*loc_orig) & 0x03ffffff;
+अटल पूर्णांक __init apply_r_mips_26_rel(u32 *loc_orig, u32 *loc_new, दीर्घ offset)
+अणु
+	अचिन्हित दीर्घ target_addr = (*loc_orig) & 0x03ffffff;
 
-	if (offset % 4) {
+	अगर (offset % 4) अणु
 		pr_err("Dangerous R_MIPS_26 REL relocation\n");
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
 	/* Original target address */
 	target_addr <<= 2;
-	target_addr += (unsigned long)loc_orig & 0xf0000000;
+	target_addr += (अचिन्हित दीर्घ)loc_orig & 0xf0000000;
 
 	/* Get the new target address */
 	target_addr += offset;
 
-	if ((target_addr & 0xf0000000) != ((unsigned long)loc_new & 0xf0000000)) {
+	अगर ((target_addr & 0xf0000000) != ((अचिन्हित दीर्घ)loc_new & 0xf0000000)) अणु
 		pr_err("R_MIPS_26 REL relocation overflow\n");
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	target_addr -= (unsigned long)loc_new & 0xf0000000;
+	target_addr -= (अचिन्हित दीर्घ)loc_new & 0xf0000000;
 	target_addr >>= 2;
 
 	*loc_new = (*loc_new & ~0x03ffffff) | (target_addr & 0x03ffffff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void __init apply_r_mips_hi16_rel(u32 *loc_orig, u32 *loc_new,
-					 long offset)
-{
-	unsigned long insn = *loc_orig;
-	unsigned long target = (insn & 0xffff) << 16; /* high 16bits of target */
+अटल व्योम __init apply_r_mips_hi16_rel(u32 *loc_orig, u32 *loc_new,
+					 दीर्घ offset)
+अणु
+	अचिन्हित दीर्घ insn = *loc_orig;
+	अचिन्हित दीर्घ target = (insn & 0xffff) << 16; /* high 16bits of target */
 
 	target += offset;
 
 	*loc_new = (insn & ~0xffff) | ((target >> 16) & 0xffff);
-}
+पूर्ण
 
-static int __init reloc_handler(u32 type, u32 *loc_orig, u32 *loc_new,
-				long offset)
-{
-	switch (type) {
-	case R_MIPS_64:
+अटल पूर्णांक __init reloc_handler(u32 type, u32 *loc_orig, u32 *loc_new,
+				दीर्घ offset)
+अणु
+	चयन (type) अणु
+	हाल R_MIPS_64:
 		apply_r_mips_64_rel(loc_new, offset);
-		break;
-	case R_MIPS_32:
+		अवरोध;
+	हाल R_MIPS_32:
 		apply_r_mips_32_rel(loc_new, offset);
-		break;
-	case R_MIPS_26:
-		return apply_r_mips_26_rel(loc_orig, loc_new, offset);
-	case R_MIPS_HI16:
+		अवरोध;
+	हाल R_MIPS_26:
+		वापस apply_r_mips_26_rel(loc_orig, loc_new, offset);
+	हाल R_MIPS_HI16:
 		apply_r_mips_hi16_rel(loc_orig, loc_new, offset);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Unhandled relocation type %d at 0x%pK\n", type,
 		       loc_orig);
-		return -ENOEXEC;
-	}
+		वापस -ENOEXEC;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init do_relocations(void *kbase_old, void *kbase_new, long offset)
-{
+अटल पूर्णांक __init करो_relocations(व्योम *kbase_old, व्योम *kbase_new, दीर्घ offset)
+अणु
 	u32 *r;
 	u32 *loc_orig;
 	u32 *loc_new;
-	int type;
-	int res;
+	पूर्णांक type;
+	पूर्णांक res;
 
-	for (r = _relocation_start; r < _relocation_end; r++) {
-		/* Sentinel for last relocation */
-		if (*r == 0)
-			break;
+	क्रम (r = _relocation_start; r < _relocation_end; r++) अणु
+		/* Sentinel क्रम last relocation */
+		अगर (*r == 0)
+			अवरोध;
 
 		type = (*r >> 24) & 0xff;
 		loc_orig = kbase_old + ((*r & 0x00ffffff) << 2);
 		loc_new = RELOCATED(loc_orig);
 
 		res = reloc_handler(type, loc_orig, loc_new, offset);
-		if (res)
-			return res;
-	}
+		अगर (res)
+			वापस res;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * The exception table is filled in by the relocs tool after vmlinux is linked.
  * It must be relocated separately since there will not be any relocation
- * information for it filled in by the linker.
+ * inक्रमmation क्रम it filled in by the linker.
  */
-static int __init relocate_exception_table(long offset)
-{
-	unsigned long *etable_start, *etable_end, *e;
+अटल पूर्णांक __init relocate_exception_table(दीर्घ offset)
+अणु
+	अचिन्हित दीर्घ *etable_start, *etable_end, *e;
 
 	etable_start = RELOCATED(&__start___ex_table);
 	etable_end = RELOCATED(&__stop___ex_table);
 
-	for (e = etable_start; e < etable_end; e++)
+	क्रम (e = etable_start; e < etable_end; e++)
 		*e += offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_RANDOMIZE_BASE
+#अगर_घोषित CONFIG_RANDOMIZE_BASE
 
-static inline __init unsigned long rotate_xor(unsigned long hash,
-					      const void *area, size_t size)
-{
-	const typeof(hash) *ptr = PTR_ALIGN(area, sizeof(hash));
-	size_t diff, i;
+अटल अंतरभूत __init अचिन्हित दीर्घ rotate_xor(अचिन्हित दीर्घ hash,
+					      स्थिर व्योम *area, माप_प्रकार size)
+अणु
+	स्थिर typeof(hash) *ptr = PTR_ALIGN(area, माप(hash));
+	माप_प्रकार dअगरf, i;
 
-	diff = (void *)ptr - area;
-	if (unlikely(size < diff + sizeof(hash)))
-		return hash;
+	dअगरf = (व्योम *)ptr - area;
+	अगर (unlikely(size < dअगरf + माप(hash)))
+		वापस hash;
 
-	size = ALIGN_DOWN(size - diff, sizeof(hash));
+	size = ALIGN_DOWN(size - dअगरf, माप(hash));
 
-	for (i = 0; i < size / sizeof(hash); i++) {
+	क्रम (i = 0; i < size / माप(hash); i++) अणु
 		/* Rotate by odd number of bits and XOR. */
-		hash = (hash << ((sizeof(hash) * 8) - 7)) | (hash >> 7);
+		hash = (hash << ((माप(hash) * 8) - 7)) | (hash >> 7);
 		hash ^= ptr[i];
-	}
+	पूर्ण
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static inline __init unsigned long get_random_boot(void)
-{
-	unsigned long entropy = random_get_entropy();
-	unsigned long hash = 0;
+अटल अंतरभूत __init अचिन्हित दीर्घ get_अक्रमom_boot(व्योम)
+अणु
+	अचिन्हित दीर्घ entropy = अक्रमom_get_entropy();
+	अचिन्हित दीर्घ hash = 0;
 
 	/* Attempt to create a simple but unpredictable starting entropy. */
-	hash = rotate_xor(hash, linux_banner, strlen(linux_banner));
+	hash = rotate_xor(hash, linux_banner, म_माप(linux_banner));
 
-	/* Add in any runtime entropy we can get */
-	hash = rotate_xor(hash, &entropy, sizeof(entropy));
+	/* Add in any runसमय entropy we can get */
+	hash = rotate_xor(hash, &entropy, माप(entropy));
 
-#if defined(CONFIG_USE_OF)
+#अगर defined(CONFIG_USE_OF)
 	/* Get any additional entropy passed in device tree */
-	if (initial_boot_params) {
-		int node, len;
+	अगर (initial_boot_params) अणु
+		पूर्णांक node, len;
 		u64 *prop;
 
 		node = fdt_path_offset(initial_boot_params, "/chosen");
-		if (node >= 0) {
+		अगर (node >= 0) अणु
 			prop = fdt_getprop_w(initial_boot_params, node,
 					     "kaslr-seed", &len);
-			if (prop && (len == sizeof(u64)))
-				hash = rotate_xor(hash, prop, sizeof(*prop));
-		}
-	}
-#endif /* CONFIG_USE_OF */
+			अगर (prop && (len == माप(u64)))
+				hash = rotate_xor(hash, prop, माप(*prop));
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_USE_OF */
 
-	return hash;
-}
+	वापस hash;
+पूर्ण
 
-static inline __init bool kaslr_disabled(void)
-{
-	char *str;
+अटल अंतरभूत __init bool kaslr_disabled(व्योम)
+अणु
+	अक्षर *str;
 
-#if defined(CONFIG_CMDLINE_BOOL)
-	const char *builtin_cmdline = CONFIG_CMDLINE;
+#अगर defined(CONFIG_CMDLINE_BOOL)
+	स्थिर अक्षर *builtin_cmdline = CONFIG_CMDLINE;
 
-	str = strstr(builtin_cmdline, "nokaslr");
-	if (str == builtin_cmdline ||
+	str = म_माला(builtin_cmdline, "nokaslr");
+	अगर (str == builtin_cmdline ||
 	    (str > builtin_cmdline && *(str - 1) == ' '))
-		return true;
-#endif
-	str = strstr(arcs_cmdline, "nokaslr");
-	if (str == arcs_cmdline || (str > arcs_cmdline && *(str - 1) == ' '))
-		return true;
+		वापस true;
+#पूर्ण_अगर
+	str = म_माला(arcs_cmdline, "nokaslr");
+	अगर (str == arcs_cmdline || (str > arcs_cmdline && *(str - 1) == ' '))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void __init *determine_relocation_address(void)
-{
-	/* Choose a new address for the kernel */
-	unsigned long kernel_length;
-	void *dest = &_text;
-	unsigned long offset;
+अटल अंतरभूत व्योम __init *determine_relocation_address(व्योम)
+अणु
+	/* Choose a new address क्रम the kernel */
+	अचिन्हित दीर्घ kernel_length;
+	व्योम *dest = &_text;
+	अचिन्हित दीर्घ offset;
 
-	if (kaslr_disabled())
-		return dest;
+	अगर (kaslr_disabled())
+		वापस dest;
 
-	kernel_length = (long)_end - (long)(&_text);
+	kernel_length = (दीर्घ)_end - (दीर्घ)(&_text);
 
-	offset = get_random_boot() << 16;
+	offset = get_अक्रमom_boot() << 16;
 	offset &= (CONFIG_RANDOMIZE_BASE_MAX_OFFSET - 1);
-	if (offset < kernel_length)
+	अगर (offset < kernel_length)
 		offset += ALIGN(kernel_length, 0xffff);
 
-	return RELOCATED(dest);
-}
+	वापस RELOCATED(dest);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void __init *determine_relocation_address(void)
-{
+अटल अंतरभूत व्योम __init *determine_relocation_address(व्योम)
+अणु
 	/*
-	 * Choose a new address for the kernel
+	 * Choose a new address क्रम the kernel
 	 * For now we'll hard code the destination
 	 */
-	return (void *)0xffffffff81000000;
-}
+	वापस (व्योम *)0xffffffff81000000;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline int __init relocation_addr_valid(void *loc_new)
-{
-	if ((unsigned long)loc_new & 0x0000ffff) {
+अटल अंतरभूत पूर्णांक __init relocation_addr_valid(व्योम *loc_new)
+अणु
+	अगर ((अचिन्हित दीर्घ)loc_new & 0x0000ffff) अणु
 		/* Inappropriately aligned new location */
-		return 0;
-	}
-	if ((unsigned long)loc_new < (unsigned long)&_end) {
+		वापस 0;
+	पूर्ण
+	अगर ((अचिन्हित दीर्घ)loc_new < (अचिन्हित दीर्घ)&_end) अणु
 		/* New location overlaps original kernel */
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static inline void __init update_kaslr_offset(unsigned long *addr, long offset)
-{
-	unsigned long *new_addr = (unsigned long *)RELOCATED(addr);
+अटल अंतरभूत व्योम __init update_kaslr_offset(अचिन्हित दीर्घ *addr, दीर्घ offset)
+अणु
+	अचिन्हित दीर्घ *new_addr = (अचिन्हित दीर्घ *)RELOCATED(addr);
 
-	*new_addr = (unsigned long)offset;
-}
+	*new_addr = (अचिन्हित दीर्घ)offset;
+पूर्ण
 
-#if defined(CONFIG_USE_OF)
-void __weak *plat_get_fdt(void)
-{
-	return NULL;
-}
-#endif
+#अगर defined(CONFIG_USE_OF)
+व्योम __weak *plat_get_fdt(व्योम)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-void *__init relocate_kernel(void)
-{
-	void *loc_new;
-	unsigned long kernel_length;
-	unsigned long bss_length;
-	long offset = 0;
-	int res = 1;
-	/* Default to original kernel entry point */
-	void *kernel_entry = start_kernel;
-	void *fdt = NULL;
+व्योम *__init relocate_kernel(व्योम)
+अणु
+	व्योम *loc_new;
+	अचिन्हित दीर्घ kernel_length;
+	अचिन्हित दीर्घ bss_length;
+	दीर्घ offset = 0;
+	पूर्णांक res = 1;
+	/* Default to original kernel entry poपूर्णांक */
+	व्योम *kernel_entry = start_kernel;
+	व्योम *fdt = शून्य;
 
 	/* Get the command line */
 	fw_init_cmdline();
-#if defined(CONFIG_USE_OF)
+#अगर defined(CONFIG_USE_OF)
 	/* Deal with the device tree */
 	fdt = plat_get_fdt();
 	early_init_dt_scan(fdt);
-	if (boot_command_line[0]) {
+	अगर (boot_command_line[0]) अणु
 		/* Boot command line was passed in device tree */
 		strlcpy(arcs_cmdline, boot_command_line, COMMAND_LINE_SIZE);
-	}
-#endif /* CONFIG_USE_OF */
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_USE_OF */
 
-	kernel_length = (long)(&_relocation_start) - (long)(&_text);
-	bss_length = (long)&__bss_stop - (long)&__bss_start;
+	kernel_length = (दीर्घ)(&_relocation_start) - (दीर्घ)(&_text);
+	bss_length = (दीर्घ)&__bss_stop - (दीर्घ)&__bss_start;
 
 	loc_new = determine_relocation_address();
 
 	/* Sanity check relocation address */
-	if (relocation_addr_valid(loc_new))
-		offset = (unsigned long)loc_new - (unsigned long)(&_text);
+	अगर (relocation_addr_valid(loc_new))
+		offset = (अचिन्हित दीर्घ)loc_new - (अचिन्हित दीर्घ)(&_text);
 
-	/* Reset the command line now so we don't end up with a duplicate */
+	/* Reset the command line now so we करोn't end up with a duplicate */
 	arcs_cmdline[0] = '\0';
 
-	if (offset) {
-		void (*fdt_relocated_)(void *) = NULL;
-#if defined(CONFIG_USE_OF)
-		unsigned long fdt_phys = virt_to_phys(fdt);
+	अगर (offset) अणु
+		व्योम (*fdt_relocated_)(व्योम *) = शून्य;
+#अगर defined(CONFIG_USE_OF)
+		अचिन्हित दीर्घ fdt_phys = virt_to_phys(fdt);
 
 		/*
 		 * If built-in dtb is used then it will have been relocated
 		 * during kernel _text relocation. If appended DTB is used
-		 * then it will not be relocated, but it should remain
-		 * intact in the original location. If dtb is loaded by
-		 * the bootloader then it may need to be moved if it crosses
+		 * then it will not be relocated, but it should reमुख्य
+		 * पूर्णांकact in the original location. If dtb is loaded by
+		 * the bootloader then it may need to be moved अगर it crosses
 		 * the target memory area
 		 */
 
-		if (fdt_phys >= virt_to_phys(RELOCATED(&_text)) &&
-			fdt_phys <= virt_to_phys(RELOCATED(&_end))) {
-			void *fdt_relocated =
-				RELOCATED(ALIGN((long)&_end, PAGE_SIZE));
-			memcpy(fdt_relocated, fdt, fdt_totalsize(fdt));
+		अगर (fdt_phys >= virt_to_phys(RELOCATED(&_text)) &&
+			fdt_phys <= virt_to_phys(RELOCATED(&_end))) अणु
+			व्योम *fdt_relocated =
+				RELOCATED(ALIGN((दीर्घ)&_end, PAGE_SIZE));
+			स_नकल(fdt_relocated, fdt, fdt_totalsize(fdt));
 			fdt = fdt_relocated;
 			fdt_relocated_ = RELOCATED(&plat_fdt_relocated);
-		}
-#endif /* CONFIG_USE_OF */
+		पूर्ण
+#पूर्ण_अगर /* CONFIG_USE_OF */
 
 		/* Copy the kernel to it's new location */
-		memcpy(loc_new, &_text, kernel_length);
+		स_नकल(loc_new, &_text, kernel_length);
 
-		/* Perform relocations on the new kernel */
-		res = do_relocations(&_text, loc_new, offset);
-		if (res < 0)
-			goto out;
+		/* Perक्रमm relocations on the new kernel */
+		res = करो_relocations(&_text, loc_new, offset);
+		अगर (res < 0)
+			जाओ out;
 
-		/* Sync the caches ready for execution of new kernel */
+		/* Sync the caches पढ़ोy क्रम execution of new kernel */
 		sync_icache(loc_new, kernel_length);
 
 		res = relocate_exception_table(offset);
-		if (res < 0)
-			goto out;
+		अगर (res < 0)
+			जाओ out;
 
 		/*
-		 * The original .bss has already been cleared, and
+		 * The original .bss has alपढ़ोy been cleared, and
 		 * some variables such as command line parameters
 		 * stored to it so make a copy in the new location.
 		 */
-		memcpy(RELOCATED(&__bss_start), &__bss_start, bss_length);
+		स_नकल(RELOCATED(&__bss_start), &__bss_start, bss_length);
 
 		/*
 		 * If fdt was stored outside of the kernel image and
-		 * had to be moved then update platform's state data
+		 * had to be moved then update platक्रमm's state data
 		 * with the new fdt location
 		 */
-		if (fdt_relocated_)
+		अगर (fdt_relocated_)
 			fdt_relocated_(fdt);
 
 		/*
-		 * Last chance for the platform to abort relocation.
-		 * This may also be used by the platform to perform any
+		 * Last chance क्रम the platक्रमm to पात relocation.
+		 * This may also be used by the platक्रमm to perक्रमm any
 		 * initialisation required now that the new kernel is
-		 * resident in memory and ready to be executed.
+		 * resident in memory and पढ़ोy to be executed.
 		 */
-		if (plat_post_relocation(offset))
-			goto out;
+		अगर (plat_post_relocation(offset))
+			जाओ out;
 
-		/* The current thread is now within the relocated image */
-		__current_thread_info = RELOCATED(&init_thread_union);
+		/* The current thपढ़ो is now within the relocated image */
+		__current_thपढ़ो_info = RELOCATED(&init_thपढ़ो_जोड़);
 
-		/* Return the new kernel's entry point */
+		/* Return the new kernel's entry poपूर्णांक */
 		kernel_entry = RELOCATED(start_kernel);
 
-		/* Error may occur before, so keep it at last */
+		/* Error may occur beक्रमe, so keep it at last */
 		update_kaslr_offset(&__kaslr_offset, offset);
-	}
+	पूर्ण
 out:
-	return kernel_entry;
-}
+	वापस kernel_entry;
+पूर्ण
 
 /*
- * Show relocation information on panic.
+ * Show relocation inक्रमmation on panic.
  */
-static void show_kernel_relocation(const char *level)
-{
-	if (__kaslr_offset > 0) {
-		printk(level);
-		pr_cont("Kernel relocated by 0x%pK\n", (void *)__kaslr_offset);
+अटल व्योम show_kernel_relocation(स्थिर अक्षर *level)
+अणु
+	अगर (__kaslr_offset > 0) अणु
+		prपूर्णांकk(level);
+		pr_cont("Kernel relocated by 0x%pK\n", (व्योम *)__kaslr_offset);
 		pr_cont(" .text @ 0x%pK\n", _text);
 		pr_cont(" .data @ 0x%pK\n", _sdata);
 		pr_cont(" .bss  @ 0x%pK\n", __bss_start);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int kernel_location_notifier_fn(struct notifier_block *self,
-				       unsigned long v, void *p)
-{
+अटल पूर्णांक kernel_location_notअगरier_fn(काष्ठा notअगरier_block *self,
+				       अचिन्हित दीर्घ v, व्योम *p)
+अणु
 	show_kernel_relocation(KERN_EMERG);
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block kernel_location_notifier = {
-	.notifier_call = kernel_location_notifier_fn
-};
+अटल काष्ठा notअगरier_block kernel_location_notअगरier = अणु
+	.notअगरier_call = kernel_location_notअगरier_fn
+पूर्ण;
 
-static int __init register_kernel_offset_dumper(void)
-{
-	atomic_notifier_chain_register(&panic_notifier_list,
-				       &kernel_location_notifier);
-	return 0;
-}
-__initcall(register_kernel_offset_dumper);
+अटल पूर्णांक __init रेजिस्टर_kernel_offset_dumper(व्योम)
+अणु
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+				       &kernel_location_notअगरier);
+	वापस 0;
+पूर्ण
+__initcall(रेजिस्टर_kernel_offset_dumper);

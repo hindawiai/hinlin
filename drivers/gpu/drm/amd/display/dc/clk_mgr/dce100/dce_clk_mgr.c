@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,115 +25,115 @@
  */
 
 
-#include "dccg.h"
-#include "clk_mgr_internal.h"
-#include "dce_clk_mgr.h"
-#include "dce110/dce110_clk_mgr.h"
-#include "dce112/dce112_clk_mgr.h"
-#include "reg_helper.h"
-#include "dmcu.h"
-#include "core_types.h"
-#include "dal_asic_id.h"
+#समावेश "dccg.h"
+#समावेश "clk_mgr_internal.h"
+#समावेश "dce_clk_mgr.h"
+#समावेश "dce110/dce110_clk_mgr.h"
+#समावेश "dce112/dce112_clk_mgr.h"
+#समावेश "reg_helper.h"
+#समावेश "dmcu.h"
+#समावेश "core_types.h"
+#समावेश "dal_asic_id.h"
 
 /*
- * Currently the register shifts and masks in this file are used for dce100 and dce80
+ * Currently the रेजिस्टर shअगरts and masks in this file are used क्रम dce100 and dce80
  * which has identical definitions.
- * TODO: remove this when DPREFCLK_CNTL and dpref DENTIST_DISPCLK_CNTL
- * is moved to dccg, where it belongs
+ * TODO: हटाओ this when DPREFCLK_CNTL and dpref DENTIST_DISPCLK_CNTL
+ * is moved to dccg, where it beदीर्घs
  */
-#include "dce/dce_8_0_d.h"
-#include "dce/dce_8_0_sh_mask.h"
+#समावेश "dce/dce_8_0_d.h"
+#समावेश "dce/dce_8_0_sh_mask.h"
 
-#define REG(reg) \
+#घोषणा REG(reg) \
 	(clk_mgr->regs->reg)
 
-#undef FN
-#define FN(reg_name, field_name) \
-	clk_mgr->clk_mgr_shift->field_name, clk_mgr->clk_mgr_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	clk_mgr->clk_mgr_shअगरt->field_name, clk_mgr->clk_mgr_mask->field_name
 
-static const struct clk_mgr_registers disp_clk_regs = {
+अटल स्थिर काष्ठा clk_mgr_रेजिस्टरs disp_clk_regs = अणु
 		CLK_COMMON_REG_LIST_DCE_BASE()
-};
+पूर्ण;
 
-static const struct clk_mgr_shift disp_clk_shift = {
+अटल स्थिर काष्ठा clk_mgr_shअगरt disp_clk_shअगरt = अणु
 		CLK_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(__SHIFT)
-};
+पूर्ण;
 
-static const struct clk_mgr_mask disp_clk_mask = {
+अटल स्थिर काष्ठा clk_mgr_mask disp_clk_mask = अणु
 		CLK_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
-};
+पूर्ण;
 
 
-/* Max clock values for each state indexed by "enum clocks_state": */
-static const struct state_dependent_clocks dce80_max_clks_by_state[] = {
+/* Max घड़ी values क्रम each state indexed by "enum clocks_state": */
+अटल स्थिर काष्ठा state_dependent_घड़ीs dce80_max_clks_by_state[] = अणु
 /* ClocksStateInvalid - should not be used */
-{ .display_clk_khz = 0, .pixel_clk_khz = 0 },
-/* ClocksStateUltraLow - not expected to be used for DCE 8.0 */
-{ .display_clk_khz = 0, .pixel_clk_khz = 0 },
+अणु .display_clk_khz = 0, .pixel_clk_khz = 0 पूर्ण,
+/* ClocksStateUltraLow - not expected to be used क्रम DCE 8.0 */
+अणु .display_clk_khz = 0, .pixel_clk_khz = 0 पूर्ण,
 /* ClocksStateLow */
-{ .display_clk_khz = 352000, .pixel_clk_khz = 330000},
+अणु .display_clk_khz = 352000, .pixel_clk_khz = 330000पूर्ण,
 /* ClocksStateNominal */
-{ .display_clk_khz = 600000, .pixel_clk_khz = 400000 },
-/* ClocksStatePerformance */
-{ .display_clk_khz = 600000, .pixel_clk_khz = 400000 } };
+अणु .display_clk_khz = 600000, .pixel_clk_khz = 400000 पूर्ण,
+/* ClocksStatePerक्रमmance */
+अणु .display_clk_khz = 600000, .pixel_clk_khz = 400000 पूर्ण पूर्ण;
 
-int dentist_get_divider_from_did(int did)
-{
-	if (did < DENTIST_BASE_DID_1)
+पूर्णांक dentist_get_भागider_from_did(पूर्णांक did)
+अणु
+	अगर (did < DENTIST_BASE_DID_1)
 		did = DENTIST_BASE_DID_1;
-	if (did > DENTIST_MAX_DID)
+	अगर (did > DENTIST_MAX_DID)
 		did = DENTIST_MAX_DID;
 
-	if (did < DENTIST_BASE_DID_2) {
-		return DENTIST_DIVIDER_RANGE_1_START + DENTIST_DIVIDER_RANGE_1_STEP
+	अगर (did < DENTIST_BASE_DID_2) अणु
+		वापस DENTIST_DIVIDER_RANGE_1_START + DENTIST_DIVIDER_RANGE_1_STEP
 							* (did - DENTIST_BASE_DID_1);
-	} else if (did < DENTIST_BASE_DID_3) {
-		return DENTIST_DIVIDER_RANGE_2_START + DENTIST_DIVIDER_RANGE_2_STEP
+	पूर्ण अन्यथा अगर (did < DENTIST_BASE_DID_3) अणु
+		वापस DENTIST_DIVIDER_RANGE_2_START + DENTIST_DIVIDER_RANGE_2_STEP
 							* (did - DENTIST_BASE_DID_2);
-	} else if (did < DENTIST_BASE_DID_4) {
-		return DENTIST_DIVIDER_RANGE_3_START + DENTIST_DIVIDER_RANGE_3_STEP
+	पूर्ण अन्यथा अगर (did < DENTIST_BASE_DID_4) अणु
+		वापस DENTIST_DIVIDER_RANGE_3_START + DENTIST_DIVIDER_RANGE_3_STEP
 							* (did - DENTIST_BASE_DID_3);
-	} else {
-		return DENTIST_DIVIDER_RANGE_4_START + DENTIST_DIVIDER_RANGE_4_STEP
+	पूर्ण अन्यथा अणु
+		वापस DENTIST_DIVIDER_RANGE_4_START + DENTIST_DIVIDER_RANGE_4_STEP
 							* (did - DENTIST_BASE_DID_4);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* SW will adjust DP REF Clock average value for all purposes
+/* SW will adjust DP REF Clock average value क्रम all purposes
  * (DP DTO / DP Audio DTO and DP GTC)
- if clock is spread for all cases:
- -if SS enabled on DP Ref clock and HW de-spreading enabled with SW
- calculations for DS_INCR/DS_MODULO (this is planned to be default case)
- -if SS enabled on DP Ref clock and HW de-spreading enabled with HW
- calculations (not planned to be used, but average clock should still
+ अगर घड़ी is spपढ़ो क्रम all हालs:
+ -अगर SS enabled on DP Ref घड़ी and HW de-spपढ़ोing enabled with SW
+ calculations क्रम DS_INCR/DS_MODULO (this is planned to be शेष हाल)
+ -अगर SS enabled on DP Ref घड़ी and HW de-spपढ़ोing enabled with HW
+ calculations (not planned to be used, but average घड़ी should still
  be valid)
- -if SS enabled on DP Ref clock and HW de-spreading disabled
- (should not be case with CIK) then SW should program all rates
- generated according to average value (case as with previous ASICs)
+ -अगर SS enabled on DP Ref घड़ी and HW de-spपढ़ोing disabled
+ (should not be हाल with CIK) then SW should program all rates
+ generated according to average value (हाल as with previous ASICs)
   */
 
-int dce_adjust_dp_ref_freq_for_ss(struct clk_mgr_internal *clk_mgr_dce, int dp_ref_clk_khz)
-{
-	if (clk_mgr_dce->ss_on_dprefclk && clk_mgr_dce->dprefclk_ss_divider != 0) {
-		struct fixed31_32 ss_percentage = dc_fixpt_div_int(
+पूर्णांक dce_adjust_dp_ref_freq_क्रम_ss(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce, पूर्णांक dp_ref_clk_khz)
+अणु
+	अगर (clk_mgr_dce->ss_on_dprefclk && clk_mgr_dce->dprefclk_ss_भागider != 0) अणु
+		काष्ठा fixed31_32 ss_percentage = dc_fixpt_भाग_पूर्णांक(
 				dc_fixpt_from_fraction(clk_mgr_dce->dprefclk_ss_percentage,
-							clk_mgr_dce->dprefclk_ss_divider), 200);
-		struct fixed31_32 adj_dp_ref_clk_khz;
+							clk_mgr_dce->dprefclk_ss_भागider), 200);
+		काष्ठा fixed31_32 adj_dp_ref_clk_khz;
 
 		ss_percentage = dc_fixpt_sub(dc_fixpt_one, ss_percentage);
-		adj_dp_ref_clk_khz = dc_fixpt_mul_int(ss_percentage, dp_ref_clk_khz);
-		dp_ref_clk_khz = dc_fixpt_floor(adj_dp_ref_clk_khz);
-	}
-	return dp_ref_clk_khz;
-}
+		adj_dp_ref_clk_khz = dc_fixpt_mul_पूर्णांक(ss_percentage, dp_ref_clk_khz);
+		dp_ref_clk_khz = dc_fixpt_न्यूनमान(adj_dp_ref_clk_khz);
+	पूर्ण
+	वापस dp_ref_clk_khz;
+पूर्ण
 
-int dce_get_dp_ref_freq_khz(struct clk_mgr *clk_mgr_base)
-{
-	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	int dprefclk_wdivider;
-	int dprefclk_src_sel;
-	int dp_ref_clk_khz;
-	int target_div;
+पूर्णांक dce_get_dp_ref_freq_khz(काष्ठा clk_mgr *clk_mgr_base)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	पूर्णांक dprefclk_wभागider;
+	पूर्णांक dprefclk_src_sel;
+	पूर्णांक dp_ref_clk_khz;
+	पूर्णांक target_भाग;
 
 	/* ASSERT DP Reference Clock source is from DFS*/
 	REG_GET(DPREFCLK_CNTL, DPREFCLK_SRC_SEL, &dprefclk_src_sel);
@@ -140,284 +141,284 @@ int dce_get_dp_ref_freq_khz(struct clk_mgr *clk_mgr_base)
 
 	/* Read the mmDENTIST_DISPCLK_CNTL to get the currently
 	 * programmed DID DENTIST_DPREFCLK_WDIVIDER*/
-	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DPREFCLK_WDIVIDER, &dprefclk_wdivider);
+	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DPREFCLK_WDIVIDER, &dprefclk_wभागider);
 
-	/* Convert DENTIST_DPREFCLK_WDIVIDERto actual divider*/
-	target_div = dentist_get_divider_from_did(dprefclk_wdivider);
+	/* Convert DENTIST_DPREFCLK_WDIVIDERto actual भागider*/
+	target_भाग = dentist_get_भागider_from_did(dprefclk_wभागider);
 
-	/* Calculate the current DFS clock, in kHz.*/
+	/* Calculate the current DFS घड़ी, in kHz.*/
 	dp_ref_clk_khz = (DENTIST_DIVIDER_RANGE_SCALE_FACTOR
-		* clk_mgr->base.dentist_vco_freq_khz) / target_div;
+		* clk_mgr->base.dentist_vco_freq_khz) / target_भाग;
 
-	return dce_adjust_dp_ref_freq_for_ss(clk_mgr, dp_ref_clk_khz);
-}
+	वापस dce_adjust_dp_ref_freq_क्रम_ss(clk_mgr, dp_ref_clk_khz);
+पूर्ण
 
-int dce12_get_dp_ref_freq_khz(struct clk_mgr *clk_mgr_base)
-{
-	struct clk_mgr_internal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+पूर्णांक dce12_get_dp_ref_freq_khz(काष्ठा clk_mgr *clk_mgr_base)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
 
-	return dce_adjust_dp_ref_freq_for_ss(clk_mgr_dce, clk_mgr_base->dprefclk_khz);
-}
+	वापस dce_adjust_dp_ref_freq_क्रम_ss(clk_mgr_dce, clk_mgr_base->dprefclk_khz);
+पूर्ण
 
-/* unit: in_khz before mode set, get pixel clock from context. ASIC register
+/* unit: in_khz beक्रमe mode set, get pixel घड़ी from context. ASIC रेजिस्टर
  * may not be programmed yet
  */
-uint32_t dce_get_max_pixel_clock_for_all_paths(struct dc_state *context)
-{
-	uint32_t max_pix_clk = 0;
-	int i;
+uपूर्णांक32_t dce_get_max_pixel_घड़ी_क्रम_all_paths(काष्ठा dc_state *context)
+अणु
+	uपूर्णांक32_t max_pix_clk = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_PIPES; i++) {
-		struct pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
+	क्रम (i = 0; i < MAX_PIPES; i++) अणु
+		काष्ठा pipe_ctx *pipe_ctx = &context->res_ctx.pipe_ctx[i];
 
-		if (pipe_ctx->stream == NULL)
-			continue;
+		अगर (pipe_ctx->stream == शून्य)
+			जारी;
 
-		/* do not check under lay */
-		if (pipe_ctx->top_pipe)
-			continue;
+		/* करो not check under lay */
+		अगर (pipe_ctx->top_pipe)
+			जारी;
 
-		if (pipe_ctx->stream_res.pix_clk_params.requested_pix_clk_100hz / 10 > max_pix_clk)
+		अगर (pipe_ctx->stream_res.pix_clk_params.requested_pix_clk_100hz / 10 > max_pix_clk)
 			max_pix_clk = pipe_ctx->stream_res.pix_clk_params.requested_pix_clk_100hz / 10;
 
-		/* raise clock state for HBR3/2 if required. Confirmed with HW DCE/DPCS
-		 * logic for HBR3 still needs Nominal (0.8V) on VDDC rail
+		/* उठाओ घड़ी state क्रम HBR3/2 अगर required. Confirmed with HW DCE/DPCS
+		 * logic क्रम HBR3 still needs Nominal (0.8V) on VDDC rail
 		 */
-		if (dc_is_dp_signal(pipe_ctx->stream->signal) &&
+		अगर (dc_is_dp_संकेत(pipe_ctx->stream->संकेत) &&
 				pipe_ctx->stream_res.pix_clk_params.requested_sym_clk > max_pix_clk)
 			max_pix_clk = pipe_ctx->stream_res.pix_clk_params.requested_sym_clk;
-	}
+	पूर्ण
 
-	return max_pix_clk;
-}
+	वापस max_pix_clk;
+पूर्ण
 
-enum dm_pp_clocks_state dce_get_required_clocks_state(
-	struct clk_mgr *clk_mgr_base,
-	struct dc_state *context)
-{
-	struct clk_mgr_internal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	int i;
-	enum dm_pp_clocks_state low_req_clk;
-	int max_pix_clk = dce_get_max_pixel_clock_for_all_paths(context);
+क्रमागत dm_pp_घड़ीs_state dce_get_required_घड़ीs_state(
+	काष्ठा clk_mgr *clk_mgr_base,
+	काष्ठा dc_state *context)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	पूर्णांक i;
+	क्रमागत dm_pp_घड़ीs_state low_req_clk;
+	पूर्णांक max_pix_clk = dce_get_max_pixel_घड़ी_क्रम_all_paths(context);
 
 	/* Iterate from highest supported to lowest valid state, and update
 	 * lowest RequiredState with the lowest state that satisfies
-	 * all required clocks
+	 * all required घड़ीs
 	 */
-	for (i = clk_mgr_dce->max_clks_state; i >= DM_PP_CLOCKS_STATE_ULTRA_LOW; i--)
-		if (context->bw_ctx.bw.dce.dispclk_khz >
+	क्रम (i = clk_mgr_dce->max_clks_state; i >= DM_PP_CLOCKS_STATE_ULTRA_LOW; i--)
+		अगर (context->bw_ctx.bw.dce.dispclk_khz >
 				clk_mgr_dce->max_clks_by_state[i].display_clk_khz
 			|| max_pix_clk >
 				clk_mgr_dce->max_clks_by_state[i].pixel_clk_khz)
-			break;
+			अवरोध;
 
 	low_req_clk = i + 1;
-	if (low_req_clk > clk_mgr_dce->max_clks_state) {
-		/* set max clock state for high phyclock, invalid on exceeding display clock */
-		if (clk_mgr_dce->max_clks_by_state[clk_mgr_dce->max_clks_state].display_clk_khz
+	अगर (low_req_clk > clk_mgr_dce->max_clks_state) अणु
+		/* set max घड़ी state क्रम high phyघड़ी, invalid on exceeding display घड़ी */
+		अगर (clk_mgr_dce->max_clks_by_state[clk_mgr_dce->max_clks_state].display_clk_khz
 				< context->bw_ctx.bw.dce.dispclk_khz)
 			low_req_clk = DM_PP_CLOCKS_STATE_INVALID;
-		else
+		अन्यथा
 			low_req_clk = clk_mgr_dce->max_clks_state;
-	}
+	पूर्ण
 
-	return low_req_clk;
-}
+	वापस low_req_clk;
+पूर्ण
 
 
-/* TODO: remove use the two broken down functions */
-int dce_set_clock(
-	struct clk_mgr *clk_mgr_base,
-	int requested_clk_khz)
-{
-	struct clk_mgr_internal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	struct bp_pixel_clock_parameters pxl_clk_params = { 0 };
-	struct dc_bios *bp = clk_mgr_base->ctx->dc_bios;
-	int actual_clock = requested_clk_khz;
-	struct dmcu *dmcu = clk_mgr_dce->base.ctx->dc->res_pool->dmcu;
+/* TODO: हटाओ use the two broken करोwn functions */
+पूर्णांक dce_set_घड़ी(
+	काष्ठा clk_mgr *clk_mgr_base,
+	पूर्णांक requested_clk_khz)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	काष्ठा bp_pixel_घड़ी_parameters pxl_clk_params = अणु 0 पूर्ण;
+	काष्ठा dc_bios *bp = clk_mgr_base->ctx->dc_bios;
+	पूर्णांक actual_घड़ी = requested_clk_khz;
+	काष्ठा dmcu *dmcu = clk_mgr_dce->base.ctx->dc->res_pool->dmcu;
 
-	/* Make sure requested clock isn't lower than minimum threshold*/
-	if (requested_clk_khz > 0)
+	/* Make sure requested घड़ी isn't lower than minimum threshold*/
+	अगर (requested_clk_khz > 0)
 		requested_clk_khz = max(requested_clk_khz,
 				clk_mgr_dce->base.dentist_vco_freq_khz / 64);
 
-	/* Prepare to program display clock*/
-	pxl_clk_params.target_pixel_clock_100hz = requested_clk_khz * 10;
+	/* Prepare to program display घड़ी*/
+	pxl_clk_params.target_pixel_घड़ी_100hz = requested_clk_khz * 10;
 	pxl_clk_params.pll_id = CLOCK_SOURCE_ID_DFS;
 
-	if (clk_mgr_dce->dfs_bypass_active)
+	अगर (clk_mgr_dce->dfs_bypass_active)
 		pxl_clk_params.flags.SET_DISPCLK_DFS_BYPASS = true;
 
 	bp->funcs->program_display_engine_pll(bp, &pxl_clk_params);
 
-	if (clk_mgr_dce->dfs_bypass_active) {
-		/* Cache the fixed display clock*/
+	अगर (clk_mgr_dce->dfs_bypass_active) अणु
+		/* Cache the fixed display घड़ी*/
 		clk_mgr_dce->dfs_bypass_disp_clk =
-			pxl_clk_params.dfs_bypass_display_clock;
-		actual_clock = pxl_clk_params.dfs_bypass_display_clock;
-	}
+			pxl_clk_params.dfs_bypass_display_घड़ी;
+		actual_घड़ी = pxl_clk_params.dfs_bypass_display_घड़ी;
+	पूर्ण
 
-	/* from power down, we need mark the clock state as ClocksStateNominal
+	/* from घातer करोwn, we need mark the घड़ी state as ClocksStateNominal
 	 * from HWReset, so when resume we will call pplib voltage regulator.*/
-	if (requested_clk_khz == 0)
+	अगर (requested_clk_khz == 0)
 		clk_mgr_dce->cur_min_clks_state = DM_PP_CLOCKS_STATE_NOMINAL;
 
-	if (dmcu && dmcu->funcs->is_dmcu_initialized(dmcu))
-		dmcu->funcs->set_psr_wait_loop(dmcu, actual_clock / 1000 / 7);
+	अगर (dmcu && dmcu->funcs->is_dmcu_initialized(dmcu))
+		dmcu->funcs->set_psr_रुको_loop(dmcu, actual_घड़ी / 1000 / 7);
 
-	return actual_clock;
-}
+	वापस actual_घड़ी;
+पूर्ण
 
 
-static void dce_clock_read_integrated_info(struct clk_mgr_internal *clk_mgr_dce)
-{
-	struct dc_debug_options *debug = &clk_mgr_dce->base.ctx->dc->debug;
-	struct dc_bios *bp = clk_mgr_dce->base.ctx->dc_bios;
-	int i;
+अटल व्योम dce_घड़ी_पढ़ो_पूर्णांकegrated_info(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce)
+अणु
+	काष्ठा dc_debug_options *debug = &clk_mgr_dce->base.ctx->dc->debug;
+	काष्ठा dc_bios *bp = clk_mgr_dce->base.ctx->dc_bios;
+	पूर्णांक i;
 
-	if (bp->integrated_info)
-		clk_mgr_dce->base.dentist_vco_freq_khz = bp->integrated_info->dentist_vco_freq;
-	if (clk_mgr_dce->base.dentist_vco_freq_khz == 0) {
+	अगर (bp->पूर्णांकegrated_info)
+		clk_mgr_dce->base.dentist_vco_freq_khz = bp->पूर्णांकegrated_info->dentist_vco_freq;
+	अगर (clk_mgr_dce->base.dentist_vco_freq_khz == 0) अणु
 		clk_mgr_dce->base.dentist_vco_freq_khz = bp->fw_info.smu_gpu_pll_output_freq;
-		if (clk_mgr_dce->base.dentist_vco_freq_khz == 0)
+		अगर (clk_mgr_dce->base.dentist_vco_freq_khz == 0)
 			clk_mgr_dce->base.dentist_vco_freq_khz = 3600000;
-	}
+	पूर्ण
 
-	/*update the maximum display clock for each power state*/
-	for (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) {
-		enum dm_pp_clocks_state clk_state = DM_PP_CLOCKS_STATE_INVALID;
+	/*update the maximum display घड़ी क्रम each घातer state*/
+	क्रम (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) अणु
+		क्रमागत dm_pp_घड़ीs_state clk_state = DM_PP_CLOCKS_STATE_INVALID;
 
-		switch (i) {
-		case 0:
+		चयन (i) अणु
+		हाल 0:
 			clk_state = DM_PP_CLOCKS_STATE_ULTRA_LOW;
-			break;
+			अवरोध;
 
-		case 1:
+		हाल 1:
 			clk_state = DM_PP_CLOCKS_STATE_LOW;
-			break;
+			अवरोध;
 
-		case 2:
+		हाल 2:
 			clk_state = DM_PP_CLOCKS_STATE_NOMINAL;
-			break;
+			अवरोध;
 
-		case 3:
+		हाल 3:
 			clk_state = DM_PP_CLOCKS_STATE_PERFORMANCE;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			clk_state = DM_PP_CLOCKS_STATE_INVALID;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*Do not allow bad VBIOS/SBIOS to override with invalid values,
-		 * check for > 100MHz*/
-		if (bp->integrated_info)
-			if (bp->integrated_info->disp_clk_voltage[i].max_supported_clk >= 100000)
+		 * check क्रम > 100MHz*/
+		अगर (bp->पूर्णांकegrated_info)
+			अगर (bp->पूर्णांकegrated_info->disp_clk_voltage[i].max_supported_clk >= 100000)
 				clk_mgr_dce->max_clks_by_state[clk_state].display_clk_khz =
-					bp->integrated_info->disp_clk_voltage[i].max_supported_clk;
-	}
+					bp->पूर्णांकegrated_info->disp_clk_voltage[i].max_supported_clk;
+	पूर्ण
 
-	if (!debug->disable_dfs_bypass && bp->integrated_info)
-		if (bp->integrated_info->gpu_cap_info & DFS_BYPASS_ENABLE)
+	अगर (!debug->disable_dfs_bypass && bp->पूर्णांकegrated_info)
+		अगर (bp->पूर्णांकegrated_info->gpu_cap_info & DFS_BYPASS_ENABLE)
 			clk_mgr_dce->dfs_bypass_enabled = true;
-}
+पूर्ण
 
-void dce_clock_read_ss_info(struct clk_mgr_internal *clk_mgr_dce)
-{
-	struct dc_bios *bp = clk_mgr_dce->base.ctx->dc_bios;
-	int ss_info_num = bp->funcs->get_ss_entry_number(
+व्योम dce_घड़ी_पढ़ो_ss_info(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce)
+अणु
+	काष्ठा dc_bios *bp = clk_mgr_dce->base.ctx->dc_bios;
+	पूर्णांक ss_info_num = bp->funcs->get_ss_entry_number(
 			bp, AS_SIGNAL_TYPE_GPU_PLL);
 
-	if (ss_info_num) {
-		struct spread_spectrum_info info = { { 0 } };
-		enum bp_result result = bp->funcs->get_spread_spectrum_info(
+	अगर (ss_info_num) अणु
+		काष्ठा spपढ़ो_spectrum_info info = अणु अणु 0 पूर्ण पूर्ण;
+		क्रमागत bp_result result = bp->funcs->get_spपढ़ो_spectrum_info(
 				bp, AS_SIGNAL_TYPE_GPU_PLL, 0, &info);
 
-		/* Based on VBIOS, VBIOS will keep entry for GPU PLL SS
-		 * even if SS not enabled and in that case
-		 * SSInfo.spreadSpectrumPercentage !=0 would be sign
+		/* Based on VBIOS, VBIOS will keep entry क्रम GPU PLL SS
+		 * even अगर SS not enabled and in that हाल
+		 * SSInfo.spपढ़ोSpectrumPercentage !=0 would be sign
 		 * that SS is enabled
 		 */
-		if (result == BP_RESULT_OK &&
-				info.spread_spectrum_percentage != 0) {
+		अगर (result == BP_RESULT_OK &&
+				info.spपढ़ो_spectrum_percentage != 0) अणु
 			clk_mgr_dce->ss_on_dprefclk = true;
-			clk_mgr_dce->dprefclk_ss_divider = info.spread_percentage_divider;
+			clk_mgr_dce->dprefclk_ss_भागider = info.spपढ़ो_percentage_भागider;
 
-			if (info.type.CENTER_MODE == 0) {
-				/* TODO: Currently for DP Reference clock we
-				 * need only SS percentage for
-				 * downspread */
+			अगर (info.type.CENTER_MODE == 0) अणु
+				/* TODO: Currently क्रम DP Reference घड़ी we
+				 * need only SS percentage क्रम
+				 * करोwnspपढ़ो */
 				clk_mgr_dce->dprefclk_ss_percentage =
-						info.spread_spectrum_percentage;
-			}
+						info.spपढ़ो_spectrum_percentage;
+			पूर्ण
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		result = bp->funcs->get_spread_spectrum_info(
+		result = bp->funcs->get_spपढ़ो_spectrum_info(
 				bp, AS_SIGNAL_TYPE_DISPLAY_PORT, 0, &info);
 
-		/* Based on VBIOS, VBIOS will keep entry for DPREFCLK SS
-		 * even if SS not enabled and in that case
-		 * SSInfo.spreadSpectrumPercentage !=0 would be sign
+		/* Based on VBIOS, VBIOS will keep entry क्रम DPREFCLK SS
+		 * even अगर SS not enabled and in that हाल
+		 * SSInfo.spपढ़ोSpectrumPercentage !=0 would be sign
 		 * that SS is enabled
 		 */
-		if (result == BP_RESULT_OK &&
-				info.spread_spectrum_percentage != 0) {
+		अगर (result == BP_RESULT_OK &&
+				info.spपढ़ो_spectrum_percentage != 0) अणु
 			clk_mgr_dce->ss_on_dprefclk = true;
-			clk_mgr_dce->dprefclk_ss_divider = info.spread_percentage_divider;
+			clk_mgr_dce->dprefclk_ss_भागider = info.spपढ़ो_percentage_भागider;
 
-			if (info.type.CENTER_MODE == 0) {
-				/* Currently for DP Reference clock we
-				 * need only SS percentage for
-				 * downspread */
+			अगर (info.type.CENTER_MODE == 0) अणु
+				/* Currently क्रम DP Reference घड़ी we
+				 * need only SS percentage क्रम
+				 * करोwnspपढ़ो */
 				clk_mgr_dce->dprefclk_ss_percentage =
-						info.spread_spectrum_percentage;
-			}
-		}
-	}
-}
+						info.spपढ़ो_spectrum_percentage;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void dce_pplib_apply_display_requirements(
-	struct dc *dc,
-	struct dc_state *context)
-{
-	struct dm_pp_display_configuration *pp_display_cfg = &context->pp_display_cfg;
+अटल व्योम dce_pplib_apply_display_requirements(
+	काष्ठा dc *dc,
+	काष्ठा dc_state *context)
+अणु
+	काष्ठा dm_pp_display_configuration *pp_display_cfg = &context->pp_display_cfg;
 
-	pp_display_cfg->avail_mclk_switch_time_us = dce110_get_min_vblank_time_us(context);
+	pp_display_cfg->avail_mclk_चयन_समय_us = dce110_get_min_vblank_समय_us(context);
 
 	dce110_fill_display_configs(context, pp_display_cfg);
 
-	if (memcmp(&dc->current_state->pp_display_cfg, pp_display_cfg, sizeof(*pp_display_cfg)) !=  0)
+	अगर (स_भेद(&dc->current_state->pp_display_cfg, pp_display_cfg, माप(*pp_display_cfg)) !=  0)
 		dm_pp_apply_display_requirements(dc->ctx, pp_display_cfg);
-}
+पूर्ण
 
-static void dce_update_clocks(struct clk_mgr *clk_mgr_base,
-			struct dc_state *context,
+अटल व्योम dce_update_घड़ीs(काष्ठा clk_mgr *clk_mgr_base,
+			काष्ठा dc_state *context,
 			bool safe_to_lower)
-{
-	struct clk_mgr_internal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	struct dm_pp_power_level_change_request level_change_req;
-	int patched_disp_clk = context->bw_ctx.bw.dce.dispclk_khz;
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_dce = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	काष्ठा dm_pp_घातer_level_change_request level_change_req;
+	पूर्णांक patched_disp_clk = context->bw_ctx.bw.dce.dispclk_khz;
 
-	/*TODO: W/A for dal3 linux, investigate why this works */
-	if (!clk_mgr_dce->dfs_bypass_active)
+	/*TODO: W/A क्रम dal3 linux, investigate why this works */
+	अगर (!clk_mgr_dce->dfs_bypass_active)
 		patched_disp_clk = patched_disp_clk * 115 / 100;
 
-	level_change_req.power_level = dce_get_required_clocks_state(clk_mgr_base, context);
-	/* get max clock state from PPLIB */
-	if ((level_change_req.power_level < clk_mgr_dce->cur_min_clks_state && safe_to_lower)
-			|| level_change_req.power_level > clk_mgr_dce->cur_min_clks_state) {
-		if (dm_pp_apply_power_level_change_request(clk_mgr_base->ctx, &level_change_req))
-			clk_mgr_dce->cur_min_clks_state = level_change_req.power_level;
-	}
+	level_change_req.घातer_level = dce_get_required_घड़ीs_state(clk_mgr_base, context);
+	/* get max घड़ी state from PPLIB */
+	अगर ((level_change_req.घातer_level < clk_mgr_dce->cur_min_clks_state && safe_to_lower)
+			|| level_change_req.घातer_level > clk_mgr_dce->cur_min_clks_state) अणु
+		अगर (dm_pp_apply_घातer_level_change_request(clk_mgr_base->ctx, &level_change_req))
+			clk_mgr_dce->cur_min_clks_state = level_change_req.घातer_level;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, patched_disp_clk, clk_mgr_base->clks.dispclk_khz)) {
-		patched_disp_clk = dce_set_clock(clk_mgr_base, patched_disp_clk);
+	अगर (should_set_घड़ी(safe_to_lower, patched_disp_clk, clk_mgr_base->clks.dispclk_khz)) अणु
+		patched_disp_clk = dce_set_घड़ी(clk_mgr_base, patched_disp_clk);
 		clk_mgr_base->clks.dispclk_khz = patched_disp_clk;
-	}
+	पूर्ण
 	dce_pplib_apply_display_requirements(clk_mgr_base->ctx->dc, context);
-}
+पूर्ण
 
 
 
@@ -426,41 +427,41 @@ static void dce_update_clocks(struct clk_mgr *clk_mgr_base,
 
 
 
-static struct clk_mgr_funcs dce_funcs = {
+अटल काष्ठा clk_mgr_funcs dce_funcs = अणु
 	.get_dp_ref_clk_frequency = dce_get_dp_ref_freq_khz,
-	.update_clocks = dce_update_clocks
-};
+	.update_घड़ीs = dce_update_घड़ीs
+पूर्ण;
 
-void dce_clk_mgr_construct(
-		struct dc_context *ctx,
-		struct clk_mgr_internal *clk_mgr)
-{
-	struct clk_mgr *base = &clk_mgr->base;
-	struct dm_pp_static_clock_info static_clk_info = {0};
+व्योम dce_clk_mgr_स्थिरruct(
+		काष्ठा dc_context *ctx,
+		काष्ठा clk_mgr_पूर्णांकernal *clk_mgr)
+अणु
+	काष्ठा clk_mgr *base = &clk_mgr->base;
+	काष्ठा dm_pp_अटल_घड़ी_info अटल_clk_info = अणु0पूर्ण;
 
-	memcpy(clk_mgr->max_clks_by_state,
+	स_नकल(clk_mgr->max_clks_by_state,
 		dce80_max_clks_by_state,
-		sizeof(dce80_max_clks_by_state));
+		माप(dce80_max_clks_by_state));
 
 	base->ctx = ctx;
 	base->funcs = &dce_funcs;
 
 	clk_mgr->regs = &disp_clk_regs;
-	clk_mgr->clk_mgr_shift = &disp_clk_shift;
+	clk_mgr->clk_mgr_shअगरt = &disp_clk_shअगरt;
 	clk_mgr->clk_mgr_mask = &disp_clk_mask;
 	clk_mgr->dfs_bypass_disp_clk = 0;
 
 	clk_mgr->dprefclk_ss_percentage = 0;
-	clk_mgr->dprefclk_ss_divider = 1000;
+	clk_mgr->dprefclk_ss_भागider = 1000;
 	clk_mgr->ss_on_dprefclk = false;
 
-	if (dm_pp_get_static_clocks(ctx, &static_clk_info))
-		clk_mgr->max_clks_state = static_clk_info.max_clocks_state;
-	else
+	अगर (dm_pp_get_अटल_घड़ीs(ctx, &अटल_clk_info))
+		clk_mgr->max_clks_state = अटल_clk_info.max_घड़ीs_state;
+	अन्यथा
 		clk_mgr->max_clks_state = DM_PP_CLOCKS_STATE_NOMINAL;
 	clk_mgr->cur_min_clks_state = DM_PP_CLOCKS_STATE_INVALID;
 
-	dce_clock_read_integrated_info(clk_mgr);
-	dce_clock_read_ss_info(clk_mgr);
-}
+	dce_घड़ी_पढ़ो_पूर्णांकegrated_info(clk_mgr);
+	dce_घड़ी_पढ़ो_ss_info(clk_mgr);
+पूर्ण
 

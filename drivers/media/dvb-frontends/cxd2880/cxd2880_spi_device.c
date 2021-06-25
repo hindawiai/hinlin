@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cxd2880_spi_device.c
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
@@ -7,24 +8,24 @@
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#include <linux/spi/spi.h>
+#समावेश <linux/spi/spi.h>
 
-#include "cxd2880_spi_device.h"
+#समावेश "cxd2880_spi_device.h"
 
-static int cxd2880_spi_device_write(struct cxd2880_spi *spi,
-				    const u8 *data, u32 size)
-{
-	struct cxd2880_spi_device *spi_device = NULL;
-	struct spi_message msg;
-	struct spi_transfer tx;
-	int result = 0;
+अटल पूर्णांक cxd2880_spi_device_ग_लिखो(काष्ठा cxd2880_spi *spi,
+				    स्थिर u8 *data, u32 size)
+अणु
+	काष्ठा cxd2880_spi_device *spi_device = शून्य;
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer tx;
+	पूर्णांक result = 0;
 
-	if (!spi || !spi->user || !data || size == 0)
-		return -EINVAL;
+	अगर (!spi || !spi->user || !data || size == 0)
+		वापस -EINVAL;
 
 	spi_device = spi->user;
 
-	memset(&tx, 0, sizeof(tx));
+	स_रखो(&tx, 0, माप(tx));
 	tx.tx_buf = data;
 	tx.len = size;
 
@@ -32,82 +33,82 @@ static int cxd2880_spi_device_write(struct cxd2880_spi *spi,
 	spi_message_add_tail(&tx, &msg);
 	result = spi_sync(spi_device->spi, &msg);
 
-	if (result < 0)
-		return -EIO;
+	अगर (result < 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2880_spi_device_write_read(struct cxd2880_spi *spi,
-					 const u8 *tx_data,
+अटल पूर्णांक cxd2880_spi_device_ग_लिखो_पढ़ो(काष्ठा cxd2880_spi *spi,
+					 स्थिर u8 *tx_data,
 					 u32 tx_size,
 					 u8 *rx_data,
 					 u32 rx_size)
-{
-	struct cxd2880_spi_device *spi_device = NULL;
-	int result = 0;
+अणु
+	काष्ठा cxd2880_spi_device *spi_device = शून्य;
+	पूर्णांक result = 0;
 
-	if (!spi || !spi->user || !tx_data ||
+	अगर (!spi || !spi->user || !tx_data ||
 	    !tx_size || !rx_data || !rx_size)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	spi_device = spi->user;
 
-	result = spi_write_then_read(spi_device->spi, tx_data,
+	result = spi_ग_लिखो_then_पढ़ो(spi_device->spi, tx_data,
 				     tx_size, rx_data, rx_size);
-	if (result < 0)
-		return -EIO;
+	अगर (result < 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-cxd2880_spi_device_initialize(struct cxd2880_spi_device *spi_device,
-			      enum cxd2880_spi_mode mode,
+पूर्णांक
+cxd2880_spi_device_initialize(काष्ठा cxd2880_spi_device *spi_device,
+			      क्रमागत cxd2880_spi_mode mode,
 			      u32 speed_hz)
-{
-	int result = 0;
-	struct spi_device *spi = spi_device->spi;
+अणु
+	पूर्णांक result = 0;
+	काष्ठा spi_device *spi = spi_device->spi;
 
-	switch (mode) {
-	case CXD2880_SPI_MODE_0:
+	चयन (mode) अणु
+	हाल CXD2880_SPI_MODE_0:
 		spi->mode = SPI_MODE_0;
-		break;
-	case CXD2880_SPI_MODE_1:
+		अवरोध;
+	हाल CXD2880_SPI_MODE_1:
 		spi->mode = SPI_MODE_1;
-		break;
-	case CXD2880_SPI_MODE_2:
+		अवरोध;
+	हाल CXD2880_SPI_MODE_2:
 		spi->mode = SPI_MODE_2;
-		break;
-	case CXD2880_SPI_MODE_3:
+		अवरोध;
+	हाल CXD2880_SPI_MODE_3:
 		spi->mode = SPI_MODE_3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	spi->max_speed_hz = speed_hz;
 	spi->bits_per_word = 8;
 	result = spi_setup(spi);
-	if (result != 0) {
+	अगर (result != 0) अणु
 		pr_err("spi_setup failed %d\n", result);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxd2880_spi_device_create_spi(struct cxd2880_spi *spi,
-				  struct cxd2880_spi_device *spi_device)
-{
-	if (!spi || !spi_device)
-		return -EINVAL;
+पूर्णांक cxd2880_spi_device_create_spi(काष्ठा cxd2880_spi *spi,
+				  काष्ठा cxd2880_spi_device *spi_device)
+अणु
+	अगर (!spi || !spi_device)
+		वापस -EINVAL;
 
-	spi->read = NULL;
-	spi->write = cxd2880_spi_device_write;
-	spi->write_read = cxd2880_spi_device_write_read;
+	spi->पढ़ो = शून्य;
+	spi->ग_लिखो = cxd2880_spi_device_ग_लिखो;
+	spi->ग_लिखो_पढ़ो = cxd2880_spi_device_ग_लिखो_पढ़ो;
 	spi->flags = 0;
 	spi->user = spi_device;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

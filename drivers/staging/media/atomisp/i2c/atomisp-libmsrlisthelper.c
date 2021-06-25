@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2013 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
-#include <linux/i2c.h>
-#include <linux/firmware.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include "../include/linux/libmsrlisthelper.h"
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश "../include/linux/libmsrlisthelper.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-/* Tagged binary data container structure definitions. */
-struct tbd_header {
-	u32 tag;          /*!< Tag identifier, also checks endianness */
+/* Tagged binary data container काष्ठाure definitions. */
+काष्ठा tbd_header अणु
+	u32 tag;          /*!< Tag identअगरier, also checks endianness */
 	u32 size;         /*!< Container size including this header */
-	u32 version;      /*!< Version, format 0xYYMMDDVV */
-	u32 revision;     /*!< Revision, format 0xYYMMDDVV */
+	u32 version;      /*!< Version, क्रमmat 0xYYMMDDVV */
+	u32 revision;     /*!< Revision, क्रमmat 0xYYMMDDVV */
 	u32 config_bits;  /*!< Configuration flag bits set */
 	u32 checksum;     /*!< Global checksum, header included */
-} __packed;
+पूर्ण __packed;
 
-struct tbd_record_header {
+काष्ठा tbd_record_header अणु
 	u32 size;        /*!< Size of record including header */
-	u8 format_id;    /*!< tbd_format_t enumeration values used */
+	u8 क्रमmat_id;    /*!< tbd_क्रमmat_t क्रमागतeration values used */
 	u8 packing_key;  /*!< Packing method; 0 = no packing */
-	u16 class_id;    /*!< tbd_class_t enumeration values used */
-} __packed;
+	u16 class_id;    /*!< tbd_class_t क्रमागतeration values used */
+पूर्ण __packed;
 
-struct tbd_data_record_header {
+काष्ठा tbd_data_record_header अणु
 	u16 next_offset;
 	u16 flags;
 	u16 data_offset;
 	u16 data_size;
-} __packed;
+पूर्ण __packed;
 
-#define TBD_CLASS_DRV_ID 2
+#घोषणा TBD_CLASS_DRV_ID 2
 
-static int set_msr_configuration(struct i2c_client *client, uint8_t *bufptr,
-				 unsigned int size)
-{
+अटल पूर्णांक set_msr_configuration(काष्ठा i2c_client *client, uपूर्णांक8_t *bufptr,
+				 अचिन्हित पूर्णांक size)
+अणु
 	/* The configuration data contains any number of sequences where
-	 * the first byte (that is, uint8_t) that marks the number of bytes
+	 * the first byte (that is, uपूर्णांक8_t) that marks the number of bytes
 	 * in the sequence to follow, is indeed followed by the indicated
 	 * number of bytes of actual data to be written to sensor.
 	 * By convention, the first two bytes of actual data should be
 	 * understood as an address in the sensor address space (hibyte
-	 * followed by lobyte) where the remaining data in the sequence
+	 * followed by lobyte) where the reमुख्यing data in the sequence
 	 * will be written. */
 
 	u8 *ptr = bufptr;
 
-	while (ptr < bufptr + size) {
-		struct i2c_msg msg = {
+	जबतक (ptr < bufptr + size) अणु
+		काष्ठा i2c_msg msg = अणु
 			.addr = client->addr,
 			.flags = 0,
-		};
-		int ret;
+		पूर्ण;
+		पूर्णांक ret;
 
 		/* How many bytes */
 		msg.len = *ptr++;
@@ -74,45 +75,45 @@ static int set_msr_configuration(struct i2c_client *client, uint8_t *bufptr,
 		msg.buf = ptr;
 		ptr += msg.len;
 
-		if (ptr > bufptr + size)
+		अगर (ptr > bufptr + size)
 			/* Accessing data beyond bounds is not tolerated */
-			return -EINVAL;
+			वापस -EINVAL;
 
 		ret = i2c_transfer(client->adapter, &msg, 1);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&client->dev, "i2c write error: %d", ret);
-			return ret;
-		}
-	}
-	return 0;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int parse_and_apply(struct i2c_client *client, uint8_t *buffer,
-			   unsigned int size)
-{
+अटल पूर्णांक parse_and_apply(काष्ठा i2c_client *client, uपूर्णांक8_t *buffer,
+			   अचिन्हित पूर्णांक size)
+अणु
 	u8 *endptr8 = buffer + size;
-	struct tbd_data_record_header *header =
-	    (struct tbd_data_record_header *)buffer;
+	काष्ठा tbd_data_record_header *header =
+	    (काष्ठा tbd_data_record_header *)buffer;
 
 	/* There may be any number of datasets present */
-	unsigned int dataset = 0;
+	अचिन्हित पूर्णांक dataset = 0;
 
-	do {
-		/* In below, four variables are read from buffer */
-		if ((uint8_t *)header + sizeof(*header) > endptr8)
-			return -EINVAL;
+	करो अणु
+		/* In below, four variables are पढ़ो from buffer */
+		अगर ((uपूर्णांक8_t *)header + माप(*header) > endptr8)
+			वापस -EINVAL;
 
 		/* All data should be located within given buffer */
-		if ((uint8_t *)header + header->data_offset +
+		अगर ((uपूर्णांक8_t *)header + header->data_offset +
 		    header->data_size > endptr8)
-			return -EINVAL;
+			वापस -EINVAL;
 
 		/* We have a new valid dataset */
 		dataset++;
 		/* See whether there is MSR data */
 		/* If yes, update the reg info */
-		if (header->data_size && (header->flags & 1)) {
-			int ret;
+		अगर (header->data_size && (header->flags & 1)) अणु
+			पूर्णांक ret;
 
 			dev_info(&client->dev,
 				 "New MSR data for sensor driver (dataset %02d) size:%d\n",
@@ -120,89 +121,89 @@ static int parse_and_apply(struct i2c_client *client, uint8_t *buffer,
 			ret = set_msr_configuration(client,
 						    buffer + header->data_offset,
 						    header->data_size);
-			if (ret)
-				return ret;
-		}
-		header = (struct tbd_data_record_header *)(buffer +
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		header = (काष्ठा tbd_data_record_header *)(buffer +
 			 header->next_offset);
-	} while (header->next_offset);
+	पूर्ण जबतक (header->next_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int apply_msr_data(struct i2c_client *client, const struct firmware *fw)
-{
-	struct tbd_header *header;
-	struct tbd_record_header *record;
+पूर्णांक apply_msr_data(काष्ठा i2c_client *client, स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा tbd_header *header;
+	काष्ठा tbd_record_header *record;
 
-	if (!fw) {
+	अगर (!fw) अणु
 		dev_warn(&client->dev, "Drv data is not loaded.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sizeof(*header) > fw->size)
-		return -EINVAL;
+	अगर (माप(*header) > fw->size)
+		वापस -EINVAL;
 
-	header = (struct tbd_header *)fw->data;
+	header = (काष्ठा tbd_header *)fw->data;
 	/* Check that we have drvb block. */
-	if (memcmp(&header->tag, "DRVB", 4))
-		return -EINVAL;
+	अगर (स_भेद(&header->tag, "DRVB", 4))
+		वापस -EINVAL;
 
 	/* Check the size */
-	if (header->size != fw->size)
-		return -EINVAL;
+	अगर (header->size != fw->size)
+		वापस -EINVAL;
 
-	if (sizeof(*header) + sizeof(*record) > fw->size)
-		return -EINVAL;
+	अगर (माप(*header) + माप(*record) > fw->size)
+		वापस -EINVAL;
 
-	record = (struct tbd_record_header *)(header + 1);
+	record = (काष्ठा tbd_record_header *)(header + 1);
 	/* Check that class id mathes tbd's drv id. */
-	if (record->class_id != TBD_CLASS_DRV_ID)
-		return -EINVAL;
+	अगर (record->class_id != TBD_CLASS_DRV_ID)
+		वापस -EINVAL;
 
 	/* Size 0 shall not be treated as an error */
-	if (!record->size)
-		return 0;
+	अगर (!record->size)
+		वापस 0;
 
-	return parse_and_apply(client, (uint8_t *)(record + 1), record->size);
-}
+	वापस parse_and_apply(client, (uपूर्णांक8_t *)(record + 1), record->size);
+पूर्ण
 EXPORT_SYMBOL_GPL(apply_msr_data);
 
-int load_msr_list(struct i2c_client *client, char *name,
-		  const struct firmware **fw)
-{
-	int ret = request_firmware(fw, name, &client->dev);
+पूर्णांक load_msr_list(काष्ठा i2c_client *client, अक्षर *name,
+		  स्थिर काष्ठा firmware **fw)
+अणु
+	पूर्णांक ret = request_firmware(fw, name, &client->dev);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev,
 			"Error %d while requesting firmware %s\n",
 			ret, name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_info(&client->dev, "Received %lu bytes drv data\n",
-		 (unsigned long)(*fw)->size);
+		 (अचिन्हित दीर्घ)(*fw)->size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(load_msr_list);
 
-void release_msr_list(struct i2c_client *client, const struct firmware *fw)
-{
+व्योम release_msr_list(काष्ठा i2c_client *client, स्थिर काष्ठा firmware *fw)
+अणु
 	release_firmware(fw);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(release_msr_list);
 
-static int init_msrlisthelper(void)
-{
-	return 0;
-}
+अटल पूर्णांक init_msrlisthelper(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void exit_msrlisthelper(void)
-{
-}
+अटल व्योम निकास_msrlisthelper(व्योम)
+अणु
+पूर्ण
 
 module_init(init_msrlisthelper);
-module_exit(exit_msrlisthelper);
+module_निकास(निकास_msrlisthelper);
 
 MODULE_AUTHOR("Jukka Kaartinen <jukka.o.kaartinen@intel.com>");
 MODULE_LICENSE("GPL");

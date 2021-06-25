@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Disassemble s390 instructions.
+ * Disassemble s390 inकाष्ठाions.
  *
  * Copyright IBM Corp. 2007
  * Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com),
  */
 
-#ifndef __ASM_S390_DIS_H__
-#define __ASM_S390_DIS_H__
+#अगर_अघोषित __ASM_S390_DIS_H__
+#घोषणा __ASM_S390_DIS_H__
 
-#include <asm/dis-defs.h>
+#समावेश <यंत्र/dis-defs.h>
 
-static inline int insn_length(unsigned char code)
-{
-	return ((((int) code + 64) >> 7) + 1) << 1;
-}
+अटल अंतरभूत पूर्णांक insn_length(अचिन्हित अक्षर code)
+अणु
+	वापस ((((पूर्णांक) code + 64) >> 7) + 1) << 1;
+पूर्ण
 
-struct pt_regs;
+काष्ठा pt_regs;
 
-void show_code(struct pt_regs *regs);
-void print_fn_code(unsigned char *code, unsigned long len);
-struct s390_insn *find_insn(unsigned char *code);
+व्योम show_code(काष्ठा pt_regs *regs);
+व्योम prपूर्णांक_fn_code(अचिन्हित अक्षर *code, अचिन्हित दीर्घ len);
+काष्ठा s390_insn *find_insn(अचिन्हित अक्षर *code);
 
-static inline int is_known_insn(unsigned char *code)
-{
-	return !!find_insn(code);
-}
+अटल अंतरभूत पूर्णांक is_known_insn(अचिन्हित अक्षर *code)
+अणु
+	वापस !!find_insn(code);
+पूर्ण
 
-#endif /* __ASM_S390_DIS_H__ */
+#पूर्ण_अगर /* __ASM_S390_DIS_H__ */

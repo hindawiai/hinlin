@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2009-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /*
- * Module for common driver code between ath9k and ath9k_htc
+ * Module क्रम common driver code between ath9k and ath9k_htc
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 MODULE_AUTHOR("Atheros Communications");
 MODULE_DESCRIPTION("Shared library for Atheros wireless 802.11n LAN cards.");
 MODULE_LICENSE("Dual BSD/GPL");
 
-/* Assumes you've already done the endian to CPU conversion */
-bool ath9k_cmn_rx_accept(struct ath_common *common,
-			 struct ieee80211_hdr *hdr,
-			 struct ieee80211_rx_status *rxs,
-			 struct ath_rx_status *rx_stats,
+/* Assumes you've alपढ़ोy करोne the endian to CPU conversion */
+bool ath9k_cmn_rx_accept(काष्ठा ath_common *common,
+			 काष्ठा ieee80211_hdr *hdr,
+			 काष्ठा ieee80211_rx_status *rxs,
+			 काष्ठा ath_rx_status *rx_stats,
 			 bool *decrypt_error,
-			 unsigned int rxfilter)
-{
-	struct ath_hw *ah = common->ah;
+			 अचिन्हित पूर्णांक rxfilter)
+अणु
+	काष्ठा ath_hw *ah = common->ah;
 	bool is_mc, is_valid_tkip, strip_mic, mic_error;
 	__le16 fc;
 
@@ -45,17 +46,17 @@ bool ath9k_cmn_rx_accept(struct ath_common *common,
 	is_valid_tkip = rx_stats->rs_keyix != ATH9K_RXKEYIX_INVALID &&
 		test_bit(rx_stats->rs_keyix, common->tkip_keymap);
 	strip_mic = is_valid_tkip && ieee80211_is_data(fc) &&
-		ieee80211_has_protected(fc) &&
+		ieee80211_has_रक्षित(fc) &&
 		!(rx_stats->rs_status &
 		(ATH9K_RXERR_DECRYPT | ATH9K_RXERR_CRC | ATH9K_RXERR_MIC |
 		 ATH9K_RXERR_KEYMISS));
 
 	/*
-	 * Key miss events are only relevant for pairwise keys where the
-	 * descriptor does contain a valid key index. This has been observed
+	 * Key miss events are only relevant क्रम pairwise keys where the
+	 * descriptor करोes contain a valid key index. This has been observed
 	 * mostly with CCMP encryption.
 	 */
-	if (rx_stats->rs_keyix == ATH9K_RXKEYIX_INVALID ||
+	अगर (rx_stats->rs_keyix == ATH9K_RXKEYIX_INVALID ||
 	    !test_bit(rx_stats->rs_keyix, common->ccmp_keymap))
 		rx_stats->rs_status &= ~ATH9K_RXERR_KEYMISS;
 
@@ -66,23 +67,23 @@ bool ath9k_cmn_rx_accept(struct ath_common *common,
 
 	/*
 	 * The rx_stats->rs_status will not be set until the end of the
-	 * chained descriptors so it can be ignored if rs_more is set. The
+	 * chained descriptors so it can be ignored अगर rs_more is set. The
 	 * rs_more will be false at the last element of the chained
 	 * descriptors.
 	 */
-	if (rx_stats->rs_status != 0) {
+	अगर (rx_stats->rs_status != 0) अणु
 		u8 status_mask;
 
-		if (rx_stats->rs_status & ATH9K_RXERR_CRC) {
+		अगर (rx_stats->rs_status & ATH9K_RXERR_CRC) अणु
 			rxs->flag |= RX_FLAG_FAILED_FCS_CRC;
 			mic_error = false;
-		}
+		पूर्ण
 
-		if ((rx_stats->rs_status & ATH9K_RXERR_DECRYPT) ||
-		    (!is_mc && (rx_stats->rs_status & ATH9K_RXERR_KEYMISS))) {
+		अगर ((rx_stats->rs_status & ATH9K_RXERR_DECRYPT) ||
+		    (!is_mc && (rx_stats->rs_status & ATH9K_RXERR_KEYMISS))) अणु
 			*decrypt_error = true;
 			mic_error = false;
-		}
+		पूर्ण
 
 
 		/*
@@ -93,294 +94,294 @@ bool ath9k_cmn_rx_accept(struct ath_common *common,
 		status_mask = ATH9K_RXERR_DECRYPT | ATH9K_RXERR_MIC |
 			      ATH9K_RXERR_KEYMISS;
 
-		if (ah->is_monitoring && (rxfilter & FIF_FCSFAIL))
+		अगर (ah->is_monitoring && (rxfilter & FIF_FCSFAIL))
 			status_mask |= ATH9K_RXERR_CRC;
 
-		if (rx_stats->rs_status & ~status_mask)
-			return false;
-	}
+		अगर (rx_stats->rs_status & ~status_mask)
+			वापस false;
+	पूर्ण
 
 	/*
 	 * For unicast frames the MIC error bit can have false positives,
 	 * so all MIC error reports need to be validated in software.
-	 * False negatives are not common, so skip software verification
-	 * if the hardware considers the MIC valid.
+	 * False negatives are not common, so skip software verअगरication
+	 * अगर the hardware considers the MIC valid.
 	 */
-	if (strip_mic)
+	अगर (strip_mic)
 		rxs->flag |= RX_FLAG_MMIC_STRIPPED;
-	else if (is_mc && mic_error)
+	अन्यथा अगर (is_mc && mic_error)
 		rxs->flag |= RX_FLAG_MMIC_ERROR;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_rx_accept);
 
-void ath9k_cmn_rx_skb_postprocess(struct ath_common *common,
-				  struct sk_buff *skb,
-				  struct ath_rx_status *rx_stats,
-				  struct ieee80211_rx_status *rxs,
+व्योम ath9k_cmn_rx_skb_postprocess(काष्ठा ath_common *common,
+				  काष्ठा sk_buff *skb,
+				  काष्ठा ath_rx_status *rx_stats,
+				  काष्ठा ieee80211_rx_status *rxs,
 				  bool decrypt_error)
-{
-	struct ath_hw *ah = common->ah;
-	struct ieee80211_hdr *hdr;
-	int hdrlen, padpos, padsize;
+अणु
+	काष्ठा ath_hw *ah = common->ah;
+	काष्ठा ieee80211_hdr *hdr;
+	पूर्णांक hdrlen, padpos, padsize;
 	u8 keyix;
 	__le16 fc;
 
-	/* see if any padding is done by the hw and remove it */
-	hdr = (struct ieee80211_hdr *) skb->data;
+	/* see अगर any padding is करोne by the hw and हटाओ it */
+	hdr = (काष्ठा ieee80211_hdr *) skb->data;
 	hdrlen = ieee80211_get_hdrlen_from_skb(skb);
 	fc = hdr->frame_control;
 	padpos = ieee80211_hdrlen(fc);
 
-	/* The MAC header is padded to have 32-bit boundary if the
-	 * packet payload is non-zero. The general calculation for
-	 * padsize would take into account odd header lengths:
+	/* The MAC header is padded to have 32-bit boundary अगर the
+	 * packet payload is non-zero. The general calculation क्रम
+	 * padsize would take पूर्णांकo account odd header lengths:
 	 * padsize = (4 - padpos % 4) % 4; However, since only
 	 * even-length headers are used, padding can only be 0 or 2
 	 * bytes and we can optimize this a bit. In addition, we must
-	 * not try to remove padding from short control frames that do
+	 * not try to हटाओ padding from लघु control frames that करो
 	 * not have payload. */
 	padsize = padpos & 3;
-	if (padsize && skb->len>=padpos+padsize+FCS_LEN) {
-		memmove(skb->data + padsize, skb->data, padpos);
+	अगर (padsize && skb->len>=padpos+padsize+FCS_LEN) अणु
+		स_हटाओ(skb->data + padsize, skb->data, padpos);
 		skb_pull(skb, padsize);
-	}
+	पूर्ण
 
 	keyix = rx_stats->rs_keyix;
 
-	if (!(keyix == ATH9K_RXKEYIX_INVALID) && !decrypt_error &&
-	    ieee80211_has_protected(fc)) {
+	अगर (!(keyix == ATH9K_RXKEYIX_INVALID) && !decrypt_error &&
+	    ieee80211_has_रक्षित(fc)) अणु
 		rxs->flag |= RX_FLAG_DECRYPTED;
-	} else if (ieee80211_has_protected(fc)
-		   && !decrypt_error && skb->len >= hdrlen + 4) {
+	पूर्ण अन्यथा अगर (ieee80211_has_रक्षित(fc)
+		   && !decrypt_error && skb->len >= hdrlen + 4) अणु
 		keyix = skb->data[hdrlen + 3] >> 6;
 
-		if (test_bit(keyix, common->keymap))
+		अगर (test_bit(keyix, common->keymap))
 			rxs->flag |= RX_FLAG_DECRYPTED;
-	}
-	if (ah->sw_mgmt_crypto_rx &&
+	पूर्ण
+	अगर (ah->sw_mgmt_crypto_rx &&
 	    (rxs->flag & RX_FLAG_DECRYPTED) &&
 	    ieee80211_is_mgmt(fc))
-		/* Use software decrypt for management frames. */
+		/* Use software decrypt क्रम management frames. */
 		rxs->flag &= ~RX_FLAG_DECRYPTED;
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_rx_skb_postprocess);
 
-int ath9k_cmn_process_rate(struct ath_common *common,
-			   struct ieee80211_hw *hw,
-			   struct ath_rx_status *rx_stats,
-			   struct ieee80211_rx_status *rxs)
-{
-	struct ieee80211_supported_band *sband;
-	enum nl80211_band band;
-	unsigned int i = 0;
-	struct ath_hw *ah = common->ah;
+पूर्णांक ath9k_cmn_process_rate(काष्ठा ath_common *common,
+			   काष्ठा ieee80211_hw *hw,
+			   काष्ठा ath_rx_status *rx_stats,
+			   काष्ठा ieee80211_rx_status *rxs)
+अणु
+	काष्ठा ieee80211_supported_band *sband;
+	क्रमागत nl80211_band band;
+	अचिन्हित पूर्णांक i = 0;
+	काष्ठा ath_hw *ah = common->ah;
 
 	band = ah->curchan->chan->band;
 	sband = hw->wiphy->bands[band];
 
-	if (IS_CHAN_QUARTER_RATE(ah->curchan))
+	अगर (IS_CHAN_QUARTER_RATE(ah->curchan))
 		rxs->bw = RATE_INFO_BW_5;
-	else if (IS_CHAN_HALF_RATE(ah->curchan))
+	अन्यथा अगर (IS_CHAN_HALF_RATE(ah->curchan))
 		rxs->bw = RATE_INFO_BW_10;
 
-	if (rx_stats->rs_rate & 0x80) {
+	अगर (rx_stats->rs_rate & 0x80) अणु
 		/* HT rate */
 		rxs->encoding = RX_ENC_HT;
 		rxs->enc_flags |= rx_stats->enc_flags;
 		rxs->bw = rx_stats->bw;
 		rxs->rate_idx = rx_stats->rs_rate & 0x7f;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if (sband->bitrates[i].hw_value == rx_stats->rs_rate) {
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर (sband->bitrates[i].hw_value == rx_stats->rs_rate) अणु
 			rxs->rate_idx = i;
-			return 0;
-		}
-		if (sband->bitrates[i].hw_value_short == rx_stats->rs_rate) {
+			वापस 0;
+		पूर्ण
+		अगर (sband->bitrates[i].hw_value_लघु == rx_stats->rs_rate) अणु
 			rxs->enc_flags |= RX_ENC_FLAG_SHORTPRE;
 			rxs->rate_idx = i;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_process_rate);
 
-void ath9k_cmn_process_rssi(struct ath_common *common,
-			    struct ieee80211_hw *hw,
-			    struct ath_rx_status *rx_stats,
-			    struct ieee80211_rx_status *rxs)
-{
-	struct ath_hw *ah = common->ah;
-	int last_rssi;
-	int rssi = rx_stats->rs_rssi;
-	int i, j;
+व्योम ath9k_cmn_process_rssi(काष्ठा ath_common *common,
+			    काष्ठा ieee80211_hw *hw,
+			    काष्ठा ath_rx_status *rx_stats,
+			    काष्ठा ieee80211_rx_status *rxs)
+अणु
+	काष्ठा ath_hw *ah = common->ah;
+	पूर्णांक last_rssi;
+	पूर्णांक rssi = rx_stats->rs_rssi;
+	पूर्णांक i, j;
 
 	/*
-	 * RSSI is not available for subframes in an A-MPDU.
+	 * RSSI is not available क्रम subframes in an A-MPDU.
 	 */
-	if (rx_stats->rs_moreaggr) {
+	अगर (rx_stats->rs_moreaggr) अणु
 		rxs->flag |= RX_FLAG_NO_SIGNAL_VAL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Check if the RSSI for the last subframe in an A-MPDU
+	 * Check अगर the RSSI क्रम the last subframe in an A-MPDU
 	 * or an unaggregated frame is valid.
 	 */
-	if (rx_stats->rs_rssi == ATH9K_RSSI_BAD) {
+	अगर (rx_stats->rs_rssi == ATH9K_RSSI_BAD) अणु
 		rxs->flag |= RX_FLAG_NO_SIGNAL_VAL;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0, j = 0; i < ARRAY_SIZE(rx_stats->rs_rssi_ctl); i++) {
+	क्रम (i = 0, j = 0; i < ARRAY_SIZE(rx_stats->rs_rssi_ctl); i++) अणु
 		s8 rssi;
 
-		if (!(ah->rxchainmask & BIT(i)))
-			continue;
+		अगर (!(ah->rxchainmask & BIT(i)))
+			जारी;
 
 		rssi = rx_stats->rs_rssi_ctl[i];
-		if (rssi != ATH9K_RSSI_BAD) {
+		अगर (rssi != ATH9K_RSSI_BAD) अणु
 		    rxs->chains |= BIT(j);
-		    rxs->chain_signal[j] = ah->noise + rssi;
-		}
+		    rxs->chain_संकेत[j] = ah->noise + rssi;
+		पूर्ण
 		j++;
-	}
+	पूर्ण
 
 	/*
 	 * Update Beacon RSSI, this is used by ANI.
 	 */
-	if (rx_stats->is_mybeacon &&
+	अगर (rx_stats->is_mybeacon &&
 	    ((ah->opmode == NL80211_IFTYPE_STATION) ||
-	     (ah->opmode == NL80211_IFTYPE_ADHOC))) {
+	     (ah->opmode == NL80211_IFTYPE_ADHOC))) अणु
 		ATH_RSSI_LPF(common->last_rssi, rx_stats->rs_rssi);
 		last_rssi = common->last_rssi;
 
-		if (likely(last_rssi != ATH_RSSI_DUMMY_MARKER))
+		अगर (likely(last_rssi != ATH_RSSI_DUMMY_MARKER))
 			rssi = ATH_EP_RND(last_rssi, ATH_RSSI_EP_MULTIPLIER);
-		if (rssi < 0)
+		अगर (rssi < 0)
 			rssi = 0;
 
 		ah->stats.avgbrssi = rssi;
-	}
+	पूर्ण
 
-	rxs->signal = ah->noise + rx_stats->rs_rssi;
-}
+	rxs->संकेत = ah->noise + rx_stats->rs_rssi;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_process_rssi);
 
-int ath9k_cmn_get_hw_crypto_keytype(struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+पूर्णांक ath9k_cmn_get_hw_crypto_keytype(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 
-	if (tx_info->control.hw_key) {
-		switch (tx_info->control.hw_key->cipher) {
-		case WLAN_CIPHER_SUITE_WEP40:
-		case WLAN_CIPHER_SUITE_WEP104:
-			return ATH9K_KEY_TYPE_WEP;
-		case WLAN_CIPHER_SUITE_TKIP:
-			return ATH9K_KEY_TYPE_TKIP;
-		case WLAN_CIPHER_SUITE_CCMP:
-			return ATH9K_KEY_TYPE_AES;
-		default:
-			break;
-		}
-	}
+	अगर (tx_info->control.hw_key) अणु
+		चयन (tx_info->control.hw_key->cipher) अणु
+		हाल WLAN_CIPHER_SUITE_WEP40:
+		हाल WLAN_CIPHER_SUITE_WEP104:
+			वापस ATH9K_KEY_TYPE_WEP;
+		हाल WLAN_CIPHER_SUITE_TKIP:
+			वापस ATH9K_KEY_TYPE_TKIP;
+		हाल WLAN_CIPHER_SUITE_CCMP:
+			वापस ATH9K_KEY_TYPE_AES;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ATH9K_KEY_TYPE_CLEAR;
-}
+	वापस ATH9K_KEY_TYPE_CLEAR;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_get_hw_crypto_keytype);
 
 /*
- * Update internal channel flags.
+ * Update पूर्णांकernal channel flags.
  */
-static void ath9k_cmn_update_ichannel(struct ath9k_channel *ichan,
-				      struct cfg80211_chan_def *chandef)
-{
-	struct ieee80211_channel *chan = chandef->chan;
+अटल व्योम ath9k_cmn_update_ichannel(काष्ठा ath9k_channel *ichan,
+				      काष्ठा cfg80211_chan_def *chandef)
+अणु
+	काष्ठा ieee80211_channel *chan = chandef->chan;
 	u16 flags = 0;
 
 	ichan->channel = chan->center_freq;
 	ichan->chan = chan;
 
-	if (chan->band == NL80211_BAND_5GHZ)
+	अगर (chan->band == NL80211_BAND_5GHZ)
 		flags |= CHANNEL_5GHZ;
 
-	switch (chandef->width) {
-	case NL80211_CHAN_WIDTH_5:
+	चयन (chandef->width) अणु
+	हाल NL80211_CHAN_WIDTH_5:
 		flags |= CHANNEL_QUARTER;
-		break;
-	case NL80211_CHAN_WIDTH_10:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_10:
 		flags |= CHANNEL_HALF;
-		break;
-	case NL80211_CHAN_WIDTH_20_NOHT:
-		break;
-	case NL80211_CHAN_WIDTH_20:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_20_NOHT:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_20:
 		flags |= CHANNEL_HT;
-		break;
-	case NL80211_CHAN_WIDTH_40:
-		if (chandef->center_freq1 > chandef->chan->center_freq)
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_40:
+		अगर (chandef->center_freq1 > chandef->chan->center_freq)
 			flags |= CHANNEL_HT40PLUS | CHANNEL_HT;
-		else
+		अन्यथा
 			flags |= CHANNEL_HT40MINUS | CHANNEL_HT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
 	ichan->channelFlags = flags;
-}
+पूर्ण
 
 /*
- * Get the internal channel reference.
+ * Get the पूर्णांकernal channel reference.
  */
-struct ath9k_channel *ath9k_cmn_get_channel(struct ieee80211_hw *hw,
-					    struct ath_hw *ah,
-					    struct cfg80211_chan_def *chandef)
-{
-	struct ieee80211_channel *curchan = chandef->chan;
-	struct ath9k_channel *channel;
+काष्ठा ath9k_channel *ath9k_cmn_get_channel(काष्ठा ieee80211_hw *hw,
+					    काष्ठा ath_hw *ah,
+					    काष्ठा cfg80211_chan_def *chandef)
+अणु
+	काष्ठा ieee80211_channel *curchan = chandef->chan;
+	काष्ठा ath9k_channel *channel;
 
 	channel = &ah->channels[curchan->hw_value];
 	ath9k_cmn_update_ichannel(channel, chandef);
 
-	return channel;
-}
+	वापस channel;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_get_channel);
 
-int ath9k_cmn_count_streams(unsigned int chainmask, int max)
-{
-	int streams = 0;
+पूर्णांक ath9k_cmn_count_streams(अचिन्हित पूर्णांक chainmask, पूर्णांक max)
+अणु
+	पूर्णांक streams = 0;
 
-	do {
-		if (++streams == max)
-			break;
-	} while ((chainmask = chainmask & (chainmask - 1)));
+	करो अणु
+		अगर (++streams == max)
+			अवरोध;
+	पूर्ण जबतक ((chainmask = chainmask & (chainmask - 1)));
 
-	return streams;
-}
+	वापस streams;
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_count_streams);
 
-void ath9k_cmn_update_txpow(struct ath_hw *ah, u16 cur_txpow,
-			    u16 new_txpow, u16 *txpower)
-{
-	struct ath_regulatory *reg = ath9k_hw_regulatory(ah);
+व्योम ath9k_cmn_update_txघात(काष्ठा ath_hw *ah, u16 cur_txघात,
+			    u16 new_txघात, u16 *txघातer)
+अणु
+	काष्ठा ath_regulatory *reg = ath9k_hw_regulatory(ah);
 
-	if (ah->curchan && reg->power_limit != new_txpow)
-		ath9k_hw_set_txpowerlimit(ah, new_txpow, false);
+	अगर (ah->curchan && reg->घातer_limit != new_txघात)
+		ath9k_hw_set_txघातerlimit(ah, new_txघात, false);
 
-	/* read back in case value is clamped */
-	*txpower = reg->max_power_level;
-}
-EXPORT_SYMBOL(ath9k_cmn_update_txpow);
+	/* पढ़ो back in हाल value is clamped */
+	*txघातer = reg->max_घातer_level;
+पूर्ण
+EXPORT_SYMBOL(ath9k_cmn_update_txघात);
 
-void ath9k_cmn_init_crypto(struct ath_hw *ah)
-{
-	struct ath_common *common = ath9k_hw_common(ah);
-	int i = 0;
+व्योम ath9k_cmn_init_crypto(काष्ठा ath_hw *ah)
+अणु
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	पूर्णांक i = 0;
 
 	/* Get the hardware key cache size. */
 	common->keymax = AR_KEYTABLE_SIZE;
@@ -391,26 +392,26 @@ void ath9k_cmn_init_crypto(struct ath_hw *ah)
 	 * With split mic keys the number of stations is limited
 	 * to 27 otherwise 59.
 	 */
-	if (ah->misc_mode & AR_PCU_MIC_NEW_LOC_ENA)
+	अगर (ah->misc_mode & AR_PCU_MIC_NEW_LOC_ENA)
 		common->crypt_caps |= ATH_CRYPT_CAP_MIC_COMBINED;
 
 	/*
-	 * Reset the key cache since some parts do not
-	 * reset the contents on initial power up.
+	 * Reset the key cache since some parts करो not
+	 * reset the contents on initial घातer up.
 	 */
-	for (i = 0; i < common->keymax; i++)
+	क्रम (i = 0; i < common->keymax; i++)
 		ath_hw_keyreset(common, (u16) i);
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_init_crypto);
 
-static int __init ath9k_cmn_init(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init ath9k_cmn_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 module_init(ath9k_cmn_init);
 
-static void __exit ath9k_cmn_exit(void)
-{
-	return;
-}
-module_exit(ath9k_cmn_exit);
+अटल व्योम __निकास ath9k_cmn_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
+module_निकास(ath9k_cmn_निकास);

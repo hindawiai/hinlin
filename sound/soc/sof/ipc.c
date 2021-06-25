@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 //
 // This file is provided under a dual BSD/GPLv2 license.  When using or
-// redistributing this file, you may do so under either license.
+// redistributing this file, you may करो so under either license.
 //
 // Copyright(c) 2018 Intel Corporation. All rights reserved.
 //
-// Author: Liam Girdwood <liam.r.girdwood@linux.intel.com>
+// Author: Liam Girdwood <liam.r.girdwood@linux.पूर्णांकel.com>
 //
 // Generic IPC layer that can work over MMIO and SPI/I2C. PHY layer provided
-// by platform driver code.
+// by platक्रमm driver code.
 //
 
-#include <linux/mutex.h>
-#include <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
 
-#include "sof-priv.h"
-#include "sof-audio.h"
-#include "ops.h"
+#समावेश "sof-priv.h"
+#समावेश "sof-audio.h"
+#समावेश "ops.h"
 
-static void ipc_trace_message(struct snd_sof_dev *sdev, u32 msg_id);
-static void ipc_stream_message(struct snd_sof_dev *sdev, u32 msg_cmd);
+अटल व्योम ipc_trace_message(काष्ठा snd_sof_dev *sdev, u32 msg_id);
+अटल व्योम ipc_stream_message(काष्ठा snd_sof_dev *sdev, u32 msg_cmd);
 
 /*
  * IPC message Tx/Rx message handling.
  */
 
 /* SOF generic IPC data */
-struct snd_sof_ipc {
-	struct snd_sof_dev *sdev;
+काष्ठा snd_sof_ipc अणु
+	काष्ठा snd_sof_dev *sdev;
 
 	/* protects messages and the disable flag */
-	struct mutex tx_mutex;
+	काष्ठा mutex tx_mutex;
 	/* disables further sending of ipc's */
 	bool disable_ipc_tx;
 
-	struct snd_sof_ipc_msg msg;
-};
+	काष्ठा snd_sof_ipc_msg msg;
+पूर्ण;
 
-struct sof_ipc_ctrl_data_params {
-	size_t msg_bytes;
-	size_t hdr_bytes;
-	size_t pl_size;
-	size_t elems;
+काष्ठा sof_ipc_ctrl_data_params अणु
+	माप_प्रकार msg_bytes;
+	माप_प्रकार hdr_bytes;
+	माप_प्रकार pl_size;
+	माप_प्रकार elems;
 	u32 num_msg;
 	u8 *src;
 	u8 *dst;
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_SND_SOC_SOF_DEBUG_VERBOSE_IPC)
-static void ipc_log_header(struct device *dev, u8 *text, u32 cmd)
-{
+#अगर IS_ENABLED(CONFIG_SND_SOC_SOF_DEBUG_VERBOSE_IPC)
+अटल व्योम ipc_log_header(काष्ठा device *dev, u8 *text, u32 cmd)
+अणु
 	u8 *str;
-	u8 *str2 = NULL;
+	u8 *str2 = शून्य;
 	u32 glb;
 	u32 type;
 	bool vdbg = false;
@@ -59,205 +60,205 @@ static void ipc_log_header(struct device *dev, u8 *text, u32 cmd)
 	glb = cmd & SOF_GLB_TYPE_MASK;
 	type = cmd & SOF_CMD_TYPE_MASK;
 
-	switch (glb) {
-	case SOF_IPC_GLB_REPLY:
-		str = "GLB_REPLY"; break;
-	case SOF_IPC_GLB_COMPOUND:
-		str = "GLB_COMPOUND"; break;
-	case SOF_IPC_GLB_TPLG_MSG:
+	चयन (glb) अणु
+	हाल SOF_IPC_GLB_REPLY:
+		str = "GLB_REPLY"; अवरोध;
+	हाल SOF_IPC_GLB_COMPOUND:
+		str = "GLB_COMPOUND"; अवरोध;
+	हाल SOF_IPC_GLB_TPLG_MSG:
 		str = "GLB_TPLG_MSG";
-		switch (type) {
-		case SOF_IPC_TPLG_COMP_NEW:
-			str2 = "COMP_NEW"; break;
-		case SOF_IPC_TPLG_COMP_FREE:
-			str2 = "COMP_FREE"; break;
-		case SOF_IPC_TPLG_COMP_CONNECT:
-			str2 = "COMP_CONNECT"; break;
-		case SOF_IPC_TPLG_PIPE_NEW:
-			str2 = "PIPE_NEW"; break;
-		case SOF_IPC_TPLG_PIPE_FREE:
-			str2 = "PIPE_FREE"; break;
-		case SOF_IPC_TPLG_PIPE_CONNECT:
-			str2 = "PIPE_CONNECT"; break;
-		case SOF_IPC_TPLG_PIPE_COMPLETE:
-			str2 = "PIPE_COMPLETE"; break;
-		case SOF_IPC_TPLG_BUFFER_NEW:
-			str2 = "BUFFER_NEW"; break;
-		case SOF_IPC_TPLG_BUFFER_FREE:
-			str2 = "BUFFER_FREE"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_GLB_PM_MSG:
+		चयन (type) अणु
+		हाल SOF_IPC_TPLG_COMP_NEW:
+			str2 = "COMP_NEW"; अवरोध;
+		हाल SOF_IPC_TPLG_COMP_FREE:
+			str2 = "COMP_FREE"; अवरोध;
+		हाल SOF_IPC_TPLG_COMP_CONNECT:
+			str2 = "COMP_CONNECT"; अवरोध;
+		हाल SOF_IPC_TPLG_PIPE_NEW:
+			str2 = "PIPE_NEW"; अवरोध;
+		हाल SOF_IPC_TPLG_PIPE_FREE:
+			str2 = "PIPE_FREE"; अवरोध;
+		हाल SOF_IPC_TPLG_PIPE_CONNECT:
+			str2 = "PIPE_CONNECT"; अवरोध;
+		हाल SOF_IPC_TPLG_PIPE_COMPLETE:
+			str2 = "PIPE_COMPLETE"; अवरोध;
+		हाल SOF_IPC_TPLG_BUFFER_NEW:
+			str2 = "BUFFER_NEW"; अवरोध;
+		हाल SOF_IPC_TPLG_BUFFER_FREE:
+			str2 = "BUFFER_FREE"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_PM_MSG:
 		str = "GLB_PM_MSG";
-		switch (type) {
-		case SOF_IPC_PM_CTX_SAVE:
-			str2 = "CTX_SAVE"; break;
-		case SOF_IPC_PM_CTX_RESTORE:
-			str2 = "CTX_RESTORE"; break;
-		case SOF_IPC_PM_CTX_SIZE:
-			str2 = "CTX_SIZE"; break;
-		case SOF_IPC_PM_CLK_SET:
-			str2 = "CLK_SET"; break;
-		case SOF_IPC_PM_CLK_GET:
-			str2 = "CLK_GET"; break;
-		case SOF_IPC_PM_CLK_REQ:
-			str2 = "CLK_REQ"; break;
-		case SOF_IPC_PM_CORE_ENABLE:
-			str2 = "CORE_ENABLE"; break;
-		case SOF_IPC_PM_GATE:
-			str2 = "GATE"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_GLB_COMP_MSG:
+		चयन (type) अणु
+		हाल SOF_IPC_PM_CTX_SAVE:
+			str2 = "CTX_SAVE"; अवरोध;
+		हाल SOF_IPC_PM_CTX_RESTORE:
+			str2 = "CTX_RESTORE"; अवरोध;
+		हाल SOF_IPC_PM_CTX_SIZE:
+			str2 = "CTX_SIZE"; अवरोध;
+		हाल SOF_IPC_PM_CLK_SET:
+			str2 = "CLK_SET"; अवरोध;
+		हाल SOF_IPC_PM_CLK_GET:
+			str2 = "CLK_GET"; अवरोध;
+		हाल SOF_IPC_PM_CLK_REQ:
+			str2 = "CLK_REQ"; अवरोध;
+		हाल SOF_IPC_PM_CORE_ENABLE:
+			str2 = "CORE_ENABLE"; अवरोध;
+		हाल SOF_IPC_PM_GATE:
+			str2 = "GATE"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_COMP_MSG:
 		str = "GLB_COMP_MSG";
-		switch (type) {
-		case SOF_IPC_COMP_SET_VALUE:
-			str2 = "SET_VALUE"; break;
-		case SOF_IPC_COMP_GET_VALUE:
-			str2 = "GET_VALUE"; break;
-		case SOF_IPC_COMP_SET_DATA:
-			str2 = "SET_DATA"; break;
-		case SOF_IPC_COMP_GET_DATA:
-			str2 = "GET_DATA"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_GLB_STREAM_MSG:
+		चयन (type) अणु
+		हाल SOF_IPC_COMP_SET_VALUE:
+			str2 = "SET_VALUE"; अवरोध;
+		हाल SOF_IPC_COMP_GET_VALUE:
+			str2 = "GET_VALUE"; अवरोध;
+		हाल SOF_IPC_COMP_SET_DATA:
+			str2 = "SET_DATA"; अवरोध;
+		हाल SOF_IPC_COMP_GET_DATA:
+			str2 = "GET_DATA"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_STREAM_MSG:
 		str = "GLB_STREAM_MSG";
-		switch (type) {
-		case SOF_IPC_STREAM_PCM_PARAMS:
-			str2 = "PCM_PARAMS"; break;
-		case SOF_IPC_STREAM_PCM_PARAMS_REPLY:
-			str2 = "PCM_REPLY"; break;
-		case SOF_IPC_STREAM_PCM_FREE:
-			str2 = "PCM_FREE"; break;
-		case SOF_IPC_STREAM_TRIG_START:
-			str2 = "TRIG_START"; break;
-		case SOF_IPC_STREAM_TRIG_STOP:
-			str2 = "TRIG_STOP"; break;
-		case SOF_IPC_STREAM_TRIG_PAUSE:
-			str2 = "TRIG_PAUSE"; break;
-		case SOF_IPC_STREAM_TRIG_RELEASE:
-			str2 = "TRIG_RELEASE"; break;
-		case SOF_IPC_STREAM_TRIG_DRAIN:
-			str2 = "TRIG_DRAIN"; break;
-		case SOF_IPC_STREAM_TRIG_XRUN:
-			str2 = "TRIG_XRUN"; break;
-		case SOF_IPC_STREAM_POSITION:
+		चयन (type) अणु
+		हाल SOF_IPC_STREAM_PCM_PARAMS:
+			str2 = "PCM_PARAMS"; अवरोध;
+		हाल SOF_IPC_STREAM_PCM_PARAMS_REPLY:
+			str2 = "PCM_REPLY"; अवरोध;
+		हाल SOF_IPC_STREAM_PCM_FREE:
+			str2 = "PCM_FREE"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_START:
+			str2 = "TRIG_START"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_STOP:
+			str2 = "TRIG_STOP"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_PAUSE:
+			str2 = "TRIG_PAUSE"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_RELEASE:
+			str2 = "TRIG_RELEASE"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_DRAIN:
+			str2 = "TRIG_DRAIN"; अवरोध;
+		हाल SOF_IPC_STREAM_TRIG_XRUN:
+			str2 = "TRIG_XRUN"; अवरोध;
+		हाल SOF_IPC_STREAM_POSITION:
 			vdbg = true;
-			str2 = "POSITION"; break;
-		case SOF_IPC_STREAM_VORBIS_PARAMS:
-			str2 = "VORBIS_PARAMS"; break;
-		case SOF_IPC_STREAM_VORBIS_FREE:
-			str2 = "VORBIS_FREE"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_FW_READY:
-		str = "FW_READY"; break;
-	case SOF_IPC_GLB_DAI_MSG:
+			str2 = "POSITION"; अवरोध;
+		हाल SOF_IPC_STREAM_VORBIS_PARAMS:
+			str2 = "VORBIS_PARAMS"; अवरोध;
+		हाल SOF_IPC_STREAM_VORBIS_FREE:
+			str2 = "VORBIS_FREE"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_FW_READY:
+		str = "FW_READY"; अवरोध;
+	हाल SOF_IPC_GLB_DAI_MSG:
 		str = "GLB_DAI_MSG";
-		switch (type) {
-		case SOF_IPC_DAI_CONFIG:
-			str2 = "CONFIG"; break;
-		case SOF_IPC_DAI_LOOPBACK:
-			str2 = "LOOPBACK"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_GLB_TRACE_MSG:
-		str = "GLB_TRACE_MSG"; break;
-	case SOF_IPC_GLB_TEST_MSG:
+		चयन (type) अणु
+		हाल SOF_IPC_DAI_CONFIG:
+			str2 = "CONFIG"; अवरोध;
+		हाल SOF_IPC_DAI_LOOPBACK:
+			str2 = "LOOPBACK"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_TRACE_MSG:
+		str = "GLB_TRACE_MSG"; अवरोध;
+	हाल SOF_IPC_GLB_TEST_MSG:
 		str = "GLB_TEST_MSG";
-		switch (type) {
-		case SOF_IPC_TEST_IPC_FLOOD:
-			str2 = "IPC_FLOOD"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	case SOF_IPC_GLB_DEBUG:
+		चयन (type) अणु
+		हाल SOF_IPC_TEST_IPC_FLOOD:
+			str2 = "IPC_FLOOD"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_DEBUG:
 		str = "GLB_DEBUG";
-		switch (type) {
-		case SOF_IPC_DEBUG_MEM_USAGE:
-			str2 = "MEM_USAGE"; break;
-		default:
-			str2 = "unknown type"; break;
-		}
-		break;
-	default:
-		str = "unknown GLB command"; break;
-	}
+		चयन (type) अणु
+		हाल SOF_IPC_DEBUG_MEM_USAGE:
+			str2 = "MEM_USAGE"; अवरोध;
+		शेष:
+			str2 = "unknown type"; अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		str = "unknown GLB command"; अवरोध;
+	पूर्ण
 
-	if (str2) {
-		if (vdbg)
+	अगर (str2) अणु
+		अगर (vdbg)
 			dev_vdbg(dev, "%s: 0x%x: %s: %s\n", text, cmd, str, str2);
-		else
+		अन्यथा
 			dev_dbg(dev, "%s: 0x%x: %s: %s\n", text, cmd, str, str2);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "%s: 0x%x: %s\n", text, cmd, str);
-	}
-}
-#else
-static inline void ipc_log_header(struct device *dev, u8 *text, u32 cmd)
-{
-	if ((cmd & SOF_GLB_TYPE_MASK) != SOF_IPC_GLB_TRACE_MSG)
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम ipc_log_header(काष्ठा device *dev, u8 *text, u32 cmd)
+अणु
+	अगर ((cmd & SOF_GLB_TYPE_MASK) != SOF_IPC_GLB_TRACE_MSG)
 		dev_dbg(dev, "%s: 0x%x\n", text, cmd);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-/* wait for IPC message reply */
-static int tx_wait_done(struct snd_sof_ipc *ipc, struct snd_sof_ipc_msg *msg,
-			void *reply_data)
-{
-	struct snd_sof_dev *sdev = ipc->sdev;
-	struct sof_ipc_cmd_hdr *hdr = msg->msg_data;
-	int ret;
+/* रुको क्रम IPC message reply */
+अटल पूर्णांक tx_रुको_करोne(काष्ठा snd_sof_ipc *ipc, काष्ठा snd_sof_ipc_msg *msg,
+			व्योम *reply_data)
+अणु
+	काष्ठा snd_sof_dev *sdev = ipc->sdev;
+	काष्ठा sof_ipc_cmd_hdr *hdr = msg->msg_data;
+	पूर्णांक ret;
 
-	/* wait for DSP IPC completion */
-	ret = wait_event_timeout(msg->waitq, msg->ipc_complete,
-				 msecs_to_jiffies(sdev->ipc_timeout));
+	/* रुको क्रम DSP IPC completion */
+	ret = रुको_event_समयout(msg->रुकोq, msg->ipc_complete,
+				 msecs_to_jअगरfies(sdev->ipc_समयout));
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		dev_err(sdev->dev, "error: ipc timed out for 0x%x size %d\n",
 			hdr->cmd, hdr->size);
 		snd_sof_handle_fw_exception(ipc->sdev);
 		ret = -ETIMEDOUT;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = msg->reply_error;
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(sdev->dev, "error: ipc error for 0x%x size %zu\n",
 				hdr->cmd, msg->reply_size);
-		} else {
+		पूर्ण अन्यथा अणु
 			ipc_log_header(sdev->dev, "ipc tx succeeded", hdr->cmd);
-			if (msg->reply_size)
-				/* copy the data returned from DSP */
-				memcpy(reply_data, msg->reply_data,
+			अगर (msg->reply_size)
+				/* copy the data वापसed from DSP */
+				स_नकल(reply_data, msg->reply_data,
 				       msg->reply_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* send IPC message from host to DSP */
-static int sof_ipc_tx_message_unlocked(struct snd_sof_ipc *ipc, u32 header,
-				       void *msg_data, size_t msg_bytes,
-				       void *reply_data, size_t reply_bytes)
-{
-	struct snd_sof_dev *sdev = ipc->sdev;
-	struct snd_sof_ipc_msg *msg;
-	int ret;
+अटल पूर्णांक sof_ipc_tx_message_unlocked(काष्ठा snd_sof_ipc *ipc, u32 header,
+				       व्योम *msg_data, माप_प्रकार msg_bytes,
+				       व्योम *reply_data, माप_प्रकार reply_bytes)
+अणु
+	काष्ठा snd_sof_dev *sdev = ipc->sdev;
+	काष्ठा snd_sof_ipc_msg *msg;
+	पूर्णांक ret;
 
-	if (ipc->disable_ipc_tx)
-		return -ENODEV;
+	अगर (ipc->disable_ipc_tx)
+		वापस -ENODEV;
 
 	/*
 	 * The spin-lock is also still needed to protect message objects against
@@ -274,70 +275,70 @@ static int sof_ipc_tx_message_unlocked(struct snd_sof_ipc *ipc, u32 header,
 	msg->reply_error = 0;
 
 	/* attach any data */
-	if (msg_bytes)
-		memcpy(msg->msg_data, msg_data, msg_bytes);
+	अगर (msg_bytes)
+		स_नकल(msg->msg_data, msg_data, msg_bytes);
 
 	sdev->msg = msg;
 
 	ret = snd_sof_dsp_send_msg(sdev, msg);
 	/* Next reply that we receive will be related to this message */
-	if (!ret)
+	अगर (!ret)
 		msg->ipc_complete = false;
 
 	spin_unlock_irq(&sdev->ipc_lock);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err_ratelimited(sdev->dev,
 				    "error: ipc tx failed with error %d\n",
 				    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ipc_log_header(sdev->dev, "ipc tx", msg->header);
 
-	/* now wait for completion */
-	if (!ret)
-		ret = tx_wait_done(ipc, msg, reply_data);
+	/* now रुको क्रम completion */
+	अगर (!ret)
+		ret = tx_रुको_करोne(ipc, msg, reply_data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* send IPC message from host to DSP */
-int sof_ipc_tx_message(struct snd_sof_ipc *ipc, u32 header,
-		       void *msg_data, size_t msg_bytes, void *reply_data,
-		       size_t reply_bytes)
-{
-	const struct sof_dsp_power_state target_state = {
+पूर्णांक sof_ipc_tx_message(काष्ठा snd_sof_ipc *ipc, u32 header,
+		       व्योम *msg_data, माप_प्रकार msg_bytes, व्योम *reply_data,
+		       माप_प्रकार reply_bytes)
+अणु
+	स्थिर काष्ठा sof_dsp_घातer_state target_state = अणु
 		.state = SOF_DSP_PM_D0,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	/* ensure the DSP is in D0 before sending a new IPC */
-	ret = snd_sof_dsp_set_power_state(ipc->sdev, &target_state);
-	if (ret < 0) {
+	/* ensure the DSP is in D0 beक्रमe sending a new IPC */
+	ret = snd_sof_dsp_set_घातer_state(ipc->sdev, &target_state);
+	अगर (ret < 0) अणु
 		dev_err(ipc->sdev->dev, "error: resuming DSP %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return sof_ipc_tx_message_no_pm(ipc, header, msg_data, msg_bytes,
+	वापस sof_ipc_tx_message_no_pm(ipc, header, msg_data, msg_bytes,
 					reply_data, reply_bytes);
-}
+पूर्ण
 EXPORT_SYMBOL(sof_ipc_tx_message);
 
 /*
- * send IPC message from host to DSP without modifying the DSP state.
- * This will be used for IPC's that can be handled by the DSP
- * even in a low-power D0 substate.
+ * send IPC message from host to DSP without modअगरying the DSP state.
+ * This will be used क्रम IPC's that can be handled by the DSP
+ * even in a low-घातer D0 substate.
  */
-int sof_ipc_tx_message_no_pm(struct snd_sof_ipc *ipc, u32 header,
-			     void *msg_data, size_t msg_bytes,
-			     void *reply_data, size_t reply_bytes)
-{
-	int ret;
+पूर्णांक sof_ipc_tx_message_no_pm(काष्ठा snd_sof_ipc *ipc, u32 header,
+			     व्योम *msg_data, माप_प्रकार msg_bytes,
+			     व्योम *reply_data, माप_प्रकार reply_bytes)
+अणु
+	पूर्णांक ret;
 
-	if (msg_bytes > SOF_IPC_MSG_MAX_SIZE ||
+	अगर (msg_bytes > SOF_IPC_MSG_MAX_SIZE ||
 	    reply_bytes > SOF_IPC_MSG_MAX_SIZE)
-		return -ENOBUFS;
+		वापस -ENOBUFS;
 
 	/* Serialise IPC TX */
 	mutex_lock(&ipc->tx_mutex);
@@ -347,294 +348,294 @@ int sof_ipc_tx_message_no_pm(struct snd_sof_ipc *ipc, u32 header,
 
 	mutex_unlock(&ipc->tx_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sof_ipc_tx_message_no_pm);
 
 /* handle reply message from DSP */
-void snd_sof_ipc_reply(struct snd_sof_dev *sdev, u32 msg_id)
-{
-	struct snd_sof_ipc_msg *msg = &sdev->ipc->msg;
+व्योम snd_sof_ipc_reply(काष्ठा snd_sof_dev *sdev, u32 msg_id)
+अणु
+	काष्ठा snd_sof_ipc_msg *msg = &sdev->ipc->msg;
 
-	if (msg->ipc_complete) {
+	अगर (msg->ipc_complete) अणु
 		dev_dbg(sdev->dev,
 			"no reply expected, received 0x%x, will be ignored",
 			msg_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* wake up and return the error if we have waiters on this message ? */
+	/* wake up and वापस the error अगर we have रुकोers on this message ? */
 	msg->ipc_complete = true;
-	wake_up(&msg->waitq);
-}
+	wake_up(&msg->रुकोq);
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_reply);
 
 /* DSP firmware has sent host a message  */
-void snd_sof_ipc_msgs_rx(struct snd_sof_dev *sdev)
-{
-	struct sof_ipc_cmd_hdr hdr;
+व्योम snd_sof_ipc_msgs_rx(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा sof_ipc_cmd_hdr hdr;
 	u32 cmd, type;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	/* read back header */
-	snd_sof_ipc_msg_data(sdev, NULL, &hdr, sizeof(hdr));
+	/* पढ़ो back header */
+	snd_sof_ipc_msg_data(sdev, शून्य, &hdr, माप(hdr));
 	ipc_log_header(sdev->dev, "ipc rx", hdr.cmd);
 
 	cmd = hdr.cmd & SOF_GLB_TYPE_MASK;
 	type = hdr.cmd & SOF_CMD_TYPE_MASK;
 
 	/* check message type */
-	switch (cmd) {
-	case SOF_IPC_GLB_REPLY:
+	चयन (cmd) अणु
+	हाल SOF_IPC_GLB_REPLY:
 		dev_err(sdev->dev, "error: ipc reply unknown\n");
-		break;
-	case SOF_IPC_FW_READY:
-		/* check for FW boot completion */
-		if (sdev->fw_state == SOF_FW_BOOT_IN_PROGRESS) {
-			err = sof_ops(sdev)->fw_ready(sdev, cmd);
-			if (err < 0)
+		अवरोध;
+	हाल SOF_IPC_FW_READY:
+		/* check क्रम FW boot completion */
+		अगर (sdev->fw_state == SOF_FW_BOOT_IN_PROGRESS) अणु
+			err = sof_ops(sdev)->fw_पढ़ोy(sdev, cmd);
+			अगर (err < 0)
 				sdev->fw_state = SOF_FW_BOOT_READY_FAILED;
-			else
+			अन्यथा
 				sdev->fw_state = SOF_FW_BOOT_COMPLETE;
 
 			/* wake up firmware loader */
-			wake_up(&sdev->boot_wait);
-		}
-		break;
-	case SOF_IPC_GLB_COMPOUND:
-	case SOF_IPC_GLB_TPLG_MSG:
-	case SOF_IPC_GLB_PM_MSG:
-	case SOF_IPC_GLB_COMP_MSG:
-		break;
-	case SOF_IPC_GLB_STREAM_MSG:
-		/* need to pass msg id into the function */
+			wake_up(&sdev->boot_रुको);
+		पूर्ण
+		अवरोध;
+	हाल SOF_IPC_GLB_COMPOUND:
+	हाल SOF_IPC_GLB_TPLG_MSG:
+	हाल SOF_IPC_GLB_PM_MSG:
+	हाल SOF_IPC_GLB_COMP_MSG:
+		अवरोध;
+	हाल SOF_IPC_GLB_STREAM_MSG:
+		/* need to pass msg id पूर्णांकo the function */
 		ipc_stream_message(sdev, hdr.cmd);
-		break;
-	case SOF_IPC_GLB_TRACE_MSG:
+		अवरोध;
+	हाल SOF_IPC_GLB_TRACE_MSG:
 		ipc_trace_message(sdev, type);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sdev->dev, "error: unknown DSP message 0x%x\n", cmd);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	ipc_log_header(sdev->dev, "ipc rx done", hdr.cmd);
-}
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_msgs_rx);
 
 /*
  * IPC trace mechanism.
  */
 
-static void ipc_trace_message(struct snd_sof_dev *sdev, u32 msg_id)
-{
-	struct sof_ipc_dma_trace_posn posn;
+अटल व्योम ipc_trace_message(काष्ठा snd_sof_dev *sdev, u32 msg_id)
+अणु
+	काष्ठा sof_ipc_dma_trace_posn posn;
 
-	switch (msg_id) {
-	case SOF_IPC_TRACE_DMA_POSITION:
-		/* read back full message */
-		snd_sof_ipc_msg_data(sdev, NULL, &posn, sizeof(posn));
+	चयन (msg_id) अणु
+	हाल SOF_IPC_TRACE_DMA_POSITION:
+		/* पढ़ो back full message */
+		snd_sof_ipc_msg_data(sdev, शून्य, &posn, माप(posn));
 		snd_sof_trace_update_pos(sdev, &posn);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sdev->dev, "error: unhandled trace message %x\n",
 			msg_id);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * IPC stream position.
  */
 
-static void ipc_period_elapsed(struct snd_sof_dev *sdev, u32 msg_id)
-{
-	struct snd_soc_component *scomp = sdev->component;
-	struct snd_sof_pcm_stream *stream;
-	struct sof_ipc_stream_posn posn;
-	struct snd_sof_pcm *spcm;
-	int direction;
+अटल व्योम ipc_period_elapsed(काष्ठा snd_sof_dev *sdev, u32 msg_id)
+अणु
+	काष्ठा snd_soc_component *scomp = sdev->component;
+	काष्ठा snd_sof_pcm_stream *stream;
+	काष्ठा sof_ipc_stream_posn posn;
+	काष्ठा snd_sof_pcm *spcm;
+	पूर्णांक direction;
 
 	spcm = snd_sof_find_spcm_comp(scomp, msg_id, &direction);
-	if (!spcm) {
+	अगर (!spcm) अणु
 		dev_err(sdev->dev,
 			"error: period elapsed for unknown stream, msg_id %d\n",
 			msg_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	stream = &spcm->stream[direction];
-	snd_sof_ipc_msg_data(sdev, stream->substream, &posn, sizeof(posn));
+	snd_sof_ipc_msg_data(sdev, stream->substream, &posn, माप(posn));
 
 	dev_vdbg(sdev->dev, "posn : host 0x%llx dai 0x%llx wall 0x%llx\n",
-		 posn.host_posn, posn.dai_posn, posn.wallclock);
+		 posn.host_posn, posn.dai_posn, posn.wallघड़ी);
 
-	memcpy(&stream->posn, &posn, sizeof(posn));
+	स_नकल(&stream->posn, &posn, माप(posn));
 
-	/* only inform ALSA for period_wakeup mode */
-	if (!stream->substream->runtime->no_period_wakeup)
+	/* only inक्रमm ALSA क्रम period_wakeup mode */
+	अगर (!stream->substream->runसमय->no_period_wakeup)
 		snd_sof_pcm_period_elapsed(stream->substream);
-}
+पूर्ण
 
-/* DSP notifies host of an XRUN within FW */
-static void ipc_xrun(struct snd_sof_dev *sdev, u32 msg_id)
-{
-	struct snd_soc_component *scomp = sdev->component;
-	struct snd_sof_pcm_stream *stream;
-	struct sof_ipc_stream_posn posn;
-	struct snd_sof_pcm *spcm;
-	int direction;
+/* DSP notअगरies host of an XRUN within FW */
+अटल व्योम ipc_xrun(काष्ठा snd_sof_dev *sdev, u32 msg_id)
+अणु
+	काष्ठा snd_soc_component *scomp = sdev->component;
+	काष्ठा snd_sof_pcm_stream *stream;
+	काष्ठा sof_ipc_stream_posn posn;
+	काष्ठा snd_sof_pcm *spcm;
+	पूर्णांक direction;
 
 	spcm = snd_sof_find_spcm_comp(scomp, msg_id, &direction);
-	if (!spcm) {
+	अगर (!spcm) अणु
 		dev_err(sdev->dev, "error: XRUN for unknown stream, msg_id %d\n",
 			msg_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	stream = &spcm->stream[direction];
-	snd_sof_ipc_msg_data(sdev, stream->substream, &posn, sizeof(posn));
+	snd_sof_ipc_msg_data(sdev, stream->substream, &posn, माप(posn));
 
 	dev_dbg(sdev->dev,  "posn XRUN: host %llx comp %d size %d\n",
 		posn.host_posn, posn.xrun_comp_id, posn.xrun_size);
 
-#if defined(CONFIG_SND_SOC_SOF_DEBUG_XRUN_STOP)
-	/* stop PCM on XRUN - used for pipeline debug */
-	memcpy(&stream->posn, &posn, sizeof(posn));
+#अगर defined(CONFIG_SND_SOC_SOF_DEBUG_XRUN_STOP)
+	/* stop PCM on XRUN - used क्रम pipeline debug */
+	स_नकल(&stream->posn, &posn, माप(posn));
 	snd_pcm_stop_xrun(stream->substream);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-/* stream notifications from DSP FW */
-static void ipc_stream_message(struct snd_sof_dev *sdev, u32 msg_cmd)
-{
+/* stream notअगरications from DSP FW */
+अटल व्योम ipc_stream_message(काष्ठा snd_sof_dev *sdev, u32 msg_cmd)
+अणु
 	/* get msg cmd type and msd id */
 	u32 msg_type = msg_cmd & SOF_CMD_TYPE_MASK;
 	u32 msg_id = SOF_IPC_MESSAGE_ID(msg_cmd);
 
-	switch (msg_type) {
-	case SOF_IPC_STREAM_POSITION:
+	चयन (msg_type) अणु
+	हाल SOF_IPC_STREAM_POSITION:
 		ipc_period_elapsed(sdev, msg_id);
-		break;
-	case SOF_IPC_STREAM_TRIG_XRUN:
+		अवरोध;
+	हाल SOF_IPC_STREAM_TRIG_XRUN:
 		ipc_xrun(sdev, msg_id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(sdev->dev, "error: unhandled stream message %x\n",
 			msg_id);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* get stream position IPC - use faster MMIO method if available on platform */
-int snd_sof_ipc_stream_posn(struct snd_soc_component *scomp,
-			    struct snd_sof_pcm *spcm, int direction,
-			    struct sof_ipc_stream_posn *posn)
-{
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_stream stream;
-	int err;
+/* get stream position IPC - use faster MMIO method अगर available on platक्रमm */
+पूर्णांक snd_sof_ipc_stream_posn(काष्ठा snd_soc_component *scomp,
+			    काष्ठा snd_sof_pcm *spcm, पूर्णांक direction,
+			    काष्ठा sof_ipc_stream_posn *posn)
+अणु
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_stream stream;
+	पूर्णांक err;
 
-	/* read position via slower IPC */
-	stream.hdr.size = sizeof(stream);
+	/* पढ़ो position via slower IPC */
+	stream.hdr.size = माप(stream);
 	stream.hdr.cmd = SOF_IPC_GLB_STREAM_MSG | SOF_IPC_STREAM_POSITION;
 	stream.comp_id = spcm->stream[direction].comp_id;
 
 	/* send IPC to the DSP */
 	err = sof_ipc_tx_message(sdev->ipc,
-				 stream.hdr.cmd, &stream, sizeof(stream), posn,
-				 sizeof(*posn));
-	if (err < 0) {
+				 stream.hdr.cmd, &stream, माप(stream), posn,
+				 माप(*posn));
+	अगर (err < 0) अणु
 		dev_err(sdev->dev, "error: failed to get stream %d position\n",
 			stream.comp_id);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_stream_posn);
 
-static int sof_get_ctrl_copy_params(enum sof_ipc_ctrl_type ctrl_type,
-				    struct sof_ipc_ctrl_data *src,
-				    struct sof_ipc_ctrl_data *dst,
-				    struct sof_ipc_ctrl_data_params *sparams)
-{
-	switch (ctrl_type) {
-	case SOF_CTRL_TYPE_VALUE_CHAN_GET:
-	case SOF_CTRL_TYPE_VALUE_CHAN_SET:
+अटल पूर्णांक sof_get_ctrl_copy_params(क्रमागत sof_ipc_ctrl_type ctrl_type,
+				    काष्ठा sof_ipc_ctrl_data *src,
+				    काष्ठा sof_ipc_ctrl_data *dst,
+				    काष्ठा sof_ipc_ctrl_data_params *sparams)
+अणु
+	चयन (ctrl_type) अणु
+	हाल SOF_CTRL_TYPE_VALUE_CHAN_GET:
+	हाल SOF_CTRL_TYPE_VALUE_CHAN_SET:
 		sparams->src = (u8 *)src->chanv;
 		sparams->dst = (u8 *)dst->chanv;
-		break;
-	case SOF_CTRL_TYPE_VALUE_COMP_GET:
-	case SOF_CTRL_TYPE_VALUE_COMP_SET:
+		अवरोध;
+	हाल SOF_CTRL_TYPE_VALUE_COMP_GET:
+	हाल SOF_CTRL_TYPE_VALUE_COMP_SET:
 		sparams->src = (u8 *)src->compv;
 		sparams->dst = (u8 *)dst->compv;
-		break;
-	case SOF_CTRL_TYPE_DATA_GET:
-	case SOF_CTRL_TYPE_DATA_SET:
+		अवरोध;
+	हाल SOF_CTRL_TYPE_DATA_GET:
+	हाल SOF_CTRL_TYPE_DATA_SET:
 		sparams->src = (u8 *)src->data->data;
 		sparams->dst = (u8 *)dst->data->data;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* calculate payload size and number of messages */
 	sparams->pl_size = SOF_IPC_MSG_MAX_SIZE - sparams->hdr_bytes;
 	sparams->num_msg = DIV_ROUND_UP(sparams->msg_bytes, sparams->pl_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sof_set_get_large_ctrl_data(struct snd_sof_dev *sdev,
-				       struct sof_ipc_ctrl_data *cdata,
-				       struct sof_ipc_ctrl_data_params *sparams,
+अटल पूर्णांक sof_set_get_large_ctrl_data(काष्ठा snd_sof_dev *sdev,
+				       काष्ठा sof_ipc_ctrl_data *cdata,
+				       काष्ठा sof_ipc_ctrl_data_params *sparams,
 				       bool send)
-{
-	struct sof_ipc_ctrl_data *partdata;
-	size_t send_bytes;
-	size_t offset = 0;
-	size_t msg_bytes;
-	size_t pl_size;
-	int err;
-	int i;
+अणु
+	काष्ठा sof_ipc_ctrl_data *partdata;
+	माप_प्रकार send_bytes;
+	माप_प्रकार offset = 0;
+	माप_प्रकार msg_bytes;
+	माप_प्रकार pl_size;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	/* allocate max ipc size because we have at least one */
 	partdata = kzalloc(SOF_IPC_MSG_MAX_SIZE, GFP_KERNEL);
-	if (!partdata)
-		return -ENOMEM;
+	अगर (!partdata)
+		वापस -ENOMEM;
 
-	if (send)
+	अगर (send)
 		err = sof_get_ctrl_copy_params(cdata->type, cdata, partdata,
 					       sparams);
-	else
+	अन्यथा
 		err = sof_get_ctrl_copy_params(cdata->type, partdata, cdata,
 					       sparams);
-	if (err < 0) {
-		kfree(partdata);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त(partdata);
+		वापस err;
+	पूर्ण
 
 	msg_bytes = sparams->msg_bytes;
 	pl_size = sparams->pl_size;
 
 	/* copy the header data */
-	memcpy(partdata, cdata, sparams->hdr_bytes);
+	स_नकल(partdata, cdata, sparams->hdr_bytes);
 
 	/* Serialise IPC TX */
 	mutex_lock(&sdev->ipc->tx_mutex);
 
 	/* copy the payload data in a loop */
-	for (i = 0; i < sparams->num_msg; i++) {
+	क्रम (i = 0; i < sparams->num_msg; i++) अणु
 		send_bytes = min(msg_bytes, pl_size);
 		partdata->num_elems = send_bytes;
 		partdata->rhdr.hdr.size = sparams->hdr_bytes + send_bytes;
 		partdata->msg_index = i;
 		msg_bytes -= send_bytes;
-		partdata->elems_remaining = msg_bytes;
+		partdata->elems_reमुख्यing = msg_bytes;
 
-		if (send)
-			memcpy(sparams->dst, sparams->src + offset, send_bytes);
+		अगर (send)
+			स_नकल(sparams->dst, sparams->src + offset, send_bytes);
 
 		err = sof_ipc_tx_message_unlocked(sdev->ipc,
 						  partdata->rhdr.hdr.cmd,
@@ -642,55 +643,55 @@ static int sof_set_get_large_ctrl_data(struct snd_sof_dev *sdev,
 						  partdata->rhdr.hdr.size,
 						  partdata,
 						  partdata->rhdr.hdr.size);
-		if (err < 0)
-			break;
+		अगर (err < 0)
+			अवरोध;
 
-		if (!send)
-			memcpy(sparams->dst + offset, sparams->src, send_bytes);
+		अगर (!send)
+			स_नकल(sparams->dst + offset, sparams->src, send_bytes);
 
 		offset += pl_size;
-	}
+	पूर्ण
 
 	mutex_unlock(&sdev->ipc->tx_mutex);
 
-	kfree(partdata);
-	return err;
-}
+	kमुक्त(partdata);
+	वापस err;
+पूर्ण
 
 /*
- * IPC get()/set() for kcontrols.
+ * IPC get()/set() क्रम kcontrols.
  */
-int snd_sof_ipc_set_get_comp_data(struct snd_sof_control *scontrol,
+पूर्णांक snd_sof_ipc_set_get_comp_data(काष्ठा snd_sof_control *scontrol,
 				  u32 ipc_cmd,
-				  enum sof_ipc_ctrl_type ctrl_type,
-				  enum sof_ipc_ctrl_cmd ctrl_cmd,
+				  क्रमागत sof_ipc_ctrl_type ctrl_type,
+				  क्रमागत sof_ipc_ctrl_cmd ctrl_cmd,
 				  bool send)
-{
-	struct snd_soc_component *scomp = scontrol->scomp;
-	struct sof_ipc_ctrl_data *cdata = scontrol->control_data;
-	struct snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
-	struct sof_ipc_fw_ready *ready = &sdev->fw_ready;
-	struct sof_ipc_fw_version *v = &ready->version;
-	struct sof_ipc_ctrl_data_params sparams;
-	size_t send_bytes;
-	int err;
+अणु
+	काष्ठा snd_soc_component *scomp = scontrol->scomp;
+	काष्ठा sof_ipc_ctrl_data *cdata = scontrol->control_data;
+	काष्ठा snd_sof_dev *sdev = snd_soc_component_get_drvdata(scomp);
+	काष्ठा sof_ipc_fw_पढ़ोy *पढ़ोy = &sdev->fw_पढ़ोy;
+	काष्ठा sof_ipc_fw_version *v = &पढ़ोy->version;
+	काष्ठा sof_ipc_ctrl_data_params sparams;
+	माप_प्रकार send_bytes;
+	पूर्णांक err;
 
-	/* read or write firmware volume */
-	if (scontrol->readback_offset != 0) {
-		/* write/read value header via mmaped region */
-		send_bytes = sizeof(struct sof_ipc_ctrl_value_chan) *
+	/* पढ़ो or ग_लिखो firmware volume */
+	अगर (scontrol->पढ़ोback_offset != 0) अणु
+		/* ग_लिखो/पढ़ो value header via mmaped region */
+		send_bytes = माप(काष्ठा sof_ipc_ctrl_value_chan) *
 		cdata->num_elems;
-		if (send)
-			snd_sof_dsp_block_write(sdev, sdev->mmio_bar,
-						scontrol->readback_offset,
+		अगर (send)
+			snd_sof_dsp_block_ग_लिखो(sdev, sdev->mmio_bar,
+						scontrol->पढ़ोback_offset,
 						cdata->chanv, send_bytes);
 
-		else
-			snd_sof_dsp_block_read(sdev, sdev->mmio_bar,
-					       scontrol->readback_offset,
+		अन्यथा
+			snd_sof_dsp_block_पढ़ो(sdev, sdev->mmio_bar,
+					       scontrol->पढ़ोback_offset,
 					       cdata->chanv, send_bytes);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cdata->rhdr.hdr.cmd = SOF_IPC_GLB_COMP_MSG | ipc_cmd;
 	cdata->cmd = ctrl_cmd;
@@ -699,89 +700,89 @@ int snd_sof_ipc_set_get_comp_data(struct snd_sof_control *scontrol,
 	cdata->msg_index = 0;
 
 	/* calculate header and data size */
-	switch (cdata->type) {
-	case SOF_CTRL_TYPE_VALUE_CHAN_GET:
-	case SOF_CTRL_TYPE_VALUE_CHAN_SET:
+	चयन (cdata->type) अणु
+	हाल SOF_CTRL_TYPE_VALUE_CHAN_GET:
+	हाल SOF_CTRL_TYPE_VALUE_CHAN_SET:
 		sparams.msg_bytes = scontrol->num_channels *
-			sizeof(struct sof_ipc_ctrl_value_chan);
-		sparams.hdr_bytes = sizeof(struct sof_ipc_ctrl_data);
+			माप(काष्ठा sof_ipc_ctrl_value_chan);
+		sparams.hdr_bytes = माप(काष्ठा sof_ipc_ctrl_data);
 		sparams.elems = scontrol->num_channels;
-		break;
-	case SOF_CTRL_TYPE_VALUE_COMP_GET:
-	case SOF_CTRL_TYPE_VALUE_COMP_SET:
+		अवरोध;
+	हाल SOF_CTRL_TYPE_VALUE_COMP_GET:
+	हाल SOF_CTRL_TYPE_VALUE_COMP_SET:
 		sparams.msg_bytes = scontrol->num_channels *
-			sizeof(struct sof_ipc_ctrl_value_comp);
-		sparams.hdr_bytes = sizeof(struct sof_ipc_ctrl_data);
+			माप(काष्ठा sof_ipc_ctrl_value_comp);
+		sparams.hdr_bytes = माप(काष्ठा sof_ipc_ctrl_data);
 		sparams.elems = scontrol->num_channels;
-		break;
-	case SOF_CTRL_TYPE_DATA_GET:
-	case SOF_CTRL_TYPE_DATA_SET:
+		अवरोध;
+	हाल SOF_CTRL_TYPE_DATA_GET:
+	हाल SOF_CTRL_TYPE_DATA_SET:
 		sparams.msg_bytes = cdata->data->size;
-		sparams.hdr_bytes = sizeof(struct sof_ipc_ctrl_data) +
-			sizeof(struct sof_abi_hdr);
+		sparams.hdr_bytes = माप(काष्ठा sof_ipc_ctrl_data) +
+			माप(काष्ठा sof_abi_hdr);
 		sparams.elems = cdata->data->size;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	cdata->rhdr.hdr.size = sparams.msg_bytes + sparams.hdr_bytes;
 	cdata->num_elems = sparams.elems;
-	cdata->elems_remaining = 0;
+	cdata->elems_reमुख्यing = 0;
 
 	/* send normal size ipc in one part */
-	if (cdata->rhdr.hdr.size <= SOF_IPC_MSG_MAX_SIZE) {
+	अगर (cdata->rhdr.hdr.size <= SOF_IPC_MSG_MAX_SIZE) अणु
 		err = sof_ipc_tx_message(sdev->ipc, cdata->rhdr.hdr.cmd, cdata,
 					 cdata->rhdr.hdr.size, cdata,
 					 cdata->rhdr.hdr.size);
 
-		if (err < 0)
+		अगर (err < 0)
 			dev_err(sdev->dev, "error: set/get ctrl ipc comp %d\n",
 				cdata->comp_id);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* data is bigger than max ipc size, chop into smaller pieces */
+	/* data is bigger than max ipc size, chop पूर्णांकo smaller pieces */
 	dev_dbg(sdev->dev, "large ipc size %u, control size %u\n",
 		cdata->rhdr.hdr.size, scontrol->size);
 
 	/* large messages is only supported from ABI 3.3.0 onwards */
-	if (v->abi_version < SOF_ABI_VER(3, 3, 0)) {
+	अगर (v->abi_version < SOF_ABI_VER(3, 3, 0)) अणु
 		dev_err(sdev->dev, "error: incompatible FW ABI version\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = sof_set_get_large_ctrl_data(sdev, cdata, &sparams, send);
 
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(sdev->dev, "error: set/get large ctrl ipc comp %d\n",
 			cdata->comp_id);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_set_get_comp_data);
 
 /*
- * IPC layer enumeration.
+ * IPC layer क्रमागतeration.
  */
 
-int snd_sof_dsp_mailbox_init(struct snd_sof_dev *sdev, u32 dspbox,
-			     size_t dspbox_size, u32 hostbox,
-			     size_t hostbox_size)
-{
+पूर्णांक snd_sof_dsp_mailbox_init(काष्ठा snd_sof_dev *sdev, u32 dspbox,
+			     माप_प्रकार dspbox_size, u32 hostbox,
+			     माप_प्रकार hostbox_size)
+अणु
 	sdev->dsp_box.offset = dspbox;
 	sdev->dsp_box.size = dspbox_size;
 	sdev->host_box.offset = hostbox;
 	sdev->host_box.size = hostbox_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_dsp_mailbox_init);
 
-int snd_sof_ipc_valid(struct snd_sof_dev *sdev)
-{
-	struct sof_ipc_fw_ready *ready = &sdev->fw_ready;
-	struct sof_ipc_fw_version *v = &ready->version;
+पूर्णांक snd_sof_ipc_valid(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा sof_ipc_fw_पढ़ोy *पढ़ोy = &sdev->fw_पढ़ोy;
+	काष्ठा sof_ipc_fw_version *v = &पढ़ोy->version;
 
 	dev_info(sdev->dev,
 		 "Firmware info: version %d:%d:%d-%s\n",  v->major, v->minor,
@@ -793,50 +794,50 @@ int snd_sof_ipc_valid(struct snd_sof_dev *sdev)
 		 SOF_ABI_VERSION_PATCH(v->abi_version),
 		 SOF_ABI_MAJOR, SOF_ABI_MINOR, SOF_ABI_PATCH);
 
-	if (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, v->abi_version)) {
+	अगर (SOF_ABI_VERSION_INCOMPATIBLE(SOF_ABI_VERSION, v->abi_version)) अणु
 		dev_err(sdev->dev, "error: incompatible FW ABI version\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (SOF_ABI_VERSION_MINOR(v->abi_version) > SOF_ABI_MINOR) {
-		if (!IS_ENABLED(CONFIG_SND_SOC_SOF_STRICT_ABI_CHECKS)) {
+	अगर (SOF_ABI_VERSION_MINOR(v->abi_version) > SOF_ABI_MINOR) अणु
+		अगर (!IS_ENABLED(CONFIG_SND_SOC_SOF_STRICT_ABI_CHECKS)) अणु
 			dev_warn(sdev->dev, "warn: FW ABI is more recent than kernel\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(sdev->dev, "error: FW ABI is more recent than kernel\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (ready->flags & SOF_IPC_INFO_BUILD) {
+	अगर (पढ़ोy->flags & SOF_IPC_INFO_BUILD) अणु
 		dev_info(sdev->dev,
 			 "Firmware debug build %d on %s-%s - options:\n"
 			 " GDB: %s\n"
 			 " lock debug: %s\n"
 			 " lock vdebug: %s\n",
-			 v->build, v->date, v->time,
-			 (ready->flags & SOF_IPC_INFO_GDB) ?
+			 v->build, v->date, v->समय,
+			 (पढ़ोy->flags & SOF_IPC_INFO_GDB) ?
 				"enabled" : "disabled",
-			 (ready->flags & SOF_IPC_INFO_LOCKS) ?
+			 (पढ़ोy->flags & SOF_IPC_INFO_LOCKS) ?
 				"enabled" : "disabled",
-			 (ready->flags & SOF_IPC_INFO_LOCKSV) ?
+			 (पढ़ोy->flags & SOF_IPC_INFO_LOCKSV) ?
 				"enabled" : "disabled");
-	}
+	पूर्ण
 
-	/* copy the fw_version into debugfs at first boot */
-	memcpy(&sdev->fw_version, v, sizeof(*v));
+	/* copy the fw_version पूर्णांकo debugfs at first boot */
+	स_नकल(&sdev->fw_version, v, माप(*v));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_valid);
 
-struct snd_sof_ipc *snd_sof_ipc_init(struct snd_sof_dev *sdev)
-{
-	struct snd_sof_ipc *ipc;
-	struct snd_sof_ipc_msg *msg;
+काष्ठा snd_sof_ipc *snd_sof_ipc_init(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा snd_sof_ipc *ipc;
+	काष्ठा snd_sof_ipc_msg *msg;
 
-	ipc = devm_kzalloc(sdev->dev, sizeof(*ipc), GFP_KERNEL);
-	if (!ipc)
-		return NULL;
+	ipc = devm_kzalloc(sdev->dev, माप(*ipc), GFP_KERNEL);
+	अगर (!ipc)
+		वापस शून्य;
 
 	mutex_init(&ipc->tx_mutex);
 	ipc->sdev = sdev;
@@ -848,30 +849,30 @@ struct snd_sof_ipc *snd_sof_ipc_init(struct snd_sof_dev *sdev)
 	/* pre-allocate message data */
 	msg->msg_data = devm_kzalloc(sdev->dev, SOF_IPC_MSG_MAX_SIZE,
 				     GFP_KERNEL);
-	if (!msg->msg_data)
-		return NULL;
+	अगर (!msg->msg_data)
+		वापस शून्य;
 
 	msg->reply_data = devm_kzalloc(sdev->dev, SOF_IPC_MSG_MAX_SIZE,
 				       GFP_KERNEL);
-	if (!msg->reply_data)
-		return NULL;
+	अगर (!msg->reply_data)
+		वापस शून्य;
 
-	init_waitqueue_head(&msg->waitq);
+	init_रुकोqueue_head(&msg->रुकोq);
 
-	return ipc;
-}
+	वापस ipc;
+पूर्ण
 EXPORT_SYMBOL(snd_sof_ipc_init);
 
-void snd_sof_ipc_free(struct snd_sof_dev *sdev)
-{
-	struct snd_sof_ipc *ipc = sdev->ipc;
+व्योम snd_sof_ipc_मुक्त(काष्ठा snd_sof_dev *sdev)
+अणु
+	काष्ठा snd_sof_ipc *ipc = sdev->ipc;
 
-	if (!ipc)
-		return;
+	अगर (!ipc)
+		वापस;
 
 	/* disable sending of ipc's */
 	mutex_lock(&ipc->tx_mutex);
 	ipc->disable_ipc_tx = true;
 	mutex_unlock(&ipc->tx_mutex);
-}
-EXPORT_SYMBOL(snd_sof_ipc_free);
+पूर्ण
+EXPORT_SYMBOL(snd_sof_ipc_मुक्त);

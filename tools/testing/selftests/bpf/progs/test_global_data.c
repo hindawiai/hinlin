@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Isovalent, Inc.
 
-#include <linux/bpf.h>
-#include <linux/pkt_cls.h>
-#include <string.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <माला.स>
 
-#include <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 11);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 11);
 	__type(key, __u32);
 	__type(value, __u64);
-} result_number SEC(".maps");
+पूर्ण result_number SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 5);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 5);
 	__type(key, __u32);
-	const char (*value)[32];
-} result_string SEC(".maps");
+	स्थिर अक्षर (*value)[32];
+पूर्ण result_string SEC(".maps");
 
-struct foo {
+काष्ठा foo अणु
 	__u8  a;
 	__u32 b;
 	__u64 c;
-};
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 5);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 5);
 	__type(key, __u32);
-	__type(value, struct foo);
-} result_struct SEC(".maps");
+	__type(value, काष्ठा foo);
+पूर्ण result_काष्ठा SEC(".maps");
 
-/* Relocation tests for __u64s. */
-static       __u64 num0;
-static       __u64 num1 = 42;
-static const __u64 num2 = 24;
-static       __u64 num3 = 0;
-static       __u64 num4 = 0xffeeff;
-static const __u64 num5 = 0xabab;
-static const __u64 num6 = 0xab;
+/* Relocation tests क्रम __u64s. */
+अटल       __u64 num0;
+अटल       __u64 num1 = 42;
+अटल स्थिर __u64 num2 = 24;
+अटल       __u64 num3 = 0;
+अटल       __u64 num4 = 0xffeeff;
+अटल स्थिर __u64 num5 = 0xabab;
+अटल स्थिर __u64 num6 = 0xab;
 
-/* Relocation tests for strings. */
-static const char str0[32] = "abcdefghijklmnopqrstuvwxyz";
-static       char str1[32] = "abcdefghijklmnopqrstuvwxyz";
-static       char str2[32];
+/* Relocation tests क्रम strings. */
+अटल स्थिर अक्षर str0[32] = "abcdefghijklmnopqrstuvwxyz";
+अटल       अक्षर str1[32] = "abcdefghijklmnopqrstuvwxyz";
+अटल       अक्षर str2[32];
 
-/* Relocation tests for structs. */
-static const struct foo struct0 = {
+/* Relocation tests क्रम काष्ठाs. */
+अटल स्थिर काष्ठा foo काष्ठा0 = अणु
 	.a = 42,
 	.b = 0xfefeefef,
 	.c = 0x1111111111111111ULL,
-};
-static struct foo struct1;
-static const struct foo struct2;
-static struct foo struct3 = {
+पूर्ण;
+अटल काष्ठा foo काष्ठा1;
+अटल स्थिर काष्ठा foo काष्ठा2;
+अटल काष्ठा foo काष्ठा3 = अणु
 	.a = 41,
 	.b = 0xeeeeefef,
 	.c = 0x2111111111111111ULL,
-};
+पूर्ण;
 
-#define test_reloc(map, num, var)					\
-	do {								\
+#घोषणा test_reloc(map, num, var)					\
+	करो अणु								\
 		__u32 key = num;					\
 		bpf_map_update_elem(&result_##map, &key, var, 0);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
 SEC("classifier/static_data_load")
-int load_static_data(struct __sk_buff *skb)
-{
-	static const __u64 bar = ~0;
+पूर्णांक load_अटल_data(काष्ठा __sk_buff *skb)
+अणु
+	अटल स्थिर __u64 bar = ~0;
 
 	test_reloc(number, 0, &num0);
 	test_reloc(number, 1, &num1);
@@ -89,18 +90,18 @@ int load_static_data(struct __sk_buff *skb)
 	test_reloc(string, 2, str2);
 	str1[5] = 'x';
 	test_reloc(string, 3, str1);
-	__builtin_memcpy(&str2[2], "hello", sizeof("hello"));
+	__builtin_स_नकल(&str2[2], "hello", माप("hello"));
 	test_reloc(string, 4, str2);
 
-	test_reloc(struct, 0, &struct0);
-	test_reloc(struct, 1, &struct1);
-	test_reloc(struct, 2, &struct2);
-	test_reloc(struct, 3, &struct3);
+	test_reloc(काष्ठा, 0, &काष्ठा0);
+	test_reloc(काष्ठा, 1, &काष्ठा1);
+	test_reloc(काष्ठा, 2, &काष्ठा2);
+	test_reloc(काष्ठा, 3, &काष्ठा3);
 
-	test_reloc(number,  9, &struct0.c);
+	test_reloc(number,  9, &काष्ठा0.c);
 	test_reloc(number, 10, &bar);
 
-	return TC_ACT_OK;
-}
+	वापस TC_ACT_OK;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

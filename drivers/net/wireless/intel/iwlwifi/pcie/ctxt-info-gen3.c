@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (C) 2018-2021 Intel Corporation
  */
-#include "iwl-trans.h"
-#include "iwl-fh.h"
-#include "iwl-context-info-gen3.h"
-#include "internal.h"
-#include "iwl-prph.h"
+#समावेश "iwl-trans.h"
+#समावेश "iwl-fh.h"
+#समावेश "iwl-context-info-gen3.h"
+#समावेश "internal.h"
+#समावेश "iwl-prph.h"
 
-static void
-iwl_pcie_ctxt_info_dbg_enable(struct iwl_trans *trans,
-			      struct iwl_prph_scratch_hwm_cfg *dbg_cfg,
+अटल व्योम
+iwl_pcie_ctxt_info_dbg_enable(काष्ठा iwl_trans *trans,
+			      काष्ठा iwl_prph_scratch_hwm_cfg *dbg_cfg,
 			      u32 *control_flags)
-{
-	enum iwl_fw_ini_allocation_id alloc_id = IWL_FW_INI_ALLOCATION_ID_DBGC1;
-	struct iwl_fw_ini_allocation_tlv *fw_mon_cfg;
+अणु
+	क्रमागत iwl_fw_ini_allocation_id alloc_id = IWL_FW_INI_ALLOCATION_ID_DBGC1;
+	काष्ठा iwl_fw_ini_allocation_tlv *fw_mon_cfg;
 	u32 dbg_flags = 0;
 
-	if (!iwl_trans_dbg_ini_valid(trans)) {
-		struct iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
+	अगर (!iwl_trans_dbg_ini_valid(trans)) अणु
+		काष्ठा iwl_dram_data *fw_mon = &trans->dbg.fw_mon;
 
 		iwl_pcie_alloc_fw_monitor(trans, 0);
 
-		if (fw_mon->size) {
+		अगर (fw_mon->size) अणु
 			dbg_flags |= IWL_PRPH_SCRATCH_EDBG_DEST_DRAM;
 
 			IWL_DEBUG_FW(trans,
@@ -30,29 +31,29 @@ iwl_pcie_ctxt_info_dbg_enable(struct iwl_trans *trans,
 
 			dbg_cfg->hwm_base_addr = cpu_to_le64(fw_mon->physical);
 			dbg_cfg->hwm_size = cpu_to_le32(fw_mon->size);
-		}
+		पूर्ण
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fw_mon_cfg = &trans->dbg.fw_mon_cfg[alloc_id];
 
-	switch (le32_to_cpu(fw_mon_cfg->buf_location)) {
-	case IWL_FW_INI_LOCATION_SRAM_PATH:
+	चयन (le32_to_cpu(fw_mon_cfg->buf_location)) अणु
+	हाल IWL_FW_INI_LOCATION_SRAM_PATH:
 		dbg_flags |= IWL_PRPH_SCRATCH_EDBG_DEST_INTERNAL;
 		IWL_DEBUG_FW(trans,
 				"WRT: Applying SMEM buffer destination\n");
-		break;
+		अवरोध;
 
-	case IWL_FW_INI_LOCATION_NPK_PATH:
+	हाल IWL_FW_INI_LOCATION_NPK_PATH:
 		dbg_flags |= IWL_PRPH_SCRATCH_EDBG_DEST_TB22DTF;
 		IWL_DEBUG_FW(trans,
 			     "WRT: Applying NPK buffer destination\n");
-		break;
+		अवरोध;
 
-	case IWL_FW_INI_LOCATION_DRAM_PATH:
-		if (trans->dbg.fw_mon_ini[alloc_id].num_frags) {
-			struct iwl_dram_data *frag =
+	हाल IWL_FW_INI_LOCATION_DRAM_PATH:
+		अगर (trans->dbg.fw_mon_ini[alloc_id].num_frags) अणु
+			काष्ठा iwl_dram_data *frag =
 				&trans->dbg.fw_mon_ini[alloc_id].frags[0];
 			dbg_flags |= IWL_PRPH_SCRATCH_EDBG_DEST_DRAM;
 			dbg_cfg->hwm_base_addr = cpu_to_le64(frag->physical);
@@ -61,69 +62,69 @@ iwl_pcie_ctxt_info_dbg_enable(struct iwl_trans *trans,
 				     "WRT: Applying DRAM destination (alloc_id=%u, num_frags=%u)\n",
 				     alloc_id,
 				     trans->dbg.fw_mon_ini[alloc_id].num_frags);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		IWL_ERR(trans, "WRT: Invalid buffer destination\n");
-	}
+	पूर्ण
 out:
-	if (dbg_flags)
+	अगर (dbg_flags)
 		*control_flags |= IWL_PRPH_SCRATCH_EARLY_DEBUG_EN | dbg_flags;
-}
+पूर्ण
 
-int iwl_pcie_ctxt_info_gen3_init(struct iwl_trans *trans,
-				 const struct fw_img *fw)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct iwl_context_info_gen3 *ctxt_info_gen3;
-	struct iwl_prph_scratch *prph_scratch;
-	struct iwl_prph_scratch_ctrl_cfg *prph_sc_ctrl;
-	struct iwl_prph_info *prph_info;
-	void *iml_img;
+पूर्णांक iwl_pcie_ctxt_info_gen3_init(काष्ठा iwl_trans *trans,
+				 स्थिर काष्ठा fw_img *fw)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा iwl_context_info_gen3 *ctxt_info_gen3;
+	काष्ठा iwl_prph_scratch *prph_scratch;
+	काष्ठा iwl_prph_scratch_ctrl_cfg *prph_sc_ctrl;
+	काष्ठा iwl_prph_info *prph_info;
+	व्योम *iml_img;
 	u32 control_flags = 0;
-	int ret;
-	int cmdq_size = max_t(u32, IWL_CMD_QUEUE_SIZE,
+	पूर्णांक ret;
+	पूर्णांक cmdq_size = max_t(u32, IWL_CMD_QUEUE_SIZE,
 			      trans->cfg->min_txq_size);
 
-	switch (trans_pcie->rx_buf_size) {
-	case IWL_AMSDU_DEF:
-		return -EINVAL;
-	case IWL_AMSDU_2K:
-		break;
-	case IWL_AMSDU_4K:
+	चयन (trans_pcie->rx_buf_size) अणु
+	हाल IWL_AMSDU_DEF:
+		वापस -EINVAL;
+	हाल IWL_AMSDU_2K:
+		अवरोध;
+	हाल IWL_AMSDU_4K:
 		control_flags |= IWL_PRPH_SCRATCH_RB_SIZE_4K;
-		break;
-	case IWL_AMSDU_8K:
+		अवरोध;
+	हाल IWL_AMSDU_8K:
 		control_flags |= IWL_PRPH_SCRATCH_RB_SIZE_4K;
-		/* if firmware supports the ext size, tell it */
+		/* अगर firmware supports the ext size, tell it */
 		control_flags |= IWL_PRPH_SCRATCH_RB_SIZE_EXT_8K;
-		break;
-	case IWL_AMSDU_12K:
+		अवरोध;
+	हाल IWL_AMSDU_12K:
 		control_flags |= IWL_PRPH_SCRATCH_RB_SIZE_4K;
-		/* if firmware supports the ext size, tell it */
+		/* अगर firmware supports the ext size, tell it */
 		control_flags |= IWL_PRPH_SCRATCH_RB_SIZE_EXT_16K;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Allocate prph scratch */
-	prph_scratch = dma_alloc_coherent(trans->dev, sizeof(*prph_scratch),
+	prph_scratch = dma_alloc_coherent(trans->dev, माप(*prph_scratch),
 					  &trans_pcie->prph_scratch_dma_addr,
 					  GFP_KERNEL);
-	if (!prph_scratch)
-		return -ENOMEM;
+	अगर (!prph_scratch)
+		वापस -ENOMEM;
 
 	prph_sc_ctrl = &prph_scratch->ctrl_cfg;
 
 	prph_sc_ctrl->version.version = 0;
 	prph_sc_ctrl->version.mac_id =
-		cpu_to_le16((u16)iwl_read32(trans, CSR_HW_REV));
-	prph_sc_ctrl->version.size = cpu_to_le16(sizeof(*prph_scratch) / 4);
+		cpu_to_le16((u16)iwl_पढ़ो32(trans, CSR_HW_REV));
+	prph_sc_ctrl->version.size = cpu_to_le16(माप(*prph_scratch) / 4);
 
 	control_flags |= IWL_PRPH_SCRATCH_MTR_MODE;
 	control_flags |= IWL_PRPH_MTR_FORMAT_256B & IWL_PRPH_SCRATCH_MTR_FORMAT;
 
-	/* initialize RX default queue */
-	prph_sc_ctrl->rbd_cfg.free_rbd_addr =
+	/* initialize RX शेष queue */
+	prph_sc_ctrl->rbd_cfg.मुक्त_rbd_addr =
 		cpu_to_le64(trans_pcie->rxq->bd_dma);
 
 	iwl_pcie_ctxt_info_dbg_enable(trans, &prph_sc_ctrl->hwm_cfg,
@@ -132,37 +133,37 @@ int iwl_pcie_ctxt_info_gen3_init(struct iwl_trans *trans,
 
 	/* allocate ucode sections in dram and set addresses */
 	ret = iwl_pcie_init_fw_sec(trans, fw, &prph_scratch->dram);
-	if (ret)
-		goto err_free_prph_scratch;
+	अगर (ret)
+		जाओ err_मुक्त_prph_scratch;
 
 
-	/* Allocate prph information
-	 * currently we don't assign to the prph info anything, but it would get
-	 * assigned later */
-	prph_info = dma_alloc_coherent(trans->dev, sizeof(*prph_info),
+	/* Allocate prph inक्रमmation
+	 * currently we करोn't assign to the prph info anything, but it would get
+	 * asचिन्हित later */
+	prph_info = dma_alloc_coherent(trans->dev, माप(*prph_info),
 				       &trans_pcie->prph_info_dma_addr,
 				       GFP_KERNEL);
-	if (!prph_info) {
+	अगर (!prph_info) अणु
 		ret = -ENOMEM;
-		goto err_free_prph_scratch;
-	}
+		जाओ err_मुक्त_prph_scratch;
+	पूर्ण
 
 	/* Allocate context info */
 	ctxt_info_gen3 = dma_alloc_coherent(trans->dev,
-					    sizeof(*ctxt_info_gen3),
+					    माप(*ctxt_info_gen3),
 					    &trans_pcie->ctxt_info_dma_addr,
 					    GFP_KERNEL);
-	if (!ctxt_info_gen3) {
+	अगर (!ctxt_info_gen3) अणु
 		ret = -ENOMEM;
-		goto err_free_prph_info;
-	}
+		जाओ err_मुक्त_prph_info;
+	पूर्ण
 
 	ctxt_info_gen3->prph_info_base_addr =
 		cpu_to_le64(trans_pcie->prph_info_dma_addr);
 	ctxt_info_gen3->prph_scratch_base_addr =
 		cpu_to_le64(trans_pcie->prph_scratch_dma_addr);
 	ctxt_info_gen3->prph_scratch_size =
-		cpu_to_le32(sizeof(*prph_scratch));
+		cpu_to_le32(माप(*prph_scratch));
 	ctxt_info_gen3->cr_head_idx_arr_base_addr =
 		cpu_to_le64(trans_pcie->rxq->rb_stts_dma);
 	ctxt_info_gen3->tr_tail_idx_arr_base_addr =
@@ -189,104 +190,104 @@ int iwl_pcie_ctxt_info_gen3_init(struct iwl_trans *trans,
 	/* Allocate IML */
 	iml_img = dma_alloc_coherent(trans->dev, trans->iml_len,
 				     &trans_pcie->iml_dma_addr, GFP_KERNEL);
-	if (!iml_img) {
+	अगर (!iml_img) अणु
 		ret = -ENOMEM;
-		goto err_free_ctxt_info;
-	}
+		जाओ err_मुक्त_ctxt_info;
+	पूर्ण
 
-	memcpy(iml_img, trans->iml, trans->iml_len);
+	स_नकल(iml_img, trans->iml, trans->iml_len);
 
-	iwl_enable_fw_load_int_ctx_info(trans);
+	iwl_enable_fw_load_पूर्णांक_ctx_info(trans);
 
 	/* kick FW self load */
-	iwl_write64(trans, CSR_CTXT_INFO_ADDR,
+	iwl_ग_लिखो64(trans, CSR_CTXT_INFO_ADDR,
 		    trans_pcie->ctxt_info_dma_addr);
-	iwl_write64(trans, CSR_IML_DATA_ADDR,
+	iwl_ग_लिखो64(trans, CSR_IML_DATA_ADDR,
 		    trans_pcie->iml_dma_addr);
-	iwl_write32(trans, CSR_IML_SIZE_ADDR, trans->iml_len);
+	iwl_ग_लिखो32(trans, CSR_IML_SIZE_ADDR, trans->iml_len);
 
 	iwl_set_bit(trans, CSR_CTXT_INFO_BOOT_CTRL,
 		    CSR_AUTO_FUNC_BOOT_ENA);
 
-	return 0;
+	वापस 0;
 
-err_free_ctxt_info:
-	dma_free_coherent(trans->dev, sizeof(*trans_pcie->ctxt_info_gen3),
+err_मुक्त_ctxt_info:
+	dma_मुक्त_coherent(trans->dev, माप(*trans_pcie->ctxt_info_gen3),
 			  trans_pcie->ctxt_info_gen3,
 			  trans_pcie->ctxt_info_dma_addr);
-	trans_pcie->ctxt_info_gen3 = NULL;
-err_free_prph_info:
-	dma_free_coherent(trans->dev,
-			  sizeof(*prph_info),
+	trans_pcie->ctxt_info_gen3 = शून्य;
+err_मुक्त_prph_info:
+	dma_मुक्त_coherent(trans->dev,
+			  माप(*prph_info),
 			prph_info,
 			trans_pcie->prph_info_dma_addr);
 
-err_free_prph_scratch:
-	dma_free_coherent(trans->dev,
-			  sizeof(*prph_scratch),
+err_मुक्त_prph_scratch:
+	dma_मुक्त_coherent(trans->dev,
+			  माप(*prph_scratch),
 			prph_scratch,
 			trans_pcie->prph_scratch_dma_addr);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-void iwl_pcie_ctxt_info_gen3_free(struct iwl_trans *trans)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+व्योम iwl_pcie_ctxt_info_gen3_मुक्त(काष्ठा iwl_trans *trans)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
 
-	if (!trans_pcie->ctxt_info_gen3)
-		return;
+	अगर (!trans_pcie->ctxt_info_gen3)
+		वापस;
 
-	dma_free_coherent(trans->dev, sizeof(*trans_pcie->ctxt_info_gen3),
+	dma_मुक्त_coherent(trans->dev, माप(*trans_pcie->ctxt_info_gen3),
 			  trans_pcie->ctxt_info_gen3,
 			  trans_pcie->ctxt_info_dma_addr);
 	trans_pcie->ctxt_info_dma_addr = 0;
-	trans_pcie->ctxt_info_gen3 = NULL;
+	trans_pcie->ctxt_info_gen3 = शून्य;
 
-	iwl_pcie_ctxt_info_free_fw_img(trans);
+	iwl_pcie_ctxt_info_मुक्त_fw_img(trans);
 
-	dma_free_coherent(trans->dev, sizeof(*trans_pcie->prph_scratch),
+	dma_मुक्त_coherent(trans->dev, माप(*trans_pcie->prph_scratch),
 			  trans_pcie->prph_scratch,
 			  trans_pcie->prph_scratch_dma_addr);
 	trans_pcie->prph_scratch_dma_addr = 0;
-	trans_pcie->prph_scratch = NULL;
+	trans_pcie->prph_scratch = शून्य;
 
-	dma_free_coherent(trans->dev, sizeof(*trans_pcie->prph_info),
+	dma_मुक्त_coherent(trans->dev, माप(*trans_pcie->prph_info),
 			  trans_pcie->prph_info,
 			  trans_pcie->prph_info_dma_addr);
 	trans_pcie->prph_info_dma_addr = 0;
-	trans_pcie->prph_info = NULL;
-}
+	trans_pcie->prph_info = शून्य;
+पूर्ण
 
-int iwl_trans_pcie_ctx_info_gen3_set_pnvm(struct iwl_trans *trans,
-					  const void *data, u32 len)
-{
-	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
-	struct iwl_prph_scratch_ctrl_cfg *prph_sc_ctrl =
+पूर्णांक iwl_trans_pcie_ctx_info_gen3_set_pnvm(काष्ठा iwl_trans *trans,
+					  स्थिर व्योम *data, u32 len)
+अणु
+	काष्ठा iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+	काष्ठा iwl_prph_scratch_ctrl_cfg *prph_sc_ctrl =
 		&trans_pcie->prph_scratch->ctrl_cfg;
-	int ret;
+	पूर्णांक ret;
 
-	if (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
-		return 0;
+	अगर (trans->trans_cfg->device_family < IWL_DEVICE_FAMILY_AX210)
+		वापस 0;
 
-	/* only allocate the DRAM if not allocated yet */
-	if (!trans->pnvm_loaded) {
-		if (WARN_ON(prph_sc_ctrl->pnvm_cfg.pnvm_size))
-			return -EBUSY;
+	/* only allocate the DRAM अगर not allocated yet */
+	अगर (!trans->pnvm_loaded) अणु
+		अगर (WARN_ON(prph_sc_ctrl->pnvm_cfg.pnvm_size))
+			वापस -EBUSY;
 
 		ret = iwl_pcie_ctxt_info_alloc_dma(trans, data, len,
 						   &trans_pcie->pnvm_dram);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			IWL_DEBUG_FW(trans, "Failed to allocate PNVM DMA %d.\n",
 				     ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	prph_sc_ctrl->pnvm_cfg.pnvm_base_addr =
 		cpu_to_le64(trans_pcie->pnvm_dram.physical);
 	prph_sc_ctrl->pnvm_cfg.pnvm_size =
 		cpu_to_le32(trans_pcie->pnvm_dram.size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

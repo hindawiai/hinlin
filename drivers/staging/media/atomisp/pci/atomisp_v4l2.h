@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Medifield PNW Camera Imaging ISP subsystem.
+ * Support क्रम Medअगरield PNW Camera Imaging ISP subप्रणाली.
  *
  * Copyright (c) 2010 Intel Corporation. All Rights Reserved.
  *
  * Copyright (c) 2010 Silicon Hive www.siliconhive.com.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
 
-#ifndef __ATOMISP_V4L2_H__
-#define __ATOMISP_V4L2_H__
+#अगर_अघोषित __ATOMISP_V4L2_H__
+#घोषणा __ATOMISP_V4L2_H__
 
-struct atomisp_video_pipe;
-struct atomisp_acc_pipe;
-struct v4l2_device;
-struct atomisp_device;
-struct firmware;
+काष्ठा atomisp_video_pipe;
+काष्ठा atomisp_acc_pipe;
+काष्ठा v4l2_device;
+काष्ठा atomisp_device;
+काष्ठा firmware;
 
-int atomisp_video_init(struct atomisp_video_pipe *video, const char *name);
-void atomisp_acc_init(struct atomisp_acc_pipe *video, const char *name);
-void atomisp_video_unregister(struct atomisp_video_pipe *video);
-void atomisp_acc_unregister(struct atomisp_acc_pipe *video);
-const struct firmware *atomisp_load_firmware(struct atomisp_device *isp);
-int atomisp_csi_lane_config(struct atomisp_device *isp);
+पूर्णांक atomisp_video_init(काष्ठा atomisp_video_pipe *video, स्थिर अक्षर *name);
+व्योम atomisp_acc_init(काष्ठा atomisp_acc_pipe *video, स्थिर अक्षर *name);
+व्योम atomisp_video_unरेजिस्टर(काष्ठा atomisp_video_pipe *video);
+व्योम atomisp_acc_unरेजिस्टर(काष्ठा atomisp_acc_pipe *video);
+स्थिर काष्ठा firmware *atomisp_load_firmware(काष्ठा atomisp_device *isp);
+पूर्णांक atomisp_csi_lane_config(काष्ठा atomisp_device *isp);
 
-#endif /* __ATOMISP_V4L2_H__ */
+#पूर्ण_अगर /* __ATOMISP_V4L2_H__ */

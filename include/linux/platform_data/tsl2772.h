@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Device driver for monitoring ambient light intensity (lux)
+ * Device driver क्रम monitoring ambient light पूर्णांकensity (lux)
  * and proximity (prox) within the TAOS TSL2772 family of devices.
  *
  * Copyright (c) 2012, TAOS Corporation.
  * Copyright (c) 2017-2018 Brian Masney <masneyb@onstation.org>
  */
 
-#ifndef __TSL2772_H
-#define __TSL2772_H
+#अगर_अघोषित __TSL2772_H
+#घोषणा __TSL2772_H
 
-struct tsl2772_lux {
-	unsigned int ch0;
-	unsigned int ch1;
-};
+काष्ठा tsl2772_lux अणु
+	अचिन्हित पूर्णांक ch0;
+	अचिन्हित पूर्णांक ch1;
+पूर्ण;
 
 /* Max number of segments allowable in LUX table */
-#define TSL2772_MAX_LUX_TABLE_SIZE		6
-/* The default LUX tables all have 3 elements.  */
-#define TSL2772_DEF_LUX_TABLE_SZ		3
-#define TSL2772_DEFAULT_TABLE_BYTES (sizeof(struct tsl2772_lux) * \
+#घोषणा TSL2772_MAX_LUX_TABLE_SIZE		6
+/* The शेष LUX tables all have 3 elements.  */
+#घोषणा TSL2772_DEF_LUX_TABLE_SZ		3
+#घोषणा TSL2772_DEFAULT_TABLE_BYTES (माप(काष्ठा tsl2772_lux) * \
 				     TSL2772_DEF_LUX_TABLE_SZ)
 
 /* Proximity diode to use */
-#define TSL2772_DIODE0                  0x01
-#define TSL2772_DIODE1                  0x02
-#define TSL2772_DIODE_BOTH              0x03
+#घोषणा TSL2772_DIODE0                  0x01
+#घोषणा TSL2772_DIODE1                  0x02
+#घोषणा TSL2772_DIODE_BOTH              0x03
 
 /* LED Power */
-#define TSL2772_100_mA                  0x00
-#define TSL2772_50_mA                   0x01
-#define TSL2772_25_mA                   0x02
-#define TSL2772_13_mA                   0x03
+#घोषणा TSL2772_100_mA                  0x00
+#घोषणा TSL2772_50_mA                   0x01
+#घोषणा TSL2772_25_mA                   0x02
+#घोषणा TSL2772_13_mA                   0x03
 
 /**
- * struct tsl2772_settings - Settings for the tsl2772 driver
- *  @als_time:              Integration time of the ALS channel ADCs in 2.73 ms
- *                          increments. Total integration time is
- *                          (256 - als_time) * 2.73.
- *  @als_gain:              Index into the tsl2772_als_gain array.
- *  @als_gain_trim:         Default gain trim to account for aperture effects.
- *  @wait_time:             Time between proximity and ALS cycles in 2.73
+ * काष्ठा tsl2772_settings - Settings क्रम the tsl2772 driver
+ *  @als_समय:              Integration समय of the ALS channel ADCs in 2.73 ms
+ *                          increments. Total पूर्णांकegration समय is
+ *                          (256 - als_समय) * 2.73.
+ *  @als_gain:              Index पूर्णांकo the tsl2772_als_gain array.
+ *  @als_gain_trim:         Default gain trim to account क्रम aperture effects.
+ *  @रुको_समय:             Time between proximity and ALS cycles in 2.73
  *                          periods.
- *  @prox_time:             Integration time of the proximity ADC in 2.73 ms
- *                          increments. Total integration time is
- *                          (256 - prx_time) * 2.73.
- *  @prox_gain:             Index into the tsl2772_prx_gain array.
+ *  @prox_समय:             Integration समय of the proximity ADC in 2.73 ms
+ *                          increments. Total पूर्णांकegration समय is
+ *                          (256 - prx_समय) * 2.73.
+ *  @prox_gain:             Index पूर्णांकo the tsl2772_prx_gain array.
  *  @als_prox_config:       The value of the ALS / Proximity configuration
- *                          register.
- *  @als_cal_target:        Known external ALS reading for calibration.
- *  @als_persistence:       H/W Filters, Number of 'out of limits' ALS readings.
- *  @als_interrupt_en:      Enable/Disable ALS interrupts
- *  @als_thresh_low:        CH0 'low' count to trigger interrupt.
- *  @als_thresh_high:       CH0 'high' count to trigger interrupt.
+ *                          रेजिस्टर.
+ *  @als_cal_target:        Known बाह्यal ALS पढ़ोing क्रम calibration.
+ *  @als_persistence:       H/W Filters, Number of 'out of limits' ALS पढ़ोings.
+ *  @als_पूर्णांकerrupt_en:      Enable/Disable ALS पूर्णांकerrupts
+ *  @als_thresh_low:        CH0 'low' count to trigger पूर्णांकerrupt.
+ *  @als_thresh_high:       CH0 'high' count to trigger पूर्णांकerrupt.
  *  @prox_persistence:      H/W Filters, Number of 'out of limits' proximity
- *                          readings.
- *  @prox_interrupt_en:     Enable/Disable proximity interrupts.
+ *                          पढ़ोings.
+ *  @prox_पूर्णांकerrupt_en:     Enable/Disable proximity पूर्णांकerrupts.
  *  @prox_thres_low:        Low threshold proximity detection.
  *  @prox_thres_high:       High threshold proximity detection.
- *  @prox_pulse_count:      Number if proximity emitter pulses.
- *  @prox_max_samples_cal:  The number of samples that are taken when performing
+ *  @prox_pulse_count:      Number अगर proximity emitter pulses.
+ *  @prox_max_samples_cal:  The number of samples that are taken when perक्रमming
  *                          a proximity calibration.
- *  @prox_diode             Which diode(s) to use for driving the external
- *                          LED(s) for proximity sensing.
- *  @prox_power             The amount of power to use for the external LED(s).
+ *  @prox_diode             Which diode(s) to use क्रम driving the बाह्यal
+ *                          LED(s) क्रम proximity sensing.
+ *  @prox_घातer             The amount of घातer to use क्रम the बाह्यal LED(s).
  */
-struct tsl2772_settings {
-	int als_time;
-	int als_gain;
-	int als_gain_trim;
-	int wait_time;
-	int prox_time;
-	int prox_gain;
-	int als_prox_config;
-	int als_cal_target;
+काष्ठा tsl2772_settings अणु
+	पूर्णांक als_समय;
+	पूर्णांक als_gain;
+	पूर्णांक als_gain_trim;
+	पूर्णांक रुको_समय;
+	पूर्णांक prox_समय;
+	पूर्णांक prox_gain;
+	पूर्णांक als_prox_config;
+	पूर्णांक als_cal_target;
 	u8 als_persistence;
-	bool als_interrupt_en;
-	int als_thresh_low;
-	int als_thresh_high;
+	bool als_पूर्णांकerrupt_en;
+	पूर्णांक als_thresh_low;
+	पूर्णांक als_thresh_high;
 	u8 prox_persistence;
-	bool prox_interrupt_en;
-	int prox_thres_low;
-	int prox_thres_high;
-	int prox_pulse_count;
-	int prox_max_samples_cal;
-	int prox_diode;
-	int prox_power;
-};
+	bool prox_पूर्णांकerrupt_en;
+	पूर्णांक prox_thres_low;
+	पूर्णांक prox_thres_high;
+	पूर्णांक prox_pulse_count;
+	पूर्णांक prox_max_samples_cal;
+	पूर्णांक prox_diode;
+	पूर्णांक prox_घातer;
+पूर्ण;
 
 /**
- * struct tsl2772_platform_data - Platform callback, glass and defaults
- * @platform_lux_table:        Device specific glass coefficents
- * @platform_default_settings: Device specific power on defaults
+ * काष्ठा tsl2772_platक्रमm_data - Platक्रमm callback, glass and शेषs
+ * @platक्रमm_lux_table:        Device specअगरic glass coefficents
+ * @platक्रमm_शेष_settings: Device specअगरic घातer on शेषs
  */
-struct tsl2772_platform_data {
-	struct tsl2772_lux platform_lux_table[TSL2772_MAX_LUX_TABLE_SIZE];
-	struct tsl2772_settings *platform_default_settings;
-};
+काष्ठा tsl2772_platक्रमm_data अणु
+	काष्ठा tsl2772_lux platक्रमm_lux_table[TSL2772_MAX_LUX_TABLE_SIZE];
+	काष्ठा tsl2772_settings *platक्रमm_शेष_settings;
+पूर्ण;
 
-#endif /* __TSL2772_H */
+#पूर्ण_अगर /* __TSL2772_H */

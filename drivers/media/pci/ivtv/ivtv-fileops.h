@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     file operation functions
     Copyright (C) 2003-2004  Kevin Thayer <nufan_wfk at yahoo.com>
@@ -6,27 +7,27 @@
 
  */
 
-#ifndef IVTV_FILEOPS_H
-#define IVTV_FILEOPS_H
+#अगर_अघोषित IVTV_खाताOPS_H
+#घोषणा IVTV_खाताOPS_H
 
 /* Testing/Debugging */
-int ivtv_v4l2_open(struct file *filp);
-ssize_t ivtv_v4l2_read(struct file *filp, char __user *buf, size_t count,
+पूर्णांक ivtv_v4l2_खोलो(काष्ठा file *filp);
+sमाप_प्रकार ivtv_v4l2_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
 		      loff_t * pos);
-ssize_t ivtv_v4l2_write(struct file *filp, const char __user *buf, size_t count,
+sमाप_प्रकार ivtv_v4l2_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf, माप_प्रकार count,
 		       loff_t * pos);
-int ivtv_v4l2_close(struct file *filp);
-__poll_t ivtv_v4l2_enc_poll(struct file *filp, poll_table * wait);
-__poll_t ivtv_v4l2_dec_poll(struct file *filp, poll_table * wait);
-int ivtv_start_capture(struct ivtv_open_id *id);
-void ivtv_stop_capture(struct ivtv_open_id *id, int gop_end);
-int ivtv_start_decoding(struct ivtv_open_id *id, int speed);
-void ivtv_mute(struct ivtv *itv);
-void ivtv_unmute(struct ivtv *itv);
+पूर्णांक ivtv_v4l2_बंद(काष्ठा file *filp);
+__poll_t ivtv_v4l2_enc_poll(काष्ठा file *filp, poll_table * रुको);
+__poll_t ivtv_v4l2_dec_poll(काष्ठा file *filp, poll_table * रुको);
+पूर्णांक ivtv_start_capture(काष्ठा ivtv_खोलो_id *id);
+व्योम ivtv_stop_capture(काष्ठा ivtv_खोलो_id *id, पूर्णांक gop_end);
+पूर्णांक ivtv_start_decoding(काष्ठा ivtv_खोलो_id *id, पूर्णांक speed);
+व्योम ivtv_mute(काष्ठा ivtv *itv);
+व्योम ivtv_unmute(काष्ठा ivtv *itv);
 
 /* Utilities */
 /* Shared with ivtv-alsa module */
-int ivtv_claim_stream(struct ivtv_open_id *id, int type);
-void ivtv_release_stream(struct ivtv_stream *s);
+पूर्णांक ivtv_claim_stream(काष्ठा ivtv_खोलो_id *id, पूर्णांक type);
+व्योम ivtv_release_stream(काष्ठा ivtv_stream *s);
 
-#endif
+#पूर्ण_अगर

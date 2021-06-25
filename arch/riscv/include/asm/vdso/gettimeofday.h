@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_VDSO_GETTIMEOFDAY_H
-#define __ASM_VDSO_GETTIMEOFDAY_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_VDSO_GETTIMखातापूर्णDAY_H
+#घोषणा __ASM_VDSO_GETTIMखातापूर्णDAY_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/barrier.h>
-#include <asm/unistd.h>
-#include <asm/csr.h>
-#include <uapi/linux/time.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/csr.h>
+#समावेश <uapi/linux/समय.स>
 
-#define VDSO_HAS_CLOCK_GETRES	1
+#घोषणा VDSO_HAS_CLOCK_GETRES	1
 
-static __always_inline
-int gettimeofday_fallback(struct __kernel_old_timeval *_tv,
-			  struct timezone *_tz)
-{
-	register struct __kernel_old_timeval *tv asm("a0") = _tv;
-	register struct timezone *tz asm("a1") = _tz;
-	register long ret asm("a0");
-	register long nr asm("a7") = __NR_gettimeofday;
+अटल __always_अंतरभूत
+पूर्णांक समय_लोofday_fallback(काष्ठा __kernel_old_समयval *_tv,
+			  काष्ठा समयzone *_tz)
+अणु
+	रेजिस्टर काष्ठा __kernel_old_समयval *tv यंत्र("a0") = _tv;
+	रेजिस्टर काष्ठा समयzone *tz यंत्र("a1") = _tz;
+	रेजिस्टर दीर्घ ret यंत्र("a0");
+	रेजिस्टर दीर्घ nr यंत्र("a7") = __NR_समय_लोofday;
 
-	asm volatile ("ecall\n"
+	यंत्र अस्थिर ("ecall\n"
 		      : "=r" (ret)
 		      : "r"(tv), "r"(tz), "r"(nr)
 		      : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __always_inline
-long clock_gettime_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
-{
-	register clockid_t clkid asm("a0") = _clkid;
-	register struct __kernel_timespec *ts asm("a1") = _ts;
-	register long ret asm("a0");
-	register long nr asm("a7") = __NR_clock_gettime;
+अटल __always_अंतरभूत
+दीर्घ घड़ी_समय_लो_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
+अणु
+	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
+	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
+	रेजिस्टर दीर्घ ret यंत्र("a0");
+	रेजिस्टर दीर्घ nr यंत्र("a7") = __NR_घड़ी_समय_लो;
 
-	asm volatile ("ecall\n"
+	यंत्र अस्थिर ("ecall\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __always_inline
-int clock_getres_fallback(clockid_t _clkid, struct __kernel_timespec *_ts)
-{
-	register clockid_t clkid asm("a0") = _clkid;
-	register struct __kernel_timespec *ts asm("a1") = _ts;
-	register long ret asm("a0");
-	register long nr asm("a7") = __NR_clock_getres;
+अटल __always_अंतरभूत
+पूर्णांक घड़ी_getres_fallback(घड़ीid_t _clkid, काष्ठा __kernel_बारpec *_ts)
+अणु
+	रेजिस्टर घड़ीid_t clkid यंत्र("a0") = _clkid;
+	रेजिस्टर काष्ठा __kernel_बारpec *ts यंत्र("a1") = _ts;
+	रेजिस्टर दीर्घ ret यंत्र("a0");
+	रेजिस्टर दीर्घ nr यंत्र("a7") = __NR_घड़ी_getres;
 
-	asm volatile ("ecall\n"
+	यंत्र अस्थिर ("ecall\n"
 		      : "=r" (ret)
 		      : "r"(clkid), "r"(ts), "r"(nr)
 		      : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __always_inline u64 __arch_get_hw_counter(s32 clock_mode,
-						 const struct vdso_data *vd)
-{
+अटल __always_अंतरभूत u64 __arch_get_hw_counter(s32 घड़ी_mode,
+						 स्थिर काष्ठा vdso_data *vd)
+अणु
 	/*
-	 * The purpose of csr_read(CSR_TIME) is to trap the system into
+	 * The purpose of csr_पढ़ो(CSR_TIME) is to trap the प्रणाली पूर्णांकo
 	 * M-mode to obtain the value of CSR_TIME. Hence, unlike other
-	 * architecture, no fence instructions surround the csr_read()
+	 * architecture, no fence inकाष्ठाions surround the csr_पढ़ो()
 	 */
-	return csr_read(CSR_TIME);
-}
+	वापस csr_पढ़ो(CSR_TIME);
+पूर्ण
 
-static __always_inline const struct vdso_data *__arch_get_vdso_data(void)
-{
-	return _vdso_data;
-}
+अटल __always_अंतरभूत स्थिर काष्ठा vdso_data *__arch_get_vdso_data(व्योम)
+अणु
+	वापस _vdso_data;
+पूर्ण
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __ASM_VDSO_GETTIMEOFDAY_H */
+#पूर्ण_अगर /* __ASM_VDSO_GETTIMखातापूर्णDAY_H */

@@ -1,56 +1,57 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2001-2007 Red Hat, Inc.
- * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2001-2007 Red Hat, Inc.
+ * Copyright तऊ 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-#ifndef _JFFS2_FS_I
-#define _JFFS2_FS_I
+#अगर_अघोषित _JFFS2_FS_I
+#घोषणा _JFFS2_FS_I
 
-#include <linux/rbtree.h>
-#include <linux/posix_acl.h>
-#include <linux/mutex.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/mutex.h>
 
-struct jffs2_inode_info {
-	/* We need an internal mutex similar to inode->i_mutex.
-	   Unfortunately, we can't used the existing one, because
+काष्ठा jffs2_inode_info अणु
+	/* We need an पूर्णांकernal mutex similar to inode->i_mutex.
+	   Unक्रमtunately, we can't used the existing one, because
 	   either the GC would deadlock, or we'd have to release it
-	   before letting GC proceed. Or we'd have to put ugliness
-	   into the GC code so it didn't attempt to obtain the i_mutex
-	   for the inode(s) which are already locked */
-	struct mutex sem;
+	   beक्रमe letting GC proceed. Or we'd have to put ugliness
+	   पूर्णांकo the GC code so it didn't attempt to obtain the i_mutex
+	   क्रम the inode(s) which are alपढ़ोy locked */
+	काष्ठा mutex sem;
 
-	/* The highest (datanode) version number used for this ino */
-	uint32_t highest_version;
+	/* The highest (datanode) version number used क्रम this ino */
+	uपूर्णांक32_t highest_version;
 
 	/* List of data fragments which make up the file */
-	struct rb_root fragtree;
+	काष्ठा rb_root fragtree;
 
 	/* There may be one datanode which isn't referenced by any of the
-	   above fragments, if it contains a metadata update but no actual
-	   data - or if this is a directory inode */
-	/* This also holds the _only_ dnode for symlinks/device nodes,
+	   above fragments, अगर it contains a metadata update but no actual
+	   data - or अगर this is a directory inode */
+	/* This also holds the _only_ dnode क्रम symlinks/device nodes,
 	   etc. */
-	struct jffs2_full_dnode *metadata;
+	काष्ठा jffs2_full_dnode *metadata;
 
 	/* Directory entries */
-	struct jffs2_full_dirent *dents;
+	काष्ठा jffs2_full_dirent *dents;
 
-	/* The target path if this is the inode of a symlink */
-	unsigned char *target;
+	/* The target path अगर this is the inode of a symlink */
+	अचिन्हित अक्षर *target;
 
-	/* Some stuff we just have to keep in-core at all times, for each inode. */
-	struct jffs2_inode_cache *inocache;
+	/* Some stuff we just have to keep in-core at all बार, क्रम each inode. */
+	काष्ठा jffs2_inode_cache *inocache;
 
-	uint16_t flags;
-	uint8_t usercompr;
-	struct inode vfs_inode;
-};
+	uपूर्णांक16_t flags;
+	uपूर्णांक8_t usercompr;
+	काष्ठा inode vfs_inode;
+पूर्ण;
 
-#endif /* _JFFS2_FS_I */
+#पूर्ण_अगर /* _JFFS2_FS_I */

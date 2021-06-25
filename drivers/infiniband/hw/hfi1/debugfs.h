@@ -1,43 +1,44 @@
-#ifndef _HFI1_DEBUGFS_H
-#define _HFI1_DEBUGFS_H
+<शैली गुरु>
+#अगर_अघोषित _HFI1_DEBUGFS_H
+#घोषणा _HFI1_DEBUGFS_H
 /*
  * Copyright(c) 2015, 2016, 2018 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -47,65 +48,65 @@
  *
  */
 
-struct hfi1_ibdev;
+काष्ठा hfi1_ibdev;
 
-#define DEBUGFS_SEQ_FILE_OPS(name) \
-static const struct seq_operations _##name##_seq_ops = { \
+#घोषणा DEBUGFS_SEQ_खाता_OPS(name) \
+अटल स्थिर काष्ठा seq_operations _##name##_seq_ops = अणु \
 	.start = _##name##_seq_start, \
 	.next  = _##name##_seq_next, \
 	.stop  = _##name##_seq_stop, \
 	.show  = _##name##_seq_show \
-}
+पूर्ण
 
-#define DEBUGFS_SEQ_FILE_OPEN(name) \
-static int _##name##_open(struct inode *inode, struct file *s) \
-{ \
-	struct seq_file *seq; \
-	int ret; \
-	ret =  seq_open(s, &_##name##_seq_ops); \
-	if (ret) \
-		return ret; \
-	seq = s->private_data; \
-	seq->private = inode->i_private; \
-	return 0; \
-}
+#घोषणा DEBUGFS_SEQ_खाता_OPEN(name) \
+अटल पूर्णांक _##name##_खोलो(काष्ठा inode *inode, काष्ठा file *s) \
+अणु \
+	काष्ठा seq_file *seq; \
+	पूर्णांक ret; \
+	ret =  seq_खोलो(s, &_##name##_seq_ops); \
+	अगर (ret) \
+		वापस ret; \
+	seq = s->निजी_data; \
+	seq->निजी = inode->i_निजी; \
+	वापस 0; \
+पूर्ण
 
-#define DEBUGFS_FILE_OPS(name) \
-static const struct file_operations _##name##_file_ops = { \
+#घोषणा DEBUGFS_खाता_OPS(name) \
+अटल स्थिर काष्ठा file_operations _##name##_file_ops = अणु \
 	.owner   = THIS_MODULE, \
-	.open    = _##name##_open, \
-	.read    = hfi1_seq_read, \
+	.खोलो    = _##name##_खोलो, \
+	.पढ़ो    = hfi1_seq_पढ़ो, \
 	.llseek  = hfi1_seq_lseek, \
 	.release = seq_release \
-}
+पूर्ण
 
 
-ssize_t hfi1_seq_read(struct file *file, char __user *buf, size_t size,
+sमाप_प्रकार hfi1_seq_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार size,
 		      loff_t *ppos);
-loff_t hfi1_seq_lseek(struct file *file, loff_t offset, int whence);
+loff_t hfi1_seq_lseek(काष्ठा file *file, loff_t offset, पूर्णांक whence);
 
-#ifdef CONFIG_DEBUG_FS
-void hfi1_dbg_ibdev_init(struct hfi1_ibdev *ibd);
-void hfi1_dbg_ibdev_exit(struct hfi1_ibdev *ibd);
-void hfi1_dbg_init(void);
-void hfi1_dbg_exit(void);
+#अगर_घोषित CONFIG_DEBUG_FS
+व्योम hfi1_dbg_ibdev_init(काष्ठा hfi1_ibdev *ibd);
+व्योम hfi1_dbg_ibdev_निकास(काष्ठा hfi1_ibdev *ibd);
+व्योम hfi1_dbg_init(व्योम);
+व्योम hfi1_dbg_निकास(व्योम);
 
-#else
-static inline void hfi1_dbg_ibdev_init(struct hfi1_ibdev *ibd)
-{
-}
+#अन्यथा
+अटल अंतरभूत व्योम hfi1_dbg_ibdev_init(काष्ठा hfi1_ibdev *ibd)
+अणु
+पूर्ण
 
-static inline void hfi1_dbg_ibdev_exit(struct hfi1_ibdev *ibd)
-{
-}
+अटल अंतरभूत व्योम hfi1_dbg_ibdev_निकास(काष्ठा hfi1_ibdev *ibd)
+अणु
+पूर्ण
 
-static inline void hfi1_dbg_init(void)
-{
-}
+अटल अंतरभूत व्योम hfi1_dbg_init(व्योम)
+अणु
+पूर्ण
 
-static inline void hfi1_dbg_exit(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम hfi1_dbg_निकास(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif                          /* _HFI1_DEBUGFS_H */
+#पूर्ण_अगर                          /* _HFI1_DEBUGFS_H */

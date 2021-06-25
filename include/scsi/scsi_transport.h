@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* 
- *  Transport specific attributes.
+ *  Transport specअगरic attributes.
  *
  *  Copyright (c) 2003 Silicon Graphics, Inc.  All rights reserved.
  */
-#ifndef SCSI_TRANSPORT_H
-#define SCSI_TRANSPORT_H
+#अगर_अघोषित SCSI_TRANSPORT_H
+#घोषणा SCSI_TRANSPORT_H
 
-#include <linux/transport_class.h>
-#include <linux/blkdev.h>
-#include <linux/bug.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_device.h>
+#समावेश <linux/transport_class.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/bug.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_device.h>
 
-struct scsi_transport_template {
+काष्ठा scsi_transport_ढाँचा अणु
 	/* the attribute containers */
-	struct transport_container host_attrs;
-	struct transport_container target_attrs;
-	struct transport_container device_attrs;
+	काष्ठा transport_container host_attrs;
+	काष्ठा transport_container target_attrs;
+	काष्ठा transport_container device_attrs;
 
 	/*
 	 * If set, called from sysfs and legacy procfs rescanning code.
 	 */
-	int (*user_scan)(struct Scsi_Host *, uint, uint, u64);
+	पूर्णांक (*user_scan)(काष्ठा Scsi_Host *, uपूर्णांक, uपूर्णांक, u64);
 
-	/* The size of the specific transport attribute structure (a
+	/* The size of the specअगरic transport attribute काष्ठाure (a
 	 * space of this size will be left at the end of the
-	 * scsi_* structure */
-	int	device_size;
-	int	device_private_offset;
-	int	target_size;
-	int	target_private_offset;
-	int	host_size;
-	/* no private offset for the host; there's an alternative mechanism */
+	 * scsi_* काष्ठाure */
+	पूर्णांक	device_size;
+	पूर्णांक	device_निजी_offset;
+	पूर्णांक	target_size;
+	पूर्णांक	target_निजी_offset;
+	पूर्णांक	host_size;
+	/* no निजी offset क्रम the host; there's an alternative mechanism */
 
 	/*
-	 * True if the transport wants to use a host-based work-queue
+	 * True अगर the transport wants to use a host-based work-queue
 	 */
-	unsigned int create_work_queue : 1;
+	अचिन्हित पूर्णांक create_work_queue : 1;
 
 	/*
-	 * Allows a transport to override the default error handler.
+	 * Allows a transport to override the शेष error handler.
 	 */
-	void (* eh_strategy_handler)(struct Scsi_Host *);
-};
+	व्योम (* eh_strategy_handler)(काष्ठा Scsi_Host *);
+पूर्ण;
 
-#define transport_class_to_shost(tc) \
+#घोषणा transport_class_to_shost(tc) \
 	dev_to_shost((tc)->parent)
 
 
-/* Private area maintenance. The driver requested allocations come
- * directly after the transport class allocations (if any).  The idea
+/* Private area मुख्यtenance. The driver requested allocations come
+ * directly after the transport class allocations (अगर any).  The idea
  * is that you *must* call these only once.  The code assumes that the
- * initial values are the ones the transport specific code requires */
-static inline void
-scsi_transport_reserve_target(struct scsi_transport_template * t, int space)
-{
-	BUG_ON(t->target_private_offset != 0);
-	t->target_private_offset = ALIGN(t->target_size, sizeof(void *));
-	t->target_size = t->target_private_offset + space;
-}
-static inline void
-scsi_transport_reserve_device(struct scsi_transport_template * t, int space)
-{
-	BUG_ON(t->device_private_offset != 0);
-	t->device_private_offset = ALIGN(t->device_size, sizeof(void *));
-	t->device_size = t->device_private_offset + space;
-}
-static inline void *
-scsi_transport_target_data(struct scsi_target *starget)
-{
-	struct Scsi_Host *shost = dev_to_shost(&starget->dev);
-	return (u8 *)starget->starget_data
-		+ shost->transportt->target_private_offset;
+ * initial values are the ones the transport specअगरic code requires */
+अटल अंतरभूत व्योम
+scsi_transport_reserve_target(काष्ठा scsi_transport_ढाँचा * t, पूर्णांक space)
+अणु
+	BUG_ON(t->target_निजी_offset != 0);
+	t->target_निजी_offset = ALIGN(t->target_size, माप(व्योम *));
+	t->target_size = t->target_निजी_offset + space;
+पूर्ण
+अटल अंतरभूत व्योम
+scsi_transport_reserve_device(काष्ठा scsi_transport_ढाँचा * t, पूर्णांक space)
+अणु
+	BUG_ON(t->device_निजी_offset != 0);
+	t->device_निजी_offset = ALIGN(t->device_size, माप(व्योम *));
+	t->device_size = t->device_निजी_offset + space;
+पूर्ण
+अटल अंतरभूत व्योम *
+scsi_transport_target_data(काष्ठा scsi_target *starget)
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(&starget->dev);
+	वापस (u8 *)starget->starget_data
+		+ shost->transportt->target_निजी_offset;
 
-}
-static inline void *
-scsi_transport_device_data(struct scsi_device *sdev)
-{
-	struct Scsi_Host *shost = sdev->host;
-	return (u8 *)sdev->sdev_data
-		+ shost->transportt->device_private_offset;
-}
+पूर्ण
+अटल अंतरभूत व्योम *
+scsi_transport_device_data(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा Scsi_Host *shost = sdev->host;
+	वापस (u8 *)sdev->sdev_data
+		+ shost->transportt->device_निजी_offset;
+पूर्ण
 
-void __scsi_init_queue(struct Scsi_Host *shost, struct request_queue *q);
+व्योम __scsi_init_queue(काष्ठा Scsi_Host *shost, काष्ठा request_queue *q);
 
-#endif /* SCSI_TRANSPORT_H */
+#पूर्ण_अगर /* SCSI_TRANSPORT_H */

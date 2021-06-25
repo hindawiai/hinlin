@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2008 Nir Tzachar <nir.tzachar@gmail.com>
+ * Copyright (C) 2008 Nir Tzaअक्षर <nir.tzaअक्षर@gmail.com>
  *
  * Derived from menuconfig.
  */
 
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <ncurses.h>
-#include <menu.h>
-#include <panel.h>
-#include <form.h>
+#समावेश <प्रकार.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <सीमा.स>
+#समावेश <मानकतर्क.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <ncurses.h>
+#समावेश <menu.h>
+#समावेश <panel.h>
+#समावेश <क्रमm.h>
 
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
+#समावेश <मानकपन.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
 
-#define max(a, b) ({\
+#घोषणा max(a, b) (अणु\
 		typeof(a) _a = a;\
 		typeof(b) _b = b;\
-		_a > _b ? _a : _b; })
+		_a > _b ? _a : _b; पूर्ण)
 
-#define min(a, b) ({\
+#घोषणा min(a, b) (अणु\
 		typeof(a) _a = a;\
 		typeof(b) _b = b;\
-		_a < _b ? _a : _b; })
+		_a < _b ? _a : _b; पूर्ण)
 
-extern int attr_normal;
-extern int attr_main_heading;
-extern int attr_main_menu_box;
-extern int attr_main_menu_fore;
-extern int attr_main_menu_back;
-extern int attr_main_menu_grey;
-extern int attr_main_menu_heading;
-extern int attr_scrollwin_text;
-extern int attr_scrollwin_heading;
-extern int attr_scrollwin_box;
-extern int attr_dialog_text;
-extern int attr_dialog_menu_fore;
-extern int attr_dialog_menu_back;
-extern int attr_dialog_box;
-extern int attr_input_box;
-extern int attr_input_heading;
-extern int attr_input_text;
-extern int attr_input_field;
-extern int attr_function_text;
-extern int attr_function_highlight;
+बाह्य पूर्णांक attr_normal;
+बाह्य पूर्णांक attr_मुख्य_heading;
+बाह्य पूर्णांक attr_मुख्य_menu_box;
+बाह्य पूर्णांक attr_मुख्य_menu_क्रमe;
+बाह्य पूर्णांक attr_मुख्य_menu_back;
+बाह्य पूर्णांक attr_मुख्य_menu_grey;
+बाह्य पूर्णांक attr_मुख्य_menu_heading;
+बाह्य पूर्णांक attr_scrollwin_text;
+बाह्य पूर्णांक attr_scrollwin_heading;
+बाह्य पूर्णांक attr_scrollwin_box;
+बाह्य पूर्णांक attr_dialog_text;
+बाह्य पूर्णांक attr_dialog_menu_क्रमe;
+बाह्य पूर्णांक attr_dialog_menu_back;
+बाह्य पूर्णांक attr_dialog_box;
+बाह्य पूर्णांक attr_input_box;
+बाह्य पूर्णांक attr_input_heading;
+बाह्य पूर्णांक attr_input_text;
+बाह्य पूर्णांक attr_input_field;
+बाह्य पूर्णांक attr_function_text;
+बाह्य पूर्णांक attr_function_highlight;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	F_HELP = 1,
 	F_SYMBOL = 2,
 	F_INSTS = 3,
@@ -63,21 +64,21 @@ typedef enum {
 	F_LOAD = 7,
 	F_SEARCH = 8,
 	F_EXIT = 9,
-} function_key;
+पूर्ण function_key;
 
-void set_colors(void);
+व्योम set_colors(व्योम);
 
-/* this changes the windows attributes !!! */
-void print_in_middle(WINDOW *win, int y, int width, const char *str, int attrs);
-int get_line_length(const char *line);
-int get_line_no(const char *text);
-const char *get_line(const char *text, int line_no);
-void fill_window(WINDOW *win, const char *text);
-int btn_dialog(WINDOW *main_window, const char *msg, int btn_num, ...);
-int dialog_inputbox(WINDOW *main_window,
-		const char *title, const char *prompt,
-		const char *init, char **resultp, int *result_len);
-void refresh_all_windows(WINDOW *main_window);
-void show_scroll_win(WINDOW *main_window,
-		const char *title,
-		const char *text);
+/* this changes the winकरोws attributes !!! */
+व्योम prपूर्णांक_in_middle(WINDOW *win, पूर्णांक y, पूर्णांक width, स्थिर अक्षर *str, पूर्णांक attrs);
+पूर्णांक get_line_length(स्थिर अक्षर *line);
+पूर्णांक get_line_no(स्थिर अक्षर *text);
+स्थिर अक्षर *get_line(स्थिर अक्षर *text, पूर्णांक line_no);
+व्योम fill_winकरोw(WINDOW *win, स्थिर अक्षर *text);
+पूर्णांक btn_dialog(WINDOW *मुख्य_winकरोw, स्थिर अक्षर *msg, पूर्णांक btn_num, ...);
+पूर्णांक dialog_inputbox(WINDOW *मुख्य_winकरोw,
+		स्थिर अक्षर *title, स्थिर अक्षर *prompt,
+		स्थिर अक्षर *init, अक्षर **resultp, पूर्णांक *result_len);
+व्योम refresh_all_winकरोws(WINDOW *मुख्य_winकरोw);
+व्योम show_scroll_win(WINDOW *मुख्य_winकरोw,
+		स्थिर अक्षर *title,
+		स्थिर अक्षर *text);

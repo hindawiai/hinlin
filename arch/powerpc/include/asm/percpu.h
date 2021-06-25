@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_PERCPU_H_
-#define _ASM_POWERPC_PERCPU_H_
-#ifdef __powerpc64__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_PERCPU_H_
+#घोषणा _ASM_POWERPC_PERCPU_H_
+#अगर_घोषित __घातerpc64__
 
 /*
- * Same as asm-generic/percpu.h, except that we store the per cpu offset
+ * Same as यंत्र-generic/percpu.h, except that we store the per cpu offset
  * in the paca. Based on the x86-64 implementation.
  */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#define __my_cpu_offset local_paca->data_offset
+#घोषणा __my_cpu_offset local_paca->data_offset
 
-#endif /* CONFIG_SMP */
-#endif /* __powerpc64__ */
+#पूर्ण_अगर /* CONFIG_SMP */
+#पूर्ण_अगर /* __घातerpc64__ */
 
-#include <asm-generic/percpu.h>
+#समावेश <यंत्र-generic/percpu.h>
 
-#include <asm/paca.h>
+#समावेश <यंत्र/paca.h>
 
-#endif /* _ASM_POWERPC_PERCPU_H_ */
+#पूर्ण_अगर /* _ASM_POWERPC_PERCPU_H_ */

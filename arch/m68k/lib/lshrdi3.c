@@ -1,9 +1,10 @@
+<शैली गुरु>
 /* lshrdi3.c extracted from gcc-2.7.2/libgcc2.c which is: */
 /* Copyright (C) 1989, 1992, 1993, 1994, 1995 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
-GNU CC is free software; you can redistribute it and/or modify
+GNU CC is मुक्त software; you can redistribute it and/or modअगरy
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation; either version 2, or (at your option)
 any later version.
@@ -11,51 +12,51 @@ any later version.
 GNU CC is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details. */
+GNU General Public License क्रम more details. */
 
-#include <linux/compiler.h>
-#include <linux/export.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/export.h>
 
-#define BITS_PER_UNIT 8
+#घोषणा BITS_PER_UNIT 8
 
-typedef		 int SItype	__mode(SI);
-typedef unsigned int USItype	__mode(SI);
-typedef		 int DItype	__mode(DI);
-typedef int word_type           __mode(__word__);
+प्रकार		 पूर्णांक SItype	__mode(SI);
+प्रकार अचिन्हित पूर्णांक USItype	__mode(SI);
+प्रकार		 पूर्णांक DItype	__mode(DI);
+प्रकार पूर्णांक word_type           __mode(__word__);
 
-struct DIstruct {SItype high, low;};
+काष्ठा DIकाष्ठा अणुSItype high, low;पूर्ण;
 
-typedef union
-{
-  struct DIstruct s;
+प्रकार जोड़
+अणु
+  काष्ठा DIकाष्ठा s;
   DItype ll;
-} DIunion;
+पूर्ण DIजोड़;
 
 DItype
 __lshrdi3 (DItype u, word_type b)
-{
-  DIunion w;
+अणु
+  DIजोड़ w;
   word_type bm;
-  DIunion uu;
+  DIजोड़ uu;
 
-  if (b == 0)
-    return u;
+  अगर (b == 0)
+    वापस u;
 
   uu.ll = u;
 
-  bm = (sizeof (SItype) * BITS_PER_UNIT) - b;
-  if (bm <= 0)
-    {
+  bm = (माप (SItype) * BITS_PER_UNIT) - b;
+  अगर (bm <= 0)
+    अणु
       w.s.high = 0;
       w.s.low = (USItype)uu.s.high >> -bm;
-    }
-  else
-    {
+    पूर्ण
+  अन्यथा
+    अणु
       USItype carries = (USItype)uu.s.high << bm;
       w.s.high = (USItype)uu.s.high >> b;
       w.s.low = ((USItype)uu.s.low >> b) | carries;
-    }
+    पूर्ण
 
-  return w.ll;
-}
+  वापस w.ll;
+पूर्ण
 EXPORT_SYMBOL(__lshrdi3);

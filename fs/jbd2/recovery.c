@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * linux/fs/jbd2/recovery.c
  *
@@ -6,308 +7,308 @@
  *
  * Copyright 1999-2000 Red Hat Software --- All Rights Reserved
  *
- * Journal recovery routines for the generic filesystem journaling code;
- * part of the ext2fs journaling system.
+ * Journal recovery routines क्रम the generic fileप्रणाली journaling code;
+ * part of the ext2fs journaling प्रणाली.
  */
 
-#ifndef __KERNEL__
-#include "jfs_user.h"
-#else
-#include <linux/time.h>
-#include <linux/fs.h>
-#include <linux/jbd2.h>
-#include <linux/errno.h>
-#include <linux/crc32.h>
-#include <linux/blkdev.h>
-#endif
+#अगर_अघोषित __KERNEL__
+#समावेश "jfs_user.h"
+#अन्यथा
+#समावेश <linux/समय.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/jbd2.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/crc32.h>
+#समावेश <linux/blkdev.h>
+#पूर्ण_अगर
 
 /*
- * Maintain information about the progress of the recovery job, so that
- * the different passes can carry information between them.
+ * Maपूर्णांकain inक्रमmation about the progress of the recovery job, so that
+ * the dअगरferent passes can carry inक्रमmation between them.
  */
-struct recovery_info
-{
+काष्ठा recovery_info
+अणु
 	tid_t		start_transaction;
 	tid_t		end_transaction;
 
-	int		nr_replays;
-	int		nr_revokes;
-	int		nr_revoke_hits;
-};
+	पूर्णांक		nr_replays;
+	पूर्णांक		nr_revokes;
+	पूर्णांक		nr_revoke_hits;
+पूर्ण;
 
-static int do_one_pass(journal_t *journal,
-				struct recovery_info *info, enum passtype pass);
-static int scan_revoke_records(journal_t *, struct buffer_head *,
-				tid_t, struct recovery_info *);
+अटल पूर्णांक करो_one_pass(journal_t *journal,
+				काष्ठा recovery_info *info, क्रमागत passtype pass);
+अटल पूर्णांक scan_revoke_records(journal_t *, काष्ठा buffer_head *,
+				tid_t, काष्ठा recovery_info *);
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-/* Release readahead buffers after use */
-static void journal_brelse_array(struct buffer_head *b[], int n)
-{
-	while (--n >= 0)
-		brelse (b[n]);
-}
+/* Release पढ़ोahead buffers after use */
+अटल व्योम journal_brअन्यथा_array(काष्ठा buffer_head *b[], पूर्णांक n)
+अणु
+	जबतक (--n >= 0)
+		brअन्यथा (b[n]);
+पूर्ण
 
 
 /*
- * When reading from the journal, we are going through the block device
- * layer directly and so there is no readahead being done for us.  We
- * need to implement any readahead ourselves if we want it to happen at
- * all.  Recovery is basically one long sequential read, so make sure we
- * do the IO in reasonably large chunks.
+ * When पढ़ोing from the journal, we are going through the block device
+ * layer directly and so there is no पढ़ोahead being करोne क्रम us.  We
+ * need to implement any पढ़ोahead ourselves अगर we want it to happen at
+ * all.  Recovery is basically one दीर्घ sequential पढ़ो, so make sure we
+ * करो the IO in reasonably large chunks.
  *
  * This is not so critical that we need to be enormously clever about
- * the readahead size, though.  128K is a purely arbitrary, good-enough
+ * the पढ़ोahead size, though.  128K is a purely arbitrary, good-enough
  * fixed value.
  */
 
-#define MAXBUF 8
-static int do_readahead(journal_t *journal, unsigned int start)
-{
-	int err;
-	unsigned int max, nbufs, next;
-	unsigned long long blocknr;
-	struct buffer_head *bh;
+#घोषणा MAXBUF 8
+अटल पूर्णांक करो_पढ़ोahead(journal_t *journal, अचिन्हित पूर्णांक start)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक max, nbufs, next;
+	अचिन्हित दीर्घ दीर्घ blocknr;
+	काष्ठा buffer_head *bh;
 
-	struct buffer_head * bufs[MAXBUF];
+	काष्ठा buffer_head * bufs[MAXBUF];
 
-	/* Do up to 128K of readahead */
+	/* Do up to 128K of पढ़ोahead */
 	max = start + (128 * 1024 / journal->j_blocksize);
-	if (max > journal->j_total_len)
+	अगर (max > journal->j_total_len)
 		max = journal->j_total_len;
 
-	/* Do the readahead itself.  We'll submit MAXBUF buffer_heads at
-	 * a time to the block device IO layer. */
+	/* Do the पढ़ोahead itself.  We'll submit MAXBUF buffer_heads at
+	 * a समय to the block device IO layer. */
 
 	nbufs = 0;
 
-	for (next = start; next < max; next++) {
+	क्रम (next = start; next < max; next++) अणु
 		err = jbd2_journal_bmap(journal, next, &blocknr);
 
-		if (err) {
-			printk(KERN_ERR "JBD2: bad block at offset %u\n",
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "JBD2: bad block at offset %u\n",
 				next);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
 		bh = __getblk(journal->j_dev, blocknr, journal->j_blocksize);
-		if (!bh) {
+		अगर (!bh) अणु
 			err = -ENOMEM;
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		if (!buffer_uptodate(bh) && !buffer_locked(bh)) {
+		अगर (!buffer_uptodate(bh) && !buffer_locked(bh)) अणु
 			bufs[nbufs++] = bh;
-			if (nbufs == MAXBUF) {
+			अगर (nbufs == MAXBUF) अणु
 				ll_rw_block(REQ_OP_READ, 0, nbufs, bufs);
-				journal_brelse_array(bufs, nbufs);
+				journal_brअन्यथा_array(bufs, nbufs);
 				nbufs = 0;
-			}
-		} else
-			brelse(bh);
-	}
+			पूर्ण
+		पूर्ण अन्यथा
+			brअन्यथा(bh);
+	पूर्ण
 
-	if (nbufs)
+	अगर (nbufs)
 		ll_rw_block(REQ_OP_READ, 0, nbufs, bufs);
 	err = 0;
 
 failed:
-	if (nbufs)
-		journal_brelse_array(bufs, nbufs);
-	return err;
-}
+	अगर (nbufs)
+		journal_brअन्यथा_array(bufs, nbufs);
+	वापस err;
+पूर्ण
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
 
 /*
  * Read a block from the journal
  */
 
-static int jread(struct buffer_head **bhp, journal_t *journal,
-		 unsigned int offset)
-{
-	int err;
-	unsigned long long blocknr;
-	struct buffer_head *bh;
+अटल पूर्णांक jपढ़ो(काष्ठा buffer_head **bhp, journal_t *journal,
+		 अचिन्हित पूर्णांक offset)
+अणु
+	पूर्णांक err;
+	अचिन्हित दीर्घ दीर्घ blocknr;
+	काष्ठा buffer_head *bh;
 
-	*bhp = NULL;
+	*bhp = शून्य;
 
-	if (offset >= journal->j_total_len) {
-		printk(KERN_ERR "JBD2: corrupted journal superblock\n");
-		return -EFSCORRUPTED;
-	}
+	अगर (offset >= journal->j_total_len) अणु
+		prपूर्णांकk(KERN_ERR "JBD2: corrupted journal superblock\n");
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
 	err = jbd2_journal_bmap(journal, offset, &blocknr);
 
-	if (err) {
-		printk(KERN_ERR "JBD2: bad block at offset %u\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "JBD2: bad block at offset %u\n",
 			offset);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	bh = __getblk(journal->j_dev, blocknr, journal->j_blocksize);
-	if (!bh)
-		return -ENOMEM;
+	अगर (!bh)
+		वापस -ENOMEM;
 
-	if (!buffer_uptodate(bh)) {
-		/* If this is a brand new buffer, start readahead.
-                   Otherwise, we assume we are already reading it.  */
-		if (!buffer_req(bh))
-			do_readahead(journal, offset);
-		wait_on_buffer(bh);
-	}
+	अगर (!buffer_uptodate(bh)) अणु
+		/* If this is a bअक्रम new buffer, start पढ़ोahead.
+                   Otherwise, we assume we are alपढ़ोy पढ़ोing it.  */
+		अगर (!buffer_req(bh))
+			करो_पढ़ोahead(journal, offset);
+		रुको_on_buffer(bh);
+	पूर्ण
 
-	if (!buffer_uptodate(bh)) {
-		printk(KERN_ERR "JBD2: Failed to read block at offset %u\n",
+	अगर (!buffer_uptodate(bh)) अणु
+		prपूर्णांकk(KERN_ERR "JBD2: Failed to read block at offset %u\n",
 			offset);
-		brelse(bh);
-		return -EIO;
-	}
+		brअन्यथा(bh);
+		वापस -EIO;
+	पूर्ण
 
 	*bhp = bh;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jbd2_descriptor_block_csum_verify(journal_t *j, void *buf)
-{
-	struct jbd2_journal_block_tail *tail;
+अटल पूर्णांक jbd2_descriptor_block_csum_verअगरy(journal_t *j, व्योम *buf)
+अणु
+	काष्ठा jbd2_journal_block_tail *tail;
 	__be32 provided;
 	__u32 calculated;
 
-	if (!jbd2_journal_has_csum_v2or3(j))
-		return 1;
+	अगर (!jbd2_journal_has_csum_v2or3(j))
+		वापस 1;
 
-	tail = (struct jbd2_journal_block_tail *)(buf + j->j_blocksize -
-			sizeof(struct jbd2_journal_block_tail));
+	tail = (काष्ठा jbd2_journal_block_tail *)(buf + j->j_blocksize -
+			माप(काष्ठा jbd2_journal_block_tail));
 	provided = tail->t_checksum;
 	tail->t_checksum = 0;
 	calculated = jbd2_chksum(j, j->j_csum_seed, buf, j->j_blocksize);
 	tail->t_checksum = provided;
 
-	return provided == cpu_to_be32(calculated);
-}
+	वापस provided == cpu_to_be32(calculated);
+पूर्ण
 
 /*
  * Count the number of in-use tags in a journal descriptor block.
  */
 
-static int count_tags(journal_t *journal, struct buffer_head *bh)
-{
-	char *			tagp;
+अटल पूर्णांक count_tags(journal_t *journal, काष्ठा buffer_head *bh)
+अणु
+	अक्षर *			tagp;
 	journal_block_tag_t *	tag;
-	int			nr = 0, size = journal->j_blocksize;
-	int			tag_bytes = journal_tag_bytes(journal);
+	पूर्णांक			nr = 0, size = journal->j_blocksize;
+	पूर्णांक			tag_bytes = journal_tag_bytes(journal);
 
-	if (jbd2_journal_has_csum_v2or3(journal))
-		size -= sizeof(struct jbd2_journal_block_tail);
+	अगर (jbd2_journal_has_csum_v2or3(journal))
+		size -= माप(काष्ठा jbd2_journal_block_tail);
 
-	tagp = &bh->b_data[sizeof(journal_header_t)];
+	tagp = &bh->b_data[माप(journal_header_t)];
 
-	while ((tagp - bh->b_data + tag_bytes) <= size) {
+	जबतक ((tagp - bh->b_data + tag_bytes) <= size) अणु
 		tag = (journal_block_tag_t *) tagp;
 
 		nr++;
 		tagp += tag_bytes;
-		if (!(tag->t_flags & cpu_to_be16(JBD2_FLAG_SAME_UUID)))
+		अगर (!(tag->t_flags & cpu_to_be16(JBD2_FLAG_SAME_UUID)))
 			tagp += 16;
 
-		if (tag->t_flags & cpu_to_be16(JBD2_FLAG_LAST_TAG))
-			break;
-	}
+		अगर (tag->t_flags & cpu_to_be16(JBD2_FLAG_LAST_TAG))
+			अवरोध;
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
 
 /* Make sure we wrap around the log correctly! */
-#define wrap(journal, var)						\
-do {									\
-	unsigned long _wrap_last =					\
+#घोषणा wrap(journal, var)						\
+करो अणु									\
+	अचिन्हित दीर्घ _wrap_last =					\
 		jbd2_has_feature_fast_commit(journal) ?			\
 			(journal)->j_fc_last : (journal)->j_last;	\
 									\
-	if (var >= _wrap_last)						\
+	अगर (var >= _wrap_last)						\
 		var -= (_wrap_last - (journal)->j_first);		\
-} while (0)
+पूर्ण जबतक (0)
 
-static int fc_do_one_pass(journal_t *journal,
-			  struct recovery_info *info, enum passtype pass)
-{
-	unsigned int expected_commit_id = info->end_transaction;
-	unsigned long next_fc_block;
-	struct buffer_head *bh;
-	int err = 0;
+अटल पूर्णांक fc_करो_one_pass(journal_t *journal,
+			  काष्ठा recovery_info *info, क्रमागत passtype pass)
+अणु
+	अचिन्हित पूर्णांक expected_commit_id = info->end_transaction;
+	अचिन्हित दीर्घ next_fc_block;
+	काष्ठा buffer_head *bh;
+	पूर्णांक err = 0;
 
 	next_fc_block = journal->j_fc_first;
-	if (!journal->j_fc_replay_callback)
-		return 0;
+	अगर (!journal->j_fc_replay_callback)
+		वापस 0;
 
-	while (next_fc_block <= journal->j_fc_last) {
+	जबतक (next_fc_block <= journal->j_fc_last) अणु
 		jbd_debug(3, "Fast commit replay: next block %ld\n",
 			  next_fc_block);
-		err = jread(&bh, journal, next_fc_block);
-		if (err) {
+		err = jपढ़ो(&bh, journal, next_fc_block);
+		अगर (err) अणु
 			jbd_debug(3, "Fast commit replay: read error\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		err = journal->j_fc_replay_callback(journal, bh, pass,
 					next_fc_block - journal->j_fc_first,
 					expected_commit_id);
 		next_fc_block++;
-		if (err < 0 || err == JBD2_FC_REPLAY_STOP)
-			break;
+		अगर (err < 0 || err == JBD2_FC_REPLAY_STOP)
+			अवरोध;
 		err = 0;
-	}
+	पूर्ण
 
-	if (err)
+	अगर (err)
 		jbd_debug(3, "Fast commit replay failed, err = %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * jbd2_journal_recover - recovers a on-disk journal
  * @journal: the journal to recover
  *
- * The primary function for recovering the log contents when mounting a
+ * The primary function क्रम recovering the log contents when mounting a
  * journaled device.
  *
- * Recovery is done in three passes.  In the first pass, we look for the
+ * Recovery is करोne in three passes.  In the first pass, we look क्रम the
  * end of the log.  In the second, we assemble the list of revoke
  * blocks.  In the third and final pass, we replay any un-revoked blocks
  * in the log.
  */
-int jbd2_journal_recover(journal_t *journal)
-{
-	int			err, err2;
+पूर्णांक jbd2_journal_recover(journal_t *journal)
+अणु
+	पूर्णांक			err, err2;
 	journal_superblock_t *	sb;
 
-	struct recovery_info	info;
+	काष्ठा recovery_info	info;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 	sb = journal->j_superblock;
 
 	/*
 	 * The journal superblock's s_start field (the current log head)
-	 * is always zero if, and only if, the journal was cleanly
+	 * is always zero अगर, and only अगर, the journal was cleanly
 	 * unmounted.
 	 */
 
-	if (!sb->s_start) {
+	अगर (!sb->s_start) अणु
 		jbd_debug(1, "No recovery required, last transaction %d\n",
 			  be32_to_cpu(sb->s_sequence));
 		journal->j_transaction_sequence = be32_to_cpu(sb->s_sequence) + 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	err = do_one_pass(journal, &info, PASS_SCAN);
-	if (!err)
-		err = do_one_pass(journal, &info, PASS_REVOKE);
-	if (!err)
-		err = do_one_pass(journal, &info, PASS_REPLAY);
+	err = करो_one_pass(journal, &info, PASS_SCAN);
+	अगर (!err)
+		err = करो_one_pass(journal, &info, PASS_REVOKE);
+	अगर (!err)
+		err = करो_one_pass(journal, &info, PASS_REPLAY);
 
 	jbd_debug(1, "JBD2: recovery, exit status %d, "
 		  "recovered transactions %u to %u\n",
@@ -321,107 +322,107 @@ int jbd2_journal_recover(journal_t *journal)
 
 	jbd2_journal_clear_revoke(journal);
 	err2 = sync_blockdev(journal->j_fs_dev);
-	if (!err)
+	अगर (!err)
 		err = err2;
 	/* Make sure all replayed data is on permanent storage */
-	if (journal->j_flags & JBD2_BARRIER) {
+	अगर (journal->j_flags & JBD2_BARRIER) अणु
 		err2 = blkdev_issue_flush(journal->j_fs_dev);
-		if (!err)
+		अगर (!err)
 			err = err2;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /**
- * jbd2_journal_skip_recovery - Start journal and wipe exiting records
+ * jbd2_journal_skip_recovery - Start journal and wipe निकासing records
  * @journal: journal to startup
  *
- * Locate any valid recovery information from the journal and set up the
- * journal structures in memory to ignore it (presumably because the
+ * Locate any valid recovery inक्रमmation from the journal and set up the
+ * journal काष्ठाures in memory to ignore it (presumably because the
  * caller has evidence that it is out of date).
- * This function doesn't appear to be exported..
+ * This function करोesn't appear to be exported..
  *
- * We perform one pass over the journal to allow us to tell the user how
- * much recovery information is being erased, and to let us initialise
+ * We perक्रमm one pass over the journal to allow us to tell the user how
+ * much recovery inक्रमmation is being erased, and to let us initialise
  * the journal transaction sequence numbers to the next unused ID.
  */
-int jbd2_journal_skip_recovery(journal_t *journal)
-{
-	int			err;
+पूर्णांक jbd2_journal_skip_recovery(journal_t *journal)
+अणु
+	पूर्णांक			err;
 
-	struct recovery_info	info;
+	काष्ठा recovery_info	info;
 
-	memset (&info, 0, sizeof(info));
+	स_रखो (&info, 0, माप(info));
 
-	err = do_one_pass(journal, &info, PASS_SCAN);
+	err = करो_one_pass(journal, &info, PASS_SCAN);
 
-	if (err) {
-		printk(KERN_ERR "JBD2: error %d scanning journal\n", err);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "JBD2: error %d scanning journal\n", err);
 		++journal->j_transaction_sequence;
-	} else {
-#ifdef CONFIG_JBD2_DEBUG
-		int dropped = info.end_transaction - 
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_JBD2_DEBUG
+		पूर्णांक dropped = info.end_transaction - 
 			be32_to_cpu(journal->j_superblock->s_sequence);
 		jbd_debug(1,
 			  "JBD2: ignoring %d transaction%s from the journal.\n",
 			  dropped, (dropped == 1) ? "" : "s");
-#endif
+#पूर्ण_अगर
 		journal->j_transaction_sequence = ++info.end_transaction;
-	}
+	पूर्ण
 
 	journal->j_tail = 0;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline unsigned long long read_tag_block(journal_t *journal,
+अटल अंतरभूत अचिन्हित दीर्घ दीर्घ पढ़ो_tag_block(journal_t *journal,
 						journal_block_tag_t *tag)
-{
-	unsigned long long block = be32_to_cpu(tag->t_blocknr);
-	if (jbd2_has_feature_64bit(journal))
+अणु
+	अचिन्हित दीर्घ दीर्घ block = be32_to_cpu(tag->t_blocknr);
+	अगर (jbd2_has_feature_64bit(journal))
 		block |= (u64)be32_to_cpu(tag->t_blocknr_high) << 32;
-	return block;
-}
+	वापस block;
+पूर्ण
 
 /*
- * calc_chksums calculates the checksums for the blocks described in the
+ * calc_chksums calculates the checksums क्रम the blocks described in the
  * descriptor block.
  */
-static int calc_chksums(journal_t *journal, struct buffer_head *bh,
-			unsigned long *next_log_block, __u32 *crc32_sum)
-{
-	int i, num_blks, err;
-	unsigned long io_block;
-	struct buffer_head *obh;
+अटल पूर्णांक calc_chksums(journal_t *journal, काष्ठा buffer_head *bh,
+			अचिन्हित दीर्घ *next_log_block, __u32 *crc32_sum)
+अणु
+	पूर्णांक i, num_blks, err;
+	अचिन्हित दीर्घ io_block;
+	काष्ठा buffer_head *obh;
 
 	num_blks = count_tags(journal, bh);
 	/* Calculate checksum of the descriptor block. */
-	*crc32_sum = crc32_be(*crc32_sum, (void *)bh->b_data, bh->b_size);
+	*crc32_sum = crc32_be(*crc32_sum, (व्योम *)bh->b_data, bh->b_size);
 
-	for (i = 0; i < num_blks; i++) {
+	क्रम (i = 0; i < num_blks; i++) अणु
 		io_block = (*next_log_block)++;
 		wrap(journal, *next_log_block);
-		err = jread(&obh, journal, io_block);
-		if (err) {
-			printk(KERN_ERR "JBD2: IO error %d recovering block "
+		err = jपढ़ो(&obh, journal, io_block);
+		अगर (err) अणु
+			prपूर्णांकk(KERN_ERR "JBD2: IO error %d recovering block "
 				"%lu in log\n", err, io_block);
-			return 1;
-		} else {
-			*crc32_sum = crc32_be(*crc32_sum, (void *)obh->b_data,
+			वापस 1;
+		पूर्ण अन्यथा अणु
+			*crc32_sum = crc32_be(*crc32_sum, (व्योम *)obh->b_data,
 				     obh->b_size);
-		}
+		पूर्ण
 		put_bh(obh);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int jbd2_commit_block_csum_verify(journal_t *j, void *buf)
-{
-	struct commit_header *h;
+अटल पूर्णांक jbd2_commit_block_csum_verअगरy(journal_t *j, व्योम *buf)
+अणु
+	काष्ठा commit_header *h;
 	__be32 provided;
 	__u32 calculated;
 
-	if (!jbd2_journal_has_csum_v2or3(j))
-		return 1;
+	अगर (!jbd2_journal_has_csum_v2or3(j))
+		वापस 1;
 
 	h = buf;
 	provided = h->h_chksum[0];
@@ -429,46 +430,46 @@ static int jbd2_commit_block_csum_verify(journal_t *j, void *buf)
 	calculated = jbd2_chksum(j, j->j_csum_seed, buf, j->j_blocksize);
 	h->h_chksum[0] = provided;
 
-	return provided == cpu_to_be32(calculated);
-}
+	वापस provided == cpu_to_be32(calculated);
+पूर्ण
 
-static int jbd2_block_tag_csum_verify(journal_t *j, journal_block_tag_t *tag,
-				      void *buf, __u32 sequence)
-{
+अटल पूर्णांक jbd2_block_tag_csum_verअगरy(journal_t *j, journal_block_tag_t *tag,
+				      व्योम *buf, __u32 sequence)
+अणु
 	journal_block_tag3_t *tag3 = (journal_block_tag3_t *)tag;
 	__u32 csum32;
 	__be32 seq;
 
-	if (!jbd2_journal_has_csum_v2or3(j))
-		return 1;
+	अगर (!jbd2_journal_has_csum_v2or3(j))
+		वापस 1;
 
 	seq = cpu_to_be32(sequence);
-	csum32 = jbd2_chksum(j, j->j_csum_seed, (__u8 *)&seq, sizeof(seq));
+	csum32 = jbd2_chksum(j, j->j_csum_seed, (__u8 *)&seq, माप(seq));
 	csum32 = jbd2_chksum(j, csum32, buf, j->j_blocksize);
 
-	if (jbd2_has_feature_csum3(j))
-		return tag3->t_checksum == cpu_to_be32(csum32);
-	else
-		return tag->t_checksum == cpu_to_be16(csum32);
-}
+	अगर (jbd2_has_feature_csum3(j))
+		वापस tag3->t_checksum == cpu_to_be32(csum32);
+	अन्यथा
+		वापस tag->t_checksum == cpu_to_be16(csum32);
+पूर्ण
 
-static int do_one_pass(journal_t *journal,
-			struct recovery_info *info, enum passtype pass)
-{
-	unsigned int		first_commit_ID, next_commit_ID;
-	unsigned long		next_log_block;
-	int			err, success = 0;
+अटल पूर्णांक करो_one_pass(journal_t *journal,
+			काष्ठा recovery_info *info, क्रमागत passtype pass)
+अणु
+	अचिन्हित पूर्णांक		first_commit_ID, next_commit_ID;
+	अचिन्हित दीर्घ		next_log_block;
+	पूर्णांक			err, success = 0;
 	journal_superblock_t *	sb;
-	journal_header_t *	tmp;
-	struct buffer_head *	bh;
-	unsigned int		sequence;
-	int			blocktype;
-	int			tag_bytes = journal_tag_bytes(journal);
+	journal_header_t *	पंचांगp;
+	काष्ठा buffer_head *	bh;
+	अचिन्हित पूर्णांक		sequence;
+	पूर्णांक			blocktype;
+	पूर्णांक			tag_bytes = journal_tag_bytes(journal);
 	__u32			crc32_sum = ~0; /* Transactional Checksums */
-	int			descr_csum_size = 0;
-	int			block_error = 0;
-	bool			need_check_commit_time = false;
-	__u64			last_trans_commit_time = 0, commit_time;
+	पूर्णांक			descr_csum_size = 0;
+	पूर्णांक			block_error = 0;
+	bool			need_check_commit_समय = false;
+	__u64			last_trans_commit_समय = 0, commit_समय;
 
 	/*
 	 * First thing is to establish what we expect to find in the log
@@ -481,7 +482,7 @@ static int do_one_pass(journal_t *journal,
 	next_log_block = be32_to_cpu(sb->s_start);
 
 	first_commit_ID = next_commit_ID;
-	if (pass == PASS_SCAN)
+	अगर (pass == PASS_SCAN)
 		info->start_transaction = first_commit_ID;
 
 	jbd_debug(1, "Starting recovery pass %d\n", pass);
@@ -489,26 +490,26 @@ static int do_one_pass(journal_t *journal,
 	/*
 	 * Now we walk through the log, transaction by transaction,
 	 * making sure that each transaction has a commit block in the
-	 * expected place.  Each complete transaction gets replayed back
-	 * into the main filesystem.
+	 * expected place.  Each complete transaction माला_लो replayed back
+	 * पूर्णांकo the मुख्य fileप्रणाली.
 	 */
 
-	while (1) {
-		int			flags;
-		char *			tagp;
+	जबतक (1) अणु
+		पूर्णांक			flags;
+		अक्षर *			tagp;
 		journal_block_tag_t *	tag;
-		struct buffer_head *	obh;
-		struct buffer_head *	nbh;
+		काष्ठा buffer_head *	obh;
+		काष्ठा buffer_head *	nbh;
 
 		cond_resched();
 
-		/* If we already know where to stop the log traversal,
+		/* If we alपढ़ोy know where to stop the log traversal,
 		 * check right now that we haven't gone past the end of
 		 * the log. */
 
-		if (pass != PASS_SCAN)
-			if (tid_geq(next_commit_ID, info->end_transaction))
-				break;
+		अगर (pass != PASS_SCAN)
+			अगर (tid_geq(next_commit_ID, info->end_transaction))
+				अवरोध;
 
 		jbd_debug(2, "Scanning for sequence ID %u at %lu/%lu\n",
 			  next_commit_ID, next_log_block,
@@ -520,9 +521,9 @@ static int do_one_pass(journal_t *journal,
 		 * record. */
 
 		jbd_debug(3, "JBD2: checking block %ld\n", next_log_block);
-		err = jread(&bh, journal, next_log_block);
-		if (err)
-			goto failed;
+		err = jपढ़ो(&bh, journal, next_log_block);
+		अगर (err)
+			जाओ failed;
 
 		next_log_block++;
 		wrap(journal, next_log_block);
@@ -530,157 +531,157 @@ static int do_one_pass(journal_t *journal,
 		/* What kind of buffer is it?
 		 *
 		 * If it is a descriptor block, check that it has the
-		 * expected sequence number.  Otherwise, we're all done
+		 * expected sequence number.  Otherwise, we're all करोne
 		 * here. */
 
-		tmp = (journal_header_t *)bh->b_data;
+		पंचांगp = (journal_header_t *)bh->b_data;
 
-		if (tmp->h_magic != cpu_to_be32(JBD2_MAGIC_NUMBER)) {
-			brelse(bh);
-			break;
-		}
+		अगर (पंचांगp->h_magic != cpu_to_be32(JBD2_MAGIC_NUMBER)) अणु
+			brअन्यथा(bh);
+			अवरोध;
+		पूर्ण
 
-		blocktype = be32_to_cpu(tmp->h_blocktype);
-		sequence = be32_to_cpu(tmp->h_sequence);
+		blocktype = be32_to_cpu(पंचांगp->h_blocktype);
+		sequence = be32_to_cpu(पंचांगp->h_sequence);
 		jbd_debug(3, "Found magic %d, sequence %d\n",
 			  blocktype, sequence);
 
-		if (sequence != next_commit_ID) {
-			brelse(bh);
-			break;
-		}
+		अगर (sequence != next_commit_ID) अणु
+			brअन्यथा(bh);
+			अवरोध;
+		पूर्ण
 
 		/* OK, we have a valid descriptor block which matches
 		 * all of the sequence number checks.  What are we going
-		 * to do with it?  That depends on the pass... */
+		 * to करो with it?  That depends on the pass... */
 
-		switch(blocktype) {
-		case JBD2_DESCRIPTOR_BLOCK:
-			/* Verify checksum first */
-			if (jbd2_journal_has_csum_v2or3(journal))
+		चयन(blocktype) अणु
+		हाल JBD2_DESCRIPTOR_BLOCK:
+			/* Verअगरy checksum first */
+			अगर (jbd2_journal_has_csum_v2or3(journal))
 				descr_csum_size =
-					sizeof(struct jbd2_journal_block_tail);
-			if (descr_csum_size > 0 &&
-			    !jbd2_descriptor_block_csum_verify(journal,
-							       bh->b_data)) {
+					माप(काष्ठा jbd2_journal_block_tail);
+			अगर (descr_csum_size > 0 &&
+			    !jbd2_descriptor_block_csum_verअगरy(journal,
+							       bh->b_data)) अणु
 				/*
 				 * PASS_SCAN can see stale blocks due to lazy
 				 * journal init. Don't error out on those yet.
 				 */
-				if (pass != PASS_SCAN) {
+				अगर (pass != PASS_SCAN) अणु
 					pr_err("JBD2: Invalid checksum recovering block %lu in log\n",
 					       next_log_block);
 					err = -EFSBADCRC;
-					brelse(bh);
-					goto failed;
-				}
-				need_check_commit_time = true;
+					brअन्यथा(bh);
+					जाओ failed;
+				पूर्ण
+				need_check_commit_समय = true;
 				jbd_debug(1,
 					"invalid descriptor block found in %lu\n",
 					next_log_block);
-			}
+			पूर्ण
 
 			/* If it is a valid descriptor block, replay it
-			 * in pass REPLAY; if journal_checksums enabled, then
+			 * in pass REPLAY; अगर journal_checksums enabled, then
 			 * calculate checksums in PASS_SCAN, otherwise,
 			 * just skip over the blocks it describes. */
-			if (pass != PASS_REPLAY) {
-				if (pass == PASS_SCAN &&
+			अगर (pass != PASS_REPLAY) अणु
+				अगर (pass == PASS_SCAN &&
 				    jbd2_has_feature_checksum(journal) &&
-				    !need_check_commit_time &&
-				    !info->end_transaction) {
-					if (calc_chksums(journal, bh,
+				    !need_check_commit_समय &&
+				    !info->end_transaction) अणु
+					अगर (calc_chksums(journal, bh,
 							&next_log_block,
-							&crc32_sum)) {
+							&crc32_sum)) अणु
 						put_bh(bh);
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					put_bh(bh);
-					continue;
-				}
+					जारी;
+				पूर्ण
 				next_log_block += count_tags(journal, bh);
 				wrap(journal, next_log_block);
 				put_bh(bh);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			/* A descriptor block: we can now write all of
+			/* A descriptor block: we can now ग_लिखो all of
 			 * the data blocks.  Yay, useful work is finally
-			 * getting done here! */
+			 * getting करोne here! */
 
-			tagp = &bh->b_data[sizeof(journal_header_t)];
-			while ((tagp - bh->b_data + tag_bytes)
-			       <= journal->j_blocksize - descr_csum_size) {
-				unsigned long io_block;
+			tagp = &bh->b_data[माप(journal_header_t)];
+			जबतक ((tagp - bh->b_data + tag_bytes)
+			       <= journal->j_blocksize - descr_csum_size) अणु
+				अचिन्हित दीर्घ io_block;
 
 				tag = (journal_block_tag_t *) tagp;
 				flags = be16_to_cpu(tag->t_flags);
 
 				io_block = next_log_block++;
 				wrap(journal, next_log_block);
-				err = jread(&obh, journal, io_block);
-				if (err) {
+				err = jपढ़ो(&obh, journal, io_block);
+				अगर (err) अणु
 					/* Recover what we can, but
 					 * report failure at the end. */
 					success = err;
-					printk(KERN_ERR
+					prपूर्णांकk(KERN_ERR
 						"JBD2: IO error %d recovering "
 						"block %ld in log\n",
 						err, io_block);
-				} else {
-					unsigned long long blocknr;
+				पूर्ण अन्यथा अणु
+					अचिन्हित दीर्घ दीर्घ blocknr;
 
-					J_ASSERT(obh != NULL);
-					blocknr = read_tag_block(journal,
+					J_ASSERT(obh != शून्य);
+					blocknr = पढ़ो_tag_block(journal,
 								 tag);
 
 					/* If the block has been
-					 * revoked, then we're all done
+					 * revoked, then we're all करोne
 					 * here. */
-					if (jbd2_journal_test_revoke
+					अगर (jbd2_journal_test_revoke
 					    (journal, blocknr,
-					     next_commit_ID)) {
-						brelse(obh);
+					     next_commit_ID)) अणु
+						brअन्यथा(obh);
 						++info->nr_revoke_hits;
-						goto skip_write;
-					}
+						जाओ skip_ग_लिखो;
+					पूर्ण
 
-					/* Look for block corruption */
-					if (!jbd2_block_tag_csum_verify(
+					/* Look क्रम block corruption */
+					अगर (!jbd2_block_tag_csum_verअगरy(
 						journal, tag, obh->b_data,
-						be32_to_cpu(tmp->h_sequence))) {
-						brelse(obh);
+						be32_to_cpu(पंचांगp->h_sequence))) अणु
+						brअन्यथा(obh);
 						success = -EFSBADCRC;
-						printk(KERN_ERR "JBD2: Invalid "
+						prपूर्णांकk(KERN_ERR "JBD2: Invalid "
 						       "checksum recovering "
 						       "data block %llu in "
 						       "log\n", blocknr);
 						block_error = 1;
-						goto skip_write;
-					}
+						जाओ skip_ग_लिखो;
+					पूर्ण
 
-					/* Find a buffer for the new
+					/* Find a buffer क्रम the new
 					 * data being restored */
 					nbh = __getblk(journal->j_fs_dev,
 							blocknr,
 							journal->j_blocksize);
-					if (nbh == NULL) {
-						printk(KERN_ERR
+					अगर (nbh == शून्य) अणु
+						prपूर्णांकk(KERN_ERR
 						       "JBD2: Out of memory "
 						       "during recovery.\n");
 						err = -ENOMEM;
-						brelse(bh);
-						brelse(obh);
-						goto failed;
-					}
+						brअन्यथा(bh);
+						brअन्यथा(obh);
+						जाओ failed;
+					पूर्ण
 
 					lock_buffer(nbh);
-					memcpy(nbh->b_data, obh->b_data,
+					स_नकल(nbh->b_data, obh->b_data,
 							journal->j_blocksize);
-					if (flags & JBD2_FLAG_ESCAPE) {
+					अगर (flags & JBD2_FLAG_ESCAPE) अणु
 						*((__be32 *)nbh->b_data) =
 						cpu_to_be32(JBD2_MAGIC_NUMBER);
-					}
+					पूर्ण
 
 					BUFFER_TRACE(nbh, "marking dirty");
 					set_buffer_uptodate(nbh);
@@ -689,28 +690,28 @@ static int do_one_pass(journal_t *journal,
 					++info->nr_replays;
 					/* ll_rw_block(WRITE, 1, &nbh); */
 					unlock_buffer(nbh);
-					brelse(obh);
-					brelse(nbh);
-				}
+					brअन्यथा(obh);
+					brअन्यथा(nbh);
+				पूर्ण
 
-			skip_write:
+			skip_ग_लिखो:
 				tagp += tag_bytes;
-				if (!(flags & JBD2_FLAG_SAME_UUID))
+				अगर (!(flags & JBD2_FLAG_SAME_UUID))
 					tagp += 16;
 
-				if (flags & JBD2_FLAG_LAST_TAG)
-					break;
-			}
+				अगर (flags & JBD2_FLAG_LAST_TAG)
+					अवरोध;
+			पूर्ण
 
-			brelse(bh);
-			continue;
+			brअन्यथा(bh);
+			जारी;
 
-		case JBD2_COMMIT_BLOCK:
-			/*     How to differentiate between interrupted commit
+		हाल JBD2_COMMIT_BLOCK:
+			/*     How to dअगरferentiate between पूर्णांकerrupted commit
 			 *               and journal corruption ?
 			 *
-			 * {nth transaction}
-			 *        Checksum Verification Failed
+			 * अणुnth transactionपूर्ण
+			 *        Checksum Verअगरication Failed
 			 *			 |
 			 *		 ____________________
 			 *		|		     |
@@ -719,7 +720,7 @@ static int do_one_pass(journal_t *journal,
 			 *		| GO TO NEXT    "Journal Corruption"
 			 *		| TRANSACTION
 			 *		|
-			 * {(n+1)th transanction}
+			 * अणु(n+1)th transanctionपूर्ण
 			 *		|
 			 * 	 _______|______________
 			 * 	|	 	      |
@@ -729,64 +730,64 @@ static int do_one_pass(journal_t *journal,
 			 *		 _____________|_________
 			 *     		|	           	|
 			 *	nth trans corrupt	OR   nth trans
-			 *	and (n+1)th interrupted     interrupted
-			 *	before commit block
+			 *	and (n+1)th पूर्णांकerrupted     पूर्णांकerrupted
+			 *	beक्रमe commit block
 			 *      could reach the disk.
-			 *	(Cannot find the difference in above
+			 *	(Cannot find the dअगरference in above
 			 *	 mentioned conditions. Hence assume
 			 *	 "Interrupted Commit".)
 			 */
-			commit_time = be64_to_cpu(
-				((struct commit_header *)bh->b_data)->h_commit_sec);
+			commit_समय = be64_to_cpu(
+				((काष्ठा commit_header *)bh->b_data)->h_commit_sec);
 			/*
-			 * If need_check_commit_time is set, it means we are in
-			 * PASS_SCAN and csum verify failed before. If
-			 * commit_time is increasing, it's the same journal,
+			 * If need_check_commit_समय is set, it means we are in
+			 * PASS_SCAN and csum verअगरy failed beक्रमe. If
+			 * commit_समय is increasing, it's the same journal,
 			 * otherwise it is stale journal block, just end this
 			 * recovery.
 			 */
-			if (need_check_commit_time) {
-				if (commit_time >= last_trans_commit_time) {
+			अगर (need_check_commit_समय) अणु
+				अगर (commit_समय >= last_trans_commit_समय) अणु
 					pr_err("JBD2: Invalid checksum found in transaction %u\n",
 					       next_commit_ID);
 					err = -EFSBADCRC;
-					brelse(bh);
-					goto failed;
-				}
+					brअन्यथा(bh);
+					जाओ failed;
+				पूर्ण
 			ignore_crc_mismatch:
 				/*
-				 * It likely does not belong to same journal,
+				 * It likely करोes not beदीर्घ to same journal,
 				 * just end this recovery with success.
 				 */
 				jbd_debug(1, "JBD2: Invalid checksum ignored in transaction %u, likely stale data\n",
 					  next_commit_ID);
 				err = 0;
-				brelse(bh);
-				goto done;
-			}
+				brअन्यथा(bh);
+				जाओ करोne;
+			पूर्ण
 
 			/*
-			 * Found an expected commit block: if checksums
-			 * are present, verify them in PASS_SCAN; else not
-			 * much to do other than move on to the next sequence
+			 * Found an expected commit block: अगर checksums
+			 * are present, verअगरy them in PASS_SCAN; अन्यथा not
+			 * much to करो other than move on to the next sequence
 			 * number.
 			 */
-			if (pass == PASS_SCAN &&
-			    jbd2_has_feature_checksum(journal)) {
-				struct commit_header *cbh =
-					(struct commit_header *)bh->b_data;
-				unsigned found_chksum =
+			अगर (pass == PASS_SCAN &&
+			    jbd2_has_feature_checksum(journal)) अणु
+				काष्ठा commit_header *cbh =
+					(काष्ठा commit_header *)bh->b_data;
+				अचिन्हित found_chksum =
 					be32_to_cpu(cbh->h_chksum[0]);
 
-				if (info->end_transaction) {
+				अगर (info->end_transaction) अणु
 					journal->j_failed_commit =
 						info->end_transaction;
-					brelse(bh);
-					break;
-				}
+					brअन्यथा(bh);
+					अवरोध;
+				पूर्ण
 
 				/* Neither checksum match nor unused? */
-				if (!((crc32_sum == found_chksum &&
+				अगर (!((crc32_sum == found_chksum &&
 				       cbh->h_chksum_type ==
 						JBD2_CRC32_CHKSUM &&
 				       cbh->h_chksum_size ==
@@ -794,66 +795,66 @@ static int do_one_pass(journal_t *journal,
 				      (cbh->h_chksum_type == 0 &&
 				       cbh->h_chksum_size == 0 &&
 				       found_chksum == 0)))
-					goto chksum_error;
+					जाओ chksum_error;
 
 				crc32_sum = ~0;
-			}
-			if (pass == PASS_SCAN &&
-			    !jbd2_commit_block_csum_verify(journal,
-							   bh->b_data)) {
+			पूर्ण
+			अगर (pass == PASS_SCAN &&
+			    !jbd2_commit_block_csum_verअगरy(journal,
+							   bh->b_data)) अणु
 			chksum_error:
-				if (commit_time < last_trans_commit_time)
-					goto ignore_crc_mismatch;
+				अगर (commit_समय < last_trans_commit_समय)
+					जाओ ignore_crc_mismatch;
 				info->end_transaction = next_commit_ID;
 
-				if (!jbd2_has_feature_async_commit(journal)) {
+				अगर (!jbd2_has_feature_async_commit(journal)) अणु
 					journal->j_failed_commit =
 						next_commit_ID;
-					brelse(bh);
-					break;
-				}
-			}
-			if (pass == PASS_SCAN)
-				last_trans_commit_time = commit_time;
-			brelse(bh);
+					brअन्यथा(bh);
+					अवरोध;
+				पूर्ण
+			पूर्ण
+			अगर (pass == PASS_SCAN)
+				last_trans_commit_समय = commit_समय;
+			brअन्यथा(bh);
 			next_commit_ID++;
-			continue;
+			जारी;
 
-		case JBD2_REVOKE_BLOCK:
+		हाल JBD2_REVOKE_BLOCK:
 			/*
-			 * Check revoke block crc in pass_scan, if csum verify
-			 * failed, check commit block time later.
+			 * Check revoke block crc in pass_scan, अगर csum verअगरy
+			 * failed, check commit block समय later.
 			 */
-			if (pass == PASS_SCAN &&
-			    !jbd2_descriptor_block_csum_verify(journal,
-							       bh->b_data)) {
+			अगर (pass == PASS_SCAN &&
+			    !jbd2_descriptor_block_csum_verअगरy(journal,
+							       bh->b_data)) अणु
 				jbd_debug(1, "JBD2: invalid revoke block found in %lu\n",
 					  next_log_block);
-				need_check_commit_time = true;
-			}
+				need_check_commit_समय = true;
+			पूर्ण
 			/* If we aren't in the REVOKE pass, then we can
 			 * just skip over this block. */
-			if (pass != PASS_REVOKE) {
-				brelse(bh);
-				continue;
-			}
+			अगर (pass != PASS_REVOKE) अणु
+				brअन्यथा(bh);
+				जारी;
+			पूर्ण
 
 			err = scan_revoke_records(journal, bh,
 						  next_commit_ID, info);
-			brelse(bh);
-			if (err)
-				goto failed;
-			continue;
+			brअन्यथा(bh);
+			अगर (err)
+				जाओ failed;
+			जारी;
 
-		default:
+		शेष:
 			jbd_debug(3, "Unrecognised magic %d, end of scan.\n",
 				  blocktype);
-			brelse(bh);
-			goto done;
-		}
-	}
+			brअन्यथा(bh);
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
- done:
+ करोne:
 	/*
 	 * We broke out of the log scan loop: either we came to the
 	 * known end of the log or we found an unexpected block in the
@@ -861,72 +862,72 @@ static int do_one_pass(journal_t *journal,
 	 * transaction marks the end of the valid log.
 	 */
 
-	if (pass == PASS_SCAN) {
-		if (!info->end_transaction)
+	अगर (pass == PASS_SCAN) अणु
+		अगर (!info->end_transaction)
 			info->end_transaction = next_commit_ID;
-	} else {
-		/* It's really bad news if different passes end up at
-		 * different places (but possible due to IO errors). */
-		if (info->end_transaction != next_commit_ID) {
-			printk(KERN_ERR "JBD2: recovery pass %d ended at "
+	पूर्ण अन्यथा अणु
+		/* It's really bad news अगर dअगरferent passes end up at
+		 * dअगरferent places (but possible due to IO errors). */
+		अगर (info->end_transaction != next_commit_ID) अणु
+			prपूर्णांकk(KERN_ERR "JBD2: recovery pass %d ended at "
 				"transaction %u, expected %u\n",
 				pass, next_commit_ID, info->end_transaction);
-			if (!success)
+			अगर (!success)
 				success = -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (jbd2_has_feature_fast_commit(journal) &&  pass != PASS_REVOKE) {
-		err = fc_do_one_pass(journal, info, pass);
-		if (err)
+	अगर (jbd2_has_feature_fast_commit(journal) &&  pass != PASS_REVOKE) अणु
+		err = fc_करो_one_pass(journal, info, pass);
+		अगर (err)
 			success = err;
-	}
+	पूर्ण
 
-	if (block_error && success == 0)
+	अगर (block_error && success == 0)
 		success = -EIO;
-	return success;
+	वापस success;
 
  failed:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Scan a revoke record, marking all blocks mentioned as revoked. */
 
-static int scan_revoke_records(journal_t *journal, struct buffer_head *bh,
-			       tid_t sequence, struct recovery_info *info)
-{
+अटल पूर्णांक scan_revoke_records(journal_t *journal, काष्ठा buffer_head *bh,
+			       tid_t sequence, काष्ठा recovery_info *info)
+अणु
 	jbd2_journal_revoke_header_t *header;
-	int offset, max;
-	int csum_size = 0;
+	पूर्णांक offset, max;
+	पूर्णांक csum_size = 0;
 	__u32 rcount;
-	int record_len = 4;
+	पूर्णांक record_len = 4;
 
 	header = (jbd2_journal_revoke_header_t *) bh->b_data;
-	offset = sizeof(jbd2_journal_revoke_header_t);
+	offset = माप(jbd2_journal_revoke_header_t);
 	rcount = be32_to_cpu(header->r_count);
 
-	if (jbd2_journal_has_csum_v2or3(journal))
-		csum_size = sizeof(struct jbd2_journal_block_tail);
-	if (rcount > journal->j_blocksize - csum_size)
-		return -EINVAL;
+	अगर (jbd2_journal_has_csum_v2or3(journal))
+		csum_size = माप(काष्ठा jbd2_journal_block_tail);
+	अगर (rcount > journal->j_blocksize - csum_size)
+		वापस -EINVAL;
 	max = rcount;
 
-	if (jbd2_has_feature_64bit(journal))
+	अगर (jbd2_has_feature_64bit(journal))
 		record_len = 8;
 
-	while (offset + record_len <= max) {
-		unsigned long long blocknr;
-		int err;
+	जबतक (offset + record_len <= max) अणु
+		अचिन्हित दीर्घ दीर्घ blocknr;
+		पूर्णांक err;
 
-		if (record_len == 4)
+		अगर (record_len == 4)
 			blocknr = be32_to_cpu(* ((__be32 *) (bh->b_data+offset)));
-		else
+		अन्यथा
 			blocknr = be64_to_cpu(* ((__be64 *) (bh->b_data+offset)));
 		offset += record_len;
 		err = jbd2_journal_set_revoke(journal, blocknr, sequence);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		++info->nr_revokes;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

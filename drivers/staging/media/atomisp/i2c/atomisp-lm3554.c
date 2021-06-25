@@ -1,495 +1,496 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * LED flash driver for LM3554
+ * LED flash driver क्रम LM3554
  *
  * Copyright (c) 2010-2012 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
 
-#include "../include/media/lm3554.h"
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <linux/acpi.h>
-#include "../include/linux/atomisp_gmin_platform.h"
-#include "../include/linux/atomisp.h"
+#समावेश "../include/media/lm3554.h"
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <linux/acpi.h>
+#समावेश "../include/linux/atomisp_gmin_platform.h"
+#समावेश "../include/linux/atomisp.h"
 
 /* Registers */
 
-#define LM3554_TORCH_BRIGHTNESS_REG	0xA0
-#define LM3554_TORCH_MODE_SHIFT		0
-#define LM3554_TORCH_CURRENT_SHIFT	3
-#define LM3554_INDICATOR_CURRENT_SHIFT	6
+#घोषणा LM3554_TORCH_BRIGHTNESS_REG	0xA0
+#घोषणा LM3554_TORCH_MODE_SHIFT		0
+#घोषणा LM3554_TORCH_CURRENT_SHIFT	3
+#घोषणा LM3554_INDICATOR_CURRENT_SHIFT	6
 
-#define LM3554_FLASH_BRIGHTNESS_REG	0xB0
-#define LM3554_FLASH_MODE_SHIFT		0
-#define LM3554_FLASH_CURRENT_SHIFT	3
-#define LM3554_STROBE_SENSITIVITY_SHIFT	7
+#घोषणा LM3554_FLASH_BRIGHTNESS_REG	0xB0
+#घोषणा LM3554_FLASH_MODE_SHIFT		0
+#घोषणा LM3554_FLASH_CURRENT_SHIFT	3
+#घोषणा LM3554_STROBE_SENSITIVITY_SHIFT	7
 
-#define LM3554_FLASH_DURATION_REG	0xC0
-#define LM3554_FLASH_TIMEOUT_SHIFT	0
-#define LM3554_CURRENT_LIMIT_SHIFT	5
+#घोषणा LM3554_FLASH_DURATION_REG	0xC0
+#घोषणा LM3554_FLASH_TIMEOUT_SHIFT	0
+#घोषणा LM3554_CURRENT_LIMIT_SHIFT	5
 
-#define LM3554_FLAGS_REG		0xD0
-#define LM3554_FLAG_TIMEOUT		BIT(0)
-#define LM3554_FLAG_THERMAL_SHUTDOWN	BIT(1)
-#define LM3554_FLAG_LED_FAULT		BIT(2)
-#define LM3554_FLAG_TX1_INTERRUPT	BIT(3)
-#define LM3554_FLAG_TX2_INTERRUPT	BIT(4)
-#define LM3554_FLAG_LED_THERMAL_FAULT	BIT(5)
-#define LM3554_FLAG_UNUSED		BIT(6)
-#define LM3554_FLAG_INPUT_VOLTAGE_LOW	BIT(7)
+#घोषणा LM3554_FLAGS_REG		0xD0
+#घोषणा LM3554_FLAG_TIMEOUT		BIT(0)
+#घोषणा LM3554_FLAG_THERMAL_SHUTDOWN	BIT(1)
+#घोषणा LM3554_FLAG_LED_FAULT		BIT(2)
+#घोषणा LM3554_FLAG_TX1_INTERRUPT	BIT(3)
+#घोषणा LM3554_FLAG_TX2_INTERRUPT	BIT(4)
+#घोषणा LM3554_FLAG_LED_THERMAL_FAULT	BIT(5)
+#घोषणा LM3554_FLAG_UNUSED		BIT(6)
+#घोषणा LM3554_FLAG_INPUT_VOLTAGE_LOW	BIT(7)
 
-#define LM3554_CONFIG_REG_1		0xE0
-#define LM3554_ENVM_TX2_SHIFT		5
-#define LM3554_TX2_POLARITY_SHIFT	6
+#घोषणा LM3554_CONFIG_REG_1		0xE0
+#घोषणा LM3554_ENVM_TX2_SHIFT		5
+#घोषणा LM3554_TX2_POLARITY_SHIFT	6
 
-struct lm3554 {
-	struct v4l2_subdev sd;
+काष्ठा lm3554 अणु
+	काष्ठा v4l2_subdev sd;
 
-	struct mutex power_lock;
-	struct v4l2_ctrl_handler ctrl_handler;
-	int power_count;
+	काष्ठा mutex घातer_lock;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
+	पूर्णांक घातer_count;
 
-	unsigned int mode;
-	int timeout;
+	अचिन्हित पूर्णांक mode;
+	पूर्णांक समयout;
 	u8 torch_current;
 	u8 indicator_current;
 	u8 flash_current;
 
-	struct timer_list flash_off_delay;
-	struct lm3554_platform_data *pdata;
-};
+	काष्ठा समयr_list flash_off_delay;
+	काष्ठा lm3554_platक्रमm_data *pdata;
+पूर्ण;
 
-#define to_lm3554(p_sd)	container_of(p_sd, struct lm3554, sd)
+#घोषणा to_lm3554(p_sd)	container_of(p_sd, काष्ठा lm3554, sd)
 
-/* Return negative errno else zero on success */
-static int lm3554_write(struct lm3554 *flash, u8 addr, u8 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&flash->sd);
-	int ret;
+/* Return negative त्रुटि_सं अन्यथा zero on success */
+अटल पूर्णांक lm3554_ग_लिखो(काष्ठा lm3554 *flash, u8 addr, u8 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&flash->sd);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(client, addr, val);
+	ret = i2c_smbus_ग_लिखो_byte_data(client, addr, val);
 
 	dev_dbg(&client->dev, "Write Addr:%02X Val:%02X %s\n", addr, val,
 		ret < 0 ? "fail" : "ok");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Return negative errno else a data byte received from the device. */
-static int lm3554_read(struct lm3554 *flash, u8 addr)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&flash->sd);
-	int ret;
+/* Return negative त्रुटि_सं अन्यथा a data byte received from the device. */
+अटल पूर्णांक lm3554_पढ़ो(काष्ठा lm3554 *flash, u8 addr)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&flash->sd);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(client, addr);
+	ret = i2c_smbus_पढ़ो_byte_data(client, addr);
 
 	dev_dbg(&client->dev, "Read Addr:%02X Val:%02X %s\n", addr, ret,
 		ret < 0 ? "fail" : "ok");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Hardware configuration
  */
 
-static int lm3554_set_mode(struct lm3554 *flash, unsigned int mode)
-{
+अटल पूर्णांक lm3554_set_mode(काष्ठा lm3554 *flash, अचिन्हित पूर्णांक mode)
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
 	val = (mode << LM3554_FLASH_MODE_SHIFT) |
 	      (flash->flash_current << LM3554_FLASH_CURRENT_SHIFT);
 
-	ret = lm3554_write(flash, LM3554_FLASH_BRIGHTNESS_REG, val);
-	if (ret == 0)
+	ret = lm3554_ग_लिखो(flash, LM3554_FLASH_BRIGHTNESS_REG, val);
+	अगर (ret == 0)
 		flash->mode = mode;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lm3554_set_torch(struct lm3554 *flash)
-{
+अटल पूर्णांक lm3554_set_torch(काष्ठा lm3554 *flash)
+अणु
 	u8 val;
 
 	val = (flash->mode << LM3554_TORCH_MODE_SHIFT) |
 	      (flash->torch_current << LM3554_TORCH_CURRENT_SHIFT) |
 	      (flash->indicator_current << LM3554_INDICATOR_CURRENT_SHIFT);
 
-	return lm3554_write(flash, LM3554_TORCH_BRIGHTNESS_REG, val);
-}
+	वापस lm3554_ग_लिखो(flash, LM3554_TORCH_BRIGHTNESS_REG, val);
+पूर्ण
 
-static int lm3554_set_flash(struct lm3554 *flash)
-{
+अटल पूर्णांक lm3554_set_flash(काष्ठा lm3554 *flash)
+अणु
 	u8 val;
 
 	val = (flash->mode << LM3554_FLASH_MODE_SHIFT) |
 	      (flash->flash_current << LM3554_FLASH_CURRENT_SHIFT);
 
-	return lm3554_write(flash, LM3554_FLASH_BRIGHTNESS_REG, val);
-}
+	वापस lm3554_ग_लिखो(flash, LM3554_FLASH_BRIGHTNESS_REG, val);
+पूर्ण
 
-static int lm3554_set_duration(struct lm3554 *flash)
-{
+अटल पूर्णांक lm3554_set_duration(काष्ठा lm3554 *flash)
+अणु
 	u8 val;
 
-	val = (flash->timeout << LM3554_FLASH_TIMEOUT_SHIFT) |
+	val = (flash->समयout << LM3554_FLASH_TIMEOUT_SHIFT) |
 	      (flash->pdata->current_limit << LM3554_CURRENT_LIMIT_SHIFT);
 
-	return lm3554_write(flash, LM3554_FLASH_DURATION_REG, val);
-}
+	वापस lm3554_ग_लिखो(flash, LM3554_FLASH_DURATION_REG, val);
+पूर्ण
 
-static int lm3554_set_config1(struct lm3554 *flash)
-{
+अटल पूर्णांक lm3554_set_config1(काष्ठा lm3554 *flash)
+अणु
 	u8 val;
 
 	val = (flash->pdata->envm_tx2 << LM3554_ENVM_TX2_SHIFT) |
 	      (flash->pdata->tx2_polarity << LM3554_TX2_POLARITY_SHIFT);
-	return lm3554_write(flash, LM3554_CONFIG_REG_1, val);
-}
+	वापस lm3554_ग_लिखो(flash, LM3554_CONFIG_REG_1, val);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Hardware trigger
  */
-static void lm3554_flash_off_delay(struct timer_list *t)
-{
-	struct lm3554 *flash = from_timer(flash, t, flash_off_delay);
-	struct lm3554_platform_data *pdata = flash->pdata;
+अटल व्योम lm3554_flash_off_delay(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lm3554 *flash = from_समयr(flash, t, flash_off_delay);
+	काष्ठा lm3554_platक्रमm_data *pdata = flash->pdata;
 
 	gpiod_set_value(pdata->gpio_strobe, 0);
-}
+पूर्ण
 
-static int lm3554_hw_strobe(struct i2c_client *client, bool strobe)
-{
-	int ret, timer_pending;
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(sd);
-	struct lm3554_platform_data *pdata = flash->pdata;
+अटल पूर्णांक lm3554_hw_strobe(काष्ठा i2c_client *client, bool strobe)
+अणु
+	पूर्णांक ret, समयr_pending;
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	काष्ठा lm3554_platक्रमm_data *pdata = flash->pdata;
 
 	/*
 	 * An abnormal high flash current is observed when strobe off the
 	 * flash. Workaround here is firstly set flash current to lower level,
-	 * wait a short moment, and then strobe off the flash.
+	 * रुको a लघु moment, and then strobe off the flash.
 	 */
 
-	timer_pending = del_timer_sync(&flash->flash_off_delay);
+	समयr_pending = del_समयr_sync(&flash->flash_off_delay);
 
 	/* Flash off */
-	if (!strobe) {
-		/* set current to 70mA and wait a while */
-		ret = lm3554_write(flash, LM3554_FLASH_BRIGHTNESS_REG, 0);
-		if (ret < 0)
-			goto err;
-		mod_timer(&flash->flash_off_delay,
-			  jiffies + msecs_to_jiffies(LM3554_TIMER_DELAY));
-		return 0;
-	}
+	अगर (!strobe) अणु
+		/* set current to 70mA and रुको a जबतक */
+		ret = lm3554_ग_लिखो(flash, LM3554_FLASH_BRIGHTNESS_REG, 0);
+		अगर (ret < 0)
+			जाओ err;
+		mod_समयr(&flash->flash_off_delay,
+			  jअगरfies + msecs_to_jअगरfies(LM3554_TIMER_DELAY));
+		वापस 0;
+	पूर्ण
 
 	/* Flash on */
 
 	/*
-	 * If timer is killed before run, flash is not strobe off,
+	 * If समयr is समाप्तed beक्रमe run, flash is not strobe off,
 	 * so must strobe off here
 	 */
-	if (timer_pending)
+	अगर (समयr_pending)
 		gpiod_set_value(pdata->gpio_strobe, 0);
 
 	/* Restore flash current settings */
 	ret = lm3554_set_flash(flash);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 	/* Strobe on Flash */
 	gpiod_set_value(pdata->gpio_strobe, 1);
 
-	return 0;
+	वापस 0;
 err:
 	dev_err(&client->dev, "failed to %s flash strobe (%d)\n",
 		strobe ? "on" : "off", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * V4L2 controls
  */
 
-static int lm3554_read_status(struct lm3554 *flash)
-{
-	int ret;
-	struct i2c_client *client = v4l2_get_subdevdata(&flash->sd);
+अटल पूर्णांक lm3554_पढ़ो_status(काष्ठा lm3554 *flash)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&flash->sd);
 
-	/* NOTE: reading register clear fault status */
-	ret = lm3554_read(flash, LM3554_FLAGS_REG);
-	if (ret < 0)
-		return ret;
+	/* NOTE: पढ़ोing रेजिस्टर clear fault status */
+	ret = lm3554_पढ़ो(flash, LM3554_FLAGS_REG);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * Accordingly to datasheet we read back '1' in bit 6.
+	 * Accordingly to datasheet we पढ़ो back '1' in bit 6.
 	 * Clear it first.
 	 */
 	ret &= ~LM3554_FLAG_UNUSED;
 
 	/*
-	 * Do not take TX1/TX2 signal as an error
+	 * Do not take TX1/TX2 संकेत as an error
 	 * because MSIC will not turn off flash, but turn to
-	 * torch mode according to gsm modem signal by hardware.
+	 * torch mode according to gsm modem संकेत by hardware.
 	 */
 	ret &= ~(LM3554_FLAG_TX1_INTERRUPT | LM3554_FLAG_TX2_INTERRUPT);
 
-	if (ret > 0)
+	अगर (ret > 0)
 		dev_dbg(&client->dev, "LM3554 flag status: %02x\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lm3554_s_flash_timeout(struct v4l2_subdev *sd, u32 val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_s_flash_समयout(काष्ठा v4l2_subdev *sd, u32 val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
 	val = clamp(val, LM3554_MIN_TIMEOUT, LM3554_MAX_TIMEOUT);
 	val = val / LM3554_TIMEOUT_STEPSIZE - 1;
 
-	flash->timeout = val;
+	flash->समयout = val;
 
-	return lm3554_set_duration(flash);
-}
+	वापस lm3554_set_duration(flash);
+पूर्ण
 
-static int lm3554_g_flash_timeout(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_g_flash_समयout(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
-	*val = (u32)(flash->timeout + 1) * LM3554_TIMEOUT_STEPSIZE;
+	*val = (u32)(flash->समयout + 1) * LM3554_TIMEOUT_STEPSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_flash_intensity(struct v4l2_subdev *sd, u32 intensity)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_s_flash_पूर्णांकensity(काष्ठा v4l2_subdev *sd, u32 पूर्णांकensity)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
-	intensity = LM3554_CLAMP_PERCENTAGE(intensity);
-	intensity = LM3554_PERCENT_TO_VALUE(intensity, LM3554_FLASH_STEP);
+	पूर्णांकensity = LM3554_CLAMP_PERCENTAGE(पूर्णांकensity);
+	पूर्णांकensity = LM3554_PERCENT_TO_VALUE(पूर्णांकensity, LM3554_FLASH_STEP);
 
-	flash->flash_current = intensity;
+	flash->flash_current = पूर्णांकensity;
 
-	return lm3554_set_flash(flash);
-}
+	वापस lm3554_set_flash(flash);
+पूर्ण
 
-static int lm3554_g_flash_intensity(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_g_flash_पूर्णांकensity(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
 	*val = LM3554_VALUE_TO_PERCENT((u32)flash->flash_current,
 				       LM3554_FLASH_STEP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_torch_intensity(struct v4l2_subdev *sd, u32 intensity)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_s_torch_पूर्णांकensity(काष्ठा v4l2_subdev *sd, u32 पूर्णांकensity)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
-	intensity = LM3554_CLAMP_PERCENTAGE(intensity);
-	intensity = LM3554_PERCENT_TO_VALUE(intensity, LM3554_TORCH_STEP);
+	पूर्णांकensity = LM3554_CLAMP_PERCENTAGE(पूर्णांकensity);
+	पूर्णांकensity = LM3554_PERCENT_TO_VALUE(पूर्णांकensity, LM3554_TORCH_STEP);
 
-	flash->torch_current = intensity;
+	flash->torch_current = पूर्णांकensity;
 
-	return lm3554_set_torch(flash);
-}
+	वापस lm3554_set_torch(flash);
+पूर्ण
 
-static int lm3554_g_torch_intensity(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_g_torch_पूर्णांकensity(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
 	*val = LM3554_VALUE_TO_PERCENT((u32)flash->torch_current,
 				       LM3554_TORCH_STEP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_indicator_intensity(struct v4l2_subdev *sd, u32 intensity)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_s_indicator_पूर्णांकensity(काष्ठा v4l2_subdev *sd, u32 पूर्णांकensity)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
-	intensity = LM3554_CLAMP_PERCENTAGE(intensity);
-	intensity = LM3554_PERCENT_TO_VALUE(intensity, LM3554_INDICATOR_STEP);
+	पूर्णांकensity = LM3554_CLAMP_PERCENTAGE(पूर्णांकensity);
+	पूर्णांकensity = LM3554_PERCENT_TO_VALUE(पूर्णांकensity, LM3554_INDICATOR_STEP);
 
-	flash->indicator_current = intensity;
+	flash->indicator_current = पूर्णांकensity;
 
-	return lm3554_set_torch(flash);
-}
+	वापस lm3554_set_torch(flash);
+पूर्ण
 
-static int lm3554_g_indicator_intensity(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_g_indicator_पूर्णांकensity(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
 	*val = LM3554_VALUE_TO_PERCENT((u32)flash->indicator_current,
 				       LM3554_INDICATOR_STEP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_flash_strobe(struct v4l2_subdev *sd, u32 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक lm3554_s_flash_strobe(काष्ठा v4l2_subdev *sd, u32 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-	return lm3554_hw_strobe(client, val);
-}
+	वापस lm3554_hw_strobe(client, val);
+पूर्ण
 
-static int lm3554_s_flash_mode(struct v4l2_subdev *sd, u32 new_mode)
-{
-	struct lm3554 *flash = to_lm3554(sd);
-	unsigned int mode;
+अटल पूर्णांक lm3554_s_flash_mode(काष्ठा v4l2_subdev *sd, u32 new_mode)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	अचिन्हित पूर्णांक mode;
 
-	switch (new_mode) {
-	case ATOMISP_FLASH_MODE_OFF:
+	चयन (new_mode) अणु
+	हाल ATOMISP_FLASH_MODE_OFF:
 		mode = LM3554_MODE_SHUTDOWN;
-		break;
-	case ATOMISP_FLASH_MODE_FLASH:
+		अवरोध;
+	हाल ATOMISP_FLASH_MODE_FLASH:
 		mode = LM3554_MODE_FLASH;
-		break;
-	case ATOMISP_FLASH_MODE_INDICATOR:
+		अवरोध;
+	हाल ATOMISP_FLASH_MODE_INDICATOR:
 		mode = LM3554_MODE_INDICATOR;
-		break;
-	case ATOMISP_FLASH_MODE_TORCH:
+		अवरोध;
+	हाल ATOMISP_FLASH_MODE_TORCH:
 		mode = LM3554_MODE_TORCH;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return lm3554_set_mode(flash, mode);
-}
+	वापस lm3554_set_mode(flash, mode);
+पूर्ण
 
-static int lm3554_g_flash_mode(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_g_flash_mode(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 	*val = flash->mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_g_flash_status(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
-	int value;
+अटल पूर्णांक lm3554_g_flash_status(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	पूर्णांक value;
 
-	value = lm3554_read_status(flash);
-	if (value < 0)
-		return value;
+	value = lm3554_पढ़ो_status(flash);
+	अगर (value < 0)
+		वापस value;
 
-	if (value & LM3554_FLAG_TIMEOUT)
+	अगर (value & LM3554_FLAG_TIMEOUT)
 		*val = ATOMISP_FLASH_STATUS_TIMEOUT;
-	else if (value > 0)
+	अन्यथा अगर (value > 0)
 		*val = ATOMISP_FLASH_STATUS_HW_ERROR;
-	else
+	अन्यथा
 		*val = ATOMISP_FLASH_STATUS_OK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_g_flash_status_register(struct v4l2_subdev *sd, s32 *val)
-{
-	struct lm3554 *flash = to_lm3554(sd);
-	int ret;
+अटल पूर्णांक lm3554_g_flash_status_रेजिस्टर(काष्ठा v4l2_subdev *sd, s32 *val)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	पूर्णांक ret;
 
-	ret = lm3554_read(flash, LM3554_FLAGS_REG);
+	ret = lm3554_पढ़ो(flash, LM3554_FLAGS_REG);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	*val = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct lm3554 *dev =
-	    container_of(ctrl->handler, struct lm3554, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक lm3554_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा lm3554 *dev =
+	    container_of(ctrl->handler, काष्ठा lm3554, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_FLASH_TIMEOUT:
-		ret = lm3554_s_flash_timeout(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FLASH_INTENSITY:
-		ret = lm3554_s_flash_intensity(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FLASH_TORCH_INTENSITY:
-		ret = lm3554_s_torch_intensity(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FLASH_INDICATOR_INTENSITY:
-		ret = lm3554_s_indicator_intensity(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FLASH_STROBE:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_FLASH_TIMEOUT:
+		ret = lm3554_s_flash_समयout(&dev->sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_INTENSITY:
+		ret = lm3554_s_flash_पूर्णांकensity(&dev->sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_TORCH_INTENSITY:
+		ret = lm3554_s_torch_पूर्णांकensity(&dev->sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_INDICATOR_INTENSITY:
+		ret = lm3554_s_indicator_पूर्णांकensity(&dev->sd, ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_STROBE:
 		ret = lm3554_s_flash_strobe(&dev->sd, ctrl->val);
-		break;
-	case V4L2_CID_FLASH_MODE:
+		अवरोध;
+	हाल V4L2_CID_FLASH_MODE:
 		ret = lm3554_s_flash_mode(&dev->sd, ctrl->val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int lm3554_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct lm3554 *dev =
-	    container_of(ctrl->handler, struct lm3554, ctrl_handler);
-	int ret = 0;
+अटल पूर्णांक lm3554_g_अस्थिर_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा lm3554 *dev =
+	    container_of(ctrl->handler, काष्ठा lm3554, ctrl_handler);
+	पूर्णांक ret = 0;
 
-	switch (ctrl->id) {
-	case V4L2_CID_FLASH_TIMEOUT:
-		ret = lm3554_g_flash_timeout(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_INTENSITY:
-		ret = lm3554_g_flash_intensity(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_TORCH_INTENSITY:
-		ret = lm3554_g_torch_intensity(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_INDICATOR_INTENSITY:
-		ret = lm3554_g_indicator_intensity(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_MODE:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_FLASH_TIMEOUT:
+		ret = lm3554_g_flash_समयout(&dev->sd, &ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_INTENSITY:
+		ret = lm3554_g_flash_पूर्णांकensity(&dev->sd, &ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_TORCH_INTENSITY:
+		ret = lm3554_g_torch_पूर्णांकensity(&dev->sd, &ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_INDICATOR_INTENSITY:
+		ret = lm3554_g_indicator_पूर्णांकensity(&dev->sd, &ctrl->val);
+		अवरोध;
+	हाल V4L2_CID_FLASH_MODE:
 		ret = lm3554_g_flash_mode(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_STATUS:
+		अवरोध;
+	हाल V4L2_CID_FLASH_STATUS:
 		ret = lm3554_g_flash_status(&dev->sd, &ctrl->val);
-		break;
-	case V4L2_CID_FLASH_STATUS_REGISTER:
-		ret = lm3554_g_flash_status_register(&dev->sd, &ctrl->val);
-		break;
-	default:
+		अवरोध;
+	हाल V4L2_CID_FLASH_STATUS_REGISTER:
+		ret = lm3554_g_flash_status_रेजिस्टर(&dev->sd, &ctrl->val);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ctrl_ops = अणु
 	.s_ctrl = lm3554_s_ctrl,
-	.g_volatile_ctrl = lm3554_g_volatile_ctrl
-};
+	.g_अस्थिर_ctrl = lm3554_g_अस्थिर_ctrl
+पूर्ण;
 
-static const struct v4l2_ctrl_config lm3554_controls[] = {
-	{
+अटल स्थिर काष्ठा v4l2_ctrl_config lm3554_controls[] = अणु
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_TIMEOUT,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -499,8 +500,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 0x01,
 		.def = LM3554_DEFAULT_TIMEOUT,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_INTENSITY,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -510,8 +511,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 0x01,
 		.def = LM3554_FLASH_DEFAULT_BRIGHTNESS,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_TORCH_INTENSITY,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -521,8 +522,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 0x01,
 		.def = LM3554_TORCH_DEFAULT_BRIGHTNESS,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_INDICATOR_INTENSITY,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -532,8 +533,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 0x01,
 		.def = LM3554_INDICATOR_DEFAULT_BRIGHTNESS,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_STROBE,
 		.type = V4L2_CTRL_TYPE_BOOLEAN,
@@ -543,8 +544,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_MODE,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -554,8 +555,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 1,
 		.def = ATOMISP_FLASH_MODE_OFF,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_STATUS,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -565,8 +566,8 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 1,
 		.def = ATOMISP_FLASH_STATUS_OK,
 		.flags = 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.ops = &ctrl_ops,
 		.id = V4L2_CID_FLASH_STATUS_REGISTER,
 		.type = V4L2_CTRL_TYPE_INTEGER,
@@ -576,369 +577,369 @@ static const struct v4l2_ctrl_config lm3554_controls[] = {
 		.step = 1,
 		.def = 0,
 		.flags = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev core operations
  */
 
-/* Put device into known state. */
-static int lm3554_setup(struct lm3554 *flash)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&flash->sd);
-	int ret;
+/* Put device पूर्णांकo known state. */
+अटल पूर्णांक lm3554_setup(काष्ठा lm3554 *flash)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&flash->sd);
+	पूर्णांक ret;
 
-	/* clear the flags register */
-	ret = lm3554_read(flash, LM3554_FLAGS_REG);
-	if (ret < 0)
-		return ret;
+	/* clear the flags रेजिस्टर */
+	ret = lm3554_पढ़ो(flash, LM3554_FLAGS_REG);
+	अगर (ret < 0)
+		वापस ret;
 
 	dev_dbg(&client->dev, "Fault info: %02x\n", ret);
 
 	ret = lm3554_set_config1(flash);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = lm3554_set_duration(flash);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = lm3554_set_torch(flash);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = lm3554_set_flash(flash);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* read status */
-	ret = lm3554_read_status(flash);
-	if (ret < 0)
-		return ret;
+	/* पढ़ो status */
+	ret = lm3554_पढ़ो_status(flash);
+	अगर (ret < 0)
+		वापस ret;
 
-	return ret ? -EIO : 0;
-}
+	वापस ret ? -EIO : 0;
+पूर्ण
 
-static int __lm3554_s_power(struct lm3554 *flash, int power)
-{
-	struct lm3554_platform_data *pdata = flash->pdata;
-	int ret;
+अटल पूर्णांक __lm3554_s_घातer(काष्ठा lm3554 *flash, पूर्णांक घातer)
+अणु
+	काष्ठा lm3554_platक्रमm_data *pdata = flash->pdata;
+	पूर्णांक ret;
 
 	/*initialize flash driver*/
-	gpiod_set_value(pdata->gpio_reset, power);
+	gpiod_set_value(pdata->gpio_reset, घातer);
 	usleep_range(100, 100 + 1);
 
-	if (power) {
-		/* Setup default values. This makes sure that the chip
+	अगर (घातer) अणु
+		/* Setup शेष values. This makes sure that the chip
 		 * is in a known state.
 		 */
 		ret = lm3554_setup(flash);
-		if (ret < 0) {
-			__lm3554_s_power(flash, 0);
-			return ret;
-		}
-	}
+		अगर (ret < 0) अणु
+			__lm3554_s_घातer(flash, 0);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm3554_s_power(struct v4l2_subdev *sd, int power)
-{
-	struct lm3554 *flash = to_lm3554(sd);
-	int ret = 0;
+अटल पूर्णांक lm3554_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक घातer)
+अणु
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	पूर्णांक ret = 0;
 
-	mutex_lock(&flash->power_lock);
+	mutex_lock(&flash->घातer_lock);
 
-	if (flash->power_count == !power) {
-		ret = __lm3554_s_power(flash, !!power);
-		if (ret < 0)
-			goto done;
-	}
+	अगर (flash->घातer_count == !घातer) अणु
+		ret = __lm3554_s_घातer(flash, !!घातer);
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
-	flash->power_count += power ? 1 : -1;
-	WARN_ON(flash->power_count < 0);
+	flash->घातer_count += घातer ? 1 : -1;
+	WARN_ON(flash->घातer_count < 0);
 
-done:
-	mutex_unlock(&flash->power_lock);
-	return ret;
-}
+करोne:
+	mutex_unlock(&flash->घातer_lock);
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_subdev_core_ops lm3554_core_ops = {
-	.s_power = lm3554_s_power,
-};
+अटल स्थिर काष्ठा v4l2_subdev_core_ops lm3554_core_ops = अणु
+	.s_घातer = lm3554_s_घातer,
+पूर्ण;
 
-static const struct v4l2_subdev_ops lm3554_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops lm3554_ops = अणु
 	.core = &lm3554_core_ops,
-};
+पूर्ण;
 
-static int lm3554_detect(struct v4l2_subdev *sd)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct i2c_adapter *adapter = client->adapter;
-	struct lm3554 *flash = to_lm3554(sd);
-	int ret;
+अटल पूर्णांक lm3554_detect(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) {
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA)) अणु
 		dev_err(&client->dev, "lm3554_detect i2c error\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Power up the flash driver and reset it */
-	ret = lm3554_s_power(&flash->sd, 1);
-	if (ret < 0) {
+	ret = lm3554_s_घातer(&flash->sd, 1);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to power on lm3554 LED flash\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&client->dev, "Successfully detected lm3554 LED flash\n");
-		lm3554_s_power(&flash->sd, 0);
-	}
+		lm3554_s_घातer(&flash->sd, 0);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lm3554_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	return lm3554_s_power(sd, 1);
-}
+अटल पूर्णांक lm3554_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
+अणु
+	वापस lm3554_s_घातer(sd, 1);
+पूर्ण
 
-static int lm3554_close(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	return lm3554_s_power(sd, 0);
-}
+अटल पूर्णांक lm3554_बंद(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
+अणु
+	वापस lm3554_s_घातer(sd, 0);
+पूर्ण
 
-static const struct v4l2_subdev_internal_ops lm3554_internal_ops = {
-	.registered = lm3554_detect,
-	.open = lm3554_open,
-	.close = lm3554_close,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops lm3554_पूर्णांकernal_ops = अणु
+	.रेजिस्टरed = lm3554_detect,
+	.खोलो = lm3554_खोलो,
+	.बंद = lm3554_बंद,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  *  I2C driver
  */
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int lm3554_suspend(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(subdev);
-	int rval;
+अटल पूर्णांक lm3554_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(subdev);
+	पूर्णांक rval;
 
-	if (flash->power_count == 0)
-		return 0;
+	अगर (flash->घातer_count == 0)
+		वापस 0;
 
-	rval = __lm3554_s_power(flash, 0);
+	rval = __lm3554_s_घातer(flash, 0);
 
 	dev_dbg(&client->dev, "Suspend %s\n", rval < 0 ? "failed" : "ok");
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int lm3554_resume(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(subdev);
-	int rval;
+अटल पूर्णांक lm3554_resume(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(subdev);
+	पूर्णांक rval;
 
-	if (flash->power_count == 0)
-		return 0;
+	अगर (flash->घातer_count == 0)
+		वापस 0;
 
-	rval = __lm3554_s_power(flash, 1);
+	rval = __lm3554_s_घातer(flash, 1);
 
 	dev_dbg(&client->dev, "Resume %s\n", rval < 0 ? "fail" : "ok");
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-#else
+#अन्यथा
 
-#define lm3554_suspend NULL
-#define lm3554_resume  NULL
+#घोषणा lm3554_suspend शून्य
+#घोषणा lm3554_resume  शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static int lm3554_gpio_init(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(sd);
-	struct lm3554_platform_data *pdata = flash->pdata;
-	int ret;
+अटल पूर्णांक lm3554_gpio_init(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	काष्ठा lm3554_platक्रमm_data *pdata = flash->pdata;
+	पूर्णांक ret;
 
-	if (!pdata->gpio_reset)
-		return -EINVAL;
+	अगर (!pdata->gpio_reset)
+		वापस -EINVAL;
 
 	ret = gpiod_direction_output(pdata->gpio_reset, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!pdata->gpio_strobe)
-		return -EINVAL;
-
-	ret = gpiod_direction_output(pdata->gpio_strobe, 0);
-	if (ret < 0)
-		return ret;
-
-	return 0;
-}
-
-static void lm3554_gpio_uninit(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(sd);
-	struct lm3554_platform_data *pdata = flash->pdata;
-	int ret;
+	अगर (!pdata->gpio_strobe)
+		वापस -EINVAL;
 
 	ret = gpiod_direction_output(pdata->gpio_strobe, 0);
-	if (ret < 0)
+	अगर (ret < 0)
+		वापस ret;
+
+	वापस 0;
+पूर्ण
+
+अटल व्योम lm3554_gpio_uninit(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(sd);
+	काष्ठा lm3554_platक्रमm_data *pdata = flash->pdata;
+	पूर्णांक ret;
+
+	ret = gpiod_direction_output(pdata->gpio_strobe, 0);
+	अगर (ret < 0)
 		dev_err(&client->dev,
 			"gpio request/direction_output fail for gpio_strobe");
 
 	ret = gpiod_direction_output(pdata->gpio_reset, 0);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&client->dev,
 			"gpio request/direction_output fail for gpio_reset");
-}
+पूर्ण
 
-static void *lm3554_platform_data_func(struct i2c_client *client)
-{
-	static struct lm3554_platform_data platform_data;
+अटल व्योम *lm3554_platक्रमm_data_func(काष्ठा i2c_client *client)
+अणु
+	अटल काष्ठा lm3554_platक्रमm_data platक्रमm_data;
 
-	platform_data.gpio_reset = gpiod_get_index(&client->dev,
-						   NULL, 2, GPIOD_OUT_LOW);
-	if (IS_ERR(platform_data.gpio_reset))
-		return ERR_CAST(platform_data.gpio_reset);
-	platform_data.gpio_strobe = gpiod_get_index(&client->dev,
-						    NULL, 0, GPIOD_OUT_LOW);
-	if (IS_ERR(platform_data.gpio_strobe))
-		return ERR_CAST(platform_data.gpio_strobe);
-	platform_data.gpio_torch = gpiod_get_index(&client->dev,
-						   NULL, 1, GPIOD_OUT_LOW);
-	if (IS_ERR(platform_data.gpio_torch))
-		return ERR_CAST(platform_data.gpio_torch);
+	platक्रमm_data.gpio_reset = gpiod_get_index(&client->dev,
+						   शून्य, 2, GPIOD_OUT_LOW);
+	अगर (IS_ERR(platक्रमm_data.gpio_reset))
+		वापस ERR_CAST(platक्रमm_data.gpio_reset);
+	platक्रमm_data.gpio_strobe = gpiod_get_index(&client->dev,
+						    शून्य, 0, GPIOD_OUT_LOW);
+	अगर (IS_ERR(platक्रमm_data.gpio_strobe))
+		वापस ERR_CAST(platक्रमm_data.gpio_strobe);
+	platक्रमm_data.gpio_torch = gpiod_get_index(&client->dev,
+						   शून्य, 1, GPIOD_OUT_LOW);
+	अगर (IS_ERR(platक्रमm_data.gpio_torch))
+		वापस ERR_CAST(platक्रमm_data.gpio_torch);
 
-	/* Set to TX2 mode, then ENVM/TX2 pin is a power amplifier sync input:
-	 * ENVM/TX pin asserted, flash forced into torch;
+	/* Set to TX2 mode, then ENVM/TX2 pin is a घातer amplअगरier sync input:
+	 * ENVM/TX pin निश्चितed, flash क्रमced पूर्णांकo torch;
 	 * ENVM/TX pin desserted, flash set back;
 	 */
-	platform_data.envm_tx2 = 1;
-	platform_data.tx2_polarity = 0;
+	platक्रमm_data.envm_tx2 = 1;
+	platक्रमm_data.tx2_polarity = 0;
 
 	/* set peak current limit to be 1000mA */
-	platform_data.current_limit = 0;
+	platक्रमm_data.current_limit = 0;
 
-	return &platform_data;
-}
+	वापस &platक्रमm_data;
+पूर्ण
 
-static int lm3554_probe(struct i2c_client *client)
-{
-	int err = 0;
-	struct lm3554 *flash;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक lm3554_probe(काष्ठा i2c_client *client)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा lm3554 *flash;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	flash = kzalloc(sizeof(*flash), GFP_KERNEL);
-	if (!flash)
-		return -ENOMEM;
+	flash = kzalloc(माप(*flash), GFP_KERNEL);
+	अगर (!flash)
+		वापस -ENOMEM;
 
-	flash->pdata = lm3554_platform_data_func(client);
-	if (IS_ERR(flash->pdata)) {
+	flash->pdata = lm3554_platक्रमm_data_func(client);
+	अगर (IS_ERR(flash->pdata)) अणु
 		err = PTR_ERR(flash->pdata);
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
 	v4l2_i2c_subdev_init(&flash->sd, client, &lm3554_ops);
-	flash->sd.internal_ops = &lm3554_internal_ops;
+	flash->sd.पूर्णांकernal_ops = &lm3554_पूर्णांकernal_ops;
 	flash->sd.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 	flash->mode = ATOMISP_FLASH_MODE_OFF;
-	flash->timeout = LM3554_MAX_TIMEOUT / LM3554_TIMEOUT_STEPSIZE - 1;
+	flash->समयout = LM3554_MAX_TIMEOUT / LM3554_TIMEOUT_STEPSIZE - 1;
 	ret =
 	    v4l2_ctrl_handler_init(&flash->ctrl_handler,
 				   ARRAY_SIZE(lm3554_controls));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "error initialize a ctrl_handler.\n");
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(lm3554_controls); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(lm3554_controls); i++)
 		v4l2_ctrl_new_custom(&flash->ctrl_handler, &lm3554_controls[i],
-				     NULL);
+				     शून्य);
 
-	if (flash->ctrl_handler.error) {
+	अगर (flash->ctrl_handler.error) अणु
 		dev_err(&client->dev, "ctrl_handler error.\n");
-		goto fail3;
-	}
+		जाओ fail3;
+	पूर्ण
 
 	flash->sd.ctrl_handler = &flash->ctrl_handler;
-	err = media_entity_pads_init(&flash->sd.entity, 0, NULL);
-	if (err) {
+	err = media_entity_pads_init(&flash->sd.entity, 0, शून्य);
+	अगर (err) अणु
 		dev_err(&client->dev, "error initialize a media entity.\n");
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
 	flash->sd.entity.function = MEDIA_ENT_F_FLASH;
 
-	mutex_init(&flash->power_lock);
+	mutex_init(&flash->घातer_lock);
 
-	timer_setup(&flash->flash_off_delay, lm3554_flash_off_delay, 0);
+	समयr_setup(&flash->flash_off_delay, lm3554_flash_off_delay, 0);
 
 	err = lm3554_gpio_init(client);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&client->dev, "gpio request/direction_output fail");
-		goto fail3;
-	}
-	return atomisp_register_i2c_module(&flash->sd, NULL, LED_FLASH);
+		जाओ fail3;
+	पूर्ण
+	वापस atomisp_रेजिस्टर_i2c_module(&flash->sd, शून्य, LED_FLASH);
 fail3:
 	media_entity_cleanup(&flash->sd.entity);
-	v4l2_ctrl_handler_free(&flash->ctrl_handler);
+	v4l2_ctrl_handler_मुक्त(&flash->ctrl_handler);
 fail2:
-	v4l2_device_unregister_subdev(&flash->sd);
+	v4l2_device_unरेजिस्टर_subdev(&flash->sd);
 fail1:
-	kfree(flash);
+	kमुक्त(flash);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lm3554_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct lm3554 *flash = to_lm3554(sd);
+अटल पूर्णांक lm3554_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा lm3554 *flash = to_lm3554(sd);
 
 	media_entity_cleanup(&flash->sd.entity);
-	v4l2_ctrl_handler_free(&flash->ctrl_handler);
-	v4l2_device_unregister_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(&flash->ctrl_handler);
+	v4l2_device_unरेजिस्टर_subdev(sd);
 
-	atomisp_gmin_remove_subdev(sd);
+	atomisp_gmin_हटाओ_subdev(sd);
 
-	del_timer_sync(&flash->flash_off_delay);
+	del_समयr_sync(&flash->flash_off_delay);
 
 	lm3554_gpio_uninit(client);
 
-	kfree(flash);
+	kमुक्त(flash);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops lm3554_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops lm3554_pm_ops = अणु
 	.suspend = lm3554_suspend,
 	.resume = lm3554_resume,
-};
+पूर्ण;
 
-static const struct acpi_device_id lm3554_acpi_match[] = {
-	{ "INTCF1C" },
-	{},
-};
+अटल स्थिर काष्ठा acpi_device_id lm3554_acpi_match[] = अणु
+	अणु "INTCF1C" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, lm3554_acpi_match);
 
-static struct i2c_driver lm3554_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver lm3554_driver = अणु
+	.driver = अणु
 		.name = "lm3554",
 		.pm   = &lm3554_pm_ops,
 		.acpi_match_table = lm3554_acpi_match,
-	},
+	पूर्ण,
 	.probe_new = lm3554_probe,
-	.remove = lm3554_remove,
-};
+	.हटाओ = lm3554_हटाओ,
+पूर्ण;
 module_i2c_driver(lm3554_driver);
 
 MODULE_AUTHOR("Jing Tao <jing.tao@intel.com>");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,47 +22,47 @@
  *
  */
 
-#define SWSMU_CODE_LAYER_L2
+#घोषणा SWSMU_CODE_LAYER_L2
 
-#include <linux/firmware.h>
-#include <linux/pci.h>
-#include <linux/i2c.h>
-#include "amdgpu.h"
-#include "amdgpu_smu.h"
-#include "atomfirmware.h"
-#include "amdgpu_atomfirmware.h"
-#include "amdgpu_atombios.h"
-#include "smu_v11_0.h"
-#include "smu11_driver_if_sienna_cichlid.h"
-#include "soc15_common.h"
-#include "atom.h"
-#include "sienna_cichlid_ppt.h"
-#include "smu_v11_0_7_pptable.h"
-#include "smu_v11_0_7_ppsmc.h"
-#include "nbio/nbio_2_3_offset.h"
-#include "nbio/nbio_2_3_sh_mask.h"
-#include "thm/thm_11_0_2_offset.h"
-#include "thm/thm_11_0_2_sh_mask.h"
-#include "mp/mp_11_0_offset.h"
-#include "mp/mp_11_0_sh_mask.h"
+#समावेश <linux/firmware.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/i2c.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_smu.h"
+#समावेश "atomfirmware.h"
+#समावेश "amdgpu_atomfirmware.h"
+#समावेश "amdgpu_atombios.h"
+#समावेश "smu_v11_0.h"
+#समावेश "smu11_driver_if_sienna_cichlid.h"
+#समावेश "soc15_common.h"
+#समावेश "atom.h"
+#समावेश "sienna_cichlid_ppt.h"
+#समावेश "smu_v11_0_7_pptable.h"
+#समावेश "smu_v11_0_7_ppsmc.h"
+#समावेश "nbio/nbio_2_3_offset.h"
+#समावेश "nbio/nbio_2_3_sh_mask.h"
+#समावेश "thm/thm_11_0_2_offset.h"
+#समावेश "thm/thm_11_0_2_sh_mask.h"
+#समावेश "mp/mp_11_0_offset.h"
+#समावेश "mp/mp_11_0_sh_mask.h"
 
-#include "asic_reg/mp/mp_11_0_sh_mask.h"
-#include "smu_cmn.h"
+#समावेश "asic_reg/mp/mp_11_0_sh_mask.h"
+#समावेश "smu_cmn.h"
 
 /*
- * DO NOT use these for err/warn/info/debug messages.
+ * DO NOT use these क्रम err/warn/info/debug messages.
  * Use dev_err, dev_warn, dev_info and dev_dbg instead.
- * They are more MGPU friendly.
+ * They are more MGPU मित्रly.
  */
-#undef pr_err
-#undef pr_warn
-#undef pr_info
-#undef pr_debug
+#अघोषित pr_err
+#अघोषित pr_warn
+#अघोषित pr_info
+#अघोषित pr_debug
 
-#define to_amdgpu_device(x) (container_of(x, struct amdgpu_device, pm.smu_i2c))
+#घोषणा to_amdgpu_device(x) (container_of(x, काष्ठा amdgpu_device, pm.smu_i2c))
 
-#define FEATURE_MASK(feature) (1ULL << feature)
-#define SMC_DPM_FEATURE ( \
+#घोषणा FEATURE_MASK(feature) (1ULL << feature)
+#घोषणा SMC_DPM_FEATURE ( \
 	FEATURE_MASK(FEATURE_DPM_PREFETCHER_BIT) | \
 	FEATURE_MASK(FEATURE_DPM_GFXCLK_BIT)     | \
 	FEATURE_MASK(FEATURE_DPM_UCLK_BIT)	 | \
@@ -71,9 +72,9 @@
 	FEATURE_MASK(FEATURE_DPM_DCEFCLK_BIT)	 | \
 	FEATURE_MASK(FEATURE_DPM_MP0CLK_BIT))
 
-#define SMU_11_0_7_GFX_BUSY_THRESHOLD 15
+#घोषणा SMU_11_0_7_GFX_BUSY_THRESHOLD 15
 
-static struct cmn2asic_msg_mapping sienna_cichlid_message_map[SMU_MSG_MAX_COUNT] = {
+अटल काष्ठा cmn2asic_msg_mapping sienna_cichlid_message_map[SMU_MSG_MAX_COUNT] = अणु
 	MSG_MAP(TestMessage,			PPSMC_MSG_TestMessage,                 1),
 	MSG_MAP(GetSmuVersion,			PPSMC_MSG_GetSmuVersion,               1),
 	MSG_MAP(GetDriverIfVersion,		PPSMC_MSG_GetDriverIfVersion,          1),
@@ -110,7 +111,7 @@ static struct cmn2asic_msg_mapping sienna_cichlid_message_map[SMU_MSG_MAX_COUNT]
 	MSG_MAP(SetGeminiApertureLow,		PPSMC_MSG_SetGeminiApertureLow,        0),
 	MSG_MAP(OverridePcieParameters,		PPSMC_MSG_OverridePcieParameters,      0),
 	MSG_MAP(ReenableAcDcInterrupt,		PPSMC_MSG_ReenableAcDcInterrupt,       0),
-	MSG_MAP(NotifyPowerSource,		PPSMC_MSG_NotifyPowerSource,           0),
+	MSG_MAP(NotअगरyPowerSource,		PPSMC_MSG_NotअगरyPowerSource,           0),
 	MSG_MAP(SetUclkFastSwitch,		PPSMC_MSG_SetUclkFastSwitch,           0),
 	MSG_MAP(SetVideoFps,			PPSMC_MSG_SetVideoFps,                 0),
 	MSG_MAP(PrepareMp1ForUnload,		PPSMC_MSG_PrepareMp1ForUnload,         1),
@@ -130,9 +131,9 @@ static struct cmn2asic_msg_mapping sienna_cichlid_message_map[SMU_MSG_MAX_COUNT]
 	MSG_MAP(SetGpoFeaturePMask,		PPSMC_MSG_SetGpoFeaturePMask,          0),
 	MSG_MAP(DisallowGpo,			PPSMC_MSG_DisallowGpo,                 0),
 	MSG_MAP(Enable2ndUSB20Port,		PPSMC_MSG_Enable2ndUSB20Port,          0),
-};
+पूर्ण;
 
-static struct cmn2asic_mapping sienna_cichlid_clk_map[SMU_CLK_COUNT] = {
+अटल काष्ठा cmn2asic_mapping sienna_cichlid_clk_map[SMU_CLK_COUNT] = अणु
 	CLK_MAP(GFXCLK,		PPCLK_GFXCLK),
 	CLK_MAP(SCLK,		PPCLK_GFXCLK),
 	CLK_MAP(SOCCLK,		PPCLK_SOCCLK),
@@ -147,9 +148,9 @@ static struct cmn2asic_mapping sienna_cichlid_clk_map[SMU_CLK_COUNT] = {
 	CLK_MAP(DISPCLK,	PPCLK_DISPCLK),
 	CLK_MAP(PIXCLK,		PPCLK_PIXCLK),
 	CLK_MAP(PHYCLK,		PPCLK_PHYCLK),
-};
+पूर्ण;
 
-static struct cmn2asic_mapping sienna_cichlid_feature_mask_map[SMU_FEATURE_COUNT] = {
+अटल काष्ठा cmn2asic_mapping sienna_cichlid_feature_mask_map[SMU_FEATURE_COUNT] = अणु
 	FEA_MAP(DPM_PREFETCHER),
 	FEA_MAP(DPM_GFXCLK),
 	FEA_MAP(DPM_GFX_GPO),
@@ -193,9 +194,9 @@ static struct cmn2asic_mapping sienna_cichlid_feature_mask_map[SMU_FEATURE_COUNT
 	FEA_MAP(MMHUB_PG),
 	FEA_MAP(ATHUB_PG),
 	FEA_MAP(APCC_DFLL),
-};
+पूर्ण;
 
-static struct cmn2asic_mapping sienna_cichlid_table_map[SMU_TABLE_COUNT] = {
+अटल काष्ठा cmn2asic_mapping sienna_cichlid_table_map[SMU_TABLE_COUNT] = अणु
 	TAB_MAP(PPTABLE),
 	TAB_MAP(WATERMARKS),
 	TAB_MAP(AVFS_PSM_DEBUG),
@@ -207,35 +208,35 @@ static struct cmn2asic_mapping sienna_cichlid_table_map[SMU_TABLE_COUNT] = {
 	TAB_MAP(OVERDRIVE),
 	TAB_MAP(I2C_COMMANDS),
 	TAB_MAP(PACE),
-};
+पूर्ण;
 
-static struct cmn2asic_mapping sienna_cichlid_pwr_src_map[SMU_POWER_SOURCE_COUNT] = {
+अटल काष्ठा cmn2asic_mapping sienna_cichlid_pwr_src_map[SMU_POWER_SOURCE_COUNT] = अणु
 	PWR_MAP(AC),
 	PWR_MAP(DC),
-};
+पूर्ण;
 
-static struct cmn2asic_mapping sienna_cichlid_workload_map[PP_SMC_POWER_PROFILE_COUNT] = {
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT,	WORKLOAD_PPLIB_DEFAULT_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_FULLSCREEN3D,		WORKLOAD_PPLIB_FULL_SCREEN_3D_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_POWERSAVING,		WORKLOAD_PPLIB_POWER_SAVING_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_VIDEO,		WORKLOAD_PPLIB_VIDEO_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_VR,			WORKLOAD_PPLIB_VR_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_COMPUTE,		WORKLOAD_PPLIB_COMPUTE_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_CUSTOM,		WORKLOAD_PPLIB_CUSTOM_BIT),
-};
+अटल काष्ठा cmn2asic_mapping sienna_cichlid_workload_map[PP_SMC_POWER_PROखाता_COUNT] = अणु
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT,	WORKLOAD_PPLIB_DEFAULT_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_FULLSCREEN3D,		WORKLOAD_PPLIB_FULL_SCREEN_3D_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_POWERSAVING,		WORKLOAD_PPLIB_POWER_SAVING_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_VIDEO,		WORKLOAD_PPLIB_VIDEO_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_VR,			WORKLOAD_PPLIB_VR_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_COMPUTE,		WORKLOAD_PPLIB_COMPUTE_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_CUSTOM,		WORKLOAD_PPLIB_CUSTOM_BIT),
+पूर्ण;
 
-static int
-sienna_cichlid_get_allowed_feature_mask(struct smu_context *smu,
-				  uint32_t *feature_mask, uint32_t num)
-{
-	struct amdgpu_device *adev = smu->adev;
+अटल पूर्णांक
+sienna_cichlid_get_allowed_feature_mask(काष्ठा smu_context *smu,
+				  uपूर्णांक32_t *feature_mask, uपूर्णांक32_t num)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
 
-	if (num > 2)
-		return -EINVAL;
+	अगर (num > 2)
+		वापस -EINVAL;
 
-	memset(feature_mask, 0, sizeof(uint32_t) * num);
+	स_रखो(feature_mask, 0, माप(uपूर्णांक32_t) * num);
 
-	*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_PREFETCHER_BIT)
+	*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_PREFETCHER_BIT)
 				| FEATURE_MASK(FEATURE_DPM_FCLK_BIT)
 				| FEATURE_MASK(FEATURE_DPM_MP0CLK_BIT)
 				| FEATURE_MASK(FEATURE_DS_SOCCLK_BIT)
@@ -256,768 +257,768 @@ sienna_cichlid_get_allowed_feature_mask(struct smu_context *smu,
 				| FEATURE_MASK(FEATURE_THERMAL_BIT)
 				| FEATURE_MASK(FEATURE_OUT_OF_BAND_MONITOR_BIT);
 
-	if (adev->pm.pp_feature & PP_SCLK_DPM_MASK) {
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_GFXCLK_BIT);
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_GFX_GPO_BIT);
-	}
+	अगर (adev->pm.pp_feature & PP_SCLK_DPM_MASK) अणु
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_GFXCLK_BIT);
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_GFX_GPO_BIT);
+	पूर्ण
 
-	if ((adev->pm.pp_feature & PP_GFX_DCS_MASK) &&
+	अगर ((adev->pm.pp_feature & PP_GFX_DCS_MASK) &&
 	    (adev->asic_type > CHIP_SIENNA_CICHLID) &&
 	    !(adev->flags & AMD_IS_APU))
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFX_DCS_BIT);
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFX_DCS_BIT);
 
-	if (adev->pm.pp_feature & PP_MCLK_DPM_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_UCLK_BIT)
+	अगर (adev->pm.pp_feature & PP_MCLK_DPM_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_UCLK_BIT)
 					| FEATURE_MASK(FEATURE_MEM_VDDCI_SCALING_BIT)
 					| FEATURE_MASK(FEATURE_MEM_MVDD_SCALING_BIT);
 
-	if (adev->pm.pp_feature & PP_PCIE_DPM_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_LINK_BIT);
+	अगर (adev->pm.pp_feature & PP_PCIE_DPM_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_LINK_BIT);
 
-	if (adev->pm.pp_feature & PP_DCEFCLK_DPM_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_DCEFCLK_BIT);
+	अगर (adev->pm.pp_feature & PP_DCEFCLK_DPM_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_DCEFCLK_BIT);
 
-	if (adev->pm.pp_feature & PP_SOCCLK_DPM_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_SOCCLK_BIT);
+	अगर (adev->pm.pp_feature & PP_SOCCLK_DPM_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DPM_SOCCLK_BIT);
 
-	if (adev->pm.pp_feature & PP_ULV_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFX_ULV_BIT);
+	अगर (adev->pm.pp_feature & PP_ULV_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFX_ULV_BIT);
 
-	if (adev->pm.pp_feature & PP_SCLK_DEEP_SLEEP_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DS_GFXCLK_BIT);
+	अगर (adev->pm.pp_feature & PP_SCLK_DEEP_SLEEP_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DS_GFXCLK_BIT);
 
-	if (adev->pm.pp_feature & PP_GFXOFF_MASK)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFXOFF_BIT);
+	अगर (adev->pm.pp_feature & PP_GFXOFF_MASK)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_GFXOFF_BIT);
 
-	if (smu->adev->pg_flags & AMD_PG_SUPPORT_ATHUB)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_ATHUB_PG_BIT);
+	अगर (smu->adev->pg_flags & AMD_PG_SUPPORT_ATHUB)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_ATHUB_PG_BIT);
 
-	if (smu->adev->pg_flags & AMD_PG_SUPPORT_MMHUB)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_MMHUB_PG_BIT);
+	अगर (smu->adev->pg_flags & AMD_PG_SUPPORT_MMHUB)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_MMHUB_PG_BIT);
 
-	if (smu->adev->pg_flags & AMD_PG_SUPPORT_VCN ||
+	अगर (smu->adev->pg_flags & AMD_PG_SUPPORT_VCN ||
 	    smu->adev->pg_flags & AMD_PG_SUPPORT_JPEG)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_MM_DPM_PG_BIT);
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_MM_DPM_PG_BIT);
 
-	if (smu->dc_controlled_by_gpio)
-       *(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_ACDC_BIT);
+	अगर (smu->dc_controlled_by_gpio)
+       *(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_ACDC_BIT);
 
-	if (amdgpu_aspm == 1)
-		*(uint64_t *)feature_mask |= FEATURE_MASK(FEATURE_DS_LCLK_BIT);
+	अगर (amdgpu_aspm == 1)
+		*(uपूर्णांक64_t *)feature_mask |= FEATURE_MASK(FEATURE_DS_LCLK_BIT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_check_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_7_powerplay_table *powerplay_table =
-		table_context->power_play_table;
-	struct smu_baco_context *smu_baco = &smu->smu_baco;
+अटल पूर्णांक sienna_cichlid_check_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_7_घातerplay_table *घातerplay_table =
+		table_context->घातer_play_table;
+	काष्ठा smu_baco_context *smu_baco = &smu->smu_baco;
 
-	if (powerplay_table->platform_caps & SMU_11_0_7_PP_PLATFORM_CAP_HARDWAREDC)
+	अगर (घातerplay_table->platक्रमm_caps & SMU_11_0_7_PP_PLATFORM_CAP_HARDWAREDC)
 		smu->dc_controlled_by_gpio = true;
 
-	if (powerplay_table->platform_caps & SMU_11_0_7_PP_PLATFORM_CAP_BACO ||
-	    powerplay_table->platform_caps & SMU_11_0_7_PP_PLATFORM_CAP_MACO)
-		smu_baco->platform_support = true;
+	अगर (घातerplay_table->platक्रमm_caps & SMU_11_0_7_PP_PLATFORM_CAP_BACO ||
+	    घातerplay_table->platक्रमm_caps & SMU_11_0_7_PP_PLATFORM_CAP_MACO)
+		smu_baco->platक्रमm_support = true;
 
 	table_context->thermal_controller_type =
-		powerplay_table->thermal_controller_type;
+		घातerplay_table->thermal_controller_type;
 
 	/*
 	 * Instead of having its own buffer space and get overdrive_table copied,
-	 * smu->od_settings just points to the actual overdrive_table
+	 * smu->od_settings just poपूर्णांकs to the actual overdrive_table
 	 */
-	smu->od_settings = &powerplay_table->overdrive_table;
+	smu->od_settings = &घातerplay_table->overdrive_table;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_append_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक sienna_cichlid_append_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *smc_pptable = table_context->driver_pptable;
-	struct atom_smc_dpm_info_v4_9 *smc_dpm_table;
-	int index, ret;
+	काष्ठा atom_smc_dpm_info_v4_9 *smc_dpm_table;
+	पूर्णांक index, ret;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					    smc_dpm_info);
 
-	ret = amdgpu_atombios_get_data_table(smu->adev, index, NULL, NULL, NULL,
-				      (uint8_t **)&smc_dpm_table);
-	if (ret)
-		return ret;
+	ret = amdgpu_atombios_get_data_table(smu->adev, index, शून्य, शून्य, शून्य,
+				      (uपूर्णांक8_t **)&smc_dpm_table);
+	अगर (ret)
+		वापस ret;
 
-	memcpy(smc_pptable->I2cControllers, smc_dpm_table->I2cControllers,
-	       sizeof(*smc_dpm_table) - sizeof(smc_dpm_table->table_header));
+	स_नकल(smc_pptable->I2cControllers, smc_dpm_table->I2cControllers,
+	       माप(*smc_dpm_table) - माप(smc_dpm_table->table_header));
 	
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_store_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_7_powerplay_table *powerplay_table =
-		table_context->power_play_table;
+अटल पूर्णांक sienna_cichlid_store_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_7_घातerplay_table *घातerplay_table =
+		table_context->घातer_play_table;
 
-	memcpy(table_context->driver_pptable, &powerplay_table->smc_pptable,
-	       sizeof(PPTable_t));
+	स_नकल(table_context->driver_pptable, &घातerplay_table->smc_pptable,
+	       माप(PPTable_t));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_setup_pptable(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_setup_pptable(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = smu_v11_0_setup_pptable(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = sienna_cichlid_store_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = sienna_cichlid_store_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	ret = sienna_cichlid_append_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = sienna_cichlid_append_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	ret = sienna_cichlid_check_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = sienna_cichlid_check_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_tables_init(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *tables = smu_table->tables;
+अटल पूर्णांक sienna_cichlid_tables_init(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *tables = smu_table->tables;
 
-	SMU_TABLE_INIT(tables, SMU_TABLE_PPTABLE, sizeof(PPTable_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_PPTABLE, माप(PPTable_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
-	SMU_TABLE_INIT(tables, SMU_TABLE_WATERMARKS, sizeof(Watermarks_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_WATERMARKS, माप(Watermarks_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
-	SMU_TABLE_INIT(tables, SMU_TABLE_SMU_METRICS, sizeof(SmuMetricsExternal_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_SMU_METRICS, माप(SmuMetricsExternal_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
-	SMU_TABLE_INIT(tables, SMU_TABLE_I2C_COMMANDS, sizeof(SwI2cRequest_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_I2C_COMMANDS, माप(SwI2cRequest_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
-	SMU_TABLE_INIT(tables, SMU_TABLE_OVERDRIVE, sizeof(OverDriveTable_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_OVERDRIVE, माप(OverDriveTable_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 	SMU_TABLE_INIT(tables, SMU_TABLE_PMSTATUSLOG, SMU11_TOOL_SIZE,
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 	SMU_TABLE_INIT(tables, SMU_TABLE_ACTIVITY_MONITOR_COEFF,
-		       sizeof(DpmActivityMonitorCoeffIntExternal_t), PAGE_SIZE,
+		       माप(DpmActivityMonitorCoeffIntExternal_t), PAGE_SIZE,
 	               AMDGPU_GEM_DOMAIN_VRAM);
 
-	smu_table->metrics_table = kzalloc(sizeof(SmuMetricsExternal_t), GFP_KERNEL);
-	if (!smu_table->metrics_table)
-		goto err0_out;
-	smu_table->metrics_time = 0;
+	smu_table->metrics_table = kzalloc(माप(SmuMetricsExternal_t), GFP_KERNEL);
+	अगर (!smu_table->metrics_table)
+		जाओ err0_out;
+	smu_table->metrics_समय = 0;
 
-	smu_table->gpu_metrics_table_size = sizeof(struct gpu_metrics_v1_1);
+	smu_table->gpu_metrics_table_size = माप(काष्ठा gpu_metrics_v1_1);
 	smu_table->gpu_metrics_table = kzalloc(smu_table->gpu_metrics_table_size, GFP_KERNEL);
-	if (!smu_table->gpu_metrics_table)
-		goto err1_out;
+	अगर (!smu_table->gpu_metrics_table)
+		जाओ err1_out;
 
-	smu_table->watermarks_table = kzalloc(sizeof(Watermarks_t), GFP_KERNEL);
-	if (!smu_table->watermarks_table)
-		goto err2_out;
+	smu_table->watermarks_table = kzalloc(माप(Watermarks_t), GFP_KERNEL);
+	अगर (!smu_table->watermarks_table)
+		जाओ err2_out;
 
-	return 0;
+	वापस 0;
 
 err2_out:
-	kfree(smu_table->gpu_metrics_table);
+	kमुक्त(smu_table->gpu_metrics_table);
 err1_out:
-	kfree(smu_table->metrics_table);
+	kमुक्त(smu_table->metrics_table);
 err0_out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int sienna_cichlid_get_smu_metrics_data(struct smu_context *smu,
+अटल पूर्णांक sienna_cichlid_get_smu_metrics_data(काष्ठा smu_context *smu,
 					       MetricsMember_t member,
-					       uint32_t *value)
-{
-	struct smu_table_context *smu_table= &smu->smu_table;
+					       uपूर्णांक32_t *value)
+अणु
+	काष्ठा smu_table_context *smu_table= &smu->smu_table;
 	SmuMetrics_t *metrics =
 		&(((SmuMetricsExternal_t *)(smu_table->metrics_table))->SmuMetrics);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->metrics_lock);
 
 	ret = smu_cmn_get_metrics_table_locked(smu,
-					       NULL,
+					       शून्य,
 					       false);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&smu->metrics_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (member) {
-	case METRICS_CURR_GFXCLK:
+	चयन (member) अणु
+	हाल METRICS_CURR_GFXCLK:
 		*value = metrics->CurrClock[PPCLK_GFXCLK];
-		break;
-	case METRICS_CURR_SOCCLK:
+		अवरोध;
+	हाल METRICS_CURR_SOCCLK:
 		*value = metrics->CurrClock[PPCLK_SOCCLK];
-		break;
-	case METRICS_CURR_UCLK:
+		अवरोध;
+	हाल METRICS_CURR_UCLK:
 		*value = metrics->CurrClock[PPCLK_UCLK];
-		break;
-	case METRICS_CURR_VCLK:
+		अवरोध;
+	हाल METRICS_CURR_VCLK:
 		*value = metrics->CurrClock[PPCLK_VCLK_0];
-		break;
-	case METRICS_CURR_VCLK1:
+		अवरोध;
+	हाल METRICS_CURR_VCLK1:
 		*value = metrics->CurrClock[PPCLK_VCLK_1];
-		break;
-	case METRICS_CURR_DCLK:
+		अवरोध;
+	हाल METRICS_CURR_DCLK:
 		*value = metrics->CurrClock[PPCLK_DCLK_0];
-		break;
-	case METRICS_CURR_DCLK1:
+		अवरोध;
+	हाल METRICS_CURR_DCLK1:
 		*value = metrics->CurrClock[PPCLK_DCLK_1];
-		break;
-	case METRICS_CURR_DCEFCLK:
+		अवरोध;
+	हाल METRICS_CURR_DCEFCLK:
 		*value = metrics->CurrClock[PPCLK_DCEFCLK];
-		break;
-	case METRICS_CURR_FCLK:
+		अवरोध;
+	हाल METRICS_CURR_FCLK:
 		*value = metrics->CurrClock[PPCLK_FCLK];
-		break;
-	case METRICS_AVERAGE_GFXCLK:
-		if (metrics->AverageGfxActivity <= SMU_11_0_7_GFX_BUSY_THRESHOLD)
+		अवरोध;
+	हाल METRICS_AVERAGE_GFXCLK:
+		अगर (metrics->AverageGfxActivity <= SMU_11_0_7_GFX_BUSY_THRESHOLD)
 			*value = metrics->AverageGfxclkFrequencyPostDs;
-		else
+		अन्यथा
 			*value = metrics->AverageGfxclkFrequencyPreDs;
-		break;
-	case METRICS_AVERAGE_FCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_FCLK:
 		*value = metrics->AverageFclkFrequencyPostDs;
-		break;
-	case METRICS_AVERAGE_UCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_UCLK:
 		*value = metrics->AverageUclkFrequencyPostDs;
-		break;
-	case METRICS_AVERAGE_GFXACTIVITY:
+		अवरोध;
+	हाल METRICS_AVERAGE_GFXACTIVITY:
 		*value = metrics->AverageGfxActivity;
-		break;
-	case METRICS_AVERAGE_MEMACTIVITY:
+		अवरोध;
+	हाल METRICS_AVERAGE_MEMACTIVITY:
 		*value = metrics->AverageUclkActivity;
-		break;
-	case METRICS_AVERAGE_SOCKETPOWER:
+		अवरोध;
+	हाल METRICS_AVERAGE_SOCKETPOWER:
 		*value = metrics->AverageSocketPower << 8;
-		break;
-	case METRICS_TEMPERATURE_EDGE:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_EDGE:
 		*value = metrics->TemperatureEdge *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_HOTSPOT:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_HOTSPOT:
 		*value = metrics->TemperatureHotspot *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_MEM:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_MEM:
 		*value = metrics->TemperatureMem *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_VRGFX:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_VRGFX:
 		*value = metrics->TemperatureVrGfx *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_VRSOC:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_VRSOC:
 		*value = metrics->TemperatureVrSoc *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_THROTTLER_STATUS:
+		अवरोध;
+	हाल METRICS_THROTTLER_STATUS:
 		*value = metrics->ThrottlerStatus;
-		break;
-	case METRICS_CURR_FANSPEED:
+		अवरोध;
+	हाल METRICS_CURR_FANSPEED:
 		*value = metrics->CurrFanSpeed;
-		break;
-	default:
-		*value = UINT_MAX;
-		break;
-	}
+		अवरोध;
+	शेष:
+		*value = अच_पूर्णांक_उच्च;
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&smu->metrics_lock);
 
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-static int sienna_cichlid_allocate_dpm_context(struct smu_context *smu)
-{
-	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
+अटल पूर्णांक sienna_cichlid_allocate_dpm_context(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_dpm_context *smu_dpm = &smu->smu_dpm;
 
-	smu_dpm->dpm_context = kzalloc(sizeof(struct smu_11_0_dpm_context),
+	smu_dpm->dpm_context = kzalloc(माप(काष्ठा smu_11_0_dpm_context),
 				       GFP_KERNEL);
-	if (!smu_dpm->dpm_context)
-		return -ENOMEM;
+	अगर (!smu_dpm->dpm_context)
+		वापस -ENOMEM;
 
-	smu_dpm->dpm_context_size = sizeof(struct smu_11_0_dpm_context);
+	smu_dpm->dpm_context_size = माप(काष्ठा smu_11_0_dpm_context);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_init_smc_tables(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_init_smc_tables(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = sienna_cichlid_tables_init(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sienna_cichlid_allocate_dpm_context(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return smu_v11_0_init_smc_tables(smu);
-}
+	वापस smu_v11_0_init_smc_tables(smu);
+पूर्ण
 
-static int sienna_cichlid_set_default_dpm_table(struct smu_context *smu)
-{
-	struct smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
+अटल पूर्णांक sienna_cichlid_set_शेष_dpm_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
 	PPTable_t *driver_ppt = smu->smu_table.driver_pptable;
-	struct smu_11_0_dpm_table *dpm_table;
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+	काष्ठा smu_11_0_dpm_table *dpm_table;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
 	/* socclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.soc_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_SOCCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_SOCCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.socclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* gfxclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.gfx_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_GFXCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_GFXCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.gfxclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* uclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.uclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_UCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_UCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.uclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* fclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.fclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_FCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_FCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_FCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_FCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.fclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* vclk0 dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.vclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_VCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_VCLK_0].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.vclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* vclk1 dpm table setup */
-	if (adev->vcn.num_vcn_inst > 1) {
+	अगर (adev->vcn.num_vcn_inst > 1) अणु
 		dpm_table = &dpm_context->dpm_tables.vclk1_table;
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
 			ret = smu_v11_0_set_single_dpm_table(smu,
 							     SMU_VCLK1,
 							     dpm_table);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			dpm_table->is_fine_grained =
 				!driver_ppt->DpmDescriptor[PPCLK_VCLK_1].SnapToDiscrete;
-		} else {
+		पूर्ण अन्यथा अणु
 			dpm_table->count = 1;
 			dpm_table->dpm_levels[0].value =
 				smu->smu_table.boot_values.vclk / 100;
 			dpm_table->dpm_levels[0].enabled = true;
 			dpm_table->min = dpm_table->dpm_levels[0].value;
 			dpm_table->max = dpm_table->dpm_levels[0].value;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* dclk0 dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.dclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_DCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_DCLK_0].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.dclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* dclk1 dpm table setup */
-	if (adev->vcn.num_vcn_inst > 1) {
+	अगर (adev->vcn.num_vcn_inst > 1) अणु
 		dpm_table = &dpm_context->dpm_tables.dclk1_table;
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
 			ret = smu_v11_0_set_single_dpm_table(smu,
 							     SMU_DCLK1,
 							     dpm_table);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			dpm_table->is_fine_grained =
 				!driver_ppt->DpmDescriptor[PPCLK_DCLK_1].SnapToDiscrete;
-		} else {
+		पूर्ण अन्यथा अणु
 			dpm_table->count = 1;
 			dpm_table->dpm_levels[0].value =
 				smu->smu_table.boot_values.dclk / 100;
 			dpm_table->dpm_levels[0].enabled = true;
 			dpm_table->min = dpm_table->dpm_levels[0].value;
 			dpm_table->max = dpm_table->dpm_levels[0].value;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* dcefclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.dcef_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_DCEFCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_DCEFCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.dcefclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* pixelclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.pixel_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_PIXCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_PIXCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.dcefclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* displayclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.display_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_DISPCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_DISPCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.dcefclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* phyclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.phy_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_PHYCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_PHYCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.dcefclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_dpm_set_vcn_enable(struct smu_context *smu, bool enable)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_dpm_set_vcn_enable(काष्ठा smu_context *smu, bool enable)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0;
 
-	if (enable) {
-		/* vcn dpm on is a prerequisite for vcn power gate messages */
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerUpVcn, 0, NULL);
-			if (ret)
-				return ret;
-			if (adev->vcn.num_vcn_inst > 1) {
+	अगर (enable) अणु
+		/* vcn dpm on is a prerequisite क्रम vcn घातer gate messages */
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
+			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerUpVcn, 0, शून्य);
+			अगर (ret)
+				वापस ret;
+			अगर (adev->vcn.num_vcn_inst > 1) अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerUpVcn,
-								  0x10000, NULL);
-				if (ret)
-					return ret;
-			}
-		}
-	} else {
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerDownVcn, 0, NULL);
-			if (ret)
-				return ret;
-			if (adev->vcn.num_vcn_inst > 1) {
+								  0x10000, शून्य);
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
+			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerDownVcn, 0, शून्य);
+			अगर (ret)
+				वापस ret;
+			अगर (adev->vcn.num_vcn_inst > 1) अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerDownVcn,
-								  0x10000, NULL);
-				if (ret)
-					return ret;
-			}
-		}
-	}
+								  0x10000, शून्य);
+				अगर (ret)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_dpm_set_jpeg_enable(struct smu_context *smu, bool enable)
-{
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_dpm_set_jpeg_enable(काष्ठा smu_context *smu, bool enable)
+अणु
+	पूर्णांक ret = 0;
 
-	if (enable) {
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerUpJpeg, 0, NULL);
-			if (ret)
-				return ret;
-		}
-	} else {
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) {
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerDownJpeg, 0, NULL);
-			if (ret)
-				return ret;
-		}
-	}
+	अगर (enable) अणु
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
+			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerUpJpeg, 0, शून्य);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_MM_DPM_PG_BIT)) अणु
+			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_PowerDownJpeg, 0, शून्य);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_get_current_clk_freq_by_table(struct smu_context *smu,
-				       enum smu_clk_type clk_type,
-				       uint32_t *value)
-{
+अटल पूर्णांक sienna_cichlid_get_current_clk_freq_by_table(काष्ठा smu_context *smu,
+				       क्रमागत smu_clk_type clk_type,
+				       uपूर्णांक32_t *value)
+अणु
 	MetricsMember_t member_type;
-	int clk_id = 0;
+	पूर्णांक clk_id = 0;
 
-	clk_id = smu_cmn_to_asic_specific_index(smu,
+	clk_id = smu_cmn_to_asic_specअगरic_index(smu,
 						CMN2ASIC_MAPPING_CLK,
 						clk_type);
-	if (clk_id < 0)
-		return clk_id;
+	अगर (clk_id < 0)
+		वापस clk_id;
 
-	switch (clk_id) {
-	case PPCLK_GFXCLK:
+	चयन (clk_id) अणु
+	हाल PPCLK_GFXCLK:
 		member_type = METRICS_CURR_GFXCLK;
-		break;
-	case PPCLK_UCLK:
+		अवरोध;
+	हाल PPCLK_UCLK:
 		member_type = METRICS_CURR_UCLK;
-		break;
-	case PPCLK_SOCCLK:
+		अवरोध;
+	हाल PPCLK_SOCCLK:
 		member_type = METRICS_CURR_SOCCLK;
-		break;
-	case PPCLK_FCLK:
+		अवरोध;
+	हाल PPCLK_FCLK:
 		member_type = METRICS_CURR_FCLK;
-		break;
-	case PPCLK_VCLK_0:
+		अवरोध;
+	हाल PPCLK_VCLK_0:
 		member_type = METRICS_CURR_VCLK;
-		break;
-	case PPCLK_VCLK_1:
+		अवरोध;
+	हाल PPCLK_VCLK_1:
 		member_type = METRICS_CURR_VCLK1;
-		break;
-	case PPCLK_DCLK_0:
+		अवरोध;
+	हाल PPCLK_DCLK_0:
 		member_type = METRICS_CURR_DCLK;
-		break;
-	case PPCLK_DCLK_1:
+		अवरोध;
+	हाल PPCLK_DCLK_1:
 		member_type = METRICS_CURR_DCLK1;
-		break;
-	case PPCLK_DCEFCLK:
+		अवरोध;
+	हाल PPCLK_DCEFCLK:
 		member_type = METRICS_CURR_DCEFCLK;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return sienna_cichlid_get_smu_metrics_data(smu,
+	वापस sienna_cichlid_get_smu_metrics_data(smu,
 						   member_type,
 						   value);
 
-}
+पूर्ण
 
-static bool sienna_cichlid_is_support_fine_grained_dpm(struct smu_context *smu, enum smu_clk_type clk_type)
-{
+अटल bool sienna_cichlid_is_support_fine_grained_dpm(काष्ठा smu_context *smu, क्रमागत smu_clk_type clk_type)
+अणु
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
-	DpmDescriptor_t *dpm_desc = NULL;
-	uint32_t clk_index = 0;
+	DpmDescriptor_t *dpm_desc = शून्य;
+	uपूर्णांक32_t clk_index = 0;
 
-	clk_index = smu_cmn_to_asic_specific_index(smu,
+	clk_index = smu_cmn_to_asic_specअगरic_index(smu,
 						   CMN2ASIC_MAPPING_CLK,
 						   clk_type);
 	dpm_desc = &pptable->DpmDescriptor[clk_index];
 
 	/* 0 - Fine grained DPM, 1 - Discrete DPM */
-	return dpm_desc->SnapToDiscrete == 0;
-}
+	वापस dpm_desc->SnapToDiscrete == 0;
+पूर्ण
 
-static bool sienna_cichlid_is_od_feature_supported(struct smu_11_0_7_overdrive_table *od_table,
-						   enum SMU_11_0_7_ODFEATURE_CAP cap)
-{
-	return od_table->cap[cap];
-}
+अटल bool sienna_cichlid_is_od_feature_supported(काष्ठा smu_11_0_7_overdrive_table *od_table,
+						   क्रमागत SMU_11_0_7_ODFEATURE_CAP cap)
+अणु
+	वापस od_table->cap[cap];
+पूर्ण
 
-static void sienna_cichlid_get_od_setting_range(struct smu_11_0_7_overdrive_table *od_table,
-						enum SMU_11_0_7_ODSETTING_ID setting,
-						uint32_t *min, uint32_t *max)
-{
-	if (min)
+अटल व्योम sienna_cichlid_get_od_setting_range(काष्ठा smu_11_0_7_overdrive_table *od_table,
+						क्रमागत SMU_11_0_7_ODSETTING_ID setting,
+						uपूर्णांक32_t *min, uपूर्णांक32_t *max)
+अणु
+	अगर (min)
 		*min = od_table->min[setting];
-	if (max)
+	अगर (max)
 		*max = od_table->max[setting];
-}
+पूर्ण
 
-static int sienna_cichlid_print_clk_levels(struct smu_context *smu,
-			enum smu_clk_type clk_type, char *buf)
-{
-	struct amdgpu_device *adev = smu->adev;
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
-	struct smu_11_0_dpm_context *dpm_context = smu_dpm->dpm_context;
+अटल पूर्णांक sienna_cichlid_prपूर्णांक_clk_levels(काष्ठा smu_context *smu,
+			क्रमागत smu_clk_type clk_type, अक्षर *buf)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_dpm_context *smu_dpm = &smu->smu_dpm;
+	काष्ठा smu_11_0_dpm_context *dpm_context = smu_dpm->dpm_context;
 	PPTable_t *pptable = (PPTable_t *)table_context->driver_pptable;
-	struct smu_11_0_7_overdrive_table *od_settings = smu->od_settings;
+	काष्ठा smu_11_0_7_overdrive_table *od_settings = smu->od_settings;
 	OverDriveTable_t *od_table =
 		(OverDriveTable_t *)table_context->overdrive_table;
-	int i, size = 0, ret = 0;
-	uint32_t cur_value = 0, value = 0, count = 0;
-	uint32_t freq_values[3] = {0};
-	uint32_t mark_index = 0;
-	uint32_t gen_speed, lane_width;
-	uint32_t min_value, max_value;
-	uint32_t smu_version;
+	पूर्णांक i, size = 0, ret = 0;
+	uपूर्णांक32_t cur_value = 0, value = 0, count = 0;
+	uपूर्णांक32_t freq_values[3] = अणु0पूर्ण;
+	uपूर्णांक32_t mark_index = 0;
+	uपूर्णांक32_t gen_speed, lane_width;
+	uपूर्णांक32_t min_value, max_value;
+	uपूर्णांक32_t smu_version;
 
-	switch (clk_type) {
-	case SMU_GFXCLK:
-	case SMU_SCLK:
-	case SMU_SOCCLK:
-	case SMU_MCLK:
-	case SMU_UCLK:
-	case SMU_FCLK:
-	case SMU_DCEFCLK:
+	चयन (clk_type) अणु
+	हाल SMU_GFXCLK:
+	हाल SMU_SCLK:
+	हाल SMU_SOCCLK:
+	हाल SMU_MCLK:
+	हाल SMU_UCLK:
+	हाल SMU_FCLK:
+	हाल SMU_DCEFCLK:
 		ret = sienna_cichlid_get_current_clk_freq_by_table(smu, clk_type, &cur_value);
-		if (ret)
-			goto print_clk_out;
+		अगर (ret)
+			जाओ prपूर्णांक_clk_out;
 
 		/* no need to disable gfxoff when retrieving the current gfxclk */
-		if ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
+		अगर ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
 			amdgpu_gfx_off_ctrl(adev, false);
 
 		ret = smu_v11_0_get_dpm_level_count(smu, clk_type, &count);
-		if (ret)
-			goto print_clk_out;
+		अगर (ret)
+			जाओ prपूर्णांक_clk_out;
 
-		if (!sienna_cichlid_is_support_fine_grained_dpm(smu, clk_type)) {
-			for (i = 0; i < count; i++) {
+		अगर (!sienna_cichlid_is_support_fine_grained_dpm(smu, clk_type)) अणु
+			क्रम (i = 0; i < count; i++) अणु
 				ret = smu_v11_0_get_dpm_freq_by_index(smu, clk_type, i, &value);
-				if (ret)
-					goto print_clk_out;
+				अगर (ret)
+					जाओ prपूर्णांक_clk_out;
 
-				size += sprintf(buf + size, "%d: %uMhz %s\n", i, value,
+				size += प्र_लिखो(buf + size, "%d: %uMhz %s\n", i, value,
 						cur_value == value ? "*" : "");
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ret = smu_v11_0_get_dpm_freq_by_index(smu, clk_type, 0, &freq_values[0]);
-			if (ret)
-				goto print_clk_out;
+			अगर (ret)
+				जाओ prपूर्णांक_clk_out;
 			ret = smu_v11_0_get_dpm_freq_by_index(smu, clk_type, count - 1, &freq_values[2]);
-			if (ret)
-				goto print_clk_out;
+			अगर (ret)
+				जाओ prपूर्णांक_clk_out;
 
 			freq_values[1] = cur_value;
 			mark_index = cur_value == freq_values[0] ? 0 :
 				     cur_value == freq_values[2] ? 2 : 1;
 
 			count = 3;
-			if (mark_index != 1) {
+			अगर (mark_index != 1) अणु
 				count = 2;
 				freq_values[1] = freq_values[2];
-			}
+			पूर्ण
 
-			for (i = 0; i < count; i++) {
-				size += sprintf(buf + size, "%d: %uMhz %s\n", i, freq_values[i],
+			क्रम (i = 0; i < count; i++) अणु
+				size += प्र_लिखो(buf + size, "%d: %uMhz %s\n", i, freq_values[i],
 						cur_value  == freq_values[i] ? "*" : "");
-			}
+			पूर्ण
 
-		}
-		break;
-	case SMU_PCIE:
+		पूर्ण
+		अवरोध;
+	हाल SMU_PCIE:
 		gen_speed = smu_v11_0_get_current_pcie_link_speed_level(smu);
 		lane_width = smu_v11_0_get_current_pcie_link_width_level(smu);
-		for (i = 0; i < NUM_LINK_LEVELS; i++)
-			size += sprintf(buf + size, "%d: %s %s %dMhz %s\n", i,
+		क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
+			size += प्र_लिखो(buf + size, "%d: %s %s %dMhz %s\n", i,
 					(dpm_context->dpm_tables.pcie_table.pcie_gen[i] == 0) ? "2.5GT/s," :
 					(dpm_context->dpm_tables.pcie_table.pcie_gen[i] == 1) ? "5.0GT/s," :
 					(dpm_context->dpm_tables.pcie_table.pcie_gen[i] == 2) ? "8.0GT/s," :
@@ -1032,272 +1033,272 @@ static int sienna_cichlid_print_clk_levels(struct smu_context *smu,
 					(gen_speed == dpm_context->dpm_tables.pcie_table.pcie_gen[i]) &&
 					(lane_width == dpm_context->dpm_tables.pcie_table.pcie_lane[i]) ?
 					"*" : "");
-		break;
-	case SMU_OD_SCLK:
-		if (!smu->od_enabled || !od_table || !od_settings)
-			break;
+		अवरोध;
+	हाल SMU_OD_SCLK:
+		अगर (!smu->od_enabled || !od_table || !od_settings)
+			अवरोध;
 
-		if (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_GFXCLK_LIMITS))
-			break;
+		अगर (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_GFXCLK_LIMITS))
+			अवरोध;
 
-		size += sprintf(buf + size, "OD_SCLK:\n");
-		size += sprintf(buf + size, "0: %uMhz\n1: %uMhz\n", od_table->GfxclkFmin, od_table->GfxclkFmax);
-		break;
+		size += प्र_लिखो(buf + size, "OD_SCLK:\n");
+		size += प्र_लिखो(buf + size, "0: %uMhz\n1: %uMhz\n", od_table->GfxclkFmin, od_table->GfxclkFmax);
+		अवरोध;
 
-	case SMU_OD_MCLK:
-		if (!smu->od_enabled || !od_table || !od_settings)
-			break;
+	हाल SMU_OD_MCLK:
+		अगर (!smu->od_enabled || !od_table || !od_settings)
+			अवरोध;
 
-		if (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS))
-			break;
+		अगर (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS))
+			अवरोध;
 
-		size += sprintf(buf + size, "OD_MCLK:\n");
-		size += sprintf(buf + size, "0: %uMhz\n1: %uMHz\n", od_table->UclkFmin, od_table->UclkFmax);
-		break;
+		size += प्र_लिखो(buf + size, "OD_MCLK:\n");
+		size += प्र_लिखो(buf + size, "0: %uMhz\n1: %uMHz\n", od_table->UclkFmin, od_table->UclkFmax);
+		अवरोध;
 
-	case SMU_OD_VDDGFX_OFFSET:
-		if (!smu->od_enabled || !od_table || !od_settings)
-			break;
+	हाल SMU_OD_VDDGFX_OFFSET:
+		अगर (!smu->od_enabled || !od_table || !od_settings)
+			अवरोध;
 
 		/*
 		 * OD GFX Voltage Offset functionality is supported only by 58.41.0
 		 * and onwards SMU firmwares.
 		 */
-		smu_cmn_get_smc_version(smu, NULL, &smu_version);
-		if ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
+		smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+		अगर ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
 		     (smu_version < 0x003a2900))
-			break;
+			अवरोध;
 
-		size += sprintf(buf + size, "OD_VDDGFX_OFFSET:\n");
-		size += sprintf(buf + size, "%dmV\n", od_table->VddGfxOffset);
-		break;
+		size += प्र_लिखो(buf + size, "OD_VDDGFX_OFFSET:\n");
+		size += प्र_लिखो(buf + size, "%dmV\n", od_table->VddGfxOffset);
+		अवरोध;
 
-	case SMU_OD_RANGE:
-		if (!smu->od_enabled || !od_table || !od_settings)
-			break;
+	हाल SMU_OD_RANGE:
+		अगर (!smu->od_enabled || !od_table || !od_settings)
+			अवरोध;
 
-		size = sprintf(buf, "%s:\n", "OD_RANGE");
+		size = प्र_लिखो(buf, "%s:\n", "OD_RANGE");
 
-		if (sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_GFXCLK_LIMITS)) {
+		अगर (sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_GFXCLK_LIMITS)) अणु
 			sienna_cichlid_get_od_setting_range(od_settings, SMU_11_0_7_ODSETTING_GFXCLKFMIN,
-							    &min_value, NULL);
+							    &min_value, शून्य);
 			sienna_cichlid_get_od_setting_range(od_settings, SMU_11_0_7_ODSETTING_GFXCLKFMAX,
-							    NULL, &max_value);
-			size += sprintf(buf + size, "SCLK: %7uMhz %10uMhz\n",
+							    शून्य, &max_value);
+			size += प्र_लिखो(buf + size, "SCLK: %7uMhz %10uMhz\n",
 					min_value, max_value);
-		}
+		पूर्ण
 
-		if (sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS)) {
+		अगर (sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS)) अणु
 			sienna_cichlid_get_od_setting_range(od_settings, SMU_11_0_7_ODSETTING_UCLKFMIN,
-							    &min_value, NULL);
+							    &min_value, शून्य);
 			sienna_cichlid_get_od_setting_range(od_settings, SMU_11_0_7_ODSETTING_UCLKFMAX,
-							    NULL, &max_value);
-			size += sprintf(buf + size, "MCLK: %7uMhz %10uMhz\n",
+							    शून्य, &max_value);
+			size += प्र_लिखो(buf + size, "MCLK: %7uMhz %10uMhz\n",
 					min_value, max_value);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-print_clk_out:
-	if ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
+prपूर्णांक_clk_out:
+	अगर ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
 		amdgpu_gfx_off_ctrl(adev, true);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int sienna_cichlid_force_clk_levels(struct smu_context *smu,
-				   enum smu_clk_type clk_type, uint32_t mask)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret = 0, size = 0;
-	uint32_t soft_min_level = 0, soft_max_level = 0, min_freq = 0, max_freq = 0;
+अटल पूर्णांक sienna_cichlid_क्रमce_clk_levels(काष्ठा smu_context *smu,
+				   क्रमागत smu_clk_type clk_type, uपूर्णांक32_t mask)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret = 0, size = 0;
+	uपूर्णांक32_t soft_min_level = 0, soft_max_level = 0, min_freq = 0, max_freq = 0;
 
 	soft_min_level = mask ? (ffs(mask) - 1) : 0;
 	soft_max_level = mask ? (fls(mask) - 1) : 0;
 
-	if ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
+	अगर ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
 		amdgpu_gfx_off_ctrl(adev, false);
 
-	switch (clk_type) {
-	case SMU_GFXCLK:
-	case SMU_SCLK:
-	case SMU_SOCCLK:
-	case SMU_MCLK:
-	case SMU_UCLK:
-	case SMU_FCLK:
-		/* There is only 2 levels for fine grained DPM */
-		if (sienna_cichlid_is_support_fine_grained_dpm(smu, clk_type)) {
+	चयन (clk_type) अणु
+	हाल SMU_GFXCLK:
+	हाल SMU_SCLK:
+	हाल SMU_SOCCLK:
+	हाल SMU_MCLK:
+	हाल SMU_UCLK:
+	हाल SMU_FCLK:
+		/* There is only 2 levels क्रम fine grained DPM */
+		अगर (sienna_cichlid_is_support_fine_grained_dpm(smu, clk_type)) अणु
 			soft_max_level = (soft_max_level >= 1 ? 1 : 0);
 			soft_min_level = (soft_min_level >= 1 ? 1 : 0);
-		}
+		पूर्ण
 
 		ret = smu_v11_0_get_dpm_freq_by_index(smu, clk_type, soft_min_level, &min_freq);
-		if (ret)
-			goto forec_level_out;
+		अगर (ret)
+			जाओ क्रमec_level_out;
 
 		ret = smu_v11_0_get_dpm_freq_by_index(smu, clk_type, soft_max_level, &max_freq);
-		if (ret)
-			goto forec_level_out;
+		अगर (ret)
+			जाओ क्रमec_level_out;
 
 		ret = smu_v11_0_set_soft_freq_limited_range(smu, clk_type, min_freq, max_freq);
-		if (ret)
-			goto forec_level_out;
-		break;
-	case SMU_DCEFCLK:
+		अगर (ret)
+			जाओ क्रमec_level_out;
+		अवरोध;
+	हाल SMU_DCEFCLK:
 		dev_info(smu->adev->dev,"Setting DCEFCLK min/max dpm level is not supported!\n");
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-forec_level_out:
-	if ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
+क्रमec_level_out:
+	अगर ((clk_type == SMU_GFXCLK) || (clk_type == SMU_SCLK))
 		amdgpu_gfx_off_ctrl(adev, true);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int sienna_cichlid_populate_umd_state_clk(struct smu_context *smu)
-{
-	struct smu_11_0_dpm_context *dpm_context =
+अटल पूर्णांक sienna_cichlid_populate_umd_state_clk(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context =
 				smu->smu_dpm.dpm_context;
-	struct smu_11_0_dpm_table *gfx_table =
+	काष्ठा smu_11_0_dpm_table *gfx_table =
 				&dpm_context->dpm_tables.gfx_table;
-	struct smu_11_0_dpm_table *mem_table =
+	काष्ठा smu_11_0_dpm_table *mem_table =
 				&dpm_context->dpm_tables.uclk_table;
-	struct smu_11_0_dpm_table *soc_table =
+	काष्ठा smu_11_0_dpm_table *soc_table =
 				&dpm_context->dpm_tables.soc_table;
-	struct smu_umd_pstate_table *pstate_table =
+	काष्ठा smu_umd_pstate_table *pstate_table =
 				&smu->pstate_table;
 
 	pstate_table->gfxclk_pstate.min = gfx_table->min;
 	pstate_table->gfxclk_pstate.peak = gfx_table->max;
-	if (gfx_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_GFXCLK)
+	अगर (gfx_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_GFXCLK)
 		pstate_table->gfxclk_pstate.standard = SIENNA_CICHLID_UMD_PSTATE_PROFILING_GFXCLK;
 
 	pstate_table->uclk_pstate.min = mem_table->min;
 	pstate_table->uclk_pstate.peak = mem_table->max;
-	if (mem_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_MEMCLK)
+	अगर (mem_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_MEMCLK)
 		pstate_table->uclk_pstate.standard = SIENNA_CICHLID_UMD_PSTATE_PROFILING_MEMCLK;
 
 	pstate_table->socclk_pstate.min = soc_table->min;
 	pstate_table->socclk_pstate.peak = soc_table->max;
-	if (soc_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_SOCCLK)
+	अगर (soc_table->max >= SIENNA_CICHLID_UMD_PSTATE_PROFILING_SOCCLK)
 		pstate_table->socclk_pstate.standard = SIENNA_CICHLID_UMD_PSTATE_PROFILING_SOCCLK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_pre_display_config_changed(struct smu_context *smu)
-{
-	int ret = 0;
-	uint32_t max_freq = 0;
+अटल पूर्णांक sienna_cichlid_pre_display_config_changed(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t max_freq = 0;
 
-	/* Sienna_Cichlid do not support to change display num currently */
-	return 0;
-#if 0
-	ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_NumOfDisplays, 0, NULL);
-	if (ret)
-		return ret;
-#endif
+	/* Sienna_Cichlid करो not support to change display num currently */
+	वापस 0;
+#अगर 0
+	ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_NumOfDisplays, 0, शून्य);
+	अगर (ret)
+		वापस ret;
+#पूर्ण_अगर
 
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) {
-		ret = smu_v11_0_get_dpm_ultimate_freq(smu, SMU_UCLK, NULL, &max_freq);
-		if (ret)
-			return ret;
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) अणु
+		ret = smu_v11_0_get_dpm_ultimate_freq(smu, SMU_UCLK, शून्य, &max_freq);
+		अगर (ret)
+			वापस ret;
 		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, 0, max_freq);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_display_config_changed(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_display_config_changed(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
-	if ((smu->watermarks_bitmap & WATERMARKS_EXIST) &&
+	अगर ((smu->watermarks_biपंचांगap & WATERMARKS_EXIST) &&
 	    smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_DCEFCLK_BIT) &&
-	    smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) {
-#if 0
+	    smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) अणु
+#अगर 0
 		ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_NumOfDisplays,
 						  smu->display_config->num_display,
-						  NULL);
-#endif
-		if (ret)
-			return ret;
-	}
+						  शून्य);
+#पूर्ण_अगर
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool sienna_cichlid_is_dpm_running(struct smu_context *smu)
-{
-	int ret = 0;
-	uint32_t feature_mask[2];
-	uint64_t feature_enabled;
+अटल bool sienna_cichlid_is_dpm_running(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t feature_mask[2];
+	uपूर्णांक64_t feature_enabled;
 
 	ret = smu_cmn_get_enabled_mask(smu, feature_mask, 2);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
-	feature_enabled = (uint64_t)feature_mask[1] << 32 | feature_mask[0];
+	feature_enabled = (uपूर्णांक64_t)feature_mask[1] << 32 | feature_mask[0];
 
-	return !!(feature_enabled & SMC_DPM_FEATURE);
-}
+	वापस !!(feature_enabled & SMC_DPM_FEATURE);
+पूर्ण
 
-static int sienna_cichlid_get_fan_speed_percent(struct smu_context *smu,
-						uint32_t *speed)
-{
-	int ret;
+अटल पूर्णांक sienna_cichlid_get_fan_speed_percent(काष्ठा smu_context *smu,
+						uपूर्णांक32_t *speed)
+अणु
+	पूर्णांक ret;
 	u32 rpm;
 
-	if (!speed)
-		return -EINVAL;
+	अगर (!speed)
+		वापस -EINVAL;
 
-	switch (smu_v11_0_get_fan_control_mode(smu)) {
-	case AMD_FAN_CTRL_AUTO:
+	चयन (smu_v11_0_get_fan_control_mode(smu)) अणु
+	हाल AMD_FAN_CTRL_AUTO:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_CURR_FANSPEED,
 							  &rpm);
-		if (!ret && smu->fan_max_rpm)
+		अगर (!ret && smu->fan_max_rpm)
 			*speed = rpm * 100 / smu->fan_max_rpm;
-		return ret;
-	default:
+		वापस ret;
+	शेष:
 		*speed = smu->user_dpm_profile.fan_speed_percent;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int sienna_cichlid_get_fan_parameters(struct smu_context *smu)
-{
+अटल पूर्णांक sienna_cichlid_get_fan_parameters(काष्ठा smu_context *smu)
+अणु
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 
 	smu->fan_max_rpm = pptable->FanMaximumRpm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_get_power_profile_mode(struct smu_context *smu, char *buf)
-{
-	DpmActivityMonitorCoeffIntExternal_t activity_monitor_external;
+अटल पूर्णांक sienna_cichlid_get_घातer_profile_mode(काष्ठा smu_context *smu, अक्षर *buf)
+अणु
+	DpmActivityMonitorCoeffIntExternal_t activity_monitor_बाह्यal;
 	DpmActivityMonitorCoeffInt_t *activity_monitor =
-		&(activity_monitor_external.DpmActivityMonitorCoeffInt);
-	uint32_t i, size = 0;
-	int16_t workload_type = 0;
-	static const char *profile_name[] = {
+		&(activity_monitor_बाह्यal.DpmActivityMonitorCoeffInt);
+	uपूर्णांक32_t i, size = 0;
+	पूर्णांक16_t workload_type = 0;
+	अटल स्थिर अक्षर *profile_name[] = अणु
 					"BOOTUP_DEFAULT",
 					"3D_FULL_SCREEN",
 					"POWER_SAVING",
 					"VIDEO",
 					"VR",
 					"COMPUTE",
-					"CUSTOM"};
-	static const char *title[] = {
+					"CUSTOM"पूर्ण;
+	अटल स्थिर अक्षर *title[] = अणु
 			"PROFILE_INDEX(NAME)",
 			"CLOCK_TYPE(NAME)",
 			"FPS",
@@ -1308,36 +1309,36 @@ static int sienna_cichlid_get_power_profile_mode(struct smu_context *smu, char *
 			"BoosterFreq",
 			"PD_Data_limit_c",
 			"PD_Data_error_coeff",
-			"PD_Data_error_rate_coeff"};
-	int result = 0;
+			"PD_Data_error_rate_coeff"पूर्ण;
+	पूर्णांक result = 0;
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
-	size += sprintf(buf + size, "%16s %s %s %s %s %s %s %s %s %s %s\n",
+	size += प्र_लिखो(buf + size, "%16s %s %s %s %s %s %s %s %s %s %s\n",
 			title[0], title[1], title[2], title[3], title[4], title[5],
 			title[6], title[7], title[8], title[9], title[10]);
 
-	for (i = 0; i <= PP_SMC_POWER_PROFILE_CUSTOM; i++) {
-		/* conv PP_SMC_POWER_PROFILE* to WORKLOAD_PPLIB_*_BIT */
-		workload_type = smu_cmn_to_asic_specific_index(smu,
+	क्रम (i = 0; i <= PP_SMC_POWER_PROखाता_CUSTOM; i++) अणु
+		/* conv PP_SMC_POWER_PROखाता* to WORKLOAD_PPLIB_*_BIT */
+		workload_type = smu_cmn_to_asic_specअगरic_index(smu,
 							       CMN2ASIC_MAPPING_WORKLOAD,
 							       i);
-		if (workload_type < 0)
-			return -EINVAL;
+		अगर (workload_type < 0)
+			वापस -EINVAL;
 
 		result = smu_cmn_update_table(smu,
 					  SMU_TABLE_ACTIVITY_MONITOR_COEFF, workload_type,
-					  (void *)(&activity_monitor_external), false);
-		if (result) {
+					  (व्योम *)(&activity_monitor_बाह्यal), false);
+		अगर (result) अणु
 			dev_err(smu->adev->dev, "[%s] Failed to get activity monitor!", __func__);
-			return result;
-		}
+			वापस result;
+		पूर्ण
 
-		size += sprintf(buf + size, "%2d %14s%s:\n",
-			i, profile_name[i], (i == smu->power_profile_mode) ? "*" : " ");
+		size += प्र_लिखो(buf + size, "%2d %14s%s:\n",
+			i, profile_name[i], (i == smu->घातer_profile_mode) ? "*" : " ");
 
-		size += sprintf(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
+		size += प्र_लिखो(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
 			" ",
 			0,
 			"GFXCLK",
@@ -1351,7 +1352,7 @@ static int sienna_cichlid_get_power_profile_mode(struct smu_context *smu, char *
 			activity_monitor->Gfx_PD_Data_error_coeff,
 			activity_monitor->Gfx_PD_Data_error_rate_coeff);
 
-		size += sprintf(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
+		size += प्र_लिखो(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
 			" ",
 			1,
 			"SOCCLK",
@@ -1365,7 +1366,7 @@ static int sienna_cichlid_get_power_profile_mode(struct smu_context *smu, char *
 			activity_monitor->Fclk_PD_Data_error_coeff,
 			activity_monitor->Fclk_PD_Data_error_rate_coeff);
 
-		size += sprintf(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
+		size += प्र_लिखो(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
 			" ",
 			2,
 			"MEMLK",
@@ -1378,38 +1379,38 @@ static int sienna_cichlid_get_power_profile_mode(struct smu_context *smu, char *
 			activity_monitor->Mem_PD_Data_limit_c,
 			activity_monitor->Mem_PD_Data_error_coeff,
 			activity_monitor->Mem_PD_Data_error_rate_coeff);
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int sienna_cichlid_set_power_profile_mode(struct smu_context *smu, long *input, uint32_t size)
-{
+अटल पूर्णांक sienna_cichlid_set_घातer_profile_mode(काष्ठा smu_context *smu, दीर्घ *input, uपूर्णांक32_t size)
+अणु
 
-	DpmActivityMonitorCoeffIntExternal_t activity_monitor_external;
+	DpmActivityMonitorCoeffIntExternal_t activity_monitor_बाह्यal;
 	DpmActivityMonitorCoeffInt_t *activity_monitor =
-		&(activity_monitor_external.DpmActivityMonitorCoeffInt);
-	int workload_type, ret = 0;
+		&(activity_monitor_बाह्यal.DpmActivityMonitorCoeffInt);
+	पूर्णांक workload_type, ret = 0;
 
-	smu->power_profile_mode = input[size];
+	smu->घातer_profile_mode = input[size];
 
-	if (smu->power_profile_mode > PP_SMC_POWER_PROFILE_CUSTOM) {
-		dev_err(smu->adev->dev, "Invalid power profile mode %d\n", smu->power_profile_mode);
-		return -EINVAL;
-	}
+	अगर (smu->घातer_profile_mode > PP_SMC_POWER_PROखाता_CUSTOM) अणु
+		dev_err(smu->adev->dev, "Invalid power profile mode %d\n", smu->घातer_profile_mode);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (smu->power_profile_mode == PP_SMC_POWER_PROFILE_CUSTOM) {
+	अगर (smu->घातer_profile_mode == PP_SMC_POWER_PROखाता_CUSTOM) अणु
 
 		ret = smu_cmn_update_table(smu,
 				       SMU_TABLE_ACTIVITY_MONITOR_COEFF, WORKLOAD_PPLIB_CUSTOM_BIT,
-				       (void *)(&activity_monitor_external), false);
-		if (ret) {
+				       (व्योम *)(&activity_monitor_बाह्यal), false);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "[%s] Failed to get activity monitor!", __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		switch (input[0]) {
-		case 0: /* Gfxclk */
+		चयन (input[0]) अणु
+		हाल 0: /* Gfxclk */
 			activity_monitor->Gfx_FPS = input[1];
 			activity_monitor->Gfx_MinFreqStep = input[2];
 			activity_monitor->Gfx_MinActiveFreqType = input[3];
@@ -1419,8 +1420,8 @@ static int sienna_cichlid_set_power_profile_mode(struct smu_context *smu, long *
 			activity_monitor->Gfx_PD_Data_limit_c = input[7];
 			activity_monitor->Gfx_PD_Data_error_coeff = input[8];
 			activity_monitor->Gfx_PD_Data_error_rate_coeff = input[9];
-			break;
-		case 1: /* Socclk */
+			अवरोध;
+		हाल 1: /* Socclk */
 			activity_monitor->Fclk_FPS = input[1];
 			activity_monitor->Fclk_MinFreqStep = input[2];
 			activity_monitor->Fclk_MinActiveFreqType = input[3];
@@ -1430,8 +1431,8 @@ static int sienna_cichlid_set_power_profile_mode(struct smu_context *smu, long *
 			activity_monitor->Fclk_PD_Data_limit_c = input[7];
 			activity_monitor->Fclk_PD_Data_error_coeff = input[8];
 			activity_monitor->Fclk_PD_Data_error_rate_coeff = input[9];
-			break;
-		case 2: /* Memlk */
+			अवरोध;
+		हाल 2: /* Memlk */
 			activity_monitor->Mem_FPS = input[1];
 			activity_monitor->Mem_MinFreqStep = input[2];
 			activity_monitor->Mem_MinActiveFreqType = input[3];
@@ -1441,245 +1442,245 @@ static int sienna_cichlid_set_power_profile_mode(struct smu_context *smu, long *
 			activity_monitor->Mem_PD_Data_limit_c = input[7];
 			activity_monitor->Mem_PD_Data_error_coeff = input[8];
 			activity_monitor->Mem_PD_Data_error_rate_coeff = input[9];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = smu_cmn_update_table(smu,
 				       SMU_TABLE_ACTIVITY_MONITOR_COEFF, WORKLOAD_PPLIB_CUSTOM_BIT,
-				       (void *)(&activity_monitor_external), true);
-		if (ret) {
+				       (व्योम *)(&activity_monitor_बाह्यal), true);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "[%s] Failed to set activity monitor!", __func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* conv PP_SMC_POWER_PROFILE* to WORKLOAD_PPLIB_*_BIT */
-	workload_type = smu_cmn_to_asic_specific_index(smu,
+	/* conv PP_SMC_POWER_PROखाता* to WORKLOAD_PPLIB_*_BIT */
+	workload_type = smu_cmn_to_asic_specअगरic_index(smu,
 						       CMN2ASIC_MAPPING_WORKLOAD,
-						       smu->power_profile_mode);
-	if (workload_type < 0)
-		return -EINVAL;
+						       smu->घातer_profile_mode);
+	अगर (workload_type < 0)
+		वापस -EINVAL;
 	smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_SetWorkloadMask,
-				    1 << workload_type, NULL);
+				    1 << workload_type, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_notify_smc_display_config(struct smu_context *smu)
-{
-	struct smu_clocks min_clocks = {0};
-	struct pp_display_clock_request clock_req;
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_notअगरy_smc_display_config(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_घड़ीs min_घड़ीs = अणु0पूर्ण;
+	काष्ठा pp_display_घड़ी_request घड़ी_req;
+	पूर्णांक ret = 0;
 
-	min_clocks.dcef_clock = smu->display_config->min_dcef_set_clk;
-	min_clocks.dcef_clock_in_sr = smu->display_config->min_dcef_deep_sleep_set_clk;
-	min_clocks.memory_clock = smu->display_config->min_mem_set_clock;
+	min_घड़ीs.dcef_घड़ी = smu->display_config->min_dcef_set_clk;
+	min_घड़ीs.dcef_घड़ी_in_sr = smu->display_config->min_dcef_deep_sleep_set_clk;
+	min_घड़ीs.memory_घड़ी = smu->display_config->min_mem_set_घड़ी;
 
-	if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) {
-		clock_req.clock_type = amd_pp_dcef_clock;
-		clock_req.clock_freq_in_khz = min_clocks.dcef_clock * 10;
+	अगर (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_DCEFCLK_BIT)) अणु
+		घड़ी_req.घड़ी_प्रकारype = amd_pp_dcef_घड़ी;
+		घड़ी_req.घड़ी_freq_in_khz = min_घड़ीs.dcef_घड़ी * 10;
 
-		ret = smu_v11_0_display_clock_voltage_request(smu, &clock_req);
-		if (!ret) {
-			if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DS_DCEFCLK_BIT)) {
+		ret = smu_v11_0_display_घड़ी_voltage_request(smu, &घड़ी_req);
+		अगर (!ret) अणु
+			अगर (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DS_DCEFCLK_BIT)) अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu,
 								  SMU_MSG_SetMinDeepSleepDcefclk,
-								  min_clocks.dcef_clock_in_sr/100,
-								  NULL);
-				if (ret) {
+								  min_घड़ीs.dcef_घड़ी_in_sr/100,
+								  शून्य);
+				अगर (ret) अणु
 					dev_err(smu->adev->dev, "Attempt to set divider for DCEFCLK Failed!");
-					return ret;
-				}
-			}
-		} else {
+					वापस ret;
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dev_info(smu->adev->dev, "Attempt to set Hard Min for DCEFCLK Failed!");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) {
-		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, min_clocks.memory_clock/100, 0);
-		if (ret) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) अणु
+		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, min_घड़ीs.memory_घड़ी/100, 0);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "[%s] Set hard min uclk failed!", __func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_set_watermarks_table(struct smu_context *smu,
-					       struct pp_smu_wm_range_sets *clock_ranges)
-{
+अटल पूर्णांक sienna_cichlid_set_watermarks_table(काष्ठा smu_context *smu,
+					       काष्ठा pp_smu_wm_range_sets *घड़ी_ranges)
+अणु
 	Watermarks_t *table = smu->smu_table.watermarks_table;
-	int ret = 0;
-	int i;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	if (clock_ranges) {
-		if (clock_ranges->num_reader_wm_sets > NUM_WM_RANGES ||
-		    clock_ranges->num_writer_wm_sets > NUM_WM_RANGES)
-			return -EINVAL;
+	अगर (घड़ी_ranges) अणु
+		अगर (घड़ी_ranges->num_पढ़ोer_wm_sets > NUM_WM_RANGES ||
+		    घड़ी_ranges->num_ग_लिखोr_wm_sets > NUM_WM_RANGES)
+			वापस -EINVAL;
 
-		for (i = 0; i < clock_ranges->num_reader_wm_sets; i++) {
+		क्रम (i = 0; i < घड़ी_ranges->num_पढ़ोer_wm_sets; i++) अणु
 			table->WatermarkRow[WM_DCEFCLK][i].MinClock =
-				clock_ranges->reader_wm_sets[i].min_drain_clk_mhz;
+				घड़ी_ranges->पढ़ोer_wm_sets[i].min_drain_clk_mhz;
 			table->WatermarkRow[WM_DCEFCLK][i].MaxClock =
-				clock_ranges->reader_wm_sets[i].max_drain_clk_mhz;
+				घड़ी_ranges->पढ़ोer_wm_sets[i].max_drain_clk_mhz;
 			table->WatermarkRow[WM_DCEFCLK][i].MinUclk =
-				clock_ranges->reader_wm_sets[i].min_fill_clk_mhz;
+				घड़ी_ranges->पढ़ोer_wm_sets[i].min_fill_clk_mhz;
 			table->WatermarkRow[WM_DCEFCLK][i].MaxUclk =
-				clock_ranges->reader_wm_sets[i].max_fill_clk_mhz;
+				घड़ी_ranges->पढ़ोer_wm_sets[i].max_fill_clk_mhz;
 
 			table->WatermarkRow[WM_DCEFCLK][i].WmSetting =
-				clock_ranges->reader_wm_sets[i].wm_inst;
-		}
+				घड़ी_ranges->पढ़ोer_wm_sets[i].wm_inst;
+		पूर्ण
 
-		for (i = 0; i < clock_ranges->num_writer_wm_sets; i++) {
+		क्रम (i = 0; i < घड़ी_ranges->num_ग_लिखोr_wm_sets; i++) अणु
 			table->WatermarkRow[WM_SOCCLK][i].MinClock =
-				clock_ranges->writer_wm_sets[i].min_fill_clk_mhz;
+				घड़ी_ranges->ग_लिखोr_wm_sets[i].min_fill_clk_mhz;
 			table->WatermarkRow[WM_SOCCLK][i].MaxClock =
-				clock_ranges->writer_wm_sets[i].max_fill_clk_mhz;
+				घड़ी_ranges->ग_लिखोr_wm_sets[i].max_fill_clk_mhz;
 			table->WatermarkRow[WM_SOCCLK][i].MinUclk =
-				clock_ranges->writer_wm_sets[i].min_drain_clk_mhz;
+				घड़ी_ranges->ग_लिखोr_wm_sets[i].min_drain_clk_mhz;
 			table->WatermarkRow[WM_SOCCLK][i].MaxUclk =
-				clock_ranges->writer_wm_sets[i].max_drain_clk_mhz;
+				घड़ी_ranges->ग_लिखोr_wm_sets[i].max_drain_clk_mhz;
 
 			table->WatermarkRow[WM_SOCCLK][i].WmSetting =
-				clock_ranges->writer_wm_sets[i].wm_inst;
-		}
+				घड़ी_ranges->ग_लिखोr_wm_sets[i].wm_inst;
+		पूर्ण
 
-		smu->watermarks_bitmap |= WATERMARKS_EXIST;
-	}
+		smu->watermarks_biपंचांगap |= WATERMARKS_EXIST;
+	पूर्ण
 
-	if ((smu->watermarks_bitmap & WATERMARKS_EXIST) &&
-	     !(smu->watermarks_bitmap & WATERMARKS_LOADED)) {
-		ret = smu_cmn_write_watermarks_table(smu);
-		if (ret) {
+	अगर ((smu->watermarks_biपंचांगap & WATERMARKS_EXIST) &&
+	     !(smu->watermarks_biपंचांगap & WATERMARKS_LOADED)) अणु
+		ret = smu_cmn_ग_लिखो_watermarks_table(smu);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to update WMTABLE!");
-			return ret;
-		}
-		smu->watermarks_bitmap |= WATERMARKS_LOADED;
-	}
+			वापस ret;
+		पूर्ण
+		smu->watermarks_biपंचांगap |= WATERMARKS_LOADED;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_read_sensor(struct smu_context *smu,
-				 enum amd_pp_sensors sensor,
-				 void *data, uint32_t *size)
-{
-	int ret = 0;
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक sienna_cichlid_पढ़ो_sensor(काष्ठा smu_context *smu,
+				 क्रमागत amd_pp_sensors sensor,
+				 व्योम *data, uपूर्णांक32_t *size)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *pptable = table_context->driver_pptable;
 
-	if(!data || !size)
-		return -EINVAL;
+	अगर(!data || !size)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->sensor_lock);
-	switch (sensor) {
-	case AMDGPU_PP_SENSOR_MAX_FAN_RPM:
-		*(uint32_t *)data = pptable->FanMaximumRpm;
+	चयन (sensor) अणु
+	हाल AMDGPU_PP_SENSOR_MAX_FAN_RPM:
+		*(uपूर्णांक32_t *)data = pptable->FanMaximumRpm;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_MEM_LOAD:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_MEM_LOAD:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_AVERAGE_MEMACTIVITY,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GPU_LOAD:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GPU_LOAD:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_AVERAGE_GFXACTIVITY,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GPU_POWER:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GPU_POWER:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_AVERAGE_SOCKETPOWER,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_HOTSPOT_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_HOTSPOT_TEMP:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_TEMPERATURE_HOTSPOT,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_EDGE_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_EDGE_TEMP:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_TEMPERATURE_EDGE,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_MEM_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_MEM_TEMP:
 		ret = sienna_cichlid_get_smu_metrics_data(smu,
 							  METRICS_TEMPERATURE_MEM,
-							  (uint32_t *)data);
+							  (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GFX_MCLK:
-		ret = sienna_cichlid_get_current_clk_freq_by_table(smu, SMU_UCLK, (uint32_t *)data);
-		*(uint32_t *)data *= 100;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GFX_MCLK:
+		ret = sienna_cichlid_get_current_clk_freq_by_table(smu, SMU_UCLK, (uपूर्णांक32_t *)data);
+		*(uपूर्णांक32_t *)data *= 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GFX_SCLK:
-		ret = sienna_cichlid_get_current_clk_freq_by_table(smu, SMU_GFXCLK, (uint32_t *)data);
-		*(uint32_t *)data *= 100;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GFX_SCLK:
+		ret = sienna_cichlid_get_current_clk_freq_by_table(smu, SMU_GFXCLK, (uपूर्णांक32_t *)data);
+		*(uपूर्णांक32_t *)data *= 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_VDDGFX:
-		ret = smu_v11_0_get_gfx_vdd(smu, (uint32_t *)data);
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_VDDGFX:
+		ret = smu_v11_0_get_gfx_vdd(smu, (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&smu->sensor_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_get_uclk_dpm_states(struct smu_context *smu, uint32_t *clocks_in_khz, uint32_t *num_states)
-{
-	uint32_t num_discrete_levels = 0;
-	uint16_t *dpm_levels = NULL;
-	uint16_t i = 0;
-	struct smu_table_context *table_context = &smu->smu_table;
-	PPTable_t *driver_ppt = NULL;
+अटल पूर्णांक sienna_cichlid_get_uclk_dpm_states(काष्ठा smu_context *smu, uपूर्णांक32_t *घड़ीs_in_khz, uपूर्णांक32_t *num_states)
+अणु
+	uपूर्णांक32_t num_discrete_levels = 0;
+	uपूर्णांक16_t *dpm_levels = शून्य;
+	uपूर्णांक16_t i = 0;
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	PPTable_t *driver_ppt = शून्य;
 
-	if (!clocks_in_khz || !num_states || !table_context->driver_pptable)
-		return -EINVAL;
+	अगर (!घड़ीs_in_khz || !num_states || !table_context->driver_pptable)
+		वापस -EINVAL;
 
 	driver_ppt = table_context->driver_pptable;
 	num_discrete_levels = driver_ppt->DpmDescriptor[PPCLK_UCLK].NumDiscreteLevels;
 	dpm_levels = driver_ppt->FreqTableUclk;
 
-	if (num_discrete_levels == 0 || dpm_levels == NULL)
-		return -EINVAL;
+	अगर (num_discrete_levels == 0 || dpm_levels == शून्य)
+		वापस -EINVAL;
 
 	*num_states = num_discrete_levels;
-	for (i = 0; i < num_discrete_levels; i++) {
+	क्रम (i = 0; i < num_discrete_levels; i++) अणु
 		/* convert to khz */
-		*clocks_in_khz = (*dpm_levels) * 1000;
-		clocks_in_khz++;
+		*घड़ीs_in_khz = (*dpm_levels) * 1000;
+		घड़ीs_in_khz++;
 		dpm_levels++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_get_thermal_temperature_range(struct smu_context *smu,
-						struct smu_temperature_range *range)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_7_powerplay_table *powerplay_table =
-				table_context->power_play_table;
+अटल पूर्णांक sienna_cichlid_get_thermal_temperature_range(काष्ठा smu_context *smu,
+						काष्ठा smu_temperature_range *range)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_7_घातerplay_table *घातerplay_table =
+				table_context->घातer_play_table;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 
-	if (!range)
-		return -EINVAL;
+	अगर (!range)
+		वापस -EINVAL;
 
-	memcpy(range, &smu11_thermal_policy[0], sizeof(struct smu_temperature_range));
+	स_नकल(range, &smu11_thermal_policy[0], माप(काष्ठा smu_temperature_range));
 
 	range->max = pptable->TemperatureLimit[TEMP_EDGE] *
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
@@ -1693,82 +1694,82 @@ static int sienna_cichlid_get_thermal_temperature_range(struct smu_context *smu,
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
 	range->mem_emergency_max = (pptable->TemperatureLimit[TEMP_MEM] + CTF_OFFSET_MEM)*
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-	range->software_shutdown_temp = powerplay_table->software_shutdown_temp;
+	range->software_shutकरोwn_temp = घातerplay_table->software_shutकरोwn_temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_display_disable_memory_clock_switch(struct smu_context *smu,
-						bool disable_memory_clock_switch)
-{
-	int ret = 0;
-	struct smu_11_0_max_sustainable_clocks *max_sustainable_clocks =
-		(struct smu_11_0_max_sustainable_clocks *)
-			smu->smu_table.max_sustainable_clocks;
-	uint32_t min_memory_clock = smu->hard_min_uclk_req_from_dal;
-	uint32_t max_memory_clock = max_sustainable_clocks->uclock;
+अटल पूर्णांक sienna_cichlid_display_disable_memory_घड़ी_चयन(काष्ठा smu_context *smu,
+						bool disable_memory_घड़ी_चयन)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा smu_11_0_max_sustainable_घड़ीs *max_sustainable_घड़ीs =
+		(काष्ठा smu_11_0_max_sustainable_घड़ीs *)
+			smu->smu_table.max_sustainable_घड़ीs;
+	uपूर्णांक32_t min_memory_घड़ी = smu->hard_min_uclk_req_from_dal;
+	uपूर्णांक32_t max_memory_घड़ी = max_sustainable_घड़ीs->uघड़ी;
 
-	if(smu->disable_uclk_switch == disable_memory_clock_switch)
-		return 0;
+	अगर(smu->disable_uclk_चयन == disable_memory_घड़ी_चयन)
+		वापस 0;
 
-	if(disable_memory_clock_switch)
-		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, max_memory_clock, 0);
-	else
-		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, min_memory_clock, 0);
+	अगर(disable_memory_घड़ी_चयन)
+		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, max_memory_घड़ी, 0);
+	अन्यथा
+		ret = smu_v11_0_set_hard_freq_limited_range(smu, SMU_UCLK, min_memory_घड़ी, 0);
 
-	if(!ret)
-		smu->disable_uclk_switch = disable_memory_clock_switch;
+	अगर(!ret)
+		smu->disable_uclk_चयन = disable_memory_घड़ी_चयन;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_get_power_limit(struct smu_context *smu)
-{
-	struct smu_11_0_7_powerplay_table *powerplay_table =
-		(struct smu_11_0_7_powerplay_table *)smu->smu_table.power_play_table;
+अटल पूर्णांक sienna_cichlid_get_घातer_limit(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_7_घातerplay_table *घातerplay_table =
+		(काष्ठा smu_11_0_7_घातerplay_table *)smu->smu_table.घातer_play_table;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
-	uint32_t power_limit, od_percent;
+	uपूर्णांक32_t घातer_limit, od_percent;
 
-	if (smu_v11_0_get_current_power_limit(smu, &power_limit)) {
+	अगर (smu_v11_0_get_current_घातer_limit(smu, &घातer_limit)) अणु
 		/* the last hope to figure out the ppt limit */
-		if (!pptable) {
+		अगर (!pptable) अणु
 			dev_err(smu->adev->dev, "Cannot get PPT limit due to pptable missing!");
-			return -EINVAL;
-		}
-		power_limit =
+			वापस -EINVAL;
+		पूर्ण
+		घातer_limit =
 			pptable->SocketPowerLimitAc[PPT_THROTTLER_PPT0];
-	}
-	smu->current_power_limit = smu->default_power_limit = power_limit;
+	पूर्ण
+	smu->current_घातer_limit = smu->शेष_घातer_limit = घातer_limit;
 
-	if (smu->od_enabled) {
-		od_percent = le32_to_cpu(powerplay_table->overdrive_table.max[SMU_11_0_7_ODSETTING_POWERPERCENTAGE]);
+	अगर (smu->od_enabled) अणु
+		od_percent = le32_to_cpu(घातerplay_table->overdrive_table.max[SMU_11_0_7_ODSETTING_POWERPERCENTAGE]);
 
-		dev_dbg(smu->adev->dev, "ODSETTING_POWERPERCENTAGE: %d (default: %d)\n", od_percent, power_limit);
+		dev_dbg(smu->adev->dev, "ODSETTING_POWERPERCENTAGE: %d (default: %d)\n", od_percent, घातer_limit);
 
-		power_limit *= (100 + od_percent);
-		power_limit /= 100;
-	}
-	smu->max_power_limit = power_limit;
+		घातer_limit *= (100 + od_percent);
+		घातer_limit /= 100;
+	पूर्ण
+	smu->max_घातer_limit = घातer_limit;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_update_pcie_parameters(struct smu_context *smu,
-					 uint32_t pcie_gen_cap,
-					 uint32_t pcie_width_cap)
-{
-	struct smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
+अटल पूर्णांक sienna_cichlid_update_pcie_parameters(काष्ठा smu_context *smu,
+					 uपूर्णांक32_t pcie_gen_cap,
+					 uपूर्णांक32_t pcie_width_cap)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
-	uint32_t smu_pcie_arg;
-	int ret, i;
+	uपूर्णांक32_t smu_pcie_arg;
+	पूर्णांक ret, i;
 
 	/* lclk dpm table setup */
-	for (i = 0; i < MAX_PCIE_CONF; i++) {
+	क्रम (i = 0; i < MAX_PCIE_CONF; i++) अणु
 		dpm_context->dpm_tables.pcie_table.pcie_gen[i] = pptable->PcieGenSpeed[i];
 		dpm_context->dpm_tables.pcie_table.pcie_lane[i] = pptable->PcieLaneCount[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < NUM_LINK_LEVELS; i++) {
+	क्रम (i = 0; i < NUM_LINK_LEVELS; i++) अणु
 		smu_pcie_arg = (i << 16) |
 			((pptable->PcieGenSpeed[i] <= pcie_gen_cap) ?
 					(pptable->PcieGenSpeed[i] << 8) :
@@ -1780,317 +1781,317 @@ static int sienna_cichlid_update_pcie_parameters(struct smu_context *smu,
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 					  SMU_MSG_OverridePcieParameters,
 					  smu_pcie_arg,
-					  NULL);
+					  शून्य);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (pptable->PcieGenSpeed[i] > pcie_gen_cap)
+		अगर (pptable->PcieGenSpeed[i] > pcie_gen_cap)
 			dpm_context->dpm_tables.pcie_table.pcie_gen[i] = pcie_gen_cap;
-		if (pptable->PcieLaneCount[i] > pcie_width_cap)
+		अगर (pptable->PcieLaneCount[i] > pcie_width_cap)
 			dpm_context->dpm_tables.pcie_table.pcie_lane[i] = pcie_width_cap;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_get_dpm_ultimate_freq(struct smu_context *smu,
-				enum smu_clk_type clk_type,
-				uint32_t *min, uint32_t *max)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret;
+अटल पूर्णांक sienna_cichlid_get_dpm_ultimate_freq(काष्ठा smu_context *smu,
+				क्रमागत smu_clk_type clk_type,
+				uपूर्णांक32_t *min, uपूर्णांक32_t *max)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	पूर्णांक ret;
 
-	if (clk_type == SMU_GFXCLK)
+	अगर (clk_type == SMU_GFXCLK)
 		amdgpu_gfx_off_ctrl(adev, false);
 	ret = smu_v11_0_get_dpm_ultimate_freq(smu, clk_type, min, max);
-	if (clk_type == SMU_GFXCLK)
+	अगर (clk_type == SMU_GFXCLK)
 		amdgpu_gfx_off_ctrl(adev, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sienna_cichlid_dump_od_table(struct smu_context *smu,
+अटल व्योम sienna_cichlid_dump_od_table(काष्ठा smu_context *smu,
 					 OverDriveTable_t *od_table)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t smu_version;
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t smu_version;
 
 	dev_dbg(smu->adev->dev, "OD: Gfxclk: (%d, %d)\n", od_table->GfxclkFmin,
 							  od_table->GfxclkFmax);
 	dev_dbg(smu->adev->dev, "OD: Uclk: (%d, %d)\n", od_table->UclkFmin,
 							od_table->UclkFmax);
 
-	smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (!((adev->asic_type == CHIP_SIENNA_CICHLID) &&
+	smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (!((adev->asic_type == CHIP_SIENNA_CICHLID) &&
 	       (smu_version < 0x003a2900)))
 		dev_dbg(smu->adev->dev, "OD: VddGfxOffset: %d\n", od_table->VddGfxOffset);
-}
+पूर्ण
 
-static int sienna_cichlid_set_default_od_settings(struct smu_context *smu)
-{
+अटल पूर्णांक sienna_cichlid_set_शेष_od_settings(काष्ठा smu_context *smu)
+अणु
 	OverDriveTable_t *od_table =
 		(OverDriveTable_t *)smu->smu_table.overdrive_table;
 	OverDriveTable_t *boot_od_table =
 		(OverDriveTable_t *)smu->smu_table.boot_overdrive_table;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	ret = smu_cmn_update_table(smu, SMU_TABLE_OVERDRIVE,
-				   0, (void *)od_table, false);
-	if (ret) {
+				   0, (व्योम *)od_table, false);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to get overdrive table!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(boot_od_table, od_table, sizeof(OverDriveTable_t));
+	स_नकल(boot_od_table, od_table, माप(OverDriveTable_t));
 
 	sienna_cichlid_dump_od_table(smu, od_table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_od_setting_check_range(struct smu_context *smu,
-						 struct smu_11_0_7_overdrive_table *od_table,
-						 enum SMU_11_0_7_ODSETTING_ID setting,
-						 uint32_t value)
-{
-	if (value < od_table->min[setting]) {
+अटल पूर्णांक sienna_cichlid_od_setting_check_range(काष्ठा smu_context *smu,
+						 काष्ठा smu_11_0_7_overdrive_table *od_table,
+						 क्रमागत SMU_11_0_7_ODSETTING_ID setting,
+						 uपूर्णांक32_t value)
+अणु
+	अगर (value < od_table->min[setting]) अणु
 		dev_warn(smu->adev->dev, "OD setting (%d, %d) is less than the minimum allowed (%d)\n",
 					  setting, value, od_table->min[setting]);
-		return -EINVAL;
-	}
-	if (value > od_table->max[setting]) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (value > od_table->max[setting]) अणु
 		dev_warn(smu->adev->dev, "OD setting (%d, %d) is greater than the maximum allowed (%d)\n",
 					  setting, value, od_table->max[setting]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sienna_cichlid_od_edit_dpm_table(struct smu_context *smu,
-					    enum PP_OD_DPM_TABLE_COMMAND type,
-					    long input[], uint32_t size)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक sienna_cichlid_od_edit_dpm_table(काष्ठा smu_context *smu,
+					    क्रमागत PP_OD_DPM_TABLE_COMMAND type,
+					    दीर्घ input[], uपूर्णांक32_t size)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	OverDriveTable_t *od_table =
 		(OverDriveTable_t *)table_context->overdrive_table;
-	struct smu_11_0_7_overdrive_table *od_settings =
-		(struct smu_11_0_7_overdrive_table *)smu->od_settings;
-	struct amdgpu_device *adev = smu->adev;
-	enum SMU_11_0_7_ODSETTING_ID freq_setting;
-	uint16_t *freq_ptr;
-	int i, ret = 0;
-	uint32_t smu_version;
+	काष्ठा smu_11_0_7_overdrive_table *od_settings =
+		(काष्ठा smu_11_0_7_overdrive_table *)smu->od_settings;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	क्रमागत SMU_11_0_7_ODSETTING_ID freq_setting;
+	uपूर्णांक16_t *freq_ptr;
+	पूर्णांक i, ret = 0;
+	uपूर्णांक32_t smu_version;
 
-	if (!smu->od_enabled) {
+	अगर (!smu->od_enabled) अणु
 		dev_warn(smu->adev->dev, "OverDrive is not enabled!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!smu->od_settings) {
+	अगर (!smu->od_settings) अणु
 		dev_err(smu->adev->dev, "OD board limits are not set!\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	if (!(table_context->overdrive_table && table_context->boot_overdrive_table)) {
+	अगर (!(table_context->overdrive_table && table_context->boot_overdrive_table)) अणु
 		dev_err(smu->adev->dev, "Overdrive table was not initialized!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (type) {
-	case PP_OD_EDIT_SCLK_VDDC_TABLE:
-		if (!sienna_cichlid_is_od_feature_supported(od_settings,
-							    SMU_11_0_7_ODCAP_GFXCLK_LIMITS)) {
+	चयन (type) अणु
+	हाल PP_OD_EDIT_SCLK_VDDC_TABLE:
+		अगर (!sienna_cichlid_is_od_feature_supported(od_settings,
+							    SMU_11_0_7_ODCAP_GFXCLK_LIMITS)) अणु
 			dev_warn(smu->adev->dev, "GFXCLK_LIMITS not supported!\n");
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 
-		for (i = 0; i < size; i += 2) {
-			if (i + 2 > size) {
+		क्रम (i = 0; i < size; i += 2) अणु
+			अगर (i + 2 > size) अणु
 				dev_info(smu->adev->dev, "invalid number of input parameters %d\n", size);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			switch (input[i]) {
-			case 0:
-				if (input[i + 1] > od_table->GfxclkFmax) {
+			चयन (input[i]) अणु
+			हाल 0:
+				अगर (input[i + 1] > od_table->GfxclkFmax) अणु
 					dev_info(smu->adev->dev, "GfxclkFmin (%ld) must be <= GfxclkFmax (%u)!\n",
 						input[i + 1], od_table->GfxclkFmax);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				freq_setting = SMU_11_0_7_ODSETTING_GFXCLKFMIN;
 				freq_ptr = &od_table->GfxclkFmin;
-				break;
+				अवरोध;
 
-			case 1:
-				if (input[i + 1] < od_table->GfxclkFmin) {
+			हाल 1:
+				अगर (input[i + 1] < od_table->GfxclkFmin) अणु
 					dev_info(smu->adev->dev, "GfxclkFmax (%ld) must be >= GfxclkFmin (%u)!\n",
 						input[i + 1], od_table->GfxclkFmin);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				freq_setting = SMU_11_0_7_ODSETTING_GFXCLKFMAX;
 				freq_ptr = &od_table->GfxclkFmax;
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				dev_info(smu->adev->dev, "Invalid SCLK_VDDC_TABLE index: %ld\n", input[i]);
 				dev_info(smu->adev->dev, "Supported indices: [0:min,1:max]\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			ret = sienna_cichlid_od_setting_check_range(smu, od_settings,
 								    freq_setting, input[i + 1]);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			*freq_ptr = (uint16_t)input[i + 1];
-		}
-		break;
+			*freq_ptr = (uपूर्णांक16_t)input[i + 1];
+		पूर्ण
+		अवरोध;
 
-	case PP_OD_EDIT_MCLK_VDDC_TABLE:
-		if (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS)) {
+	हाल PP_OD_EDIT_MCLK_VDDC_TABLE:
+		अगर (!sienna_cichlid_is_od_feature_supported(od_settings, SMU_11_0_7_ODCAP_UCLK_LIMITS)) अणु
 			dev_warn(smu->adev->dev, "UCLK_LIMITS not supported!\n");
-			return -ENOTSUPP;
-		}
+			वापस -ENOTSUPP;
+		पूर्ण
 
-		for (i = 0; i < size; i += 2) {
-			if (i + 2 > size) {
+		क्रम (i = 0; i < size; i += 2) अणु
+			अगर (i + 2 > size) अणु
 				dev_info(smu->adev->dev, "invalid number of input parameters %d\n", size);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			switch (input[i]) {
-			case 0:
-				if (input[i + 1] > od_table->UclkFmax) {
+			चयन (input[i]) अणु
+			हाल 0:
+				अगर (input[i + 1] > od_table->UclkFmax) अणु
 					dev_info(smu->adev->dev, "UclkFmin (%ld) must be <= UclkFmax (%u)!\n",
 						input[i + 1], od_table->UclkFmax);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				freq_setting = SMU_11_0_7_ODSETTING_UCLKFMIN;
 				freq_ptr = &od_table->UclkFmin;
-				break;
+				अवरोध;
 
-			case 1:
-				if (input[i + 1] < od_table->UclkFmin) {
+			हाल 1:
+				अगर (input[i + 1] < od_table->UclkFmin) अणु
 					dev_info(smu->adev->dev, "UclkFmax (%ld) must be >= UclkFmin (%u)!\n",
 						input[i + 1], od_table->UclkFmin);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
 				freq_setting = SMU_11_0_7_ODSETTING_UCLKFMAX;
 				freq_ptr = &od_table->UclkFmax;
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				dev_info(smu->adev->dev, "Invalid MCLK_VDDC_TABLE index: %ld\n", input[i]);
 				dev_info(smu->adev->dev, "Supported indices: [0:min,1:max]\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			ret = sienna_cichlid_od_setting_check_range(smu, od_settings,
 								    freq_setting, input[i + 1]);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			*freq_ptr = (uint16_t)input[i + 1];
-		}
-		break;
+			*freq_ptr = (uपूर्णांक16_t)input[i + 1];
+		पूर्ण
+		अवरोध;
 
-	case PP_OD_RESTORE_DEFAULT_TABLE:
-		memcpy(table_context->overdrive_table,
+	हाल PP_OD_RESTORE_DEFAULT_TABLE:
+		स_नकल(table_context->overdrive_table,
 				table_context->boot_overdrive_table,
-				sizeof(OverDriveTable_t));
+				माप(OverDriveTable_t));
 		fallthrough;
 
-	case PP_OD_COMMIT_DPM_TABLE:
+	हाल PP_OD_COMMIT_DPM_TABLE:
 		sienna_cichlid_dump_od_table(smu, od_table);
 
 		ret = smu_cmn_update_table(smu, SMU_TABLE_OVERDRIVE,
-					   0, (void *)od_table, true);
-		if (ret) {
+					   0, (व्योम *)od_table, true);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to import overdrive table!\n");
-			return ret;
-		}
-		break;
+			वापस ret;
+		पूर्ण
+		अवरोध;
 
-	case PP_OD_EDIT_VDDGFX_OFFSET:
-		if (size != 1) {
+	हाल PP_OD_EDIT_VDDGFX_OFFSET:
+		अगर (size != 1) अणु
 			dev_info(smu->adev->dev, "invalid number of parameters: %d\n", size);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
 		 * OD GFX Voltage Offset functionality is supported only by 58.41.0
 		 * and onwards SMU firmwares.
 		 */
-		smu_cmn_get_smc_version(smu, NULL, &smu_version);
-		if ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
-		     (smu_version < 0x003a2900)) {
+		smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+		अगर ((adev->asic_type == CHIP_SIENNA_CICHLID) &&
+		     (smu_version < 0x003a2900)) अणु
 			dev_err(smu->adev->dev, "OD GFX Voltage offset functionality is supported "
 						"only by 58.41.0 and onwards SMU firmwares!\n");
-			return -EOPNOTSUPP;
-		}
+			वापस -EOPNOTSUPP;
+		पूर्ण
 
-		od_table->VddGfxOffset = (int16_t)input[0];
+		od_table->VddGfxOffset = (पूर्णांक16_t)input[0];
 
 		sienna_cichlid_dump_od_table(smu, od_table);
-		break;
+		अवरोध;
 
-	default:
-		return -ENOSYS;
-	}
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_run_btc(struct smu_context *smu)
-{
-	return smu_cmn_send_smc_msg(smu, SMU_MSG_RunDcBtc, NULL);
-}
+अटल पूर्णांक sienna_cichlid_run_btc(काष्ठा smu_context *smu)
+अणु
+	वापस smu_cmn_send_smc_msg(smu, SMU_MSG_RunDcBtc, शून्य);
+पूर्ण
 
-static bool sienna_cichlid_is_baco_supported(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t val;
+अटल bool sienna_cichlid_is_baco_supported(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t val;
 
-	if (amdgpu_sriov_vf(adev) || (!smu_v11_0_baco_is_support(smu)))
-		return false;
+	अगर (amdgpu_sriov_vf(adev) || (!smu_v11_0_baco_is_support(smu)))
+		वापस false;
 
 	val = RREG32_SOC15(NBIO, 0, mmRCC_BIF_STRAP0);
-	return (val & RCC_BIF_STRAP0__STRAP_PX_CAPABLE_MASK) ? true : false;
-}
+	वापस (val & RCC_BIF_STRAP0__STRAP_PX_CAPABLE_MASK) ? true : false;
+पूर्ण
 
-static bool sienna_cichlid_is_mode1_reset_supported(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t val;
+अटल bool sienna_cichlid_is_mode1_reset_supported(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t val;
 	u32 smu_version;
 
 	/**
 	 * SRIOV env will not support SMU mode1 reset
 	 * PM FW support mode1 reset from 58.26
 	 */
-	smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (amdgpu_sriov_vf(adev) || (smu_version < 0x003a1a00))
-		return false;
+	smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (amdgpu_sriov_vf(adev) || (smu_version < 0x003a1a00))
+		वापस false;
 
 	/**
-	 * mode1 reset relies on PSP, so we should check if
+	 * mode1 reset relies on PSP, so we should check अगर
 	 * PSP is alive.
 	 */
 	val = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81);
-	return val != 0x0;
-}
+	वापस val != 0x0;
+पूर्ण
 
-static void sienna_cichlid_dump_pptable(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल व्योम sienna_cichlid_dump_pptable(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *pptable = table_context->driver_pptable;
-	int i;
+	पूर्णांक i;
 
 	dev_info(smu->adev->dev, "Dumped PPTable:\n");
 
@@ -2098,21 +2099,21 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "FeaturesToRun[0] = 0x%08x\n", pptable->FeaturesToRun[0]);
 	dev_info(smu->adev->dev, "FeaturesToRun[1] = 0x%08x\n", pptable->FeaturesToRun[1]);
 
-	for (i = 0; i < PPT_THROTTLER_COUNT; i++) {
+	क्रम (i = 0; i < PPT_THROTTLER_COUNT; i++) अणु
 		dev_info(smu->adev->dev, "SocketPowerLimitAc[%d] = 0x%x\n", i, pptable->SocketPowerLimitAc[i]);
 		dev_info(smu->adev->dev, "SocketPowerLimitAcTau[%d] = 0x%x\n", i, pptable->SocketPowerLimitAcTau[i]);
 		dev_info(smu->adev->dev, "SocketPowerLimitDc[%d] = 0x%x\n", i, pptable->SocketPowerLimitDc[i]);
 		dev_info(smu->adev->dev, "SocketPowerLimitDcTau[%d] = 0x%x\n", i, pptable->SocketPowerLimitDcTau[i]);
-	}
+	पूर्ण
 
-	for (i = 0; i < TDC_THROTTLER_COUNT; i++) {
+	क्रम (i = 0; i < TDC_THROTTLER_COUNT; i++) अणु
 		dev_info(smu->adev->dev, "TdcLimit[%d] = 0x%x\n", i, pptable->TdcLimit[i]);
 		dev_info(smu->adev->dev, "TdcLimitTau[%d] = 0x%x\n", i, pptable->TdcLimitTau[i]);
-	}
+	पूर्ण
 
-	for (i = 0; i < TEMP_COUNT; i++) {
+	क्रम (i = 0; i < TEMP_COUNT; i++) अणु
 		dev_info(smu->adev->dev, "TemperatureLimit[%d] = 0x%x\n", i, pptable->TemperatureLimit[i]);
-	}
+	पूर्ण
 
 	dev_info(smu->adev->dev, "FitLimit = 0x%x\n", pptable->FitLimit);
 	dev_info(smu->adev->dev, "TotalPowerConfig = 0x%x\n", pptable->TotalPowerConfig);
@@ -2121,10 +2122,10 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "TotalPowerPadding[2] = 0x%x\n", pptable->TotalPowerPadding[2]);
 
 	dev_info(smu->adev->dev, "ApccPlusResidencyLimit = 0x%x\n", pptable->ApccPlusResidencyLimit);
-	for (i = 0; i < NUM_SMNCLK_DPM_LEVELS; i++) {
+	क्रम (i = 0; i < NUM_SMNCLK_DPM_LEVELS; i++) अणु
 		dev_info(smu->adev->dev, "SmnclkDpmFreq[%d] = 0x%x\n", i, pptable->SmnclkDpmFreq[i]);
 		dev_info(smu->adev->dev, "SmnclkDpmVoltage[%d] = 0x%x\n", i, pptable->SmnclkDpmVoltage[i]);
-	}
+	पूर्ण
 	dev_info(smu->adev->dev, "ThrottlerControlMask = 0x%x\n", pptable->ThrottlerControlMask);
 
 	dev_info(smu->adev->dev, "FwDStateMask = 0x%x\n", pptable->FwDStateMask);
@@ -2328,27 +2329,27 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 			pptable->DpmDescriptor[PPCLK_VCLK_1].Padding16);
 
 	dev_info(smu->adev->dev, "FreqTableGfx\n");
-	for (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableGfx[i]);
 
 	dev_info(smu->adev->dev, "FreqTableVclk\n");
-	for (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableVclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableDclk\n");
-	for (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableDclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableSocclk\n");
-	for (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableSocclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableUclk\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableUclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableFclk\n");
-	for (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = 0x%x\n", i, pptable->FreqTableFclk[i]);
 
 	dev_info(smu->adev->dev, "DcModeMaxFreq\n");
@@ -2362,26 +2363,26 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "  .PPCLK_VCLK_1 = 0x%x\n", pptable->DcModeMaxFreq[PPCLK_VCLK_1]);
 
 	dev_info(smu->adev->dev, "FreqTableUclkDiv\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->FreqTableUclkDiv[i]);
 
 	dev_info(smu->adev->dev, "FclkBoostFreq = 0x%x\n", pptable->FclkBoostFreq);
 	dev_info(smu->adev->dev, "FclkParamPadding = 0x%x\n", pptable->FclkParamPadding);
 
 	dev_info(smu->adev->dev, "Mp0clkFreq\n");
-	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->Mp0clkFreq[i]);
 
 	dev_info(smu->adev->dev, "Mp0DpmVoltage\n");
-	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->Mp0DpmVoltage[i]);
 
 	dev_info(smu->adev->dev, "MemVddciVoltage\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->MemVddciVoltage[i]);
 
 	dev_info(smu->adev->dev, "MemMvddVoltage\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->MemMvddVoltage[i]);
 
 	dev_info(smu->adev->dev, "GfxclkFgfxoffEntry = 0x%x\n", pptable->GfxclkFgfxoffEntry);
@@ -2418,7 +2419,7 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "DcsParamPadding[4] = 0x%x\n", pptable->DcsParamPadding[4]);
 
 	dev_info(smu->adev->dev, "FlopsPerByteTable\n");
-	for (i = 0; i < RLC_PACE_TABLE_NUM_LEVELS; i++)
+	क्रम (i = 0; i < RLC_PACE_TABLE_NUM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->FlopsPerByteTable[i]);
 
 	dev_info(smu->adev->dev, "LowestUclkReservedForUlv = 0x%x\n", pptable->LowestUclkReservedForUlv);
@@ -2427,7 +2428,7 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "vddingMem[2] = 0x%x\n", pptable->PaddingMem[2]);
 
 	dev_info(smu->adev->dev, "UclkDpmPstates\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->UclkDpmPstates[i]);
 
 	dev_info(smu->adev->dev, "UclkDpmSrcFreqRange\n");
@@ -2444,22 +2445,22 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "UclkMidstepPadding = 0x%x\n", pptable->UclkMidstepPadding);
 
 	dev_info(smu->adev->dev, "PcieGenSpeed\n");
-	for (i = 0; i < NUM_LINK_LEVELS; i++)
+	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->PcieGenSpeed[i]);
 
 	dev_info(smu->adev->dev, "PcieLaneCount\n");
-	for (i = 0; i < NUM_LINK_LEVELS; i++)
+	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->PcieLaneCount[i]);
 
 	dev_info(smu->adev->dev, "LclkFreq\n");
-	for (i = 0; i < NUM_LINK_LEVELS; i++)
+	क्रम (i = 0; i < NUM_LINK_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->LclkFreq[i]);
 
 	dev_info(smu->adev->dev, "FanStopTemp = 0x%x\n", pptable->FanStopTemp);
 	dev_info(smu->adev->dev, "FanStartTemp = 0x%x\n", pptable->FanStartTemp);
 
 	dev_info(smu->adev->dev, "FanGain\n");
-	for (i = 0; i < TEMP_COUNT; i++)
+	क्रम (i = 0; i < TEMP_COUNT; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->FanGain[i]);
 
 	dev_info(smu->adev->dev, "FanPwmMin = 0x%x\n", pptable->FanPwmMin);
@@ -2513,12 +2514,12 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 			pptable->qAgingGb[AVFS_VOLTAGE_SOC].b);
 
 	dev_info(smu->adev->dev, "PiecewiseLinearDroopIntGfxDfll\n");
-	for (i = 0; i < NUM_PIECE_WISE_LINEAR_DROOP_MODEL_VF_POINTS; i++) {
+	क्रम (i = 0; i < NUM_PIECE_WISE_LINEAR_DROOP_MODEL_VF_POINTS; i++) अणु
 		dev_info(smu->adev->dev, "		Fset[%d] = 0x%x\n",
 			i, pptable->PiecewiseLinearDroopIntGfxDfll.Fset[i]);
 		dev_info(smu->adev->dev, "		Vdroop[%d] = 0x%x\n",
 			i, pptable->PiecewiseLinearDroopIntGfxDfll.Vdroop[i]);
-	}
+	पूर्ण
 
 	dev_info(smu->adev->dev, "qStaticVoltageOffset[AVFS_VOLTAGE_GFX]{a = 0x%x b = 0x%x c = 0x%x}\n",
 			pptable->qStaticVoltageOffset[AVFS_VOLTAGE_GFX].a,
@@ -2546,7 +2547,7 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "DcBtcGb[AVFS_VOLTAGE_SOC] = 0x%x\n", pptable->DcBtcGb[AVFS_VOLTAGE_SOC]);
 
 	dev_info(smu->adev->dev, "XgmiDpmPstates\n");
-	for (i = 0; i < NUM_XGMI_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->XgmiDpmPstates[i]);
 	dev_info(smu->adev->dev, "XgmiDpmSpare[0] = 0x%02x\n", pptable->XgmiDpmSpare[0]);
 	dev_info(smu->adev->dev, "XgmiDpmSpare[1] = 0x%02x\n", pptable->XgmiDpmSpare[1]);
@@ -2585,7 +2586,7 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "GamingClk[4] = 0x%x\n", pptable->GamingClk[4]);
 	dev_info(smu->adev->dev, "GamingClk[5] = 0x%x\n", pptable->GamingClk[5]);
 
-	for (i = 0; i < NUM_I2C_CONTROLLERS; i++) {
+	क्रम (i = 0; i < NUM_I2C_CONTROLLERS; i++) अणु
 		dev_info(smu->adev->dev, "I2cControllers[%d]:\n", i);
 		dev_info(smu->adev->dev, "                   .Enabled = 0x%x\n",
 				pptable->I2cControllers[i].Enabled);
@@ -2603,7 +2604,7 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 				pptable->I2cControllers[i].I2cProtocol);
 		dev_info(smu->adev->dev, "                   .PaddingConfig = 0x%x\n",
 				pptable->I2cControllers[i].PaddingConfig);
-	}
+	पूर्ण
 
 	dev_info(smu->adev->dev, "GpioScl = 0x%x\n", pptable->GpioScl);
 	dev_info(smu->adev->dev, "GpioSda = 0x%x\n", pptable->GpioSda);
@@ -2655,20 +2656,20 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "LedSpare1[0] = 0x%x\n", pptable->LedSpare1[0]);
 	dev_info(smu->adev->dev, "LedSpare1[1] = 0x%x\n", pptable->LedSpare1[1]);
 
-	dev_info(smu->adev->dev, "PllGfxclkSpreadEnabled = 0x%x\n", pptable->PllGfxclkSpreadEnabled);
-	dev_info(smu->adev->dev, "PllGfxclkSpreadPercent = 0x%x\n", pptable->PllGfxclkSpreadPercent);
-	dev_info(smu->adev->dev, "PllGfxclkSpreadFreq = 0x%x\n",    pptable->PllGfxclkSpreadFreq);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadEnabled = 0x%x\n", pptable->PllGfxclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadPercent = 0x%x\n", pptable->PllGfxclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadFreq = 0x%x\n",    pptable->PllGfxclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "DfllGfxclkSpreadEnabled = 0x%x\n", pptable->DfllGfxclkSpreadEnabled);
-	dev_info(smu->adev->dev, "DfllGfxclkSpreadPercent = 0x%x\n", pptable->DfllGfxclkSpreadPercent);
-	dev_info(smu->adev->dev, "DfllGfxclkSpreadFreq = 0x%x\n",    pptable->DfllGfxclkSpreadFreq);
+	dev_info(smu->adev->dev, "DfllGfxclkSpreadEnabled = 0x%x\n", pptable->DfllGfxclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "DfllGfxclkSpreadPercent = 0x%x\n", pptable->DfllGfxclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "DfllGfxclkSpreadFreq = 0x%x\n",    pptable->DfllGfxclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "UclkSpreadPadding = 0x%x\n", pptable->UclkSpreadPadding);
-	dev_info(smu->adev->dev, "UclkSpreadFreq = 0x%x\n", pptable->UclkSpreadFreq);
+	dev_info(smu->adev->dev, "UclkSpreadPadding = 0x%x\n", pptable->UclkSpपढ़ोPadding);
+	dev_info(smu->adev->dev, "UclkSpreadFreq = 0x%x\n", pptable->UclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "FclkSpreadEnabled = 0x%x\n", pptable->FclkSpreadEnabled);
-	dev_info(smu->adev->dev, "FclkSpreadPercent = 0x%x\n", pptable->FclkSpreadPercent);
-	dev_info(smu->adev->dev, "FclkSpreadFreq = 0x%x\n", pptable->FclkSpreadFreq);
+	dev_info(smu->adev->dev, "FclkSpreadEnabled = 0x%x\n", pptable->FclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "FclkSpreadPercent = 0x%x\n", pptable->FclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "FclkSpreadFreq = 0x%x\n", pptable->FclkSpपढ़ोFreq);
 
 	dev_info(smu->adev->dev, "MemoryChannelEnabled = 0x%x\n", pptable->MemoryChannelEnabled);
 	dev_info(smu->adev->dev, "DramBitWidth = 0x%x\n", pptable->DramBitWidth);
@@ -2680,16 +2681,16 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "BoardPowerPadding = 0x%x\n", pptable->BoardPowerPadding);
 
 	dev_info(smu->adev->dev, "XgmiLinkSpeed\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->XgmiLinkSpeed[i]);
 	dev_info(smu->adev->dev, "XgmiLinkWidth\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->XgmiLinkWidth[i]);
 	dev_info(smu->adev->dev, "XgmiFclkFreq\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->XgmiFclkFreq[i]);
 	dev_info(smu->adev->dev, "XgmiSocVoltage\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = 0x%x\n", i, pptable->XgmiSocVoltage[i]);
 
 	dev_info(smu->adev->dev, "HsrEnabled = 0x%x\n", pptable->HsrEnabled);
@@ -2717,136 +2718,136 @@ static void sienna_cichlid_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "MmHubPadding[5] = 0x%x\n", pptable->MmHubPadding[5]);
 	dev_info(smu->adev->dev, "MmHubPadding[6] = 0x%x\n", pptable->MmHubPadding[6]);
 	dev_info(smu->adev->dev, "MmHubPadding[7] = 0x%x\n", pptable->MmHubPadding[7]);
-}
+पूर्ण
 
-static void sienna_cichlid_fill_i2c_req(SwI2cRequest_t  *req, bool write,
-				  uint8_t address, uint32_t numbytes,
-				  uint8_t *data)
-{
-	int i;
+अटल व्योम sienna_cichlid_fill_i2c_req(SwI2cRequest_t  *req, bool ग_लिखो,
+				  uपूर्णांक8_t address, uपूर्णांक32_t numbytes,
+				  uपूर्णांक8_t *data)
+अणु
+	पूर्णांक i;
 
 	req->I2CcontrollerPort = 1;
 	req->I2CSpeed = 2;
 	req->SlaveAddress = address;
 	req->NumCmds = numbytes;
 
-	for (i = 0; i < numbytes; i++) {
+	क्रम (i = 0; i < numbytes; i++) अणु
 		SwI2cCmd_t *cmd =  &req->SwI2cCmds[i];
 
-		/* First 2 bytes are always write for lower 2b EEPROM address */
-		if (i < 2)
+		/* First 2 bytes are always ग_लिखो क्रम lower 2b EEPROM address */
+		अगर (i < 2)
 			cmd->CmdConfig = CMDCONFIG_READWRITE_MASK;
-		else
-			cmd->CmdConfig = write ? CMDCONFIG_READWRITE_MASK : 0;
+		अन्यथा
+			cmd->CmdConfig = ग_लिखो ? CMDCONFIG_READWRITE_MASK : 0;
 
 
-		/* Add RESTART for read  after address filled */
-		cmd->CmdConfig |= (i == 2 && !write) ? CMDCONFIG_RESTART_MASK : 0;
+		/* Add RESTART क्रम पढ़ो  after address filled */
+		cmd->CmdConfig |= (i == 2 && !ग_लिखो) ? CMDCONFIG_RESTART_MASK : 0;
 
 		/* Add STOP in the end */
 		cmd->CmdConfig |= (i == (numbytes - 1)) ? CMDCONFIG_STOP_MASK : 0;
 
-		/* Fill with data regardless if read or write to simplify code */
+		/* Fill with data regardless अगर पढ़ो or ग_लिखो to simplअगरy code */
 		cmd->ReadWriteData = data[i];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sienna_cichlid_i2c_read_data(struct i2c_adapter *control,
-					       uint8_t address,
-					       uint8_t *data,
-					       uint32_t numbytes)
-{
-	uint32_t  i, ret = 0;
+अटल पूर्णांक sienna_cichlid_i2c_पढ़ो_data(काष्ठा i2c_adapter *control,
+					       uपूर्णांक8_t address,
+					       uपूर्णांक8_t *data,
+					       uपूर्णांक32_t numbytes)
+अणु
+	uपूर्णांक32_t  i, ret = 0;
 	SwI2cRequest_t req;
-	struct amdgpu_device *adev = to_amdgpu_device(control);
-	struct smu_table_context *smu_table = &adev->smu.smu_table;
-	struct smu_table *table = &smu_table->driver_table;
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
+	काष्ठा smu_table_context *smu_table = &adev->smu.smu_table;
+	काष्ठा smu_table *table = &smu_table->driver_table;
 
-	if (numbytes > MAX_SW_I2C_COMMANDS) {
+	अगर (numbytes > MAX_SW_I2C_COMMANDS) अणु
 		dev_err(adev->dev, "numbytes requested %d is over max allowed %d\n",
 			numbytes, MAX_SW_I2C_COMMANDS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	sienna_cichlid_fill_i2c_req(&req, false, address, numbytes, data);
 
 	mutex_lock(&adev->smu.mutex);
-	/* Now read data starting with that address */
+	/* Now पढ़ो data starting with that address */
 	ret = smu_cmn_update_table(&adev->smu, SMU_TABLE_I2C_COMMANDS, 0, &req,
 					true);
 	mutex_unlock(&adev->smu.mutex);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		SwI2cRequest_t *res = (SwI2cRequest_t *)table->cpu_addr;
 
-		/* Assume SMU  fills res.SwI2cCmds[i].Data with read bytes */
-		for (i = 0; i < numbytes; i++)
+		/* Assume SMU  fills res.SwI2cCmds[i].Data with पढ़ो bytes */
+		क्रम (i = 0; i < numbytes; i++)
 			data[i] = res->SwI2cCmds[i].ReadWriteData;
 
 		dev_dbg(adev->dev, "sienna_cichlid_i2c_read_data, address = %x, bytes = %d, data :",
-				  (uint16_t)address, numbytes);
+				  (uपूर्णांक16_t)address, numbytes);
 
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
 			       8, 1, data, numbytes, false);
-	} else
+	पूर्ण अन्यथा
 		dev_err(adev->dev, "sienna_cichlid_i2c_read_data - error occurred :%x", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_i2c_write_data(struct i2c_adapter *control,
-						uint8_t address,
-						uint8_t *data,
-						uint32_t numbytes)
-{
-	uint32_t ret;
+अटल पूर्णांक sienna_cichlid_i2c_ग_लिखो_data(काष्ठा i2c_adapter *control,
+						uपूर्णांक8_t address,
+						uपूर्णांक8_t *data,
+						uपूर्णांक32_t numbytes)
+अणु
+	uपूर्णांक32_t ret;
 	SwI2cRequest_t req;
-	struct amdgpu_device *adev = to_amdgpu_device(control);
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
 
-	if (numbytes > MAX_SW_I2C_COMMANDS) {
+	अगर (numbytes > MAX_SW_I2C_COMMANDS) अणु
 		dev_err(adev->dev, "numbytes requested %d is over max allowed %d\n",
 			numbytes, MAX_SW_I2C_COMMANDS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	sienna_cichlid_fill_i2c_req(&req, true, address, numbytes, data);
 
 	mutex_lock(&adev->smu.mutex);
 	ret = smu_cmn_update_table(&adev->smu, SMU_TABLE_I2C_COMMANDS, 0, &req, true);
 	mutex_unlock(&adev->smu.mutex);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_dbg(adev->dev, "sienna_cichlid_i2c_write(), address = %x, bytes = %d , data: ",
-					 (uint16_t)address, numbytes);
+					 (uपूर्णांक16_t)address, numbytes);
 
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
 			       8, 1, data, numbytes, false);
 		/*
-		 * According to EEPROM spec there is a MAX of 10 ms required for
-		 * EEPROM to flush internal RX buffer after STOP was issued at the
-		 * end of write transaction. During this time the EEPROM will not be
-		 * responsive to any more commands - so wait a bit more.
+		 * According to EEPROM spec there is a MAX of 10 ms required क्रम
+		 * EEPROM to flush पूर्णांकernal RX buffer after STOP was issued at the
+		 * end of ग_लिखो transaction. During this समय the EEPROM will not be
+		 * responsive to any more commands - so रुको a bit more.
 		 */
 		msleep(10);
 
-	} else
+	पूर्ण अन्यथा
 		dev_err(adev->dev, "sienna_cichlid_i2c_write- error occurred :%x", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_i2c_xfer(struct i2c_adapter *i2c_adap,
-			      struct i2c_msg *msgs, int num)
-{
-	uint32_t  i, j, ret, data_size, data_chunk_size, next_eeprom_addr = 0;
-	uint8_t *data_ptr, data_chunk[MAX_SW_I2C_COMMANDS] = { 0 };
+अटल पूर्णांक sienna_cichlid_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+			      काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	uपूर्णांक32_t  i, j, ret, data_size, data_chunk_size, next_eeprom_addr = 0;
+	uपूर्णांक8_t *data_ptr, data_chunk[MAX_SW_I2C_COMMANDS] = अणु 0 पूर्ण;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		/*
-		 * SMU interface allows at most MAX_SW_I2C_COMMANDS bytes of data at
-		 * once and hence the data needs to be spliced into chunks and sent each
+		 * SMU पूर्णांकerface allows at most MAX_SW_I2C_COMMANDS bytes of data at
+		 * once and hence the data needs to be spliced पूर्णांकo chunks and sent each
 		 * chunk separately
 		 */
 		data_size = msgs[i].len - 2;
@@ -2854,116 +2855,116 @@ static int sienna_cichlid_i2c_xfer(struct i2c_adapter *i2c_adap,
 		next_eeprom_addr = (msgs[i].buf[0] << 8 & 0xff00) | (msgs[i].buf[1] & 0xff);
 		data_ptr = msgs[i].buf + 2;
 
-		for (j = 0; j < data_size / data_chunk_size; j++) {
+		क्रम (j = 0; j < data_size / data_chunk_size; j++) अणु
 			/* Insert the EEPROM dest addess, bits 0-15 */
 			data_chunk[0] = ((next_eeprom_addr >> 8) & 0xff);
 			data_chunk[1] = (next_eeprom_addr & 0xff);
 
-			if (msgs[i].flags & I2C_M_RD) {
-				ret = sienna_cichlid_i2c_read_data(i2c_adap,
-							     (uint8_t)msgs[i].addr,
+			अगर (msgs[i].flags & I2C_M_RD) अणु
+				ret = sienna_cichlid_i2c_पढ़ो_data(i2c_adap,
+							     (uपूर्णांक8_t)msgs[i].addr,
 							     data_chunk, MAX_SW_I2C_COMMANDS);
 
-				memcpy(data_ptr, data_chunk + 2, data_chunk_size);
-			} else {
+				स_नकल(data_ptr, data_chunk + 2, data_chunk_size);
+			पूर्ण अन्यथा अणु
 
-				memcpy(data_chunk + 2, data_ptr, data_chunk_size);
+				स_नकल(data_chunk + 2, data_ptr, data_chunk_size);
 
-				ret = sienna_cichlid_i2c_write_data(i2c_adap,
-							      (uint8_t)msgs[i].addr,
+				ret = sienna_cichlid_i2c_ग_लिखो_data(i2c_adap,
+							      (uपूर्णांक8_t)msgs[i].addr,
 							      data_chunk, MAX_SW_I2C_COMMANDS);
-			}
+			पूर्ण
 
-			if (ret) {
+			अगर (ret) अणु
 				num = -EIO;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
 			next_eeprom_addr += data_chunk_size;
 			data_ptr += data_chunk_size;
-		}
+		पूर्ण
 
-		if (data_size % data_chunk_size) {
+		अगर (data_size % data_chunk_size) अणु
 			data_chunk[0] = ((next_eeprom_addr >> 8) & 0xff);
 			data_chunk[1] = (next_eeprom_addr & 0xff);
 
-			if (msgs[i].flags & I2C_M_RD) {
-				ret = sienna_cichlid_i2c_read_data(i2c_adap,
-							     (uint8_t)msgs[i].addr,
+			अगर (msgs[i].flags & I2C_M_RD) अणु
+				ret = sienna_cichlid_i2c_पढ़ो_data(i2c_adap,
+							     (uपूर्णांक8_t)msgs[i].addr,
 							     data_chunk, (data_size % data_chunk_size) + 2);
 
-				memcpy(data_ptr, data_chunk + 2, data_size % data_chunk_size);
-			} else {
-				memcpy(data_chunk + 2, data_ptr, data_size % data_chunk_size);
+				स_नकल(data_ptr, data_chunk + 2, data_size % data_chunk_size);
+			पूर्ण अन्यथा अणु
+				स_नकल(data_chunk + 2, data_ptr, data_size % data_chunk_size);
 
-				ret = sienna_cichlid_i2c_write_data(i2c_adap,
-							      (uint8_t)msgs[i].addr,
+				ret = sienna_cichlid_i2c_ग_लिखो_data(i2c_adap,
+							      (uपूर्णांक8_t)msgs[i].addr,
 							      data_chunk, (data_size % data_chunk_size) + 2);
-			}
+			पूर्ण
 
-			if (ret) {
+			अगर (ret) अणु
 				num = -EIO;
-				goto fail;
-			}
-		}
-	}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 fail:
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static u32 sienna_cichlid_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 sienna_cichlid_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
 
-static const struct i2c_algorithm sienna_cichlid_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm sienna_cichlid_i2c_algo = अणु
 	.master_xfer = sienna_cichlid_i2c_xfer,
 	.functionality = sienna_cichlid_i2c_func,
-};
+पूर्ण;
 
-static int sienna_cichlid_i2c_control_init(struct smu_context *smu, struct i2c_adapter *control)
-{
-	struct amdgpu_device *adev = to_amdgpu_device(control);
-	int res;
+अटल पूर्णांक sienna_cichlid_i2c_control_init(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control)
+अणु
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
+	पूर्णांक res;
 
 	control->owner = THIS_MODULE;
 	control->class = I2C_CLASS_SPD;
 	control->dev.parent = &adev->pdev->dev;
 	control->algo = &sienna_cichlid_i2c_algo;
-	snprintf(control->name, sizeof(control->name), "AMDGPU SMU");
+	snम_लिखो(control->name, माप(control->name), "AMDGPU SMU");
 
 	res = i2c_add_adapter(control);
-	if (res)
+	अगर (res)
 		DRM_ERROR("Failed to register hw i2c, err: %d\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void sienna_cichlid_i2c_control_fini(struct smu_context *smu, struct i2c_adapter *control)
-{
+अटल व्योम sienna_cichlid_i2c_control_fini(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control)
+अणु
 	i2c_del_adapter(control);
-}
+पूर्ण
 
-static ssize_t sienna_cichlid_get_gpu_metrics(struct smu_context *smu,
-					      void **table)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct gpu_metrics_v1_1 *gpu_metrics =
-		(struct gpu_metrics_v1_1 *)smu_table->gpu_metrics_table;
-	SmuMetricsExternal_t metrics_external;
+अटल sमाप_प्रकार sienna_cichlid_get_gpu_metrics(काष्ठा smu_context *smu,
+					      व्योम **table)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा gpu_metrics_v1_1 *gpu_metrics =
+		(काष्ठा gpu_metrics_v1_1 *)smu_table->gpu_metrics_table;
+	SmuMetricsExternal_t metrics_बाह्यal;
 	SmuMetrics_t *metrics =
-		&(metrics_external.SmuMetrics);
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t smu_version;
-	int ret = 0;
+		&(metrics_बाह्यal.SmuMetrics);
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret = 0;
 
 	ret = smu_cmn_get_metrics_table(smu,
-					&metrics_external,
+					&metrics_बाह्यal,
 					true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	smu_cmn_init_soft_gpu_metrics(gpu_metrics, 1, 1);
 
@@ -2978,12 +2979,12 @@ static ssize_t sienna_cichlid_get_gpu_metrics(struct smu_context *smu,
 	gpu_metrics->average_umc_activity = metrics->AverageUclkActivity;
 	gpu_metrics->average_mm_activity = metrics->VcnActivityPercentage;
 
-	gpu_metrics->average_socket_power = metrics->AverageSocketPower;
+	gpu_metrics->average_socket_घातer = metrics->AverageSocketPower;
 	gpu_metrics->energy_accumulator = metrics->EnergyAccumulator;
 
-	if (metrics->AverageGfxActivity <= SMU_11_0_7_GFX_BUSY_THRESHOLD)
+	अगर (metrics->AverageGfxActivity <= SMU_11_0_7_GFX_BUSY_THRESHOLD)
 		gpu_metrics->average_gfxclk_frequency = metrics->AverageGfxclkFrequencyPostDs;
-	else
+	अन्यथा
 		gpu_metrics->average_gfxclk_frequency = metrics->AverageGfxclkFrequencyPreDs;
 	gpu_metrics->average_uclk_frequency = metrics->AverageUclkFrequencyPostDs;
 	gpu_metrics->average_vclk0_frequency = metrics->AverageVclk0Frequency;
@@ -3003,218 +3004,218 @@ static ssize_t sienna_cichlid_get_gpu_metrics(struct smu_context *smu,
 
 	gpu_metrics->current_fan_speed = metrics->CurrFanSpeed;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret)
-		return ret;
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret)
+		वापस ret;
 
-	if (((adev->asic_type == CHIP_SIENNA_CICHLID) && smu_version > 0x003A1E00) ||
-	      ((adev->asic_type == CHIP_NAVY_FLOUNDER) && smu_version > 0x00410400)) {
+	अगर (((adev->asic_type == CHIP_SIENNA_CICHLID) && smu_version > 0x003A1E00) ||
+	      ((adev->asic_type == CHIP_NAVY_FLOUNDER) && smu_version > 0x00410400)) अणु
 		gpu_metrics->pcie_link_width = metrics->PcieWidth;
 		gpu_metrics->pcie_link_speed = link_speed[metrics->PcieRate];
-	} else {
+	पूर्ण अन्यथा अणु
 		gpu_metrics->pcie_link_width =
 				smu_v11_0_get_current_pcie_link_width(smu);
 		gpu_metrics->pcie_link_speed =
 				smu_v11_0_get_current_pcie_link_speed(smu);
-	}
+	पूर्ण
 
-	gpu_metrics->system_clock_counter = ktime_get_boottime_ns();
+	gpu_metrics->प्रणाली_घड़ी_counter = kसमय_get_bootसमय_ns();
 
-	*table = (void *)gpu_metrics;
+	*table = (व्योम *)gpu_metrics;
 
-	return sizeof(struct gpu_metrics_v1_1);
-}
+	वापस माप(काष्ठा gpu_metrics_v1_1);
+पूर्ण
 
-static int sienna_cichlid_enable_mgpu_fan_boost(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक sienna_cichlid_enable_mgpu_fan_boost(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *smc_pptable = table_context->driver_pptable;
 
 	/*
-	 * Skip the MGpuFanBoost setting for those ASICs
-	 * which do not support it
+	 * Skip the MGpuFanBoost setting क्रम those ASICs
+	 * which करो not support it
 	 */
-	if (!smc_pptable->MGpuFanBoostLimitRpm)
-		return 0;
+	अगर (!smc_pptable->MGpuFanBoostLimitRpm)
+		वापस 0;
 
-	return smu_cmn_send_smc_msg_with_param(smu,
+	वापस smu_cmn_send_smc_msg_with_param(smu,
 					       SMU_MSG_SetMGpuFanBoostLimitRpm,
 					       0,
-					       NULL);
-}
+					       शून्य);
+पूर्ण
 
-static int sienna_cichlid_gpo_control(struct smu_context *smu,
+अटल पूर्णांक sienna_cichlid_gpo_control(काष्ठा smu_context *smu,
 				      bool enablement)
-{
-	uint32_t smu_version;
-	int ret = 0;
+अणु
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret = 0;
 
 
-	if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_GFX_GPO_BIT)) {
-		ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-		if (ret)
-			return ret;
+	अगर (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DPM_GFX_GPO_BIT)) अणु
+		ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+		अगर (ret)
+			वापस ret;
 
-		if (enablement) {
-			if (smu_version < 0x003a2500) {
+		अगर (enablement) अणु
+			अगर (smu_version < 0x003a2500) अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu,
 								      SMU_MSG_SetGpoFeaturePMask,
 								      GFX_GPO_PACE_MASK | GFX_GPO_DEM_MASK,
-								      NULL);
-			} else {
+								      शून्य);
+			पूर्ण अन्यथा अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu,
 								      SMU_MSG_DisallowGpo,
 								      0,
-								      NULL);
-			}
-		} else {
-			if (smu_version < 0x003a2500) {
+								      शून्य);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (smu_version < 0x003a2500) अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu,
 								      SMU_MSG_SetGpoFeaturePMask,
 								      0,
-								      NULL);
-			} else {
+								      शून्य);
+			पूर्ण अन्यथा अणु
 				ret = smu_cmn_send_smc_msg_with_param(smu,
 								      SMU_MSG_DisallowGpo,
 								      1,
-								      NULL);
-			}
-		}
-	}
+								      शून्य);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sienna_cichlid_notify_2nd_usb20_port(struct smu_context *smu)
-{
-	uint32_t smu_version;
-	int ret = 0;
+अटल पूर्णांक sienna_cichlid_notअगरy_2nd_usb20_port(काष्ठा smu_context *smu)
+अणु
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret = 0;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret)
-		return ret;
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Message SMU_MSG_Enable2ndUSB20Port is supported by 58.45
 	 * onwards PMFWs.
 	 */
-	if (smu_version < 0x003A2D00)
-		return 0;
+	अगर (smu_version < 0x003A2D00)
+		वापस 0;
 
-	return smu_cmn_send_smc_msg_with_param(smu,
+	वापस smu_cmn_send_smc_msg_with_param(smu,
 					       SMU_MSG_Enable2ndUSB20Port,
 					       smu->smu_table.boot_values.firmware_caps & ATOM_FIRMWARE_CAP_ENABLE_2ND_USB20PORT ?
 					       1 : 0,
-					       NULL);
-}
+					       शून्य);
+पूर्ण
 
-static int sienna_cichlid_system_features_control(struct smu_context *smu,
+अटल पूर्णांक sienna_cichlid_प्रणाली_features_control(काष्ठा smu_context *smu,
 						  bool en)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 
-	if (en) {
-		ret = sienna_cichlid_notify_2nd_usb20_port(smu);
-		if (ret)
-			return ret;
-	}
+	अगर (en) अणु
+		ret = sienna_cichlid_notअगरy_2nd_usb20_port(smu);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return smu_v11_0_system_features_control(smu, en);
-}
+	वापस smu_v11_0_प्रणाली_features_control(smu, en);
+पूर्ण
 
-static int sienna_cichlid_set_mp1_state(struct smu_context *smu,
-					enum pp_mp1_state mp1_state)
-{
-	int ret;
+अटल पूर्णांक sienna_cichlid_set_mp1_state(काष्ठा smu_context *smu,
+					क्रमागत pp_mp1_state mp1_state)
+अणु
+	पूर्णांक ret;
 
-	switch (mp1_state) {
-	case PP_MP1_STATE_UNLOAD:
+	चयन (mp1_state) अणु
+	हाल PP_MP1_STATE_UNLOAD:
 		ret = smu_cmn_set_mp1_state(smu, mp1_state);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Ignore others */
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct pptable_funcs sienna_cichlid_ppt_funcs = {
+अटल स्थिर काष्ठा pptable_funcs sienna_cichlid_ppt_funcs = अणु
 	.get_allowed_feature_mask = sienna_cichlid_get_allowed_feature_mask,
-	.set_default_dpm_table = sienna_cichlid_set_default_dpm_table,
+	.set_शेष_dpm_table = sienna_cichlid_set_शेष_dpm_table,
 	.dpm_set_vcn_enable = sienna_cichlid_dpm_set_vcn_enable,
 	.dpm_set_jpeg_enable = sienna_cichlid_dpm_set_jpeg_enable,
 	.i2c_init = sienna_cichlid_i2c_control_init,
 	.i2c_fini = sienna_cichlid_i2c_control_fini,
-	.print_clk_levels = sienna_cichlid_print_clk_levels,
-	.force_clk_levels = sienna_cichlid_force_clk_levels,
+	.prपूर्णांक_clk_levels = sienna_cichlid_prपूर्णांक_clk_levels,
+	.क्रमce_clk_levels = sienna_cichlid_क्रमce_clk_levels,
 	.populate_umd_state_clk = sienna_cichlid_populate_umd_state_clk,
 	.pre_display_config_changed = sienna_cichlid_pre_display_config_changed,
 	.display_config_changed = sienna_cichlid_display_config_changed,
-	.notify_smc_display_config = sienna_cichlid_notify_smc_display_config,
+	.notअगरy_smc_display_config = sienna_cichlid_notअगरy_smc_display_config,
 	.is_dpm_running = sienna_cichlid_is_dpm_running,
 	.get_fan_speed_percent = sienna_cichlid_get_fan_speed_percent,
-	.get_power_profile_mode = sienna_cichlid_get_power_profile_mode,
-	.set_power_profile_mode = sienna_cichlid_set_power_profile_mode,
+	.get_घातer_profile_mode = sienna_cichlid_get_घातer_profile_mode,
+	.set_घातer_profile_mode = sienna_cichlid_set_घातer_profile_mode,
 	.set_watermarks_table = sienna_cichlid_set_watermarks_table,
-	.read_sensor = sienna_cichlid_read_sensor,
+	.पढ़ो_sensor = sienna_cichlid_पढ़ो_sensor,
 	.get_uclk_dpm_states = sienna_cichlid_get_uclk_dpm_states,
-	.set_performance_level = smu_v11_0_set_performance_level,
+	.set_perक्रमmance_level = smu_v11_0_set_perक्रमmance_level,
 	.get_thermal_temperature_range = sienna_cichlid_get_thermal_temperature_range,
-	.display_disable_memory_clock_switch = sienna_cichlid_display_disable_memory_clock_switch,
-	.get_power_limit = sienna_cichlid_get_power_limit,
+	.display_disable_memory_घड़ी_चयन = sienna_cichlid_display_disable_memory_घड़ी_चयन,
+	.get_घातer_limit = sienna_cichlid_get_घातer_limit,
 	.update_pcie_parameters = sienna_cichlid_update_pcie_parameters,
 	.dump_pptable = sienna_cichlid_dump_pptable,
 	.init_microcode = smu_v11_0_init_microcode,
 	.load_microcode = smu_v11_0_load_microcode,
 	.init_smc_tables = sienna_cichlid_init_smc_tables,
 	.fini_smc_tables = smu_v11_0_fini_smc_tables,
-	.init_power = smu_v11_0_init_power,
-	.fini_power = smu_v11_0_fini_power,
+	.init_घातer = smu_v11_0_init_घातer,
+	.fini_घातer = smu_v11_0_fini_घातer,
 	.check_fw_status = smu_v11_0_check_fw_status,
 	.setup_pptable = sienna_cichlid_setup_pptable,
 	.get_vbios_bootup_values = smu_v11_0_get_vbios_bootup_values,
 	.check_fw_version = smu_v11_0_check_fw_version,
-	.write_pptable = smu_cmn_write_pptable,
+	.ग_लिखो_pptable = smu_cmn_ग_लिखो_pptable,
 	.set_driver_table_location = smu_v11_0_set_driver_table_location,
 	.set_tool_table_location = smu_v11_0_set_tool_table_location,
-	.notify_memory_pool_location = smu_v11_0_notify_memory_pool_location,
-	.system_features_control = sienna_cichlid_system_features_control,
+	.notअगरy_memory_pool_location = smu_v11_0_notअगरy_memory_pool_location,
+	.प्रणाली_features_control = sienna_cichlid_प्रणाली_features_control,
 	.send_smc_msg_with_param = smu_cmn_send_smc_msg_with_param,
 	.send_smc_msg = smu_cmn_send_smc_msg,
-	.init_display_count = NULL,
+	.init_display_count = शून्य,
 	.set_allowed_mask = smu_v11_0_set_allowed_mask,
 	.get_enabled_mask = smu_cmn_get_enabled_mask,
 	.feature_is_enabled = smu_cmn_feature_is_enabled,
 	.disable_all_features_with_exception = smu_cmn_disable_all_features_with_exception,
-	.notify_display_change = NULL,
-	.set_power_limit = smu_v11_0_set_power_limit,
-	.init_max_sustainable_clocks = smu_v11_0_init_max_sustainable_clocks,
+	.notअगरy_display_change = शून्य,
+	.set_घातer_limit = smu_v11_0_set_घातer_limit,
+	.init_max_sustainable_घड़ीs = smu_v11_0_init_max_sustainable_घड़ीs,
 	.enable_thermal_alert = smu_v11_0_enable_thermal_alert,
 	.disable_thermal_alert = smu_v11_0_disable_thermal_alert,
-	.set_min_dcef_deep_sleep = NULL,
-	.display_clock_voltage_request = smu_v11_0_display_clock_voltage_request,
+	.set_min_dcef_deep_sleep = शून्य,
+	.display_घड़ी_voltage_request = smu_v11_0_display_घड़ी_voltage_request,
 	.get_fan_control_mode = smu_v11_0_get_fan_control_mode,
 	.set_fan_control_mode = smu_v11_0_set_fan_control_mode,
 	.set_fan_speed_percent = smu_v11_0_set_fan_speed_percent,
 	.set_xgmi_pstate = smu_v11_0_set_xgmi_pstate,
 	.gfx_off_control = smu_v11_0_gfx_off_control,
-	.register_irq_handler = smu_v11_0_register_irq_handler,
+	.रेजिस्टर_irq_handler = smu_v11_0_रेजिस्टर_irq_handler,
 	.set_azalia_d3_pme = smu_v11_0_set_azalia_d3_pme,
-	.get_max_sustainable_clocks_by_dc = smu_v11_0_get_max_sustainable_clocks_by_dc,
+	.get_max_sustainable_घड़ीs_by_dc = smu_v11_0_get_max_sustainable_घड़ीs_by_dc,
 	.baco_is_support= sienna_cichlid_is_baco_supported,
 	.baco_get_state = smu_v11_0_baco_get_state,
 	.baco_set_state = smu_v11_0_baco_set_state,
 	.baco_enter = smu_v11_0_baco_enter,
-	.baco_exit = smu_v11_0_baco_exit,
+	.baco_निकास = smu_v11_0_baco_निकास,
 	.mode1_reset_is_support = sienna_cichlid_is_mode1_reset_supported,
 	.mode1_reset = smu_v11_0_mode1_reset,
 	.get_dpm_ultimate_freq = sienna_cichlid_get_dpm_ultimate_freq,
 	.set_soft_freq_limited_range = smu_v11_0_set_soft_freq_limited_range,
-	.set_default_od_settings = sienna_cichlid_set_default_od_settings,
+	.set_शेष_od_settings = sienna_cichlid_set_शेष_od_settings,
 	.od_edit_dpm_table = sienna_cichlid_od_edit_dpm_table,
 	.run_btc = sienna_cichlid_run_btc,
-	.set_power_source = smu_v11_0_set_power_source,
+	.set_घातer_source = smu_v11_0_set_घातer_source,
 	.get_pp_feature_mask = smu_cmn_get_pp_feature_mask,
 	.set_pp_feature_mask = smu_cmn_set_pp_feature_mask,
 	.get_gpu_metrics = sienna_cichlid_get_gpu_metrics,
@@ -3222,18 +3223,18 @@ static const struct pptable_funcs sienna_cichlid_ppt_funcs = {
 	.gfx_ulv_control = smu_v11_0_gfx_ulv_control,
 	.deep_sleep_control = smu_v11_0_deep_sleep_control,
 	.get_fan_parameters = sienna_cichlid_get_fan_parameters,
-	.interrupt_work = smu_v11_0_interrupt_work,
+	.पूर्णांकerrupt_work = smu_v11_0_पूर्णांकerrupt_work,
 	.gpo_control = sienna_cichlid_gpo_control,
 	.set_mp1_state = sienna_cichlid_set_mp1_state,
-};
+पूर्ण;
 
-void sienna_cichlid_set_ppt_funcs(struct smu_context *smu)
-{
+व्योम sienna_cichlid_set_ppt_funcs(काष्ठा smu_context *smu)
+अणु
 	smu->ppt_funcs = &sienna_cichlid_ppt_funcs;
 	smu->message_map = sienna_cichlid_message_map;
-	smu->clock_map = sienna_cichlid_clk_map;
+	smu->घड़ी_map = sienna_cichlid_clk_map;
 	smu->feature_map = sienna_cichlid_feature_mask_map;
 	smu->table_map = sienna_cichlid_table_map;
 	smu->pwr_src_map = sienna_cichlid_pwr_src_map;
 	smu->workload_map = sienna_cichlid_workload_map;
-}
+पूर्ण

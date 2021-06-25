@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  CCW device PGID and path verification I/O handling.
+ *  CCW device PGID and path verअगरication I/O handling.
  *
  *    Copyright IBM Corp. 2002, 2009
  *    Author(s): Cornelia Huck <cornelia.huck@de.ibm.com>
@@ -8,627 +9,627 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/bitops.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <asm/ccwdev.h>
-#include <asm/cio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/cपन.स>
 
-#include "cio.h"
-#include "cio_debug.h"
-#include "device.h"
-#include "io_sch.h"
+#समावेश "cio.h"
+#समावेश "cio_debug.h"
+#समावेश "device.h"
+#समावेश "io_sch.h"
 
-#define PGID_RETRIES	256
-#define PGID_TIMEOUT	(10 * HZ)
+#घोषणा PGID_RETRIES	256
+#घोषणा PGID_TIMEOUT	(10 * HZ)
 
-static void verify_start(struct ccw_device *cdev);
+अटल व्योम verअगरy_start(काष्ठा ccw_device *cdev);
 
 /*
- * Process path verification data and report result.
+ * Process path verअगरication data and report result.
  */
-static void verify_done(struct ccw_device *cdev, int rc)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_dev_id *id = &cdev->private->dev_id;
-	int mpath = cdev->private->flags.mpath;
-	int pgroup = cdev->private->flags.pgroup;
+अटल व्योम verअगरy_करोne(काष्ठा ccw_device *cdev, पूर्णांक rc)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_dev_id *id = &cdev->निजी->dev_id;
+	पूर्णांक mpath = cdev->निजी->flags.mpath;
+	पूर्णांक pgroup = cdev->निजी->flags.pgroup;
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	/* Ensure consistent multipathing state at device and channel. */
-	if (sch->config.mp != mpath) {
+	अगर (sch->config.mp != mpath) अणु
 		sch->config.mp = mpath;
 		rc = cio_commit_config(sch);
-	}
+	पूर्ण
 out:
 	CIO_MSG_EVENT(2, "vrfy: device 0.%x.%04x: rc=%d pgroup=%d mpath=%d "
 			 "vpm=%02x\n", id->ssid, id->devno, rc, pgroup, mpath,
 			 sch->vpm);
-	ccw_device_verify_done(cdev, rc);
-}
+	ccw_device_verअगरy_करोne(cdev, rc);
+पूर्ण
 
 /*
- * Create channel program to perform a NOOP.
+ * Create channel program to perक्रमm a NOOP.
  */
-static void nop_build_cp(struct ccw_device *cdev)
-{
-	struct ccw_request *req = &cdev->private->req;
-	struct ccw1 *cp = cdev->private->dma_area->iccws;
+अटल व्योम nop_build_cp(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	काष्ठा ccw1 *cp = cdev->निजी->dma_area->iccws;
 
 	cp->cmd_code	= CCW_CMD_NOOP;
 	cp->cda		= 0;
 	cp->count	= 0;
 	cp->flags	= CCW_FLAG_SLI;
 	req->cp		= cp;
-}
+पूर्ण
 
 /*
- * Perform NOOP on a single path.
+ * Perक्रमm NOOP on a single path.
  */
-static void nop_do(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम nop_करो(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
 	req->lpm = lpm_adjust(req->lpm, sch->schib.pmcw.pam & sch->opm &
-			      ~cdev->private->path_noirq_mask);
-	if (!req->lpm)
-		goto out_nopath;
+			      ~cdev->निजी->path_noirq_mask);
+	अगर (!req->lpm)
+		जाओ out_nopath;
 	nop_build_cp(cdev);
 	ccw_request_start(cdev);
-	return;
+	वापस;
 
 out_nopath:
-	verify_done(cdev, sch->vpm ? 0 : -EACCES);
-}
+	verअगरy_करोne(cdev, sch->vpm ? 0 : -EACCES);
+पूर्ण
 
 /*
  * Adjust NOOP I/O status.
  */
-static enum io_status nop_filter(struct ccw_device *cdev, void *data,
-				 struct irb *irb, enum io_status status)
-{
+अटल क्रमागत io_status nop_filter(काष्ठा ccw_device *cdev, व्योम *data,
+				 काष्ठा irb *irb, क्रमागत io_status status)
+अणु
 	/* Only subchannel status might indicate a path error. */
-	if (status == IO_STATUS_ERROR && irb->scsw.cmd.cstat == 0)
-		return IO_DONE;
-	return status;
-}
+	अगर (status == IO_STATUS_ERROR && irb->scsw.cmd.cstat == 0)
+		वापस IO_DONE;
+	वापस status;
+पूर्ण
 
 /*
- * Process NOOP request result for a single path.
+ * Process NOOP request result क्रम a single path.
  */
-static void nop_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम nop_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		sch->vpm |= req->lpm;
-		break;
-	case -ETIME:
-		cdev->private->path_noirq_mask |= req->lpm;
-		break;
-	case -EACCES:
-		cdev->private->path_notoper_mask |= req->lpm;
-		break;
-	default:
-		goto err;
-	}
+		अवरोध;
+	हाल -ETIME:
+		cdev->निजी->path_noirq_mask |= req->lpm;
+		अवरोध;
+	हाल -EACCES:
+		cdev->निजी->path_notoper_mask |= req->lpm;
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 	/* Continue on the next path. */
 	req->lpm >>= 1;
-	nop_do(cdev);
-	return;
+	nop_करो(cdev);
+	वापस;
 
 err:
-	verify_done(cdev, rc);
-}
+	verअगरy_करोne(cdev, rc);
+पूर्ण
 
 /*
- * Create channel program to perform SET PGID on a single path.
+ * Create channel program to perक्रमm SET PGID on a single path.
  */
-static void spid_build_cp(struct ccw_device *cdev, u8 fn)
-{
-	struct ccw_request *req = &cdev->private->req;
-	struct ccw1 *cp = cdev->private->dma_area->iccws;
-	int i = pathmask_to_pos(req->lpm);
-	struct pgid *pgid = &cdev->private->dma_area->pgid[i];
+अटल व्योम spid_build_cp(काष्ठा ccw_device *cdev, u8 fn)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	काष्ठा ccw1 *cp = cdev->निजी->dma_area->iccws;
+	पूर्णांक i = pathmask_to_pos(req->lpm);
+	काष्ठा pgid *pgid = &cdev->निजी->dma_area->pgid[i];
 
 	pgid->inf.fc	= fn;
 	cp->cmd_code	= CCW_CMD_SET_PGID;
 	cp->cda		= (u32) (addr_t) pgid;
-	cp->count	= sizeof(*pgid);
+	cp->count	= माप(*pgid);
 	cp->flags	= CCW_FLAG_SLI;
 	req->cp		= cp;
-}
+पूर्ण
 
-static void pgid_wipeout_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	if (rc) {
-		/* We don't know the path groups' state. Abort. */
-		verify_done(cdev, rc);
-		return;
-	}
+अटल व्योम pgid_wipeout_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	अगर (rc) अणु
+		/* We करोn't know the path groups' state. Abort. */
+		verअगरy_करोne(cdev, rc);
+		वापस;
+	पूर्ण
 	/*
-	 * Path groups have been reset. Restart path verification but
+	 * Path groups have been reset. Restart path verअगरication but
 	 * leave paths in path_noirq_mask out.
 	 */
-	cdev->private->flags.pgid_unknown = 0;
-	verify_start(cdev);
-}
+	cdev->निजी->flags.pgid_unknown = 0;
+	verअगरy_start(cdev);
+पूर्ण
 
 /*
- * Reset pathgroups and restart path verification, leave unusable paths out.
+ * Reset pathgroups and restart path verअगरication, leave unusable paths out.
  */
-static void pgid_wipeout_start(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_dev_id *id = &cdev->private->dev_id;
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम pgid_wipeout_start(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_dev_id *id = &cdev->निजी->dev_id;
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 	u8 fn;
 
 	CIO_MSG_EVENT(2, "wipe: device 0.%x.%04x: pvm=%02x nim=%02x\n",
-		      id->ssid, id->devno, cdev->private->pgid_valid_mask,
-		      cdev->private->path_noirq_mask);
+		      id->ssid, id->devno, cdev->निजी->pgid_valid_mask,
+		      cdev->निजी->path_noirq_mask);
 
 	/* Initialize request data. */
-	memset(req, 0, sizeof(*req));
-	req->timeout	= PGID_TIMEOUT;
+	स_रखो(req, 0, माप(*req));
+	req->समयout	= PGID_TIMEOUT;
 	req->maxretries	= PGID_RETRIES;
 	req->lpm	= sch->schib.pmcw.pam;
 	req->callback	= pgid_wipeout_callback;
 	fn = SPID_FUNC_DISBAND;
-	if (cdev->private->flags.mpath)
+	अगर (cdev->निजी->flags.mpath)
 		fn |= SPID_FUNC_MULTI_PATH;
 	spid_build_cp(cdev, fn);
 	ccw_request_start(cdev);
-}
+पूर्ण
 
 /*
- * Perform establish/resign SET PGID on a single path.
+ * Perक्रमm establish/resign SET PGID on a single path.
  */
-static void spid_do(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम spid_करो(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 	u8 fn;
 
-	/* Use next available path that is not already in correct state. */
-	req->lpm = lpm_adjust(req->lpm, cdev->private->pgid_todo_mask);
-	if (!req->lpm)
-		goto out_nopath;
+	/* Use next available path that is not alपढ़ोy in correct state. */
+	req->lpm = lpm_adjust(req->lpm, cdev->निजी->pgid_toकरो_mask);
+	अगर (!req->lpm)
+		जाओ out_nopath;
 	/* Channel program setup. */
-	if (req->lpm & sch->opm)
+	अगर (req->lpm & sch->opm)
 		fn = SPID_FUNC_ESTABLISH;
-	else
+	अन्यथा
 		fn = SPID_FUNC_RESIGN;
-	if (cdev->private->flags.mpath)
+	अगर (cdev->निजी->flags.mpath)
 		fn |= SPID_FUNC_MULTI_PATH;
 	spid_build_cp(cdev, fn);
 	ccw_request_start(cdev);
-	return;
+	वापस;
 
 out_nopath:
-	if (cdev->private->flags.pgid_unknown) {
-		/* At least one SPID could be partially done. */
+	अगर (cdev->निजी->flags.pgid_unknown) अणु
+		/* At least one SPID could be partially करोne. */
 		pgid_wipeout_start(cdev);
-		return;
-	}
-	verify_done(cdev, sch->vpm ? 0 : -EACCES);
-}
+		वापस;
+	पूर्ण
+	verअगरy_करोne(cdev, sch->vpm ? 0 : -EACCES);
+पूर्ण
 
 /*
- * Process SET PGID request result for a single path.
+ * Process SET PGID request result क्रम a single path.
  */
-static void spid_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम spid_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
-	switch (rc) {
-	case 0:
+	चयन (rc) अणु
+	हाल 0:
 		sch->vpm |= req->lpm & sch->opm;
-		break;
-	case -ETIME:
-		cdev->private->flags.pgid_unknown = 1;
-		cdev->private->path_noirq_mask |= req->lpm;
-		break;
-	case -EACCES:
-		cdev->private->path_notoper_mask |= req->lpm;
-		break;
-	case -EOPNOTSUPP:
-		if (cdev->private->flags.mpath) {
+		अवरोध;
+	हाल -ETIME:
+		cdev->निजी->flags.pgid_unknown = 1;
+		cdev->निजी->path_noirq_mask |= req->lpm;
+		अवरोध;
+	हाल -EACCES:
+		cdev->निजी->path_notoper_mask |= req->lpm;
+		अवरोध;
+	हाल -EOPNOTSUPP:
+		अगर (cdev->निजी->flags.mpath) अणु
 			/* Try without multipathing. */
-			cdev->private->flags.mpath = 0;
-			goto out_restart;
-		}
+			cdev->निजी->flags.mpath = 0;
+			जाओ out_restart;
+		पूर्ण
 		/* Try without pathgrouping. */
-		cdev->private->flags.pgroup = 0;
-		goto out_restart;
-	default:
-		goto err;
-	}
+		cdev->निजी->flags.pgroup = 0;
+		जाओ out_restart;
+	शेष:
+		जाओ err;
+	पूर्ण
 	req->lpm >>= 1;
-	spid_do(cdev);
-	return;
+	spid_करो(cdev);
+	वापस;
 
 out_restart:
-	verify_start(cdev);
-	return;
+	verअगरy_start(cdev);
+	वापस;
 err:
-	verify_done(cdev, rc);
-}
+	verअगरy_करोne(cdev, rc);
+पूर्ण
 
-static void spid_start(struct ccw_device *cdev)
-{
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम spid_start(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
 	/* Initialize request data. */
-	memset(req, 0, sizeof(*req));
-	req->timeout	= PGID_TIMEOUT;
+	स_रखो(req, 0, माप(*req));
+	req->समयout	= PGID_TIMEOUT;
 	req->maxretries	= PGID_RETRIES;
 	req->lpm	= 0x80;
 	req->singlepath	= 1;
 	req->callback	= spid_callback;
-	spid_do(cdev);
-}
+	spid_करो(cdev);
+पूर्ण
 
-static int pgid_is_reset(struct pgid *p)
-{
-	char *c;
+अटल पूर्णांक pgid_is_reset(काष्ठा pgid *p)
+अणु
+	अक्षर *c;
 
-	for (c = (char *)p + 1; c < (char *)(p + 1); c++) {
-		if (*c != 0)
-			return 0;
-	}
-	return 1;
-}
+	क्रम (c = (अक्षर *)p + 1; c < (अक्षर *)(p + 1); c++) अणु
+		अगर (*c != 0)
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int pgid_cmp(struct pgid *p1, struct pgid *p2)
-{
-	return memcmp((char *) p1 + 1, (char *) p2 + 1,
-		      sizeof(struct pgid) - 1);
-}
+अटल पूर्णांक pgid_cmp(काष्ठा pgid *p1, काष्ठा pgid *p2)
+अणु
+	वापस स_भेद((अक्षर *) p1 + 1, (अक्षर *) p2 + 1,
+		      माप(काष्ठा pgid) - 1);
+पूर्ण
 
 /*
  * Determine pathgroup state from PGID data.
  */
-static void pgid_analyze(struct ccw_device *cdev, struct pgid **p,
-			 int *mismatch, u8 *reserved, u8 *reset)
-{
-	struct pgid *pgid = &cdev->private->dma_area->pgid[0];
-	struct pgid *first = NULL;
-	int lpm;
-	int i;
+अटल व्योम pgid_analyze(काष्ठा ccw_device *cdev, काष्ठा pgid **p,
+			 पूर्णांक *mismatch, u8 *reserved, u8 *reset)
+अणु
+	काष्ठा pgid *pgid = &cdev->निजी->dma_area->pgid[0];
+	काष्ठा pgid *first = शून्य;
+	पूर्णांक lpm;
+	पूर्णांक i;
 
 	*mismatch = 0;
 	*reserved = 0;
 	*reset = 0;
-	for (i = 0, lpm = 0x80; i < 8; i++, pgid++, lpm >>= 1) {
-		if ((cdev->private->pgid_valid_mask & lpm) == 0)
-			continue;
-		if (pgid->inf.ps.state2 == SNID_STATE2_RESVD_ELSE)
+	क्रम (i = 0, lpm = 0x80; i < 8; i++, pgid++, lpm >>= 1) अणु
+		अगर ((cdev->निजी->pgid_valid_mask & lpm) == 0)
+			जारी;
+		अगर (pgid->inf.ps.state2 == SNID_STATE2_RESVD_ELSE)
 			*reserved |= lpm;
-		if (pgid_is_reset(pgid)) {
+		अगर (pgid_is_reset(pgid)) अणु
 			*reset |= lpm;
-			continue;
-		}
-		if (!first) {
+			जारी;
+		पूर्ण
+		अगर (!first) अणु
 			first = pgid;
-			continue;
-		}
-		if (pgid_cmp(pgid, first) != 0)
+			जारी;
+		पूर्ण
+		अगर (pgid_cmp(pgid, first) != 0)
 			*mismatch = 1;
-	}
-	if (!first)
-		first = &channel_subsystems[0]->global_pgid;
+	पूर्ण
+	अगर (!first)
+		first = &channel_subप्रणालीs[0]->global_pgid;
 	*p = first;
-}
+पूर्ण
 
-static u8 pgid_to_donepm(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct pgid *pgid;
-	int i;
-	int lpm;
-	u8 donepm = 0;
+अटल u8 pgid_to_करोnepm(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा pgid *pgid;
+	पूर्णांक i;
+	पूर्णांक lpm;
+	u8 करोnepm = 0;
 
-	/* Set bits for paths which are already in the target state. */
-	for (i = 0; i < 8; i++) {
+	/* Set bits क्रम paths which are alपढ़ोy in the target state. */
+	क्रम (i = 0; i < 8; i++) अणु
 		lpm = 0x80 >> i;
-		if ((cdev->private->pgid_valid_mask & lpm) == 0)
-			continue;
-		pgid = &cdev->private->dma_area->pgid[i];
-		if (sch->opm & lpm) {
-			if (pgid->inf.ps.state1 != SNID_STATE1_GROUPED)
-				continue;
-		} else {
-			if (pgid->inf.ps.state1 != SNID_STATE1_UNGROUPED)
-				continue;
-		}
-		if (cdev->private->flags.mpath) {
-			if (pgid->inf.ps.state3 != SNID_STATE3_MULTI_PATH)
-				continue;
-		} else {
-			if (pgid->inf.ps.state3 != SNID_STATE3_SINGLE_PATH)
-				continue;
-		}
-		donepm |= lpm;
-	}
+		अगर ((cdev->निजी->pgid_valid_mask & lpm) == 0)
+			जारी;
+		pgid = &cdev->निजी->dma_area->pgid[i];
+		अगर (sch->opm & lpm) अणु
+			अगर (pgid->inf.ps.state1 != SNID_STATE1_GROUPED)
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (pgid->inf.ps.state1 != SNID_STATE1_UNGROUPED)
+				जारी;
+		पूर्ण
+		अगर (cdev->निजी->flags.mpath) अणु
+			अगर (pgid->inf.ps.state3 != SNID_STATE3_MULTI_PATH)
+				जारी;
+		पूर्ण अन्यथा अणु
+			अगर (pgid->inf.ps.state3 != SNID_STATE3_SINGLE_PATH)
+				जारी;
+		पूर्ण
+		करोnepm |= lpm;
+	पूर्ण
 
-	return donepm;
-}
+	वापस करोnepm;
+पूर्ण
 
-static void pgid_fill(struct ccw_device *cdev, struct pgid *pgid)
-{
-	int i;
+अटल व्योम pgid_fill(काष्ठा ccw_device *cdev, काष्ठा pgid *pgid)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++)
-		memcpy(&cdev->private->dma_area->pgid[i], pgid,
-		       sizeof(struct pgid));
-}
+	क्रम (i = 0; i < 8; i++)
+		स_नकल(&cdev->निजी->dma_area->pgid[i], pgid,
+		       माप(काष्ठा pgid));
+पूर्ण
 
 /*
  * Process SENSE PGID data and report result.
  */
-static void snid_done(struct ccw_device *cdev, int rc)
-{
-	struct ccw_dev_id *id = &cdev->private->dev_id;
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct pgid *pgid;
-	int mismatch = 0;
+अटल व्योम snid_करोne(काष्ठा ccw_device *cdev, पूर्णांक rc)
+अणु
+	काष्ठा ccw_dev_id *id = &cdev->निजी->dev_id;
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा pgid *pgid;
+	पूर्णांक mismatch = 0;
 	u8 reserved = 0;
 	u8 reset = 0;
-	u8 donepm;
+	u8 करोnepm;
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	pgid_analyze(cdev, &pgid, &mismatch, &reserved, &reset);
-	if (reserved == cdev->private->pgid_valid_mask)
+	अगर (reserved == cdev->निजी->pgid_valid_mask)
 		rc = -EUSERS;
-	else if (mismatch)
+	अन्यथा अगर (mismatch)
 		rc = -EOPNOTSUPP;
-	else {
-		donepm = pgid_to_donepm(cdev);
-		sch->vpm = donepm & sch->opm;
-		cdev->private->pgid_reset_mask |= reset;
-		cdev->private->pgid_todo_mask &=
-			~(donepm | cdev->private->path_noirq_mask);
+	अन्यथा अणु
+		करोnepm = pgid_to_करोnepm(cdev);
+		sch->vpm = करोnepm & sch->opm;
+		cdev->निजी->pgid_reset_mask |= reset;
+		cdev->निजी->pgid_toकरो_mask &=
+			~(करोnepm | cdev->निजी->path_noirq_mask);
 		pgid_fill(cdev, pgid);
-	}
+	पूर्ण
 out:
 	CIO_MSG_EVENT(2, "snid: device 0.%x.%04x: rc=%d pvm=%02x vpm=%02x "
 		      "todo=%02x mism=%d rsvd=%02x reset=%02x\n", id->ssid,
-		      id->devno, rc, cdev->private->pgid_valid_mask, sch->vpm,
-		      cdev->private->pgid_todo_mask, mismatch, reserved, reset);
-	switch (rc) {
-	case 0:
-		if (cdev->private->flags.pgid_unknown) {
+		      id->devno, rc, cdev->निजी->pgid_valid_mask, sch->vpm,
+		      cdev->निजी->pgid_toकरो_mask, mismatch, reserved, reset);
+	चयन (rc) अणु
+	हाल 0:
+		अगर (cdev->निजी->flags.pgid_unknown) अणु
 			pgid_wipeout_start(cdev);
-			return;
-		}
-		/* Anything left to do? */
-		if (cdev->private->pgid_todo_mask == 0) {
-			verify_done(cdev, sch->vpm == 0 ? -EACCES : 0);
-			return;
-		}
-		/* Perform path-grouping. */
+			वापस;
+		पूर्ण
+		/* Anything left to करो? */
+		अगर (cdev->निजी->pgid_toकरो_mask == 0) अणु
+			verअगरy_करोne(cdev, sch->vpm == 0 ? -EACCES : 0);
+			वापस;
+		पूर्ण
+		/* Perक्रमm path-grouping. */
 		spid_start(cdev);
-		break;
-	case -EOPNOTSUPP:
+		अवरोध;
+	हाल -EOPNOTSUPP:
 		/* Path-grouping not supported. */
-		cdev->private->flags.pgroup = 0;
-		cdev->private->flags.mpath = 0;
-		verify_start(cdev);
-		break;
-	default:
-		verify_done(cdev, rc);
-	}
-}
+		cdev->निजी->flags.pgroup = 0;
+		cdev->निजी->flags.mpath = 0;
+		verअगरy_start(cdev);
+		अवरोध;
+	शेष:
+		verअगरy_करोne(cdev, rc);
+	पूर्ण
+पूर्ण
 
 /*
- * Create channel program to perform a SENSE PGID on a single path.
+ * Create channel program to perक्रमm a SENSE PGID on a single path.
  */
-static void snid_build_cp(struct ccw_device *cdev)
-{
-	struct ccw_request *req = &cdev->private->req;
-	struct ccw1 *cp = cdev->private->dma_area->iccws;
-	int i = pathmask_to_pos(req->lpm);
+अटल व्योम snid_build_cp(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	काष्ठा ccw1 *cp = cdev->निजी->dma_area->iccws;
+	पूर्णांक i = pathmask_to_pos(req->lpm);
 
 	/* Channel program setup. */
 	cp->cmd_code	= CCW_CMD_SENSE_PGID;
-	cp->cda		= (u32) (addr_t) &cdev->private->dma_area->pgid[i];
-	cp->count	= sizeof(struct pgid);
+	cp->cda		= (u32) (addr_t) &cdev->निजी->dma_area->pgid[i];
+	cp->count	= माप(काष्ठा pgid);
 	cp->flags	= CCW_FLAG_SLI;
 	req->cp		= cp;
-}
+पूर्ण
 
 /*
- * Perform SENSE PGID on a single path.
+ * Perक्रमm SENSE PGID on a single path.
  */
-static void snid_do(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
-	int ret;
+अटल व्योम snid_करो(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	पूर्णांक ret;
 
 	req->lpm = lpm_adjust(req->lpm, sch->schib.pmcw.pam &
-			      ~cdev->private->path_noirq_mask);
-	if (!req->lpm)
-		goto out_nopath;
+			      ~cdev->निजी->path_noirq_mask);
+	अगर (!req->lpm)
+		जाओ out_nopath;
 	snid_build_cp(cdev);
 	ccw_request_start(cdev);
-	return;
+	वापस;
 
 out_nopath:
-	if (cdev->private->pgid_valid_mask)
+	अगर (cdev->निजी->pgid_valid_mask)
 		ret = 0;
-	else if (cdev->private->path_noirq_mask)
+	अन्यथा अगर (cdev->निजी->path_noirq_mask)
 		ret = -ETIME;
-	else
+	अन्यथा
 		ret = -EACCES;
-	snid_done(cdev, ret);
-}
+	snid_करोne(cdev, ret);
+पूर्ण
 
 /*
- * Process SENSE PGID request result for single path.
+ * Process SENSE PGID request result क्रम single path.
  */
-static void snid_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम snid_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
-	switch (rc) {
-	case 0:
-		cdev->private->pgid_valid_mask |= req->lpm;
-		break;
-	case -ETIME:
-		cdev->private->flags.pgid_unknown = 1;
-		cdev->private->path_noirq_mask |= req->lpm;
-		break;
-	case -EACCES:
-		cdev->private->path_notoper_mask |= req->lpm;
-		break;
-	default:
-		goto err;
-	}
+	चयन (rc) अणु
+	हाल 0:
+		cdev->निजी->pgid_valid_mask |= req->lpm;
+		अवरोध;
+	हाल -ETIME:
+		cdev->निजी->flags.pgid_unknown = 1;
+		cdev->निजी->path_noirq_mask |= req->lpm;
+		अवरोध;
+	हाल -EACCES:
+		cdev->निजी->path_notoper_mask |= req->lpm;
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 	/* Continue on the next path. */
 	req->lpm >>= 1;
-	snid_do(cdev);
-	return;
+	snid_करो(cdev);
+	वापस;
 
 err:
-	snid_done(cdev, rc);
-}
+	snid_करोne(cdev, rc);
+पूर्ण
 
 /*
- * Perform path verification.
+ * Perक्रमm path verअगरication.
  */
-static void verify_start(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
-	struct ccw_dev_id *devid = &cdev->private->dev_id;
+अटल व्योम verअगरy_start(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	काष्ठा ccw_dev_id *devid = &cdev->निजी->dev_id;
 
 	sch->vpm = 0;
 	sch->lpm = sch->schib.pmcw.pam;
 
 	/* Initialize PGID data. */
-	memset(cdev->private->dma_area->pgid, 0,
-	       sizeof(cdev->private->dma_area->pgid));
-	cdev->private->pgid_valid_mask = 0;
-	cdev->private->pgid_todo_mask = sch->schib.pmcw.pam;
-	cdev->private->path_notoper_mask = 0;
+	स_रखो(cdev->निजी->dma_area->pgid, 0,
+	       माप(cdev->निजी->dma_area->pgid));
+	cdev->निजी->pgid_valid_mask = 0;
+	cdev->निजी->pgid_toकरो_mask = sch->schib.pmcw.pam;
+	cdev->निजी->path_notoper_mask = 0;
 
 	/* Initialize request data. */
-	memset(req, 0, sizeof(*req));
-	req->timeout	= PGID_TIMEOUT;
+	स_रखो(req, 0, माप(*req));
+	req->समयout	= PGID_TIMEOUT;
 	req->maxretries	= PGID_RETRIES;
 	req->lpm	= 0x80;
 	req->singlepath	= 1;
-	if (cdev->private->flags.pgroup) {
+	अगर (cdev->निजी->flags.pgroup) अणु
 		CIO_TRACE_EVENT(4, "snid");
-		CIO_HEX_EVENT(4, devid, sizeof(*devid));
+		CIO_HEX_EVENT(4, devid, माप(*devid));
 		req->callback	= snid_callback;
-		snid_do(cdev);
-	} else {
+		snid_करो(cdev);
+	पूर्ण अन्यथा अणु
 		CIO_TRACE_EVENT(4, "nop");
-		CIO_HEX_EVENT(4, devid, sizeof(*devid));
+		CIO_HEX_EVENT(4, devid, माप(*devid));
 		req->filter	= nop_filter;
 		req->callback	= nop_callback;
-		nop_do(cdev);
-	}
-}
+		nop_करो(cdev);
+	पूर्ण
+पूर्ण
 
 /**
- * ccw_device_verify_start - perform path verification
+ * ccw_device_verअगरy_start - perक्रमm path verअगरication
  * @cdev: ccw device
  *
- * Perform an I/O on each available channel path to @cdev to determine which
+ * Perक्रमm an I/O on each available channel path to @cdev to determine which
  * paths are operational. The resulting path mask is stored in sch->vpm.
- * If device options specify pathgrouping, establish a pathgroup for the
- * operational paths. When finished, call ccw_device_verify_done with a
- * return code specifying the result.
+ * If device options specअगरy pathgrouping, establish a pathgroup क्रम the
+ * operational paths. When finished, call ccw_device_verअगरy_करोne with a
+ * वापस code specअगरying the result.
  */
-void ccw_device_verify_start(struct ccw_device *cdev)
-{
+व्योम ccw_device_verअगरy_start(काष्ठा ccw_device *cdev)
+अणु
 	CIO_TRACE_EVENT(4, "vrfy");
-	CIO_HEX_EVENT(4, &cdev->private->dev_id, sizeof(cdev->private->dev_id));
+	CIO_HEX_EVENT(4, &cdev->निजी->dev_id, माप(cdev->निजी->dev_id));
 	/*
 	 * Initialize pathgroup and multipath state with target values.
-	 * They may change in the course of path verification.
+	 * They may change in the course of path verअगरication.
 	 */
-	cdev->private->flags.pgroup = cdev->private->options.pgroup;
-	cdev->private->flags.mpath = cdev->private->options.mpath;
-	cdev->private->flags.doverify = 0;
-	cdev->private->path_noirq_mask = 0;
-	verify_start(cdev);
-}
+	cdev->निजी->flags.pgroup = cdev->निजी->options.pgroup;
+	cdev->निजी->flags.mpath = cdev->निजी->options.mpath;
+	cdev->निजी->flags.करोverअगरy = 0;
+	cdev->निजी->path_noirq_mask = 0;
+	verअगरy_start(cdev);
+पूर्ण
 
 /*
  * Process disband SET PGID request result.
  */
-static void disband_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_dev_id *id = &cdev->private->dev_id;
+अटल व्योम disband_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_dev_id *id = &cdev->निजी->dev_id;
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	/* Ensure consistent multipathing state at device and channel. */
-	cdev->private->flags.mpath = 0;
-	if (sch->config.mp) {
+	cdev->निजी->flags.mpath = 0;
+	अगर (sch->config.mp) अणु
 		sch->config.mp = 0;
 		rc = cio_commit_config(sch);
-	}
+	पूर्ण
 out:
 	CIO_MSG_EVENT(0, "disb: device 0.%x.%04x: rc=%d\n", id->ssid, id->devno,
 		      rc);
-	ccw_device_disband_done(cdev, rc);
-}
+	ccw_device_disband_करोne(cdev, rc);
+पूर्ण
 
 /**
  * ccw_device_disband_start - disband pathgroup
  * @cdev: ccw device
  *
  * Execute a SET PGID channel program on @cdev to disband a previously
- * established pathgroup. When finished, call ccw_device_disband_done with
- * a return code specifying the result.
+ * established pathgroup. When finished, call ccw_device_disband_करोne with
+ * a वापस code specअगरying the result.
  */
-void ccw_device_disband_start(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+व्योम ccw_device_disband_start(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 	u8 fn;
 
 	CIO_TRACE_EVENT(4, "disb");
-	CIO_HEX_EVENT(4, &cdev->private->dev_id, sizeof(cdev->private->dev_id));
+	CIO_HEX_EVENT(4, &cdev->निजी->dev_id, माप(cdev->निजी->dev_id));
 	/* Request setup. */
-	memset(req, 0, sizeof(*req));
-	req->timeout	= PGID_TIMEOUT;
+	स_रखो(req, 0, माप(*req));
+	req->समयout	= PGID_TIMEOUT;
 	req->maxretries	= PGID_RETRIES;
 	req->lpm	= sch->schib.pmcw.pam & sch->opm;
 	req->singlepath	= 1;
 	req->callback	= disband_callback;
 	fn = SPID_FUNC_DISBAND;
-	if (cdev->private->flags.mpath)
+	अगर (cdev->निजी->flags.mpath)
 		fn |= SPID_FUNC_MULTI_PATH;
 	spid_build_cp(cdev, fn);
 	ccw_request_start(cdev);
-}
+पूर्ण
 
-struct stlck_data {
-	struct completion done;
-	int rc;
-};
+काष्ठा stlck_data अणु
+	काष्ठा completion करोne;
+	पूर्णांक rc;
+पूर्ण;
 
-static void stlck_build_cp(struct ccw_device *cdev, void *buf1, void *buf2)
-{
-	struct ccw_request *req = &cdev->private->req;
-	struct ccw1 *cp = cdev->private->dma_area->iccws;
+अटल व्योम stlck_build_cp(काष्ठा ccw_device *cdev, व्योम *buf1, व्योम *buf2)
+अणु
+	काष्ठा ccw_request *req = &cdev->निजी->req;
+	काष्ठा ccw1 *cp = cdev->निजी->dma_area->iccws;
 
 	cp[0].cmd_code = CCW_CMD_STLCK;
 	cp[0].cda = (u32) (addr_t) buf1;
@@ -639,88 +640,88 @@ static void stlck_build_cp(struct ccw_device *cdev, void *buf1, void *buf2)
 	cp[1].count = 32;
 	cp[1].flags = 0;
 	req->cp = cp;
-}
+पूर्ण
 
-static void stlck_callback(struct ccw_device *cdev, void *data, int rc)
-{
-	struct stlck_data *sdata = data;
+अटल व्योम stlck_callback(काष्ठा ccw_device *cdev, व्योम *data, पूर्णांक rc)
+अणु
+	काष्ठा stlck_data *sdata = data;
 
 	sdata->rc = rc;
-	complete(&sdata->done);
-}
+	complete(&sdata->करोne);
+पूर्ण
 
 /**
- * ccw_device_stlck_start - perform unconditional release
+ * ccw_device_stlck_start - perक्रमm unconditional release
  * @cdev: ccw device
- * @data: data pointer to be passed to ccw_device_stlck_done
- * @buf1: data pointer used in channel program
- * @buf2: data pointer used in channel program
+ * @data: data poपूर्णांकer to be passed to ccw_device_stlck_करोne
+ * @buf1: data poपूर्णांकer used in channel program
+ * @buf2: data poपूर्णांकer used in channel program
  *
  * Execute a channel program on @cdev to release an existing PGID reservation.
  */
-static void ccw_device_stlck_start(struct ccw_device *cdev, void *data,
-				   void *buf1, void *buf2)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct ccw_request *req = &cdev->private->req;
+अटल व्योम ccw_device_stlck_start(काष्ठा ccw_device *cdev, व्योम *data,
+				   व्योम *buf1, व्योम *buf2)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा ccw_request *req = &cdev->निजी->req;
 
 	CIO_TRACE_EVENT(4, "stlck");
-	CIO_HEX_EVENT(4, &cdev->private->dev_id, sizeof(cdev->private->dev_id));
+	CIO_HEX_EVENT(4, &cdev->निजी->dev_id, माप(cdev->निजी->dev_id));
 	/* Request setup. */
-	memset(req, 0, sizeof(*req));
-	req->timeout	= PGID_TIMEOUT;
+	स_रखो(req, 0, माप(*req));
+	req->समयout	= PGID_TIMEOUT;
 	req->maxretries	= PGID_RETRIES;
 	req->lpm	= sch->schib.pmcw.pam & sch->opm;
 	req->data	= data;
 	req->callback	= stlck_callback;
 	stlck_build_cp(cdev, buf1, buf2);
 	ccw_request_start(cdev);
-}
+पूर्ण
 
 /*
- * Perform unconditional reserve + release.
+ * Perक्रमm unconditional reserve + release.
  */
-int ccw_device_stlck(struct ccw_device *cdev)
-{
-	struct subchannel *sch = to_subchannel(cdev->dev.parent);
-	struct stlck_data data;
+पूर्णांक ccw_device_stlck(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा subchannel *sch = to_subchannel(cdev->dev.parent);
+	काष्ठा stlck_data data;
 	u8 *buffer;
-	int rc;
+	पूर्णांक rc;
 
-	/* Check if steal lock operation is valid for this device. */
-	if (cdev->drv) {
-		if (!cdev->private->options.force)
-			return -EINVAL;
-	}
+	/* Check अगर steal lock operation is valid क्रम this device. */
+	अगर (cdev->drv) अणु
+		अगर (!cdev->निजी->options.क्रमce)
+			वापस -EINVAL;
+	पूर्ण
 	buffer = kzalloc(64, GFP_DMA | GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
-	init_completion(&data.done);
+	अगर (!buffer)
+		वापस -ENOMEM;
+	init_completion(&data.करोne);
 	data.rc = -EIO;
 	spin_lock_irq(sch->lock);
 	rc = cio_enable_subchannel(sch, (u32) (addr_t) sch);
-	if (rc)
-		goto out_unlock;
-	/* Perform operation. */
-	cdev->private->state = DEV_STATE_STEAL_LOCK;
+	अगर (rc)
+		जाओ out_unlock;
+	/* Perक्रमm operation. */
+	cdev->निजी->state = DEV_STATE_STEAL_LOCK;
 	ccw_device_stlck_start(cdev, &data, &buffer[0], &buffer[32]);
 	spin_unlock_irq(sch->lock);
-	/* Wait for operation to finish. */
-	if (wait_for_completion_interruptible(&data.done)) {
-		/* Got a signal. */
+	/* Wait क्रम operation to finish. */
+	अगर (रुको_क्रम_completion_पूर्णांकerruptible(&data.करोne)) अणु
+		/* Got a संकेत. */
 		spin_lock_irq(sch->lock);
 		ccw_request_cancel(cdev);
 		spin_unlock_irq(sch->lock);
-		wait_for_completion(&data.done);
-	}
+		रुको_क्रम_completion(&data.करोne);
+	पूर्ण
 	rc = data.rc;
 	/* Check results. */
 	spin_lock_irq(sch->lock);
 	cio_disable_subchannel(sch);
-	cdev->private->state = DEV_STATE_BOXED;
+	cdev->निजी->state = DEV_STATE_BOXED;
 out_unlock:
 	spin_unlock_irq(sch->lock);
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright IBM Corp 2019
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/fsi-occ.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fsi-occ.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-struct p9_sbe_occ {
-	struct occ occ;
-	struct device *sbe;
-};
+काष्ठा p9_sbe_occ अणु
+	काष्ठा occ occ;
+	काष्ठा device *sbe;
+पूर्ण;
 
-#define to_p9_sbe_occ(x)	container_of((x), struct p9_sbe_occ, occ)
+#घोषणा to_p9_sbe_occ(x)	container_of((x), काष्ठा p9_sbe_occ, occ)
 
-static int p9_sbe_occ_send_cmd(struct occ *occ, u8 *cmd)
-{
-	struct occ_response *resp = &occ->resp;
-	struct p9_sbe_occ *ctx = to_p9_sbe_occ(occ);
-	size_t resp_len = sizeof(*resp);
-	int rc;
+अटल पूर्णांक p9_sbe_occ_send_cmd(काष्ठा occ *occ, u8 *cmd)
+अणु
+	काष्ठा occ_response *resp = &occ->resp;
+	काष्ठा p9_sbe_occ *ctx = to_p9_sbe_occ(occ);
+	माप_प्रकार resp_len = माप(*resp);
+	पूर्णांक rc;
 
 	rc = fsi_occ_submit(ctx->sbe, cmd, 8, resp, &resp_len);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	switch (resp->return_status) {
-	case OCC_RESP_CMD_IN_PRG:
+	चयन (resp->वापस_status) अणु
+	हाल OCC_RESP_CMD_IN_PRG:
 		rc = -ETIMEDOUT;
-		break;
-	case OCC_RESP_SUCCESS:
+		अवरोध;
+	हाल OCC_RESP_SUCCESS:
 		rc = 0;
-		break;
-	case OCC_RESP_CMD_INVAL:
-	case OCC_RESP_CMD_LEN_INVAL:
-	case OCC_RESP_DATA_INVAL:
-	case OCC_RESP_CHKSUM_ERR:
+		अवरोध;
+	हाल OCC_RESP_CMD_INVAL:
+	हाल OCC_RESP_CMD_LEN_INVAL:
+	हाल OCC_RESP_DATA_INVAL:
+	हाल OCC_RESP_CHKSUM_ERR:
 		rc = -EINVAL;
-		break;
-	case OCC_RESP_INT_ERR:
-	case OCC_RESP_BAD_STATE:
-	case OCC_RESP_CRIT_EXCEPT:
-	case OCC_RESP_CRIT_INIT:
-	case OCC_RESP_CRIT_WATCHDOG:
-	case OCC_RESP_CRIT_OCB:
-	case OCC_RESP_CRIT_HW:
+		अवरोध;
+	हाल OCC_RESP_INT_ERR:
+	हाल OCC_RESP_BAD_STATE:
+	हाल OCC_RESP_CRIT_EXCEPT:
+	हाल OCC_RESP_CRIT_INIT:
+	हाल OCC_RESP_CRIT_WATCHDOG:
+	हाल OCC_RESP_CRIT_OCB:
+	हाल OCC_RESP_CRIT_HW:
 		rc = -EREMOTEIO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EPROTO;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int p9_sbe_occ_probe(struct platform_device *pdev)
-{
-	int rc;
-	struct occ *occ;
-	struct p9_sbe_occ *ctx = devm_kzalloc(&pdev->dev, sizeof(*ctx),
+अटल पूर्णांक p9_sbe_occ_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rc;
+	काष्ठा occ *occ;
+	काष्ठा p9_sbe_occ *ctx = devm_kzalloc(&pdev->dev, माप(*ctx),
 					      GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->sbe = pdev->dev.parent;
 	occ = &ctx->occ;
 	occ->bus_dev = &pdev->dev;
-	platform_set_drvdata(pdev, occ);
+	platक्रमm_set_drvdata(pdev, occ);
 
-	occ->powr_sample_time_us = 500;
+	occ->घातr_sample_समय_us = 500;
 	occ->poll_cmd_data = 0x20;		/* P9 OCC poll data */
 	occ->send_cmd = p9_sbe_occ_send_cmd;
 
 	rc = occ_setup(occ, "p9_occ");
-	if (rc == -ESHUTDOWN)
-		rc = -ENODEV;	/* Host is shutdown, don't spew errors */
+	अगर (rc == -ESHUTDOWN)
+		rc = -ENODEV;	/* Host is shutकरोwn, करोn't spew errors */
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int p9_sbe_occ_remove(struct platform_device *pdev)
-{
-	struct occ *occ = platform_get_drvdata(pdev);
-	struct p9_sbe_occ *ctx = to_p9_sbe_occ(occ);
+अटल पूर्णांक p9_sbe_occ_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा occ *occ = platक्रमm_get_drvdata(pdev);
+	काष्ठा p9_sbe_occ *ctx = to_p9_sbe_occ(occ);
 
-	ctx->sbe = NULL;
-	occ_shutdown(occ);
+	ctx->sbe = शून्य;
+	occ_shutकरोwn(occ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver p9_sbe_occ_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver p9_sbe_occ_driver = अणु
+	.driver = अणु
 		.name = "occ-hwmon",
-	},
+	पूर्ण,
 	.probe	= p9_sbe_occ_probe,
-	.remove = p9_sbe_occ_remove,
-};
+	.हटाओ = p9_sbe_occ_हटाओ,
+पूर्ण;
 
-module_platform_driver(p9_sbe_occ_driver);
+module_platक्रमm_driver(p9_sbe_occ_driver);
 
 MODULE_AUTHOR("Eddie James <eajames@linux.ibm.com>");
 MODULE_DESCRIPTION("BMC P9 OCC hwmon driver");

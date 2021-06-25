@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap2/common.c
  *
@@ -9,23 +10,23 @@
  * Tony Lindgren <tony@atomide.com>
  * Added OMAP4 support - Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include "common.h"
-#include "omap-secure.h"
+#समावेश "common.h"
+#समावेश "omap-secure.h"
 
 /*
- * Stub function for OMAP2 so that common files
- * continue to build when custom builds are used
+ * Stub function क्रम OMAP2 so that common files
+ * जारी to build when custom builds are used
  */
-int __weak omap_secure_ram_reserve_memblock(void)
-{
-	return 0;
-}
+पूर्णांक __weak omap_secure_ram_reserve_memblock(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-void __init omap_reserve(void)
-{
+व्योम __init omap_reserve(व्योम)
+अणु
 	omap_secure_ram_reserve_memblock();
 	omap_barrier_reserve_memblock();
-}
+पूर्ण

@@ -1,477 +1,478 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) Maxime Coquelin 2015
  * Copyright (C) STMicroelectronics 2017
- * Author:  Maxime Coquelin <mcoquelin.stm32@gmail.com>
+ * Author:  Maxime Coquelin <mcoquelin.sपंचांग32@gmail.com>
  *
  * Heavily based on Mediatek's pinctrl driver
  */
-#include <linux/clk.h>
-#include <linux/gpio/driver.h>
-#include <linux/hwspinlock.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/hwspinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
 
-#include "../core.h"
-#include "../pinconf.h"
-#include "../pinctrl-utils.h"
-#include "pinctrl-stm32.h"
+#समावेश "../core.h"
+#समावेश "../pinconf.h"
+#समावेश "../pinctrl-utils.h"
+#समावेश "pinctrl-stm32.h"
 
-#define STM32_GPIO_MODER	0x00
-#define STM32_GPIO_TYPER	0x04
-#define STM32_GPIO_SPEEDR	0x08
-#define STM32_GPIO_PUPDR	0x0c
-#define STM32_GPIO_IDR		0x10
-#define STM32_GPIO_ODR		0x14
-#define STM32_GPIO_BSRR		0x18
-#define STM32_GPIO_LCKR		0x1c
-#define STM32_GPIO_AFRL		0x20
-#define STM32_GPIO_AFRH		0x24
+#घोषणा STM32_GPIO_MODER	0x00
+#घोषणा STM32_GPIO_TYPER	0x04
+#घोषणा STM32_GPIO_SPEEDR	0x08
+#घोषणा STM32_GPIO_PUPDR	0x0c
+#घोषणा STM32_GPIO_IDR		0x10
+#घोषणा STM32_GPIO_ODR		0x14
+#घोषणा STM32_GPIO_BSRR		0x18
+#घोषणा STM32_GPIO_LCKR		0x1c
+#घोषणा STM32_GPIO_AFRL		0x20
+#घोषणा STM32_GPIO_AFRH		0x24
 
 /* custom bitfield to backup pin status */
-#define STM32_GPIO_BKP_MODE_SHIFT	0
-#define STM32_GPIO_BKP_MODE_MASK	GENMASK(1, 0)
-#define STM32_GPIO_BKP_ALT_SHIFT	2
-#define STM32_GPIO_BKP_ALT_MASK		GENMASK(5, 2)
-#define STM32_GPIO_BKP_SPEED_SHIFT	6
-#define STM32_GPIO_BKP_SPEED_MASK	GENMASK(7, 6)
-#define STM32_GPIO_BKP_PUPD_SHIFT	8
-#define STM32_GPIO_BKP_PUPD_MASK	GENMASK(9, 8)
-#define STM32_GPIO_BKP_TYPE		10
-#define STM32_GPIO_BKP_VAL		11
+#घोषणा STM32_GPIO_BKP_MODE_SHIFT	0
+#घोषणा STM32_GPIO_BKP_MODE_MASK	GENMASK(1, 0)
+#घोषणा STM32_GPIO_BKP_ALT_SHIFT	2
+#घोषणा STM32_GPIO_BKP_ALT_MASK		GENMASK(5, 2)
+#घोषणा STM32_GPIO_BKP_SPEED_SHIFT	6
+#घोषणा STM32_GPIO_BKP_SPEED_MASK	GENMASK(7, 6)
+#घोषणा STM32_GPIO_BKP_PUPD_SHIFT	8
+#घोषणा STM32_GPIO_BKP_PUPD_MASK	GENMASK(9, 8)
+#घोषणा STM32_GPIO_BKP_TYPE		10
+#घोषणा STM32_GPIO_BKP_VAL		11
 
-#define STM32_GPIO_PINS_PER_BANK 16
-#define STM32_GPIO_IRQ_LINE	 16
+#घोषणा STM32_GPIO_PINS_PER_BANK 16
+#घोषणा STM32_GPIO_IRQ_LINE	 16
 
-#define SYSCFG_IRQMUX_MASK GENMASK(3, 0)
+#घोषणा SYSCFG_IRQMUX_MASK GENMASK(3, 0)
 
-#define gpio_range_to_bank(chip) \
-		container_of(chip, struct stm32_gpio_bank, range)
+#घोषणा gpio_range_to_bank(chip) \
+		container_of(chip, काष्ठा sपंचांग32_gpio_bank, range)
 
-#define HWSPNLCK_TIMEOUT	1000 /* usec */
+#घोषणा HWSPNLCK_TIMEOUT	1000 /* usec */
 
-static const char * const stm32_gpio_functions[] = {
+अटल स्थिर अक्षर * स्थिर sपंचांग32_gpio_functions[] = अणु
 	"gpio", "af0", "af1",
 	"af2", "af3", "af4",
 	"af5", "af6", "af7",
 	"af8", "af9", "af10",
 	"af11", "af12", "af13",
 	"af14", "af15", "analog",
-};
+पूर्ण;
 
-struct stm32_pinctrl_group {
-	const char *name;
-	unsigned long config;
-	unsigned pin;
-};
+काष्ठा sपंचांग32_pinctrl_group अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ config;
+	अचिन्हित pin;
+पूर्ण;
 
-struct stm32_gpio_bank {
-	void __iomem *base;
-	struct clk *clk;
-	struct reset_control *rstc;
+काष्ठा sपंचांग32_gpio_bank अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	काष्ठा reset_control *rstc;
 	spinlock_t lock;
-	struct gpio_chip gpio_chip;
-	struct pinctrl_gpio_range range;
-	struct fwnode_handle *fwnode;
-	struct irq_domain *domain;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा pinctrl_gpio_range range;
+	काष्ठा fwnode_handle *fwnode;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 	u32 bank_nr;
 	u32 bank_ioport_nr;
 	u32 pin_backup[STM32_GPIO_PINS_PER_BANK];
 	u8 irq_type[STM32_GPIO_PINS_PER_BANK];
-};
+पूर्ण;
 
-struct stm32_pinctrl {
-	struct device *dev;
-	struct pinctrl_dev *pctl_dev;
-	struct pinctrl_desc pctl_desc;
-	struct stm32_pinctrl_group *groups;
-	unsigned ngroups;
-	const char **grp_names;
-	struct stm32_gpio_bank *banks;
-	unsigned nbanks;
-	const struct stm32_pinctrl_match_data *match_data;
-	struct irq_domain	*domain;
-	struct regmap		*regmap;
-	struct regmap_field	*irqmux[STM32_GPIO_PINS_PER_BANK];
-	struct hwspinlock *hwlock;
-	struct stm32_desc_pin *pins;
+काष्ठा sपंचांग32_pinctrl अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl_dev;
+	काष्ठा pinctrl_desc pctl_desc;
+	काष्ठा sपंचांग32_pinctrl_group *groups;
+	अचिन्हित ngroups;
+	स्थिर अक्षर **grp_names;
+	काष्ठा sपंचांग32_gpio_bank *banks;
+	अचिन्हित nbanks;
+	स्थिर काष्ठा sपंचांग32_pinctrl_match_data *match_data;
+	काष्ठा irq_करोमुख्य	*करोमुख्य;
+	काष्ठा regmap		*regmap;
+	काष्ठा regmap_field	*irqmux[STM32_GPIO_PINS_PER_BANK];
+	काष्ठा hwspinlock *hwlock;
+	काष्ठा sपंचांग32_desc_pin *pins;
 	u32 npins;
 	u32 pkg;
 	u16 irqmux_map;
 	spinlock_t irqmux_lock;
-};
+पूर्ण;
 
-static inline int stm32_gpio_pin(int gpio)
-{
-	return gpio % STM32_GPIO_PINS_PER_BANK;
-}
+अटल अंतरभूत पूर्णांक sपंचांग32_gpio_pin(पूर्णांक gpio)
+अणु
+	वापस gpio % STM32_GPIO_PINS_PER_BANK;
+पूर्ण
 
-static inline u32 stm32_gpio_get_mode(u32 function)
-{
-	switch (function) {
-	case STM32_PIN_GPIO:
-		return 0;
-	case STM32_PIN_AF(0) ... STM32_PIN_AF(15):
-		return 2;
-	case STM32_PIN_ANALOG:
-		return 3;
-	}
+अटल अंतरभूत u32 sपंचांग32_gpio_get_mode(u32 function)
+अणु
+	चयन (function) अणु
+	हाल STM32_PIN_GPIO:
+		वापस 0;
+	हाल STM32_PIN_AF(0) ... STM32_PIN_AF(15):
+		वापस 2;
+	हाल STM32_PIN_ANALOG:
+		वापस 3;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u32 stm32_gpio_get_alt(u32 function)
-{
-	switch (function) {
-	case STM32_PIN_GPIO:
-		return 0;
-	case STM32_PIN_AF(0) ... STM32_PIN_AF(15):
-		return function - 1;
-	case STM32_PIN_ANALOG:
-		return 0;
-	}
+अटल अंतरभूत u32 sपंचांग32_gpio_get_alt(u32 function)
+अणु
+	चयन (function) अणु
+	हाल STM32_PIN_GPIO:
+		वापस 0;
+	हाल STM32_PIN_AF(0) ... STM32_PIN_AF(15):
+		वापस function - 1;
+	हाल STM32_PIN_ANALOG:
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_gpio_backup_value(struct stm32_gpio_bank *bank,
+अटल व्योम sपंचांग32_gpio_backup_value(काष्ठा sपंचांग32_gpio_bank *bank,
 				    u32 offset, u32 value)
-{
+अणु
 	bank->pin_backup[offset] &= ~BIT(STM32_GPIO_BKP_VAL);
 	bank->pin_backup[offset] |= value << STM32_GPIO_BKP_VAL;
-}
+पूर्ण
 
-static void stm32_gpio_backup_mode(struct stm32_gpio_bank *bank, u32 offset,
+अटल व्योम sपंचांग32_gpio_backup_mode(काष्ठा sपंचांग32_gpio_bank *bank, u32 offset,
 				   u32 mode, u32 alt)
-{
+अणु
 	bank->pin_backup[offset] &= ~(STM32_GPIO_BKP_MODE_MASK |
 				      STM32_GPIO_BKP_ALT_MASK);
 	bank->pin_backup[offset] |= mode << STM32_GPIO_BKP_MODE_SHIFT;
 	bank->pin_backup[offset] |= alt << STM32_GPIO_BKP_ALT_SHIFT;
-}
+पूर्ण
 
-static void stm32_gpio_backup_driving(struct stm32_gpio_bank *bank, u32 offset,
+अटल व्योम sपंचांग32_gpio_backup_driving(काष्ठा sपंचांग32_gpio_bank *bank, u32 offset,
 				      u32 drive)
-{
+अणु
 	bank->pin_backup[offset] &= ~BIT(STM32_GPIO_BKP_TYPE);
 	bank->pin_backup[offset] |= drive << STM32_GPIO_BKP_TYPE;
-}
+पूर्ण
 
-static void stm32_gpio_backup_speed(struct stm32_gpio_bank *bank, u32 offset,
+अटल व्योम sपंचांग32_gpio_backup_speed(काष्ठा sपंचांग32_gpio_bank *bank, u32 offset,
 				    u32 speed)
-{
+अणु
 	bank->pin_backup[offset] &= ~STM32_GPIO_BKP_SPEED_MASK;
 	bank->pin_backup[offset] |= speed << STM32_GPIO_BKP_SPEED_SHIFT;
-}
+पूर्ण
 
-static void stm32_gpio_backup_bias(struct stm32_gpio_bank *bank, u32 offset,
+अटल व्योम sपंचांग32_gpio_backup_bias(काष्ठा sपंचांग32_gpio_bank *bank, u32 offset,
 				   u32 bias)
-{
+अणु
 	bank->pin_backup[offset] &= ~STM32_GPIO_BKP_PUPD_MASK;
 	bank->pin_backup[offset] |= bias << STM32_GPIO_BKP_PUPD_SHIFT;
-}
+पूर्ण
 
 /* GPIO functions */
 
-static inline void __stm32_gpio_set(struct stm32_gpio_bank *bank,
-	unsigned offset, int value)
-{
-	stm32_gpio_backup_value(bank, offset, value);
+अटल अंतरभूत व्योम __sपंचांग32_gpio_set(काष्ठा sपंचांग32_gpio_bank *bank,
+	अचिन्हित offset, पूर्णांक value)
+अणु
+	sपंचांग32_gpio_backup_value(bank, offset, value);
 
-	if (!value)
+	अगर (!value)
 		offset += STM32_GPIO_PINS_PER_BANK;
 
 	clk_enable(bank->clk);
 
-	writel_relaxed(BIT(offset), bank->base + STM32_GPIO_BSRR);
+	ग_लिखोl_relaxed(BIT(offset), bank->base + STM32_GPIO_BSRR);
 
 	clk_disable(bank->clk);
-}
+पूर्ण
 
-static int stm32_gpio_request(struct gpio_chip *chip, unsigned offset)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	struct pinctrl_gpio_range *range;
-	int pin = offset + (bank->bank_nr * STM32_GPIO_PINS_PER_BANK);
+अटल पूर्णांक sपंचांग32_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	काष्ठा pinctrl_gpio_range *range;
+	पूर्णांक pin = offset + (bank->bank_nr * STM32_GPIO_PINS_PER_BANK);
 
 	range = pinctrl_find_gpio_range_from_pin_nolock(pctl->pctl_dev, pin);
-	if (!range) {
+	अगर (!range) अणु
 		dev_err(pctl->dev, "pin %d not in range.\n", pin);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return pinctrl_gpio_request(chip->base + offset);
-}
+	वापस pinctrl_gpio_request(chip->base + offset);
+पूर्ण
 
-static void stm32_gpio_free(struct gpio_chip *chip, unsigned offset)
-{
-	pinctrl_gpio_free(chip->base + offset);
-}
+अटल व्योम sपंचांग32_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	pinctrl_gpio_मुक्त(chip->base + offset);
+पूर्ण
 
-static int stm32_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक sपंचांग32_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	clk_enable(bank->clk);
 
-	ret = !!(readl_relaxed(bank->base + STM32_GPIO_IDR) & BIT(offset));
+	ret = !!(पढ़ोl_relaxed(bank->base + STM32_GPIO_IDR) & BIT(offset));
 
 	clk_disable(bank->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stm32_gpio_set(struct gpio_chip *chip, unsigned offset, int value)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल व्योम sपंचांग32_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
 
-	__stm32_gpio_set(bank, offset, value);
-}
+	__sपंचांग32_gpio_set(bank, offset, value);
+पूर्ण
 
-static int stm32_gpio_direction_input(struct gpio_chip *chip, unsigned offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक sपंचांग32_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int stm32_gpio_direction_output(struct gpio_chip *chip,
-	unsigned offset, int value)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक sपंचांग32_gpio_direction_output(काष्ठा gpio_chip *chip,
+	अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
 
-	__stm32_gpio_set(bank, offset, value);
+	__sपंचांग32_gpio_set(bank, offset, value);
 	pinctrl_gpio_direction_output(chip->base + offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int stm32_gpio_to_irq(struct gpio_chip *chip, unsigned int offset)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
-	struct irq_fwspec fwspec;
+अटल पूर्णांक sपंचांग32_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
+	काष्ठा irq_fwspec fwspec;
 
 	fwspec.fwnode = bank->fwnode;
 	fwspec.param_count = 2;
 	fwspec.param[0] = offset;
 	fwspec.param[1] = IRQ_TYPE_NONE;
 
-	return irq_create_fwspec_mapping(&fwspec);
-}
+	वापस irq_create_fwspec_mapping(&fwspec);
+पूर्ण
 
-static int stm32_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(chip);
-	int pin = stm32_gpio_pin(offset);
-	int ret;
+अटल पूर्णांक sपंचांग32_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(chip);
+	पूर्णांक pin = sपंचांग32_gpio_pin(offset);
+	पूर्णांक ret;
 	u32 mode, alt;
 
-	stm32_pmx_get_mode(bank, pin, &mode, &alt);
-	if ((alt == 0) && (mode == 0))
-		ret = GPIO_LINE_DIRECTION_IN;
-	else if ((alt == 0) && (mode == 1))
-		ret = GPIO_LINE_DIRECTION_OUT;
-	else
+	sपंचांग32_pmx_get_mode(bank, pin, &mode, &alt);
+	अगर ((alt == 0) && (mode == 0))
+		ret = GPIO_LINE_सूचीECTION_IN;
+	अन्यथा अगर ((alt == 0) && (mode == 1))
+		ret = GPIO_LINE_सूचीECTION_OUT;
+	अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct gpio_chip stm32_gpio_template = {
-	.request		= stm32_gpio_request,
-	.free			= stm32_gpio_free,
-	.get			= stm32_gpio_get,
-	.set			= stm32_gpio_set,
-	.direction_input	= stm32_gpio_direction_input,
-	.direction_output	= stm32_gpio_direction_output,
-	.to_irq			= stm32_gpio_to_irq,
-	.get_direction		= stm32_gpio_get_direction,
+अटल स्थिर काष्ठा gpio_chip sपंचांग32_gpio_ढाँचा = अणु
+	.request		= sपंचांग32_gpio_request,
+	.मुक्त			= sपंचांग32_gpio_मुक्त,
+	.get			= sपंचांग32_gpio_get,
+	.set			= sपंचांग32_gpio_set,
+	.direction_input	= sपंचांग32_gpio_direction_input,
+	.direction_output	= sपंचांग32_gpio_direction_output,
+	.to_irq			= sपंचांग32_gpio_to_irq,
+	.get_direction		= sपंचांग32_gpio_get_direction,
 	.set_config		= gpiochip_generic_config,
-};
+पूर्ण;
 
-static void stm32_gpio_irq_trigger(struct irq_data *d)
-{
-	struct stm32_gpio_bank *bank = d->domain->host_data;
-	int level;
+अटल व्योम sपंचांग32_gpio_irq_trigger(काष्ठा irq_data *d)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = d->करोमुख्य->host_data;
+	पूर्णांक level;
 
-	/* If level interrupt type then retrig */
-	level = stm32_gpio_get(&bank->gpio_chip, d->hwirq);
-	if ((level == 0 && bank->irq_type[d->hwirq] == IRQ_TYPE_LEVEL_LOW) ||
+	/* If level पूर्णांकerrupt type then retrig */
+	level = sपंचांग32_gpio_get(&bank->gpio_chip, d->hwirq);
+	अगर ((level == 0 && bank->irq_type[d->hwirq] == IRQ_TYPE_LEVEL_LOW) ||
 	    (level == 1 && bank->irq_type[d->hwirq] == IRQ_TYPE_LEVEL_HIGH))
 		irq_chip_retrigger_hierarchy(d);
-}
+पूर्ण
 
-static void stm32_gpio_irq_eoi(struct irq_data *d)
-{
+अटल व्योम sपंचांग32_gpio_irq_eoi(काष्ठा irq_data *d)
+अणु
 	irq_chip_eoi_parent(d);
-	stm32_gpio_irq_trigger(d);
-};
+	sपंचांग32_gpio_irq_trigger(d);
+पूर्ण;
 
-static int stm32_gpio_set_type(struct irq_data *d, unsigned int type)
-{
-	struct stm32_gpio_bank *bank = d->domain->host_data;
+अटल पूर्णांक sपंचांग32_gpio_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = d->करोमुख्य->host_data;
 	u32 parent_type;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
-	case IRQ_TYPE_EDGE_FALLING:
-	case IRQ_TYPE_EDGE_BOTH:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
+	हाल IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		parent_type = type;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		parent_type = IRQ_TYPE_EDGE_RISING;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		parent_type = IRQ_TYPE_EDGE_FALLING;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	bank->irq_type[d->hwirq] = type;
 
-	return irq_chip_set_type_parent(d, parent_type);
-};
+	वापस irq_chip_set_type_parent(d, parent_type);
+पूर्ण;
 
-static int stm32_gpio_irq_request_resources(struct irq_data *irq_data)
-{
-	struct stm32_gpio_bank *bank = irq_data->domain->host_data;
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	int ret;
+अटल पूर्णांक sपंचांग32_gpio_irq_request_resources(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = irq_data->करोमुख्य->host_data;
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	पूर्णांक ret;
 
-	ret = stm32_gpio_direction_input(&bank->gpio_chip, irq_data->hwirq);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_gpio_direction_input(&bank->gpio_chip, irq_data->hwirq);
+	अगर (ret)
+		वापस ret;
 
 	ret = gpiochip_lock_as_irq(&bank->gpio_chip, irq_data->hwirq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctl->dev, "unable to lock HW IRQ %lu for IRQ\n",
 			irq_data->hwirq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_gpio_irq_release_resources(struct irq_data *irq_data)
-{
-	struct stm32_gpio_bank *bank = irq_data->domain->host_data;
+अटल व्योम sपंचांग32_gpio_irq_release_resources(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = irq_data->करोमुख्य->host_data;
 
 	gpiochip_unlock_as_irq(&bank->gpio_chip, irq_data->hwirq);
-}
+पूर्ण
 
-static void stm32_gpio_irq_unmask(struct irq_data *d)
-{
+अटल व्योम sपंचांग32_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
 	irq_chip_unmask_parent(d);
-	stm32_gpio_irq_trigger(d);
-}
+	sपंचांग32_gpio_irq_trigger(d);
+पूर्ण
 
-static struct irq_chip stm32_gpio_irq_chip = {
+अटल काष्ठा irq_chip sपंचांग32_gpio_irq_chip = अणु
 	.name		= "stm32gpio",
-	.irq_eoi	= stm32_gpio_irq_eoi,
+	.irq_eoi	= sपंचांग32_gpio_irq_eoi,
 	.irq_ack	= irq_chip_ack_parent,
 	.irq_mask	= irq_chip_mask_parent,
-	.irq_unmask	= stm32_gpio_irq_unmask,
-	.irq_set_type	= stm32_gpio_set_type,
+	.irq_unmask	= sपंचांग32_gpio_irq_unmask,
+	.irq_set_type	= sपंचांग32_gpio_set_type,
 	.irq_set_wake	= irq_chip_set_wake_parent,
-	.irq_request_resources = stm32_gpio_irq_request_resources,
-	.irq_release_resources = stm32_gpio_irq_release_resources,
-};
+	.irq_request_resources = sपंचांग32_gpio_irq_request_resources,
+	.irq_release_resources = sपंचांग32_gpio_irq_release_resources,
+पूर्ण;
 
-static int stm32_gpio_domain_translate(struct irq_domain *d,
-				       struct irq_fwspec *fwspec,
-				       unsigned long *hwirq,
-				       unsigned int *type)
-{
-	if ((fwspec->param_count != 2) ||
+अटल पूर्णांक sपंचांग32_gpio_करोमुख्य_translate(काष्ठा irq_करोमुख्य *d,
+				       काष्ठा irq_fwspec *fwspec,
+				       अचिन्हित दीर्घ *hwirq,
+				       अचिन्हित पूर्णांक *type)
+अणु
+	अगर ((fwspec->param_count != 2) ||
 	    (fwspec->param[0] >= STM32_GPIO_IRQ_LINE))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	*hwirq = fwspec->param[0];
 	*type = fwspec->param[1];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_gpio_domain_activate(struct irq_domain *d,
-				      struct irq_data *irq_data, bool reserve)
-{
-	struct stm32_gpio_bank *bank = d->host_data;
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक sपंचांग32_gpio_करोमुख्य_activate(काष्ठा irq_करोमुख्य *d,
+				      काष्ठा irq_data *irq_data, bool reserve)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = d->host_data;
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	/*
-	 * gpio irq mux is shared between several banks, a lock has to be done
-	 * to avoid overriding.
+	 * gpio irq mux is shared between several banks, a lock has to be करोne
+	 * to aव्योम overriding.
 	 */
 	spin_lock_irqsave(&pctl->irqmux_lock, flags);
 
-	if (pctl->hwlock) {
-		ret = hwspin_lock_timeout_in_atomic(pctl->hwlock,
+	अगर (pctl->hwlock) अणु
+		ret = hwspin_lock_समयout_in_atomic(pctl->hwlock,
 						    HWSPNLCK_TIMEOUT);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pctl->dev, "Can't get hwspinlock\n");
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	if (pctl->irqmux_map & BIT(irq_data->hwirq)) {
+	अगर (pctl->irqmux_map & BIT(irq_data->hwirq)) अणु
 		dev_err(pctl->dev, "irq line %ld already requested.\n",
 			irq_data->hwirq);
 		ret = -EBUSY;
-		if (pctl->hwlock)
+		अगर (pctl->hwlock)
 			hwspin_unlock_in_atomic(pctl->hwlock);
-		goto unlock;
-	} else {
+		जाओ unlock;
+	पूर्ण अन्यथा अणु
 		pctl->irqmux_map |= BIT(irq_data->hwirq);
-	}
+	पूर्ण
 
-	regmap_field_write(pctl->irqmux[irq_data->hwirq], bank->bank_ioport_nr);
+	regmap_field_ग_लिखो(pctl->irqmux[irq_data->hwirq], bank->bank_ioport_nr);
 
-	if (pctl->hwlock)
+	अगर (pctl->hwlock)
 		hwspin_unlock_in_atomic(pctl->hwlock);
 
 unlock:
 	spin_unlock_irqrestore(&pctl->irqmux_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void stm32_gpio_domain_deactivate(struct irq_domain *d,
-					 struct irq_data *irq_data)
-{
-	struct stm32_gpio_bank *bank = d->host_data;
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	unsigned long flags;
+अटल व्योम sपंचांग32_gpio_करोमुख्य_deactivate(काष्ठा irq_करोमुख्य *d,
+					 काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = d->host_data;
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&pctl->irqmux_lock, flags);
 	pctl->irqmux_map &= ~BIT(irq_data->hwirq);
 	spin_unlock_irqrestore(&pctl->irqmux_lock, flags);
-}
+पूर्ण
 
-static int stm32_gpio_domain_alloc(struct irq_domain *d,
-				   unsigned int virq,
-				   unsigned int nr_irqs, void *data)
-{
-	struct stm32_gpio_bank *bank = d->host_data;
-	struct irq_fwspec *fwspec = data;
-	struct irq_fwspec parent_fwspec;
+अटल पूर्णांक sपंचांग32_gpio_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *d,
+				   अचिन्हित पूर्णांक virq,
+				   अचिन्हित पूर्णांक nr_irqs, व्योम *data)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = d->host_data;
+	काष्ठा irq_fwspec *fwspec = data;
+	काष्ठा irq_fwspec parent_fwspec;
 	irq_hw_number_t hwirq;
 
 	hwirq = fwspec->param[0];
@@ -480,776 +481,776 @@ static int stm32_gpio_domain_alloc(struct irq_domain *d,
 	parent_fwspec.param[0] = fwspec->param[0];
 	parent_fwspec.param[1] = fwspec->param[1];
 
-	irq_domain_set_hwirq_and_chip(d, virq, hwirq, &stm32_gpio_irq_chip,
+	irq_करोमुख्य_set_hwirq_and_chip(d, virq, hwirq, &sपंचांग32_gpio_irq_chip,
 				      bank);
 
-	return irq_domain_alloc_irqs_parent(d, virq, nr_irqs, &parent_fwspec);
-}
+	वापस irq_करोमुख्य_alloc_irqs_parent(d, virq, nr_irqs, &parent_fwspec);
+पूर्ण
 
-static const struct irq_domain_ops stm32_gpio_domain_ops = {
-	.translate      = stm32_gpio_domain_translate,
-	.alloc          = stm32_gpio_domain_alloc,
-	.free           = irq_domain_free_irqs_common,
-	.activate	= stm32_gpio_domain_activate,
-	.deactivate	= stm32_gpio_domain_deactivate,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops sपंचांग32_gpio_करोमुख्य_ops = अणु
+	.translate      = sपंचांग32_gpio_करोमुख्य_translate,
+	.alloc          = sपंचांग32_gpio_करोमुख्य_alloc,
+	.मुक्त           = irq_करोमुख्य_मुक्त_irqs_common,
+	.activate	= sपंचांग32_gpio_करोमुख्य_activate,
+	.deactivate	= sपंचांग32_gpio_करोमुख्य_deactivate,
+पूर्ण;
 
 /* Pinctrl functions */
-static struct stm32_pinctrl_group *
-stm32_pctrl_find_group_by_pin(struct stm32_pinctrl *pctl, u32 pin)
-{
-	int i;
+अटल काष्ठा sपंचांग32_pinctrl_group *
+sपंचांग32_pctrl_find_group_by_pin(काष्ठा sपंचांग32_pinctrl *pctl, u32 pin)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->ngroups; i++) {
-		struct stm32_pinctrl_group *grp = pctl->groups + i;
+	क्रम (i = 0; i < pctl->ngroups; i++) अणु
+		काष्ठा sपंचांग32_pinctrl_group *grp = pctl->groups + i;
 
-		if (grp->pin == pin)
-			return grp;
-	}
+		अगर (grp->pin == pin)
+			वापस grp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool stm32_pctrl_is_function_valid(struct stm32_pinctrl *pctl,
+अटल bool sपंचांग32_pctrl_is_function_valid(काष्ठा sपंचांग32_pinctrl *pctl,
 		u32 pin_num, u32 fnum)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pctl->npins; i++) {
-		const struct stm32_desc_pin *pin = pctl->pins + i;
-		const struct stm32_desc_function *func = pin->functions;
+	क्रम (i = 0; i < pctl->npins; i++) अणु
+		स्थिर काष्ठा sपंचांग32_desc_pin *pin = pctl->pins + i;
+		स्थिर काष्ठा sपंचांग32_desc_function *func = pin->functions;
 
-		if (pin->pin.number != pin_num)
-			continue;
+		अगर (pin->pin.number != pin_num)
+			जारी;
 
-		while (func && func->name) {
-			if (func->num == fnum)
-				return true;
+		जबतक (func && func->name) अणु
+			अगर (func->num == fnum)
+				वापस true;
 			func++;
-		}
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_err(pctl->dev, "invalid function %d on pin %d .\n", fnum, pin_num);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int stm32_pctrl_dt_node_to_map_func(struct stm32_pinctrl *pctl,
-		u32 pin, u32 fnum, struct stm32_pinctrl_group *grp,
-		struct pinctrl_map **map, unsigned *reserved_maps,
-		unsigned *num_maps)
-{
-	if (*num_maps == *reserved_maps)
-		return -ENOSPC;
+अटल पूर्णांक sपंचांग32_pctrl_dt_node_to_map_func(काष्ठा sपंचांग32_pinctrl *pctl,
+		u32 pin, u32 fnum, काष्ठा sपंचांग32_pinctrl_group *grp,
+		काष्ठा pinctrl_map **map, अचिन्हित *reserved_maps,
+		अचिन्हित *num_maps)
+अणु
+	अगर (*num_maps == *reserved_maps)
+		वापस -ENOSPC;
 
 	(*map)[*num_maps].type = PIN_MAP_TYPE_MUX_GROUP;
 	(*map)[*num_maps].data.mux.group = grp->name;
 
-	if (!stm32_pctrl_is_function_valid(pctl, pin, fnum))
-		return -EINVAL;
+	अगर (!sपंचांग32_pctrl_is_function_valid(pctl, pin, fnum))
+		वापस -EINVAL;
 
-	(*map)[*num_maps].data.mux.function = stm32_gpio_functions[fnum];
+	(*map)[*num_maps].data.mux.function = sपंचांग32_gpio_functions[fnum];
 	(*num_maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pctrl_dt_subnode_to_map(struct pinctrl_dev *pctldev,
-				      struct device_node *node,
-				      struct pinctrl_map **map,
-				      unsigned *reserved_maps,
-				      unsigned *num_maps)
-{
-	struct stm32_pinctrl *pctl;
-	struct stm32_pinctrl_group *grp;
-	struct property *pins;
+अटल पूर्णांक sपंचांग32_pctrl_dt_subnode_to_map(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा device_node *node,
+				      काष्ठा pinctrl_map **map,
+				      अचिन्हित *reserved_maps,
+				      अचिन्हित *num_maps)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl;
+	काष्ठा sपंचांग32_pinctrl_group *grp;
+	काष्ठा property *pins;
 	u32 pinfunc, pin, func;
-	unsigned long *configs;
-	unsigned int num_configs;
+	अचिन्हित दीर्घ *configs;
+	अचिन्हित पूर्णांक num_configs;
 	bool has_config = 0;
-	unsigned reserve = 0;
-	int num_pins, num_funcs, maps_per_pin, i, err = 0;
+	अचिन्हित reserve = 0;
+	पूर्णांक num_pins, num_funcs, maps_per_pin, i, err = 0;
 
 	pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	pins = of_find_property(node, "pinmux", NULL);
-	if (!pins) {
+	pins = of_find_property(node, "pinmux", शून्य);
+	अगर (!pins) अणु
 		dev_err(pctl->dev, "missing pins property in node %pOFn .\n",
 				node);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = pinconf_generic_parse_dt_config(node, pctldev, &configs,
 		&num_configs);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (num_configs)
+	अगर (num_configs)
 		has_config = 1;
 
-	num_pins = pins->length / sizeof(u32);
+	num_pins = pins->length / माप(u32);
 	num_funcs = num_pins;
 	maps_per_pin = 0;
-	if (num_funcs)
+	अगर (num_funcs)
 		maps_per_pin++;
-	if (has_config && num_pins >= 1)
+	अगर (has_config && num_pins >= 1)
 		maps_per_pin++;
 
-	if (!num_pins || !maps_per_pin) {
+	अगर (!num_pins || !maps_per_pin) अणु
 		err = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	reserve = num_pins * maps_per_pin;
 
 	err = pinctrl_utils_reserve_map(pctldev, map,
 			reserved_maps, num_maps, reserve);
-	if (err)
-		goto exit;
+	अगर (err)
+		जाओ निकास;
 
-	for (i = 0; i < num_pins; i++) {
-		err = of_property_read_u32_index(node, "pinmux",
+	क्रम (i = 0; i < num_pins; i++) अणु
+		err = of_property_पढ़ो_u32_index(node, "pinmux",
 				i, &pinfunc);
-		if (err)
-			goto exit;
+		अगर (err)
+			जाओ निकास;
 
 		pin = STM32_GET_PIN_NO(pinfunc);
 		func = STM32_GET_PIN_FUNC(pinfunc);
 
-		if (!stm32_pctrl_is_function_valid(pctl, pin, func)) {
+		अगर (!sपंचांग32_pctrl_is_function_valid(pctl, pin, func)) अणु
 			err = -EINVAL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		grp = stm32_pctrl_find_group_by_pin(pctl, pin);
-		if (!grp) {
+		grp = sपंचांग32_pctrl_find_group_by_pin(pctl, pin);
+		अगर (!grp) अणु
 			dev_err(pctl->dev, "unable to match pin %d to group\n",
 					pin);
 			err = -EINVAL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		err = stm32_pctrl_dt_node_to_map_func(pctl, pin, func, grp, map,
+		err = sपंचांग32_pctrl_dt_node_to_map_func(pctl, pin, func, grp, map,
 				reserved_maps, num_maps);
-		if (err)
-			goto exit;
+		अगर (err)
+			जाओ निकास;
 
-		if (has_config) {
+		अगर (has_config) अणु
 			err = pinctrl_utils_add_map_configs(pctldev, map,
 					reserved_maps, num_maps, grp->name,
 					configs, num_configs,
 					PIN_MAP_TYPE_CONFIGS_GROUP);
-			if (err)
-				goto exit;
-		}
-	}
+			अगर (err)
+				जाओ निकास;
+		पूर्ण
+	पूर्ण
 
-exit:
-	kfree(configs);
-	return err;
-}
+निकास:
+	kमुक्त(configs);
+	वापस err;
+पूर्ण
 
-static int stm32_pctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
-				 struct device_node *np_config,
-				 struct pinctrl_map **map, unsigned *num_maps)
-{
-	struct device_node *np;
-	unsigned reserved_maps;
-	int ret;
+अटल पूर्णांक sपंचांग32_pctrl_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा device_node *np_config,
+				 काष्ठा pinctrl_map **map, अचिन्हित *num_maps)
+अणु
+	काष्ठा device_node *np;
+	अचिन्हित reserved_maps;
+	पूर्णांक ret;
 
-	*map = NULL;
+	*map = शून्य;
 	*num_maps = 0;
 	reserved_maps = 0;
 
-	for_each_child_of_node(np_config, np) {
-		ret = stm32_pctrl_dt_subnode_to_map(pctldev, np, map,
+	क्रम_each_child_of_node(np_config, np) अणु
+		ret = sपंचांग32_pctrl_dt_subnode_to_map(pctldev, np, map,
 				&reserved_maps, num_maps);
-		if (ret < 0) {
-			pinctrl_utils_free_map(pctldev, *map, *num_maps);
+		अगर (ret < 0) अणु
+			pinctrl_utils_मुक्त_map(pctldev, *map, *num_maps);
 			of_node_put(np);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sपंचांग32_pctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->ngroups;
-}
+	वापस pctl->ngroups;
+पूर्ण
 
-static const char *stm32_pctrl_get_group_name(struct pinctrl_dev *pctldev,
-					      unsigned group)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *sपंचांग32_pctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					      अचिन्हित group)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->groups[group].name;
-}
+	वापस pctl->groups[group].name;
+पूर्ण
 
-static int stm32_pctrl_get_group_pins(struct pinctrl_dev *pctldev,
-				      unsigned group,
-				      const unsigned **pins,
-				      unsigned *num_pins)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sपंचांग32_pctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित group,
+				      स्थिर अचिन्हित **pins,
+				      अचिन्हित *num_pins)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	*pins = (unsigned *)&pctl->groups[group].pin;
+	*pins = (अचिन्हित *)&pctl->groups[group].pin;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops stm32_pctrl_ops = {
-	.dt_node_to_map		= stm32_pctrl_dt_node_to_map,
-	.dt_free_map		= pinctrl_utils_free_map,
-	.get_groups_count	= stm32_pctrl_get_groups_count,
-	.get_group_name		= stm32_pctrl_get_group_name,
-	.get_group_pins		= stm32_pctrl_get_group_pins,
-};
+अटल स्थिर काष्ठा pinctrl_ops sपंचांग32_pctrl_ops = अणु
+	.dt_node_to_map		= sपंचांग32_pctrl_dt_node_to_map,
+	.dt_मुक्त_map		= pinctrl_utils_मुक्त_map,
+	.get_groups_count	= sपंचांग32_pctrl_get_groups_count,
+	.get_group_name		= sपंचांग32_pctrl_get_group_name,
+	.get_group_pins		= sपंचांग32_pctrl_get_group_pins,
+पूर्ण;
 
 
 /* Pinmux functions */
 
-static int stm32_pmx_get_funcs_cnt(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(stm32_gpio_functions);
-}
+अटल पूर्णांक sपंचांग32_pmx_get_funcs_cnt(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(sपंचांग32_gpio_functions);
+पूर्ण
 
-static const char *stm32_pmx_get_func_name(struct pinctrl_dev *pctldev,
-					   unsigned selector)
-{
-	return stm32_gpio_functions[selector];
-}
+अटल स्थिर अक्षर *sपंचांग32_pmx_get_func_name(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित selector)
+अणु
+	वापस sपंचांग32_gpio_functions[selector];
+पूर्ण
 
-static int stm32_pmx_get_func_groups(struct pinctrl_dev *pctldev,
-				     unsigned function,
-				     const char * const **groups,
-				     unsigned * const num_groups)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sपंचांग32_pmx_get_func_groups(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित function,
+				     स्थिर अक्षर * स्थिर **groups,
+				     अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctl->grp_names;
 	*num_groups = pctl->ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pmx_set_mode(struct stm32_gpio_bank *bank,
-			      int pin, u32 mode, u32 alt)
-{
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+अटल पूर्णांक sपंचांग32_pmx_set_mode(काष्ठा sपंचांग32_gpio_bank *bank,
+			      पूर्णांक pin, u32 mode, u32 alt)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
 	u32 val;
-	int alt_shift = (pin % 8) * 4;
-	int alt_offset = STM32_GPIO_AFRL + (pin / 8) * 4;
-	unsigned long flags;
-	int err = 0;
+	पूर्णांक alt_shअगरt = (pin % 8) * 4;
+	पूर्णांक alt_offset = STM32_GPIO_AFRL + (pin / 8) * 4;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	if (pctl->hwlock) {
-		err = hwspin_lock_timeout_in_atomic(pctl->hwlock,
+	अगर (pctl->hwlock) अणु
+		err = hwspin_lock_समयout_in_atomic(pctl->hwlock,
 						    HWSPNLCK_TIMEOUT);
-		if (err) {
+		अगर (err) अणु
 			dev_err(pctl->dev, "Can't get hwspinlock\n");
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	val = readl_relaxed(bank->base + alt_offset);
-	val &= ~GENMASK(alt_shift + 3, alt_shift);
-	val |= (alt << alt_shift);
-	writel_relaxed(val, bank->base + alt_offset);
+	val = पढ़ोl_relaxed(bank->base + alt_offset);
+	val &= ~GENMASK(alt_shअगरt + 3, alt_shअगरt);
+	val |= (alt << alt_shअगरt);
+	ग_लिखोl_relaxed(val, bank->base + alt_offset);
 
-	val = readl_relaxed(bank->base + STM32_GPIO_MODER);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_MODER);
 	val &= ~GENMASK(pin * 2 + 1, pin * 2);
 	val |= mode << (pin * 2);
-	writel_relaxed(val, bank->base + STM32_GPIO_MODER);
+	ग_लिखोl_relaxed(val, bank->base + STM32_GPIO_MODER);
 
-	if (pctl->hwlock)
+	अगर (pctl->hwlock)
 		hwspin_unlock_in_atomic(pctl->hwlock);
 
-	stm32_gpio_backup_mode(bank, pin, mode, alt);
+	sपंचांग32_gpio_backup_mode(bank, pin, mode, alt);
 
 unlock:
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void stm32_pmx_get_mode(struct stm32_gpio_bank *bank, int pin, u32 *mode,
+व्योम sपंचांग32_pmx_get_mode(काष्ठा sपंचांग32_gpio_bank *bank, पूर्णांक pin, u32 *mode,
 			u32 *alt)
-{
+अणु
 	u32 val;
-	int alt_shift = (pin % 8) * 4;
-	int alt_offset = STM32_GPIO_AFRL + (pin / 8) * 4;
-	unsigned long flags;
+	पूर्णांक alt_shअगरt = (pin % 8) * 4;
+	पूर्णांक alt_offset = STM32_GPIO_AFRL + (pin / 8) * 4;
+	अचिन्हित दीर्घ flags;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	val = readl_relaxed(bank->base + alt_offset);
-	val &= GENMASK(alt_shift + 3, alt_shift);
-	*alt = val >> alt_shift;
+	val = पढ़ोl_relaxed(bank->base + alt_offset);
+	val &= GENMASK(alt_shअगरt + 3, alt_shअगरt);
+	*alt = val >> alt_shअगरt;
 
-	val = readl_relaxed(bank->base + STM32_GPIO_MODER);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_MODER);
 	val &= GENMASK(pin * 2 + 1, pin * 2);
 	*mode = val >> (pin * 2);
 
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
-}
+पूर्ण
 
-static int stm32_pmx_set_mux(struct pinctrl_dev *pctldev,
-			    unsigned function,
-			    unsigned group)
-{
+अटल पूर्णांक sपंचांग32_pmx_set_mux(काष्ठा pinctrl_dev *pctldev,
+			    अचिन्हित function,
+			    अचिन्हित group)
+अणु
 	bool ret;
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct stm32_pinctrl_group *g = pctl->groups + group;
-	struct pinctrl_gpio_range *range;
-	struct stm32_gpio_bank *bank;
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sपंचांग32_pinctrl_group *g = pctl->groups + group;
+	काष्ठा pinctrl_gpio_range *range;
+	काष्ठा sपंचांग32_gpio_bank *bank;
 	u32 mode, alt;
-	int pin;
+	पूर्णांक pin;
 
-	ret = stm32_pctrl_is_function_valid(pctl, g->pin, function);
-	if (!ret)
-		return -EINVAL;
+	ret = sपंचांग32_pctrl_is_function_valid(pctl, g->pin, function);
+	अगर (!ret)
+		वापस -EINVAL;
 
 	range = pinctrl_find_gpio_range_from_pin(pctldev, g->pin);
-	if (!range) {
+	अगर (!range) अणु
 		dev_err(pctl->dev, "No gpio range defined.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bank = gpiochip_get_data(range->gc);
-	pin = stm32_gpio_pin(g->pin);
+	pin = sपंचांग32_gpio_pin(g->pin);
 
-	mode = stm32_gpio_get_mode(function);
-	alt = stm32_gpio_get_alt(function);
+	mode = sपंचांग32_gpio_get_mode(function);
+	alt = sपंचांग32_gpio_get_alt(function);
 
-	return stm32_pmx_set_mode(bank, pin, mode, alt);
-}
+	वापस sपंचांग32_pmx_set_mode(bank, pin, mode, alt);
+पूर्ण
 
-static int stm32_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
-			struct pinctrl_gpio_range *range, unsigned gpio,
+अटल पूर्णांक sपंचांग32_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+			काष्ठा pinctrl_gpio_range *range, अचिन्हित gpio,
 			bool input)
-{
-	struct stm32_gpio_bank *bank = gpiochip_get_data(range->gc);
-	int pin = stm32_gpio_pin(gpio);
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = gpiochip_get_data(range->gc);
+	पूर्णांक pin = sपंचांग32_gpio_pin(gpio);
 
-	return stm32_pmx_set_mode(bank, pin, !input, 0);
-}
+	वापस sपंचांग32_pmx_set_mode(bank, pin, !input, 0);
+पूर्ण
 
-static const struct pinmux_ops stm32_pmx_ops = {
-	.get_functions_count	= stm32_pmx_get_funcs_cnt,
-	.get_function_name	= stm32_pmx_get_func_name,
-	.get_function_groups	= stm32_pmx_get_func_groups,
-	.set_mux		= stm32_pmx_set_mux,
-	.gpio_set_direction	= stm32_pmx_gpio_set_direction,
+अटल स्थिर काष्ठा pinmux_ops sपंचांग32_pmx_ops = अणु
+	.get_functions_count	= sपंचांग32_pmx_get_funcs_cnt,
+	.get_function_name	= sपंचांग32_pmx_get_func_name,
+	.get_function_groups	= sपंचांग32_pmx_get_func_groups,
+	.set_mux		= sपंचांग32_pmx_set_mux,
+	.gpio_set_direction	= sपंचांग32_pmx_gpio_set_direction,
 	.strict			= true,
-};
+पूर्ण;
 
 /* Pinconf functions */
 
-static int stm32_pconf_set_driving(struct stm32_gpio_bank *bank,
-				   unsigned offset, u32 drive)
-{
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	unsigned long flags;
+अटल पूर्णांक sपंचांग32_pconf_set_driving(काष्ठा sपंचांग32_gpio_bank *bank,
+				   अचिन्हित offset, u32 drive)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	अचिन्हित दीर्घ flags;
 	u32 val;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	if (pctl->hwlock) {
-		err = hwspin_lock_timeout_in_atomic(pctl->hwlock,
+	अगर (pctl->hwlock) अणु
+		err = hwspin_lock_समयout_in_atomic(pctl->hwlock,
 						    HWSPNLCK_TIMEOUT);
-		if (err) {
+		अगर (err) अणु
 			dev_err(pctl->dev, "Can't get hwspinlock\n");
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	val = readl_relaxed(bank->base + STM32_GPIO_TYPER);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_TYPER);
 	val &= ~BIT(offset);
 	val |= drive << offset;
-	writel_relaxed(val, bank->base + STM32_GPIO_TYPER);
+	ग_लिखोl_relaxed(val, bank->base + STM32_GPIO_TYPER);
 
-	if (pctl->hwlock)
+	अगर (pctl->hwlock)
 		hwspin_unlock_in_atomic(pctl->hwlock);
 
-	stm32_gpio_backup_driving(bank, offset, drive);
+	sपंचांग32_gpio_backup_driving(bank, offset, drive);
 
 unlock:
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 stm32_pconf_get_driving(struct stm32_gpio_bank *bank,
-	unsigned int offset)
-{
-	unsigned long flags;
+अटल u32 sपंचांग32_pconf_get_driving(काष्ठा sपंचांग32_gpio_bank *bank,
+	अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	val = readl_relaxed(bank->base + STM32_GPIO_TYPER);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_TYPER);
 	val &= BIT(offset);
 
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return (val >> offset);
-}
+	वापस (val >> offset);
+पूर्ण
 
-static int stm32_pconf_set_speed(struct stm32_gpio_bank *bank,
-				 unsigned offset, u32 speed)
-{
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	unsigned long flags;
+अटल पूर्णांक sपंचांग32_pconf_set_speed(काष्ठा sपंचांग32_gpio_bank *bank,
+				 अचिन्हित offset, u32 speed)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	अचिन्हित दीर्घ flags;
 	u32 val;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	if (pctl->hwlock) {
-		err = hwspin_lock_timeout_in_atomic(pctl->hwlock,
+	अगर (pctl->hwlock) अणु
+		err = hwspin_lock_समयout_in_atomic(pctl->hwlock,
 						    HWSPNLCK_TIMEOUT);
-		if (err) {
+		अगर (err) अणु
 			dev_err(pctl->dev, "Can't get hwspinlock\n");
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	val = readl_relaxed(bank->base + STM32_GPIO_SPEEDR);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_SPEEDR);
 	val &= ~GENMASK(offset * 2 + 1, offset * 2);
 	val |= speed << (offset * 2);
-	writel_relaxed(val, bank->base + STM32_GPIO_SPEEDR);
+	ग_लिखोl_relaxed(val, bank->base + STM32_GPIO_SPEEDR);
 
-	if (pctl->hwlock)
+	अगर (pctl->hwlock)
 		hwspin_unlock_in_atomic(pctl->hwlock);
 
-	stm32_gpio_backup_speed(bank, offset, speed);
+	sपंचांग32_gpio_backup_speed(bank, offset, speed);
 
 unlock:
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 stm32_pconf_get_speed(struct stm32_gpio_bank *bank,
-	unsigned int offset)
-{
-	unsigned long flags;
+अटल u32 sपंचांग32_pconf_get_speed(काष्ठा sपंचांग32_gpio_bank *bank,
+	अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	val = readl_relaxed(bank->base + STM32_GPIO_SPEEDR);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_SPEEDR);
 	val &= GENMASK(offset * 2 + 1, offset * 2);
 
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return (val >> (offset * 2));
-}
+	वापस (val >> (offset * 2));
+पूर्ण
 
-static int stm32_pconf_set_bias(struct stm32_gpio_bank *bank,
-				unsigned offset, u32 bias)
-{
-	struct stm32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
-	unsigned long flags;
+अटल पूर्णांक sपंचांग32_pconf_set_bias(काष्ठा sपंचांग32_gpio_bank *bank,
+				अचिन्हित offset, u32 bias)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(bank->gpio_chip.parent);
+	अचिन्हित दीर्घ flags;
 	u32 val;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	if (pctl->hwlock) {
-		err = hwspin_lock_timeout_in_atomic(pctl->hwlock,
+	अगर (pctl->hwlock) अणु
+		err = hwspin_lock_समयout_in_atomic(pctl->hwlock,
 						    HWSPNLCK_TIMEOUT);
-		if (err) {
+		अगर (err) अणु
 			dev_err(pctl->dev, "Can't get hwspinlock\n");
-			goto unlock;
-		}
-	}
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 
-	val = readl_relaxed(bank->base + STM32_GPIO_PUPDR);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_PUPDR);
 	val &= ~GENMASK(offset * 2 + 1, offset * 2);
 	val |= bias << (offset * 2);
-	writel_relaxed(val, bank->base + STM32_GPIO_PUPDR);
+	ग_लिखोl_relaxed(val, bank->base + STM32_GPIO_PUPDR);
 
-	if (pctl->hwlock)
+	अगर (pctl->hwlock)
 		hwspin_unlock_in_atomic(pctl->hwlock);
 
-	stm32_gpio_backup_bias(bank, offset, bias);
+	sपंचांग32_gpio_backup_bias(bank, offset, bias);
 
 unlock:
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u32 stm32_pconf_get_bias(struct stm32_gpio_bank *bank,
-	unsigned int offset)
-{
-	unsigned long flags;
+अटल u32 sपंचांग32_pconf_get_bias(काष्ठा sपंचांग32_gpio_bank *bank,
+	अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	val = readl_relaxed(bank->base + STM32_GPIO_PUPDR);
+	val = पढ़ोl_relaxed(bank->base + STM32_GPIO_PUPDR);
 	val &= GENMASK(offset * 2 + 1, offset * 2);
 
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return (val >> (offset * 2));
-}
+	वापस (val >> (offset * 2));
+पूर्ण
 
-static bool stm32_pconf_get(struct stm32_gpio_bank *bank,
-	unsigned int offset, bool dir)
-{
-	unsigned long flags;
+अटल bool sपंचांग32_pconf_get(काष्ठा sपंचांग32_gpio_bank *bank,
+	अचिन्हित पूर्णांक offset, bool dir)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	clk_enable(bank->clk);
 	spin_lock_irqsave(&bank->lock, flags);
 
-	if (dir)
-		val = !!(readl_relaxed(bank->base + STM32_GPIO_IDR) &
+	अगर (dir)
+		val = !!(पढ़ोl_relaxed(bank->base + STM32_GPIO_IDR) &
 			 BIT(offset));
-	else
-		val = !!(readl_relaxed(bank->base + STM32_GPIO_ODR) &
+	अन्यथा
+		val = !!(पढ़ोl_relaxed(bank->base + STM32_GPIO_ODR) &
 			 BIT(offset));
 
 	spin_unlock_irqrestore(&bank->lock, flags);
 	clk_disable(bank->clk);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int stm32_pconf_parse_conf(struct pinctrl_dev *pctldev,
-		unsigned int pin, enum pin_config_param param,
-		enum pin_config_param arg)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct pinctrl_gpio_range *range;
-	struct stm32_gpio_bank *bank;
-	int offset, ret = 0;
+अटल पूर्णांक sपंचांग32_pconf_parse_conf(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित पूर्णांक pin, क्रमागत pin_config_param param,
+		क्रमागत pin_config_param arg)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा pinctrl_gpio_range *range;
+	काष्ठा sपंचांग32_gpio_bank *bank;
+	पूर्णांक offset, ret = 0;
 
 	range = pinctrl_find_gpio_range_from_pin_nolock(pctldev, pin);
-	if (!range) {
+	अगर (!range) अणु
 		dev_err(pctl->dev, "No gpio range defined.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bank = gpiochip_get_data(range->gc);
-	offset = stm32_gpio_pin(pin);
+	offset = sपंचांग32_gpio_pin(pin);
 
-	switch (param) {
-	case PIN_CONFIG_DRIVE_PUSH_PULL:
-		ret = stm32_pconf_set_driving(bank, offset, 0);
-		break;
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		ret = stm32_pconf_set_driving(bank, offset, 1);
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		ret = stm32_pconf_set_speed(bank, offset, arg);
-		break;
-	case PIN_CONFIG_BIAS_DISABLE:
-		ret = stm32_pconf_set_bias(bank, offset, 0);
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		ret = stm32_pconf_set_bias(bank, offset, 1);
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		ret = stm32_pconf_set_bias(bank, offset, 2);
-		break;
-	case PIN_CONFIG_OUTPUT:
-		__stm32_gpio_set(bank, offset, arg);
-		ret = stm32_pmx_gpio_set_direction(pctldev, range, pin, false);
-		break;
-	default:
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
+		ret = sपंचांग32_pconf_set_driving(bank, offset, 0);
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		ret = sपंचांग32_pconf_set_driving(bank, offset, 1);
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		ret = sपंचांग32_pconf_set_speed(bank, offset, arg);
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		ret = sपंचांग32_pconf_set_bias(bank, offset, 0);
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		ret = sपंचांग32_pconf_set_bias(bank, offset, 1);
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		ret = sपंचांग32_pconf_set_bias(bank, offset, 2);
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT:
+		__sपंचांग32_gpio_set(bank, offset, arg);
+		ret = sपंचांग32_pmx_gpio_set_direction(pctldev, range, pin, false);
+		अवरोध;
+	शेष:
 		ret = -ENOTSUPP;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stm32_pconf_group_get(struct pinctrl_dev *pctldev,
-				 unsigned group,
-				 unsigned long *config)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक sपंचांग32_pconf_group_get(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित group,
+				 अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*config = pctl->groups[group].config;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pconf_group_set(struct pinctrl_dev *pctldev, unsigned group,
-				 unsigned long *configs, unsigned num_configs)
-{
-	struct stm32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct stm32_pinctrl_group *g = &pctl->groups[group];
-	int i, ret;
+अटल पूर्णांक sपंचांग32_pconf_group_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित group,
+				 अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा sपंचांग32_pinctrl_group *g = &pctl->groups[group];
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		mutex_lock(&pctldev->mutex);
-		ret = stm32_pconf_parse_conf(pctldev, g->pin,
+		ret = sपंचांग32_pconf_parse_conf(pctldev, g->pin,
 			pinconf_to_config_param(configs[i]),
 			pinconf_to_config_argument(configs[i]));
 		mutex_unlock(&pctldev->mutex);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		g->config = configs[i];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			   unsigned long *configs, unsigned int num_configs)
-{
-	int i, ret;
+अटल पूर्णांक sपंचांग32_pconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			   अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_configs; i++) {
-		ret = stm32_pconf_parse_conf(pctldev, pin,
+	क्रम (i = 0; i < num_configs; i++) अणु
+		ret = sपंचांग32_pconf_parse_conf(pctldev, pin,
 				pinconf_to_config_param(configs[i]),
 				pinconf_to_config_argument(configs[i]));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_pconf_dbg_show(struct pinctrl_dev *pctldev,
-				 struct seq_file *s,
-				 unsigned int pin)
-{
-	struct pinctrl_gpio_range *range;
-	struct stm32_gpio_bank *bank;
-	int offset;
+अटल व्योम sपंचांग32_pconf_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा seq_file *s,
+				 अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा pinctrl_gpio_range *range;
+	काष्ठा sपंचांग32_gpio_bank *bank;
+	पूर्णांक offset;
 	u32 mode, alt, drive, speed, bias;
-	static const char * const modes[] = {
-			"input", "output", "alternate", "analog" };
-	static const char * const speeds[] = {
-			"low", "medium", "high", "very high" };
-	static const char * const biasing[] = {
-			"floating", "pull up", "pull down", "" };
+	अटल स्थिर अक्षर * स्थिर modes[] = अणु
+			"input", "output", "alternate", "analog" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर speeds[] = अणु
+			"low", "medium", "high", "very high" पूर्ण;
+	अटल स्थिर अक्षर * स्थिर biasing[] = अणु
+			"floating", "pull up", "pull down", "" पूर्ण;
 	bool val;
 
 	range = pinctrl_find_gpio_range_from_pin_nolock(pctldev, pin);
-	if (!range)
-		return;
+	अगर (!range)
+		वापस;
 
 	bank = gpiochip_get_data(range->gc);
-	offset = stm32_gpio_pin(pin);
+	offset = sपंचांग32_gpio_pin(pin);
 
-	stm32_pmx_get_mode(bank, offset, &mode, &alt);
-	bias = stm32_pconf_get_bias(bank, offset);
+	sपंचांग32_pmx_get_mode(bank, offset, &mode, &alt);
+	bias = sपंचांग32_pconf_get_bias(bank, offset);
 
-	seq_printf(s, "%s ", modes[mode]);
+	seq_म_लिखो(s, "%s ", modes[mode]);
 
-	switch (mode) {
+	चयन (mode) अणु
 	/* input */
-	case 0:
-		val = stm32_pconf_get(bank, offset, true);
-		seq_printf(s, "- %s - %s",
+	हाल 0:
+		val = sपंचांग32_pconf_get(bank, offset, true);
+		seq_म_लिखो(s, "- %s - %s",
 			   val ? "high" : "low",
 			   biasing[bias]);
-		break;
+		अवरोध;
 
 	/* output */
-	case 1:
-		drive = stm32_pconf_get_driving(bank, offset);
-		speed = stm32_pconf_get_speed(bank, offset);
-		val = stm32_pconf_get(bank, offset, false);
-		seq_printf(s, "- %s - %s - %s - %s %s",
+	हाल 1:
+		drive = sपंचांग32_pconf_get_driving(bank, offset);
+		speed = sपंचांग32_pconf_get_speed(bank, offset);
+		val = sपंचांग32_pconf_get(bank, offset, false);
+		seq_म_लिखो(s, "- %s - %s - %s - %s %s",
 			   val ? "high" : "low",
 			   drive ? "open drain" : "push pull",
 			   biasing[bias],
 			   speeds[speed], "speed");
-		break;
+		अवरोध;
 
 	/* alternate */
-	case 2:
-		drive = stm32_pconf_get_driving(bank, offset);
-		speed = stm32_pconf_get_speed(bank, offset);
-		seq_printf(s, "%d - %s - %s - %s %s", alt,
+	हाल 2:
+		drive = sपंचांग32_pconf_get_driving(bank, offset);
+		speed = sपंचांग32_pconf_get_speed(bank, offset);
+		seq_म_लिखो(s, "%d - %s - %s - %s %s", alt,
 			   drive ? "open drain" : "push pull",
 			   biasing[bias],
 			   speeds[speed], "speed");
-		break;
+		अवरोध;
 
 	/* analog */
-	case 3:
-		break;
-	}
-}
+	हाल 3:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const struct pinconf_ops stm32_pconf_ops = {
-	.pin_config_group_get	= stm32_pconf_group_get,
-	.pin_config_group_set	= stm32_pconf_group_set,
-	.pin_config_set		= stm32_pconf_set,
-	.pin_config_dbg_show	= stm32_pconf_dbg_show,
-};
+अटल स्थिर काष्ठा pinconf_ops sपंचांग32_pconf_ops = अणु
+	.pin_config_group_get	= sपंचांग32_pconf_group_get,
+	.pin_config_group_set	= sपंचांग32_pconf_group_set,
+	.pin_config_set		= sपंचांग32_pconf_set,
+	.pin_config_dbg_show	= sपंचांग32_pconf_dbg_show,
+पूर्ण;
 
-static int stm32_gpiolib_register_bank(struct stm32_pinctrl *pctl,
-	struct device_node *np)
-{
-	struct stm32_gpio_bank *bank = &pctl->banks[pctl->nbanks];
-	int bank_ioport_nr;
-	struct pinctrl_gpio_range *range = &bank->range;
-	struct of_phandle_args args;
-	struct device *dev = pctl->dev;
-	struct resource res;
-	int npins = STM32_GPIO_PINS_PER_BANK;
-	int bank_nr, err;
+अटल पूर्णांक sपंचांग32_gpiolib_रेजिस्टर_bank(काष्ठा sपंचांग32_pinctrl *pctl,
+	काष्ठा device_node *np)
+अणु
+	काष्ठा sपंचांग32_gpio_bank *bank = &pctl->banks[pctl->nbanks];
+	पूर्णांक bank_ioport_nr;
+	काष्ठा pinctrl_gpio_range *range = &bank->range;
+	काष्ठा of_phandle_args args;
+	काष्ठा device *dev = pctl->dev;
+	काष्ठा resource res;
+	पूर्णांक npins = STM32_GPIO_PINS_PER_BANK;
+	पूर्णांक bank_nr, err;
 
-	if (!IS_ERR(bank->rstc))
-		reset_control_deassert(bank->rstc);
+	अगर (!IS_ERR(bank->rstc))
+		reset_control_deनिश्चित(bank->rstc);
 
-	if (of_address_to_resource(np, 0, &res))
-		return -ENODEV;
+	अगर (of_address_to_resource(np, 0, &res))
+		वापस -ENODEV;
 
 	bank->base = devm_ioremap_resource(dev, &res);
-	if (IS_ERR(bank->base))
-		return PTR_ERR(bank->base);
+	अगर (IS_ERR(bank->base))
+		वापस PTR_ERR(bank->base);
 
 	err = clk_prepare(bank->clk);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to prepare clk (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	bank->gpio_chip = stm32_gpio_template;
+	bank->gpio_chip = sपंचांग32_gpio_ढाँचा;
 
-	of_property_read_string(np, "st,bank-name", &bank->gpio_chip.label);
+	of_property_पढ़ो_string(np, "st,bank-name", &bank->gpio_chip.label);
 
-	if (!of_parse_phandle_with_fixed_args(np, "gpio-ranges", 3, 0, &args)) {
+	अगर (!of_parse_phandle_with_fixed_args(np, "gpio-ranges", 3, 0, &args)) अणु
 		bank_nr = args.args[1] / STM32_GPIO_PINS_PER_BANK;
 		bank->gpio_chip.base = args.args[1];
-	} else {
+	पूर्ण अन्यथा अणु
 		bank_nr = pctl->nbanks;
 		bank->gpio_chip.base = bank_nr * STM32_GPIO_PINS_PER_BANK;
 		range->name = bank->gpio_chip.label;
@@ -1260,9 +1261,9 @@ static int stm32_gpiolib_register_bank(struct stm32_pinctrl *pctl,
 		range->gc = &bank->gpio_chip;
 		pinctrl_add_gpio_range(pctl->pctl_dev,
 				       &pctl->banks[bank_nr].range);
-	}
+	पूर्ण
 
-	if (of_property_read_u32(np, "st,bank-ioport", &bank_ioport_nr))
+	अगर (of_property_पढ़ो_u32(np, "st,bank-ioport", &bank_ioport_nr))
 		bank_ioport_nr = bank_nr;
 
 	bank->gpio_chip.base = bank_nr * STM32_GPIO_PINS_PER_BANK;
@@ -1274,73 +1275,73 @@ static int stm32_gpiolib_register_bank(struct stm32_pinctrl *pctl,
 	bank->bank_ioport_nr = bank_ioport_nr;
 	spin_lock_init(&bank->lock);
 
-	/* create irq hierarchical domain */
+	/* create irq hierarchical करोमुख्य */
 	bank->fwnode = of_node_to_fwnode(np);
 
-	bank->domain = irq_domain_create_hierarchy(pctl->domain, 0,
+	bank->करोमुख्य = irq_करोमुख्य_create_hierarchy(pctl->करोमुख्य, 0,
 					STM32_GPIO_IRQ_LINE, bank->fwnode,
-					&stm32_gpio_domain_ops, bank);
+					&sपंचांग32_gpio_करोमुख्य_ops, bank);
 
-	if (!bank->domain)
-		return -ENODEV;
+	अगर (!bank->करोमुख्य)
+		वापस -ENODEV;
 
 	err = gpiochip_add_data(&bank->gpio_chip, bank);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to add gpiochip(%d)!\n", bank_nr);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_info(dev, "%s bank added\n", bank->gpio_chip.label);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_domain *stm32_pctrl_get_irq_domain(struct device_node *np)
-{
-	struct device_node *parent;
-	struct irq_domain *domain;
+अटल काष्ठा irq_करोमुख्य *sपंचांग32_pctrl_get_irq_करोमुख्य(काष्ठा device_node *np)
+अणु
+	काष्ठा device_node *parent;
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 
-	if (!of_find_property(np, "interrupt-parent", NULL))
-		return NULL;
+	अगर (!of_find_property(np, "interrupt-parent", शून्य))
+		वापस शून्य;
 
 	parent = of_irq_find_parent(np);
-	if (!parent)
-		return ERR_PTR(-ENXIO);
+	अगर (!parent)
+		वापस ERR_PTR(-ENXIO);
 
-	domain = irq_find_host(parent);
-	if (!domain)
-		/* domain not registered yet */
-		return ERR_PTR(-EPROBE_DEFER);
+	करोमुख्य = irq_find_host(parent);
+	अगर (!करोमुख्य)
+		/* करोमुख्य not रेजिस्टरed yet */
+		वापस ERR_PTR(-EPROBE_DEFER);
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-static int stm32_pctrl_dt_setup_irq(struct platform_device *pdev,
-			   struct stm32_pinctrl *pctl)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device *dev = &pdev->dev;
-	struct regmap *rm;
-	int offset, ret, i;
-	int mask, mask_width;
+अटल पूर्णांक sपंचांग32_pctrl_dt_setup_irq(काष्ठा platक्रमm_device *pdev,
+			   काष्ठा sपंचांग32_pinctrl *pctl)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा regmap *rm;
+	पूर्णांक offset, ret, i;
+	पूर्णांक mask, mask_width;
 
 	pctl->regmap = syscon_regmap_lookup_by_phandle(np, "st,syscfg");
-	if (IS_ERR(pctl->regmap))
-		return PTR_ERR(pctl->regmap);
+	अगर (IS_ERR(pctl->regmap))
+		वापस PTR_ERR(pctl->regmap);
 
 	rm = pctl->regmap;
 
-	ret = of_property_read_u32_index(np, "st,syscfg", 1, &offset);
-	if (ret)
-		return ret;
+	ret = of_property_पढ़ो_u32_index(np, "st,syscfg", 1, &offset);
+	अगर (ret)
+		वापस ret;
 
-	ret = of_property_read_u32_index(np, "st,syscfg", 2, &mask);
-	if (ret)
+	ret = of_property_पढ़ो_u32_index(np, "st,syscfg", 2, &mask);
+	अगर (ret)
 		mask = SYSCFG_IRQMUX_MASK;
 
 	mask_width = fls(mask);
 
-	for (i = 0; i < STM32_GPIO_PINS_PER_BANK; i++) {
-		struct reg_field mux;
+	क्रम (i = 0; i < STM32_GPIO_PINS_PER_BANK; i++) अणु
+		काष्ठा reg_field mux;
 
 		mux.reg = offset + (i / 4) * 4;
 		mux.lsb = (i % 4) * mask_width;
@@ -1350,153 +1351,153 @@ static int stm32_pctrl_dt_setup_irq(struct platform_device *pdev,
 			i, mux.reg, mux.lsb, mux.msb);
 
 		pctl->irqmux[i] = devm_regmap_field_alloc(dev, rm, mux);
-		if (IS_ERR(pctl->irqmux[i]))
-			return PTR_ERR(pctl->irqmux[i]);
-	}
+		अगर (IS_ERR(pctl->irqmux[i]))
+			वापस PTR_ERR(pctl->irqmux[i]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pctrl_build_state(struct platform_device *pdev)
-{
-	struct stm32_pinctrl *pctl = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक sपंचांग32_pctrl_build_state(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
 	pctl->ngroups = pctl->npins;
 
 	/* Allocate groups */
-	pctl->groups = devm_kcalloc(&pdev->dev, pctl->ngroups,
-				    sizeof(*pctl->groups), GFP_KERNEL);
-	if (!pctl->groups)
-		return -ENOMEM;
+	pctl->groups = devm_kसुस्मृति(&pdev->dev, pctl->ngroups,
+				    माप(*pctl->groups), GFP_KERNEL);
+	अगर (!pctl->groups)
+		वापस -ENOMEM;
 
 	/* We assume that one pin is one group, use pin name as group name. */
-	pctl->grp_names = devm_kcalloc(&pdev->dev, pctl->ngroups,
-				       sizeof(*pctl->grp_names), GFP_KERNEL);
-	if (!pctl->grp_names)
-		return -ENOMEM;
+	pctl->grp_names = devm_kसुस्मृति(&pdev->dev, pctl->ngroups,
+				       माप(*pctl->grp_names), GFP_KERNEL);
+	अगर (!pctl->grp_names)
+		वापस -ENOMEM;
 
-	for (i = 0; i < pctl->npins; i++) {
-		const struct stm32_desc_pin *pin = pctl->pins + i;
-		struct stm32_pinctrl_group *group = pctl->groups + i;
+	क्रम (i = 0; i < pctl->npins; i++) अणु
+		स्थिर काष्ठा sपंचांग32_desc_pin *pin = pctl->pins + i;
+		काष्ठा sपंचांग32_pinctrl_group *group = pctl->groups + i;
 
 		group->name = pin->pin.name;
 		group->pin = pin->pin.number;
 		pctl->grp_names[i] = pin->pin.name;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stm32_pctrl_create_pins_tab(struct stm32_pinctrl *pctl,
-				       struct stm32_desc_pin *pins)
-{
-	const struct stm32_desc_pin *p;
-	int i, nb_pins_available = 0;
+अटल पूर्णांक sपंचांग32_pctrl_create_pins_tab(काष्ठा sपंचांग32_pinctrl *pctl,
+				       काष्ठा sपंचांग32_desc_pin *pins)
+अणु
+	स्थिर काष्ठा sपंचांग32_desc_pin *p;
+	पूर्णांक i, nb_pins_available = 0;
 
-	for (i = 0; i < pctl->match_data->npins; i++) {
+	क्रम (i = 0; i < pctl->match_data->npins; i++) अणु
 		p = pctl->match_data->pins + i;
-		if (pctl->pkg && !(pctl->pkg & p->pkg))
-			continue;
+		अगर (pctl->pkg && !(pctl->pkg & p->pkg))
+			जारी;
 		pins->pin = p->pin;
 		pins->functions = p->functions;
 		pins++;
 		nb_pins_available++;
-	}
+	पूर्ण
 
 	pctl->npins = nb_pins_available;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stm32_pctl_get_package(struct device_node *np,
-				   struct stm32_pinctrl *pctl)
-{
-	if (of_property_read_u32(np, "st,package", &pctl->pkg)) {
+अटल व्योम sपंचांग32_pctl_get_package(काष्ठा device_node *np,
+				   काष्ठा sपंचांग32_pinctrl *pctl)
+अणु
+	अगर (of_property_पढ़ो_u32(np, "st,package", &pctl->pkg)) अणु
 		pctl->pkg = 0;
 		dev_warn(pctl->dev, "No package detected, use default one\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(pctl->dev, "package detected: %x\n", pctl->pkg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int stm32_pctl_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct device_node *child;
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
-	struct stm32_pinctrl *pctl;
-	struct pinctrl_pin_desc *pins;
-	int i, ret, hwlock_id, banks = 0;
+पूर्णांक sपंचांग32_pctl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा device_node *child;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sपंचांग32_pinctrl *pctl;
+	काष्ठा pinctrl_pin_desc *pins;
+	पूर्णांक i, ret, hwlock_id, banks = 0;
 
-	if (!np)
-		return -EINVAL;
+	अगर (!np)
+		वापस -EINVAL;
 
 	match = of_match_device(dev->driver->of_match_table, dev);
-	if (!match || !match->data)
-		return -EINVAL;
+	अगर (!match || !match->data)
+		वापस -EINVAL;
 
-	if (!of_find_property(np, "pins-are-numbered", NULL)) {
+	अगर (!of_find_property(np, "pins-are-numbered", शून्य)) अणु
 		dev_err(dev, "only support pins-are-numbered format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pctl = devm_kzalloc(dev, sizeof(*pctl), GFP_KERNEL);
-	if (!pctl)
-		return -ENOMEM;
+	pctl = devm_kzalloc(dev, माप(*pctl), GFP_KERNEL);
+	अगर (!pctl)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, pctl);
+	platक्रमm_set_drvdata(pdev, pctl);
 
-	/* check for IRQ controller (may require deferred probe) */
-	pctl->domain = stm32_pctrl_get_irq_domain(np);
-	if (IS_ERR(pctl->domain))
-		return PTR_ERR(pctl->domain);
+	/* check क्रम IRQ controller (may require deferred probe) */
+	pctl->करोमुख्य = sपंचांग32_pctrl_get_irq_करोमुख्य(np);
+	अगर (IS_ERR(pctl->करोमुख्य))
+		वापस PTR_ERR(pctl->करोमुख्य);
 
 	/* hwspinlock is optional */
 	hwlock_id = of_hwspin_lock_get_id(pdev->dev.of_node, 0);
-	if (hwlock_id < 0) {
-		if (hwlock_id == -EPROBE_DEFER)
-			return hwlock_id;
-	} else {
-		pctl->hwlock = hwspin_lock_request_specific(hwlock_id);
-	}
+	अगर (hwlock_id < 0) अणु
+		अगर (hwlock_id == -EPROBE_DEFER)
+			वापस hwlock_id;
+	पूर्ण अन्यथा अणु
+		pctl->hwlock = hwspin_lock_request_specअगरic(hwlock_id);
+	पूर्ण
 
 	spin_lock_init(&pctl->irqmux_lock);
 
 	pctl->dev = dev;
 	pctl->match_data = match->data;
 
-	/*  get package information */
-	stm32_pctl_get_package(np, pctl);
+	/*  get package inक्रमmation */
+	sपंचांग32_pctl_get_package(np, pctl);
 
-	pctl->pins = devm_kcalloc(pctl->dev, pctl->match_data->npins,
-				  sizeof(*pctl->pins), GFP_KERNEL);
-	if (!pctl->pins)
-		return -ENOMEM;
+	pctl->pins = devm_kसुस्मृति(pctl->dev, pctl->match_data->npins,
+				  माप(*pctl->pins), GFP_KERNEL);
+	अगर (!pctl->pins)
+		वापस -ENOMEM;
 
-	ret = stm32_pctrl_create_pins_tab(pctl, pctl->pins);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_pctrl_create_pins_tab(pctl, pctl->pins);
+	अगर (ret)
+		वापस ret;
 
-	ret = stm32_pctrl_build_state(pdev);
-	if (ret) {
+	ret = sपंचांग32_pctrl_build_state(pdev);
+	अगर (ret) अणु
 		dev_err(dev, "build state failed: %d\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pctl->domain) {
-		ret = stm32_pctrl_dt_setup_irq(pdev, pctl);
-		if (ret)
-			return ret;
-	}
+	अगर (pctl->करोमुख्य) अणु
+		ret = sपंचांग32_pctrl_dt_setup_irq(pdev, pctl);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	pins = devm_kcalloc(&pdev->dev, pctl->npins, sizeof(*pins),
+	pins = devm_kसुस्मृति(&pdev->dev, pctl->npins, माप(*pins),
 			    GFP_KERNEL);
-	if (!pins)
-		return -ENOMEM;
+	अगर (!pins)
+		वापस -ENOMEM;
 
-	for (i = 0; i < pctl->npins; i++)
+	क्रम (i = 0; i < pctl->npins; i++)
 		pins[i] = pctl->pins[i].pin;
 
 	pctl->pctl_desc.name = dev_name(&pdev->dev);
@@ -1504,92 +1505,92 @@ int stm32_pctl_probe(struct platform_device *pdev)
 	pctl->pctl_desc.pins = pins;
 	pctl->pctl_desc.npins = pctl->npins;
 	pctl->pctl_desc.link_consumers = true;
-	pctl->pctl_desc.confops = &stm32_pconf_ops;
-	pctl->pctl_desc.pctlops = &stm32_pctrl_ops;
-	pctl->pctl_desc.pmxops = &stm32_pmx_ops;
+	pctl->pctl_desc.confops = &sपंचांग32_pconf_ops;
+	pctl->pctl_desc.pctlops = &sपंचांग32_pctrl_ops;
+	pctl->pctl_desc.pmxops = &sपंचांग32_pmx_ops;
 	pctl->dev = &pdev->dev;
 
-	pctl->pctl_dev = devm_pinctrl_register(&pdev->dev, &pctl->pctl_desc,
+	pctl->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, &pctl->pctl_desc,
 					       pctl);
 
-	if (IS_ERR(pctl->pctl_dev)) {
+	अगर (IS_ERR(pctl->pctl_dev)) अणु
 		dev_err(&pdev->dev, "Failed pinctrl registration\n");
-		return PTR_ERR(pctl->pctl_dev);
-	}
+		वापस PTR_ERR(pctl->pctl_dev);
+	पूर्ण
 
-	for_each_available_child_of_node(np, child)
-		if (of_property_read_bool(child, "gpio-controller"))
+	क्रम_each_available_child_of_node(np, child)
+		अगर (of_property_पढ़ो_bool(child, "gpio-controller"))
 			banks++;
 
-	if (!banks) {
+	अगर (!banks) अणु
 		dev_err(dev, "at least one GPIO bank is required\n");
-		return -EINVAL;
-	}
-	pctl->banks = devm_kcalloc(dev, banks, sizeof(*pctl->banks),
+		वापस -EINVAL;
+	पूर्ण
+	pctl->banks = devm_kसुस्मृति(dev, banks, माप(*pctl->banks),
 			GFP_KERNEL);
-	if (!pctl->banks)
-		return -ENOMEM;
+	अगर (!pctl->banks)
+		वापस -ENOMEM;
 
 	i = 0;
-	for_each_available_child_of_node(np, child) {
-		struct stm32_gpio_bank *bank = &pctl->banks[i];
+	क्रम_each_available_child_of_node(np, child) अणु
+		काष्ठा sपंचांग32_gpio_bank *bank = &pctl->banks[i];
 
-		if (of_property_read_bool(child, "gpio-controller")) {
+		अगर (of_property_पढ़ो_bool(child, "gpio-controller")) अणु
 			bank->rstc = of_reset_control_get_exclusive(child,
-								    NULL);
-			if (PTR_ERR(bank->rstc) == -EPROBE_DEFER) {
+								    शून्य);
+			अगर (PTR_ERR(bank->rstc) == -EPROBE_DEFER) अणु
 				of_node_put(child);
-				return -EPROBE_DEFER;
-			}
+				वापस -EPROBE_DEFER;
+			पूर्ण
 
-			bank->clk = of_clk_get_by_name(child, NULL);
-			if (IS_ERR(bank->clk)) {
-				if (PTR_ERR(bank->clk) != -EPROBE_DEFER)
+			bank->clk = of_clk_get_by_name(child, शून्य);
+			अगर (IS_ERR(bank->clk)) अणु
+				अगर (PTR_ERR(bank->clk) != -EPROBE_DEFER)
 					dev_err(dev,
 						"failed to get clk (%ld)\n",
 						PTR_ERR(bank->clk));
 				of_node_put(child);
-				return PTR_ERR(bank->clk);
-			}
+				वापस PTR_ERR(bank->clk);
+			पूर्ण
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for_each_available_child_of_node(np, child) {
-		if (of_property_read_bool(child, "gpio-controller")) {
-			ret = stm32_gpiolib_register_bank(pctl, child);
-			if (ret) {
+	क्रम_each_available_child_of_node(np, child) अणु
+		अगर (of_property_पढ़ो_bool(child, "gpio-controller")) अणु
+			ret = sपंचांग32_gpiolib_रेजिस्टर_bank(pctl, child);
+			अगर (ret) अणु
 				of_node_put(child);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			pctl->nbanks++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dev_info(dev, "Pinctrl STM32 initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused stm32_pinctrl_restore_gpio_regs(
-					struct stm32_pinctrl *pctl, u32 pin)
-{
-	const struct pin_desc *desc = pin_desc_get(pctl->pctl_dev, pin);
-	u32 val, alt, mode, offset = stm32_gpio_pin(pin);
-	struct pinctrl_gpio_range *range;
-	struct stm32_gpio_bank *bank;
+अटल पूर्णांक __maybe_unused sपंचांग32_pinctrl_restore_gpio_regs(
+					काष्ठा sपंचांग32_pinctrl *pctl, u32 pin)
+अणु
+	स्थिर काष्ठा pin_desc *desc = pin_desc_get(pctl->pctl_dev, pin);
+	u32 val, alt, mode, offset = sपंचांग32_gpio_pin(pin);
+	काष्ठा pinctrl_gpio_range *range;
+	काष्ठा sपंचांग32_gpio_bank *bank;
 	bool pin_is_irq;
-	int ret;
+	पूर्णांक ret;
 
 	range = pinctrl_find_gpio_range_from_pin(pctl->pctl_dev, pin);
-	if (!range)
-		return 0;
+	अगर (!range)
+		वापस 0;
 
 	pin_is_irq = gpiochip_line_is_irq(range->gc, offset);
 
-	if (!desc || (!pin_is_irq && !desc->gpio_owner))
-		return 0;
+	अगर (!desc || (!pin_is_irq && !desc->gpio_owner))
+		वापस 0;
 
 	bank = gpiochip_get_data(range->gc);
 
@@ -1598,48 +1599,48 @@ static int __maybe_unused stm32_pinctrl_restore_gpio_regs(
 	mode = bank->pin_backup[offset] & STM32_GPIO_BKP_MODE_MASK;
 	mode >>= STM32_GPIO_BKP_MODE_SHIFT;
 
-	ret = stm32_pmx_set_mode(bank, offset, mode, alt);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_pmx_set_mode(bank, offset, mode, alt);
+	अगर (ret)
+		वापस ret;
 
-	if (mode == 1) {
+	अगर (mode == 1) अणु
 		val = bank->pin_backup[offset] & BIT(STM32_GPIO_BKP_VAL);
 		val = val >> STM32_GPIO_BKP_VAL;
-		__stm32_gpio_set(bank, offset, val);
-	}
+		__sपंचांग32_gpio_set(bank, offset, val);
+	पूर्ण
 
 	val = bank->pin_backup[offset] & BIT(STM32_GPIO_BKP_TYPE);
 	val >>= STM32_GPIO_BKP_TYPE;
-	ret = stm32_pconf_set_driving(bank, offset, val);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_pconf_set_driving(bank, offset, val);
+	अगर (ret)
+		वापस ret;
 
 	val = bank->pin_backup[offset] & STM32_GPIO_BKP_SPEED_MASK;
 	val >>= STM32_GPIO_BKP_SPEED_SHIFT;
-	ret = stm32_pconf_set_speed(bank, offset, val);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_pconf_set_speed(bank, offset, val);
+	अगर (ret)
+		वापस ret;
 
 	val = bank->pin_backup[offset] & STM32_GPIO_BKP_PUPD_MASK;
 	val >>= STM32_GPIO_BKP_PUPD_SHIFT;
-	ret = stm32_pconf_set_bias(bank, offset, val);
-	if (ret)
-		return ret;
+	ret = sपंचांग32_pconf_set_bias(bank, offset, val);
+	अगर (ret)
+		वापस ret;
 
-	if (pin_is_irq)
-		regmap_field_write(pctl->irqmux[offset], bank->bank_ioport_nr);
+	अगर (pin_is_irq)
+		regmap_field_ग_लिखो(pctl->irqmux[offset], bank->bank_ioport_nr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __maybe_unused stm32_pinctrl_resume(struct device *dev)
-{
-	struct stm32_pinctrl *pctl = dev_get_drvdata(dev);
-	struct stm32_pinctrl_group *g = pctl->groups;
-	int i;
+पूर्णांक __maybe_unused sपंचांग32_pinctrl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_pinctrl *pctl = dev_get_drvdata(dev);
+	काष्ठा sपंचांग32_pinctrl_group *g = pctl->groups;
+	पूर्णांक i;
 
-	for (i = g->pin; i < g->pin + pctl->ngroups; i++)
-		stm32_pinctrl_restore_gpio_regs(pctl, i);
+	क्रम (i = g->pin; i < g->pin + pctl->ngroups; i++)
+		sपंचांग32_pinctrl_restore_gpio_regs(pctl, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

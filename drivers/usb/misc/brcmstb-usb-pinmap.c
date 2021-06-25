@@ -1,351 +1,352 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020, Broadcom */
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/device.h>
-#include <linux/of.h>
-#include <linux/kernel.h>
-#include <linux/kdebug.h>
-#include <linux/gpio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/gpio/consumer.h>
 
-struct out_pin {
+काष्ठा out_pin अणु
 	u32 enable_mask;
 	u32 value_mask;
 	u32 changed_mask;
 	u32 clr_changed_mask;
-	struct gpio_desc *gpiod;
-	const char *name;
-};
+	काष्ठा gpio_desc *gpiod;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-struct in_pin {
+काष्ठा in_pin अणु
 	u32 enable_mask;
 	u32 value_mask;
-	struct gpio_desc *gpiod;
-	const char *name;
-	struct brcmstb_usb_pinmap_data *pdata;
-};
+	काष्ठा gpio_desc *gpiod;
+	स्थिर अक्षर *name;
+	काष्ठा brcmstb_usb_pinmap_data *pdata;
+पूर्ण;
 
-struct brcmstb_usb_pinmap_data {
-	void __iomem *regs;
-	int in_count;
-	struct in_pin *in_pins;
-	int out_count;
-	struct out_pin *out_pins;
-};
+काष्ठा brcmstb_usb_pinmap_data अणु
+	व्योम __iomem *regs;
+	पूर्णांक in_count;
+	काष्ठा in_pin *in_pins;
+	पूर्णांक out_count;
+	काष्ठा out_pin *out_pins;
+पूर्ण;
 
 
-static void pinmap_set(void __iomem *reg, u32 mask)
-{
+अटल व्योम pinmap_set(व्योम __iomem *reg, u32 mask)
+अणु
 	u32 val;
 
-	val = readl(reg);
+	val = पढ़ोl(reg);
 	val |= mask;
-	writel(val, reg);
-}
+	ग_लिखोl(val, reg);
+पूर्ण
 
-static void pinmap_unset(void __iomem *reg, u32 mask)
-{
+अटल व्योम pinmap_unset(व्योम __iomem *reg, u32 mask)
+अणु
 	u32 val;
 
-	val = readl(reg);
+	val = पढ़ोl(reg);
 	val &= ~mask;
-	writel(val, reg);
-}
+	ग_लिखोl(val, reg);
+पूर्ण
 
-static void sync_in_pin(struct in_pin *pin)
-{
+अटल व्योम sync_in_pin(काष्ठा in_pin *pin)
+अणु
 	u32 val;
 
 	val = gpiod_get_value(pin->gpiod);
-	if (val)
+	अगर (val)
 		pinmap_set(pin->pdata->regs, pin->value_mask);
-	else
+	अन्यथा
 		pinmap_unset(pin->pdata->regs, pin->value_mask);
-}
+पूर्ण
 
 /*
- * Interrupt from override register, propagate from override bit
+ * Interrupt from override रेजिस्टर, propagate from override bit
  * to GPIO.
  */
-static irqreturn_t brcmstb_usb_pinmap_ovr_isr(int irq, void *dev_id)
-{
-	struct brcmstb_usb_pinmap_data *pdata = dev_id;
-	struct out_pin *pout;
+अटल irqवापस_t brcmstb_usb_pinmap_ovr_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा brcmstb_usb_pinmap_data *pdata = dev_id;
+	काष्ठा out_pin *pout;
 	u32 val;
 	u32 bit;
-	int x;
+	पूर्णांक x;
 
-	pr_debug("%s: reg: 0x%x\n", __func__, readl(pdata->regs));
+	pr_debug("%s: reg: 0x%x\n", __func__, पढ़ोl(pdata->regs));
 	pout = pdata->out_pins;
-	for (x = 0; x < pdata->out_count; x++) {
-		val = readl(pdata->regs);
-		if (val & pout->changed_mask) {
+	क्रम (x = 0; x < pdata->out_count; x++) अणु
+		val = पढ़ोl(pdata->regs);
+		अगर (val & pout->changed_mask) अणु
 			pinmap_set(pdata->regs, pout->clr_changed_mask);
 			pinmap_unset(pdata->regs, pout->clr_changed_mask);
 			bit = val & pout->value_mask;
 			gpiod_set_value(pout->gpiod, bit ? 1 : 0);
 			pr_debug("%s: %s bit changed state to %d\n",
 				 __func__, pout->name, bit ? 1 : 0);
-		}
-	}
-	return IRQ_HANDLED;
-}
+		पूर्ण
+	पूर्ण
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * Interrupt from GPIO, propagate from GPIO to override bit.
  */
-static irqreturn_t brcmstb_usb_pinmap_gpio_isr(int irq, void *dev_id)
-{
-	struct in_pin *pin = dev_id;
+अटल irqवापस_t brcmstb_usb_pinmap_gpio_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा in_pin *pin = dev_id;
 
 	pr_debug("%s: %s pin changed state\n", __func__, pin->name);
 	sync_in_pin(pin);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static void get_pin_counts(struct device_node *dn, int *in_count,
-			   int *out_count)
-{
-	int in;
-	int out;
+अटल व्योम get_pin_counts(काष्ठा device_node *dn, पूर्णांक *in_count,
+			   पूर्णांक *out_count)
+अणु
+	पूर्णांक in;
+	पूर्णांक out;
 
 	*in_count = 0;
 	*out_count = 0;
 	in = of_property_count_strings(dn, "brcm,in-functions");
-	if (in < 0)
-		return;
+	अगर (in < 0)
+		वापस;
 	out = of_property_count_strings(dn, "brcm,out-functions");
-	if (out < 0)
-		return;
+	अगर (out < 0)
+		वापस;
 	*in_count = in;
 	*out_count = out;
-}
+पूर्ण
 
-static int parse_pins(struct device *dev, struct device_node *dn,
-		      struct brcmstb_usb_pinmap_data *pdata)
-{
-	struct out_pin *pout;
-	struct in_pin *pin;
-	int index;
-	int res;
-	int x;
+अटल पूर्णांक parse_pins(काष्ठा device *dev, काष्ठा device_node *dn,
+		      काष्ठा brcmstb_usb_pinmap_data *pdata)
+अणु
+	काष्ठा out_pin *pout;
+	काष्ठा in_pin *pin;
+	पूर्णांक index;
+	पूर्णांक res;
+	पूर्णांक x;
 
 	pin = pdata->in_pins;
-	for (x = 0, index = 0; x < pdata->in_count; x++) {
+	क्रम (x = 0, index = 0; x < pdata->in_count; x++) अणु
 		pin->gpiod = devm_gpiod_get_index(dev, "in", x, GPIOD_IN);
-		if (IS_ERR(pin->gpiod)) {
+		अगर (IS_ERR(pin->gpiod)) अणु
 			dev_err(dev, "Error getting gpio %s\n", pin->name);
-			return PTR_ERR(pin->gpiod);
+			वापस PTR_ERR(pin->gpiod);
 
-		}
-		res = of_property_read_string_index(dn, "brcm,in-functions", x,
+		पूर्ण
+		res = of_property_पढ़ो_string_index(dn, "brcm,in-functions", x,
 						    &pin->name);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting brcm,in-functions for %s\n",
 				pin->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,in-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,in-masks", index++,
 						 &pin->enable_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 1st brcm,in-masks for %s\n",
 				pin->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,in-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,in-masks", index++,
 						 &pin->value_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 2nd brcm,in-masks for %s\n",
 				pin->name);
-			return res;
-		}
+			वापस res;
+		पूर्ण
 		pin->pdata = pdata;
 		pin++;
-	}
+	पूर्ण
 	pout = pdata->out_pins;
-	for (x = 0, index = 0; x < pdata->out_count; x++) {
+	क्रम (x = 0, index = 0; x < pdata->out_count; x++) अणु
 		pout->gpiod = devm_gpiod_get_index(dev, "out", x,
 						   GPIOD_OUT_HIGH);
-		if (IS_ERR(pout->gpiod)) {
+		अगर (IS_ERR(pout->gpiod)) अणु
 			dev_err(dev, "Error getting gpio %s\n", pin->name);
-			return PTR_ERR(pout->gpiod);
-		}
-		res = of_property_read_string_index(dn, "brcm,out-functions", x,
+			वापस PTR_ERR(pout->gpiod);
+		पूर्ण
+		res = of_property_पढ़ो_string_index(dn, "brcm,out-functions", x,
 						    &pout->name);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting brcm,out-functions for %s\n",
 				pout->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,out-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,out-masks", index++,
 						 &pout->enable_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 1st brcm,out-masks for %s\n",
 				pout->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,out-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,out-masks", index++,
 						 &pout->value_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 2nd brcm,out-masks for %s\n",
 				pout->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,out-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,out-masks", index++,
 						 &pout->changed_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 3rd brcm,out-masks for %s\n",
 				pout->name);
-			return res;
-		}
-		res = of_property_read_u32_index(dn, "brcm,out-masks", index++,
+			वापस res;
+		पूर्ण
+		res = of_property_पढ़ो_u32_index(dn, "brcm,out-masks", index++,
 						 &pout->clr_changed_mask);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			dev_err(dev, "Error getting 4th out-masks for %s\n",
 				pout->name);
-			return res;
-		}
+			वापस res;
+		पूर्ण
 		pout++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sync_all_pins(struct brcmstb_usb_pinmap_data *pdata)
-{
-	struct out_pin *pout;
-	struct in_pin *pin;
-	int val;
-	int x;
+अटल व्योम sync_all_pins(काष्ठा brcmstb_usb_pinmap_data *pdata)
+अणु
+	काष्ठा out_pin *pout;
+	काष्ठा in_pin *pin;
+	पूर्णांक val;
+	पूर्णांक x;
 
 	/*
 	 * Enable the override, clear any changed condition and
-	 * propagate the state to the GPIO for all out pins.
+	 * propagate the state to the GPIO क्रम all out pins.
 	 */
 	pout = pdata->out_pins;
-	for (x = 0; x < pdata->out_count; x++) {
+	क्रम (x = 0; x < pdata->out_count; x++) अणु
 		pinmap_set(pdata->regs, pout->enable_mask);
 		pinmap_set(pdata->regs, pout->clr_changed_mask);
 		pinmap_unset(pdata->regs, pout->clr_changed_mask);
-		val = readl(pdata->regs) & pout->value_mask;
+		val = पढ़ोl(pdata->regs) & pout->value_mask;
 		gpiod_set_value(pout->gpiod, val ? 1 : 0);
 		pout++;
-	}
+	पूर्ण
 
 	/* sync and enable all in pins. */
 	pin = pdata->in_pins;
-	for (x = 0; x < pdata->in_count; x++) {
+	क्रम (x = 0; x < pdata->in_count; x++) अणु
 		sync_in_pin(pin);
 		pinmap_set(pdata->regs, pin->enable_mask);
 		pin++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init brcmstb_usb_pinmap_probe(struct platform_device *pdev)
-{
-	struct device_node *dn = pdev->dev.of_node;
-	struct brcmstb_usb_pinmap_data *pdata;
-	struct in_pin *pin;
-	struct resource *r;
-	int out_count;
-	int in_count;
-	int err;
-	int irq;
-	int x;
+अटल पूर्णांक __init brcmstb_usb_pinmap_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *dn = pdev->dev.of_node;
+	काष्ठा brcmstb_usb_pinmap_data *pdata;
+	काष्ठा in_pin *pin;
+	काष्ठा resource *r;
+	पूर्णांक out_count;
+	पूर्णांक in_count;
+	पूर्णांक err;
+	पूर्णांक irq;
+	पूर्णांक x;
 
 	get_pin_counts(dn, &in_count, &out_count);
-	if ((in_count + out_count) == 0)
-		return -EINVAL;
+	अगर ((in_count + out_count) == 0)
+		वापस -EINVAL;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!r)
-		return -EINVAL;
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!r)
+		वापस -EINVAL;
 
 	pdata = devm_kzalloc(&pdev->dev,
-			     sizeof(*pdata) +
-			     (sizeof(struct in_pin) * in_count) +
-			     (sizeof(struct out_pin) * out_count), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+			     माप(*pdata) +
+			     (माप(काष्ठा in_pin) * in_count) +
+			     (माप(काष्ठा out_pin) * out_count), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	pdata->in_count = in_count;
 	pdata->out_count = out_count;
-	pdata->in_pins = (struct in_pin *)(pdata + 1);
-	pdata->out_pins = (struct out_pin *)(pdata->in_pins + in_count);
+	pdata->in_pins = (काष्ठा in_pin *)(pdata + 1);
+	pdata->out_pins = (काष्ठा out_pin *)(pdata->in_pins + in_count);
 
 	pdata->regs = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	if (!pdata->regs)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, pdata);
+	अगर (!pdata->regs)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, pdata);
 
 	err = parse_pins(&pdev->dev, dn, pdata);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sync_all_pins(pdata);
 
-	if (out_count) {
+	अगर (out_count) अणु
 
-		/* Enable interrupt for out pins */
-		irq = platform_get_irq(pdev, 0);
+		/* Enable पूर्णांकerrupt क्रम out pins */
+		irq = platक्रमm_get_irq(pdev, 0);
 		err = devm_request_irq(&pdev->dev, irq,
 				       brcmstb_usb_pinmap_ovr_isr,
 				       IRQF_TRIGGER_RISING,
 				       pdev->name, pdata);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "Error requesting IRQ\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	for (x = 0, pin = pdata->in_pins; x < pdata->in_count; x++, pin++) {
+	क्रम (x = 0, pin = pdata->in_pins; x < pdata->in_count; x++, pin++) अणु
 		irq = gpiod_to_irq(pin->gpiod);
-		if (irq < 0) {
+		अगर (irq < 0) अणु
 			dev_err(&pdev->dev, "Error getting IRQ for %s pin\n",
 				pin->name);
-			return irq;
-		}
+			वापस irq;
+		पूर्ण
 		err = devm_request_irq(&pdev->dev, irq,
 				       brcmstb_usb_pinmap_gpio_isr,
 				       IRQF_SHARED | IRQF_TRIGGER_RISING |
 				       IRQF_TRIGGER_FALLING,
 				       pdev->name, pin);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "Error requesting IRQ for %s pin\n",
 				pin->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(&pdev->dev, "Driver probe succeeded\n");
 	dev_dbg(&pdev->dev, "In pin count: %d, out pin count: %d\n",
 		pdata->in_count, pdata->out_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct of_device_id brcmstb_usb_pinmap_of_match[] = {
-	{ .compatible = "brcm,usb-pinmap" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id brcmstb_usb_pinmap_of_match[] = अणु
+	अणु .compatible = "brcm,usb-pinmap" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver brcmstb_usb_pinmap_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver brcmstb_usb_pinmap_driver = अणु
+	.driver = अणु
 		.name	= "brcm-usb-pinmap",
 		.of_match_table = brcmstb_usb_pinmap_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init brcmstb_usb_pinmap_init(void)
-{
-	return platform_driver_probe(&brcmstb_usb_pinmap_driver,
+अटल पूर्णांक __init brcmstb_usb_pinmap_init(व्योम)
+अणु
+	वापस platक्रमm_driver_probe(&brcmstb_usb_pinmap_driver,
 				     brcmstb_usb_pinmap_probe);
-}
+पूर्ण
 
 module_init(brcmstb_usb_pinmap_init);
 MODULE_AUTHOR("Al Cooper <alcooperx@gmail.com>");

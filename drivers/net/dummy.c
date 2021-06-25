@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* dummy.c: a dummy net driver
 
-	The purpose of this driver is to provide a device to point a
+	The purpose of this driver is to provide a device to poपूर्णांक a
 	route through, but not to actually transmit packets.
 
 	Why?  If you have a machine whose only connection is an occasional
@@ -10,18 +11,18 @@
 	This isn't very consistent.
 
 	One solution is to set up a dummy link using PPP/SLIP/PLIP,
-	but this seems (to me) too much overhead for too little gain.
-	This driver provides a small alternative. Thus you can do
+	but this seems (to me) too much overhead क्रम too little gain.
+	This driver provides a small alternative. Thus you can करो
 
 	[when not running slip]
-		ifconfig dummy slip.addr.ess.here up
+		अगरconfig dummy slip.addr.ess.here up
 	[to go to slip]
-		ifconfig dummy down
+		अगरconfig dummy करोwn
 		dip whatever
 
 	This was written by looking at Donald Becker's skeleton driver
 	and the loopback driver.  I then threw away anything that didn't
-	apply!	Thanks to Alan Cox for the key clue on what to do with
+	apply!	Thanks to Alan Cox क्रम the key clue on what to करो with
 	misguided packets.
 
 			Nick Holloway, 27th May 1994
@@ -29,97 +30,97 @@
 			Alan Cox, 30th May 1994
 */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/init.h>
-#include <linux/moduleparam.h>
-#include <linux/rtnetlink.h>
-#include <linux/net_tstamp.h>
-#include <net/rtnetlink.h>
-#include <linux/u64_stats_sync.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/init.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/net_tstamp.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <linux/u64_stats_sync.h>
 
-#define DRV_NAME	"dummy"
+#घोषणा DRV_NAME	"dummy"
 
-static int numdummies = 1;
+अटल पूर्णांक numdummies = 1;
 
 /* fake multicast ability */
-static void set_multicast_list(struct net_device *dev)
-{
-}
+अटल व्योम set_multicast_list(काष्ठा net_device *dev)
+अणु
+पूर्ण
 
-static void dummy_get_stats64(struct net_device *dev,
-			      struct rtnl_link_stats64 *stats)
-{
-	dev_lstats_read(dev, &stats->tx_packets, &stats->tx_bytes);
-}
+अटल व्योम dummy_get_stats64(काष्ठा net_device *dev,
+			      काष्ठा rtnl_link_stats64 *stats)
+अणु
+	dev_lstats_पढ़ो(dev, &stats->tx_packets, &stats->tx_bytes);
+पूर्ण
 
-static netdev_tx_t dummy_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+अटल netdev_tx_t dummy_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 	dev_lstats_add(dev, skb->len);
 
-	skb_tx_timestamp(skb);
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	skb_tx_बारtamp(skb);
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int dummy_dev_init(struct net_device *dev)
-{
-	dev->lstats = netdev_alloc_pcpu_stats(struct pcpu_lstats);
-	if (!dev->lstats)
-		return -ENOMEM;
+अटल पूर्णांक dummy_dev_init(काष्ठा net_device *dev)
+अणु
+	dev->lstats = netdev_alloc_pcpu_stats(काष्ठा pcpu_lstats);
+	अगर (!dev->lstats)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dummy_dev_uninit(struct net_device *dev)
-{
-	free_percpu(dev->lstats);
-}
+अटल व्योम dummy_dev_uninit(काष्ठा net_device *dev)
+अणु
+	मुक्त_percpu(dev->lstats);
+पूर्ण
 
-static int dummy_change_carrier(struct net_device *dev, bool new_carrier)
-{
-	if (new_carrier)
-		netif_carrier_on(dev);
-	else
-		netif_carrier_off(dev);
-	return 0;
-}
+अटल पूर्णांक dummy_change_carrier(काष्ठा net_device *dev, bool new_carrier)
+अणु
+	अगर (new_carrier)
+		netअगर_carrier_on(dev);
+	अन्यथा
+		netअगर_carrier_off(dev);
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops dummy_netdev_ops = {
-	.ndo_init		= dummy_dev_init,
-	.ndo_uninit		= dummy_dev_uninit,
-	.ndo_start_xmit		= dummy_xmit,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_get_stats64	= dummy_get_stats64,
-	.ndo_change_carrier	= dummy_change_carrier,
-};
+अटल स्थिर काष्ठा net_device_ops dummy_netdev_ops = अणु
+	.nकरो_init		= dummy_dev_init,
+	.nकरो_uninit		= dummy_dev_uninit,
+	.nकरो_start_xmit		= dummy_xmit,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_get_stats64	= dummy_get_stats64,
+	.nकरो_change_carrier	= dummy_change_carrier,
+पूर्ण;
 
-static void dummy_get_drvinfo(struct net_device *dev,
-			      struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-}
+अटल व्योम dummy_get_drvinfo(काष्ठा net_device *dev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+पूर्ण
 
-static const struct ethtool_ops dummy_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops dummy_ethtool_ops = अणु
 	.get_drvinfo            = dummy_get_drvinfo,
 	.get_ts_info		= ethtool_op_get_ts_info,
-};
+पूर्ण;
 
-static void dummy_setup(struct net_device *dev)
-{
+अटल व्योम dummy_setup(काष्ठा net_device *dev)
+अणु
 	ether_setup(dev);
 
-	/* Initialize the device structure. */
+	/* Initialize the device काष्ठाure. */
 	dev->netdev_ops = &dummy_netdev_ops;
 	dev->ethtool_ops = &dummy_ethtool_ops;
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 
-	/* Fill in device structure with ethernet-generic values. */
+	/* Fill in device काष्ठाure with ethernet-generic values. */
 	dev->flags |= IFF_NOARP;
 	dev->flags &= ~IFF_MULTICAST;
 	dev->priv_flags |= IFF_LIVE_ADDR_CHANGE | IFF_NO_QUEUE;
@@ -129,84 +130,84 @@ static void dummy_setup(struct net_device *dev)
 	dev->features	|= NETIF_F_GSO_ENCAP_ALL;
 	dev->hw_features |= dev->features;
 	dev->hw_enc_features |= dev->features;
-	eth_hw_addr_random(dev);
+	eth_hw_addr_अक्रमom(dev);
 
 	dev->min_mtu = 0;
 	dev->max_mtu = 0;
-}
+पूर्ण
 
-static int dummy_validate(struct nlattr *tb[], struct nlattr *data[],
-			  struct netlink_ext_ack *extack)
-{
-	if (tb[IFLA_ADDRESS]) {
-		if (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
-			return -EINVAL;
-		if (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
-			return -EADDRNOTAVAIL;
-	}
-	return 0;
-}
+अटल पूर्णांक dummy_validate(काष्ठा nlattr *tb[], काष्ठा nlattr *data[],
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (tb[IFLA_ADDRESS]) अणु
+		अगर (nla_len(tb[IFLA_ADDRESS]) != ETH_ALEN)
+			वापस -EINVAL;
+		अगर (!is_valid_ether_addr(nla_data(tb[IFLA_ADDRESS])))
+			वापस -EADDRNOTAVAIL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct rtnl_link_ops dummy_link_ops __read_mostly = {
+अटल काष्ठा rtnl_link_ops dummy_link_ops __पढ़ो_mostly = अणु
 	.kind		= DRV_NAME,
 	.setup		= dummy_setup,
 	.validate	= dummy_validate,
-};
+पूर्ण;
 
 /* Number of dummy devices to be set up by this module. */
-module_param(numdummies, int, 0);
+module_param(numdummies, पूर्णांक, 0);
 MODULE_PARM_DESC(numdummies, "Number of dummy pseudo devices");
 
-static int __init dummy_init_one(void)
-{
-	struct net_device *dev_dummy;
-	int err;
+अटल पूर्णांक __init dummy_init_one(व्योम)
+अणु
+	काष्ठा net_device *dev_dummy;
+	पूर्णांक err;
 
 	dev_dummy = alloc_netdev(0, "dummy%d", NET_NAME_ENUM, dummy_setup);
-	if (!dev_dummy)
-		return -ENOMEM;
+	अगर (!dev_dummy)
+		वापस -ENOMEM;
 
 	dev_dummy->rtnl_link_ops = &dummy_link_ops;
-	err = register_netdevice(dev_dummy);
-	if (err < 0)
-		goto err;
-	return 0;
+	err = रेजिस्टर_netdevice(dev_dummy);
+	अगर (err < 0)
+		जाओ err;
+	वापस 0;
 
 err:
-	free_netdev(dev_dummy);
-	return err;
-}
+	मुक्त_netdev(dev_dummy);
+	वापस err;
+पूर्ण
 
-static int __init dummy_init_module(void)
-{
-	int i, err = 0;
+अटल पूर्णांक __init dummy_init_module(व्योम)
+अणु
+	पूर्णांक i, err = 0;
 
-	down_write(&pernet_ops_rwsem);
+	करोwn_ग_लिखो(&pernet_ops_rwsem);
 	rtnl_lock();
-	err = __rtnl_link_register(&dummy_link_ops);
-	if (err < 0)
-		goto out;
+	err = __rtnl_link_रेजिस्टर(&dummy_link_ops);
+	अगर (err < 0)
+		जाओ out;
 
-	for (i = 0; i < numdummies && !err; i++) {
+	क्रम (i = 0; i < numdummies && !err; i++) अणु
 		err = dummy_init_one();
 		cond_resched();
-	}
-	if (err < 0)
-		__rtnl_link_unregister(&dummy_link_ops);
+	पूर्ण
+	अगर (err < 0)
+		__rtnl_link_unरेजिस्टर(&dummy_link_ops);
 
 out:
 	rtnl_unlock();
-	up_write(&pernet_ops_rwsem);
+	up_ग_लिखो(&pernet_ops_rwsem);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit dummy_cleanup_module(void)
-{
-	rtnl_link_unregister(&dummy_link_ops);
-}
+अटल व्योम __निकास dummy_cleanup_module(व्योम)
+अणु
+	rtnl_link_unरेजिस्टर(&dummy_link_ops);
+पूर्ण
 
 module_init(dummy_init_module);
-module_exit(dummy_cleanup_module);
+module_निकास(dummy_cleanup_module);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_RTNL_LINK(DRV_NAME);

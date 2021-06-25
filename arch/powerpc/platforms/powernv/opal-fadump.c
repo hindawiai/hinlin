@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Firmware-Assisted Dump support on POWER platform (OPAL).
+ * Firmware-Assisted Dump support on POWER platक्रमm (OPAL).
  *
  * Copyright 2019, Hari Bathini, IBM Corporation.
  */
 
-#define pr_fmt(fmt) "opal fadump: " fmt
+#घोषणा pr_fmt(fmt) "opal fadump: " fmt
 
-#include <linux/string.h>
-#include <linux/seq_file.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/libfdt.h>
-#include <linux/mm.h>
-#include <linux/crash_dump.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/crash_dump.h>
 
-#include <asm/page.h>
-#include <asm/opal.h>
-#include <asm/fadump-internal.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/fadump-पूर्णांकernal.h>
 
-#include "opal-fadump.h"
+#समावेश "opal-fadump.h"
 
 
-#ifdef CONFIG_PRESERVE_FA_DUMP
+#अगर_घोषित CONFIG_PRESERVE_FA_DUMP
 /*
  * When dump is active but PRESERVE_FA_DUMP is enabled on the kernel,
  * ensure crash data is preserved in hope that the subsequent memory
  * preserving kernel boot is going to process this crash data.
  */
-void __init opal_fadump_dt_scan(struct fw_dump *fadump_conf, u64 node)
-{
-	const struct opal_fadump_mem_struct *opal_fdm_active;
-	const __be32 *prop;
-	unsigned long dn;
+व्योम __init opal_fadump_dt_scan(काष्ठा fw_dump *fadump_conf, u64 node)
+अणु
+	स्थिर काष्ठा opal_fadump_mem_काष्ठा *opal_fdm_active;
+	स्थिर __be32 *prop;
+	अचिन्हित दीर्घ dn;
 	u64 addr = 0;
 	s64 ret;
 
 	dn = of_get_flat_dt_subnode_by_name(node, "dump");
-	if (dn == -FDT_ERR_NOTFOUND)
-		return;
+	अगर (dn == -FDT_ERR_NOTFOUND)
+		वापस;
 
 	/*
-	 * Check if dump has been initiated on last reboot.
+	 * Check अगर dump has been initiated on last reboot.
 	 */
-	prop = of_get_flat_dt_prop(dn, "mpipl-boot", NULL);
-	if (!prop)
-		return;
+	prop = of_get_flat_dt_prop(dn, "mpipl-boot", शून्य);
+	अगर (!prop)
+		वापस;
 
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_KERNEL, &addr);
-	if ((ret != OPAL_SUCCESS) || !addr) {
+	अगर ((ret != OPAL_SUCCESS) || !addr) अणु
 		pr_debug("Could not get Kernel metadata (%lld)\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Preserve memory only if kernel memory regions are registered
-	 * with f/w for MPIPL.
+	 * Preserve memory only अगर kernel memory regions are रेजिस्टरed
+	 * with f/w क्रम MPIPL.
 	 */
 	addr = be64_to_cpu(addr);
 	pr_debug("Kernel metadata addr: %llx\n", addr);
-	opal_fdm_active = (void *)addr;
-	if (opal_fdm_active->registered_regions == 0)
-		return;
+	opal_fdm_active = (व्योम *)addr;
+	अगर (opal_fdm_active->रेजिस्टरed_regions == 0)
+		वापस;
 
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_BOOT_MEM, &addr);
-	if ((ret != OPAL_SUCCESS) || !addr) {
+	अगर ((ret != OPAL_SUCCESS) || !addr) अणु
 		pr_err("Failed to get boot memory tag (%lld)\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Memory below this address can be used for booting a
+	 * Memory below this address can be used क्रम booting a
 	 * capture kernel or petitboot kernel. Preserve everything
-	 * above this address for processing crashdump.
+	 * above this address क्रम processing crashdump.
 	 */
 	fadump_conf->boot_mem_top = be64_to_cpu(addr);
 	pr_debug("Preserve everything above %llx\n", fadump_conf->boot_mem_top);
 
 	pr_info("Firmware-assisted dump is active.\n");
 	fadump_conf->dump_active = 1;
-}
+पूर्ण
 
-#else /* CONFIG_PRESERVE_FA_DUMP */
-static const struct opal_fadump_mem_struct *opal_fdm_active;
-static const struct opal_mpipl_fadump *opal_cpu_metadata;
-static struct opal_fadump_mem_struct *opal_fdm;
+#अन्यथा /* CONFIG_PRESERVE_FA_DUMP */
+अटल स्थिर काष्ठा opal_fadump_mem_काष्ठा *opal_fdm_active;
+अटल स्थिर काष्ठा opal_mpipl_fadump *opal_cpu_metadata;
+अटल काष्ठा opal_fadump_mem_काष्ठा *opal_fdm;
 
-#ifdef CONFIG_OPAL_CORE
-extern bool kernel_initiated;
-#endif
+#अगर_घोषित CONFIG_OPAL_CORE
+बाह्य bool kernel_initiated;
+#पूर्ण_अगर
 
-static int opal_fadump_unregister(struct fw_dump *fadump_conf);
+अटल पूर्णांक opal_fadump_unरेजिस्टर(काष्ठा fw_dump *fadump_conf);
 
-static void opal_fadump_update_config(struct fw_dump *fadump_conf,
-				      const struct opal_fadump_mem_struct *fdm)
-{
+अटल व्योम opal_fadump_update_config(काष्ठा fw_dump *fadump_conf,
+				      स्थिर काष्ठा opal_fadump_mem_काष्ठा *fdm)
+अणु
 	pr_debug("Boot memory regions count: %d\n", fdm->region_cnt);
 
 	/*
@@ -106,27 +107,27 @@ static void opal_fadump_update_config(struct fw_dump *fadump_conf,
 		 fadump_conf->boot_mem_dest_addr);
 
 	fadump_conf->fadumphdr_addr = fdm->fadumphdr_addr;
-}
+पूर्ण
 
 /*
  * This function is called in the capture kernel to get configuration details
  * from metadata setup by the first kernel.
  */
-static void opal_fadump_get_config(struct fw_dump *fadump_conf,
-				   const struct opal_fadump_mem_struct *fdm)
-{
-	unsigned long base, size, last_end, hole_size;
-	int i;
+अटल व्योम opal_fadump_get_config(काष्ठा fw_dump *fadump_conf,
+				   स्थिर काष्ठा opal_fadump_mem_काष्ठा *fdm)
+अणु
+	अचिन्हित दीर्घ base, size, last_end, hole_size;
+	पूर्णांक i;
 
-	if (!fadump_conf->dump_active)
-		return;
+	अगर (!fadump_conf->dump_active)
+		वापस;
 
 	last_end = 0;
 	hole_size = 0;
 	fadump_conf->boot_memory_size = 0;
 
 	pr_debug("Boot memory regions:\n");
-	for (i = 0; i < fdm->region_cnt; i++) {
+	क्रम (i = 0; i < fdm->region_cnt; i++) अणु
 		base = fdm->rgn[i].src;
 		size = fdm->rgn[i].size;
 		pr_debug("\t[%03d] base: 0x%lx, size: 0x%lx\n", i, base, size);
@@ -137,69 +138,69 @@ static void opal_fadump_get_config(struct fw_dump *fadump_conf,
 		hole_size += (base - last_end);
 
 		last_end = base + size;
-	}
+	पूर्ण
 
 	/*
-	 * Start address of reserve dump area (permanent reservation) for
-	 * re-registering FADump after dump capture.
+	 * Start address of reserve dump area (permanent reservation) क्रम
+	 * re-रेजिस्टरing FADump after dump capture.
 	 */
 	fadump_conf->reserve_dump_area_start = fdm->rgn[0].dest;
 
 	/*
-	 * Rarely, but it can so happen that system crashes before all
-	 * boot memory regions are registered for MPIPL. In such
-	 * cases, warn that the vmcore may not be accurate and proceed
-	 * anyway as that is the best bet considering free pages, cache
+	 * Rarely, but it can so happen that प्रणाली crashes beक्रमe all
+	 * boot memory regions are रेजिस्टरed क्रम MPIPL. In such
+	 * हालs, warn that the vmcore may not be accurate and proceed
+	 * anyway as that is the best bet considering मुक्त pages, cache
 	 * pages, user pages, etc are usually filtered out.
 	 *
 	 * Hope the memory that could not be preserved only has pages
-	 * that are usually filtered out while saving the vmcore.
+	 * that are usually filtered out जबतक saving the vmcore.
 	 */
-	if (fdm->region_cnt > fdm->registered_regions) {
+	अगर (fdm->region_cnt > fdm->रेजिस्टरed_regions) अणु
 		pr_warn("Not all memory regions were saved!!!\n");
 		pr_warn("  Unsaved memory regions:\n");
-		i = fdm->registered_regions;
-		while (i < fdm->region_cnt) {
+		i = fdm->रेजिस्टरed_regions;
+		जबतक (i < fdm->region_cnt) अणु
 			pr_warn("\t[%03d] base: 0x%llx, size: 0x%llx\n",
 				i, fdm->rgn[i].src, fdm->rgn[i].size);
 			i++;
-		}
+		पूर्ण
 
 		pr_warn("If the unsaved regions only contain pages that are filtered out (eg. free/user pages), the vmcore should still be usable.\n");
 		pr_warn("WARNING: If the unsaved regions contain kernel pages, the vmcore will be corrupted.\n");
-	}
+	पूर्ण
 
 	fadump_conf->boot_mem_top = (fadump_conf->boot_memory_size + hole_size);
 	fadump_conf->boot_mem_regs_cnt = fdm->region_cnt;
 	opal_fadump_update_config(fadump_conf, fdm);
-}
+पूर्ण
 
 /* Initialize kernel metadata */
-static void opal_fadump_init_metadata(struct opal_fadump_mem_struct *fdm)
-{
+अटल व्योम opal_fadump_init_metadata(काष्ठा opal_fadump_mem_काष्ठा *fdm)
+अणु
 	fdm->version = OPAL_FADUMP_VERSION;
 	fdm->region_cnt = 0;
-	fdm->registered_regions = 0;
+	fdm->रेजिस्टरed_regions = 0;
 	fdm->fadumphdr_addr = 0;
-}
+पूर्ण
 
-static u64 opal_fadump_init_mem_struct(struct fw_dump *fadump_conf)
-{
+अटल u64 opal_fadump_init_mem_काष्ठा(काष्ठा fw_dump *fadump_conf)
+अणु
 	u64 addr = fadump_conf->reserve_dump_area_start;
-	int i;
+	पूर्णांक i;
 
 	opal_fdm = __va(fadump_conf->kernel_metadata);
 	opal_fadump_init_metadata(opal_fdm);
 
 	/* Boot memory regions */
-	for (i = 0; i < fadump_conf->boot_mem_regs_cnt; i++) {
+	क्रम (i = 0; i < fadump_conf->boot_mem_regs_cnt; i++) अणु
 		opal_fdm->rgn[i].src	= fadump_conf->boot_mem_addr[i];
 		opal_fdm->rgn[i].dest	= addr;
 		opal_fdm->rgn[i].size	= fadump_conf->boot_mem_sz[i];
 
 		opal_fdm->region_cnt++;
 		addr += fadump_conf->boot_mem_sz[i];
-	}
+	पूर्ण
 
 	/*
 	 * Kernel metadata is passed to f/w and retrieved in capture kerenl.
@@ -210,21 +211,21 @@ static u64 opal_fadump_init_mem_struct(struct fw_dump *fadump_conf)
 
 	opal_fadump_update_config(fadump_conf, opal_fdm);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static u64 opal_fadump_get_metadata_size(void)
-{
-	return PAGE_ALIGN(sizeof(struct opal_fadump_mem_struct));
-}
+अटल u64 opal_fadump_get_metadata_size(व्योम)
+अणु
+	वापस PAGE_ALIGN(माप(काष्ठा opal_fadump_mem_काष्ठा));
+पूर्ण
 
-static int opal_fadump_setup_metadata(struct fw_dump *fadump_conf)
-{
-	int err = 0;
+अटल पूर्णांक opal_fadump_setup_metadata(काष्ठा fw_dump *fadump_conf)
+अणु
+	पूर्णांक err = 0;
 	s64 ret;
 
 	/*
-	 * Use the last page(s) in FADump memory reservation for
+	 * Use the last page(s) in FADump memory reservation क्रम
 	 * kernel metadata.
 	 */
 	fadump_conf->kernel_metadata = (fadump_conf->reserve_dump_area_start +
@@ -232,7 +233,7 @@ static int opal_fadump_setup_metadata(struct fw_dump *fadump_conf)
 					opal_fadump_get_metadata_size());
 	pr_info("Kernel metadata addr: %llx\n", fadump_conf->kernel_metadata);
 
-	/* Initialize kernel metadata before registering the address with f/w */
+	/* Initialize kernel metadata beक्रमe रेजिस्टरing the address with f/w */
 	opal_fdm = __va(fadump_conf->kernel_metadata);
 	opal_fadump_init_metadata(opal_fdm);
 
@@ -240,131 +241,131 @@ static int opal_fadump_setup_metadata(struct fw_dump *fadump_conf)
 	 * Register metadata address with f/w. Can be retrieved in
 	 * the capture kernel.
 	 */
-	ret = opal_mpipl_register_tag(OPAL_MPIPL_TAG_KERNEL,
+	ret = opal_mpipl_रेजिस्टर_tag(OPAL_MPIPL_TAG_KERNEL,
 				      fadump_conf->kernel_metadata);
-	if (ret != OPAL_SUCCESS) {
+	अगर (ret != OPAL_SUCCESS) अणु
 		pr_err("Failed to set kernel metadata tag!\n");
 		err = -EPERM;
-	}
+	पूर्ण
 
 	/*
 	 * Register boot memory top address with f/w. Should be retrieved
-	 * by a kernel that intends to preserve crash'ed kernel's memory.
+	 * by a kernel that पूर्णांकends to preserve crash'ed kernel's memory.
 	 */
-	ret = opal_mpipl_register_tag(OPAL_MPIPL_TAG_BOOT_MEM,
+	ret = opal_mpipl_रेजिस्टर_tag(OPAL_MPIPL_TAG_BOOT_MEM,
 				      fadump_conf->boot_mem_top);
-	if (ret != OPAL_SUCCESS) {
+	अगर (ret != OPAL_SUCCESS) अणु
 		pr_err("Failed to set boot memory tag!\n");
 		err = -EPERM;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u64 opal_fadump_get_bootmem_min(void)
-{
-	return OPAL_FADUMP_MIN_BOOT_MEM;
-}
+अटल u64 opal_fadump_get_booपंचांगem_min(व्योम)
+अणु
+	वापस OPAL_FADUMP_MIN_BOOT_MEM;
+पूर्ण
 
-static int opal_fadump_register(struct fw_dump *fadump_conf)
-{
+अटल पूर्णांक opal_fadump_रेजिस्टर(काष्ठा fw_dump *fadump_conf)
+अणु
 	s64 rc = OPAL_PARAMETER;
-	int i, err = -EIO;
+	पूर्णांक i, err = -EIO;
 
-	for (i = 0; i < opal_fdm->region_cnt; i++) {
+	क्रम (i = 0; i < opal_fdm->region_cnt; i++) अणु
 		rc = opal_mpipl_update(OPAL_MPIPL_ADD_RANGE,
 				       opal_fdm->rgn[i].src,
 				       opal_fdm->rgn[i].dest,
 				       opal_fdm->rgn[i].size);
-		if (rc != OPAL_SUCCESS)
-			break;
+		अगर (rc != OPAL_SUCCESS)
+			अवरोध;
 
-		opal_fdm->registered_regions++;
-	}
+		opal_fdm->रेजिस्टरed_regions++;
+	पूर्ण
 
-	switch (rc) {
-	case OPAL_SUCCESS:
+	चयन (rc) अणु
+	हाल OPAL_SUCCESS:
 		pr_info("Registration is successful!\n");
-		fadump_conf->dump_registered = 1;
+		fadump_conf->dump_रेजिस्टरed = 1;
 		err = 0;
-		break;
-	case OPAL_RESOURCE:
+		अवरोध;
+	हाल OPAL_RESOURCE:
 		/* If MAX regions limit in f/w is hit, warn and proceed. */
 		pr_warn("%d regions could not be registered for MPIPL as MAX limit is reached!\n",
-			(opal_fdm->region_cnt - opal_fdm->registered_regions));
-		fadump_conf->dump_registered = 1;
+			(opal_fdm->region_cnt - opal_fdm->रेजिस्टरed_regions));
+		fadump_conf->dump_रेजिस्टरed = 1;
 		err = 0;
-		break;
-	case OPAL_PARAMETER:
+		अवरोध;
+	हाल OPAL_PARAMETER:
 		pr_err("Failed to register. Parameter Error(%lld).\n", rc);
-		break;
-	case OPAL_HARDWARE:
+		अवरोध;
+	हाल OPAL_HARDWARE:
 		pr_err("Support not available.\n");
 		fadump_conf->fadump_supported = 0;
 		fadump_conf->fadump_enabled = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Failed to register. Unknown Error(%lld).\n", rc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
-	 * If some regions were registered before OPAL_MPIPL_ADD_RANGE
-	 * OPAL call failed, unregister all regions.
+	 * If some regions were रेजिस्टरed beक्रमe OPAL_MPIPL_ADD_RANGE
+	 * OPAL call failed, unरेजिस्टर all regions.
 	 */
-	if ((err < 0) && (opal_fdm->registered_regions > 0))
-		opal_fadump_unregister(fadump_conf);
+	अगर ((err < 0) && (opal_fdm->रेजिस्टरed_regions > 0))
+		opal_fadump_unरेजिस्टर(fadump_conf);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int opal_fadump_unregister(struct fw_dump *fadump_conf)
-{
+अटल पूर्णांक opal_fadump_unरेजिस्टर(काष्ठा fw_dump *fadump_conf)
+अणु
 	s64 rc;
 
 	rc = opal_mpipl_update(OPAL_MPIPL_REMOVE_ALL, 0, 0, 0);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Failed to un-register - unexpected Error(%lld).\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	opal_fdm->registered_regions = 0;
-	fadump_conf->dump_registered = 0;
-	return 0;
-}
+	opal_fdm->रेजिस्टरed_regions = 0;
+	fadump_conf->dump_रेजिस्टरed = 0;
+	वापस 0;
+पूर्ण
 
-static int opal_fadump_invalidate(struct fw_dump *fadump_conf)
-{
+अटल पूर्णांक opal_fadump_invalidate(काष्ठा fw_dump *fadump_conf)
+अणु
 	s64 rc;
 
 	rc = opal_mpipl_update(OPAL_MPIPL_FREE_PRESERVED_MEMORY, 0, 0, 0);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Failed to invalidate - unexpected Error(%lld).\n", rc);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	fadump_conf->dump_active = 0;
-	opal_fdm_active = NULL;
-	return 0;
-}
+	opal_fdm_active = शून्य;
+	वापस 0;
+पूर्ण
 
-static void opal_fadump_cleanup(struct fw_dump *fadump_conf)
-{
+अटल व्योम opal_fadump_cleanup(काष्ठा fw_dump *fadump_conf)
+अणु
 	s64 ret;
 
-	ret = opal_mpipl_register_tag(OPAL_MPIPL_TAG_KERNEL, 0);
-	if (ret != OPAL_SUCCESS)
+	ret = opal_mpipl_रेजिस्टर_tag(OPAL_MPIPL_TAG_KERNEL, 0);
+	अगर (ret != OPAL_SUCCESS)
 		pr_warn("Could not reset (%llu) kernel metadata tag!\n", ret);
-}
+पूर्ण
 
 /*
- * Verify if CPU state data is available. If available, do a bit of sanity
- * checking before processing this data.
+ * Verअगरy अगर CPU state data is available. If available, करो a bit of sanity
+ * checking beक्रमe processing this data.
  */
-static bool __init is_opal_fadump_cpu_data_valid(struct fw_dump *fadump_conf)
-{
-	if (!opal_cpu_metadata)
-		return false;
+अटल bool __init is_opal_fadump_cpu_data_valid(काष्ठा fw_dump *fadump_conf)
+अणु
+	अगर (!opal_cpu_metadata)
+		वापस false;
 
 	fadump_conf->cpu_state_data_version =
 		be32_to_cpu(opal_cpu_metadata->cpu_data_version);
@@ -375,70 +376,70 @@ static bool __init is_opal_fadump_cpu_data_valid(struct fw_dump *fadump_conf)
 	fadump_conf->cpu_state_data_size =
 		be64_to_cpu(opal_cpu_metadata->region[0].size);
 
-	if (fadump_conf->cpu_state_data_version != HDAT_FADUMP_CPU_DATA_VER) {
+	अगर (fadump_conf->cpu_state_data_version != HDAT_FADUMP_CPU_DATA_VER) अणु
 		pr_warn("Supported CPU state data version: %u, found: %d!\n",
 			HDAT_FADUMP_CPU_DATA_VER,
 			fadump_conf->cpu_state_data_version);
 		pr_warn("WARNING: F/W using newer CPU state data format!!\n");
-	}
+	पूर्ण
 
-	if ((fadump_conf->cpu_state_dest_vaddr == 0) ||
+	अगर ((fadump_conf->cpu_state_dest_vaddr == 0) ||
 	    (fadump_conf->cpu_state_entry_size == 0) ||
 	    (fadump_conf->cpu_state_entry_size >
-	     fadump_conf->cpu_state_data_size)) {
+	     fadump_conf->cpu_state_data_size)) अणु
 		pr_err("CPU state data is invalid. Ignoring!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Convert CPU state data saved at the time of crash into ELF notes.
+ * Convert CPU state data saved at the समय of crash पूर्णांकo ELF notes.
  *
- * While the crashing CPU's register data is saved by the kernel, CPU state
- * data for all CPUs is saved by f/w. In CPU state data provided by f/w,
- * each register entry is of 16 bytes, a numerical identifier along with
- * a GPR/SPR flag in the first 8 bytes and the register value in the next
- * 8 bytes. For more details refer to F/W documentation. If this data is
- * missing or in unsupported format, append crashing CPU's register data
+ * While the crashing CPU's रेजिस्टर data is saved by the kernel, CPU state
+ * data क्रम all CPUs is saved by f/w. In CPU state data provided by f/w,
+ * each रेजिस्टर entry is of 16 bytes, a numerical identअगरier aदीर्घ with
+ * a GPR/SPR flag in the first 8 bytes and the रेजिस्टर value in the next
+ * 8 bytes. For more details refer to F/W करोcumentation. If this data is
+ * missing or in unsupported क्रमmat, append crashing CPU's रेजिस्टर data
  * saved by the kernel in the PT_NOTE, to have something to work with in
  * the vmcore file.
  */
-static int __init
-opal_fadump_build_cpu_notes(struct fw_dump *fadump_conf,
-			    struct fadump_crash_info_header *fdh)
-{
-	u32 thread_pir, size_per_thread, regs_offset, regs_cnt, reg_esize;
-	struct hdat_fadump_thread_hdr *thdr;
+अटल पूर्णांक __init
+opal_fadump_build_cpu_notes(काष्ठा fw_dump *fadump_conf,
+			    काष्ठा fadump_crash_info_header *fdh)
+अणु
+	u32 thपढ़ो_pir, size_per_thपढ़ो, regs_offset, regs_cnt, reg_esize;
+	काष्ठा hdat_fadump_thपढ़ो_hdr *thdr;
 	bool is_cpu_data_valid = false;
 	u32 num_cpus = 1, *note_buf;
-	struct pt_regs regs;
-	char *bufp;
-	int rc, i;
+	काष्ठा pt_regs regs;
+	अक्षर *bufp;
+	पूर्णांक rc, i;
 
-	if (is_opal_fadump_cpu_data_valid(fadump_conf)) {
-		size_per_thread = fadump_conf->cpu_state_entry_size;
-		num_cpus = (fadump_conf->cpu_state_data_size / size_per_thread);
+	अगर (is_opal_fadump_cpu_data_valid(fadump_conf)) अणु
+		size_per_thपढ़ो = fadump_conf->cpu_state_entry_size;
+		num_cpus = (fadump_conf->cpu_state_data_size / size_per_thपढ़ो);
 		bufp = __va(fadump_conf->cpu_state_dest_vaddr);
 		is_cpu_data_valid = true;
-	}
+	पूर्ण
 
 	rc = fadump_setup_cpu_notes_buf(num_cpus);
-	if (rc != 0)
-		return rc;
+	अगर (rc != 0)
+		वापस rc;
 
 	note_buf = (u32 *)fadump_conf->cpu_notes_buf_vaddr;
-	if (!is_cpu_data_valid)
-		goto out;
+	अगर (!is_cpu_data_valid)
+		जाओ out;
 
 	/*
-	 * Offset for register entries, entry size and registers count is
-	 * duplicated in every thread header in keeping with HDAT format.
-	 * Use these values from the first thread header.
+	 * Offset क्रम रेजिस्टर entries, entry size and रेजिस्टरs count is
+	 * duplicated in every thपढ़ो header in keeping with HDAT क्रमmat.
+	 * Use these values from the first thपढ़ो header.
 	 */
-	thdr = (struct hdat_fadump_thread_hdr *)bufp;
-	regs_offset = (offsetof(struct hdat_fadump_thread_hdr, offset) +
+	thdr = (काष्ठा hdat_fadump_thपढ़ो_hdr *)bufp;
+	regs_offset = (दुरत्व(काष्ठा hdat_fadump_thपढ़ो_hdr, offset) +
 		       be32_to_cpu(thdr->offset));
 	reg_esize = be32_to_cpu(thdr->esize);
 	regs_cnt  = be32_to_cpu(thdr->ecnt);
@@ -448,269 +449,269 @@ opal_fadump_build_cpu_notes(struct fw_dump *fadump_conf,
 	pr_debug("\tOffset: %u, Entry size: %u, Cnt: %u\n",
 		 regs_offset, reg_esize, regs_cnt);
 
-	for (i = 0; i < num_cpus; i++, bufp += size_per_thread) {
-		thdr = (struct hdat_fadump_thread_hdr *)bufp;
+	क्रम (i = 0; i < num_cpus; i++, bufp += size_per_thपढ़ो) अणु
+		thdr = (काष्ठा hdat_fadump_thपढ़ो_hdr *)bufp;
 
-		thread_pir = be32_to_cpu(thdr->pir);
+		thपढ़ो_pir = be32_to_cpu(thdr->pir);
 		pr_debug("[%04d] PIR: 0x%x, core state: 0x%02x\n",
-			 i, thread_pir, thdr->core_state);
+			 i, thपढ़ो_pir, thdr->core_state);
 
 		/*
 		 * If this is kernel initiated crash, crashing_cpu would be set
-		 * appropriately and register data of the crashing CPU saved by
-		 * crashing kernel. Add this saved register data of crashing CPU
-		 * to elf notes and populate the pt_regs for the remaining CPUs
-		 * from register state data provided by firmware.
+		 * appropriately and रेजिस्टर data of the crashing CPU saved by
+		 * crashing kernel. Add this saved रेजिस्टर data of crashing CPU
+		 * to elf notes and populate the pt_regs क्रम the reमुख्यing CPUs
+		 * from रेजिस्टर state data provided by firmware.
 		 */
-		if (fdh->crashing_cpu == thread_pir) {
+		अगर (fdh->crashing_cpu == thपढ़ो_pir) अणु
 			note_buf = fadump_regs_to_elf_notes(note_buf,
 							    &fdh->regs);
 			pr_debug("Crashing CPU PIR: 0x%x - R1 : 0x%lx, NIP : 0x%lx\n",
 				 fdh->crashing_cpu, fdh->regs.gpr[1],
 				 fdh->regs.nip);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * Register state data of MAX cores is provided by firmware,
-		 * but some of this cores may not be active. So, while
-		 * processing register state data, check core state and
-		 * skip threads that belong to inactive cores.
+		 * but some of this cores may not be active. So, जबतक
+		 * processing रेजिस्टर state data, check core state and
+		 * skip thपढ़ोs that beदीर्घ to inactive cores.
 		 */
-		if (thdr->core_state == HDAT_FADUMP_CORE_INACTIVE)
-			continue;
+		अगर (thdr->core_state == HDAT_FADUMP_CORE_INACTIVE)
+			जारी;
 
-		opal_fadump_read_regs((bufp + regs_offset), regs_cnt,
+		opal_fadump_पढ़ो_regs((bufp + regs_offset), regs_cnt,
 				      reg_esize, true, &regs);
 		note_buf = fadump_regs_to_elf_notes(note_buf, &regs);
 		pr_debug("CPU PIR: 0x%x - R1 : 0x%lx, NIP : 0x%lx\n",
-			 thread_pir, regs.gpr[1], regs.nip);
-	}
+			 thपढ़ो_pir, regs.gpr[1], regs.nip);
+	पूर्ण
 
 out:
 	/*
 	 * CPU state data is invalid/unsupported. Try appending crashing CPU's
-	 * register data, if it is saved by the kernel.
+	 * रेजिस्टर data, अगर it is saved by the kernel.
 	 */
-	if (fadump_conf->cpu_notes_buf_vaddr == (u64)note_buf) {
-		if (fdh->crashing_cpu == FADUMP_CPU_UNKNOWN) {
-			fadump_free_cpu_notes_buf();
-			return -ENODEV;
-		}
+	अगर (fadump_conf->cpu_notes_buf_vaddr == (u64)note_buf) अणु
+		अगर (fdh->crashing_cpu == FADUMP_CPU_UNKNOWN) अणु
+			fadump_मुक्त_cpu_notes_buf();
+			वापस -ENODEV;
+		पूर्ण
 
 		pr_warn("WARNING: appending only crashing CPU's register data\n");
 		note_buf = fadump_regs_to_elf_notes(note_buf, &(fdh->regs));
-	}
+	पूर्ण
 
 	final_note(note_buf);
 
 	pr_debug("Updating elfcore header (%llx) with cpu notes\n",
 		 fdh->elfcorehdr_addr);
 	fadump_update_elfcore_header(__va(fdh->elfcorehdr_addr));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init opal_fadump_process(struct fw_dump *fadump_conf)
-{
-	struct fadump_crash_info_header *fdh;
-	int rc = -EINVAL;
+अटल पूर्णांक __init opal_fadump_process(काष्ठा fw_dump *fadump_conf)
+अणु
+	काष्ठा fadump_crash_info_header *fdh;
+	पूर्णांक rc = -EINVAL;
 
-	if (!opal_fdm_active || !fadump_conf->fadumphdr_addr)
-		return rc;
+	अगर (!opal_fdm_active || !fadump_conf->fadumphdr_addr)
+		वापस rc;
 
 	/* Validate the fadump crash info header */
 	fdh = __va(fadump_conf->fadumphdr_addr);
-	if (fdh->magic_number != FADUMP_CRASH_INFO_MAGIC) {
+	अगर (fdh->magic_number != FADUMP_CRASH_INFO_MAGIC) अणु
 		pr_err("Crash info header is not valid.\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-#ifdef CONFIG_OPAL_CORE
+#अगर_घोषित CONFIG_OPAL_CORE
 	/*
 	 * If this is a kernel initiated crash, crashing_cpu would be set
-	 * appropriately and register data of the crashing CPU saved by
-	 * crashing kernel. Add this saved register data of crashing CPU
-	 * to elf notes and populate the pt_regs for the remaining CPUs
-	 * from register state data provided by firmware.
+	 * appropriately and रेजिस्टर data of the crashing CPU saved by
+	 * crashing kernel. Add this saved रेजिस्टर data of crashing CPU
+	 * to elf notes and populate the pt_regs क्रम the reमुख्यing CPUs
+	 * from रेजिस्टर state data provided by firmware.
 	 */
-	if (fdh->crashing_cpu != FADUMP_CPU_UNKNOWN)
+	अगर (fdh->crashing_cpu != FADUMP_CPU_UNKNOWN)
 		kernel_initiated = true;
-#endif
+#पूर्ण_अगर
 
 	rc = opal_fadump_build_cpu_notes(fadump_conf, fdh);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * We are done validating dump info and elfcore header is now ready
+	 * We are करोne validating dump info and elfcore header is now पढ़ोy
 	 * to be exported. set elfcorehdr_addr so that vmcore module will
 	 * export the elfcore header through '/proc/vmcore'.
 	 */
 	elfcorehdr_addr = fdh->elfcorehdr_addr;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void opal_fadump_region_show(struct fw_dump *fadump_conf,
-				    struct seq_file *m)
-{
-	const struct opal_fadump_mem_struct *fdm_ptr;
+अटल व्योम opal_fadump_region_show(काष्ठा fw_dump *fadump_conf,
+				    काष्ठा seq_file *m)
+अणु
+	स्थिर काष्ठा opal_fadump_mem_काष्ठा *fdm_ptr;
 	u64 dumped_bytes = 0;
-	int i;
+	पूर्णांक i;
 
-	if (fadump_conf->dump_active)
+	अगर (fadump_conf->dump_active)
 		fdm_ptr = opal_fdm_active;
-	else
+	अन्यथा
 		fdm_ptr = opal_fdm;
 
-	for (i = 0; i < fdm_ptr->region_cnt; i++) {
+	क्रम (i = 0; i < fdm_ptr->region_cnt; i++) अणु
 		/*
-		 * Only regions that are registered for MPIPL
+		 * Only regions that are रेजिस्टरed क्रम MPIPL
 		 * would have dump data.
 		 */
-		if ((fadump_conf->dump_active) &&
-		    (i < fdm_ptr->registered_regions))
+		अगर ((fadump_conf->dump_active) &&
+		    (i < fdm_ptr->रेजिस्टरed_regions))
 			dumped_bytes = fdm_ptr->rgn[i].size;
 
-		seq_printf(m, "DUMP: Src: %#016llx, Dest: %#016llx, ",
+		seq_म_लिखो(m, "DUMP: Src: %#016llx, Dest: %#016llx, ",
 			   fdm_ptr->rgn[i].src, fdm_ptr->rgn[i].dest);
-		seq_printf(m, "Size: %#llx, Dumped: %#llx bytes\n",
+		seq_म_लिखो(m, "Size: %#llx, Dumped: %#llx bytes\n",
 			   fdm_ptr->rgn[i].size, dumped_bytes);
-	}
+	पूर्ण
 
 	/* Dump is active. Show reserved area start address. */
-	if (fadump_conf->dump_active) {
-		seq_printf(m, "\nMemory above %#016lx is reserved for saving crash dump\n",
+	अगर (fadump_conf->dump_active) अणु
+		seq_म_लिखो(m, "\nMemory above %#016lx is reserved for saving crash dump\n",
 			   fadump_conf->reserve_dump_area_start);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void opal_fadump_trigger(struct fadump_crash_info_header *fdh,
-				const char *msg)
-{
-	int rc;
+अटल व्योम opal_fadump_trigger(काष्ठा fadump_crash_info_header *fdh,
+				स्थिर अक्षर *msg)
+अणु
+	पूर्णांक rc;
 
 	/*
-	 * Unlike on pSeries platform, logical CPU number is not provided
-	 * with architected register state data. So, store the crashing
-	 * CPU's PIR instead to plug the appropriate register data for
+	 * Unlike on pSeries platक्रमm, logical CPU number is not provided
+	 * with architected रेजिस्टर state data. So, store the crashing
+	 * CPU's PIR instead to plug the appropriate रेजिस्टर data क्रम
 	 * crashing CPU in the vmcore file.
 	 */
 	fdh->crashing_cpu = (u32)mfspr(SPRN_PIR);
 
 	rc = opal_cec_reboot2(OPAL_REBOOT_MPIPL, msg);
-	if (rc == OPAL_UNSUPPORTED) {
+	अगर (rc == OPAL_UNSUPPORTED) अणु
 		pr_emerg("Reboot type %d not supported.\n",
 			 OPAL_REBOOT_MPIPL);
-	} else if (rc == OPAL_HARDWARE)
+	पूर्ण अन्यथा अगर (rc == OPAL_HARDWARE)
 		pr_emerg("No backend support for MPIPL!\n");
-}
+पूर्ण
 
-static struct fadump_ops opal_fadump_ops = {
-	.fadump_init_mem_struct		= opal_fadump_init_mem_struct,
+अटल काष्ठा fadump_ops opal_fadump_ops = अणु
+	.fadump_init_mem_काष्ठा		= opal_fadump_init_mem_काष्ठा,
 	.fadump_get_metadata_size	= opal_fadump_get_metadata_size,
 	.fadump_setup_metadata		= opal_fadump_setup_metadata,
-	.fadump_get_bootmem_min		= opal_fadump_get_bootmem_min,
-	.fadump_register		= opal_fadump_register,
-	.fadump_unregister		= opal_fadump_unregister,
+	.fadump_get_booपंचांगem_min		= opal_fadump_get_booपंचांगem_min,
+	.fadump_रेजिस्टर		= opal_fadump_रेजिस्टर,
+	.fadump_unरेजिस्टर		= opal_fadump_unरेजिस्टर,
 	.fadump_invalidate		= opal_fadump_invalidate,
 	.fadump_cleanup			= opal_fadump_cleanup,
 	.fadump_process			= opal_fadump_process,
 	.fadump_region_show		= opal_fadump_region_show,
 	.fadump_trigger			= opal_fadump_trigger,
-};
+पूर्ण;
 
-void __init opal_fadump_dt_scan(struct fw_dump *fadump_conf, u64 node)
-{
-	const __be32 *prop;
-	unsigned long dn;
+व्योम __init opal_fadump_dt_scan(काष्ठा fw_dump *fadump_conf, u64 node)
+अणु
+	स्थिर __be32 *prop;
+	अचिन्हित दीर्घ dn;
 	u64 addr = 0;
-	int i, len;
+	पूर्णांक i, len;
 	s64 ret;
 
 	/*
-	 * Check if Firmware-Assisted Dump is supported. if yes, check
-	 * if dump has been initiated on last reboot.
+	 * Check अगर Firmware-Assisted Dump is supported. अगर yes, check
+	 * अगर dump has been initiated on last reboot.
 	 */
 	dn = of_get_flat_dt_subnode_by_name(node, "dump");
-	if (dn == -FDT_ERR_NOTFOUND) {
+	अगर (dn == -FDT_ERR_NOTFOUND) अणु
 		pr_debug("FADump support is missing!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!of_flat_dt_is_compatible(dn, "ibm,opal-dump")) {
+	अगर (!of_flat_dt_is_compatible(dn, "ibm,opal-dump")) अणु
 		pr_err("Support missing for this f/w version!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	prop = of_get_flat_dt_prop(dn, "fw-load-area", &len);
-	if (prop) {
+	अगर (prop) अणु
 		/*
 		 * Each f/w load area is an (address,size) pair,
 		 * 2 cells each, totalling 4 cells per range.
 		 */
-		for (i = 0; i < len / (sizeof(*prop) * 4); i++) {
+		क्रम (i = 0; i < len / (माप(*prop) * 4); i++) अणु
 			u64 base, end;
 
-			base = of_read_number(prop + (i * 4) + 0, 2);
+			base = of_पढ़ो_number(prop + (i * 4) + 0, 2);
 			end = base;
-			end += of_read_number(prop + (i * 4) + 2, 2);
-			if (end > OPAL_FADUMP_MIN_BOOT_MEM) {
+			end += of_पढ़ो_number(prop + (i * 4) + 2, 2);
+			अगर (end > OPAL_FADUMP_MIN_BOOT_MEM) अणु
 				pr_err("F/W load area: 0x%llx-0x%llx\n",
 				       base, end);
 				pr_err("F/W version not supported!\n");
-				return;
-			}
-		}
-	}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	fadump_conf->ops		= &opal_fadump_ops;
 	fadump_conf->fadump_supported	= 1;
 
 	/*
-	 * Firmware supports 32-bit field for size. Align it to PAGE_SIZE
+	 * Firmware supports 32-bit field क्रम size. Align it to PAGE_SIZE
 	 * and request firmware to copy multiple kernel boot memory regions.
 	 */
 	fadump_conf->max_copy_size = ALIGN_DOWN(U32_MAX, PAGE_SIZE);
 
 	/*
-	 * Check if dump has been initiated on last reboot.
+	 * Check अगर dump has been initiated on last reboot.
 	 */
-	prop = of_get_flat_dt_prop(dn, "mpipl-boot", NULL);
-	if (!prop)
-		return;
+	prop = of_get_flat_dt_prop(dn, "mpipl-boot", शून्य);
+	अगर (!prop)
+		वापस;
 
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_KERNEL, &addr);
-	if ((ret != OPAL_SUCCESS) || !addr) {
+	अगर ((ret != OPAL_SUCCESS) || !addr) अणु
 		pr_err("Failed to get Kernel metadata (%lld)\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	addr = be64_to_cpu(addr);
 	pr_debug("Kernel metadata addr: %llx\n", addr);
 
 	opal_fdm_active = __va(addr);
-	if (opal_fdm_active->version != OPAL_FADUMP_VERSION) {
+	अगर (opal_fdm_active->version != OPAL_FADUMP_VERSION) अणु
 		pr_warn("Supported kernel metadata version: %u, found: %d!\n",
 			OPAL_FADUMP_VERSION, opal_fdm_active->version);
 		pr_warn("WARNING: Kernel metadata format mismatch identified! Core file maybe corrupted..\n");
-	}
+	पूर्ण
 
-	/* Kernel regions not registered with f/w for MPIPL */
-	if (opal_fdm_active->registered_regions == 0) {
-		opal_fdm_active = NULL;
-		return;
-	}
+	/* Kernel regions not रेजिस्टरed with f/w क्रम MPIPL */
+	अगर (opal_fdm_active->रेजिस्टरed_regions == 0) अणु
+		opal_fdm_active = शून्य;
+		वापस;
+	पूर्ण
 
 	ret = opal_mpipl_query_tag(OPAL_MPIPL_TAG_CPU, &addr);
-	if (addr) {
+	अगर (addr) अणु
 		addr = be64_to_cpu(addr);
 		pr_debug("CPU metadata addr: %llx\n", addr);
 		opal_cpu_metadata = __va(addr);
-	}
+	पूर्ण
 
 	pr_info("Firmware-assisted dump is active.\n");
 	fadump_conf->dump_active = 1;
 	opal_fadump_get_config(fadump_conf, opal_fdm_active);
-}
-#endif /* !CONFIG_PRESERVE_FA_DUMP */
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_PRESERVE_FA_DUMP */

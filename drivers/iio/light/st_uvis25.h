@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * STMicroelectronics uvis25 sensor driver
  *
@@ -7,35 +8,35 @@
  * Lorenzo Bianconi <lorenzo.bianconi83@gmail.com>
  */
 
-#ifndef ST_UVIS25_H
-#define ST_UVIS25_H
+#अगर_अघोषित ST_UVIS25_H
+#घोषणा ST_UVIS25_H
 
-#define ST_UVIS25_DEV_NAME		"uvis25"
+#घोषणा ST_UVIS25_DEV_NAME		"uvis25"
 
-#include <linux/iio/iio.h>
+#समावेश <linux/iio/iपन.स>
 
 /**
- * struct st_uvis25_hw - ST UVIS25 sensor instance
+ * काष्ठा st_uvis25_hw - ST UVIS25 sensor instance
  * @regmap: Register map of the device.
  * @trig: The trigger in use by the driver.
  * @enabled: Status of the sensor (false->off, true->on).
- * @irq: Device interrupt line (I2C or SPI).
+ * @irq: Device पूर्णांकerrupt line (I2C or SPI).
  */
-struct st_uvis25_hw {
-	struct regmap *regmap;
+काष्ठा st_uvis25_hw अणु
+	काष्ठा regmap *regmap;
 
-	struct iio_trigger *trig;
+	काष्ठा iio_trigger *trig;
 	bool enabled;
-	int irq;
-	/* Ensure timestamp is naturally aligned */
-	struct {
+	पूर्णांक irq;
+	/* Ensure बारtamp is naturally aligned */
+	काष्ठा अणु
 		u8 chan;
 		s64 ts __aligned(8);
-	} scan;
-};
+	पूर्ण scan;
+पूर्ण;
 
-extern const struct dev_pm_ops st_uvis25_pm_ops;
+बाह्य स्थिर काष्ठा dev_pm_ops st_uvis25_pm_ops;
 
-int st_uvis25_probe(struct device *dev, int irq, struct regmap *regmap);
+पूर्णांक st_uvis25_probe(काष्ठा device *dev, पूर्णांक irq, काष्ठा regmap *regmap);
 
-#endif /* ST_UVIS25_H */
+#पूर्ण_अगर /* ST_UVIS25_H */

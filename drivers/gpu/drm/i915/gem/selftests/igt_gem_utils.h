@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2018 Intel Corporation
+ * Copyright तऊ 2018 Intel Corporation
  */
 
-#ifndef __IGT_GEM_UTILS_H__
-#define __IGT_GEM_UTILS_H__
+#अगर_अघोषित __IGT_GEM_UTILS_H__
+#घोषणा __IGT_GEM_UTILS_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct i915_request;
-struct i915_gem_context;
-struct i915_vma;
+काष्ठा i915_request;
+काष्ठा i915_gem_context;
+काष्ठा i915_vma;
 
-struct intel_context;
-struct intel_engine_cs;
+काष्ठा पूर्णांकel_context;
+काष्ठा पूर्णांकel_engine_cs;
 
-struct i915_request *
-igt_request_alloc(struct i915_gem_context *ctx, struct intel_engine_cs *engine);
+काष्ठा i915_request *
+igt_request_alloc(काष्ठा i915_gem_context *ctx, काष्ठा पूर्णांकel_engine_cs *engine);
 
-struct i915_vma *
-igt_emit_store_dw(struct i915_vma *vma,
+काष्ठा i915_vma *
+igt_emit_store_dw(काष्ठा i915_vma *vma,
 		  u64 offset,
-		  unsigned long count,
+		  अचिन्हित दीर्घ count,
 		  u32 val);
 
-int igt_gpu_fill_dw(struct intel_context *ce,
-		    struct i915_vma *vma, u64 offset,
-		    unsigned long count, u32 val);
+पूर्णांक igt_gpu_fill_dw(काष्ठा पूर्णांकel_context *ce,
+		    काष्ठा i915_vma *vma, u64 offset,
+		    अचिन्हित दीर्घ count, u32 val);
 
-#endif /* __IGT_GEM_UTILS_H__ */
+#पूर्ण_अगर /* __IGT_GEM_UTILS_H__ */

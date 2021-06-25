@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * System Control and Management Interface (SCMI) Message Mailbox Transport
  * driver.
@@ -6,196 +7,196 @@
  * Copyright (C) 2019 ARM Ltd.
  */
 
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/mailbox_client.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mailbox_client.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/slab.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 /**
- * struct scmi_mailbox - Structure representing a SCMI mailbox transport
+ * काष्ठा scmi_mailbox - Structure representing a SCMI mailbox transport
  *
  * @cl: Mailbox Client
  * @chan: Transmit/Receive mailbox channel
  * @cinfo: SCMI channel info
  * @shmem: Transmit/Receive shared memory area
  */
-struct scmi_mailbox {
-	struct mbox_client cl;
-	struct mbox_chan *chan;
-	struct scmi_chan_info *cinfo;
-	struct scmi_shared_mem __iomem *shmem;
-};
+काष्ठा scmi_mailbox अणु
+	काष्ठा mbox_client cl;
+	काष्ठा mbox_chan *chan;
+	काष्ठा scmi_chan_info *cinfo;
+	काष्ठा scmi_shared_mem __iomem *shmem;
+पूर्ण;
 
-#define client_to_scmi_mailbox(c) container_of(c, struct scmi_mailbox, cl)
+#घोषणा client_to_scmi_mailbox(c) container_of(c, काष्ठा scmi_mailbox, cl)
 
-static void tx_prepare(struct mbox_client *cl, void *m)
-{
-	struct scmi_mailbox *smbox = client_to_scmi_mailbox(cl);
+अटल व्योम tx_prepare(काष्ठा mbox_client *cl, व्योम *m)
+अणु
+	काष्ठा scmi_mailbox *smbox = client_to_scmi_mailbox(cl);
 
 	shmem_tx_prepare(smbox->shmem, m);
-}
+पूर्ण
 
-static void rx_callback(struct mbox_client *cl, void *m)
-{
-	struct scmi_mailbox *smbox = client_to_scmi_mailbox(cl);
+अटल व्योम rx_callback(काष्ठा mbox_client *cl, व्योम *m)
+अणु
+	काष्ठा scmi_mailbox *smbox = client_to_scmi_mailbox(cl);
 
-	scmi_rx_callback(smbox->cinfo, shmem_read_header(smbox->shmem));
-}
+	scmi_rx_callback(smbox->cinfo, shmem_पढ़ो_header(smbox->shmem));
+पूर्ण
 
-static bool mailbox_chan_available(struct device *dev, int idx)
-{
-	return !of_parse_phandle_with_args(dev->of_node, "mboxes",
-					   "#mbox-cells", idx, NULL);
-}
+अटल bool mailbox_chan_available(काष्ठा device *dev, पूर्णांक idx)
+अणु
+	वापस !of_parse_phandle_with_args(dev->of_node, "mboxes",
+					   "#mbox-cells", idx, शून्य);
+पूर्ण
 
-static int mailbox_chan_setup(struct scmi_chan_info *cinfo, struct device *dev,
+अटल पूर्णांक mailbox_chan_setup(काष्ठा scmi_chan_info *cinfo, काष्ठा device *dev,
 			      bool tx)
-{
-	const char *desc = tx ? "Tx" : "Rx";
-	struct device *cdev = cinfo->dev;
-	struct scmi_mailbox *smbox;
-	struct device_node *shmem;
-	int ret, idx = tx ? 0 : 1;
-	struct mbox_client *cl;
-	resource_size_t size;
-	struct resource res;
+अणु
+	स्थिर अक्षर *desc = tx ? "Tx" : "Rx";
+	काष्ठा device *cdev = cinfo->dev;
+	काष्ठा scmi_mailbox *smbox;
+	काष्ठा device_node *shmem;
+	पूर्णांक ret, idx = tx ? 0 : 1;
+	काष्ठा mbox_client *cl;
+	resource_माप_प्रकार size;
+	काष्ठा resource res;
 
-	smbox = devm_kzalloc(dev, sizeof(*smbox), GFP_KERNEL);
-	if (!smbox)
-		return -ENOMEM;
+	smbox = devm_kzalloc(dev, माप(*smbox), GFP_KERNEL);
+	अगर (!smbox)
+		वापस -ENOMEM;
 
 	shmem = of_parse_phandle(cdev->of_node, "shmem", idx);
 	ret = of_address_to_resource(shmem, 0, &res);
 	of_node_put(shmem);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(cdev, "failed to get SCMI %s shared memory\n", desc);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	size = resource_size(&res);
 	smbox->shmem = devm_ioremap(dev, res.start, size);
-	if (!smbox->shmem) {
+	अगर (!smbox->shmem) अणु
 		dev_err(dev, "failed to ioremap SCMI %s shared memory\n", desc);
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 	cl = &smbox->cl;
 	cl->dev = cdev;
-	cl->tx_prepare = tx ? tx_prepare : NULL;
+	cl->tx_prepare = tx ? tx_prepare : शून्य;
 	cl->rx_callback = rx_callback;
 	cl->tx_block = false;
-	cl->knows_txdone = tx;
+	cl->knows_txकरोne = tx;
 
 	smbox->chan = mbox_request_channel(cl, tx ? 0 : 1);
-	if (IS_ERR(smbox->chan)) {
+	अगर (IS_ERR(smbox->chan)) अणु
 		ret = PTR_ERR(smbox->chan);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(cdev, "failed to request SCMI %s mailbox\n",
 				tx ? "Tx" : "Rx");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cinfo->transport_info = smbox;
 	smbox->cinfo = cinfo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mailbox_chan_free(int id, void *p, void *data)
-{
-	struct scmi_chan_info *cinfo = p;
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल पूर्णांक mailbox_chan_मुक्त(पूर्णांक id, व्योम *p, व्योम *data)
+अणु
+	काष्ठा scmi_chan_info *cinfo = p;
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
-	if (smbox && !IS_ERR(smbox->chan)) {
-		mbox_free_channel(smbox->chan);
-		cinfo->transport_info = NULL;
-		smbox->chan = NULL;
-		smbox->cinfo = NULL;
-	}
+	अगर (smbox && !IS_ERR(smbox->chan)) अणु
+		mbox_मुक्त_channel(smbox->chan);
+		cinfo->transport_info = शून्य;
+		smbox->chan = शून्य;
+		smbox->cinfo = शून्य;
+	पूर्ण
 
-	scmi_free_channel(cinfo, data, id);
+	scmi_मुक्त_channel(cinfo, data, id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mailbox_send_message(struct scmi_chan_info *cinfo,
-				struct scmi_xfer *xfer)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
-	int ret;
+अटल पूर्णांक mailbox_send_message(काष्ठा scmi_chan_info *cinfo,
+				काष्ठा scmi_xfer *xfer)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
+	पूर्णांक ret;
 
 	ret = mbox_send_message(smbox->chan, xfer);
 
-	/* mbox_send_message returns non-negative value on success, so reset */
-	if (ret > 0)
+	/* mbox_send_message वापसs non-negative value on success, so reset */
+	अगर (ret > 0)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mailbox_mark_txdone(struct scmi_chan_info *cinfo, int ret)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल व्योम mailbox_mark_txकरोne(काष्ठा scmi_chan_info *cinfo, पूर्णांक ret)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
 	/*
 	 * NOTE: we might prefer not to need the mailbox ticker to manage the
 	 * transfer queueing since the protocol layer queues things by itself.
-	 * Unfortunately, we have to kick the mailbox framework after we have
+	 * Unक्रमtunately, we have to kick the mailbox framework after we have
 	 * received our message.
 	 */
-	mbox_client_txdone(smbox->chan, ret);
-}
+	mbox_client_txकरोne(smbox->chan, ret);
+पूर्ण
 
-static void mailbox_fetch_response(struct scmi_chan_info *cinfo,
-				   struct scmi_xfer *xfer)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल व्योम mailbox_fetch_response(काष्ठा scmi_chan_info *cinfo,
+				   काष्ठा scmi_xfer *xfer)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
 	shmem_fetch_response(smbox->shmem, xfer);
-}
+पूर्ण
 
-static void mailbox_fetch_notification(struct scmi_chan_info *cinfo,
-				       size_t max_len, struct scmi_xfer *xfer)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल व्योम mailbox_fetch_notअगरication(काष्ठा scmi_chan_info *cinfo,
+				       माप_प्रकार max_len, काष्ठा scmi_xfer *xfer)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
-	shmem_fetch_notification(smbox->shmem, max_len, xfer);
-}
+	shmem_fetch_notअगरication(smbox->shmem, max_len, xfer);
+पूर्ण
 
-static void mailbox_clear_channel(struct scmi_chan_info *cinfo)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल व्योम mailbox_clear_channel(काष्ठा scmi_chan_info *cinfo)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
 	shmem_clear_channel(smbox->shmem);
-}
+पूर्ण
 
-static bool
-mailbox_poll_done(struct scmi_chan_info *cinfo, struct scmi_xfer *xfer)
-{
-	struct scmi_mailbox *smbox = cinfo->transport_info;
+अटल bool
+mailbox_poll_करोne(काष्ठा scmi_chan_info *cinfo, काष्ठा scmi_xfer *xfer)
+अणु
+	काष्ठा scmi_mailbox *smbox = cinfo->transport_info;
 
-	return shmem_poll_done(smbox->shmem, xfer);
-}
+	वापस shmem_poll_करोne(smbox->shmem, xfer);
+पूर्ण
 
-static const struct scmi_transport_ops scmi_mailbox_ops = {
+अटल स्थिर काष्ठा scmi_transport_ops scmi_mailbox_ops = अणु
 	.chan_available = mailbox_chan_available,
 	.chan_setup = mailbox_chan_setup,
-	.chan_free = mailbox_chan_free,
+	.chan_मुक्त = mailbox_chan_मुक्त,
 	.send_message = mailbox_send_message,
-	.mark_txdone = mailbox_mark_txdone,
+	.mark_txकरोne = mailbox_mark_txकरोne,
 	.fetch_response = mailbox_fetch_response,
-	.fetch_notification = mailbox_fetch_notification,
+	.fetch_notअगरication = mailbox_fetch_notअगरication,
 	.clear_channel = mailbox_clear_channel,
-	.poll_done = mailbox_poll_done,
-};
+	.poll_करोne = mailbox_poll_करोne,
+पूर्ण;
 
-const struct scmi_desc scmi_mailbox_desc = {
+स्थिर काष्ठा scmi_desc scmi_mailbox_desc = अणु
 	.ops = &scmi_mailbox_ops,
-	.max_rx_timeout_ms = 30, /* We may increase this if required */
+	.max_rx_समयout_ms = 30, /* We may increase this अगर required */
 	.max_msg = 20, /* Limited by MBOX_TX_QUEUE_LEN */
 	.max_msg_size = 128,
-};
+पूर्ण;

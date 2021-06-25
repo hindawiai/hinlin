@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 /*  Description: */
-/*  This file is for 92CE/92CU dynamic mechanism only */
+/*  This file is क्रम 92CE/92CU dynamic mechanism only */
 
-#define _RTL8723B_DM_C_
+#घोषणा _RTL8723B_DM_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
-#include <rtl8723b_hal.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
+#समावेश <rtl8723b_hal.h>
 
 /*  Global var */
 
-static void dm_CheckStatistics(struct adapter *Adapter)
-{
-}
+अटल व्योम dm_CheckStatistics(काष्ठा adapter *Adapter)
+अणु
+पूर्ण
 /*  */
 /*  functions */
 /*  */
-static void Init_ODM_ComInfo_8723b(struct adapter *Adapter)
-{
+अटल व्योम Init_ODM_ComInfo_8723b(काष्ठा adapter *Adapter)
+अणु
 
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
-	struct dm_priv *pdmpriv = &pHalData->dmpriv;
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+	काष्ठा dm_priv *pdmpriv = &pHalData->dmpriv;
 	u8 cut_ver, fab_ver;
 
 	/*  */
 	/*  Init Value */
 	/*  */
-	memset(pDM_Odm, 0, sizeof(*pDM_Odm));
+	स_रखो(pDM_Odm, 0, माप(*pDM_Odm));
 
 	pDM_Odm->Adapter = Adapter;
-#define ODM_CE 0x04
+#घोषणा ODM_CE 0x04
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PLATFORM, ODM_CE);
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_INTERFACE, RTW_SDIO);
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PACKAGE_TYPE, pHalData->PackageType);
@@ -49,33 +50,33 @@ static void Init_ODM_ComInfo_8723b(struct adapter *Adapter)
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_MP_TEST_CHIP, IS_NORMAL_CHIP(pHalData->VersionID));
 
 	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_PATCH_ID, pHalData->CustomerID);
-	/* 	ODM_CMNINFO_BINHCT_TEST only for MP Team */
-	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_BWIFI_TEST, Adapter->registrypriv.wifi_spec);
+	/* 	ODM_CMNINFO_BINHCT_TEST only क्रम MP Team */
+	ODM_CmnInfoInit(pDM_Odm, ODM_CMNINFO_BWIFI_TEST, Adapter->registrypriv.wअगरi_spec);
 
 
-	if (pHalData->rf_type == RF_1T1R) {
+	अगर (pHalData->rf_type == RF_1T1R) अणु
 		ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_RF_TYPE, ODM_1T1R);
-	} else if (pHalData->rf_type == RF_2T2R) {
+	पूर्ण अन्यथा अगर (pHalData->rf_type == RF_2T2R) अणु
 		ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_RF_TYPE, ODM_2T2R);
-	} else if (pHalData->rf_type == RF_1T2R) {
+	पूर्ण अन्यथा अगर (pHalData->rf_type == RF_1T2R) अणु
 		ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_RF_TYPE, ODM_1T2R);
-	}
+	पूर्ण
 
 	pdmpriv->InitODMFlag = ODM_RF_CALIBRATION|ODM_RF_TX_PWR_TRACK;
 
 	ODM_CmnInfoUpdate(pDM_Odm, ODM_CMNINFO_ABILITY, pdmpriv->InitODMFlag);
-}
+पूर्ण
 
-static void Update_ODM_ComInfo_8723b(struct adapter *Adapter)
-{
-	struct mlme_ext_priv *pmlmeext = &Adapter->mlmeextpriv;
-	struct mlme_priv *pmlmepriv = &Adapter->mlmepriv;
-	struct dvobj_priv *dvobj = adapter_to_dvobj(Adapter);
-	struct pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(Adapter);
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
-	struct dm_priv *pdmpriv = &pHalData->dmpriv;
-	int i;
+अटल व्योम Update_ODM_ComInfo_8723b(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा mlme_ext_priv *pmlmeext = &Adapter->mlmeextpriv;
+	काष्ठा mlme_priv *pmlmepriv = &Adapter->mlmepriv;
+	काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(Adapter);
+	काष्ठा pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(Adapter);
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+	काष्ठा dm_priv *pdmpriv = &pHalData->dmpriv;
+	पूर्णांक i;
 	u8 zero = 0;
 
 	pdmpriv->InitODMFlag = 0
@@ -93,7 +94,7 @@ static void Update_ODM_ComInfo_8723b(struct adapter *Adapter)
 		;
 
 	/*  */
-	/*  Pointer reference */
+	/*  Poपूर्णांकer reference */
 	/*  */
 	/* ODM_CMNINFO_MAC_PHY_MODE pHalData->MacPhyMode92D */
 	/* 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_MAC_PHY_MODE,&(pDM_Odm->u8_temp)); */
@@ -104,28 +105,28 @@ static void Update_ODM_ComInfo_8723b(struct adapter *Adapter)
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_RX_UNI, &(dvobj->traffic_stat.rx_bytes));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_WM_MODE, &(pmlmeext->cur_wireless_mode));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_SEC_CHNL_OFFSET, &(pHalData->nCur40MhzPrimeSC));
-	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_SEC_MODE, &(Adapter->securitypriv.dot11PrivacyAlgrthm));
+	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_SEC_MODE, &(Adapter->securitypriv.करोt11PrivacyAlgrthm));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_BW, &(pHalData->CurrentChannelBW));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_CHNL, &(pHalData->CurrentChannel));
-	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_NET_CLOSED, &(Adapter->net_closed));
+	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_NET_CLOSED, &(Adapter->net_बंदd));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_MP_MODE, &zero);
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_BAND, &(pHalData->CurrentBandType));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_FORCED_IGI_LB, &(pHalData->u1ForcedIgiLb));
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_FORCED_RATE, &(pHalData->ForcedDataRate));
 
 	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_SCAN, &(pmlmepriv->bScanInProcess));
-	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_POWER_SAVING, &(pwrctrlpriv->bpower_saving));
+	ODM_CmnInfoHook(pDM_Odm, ODM_CMNINFO_POWER_SAVING, &(pwrctrlpriv->bघातer_saving));
 
 
-	for (i = 0; i < NUM_STA; i++)
-		ODM_CmnInfoPtrArrayHook(pDM_Odm, ODM_CMNINFO_STA_STATUS, i, NULL);
-}
+	क्रम (i = 0; i < NUM_STA; i++)
+		ODM_CmnInfoPtrArrayHook(pDM_Odm, ODM_CMNINFO_STA_STATUS, i, शून्य);
+पूर्ण
 
-void rtl8723b_InitHalDm(struct adapter *Adapter)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct dm_priv *pdmpriv = &pHalData->dmpriv;
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+व्योम rtl8723b_InitHalDm(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा dm_priv *pdmpriv = &pHalData->dmpriv;
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
 
 	pdmpriv->DM_Type = DM_Type_ByDriver;
 	pdmpriv->DMFlag = DYNAMIC_FUNC_DISABLE;
@@ -137,45 +138,45 @@ void rtl8723b_InitHalDm(struct adapter *Adapter)
 	Update_ODM_ComInfo_8723b(Adapter);
 
 	ODM_DMInit(pDM_Odm);
-}
+पूर्ण
 
-void rtl8723b_HalDmWatchDog(struct adapter *Adapter)
-{
+व्योम rtl8723b_HalDmWatchDog(काष्ठा adapter *Adapter)
+अणु
 	bool fw_current_in_ps_mode = false;
 	bool bFwPSAwake = true;
 	u8 hw_init_completed = false;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
 
 	hw_init_completed = Adapter->hw_init_completed;
 
-	if (hw_init_completed == false)
-		goto skip_dm;
+	अगर (hw_init_completed == false)
+		जाओ skip_dm;
 
 	fw_current_in_ps_mode = adapter_to_pwrctl(Adapter)->fw_current_in_ps_mode;
 	rtw_hal_get_hwreg(Adapter, HW_VAR_FWLPS_RF_ON, (u8 *)(&bFwPSAwake));
 
-	if (
+	अगर (
 		(hw_init_completed == true) &&
 		((!fw_current_in_ps_mode) && bFwPSAwake)
-	) {
+	) अणु
 		/*  */
 		/*  Calculate Tx/Rx statistics. */
 		/*  */
 		dm_CheckStatistics(Adapter);
-		rtw_hal_check_rxfifo_full(Adapter);
-	}
+		rtw_hal_check_rxfअगरo_full(Adapter);
+	पूर्ण
 
 	/* ODM */
-	if (hw_init_completed == true) {
+	अगर (hw_init_completed == true) अणु
 		u8 bLinked = false;
 		u8 bsta_state = false;
 		bool bBtDisabled = true;
 
-		if (rtw_linked_check(Adapter)) {
+		अगर (rtw_linked_check(Adapter)) अणु
 			bLinked = true;
-			if (check_fwstate(&Adapter->mlmepriv, WIFI_STATION_STATE))
+			अगर (check_fwstate(&Adapter->mlmepriv, WIFI_STATION_STATE))
 				bsta_state = true;
-		}
+		पूर्ण
 
 		ODM_CmnInfoUpdate(&pHalData->odmpriv, ODM_CMNINFO_LINK, bLinked);
 		ODM_CmnInfoUpdate(&pHalData->odmpriv, ODM_CMNINFO_STATION_STATE, bsta_state);
@@ -187,21 +188,21 @@ void rtl8723b_HalDmWatchDog(struct adapter *Adapter)
 		ODM_CmnInfoUpdate(&pHalData->odmpriv, ODM_CMNINFO_BT_ENABLED,
 				  !bBtDisabled);
 
-		ODM_DMWatchdog(&pHalData->odmpriv);
-	}
+		ODM_DMWatchकरोg(&pHalData->odmpriv);
+	पूर्ण
 
 skip_dm:
-	return;
-}
+	वापस;
+पूर्ण
 
-void rtl8723b_hal_dm_in_lps(struct adapter *padapter)
-{
+व्योम rtl8723b_hal_dm_in_lps(काष्ठा adapter *padapter)
+अणु
 	u32 PWDB_rssi = 0;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct hal_com_data *pHalData = GET_HAL_DATA(padapter);
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct sta_info *psta = NULL;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(padapter);
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	काष्ठा sta_info *psta = शून्य;
 
 	/* update IGI */
 	ODM_Write_DIG(pDM_Odm, pDM_Odm->RSSI_Min);
@@ -209,60 +210,60 @@ void rtl8723b_hal_dm_in_lps(struct adapter *padapter)
 
 	/* set rssi to fw */
 	psta = rtw_get_stainfo(pstapriv, get_bssid(pmlmepriv));
-	if (psta && (psta->rssi_stat.UndecoratedSmoothedPWDB > 0)) {
+	अगर (psta && (psta->rssi_stat.UndecoratedSmoothedPWDB > 0)) अणु
 		PWDB_rssi = (psta->mac_id | (psta->rssi_stat.UndecoratedSmoothedPWDB<<16));
 
 		rtl8723b_set_rssi_cmd(padapter, (u8 *)&PWDB_rssi);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-void rtl8723b_HalDmWatchDog_in_LPS(struct adapter *Adapter)
-{
+व्योम rtl8723b_HalDmWatchDog_in_LPS(काष्ठा adapter *Adapter)
+अणु
 	u8 bLinked = false;
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct mlme_priv *pmlmepriv = &Adapter->mlmepriv;
-	struct dm_priv *pdmpriv = &pHalData->dmpriv;
-	struct dm_odm_t *pDM_Odm = &pHalData->odmpriv;
-	struct dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
-	struct sta_priv *pstapriv = &Adapter->stapriv;
-	struct sta_info *psta = NULL;
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा mlme_priv *pmlmepriv = &Adapter->mlmepriv;
+	काष्ठा dm_priv *pdmpriv = &pHalData->dmpriv;
+	काष्ठा dm_odm_t *pDM_Odm = &pHalData->odmpriv;
+	काष्ठा dig_t *pDM_DigTable = &pDM_Odm->DM_DigTable;
+	काष्ठा sta_priv *pstapriv = &Adapter->stapriv;
+	काष्ठा sta_info *psta = शून्य;
 
-	if (Adapter->hw_init_completed == false)
-		goto skip_lps_dm;
+	अगर (Adapter->hw_init_completed == false)
+		जाओ skip_lps_dm;
 
 
-	if (rtw_linked_check(Adapter))
+	अगर (rtw_linked_check(Adapter))
 		bLinked = true;
 
 	ODM_CmnInfoUpdate(&pHalData->odmpriv, ODM_CMNINFO_LINK, bLinked);
 
-	if (bLinked == false)
-		goto skip_lps_dm;
+	अगर (bLinked == false)
+		जाओ skip_lps_dm;
 
-	if (!(pDM_Odm->SupportAbility & ODM_BB_RSSI_MONITOR))
-		goto skip_lps_dm;
+	अगर (!(pDM_Odm->SupportAbility & ODM_BB_RSSI_MONITOR))
+		जाओ skip_lps_dm;
 
 
-	/* ODM_DMWatchdog(&pHalData->odmpriv); */
+	/* ODM_DMWatchकरोg(&pHalData->odmpriv); */
 	/* Do DIG by RSSI In LPS-32K */
 
       /* 1 Find MIN-RSSI */
 	psta = rtw_get_stainfo(pstapriv, get_bssid(pmlmepriv));
-	if (!psta)
-		goto skip_lps_dm;
+	अगर (!psta)
+		जाओ skip_lps_dm;
 
 	pdmpriv->EntryMinUndecoratedSmoothedPWDB = psta->rssi_stat.UndecoratedSmoothedPWDB;
 
-	if (pdmpriv->EntryMinUndecoratedSmoothedPWDB <= 0)
-		goto skip_lps_dm;
+	अगर (pdmpriv->EntryMinUndecoratedSmoothedPWDB <= 0)
+		जाओ skip_lps_dm;
 
 	pdmpriv->MinUndecoratedPWDBForDM = pdmpriv->EntryMinUndecoratedSmoothedPWDB;
 
 	pDM_Odm->RSSI_Min = pdmpriv->MinUndecoratedPWDBForDM;
 
-	/* if (pDM_DigTable->CurIGValue != pDM_Odm->RSSI_Min) */
-	if (
+	/* अगर (pDM_DigTable->CurIGValue != pDM_Odm->RSSI_Min) */
+	अगर (
 		(pDM_DigTable->CurIGValue > pDM_Odm->RSSI_Min + 5) ||
 		(pDM_DigTable->CurIGValue < pDM_Odm->RSSI_Min - 5)
 	)
@@ -271,15 +272,15 @@ void rtl8723b_HalDmWatchDog_in_LPS(struct adapter *Adapter)
 
 skip_lps_dm:
 
-	return;
+	वापस;
 
-}
+पूर्ण
 
-void rtl8723b_init_dm_priv(struct adapter *Adapter)
-{
-	struct hal_com_data *pHalData = GET_HAL_DATA(Adapter);
-	struct dm_priv *pdmpriv = &pHalData->dmpriv;
+व्योम rtl8723b_init_dm_priv(काष्ठा adapter *Adapter)
+अणु
+	काष्ठा hal_com_data *pHalData = GET_HAL_DATA(Adapter);
+	काष्ठा dm_priv *pdmpriv = &pHalData->dmpriv;
 
-	memset(pdmpriv, 0, sizeof(struct dm_priv));
+	स_रखो(pdmpriv, 0, माप(काष्ठा dm_priv));
 	Init_ODM_ComInfo_8723b(Adapter);
-}
+पूर्ण

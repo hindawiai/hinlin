@@ -1,369 +1,370 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright (c) 2016-2017 Hisilicon Limited.
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
 
-#include "hnae3.h"
+#समावेश "hnae3.h"
 
-static LIST_HEAD(hnae3_ae_algo_list);
-static LIST_HEAD(hnae3_client_list);
-static LIST_HEAD(hnae3_ae_dev_list);
+अटल LIST_HEAD(hnae3_ae_algo_list);
+अटल LIST_HEAD(hnae3_client_list);
+अटल LIST_HEAD(hnae3_ae_dev_list);
 
-/* we are keeping things simple and using single lock for all the
- * list. This is a non-critical code so other updations, if happen
- * in parallel, can wait.
+/* we are keeping things simple and using single lock क्रम all the
+ * list. This is a non-critical code so other updations, अगर happen
+ * in parallel, can रुको.
  */
-static DEFINE_MUTEX(hnae3_common_lock);
+अटल DEFINE_MUTEX(hnae3_common_lock);
 
-static bool hnae3_client_match(enum hnae3_client_type client_type)
-{
-	if (client_type == HNAE3_CLIENT_KNIC ||
+अटल bool hnae3_client_match(क्रमागत hnae3_client_type client_type)
+अणु
+	अगर (client_type == HNAE3_CLIENT_KNIC ||
 	    client_type == HNAE3_CLIENT_ROCE)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void hnae3_set_client_init_flag(struct hnae3_client *client,
-				struct hnae3_ae_dev *ae_dev,
-				unsigned int inited)
-{
-	if (!client || !ae_dev)
-		return;
+व्योम hnae3_set_client_init_flag(काष्ठा hnae3_client *client,
+				काष्ठा hnae3_ae_dev *ae_dev,
+				अचिन्हित पूर्णांक inited)
+अणु
+	अगर (!client || !ae_dev)
+		वापस;
 
-	switch (client->type) {
-	case HNAE3_CLIENT_KNIC:
+	चयन (client->type) अणु
+	हाल HNAE3_CLIENT_KNIC:
 		hnae3_set_bit(ae_dev->flag, HNAE3_KNIC_CLIENT_INITED_B, inited);
-		break;
-	case HNAE3_CLIENT_ROCE:
+		अवरोध;
+	हाल HNAE3_CLIENT_ROCE:
 		hnae3_set_bit(ae_dev->flag, HNAE3_ROCE_CLIENT_INITED_B, inited);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(hnae3_set_client_init_flag);
 
-static int hnae3_get_client_init_flag(struct hnae3_client *client,
-				      struct hnae3_ae_dev *ae_dev)
-{
-	int inited = 0;
+अटल पूर्णांक hnae3_get_client_init_flag(काष्ठा hnae3_client *client,
+				      काष्ठा hnae3_ae_dev *ae_dev)
+अणु
+	पूर्णांक inited = 0;
 
-	switch (client->type) {
-	case HNAE3_CLIENT_KNIC:
+	चयन (client->type) अणु
+	हाल HNAE3_CLIENT_KNIC:
 		inited = hnae3_get_bit(ae_dev->flag,
 				       HNAE3_KNIC_CLIENT_INITED_B);
-		break;
-	case HNAE3_CLIENT_ROCE:
+		अवरोध;
+	हाल HNAE3_CLIENT_ROCE:
 		inited = hnae3_get_bit(ae_dev->flag,
 				       HNAE3_ROCE_CLIENT_INITED_B);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return inited;
-}
+	वापस inited;
+पूर्ण
 
-static int hnae3_init_client_instance(struct hnae3_client *client,
-				      struct hnae3_ae_dev *ae_dev)
-{
-	int ret;
+अटल पूर्णांक hnae3_init_client_instance(काष्ठा hnae3_client *client,
+				      काष्ठा hnae3_ae_dev *ae_dev)
+अणु
+	पूर्णांक ret;
 
-	/* check if this client matches the type of ae_dev */
-	if (!(hnae3_client_match(client->type) &&
-	      hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))) {
-		return 0;
-	}
+	/* check अगर this client matches the type of ae_dev */
+	अगर (!(hnae3_client_match(client->type) &&
+	      hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))) अणु
+		वापस 0;
+	पूर्ण
 
 	ret = ae_dev->ops->init_client_instance(client, ae_dev);
-	if (ret)
+	अगर (ret)
 		dev_err(&ae_dev->pdev->dev,
 			"fail to instantiate client, ret = %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hnae3_uninit_client_instance(struct hnae3_client *client,
-					 struct hnae3_ae_dev *ae_dev)
-{
-	/* check if this client matches the type of ae_dev */
-	if (!(hnae3_client_match(client->type) &&
+अटल व्योम hnae3_uninit_client_instance(काष्ठा hnae3_client *client,
+					 काष्ठा hnae3_ae_dev *ae_dev)
+अणु
+	/* check अगर this client matches the type of ae_dev */
+	अगर (!(hnae3_client_match(client->type) &&
 	      hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B)))
-		return;
+		वापस;
 
-	if (hnae3_get_client_init_flag(client, ae_dev)) {
+	अगर (hnae3_get_client_init_flag(client, ae_dev)) अणु
 		ae_dev->ops->uninit_client_instance(client, ae_dev);
 
 		hnae3_set_client_init_flag(client, ae_dev, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int hnae3_register_client(struct hnae3_client *client)
-{
-	struct hnae3_client *client_tmp;
-	struct hnae3_ae_dev *ae_dev;
+पूर्णांक hnae3_रेजिस्टर_client(काष्ठा hnae3_client *client)
+अणु
+	काष्ठा hnae3_client *client_पंचांगp;
+	काष्ठा hnae3_ae_dev *ae_dev;
 
-	if (!client)
-		return -ENODEV;
+	अगर (!client)
+		वापस -ENODEV;
 
 	mutex_lock(&hnae3_common_lock);
-	/* one system should only have one client for every type */
-	list_for_each_entry(client_tmp, &hnae3_client_list, node) {
-		if (client_tmp->type == client->type)
-			goto exit;
-	}
+	/* one प्रणाली should only have one client क्रम every type */
+	list_क्रम_each_entry(client_पंचांगp, &hnae3_client_list, node) अणु
+		अगर (client_पंचांगp->type == client->type)
+			जाओ निकास;
+	पूर्ण
 
 	list_add_tail(&client->node, &hnae3_client_list);
 
 	/* initialize the client on every matched port */
-	list_for_each_entry(ae_dev, &hnae3_ae_dev_list, node) {
-		/* if the client could not be initialized on current port, for
+	list_क्रम_each_entry(ae_dev, &hnae3_ae_dev_list, node) अणु
+		/* अगर the client could not be initialized on current port, क्रम
 		 * any error reasons, move on to next available port
 		 */
-		int ret = hnae3_init_client_instance(client, ae_dev);
-		if (ret)
+		पूर्णांक ret = hnae3_init_client_instance(client, ae_dev);
+		अगर (ret)
 			dev_err(&ae_dev->pdev->dev,
 				"match and instantiation failed for port, ret = %d\n",
 				ret);
-	}
+	पूर्ण
 
-exit:
+निकास:
 	mutex_unlock(&hnae3_common_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(hnae3_register_client);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(hnae3_रेजिस्टर_client);
 
-void hnae3_unregister_client(struct hnae3_client *client)
-{
-	struct hnae3_client *client_tmp;
-	struct hnae3_ae_dev *ae_dev;
+व्योम hnae3_unरेजिस्टर_client(काष्ठा hnae3_client *client)
+अणु
+	काष्ठा hnae3_client *client_पंचांगp;
+	काष्ठा hnae3_ae_dev *ae_dev;
 	bool existed = false;
 
-	if (!client)
-		return;
+	अगर (!client)
+		वापस;
 
 	mutex_lock(&hnae3_common_lock);
-	/* one system should only have one client for every type */
-	list_for_each_entry(client_tmp, &hnae3_client_list, node) {
-		if (client_tmp->type == client->type) {
+	/* one प्रणाली should only have one client क्रम every type */
+	list_क्रम_each_entry(client_पंचांगp, &hnae3_client_list, node) अणु
+		अगर (client_पंचांगp->type == client->type) अणु
 			existed = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!existed) {
+	अगर (!existed) अणु
 		mutex_unlock(&hnae3_common_lock);
 		pr_err("client %s does not exist!\n", client->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* un-initialize the client on every matched port */
-	list_for_each_entry(ae_dev, &hnae3_ae_dev_list, node) {
+	list_क्रम_each_entry(ae_dev, &hnae3_ae_dev_list, node) अणु
 		hnae3_uninit_client_instance(client, ae_dev);
-	}
+	पूर्ण
 
 	list_del(&client->node);
 	mutex_unlock(&hnae3_common_lock);
-}
-EXPORT_SYMBOL(hnae3_unregister_client);
+पूर्ण
+EXPORT_SYMBOL(hnae3_unरेजिस्टर_client);
 
-/* hnae3_register_ae_algo - register a AE algorithm to hnae3 framework
+/* hnae3_रेजिस्टर_ae_algo - रेजिस्टर a AE algorithm to hnae3 framework
  * @ae_algo: AE algorithm
  * NOTE: the duplicated name will not be checked
  */
-void hnae3_register_ae_algo(struct hnae3_ae_algo *ae_algo)
-{
-	const struct pci_device_id *id;
-	struct hnae3_ae_dev *ae_dev;
-	struct hnae3_client *client;
-	int ret;
+व्योम hnae3_रेजिस्टर_ae_algo(काष्ठा hnae3_ae_algo *ae_algo)
+अणु
+	स्थिर काष्ठा pci_device_id *id;
+	काष्ठा hnae3_ae_dev *ae_dev;
+	काष्ठा hnae3_client *client;
+	पूर्णांक ret;
 
-	if (!ae_algo)
-		return;
+	अगर (!ae_algo)
+		वापस;
 
 	mutex_lock(&hnae3_common_lock);
 
 	list_add_tail(&ae_algo->node, &hnae3_ae_algo_list);
 
-	/* Check if this algo/ops matches the list of ae_devs */
-	list_for_each_entry(ae_dev, &hnae3_ae_dev_list, node) {
+	/* Check अगर this algo/ops matches the list of ae_devs */
+	list_क्रम_each_entry(ae_dev, &hnae3_ae_dev_list, node) अणु
 		id = pci_match_id(ae_algo->pdev_id_table, ae_dev->pdev);
-		if (!id)
-			continue;
+		अगर (!id)
+			जारी;
 
-		if (!ae_algo->ops) {
+		अगर (!ae_algo->ops) अणु
 			dev_err(&ae_dev->pdev->dev, "ae_algo ops are null\n");
-			continue;
-		}
+			जारी;
+		पूर्ण
 		ae_dev->ops = ae_algo->ops;
 
 		ret = ae_algo->ops->init_ae_dev(ae_dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&ae_dev->pdev->dev,
 				"init ae_dev error, ret = %d\n", ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* ae_dev init should set flag */
 		hnae3_set_bit(ae_dev->flag, HNAE3_DEV_INITED_B, 1);
 
-		/* check the client list for the match with this ae_dev type and
+		/* check the client list क्रम the match with this ae_dev type and
 		 * initialize the figure out client instance
 		 */
-		list_for_each_entry(client, &hnae3_client_list, node) {
+		list_क्रम_each_entry(client, &hnae3_client_list, node) अणु
 			ret = hnae3_init_client_instance(client, ae_dev);
-			if (ret)
+			अगर (ret)
 				dev_err(&ae_dev->pdev->dev,
 					"match and instantiation failed, ret = %d\n",
 					ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&hnae3_common_lock);
-}
-EXPORT_SYMBOL(hnae3_register_ae_algo);
+पूर्ण
+EXPORT_SYMBOL(hnae3_रेजिस्टर_ae_algo);
 
-/* hnae3_unregister_ae_algo - unregisters a AE algorithm
- * @ae_algo: the AE algorithm to unregister
+/* hnae3_unरेजिस्टर_ae_algo - unरेजिस्टरs a AE algorithm
+ * @ae_algo: the AE algorithm to unरेजिस्टर
  */
-void hnae3_unregister_ae_algo(struct hnae3_ae_algo *ae_algo)
-{
-	const struct pci_device_id *id;
-	struct hnae3_ae_dev *ae_dev;
-	struct hnae3_client *client;
+व्योम hnae3_unरेजिस्टर_ae_algo(काष्ठा hnae3_ae_algo *ae_algo)
+अणु
+	स्थिर काष्ठा pci_device_id *id;
+	काष्ठा hnae3_ae_dev *ae_dev;
+	काष्ठा hnae3_client *client;
 
-	if (!ae_algo)
-		return;
+	अगर (!ae_algo)
+		वापस;
 
 	mutex_lock(&hnae3_common_lock);
-	/* Check if there are matched ae_dev */
-	list_for_each_entry(ae_dev, &hnae3_ae_dev_list, node) {
-		if (!hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))
-			continue;
+	/* Check अगर there are matched ae_dev */
+	list_क्रम_each_entry(ae_dev, &hnae3_ae_dev_list, node) अणु
+		अगर (!hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))
+			जारी;
 
 		id = pci_match_id(ae_algo->pdev_id_table, ae_dev->pdev);
-		if (!id)
-			continue;
+		अगर (!id)
+			जारी;
 
-		/* check the client list for the match with this ae_dev type and
+		/* check the client list क्रम the match with this ae_dev type and
 		 * un-initialize the figure out client instance
 		 */
-		list_for_each_entry(client, &hnae3_client_list, node)
+		list_क्रम_each_entry(client, &hnae3_client_list, node)
 			hnae3_uninit_client_instance(client, ae_dev);
 
 		ae_algo->ops->uninit_ae_dev(ae_dev);
 		hnae3_set_bit(ae_dev->flag, HNAE3_DEV_INITED_B, 0);
-		ae_dev->ops = NULL;
-	}
+		ae_dev->ops = शून्य;
+	पूर्ण
 
 	list_del(&ae_algo->node);
 	mutex_unlock(&hnae3_common_lock);
-}
-EXPORT_SYMBOL(hnae3_unregister_ae_algo);
+पूर्ण
+EXPORT_SYMBOL(hnae3_unरेजिस्टर_ae_algo);
 
-/* hnae3_register_ae_dev - registers a AE device to hnae3 framework
+/* hnae3_रेजिस्टर_ae_dev - रेजिस्टरs a AE device to hnae3 framework
  * @ae_dev: the AE device
  * NOTE: the duplicated name will not be checked
  */
-int hnae3_register_ae_dev(struct hnae3_ae_dev *ae_dev)
-{
-	const struct pci_device_id *id;
-	struct hnae3_ae_algo *ae_algo;
-	struct hnae3_client *client;
-	int ret;
+पूर्णांक hnae3_रेजिस्टर_ae_dev(काष्ठा hnae3_ae_dev *ae_dev)
+अणु
+	स्थिर काष्ठा pci_device_id *id;
+	काष्ठा hnae3_ae_algo *ae_algo;
+	काष्ठा hnae3_client *client;
+	पूर्णांक ret;
 
-	if (!ae_dev)
-		return -ENODEV;
+	अगर (!ae_dev)
+		वापस -ENODEV;
 
 	mutex_lock(&hnae3_common_lock);
 
 	list_add_tail(&ae_dev->node, &hnae3_ae_dev_list);
 
-	/* Check if there are matched ae_algo */
-	list_for_each_entry(ae_algo, &hnae3_ae_algo_list, node) {
+	/* Check अगर there are matched ae_algo */
+	list_क्रम_each_entry(ae_algo, &hnae3_ae_algo_list, node) अणु
 		id = pci_match_id(ae_algo->pdev_id_table, ae_dev->pdev);
-		if (!id)
-			continue;
+		अगर (!id)
+			जारी;
 
-		if (!ae_algo->ops) {
+		अगर (!ae_algo->ops) अणु
 			dev_err(&ae_dev->pdev->dev, "ae_algo ops are null\n");
 			ret = -EOPNOTSUPP;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		ae_dev->ops = ae_algo->ops;
 
 		ret = ae_dev->ops->init_ae_dev(ae_dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&ae_dev->pdev->dev,
 				"init ae_dev error, ret = %d\n", ret);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		/* ae_dev init should set flag */
 		hnae3_set_bit(ae_dev->flag, HNAE3_DEV_INITED_B, 1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* check the client list for the match with this ae_dev type and
+	/* check the client list क्रम the match with this ae_dev type and
 	 * initialize the figure out client instance
 	 */
-	list_for_each_entry(client, &hnae3_client_list, node) {
+	list_क्रम_each_entry(client, &hnae3_client_list, node) अणु
 		ret = hnae3_init_client_instance(client, ae_dev);
-		if (ret)
+		अगर (ret)
 			dev_err(&ae_dev->pdev->dev,
 				"match and instantiation failed, ret = %d\n",
 				ret);
-	}
+	पूर्ण
 
 	mutex_unlock(&hnae3_common_lock);
 
-	return 0;
+	वापस 0;
 
 out_err:
 	list_del(&ae_dev->node);
 	mutex_unlock(&hnae3_common_lock);
 
-	return ret;
-}
-EXPORT_SYMBOL(hnae3_register_ae_dev);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(hnae3_रेजिस्टर_ae_dev);
 
-/* hnae3_unregister_ae_dev - unregisters a AE device
- * @ae_dev: the AE device to unregister
+/* hnae3_unरेजिस्टर_ae_dev - unरेजिस्टरs a AE device
+ * @ae_dev: the AE device to unरेजिस्टर
  */
-void hnae3_unregister_ae_dev(struct hnae3_ae_dev *ae_dev)
-{
-	const struct pci_device_id *id;
-	struct hnae3_ae_algo *ae_algo;
-	struct hnae3_client *client;
+व्योम hnae3_unरेजिस्टर_ae_dev(काष्ठा hnae3_ae_dev *ae_dev)
+अणु
+	स्थिर काष्ठा pci_device_id *id;
+	काष्ठा hnae3_ae_algo *ae_algo;
+	काष्ठा hnae3_client *client;
 
-	if (!ae_dev)
-		return;
+	अगर (!ae_dev)
+		वापस;
 
 	mutex_lock(&hnae3_common_lock);
-	/* Check if there are matched ae_algo */
-	list_for_each_entry(ae_algo, &hnae3_ae_algo_list, node) {
-		if (!hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))
-			continue;
+	/* Check अगर there are matched ae_algo */
+	list_क्रम_each_entry(ae_algo, &hnae3_ae_algo_list, node) अणु
+		अगर (!hnae3_get_bit(ae_dev->flag, HNAE3_DEV_INITED_B))
+			जारी;
 
 		id = pci_match_id(ae_algo->pdev_id_table, ae_dev->pdev);
-		if (!id)
-			continue;
+		अगर (!id)
+			जारी;
 
-		list_for_each_entry(client, &hnae3_client_list, node)
+		list_क्रम_each_entry(client, &hnae3_client_list, node)
 			hnae3_uninit_client_instance(client, ae_dev);
 
 		ae_algo->ops->uninit_ae_dev(ae_dev);
 		hnae3_set_bit(ae_dev->flag, HNAE3_DEV_INITED_B, 0);
-		ae_dev->ops = NULL;
-	}
+		ae_dev->ops = शून्य;
+	पूर्ण
 
 	list_del(&ae_dev->node);
 	mutex_unlock(&hnae3_common_lock);
-}
-EXPORT_SYMBOL(hnae3_unregister_ae_dev);
+पूर्ण
+EXPORT_SYMBOL(hnae3_unरेजिस्टर_ae_dev);
 
 MODULE_AUTHOR("Huawei Tech. Co., Ltd.");
 MODULE_LICENSE("GPL");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,53 +22,53 @@
  *
  */
 
-#define SWSMU_CODE_LAYER_L2
+#घोषणा SWSMU_CODE_LAYER_L2
 
-#include <linux/firmware.h>
-#include "amdgpu.h"
-#include "amdgpu_smu.h"
-#include "atomfirmware.h"
-#include "amdgpu_atomfirmware.h"
-#include "amdgpu_atombios.h"
-#include "smu_v11_0.h"
-#include "smu11_driver_if_arcturus.h"
-#include "soc15_common.h"
-#include "atom.h"
-#include "power_state.h"
-#include "arcturus_ppt.h"
-#include "smu_v11_0_pptable.h"
-#include "arcturus_ppsmc.h"
-#include "nbio/nbio_7_4_offset.h"
-#include "nbio/nbio_7_4_sh_mask.h"
-#include "thm/thm_11_0_2_offset.h"
-#include "thm/thm_11_0_2_sh_mask.h"
-#include "amdgpu_xgmi.h"
-#include <linux/i2c.h>
-#include <linux/pci.h>
-#include "amdgpu_ras.h"
-#include "smu_cmn.h"
+#समावेश <linux/firmware.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_smu.h"
+#समावेश "atomfirmware.h"
+#समावेश "amdgpu_atomfirmware.h"
+#समावेश "amdgpu_atombios.h"
+#समावेश "smu_v11_0.h"
+#समावेश "smu11_driver_if_arcturus.h"
+#समावेश "soc15_common.h"
+#समावेश "atom.h"
+#समावेश "power_state.h"
+#समावेश "arcturus_ppt.h"
+#समावेश "smu_v11_0_pptable.h"
+#समावेश "arcturus_ppsmc.h"
+#समावेश "nbio/nbio_7_4_offset.h"
+#समावेश "nbio/nbio_7_4_sh_mask.h"
+#समावेश "thm/thm_11_0_2_offset.h"
+#समावेश "thm/thm_11_0_2_sh_mask.h"
+#समावेश "amdgpu_xgmi.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/pci.h>
+#समावेश "amdgpu_ras.h"
+#समावेश "smu_cmn.h"
 
 /*
- * DO NOT use these for err/warn/info/debug messages.
+ * DO NOT use these क्रम err/warn/info/debug messages.
  * Use dev_err, dev_warn, dev_info and dev_dbg instead.
- * They are more MGPU friendly.
+ * They are more MGPU मित्रly.
  */
-#undef pr_err
-#undef pr_warn
-#undef pr_info
-#undef pr_debug
+#अघोषित pr_err
+#अघोषित pr_warn
+#अघोषित pr_info
+#अघोषित pr_debug
 
-#define to_amdgpu_device(x) (container_of(x, struct amdgpu_device, pm.smu_i2c))
+#घोषणा to_amdgpu_device(x) (container_of(x, काष्ठा amdgpu_device, pm.smu_i2c))
 
-#define ARCTURUS_FEA_MAP(smu_feature, arcturus_feature) \
-	[smu_feature] = {1, (arcturus_feature)}
+#घोषणा ARCTURUS_FEA_MAP(smu_feature, arcturus_feature) \
+	[smu_feature] = अणु1, (arcturus_feature)पूर्ण
 
-#define SMU_FEATURES_LOW_MASK        0x00000000FFFFFFFF
-#define SMU_FEATURES_LOW_SHIFT       0
-#define SMU_FEATURES_HIGH_MASK       0xFFFFFFFF00000000
-#define SMU_FEATURES_HIGH_SHIFT      32
+#घोषणा SMU_FEATURES_LOW_MASK        0x00000000FFFFFFFF
+#घोषणा SMU_FEATURES_LOW_SHIFT       0
+#घोषणा SMU_FEATURES_HIGH_MASK       0xFFFFFFFF00000000
+#घोषणा SMU_FEATURES_HIGH_SHIFT      32
 
-#define SMC_DPM_FEATURE ( \
+#घोषणा SMC_DPM_FEATURE ( \
 	FEATURE_DPM_PREFETCHER_MASK | \
 	FEATURE_DPM_GFXCLK_MASK | \
 	FEATURE_DPM_UCLK_MASK | \
@@ -76,12 +77,12 @@
 	FEATURE_DPM_FCLK_MASK | \
 	FEATURE_DPM_XGMI_MASK)
 
-/* possible frequency drift (1Mhz) */
-#define EPSILON				1
+/* possible frequency drअगरt (1Mhz) */
+#घोषणा EPSILON				1
 
-#define smnPCIE_ESM_CTRL			0x111003D0
+#घोषणा smnPCIE_ESM_CTRL			0x111003D0
 
-static const struct cmn2asic_msg_mapping arcturus_message_map[SMU_MSG_MAX_COUNT] = {
+अटल स्थिर काष्ठा cmn2asic_msg_mapping arcturus_message_map[SMU_MSG_MAX_COUNT] = अणु
 	MSG_MAP(TestMessage,			     PPSMC_MSG_TestMessage,			0),
 	MSG_MAP(GetSmuVersion,			     PPSMC_MSG_GetSmuVersion,			1),
 	MSG_MAP(GetDriverIfVersion,		     PPSMC_MSG_GetDriverIfVersion,		1),
@@ -127,7 +128,7 @@ static const struct cmn2asic_msg_mapping arcturus_message_map[SMU_MSG_MAX_COUNT]
 	MSG_MAP(PowerDownVcn1,			     PPSMC_MSG_PowerDownVcn1,			0),
 	MSG_MAP(PrepareMp1ForUnload,		     PPSMC_MSG_PrepareMp1ForUnload,		0),
 	MSG_MAP(PrepareMp1ForReset,		     PPSMC_MSG_PrepareMp1ForReset,		0),
-	MSG_MAP(PrepareMp1ForShutdown,		     PPSMC_MSG_PrepareMp1ForShutdown,		0),
+	MSG_MAP(PrepareMp1ForShutकरोwn,		     PPSMC_MSG_PrepareMp1ForShutकरोwn,		0),
 	MSG_MAP(SoftReset,			     PPSMC_MSG_SoftReset,			0),
 	MSG_MAP(RunAfllBtc,			     PPSMC_MSG_RunAfllBtc,			0),
 	MSG_MAP(RunDcBtc,			     PPSMC_MSG_RunDcBtc,			0),
@@ -143,9 +144,9 @@ static const struct cmn2asic_msg_mapping arcturus_message_map[SMU_MSG_MAX_COUNT]
 	MSG_MAP(ReadSerialNumTop32,		     PPSMC_MSG_ReadSerialNumTop32,		1),
 	MSG_MAP(ReadSerialNumBottom32,		     PPSMC_MSG_ReadSerialNumBottom32,		1),
 	MSG_MAP(LightSBR,			     PPSMC_MSG_LightSBR,			0),
-};
+पूर्ण;
 
-static const struct cmn2asic_mapping arcturus_clk_map[SMU_CLK_COUNT] = {
+अटल स्थिर काष्ठा cmn2asic_mapping arcturus_clk_map[SMU_CLK_COUNT] = अणु
 	CLK_MAP(GFXCLK, PPCLK_GFXCLK),
 	CLK_MAP(SCLK,	PPCLK_GFXCLK),
 	CLK_MAP(SOCCLK, PPCLK_SOCCLK),
@@ -154,9 +155,9 @@ static const struct cmn2asic_mapping arcturus_clk_map[SMU_CLK_COUNT] = {
 	CLK_MAP(MCLK, PPCLK_UCLK),
 	CLK_MAP(DCLK, PPCLK_DCLK),
 	CLK_MAP(VCLK, PPCLK_VCLK),
-};
+पूर्ण;
 
-static const struct cmn2asic_mapping arcturus_feature_mask_map[SMU_FEATURE_COUNT] = {
+अटल स्थिर काष्ठा cmn2asic_mapping arcturus_feature_mask_map[SMU_FEATURE_COUNT] = अणु
 	FEA_MAP(DPM_PREFETCHER),
 	FEA_MAP(DPM_GFXCLK),
 	FEA_MAP(DPM_UCLK),
@@ -183,9 +184,9 @@ static const struct cmn2asic_mapping arcturus_feature_mask_map[SMU_FEATURE_COUNT
 	FEA_MAP(THERMAL),
 	FEA_MAP(OUT_OF_BAND_MONITOR),
 	FEA_MAP(TEMP_DEPENDENT_VMIN),
-};
+पूर्ण;
 
-static const struct cmn2asic_mapping arcturus_table_map[SMU_TABLE_COUNT] = {
+अटल स्थिर काष्ठा cmn2asic_mapping arcturus_table_map[SMU_TABLE_COUNT] = अणु
 	TAB_MAP(PPTABLE),
 	TAB_MAP(AVFS),
 	TAB_MAP(AVFS_PSM_DEBUG),
@@ -196,294 +197,294 @@ static const struct cmn2asic_mapping arcturus_table_map[SMU_TABLE_COUNT] = {
 	TAB_MAP(OVERDRIVE),
 	TAB_MAP(I2C_COMMANDS),
 	TAB_MAP(ACTIVITY_MONITOR_COEFF),
-};
+पूर्ण;
 
-static const struct cmn2asic_mapping arcturus_pwr_src_map[SMU_POWER_SOURCE_COUNT] = {
+अटल स्थिर काष्ठा cmn2asic_mapping arcturus_pwr_src_map[SMU_POWER_SOURCE_COUNT] = अणु
 	PWR_MAP(AC),
 	PWR_MAP(DC),
-};
+पूर्ण;
 
-static const struct cmn2asic_mapping arcturus_workload_map[PP_SMC_POWER_PROFILE_COUNT] = {
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_BOOTUP_DEFAULT,	WORKLOAD_PPLIB_DEFAULT_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_POWERSAVING,		WORKLOAD_PPLIB_POWER_SAVING_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_VIDEO,		WORKLOAD_PPLIB_VIDEO_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_COMPUTE,		WORKLOAD_PPLIB_COMPUTE_BIT),
-	WORKLOAD_MAP(PP_SMC_POWER_PROFILE_CUSTOM,		WORKLOAD_PPLIB_CUSTOM_BIT),
-};
+अटल स्थिर काष्ठा cmn2asic_mapping arcturus_workload_map[PP_SMC_POWER_PROखाता_COUNT] = अणु
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_BOOTUP_DEFAULT,	WORKLOAD_PPLIB_DEFAULT_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_POWERSAVING,		WORKLOAD_PPLIB_POWER_SAVING_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_VIDEO,		WORKLOAD_PPLIB_VIDEO_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_COMPUTE,		WORKLOAD_PPLIB_COMPUTE_BIT),
+	WORKLOAD_MAP(PP_SMC_POWER_PROखाता_CUSTOM,		WORKLOAD_PPLIB_CUSTOM_BIT),
+पूर्ण;
 
-static int arcturus_tables_init(struct smu_context *smu)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct smu_table *tables = smu_table->tables;
+अटल पूर्णांक arcturus_tables_init(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा smu_table *tables = smu_table->tables;
 
-	SMU_TABLE_INIT(tables, SMU_TABLE_PPTABLE, sizeof(PPTable_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_PPTABLE, माप(PPTable_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 
 	SMU_TABLE_INIT(tables, SMU_TABLE_PMSTATUSLOG, SMU11_TOOL_SIZE,
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 
-	SMU_TABLE_INIT(tables, SMU_TABLE_SMU_METRICS, sizeof(SmuMetrics_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_SMU_METRICS, माप(SmuMetrics_t),
 		       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 
-	SMU_TABLE_INIT(tables, SMU_TABLE_I2C_COMMANDS, sizeof(SwI2cRequest_t),
+	SMU_TABLE_INIT(tables, SMU_TABLE_I2C_COMMANDS, माप(SwI2cRequest_t),
 			       PAGE_SIZE, AMDGPU_GEM_DOMAIN_VRAM);
 
 	SMU_TABLE_INIT(tables, SMU_TABLE_ACTIVITY_MONITOR_COEFF,
-		       sizeof(DpmActivityMonitorCoeffInt_t), PAGE_SIZE,
+		       माप(DpmActivityMonitorCoeffInt_t), PAGE_SIZE,
 		       AMDGPU_GEM_DOMAIN_VRAM);
 
-	smu_table->metrics_table = kzalloc(sizeof(SmuMetrics_t), GFP_KERNEL);
-	if (!smu_table->metrics_table)
-		return -ENOMEM;
-	smu_table->metrics_time = 0;
+	smu_table->metrics_table = kzalloc(माप(SmuMetrics_t), GFP_KERNEL);
+	अगर (!smu_table->metrics_table)
+		वापस -ENOMEM;
+	smu_table->metrics_समय = 0;
 
-	smu_table->gpu_metrics_table_size = sizeof(struct gpu_metrics_v1_1);
+	smu_table->gpu_metrics_table_size = माप(काष्ठा gpu_metrics_v1_1);
 	smu_table->gpu_metrics_table = kzalloc(smu_table->gpu_metrics_table_size, GFP_KERNEL);
-	if (!smu_table->gpu_metrics_table) {
-		kfree(smu_table->metrics_table);
-		return -ENOMEM;
-	}
+	अगर (!smu_table->gpu_metrics_table) अणु
+		kमुक्त(smu_table->metrics_table);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_allocate_dpm_context(struct smu_context *smu)
-{
-	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
+अटल पूर्णांक arcturus_allocate_dpm_context(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_dpm_context *smu_dpm = &smu->smu_dpm;
 
-	smu_dpm->dpm_context = kzalloc(sizeof(struct smu_11_0_dpm_context),
+	smu_dpm->dpm_context = kzalloc(माप(काष्ठा smu_11_0_dpm_context),
 				       GFP_KERNEL);
-	if (!smu_dpm->dpm_context)
-		return -ENOMEM;
-	smu_dpm->dpm_context_size = sizeof(struct smu_11_0_dpm_context);
+	अगर (!smu_dpm->dpm_context)
+		वापस -ENOMEM;
+	smu_dpm->dpm_context_size = माप(काष्ठा smu_11_0_dpm_context);
 
-	smu_dpm->dpm_current_power_state = kzalloc(sizeof(struct smu_power_state),
+	smu_dpm->dpm_current_घातer_state = kzalloc(माप(काष्ठा smu_घातer_state),
 				       GFP_KERNEL);
-	if (!smu_dpm->dpm_current_power_state)
-		return -ENOMEM;
+	अगर (!smu_dpm->dpm_current_घातer_state)
+		वापस -ENOMEM;
 
-	smu_dpm->dpm_request_power_state = kzalloc(sizeof(struct smu_power_state),
+	smu_dpm->dpm_request_घातer_state = kzalloc(माप(काष्ठा smu_घातer_state),
 				       GFP_KERNEL);
-	if (!smu_dpm->dpm_request_power_state)
-		return -ENOMEM;
+	अगर (!smu_dpm->dpm_request_घातer_state)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_init_smc_tables(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक arcturus_init_smc_tables(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = arcturus_tables_init(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = arcturus_allocate_dpm_context(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return smu_v11_0_init_smc_tables(smu);
-}
+	वापस smu_v11_0_init_smc_tables(smu);
+पूर्ण
 
-static int
-arcturus_get_allowed_feature_mask(struct smu_context *smu,
-				  uint32_t *feature_mask, uint32_t num)
-{
-	if (num > 2)
-		return -EINVAL;
+अटल पूर्णांक
+arcturus_get_allowed_feature_mask(काष्ठा smu_context *smu,
+				  uपूर्णांक32_t *feature_mask, uपूर्णांक32_t num)
+अणु
+	अगर (num > 2)
+		वापस -EINVAL;
 
 	/* pptable will handle the features to enable */
-	memset(feature_mask, 0xFF, sizeof(uint32_t) * num);
+	स_रखो(feature_mask, 0xFF, माप(uपूर्णांक32_t) * num);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_set_default_dpm_table(struct smu_context *smu)
-{
-	struct smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
+अटल पूर्णांक arcturus_set_शेष_dpm_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
 	PPTable_t *driver_ppt = smu->smu_table.driver_pptable;
-	struct smu_11_0_dpm_table *dpm_table = NULL;
-	int ret = 0;
+	काष्ठा smu_11_0_dpm_table *dpm_table = शून्य;
+	पूर्णांक ret = 0;
 
 	/* socclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.soc_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_SOCCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_SOCCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.socclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* gfxclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.gfx_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_GFXCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_GFXCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.gfxclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* memclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.uclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_UCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_UCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.uclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
 	/* fclk dpm table setup */
 	dpm_table = &dpm_context->dpm_tables.fclk_table;
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_FCLK_BIT)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_FCLK_BIT)) अणु
 		ret = smu_v11_0_set_single_dpm_table(smu,
 						     SMU_FCLK,
 						     dpm_table);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		dpm_table->is_fine_grained =
 			!driver_ppt->DpmDescriptor[PPCLK_FCLK].SnapToDiscrete;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpm_table->count = 1;
 		dpm_table->dpm_levels[0].value = smu->smu_table.boot_values.fclk / 100;
 		dpm_table->dpm_levels[0].enabled = true;
 		dpm_table->min = dpm_table->dpm_levels[0].value;
 		dpm_table->max = dpm_table->dpm_levels[0].value;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_check_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_powerplay_table *powerplay_table =
-		table_context->power_play_table;
-	struct smu_baco_context *smu_baco = &smu->smu_baco;
+अटल पूर्णांक arcturus_check_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_घातerplay_table *घातerplay_table =
+		table_context->घातer_play_table;
+	काष्ठा smu_baco_context *smu_baco = &smu->smu_baco;
 
-	if (powerplay_table->platform_caps & SMU_11_0_PP_PLATFORM_CAP_BACO ||
-	    powerplay_table->platform_caps & SMU_11_0_PP_PLATFORM_CAP_MACO)
-		smu_baco->platform_support = true;
+	अगर (घातerplay_table->platक्रमm_caps & SMU_11_0_PP_PLATFORM_CAP_BACO ||
+	    घातerplay_table->platक्रमm_caps & SMU_11_0_PP_PLATFORM_CAP_MACO)
+		smu_baco->platक्रमm_support = true;
 
 	table_context->thermal_controller_type =
-		powerplay_table->thermal_controller_type;
+		घातerplay_table->thermal_controller_type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_store_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_powerplay_table *powerplay_table =
-		table_context->power_play_table;
+अटल पूर्णांक arcturus_store_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_घातerplay_table *घातerplay_table =
+		table_context->घातer_play_table;
 
-	memcpy(table_context->driver_pptable, &powerplay_table->smc_pptable,
-	       sizeof(PPTable_t));
+	स_नकल(table_context->driver_pptable, &घातerplay_table->smc_pptable,
+	       माप(PPTable_t));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_append_powerplay_table(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक arcturus_append_घातerplay_table(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *smc_pptable = table_context->driver_pptable;
-	struct atom_smc_dpm_info_v4_6 *smc_dpm_table;
-	int index, ret;
+	काष्ठा atom_smc_dpm_info_v4_6 *smc_dpm_table;
+	पूर्णांक index, ret;
 
-	index = get_index_into_master_table(atom_master_list_of_data_tables_v2_1,
+	index = get_index_पूर्णांकo_master_table(atom_master_list_of_data_tables_v2_1,
 					   smc_dpm_info);
 
-	ret = amdgpu_atombios_get_data_table(smu->adev, index, NULL, NULL, NULL,
-				      (uint8_t **)&smc_dpm_table);
-	if (ret)
-		return ret;
+	ret = amdgpu_atombios_get_data_table(smu->adev, index, शून्य, शून्य, शून्य,
+				      (uपूर्णांक8_t **)&smc_dpm_table);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(smu->adev->dev, "smc_dpm_info table revision(format.content): %d.%d\n",
-			smc_dpm_table->table_header.format_revision,
+			smc_dpm_table->table_header.क्रमmat_revision,
 			smc_dpm_table->table_header.content_revision);
 
-	if ((smc_dpm_table->table_header.format_revision == 4) &&
+	अगर ((smc_dpm_table->table_header.क्रमmat_revision == 4) &&
 	    (smc_dpm_table->table_header.content_revision == 6))
-		memcpy(&smc_pptable->MaxVoltageStepGfx,
+		स_नकल(&smc_pptable->MaxVoltageStepGfx,
 		       &smc_dpm_table->maxvoltagestepgfx,
-		       sizeof(*smc_dpm_table) - offsetof(struct atom_smc_dpm_info_v4_6, maxvoltagestepgfx));
+		       माप(*smc_dpm_table) - दुरत्व(काष्ठा atom_smc_dpm_info_v4_6, maxvoltagestepgfx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_setup_pptable(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक arcturus_setup_pptable(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = smu_v11_0_setup_pptable(smu);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = arcturus_store_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = arcturus_store_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	ret = arcturus_append_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = arcturus_append_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	ret = arcturus_check_powerplay_table(smu);
-	if (ret)
-		return ret;
+	ret = arcturus_check_घातerplay_table(smu);
+	अगर (ret)
+		वापस ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_run_btc(struct smu_context *smu)
-{
-	int ret = 0;
+अटल पूर्णांक arcturus_run_btc(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
 
-	ret = smu_cmn_send_smc_msg(smu, SMU_MSG_RunAfllBtc, NULL);
-	if (ret) {
+	ret = smu_cmn_send_smc_msg(smu, SMU_MSG_RunAfllBtc, शून्य);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "RunAfllBtc failed!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return smu_cmn_send_smc_msg(smu, SMU_MSG_RunDcBtc, NULL);
-}
+	वापस smu_cmn_send_smc_msg(smu, SMU_MSG_RunDcBtc, शून्य);
+पूर्ण
 
-static int arcturus_populate_umd_state_clk(struct smu_context *smu)
-{
-	struct smu_11_0_dpm_context *dpm_context =
+अटल पूर्णांक arcturus_populate_umd_state_clk(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context =
 				smu->smu_dpm.dpm_context;
-	struct smu_11_0_dpm_table *gfx_table =
+	काष्ठा smu_11_0_dpm_table *gfx_table =
 				&dpm_context->dpm_tables.gfx_table;
-	struct smu_11_0_dpm_table *mem_table =
+	काष्ठा smu_11_0_dpm_table *mem_table =
 				&dpm_context->dpm_tables.uclk_table;
-	struct smu_11_0_dpm_table *soc_table =
+	काष्ठा smu_11_0_dpm_table *soc_table =
 				&dpm_context->dpm_tables.soc_table;
-	struct smu_umd_pstate_table *pstate_table =
+	काष्ठा smu_umd_pstate_table *pstate_table =
 				&smu->pstate_table;
 
 	pstate_table->gfxclk_pstate.min = gfx_table->min;
@@ -495,337 +496,337 @@ static int arcturus_populate_umd_state_clk(struct smu_context *smu)
 	pstate_table->socclk_pstate.min = soc_table->min;
 	pstate_table->socclk_pstate.peak = soc_table->max;
 
-	if (gfx_table->count > ARCTURUS_UMD_PSTATE_GFXCLK_LEVEL &&
+	अगर (gfx_table->count > ARCTURUS_UMD_PSTATE_GFXCLK_LEVEL &&
 	    mem_table->count > ARCTURUS_UMD_PSTATE_MCLK_LEVEL &&
-	    soc_table->count > ARCTURUS_UMD_PSTATE_SOCCLK_LEVEL) {
+	    soc_table->count > ARCTURUS_UMD_PSTATE_SOCCLK_LEVEL) अणु
 		pstate_table->gfxclk_pstate.standard =
 			gfx_table->dpm_levels[ARCTURUS_UMD_PSTATE_GFXCLK_LEVEL].value;
 		pstate_table->uclk_pstate.standard =
 			mem_table->dpm_levels[ARCTURUS_UMD_PSTATE_MCLK_LEVEL].value;
 		pstate_table->socclk_pstate.standard =
 			soc_table->dpm_levels[ARCTURUS_UMD_PSTATE_SOCCLK_LEVEL].value;
-	} else {
+	पूर्ण अन्यथा अणु
 		pstate_table->gfxclk_pstate.standard =
 			pstate_table->gfxclk_pstate.min;
 		pstate_table->uclk_pstate.standard =
 			pstate_table->uclk_pstate.min;
 		pstate_table->socclk_pstate.standard =
 			pstate_table->socclk_pstate.min;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_get_clk_table(struct smu_context *smu,
-			struct pp_clock_levels_with_latency *clocks,
-			struct smu_11_0_dpm_table *dpm_table)
-{
-	int i, count;
+अटल पूर्णांक arcturus_get_clk_table(काष्ठा smu_context *smu,
+			काष्ठा pp_घड़ी_levels_with_latency *घड़ीs,
+			काष्ठा smu_11_0_dpm_table *dpm_table)
+अणु
+	पूर्णांक i, count;
 
 	count = (dpm_table->count > MAX_NUM_CLOCKS) ? MAX_NUM_CLOCKS : dpm_table->count;
-	clocks->num_levels = count;
+	घड़ीs->num_levels = count;
 
-	for (i = 0; i < count; i++) {
-		clocks->data[i].clocks_in_khz =
+	क्रम (i = 0; i < count; i++) अणु
+		घड़ीs->data[i].घड़ीs_in_khz =
 			dpm_table->dpm_levels[i].value * 1000;
-		clocks->data[i].latency_in_us = 0;
-	}
+		घड़ीs->data[i].latency_in_us = 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_freqs_in_same_level(int32_t frequency1,
-					int32_t frequency2)
-{
-	return (abs(frequency1 - frequency2) <= EPSILON);
-}
+अटल पूर्णांक arcturus_freqs_in_same_level(पूर्णांक32_t frequency1,
+					पूर्णांक32_t frequency2)
+अणु
+	वापस (असल(frequency1 - frequency2) <= EPSILON);
+पूर्ण
 
-static int arcturus_get_smu_metrics_data(struct smu_context *smu,
+अटल पूर्णांक arcturus_get_smu_metrics_data(काष्ठा smu_context *smu,
 					 MetricsMember_t member,
-					 uint32_t *value)
-{
-	struct smu_table_context *smu_table= &smu->smu_table;
+					 uपूर्णांक32_t *value)
+अणु
+	काष्ठा smu_table_context *smu_table= &smu->smu_table;
 	SmuMetrics_t *metrics = (SmuMetrics_t *)smu_table->metrics_table;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&smu->metrics_lock);
 
 	ret = smu_cmn_get_metrics_table_locked(smu,
-					       NULL,
+					       शून्य,
 					       false);
-	if (ret) {
+	अगर (ret) अणु
 		mutex_unlock(&smu->metrics_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (member) {
-	case METRICS_CURR_GFXCLK:
+	चयन (member) अणु
+	हाल METRICS_CURR_GFXCLK:
 		*value = metrics->CurrClock[PPCLK_GFXCLK];
-		break;
-	case METRICS_CURR_SOCCLK:
+		अवरोध;
+	हाल METRICS_CURR_SOCCLK:
 		*value = metrics->CurrClock[PPCLK_SOCCLK];
-		break;
-	case METRICS_CURR_UCLK:
+		अवरोध;
+	हाल METRICS_CURR_UCLK:
 		*value = metrics->CurrClock[PPCLK_UCLK];
-		break;
-	case METRICS_CURR_VCLK:
+		अवरोध;
+	हाल METRICS_CURR_VCLK:
 		*value = metrics->CurrClock[PPCLK_VCLK];
-		break;
-	case METRICS_CURR_DCLK:
+		अवरोध;
+	हाल METRICS_CURR_DCLK:
 		*value = metrics->CurrClock[PPCLK_DCLK];
-		break;
-	case METRICS_CURR_FCLK:
+		अवरोध;
+	हाल METRICS_CURR_FCLK:
 		*value = metrics->CurrClock[PPCLK_FCLK];
-		break;
-	case METRICS_AVERAGE_GFXCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_GFXCLK:
 		*value = metrics->AverageGfxclkFrequency;
-		break;
-	case METRICS_AVERAGE_SOCCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_SOCCLK:
 		*value = metrics->AverageSocclkFrequency;
-		break;
-	case METRICS_AVERAGE_UCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_UCLK:
 		*value = metrics->AverageUclkFrequency;
-		break;
-	case METRICS_AVERAGE_VCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_VCLK:
 		*value = metrics->AverageVclkFrequency;
-		break;
-	case METRICS_AVERAGE_DCLK:
+		अवरोध;
+	हाल METRICS_AVERAGE_DCLK:
 		*value = metrics->AverageDclkFrequency;
-		break;
-	case METRICS_AVERAGE_GFXACTIVITY:
+		अवरोध;
+	हाल METRICS_AVERAGE_GFXACTIVITY:
 		*value = metrics->AverageGfxActivity;
-		break;
-	case METRICS_AVERAGE_MEMACTIVITY:
+		अवरोध;
+	हाल METRICS_AVERAGE_MEMACTIVITY:
 		*value = metrics->AverageUclkActivity;
-		break;
-	case METRICS_AVERAGE_VCNACTIVITY:
+		अवरोध;
+	हाल METRICS_AVERAGE_VCNACTIVITY:
 		*value = metrics->VcnActivityPercentage;
-		break;
-	case METRICS_AVERAGE_SOCKETPOWER:
+		अवरोध;
+	हाल METRICS_AVERAGE_SOCKETPOWER:
 		*value = metrics->AverageSocketPower << 8;
-		break;
-	case METRICS_TEMPERATURE_EDGE:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_EDGE:
 		*value = metrics->TemperatureEdge *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_HOTSPOT:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_HOTSPOT:
 		*value = metrics->TemperatureHotspot *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_MEM:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_MEM:
 		*value = metrics->TemperatureHBM *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_VRGFX:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_VRGFX:
 		*value = metrics->TemperatureVrGfx *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_VRSOC:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_VRSOC:
 		*value = metrics->TemperatureVrSoc *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_TEMPERATURE_VRMEM:
+		अवरोध;
+	हाल METRICS_TEMPERATURE_VRMEM:
 		*value = metrics->TemperatureVrMem *
 			SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-		break;
-	case METRICS_THROTTLER_STATUS:
+		अवरोध;
+	हाल METRICS_THROTTLER_STATUS:
 		*value = metrics->ThrottlerStatus;
-		break;
-	case METRICS_CURR_FANSPEED:
+		अवरोध;
+	हाल METRICS_CURR_FANSPEED:
 		*value = metrics->CurrFanSpeed;
-		break;
-	default:
-		*value = UINT_MAX;
-		break;
-	}
+		अवरोध;
+	शेष:
+		*value = अच_पूर्णांक_उच्च;
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&smu->metrics_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_get_current_clk_freq_by_table(struct smu_context *smu,
-				       enum smu_clk_type clk_type,
-				       uint32_t *value)
-{
+अटल पूर्णांक arcturus_get_current_clk_freq_by_table(काष्ठा smu_context *smu,
+				       क्रमागत smu_clk_type clk_type,
+				       uपूर्णांक32_t *value)
+अणु
 	MetricsMember_t member_type;
-	int clk_id = 0;
+	पूर्णांक clk_id = 0;
 
-	if (!value)
-		return -EINVAL;
+	अगर (!value)
+		वापस -EINVAL;
 
-	clk_id = smu_cmn_to_asic_specific_index(smu,
+	clk_id = smu_cmn_to_asic_specअगरic_index(smu,
 						CMN2ASIC_MAPPING_CLK,
 						clk_type);
-	if (clk_id < 0)
-		return -EINVAL;
+	अगर (clk_id < 0)
+		वापस -EINVAL;
 
-	switch (clk_id) {
-	case PPCLK_GFXCLK:
+	चयन (clk_id) अणु
+	हाल PPCLK_GFXCLK:
 		/*
 		 * CurrClock[clk_id] can provide accurate
 		 *   output only when the dpm feature is enabled.
-		 * We can use Average_* for dpm disabled case.
-		 *   But this is available for gfxclk/uclk/socclk/vclk/dclk.
+		 * We can use Average_* क्रम dpm disabled हाल.
+		 *   But this is available क्रम gfxclk/uclk/socclk/vclk/dclk.
 		 */
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT))
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT))
 			member_type = METRICS_CURR_GFXCLK;
-		else
+		अन्यथा
 			member_type = METRICS_AVERAGE_GFXCLK;
-		break;
-	case PPCLK_UCLK:
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT))
+		अवरोध;
+	हाल PPCLK_UCLK:
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT))
 			member_type = METRICS_CURR_UCLK;
-		else
+		अन्यथा
 			member_type = METRICS_AVERAGE_UCLK;
-		break;
-	case PPCLK_SOCCLK:
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT))
+		अवरोध;
+	हाल PPCLK_SOCCLK:
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT))
 			member_type = METRICS_CURR_SOCCLK;
-		else
+		अन्यथा
 			member_type = METRICS_AVERAGE_SOCCLK;
-		break;
-	case PPCLK_VCLK:
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT))
+		अवरोध;
+	हाल PPCLK_VCLK:
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT))
 			member_type = METRICS_CURR_VCLK;
-		else
+		अन्यथा
 			member_type = METRICS_AVERAGE_VCLK;
-		break;
-	case PPCLK_DCLK:
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT))
+		अवरोध;
+	हाल PPCLK_DCLK:
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT))
 			member_type = METRICS_CURR_DCLK;
-		else
+		अन्यथा
 			member_type = METRICS_AVERAGE_DCLK;
-		break;
-	case PPCLK_FCLK:
+		अवरोध;
+	हाल PPCLK_FCLK:
 		member_type = METRICS_CURR_FCLK;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return arcturus_get_smu_metrics_data(smu,
+	वापस arcturus_get_smu_metrics_data(smu,
 					     member_type,
 					     value);
-}
+पूर्ण
 
-static int arcturus_print_clk_levels(struct smu_context *smu,
-			enum smu_clk_type type, char *buf)
-{
-	int i, now, size = 0;
-	int ret = 0;
-	struct pp_clock_levels_with_latency clocks;
-	struct smu_11_0_dpm_table *single_dpm_table;
-	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
-	struct smu_11_0_dpm_context *dpm_context = NULL;
-	uint32_t gen_speed, lane_width;
+अटल पूर्णांक arcturus_prपूर्णांक_clk_levels(काष्ठा smu_context *smu,
+			क्रमागत smu_clk_type type, अक्षर *buf)
+अणु
+	पूर्णांक i, now, size = 0;
+	पूर्णांक ret = 0;
+	काष्ठा pp_घड़ी_levels_with_latency घड़ीs;
+	काष्ठा smu_11_0_dpm_table *single_dpm_table;
+	काष्ठा smu_dpm_context *smu_dpm = &smu->smu_dpm;
+	काष्ठा smu_11_0_dpm_context *dpm_context = शून्य;
+	uपूर्णांक32_t gen_speed, lane_width;
 
-	if (amdgpu_ras_intr_triggered())
-		return snprintf(buf, PAGE_SIZE, "unavailable\n");
+	अगर (amdgpu_ras_पूर्णांकr_triggered())
+		वापस snम_लिखो(buf, PAGE_SIZE, "unavailable\n");
 
 	dpm_context = smu_dpm->dpm_context;
 
-	switch (type) {
-	case SMU_SCLK:
+	चयन (type) अणु
+	हाल SMU_SCLK:
 		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_GFXCLK, &now);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get current gfx clk Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		single_dpm_table = &(dpm_context->dpm_tables.gfx_table);
-		ret = arcturus_get_clk_table(smu, &clocks, single_dpm_table);
-		if (ret) {
+		ret = arcturus_get_clk_table(smu, &घड़ीs, single_dpm_table);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get gfx clk levels Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/*
-		 * For DPM disabled case, there will be only one clock level.
-		 * And it's safe to assume that is always the current clock.
+		 * For DPM disabled हाल, there will be only one घड़ी level.
+		 * And it's safe to assume that is always the current घड़ी.
 		 */
-		for (i = 0; i < clocks.num_levels; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n", i,
-					clocks.data[i].clocks_in_khz / 1000,
-					(clocks.num_levels == 1) ? "*" :
+		क्रम (i = 0; i < घड़ीs.num_levels; i++)
+			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n", i,
+					घड़ीs.data[i].घड़ीs_in_khz / 1000,
+					(घड़ीs.num_levels == 1) ? "*" :
 					(arcturus_freqs_in_same_level(
-					clocks.data[i].clocks_in_khz / 1000,
+					घड़ीs.data[i].घड़ीs_in_khz / 1000,
 					now) ? "*" : ""));
-		break;
+		अवरोध;
 
-	case SMU_MCLK:
+	हाल SMU_MCLK:
 		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_UCLK, &now);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get current mclk Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		single_dpm_table = &(dpm_context->dpm_tables.uclk_table);
-		ret = arcturus_get_clk_table(smu, &clocks, single_dpm_table);
-		if (ret) {
+		ret = arcturus_get_clk_table(smu, &घड़ीs, single_dpm_table);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get memory clk levels Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		for (i = 0; i < clocks.num_levels; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
-				i, clocks.data[i].clocks_in_khz / 1000,
-				(clocks.num_levels == 1) ? "*" :
+		क्रम (i = 0; i < घड़ीs.num_levels; i++)
+			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n",
+				i, घड़ीs.data[i].घड़ीs_in_khz / 1000,
+				(घड़ीs.num_levels == 1) ? "*" :
 				(arcturus_freqs_in_same_level(
-				clocks.data[i].clocks_in_khz / 1000,
+				घड़ीs.data[i].घड़ीs_in_khz / 1000,
 				now) ? "*" : ""));
-		break;
+		अवरोध;
 
-	case SMU_SOCCLK:
+	हाल SMU_SOCCLK:
 		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_SOCCLK, &now);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get current socclk Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		single_dpm_table = &(dpm_context->dpm_tables.soc_table);
-		ret = arcturus_get_clk_table(smu, &clocks, single_dpm_table);
-		if (ret) {
+		ret = arcturus_get_clk_table(smu, &घड़ीs, single_dpm_table);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get socclk levels Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		for (i = 0; i < clocks.num_levels; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
-				i, clocks.data[i].clocks_in_khz / 1000,
-				(clocks.num_levels == 1) ? "*" :
+		क्रम (i = 0; i < घड़ीs.num_levels; i++)
+			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n",
+				i, घड़ीs.data[i].घड़ीs_in_khz / 1000,
+				(घड़ीs.num_levels == 1) ? "*" :
 				(arcturus_freqs_in_same_level(
-				clocks.data[i].clocks_in_khz / 1000,
+				घड़ीs.data[i].घड़ीs_in_khz / 1000,
 				now) ? "*" : ""));
-		break;
+		अवरोध;
 
-	case SMU_FCLK:
+	हाल SMU_FCLK:
 		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_FCLK, &now);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get current fclk Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		single_dpm_table = &(dpm_context->dpm_tables.fclk_table);
-		ret = arcturus_get_clk_table(smu, &clocks, single_dpm_table);
-		if (ret) {
+		ret = arcturus_get_clk_table(smu, &घड़ीs, single_dpm_table);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Attempt to get fclk levels Failed!");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		for (i = 0; i < single_dpm_table->count; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
+		क्रम (i = 0; i < single_dpm_table->count; i++)
+			size += प्र_लिखो(buf + size, "%d: %uMhz %s\n",
 				i, single_dpm_table->dpm_levels[i].value,
-				(clocks.num_levels == 1) ? "*" :
+				(घड़ीs.num_levels == 1) ? "*" :
 				(arcturus_freqs_in_same_level(
-				clocks.data[i].clocks_in_khz / 1000,
+				घड़ीs.data[i].घड़ीs_in_khz / 1000,
 				now) ? "*" : ""));
-		break;
+		अवरोध;
 
-	case SMU_PCIE:
+	हाल SMU_PCIE:
 		gen_speed = smu_v11_0_get_current_pcie_link_speed_level(smu);
 		lane_width = smu_v11_0_get_current_pcie_link_width_level(smu);
-		size += sprintf(buf + size, "0: %s %s %dMhz *\n",
+		size += प्र_लिखो(buf + size, "0: %s %s %dMhz *\n",
 				(gen_speed == 0) ? "2.5GT/s," :
 				(gen_speed == 1) ? "5.0GT/s," :
 				(gen_speed == 2) ? "8.0GT/s," :
@@ -837,152 +838,152 @@ static int arcturus_print_clk_levels(struct smu_context *smu,
 				(lane_width == 5) ? "x12" :
 				(lane_width == 6) ? "x16" : "",
 				smu->smu_table.boot_values.lclk / 100);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int arcturus_upload_dpm_level(struct smu_context *smu,
+अटल पूर्णांक arcturus_upload_dpm_level(काष्ठा smu_context *smu,
 				     bool max,
-				     uint32_t feature_mask,
-				     uint32_t level)
-{
-	struct smu_11_0_dpm_context *dpm_context =
+				     uपूर्णांक32_t feature_mask,
+				     uपूर्णांक32_t level)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context =
 			smu->smu_dpm.dpm_context;
-	uint32_t freq;
-	int ret = 0;
+	uपूर्णांक32_t freq;
+	पूर्णांक ret = 0;
 
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT) &&
-	    (feature_mask & FEATURE_DPM_GFXCLK_MASK)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_GFXCLK_BIT) &&
+	    (feature_mask & FEATURE_DPM_GFXCLK_MASK)) अणु
 		freq = dpm_context->dpm_tables.gfx_table.dpm_levels[level].value;
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 			(max ? SMU_MSG_SetSoftMaxByFreq : SMU_MSG_SetSoftMinByFreq),
 			(PPCLK_GFXCLK << 16) | (freq & 0xffff),
-			NULL);
-		if (ret) {
+			शून्य);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to set soft %s gfxclk !\n",
 						max ? "max" : "min");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT) &&
-	    (feature_mask & FEATURE_DPM_UCLK_MASK)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_UCLK_BIT) &&
+	    (feature_mask & FEATURE_DPM_UCLK_MASK)) अणु
 		freq = dpm_context->dpm_tables.uclk_table.dpm_levels[level].value;
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 			(max ? SMU_MSG_SetSoftMaxByFreq : SMU_MSG_SetSoftMinByFreq),
 			(PPCLK_UCLK << 16) | (freq & 0xffff),
-			NULL);
-		if (ret) {
+			शून्य);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to set soft %s memclk !\n",
 						max ? "max" : "min");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT) &&
-	    (feature_mask & FEATURE_DPM_SOCCLK_MASK)) {
+	अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_DPM_SOCCLK_BIT) &&
+	    (feature_mask & FEATURE_DPM_SOCCLK_MASK)) अणु
 		freq = dpm_context->dpm_tables.soc_table.dpm_levels[level].value;
 		ret = smu_cmn_send_smc_msg_with_param(smu,
 			(max ? SMU_MSG_SetSoftMaxByFreq : SMU_MSG_SetSoftMinByFreq),
 			(PPCLK_SOCCLK << 16) | (freq & 0xffff),
-			NULL);
-		if (ret) {
+			शून्य);
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to set soft %s socclk !\n",
 						max ? "max" : "min");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_force_clk_levels(struct smu_context *smu,
-			enum smu_clk_type type, uint32_t mask)
-{
-	struct smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
-	struct smu_11_0_dpm_table *single_dpm_table = NULL;
-	uint32_t soft_min_level, soft_max_level;
-	uint32_t smu_version;
-	int ret = 0;
+अटल पूर्णांक arcturus_क्रमce_clk_levels(काष्ठा smu_context *smu,
+			क्रमागत smu_clk_type type, uपूर्णांक32_t mask)
+अणु
+	काष्ठा smu_11_0_dpm_context *dpm_context = smu->smu_dpm.dpm_context;
+	काष्ठा smu_11_0_dpm_table *single_dpm_table = शून्य;
+	uपूर्णांक32_t soft_min_level, soft_max_level;
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret = 0;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret) {
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to get smu version!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if ((smu_version >= 0x361200) &&
-	    (smu_version <= 0x361a00)) {
+	अगर ((smu_version >= 0x361200) &&
+	    (smu_version <= 0x361a00)) अणु
 		dev_err(smu->adev->dev, "Forcing clock level is not supported with "
 		       "54.18 - 54.26(included) SMU firmwares\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	soft_min_level = mask ? (ffs(mask) - 1) : 0;
 	soft_max_level = mask ? (fls(mask) - 1) : 0;
 
-	switch (type) {
-	case SMU_SCLK:
+	चयन (type) अणु
+	हाल SMU_SCLK:
 		single_dpm_table = &(dpm_context->dpm_tables.gfx_table);
-		if (soft_max_level >= single_dpm_table->count) {
+		अगर (soft_max_level >= single_dpm_table->count) अणु
 			dev_err(smu->adev->dev, "Clock level specified %d is over max allowed %d\n",
 					soft_max_level, single_dpm_table->count - 1);
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = arcturus_upload_dpm_level(smu,
 						false,
 						FEATURE_DPM_GFXCLK_MASK,
 						soft_min_level);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "Failed to upload boot level to lowest!\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = arcturus_upload_dpm_level(smu,
 						true,
 						FEATURE_DPM_GFXCLK_MASK,
 						soft_max_level);
-		if (ret)
+		अगर (ret)
 			dev_err(smu->adev->dev, "Failed to upload dpm max level to highest!\n");
 
-		break;
+		अवरोध;
 
-	case SMU_MCLK:
-	case SMU_SOCCLK:
-	case SMU_FCLK:
+	हाल SMU_MCLK:
+	हाल SMU_SOCCLK:
+	हाल SMU_FCLK:
 		/*
-		 * Should not arrive here since Arcturus does not
-		 * support mclk/socclk/fclk softmin/softmax settings
+		 * Should not arrive here since Arcturus करोes not
+		 * support mclk/socclk/fclk sofपंचांगin/sofपंचांगax settings
 		 */
 		ret = -EINVAL;
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_get_thermal_temperature_range(struct smu_context *smu,
-						struct smu_temperature_range *range)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_powerplay_table *powerplay_table =
-				table_context->power_play_table;
+अटल पूर्णांक arcturus_get_thermal_temperature_range(काष्ठा smu_context *smu,
+						काष्ठा smu_temperature_range *range)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
+	काष्ठा smu_11_0_घातerplay_table *घातerplay_table =
+				table_context->घातer_play_table;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 
-	if (!range)
-		return -EINVAL;
+	अगर (!range)
+		वापस -EINVAL;
 
-	memcpy(range, &smu11_thermal_policy[0], sizeof(struct smu_temperature_range));
+	स_नकल(range, &smu11_thermal_policy[0], माप(काष्ठा smu_temperature_range));
 
 	range->max = pptable->TedgeLimit *
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
@@ -996,167 +997,167 @@ static int arcturus_get_thermal_temperature_range(struct smu_context *smu,
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
 	range->mem_emergency_max = (pptable->TmemLimit + CTF_OFFSET_MEM)*
 		SMU_TEMPERATURE_UNITS_PER_CENTIGRADES;
-	range->software_shutdown_temp = powerplay_table->software_shutdown_temp;
+	range->software_shutकरोwn_temp = घातerplay_table->software_shutकरोwn_temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_read_sensor(struct smu_context *smu,
-				enum amd_pp_sensors sensor,
-				void *data, uint32_t *size)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल पूर्णांक arcturus_पढ़ो_sensor(काष्ठा smu_context *smu,
+				क्रमागत amd_pp_sensors sensor,
+				व्योम *data, uपूर्णांक32_t *size)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *pptable = table_context->driver_pptable;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (amdgpu_ras_intr_triggered())
-		return 0;
+	अगर (amdgpu_ras_पूर्णांकr_triggered())
+		वापस 0;
 
-	if (!data || !size)
-		return -EINVAL;
+	अगर (!data || !size)
+		वापस -EINVAL;
 
 	mutex_lock(&smu->sensor_lock);
-	switch (sensor) {
-	case AMDGPU_PP_SENSOR_MAX_FAN_RPM:
-		*(uint32_t *)data = pptable->FanMaximumRpm;
+	चयन (sensor) अणु
+	हाल AMDGPU_PP_SENSOR_MAX_FAN_RPM:
+		*(uपूर्णांक32_t *)data = pptable->FanMaximumRpm;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_MEM_LOAD:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_MEM_LOAD:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_AVERAGE_MEMACTIVITY,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GPU_LOAD:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GPU_LOAD:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_AVERAGE_GFXACTIVITY,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GPU_POWER:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GPU_POWER:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_AVERAGE_SOCKETPOWER,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_HOTSPOT_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_HOTSPOT_TEMP:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_TEMPERATURE_HOTSPOT,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_EDGE_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_EDGE_TEMP:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_TEMPERATURE_EDGE,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_MEM_TEMP:
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_MEM_TEMP:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_TEMPERATURE_MEM,
-						    (uint32_t *)data);
+						    (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GFX_MCLK:
-		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_UCLK, (uint32_t *)data);
-		/* the output clock frequency in 10K unit */
-		*(uint32_t *)data *= 100;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GFX_MCLK:
+		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_UCLK, (uपूर्णांक32_t *)data);
+		/* the output घड़ी frequency in 10K unit */
+		*(uपूर्णांक32_t *)data *= 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_GFX_SCLK:
-		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_GFXCLK, (uint32_t *)data);
-		*(uint32_t *)data *= 100;
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_GFX_SCLK:
+		ret = arcturus_get_current_clk_freq_by_table(smu, SMU_GFXCLK, (uपूर्णांक32_t *)data);
+		*(uपूर्णांक32_t *)data *= 100;
 		*size = 4;
-		break;
-	case AMDGPU_PP_SENSOR_VDDGFX:
-		ret = smu_v11_0_get_gfx_vdd(smu, (uint32_t *)data);
+		अवरोध;
+	हाल AMDGPU_PP_SENSOR_VDDGFX:
+		ret = smu_v11_0_get_gfx_vdd(smu, (uपूर्णांक32_t *)data);
 		*size = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&smu->sensor_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_get_fan_speed_percent(struct smu_context *smu,
-					  uint32_t *speed)
-{
-	int ret;
+अटल पूर्णांक arcturus_get_fan_speed_percent(काष्ठा smu_context *smu,
+					  uपूर्णांक32_t *speed)
+अणु
+	पूर्णांक ret;
 	u32 rpm;
 
-	if (!speed)
-		return -EINVAL;
+	अगर (!speed)
+		वापस -EINVAL;
 
-	switch (smu_v11_0_get_fan_control_mode(smu)) {
-	case AMD_FAN_CTRL_AUTO:
+	चयन (smu_v11_0_get_fan_control_mode(smu)) अणु
+	हाल AMD_FAN_CTRL_AUTO:
 		ret = arcturus_get_smu_metrics_data(smu,
 						    METRICS_CURR_FANSPEED,
 						    &rpm);
-		if (!ret && smu->fan_max_rpm)
+		अगर (!ret && smu->fan_max_rpm)
 			*speed = rpm * 100 / smu->fan_max_rpm;
-		return ret;
-	default:
+		वापस ret;
+	शेष:
 		*speed = smu->user_dpm_profile.fan_speed_percent;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int arcturus_get_fan_parameters(struct smu_context *smu)
-{
+अटल पूर्णांक arcturus_get_fan_parameters(काष्ठा smu_context *smu)
+अणु
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
 
 	smu->fan_max_rpm = pptable->FanMaximumRpm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_get_power_limit(struct smu_context *smu)
-{
-	struct smu_11_0_powerplay_table *powerplay_table =
-		(struct smu_11_0_powerplay_table *)smu->smu_table.power_play_table;
+अटल पूर्णांक arcturus_get_घातer_limit(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_11_0_घातerplay_table *घातerplay_table =
+		(काष्ठा smu_11_0_घातerplay_table *)smu->smu_table.घातer_play_table;
 	PPTable_t *pptable = smu->smu_table.driver_pptable;
-	uint32_t power_limit, od_percent;
+	uपूर्णांक32_t घातer_limit, od_percent;
 
-	if (smu_v11_0_get_current_power_limit(smu, &power_limit)) {
+	अगर (smu_v11_0_get_current_घातer_limit(smu, &घातer_limit)) अणु
 		/* the last hope to figure out the ppt limit */
-		if (!pptable) {
+		अगर (!pptable) अणु
 			dev_err(smu->adev->dev, "Cannot get PPT limit due to pptable missing!");
-			return -EINVAL;
-		}
-		power_limit =
+			वापस -EINVAL;
+		पूर्ण
+		घातer_limit =
 			pptable->SocketPowerLimitAc[PPT_THROTTLER_PPT0];
-	}
-	smu->current_power_limit = smu->default_power_limit = power_limit;
+	पूर्ण
+	smu->current_घातer_limit = smu->शेष_घातer_limit = घातer_limit;
 
-	if (smu->od_enabled) {
-		od_percent = le32_to_cpu(powerplay_table->overdrive_table.max[SMU_11_0_ODSETTING_POWERPERCENTAGE]);
+	अगर (smu->od_enabled) अणु
+		od_percent = le32_to_cpu(घातerplay_table->overdrive_table.max[SMU_11_0_ODSETTING_POWERPERCENTAGE]);
 
-		dev_dbg(smu->adev->dev, "ODSETTING_POWERPERCENTAGE: %d (default: %d)\n", od_percent, power_limit);
+		dev_dbg(smu->adev->dev, "ODSETTING_POWERPERCENTAGE: %d (default: %d)\n", od_percent, घातer_limit);
 
-		power_limit *= (100 + od_percent);
-		power_limit /= 100;
-	}
-	smu->max_power_limit = power_limit;
+		घातer_limit *= (100 + od_percent);
+		घातer_limit /= 100;
+	पूर्ण
+	smu->max_घातer_limit = घातer_limit;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_get_power_profile_mode(struct smu_context *smu,
-					   char *buf)
-{
+अटल पूर्णांक arcturus_get_घातer_profile_mode(काष्ठा smu_context *smu,
+					   अक्षर *buf)
+अणु
 	DpmActivityMonitorCoeffInt_t activity_monitor;
-	static const char *profile_name[] = {
+	अटल स्थिर अक्षर *profile_name[] = अणु
 					"BOOTUP_DEFAULT",
 					"3D_FULL_SCREEN",
 					"POWER_SAVING",
 					"VIDEO",
 					"VR",
 					"COMPUTE",
-					"CUSTOM"};
-	static const char *title[] = {
+					"CUSTOM"पूर्ण;
+	अटल स्थिर अक्षर *title[] = अणु
 			"PROFILE_INDEX(NAME)",
 			"CLOCK_TYPE(NAME)",
 			"FPS",
@@ -1167,55 +1168,55 @@ static int arcturus_get_power_profile_mode(struct smu_context *smu,
 			"BoosterFreq",
 			"PD_Data_limit_c",
 			"PD_Data_error_coeff",
-			"PD_Data_error_rate_coeff"};
-	uint32_t i, size = 0;
-	int16_t workload_type = 0;
-	int result = 0;
-	uint32_t smu_version;
+			"PD_Data_error_rate_coeff"पूर्ण;
+	uपूर्णांक32_t i, size = 0;
+	पूर्णांक16_t workload_type = 0;
+	पूर्णांक result = 0;
+	uपूर्णांक32_t smu_version;
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
-	result = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (result)
-		return result;
+	result = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (result)
+		वापस result;
 
-	if (smu_version >= 0x360d00)
-		size += sprintf(buf + size, "%16s %s %s %s %s %s %s %s %s %s %s\n",
+	अगर (smu_version >= 0x360d00)
+		size += प्र_लिखो(buf + size, "%16s %s %s %s %s %s %s %s %s %s %s\n",
 			title[0], title[1], title[2], title[3], title[4], title[5],
 			title[6], title[7], title[8], title[9], title[10]);
-	else
-		size += sprintf(buf + size, "%16s\n",
+	अन्यथा
+		size += प्र_लिखो(buf + size, "%16s\n",
 			title[0]);
 
-	for (i = 0; i <= PP_SMC_POWER_PROFILE_CUSTOM; i++) {
+	क्रम (i = 0; i <= PP_SMC_POWER_PROखाता_CUSTOM; i++) अणु
 		/*
-		 * Conv PP_SMC_POWER_PROFILE* to WORKLOAD_PPLIB_*_BIT
+		 * Conv PP_SMC_POWER_PROखाता* to WORKLOAD_PPLIB_*_BIT
 		 * Not all profile modes are supported on arcturus.
 		 */
-		workload_type = smu_cmn_to_asic_specific_index(smu,
+		workload_type = smu_cmn_to_asic_specअगरic_index(smu,
 							       CMN2ASIC_MAPPING_WORKLOAD,
 							       i);
-		if (workload_type < 0)
-			continue;
+		अगर (workload_type < 0)
+			जारी;
 
-		if (smu_version >= 0x360d00) {
+		अगर (smu_version >= 0x360d00) अणु
 			result = smu_cmn_update_table(smu,
 						  SMU_TABLE_ACTIVITY_MONITOR_COEFF,
 						  workload_type,
-						  (void *)(&activity_monitor),
+						  (व्योम *)(&activity_monitor),
 						  false);
-			if (result) {
+			अगर (result) अणु
 				dev_err(smu->adev->dev, "[%s] Failed to get activity monitor!", __func__);
-				return result;
-			}
-		}
+				वापस result;
+			पूर्ण
+		पूर्ण
 
-		size += sprintf(buf + size, "%2d %14s%s\n",
-			i, profile_name[i], (i == smu->power_profile_mode) ? "*" : " ");
+		size += प्र_लिखो(buf + size, "%2d %14s%s\n",
+			i, profile_name[i], (i == smu->घातer_profile_mode) ? "*" : " ");
 
-		if (smu_version >= 0x360d00) {
-			size += sprintf(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
+		अगर (smu_version >= 0x360d00) अणु
+			size += प्र_लिखो(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
 				" ",
 				0,
 				"GFXCLK",
@@ -1229,7 +1230,7 @@ static int arcturus_get_power_profile_mode(struct smu_context *smu,
 				activity_monitor.Gfx_PD_Data_error_coeff,
 				activity_monitor.Gfx_PD_Data_error_rate_coeff);
 
-			size += sprintf(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
+			size += प्र_लिखो(buf + size, "%19s %d(%13s) %7d %7d %7d %7d %7d %7d %7d %7d %7d\n",
 				" ",
 				1,
 				"UCLK",
@@ -1242,45 +1243,45 @@ static int arcturus_get_power_profile_mode(struct smu_context *smu,
 				activity_monitor.Mem_PD_Data_limit_c,
 				activity_monitor.Mem_PD_Data_error_coeff,
 				activity_monitor.Mem_PD_Data_error_rate_coeff);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int arcturus_set_power_profile_mode(struct smu_context *smu,
-					   long *input,
-					   uint32_t size)
-{
+अटल पूर्णांक arcturus_set_घातer_profile_mode(काष्ठा smu_context *smu,
+					   दीर्घ *input,
+					   uपूर्णांक32_t size)
+अणु
 	DpmActivityMonitorCoeffInt_t activity_monitor;
-	int workload_type = 0;
-	uint32_t profile_mode = input[size];
-	int ret = 0;
-	uint32_t smu_version;
+	पूर्णांक workload_type = 0;
+	uपूर्णांक32_t profile_mode = input[size];
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t smu_version;
 
-	if (profile_mode > PP_SMC_POWER_PROFILE_CUSTOM) {
+	अगर (profile_mode > PP_SMC_POWER_PROखाता_CUSTOM) अणु
 		dev_err(smu->adev->dev, "Invalid power profile mode %d\n", profile_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret)
-		return ret;
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret)
+		वापस ret;
 
-	if ((profile_mode == PP_SMC_POWER_PROFILE_CUSTOM) &&
-	     (smu_version >=0x360d00)) {
+	अगर ((profile_mode == PP_SMC_POWER_PROखाता_CUSTOM) &&
+	     (smu_version >=0x360d00)) अणु
 		ret = smu_cmn_update_table(smu,
 				       SMU_TABLE_ACTIVITY_MONITOR_COEFF,
 				       WORKLOAD_PPLIB_CUSTOM_BIT,
-				       (void *)(&activity_monitor),
+				       (व्योम *)(&activity_monitor),
 				       false);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "[%s] Failed to get activity monitor!", __func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		switch (input[0]) {
-		case 0: /* Gfxclk */
+		चयन (input[0]) अणु
+		हाल 0: /* Gfxclk */
 			activity_monitor.Gfx_FPS = input[1];
 			activity_monitor.Gfx_UseRlcBusy = input[2];
 			activity_monitor.Gfx_MinActiveFreqType = input[3];
@@ -1290,8 +1291,8 @@ static int arcturus_set_power_profile_mode(struct smu_context *smu,
 			activity_monitor.Gfx_PD_Data_limit_c = input[7];
 			activity_monitor.Gfx_PD_Data_error_coeff = input[8];
 			activity_monitor.Gfx_PD_Data_error_rate_coeff = input[9];
-			break;
-		case 1: /* Uclk */
+			अवरोध;
+		हाल 1: /* Uclk */
 			activity_monitor.Mem_FPS = input[1];
 			activity_monitor.Mem_UseRlcBusy = input[2];
 			activity_monitor.Mem_MinActiveFreqType = input[3];
@@ -1301,84 +1302,84 @@ static int arcturus_set_power_profile_mode(struct smu_context *smu,
 			activity_monitor.Mem_PD_Data_limit_c = input[7];
 			activity_monitor.Mem_PD_Data_error_coeff = input[8];
 			activity_monitor.Mem_PD_Data_error_rate_coeff = input[9];
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ret = smu_cmn_update_table(smu,
 				       SMU_TABLE_ACTIVITY_MONITOR_COEFF,
 				       WORKLOAD_PPLIB_CUSTOM_BIT,
-				       (void *)(&activity_monitor),
+				       (व्योम *)(&activity_monitor),
 				       true);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(smu->adev->dev, "[%s] Failed to set activity monitor!", __func__);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Conv PP_SMC_POWER_PROFILE* to WORKLOAD_PPLIB_*_BIT
+	 * Conv PP_SMC_POWER_PROखाता* to WORKLOAD_PPLIB_*_BIT
 	 * Not all profile modes are supported on arcturus.
 	 */
-	workload_type = smu_cmn_to_asic_specific_index(smu,
+	workload_type = smu_cmn_to_asic_specअगरic_index(smu,
 						       CMN2ASIC_MAPPING_WORKLOAD,
 						       profile_mode);
-	if (workload_type < 0) {
+	अगर (workload_type < 0) अणु
 		dev_dbg(smu->adev->dev, "Unsupported power profile mode %d on arcturus\n", profile_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = smu_cmn_send_smc_msg_with_param(smu,
 					  SMU_MSG_SetWorkloadMask,
 					  1 << workload_type,
-					  NULL);
-	if (ret) {
+					  शून्य);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Fail to set workload type %d\n", workload_type);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	smu->power_profile_mode = profile_mode;
+	smu->घातer_profile_mode = profile_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arcturus_set_performance_level(struct smu_context *smu,
-					  enum amd_dpm_forced_level level)
-{
-	uint32_t smu_version;
-	int ret;
+अटल पूर्णांक arcturus_set_perक्रमmance_level(काष्ठा smu_context *smu,
+					  क्रमागत amd_dpm_क्रमced_level level)
+अणु
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret) {
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to get smu version!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (level) {
-	case AMD_DPM_FORCED_LEVEL_HIGH:
-	case AMD_DPM_FORCED_LEVEL_LOW:
-	case AMD_DPM_FORCED_LEVEL_PROFILE_STANDARD:
-	case AMD_DPM_FORCED_LEVEL_PROFILE_MIN_SCLK:
-	case AMD_DPM_FORCED_LEVEL_PROFILE_MIN_MCLK:
-	case AMD_DPM_FORCED_LEVEL_PROFILE_PEAK:
-		if ((smu_version >= 0x361200) &&
-		    (smu_version <= 0x361a00)) {
+	चयन (level) अणु
+	हाल AMD_DPM_FORCED_LEVEL_HIGH:
+	हाल AMD_DPM_FORCED_LEVEL_LOW:
+	हाल AMD_DPM_FORCED_LEVEL_PROखाता_STANDARD:
+	हाल AMD_DPM_FORCED_LEVEL_PROखाता_MIN_SCLK:
+	हाल AMD_DPM_FORCED_LEVEL_PROखाता_MIN_MCLK:
+	हाल AMD_DPM_FORCED_LEVEL_PROखाता_PEAK:
+		अगर ((smu_version >= 0x361200) &&
+		    (smu_version <= 0x361a00)) अणु
 			dev_err(smu->adev->dev, "Forcing clock level is not supported with "
 			       "54.18 - 54.26(included) SMU firmwares\n");
-			return -EOPNOTSUPP;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस -EOPNOTSUPP;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return smu_v11_0_set_performance_level(smu, level);
-}
+	वापस smu_v11_0_set_perक्रमmance_level(smu, level);
+पूर्ण
 
-static void arcturus_dump_pptable(struct smu_context *smu)
-{
-	struct smu_table_context *table_context = &smu->smu_table;
+अटल व्योम arcturus_dump_pptable(काष्ठा smu_context *smu)
+अणु
+	काष्ठा smu_table_context *table_context = &smu->smu_table;
 	PPTable_t *pptable = table_context->driver_pptable;
-	int i;
+	पूर्णांक i;
 
 	dev_info(smu->adev->dev, "Dumped PPTable:\n");
 
@@ -1387,10 +1388,10 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "FeaturesToRun[0] = 0x%08x\n", pptable->FeaturesToRun[0]);
 	dev_info(smu->adev->dev, "FeaturesToRun[1] = 0x%08x\n", pptable->FeaturesToRun[1]);
 
-	for (i = 0; i < PPT_THROTTLER_COUNT; i++) {
+	क्रम (i = 0; i < PPT_THROTTLER_COUNT; i++) अणु
 		dev_info(smu->adev->dev, "SocketPowerLimitAc[%d] = %d\n", i, pptable->SocketPowerLimitAc[i]);
 		dev_info(smu->adev->dev, "SocketPowerLimitAcTau[%d] = %d\n", i, pptable->SocketPowerLimitAcTau[i]);
-	}
+	पूर्ण
 
 	dev_info(smu->adev->dev, "TdcLimitSoc = %d\n", pptable->TdcLimitSoc);
 	dev_info(smu->adev->dev, "TdcLimitSocTau = %d\n", pptable->TdcLimitSocTau);
@@ -1554,35 +1555,35 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 
 
 	dev_info(smu->adev->dev, "FreqTableGfx\n");
-	for (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_GFXCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableGfx[i]);
 
 	dev_info(smu->adev->dev, "FreqTableVclk\n");
-	for (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_VCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableVclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableDclk\n");
-	for (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_DCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableDclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableSocclk\n");
-	for (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_SOCCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableSocclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableUclk\n");
-	for (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_UCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableUclk[i]);
 
 	dev_info(smu->adev->dev, "FreqTableFclk\n");
-	for (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_FCLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%02d] = %d\n", i, pptable->FreqTableFclk[i]);
 
 	dev_info(smu->adev->dev, "Mp0clkFreq\n");
-	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->Mp0clkFreq[i]);
 
 	dev_info(smu->adev->dev, "Mp0DpmVoltage\n");
-	for (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
+	क्रम (i = 0; i < NUM_MP0CLK_DPM_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->Mp0DpmVoltage[i]);
 
 	dev_info(smu->adev->dev, "GfxclkFidle = 0x%x\n", pptable->GfxclkFidle);
@@ -1676,7 +1677,7 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "DcBtcGb[AVFS_VOLTAGE_SOC] = 0x%x\n", pptable->DcBtcGb[AVFS_VOLTAGE_SOC]);
 
 	dev_info(smu->adev->dev, "XgmiDpmPstates\n");
-	for (i = 0; i < NUM_XGMI_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->XgmiDpmPstates[i]);
 	dev_info(smu->adev->dev, "XgmiDpmSpare[0] = 0x%02x\n", pptable->XgmiDpmSpare[0]);
 	dev_info(smu->adev->dev, "XgmiDpmSpare[1] = 0x%02x\n", pptable->XgmiDpmSpare[1]);
@@ -1751,23 +1752,23 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "VR1HotGpio = %d\n", pptable->VR1HotGpio);
 	dev_info(smu->adev->dev, "VR1HotPolarity = %d\n", pptable->VR1HotPolarity);
 
-	dev_info(smu->adev->dev, "PllGfxclkSpreadEnabled = %d\n", pptable->PllGfxclkSpreadEnabled);
-	dev_info(smu->adev->dev, "PllGfxclkSpreadPercent = %d\n", pptable->PllGfxclkSpreadPercent);
-	dev_info(smu->adev->dev, "PllGfxclkSpreadFreq = %d\n", pptable->PllGfxclkSpreadFreq);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadEnabled = %d\n", pptable->PllGfxclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadPercent = %d\n", pptable->PllGfxclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "PllGfxclkSpreadFreq = %d\n", pptable->PllGfxclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "UclkSpreadEnabled = %d\n", pptable->UclkSpreadEnabled);
-	dev_info(smu->adev->dev, "UclkSpreadPercent = %d\n", pptable->UclkSpreadPercent);
-	dev_info(smu->adev->dev, "UclkSpreadFreq = %d\n", pptable->UclkSpreadFreq);
+	dev_info(smu->adev->dev, "UclkSpreadEnabled = %d\n", pptable->UclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "UclkSpreadPercent = %d\n", pptable->UclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "UclkSpreadFreq = %d\n", pptable->UclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "FclkSpreadEnabled = %d\n", pptable->FclkSpreadEnabled);
-	dev_info(smu->adev->dev, "FclkSpreadPercent = %d\n", pptable->FclkSpreadPercent);
-	dev_info(smu->adev->dev, "FclkSpreadFreq = %d\n", pptable->FclkSpreadFreq);
+	dev_info(smu->adev->dev, "FclkSpreadEnabled = %d\n", pptable->FclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "FclkSpreadPercent = %d\n", pptable->FclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "FclkSpreadFreq = %d\n", pptable->FclkSpपढ़ोFreq);
 
-	dev_info(smu->adev->dev, "FllGfxclkSpreadEnabled = %d\n", pptable->FllGfxclkSpreadEnabled);
-	dev_info(smu->adev->dev, "FllGfxclkSpreadPercent = %d\n", pptable->FllGfxclkSpreadPercent);
-	dev_info(smu->adev->dev, "FllGfxclkSpreadFreq = %d\n", pptable->FllGfxclkSpreadFreq);
+	dev_info(smu->adev->dev, "FllGfxclkSpreadEnabled = %d\n", pptable->FllGfxclkSpपढ़ोEnabled);
+	dev_info(smu->adev->dev, "FllGfxclkSpreadPercent = %d\n", pptable->FllGfxclkSpपढ़ोPercent);
+	dev_info(smu->adev->dev, "FllGfxclkSpreadFreq = %d\n", pptable->FllGfxclkSpपढ़ोFreq);
 
-	for (i = 0; i < NUM_I2C_CONTROLLERS; i++) {
+	क्रम (i = 0; i < NUM_I2C_CONTROLLERS; i++) अणु
 		dev_info(smu->adev->dev, "I2cControllers[%d]:\n", i);
 		dev_info(smu->adev->dev, "                   .Enabled = %d\n",
 				pptable->I2cControllers[i].Enabled);
@@ -1783,7 +1784,7 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 				pptable->I2cControllers[i].I2cProtocol);
 		dev_info(smu->adev->dev, "                   .Speed = %d\n",
 				pptable->I2cControllers[i].Speed);
-	}
+	पूर्ण
 
 	dev_info(smu->adev->dev, "MemoryChannelEnabled = %d\n", pptable->MemoryChannelEnabled);
 	dev_info(smu->adev->dev, "DramBitWidth = %d\n", pptable->DramBitWidth);
@@ -1791,188 +1792,188 @@ static void arcturus_dump_pptable(struct smu_context *smu)
 	dev_info(smu->adev->dev, "TotalBoardPower = %d\n", pptable->TotalBoardPower);
 
 	dev_info(smu->adev->dev, "XgmiLinkSpeed\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->XgmiLinkSpeed[i]);
 	dev_info(smu->adev->dev, "XgmiLinkWidth\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->XgmiLinkWidth[i]);
 	dev_info(smu->adev->dev, "XgmiFclkFreq\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->XgmiFclkFreq[i]);
 	dev_info(smu->adev->dev, "XgmiSocVoltage\n");
-	for (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
+	क्रम (i = 0; i < NUM_XGMI_PSTATE_LEVELS; i++)
 		dev_info(smu->adev->dev, "  .[%d] = %d\n", i, pptable->XgmiSocVoltage[i]);
 
-}
+पूर्ण
 
-static bool arcturus_is_dpm_running(struct smu_context *smu)
-{
-	int ret = 0;
-	uint32_t feature_mask[2];
-	uint64_t feature_enabled;
+अटल bool arcturus_is_dpm_running(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret = 0;
+	uपूर्णांक32_t feature_mask[2];
+	uपूर्णांक64_t feature_enabled;
 
 	ret = smu_cmn_get_enabled_mask(smu, feature_mask, 2);
-	if (ret)
-		return false;
+	अगर (ret)
+		वापस false;
 
-	feature_enabled = (uint64_t)feature_mask[1] << 32 | feature_mask[0];
+	feature_enabled = (uपूर्णांक64_t)feature_mask[1] << 32 | feature_mask[0];
 
-	return !!(feature_enabled & SMC_DPM_FEATURE);
-}
+	वापस !!(feature_enabled & SMC_DPM_FEATURE);
+पूर्ण
 
-static int arcturus_dpm_set_vcn_enable(struct smu_context *smu, bool enable)
-{
-	int ret = 0;
+अटल पूर्णांक arcturus_dpm_set_vcn_enable(काष्ठा smu_context *smu, bool enable)
+अणु
+	पूर्णांक ret = 0;
 
-	if (enable) {
-		if (!smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT)) {
+	अगर (enable) अणु
+		अगर (!smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT)) अणु
 			ret = smu_cmn_feature_set_enabled(smu, SMU_FEATURE_VCN_PG_BIT, 1);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(smu->adev->dev, "[EnableVCNDPM] failed!\n");
-				return ret;
-			}
-		}
-	} else {
-		if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT)) {
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_VCN_PG_BIT)) अणु
 			ret = smu_cmn_feature_set_enabled(smu, SMU_FEATURE_VCN_PG_BIT, 0);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(smu->adev->dev, "[DisableVCNDPM] failed!\n");
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void arcturus_fill_i2c_req(SwI2cRequest_t  *req, bool write,
-				  uint8_t address, uint32_t numbytes,
-				  uint8_t *data)
-{
-	int i;
+अटल व्योम arcturus_fill_i2c_req(SwI2cRequest_t  *req, bool ग_लिखो,
+				  uपूर्णांक8_t address, uपूर्णांक32_t numbytes,
+				  uपूर्णांक8_t *data)
+अणु
+	पूर्णांक i;
 
 	req->I2CcontrollerPort = 0;
 	req->I2CSpeed = 2;
 	req->SlaveAddress = address;
 	req->NumCmds = numbytes;
 
-	for (i = 0; i < numbytes; i++) {
+	क्रम (i = 0; i < numbytes; i++) अणु
 		SwI2cCmd_t *cmd =  &req->SwI2cCmds[i];
 
-		/* First 2 bytes are always write for lower 2b EEPROM address */
-		if (i < 2)
+		/* First 2 bytes are always ग_लिखो क्रम lower 2b EEPROM address */
+		अगर (i < 2)
 			cmd->Cmd = 1;
-		else
-			cmd->Cmd = write;
+		अन्यथा
+			cmd->Cmd = ग_लिखो;
 
 
-		/* Add RESTART for read  after address filled */
-		cmd->CmdConfig |= (i == 2 && !write) ? CMDCONFIG_RESTART_MASK : 0;
+		/* Add RESTART क्रम पढ़ो  after address filled */
+		cmd->CmdConfig |= (i == 2 && !ग_लिखो) ? CMDCONFIG_RESTART_MASK : 0;
 
 		/* Add STOP in the end */
 		cmd->CmdConfig |= (i == (numbytes - 1)) ? CMDCONFIG_STOP_MASK : 0;
 
-		/* Fill with data regardless if read or write to simplify code */
+		/* Fill with data regardless अगर पढ़ो or ग_लिखो to simplअगरy code */
 		cmd->RegisterAddr = data[i];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int arcturus_i2c_read_data(struct i2c_adapter *control,
-					       uint8_t address,
-					       uint8_t *data,
-					       uint32_t numbytes)
-{
-	uint32_t  i, ret = 0;
+अटल पूर्णांक arcturus_i2c_पढ़ो_data(काष्ठा i2c_adapter *control,
+					       uपूर्णांक8_t address,
+					       uपूर्णांक8_t *data,
+					       uपूर्णांक32_t numbytes)
+अणु
+	uपूर्णांक32_t  i, ret = 0;
 	SwI2cRequest_t req;
-	struct amdgpu_device *adev = to_amdgpu_device(control);
-	struct smu_table_context *smu_table = &adev->smu.smu_table;
-	struct smu_table *table = &smu_table->driver_table;
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
+	काष्ठा smu_table_context *smu_table = &adev->smu.smu_table;
+	काष्ठा smu_table *table = &smu_table->driver_table;
 
-	if (numbytes > MAX_SW_I2C_COMMANDS) {
+	अगर (numbytes > MAX_SW_I2C_COMMANDS) अणु
 		dev_err(adev->dev, "numbytes requested %d is over max allowed %d\n",
 			numbytes, MAX_SW_I2C_COMMANDS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	arcturus_fill_i2c_req(&req, false, address, numbytes, data);
 
 	mutex_lock(&adev->smu.mutex);
-	/* Now read data starting with that address */
+	/* Now पढ़ो data starting with that address */
 	ret = smu_cmn_update_table(&adev->smu, SMU_TABLE_I2C_COMMANDS, 0, &req,
 					true);
 	mutex_unlock(&adev->smu.mutex);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		SwI2cRequest_t *res = (SwI2cRequest_t *)table->cpu_addr;
 
-		/* Assume SMU  fills res.SwI2cCmds[i].Data with read bytes */
-		for (i = 0; i < numbytes; i++)
+		/* Assume SMU  fills res.SwI2cCmds[i].Data with पढ़ो bytes */
+		क्रम (i = 0; i < numbytes; i++)
 			data[i] = res->SwI2cCmds[i].Data;
 
 		dev_dbg(adev->dev, "arcturus_i2c_read_data, address = %x, bytes = %d, data :",
-				  (uint16_t)address, numbytes);
+				  (uपूर्णांक16_t)address, numbytes);
 
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
 			       8, 1, data, numbytes, false);
-	} else
+	पूर्ण अन्यथा
 		dev_err(adev->dev, "arcturus_i2c_read_data - error occurred :%x", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_i2c_write_data(struct i2c_adapter *control,
-						uint8_t address,
-						uint8_t *data,
-						uint32_t numbytes)
-{
-	uint32_t ret;
+अटल पूर्णांक arcturus_i2c_ग_लिखो_data(काष्ठा i2c_adapter *control,
+						uपूर्णांक8_t address,
+						uपूर्णांक8_t *data,
+						uपूर्णांक32_t numbytes)
+अणु
+	uपूर्णांक32_t ret;
 	SwI2cRequest_t req;
-	struct amdgpu_device *adev = to_amdgpu_device(control);
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
 
-	if (numbytes > MAX_SW_I2C_COMMANDS) {
+	अगर (numbytes > MAX_SW_I2C_COMMANDS) अणु
 		dev_err(adev->dev, "numbytes requested %d is over max allowed %d\n",
 			numbytes, MAX_SW_I2C_COMMANDS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	arcturus_fill_i2c_req(&req, true, address, numbytes, data);
 
 	mutex_lock(&adev->smu.mutex);
 	ret = smu_cmn_update_table(&adev->smu, SMU_TABLE_I2C_COMMANDS, 0, &req, true);
 	mutex_unlock(&adev->smu.mutex);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		dev_dbg(adev->dev, "arcturus_i2c_write(), address = %x, bytes = %d , data: ",
-					 (uint16_t)address, numbytes);
+					 (uपूर्णांक16_t)address, numbytes);
 
-		print_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "data: ", DUMP_PREFIX_NONE,
 			       8, 1, data, numbytes, false);
 		/*
-		 * According to EEPROM spec there is a MAX of 10 ms required for
-		 * EEPROM to flush internal RX buffer after STOP was issued at the
-		 * end of write transaction. During this time the EEPROM will not be
-		 * responsive to any more commands - so wait a bit more.
+		 * According to EEPROM spec there is a MAX of 10 ms required क्रम
+		 * EEPROM to flush पूर्णांकernal RX buffer after STOP was issued at the
+		 * end of ग_लिखो transaction. During this समय the EEPROM will not be
+		 * responsive to any more commands - so रुको a bit more.
 		 */
 		msleep(10);
 
-	} else
+	पूर्ण अन्यथा
 		dev_err(adev->dev, "arcturus_i2c_write- error occurred :%x", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arcturus_i2c_xfer(struct i2c_adapter *i2c_adap,
-			      struct i2c_msg *msgs, int num)
-{
-	uint32_t  i, j, ret, data_size, data_chunk_size, next_eeprom_addr = 0;
-	uint8_t *data_ptr, data_chunk[MAX_SW_I2C_COMMANDS] = { 0 };
+अटल पूर्णांक arcturus_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+			      काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	uपूर्णांक32_t  i, j, ret, data_size, data_chunk_size, next_eeprom_addr = 0;
+	uपूर्णांक8_t *data_ptr, data_chunk[MAX_SW_I2C_COMMANDS] = अणु 0 पूर्ण;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		/*
-		 * SMU interface allows at most MAX_SW_I2C_COMMANDS bytes of data at
-		 * once and hence the data needs to be spliced into chunks and sent each
+		 * SMU पूर्णांकerface allows at most MAX_SW_I2C_COMMANDS bytes of data at
+		 * once and hence the data needs to be spliced पूर्णांकo chunks and sent each
 		 * chunk separately
 		 */
 		data_size = msgs[i].len - 2;
@@ -1980,265 +1981,265 @@ static int arcturus_i2c_xfer(struct i2c_adapter *i2c_adap,
 		next_eeprom_addr = (msgs[i].buf[0] << 8 & 0xff00) | (msgs[i].buf[1] & 0xff);
 		data_ptr = msgs[i].buf + 2;
 
-		for (j = 0; j < data_size / data_chunk_size; j++) {
+		क्रम (j = 0; j < data_size / data_chunk_size; j++) अणु
 			/* Insert the EEPROM dest addess, bits 0-15 */
 			data_chunk[0] = ((next_eeprom_addr >> 8) & 0xff);
 			data_chunk[1] = (next_eeprom_addr & 0xff);
 
-			if (msgs[i].flags & I2C_M_RD) {
-				ret = arcturus_i2c_read_data(i2c_adap,
-							     (uint8_t)msgs[i].addr,
+			अगर (msgs[i].flags & I2C_M_RD) अणु
+				ret = arcturus_i2c_पढ़ो_data(i2c_adap,
+							     (uपूर्णांक8_t)msgs[i].addr,
 							     data_chunk, MAX_SW_I2C_COMMANDS);
 
-				memcpy(data_ptr, data_chunk + 2, data_chunk_size);
-			} else {
+				स_नकल(data_ptr, data_chunk + 2, data_chunk_size);
+			पूर्ण अन्यथा अणु
 
-				memcpy(data_chunk + 2, data_ptr, data_chunk_size);
+				स_नकल(data_chunk + 2, data_ptr, data_chunk_size);
 
-				ret = arcturus_i2c_write_data(i2c_adap,
-							      (uint8_t)msgs[i].addr,
+				ret = arcturus_i2c_ग_लिखो_data(i2c_adap,
+							      (uपूर्णांक8_t)msgs[i].addr,
 							      data_chunk, MAX_SW_I2C_COMMANDS);
-			}
+			पूर्ण
 
-			if (ret) {
+			अगर (ret) अणु
 				num = -EIO;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
 			next_eeprom_addr += data_chunk_size;
 			data_ptr += data_chunk_size;
-		}
+		पूर्ण
 
-		if (data_size % data_chunk_size) {
+		अगर (data_size % data_chunk_size) अणु
 			data_chunk[0] = ((next_eeprom_addr >> 8) & 0xff);
 			data_chunk[1] = (next_eeprom_addr & 0xff);
 
-			if (msgs[i].flags & I2C_M_RD) {
-				ret = arcturus_i2c_read_data(i2c_adap,
-							     (uint8_t)msgs[i].addr,
+			अगर (msgs[i].flags & I2C_M_RD) अणु
+				ret = arcturus_i2c_पढ़ो_data(i2c_adap,
+							     (uपूर्णांक8_t)msgs[i].addr,
 							     data_chunk, (data_size % data_chunk_size) + 2);
 
-				memcpy(data_ptr, data_chunk + 2, data_size % data_chunk_size);
-			} else {
-				memcpy(data_chunk + 2, data_ptr, data_size % data_chunk_size);
+				स_नकल(data_ptr, data_chunk + 2, data_size % data_chunk_size);
+			पूर्ण अन्यथा अणु
+				स_नकल(data_chunk + 2, data_ptr, data_size % data_chunk_size);
 
-				ret = arcturus_i2c_write_data(i2c_adap,
-							      (uint8_t)msgs[i].addr,
+				ret = arcturus_i2c_ग_लिखो_data(i2c_adap,
+							      (uपूर्णांक8_t)msgs[i].addr,
 							      data_chunk, (data_size % data_chunk_size) + 2);
-			}
+			पूर्ण
 
-			if (ret) {
+			अगर (ret) अणु
 				num = -EIO;
-				goto fail;
-			}
-		}
-	}
+				जाओ fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 fail:
-	return num;
-}
+	वापस num;
+पूर्ण
 
-static u32 arcturus_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 arcturus_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
 
-static const struct i2c_algorithm arcturus_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm arcturus_i2c_algo = अणु
 	.master_xfer = arcturus_i2c_xfer,
 	.functionality = arcturus_i2c_func,
-};
+पूर्ण;
 
-static int arcturus_i2c_control_init(struct smu_context *smu, struct i2c_adapter *control)
-{
-	struct amdgpu_device *adev = to_amdgpu_device(control);
-	int res;
+अटल पूर्णांक arcturus_i2c_control_init(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control)
+अणु
+	काष्ठा amdgpu_device *adev = to_amdgpu_device(control);
+	पूर्णांक res;
 
 	control->owner = THIS_MODULE;
 	control->class = I2C_CLASS_SPD;
 	control->dev.parent = &adev->pdev->dev;
 	control->algo = &arcturus_i2c_algo;
-	snprintf(control->name, sizeof(control->name), "AMDGPU SMU");
+	snम_लिखो(control->name, माप(control->name), "AMDGPU SMU");
 
 	res = i2c_add_adapter(control);
-	if (res)
+	अगर (res)
 		DRM_ERROR("Failed to register hw i2c, err: %d\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void arcturus_i2c_control_fini(struct smu_context *smu, struct i2c_adapter *control)
-{
+अटल व्योम arcturus_i2c_control_fini(काष्ठा smu_context *smu, काष्ठा i2c_adapter *control)
+अणु
 	i2c_del_adapter(control);
-}
+पूर्ण
 
-static void arcturus_get_unique_id(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t top32 = 0, bottom32 = 0, smu_version;
-	uint64_t id;
+अटल व्योम arcturus_get_unique_id(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t top32 = 0, bottom32 = 0, smu_version;
+	uपूर्णांक64_t id;
 
-	if (smu_cmn_get_smc_version(smu, NULL, &smu_version)) {
+	अगर (smu_cmn_get_smc_version(smu, शून्य, &smu_version)) अणु
 		dev_warn(adev->dev, "Failed to get smu version, cannot get unique_id or serial_number\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* PPSMC_MSG_ReadSerial* is supported by 54.23.0 and onwards */
-	if (smu_version < 0x361700) {
+	अगर (smu_version < 0x361700) अणु
 		dev_warn(adev->dev, "ReadSerial is only supported by PMFW 54.23.0 and onwards\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Get the SN to turn into a Unique ID */
+	/* Get the SN to turn पूर्णांकo a Unique ID */
 	smu_cmn_send_smc_msg(smu, SMU_MSG_ReadSerialNumTop32, &top32);
 	smu_cmn_send_smc_msg(smu, SMU_MSG_ReadSerialNumBottom32, &bottom32);
 
-	id = ((uint64_t)bottom32 << 32) | top32;
+	id = ((uपूर्णांक64_t)bottom32 << 32) | top32;
 	adev->unique_id = id;
 	/* For Arcturus-and-later, unique_id == serial_number, so convert it to a
-	 * 16-digit HEX string for convenience and backwards-compatibility
+	 * 16-digit HEX string क्रम convenience and backwards-compatibility
 	 */
-	sprintf(adev->serial, "%llx", id);
-}
+	प्र_लिखो(adev->serial, "%llx", id);
+पूर्ण
 
-static bool arcturus_is_baco_supported(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t val;
+अटल bool arcturus_is_baco_supported(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t val;
 
-	if (!smu_v11_0_baco_is_support(smu) || amdgpu_sriov_vf(adev))
-		return false;
+	अगर (!smu_v11_0_baco_is_support(smu) || amdgpu_sriov_vf(adev))
+		वापस false;
 
 	val = RREG32_SOC15(NBIO, 0, mmRCC_BIF_STRAP0);
-	return (val & RCC_BIF_STRAP0__STRAP_PX_CAPABLE_MASK) ? true : false;
-}
+	वापस (val & RCC_BIF_STRAP0__STRAP_PX_CAPABLE_MASK) ? true : false;
+पूर्ण
 
-static int arcturus_set_df_cstate(struct smu_context *smu,
-				  enum pp_df_cstate state)
-{
-	uint32_t smu_version;
-	int ret;
+अटल पूर्णांक arcturus_set_df_cstate(काष्ठा smu_context *smu,
+				  क्रमागत pp_df_cstate state)
+अणु
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret) {
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to get smu version!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* PPSMC_MSG_DFCstateControl is supported by 54.15.0 and onwards */
-	if (smu_version < 0x360F00) {
+	अगर (smu_version < 0x360F00) अणु
 		dev_err(smu->adev->dev, "DFCstateControl is only supported by PMFW 54.15.0 and onwards\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_DFCstateControl, state, NULL);
-}
+	वापस smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_DFCstateControl, state, शून्य);
+पूर्ण
 
-static int arcturus_allow_xgmi_power_down(struct smu_context *smu, bool en)
-{
-	uint32_t smu_version;
-	int ret;
+अटल पूर्णांक arcturus_allow_xgmi_घातer_करोwn(काष्ठा smu_context *smu, bool en)
+अणु
+	uपूर्णांक32_t smu_version;
+	पूर्णांक ret;
 
-	ret = smu_cmn_get_smc_version(smu, NULL, &smu_version);
-	if (ret) {
+	ret = smu_cmn_get_smc_version(smu, शून्य, &smu_version);
+	अगर (ret) अणु
 		dev_err(smu->adev->dev, "Failed to get smu version!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* PPSMC_MSG_GmiPwrDnControl is supported by 54.23.0 and onwards */
-	if (smu_version < 0x00361700) {
+	अगर (smu_version < 0x00361700) अणु
 		dev_err(smu->adev->dev, "XGMI power down control is only supported by PMFW 54.23.0 and onwards\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (en)
-		return smu_cmn_send_smc_msg_with_param(smu,
+	अगर (en)
+		वापस smu_cmn_send_smc_msg_with_param(smu,
 						   SMU_MSG_GmiPwrDnControl,
 						   1,
-						   NULL);
+						   शून्य);
 
-	return smu_cmn_send_smc_msg_with_param(smu,
+	वापस smu_cmn_send_smc_msg_with_param(smu,
 					   SMU_MSG_GmiPwrDnControl,
 					   0,
-					   NULL);
-}
+					   शून्य);
+पूर्ण
 
-static const struct throttling_logging_label {
-	uint32_t feature_mask;
-	const char *label;
-} logging_label[] = {
-	{(1U << THROTTLER_TEMP_HOTSPOT_BIT), "GPU"},
-	{(1U << THROTTLER_TEMP_MEM_BIT), "HBM"},
-	{(1U << THROTTLER_TEMP_VR_GFX_BIT), "VR of GFX rail"},
-	{(1U << THROTTLER_TEMP_VR_MEM_BIT), "VR of HBM rail"},
-	{(1U << THROTTLER_TEMP_VR_SOC_BIT), "VR of SOC rail"},
-	{(1U << THROTTLER_VRHOT0_BIT), "VR0 HOT"},
-	{(1U << THROTTLER_VRHOT1_BIT), "VR1 HOT"},
-};
-static void arcturus_log_thermal_throttling_event(struct smu_context *smu)
-{
-	int ret;
-	int throttler_idx, throtting_events = 0, buf_idx = 0;
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t throttler_status;
-	char log_buf[256];
+अटल स्थिर काष्ठा throttling_logging_label अणु
+	uपूर्णांक32_t feature_mask;
+	स्थिर अक्षर *label;
+पूर्ण logging_label[] = अणु
+	अणु(1U << THROTTLER_TEMP_HOTSPOT_BIT), "GPU"पूर्ण,
+	अणु(1U << THROTTLER_TEMP_MEM_BIT), "HBM"पूर्ण,
+	अणु(1U << THROTTLER_TEMP_VR_GFX_BIT), "VR of GFX rail"पूर्ण,
+	अणु(1U << THROTTLER_TEMP_VR_MEM_BIT), "VR of HBM rail"पूर्ण,
+	अणु(1U << THROTTLER_TEMP_VR_SOC_BIT), "VR of SOC rail"पूर्ण,
+	अणु(1U << THROTTLER_VRHOT0_BIT), "VR0 HOT"पूर्ण,
+	अणु(1U << THROTTLER_VRHOT1_BIT), "VR1 HOT"पूर्ण,
+पूर्ण;
+अटल व्योम arcturus_log_thermal_throttling_event(काष्ठा smu_context *smu)
+अणु
+	पूर्णांक ret;
+	पूर्णांक throttler_idx, throtting_events = 0, buf_idx = 0;
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t throttler_status;
+	अक्षर log_buf[256];
 
 	ret = arcturus_get_smu_metrics_data(smu,
 					    METRICS_THROTTLER_STATUS,
 					    &throttler_status);
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
-	memset(log_buf, 0, sizeof(log_buf));
-	for (throttler_idx = 0; throttler_idx < ARRAY_SIZE(logging_label);
-	     throttler_idx++) {
-		if (throttler_status & logging_label[throttler_idx].feature_mask) {
+	स_रखो(log_buf, 0, माप(log_buf));
+	क्रम (throttler_idx = 0; throttler_idx < ARRAY_SIZE(logging_label);
+	     throttler_idx++) अणु
+		अगर (throttler_status & logging_label[throttler_idx].feature_mask) अणु
 			throtting_events++;
-			buf_idx += snprintf(log_buf + buf_idx,
-					    sizeof(log_buf) - buf_idx,
+			buf_idx += snम_लिखो(log_buf + buf_idx,
+					    माप(log_buf) - buf_idx,
 					    "%s%s",
 					    throtting_events > 1 ? " and " : "",
 					    logging_label[throttler_idx].label);
-			if (buf_idx >= sizeof(log_buf)) {
+			अगर (buf_idx >= माप(log_buf)) अणु
 				dev_err(adev->dev, "buffer overflow!\n");
-				log_buf[sizeof(log_buf) - 1] = '\0';
-				break;
-			}
-		}
-	}
+				log_buf[माप(log_buf) - 1] = '\0';
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	dev_warn(adev->dev, "WARN: GPU thermal throttling temperature reached, expect performance decrease. %s.\n",
 			log_buf);
 	kgd2kfd_smi_event_throttle(smu->adev->kfd.dev, throttler_status);
-}
+पूर्ण
 
-static uint16_t arcturus_get_current_pcie_link_speed(struct smu_context *smu)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t esm_ctrl;
+अटल uपूर्णांक16_t arcturus_get_current_pcie_link_speed(काष्ठा smu_context *smu)
+अणु
+	काष्ठा amdgpu_device *adev = smu->adev;
+	uपूर्णांक32_t esm_ctrl;
 
 	/* TODO: confirm this on real target */
 	esm_ctrl = RREG32_PCIE(smnPCIE_ESM_CTRL);
-	if ((esm_ctrl >> 15) & 0x1FFFF)
-		return (uint16_t)(((esm_ctrl >> 8) & 0x3F) + 128);
+	अगर ((esm_ctrl >> 15) & 0x1FFFF)
+		वापस (uपूर्णांक16_t)(((esm_ctrl >> 8) & 0x3F) + 128);
 
-	return smu_v11_0_get_current_pcie_link_speed(smu);
-}
+	वापस smu_v11_0_get_current_pcie_link_speed(smu);
+पूर्ण
 
-static ssize_t arcturus_get_gpu_metrics(struct smu_context *smu,
-					void **table)
-{
-	struct smu_table_context *smu_table = &smu->smu_table;
-	struct gpu_metrics_v1_1 *gpu_metrics =
-		(struct gpu_metrics_v1_1 *)smu_table->gpu_metrics_table;
+अटल sमाप_प्रकार arcturus_get_gpu_metrics(काष्ठा smu_context *smu,
+					व्योम **table)
+अणु
+	काष्ठा smu_table_context *smu_table = &smu->smu_table;
+	काष्ठा gpu_metrics_v1_1 *gpu_metrics =
+		(काष्ठा gpu_metrics_v1_1 *)smu_table->gpu_metrics_table;
 	SmuMetrics_t metrics;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	ret = smu_cmn_get_metrics_table(smu,
 					&metrics,
 					true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	smu_cmn_init_soft_gpu_metrics(gpu_metrics, 1, 1);
 
@@ -2253,7 +2254,7 @@ static ssize_t arcturus_get_gpu_metrics(struct smu_context *smu,
 	gpu_metrics->average_umc_activity = metrics.AverageUclkActivity;
 	gpu_metrics->average_mm_activity = metrics.VcnActivityPercentage;
 
-	gpu_metrics->average_socket_power = metrics.AverageSocketPower;
+	gpu_metrics->average_socket_घातer = metrics.AverageSocketPower;
 	gpu_metrics->energy_accumulator = metrics.EnergyAccumulator;
 
 	gpu_metrics->average_gfxclk_frequency = metrics.AverageGfxclkFrequency;
@@ -2277,32 +2278,32 @@ static ssize_t arcturus_get_gpu_metrics(struct smu_context *smu,
 	gpu_metrics->pcie_link_speed =
 			arcturus_get_current_pcie_link_speed(smu);
 
-	gpu_metrics->system_clock_counter = ktime_get_boottime_ns();
+	gpu_metrics->प्रणाली_घड़ी_counter = kसमय_get_bootसमय_ns();
 
-	*table = (void *)gpu_metrics;
+	*table = (व्योम *)gpu_metrics;
 
-	return sizeof(struct gpu_metrics_v1_1);
-}
+	वापस माप(काष्ठा gpu_metrics_v1_1);
+पूर्ण
 
-static const struct pptable_funcs arcturus_ppt_funcs = {
+अटल स्थिर काष्ठा pptable_funcs arcturus_ppt_funcs = अणु
 	/* init dpm */
 	.get_allowed_feature_mask = arcturus_get_allowed_feature_mask,
 	/* btc */
 	.run_btc = arcturus_run_btc,
 	/* dpm/clk tables */
-	.set_default_dpm_table = arcturus_set_default_dpm_table,
+	.set_शेष_dpm_table = arcturus_set_शेष_dpm_table,
 	.populate_umd_state_clk = arcturus_populate_umd_state_clk,
 	.get_thermal_temperature_range = arcturus_get_thermal_temperature_range,
-	.print_clk_levels = arcturus_print_clk_levels,
-	.force_clk_levels = arcturus_force_clk_levels,
-	.read_sensor = arcturus_read_sensor,
+	.prपूर्णांक_clk_levels = arcturus_prपूर्णांक_clk_levels,
+	.क्रमce_clk_levels = arcturus_क्रमce_clk_levels,
+	.पढ़ो_sensor = arcturus_पढ़ो_sensor,
 	.get_fan_speed_percent = arcturus_get_fan_speed_percent,
-	.get_power_profile_mode = arcturus_get_power_profile_mode,
-	.set_power_profile_mode = arcturus_set_power_profile_mode,
-	.set_performance_level = arcturus_set_performance_level,
-	/* debug (internal used) */
+	.get_घातer_profile_mode = arcturus_get_घातer_profile_mode,
+	.set_घातer_profile_mode = arcturus_set_घातer_profile_mode,
+	.set_perक्रमmance_level = arcturus_set_perक्रमmance_level,
+	/* debug (पूर्णांकernal used) */
 	.dump_pptable = arcturus_dump_pptable,
-	.get_power_limit = arcturus_get_power_limit,
+	.get_घातer_limit = arcturus_get_घातer_limit,
 	.is_dpm_running = arcturus_is_dpm_running,
 	.dpm_set_vcn_enable = arcturus_dpm_set_vcn_enable,
 	.i2c_init = arcturus_i2c_control_init,
@@ -2313,49 +2314,49 @@ static const struct pptable_funcs arcturus_ppt_funcs = {
 	.fini_microcode = smu_v11_0_fini_microcode,
 	.init_smc_tables = arcturus_init_smc_tables,
 	.fini_smc_tables = smu_v11_0_fini_smc_tables,
-	.init_power = smu_v11_0_init_power,
-	.fini_power = smu_v11_0_fini_power,
+	.init_घातer = smu_v11_0_init_घातer,
+	.fini_घातer = smu_v11_0_fini_घातer,
 	.check_fw_status = smu_v11_0_check_fw_status,
 	/* pptable related */
 	.setup_pptable = arcturus_setup_pptable,
 	.get_vbios_bootup_values = smu_v11_0_get_vbios_bootup_values,
 	.check_fw_version = smu_v11_0_check_fw_version,
-	.write_pptable = smu_cmn_write_pptable,
+	.ग_लिखो_pptable = smu_cmn_ग_लिखो_pptable,
 	.set_driver_table_location = smu_v11_0_set_driver_table_location,
 	.set_tool_table_location = smu_v11_0_set_tool_table_location,
-	.notify_memory_pool_location = smu_v11_0_notify_memory_pool_location,
-	.system_features_control = smu_v11_0_system_features_control,
+	.notअगरy_memory_pool_location = smu_v11_0_notअगरy_memory_pool_location,
+	.प्रणाली_features_control = smu_v11_0_प्रणाली_features_control,
 	.send_smc_msg_with_param = smu_cmn_send_smc_msg_with_param,
 	.send_smc_msg = smu_cmn_send_smc_msg,
-	.init_display_count = NULL,
+	.init_display_count = शून्य,
 	.set_allowed_mask = smu_v11_0_set_allowed_mask,
 	.get_enabled_mask = smu_cmn_get_enabled_mask,
 	.feature_is_enabled = smu_cmn_feature_is_enabled,
 	.disable_all_features_with_exception = smu_cmn_disable_all_features_with_exception,
-	.notify_display_change = NULL,
-	.set_power_limit = smu_v11_0_set_power_limit,
-	.init_max_sustainable_clocks = smu_v11_0_init_max_sustainable_clocks,
+	.notअगरy_display_change = शून्य,
+	.set_घातer_limit = smu_v11_0_set_घातer_limit,
+	.init_max_sustainable_घड़ीs = smu_v11_0_init_max_sustainable_घड़ीs,
 	.enable_thermal_alert = smu_v11_0_enable_thermal_alert,
 	.disable_thermal_alert = smu_v11_0_disable_thermal_alert,
-	.set_min_dcef_deep_sleep = NULL,
-	.display_clock_voltage_request = smu_v11_0_display_clock_voltage_request,
+	.set_min_dcef_deep_sleep = शून्य,
+	.display_घड़ी_voltage_request = smu_v11_0_display_घड़ी_voltage_request,
 	.get_fan_control_mode = smu_v11_0_get_fan_control_mode,
 	.set_fan_control_mode = smu_v11_0_set_fan_control_mode,
 	.set_fan_speed_percent = smu_v11_0_set_fan_speed_percent,
 	.set_xgmi_pstate = smu_v11_0_set_xgmi_pstate,
 	.gfx_off_control = smu_v11_0_gfx_off_control,
-	.register_irq_handler = smu_v11_0_register_irq_handler,
+	.रेजिस्टर_irq_handler = smu_v11_0_रेजिस्टर_irq_handler,
 	.set_azalia_d3_pme = smu_v11_0_set_azalia_d3_pme,
-	.get_max_sustainable_clocks_by_dc = smu_v11_0_get_max_sustainable_clocks_by_dc,
+	.get_max_sustainable_घड़ीs_by_dc = smu_v11_0_get_max_sustainable_घड़ीs_by_dc,
 	.baco_is_support= arcturus_is_baco_supported,
 	.baco_get_state = smu_v11_0_baco_get_state,
 	.baco_set_state = smu_v11_0_baco_set_state,
 	.baco_enter = smu_v11_0_baco_enter,
-	.baco_exit = smu_v11_0_baco_exit,
+	.baco_निकास = smu_v11_0_baco_निकास,
 	.get_dpm_ultimate_freq = smu_v11_0_get_dpm_ultimate_freq,
 	.set_soft_freq_limited_range = smu_v11_0_set_soft_freq_limited_range,
 	.set_df_cstate = arcturus_set_df_cstate,
-	.allow_xgmi_power_down = arcturus_allow_xgmi_power_down,
+	.allow_xgmi_घातer_करोwn = arcturus_allow_xgmi_घातer_करोwn,
 	.log_thermal_throttling_event = arcturus_log_thermal_throttling_event,
 	.get_pp_feature_mask = smu_cmn_get_pp_feature_mask,
 	.set_pp_feature_mask = smu_cmn_set_pp_feature_mask,
@@ -2363,18 +2364,18 @@ static const struct pptable_funcs arcturus_ppt_funcs = {
 	.gfx_ulv_control = smu_v11_0_gfx_ulv_control,
 	.deep_sleep_control = smu_v11_0_deep_sleep_control,
 	.get_fan_parameters = arcturus_get_fan_parameters,
-	.interrupt_work = smu_v11_0_interrupt_work,
+	.पूर्णांकerrupt_work = smu_v11_0_पूर्णांकerrupt_work,
 	.set_light_sbr = smu_v11_0_set_light_sbr,
 	.set_mp1_state = smu_cmn_set_mp1_state,
-};
+पूर्ण;
 
-void arcturus_set_ppt_funcs(struct smu_context *smu)
-{
+व्योम arcturus_set_ppt_funcs(काष्ठा smu_context *smu)
+अणु
 	smu->ppt_funcs = &arcturus_ppt_funcs;
 	smu->message_map = arcturus_message_map;
-	smu->clock_map = arcturus_clk_map;
+	smu->घड़ी_map = arcturus_clk_map;
 	smu->feature_map = arcturus_feature_mask_map;
 	smu->table_map = arcturus_table_map;
 	smu->pwr_src_map = arcturus_pwr_src_map;
 	smu->workload_map = arcturus_workload_map;
-}
+पूर्ण

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * isl9305 - Intersil ISL9305 DCDC regulator
  *
@@ -7,20 +8,20 @@
  * Author: Mark Brown <broonie@kernel.org>
  */
 
-#ifndef __ISL9305_H
-#define __ISL9305_H
+#अगर_अघोषित __ISL9305_H
+#घोषणा __ISL9305_H
 
-#define ISL9305_DCD1 0
-#define ISL9305_DCD2 1
-#define ISL9305_LDO1 2
-#define ISL9305_LDO2 3
+#घोषणा ISL9305_DCD1 0
+#घोषणा ISL9305_DCD2 1
+#घोषणा ISL9305_LDO1 2
+#घोषणा ISL9305_LDO2 3
 
-#define ISL9305_MAX_REGULATOR ISL9305_LDO2
+#घोषणा ISL9305_MAX_REGULATOR ISL9305_LDO2
 
-struct regulator_init_data;
+काष्ठा regulator_init_data;
 
-struct isl9305_pdata {
-	struct regulator_init_data *init_data[ISL9305_MAX_REGULATOR + 1];
-};
+काष्ठा isl9305_pdata अणु
+	काष्ठा regulator_init_data *init_data[ISL9305_MAX_REGULATOR + 1];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/act_meta_prio.c IFE skb->priority metadata module
  *
  * copyright Jamal Hadi Salim (2015)
 */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/rtnetlink.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <net/netlink.h>
-#include <net/pkt_sched.h>
-#include <uapi/linux/tc_act/tc_ife.h>
-#include <net/tc_act/tc_ife.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <net/netlink.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <uapi/linux/tc_act/tc_अगरe.h>
+#समावेश <net/tc_act/tc_अगरe.h>
 
-static int skbprio_check(struct sk_buff *skb, struct tcf_meta_info *e)
-{
-	return ife_check_meta_u32(skb->priority, e);
-}
+अटल पूर्णांक skbprio_check(काष्ठा sk_buff *skb, काष्ठा tcf_meta_info *e)
+अणु
+	वापस अगरe_check_meta_u32(skb->priority, e);
+पूर्ण
 
-static int skbprio_encode(struct sk_buff *skb, void *skbdata,
-			  struct tcf_meta_info *e)
-{
-	u32 ifeprio = skb->priority; /* avoid having to cast skb->priority*/
+अटल पूर्णांक skbprio_encode(काष्ठा sk_buff *skb, व्योम *skbdata,
+			  काष्ठा tcf_meta_info *e)
+अणु
+	u32 अगरeprio = skb->priority; /* aव्योम having to cast skb->priority*/
 
-	return ife_encode_meta_u32(ifeprio, skbdata, e);
-}
+	वापस अगरe_encode_meta_u32(अगरeprio, skbdata, e);
+पूर्ण
 
-static int skbprio_decode(struct sk_buff *skb, void *data, u16 len)
-{
-	u32 ifeprio = *(u32 *)data;
+अटल पूर्णांक skbprio_decode(काष्ठा sk_buff *skb, व्योम *data, u16 len)
+अणु
+	u32 अगरeprio = *(u32 *)data;
 
-	skb->priority = ntohl(ifeprio);
-	return 0;
-}
+	skb->priority = ntohl(अगरeprio);
+	वापस 0;
+पूर्ण
 
-static struct tcf_meta_ops ife_prio_ops = {
+अटल काष्ठा tcf_meta_ops अगरe_prio_ops = अणु
 	.metaid = IFE_META_PRIO,
 	.metatype = NLA_U32,
 	.name = "skbprio",
@@ -47,23 +48,23 @@ static struct tcf_meta_ops ife_prio_ops = {
 	.check_presence = skbprio_check,
 	.encode = skbprio_encode,
 	.decode = skbprio_decode,
-	.get = ife_get_meta_u32,
-	.alloc = ife_alloc_meta_u32,
+	.get = अगरe_get_meta_u32,
+	.alloc = अगरe_alloc_meta_u32,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ifeprio_init_module(void)
-{
-	return register_ife_op(&ife_prio_ops);
-}
+अटल पूर्णांक __init अगरeprio_init_module(व्योम)
+अणु
+	वापस रेजिस्टर_अगरe_op(&अगरe_prio_ops);
+पूर्ण
 
-static void __exit ifeprio_cleanup_module(void)
-{
-	unregister_ife_op(&ife_prio_ops);
-}
+अटल व्योम __निकास अगरeprio_cleanup_module(व्योम)
+अणु
+	unरेजिस्टर_अगरe_op(&अगरe_prio_ops);
+पूर्ण
 
-module_init(ifeprio_init_module);
-module_exit(ifeprio_cleanup_module);
+module_init(अगरeprio_init_module);
+module_निकास(अगरeprio_cleanup_module);
 
 MODULE_AUTHOR("Jamal Hadi Salim(2015)");
 MODULE_DESCRIPTION("Inter-FE skb prio metadata action");

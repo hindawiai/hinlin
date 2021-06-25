@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2018-2020 Broadcom.
  */
-#include <linux/dma-mapping.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/pgtable.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/page.h>
-#include <asm/unaligned.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <uapi/linux/misc/bcm_vk.h>
+#समावेश <uapi/linux/misc/bcm_vk.h>
 
-#include "bcm_vk.h"
-#include "bcm_vk_msg.h"
-#include "bcm_vk_sg.h"
+#समावेश "bcm_vk.h"
+#समावेश "bcm_vk_msg.h"
+#समावेश "bcm_vk_sg.h"
 
 /*
  * Valkyrie has a hardware limitation of 16M transfer size.
  * So limit the SGL chunks to 16M.
  */
-#define BCM_VK_MAX_SGL_CHUNK SZ_16M
+#घोषणा BCM_VK_MAX_SGL_CHUNK SZ_16M
 
-static int bcm_vk_dma_alloc(struct device *dev,
-			    struct bcm_vk_dma *dma,
-			    int dir,
-			    struct _vk_data *vkdata);
-static int bcm_vk_dma_free(struct device *dev, struct bcm_vk_dma *dma);
+अटल पूर्णांक bcm_vk_dma_alloc(काष्ठा device *dev,
+			    काष्ठा bcm_vk_dma *dma,
+			    पूर्णांक dir,
+			    काष्ठा _vk_data *vkdata);
+अटल पूर्णांक bcm_vk_dma_मुक्त(काष्ठा device *dev, काष्ठा bcm_vk_dma *dma);
 
 /* Uncomment to dump SGLIST */
-/* #define BCM_VK_DUMP_SGLIST */
+/* #घोषणा BCM_VK_DUMP_SGLIST */
 
-static int bcm_vk_dma_alloc(struct device *dev,
-			    struct bcm_vk_dma *dma,
-			    int direction,
-			    struct _vk_data *vkdata)
-{
+अटल पूर्णांक bcm_vk_dma_alloc(काष्ठा device *dev,
+			    काष्ठा bcm_vk_dma *dma,
+			    पूर्णांक direction,
+			    काष्ठा _vk_data *vkdata)
+अणु
 	dma_addr_t addr, sg_addr;
-	int err;
-	int i;
-	int offset;
+	पूर्णांक err;
+	पूर्णांक i;
+	पूर्णांक offset;
 	u32 size;
-	u32 remaining_size;
+	u32 reमुख्यing_size;
 	u32 transfer_size;
 	u64 data;
-	unsigned long first, last;
-	struct _vk_data *sgdata;
+	अचिन्हित दीर्घ first, last;
+	काष्ठा _vk_data *sgdata;
 
 	/* Get 64-bit user address */
 	data = get_unaligned(&vkdata->address);
 
-	/* offset into first page */
+	/* offset पूर्णांकo first page */
 	offset = offset_in_page(data);
 
 	/* Calculate number of pages */
@@ -60,83 +61,83 @@ static int bcm_vk_dma_alloc(struct device *dev,
 	dma->nr_pages = last - first + 1;
 
 	/* Allocate DMA pages */
-	dma->pages = kmalloc_array(dma->nr_pages,
-				   sizeof(struct page *),
+	dma->pages = kदो_स्मृति_array(dma->nr_pages,
+				   माप(काष्ठा page *),
 				   GFP_KERNEL);
-	if (!dma->pages)
-		return -ENOMEM;
+	अगर (!dma->pages)
+		वापस -ENOMEM;
 
 	dev_dbg(dev, "Alloc DMA Pages [0x%llx+0x%x => %d pages]\n",
 		data, vkdata->size, dma->nr_pages);
 
 	dma->direction = direction;
 
-	/* Get user pages into memory */
+	/* Get user pages पूर्णांकo memory */
 	err = get_user_pages_fast(data & PAGE_MASK,
 				  dma->nr_pages,
 				  direction == DMA_FROM_DEVICE,
 				  dma->pages);
-	if (err != dma->nr_pages) {
+	अगर (err != dma->nr_pages) अणु
 		dma->nr_pages = (err >= 0) ? err : 0;
 		dev_err(dev, "get_user_pages_fast, err=%d [%d]\n",
 			err, dma->nr_pages);
-		return err < 0 ? err : -EINVAL;
-	}
+		वापस err < 0 ? err : -EINVAL;
+	पूर्ण
 
 	/* Max size of sg list is 1 per mapped page + fields at start */
-	dma->sglen = (dma->nr_pages * sizeof(*sgdata)) +
-		     (sizeof(u32) * SGLIST_VKDATA_START);
+	dma->sglen = (dma->nr_pages * माप(*sgdata)) +
+		     (माप(u32) * SGLIST_VKDATA_START);
 
 	/* Allocate sglist */
 	dma->sglist = dma_alloc_coherent(dev,
 					 dma->sglen,
 					 &dma->handle,
 					 GFP_KERNEL);
-	if (!dma->sglist)
-		return -ENOMEM;
+	अगर (!dma->sglist)
+		वापस -ENOMEM;
 
 	dma->sglist[SGLIST_NUM_SG] = 0;
 	dma->sglist[SGLIST_TOTALSIZE] = vkdata->size;
-	remaining_size = vkdata->size;
-	sgdata = (struct _vk_data *)&dma->sglist[SGLIST_VKDATA_START];
+	reमुख्यing_size = vkdata->size;
+	sgdata = (काष्ठा _vk_data *)&dma->sglist[SGLIST_VKDATA_START];
 
-	/* Map all pages into DMA */
-	size = min_t(size_t, PAGE_SIZE - offset, remaining_size);
-	remaining_size -= size;
+	/* Map all pages पूर्णांकo DMA */
+	size = min_t(माप_प्रकार, PAGE_SIZE - offset, reमुख्यing_size);
+	reमुख्यing_size -= size;
 	sg_addr = dma_map_page(dev,
 			       dma->pages[0],
 			       offset,
 			       size,
 			       dma->direction);
 	transfer_size = size;
-	if (unlikely(dma_mapping_error(dev, sg_addr))) {
-		__free_page(dma->pages[0]);
-		return -EIO;
-	}
+	अगर (unlikely(dma_mapping_error(dev, sg_addr))) अणु
+		__मुक्त_page(dma->pages[0]);
+		वापस -EIO;
+	पूर्ण
 
-	for (i = 1; i < dma->nr_pages; i++) {
-		size = min_t(size_t, PAGE_SIZE, remaining_size);
-		remaining_size -= size;
+	क्रम (i = 1; i < dma->nr_pages; i++) अणु
+		size = min_t(माप_प्रकार, PAGE_SIZE, reमुख्यing_size);
+		reमुख्यing_size -= size;
 		addr = dma_map_page(dev,
 				    dma->pages[i],
 				    0,
 				    size,
 				    dma->direction);
-		if (unlikely(dma_mapping_error(dev, addr))) {
-			__free_page(dma->pages[i]);
-			return -EIO;
-		}
+		अगर (unlikely(dma_mapping_error(dev, addr))) अणु
+			__मुक्त_page(dma->pages[i]);
+			वापस -EIO;
+		पूर्ण
 
 		/*
 		 * Compress SG list entry when pages are contiguous
 		 * and transfer size less or equal to BCM_VK_MAX_SGL_CHUNK
 		 */
-		if ((addr == (sg_addr + transfer_size)) &&
-		    ((transfer_size + size) <= BCM_VK_MAX_SGL_CHUNK)) {
+		अगर ((addr == (sg_addr + transfer_size)) &&
+		    ((transfer_size + size) <= BCM_VK_MAX_SGL_CHUNK)) अणु
 			/* pages are contiguous, add to same sg entry */
 			transfer_size += size;
-		} else {
-			/* pages are not contiguous, write sg entry */
+		पूर्ण अन्यथा अणु
+			/* pages are not contiguous, ग_लिखो sg entry */
 			sgdata->size = transfer_size;
 			put_unaligned(sg_addr, (u64 *)&sgdata->address);
 			dma->sglist[SGLIST_NUM_SG]++;
@@ -145,44 +146,44 @@ static int bcm_vk_dma_alloc(struct device *dev,
 			sgdata++;
 			sg_addr = addr;
 			transfer_size = size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* Write last sg list entry */
 	sgdata->size = transfer_size;
 	put_unaligned(sg_addr, (u64 *)&sgdata->address);
 	dma->sglist[SGLIST_NUM_SG]++;
 
-	/* Update pointers and size field to point to sglist */
+	/* Update poपूर्णांकers and size field to poपूर्णांक to sglist */
 	put_unaligned((u64)dma->handle, &vkdata->address);
-	vkdata->size = (dma->sglist[SGLIST_NUM_SG] * sizeof(*sgdata)) +
-		       (sizeof(u32) * SGLIST_VKDATA_START);
+	vkdata->size = (dma->sglist[SGLIST_NUM_SG] * माप(*sgdata)) +
+		       (माप(u32) * SGLIST_VKDATA_START);
 
-#ifdef BCM_VK_DUMP_SGLIST
+#अगर_घोषित BCM_VK_DUMP_SGLIST
 	dev_dbg(dev,
 		"sgl 0x%llx handle 0x%llx, sglen: 0x%x sgsize: 0x%x\n",
 		(u64)dma->sglist,
 		dma->handle,
 		dma->sglen,
 		vkdata->size);
-	for (i = 0; i < vkdata->size / sizeof(u32); i++)
+	क्रम (i = 0; i < vkdata->size / माप(u32); i++)
 		dev_dbg(dev, "i:0x%x 0x%x\n", i, dma->sglist[i]);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bcm_vk_sg_alloc(struct device *dev,
-		    struct bcm_vk_dma *dma,
-		    int dir,
-		    struct _vk_data *vkdata,
-		    int num)
-{
-	int i;
-	int rc = -EINVAL;
+पूर्णांक bcm_vk_sg_alloc(काष्ठा device *dev,
+		    काष्ठा bcm_vk_dma *dma,
+		    पूर्णांक dir,
+		    काष्ठा _vk_data *vkdata,
+		    पूर्णांक num)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc = -EINVAL;
 
 	/* Convert user addresses to DMA SG List */
-	for (i = 0; i < num; i++) {
-		if (vkdata[i].size && vkdata[i].address) {
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (vkdata[i].size && vkdata[i].address) अणु
 			/*
 			 * If both size and address are non-zero
 			 * then DMA alloc.
@@ -191,8 +192,8 @@ int bcm_vk_sg_alloc(struct device *dev,
 					      &dma[i],
 					      dir,
 					      &vkdata[i]);
-		} else if (vkdata[i].size ||
-			   vkdata[i].address) {
+		पूर्ण अन्यथा अगर (vkdata[i].size ||
+			   vkdata[i].address) अणु
 			/*
 			 * If one of size and address are zero
 			 * there is a problem.
@@ -201,75 +202,75 @@ int bcm_vk_sg_alloc(struct device *dev,
 				"Invalid vkdata %x 0x%x 0x%llx\n",
 				i, vkdata[i].size, vkdata[i].address);
 			rc = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * If size and address are both zero
-			 * don't convert, but return success.
+			 * करोn't convert, but वापस success.
 			 */
 			rc = 0;
-		}
+		पूर्ण
 
-		if (rc)
-			goto fail_alloc;
-	}
-	return rc;
+		अगर (rc)
+			जाओ fail_alloc;
+	पूर्ण
+	वापस rc;
 
 fail_alloc:
-	while (i > 0) {
+	जबतक (i > 0) अणु
 		i--;
-		if (dma[i].sglist)
-			bcm_vk_dma_free(dev, &dma[i]);
-	}
-	return rc;
-}
+		अगर (dma[i].sglist)
+			bcm_vk_dma_मुक्त(dev, &dma[i]);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int bcm_vk_dma_free(struct device *dev, struct bcm_vk_dma *dma)
-{
+अटल पूर्णांक bcm_vk_dma_मुक्त(काष्ठा device *dev, काष्ठा bcm_vk_dma *dma)
+अणु
 	dma_addr_t addr;
-	int i;
-	int num_sg;
+	पूर्णांक i;
+	पूर्णांक num_sg;
 	u32 size;
-	struct _vk_data *vkdata;
+	काष्ठा _vk_data *vkdata;
 
 	dev_dbg(dev, "free sglist=%p sglen=0x%x\n", dma->sglist, dma->sglen);
 
 	/* Unmap all pages in the sglist */
 	num_sg = dma->sglist[SGLIST_NUM_SG];
-	vkdata = (struct _vk_data *)&dma->sglist[SGLIST_VKDATA_START];
-	for (i = 0; i < num_sg; i++) {
+	vkdata = (काष्ठा _vk_data *)&dma->sglist[SGLIST_VKDATA_START];
+	क्रम (i = 0; i < num_sg; i++) अणु
 		size = vkdata[i].size;
 		addr = get_unaligned(&vkdata[i].address);
 
 		dma_unmap_page(dev, addr, size, dma->direction);
-	}
+	पूर्ण
 
 	/* Free allocated sglist */
-	dma_free_coherent(dev, dma->sglen, dma->sglist, dma->handle);
+	dma_मुक्त_coherent(dev, dma->sglen, dma->sglist, dma->handle);
 
 	/* Release lock on all pages */
-	for (i = 0; i < dma->nr_pages; i++)
+	क्रम (i = 0; i < dma->nr_pages; i++)
 		put_page(dma->pages[i]);
 
 	/* Free allocated dma pages */
-	kfree(dma->pages);
-	dma->sglist = NULL;
+	kमुक्त(dma->pages);
+	dma->sglist = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int bcm_vk_sg_free(struct device *dev, struct bcm_vk_dma *dma, int num,
-		   int *proc_cnt)
-{
-	int i;
+पूर्णांक bcm_vk_sg_मुक्त(काष्ठा device *dev, काष्ठा bcm_vk_dma *dma, पूर्णांक num,
+		   पूर्णांक *proc_cnt)
+अणु
+	पूर्णांक i;
 
 	*proc_cnt = 0;
-	/* Unmap and free all pages and sglists */
-	for (i = 0; i < num; i++) {
-		if (dma[i].sglist) {
-			bcm_vk_dma_free(dev, &dma[i]);
+	/* Unmap and मुक्त all pages and sglists */
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (dma[i].sglist) अणु
+			bcm_vk_dma_मुक्त(dev, &dma[i]);
 			*proc_cnt += 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

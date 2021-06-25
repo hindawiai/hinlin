@@ -1,269 +1,270 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Texas Instruments Incorporated - https://www.ti.com/
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#include <linux/dma-fence.h>
+#समावेश <linux/dma-fence.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_of.h>
-#include <drm/drm_panel.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_of.h>
+#समावेश <drm/drm_panel.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "tidss_crtc.h"
-#include "tidss_dispc.h"
-#include "tidss_drv.h"
-#include "tidss_encoder.h"
-#include "tidss_kms.h"
-#include "tidss_plane.h"
+#समावेश "tidss_crtc.h"
+#समावेश "tidss_dispc.h"
+#समावेश "tidss_drv.h"
+#समावेश "tidss_encoder.h"
+#समावेश "tidss_kms.h"
+#समावेश "tidss_plane.h"
 
-static void tidss_atomic_commit_tail(struct drm_atomic_state *old_state)
-{
-	struct drm_device *ddev = old_state->dev;
-	struct tidss_device *tidss = to_tidss(ddev);
-	bool fence_cookie = dma_fence_begin_signalling();
+अटल व्योम tidss_atomic_commit_tail(काष्ठा drm_atomic_state *old_state)
+अणु
+	काष्ठा drm_device *ddev = old_state->dev;
+	काष्ठा tidss_device *tidss = to_tidss(ddev);
+	bool fence_cookie = dma_fence_begin_संकेतling();
 
 	dev_dbg(ddev->dev, "%s\n", __func__);
 
-	tidss_runtime_get(tidss);
+	tidss_runसमय_get(tidss);
 
 	drm_atomic_helper_commit_modeset_disables(ddev, old_state);
 	drm_atomic_helper_commit_planes(ddev, old_state, 0);
 	drm_atomic_helper_commit_modeset_enables(ddev, old_state);
 
-	drm_atomic_helper_commit_hw_done(old_state);
-	dma_fence_end_signalling(fence_cookie);
-	drm_atomic_helper_wait_for_flip_done(ddev, old_state);
+	drm_atomic_helper_commit_hw_करोne(old_state);
+	dma_fence_end_संकेतling(fence_cookie);
+	drm_atomic_helper_रुको_क्रम_flip_करोne(ddev, old_state);
 
 	drm_atomic_helper_cleanup_planes(ddev, old_state);
 
-	tidss_runtime_put(tidss);
-}
+	tidss_runसमय_put(tidss);
+पूर्ण
 
-static const struct drm_mode_config_helper_funcs mode_config_helper_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_helper_funcs mode_config_helper_funcs = अणु
 	.atomic_commit_tail = tidss_atomic_commit_tail,
-};
+पूर्ण;
 
-static int tidss_atomic_check(struct drm_device *ddev,
-			      struct drm_atomic_state *state)
-{
-	struct drm_plane_state *opstate;
-	struct drm_plane_state *npstate;
-	struct drm_plane *plane;
-	struct drm_crtc_state *cstate;
-	struct drm_crtc *crtc;
-	int ret, i;
+अटल पूर्णांक tidss_atomic_check(काष्ठा drm_device *ddev,
+			      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *opstate;
+	काष्ठा drm_plane_state *npstate;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_crtc_state *cstate;
+	काष्ठा drm_crtc *crtc;
+	पूर्णांक ret, i;
 
 	ret = drm_atomic_helper_check(ddev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Add all active planes on a CRTC to the atomic state, if
+	 * Add all active planes on a CRTC to the atomic state, अगर
 	 * x/y/z position or activity of any plane on that CRTC
-	 * changes. This is needed for updating the plane positions in
+	 * changes. This is needed क्रम updating the plane positions in
 	 * tidss_crtc_position_planes() which is called from
 	 * crtc_atomic_enable() and crtc_atomic_flush(). We have an
 	 * extra flag to to mark x,y-position changes and together
 	 * with zpos_changed the condition recognizes all the above
-	 * cases.
+	 * हालs.
 	 */
-	for_each_oldnew_plane_in_state(state, plane, opstate, npstate, i) {
-		if (!npstate->crtc || !npstate->visible)
-			continue;
+	क्रम_each_oldnew_plane_in_state(state, plane, opstate, npstate, i) अणु
+		अगर (!npstate->crtc || !npstate->visible)
+			जारी;
 
-		if (!opstate->crtc || opstate->crtc_x != npstate->crtc_x ||
-		    opstate->crtc_y != npstate->crtc_y) {
+		अगर (!opstate->crtc || opstate->crtc_x != npstate->crtc_x ||
+		    opstate->crtc_y != npstate->crtc_y) अणु
 			cstate = drm_atomic_get_crtc_state(state,
 							   npstate->crtc);
-			if (IS_ERR(cstate))
-				return PTR_ERR(cstate);
+			अगर (IS_ERR(cstate))
+				वापस PTR_ERR(cstate);
 			to_tidss_crtc_state(cstate)->plane_pos_changed = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for_each_new_crtc_in_state(state, crtc, cstate, i) {
-		if (to_tidss_crtc_state(cstate)->plane_pos_changed ||
-		    cstate->zpos_changed) {
+	क्रम_each_new_crtc_in_state(state, crtc, cstate, i) अणु
+		अगर (to_tidss_crtc_state(cstate)->plane_pos_changed ||
+		    cstate->zpos_changed) अणु
 			ret = drm_atomic_add_affected_planes(state, crtc);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_mode_config_funcs mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create,
 	.atomic_check = tidss_atomic_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static int tidss_dispc_modeset_init(struct tidss_device *tidss)
-{
-	struct device *dev = tidss->dev;
-	unsigned int fourccs_len;
-	const u32 *fourccs = dispc_plane_formats(tidss->dispc, &fourccs_len);
-	unsigned int i;
+अटल पूर्णांक tidss_dispc_modeset_init(काष्ठा tidss_device *tidss)
+अणु
+	काष्ठा device *dev = tidss->dev;
+	अचिन्हित पूर्णांक fourccs_len;
+	स्थिर u32 *fourccs = dispc_plane_क्रमmats(tidss->dispc, &fourccs_len);
+	अचिन्हित पूर्णांक i;
 
-	struct pipe {
+	काष्ठा pipe अणु
 		u32 hw_videoport;
-		struct drm_bridge *bridge;
+		काष्ठा drm_bridge *bridge;
 		u32 enc_type;
-	};
+	पूर्ण;
 
-	const struct dispc_features *feat = tidss->feat;
+	स्थिर काष्ठा dispc_features *feat = tidss->feat;
 	u32 max_vps = feat->num_vps;
 	u32 max_planes = feat->num_planes;
 
-	struct pipe pipes[TIDSS_MAX_PORTS];
+	काष्ठा pipe pipes[TIDSS_MAX_PORTS];
 	u32 num_pipes = 0;
 	u32 crtc_mask;
 
 	/* first find all the connected panels & bridges */
 
-	for (i = 0; i < max_vps; i++) {
-		struct drm_panel *panel;
-		struct drm_bridge *bridge;
+	क्रम (i = 0; i < max_vps; i++) अणु
+		काष्ठा drm_panel *panel;
+		काष्ठा drm_bridge *bridge;
 		u32 enc_type = DRM_MODE_ENCODER_NONE;
-		int ret;
+		पूर्णांक ret;
 
 		ret = drm_of_find_panel_or_bridge(dev->of_node, i, 0,
 						  &panel, &bridge);
-		if (ret == -ENODEV) {
+		अगर (ret == -ENODEV) अणु
 			dev_dbg(dev, "no panel/bridge for port %d\n", i);
-			continue;
-		} else if (ret) {
+			जारी;
+		पूर्ण अन्यथा अगर (ret) अणु
 			dev_dbg(dev, "port %d probe returned %d\n", i, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (panel) {
+		अगर (panel) अणु
 			u32 conn_type;
 
 			dev_dbg(dev, "Setting up panel for port %d\n", i);
 
-			switch (feat->vp_bus_type[i]) {
-			case DISPC_VP_OLDI:
+			चयन (feat->vp_bus_type[i]) अणु
+			हाल DISPC_VP_OLDI:
 				enc_type = DRM_MODE_ENCODER_LVDS;
 				conn_type = DRM_MODE_CONNECTOR_LVDS;
-				break;
-			case DISPC_VP_DPI:
+				अवरोध;
+			हाल DISPC_VP_DPI:
 				enc_type = DRM_MODE_ENCODER_DPI;
 				conn_type = DRM_MODE_CONNECTOR_DPI;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				WARN_ON(1);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			if (panel->connector_type != conn_type) {
+			अगर (panel->connector_type != conn_type) अणु
 				dev_err(dev,
 					"%s: Panel %s has incompatible connector type for vp%d (%d != %d)\n",
 					 __func__, dev_name(panel->dev), i,
 					 panel->connector_type, conn_type);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			bridge = devm_drm_panel_bridge_add(dev, panel);
-			if (IS_ERR(bridge)) {
+			अगर (IS_ERR(bridge)) अणु
 				dev_err(dev,
 					"failed to set up panel bridge for port %d\n",
 					i);
-				return PTR_ERR(bridge);
-			}
-		}
+				वापस PTR_ERR(bridge);
+			पूर्ण
+		पूर्ण
 
 		pipes[num_pipes].hw_videoport = i;
 		pipes[num_pipes].bridge = bridge;
 		pipes[num_pipes].enc_type = enc_type;
 		num_pipes++;
-	}
+	पूर्ण
 
 	/* all planes can be on any crtc */
 	crtc_mask = (1 << num_pipes) - 1;
 
-	/* then create a plane, a crtc and an encoder for each panel/bridge */
+	/* then create a plane, a crtc and an encoder क्रम each panel/bridge */
 
-	for (i = 0; i < num_pipes; ++i) {
-		struct tidss_plane *tplane;
-		struct tidss_crtc *tcrtc;
-		struct drm_encoder *enc;
+	क्रम (i = 0; i < num_pipes; ++i) अणु
+		काष्ठा tidss_plane *tplane;
+		काष्ठा tidss_crtc *tcrtc;
+		काष्ठा drm_encoder *enc;
 		u32 hw_plane_id = feat->vid_order[tidss->num_planes];
-		int ret;
+		पूर्णांक ret;
 
 		tplane = tidss_plane_create(tidss, hw_plane_id,
 					    DRM_PLANE_TYPE_PRIMARY, crtc_mask,
 					    fourccs, fourccs_len);
-		if (IS_ERR(tplane)) {
+		अगर (IS_ERR(tplane)) अणु
 			dev_err(tidss->dev, "plane create failed\n");
-			return PTR_ERR(tplane);
-		}
+			वापस PTR_ERR(tplane);
+		पूर्ण
 
 		tidss->planes[tidss->num_planes++] = &tplane->plane;
 
 		tcrtc = tidss_crtc_create(tidss, pipes[i].hw_videoport,
 					  &tplane->plane);
-		if (IS_ERR(tcrtc)) {
+		अगर (IS_ERR(tcrtc)) अणु
 			dev_err(tidss->dev, "crtc create failed\n");
-			return PTR_ERR(tcrtc);
-		}
+			वापस PTR_ERR(tcrtc);
+		पूर्ण
 
 		tidss->crtcs[tidss->num_crtcs++] = &tcrtc->crtc;
 
 		enc = tidss_encoder_create(tidss, pipes[i].enc_type,
 					   1 << tcrtc->crtc.index);
-		if (IS_ERR(enc)) {
+		अगर (IS_ERR(enc)) अणु
 			dev_err(tidss->dev, "encoder create failed\n");
-			return PTR_ERR(enc);
-		}
+			वापस PTR_ERR(enc);
+		पूर्ण
 
-		ret = drm_bridge_attach(enc, pipes[i].bridge, NULL, 0);
-		if (ret) {
+		ret = drm_bridge_attach(enc, pipes[i].bridge, शून्य, 0);
+		अगर (ret) अणु
 			dev_err(tidss->dev, "bridge attach failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* create overlay planes of the leftover planes */
 
-	while (tidss->num_planes < max_planes) {
-		struct tidss_plane *tplane;
+	जबतक (tidss->num_planes < max_planes) अणु
+		काष्ठा tidss_plane *tplane;
 		u32 hw_plane_id = feat->vid_order[tidss->num_planes];
 
 		tplane = tidss_plane_create(tidss, hw_plane_id,
 					    DRM_PLANE_TYPE_OVERLAY, crtc_mask,
 					    fourccs, fourccs_len);
 
-		if (IS_ERR(tplane)) {
+		अगर (IS_ERR(tplane)) अणु
 			dev_err(tidss->dev, "plane create failed\n");
-			return PTR_ERR(tplane);
-		}
+			वापस PTR_ERR(tplane);
+		पूर्ण
 
 		tidss->planes[tidss->num_planes++] = &tplane->plane;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int tidss_modeset_init(struct tidss_device *tidss)
-{
-	struct drm_device *ddev = &tidss->ddev;
-	int ret;
+पूर्णांक tidss_modeset_init(काष्ठा tidss_device *tidss)
+अणु
+	काष्ठा drm_device *ddev = &tidss->ddev;
+	पूर्णांक ret;
 
 	dev_dbg(tidss->dev, "%s\n", __func__);
 
 	ret = drmm_mode_config_init(ddev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ddev->mode_config.min_width = 8;
 	ddev->mode_config.min_height = 8;
@@ -271,19 +272,19 @@ int tidss_modeset_init(struct tidss_device *tidss)
 	ddev->mode_config.max_height = 8096;
 	ddev->mode_config.normalize_zpos = true;
 	ddev->mode_config.funcs = &mode_config_funcs;
-	ddev->mode_config.helper_private = &mode_config_helper_funcs;
+	ddev->mode_config.helper_निजी = &mode_config_helper_funcs;
 
 	ret = tidss_dispc_modeset_init(tidss);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = drm_vblank_init(ddev, tidss->num_crtcs);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(ddev);
 
 	dev_dbg(tidss->dev, "%s done\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

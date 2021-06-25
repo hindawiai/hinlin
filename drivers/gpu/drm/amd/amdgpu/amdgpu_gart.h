@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,50 +22,50 @@
  *
  */
 
-#ifndef __AMDGPU_GART_H__
-#define __AMDGPU_GART_H__
+#अगर_अघोषित __AMDGPU_GART_H__
+#घोषणा __AMDGPU_GART_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * GART structures, functions & helpers
+ * GART काष्ठाures, functions & helpers
  */
-struct amdgpu_device;
-struct amdgpu_bo;
+काष्ठा amdgpu_device;
+काष्ठा amdgpu_bo;
 
-#define AMDGPU_GPU_PAGE_SIZE 4096
-#define AMDGPU_GPU_PAGE_MASK (AMDGPU_GPU_PAGE_SIZE - 1)
-#define AMDGPU_GPU_PAGE_SHIFT 12
-#define AMDGPU_GPU_PAGE_ALIGN(a) (((a) + AMDGPU_GPU_PAGE_MASK) & ~AMDGPU_GPU_PAGE_MASK)
+#घोषणा AMDGPU_GPU_PAGE_SIZE 4096
+#घोषणा AMDGPU_GPU_PAGE_MASK (AMDGPU_GPU_PAGE_SIZE - 1)
+#घोषणा AMDGPU_GPU_PAGE_SHIFT 12
+#घोषणा AMDGPU_GPU_PAGE_ALIGN(a) (((a) + AMDGPU_GPU_PAGE_MASK) & ~AMDGPU_GPU_PAGE_MASK)
 
-#define AMDGPU_GPU_PAGES_IN_CPU_PAGE (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE)
+#घोषणा AMDGPU_GPU_PAGES_IN_CPU_PAGE (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE)
 
-struct amdgpu_gart {
-	struct amdgpu_bo		*bo;
+काष्ठा amdgpu_gart अणु
+	काष्ठा amdgpu_bo		*bo;
 	/* CPU kmapped address of gart table */
-	void				*ptr;
-	unsigned			num_gpu_pages;
-	unsigned			num_cpu_pages;
-	unsigned			table_size;
-	bool				ready;
+	व्योम				*ptr;
+	अचिन्हित			num_gpu_pages;
+	अचिन्हित			num_cpu_pages;
+	अचिन्हित			table_size;
+	bool				पढ़ोy;
 
-	/* Asic default pte flags */
-	uint64_t			gart_pte_flags;
-};
+	/* Asic शेष pte flags */
+	uपूर्णांक64_t			gart_pte_flags;
+पूर्ण;
 
-int amdgpu_gart_table_vram_alloc(struct amdgpu_device *adev);
-void amdgpu_gart_table_vram_free(struct amdgpu_device *adev);
-int amdgpu_gart_table_vram_pin(struct amdgpu_device *adev);
-void amdgpu_gart_table_vram_unpin(struct amdgpu_device *adev);
-int amdgpu_gart_init(struct amdgpu_device *adev);
-void amdgpu_gart_fini(struct amdgpu_device *adev);
-int amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
-		       int pages);
-int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t offset,
-		    int pages, dma_addr_t *dma_addr, uint64_t flags,
-		    void *dst);
-int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
-		     int pages, struct page **pagelist,
-		     dma_addr_t *dma_addr, uint64_t flags);
+पूर्णांक amdgpu_gart_table_vram_alloc(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_gart_table_vram_मुक्त(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_gart_table_vram_pin(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_gart_table_vram_unpin(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_gart_init(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_gart_fini(काष्ठा amdgpu_device *adev);
+पूर्णांक amdgpu_gart_unbind(काष्ठा amdgpu_device *adev, uपूर्णांक64_t offset,
+		       पूर्णांक pages);
+पूर्णांक amdgpu_gart_map(काष्ठा amdgpu_device *adev, uपूर्णांक64_t offset,
+		    पूर्णांक pages, dma_addr_t *dma_addr, uपूर्णांक64_t flags,
+		    व्योम *dst);
+पूर्णांक amdgpu_gart_bind(काष्ठा amdgpu_device *adev, uपूर्णांक64_t offset,
+		     पूर्णांक pages, काष्ठा page **pagelist,
+		     dma_addr_t *dma_addr, uपूर्णांक64_t flags);
 
-#endif
+#पूर्ण_अगर

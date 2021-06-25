@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * INT3400 thermal driver
  *
  * Copyright (C) 2014, Intel Corporation
- * Authors: Zhang Rui <rui.zhang@intel.com>
+ * Authors: Zhang Rui <rui.zhang@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/acpi.h>
-#include <linux/thermal.h>
-#include "acpi_thermal_rel.h"
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/thermal.h>
+#समावेश "acpi_thermal_rel.h"
 
-#define INT3400_THERMAL_TABLE_CHANGED 0x83
-#define INT3400_ODVP_CHANGED 0x88
-#define INT3400_KEEP_ALIVE 0xA0
+#घोषणा INT3400_THERMAL_TABLE_CHANGED 0x83
+#घोषणा INT3400_ODVP_CHANGED 0x88
+#घोषणा INT3400_KEEP_ALIVE 0xA0
 
-enum int3400_thermal_uuid {
+क्रमागत पूर्णांक3400_thermal_uuid अणु
 	INT3400_THERMAL_PASSIVE_1,
 	INT3400_THERMAL_ACTIVE,
 	INT3400_THERMAL_CRITICAL,
@@ -28,9 +29,9 @@ enum int3400_thermal_uuid {
 	INT3400_THERMAL_COOLING_MODE,
 	INT3400_THERMAL_HARDWARE_DUTY_CYCLING,
 	INT3400_THERMAL_MAXIMUM_UUID,
-};
+पूर्ण;
 
-static char *int3400_thermal_uuids[INT3400_THERMAL_MAXIMUM_UUID] = {
+अटल अक्षर *पूर्णांक3400_thermal_uuids[INT3400_THERMAL_MAXIMUM_UUID] = अणु
 	"42A441D6-AE6A-462b-A84B-4A8CE79027D3",
 	"3A95C389-E4B8-4629-A526-C52C88626BAE",
 	"97C68AE7-15FA-499c-B8C9-5DA81D606E0A",
@@ -41,565 +42,565 @@ static char *int3400_thermal_uuids[INT3400_THERMAL_MAXIMUM_UUID] = {
 	"6ED722A7-9240-48A5-B479-31EEF723D7CF",
 	"16CAF1B7-DD38-40ED-B1C1-1B8A1913D531",
 	"BE84BABF-C4D4-403D-B495-3128FD44dAC1",
-};
+पूर्ण;
 
-struct odvp_attr;
+काष्ठा odvp_attr;
 
-struct int3400_thermal_priv {
-	struct acpi_device *adev;
-	struct platform_device *pdev;
-	struct thermal_zone_device *thermal;
-	int art_count;
-	struct art *arts;
-	int trt_count;
-	struct trt *trts;
-	u8 uuid_bitmap;
-	int rel_misc_dev_res;
-	int current_uuid_index;
-	char *data_vault;
-	int odvp_count;
-	int *odvp;
-	struct odvp_attr *odvp_attrs;
-};
+काष्ठा पूर्णांक3400_thermal_priv अणु
+	काष्ठा acpi_device *adev;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा thermal_zone_device *thermal;
+	पूर्णांक art_count;
+	काष्ठा art *arts;
+	पूर्णांक trt_count;
+	काष्ठा trt *trts;
+	u8 uuid_biपंचांगap;
+	पूर्णांक rel_misc_dev_res;
+	पूर्णांक current_uuid_index;
+	अक्षर *data_vault;
+	पूर्णांक odvp_count;
+	पूर्णांक *odvp;
+	काष्ठा odvp_attr *odvp_attrs;
+पूर्ण;
 
-static int evaluate_odvp(struct int3400_thermal_priv *priv);
+अटल पूर्णांक evaluate_odvp(काष्ठा पूर्णांक3400_thermal_priv *priv);
 
-struct odvp_attr {
-	int odvp;
-	struct int3400_thermal_priv *priv;
-	struct kobj_attribute attr;
-};
+काष्ठा odvp_attr अणु
+	पूर्णांक odvp;
+	काष्ठा पूर्णांक3400_thermal_priv *priv;
+	काष्ठा kobj_attribute attr;
+पूर्ण;
 
-static ssize_t data_vault_read(struct file *file, struct kobject *kobj,
-	     struct bin_attribute *attr, char *buf, loff_t off, size_t count)
-{
-	memcpy(buf, attr->private + off, count);
-	return count;
-}
+अटल sमाप_प्रकार data_vault_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
+	     काष्ठा bin_attribute *attr, अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	स_नकल(buf, attr->निजी + off, count);
+	वापस count;
+पूर्ण
 
-static BIN_ATTR_RO(data_vault, 0);
+अटल BIN_ATTR_RO(data_vault, 0);
 
-static struct bin_attribute *data_attributes[] = {
+अटल काष्ठा bin_attribute *data_attributes[] = अणु
 	&bin_attr_data_vault,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static ssize_t imok_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct int3400_thermal_priv *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार imok_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = dev_get_drvdata(dev);
 	acpi_status status;
-	int input, ret;
+	पूर्णांक input, ret;
 
-	ret = kstrtouint(buf, 10, &input);
-	if (ret)
-		return ret;
+	ret = kstrtouपूर्णांक(buf, 10, &input);
+	अगर (ret)
+		वापस ret;
 	status = acpi_execute_simple_method(priv->adev->handle, "IMOK", input);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_WO(imok);
+अटल DEVICE_ATTR_WO(imok);
 
-static struct attribute *imok_attr[] = {
+अटल काष्ठा attribute *imok_attr[] = अणु
 	&dev_attr_imok.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group data_attribute_group = {
+अटल स्थिर काष्ठा attribute_group data_attribute_group = अणु
 	.bin_attrs = data_attributes,
 	.attrs = imok_attr,
-};
+पूर्ण;
 
-static ssize_t available_uuids_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct int3400_thermal_priv *priv = dev_get_drvdata(dev);
-	int i;
-	int length = 0;
+अटल sमाप_प्रकार available_uuids_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = dev_get_drvdata(dev);
+	पूर्णांक i;
+	पूर्णांक length = 0;
 
-	if (!priv->uuid_bitmap)
-		return sprintf(buf, "UNKNOWN\n");
+	अगर (!priv->uuid_biपंचांगap)
+		वापस प्र_लिखो(buf, "UNKNOWN\n");
 
-	for (i = 0; i < INT3400_THERMAL_MAXIMUM_UUID; i++) {
-		if (priv->uuid_bitmap & (1 << i))
-			if (PAGE_SIZE - length > 0)
-				length += scnprintf(&buf[length],
+	क्रम (i = 0; i < INT3400_THERMAL_MAXIMUM_UUID; i++) अणु
+		अगर (priv->uuid_biपंचांगap & (1 << i))
+			अगर (PAGE_SIZE - length > 0)
+				length += scnम_लिखो(&buf[length],
 						   PAGE_SIZE - length,
 						   "%s\n",
-						   int3400_thermal_uuids[i]);
-	}
+						   पूर्णांक3400_thermal_uuids[i]);
+	पूर्ण
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static ssize_t current_uuid_show(struct device *dev,
-				 struct device_attribute *devattr, char *buf)
-{
-	struct int3400_thermal_priv *priv = dev_get_drvdata(dev);
+अटल sमाप_प्रकार current_uuid_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = dev_get_drvdata(dev);
 
-	if (priv->current_uuid_index == -1)
-		return sprintf(buf, "INVALID\n");
+	अगर (priv->current_uuid_index == -1)
+		वापस प्र_लिखो(buf, "INVALID\n");
 
-	return sprintf(buf, "%s\n",
-		       int3400_thermal_uuids[priv->current_uuid_index]);
-}
+	वापस प्र_लिखो(buf, "%s\n",
+		       पूर्णांक3400_thermal_uuids[priv->current_uuid_index]);
+पूर्ण
 
-static ssize_t current_uuid_store(struct device *dev,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct int3400_thermal_priv *priv = dev_get_drvdata(dev);
-	int i;
+अटल sमाप_प्रकार current_uuid_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < INT3400_THERMAL_MAXIMUM_UUID; ++i) {
-		if (!strncmp(buf, int3400_thermal_uuids[i],
-			     sizeof(int3400_thermal_uuids[i]) - 1)) {
+	क्रम (i = 0; i < INT3400_THERMAL_MAXIMUM_UUID; ++i) अणु
+		अगर (!म_भेदन(buf, पूर्णांक3400_thermal_uuids[i],
+			     माप(पूर्णांक3400_thermal_uuids[i]) - 1)) अणु
 			/*
 			 * If we have a list of supported UUIDs, make sure
 			 * this one is supported.
 			 */
-			if (priv->uuid_bitmap &&
-			    !(priv->uuid_bitmap & (1 << i)))
-				return -EINVAL;
+			अगर (priv->uuid_biपंचांगap &&
+			    !(priv->uuid_biपंचांगap & (1 << i)))
+				वापस -EINVAL;
 
 			priv->current_uuid_index = i;
-			return count;
-		}
-	}
+			वापस count;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static DEVICE_ATTR_RW(current_uuid);
-static DEVICE_ATTR_RO(available_uuids);
-static struct attribute *uuid_attrs[] = {
+अटल DEVICE_ATTR_RW(current_uuid);
+अटल DEVICE_ATTR_RO(available_uuids);
+अटल काष्ठा attribute *uuid_attrs[] = अणु
 	&dev_attr_available_uuids.attr,
 	&dev_attr_current_uuid.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group uuid_attribute_group = {
+अटल स्थिर काष्ठा attribute_group uuid_attribute_group = अणु
 	.attrs = uuid_attrs,
 	.name = "uuids"
-};
+पूर्ण;
 
-static int int3400_thermal_get_uuids(struct int3400_thermal_priv *priv)
-{
-	struct acpi_buffer buf = { ACPI_ALLOCATE_BUFFER, NULL};
-	union acpi_object *obja, *objb;
-	int i, j;
-	int result = 0;
+अटल पूर्णांक पूर्णांक3400_thermal_get_uuids(काष्ठा पूर्णांक3400_thermal_priv *priv)
+अणु
+	काष्ठा acpi_buffer buf = अणु ACPI_ALLOCATE_BUFFER, शून्यपूर्ण;
+	जोड़ acpi_object *obja, *objb;
+	पूर्णांक i, j;
+	पूर्णांक result = 0;
 	acpi_status status;
 
-	status = acpi_evaluate_object(priv->adev->handle, "IDSP", NULL, &buf);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_object(priv->adev->handle, "IDSP", शून्य, &buf);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	obja = (union acpi_object *)buf.pointer;
-	if (obja->type != ACPI_TYPE_PACKAGE) {
+	obja = (जोड़ acpi_object *)buf.poपूर्णांकer;
+	अगर (obja->type != ACPI_TYPE_PACKAGE) अणु
 		result = -EINVAL;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	for (i = 0; i < obja->package.count; i++) {
+	क्रम (i = 0; i < obja->package.count; i++) अणु
 		objb = &obja->package.elements[i];
-		if (objb->type != ACPI_TYPE_BUFFER) {
+		अगर (objb->type != ACPI_TYPE_BUFFER) अणु
 			result = -EINVAL;
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
 		/* UUID must be 16 bytes */
-		if (objb->buffer.length != 16) {
+		अगर (objb->buffer.length != 16) अणु
 			result = -EINVAL;
-			goto end;
-		}
+			जाओ end;
+		पूर्ण
 
-		for (j = 0; j < INT3400_THERMAL_MAXIMUM_UUID; j++) {
+		क्रम (j = 0; j < INT3400_THERMAL_MAXIMUM_UUID; j++) अणु
 			guid_t guid;
 
-			guid_parse(int3400_thermal_uuids[j], &guid);
-			if (guid_equal((guid_t *)objb->buffer.pointer, &guid)) {
-				priv->uuid_bitmap |= (1 << j);
-				break;
-			}
-		}
-	}
+			guid_parse(पूर्णांक3400_thermal_uuids[j], &guid);
+			अगर (guid_equal((guid_t *)objb->buffer.poपूर्णांकer, &guid)) अणु
+				priv->uuid_biपंचांगap |= (1 << j);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 end:
-	kfree(buf.pointer);
-	return result;
-}
+	kमुक्त(buf.poपूर्णांकer);
+	वापस result;
+पूर्ण
 
-static int int3400_thermal_run_osc(acpi_handle handle,
-				enum int3400_thermal_uuid uuid, bool enable)
-{
+अटल पूर्णांक पूर्णांक3400_thermal_run_osc(acpi_handle handle,
+				क्रमागत पूर्णांक3400_thermal_uuid uuid, bool enable)
+अणु
 	u32 ret, buf[2];
 	acpi_status status;
-	int result = 0;
-	struct acpi_osc_context context = {
-		.uuid_str = NULL,
+	पूर्णांक result = 0;
+	काष्ठा acpi_osc_context context = अणु
+		.uuid_str = शून्य,
 		.rev = 1,
 		.cap.length = 8,
-	};
+	पूर्ण;
 
-	if (uuid < 0 || uuid >= INT3400_THERMAL_MAXIMUM_UUID)
-		return -EINVAL;
+	अगर (uuid < 0 || uuid >= INT3400_THERMAL_MAXIMUM_UUID)
+		वापस -EINVAL;
 
-	context.uuid_str = int3400_thermal_uuids[uuid];
+	context.uuid_str = पूर्णांक3400_thermal_uuids[uuid];
 
 	buf[OSC_QUERY_DWORD] = 0;
 	buf[OSC_SUPPORT_DWORD] = enable;
 
-	context.cap.pointer = buf;
+	context.cap.poपूर्णांकer = buf;
 
 	status = acpi_run_osc(handle, &context);
-	if (ACPI_SUCCESS(status)) {
-		ret = *((u32 *)(context.ret.pointer + 4));
-		if (ret != enable)
+	अगर (ACPI_SUCCESS(status)) अणु
+		ret = *((u32 *)(context.ret.poपूर्णांकer + 4));
+		अगर (ret != enable)
 			result = -EPERM;
-	} else
+	पूर्ण अन्यथा
 		result = -EPERM;
 
-	kfree(context.ret.pointer);
+	kमुक्त(context.ret.poपूर्णांकer);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t odvp_show(struct kobject *kobj, struct kobj_attribute *attr,
-			 char *buf)
-{
-	struct odvp_attr *odvp_attr;
+अटल sमाप_प्रकार odvp_show(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा odvp_attr *odvp_attr;
 
-	odvp_attr = container_of(attr, struct odvp_attr, attr);
+	odvp_attr = container_of(attr, काष्ठा odvp_attr, attr);
 
-	return sprintf(buf, "%d\n", odvp_attr->priv->odvp[odvp_attr->odvp]);
-}
+	वापस प्र_लिखो(buf, "%d\n", odvp_attr->priv->odvp[odvp_attr->odvp]);
+पूर्ण
 
-static void cleanup_odvp(struct int3400_thermal_priv *priv)
-{
-	int i;
+अटल व्योम cleanup_odvp(काष्ठा पूर्णांक3400_thermal_priv *priv)
+अणु
+	पूर्णांक i;
 
-	if (priv->odvp_attrs) {
-		for (i = 0; i < priv->odvp_count; i++) {
-			sysfs_remove_file(&priv->pdev->dev.kobj,
+	अगर (priv->odvp_attrs) अणु
+		क्रम (i = 0; i < priv->odvp_count; i++) अणु
+			sysfs_हटाओ_file(&priv->pdev->dev.kobj,
 					  &priv->odvp_attrs[i].attr.attr);
-			kfree(priv->odvp_attrs[i].attr.attr.name);
-		}
-		kfree(priv->odvp_attrs);
-	}
-	kfree(priv->odvp);
+			kमुक्त(priv->odvp_attrs[i].attr.attr.name);
+		पूर्ण
+		kमुक्त(priv->odvp_attrs);
+	पूर्ण
+	kमुक्त(priv->odvp);
 	priv->odvp_count = 0;
-}
+पूर्ण
 
-static int evaluate_odvp(struct int3400_thermal_priv *priv)
-{
-	struct acpi_buffer odvp = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj = NULL;
+अटल पूर्णांक evaluate_odvp(काष्ठा पूर्णांक3400_thermal_priv *priv)
+अणु
+	काष्ठा acpi_buffer odvp = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj = शून्य;
 	acpi_status status;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	status = acpi_evaluate_object(priv->adev->handle, "ODVP", NULL, &odvp);
-	if (ACPI_FAILURE(status)) {
+	status = acpi_evaluate_object(priv->adev->handle, "ODVP", शून्य, &odvp);
+	अगर (ACPI_FAILURE(status)) अणु
 		ret = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	obj = odvp.pointer;
-	if (obj->type != ACPI_TYPE_PACKAGE) {
+	obj = odvp.poपूर्णांकer;
+	अगर (obj->type != ACPI_TYPE_PACKAGE) अणु
 		ret = -EINVAL;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	if (priv->odvp == NULL) {
+	अगर (priv->odvp == शून्य) अणु
 		priv->odvp_count = obj->package.count;
-		priv->odvp = kmalloc_array(priv->odvp_count, sizeof(int),
+		priv->odvp = kदो_स्मृति_array(priv->odvp_count, माप(पूर्णांक),
 				     GFP_KERNEL);
-		if (!priv->odvp) {
+		अगर (!priv->odvp) अणु
 			ret = -ENOMEM;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	if (priv->odvp_attrs == NULL) {
-		priv->odvp_attrs = kcalloc(priv->odvp_count,
-					   sizeof(struct odvp_attr),
+	अगर (priv->odvp_attrs == शून्य) अणु
+		priv->odvp_attrs = kसुस्मृति(priv->odvp_count,
+					   माप(काष्ठा odvp_attr),
 					   GFP_KERNEL);
-		if (!priv->odvp_attrs) {
+		अगर (!priv->odvp_attrs) अणु
 			ret = -ENOMEM;
-			goto out_err;
-		}
-		for (i = 0; i < priv->odvp_count; i++) {
-			struct odvp_attr *odvp = &priv->odvp_attrs[i];
+			जाओ out_err;
+		पूर्ण
+		क्रम (i = 0; i < priv->odvp_count; i++) अणु
+			काष्ठा odvp_attr *odvp = &priv->odvp_attrs[i];
 
 			sysfs_attr_init(&odvp->attr.attr);
 			odvp->priv = priv;
 			odvp->odvp = i;
-			odvp->attr.attr.name = kasprintf(GFP_KERNEL,
+			odvp->attr.attr.name = kaप्र_लिखो(GFP_KERNEL,
 							 "odvp%d", i);
 
-			if (!odvp->attr.attr.name) {
+			अगर (!odvp->attr.attr.name) अणु
 				ret = -ENOMEM;
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
 			odvp->attr.attr.mode = 0444;
 			odvp->attr.show = odvp_show;
-			odvp->attr.store = NULL;
+			odvp->attr.store = शून्य;
 			ret = sysfs_create_file(&priv->pdev->dev.kobj,
 						&odvp->attr.attr);
-			if (ret)
-				goto out_err;
-		}
-	}
+			अगर (ret)
+				जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < obj->package.count; i++) {
-		if (obj->package.elements[i].type == ACPI_TYPE_INTEGER)
-			priv->odvp[i] = obj->package.elements[i].integer.value;
-	}
+	क्रम (i = 0; i < obj->package.count; i++) अणु
+		अगर (obj->package.elements[i].type == ACPI_TYPE_INTEGER)
+			priv->odvp[i] = obj->package.elements[i].पूर्णांकeger.value;
+	पूर्ण
 
-	kfree(obj);
-	return 0;
+	kमुक्त(obj);
+	वापस 0;
 
 out_err:
 	cleanup_odvp(priv);
-	kfree(obj);
-	return ret;
-}
+	kमुक्त(obj);
+	वापस ret;
+पूर्ण
 
-static void int3400_notify(acpi_handle handle,
+अटल व्योम पूर्णांक3400_notअगरy(acpi_handle handle,
 			u32 event,
-			void *data)
-{
-	struct int3400_thermal_priv *priv = data;
-	char *thermal_prop[5];
-	int therm_event;
+			व्योम *data)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = data;
+	अक्षर *thermal_prop[5];
+	पूर्णांक therm_event;
 
-	if (!priv)
-		return;
+	अगर (!priv)
+		वापस;
 
-	switch (event) {
-	case INT3400_THERMAL_TABLE_CHANGED:
+	चयन (event) अणु
+	हाल INT3400_THERMAL_TABLE_CHANGED:
 		therm_event = THERMAL_TABLE_CHANGED;
-		break;
-	case INT3400_KEEP_ALIVE:
+		अवरोध;
+	हाल INT3400_KEEP_ALIVE:
 		therm_event = THERMAL_EVENT_KEEP_ALIVE;
-		break;
-	case INT3400_ODVP_CHANGED:
+		अवरोध;
+	हाल INT3400_ODVP_CHANGED:
 		evaluate_odvp(priv);
 		therm_event = THERMAL_DEVICE_POWER_CAPABILITY_CHANGED;
-		break;
-	default:
-		/* Ignore unknown notification codes sent to INT3400 device */
-		return;
-	}
+		अवरोध;
+	शेष:
+		/* Ignore unknown notअगरication codes sent to INT3400 device */
+		वापस;
+	पूर्ण
 
-	thermal_prop[0] = kasprintf(GFP_KERNEL, "NAME=%s", priv->thermal->type);
-	thermal_prop[1] = kasprintf(GFP_KERNEL, "TEMP=%d", priv->thermal->temperature);
-	thermal_prop[2] = kasprintf(GFP_KERNEL, "TRIP=");
-	thermal_prop[3] = kasprintf(GFP_KERNEL, "EVENT=%d", therm_event);
-	thermal_prop[4] = NULL;
+	thermal_prop[0] = kaप्र_लिखो(GFP_KERNEL, "NAME=%s", priv->thermal->type);
+	thermal_prop[1] = kaप्र_लिखो(GFP_KERNEL, "TEMP=%d", priv->thermal->temperature);
+	thermal_prop[2] = kaप्र_लिखो(GFP_KERNEL, "TRIP=");
+	thermal_prop[3] = kaप्र_लिखो(GFP_KERNEL, "EVENT=%d", therm_event);
+	thermal_prop[4] = शून्य;
 	kobject_uevent_env(&priv->thermal->device.kobj, KOBJ_CHANGE, thermal_prop);
-}
+पूर्ण
 
-static int int3400_thermal_get_temp(struct thermal_zone_device *thermal,
-			int *temp)
-{
+अटल पूर्णांक पूर्णांक3400_thermal_get_temp(काष्ठा thermal_zone_device *thermal,
+			पूर्णांक *temp)
+अणु
 	*temp = 20 * 1000; /* faked temp sensor with 20C */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int int3400_thermal_change_mode(struct thermal_zone_device *thermal,
-				       enum thermal_device_mode mode)
-{
-	struct int3400_thermal_priv *priv = thermal->devdata;
-	int result = 0;
+अटल पूर्णांक पूर्णांक3400_thermal_change_mode(काष्ठा thermal_zone_device *thermal,
+				       क्रमागत thermal_device_mode mode)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = thermal->devdata;
+	पूर्णांक result = 0;
 
-	if (!priv)
-		return -EINVAL;
+	अगर (!priv)
+		वापस -EINVAL;
 
-	if (mode != thermal->mode)
-		result = int3400_thermal_run_osc(priv->adev->handle,
+	अगर (mode != thermal->mode)
+		result = पूर्णांक3400_thermal_run_osc(priv->adev->handle,
 						priv->current_uuid_index,
 						mode == THERMAL_DEVICE_ENABLED);
 
 
 	evaluate_odvp(priv);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct thermal_zone_device_ops int3400_thermal_ops = {
-	.get_temp = int3400_thermal_get_temp,
-	.change_mode = int3400_thermal_change_mode,
-};
+अटल काष्ठा thermal_zone_device_ops पूर्णांक3400_thermal_ops = अणु
+	.get_temp = पूर्णांक3400_thermal_get_temp,
+	.change_mode = पूर्णांक3400_thermal_change_mode,
+पूर्ण;
 
-static struct thermal_zone_params int3400_thermal_params = {
+अटल काष्ठा thermal_zone_params पूर्णांक3400_thermal_params = अणु
 	.governor_name = "user_space",
 	.no_hwmon = true,
-};
+पूर्ण;
 
-static void int3400_setup_gddv(struct int3400_thermal_priv *priv)
-{
-	struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
+अटल व्योम पूर्णांक3400_setup_gddv(काष्ठा पूर्णांक3400_thermal_priv *priv)
+अणु
+	काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
 	acpi_status status;
 
-	status = acpi_evaluate_object(priv->adev->handle, "GDDV", NULL,
+	status = acpi_evaluate_object(priv->adev->handle, "GDDV", शून्य,
 				      &buffer);
-	if (ACPI_FAILURE(status) || !buffer.length)
-		return;
+	अगर (ACPI_FAILURE(status) || !buffer.length)
+		वापस;
 
-	obj = buffer.pointer;
-	if (obj->type != ACPI_TYPE_PACKAGE || obj->package.count != 1
-	    || obj->package.elements[0].type != ACPI_TYPE_BUFFER) {
-		kfree(buffer.pointer);
-		return;
-	}
+	obj = buffer.poपूर्णांकer;
+	अगर (obj->type != ACPI_TYPE_PACKAGE || obj->package.count != 1
+	    || obj->package.elements[0].type != ACPI_TYPE_BUFFER) अणु
+		kमुक्त(buffer.poपूर्णांकer);
+		वापस;
+	पूर्ण
 
-	priv->data_vault = kmemdup(obj->package.elements[0].buffer.pointer,
+	priv->data_vault = kmemdup(obj->package.elements[0].buffer.poपूर्णांकer,
 				   obj->package.elements[0].buffer.length,
 				   GFP_KERNEL);
-	bin_attr_data_vault.private = priv->data_vault;
+	bin_attr_data_vault.निजी = priv->data_vault;
 	bin_attr_data_vault.size = obj->package.elements[0].buffer.length;
-	kfree(buffer.pointer);
-}
+	kमुक्त(buffer.poपूर्णांकer);
+पूर्ण
 
-static int int3400_thermal_probe(struct platform_device *pdev)
-{
-	struct acpi_device *adev = ACPI_COMPANION(&pdev->dev);
-	struct int3400_thermal_priv *priv;
-	int result;
+अटल पूर्णांक पूर्णांक3400_thermal_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(&pdev->dev);
+	काष्ठा पूर्णांक3400_thermal_priv *priv;
+	पूर्णांक result;
 
-	if (!adev)
-		return -ENODEV;
+	अगर (!adev)
+		वापस -ENODEV;
 
-	priv = kzalloc(sizeof(struct int3400_thermal_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(काष्ठा पूर्णांक3400_thermal_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->pdev = pdev;
 	priv->adev = adev;
 
-	result = int3400_thermal_get_uuids(priv);
+	result = पूर्णांक3400_thermal_get_uuids(priv);
 
 	/* Missing IDSP isn't fatal */
-	if (result && result != -ENODEV)
-		goto free_priv;
+	अगर (result && result != -ENODEV)
+		जाओ मुक्त_priv;
 
 	priv->current_uuid_index = -1;
 
 	result = acpi_parse_art(priv->adev->handle, &priv->art_count,
 				&priv->arts, true);
-	if (result)
+	अगर (result)
 		dev_dbg(&pdev->dev, "_ART table parsing error\n");
 
 	result = acpi_parse_trt(priv->adev->handle, &priv->trt_count,
 				&priv->trts, true);
-	if (result)
+	अगर (result)
 		dev_dbg(&pdev->dev, "_TRT table parsing error\n");
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	int3400_setup_gddv(priv);
+	पूर्णांक3400_setup_gddv(priv);
 
 	evaluate_odvp(priv);
 
-	priv->thermal = thermal_zone_device_register("INT3400 Thermal", 0, 0,
-						priv, &int3400_thermal_ops,
-						&int3400_thermal_params, 0, 0);
-	if (IS_ERR(priv->thermal)) {
+	priv->thermal = thermal_zone_device_रेजिस्टर("INT3400 Thermal", 0, 0,
+						priv, &पूर्णांक3400_thermal_ops,
+						&पूर्णांक3400_thermal_params, 0, 0);
+	अगर (IS_ERR(priv->thermal)) अणु
 		result = PTR_ERR(priv->thermal);
-		goto free_art_trt;
-	}
+		जाओ मुक्त_art_trt;
+	पूर्ण
 
 	priv->rel_misc_dev_res = acpi_thermal_rel_misc_device_add(
 							priv->adev->handle);
 
 	result = sysfs_create_group(&pdev->dev.kobj, &uuid_attribute_group);
-	if (result)
-		goto free_rel_misc;
+	अगर (result)
+		जाओ मुक्त_rel_misc;
 
-	if (priv->data_vault) {
+	अगर (priv->data_vault) अणु
 		result = sysfs_create_group(&pdev->dev.kobj,
 					    &data_attribute_group);
-		if (result)
-			goto free_uuid;
-	}
+		अगर (result)
+			जाओ मुक्त_uuid;
+	पूर्ण
 
-	result = acpi_install_notify_handler(
-			priv->adev->handle, ACPI_DEVICE_NOTIFY, int3400_notify,
-			(void *)priv);
-	if (result)
-		goto free_sysfs;
+	result = acpi_install_notअगरy_handler(
+			priv->adev->handle, ACPI_DEVICE_NOTIFY, पूर्णांक3400_notअगरy,
+			(व्योम *)priv);
+	अगर (result)
+		जाओ मुक्त_sysfs;
 
-	return 0;
+	वापस 0;
 
-free_sysfs:
+मुक्त_sysfs:
 	cleanup_odvp(priv);
-	if (priv->data_vault) {
-		sysfs_remove_group(&pdev->dev.kobj, &data_attribute_group);
-		kfree(priv->data_vault);
-	}
-free_uuid:
-	sysfs_remove_group(&pdev->dev.kobj, &uuid_attribute_group);
-free_rel_misc:
-	if (!priv->rel_misc_dev_res)
-		acpi_thermal_rel_misc_device_remove(priv->adev->handle);
-	thermal_zone_device_unregister(priv->thermal);
-free_art_trt:
-	kfree(priv->trts);
-	kfree(priv->arts);
-free_priv:
-	kfree(priv);
-	return result;
-}
+	अगर (priv->data_vault) अणु
+		sysfs_हटाओ_group(&pdev->dev.kobj, &data_attribute_group);
+		kमुक्त(priv->data_vault);
+	पूर्ण
+मुक्त_uuid:
+	sysfs_हटाओ_group(&pdev->dev.kobj, &uuid_attribute_group);
+मुक्त_rel_misc:
+	अगर (!priv->rel_misc_dev_res)
+		acpi_thermal_rel_misc_device_हटाओ(priv->adev->handle);
+	thermal_zone_device_unरेजिस्टर(priv->thermal);
+मुक्त_art_trt:
+	kमुक्त(priv->trts);
+	kमुक्त(priv->arts);
+मुक्त_priv:
+	kमुक्त(priv);
+	वापस result;
+पूर्ण
 
-static int int3400_thermal_remove(struct platform_device *pdev)
-{
-	struct int3400_thermal_priv *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक पूर्णांक3400_thermal_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा पूर्णांक3400_thermal_priv *priv = platक्रमm_get_drvdata(pdev);
 
-	acpi_remove_notify_handler(
+	acpi_हटाओ_notअगरy_handler(
 			priv->adev->handle, ACPI_DEVICE_NOTIFY,
-			int3400_notify);
+			पूर्णांक3400_notअगरy);
 
 	cleanup_odvp(priv);
 
-	if (!priv->rel_misc_dev_res)
-		acpi_thermal_rel_misc_device_remove(priv->adev->handle);
+	अगर (!priv->rel_misc_dev_res)
+		acpi_thermal_rel_misc_device_हटाओ(priv->adev->handle);
 
-	if (priv->data_vault)
-		sysfs_remove_group(&pdev->dev.kobj, &data_attribute_group);
-	sysfs_remove_group(&pdev->dev.kobj, &uuid_attribute_group);
-	thermal_zone_device_unregister(priv->thermal);
-	kfree(priv->data_vault);
-	kfree(priv->trts);
-	kfree(priv->arts);
-	kfree(priv);
-	return 0;
-}
+	अगर (priv->data_vault)
+		sysfs_हटाओ_group(&pdev->dev.kobj, &data_attribute_group);
+	sysfs_हटाओ_group(&pdev->dev.kobj, &uuid_attribute_group);
+	thermal_zone_device_unरेजिस्टर(priv->thermal);
+	kमुक्त(priv->data_vault);
+	kमुक्त(priv->trts);
+	kमुक्त(priv->arts);
+	kमुक्त(priv);
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id int3400_thermal_match[] = {
-	{"INT3400", 0},
-	{"INTC1040", 0},
-	{"INTC1041", 0},
-	{}
-};
+अटल स्थिर काष्ठा acpi_device_id पूर्णांक3400_thermal_match[] = अणु
+	अणु"INT3400", 0पूर्ण,
+	अणु"INTC1040", 0पूर्ण,
+	अणु"INTC1041", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-MODULE_DEVICE_TABLE(acpi, int3400_thermal_match);
+MODULE_DEVICE_TABLE(acpi, पूर्णांक3400_thermal_match);
 
-static struct platform_driver int3400_thermal_driver = {
-	.probe = int3400_thermal_probe,
-	.remove = int3400_thermal_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver पूर्णांक3400_thermal_driver = अणु
+	.probe = पूर्णांक3400_thermal_probe,
+	.हटाओ = पूर्णांक3400_thermal_हटाओ,
+	.driver = अणु
 		   .name = "int3400 thermal",
-		   .acpi_match_table = ACPI_PTR(int3400_thermal_match),
-		   },
-};
+		   .acpi_match_table = ACPI_PTR(पूर्णांक3400_thermal_match),
+		   पूर्ण,
+पूर्ण;
 
-module_platform_driver(int3400_thermal_driver);
+module_platक्रमm_driver(पूर्णांक3400_thermal_driver);
 
 MODULE_DESCRIPTION("INT3400 Thermal driver");
 MODULE_AUTHOR("Zhang Rui <rui.zhang@intel.com>");

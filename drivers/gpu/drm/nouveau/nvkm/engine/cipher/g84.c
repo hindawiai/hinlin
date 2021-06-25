@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,114 +22,114 @@
  *
  * Authors: Ben Skeggs
  */
-#include <engine/cipher.h>
-#include <engine/fifo.h>
+#समावेश <engine/cipher.h>
+#समावेश <engine/fअगरo.h>
 
-#include <core/client.h>
-#include <core/enum.h>
-#include <core/gpuobj.h>
+#समावेश <core/client.h>
+#समावेश <core/क्रमागत.h>
+#समावेश <core/gpuobj.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static int
-g84_cipher_oclass_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
-		       int align, struct nvkm_gpuobj **pgpuobj)
-{
-	int ret = nvkm_gpuobj_new(object->engine->subdev.device, 16,
+अटल पूर्णांक
+g84_cipher_oclass_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
+		       पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	पूर्णांक ret = nvkm_gpuobj_new(object->engine->subdev.device, 16,
 				  align, false, parent, pgpuobj);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		nvkm_kmap(*pgpuobj);
 		nvkm_wo32(*pgpuobj, 0x00, object->oclass);
 		nvkm_wo32(*pgpuobj, 0x04, 0x00000000);
 		nvkm_wo32(*pgpuobj, 0x08, 0x00000000);
 		nvkm_wo32(*pgpuobj, 0x0c, 0x00000000);
-		nvkm_done(*pgpuobj);
-	}
-	return ret;
-}
+		nvkm_करोne(*pgpuobj);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_object_func
-g84_cipher_oclass_func = {
+अटल स्थिर काष्ठा nvkm_object_func
+g84_cipher_oclass_func = अणु
 	.bind = g84_cipher_oclass_bind,
-};
+पूर्ण;
 
-static int
-g84_cipher_cclass_bind(struct nvkm_object *object, struct nvkm_gpuobj *parent,
-		       int align, struct nvkm_gpuobj **pgpuobj)
-{
-	return nvkm_gpuobj_new(object->engine->subdev.device, 256,
+अटल पूर्णांक
+g84_cipher_cclass_bind(काष्ठा nvkm_object *object, काष्ठा nvkm_gpuobj *parent,
+		       पूर्णांक align, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	वापस nvkm_gpuobj_new(object->engine->subdev.device, 256,
 			       align, true, parent, pgpuobj);
 
-}
+पूर्ण
 
-static const struct nvkm_object_func
-g84_cipher_cclass = {
+अटल स्थिर काष्ठा nvkm_object_func
+g84_cipher_cclass = अणु
 	.bind = g84_cipher_cclass_bind,
-};
+पूर्ण;
 
-static const struct nvkm_bitfield
-g84_cipher_intr_mask[] = {
-	{ 0x00000001, "INVALID_STATE" },
-	{ 0x00000002, "ILLEGAL_MTHD" },
-	{ 0x00000004, "ILLEGAL_CLASS" },
-	{ 0x00000080, "QUERY" },
-	{ 0x00000100, "FAULT" },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_bitfield
+g84_cipher_पूर्णांकr_mask[] = अणु
+	अणु 0x00000001, "INVALID_STATE" पूर्ण,
+	अणु 0x00000002, "ILLEGAL_MTHD" पूर्ण,
+	अणु 0x00000004, "ILLEGAL_CLASS" पूर्ण,
+	अणु 0x00000080, "QUERY" पूर्ण,
+	अणु 0x00000100, "FAULT" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void
-g84_cipher_intr(struct nvkm_engine *cipher)
-{
-	struct nvkm_subdev *subdev = &cipher->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_fifo *fifo = device->fifo;
-	struct nvkm_fifo_chan *chan;
+अटल व्योम
+g84_cipher_पूर्णांकr(काष्ठा nvkm_engine *cipher)
+अणु
+	काष्ठा nvkm_subdev *subdev = &cipher->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_fअगरo *fअगरo = device->fअगरo;
+	काष्ठा nvkm_fअगरo_chan *chan;
 	u32 stat = nvkm_rd32(device, 0x102130);
 	u32 mthd = nvkm_rd32(device, 0x102190);
 	u32 data = nvkm_rd32(device, 0x102194);
 	u32 inst = nvkm_rd32(device, 0x102188) & 0x7fffffff;
-	unsigned long flags;
-	char msg[128];
+	अचिन्हित दीर्घ flags;
+	अक्षर msg[128];
 
-	chan = nvkm_fifo_chan_inst(fifo, (u64)inst << 12, &flags);
-	if (stat) {
-		nvkm_snprintbf(msg, sizeof(msg), g84_cipher_intr_mask, stat);
+	chan = nvkm_fअगरo_chan_inst(fअगरo, (u64)inst << 12, &flags);
+	अगर (stat) अणु
+		nvkm_snprपूर्णांकbf(msg, माप(msg), g84_cipher_पूर्णांकr_mask, stat);
 		nvkm_error(subdev,  "%08x [%s] ch %d [%010llx %s] "
 				    "mthd %04x data %08x\n", stat, msg,
 			   chan ? chan->chid : -1, (u64)inst << 12,
 			   chan ? chan->object.client->name : "unknown",
 			   mthd, data);
-	}
-	nvkm_fifo_chan_put(fifo, flags, &chan);
+	पूर्ण
+	nvkm_fअगरo_chan_put(fअगरo, flags, &chan);
 
 	nvkm_wr32(device, 0x102130, stat);
 	nvkm_wr32(device, 0x10200c, 0x10);
-}
+पूर्ण
 
-static int
-g84_cipher_init(struct nvkm_engine *cipher)
-{
-	struct nvkm_device *device = cipher->subdev.device;
+अटल पूर्णांक
+g84_cipher_init(काष्ठा nvkm_engine *cipher)
+अणु
+	काष्ठा nvkm_device *device = cipher->subdev.device;
 	nvkm_wr32(device, 0x102130, 0xffffffff);
 	nvkm_wr32(device, 0x102140, 0xffffffbf);
 	nvkm_wr32(device, 0x10200c, 0x00000010);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nvkm_engine_func
-g84_cipher = {
+अटल स्थिर काष्ठा nvkm_engine_func
+g84_cipher = अणु
 	.init = g84_cipher_init,
-	.intr = g84_cipher_intr,
+	.पूर्णांकr = g84_cipher_पूर्णांकr,
 	.cclass = &g84_cipher_cclass,
-	.sclass = {
-		{ -1, -1, NV74_CIPHER, &g84_cipher_oclass_func },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, NV74_CIPHER, &g84_cipher_oclass_func पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-g84_cipher_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	       struct nvkm_engine **pengine)
-{
-	return nvkm_engine_new_(&g84_cipher, device, type, inst, true, pengine);
-}
+पूर्णांक
+g84_cipher_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	       काष्ठा nvkm_engine **pengine)
+अणु
+	वापस nvkm_engine_new_(&g84_cipher, device, type, inst, true, pengine);
+पूर्ण

@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVFW_FW_H__
-#define __NVFW_FW_H__
-#include <core/os.h>
-struct nvkm_subdev;
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVFW_FW_H__
+#घोषणा __NVFW_FW_H__
+#समावेश <core/os.h>
+काष्ठा nvkm_subdev;
 
-struct nvfw_bin_hdr {
+काष्ठा nvfw_bin_hdr अणु
 	u32 bin_magic;
 	u32 bin_ver;
 	u32 bin_size;
 	u32 header_offset;
 	u32 data_offset;
 	u32 data_size;
-};
+पूर्ण;
 
-const struct nvfw_bin_hdr *nvfw_bin_hdr(struct nvkm_subdev *, const void *);
+स्थिर काष्ठा nvfw_bin_hdr *nvfw_bin_hdr(काष्ठा nvkm_subdev *, स्थिर व्योम *);
 
-struct nvfw_bl_desc {
+काष्ठा nvfw_bl_desc अणु
 	u32 start_tag;
 	u32 dmem_load_off;
 	u32 code_off;
 	u32 code_size;
 	u32 data_off;
 	u32 data_size;
-};
+पूर्ण;
 
-const struct nvfw_bl_desc *nvfw_bl_desc(struct nvkm_subdev *, const void *);
-#endif
+स्थिर काष्ठा nvfw_bl_desc *nvfw_bl_desc(काष्ठा nvkm_subdev *, स्थिर व्योम *);
+#पूर्ण_अगर

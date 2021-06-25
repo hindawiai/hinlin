@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-int _version SEC("version") = 1;
+पूर्णांक _version SEC("version") = 1;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u64);
-	__uint(pinning, LIBBPF_PIN_BY_NAME);
-} pinmap SEC(".maps");
+	__uपूर्णांक(pinning, LIBBPF_PIN_BY_NAME);
+पूर्ण pinmap SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u64);
-} nopinmap SEC(".maps");
+पूर्ण nopinmap SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u64);
-	__uint(pinning, LIBBPF_PIN_NONE);
-} nopinmap2 SEC(".maps");
+	__uपूर्णांक(pinning, LIBBPF_PIN_NONE);
+पूर्ण nopinmap2 SEC(".maps");
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

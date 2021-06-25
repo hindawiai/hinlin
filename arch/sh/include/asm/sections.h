@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_SECTIONS_H
-#define __ASM_SH_SECTIONS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_SECTIONS_H
+#घोषणा __ASM_SH_SECTIONS_H
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-extern long __machvec_start, __machvec_end;
-extern char __uncached_start, __uncached_end;
-extern char __start_eh_frame[], __stop_eh_frame[];
+बाह्य दीर्घ __machvec_start, __machvec_end;
+बाह्य अक्षर __uncached_start, __uncached_end;
+बाह्य अक्षर __start_eh_frame[], __stop_eh_frame[];
 
-#endif /* __ASM_SH_SECTIONS_H */
+#पूर्ण_अगर /* __ASM_SH_SECTIONS_H */
 

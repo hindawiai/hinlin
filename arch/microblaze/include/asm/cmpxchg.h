@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MICROBLAZE_CMPXCHG_H
-#define _ASM_MICROBLAZE_CMPXCHG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MICROBLAZE_CMPXCHG_H
+#घोषणा _ASM_MICROBLAZE_CMPXCHG_H
 
-#ifndef CONFIG_SMP
-# include <asm-generic/cmpxchg.h>
-#endif
+#अगर_अघोषित CONFIG_SMP
+# include <यंत्र-generic/cmpxchg.h>
+#पूर्ण_अगर
 
-#endif /* _ASM_MICROBLAZE_CMPXCHG_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_CMPXCHG_H */

@@ -1,43 +1,44 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#define KBUILD_MODNAME "foo"
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/in.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <uapi/linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include "bpf_legacy.h"
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/in.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश "bpf_legacy.h"
 
-#define DEFAULT_PKTGEN_UDP_PORT	9
-#define IP_MF			0x2000
-#define IP_OFFSET		0x1FFF
+#घोषणा DEFAULT_PKTGEN_UDP_PORT	9
+#घोषणा IP_MF			0x2000
+#घोषणा IP_OFFSET		0x1FFF
 
-static inline int ip_is_fragment(struct __sk_buff *ctx, __u64 nhoff)
-{
-	return load_half(ctx, nhoff + offsetof(struct iphdr, frag_off))
+अटल अंतरभूत पूर्णांक ip_is_fragment(काष्ठा __sk_buff *ctx, __u64 nhoff)
+अणु
+	वापस load_half(ctx, nhoff + दुरत्व(काष्ठा iphdr, frag_off))
 		& (IP_MF | IP_OFFSET);
-}
+पूर्ण
 
 SEC("ldabs")
-int handle_ingress(struct __sk_buff *skb)
-{
-	__u64 troff = ETH_HLEN + sizeof(struct iphdr);
+पूर्णांक handle_ingress(काष्ठा __sk_buff *skb)
+अणु
+	__u64 troff = ETH_HLEN + माप(काष्ठा iphdr);
 
-	if (load_half(skb, offsetof(struct ethhdr, h_proto)) != ETH_P_IP)
-		return 0;
-	if (load_byte(skb, ETH_HLEN + offsetof(struct iphdr, protocol)) != IPPROTO_UDP ||
+	अगर (load_half(skb, दुरत्व(काष्ठा ethhdr, h_proto)) != ETH_P_IP)
+		वापस 0;
+	अगर (load_byte(skb, ETH_HLEN + दुरत्व(काष्ठा iphdr, protocol)) != IPPROTO_UDP ||
 	    load_byte(skb, ETH_HLEN) != 0x45)
-		return 0;
-	if (ip_is_fragment(skb, ETH_HLEN))
-		return 0;
-	if (load_half(skb, troff + offsetof(struct udphdr, dest)) == DEFAULT_PKTGEN_UDP_PORT)
-		return TC_ACT_SHOT;
-	return 0;
-}
-char _license[] SEC("license") = "GPL";
+		वापस 0;
+	अगर (ip_is_fragment(skb, ETH_HLEN))
+		वापस 0;
+	अगर (load_half(skb, troff + दुरत्व(काष्ठा udphdr, dest)) == DEFAULT_PKTGEN_UDP_PORT)
+		वापस TC_ACT_SHOT;
+	वापस 0;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

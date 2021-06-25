@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc.
  *
  *  Based on Len Brown's <lenb@kernel.org> turbostat tool.
  */
 
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include "helpers/helpers.h"
-#include "idle_monitor/cpupower-monitor.h"
+#समावेश "helpers/helpers.h"
+#समावेश "idle_monitor/cpupower-monitor.h"
 
-#define MSR_PKG_C3_RESIDENCY	0x3F8
-#define MSR_PKG_C6_RESIDENCY	0x3F9
-#define MSR_CORE_C3_RESIDENCY	0x3FC
-#define MSR_CORE_C6_RESIDENCY	0x3FD
+#घोषणा MSR_PKG_C3_RESIDENCY	0x3F8
+#घोषणा MSR_PKG_C6_RESIDENCY	0x3F9
+#घोषणा MSR_CORE_C3_RESIDENCY	0x3FC
+#घोषणा MSR_CORE_C6_RESIDENCY	0x3FD
 
-#define MSR_TSC	0x10
+#घोषणा MSR_TSC	0x10
 
-#define NHM_CSTATE_COUNT 4
+#घोषणा NHM_CSTATE_COUNT 4
 
-enum intel_nhm_id { C3 = 0, C6, PC3, PC6, TSC = 0xFFFF };
+क्रमागत पूर्णांकel_nhm_id अणु C3 = 0, C6, PC3, PC6, TSC = 0xFFFF पूर्ण;
 
-static int nhm_get_count_percent(unsigned int self_id, double *percent,
-				 unsigned int cpu);
+अटल पूर्णांक nhm_get_count_percent(अचिन्हित पूर्णांक self_id, द्विगुन *percent,
+				 अचिन्हित पूर्णांक cpu);
 
-static cstate_t nhm_cstates[NHM_CSTATE_COUNT] = {
-	{
+अटल cstate_t nhm_cstates[NHM_CSTATE_COUNT] = अणु
+	अणु
 		.name			= "C3",
 		.desc			= N_("Processor Core C3"),
 		.id			= C3,
 		.range			= RANGE_CORE,
 		.get_count_percent	= nhm_get_count_percent,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "C6",
 		.desc			= N_("Processor Core C6"),
 		.id			= C6,
 		.range			= RANGE_CORE,
 		.get_count_percent	= nhm_get_count_percent,
-	},
+	पूर्ण,
 
-	{
+	अणु
 		.name			= "PC3",
 		.desc			= N_("Processor Package C3"),
 		.id			= PC3,
 		.range			= RANGE_PACKAGE,
 		.get_count_percent	= nhm_get_count_percent,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "PC6",
 		.desc			= N_("Processor Package C6"),
 		.id			= PC6,
 		.range			= RANGE_PACKAGE,
 		.get_count_percent	= nhm_get_count_percent,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static unsigned long long tsc_at_measure_start;
-static unsigned long long tsc_at_measure_end;
-static unsigned long long *previous_count[NHM_CSTATE_COUNT];
-static unsigned long long *current_count[NHM_CSTATE_COUNT];
-/* valid flag for all CPUs. If a MSR read failed it will be zero */
-static int *is_valid;
+अटल अचिन्हित दीर्घ दीर्घ tsc_at_measure_start;
+अटल अचिन्हित दीर्घ दीर्घ tsc_at_measure_end;
+अटल अचिन्हित दीर्घ दीर्घ *previous_count[NHM_CSTATE_COUNT];
+अटल अचिन्हित दीर्घ दीर्घ *current_count[NHM_CSTATE_COUNT];
+/* valid flag क्रम all CPUs. If a MSR पढ़ो failed it will be zero */
+अटल पूर्णांक *is_valid;
 
-static int nhm_get_count(enum intel_nhm_id id, unsigned long long *val,
-			unsigned int cpu)
-{
-	int msr;
+अटल पूर्णांक nhm_get_count(क्रमागत पूर्णांकel_nhm_id id, अचिन्हित दीर्घ दीर्घ *val,
+			अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक msr;
 
-	switch (id) {
-	case C3:
+	चयन (id) अणु
+	हाल C3:
 		msr = MSR_CORE_C3_RESIDENCY;
-		break;
-	case C6:
+		अवरोध;
+	हाल C6:
 		msr = MSR_CORE_C6_RESIDENCY;
-		break;
-	case PC3:
+		अवरोध;
+	हाल PC3:
 		msr = MSR_PKG_C3_RESIDENCY;
-		break;
-	case PC6:
+		अवरोध;
+	हाल PC6:
 		msr = MSR_PKG_C6_RESIDENCY;
-		break;
-	case TSC:
+		अवरोध;
+	हाल TSC:
 		msr = MSR_TSC;
-		break;
-	default:
-		return -1;
-	}
-	if (read_msr(cpu, msr, val))
-		return -1;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+	अगर (पढ़ो_msr(cpu, msr, val))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nhm_get_count_percent(unsigned int id, double *percent,
-				 unsigned int cpu)
-{
+अटल पूर्णांक nhm_get_count_percent(अचिन्हित पूर्णांक id, द्विगुन *percent,
+				 अचिन्हित पूर्णांक cpu)
+अणु
 	*percent = 0.0;
 
-	if (!is_valid[cpu])
-		return -1;
+	अगर (!is_valid[cpu])
+		वापस -1;
 
 	*percent = (100.0 *
 		(current_count[id][cpu] - previous_count[id][cpu])) /
 		(tsc_at_measure_end - tsc_at_measure_start);
 
-	dprint("%s: previous: %llu - current: %llu - (%u)\n",
+	dprपूर्णांक("%s: previous: %llu - current: %llu - (%u)\n",
 		nhm_cstates[id].name, previous_count[id][cpu],
 		current_count[id][cpu], cpu);
 
-	dprint("%s: tsc_diff: %llu - count_diff: %llu - percent: %2.f (%u)\n",
+	dprपूर्णांक("%s: tsc_diff: %llu - count_diff: %llu - percent: %2.f (%u)\n",
 	       nhm_cstates[id].name,
-	       (unsigned long long) tsc_at_measure_end - tsc_at_measure_start,
+	       (अचिन्हित दीर्घ दीर्घ) tsc_at_measure_end - tsc_at_measure_start,
 	       current_count[id][cpu] - previous_count[id][cpu],
 	       *percent, cpu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nhm_start(void)
-{
-	int num, cpu;
-	unsigned long long dbg, val;
+अटल पूर्णांक nhm_start(व्योम)
+अणु
+	पूर्णांक num, cpu;
+	अचिन्हित दीर्घ दीर्घ dbg, val;
 
 	nhm_get_count(TSC, &tsc_at_measure_start, base_cpu);
 
-	for (num = 0; num < NHM_CSTATE_COUNT; num++) {
-		for (cpu = 0; cpu < cpu_count; cpu++) {
+	क्रम (num = 0; num < NHM_CSTATE_COUNT; num++) अणु
+		क्रम (cpu = 0; cpu < cpu_count; cpu++) अणु
 			is_valid[cpu] = !nhm_get_count(num, &val, cpu);
 			previous_count[num][cpu] = val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	nhm_get_count(TSC, &dbg, base_cpu);
-	dprint("TSC diff: %llu\n", dbg - tsc_at_measure_start);
-	return 0;
-}
+	dprपूर्णांक("TSC diff: %llu\n", dbg - tsc_at_measure_start);
+	वापस 0;
+पूर्ण
 
-static int nhm_stop(void)
-{
-	unsigned long long val;
-	unsigned long long dbg;
-	int num, cpu;
+अटल पूर्णांक nhm_stop(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ val;
+	अचिन्हित दीर्घ दीर्घ dbg;
+	पूर्णांक num, cpu;
 
 	nhm_get_count(TSC, &tsc_at_measure_end, base_cpu);
 
-	for (num = 0; num < NHM_CSTATE_COUNT; num++) {
-		for (cpu = 0; cpu < cpu_count; cpu++) {
+	क्रम (num = 0; num < NHM_CSTATE_COUNT; num++) अणु
+		क्रम (cpu = 0; cpu < cpu_count; cpu++) अणु
 			is_valid[cpu] = !nhm_get_count(num, &val, cpu);
 			current_count[num][cpu] = val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	nhm_get_count(TSC, &dbg, base_cpu);
-	dprint("TSC diff: %llu\n", dbg - tsc_at_measure_end);
+	dprपूर्णांक("TSC diff: %llu\n", dbg - tsc_at_measure_end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct cpuidle_monitor intel_nhm_monitor;
+काष्ठा cpuidle_monitor पूर्णांकel_nhm_monitor;
 
-struct cpuidle_monitor *intel_nhm_register(void)
-{
-	int num;
+काष्ठा cpuidle_monitor *पूर्णांकel_nhm_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक num;
 
-	if (cpupower_cpu_info.vendor != X86_VENDOR_INTEL)
-		return NULL;
+	अगर (cpuघातer_cpu_info.venकरोr != X86_VENDOR_INTEL)
+		वापस शून्य;
 
-	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_INV_TSC))
-		return NULL;
+	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_INV_TSC))
+		वापस शून्य;
 
-	if (!(cpupower_cpu_info.caps & CPUPOWER_CAP_APERF))
-		return NULL;
+	अगर (!(cpuघातer_cpu_info.caps & CPUPOWER_CAP_APERF))
+		वापस शून्य;
 
 	/* Free this at program termination */
-	is_valid = calloc(cpu_count, sizeof(int));
-	for (num = 0; num < NHM_CSTATE_COUNT; num++) {
-		previous_count[num] = calloc(cpu_count,
-					sizeof(unsigned long long));
-		current_count[num]  = calloc(cpu_count,
-					sizeof(unsigned long long));
-	}
+	is_valid = सुस्मृति(cpu_count, माप(पूर्णांक));
+	क्रम (num = 0; num < NHM_CSTATE_COUNT; num++) अणु
+		previous_count[num] = सुस्मृति(cpu_count,
+					माप(अचिन्हित दीर्घ दीर्घ));
+		current_count[num]  = सुस्मृति(cpu_count,
+					माप(अचिन्हित दीर्घ दीर्घ));
+	पूर्ण
 
-	intel_nhm_monitor.name_len = strlen(intel_nhm_monitor.name);
-	return &intel_nhm_monitor;
-}
+	पूर्णांकel_nhm_monitor.name_len = म_माप(पूर्णांकel_nhm_monitor.name);
+	वापस &पूर्णांकel_nhm_monitor;
+पूर्ण
 
-void intel_nhm_unregister(void)
-{
-	int num;
+व्योम पूर्णांकel_nhm_unरेजिस्टर(व्योम)
+अणु
+	पूर्णांक num;
 
-	for (num = 0; num < NHM_CSTATE_COUNT; num++) {
-		free(previous_count[num]);
-		free(current_count[num]);
-	}
-	free(is_valid);
-}
+	क्रम (num = 0; num < NHM_CSTATE_COUNT; num++) अणु
+		मुक्त(previous_count[num]);
+		मुक्त(current_count[num]);
+	पूर्ण
+	मुक्त(is_valid);
+पूर्ण
 
-struct cpuidle_monitor intel_nhm_monitor = {
+काष्ठा cpuidle_monitor पूर्णांकel_nhm_monitor = अणु
 	.name			= "Nehalem",
 	.hw_states_num		= NHM_CSTATE_COUNT,
 	.hw_states		= nhm_cstates,
 	.start			= nhm_start,
 	.stop			= nhm_stop,
-	.do_register		= intel_nhm_register,
-	.unregister		= intel_nhm_unregister,
+	.करो_रेजिस्टर		= पूर्णांकel_nhm_रेजिस्टर,
+	.unरेजिस्टर		= पूर्णांकel_nhm_unरेजिस्टर,
 	.flags.needs_root	= 1,
 	.overflow_s		= 922000000 /* 922337203 seconds TSC overflow
 					       at 20GHz */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर

@@ -1,63 +1,64 @@
+<शैली गुरु>
 /*
- * Interrupt handling for GE FPGA based PIC
+ * Interrupt handling क्रम GE FPGA based PIC
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
  *
- * 2008 (c) GE Intelligent Platforms Embedded Systems, Inc.
+ * 2008 (c) GE Intelligent Platक्रमms Embedded Systems, Inc.
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
  * kind, whether express or implied.
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/byteorder.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/irq.h>
 
-#include "ge_pic.h"
+#समावेश "ge_pic.h"
 
-#define DEBUG
-#undef DEBUG
+#घोषणा DEBUG
+#अघोषित DEBUG
 
-#ifdef DEBUG
-#define DBG(fmt...) do { printk(KERN_DEBUG "gef_pic: " fmt); } while (0)
-#else
-#define DBG(fmt...) do { } while (0)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(fmt...) करो अणु prपूर्णांकk(KERN_DEBUG "gef_pic: " fmt); पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा DBG(fmt...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define GEF_PIC_NUM_IRQS	32
+#घोषणा GEF_PIC_NUM_IRQS	32
 
 /* Interrupt Controller Interface Registers */
-#define GEF_PIC_INTR_STATUS	0x0000
+#घोषणा GEF_PIC_INTR_STATUS	0x0000
 
-#define GEF_PIC_INTR_MASK(cpu)	(0x0010 + (0x4 * cpu))
-#define GEF_PIC_CPU0_INTR_MASK	GEF_PIC_INTR_MASK(0)
-#define GEF_PIC_CPU1_INTR_MASK	GEF_PIC_INTR_MASK(1)
+#घोषणा GEF_PIC_INTR_MASK(cpu)	(0x0010 + (0x4 * cpu))
+#घोषणा GEF_PIC_CPU0_INTR_MASK	GEF_PIC_INTR_MASK(0)
+#घोषणा GEF_PIC_CPU1_INTR_MASK	GEF_PIC_INTR_MASK(1)
 
-#define GEF_PIC_MCP_MASK(cpu)	(0x0018 + (0x4 * cpu))
-#define GEF_PIC_CPU0_MCP_MASK	GEF_PIC_MCP_MASK(0)
-#define GEF_PIC_CPU1_MCP_MASK	GEF_PIC_MCP_MASK(1)
+#घोषणा GEF_PIC_MCP_MASK(cpu)	(0x0018 + (0x4 * cpu))
+#घोषणा GEF_PIC_CPU0_MCP_MASK	GEF_PIC_MCP_MASK(0)
+#घोषणा GEF_PIC_CPU1_MCP_MASK	GEF_PIC_MCP_MASK(1)
 
 
-static DEFINE_RAW_SPINLOCK(gef_pic_lock);
+अटल DEFINE_RAW_SPINLOCK(gef_pic_lock);
 
-static void __iomem *gef_pic_irq_reg_base;
-static struct irq_domain *gef_pic_irq_host;
-static int gef_pic_cascade_irq;
+अटल व्योम __iomem *gef_pic_irq_reg_base;
+अटल काष्ठा irq_करोमुख्य *gef_pic_irq_host;
+अटल पूर्णांक gef_pic_cascade_irq;
 
 /*
  * Interrupt Controller Handling
  *
- * The interrupt controller handles interrupts for most on board interrupts,
- * apart from PCI interrupts. For example on SBC610:
+ * The पूर्णांकerrupt controller handles पूर्णांकerrupts क्रम most on board पूर्णांकerrupts,
+ * apart from PCI पूर्णांकerrupts. For example on SBC610:
  *
  * 17:31 RO Reserved
  * 16    RO PCI Express Doorbell 3 Status
@@ -71,47 +72,47 @@ static int gef_pic_cascade_irq;
  * 8     RO Ethernet PHY3 Interrupt Status
  * 7     RO PEX8548 Interrupt Status
  * 6     RO Reserved
- * 5     RO Watchdog 0 Interrupt Status
- * 4     RO Watchdog 1 Interrupt Status
+ * 5     RO Watchकरोg 0 Interrupt Status
+ * 4     RO Watchकरोg 1 Interrupt Status
  * 3     RO AXIS Message FIFO A Interrupt Status
  * 2     RO AXIS Message FIFO B Interrupt Status
  * 1     RO AXIS Message FIFO C Interrupt Status
  * 0     RO AXIS Message FIFO D Interrupt Status
  *
- * Interrupts can be forwarded to one of two output lines. Nothing
- * clever is done, so if the masks are incorrectly set, a single input
- * interrupt could generate interrupts on both output lines!
+ * Interrupts can be क्रमwarded to one of two output lines. Nothing
+ * clever is करोne, so अगर the masks are incorrectly set, a single input
+ * पूर्णांकerrupt could generate पूर्णांकerrupts on both output lines!
  *
- * The dual lines are there to allow the chained interrupts to be easily
- * passed into two different cores. We currently do not use this functionality
+ * The dual lines are there to allow the chained पूर्णांकerrupts to be easily
+ * passed पूर्णांकo two dअगरferent cores. We currently करो not use this functionality
  * in this driver.
  *
  * Controller can also be configured to generate Machine checks (MCP), again on
- * two lines, to be attached to two different cores. It is suggested that these
+ * two lines, to be attached to two dअगरferent cores. It is suggested that these
  * should be masked out.
  */
 
-static void gef_pic_cascade(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	unsigned int cascade_irq;
+अटल व्योम gef_pic_cascade(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	अचिन्हित पूर्णांक cascade_irq;
 
 	/*
-	 * See if we actually have an interrupt, call generic handling code if
-	 * we do.
+	 * See अगर we actually have an पूर्णांकerrupt, call generic handling code अगर
+	 * we करो.
 	 */
 	cascade_irq = gef_pic_get_irq();
 
-	if (cascade_irq)
+	अगर (cascade_irq)
 		generic_handle_irq(cascade_irq);
 
 	chip->irq_eoi(&desc->irq_data);
-}
+पूर्ण
 
-static void gef_pic_mask(struct irq_data *d)
-{
-	unsigned long flags;
-	unsigned int hwirq = irqd_to_hwirq(d);
+अटल व्योम gef_pic_mask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक hwirq = irqd_to_hwirq(d);
 	u32 mask;
 
 	raw_spin_lock_irqsave(&gef_pic_lock, flags);
@@ -119,20 +120,20 @@ static void gef_pic_mask(struct irq_data *d)
 	mask &= ~(1 << hwirq);
 	out_be32(gef_pic_irq_reg_base + GEF_PIC_INTR_MASK(0), mask);
 	raw_spin_unlock_irqrestore(&gef_pic_lock, flags);
-}
+पूर्ण
 
-static void gef_pic_mask_ack(struct irq_data *d)
-{
-	/* Don't think we actually have to do anything to ack an interrupt,
-	 * we just need to clear down the devices interrupt and it will go away
+अटल व्योम gef_pic_mask_ack(काष्ठा irq_data *d)
+अणु
+	/* Don't think we actually have to करो anything to ack an पूर्णांकerrupt,
+	 * we just need to clear करोwn the devices पूर्णांकerrupt and it will go away
 	 */
 	gef_pic_mask(d);
-}
+पूर्ण
 
-static void gef_pic_unmask(struct irq_data *d)
-{
-	unsigned long flags;
-	unsigned int hwirq = irqd_to_hwirq(d);
+अटल व्योम gef_pic_unmask(काष्ठा irq_data *d)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक hwirq = irqd_to_hwirq(d);
 	u32 mask;
 
 	raw_spin_lock_irqsave(&gef_pic_lock, flags);
@@ -140,57 +141,57 @@ static void gef_pic_unmask(struct irq_data *d)
 	mask |= (1 << hwirq);
 	out_be32(gef_pic_irq_reg_base + GEF_PIC_INTR_MASK(0), mask);
 	raw_spin_unlock_irqrestore(&gef_pic_lock, flags);
-}
+पूर्ण
 
-static struct irq_chip gef_pic_chip = {
+अटल काष्ठा irq_chip gef_pic_chip = अणु
 	.name		= "gefp",
 	.irq_mask	= gef_pic_mask,
 	.irq_mask_ack	= gef_pic_mask_ack,
 	.irq_unmask	= gef_pic_unmask,
-};
+पूर्ण;
 
 
-/* When an interrupt is being configured, this call allows some flexibilty
- * in deciding which irq_chip structure is used
+/* When an पूर्णांकerrupt is being configured, this call allows some flexibilty
+ * in deciding which irq_chip काष्ठाure is used
  */
-static int gef_pic_host_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक gef_pic_host_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 			  irq_hw_number_t hwirq)
-{
-	/* All interrupts are LEVEL sensitive */
+अणु
+	/* All पूर्णांकerrupts are LEVEL sensitive */
 	irq_set_status_flags(virq, IRQ_LEVEL);
 	irq_set_chip_and_handler(virq, &gef_pic_chip, handle_level_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gef_pic_host_xlate(struct irq_domain *h, struct device_node *ct,
-			    const u32 *intspec, unsigned int intsize,
-			    irq_hw_number_t *out_hwirq, unsigned int *out_flags)
-{
+अटल पूर्णांक gef_pic_host_xlate(काष्ठा irq_करोमुख्य *h, काष्ठा device_node *ct,
+			    स्थिर u32 *पूर्णांकspec, अचिन्हित पूर्णांक पूर्णांकsize,
+			    irq_hw_number_t *out_hwirq, अचिन्हित पूर्णांक *out_flags)
+अणु
 
-	*out_hwirq = intspec[0];
-	if (intsize > 1)
-		*out_flags = intspec[1];
-	else
+	*out_hwirq = पूर्णांकspec[0];
+	अगर (पूर्णांकsize > 1)
+		*out_flags = पूर्णांकspec[1];
+	अन्यथा
 		*out_flags = IRQ_TYPE_LEVEL_HIGH;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops gef_pic_host_ops = {
+अटल स्थिर काष्ठा irq_करोमुख्य_ops gef_pic_host_ops = अणु
 	.map	= gef_pic_host_map,
 	.xlate	= gef_pic_host_xlate,
-};
+पूर्ण;
 
 
 /*
  * Initialisation of PIC, this should be called in BSP
  */
-void __init gef_pic_init(struct device_node *np)
-{
-	unsigned long flags;
+व्योम __init gef_pic_init(काष्ठा device_node *np)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* Map the devices registers into memory */
+	/* Map the devices रेजिस्टरs पूर्णांकo memory */
 	gef_pic_irq_reg_base = of_iomap(np, 0);
 
 	raw_spin_lock_irqsave(&gef_pic_lock, flags);
@@ -206,30 +207,30 @@ void __init gef_pic_init(struct device_node *np)
 
 	/* Map controller */
 	gef_pic_cascade_irq = irq_of_parse_and_map(np, 0);
-	if (!gef_pic_cascade_irq) {
-		printk(KERN_ERR "SBC610: failed to map cascade interrupt");
-		return;
-	}
+	अगर (!gef_pic_cascade_irq) अणु
+		prपूर्णांकk(KERN_ERR "SBC610: failed to map cascade interrupt");
+		वापस;
+	पूर्ण
 
-	/* Setup an irq_domain structure */
-	gef_pic_irq_host = irq_domain_add_linear(np, GEF_PIC_NUM_IRQS,
-					  &gef_pic_host_ops, NULL);
-	if (gef_pic_irq_host == NULL)
-		return;
+	/* Setup an irq_करोमुख्य काष्ठाure */
+	gef_pic_irq_host = irq_करोमुख्य_add_linear(np, GEF_PIC_NUM_IRQS,
+					  &gef_pic_host_ops, शून्य);
+	अगर (gef_pic_irq_host == शून्य)
+		वापस;
 
 	/* Chain with parent controller */
 	irq_set_chained_handler(gef_pic_cascade_irq, gef_pic_cascade);
-}
+पूर्ण
 
 /*
- * This is called when we receive an interrupt with apparently comes from this
- * chip - check, returning the highest interrupt generated or return 0.
+ * This is called when we receive an पूर्णांकerrupt with apparently comes from this
+ * chip - check, वापसing the highest पूर्णांकerrupt generated or वापस 0.
  */
-unsigned int gef_pic_get_irq(void)
-{
+अचिन्हित पूर्णांक gef_pic_get_irq(व्योम)
+अणु
 	u32 cause, mask, active;
-	unsigned int virq = 0;
-	int hwirq;
+	अचिन्हित पूर्णांक virq = 0;
+	पूर्णांक hwirq;
 
 	cause = in_be32(gef_pic_irq_reg_base + GEF_PIC_INTR_STATUS);
 
@@ -237,15 +238,15 @@ unsigned int gef_pic_get_irq(void)
 
 	active = cause & mask;
 
-	if (active) {
-		for (hwirq = GEF_PIC_NUM_IRQS - 1; hwirq > -1; hwirq--) {
-			if (active & (0x1 << hwirq))
-				break;
-		}
+	अगर (active) अणु
+		क्रम (hwirq = GEF_PIC_NUM_IRQS - 1; hwirq > -1; hwirq--) अणु
+			अगर (active & (0x1 << hwirq))
+				अवरोध;
+		पूर्ण
 		virq = irq_linear_revmap(gef_pic_irq_host,
 			(irq_hw_number_t)hwirq);
-	}
+	पूर्ण
 
-	return virq;
-}
+	वापस virq;
+पूर्ण
 

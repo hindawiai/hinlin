@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NFNL_ACCT_H_
-#define _NFNL_ACCT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NFNL_ACCT_H_
+#घोषणा _NFNL_ACCT_H_
 
-#include <uapi/linux/netfilter/nfnetlink_acct.h>
-#include <net/net_namespace.h>
+#समावेश <uapi/linux/netfilter/nfnetlink_acct.h>
+#समावेश <net/net_namespace.h>
 
-enum {
+क्रमागत अणु
 	NFACCT_NO_QUOTA		= -1,
 	NFACCT_UNDERQUOTA,
 	NFACCT_OVERQUOTA,
-};
+पूर्ण;
 
-struct nf_acct;
+काष्ठा nf_acct;
 
-struct nf_acct *nfnl_acct_find_get(struct net *net, const char *filter_name);
-void nfnl_acct_put(struct nf_acct *acct);
-void nfnl_acct_update(const struct sk_buff *skb, struct nf_acct *nfacct);
-int nfnl_acct_overquota(struct net *net, struct nf_acct *nfacct);
-#endif /* _NFNL_ACCT_H */
+काष्ठा nf_acct *nfnl_acct_find_get(काष्ठा net *net, स्थिर अक्षर *filter_name);
+व्योम nfnl_acct_put(काष्ठा nf_acct *acct);
+व्योम nfnl_acct_update(स्थिर काष्ठा sk_buff *skb, काष्ठा nf_acct *nfacct);
+पूर्णांक nfnl_acct_overquota(काष्ठा net *net, काष्ठा nf_acct *nfacct);
+#पूर्ण_अगर /* _NFNL_ACCT_H */

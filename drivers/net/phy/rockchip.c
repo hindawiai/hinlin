@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /**
  * drivers/net/phy/rockchip.c
  *
- * Driver for ROCKCHIP Ethernet PHYs
+ * Driver क्रम ROCKCHIP Ethernet PHYs
  *
  * Copyright (c) 2017, Fuzhou Rockchip Electronics Co., Ltd
  *
  * David Wu <david.wu@rock-chips.com>
  */
 
-#include <linux/ethtool.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mii.h>
-#include <linux/netdevice.h>
-#include <linux/phy.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/phy.h>
 
-#define INTERNAL_EPHY_ID			0x1234d400
+#घोषणा INTERNAL_EPHY_ID			0x1234d400
 
-#define MII_INTERNAL_CTRL_STATUS		17
-#define SMI_ADDR_TSTCNTL			20
-#define SMI_ADDR_TSTREAD1			21
-#define SMI_ADDR_TSTREAD2			22
-#define SMI_ADDR_TSTWRITE			23
-#define MII_SPECIAL_CONTROL_STATUS		31
+#घोषणा MII_INTERNAL_CTRL_STATUS		17
+#घोषणा SMI_ADDR_TSTCNTL			20
+#घोषणा SMI_ADDR_TSTREAD1			21
+#घोषणा SMI_ADDR_TSTREAD2			22
+#घोषणा SMI_ADDR_TSTWRITE			23
+#घोषणा MII_SPECIAL_CONTROL_STATUS		31
 
-#define MII_AUTO_MDIX_EN			BIT(7)
-#define MII_MDIX_EN				BIT(6)
+#घोषणा MII_AUTO_MDIX_EN			BIT(7)
+#घोषणा MII_MDIX_EN				BIT(6)
 
-#define MII_SPEED_10				BIT(2)
-#define MII_SPEED_100				BIT(3)
+#घोषणा MII_SPEED_10				BIT(2)
+#घोषणा MII_SPEED_100				BIT(3)
 
-#define TSTCNTL_RD				(BIT(15) | BIT(10))
-#define TSTCNTL_WR				(BIT(14) | BIT(10))
+#घोषणा TSTCNTL_RD				(BIT(15) | BIT(10))
+#घोषणा TSTCNTL_WR				(BIT(14) | BIT(10))
 
-#define TSTMODE_ENABLE				0x400
-#define TSTMODE_DISABLE				0x0
+#घोषणा TSTMODE_ENABLE				0x400
+#घोषणा TSTMODE_DISABLE				0x0
 
-#define WR_ADDR_A7CFG				0x18
+#घोषणा WR_ADDR_A7CFG				0x18
 
-static int rockchip_init_tstmode(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक rockchip_init_tsपंचांगode(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	/* Enable access to Analog and DSP register banks */
-	ret = phy_write(phydev, SMI_ADDR_TSTCNTL, TSTMODE_ENABLE);
-	if (ret)
-		return ret;
+	/* Enable access to Analog and DSP रेजिस्टर banks */
+	ret = phy_ग_लिखो(phydev, SMI_ADDR_TSTCNTL, TSTMODE_ENABLE);
+	अगर (ret)
+		वापस ret;
 
-	ret = phy_write(phydev, SMI_ADDR_TSTCNTL, TSTMODE_DISABLE);
-	if (ret)
-		return ret;
+	ret = phy_ग_लिखो(phydev, SMI_ADDR_TSTCNTL, TSTMODE_DISABLE);
+	अगर (ret)
+		वापस ret;
 
-	return phy_write(phydev, SMI_ADDR_TSTCNTL, TSTMODE_ENABLE);
-}
+	वापस phy_ग_लिखो(phydev, SMI_ADDR_TSTCNTL, TSTMODE_ENABLE);
+पूर्ण
 
-static int rockchip_close_tstmode(struct phy_device *phydev)
-{
-	/* Back to basic register bank */
-	return phy_write(phydev, SMI_ADDR_TSTCNTL, TSTMODE_DISABLE);
-}
+अटल पूर्णांक rockchip_बंद_tsपंचांगode(काष्ठा phy_device *phydev)
+अणु
+	/* Back to basic रेजिस्टर bank */
+	वापस phy_ग_लिखो(phydev, SMI_ADDR_TSTCNTL, TSTMODE_DISABLE);
+पूर्ण
 
-static int rockchip_integrated_phy_analog_init(struct phy_device *phydev)
-{
-	int ret;
+अटल पूर्णांक rockchip_पूर्णांकegrated_phy_analog_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक ret;
 
-	ret = rockchip_init_tstmode(phydev);
-	if (ret)
-		return ret;
+	ret = rockchip_init_tsपंचांगode(phydev);
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Adjust tx amplitude to make sginal better,
-	 * the default value is 0x8.
+	 * the शेष value is 0x8.
 	 */
-	ret = phy_write(phydev, SMI_ADDR_TSTWRITE, 0xB);
-	if (ret)
-		return ret;
-	ret = phy_write(phydev, SMI_ADDR_TSTCNTL, TSTCNTL_WR | WR_ADDR_A7CFG);
-	if (ret)
-		return ret;
+	ret = phy_ग_लिखो(phydev, SMI_ADDR_TSTWRITE, 0xB);
+	अगर (ret)
+		वापस ret;
+	ret = phy_ग_लिखो(phydev, SMI_ADDR_TSTCNTL, TSTCNTL_WR | WR_ADDR_A7CFG);
+	अगर (ret)
+		वापस ret;
 
-	return rockchip_close_tstmode(phydev);
-}
+	वापस rockchip_बंद_tsपंचांगode(phydev);
+पूर्ण
 
-static int rockchip_integrated_phy_config_init(struct phy_device *phydev)
-{
-	int val, ret;
+अटल पूर्णांक rockchip_पूर्णांकegrated_phy_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val, ret;
 
 	/*
-	 * The auto MIDX has linked problem on some board,
-	 * workround to disable auto MDIX.
+	 * The स्वतः MIDX has linked problem on some board,
+	 * workround to disable स्वतः MDIX.
 	 */
-	val = phy_read(phydev, MII_INTERNAL_CTRL_STATUS);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो(phydev, MII_INTERNAL_CTRL_STATUS);
+	अगर (val < 0)
+		वापस val;
 	val &= ~MII_AUTO_MDIX_EN;
-	ret = phy_write(phydev, MII_INTERNAL_CTRL_STATUS, val);
-	if (ret)
-		return ret;
+	ret = phy_ग_लिखो(phydev, MII_INTERNAL_CTRL_STATUS, val);
+	अगर (ret)
+		वापस ret;
 
-	return rockchip_integrated_phy_analog_init(phydev);
-}
+	वापस rockchip_पूर्णांकegrated_phy_analog_init(phydev);
+पूर्ण
 
-static void rockchip_link_change_notify(struct phy_device *phydev)
-{
+अटल व्योम rockchip_link_change_notअगरy(काष्ठा phy_device *phydev)
+अणु
 	/*
-	 * If mode switch happens from 10BT to 100BT, all DSP/AFE
-	 * registers are set to default values. So any AFE/DSP
-	 * registers have to be re-initialized in this case.
+	 * If mode चयन happens from 10BT to 100BT, all DSP/AFE
+	 * रेजिस्टरs are set to शेष values. So any AFE/DSP
+	 * रेजिस्टरs have to be re-initialized in this हाल.
 	 */
-	if (phydev->state == PHY_RUNNING && phydev->speed == SPEED_100) {
-		int ret = rockchip_integrated_phy_analog_init(phydev);
+	अगर (phydev->state == PHY_RUNNING && phydev->speed == SPEED_100) अणु
+		पूर्णांक ret = rockchip_पूर्णांकegrated_phy_analog_init(phydev);
 
-		if (ret)
+		अगर (ret)
 			phydev_err(phydev, "rockchip_integrated_phy_analog_init err: %d.\n",
 				   ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int rockchip_set_polarity(struct phy_device *phydev, int polarity)
-{
-	int reg, err, val;
+अटल पूर्णांक rockchip_set_polarity(काष्ठा phy_device *phydev, पूर्णांक polarity)
+अणु
+	पूर्णांक reg, err, val;
 
 	/* get the current settings */
-	reg = phy_read(phydev, MII_INTERNAL_CTRL_STATUS);
-	if (reg < 0)
-		return reg;
+	reg = phy_पढ़ो(phydev, MII_INTERNAL_CTRL_STATUS);
+	अगर (reg < 0)
+		वापस reg;
 
 	reg &= ~MII_AUTO_MDIX_EN;
 	val = reg;
-	switch (polarity) {
-	case ETH_TP_MDI:
+	चयन (polarity) अणु
+	हाल ETH_TP_MDI:
 		val &= ~MII_MDIX_EN;
-		break;
-	case ETH_TP_MDI_X:
+		अवरोध;
+	हाल ETH_TP_MDI_X:
 		val |= MII_MDIX_EN;
-		break;
-	case ETH_TP_MDI_AUTO:
-	case ETH_TP_MDI_INVALID:
-	default:
-		return 0;
-	}
+		अवरोध;
+	हाल ETH_TP_MDI_AUTO:
+	हाल ETH_TP_MDI_INVALID:
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (val != reg) {
-		/* Set the new polarity value in the register */
-		err = phy_write(phydev, MII_INTERNAL_CTRL_STATUS, val);
-		if (err)
-			return err;
-	}
+	अगर (val != reg) अणु
+		/* Set the new polarity value in the रेजिस्टर */
+		err = phy_ग_लिखो(phydev, MII_INTERNAL_CTRL_STATUS, val);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_config_aneg(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक rockchip_config_aneg(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	err = rockchip_set_polarity(phydev, phydev->mdix);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return genphy_config_aneg(phydev);
-}
+	वापस genphy_config_aneg(phydev);
+पूर्ण
 
-static int rockchip_phy_resume(struct phy_device *phydev)
-{
+अटल पूर्णांक rockchip_phy_resume(काष्ठा phy_device *phydev)
+अणु
 	genphy_resume(phydev);
 
-	return rockchip_integrated_phy_config_init(phydev);
-}
+	वापस rockchip_पूर्णांकegrated_phy_config_init(phydev);
+पूर्ण
 
-static struct phy_driver rockchip_phy_driver[] = {
-{
+अटल काष्ठा phy_driver rockchip_phy_driver[] = अणु
+अणु
 	.phy_id			= INTERNAL_EPHY_ID,
 	.phy_id_mask		= 0xfffffff0,
 	.name			= "Rockchip integrated EPHY",
 	/* PHY_BASIC_FEATURES */
 	.flags			= 0,
-	.link_change_notify	= rockchip_link_change_notify,
+	.link_change_notअगरy	= rockchip_link_change_notअगरy,
 	.soft_reset		= genphy_soft_reset,
-	.config_init		= rockchip_integrated_phy_config_init,
+	.config_init		= rockchip_पूर्णांकegrated_phy_config_init,
 	.config_aneg		= rockchip_config_aneg,
 	.suspend		= genphy_suspend,
 	.resume			= rockchip_phy_resume,
-},
-};
+पूर्ण,
+पूर्ण;
 
 module_phy_driver(rockchip_phy_driver);
 
-static struct mdio_device_id __maybe_unused rockchip_phy_tbl[] = {
-	{ INTERNAL_EPHY_ID, 0xfffffff0 },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused rockchip_phy_tbl[] = अणु
+	अणु INTERNAL_EPHY_ID, 0xfffffff0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, rockchip_phy_tbl);
 

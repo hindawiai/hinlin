@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) 2020 Daniel Palmer<daniel@thingy.jp> */
 
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <dt-bindings/gpio/msc313-gpio.h>
-#include <dt-bindings/interrupt-controller/arm-gic.h>
+#समावेश <dt-bindings/gpio/msc313-gpपन.स>
+#समावेश <dt-bindings/पूर्णांकerrupt-controller/arm-gic.h>
 
-#define DRIVER_NAME "gpio-msc313"
+#घोषणा DRIVER_NAME "gpio-msc313"
 
-#define MSC313_GPIO_IN  BIT(0)
-#define MSC313_GPIO_OUT BIT(4)
-#define MSC313_GPIO_OEN BIT(5)
+#घोषणा MSC313_GPIO_IN  BIT(0)
+#घोषणा MSC313_GPIO_OUT BIT(4)
+#घोषणा MSC313_GPIO_OEN BIT(5)
 
 /*
  * These bits need to be saved to correctly restore the
  * gpio state when resuming from suspend to memory.
  */
-#define MSC313_GPIO_BITSTOSAVE (MSC313_GPIO_OUT | MSC313_GPIO_OEN)
+#घोषणा MSC313_GPIO_BITSTOSAVE (MSC313_GPIO_OUT | MSC313_GPIO_OEN)
 
-/* pad names for fuart, same for all SoCs so far */
-#define MSC313_PINNAME_FUART_RX		"fuart_rx"
-#define MSC313_PINNAME_FUART_TX		"fuart_tx"
-#define MSC313_PINNAME_FUART_CTS	"fuart_cts"
-#define MSC313_PINNAME_FUART_RTS	"fuart_rts"
+/* pad names क्रम fuart, same क्रम all SoCs so far */
+#घोषणा MSC313_PINNAME_FUART_RX		"fuart_rx"
+#घोषणा MSC313_PINNAME_FUART_TX		"fuart_tx"
+#घोषणा MSC313_PINNAME_FUART_CTS	"fuart_cts"
+#घोषणा MSC313_PINNAME_FUART_RTS	"fuart_rts"
 
-/* pad names for sr, mercury5 is different */
-#define MSC313_PINNAME_SR_IO2		"sr_io2"
-#define MSC313_PINNAME_SR_IO3		"sr_io3"
-#define MSC313_PINNAME_SR_IO4		"sr_io4"
-#define MSC313_PINNAME_SR_IO5		"sr_io5"
-#define MSC313_PINNAME_SR_IO6		"sr_io6"
-#define MSC313_PINNAME_SR_IO7		"sr_io7"
-#define MSC313_PINNAME_SR_IO8		"sr_io8"
-#define MSC313_PINNAME_SR_IO9		"sr_io9"
-#define MSC313_PINNAME_SR_IO10		"sr_io10"
-#define MSC313_PINNAME_SR_IO11		"sr_io11"
-#define MSC313_PINNAME_SR_IO12		"sr_io12"
-#define MSC313_PINNAME_SR_IO13		"sr_io13"
-#define MSC313_PINNAME_SR_IO14		"sr_io14"
-#define MSC313_PINNAME_SR_IO15		"sr_io15"
-#define MSC313_PINNAME_SR_IO16		"sr_io16"
-#define MSC313_PINNAME_SR_IO17		"sr_io17"
+/* pad names क्रम sr, mercury5 is dअगरferent */
+#घोषणा MSC313_PINNAME_SR_IO2		"sr_io2"
+#घोषणा MSC313_PINNAME_SR_IO3		"sr_io3"
+#घोषणा MSC313_PINNAME_SR_IO4		"sr_io4"
+#घोषणा MSC313_PINNAME_SR_IO5		"sr_io5"
+#घोषणा MSC313_PINNAME_SR_IO6		"sr_io6"
+#घोषणा MSC313_PINNAME_SR_IO7		"sr_io7"
+#घोषणा MSC313_PINNAME_SR_IO8		"sr_io8"
+#घोषणा MSC313_PINNAME_SR_IO9		"sr_io9"
+#घोषणा MSC313_PINNAME_SR_IO10		"sr_io10"
+#घोषणा MSC313_PINNAME_SR_IO11		"sr_io11"
+#घोषणा MSC313_PINNAME_SR_IO12		"sr_io12"
+#घोषणा MSC313_PINNAME_SR_IO13		"sr_io13"
+#घोषणा MSC313_PINNAME_SR_IO14		"sr_io14"
+#घोषणा MSC313_PINNAME_SR_IO15		"sr_io15"
+#घोषणा MSC313_PINNAME_SR_IO16		"sr_io16"
+#घोषणा MSC313_PINNAME_SR_IO17		"sr_io17"
 
-/* pad names for sd, same for all SoCs so far */
-#define MSC313_PINNAME_SD_CLK		"sd_clk"
-#define MSC313_PINNAME_SD_CMD		"sd_cmd"
-#define MSC313_PINNAME_SD_D0		"sd_d0"
-#define MSC313_PINNAME_SD_D1		"sd_d1"
-#define MSC313_PINNAME_SD_D2		"sd_d2"
-#define MSC313_PINNAME_SD_D3		"sd_d3"
+/* pad names क्रम sd, same क्रम all SoCs so far */
+#घोषणा MSC313_PINNAME_SD_CLK		"sd_clk"
+#घोषणा MSC313_PINNAME_SD_CMD		"sd_cmd"
+#घोषणा MSC313_PINNAME_SD_D0		"sd_d0"
+#घोषणा MSC313_PINNAME_SD_D1		"sd_d1"
+#घोषणा MSC313_PINNAME_SD_D2		"sd_d2"
+#घोषणा MSC313_PINNAME_SD_D3		"sd_d3"
 
-/* pad names for i2c1, same for all SoCs so for */
-#define MSC313_PINNAME_I2C1_SCL		"i2c1_scl"
-#define MSC313_PINNAME_I2C1_SCA		"i2c1_sda"
+/* pad names क्रम i2c1, same क्रम all SoCs so क्रम */
+#घोषणा MSC313_PINNAME_I2C1_SCL		"i2c1_scl"
+#घोषणा MSC313_PINNAME_I2C1_SCA		"i2c1_sda"
 
-/* pad names for spi0, same for all SoCs so far */
-#define MSC313_PINNAME_SPI0_CZ		"spi0_cz"
-#define MSC313_PINNAME_SPI0_CK		"spi0_ck"
-#define MSC313_PINNAME_SPI0_DI		"spi0_di"
-#define MSC313_PINNAME_SPI0_DO		"spi0_do"
+/* pad names क्रम spi0, same क्रम all SoCs so far */
+#घोषणा MSC313_PINNAME_SPI0_CZ		"spi0_cz"
+#घोषणा MSC313_PINNAME_SPI0_CK		"spi0_ck"
+#घोषणा MSC313_PINNAME_SPI0_DI		"spi0_di"
+#घोषणा MSC313_PINNAME_SPI0_DO		"spi0_do"
 
-#define FUART_NAMES			\
+#घोषणा FUART_NAMES			\
 	MSC313_PINNAME_FUART_RX,	\
 	MSC313_PINNAME_FUART_TX,	\
 	MSC313_PINNAME_FUART_CTS,	\
 	MSC313_PINNAME_FUART_RTS
 
-#define OFF_FUART_RX	0x50
-#define OFF_FUART_TX	0x54
-#define OFF_FUART_CTS	0x58
-#define OFF_FUART_RTS	0x5c
+#घोषणा OFF_FUART_RX	0x50
+#घोषणा OFF_FUART_TX	0x54
+#घोषणा OFF_FUART_CTS	0x58
+#घोषणा OFF_FUART_RTS	0x5c
 
-#define FUART_OFFSETS	\
+#घोषणा FUART_OFFSETS	\
 	OFF_FUART_RX,	\
 	OFF_FUART_TX,	\
 	OFF_FUART_CTS,	\
 	OFF_FUART_RTS
 
-#define SR_NAMES		\
+#घोषणा SR_NAMES		\
 	MSC313_PINNAME_SR_IO2,	\
 	MSC313_PINNAME_SR_IO3,	\
 	MSC313_PINNAME_SR_IO4,	\
@@ -104,24 +105,24 @@
 	MSC313_PINNAME_SR_IO16,	\
 	MSC313_PINNAME_SR_IO17
 
-#define OFF_SR_IO2	0x88
-#define OFF_SR_IO3	0x8c
-#define OFF_SR_IO4	0x90
-#define OFF_SR_IO5	0x94
-#define OFF_SR_IO6	0x98
-#define OFF_SR_IO7	0x9c
-#define OFF_SR_IO8	0xa0
-#define OFF_SR_IO9	0xa4
-#define OFF_SR_IO10	0xa8
-#define OFF_SR_IO11	0xac
-#define OFF_SR_IO12	0xb0
-#define OFF_SR_IO13	0xb4
-#define OFF_SR_IO14	0xb8
-#define OFF_SR_IO15	0xbc
-#define OFF_SR_IO16	0xc0
-#define OFF_SR_IO17	0xc4
+#घोषणा OFF_SR_IO2	0x88
+#घोषणा OFF_SR_IO3	0x8c
+#घोषणा OFF_SR_IO4	0x90
+#घोषणा OFF_SR_IO5	0x94
+#घोषणा OFF_SR_IO6	0x98
+#घोषणा OFF_SR_IO7	0x9c
+#घोषणा OFF_SR_IO8	0xa0
+#घोषणा OFF_SR_IO9	0xa4
+#घोषणा OFF_SR_IO10	0xa8
+#घोषणा OFF_SR_IO11	0xac
+#घोषणा OFF_SR_IO12	0xb0
+#घोषणा OFF_SR_IO13	0xb4
+#घोषणा OFF_SR_IO14	0xb8
+#घोषणा OFF_SR_IO15	0xbc
+#घोषणा OFF_SR_IO16	0xc0
+#घोषणा OFF_SR_IO17	0xc4
 
-#define SR_OFFSETS	\
+#घोषणा SR_OFFSETS	\
 	OFF_SR_IO2,	\
 	OFF_SR_IO3,	\
 	OFF_SR_IO4,	\
@@ -139,7 +140,7 @@
 	OFF_SR_IO16,	\
 	OFF_SR_IO17
 
-#define SD_NAMES		\
+#घोषणा SD_NAMES		\
 	MSC313_PINNAME_SD_CLK,	\
 	MSC313_PINNAME_SD_CMD,	\
 	MSC313_PINNAME_SD_D0,	\
@@ -147,14 +148,14 @@
 	MSC313_PINNAME_SD_D2,	\
 	MSC313_PINNAME_SD_D3
 
-#define OFF_SD_CLK	0x140
-#define OFF_SD_CMD	0x144
-#define OFF_SD_D0	0x148
-#define OFF_SD_D1	0x14c
-#define OFF_SD_D2	0x150
-#define OFF_SD_D3	0x154
+#घोषणा OFF_SD_CLK	0x140
+#घोषणा OFF_SD_CMD	0x144
+#घोषणा OFF_SD_D0	0x148
+#घोषणा OFF_SD_D1	0x14c
+#घोषणा OFF_SD_D2	0x150
+#घोषणा OFF_SD_D3	0x154
 
-#define SD_OFFSETS	\
+#घोषणा SD_OFFSETS	\
 	OFF_SD_CLK,	\
 	OFF_SD_CMD,	\
 	OFF_SD_D0,	\
@@ -162,226 +163,226 @@
 	OFF_SD_D2,	\
 	OFF_SD_D3
 
-#define I2C1_NAMES			\
+#घोषणा I2C1_NAMES			\
 	MSC313_PINNAME_I2C1_SCL,	\
 	MSC313_PINNAME_I2C1_SCA
 
-#define OFF_I2C1_SCL	0x188
-#define OFF_I2C1_SCA	0x18c
+#घोषणा OFF_I2C1_SCL	0x188
+#घोषणा OFF_I2C1_SCA	0x18c
 
-#define I2C1_OFFSETS	\
+#घोषणा I2C1_OFFSETS	\
 	OFF_I2C1_SCL,	\
 	OFF_I2C1_SCA
 
-#define SPI0_NAMES		\
+#घोषणा SPI0_NAMES		\
 	MSC313_PINNAME_SPI0_CZ,	\
 	MSC313_PINNAME_SPI0_CK,	\
 	MSC313_PINNAME_SPI0_DI,	\
 	MSC313_PINNAME_SPI0_DO
 
-#define OFF_SPI0_CZ	0x1c0
-#define OFF_SPI0_CK	0x1c4
-#define OFF_SPI0_DI	0x1c8
-#define OFF_SPI0_DO	0x1cc
+#घोषणा OFF_SPI0_CZ	0x1c0
+#घोषणा OFF_SPI0_CK	0x1c4
+#घोषणा OFF_SPI0_DI	0x1c8
+#घोषणा OFF_SPI0_DO	0x1cc
 
-#define SPI0_OFFSETS	\
+#घोषणा SPI0_OFFSETS	\
 	OFF_SPI0_CZ,	\
 	OFF_SPI0_CK,	\
 	OFF_SPI0_DI,	\
 	OFF_SPI0_DO
 
-struct msc313_gpio_data {
-	const char * const *names;
-	const unsigned int *offsets;
-	const unsigned int num;
-};
+काष्ठा msc313_gpio_data अणु
+	स्थिर अक्षर * स्थिर *names;
+	स्थिर अचिन्हित पूर्णांक *offsets;
+	स्थिर अचिन्हित पूर्णांक num;
+पूर्ण;
 
-#define MSC313_GPIO_CHIPDATA(_chip) \
-static const struct msc313_gpio_data _chip##_data = { \
+#घोषणा MSC313_GPIO_CHIPDATA(_chip) \
+अटल स्थिर काष्ठा msc313_gpio_data _chip##_data = अणु \
 	.names = _chip##_names, \
 	.offsets = _chip##_offsets, \
 	.num = ARRAY_SIZE(_chip##_offsets), \
-}
+पूर्ण
 
-#ifdef CONFIG_MACH_INFINITY
-static const char * const msc313_names[] = {
+#अगर_घोषित CONFIG_MACH_अनन्त
+अटल स्थिर अक्षर * स्थिर msc313_names[] = अणु
 	FUART_NAMES,
 	SR_NAMES,
 	SD_NAMES,
 	I2C1_NAMES,
 	SPI0_NAMES,
-};
+पूर्ण;
 
-static const unsigned int msc313_offsets[] = {
+अटल स्थिर अचिन्हित पूर्णांक msc313_offsets[] = अणु
 	FUART_OFFSETS,
 	SR_OFFSETS,
 	SD_OFFSETS,
 	I2C1_OFFSETS,
 	SPI0_OFFSETS,
-};
+पूर्ण;
 
 MSC313_GPIO_CHIPDATA(msc313);
-#endif
+#पूर्ण_अगर
 
-struct msc313_gpio {
-	void __iomem *base;
-	const struct msc313_gpio_data *gpio_data;
+काष्ठा msc313_gpio अणु
+	व्योम __iomem *base;
+	स्थिर काष्ठा msc313_gpio_data *gpio_data;
 	u8 *saved;
-};
+पूर्ण;
 
-static void msc313_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct msc313_gpio *gpio = gpiochip_get_data(chip);
-	u8 gpioreg = readb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
+अटल व्योम msc313_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा msc313_gpio *gpio = gpiochip_get_data(chip);
+	u8 gpioreg = पढ़ोb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
 
-	if (value)
+	अगर (value)
 		gpioreg |= MSC313_GPIO_OUT;
-	else
+	अन्यथा
 		gpioreg &= ~MSC313_GPIO_OUT;
 
-	writeb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
-}
+	ग_लिखोb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
+पूर्ण
 
-static int msc313_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct msc313_gpio *gpio = gpiochip_get_data(chip);
+अटल पूर्णांक msc313_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा msc313_gpio *gpio = gpiochip_get_data(chip);
 
-	return readb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]) & MSC313_GPIO_IN;
-}
+	वापस पढ़ोb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]) & MSC313_GPIO_IN;
+पूर्ण
 
-static int msc313_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct msc313_gpio *gpio = gpiochip_get_data(chip);
-	u8 gpioreg = readb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
+अटल पूर्णांक msc313_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा msc313_gpio *gpio = gpiochip_get_data(chip);
+	u8 gpioreg = पढ़ोb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
 
 	gpioreg |= MSC313_GPIO_OEN;
-	writeb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
+	ग_लिखोb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int msc313_gpio_direction_output(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct msc313_gpio *gpio = gpiochip_get_data(chip);
-	u8 gpioreg = readb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
+अटल पूर्णांक msc313_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा msc313_gpio *gpio = gpiochip_get_data(chip);
+	u8 gpioreg = पढ़ोb_relaxed(gpio->base + gpio->gpio_data->offsets[offset]);
 
 	gpioreg &= ~MSC313_GPIO_OEN;
-	if (value)
+	अगर (value)
 		gpioreg |= MSC313_GPIO_OUT;
-	else
+	अन्यथा
 		gpioreg &= ~MSC313_GPIO_OUT;
-	writeb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
+	ग_लिखोb_relaxed(gpioreg, gpio->base + gpio->gpio_data->offsets[offset]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The interrupt handling happens in the parent interrupt controller,
- * we don't do anything here.
+ * The पूर्णांकerrupt handling happens in the parent पूर्णांकerrupt controller,
+ * we करोn't करो anything here.
  */
-static struct irq_chip msc313_gpio_irqchip = {
+अटल काष्ठा irq_chip msc313_gpio_irqchip = अणु
 	.name = "GPIO",
 	.irq_eoi = irq_chip_eoi_parent,
 	.irq_mask = irq_chip_mask_parent,
 	.irq_unmask = irq_chip_unmask_parent,
 	.irq_set_type = irq_chip_set_type_parent,
 	.irq_set_affinity = irq_chip_set_affinity_parent,
-};
+पूर्ण;
 
 /*
- * The parent interrupt controller needs the GIC interrupt type set to GIC_SPI
+ * The parent पूर्णांकerrupt controller needs the GIC पूर्णांकerrupt type set to GIC_SPI
  * so we need to provide the fwspec. Essentially gpiochip_populate_parent_fwspec_twocell
- * that puts GIC_SPI into the first cell.
+ * that माला_दो GIC_SPI पूर्णांकo the first cell.
  */
-static void *msc313_gpio_populate_parent_fwspec(struct gpio_chip *gc,
-					     unsigned int parent_hwirq,
-					     unsigned int parent_type)
-{
-	struct irq_fwspec *fwspec;
+अटल व्योम *msc313_gpio_populate_parent_fwspec(काष्ठा gpio_chip *gc,
+					     अचिन्हित पूर्णांक parent_hwirq,
+					     अचिन्हित पूर्णांक parent_type)
+अणु
+	काष्ठा irq_fwspec *fwspec;
 
-	fwspec = kmalloc(sizeof(*fwspec), GFP_KERNEL);
-	if (!fwspec)
-		return NULL;
+	fwspec = kदो_स्मृति(माप(*fwspec), GFP_KERNEL);
+	अगर (!fwspec)
+		वापस शून्य;
 
-	fwspec->fwnode = gc->irq.parent_domain->fwnode;
+	fwspec->fwnode = gc->irq.parent_करोमुख्य->fwnode;
 	fwspec->param_count = 3;
 	fwspec->param[0] = GIC_SPI;
 	fwspec->param[1] = parent_hwirq;
 	fwspec->param[2] = parent_type;
 
-	return fwspec;
-}
+	वापस fwspec;
+पूर्ण
 
-static int msc313e_gpio_child_to_parent_hwirq(struct gpio_chip *chip,
-					     unsigned int child,
-					     unsigned int child_type,
-					     unsigned int *parent,
-					     unsigned int *parent_type)
-{
-	struct msc313_gpio *priv = gpiochip_get_data(chip);
-	unsigned int offset = priv->gpio_data->offsets[child];
+अटल पूर्णांक msc313e_gpio_child_to_parent_hwirq(काष्ठा gpio_chip *chip,
+					     अचिन्हित पूर्णांक child,
+					     अचिन्हित पूर्णांक child_type,
+					     अचिन्हित पूर्णांक *parent,
+					     अचिन्हित पूर्णांक *parent_type)
+अणु
+	काष्ठा msc313_gpio *priv = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक offset = priv->gpio_data->offsets[child];
 
 	/*
-	 * only the spi0 pins have interrupts on the parent
+	 * only the spi0 pins have पूर्णांकerrupts on the parent
 	 * on all of the known chips and so far they are all
 	 * mapped to the same place
 	 */
-	if (offset >= OFF_SPI0_CZ && offset <= OFF_SPI0_DO) {
+	अगर (offset >= OFF_SPI0_CZ && offset <= OFF_SPI0_DO) अणु
 		*parent_type = child_type;
 		*parent = ((offset - OFF_SPI0_CZ) >> 2) + 28;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int msc313_gpio_probe(struct platform_device *pdev)
-{
-	const struct msc313_gpio_data *match_data;
-	struct msc313_gpio *gpio;
-	struct gpio_chip *gpiochip;
-	struct gpio_irq_chip *gpioirqchip;
-	struct irq_domain *parent_domain;
-	struct device_node *parent_node;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक msc313_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा msc313_gpio_data *match_data;
+	काष्ठा msc313_gpio *gpio;
+	काष्ठा gpio_chip *gpiochip;
+	काष्ठा gpio_irq_chip *gpioirqchip;
+	काष्ठा irq_करोमुख्य *parent_करोमुख्य;
+	काष्ठा device_node *parent_node;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
 	match_data = of_device_get_match_data(dev);
-	if (!match_data)
-		return -EINVAL;
+	अगर (!match_data)
+		वापस -EINVAL;
 
 	parent_node = of_irq_find_parent(dev->of_node);
-	if (!parent_node)
-		return -ENODEV;
+	अगर (!parent_node)
+		वापस -ENODEV;
 
-	parent_domain = irq_find_host(parent_node);
-	if (!parent_domain)
-		return -ENODEV;
+	parent_करोमुख्य = irq_find_host(parent_node);
+	अगर (!parent_करोमुख्य)
+		वापस -ENODEV;
 
-	gpio = devm_kzalloc(dev, sizeof(*gpio), GFP_KERNEL);
-	if (!gpio)
-		return -ENOMEM;
+	gpio = devm_kzalloc(dev, माप(*gpio), GFP_KERNEL);
+	अगर (!gpio)
+		वापस -ENOMEM;
 
 	gpio->gpio_data = match_data;
 
-	gpio->saved = devm_kcalloc(dev, gpio->gpio_data->num, sizeof(*gpio->saved), GFP_KERNEL);
-	if (!gpio->saved)
-		return -ENOMEM;
+	gpio->saved = devm_kसुस्मृति(dev, gpio->gpio_data->num, माप(*gpio->saved), GFP_KERNEL);
+	अगर (!gpio->saved)
+		वापस -ENOMEM;
 
-	gpio->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(gpio->base))
-		return PTR_ERR(gpio->base);
+	gpio->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(gpio->base))
+		वापस PTR_ERR(gpio->base);
 
-	platform_set_drvdata(pdev, gpio);
+	platक्रमm_set_drvdata(pdev, gpio);
 
-	gpiochip = devm_kzalloc(dev, sizeof(*gpiochip), GFP_KERNEL);
-	if (!gpiochip)
-		return -ENOMEM;
+	gpiochip = devm_kzalloc(dev, माप(*gpiochip), GFP_KERNEL);
+	अगर (!gpiochip)
+		वापस -ENOMEM;
 
 	gpiochip->label = DRIVER_NAME;
 	gpiochip->parent = dev;
 	gpiochip->request = gpiochip_generic_request;
-	gpiochip->free = gpiochip_generic_free;
+	gpiochip->मुक्त = gpiochip_generic_मुक्त;
 	gpiochip->direction_input = msc313_gpio_direction_input;
 	gpiochip->direction_output = msc313_gpio_direction_output;
 	gpiochip->get = msc313_gpio_get;
@@ -393,68 +394,68 @@ static int msc313_gpio_probe(struct platform_device *pdev)
 	gpioirqchip = &gpiochip->irq;
 	gpioirqchip->chip = &msc313_gpio_irqchip;
 	gpioirqchip->fwnode = of_node_to_fwnode(dev->of_node);
-	gpioirqchip->parent_domain = parent_domain;
+	gpioirqchip->parent_करोमुख्य = parent_करोमुख्य;
 	gpioirqchip->child_to_parent_hwirq = msc313e_gpio_child_to_parent_hwirq;
 	gpioirqchip->populate_parent_alloc_arg = msc313_gpio_populate_parent_fwspec;
 	gpioirqchip->handler = handle_bad_irq;
-	gpioirqchip->default_type = IRQ_TYPE_NONE;
+	gpioirqchip->शेष_type = IRQ_TYPE_NONE;
 
 	ret = devm_gpiochip_add_data(dev, gpiochip, gpio);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int msc313_gpio_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक msc313_gpio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id msc313_gpio_of_match[] = {
-#ifdef CONFIG_MACH_INFINITY
-	{
+अटल स्थिर काष्ठा of_device_id msc313_gpio_of_match[] = अणु
+#अगर_घोषित CONFIG_MACH_अनन्त
+	अणु
 		.compatible = "mstar,msc313-gpio",
 		.data = &msc313_data,
-	},
-#endif
-	{ }
-};
+	पूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 
 /*
- * The GPIO controller loses the state of the registers when the
- * SoC goes into suspend to memory mode so we need to save some
- * of the register bits before suspending and put it back when resuming
+ * The GPIO controller loses the state of the रेजिस्टरs when the
+ * SoC goes पूर्णांकo suspend to memory mode so we need to save some
+ * of the रेजिस्टर bits beक्रमe suspending and put it back when resuming
  */
-static int __maybe_unused msc313_gpio_suspend(struct device *dev)
-{
-	struct msc313_gpio *gpio = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused msc313_gpio_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा msc313_gpio *gpio = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < gpio->gpio_data->num; i++)
-		gpio->saved[i] = readb_relaxed(gpio->base + gpio->gpio_data->offsets[i]) & MSC313_GPIO_BITSTOSAVE;
+	क्रम (i = 0; i < gpio->gpio_data->num; i++)
+		gpio->saved[i] = पढ़ोb_relaxed(gpio->base + gpio->gpio_data->offsets[i]) & MSC313_GPIO_BITSTOSAVE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused msc313_gpio_resume(struct device *dev)
-{
-	struct msc313_gpio *gpio = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused msc313_gpio_resume(काष्ठा device *dev)
+अणु
+	काष्ठा msc313_gpio *gpio = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < gpio->gpio_data->num; i++)
-		writeb_relaxed(gpio->saved[i], gpio->base + gpio->gpio_data->offsets[i]);
+	क्रम (i = 0; i < gpio->gpio_data->num; i++)
+		ग_लिखोb_relaxed(gpio->saved[i], gpio->base + gpio->gpio_data->offsets[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(msc313_gpio_ops, msc313_gpio_suspend, msc313_gpio_resume);
+अटल SIMPLE_DEV_PM_OPS(msc313_gpio_ops, msc313_gpio_suspend, msc313_gpio_resume);
 
-static struct platform_driver msc313_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver msc313_gpio_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = msc313_gpio_of_match,
 		.pm = &msc313_gpio_ops,
-	},
+	पूर्ण,
 	.probe = msc313_gpio_probe,
-	.remove = msc313_gpio_remove,
-};
+	.हटाओ = msc313_gpio_हटाओ,
+पूर्ण;
 
-builtin_platform_driver(msc313_gpio_driver);
+builtin_platक्रमm_driver(msc313_gpio_driver);

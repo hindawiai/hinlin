@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for Digigram VXpocket soundcards
+ * Driver क्रम Digigram VXpocket soundcards
  *
  * Copyright (c) 2002 by Takashi Iwai <tiwai@suse.de>
  */
 
-#ifndef __VXPOCKET_H
-#define __VXPOCKET_H
+#अगर_अघोषित __VXPOCKET_H
+#घोषणा __VXPOCKET_H
 
-#include <sound/vx_core.h>
+#समावेश <sound/vx_core.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
 
-struct snd_vxpocket {
+काष्ठा snd_vxpocket अणु
 
-	struct vx_core core;
+	काष्ठा vx_core core;
 
-	unsigned long port;
+	अचिन्हित दीर्घ port;
 
-	int mic_level;	/* analog mic level (or boost) */
+	पूर्णांक mic_level;	/* analog mic level (or boost) */
 
-	unsigned int regCDSP;	/* current CDSP register */
-	unsigned int regDIALOG;	/* current DIALOG register */
+	अचिन्हित पूर्णांक regCDSP;	/* current CDSP रेजिस्टर */
+	अचिन्हित पूर्णांक regDIALOG;	/* current DIALOG रेजिस्टर */
 
-	int index;	/* card index */
+	पूर्णांक index;	/* card index */
 
 	/* pcmcia stuff */
-	struct pcmcia_device	*p_dev;
-};
+	काष्ठा pcmcia_device	*p_dev;
+पूर्ण;
 
-#define to_vxpocket(x)	container_of(x, struct snd_vxpocket, core)
+#घोषणा to_vxpocket(x)	container_of(x, काष्ठा snd_vxpocket, core)
 
-extern const struct snd_vx_ops snd_vxpocket_ops;
+बाह्य स्थिर काष्ठा snd_vx_ops snd_vxpocket_ops;
 
-void vx_set_mic_boost(struct vx_core *chip, int boost);
-void vx_set_mic_level(struct vx_core *chip, int level);
+व्योम vx_set_mic_boost(काष्ठा vx_core *chip, पूर्णांक boost);
+व्योम vx_set_mic_level(काष्ठा vx_core *chip, पूर्णांक level);
 
-int vxp_add_mic_controls(struct vx_core *chip);
+पूर्णांक vxp_add_mic_controls(काष्ठा vx_core *chip);
 
-/* Constants used to access the CDSP register (0x08). */
-#define CDSP_MAGIC	0xA7	/* magic value (for read) */
-/* for write */
-#define VXP_CDSP_CLOCKIN_SEL_MASK	0x80	/* 0 (internal), 1 (AES/EBU) */
-#define VXP_CDSP_DATAIN_SEL_MASK	0x40	/* 0 (analog), 1 (UER) */
-#define VXP_CDSP_SMPTE_SEL_MASK		0x20
-#define VXP_CDSP_RESERVED_MASK		0x10
-#define VXP_CDSP_MIC_SEL_MASK		0x08
-#define VXP_CDSP_VALID_IRQ_MASK		0x04
-#define VXP_CDSP_CODEC_RESET_MASK	0x02
-#define VXP_CDSP_DSP_RESET_MASK		0x01
+/* Constants used to access the CDSP रेजिस्टर (0x08). */
+#घोषणा CDSP_MAGIC	0xA7	/* magic value (क्रम पढ़ो) */
+/* क्रम ग_लिखो */
+#घोषणा VXP_CDSP_CLOCKIN_SEL_MASK	0x80	/* 0 (पूर्णांकernal), 1 (AES/EBU) */
+#घोषणा VXP_CDSP_DATAIN_SEL_MASK	0x40	/* 0 (analog), 1 (UER) */
+#घोषणा VXP_CDSP_SMPTE_SEL_MASK		0x20
+#घोषणा VXP_CDSP_RESERVED_MASK		0x10
+#घोषणा VXP_CDSP_MIC_SEL_MASK		0x08
+#घोषणा VXP_CDSP_VALID_IRQ_MASK		0x04
+#घोषणा VXP_CDSP_CODEC_RESET_MASK	0x02
+#घोषणा VXP_CDSP_DSP_RESET_MASK		0x01
 /* VXPOCKET 240/440 */
-#define P24_CDSP_MICS_SEL_MASK		0x18
-#define P24_CDSP_MIC20_SEL_MASK		0x10
-#define P24_CDSP_MIC38_SEL_MASK		0x08
+#घोषणा P24_CDSP_MICS_SEL_MASK		0x18
+#घोषणा P24_CDSP_MIC20_SEL_MASK		0x10
+#घोषणा P24_CDSP_MIC38_SEL_MASK		0x08
 
-/* Constants used to access the MEMIRQ register (0x0C). */
-#define P44_MEMIRQ_MASTER_SLAVE_SEL_MASK 0x08
-#define P44_MEMIRQ_SYNCED_ALONE_SEL_MASK 0x04
-#define P44_MEMIRQ_WCLK_OUT_IN_SEL_MASK  0x02 /* Not used */
-#define P44_MEMIRQ_WCLK_UER_SEL_MASK     0x01 /* Not used */
+/* Constants used to access the MEMIRQ रेजिस्टर (0x0C). */
+#घोषणा P44_MEMIRQ_MASTER_SLAVE_SEL_MASK 0x08
+#घोषणा P44_MEMIRQ_SYNCED_ALONE_SEL_MASK 0x04
+#घोषणा P44_MEMIRQ_WCLK_OUT_IN_SEL_MASK  0x02 /* Not used */
+#घोषणा P44_MEMIRQ_WCLK_UER_SEL_MASK     0x01 /* Not used */
 
 /* Micro levels (0x0C) */
 
-/* Constants used to access the DIALOG register (0x0D). */
-#define VXP_DLG_XILINX_REPROG_MASK	0x80	/* W */
-#define VXP_DLG_DATA_XICOR_MASK		0x80	/* R */
-#define VXP_DLG_RESERVED4_0_MASK	0x40
-#define VXP_DLG_RESERVED2_0_MASK	0x20
-#define VXP_DLG_RESERVED1_0_MASK	0x10
-#define VXP_DLG_DMAWRITE_SEL_MASK	0x08	/* W */
-#define VXP_DLG_DMAREAD_SEL_MASK	0x04	/* W */
-#define VXP_DLG_MEMIRQ_MASK		0x02	/* R */
-#define VXP_DLG_DMA16_SEL_MASK		0x02	/* W */
-#define VXP_DLG_ACK_MEMIRQ_MASK		0x01	/* R/W */
+/* Constants used to access the DIALOG रेजिस्टर (0x0D). */
+#घोषणा VXP_DLG_XILINX_REPROG_MASK	0x80	/* W */
+#घोषणा VXP_DLG_DATA_XICOR_MASK		0x80	/* R */
+#घोषणा VXP_DLG_RESERVED4_0_MASK	0x40
+#घोषणा VXP_DLG_RESERVED2_0_MASK	0x20
+#घोषणा VXP_DLG_RESERVED1_0_MASK	0x10
+#घोषणा VXP_DLG_DMAWRITE_SEL_MASK	0x08	/* W */
+#घोषणा VXP_DLG_DMAREAD_SEL_MASK	0x04	/* W */
+#घोषणा VXP_DLG_MEMIRQ_MASK		0x02	/* R */
+#घोषणा VXP_DLG_DMA16_SEL_MASK		0x02	/* W */
+#घोषणा VXP_DLG_ACK_MEMIRQ_MASK		0x01	/* R/W */
 
 
-#endif /* __VXPOCKET_H */
+#पूर्ण_अगर /* __VXPOCKET_H */

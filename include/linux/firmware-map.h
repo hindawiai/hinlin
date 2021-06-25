@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * include/linux/firmware-map.h:
  *  Copyright (C) 2008 SUSE LINUX Products GmbH
  *  by Bernhard Walle <bernhard.walle@gmx.de>
  */
-#ifndef _LINUX_FIRMWARE_MAP_H
-#define _LINUX_FIRMWARE_MAP_H
+#अगर_अघोषित _LINUX_FIRMWARE_MAP_H
+#घोषणा _LINUX_FIRMWARE_MAP_H
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
 /*
- * provide a dummy interface if CONFIG_FIRMWARE_MEMMAP is disabled
+ * provide a dummy पूर्णांकerface अगर CONFIG_FIRMWARE_MEMMAP is disabled
  */
-#ifdef CONFIG_FIRMWARE_MEMMAP
+#अगर_घोषित CONFIG_FIRMWARE_MEMMAP
 
-int firmware_map_add_early(u64 start, u64 end, const char *type);
-int firmware_map_add_hotplug(u64 start, u64 end, const char *type);
-int firmware_map_remove(u64 start, u64 end, const char *type);
+पूर्णांक firmware_map_add_early(u64 start, u64 end, स्थिर अक्षर *type);
+पूर्णांक firmware_map_add_hotplug(u64 start, u64 end, स्थिर अक्षर *type);
+पूर्णांक firmware_map_हटाओ(u64 start, u64 end, स्थिर अक्षर *type);
 
-#else /* CONFIG_FIRMWARE_MEMMAP */
+#अन्यथा /* CONFIG_FIRMWARE_MEMMAP */
 
-static inline int firmware_map_add_early(u64 start, u64 end, const char *type)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक firmware_map_add_early(u64 start, u64 end, स्थिर अक्षर *type)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int firmware_map_add_hotplug(u64 start, u64 end, const char *type)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक firmware_map_add_hotplug(u64 start, u64 end, स्थिर अक्षर *type)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int firmware_map_remove(u64 start, u64 end, const char *type)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक firmware_map_हटाओ(u64 start, u64 end, स्थिर अक्षर *type)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_FIRMWARE_MEMMAP */
+#पूर्ण_अगर /* CONFIG_FIRMWARE_MEMMAP */
 
-#endif /* _LINUX_FIRMWARE_MAP_H */
+#पूर्ण_अगर /* _LINUX_FIRMWARE_MAP_H */

@@ -1,407 +1,408 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * tegra30_ahub.c - Tegra30 AHUB driver
  *
  * Copyright (c) 2011,2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
-#include <sound/soc.h>
-#include "tegra30_ahub.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/soc.h>
+#समावेश "tegra30_ahub.h"
 
-#define DRV_NAME "tegra30-ahub"
+#घोषणा DRV_NAME "tegra30-ahub"
 
-static struct tegra30_ahub *ahub;
+अटल काष्ठा tegra30_ahub *ahub;
 
-static inline void tegra30_apbif_write(u32 reg, u32 val)
-{
-	regmap_write(ahub->regmap_apbif, reg, val);
-}
+अटल अंतरभूत व्योम tegra30_apbअगर_ग_लिखो(u32 reg, u32 val)
+अणु
+	regmap_ग_लिखो(ahub->regmap_apbअगर, reg, val);
+पूर्ण
 
-static inline u32 tegra30_apbif_read(u32 reg)
-{
+अटल अंतरभूत u32 tegra30_apbअगर_पढ़ो(u32 reg)
+अणु
 	u32 val;
 
-	regmap_read(ahub->regmap_apbif, reg, &val);
-	return val;
-}
+	regmap_पढ़ो(ahub->regmap_apbअगर, reg, &val);
+	वापस val;
+पूर्ण
 
-static inline void tegra30_audio_write(u32 reg, u32 val)
-{
-	regmap_write(ahub->regmap_ahub, reg, val);
-}
+अटल अंतरभूत व्योम tegra30_audio_ग_लिखो(u32 reg, u32 val)
+अणु
+	regmap_ग_लिखो(ahub->regmap_ahub, reg, val);
+पूर्ण
 
-static __maybe_unused int tegra30_ahub_runtime_suspend(struct device *dev)
-{
-	regcache_cache_only(ahub->regmap_apbif, true);
+अटल __maybe_unused पूर्णांक tegra30_ahub_runसमय_suspend(काष्ठा device *dev)
+अणु
+	regcache_cache_only(ahub->regmap_apbअगर, true);
 	regcache_cache_only(ahub->regmap_ahub, true);
 
-	clk_bulk_disable_unprepare(ahub->nclocks, ahub->clocks);
+	clk_bulk_disable_unprepare(ahub->nघड़ीs, ahub->घड़ीs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * clk_apbif isn't required for an I2S<->I2S configuration where no PCM data
- * is read from or sent to memory. However, that's not something the rest of
- * the driver supports right now, so we'll just treat the two clocks as one
- * for now.
+ * clk_apbअगर isn't required क्रम an I2S<->I2S configuration where no PCM data
+ * is पढ़ो from or sent to memory. However, that's not something the rest of
+ * the driver supports right now, so we'll just treat the two घड़ीs as one
+ * क्रम now.
  *
  * These functions should not be a plain ref-count. Instead, each active stream
- * contributes some requirement to the minimum clock rate, so starting or
- * stopping streams should dynamically adjust the clock as required.  However,
+ * contributes some requirement to the minimum घड़ी rate, so starting or
+ * stopping streams should dynamically adjust the घड़ी as required.  However,
  * this is not yet implemented.
  */
-static __maybe_unused int tegra30_ahub_runtime_resume(struct device *dev)
-{
-	int ret;
+अटल __maybe_unused पूर्णांक tegra30_ahub_runसमय_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
-	ret = reset_control_bulk_assert(ahub->nresets, ahub->resets);
-	if (ret)
-		return ret;
+	ret = reset_control_bulk_निश्चित(ahub->nresets, ahub->resets);
+	अगर (ret)
+		वापस ret;
 
-	ret = clk_bulk_prepare_enable(ahub->nclocks, ahub->clocks);
-	if (ret)
-		return ret;
+	ret = clk_bulk_prepare_enable(ahub->nघड़ीs, ahub->घड़ीs);
+	अगर (ret)
+		वापस ret;
 
 	usleep_range(10, 100);
 
-	ret = reset_control_bulk_deassert(ahub->nresets, ahub->resets);
-	if (ret)
-		goto disable_clocks;
+	ret = reset_control_bulk_deनिश्चित(ahub->nresets, ahub->resets);
+	अगर (ret)
+		जाओ disable_घड़ीs;
 
-	regcache_cache_only(ahub->regmap_apbif, false);
+	regcache_cache_only(ahub->regmap_apbअगर, false);
 	regcache_cache_only(ahub->regmap_ahub, false);
-	regcache_mark_dirty(ahub->regmap_apbif);
+	regcache_mark_dirty(ahub->regmap_apbअगर);
 	regcache_mark_dirty(ahub->regmap_ahub);
 
-	ret = regcache_sync(ahub->regmap_apbif);
-	if (ret)
-		goto disable_clocks;
+	ret = regcache_sync(ahub->regmap_apbअगर);
+	अगर (ret)
+		जाओ disable_घड़ीs;
 
 	ret = regcache_sync(ahub->regmap_ahub);
-	if (ret)
-		goto disable_clocks;
+	अगर (ret)
+		जाओ disable_घड़ीs;
 
-	return 0;
+	वापस 0;
 
-disable_clocks:
-	clk_bulk_disable_unprepare(ahub->nclocks, ahub->clocks);
+disable_घड़ीs:
+	clk_bulk_disable_unprepare(ahub->nघड़ीs, ahub->घड़ीs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tegra30_ahub_allocate_rx_fifo(enum tegra30_ahub_rxcif *rxcif,
-				  char *dmachan, int dmachan_len,
-				  dma_addr_t *fiforeg)
-{
-	int channel;
+पूर्णांक tegra30_ahub_allocate_rx_fअगरo(क्रमागत tegra30_ahub_rxcअगर *rxcअगर,
+				  अक्षर *dmachan, पूर्णांक dmachan_len,
+				  dma_addr_t *fअगरoreg)
+अणु
+	पूर्णांक channel;
 	u32 reg, val;
-	struct tegra30_ahub_cif_conf cif_conf;
+	काष्ठा tegra30_ahub_cअगर_conf cअगर_conf;
 
 	channel = find_first_zero_bit(ahub->rx_usage,
 				      TEGRA30_AHUB_CHANNEL_CTRL_COUNT);
-	if (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
-		return -EBUSY;
+	अगर (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
+		वापस -EBUSY;
 
 	__set_bit(channel, ahub->rx_usage);
 
-	*rxcif = TEGRA30_AHUB_RXCIF_APBIF_RX0 + channel;
-	snprintf(dmachan, dmachan_len, "rx%d", channel);
-	*fiforeg = ahub->apbif_addr + TEGRA30_AHUB_CHANNEL_RXFIFO +
+	*rxcअगर = TEGRA30_AHUB_RXCIF_APBIF_RX0 + channel;
+	snम_लिखो(dmachan, dmachan_len, "rx%d", channel);
+	*fअगरoreg = ahub->apbअगर_addr + TEGRA30_AHUB_CHANNEL_RXFIFO +
 		   (channel * TEGRA30_AHUB_CHANNEL_RXFIFO_STRIDE);
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val &= ~(TEGRA30_AHUB_CHANNEL_CTRL_RX_THRESHOLD_MASK |
 		 TEGRA30_AHUB_CHANNEL_CTRL_RX_PACK_MASK);
 	val |= (7 << TEGRA30_AHUB_CHANNEL_CTRL_RX_THRESHOLD_SHIFT) |
 	       TEGRA30_AHUB_CHANNEL_CTRL_RX_PACK_EN |
 	       TEGRA30_AHUB_CHANNEL_CTRL_RX_PACK_16;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	cif_conf.threshold = 0;
-	cif_conf.audio_channels = 2;
-	cif_conf.client_channels = 2;
-	cif_conf.audio_bits = TEGRA30_AUDIOCIF_BITS_16;
-	cif_conf.client_bits = TEGRA30_AUDIOCIF_BITS_16;
-	cif_conf.expand = 0;
-	cif_conf.stereo_conv = 0;
-	cif_conf.replicate = 0;
-	cif_conf.direction = TEGRA30_AUDIOCIF_DIRECTION_RX;
-	cif_conf.truncate = 0;
-	cif_conf.mono_conv = 0;
+	cअगर_conf.threshold = 0;
+	cअगर_conf.audio_channels = 2;
+	cअगर_conf.client_channels = 2;
+	cअगर_conf.audio_bits = TEGRA30_AUDIOCIF_BITS_16;
+	cअगर_conf.client_bits = TEGRA30_AUDIOCIF_BITS_16;
+	cअगर_conf.expand = 0;
+	cअगर_conf.stereo_conv = 0;
+	cअगर_conf.replicate = 0;
+	cअगर_conf.direction = TEGRA30_AUDIOCIF_सूचीECTION_RX;
+	cअगर_conf.truncate = 0;
+	cअगर_conf.mono_conv = 0;
 
 	reg = TEGRA30_AHUB_CIF_RX_CTRL +
 	      (channel * TEGRA30_AHUB_CIF_RX_CTRL_STRIDE);
-	ahub->soc_data->set_audio_cif(ahub->regmap_apbif, reg, &cif_conf);
+	ahub->soc_data->set_audio_cअगर(ahub->regmap_apbअगर, reg, &cअगर_conf);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_allocate_rx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_allocate_rx_fअगरo);
 
-int tegra30_ahub_enable_rx_fifo(enum tegra30_ahub_rxcif rxcif)
-{
-	int channel = rxcif - TEGRA30_AHUB_RXCIF_APBIF_RX0;
-	int reg, val;
+पूर्णांक tegra30_ahub_enable_rx_fअगरo(क्रमागत tegra30_ahub_rxcअगर rxcअगर)
+अणु
+	पूर्णांक channel = rxcअगर - TEGRA30_AHUB_RXCIF_APBIF_RX0;
+	पूर्णांक reg, val;
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val |= TEGRA30_AHUB_CHANNEL_CTRL_RX_EN;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_enable_rx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_enable_rx_fअगरo);
 
-int tegra30_ahub_disable_rx_fifo(enum tegra30_ahub_rxcif rxcif)
-{
-	int channel = rxcif - TEGRA30_AHUB_RXCIF_APBIF_RX0;
-	int reg, val;
+पूर्णांक tegra30_ahub_disable_rx_fअगरo(क्रमागत tegra30_ahub_rxcअगर rxcअगर)
+अणु
+	पूर्णांक channel = rxcअगर - TEGRA30_AHUB_RXCIF_APBIF_RX0;
+	पूर्णांक reg, val;
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val &= ~TEGRA30_AHUB_CHANNEL_CTRL_RX_EN;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_disable_rx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_disable_rx_fअगरo);
 
-int tegra30_ahub_free_rx_fifo(enum tegra30_ahub_rxcif rxcif)
-{
-	int channel = rxcif - TEGRA30_AHUB_RXCIF_APBIF_RX0;
+पूर्णांक tegra30_ahub_मुक्त_rx_fअगरo(क्रमागत tegra30_ahub_rxcअगर rxcअगर)
+अणु
+	पूर्णांक channel = rxcअगर - TEGRA30_AHUB_RXCIF_APBIF_RX0;
 
 	__clear_bit(channel, ahub->rx_usage);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_free_rx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_मुक्त_rx_fअगरo);
 
-int tegra30_ahub_allocate_tx_fifo(enum tegra30_ahub_txcif *txcif,
-				  char *dmachan, int dmachan_len,
-				  dma_addr_t *fiforeg)
-{
-	int channel;
+पूर्णांक tegra30_ahub_allocate_tx_fअगरo(क्रमागत tegra30_ahub_txcअगर *txcअगर,
+				  अक्षर *dmachan, पूर्णांक dmachan_len,
+				  dma_addr_t *fअगरoreg)
+अणु
+	पूर्णांक channel;
 	u32 reg, val;
-	struct tegra30_ahub_cif_conf cif_conf;
+	काष्ठा tegra30_ahub_cअगर_conf cअगर_conf;
 
 	channel = find_first_zero_bit(ahub->tx_usage,
 				      TEGRA30_AHUB_CHANNEL_CTRL_COUNT);
-	if (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
-		return -EBUSY;
+	अगर (channel >= TEGRA30_AHUB_CHANNEL_CTRL_COUNT)
+		वापस -EBUSY;
 
 	__set_bit(channel, ahub->tx_usage);
 
-	*txcif = TEGRA30_AHUB_TXCIF_APBIF_TX0 + channel;
-	snprintf(dmachan, dmachan_len, "tx%d", channel);
-	*fiforeg = ahub->apbif_addr + TEGRA30_AHUB_CHANNEL_TXFIFO +
+	*txcअगर = TEGRA30_AHUB_TXCIF_APBIF_TX0 + channel;
+	snम_लिखो(dmachan, dmachan_len, "tx%d", channel);
+	*fअगरoreg = ahub->apbअगर_addr + TEGRA30_AHUB_CHANNEL_TXFIFO +
 		   (channel * TEGRA30_AHUB_CHANNEL_TXFIFO_STRIDE);
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val &= ~(TEGRA30_AHUB_CHANNEL_CTRL_TX_THRESHOLD_MASK |
 		 TEGRA30_AHUB_CHANNEL_CTRL_TX_PACK_MASK);
 	val |= (7 << TEGRA30_AHUB_CHANNEL_CTRL_TX_THRESHOLD_SHIFT) |
 	       TEGRA30_AHUB_CHANNEL_CTRL_TX_PACK_EN |
 	       TEGRA30_AHUB_CHANNEL_CTRL_TX_PACK_16;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	cif_conf.threshold = 0;
-	cif_conf.audio_channels = 2;
-	cif_conf.client_channels = 2;
-	cif_conf.audio_bits = TEGRA30_AUDIOCIF_BITS_16;
-	cif_conf.client_bits = TEGRA30_AUDIOCIF_BITS_16;
-	cif_conf.expand = 0;
-	cif_conf.stereo_conv = 0;
-	cif_conf.replicate = 0;
-	cif_conf.direction = TEGRA30_AUDIOCIF_DIRECTION_TX;
-	cif_conf.truncate = 0;
-	cif_conf.mono_conv = 0;
+	cअगर_conf.threshold = 0;
+	cअगर_conf.audio_channels = 2;
+	cअगर_conf.client_channels = 2;
+	cअगर_conf.audio_bits = TEGRA30_AUDIOCIF_BITS_16;
+	cअगर_conf.client_bits = TEGRA30_AUDIOCIF_BITS_16;
+	cअगर_conf.expand = 0;
+	cअगर_conf.stereo_conv = 0;
+	cअगर_conf.replicate = 0;
+	cअगर_conf.direction = TEGRA30_AUDIOCIF_सूचीECTION_TX;
+	cअगर_conf.truncate = 0;
+	cअगर_conf.mono_conv = 0;
 
 	reg = TEGRA30_AHUB_CIF_TX_CTRL +
 	      (channel * TEGRA30_AHUB_CIF_TX_CTRL_STRIDE);
-	ahub->soc_data->set_audio_cif(ahub->regmap_apbif, reg, &cif_conf);
+	ahub->soc_data->set_audio_cअगर(ahub->regmap_apbअगर, reg, &cअगर_conf);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_allocate_tx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_allocate_tx_fअगरo);
 
-int tegra30_ahub_enable_tx_fifo(enum tegra30_ahub_txcif txcif)
-{
-	int channel = txcif - TEGRA30_AHUB_TXCIF_APBIF_TX0;
-	int reg, val;
+पूर्णांक tegra30_ahub_enable_tx_fअगरo(क्रमागत tegra30_ahub_txcअगर txcअगर)
+अणु
+	पूर्णांक channel = txcअगर - TEGRA30_AHUB_TXCIF_APBIF_TX0;
+	पूर्णांक reg, val;
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val |= TEGRA30_AHUB_CHANNEL_CTRL_TX_EN;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_enable_tx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_enable_tx_fअगरo);
 
-int tegra30_ahub_disable_tx_fifo(enum tegra30_ahub_txcif txcif)
-{
-	int channel = txcif - TEGRA30_AHUB_TXCIF_APBIF_TX0;
-	int reg, val;
+पूर्णांक tegra30_ahub_disable_tx_fअगरo(क्रमागत tegra30_ahub_txcअगर txcअगर)
+अणु
+	पूर्णांक channel = txcअगर - TEGRA30_AHUB_TXCIF_APBIF_TX0;
+	पूर्णांक reg, val;
 
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_CHANNEL_CTRL +
 	      (channel * TEGRA30_AHUB_CHANNEL_CTRL_STRIDE);
-	val = tegra30_apbif_read(reg);
+	val = tegra30_apbअगर_पढ़ो(reg);
 	val &= ~TEGRA30_AHUB_CHANNEL_CTRL_TX_EN;
-	tegra30_apbif_write(reg, val);
+	tegra30_apbअगर_ग_लिखो(reg, val);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_disable_tx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_disable_tx_fअगरo);
 
-int tegra30_ahub_free_tx_fifo(enum tegra30_ahub_txcif txcif)
-{
-	int channel = txcif - TEGRA30_AHUB_TXCIF_APBIF_TX0;
+पूर्णांक tegra30_ahub_मुक्त_tx_fअगरo(क्रमागत tegra30_ahub_txcअगर txcअगर)
+अणु
+	पूर्णांक channel = txcअगर - TEGRA30_AHUB_TXCIF_APBIF_TX0;
 
 	__clear_bit(channel, ahub->tx_usage);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_free_tx_fifo);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_मुक्त_tx_fअगरo);
 
-int tegra30_ahub_set_rx_cif_source(enum tegra30_ahub_rxcif rxcif,
-				   enum tegra30_ahub_txcif txcif)
-{
-	int channel = rxcif - TEGRA30_AHUB_RXCIF_APBIF_RX0;
-	int reg;
+पूर्णांक tegra30_ahub_set_rx_cअगर_source(क्रमागत tegra30_ahub_rxcअगर rxcअगर,
+				   क्रमागत tegra30_ahub_txcअगर txcअगर)
+अणु
+	पूर्णांक channel = rxcअगर - TEGRA30_AHUB_RXCIF_APBIF_RX0;
+	पूर्णांक reg;
 
-	pm_runtime_get_sync(ahub->dev);
-
-	reg = TEGRA30_AHUB_AUDIO_RX +
-	      (channel * TEGRA30_AHUB_AUDIO_RX_STRIDE);
-	tegra30_audio_write(reg, 1 << txcif);
-
-	pm_runtime_put(ahub->dev);
-
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_set_rx_cif_source);
-
-int tegra30_ahub_unset_rx_cif_source(enum tegra30_ahub_rxcif rxcif)
-{
-	int channel = rxcif - TEGRA30_AHUB_RXCIF_APBIF_RX0;
-	int reg;
-
-	pm_runtime_get_sync(ahub->dev);
+	pm_runसमय_get_sync(ahub->dev);
 
 	reg = TEGRA30_AHUB_AUDIO_RX +
 	      (channel * TEGRA30_AHUB_AUDIO_RX_STRIDE);
-	tegra30_audio_write(reg, 0);
+	tegra30_audio_ग_लिखो(reg, 1 << txcअगर);
 
-	pm_runtime_put(ahub->dev);
+	pm_runसमय_put(ahub->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_unset_rx_cif_source);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_set_rx_cअगर_source);
 
-static const struct reset_control_bulk_data tegra30_ahub_resets_data[] = {
-	{ "d_audio" },
-	{ "apbif" },
-	{ "i2s0" },
-	{ "i2s1" },
-	{ "i2s2" },
-	{ "i2s3" },
-	{ "i2s4" },
-	{ "dam0" },
-	{ "dam1" },
-	{ "dam2" },
-	{ "spdif" },
-	{ "amx" }, /* Tegra114+ */
-	{ "adx" }, /* Tegra114+ */
-	{ "amx1" }, /* Tegra124 */
-	{ "adx1" }, /* Tegra124 */
-	{ "afc0" }, /* Tegra124 */
-	{ "afc1" }, /* Tegra124 */
-	{ "afc2" }, /* Tegra124 */
-	{ "afc3" }, /* Tegra124 */
-	{ "afc4" }, /* Tegra124 */
-	{ "afc5" }, /* Tegra124 */
-};
+पूर्णांक tegra30_ahub_unset_rx_cअगर_source(क्रमागत tegra30_ahub_rxcअगर rxcअगर)
+अणु
+	पूर्णांक channel = rxcअगर - TEGRA30_AHUB_RXCIF_APBIF_RX0;
+	पूर्णांक reg;
 
-#define LAST_REG(name) \
+	pm_runसमय_get_sync(ahub->dev);
+
+	reg = TEGRA30_AHUB_AUDIO_RX +
+	      (channel * TEGRA30_AHUB_AUDIO_RX_STRIDE);
+	tegra30_audio_ग_लिखो(reg, 0);
+
+	pm_runसमय_put(ahub->dev);
+
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_unset_rx_cअगर_source);
+
+अटल स्थिर काष्ठा reset_control_bulk_data tegra30_ahub_resets_data[] = अणु
+	अणु "d_audio" पूर्ण,
+	अणु "apbif" पूर्ण,
+	अणु "i2s0" पूर्ण,
+	अणु "i2s1" पूर्ण,
+	अणु "i2s2" पूर्ण,
+	अणु "i2s3" पूर्ण,
+	अणु "i2s4" पूर्ण,
+	अणु "dam0" पूर्ण,
+	अणु "dam1" पूर्ण,
+	अणु "dam2" पूर्ण,
+	अणु "spdif" पूर्ण,
+	अणु "amx" पूर्ण, /* Tegra114+ */
+	अणु "adx" पूर्ण, /* Tegra114+ */
+	अणु "amx1" पूर्ण, /* Tegra124 */
+	अणु "adx1" पूर्ण, /* Tegra124 */
+	अणु "afc0" पूर्ण, /* Tegra124 */
+	अणु "afc1" पूर्ण, /* Tegra124 */
+	अणु "afc2" पूर्ण, /* Tegra124 */
+	अणु "afc3" पूर्ण, /* Tegra124 */
+	अणु "afc4" पूर्ण, /* Tegra124 */
+	अणु "afc5" पूर्ण, /* Tegra124 */
+पूर्ण;
+
+#घोषणा LAST_REG(name) \
 	(TEGRA30_AHUB_##name + \
 	 (TEGRA30_AHUB_##name##_STRIDE * TEGRA30_AHUB_##name##_COUNT) - 4)
 
-#define REG_IN_ARRAY(reg, name) \
+#घोषणा REG_IN_ARRAY(reg, name) \
 	((reg >= TEGRA30_AHUB_##name) && \
 	 (reg <= LAST_REG(name) && \
 	 (!((reg - TEGRA30_AHUB_##name) % TEGRA30_AHUB_##name##_STRIDE))))
 
-static bool tegra30_ahub_apbif_wr_rd_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TEGRA30_AHUB_CONFIG_LINK_CTRL:
-	case TEGRA30_AHUB_MISC_CTRL:
-	case TEGRA30_AHUB_APBDMA_LIVE_STATUS:
-	case TEGRA30_AHUB_I2S_LIVE_STATUS:
-	case TEGRA30_AHUB_SPDIF_LIVE_STATUS:
-	case TEGRA30_AHUB_I2S_INT_MASK:
-	case TEGRA30_AHUB_DAM_INT_MASK:
-	case TEGRA30_AHUB_SPDIF_INT_MASK:
-	case TEGRA30_AHUB_APBIF_INT_MASK:
-	case TEGRA30_AHUB_I2S_INT_STATUS:
-	case TEGRA30_AHUB_DAM_INT_STATUS:
-	case TEGRA30_AHUB_SPDIF_INT_STATUS:
-	case TEGRA30_AHUB_APBIF_INT_STATUS:
-	case TEGRA30_AHUB_I2S_INT_SOURCE:
-	case TEGRA30_AHUB_DAM_INT_SOURCE:
-	case TEGRA30_AHUB_SPDIF_INT_SOURCE:
-	case TEGRA30_AHUB_APBIF_INT_SOURCE:
-	case TEGRA30_AHUB_I2S_INT_SET:
-	case TEGRA30_AHUB_DAM_INT_SET:
-	case TEGRA30_AHUB_SPDIF_INT_SET:
-	case TEGRA30_AHUB_APBIF_INT_SET:
-		return true;
-	default:
-		break;
-	}
+अटल bool tegra30_ahub_apbअगर_wr_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TEGRA30_AHUB_CONFIG_LINK_CTRL:
+	हाल TEGRA30_AHUB_MISC_CTRL:
+	हाल TEGRA30_AHUB_APBDMA_LIVE_STATUS:
+	हाल TEGRA30_AHUB_I2S_LIVE_STATUS:
+	हाल TEGRA30_AHUB_SPDIF_LIVE_STATUS:
+	हाल TEGRA30_AHUB_I2S_INT_MASK:
+	हाल TEGRA30_AHUB_DAM_INT_MASK:
+	हाल TEGRA30_AHUB_SPDIF_INT_MASK:
+	हाल TEGRA30_AHUB_APBIF_INT_MASK:
+	हाल TEGRA30_AHUB_I2S_INT_STATUS:
+	हाल TEGRA30_AHUB_DAM_INT_STATUS:
+	हाल TEGRA30_AHUB_SPDIF_INT_STATUS:
+	हाल TEGRA30_AHUB_APBIF_INT_STATUS:
+	हाल TEGRA30_AHUB_I2S_INT_SOURCE:
+	हाल TEGRA30_AHUB_DAM_INT_SOURCE:
+	हाल TEGRA30_AHUB_SPDIF_INT_SOURCE:
+	हाल TEGRA30_AHUB_APBIF_INT_SOURCE:
+	हाल TEGRA30_AHUB_I2S_INT_SET:
+	हाल TEGRA30_AHUB_DAM_INT_SET:
+	हाल TEGRA30_AHUB_SPDIF_INT_SET:
+	हाल TEGRA30_AHUB_APBIF_INT_SET:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (REG_IN_ARRAY(reg, CHANNEL_CTRL) ||
+	अगर (REG_IN_ARRAY(reg, CHANNEL_CTRL) ||
 	    REG_IN_ARRAY(reg, CHANNEL_CLEAR) ||
 	    REG_IN_ARRAY(reg, CHANNEL_STATUS) ||
 	    REG_IN_ARRAY(reg, CHANNEL_TXFIFO) ||
@@ -409,223 +410,223 @@ static bool tegra30_ahub_apbif_wr_rd_reg(struct device *dev, unsigned int reg)
 	    REG_IN_ARRAY(reg, CIF_TX_CTRL) ||
 	    REG_IN_ARRAY(reg, CIF_RX_CTRL) ||
 	    REG_IN_ARRAY(reg, DAM_LIVE_STATUS))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool tegra30_ahub_apbif_volatile_reg(struct device *dev,
-					    unsigned int reg)
-{
-	switch (reg) {
-	case TEGRA30_AHUB_CONFIG_LINK_CTRL:
-	case TEGRA30_AHUB_MISC_CTRL:
-	case TEGRA30_AHUB_APBDMA_LIVE_STATUS:
-	case TEGRA30_AHUB_I2S_LIVE_STATUS:
-	case TEGRA30_AHUB_SPDIF_LIVE_STATUS:
-	case TEGRA30_AHUB_I2S_INT_STATUS:
-	case TEGRA30_AHUB_DAM_INT_STATUS:
-	case TEGRA30_AHUB_SPDIF_INT_STATUS:
-	case TEGRA30_AHUB_APBIF_INT_STATUS:
-	case TEGRA30_AHUB_I2S_INT_SET:
-	case TEGRA30_AHUB_DAM_INT_SET:
-	case TEGRA30_AHUB_SPDIF_INT_SET:
-	case TEGRA30_AHUB_APBIF_INT_SET:
-		return true;
-	default:
-		break;
-	}
+अटल bool tegra30_ahub_apbअगर_अस्थिर_reg(काष्ठा device *dev,
+					    अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TEGRA30_AHUB_CONFIG_LINK_CTRL:
+	हाल TEGRA30_AHUB_MISC_CTRL:
+	हाल TEGRA30_AHUB_APBDMA_LIVE_STATUS:
+	हाल TEGRA30_AHUB_I2S_LIVE_STATUS:
+	हाल TEGRA30_AHUB_SPDIF_LIVE_STATUS:
+	हाल TEGRA30_AHUB_I2S_INT_STATUS:
+	हाल TEGRA30_AHUB_DAM_INT_STATUS:
+	हाल TEGRA30_AHUB_SPDIF_INT_STATUS:
+	हाल TEGRA30_AHUB_APBIF_INT_STATUS:
+	हाल TEGRA30_AHUB_I2S_INT_SET:
+	हाल TEGRA30_AHUB_DAM_INT_SET:
+	हाल TEGRA30_AHUB_SPDIF_INT_SET:
+	हाल TEGRA30_AHUB_APBIF_INT_SET:
+		वापस true;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (REG_IN_ARRAY(reg, CHANNEL_CLEAR) ||
+	अगर (REG_IN_ARRAY(reg, CHANNEL_CLEAR) ||
 	    REG_IN_ARRAY(reg, CHANNEL_STATUS) ||
 	    REG_IN_ARRAY(reg, CHANNEL_TXFIFO) ||
 	    REG_IN_ARRAY(reg, CHANNEL_RXFIFO) ||
 	    REG_IN_ARRAY(reg, DAM_LIVE_STATUS))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool tegra30_ahub_apbif_precious_reg(struct device *dev,
-					    unsigned int reg)
-{
-	if (REG_IN_ARRAY(reg, CHANNEL_TXFIFO) ||
+अटल bool tegra30_ahub_apbअगर_precious_reg(काष्ठा device *dev,
+					    अचिन्हित पूर्णांक reg)
+अणु
+	अगर (REG_IN_ARRAY(reg, CHANNEL_TXFIFO) ||
 	    REG_IN_ARRAY(reg, CHANNEL_RXFIFO))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const struct regmap_config tegra30_ahub_apbif_regmap_config = {
+अटल स्थिर काष्ठा regmap_config tegra30_ahub_apbअगर_regmap_config = अणु
 	.name = "apbif",
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = TEGRA30_AHUB_APBIF_INT_SET,
-	.writeable_reg = tegra30_ahub_apbif_wr_rd_reg,
-	.readable_reg = tegra30_ahub_apbif_wr_rd_reg,
-	.volatile_reg = tegra30_ahub_apbif_volatile_reg,
-	.precious_reg = tegra30_ahub_apbif_precious_reg,
+	.max_रेजिस्टर = TEGRA30_AHUB_APBIF_INT_SET,
+	.ग_लिखोable_reg = tegra30_ahub_apbअगर_wr_rd_reg,
+	.पढ़ोable_reg = tegra30_ahub_apbअगर_wr_rd_reg,
+	.अस्थिर_reg = tegra30_ahub_apbअगर_अस्थिर_reg,
+	.precious_reg = tegra30_ahub_apbअगर_precious_reg,
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static bool tegra30_ahub_ahub_wr_rd_reg(struct device *dev, unsigned int reg)
-{
-	if (REG_IN_ARRAY(reg, AUDIO_RX))
-		return true;
+अटल bool tegra30_ahub_ahub_wr_rd_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर (REG_IN_ARRAY(reg, AUDIO_RX))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static const struct regmap_config tegra30_ahub_ahub_regmap_config = {
+अटल स्थिर काष्ठा regmap_config tegra30_ahub_ahub_regmap_config = अणु
 	.name = "ahub",
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = LAST_REG(AUDIO_RX),
-	.writeable_reg = tegra30_ahub_ahub_wr_rd_reg,
-	.readable_reg = tegra30_ahub_ahub_wr_rd_reg,
+	.max_रेजिस्टर = LAST_REG(AUDIO_RX),
+	.ग_लिखोable_reg = tegra30_ahub_ahub_wr_rd_reg,
+	.पढ़ोable_reg = tegra30_ahub_ahub_wr_rd_reg,
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static struct tegra30_ahub_soc_data soc_data_tegra30 = {
+अटल काष्ठा tegra30_ahub_soc_data soc_data_tegra30 = अणु
 	.num_resets = 11,
-	.set_audio_cif = tegra30_ahub_set_cif,
-};
+	.set_audio_cअगर = tegra30_ahub_set_cअगर,
+पूर्ण;
 
-static struct tegra30_ahub_soc_data soc_data_tegra114 = {
+अटल काष्ठा tegra30_ahub_soc_data soc_data_tegra114 = अणु
 	.num_resets = 13,
-	.set_audio_cif = tegra30_ahub_set_cif,
-};
+	.set_audio_cअगर = tegra30_ahub_set_cअगर,
+पूर्ण;
 
-static struct tegra30_ahub_soc_data soc_data_tegra124 = {
+अटल काष्ठा tegra30_ahub_soc_data soc_data_tegra124 = अणु
 	.num_resets = 21,
-	.set_audio_cif = tegra124_ahub_set_cif,
-};
+	.set_audio_cअगर = tegra124_ahub_set_cअगर,
+पूर्ण;
 
-static const struct of_device_id tegra30_ahub_of_match[] = {
-	{ .compatible = "nvidia,tegra124-ahub", .data = &soc_data_tegra124 },
-	{ .compatible = "nvidia,tegra114-ahub", .data = &soc_data_tegra114 },
-	{ .compatible = "nvidia,tegra30-ahub",  .data = &soc_data_tegra30 },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id tegra30_ahub_of_match[] = अणु
+	अणु .compatible = "nvidia,tegra124-ahub", .data = &soc_data_tegra124 पूर्ण,
+	अणु .compatible = "nvidia,tegra114-ahub", .data = &soc_data_tegra114 पूर्ण,
+	अणु .compatible = "nvidia,tegra30-ahub",  .data = &soc_data_tegra30 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int tegra30_ahub_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	const struct tegra30_ahub_soc_data *soc_data;
-	struct resource *res0;
-	void __iomem *regs_apbif, *regs_ahub;
-	int ret = 0;
+अटल पूर्णांक tegra30_ahub_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर काष्ठा tegra30_ahub_soc_data *soc_data;
+	काष्ठा resource *res0;
+	व्योम __iomem *regs_apbअगर, *regs_ahub;
+	पूर्णांक ret = 0;
 
 	match = of_match_device(tegra30_ahub_of_match, &pdev->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 	soc_data = match->data;
 
-	ahub = devm_kzalloc(&pdev->dev, sizeof(struct tegra30_ahub),
+	ahub = devm_kzalloc(&pdev->dev, माप(काष्ठा tegra30_ahub),
 			    GFP_KERNEL);
-	if (!ahub)
-		return -ENOMEM;
+	अगर (!ahub)
+		वापस -ENOMEM;
 	dev_set_drvdata(&pdev->dev, ahub);
 
-	BUILD_BUG_ON(sizeof(ahub->resets) != sizeof(tegra30_ahub_resets_data));
-	memcpy(ahub->resets, tegra30_ahub_resets_data, sizeof(ahub->resets));
+	BUILD_BUG_ON(माप(ahub->resets) != माप(tegra30_ahub_resets_data));
+	स_नकल(ahub->resets, tegra30_ahub_resets_data, माप(ahub->resets));
 
 	ahub->nresets = soc_data->num_resets;
 	ahub->soc_data = soc_data;
 	ahub->dev = &pdev->dev;
 
-	ahub->clocks[ahub->nclocks++].id = "apbif";
-	ahub->clocks[ahub->nclocks++].id = "d_audio";
+	ahub->घड़ीs[ahub->nघड़ीs++].id = "apbif";
+	ahub->घड़ीs[ahub->nघड़ीs++].id = "d_audio";
 
-	ret = devm_clk_bulk_get(&pdev->dev, ahub->nclocks, ahub->clocks);
-	if (ret)
-		goto err_unset_ahub;
+	ret = devm_clk_bulk_get(&pdev->dev, ahub->nघड़ीs, ahub->घड़ीs);
+	अगर (ret)
+		जाओ err_unset_ahub;
 
 	ret = devm_reset_control_bulk_get_exclusive(&pdev->dev, ahub->nresets,
 						    ahub->resets);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Can't get resets: %d\n", ret);
-		goto err_unset_ahub;
-	}
+		जाओ err_unset_ahub;
+	पूर्ण
 
-	res0 = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	regs_apbif = devm_ioremap_resource(&pdev->dev, res0);
-	if (IS_ERR(regs_apbif)) {
-		ret = PTR_ERR(regs_apbif);
-		goto err_unset_ahub;
-	}
+	res0 = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	regs_apbअगर = devm_ioremap_resource(&pdev->dev, res0);
+	अगर (IS_ERR(regs_apbअगर)) अणु
+		ret = PTR_ERR(regs_apbअगर);
+		जाओ err_unset_ahub;
+	पूर्ण
 
-	ahub->apbif_addr = res0->start;
+	ahub->apbअगर_addr = res0->start;
 
-	ahub->regmap_apbif = devm_regmap_init_mmio(&pdev->dev, regs_apbif,
-					&tegra30_ahub_apbif_regmap_config);
-	if (IS_ERR(ahub->regmap_apbif)) {
+	ahub->regmap_apbअगर = devm_regmap_init_mmio(&pdev->dev, regs_apbअगर,
+					&tegra30_ahub_apbअगर_regmap_config);
+	अगर (IS_ERR(ahub->regmap_apbअगर)) अणु
 		dev_err(&pdev->dev, "apbif regmap init failed\n");
-		ret = PTR_ERR(ahub->regmap_apbif);
-		goto err_unset_ahub;
-	}
-	regcache_cache_only(ahub->regmap_apbif, true);
+		ret = PTR_ERR(ahub->regmap_apbअगर);
+		जाओ err_unset_ahub;
+	पूर्ण
+	regcache_cache_only(ahub->regmap_apbअगर, true);
 
-	regs_ahub = devm_platform_ioremap_resource(pdev, 1);
-	if (IS_ERR(regs_ahub)) {
+	regs_ahub = devm_platक्रमm_ioremap_resource(pdev, 1);
+	अगर (IS_ERR(regs_ahub)) अणु
 		ret = PTR_ERR(regs_ahub);
-		goto err_unset_ahub;
-	}
+		जाओ err_unset_ahub;
+	पूर्ण
 
 	ahub->regmap_ahub = devm_regmap_init_mmio(&pdev->dev, regs_ahub,
 					&tegra30_ahub_ahub_regmap_config);
-	if (IS_ERR(ahub->regmap_ahub)) {
+	अगर (IS_ERR(ahub->regmap_ahub)) अणु
 		dev_err(&pdev->dev, "ahub regmap init failed\n");
 		ret = PTR_ERR(ahub->regmap_ahub);
-		goto err_unset_ahub;
-	}
+		जाओ err_unset_ahub;
+	पूर्ण
 	regcache_cache_only(ahub->regmap_ahub, true);
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	of_platform_populate(pdev->dev.of_node, NULL, NULL, &pdev->dev);
+	of_platक्रमm_populate(pdev->dev.of_node, शून्य, शून्य, &pdev->dev);
 
-	return 0;
+	वापस 0;
 
 err_unset_ahub:
-	ahub = NULL;
+	ahub = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tegra30_ahub_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
+अटल पूर्णांक tegra30_ahub_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
 
-	ahub = NULL;
+	ahub = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tegra30_ahub_pm_ops = {
-	SET_RUNTIME_PM_OPS(tegra30_ahub_runtime_suspend,
-			   tegra30_ahub_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops tegra30_ahub_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(tegra30_ahub_runसमय_suspend,
+			   tegra30_ahub_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static struct platform_driver tegra30_ahub_driver = {
+अटल काष्ठा platक्रमm_driver tegra30_ahub_driver = अणु
 	.probe = tegra30_ahub_probe,
-	.remove = tegra30_ahub_remove,
-	.driver = {
+	.हटाओ = tegra30_ahub_हटाओ,
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = tegra30_ahub_of_match,
 		.pm = &tegra30_ahub_pm_ops,
-	},
-};
-module_platform_driver(tegra30_ahub_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(tegra30_ahub_driver);
 
-void tegra30_ahub_set_cif(struct regmap *regmap, unsigned int reg,
-			  struct tegra30_ahub_cif_conf *conf)
-{
-	unsigned int value;
+व्योम tegra30_ahub_set_cअगर(काष्ठा regmap *regmap, अचिन्हित पूर्णांक reg,
+			  काष्ठा tegra30_ahub_cअगर_conf *conf)
+अणु
+	अचिन्हित पूर्णांक value;
 
 	value = (conf->threshold <<
 			TEGRA30_AUDIOCIF_CTRL_FIFO_THRESHOLD_SHIFT) |
@@ -644,20 +645,20 @@ void tegra30_ahub_set_cif(struct regmap *regmap, unsigned int reg,
 		(conf->replicate <<
 			TEGRA30_AUDIOCIF_CTRL_REPLICATE_SHIFT) |
 		(conf->direction <<
-			TEGRA30_AUDIOCIF_CTRL_DIRECTION_SHIFT) |
+			TEGRA30_AUDIOCIF_CTRL_सूचीECTION_SHIFT) |
 		(conf->truncate <<
 			TEGRA30_AUDIOCIF_CTRL_TRUNCATE_SHIFT) |
 		(conf->mono_conv <<
 			TEGRA30_AUDIOCIF_CTRL_MONO_CONV_SHIFT);
 
-	regmap_write(regmap, reg, value);
-}
-EXPORT_SYMBOL_GPL(tegra30_ahub_set_cif);
+	regmap_ग_लिखो(regmap, reg, value);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra30_ahub_set_cअगर);
 
-void tegra124_ahub_set_cif(struct regmap *regmap, unsigned int reg,
-			   struct tegra30_ahub_cif_conf *conf)
-{
-	unsigned int value;
+व्योम tegra124_ahub_set_cअगर(काष्ठा regmap *regmap, अचिन्हित पूर्णांक reg,
+			   काष्ठा tegra30_ahub_cअगर_conf *conf)
+अणु
+	अचिन्हित पूर्णांक value;
 
 	value = (conf->threshold <<
 			TEGRA124_AUDIOCIF_CTRL_FIFO_THRESHOLD_SHIFT) |
@@ -676,15 +677,15 @@ void tegra124_ahub_set_cif(struct regmap *regmap, unsigned int reg,
 		(conf->replicate <<
 			TEGRA30_AUDIOCIF_CTRL_REPLICATE_SHIFT) |
 		(conf->direction <<
-			TEGRA30_AUDIOCIF_CTRL_DIRECTION_SHIFT) |
+			TEGRA30_AUDIOCIF_CTRL_सूचीECTION_SHIFT) |
 		(conf->truncate <<
 			TEGRA30_AUDIOCIF_CTRL_TRUNCATE_SHIFT) |
 		(conf->mono_conv <<
 			TEGRA30_AUDIOCIF_CTRL_MONO_CONV_SHIFT);
 
-	regmap_write(regmap, reg, value);
-}
-EXPORT_SYMBOL_GPL(tegra124_ahub_set_cif);
+	regmap_ग_लिखो(regmap, reg, value);
+पूर्ण
+EXPORT_SYMBOL_GPL(tegra124_ahub_set_cअगर);
 
 MODULE_AUTHOR("Stephen Warren <swarren@nvidia.com>");
 MODULE_DESCRIPTION("Tegra30 AHUB driver");

@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*     
- *   ALSA Driver for Ego Systems Inc. (ESI) Miditerminal 4140
- *   Copyright (c) 2006 by Matthias König <mk@phasorlab.de>
+ *   ALSA Driver क्रम Ego Systems Inc. (ESI) Miditerminal 4140
+ *   Copyright (c) 2006 by Matthias Kथघnig <mk@phasorlab.de>
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/parport.h>
-#include <linux/spinlock.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/rawmidi.h>
-#include <sound/control.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/control.h>
 
-#define CARD_NAME "Miditerminal 4140"
-#define DRIVER_NAME "MTS64"
-#define PLATFORM_DRIVER "snd_mts64"
+#घोषणा CARD_NAME "Miditerminal 4140"
+#घोषणा DRIVER_NAME "MTS64"
+#घोषणा PLATFORM_DRIVER "snd_mts64"
 
-static int index[SNDRV_CARDS]  = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS]   = SNDRV_DEFAULT_STR;
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल पूर्णांक index[SNDRV_CARDS]  = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS]   = SNDRV_DEFAULT_STR;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-static struct platform_device *platform_devices[SNDRV_CARDS]; 
-static int device_count;
+अटल काष्ठा platक्रमm_device *platक्रमm_devices[SNDRV_CARDS]; 
+अटल पूर्णांक device_count;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for " CARD_NAME " soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for " CARD_NAME " soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable " CARD_NAME " soundcard.");
 
 MODULE_AUTHOR("Matthias Koenig <mk@phasorlab.de>");
@@ -39,46 +40,46 @@ MODULE_DESCRIPTION("ESI Miditerminal 4140");
 MODULE_LICENSE("GPL");
 
 /*********************************************************************
- * Chip specific
+ * Chip specअगरic
  *********************************************************************/
-#define MTS64_NUM_INPUT_PORTS 5
-#define MTS64_NUM_OUTPUT_PORTS 4
-#define MTS64_SMPTE_SUBSTREAM 4
+#घोषणा MTS64_NUM_INPUT_PORTS 5
+#घोषणा MTS64_NUM_OUTPUT_PORTS 4
+#घोषणा MTS64_SMPTE_SUBSTREAM 4
 
-struct mts64 {
+काष्ठा mts64 अणु
 	spinlock_t lock;
-	struct snd_card *card;
-	struct snd_rawmidi *rmidi;
-	struct pardevice *pardev;
-	int open_count;
-	int current_midi_output_port;
-	int current_midi_input_port;
+	काष्ठा snd_card *card;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा pardevice *pardev;
+	पूर्णांक खोलो_count;
+	पूर्णांक current_midi_output_port;
+	पूर्णांक current_midi_input_port;
 	u8 mode[MTS64_NUM_INPUT_PORTS];
-	struct snd_rawmidi_substream *midi_input_substream[MTS64_NUM_INPUT_PORTS];
-	int smpte_switch;
-	u8 time[4]; /* [0]=hh, [1]=mm, [2]=ss, [3]=ff */
+	काष्ठा snd_rawmidi_substream *midi_input_substream[MTS64_NUM_INPUT_PORTS];
+	पूर्णांक smpte_चयन;
+	u8 समय[4]; /* [0]=hh, [1]=mm, [2]=ss, [3]=ff */
 	u8 fps;
-};
+पूर्ण;
 
-static int snd_mts64_free(struct mts64 *mts)
-{
-	kfree(mts);
-	return 0;
-}
+अटल पूर्णांक snd_mts64_मुक्त(काष्ठा mts64 *mts)
+अणु
+	kमुक्त(mts);
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_create(struct snd_card *card,
-			    struct pardevice *pardev,
-			    struct mts64 **rchip)
-{
-	struct mts64 *mts;
+अटल पूर्णांक snd_mts64_create(काष्ठा snd_card *card,
+			    काष्ठा pardevice *pardev,
+			    काष्ठा mts64 **rchip)
+अणु
+	काष्ठा mts64 *mts;
 
-	*rchip = NULL;
+	*rchip = शून्य;
 
-	mts = kzalloc(sizeof(struct mts64), GFP_KERNEL);
-	if (mts == NULL) 
-		return -ENOMEM;
+	mts = kzalloc(माप(काष्ठा mts64), GFP_KERNEL);
+	अगर (mts == शून्य) 
+		वापस -ENOMEM;
 
-	/* Init chip specific data */
+	/* Init chip specअगरic data */
 	spin_lock_init(&mts->lock);
 	mts->card = card;
 	mts->pardev = pardev;
@@ -87,109 +88,109 @@ static int snd_mts64_create(struct snd_card *card,
 
 	*rchip = mts;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*********************************************************************
- * HW register related constants
+ * HW रेजिस्टर related स्थिरants
  *********************************************************************/
 
 /* Status Bits */
-#define MTS64_STAT_BSY             0x80
-#define MTS64_STAT_BIT_SET         0x20  /* readout process, bit is set */
-#define MTS64_STAT_PORT            0x10  /* read byte is a port number */
+#घोषणा MTS64_STAT_BSY             0x80
+#घोषणा MTS64_STAT_BIT_SET         0x20  /* पढ़ोout process, bit is set */
+#घोषणा MTS64_STAT_PORT            0x10  /* पढ़ो byte is a port number */
 
 /* Control Bits */
-#define MTS64_CTL_READOUT          0x08  /* enable readout */
-#define MTS64_CTL_WRITE_CMD        0x06  
-#define MTS64_CTL_WRITE_DATA       0x02  
-#define MTS64_CTL_STROBE           0x01  
+#घोषणा MTS64_CTL_READOUT          0x08  /* enable पढ़ोout */
+#घोषणा MTS64_CTL_WRITE_CMD        0x06  
+#घोषणा MTS64_CTL_WRITE_DATA       0x02  
+#घोषणा MTS64_CTL_STROBE           0x01  
 
 /* Command */
-#define MTS64_CMD_RESET            0xfe
-#define MTS64_CMD_PROBE            0x8f  /* Used in probing procedure */
-#define MTS64_CMD_SMPTE_SET_TIME   0xe8
-#define MTS64_CMD_SMPTE_SET_FPS    0xee
-#define MTS64_CMD_SMPTE_STOP       0xef
-#define MTS64_CMD_SMPTE_FPS_24     0xe3
-#define MTS64_CMD_SMPTE_FPS_25     0xe2
-#define MTS64_CMD_SMPTE_FPS_2997   0xe4 
-#define MTS64_CMD_SMPTE_FPS_30D    0xe1
-#define MTS64_CMD_SMPTE_FPS_30     0xe0
-#define MTS64_CMD_COM_OPEN         0xf8  /* setting the communication mode */
-#define MTS64_CMD_COM_CLOSE1       0xff  /* clearing communication mode */
-#define MTS64_CMD_COM_CLOSE2       0xf5
+#घोषणा MTS64_CMD_RESET            0xfe
+#घोषणा MTS64_CMD_PROBE            0x8f  /* Used in probing procedure */
+#घोषणा MTS64_CMD_SMPTE_SET_TIME   0xe8
+#घोषणा MTS64_CMD_SMPTE_SET_FPS    0xee
+#घोषणा MTS64_CMD_SMPTE_STOP       0xef
+#घोषणा MTS64_CMD_SMPTE_FPS_24     0xe3
+#घोषणा MTS64_CMD_SMPTE_FPS_25     0xe2
+#घोषणा MTS64_CMD_SMPTE_FPS_2997   0xe4 
+#घोषणा MTS64_CMD_SMPTE_FPS_30D    0xe1
+#घोषणा MTS64_CMD_SMPTE_FPS_30     0xe0
+#घोषणा MTS64_CMD_COM_OPEN         0xf8  /* setting the communication mode */
+#घोषणा MTS64_CMD_COM_CLOSE1       0xff  /* clearing communication mode */
+#घोषणा MTS64_CMD_COM_CLOSE2       0xf5
 
 /*********************************************************************
- * Hardware specific functions
+ * Hardware specअगरic functions
  *********************************************************************/
-static void mts64_enable_readout(struct parport *p);
-static void mts64_disable_readout(struct parport *p);
-static int mts64_device_ready(struct parport *p);
-static int mts64_device_init(struct parport *p);
-static int mts64_device_open(struct mts64 *mts);
-static int mts64_device_close(struct mts64 *mts);
-static u8 mts64_map_midi_input(u8 c);
-static int mts64_probe(struct parport *p);
-static u16 mts64_read(struct parport *p);
-static u8 mts64_read_char(struct parport *p);
-static void mts64_smpte_start(struct parport *p,
+अटल व्योम mts64_enable_पढ़ोout(काष्ठा parport *p);
+अटल व्योम mts64_disable_पढ़ोout(काष्ठा parport *p);
+अटल पूर्णांक mts64_device_पढ़ोy(काष्ठा parport *p);
+अटल पूर्णांक mts64_device_init(काष्ठा parport *p);
+अटल पूर्णांक mts64_device_खोलो(काष्ठा mts64 *mts);
+अटल पूर्णांक mts64_device_बंद(काष्ठा mts64 *mts);
+अटल u8 mts64_map_midi_input(u8 c);
+अटल पूर्णांक mts64_probe(काष्ठा parport *p);
+अटल u16 mts64_पढ़ो(काष्ठा parport *p);
+अटल u8 mts64_पढ़ो_अक्षर(काष्ठा parport *p);
+अटल व्योम mts64_smpte_start(काष्ठा parport *p,
 			      u8 hours, u8 minutes,
 			      u8 seconds, u8 frames,
 			      u8 idx);
-static void mts64_smpte_stop(struct parport *p);
-static void mts64_write_command(struct parport *p, u8 c);
-static void mts64_write_data(struct parport *p, u8 c);
-static void mts64_write_midi(struct mts64 *mts, u8 c, int midiport);
+अटल व्योम mts64_smpte_stop(काष्ठा parport *p);
+अटल व्योम mts64_ग_लिखो_command(काष्ठा parport *p, u8 c);
+अटल व्योम mts64_ग_लिखो_data(काष्ठा parport *p, u8 c);
+अटल व्योम mts64_ग_लिखो_midi(काष्ठा mts64 *mts, u8 c, पूर्णांक midiport);
 
 
-/*  Enables the readout procedure
+/*  Enables the पढ़ोout procedure
  *
- *  Before we can read a midi byte from the device, we have to set
+ *  Beक्रमe we can पढ़ो a midi byte from the device, we have to set
  *  bit 3 of control port.
  */
-static void mts64_enable_readout(struct parport *p)
-{
+अटल व्योम mts64_enable_पढ़ोout(काष्ठा parport *p)
+अणु
 	u8 c;
 
-	c = parport_read_control(p);
+	c = parport_पढ़ो_control(p);
 	c |= MTS64_CTL_READOUT;
-	parport_write_control(p, c); 
-}
+	parport_ग_लिखो_control(p, c); 
+पूर्ण
 
-/*  Disables readout 
+/*  Disables पढ़ोout 
  *
- *  Readout is disabled by clearing bit 3 of control
+ *  Reaकरोut is disabled by clearing bit 3 of control
  */
-static void mts64_disable_readout(struct parport *p)
-{
+अटल व्योम mts64_disable_पढ़ोout(काष्ठा parport *p)
+अणु
 	u8 c;
 
-	c = parport_read_control(p);
+	c = parport_पढ़ो_control(p);
 	c &= ~MTS64_CTL_READOUT;
-	parport_write_control(p, c);
-}
+	parport_ग_लिखो_control(p, c);
+पूर्ण
 
-/*  waits for device ready
+/*  रुकोs क्रम device पढ़ोy
  *
- *  Checks if BUSY (Bit 7 of status) is clear
- *  1 device ready
+ *  Checks अगर BUSY (Bit 7 of status) is clear
+ *  1 device पढ़ोy
  *  0 failure
  */
-static int mts64_device_ready(struct parport *p)
-{
-	int i;
+अटल पूर्णांक mts64_device_पढ़ोy(काष्ठा parport *p)
+अणु
+	पूर्णांक i;
 	u8 c;
 
-	for (i = 0; i < 0xffff; ++i) {
-		c = parport_read_status(p);
+	क्रम (i = 0; i < 0xffff; ++i) अणु
+		c = parport_पढ़ो_status(p);
 		c &= MTS64_STAT_BSY;
-		if (c != 0) 
-			return 1;
-	} 
+		अगर (c != 0) 
+			वापस 1;
+	पूर्ण 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*  Init device (LED blinking startup magic)
  *
@@ -197,146 +198,146 @@ static int mts64_device_ready(struct parport *p)
  *  0 init ok
  *  -EIO failure
  */
-static int mts64_device_init(struct parport *p)
-{
-	int i;
+अटल पूर्णांक mts64_device_init(काष्ठा parport *p)
+अणु
+	पूर्णांक i;
 
-	mts64_write_command(p, MTS64_CMD_RESET);
+	mts64_ग_लिखो_command(p, MTS64_CMD_RESET);
 
-	for (i = 0; i < 64; ++i) {
+	क्रम (i = 0; i < 64; ++i) अणु
 		msleep(100);
 
-		if (mts64_probe(p) == 0) {
+		अगर (mts64_probe(p) == 0) अणु
 			/* success */
-			mts64_disable_readout(p);
-			return 0;
-		}
-	}
-	mts64_disable_readout(p);
+			mts64_disable_पढ़ोout(p);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	mts64_disable_पढ़ोout(p);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /* 
  *  Opens the device (set communication mode)
  */
-static int mts64_device_open(struct mts64 *mts)
-{
-	int i;
-	struct parport *p = mts->pardev->port;
+अटल पूर्णांक mts64_device_खोलो(काष्ठा mts64 *mts)
+अणु
+	पूर्णांक i;
+	काष्ठा parport *p = mts->pardev->port;
 
-	for (i = 0; i < 5; ++i)
-		mts64_write_command(p, MTS64_CMD_COM_OPEN);
+	क्रम (i = 0; i < 5; ++i)
+		mts64_ग_लिखो_command(p, MTS64_CMD_COM_OPEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*  
  *  Close device (clear communication mode)
  */
-static int mts64_device_close(struct mts64 *mts)
-{
-	int i;
-	struct parport *p = mts->pardev->port;
+अटल पूर्णांक mts64_device_बंद(काष्ठा mts64 *mts)
+अणु
+	पूर्णांक i;
+	काष्ठा parport *p = mts->pardev->port;
 
-	for (i = 0; i < 5; ++i) {
-		mts64_write_command(p, MTS64_CMD_COM_CLOSE1);
-		mts64_write_command(p, MTS64_CMD_COM_CLOSE2);
-	}
+	क्रम (i = 0; i < 5; ++i) अणु
+		mts64_ग_लिखो_command(p, MTS64_CMD_COM_CLOSE1);
+		mts64_ग_लिखो_command(p, MTS64_CMD_COM_CLOSE2);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*  map hardware port to substream number
  * 
- *  When reading a byte from the device, the device tells us
+ *  When पढ़ोing a byte from the device, the device tells us
  *  on what port the byte is. This HW port has to be mapped to
  *  the midiport (substream number).
  *  substream 0-3 are Midiports 1-4
  *  substream 4 is SMPTE Timecode
- *  The mapping is done by the table:
+ *  The mapping is करोne by the table:
  *  HW | 0 | 1 | 2 | 3 | 4 
  *  SW | 0 | 1 | 4 | 2 | 3
  */
-static u8 mts64_map_midi_input(u8 c)
-{
-	static const u8 map[] = { 0, 1, 4, 2, 3 };
+अटल u8 mts64_map_midi_input(u8 c)
+अणु
+	अटल स्थिर u8 map[] = अणु 0, 1, 4, 2, 3 पूर्ण;
 
-	return map[c];
-}
+	वापस map[c];
+पूर्ण
 
 
-/*  Probe parport for device
+/*  Probe parport क्रम device
  *
  *  Do we have a Miditerminal 4140 on parport? 
  *  Returns:
  *  0       device found
  *  -ENODEV no device
  */
-static int mts64_probe(struct parport *p)
-{
+अटल पूर्णांक mts64_probe(काष्ठा parport *p)
+अणु
 	u8 c;
 
 	mts64_smpte_stop(p);
-	mts64_write_command(p, MTS64_CMD_PROBE);
+	mts64_ग_लिखो_command(p, MTS64_CMD_PROBE);
 
 	msleep(50);
 	
-	c = mts64_read(p);
+	c = mts64_पढ़ो(p);
 
 	c &= 0x00ff;
-	if (c != MTS64_CMD_PROBE) 
-		return -ENODEV;
-	else 
-		return 0;
+	अगर (c != MTS64_CMD_PROBE) 
+		वापस -ENODEV;
+	अन्यथा 
+		वापस 0;
 
-}
+पूर्ण
 
 /*  Read byte incl. status from device
  *
  *  Returns:
  *  data in lower 8 bits and status in upper 8 bits
  */
-static u16 mts64_read(struct parport *p)
-{
+अटल u16 mts64_पढ़ो(काष्ठा parport *p)
+अणु
 	u8 data, status;
 
-	mts64_device_ready(p);
-	mts64_enable_readout(p);
-	status = parport_read_status(p);
-	data = mts64_read_char(p);
-	mts64_disable_readout(p);
+	mts64_device_पढ़ोy(p);
+	mts64_enable_पढ़ोout(p);
+	status = parport_पढ़ो_status(p);
+	data = mts64_पढ़ो_अक्षर(p);
+	mts64_disable_पढ़ोout(p);
 
-	return (status << 8) | data;
-}
+	वापस (status << 8) | data;
+पूर्ण
 
 /*  Read a byte from device
  *
- *  Note, that readout mode has to be enabled.
- *  readout procedure is as follows: 
- *  - Write number of the Bit to read to DATA
+ *  Note, that पढ़ोout mode has to be enabled.
+ *  पढ़ोout procedure is as follows: 
+ *  - Write number of the Bit to पढ़ो to DATA
  *  - Read STATUS
- *  - Bit 5 of STATUS indicates if Bit is set
+ *  - Bit 5 of STATUS indicates अगर Bit is set
  *
  *  Returns:
- *  Byte read from device
+ *  Byte पढ़ो from device
  */
-static u8 mts64_read_char(struct parport *p)
-{
+अटल u8 mts64_पढ़ो_अक्षर(काष्ठा parport *p)
+अणु
 	u8 c = 0;
 	u8 status;
 	u8 i;
 
-	for (i = 0; i < 8; ++i) {
-		parport_write_data(p, i);
+	क्रम (i = 0; i < 8; ++i) अणु
+		parport_ग_लिखो_data(p, i);
 		c >>= 1;
-		status = parport_read_status(p);
-		if (status & MTS64_STAT_BIT_SET) 
+		status = parport_पढ़ो_status(p);
+		अगर (status & MTS64_STAT_BIT_SET) 
 			c |= 0x80;
-	}
+	पूर्ण
 	
-	return c;
-}
+	वापस c;
+पूर्ण
 
 /*  Starts SMPTE Timecode generation
  *
@@ -347,430 +348,430 @@ static u8 mts64_read_char(struct parport *p)
  *  3 30 fps (Drop-frame)
  *  4 30 fps
  */
-static void mts64_smpte_start(struct parport *p,
+अटल व्योम mts64_smpte_start(काष्ठा parport *p,
 			      u8 hours, u8 minutes,
 			      u8 seconds, u8 frames,
 			      u8 idx)
-{
-	static const u8 fps[5] = { MTS64_CMD_SMPTE_FPS_24,
+अणु
+	अटल स्थिर u8 fps[5] = अणु MTS64_CMD_SMPTE_FPS_24,
 			     MTS64_CMD_SMPTE_FPS_25,
 			     MTS64_CMD_SMPTE_FPS_2997, 
 			     MTS64_CMD_SMPTE_FPS_30D,
-			     MTS64_CMD_SMPTE_FPS_30    };
+			     MTS64_CMD_SMPTE_FPS_30    पूर्ण;
 
-	mts64_write_command(p, MTS64_CMD_SMPTE_SET_TIME);
-	mts64_write_command(p, frames);
-	mts64_write_command(p, seconds);
-	mts64_write_command(p, minutes);
-	mts64_write_command(p, hours);
+	mts64_ग_लिखो_command(p, MTS64_CMD_SMPTE_SET_TIME);
+	mts64_ग_लिखो_command(p, frames);
+	mts64_ग_लिखो_command(p, seconds);
+	mts64_ग_लिखो_command(p, minutes);
+	mts64_ग_लिखो_command(p, hours);
 
-	mts64_write_command(p, MTS64_CMD_SMPTE_SET_FPS);
-	mts64_write_command(p, fps[idx]);
-}
+	mts64_ग_लिखो_command(p, MTS64_CMD_SMPTE_SET_FPS);
+	mts64_ग_लिखो_command(p, fps[idx]);
+पूर्ण
 
 /*  Stops SMPTE Timecode generation
  */
-static void mts64_smpte_stop(struct parport *p)
-{
-	mts64_write_command(p, MTS64_CMD_SMPTE_STOP);
-}
+अटल व्योम mts64_smpte_stop(काष्ठा parport *p)
+अणु
+	mts64_ग_लिखो_command(p, MTS64_CMD_SMPTE_STOP);
+पूर्ण
 
 /*  Write a command byte to device
  */
-static void mts64_write_command(struct parport *p, u8 c)
-{
-	mts64_device_ready(p);
+अटल व्योम mts64_ग_लिखो_command(काष्ठा parport *p, u8 c)
+अणु
+	mts64_device_पढ़ोy(p);
 
-	parport_write_data(p, c);
+	parport_ग_लिखो_data(p, c);
 
-	parport_write_control(p, MTS64_CTL_WRITE_CMD);
-	parport_write_control(p, MTS64_CTL_WRITE_CMD | MTS64_CTL_STROBE);
-	parport_write_control(p, MTS64_CTL_WRITE_CMD);
-}
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_CMD);
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_CMD | MTS64_CTL_STROBE);
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_CMD);
+पूर्ण
 
 /*  Write a data byte to device 
  */
-static void mts64_write_data(struct parport *p, u8 c)
-{
-	mts64_device_ready(p);
+अटल व्योम mts64_ग_लिखो_data(काष्ठा parport *p, u8 c)
+अणु
+	mts64_device_पढ़ोy(p);
 
-	parport_write_data(p, c);
+	parport_ग_लिखो_data(p, c);
 
-	parport_write_control(p, MTS64_CTL_WRITE_DATA);
-	parport_write_control(p, MTS64_CTL_WRITE_DATA | MTS64_CTL_STROBE);
-	parport_write_control(p, MTS64_CTL_WRITE_DATA);
-}
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_DATA);
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_DATA | MTS64_CTL_STROBE);
+	parport_ग_लिखो_control(p, MTS64_CTL_WRITE_DATA);
+पूर्ण
 
 /*  Write a MIDI byte to midiport
  *
  *  midiport ranges from 0-3 and maps to Ports 1-4
  *  assumptions: communication mode is on
  */
-static void mts64_write_midi(struct mts64 *mts, u8 c,
-			     int midiport)
-{
-	struct parport *p = mts->pardev->port;
+अटल व्योम mts64_ग_लिखो_midi(काष्ठा mts64 *mts, u8 c,
+			     पूर्णांक midiport)
+अणु
+	काष्ठा parport *p = mts->pardev->port;
 
 	/* check current midiport */
-	if (mts->current_midi_output_port != midiport)
-		mts64_write_command(p, midiport);
+	अगर (mts->current_midi_output_port != midiport)
+		mts64_ग_लिखो_command(p, midiport);
 
-	/* write midi byte */
-	mts64_write_data(p, c);
-}
+	/* ग_लिखो midi byte */
+	mts64_ग_लिखो_data(p, c);
+पूर्ण
 
 /*********************************************************************
  * Control elements
  *********************************************************************/
 
 /* SMPTE Switch */
-#define snd_mts64_ctl_smpte_switch_info		snd_ctl_boolean_mono_info
+#घोषणा snd_mts64_ctl_smpte_चयन_info		snd_ctl_boolean_mono_info
 
-static int snd_mts64_ctl_smpte_switch_get(struct snd_kcontrol* kctl,
-					  struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
+अटल पूर्णांक snd_mts64_ctl_smpte_चयन_get(काष्ठा snd_kcontrol* kctl,
+					  काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
 
 	spin_lock_irq(&mts->lock);
-	uctl->value.integer.value[0] = mts->smpte_switch;
+	uctl->value.पूर्णांकeger.value[0] = mts->smpte_चयन;
 	spin_unlock_irq(&mts->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* smpte_switch is not accessed from IRQ handler, so we just need
+/* smpte_चयन is not accessed from IRQ handler, so we just need
    to protect the HW access */
-static int snd_mts64_ctl_smpte_switch_put(struct snd_kcontrol* kctl,
-					  struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
-	int changed = 0;
-	int val = !!uctl->value.integer.value[0];
+अटल पूर्णांक snd_mts64_ctl_smpte_चयन_put(काष्ठा snd_kcontrol* kctl,
+					  काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
+	पूर्णांक changed = 0;
+	पूर्णांक val = !!uctl->value.पूर्णांकeger.value[0];
 
 	spin_lock_irq(&mts->lock);
-	if (mts->smpte_switch == val)
-		goto __out;
+	अगर (mts->smpte_चयन == val)
+		जाओ __out;
 
 	changed = 1;
-	mts->smpte_switch = val;
-	if (mts->smpte_switch) {
+	mts->smpte_चयन = val;
+	अगर (mts->smpte_चयन) अणु
 		mts64_smpte_start(mts->pardev->port,
-				  mts->time[0], mts->time[1],
-				  mts->time[2], mts->time[3],
+				  mts->समय[0], mts->समय[1],
+				  mts->समय[2], mts->समय[3],
 				  mts->fps);
-	} else {
+	पूर्ण अन्यथा अणु
 		mts64_smpte_stop(mts->pardev->port);
-	}
+	पूर्ण
 __out:
 	spin_unlock_irq(&mts->lock);
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_switch = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_चयन = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Playback Switch",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 0,
-	.info = snd_mts64_ctl_smpte_switch_info,
-	.get  = snd_mts64_ctl_smpte_switch_get,
-	.put  = snd_mts64_ctl_smpte_switch_put
-};
+	.निजी_value = 0,
+	.info = snd_mts64_ctl_smpte_चयन_info,
+	.get  = snd_mts64_ctl_smpte_चयन_get,
+	.put  = snd_mts64_ctl_smpte_चयन_put
+पूर्ण;
 
 /* Time */
-static int snd_mts64_ctl_smpte_time_h_info(struct snd_kcontrol *kctl,
-					   struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_mts64_ctl_smpte_समय_h_info(काष्ठा snd_kcontrol *kctl,
+					   काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 23;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 23;
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_ctl_smpte_time_f_info(struct snd_kcontrol *kctl,
-					   struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_mts64_ctl_smpte_समय_f_info(काष्ठा snd_kcontrol *kctl,
+					   काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 99;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 99;
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_ctl_smpte_time_info(struct snd_kcontrol *kctl,
-					 struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक snd_mts64_ctl_smpte_समय_info(काष्ठा snd_kcontrol *kctl,
+					 काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 59;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = 59;
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_ctl_smpte_time_get(struct snd_kcontrol *kctl,
-					struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
-	int idx = kctl->private_value;
+अटल पूर्णांक snd_mts64_ctl_smpte_समय_get(काष्ठा snd_kcontrol *kctl,
+					काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
+	पूर्णांक idx = kctl->निजी_value;
 
 	spin_lock_irq(&mts->lock);
-	uctl->value.integer.value[0] = mts->time[idx];
+	uctl->value.पूर्णांकeger.value[0] = mts->समय[idx];
 	spin_unlock_irq(&mts->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_ctl_smpte_time_put(struct snd_kcontrol *kctl,
-					struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
-	int idx = kctl->private_value;
-	unsigned int time = uctl->value.integer.value[0] % 60;
-	int changed = 0;
+अटल पूर्णांक snd_mts64_ctl_smpte_समय_put(काष्ठा snd_kcontrol *kctl,
+					काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
+	पूर्णांक idx = kctl->निजी_value;
+	अचिन्हित पूर्णांक समय = uctl->value.पूर्णांकeger.value[0] % 60;
+	पूर्णांक changed = 0;
 
 	spin_lock_irq(&mts->lock);
-	if (mts->time[idx] != time) {
+	अगर (mts->समय[idx] != समय) अणु
 		changed = 1;
-		mts->time[idx] = time;
-	}
+		mts->समय[idx] = समय;
+	पूर्ण
 	spin_unlock_irq(&mts->lock);
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_time_hours = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_समय_hours = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Time Hours",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 0,
-	.info = snd_mts64_ctl_smpte_time_h_info,
-	.get  = snd_mts64_ctl_smpte_time_get,
-	.put  = snd_mts64_ctl_smpte_time_put
-};
+	.निजी_value = 0,
+	.info = snd_mts64_ctl_smpte_समय_h_info,
+	.get  = snd_mts64_ctl_smpte_समय_get,
+	.put  = snd_mts64_ctl_smpte_समय_put
+पूर्ण;
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_time_minutes = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_समय_minutes = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Time Minutes",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 1,
-	.info = snd_mts64_ctl_smpte_time_info,
-	.get  = snd_mts64_ctl_smpte_time_get,
-	.put  = snd_mts64_ctl_smpte_time_put
-};
+	.निजी_value = 1,
+	.info = snd_mts64_ctl_smpte_समय_info,
+	.get  = snd_mts64_ctl_smpte_समय_get,
+	.put  = snd_mts64_ctl_smpte_समय_put
+पूर्ण;
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_time_seconds = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_समय_seconds = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Time Seconds",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 2,
-	.info = snd_mts64_ctl_smpte_time_info,
-	.get  = snd_mts64_ctl_smpte_time_get,
-	.put  = snd_mts64_ctl_smpte_time_put
-};
+	.निजी_value = 2,
+	.info = snd_mts64_ctl_smpte_समय_info,
+	.get  = snd_mts64_ctl_smpte_समय_get,
+	.put  = snd_mts64_ctl_smpte_समय_put
+पूर्ण;
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_time_frames = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_समय_frames = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Time Frames",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 3,
-	.info = snd_mts64_ctl_smpte_time_f_info,
-	.get  = snd_mts64_ctl_smpte_time_get,
-	.put  = snd_mts64_ctl_smpte_time_put
-};
+	.निजी_value = 3,
+	.info = snd_mts64_ctl_smpte_समय_f_info,
+	.get  = snd_mts64_ctl_smpte_समय_get,
+	.put  = snd_mts64_ctl_smpte_समय_put
+पूर्ण;
 
 /* FPS */
-static int snd_mts64_ctl_smpte_fps_info(struct snd_kcontrol *kctl,
-					struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[5] = {
+अटल पूर्णांक snd_mts64_ctl_smpte_fps_info(काष्ठा snd_kcontrol *kctl,
+					काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[5] = अणु
 		"24", "25", "29.97", "30D", "30"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 1, 5, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 1, 5, texts);
+पूर्ण
 
-static int snd_mts64_ctl_smpte_fps_get(struct snd_kcontrol *kctl,
-				       struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
+अटल पूर्णांक snd_mts64_ctl_smpte_fps_get(काष्ठा snd_kcontrol *kctl,
+				       काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
 
 	spin_lock_irq(&mts->lock);
-	uctl->value.enumerated.item[0] = mts->fps;
+	uctl->value.क्रमागतerated.item[0] = mts->fps;
 	spin_unlock_irq(&mts->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_ctl_smpte_fps_put(struct snd_kcontrol *kctl,
-				       struct snd_ctl_elem_value *uctl)
-{
-	struct mts64 *mts = snd_kcontrol_chip(kctl);
-	int changed = 0;
+अटल पूर्णांक snd_mts64_ctl_smpte_fps_put(काष्ठा snd_kcontrol *kctl,
+				       काष्ठा snd_ctl_elem_value *uctl)
+अणु
+	काष्ठा mts64 *mts = snd_kcontrol_chip(kctl);
+	पूर्णांक changed = 0;
 
-	if (uctl->value.enumerated.item[0] >= 5)
-		return -EINVAL;
+	अगर (uctl->value.क्रमागतerated.item[0] >= 5)
+		वापस -EINVAL;
 	spin_lock_irq(&mts->lock);
-	if (mts->fps != uctl->value.enumerated.item[0]) {
+	अगर (mts->fps != uctl->value.क्रमागतerated.item[0]) अणु
 		changed = 1;
-		mts->fps = uctl->value.enumerated.item[0];
-	}
+		mts->fps = uctl->value.क्रमागतerated.item[0];
+	पूर्ण
 	spin_unlock_irq(&mts->lock);
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static const struct snd_kcontrol_new mts64_ctl_smpte_fps = {
-	.iface = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
+अटल स्थिर काष्ठा snd_kcontrol_new mts64_ctl_smpte_fps = अणु
+	.अगरace = SNDRV_CTL_ELEM_IFACE_RAWMIDI,
 	.name  = "SMPTE Fps",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.private_value = 0,
+	.निजी_value = 0,
 	.info  = snd_mts64_ctl_smpte_fps_info,
 	.get   = snd_mts64_ctl_smpte_fps_get,
 	.put   = snd_mts64_ctl_smpte_fps_put
-};
+पूर्ण;
 
 
-static int snd_mts64_ctl_create(struct snd_card *card,
-				struct mts64 *mts)
-{
-	int err, i;
-	static const struct snd_kcontrol_new *control[] = {
-		&mts64_ctl_smpte_switch,
-		&mts64_ctl_smpte_time_hours,
-		&mts64_ctl_smpte_time_minutes,
-		&mts64_ctl_smpte_time_seconds,
-		&mts64_ctl_smpte_time_frames,
+अटल पूर्णांक snd_mts64_ctl_create(काष्ठा snd_card *card,
+				काष्ठा mts64 *mts)
+अणु
+	पूर्णांक err, i;
+	अटल स्थिर काष्ठा snd_kcontrol_new *control[] = अणु
+		&mts64_ctl_smpte_चयन,
+		&mts64_ctl_smpte_समय_hours,
+		&mts64_ctl_smpte_समय_minutes,
+		&mts64_ctl_smpte_समय_seconds,
+		&mts64_ctl_smpte_समय_frames,
 		&mts64_ctl_smpte_fps,
-	        NULL  };
+	        शून्य  पूर्ण;
 
-	for (i = 0; control[i]; ++i) {
+	क्रम (i = 0; control[i]; ++i) अणु
 		err = snd_ctl_add(card, snd_ctl_new1(control[i], mts));
-		if (err < 0) {
-			snd_printd("Cannot create control: %s\n", 
+		अगर (err < 0) अणु
+			snd_prपूर्णांकd("Cannot create control: %s\n", 
 				   control[i]->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*********************************************************************
  * Rawmidi
  *********************************************************************/
-#define MTS64_MODE_INPUT_TRIGGERED 0x01
+#घोषणा MTS64_MODE_INPUT_TRIGGERED 0x01
 
-static int snd_mts64_rawmidi_open(struct snd_rawmidi_substream *substream)
-{
-	struct mts64 *mts = substream->rmidi->private_data;
+अटल पूर्णांक snd_mts64_rawmidi_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा mts64 *mts = substream->rmidi->निजी_data;
 
-	if (mts->open_count == 0) {
-		/* We don't need a spinlock here, because this is just called 
-		   if the device has not been opened before. 
+	अगर (mts->खोलो_count == 0) अणु
+		/* We करोn't need a spinlock here, because this is just called 
+		   अगर the device has not been खोलोed beक्रमe. 
 		   So there aren't any IRQs from the device */
-		mts64_device_open(mts);
+		mts64_device_खोलो(mts);
 
 		msleep(50);
-	}
-	++(mts->open_count);
+	पूर्ण
+	++(mts->खोलो_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_mts64_rawmidi_close(struct snd_rawmidi_substream *substream)
-{
-	struct mts64 *mts = substream->rmidi->private_data;
-	unsigned long flags;
+अटल पूर्णांक snd_mts64_rawmidi_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा mts64 *mts = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
-	--(mts->open_count);
-	if (mts->open_count == 0) {
+	--(mts->खोलो_count);
+	अगर (mts->खोलो_count == 0) अणु
 		/* We need the spinlock_irqsave here because we can still
-		   have IRQs at this point */
+		   have IRQs at this poपूर्णांक */
 		spin_lock_irqsave(&mts->lock, flags);
-		mts64_device_close(mts);
+		mts64_device_बंद(mts);
 		spin_unlock_irqrestore(&mts->lock, flags);
 
 		msleep(500);
 
-	} else if (mts->open_count < 0)
-		mts->open_count = 0;
+	पूर्ण अन्यथा अगर (mts->खोलो_count < 0)
+		mts->खोलो_count = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_mts64_rawmidi_output_trigger(struct snd_rawmidi_substream *substream,
-					     int up)
-{
-	struct mts64 *mts = substream->rmidi->private_data;
+अटल व्योम snd_mts64_rawmidi_output_trigger(काष्ठा snd_rawmidi_substream *substream,
+					     पूर्णांक up)
+अणु
+	काष्ठा mts64 *mts = substream->rmidi->निजी_data;
 	u8 data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mts->lock, flags);
-	while (snd_rawmidi_transmit_peek(substream, &data, 1) == 1) {
-		mts64_write_midi(mts, data, substream->number+1);
+	जबतक (snd_rawmidi_transmit_peek(substream, &data, 1) == 1) अणु
+		mts64_ग_लिखो_midi(mts, data, substream->number+1);
 		snd_rawmidi_transmit_ack(substream, 1);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&mts->lock, flags);
-}
+पूर्ण
 
-static void snd_mts64_rawmidi_input_trigger(struct snd_rawmidi_substream *substream,
-					    int up)
-{
-	struct mts64 *mts = substream->rmidi->private_data;
-	unsigned long flags;
+अटल व्योम snd_mts64_rawmidi_input_trigger(काष्ठा snd_rawmidi_substream *substream,
+					    पूर्णांक up)
+अणु
+	काष्ठा mts64 *mts = substream->rmidi->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&mts->lock, flags);
-	if (up)
+	अगर (up)
 		mts->mode[substream->number] |= MTS64_MODE_INPUT_TRIGGERED;
-	else
+	अन्यथा
  		mts->mode[substream->number] &= ~MTS64_MODE_INPUT_TRIGGERED;
 	
 	spin_unlock_irqrestore(&mts->lock, flags);
-}
+पूर्ण
 
-static const struct snd_rawmidi_ops snd_mts64_rawmidi_output_ops = {
-	.open    = snd_mts64_rawmidi_open,
-	.close   = snd_mts64_rawmidi_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_mts64_rawmidi_output_ops = अणु
+	.खोलो    = snd_mts64_rawmidi_खोलो,
+	.बंद   = snd_mts64_rawmidi_बंद,
 	.trigger = snd_mts64_rawmidi_output_trigger
-};
+पूर्ण;
 
-static const struct snd_rawmidi_ops snd_mts64_rawmidi_input_ops = {
-	.open    = snd_mts64_rawmidi_open,
-	.close   = snd_mts64_rawmidi_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops snd_mts64_rawmidi_input_ops = अणु
+	.खोलो    = snd_mts64_rawmidi_खोलो,
+	.बंद   = snd_mts64_rawmidi_बंद,
 	.trigger = snd_mts64_rawmidi_input_trigger
-};
+पूर्ण;
 
 /* Create and initialize the rawmidi component */
-static int snd_mts64_rawmidi_create(struct snd_card *card)
-{
-	struct mts64 *mts = card->private_data;
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *substream;
-	struct list_head *list;
-	int err;
+अटल पूर्णांक snd_mts64_rawmidi_create(काष्ठा snd_card *card)
+अणु
+	काष्ठा mts64 *mts = card->निजी_data;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *substream;
+	काष्ठा list_head *list;
+	पूर्णांक err;
 	
 	err = snd_rawmidi_new(card, CARD_NAME, 0, 
 			      MTS64_NUM_OUTPUT_PORTS, 
 			      MTS64_NUM_INPUT_PORTS, 
 			      &rmidi);
-	if (err < 0) 
-		return err;
+	अगर (err < 0) 
+		वापस err;
 
-	rmidi->private_data = mts;
-	strcpy(rmidi->name, CARD_NAME);
+	rmidi->निजी_data = mts;
+	म_नकल(rmidi->name, CARD_NAME);
 	rmidi->info_flags = SNDRV_RAWMIDI_INFO_OUTPUT |
 		            SNDRV_RAWMIDI_INFO_INPUT |
                             SNDRV_RAWMIDI_INFO_DUPLEX;
 
 	mts->rmidi = rmidi;
 
-	/* register rawmidi ops */
+	/* रेजिस्टर rawmidi ops */
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT, 
 			    &snd_mts64_rawmidi_output_ops);
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_INPUT, 
@@ -778,279 +779,279 @@ static int snd_mts64_rawmidi_create(struct snd_card *card)
 
 	/* name substreams */
 	/* output */
-	list_for_each(list, 
-		      &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams) {
-		substream = list_entry(list, struct snd_rawmidi_substream, list);
-		sprintf(substream->name,
+	list_क्रम_each(list, 
+		      &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams) अणु
+		substream = list_entry(list, काष्ठा snd_rawmidi_substream, list);
+		प्र_लिखो(substream->name,
 			"Miditerminal %d", substream->number+1);
-	}
+	पूर्ण
 	/* input */
-	list_for_each(list, 
-		      &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams) {
-		substream = list_entry(list, struct snd_rawmidi_substream, list);
+	list_क्रम_each(list, 
+		      &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams) अणु
+		substream = list_entry(list, काष्ठा snd_rawmidi_substream, list);
 		mts->midi_input_substream[substream->number] = substream;
-		switch(substream->number) {
-		case MTS64_SMPTE_SUBSTREAM:
-			strcpy(substream->name, "Miditerminal SMPTE");
-			break;
-		default:
-			sprintf(substream->name,
+		चयन(substream->number) अणु
+		हाल MTS64_SMPTE_SUBSTREAM:
+			म_नकल(substream->name, "Miditerminal SMPTE");
+			अवरोध;
+		शेष:
+			प्र_लिखो(substream->name,
 				"Miditerminal %d", substream->number+1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* controls */
 	err = snd_mts64_ctl_create(card, mts);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*********************************************************************
  * parport stuff
  *********************************************************************/
-static void snd_mts64_interrupt(void *private)
-{
-	struct mts64 *mts = ((struct snd_card*)private)->private_data;
+अटल व्योम snd_mts64_पूर्णांकerrupt(व्योम *निजी)
+अणु
+	काष्ठा mts64 *mts = ((काष्ठा snd_card*)निजी)->निजी_data;
 	u16 ret;
 	u8 status, data;
-	struct snd_rawmidi_substream *substream;
+	काष्ठा snd_rawmidi_substream *substream;
 
 	spin_lock(&mts->lock);
-	ret = mts64_read(mts->pardev->port);
+	ret = mts64_पढ़ो(mts->pardev->port);
 	data = ret & 0x00ff;
 	status = ret >> 8;
 
-	if (status & MTS64_STAT_PORT) {
+	अगर (status & MTS64_STAT_PORT) अणु
 		mts->current_midi_input_port = mts64_map_midi_input(data);
-	} else {
-		if (mts->current_midi_input_port == -1) 
-			goto __out;
+	पूर्ण अन्यथा अणु
+		अगर (mts->current_midi_input_port == -1) 
+			जाओ __out;
 		substream = mts->midi_input_substream[mts->current_midi_input_port];
-		if (mts->mode[substream->number] & MTS64_MODE_INPUT_TRIGGERED)
+		अगर (mts->mode[substream->number] & MTS64_MODE_INPUT_TRIGGERED)
 			snd_rawmidi_receive(substream, &data, 1);
-	}
+	पूर्ण
 __out:
 	spin_unlock(&mts->lock);
-}
+पूर्ण
 
-static void snd_mts64_attach(struct parport *p)
-{
-	struct platform_device *device;
+अटल व्योम snd_mts64_attach(काष्ठा parport *p)
+अणु
+	काष्ठा platक्रमm_device *device;
 
-	device = platform_device_alloc(PLATFORM_DRIVER, device_count);
-	if (!device)
-		return;
+	device = platक्रमm_device_alloc(PLATFORM_DRIVER, device_count);
+	अगर (!device)
+		वापस;
 
-	/* Temporary assignment to forward the parport */
-	platform_set_drvdata(device, p);
+	/* Temporary assignment to क्रमward the parport */
+	platक्रमm_set_drvdata(device, p);
 
-	if (platform_device_add(device) < 0) {
-		platform_device_put(device);
-		return;
-	}
+	अगर (platक्रमm_device_add(device) < 0) अणु
+		platक्रमm_device_put(device);
+		वापस;
+	पूर्ण
 
-	/* Since we dont get the return value of probe
-	 * We need to check if device probing succeeded or not */
-	if (!platform_get_drvdata(device)) {
-		platform_device_unregister(device);
-		return;
-	}
+	/* Since we करोnt get the वापस value of probe
+	 * We need to check अगर device probing succeeded or not */
+	अगर (!platक्रमm_get_drvdata(device)) अणु
+		platक्रमm_device_unरेजिस्टर(device);
+		वापस;
+	पूर्ण
 
-	/* register device in global table */
-	platform_devices[device_count] = device;
+	/* रेजिस्टर device in global table */
+	platक्रमm_devices[device_count] = device;
 	device_count++;
-}
+पूर्ण
 
-static void snd_mts64_detach(struct parport *p)
-{
-	/* nothing to do here */
-}
+अटल व्योम snd_mts64_detach(काष्ठा parport *p)
+अणु
+	/* nothing to करो here */
+पूर्ण
 
-static int snd_mts64_dev_probe(struct pardevice *pardev)
-{
-	if (strcmp(pardev->name, DRIVER_NAME))
-		return -ENODEV;
+अटल पूर्णांक snd_mts64_dev_probe(काष्ठा pardevice *pardev)
+अणु
+	अगर (म_भेद(pardev->name, DRIVER_NAME))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct parport_driver mts64_parport_driver = {
+अटल काष्ठा parport_driver mts64_parport_driver = अणु
 	.name		= "mts64",
 	.probe		= snd_mts64_dev_probe,
 	.match_port	= snd_mts64_attach,
 	.detach		= snd_mts64_detach,
 	.devmodel	= true,
-};
+पूर्ण;
 
 /*********************************************************************
- * platform stuff
+ * platक्रमm stuff
  *********************************************************************/
-static void snd_mts64_card_private_free(struct snd_card *card)
-{
-	struct mts64 *mts = card->private_data;
-	struct pardevice *pardev = mts->pardev;
+अटल व्योम snd_mts64_card_निजी_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा mts64 *mts = card->निजी_data;
+	काष्ठा pardevice *pardev = mts->pardev;
 
-	if (pardev) {
+	अगर (pardev) अणु
 		parport_release(pardev);
-		parport_unregister_device(pardev);
-	}
+		parport_unरेजिस्टर_device(pardev);
+	पूर्ण
 
-	snd_mts64_free(mts);
-}
+	snd_mts64_मुक्त(mts);
+पूर्ण
 
-static int snd_mts64_probe(struct platform_device *pdev)
-{
-	struct pardevice *pardev;
-	struct parport *p;
-	int dev = pdev->id;
-	struct snd_card *card = NULL;
-	struct mts64 *mts = NULL;
-	int err;
-	struct pardev_cb mts64_cb = {
-		.preempt = NULL,
-		.wakeup = NULL,
-		.irq_func = snd_mts64_interrupt,	/* ISR */
+अटल पूर्णांक snd_mts64_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pardevice *pardev;
+	काष्ठा parport *p;
+	पूर्णांक dev = pdev->id;
+	काष्ठा snd_card *card = शून्य;
+	काष्ठा mts64 *mts = शून्य;
+	पूर्णांक err;
+	काष्ठा pardev_cb mts64_cb = अणु
+		.preempt = शून्य,
+		.wakeup = शून्य,
+		.irq_func = snd_mts64_पूर्णांकerrupt,	/* ISR */
 		.flags = PARPORT_DEV_EXCL,		/* flags */
-	};
+	पूर्ण;
 
-	p = platform_get_drvdata(pdev);
-	platform_set_drvdata(pdev, NULL);
+	p = platक्रमm_get_drvdata(pdev);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
-	if (!enable[dev]) 
-		return -ENOENT;
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
+	अगर (!enable[dev]) 
+		वापस -ENOENT;
 
 	err = snd_card_new(&pdev->dev, index[dev], id[dev], THIS_MODULE,
 			   0, &card);
-	if (err < 0) {
-		snd_printd("Cannot create card\n");
-		return err;
-	}
-	strcpy(card->driver, DRIVER_NAME);
-	strcpy(card->shortname, "ESI " CARD_NAME);
-	sprintf(card->longname,  "%s at 0x%lx, irq %i", 
-		card->shortname, p->base, p->irq);
+	अगर (err < 0) अणु
+		snd_prपूर्णांकd("Cannot create card\n");
+		वापस err;
+	पूर्ण
+	म_नकल(card->driver, DRIVER_NAME);
+	म_नकल(card->लघुname, "ESI " CARD_NAME);
+	प्र_लिखो(card->दीर्घname,  "%s at 0x%lx, irq %i", 
+		card->लघुname, p->base, p->irq);
 
-	mts64_cb.private = card;			 /* private */
-	pardev = parport_register_dev_model(p,		 /* port */
+	mts64_cb.निजी = card;			 /* निजी */
+	pardev = parport_रेजिस्टर_dev_model(p,		 /* port */
 					    DRIVER_NAME, /* name */
 					    &mts64_cb,	 /* callbacks */
 					    pdev->id);	 /* device number */
-	if (!pardev) {
-		snd_printd("Cannot register pardevice\n");
+	अगर (!pardev) अणु
+		snd_prपूर्णांकd("Cannot register pardevice\n");
 		err = -EIO;
-		goto __err;
-	}
+		जाओ __err;
+	पूर्ण
 
 	/* claim parport */
-	if (parport_claim(pardev)) {
-		snd_printd("Cannot claim parport 0x%lx\n", pardev->port->base);
+	अगर (parport_claim(pardev)) अणु
+		snd_prपूर्णांकd("Cannot claim parport 0x%lx\n", pardev->port->base);
 		err = -EIO;
-		goto free_pardev;
-	}
+		जाओ मुक्त_pardev;
+	पूर्ण
 
-	if ((err = snd_mts64_create(card, pardev, &mts)) < 0) {
-		snd_printd("Cannot create main component\n");
-		goto release_pardev;
-	}
-	card->private_data = mts;
-	card->private_free = snd_mts64_card_private_free;
+	अगर ((err = snd_mts64_create(card, pardev, &mts)) < 0) अणु
+		snd_prपूर्णांकd("Cannot create main component\n");
+		जाओ release_pardev;
+	पूर्ण
+	card->निजी_data = mts;
+	card->निजी_मुक्त = snd_mts64_card_निजी_मुक्त;
 
 	err = mts64_probe(p);
-	if (err) {
+	अगर (err) अणु
 		err = -EIO;
-		goto __err;
-	}
+		जाओ __err;
+	पूर्ण
 	
-	if ((err = snd_mts64_rawmidi_create(card)) < 0) {
-		snd_printd("Creating Rawmidi component failed\n");
-		goto __err;
-	}
+	अगर ((err = snd_mts64_rawmidi_create(card)) < 0) अणु
+		snd_prपूर्णांकd("Creating Rawmidi component failed\n");
+		जाओ __err;
+	पूर्ण
 
 	/* init device */
-	if ((err = mts64_device_init(p)) < 0)
-		goto __err;
+	अगर ((err = mts64_device_init(p)) < 0)
+		जाओ __err;
 
-	platform_set_drvdata(pdev, card);
+	platक्रमm_set_drvdata(pdev, card);
 
-	/* At this point card will be usable */
-	if ((err = snd_card_register(card)) < 0) {
-		snd_printd("Cannot register card\n");
-		goto __err;
-	}
+	/* At this poपूर्णांक card will be usable */
+	अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
+		snd_prपूर्णांकd("Cannot register card\n");
+		जाओ __err;
+	पूर्ण
 
-	snd_printk(KERN_INFO "ESI Miditerminal 4140 on 0x%lx\n", p->base);
-	return 0;
+	snd_prपूर्णांकk(KERN_INFO "ESI Miditerminal 4140 on 0x%lx\n", p->base);
+	वापस 0;
 
 release_pardev:
 	parport_release(pardev);
-free_pardev:
-	parport_unregister_device(pardev);
+मुक्त_pardev:
+	parport_unरेजिस्टर_device(pardev);
 __err:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static int snd_mts64_remove(struct platform_device *pdev)
-{
-	struct snd_card *card = platform_get_drvdata(pdev);
+अटल पूर्णांक snd_mts64_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_card *card = platक्रमm_get_drvdata(pdev);
 
-	if (card)
-		snd_card_free(card);
+	अगर (card)
+		snd_card_मुक्त(card);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver snd_mts64_driver = {
+अटल काष्ठा platक्रमm_driver snd_mts64_driver = अणु
 	.probe  = snd_mts64_probe,
-	.remove = snd_mts64_remove,
-	.driver = {
+	.हटाओ = snd_mts64_हटाओ,
+	.driver = अणु
 		.name = PLATFORM_DRIVER,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /*********************************************************************
  * module init stuff
  *********************************************************************/
-static void snd_mts64_unregister_all(void)
-{
-	int i;
+अटल व्योम snd_mts64_unरेजिस्टर_all(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SNDRV_CARDS; ++i) {
-		if (platform_devices[i]) {
-			platform_device_unregister(platform_devices[i]);
-			platform_devices[i] = NULL;
-		}
-	}		
-	platform_driver_unregister(&snd_mts64_driver);
-	parport_unregister_driver(&mts64_parport_driver);
-}
+	क्रम (i = 0; i < SNDRV_CARDS; ++i) अणु
+		अगर (platक्रमm_devices[i]) अणु
+			platक्रमm_device_unरेजिस्टर(platक्रमm_devices[i]);
+			platक्रमm_devices[i] = शून्य;
+		पूर्ण
+	पूर्ण		
+	platक्रमm_driver_unरेजिस्टर(&snd_mts64_driver);
+	parport_unरेजिस्टर_driver(&mts64_parport_driver);
+पूर्ण
 
-static int __init snd_mts64_module_init(void)
-{
-	int err;
+अटल पूर्णांक __init snd_mts64_module_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if ((err = platform_driver_register(&snd_mts64_driver)) < 0)
-		return err;
+	अगर ((err = platक्रमm_driver_रेजिस्टर(&snd_mts64_driver)) < 0)
+		वापस err;
 
-	if (parport_register_driver(&mts64_parport_driver) != 0) {
-		platform_driver_unregister(&snd_mts64_driver);
-		return -EIO;
-	}
+	अगर (parport_रेजिस्टर_driver(&mts64_parport_driver) != 0) अणु
+		platक्रमm_driver_unरेजिस्टर(&snd_mts64_driver);
+		वापस -EIO;
+	पूर्ण
 
-	if (device_count == 0) {
-		snd_mts64_unregister_all();
-		return -ENODEV;
-	}
+	अगर (device_count == 0) अणु
+		snd_mts64_unरेजिस्टर_all();
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit snd_mts64_module_exit(void)
-{
-	snd_mts64_unregister_all();
-}
+अटल व्योम __निकास snd_mts64_module_निकास(व्योम)
+अणु
+	snd_mts64_unरेजिस्टर_all();
+पूर्ण
 
 module_init(snd_mts64_module_init);
-module_exit(snd_mts64_module_exit);
+module_निकास(snd_mts64_module_निकास);

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_PARISC_RUNWAY_H
-#define ASM_PARISC_RUNWAY_H
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_PARISC_RUNWAY_H
+#घोषणा ASM_PARISC_RUNWAY_H
+#अगर_घोषित __KERNEL__
 
 /* declared in arch/parisc/kernel/setup.c */
-extern struct proc_dir_entry * proc_runway_root;
+बाह्य काष्ठा proc_dir_entry * proc_runway_root;
 
-#define RUNWAY_STATUS	0x10
-#define RUNWAY_DEBUG	0x40
+#घोषणा RUNWAY_STATUS	0x10
+#घोषणा RUNWAY_DEBUG	0x40
 
-#endif /* __KERNEL__ */
-#endif /* ASM_PARISC_RUNWAY_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* ASM_PARISC_RUNWAY_H */

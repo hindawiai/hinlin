@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Kernel module to match AH parameters. */
 /* (C) 1999-2000 Yon Uriarte <yon@astaro.de>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/in.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ip.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/in.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ip.h>
 
-#include <linux/netfilter_ipv4/ipt_ah.h>
-#include <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv4/ipt_ah.h>
+#समावेश <linux/netfilter/x_tables.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Yon Uriarte <yon@astaro.de>");
 MODULE_DESCRIPTION("Xtables: IPv4 IPsec-AH SPI match");
 
-/* Returns 1 if the spi is matched by the range, 0 otherwise */
-static inline bool
-spi_match(u_int32_t min, u_int32_t max, u_int32_t spi, bool invert)
-{
+/* Returns 1 अगर the spi is matched by the range, 0 otherwise */
+अटल अंतरभूत bool
+spi_match(u_पूर्णांक32_t min, u_पूर्णांक32_t max, u_पूर्णांक32_t spi, bool invert)
+अणु
 	bool r;
 	pr_debug("spi_match:%c 0x%x <= 0x%x <= 0x%x\n",
 		 invert ? '!' : ' ', min, spi, max);
 	r = (spi >= min && spi <= max) ^ invert;
 	pr_debug(" result %s\n", r ? "PASS" : "FAILED");
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static bool ah_mt(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	struct ip_auth_hdr _ahdr;
-	const struct ip_auth_hdr *ah;
-	const struct ipt_ah *ahinfo = par->matchinfo;
+अटल bool ah_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	काष्ठा ip_auth_hdr _ahdr;
+	स्थिर काष्ठा ip_auth_hdr *ah;
+	स्थिर काष्ठा ipt_ah *ahinfo = par->matchinfo;
 
 	/* Must not be a fragment. */
-	if (par->fragoff != 0)
-		return false;
+	अगर (par->fragoff != 0)
+		वापस false;
 
-	ah = skb_header_pointer(skb, par->thoff, sizeof(_ahdr), &_ahdr);
-	if (ah == NULL) {
+	ah = skb_header_poपूर्णांकer(skb, par->thoff, माप(_ahdr), &_ahdr);
+	अगर (ah == शून्य) अणु
 		/* We've been asked to examine this packet, and we
 		 * can't.  Hence, no choice but to drop.
 		 */
 		pr_debug("Dropping evil AH tinygram.\n");
 		par->hotdrop = true;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return spi_match(ahinfo->spis[0], ahinfo->spis[1],
+	वापस spi_match(ahinfo->spis[0], ahinfo->spis[1],
 			 ntohl(ah->spi),
 			 !!(ahinfo->invflags & IPT_AH_INV_SPI));
-}
+पूर्ण
 
-static int ah_mt_check(const struct xt_mtchk_param *par)
-{
-	const struct ipt_ah *ahinfo = par->matchinfo;
+अटल पूर्णांक ah_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
+अणु
+	स्थिर काष्ठा ipt_ah *ahinfo = par->matchinfo;
 
-	/* Must specify no unknown invflags */
-	if (ahinfo->invflags & ~IPT_AH_INV_MASK) {
+	/* Must specअगरy no unknown invflags */
+	अगर (ahinfo->invflags & ~IPT_AH_INV_MASK) अणु
 		pr_debug("unknown flags %X\n", ahinfo->invflags);
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct xt_match ah_mt_reg __read_mostly = {
+अटल काष्ठा xt_match ah_mt_reg __पढ़ो_mostly = अणु
 	.name		= "ah",
 	.family		= NFPROTO_IPV4,
 	.match		= ah_mt,
-	.matchsize	= sizeof(struct ipt_ah),
+	.matchsize	= माप(काष्ठा ipt_ah),
 	.proto		= IPPROTO_AH,
 	.checkentry	= ah_mt_check,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ah_mt_init(void)
-{
-	return xt_register_match(&ah_mt_reg);
-}
+अटल पूर्णांक __init ah_mt_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_match(&ah_mt_reg);
+पूर्ण
 
-static void __exit ah_mt_exit(void)
-{
-	xt_unregister_match(&ah_mt_reg);
-}
+अटल व्योम __निकास ah_mt_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_match(&ah_mt_reg);
+पूर्ण
 
 module_init(ah_mt_init);
-module_exit(ah_mt_exit);
+module_निकास(ah_mt_निकास);

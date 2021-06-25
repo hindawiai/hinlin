@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * das16.c
  * DAS16 driver
@@ -6,7 +7,7 @@
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
  * Copyright (C) 2000 Chris R. Baugher <baugher@enteract.com>
- * Copyright (C) 2001,2002 Frank Mori Hess <fmhess@users.sourceforge.net>
+ * Copyright (C) 2001,2002 Frank Mori Hess <fmhess@users.sourceक्रमge.net>
  */
 
 /*
@@ -27,24 +28,24 @@
  * Status: works
  * Updated: 2003-10-12
  *
- * A rewrite of the das16 and das1600 drivers.
+ * A reग_लिखो of the das16 and das1600 drivers.
  *
  * Options:
  *	[0] - base io address
- *	[1] - irq (does nothing, irq is not used anymore)
- *	[2] - dma channel (optional, required for comedi_command support)
- *	[3] - master clock speed in MHz (optional, 1 or 10, ignored if
- *		board can probe clock, defaults to 1)
+ *	[1] - irq (करोes nothing, irq is not used anymore)
+ *	[2] - dma channel (optional, required क्रम comedi_command support)
+ *	[3] - master घड़ी speed in MHz (optional, 1 or 10, ignored अगर
+ *		board can probe घड़ी, शेषs to 1)
  *	[4] - analog input range lowest voltage in microvolts (optional,
- *		only useful if your board does not have software
+ *		only useful अगर your board करोes not have software
  *		programmable gain)
  *	[5] - analog input range highest voltage in microvolts (optional,
- *		only useful if board does not have software programmable
+ *		only useful अगर board करोes not have software programmable
  *		gain)
  *	[6] - analog output range lowest voltage in microvolts (optional)
  *	[7] - analog output range highest voltage in microvolts (optional)
  *
- * Passing a zero for an option is the same as leaving it unspecified.
+ * Passing a zero क्रम an option is the same as leaving it unspecअगरied.
  */
 
 /*
@@ -60,99 +61,99 @@
  * www.measurementcomputing.com
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedidev.h"
+#समावेश "../comedidev.h"
 
-#include "comedi_isadma.h"
-#include "comedi_8254.h"
-#include "8255.h"
+#समावेश "comedi_isadma.h"
+#समावेश "comedi_8254.h"
+#समावेश "8255.h"
 
-#define DAS16_DMA_SIZE 0xff00	/*  size in bytes of allocated dma buffer */
+#घोषणा DAS16_DMA_SIZE 0xff00	/*  size in bytes of allocated dma buffer */
 
 /*
  * Register I/O map
  */
-#define DAS16_TRIG_REG			0x00
-#define DAS16_AI_LSB_REG		0x00
-#define DAS16_AI_MSB_REG		0x01
-#define DAS16_MUX_REG			0x02
-#define DAS16_DIO_REG			0x03
-#define DAS16_AO_LSB_REG(x)		((x) ? 0x06 : 0x04)
-#define DAS16_AO_MSB_REG(x)		((x) ? 0x07 : 0x05)
-#define DAS16_STATUS_REG		0x08
-#define DAS16_STATUS_BUSY		BIT(7)
-#define DAS16_STATUS_UNIPOLAR		BIT(6)
-#define DAS16_STATUS_MUXBIT		BIT(5)
-#define DAS16_STATUS_INT		BIT(4)
-#define DAS16_CTRL_REG			0x09
-#define DAS16_CTRL_INTE			BIT(7)
-#define DAS16_CTRL_IRQ(x)		(((x) & 0x7) << 4)
-#define DAS16_CTRL_DMAE			BIT(2)
-#define DAS16_CTRL_PACING_MASK		(3 << 0)
-#define DAS16_CTRL_INT_PACER		(3 << 0)
-#define DAS16_CTRL_EXT_PACER		(2 << 0)
-#define DAS16_CTRL_SOFT_PACER		(0 << 0)
-#define DAS16_PACER_REG			0x0a
-#define DAS16_PACER_BURST_LEN(x)	(((x) & 0xf) << 4)
-#define DAS16_PACER_CTR0		BIT(1)
-#define DAS16_PACER_TRIG0		BIT(0)
-#define DAS16_GAIN_REG			0x0b
-#define DAS16_TIMER_BASE_REG		0x0c	/* to 0x0f */
+#घोषणा DAS16_TRIG_REG			0x00
+#घोषणा DAS16_AI_LSB_REG		0x00
+#घोषणा DAS16_AI_MSB_REG		0x01
+#घोषणा DAS16_MUX_REG			0x02
+#घोषणा DAS16_DIO_REG			0x03
+#घोषणा DAS16_AO_LSB_REG(x)		((x) ? 0x06 : 0x04)
+#घोषणा DAS16_AO_MSB_REG(x)		((x) ? 0x07 : 0x05)
+#घोषणा DAS16_STATUS_REG		0x08
+#घोषणा DAS16_STATUS_BUSY		BIT(7)
+#घोषणा DAS16_STATUS_UNIPOLAR		BIT(6)
+#घोषणा DAS16_STATUS_MUXBIT		BIT(5)
+#घोषणा DAS16_STATUS_INT		BIT(4)
+#घोषणा DAS16_CTRL_REG			0x09
+#घोषणा DAS16_CTRL_INTE			BIT(7)
+#घोषणा DAS16_CTRL_IRQ(x)		(((x) & 0x7) << 4)
+#घोषणा DAS16_CTRL_DMAE			BIT(2)
+#घोषणा DAS16_CTRL_PACING_MASK		(3 << 0)
+#घोषणा DAS16_CTRL_INT_PACER		(3 << 0)
+#घोषणा DAS16_CTRL_EXT_PACER		(2 << 0)
+#घोषणा DAS16_CTRL_SOFT_PACER		(0 << 0)
+#घोषणा DAS16_PACER_REG			0x0a
+#घोषणा DAS16_PACER_BURST_LEN(x)	(((x) & 0xf) << 4)
+#घोषणा DAS16_PACER_CTR0		BIT(1)
+#घोषणा DAS16_PACER_TRIG0		BIT(0)
+#घोषणा DAS16_GAIN_REG			0x0b
+#घोषणा DAS16_TIMER_BASE_REG		0x0c	/* to 0x0f */
 
-#define DAS1600_CONV_REG		0x404
-#define DAS1600_CONV_DISABLE		BIT(6)
-#define DAS1600_BURST_REG		0x405
-#define DAS1600_BURST_VAL		BIT(6)
-#define DAS1600_ENABLE_REG		0x406
-#define DAS1600_ENABLE_VAL		BIT(6)
-#define DAS1600_STATUS_REG		0x407
-#define DAS1600_STATUS_BME		BIT(6)
-#define DAS1600_STATUS_ME		BIT(5)
-#define DAS1600_STATUS_CD		BIT(4)
-#define DAS1600_STATUS_WS		BIT(1)
-#define DAS1600_STATUS_CLK_10MHZ	BIT(0)
+#घोषणा DAS1600_CONV_REG		0x404
+#घोषणा DAS1600_CONV_DISABLE		BIT(6)
+#घोषणा DAS1600_BURST_REG		0x405
+#घोषणा DAS1600_BURST_VAL		BIT(6)
+#घोषणा DAS1600_ENABLE_REG		0x406
+#घोषणा DAS1600_ENABLE_VAL		BIT(6)
+#घोषणा DAS1600_STATUS_REG		0x407
+#घोषणा DAS1600_STATUS_BME		BIT(6)
+#घोषणा DAS1600_STATUS_ME		BIT(5)
+#घोषणा DAS1600_STATUS_CD		BIT(4)
+#घोषणा DAS1600_STATUS_WS		BIT(1)
+#घोषणा DAS1600_STATUS_CLK_10MHZ	BIT(0)
 
-static const struct comedi_lrange range_das1x01_bip = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_das1x01_bip = अणु
+	4, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(1),
 		BIP_RANGE(0.1),
 		BIP_RANGE(0.01)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das1x01_unip = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_das1x01_unip = अणु
+	4, अणु
 		UNI_RANGE(10),
 		UNI_RANGE(1),
 		UNI_RANGE(0.1),
 		UNI_RANGE(0.01)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das1x02_bip = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_das1x02_bip = अणु
+	4, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
 		BIP_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das1x02_unip = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_das1x02_unip = अणु
+	4, अणु
 		UNI_RANGE(10),
 		UNI_RANGE(5),
 		UNI_RANGE(2.5),
 		UNI_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das16jr = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange range_das16jr = अणु
+	9, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
@@ -162,11 +163,11 @@ static const struct comedi_lrange range_das16jr = {
 		UNI_RANGE(5),
 		UNI_RANGE(2.5),
 		UNI_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_das16jr_16 = {
-	8, {
+अटल स्थिर काष्ठा comedi_lrange range_das16jr_16 = अणु
+	8, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
@@ -175,61 +176,61 @@ static const struct comedi_lrange range_das16jr_16 = {
 		UNI_RANGE(5),
 		UNI_RANGE(2.5),
 		UNI_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const int das16jr_gainlist[] = { 8, 0, 1, 2, 3, 4, 5, 6, 7 };
-static const int das16jr_16_gainlist[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-static const int das1600_gainlist[] = { 0, 1, 2, 3 };
+अटल स्थिर पूर्णांक das16jr_gainlist[] = अणु 8, 0, 1, 2, 3, 4, 5, 6, 7 पूर्ण;
+अटल स्थिर पूर्णांक das16jr_16_gainlist[] = अणु 0, 1, 2, 3, 4, 5, 6, 7 पूर्ण;
+अटल स्थिर पूर्णांक das1600_gainlist[] = अणु 0, 1, 2, 3 पूर्ण;
 
-enum {
+क्रमागत अणु
 	das16_pg_none = 0,
 	das16_pg_16jr,
 	das16_pg_16jr_16,
 	das16_pg_1601,
 	das16_pg_1602,
-};
+पूर्ण;
 
-static const int *const das16_gainlists[] = {
-	NULL,
+अटल स्थिर पूर्णांक *स्थिर das16_gainlists[] = अणु
+	शून्य,
 	das16jr_gainlist,
 	das16jr_16_gainlist,
 	das1600_gainlist,
 	das1600_gainlist,
-};
+पूर्ण;
 
-static const struct comedi_lrange *const das16_ai_uni_lranges[] = {
+अटल स्थिर काष्ठा comedi_lrange *स्थिर das16_ai_uni_lranges[] = अणु
 	&range_unknown,
 	&range_das16jr,
 	&range_das16jr_16,
 	&range_das1x01_unip,
 	&range_das1x02_unip,
-};
+पूर्ण;
 
-static const struct comedi_lrange *const das16_ai_bip_lranges[] = {
+अटल स्थिर काष्ठा comedi_lrange *स्थिर das16_ai_bip_lranges[] = अणु
 	&range_unknown,
 	&range_das16jr,
 	&range_das16jr_16,
 	&range_das1x01_bip,
 	&range_das1x02_bip,
-};
+पूर्ण;
 
-struct das16_board {
-	const char *name;
-	unsigned int ai_maxdata;
-	unsigned int ai_speed;	/*  max conversion speed in nanosec */
-	unsigned int ai_pg;
-	unsigned int has_ao:1;
-	unsigned int has_8255:1;
+काष्ठा das16_board अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक ai_maxdata;
+	अचिन्हित पूर्णांक ai_speed;	/*  max conversion speed in nanosec */
+	अचिन्हित पूर्णांक ai_pg;
+	अचिन्हित पूर्णांक has_ao:1;
+	अचिन्हित पूर्णांक has_8255:1;
 
-	unsigned int i8255_offset;
+	अचिन्हित पूर्णांक i8255_offset;
 
-	unsigned int size;
-	unsigned int id;
-};
+	अचिन्हित पूर्णांक size;
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-static const struct das16_board das16_boards[] = {
-	{
+अटल स्थिर काष्ठा das16_board das16_boards[] = अणु
+	अणु
 		.name		= "das-16",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 15000,
@@ -239,7 +240,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x10,
 		.size		= 0x14,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-16g",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 15000,
@@ -249,7 +250,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x10,
 		.size		= 0x14,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-16f",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 8500,
@@ -259,7 +260,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x10,
 		.size		= 0x14,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das16",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 20000,
@@ -269,7 +270,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x10,
 		.size		= 0x14,
 		.id		= 0x80,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das16/f",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
@@ -279,35 +280,35 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x10,
 		.size		= 0x14,
 		.id		= 0x80,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das16/jr",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 7692,
 		.ai_pg		= das16_pg_16jr,
 		.size		= 0x10,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "pc104-das16jr",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 3300,
 		.ai_pg		= das16_pg_16jr,
 		.size		= 0x10,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das16jr/16",
 		.ai_maxdata	= 0xffff,
 		.ai_speed	= 10000,
 		.ai_pg		= das16_pg_16jr_16,
 		.size		= 0x10,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "pc104-das16jr/16",
 		.ai_maxdata	= 0xffff,
 		.ai_speed	= 10000,
 		.ai_pg		= das16_pg_16jr_16,
 		.size		= 0x10,
 		.id		= 0x00,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1201",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 20000,
@@ -316,7 +317,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0x20,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1202",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
@@ -325,21 +326,21 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0x20,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1401",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
 		.ai_pg		= das16_pg_1601,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1402",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
 		.ai_pg		= das16_pg_1602,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1601",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
@@ -349,7 +350,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "das-1602",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
@@ -359,28 +360,28 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1401/12",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 6250,
 		.ai_pg		= das16_pg_1601,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1402/12",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 6250,
 		.ai_pg		= das16_pg_1602,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1402/16",
 		.ai_maxdata	= 0xffff,
 		.ai_speed	= 10000,
 		.ai_pg		= das16_pg_1602,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1601/12",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 6250,
@@ -390,7 +391,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1602/12",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 10000,
@@ -400,7 +401,7 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das1602/16",
 		.ai_maxdata	= 0xffff,
 		.ai_speed	= 10000,
@@ -410,206 +411,206 @@ static const struct das16_board das16_boards[] = {
 		.i8255_offset	= 0x400,
 		.size		= 0x408,
 		.id		= 0xc0,
-	}, {
+	पूर्ण, अणु
 		.name		= "cio-das16/330",
 		.ai_maxdata	= 0x0fff,
 		.ai_speed	= 3030,
 		.ai_pg		= das16_pg_16jr,
 		.size		= 0x14,
 		.id		= 0xf0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Period for timer interrupt in jiffies.  It's a function
+ * Period क्रम समयr पूर्णांकerrupt in jअगरfies.  It's a function
  * to deal with possibility of dynamic HZ patches
  */
-static inline int timer_period(void)
-{
-	return HZ / 20;
-}
+अटल अंतरभूत पूर्णांक समयr_period(व्योम)
+अणु
+	वापस HZ / 20;
+पूर्ण
 
-struct das16_private_struct {
-	struct comedi_isadma	*dma;
-	struct comedi_device	*dev;
-	unsigned int		clockbase;
-	unsigned int		ctrl_reg;
-	unsigned int		divisor1;
-	unsigned int		divisor2;
-	struct timer_list	timer;
-	unsigned long		extra_iobase;
-	unsigned int		can_burst:1;
-	unsigned int		timer_running:1;
-};
+काष्ठा das16_निजी_काष्ठा अणु
+	काष्ठा comedi_isadma	*dma;
+	काष्ठा comedi_device	*dev;
+	अचिन्हित पूर्णांक		घड़ीbase;
+	अचिन्हित पूर्णांक		ctrl_reg;
+	अचिन्हित पूर्णांक		भागisor1;
+	अचिन्हित पूर्णांक		भागisor2;
+	काष्ठा समयr_list	समयr;
+	अचिन्हित दीर्घ		extra_iobase;
+	अचिन्हित पूर्णांक		can_burst:1;
+	अचिन्हित पूर्णांक		समयr_running:1;
+पूर्ण;
 
-static void das16_ai_setup_dma(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       unsigned int unread_samples)
-{
-	struct das16_private_struct *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
-	unsigned int max_samples = comedi_bytes_to_samples(s, desc->maxsize);
-	unsigned int nsamples;
+अटल व्योम das16_ai_setup_dma(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       अचिन्हित पूर्णांक unपढ़ो_samples)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
+	अचिन्हित पूर्णांक max_samples = comedi_bytes_to_samples(s, desc->maxsize);
+	अचिन्हित पूर्णांक nsamples;
 
 	/*
 	 * Determine dma size based on the buffer size plus the number of
-	 * unread samples and the number of samples remaining in the command.
+	 * unपढ़ो samples and the number of samples reमुख्यing in the command.
 	 */
-	nsamples = comedi_nsamples_left(s, max_samples + unread_samples);
-	if (nsamples > unread_samples) {
-		nsamples -= unread_samples;
+	nsamples = comedi_nsamples_left(s, max_samples + unपढ़ो_samples);
+	अगर (nsamples > unपढ़ो_samples) अणु
+		nsamples -= unपढ़ो_samples;
 		desc->size = comedi_samples_to_bytes(s, nsamples);
 		comedi_isadma_program(desc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void das16_interrupt(struct comedi_device *dev)
-{
-	struct das16_private_struct *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
-	unsigned long spin_flags;
-	unsigned int residue;
-	unsigned int nbytes;
-	unsigned int nsamples;
+अटल व्योम das16_पूर्णांकerrupt(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
+	अचिन्हित दीर्घ spin_flags;
+	अचिन्हित पूर्णांक residue;
+	अचिन्हित पूर्णांक nbytes;
+	अचिन्हित पूर्णांक nsamples;
 
 	spin_lock_irqsave(&dev->spinlock, spin_flags);
-	if (!(devpriv->ctrl_reg & DAS16_CTRL_DMAE)) {
+	अगर (!(devpriv->ctrl_reg & DAS16_CTRL_DMAE)) अणु
 		spin_unlock_irqrestore(&dev->spinlock, spin_flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * The pc104-das16jr (at least) has problems if the dma
-	 * transfer is interrupted in the middle of transferring
+	 * The pc104-das16jr (at least) has problems अगर the dma
+	 * transfer is पूर्णांकerrupted in the middle of transferring
 	 * a 16 bit sample.
 	 */
 	residue = comedi_isadma_disable_on_sample(desc->chan,
 						  comedi_bytes_per_sample(s));
 
-	/* figure out how many samples to read */
-	if (residue > desc->size) {
+	/* figure out how many samples to पढ़ो */
+	अगर (residue > desc->size) अणु
 		dev_err(dev->class_dev, "residue > transfer size!\n");
 		async->events |= COMEDI_CB_ERROR;
 		nbytes = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		nbytes = desc->size - residue;
-	}
+	पूर्ण
 	nsamples = comedi_bytes_to_samples(s, nbytes);
 
-	/* restart DMA if more samples are needed */
-	if (nsamples) {
+	/* restart DMA अगर more samples are needed */
+	अगर (nsamples) अणु
 		dma->cur_dma = 1 - dma->cur_dma;
 		das16_ai_setup_dma(dev, s, nsamples);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&dev->spinlock, spin_flags);
 
-	comedi_buf_write_samples(s, desc->virt_addr, nsamples);
+	comedi_buf_ग_लिखो_samples(s, desc->virt_addr, nsamples);
 
-	if (cmd->stop_src == TRIG_COUNT && async->scans_done >= cmd->stop_arg)
+	अगर (cmd->stop_src == TRIG_COUNT && async->scans_करोne >= cmd->stop_arg)
 		async->events |= COMEDI_CB_EOA;
 
 	comedi_handle_events(dev, s);
-}
+पूर्ण
 
-static void das16_timer_interrupt(struct timer_list *t)
-{
-	struct das16_private_struct *devpriv = from_timer(devpriv, t, timer);
-	struct comedi_device *dev = devpriv->dev;
-	unsigned long flags;
+अटल व्योम das16_समयr_पूर्णांकerrupt(काष्ठा समयr_list *t)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = from_समयr(devpriv, t, समयr);
+	काष्ठा comedi_device *dev = devpriv->dev;
+	अचिन्हित दीर्घ flags;
 
-	das16_interrupt(dev);
+	das16_पूर्णांकerrupt(dev);
 
 	spin_lock_irqsave(&dev->spinlock, flags);
-	if (devpriv->timer_running)
-		mod_timer(&devpriv->timer, jiffies + timer_period());
+	अगर (devpriv->समयr_running)
+		mod_समयr(&devpriv->समयr, jअगरfies + समयr_period());
 	spin_unlock_irqrestore(&dev->spinlock, flags);
-}
+पूर्ण
 
-static void das16_ai_set_mux_range(struct comedi_device *dev,
-				   unsigned int first_chan,
-				   unsigned int last_chan,
-				   unsigned int range)
-{
-	const struct das16_board *board = dev->board_ptr;
+अटल व्योम das16_ai_set_mux_range(काष्ठा comedi_device *dev,
+				   अचिन्हित पूर्णांक first_chan,
+				   अचिन्हित पूर्णांक last_chan,
+				   अचिन्हित पूर्णांक range)
+अणु
+	स्थिर काष्ठा das16_board *board = dev->board_ptr;
 
 	/* set multiplexer */
 	outb(first_chan | (last_chan << 4), dev->iobase + DAS16_MUX_REG);
 
-	/* some boards do not have programmable gain */
-	if (board->ai_pg == das16_pg_none)
-		return;
+	/* some boards करो not have programmable gain */
+	अगर (board->ai_pg == das16_pg_none)
+		वापस;
 
 	/*
-	 * Set gain (this is also burst rate register but according to
-	 * computer boards manual, burst rate does nothing, even on
+	 * Set gain (this is also burst rate रेजिस्टर but according to
+	 * computer boards manual, burst rate करोes nothing, even on
 	 * keithley cards).
 	 */
 	outb((das16_gainlists[board->ai_pg])[range],
 	     dev->iobase + DAS16_GAIN_REG);
-}
+पूर्ण
 
-static int das16_ai_check_chanlist(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   struct comedi_cmd *cmd)
-{
-	unsigned int chan0 = CR_CHAN(cmd->chanlist[0]);
-	unsigned int range0 = CR_RANGE(cmd->chanlist[0]);
-	int i;
+अटल पूर्णांक das16_ai_check_chanlist(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   काष्ठा comedi_cmd *cmd)
+अणु
+	अचिन्हित पूर्णांक chan0 = CR_CHAN(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक range0 = CR_RANGE(cmd->chanlist[0]);
+	पूर्णांक i;
 
-	for (i = 1; i < cmd->chanlist_len; i++) {
-		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
-		unsigned int range = CR_RANGE(cmd->chanlist[i]);
+	क्रम (i = 1; i < cmd->chanlist_len; i++) अणु
+		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
+		अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[i]);
 
-		if (chan != ((chan0 + i) % s->n_chan)) {
+		अगर (chan != ((chan0 + i) % s->n_chan)) अणु
 			dev_dbg(dev->class_dev,
 				"entries in chanlist must be consecutive channels, counting upwards\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (range != range0) {
+		अगर (range != range0) अणु
 			dev_dbg(dev->class_dev,
 				"entries in chanlist must all have the same gain\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int das16_cmd_test(struct comedi_device *dev, struct comedi_subdevice *s,
-			  struct comedi_cmd *cmd)
-{
-	const struct das16_board *board = dev->board_ptr;
-	struct das16_private_struct *devpriv = dev->private;
-	int err = 0;
-	unsigned int trig_mask;
-	unsigned int arg;
+अटल पूर्णांक das16_cmd_test(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_cmd *cmd)
+अणु
+	स्थिर काष्ठा das16_board *board = dev->board_ptr;
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक trig_mask;
+	अचिन्हित पूर्णांक arg;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 
 	trig_mask = TRIG_FOLLOW;
-	if (devpriv->can_burst)
+	अगर (devpriv->can_burst)
 		trig_mask |= TRIG_TIMER | TRIG_EXT;
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, trig_mask);
 
 	trig_mask = TRIG_TIMER | TRIG_EXT;
-	if (devpriv->can_burst)
+	अगर (devpriv->can_burst)
 		trig_mask |= TRIG_NOW;
 	err |= comedi_check_trigger_src(&cmd->convert_src, trig_mask);
 
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -619,101 +620,101 @@ static int das16_cmd_test(struct comedi_device *dev, struct comedi_subdevice *s,
 
 	/* Step 2b : and mutually compatible */
 
-	/*  make sure scan_begin_src and convert_src don't conflict */
-	if (cmd->scan_begin_src == TRIG_FOLLOW && cmd->convert_src == TRIG_NOW)
+	/*  make sure scan_begin_src and convert_src करोn't conflict */
+	अगर (cmd->scan_begin_src == TRIG_FOLLOW && cmd->convert_src == TRIG_NOW)
 		err |= -EINVAL;
-	if (cmd->scan_begin_src != TRIG_FOLLOW && cmd->convert_src != TRIG_NOW)
+	अगर (cmd->scan_begin_src != TRIG_FOLLOW && cmd->convert_src != TRIG_NOW)
 		err |= -EINVAL;
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	if (cmd->scan_begin_src == TRIG_FOLLOW)	/* internal trigger */
+	अगर (cmd->scan_begin_src == TRIG_FOLLOW)	/* पूर्णांकernal trigger */
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
 	/* check against maximum frequency */
-	if (cmd->scan_begin_src == TRIG_TIMER) {
+	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
 		err |= comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
 						    board->ai_speed *
 						    cmd->chanlist_len);
-	}
+	पूर्ण
 
-	if (cmd->convert_src == TRIG_TIMER) {
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg,
 						    board->ai_speed);
-	}
+	पूर्ण
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/*  step 4: fix up arguments */
-	if (cmd->scan_begin_src == TRIG_TIMER) {
+	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
 		arg = cmd->scan_begin_arg;
-		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
+		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, arg);
-	}
-	if (cmd->convert_src == TRIG_TIMER) {
+	पूर्ण
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		arg = cmd->convert_arg;
-		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
+		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, arg);
-	}
-	if (err)
-		return 4;
+	पूर्ण
+	अगर (err)
+		वापस 4;
 
-	/* Step 5: check channel list if it exists */
-	if (cmd->chanlist && cmd->chanlist_len > 0)
+	/* Step 5: check channel list अगर it exists */
+	अगर (cmd->chanlist && cmd->chanlist_len > 0)
 		err |= das16_ai_check_chanlist(dev, s, cmd);
 
-	if (err)
-		return 5;
+	अगर (err)
+		वापस 5;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int das16_set_pacer(struct comedi_device *dev, unsigned int ns,
-				    unsigned int flags)
-{
-	comedi_8254_cascade_ns_to_timer(dev->pacer, &ns, flags);
-	comedi_8254_update_divisors(dev->pacer);
+अटल अचिन्हित पूर्णांक das16_set_pacer(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक ns,
+				    अचिन्हित पूर्णांक flags)
+अणु
+	comedi_8254_cascade_ns_to_समयr(dev->pacer, &ns, flags);
+	comedi_8254_update_भागisors(dev->pacer);
 	comedi_8254_pacer_enable(dev->pacer, 1, 2, true);
 
-	return ns;
-}
+	वापस ns;
+पूर्ण
 
-static int das16_cmd_exec(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct das16_private_struct *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	unsigned int first_chan = CR_CHAN(cmd->chanlist[0]);
-	unsigned int last_chan = CR_CHAN(cmd->chanlist[cmd->chanlist_len - 1]);
-	unsigned int range = CR_RANGE(cmd->chanlist[0]);
-	unsigned int byte;
-	unsigned long flags;
+अटल पूर्णांक das16_cmd_exec(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	अचिन्हित पूर्णांक first_chan = CR_CHAN(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक last_chan = CR_CHAN(cmd->chanlist[cmd->chanlist_len - 1]);
+	अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक byte;
+	अचिन्हित दीर्घ flags;
 
-	if (cmd->flags & CMDF_PRIORITY) {
+	अगर (cmd->flags & CMDF_PRIORITY) अणु
 		dev_err(dev->class_dev,
 			"isa dma transfers cannot be performed with CMDF_PRIORITY, aborting\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (devpriv->can_burst)
+	अगर (devpriv->can_burst)
 		outb(DAS1600_CONV_DISABLE, dev->iobase + DAS1600_CONV_REG);
 
-	/* set mux and range for chanlist scan */
+	/* set mux and range क्रम chanlist scan */
 	das16_ai_set_mux_range(dev, first_chan, last_chan, range);
 
 	/* set counter mode and counts */
@@ -721,251 +722,251 @@ static int das16_cmd_exec(struct comedi_device *dev, struct comedi_subdevice *s)
 
 	/* enable counters */
 	byte = 0;
-	if (devpriv->can_burst) {
-		if (cmd->convert_src == TRIG_NOW) {
+	अगर (devpriv->can_burst) अणु
+		अगर (cmd->convert_src == TRIG_NOW) अणु
 			outb(DAS1600_BURST_VAL,
 			     dev->iobase + DAS1600_BURST_REG);
 			/*  set burst length */
 			byte |= DAS16_PACER_BURST_LEN(cmd->chanlist_len - 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			outb(0, dev->iobase + DAS1600_BURST_REG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	outb(byte, dev->iobase + DAS16_PACER_REG);
 
 	/* set up dma transfer */
 	dma->cur_dma = 0;
 	das16_ai_setup_dma(dev, s, 0);
 
-	/*  set up timer */
+	/*  set up समयr */
 	spin_lock_irqsave(&dev->spinlock, flags);
-	devpriv->timer_running = 1;
-	devpriv->timer.expires = jiffies + timer_period();
-	add_timer(&devpriv->timer);
+	devpriv->समयr_running = 1;
+	devpriv->समयr.expires = jअगरfies + समयr_period();
+	add_समयr(&devpriv->समयr);
 
-	/* enable DMA interrupt with external or internal pacing */
+	/* enable DMA पूर्णांकerrupt with बाह्यal or पूर्णांकernal pacing */
 	devpriv->ctrl_reg &= ~(DAS16_CTRL_INTE | DAS16_CTRL_PACING_MASK);
 	devpriv->ctrl_reg |= DAS16_CTRL_DMAE;
-	if (cmd->convert_src == TRIG_EXT)
+	अगर (cmd->convert_src == TRIG_EXT)
 		devpriv->ctrl_reg |= DAS16_CTRL_EXT_PACER;
-	else
+	अन्यथा
 		devpriv->ctrl_reg |= DAS16_CTRL_INT_PACER;
 	outb(devpriv->ctrl_reg, dev->iobase + DAS16_CTRL_REG);
 
-	if (devpriv->can_burst)
+	अगर (devpriv->can_burst)
 		outb(0, dev->iobase + DAS1600_CONV_REG);
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int das16_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct das16_private_struct *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	unsigned long flags;
+अटल पूर्णांक das16_cancel(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dev->spinlock, flags);
 
-	/* disable interrupts, dma and pacer clocked conversions */
+	/* disable पूर्णांकerrupts, dma and pacer घड़ीed conversions */
 	devpriv->ctrl_reg &= ~(DAS16_CTRL_INTE | DAS16_CTRL_DMAE |
 			       DAS16_CTRL_PACING_MASK);
 	outb(devpriv->ctrl_reg, dev->iobase + DAS16_CTRL_REG);
 
 	comedi_isadma_disable(dma->chan);
 
-	/*  disable SW timer */
-	if (devpriv->timer_running) {
-		devpriv->timer_running = 0;
-		del_timer(&devpriv->timer);
-	}
+	/*  disable SW समयr */
+	अगर (devpriv->समयr_running) अणु
+		devpriv->समयr_running = 0;
+		del_समयr(&devpriv->समयr);
+	पूर्ण
 
-	if (devpriv->can_burst)
+	अगर (devpriv->can_burst)
 		outb(0, dev->iobase + DAS1600_BURST_REG);
 
 	spin_unlock_irqrestore(&dev->spinlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void das16_ai_munge(struct comedi_device *dev,
-			   struct comedi_subdevice *s, void *array,
-			   unsigned int num_bytes,
-			   unsigned int start_chan_index)
-{
-	unsigned short *data = array;
-	unsigned int num_samples = comedi_bytes_to_samples(s, num_bytes);
-	unsigned int i;
+अटल व्योम das16_ai_munge(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s, व्योम *array,
+			   अचिन्हित पूर्णांक num_bytes,
+			   अचिन्हित पूर्णांक start_chan_index)
+अणु
+	अचिन्हित लघु *data = array;
+	अचिन्हित पूर्णांक num_samples = comedi_bytes_to_samples(s, num_bytes);
+	अचिन्हित पूर्णांक i;
 	__le16 *buf = array;
 
-	for (i = 0; i < num_samples; i++) {
+	क्रम (i = 0; i < num_samples; i++) अणु
 		data[i] = le16_to_cpu(buf[i]);
-		if (s->maxdata == 0x0fff)
+		अगर (s->maxdata == 0x0fff)
 			data[i] >>= 4;
 		data[i] &= s->maxdata;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int das16_ai_eoc(struct comedi_device *dev,
-			struct comedi_subdevice *s,
-			struct comedi_insn *insn,
-			unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक das16_ai_eoc(काष्ठा comedi_device *dev,
+			काष्ठा comedi_subdevice *s,
+			काष्ठा comedi_insn *insn,
+			अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inb(dev->iobase + DAS16_STATUS_REG);
-	if ((status & DAS16_STATUS_BUSY) == 0)
-		return 0;
-	return -EBUSY;
-}
+	अगर ((status & DAS16_STATUS_BUSY) == 0)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int das16_ai_insn_read(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      struct comedi_insn *insn,
-			      unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	unsigned int val;
-	int ret;
-	int i;
+अटल पूर्णांक das16_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      काष्ठा comedi_insn *insn,
+			      अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* set mux and range for single channel */
+	/* set mux and range क्रम single channel */
 	das16_ai_set_mux_range(dev, chan, chan, range);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		/* trigger conversion */
 		outb_p(0, dev->iobase + DAS16_TRIG_REG);
 
-		ret = comedi_timeout(dev, s, insn, das16_ai_eoc, 0);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, das16_ai_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
 		val = inb(dev->iobase + DAS16_AI_MSB_REG) << 8;
 		val |= inb(dev->iobase + DAS16_AI_LSB_REG);
-		if (s->maxdata == 0x0fff)
+		अगर (s->maxdata == 0x0fff)
 			val >>= 4;
 		val &= s->maxdata;
 
 		data[i] = val;
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das16_ao_insn_write(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	int i;
+अटल पूर्णांक das16_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
-		s->readback[chan] = val;
+		s->पढ़ोback[chan] = val;
 
 		val <<= 4;
 
 		outb(val & 0xff, dev->iobase + DAS16_AO_LSB_REG(chan));
 		outb((val >> 8) & 0xff, dev->iobase + DAS16_AO_MSB_REG(chan));
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das16_di_insn_bits(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      struct comedi_insn *insn,
-			      unsigned int *data)
-{
+अटल पूर्णांक das16_di_insn_bits(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      काष्ठा comedi_insn *insn,
+			      अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inb(dev->iobase + DAS16_DIO_REG) & 0xf;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das16_do_insn_bits(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      struct comedi_insn *insn,
-			      unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
+अटल पूर्णांक das16_करो_insn_bits(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      काष्ठा comedi_insn *insn,
+			      अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
 		outb(s->state, dev->iobase + DAS16_DIO_REG);
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int das16_probe(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	const struct das16_board *board = dev->board_ptr;
-	int diobits;
+अटल पूर्णांक das16_probe(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा das16_board *board = dev->board_ptr;
+	पूर्णांक diobits;
 
 	/* diobits indicates boards */
 	diobits = inb(dev->iobase + DAS16_DIO_REG) & 0xf0;
-	if (board->id != diobits) {
+	अगर (board->id != diobits) अणु
 		dev_err(dev->class_dev,
 			"requested board's id bits are incorrect (0x%x != 0x%x)\n",
 			board->id, diobits);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void das16_reset(struct comedi_device *dev)
-{
+अटल व्योम das16_reset(काष्ठा comedi_device *dev)
+अणु
 	outb(0, dev->iobase + DAS16_STATUS_REG);
 	outb(0, dev->iobase + DAS16_CTRL_REG);
 	outb(0, dev->iobase + DAS16_PACER_REG);
-}
+पूर्ण
 
-static void das16_alloc_dma(struct comedi_device *dev, unsigned int dma_chan)
-{
-	struct das16_private_struct *devpriv = dev->private;
+अटल व्योम das16_alloc_dma(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक dma_chan)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
 
-	timer_setup(&devpriv->timer, das16_timer_interrupt, 0);
+	समयr_setup(&devpriv->समयr, das16_समयr_पूर्णांकerrupt, 0);
 
 	/* only DMA channels 3 and 1 are valid */
-	if (!(dma_chan == 1 || dma_chan == 3))
-		return;
+	अगर (!(dma_chan == 1 || dma_chan == 3))
+		वापस;
 
 	/* DMA uses two buffers */
 	devpriv->dma = comedi_isadma_alloc(dev, 2, dma_chan, dma_chan,
 					   DAS16_DMA_SIZE, COMEDI_ISADMA_READ);
-}
+पूर्ण
 
-static void das16_free_dma(struct comedi_device *dev)
-{
-	struct das16_private_struct *devpriv = dev->private;
+अटल व्योम das16_मुक्त_dma(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
 
-	if (devpriv) {
-		del_timer_sync(&devpriv->timer);
-		comedi_isadma_free(devpriv->dma);
-	}
-}
+	अगर (devpriv) अणु
+		del_समयr_sync(&devpriv->समयr);
+		comedi_isadma_मुक्त(devpriv->dma);
+	पूर्ण
+पूर्ण
 
-static const struct comedi_lrange *das16_ai_range(struct comedi_device *dev,
-						  struct comedi_subdevice *s,
-						  struct comedi_devconfig *it,
-						  unsigned int pg_type,
-						  unsigned int status)
-{
-	unsigned int min = it->options[4];
-	unsigned int max = it->options[5];
+अटल स्थिर काष्ठा comedi_lrange *das16_ai_range(काष्ठा comedi_device *dev,
+						  काष्ठा comedi_subdevice *s,
+						  काष्ठा comedi_devconfig *it,
+						  अचिन्हित पूर्णांक pg_type,
+						  अचिन्हित पूर्णांक status)
+अणु
+	अचिन्हित पूर्णांक min = it->options[4];
+	अचिन्हित पूर्णांक max = it->options[5];
 
 	/* get any user-defined input range */
-	if (pg_type == das16_pg_none && (min || max)) {
-		struct comedi_lrange *lrange;
-		struct comedi_krange *krange;
+	अगर (pg_type == das16_pg_none && (min || max)) अणु
+		काष्ठा comedi_lrange *lrange;
+		काष्ठा comedi_krange *krange;
 
 		/* allocate single-range range table */
 		lrange = comedi_alloc_spriv(s,
-					    sizeof(*lrange) + sizeof(*krange));
-		if (!lrange)
-			return &range_unknown;
+					    माप(*lrange) + माप(*krange));
+		अगर (!lrange)
+			वापस &range_unknown;
 
 		/* initialize ai range */
 		lrange->length = 1;
@@ -974,32 +975,32 @@ static const struct comedi_lrange *das16_ai_range(struct comedi_device *dev,
 		krange->max = max;
 		krange->flags = UNIT_volt;
 
-		return lrange;
-	}
+		वापस lrange;
+	पूर्ण
 
 	/* use software programmable range */
-	if (status & DAS16_STATUS_UNIPOLAR)
-		return das16_ai_uni_lranges[pg_type];
-	return das16_ai_bip_lranges[pg_type];
-}
+	अगर (status & DAS16_STATUS_UNIPOLAR)
+		वापस das16_ai_uni_lranges[pg_type];
+	वापस das16_ai_bip_lranges[pg_type];
+पूर्ण
 
-static const struct comedi_lrange *das16_ao_range(struct comedi_device *dev,
-						  struct comedi_subdevice *s,
-						  struct comedi_devconfig *it)
-{
-	unsigned int min = it->options[6];
-	unsigned int max = it->options[7];
+अटल स्थिर काष्ठा comedi_lrange *das16_ao_range(काष्ठा comedi_device *dev,
+						  काष्ठा comedi_subdevice *s,
+						  काष्ठा comedi_devconfig *it)
+अणु
+	अचिन्हित पूर्णांक min = it->options[6];
+	अचिन्हित पूर्णांक max = it->options[7];
 
 	/* get any user-defined output range */
-	if (min || max) {
-		struct comedi_lrange *lrange;
-		struct comedi_krange *krange;
+	अगर (min || max) अणु
+		काष्ठा comedi_lrange *lrange;
+		काष्ठा comedi_krange *krange;
 
 		/* allocate single-range range table */
 		lrange = comedi_alloc_spriv(s,
-					    sizeof(*lrange) + sizeof(*krange));
-		if (!lrange)
-			return &range_unknown;
+					    माप(*lrange) + माप(*krange));
+		अगर (!lrange)
+			वापस &range_unknown;
 
 		/* initialize ao range */
 		lrange->length = 1;
@@ -1008,77 +1009,77 @@ static const struct comedi_lrange *das16_ao_range(struct comedi_device *dev,
 		krange->max = max;
 		krange->flags = UNIT_volt;
 
-		return lrange;
-	}
+		वापस lrange;
+	पूर्ण
 
-	return &range_unknown;
-}
+	वापस &range_unknown;
+पूर्ण
 
-static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	const struct das16_board *board = dev->board_ptr;
-	struct das16_private_struct *devpriv;
-	struct comedi_subdevice *s;
-	unsigned int osc_base;
-	unsigned int status;
-	int ret;
+अटल पूर्णांक das16_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा das16_board *board = dev->board_ptr;
+	काष्ठा das16_निजी_काष्ठा *devpriv;
+	काष्ठा comedi_subdevice *s;
+	अचिन्हित पूर्णांक osc_base;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक ret;
 
-	/*  check that clock setting is valid */
-	if (it->options[3]) {
-		if (it->options[3] != 1 && it->options[3] != 10) {
+	/*  check that घड़ी setting is valid */
+	अगर (it->options[3]) अणु
+		अगर (it->options[3] != 1 && it->options[3] != 10) अणु
 			dev_err(dev->class_dev,
 				"Invalid option. Master clock must be set to 1 or 10 (MHz)\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 	devpriv->dev = dev;
 
-	if (board->size < 0x400) {
+	अगर (board->size < 0x400) अणु
 		ret = comedi_request_region(dev, it->options[0], board->size);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		ret = comedi_request_region(dev, it->options[0], 0x10);
-		if (ret)
-			return ret;
-		/* Request an additional region for the 8255 */
+		अगर (ret)
+			वापस ret;
+		/* Request an additional region क्रम the 8255 */
 		ret = __comedi_request_region(dev, dev->iobase + 0x400,
 					      board->size & 0x3ff);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		devpriv->extra_iobase = dev->iobase + 0x400;
 		devpriv->can_burst = 1;
-	}
+	पूर्ण
 
 	/*  probe id bits to make sure they are consistent */
-	if (das16_probe(dev, it))
-		return -EINVAL;
+	अगर (das16_probe(dev, it))
+		वापस -EINVAL;
 
-	/*  get master clock speed */
+	/*  get master घड़ी speed */
 	osc_base = I8254_OSC_BASE_1MHZ;
-	if (devpriv->can_burst) {
+	अगर (devpriv->can_burst) अणु
 		status = inb(dev->iobase + DAS1600_STATUS_REG);
-		if (status & DAS1600_STATUS_CLK_10MHZ)
+		अगर (status & DAS1600_STATUS_CLK_10MHZ)
 			osc_base = I8254_OSC_BASE_10MHZ;
-	} else {
-		if (it->options[3])
+	पूर्ण अन्यथा अणु
+		अगर (it->options[3])
 			osc_base = I8254_OSC_BASE_1MHZ / it->options[3];
-	}
+	पूर्ण
 
 	dev->pacer = comedi_8254_init(dev->iobase + DAS16_TIMER_BASE_REG,
 				      osc_base, I8254_IO8, 0);
-	if (!dev->pacer)
-		return -ENOMEM;
+	अगर (!dev->pacer)
+		वापस -ENOMEM;
 
 	das16_alloc_dma(dev, it->options[2]);
 
 	ret = comedi_alloc_subdevices(dev, 4 + board->has_8255);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	status = inb(dev->iobase + DAS16_STATUS_REG);
 
@@ -1086,42 +1087,42 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s = &dev->subdevices[0];
 	s->type		= COMEDI_SUBD_AI;
 	s->subdev_flags	= SDF_READABLE;
-	if (status & DAS16_STATUS_MUXBIT) {
+	अगर (status & DAS16_STATUS_MUXBIT) अणु
 		s->subdev_flags	|= SDF_GROUND;
 		s->n_chan	= 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		s->subdev_flags	|= SDF_DIFF;
 		s->n_chan	= 8;
-	}
+	पूर्ण
 	s->len_chanlist	= s->n_chan;
 	s->maxdata	= board->ai_maxdata;
 	s->range_table	= das16_ai_range(dev, s, it, board->ai_pg, status);
-	s->insn_read	= das16_ai_insn_read;
-	if (devpriv->dma) {
-		dev->read_subdev = s;
+	s->insn_पढ़ो	= das16_ai_insn_पढ़ो;
+	अगर (devpriv->dma) अणु
+		dev->पढ़ो_subdev = s;
 		s->subdev_flags	|= SDF_CMD_READ;
-		s->do_cmdtest	= das16_cmd_test;
-		s->do_cmd	= das16_cmd_exec;
+		s->करो_cmdtest	= das16_cmd_test;
+		s->करो_cmd	= das16_cmd_exec;
 		s->cancel	= das16_cancel;
 		s->munge	= das16_ai_munge;
-	}
+	पूर्ण
 
 	/* Analog Output subdevice */
 	s = &dev->subdevices[1];
-	if (board->has_ao) {
+	अगर (board->has_ao) अणु
 		s->type		= COMEDI_SUBD_AO;
 		s->subdev_flags	= SDF_WRITABLE;
 		s->n_chan	= 2;
 		s->maxdata	= 0x0fff;
 		s->range_table	= das16_ao_range(dev, s, it);
-		s->insn_write	= das16_ao_insn_write;
+		s->insn_ग_लिखो	= das16_ao_insn_ग_लिखो;
 
-		ret = comedi_alloc_subdev_readback(s);
-		if (ret)
-			return ret;
-	} else {
+		ret = comedi_alloc_subdev_पढ़ोback(s);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		s->type		= COMEDI_SUBD_UNUSED;
-	}
+	पूर्ण
 
 	/* Digital Input subdevice */
 	s = &dev->subdevices[2];
@@ -1139,60 +1140,60 @@ static int das16_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s->n_chan	= 4;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= das16_do_insn_bits;
+	s->insn_bits	= das16_करो_insn_bits;
 
 	/* initialize digital output lines */
 	outb(s->state, dev->iobase + DAS16_DIO_REG);
 
 	/* 8255 Digital I/O subdevice */
-	if (board->has_8255) {
+	अगर (board->has_8255) अणु
 		s = &dev->subdevices[4];
-		ret = subdev_8255_init(dev, s, NULL, board->i8255_offset);
-		if (ret)
-			return ret;
-	}
+		ret = subdev_8255_init(dev, s, शून्य, board->i8255_offset);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	das16_reset(dev);
-	/* set the interrupt level */
+	/* set the पूर्णांकerrupt level */
 	devpriv->ctrl_reg = DAS16_CTRL_IRQ(dev->irq);
 	outb(devpriv->ctrl_reg, dev->iobase + DAS16_CTRL_REG);
 
-	if (devpriv->can_burst) {
+	अगर (devpriv->can_burst) अणु
 		outb(DAS1600_ENABLE_VAL, dev->iobase + DAS1600_ENABLE_REG);
 		outb(0, dev->iobase + DAS1600_CONV_REG);
 		outb(0, dev->iobase + DAS1600_BURST_REG);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void das16_detach(struct comedi_device *dev)
-{
-	const struct das16_board *board = dev->board_ptr;
-	struct das16_private_struct *devpriv = dev->private;
+अटल व्योम das16_detach(काष्ठा comedi_device *dev)
+अणु
+	स्थिर काष्ठा das16_board *board = dev->board_ptr;
+	काष्ठा das16_निजी_काष्ठा *devpriv = dev->निजी;
 
-	if (devpriv) {
-		if (dev->iobase)
+	अगर (devpriv) अणु
+		अगर (dev->iobase)
 			das16_reset(dev);
-		das16_free_dma(dev);
+		das16_मुक्त_dma(dev);
 
-		if (devpriv->extra_iobase)
+		अगर (devpriv->extra_iobase)
 			release_region(devpriv->extra_iobase,
 				       board->size & 0x3ff);
-	}
+	पूर्ण
 
 	comedi_legacy_detach(dev);
-}
+पूर्ण
 
-static struct comedi_driver das16_driver = {
+अटल काष्ठा comedi_driver das16_driver = अणु
 	.driver_name	= "das16",
 	.module		= THIS_MODULE,
 	.attach		= das16_attach,
 	.detach		= das16_detach,
 	.board_name	= &das16_boards[0].name,
 	.num_names	= ARRAY_SIZE(das16_boards),
-	.offset		= sizeof(das16_boards[0]),
-};
+	.offset		= माप(das16_boards[0]),
+पूर्ण;
 module_comedi_driver(das16_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

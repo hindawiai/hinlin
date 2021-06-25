@@ -1,74 +1,75 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ZynqMP DisplayPort Subsystem Driver
+ * ZynqMP DisplayPort Subप्रणाली Driver
  *
  * Copyright (C) 2017 - 2020 Xilinx, Inc.
  *
  * Authors:
  * - Hyun Woo Kwon <hyun.kwon@xilinx.com>
- * - Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * - Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/of_reserved_mem.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_device.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_mode_config.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_mode_config.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "zynqmp_disp.h"
-#include "zynqmp_dp.h"
-#include "zynqmp_dpsub.h"
+#समावेश "zynqmp_disp.h"
+#समावेश "zynqmp_dp.h"
+#समावेश "zynqmp_dpsub.h"
 
 /* -----------------------------------------------------------------------------
  * Dumb Buffer & Framebuffer Allocation
  */
 
-static int zynqmp_dpsub_dumb_create(struct drm_file *file_priv,
-				    struct drm_device *drm,
-				    struct drm_mode_create_dumb *args)
-{
-	struct zynqmp_dpsub *dpsub = to_zynqmp_dpsub(drm);
-	unsigned int pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
+अटल पूर्णांक zynqmp_dpsub_dumb_create(काष्ठा drm_file *file_priv,
+				    काष्ठा drm_device *drm,
+				    काष्ठा drm_mode_create_dumb *args)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = to_zynqmp_dpsub(drm);
+	अचिन्हित पूर्णांक pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
 
-	/* Enforce the alignment constraints of the DMA engine. */
+	/* Enक्रमce the alignment स्थिरraपूर्णांकs of the DMA engine. */
 	args->pitch = ALIGN(pitch, dpsub->dma_align);
 
-	return drm_gem_cma_dumb_create_internal(file_priv, drm, args);
-}
+	वापस drm_gem_cma_dumb_create_पूर्णांकernal(file_priv, drm, args);
+पूर्ण
 
-static struct drm_framebuffer *
-zynqmp_dpsub_fb_create(struct drm_device *drm, struct drm_file *file_priv,
-		       const struct drm_mode_fb_cmd2 *mode_cmd)
-{
-	struct zynqmp_dpsub *dpsub = to_zynqmp_dpsub(drm);
-	struct drm_mode_fb_cmd2 cmd = *mode_cmd;
-	unsigned int i;
+अटल काष्ठा drm_framebuffer *
+zynqmp_dpsub_fb_create(काष्ठा drm_device *drm, काष्ठा drm_file *file_priv,
+		       स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = to_zynqmp_dpsub(drm);
+	काष्ठा drm_mode_fb_cmd2 cmd = *mode_cmd;
+	अचिन्हित पूर्णांक i;
 
-	/* Enforce the alignment constraints of the DMA engine. */
-	for (i = 0; i < ARRAY_SIZE(cmd.pitches); ++i)
+	/* Enक्रमce the alignment स्थिरraपूर्णांकs of the DMA engine. */
+	क्रम (i = 0; i < ARRAY_SIZE(cmd.pitches); ++i)
 		cmd.pitches[i] = ALIGN(cmd.pitches[i], dpsub->dma_align);
 
-	return drm_gem_fb_create(drm, file_priv, &cmd);
-}
+	वापस drm_gem_fb_create(drm, file_priv, &cmd);
+पूर्ण
 
-static const struct drm_mode_config_funcs zynqmp_dpsub_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs zynqmp_dpsub_mode_config_funcs = अणु
 	.fb_create		= zynqmp_dpsub_fb_create,
 	.atomic_check		= drm_atomic_helper_check,
 	.atomic_commit		= drm_atomic_helper_commit,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * DRM/KMS Driver
@@ -76,7 +77,7 @@ static const struct drm_mode_config_funcs zynqmp_dpsub_mode_config_funcs = {
 
 DEFINE_DRM_GEM_CMA_FOPS(zynqmp_dpsub_drm_fops);
 
-static const struct drm_driver zynqmp_dpsub_drm_driver = {
+अटल स्थिर काष्ठा drm_driver zynqmp_dpsub_drm_driver = अणु
 	.driver_features		= DRIVER_MODESET | DRIVER_GEM |
 					  DRIVER_ATOMIC,
 
@@ -89,17 +90,17 @@ static const struct drm_driver zynqmp_dpsub_drm_driver = {
 	.date				= "20130509",
 	.major				= 1,
 	.minor				= 0,
-};
+पूर्ण;
 
-static int zynqmp_dpsub_drm_init(struct zynqmp_dpsub *dpsub)
-{
-	struct drm_device *drm = &dpsub->drm;
-	int ret;
+अटल पूर्णांक zynqmp_dpsub_drm_init(काष्ठा zynqmp_dpsub *dpsub)
+अणु
+	काष्ठा drm_device *drm = &dpsub->drm;
+	पूर्णांक ret;
 
 	/* Initialize mode config, vblank and the KMS poll helper. */
 	ret = drmm_mode_config_init(drm);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	drm->mode_config.funcs = &zynqmp_dpsub_mode_config_funcs;
 	drm->mode_config.min_width = 0;
@@ -108,8 +109,8 @@ static int zynqmp_dpsub_drm_init(struct zynqmp_dpsub *dpsub)
 	drm->mode_config.max_height = ZYNQMP_DISP_MAX_HEIGHT;
 
 	ret = drm_vblank_init(drm, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm->irq_enabled = 1;
 
@@ -121,174 +122,174 @@ static int zynqmp_dpsub_drm_init(struct zynqmp_dpsub *dpsub)
 	 * the DP encoder needs the CRTC.
 	 */
 	ret = zynqmp_disp_drm_init(dpsub);
-	if (ret)
-		goto err_poll_fini;
+	अगर (ret)
+		जाओ err_poll_fini;
 
 	ret = zynqmp_dp_drm_init(dpsub);
-	if (ret)
-		goto err_poll_fini;
+	अगर (ret)
+		जाओ err_poll_fini;
 
-	/* Reset all components and register the DRM device. */
+	/* Reset all components and रेजिस्टर the DRM device. */
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret < 0)
-		goto err_poll_fini;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret < 0)
+		जाओ err_poll_fini;
 
 	/* Initialize fbdev generic emulation. */
 	drm_fbdev_generic_setup(drm, 24);
 
-	return 0;
+	वापस 0;
 
 err_poll_fini:
 	drm_kms_helper_poll_fini(drm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Power Management
  */
 
-static int __maybe_unused zynqmp_dpsub_suspend(struct device *dev)
-{
-	struct zynqmp_dpsub *dpsub = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused zynqmp_dpsub_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_suspend(&dpsub->drm);
-}
+	वापस drm_mode_config_helper_suspend(&dpsub->drm);
+पूर्ण
 
-static int __maybe_unused zynqmp_dpsub_resume(struct device *dev)
-{
-	struct zynqmp_dpsub *dpsub = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused zynqmp_dpsub_resume(काष्ठा device *dev)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_resume(&dpsub->drm);
-}
+	वापस drm_mode_config_helper_resume(&dpsub->drm);
+पूर्ण
 
-static const struct dev_pm_ops zynqmp_dpsub_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops zynqmp_dpsub_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(zynqmp_dpsub_suspend, zynqmp_dpsub_resume)
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Probe & Remove
  */
 
-static int zynqmp_dpsub_init_clocks(struct zynqmp_dpsub *dpsub)
-{
-	int ret;
+अटल पूर्णांक zynqmp_dpsub_init_घड़ीs(काष्ठा zynqmp_dpsub *dpsub)
+अणु
+	पूर्णांक ret;
 
 	dpsub->apb_clk = devm_clk_get(dpsub->dev, "dp_apb_clk");
-	if (IS_ERR(dpsub->apb_clk))
-		return PTR_ERR(dpsub->apb_clk);
+	अगर (IS_ERR(dpsub->apb_clk))
+		वापस PTR_ERR(dpsub->apb_clk);
 
 	ret = clk_prepare_enable(dpsub->apb_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dpsub->dev, "failed to enable the APB clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zynqmp_dpsub_probe(struct platform_device *pdev)
-{
-	struct zynqmp_dpsub *dpsub;
-	int ret;
+अटल पूर्णांक zynqmp_dpsub_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub;
+	पूर्णांक ret;
 
-	/* Allocate private data. */
+	/* Allocate निजी data. */
 	dpsub = devm_drm_dev_alloc(&pdev->dev, &zynqmp_dpsub_drm_driver,
-				   struct zynqmp_dpsub, drm);
-	if (IS_ERR(dpsub))
-		return PTR_ERR(dpsub);
+				   काष्ठा zynqmp_dpsub, drm);
+	अगर (IS_ERR(dpsub))
+		वापस PTR_ERR(dpsub);
 
 	dpsub->dev = &pdev->dev;
-	platform_set_drvdata(pdev, dpsub);
+	platक्रमm_set_drvdata(pdev, dpsub);
 
 	dma_set_mask(dpsub->dev, DMA_BIT_MASK(ZYNQMP_DISP_MAX_DMA_BIT));
 
-	/* Try the reserved memory. Proceed if there's none. */
+	/* Try the reserved memory. Proceed अगर there's none. */
 	of_reserved_mem_device_init(&pdev->dev);
 
-	ret = zynqmp_dpsub_init_clocks(dpsub);
-	if (ret < 0)
-		goto err_mem;
+	ret = zynqmp_dpsub_init_घड़ीs(dpsub);
+	अगर (ret < 0)
+		जाओ err_mem;
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
 	/*
 	 * DP should be probed first so that the zynqmp_disp can set the output
-	 * format accordingly.
+	 * क्रमmat accordingly.
 	 */
 	ret = zynqmp_dp_probe(dpsub, &dpsub->drm);
-	if (ret)
-		goto err_pm;
+	अगर (ret)
+		जाओ err_pm;
 
 	ret = zynqmp_disp_probe(dpsub, &dpsub->drm);
-	if (ret)
-		goto err_dp;
+	अगर (ret)
+		जाओ err_dp;
 
 	ret = zynqmp_dpsub_drm_init(dpsub);
-	if (ret)
-		goto err_disp;
+	अगर (ret)
+		जाओ err_disp;
 
 	dev_info(&pdev->dev, "ZynqMP DisplayPort Subsystem driver probed");
 
-	return 0;
+	वापस 0;
 
 err_disp:
-	zynqmp_disp_remove(dpsub);
+	zynqmp_disp_हटाओ(dpsub);
 err_dp:
-	zynqmp_dp_remove(dpsub);
+	zynqmp_dp_हटाओ(dpsub);
 err_pm:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 	clk_disable_unprepare(dpsub->apb_clk);
 err_mem:
 	of_reserved_mem_device_release(&pdev->dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int zynqmp_dpsub_remove(struct platform_device *pdev)
-{
-	struct zynqmp_dpsub *dpsub = platform_get_drvdata(pdev);
-	struct drm_device *drm = &dpsub->drm;
+अटल पूर्णांक zynqmp_dpsub_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = platक्रमm_get_drvdata(pdev);
+	काष्ठा drm_device *drm = &dpsub->drm;
 
-	drm_dev_unregister(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_dev_unरेजिस्टर(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 	drm_kms_helper_poll_fini(drm);
 
-	zynqmp_disp_remove(dpsub);
-	zynqmp_dp_remove(dpsub);
+	zynqmp_disp_हटाओ(dpsub);
+	zynqmp_dp_हटाओ(dpsub);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 	clk_disable_unprepare(dpsub->apb_clk);
 	of_reserved_mem_device_release(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zynqmp_dpsub_shutdown(struct platform_device *pdev)
-{
-	struct zynqmp_dpsub *dpsub = platform_get_drvdata(pdev);
+अटल व्योम zynqmp_dpsub_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा zynqmp_dpsub *dpsub = platक्रमm_get_drvdata(pdev);
 
-	drm_atomic_helper_shutdown(&dpsub->drm);
-}
+	drm_atomic_helper_shutकरोwn(&dpsub->drm);
+पूर्ण
 
-static const struct of_device_id zynqmp_dpsub_of_match[] = {
-	{ .compatible = "xlnx,zynqmp-dpsub-1.7", },
-	{ /* end of table */ },
-};
+अटल स्थिर काष्ठा of_device_id zynqmp_dpsub_of_match[] = अणु
+	अणु .compatible = "xlnx,zynqmp-dpsub-1.7", पूर्ण,
+	अणु /* end of table */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, zynqmp_dpsub_of_match);
 
-static struct platform_driver zynqmp_dpsub_driver = {
+अटल काष्ठा platक्रमm_driver zynqmp_dpsub_driver = अणु
 	.probe			= zynqmp_dpsub_probe,
-	.remove			= zynqmp_dpsub_remove,
-	.shutdown		= zynqmp_dpsub_shutdown,
-	.driver			= {
+	.हटाओ			= zynqmp_dpsub_हटाओ,
+	.shutकरोwn		= zynqmp_dpsub_shutकरोwn,
+	.driver			= अणु
 		.name		= "zynqmp-dpsub",
 		.pm		= &zynqmp_dpsub_pm_ops,
 		.of_match_table	= zynqmp_dpsub_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(zynqmp_dpsub_driver);
+module_platक्रमm_driver(zynqmp_dpsub_driver);
 
 MODULE_AUTHOR("Xilinx, Inc.");
 MODULE_DESCRIPTION("ZynqMP DP Subsystem Driver");

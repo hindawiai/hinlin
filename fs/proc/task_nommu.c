@@ -1,168 +1,169 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/mm.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/fs_struct.h>
-#include <linux/mount.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/seq_file.h>
-#include <linux/sched/mm.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/sched/mm.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
 /*
- * Logic: we've got two memory sums for each process, "shared", and
- * "non-shared". Shared memory may get counted more than once, for
+ * Logic: we've got two memory sums क्रम each process, "shared", and
+ * "non-shared". Shared memory may get counted more than once, क्रम
  * each process that owns it. Non-shared memory is counted
  * accurately.
  */
-void task_mem(struct seq_file *m, struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
-	struct vm_region *region;
-	struct rb_node *p;
-	unsigned long bytes = 0, sbytes = 0, slack = 0, size;
+व्योम task_mem(काष्ठा seq_file *m, काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा vm_region *region;
+	काष्ठा rb_node *p;
+	अचिन्हित दीर्घ bytes = 0, sbytes = 0, slack = 0, size;
         
-	mmap_read_lock(mm);
-	for (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) {
-		vma = rb_entry(p, struct vm_area_struct, vm_rb);
+	mmap_पढ़ो_lock(mm);
+	क्रम (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) अणु
+		vma = rb_entry(p, काष्ठा vm_area_काष्ठा, vm_rb);
 
 		bytes += kobjsize(vma);
 
 		region = vma->vm_region;
-		if (region) {
+		अगर (region) अणु
 			size = kobjsize(region);
 			size += region->vm_end - region->vm_start;
-		} else {
+		पूर्ण अन्यथा अणु
 			size = vma->vm_end - vma->vm_start;
-		}
+		पूर्ण
 
-		if (atomic_read(&mm->mm_count) > 1 ||
-		    vma->vm_flags & VM_MAYSHARE) {
+		अगर (atomic_पढ़ो(&mm->mm_count) > 1 ||
+		    vma->vm_flags & VM_MAYSHARE) अणु
 			sbytes += size;
-		} else {
+		पूर्ण अन्यथा अणु
 			bytes += size;
-			if (region)
+			अगर (region)
 				slack = region->vm_end - vma->vm_end;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (atomic_read(&mm->mm_count) > 1)
+	अगर (atomic_पढ़ो(&mm->mm_count) > 1)
 		sbytes += kobjsize(mm);
-	else
+	अन्यथा
 		bytes += kobjsize(mm);
 	
-	if (current->fs && current->fs->users > 1)
+	अगर (current->fs && current->fs->users > 1)
 		sbytes += kobjsize(current->fs);
-	else
+	अन्यथा
 		bytes += kobjsize(current->fs);
 
-	if (current->files && atomic_read(&current->files->count) > 1)
+	अगर (current->files && atomic_पढ़ो(&current->files->count) > 1)
 		sbytes += kobjsize(current->files);
-	else
+	अन्यथा
 		bytes += kobjsize(current->files);
 
-	if (current->sighand && refcount_read(&current->sighand->count) > 1)
+	अगर (current->sighand && refcount_पढ़ो(&current->sighand->count) > 1)
 		sbytes += kobjsize(current->sighand);
-	else
+	अन्यथा
 		bytes += kobjsize(current->sighand);
 
 	bytes += kobjsize(current); /* includes kernel stack */
 
-	seq_printf(m,
+	seq_म_लिखो(m,
 		"Mem:\t%8lu bytes\n"
 		"Slack:\t%8lu bytes\n"
 		"Shared:\t%8lu bytes\n",
 		bytes, slack, sbytes);
 
-	mmap_read_unlock(mm);
-}
+	mmap_पढ़ो_unlock(mm);
+पूर्ण
 
-unsigned long task_vsize(struct mm_struct *mm)
-{
-	struct vm_area_struct *vma;
-	struct rb_node *p;
-	unsigned long vsize = 0;
+अचिन्हित दीर्घ task_vsize(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा rb_node *p;
+	अचिन्हित दीर्घ vsize = 0;
 
-	mmap_read_lock(mm);
-	for (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) {
-		vma = rb_entry(p, struct vm_area_struct, vm_rb);
+	mmap_पढ़ो_lock(mm);
+	क्रम (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) अणु
+		vma = rb_entry(p, काष्ठा vm_area_काष्ठा, vm_rb);
 		vsize += vma->vm_end - vma->vm_start;
-	}
-	mmap_read_unlock(mm);
-	return vsize;
-}
+	पूर्ण
+	mmap_पढ़ो_unlock(mm);
+	वापस vsize;
+पूर्ण
 
-unsigned long task_statm(struct mm_struct *mm,
-			 unsigned long *shared, unsigned long *text,
-			 unsigned long *data, unsigned long *resident)
-{
-	struct vm_area_struct *vma;
-	struct vm_region *region;
-	struct rb_node *p;
-	unsigned long size = kobjsize(mm);
+अचिन्हित दीर्घ task_staपंचांग(काष्ठा mm_काष्ठा *mm,
+			 अचिन्हित दीर्घ *shared, अचिन्हित दीर्घ *text,
+			 अचिन्हित दीर्घ *data, अचिन्हित दीर्घ *resident)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा vm_region *region;
+	काष्ठा rb_node *p;
+	अचिन्हित दीर्घ size = kobjsize(mm);
 
-	mmap_read_lock(mm);
-	for (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) {
-		vma = rb_entry(p, struct vm_area_struct, vm_rb);
+	mmap_पढ़ो_lock(mm);
+	क्रम (p = rb_first(&mm->mm_rb); p; p = rb_next(p)) अणु
+		vma = rb_entry(p, काष्ठा vm_area_काष्ठा, vm_rb);
 		size += kobjsize(vma);
 		region = vma->vm_region;
-		if (region) {
+		अगर (region) अणु
 			size += kobjsize(region);
 			size += region->vm_end - region->vm_start;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*text = (PAGE_ALIGN(mm->end_code) - (mm->start_code & PAGE_MASK))
 		>> PAGE_SHIFT;
 	*data = (PAGE_ALIGN(mm->start_stack) - (mm->start_data & PAGE_MASK))
 		>> PAGE_SHIFT;
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	size >>= PAGE_SHIFT;
 	size += *text + *data;
 	*resident = size;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int is_stack(struct vm_area_struct *vma)
-{
-	struct mm_struct *mm = vma->vm_mm;
+अटल पूर्णांक is_stack(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
 	/*
-	 * We make no effort to guess what a given thread considers to be
-	 * its "stack".  It's not even well-defined for programs written
+	 * We make no efक्रमt to guess what a given thपढ़ो considers to be
+	 * its "stack".  It's not even well-defined क्रम programs written
 	 * languages like Go.
 	 */
-	return vma->vm_start <= mm->start_stack &&
+	वापस vma->vm_start <= mm->start_stack &&
 		vma->vm_end >= mm->start_stack;
-}
+पूर्ण
 
 /*
  * display a single VMA to a sequenced file
  */
-static int nommu_vma_show(struct seq_file *m, struct vm_area_struct *vma)
-{
-	struct mm_struct *mm = vma->vm_mm;
-	unsigned long ino = 0;
-	struct file *file;
+अटल पूर्णांक nommu_vma_show(काष्ठा seq_file *m, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
+	अचिन्हित दीर्घ ino = 0;
+	काष्ठा file *file;
 	dev_t dev = 0;
-	int flags;
-	unsigned long long pgoff = 0;
+	पूर्णांक flags;
+	अचिन्हित दीर्घ दीर्घ pgoff = 0;
 
 	flags = vma->vm_flags;
 	file = vma->vm_file;
 
-	if (file) {
-		struct inode *inode = file_inode(vma->vm_file);
+	अगर (file) अणु
+		काष्ठा inode *inode = file_inode(vma->vm_file);
 		dev = inode->i_sb->s_dev;
 		ino = inode->i_ino;
 		pgoff = (loff_t)vma->vm_pgoff << PAGE_SHIFT;
-	}
+	पूर्ण
 
-	seq_setwidth(m, 25 + sizeof(void *) * 6 - 1);
-	seq_printf(m,
+	seq_setwidth(m, 25 + माप(व्योम *) * 6 - 1);
+	seq_म_लिखो(m,
 		   "%08lx-%08lx %c%c%c%c %08llx %02x:%02x %lu ",
 		   vma->vm_start,
 		   vma->vm_end,
@@ -173,130 +174,130 @@ static int nommu_vma_show(struct seq_file *m, struct vm_area_struct *vma)
 		   pgoff,
 		   MAJOR(dev), MINOR(dev), ino);
 
-	if (file) {
+	अगर (file) अणु
 		seq_pad(m, ' ');
 		seq_file_path(m, file, "");
-	} else if (mm && is_stack(vma)) {
+	पूर्ण अन्यथा अगर (mm && is_stack(vma)) अणु
 		seq_pad(m, ' ');
-		seq_puts(m, "[stack]");
-	}
+		seq_माला_दो(m, "[stack]");
+	पूर्ण
 
-	seq_putc(m, '\n');
-	return 0;
-}
+	seq_अ_दो(m, '\n');
+	वापस 0;
+पूर्ण
 
 /*
- * display mapping lines for a particular process's /proc/pid/maps
+ * display mapping lines क्रम a particular process's /proc/pid/maps
  */
-static int show_map(struct seq_file *m, void *_p)
-{
-	struct rb_node *p = _p;
+अटल पूर्णांक show_map(काष्ठा seq_file *m, व्योम *_p)
+अणु
+	काष्ठा rb_node *p = _p;
 
-	return nommu_vma_show(m, rb_entry(p, struct vm_area_struct, vm_rb));
-}
+	वापस nommu_vma_show(m, rb_entry(p, काष्ठा vm_area_काष्ठा, vm_rb));
+पूर्ण
 
-static void *m_start(struct seq_file *m, loff_t *pos)
-{
-	struct proc_maps_private *priv = m->private;
-	struct mm_struct *mm;
-	struct rb_node *p;
+अटल व्योम *m_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
+	काष्ठा mm_काष्ठा *mm;
+	काष्ठा rb_node *p;
 	loff_t n = *pos;
 
 	/* pin the task and mm whilst we play with them */
 	priv->task = get_proc_task(priv->inode);
-	if (!priv->task)
-		return ERR_PTR(-ESRCH);
+	अगर (!priv->task)
+		वापस ERR_PTR(-ESRCH);
 
 	mm = priv->mm;
-	if (!mm || !mmget_not_zero(mm))
-		return NULL;
+	अगर (!mm || !mmget_not_zero(mm))
+		वापस शून्य;
 
-	if (mmap_read_lock_killable(mm)) {
+	अगर (mmap_पढ़ो_lock_समाप्तable(mm)) अणु
 		mmput(mm);
-		return ERR_PTR(-EINTR);
-	}
+		वापस ERR_PTR(-EINTR);
+	पूर्ण
 
 	/* start from the Nth VMA */
-	for (p = rb_first(&mm->mm_rb); p; p = rb_next(p))
-		if (n-- == 0)
-			return p;
+	क्रम (p = rb_first(&mm->mm_rb); p; p = rb_next(p))
+		अगर (n-- == 0)
+			वापस p;
 
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	mmput(mm);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void m_stop(struct seq_file *m, void *_vml)
-{
-	struct proc_maps_private *priv = m->private;
+अटल व्योम m_stop(काष्ठा seq_file *m, व्योम *_vml)
+अणु
+	काष्ठा proc_maps_निजी *priv = m->निजी;
 
-	if (!IS_ERR_OR_NULL(_vml)) {
-		mmap_read_unlock(priv->mm);
+	अगर (!IS_ERR_OR_शून्य(_vml)) अणु
+		mmap_पढ़ो_unlock(priv->mm);
 		mmput(priv->mm);
-	}
-	if (priv->task) {
-		put_task_struct(priv->task);
-		priv->task = NULL;
-	}
-}
+	पूर्ण
+	अगर (priv->task) अणु
+		put_task_काष्ठा(priv->task);
+		priv->task = शून्य;
+	पूर्ण
+पूर्ण
 
-static void *m_next(struct seq_file *m, void *_p, loff_t *pos)
-{
-	struct rb_node *p = _p;
+अटल व्योम *m_next(काष्ठा seq_file *m, व्योम *_p, loff_t *pos)
+अणु
+	काष्ठा rb_node *p = _p;
 
 	(*pos)++;
-	return p ? rb_next(p) : NULL;
-}
+	वापस p ? rb_next(p) : शून्य;
+पूर्ण
 
-static const struct seq_operations proc_pid_maps_ops = {
+अटल स्थिर काष्ठा seq_operations proc_pid_maps_ops = अणु
 	.start	= m_start,
 	.next	= m_next,
 	.stop	= m_stop,
 	.show	= show_map
-};
+पूर्ण;
 
-static int maps_open(struct inode *inode, struct file *file,
-		     const struct seq_operations *ops)
-{
-	struct proc_maps_private *priv;
+अटल पूर्णांक maps_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+		     स्थिर काष्ठा seq_operations *ops)
+अणु
+	काष्ठा proc_maps_निजी *priv;
 
-	priv = __seq_open_private(file, ops, sizeof(*priv));
-	if (!priv)
-		return -ENOMEM;
+	priv = __seq_खोलो_निजी(file, ops, माप(*priv));
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->inode = inode;
-	priv->mm = proc_mem_open(inode, PTRACE_MODE_READ);
-	if (IS_ERR(priv->mm)) {
-		int err = PTR_ERR(priv->mm);
+	priv->mm = proc_mem_खोलो(inode, PTRACE_MODE_READ);
+	अगर (IS_ERR(priv->mm)) अणु
+		पूर्णांक err = PTR_ERR(priv->mm);
 
-		seq_release_private(inode, file);
-		return err;
-	}
+		seq_release_निजी(inode, file);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int map_release(struct inode *inode, struct file *file)
-{
-	struct seq_file *seq = file->private_data;
-	struct proc_maps_private *priv = seq->private;
+अटल पूर्णांक map_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *seq = file->निजी_data;
+	काष्ठा proc_maps_निजी *priv = seq->निजी;
 
-	if (priv->mm)
+	अगर (priv->mm)
 		mmdrop(priv->mm);
 
-	return seq_release_private(inode, file);
-}
+	वापस seq_release_निजी(inode, file);
+पूर्ण
 
-static int pid_maps_open(struct inode *inode, struct file *file)
-{
-	return maps_open(inode, file, &proc_pid_maps_ops);
-}
+अटल पूर्णांक pid_maps_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस maps_खोलो(inode, file, &proc_pid_maps_ops);
+पूर्ण
 
-const struct file_operations proc_pid_maps_operations = {
-	.open		= pid_maps_open,
-	.read		= seq_read,
+स्थिर काष्ठा file_operations proc_pid_maps_operations = अणु
+	.खोलो		= pid_maps_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= map_release,
-};
+पूर्ण;
 

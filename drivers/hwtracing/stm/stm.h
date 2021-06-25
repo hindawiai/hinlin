@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * System Trace Module (STM) infrastructure
+ * System Trace Module (STM) infraकाष्ठाure
  * Copyright (c) 2014, Intel Corporation.
  *
- * STM class implements generic infrastructure for  System Trace Module devices
- * as defined in MIPI STPv2 specification.
+ * STM class implements generic infraकाष्ठाure क्रम  System Trace Module devices
+ * as defined in MIPI STPv2 specअगरication.
  */
 
-#ifndef _STM_STM_H_
-#define _STM_STM_H_
+#अगर_अघोषित _STM_STM_H_
+#घोषणा _STM_STM_H_
 
-#include <linux/configfs.h>
+#समावेश <linux/configfs.h>
 
-struct stp_policy;
-struct stp_policy_node;
-struct stm_protocol_driver;
+काष्ठा stp_policy;
+काष्ठा stp_policy_node;
+काष्ठा sपंचांग_protocol_driver;
 
-int stp_configfs_init(void);
-void stp_configfs_exit(void);
+पूर्णांक stp_configfs_init(व्योम);
+व्योम stp_configfs_निकास(व्योम);
 
-void *stp_policy_node_priv(struct stp_policy_node *pn);
+व्योम *stp_policy_node_priv(काष्ठा stp_policy_node *pn);
 
-struct stp_master {
-	unsigned int	nr_free;
-	unsigned long	chan_map[];
-};
+काष्ठा stp_master अणु
+	अचिन्हित पूर्णांक	nr_मुक्त;
+	अचिन्हित दीर्घ	chan_map[];
+पूर्ण;
 
-struct stm_device {
-	struct device		dev;
-	struct module		*owner;
-	struct stp_policy	*policy;
-	struct mutex		policy_mutex;
-	int			major;
-	unsigned int		sw_nmasters;
-	struct stm_data		*data;
-	struct mutex		link_mutex;
+काष्ठा sपंचांग_device अणु
+	काष्ठा device		dev;
+	काष्ठा module		*owner;
+	काष्ठा stp_policy	*policy;
+	काष्ठा mutex		policy_mutex;
+	पूर्णांक			major;
+	अचिन्हित पूर्णांक		sw_nmasters;
+	काष्ठा sपंचांग_data		*data;
+	काष्ठा mutex		link_mutex;
 	spinlock_t		link_lock;
-	struct list_head	link_list;
+	काष्ठा list_head	link_list;
 	/* framing protocol in use */
-	const struct stm_protocol_driver	*pdrv;
-	const struct config_item_type		*pdrv_node_type;
+	स्थिर काष्ठा sपंचांग_protocol_driver	*pdrv;
+	स्थिर काष्ठा config_item_type		*pdrv_node_type;
 	/* master allocation */
 	spinlock_t		mc_lock;
-	struct stp_master	*masters[];
-};
+	काष्ठा stp_master	*masters[];
+पूर्ण;
 
-#define to_stm_device(_d)				\
-	container_of((_d), struct stm_device, dev)
+#घोषणा to_sपंचांग_device(_d)				\
+	container_of((_d), काष्ठा sपंचांग_device, dev)
 
-struct stp_policy_node *
-stp_policy_node_lookup(struct stm_device *stm, char *s);
-void stp_policy_node_put(struct stp_policy_node *policy_node);
-void stp_policy_unbind(struct stp_policy *policy);
+काष्ठा stp_policy_node *
+stp_policy_node_lookup(काष्ठा sपंचांग_device *sपंचांग, अक्षर *s);
+व्योम stp_policy_node_put(काष्ठा stp_policy_node *policy_node);
+व्योम stp_policy_unbind(काष्ठा stp_policy *policy);
 
-void stp_policy_node_get_ranges(struct stp_policy_node *policy_node,
-				unsigned int *mstart, unsigned int *mend,
-				unsigned int *cstart, unsigned int *cend);
+व्योम stp_policy_node_get_ranges(काष्ठा stp_policy_node *policy_node,
+				अचिन्हित पूर्णांक *mstart, अचिन्हित पूर्णांक *mend,
+				अचिन्हित पूर्णांक *cstart, अचिन्हित पूर्णांक *cend);
 
-const struct config_item_type *
-get_policy_node_type(struct configfs_attribute **attrs);
+स्थिर काष्ठा config_item_type *
+get_policy_node_type(काष्ठा configfs_attribute **attrs);
 
-struct stm_output {
+काष्ठा sपंचांग_output अणु
 	spinlock_t		lock;
-	unsigned int		master;
-	unsigned int		channel;
-	unsigned int		nr_chans;
-	void			*pdrv_private;
-};
+	अचिन्हित पूर्णांक		master;
+	अचिन्हित पूर्णांक		channel;
+	अचिन्हित पूर्णांक		nr_chans;
+	व्योम			*pdrv_निजी;
+पूर्ण;
 
-struct stm_file {
-	struct stm_device	*stm;
-	struct stm_output	output;
-};
+काष्ठा sपंचांग_file अणु
+	काष्ठा sपंचांग_device	*sपंचांग;
+	काष्ठा sपंचांग_output	output;
+पूर्ण;
 
-struct stm_device *stm_find_device(const char *name);
-void stm_put_device(struct stm_device *stm);
+काष्ठा sपंचांग_device *sपंचांग_find_device(स्थिर अक्षर *name);
+व्योम sपंचांग_put_device(काष्ठा sपंचांग_device *sपंचांग);
 
-struct stm_source_device {
-	struct device		dev;
-	struct stm_source_data	*data;
+काष्ठा sपंचांग_source_device अणु
+	काष्ठा device		dev;
+	काष्ठा sपंचांग_source_data	*data;
 	spinlock_t		link_lock;
-	struct stm_device __rcu	*link;
-	struct list_head	link_entry;
-	/* one output per stm_source device */
-	struct stm_output	output;
-};
+	काष्ठा sपंचांग_device __rcu	*link;
+	काष्ठा list_head	link_entry;
+	/* one output per sपंचांग_source device */
+	काष्ठा sपंचांग_output	output;
+पूर्ण;
 
-#define to_stm_source_device(_d)				\
-	container_of((_d), struct stm_source_device, dev)
+#घोषणा to_sपंचांग_source_device(_d)				\
+	container_of((_d), काष्ठा sपंचांग_source_device, dev)
 
-void *to_pdrv_policy_node(struct config_item *item);
+व्योम *to_pdrv_policy_node(काष्ठा config_item *item);
 
-struct stm_protocol_driver {
-	struct module	*owner;
-	const char	*name;
-	ssize_t		(*write)(struct stm_data *data,
-				 struct stm_output *output, unsigned int chan,
-				 const char *buf, size_t count);
-	void		(*policy_node_init)(void *arg);
-	int		(*output_open)(void *priv, struct stm_output *output);
-	void		(*output_close)(struct stm_output *output);
-	ssize_t		priv_sz;
-	struct configfs_attribute	**policy_attr;
-};
+काष्ठा sपंचांग_protocol_driver अणु
+	काष्ठा module	*owner;
+	स्थिर अक्षर	*name;
+	sमाप_प्रकार		(*ग_लिखो)(काष्ठा sपंचांग_data *data,
+				 काष्ठा sपंचांग_output *output, अचिन्हित पूर्णांक chan,
+				 स्थिर अक्षर *buf, माप_प्रकार count);
+	व्योम		(*policy_node_init)(व्योम *arg);
+	पूर्णांक		(*output_खोलो)(व्योम *priv, काष्ठा sपंचांग_output *output);
+	व्योम		(*output_बंद)(काष्ठा sपंचांग_output *output);
+	sमाप_प्रकार		priv_sz;
+	काष्ठा configfs_attribute	**policy_attr;
+पूर्ण;
 
-int stm_register_protocol(const struct stm_protocol_driver *pdrv);
-void stm_unregister_protocol(const struct stm_protocol_driver *pdrv);
-int stm_lookup_protocol(const char *name,
-			const struct stm_protocol_driver **pdrv,
-			const struct config_item_type **type);
-void stm_put_protocol(const struct stm_protocol_driver *pdrv);
-ssize_t stm_data_write(struct stm_data *data, unsigned int m,
-		       unsigned int c, bool ts_first, const void *buf,
-		       size_t count);
+पूर्णांक sपंचांग_रेजिस्टर_protocol(स्थिर काष्ठा sपंचांग_protocol_driver *pdrv);
+व्योम sपंचांग_unरेजिस्टर_protocol(स्थिर काष्ठा sपंचांग_protocol_driver *pdrv);
+पूर्णांक sपंचांग_lookup_protocol(स्थिर अक्षर *name,
+			स्थिर काष्ठा sपंचांग_protocol_driver **pdrv,
+			स्थिर काष्ठा config_item_type **type);
+व्योम sपंचांग_put_protocol(स्थिर काष्ठा sपंचांग_protocol_driver *pdrv);
+sमाप_प्रकार sपंचांग_data_ग_लिखो(काष्ठा sपंचांग_data *data, अचिन्हित पूर्णांक m,
+		       अचिन्हित पूर्णांक c, bool ts_first, स्थिर व्योम *buf,
+		       माप_प्रकार count);
 
-#endif /* _STM_STM_H_ */
+#पूर्ण_अगर /* _STM_STM_H_ */

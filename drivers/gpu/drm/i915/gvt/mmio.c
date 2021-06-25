@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,229 +23,229 @@
  *
  * Authors:
  *    Ke Yu
- *    Kevin Tian <kevin.tian@intel.com>
+ *    Kevin Tian <kevin.tian@पूर्णांकel.com>
  *    Dexuan Cui
  *
  * Contributors:
- *    Tina Zhang <tina.zhang@intel.com>
- *    Min He <min.he@intel.com>
- *    Niu Bing <bing.niu@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Tina Zhang <tina.zhang@पूर्णांकel.com>
+ *    Min He <min.he@पूर्णांकel.com>
+ *    Niu Bing <bing.niu@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  */
 
-#include "i915_drv.h"
-#include "gvt.h"
+#समावेश "i915_drv.h"
+#समावेश "gvt.h"
 
 /**
- * intel_vgpu_gpa_to_mmio_offset - translate a GPA to MMIO offset
+ * पूर्णांकel_vgpu_gpa_to_mmio_offset - translate a GPA to MMIO offset
  * @vgpu: a vGPU
  * @gpa: guest physical address
  *
  * Returns:
- * Zero on success, negative error code if failed
+ * Zero on success, negative error code अगर failed
  */
-int intel_vgpu_gpa_to_mmio_offset(struct intel_vgpu *vgpu, u64 gpa)
-{
-	u64 gttmmio_gpa = intel_vgpu_get_bar_gpa(vgpu, PCI_BASE_ADDRESS_0);
-	return gpa - gttmmio_gpa;
-}
+पूर्णांक पूर्णांकel_vgpu_gpa_to_mmio_offset(काष्ठा पूर्णांकel_vgpu *vgpu, u64 gpa)
+अणु
+	u64 gtपंचांगmio_gpa = पूर्णांकel_vgpu_get_bar_gpa(vgpu, PCI_BASE_ADDRESS_0);
+	वापस gpa - gtपंचांगmio_gpa;
+पूर्ण
 
-#define reg_is_mmio(gvt, reg)  \
+#घोषणा reg_is_mmio(gvt, reg)  \
 	(reg >= 0 && reg < gvt->device_info.mmio_size)
 
-#define reg_is_gtt(gvt, reg)   \
+#घोषणा reg_is_gtt(gvt, reg)   \
 	(reg >= gvt->device_info.gtt_start_offset \
 	 && reg < gvt->device_info.gtt_start_offset + gvt_ggtt_sz(gvt))
 
-static void failsafe_emulate_mmio_rw(struct intel_vgpu *vgpu, u64 pa,
-		void *p_data, unsigned int bytes, bool read)
-{
-	struct intel_gvt *gvt = NULL;
-	void *pt = NULL;
-	unsigned int offset = 0;
+अटल व्योम failsafe_emulate_mmio_rw(काष्ठा पूर्णांकel_vgpu *vgpu, u64 pa,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes, bool पढ़ो)
+अणु
+	काष्ठा पूर्णांकel_gvt *gvt = शून्य;
+	व्योम *pt = शून्य;
+	अचिन्हित पूर्णांक offset = 0;
 
-	if (!vgpu || !p_data)
-		return;
+	अगर (!vgpu || !p_data)
+		वापस;
 
 	gvt = vgpu->gvt;
 	mutex_lock(&vgpu->vgpu_lock);
-	offset = intel_vgpu_gpa_to_mmio_offset(vgpu, pa);
-	if (reg_is_mmio(gvt, offset)) {
-		if (read)
-			intel_vgpu_default_mmio_read(vgpu, offset, p_data,
+	offset = पूर्णांकel_vgpu_gpa_to_mmio_offset(vgpu, pa);
+	अगर (reg_is_mmio(gvt, offset)) अणु
+		अगर (पढ़ो)
+			पूर्णांकel_vgpu_शेष_mmio_पढ़ो(vgpu, offset, p_data,
 					bytes);
-		else
-			intel_vgpu_default_mmio_write(vgpu, offset, p_data,
+		अन्यथा
+			पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, p_data,
 					bytes);
-	} else if (reg_is_gtt(gvt, offset)) {
+	पूर्ण अन्यथा अगर (reg_is_gtt(gvt, offset)) अणु
 		offset -= gvt->device_info.gtt_start_offset;
-		pt = vgpu->gtt.ggtt_mm->ggtt_mm.virtual_ggtt + offset;
-		if (read)
-			memcpy(p_data, pt, bytes);
-		else
-			memcpy(pt, p_data, bytes);
+		pt = vgpu->gtt.ggtt_mm->ggtt_mm.भव_ggtt + offset;
+		अगर (पढ़ो)
+			स_नकल(p_data, pt, bytes);
+		अन्यथा
+			स_नकल(pt, p_data, bytes);
 
-	}
+	पूर्ण
 	mutex_unlock(&vgpu->vgpu_lock);
-}
+पूर्ण
 
 /**
- * intel_vgpu_emulate_mmio_read - emulate MMIO read
+ * पूर्णांकel_vgpu_emulate_mmio_पढ़ो - emulate MMIO पढ़ो
  * @vgpu: a vGPU
  * @pa: guest physical address
- * @p_data: data return buffer
+ * @p_data: data वापस buffer
  * @bytes: access data length
  *
  * Returns:
- * Zero on success, negative error code if failed
+ * Zero on success, negative error code अगर failed
  */
-int intel_vgpu_emulate_mmio_read(struct intel_vgpu *vgpu, u64 pa,
-		void *p_data, unsigned int bytes)
-{
-	struct intel_gvt *gvt = vgpu->gvt;
-	struct drm_i915_private *i915 = gvt->gt->i915;
-	unsigned int offset = 0;
-	int ret = -EINVAL;
+पूर्णांक पूर्णांकel_vgpu_emulate_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, u64 pa,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
+	काष्ठा drm_i915_निजी *i915 = gvt->gt->i915;
+	अचिन्हित पूर्णांक offset = 0;
+	पूर्णांक ret = -EINVAL;
 
-	if (vgpu->failsafe) {
+	अगर (vgpu->failsafe) अणु
 		failsafe_emulate_mmio_rw(vgpu, pa, p_data, bytes, true);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	mutex_lock(&vgpu->vgpu_lock);
 
-	offset = intel_vgpu_gpa_to_mmio_offset(vgpu, pa);
+	offset = पूर्णांकel_vgpu_gpa_to_mmio_offset(vgpu, pa);
 
-	if (drm_WARN_ON(&i915->drm, bytes > 8))
-		goto err;
+	अगर (drm_WARN_ON(&i915->drm, bytes > 8))
+		जाओ err;
 
-	if (reg_is_gtt(gvt, offset)) {
-		if (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, 4) &&
+	अगर (reg_is_gtt(gvt, offset)) अणु
+		अगर (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, 4) &&
 				!IS_ALIGNED(offset, 8)))
-			goto err;
-		if (drm_WARN_ON(&i915->drm, bytes != 4 && bytes != 8))
-			goto err;
-		if (drm_WARN_ON(&i915->drm,
+			जाओ err;
+		अगर (drm_WARN_ON(&i915->drm, bytes != 4 && bytes != 8))
+			जाओ err;
+		अगर (drm_WARN_ON(&i915->drm,
 				!reg_is_gtt(gvt, offset + bytes - 1)))
-			goto err;
+			जाओ err;
 
-		ret = intel_vgpu_emulate_ggtt_mmio_read(vgpu, offset,
+		ret = पूर्णांकel_vgpu_emulate_ggtt_mmio_पढ़ो(vgpu, offset,
 				p_data, bytes);
-		if (ret)
-			goto err;
-		goto out;
-	}
+		अगर (ret)
+			जाओ err;
+		जाओ out;
+	पूर्ण
 
-	if (drm_WARN_ON_ONCE(&i915->drm, !reg_is_mmio(gvt, offset))) {
-		ret = intel_gvt_hypervisor_read_gpa(vgpu, pa, p_data, bytes);
-		goto out;
-	}
+	अगर (drm_WARN_ON_ONCE(&i915->drm, !reg_is_mmio(gvt, offset))) अणु
+		ret = पूर्णांकel_gvt_hypervisor_पढ़ो_gpa(vgpu, pa, p_data, bytes);
+		जाओ out;
+	पूर्ण
 
-	if (drm_WARN_ON(&i915->drm, !reg_is_mmio(gvt, offset + bytes - 1)))
-		goto err;
+	अगर (drm_WARN_ON(&i915->drm, !reg_is_mmio(gvt, offset + bytes - 1)))
+		जाओ err;
 
-	if (!intel_gvt_mmio_is_unalign(gvt, offset)) {
-		if (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, bytes)))
-			goto err;
-	}
+	अगर (!पूर्णांकel_gvt_mmio_is_unalign(gvt, offset)) अणु
+		अगर (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, bytes)))
+			जाओ err;
+	पूर्ण
 
-	ret = intel_vgpu_mmio_reg_rw(vgpu, offset, p_data, bytes, true);
-	if (ret < 0)
-		goto err;
+	ret = पूर्णांकel_vgpu_mmio_reg_rw(vgpu, offset, p_data, bytes, true);
+	अगर (ret < 0)
+		जाओ err;
 
-	intel_gvt_mmio_set_accessed(gvt, offset);
+	पूर्णांकel_gvt_mmio_set_accessed(gvt, offset);
 	ret = 0;
-	goto out;
+	जाओ out;
 
 err:
 	gvt_vgpu_err("fail to emulate MMIO read %08x len %d\n",
 			offset, bytes);
 out:
 	mutex_unlock(&vgpu->vgpu_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * intel_vgpu_emulate_mmio_write - emulate MMIO write
+ * पूर्णांकel_vgpu_emulate_mmio_ग_लिखो - emulate MMIO ग_लिखो
  * @vgpu: a vGPU
  * @pa: guest physical address
- * @p_data: write data buffer
+ * @p_data: ग_लिखो data buffer
  * @bytes: access data length
  *
  * Returns:
- * Zero on success, negative error code if failed
+ * Zero on success, negative error code अगर failed
  */
-int intel_vgpu_emulate_mmio_write(struct intel_vgpu *vgpu, u64 pa,
-		void *p_data, unsigned int bytes)
-{
-	struct intel_gvt *gvt = vgpu->gvt;
-	struct drm_i915_private *i915 = gvt->gt->i915;
-	unsigned int offset = 0;
-	int ret = -EINVAL;
+पूर्णांक पूर्णांकel_vgpu_emulate_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, u64 pa,
+		व्योम *p_data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
+	काष्ठा drm_i915_निजी *i915 = gvt->gt->i915;
+	अचिन्हित पूर्णांक offset = 0;
+	पूर्णांक ret = -EINVAL;
 
-	if (vgpu->failsafe) {
+	अगर (vgpu->failsafe) अणु
 		failsafe_emulate_mmio_rw(vgpu, pa, p_data, bytes, false);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_lock(&vgpu->vgpu_lock);
 
-	offset = intel_vgpu_gpa_to_mmio_offset(vgpu, pa);
+	offset = पूर्णांकel_vgpu_gpa_to_mmio_offset(vgpu, pa);
 
-	if (drm_WARN_ON(&i915->drm, bytes > 8))
-		goto err;
+	अगर (drm_WARN_ON(&i915->drm, bytes > 8))
+		जाओ err;
 
-	if (reg_is_gtt(gvt, offset)) {
-		if (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, 4) &&
+	अगर (reg_is_gtt(gvt, offset)) अणु
+		अगर (drm_WARN_ON(&i915->drm, !IS_ALIGNED(offset, 4) &&
 				!IS_ALIGNED(offset, 8)))
-			goto err;
-		if (drm_WARN_ON(&i915->drm, bytes != 4 && bytes != 8))
-			goto err;
-		if (drm_WARN_ON(&i915->drm,
+			जाओ err;
+		अगर (drm_WARN_ON(&i915->drm, bytes != 4 && bytes != 8))
+			जाओ err;
+		अगर (drm_WARN_ON(&i915->drm,
 				!reg_is_gtt(gvt, offset + bytes - 1)))
-			goto err;
+			जाओ err;
 
-		ret = intel_vgpu_emulate_ggtt_mmio_write(vgpu, offset,
+		ret = पूर्णांकel_vgpu_emulate_ggtt_mmio_ग_लिखो(vgpu, offset,
 				p_data, bytes);
-		if (ret)
-			goto err;
-		goto out;
-	}
+		अगर (ret)
+			जाओ err;
+		जाओ out;
+	पूर्ण
 
-	if (drm_WARN_ON_ONCE(&i915->drm, !reg_is_mmio(gvt, offset))) {
-		ret = intel_gvt_hypervisor_write_gpa(vgpu, pa, p_data, bytes);
-		goto out;
-	}
+	अगर (drm_WARN_ON_ONCE(&i915->drm, !reg_is_mmio(gvt, offset))) अणु
+		ret = पूर्णांकel_gvt_hypervisor_ग_लिखो_gpa(vgpu, pa, p_data, bytes);
+		जाओ out;
+	पूर्ण
 
-	ret = intel_vgpu_mmio_reg_rw(vgpu, offset, p_data, bytes, false);
-	if (ret < 0)
-		goto err;
+	ret = पूर्णांकel_vgpu_mmio_reg_rw(vgpu, offset, p_data, bytes, false);
+	अगर (ret < 0)
+		जाओ err;
 
-	intel_gvt_mmio_set_accessed(gvt, offset);
+	पूर्णांकel_gvt_mmio_set_accessed(gvt, offset);
 	ret = 0;
-	goto out;
+	जाओ out;
 err:
 	gvt_vgpu_err("fail to emulate MMIO write %08x len %d\n", offset,
 		     bytes);
 out:
 	mutex_unlock(&vgpu->vgpu_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
- * intel_vgpu_reset_mmio - reset virtual MMIO space
+ * पूर्णांकel_vgpu_reset_mmio - reset भव MMIO space
  * @vgpu: a vGPU
  * @dmlr: whether this is device model level reset
  */
-void intel_vgpu_reset_mmio(struct intel_vgpu *vgpu, bool dmlr)
-{
-	struct intel_gvt *gvt = vgpu->gvt;
-	const struct intel_gvt_device_info *info = &gvt->device_info;
-	void  *mmio = gvt->firmware.mmio;
+व्योम पूर्णांकel_vgpu_reset_mmio(काष्ठा पूर्णांकel_vgpu *vgpu, bool dmlr)
+अणु
+	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
+	स्थिर काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
+	व्योम  *mmio = gvt->firmware.mmio;
 
-	if (dmlr) {
-		memcpy(vgpu->mmio.vreg, mmio, info->mmio_size);
+	अगर (dmlr) अणु
+		स_नकल(vgpu->mmio.vreg, mmio, info->mmio_size);
 
 		vgpu_vreg_t(vgpu, GEN6_GT_THREAD_STATUS_REG) = 0;
 
@@ -254,7 +255,7 @@ void intel_vgpu_reset_mmio(struct intel_vgpu *vgpu, bool dmlr)
 		/* uc reset hw expect GS_MIA_IN_RESET */
 		vgpu_vreg_t(vgpu, GUC_STATUS) |= GS_MIA_IN_RESET;
 
-		if (IS_BROXTON(vgpu->gvt->gt->i915)) {
+		अगर (IS_BROXTON(vgpu->gvt->gt->i915)) अणु
 			vgpu_vreg_t(vgpu, BXT_P_CR_GT_DISP_PWRON) &=
 				    ~(BIT(0) | BIT(1));
 			vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY0)) &=
@@ -285,45 +286,45 @@ void intel_vgpu_reset_mmio(struct intel_vgpu *vgpu, bool dmlr)
 				SKL_FUSE_PG_DIST_STATUS(SKL_PG0) |
 				SKL_FUSE_PG_DIST_STATUS(SKL_PG1) |
 				SKL_FUSE_PG_DIST_STATUS(SKL_PG2);
-		}
-	} else {
-#define GVT_GEN8_MMIO_RESET_OFFSET		(0x44200)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+#घोषणा GVT_GEN8_MMIO_RESET_OFFSET		(0x44200)
 		/* only reset the engine related, so starting with 0x44200
-		 * interrupt include DE,display mmio related will not be
+		 * पूर्णांकerrupt include DE,display mmio related will not be
 		 * touched
 		 */
-		memcpy(vgpu->mmio.vreg, mmio, GVT_GEN8_MMIO_RESET_OFFSET);
-	}
+		स_नकल(vgpu->mmio.vreg, mmio, GVT_GEN8_MMIO_RESET_OFFSET);
+	पूर्ण
 
-}
+पूर्ण
 
 /**
- * intel_vgpu_init_mmio - init MMIO  space
+ * पूर्णांकel_vgpu_init_mmio - init MMIO  space
  * @vgpu: a vGPU
  *
  * Returns:
- * Zero on success, negative error code if failed
+ * Zero on success, negative error code अगर failed
  */
-int intel_vgpu_init_mmio(struct intel_vgpu *vgpu)
-{
-	const struct intel_gvt_device_info *info = &vgpu->gvt->device_info;
+पूर्णांक पूर्णांकel_vgpu_init_mmio(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
+	स्थिर काष्ठा पूर्णांकel_gvt_device_info *info = &vgpu->gvt->device_info;
 
 	vgpu->mmio.vreg = vzalloc(info->mmio_size);
-	if (!vgpu->mmio.vreg)
-		return -ENOMEM;
+	अगर (!vgpu->mmio.vreg)
+		वापस -ENOMEM;
 
-	intel_vgpu_reset_mmio(vgpu, true);
+	पूर्णांकel_vgpu_reset_mmio(vgpu, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_vgpu_clean_mmio - clean MMIO space
+ * पूर्णांकel_vgpu_clean_mmio - clean MMIO space
  * @vgpu: a vGPU
  *
  */
-void intel_vgpu_clean_mmio(struct intel_vgpu *vgpu)
-{
-	vfree(vgpu->mmio.vreg);
-	vgpu->mmio.vreg = NULL;
-}
+व्योम पूर्णांकel_vgpu_clean_mmio(काष्ठा पूर्णांकel_vgpu *vgpu)
+अणु
+	vमुक्त(vgpu->mmio.vreg);
+	vgpu->mmio.vreg = शून्य;
+पूर्ण

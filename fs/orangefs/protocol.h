@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/spinlock_types.h>
-#include <linux/slab.h>
-#include <linux/ioctl.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock_types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ioctl.h>
 
 /* khandle stuff  ***********************************************************/
 
@@ -15,138 +16,138 @@
  * The kernel module will always use the first four bytes and
  * the last four bytes as an inum.
  */
-struct orangefs_khandle {
-	unsigned char u[16];
-}  __aligned(8);
+काष्ठा orangefs_khandle अणु
+	अचिन्हित अक्षर u[16];
+पूर्ण  __aligned(8);
 
 /*
  * kernel version of an object ref.
  */
-struct orangefs_object_kref {
-	struct orangefs_khandle khandle;
+काष्ठा orangefs_object_kref अणु
+	काष्ठा orangefs_khandle khandle;
 	__s32 fs_id;
 	__s32 __pad1;
-};
+पूर्ण;
 
 /*
  * compare 2 khandles assumes little endian thus from large address to
  * small address
  */
-static inline int ORANGEFS_khandle_cmp(const struct orangefs_khandle *kh1,
-				   const struct orangefs_khandle *kh2)
-{
-	int i;
+अटल अंतरभूत पूर्णांक ORANGEFS_khandle_cmp(स्थिर काष्ठा orangefs_khandle *kh1,
+				   स्थिर काष्ठा orangefs_khandle *kh2)
+अणु
+	पूर्णांक i;
 
-	for (i = 15; i >= 0; i--) {
-		if (kh1->u[i] > kh2->u[i])
-			return 1;
-		if (kh1->u[i] < kh2->u[i])
-			return -1;
-	}
+	क्रम (i = 15; i >= 0; i--) अणु
+		अगर (kh1->u[i] > kh2->u[i])
+			वापस 1;
+		अगर (kh1->u[i] < kh2->u[i])
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ORANGEFS_khandle_to(const struct orangefs_khandle *kh,
-				   void *p, int size)
-{
+अटल अंतरभूत व्योम ORANGEFS_khandle_to(स्थिर काष्ठा orangefs_khandle *kh,
+				   व्योम *p, पूर्णांक size)
+अणु
 
-	memcpy(p, kh->u, 16);
-	memset(p + 16, 0, size - 16);
+	स_नकल(p, kh->u, 16);
+	स_रखो(p + 16, 0, size - 16);
 
-}
+पूर्ण
 
-static inline void ORANGEFS_khandle_from(struct orangefs_khandle *kh,
-				     void *p, int size)
-{
-	memset(kh, 0, 16);
-	memcpy(kh->u, p, 16);
+अटल अंतरभूत व्योम ORANGEFS_khandle_from(काष्ठा orangefs_khandle *kh,
+				     व्योम *p, पूर्णांक size)
+अणु
+	स_रखो(kh, 0, 16);
+	स_नकल(kh->u, p, 16);
 
-}
+पूर्ण
 
 /* pvfs2-types.h ************************************************************/
 
-#define ORANGEFS_SUPER_MAGIC 0x20030528
+#घोषणा ORANGEFS_SUPER_MAGIC 0x20030528
 
 /*
- * ORANGEFS error codes are a signed 32-bit integer. Error codes are negative, but
- * the sign is stripped before decoding.
+ * ORANGEFS error codes are a चिन्हित 32-bit पूर्णांकeger. Error codes are negative, but
+ * the sign is stripped beक्रमe decoding.
  */
 
 /* Bit 31 is not used since it is the sign. */
 
 /*
- * Bit 30 specifies that this is a ORANGEFS error. A ORANGEFS error is either an
- * encoded errno value or a ORANGEFS protocol error.
+ * Bit 30 specअगरies that this is a ORANGEFS error. A ORANGEFS error is either an
+ * encoded त्रुटि_सं value or a ORANGEFS protocol error.
  */
-#define ORANGEFS_ERROR_BIT (1 << 30)
+#घोषणा ORANGEFS_ERROR_BIT (1 << 30)
 
 /*
- * Bit 29 specifies that this is a ORANGEFS protocol error and not an encoded
- * errno value.
+ * Bit 29 specअगरies that this is a ORANGEFS protocol error and not an encoded
+ * त्रुटि_सं value.
  */
-#define ORANGEFS_NON_ERRNO_ERROR_BIT (1 << 29)
+#घोषणा ORANGEFS_NON_ERRNO_ERROR_BIT (1 << 29)
 
 /*
- * Bits 9, 8, and 7 specify the error class, which encodes the section of
- * server code the error originated in for logging purposes. It is not used
+ * Bits 9, 8, and 7 specअगरy the error class, which encodes the section of
+ * server code the error originated in क्रम logging purposes. It is not used
  * in the kernel except to be masked out.
  */
-#define ORANGEFS_ERROR_CLASS_BITS 0x380
+#घोषणा ORANGEFS_ERROR_CLASS_BITS 0x380
 
-/* Bits 6 - 0 are reserved for the actual error code. */
-#define ORANGEFS_ERROR_NUMBER_BITS 0x7f
+/* Bits 6 - 0 are reserved क्रम the actual error code. */
+#घोषणा ORANGEFS_ERROR_NUMBER_BITS 0x7f
 
-/* Encoded errno values decoded by PINT_errno_mapping in orangefs-utils.c. */
+/* Encoded त्रुटि_सं values decoded by PINT_त्रुटि_सं_mapping in orangefs-utils.c. */
 
 /* Our own ORANGEFS protocol error codes. */
-#define ORANGEFS_ECANCEL    (1|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_EDEVINIT   (2|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_EDETAIL    (3|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_EHOSTNTFD  (4|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_EADDRNTFD  (5|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_ENORECVR   (6|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_ETRYAGAIN  (7|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_ENOTPVFS   (8|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
-#define ORANGEFS_ESECURITY  (9|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_ECANCEL    (1|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_EDEVINIT   (2|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_EDETAIL    (3|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_EHOSTNTFD  (4|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_EADDRNTFD  (5|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_ENORECVR   (6|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_ETRYAGAIN  (7|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_ENOTPVFS   (8|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
+#घोषणा ORANGEFS_ESECURITY  (9|ORANGEFS_NON_ERRNO_ERROR_BIT|ORANGEFS_ERROR_BIT)
 
 /* permission bits */
-#define ORANGEFS_O_EXECUTE (1 << 0)
-#define ORANGEFS_O_WRITE   (1 << 1)
-#define ORANGEFS_O_READ    (1 << 2)
-#define ORANGEFS_G_EXECUTE (1 << 3)
-#define ORANGEFS_G_WRITE   (1 << 4)
-#define ORANGEFS_G_READ    (1 << 5)
-#define ORANGEFS_U_EXECUTE (1 << 6)
-#define ORANGEFS_U_WRITE   (1 << 7)
-#define ORANGEFS_U_READ    (1 << 8)
+#घोषणा ORANGEFS_O_EXECUTE (1 << 0)
+#घोषणा ORANGEFS_O_WRITE   (1 << 1)
+#घोषणा ORANGEFS_O_READ    (1 << 2)
+#घोषणा ORANGEFS_G_EXECUTE (1 << 3)
+#घोषणा ORANGEFS_G_WRITE   (1 << 4)
+#घोषणा ORANGEFS_G_READ    (1 << 5)
+#घोषणा ORANGEFS_U_EXECUTE (1 << 6)
+#घोषणा ORANGEFS_U_WRITE   (1 << 7)
+#घोषणा ORANGEFS_U_READ    (1 << 8)
 /* no ORANGEFS_U_VTX (sticky bit) */
-#define ORANGEFS_G_SGID    (1 << 10)
-#define ORANGEFS_U_SUID    (1 << 11)
+#घोषणा ORANGEFS_G_SGID    (1 << 10)
+#घोषणा ORANGEFS_U_SUID    (1 << 11)
 
-#define ORANGEFS_ITERATE_START    2147483646
-#define ORANGEFS_ITERATE_END      2147483645
-#define ORANGEFS_IMMUTABLE_FL FS_IMMUTABLE_FL
-#define ORANGEFS_APPEND_FL    FS_APPEND_FL
-#define ORANGEFS_NOATIME_FL   FS_NOATIME_FL
-#define ORANGEFS_MIRROR_FL    0x01000000ULL
-#define ORANGEFS_FS_ID_NULL       ((__s32)0)
-#define ORANGEFS_ATTR_SYS_UID                   (1 << 0)
-#define ORANGEFS_ATTR_SYS_GID                   (1 << 1)
-#define ORANGEFS_ATTR_SYS_PERM                  (1 << 2)
-#define ORANGEFS_ATTR_SYS_ATIME                 (1 << 3)
-#define ORANGEFS_ATTR_SYS_CTIME                 (1 << 4)
-#define ORANGEFS_ATTR_SYS_MTIME                 (1 << 5)
-#define ORANGEFS_ATTR_SYS_TYPE                  (1 << 6)
-#define ORANGEFS_ATTR_SYS_ATIME_SET             (1 << 7)
-#define ORANGEFS_ATTR_SYS_MTIME_SET             (1 << 8)
-#define ORANGEFS_ATTR_SYS_SIZE                  (1 << 20)
-#define ORANGEFS_ATTR_SYS_LNK_TARGET            (1 << 24)
-#define ORANGEFS_ATTR_SYS_DFILE_COUNT           (1 << 25)
-#define ORANGEFS_ATTR_SYS_DIRENT_COUNT          (1 << 26)
-#define ORANGEFS_ATTR_SYS_BLKSIZE               (1 << 28)
-#define ORANGEFS_ATTR_SYS_MIRROR_COPIES_COUNT   (1 << 29)
-#define ORANGEFS_ATTR_SYS_COMMON_ALL	\
+#घोषणा ORANGEFS_ITERATE_START    2147483646
+#घोषणा ORANGEFS_ITERATE_END      2147483645
+#घोषणा ORANGEFS_IMMUTABLE_FL FS_IMMUTABLE_FL
+#घोषणा ORANGEFS_APPEND_FL    FS_APPEND_FL
+#घोषणा ORANGEFS_NOATIME_FL   FS_NOATIME_FL
+#घोषणा ORANGEFS_MIRROR_FL    0x01000000ULL
+#घोषणा ORANGEFS_FS_ID_शून्य       ((__s32)0)
+#घोषणा ORANGEFS_ATTR_SYS_UID                   (1 << 0)
+#घोषणा ORANGEFS_ATTR_SYS_GID                   (1 << 1)
+#घोषणा ORANGEFS_ATTR_SYS_PERM                  (1 << 2)
+#घोषणा ORANGEFS_ATTR_SYS_ATIME                 (1 << 3)
+#घोषणा ORANGEFS_ATTR_SYS_CTIME                 (1 << 4)
+#घोषणा ORANGEFS_ATTR_SYS_MTIME                 (1 << 5)
+#घोषणा ORANGEFS_ATTR_SYS_TYPE                  (1 << 6)
+#घोषणा ORANGEFS_ATTR_SYS_ATIME_SET             (1 << 7)
+#घोषणा ORANGEFS_ATTR_SYS_MTIME_SET             (1 << 8)
+#घोषणा ORANGEFS_ATTR_SYS_SIZE                  (1 << 20)
+#घोषणा ORANGEFS_ATTR_SYS_LNK_TARGET            (1 << 24)
+#घोषणा ORANGEFS_ATTR_SYS_Dखाता_COUNT           (1 << 25)
+#घोषणा ORANGEFS_ATTR_SYS_सूचीENT_COUNT          (1 << 26)
+#घोषणा ORANGEFS_ATTR_SYS_BLKSIZE               (1 << 28)
+#घोषणा ORANGEFS_ATTR_SYS_MIRROR_COPIES_COUNT   (1 << 29)
+#घोषणा ORANGEFS_ATTR_SYS_COMMON_ALL	\
 	(ORANGEFS_ATTR_SYS_UID	|	\
 	 ORANGEFS_ATTR_SYS_GID	|	\
 	 ORANGEFS_ATTR_SYS_PERM	|	\
@@ -155,159 +156,159 @@ static inline void ORANGEFS_khandle_from(struct orangefs_khandle *kh,
 	 ORANGEFS_ATTR_SYS_MTIME	|	\
 	 ORANGEFS_ATTR_SYS_TYPE)
 
-#define ORANGEFS_ATTR_SYS_ALL_SETABLE		\
+#घोषणा ORANGEFS_ATTR_SYS_ALL_SETABLE		\
 (ORANGEFS_ATTR_SYS_COMMON_ALL-ORANGEFS_ATTR_SYS_TYPE)
 
-#define ORANGEFS_ATTR_SYS_ALL_NOHINT			\
+#घोषणा ORANGEFS_ATTR_SYS_ALL_NOHINT			\
 	(ORANGEFS_ATTR_SYS_COMMON_ALL		|	\
 	 ORANGEFS_ATTR_SYS_SIZE			|	\
 	 ORANGEFS_ATTR_SYS_LNK_TARGET		|	\
-	 ORANGEFS_ATTR_SYS_DFILE_COUNT		|	\
+	 ORANGEFS_ATTR_SYS_Dखाता_COUNT		|	\
 	 ORANGEFS_ATTR_SYS_MIRROR_COPIES_COUNT	|	\
-	 ORANGEFS_ATTR_SYS_DIRENT_COUNT		|	\
+	 ORANGEFS_ATTR_SYS_सूचीENT_COUNT		|	\
 	 ORANGEFS_ATTR_SYS_BLKSIZE)
 
-#define ORANGEFS_XATTR_REPLACE 0x2
-#define ORANGEFS_XATTR_CREATE  0x1
-#define ORANGEFS_MAX_SERVER_ADDR_LEN 256
-#define ORANGEFS_NAME_MAX                256
+#घोषणा ORANGEFS_XATTR_REPLACE 0x2
+#घोषणा ORANGEFS_XATTR_CREATE  0x1
+#घोषणा ORANGEFS_MAX_SERVER_ADDR_LEN 256
+#घोषणा ORANGEFS_NAME_MAX                256
 /*
- * max extended attribute name len as imposed by the VFS and exploited for the
+ * max extended attribute name len as imposed by the VFS and exploited क्रम the
  * upcall request types.
- * NOTE: Please retain them as multiples of 8 even if you wish to change them
- * This is *NECESSARY* for supporting 32 bit user-space binaries on a 64-bit
+ * NOTE: Please retain them as multiples of 8 even अगर you wish to change them
+ * This is *NECESSARY* क्रम supporting 32 bit user-space binaries on a 64-bit
  * kernel. Due to implementation within DBPF, this really needs to be
  * ORANGEFS_NAME_MAX, which it was the same value as, but no reason to let it
- * break if that changes in the future.
+ * अवरोध अगर that changes in the future.
  */
-#define ORANGEFS_MAX_XATTR_NAMELEN   ORANGEFS_NAME_MAX	/* Not the same as
+#घोषणा ORANGEFS_MAX_XATTR_NAMELEN   ORANGEFS_NAME_MAX	/* Not the same as
 						 * XATTR_NAME_MAX defined
 						 * by <linux/xattr.h>
 						 */
-#define ORANGEFS_MAX_XATTR_VALUELEN  8192	/* Not the same as XATTR_SIZE_MAX
+#घोषणा ORANGEFS_MAX_XATTR_VALUELEN  8192	/* Not the same as XATTR_SIZE_MAX
 					 * defined by <linux/xattr.h>
 					 */
-#define ORANGEFS_MAX_XATTR_LISTLEN   16	/* Not the same as XATTR_LIST_MAX
+#घोषणा ORANGEFS_MAX_XATTR_LISTLEN   16	/* Not the same as XATTR_LIST_MAX
 					 * defined by <linux/xattr.h>
 					 */
 /*
- * ORANGEFS I/O operation types, used in both system and server interfaces.
+ * ORANGEFS I/O operation types, used in both प्रणाली and server पूर्णांकerfaces.
  */
-enum ORANGEFS_io_type {
+क्रमागत ORANGEFS_io_type अणु
 	ORANGEFS_IO_READ = 1,
 	ORANGEFS_IO_WRITE = 2
-};
+पूर्ण;
 
 /*
- * If this enum is modified the server parameters related to the precreate pool
- * batch and low threshold sizes may need to be modified  to reflect this
+ * If this क्रमागत is modअगरied the server parameters related to the precreate pool
+ * batch and low threshold sizes may need to be modअगरied  to reflect this
  * change.
  */
-enum orangefs_ds_type {
+क्रमागत orangefs_ds_type अणु
 	ORANGEFS_TYPE_NONE = 0,
-	ORANGEFS_TYPE_METAFILE = (1 << 0),
-	ORANGEFS_TYPE_DATAFILE = (1 << 1),
-	ORANGEFS_TYPE_DIRECTORY = (1 << 2),
+	ORANGEFS_TYPE_METAखाता = (1 << 0),
+	ORANGEFS_TYPE_DATAखाता = (1 << 1),
+	ORANGEFS_TYPE_सूचीECTORY = (1 << 2),
 	ORANGEFS_TYPE_SYMLINK = (1 << 3),
-	ORANGEFS_TYPE_DIRDATA = (1 << 4),
-	ORANGEFS_TYPE_INTERNAL = (1 << 5)	/* for the server's private use */
-};
+	ORANGEFS_TYPE_सूचीDATA = (1 << 4),
+	ORANGEFS_TYPE_INTERNAL = (1 << 5)	/* क्रम the server's निजी use */
+पूर्ण;
 
-/* This structure is used by the VFS-client interaction alone */
-struct ORANGEFS_keyval_pair {
-	char key[ORANGEFS_MAX_XATTR_NAMELEN];
-	__s32 key_sz;	/* __s32 for portable, fixed-size structures */
+/* This काष्ठाure is used by the VFS-client पूर्णांकeraction alone */
+काष्ठा ORANGEFS_keyval_pair अणु
+	अक्षर key[ORANGEFS_MAX_XATTR_NAMELEN];
+	__s32 key_sz;	/* __s32 क्रम portable, fixed-size काष्ठाures */
 	__s32 val_sz;
-	char val[ORANGEFS_MAX_XATTR_VALUELEN];
-};
+	अक्षर val[ORANGEFS_MAX_XATTR_VALUELEN];
+पूर्ण;
 
-/* pvfs2-sysint.h ***********************************************************/
-/* Describes attributes for a file, directory, or symlink. */
-struct ORANGEFS_sys_attr_s {
+/* pvfs2-sysपूर्णांक.h ***********************************************************/
+/* Describes attributes क्रम a file, directory, or symlink. */
+काष्ठा ORANGEFS_sys_attr_s अणु
 	__u32 owner;
 	__u32 group;
 	__u32 perms;
-	__u64 atime;
-	__u64 mtime;
-	__u64 ctime;
+	__u64 aसमय;
+	__u64 mसमय;
+	__u64 स_समय;
 	__s64 size;
 
-	/* NOTE: caller must free if valid */
-	char *link_target;
+	/* NOTE: caller must मुक्त अगर valid */
+	अक्षर *link_target;
 
-	/* Changed to __s32 so that size of structure does not change */
+	/* Changed to __s32 so that size of काष्ठाure करोes not change */
 	__s32 dfile_count;
 
-	/* Changed to __s32 so that size of structure does not change */
+	/* Changed to __s32 so that size of काष्ठाure करोes not change */
 	__s32 distr_dir_servers_initial;
 
-	/* Changed to __s32 so that size of structure does not change */
+	/* Changed to __s32 so that size of काष्ठाure करोes not change */
 	__s32 distr_dir_servers_max;
 
-	/* Changed to __s32 so that size of structure does not change */
+	/* Changed to __s32 so that size of काष्ठाure करोes not change */
 	__s32 distr_dir_split_size;
 
 	__u32 mirror_copies_count;
 
-	/* NOTE: caller must free if valid */
-	char *dist_name;
+	/* NOTE: caller must मुक्त अगर valid */
+	अक्षर *dist_name;
 
-	/* NOTE: caller must free if valid */
-	char *dist_params;
+	/* NOTE: caller must मुक्त अगर valid */
+	अक्षर *dist_params;
 
 	__s64 dirent_count;
-	enum orangefs_ds_type objtype;
+	क्रमागत orangefs_ds_type objtype;
 	__u64 flags;
 	__u32 mask;
 	__s64 blksize;
-};
+पूर्ण;
 
-#define ORANGEFS_LOOKUP_LINK_NO_FOLLOW 0
+#घोषणा ORANGEFS_LOOKUP_LINK_NO_FOLLOW 0
 
-/* pint-dev.h ***************************************************************/
+/* pपूर्णांक-dev.h ***************************************************************/
 
-/* parameter structure used in ORANGEFS_DEV_DEBUG ioctl command */
-struct dev_mask_info_s {
-	enum {
+/* parameter काष्ठाure used in ORANGEFS_DEV_DEBUG ioctl command */
+काष्ठा dev_mask_info_s अणु
+	क्रमागत अणु
 		KERNEL_MASK,
 		CLIENT_MASK,
-	} mask_type;
+	पूर्ण mask_type;
 	__u64 mask_value;
-};
+पूर्ण;
 
-struct dev_mask2_info_s {
+काष्ठा dev_mask2_info_s अणु
 	__u64 mask1_value;
 	__u64 mask2_value;
-};
+पूर्ण;
 
 /* pvfs2-util.h *************************************************************/
-__s32 ORANGEFS_util_translate_mode(int mode);
+__s32 ORANGEFS_util_translate_mode(पूर्णांक mode);
 
 /* pvfs2-debug.h ************************************************************/
-#include "orangefs-debug.h"
+#समावेश "orangefs-debug.h"
 
-/* pvfs2-internal.h *********************************************************/
-#define llu(x) (unsigned long long)(x)
-#define lld(x) (long long)(x)
+/* pvfs2-पूर्णांकernal.h *********************************************************/
+#घोषणा llu(x) (अचिन्हित दीर्घ दीर्घ)(x)
+#घोषणा lld(x) (दीर्घ दीर्घ)(x)
 
-/* pint-dev-shared.h ********************************************************/
-#define ORANGEFS_DEV_MAGIC 'k'
+/* pपूर्णांक-dev-shared.h ********************************************************/
+#घोषणा ORANGEFS_DEV_MAGIC 'k'
 
-#define ORANGEFS_READDIR_DEFAULT_DESC_COUNT  5
+#घोषणा ORANGEFS_READसूची_DEFAULT_DESC_COUNT  5
 
-#define DEV_GET_MAGIC           0x1
-#define DEV_GET_MAX_UPSIZE      0x2
-#define DEV_GET_MAX_DOWNSIZE    0x3
-#define DEV_MAP                 0x4
-#define DEV_REMOUNT_ALL         0x5
-#define DEV_DEBUG               0x6
-#define DEV_UPSTREAM            0x7
-#define DEV_CLIENT_MASK         0x8
-#define DEV_CLIENT_STRING       0x9
-#define DEV_MAX_NR              0xa
+#घोषणा DEV_GET_MAGIC           0x1
+#घोषणा DEV_GET_MAX_UPSIZE      0x2
+#घोषणा DEV_GET_MAX_DOWNSIZE    0x3
+#घोषणा DEV_MAP                 0x4
+#घोषणा DEV_REMOUNT_ALL         0x5
+#घोषणा DEV_DEBUG               0x6
+#घोषणा DEV_UPSTREAM            0x7
+#घोषणा DEV_CLIENT_MASK         0x8
+#घोषणा DEV_CLIENT_STRING       0x9
+#घोषणा DEV_MAX_NR              0xa
 
 /* supported ioctls, codes are with respect to user-space */
-enum {
+क्रमागत अणु
 	ORANGEFS_DEV_GET_MAGIC = _IOW(ORANGEFS_DEV_MAGIC, DEV_GET_MAGIC, __s32),
 	ORANGEFS_DEV_GET_MAX_UPSIZE =
 	    _IOW(ORANGEFS_DEV_MAGIC, DEV_GET_MAX_UPSIZE, __s32),
@@ -316,47 +317,47 @@ enum {
 	ORANGEFS_DEV_MAP = _IO(ORANGEFS_DEV_MAGIC, DEV_MAP),
 	ORANGEFS_DEV_REMOUNT_ALL = _IO(ORANGEFS_DEV_MAGIC, DEV_REMOUNT_ALL),
 	ORANGEFS_DEV_DEBUG = _IOR(ORANGEFS_DEV_MAGIC, DEV_DEBUG, __s32),
-	ORANGEFS_DEV_UPSTREAM = _IOW(ORANGEFS_DEV_MAGIC, DEV_UPSTREAM, int),
+	ORANGEFS_DEV_UPSTREAM = _IOW(ORANGEFS_DEV_MAGIC, DEV_UPSTREAM, पूर्णांक),
 	ORANGEFS_DEV_CLIENT_MASK = _IOW(ORANGEFS_DEV_MAGIC,
 				    DEV_CLIENT_MASK,
-				    struct dev_mask2_info_s),
+				    काष्ठा dev_mask2_info_s),
 	ORANGEFS_DEV_CLIENT_STRING = _IOW(ORANGEFS_DEV_MAGIC,
 				      DEV_CLIENT_STRING,
-				      char *),
+				      अक्षर *),
 	ORANGEFS_DEV_MAXNR = DEV_MAX_NR,
-};
+पूर्ण;
 
 /*
- * version number for use in communicating between kernel space and user
- * space. Zero signifies the upstream version of the kernel module.
+ * version number क्रम use in communicating between kernel space and user
+ * space. Zero signअगरies the upstream version of the kernel module.
  */
-#define ORANGEFS_KERNEL_PROTO_VERSION 0
-#define ORANGEFS_MINIMUM_USERSPACE_VERSION 20903
+#घोषणा ORANGEFS_KERNEL_PROTO_VERSION 0
+#घोषणा ORANGEFS_MINIMUM_USERSPACE_VERSION 20903
 
 /*
  * describes memory regions to map in the ORANGEFS_DEV_MAP ioctl.
- * NOTE: See devorangefs-req.c for 32 bit compat structure.
- * Since this structure has a variable-sized layout that is different
- * on 32 and 64 bit platforms, we need to normalize to a 64 bit layout
- * on such systems before servicing ioctl calls from user-space binaries
+ * NOTE: See devorangefs-req.c क्रम 32 bit compat काष्ठाure.
+ * Since this काष्ठाure has a variable-sized layout that is dअगरferent
+ * on 32 and 64 bit platक्रमms, we need to normalize to a 64 bit layout
+ * on such प्रणालीs beक्रमe servicing ioctl calls from user-space binaries
  * that may be 32 bit!
  */
-struct ORANGEFS_dev_map_desc {
-	void __user *ptr;
+काष्ठा ORANGEFS_dev_map_desc अणु
+	व्योम __user *ptr;
 	__s32 total_size;
 	__s32 size;
 	__s32 count;
-};
+पूर्ण;
 
 /* gossip.h *****************************************************************/
 
-extern __u64 orangefs_gossip_debug_mask;
+बाह्य __u64 orangefs_gossip_debug_mask;
 
-/* try to avoid function call overhead by checking masks in macro */
-#define gossip_debug(mask, fmt, ...)					\
-do {									\
-	if (orangefs_gossip_debug_mask & (mask))			\
-		printk(KERN_DEBUG fmt, ##__VA_ARGS__);			\
-} while (0)
+/* try to aव्योम function call overhead by checking masks in macro */
+#घोषणा gossip_debug(mask, fmt, ...)					\
+करो अणु									\
+	अगर (orangefs_gossip_debug_mask & (mask))			\
+		prपूर्णांकk(KERN_DEBUG fmt, ##__VA_ARGS__);			\
+पूर्ण जबतक (0)
 
-#define gossip_err pr_err
+#घोषणा gossip_err pr_err

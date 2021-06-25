@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Hibernation support for x86
+ * Hibernation support क्रम x86
  *
  * Copyright (c) 2007 Rafael J. Wysocki <rjw@sisk.pl>
  * Copyright (c) 2002 Pavel Machek <pavel@ucw.cz>
  * Copyright (c) 2001 Patrick Mochel <mochel@osdl.org>
  */
-#include <linux/gfp.h>
-#include <linux/smp.h>
-#include <linux/suspend.h>
-#include <linux/scatterlist.h>
-#include <linux/kdebug.h>
-#include <linux/cpu.h>
-#include <linux/pgtable.h>
-#include <linux/types.h>
-#include <linux/crc32.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crc32.h>
 
-#include <asm/e820/api.h>
-#include <asm/init.h>
-#include <asm/proto.h>
-#include <asm/page.h>
-#include <asm/mtrr.h>
-#include <asm/sections.h>
-#include <asm/suspend.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/init.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/mtrr.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/suspend.h>
+#समावेश <यंत्र/tlbflush.h>
 
 /*
  * Address to jump to in the last phase of restore in order to get to the image
  * kernel's text (this value is passed in the image header).
  */
-unsigned long restore_jump_address __visible;
-unsigned long jump_address_phys;
+अचिन्हित दीर्घ restore_jump_address __visible;
+अचिन्हित दीर्घ jump_address_phys;
 
 /*
- * Value of the cr3 register from before the hibernation (this value is passed
+ * Value of the cr3 रेजिस्टर from beक्रमe the hibernation (this value is passed
  * in the image header).
  */
-unsigned long restore_cr3 __visible;
-unsigned long temp_pgt __visible;
-unsigned long relocated_restore_code __visible;
+अचिन्हित दीर्घ restore_cr3 __visible;
+अचिन्हित दीर्घ temp_pgt __visible;
+अचिन्हित दीर्घ relocated_restore_code __visible;
 
 /**
- *	pfn_is_nosave - check if given pfn is in the 'nosave' section
+ *	pfn_is_nosave - check अगर given pfn is in the 'nosave' section
  */
-int pfn_is_nosave(unsigned long pfn)
-{
-	unsigned long nosave_begin_pfn;
-	unsigned long nosave_end_pfn;
+पूर्णांक pfn_is_nosave(अचिन्हित दीर्घ pfn)
+अणु
+	अचिन्हित दीर्घ nosave_begin_pfn;
+	अचिन्हित दीर्घ nosave_end_pfn;
 
 	nosave_begin_pfn = __pa_symbol(&__nosave_begin) >> PAGE_SHIFT;
 	nosave_end_pfn = PAGE_ALIGN(__pa_symbol(&__nosave_end)) >> PAGE_SHIFT;
 
-	return pfn >= nosave_begin_pfn && pfn < nosave_end_pfn;
-}
+	वापस pfn >= nosave_begin_pfn && pfn < nosave_end_pfn;
+पूर्ण
 
-struct restore_data_record {
-	unsigned long jump_address;
-	unsigned long jump_address_phys;
-	unsigned long cr3;
-	unsigned long magic;
-	unsigned long e820_checksum;
-};
+काष्ठा restore_data_record अणु
+	अचिन्हित दीर्घ jump_address;
+	अचिन्हित दीर्घ jump_address_phys;
+	अचिन्हित दीर्घ cr3;
+	अचिन्हित दीर्घ magic;
+	अचिन्हित दीर्घ e820_checksum;
+पूर्ण;
 
 /**
  * compute_e820_crc32 - calculate crc32 of a given e820 table
@@ -69,39 +70,39 @@ struct restore_data_record {
  *
  * Return: the resulting checksum
  */
-static inline u32 compute_e820_crc32(struct e820_table *table)
-{
-	int size = offsetof(struct e820_table, entries) +
-		sizeof(struct e820_entry) * table->nr_entries;
+अटल अंतरभूत u32 compute_e820_crc32(काष्ठा e820_table *table)
+अणु
+	पूर्णांक size = दुरत्व(काष्ठा e820_table, entries) +
+		माप(काष्ठा e820_entry) * table->nr_entries;
 
-	return ~crc32_le(~0, (unsigned char const *)table, size);
-}
+	वापस ~crc32_le(~0, (अचिन्हित अक्षर स्थिर *)table, size);
+पूर्ण
 
-#ifdef CONFIG_X86_64
-#define RESTORE_MAGIC	0x23456789ABCDEF02UL
-#else
-#define RESTORE_MAGIC	0x12345679UL
-#endif
+#अगर_घोषित CONFIG_X86_64
+#घोषणा RESTORE_MAGIC	0x23456789ABCDEF02UL
+#अन्यथा
+#घोषणा RESTORE_MAGIC	0x12345679UL
+#पूर्ण_अगर
 
 /**
- *	arch_hibernation_header_save - populate the architecture specific part
+ *	arch_hibernation_header_save - populate the architecture specअगरic part
  *		of a hibernation image header
  *	@addr: address to save the data at
  */
-int arch_hibernation_header_save(void *addr, unsigned int max_size)
-{
-	struct restore_data_record *rdr = addr;
+पूर्णांक arch_hibernation_header_save(व्योम *addr, अचिन्हित पूर्णांक max_size)
+अणु
+	काष्ठा restore_data_record *rdr = addr;
 
-	if (max_size < sizeof(struct restore_data_record))
-		return -EOVERFLOW;
+	अगर (max_size < माप(काष्ठा restore_data_record))
+		वापस -EOVERFLOW;
 	rdr->magic = RESTORE_MAGIC;
-	rdr->jump_address = (unsigned long)restore_registers;
-	rdr->jump_address_phys = __pa_symbol(restore_registers);
+	rdr->jump_address = (अचिन्हित दीर्घ)restore_रेजिस्टरs;
+	rdr->jump_address_phys = __pa_symbol(restore_रेजिस्टरs);
 
 	/*
 	 * The restore code fixes up CR3 and CR4 in the following sequence:
 	 *
-	 * [in hibernation asm]
+	 * [in hibernation यंत्र]
 	 * 1. CR3 <= temporary page tables
 	 * 2. CR4 <= mmu_cr4_features (from the kernel that restores us)
 	 * 3. CR3 <= rdr->cr3
@@ -111,44 +112,44 @@ int arch_hibernation_header_save(void *addr, unsigned int max_size)
 	 * 6. CR3 <= saved CR3
 	 *
 	 * Our mmu_cr4_features has CR4.PCIDE=0, and toggling
-	 * CR4.PCIDE while CR3's PCID bits are nonzero is illegal, so
-	 * rdr->cr3 needs to point to valid page tables but must not
+	 * CR4.PCIDE जबतक CR3's PCID bits are nonzero is illegal, so
+	 * rdr->cr3 needs to poपूर्णांक to valid page tables but must not
 	 * have any of the PCID bits set.
 	 */
 	rdr->cr3 = restore_cr3 & ~CR3_PCID_MASK;
 
 	rdr->e820_checksum = compute_e820_crc32(e820_table_firmware);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	arch_hibernation_header_restore - read the architecture specific data
+ *	arch_hibernation_header_restore - पढ़ो the architecture specअगरic data
  *		from the hibernation image header
- *	@addr: address to read the data from
+ *	@addr: address to पढ़ो the data from
  */
-int arch_hibernation_header_restore(void *addr)
-{
-	struct restore_data_record *rdr = addr;
+पूर्णांक arch_hibernation_header_restore(व्योम *addr)
+अणु
+	काष्ठा restore_data_record *rdr = addr;
 
-	if (rdr->magic != RESTORE_MAGIC) {
+	अगर (rdr->magic != RESTORE_MAGIC) अणु
 		pr_crit("Unrecognized hibernate image header format!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	restore_jump_address = rdr->jump_address;
 	jump_address_phys = rdr->jump_address_phys;
 	restore_cr3 = rdr->cr3;
 
-	if (rdr->e820_checksum != compute_e820_crc32(e820_table_firmware)) {
+	अगर (rdr->e820_checksum != compute_e820_crc32(e820_table_firmware)) अणु
 		pr_crit("Hibernate inconsistent memory map detected!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int relocate_restore_code(void)
-{
+पूर्णांक relocate_restore_code(व्योम)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -156,64 +157,64 @@ int relocate_restore_code(void)
 	pte_t *pte;
 
 	relocated_restore_code = get_safe_page(GFP_ATOMIC);
-	if (!relocated_restore_code)
-		return -ENOMEM;
+	अगर (!relocated_restore_code)
+		वापस -ENOMEM;
 
-	memcpy((void *)relocated_restore_code, core_restore_code, PAGE_SIZE);
+	स_नकल((व्योम *)relocated_restore_code, core_restore_code, PAGE_SIZE);
 
 	/* Make the page containing the relocated code executable */
-	pgd = (pgd_t *)__va(read_cr3_pa()) +
+	pgd = (pgd_t *)__va(पढ़ो_cr3_pa()) +
 		pgd_index(relocated_restore_code);
 	p4d = p4d_offset(pgd, relocated_restore_code);
-	if (p4d_large(*p4d)) {
+	अगर (p4d_large(*p4d)) अणु
 		set_p4d(p4d, __p4d(p4d_val(*p4d) & ~_PAGE_NX));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pud = pud_offset(p4d, relocated_restore_code);
-	if (pud_large(*pud)) {
+	अगर (pud_large(*pud)) अणु
 		set_pud(pud, __pud(pud_val(*pud) & ~_PAGE_NX));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pmd = pmd_offset(pud, relocated_restore_code);
-	if (pmd_large(*pmd)) {
+	अगर (pmd_large(*pmd)) अणु
 		set_pmd(pmd, __pmd(pmd_val(*pmd) & ~_PAGE_NX));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pte = pte_offset_kernel(pmd, relocated_restore_code);
 	set_pte(pte, __pte(pte_val(*pte) & ~_PAGE_NX));
 out:
 	__flush_tlb_all();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int arch_resume_nosmt(void)
-{
-	int ret = 0;
+पूर्णांक arch_resume_nosmt(व्योम)
+अणु
+	पूर्णांक ret = 0;
 	/*
-	 * We reached this while coming out of hibernation. This means
-	 * that SMT siblings are sleeping in hlt, as mwait is not safe
+	 * We reached this जबतक coming out of hibernation. This means
+	 * that SMT siblings are sleeping in hlt, as mरुको is not safe
 	 * against control transition during resume (see comment in
 	 * hibernate_resume_nonboot_cpu_disable()).
 	 *
 	 * If the resumed kernel has SMT disabled, we have to take all the
 	 * SMT siblings out of hlt, and offline them again so that they
-	 * end up in mwait proper.
+	 * end up in mरुको proper.
 	 *
 	 * Called with hotplug disabled.
 	 */
 	cpu_hotplug_enable();
-	if (cpu_smt_control == CPU_SMT_DISABLED ||
-			cpu_smt_control == CPU_SMT_FORCE_DISABLED) {
-		enum cpuhp_smt_control old = cpu_smt_control;
+	अगर (cpu_smt_control == CPU_SMT_DISABLED ||
+			cpu_smt_control == CPU_SMT_FORCE_DISABLED) अणु
+		क्रमागत cpuhp_smt_control old = cpu_smt_control;
 
 		ret = cpuhp_smt_enable();
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 		ret = cpuhp_smt_disable(old);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 out:
 	cpu_hotplug_disable();
-	return ret;
-}
+	वापस ret;
+पूर्ण

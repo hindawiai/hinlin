@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,81 +20,81 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <core/memory.h>
-#include <core/notify.h>
+#समावेश <core/memory.h>
+#समावेश <core/notअगरy.h>
 
-static void
-nvkm_fault_ntfy_fini(struct nvkm_event *event, int type, int index)
-{
-	struct nvkm_fault *fault = container_of(event, typeof(*fault), event);
-	fault->func->buffer.intr(fault->buffer[index], false);
-}
+अटल व्योम
+nvkm_fault_ntfy_fini(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
+अणु
+	काष्ठा nvkm_fault *fault = container_of(event, typeof(*fault), event);
+	fault->func->buffer.पूर्णांकr(fault->buffer[index], false);
+पूर्ण
 
-static void
-nvkm_fault_ntfy_init(struct nvkm_event *event, int type, int index)
-{
-	struct nvkm_fault *fault = container_of(event, typeof(*fault), event);
-	fault->func->buffer.intr(fault->buffer[index], true);
-}
+अटल व्योम
+nvkm_fault_ntfy_init(काष्ठा nvkm_event *event, पूर्णांक type, पूर्णांक index)
+अणु
+	काष्ठा nvkm_fault *fault = container_of(event, typeof(*fault), event);
+	fault->func->buffer.पूर्णांकr(fault->buffer[index], true);
+पूर्ण
 
-static int
-nvkm_fault_ntfy_ctor(struct nvkm_object *object, void *argv, u32 argc,
-		     struct nvkm_notify *notify)
-{
-	struct nvkm_fault_buffer *buffer = nvkm_fault_buffer(object);
-	if (argc == 0) {
-		notify->size  = 0;
-		notify->types = 1;
-		notify->index = buffer->id;
-		return 0;
-	}
-	return -ENOSYS;
-}
+अटल पूर्णांक
+nvkm_fault_ntfy_ctor(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
+		     काष्ठा nvkm_notअगरy *notअगरy)
+अणु
+	काष्ठा nvkm_fault_buffer *buffer = nvkm_fault_buffer(object);
+	अगर (argc == 0) अणु
+		notअगरy->size  = 0;
+		notअगरy->types = 1;
+		notअगरy->index = buffer->id;
+		वापस 0;
+	पूर्ण
+	वापस -ENOSYS;
+पूर्ण
 
-static const struct nvkm_event_func
-nvkm_fault_ntfy = {
+अटल स्थिर काष्ठा nvkm_event_func
+nvkm_fault_ntfy = अणु
 	.ctor = nvkm_fault_ntfy_ctor,
 	.init = nvkm_fault_ntfy_init,
 	.fini = nvkm_fault_ntfy_fini,
-};
+पूर्ण;
 
-static void
-nvkm_fault_intr(struct nvkm_subdev *subdev)
-{
-	struct nvkm_fault *fault = nvkm_fault(subdev);
-	return fault->func->intr(fault);
-}
+अटल व्योम
+nvkm_fault_पूर्णांकr(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_fault *fault = nvkm_fault(subdev);
+	वापस fault->func->पूर्णांकr(fault);
+पूर्ण
 
-static int
-nvkm_fault_fini(struct nvkm_subdev *subdev, bool suspend)
-{
-	struct nvkm_fault *fault = nvkm_fault(subdev);
-	if (fault->func->fini)
+अटल पूर्णांक
+nvkm_fault_fini(काष्ठा nvkm_subdev *subdev, bool suspend)
+अणु
+	काष्ठा nvkm_fault *fault = nvkm_fault(subdev);
+	अगर (fault->func->fini)
 		fault->func->fini(fault);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fault_init(struct nvkm_subdev *subdev)
-{
-	struct nvkm_fault *fault = nvkm_fault(subdev);
-	if (fault->func->init)
+अटल पूर्णांक
+nvkm_fault_init(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_fault *fault = nvkm_fault(subdev);
+	अगर (fault->func->init)
 		fault->func->init(fault);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fault_oneinit_buffer(struct nvkm_fault *fault, int id)
-{
-	struct nvkm_subdev *subdev = &fault->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvkm_fault_buffer *buffer;
-	int ret;
+अटल पूर्णांक
+nvkm_fault_oneinit_buffer(काष्ठा nvkm_fault *fault, पूर्णांक id)
+अणु
+	काष्ठा nvkm_subdev *subdev = &fault->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvkm_fault_buffer *buffer;
+	पूर्णांक ret;
 
-	if (!(buffer = kzalloc(sizeof(*buffer), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(buffer = kzalloc(माप(*buffer), GFP_KERNEL)))
+		वापस -ENOMEM;
 	buffer->fault = fault;
 	buffer->id = id;
 	fault->func->buffer.info(buffer);
@@ -104,80 +105,80 @@ nvkm_fault_oneinit_buffer(struct nvkm_fault *fault, int id)
 	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, buffer->entries *
 			      fault->func->buffer.entry_size, 0x1000, true,
 			      &buffer->mem);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Pin fault buffer in BAR2. */
 	buffer->addr = fault->func->buffer.pin(buffer);
-	if (buffer->addr == ~0ULL)
-		return -EFAULT;
+	अगर (buffer->addr == ~0ULL)
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fault_oneinit(struct nvkm_subdev *subdev)
-{
-	struct nvkm_fault *fault = nvkm_fault(subdev);
-	int ret, i;
+अटल पूर्णांक
+nvkm_fault_oneinit(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_fault *fault = nvkm_fault(subdev);
+	पूर्णांक ret, i;
 
-	for (i = 0; i < ARRAY_SIZE(fault->buffer); i++) {
-		if (i < fault->func->buffer.nr) {
+	क्रम (i = 0; i < ARRAY_SIZE(fault->buffer); i++) अणु
+		अगर (i < fault->func->buffer.nr) अणु
 			ret = nvkm_fault_oneinit_buffer(fault, i);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 			fault->buffer_nr = i + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = nvkm_event_init(&nvkm_fault_ntfy, 1, fault->buffer_nr,
 			      &fault->event);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (fault->func->oneinit)
+	अगर (fault->func->oneinit)
 		ret = fault->func->oneinit(fault);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *
-nvkm_fault_dtor(struct nvkm_subdev *subdev)
-{
-	struct nvkm_fault *fault = nvkm_fault(subdev);
-	int i;
+अटल व्योम *
+nvkm_fault_dtor(काष्ठा nvkm_subdev *subdev)
+अणु
+	काष्ठा nvkm_fault *fault = nvkm_fault(subdev);
+	पूर्णांक i;
 
-	nvkm_notify_fini(&fault->nrpfb);
+	nvkm_notअगरy_fini(&fault->nrpfb);
 	nvkm_event_fini(&fault->event);
 
-	for (i = 0; i < fault->buffer_nr; i++) {
-		if (fault->buffer[i]) {
+	क्रम (i = 0; i < fault->buffer_nr; i++) अणु
+		अगर (fault->buffer[i]) अणु
 			nvkm_memory_unref(&fault->buffer[i]->mem);
-			kfree(fault->buffer[i]);
-		}
-	}
+			kमुक्त(fault->buffer[i]);
+		पूर्ण
+	पूर्ण
 
-	return fault;
-}
+	वापस fault;
+पूर्ण
 
-static const struct nvkm_subdev_func
-nvkm_fault = {
+अटल स्थिर काष्ठा nvkm_subdev_func
+nvkm_fault = अणु
 	.dtor = nvkm_fault_dtor,
 	.oneinit = nvkm_fault_oneinit,
 	.init = nvkm_fault_init,
 	.fini = nvkm_fault_fini,
-	.intr = nvkm_fault_intr,
-};
+	.पूर्णांकr = nvkm_fault_पूर्णांकr,
+पूर्ण;
 
-int
-nvkm_fault_new_(const struct nvkm_fault_func *func, struct nvkm_device *device,
-		enum nvkm_subdev_type type, int inst, struct nvkm_fault **pfault)
-{
-	struct nvkm_fault *fault;
-	if (!(fault = *pfault = kzalloc(sizeof(*fault), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_fault_new_(स्थिर काष्ठा nvkm_fault_func *func, काष्ठा nvkm_device *device,
+		क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_fault **pfault)
+अणु
+	काष्ठा nvkm_fault *fault;
+	अगर (!(fault = *pfault = kzalloc(माप(*fault), GFP_KERNEL)))
+		वापस -ENOMEM;
 	nvkm_subdev_ctor(&nvkm_fault, device, type, inst, &fault->subdev);
 	fault->func = func;
 	fault->user.ctor = nvkm_ufault_new;
 	fault->user.base = func->user.base;
-	return 0;
-}
+	वापस 0;
+पूर्ण

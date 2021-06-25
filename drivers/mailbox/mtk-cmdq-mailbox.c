@@ -1,635 +1,636 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2018 MediaTek Inc.
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/mailbox_controller.h>
-#include <linux/mailbox/mtk-cmdq-mailbox.h>
-#include <linux/of_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/mailbox/mtk-cmdq-mailbox.h>
+#समावेश <linux/of_device.h>
 
-#define CMDQ_OP_CODE_MASK		(0xff << CMDQ_OP_CODE_SHIFT)
-#define CMDQ_NUM_CMD(t)			(t->cmd_buf_size / CMDQ_INST_SIZE)
+#घोषणा CMDQ_OP_CODE_MASK		(0xff << CMDQ_OP_CODE_SHIFT)
+#घोषणा CMDQ_NUM_CMD(t)			(t->cmd_buf_size / CMDQ_INST_SIZE)
 
-#define CMDQ_CURR_IRQ_STATUS		0x10
-#define CMDQ_SYNC_TOKEN_UPDATE		0x68
-#define CMDQ_THR_SLOT_CYCLES		0x30
-#define CMDQ_THR_BASE			0x100
-#define CMDQ_THR_SIZE			0x80
-#define CMDQ_THR_WARM_RESET		0x00
-#define CMDQ_THR_ENABLE_TASK		0x04
-#define CMDQ_THR_SUSPEND_TASK		0x08
-#define CMDQ_THR_CURR_STATUS		0x0c
-#define CMDQ_THR_IRQ_STATUS		0x10
-#define CMDQ_THR_IRQ_ENABLE		0x14
-#define CMDQ_THR_CURR_ADDR		0x20
-#define CMDQ_THR_END_ADDR		0x24
-#define CMDQ_THR_WAIT_TOKEN		0x30
-#define CMDQ_THR_PRIORITY		0x40
+#घोषणा CMDQ_CURR_IRQ_STATUS		0x10
+#घोषणा CMDQ_SYNC_TOKEN_UPDATE		0x68
+#घोषणा CMDQ_THR_SLOT_CYCLES		0x30
+#घोषणा CMDQ_THR_BASE			0x100
+#घोषणा CMDQ_THR_SIZE			0x80
+#घोषणा CMDQ_THR_WARM_RESET		0x00
+#घोषणा CMDQ_THR_ENABLE_TASK		0x04
+#घोषणा CMDQ_THR_SUSPEND_TASK		0x08
+#घोषणा CMDQ_THR_CURR_STATUS		0x0c
+#घोषणा CMDQ_THR_IRQ_STATUS		0x10
+#घोषणा CMDQ_THR_IRQ_ENABLE		0x14
+#घोषणा CMDQ_THR_CURR_ADDR		0x20
+#घोषणा CMDQ_THR_END_ADDR		0x24
+#घोषणा CMDQ_THR_WAIT_TOKEN		0x30
+#घोषणा CMDQ_THR_PRIORITY		0x40
 
-#define CMDQ_THR_ACTIVE_SLOT_CYCLES	0x3200
-#define CMDQ_THR_ENABLED		0x1
-#define CMDQ_THR_DISABLED		0x0
-#define CMDQ_THR_SUSPEND		0x1
-#define CMDQ_THR_RESUME			0x0
-#define CMDQ_THR_STATUS_SUSPENDED	BIT(1)
-#define CMDQ_THR_DO_WARM_RESET		BIT(0)
-#define CMDQ_THR_IRQ_DONE		0x1
-#define CMDQ_THR_IRQ_ERROR		0x12
-#define CMDQ_THR_IRQ_EN			(CMDQ_THR_IRQ_ERROR | CMDQ_THR_IRQ_DONE)
-#define CMDQ_THR_IS_WAITING		BIT(31)
+#घोषणा CMDQ_THR_ACTIVE_SLOT_CYCLES	0x3200
+#घोषणा CMDQ_THR_ENABLED		0x1
+#घोषणा CMDQ_THR_DISABLED		0x0
+#घोषणा CMDQ_THR_SUSPEND		0x1
+#घोषणा CMDQ_THR_RESUME			0x0
+#घोषणा CMDQ_THR_STATUS_SUSPENDED	BIT(1)
+#घोषणा CMDQ_THR_DO_WARM_RESET		BIT(0)
+#घोषणा CMDQ_THR_IRQ_DONE		0x1
+#घोषणा CMDQ_THR_IRQ_ERROR		0x12
+#घोषणा CMDQ_THR_IRQ_EN			(CMDQ_THR_IRQ_ERROR | CMDQ_THR_IRQ_DONE)
+#घोषणा CMDQ_THR_IS_WAITING		BIT(31)
 
-#define CMDQ_JUMP_BY_OFFSET		0x10000000
-#define CMDQ_JUMP_BY_PA			0x10000001
+#घोषणा CMDQ_JUMP_BY_OFFSET		0x10000000
+#घोषणा CMDQ_JUMP_BY_PA			0x10000001
 
-struct cmdq_thread {
-	struct mbox_chan	*chan;
-	void __iomem		*base;
-	struct list_head	task_busy_list;
+काष्ठा cmdq_thपढ़ो अणु
+	काष्ठा mbox_chan	*chan;
+	व्योम __iomem		*base;
+	काष्ठा list_head	task_busy_list;
 	u32			priority;
-};
+पूर्ण;
 
-struct cmdq_task {
-	struct cmdq		*cmdq;
-	struct list_head	list_entry;
+काष्ठा cmdq_task अणु
+	काष्ठा cmdq		*cmdq;
+	काष्ठा list_head	list_entry;
 	dma_addr_t		pa_base;
-	struct cmdq_thread	*thread;
-	struct cmdq_pkt		*pkt; /* the packet sent from mailbox client */
-};
+	काष्ठा cmdq_thपढ़ो	*thपढ़ो;
+	काष्ठा cmdq_pkt		*pkt; /* the packet sent from mailbox client */
+पूर्ण;
 
-struct cmdq {
-	struct mbox_controller	mbox;
-	void __iomem		*base;
-	int			irq;
-	u32			thread_nr;
+काष्ठा cmdq अणु
+	काष्ठा mbox_controller	mbox;
+	व्योम __iomem		*base;
+	पूर्णांक			irq;
+	u32			thपढ़ो_nr;
 	u32			irq_mask;
-	struct cmdq_thread	*thread;
-	struct clk		*clock;
+	काष्ठा cmdq_thपढ़ो	*thपढ़ो;
+	काष्ठा clk		*घड़ी;
 	bool			suspended;
-	u8			shift_pa;
-};
+	u8			shअगरt_pa;
+पूर्ण;
 
-struct gce_plat {
-	u32 thread_nr;
-	u8 shift;
-};
+काष्ठा gce_plat अणु
+	u32 thपढ़ो_nr;
+	u8 shअगरt;
+पूर्ण;
 
-u8 cmdq_get_shift_pa(struct mbox_chan *chan)
-{
-	struct cmdq *cmdq = container_of(chan->mbox, struct cmdq, mbox);
+u8 cmdq_get_shअगरt_pa(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा cmdq *cmdq = container_of(chan->mbox, काष्ठा cmdq, mbox);
 
-	return cmdq->shift_pa;
-}
-EXPORT_SYMBOL(cmdq_get_shift_pa);
+	वापस cmdq->shअगरt_pa;
+पूर्ण
+EXPORT_SYMBOL(cmdq_get_shअगरt_pa);
 
-static int cmdq_thread_suspend(struct cmdq *cmdq, struct cmdq_thread *thread)
-{
+अटल पूर्णांक cmdq_thपढ़ो_suspend(काष्ठा cmdq *cmdq, काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
 	u32 status;
 
-	writel(CMDQ_THR_SUSPEND, thread->base + CMDQ_THR_SUSPEND_TASK);
+	ग_लिखोl(CMDQ_THR_SUSPEND, thपढ़ो->base + CMDQ_THR_SUSPEND_TASK);
 
-	/* If already disabled, treat as suspended successful. */
-	if (!(readl(thread->base + CMDQ_THR_ENABLE_TASK) & CMDQ_THR_ENABLED))
-		return 0;
+	/* If alपढ़ोy disabled, treat as suspended successful. */
+	अगर (!(पढ़ोl(thपढ़ो->base + CMDQ_THR_ENABLE_TASK) & CMDQ_THR_ENABLED))
+		वापस 0;
 
-	if (readl_poll_timeout_atomic(thread->base + CMDQ_THR_CURR_STATUS,
-			status, status & CMDQ_THR_STATUS_SUSPENDED, 0, 10)) {
+	अगर (पढ़ोl_poll_समयout_atomic(thपढ़ो->base + CMDQ_THR_CURR_STATUS,
+			status, status & CMDQ_THR_STATUS_SUSPENDED, 0, 10)) अणु
 		dev_err(cmdq->mbox.dev, "suspend GCE thread 0x%x failed\n",
-			(u32)(thread->base - cmdq->base));
-		return -EFAULT;
-	}
+			(u32)(thपढ़ो->base - cmdq->base));
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cmdq_thread_resume(struct cmdq_thread *thread)
-{
-	writel(CMDQ_THR_RESUME, thread->base + CMDQ_THR_SUSPEND_TASK);
-}
+अटल व्योम cmdq_thपढ़ो_resume(काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
+	ग_लिखोl(CMDQ_THR_RESUME, thपढ़ो->base + CMDQ_THR_SUSPEND_TASK);
+पूर्ण
 
-static void cmdq_init(struct cmdq *cmdq)
-{
-	int i;
+अटल व्योम cmdq_init(काष्ठा cmdq *cmdq)
+अणु
+	पूर्णांक i;
 
-	WARN_ON(clk_enable(cmdq->clock) < 0);
-	writel(CMDQ_THR_ACTIVE_SLOT_CYCLES, cmdq->base + CMDQ_THR_SLOT_CYCLES);
-	for (i = 0; i <= CMDQ_MAX_EVENT; i++)
-		writel(i, cmdq->base + CMDQ_SYNC_TOKEN_UPDATE);
-	clk_disable(cmdq->clock);
-}
+	WARN_ON(clk_enable(cmdq->घड़ी) < 0);
+	ग_लिखोl(CMDQ_THR_ACTIVE_SLOT_CYCLES, cmdq->base + CMDQ_THR_SLOT_CYCLES);
+	क्रम (i = 0; i <= CMDQ_MAX_EVENT; i++)
+		ग_लिखोl(i, cmdq->base + CMDQ_SYNC_TOKEN_UPDATE);
+	clk_disable(cmdq->घड़ी);
+पूर्ण
 
-static int cmdq_thread_reset(struct cmdq *cmdq, struct cmdq_thread *thread)
-{
+अटल पूर्णांक cmdq_thपढ़ो_reset(काष्ठा cmdq *cmdq, काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
 	u32 warm_reset;
 
-	writel(CMDQ_THR_DO_WARM_RESET, thread->base + CMDQ_THR_WARM_RESET);
-	if (readl_poll_timeout_atomic(thread->base + CMDQ_THR_WARM_RESET,
+	ग_लिखोl(CMDQ_THR_DO_WARM_RESET, thपढ़ो->base + CMDQ_THR_WARM_RESET);
+	अगर (पढ़ोl_poll_समयout_atomic(thपढ़ो->base + CMDQ_THR_WARM_RESET,
 			warm_reset, !(warm_reset & CMDQ_THR_DO_WARM_RESET),
-			0, 10)) {
+			0, 10)) अणु
 		dev_err(cmdq->mbox.dev, "reset GCE thread 0x%x failed\n",
-			(u32)(thread->base - cmdq->base));
-		return -EFAULT;
-	}
+			(u32)(thपढ़ो->base - cmdq->base));
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cmdq_thread_disable(struct cmdq *cmdq, struct cmdq_thread *thread)
-{
-	cmdq_thread_reset(cmdq, thread);
-	writel(CMDQ_THR_DISABLED, thread->base + CMDQ_THR_ENABLE_TASK);
-}
+अटल व्योम cmdq_thपढ़ो_disable(काष्ठा cmdq *cmdq, काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
+	cmdq_thपढ़ो_reset(cmdq, thपढ़ो);
+	ग_लिखोl(CMDQ_THR_DISABLED, thपढ़ो->base + CMDQ_THR_ENABLE_TASK);
+पूर्ण
 
-/* notify GCE to re-fetch commands by setting GCE thread PC */
-static void cmdq_thread_invalidate_fetched_data(struct cmdq_thread *thread)
-{
-	writel(readl(thread->base + CMDQ_THR_CURR_ADDR),
-	       thread->base + CMDQ_THR_CURR_ADDR);
-}
+/* notअगरy GCE to re-fetch commands by setting GCE thपढ़ो PC */
+अटल व्योम cmdq_thपढ़ो_invalidate_fetched_data(काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
+	ग_लिखोl(पढ़ोl(thपढ़ो->base + CMDQ_THR_CURR_ADDR),
+	       thपढ़ो->base + CMDQ_THR_CURR_ADDR);
+पूर्ण
 
-static void cmdq_task_insert_into_thread(struct cmdq_task *task)
-{
-	struct device *dev = task->cmdq->mbox.dev;
-	struct cmdq_thread *thread = task->thread;
-	struct cmdq_task *prev_task = list_last_entry(
-			&thread->task_busy_list, typeof(*task), list_entry);
+अटल व्योम cmdq_task_insert_पूर्णांकo_thपढ़ो(काष्ठा cmdq_task *task)
+अणु
+	काष्ठा device *dev = task->cmdq->mbox.dev;
+	काष्ठा cmdq_thपढ़ो *thपढ़ो = task->thपढ़ो;
+	काष्ठा cmdq_task *prev_task = list_last_entry(
+			&thपढ़ो->task_busy_list, typeof(*task), list_entry);
 	u64 *prev_task_base = prev_task->pkt->va_base;
 
 	/* let previous task jump to this task */
-	dma_sync_single_for_cpu(dev, prev_task->pa_base,
+	dma_sync_single_क्रम_cpu(dev, prev_task->pa_base,
 				prev_task->pkt->cmd_buf_size, DMA_TO_DEVICE);
 	prev_task_base[CMDQ_NUM_CMD(prev_task->pkt) - 1] =
 		(u64)CMDQ_JUMP_BY_PA << 32 | task->pa_base;
-	dma_sync_single_for_device(dev, prev_task->pa_base,
+	dma_sync_single_क्रम_device(dev, prev_task->pa_base,
 				   prev_task->pkt->cmd_buf_size, DMA_TO_DEVICE);
 
-	cmdq_thread_invalidate_fetched_data(thread);
-}
+	cmdq_thपढ़ो_invalidate_fetched_data(thपढ़ो);
+पूर्ण
 
-static bool cmdq_thread_is_in_wfe(struct cmdq_thread *thread)
-{
-	return readl(thread->base + CMDQ_THR_WAIT_TOKEN) & CMDQ_THR_IS_WAITING;
-}
+अटल bool cmdq_thपढ़ो_is_in_wfe(काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
+	वापस पढ़ोl(thपढ़ो->base + CMDQ_THR_WAIT_TOKEN) & CMDQ_THR_IS_WAITING;
+पूर्ण
 
-static void cmdq_task_exec_done(struct cmdq_task *task, enum cmdq_cb_status sta)
-{
-	struct cmdq_task_cb *cb = &task->pkt->async_cb;
-	struct cmdq_cb_data data;
+अटल व्योम cmdq_task_exec_करोne(काष्ठा cmdq_task *task, क्रमागत cmdq_cb_status sta)
+अणु
+	काष्ठा cmdq_task_cb *cb = &task->pkt->async_cb;
+	काष्ठा cmdq_cb_data data;
 
-	WARN_ON(cb->cb == (cmdq_async_flush_cb)NULL);
+	WARN_ON(cb->cb == (cmdq_async_flush_cb)शून्य);
 	data.sta = sta;
 	data.data = cb->data;
 	cb->cb(data);
 
 	list_del(&task->list_entry);
-}
+पूर्ण
 
-static void cmdq_task_handle_error(struct cmdq_task *task)
-{
-	struct cmdq_thread *thread = task->thread;
-	struct cmdq_task *next_task;
-	struct cmdq *cmdq = task->cmdq;
+अटल व्योम cmdq_task_handle_error(काष्ठा cmdq_task *task)
+अणु
+	काष्ठा cmdq_thपढ़ो *thपढ़ो = task->thपढ़ो;
+	काष्ठा cmdq_task *next_task;
+	काष्ठा cmdq *cmdq = task->cmdq;
 
 	dev_err(cmdq->mbox.dev, "task 0x%p error\n", task);
-	WARN_ON(cmdq_thread_suspend(cmdq, thread) < 0);
-	next_task = list_first_entry_or_null(&thread->task_busy_list,
-			struct cmdq_task, list_entry);
-	if (next_task)
-		writel(next_task->pa_base >> cmdq->shift_pa,
-		       thread->base + CMDQ_THR_CURR_ADDR);
-	cmdq_thread_resume(thread);
-}
+	WARN_ON(cmdq_thपढ़ो_suspend(cmdq, thपढ़ो) < 0);
+	next_task = list_first_entry_or_null(&thपढ़ो->task_busy_list,
+			काष्ठा cmdq_task, list_entry);
+	अगर (next_task)
+		ग_लिखोl(next_task->pa_base >> cmdq->shअगरt_pa,
+		       thपढ़ो->base + CMDQ_THR_CURR_ADDR);
+	cmdq_thपढ़ो_resume(thपढ़ो);
+पूर्ण
 
-static void cmdq_thread_irq_handler(struct cmdq *cmdq,
-				    struct cmdq_thread *thread)
-{
-	struct cmdq_task *task, *tmp, *curr_task = NULL;
+अटल व्योम cmdq_thपढ़ो_irq_handler(काष्ठा cmdq *cmdq,
+				    काष्ठा cmdq_thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा cmdq_task *task, *पंचांगp, *curr_task = शून्य;
 	u32 curr_pa, irq_flag, task_end_pa;
 	bool err;
 
-	irq_flag = readl(thread->base + CMDQ_THR_IRQ_STATUS);
-	writel(~irq_flag, thread->base + CMDQ_THR_IRQ_STATUS);
+	irq_flag = पढ़ोl(thपढ़ो->base + CMDQ_THR_IRQ_STATUS);
+	ग_लिखोl(~irq_flag, thपढ़ो->base + CMDQ_THR_IRQ_STATUS);
 
 	/*
 	 * When ISR call this function, another CPU core could run
-	 * "release task" right before we acquire the spin lock, and thus
-	 * reset / disable this GCE thread, so we need to check the enable
-	 * bit of this GCE thread.
+	 * "release task" right beक्रमe we acquire the spin lock, and thus
+	 * reset / disable this GCE thपढ़ो, so we need to check the enable
+	 * bit of this GCE thपढ़ो.
 	 */
-	if (!(readl(thread->base + CMDQ_THR_ENABLE_TASK) & CMDQ_THR_ENABLED))
-		return;
+	अगर (!(पढ़ोl(thपढ़ो->base + CMDQ_THR_ENABLE_TASK) & CMDQ_THR_ENABLED))
+		वापस;
 
-	if (irq_flag & CMDQ_THR_IRQ_ERROR)
+	अगर (irq_flag & CMDQ_THR_IRQ_ERROR)
 		err = true;
-	else if (irq_flag & CMDQ_THR_IRQ_DONE)
+	अन्यथा अगर (irq_flag & CMDQ_THR_IRQ_DONE)
 		err = false;
-	else
-		return;
+	अन्यथा
+		वापस;
 
-	curr_pa = readl(thread->base + CMDQ_THR_CURR_ADDR) << cmdq->shift_pa;
+	curr_pa = पढ़ोl(thपढ़ो->base + CMDQ_THR_CURR_ADDR) << cmdq->shअगरt_pa;
 
-	list_for_each_entry_safe(task, tmp, &thread->task_busy_list,
-				 list_entry) {
+	list_क्रम_each_entry_safe(task, पंचांगp, &thपढ़ो->task_busy_list,
+				 list_entry) अणु
 		task_end_pa = task->pa_base + task->pkt->cmd_buf_size;
-		if (curr_pa >= task->pa_base && curr_pa < task_end_pa)
+		अगर (curr_pa >= task->pa_base && curr_pa < task_end_pa)
 			curr_task = task;
 
-		if (!curr_task || curr_pa == task_end_pa - CMDQ_INST_SIZE) {
-			cmdq_task_exec_done(task, CMDQ_CB_NORMAL);
-			kfree(task);
-		} else if (err) {
-			cmdq_task_exec_done(task, CMDQ_CB_ERROR);
+		अगर (!curr_task || curr_pa == task_end_pa - CMDQ_INST_SIZE) अणु
+			cmdq_task_exec_करोne(task, CMDQ_CB_NORMAL);
+			kमुक्त(task);
+		पूर्ण अन्यथा अगर (err) अणु
+			cmdq_task_exec_करोne(task, CMDQ_CB_ERROR);
 			cmdq_task_handle_error(curr_task);
-			kfree(task);
-		}
+			kमुक्त(task);
+		पूर्ण
 
-		if (curr_task)
-			break;
-	}
+		अगर (curr_task)
+			अवरोध;
+	पूर्ण
 
-	if (list_empty(&thread->task_busy_list)) {
-		cmdq_thread_disable(cmdq, thread);
-		clk_disable(cmdq->clock);
-	}
-}
+	अगर (list_empty(&thपढ़ो->task_busy_list)) अणु
+		cmdq_thपढ़ो_disable(cmdq, thपढ़ो);
+		clk_disable(cmdq->घड़ी);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t cmdq_irq_handler(int irq, void *dev)
-{
-	struct cmdq *cmdq = dev;
-	unsigned long irq_status, flags = 0L;
-	int bit;
+अटल irqवापस_t cmdq_irq_handler(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा cmdq *cmdq = dev;
+	अचिन्हित दीर्घ irq_status, flags = 0L;
+	पूर्णांक bit;
 
-	irq_status = readl(cmdq->base + CMDQ_CURR_IRQ_STATUS) & cmdq->irq_mask;
-	if (!(irq_status ^ cmdq->irq_mask))
-		return IRQ_NONE;
+	irq_status = पढ़ोl(cmdq->base + CMDQ_CURR_IRQ_STATUS) & cmdq->irq_mask;
+	अगर (!(irq_status ^ cmdq->irq_mask))
+		वापस IRQ_NONE;
 
-	for_each_clear_bit(bit, &irq_status, cmdq->thread_nr) {
-		struct cmdq_thread *thread = &cmdq->thread[bit];
+	क्रम_each_clear_bit(bit, &irq_status, cmdq->thपढ़ो_nr) अणु
+		काष्ठा cmdq_thपढ़ो *thपढ़ो = &cmdq->thपढ़ो[bit];
 
-		spin_lock_irqsave(&thread->chan->lock, flags);
-		cmdq_thread_irq_handler(cmdq, thread);
-		spin_unlock_irqrestore(&thread->chan->lock, flags);
-	}
+		spin_lock_irqsave(&thपढ़ो->chan->lock, flags);
+		cmdq_thपढ़ो_irq_handler(cmdq, thपढ़ो);
+		spin_unlock_irqrestore(&thपढ़ो->chan->lock, flags);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int cmdq_suspend(struct device *dev)
-{
-	struct cmdq *cmdq = dev_get_drvdata(dev);
-	struct cmdq_thread *thread;
-	int i;
+अटल पूर्णांक cmdq_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cmdq *cmdq = dev_get_drvdata(dev);
+	काष्ठा cmdq_thपढ़ो *thपढ़ो;
+	पूर्णांक i;
 	bool task_running = false;
 
 	cmdq->suspended = true;
 
-	for (i = 0; i < cmdq->thread_nr; i++) {
-		thread = &cmdq->thread[i];
-		if (!list_empty(&thread->task_busy_list)) {
+	क्रम (i = 0; i < cmdq->thपढ़ो_nr; i++) अणु
+		thपढ़ो = &cmdq->thपढ़ो[i];
+		अगर (!list_empty(&thपढ़ो->task_busy_list)) अणु
 			task_running = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (task_running)
+	अगर (task_running)
 		dev_warn(dev, "exist running task(s) in suspend\n");
 
-	clk_unprepare(cmdq->clock);
+	clk_unprepare(cmdq->घड़ी);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmdq_resume(struct device *dev)
-{
-	struct cmdq *cmdq = dev_get_drvdata(dev);
+अटल पूर्णांक cmdq_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cmdq *cmdq = dev_get_drvdata(dev);
 
-	WARN_ON(clk_prepare(cmdq->clock) < 0);
+	WARN_ON(clk_prepare(cmdq->घड़ी) < 0);
 	cmdq->suspended = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmdq_remove(struct platform_device *pdev)
-{
-	struct cmdq *cmdq = platform_get_drvdata(pdev);
+अटल पूर्णांक cmdq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cmdq *cmdq = platक्रमm_get_drvdata(pdev);
 
-	clk_unprepare(cmdq->clock);
+	clk_unprepare(cmdq->घड़ी);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmdq_mbox_send_data(struct mbox_chan *chan, void *data)
-{
-	struct cmdq_pkt *pkt = (struct cmdq_pkt *)data;
-	struct cmdq_thread *thread = (struct cmdq_thread *)chan->con_priv;
-	struct cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
-	struct cmdq_task *task;
-	unsigned long curr_pa, end_pa;
+अटल पूर्णांक cmdq_mbox_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा cmdq_pkt *pkt = (काष्ठा cmdq_pkt *)data;
+	काष्ठा cmdq_thपढ़ो *thपढ़ो = (काष्ठा cmdq_thपढ़ो *)chan->con_priv;
+	काष्ठा cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
+	काष्ठा cmdq_task *task;
+	अचिन्हित दीर्घ curr_pa, end_pa;
 
-	/* Client should not flush new tasks if suspended. */
+	/* Client should not flush new tasks अगर suspended. */
 	WARN_ON(cmdq->suspended);
 
-	task = kzalloc(sizeof(*task), GFP_ATOMIC);
-	if (!task)
-		return -ENOMEM;
+	task = kzalloc(माप(*task), GFP_ATOMIC);
+	अगर (!task)
+		वापस -ENOMEM;
 
 	task->cmdq = cmdq;
 	INIT_LIST_HEAD(&task->list_entry);
 	task->pa_base = pkt->pa_base;
-	task->thread = thread;
+	task->thपढ़ो = thपढ़ो;
 	task->pkt = pkt;
 
-	if (list_empty(&thread->task_busy_list)) {
-		WARN_ON(clk_enable(cmdq->clock) < 0);
+	अगर (list_empty(&thपढ़ो->task_busy_list)) अणु
+		WARN_ON(clk_enable(cmdq->घड़ी) < 0);
 		/*
-		 * The thread reset will clear thread related register to 0,
+		 * The thपढ़ो reset will clear thपढ़ो related रेजिस्टर to 0,
 		 * including pc, end, priority, irq, suspend and enable. Thus
 		 * set CMDQ_THR_ENABLED to CMDQ_THR_ENABLE_TASK will enable
-		 * thread and make it running.
+		 * thपढ़ो and make it running.
 		 */
-		WARN_ON(cmdq_thread_reset(cmdq, thread) < 0);
+		WARN_ON(cmdq_thपढ़ो_reset(cmdq, thपढ़ो) < 0);
 
-		writel(task->pa_base >> cmdq->shift_pa,
-		       thread->base + CMDQ_THR_CURR_ADDR);
-		writel((task->pa_base + pkt->cmd_buf_size) >> cmdq->shift_pa,
-		       thread->base + CMDQ_THR_END_ADDR);
+		ग_लिखोl(task->pa_base >> cmdq->shअगरt_pa,
+		       thपढ़ो->base + CMDQ_THR_CURR_ADDR);
+		ग_लिखोl((task->pa_base + pkt->cmd_buf_size) >> cmdq->shअगरt_pa,
+		       thपढ़ो->base + CMDQ_THR_END_ADDR);
 
-		writel(thread->priority, thread->base + CMDQ_THR_PRIORITY);
-		writel(CMDQ_THR_IRQ_EN, thread->base + CMDQ_THR_IRQ_ENABLE);
-		writel(CMDQ_THR_ENABLED, thread->base + CMDQ_THR_ENABLE_TASK);
-	} else {
-		WARN_ON(cmdq_thread_suspend(cmdq, thread) < 0);
-		curr_pa = readl(thread->base + CMDQ_THR_CURR_ADDR) <<
-			cmdq->shift_pa;
-		end_pa = readl(thread->base + CMDQ_THR_END_ADDR) <<
-			cmdq->shift_pa;
+		ग_लिखोl(thपढ़ो->priority, thपढ़ो->base + CMDQ_THR_PRIORITY);
+		ग_लिखोl(CMDQ_THR_IRQ_EN, thपढ़ो->base + CMDQ_THR_IRQ_ENABLE);
+		ग_लिखोl(CMDQ_THR_ENABLED, thपढ़ो->base + CMDQ_THR_ENABLE_TASK);
+	पूर्ण अन्यथा अणु
+		WARN_ON(cmdq_thपढ़ो_suspend(cmdq, thपढ़ो) < 0);
+		curr_pa = पढ़ोl(thपढ़ो->base + CMDQ_THR_CURR_ADDR) <<
+			cmdq->shअगरt_pa;
+		end_pa = पढ़ोl(thपढ़ो->base + CMDQ_THR_END_ADDR) <<
+			cmdq->shअगरt_pa;
 		/* check boundary */
-		if (curr_pa == end_pa - CMDQ_INST_SIZE ||
-		    curr_pa == end_pa) {
+		अगर (curr_pa == end_pa - CMDQ_INST_SIZE ||
+		    curr_pa == end_pa) अणु
 			/* set to this task directly */
-			writel(task->pa_base >> cmdq->shift_pa,
-			       thread->base + CMDQ_THR_CURR_ADDR);
-		} else {
-			cmdq_task_insert_into_thread(task);
-			smp_mb(); /* modify jump before enable thread */
-		}
-		writel((task->pa_base + pkt->cmd_buf_size) >> cmdq->shift_pa,
-		       thread->base + CMDQ_THR_END_ADDR);
-		cmdq_thread_resume(thread);
-	}
-	list_move_tail(&task->list_entry, &thread->task_busy_list);
+			ग_लिखोl(task->pa_base >> cmdq->shअगरt_pa,
+			       thपढ़ो->base + CMDQ_THR_CURR_ADDR);
+		पूर्ण अन्यथा अणु
+			cmdq_task_insert_पूर्णांकo_thपढ़ो(task);
+			smp_mb(); /* modअगरy jump beक्रमe enable thपढ़ो */
+		पूर्ण
+		ग_लिखोl((task->pa_base + pkt->cmd_buf_size) >> cmdq->shअगरt_pa,
+		       thपढ़ो->base + CMDQ_THR_END_ADDR);
+		cmdq_thपढ़ो_resume(thपढ़ो);
+	पूर्ण
+	list_move_tail(&task->list_entry, &thपढ़ो->task_busy_list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmdq_mbox_startup(struct mbox_chan *chan)
-{
-	return 0;
-}
+अटल पूर्णांक cmdq_mbox_startup(काष्ठा mbox_chan *chan)
+अणु
+	वापस 0;
+पूर्ण
 
-static void cmdq_mbox_shutdown(struct mbox_chan *chan)
-{
-	struct cmdq_thread *thread = (struct cmdq_thread *)chan->con_priv;
-	struct cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
-	struct cmdq_task *task, *tmp;
-	unsigned long flags;
+अटल व्योम cmdq_mbox_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा cmdq_thपढ़ो *thपढ़ो = (काष्ठा cmdq_thपढ़ो *)chan->con_priv;
+	काष्ठा cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
+	काष्ठा cmdq_task *task, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&thread->chan->lock, flags);
-	if (list_empty(&thread->task_busy_list))
-		goto done;
+	spin_lock_irqsave(&thपढ़ो->chan->lock, flags);
+	अगर (list_empty(&thपढ़ो->task_busy_list))
+		जाओ करोne;
 
-	WARN_ON(cmdq_thread_suspend(cmdq, thread) < 0);
+	WARN_ON(cmdq_thपढ़ो_suspend(cmdq, thपढ़ो) < 0);
 
 	/* make sure executed tasks have success callback */
-	cmdq_thread_irq_handler(cmdq, thread);
-	if (list_empty(&thread->task_busy_list))
-		goto done;
+	cmdq_thपढ़ो_irq_handler(cmdq, thपढ़ो);
+	अगर (list_empty(&thपढ़ो->task_busy_list))
+		जाओ करोne;
 
-	list_for_each_entry_safe(task, tmp, &thread->task_busy_list,
-				 list_entry) {
-		cmdq_task_exec_done(task, CMDQ_CB_ERROR);
-		kfree(task);
-	}
+	list_क्रम_each_entry_safe(task, पंचांगp, &thपढ़ो->task_busy_list,
+				 list_entry) अणु
+		cmdq_task_exec_करोne(task, CMDQ_CB_ERROR);
+		kमुक्त(task);
+	पूर्ण
 
-	cmdq_thread_disable(cmdq, thread);
-	clk_disable(cmdq->clock);
-done:
+	cmdq_thपढ़ो_disable(cmdq, thपढ़ो);
+	clk_disable(cmdq->घड़ी);
+करोne:
 	/*
-	 * The thread->task_busy_list empty means thread already disable. The
-	 * cmdq_mbox_send_data() always reset thread which clear disable and
+	 * The thपढ़ो->task_busy_list empty means thपढ़ो alपढ़ोy disable. The
+	 * cmdq_mbox_send_data() always reset thपढ़ो which clear disable and
 	 * suspend statue when first pkt send to channel, so there is no need
-	 * to do any operation here, only unlock and leave.
+	 * to करो any operation here, only unlock and leave.
 	 */
-	spin_unlock_irqrestore(&thread->chan->lock, flags);
-}
+	spin_unlock_irqrestore(&thपढ़ो->chan->lock, flags);
+पूर्ण
 
-static int cmdq_mbox_flush(struct mbox_chan *chan, unsigned long timeout)
-{
-	struct cmdq_thread *thread = (struct cmdq_thread *)chan->con_priv;
-	struct cmdq_task_cb *cb;
-	struct cmdq_cb_data data;
-	struct cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
-	struct cmdq_task *task, *tmp;
-	unsigned long flags;
+अटल पूर्णांक cmdq_mbox_flush(काष्ठा mbox_chan *chan, अचिन्हित दीर्घ समयout)
+अणु
+	काष्ठा cmdq_thपढ़ो *thपढ़ो = (काष्ठा cmdq_thपढ़ो *)chan->con_priv;
+	काष्ठा cmdq_task_cb *cb;
+	काष्ठा cmdq_cb_data data;
+	काष्ठा cmdq *cmdq = dev_get_drvdata(chan->mbox->dev);
+	काष्ठा cmdq_task *task, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 	u32 enable;
 
-	spin_lock_irqsave(&thread->chan->lock, flags);
-	if (list_empty(&thread->task_busy_list))
-		goto out;
+	spin_lock_irqsave(&thपढ़ो->chan->lock, flags);
+	अगर (list_empty(&thपढ़ो->task_busy_list))
+		जाओ out;
 
-	WARN_ON(cmdq_thread_suspend(cmdq, thread) < 0);
-	if (!cmdq_thread_is_in_wfe(thread))
-		goto wait;
+	WARN_ON(cmdq_thपढ़ो_suspend(cmdq, thपढ़ो) < 0);
+	अगर (!cmdq_thपढ़ो_is_in_wfe(thपढ़ो))
+		जाओ रुको;
 
-	list_for_each_entry_safe(task, tmp, &thread->task_busy_list,
-				 list_entry) {
+	list_क्रम_each_entry_safe(task, पंचांगp, &thपढ़ो->task_busy_list,
+				 list_entry) अणु
 		cb = &task->pkt->async_cb;
-		if (cb->cb) {
+		अगर (cb->cb) अणु
 			data.sta = CMDQ_CB_ERROR;
 			data.data = cb->data;
 			cb->cb(data);
-		}
+		पूर्ण
 		list_del(&task->list_entry);
-		kfree(task);
-	}
+		kमुक्त(task);
+	पूर्ण
 
-	cmdq_thread_resume(thread);
-	cmdq_thread_disable(cmdq, thread);
-	clk_disable(cmdq->clock);
+	cmdq_thपढ़ो_resume(thपढ़ो);
+	cmdq_thपढ़ो_disable(cmdq, thपढ़ो);
+	clk_disable(cmdq->घड़ी);
 
 out:
-	spin_unlock_irqrestore(&thread->chan->lock, flags);
-	return 0;
+	spin_unlock_irqrestore(&thपढ़ो->chan->lock, flags);
+	वापस 0;
 
-wait:
-	cmdq_thread_resume(thread);
-	spin_unlock_irqrestore(&thread->chan->lock, flags);
-	if (readl_poll_timeout_atomic(thread->base + CMDQ_THR_ENABLE_TASK,
-				      enable, enable == 0, 1, timeout)) {
+रुको:
+	cmdq_thपढ़ो_resume(thपढ़ो);
+	spin_unlock_irqrestore(&thपढ़ो->chan->lock, flags);
+	अगर (पढ़ोl_poll_समयout_atomic(thपढ़ो->base + CMDQ_THR_ENABLE_TASK,
+				      enable, enable == 0, 1, समयout)) अणु
 		dev_err(cmdq->mbox.dev, "Fail to wait GCE thread 0x%x done\n",
-			(u32)(thread->base - cmdq->base));
+			(u32)(thपढ़ो->base - cmdq->base));
 
-		return -EFAULT;
-	}
-	return 0;
-}
+		वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct mbox_chan_ops cmdq_mbox_chan_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops cmdq_mbox_chan_ops = अणु
 	.send_data = cmdq_mbox_send_data,
 	.startup = cmdq_mbox_startup,
-	.shutdown = cmdq_mbox_shutdown,
+	.shutकरोwn = cmdq_mbox_shutकरोwn,
 	.flush = cmdq_mbox_flush,
-};
+पूर्ण;
 
-static struct mbox_chan *cmdq_xlate(struct mbox_controller *mbox,
-		const struct of_phandle_args *sp)
-{
-	int ind = sp->args[0];
-	struct cmdq_thread *thread;
+अटल काष्ठा mbox_chan *cmdq_xlate(काष्ठा mbox_controller *mbox,
+		स्थिर काष्ठा of_phandle_args *sp)
+अणु
+	पूर्णांक ind = sp->args[0];
+	काष्ठा cmdq_thपढ़ो *thपढ़ो;
 
-	if (ind >= mbox->num_chans)
-		return ERR_PTR(-EINVAL);
+	अगर (ind >= mbox->num_chans)
+		वापस ERR_PTR(-EINVAL);
 
-	thread = (struct cmdq_thread *)mbox->chans[ind].con_priv;
-	thread->priority = sp->args[1];
-	thread->chan = &mbox->chans[ind];
+	thपढ़ो = (काष्ठा cmdq_thपढ़ो *)mbox->chans[ind].con_priv;
+	thपढ़ो->priority = sp->args[1];
+	thपढ़ो->chan = &mbox->chans[ind];
 
-	return &mbox->chans[ind];
-}
+	वापस &mbox->chans[ind];
+पूर्ण
 
-static int cmdq_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct cmdq *cmdq;
-	int err, i;
-	struct gce_plat *plat_data;
+अटल पूर्णांक cmdq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा cmdq *cmdq;
+	पूर्णांक err, i;
+	काष्ठा gce_plat *plat_data;
 
-	cmdq = devm_kzalloc(dev, sizeof(*cmdq), GFP_KERNEL);
-	if (!cmdq)
-		return -ENOMEM;
+	cmdq = devm_kzalloc(dev, माप(*cmdq), GFP_KERNEL);
+	अगर (!cmdq)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	cmdq->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(cmdq->base)) {
+	अगर (IS_ERR(cmdq->base)) अणु
 		dev_err(dev, "failed to ioremap gce\n");
-		return PTR_ERR(cmdq->base);
-	}
+		वापस PTR_ERR(cmdq->base);
+	पूर्ण
 
-	cmdq->irq = platform_get_irq(pdev, 0);
-	if (cmdq->irq < 0)
-		return cmdq->irq;
+	cmdq->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (cmdq->irq < 0)
+		वापस cmdq->irq;
 
-	plat_data = (struct gce_plat *)of_device_get_match_data(dev);
-	if (!plat_data) {
+	plat_data = (काष्ठा gce_plat *)of_device_get_match_data(dev);
+	अगर (!plat_data) अणु
 		dev_err(dev, "failed to get match data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	cmdq->thread_nr = plat_data->thread_nr;
-	cmdq->shift_pa = plat_data->shift;
-	cmdq->irq_mask = GENMASK(cmdq->thread_nr - 1, 0);
+	cmdq->thपढ़ो_nr = plat_data->thपढ़ो_nr;
+	cmdq->shअगरt_pa = plat_data->shअगरt;
+	cmdq->irq_mask = GENMASK(cmdq->thपढ़ो_nr - 1, 0);
 	err = devm_request_irq(dev, cmdq->irq, cmdq_irq_handler, IRQF_SHARED,
 			       "mtk_cmdq", cmdq);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to register ISR (%d)\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_dbg(dev, "cmdq device: addr:0x%p, va:0x%p, irq:%d\n",
 		dev, cmdq->base, cmdq->irq);
 
-	cmdq->clock = devm_clk_get(dev, "gce");
-	if (IS_ERR(cmdq->clock)) {
+	cmdq->घड़ी = devm_clk_get(dev, "gce");
+	अगर (IS_ERR(cmdq->घड़ी)) अणु
 		dev_err(dev, "failed to get gce clk\n");
-		return PTR_ERR(cmdq->clock);
-	}
+		वापस PTR_ERR(cmdq->घड़ी);
+	पूर्ण
 
 	cmdq->mbox.dev = dev;
-	cmdq->mbox.chans = devm_kcalloc(dev, cmdq->thread_nr,
-					sizeof(*cmdq->mbox.chans), GFP_KERNEL);
-	if (!cmdq->mbox.chans)
-		return -ENOMEM;
+	cmdq->mbox.chans = devm_kसुस्मृति(dev, cmdq->thपढ़ो_nr,
+					माप(*cmdq->mbox.chans), GFP_KERNEL);
+	अगर (!cmdq->mbox.chans)
+		वापस -ENOMEM;
 
-	cmdq->mbox.num_chans = cmdq->thread_nr;
+	cmdq->mbox.num_chans = cmdq->thपढ़ो_nr;
 	cmdq->mbox.ops = &cmdq_mbox_chan_ops;
 	cmdq->mbox.of_xlate = cmdq_xlate;
 
 	/* make use of TXDONE_BY_ACK */
-	cmdq->mbox.txdone_irq = false;
-	cmdq->mbox.txdone_poll = false;
+	cmdq->mbox.txकरोne_irq = false;
+	cmdq->mbox.txकरोne_poll = false;
 
-	cmdq->thread = devm_kcalloc(dev, cmdq->thread_nr,
-					sizeof(*cmdq->thread), GFP_KERNEL);
-	if (!cmdq->thread)
-		return -ENOMEM;
+	cmdq->thपढ़ो = devm_kसुस्मृति(dev, cmdq->thपढ़ो_nr,
+					माप(*cmdq->thपढ़ो), GFP_KERNEL);
+	अगर (!cmdq->thपढ़ो)
+		वापस -ENOMEM;
 
-	for (i = 0; i < cmdq->thread_nr; i++) {
-		cmdq->thread[i].base = cmdq->base + CMDQ_THR_BASE +
+	क्रम (i = 0; i < cmdq->thपढ़ो_nr; i++) अणु
+		cmdq->thपढ़ो[i].base = cmdq->base + CMDQ_THR_BASE +
 				CMDQ_THR_SIZE * i;
-		INIT_LIST_HEAD(&cmdq->thread[i].task_busy_list);
-		cmdq->mbox.chans[i].con_priv = (void *)&cmdq->thread[i];
-	}
+		INIT_LIST_HEAD(&cmdq->thपढ़ो[i].task_busy_list);
+		cmdq->mbox.chans[i].con_priv = (व्योम *)&cmdq->thपढ़ो[i];
+	पूर्ण
 
-	err = devm_mbox_controller_register(dev, &cmdq->mbox);
-	if (err < 0) {
+	err = devm_mbox_controller_रेजिस्टर(dev, &cmdq->mbox);
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to register mailbox: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, cmdq);
-	WARN_ON(clk_prepare(cmdq->clock) < 0);
+	platक्रमm_set_drvdata(pdev, cmdq);
+	WARN_ON(clk_prepare(cmdq->घड़ी) < 0);
 
 	cmdq_init(cmdq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops cmdq_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cmdq_pm_ops = अणु
 	.suspend = cmdq_suspend,
 	.resume = cmdq_resume,
-};
+पूर्ण;
 
-static const struct gce_plat gce_plat_v2 = {.thread_nr = 16};
-static const struct gce_plat gce_plat_v3 = {.thread_nr = 24};
-static const struct gce_plat gce_plat_v4 = {.thread_nr = 24, .shift = 3};
+अटल स्थिर काष्ठा gce_plat gce_plat_v2 = अणु.thपढ़ो_nr = 16पूर्ण;
+अटल स्थिर काष्ठा gce_plat gce_plat_v3 = अणु.thपढ़ो_nr = 24पूर्ण;
+अटल स्थिर काष्ठा gce_plat gce_plat_v4 = अणु.thपढ़ो_nr = 24, .shअगरt = 3पूर्ण;
 
-static const struct of_device_id cmdq_of_ids[] = {
-	{.compatible = "mediatek,mt8173-gce", .data = (void *)&gce_plat_v2},
-	{.compatible = "mediatek,mt8183-gce", .data = (void *)&gce_plat_v3},
-	{.compatible = "mediatek,mt6779-gce", .data = (void *)&gce_plat_v4},
-	{}
-};
+अटल स्थिर काष्ठा of_device_id cmdq_of_ids[] = अणु
+	अणु.compatible = "mediatek,mt8173-gce", .data = (व्योम *)&gce_plat_v2पूर्ण,
+	अणु.compatible = "mediatek,mt8183-gce", .data = (व्योम *)&gce_plat_v3पूर्ण,
+	अणु.compatible = "mediatek,mt6779-gce", .data = (व्योम *)&gce_plat_v4पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver cmdq_drv = {
+अटल काष्ठा platक्रमm_driver cmdq_drv = अणु
 	.probe = cmdq_probe,
-	.remove = cmdq_remove,
-	.driver = {
+	.हटाओ = cmdq_हटाओ,
+	.driver = अणु
 		.name = "mtk_cmdq",
 		.pm = &cmdq_pm_ops,
 		.of_match_table = cmdq_of_ids,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init cmdq_drv_init(void)
-{
-	return platform_driver_register(&cmdq_drv);
-}
+अटल पूर्णांक __init cmdq_drv_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&cmdq_drv);
+पूर्ण
 
-static void __exit cmdq_drv_exit(void)
-{
-	platform_driver_unregister(&cmdq_drv);
-}
+अटल व्योम __निकास cmdq_drv_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&cmdq_drv);
+पूर्ण
 
 subsys_initcall(cmdq_drv_init);
-module_exit(cmdq_drv_exit);
+module_निकास(cmdq_drv_निकास);
 
 MODULE_LICENSE("GPL v2");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,61 +21,61 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef __AMDGPU_JOB_H__
-#define __AMDGPU_JOB_H__
+#अगर_अघोषित __AMDGPU_JOB_H__
+#घोषणा __AMDGPU_JOB_H__
 
 /* bit set means command submit involves a preamble IB */
-#define AMDGPU_PREAMBLE_IB_PRESENT          (1 << 0)
-/* bit set means preamble IB is first presented in belonging context */
-#define AMDGPU_PREAMBLE_IB_PRESENT_FIRST    (1 << 1)
-/* bit set means context switch occured */
-#define AMDGPU_HAVE_CTX_SWITCH              (1 << 2)
+#घोषणा AMDGPU_PREAMBLE_IB_PRESENT          (1 << 0)
+/* bit set means preamble IB is first presented in beदीर्घing context */
+#घोषणा AMDGPU_PREAMBLE_IB_PRESENT_FIRST    (1 << 1)
+/* bit set means context चयन occured */
+#घोषणा AMDGPU_HAVE_CTX_SWITCH              (1 << 2)
 /* bit set means IB is preempted */
-#define AMDGPU_IB_PREEMPTED                 (1 << 3)
+#घोषणा AMDGPU_IB_PREEMPTED                 (1 << 3)
 
-#define to_amdgpu_job(sched_job)		\
-		container_of((sched_job), struct amdgpu_job, base)
+#घोषणा to_amdgpu_job(sched_job)		\
+		container_of((sched_job), काष्ठा amdgpu_job, base)
 
-#define AMDGPU_JOB_GET_VMID(job) ((job) ? (job)->vmid : 0)
+#घोषणा AMDGPU_JOB_GET_VMID(job) ((job) ? (job)->vmid : 0)
 
-struct amdgpu_fence;
-enum amdgpu_ib_pool_type;
+काष्ठा amdgpu_fence;
+क्रमागत amdgpu_ib_pool_type;
 
-struct amdgpu_job {
-	struct drm_sched_job    base;
-	struct amdgpu_vm	*vm;
-	struct amdgpu_sync	sync;
-	struct amdgpu_sync	sched_sync;
-	struct amdgpu_ib	*ibs;
-	struct dma_fence	*fence; /* the hw fence */
-	uint32_t		preamble_status;
-	uint32_t                preemption_status;
-	uint32_t		num_ibs;
+काष्ठा amdgpu_job अणु
+	काष्ठा drm_sched_job    base;
+	काष्ठा amdgpu_vm	*vm;
+	काष्ठा amdgpu_sync	sync;
+	काष्ठा amdgpu_sync	sched_sync;
+	काष्ठा amdgpu_ib	*ibs;
+	काष्ठा dma_fence	*fence; /* the hw fence */
+	uपूर्णांक32_t		preamble_status;
+	uपूर्णांक32_t                preemption_status;
+	uपूर्णांक32_t		num_ibs;
 	bool                    vm_needs_flush;
-	uint64_t		vm_pd_addr;
-	unsigned		vmid;
-	unsigned		pasid;
-	uint32_t		gds_base, gds_size;
-	uint32_t		gws_base, gws_size;
-	uint32_t		oa_base, oa_size;
-	uint32_t		vram_lost_counter;
+	uपूर्णांक64_t		vm_pd_addr;
+	अचिन्हित		vmid;
+	अचिन्हित		pasid;
+	uपूर्णांक32_t		gds_base, gds_size;
+	uपूर्णांक32_t		gws_base, gws_size;
+	uपूर्णांक32_t		oa_base, oa_size;
+	uपूर्णांक32_t		vram_lost_counter;
 
 	/* user fence handling */
-	uint64_t		uf_addr;
-	uint64_t		uf_sequence;
-};
+	uपूर्णांक64_t		uf_addr;
+	uपूर्णांक64_t		uf_sequence;
+पूर्ण;
 
-int amdgpu_job_alloc(struct amdgpu_device *adev, unsigned num_ibs,
-		     struct amdgpu_job **job, struct amdgpu_vm *vm);
-int amdgpu_job_alloc_with_ib(struct amdgpu_device *adev, unsigned size,
-		enum amdgpu_ib_pool_type pool, struct amdgpu_job **job);
-void amdgpu_job_free_resources(struct amdgpu_job *job);
-void amdgpu_job_free(struct amdgpu_job *job);
-int amdgpu_job_submit(struct amdgpu_job *job, struct drm_sched_entity *entity,
-		      void *owner, struct dma_fence **f);
-int amdgpu_job_submit_direct(struct amdgpu_job *job, struct amdgpu_ring *ring,
-			     struct dma_fence **fence);
+पूर्णांक amdgpu_job_alloc(काष्ठा amdgpu_device *adev, अचिन्हित num_ibs,
+		     काष्ठा amdgpu_job **job, काष्ठा amdgpu_vm *vm);
+पूर्णांक amdgpu_job_alloc_with_ib(काष्ठा amdgpu_device *adev, अचिन्हित size,
+		क्रमागत amdgpu_ib_pool_type pool, काष्ठा amdgpu_job **job);
+व्योम amdgpu_job_मुक्त_resources(काष्ठा amdgpu_job *job);
+व्योम amdgpu_job_मुक्त(काष्ठा amdgpu_job *job);
+पूर्णांक amdgpu_job_submit(काष्ठा amdgpu_job *job, काष्ठा drm_sched_entity *entity,
+		      व्योम *owner, काष्ठा dma_fence **f);
+पूर्णांक amdgpu_job_submit_direct(काष्ठा amdgpu_job *job, काष्ठा amdgpu_ring *ring,
+			     काष्ठा dma_fence **fence);
 
-void amdgpu_job_stop_all_jobs_on_sched(struct drm_gpu_scheduler *sched);
+व्योम amdgpu_job_stop_all_jobs_on_sched(काष्ठा drm_gpu_scheduler *sched);
 
-#endif
+#पूर्ण_अगर

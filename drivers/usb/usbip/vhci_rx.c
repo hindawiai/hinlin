@@ -1,101 +1,102 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  */
 
-#include <linux/kthread.h>
-#include <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/slab.h>
 
-#include "usbip_common.h"
-#include "vhci.h"
+#समावेश "usbip_common.h"
+#समावेश "vhci.h"
 
 /* get URB from transmitted urb queue. caller must hold vdev->priv_lock */
-struct urb *pickup_urb_and_free_priv(struct vhci_device *vdev, __u32 seqnum)
-{
-	struct vhci_priv *priv, *tmp;
-	struct urb *urb = NULL;
-	int status;
+काष्ठा urb *pickup_urb_and_मुक्त_priv(काष्ठा vhci_device *vdev, __u32 seqnum)
+अणु
+	काष्ठा vhci_priv *priv, *पंचांगp;
+	काष्ठा urb *urb = शून्य;
+	पूर्णांक status;
 
-	list_for_each_entry_safe(priv, tmp, &vdev->priv_rx, list) {
-		if (priv->seqnum != seqnum)
-			continue;
+	list_क्रम_each_entry_safe(priv, पंचांगp, &vdev->priv_rx, list) अणु
+		अगर (priv->seqnum != seqnum)
+			जारी;
 
 		urb = priv->urb;
 		status = urb->status;
 
 		usbip_dbg_vhci_rx("find urb seqnum %u\n", seqnum);
 
-		switch (status) {
-		case -ENOENT:
+		चयन (status) अणु
+		हाल -ENOENT:
 			fallthrough;
-		case -ECONNRESET:
+		हाल -ECONNRESET:
 			dev_dbg(&urb->dev->dev,
 				 "urb seq# %u was unlinked %ssynchronously\n",
 				 seqnum, status == -ENOENT ? "" : "a");
-			break;
-		case -EINPROGRESS:
+			अवरोध;
+		हाल -EINPROGRESS:
 			/* no info output */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(&urb->dev->dev,
 				 "urb seq# %u may be in a error, status %d\n",
 				 seqnum, status);
-		}
+		पूर्ण
 
 		list_del(&priv->list);
-		kfree(priv);
-		urb->hcpriv = NULL;
+		kमुक्त(priv);
+		urb->hcpriv = शून्य;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return urb;
-}
+	वापस urb;
+पूर्ण
 
-static void vhci_recv_ret_submit(struct vhci_device *vdev,
-				 struct usbip_header *pdu)
-{
-	struct vhci_hcd *vhci_hcd = vdev_to_vhci_hcd(vdev);
-	struct vhci *vhci = vhci_hcd->vhci;
-	struct usbip_device *ud = &vdev->ud;
-	struct urb *urb;
-	unsigned long flags;
+अटल व्योम vhci_recv_ret_submit(काष्ठा vhci_device *vdev,
+				 काष्ठा usbip_header *pdu)
+अणु
+	काष्ठा vhci_hcd *vhci_hcd = vdev_to_vhci_hcd(vdev);
+	काष्ठा vhci *vhci = vhci_hcd->vhci;
+	काष्ठा usbip_device *ud = &vdev->ud;
+	काष्ठा urb *urb;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
-	urb = pickup_urb_and_free_priv(vdev, pdu->base.seqnum);
+	urb = pickup_urb_and_मुक्त_priv(vdev, pdu->base.seqnum);
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	if (!urb) {
+	अगर (!urb) अणु
 		pr_err("cannot find a urb of seqnum %u max seqnum %d\n",
 			pdu->base.seqnum,
-			atomic_read(&vhci_hcd->seqnum));
+			atomic_पढ़ो(&vhci_hcd->seqnum));
 		usbip_event_add(ud, VDEV_EVENT_ERROR_TCP);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* unpack the pdu to a urb */
 	usbip_pack_pdu(pdu, urb, USBIP_RET_SUBMIT, 0);
 
 	/* recv transfer buffer */
-	if (usbip_recv_xbuff(ud, urb) < 0) {
+	अगर (usbip_recv_xbuff(ud, urb) < 0) अणु
 		urb->status = -EPROTO;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* recv iso_packet_descriptor */
-	if (usbip_recv_iso(ud, urb) < 0) {
+	अगर (usbip_recv_iso(ud, urb) < 0) अणु
 		urb->status = -EPROTO;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* restore the padding in iso packets */
 	usbip_pad_iso(ud, urb);
 
 error:
-	if (usbip_dbg_flag_vhci_rx)
+	अगर (usbip_dbg_flag_vhci_rx)
 		usbip_dump_urb(urb);
 
-	if (urb->num_sgs)
+	अगर (urb->num_sgs)
 		urb->transfer_flags &= ~URB_DMA_MAP_SG;
 
 	usbip_dbg_vhci_rx("now giveback urb %u\n", pdu->base.seqnum);
@@ -107,64 +108,64 @@ error:
 	usb_hcd_giveback_urb(vhci_hcd_to_hcd(vhci_hcd), urb, urb->status);
 
 	usbip_dbg_vhci_rx("Leave\n");
-}
+पूर्ण
 
-static struct vhci_unlink *dequeue_pending_unlink(struct vhci_device *vdev,
-						  struct usbip_header *pdu)
-{
-	struct vhci_unlink *unlink, *tmp;
-	unsigned long flags;
+अटल काष्ठा vhci_unlink *dequeue_pending_unlink(काष्ठा vhci_device *vdev,
+						  काष्ठा usbip_header *pdu)
+अणु
+	काष्ठा vhci_unlink *unlink, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
 
-	list_for_each_entry_safe(unlink, tmp, &vdev->unlink_rx, list) {
+	list_क्रम_each_entry_safe(unlink, पंचांगp, &vdev->unlink_rx, list) अणु
 		pr_info("unlink->seqnum %lu\n", unlink->seqnum);
-		if (unlink->seqnum == pdu->base.seqnum) {
+		अगर (unlink->seqnum == pdu->base.seqnum) अणु
 			usbip_dbg_vhci_rx("found pending unlink, %lu\n",
 					  unlink->seqnum);
 			list_del(&unlink->list);
 
 			spin_unlock_irqrestore(&vdev->priv_lock, flags);
-			return unlink;
-		}
-	}
+			वापस unlink;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void vhci_recv_ret_unlink(struct vhci_device *vdev,
-				 struct usbip_header *pdu)
-{
-	struct vhci_hcd *vhci_hcd = vdev_to_vhci_hcd(vdev);
-	struct vhci *vhci = vhci_hcd->vhci;
-	struct vhci_unlink *unlink;
-	struct urb *urb;
-	unsigned long flags;
+अटल व्योम vhci_recv_ret_unlink(काष्ठा vhci_device *vdev,
+				 काष्ठा usbip_header *pdu)
+अणु
+	काष्ठा vhci_hcd *vhci_hcd = vdev_to_vhci_hcd(vdev);
+	काष्ठा vhci *vhci = vhci_hcd->vhci;
+	काष्ठा vhci_unlink *unlink;
+	काष्ठा urb *urb;
+	अचिन्हित दीर्घ flags;
 
 	usbip_dump_header(pdu);
 
 	unlink = dequeue_pending_unlink(vdev, pdu);
-	if (!unlink) {
+	अगर (!unlink) अणु
 		pr_info("cannot find the pending unlink %u\n",
 			pdu->base.seqnum);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
-	urb = pickup_urb_and_free_priv(vdev, unlink->unlink_seqnum);
+	urb = pickup_urb_and_मुक्त_priv(vdev, unlink->unlink_seqnum);
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	if (!urb) {
+	अगर (!urb) अणु
 		/*
 		 * I get the result of a unlink request. But, it seems that I
-		 * already received the result of its submit result and gave
+		 * alपढ़ोy received the result of its submit result and gave
 		 * back the URB.
 		 */
 		pr_info("the urb (seqnum %d) was already given back\n",
 			pdu->base.seqnum);
-	} else {
+	पूर्ण अन्यथा अणु
 		usbip_dbg_vhci_rx("now giveback urb %d\n", pdu->base.seqnum);
 
 		/* If unlink is successful, status is -ECONNRESET */
@@ -176,95 +177,95 @@ static void vhci_recv_ret_unlink(struct vhci_device *vdev,
 		spin_unlock_irqrestore(&vhci->lock, flags);
 
 		usb_hcd_giveback_urb(vhci_hcd_to_hcd(vhci_hcd), urb, urb->status);
-	}
+	पूर्ण
 
-	kfree(unlink);
-}
+	kमुक्त(unlink);
+पूर्ण
 
-static int vhci_priv_tx_empty(struct vhci_device *vdev)
-{
-	int empty = 0;
-	unsigned long flags;
+अटल पूर्णांक vhci_priv_tx_empty(काष्ठा vhci_device *vdev)
+अणु
+	पूर्णांक empty = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vdev->priv_lock, flags);
 	empty = list_empty(&vdev->priv_rx);
 	spin_unlock_irqrestore(&vdev->priv_lock, flags);
 
-	return empty;
-}
+	वापस empty;
+पूर्ण
 
 /* recv a pdu */
-static void vhci_rx_pdu(struct usbip_device *ud)
-{
-	int ret;
-	struct usbip_header pdu;
-	struct vhci_device *vdev = container_of(ud, struct vhci_device, ud);
+अटल व्योम vhci_rx_pdu(काष्ठा usbip_device *ud)
+अणु
+	पूर्णांक ret;
+	काष्ठा usbip_header pdu;
+	काष्ठा vhci_device *vdev = container_of(ud, काष्ठा vhci_device, ud);
 
 	usbip_dbg_vhci_rx("Enter\n");
 
-	memset(&pdu, 0, sizeof(pdu));
+	स_रखो(&pdu, 0, माप(pdu));
 
 	/* receive a pdu header */
-	ret = usbip_recv(ud->tcp_socket, &pdu, sizeof(pdu));
-	if (ret < 0) {
-		if (ret == -ECONNRESET)
+	ret = usbip_recv(ud->tcp_socket, &pdu, माप(pdu));
+	अगर (ret < 0) अणु
+		अगर (ret == -ECONNRESET)
 			pr_info("connection reset by peer\n");
-		else if (ret == -EAGAIN) {
-			/* ignore if connection was idle */
-			if (vhci_priv_tx_empty(vdev))
-				return;
+		अन्यथा अगर (ret == -EAGAIN) अणु
+			/* ignore अगर connection was idle */
+			अगर (vhci_priv_tx_empty(vdev))
+				वापस;
 			pr_info("connection timed out with pending urbs\n");
-		} else if (ret != -ERESTARTSYS)
+		पूर्ण अन्यथा अगर (ret != -ERESTARTSYS)
 			pr_info("xmit failed %d\n", ret);
 
 		usbip_event_add(ud, VDEV_EVENT_ERROR_TCP);
-		return;
-	}
-	if (ret == 0) {
+		वापस;
+	पूर्ण
+	अगर (ret == 0) अणु
 		pr_info("connection closed");
 		usbip_event_add(ud, VDEV_EVENT_DOWN);
-		return;
-	}
-	if (ret != sizeof(pdu)) {
+		वापस;
+	पूर्ण
+	अगर (ret != माप(pdu)) अणु
 		pr_err("received pdu size is %d, should be %d\n", ret,
-		       (unsigned int)sizeof(pdu));
+		       (अचिन्हित पूर्णांक)माप(pdu));
 		usbip_event_add(ud, VDEV_EVENT_ERROR_TCP);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	usbip_header_correct_endian(&pdu, 0);
 
-	if (usbip_dbg_flag_vhci_rx)
+	अगर (usbip_dbg_flag_vhci_rx)
 		usbip_dump_header(&pdu);
 
-	switch (pdu.base.command) {
-	case USBIP_RET_SUBMIT:
+	चयन (pdu.base.command) अणु
+	हाल USBIP_RET_SUBMIT:
 		vhci_recv_ret_submit(vdev, &pdu);
-		break;
-	case USBIP_RET_UNLINK:
+		अवरोध;
+	हाल USBIP_RET_UNLINK:
 		vhci_recv_ret_unlink(vdev, &pdu);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* NOT REACHED */
 		pr_err("unknown pdu %u\n", pdu.base.command);
 		usbip_dump_header(&pdu);
 		usbip_event_add(ud, VDEV_EVENT_ERROR_TCP);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int vhci_rx_loop(void *data)
-{
-	struct usbip_device *ud = data;
+पूर्णांक vhci_rx_loop(व्योम *data)
+अणु
+	काष्ठा usbip_device *ud = data;
 
-	while (!kthread_should_stop()) {
-		if (usbip_event_happened(ud))
-			break;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (usbip_event_happened(ud))
+			अवरोध;
 
 		usbip_kcov_remote_start(ud);
 		vhci_rx_pdu(ud);
 		usbip_kcov_remote_stop();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010-2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __ISP_LOCAL_H_INCLUDED__
-#define __ISP_LOCAL_H_INCLUDED__
+#अगर_अघोषित __ISP_LOCAL_H_INCLUDED__
+#घोषणा __ISP_LOCAL_H_INCLUDED__
 
-#include <stdbool.h>
+#समावेश <stdbool.h>
 
-#include "isp_global.h"
+#समावेश "isp_global.h"
 
-#include <isp2400_support.h>
+#समावेश <isp2400_support.h>
 
-#define HIVE_ISP_VMEM_MASK	((1U << ISP_VMEM_ELEMBITS) - 1)
+#घोषणा HIVE_ISP_VMEM_MASK	((1U << ISP_VMEM_ELEMBITS) - 1)
 
-typedef struct isp_state_s		isp_state_t;
-typedef struct isp_stall_s		isp_stall_t;
+प्रकार काष्ठा isp_state_s		isp_state_t;
+प्रकार काष्ठा isp_stall_s		isp_stall_t;
 
-struct isp_state_s {
-	int	pc;
-	int	status_register;
+काष्ठा isp_state_s अणु
+	पूर्णांक	pc;
+	पूर्णांक	status_रेजिस्टर;
 	bool	is_broken;
 	bool	is_idle;
 	bool	is_sleeping;
 	bool	is_stalling;
-};
+पूर्ण;
 
-struct isp_stall_s {
-	bool	fifo0;
-	bool	fifo1;
-	bool	fifo2;
-	bool	fifo3;
-	bool	fifo4;
-	bool	fifo5;
-	bool	fifo6;
+काष्ठा isp_stall_s अणु
+	bool	fअगरo0;
+	bool	fअगरo1;
+	bool	fअगरo2;
+	bool	fअगरo3;
+	bool	fअगरo4;
+	bool	fअगरo5;
+	bool	fअगरo6;
 	bool	stat_ctrl;
 	bool	dmem;
 	bool	vmem;
@@ -53,6 +54,6 @@ struct isp_stall_s {
 	bool	hmem;
 	bool	pmem;
 	bool	icache_master;
-};
+पूर्ण;
 
-#endif /* __ISP_LOCAL_H_INCLUDED__ */
+#पूर्ण_अगर /* __ISP_LOCAL_H_INCLUDED__ */

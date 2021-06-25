@@ -1,188 +1,189 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Technologic Systems TS-5500 Single Board Computer support
  *
  * Copyright (C) 2013-2014 Savoir-faire Linux Inc.
  *	Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
- * This driver registers the Technologic Systems TS-5500 Single Board Computer
- * (SBC) and its devices, and exposes information to userspace such as jumpers'
- * state or available options. For further information about sysfs entries, see
- * Documentation/ABI/testing/sysfs-platform-ts5500.
+ * This driver रेजिस्टरs the Technologic Systems TS-5500 Single Board Computer
+ * (SBC) and its devices, and exposes inक्रमmation to userspace such as jumpers'
+ * state or available options. For further inक्रमmation about sysfs entries, see
+ * Documentation/ABI/testing/sysfs-platक्रमm-ts5500.
  *
- * This code may be extended to support similar x86-based platforms.
+ * This code may be extended to support similar x86-based platक्रमms.
  * Actually, the TS-5500 and TS-5400 are supported.
  */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/leds.h>
-#include <linux/init.h>
-#include <linux/platform_data/max197.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_data/max197.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-/* Product code register */
-#define TS5500_PRODUCT_CODE_ADDR	0x74
-#define TS5500_PRODUCT_CODE		0x60	/* TS-5500 product code */
-#define TS5400_PRODUCT_CODE		0x40	/* TS-5400 product code */
+/* Product code रेजिस्टर */
+#घोषणा TS5500_PRODUCT_CODE_ADDR	0x74
+#घोषणा TS5500_PRODUCT_CODE		0x60	/* TS-5500 product code */
+#घोषणा TS5400_PRODUCT_CODE		0x40	/* TS-5400 product code */
 
-/* SRAM/RS-485/ADC options, and RS-485 RTS/Automatic RS-485 flags register */
-#define TS5500_SRAM_RS485_ADC_ADDR	0x75
-#define TS5500_SRAM			BIT(0)	/* SRAM option */
-#define TS5500_RS485			BIT(1)	/* RS-485 option */
-#define TS5500_ADC			BIT(2)	/* A/D converter option */
-#define TS5500_RS485_RTS		BIT(6)	/* RTS for RS-485 */
-#define TS5500_RS485_AUTO		BIT(7)	/* Automatic RS-485 */
+/* SRAM/RS-485/ADC options, and RS-485 RTS/Automatic RS-485 flags रेजिस्टर */
+#घोषणा TS5500_SRAM_RS485_ADC_ADDR	0x75
+#घोषणा TS5500_SRAM			BIT(0)	/* SRAM option */
+#घोषणा TS5500_RS485			BIT(1)	/* RS-485 option */
+#घोषणा TS5500_ADC			BIT(2)	/* A/D converter option */
+#घोषणा TS5500_RS485_RTS		BIT(6)	/* RTS क्रम RS-485 */
+#घोषणा TS5500_RS485_AUTO		BIT(7)	/* Automatic RS-485 */
 
-/* External Reset/Industrial Temperature Range options register */
-#define TS5500_ERESET_ITR_ADDR		0x76
-#define TS5500_ERESET			BIT(0)	/* External Reset option */
-#define TS5500_ITR			BIT(1)	/* Indust. Temp. Range option */
+/* External Reset/Industrial Temperature Range options रेजिस्टर */
+#घोषणा TS5500_ERESET_ITR_ADDR		0x76
+#घोषणा TS5500_ERESET			BIT(0)	/* External Reset option */
+#घोषणा TS5500_ITR			BIT(1)	/* Indust. Temp. Range option */
 
-/* LED/Jumpers register */
-#define TS5500_LED_JP_ADDR		0x77
-#define TS5500_LED			BIT(0)	/* LED flag */
-#define TS5500_JP1			BIT(1)	/* Automatic CMOS */
-#define TS5500_JP2			BIT(2)	/* Enable Serial Console */
-#define TS5500_JP3			BIT(3)	/* Write Enable Drive A */
-#define TS5500_JP4			BIT(4)	/* Fast Console (115K baud) */
-#define TS5500_JP5			BIT(5)	/* User Jumper */
-#define TS5500_JP6			BIT(6)	/* Console on COM1 (req. JP2) */
-#define TS5500_JP7			BIT(7)	/* Undocumented (Unused) */
+/* LED/Jumpers रेजिस्टर */
+#घोषणा TS5500_LED_JP_ADDR		0x77
+#घोषणा TS5500_LED			BIT(0)	/* LED flag */
+#घोषणा TS5500_JP1			BIT(1)	/* Automatic CMOS */
+#घोषणा TS5500_JP2			BIT(2)	/* Enable Serial Console */
+#घोषणा TS5500_JP3			BIT(3)	/* Write Enable Drive A */
+#घोषणा TS5500_JP4			BIT(4)	/* Fast Console (115K baud) */
+#घोषणा TS5500_JP5			BIT(5)	/* User Jumper */
+#घोषणा TS5500_JP6			BIT(6)	/* Console on COM1 (req. JP2) */
+#घोषणा TS5500_JP7			BIT(7)	/* Unकरोcumented (Unused) */
 
-/* A/D Converter registers */
-#define TS5500_ADC_CONV_BUSY_ADDR	0x195	/* Conversion state register */
-#define TS5500_ADC_CONV_BUSY		BIT(0)
-#define TS5500_ADC_CONV_INIT_LSB_ADDR	0x196	/* Start conv. / LSB register */
-#define TS5500_ADC_CONV_MSB_ADDR	0x197	/* MSB register */
-#define TS5500_ADC_CONV_DELAY		12	/* usec */
+/* A/D Converter रेजिस्टरs */
+#घोषणा TS5500_ADC_CONV_BUSY_ADDR	0x195	/* Conversion state रेजिस्टर */
+#घोषणा TS5500_ADC_CONV_BUSY		BIT(0)
+#घोषणा TS5500_ADC_CONV_INIT_LSB_ADDR	0x196	/* Start conv. / LSB रेजिस्टर */
+#घोषणा TS5500_ADC_CONV_MSB_ADDR	0x197	/* MSB रेजिस्टर */
+#घोषणा TS5500_ADC_CONV_DELAY		12	/* usec */
 
 /**
- * struct ts5500_sbc - TS-5500 board description
+ * काष्ठा ts5500_sbc - TS-5500 board description
  * @name:	Board model name.
  * @id:		Board product ID.
- * @sram:	Flag for SRAM option.
- * @rs485:	Flag for RS-485 option.
- * @adc:	Flag for Analog/Digital converter option.
- * @ereset:	Flag for External Reset option.
- * @itr:	Flag for Industrial Temperature Range option.
- * @jumpers:	Bitfield for jumpers' state.
+ * @sram:	Flag क्रम SRAM option.
+ * @rs485:	Flag क्रम RS-485 option.
+ * @adc:	Flag क्रम Analog/Digital converter option.
+ * @ereset:	Flag क्रम External Reset option.
+ * @itr:	Flag क्रम Industrial Temperature Range option.
+ * @jumpers:	Bitfield क्रम jumpers' state.
  */
-struct ts5500_sbc {
-	const char *name;
-	int	id;
+काष्ठा ts5500_sbc अणु
+	स्थिर अक्षर *name;
+	पूर्णांक	id;
 	bool	sram;
 	bool	rs485;
 	bool	adc;
 	bool	ereset;
 	bool	itr;
 	u8	jumpers;
-};
+पूर्ण;
 
-/* Board signatures in BIOS shadow RAM */
-static const struct {
-	const char * const string;
-	const ssize_t offset;
-} ts5500_signatures[] __initconst = {
-	{ "TS-5x00 AMD Elan", 0xb14 },
-};
+/* Board signatures in BIOS shaकरोw RAM */
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर * स्थिर string;
+	स्थिर sमाप_प्रकार offset;
+पूर्ण ts5500_signatures[] __initस्थिर = अणु
+	अणु "TS-5x00 AMD Elan", 0xb14 पूर्ण,
+पूर्ण;
 
-static int __init ts5500_check_signature(void)
-{
-	void __iomem *bios;
-	int i, ret = -ENODEV;
+अटल पूर्णांक __init ts5500_check_signature(व्योम)
+अणु
+	व्योम __iomem *bios;
+	पूर्णांक i, ret = -ENODEV;
 
 	bios = ioremap(0xf0000, 0x10000);
-	if (!bios)
-		return -ENOMEM;
+	अगर (!bios)
+		वापस -ENOMEM;
 
-	for (i = 0; i < ARRAY_SIZE(ts5500_signatures); i++) {
-		if (check_signature(bios + ts5500_signatures[i].offset,
+	क्रम (i = 0; i < ARRAY_SIZE(ts5500_signatures); i++) अणु
+		अगर (check_signature(bios + ts5500_signatures[i].offset,
 				    ts5500_signatures[i].string,
-				    strlen(ts5500_signatures[i].string))) {
+				    म_माप(ts5500_signatures[i].string))) अणु
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	iounmap(bios);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init ts5500_detect_config(struct ts5500_sbc *sbc)
-{
-	u8 tmp;
-	int ret = 0;
+अटल पूर्णांक __init ts5500_detect_config(काष्ठा ts5500_sbc *sbc)
+अणु
+	u8 पंचांगp;
+	पूर्णांक ret = 0;
 
-	if (!request_region(TS5500_PRODUCT_CODE_ADDR, 4, "ts5500"))
-		return -EBUSY;
+	अगर (!request_region(TS5500_PRODUCT_CODE_ADDR, 4, "ts5500"))
+		वापस -EBUSY;
 
 	sbc->id = inb(TS5500_PRODUCT_CODE_ADDR);
-	if (sbc->id == TS5500_PRODUCT_CODE) {
+	अगर (sbc->id == TS5500_PRODUCT_CODE) अणु
 		sbc->name = "TS-5500";
-	} else if (sbc->id == TS5400_PRODUCT_CODE) {
+	पूर्ण अन्यथा अगर (sbc->id == TS5400_PRODUCT_CODE) अणु
 		sbc->name = "TS-5400";
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("ts5500: unknown product code 0x%x\n", sbc->id);
 		ret = -ENODEV;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	tmp = inb(TS5500_SRAM_RS485_ADC_ADDR);
-	sbc->sram = tmp & TS5500_SRAM;
-	sbc->rs485 = tmp & TS5500_RS485;
-	sbc->adc = tmp & TS5500_ADC;
+	पंचांगp = inb(TS5500_SRAM_RS485_ADC_ADDR);
+	sbc->sram = पंचांगp & TS5500_SRAM;
+	sbc->rs485 = पंचांगp & TS5500_RS485;
+	sbc->adc = पंचांगp & TS5500_ADC;
 
-	tmp = inb(TS5500_ERESET_ITR_ADDR);
-	sbc->ereset = tmp & TS5500_ERESET;
-	sbc->itr = tmp & TS5500_ITR;
+	पंचांगp = inb(TS5500_ERESET_ITR_ADDR);
+	sbc->ereset = पंचांगp & TS5500_ERESET;
+	sbc->itr = पंचांगp & TS5500_ITR;
 
-	tmp = inb(TS5500_LED_JP_ADDR);
-	sbc->jumpers = tmp & ~TS5500_LED;
+	पंचांगp = inb(TS5500_LED_JP_ADDR);
+	sbc->jumpers = पंचांगp & ~TS5500_LED;
 
 cleanup:
 	release_region(TS5500_PRODUCT_CODE_ADDR, 4);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ts5500_sbc *sbc = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ts5500_sbc *sbc = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", sbc->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", sbc->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t id_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ts5500_sbc *sbc = dev_get_drvdata(dev);
+अटल sमाप_प्रकार id_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ts5500_sbc *sbc = dev_get_drvdata(dev);
 
-	return sprintf(buf, "0x%.2x\n", sbc->id);
-}
-static DEVICE_ATTR_RO(id);
+	वापस प्र_लिखो(buf, "0x%.2x\n", sbc->id);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static ssize_t jumpers_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct ts5500_sbc *sbc = dev_get_drvdata(dev);
+अटल sमाप_प्रकार jumpers_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा ts5500_sbc *sbc = dev_get_drvdata(dev);
 
-	return sprintf(buf, "0x%.2x\n", sbc->jumpers >> 1);
-}
-static DEVICE_ATTR_RO(jumpers);
+	वापस प्र_लिखो(buf, "0x%.2x\n", sbc->jumpers >> 1);
+पूर्ण
+अटल DEVICE_ATTR_RO(jumpers);
 
-#define TS5500_ATTR_BOOL(_field)					\
-	static ssize_t _field##_show(struct device *dev,		\
-			struct device_attribute *attr, char *buf)	\
-	{								\
-		struct ts5500_sbc *sbc = dev_get_drvdata(dev);		\
+#घोषणा TS5500_ATTR_BOOL(_field)					\
+	अटल sमाप_प्रकार _field##_show(काष्ठा device *dev,		\
+			काष्ठा device_attribute *attr, अक्षर *buf)	\
+	अणु								\
+		काष्ठा ts5500_sbc *sbc = dev_get_drvdata(dev);		\
 									\
-		return sprintf(buf, "%d\n", sbc->_field);		\
-	}								\
-	static DEVICE_ATTR_RO(_field)
+		वापस प्र_लिखो(buf, "%d\n", sbc->_field);		\
+	पूर्ण								\
+	अटल DEVICE_ATTR_RO(_field)
 
 TS5500_ATTR_BOOL(sram);
 TS5500_ATTR_BOOL(rs485);
@@ -190,7 +191,7 @@ TS5500_ATTR_BOOL(adc);
 TS5500_ATTR_BOOL(ereset);
 TS5500_ATTR_BOOL(itr);
 
-static struct attribute *ts5500_attributes[] = {
+अटल काष्ठा attribute *ts5500_attributes[] = अणु
 	&dev_attr_id.attr,
 	&dev_attr_name.attr,
 	&dev_attr_jumpers.attr,
@@ -199,143 +200,143 @@ static struct attribute *ts5500_attributes[] = {
 	&dev_attr_adc.attr,
 	&dev_attr_ereset.attr,
 	&dev_attr_itr.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ts5500_attr_group = {
+अटल स्थिर काष्ठा attribute_group ts5500_attr_group = अणु
 	.attrs = ts5500_attributes,
-};
+पूर्ण;
 
-static struct resource ts5500_dio1_resource[] = {
+अटल काष्ठा resource ts5500_dio1_resource[] = अणु
 	DEFINE_RES_IRQ_NAMED(7, "DIO1 interrupt"),
-};
+पूर्ण;
 
-static struct platform_device ts5500_dio1_pdev = {
+अटल काष्ठा platक्रमm_device ts5500_dio1_pdev = अणु
 	.name = "ts5500-dio1",
 	.id = -1,
 	.resource = ts5500_dio1_resource,
 	.num_resources = 1,
-};
+पूर्ण;
 
-static struct resource ts5500_dio2_resource[] = {
+अटल काष्ठा resource ts5500_dio2_resource[] = अणु
 	DEFINE_RES_IRQ_NAMED(6, "DIO2 interrupt"),
-};
+पूर्ण;
 
-static struct platform_device ts5500_dio2_pdev = {
+अटल काष्ठा platक्रमm_device ts5500_dio2_pdev = अणु
 	.name = "ts5500-dio2",
 	.id = -1,
 	.resource = ts5500_dio2_resource,
 	.num_resources = 1,
-};
+पूर्ण;
 
-static void ts5500_led_set(struct led_classdev *led_cdev,
-			   enum led_brightness brightness)
-{
+अटल व्योम ts5500_led_set(काष्ठा led_classdev *led_cdev,
+			   क्रमागत led_brightness brightness)
+अणु
 	outb(!!brightness, TS5500_LED_JP_ADDR);
-}
+पूर्ण
 
-static enum led_brightness ts5500_led_get(struct led_classdev *led_cdev)
-{
-	return (inb(TS5500_LED_JP_ADDR) & TS5500_LED) ? LED_FULL : LED_OFF;
-}
+अटल क्रमागत led_brightness ts5500_led_get(काष्ठा led_classdev *led_cdev)
+अणु
+	वापस (inb(TS5500_LED_JP_ADDR) & TS5500_LED) ? LED_FULL : LED_OFF;
+पूर्ण
 
-static struct led_classdev ts5500_led_cdev = {
+अटल काष्ठा led_classdev ts5500_led_cdev = अणु
 	.name = "ts5500:green:",
 	.brightness_set = ts5500_led_set,
 	.brightness_get = ts5500_led_get,
-};
+पूर्ण;
 
-static int ts5500_adc_convert(u8 ctrl)
-{
+अटल पूर्णांक ts5500_adc_convert(u8 ctrl)
+अणु
 	u8 lsb, msb;
 
 	/* Start conversion (ensure the 3 MSB are set to 0) */
 	outb(ctrl & 0x1f, TS5500_ADC_CONV_INIT_LSB_ADDR);
 
 	/*
-	 * The platform has CPLD logic driving the A/D converter.
+	 * The platक्रमm has CPLD logic driving the A/D converter.
 	 * The conversion must complete within 11 microseconds,
 	 * otherwise we have to re-initiate a conversion.
 	 */
 	udelay(TS5500_ADC_CONV_DELAY);
-	if (inb(TS5500_ADC_CONV_BUSY_ADDR) & TS5500_ADC_CONV_BUSY)
-		return -EBUSY;
+	अगर (inb(TS5500_ADC_CONV_BUSY_ADDR) & TS5500_ADC_CONV_BUSY)
+		वापस -EBUSY;
 
 	/* Read the raw data */
 	lsb = inb(TS5500_ADC_CONV_INIT_LSB_ADDR);
 	msb = inb(TS5500_ADC_CONV_MSB_ADDR);
 
-	return (msb << 8) | lsb;
-}
+	वापस (msb << 8) | lsb;
+पूर्ण
 
-static struct max197_platform_data ts5500_adc_pdata = {
+अटल काष्ठा max197_platक्रमm_data ts5500_adc_pdata = अणु
 	.convert = ts5500_adc_convert,
-};
+पूर्ण;
 
-static struct platform_device ts5500_adc_pdev = {
+अटल काष्ठा platक्रमm_device ts5500_adc_pdev = अणु
 	.name = "max197",
 	.id = -1,
-	.dev = {
-		.platform_data = &ts5500_adc_pdata,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = &ts5500_adc_pdata,
+	पूर्ण,
+पूर्ण;
 
-static int __init ts5500_init(void)
-{
-	struct platform_device *pdev;
-	struct ts5500_sbc *sbc;
-	int err;
+अटल पूर्णांक __init ts5500_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा ts5500_sbc *sbc;
+	पूर्णांक err;
 
 	/*
-	 * There is no DMI available or PCI bridge subvendor info,
-	 * only the BIOS provides a 16-bit identification call.
-	 * It is safer to find a signature in the BIOS shadow RAM.
+	 * There is no DMI available or PCI bridge subvenकरोr info,
+	 * only the BIOS provides a 16-bit identअगरication call.
+	 * It is safer to find a signature in the BIOS shaकरोw RAM.
 	 */
 	err = ts5500_check_signature();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	pdev = platform_device_register_simple("ts5500", -1, NULL, 0);
-	if (IS_ERR(pdev))
-		return PTR_ERR(pdev);
+	pdev = platक्रमm_device_रेजिस्टर_simple("ts5500", -1, शून्य, 0);
+	अगर (IS_ERR(pdev))
+		वापस PTR_ERR(pdev);
 
-	sbc = devm_kzalloc(&pdev->dev, sizeof(struct ts5500_sbc), GFP_KERNEL);
-	if (!sbc) {
+	sbc = devm_kzalloc(&pdev->dev, माप(काष्ठा ts5500_sbc), GFP_KERNEL);
+	अगर (!sbc) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	err = ts5500_detect_config(sbc);
-	if (err)
-		goto error;
+	अगर (err)
+		जाओ error;
 
-	platform_set_drvdata(pdev, sbc);
+	platक्रमm_set_drvdata(pdev, sbc);
 
 	err = sysfs_create_group(&pdev->dev.kobj, &ts5500_attr_group);
-	if (err)
-		goto error;
+	अगर (err)
+		जाओ error;
 
-	if (sbc->id == TS5500_PRODUCT_CODE) {
+	अगर (sbc->id == TS5500_PRODUCT_CODE) अणु
 		ts5500_dio1_pdev.dev.parent = &pdev->dev;
-		if (platform_device_register(&ts5500_dio1_pdev))
+		अगर (platक्रमm_device_रेजिस्टर(&ts5500_dio1_pdev))
 			dev_warn(&pdev->dev, "DIO1 block registration failed\n");
 		ts5500_dio2_pdev.dev.parent = &pdev->dev;
-		if (platform_device_register(&ts5500_dio2_pdev))
+		अगर (platक्रमm_device_रेजिस्टर(&ts5500_dio2_pdev))
 			dev_warn(&pdev->dev, "DIO2 block registration failed\n");
-	}
+	पूर्ण
 
-	if (led_classdev_register(&pdev->dev, &ts5500_led_cdev))
+	अगर (led_classdev_रेजिस्टर(&pdev->dev, &ts5500_led_cdev))
 		dev_warn(&pdev->dev, "LED registration failed\n");
 
-	if (sbc->adc) {
+	अगर (sbc->adc) अणु
 		ts5500_adc_pdev.dev.parent = &pdev->dev;
-		if (platform_device_register(&ts5500_adc_pdev))
+		अगर (platक्रमm_device_रेजिस्टर(&ts5500_adc_pdev))
 			dev_warn(&pdev->dev, "ADC registration failed\n");
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
-	platform_device_unregister(pdev);
-	return err;
-}
+	platक्रमm_device_unरेजिस्टर(pdev);
+	वापस err;
+पूर्ण
 device_initcall(ts5500_init);

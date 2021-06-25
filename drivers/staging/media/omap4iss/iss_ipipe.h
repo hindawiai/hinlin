@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * TI OMAP4 ISS V4L2 Driver - ISP IPIPE module
  *
@@ -7,57 +8,57 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#ifndef OMAP4_ISS_IPIPE_H
-#define OMAP4_ISS_IPIPE_H
+#अगर_अघोषित OMAP4_ISS_IPIPE_H
+#घोषणा OMAP4_ISS_IPIPE_H
 
-#include "iss_video.h"
+#समावेश "iss_video.h"
 
-enum ipipe_input_entity {
+क्रमागत ipipe_input_entity अणु
 	IPIPE_INPUT_NONE,
 	IPIPE_INPUT_IPIPEIF,
-};
+पूर्ण;
 
-#define IPIPE_OUTPUT_VP				BIT(0)
+#घोषणा IPIPE_OUTPUT_VP				BIT(0)
 
 /* Sink and source IPIPE pads */
-#define IPIPE_PAD_SINK				0
-#define IPIPE_PAD_SOURCE_VP			1
-#define IPIPE_PADS_NUM				2
+#घोषणा IPIPE_PAD_SINK				0
+#घोषणा IPIPE_PAD_SOURCE_VP			1
+#घोषणा IPIPE_PADS_NUM				2
 
 /*
- * struct iss_ipipe_device - Structure for the IPIPE module to store its own
- *			    information
+ * काष्ठा iss_ipipe_device - Structure क्रम the IPIPE module to store its own
+ *			    inक्रमmation
  * @subdev: V4L2 subdevice
  * @pads: Sink and source media entity pads
- * @formats: Active video formats
+ * @क्रमmats: Active video क्रमmats
  * @input: Active input
- * @output: Active outputs
+ * @output: Active outमाला_दो
  * @error: A hardware error occurred during capture
  * @state: Streaming state
- * @wait: Wait queue used to stop the module
+ * @रुको: Wait queue used to stop the module
  * @stopping: Stopping state
  */
-struct iss_ipipe_device {
-	struct v4l2_subdev subdev;
-	struct media_pad pads[IPIPE_PADS_NUM];
-	struct v4l2_mbus_framefmt formats[IPIPE_PADS_NUM];
+काष्ठा iss_ipipe_device अणु
+	काष्ठा v4l2_subdev subdev;
+	काष्ठा media_pad pads[IPIPE_PADS_NUM];
+	काष्ठा v4l2_mbus_framefmt क्रमmats[IPIPE_PADS_NUM];
 
-	enum ipipe_input_entity input;
-	unsigned int output;
-	unsigned int error;
+	क्रमागत ipipe_input_entity input;
+	अचिन्हित पूर्णांक output;
+	अचिन्हित पूर्णांक error;
 
-	enum iss_pipeline_stream_state state;
-	wait_queue_head_t wait;
+	क्रमागत iss_pipeline_stream_state state;
+	रुको_queue_head_t रुको;
 	atomic_t stopping;
-};
+पूर्ण;
 
-struct iss_device;
+काष्ठा iss_device;
 
-int omap4iss_ipipe_register_entities(struct iss_ipipe_device *ipipe,
-				     struct v4l2_device *vdev);
-void omap4iss_ipipe_unregister_entities(struct iss_ipipe_device *ipipe);
+पूर्णांक omap4iss_ipipe_रेजिस्टर_entities(काष्ठा iss_ipipe_device *ipipe,
+				     काष्ठा v4l2_device *vdev);
+व्योम omap4iss_ipipe_unरेजिस्टर_entities(काष्ठा iss_ipipe_device *ipipe);
 
-int omap4iss_ipipe_init(struct iss_device *iss);
-void omap4iss_ipipe_cleanup(struct iss_device *iss);
+पूर्णांक omap4iss_ipipe_init(काष्ठा iss_device *iss);
+व्योम omap4iss_ipipe_cleanup(काष्ठा iss_device *iss);
 
-#endif	/* OMAP4_ISS_IPIPE_H */
+#पूर्ण_अगर	/* OMAP4_ISS_IPIPE_H */

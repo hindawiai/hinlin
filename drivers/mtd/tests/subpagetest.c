@@ -1,436 +1,437 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2007 Nokia Corporation
  *
- * Test sub-page read and write on MTD device.
+ * Test sub-page पढ़ो and ग_लिखो on MTD device.
  * Author: Adrian Hunter <ext-adrian.hunter@nokia.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/err.h>
-#include <linux/mtd/mtd.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/random.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "mtd_test.h"
+#समावेश "mtd_test.h"
 
-static int dev = -EINVAL;
-module_param(dev, int, S_IRUGO);
+अटल पूर्णांक dev = -EINVAL;
+module_param(dev, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-static struct mtd_info *mtd;
-static unsigned char *writebuf;
-static unsigned char *readbuf;
-static unsigned char *bbt;
+अटल काष्ठा mtd_info *mtd;
+अटल अचिन्हित अक्षर *ग_लिखोbuf;
+अटल अचिन्हित अक्षर *पढ़ोbuf;
+अटल अचिन्हित अक्षर *bbt;
 
-static int subpgsize;
-static int bufsize;
-static int ebcnt;
-static int pgcnt;
-static int errcnt;
-static struct rnd_state rnd_state;
+अटल पूर्णांक subpgsize;
+अटल पूर्णांक bufsize;
+अटल पूर्णांक ebcnt;
+अटल पूर्णांक pgcnt;
+अटल पूर्णांक errcnt;
+अटल काष्ठा rnd_state rnd_state;
 
-static inline void clear_data(unsigned char *buf, size_t len)
-{
-	memset(buf, 0, len);
-}
+अटल अंतरभूत व्योम clear_data(अचिन्हित अक्षर *buf, माप_प्रकार len)
+अणु
+	स_रखो(buf, 0, len);
+पूर्ण
 
-static int write_eraseblock(int ebnum)
-{
-	size_t written;
-	int err = 0;
+अटल पूर्णांक ग_लिखो_eraseblock(पूर्णांक ebnum)
+अणु
+	माप_प्रकार written;
+	पूर्णांक err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	prandom_bytes_state(&rnd_state, writebuf, subpgsize);
-	err = mtd_write(mtd, addr, subpgsize, &written, writebuf);
-	if (unlikely(err || written != subpgsize)) {
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize);
+	err = mtd_ग_लिखो(mtd, addr, subpgsize, &written, ग_लिखोbuf);
+	अगर (unlikely(err || written != subpgsize)) अणु
 		pr_err("error: write failed at %#llx\n",
-		       (long long)addr);
-		if (written != subpgsize) {
+		       (दीर्घ दीर्घ)addr);
+		अगर (written != subpgsize) अणु
 			pr_err("  write size: %#x\n", subpgsize);
 			pr_err("  written: %#zx\n", written);
-		}
-		return err ? err : -1;
-	}
+		पूर्ण
+		वापस err ? err : -1;
+	पूर्ण
 
 	addr += subpgsize;
 
-	prandom_bytes_state(&rnd_state, writebuf, subpgsize);
-	err = mtd_write(mtd, addr, subpgsize, &written, writebuf);
-	if (unlikely(err || written != subpgsize)) {
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize);
+	err = mtd_ग_लिखो(mtd, addr, subpgsize, &written, ग_लिखोbuf);
+	अगर (unlikely(err || written != subpgsize)) अणु
 		pr_err("error: write failed at %#llx\n",
-		       (long long)addr);
-		if (written != subpgsize) {
+		       (दीर्घ दीर्घ)addr);
+		अगर (written != subpgsize) अणु
 			pr_err("  write size: %#x\n", subpgsize);
 			pr_err("  written: %#zx\n", written);
-		}
-		return err ? err : -1;
-	}
+		पूर्ण
+		वापस err ? err : -1;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int write_eraseblock2(int ebnum)
-{
-	size_t written;
-	int err = 0, k;
+अटल पूर्णांक ग_लिखो_eraseblock2(पूर्णांक ebnum)
+अणु
+	माप_प्रकार written;
+	पूर्णांक err = 0, k;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	for (k = 1; k < 33; ++k) {
-		if (addr + (subpgsize * k) > (loff_t)(ebnum + 1) * mtd->erasesize)
-			break;
-		prandom_bytes_state(&rnd_state, writebuf, subpgsize * k);
-		err = mtd_write(mtd, addr, subpgsize * k, &written, writebuf);
-		if (unlikely(err || written != subpgsize * k)) {
+	क्रम (k = 1; k < 33; ++k) अणु
+		अगर (addr + (subpgsize * k) > (loff_t)(ebnum + 1) * mtd->erasesize)
+			अवरोध;
+		pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize * k);
+		err = mtd_ग_लिखो(mtd, addr, subpgsize * k, &written, ग_लिखोbuf);
+		अगर (unlikely(err || written != subpgsize * k)) अणु
 			pr_err("error: write failed at %#llx\n",
-			       (long long)addr);
-			if (written != subpgsize * k) {
+			       (दीर्घ दीर्घ)addr);
+			अगर (written != subpgsize * k) अणु
 				pr_err("  write size: %#x\n",
 				       subpgsize * k);
 				pr_err("  written: %#08zx\n",
 				       written);
-			}
-			return err ? err : -1;
-		}
+			पूर्ण
+			वापस err ? err : -1;
+		पूर्ण
 		addr += subpgsize * k;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void print_subpage(unsigned char *p)
-{
-	int i, j;
+अटल व्योम prपूर्णांक_subpage(अचिन्हित अक्षर *p)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < subpgsize; ) {
-		for (j = 0; i < subpgsize && j < 32; ++i, ++j)
-			printk("%02x", *p++);
-		printk("\n");
-	}
-}
+	क्रम (i = 0; i < subpgsize; ) अणु
+		क्रम (j = 0; i < subpgsize && j < 32; ++i, ++j)
+			prपूर्णांकk("%02x", *p++);
+		prपूर्णांकk("\n");
+	पूर्ण
+पूर्ण
 
-static int verify_eraseblock(int ebnum)
-{
-	size_t read;
-	int err = 0;
+अटल पूर्णांक verअगरy_eraseblock(पूर्णांक ebnum)
+अणु
+	माप_प्रकार पढ़ो;
+	पूर्णांक err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	prandom_bytes_state(&rnd_state, writebuf, subpgsize);
-	clear_data(readbuf, subpgsize);
-	err = mtd_read(mtd, addr, subpgsize, &read, readbuf);
-	if (unlikely(err || read != subpgsize)) {
-		if (mtd_is_bitflip(err) && read == subpgsize) {
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize);
+	clear_data(पढ़ोbuf, subpgsize);
+	err = mtd_पढ़ो(mtd, addr, subpgsize, &पढ़ो, पढ़ोbuf);
+	अगर (unlikely(err || पढ़ो != subpgsize)) अणु
+		अगर (mtd_is_bitflip(err) && पढ़ो == subpgsize) अणु
 			pr_info("ECC correction at %#llx\n",
-			       (long long)addr);
+			       (दीर्घ दीर्घ)addr);
 			err = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("error: read failed at %#llx\n",
-			       (long long)addr);
-			return err ? err : -1;
-		}
-	}
-	if (unlikely(memcmp(readbuf, writebuf, subpgsize))) {
+			       (दीर्घ दीर्घ)addr);
+			वापस err ? err : -1;
+		पूर्ण
+	पूर्ण
+	अगर (unlikely(स_भेद(पढ़ोbuf, ग_लिखोbuf, subpgsize))) अणु
 		pr_err("error: verify failed at %#llx\n",
-		       (long long)addr);
+		       (दीर्घ दीर्घ)addr);
 		pr_info("------------- written----------------\n");
-		print_subpage(writebuf);
+		prपूर्णांक_subpage(ग_लिखोbuf);
 		pr_info("------------- read ------------------\n");
-		print_subpage(readbuf);
+		prपूर्णांक_subpage(पढ़ोbuf);
 		pr_info("-------------------------------------\n");
 		errcnt += 1;
-	}
+	पूर्ण
 
 	addr += subpgsize;
 
-	prandom_bytes_state(&rnd_state, writebuf, subpgsize);
-	clear_data(readbuf, subpgsize);
-	err = mtd_read(mtd, addr, subpgsize, &read, readbuf);
-	if (unlikely(err || read != subpgsize)) {
-		if (mtd_is_bitflip(err) && read == subpgsize) {
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize);
+	clear_data(पढ़ोbuf, subpgsize);
+	err = mtd_पढ़ो(mtd, addr, subpgsize, &पढ़ो, पढ़ोbuf);
+	अगर (unlikely(err || पढ़ो != subpgsize)) अणु
+		अगर (mtd_is_bitflip(err) && पढ़ो == subpgsize) अणु
 			pr_info("ECC correction at %#llx\n",
-			       (long long)addr);
+			       (दीर्घ दीर्घ)addr);
 			err = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("error: read failed at %#llx\n",
-			       (long long)addr);
-			return err ? err : -1;
-		}
-	}
-	if (unlikely(memcmp(readbuf, writebuf, subpgsize))) {
+			       (दीर्घ दीर्घ)addr);
+			वापस err ? err : -1;
+		पूर्ण
+	पूर्ण
+	अगर (unlikely(स_भेद(पढ़ोbuf, ग_लिखोbuf, subpgsize))) अणु
 		pr_info("error: verify failed at %#llx\n",
-		       (long long)addr);
+		       (दीर्घ दीर्घ)addr);
 		pr_info("------------- written----------------\n");
-		print_subpage(writebuf);
+		prपूर्णांक_subpage(ग_लिखोbuf);
 		pr_info("------------- read ------------------\n");
-		print_subpage(readbuf);
+		prपूर्णांक_subpage(पढ़ोbuf);
 		pr_info("-------------------------------------\n");
 		errcnt += 1;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int verify_eraseblock2(int ebnum)
-{
-	size_t read;
-	int err = 0, k;
+अटल पूर्णांक verअगरy_eraseblock2(पूर्णांक ebnum)
+अणु
+	माप_प्रकार पढ़ो;
+	पूर्णांक err = 0, k;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	for (k = 1; k < 33; ++k) {
-		if (addr + (subpgsize * k) > (loff_t)(ebnum + 1) * mtd->erasesize)
-			break;
-		prandom_bytes_state(&rnd_state, writebuf, subpgsize * k);
-		clear_data(readbuf, subpgsize * k);
-		err = mtd_read(mtd, addr, subpgsize * k, &read, readbuf);
-		if (unlikely(err || read != subpgsize * k)) {
-			if (mtd_is_bitflip(err) && read == subpgsize * k) {
+	क्रम (k = 1; k < 33; ++k) अणु
+		अगर (addr + (subpgsize * k) > (loff_t)(ebnum + 1) * mtd->erasesize)
+			अवरोध;
+		pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, subpgsize * k);
+		clear_data(पढ़ोbuf, subpgsize * k);
+		err = mtd_पढ़ो(mtd, addr, subpgsize * k, &पढ़ो, पढ़ोbuf);
+		अगर (unlikely(err || पढ़ो != subpgsize * k)) अणु
+			अगर (mtd_is_bitflip(err) && पढ़ो == subpgsize * k) अणु
 				pr_info("ECC correction at %#llx\n",
-				       (long long)addr);
+				       (दीर्घ दीर्घ)addr);
 				err = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("error: read failed at "
-				       "%#llx\n", (long long)addr);
-				return err ? err : -1;
-			}
-		}
-		if (unlikely(memcmp(readbuf, writebuf, subpgsize * k))) {
+				       "%#llx\n", (दीर्घ दीर्घ)addr);
+				वापस err ? err : -1;
+			पूर्ण
+		पूर्ण
+		अगर (unlikely(स_भेद(पढ़ोbuf, ग_लिखोbuf, subpgsize * k))) अणु
 			pr_err("error: verify failed at %#llx\n",
-			       (long long)addr);
+			       (दीर्घ दीर्घ)addr);
 			errcnt += 1;
-		}
+		पूर्ण
 		addr += subpgsize * k;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int verify_eraseblock_ff(int ebnum)
-{
-	uint32_t j;
-	size_t read;
-	int err = 0;
+अटल पूर्णांक verअगरy_eraseblock_ff(पूर्णांक ebnum)
+अणु
+	uपूर्णांक32_t j;
+	माप_प्रकार पढ़ो;
+	पूर्णांक err = 0;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	memset(writebuf, 0xff, subpgsize);
-	for (j = 0; j < mtd->erasesize / subpgsize; ++j) {
-		clear_data(readbuf, subpgsize);
-		err = mtd_read(mtd, addr, subpgsize, &read, readbuf);
-		if (unlikely(err || read != subpgsize)) {
-			if (mtd_is_bitflip(err) && read == subpgsize) {
+	स_रखो(ग_लिखोbuf, 0xff, subpgsize);
+	क्रम (j = 0; j < mtd->erasesize / subpgsize; ++j) अणु
+		clear_data(पढ़ोbuf, subpgsize);
+		err = mtd_पढ़ो(mtd, addr, subpgsize, &पढ़ो, पढ़ोbuf);
+		अगर (unlikely(err || पढ़ो != subpgsize)) अणु
+			अगर (mtd_is_bitflip(err) && पढ़ो == subpgsize) अणु
 				pr_info("ECC correction at %#llx\n",
-				       (long long)addr);
+				       (दीर्घ दीर्घ)addr);
 				err = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("error: read failed at "
-				       "%#llx\n", (long long)addr);
-				return err ? err : -1;
-			}
-		}
-		if (unlikely(memcmp(readbuf, writebuf, subpgsize))) {
+				       "%#llx\n", (दीर्घ दीर्घ)addr);
+				वापस err ? err : -1;
+			पूर्ण
+		पूर्ण
+		अगर (unlikely(स_भेद(पढ़ोbuf, ग_लिखोbuf, subpgsize))) अणु
 			pr_err("error: verify 0xff failed at "
-			       "%#llx\n", (long long)addr);
+			       "%#llx\n", (दीर्घ दीर्घ)addr);
 			errcnt += 1;
-		}
+		पूर्ण
 		addr += subpgsize;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int verify_all_eraseblocks_ff(void)
-{
-	int err;
-	unsigned int i;
+अटल पूर्णांक verअगरy_all_eraseblocks_ff(व्योम)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक i;
 
 	pr_info("verifying all eraseblocks for 0xff\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = verify_eraseblock_ff(i);
-		if (err)
-			return err;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = verअगरy_eraseblock_ff(i);
+		अगर (err)
+			वापस err;
+		अगर (i % 256 == 0)
 			pr_info("verified up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	pr_info("verified %u eraseblocks\n", i);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init mtd_subpagetest_init(void)
-{
-	int err = 0;
-	uint32_t i;
-	uint64_t tmp;
+अटल पूर्णांक __init mtd_subpagetest_init(व्योम)
+अणु
+	पूर्णांक err = 0;
+	uपूर्णांक32_t i;
+	uपूर्णांक64_t पंचांगp;
 
-	printk(KERN_INFO "\n");
-	printk(KERN_INFO "=================================================\n");
+	prपूर्णांकk(KERN_INFO "\n");
+	prपूर्णांकk(KERN_INFO "=================================================\n");
 
-	if (dev < 0) {
+	अगर (dev < 0) अणु
 		pr_info("Please specify a valid mtd-device via module parameter\n");
 		pr_crit("CAREFUL: This test wipes all data on the specified MTD device!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(NULL, dev);
-	if (IS_ERR(mtd)) {
+	mtd = get_mtd_device(शून्य, dev);
+	अगर (IS_ERR(mtd)) अणु
 		err = PTR_ERR(mtd);
 		pr_err("error: cannot get MTD device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!mtd_type_is_nand(mtd)) {
+	अगर (!mtd_type_is_nand(mtd)) अणु
 		pr_info("this test requires NAND flash\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	subpgsize = mtd->writesize >> mtd->subpage_sft;
-	tmp = mtd->size;
-	do_div(tmp, mtd->erasesize);
-	ebcnt = tmp;
-	pgcnt = mtd->erasesize / mtd->writesize;
+	subpgsize = mtd->ग_लिखोsize >> mtd->subpage_sft;
+	पंचांगp = mtd->size;
+	करो_भाग(पंचांगp, mtd->erasesize);
+	ebcnt = पंचांगp;
+	pgcnt = mtd->erasesize / mtd->ग_लिखोsize;
 
 	pr_info("MTD device size %llu, eraseblock size %u, "
 	       "page size %u, subpage size %u, count of eraseblocks %u, "
 	       "pages per eraseblock %u, OOB size %u\n",
-	       (unsigned long long)mtd->size, mtd->erasesize,
-	       mtd->writesize, subpgsize, ebcnt, pgcnt, mtd->oobsize);
+	       (अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
+	       mtd->ग_लिखोsize, subpgsize, ebcnt, pgcnt, mtd->oobsize);
 
 	err = -ENOMEM;
 	bufsize = subpgsize * 32;
-	writebuf = kmalloc(bufsize, GFP_KERNEL);
-	if (!writebuf)
-		goto out;
-	readbuf = kmalloc(bufsize, GFP_KERNEL);
-	if (!readbuf)
-		goto out;
+	ग_लिखोbuf = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!ग_लिखोbuf)
+		जाओ out;
+	पढ़ोbuf = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!पढ़ोbuf)
+		जाओ out;
 	bbt = kzalloc(ebcnt, GFP_KERNEL);
-	if (!bbt)
-		goto out;
+	अगर (!bbt)
+		जाओ out;
 
-	err = mtdtest_scan_for_bad_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	err = mtdtest_scan_क्रम_bad_eraseblocks(mtd, bbt, 0, ebcnt);
+	अगर (err)
+		जाओ out;
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	pr_info("writing whole device\n");
-	prandom_seed_state(&rnd_state, 1);
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = write_eraseblock(i);
-		if (unlikely(err))
-			goto out;
-		if (i % 256 == 0)
+	pअक्रमom_seed_state(&rnd_state, 1);
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = ग_लिखो_eraseblock(i);
+		अगर (unlikely(err))
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("written up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("written %u eraseblocks\n", i);
 
-	prandom_seed_state(&rnd_state, 1);
+	pअक्रमom_seed_state(&rnd_state, 1);
 	pr_info("verifying all eraseblocks\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = verify_eraseblock(i);
-		if (unlikely(err))
-			goto out;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = verअगरy_eraseblock(i);
+		अगर (unlikely(err))
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("verified up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("verified %u eraseblocks\n", i);
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = verify_all_eraseblocks_ff();
-	if (err)
-		goto out;
+	err = verअगरy_all_eraseblocks_ff();
+	अगर (err)
+		जाओ out;
 
 	/* Write all eraseblocks */
-	prandom_seed_state(&rnd_state, 3);
+	pअक्रमom_seed_state(&rnd_state, 3);
 	pr_info("writing whole device\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = write_eraseblock2(i);
-		if (unlikely(err))
-			goto out;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = ग_लिखो_eraseblock2(i);
+		अगर (unlikely(err))
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("written up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("written %u eraseblocks\n", i);
 
 	/* Check all eraseblocks */
-	prandom_seed_state(&rnd_state, 3);
+	pअक्रमom_seed_state(&rnd_state, 3);
 	pr_info("verifying all eraseblocks\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = verify_eraseblock2(i);
-		if (unlikely(err))
-			goto out;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = verअगरy_eraseblock2(i);
+		अगर (unlikely(err))
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("verified up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("verified %u eraseblocks\n", i);
 
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = verify_all_eraseblocks_ff();
-	if (err)
-		goto out;
+	err = verअगरy_all_eraseblocks_ff();
+	अगर (err)
+		जाओ out;
 
 	pr_info("finished with %d errors\n", errcnt);
 
 out:
-	kfree(bbt);
-	kfree(readbuf);
-	kfree(writebuf);
+	kमुक्त(bbt);
+	kमुक्त(पढ़ोbuf);
+	kमुक्त(ग_लिखोbuf);
 	put_mtd_device(mtd);
-	if (err)
+	अगर (err)
 		pr_info("error %d occurred\n", err);
-	printk(KERN_INFO "=================================================\n");
-	return err;
-}
+	prपूर्णांकk(KERN_INFO "=================================================\n");
+	वापस err;
+पूर्ण
 module_init(mtd_subpagetest_init);
 
-static void __exit mtd_subpagetest_exit(void)
-{
-	return;
-}
-module_exit(mtd_subpagetest_exit);
+अटल व्योम __निकास mtd_subpagetest_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
+module_निकास(mtd_subpagetest_निकास);
 
 MODULE_DESCRIPTION("Subpage test module");
 MODULE_AUTHOR("Adrian Hunter");

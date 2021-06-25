@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,120 +22,120 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef __I915_SELFTEST_H__
-#define __I915_SELFTEST_H__
+#अगर_अघोषित __I915_SELFTEST_H__
+#घोषणा __I915_SELFTEST_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct pci_dev;
-struct drm_i915_private;
+काष्ठा pci_dev;
+काष्ठा drm_i915_निजी;
 
-struct i915_selftest {
-	unsigned long timeout_jiffies;
-	unsigned int timeout_ms;
-	unsigned int random_seed;
-	char *filter;
-	int mock;
-	int live;
-	int perf;
-};
+काष्ठा i915_selftest अणु
+	अचिन्हित दीर्घ समयout_jअगरfies;
+	अचिन्हित पूर्णांक समयout_ms;
+	अचिन्हित पूर्णांक अक्रमom_seed;
+	अक्षर *filter;
+	पूर्णांक mock;
+	पूर्णांक live;
+	पूर्णांक perf;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#include <linux/fault-inject.h>
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#समावेश <linux/fault-inject.h>
 
-extern struct i915_selftest i915_selftest;
+बाह्य काष्ठा i915_selftest i915_selftest;
 
-int i915_mock_selftests(void);
-int i915_live_selftests(struct pci_dev *pdev);
-int i915_perf_selftests(struct pci_dev *pdev);
+पूर्णांक i915_mock_selftests(व्योम);
+पूर्णांक i915_live_selftests(काष्ठा pci_dev *pdev);
+पूर्णांक i915_perf_selftests(काष्ठा pci_dev *pdev);
 
 /* We extract the function declarations from i915_mock_selftests.h and
  * i915_live_selftests.h Add your unit test declarations there!
  *
- * Mock unit tests are run very early upon module load, before the driver
- * is probed. All hardware interactions, as well as other subsystems, must
+ * Mock unit tests are run very early upon module load, beक्रमe the driver
+ * is probed. All hardware पूर्णांकeractions, as well as other subप्रणालीs, must
  * be "mocked".
  *
  * Live unit tests are run after the driver is loaded - all hardware
- * interactions are real.
+ * पूर्णांकeractions are real.
  */
-#define selftest(name, func) int func(void);
-#include "selftests/i915_mock_selftests.h"
-#undef selftest
-#define selftest(name, func) int func(struct drm_i915_private *i915);
-#include "selftests/i915_live_selftests.h"
-#include "selftests/i915_perf_selftests.h"
-#undef selftest
+#घोषणा selftest(name, func) पूर्णांक func(व्योम);
+#समावेश "selftests/i915_mock_selftests.h"
+#अघोषित selftest
+#घोषणा selftest(name, func) पूर्णांक func(काष्ठा drm_i915_निजी *i915);
+#समावेश "selftests/i915_live_selftests.h"
+#समावेश "selftests/i915_perf_selftests.h"
+#अघोषित selftest
 
-struct i915_subtest {
-	int (*func)(void *data);
-	const char *name;
-};
+काष्ठा i915_subtest अणु
+	पूर्णांक (*func)(व्योम *data);
+	स्थिर अक्षर *name;
+पूर्ण;
 
-int __i915_nop_setup(void *data);
-int __i915_nop_teardown(int err, void *data);
+पूर्णांक __i915_nop_setup(व्योम *data);
+पूर्णांक __i915_nop_tearकरोwn(पूर्णांक err, व्योम *data);
 
-int __i915_live_setup(void *data);
-int __i915_live_teardown(int err, void *data);
+पूर्णांक __i915_live_setup(व्योम *data);
+पूर्णांक __i915_live_tearकरोwn(पूर्णांक err, व्योम *data);
 
-int __intel_gt_live_setup(void *data);
-int __intel_gt_live_teardown(int err, void *data);
+पूर्णांक __पूर्णांकel_gt_live_setup(व्योम *data);
+पूर्णांक __पूर्णांकel_gt_live_tearकरोwn(पूर्णांक err, व्योम *data);
 
-int __i915_subtests(const char *caller,
-		    int (*setup)(void *data),
-		    int (*teardown)(int err, void *data),
-		    const struct i915_subtest *st,
-		    unsigned int count,
-		    void *data);
-#define i915_subtests(T, data) \
+पूर्णांक __i915_subtests(स्थिर अक्षर *caller,
+		    पूर्णांक (*setup)(व्योम *data),
+		    पूर्णांक (*tearकरोwn)(पूर्णांक err, व्योम *data),
+		    स्थिर काष्ठा i915_subtest *st,
+		    अचिन्हित पूर्णांक count,
+		    व्योम *data);
+#घोषणा i915_subtests(T, data) \
 	__i915_subtests(__func__, \
-			__i915_nop_setup, __i915_nop_teardown, \
+			__i915_nop_setup, __i915_nop_tearकरोwn, \
 			T, ARRAY_SIZE(T), data)
-#define i915_live_subtests(T, data) ({ \
-	typecheck(struct drm_i915_private *, data); \
+#घोषणा i915_live_subtests(T, data) (अणु \
+	typecheck(काष्ठा drm_i915_निजी *, data); \
 	__i915_subtests(__func__, \
-			__i915_live_setup, __i915_live_teardown, \
+			__i915_live_setup, __i915_live_tearकरोwn, \
 			T, ARRAY_SIZE(T), data); \
-})
-#define intel_gt_live_subtests(T, data) ({ \
-	typecheck(struct intel_gt *, data); \
+पूर्ण)
+#घोषणा पूर्णांकel_gt_live_subtests(T, data) (अणु \
+	typecheck(काष्ठा पूर्णांकel_gt *, data); \
 	__i915_subtests(__func__, \
-			__intel_gt_live_setup, __intel_gt_live_teardown, \
+			__पूर्णांकel_gt_live_setup, __पूर्णांकel_gt_live_tearकरोwn, \
 			T, ARRAY_SIZE(T), data); \
-})
+पूर्ण)
 
-#define SUBTEST(x) { x, #x }
+#घोषणा SUBTEST(x) अणु x, #x पूर्ण
 
-#define I915_SELFTEST_DECLARE(x) x
-#define I915_SELFTEST_ONLY(x) unlikely(x)
-#define I915_SELFTEST_EXPORT
+#घोषणा I915_SELFTEST_DECLARE(x) x
+#घोषणा I915_SELFTEST_ONLY(x) unlikely(x)
+#घोषणा I915_SELFTEST_EXPORT
 
-#else /* !IS_ENABLED(CONFIG_DRM_I915_SELFTEST) */
+#अन्यथा /* !IS_ENABLED(CONFIG_DRM_I915_SELFTEST) */
 
-static inline int i915_mock_selftests(void) { return 0; }
-static inline int i915_live_selftests(struct pci_dev *pdev) { return 0; }
-static inline int i915_perf_selftests(struct pci_dev *pdev) { return 0; }
+अटल अंतरभूत पूर्णांक i915_mock_selftests(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक i915_live_selftests(काष्ठा pci_dev *pdev) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक i915_perf_selftests(काष्ठा pci_dev *pdev) अणु वापस 0; पूर्ण
 
-#define I915_SELFTEST_DECLARE(x)
-#define I915_SELFTEST_ONLY(x) 0
-#define I915_SELFTEST_EXPORT static
+#घोषणा I915_SELFTEST_DECLARE(x)
+#घोषणा I915_SELFTEST_ONLY(x) 0
+#घोषणा I915_SELFTEST_EXPORT अटल
 
-#endif
+#पूर्ण_अगर
 
 /* Using the i915_selftest_ prefix becomes a little unwieldy with the helpers.
- * Instead we use the igt_ shorthand, in reference to the intel-gpu-tools
- * suite of uabi test cases (which includes a test runner for our selftests).
+ * Instead we use the igt_ लघुhand, in reference to the पूर्णांकel-gpu-tools
+ * suite of uabi test हालs (which includes a test runner क्रम our selftests).
  */
 
-#define IGT_TIMEOUT(name__) \
-	unsigned long name__ = jiffies + i915_selftest.timeout_jiffies
+#घोषणा IGT_TIMEOUT(name__) \
+	अचिन्हित दीर्घ name__ = jअगरfies + i915_selftest.समयout_jअगरfies
 
-__printf(2, 3)
-bool __igt_timeout(unsigned long timeout, const char *fmt, ...);
+__म_लिखो(2, 3)
+bool __igt_समयout(अचिन्हित दीर्घ समयout, स्थिर अक्षर *fmt, ...);
 
-#define igt_timeout(t, fmt, ...) \
-	__igt_timeout((t), KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
+#घोषणा igt_समयout(t, fmt, ...) \
+	__igt_समयout((t), KERN_DEBUG pr_fmt(fmt), ##__VA_ARGS__)
 
-void igt_hexdump(const void *buf, size_t len);
+व्योम igt_hexdump(स्थिर व्योम *buf, माप_प्रकार len);
 
-#endif /* !__I915_SELFTEST_H__ */
+#पूर्ण_अगर /* !__I915_SELFTEST_H__ */

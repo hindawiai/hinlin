@@ -1,407 +1,408 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * MediaTek Pinctrl Moore Driver, which implement the generic dt-binding
- * pinctrl-bindings.txt for MediaTek SoC.
+ * pinctrl-bindings.txt क्रम MediaTek SoC.
  *
  * Copyright (C) 2017-2018 MediaTek Inc.
  * Author: Sean Wang <sean.wang@mediatek.com>
  *
  */
 
-#include <linux/gpio/driver.h>
-#include "pinctrl-moore.h"
+#समावेश <linux/gpio/driver.h>
+#समावेश "pinctrl-moore.h"
 
-#define PINCTRL_PINCTRL_DEV		KBUILD_MODNAME
+#घोषणा PINCTRL_PINCTRL_DEV		KBUILD_MODNAME
 
 /* Custom pinconf parameters */
-#define MTK_PIN_CONFIG_TDSEL	(PIN_CONFIG_END + 1)
-#define MTK_PIN_CONFIG_RDSEL	(PIN_CONFIG_END + 2)
-#define MTK_PIN_CONFIG_PU_ADV	(PIN_CONFIG_END + 3)
-#define MTK_PIN_CONFIG_PD_ADV	(PIN_CONFIG_END + 4)
+#घोषणा MTK_PIN_CONFIG_TDSEL	(PIN_CONFIG_END + 1)
+#घोषणा MTK_PIN_CONFIG_RDSEL	(PIN_CONFIG_END + 2)
+#घोषणा MTK_PIN_CONFIG_PU_ADV	(PIN_CONFIG_END + 3)
+#घोषणा MTK_PIN_CONFIG_PD_ADV	(PIN_CONFIG_END + 4)
 
-static const struct pinconf_generic_params mtk_custom_bindings[] = {
-	{"mediatek,tdsel",	MTK_PIN_CONFIG_TDSEL,		0},
-	{"mediatek,rdsel",	MTK_PIN_CONFIG_RDSEL,		0},
-	{"mediatek,pull-up-adv", MTK_PIN_CONFIG_PU_ADV,		1},
-	{"mediatek,pull-down-adv", MTK_PIN_CONFIG_PD_ADV,	1},
-};
+अटल स्थिर काष्ठा pinconf_generic_params mtk_custom_bindings[] = अणु
+	अणु"mediatek,tdsel",	MTK_PIN_CONFIG_TDSEL,		0पूर्ण,
+	अणु"mediatek,rdsel",	MTK_PIN_CONFIG_RDSEL,		0पूर्ण,
+	अणु"mediatek,pull-up-adv", MTK_PIN_CONFIG_PU_ADV,		1पूर्ण,
+	अणु"mediatek,pull-down-adv", MTK_PIN_CONFIG_PD_ADV,	1पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-static const struct pin_config_item mtk_conf_items[] = {
-	PCONFDUMP(MTK_PIN_CONFIG_TDSEL, "tdsel", NULL, true),
-	PCONFDUMP(MTK_PIN_CONFIG_RDSEL, "rdsel", NULL, true),
-	PCONFDUMP(MTK_PIN_CONFIG_PU_ADV, "pu-adv", NULL, true),
-	PCONFDUMP(MTK_PIN_CONFIG_PD_ADV, "pd-adv", NULL, true),
-};
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल स्थिर काष्ठा pin_config_item mtk_conf_items[] = अणु
+	PCONFDUMP(MTK_PIN_CONFIG_TDSEL, "tdsel", शून्य, true),
+	PCONFDUMP(MTK_PIN_CONFIG_RDSEL, "rdsel", शून्य, true),
+	PCONFDUMP(MTK_PIN_CONFIG_PU_ADV, "pu-adv", शून्य, true),
+	PCONFDUMP(MTK_PIN_CONFIG_PD_ADV, "pd-adv", शून्य, true),
+पूर्ण;
+#पूर्ण_अगर
 
-static int mtk_pinmux_set_mux(struct pinctrl_dev *pctldev,
-			      unsigned int selector, unsigned int group)
-{
-	struct mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
-	struct function_desc *func;
-	struct group_desc *grp;
-	int i;
+अटल पूर्णांक mtk_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित पूर्णांक selector, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा function_desc *func;
+	काष्ठा group_desc *grp;
+	पूर्णांक i;
 
 	func = pinmux_generic_get_function(pctldev, selector);
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
 	grp = pinctrl_generic_get_group(pctldev, group);
-	if (!grp)
-		return -EINVAL;
+	अगर (!grp)
+		वापस -EINVAL;
 
 	dev_dbg(pctldev->dev, "enable function %s group %s\n",
 		func->name, grp->name);
 
-	for (i = 0; i < grp->num_pins; i++) {
-		const struct mtk_pin_desc *desc;
-		int *pin_modes = grp->data;
-		int pin = grp->pins[i];
+	क्रम (i = 0; i < grp->num_pins; i++) अणु
+		स्थिर काष्ठा mtk_pin_desc *desc;
+		पूर्णांक *pin_modes = grp->data;
+		पूर्णांक pin = grp->pins[i];
 
-		desc = (const struct mtk_pin_desc *)&hw->soc->pins[pin];
+		desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[pin];
 
 		mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_MODE,
 				 pin_modes[i]);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_pinmux_gpio_request_enable(struct pinctrl_dev *pctldev,
-					  struct pinctrl_gpio_range *range,
-					  unsigned int pin)
-{
-	struct mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
-	const struct mtk_pin_desc *desc;
+अटल पूर्णांक mtk_pinmux_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+					  काष्ठा pinctrl_gpio_range *range,
+					  अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[pin];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[pin];
 
-	return mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_MODE,
+	वापस mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_MODE,
 				hw->soc->gpio_m);
-}
+पूर्ण
 
-static int mtk_pinmux_gpio_set_direction(struct pinctrl_dev *pctldev,
-					 struct pinctrl_gpio_range *range,
-					 unsigned int pin, bool input)
-{
-	struct mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
-	const struct mtk_pin_desc *desc;
+अटल पूर्णांक mtk_pinmux_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+					 काष्ठा pinctrl_gpio_range *range,
+					 अचिन्हित पूर्णांक pin, bool input)
+अणु
+	काष्ठा mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[pin];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[pin];
 
 	/* hardware would take 0 as input direction */
-	return mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR, !input);
-}
+	वापस mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_सूची, !input);
+पूर्ण
 
-static int mtk_pinconf_get(struct pinctrl_dev *pctldev,
-			   unsigned int pin, unsigned long *config)
-{
-	struct mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक mtk_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			   अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
 	u32 param = pinconf_to_config_param(*config);
-	int val, val2, err, reg, ret = 1;
-	const struct mtk_pin_desc *desc;
+	पूर्णांक val, val2, err, reg, ret = 1;
+	स्थिर काष्ठा mtk_pin_desc *desc;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[pin];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[pin];
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (hw->soc->bias_disable_get) {
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (hw->soc->bias_disable_get) अणु
 			err = hw->soc->bias_disable_get(hw, desc, &ret);
-			if (err)
-				return err;
-		} else {
-			return -ENOTSUPP;
-		}
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (hw->soc->bias_get) {
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -ENOTSUPP;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (hw->soc->bias_get) अणु
 			err = hw->soc->bias_get(hw, desc, 1, &ret);
-			if (err)
-				return err;
-		} else {
-			return -ENOTSUPP;
-		}
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		if (hw->soc->bias_get) {
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -ENOTSUPP;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		अगर (hw->soc->bias_get) अणु
 			err = hw->soc->bias_get(hw, desc, 0, &ret);
-			if (err)
-				return err;
-		} else {
-			return -ENOTSUPP;
-		}
-		break;
-	case PIN_CONFIG_SLEW_RATE:
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -ENOTSUPP;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
 		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_SR, &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (!val)
-			return -EINVAL;
+		अगर (!val)
+			वापस -EINVAL;
 
-		break;
-	case PIN_CONFIG_INPUT_ENABLE:
-	case PIN_CONFIG_OUTPUT_ENABLE:
-		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_DIR, &val);
-		if (err)
-			return err;
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_ENABLE:
+	हाल PIN_CONFIG_OUTPUT_ENABLE:
+		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_सूची, &val);
+		अगर (err)
+			वापस err;
 
 		/* HW takes input mode as zero; output mode as non-zero */
-		if ((val && param == PIN_CONFIG_INPUT_ENABLE) ||
+		अगर ((val && param == PIN_CONFIG_INPUT_ENABLE) ||
 		    (!val && param == PIN_CONFIG_OUTPUT_ENABLE))
-			return -EINVAL;
+			वापस -EINVAL;
 
-		break;
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_DIR, &val);
-		if (err)
-			return err;
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_सूची, &val);
+		अगर (err)
+			वापस err;
 
 		err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_SMT, &val2);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (val || !val2)
-			return -EINVAL;
+		अगर (val || !val2)
+			वापस -EINVAL;
 
-		break;
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		if (hw->soc->drive_get) {
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		अगर (hw->soc->drive_get) अणु
 			err = hw->soc->drive_get(hw, desc, &ret);
-			if (err)
-				return err;
-		} else {
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
 			err = -ENOTSUPP;
-		}
-		break;
-	case MTK_PIN_CONFIG_TDSEL:
-	case MTK_PIN_CONFIG_RDSEL:
+		पूर्ण
+		अवरोध;
+	हाल MTK_PIN_CONFIG_TDSEL:
+	हाल MTK_PIN_CONFIG_RDSEL:
 		reg = (param == MTK_PIN_CONFIG_TDSEL) ?
 		       PINCTRL_PIN_REG_TDSEL : PINCTRL_PIN_REG_RDSEL;
 
 		err = mtk_hw_get_value(hw, desc, reg, &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		ret = val;
 
-		break;
-	case MTK_PIN_CONFIG_PU_ADV:
-	case MTK_PIN_CONFIG_PD_ADV:
-		if (hw->soc->adv_pull_get) {
+		अवरोध;
+	हाल MTK_PIN_CONFIG_PU_ADV:
+	हाल MTK_PIN_CONFIG_PD_ADV:
+		अगर (hw->soc->adv_pull_get) अणु
 			bool pullup;
 
 			pullup = param == MTK_PIN_CONFIG_PU_ADV;
 			err = hw->soc->adv_pull_get(hw, desc, pullup, &ret);
-			if (err)
-				return err;
-		} else {
-			return -ENOTSUPP;
-		}
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अणु
+			वापस -ENOTSUPP;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			   unsigned long *configs, unsigned int num_configs)
-{
-	struct mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
-	const struct mtk_pin_desc *desc;
+अटल पूर्णांक mtk_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			   अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा mtk_pinctrl *hw = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 	u32 reg, param, arg;
-	int cfg, err = 0;
+	पूर्णांक cfg, err = 0;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[pin];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[pin];
 
-	for (cfg = 0; cfg < num_configs; cfg++) {
+	क्रम (cfg = 0; cfg < num_configs; cfg++) अणु
 		param = pinconf_to_config_param(configs[cfg]);
 		arg = pinconf_to_config_argument(configs[cfg]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
-			if (hw->soc->bias_disable_set) {
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
+			अगर (hw->soc->bias_disable_set) अणु
 				err = hw->soc->bias_disable_set(hw, desc);
-				if (err)
-					return err;
-			} else {
-				return -ENOTSUPP;
-			}
-			break;
-		case PIN_CONFIG_BIAS_PULL_UP:
-			if (hw->soc->bias_set) {
+				अगर (err)
+					वापस err;
+			पूर्ण अन्यथा अणु
+				वापस -ENOTSUPP;
+			पूर्ण
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+			अगर (hw->soc->bias_set) अणु
 				err = hw->soc->bias_set(hw, desc, 1);
-				if (err)
-					return err;
-			} else {
-				return -ENOTSUPP;
-			}
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
-			if (hw->soc->bias_set) {
+				अगर (err)
+					वापस err;
+			पूर्ण अन्यथा अणु
+				वापस -ENOTSUPP;
+			पूर्ण
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
+			अगर (hw->soc->bias_set) अणु
 				err = hw->soc->bias_set(hw, desc, 0);
-				if (err)
-					return err;
-			} else {
-				return -ENOTSUPP;
-			}
-			break;
-		case PIN_CONFIG_OUTPUT_ENABLE:
+				अगर (err)
+					वापस err;
+			पूर्ण अन्यथा अणु
+				वापस -ENOTSUPP;
+			पूर्ण
+			अवरोध;
+		हाल PIN_CONFIG_OUTPUT_ENABLE:
 			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_SMT,
 					       MTK_DISABLE);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
-			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_सूची,
 					       MTK_OUTPUT);
-			if (err)
-				goto err;
-			break;
-		case PIN_CONFIG_INPUT_ENABLE:
+			अगर (err)
+				जाओ err;
+			अवरोध;
+		हाल PIN_CONFIG_INPUT_ENABLE:
 
-			if (hw->soc->ies_present) {
+			अगर (hw->soc->ies_present) अणु
 				mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_IES,
 						 MTK_ENABLE);
-			}
+			पूर्ण
 
-			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_सूची,
 					       MTK_INPUT);
-			if (err)
-				goto err;
-			break;
-		case PIN_CONFIG_SLEW_RATE:
+			अगर (err)
+				जाओ err;
+			अवरोध;
+		हाल PIN_CONFIG_SLEW_RATE:
 			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_SR,
 					       arg);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
-			break;
-		case PIN_CONFIG_OUTPUT:
-			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+			अवरोध;
+		हाल PIN_CONFIG_OUTPUT:
+			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_सूची,
 					       MTK_OUTPUT);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
 			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DO,
 					       arg);
-			if (err)
-				goto err;
-			break;
-		case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+			अगर (err)
+				जाओ err;
+			अवरोध;
+		हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 			/* arg = 1: Input mode & SMT enable ;
 			 * arg = 0: Output mode & SMT disable
 			 */
 			arg = arg ? 2 : 1;
-			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DIR,
+			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_सूची,
 					       arg & 1);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
 			err = mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_SMT,
 					       !!(arg & 2));
-			if (err)
-				goto err;
-			break;
-		case PIN_CONFIG_DRIVE_STRENGTH:
-			if (hw->soc->drive_set) {
+			अगर (err)
+				जाओ err;
+			अवरोध;
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
+			अगर (hw->soc->drive_set) अणु
 				err = hw->soc->drive_set(hw, desc, arg);
-				if (err)
-					return err;
-			} else {
+				अगर (err)
+					वापस err;
+			पूर्ण अन्यथा अणु
 				err = -ENOTSUPP;
-			}
-			break;
-		case MTK_PIN_CONFIG_TDSEL:
-		case MTK_PIN_CONFIG_RDSEL:
+			पूर्ण
+			अवरोध;
+		हाल MTK_PIN_CONFIG_TDSEL:
+		हाल MTK_PIN_CONFIG_RDSEL:
 			reg = (param == MTK_PIN_CONFIG_TDSEL) ?
 			       PINCTRL_PIN_REG_TDSEL : PINCTRL_PIN_REG_RDSEL;
 
 			err = mtk_hw_set_value(hw, desc, reg, arg);
-			if (err)
-				goto err;
-			break;
-		case MTK_PIN_CONFIG_PU_ADV:
-		case MTK_PIN_CONFIG_PD_ADV:
-			if (hw->soc->adv_pull_set) {
+			अगर (err)
+				जाओ err;
+			अवरोध;
+		हाल MTK_PIN_CONFIG_PU_ADV:
+		हाल MTK_PIN_CONFIG_PD_ADV:
+			अगर (hw->soc->adv_pull_set) अणु
 				bool pullup;
 
 				pullup = param == MTK_PIN_CONFIG_PU_ADV;
 				err = hw->soc->adv_pull_set(hw, desc, pullup,
 							    arg);
-				if (err)
-					return err;
-			} else {
-				return -ENOTSUPP;
-			}
-			break;
-		default:
+				अगर (err)
+					वापस err;
+			पूर्ण अन्यथा अणु
+				वापस -ENOTSUPP;
+			पूर्ण
+			अवरोध;
+		शेष:
 			err = -ENOTSUPP;
-		}
-	}
+		पूर्ण
+	पूर्ण
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mtk_pinconf_group_get(struct pinctrl_dev *pctldev,
-				 unsigned int group, unsigned long *config)
-{
-	const unsigned int *pins;
-	unsigned int i, npins, old = 0;
-	int ret;
+अटल पूर्णांक mtk_pinconf_group_get(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *config)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक i, npins, old = 0;
+	पूर्णांक ret;
 
 	ret = pinctrl_generic_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < npins; i++) {
-		if (mtk_pinconf_get(pctldev, pins[i], config))
-			return -ENOTSUPP;
+	क्रम (i = 0; i < npins; i++) अणु
+		अगर (mtk_pinconf_get(pctldev, pins[i], config))
+			वापस -ENOTSUPP;
 
-		/* configs do not match between two pins */
-		if (i && old != *config)
-			return -ENOTSUPP;
+		/* configs करो not match between two pins */
+		अगर (i && old != *config)
+			वापस -ENOTSUPP;
 
 		old = *config;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_pinconf_group_set(struct pinctrl_dev *pctldev,
-				 unsigned int group, unsigned long *configs,
-				 unsigned int num_configs)
-{
-	const unsigned int *pins;
-	unsigned int i, npins;
-	int ret;
+अटल पूर्णांक mtk_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *configs,
+				 अचिन्हित पूर्णांक num_configs)
+अणु
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक i, npins;
+	पूर्णांक ret;
 
 	ret = pinctrl_generic_get_group_pins(pctldev, group, &pins, &npins);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < npins; i++) {
+	क्रम (i = 0; i < npins; i++) अणु
 		ret = mtk_pinconf_set(pctldev, pins[i], configs, num_configs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops mtk_pctlops = {
+अटल स्थिर काष्ठा pinctrl_ops mtk_pctlops = अणु
 	.get_groups_count = pinctrl_generic_get_group_count,
 	.get_group_name = pinctrl_generic_get_group_name,
 	.get_group_pins = pinctrl_generic_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_free_map = pinconf_generic_dt_free_map,
-};
+	.dt_मुक्त_map = pinconf_generic_dt_मुक्त_map,
+पूर्ण;
 
-static const struct pinmux_ops mtk_pmxops = {
+अटल स्थिर काष्ठा pinmux_ops mtk_pmxops = अणु
 	.get_functions_count = pinmux_generic_get_function_count,
 	.get_function_name = pinmux_generic_get_function_name,
 	.get_function_groups = pinmux_generic_get_function_groups,
@@ -409,107 +410,107 @@ static const struct pinmux_ops mtk_pmxops = {
 	.gpio_request_enable = mtk_pinmux_gpio_request_enable,
 	.gpio_set_direction = mtk_pinmux_gpio_set_direction,
 	.strict = true,
-};
+पूर्ण;
 
-static const struct pinconf_ops mtk_confops = {
+अटल स्थिर काष्ठा pinconf_ops mtk_confops = अणु
 	.is_generic = true,
 	.pin_config_get = mtk_pinconf_get,
 	.pin_config_set = mtk_pinconf_set,
 	.pin_config_group_get = mtk_pinconf_group_get,
 	.pin_config_group_set = mtk_pinconf_group_set,
 	.pin_config_config_dbg_show = pinconf_generic_dump_config,
-};
+पूर्ण;
 
-static struct pinctrl_desc mtk_desc = {
+अटल काष्ठा pinctrl_desc mtk_desc = अणु
 	.name = PINCTRL_PINCTRL_DEV,
 	.pctlops = &mtk_pctlops,
 	.pmxops = &mtk_pmxops,
 	.confops = &mtk_confops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int mtk_gpio_get(struct gpio_chip *chip, unsigned int gpio)
-{
-	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
-	const struct mtk_pin_desc *desc;
-	int value, err;
+अटल पूर्णांक mtk_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा mtk_pinctrl *hw = gpiochip_get_data(chip);
+	स्थिर काष्ठा mtk_pin_desc *desc;
+	पूर्णांक value, err;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[gpio];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[gpio];
 
 	err = mtk_hw_get_value(hw, desc, PINCTRL_PIN_REG_DI, &value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return !!value;
-}
+	वापस !!value;
+पूर्ण
 
-static void mtk_gpio_set(struct gpio_chip *chip, unsigned int gpio, int value)
-{
-	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
-	const struct mtk_pin_desc *desc;
+अटल व्योम mtk_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio, पूर्णांक value)
+अणु
+	काष्ठा mtk_pinctrl *hw = gpiochip_get_data(chip);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[gpio];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[gpio];
 
 	mtk_hw_set_value(hw, desc, PINCTRL_PIN_REG_DO, !!value);
-}
+पूर्ण
 
-static int mtk_gpio_direction_input(struct gpio_chip *chip, unsigned int gpio)
-{
-	return pinctrl_gpio_direction_input(chip->base + gpio);
-}
+अटल पूर्णांक mtk_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + gpio);
+पूर्ण
 
-static int mtk_gpio_direction_output(struct gpio_chip *chip, unsigned int gpio,
-				     int value)
-{
+अटल पूर्णांक mtk_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio,
+				     पूर्णांक value)
+अणु
 	mtk_gpio_set(chip, gpio, value);
 
-	return pinctrl_gpio_direction_output(chip->base + gpio);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + gpio);
+पूर्ण
 
-static int mtk_gpio_to_irq(struct gpio_chip *chip, unsigned int offset)
-{
-	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
-	const struct mtk_pin_desc *desc;
+अटल पूर्णांक mtk_gpio_to_irq(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा mtk_pinctrl *hw = gpiochip_get_data(chip);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 
-	if (!hw->eint)
-		return -ENOTSUPP;
+	अगर (!hw->eपूर्णांक)
+		वापस -ENOTSUPP;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[offset];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[offset];
 
-	if (desc->eint.eint_n == (u16)EINT_NA)
-		return -ENOTSUPP;
+	अगर (desc->eपूर्णांक.eपूर्णांक_n == (u16)EINT_NA)
+		वापस -ENOTSUPP;
 
-	return mtk_eint_find_irq(hw->eint, desc->eint.eint_n);
-}
+	वापस mtk_eपूर्णांक_find_irq(hw->eपूर्णांक, desc->eपूर्णांक.eपूर्णांक_n);
+पूर्ण
 
-static int mtk_gpio_set_config(struct gpio_chip *chip, unsigned int offset,
-			       unsigned long config)
-{
-	struct mtk_pinctrl *hw = gpiochip_get_data(chip);
-	const struct mtk_pin_desc *desc;
+अटल पूर्णांक mtk_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			       अचिन्हित दीर्घ config)
+अणु
+	काष्ठा mtk_pinctrl *hw = gpiochip_get_data(chip);
+	स्थिर काष्ठा mtk_pin_desc *desc;
 	u32 debounce;
 
-	desc = (const struct mtk_pin_desc *)&hw->soc->pins[offset];
+	desc = (स्थिर काष्ठा mtk_pin_desc *)&hw->soc->pins[offset];
 
-	if (!hw->eint ||
+	अगर (!hw->eपूर्णांक ||
 	    pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE ||
-	    desc->eint.eint_n == (u16)EINT_NA)
-		return -ENOTSUPP;
+	    desc->eपूर्णांक.eपूर्णांक_n == (u16)EINT_NA)
+		वापस -ENOTSUPP;
 
 	debounce = pinconf_to_config_argument(config);
 
-	return mtk_eint_set_debounce(hw->eint, desc->eint.eint_n, debounce);
-}
+	वापस mtk_eपूर्णांक_set_debounce(hw->eपूर्णांक, desc->eपूर्णांक.eपूर्णांक_n, debounce);
+पूर्ण
 
-static int mtk_build_gpiochip(struct mtk_pinctrl *hw, struct device_node *np)
-{
-	struct gpio_chip *chip = &hw->chip;
-	int ret;
+अटल पूर्णांक mtk_build_gpiochip(काष्ठा mtk_pinctrl *hw, काष्ठा device_node *np)
+अणु
+	काष्ठा gpio_chip *chip = &hw->chip;
+	पूर्णांक ret;
 
 	chip->label		= PINCTRL_PINCTRL_DEV;
 	chip->parent		= hw->dev;
 	chip->request		= gpiochip_generic_request;
-	chip->free		= gpiochip_generic_free;
+	chip->मुक्त		= gpiochip_generic_मुक्त;
 	chip->direction_input	= mtk_gpio_direction_input;
 	chip->direction_output	= mtk_gpio_direction_output;
 	chip->get		= mtk_gpio_get;
@@ -522,164 +523,164 @@ static int mtk_build_gpiochip(struct mtk_pinctrl *hw, struct device_node *np)
 	chip->of_gpio_n_cells	= 2;
 
 	ret = gpiochip_add_data(chip, hw);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Just for backward compatible for these old pinctrl nodes without
+	/* Just क्रम backward compatible क्रम these old pinctrl nodes without
 	 * "gpio-ranges" property. Otherwise, called directly from a
 	 * DeviceTree-supported pinctrl driver is DEPRECATED.
 	 * Please see Section 2.1 of
 	 * Documentation/devicetree/bindings/gpio/gpio.txt on how to
 	 * bind pinctrl and gpio drivers via the "gpio-ranges" property.
 	 */
-	if (!of_find_property(np, "gpio-ranges", NULL)) {
+	अगर (!of_find_property(np, "gpio-ranges", शून्य)) अणु
 		ret = gpiochip_add_pin_range(chip, dev_name(hw->dev), 0, 0,
 					     chip->ngpio);
-		if (ret < 0) {
-			gpiochip_remove(chip);
-			return ret;
-		}
-	}
+		अगर (ret < 0) अणु
+			gpiochip_हटाओ(chip);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_build_groups(struct mtk_pinctrl *hw)
-{
-	int err, i;
+अटल पूर्णांक mtk_build_groups(काष्ठा mtk_pinctrl *hw)
+अणु
+	पूर्णांक err, i;
 
-	for (i = 0; i < hw->soc->ngrps; i++) {
-		const struct group_desc *group = hw->soc->grps + i;
+	क्रम (i = 0; i < hw->soc->ngrps; i++) अणु
+		स्थिर काष्ठा group_desc *group = hw->soc->grps + i;
 
 		err = pinctrl_generic_add_group(hw->pctrl, group->name,
 						group->pins, group->num_pins,
 						group->data);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->dev, "Failed to register group %s\n",
 				group->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_build_functions(struct mtk_pinctrl *hw)
-{
-	int i, err;
+अटल पूर्णांक mtk_build_functions(काष्ठा mtk_pinctrl *hw)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < hw->soc->nfuncs ; i++) {
-		const struct function_desc *func = hw->soc->funcs + i;
+	क्रम (i = 0; i < hw->soc->nfuncs ; i++) अणु
+		स्थिर काष्ठा function_desc *func = hw->soc->funcs + i;
 
 		err = pinmux_generic_add_function(hw->pctrl, func->name,
 						  func->group_names,
 						  func->num_group_names,
 						  func->data);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(hw->dev, "Failed to register function %s\n",
 				func->name);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mtk_moore_pinctrl_probe(struct platform_device *pdev,
-			    const struct mtk_pin_soc *soc)
-{
-	struct pinctrl_pin_desc *pins;
-	struct mtk_pinctrl *hw;
-	int err, i;
+पूर्णांक mtk_moore_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
+			    स्थिर काष्ठा mtk_pin_soc *soc)
+अणु
+	काष्ठा pinctrl_pin_desc *pins;
+	काष्ठा mtk_pinctrl *hw;
+	पूर्णांक err, i;
 
-	hw = devm_kzalloc(&pdev->dev, sizeof(*hw), GFP_KERNEL);
-	if (!hw)
-		return -ENOMEM;
+	hw = devm_kzalloc(&pdev->dev, माप(*hw), GFP_KERNEL);
+	अगर (!hw)
+		वापस -ENOMEM;
 
 	hw->soc = soc;
 	hw->dev = &pdev->dev;
 
-	if (!hw->soc->nbase_names) {
+	अगर (!hw->soc->nbase_names) अणु
 		dev_err(&pdev->dev,
 			"SoC should be assigned at least one register base\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	hw->base = devm_kmalloc_array(&pdev->dev, hw->soc->nbase_names,
-				      sizeof(*hw->base), GFP_KERNEL);
-	if (!hw->base)
-		return -ENOMEM;
+	hw->base = devm_kदो_स्मृति_array(&pdev->dev, hw->soc->nbase_names,
+				      माप(*hw->base), GFP_KERNEL);
+	अगर (!hw->base)
+		वापस -ENOMEM;
 
-	for (i = 0; i < hw->soc->nbase_names; i++) {
-		hw->base[i] = devm_platform_ioremap_resource_byname(pdev,
+	क्रम (i = 0; i < hw->soc->nbase_names; i++) अणु
+		hw->base[i] = devm_platक्रमm_ioremap_resource_byname(pdev,
 						hw->soc->base_names[i]);
-		if (IS_ERR(hw->base[i]))
-			return PTR_ERR(hw->base[i]);
-	}
+		अगर (IS_ERR(hw->base[i]))
+			वापस PTR_ERR(hw->base[i]);
+	पूर्ण
 
 	hw->nbase = hw->soc->nbase_names;
 
 	spin_lock_init(&hw->lock);
 
-	/* Copy from internal struct mtk_pin_desc to register to the core */
-	pins = devm_kmalloc_array(&pdev->dev, hw->soc->npins, sizeof(*pins),
+	/* Copy from पूर्णांकernal काष्ठा mtk_pin_desc to रेजिस्टर to the core */
+	pins = devm_kदो_स्मृति_array(&pdev->dev, hw->soc->npins, माप(*pins),
 				  GFP_KERNEL);
-	if (!pins)
-		return -ENOMEM;
+	अगर (!pins)
+		वापस -ENOMEM;
 
-	for (i = 0; i < hw->soc->npins; i++) {
+	क्रम (i = 0; i < hw->soc->npins; i++) अणु
 		pins[i].number = hw->soc->pins[i].number;
 		pins[i].name = hw->soc->pins[i].name;
-	}
+	पूर्ण
 
 	/* Setup pins descriptions per SoC types */
-	mtk_desc.pins = (const struct pinctrl_pin_desc *)pins;
+	mtk_desc.pins = (स्थिर काष्ठा pinctrl_pin_desc *)pins;
 	mtk_desc.npins = hw->soc->npins;
 	mtk_desc.num_custom_params = ARRAY_SIZE(mtk_custom_bindings);
 	mtk_desc.custom_params = mtk_custom_bindings;
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	mtk_desc.custom_conf_items = mtk_conf_items;
-#endif
+#पूर्ण_अगर
 
-	err = devm_pinctrl_register_and_init(&pdev->dev, &mtk_desc, hw,
+	err = devm_pinctrl_रेजिस्टर_and_init(&pdev->dev, &mtk_desc, hw,
 					     &hw->pctrl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Setup groups descriptions per SoC types */
 	err = mtk_build_groups(hw);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to build groups\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* Setup functions descriptions per SoC types */
 	err = mtk_build_functions(hw);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to build functions\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* For able to make pinctrl_claim_hogs, we must not enable pinctrl
 	 * until all groups and functions are being added one.
 	 */
 	err = pinctrl_enable(hw->pctrl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = mtk_build_eint(hw, pdev);
-	if (err)
+	err = mtk_build_eपूर्णांक(hw, pdev);
+	अगर (err)
 		dev_warn(&pdev->dev,
 			 "Failed to add EINT, but pinctrl still can work\n");
 
-	/* Build gpiochip should be after pinctrl_enable is done */
+	/* Build gpiochip should be after pinctrl_enable is करोne */
 	err = mtk_build_gpiochip(hw, pdev->dev.of_node);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to add gpio_chip\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	platform_set_drvdata(pdev, hw);
+	platक्रमm_set_drvdata(pdev, hw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

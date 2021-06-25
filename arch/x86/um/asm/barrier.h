@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_UM_BARRIER_H_
-#define _ASM_UM_BARRIER_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_UM_BARRIER_H_
+#घोषणा _ASM_UM_BARRIER_H_
 
-#include <asm/alternative.h>
+#समावेश <यंत्र/alternative.h>
 
 /*
  * Force strict CPU ordering.
  * And yes, this is required on UP too when we're talking
  * to devices.
  */
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-#define mb()	alternative("lock; addl $0,0(%%esp)", "mfence", X86_FEATURE_XMM2)
-#define rmb()	alternative("lock; addl $0,0(%%esp)", "lfence", X86_FEATURE_XMM2)
-#define wmb()	alternative("lock; addl $0,0(%%esp)", "sfence", X86_FEATURE_XMM)
+#घोषणा mb()	alternative("lock; addl $0,0(%%esp)", "mfence", X86_FEATURE_XMM2)
+#घोषणा rmb()	alternative("lock; addl $0,0(%%esp)", "lfence", X86_FEATURE_XMM2)
+#घोषणा wmb()	alternative("lock; addl $0,0(%%esp)", "sfence", X86_FEATURE_XMM)
 
-#else /* CONFIG_X86_32 */
+#अन्यथा /* CONFIG_X86_32 */
 
-#define mb()	asm volatile("mfence" : : : "memory")
-#define rmb()	asm volatile("lfence" : : : "memory")
-#define wmb()	asm volatile("sfence" : : : "memory")
+#घोषणा mb()	यंत्र अस्थिर("mfence" : : : "memory")
+#घोषणा rmb()	यंत्र अस्थिर("lfence" : : : "memory")
+#घोषणा wmb()	यंत्र अस्थिर("sfence" : : : "memory")
 
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-#include <asm-generic/barrier.h>
+#समावेश <यंत्र-generic/barrier.h>
 
-#endif
+#पूर्ण_अगर

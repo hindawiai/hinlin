@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
-   BNEP implementation for Linux Bluetooth stack (BlueZ).
+   BNEP implementation क्रम Linux Bluetooth stack (BlueZ).
    Copyright (C) 2001-2002 Inventel Systemes
    Written 2001-2002 by
-	Clément Moreau <clement.moreau@inventel.fr>
+	Clथऊment Moreau <clement.moreau@inventel.fr>
 	David Libault  <david.libault@inventel.fr>
 
    Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -15,7 +16,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -25,69 +26,69 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/module.h>
-#include <linux/kthread.h>
-#include <linux/file.h>
-#include <linux/etherdevice.h>
-#include <asm/unaligned.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/file.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/l2cap.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/l2cap.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "bnep.h"
+#समावेश "bnep.h"
 
-#define VERSION "1.3"
+#घोषणा VERSION "1.3"
 
-static bool compress_src = true;
-static bool compress_dst = true;
+अटल bool compress_src = true;
+अटल bool compress_dst = true;
 
-static LIST_HEAD(bnep_session_list);
-static DECLARE_RWSEM(bnep_session_sem);
+अटल LIST_HEAD(bnep_session_list);
+अटल DECLARE_RWSEM(bnep_session_sem);
 
-static struct bnep_session *__bnep_get_session(u8 *dst)
-{
-	struct bnep_session *s;
+अटल काष्ठा bnep_session *__bnep_get_session(u8 *dst)
+अणु
+	काष्ठा bnep_session *s;
 
 	BT_DBG("");
 
-	list_for_each_entry(s, &bnep_session_list, list)
-		if (ether_addr_equal(dst, s->eh.h_source))
-			return s;
+	list_क्रम_each_entry(s, &bnep_session_list, list)
+		अगर (ether_addr_equal(dst, s->eh.h_source))
+			वापस s;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __bnep_link_session(struct bnep_session *s)
-{
+अटल व्योम __bnep_link_session(काष्ठा bnep_session *s)
+अणु
 	list_add(&s->list, &bnep_session_list);
-}
+पूर्ण
 
-static void __bnep_unlink_session(struct bnep_session *s)
-{
+अटल व्योम __bnep_unlink_session(काष्ठा bnep_session *s)
+अणु
 	list_del(&s->list);
-}
+पूर्ण
 
-static int bnep_send(struct bnep_session *s, void *data, size_t len)
-{
-	struct socket *sock = s->sock;
-	struct kvec iv = { data, len };
+अटल पूर्णांक bnep_send(काष्ठा bnep_session *s, व्योम *data, माप_प्रकार len)
+अणु
+	काष्ठा socket *sock = s->sock;
+	काष्ठा kvec iv = अणु data, len पूर्ण;
 
-	return kernel_sendmsg(sock, &s->msg, &iv, 1, len);
-}
+	वापस kernel_sendmsg(sock, &s->msg, &iv, 1, len);
+पूर्ण
 
-static int bnep_send_rsp(struct bnep_session *s, u8 ctrl, u16 resp)
-{
-	struct bnep_control_rsp rsp;
+अटल पूर्णांक bnep_send_rsp(काष्ठा bnep_session *s, u8 ctrl, u16 resp)
+अणु
+	काष्ठा bnep_control_rsp rsp;
 	rsp.type = BNEP_CONTROL;
 	rsp.ctrl = ctrl;
 	rsp.resp = htons(resp);
-	return bnep_send(s, &rsp, sizeof(rsp));
-}
+	वापस bnep_send(s, &rsp, माप(rsp));
+पूर्ण
 
-#ifdef CONFIG_BT_BNEP_PROTO_FILTER
-static inline void bnep_set_default_proto_filter(struct bnep_session *s)
-{
+#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
+अटल अंतरभूत व्योम bnep_set_शेष_proto_filter(काष्ठा bnep_session *s)
+अणु
 	/* (IPv4, ARP)  */
 	s->proto_filter[0].start = ETH_P_IP;
 	s->proto_filter[0].end   = ETH_P_ARP;
@@ -97,87 +98,87 @@ static inline void bnep_set_default_proto_filter(struct bnep_session *s)
 	/* (IPX, IPv6) */
 	s->proto_filter[2].start = ETH_P_IPX;
 	s->proto_filter[2].end   = ETH_P_IPV6;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int bnep_ctrl_set_netfilter(struct bnep_session *s, __be16 *data, int len)
-{
-	int n;
+अटल पूर्णांक bnep_ctrl_set_netfilter(काष्ठा bnep_session *s, __be16 *data, पूर्णांक len)
+अणु
+	पूर्णांक n;
 
-	if (len < 2)
-		return -EILSEQ;
+	अगर (len < 2)
+		वापस -EILSEQ;
 
 	n = get_unaligned_be16(data);
 	data++;
 	len -= 2;
 
-	if (len < n)
-		return -EILSEQ;
+	अगर (len < n)
+		वापस -EILSEQ;
 
 	BT_DBG("filter len %d", n);
 
-#ifdef CONFIG_BT_BNEP_PROTO_FILTER
+#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
 	n /= 4;
-	if (n <= BNEP_MAX_PROTO_FILTERS) {
-		struct bnep_proto_filter *f = s->proto_filter;
-		int i;
+	अगर (n <= BNEP_MAX_PROTO_FILTERS) अणु
+		काष्ठा bnep_proto_filter *f = s->proto_filter;
+		पूर्णांक i;
 
-		for (i = 0; i < n; i++) {
+		क्रम (i = 0; i < n; i++) अणु
 			f[i].start = get_unaligned_be16(data++);
 			f[i].end   = get_unaligned_be16(data++);
 
 			BT_DBG("proto filter start %d end %d",
 				f[i].start, f[i].end);
-		}
+		पूर्ण
 
-		if (i < BNEP_MAX_PROTO_FILTERS)
-			memset(f + i, 0, sizeof(*f));
+		अगर (i < BNEP_MAX_PROTO_FILTERS)
+			स_रखो(f + i, 0, माप(*f));
 
-		if (n == 0)
-			bnep_set_default_proto_filter(s);
+		अगर (n == 0)
+			bnep_set_शेष_proto_filter(s);
 
 		bnep_send_rsp(s, BNEP_FILTER_NET_TYPE_RSP, BNEP_SUCCESS);
-	} else {
+	पूर्ण अन्यथा अणु
 		bnep_send_rsp(s, BNEP_FILTER_NET_TYPE_RSP, BNEP_FILTER_LIMIT_REACHED);
-	}
-#else
+	पूर्ण
+#अन्यथा
 	bnep_send_rsp(s, BNEP_FILTER_NET_TYPE_RSP, BNEP_FILTER_UNSUPPORTED_REQ);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int bnep_ctrl_set_mcfilter(struct bnep_session *s, u8 *data, int len)
-{
-	int n;
+अटल पूर्णांक bnep_ctrl_set_mcfilter(काष्ठा bnep_session *s, u8 *data, पूर्णांक len)
+अणु
+	पूर्णांक n;
 
-	if (len < 2)
-		return -EILSEQ;
+	अगर (len < 2)
+		वापस -EILSEQ;
 
 	n = get_unaligned_be16(data);
 	data += 2;
 	len -= 2;
 
-	if (len < n)
-		return -EILSEQ;
+	अगर (len < n)
+		वापस -EILSEQ;
 
 	BT_DBG("filter len %d", n);
 
-#ifdef CONFIG_BT_BNEP_MC_FILTER
+#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
 	n /= (ETH_ALEN * 2);
 
-	if (n > 0) {
-		int i;
+	अगर (n > 0) अणु
+		पूर्णांक i;
 
 		s->mc_filter = 0;
 
 		/* Always send broadcast */
-		set_bit(bnep_mc_hash(s->dev->broadcast), (ulong *) &s->mc_filter);
+		set_bit(bnep_mc_hash(s->dev->broadcast), (uदीर्घ *) &s->mc_filter);
 
 		/* Add address ranges to the multicast hash */
-		for (; n > 0; n--) {
+		क्रम (; n > 0; n--) अणु
 			u8 a1[6], *a2;
 
-			memcpy(a1, data, ETH_ALEN);
+			स_नकल(a1, data, ETH_ALEN);
 			data += ETH_ALEN;
 			a2 = data;
 			data += ETH_ALEN;
@@ -185,120 +186,120 @@ static int bnep_ctrl_set_mcfilter(struct bnep_session *s, u8 *data, int len)
 			BT_DBG("mc filter %pMR -> %pMR", a1, a2);
 
 			/* Iterate from a1 to a2 */
-			set_bit(bnep_mc_hash(a1), (ulong *) &s->mc_filter);
-			while (memcmp(a1, a2, 6) < 0 && s->mc_filter != ~0LL) {
+			set_bit(bnep_mc_hash(a1), (uदीर्घ *) &s->mc_filter);
+			जबतक (स_भेद(a1, a2, 6) < 0 && s->mc_filter != ~0LL) अणु
 				/* Increment a1 */
 				i = 5;
-				while (i >= 0 && ++a1[i--] == 0)
+				जबतक (i >= 0 && ++a1[i--] == 0)
 					;
 
-				set_bit(bnep_mc_hash(a1), (ulong *) &s->mc_filter);
-			}
-		}
-	}
+				set_bit(bnep_mc_hash(a1), (uदीर्घ *) &s->mc_filter);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	BT_DBG("mc filter hash 0x%llx", s->mc_filter);
 
 	bnep_send_rsp(s, BNEP_FILTER_MULTI_ADDR_RSP, BNEP_SUCCESS);
-#else
+#अन्यथा
 	bnep_send_rsp(s, BNEP_FILTER_MULTI_ADDR_RSP, BNEP_FILTER_UNSUPPORTED_REQ);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int bnep_rx_control(struct bnep_session *s, void *data, int len)
-{
+अटल पूर्णांक bnep_rx_control(काष्ठा bnep_session *s, व्योम *data, पूर्णांक len)
+अणु
 	u8  cmd = *(u8 *)data;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	data++;
 	len--;
 
-	switch (cmd) {
-	case BNEP_CMD_NOT_UNDERSTOOD:
-	case BNEP_SETUP_CONN_RSP:
-	case BNEP_FILTER_NET_TYPE_RSP:
-	case BNEP_FILTER_MULTI_ADDR_RSP:
-		/* Ignore these for now */
-		break;
+	चयन (cmd) अणु
+	हाल BNEP_CMD_NOT_UNDERSTOOD:
+	हाल BNEP_SETUP_CONN_RSP:
+	हाल BNEP_FILTER_NET_TYPE_RSP:
+	हाल BNEP_FILTER_MULTI_ADDR_RSP:
+		/* Ignore these क्रम now */
+		अवरोध;
 
-	case BNEP_FILTER_NET_TYPE_SET:
+	हाल BNEP_FILTER_NET_TYPE_SET:
 		err = bnep_ctrl_set_netfilter(s, data, len);
-		break;
+		अवरोध;
 
-	case BNEP_FILTER_MULTI_ADDR_SET:
+	हाल BNEP_FILTER_MULTI_ADDR_SET:
 		err = bnep_ctrl_set_mcfilter(s, data, len);
-		break;
+		अवरोध;
 
-	case BNEP_SETUP_CONN_REQ:
+	हाल BNEP_SETUP_CONN_REQ:
 		/* Successful response should be sent only once */
-		if (test_bit(BNEP_SETUP_RESPONSE, &s->flags) &&
+		अगर (test_bit(BNEP_SETUP_RESPONSE, &s->flags) &&
 		    !test_and_set_bit(BNEP_SETUP_RSP_SENT, &s->flags))
 			err = bnep_send_rsp(s, BNEP_SETUP_CONN_RSP,
 					    BNEP_SUCCESS);
-		else
+		अन्यथा
 			err = bnep_send_rsp(s, BNEP_SETUP_CONN_RSP,
 					    BNEP_CONN_NOT_ALLOWED);
-		break;
+		अवरोध;
 
-	default: {
+	शेष: अणु
 			u8 pkt[3];
 			pkt[0] = BNEP_CONTROL;
 			pkt[1] = BNEP_CMD_NOT_UNDERSTOOD;
 			pkt[2] = cmd;
-			err = bnep_send(s, pkt, sizeof(pkt));
-		}
-		break;
-	}
+			err = bnep_send(s, pkt, माप(pkt));
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bnep_rx_extension(struct bnep_session *s, struct sk_buff *skb)
-{
-	struct bnep_ext_hdr *h;
-	int err = 0;
+अटल पूर्णांक bnep_rx_extension(काष्ठा bnep_session *s, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bnep_ext_hdr *h;
+	पूर्णांक err = 0;
 
-	do {
-		h = (void *) skb->data;
-		if (!skb_pull(skb, sizeof(*h))) {
+	करो अणु
+		h = (व्योम *) skb->data;
+		अगर (!skb_pull(skb, माप(*h))) अणु
 			err = -EILSEQ;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		BT_DBG("type 0x%x len %d", h->type, h->len);
 
-		switch (h->type & BNEP_TYPE_MASK) {
-		case BNEP_EXT_CONTROL:
+		चयन (h->type & BNEP_TYPE_MASK) अणु
+		हाल BNEP_EXT_CONTROL:
 			bnep_rx_control(s, skb->data, skb->len);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			/* Unknown extension, skip it. */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!skb_pull(skb, h->len)) {
+		अगर (!skb_pull(skb, h->len)) अणु
 			err = -EILSEQ;
-			break;
-		}
-	} while (!err && (h->type & BNEP_EXT_HEADER));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!err && (h->type & BNEP_EXT_HEADER));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u8 __bnep_rx_hlen[] = {
+अटल u8 __bnep_rx_hlen[] = अणु
 	ETH_HLEN,     /* BNEP_GENERAL */
 	0,            /* BNEP_CONTROL */
 	2,            /* BNEP_COMPRESSED */
 	ETH_ALEN + 2, /* BNEP_COMPRESSED_SRC_ONLY */
 	ETH_ALEN + 2  /* BNEP_COMPRESSED_DST_ONLY */
-};
+पूर्ण;
 
-static int bnep_rx_frame(struct bnep_session *s, struct sk_buff *skb)
-{
-	struct net_device *dev = s->dev;
-	struct sk_buff *nskb;
+अटल पूर्णांक bnep_rx_frame(काष्ठा bnep_session *s, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = s->dev;
+	काष्ठा sk_buff *nskb;
 	u8 type, ctrl_type;
 
 	dev->stats.rx_bytes += skb->len;
@@ -307,294 +308,294 @@ static int bnep_rx_frame(struct bnep_session *s, struct sk_buff *skb)
 	skb_pull(skb, 1);
 	ctrl_type = *(u8 *)skb->data;
 
-	if ((type & BNEP_TYPE_MASK) >= sizeof(__bnep_rx_hlen))
-		goto badframe;
+	अगर ((type & BNEP_TYPE_MASK) >= माप(__bnep_rx_hlen))
+		जाओ badframe;
 
-	if ((type & BNEP_TYPE_MASK) == BNEP_CONTROL) {
-		if (bnep_rx_control(s, skb->data, skb->len) < 0) {
+	अगर ((type & BNEP_TYPE_MASK) == BNEP_CONTROL) अणु
+		अगर (bnep_rx_control(s, skb->data, skb->len) < 0) अणु
 			dev->stats.tx_errors++;
-			kfree_skb(skb);
-			return 0;
-		}
+			kमुक्त_skb(skb);
+			वापस 0;
+		पूर्ण
 
-		if (!(type & BNEP_EXT_HEADER)) {
-			kfree_skb(skb);
-			return 0;
-		}
+		अगर (!(type & BNEP_EXT_HEADER)) अणु
+			kमुक्त_skb(skb);
+			वापस 0;
+		पूर्ण
 
-		/* Verify and pull ctrl message since it's already processed */
-		switch (ctrl_type) {
-		case BNEP_SETUP_CONN_REQ:
+		/* Verअगरy and pull ctrl message since it's alपढ़ोy processed */
+		चयन (ctrl_type) अणु
+		हाल BNEP_SETUP_CONN_REQ:
 			/* Pull: ctrl type (1 b), len (1 b), data (len bytes) */
-			if (!skb_pull(skb, 2 + *(u8 *)(skb->data + 1) * 2))
-				goto badframe;
-			break;
-		case BNEP_FILTER_MULTI_ADDR_SET:
-		case BNEP_FILTER_NET_TYPE_SET:
+			अगर (!skb_pull(skb, 2 + *(u8 *)(skb->data + 1) * 2))
+				जाओ badframe;
+			अवरोध;
+		हाल BNEP_FILTER_MULTI_ADDR_SET:
+		हाल BNEP_FILTER_NET_TYPE_SET:
 			/* Pull: ctrl type (1 b), len (2 b), data (len bytes) */
-			if (!skb_pull(skb, 3 + *(u16 *)(skb->data + 1) * 2))
-				goto badframe;
-			break;
-		default:
-			kfree_skb(skb);
-			return 0;
-		}
-	} else {
+			अगर (!skb_pull(skb, 3 + *(u16 *)(skb->data + 1) * 2))
+				जाओ badframe;
+			अवरोध;
+		शेष:
+			kमुक्त_skb(skb);
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		skb_reset_mac_header(skb);
 
-		/* Verify and pull out header */
-		if (!skb_pull(skb, __bnep_rx_hlen[type & BNEP_TYPE_MASK]))
-			goto badframe;
+		/* Verअगरy and pull out header */
+		अगर (!skb_pull(skb, __bnep_rx_hlen[type & BNEP_TYPE_MASK]))
+			जाओ badframe;
 
 		s->eh.h_proto = get_unaligned((__be16 *) (skb->data - 2));
-	}
+	पूर्ण
 
-	if (type & BNEP_EXT_HEADER) {
-		if (bnep_rx_extension(s, skb) < 0)
-			goto badframe;
-	}
+	अगर (type & BNEP_EXT_HEADER) अणु
+		अगर (bnep_rx_extension(s, skb) < 0)
+			जाओ badframe;
+	पूर्ण
 
 	/* Strip 802.1p header */
-	if (ntohs(s->eh.h_proto) == ETH_P_8021Q) {
-		if (!skb_pull(skb, 4))
-			goto badframe;
+	अगर (ntohs(s->eh.h_proto) == ETH_P_8021Q) अणु
+		अगर (!skb_pull(skb, 4))
+			जाओ badframe;
 		s->eh.h_proto = get_unaligned((__be16 *) (skb->data - 2));
-	}
+	पूर्ण
 
 	/* We have to alloc new skb and copy data here :(. Because original skb
-	 * may not be modified and because of the alignment requirements. */
+	 * may not be modअगरied and because of the alignment requirements. */
 	nskb = alloc_skb(2 + ETH_HLEN + skb->len, GFP_KERNEL);
-	if (!nskb) {
+	अगर (!nskb) अणु
 		dev->stats.rx_dropped++;
-		kfree_skb(skb);
-		return -ENOMEM;
-	}
+		kमुक्त_skb(skb);
+		वापस -ENOMEM;
+	पूर्ण
 	skb_reserve(nskb, 2);
 
-	/* Decompress header and construct ether frame */
-	switch (type & BNEP_TYPE_MASK) {
-	case BNEP_COMPRESSED:
+	/* Decompress header and स्थिरruct ether frame */
+	चयन (type & BNEP_TYPE_MASK) अणु
+	हाल BNEP_COMPRESSED:
 		__skb_put_data(nskb, &s->eh, ETH_HLEN);
-		break;
+		अवरोध;
 
-	case BNEP_COMPRESSED_SRC_ONLY:
+	हाल BNEP_COMPRESSED_SRC_ONLY:
 		__skb_put_data(nskb, s->eh.h_dest, ETH_ALEN);
 		__skb_put_data(nskb, skb_mac_header(skb), ETH_ALEN);
 		put_unaligned(s->eh.h_proto, (__be16 *) __skb_put(nskb, 2));
-		break;
+		अवरोध;
 
-	case BNEP_COMPRESSED_DST_ONLY:
+	हाल BNEP_COMPRESSED_DST_ONLY:
 		__skb_put_data(nskb, skb_mac_header(skb), ETH_ALEN);
 		__skb_put_data(nskb, s->eh.h_source, ETH_ALEN + 2);
-		break;
+		अवरोध;
 
-	case BNEP_GENERAL:
+	हाल BNEP_GENERAL:
 		__skb_put_data(nskb, skb_mac_header(skb), ETH_ALEN * 2);
 		put_unaligned(s->eh.h_proto, (__be16 *) __skb_put(nskb, 2));
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	skb_copy_from_linear_data(skb, __skb_put(nskb, skb->len), skb->len);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
 	dev->stats.rx_packets++;
 	nskb->ip_summed = CHECKSUM_NONE;
 	nskb->protocol  = eth_type_trans(nskb, dev);
-	netif_rx_ni(nskb);
-	return 0;
+	netअगर_rx_ni(nskb);
+	वापस 0;
 
 badframe:
 	dev->stats.rx_errors++;
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static u8 __bnep_tx_types[] = {
+अटल u8 __bnep_tx_types[] = अणु
 	BNEP_GENERAL,
 	BNEP_COMPRESSED_SRC_ONLY,
 	BNEP_COMPRESSED_DST_ONLY,
 	BNEP_COMPRESSED
-};
+पूर्ण;
 
-static int bnep_tx_frame(struct bnep_session *s, struct sk_buff *skb)
-{
-	struct ethhdr *eh = (void *) skb->data;
-	struct socket *sock = s->sock;
-	struct kvec iv[3];
-	int len = 0, il = 0;
+अटल पूर्णांक bnep_tx_frame(काष्ठा bnep_session *s, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ethhdr *eh = (व्योम *) skb->data;
+	काष्ठा socket *sock = s->sock;
+	काष्ठा kvec iv[3];
+	पूर्णांक len = 0, il = 0;
 	u8 type = 0;
 
 	BT_DBG("skb %p dev %p type %d", skb, skb->dev, skb->pkt_type);
 
-	if (!skb->dev) {
+	अगर (!skb->dev) अणु
 		/* Control frame sent by us */
-		goto send;
-	}
+		जाओ send;
+	पूर्ण
 
-	iv[il++] = (struct kvec) { &type, 1 };
+	iv[il++] = (काष्ठा kvec) अणु &type, 1 पूर्ण;
 	len++;
 
-	if (compress_src && ether_addr_equal(eh->h_dest, s->eh.h_source))
+	अगर (compress_src && ether_addr_equal(eh->h_dest, s->eh.h_source))
 		type |= 0x01;
 
-	if (compress_dst && ether_addr_equal(eh->h_source, s->eh.h_dest))
+	अगर (compress_dst && ether_addr_equal(eh->h_source, s->eh.h_dest))
 		type |= 0x02;
 
-	if (type)
+	अगर (type)
 		skb_pull(skb, ETH_ALEN * 2);
 
 	type = __bnep_tx_types[type];
-	switch (type) {
-	case BNEP_COMPRESSED_SRC_ONLY:
-		iv[il++] = (struct kvec) { eh->h_source, ETH_ALEN };
+	चयन (type) अणु
+	हाल BNEP_COMPRESSED_SRC_ONLY:
+		iv[il++] = (काष्ठा kvec) अणु eh->h_source, ETH_ALEN पूर्ण;
 		len += ETH_ALEN;
-		break;
+		अवरोध;
 
-	case BNEP_COMPRESSED_DST_ONLY:
-		iv[il++] = (struct kvec) { eh->h_dest, ETH_ALEN };
+	हाल BNEP_COMPRESSED_DST_ONLY:
+		iv[il++] = (काष्ठा kvec) अणु eh->h_dest, ETH_ALEN पूर्ण;
 		len += ETH_ALEN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 send:
-	iv[il++] = (struct kvec) { skb->data, skb->len };
+	iv[il++] = (काष्ठा kvec) अणु skb->data, skb->len पूर्ण;
 	len += skb->len;
 
 	/* FIXME: linearize skb */
-	{
+	अणु
 		len = kernel_sendmsg(sock, &s->msg, iv, il, len);
-	}
-	kfree_skb(skb);
+	पूर्ण
+	kमुक्त_skb(skb);
 
-	if (len > 0) {
+	अगर (len > 0) अणु
 		s->dev->stats.tx_bytes += len;
 		s->dev->stats.tx_packets++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int bnep_session(void *arg)
-{
-	struct bnep_session *s = arg;
-	struct net_device *dev = s->dev;
-	struct sock *sk = s->sock->sk;
-	struct sk_buff *skb;
-	DEFINE_WAIT_FUNC(wait, woken_wake_function);
+अटल पूर्णांक bnep_session(व्योम *arg)
+अणु
+	काष्ठा bnep_session *s = arg;
+	काष्ठा net_device *dev = s->dev;
+	काष्ठा sock *sk = s->sock->sk;
+	काष्ठा sk_buff *skb;
+	DEFINE_WAIT_FUNC(रुको, woken_wake_function);
 
 	BT_DBG("");
 
 	set_user_nice(current, -15);
 
-	add_wait_queue(sk_sleep(sk), &wait);
-	while (1) {
-		if (atomic_read(&s->terminate))
-			break;
+	add_रुको_queue(sk_sleep(sk), &रुको);
+	जबतक (1) अणु
+		अगर (atomic_पढ़ो(&s->terminate))
+			अवरोध;
 		/* RX */
-		while ((skb = skb_dequeue(&sk->sk_receive_queue))) {
+		जबतक ((skb = skb_dequeue(&sk->sk_receive_queue))) अणु
 			skb_orphan(skb);
-			if (!skb_linearize(skb))
+			अगर (!skb_linearize(skb))
 				bnep_rx_frame(s, skb);
-			else
-				kfree_skb(skb);
-		}
+			अन्यथा
+				kमुक्त_skb(skb);
+		पूर्ण
 
-		if (sk->sk_state != BT_CONNECTED)
-			break;
+		अगर (sk->sk_state != BT_CONNECTED)
+			अवरोध;
 
 		/* TX */
-		while ((skb = skb_dequeue(&sk->sk_write_queue)))
-			if (bnep_tx_frame(s, skb))
-				break;
-		netif_wake_queue(dev);
+		जबतक ((skb = skb_dequeue(&sk->sk_ग_लिखो_queue)))
+			अगर (bnep_tx_frame(s, skb))
+				अवरोध;
+		netअगर_wake_queue(dev);
 
 		/*
-		 * wait_woken() performs the necessary memory barriers
-		 * for us; see the header comment for this primitive.
+		 * रुको_woken() perक्रमms the necessary memory barriers
+		 * क्रम us; see the header comment क्रम this primitive.
 		 */
-		wait_woken(&wait, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-	}
-	remove_wait_queue(sk_sleep(sk), &wait);
+		रुको_woken(&रुको, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+	पूर्ण
+	हटाओ_रुको_queue(sk_sleep(sk), &रुको);
 
 	/* Cleanup session */
-	down_write(&bnep_session_sem);
+	करोwn_ग_लिखो(&bnep_session_sem);
 
 	/* Delete network device */
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
-	/* Wakeup user-space polling for socket errors */
+	/* Wakeup user-space polling क्रम socket errors */
 	s->sock->sk->sk_err = EUNATCH;
 
-	wake_up_interruptible(sk_sleep(s->sock->sk));
+	wake_up_पूर्णांकerruptible(sk_sleep(s->sock->sk));
 
 	/* Release the socket */
 	fput(s->sock->file);
 
 	__bnep_unlink_session(s);
 
-	up_write(&bnep_session_sem);
-	free_netdev(dev);
-	module_put_and_exit(0);
-	return 0;
-}
+	up_ग_लिखो(&bnep_session_sem);
+	मुक्त_netdev(dev);
+	module_put_and_निकास(0);
+	वापस 0;
+पूर्ण
 
-static struct device *bnep_get_device(struct bnep_session *session)
-{
-	struct l2cap_conn *conn = l2cap_pi(session->sock->sk)->chan->conn;
+अटल काष्ठा device *bnep_get_device(काष्ठा bnep_session *session)
+अणु
+	काष्ठा l2cap_conn *conn = l2cap_pi(session->sock->sk)->chan->conn;
 
-	if (!conn || !conn->hcon)
-		return NULL;
+	अगर (!conn || !conn->hcon)
+		वापस शून्य;
 
-	return &conn->hcon->dev;
-}
+	वापस &conn->hcon->dev;
+पूर्ण
 
-static struct device_type bnep_type = {
+अटल काष्ठा device_type bnep_type = अणु
 	.name	= "bluetooth",
-};
+पूर्ण;
 
-int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock)
-{
+पूर्णांक bnep_add_connection(काष्ठा bnep_connadd_req *req, काष्ठा socket *sock)
+अणु
 	u32 valid_flags = BIT(BNEP_SETUP_RESPONSE);
-	struct net_device *dev;
-	struct bnep_session *s, *ss;
+	काष्ठा net_device *dev;
+	काष्ठा bnep_session *s, *ss;
 	u8 dst[ETH_ALEN], src[ETH_ALEN];
-	int err;
+	पूर्णांक err;
 
 	BT_DBG("");
 
-	if (!l2cap_is_socket(sock))
-		return -EBADFD;
+	अगर (!l2cap_is_socket(sock))
+		वापस -EBADFD;
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
-	baswap((void *) dst, &l2cap_pi(sock->sk)->chan->dst);
-	baswap((void *) src, &l2cap_pi(sock->sk)->chan->src);
+	baswap((व्योम *) dst, &l2cap_pi(sock->sk)->chan->dst);
+	baswap((व्योम *) src, &l2cap_pi(sock->sk)->chan->src);
 
-	/* session struct allocated as private part of net_device */
-	dev = alloc_netdev(sizeof(struct bnep_session),
+	/* session काष्ठा allocated as निजी part of net_device */
+	dev = alloc_netdev(माप(काष्ठा bnep_session),
 			   (*req->device) ? req->device : "bnep%d",
 			   NET_NAME_UNKNOWN,
 			   bnep_net_setup);
-	if (!dev)
-		return -ENOMEM;
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	down_write(&bnep_session_sem);
+	करोwn_ग_लिखो(&bnep_session_sem);
 
 	ss = __bnep_get_session(dst);
-	if (ss && ss->state == BT_CONNECTED) {
+	अगर (ss && ss->state == BT_CONNECTED) अणु
 		err = -EEXIST;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	s = netdev_priv(dev);
 
-	/* This is rx header therefore addresses are swapped.
+	/* This is rx header thereक्रमe addresses are swapped.
 	 * ie. eh.h_dest is our local address. */
-	memcpy(s->eh.h_dest,   &src, ETH_ALEN);
-	memcpy(s->eh.h_source, &dst, ETH_ALEN);
-	memcpy(dev->dev_addr, s->eh.h_dest, ETH_ALEN);
+	स_नकल(s->eh.h_dest,   &src, ETH_ALEN);
+	स_नकल(s->eh.h_source, &dst, ETH_ALEN);
+	स_नकल(dev->dev_addr, s->eh.h_dest, ETH_ALEN);
 
 	s->dev   = dev;
 	s->sock  = sock;
@@ -604,157 +605,157 @@ int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock)
 
 	s->msg.msg_flags = MSG_NOSIGNAL;
 
-#ifdef CONFIG_BT_BNEP_MC_FILTER
-	/* Set default mc filter to not filter out any mc addresses
-	 * as defined in the BNEP specification (revision 0.95a)
+#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
+	/* Set शेष mc filter to not filter out any mc addresses
+	 * as defined in the BNEP specअगरication (revision 0.95a)
 	 * http://grouper.ieee.org/groups/802/15/Bluetooth/BNEP.pdf
 	 */
 	s->mc_filter = ~0LL;
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_BT_BNEP_PROTO_FILTER
-	/* Set default protocol filter */
-	bnep_set_default_proto_filter(s);
-#endif
+#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
+	/* Set शेष protocol filter */
+	bnep_set_शेष_proto_filter(s);
+#पूर्ण_अगर
 
 	SET_NETDEV_DEV(dev, bnep_get_device(s));
 	SET_NETDEV_DEVTYPE(dev, &bnep_type);
 
-	err = register_netdev(dev);
-	if (err)
-		goto failed;
+	err = रेजिस्टर_netdev(dev);
+	अगर (err)
+		जाओ failed;
 
 	__bnep_link_session(s);
 
 	__module_get(THIS_MODULE);
-	s->task = kthread_run(bnep_session, s, "kbnepd %s", dev->name);
-	if (IS_ERR(s->task)) {
-		/* Session thread start failed, gotta cleanup. */
+	s->task = kthपढ़ो_run(bnep_session, s, "kbnepd %s", dev->name);
+	अगर (IS_ERR(s->task)) अणु
+		/* Session thपढ़ो start failed, gotta cleanup. */
 		module_put(THIS_MODULE);
-		unregister_netdev(dev);
+		unरेजिस्टर_netdev(dev);
 		__bnep_unlink_session(s);
 		err = PTR_ERR(s->task);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	up_write(&bnep_session_sem);
-	strcpy(req->device, dev->name);
-	return 0;
+	up_ग_लिखो(&bnep_session_sem);
+	म_नकल(req->device, dev->name);
+	वापस 0;
 
 failed:
-	up_write(&bnep_session_sem);
-	free_netdev(dev);
-	return err;
-}
+	up_ग_लिखो(&bnep_session_sem);
+	मुक्त_netdev(dev);
+	वापस err;
+पूर्ण
 
-int bnep_del_connection(struct bnep_conndel_req *req)
-{
+पूर्णांक bnep_del_connection(काष्ठा bnep_conndel_req *req)
+अणु
 	u32 valid_flags = 0;
-	struct bnep_session *s;
-	int  err = 0;
+	काष्ठा bnep_session *s;
+	पूर्णांक  err = 0;
 
 	BT_DBG("");
 
-	if (req->flags & ~valid_flags)
-		return -EINVAL;
+	अगर (req->flags & ~valid_flags)
+		वापस -EINVAL;
 
-	down_read(&bnep_session_sem);
+	करोwn_पढ़ो(&bnep_session_sem);
 
 	s = __bnep_get_session(req->dst);
-	if (s) {
+	अगर (s) अणु
 		atomic_inc(&s->terminate);
-		wake_up_interruptible(sk_sleep(s->sock->sk));
-	} else
+		wake_up_पूर्णांकerruptible(sk_sleep(s->sock->sk));
+	पूर्ण अन्यथा
 		err = -ENOENT;
 
-	up_read(&bnep_session_sem);
-	return err;
-}
+	up_पढ़ो(&bnep_session_sem);
+	वापस err;
+पूर्ण
 
-static void __bnep_copy_ci(struct bnep_conninfo *ci, struct bnep_session *s)
-{
+अटल व्योम __bnep_copy_ci(काष्ठा bnep_conninfo *ci, काष्ठा bnep_session *s)
+अणु
 	u32 valid_flags = BIT(BNEP_SETUP_RESPONSE);
 
-	memset(ci, 0, sizeof(*ci));
-	memcpy(ci->dst, s->eh.h_source, ETH_ALEN);
-	strcpy(ci->device, s->dev->name);
+	स_रखो(ci, 0, माप(*ci));
+	स_नकल(ci->dst, s->eh.h_source, ETH_ALEN);
+	म_नकल(ci->device, s->dev->name);
 	ci->flags = s->flags & valid_flags;
 	ci->state = s->state;
 	ci->role  = s->role;
-}
+पूर्ण
 
-int bnep_get_connlist(struct bnep_connlist_req *req)
-{
-	struct bnep_session *s;
-	int err = 0, n = 0;
+पूर्णांक bnep_get_connlist(काष्ठा bnep_connlist_req *req)
+अणु
+	काष्ठा bnep_session *s;
+	पूर्णांक err = 0, n = 0;
 
-	down_read(&bnep_session_sem);
+	करोwn_पढ़ो(&bnep_session_sem);
 
-	list_for_each_entry(s, &bnep_session_list, list) {
-		struct bnep_conninfo ci;
+	list_क्रम_each_entry(s, &bnep_session_list, list) अणु
+		काष्ठा bnep_conninfo ci;
 
 		__bnep_copy_ci(&ci, s);
 
-		if (copy_to_user(req->ci, &ci, sizeof(ci))) {
+		अगर (copy_to_user(req->ci, &ci, माप(ci))) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (++n >= req->cnum)
-			break;
+		अगर (++n >= req->cnum)
+			अवरोध;
 
 		req->ci++;
-	}
+	पूर्ण
 	req->cnum = n;
 
-	up_read(&bnep_session_sem);
-	return err;
-}
+	up_पढ़ो(&bnep_session_sem);
+	वापस err;
+पूर्ण
 
-int bnep_get_conninfo(struct bnep_conninfo *ci)
-{
-	struct bnep_session *s;
-	int err = 0;
+पूर्णांक bnep_get_conninfo(काष्ठा bnep_conninfo *ci)
+अणु
+	काष्ठा bnep_session *s;
+	पूर्णांक err = 0;
 
-	down_read(&bnep_session_sem);
+	करोwn_पढ़ो(&bnep_session_sem);
 
 	s = __bnep_get_session(ci->dst);
-	if (s)
+	अगर (s)
 		__bnep_copy_ci(ci, s);
-	else
+	अन्यथा
 		err = -ENOENT;
 
-	up_read(&bnep_session_sem);
-	return err;
-}
+	up_पढ़ो(&bnep_session_sem);
+	वापस err;
+पूर्ण
 
-static int __init bnep_init(void)
-{
-	char flt[50] = "";
+अटल पूर्णांक __init bnep_init(व्योम)
+अणु
+	अक्षर flt[50] = "";
 
-#ifdef CONFIG_BT_BNEP_PROTO_FILTER
-	strcat(flt, "protocol ");
-#endif
+#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
+	म_जोड़ो(flt, "protocol ");
+#पूर्ण_अगर
 
-#ifdef CONFIG_BT_BNEP_MC_FILTER
-	strcat(flt, "multicast");
-#endif
+#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
+	म_जोड़ो(flt, "multicast");
+#पूर्ण_अगर
 
 	BT_INFO("BNEP (Ethernet Emulation) ver %s", VERSION);
-	if (flt[0])
+	अगर (flt[0])
 		BT_INFO("BNEP filters: %s", flt);
 
 	bnep_sock_init();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit bnep_exit(void)
-{
+अटल व्योम __निकास bnep_निकास(व्योम)
+अणु
 	bnep_sock_cleanup();
-}
+पूर्ण
 
 module_init(bnep_init);
-module_exit(bnep_exit);
+module_निकास(bnep_निकास);
 
 module_param(compress_src, bool, 0644);
 MODULE_PARM_DESC(compress_src, "Compress sources headers");

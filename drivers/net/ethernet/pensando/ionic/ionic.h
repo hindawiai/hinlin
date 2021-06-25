@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#ifndef _IONIC_H_
-#define _IONIC_H_
+#अगर_अघोषित _IONIC_H_
+#घोषणा _IONIC_H_
 
-struct ionic_lif;
+काष्ठा ionic_lअगर;
 
-#include "ionic_if.h"
-#include "ionic_dev.h"
-#include "ionic_devlink.h"
+#समावेश "ionic_if.h"
+#समावेश "ionic_dev.h"
+#समावेश "ionic_devlink.h"
 
-#define IONIC_DRV_NAME		"ionic"
-#define IONIC_DRV_DESCRIPTION	"Pensando Ethernet NIC Driver"
+#घोषणा IONIC_DRV_NAME		"ionic"
+#घोषणा IONIC_DRV_DESCRIPTION	"Pensando Ethernet NIC Driver"
 
-#define PCI_VENDOR_ID_PENSANDO			0x1dd8
+#घोषणा PCI_VENDOR_ID_PENSANDO			0x1dd8
 
-#define PCI_DEVICE_ID_PENSANDO_IONIC_ETH_PF	0x1002
-#define PCI_DEVICE_ID_PENSANDO_IONIC_ETH_VF	0x1003
+#घोषणा PCI_DEVICE_ID_PENSANDO_IONIC_ETH_PF	0x1002
+#घोषणा PCI_DEVICE_ID_PENSANDO_IONIC_ETH_VF	0x1003
 
-#define DEVCMD_TIMEOUT  10
+#घोषणा DEVCMD_TIMEOUT  10
 
-#define IONIC_PHC_UPDATE_NS	10000000000	    /* 10s in nanoseconds */
-#define NORMAL_PPB		1000000000	    /* one billion parts per billion */
-#define SCALED_PPM		(1000000ull << 16)  /* 2^16 million parts per 2^16 million */
+#घोषणा IONIC_PHC_UPDATE_NS	10000000000	    /* 10s in nanoseconds */
+#घोषणा NORMAL_PPB		1000000000	    /* one billion parts per billion */
+#घोषणा SCALED_PPM		(1000000ull << 16)  /* 2^16 million parts per 2^16 million */
 
-struct ionic_vf {
+काष्ठा ionic_vf अणु
 	u16	 index;
 	u8	 macaddr[6];
 	__le32	 maxrate;
@@ -33,54 +34,54 @@ struct ionic_vf {
 	u8	 trusted;
 	u8	 linkstate;
 	dma_addr_t       stats_pa;
-	struct ionic_lif_stats stats;
-};
+	काष्ठा ionic_lअगर_stats stats;
+पूर्ण;
 
-struct ionic {
-	struct pci_dev *pdev;
-	struct device *dev;
-	struct devlink_port dl_port;
-	struct ionic_dev idev;
-	struct mutex dev_cmd_lock;	/* lock for dev_cmd operations */
-	struct dentry *dentry;
-	struct ionic_dev_bar bars[IONIC_BARS_MAX];
-	unsigned int num_bars;
-	struct ionic_identity ident;
-	struct ionic_lif *lif;
-	unsigned int nnqs_per_lif;
-	unsigned int neqs_per_lif;
-	unsigned int ntxqs_per_lif;
-	unsigned int nrxqs_per_lif;
-	unsigned int nintrs;
-	DECLARE_BITMAP(intrs, IONIC_INTR_CTRL_REGS_MAX);
-	struct work_struct nb_work;
-	struct notifier_block nb;
-	struct rw_semaphore vf_op_lock;	/* lock for VF operations */
-	struct ionic_vf *vfs;
-	int num_vfs;
-	struct timer_list watchdog_timer;
-	int watchdog_period;
-};
+काष्ठा ionic अणु
+	काष्ठा pci_dev *pdev;
+	काष्ठा device *dev;
+	काष्ठा devlink_port dl_port;
+	काष्ठा ionic_dev idev;
+	काष्ठा mutex dev_cmd_lock;	/* lock क्रम dev_cmd operations */
+	काष्ठा dentry *dentry;
+	काष्ठा ionic_dev_bar bars[IONIC_BARS_MAX];
+	अचिन्हित पूर्णांक num_bars;
+	काष्ठा ionic_identity ident;
+	काष्ठा ionic_lअगर *lअगर;
+	अचिन्हित पूर्णांक nnqs_per_lअगर;
+	अचिन्हित पूर्णांक neqs_per_lअगर;
+	अचिन्हित पूर्णांक ntxqs_per_lअगर;
+	अचिन्हित पूर्णांक nrxqs_per_lअगर;
+	अचिन्हित पूर्णांक nपूर्णांकrs;
+	DECLARE_BITMAP(पूर्णांकrs, IONIC_INTR_CTRL_REGS_MAX);
+	काष्ठा work_काष्ठा nb_work;
+	काष्ठा notअगरier_block nb;
+	काष्ठा rw_semaphore vf_op_lock;	/* lock क्रम VF operations */
+	काष्ठा ionic_vf *vfs;
+	पूर्णांक num_vfs;
+	काष्ठा समयr_list watchकरोg_समयr;
+	पूर्णांक watchकरोg_period;
+पूर्ण;
 
-struct ionic_admin_ctx {
-	struct completion work;
-	union ionic_adminq_cmd cmd;
-	union ionic_adminq_comp comp;
-};
+काष्ठा ionic_admin_ctx अणु
+	काष्ठा completion work;
+	जोड़ ionic_adminq_cmd cmd;
+	जोड़ ionic_adminq_comp comp;
+पूर्ण;
 
-int ionic_adminq_post(struct ionic_lif *lif, struct ionic_admin_ctx *ctx);
-int ionic_adminq_wait(struct ionic_lif *lif, struct ionic_admin_ctx *ctx, int err);
-int ionic_adminq_post_wait(struct ionic_lif *lif, struct ionic_admin_ctx *ctx);
-int ionic_dev_cmd_wait(struct ionic *ionic, unsigned long max_wait);
-int ionic_set_dma_mask(struct ionic *ionic);
-int ionic_setup(struct ionic *ionic);
+पूर्णांक ionic_adminq_post(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx);
+पूर्णांक ionic_adminq_रुको(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx, पूर्णांक err);
+पूर्णांक ionic_adminq_post_रुको(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_admin_ctx *ctx);
+पूर्णांक ionic_dev_cmd_रुको(काष्ठा ionic *ionic, अचिन्हित दीर्घ max_रुको);
+पूर्णांक ionic_set_dma_mask(काष्ठा ionic *ionic);
+पूर्णांक ionic_setup(काष्ठा ionic *ionic);
 
-int ionic_identify(struct ionic *ionic);
-int ionic_init(struct ionic *ionic);
-int ionic_reset(struct ionic *ionic);
+पूर्णांक ionic_identअगरy(काष्ठा ionic *ionic);
+पूर्णांक ionic_init(काष्ठा ionic *ionic);
+पूर्णांक ionic_reset(काष्ठा ionic *ionic);
 
-int ionic_port_identify(struct ionic *ionic);
-int ionic_port_init(struct ionic *ionic);
-int ionic_port_reset(struct ionic *ionic);
+पूर्णांक ionic_port_identअगरy(काष्ठा ionic *ionic);
+पूर्णांक ionic_port_init(काष्ठा ionic *ionic);
+पूर्णांक ionic_port_reset(काष्ठा ionic *ionic);
 
-#endif /* _IONIC_H_ */
+#पूर्ण_अगर /* _IONIC_H_ */

@@ -1,198 +1,199 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Kernel Connection Multiplexor
  *
  * Copyright (c) 2016 Tom Herbert <tom@herbertland.com>
  */
 
-#ifndef __NET_KCM_H_
-#define __NET_KCM_H_
+#अगर_अघोषित __NET_KCM_H_
+#घोषणा __NET_KCM_H_
 
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/strparser.h>
-#include <uapi/linux/kcm.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/strparser.h>
+#समावेश <uapi/linux/kcm.h>
 
-extern unsigned int kcm_net_id;
+बाह्य अचिन्हित पूर्णांक kcm_net_id;
 
-#define KCM_STATS_ADD(stat, count) ((stat) += (count))
-#define KCM_STATS_INCR(stat) ((stat)++)
+#घोषणा KCM_STATS_ADD(stat, count) ((stat) += (count))
+#घोषणा KCM_STATS_INCR(stat) ((stat)++)
 
-struct kcm_psock_stats {
-	unsigned long long tx_msgs;
-	unsigned long long tx_bytes;
-	unsigned long long reserved;
-	unsigned long long unreserved;
-	unsigned int tx_aborts;
-};
+काष्ठा kcm_psock_stats अणु
+	अचिन्हित दीर्घ दीर्घ tx_msgs;
+	अचिन्हित दीर्घ दीर्घ tx_bytes;
+	अचिन्हित दीर्घ दीर्घ reserved;
+	अचिन्हित दीर्घ दीर्घ unreserved;
+	अचिन्हित पूर्णांक tx_पातs;
+पूर्ण;
 
-struct kcm_mux_stats {
-	unsigned long long rx_msgs;
-	unsigned long long rx_bytes;
-	unsigned long long tx_msgs;
-	unsigned long long tx_bytes;
-	unsigned int rx_ready_drops;
-	unsigned int tx_retries;
-	unsigned int psock_attach;
-	unsigned int psock_unattach_rsvd;
-	unsigned int psock_unattach;
-};
+काष्ठा kcm_mux_stats अणु
+	अचिन्हित दीर्घ दीर्घ rx_msgs;
+	अचिन्हित दीर्घ दीर्घ rx_bytes;
+	अचिन्हित दीर्घ दीर्घ tx_msgs;
+	अचिन्हित दीर्घ दीर्घ tx_bytes;
+	अचिन्हित पूर्णांक rx_पढ़ोy_drops;
+	अचिन्हित पूर्णांक tx_retries;
+	अचिन्हित पूर्णांक psock_attach;
+	अचिन्हित पूर्णांक psock_unattach_rsvd;
+	अचिन्हित पूर्णांक psock_unattach;
+पूर्ण;
 
-struct kcm_stats {
-	unsigned long long rx_msgs;
-	unsigned long long rx_bytes;
-	unsigned long long tx_msgs;
-	unsigned long long tx_bytes;
-};
+काष्ठा kcm_stats अणु
+	अचिन्हित दीर्घ दीर्घ rx_msgs;
+	अचिन्हित दीर्घ दीर्घ rx_bytes;
+	अचिन्हित दीर्घ दीर्घ tx_msgs;
+	अचिन्हित दीर्घ दीर्घ tx_bytes;
+पूर्ण;
 
-struct kcm_tx_msg {
-	unsigned int sent;
-	unsigned int fragidx;
-	unsigned int frag_offset;
-	unsigned int msg_flags;
-	struct sk_buff *frag_skb;
-	struct sk_buff *last_skb;
-};
+काष्ठा kcm_tx_msg अणु
+	अचिन्हित पूर्णांक sent;
+	अचिन्हित पूर्णांक fragidx;
+	अचिन्हित पूर्णांक frag_offset;
+	अचिन्हित पूर्णांक msg_flags;
+	काष्ठा sk_buff *frag_skb;
+	काष्ठा sk_buff *last_skb;
+पूर्ण;
 
-/* Socket structure for KCM client sockets */
-struct kcm_sock {
-	struct sock sk;
-	struct kcm_mux *mux;
-	struct list_head kcm_sock_list;
-	int index;
-	u32 done : 1;
-	struct work_struct done_work;
+/* Socket काष्ठाure क्रम KCM client sockets */
+काष्ठा kcm_sock अणु
+	काष्ठा sock sk;
+	काष्ठा kcm_mux *mux;
+	काष्ठा list_head kcm_sock_list;
+	पूर्णांक index;
+	u32 करोne : 1;
+	काष्ठा work_काष्ठा करोne_work;
 
-	struct kcm_stats stats;
+	काष्ठा kcm_stats stats;
 
 	/* Transmit */
-	struct kcm_psock *tx_psock;
-	struct work_struct tx_work;
-	struct list_head wait_psock_list;
-	struct sk_buff *seq_skb;
+	काष्ठा kcm_psock *tx_psock;
+	काष्ठा work_काष्ठा tx_work;
+	काष्ठा list_head रुको_psock_list;
+	काष्ठा sk_buff *seq_skb;
 	u32 tx_stopped : 1;
 
-	/* Don't use bit fields here, these are set under different locks */
-	bool tx_wait;
-	bool tx_wait_more;
+	/* Don't use bit fields here, these are set under dअगरferent locks */
+	bool tx_रुको;
+	bool tx_रुको_more;
 
 	/* Receive */
-	struct kcm_psock *rx_psock;
-	struct list_head wait_rx_list; /* KCMs waiting for receiving */
-	bool rx_wait;
+	काष्ठा kcm_psock *rx_psock;
+	काष्ठा list_head रुको_rx_list; /* KCMs रुकोing क्रम receiving */
+	bool rx_रुको;
 	u32 rx_disabled : 1;
-};
+पूर्ण;
 
-struct bpf_prog;
+काष्ठा bpf_prog;
 
-/* Structure for an attached lower socket */
-struct kcm_psock {
-	struct sock *sk;
-	struct strparser strp;
-	struct kcm_mux *mux;
-	int index;
+/* Structure क्रम an attached lower socket */
+काष्ठा kcm_psock अणु
+	काष्ठा sock *sk;
+	काष्ठा strparser strp;
+	काष्ठा kcm_mux *mux;
+	पूर्णांक index;
 
 	u32 tx_stopped : 1;
-	u32 done : 1;
+	u32 करोne : 1;
 	u32 unattaching : 1;
 
-	void (*save_state_change)(struct sock *sk);
-	void (*save_data_ready)(struct sock *sk);
-	void (*save_write_space)(struct sock *sk);
+	व्योम (*save_state_change)(काष्ठा sock *sk);
+	व्योम (*save_data_पढ़ोy)(काष्ठा sock *sk);
+	व्योम (*save_ग_लिखो_space)(काष्ठा sock *sk);
 
-	struct list_head psock_list;
+	काष्ठा list_head psock_list;
 
-	struct kcm_psock_stats stats;
+	काष्ठा kcm_psock_stats stats;
 
 	/* Receive */
-	struct list_head psock_ready_list;
-	struct bpf_prog *bpf_prog;
-	struct kcm_sock *rx_kcm;
-	unsigned long long saved_rx_bytes;
-	unsigned long long saved_rx_msgs;
-	struct sk_buff *ready_rx_msg;
+	काष्ठा list_head psock_पढ़ोy_list;
+	काष्ठा bpf_prog *bpf_prog;
+	काष्ठा kcm_sock *rx_kcm;
+	अचिन्हित दीर्घ दीर्घ saved_rx_bytes;
+	अचिन्हित दीर्घ दीर्घ saved_rx_msgs;
+	काष्ठा sk_buff *पढ़ोy_rx_msg;
 
 	/* Transmit */
-	struct kcm_sock *tx_kcm;
-	struct list_head psock_avail_list;
-	unsigned long long saved_tx_bytes;
-	unsigned long long saved_tx_msgs;
-};
+	काष्ठा kcm_sock *tx_kcm;
+	काष्ठा list_head psock_avail_list;
+	अचिन्हित दीर्घ दीर्घ saved_tx_bytes;
+	अचिन्हित दीर्घ दीर्घ saved_tx_msgs;
+पूर्ण;
 
 /* Per net MUX list */
-struct kcm_net {
-	struct mutex mutex;
-	struct kcm_psock_stats aggregate_psock_stats;
-	struct kcm_mux_stats aggregate_mux_stats;
-	struct strp_aggr_stats aggregate_strp_stats;
-	struct list_head mux_list;
-	int count;
-};
+काष्ठा kcm_net अणु
+	काष्ठा mutex mutex;
+	काष्ठा kcm_psock_stats aggregate_psock_stats;
+	काष्ठा kcm_mux_stats aggregate_mux_stats;
+	काष्ठा strp_aggr_stats aggregate_strp_stats;
+	काष्ठा list_head mux_list;
+	पूर्णांक count;
+पूर्ण;
 
-/* Structure for a MUX */
-struct kcm_mux {
-	struct list_head kcm_mux_list;
-	struct rcu_head rcu;
-	struct kcm_net *knet;
+/* Structure क्रम a MUX */
+काष्ठा kcm_mux अणु
+	काष्ठा list_head kcm_mux_list;
+	काष्ठा rcu_head rcu;
+	काष्ठा kcm_net *knet;
 
-	struct list_head kcm_socks;	/* All KCM sockets on MUX */
-	int kcm_socks_cnt;		/* Total KCM socket count for MUX */
-	struct list_head psocks;	/* List of all psocks on MUX */
-	int psocks_cnt;		/* Total attached sockets */
+	काष्ठा list_head kcm_socks;	/* All KCM sockets on MUX */
+	पूर्णांक kcm_socks_cnt;		/* Total KCM socket count क्रम MUX */
+	काष्ठा list_head psocks;	/* List of all psocks on MUX */
+	पूर्णांक psocks_cnt;		/* Total attached sockets */
 
-	struct kcm_mux_stats stats;
-	struct kcm_psock_stats aggregate_psock_stats;
-	struct strp_aggr_stats aggregate_strp_stats;
+	काष्ठा kcm_mux_stats stats;
+	काष्ठा kcm_psock_stats aggregate_psock_stats;
+	काष्ठा strp_aggr_stats aggregate_strp_stats;
 
 	/* Receive */
 	spinlock_t rx_lock ____cacheline_aligned_in_smp;
-	struct list_head kcm_rx_waiters; /* KCMs waiting for receiving */
-	struct list_head psocks_ready;	/* List of psocks with a msg ready */
-	struct sk_buff_head rx_hold_queue;
+	काष्ठा list_head kcm_rx_रुकोers; /* KCMs रुकोing क्रम receiving */
+	काष्ठा list_head psocks_पढ़ोy;	/* List of psocks with a msg पढ़ोy */
+	काष्ठा sk_buff_head rx_hold_queue;
 
 	/* Transmit */
 	spinlock_t  lock ____cacheline_aligned_in_smp;	/* TX and mux locking */
-	struct list_head psocks_avail;	/* List of available psocks */
-	struct list_head kcm_tx_waiters; /* KCMs waiting for a TX psock */
-};
+	काष्ठा list_head psocks_avail;	/* List of available psocks */
+	काष्ठा list_head kcm_tx_रुकोers; /* KCMs रुकोing क्रम a TX psock */
+पूर्ण;
 
-#ifdef CONFIG_PROC_FS
-int kcm_proc_init(void);
-void kcm_proc_exit(void);
-#else
-static inline int kcm_proc_init(void) { return 0; }
-static inline void kcm_proc_exit(void) { }
-#endif
+#अगर_घोषित CONFIG_PROC_FS
+पूर्णांक kcm_proc_init(व्योम);
+व्योम kcm_proc_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक kcm_proc_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम kcm_proc_निकास(व्योम) अणु पूर्ण
+#पूर्ण_अगर
 
-static inline void aggregate_psock_stats(struct kcm_psock_stats *stats,
-					 struct kcm_psock_stats *agg_stats)
-{
+अटल अंतरभूत व्योम aggregate_psock_stats(काष्ठा kcm_psock_stats *stats,
+					 काष्ठा kcm_psock_stats *agg_stats)
+अणु
 	/* Save psock statistics in the mux when psock is being unattached. */
 
-#define SAVE_PSOCK_STATS(_stat) (agg_stats->_stat += stats->_stat)
+#घोषणा SAVE_PSOCK_STATS(_stat) (agg_stats->_stat += stats->_stat)
 	SAVE_PSOCK_STATS(tx_msgs);
 	SAVE_PSOCK_STATS(tx_bytes);
 	SAVE_PSOCK_STATS(reserved);
 	SAVE_PSOCK_STATS(unreserved);
-	SAVE_PSOCK_STATS(tx_aborts);
-#undef SAVE_PSOCK_STATS
-}
+	SAVE_PSOCK_STATS(tx_पातs);
+#अघोषित SAVE_PSOCK_STATS
+पूर्ण
 
-static inline void aggregate_mux_stats(struct kcm_mux_stats *stats,
-				       struct kcm_mux_stats *agg_stats)
-{
+अटल अंतरभूत व्योम aggregate_mux_stats(काष्ठा kcm_mux_stats *stats,
+				       काष्ठा kcm_mux_stats *agg_stats)
+अणु
 	/* Save psock statistics in the mux when psock is being unattached. */
 
-#define SAVE_MUX_STATS(_stat) (agg_stats->_stat += stats->_stat)
+#घोषणा SAVE_MUX_STATS(_stat) (agg_stats->_stat += stats->_stat)
 	SAVE_MUX_STATS(rx_msgs);
 	SAVE_MUX_STATS(rx_bytes);
 	SAVE_MUX_STATS(tx_msgs);
 	SAVE_MUX_STATS(tx_bytes);
-	SAVE_MUX_STATS(rx_ready_drops);
+	SAVE_MUX_STATS(rx_पढ़ोy_drops);
 	SAVE_MUX_STATS(psock_attach);
 	SAVE_MUX_STATS(psock_unattach_rsvd);
 	SAVE_MUX_STATS(psock_unattach);
-#undef SAVE_MUX_STATS
-}
+#अघोषित SAVE_MUX_STATS
+पूर्ण
 
-#endif /* __NET_KCM_H_ */
+#पूर्ण_अगर /* __NET_KCM_H_ */

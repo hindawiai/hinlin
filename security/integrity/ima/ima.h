@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2005,2006,2007,2008 IBM Corporation
  *
@@ -7,185 +8,185 @@
  * Mimi Zohar <zohar@us.ibm.com>
  *
  * File: ima.h
- *	internal Integrity Measurement Architecture (IMA) definitions
+ *	पूर्णांकernal Integrity Measurement Architecture (IMA) definitions
  */
 
-#ifndef __LINUX_IMA_H
-#define __LINUX_IMA_H
+#अगर_अघोषित __LINUX_IMA_H
+#घोषणा __LINUX_IMA_H
 
-#include <linux/types.h>
-#include <linux/crypto.h>
-#include <linux/fs.h>
-#include <linux/security.h>
-#include <linux/hash.h>
-#include <linux/tpm.h>
-#include <linux/audit.h>
-#include <crypto/hash_info.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/security.h>
+#समावेश <linux/hash.h>
+#समावेश <linux/tpm.h>
+#समावेश <linux/audit.h>
+#समावेश <crypto/hash_info.h>
 
-#include "../integrity.h"
+#समावेश "../integrity.h"
 
-enum ima_show_type { IMA_SHOW_BINARY, IMA_SHOW_BINARY_NO_FIELD_LEN,
-		     IMA_SHOW_BINARY_OLD_STRING_FMT, IMA_SHOW_ASCII };
-enum tpm_pcrs { TPM_PCR0 = 0, TPM_PCR8 = 8, TPM_PCR10 = 10 };
+क्रमागत ima_show_type अणु IMA_SHOW_BINARY, IMA_SHOW_BINARY_NO_FIELD_LEN,
+		     IMA_SHOW_BINARY_OLD_STRING_FMT, IMA_SHOW_ASCII पूर्ण;
+क्रमागत tpm_pcrs अणु TPM_PCR0 = 0, TPM_PCR8 = 8, TPM_PCR10 = 10 पूर्ण;
 
-/* digest size for IMA, fits SHA1 or MD5 */
-#define IMA_DIGEST_SIZE		SHA1_DIGEST_SIZE
-#define IMA_EVENT_NAME_LEN_MAX	255
+/* digest size क्रम IMA, fits SHA1 or MD5 */
+#घोषणा IMA_DIGEST_SIZE		SHA1_DIGEST_SIZE
+#घोषणा IMA_EVENT_NAME_LEN_MAX	255
 
-#define IMA_HASH_BITS 10
-#define IMA_MEASURE_HTABLE_SIZE (1 << IMA_HASH_BITS)
+#घोषणा IMA_HASH_BITS 10
+#घोषणा IMA_MEASURE_HTABLE_SIZE (1 << IMA_HASH_BITS)
 
-#define IMA_TEMPLATE_FIELD_ID_MAX_LEN	16
-#define IMA_TEMPLATE_NUM_FIELDS_MAX	15
+#घोषणा IMA_TEMPLATE_FIELD_ID_MAX_LEN	16
+#घोषणा IMA_TEMPLATE_NUM_FIELDS_MAX	15
 
-#define IMA_TEMPLATE_IMA_NAME "ima"
-#define IMA_TEMPLATE_IMA_FMT "d|n"
+#घोषणा IMA_TEMPLATE_IMA_NAME "ima"
+#घोषणा IMA_TEMPLATE_IMA_FMT "d|n"
 
-#define NR_BANKS(chip) ((chip != NULL) ? chip->nr_allocated_banks : 0)
+#घोषणा NR_BANKS(chip) ((chip != शून्य) ? chip->nr_allocated_banks : 0)
 
 /* current content of the policy */
-extern int ima_policy_flag;
+बाह्य पूर्णांक ima_policy_flag;
 
 /* set during initialization */
-extern int ima_hash_algo;
-extern int ima_sha1_idx __ro_after_init;
-extern int ima_hash_algo_idx __ro_after_init;
-extern int ima_extra_slots __ro_after_init;
-extern int ima_appraise;
-extern struct tpm_chip *ima_tpm_chip;
-extern const char boot_aggregate_name[];
+बाह्य पूर्णांक ima_hash_algo;
+बाह्य पूर्णांक ima_sha1_idx __ro_after_init;
+बाह्य पूर्णांक ima_hash_algo_idx __ro_after_init;
+बाह्य पूर्णांक ima_extra_slots __ro_after_init;
+बाह्य पूर्णांक ima_appउठाओ;
+बाह्य काष्ठा tpm_chip *ima_tpm_chip;
+बाह्य स्थिर अक्षर boot_aggregate_name[];
 
 /* IMA event related data */
-struct ima_event_data {
-	struct integrity_iint_cache *iint;
-	struct file *file;
-	const unsigned char *filename;
-	struct evm_ima_xattr_data *xattr_value;
-	int xattr_len;
-	const struct modsig *modsig;
-	const char *violation;
-	const void *buf;
-	int buf_len;
-};
+काष्ठा ima_event_data अणु
+	काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक;
+	काष्ठा file *file;
+	स्थिर अचिन्हित अक्षर *filename;
+	काष्ठा evm_ima_xattr_data *xattr_value;
+	पूर्णांक xattr_len;
+	स्थिर काष्ठा modsig *modsig;
+	स्थिर अक्षर *violation;
+	स्थिर व्योम *buf;
+	पूर्णांक buf_len;
+पूर्ण;
 
-/* IMA template field data definition */
-struct ima_field_data {
+/* IMA ढाँचा field data definition */
+काष्ठा ima_field_data अणु
 	u8 *data;
 	u32 len;
-};
+पूर्ण;
 
-/* IMA template field definition */
-struct ima_template_field {
-	const char field_id[IMA_TEMPLATE_FIELD_ID_MAX_LEN];
-	int (*field_init)(struct ima_event_data *event_data,
-			  struct ima_field_data *field_data);
-	void (*field_show)(struct seq_file *m, enum ima_show_type show,
-			   struct ima_field_data *field_data);
-};
+/* IMA ढाँचा field definition */
+काष्ठा ima_ढाँचा_field अणु
+	स्थिर अक्षर field_id[IMA_TEMPLATE_FIELD_ID_MAX_LEN];
+	पूर्णांक (*field_init)(काष्ठा ima_event_data *event_data,
+			  काष्ठा ima_field_data *field_data);
+	व्योम (*field_show)(काष्ठा seq_file *m, क्रमागत ima_show_type show,
+			   काष्ठा ima_field_data *field_data);
+पूर्ण;
 
-/* IMA template descriptor definition */
-struct ima_template_desc {
-	struct list_head list;
-	char *name;
-	char *fmt;
-	int num_fields;
-	const struct ima_template_field **fields;
-};
+/* IMA ढाँचा descriptor definition */
+काष्ठा ima_ढाँचा_desc अणु
+	काष्ठा list_head list;
+	अक्षर *name;
+	अक्षर *fmt;
+	पूर्णांक num_fields;
+	स्थिर काष्ठा ima_ढाँचा_field **fields;
+पूर्ण;
 
-struct ima_template_entry {
-	int pcr;
-	struct tpm_digest *digests;
-	struct ima_template_desc *template_desc; /* template descriptor */
-	u32 template_data_len;
-	struct ima_field_data template_data[];	/* template related data */
-};
+काष्ठा ima_ढाँचा_entry अणु
+	पूर्णांक pcr;
+	काष्ठा tpm_digest *digests;
+	काष्ठा ima_ढाँचा_desc *ढाँचा_desc; /* ढाँचा descriptor */
+	u32 ढाँचा_data_len;
+	काष्ठा ima_field_data ढाँचा_data[];	/* ढाँचा related data */
+पूर्ण;
 
-struct ima_queue_entry {
-	struct hlist_node hnext;	/* place in hash collision list */
-	struct list_head later;		/* place in ima_measurements list */
-	struct ima_template_entry *entry;
-};
-extern struct list_head ima_measurements;	/* list of all measurements */
+काष्ठा ima_queue_entry अणु
+	काष्ठा hlist_node hnext;	/* place in hash collision list */
+	काष्ठा list_head later;		/* place in ima_measurements list */
+	काष्ठा ima_ढाँचा_entry *entry;
+पूर्ण;
+बाह्य काष्ठा list_head ima_measurements;	/* list of all measurements */
 
 /* Some details preceding the binary serialized measurement list */
-struct ima_kexec_hdr {
+काष्ठा ima_kexec_hdr अणु
 	u16 version;
 	u16 _reserved0;
 	u32 _reserved1;
 	u64 buffer_size;
 	u64 count;
-};
+पूर्ण;
 
-extern const int read_idmap[];
+बाह्य स्थिर पूर्णांक पढ़ो_idmap[];
 
-#ifdef CONFIG_HAVE_IMA_KEXEC
-void ima_load_kexec_buffer(void);
-#else
-static inline void ima_load_kexec_buffer(void) {}
-#endif /* CONFIG_HAVE_IMA_KEXEC */
+#अगर_घोषित CONFIG_HAVE_IMA_KEXEC
+व्योम ima_load_kexec_buffer(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ima_load_kexec_buffer(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_HAVE_IMA_KEXEC */
 
 /*
- * The default binary_runtime_measurements list format is defined as the
- * platform native format.  The canonical format is defined as little-endian.
+ * The शेष binary_runसमय_measurements list क्रमmat is defined as the
+ * platक्रमm native क्रमmat.  The canonical क्रमmat is defined as little-endian.
  */
-extern bool ima_canonical_fmt;
+बाह्य bool ima_canonical_fmt;
 
 /* Internal IMA function definitions */
-int ima_init(void);
-int ima_fs_init(void);
-int ima_add_template_entry(struct ima_template_entry *entry, int violation,
-			   const char *op, struct inode *inode,
-			   const unsigned char *filename);
-int ima_calc_file_hash(struct file *file, struct ima_digest_data *hash);
-int ima_calc_buffer_hash(const void *buf, loff_t len,
-			 struct ima_digest_data *hash);
-int ima_calc_field_array_hash(struct ima_field_data *field_data,
-			      struct ima_template_entry *entry);
-int ima_calc_boot_aggregate(struct ima_digest_data *hash);
-void ima_add_violation(struct file *file, const unsigned char *filename,
-		       struct integrity_iint_cache *iint,
-		       const char *op, const char *cause);
-int ima_init_crypto(void);
-void ima_putc(struct seq_file *m, void *data, int datalen);
-void ima_print_digest(struct seq_file *m, u8 *digest, u32 size);
-int template_desc_init_fields(const char *template_fmt,
-			      const struct ima_template_field ***fields,
-			      int *num_fields);
-struct ima_template_desc *ima_template_desc_current(void);
-struct ima_template_desc *ima_template_desc_buf(void);
-struct ima_template_desc *lookup_template_desc(const char *name);
-bool ima_template_has_modsig(const struct ima_template_desc *ima_template);
-int ima_restore_measurement_entry(struct ima_template_entry *entry);
-int ima_restore_measurement_list(loff_t bufsize, void *buf);
-int ima_measurements_show(struct seq_file *m, void *v);
-unsigned long ima_get_binary_runtime_size(void);
-int ima_init_template(void);
-void ima_init_template_list(void);
-int __init ima_init_digests(void);
-int ima_lsm_policy_change(struct notifier_block *nb, unsigned long event,
-			  void *lsm_data);
+पूर्णांक ima_init(व्योम);
+पूर्णांक ima_fs_init(व्योम);
+पूर्णांक ima_add_ढाँचा_entry(काष्ठा ima_ढाँचा_entry *entry, पूर्णांक violation,
+			   स्थिर अक्षर *op, काष्ठा inode *inode,
+			   स्थिर अचिन्हित अक्षर *filename);
+पूर्णांक ima_calc_file_hash(काष्ठा file *file, काष्ठा ima_digest_data *hash);
+पूर्णांक ima_calc_buffer_hash(स्थिर व्योम *buf, loff_t len,
+			 काष्ठा ima_digest_data *hash);
+पूर्णांक ima_calc_field_array_hash(काष्ठा ima_field_data *field_data,
+			      काष्ठा ima_ढाँचा_entry *entry);
+पूर्णांक ima_calc_boot_aggregate(काष्ठा ima_digest_data *hash);
+व्योम ima_add_violation(काष्ठा file *file, स्थिर अचिन्हित अक्षर *filename,
+		       काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+		       स्थिर अक्षर *op, स्थिर अक्षर *cause);
+पूर्णांक ima_init_crypto(व्योम);
+व्योम ima_अ_दो(काष्ठा seq_file *m, व्योम *data, पूर्णांक datalen);
+व्योम ima_prपूर्णांक_digest(काष्ठा seq_file *m, u8 *digest, u32 size);
+पूर्णांक ढाँचा_desc_init_fields(स्थिर अक्षर *ढाँचा_fmt,
+			      स्थिर काष्ठा ima_ढाँचा_field ***fields,
+			      पूर्णांक *num_fields);
+काष्ठा ima_ढाँचा_desc *ima_ढाँचा_desc_current(व्योम);
+काष्ठा ima_ढाँचा_desc *ima_ढाँचा_desc_buf(व्योम);
+काष्ठा ima_ढाँचा_desc *lookup_ढाँचा_desc(स्थिर अक्षर *name);
+bool ima_ढाँचा_has_modsig(स्थिर काष्ठा ima_ढाँचा_desc *ima_ढाँचा);
+पूर्णांक ima_restore_measurement_entry(काष्ठा ima_ढाँचा_entry *entry);
+पूर्णांक ima_restore_measurement_list(loff_t bufsize, व्योम *buf);
+पूर्णांक ima_measurements_show(काष्ठा seq_file *m, व्योम *v);
+अचिन्हित दीर्घ ima_get_binary_runसमय_size(व्योम);
+पूर्णांक ima_init_ढाँचा(व्योम);
+व्योम ima_init_ढाँचा_list(व्योम);
+पूर्णांक __init ima_init_digests(व्योम);
+पूर्णांक ima_lsm_policy_change(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event,
+			  व्योम *lsm_data);
 
 /*
  * used to protect h_table and sha_table
  */
-extern spinlock_t ima_queue_lock;
+बाह्य spinlock_t ima_queue_lock;
 
-struct ima_h_table {
-	atomic_long_t len;	/* number of stored measurements in the list */
-	atomic_long_t violations;
-	struct hlist_head queue[IMA_MEASURE_HTABLE_SIZE];
-};
-extern struct ima_h_table ima_htable;
+काष्ठा ima_h_table अणु
+	atomic_दीर्घ_t len;	/* number of stored measurements in the list */
+	atomic_दीर्घ_t violations;
+	काष्ठा hlist_head queue[IMA_MEASURE_HTABLE_SIZE];
+पूर्ण;
+बाह्य काष्ठा ima_h_table ima_htable;
 
-static inline unsigned int ima_hash_key(u8 *digest)
-{
-	/* there is no point in taking a hash of part of a digest */
-	return (digest[0] | digest[1] << 8) % IMA_MEASURE_HTABLE_SIZE;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक ima_hash_key(u8 *digest)
+अणु
+	/* there is no poपूर्णांक in taking a hash of part of a digest */
+	वापस (digest[0] | digest[1] << 8) % IMA_MEASURE_HTABLE_SIZE;
+पूर्ण
 
-#define __ima_hooks(hook)				\
+#घोषणा __ima_hooks(hook)				\
 	hook(NONE, none)				\
-	hook(FILE_CHECK, file)				\
+	hook(खाता_CHECK, file)				\
 	hook(MMAP_CHECK, mmap)				\
 	hook(BPRM_CHECK, bprm)				\
 	hook(CREDS_CHECK, creds)			\
@@ -200,250 +201,250 @@ static inline unsigned int ima_hash_key(u8 *digest)
 	hook(CRITICAL_DATA, critical_data)		\
 	hook(MAX_CHECK, none)
 
-#define __ima_hook_enumify(ENUM, str)	ENUM,
-#define __ima_stringify(arg) (#arg)
-#define __ima_hook_measuring_stringify(ENUM, str) \
-		(__ima_stringify(measuring_ ##str)),
+#घोषणा __ima_hook_क्रमागतअगरy(ENUM, str)	ENUM,
+#घोषणा __ima_stringअगरy(arg) (#arg)
+#घोषणा __ima_hook_measuring_stringअगरy(ENUM, str) \
+		(__ima_stringअगरy(measuring_ ##str)),
 
-enum ima_hooks {
-	__ima_hooks(__ima_hook_enumify)
-};
+क्रमागत ima_hooks अणु
+	__ima_hooks(__ima_hook_क्रमागतअगरy)
+पूर्ण;
 
-static const char * const ima_hooks_measure_str[] = {
-	__ima_hooks(__ima_hook_measuring_stringify)
-};
+अटल स्थिर अक्षर * स्थिर ima_hooks_measure_str[] = अणु
+	__ima_hooks(__ima_hook_measuring_stringअगरy)
+पूर्ण;
 
-static inline const char *func_measure_str(enum ima_hooks func)
-{
-	if (func >= MAX_CHECK)
-		return ima_hooks_measure_str[NONE];
+अटल अंतरभूत स्थिर अक्षर *func_measure_str(क्रमागत ima_hooks func)
+अणु
+	अगर (func >= MAX_CHECK)
+		वापस ima_hooks_measure_str[NONE];
 
-	return ima_hooks_measure_str[func];
-}
+	वापस ima_hooks_measure_str[func];
+पूर्ण
 
-extern const char *const func_tokens[];
+बाह्य स्थिर अक्षर *स्थिर func_tokens[];
 
-struct modsig;
+काष्ठा modsig;
 
-#ifdef CONFIG_IMA_QUEUE_EARLY_BOOT_KEYS
+#अगर_घोषित CONFIG_IMA_QUEUE_EARLY_BOOT_KEYS
 /*
  * To track keys that need to be measured.
  */
-struct ima_key_entry {
-	struct list_head list;
-	void *payload;
-	size_t payload_len;
-	char *keyring_name;
-};
-void ima_init_key_queue(void);
-bool ima_should_queue_key(void);
-bool ima_queue_key(struct key *keyring, const void *payload,
-		   size_t payload_len);
-void ima_process_queued_keys(void);
-#else
-static inline void ima_init_key_queue(void) {}
-static inline bool ima_should_queue_key(void) { return false; }
-static inline bool ima_queue_key(struct key *keyring,
-				 const void *payload,
-				 size_t payload_len) { return false; }
-static inline void ima_process_queued_keys(void) {}
-#endif /* CONFIG_IMA_QUEUE_EARLY_BOOT_KEYS */
+काष्ठा ima_key_entry अणु
+	काष्ठा list_head list;
+	व्योम *payload;
+	माप_प्रकार payload_len;
+	अक्षर *keyring_name;
+पूर्ण;
+व्योम ima_init_key_queue(व्योम);
+bool ima_should_queue_key(व्योम);
+bool ima_queue_key(काष्ठा key *keyring, स्थिर व्योम *payload,
+		   माप_प्रकार payload_len);
+व्योम ima_process_queued_keys(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम ima_init_key_queue(व्योम) अणुपूर्ण
+अटल अंतरभूत bool ima_should_queue_key(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत bool ima_queue_key(काष्ठा key *keyring,
+				 स्थिर व्योम *payload,
+				 माप_प्रकार payload_len) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम ima_process_queued_keys(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_IMA_QUEUE_EARLY_BOOT_KEYS */
 
 /* LIM API function definitions */
-int ima_get_action(struct user_namespace *mnt_userns, struct inode *inode,
-		   const struct cred *cred, u32 secid, int mask,
-		   enum ima_hooks func, int *pcr,
-		   struct ima_template_desc **template_desc,
-		   const char *func_data);
-int ima_must_measure(struct inode *inode, int mask, enum ima_hooks func);
-int ima_collect_measurement(struct integrity_iint_cache *iint,
-			    struct file *file, void *buf, loff_t size,
-			    enum hash_algo algo, struct modsig *modsig);
-void ima_store_measurement(struct integrity_iint_cache *iint, struct file *file,
-			   const unsigned char *filename,
-			   struct evm_ima_xattr_data *xattr_value,
-			   int xattr_len, const struct modsig *modsig, int pcr,
-			   struct ima_template_desc *template_desc);
-void process_buffer_measurement(struct user_namespace *mnt_userns,
-				struct inode *inode, const void *buf, int size,
-				const char *eventname, enum ima_hooks func,
-				int pcr, const char *func_data,
+पूर्णांक ima_get_action(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		   स्थिर काष्ठा cred *cred, u32 secid, पूर्णांक mask,
+		   क्रमागत ima_hooks func, पूर्णांक *pcr,
+		   काष्ठा ima_ढाँचा_desc **ढाँचा_desc,
+		   स्थिर अक्षर *func_data);
+पूर्णांक ima_must_measure(काष्ठा inode *inode, पूर्णांक mask, क्रमागत ima_hooks func);
+पूर्णांक ima_collect_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			    काष्ठा file *file, व्योम *buf, loff_t size,
+			    क्रमागत hash_algo algo, काष्ठा modsig *modsig);
+व्योम ima_store_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक, काष्ठा file *file,
+			   स्थिर अचिन्हित अक्षर *filename,
+			   काष्ठा evm_ima_xattr_data *xattr_value,
+			   पूर्णांक xattr_len, स्थिर काष्ठा modsig *modsig, पूर्णांक pcr,
+			   काष्ठा ima_ढाँचा_desc *ढाँचा_desc);
+व्योम process_buffer_measurement(काष्ठा user_namespace *mnt_userns,
+				काष्ठा inode *inode, स्थिर व्योम *buf, पूर्णांक size,
+				स्थिर अक्षर *eventname, क्रमागत ima_hooks func,
+				पूर्णांक pcr, स्थिर अक्षर *func_data,
 				bool buf_hash);
-void ima_audit_measurement(struct integrity_iint_cache *iint,
-			   const unsigned char *filename);
-int ima_alloc_init_template(struct ima_event_data *event_data,
-			    struct ima_template_entry **entry,
-			    struct ima_template_desc *template_desc);
-int ima_store_template(struct ima_template_entry *entry, int violation,
-		       struct inode *inode,
-		       const unsigned char *filename, int pcr);
-void ima_free_template_entry(struct ima_template_entry *entry);
-const char *ima_d_path(const struct path *path, char **pathbuf, char *filename);
+व्योम ima_audit_measurement(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			   स्थिर अचिन्हित अक्षर *filename);
+पूर्णांक ima_alloc_init_ढाँचा(काष्ठा ima_event_data *event_data,
+			    काष्ठा ima_ढाँचा_entry **entry,
+			    काष्ठा ima_ढाँचा_desc *ढाँचा_desc);
+पूर्णांक ima_store_ढाँचा(काष्ठा ima_ढाँचा_entry *entry, पूर्णांक violation,
+		       काष्ठा inode *inode,
+		       स्थिर अचिन्हित अक्षर *filename, पूर्णांक pcr);
+व्योम ima_मुक्त_ढाँचा_entry(काष्ठा ima_ढाँचा_entry *entry);
+स्थिर अक्षर *ima_d_path(स्थिर काष्ठा path *path, अक्षर **pathbuf, अक्षर *filename);
 
 /* IMA policy related functions */
-int ima_match_policy(struct user_namespace *mnt_userns, struct inode *inode,
-		     const struct cred *cred, u32 secid, enum ima_hooks func,
-		     int mask, int flags, int *pcr,
-		     struct ima_template_desc **template_desc,
-		     const char *func_data);
-void ima_init_policy(void);
-void ima_update_policy(void);
-void ima_update_policy_flag(void);
-ssize_t ima_parse_add_rule(char *);
-void ima_delete_rules(void);
-int ima_check_policy(void);
-void *ima_policy_start(struct seq_file *m, loff_t *pos);
-void *ima_policy_next(struct seq_file *m, void *v, loff_t *pos);
-void ima_policy_stop(struct seq_file *m, void *v);
-int ima_policy_show(struct seq_file *m, void *v);
+पूर्णांक ima_match_policy(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		     स्थिर काष्ठा cred *cred, u32 secid, क्रमागत ima_hooks func,
+		     पूर्णांक mask, पूर्णांक flags, पूर्णांक *pcr,
+		     काष्ठा ima_ढाँचा_desc **ढाँचा_desc,
+		     स्थिर अक्षर *func_data);
+व्योम ima_init_policy(व्योम);
+व्योम ima_update_policy(व्योम);
+व्योम ima_update_policy_flag(व्योम);
+sमाप_प्रकार ima_parse_add_rule(अक्षर *);
+व्योम ima_delete_rules(व्योम);
+पूर्णांक ima_check_policy(व्योम);
+व्योम *ima_policy_start(काष्ठा seq_file *m, loff_t *pos);
+व्योम *ima_policy_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos);
+व्योम ima_policy_stop(काष्ठा seq_file *m, व्योम *v);
+पूर्णांक ima_policy_show(काष्ठा seq_file *m, व्योम *v);
 
-/* Appraise integrity measurements */
-#define IMA_APPRAISE_ENFORCE	0x01
-#define IMA_APPRAISE_FIX	0x02
-#define IMA_APPRAISE_LOG	0x04
-#define IMA_APPRAISE_MODULES	0x08
-#define IMA_APPRAISE_FIRMWARE	0x10
-#define IMA_APPRAISE_POLICY	0x20
-#define IMA_APPRAISE_KEXEC	0x40
+/* Appउठाओ पूर्णांकegrity measurements */
+#घोषणा IMA_APPRAISE_ENFORCE	0x01
+#घोषणा IMA_APPRAISE_FIX	0x02
+#घोषणा IMA_APPRAISE_LOG	0x04
+#घोषणा IMA_APPRAISE_MODULES	0x08
+#घोषणा IMA_APPRAISE_FIRMWARE	0x10
+#घोषणा IMA_APPRAISE_POLICY	0x20
+#घोषणा IMA_APPRAISE_KEXEC	0x40
 
-#ifdef CONFIG_IMA_APPRAISE
-int ima_check_blacklist(struct integrity_iint_cache *iint,
-			const struct modsig *modsig, int pcr);
-int ima_appraise_measurement(enum ima_hooks func,
-			     struct integrity_iint_cache *iint,
-			     struct file *file, const unsigned char *filename,
-			     struct evm_ima_xattr_data *xattr_value,
-			     int xattr_len, const struct modsig *modsig);
-int ima_must_appraise(struct user_namespace *mnt_userns, struct inode *inode,
-		      int mask, enum ima_hooks func);
-void ima_update_xattr(struct integrity_iint_cache *iint, struct file *file);
-enum integrity_status ima_get_cache_status(struct integrity_iint_cache *iint,
-					   enum ima_hooks func);
-enum hash_algo ima_get_hash_algo(struct evm_ima_xattr_data *xattr_value,
-				 int xattr_len);
-int ima_read_xattr(struct dentry *dentry,
-		   struct evm_ima_xattr_data **xattr_value);
+#अगर_घोषित CONFIG_IMA_APPRAISE
+पूर्णांक ima_check_blacklist(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			स्थिर काष्ठा modsig *modsig, पूर्णांक pcr);
+पूर्णांक ima_appउठाओ_measurement(क्रमागत ima_hooks func,
+			     काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+			     काष्ठा file *file, स्थिर अचिन्हित अक्षर *filename,
+			     काष्ठा evm_ima_xattr_data *xattr_value,
+			     पूर्णांक xattr_len, स्थिर काष्ठा modsig *modsig);
+पूर्णांक ima_must_appउठाओ(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		      पूर्णांक mask, क्रमागत ima_hooks func);
+व्योम ima_update_xattr(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक, काष्ठा file *file);
+क्रमागत पूर्णांकegrity_status ima_get_cache_status(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+					   क्रमागत ima_hooks func);
+क्रमागत hash_algo ima_get_hash_algo(काष्ठा evm_ima_xattr_data *xattr_value,
+				 पूर्णांक xattr_len);
+पूर्णांक ima_पढ़ो_xattr(काष्ठा dentry *dentry,
+		   काष्ठा evm_ima_xattr_data **xattr_value);
 
-#else
-static inline int ima_check_blacklist(struct integrity_iint_cache *iint,
-				      const struct modsig *modsig, int pcr)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक ima_check_blacklist(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+				      स्थिर काष्ठा modsig *modsig, पूर्णांक pcr)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ima_appraise_measurement(enum ima_hooks func,
-					   struct integrity_iint_cache *iint,
-					   struct file *file,
-					   const unsigned char *filename,
-					   struct evm_ima_xattr_data *xattr_value,
-					   int xattr_len,
-					   const struct modsig *modsig)
-{
-	return INTEGRITY_UNKNOWN;
-}
+अटल अंतरभूत पूर्णांक ima_appउठाओ_measurement(क्रमागत ima_hooks func,
+					   काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+					   काष्ठा file *file,
+					   स्थिर अचिन्हित अक्षर *filename,
+					   काष्ठा evm_ima_xattr_data *xattr_value,
+					   पूर्णांक xattr_len,
+					   स्थिर काष्ठा modsig *modsig)
+अणु
+	वापस INTEGRITY_UNKNOWN;
+पूर्ण
 
-static inline int ima_must_appraise(struct user_namespace *mnt_userns,
-				    struct inode *inode, int mask,
-				    enum ima_hooks func)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ima_must_appउठाओ(काष्ठा user_namespace *mnt_userns,
+				    काष्ठा inode *inode, पूर्णांक mask,
+				    क्रमागत ima_hooks func)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ima_update_xattr(struct integrity_iint_cache *iint,
-				    struct file *file)
-{
-}
+अटल अंतरभूत व्योम ima_update_xattr(काष्ठा पूर्णांकegrity_iपूर्णांक_cache *iपूर्णांक,
+				    काष्ठा file *file)
+अणु
+पूर्ण
 
-static inline enum integrity_status ima_get_cache_status(struct integrity_iint_cache
-							 *iint,
-							 enum ima_hooks func)
-{
-	return INTEGRITY_UNKNOWN;
-}
+अटल अंतरभूत क्रमागत पूर्णांकegrity_status ima_get_cache_status(काष्ठा पूर्णांकegrity_iपूर्णांक_cache
+							 *iपूर्णांक,
+							 क्रमागत ima_hooks func)
+अणु
+	वापस INTEGRITY_UNKNOWN;
+पूर्ण
 
-static inline enum hash_algo
-ima_get_hash_algo(struct evm_ima_xattr_data *xattr_value, int xattr_len)
-{
-	return ima_hash_algo;
-}
+अटल अंतरभूत क्रमागत hash_algo
+ima_get_hash_algo(काष्ठा evm_ima_xattr_data *xattr_value, पूर्णांक xattr_len)
+अणु
+	वापस ima_hash_algo;
+पूर्ण
 
-static inline int ima_read_xattr(struct dentry *dentry,
-				 struct evm_ima_xattr_data **xattr_value)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ima_पढ़ो_xattr(काष्ठा dentry *dentry,
+				 काष्ठा evm_ima_xattr_data **xattr_value)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_IMA_APPRAISE */
+#पूर्ण_अगर /* CONFIG_IMA_APPRAISE */
 
-#ifdef CONFIG_IMA_APPRAISE_MODSIG
-int ima_read_modsig(enum ima_hooks func, const void *buf, loff_t buf_len,
-		    struct modsig **modsig);
-void ima_collect_modsig(struct modsig *modsig, const void *buf, loff_t size);
-int ima_get_modsig_digest(const struct modsig *modsig, enum hash_algo *algo,
-			  const u8 **digest, u32 *digest_size);
-int ima_get_raw_modsig(const struct modsig *modsig, const void **data,
+#अगर_घोषित CONFIG_IMA_APPRAISE_MODSIG
+पूर्णांक ima_पढ़ो_modsig(क्रमागत ima_hooks func, स्थिर व्योम *buf, loff_t buf_len,
+		    काष्ठा modsig **modsig);
+व्योम ima_collect_modsig(काष्ठा modsig *modsig, स्थिर व्योम *buf, loff_t size);
+पूर्णांक ima_get_modsig_digest(स्थिर काष्ठा modsig *modsig, क्रमागत hash_algo *algo,
+			  स्थिर u8 **digest, u32 *digest_size);
+पूर्णांक ima_get_raw_modsig(स्थिर काष्ठा modsig *modsig, स्थिर व्योम **data,
 		       u32 *data_len);
-void ima_free_modsig(struct modsig *modsig);
-#else
-static inline int ima_read_modsig(enum ima_hooks func, const void *buf,
-				  loff_t buf_len, struct modsig **modsig)
-{
-	return -EOPNOTSUPP;
-}
+व्योम ima_मुक्त_modsig(काष्ठा modsig *modsig);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ima_पढ़ो_modsig(क्रमागत ima_hooks func, स्थिर व्योम *buf,
+				  loff_t buf_len, काष्ठा modsig **modsig)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void ima_collect_modsig(struct modsig *modsig, const void *buf,
+अटल अंतरभूत व्योम ima_collect_modsig(काष्ठा modsig *modsig, स्थिर व्योम *buf,
 				      loff_t size)
-{
-}
+अणु
+पूर्ण
 
-static inline int ima_get_modsig_digest(const struct modsig *modsig,
-					enum hash_algo *algo, const u8 **digest,
+अटल अंतरभूत पूर्णांक ima_get_modsig_digest(स्थिर काष्ठा modsig *modsig,
+					क्रमागत hash_algo *algo, स्थिर u8 **digest,
 					u32 *digest_size)
-{
-	return -EOPNOTSUPP;
-}
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int ima_get_raw_modsig(const struct modsig *modsig,
-				     const void **data, u32 *data_len)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक ima_get_raw_modsig(स्थिर काष्ठा modsig *modsig,
+				     स्थिर व्योम **data, u32 *data_len)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void ima_free_modsig(struct modsig *modsig)
-{
-}
-#endif /* CONFIG_IMA_APPRAISE_MODSIG */
+अटल अंतरभूत व्योम ima_मुक्त_modsig(काष्ठा modsig *modsig)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_IMA_APPRAISE_MODSIG */
 
 /* LSM based policy rules require audit */
-#ifdef CONFIG_IMA_LSM_RULES
+#अगर_घोषित CONFIG_IMA_LSM_RULES
 
-#define ima_filter_rule_init security_audit_rule_init
-#define ima_filter_rule_free security_audit_rule_free
-#define ima_filter_rule_match security_audit_rule_match
+#घोषणा ima_filter_rule_init security_audit_rule_init
+#घोषणा ima_filter_rule_मुक्त security_audit_rule_मुक्त
+#घोषणा ima_filter_rule_match security_audit_rule_match
 
-#else
+#अन्यथा
 
-static inline int ima_filter_rule_init(u32 field, u32 op, char *rulestr,
-				       void **lsmrule)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक ima_filter_rule_init(u32 field, u32 op, अक्षर *rulestr,
+				       व्योम **lsmrule)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void ima_filter_rule_free(void *lsmrule)
-{
-}
+अटल अंतरभूत व्योम ima_filter_rule_मुक्त(व्योम *lsmrule)
+अणु
+पूर्ण
 
-static inline int ima_filter_rule_match(u32 secid, u32 field, u32 op,
-					void *lsmrule)
-{
-	return -EINVAL;
-}
-#endif /* CONFIG_IMA_LSM_RULES */
+अटल अंतरभूत पूर्णांक ima_filter_rule_match(u32 secid, u32 field, u32 op,
+					व्योम *lsmrule)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_IMA_LSM_RULES */
 
-#ifdef	CONFIG_IMA_READ_POLICY
-#define	POLICY_FILE_FLAGS	(S_IWUSR | S_IRUSR)
-#else
-#define	POLICY_FILE_FLAGS	S_IWUSR
-#endif /* CONFIG_IMA_READ_POLICY */
+#अगर_घोषित	CONFIG_IMA_READ_POLICY
+#घोषणा	POLICY_खाता_FLAGS	(S_IWUSR | S_IRUSR)
+#अन्यथा
+#घोषणा	POLICY_खाता_FLAGS	S_IWUSR
+#पूर्ण_अगर /* CONFIG_IMA_READ_POLICY */
 
-#endif /* __LINUX_IMA_H */
+#पूर्ण_अगर /* __LINUX_IMA_H */

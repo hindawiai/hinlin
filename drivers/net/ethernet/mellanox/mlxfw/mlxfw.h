@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2017-2019 Mellanox Technologies. All rights reserved */
 
-#ifndef _MLXFW_H
-#define _MLXFW_H
+#अगर_अघोषित _MLXFW_H
+#घोषणा _MLXFW_H
 
-#include <linux/firmware.h>
-#include <linux/netlink.h>
-#include <linux/device.h>
-#include <net/devlink.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/device.h>
+#समावेश <net/devlink.h>
 
-struct mlxfw_dev {
-	const struct mlxfw_dev_ops *ops;
-	const char *psid;
+काष्ठा mlxfw_dev अणु
+	स्थिर काष्ठा mlxfw_dev_ops *ops;
+	स्थिर अक्षर *psid;
 	u16 psid_size;
-	struct devlink *devlink;
-};
+	काष्ठा devlink *devlink;
+पूर्ण;
 
-static inline
-struct device *mlxfw_dev_dev(struct mlxfw_dev *mlxfw_dev)
-{
-	return mlxfw_dev->devlink->dev;
-}
+अटल अंतरभूत
+काष्ठा device *mlxfw_dev_dev(काष्ठा mlxfw_dev *mlxfw_dev)
+अणु
+	वापस mlxfw_dev->devlink->dev;
+पूर्ण
 
-#define MLXFW_PRFX "mlxfw: "
+#घोषणा MLXFW_PRFX "mlxfw: "
 
-#define mlxfw_info(mlxfw_dev, fmt, ...) \
+#घोषणा mlxfw_info(mlxfw_dev, fmt, ...) \
 	dev_info(mlxfw_dev_dev(mlxfw_dev), MLXFW_PRFX fmt, ## __VA_ARGS__)
-#define mlxfw_err(mlxfw_dev, fmt, ...) \
+#घोषणा mlxfw_err(mlxfw_dev, fmt, ...) \
 	dev_err(mlxfw_dev_dev(mlxfw_dev), MLXFW_PRFX fmt, ## __VA_ARGS__)
-#define mlxfw_dbg(mlxfw_dev, fmt, ...) \
+#घोषणा mlxfw_dbg(mlxfw_dev, fmt, ...) \
 	dev_dbg(mlxfw_dev_dev(mlxfw_dev), MLXFW_PRFX fmt, ## __VA_ARGS__)
 
-enum mlxfw_fsm_state {
+क्रमागत mlxfw_fsm_state अणु
 	MLXFW_FSM_STATE_IDLE,
 	MLXFW_FSM_STATE_LOCKED,
 	MLXFW_FSM_STATE_INITIALIZE,
@@ -39,9 +40,9 @@ enum mlxfw_fsm_state {
 	MLXFW_FSM_STATE_VERIFY,
 	MLXFW_FSM_STATE_APPLY,
 	MLXFW_FSM_STATE_ACTIVATE,
-};
+पूर्ण;
 
-enum mlxfw_fsm_state_err {
+क्रमागत mlxfw_fsm_state_err अणु
 	MLXFW_FSM_STATE_ERR_OK,
 	MLXFW_FSM_STATE_ERR_ERROR,
 	MLXFW_FSM_STATE_ERR_REJECTED_DIGEST_ERR,
@@ -53,9 +54,9 @@ enum mlxfw_fsm_state_err {
 	MLXFW_FSM_STATE_ERR_REJECTED_BAD_FORMAT,
 	MLXFW_FSM_STATE_ERR_BLOCKED_PENDING_RESET,
 	MLXFW_FSM_STATE_ERR_MAX,
-};
+पूर्ण;
 
-enum mlxfw_fsm_reactivate_status {
+क्रमागत mlxfw_fsm_reactivate_status अणु
 	MLXFW_FSM_REACTIVATE_STATUS_OK,
 	MLXFW_FSM_REACTIVATE_STATUS_BUSY,
 	MLXFW_FSM_REACTIVATE_STATUS_PROHIBITED_FW_VER_ERR,
@@ -67,49 +68,49 @@ enum mlxfw_fsm_reactivate_status {
 	MLXFW_FSM_REACTIVATE_STATUS_ERR_DEVICE_RESET_REQUIRED,
 	MLXFW_FSM_REACTIVATE_STATUS_ERR_FW_PROGRAMMING_NEEDED,
 	MLXFW_FSM_REACTIVATE_STATUS_MAX,
-};
+पूर्ण;
 
-struct mlxfw_dev_ops {
-	int (*component_query)(struct mlxfw_dev *mlxfw_dev, u16 component_index,
+काष्ठा mlxfw_dev_ops अणु
+	पूर्णांक (*component_query)(काष्ठा mlxfw_dev *mlxfw_dev, u16 component_index,
 			       u32 *p_max_size, u8 *p_align_bits,
-			       u16 *p_max_write_size);
+			       u16 *p_max_ग_लिखो_size);
 
-	int (*fsm_lock)(struct mlxfw_dev *mlxfw_dev, u32 *fwhandle);
+	पूर्णांक (*fsm_lock)(काष्ठा mlxfw_dev *mlxfw_dev, u32 *fwhandle);
 
-	int (*fsm_component_update)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle,
+	पूर्णांक (*fsm_component_update)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle,
 				    u16 component_index, u32 component_size);
 
-	int (*fsm_block_download)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle,
+	पूर्णांक (*fsm_block_करोwnload)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle,
 				  u8 *data, u16 size, u32 offset);
 
-	int (*fsm_component_verify)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle,
+	पूर्णांक (*fsm_component_verअगरy)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle,
 				    u16 component_index);
 
-	int (*fsm_activate)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle);
+	पूर्णांक (*fsm_activate)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle);
 
-	int (*fsm_reactivate)(struct mlxfw_dev *mlxfw_dev, u8 *status);
+	पूर्णांक (*fsm_reactivate)(काष्ठा mlxfw_dev *mlxfw_dev, u8 *status);
 
-	int (*fsm_query_state)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle,
-			       enum mlxfw_fsm_state *fsm_state,
-			       enum mlxfw_fsm_state_err *fsm_state_err);
+	पूर्णांक (*fsm_query_state)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle,
+			       क्रमागत mlxfw_fsm_state *fsm_state,
+			       क्रमागत mlxfw_fsm_state_err *fsm_state_err);
 
-	void (*fsm_cancel)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle);
+	व्योम (*fsm_cancel)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle);
 
-	void (*fsm_release)(struct mlxfw_dev *mlxfw_dev, u32 fwhandle);
-};
+	व्योम (*fsm_release)(काष्ठा mlxfw_dev *mlxfw_dev, u32 fwhandle);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MLXFW)
-int mlxfw_firmware_flash(struct mlxfw_dev *mlxfw_dev,
-			 const struct firmware *firmware,
-			 struct netlink_ext_ack *extack);
-#else
-static inline
-int mlxfw_firmware_flash(struct mlxfw_dev *mlxfw_dev,
-			 const struct firmware *firmware,
-			 struct netlink_ext_ack *extack)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+#अगर IS_REACHABLE(CONFIG_MLXFW)
+पूर्णांक mlxfw_firmware_flash(काष्ठा mlxfw_dev *mlxfw_dev,
+			 स्थिर काष्ठा firmware *firmware,
+			 काष्ठा netlink_ext_ack *extack);
+#अन्यथा
+अटल अंतरभूत
+पूर्णांक mlxfw_firmware_flash(काष्ठा mlxfw_dev *mlxfw_dev,
+			 स्थिर काष्ठा firmware *firmware,
+			 काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

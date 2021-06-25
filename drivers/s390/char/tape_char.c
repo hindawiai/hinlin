@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    character device frontend for tape device driver
+ *    अक्षरacter device frontend क्रम tape device driver
  *
  *  S390 and zSeries version
  *    Copyright IBM Corp. 2001, 2006
@@ -10,399 +11,399 @@
  *		 Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "tape"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "tape"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/proc_fs.h>
-#include <linux/mtio.h>
-#include <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/mtपन.स>
+#समावेश <linux/compat.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#define TAPE_DBF_AREA	tape_core_dbf
+#घोषणा TAPE_DBF_AREA	tape_core_dbf
 
-#include "tape.h"
-#include "tape_std.h"
-#include "tape_class.h"
+#समावेश "tape.h"
+#समावेश "tape_std.h"
+#समावेश "tape_class.h"
 
-#define TAPECHAR_MAJOR		0	/* get dynamic major */
+#घोषणा TAPECHAR_MAJOR		0	/* get dynamic major */
 
 /*
- * file operation structure for tape character frontend
+ * file operation काष्ठाure क्रम tape अक्षरacter frontend
  */
-static ssize_t tapechar_read(struct file *, char __user *, size_t, loff_t *);
-static ssize_t tapechar_write(struct file *, const char __user *, size_t, loff_t *);
-static int tapechar_open(struct inode *,struct file *);
-static int tapechar_release(struct inode *,struct file *);
-static long tapechar_ioctl(struct file *, unsigned int, unsigned long);
-#ifdef CONFIG_COMPAT
-static long tapechar_compat_ioctl(struct file *, unsigned int, unsigned long);
-#endif
+अटल sमाप_प्रकार tapeअक्षर_पढ़ो(काष्ठा file *, अक्षर __user *, माप_प्रकार, loff_t *);
+अटल sमाप_प्रकार tapeअक्षर_ग_लिखो(काष्ठा file *, स्थिर अक्षर __user *, माप_प्रकार, loff_t *);
+अटल पूर्णांक tapeअक्षर_खोलो(काष्ठा inode *,काष्ठा file *);
+अटल पूर्णांक tapeअक्षर_release(काष्ठा inode *,काष्ठा file *);
+अटल दीर्घ tapeअक्षर_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ tapeअक्षर_compat_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+#पूर्ण_अगर
 
-static const struct file_operations tape_fops =
-{
+अटल स्थिर काष्ठा file_operations tape_fops =
+अणु
 	.owner = THIS_MODULE,
-	.read = tapechar_read,
-	.write = tapechar_write,
-	.unlocked_ioctl = tapechar_ioctl,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl = tapechar_compat_ioctl,
-#endif
-	.open = tapechar_open,
-	.release = tapechar_release,
+	.पढ़ो = tapeअक्षर_पढ़ो,
+	.ग_लिखो = tapeअक्षर_ग_लिखो,
+	.unlocked_ioctl = tapeअक्षर_ioctl,
+#अगर_घोषित CONFIG_COMPAT
+	.compat_ioctl = tapeअक्षर_compat_ioctl,
+#पूर्ण_अगर
+	.खोलो = tapeअक्षर_खोलो,
+	.release = tapeअक्षर_release,
 	.llseek = no_llseek,
-};
+पूर्ण;
 
-static int tapechar_major = TAPECHAR_MAJOR;
+अटल पूर्णांक tapeअक्षर_major = TAPECHAR_MAJOR;
 
 /*
- * This function is called for every new tapedevice
+ * This function is called क्रम every new tapedevice
  */
-int
-tapechar_setup_device(struct tape_device * device)
-{
-	char	device_name[20];
+पूर्णांक
+tapeअक्षर_setup_device(काष्ठा tape_device * device)
+अणु
+	अक्षर	device_name[20];
 
-	sprintf(device_name, "ntibm%i", device->first_minor / 2);
-	device->nt = register_tape_dev(
+	प्र_लिखो(device_name, "ntibm%i", device->first_minor / 2);
+	device->nt = रेजिस्टर_tape_dev(
 		&device->cdev->dev,
-		MKDEV(tapechar_major, device->first_minor),
+		MKDEV(tapeअक्षर_major, device->first_minor),
 		&tape_fops,
 		device_name,
 		"non-rewinding"
 	);
 	device_name[0] = 'r';
-	device->rt = register_tape_dev(
+	device->rt = रेजिस्टर_tape_dev(
 		&device->cdev->dev,
-		MKDEV(tapechar_major, device->first_minor + 1),
+		MKDEV(tapeअक्षर_major, device->first_minor + 1),
 		&tape_fops,
 		device_name,
 		"rewinding"
 	);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-tapechar_cleanup_device(struct tape_device *device)
-{
-	unregister_tape_dev(&device->cdev->dev, device->rt);
-	device->rt = NULL;
-	unregister_tape_dev(&device->cdev->dev, device->nt);
-	device->nt = NULL;
-}
+व्योम
+tapeअक्षर_cleanup_device(काष्ठा tape_device *device)
+अणु
+	unरेजिस्टर_tape_dev(&device->cdev->dev, device->rt);
+	device->rt = शून्य;
+	unरेजिस्टर_tape_dev(&device->cdev->dev, device->nt);
+	device->nt = शून्य;
+पूर्ण
 
-static int
-tapechar_check_idalbuffer(struct tape_device *device, size_t block_size)
-{
-	struct idal_buffer *new;
+अटल पूर्णांक
+tapeअक्षर_check_idalbuffer(काष्ठा tape_device *device, माप_प्रकार block_size)
+अणु
+	काष्ठा idal_buffer *new;
 
-	if (device->char_data.idal_buf != NULL &&
-	    device->char_data.idal_buf->size == block_size)
-		return 0;
+	अगर (device->अक्षर_data.idal_buf != शून्य &&
+	    device->अक्षर_data.idal_buf->size == block_size)
+		वापस 0;
 
-	if (block_size > MAX_BLOCKSIZE) {
+	अगर (block_size > MAX_BLOCKSIZE) अणु
 		DBF_EVENT(3, "Invalid blocksize (%zd > %d)\n",
 			block_size, MAX_BLOCKSIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* The current idal buffer is not correct. Allocate a new one. */
 	new = idal_buffer_alloc(block_size, 0);
-	if (IS_ERR(new))
-		return -ENOMEM;
+	अगर (IS_ERR(new))
+		वापस -ENOMEM;
 
-	if (device->char_data.idal_buf != NULL)
-		idal_buffer_free(device->char_data.idal_buf);
+	अगर (device->अक्षर_data.idal_buf != शून्य)
+		idal_buffer_मुक्त(device->अक्षर_data.idal_buf);
 
-	device->char_data.idal_buf = new;
+	device->अक्षर_data.idal_buf = new;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Tape device read function
+ * Tape device पढ़ो function
  */
-static ssize_t
-tapechar_read(struct file *filp, char __user *data, size_t count, loff_t *ppos)
-{
-	struct tape_device *device;
-	struct tape_request *request;
-	size_t block_size;
-	int rc;
+अटल sमाप_प्रकार
+tapeअक्षर_पढ़ो(काष्ठा file *filp, अक्षर __user *data, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा tape_device *device;
+	काष्ठा tape_request *request;
+	माप_प्रकार block_size;
+	पूर्णांक rc;
 
 	DBF_EVENT(6, "TCHAR:read\n");
-	device = (struct tape_device *) filp->private_data;
+	device = (काष्ठा tape_device *) filp->निजी_data;
 
 	/*
-	 * If the tape isn't terminated yet, do it now. And since we then
-	 * are at the end of the tape there wouldn't be anything to read
-	 * anyways. So we return immediately.
+	 * If the tape isn't terminated yet, करो it now. And since we then
+	 * are at the end of the tape there wouldn't be anything to पढ़ो
+	 * anyways. So we वापस immediately.
 	 */
-	if(device->required_tapemarks) {
-		return tape_std_terminate_write(device);
-	}
+	अगर(device->required_tapemarks) अणु
+		वापस tape_std_terminate_ग_लिखो(device);
+	पूर्ण
 
 	/* Find out block size to use */
-	if (device->char_data.block_size != 0) {
-		if (count < device->char_data.block_size) {
+	अगर (device->अक्षर_data.block_size != 0) अणु
+		अगर (count < device->अक्षर_data.block_size) अणु
 			DBF_EVENT(3, "TCHAR:read smaller than block "
 				  "size was requested\n");
-			return -EINVAL;
-		}
-		block_size = device->char_data.block_size;
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+		block_size = device->अक्षर_data.block_size;
+	पूर्ण अन्यथा अणु
 		block_size = count;
-	}
+	पूर्ण
 
-	rc = tapechar_check_idalbuffer(device, block_size);
-	if (rc)
-		return rc;
+	rc = tapeअक्षर_check_idalbuffer(device, block_size);
+	अगर (rc)
+		वापस rc;
 
 	DBF_EVENT(6, "TCHAR:nbytes: %lx\n", block_size);
 	/* Let the discipline build the ccw chain. */
-	request = device->discipline->read_block(device, block_size);
-	if (IS_ERR(request))
-		return PTR_ERR(request);
+	request = device->discipline->पढ़ो_block(device, block_size);
+	अगर (IS_ERR(request))
+		वापस PTR_ERR(request);
 	/* Execute it. */
-	rc = tape_do_io(device, request);
-	if (rc == 0) {
+	rc = tape_करो_io(device, request);
+	अगर (rc == 0) अणु
 		rc = block_size - request->rescnt;
 		DBF_EVENT(6, "TCHAR:rbytes:  %x\n", rc);
 		/* Copy data from idal buffer to user space. */
-		if (idal_buffer_to_user(device->char_data.idal_buf,
+		अगर (idal_buffer_to_user(device->अक्षर_data.idal_buf,
 					data, rc) != 0)
 			rc = -EFAULT;
-	}
-	tape_free_request(request);
-	return rc;
-}
+	पूर्ण
+	tape_मुक्त_request(request);
+	वापस rc;
+पूर्ण
 
 /*
- * Tape device write function
+ * Tape device ग_लिखो function
  */
-static ssize_t
-tapechar_write(struct file *filp, const char __user *data, size_t count, loff_t *ppos)
-{
-	struct tape_device *device;
-	struct tape_request *request;
-	size_t block_size;
-	size_t written;
-	int nblocks;
-	int i, rc;
+अटल sमाप_प्रकार
+tapeअक्षर_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *data, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा tape_device *device;
+	काष्ठा tape_request *request;
+	माप_प्रकार block_size;
+	माप_प्रकार written;
+	पूर्णांक nblocks;
+	पूर्णांक i, rc;
 
 	DBF_EVENT(6, "TCHAR:write\n");
-	device = (struct tape_device *) filp->private_data;
+	device = (काष्ठा tape_device *) filp->निजी_data;
 	/* Find out block size and number of blocks */
-	if (device->char_data.block_size != 0) {
-		if (count < device->char_data.block_size) {
+	अगर (device->अक्षर_data.block_size != 0) अणु
+		अगर (count < device->अक्षर_data.block_size) अणु
 			DBF_EVENT(3, "TCHAR:write smaller than block "
 				  "size was requested\n");
-			return -EINVAL;
-		}
-		block_size = device->char_data.block_size;
+			वापस -EINVAL;
+		पूर्ण
+		block_size = device->अक्षर_data.block_size;
 		nblocks = count / block_size;
-	} else {
+	पूर्ण अन्यथा अणु
 		block_size = count;
 		nblocks = 1;
-	}
+	पूर्ण
 
-	rc = tapechar_check_idalbuffer(device, block_size);
-	if (rc)
-		return rc;
+	rc = tapeअक्षर_check_idalbuffer(device, block_size);
+	अगर (rc)
+		वापस rc;
 
 	DBF_EVENT(6,"TCHAR:nbytes: %lx\n", block_size);
 	DBF_EVENT(6, "TCHAR:nblocks: %x\n", nblocks);
 	/* Let the discipline build the ccw chain. */
-	request = device->discipline->write_block(device, block_size);
-	if (IS_ERR(request))
-		return PTR_ERR(request);
+	request = device->discipline->ग_लिखो_block(device, block_size);
+	अगर (IS_ERR(request))
+		वापस PTR_ERR(request);
 	rc = 0;
 	written = 0;
-	for (i = 0; i < nblocks; i++) {
+	क्रम (i = 0; i < nblocks; i++) अणु
 		/* Copy data from user space to idal buffer. */
-		if (idal_buffer_from_user(device->char_data.idal_buf,
-					  data, block_size)) {
+		अगर (idal_buffer_from_user(device->अक्षर_data.idal_buf,
+					  data, block_size)) अणु
 			rc = -EFAULT;
-			break;
-		}
-		rc = tape_do_io(device, request);
-		if (rc)
-			break;
+			अवरोध;
+		पूर्ण
+		rc = tape_करो_io(device, request);
+		अगर (rc)
+			अवरोध;
 		DBF_EVENT(6, "TCHAR:wbytes: %lx\n",
 			  block_size - request->rescnt);
 		written += block_size - request->rescnt;
-		if (request->rescnt != 0)
-			break;
+		अगर (request->rescnt != 0)
+			अवरोध;
 		data += block_size;
-	}
-	tape_free_request(request);
-	if (rc == -ENOSPC) {
+	पूर्ण
+	tape_मुक्त_request(request);
+	अगर (rc == -ENOSPC) अणु
 		/*
 		 * Ok, the device has no more space. It has NOT written
 		 * the block.
 		 */
-		if (device->discipline->process_eov)
+		अगर (device->discipline->process_eov)
 			device->discipline->process_eov(device);
-		if (written > 0)
+		अगर (written > 0)
 			rc = 0;
 
-	}
+	पूर्ण
 
 	/*
-	 * After doing a write we always need two tapemarks to correctly
+	 * After करोing a ग_लिखो we always need two tapemarks to correctly
 	 * terminate the tape (one to terminate the file, the second to
 	 * flag the end of recorded data.
 	 * Since process_eov positions the tape in front of the written
-	 * tapemark it doesn't hurt to write two marks again.
+	 * tapemark it करोesn't hurt to ग_लिखो two marks again.
 	 */
-	if (!rc)
+	अगर (!rc)
 		device->required_tapemarks = 2;
 
-	return rc ? rc : written;
-}
+	वापस rc ? rc : written;
+पूर्ण
 
 /*
- * Character frontend tape device open function.
+ * Character frontend tape device खोलो function.
  */
-static int
-tapechar_open (struct inode *inode, struct file *filp)
-{
-	struct tape_device *device;
-	int minor, rc;
+अटल पूर्णांक
+tapeअक्षर_खोलो (काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा tape_device *device;
+	पूर्णांक minor, rc;
 
 	DBF_EVENT(6, "TCHAR:open: %i:%i\n",
 		imajor(file_inode(filp)),
 		iminor(file_inode(filp)));
 
-	if (imajor(file_inode(filp)) != tapechar_major)
-		return -ENODEV;
+	अगर (imajor(file_inode(filp)) != tapeअक्षर_major)
+		वापस -ENODEV;
 
 	minor = iminor(file_inode(filp));
 	device = tape_find_device(minor / TAPE_MINORS_PER_DEV);
-	if (IS_ERR(device)) {
+	अगर (IS_ERR(device)) अणु
 		DBF_EVENT(3, "TCHAR:open: tape_find_device() failed\n");
-		return PTR_ERR(device);
-	}
+		वापस PTR_ERR(device);
+	पूर्ण
 
-	rc = tape_open(device);
-	if (rc == 0) {
-		filp->private_data = device;
-		stream_open(inode, filp);
-	} else
+	rc = tape_खोलो(device);
+	अगर (rc == 0) अणु
+		filp->निजी_data = device;
+		stream_खोलो(inode, filp);
+	पूर्ण अन्यथा
 		tape_put_device(device);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * Character frontend tape device release function.
  */
 
-static int
-tapechar_release(struct inode *inode, struct file *filp)
-{
-	struct tape_device *device;
+अटल पूर्णांक
+tapeअक्षर_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा tape_device *device;
 
 	DBF_EVENT(6, "TCHAR:release: %x\n", iminor(inode));
-	device = (struct tape_device *) filp->private_data;
+	device = (काष्ठा tape_device *) filp->निजी_data;
 
 	/*
-	 * If this is the rewinding tape minor then rewind. In that case we
-	 * write all required tapemarks. Otherwise only one to terminate the
+	 * If this is the शुरुआतing tape minor then शुरुआत. In that हाल we
+	 * ग_लिखो all required tapemarks. Otherwise only one to terminate the
 	 * file.
 	 */
-	if ((iminor(inode) & 1) != 0) {
-		if (device->required_tapemarks)
-			tape_std_terminate_write(device);
+	अगर ((iminor(inode) & 1) != 0) अणु
+		अगर (device->required_tapemarks)
+			tape_std_terminate_ग_लिखो(device);
 		tape_mtop(device, MTREW, 1);
-	} else {
-		if (device->required_tapemarks > 1) {
-			if (tape_mtop(device, MTWEOF, 1) == 0)
+	पूर्ण अन्यथा अणु
+		अगर (device->required_tapemarks > 1) अणु
+			अगर (tape_mtop(device, MTWखातापूर्ण, 1) == 0)
 				device->required_tapemarks--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (device->char_data.idal_buf != NULL) {
-		idal_buffer_free(device->char_data.idal_buf);
-		device->char_data.idal_buf = NULL;
-	}
+	अगर (device->अक्षर_data.idal_buf != शून्य) अणु
+		idal_buffer_मुक्त(device->अक्षर_data.idal_buf);
+		device->अक्षर_data.idal_buf = शून्य;
+	पूर्ण
 	tape_release(device);
-	filp->private_data = NULL;
+	filp->निजी_data = शून्य;
 	tape_put_device(device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Tape device io controls.
  */
-static int
-__tapechar_ioctl(struct tape_device *device,
-		 unsigned int no, void __user *data)
-{
-	int rc;
+अटल पूर्णांक
+__tapeअक्षर_ioctl(काष्ठा tape_device *device,
+		 अचिन्हित पूर्णांक no, व्योम __user *data)
+अणु
+	पूर्णांक rc;
 
-	if (no == MTIOCTOP) {
-		struct mtop op;
+	अगर (no == MTIOCTOP) अणु
+		काष्ठा mtop op;
 
-		if (copy_from_user(&op, data, sizeof(op)) != 0)
-			return -EFAULT;
-		if (op.mt_count < 0)
-			return -EINVAL;
+		अगर (copy_from_user(&op, data, माप(op)) != 0)
+			वापस -EFAULT;
+		अगर (op.mt_count < 0)
+			वापस -EINVAL;
 
 		/*
-		 * Operations that change tape position should write final
+		 * Operations that change tape position should ग_लिखो final
 		 * tapemarks.
 		 */
-		switch (op.mt_op) {
-			case MTFSF:
-			case MTBSF:
-			case MTFSR:
-			case MTBSR:
-			case MTREW:
-			case MTOFFL:
-			case MTEOM:
-			case MTRETEN:
-			case MTBSFM:
-			case MTFSFM:
-			case MTSEEK:
-				if (device->required_tapemarks)
-					tape_std_terminate_write(device);
-			default:
+		चयन (op.mt_op) अणु
+			हाल MTFSF:
+			हाल MTBSF:
+			हाल MTFSR:
+			हाल MTBSR:
+			हाल MTREW:
+			हाल MTOFFL:
+			हाल MTEOM:
+			हाल MTRETEN:
+			हाल MTBSFM:
+			हाल MTFSFM:
+			हाल MTSEEK:
+				अगर (device->required_tapemarks)
+					tape_std_terminate_ग_लिखो(device);
+			शेष:
 				;
-		}
+		पूर्ण
 		rc = tape_mtop(device, op.mt_op, op.mt_count);
 
-		if (op.mt_op == MTWEOF && rc == 0) {
-			if (op.mt_count > device->required_tapemarks)
+		अगर (op.mt_op == MTWखातापूर्ण && rc == 0) अणु
+			अगर (op.mt_count > device->required_tapemarks)
 				device->required_tapemarks = 0;
-			else
+			अन्यथा
 				device->required_tapemarks -= op.mt_count;
-		}
-		return rc;
-	}
-	if (no == MTIOCPOS) {
+		पूर्ण
+		वापस rc;
+	पूर्ण
+	अगर (no == MTIOCPOS) अणु
 		/* MTIOCPOS: query the tape position. */
-		struct mtpos pos;
+		काष्ठा mtpos pos;
 
 		rc = tape_mtop(device, MTTELL, 1);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		pos.mt_blkno = rc;
-		return put_user_mtpos(data, &pos);
-	}
-	if (no == MTIOCGET) {
+		वापस put_user_mtpos(data, &pos);
+	पूर्ण
+	अगर (no == MTIOCGET) अणु
 		/* MTIOCGET: query the tape drive status. */
-		struct mtget get;
+		काष्ठा mtget get;
 
-		memset(&get, 0, sizeof(get));
+		स_रखो(&get, 0, माप(get));
 		get.mt_type = MT_ISUNKNOWN;
 		get.mt_resid = 0 /* device->devstat.rescnt */;
 		get.mt_dsreg =
-			((device->char_data.block_size << MT_ST_BLKSIZE_SHIFT)
+			((device->अक्षर_data.block_size << MT_ST_BLKSIZE_SHIFT)
 			 & MT_ST_BLKSIZE_MASK);
 		/* FIXME: mt_gstat, mt_erreg, mt_fileno */
 		get.mt_gstat = 0;
@@ -410,81 +411,81 @@ __tapechar_ioctl(struct tape_device *device,
 		get.mt_fileno = 0;
 		get.mt_gstat  = device->tape_generic_status;
 
-		if (device->medium_state == MS_LOADED) {
+		अगर (device->medium_state == MS_LOADED) अणु
 			rc = tape_mtop(device, MTTELL, 1);
 
-			if (rc < 0)
-				return rc;
+			अगर (rc < 0)
+				वापस rc;
 
-			if (rc == 0)
+			अगर (rc == 0)
 				get.mt_gstat |= GMT_BOT(~0);
 
 			get.mt_blkno = rc;
-		}
+		पूर्ण
 
-		return put_user_mtget(data, &get);
-	}
+		वापस put_user_mtget(data, &get);
+	पूर्ण
 	/* Try the discipline ioctl function. */
-	if (device->discipline->ioctl_fn == NULL)
-		return -EINVAL;
-	return device->discipline->ioctl_fn(device, no, (unsigned long)data);
-}
+	अगर (device->discipline->ioctl_fn == शून्य)
+		वापस -EINVAL;
+	वापस device->discipline->ioctl_fn(device, no, (अचिन्हित दीर्घ)data);
+पूर्ण
 
-static long
-tapechar_ioctl(struct file *filp, unsigned int no, unsigned long data)
-{
-	struct tape_device *device;
-	long rc;
+अटल दीर्घ
+tapeअक्षर_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक no, अचिन्हित दीर्घ data)
+अणु
+	काष्ठा tape_device *device;
+	दीर्घ rc;
 
 	DBF_EVENT(6, "TCHAR:ioct\n");
 
-	device = (struct tape_device *) filp->private_data;
+	device = (काष्ठा tape_device *) filp->निजी_data;
 	mutex_lock(&device->mutex);
-	rc = __tapechar_ioctl(device, no, (void __user *)data);
+	rc = __tapeअक्षर_ioctl(device, no, (व्योम __user *)data);
 	mutex_unlock(&device->mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long
-tapechar_compat_ioctl(struct file *filp, unsigned int no, unsigned long data)
-{
-	struct tape_device *device = filp->private_data;
-	long rc;
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ
+tapeअक्षर_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक no, अचिन्हित दीर्घ data)
+अणु
+	काष्ठा tape_device *device = filp->निजी_data;
+	दीर्घ rc;
 
-	if (no == MTIOCPOS32)
+	अगर (no == MTIOCPOS32)
 		no = MTIOCPOS;
-	else if (no == MTIOCGET32)
+	अन्यथा अगर (no == MTIOCGET32)
 		no = MTIOCGET;
 
 	mutex_lock(&device->mutex);
-	rc = __tapechar_ioctl(device, no, compat_ptr(data));
+	rc = __tapeअक्षर_ioctl(device, no, compat_ptr(data));
 	mutex_unlock(&device->mutex);
-	return rc;
-}
-#endif /* CONFIG_COMPAT */
+	वापस rc;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
 /*
- * Initialize character device frontend.
+ * Initialize अक्षरacter device frontend.
  */
-int
-tapechar_init (void)
-{
+पूर्णांक
+tapeअक्षर_init (व्योम)
+अणु
 	dev_t	dev;
 
-	if (alloc_chrdev_region(&dev, 0, 256, "tape") != 0)
-		return -1;
+	अगर (alloc_chrdev_region(&dev, 0, 256, "tape") != 0)
+		वापस -1;
 
-	tapechar_major = MAJOR(dev);
+	tapeअक्षर_major = MAJOR(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * cleanup
  */
-void
-tapechar_exit(void)
-{
-	unregister_chrdev_region(MKDEV(tapechar_major, 0), 256);
-}
+व्योम
+tapeअक्षर_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(MKDEV(tapeअक्षर_major, 0), 256);
+पूर्ण

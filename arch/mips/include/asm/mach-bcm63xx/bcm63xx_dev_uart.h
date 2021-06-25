@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_DEV_UART_H_
-#define BCM63XX_DEV_UART_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_DEV_UART_H_
+#घोषणा BCM63XX_DEV_UART_H_
 
-int bcm63xx_uart_register(unsigned int id);
+पूर्णांक bcm63xx_uart_रेजिस्टर(अचिन्हित पूर्णांक id);
 
-#endif /* BCM63XX_DEV_UART_H_ */
+#पूर्ण_अगर /* BCM63XX_DEV_UART_H_ */

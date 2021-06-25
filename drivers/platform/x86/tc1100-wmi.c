@@ -1,265 +1,266 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  HP Compaq TC1100 Tablet WMI Extras Driver
  *
  *  Copyright (C) 2007 Carlos Corbacho <carlos@strangeworlds.co.uk>
  *  Copyright (C) 2004 Jamey Hicks <jamey.hicks@hp.com>
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/acpi.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define GUID "C364AC71-36DB-495A-8494-B439D472A505"
+#घोषणा GUID "C364AC71-36DB-495A-8494-B439D472A505"
 
-#define TC1100_INSTANCE_WIRELESS		1
-#define TC1100_INSTANCE_JOGDIAL		2
+#घोषणा TC1100_INSTANCE_WIRELESS		1
+#घोषणा TC1100_INSTANCE_JOGDIAL		2
 
 MODULE_AUTHOR("Jamey Hicks, Carlos Corbacho");
 MODULE_DESCRIPTION("HP Compaq TC1100 Tablet WMI Extras");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("wmi:C364AC71-36DB-495A-8494-B439D472A505");
 
-static struct platform_device *tc1100_device;
+अटल काष्ठा platक्रमm_device *tc1100_device;
 
-struct tc1100_data {
+काष्ठा tc1100_data अणु
 	u32 wireless;
 	u32 jogdial;
-};
+पूर्ण;
 
-#ifdef CONFIG_PM
-static struct tc1100_data suspend_data;
-#endif
+#अगर_घोषित CONFIG_PM
+अटल काष्ठा tc1100_data suspend_data;
+#पूर्ण_अगर
 
 /* --------------------------------------------------------------------------
 				Device Management
    -------------------------------------------------------------------------- */
 
-static int get_state(u32 *out, u8 instance)
-{
-	u32 tmp;
+अटल पूर्णांक get_state(u32 *out, u8 instance)
+अणु
+	u32 पंचांगp;
 	acpi_status status;
-	struct acpi_buffer result = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj;
+	काष्ठा acpi_buffer result = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj;
 
-	if (!out)
-		return -EINVAL;
+	अगर (!out)
+		वापस -EINVAL;
 
-	if (instance > 2)
-		return -ENODEV;
+	अगर (instance > 2)
+		वापस -ENODEV;
 
 	status = wmi_query_block(GUID, instance, &result);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	obj = (union acpi_object *) result.pointer;
-	if (obj && obj->type == ACPI_TYPE_INTEGER) {
-		tmp = obj->integer.value;
-	} else {
-		tmp = 0;
-	}
+	obj = (जोड़ acpi_object *) result.poपूर्णांकer;
+	अगर (obj && obj->type == ACPI_TYPE_INTEGER) अणु
+		पंचांगp = obj->पूर्णांकeger.value;
+	पूर्ण अन्यथा अणु
+		पंचांगp = 0;
+	पूर्ण
 
-	if (result.length > 0)
-		kfree(result.pointer);
+	अगर (result.length > 0)
+		kमुक्त(result.poपूर्णांकer);
 
-	switch (instance) {
-	case TC1100_INSTANCE_WIRELESS:
-		*out = (tmp == 3) ? 1 : 0;
-		return 0;
-	case TC1100_INSTANCE_JOGDIAL:
-		*out = (tmp == 1) ? 0 : 1;
-		return 0;
-	default:
-		return -ENODEV;
-	}
-}
+	चयन (instance) अणु
+	हाल TC1100_INSTANCE_WIRELESS:
+		*out = (पंचांगp == 3) ? 1 : 0;
+		वापस 0;
+	हाल TC1100_INSTANCE_JOGDIAL:
+		*out = (पंचांगp == 1) ? 0 : 1;
+		वापस 0;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
-static int set_state(u32 *in, u8 instance)
-{
+अटल पूर्णांक set_state(u32 *in, u8 instance)
+अणु
 	u32 value;
 	acpi_status status;
-	struct acpi_buffer input;
+	काष्ठा acpi_buffer input;
 
-	if (!in)
-		return -EINVAL;
+	अगर (!in)
+		वापस -EINVAL;
 
-	if (instance > 2)
-		return -ENODEV;
+	अगर (instance > 2)
+		वापस -ENODEV;
 
-	switch (instance) {
-	case TC1100_INSTANCE_WIRELESS:
+	चयन (instance) अणु
+	हाल TC1100_INSTANCE_WIRELESS:
 		value = (*in) ? 1 : 2;
-		break;
-	case TC1100_INSTANCE_JOGDIAL:
+		अवरोध;
+	हाल TC1100_INSTANCE_JOGDIAL:
 		value = (*in) ? 0 : 1;
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
-	input.length = sizeof(u32);
-	input.pointer = &value;
+	input.length = माप(u32);
+	input.poपूर्णांकer = &value;
 
 	status = wmi_set_block(GUID, instance, &input);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --------------------------------------------------------------------------
 				FS Interface (/sys)
    -------------------------------------------------------------------------- */
 
 /*
- * Read/ write bool sysfs macro
+ * Read/ ग_लिखो bool sysfs macro
  */
-#define show_set_bool(value, instance) \
-static ssize_t \
-show_bool_##value(struct device *dev, struct device_attribute *attr, \
-	char *buf) \
-{ \
+#घोषणा show_set_bool(value, instance) \
+अटल sमाप_प्रकार \
+show_bool_##value(काष्ठा device *dev, काष्ठा device_attribute *attr, \
+	अक्षर *buf) \
+अणु \
 	u32 result; \
 	acpi_status status = get_state(&result, instance); \
-	if (ACPI_SUCCESS(status)) \
-		return sprintf(buf, "%d\n", result); \
-	return sprintf(buf, "Read error\n"); \
-} \
+	अगर (ACPI_SUCCESS(status)) \
+		वापस प्र_लिखो(buf, "%d\n", result); \
+	वापस प्र_लिखो(buf, "Read error\n"); \
+पूर्ण \
 \
-static ssize_t \
-set_bool_##value(struct device *dev, struct device_attribute *attr, \
-	const char *buf, size_t count) \
-{ \
-	u32 tmp = simple_strtoul(buf, NULL, 10); \
-	acpi_status status = set_state(&tmp, instance); \
-		if (ACPI_FAILURE(status)) \
-			return -EINVAL; \
-	return count; \
-} \
-static DEVICE_ATTR(value, S_IRUGO | S_IWUSR, \
+अटल sमाप_प्रकार \
+set_bool_##value(काष्ठा device *dev, काष्ठा device_attribute *attr, \
+	स्थिर अक्षर *buf, माप_प्रकार count) \
+अणु \
+	u32 पंचांगp = simple_म_से_अदीर्घ(buf, शून्य, 10); \
+	acpi_status status = set_state(&पंचांगp, instance); \
+		अगर (ACPI_FAILURE(status)) \
+			वापस -EINVAL; \
+	वापस count; \
+पूर्ण \
+अटल DEVICE_ATTR(value, S_IRUGO | S_IWUSR, \
 	show_bool_##value, set_bool_##value);
 
 show_set_bool(wireless, TC1100_INSTANCE_WIRELESS);
 show_set_bool(jogdial, TC1100_INSTANCE_JOGDIAL);
 
-static struct attribute *tc1100_attributes[] = {
+अटल काष्ठा attribute *tc1100_attributes[] = अणु
 	&dev_attr_wireless.attr,
 	&dev_attr_jogdial.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group tc1100_attribute_group = {
+अटल काष्ठा attribute_group tc1100_attribute_group = अणु
 	.attrs	= tc1100_attributes,
-};
+पूर्ण;
 
 /* --------------------------------------------------------------------------
 				Driver Model
    -------------------------------------------------------------------------- */
 
-static int __init tc1100_probe(struct platform_device *device)
-{
-	return sysfs_create_group(&device->dev.kobj, &tc1100_attribute_group);
-}
+अटल पूर्णांक __init tc1100_probe(काष्ठा platक्रमm_device *device)
+अणु
+	वापस sysfs_create_group(&device->dev.kobj, &tc1100_attribute_group);
+पूर्ण
 
 
-static int tc1100_remove(struct platform_device *device)
-{
-	sysfs_remove_group(&device->dev.kobj, &tc1100_attribute_group);
+अटल पूर्णांक tc1100_हटाओ(काष्ठा platक्रमm_device *device)
+अणु
+	sysfs_हटाओ_group(&device->dev.kobj, &tc1100_attribute_group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int tc1100_suspend(struct device *dev)
-{
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक tc1100_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = get_state(&suspend_data.wireless, TC1100_INSTANCE_WIRELESS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = get_state(&suspend_data.jogdial, TC1100_INSTANCE_JOGDIAL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tc1100_resume(struct device *dev)
-{
-	int ret;
+अटल पूर्णांक tc1100_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = set_state(&suspend_data.wireless, TC1100_INSTANCE_WIRELESS);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = set_state(&suspend_data.jogdial, TC1100_INSTANCE_JOGDIAL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops tc1100_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops tc1100_pm_ops = अणु
 	.suspend	= tc1100_suspend,
 	.resume		= tc1100_resume,
-	.freeze		= tc1100_suspend,
+	.मुक्तze		= tc1100_suspend,
 	.restore	= tc1100_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct platform_driver tc1100_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tc1100_driver = अणु
+	.driver = अणु
 		.name = "tc1100-wmi",
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 		.pm = &tc1100_pm_ops,
-#endif
-	},
-	.remove = tc1100_remove,
-};
+#पूर्ण_अगर
+	पूर्ण,
+	.हटाओ = tc1100_हटाओ,
+पूर्ण;
 
-static int __init tc1100_init(void)
-{
-	int error;
+अटल पूर्णांक __init tc1100_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!wmi_has_guid(GUID))
-		return -ENODEV;
+	अगर (!wmi_has_guid(GUID))
+		वापस -ENODEV;
 
-	tc1100_device = platform_device_alloc("tc1100-wmi", -1);
-	if (!tc1100_device)
-		return -ENOMEM;
+	tc1100_device = platक्रमm_device_alloc("tc1100-wmi", -1);
+	अगर (!tc1100_device)
+		वापस -ENOMEM;
 
-	error = platform_device_add(tc1100_device);
-	if (error)
-		goto err_device_put;
+	error = platक्रमm_device_add(tc1100_device);
+	अगर (error)
+		जाओ err_device_put;
 
-	error = platform_driver_probe(&tc1100_driver, tc1100_probe);
-	if (error)
-		goto err_device_del;
+	error = platक्रमm_driver_probe(&tc1100_driver, tc1100_probe);
+	अगर (error)
+		जाओ err_device_del;
 
 	pr_info("HP Compaq TC1100 Tablet WMI Extras loaded\n");
-	return 0;
+	वापस 0;
 
  err_device_del:
-	platform_device_del(tc1100_device);
+	platक्रमm_device_del(tc1100_device);
  err_device_put:
-	platform_device_put(tc1100_device);
-	return error;
-}
+	platक्रमm_device_put(tc1100_device);
+	वापस error;
+पूर्ण
 
-static void __exit tc1100_exit(void)
-{
-	platform_device_unregister(tc1100_device);
-	platform_driver_unregister(&tc1100_driver);
-}
+अटल व्योम __निकास tc1100_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(tc1100_device);
+	platक्रमm_driver_unरेजिस्टर(&tc1100_driver);
+पूर्ण
 
 module_init(tc1100_init);
-module_exit(tc1100_exit);
+module_निकास(tc1100_निकास);

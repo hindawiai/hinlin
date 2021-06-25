@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * omap_vout_vrfb.h
  *
@@ -9,32 +10,32 @@
  *
  */
 
-#ifndef OMAP_VOUT_VRFB_H
-#define OMAP_VOUT_VRFB_H
+#अगर_अघोषित OMAP_VOUT_VRFB_H
+#घोषणा OMAP_VOUT_VRFB_H
 
-#ifdef CONFIG_VIDEO_OMAP2_VOUT_VRFB
-void omap_vout_free_vrfb_buffers(struct omap_vout_device *vout);
-int omap_vout_setup_vrfb_bufs(struct platform_device *pdev, int vid_num,
-			bool static_vrfb_allocation);
-void omap_vout_release_vrfb(struct omap_vout_device *vout);
-int omap_vout_vrfb_buffer_setup(struct omap_vout_device *vout,
-			unsigned int *count, unsigned int startindex);
-int omap_vout_prepare_vrfb(struct omap_vout_device *vout,
-			struct vb2_buffer *vb);
-void omap_vout_calculate_vrfb_offset(struct omap_vout_device *vout);
-#else
-static inline void omap_vout_free_vrfb_buffers(struct omap_vout_device *vout) { };
-static inline int omap_vout_setup_vrfb_bufs(struct platform_device *pdev, int vid_num,
-			bool static_vrfb_allocation)
-		{ return 0; };
-static inline void omap_vout_release_vrfb(struct omap_vout_device *vout) { };
-static inline int omap_vout_vrfb_buffer_setup(struct omap_vout_device *vout,
-			unsigned int *count, unsigned int startindex)
-		{ return 0; };
-static inline int omap_vout_prepare_vrfb(struct omap_vout_device *vout,
-			struct vb2_buffer *vb)
-		{ return 0; };
-static inline void omap_vout_calculate_vrfb_offset(struct omap_vout_device *vout) { };
-#endif
+#अगर_घोषित CONFIG_VIDEO_OMAP2_VOUT_VRFB
+व्योम omap_vout_मुक्त_vrfb_buffers(काष्ठा omap_vout_device *vout);
+पूर्णांक omap_vout_setup_vrfb_bufs(काष्ठा platक्रमm_device *pdev, पूर्णांक vid_num,
+			bool अटल_vrfb_allocation);
+व्योम omap_vout_release_vrfb(काष्ठा omap_vout_device *vout);
+पूर्णांक omap_vout_vrfb_buffer_setup(काष्ठा omap_vout_device *vout,
+			अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक startindex);
+पूर्णांक omap_vout_prepare_vrfb(काष्ठा omap_vout_device *vout,
+			काष्ठा vb2_buffer *vb);
+व्योम omap_vout_calculate_vrfb_offset(काष्ठा omap_vout_device *vout);
+#अन्यथा
+अटल अंतरभूत व्योम omap_vout_मुक्त_vrfb_buffers(काष्ठा omap_vout_device *vout) अणु पूर्ण;
+अटल अंतरभूत पूर्णांक omap_vout_setup_vrfb_bufs(काष्ठा platक्रमm_device *pdev, पूर्णांक vid_num,
+			bool अटल_vrfb_allocation)
+		अणु वापस 0; पूर्ण;
+अटल अंतरभूत व्योम omap_vout_release_vrfb(काष्ठा omap_vout_device *vout) अणु पूर्ण;
+अटल अंतरभूत पूर्णांक omap_vout_vrfb_buffer_setup(काष्ठा omap_vout_device *vout,
+			अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक startindex)
+		अणु वापस 0; पूर्ण;
+अटल अंतरभूत पूर्णांक omap_vout_prepare_vrfb(काष्ठा omap_vout_device *vout,
+			काष्ठा vb2_buffer *vb)
+		अणु वापस 0; पूर्ण;
+अटल अंतरभूत व्योम omap_vout_calculate_vrfb_offset(काष्ठा omap_vout_device *vout) अणु पूर्ण;
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

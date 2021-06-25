@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright 2009 VMware, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,99 +21,99 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Michel Dänzer
+ * Authors: Michel Dथअnzer
  */
 
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#include "amdgpu_uvd.h"
-#include "amdgpu_vce.h"
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_uvd.h"
+#समावेश "amdgpu_vce.h"
 
 /* Test BO GTT->VRAM and VRAM->GTT GPU copies across the whole GTT aperture */
-static void amdgpu_do_test_moves(struct amdgpu_device *adev)
-{
-	struct amdgpu_ring *ring = adev->mman.buffer_funcs_ring;
-	struct amdgpu_bo *vram_obj = NULL;
-	struct amdgpu_bo **gtt_obj = NULL;
-	struct amdgpu_bo_param bp;
-	uint64_t gart_addr, vram_addr;
-	unsigned n, size;
-	int i, r;
+अटल व्योम amdgpu_करो_test_moves(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ring *ring = adev->mman.buffer_funcs_ring;
+	काष्ठा amdgpu_bo *vram_obj = शून्य;
+	काष्ठा amdgpu_bo **gtt_obj = शून्य;
+	काष्ठा amdgpu_bo_param bp;
+	uपूर्णांक64_t gart_addr, vram_addr;
+	अचिन्हित n, size;
+	पूर्णांक i, r;
 
 	size = 1024 * 1024;
 
 	/* Number of tests =
-	 * (Total GTT - gart_pin_size - (2 transfer windows for buffer moves)) / test size
+	 * (Total GTT - gart_pin_size - (2 transfer winकरोws क्रम buffer moves)) / test size
 	 */
-	n = adev->gmc.gart_size - atomic64_read(&adev->gart_pin_size);
+	n = adev->gmc.gart_size - atomic64_पढ़ो(&adev->gart_pin_size);
 	n -= AMDGPU_GTT_MAX_TRANSFER_SIZE * AMDGPU_GTT_NUM_TRANSFER_WINDOWS *
 		AMDGPU_GPU_PAGE_SIZE;
 	n /= size;
 
-	gtt_obj = kcalloc(n, sizeof(*gtt_obj), GFP_KERNEL);
-	if (!gtt_obj) {
+	gtt_obj = kसुस्मृति(n, माप(*gtt_obj), GFP_KERNEL);
+	अगर (!gtt_obj) अणु
 		DRM_ERROR("Failed to allocate %d pointers\n", n);
 		r = 1;
-		goto out_cleanup;
-	}
-	memset(&bp, 0, sizeof(bp));
+		जाओ out_cleanup;
+	पूर्ण
+	स_रखो(&bp, 0, माप(bp));
 	bp.size = size;
 	bp.byte_align = PAGE_SIZE;
-	bp.domain = AMDGPU_GEM_DOMAIN_VRAM;
+	bp.करोमुख्य = AMDGPU_GEM_DOMAIN_VRAM;
 	bp.flags = 0;
-	bp.type = ttm_bo_type_kernel;
-	bp.resv = NULL;
-	bp.bo_ptr_size = sizeof(struct amdgpu_bo);
+	bp.type = tपंचांग_bo_type_kernel;
+	bp.resv = शून्य;
+	bp.bo_ptr_size = माप(काष्ठा amdgpu_bo);
 
 	r = amdgpu_bo_create(adev, &bp, &vram_obj);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to create VRAM object\n");
-		goto out_cleanup;
-	}
+		जाओ out_cleanup;
+	पूर्ण
 	r = amdgpu_bo_reserve(vram_obj, false);
-	if (unlikely(r != 0))
-		goto out_unref;
+	अगर (unlikely(r != 0))
+		जाओ out_unref;
 	r = amdgpu_bo_pin(vram_obj, AMDGPU_GEM_DOMAIN_VRAM);
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("Failed to pin VRAM object\n");
-		goto out_unres;
-	}
+		जाओ out_unres;
+	पूर्ण
 	vram_addr = amdgpu_bo_gpu_offset(vram_obj);
-	for (i = 0; i < n; i++) {
-		void *gtt_map, *vram_map;
-		void **gart_start, **gart_end;
-		void **vram_start, **vram_end;
-		struct dma_fence *fence = NULL;
+	क्रम (i = 0; i < n; i++) अणु
+		व्योम *gtt_map, *vram_map;
+		व्योम **gart_start, **gart_end;
+		व्योम **vram_start, **vram_end;
+		काष्ठा dma_fence *fence = शून्य;
 
-		bp.domain = AMDGPU_GEM_DOMAIN_GTT;
+		bp.करोमुख्य = AMDGPU_GEM_DOMAIN_GTT;
 		r = amdgpu_bo_create(adev, &bp, gtt_obj + i);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to create GTT object %d\n", i);
-			goto out_lclean;
-		}
+			जाओ out_lclean;
+		पूर्ण
 
 		r = amdgpu_bo_reserve(gtt_obj[i], false);
-		if (unlikely(r != 0))
-			goto out_lclean_unref;
+		अगर (unlikely(r != 0))
+			जाओ out_lclean_unref;
 		r = amdgpu_bo_pin(gtt_obj[i], AMDGPU_GEM_DOMAIN_GTT);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to pin GTT object %d\n", i);
-			goto out_lclean_unres;
-		}
-		r = amdgpu_ttm_alloc_gart(&gtt_obj[i]->tbo);
-		if (r) {
+			जाओ out_lclean_unres;
+		पूर्ण
+		r = amdgpu_tपंचांग_alloc_gart(&gtt_obj[i]->tbo);
+		अगर (r) अणु
 			DRM_ERROR("%p bind failed\n", gtt_obj[i]);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 		gart_addr = amdgpu_bo_gpu_offset(gtt_obj[i]);
 
 		r = amdgpu_bo_kmap(gtt_obj[i], &gtt_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map GTT object %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gart_start = gtt_map, gart_end = gtt_map + size;
+		क्रम (gart_start = gtt_map, gart_end = gtt_map + size;
 		     gart_start < gart_end;
 		     gart_start++)
 			*gart_start = gart_start;
@@ -120,99 +121,99 @@ static void amdgpu_do_test_moves(struct amdgpu_device *adev)
 		amdgpu_bo_kunmap(gtt_obj[i]);
 
 		r = amdgpu_copy_buffer(ring, gart_addr, vram_addr,
-				       size, NULL, &fence, false, false, false);
+				       size, शून्य, &fence, false, false, false);
 
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed GTT->VRAM copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		r = dma_fence_wait(fence, false);
-		if (r) {
+		r = dma_fence_रुको(fence, false);
+		अगर (r) अणु
 			DRM_ERROR("Failed to wait for GTT->VRAM fence %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
 		dma_fence_put(fence);
-		fence = NULL;
+		fence = शून्य;
 
 		r = amdgpu_bo_kmap(vram_obj, &vram_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map VRAM object after copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gart_start = gtt_map, gart_end = gtt_map + size,
+		क्रम (gart_start = gtt_map, gart_end = gtt_map + size,
 		     vram_start = vram_map, vram_end = vram_map + size;
 		     vram_start < vram_end;
-		     gart_start++, vram_start++) {
-			if (*vram_start != gart_start) {
+		     gart_start++, vram_start++) अणु
+			अगर (*vram_start != gart_start) अणु
 				DRM_ERROR("Incorrect GTT->VRAM copy %d: Got 0x%p, "
 					  "expected 0x%p (GTT/VRAM offset "
 					  "0x%16llx/0x%16llx)\n",
 					  i, *vram_start, gart_start,
-					  (unsigned long long)
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (gart_addr - adev->gmc.gart_start +
-					   (void *)gart_start - gtt_map),
-					  (unsigned long long)
+					   (व्योम *)gart_start - gtt_map),
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (vram_addr - adev->gmc.vram_start +
-					   (void *)gart_start - gtt_map));
+					   (व्योम *)gart_start - gtt_map));
 				amdgpu_bo_kunmap(vram_obj);
-				goto out_lclean_unpin;
-			}
+				जाओ out_lclean_unpin;
+			पूर्ण
 			*vram_start = vram_start;
-		}
+		पूर्ण
 
 		amdgpu_bo_kunmap(vram_obj);
 
 		r = amdgpu_copy_buffer(ring, vram_addr, gart_addr,
-				       size, NULL, &fence, false, false, false);
+				       size, शून्य, &fence, false, false, false);
 
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed VRAM->GTT copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		r = dma_fence_wait(fence, false);
-		if (r) {
+		r = dma_fence_रुको(fence, false);
+		अगर (r) अणु
 			DRM_ERROR("Failed to wait for VRAM->GTT fence %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
 		dma_fence_put(fence);
-		fence = NULL;
+		fence = शून्य;
 
 		r = amdgpu_bo_kmap(gtt_obj[i], &gtt_map);
-		if (r) {
+		अगर (r) अणु
 			DRM_ERROR("Failed to map GTT object after copy %d\n", i);
-			goto out_lclean_unpin;
-		}
+			जाओ out_lclean_unpin;
+		पूर्ण
 
-		for (gart_start = gtt_map, gart_end = gtt_map + size,
+		क्रम (gart_start = gtt_map, gart_end = gtt_map + size,
 		     vram_start = vram_map, vram_end = vram_map + size;
 		     gart_start < gart_end;
-		     gart_start++, vram_start++) {
-			if (*gart_start != vram_start) {
+		     gart_start++, vram_start++) अणु
+			अगर (*gart_start != vram_start) अणु
 				DRM_ERROR("Incorrect VRAM->GTT copy %d: Got 0x%p, "
 					  "expected 0x%p (VRAM/GTT offset "
 					  "0x%16llx/0x%16llx)\n",
 					  i, *gart_start, vram_start,
-					  (unsigned long long)
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (vram_addr - adev->gmc.vram_start +
-					   (void *)vram_start - vram_map),
-					  (unsigned long long)
+					   (व्योम *)vram_start - vram_map),
+					  (अचिन्हित दीर्घ दीर्घ)
 					  (gart_addr - adev->gmc.gart_start +
-					   (void *)vram_start - vram_map));
+					   (व्योम *)vram_start - vram_map));
 				amdgpu_bo_kunmap(gtt_obj[i]);
-				goto out_lclean_unpin;
-			}
-		}
+				जाओ out_lclean_unpin;
+			पूर्ण
+		पूर्ण
 
 		amdgpu_bo_kunmap(gtt_obj[i]);
 
 		DRM_INFO("Tested GTT->VRAM and VRAM->GTT copy for GTT offset 0x%llx\n",
 			 gart_addr - adev->gmc.gart_start);
-		continue;
+		जारी;
 
 out_lclean_unpin:
 		amdgpu_bo_unpin(gtt_obj[i]);
@@ -221,15 +222,15 @@ out_lclean_unres:
 out_lclean_unref:
 		amdgpu_bo_unref(&gtt_obj[i]);
 out_lclean:
-		for (--i; i >= 0; --i) {
+		क्रम (--i; i >= 0; --i) अणु
 			amdgpu_bo_unpin(gtt_obj[i]);
 			amdgpu_bo_unreserve(gtt_obj[i]);
 			amdgpu_bo_unref(&gtt_obj[i]);
-		}
-		if (fence)
+		पूर्ण
+		अगर (fence)
 			dma_fence_put(fence);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	amdgpu_bo_unpin(vram_obj);
 out_unres:
@@ -237,14 +238,14 @@ out_unres:
 out_unref:
 	amdgpu_bo_unref(&vram_obj);
 out_cleanup:
-	kfree(gtt_obj);
-	if (r) {
+	kमुक्त(gtt_obj);
+	अगर (r) अणु
 		pr_warn("Error while testing BO move\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void amdgpu_test_moves(struct amdgpu_device *adev)
-{
-	if (adev->mman.buffer_funcs)
-		amdgpu_do_test_moves(adev);
-}
+व्योम amdgpu_test_moves(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->mman.buffer_funcs)
+		amdgpu_करो_test_moves(adev);
+पूर्ण

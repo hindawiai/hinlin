@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * cifs_unicode:  Unicode kernel case support
+ * cअगरs_unicode:  Unicode kernel हाल support
  *
  * Function:
- *     Convert a unicode character to upper or lower case using
+ *     Convert a unicode अक्षरacter to upper or lower हाल using
  *     compressed tables.
  *
  *   Copyright (c) International Business Machines  Corp., 2000,2009
  *
  * Notes:
  *     These APIs are based on the C library functions.  The semantics
- *     should match the C functions but with expanded size operands.
+ *     should match the C functions but with expanded size opeअक्रमs.
  *
  *     The upper/lower functions are based on a table created by mkupr.
- *     This is a compressed table of upper and lower case conversion.
+ *     This is a compressed table of upper and lower हाल conversion.
  */
-#ifndef _CIFS_UNICODE_H
-#define _CIFS_UNICODE_H
+#अगर_अघोषित _CIFS_UNICODE_H
+#घोषणा _CIFS_UNICODE_H
 
-#include <asm/byteorder.h>
-#include <linux/types.h>
-#include <linux/nls.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/types.h>
+#समावेश <linux/nls.h>
 
-#define  UNIUPR_NOLOWER		/* Example to not expand lower case tables */
+#घोषणा  UNIUPR_NOLOWER		/* Example to not expand lower हाल tables */
 
 /*
- * Windows maps these to the user defined 16 bit Unicode range since they are
- * reserved symbols (along with \ and /), otherwise illegal to store
+ * Winकरोws maps these to the user defined 16 bit Unicode range since they are
+ * reserved symbols (aदीर्घ with \ and /), otherwise illegal to store
  * in filenames in NTFS
  */
-#define UNI_ASTERISK    (__u16) ('*' + 0xF000)
-#define UNI_QUESTION    (__u16) ('?' + 0xF000)
-#define UNI_COLON       (__u16) (':' + 0xF000)
-#define UNI_GRTRTHAN    (__u16) ('>' + 0xF000)
-#define UNI_LESSTHAN    (__u16) ('<' + 0xF000)
-#define UNI_PIPE        (__u16) ('|' + 0xF000)
-#define UNI_SLASH       (__u16) ('\\' + 0xF000)
+#घोषणा UNI_ASTERISK    (__u16) ('*' + 0xF000)
+#घोषणा UNI_QUESTION    (__u16) ('?' + 0xF000)
+#घोषणा UNI_COLON       (__u16) (':' + 0xF000)
+#घोषणा UNI_GRTRTHAN    (__u16) ('>' + 0xF000)
+#घोषणा UNI_LESSTHAN    (__u16) ('<' + 0xF000)
+#घोषणा UNI_PIPE        (__u16) ('|' + 0xF000)
+#घोषणा UNI_SLASH       (__u16) ('\\' + 0xF000)
 
 /*
- * Macs use an older "SFM" mapping of the symbols above. Fortunately it does
- * not conflict (although almost does) with the mapping above.
+ * Macs use an older "SFM" mapping of the symbols above. Fortunately it करोes
+ * not conflict (although almost करोes) with the mapping above.
  */
 
-#define SFM_DOUBLEQUOTE ((__u16) 0xF020)
-#define SFM_ASTERISK    ((__u16) 0xF021)
-#define SFM_QUESTION    ((__u16) 0xF025)
-#define SFM_COLON       ((__u16) 0xF022)
-#define SFM_GRTRTHAN    ((__u16) 0xF024)
-#define SFM_LESSTHAN    ((__u16) 0xF023)
-#define SFM_PIPE        ((__u16) 0xF027)
-#define SFM_SLASH       ((__u16) 0xF026)
-#define SFM_SPACE	((__u16) 0xF028)
-#define SFM_PERIOD	((__u16) 0xF029)
+#घोषणा SFM_DOUBLEQUOTE ((__u16) 0xF020)
+#घोषणा SFM_ASTERISK    ((__u16) 0xF021)
+#घोषणा SFM_QUESTION    ((__u16) 0xF025)
+#घोषणा SFM_COLON       ((__u16) 0xF022)
+#घोषणा SFM_GRTRTHAN    ((__u16) 0xF024)
+#घोषणा SFM_LESSTHAN    ((__u16) 0xF023)
+#घोषणा SFM_PIPE        ((__u16) 0xF027)
+#घोषणा SFM_SLASH       ((__u16) 0xF026)
+#घोषणा SFM_SPACE	((__u16) 0xF028)
+#घोषणा SFM_PERIOD	((__u16) 0xF029)
 
 /*
- * Mapping mechanism to use when one of the seven reserved characters is
- * encountered.  We can only map using one of the mechanisms at a time
- * since otherwise readdir could return directory entries which we would
- * not be able to open
+ * Mapping mechanism to use when one of the seven reserved अक्षरacters is
+ * encountered.  We can only map using one of the mechanisms at a समय
+ * since otherwise सूची_पढ़ो could वापस directory entries which we would
+ * not be able to खोलो
  *
- * NO_MAP_UNI_RSVD  = do not perform any remapping of the character
- * SFM_MAP_UNI_RSVD = map reserved characters using SFM scheme (MAC compatible)
- * SFU_MAP_UNI_RSVD = map reserved characters ala SFU ("mapchars" option)
+ * NO_MAP_UNI_RSVD  = करो not perक्रमm any remapping of the अक्षरacter
+ * SFM_MAP_UNI_RSVD = map reserved अक्षरacters using SFM scheme (MAC compatible)
+ * SFU_MAP_UNI_RSVD = map reserved अक्षरacters ala SFU ("mapchars" option)
  *
  */
-#define NO_MAP_UNI_RSVD		0
-#define SFM_MAP_UNI_RSVD	1
-#define SFU_MAP_UNI_RSVD	2
+#घोषणा NO_MAP_UNI_RSVD		0
+#घोषणा SFM_MAP_UNI_RSVD	1
+#घोषणा SFU_MAP_UNI_RSVD	2
 
-/* Just define what we want from uniupr.h.  We don't want to define the tables
+/* Just define what we want from uniupr.h.  We करोn't want to define the tables
  * in each source file.
  */
-#ifndef	UNICASERANGE_DEFINED
-struct UniCaseRange {
-	wchar_t start;
-	wchar_t end;
-	signed char *table;
-};
-#endif				/* UNICASERANGE_DEFINED */
+#अगर_अघोषित	UNICASदुस्फल_DEFINED
+काष्ठा UniCaseRange अणु
+	ब_अक्षर_प्रकार start;
+	ब_अक्षर_प्रकार end;
+	चिन्हित अक्षर *table;
+पूर्ण;
+#पूर्ण_अगर				/* UNICASदुस्फल_DEFINED */
 
-#ifndef UNIUPR_NOUPPER
-extern signed char CifsUniUpperTable[512];
-extern const struct UniCaseRange CifsUniUpperRange[];
-#endif				/* UNIUPR_NOUPPER */
+#अगर_अघोषित UNIUPR_NOUPPER
+बाह्य चिन्हित अक्षर CअगरsUniUpperTable[512];
+बाह्य स्थिर काष्ठा UniCaseRange CअगरsUniUpperRange[];
+#पूर्ण_अगर				/* UNIUPR_NOUPPER */
 
-#ifndef UNIUPR_NOLOWER
-extern signed char CifsUniLowerTable[512];
-extern const struct UniCaseRange CifsUniLowerRange[];
-#endif				/* UNIUPR_NOLOWER */
+#अगर_अघोषित UNIUPR_NOLOWER
+बाह्य चिन्हित अक्षर CअगरsUniLowerTable[512];
+बाह्य स्थिर काष्ठा UniCaseRange CअगरsUniLowerRange[];
+#पूर्ण_अगर				/* UNIUPR_NOLOWER */
 
-#ifdef __KERNEL__
-int cifs_from_utf16(char *to, const __le16 *from, int tolen, int fromlen,
-		    const struct nls_table *cp, int map_type);
-int cifs_utf16_bytes(const __le16 *from, int maxbytes,
-		     const struct nls_table *codepage);
-int cifs_strtoUTF16(__le16 *, const char *, int, const struct nls_table *);
-char *cifs_strndup_from_utf16(const char *src, const int maxlen,
-			      const bool is_unicode,
-			      const struct nls_table *codepage);
-extern int cifsConvertToUTF16(__le16 *target, const char *source, int maxlen,
-			      const struct nls_table *cp, int mapChars);
-extern int cifs_remap(struct cifs_sb_info *cifs_sb);
-extern __le16 *cifs_strndup_to_utf16(const char *src, const int maxlen,
-				     int *utf16_len, const struct nls_table *cp,
-				     int remap);
-#endif
+#अगर_घोषित __KERNEL__
+पूर्णांक cअगरs_from_utf16(अक्षर *to, स्थिर __le16 *from, पूर्णांक tolen, पूर्णांक fromlen,
+		    स्थिर काष्ठा nls_table *cp, पूर्णांक map_type);
+पूर्णांक cअगरs_utf16_bytes(स्थिर __le16 *from, पूर्णांक maxbytes,
+		     स्थिर काष्ठा nls_table *codepage);
+पूर्णांक cअगरs_strtoUTF16(__le16 *, स्थिर अक्षर *, पूर्णांक, स्थिर काष्ठा nls_table *);
+अक्षर *cअगरs_strndup_from_utf16(स्थिर अक्षर *src, स्थिर पूर्णांक maxlen,
+			      स्थिर bool is_unicode,
+			      स्थिर काष्ठा nls_table *codepage);
+बाह्य पूर्णांक cअगरsConvertToUTF16(__le16 *target, स्थिर अक्षर *source, पूर्णांक maxlen,
+			      स्थिर काष्ठा nls_table *cp, पूर्णांक mapChars);
+बाह्य पूर्णांक cअगरs_remap(काष्ठा cअगरs_sb_info *cअगरs_sb);
+बाह्य __le16 *cअगरs_strndup_to_utf16(स्थिर अक्षर *src, स्थिर पूर्णांक maxlen,
+				     पूर्णांक *utf16_len, स्थिर काष्ठा nls_table *cp,
+				     पूर्णांक remap);
+#पूर्ण_अगर
 
-wchar_t cifs_toupper(wchar_t in);
+ब_अक्षर_प्रकार cअगरs_बड़े(ब_अक्षर_प्रकार in);
 
 /*
  * UniStrcat:  Concatenate the second string to the first
@@ -114,34 +115,34 @@ wchar_t cifs_toupper(wchar_t in);
  * Returns:
  *     Address of the first string
  */
-static inline __le16 *
-UniStrcat(__le16 *ucs1, const __le16 *ucs2)
-{
-	__le16 *anchor = ucs1;	/* save a pointer to start of ucs1 */
+अटल अंतरभूत __le16 *
+UniStrcat(__le16 *ucs1, स्थिर __le16 *ucs2)
+अणु
+	__le16 *anchor = ucs1;	/* save a poपूर्णांकer to start of ucs1 */
 
-	while (*ucs1++) ;	/* To end of first string */
+	जबतक (*ucs1++) ;	/* To end of first string */
 	ucs1--;			/* Return to the null */
-	while ((*ucs1++ = *ucs2++)) ;	/* copy string 2 over */
-	return anchor;
-}
+	जबतक ((*ucs1++ = *ucs2++)) ;	/* copy string 2 over */
+	वापस anchor;
+पूर्ण
 
 /*
- * UniStrchr:  Find a character in a string
+ * UniStrchr:  Find a अक्षरacter in a string
  *
  * Returns:
- *     Address of first occurrence of character in string
- *     or NULL if the character is not in the string
+ *     Address of first occurrence of अक्षरacter in string
+ *     or शून्य अगर the अक्षरacter is not in the string
  */
-static inline wchar_t *
-UniStrchr(const wchar_t *ucs, wchar_t uc)
-{
-	while ((*ucs != uc) && *ucs)
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrchr(स्थिर ब_अक्षर_प्रकार *ucs, ब_अक्षर_प्रकार uc)
+अणु
+	जबतक ((*ucs != uc) && *ucs)
 		ucs++;
 
-	if (*ucs == uc)
-		return (wchar_t *) ucs;
-	return NULL;
-}
+	अगर (*ucs == uc)
+		वापस (ब_अक्षर_प्रकार *) ucs;
+	वापस शून्य;
+पूर्ण
 
 /*
  * UniStrcmp:  Compare two strings
@@ -151,254 +152,254 @@ UniStrchr(const wchar_t *ucs, wchar_t uc)
  *     = 0:  Strings are equal
  *     > 0:  First string is greater than second
  */
-static inline int
-UniStrcmp(const wchar_t *ucs1, const wchar_t *ucs2)
-{
-	while ((*ucs1 == *ucs2) && *ucs1) {
+अटल अंतरभूत पूर्णांक
+UniStrcmp(स्थिर ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2)
+अणु
+	जबतक ((*ucs1 == *ucs2) && *ucs1) अणु
 		ucs1++;
 		ucs2++;
-	}
-	return (int) *ucs1 - (int) *ucs2;
-}
+	पूर्ण
+	वापस (पूर्णांक) *ucs1 - (पूर्णांक) *ucs2;
+पूर्ण
 
 /*
  * UniStrcpy:  Copy a string
  */
-static inline wchar_t *
-UniStrcpy(wchar_t *ucs1, const wchar_t *ucs2)
-{
-	wchar_t *anchor = ucs1;	/* save the start of result string */
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrcpy(ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;	/* save the start of result string */
 
-	while ((*ucs1++ = *ucs2++)) ;
-	return anchor;
-}
+	जबतक ((*ucs1++ = *ucs2++)) ;
+	वापस anchor;
+पूर्ण
 
 /*
- * UniStrlen:  Return the length of a string (in 16 bit Unicode chars not bytes)
+ * UniStrlen:  Return the length of a string (in 16 bit Unicode अक्षरs not bytes)
  */
-static inline size_t
-UniStrlen(const wchar_t *ucs1)
-{
-	int i = 0;
+अटल अंतरभूत माप_प्रकार
+UniStrlen(स्थिर ब_अक्षर_प्रकार *ucs1)
+अणु
+	पूर्णांक i = 0;
 
-	while (*ucs1++)
+	जबतक (*ucs1++)
 		i++;
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
- * UniStrnlen:  Return the length (in 16 bit Unicode chars not bytes) of a
+ * UniStrnlen:  Return the length (in 16 bit Unicode अक्षरs not bytes) of a
  *		string (length limited)
  */
-static inline size_t
-UniStrnlen(const wchar_t *ucs1, int maxlen)
-{
-	int i = 0;
+अटल अंतरभूत माप_प्रकार
+UniStrnlen(स्थिर ब_अक्षर_प्रकार *ucs1, पूर्णांक maxlen)
+अणु
+	पूर्णांक i = 0;
 
-	while (*ucs1++) {
+	जबतक (*ucs1++) अणु
 		i++;
-		if (i >= maxlen)
-			break;
-	}
-	return i;
-}
+		अगर (i >= maxlen)
+			अवरोध;
+	पूर्ण
+	वापस i;
+पूर्ण
 
 /*
  * UniStrncat:  Concatenate length limited string
  */
-static inline wchar_t *
-UniStrncat(wchar_t *ucs1, const wchar_t *ucs2, size_t n)
-{
-	wchar_t *anchor = ucs1;	/* save pointer to string 1 */
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrncat(ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2, माप_प्रकार n)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;	/* save poपूर्णांकer to string 1 */
 
-	while (*ucs1++) ;
-	ucs1--;			/* point to null terminator of s1 */
-	while (n-- && (*ucs1 = *ucs2)) {	/* copy s2 after s1 */
+	जबतक (*ucs1++) ;
+	ucs1--;			/* poपूर्णांक to null terminator of s1 */
+	जबतक (n-- && (*ucs1 = *ucs2)) अणु	/* copy s2 after s1 */
 		ucs1++;
 		ucs2++;
-	}
+	पूर्ण
 	*ucs1 = 0;		/* Null terminate the result */
-	return (anchor);
-}
+	वापस (anchor);
+पूर्ण
 
 /*
  * UniStrncmp:  Compare length limited string
  */
-static inline int
-UniStrncmp(const wchar_t *ucs1, const wchar_t *ucs2, size_t n)
-{
-	if (!n)
-		return 0;	/* Null strings are equal */
-	while ((*ucs1 == *ucs2) && *ucs1 && --n) {
+अटल अंतरभूत पूर्णांक
+UniStrncmp(स्थिर ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2, माप_प्रकार n)
+अणु
+	अगर (!n)
+		वापस 0;	/* Null strings are equal */
+	जबतक ((*ucs1 == *ucs2) && *ucs1 && --n) अणु
 		ucs1++;
 		ucs2++;
-	}
-	return (int) *ucs1 - (int) *ucs2;
-}
+	पूर्ण
+	वापस (पूर्णांक) *ucs1 - (पूर्णांक) *ucs2;
+पूर्ण
 
 /*
  * UniStrncmp_le:  Compare length limited string - native to little-endian
  */
-static inline int
-UniStrncmp_le(const wchar_t *ucs1, const wchar_t *ucs2, size_t n)
-{
-	if (!n)
-		return 0;	/* Null strings are equal */
-	while ((*ucs1 == __le16_to_cpu(*ucs2)) && *ucs1 && --n) {
+अटल अंतरभूत पूर्णांक
+UniStrncmp_le(स्थिर ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2, माप_प्रकार n)
+अणु
+	अगर (!n)
+		वापस 0;	/* Null strings are equal */
+	जबतक ((*ucs1 == __le16_to_cpu(*ucs2)) && *ucs1 && --n) अणु
 		ucs1++;
 		ucs2++;
-	}
-	return (int) *ucs1 - (int) __le16_to_cpu(*ucs2);
-}
+	पूर्ण
+	वापस (पूर्णांक) *ucs1 - (पूर्णांक) __le16_to_cpu(*ucs2);
+पूर्ण
 
 /*
  * UniStrncpy:  Copy length limited string with pad
  */
-static inline wchar_t *
-UniStrncpy(wchar_t *ucs1, const wchar_t *ucs2, size_t n)
-{
-	wchar_t *anchor = ucs1;
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrncpy(ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2, माप_प्रकार n)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;
 
-	while (n-- && *ucs2)	/* Copy the strings */
+	जबतक (n-- && *ucs2)	/* Copy the strings */
 		*ucs1++ = *ucs2++;
 
 	n++;
-	while (n--)		/* Pad with nulls */
+	जबतक (n--)		/* Pad with nulls */
 		*ucs1++ = 0;
-	return anchor;
-}
+	वापस anchor;
+पूर्ण
 
 /*
  * UniStrncpy_le:  Copy length limited string with pad to little-endian
  */
-static inline wchar_t *
-UniStrncpy_le(wchar_t *ucs1, const wchar_t *ucs2, size_t n)
-{
-	wchar_t *anchor = ucs1;
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrncpy_le(ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2, माप_प्रकार n)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;
 
-	while (n-- && *ucs2)	/* Copy the strings */
+	जबतक (n-- && *ucs2)	/* Copy the strings */
 		*ucs1++ = __le16_to_cpu(*ucs2++);
 
 	n++;
-	while (n--)		/* Pad with nulls */
+	जबतक (n--)		/* Pad with nulls */
 		*ucs1++ = 0;
-	return anchor;
-}
+	वापस anchor;
+पूर्ण
 
 /*
  * UniStrstr:  Find a string in a string
  *
  * Returns:
  *     Address of first match found
- *     NULL if no matching string is found
+ *     शून्य अगर no matching string is found
  */
-static inline wchar_t *
-UniStrstr(const wchar_t *ucs1, const wchar_t *ucs2)
-{
-	const wchar_t *anchor1 = ucs1;
-	const wchar_t *anchor2 = ucs2;
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrstr(स्थिर ब_अक्षर_प्रकार *ucs1, स्थिर ब_अक्षर_प्रकार *ucs2)
+अणु
+	स्थिर ब_अक्षर_प्रकार *anchor1 = ucs1;
+	स्थिर ब_अक्षर_प्रकार *anchor2 = ucs2;
 
-	while (*ucs1) {
-		if (*ucs1 == *ucs2) {
+	जबतक (*ucs1) अणु
+		अगर (*ucs1 == *ucs2) अणु
 			/* Partial match found */
 			ucs1++;
 			ucs2++;
-		} else {
-			if (!*ucs2)	/* Match found */
-				return (wchar_t *) anchor1;
+		पूर्ण अन्यथा अणु
+			अगर (!*ucs2)	/* Match found */
+				वापस (ब_अक्षर_प्रकार *) anchor1;
 			ucs1 = ++anchor1;	/* No match */
 			ucs2 = anchor2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!*ucs2)		/* Both end together */
-		return (wchar_t *) anchor1;	/* Match found */
-	return NULL;		/* No match */
-}
+	अगर (!*ucs2)		/* Both end together */
+		वापस (ब_अक्षर_प्रकार *) anchor1;	/* Match found */
+	वापस शून्य;		/* No match */
+पूर्ण
 
-#ifndef UNIUPR_NOUPPER
+#अगर_अघोषित UNIUPR_NOUPPER
 /*
- * UniToupper:  Convert a unicode character to upper case
+ * UniToupper:  Convert a unicode अक्षरacter to upper हाल
  */
-static inline wchar_t
-UniToupper(register wchar_t uc)
-{
-	register const struct UniCaseRange *rp;
+अटल अंतरभूत ब_अक्षर_प्रकार
+UniToupper(रेजिस्टर ब_अक्षर_प्रकार uc)
+अणु
+	रेजिस्टर स्थिर काष्ठा UniCaseRange *rp;
 
-	if (uc < sizeof(CifsUniUpperTable)) {
-		/* Latin characters */
-		return uc + CifsUniUpperTable[uc];	/* Use base tables */
-	} else {
-		rp = CifsUniUpperRange;	/* Use range tables */
-		while (rp->start) {
-			if (uc < rp->start)	/* Before start of range */
-				return uc;	/* Uppercase = input */
-			if (uc <= rp->end)	/* In range */
-				return uc + rp->table[uc - rp->start];
+	अगर (uc < माप(CअगरsUniUpperTable)) अणु
+		/* Latin अक्षरacters */
+		वापस uc + CअगरsUniUpperTable[uc];	/* Use base tables */
+	पूर्ण अन्यथा अणु
+		rp = CअगरsUniUpperRange;	/* Use range tables */
+		जबतक (rp->start) अणु
+			अगर (uc < rp->start)	/* Beक्रमe start of range */
+				वापस uc;	/* Upperहाल = input */
+			अगर (uc <= rp->end)	/* In range */
+				वापस uc + rp->table[uc - rp->start];
 			rp++;	/* Try next range */
-		}
-	}
-	return uc;		/* Past last range */
-}
+		पूर्ण
+	पूर्ण
+	वापस uc;		/* Past last range */
+पूर्ण
 
 /*
- * UniStrupr:  Upper case a unicode string
+ * UniStrupr:  Upper हाल a unicode string
  */
-static inline __le16 *
-UniStrupr(register __le16 *upin)
-{
-	register __le16 *up;
+अटल अंतरभूत __le16 *
+UniStrupr(रेजिस्टर __le16 *upin)
+अणु
+	रेजिस्टर __le16 *up;
 
 	up = upin;
-	while (*up) {		/* For all characters */
+	जबतक (*up) अणु		/* For all अक्षरacters */
 		*up = cpu_to_le16(UniToupper(le16_to_cpu(*up)));
 		up++;
-	}
-	return upin;		/* Return input pointer */
-}
-#endif				/* UNIUPR_NOUPPER */
+	पूर्ण
+	वापस upin;		/* Return input poपूर्णांकer */
+पूर्ण
+#पूर्ण_अगर				/* UNIUPR_NOUPPER */
 
-#ifndef UNIUPR_NOLOWER
+#अगर_अघोषित UNIUPR_NOLOWER
 /*
- * UniTolower:  Convert a unicode character to lower case
+ * UniTolower:  Convert a unicode अक्षरacter to lower हाल
  */
-static inline wchar_t
-UniTolower(register wchar_t uc)
-{
-	register const struct UniCaseRange *rp;
+अटल अंतरभूत ब_अक्षर_प्रकार
+UniTolower(रेजिस्टर ब_अक्षर_प्रकार uc)
+अणु
+	रेजिस्टर स्थिर काष्ठा UniCaseRange *rp;
 
-	if (uc < sizeof(CifsUniLowerTable)) {
-		/* Latin characters */
-		return uc + CifsUniLowerTable[uc];	/* Use base tables */
-	} else {
-		rp = CifsUniLowerRange;	/* Use range tables */
-		while (rp->start) {
-			if (uc < rp->start)	/* Before start of range */
-				return uc;	/* Uppercase = input */
-			if (uc <= rp->end)	/* In range */
-				return uc + rp->table[uc - rp->start];
+	अगर (uc < माप(CअगरsUniLowerTable)) अणु
+		/* Latin अक्षरacters */
+		वापस uc + CअगरsUniLowerTable[uc];	/* Use base tables */
+	पूर्ण अन्यथा अणु
+		rp = CअगरsUniLowerRange;	/* Use range tables */
+		जबतक (rp->start) अणु
+			अगर (uc < rp->start)	/* Beक्रमe start of range */
+				वापस uc;	/* Upperहाल = input */
+			अगर (uc <= rp->end)	/* In range */
+				वापस uc + rp->table[uc - rp->start];
 			rp++;	/* Try next range */
-		}
-	}
-	return uc;		/* Past last range */
-}
+		पूर्ण
+	पूर्ण
+	वापस uc;		/* Past last range */
+पूर्ण
 
 /*
- * UniStrlwr:  Lower case a unicode string
+ * UniStrlwr:  Lower हाल a unicode string
  */
-static inline wchar_t *
-UniStrlwr(register wchar_t *upin)
-{
-	register wchar_t *up;
+अटल अंतरभूत ब_अक्षर_प्रकार *
+UniStrlwr(रेजिस्टर ब_अक्षर_प्रकार *upin)
+अणु
+	रेजिस्टर ब_अक्षर_प्रकार *up;
 
 	up = upin;
-	while (*up) {		/* For all characters */
+	जबतक (*up) अणु		/* For all अक्षरacters */
 		*up = UniTolower(*up);
 		up++;
-	}
-	return upin;		/* Return input pointer */
-}
+	पूर्ण
+	वापस upin;		/* Return input poपूर्णांकer */
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _CIFS_UNICODE_H */
+#पूर्ण_अगर /* _CIFS_UNICODE_H */

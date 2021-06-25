@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SuperH on-chip serial module support.  (SCI with no FIFO / with FIFO)
  *
  *  Copyright (C) 2002 - 2011  Paul Mundt
  *  Copyright (C) 2015 Glider bvba
- *  Modified to support SH7720 SCIF. Markus Brunner, Mark Jonas (Jul 2007).
+ *  Modअगरied to support SH7720 SCIF. Markus Brunner, Mark Jonas (Jul 2007).
  *
- * based off of the old drivers/char/sh-sci.c by:
+ * based off of the old drivers/अक्षर/sh-sci.c by:
  *
  *   Copyright (C) 1999, 2000  Niibe Yutaka
  *   Copyright (C) 2000  Sugioka Toshinobu
- *   Modified to support multiple serial ports. Stuart Menefy (May 2000).
- *   Modified to support SecureEdge. David McCullough (2002)
- *   Modified to support SH7300 SCIF. Takashi Kusuda (Jun 2003).
+ *   Modअगरied to support multiple serial ports. Stuart Menefy (May 2000).
+ *   Modअगरied to support SecureEdge. David McCullough (2002)
+ *   Modअगरied to support SH7300 SCIF. Takashi Kusuda (Jun 2003).
  *   Removed SH7300 support (Jul 2007).
  */
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/ctype.h>
-#include <linux/cpufreq.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/ktime.h>
-#include <linux/major.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/scatterlist.h>
-#include <linux/serial.h>
-#include <linux/serial_sci.h>
-#include <linux/sh_dma.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/sysrq.h>
-#include <linux/timer.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/major.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_sci.h>
+#समावेश <linux/sh_dma.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#ifdef CONFIG_SUPERH
-#include <asm/sh_bios.h>
-#include <asm/platform_early.h>
-#endif
+#अगर_घोषित CONFIG_SUPERH
+#समावेश <यंत्र/sh_मूलप्रण.स>
+#समावेश <यंत्र/platक्रमm_early.h>
+#पूर्ण_अगर
 
-#include "serial_mctrl_gpio.h"
-#include "sh-sci.h"
+#समावेश "serial_mctrl_gpio.h"
+#समावेश "sh-sci.h"
 
-/* Offsets into the sci_port->irqs array */
-enum {
+/* Offsets पूर्णांकo the sci_port->irqs array */
+क्रमागत अणु
 	SCIx_ERI_IRQ,
 	SCIx_RXI_IRQ,
 	SCIx_TXI_IRQ,
@@ -66,1121 +67,1121 @@ enum {
 	SCIx_TEI_IRQ,
 	SCIx_NR_IRQS,
 
-	SCIx_MUX_IRQ = SCIx_NR_IRQS,	/* special case */
-};
+	SCIx_MUX_IRQ = SCIx_NR_IRQS,	/* special हाल */
+पूर्ण;
 
-#define SCIx_IRQ_IS_MUXED(port)			\
+#घोषणा SCIx_IRQ_IS_MUXED(port)			\
 	((port)->irqs[SCIx_ERI_IRQ] ==	\
 	 (port)->irqs[SCIx_RXI_IRQ]) ||	\
 	((port)->irqs[SCIx_ERI_IRQ] &&	\
 	 ((port)->irqs[SCIx_RXI_IRQ] < 0))
 
-enum SCI_CLKS {
+क्रमागत SCI_CLKS अणु
 	SCI_FCK,		/* Functional Clock */
 	SCI_SCK,		/* Optional External Clock */
 	SCI_BRG_INT,		/* Optional BRG Internal Clock Source */
 	SCI_SCIF_CLK,		/* Optional BRG External Clock Source */
 	SCI_NUM_CLKS
-};
+पूर्ण;
 
 /* Bit x set means sampling rate x + 1 is supported */
-#define SCI_SR(x)		BIT((x) - 1)
-#define SCI_SR_RANGE(x, y)	GENMASK((y) - 1, (x) - 1)
+#घोषणा SCI_SR(x)		BIT((x) - 1)
+#घोषणा SCI_SR_RANGE(x, y)	GENMASK((y) - 1, (x) - 1)
 
-#define SCI_SR_SCIFAB		SCI_SR(5) | SCI_SR(7) | SCI_SR(11) | \
+#घोषणा SCI_SR_SCIFAB		SCI_SR(5) | SCI_SR(7) | SCI_SR(11) | \
 				SCI_SR(13) | SCI_SR(16) | SCI_SR(17) | \
 				SCI_SR(19) | SCI_SR(27)
 
-#define min_sr(_port)		ffs((_port)->sampling_rate_mask)
-#define max_sr(_port)		fls((_port)->sampling_rate_mask)
+#घोषणा min_sr(_port)		ffs((_port)->sampling_rate_mask)
+#घोषणा max_sr(_port)		fls((_port)->sampling_rate_mask)
 
 /* Iterate over all supported sampling rates, from high to low */
-#define for_each_sr(_sr, _port)						\
-	for ((_sr) = max_sr(_port); (_sr) >= min_sr(_port); (_sr)--)	\
-		if ((_port)->sampling_rate_mask & SCI_SR((_sr)))
+#घोषणा क्रम_each_sr(_sr, _port)						\
+	क्रम ((_sr) = max_sr(_port); (_sr) >= min_sr(_port); (_sr)--)	\
+		अगर ((_port)->sampling_rate_mask & SCI_SR((_sr)))
 
-struct plat_sci_reg {
+काष्ठा plat_sci_reg अणु
 	u8 offset, size;
-};
+पूर्ण;
 
-struct sci_port_params {
-	const struct plat_sci_reg regs[SCIx_NR_REGS];
-	unsigned int fifosize;
-	unsigned int overrun_reg;
-	unsigned int overrun_mask;
-	unsigned int sampling_rate_mask;
-	unsigned int error_mask;
-	unsigned int error_clear;
-};
+काष्ठा sci_port_params अणु
+	स्थिर काष्ठा plat_sci_reg regs[SCIx_NR_REGS];
+	अचिन्हित पूर्णांक fअगरosize;
+	अचिन्हित पूर्णांक overrun_reg;
+	अचिन्हित पूर्णांक overrun_mask;
+	अचिन्हित पूर्णांक sampling_rate_mask;
+	अचिन्हित पूर्णांक error_mask;
+	अचिन्हित पूर्णांक error_clear;
+पूर्ण;
 
-struct sci_port {
-	struct uart_port	port;
+काष्ठा sci_port अणु
+	काष्ठा uart_port	port;
 
-	/* Platform configuration */
-	const struct sci_port_params *params;
-	const struct plat_sci_port *cfg;
-	unsigned int		sampling_rate_mask;
-	resource_size_t		reg_size;
-	struct mctrl_gpios	*gpios;
+	/* Platक्रमm configuration */
+	स्थिर काष्ठा sci_port_params *params;
+	स्थिर काष्ठा plat_sci_port *cfg;
+	अचिन्हित पूर्णांक		sampling_rate_mask;
+	resource_माप_प्रकार		reg_size;
+	काष्ठा mctrl_gpios	*gpios;
 
 	/* Clocks */
-	struct clk		*clks[SCI_NUM_CLKS];
-	unsigned long		clk_rates[SCI_NUM_CLKS];
+	काष्ठा clk		*clks[SCI_NUM_CLKS];
+	अचिन्हित दीर्घ		clk_rates[SCI_NUM_CLKS];
 
-	int			irqs[SCIx_NR_IRQS];
-	char			*irqstr[SCIx_NR_IRQS];
+	पूर्णांक			irqs[SCIx_NR_IRQS];
+	अक्षर			*irqstr[SCIx_NR_IRQS];
 
-	struct dma_chan			*chan_tx;
-	struct dma_chan			*chan_rx;
+	काष्ठा dma_chan			*chan_tx;
+	काष्ठा dma_chan			*chan_rx;
 
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-	struct dma_chan			*chan_tx_saved;
-	struct dma_chan			*chan_rx_saved;
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+	काष्ठा dma_chan			*chan_tx_saved;
+	काष्ठा dma_chan			*chan_rx_saved;
 	dma_cookie_t			cookie_tx;
 	dma_cookie_t			cookie_rx[2];
 	dma_cookie_t			active_rx;
 	dma_addr_t			tx_dma_addr;
-	unsigned int			tx_dma_len;
-	struct scatterlist		sg_rx[2];
-	void				*rx_buf[2];
-	size_t				buf_len_rx;
-	struct work_struct		work_tx;
-	struct hrtimer			rx_timer;
-	unsigned int			rx_timeout;	/* microseconds */
-#endif
-	unsigned int			rx_frame;
-	int				rx_trigger;
-	struct timer_list		rx_fifo_timer;
-	int				rx_fifo_timeout;
-	u16				hscif_tot;
+	अचिन्हित पूर्णांक			tx_dma_len;
+	काष्ठा scatterlist		sg_rx[2];
+	व्योम				*rx_buf[2];
+	माप_प्रकार				buf_len_rx;
+	काष्ठा work_काष्ठा		work_tx;
+	काष्ठा hrसमयr			rx_समयr;
+	अचिन्हित पूर्णांक			rx_समयout;	/* microseconds */
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक			rx_frame;
+	पूर्णांक				rx_trigger;
+	काष्ठा समयr_list		rx_fअगरo_समयr;
+	पूर्णांक				rx_fअगरo_समयout;
+	u16				hscअगर_tot;
 
 	bool has_rtscts;
-	bool autorts;
-};
+	bool स्वतःrts;
+पूर्ण;
 
-#define SCI_NPORTS CONFIG_SERIAL_SH_SCI_NR_UARTS
+#घोषणा SCI_NPORTS CONFIG_SERIAL_SH_SCI_NR_UARTS
 
-static struct sci_port sci_ports[SCI_NPORTS];
-static unsigned long sci_ports_in_use;
-static struct uart_driver sci_uart_driver;
+अटल काष्ठा sci_port sci_ports[SCI_NPORTS];
+अटल अचिन्हित दीर्घ sci_ports_in_use;
+अटल काष्ठा uart_driver sci_uart_driver;
 
-static inline struct sci_port *
-to_sci_port(struct uart_port *uart)
-{
-	return container_of(uart, struct sci_port, port);
-}
+अटल अंतरभूत काष्ठा sci_port *
+to_sci_port(काष्ठा uart_port *uart)
+अणु
+	वापस container_of(uart, काष्ठा sci_port, port);
+पूर्ण
 
-static const struct sci_port_params sci_port_params[SCIx_NR_REGTYPES] = {
+अटल स्थिर काष्ठा sci_port_params sci_port_params[SCIx_NR_REGTYPES] = अणु
 	/*
-	 * Common SCI definitions, dependent on the port's regshift
+	 * Common SCI definitions, dependent on the port's regshअगरt
 	 * value.
 	 */
-	[SCIx_SCI_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00,  8 },
-			[SCBRR]		= { 0x01,  8 },
-			[SCSCR]		= { 0x02,  8 },
-			[SCxTDR]	= { 0x03,  8 },
-			[SCxSR]		= { 0x04,  8 },
-			[SCxRDR]	= { 0x05,  8 },
-		},
-		.fifosize = 1,
+	[SCIx_SCI_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00,  8 पूर्ण,
+			[SCBRR]		= अणु 0x01,  8 पूर्ण,
+			[SCSCR]		= अणु 0x02,  8 पूर्ण,
+			[SCxTDR]	= अणु 0x03,  8 पूर्ण,
+			[SCxSR]		= अणु 0x04,  8 पूर्ण,
+			[SCxRDR]	= अणु 0x05,  8 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 1,
 		.overrun_reg = SCxSR,
 		.overrun_mask = SCI_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCI_DEFAULT_ERROR_MASK | SCI_ORER,
 		.error_clear = SCI_ERROR_CLEAR & ~SCI_ORER,
-	},
+	पूर्ण,
 
 	/*
-	 * Common definitions for legacy IrDA ports.
+	 * Common definitions क्रम legacy IrDA ports.
 	 */
-	[SCIx_IRDA_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00,  8 },
-			[SCBRR]		= { 0x02,  8 },
-			[SCSCR]		= { 0x04,  8 },
-			[SCxTDR]	= { 0x06,  8 },
-			[SCxSR]		= { 0x08, 16 },
-			[SCxRDR]	= { 0x0a,  8 },
-			[SCFCR]		= { 0x0c,  8 },
-			[SCFDR]		= { 0x0e, 16 },
-		},
-		.fifosize = 1,
+	[SCIx_IRDA_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00,  8 पूर्ण,
+			[SCBRR]		= अणु 0x02,  8 पूर्ण,
+			[SCSCR]		= अणु 0x04,  8 पूर्ण,
+			[SCxTDR]	= अणु 0x06,  8 पूर्ण,
+			[SCxSR]		= अणु 0x08, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x0a,  8 पूर्ण,
+			[SCFCR]		= अणु 0x0c,  8 पूर्ण,
+			[SCFDR]		= अणु 0x0e, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 1,
 		.overrun_reg = SCxSR,
 		.overrun_mask = SCI_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCI_DEFAULT_ERROR_MASK | SCI_ORER,
 		.error_clear = SCI_ERROR_CLEAR & ~SCI_ORER,
-	},
+	पूर्ण,
 
 	/*
 	 * Common SCIFA definitions.
 	 */
-	[SCIx_SCIFA_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x20,  8 },
-			[SCxSR]		= { 0x14, 16 },
-			[SCxRDR]	= { 0x24,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCPCR]		= { 0x30, 16 },
-			[SCPDR]		= { 0x34, 16 },
-		},
-		.fifosize = 64,
+	[SCIx_SCIFA_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x20,  8 पूर्ण,
+			[SCxSR]		= अणु 0x14, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x24,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCPCR]		= अणु 0x30, 16 पूर्ण,
+			[SCPDR]		= अणु 0x34, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 64,
 		.overrun_reg = SCxSR,
 		.overrun_mask = SCIFA_ORER,
 		.sampling_rate_mask = SCI_SR_SCIFAB,
 		.error_mask = SCIF_DEFAULT_ERROR_MASK | SCIFA_ORER,
 		.error_clear = SCIF_ERROR_CLEAR & ~SCIFA_ORER,
-	},
+	पूर्ण,
 
 	/*
 	 * Common SCIFB definitions.
 	 */
-	[SCIx_SCIFB_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x40,  8 },
-			[SCxSR]		= { 0x14, 16 },
-			[SCxRDR]	= { 0x60,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCTFDR]	= { 0x38, 16 },
-			[SCRFDR]	= { 0x3c, 16 },
-			[SCPCR]		= { 0x30, 16 },
-			[SCPDR]		= { 0x34, 16 },
-		},
-		.fifosize = 256,
+	[SCIx_SCIFB_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x40,  8 पूर्ण,
+			[SCxSR]		= अणु 0x14, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x60,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCTFDR]	= अणु 0x38, 16 पूर्ण,
+			[SCRFDR]	= अणु 0x3c, 16 पूर्ण,
+			[SCPCR]		= अणु 0x30, 16 पूर्ण,
+			[SCPDR]		= अणु 0x34, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 256,
 		.overrun_reg = SCxSR,
 		.overrun_mask = SCIFA_ORER,
 		.sampling_rate_mask = SCI_SR_SCIFAB,
 		.error_mask = SCIF_DEFAULT_ERROR_MASK | SCIFA_ORER,
 		.error_clear = SCIF_ERROR_CLEAR & ~SCIFA_ORER,
-	},
+	पूर्ण,
 
 	/*
-	 * Common SH-2(A) SCIF definitions for ports with FIFO data
-	 * count registers.
+	 * Common SH-2(A) SCIF definitions क्रम ports with FIFO data
+	 * count रेजिस्टरs.
 	 */
-	[SCIx_SH2_SCIF_FIFODATA_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCSPTR]	= { 0x20, 16 },
-			[SCLSR]		= { 0x24, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH2_SCIF_FIFODATA_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x20, 16 पूर्ण,
+			[SCLSR]		= अणु 0x24, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
 	 * The "SCIFA" that is in RZ/T and RZ/A2.
 	 * It looks like a normal SCIF with FIFO data, but with a
-	 * compressed address space. Also, the break out of interrupts
-	 * are different: ERI/BRI, RXI, TXI, TEI, DRI.
+	 * compressed address space. Also, the अवरोध out of पूर्णांकerrupts
+	 * are dअगरferent: ERI/BRI, RXI, TXI, TEI, DRI.
 	 */
-	[SCIx_RZ_SCIFA_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x02,  8 },
-			[SCSCR]		= { 0x04, 16 },
-			[SCxTDR]	= { 0x06,  8 },
-			[SCxSR]		= { 0x08, 16 },
-			[SCxRDR]	= { 0x0A,  8 },
-			[SCFCR]		= { 0x0C, 16 },
-			[SCFDR]		= { 0x0E, 16 },
-			[SCSPTR]	= { 0x10, 16 },
-			[SCLSR]		= { 0x12, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_RZ_SCIFA_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x02,  8 पूर्ण,
+			[SCSCR]		= अणु 0x04, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x06,  8 पूर्ण,
+			[SCxSR]		= अणु 0x08, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x0A,  8 पूर्ण,
+			[SCFCR]		= अणु 0x0C, 16 पूर्ण,
+			[SCFDR]		= अणु 0x0E, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x10, 16 पूर्ण,
+			[SCLSR]		= अणु 0x12, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
 	 * Common SH-3 SCIF definitions.
 	 */
-	[SCIx_SH3_SCIF_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00,  8 },
-			[SCBRR]		= { 0x02,  8 },
-			[SCSCR]		= { 0x04,  8 },
-			[SCxTDR]	= { 0x06,  8 },
-			[SCxSR]		= { 0x08, 16 },
-			[SCxRDR]	= { 0x0a,  8 },
-			[SCFCR]		= { 0x0c,  8 },
-			[SCFDR]		= { 0x0e, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH3_SCIF_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00,  8 पूर्ण,
+			[SCBRR]		= अणु 0x02,  8 पूर्ण,
+			[SCSCR]		= अणु 0x04,  8 पूर्ण,
+			[SCxTDR]	= अणु 0x06,  8 पूर्ण,
+			[SCxSR]		= अणु 0x08, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x0a,  8 पूर्ण,
+			[SCFCR]		= अणु 0x0c,  8 पूर्ण,
+			[SCFDR]		= अणु 0x0e, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
 	 * Common SH-4(A) SCIF(B) definitions.
 	 */
-	[SCIx_SH4_SCIF_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCSPTR]	= { 0x20, 16 },
-			[SCLSR]		= { 0x24, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH4_SCIF_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x20, 16 पूर्ण,
+			[SCLSR]		= अणु 0x24, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
-	 * Common SCIF definitions for ports with a Baud Rate Generator for
+	 * Common SCIF definitions क्रम ports with a Baud Rate Generator क्रम
 	 * External Clock (BRG).
 	 */
-	[SCIx_SH4_SCIF_BRG_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCSPTR]	= { 0x20, 16 },
-			[SCLSR]		= { 0x24, 16 },
-			[SCDL]		= { 0x30, 16 },
-			[SCCKS]		= { 0x34, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH4_SCIF_BRG_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x20, 16 पूर्ण,
+			[SCLSR]		= अणु 0x24, 16 पूर्ण,
+			[SCDL]		= अणु 0x30, 16 पूर्ण,
+			[SCCKS]		= अणु 0x34, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
 	 * Common HSCIF definitions.
 	 */
-	[SCIx_HSCIF_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCSPTR]	= { 0x20, 16 },
-			[SCLSR]		= { 0x24, 16 },
-			[HSSRR]		= { 0x40, 16 },
-			[SCDL]		= { 0x30, 16 },
-			[SCCKS]		= { 0x34, 16 },
-			[HSRTRGR]	= { 0x54, 16 },
-			[HSTTRGR]	= { 0x58, 16 },
-		},
-		.fifosize = 128,
+	[SCIx_HSCIF_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x20, 16 पूर्ण,
+			[SCLSR]		= अणु 0x24, 16 पूर्ण,
+			[HSSRR]		= अणु 0x40, 16 पूर्ण,
+			[SCDL]		= अणु 0x30, 16 पूर्ण,
+			[SCCKS]		= अणु 0x34, 16 पूर्ण,
+			[HSRTRGR]	= अणु 0x54, 16 पूर्ण,
+			[HSTTRGR]	= अणु 0x58, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 128,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR_RANGE(8, 32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
-	 * Common SH-4(A) SCIF(B) definitions for ports without an SCSPTR
-	 * register.
+	 * Common SH-4(A) SCIF(B) definitions क्रम ports without an SCSPTR
+	 * रेजिस्टर.
 	 */
-	[SCIx_SH4_SCIF_NO_SCSPTR_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCLSR]		= { 0x24, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH4_SCIF_NO_SCSPTR_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCLSR]		= अणु 0x24, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
-	 * Common SH-4(A) SCIF(B) definitions for ports with FIFO data
-	 * count registers.
+	 * Common SH-4(A) SCIF(B) definitions क्रम ports with FIFO data
+	 * count रेजिस्टरs.
 	 */
-	[SCIx_SH4_SCIF_FIFODATA_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x0c,  8 },
-			[SCxSR]		= { 0x10, 16 },
-			[SCxRDR]	= { 0x14,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-			[SCTFDR]	= { 0x1c, 16 },	/* aliased to SCFDR */
-			[SCRFDR]	= { 0x20, 16 },
-			[SCSPTR]	= { 0x24, 16 },
-			[SCLSR]		= { 0x28, 16 },
-		},
-		.fifosize = 16,
+	[SCIx_SH4_SCIF_FIFODATA_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x0c,  8 पूर्ण,
+			[SCxSR]		= अणु 0x10, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x14,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+			[SCTFDR]	= अणु 0x1c, 16 पूर्ण,	/* aliased to SCFDR */
+			[SCRFDR]	= अणु 0x20, 16 पूर्ण,
+			[SCSPTR]	= अणु 0x24, 16 पूर्ण,
+			[SCLSR]		= अणु 0x28, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 16,
 		.overrun_reg = SCLSR,
 		.overrun_mask = SCLSR_ORER,
 		.sampling_rate_mask = SCI_SR(32),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK,
 		.error_clear = SCIF_ERROR_CLEAR,
-	},
+	पूर्ण,
 
 	/*
 	 * SH7705-style SCIF(B) ports, lacking both SCSPTR and SCLSR
-	 * registers.
+	 * रेजिस्टरs.
 	 */
-	[SCIx_SH7705_SCIF_REGTYPE] = {
-		.regs = {
-			[SCSMR]		= { 0x00, 16 },
-			[SCBRR]		= { 0x04,  8 },
-			[SCSCR]		= { 0x08, 16 },
-			[SCxTDR]	= { 0x20,  8 },
-			[SCxSR]		= { 0x14, 16 },
-			[SCxRDR]	= { 0x24,  8 },
-			[SCFCR]		= { 0x18, 16 },
-			[SCFDR]		= { 0x1c, 16 },
-		},
-		.fifosize = 64,
+	[SCIx_SH7705_SCIF_REGTYPE] = अणु
+		.regs = अणु
+			[SCSMR]		= अणु 0x00, 16 पूर्ण,
+			[SCBRR]		= अणु 0x04,  8 पूर्ण,
+			[SCSCR]		= अणु 0x08, 16 पूर्ण,
+			[SCxTDR]	= अणु 0x20,  8 पूर्ण,
+			[SCxSR]		= अणु 0x14, 16 पूर्ण,
+			[SCxRDR]	= अणु 0x24,  8 पूर्ण,
+			[SCFCR]		= अणु 0x18, 16 पूर्ण,
+			[SCFDR]		= अणु 0x1c, 16 पूर्ण,
+		पूर्ण,
+		.fअगरosize = 64,
 		.overrun_reg = SCxSR,
 		.overrun_mask = SCIFA_ORER,
 		.sampling_rate_mask = SCI_SR(16),
 		.error_mask = SCIF_DEFAULT_ERROR_MASK | SCIFA_ORER,
 		.error_clear = SCIF_ERROR_CLEAR & ~SCIFA_ORER,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define sci_getreg(up, offset)		(&to_sci_port(up)->params->regs[offset])
+#घोषणा sci_getreg(up, offset)		(&to_sci_port(up)->params->regs[offset])
 
 /*
- * The "offset" here is rather misleading, in that it refers to an enum
+ * The "offset" here is rather misleading, in that it refers to an क्रमागत
  * value relative to the port mapping rather than the fixed offset
- * itself, which needs to be manually retrieved from the platform's
- * register map for the given port.
+ * itself, which needs to be manually retrieved from the platक्रमm's
+ * रेजिस्टर map क्रम the given port.
  */
-static unsigned int sci_serial_in(struct uart_port *p, int offset)
-{
-	const struct plat_sci_reg *reg = sci_getreg(p, offset);
+अटल अचिन्हित पूर्णांक sci_serial_in(काष्ठा uart_port *p, पूर्णांक offset)
+अणु
+	स्थिर काष्ठा plat_sci_reg *reg = sci_getreg(p, offset);
 
-	if (reg->size == 8)
-		return ioread8(p->membase + (reg->offset << p->regshift));
-	else if (reg->size == 16)
-		return ioread16(p->membase + (reg->offset << p->regshift));
-	else
+	अगर (reg->size == 8)
+		वापस ioपढ़ो8(p->membase + (reg->offset << p->regshअगरt));
+	अन्यथा अगर (reg->size == 16)
+		वापस ioपढ़ो16(p->membase + (reg->offset << p->regshअगरt));
+	अन्यथा
 		WARN(1, "Invalid register access\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sci_serial_out(struct uart_port *p, int offset, int value)
-{
-	const struct plat_sci_reg *reg = sci_getreg(p, offset);
+अटल व्योम sci_serial_out(काष्ठा uart_port *p, पूर्णांक offset, पूर्णांक value)
+अणु
+	स्थिर काष्ठा plat_sci_reg *reg = sci_getreg(p, offset);
 
-	if (reg->size == 8)
-		iowrite8(value, p->membase + (reg->offset << p->regshift));
-	else if (reg->size == 16)
-		iowrite16(value, p->membase + (reg->offset << p->regshift));
-	else
+	अगर (reg->size == 8)
+		ioग_लिखो8(value, p->membase + (reg->offset << p->regshअगरt));
+	अन्यथा अगर (reg->size == 16)
+		ioग_लिखो16(value, p->membase + (reg->offset << p->regshअगरt));
+	अन्यथा
 		WARN(1, "Invalid register access\n");
-}
+पूर्ण
 
-static void sci_port_enable(struct sci_port *sci_port)
-{
-	unsigned int i;
+अटल व्योम sci_port_enable(काष्ठा sci_port *sci_port)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!sci_port->port.dev)
-		return;
+	अगर (!sci_port->port.dev)
+		वापस;
 
-	pm_runtime_get_sync(sci_port->port.dev);
+	pm_runसमय_get_sync(sci_port->port.dev);
 
-	for (i = 0; i < SCI_NUM_CLKS; i++) {
+	क्रम (i = 0; i < SCI_NUM_CLKS; i++) अणु
 		clk_prepare_enable(sci_port->clks[i]);
 		sci_port->clk_rates[i] = clk_get_rate(sci_port->clks[i]);
-	}
+	पूर्ण
 	sci_port->port.uartclk = sci_port->clk_rates[SCI_FCK];
-}
+पूर्ण
 
-static void sci_port_disable(struct sci_port *sci_port)
-{
-	unsigned int i;
+अटल व्योम sci_port_disable(काष्ठा sci_port *sci_port)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!sci_port->port.dev)
-		return;
+	अगर (!sci_port->port.dev)
+		वापस;
 
-	for (i = SCI_NUM_CLKS; i-- > 0; )
+	क्रम (i = SCI_NUM_CLKS; i-- > 0; )
 		clk_disable_unprepare(sci_port->clks[i]);
 
-	pm_runtime_put_sync(sci_port->port.dev);
-}
+	pm_runसमय_put_sync(sci_port->port.dev);
+पूर्ण
 
-static inline unsigned long port_rx_irq_mask(struct uart_port *port)
-{
+अटल अंतरभूत अचिन्हित दीर्घ port_rx_irq_mask(काष्ठा uart_port *port)
+अणु
 	/*
 	 * Not all ports (such as SCIFA) will support REIE. Rather than
 	 * special-casing the port type, we check the port initialization
 	 * IRQ enable mask to see whether the IRQ is desired at all. If
-	 * it's unset, it's logically inferred that there's no point in
-	 * testing for it.
+	 * it's unset, it's logically inferred that there's no poपूर्णांक in
+	 * testing क्रम it.
 	 */
-	return SCSCR_RIE | (to_sci_port(port)->cfg->scscr & SCSCR_REIE);
-}
+	वापस SCSCR_RIE | (to_sci_port(port)->cfg->scscr & SCSCR_REIE);
+पूर्ण
 
-static void sci_start_tx(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	unsigned short ctrl;
+अटल व्योम sci_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	अचिन्हित लघु ctrl;
 
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		u16 new, scr = serial_port_in(port, SCSCR);
-		if (s->chan_tx)
+		अगर (s->chan_tx)
 			new = scr | SCSCR_TDRQE;
-		else
+		अन्यथा
 			new = scr & ~SCSCR_TDRQE;
-		if (new != scr)
+		अगर (new != scr)
 			serial_port_out(port, SCSCR, new);
-	}
+	पूर्ण
 
-	if (s->chan_tx && !uart_circ_empty(&s->port.state->xmit) &&
-	    dma_submit_error(s->cookie_tx)) {
+	अगर (s->chan_tx && !uart_circ_empty(&s->port.state->xmit) &&
+	    dma_submit_error(s->cookie_tx)) अणु
 		s->cookie_tx = 0;
 		schedule_work(&s->work_tx);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!s->chan_tx || port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+	अगर (!s->chan_tx || port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		/* Set TIE (Transmit Interrupt Enable) bit in SCSCR */
 		ctrl = serial_port_in(port, SCSCR);
 		serial_port_out(port, SCSCR, ctrl | SCSCR_TIE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sci_stop_tx(struct uart_port *port)
-{
-	unsigned short ctrl;
+अटल व्योम sci_stop_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित लघु ctrl;
 
 	/* Clear TIE (Transmit Interrupt Enable) bit in SCSCR */
 	ctrl = serial_port_in(port, SCSCR);
 
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
 		ctrl &= ~SCSCR_TDRQE;
 
 	ctrl &= ~SCSCR_TIE;
 
 	serial_port_out(port, SCSCR, ctrl);
-}
+पूर्ण
 
-static void sci_start_rx(struct uart_port *port)
-{
-	unsigned short ctrl;
+अटल व्योम sci_start_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित लघु ctrl;
 
 	ctrl = serial_port_in(port, SCSCR) | port_rx_irq_mask(port);
 
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
 		ctrl &= ~SCSCR_RDRQE;
 
 	serial_port_out(port, SCSCR, ctrl);
-}
+पूर्ण
 
-static void sci_stop_rx(struct uart_port *port)
-{
-	unsigned short ctrl;
+अटल व्योम sci_stop_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित लघु ctrl;
 
 	ctrl = serial_port_in(port, SCSCR);
 
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
 		ctrl &= ~SCSCR_RDRQE;
 
 	ctrl &= ~port_rx_irq_mask(port);
 
 	serial_port_out(port, SCSCR, ctrl);
-}
+पूर्ण
 
-static void sci_clear_SCxSR(struct uart_port *port, unsigned int mask)
-{
-	if (port->type == PORT_SCI) {
+अटल व्योम sci_clear_SCxSR(काष्ठा uart_port *port, अचिन्हित पूर्णांक mask)
+अणु
+	अगर (port->type == PORT_SCI) अणु
 		/* Just store the mask */
 		serial_port_out(port, SCxSR, mask);
-	} else if (to_sci_port(port)->params->overrun_mask == SCIFA_ORER) {
+	पूर्ण अन्यथा अगर (to_sci_port(port)->params->overrun_mask == SCIFA_ORER) अणु
 		/* SCIFA/SCIFB and SCIF on SH7705/SH7720/SH7721 */
 		/* Only clear the status bits we want to clear */
 		serial_port_out(port, SCxSR,
 				serial_port_in(port, SCxSR) & mask);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Store the mask, clear parity/framing errors */
 		serial_port_out(port, SCxSR, mask & ~(SCIF_FERC | SCIF_PERC));
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_CONSOLE_POLL) || defined(CONFIG_SERIAL_SH_SCI_CONSOLE) || \
+#अगर defined(CONFIG_CONSOLE_POLL) || defined(CONFIG_SERIAL_SH_SCI_CONSOLE) || \
     defined(CONFIG_SERIAL_SH_SCI_EARLYCON)
 
-#ifdef CONFIG_CONSOLE_POLL
-static int sci_poll_get_char(struct uart_port *port)
-{
-	unsigned short status;
-	int c;
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक sci_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	अचिन्हित लघु status;
+	पूर्णांक c;
 
-	do {
+	करो अणु
 		status = serial_port_in(port, SCxSR);
-		if (status & SCxSR_ERRORS(port)) {
+		अगर (status & SCxSR_ERRORS(port)) अणु
 			sci_clear_SCxSR(port, SCxSR_ERROR_CLEAR(port));
-			continue;
-		}
-		break;
-	} while (1);
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण जबतक (1);
 
-	if (!(status & SCxSR_RDxF(port)))
-		return NO_POLL_CHAR;
+	अगर (!(status & SCxSR_RDxF(port)))
+		वापस NO_POLL_CHAR;
 
 	c = serial_port_in(port, SCxRDR);
 
-	/* Dummy read */
+	/* Dummy पढ़ो */
 	serial_port_in(port, SCxSR);
 	sci_clear_SCxSR(port, SCxSR_RDxF_CLEAR(port));
 
-	return c;
-}
-#endif
+	वापस c;
+पूर्ण
+#पूर्ण_अगर
 
-static void sci_poll_put_char(struct uart_port *port, unsigned char c)
-{
-	unsigned short status;
+अटल व्योम sci_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर c)
+अणु
+	अचिन्हित लघु status;
 
-	do {
+	करो अणु
 		status = serial_port_in(port, SCxSR);
-	} while (!(status & SCxSR_TDxE(port)));
+	पूर्ण जबतक (!(status & SCxSR_TDxE(port)));
 
 	serial_port_out(port, SCxTDR, c);
 	sci_clear_SCxSR(port, SCxSR_TDxE_CLEAR(port) & ~SCxSR_TEND(port));
-}
-#endif /* CONFIG_CONSOLE_POLL || CONFIG_SERIAL_SH_SCI_CONSOLE ||
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL || CONFIG_SERIAL_SH_SCI_CONSOLE ||
 	  CONFIG_SERIAL_SH_SCI_EARLYCON */
 
-static void sci_init_pins(struct uart_port *port, unsigned int cflag)
-{
-	struct sci_port *s = to_sci_port(port);
+अटल व्योम sci_init_pins(काष्ठा uart_port *port, अचिन्हित पूर्णांक cflag)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
 
 	/*
-	 * Use port-specific handler if provided.
+	 * Use port-specअगरic handler अगर provided.
 	 */
-	if (s->cfg->ops && s->cfg->ops->init_pins) {
+	अगर (s->cfg->ops && s->cfg->ops->init_pins) अणु
 		s->cfg->ops->init_pins(port, cflag);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		u16 data = serial_port_in(port, SCPDR);
 		u16 ctrl = serial_port_in(port, SCPCR);
 
 		/* Enable RXD and TXD pin functions */
 		ctrl &= ~(SCPCR_RXDC | SCPCR_TXDC);
-		if (to_sci_port(port)->has_rtscts) {
-			/* RTS# is output, active low, unless autorts */
-			if (!(port->mctrl & TIOCM_RTS)) {
+		अगर (to_sci_port(port)->has_rtscts) अणु
+			/* RTS# is output, active low, unless स्वतःrts */
+			अगर (!(port->mctrl & TIOCM_RTS)) अणु
 				ctrl |= SCPCR_RTSC;
 				data |= SCPDR_RTSD;
-			} else if (!s->autorts) {
+			पूर्ण अन्यथा अगर (!s->स्वतःrts) अणु
 				ctrl |= SCPCR_RTSC;
 				data &= ~SCPDR_RTSD;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Enable RTS# pin function */
 				ctrl &= ~SCPCR_RTSC;
-			}
+			पूर्ण
 			/* Enable CTS# pin function */
 			ctrl &= ~SCPCR_CTSC;
-		}
+		पूर्ण
 		serial_port_out(port, SCPDR, data);
 		serial_port_out(port, SCPCR, ctrl);
-	} else if (sci_getreg(port, SCSPTR)->size) {
+	पूर्ण अन्यथा अगर (sci_getreg(port, SCSPTR)->size) अणु
 		u16 status = serial_port_in(port, SCSPTR);
 
-		/* RTS# is always output; and active low, unless autorts */
+		/* RTS# is always output; and active low, unless स्वतःrts */
 		status |= SCSPTR_RTSIO;
-		if (!(port->mctrl & TIOCM_RTS))
+		अगर (!(port->mctrl & TIOCM_RTS))
 			status |= SCSPTR_RTSDT;
-		else if (!s->autorts)
+		अन्यथा अगर (!s->स्वतःrts)
 			status &= ~SCSPTR_RTSDT;
-		/* CTS# and SCK are inputs */
+		/* CTS# and SCK are inमाला_दो */
 		status &= ~(SCSPTR_CTSIO | SCSPTR_SCKIO);
 		serial_port_out(port, SCSPTR, status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sci_txfill(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	unsigned int fifo_mask = (s->params->fifosize << 1) - 1;
-	const struct plat_sci_reg *reg;
+अटल पूर्णांक sci_txfill(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	अचिन्हित पूर्णांक fअगरo_mask = (s->params->fअगरosize << 1) - 1;
+	स्थिर काष्ठा plat_sci_reg *reg;
 
 	reg = sci_getreg(port, SCTFDR);
-	if (reg->size)
-		return serial_port_in(port, SCTFDR) & fifo_mask;
+	अगर (reg->size)
+		वापस serial_port_in(port, SCTFDR) & fअगरo_mask;
 
 	reg = sci_getreg(port, SCFDR);
-	if (reg->size)
-		return serial_port_in(port, SCFDR) >> 8;
+	अगर (reg->size)
+		वापस serial_port_in(port, SCFDR) >> 8;
 
-	return !(serial_port_in(port, SCxSR) & SCI_TDRE);
-}
+	वापस !(serial_port_in(port, SCxSR) & SCI_TDRE);
+पूर्ण
 
-static int sci_txroom(struct uart_port *port)
-{
-	return port->fifosize - sci_txfill(port);
-}
+अटल पूर्णांक sci_txroom(काष्ठा uart_port *port)
+अणु
+	वापस port->fअगरosize - sci_txfill(port);
+पूर्ण
 
-static int sci_rxfill(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	unsigned int fifo_mask = (s->params->fifosize << 1) - 1;
-	const struct plat_sci_reg *reg;
+अटल पूर्णांक sci_rxfill(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	अचिन्हित पूर्णांक fअगरo_mask = (s->params->fअगरosize << 1) - 1;
+	स्थिर काष्ठा plat_sci_reg *reg;
 
 	reg = sci_getreg(port, SCRFDR);
-	if (reg->size)
-		return serial_port_in(port, SCRFDR) & fifo_mask;
+	अगर (reg->size)
+		वापस serial_port_in(port, SCRFDR) & fअगरo_mask;
 
 	reg = sci_getreg(port, SCFDR);
-	if (reg->size)
-		return serial_port_in(port, SCFDR) & fifo_mask;
+	अगर (reg->size)
+		वापस serial_port_in(port, SCFDR) & fअगरo_mask;
 
-	return (serial_port_in(port, SCxSR) & SCxSR_RDxF(port)) != 0;
-}
+	वापस (serial_port_in(port, SCxSR) & SCxSR_RDxF(port)) != 0;
+पूर्ण
 
 /* ********************************************************************** *
- *                   the interrupt related routines                       *
+ *                   the पूर्णांकerrupt related routines                       *
  * ********************************************************************** */
 
-static void sci_transmit_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned int stopped = uart_tx_stopped(port);
-	unsigned short status;
-	unsigned short ctrl;
-	int count;
+अटल व्योम sci_transmit_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित पूर्णांक stopped = uart_tx_stopped(port);
+	अचिन्हित लघु status;
+	अचिन्हित लघु ctrl;
+	पूर्णांक count;
 
 	status = serial_port_in(port, SCxSR);
-	if (!(status & SCxSR_TDxE(port))) {
+	अगर (!(status & SCxSR_TDxE(port))) अणु
 		ctrl = serial_port_in(port, SCSCR);
-		if (uart_circ_empty(xmit))
+		अगर (uart_circ_empty(xmit))
 			ctrl &= ~SCSCR_TIE;
-		else
+		अन्यथा
 			ctrl |= SCSCR_TIE;
 		serial_port_out(port, SCSCR, ctrl);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	count = sci_txroom(port);
 
-	do {
-		unsigned char c;
+	करो अणु
+		अचिन्हित अक्षर c;
 
-		if (port->x_char) {
-			c = port->x_char;
-			port->x_char = 0;
-		} else if (!uart_circ_empty(xmit) && !stopped) {
+		अगर (port->x_अक्षर) अणु
+			c = port->x_अक्षर;
+			port->x_अक्षर = 0;
+		पूर्ण अन्यथा अगर (!uart_circ_empty(xmit) && !stopped) अणु
 			c = xmit->buf[xmit->tail];
 			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
-		} else {
-			break;
-		}
+		पूर्ण अन्यथा अणु
+			अवरोध;
+		पूर्ण
 
 		serial_port_out(port, SCxTDR, c);
 
 		port->icount.tx++;
-	} while (--count > 0);
+	पूर्ण जबतक (--count > 0);
 
 	sci_clear_SCxSR(port, SCxSR_TDxE_CLEAR(port));
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+	अगर (uart_circ_empty(xmit))
 		sci_stop_tx(port);
 
-}
+पूर्ण
 
-/* On SH3, SCIF may read end-of-break as a space->mark char */
-#define STEPFN(c)  ({int __c = (c); (((__c-1)|(__c)) == -1); })
+/* On SH3, SCIF may पढ़ो end-of-अवरोध as a space->mark अक्षर */
+#घोषणा STEPFN(c)  (अणुपूर्णांक __c = (c); (((__c-1)|(__c)) == -1); पूर्ण)
 
-static void sci_receive_chars(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
-	int i, count, copied = 0;
-	unsigned short status;
-	unsigned char flag;
+अटल व्योम sci_receive_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	पूर्णांक i, count, copied = 0;
+	अचिन्हित लघु status;
+	अचिन्हित अक्षर flag;
 
 	status = serial_port_in(port, SCxSR);
-	if (!(status & SCxSR_RDxF(port)))
-		return;
+	अगर (!(status & SCxSR_RDxF(port)))
+		वापस;
 
-	while (1) {
-		/* Don't copy more bytes than there is room for in the buffer */
+	जबतक (1) अणु
+		/* Don't copy more bytes than there is room क्रम in the buffer */
 		count = tty_buffer_request_room(tport, sci_rxfill(port));
 
-		/* If for any reason we can't copy more data, we're done! */
-		if (count == 0)
-			break;
+		/* If क्रम any reason we can't copy more data, we're करोne! */
+		अगर (count == 0)
+			अवरोध;
 
-		if (port->type == PORT_SCI) {
-			char c = serial_port_in(port, SCxRDR);
-			if (uart_handle_sysrq_char(port, c))
+		अगर (port->type == PORT_SCI) अणु
+			अक्षर c = serial_port_in(port, SCxRDR);
+			अगर (uart_handle_sysrq_अक्षर(port, c))
 				count = 0;
-			else
-				tty_insert_flip_char(tport, c, TTY_NORMAL);
-		} else {
-			for (i = 0; i < count; i++) {
-				char c;
+			अन्यथा
+				tty_insert_flip_अक्षर(tport, c, TTY_NORMAL);
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < count; i++) अणु
+				अक्षर c;
 
-				if (port->type == PORT_SCIF ||
-				    port->type == PORT_HSCIF) {
+				अगर (port->type == PORT_SCIF ||
+				    port->type == PORT_HSCIF) अणु
 					status = serial_port_in(port, SCxSR);
 					c = serial_port_in(port, SCxRDR);
-				} else {
+				पूर्ण अन्यथा अणु
 					c = serial_port_in(port, SCxRDR);
 					status = serial_port_in(port, SCxSR);
-				}
-				if (uart_handle_sysrq_char(port, c)) {
+				पूर्ण
+				अगर (uart_handle_sysrq_अक्षर(port, c)) अणु
 					count--; i--;
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				/* Store data and status */
-				if (status & SCxSR_FER(port)) {
+				अगर (status & SCxSR_FER(port)) अणु
 					flag = TTY_FRAME;
 					port->icount.frame++;
 					dev_notice(port->dev, "frame error\n");
-				} else if (status & SCxSR_PER(port)) {
+				पूर्ण अन्यथा अगर (status & SCxSR_PER(port)) अणु
 					flag = TTY_PARITY;
 					port->icount.parity++;
 					dev_notice(port->dev, "parity error\n");
-				} else
+				पूर्ण अन्यथा
 					flag = TTY_NORMAL;
 
-				tty_insert_flip_char(tport, c, flag);
-			}
-		}
+				tty_insert_flip_अक्षर(tport, c, flag);
+			पूर्ण
+		पूर्ण
 
-		serial_port_in(port, SCxSR); /* dummy read */
+		serial_port_in(port, SCxSR); /* dummy पढ़ो */
 		sci_clear_SCxSR(port, SCxSR_RDxF_CLEAR(port));
 
 		copied += count;
 		port->icount.rx += count;
-	}
+	पूर्ण
 
-	if (copied) {
-		/* Tell the rest of the system the news. New characters! */
+	अगर (copied) अणु
+		/* Tell the rest of the प्रणाली the news. New अक्षरacters! */
 		tty_flip_buffer_push(tport);
-	} else {
-		/* TTY buffers full; read from RX reg to prevent lockup */
+	पूर्ण अन्यथा अणु
+		/* TTY buffers full; पढ़ो from RX reg to prevent lockup */
 		serial_port_in(port, SCxRDR);
-		serial_port_in(port, SCxSR); /* dummy read */
+		serial_port_in(port, SCxSR); /* dummy पढ़ो */
 		sci_clear_SCxSR(port, SCxSR_RDxF_CLEAR(port));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sci_handle_errors(struct uart_port *port)
-{
-	int copied = 0;
-	unsigned short status = serial_port_in(port, SCxSR);
-	struct tty_port *tport = &port->state->port;
-	struct sci_port *s = to_sci_port(port);
+अटल पूर्णांक sci_handle_errors(काष्ठा uart_port *port)
+अणु
+	पूर्णांक copied = 0;
+	अचिन्हित लघु status = serial_port_in(port, SCxSR);
+	काष्ठा tty_port *tport = &port->state->port;
+	काष्ठा sci_port *s = to_sci_port(port);
 
 	/* Handle overruns */
-	if (status & s->params->overrun_mask) {
+	अगर (status & s->params->overrun_mask) अणु
 		port->icount.overrun++;
 
 		/* overrun error */
-		if (tty_insert_flip_char(tport, 0, TTY_OVERRUN))
+		अगर (tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN))
 			copied++;
 
 		dev_notice(port->dev, "overrun error\n");
-	}
+	पूर्ण
 
-	if (status & SCxSR_FER(port)) {
+	अगर (status & SCxSR_FER(port)) अणु
 		/* frame error */
 		port->icount.frame++;
 
-		if (tty_insert_flip_char(tport, 0, TTY_FRAME))
+		अगर (tty_insert_flip_अक्षर(tport, 0, TTY_FRAME))
 			copied++;
 
 		dev_notice(port->dev, "frame error\n");
-	}
+	पूर्ण
 
-	if (status & SCxSR_PER(port)) {
+	अगर (status & SCxSR_PER(port)) अणु
 		/* parity error */
 		port->icount.parity++;
 
-		if (tty_insert_flip_char(tport, 0, TTY_PARITY))
+		अगर (tty_insert_flip_अक्षर(tport, 0, TTY_PARITY))
 			copied++;
 
 		dev_notice(port->dev, "parity error\n");
-	}
+	पूर्ण
 
-	if (copied)
+	अगर (copied)
 		tty_flip_buffer_push(tport);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static int sci_handle_fifo_overrun(struct uart_port *port)
-{
-	struct tty_port *tport = &port->state->port;
-	struct sci_port *s = to_sci_port(port);
-	const struct plat_sci_reg *reg;
-	int copied = 0;
+अटल पूर्णांक sci_handle_fअगरo_overrun(काष्ठा uart_port *port)
+अणु
+	काष्ठा tty_port *tport = &port->state->port;
+	काष्ठा sci_port *s = to_sci_port(port);
+	स्थिर काष्ठा plat_sci_reg *reg;
+	पूर्णांक copied = 0;
 	u16 status;
 
 	reg = sci_getreg(port, s->params->overrun_reg);
-	if (!reg->size)
-		return 0;
+	अगर (!reg->size)
+		वापस 0;
 
 	status = serial_port_in(port, s->params->overrun_reg);
-	if (status & s->params->overrun_mask) {
+	अगर (status & s->params->overrun_mask) अणु
 		status &= ~s->params->overrun_mask;
 		serial_port_out(port, s->params->overrun_reg, status);
 
 		port->icount.overrun++;
 
-		tty_insert_flip_char(tport, 0, TTY_OVERRUN);
+		tty_insert_flip_अक्षर(tport, 0, TTY_OVERRUN);
 		tty_flip_buffer_push(tport);
 
 		dev_dbg(port->dev, "overrun error\n");
 		copied++;
-	}
+	पूर्ण
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static int sci_handle_breaks(struct uart_port *port)
-{
-	int copied = 0;
-	unsigned short status = serial_port_in(port, SCxSR);
-	struct tty_port *tport = &port->state->port;
+अटल पूर्णांक sci_handle_अवरोधs(काष्ठा uart_port *port)
+अणु
+	पूर्णांक copied = 0;
+	अचिन्हित लघु status = serial_port_in(port, SCxSR);
+	काष्ठा tty_port *tport = &port->state->port;
 
-	if (uart_handle_break(port))
-		return 0;
+	अगर (uart_handle_अवरोध(port))
+		वापस 0;
 
-	if (status & SCxSR_BRK(port)) {
+	अगर (status & SCxSR_BRK(port)) अणु
 		port->icount.brk++;
 
-		/* Notify of BREAK */
-		if (tty_insert_flip_char(tport, 0, TTY_BREAK))
+		/* Notअगरy of BREAK */
+		अगर (tty_insert_flip_अक्षर(tport, 0, TTY_BREAK))
 			copied++;
 
 		dev_dbg(port->dev, "BREAK detected\n");
-	}
+	पूर्ण
 
-	if (copied)
+	अगर (copied)
 		tty_flip_buffer_push(tport);
 
-	copied += sci_handle_fifo_overrun(port);
+	copied += sci_handle_fअगरo_overrun(port);
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static int scif_set_rtrg(struct uart_port *port, int rx_trig)
-{
-	unsigned int bits;
+अटल पूर्णांक scअगर_set_rtrg(काष्ठा uart_port *port, पूर्णांक rx_trig)
+अणु
+	अचिन्हित पूर्णांक bits;
 
-	if (rx_trig >= port->fifosize)
-		rx_trig = port->fifosize - 1;
-	if (rx_trig < 1)
+	अगर (rx_trig >= port->fअगरosize)
+		rx_trig = port->fअगरosize - 1;
+	अगर (rx_trig < 1)
 		rx_trig = 1;
 
 	/* HSCIF can be set to an arbitrary level. */
-	if (sci_getreg(port, HSRTRGR)->size) {
+	अगर (sci_getreg(port, HSRTRGR)->size) अणु
 		serial_port_out(port, HSRTRGR, rx_trig);
-		return rx_trig;
-	}
+		वापस rx_trig;
+	पूर्ण
 
-	switch (port->type) {
-	case PORT_SCIF:
-		if (rx_trig < 4) {
+	चयन (port->type) अणु
+	हाल PORT_SCIF:
+		अगर (rx_trig < 4) अणु
 			bits = 0;
 			rx_trig = 1;
-		} else if (rx_trig < 8) {
+		पूर्ण अन्यथा अगर (rx_trig < 8) अणु
 			bits = SCFCR_RTRG0;
 			rx_trig = 4;
-		} else if (rx_trig < 14) {
+		पूर्ण अन्यथा अगर (rx_trig < 14) अणु
 			bits = SCFCR_RTRG1;
 			rx_trig = 8;
-		} else {
+		पूर्ण अन्यथा अणु
 			bits = SCFCR_RTRG0 | SCFCR_RTRG1;
 			rx_trig = 14;
-		}
-		break;
-	case PORT_SCIFA:
-	case PORT_SCIFB:
-		if (rx_trig < 16) {
+		पूर्ण
+		अवरोध;
+	हाल PORT_SCIFA:
+	हाल PORT_SCIFB:
+		अगर (rx_trig < 16) अणु
 			bits = 0;
 			rx_trig = 1;
-		} else if (rx_trig < 32) {
+		पूर्ण अन्यथा अगर (rx_trig < 32) अणु
 			bits = SCFCR_RTRG0;
 			rx_trig = 16;
-		} else if (rx_trig < 48) {
+		पूर्ण अन्यथा अगर (rx_trig < 48) अणु
 			bits = SCFCR_RTRG1;
 			rx_trig = 32;
-		} else {
+		पूर्ण अन्यथा अणु
 			bits = SCFCR_RTRG0 | SCFCR_RTRG1;
 			rx_trig = 48;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN(1, "unknown FIFO configuration");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	serial_port_out(port, SCFCR,
 		(serial_port_in(port, SCFCR) &
 		~(SCFCR_RTRG1 | SCFCR_RTRG0)) | bits);
 
-	return rx_trig;
-}
+	वापस rx_trig;
+पूर्ण
 
-static int scif_rtrg_enabled(struct uart_port *port)
-{
-	if (sci_getreg(port, HSRTRGR)->size)
-		return serial_port_in(port, HSRTRGR) != 0;
-	else
-		return (serial_port_in(port, SCFCR) &
+अटल पूर्णांक scअगर_rtrg_enabled(काष्ठा uart_port *port)
+अणु
+	अगर (sci_getreg(port, HSRTRGR)->size)
+		वापस serial_port_in(port, HSRTRGR) != 0;
+	अन्यथा
+		वापस (serial_port_in(port, SCFCR) &
 			(SCFCR_RTRG0 | SCFCR_RTRG1)) != 0;
-}
+पूर्ण
 
-static void rx_fifo_timer_fn(struct timer_list *t)
-{
-	struct sci_port *s = from_timer(s, t, rx_fifo_timer);
-	struct uart_port *port = &s->port;
+अटल व्योम rx_fअगरo_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sci_port *s = from_समयr(s, t, rx_fअगरo_समयr);
+	काष्ठा uart_port *port = &s->port;
 
 	dev_dbg(port->dev, "Rx timed out\n");
-	scif_set_rtrg(port, 1);
-}
+	scअगर_set_rtrg(port, 1);
+पूर्ण
 
-static ssize_t rx_fifo_trigger_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
-	struct sci_port *sci = to_sci_port(port);
+अटल sमाप_प्रकार rx_fअगरo_trigger_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
+	काष्ठा sci_port *sci = to_sci_port(port);
 
-	return sprintf(buf, "%d\n", sci->rx_trigger);
-}
+	वापस प्र_लिखो(buf, "%d\n", sci->rx_trigger);
+पूर्ण
 
-static ssize_t rx_fifo_trigger_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
-	struct sci_port *sci = to_sci_port(port);
-	int ret;
-	long r;
+अटल sमाप_प्रकार rx_fअगरo_trigger_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
+	काष्ठा sci_port *sci = to_sci_port(port);
+	पूर्णांक ret;
+	दीर्घ r;
 
-	ret = kstrtol(buf, 0, &r);
-	if (ret)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 0, &r);
+	अगर (ret)
+		वापस ret;
 
-	sci->rx_trigger = scif_set_rtrg(port, r);
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
-		scif_set_rtrg(port, 1);
+	sci->rx_trigger = scअगर_set_rtrg(port, r);
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+		scअगर_set_rtrg(port, 1);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(rx_fifo_trigger);
+अटल DEVICE_ATTR_RW(rx_fअगरo_trigger);
 
-static ssize_t rx_fifo_timeout_show(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
-	struct sci_port *sci = to_sci_port(port);
-	int v;
+अटल sमाप_प्रकार rx_fअगरo_समयout_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
+	काष्ठा sci_port *sci = to_sci_port(port);
+	पूर्णांक v;
 
-	if (port->type == PORT_HSCIF)
-		v = sci->hscif_tot >> HSSCR_TOT_SHIFT;
-	else
-		v = sci->rx_fifo_timeout;
+	अगर (port->type == PORT_HSCIF)
+		v = sci->hscअगर_tot >> HSSCR_TOT_SHIFT;
+	अन्यथा
+		v = sci->rx_fअगरo_समयout;
 
-	return sprintf(buf, "%d\n", v);
-}
+	वापस प्र_लिखो(buf, "%d\n", v);
+पूर्ण
 
-static ssize_t rx_fifo_timeout_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf,
-				size_t count)
-{
-	struct uart_port *port = dev_get_drvdata(dev);
-	struct sci_port *sci = to_sci_port(port);
-	int ret;
-	long r;
+अटल sमाप_प्रकार rx_fअगरo_समयout_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	काष्ठा uart_port *port = dev_get_drvdata(dev);
+	काष्ठा sci_port *sci = to_sci_port(port);
+	पूर्णांक ret;
+	दीर्घ r;
 
-	ret = kstrtol(buf, 0, &r);
-	if (ret)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 0, &r);
+	अगर (ret)
+		वापस ret;
 
-	if (port->type == PORT_HSCIF) {
-		if (r < 0 || r > 3)
-			return -EINVAL;
-		sci->hscif_tot = r << HSSCR_TOT_SHIFT;
-	} else {
-		sci->rx_fifo_timeout = r;
-		scif_set_rtrg(port, 1);
-		if (r > 0)
-			timer_setup(&sci->rx_fifo_timer, rx_fifo_timer_fn, 0);
-	}
+	अगर (port->type == PORT_HSCIF) अणु
+		अगर (r < 0 || r > 3)
+			वापस -EINVAL;
+		sci->hscअगर_tot = r << HSSCR_TOT_SHIFT;
+	पूर्ण अन्यथा अणु
+		sci->rx_fअगरo_समयout = r;
+		scअगर_set_rtrg(port, 1);
+		अगर (r > 0)
+			समयr_setup(&sci->rx_fअगरo_समयr, rx_fअगरo_समयr_fn, 0);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(rx_fifo_timeout);
+अटल DEVICE_ATTR_RW(rx_fअगरo_समयout);
 
 
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-static void sci_dma_tx_complete(void *arg)
-{
-	struct sci_port *s = arg;
-	struct uart_port *port = &s->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned long flags;
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+अटल व्योम sci_dma_tx_complete(व्योम *arg)
+अणु
+	काष्ठा sci_port *s = arg;
+	काष्ठा uart_port *port = &s->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(port->dev, "%s(%d)\n", __func__, port->line);
 
@@ -1191,103 +1192,103 @@ static void sci_dma_tx_complete(void *arg)
 
 	port->icount.tx += s->tx_dma_len;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (!uart_circ_empty(xmit)) {
+	अगर (!uart_circ_empty(xmit)) अणु
 		s->cookie_tx = 0;
 		schedule_work(&s->work_tx);
-	} else {
+	पूर्ण अन्यथा अणु
 		s->cookie_tx = -EINVAL;
-		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+		अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 			u16 ctrl = serial_port_in(port, SCSCR);
 			serial_port_out(port, SCSCR, ctrl & ~SCSCR_TIE);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /* Locking: called with port lock held */
-static int sci_dma_rx_push(struct sci_port *s, void *buf, size_t count)
-{
-	struct uart_port *port = &s->port;
-	struct tty_port *tport = &port->state->port;
-	int copied;
+अटल पूर्णांक sci_dma_rx_push(काष्ठा sci_port *s, व्योम *buf, माप_प्रकार count)
+अणु
+	काष्ठा uart_port *port = &s->port;
+	काष्ठा tty_port *tport = &port->state->port;
+	पूर्णांक copied;
 
 	copied = tty_insert_flip_string(tport, buf, count);
-	if (copied < count)
+	अगर (copied < count)
 		port->icount.buf_overrun++;
 
 	port->icount.rx += copied;
 
-	return copied;
-}
+	वापस copied;
+पूर्ण
 
-static int sci_dma_rx_find_active(struct sci_port *s)
-{
-	unsigned int i;
+अटल पूर्णांक sci_dma_rx_find_active(काष्ठा sci_port *s)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(s->cookie_rx); i++)
-		if (s->active_rx == s->cookie_rx[i])
-			return i;
+	क्रम (i = 0; i < ARRAY_SIZE(s->cookie_rx); i++)
+		अगर (s->active_rx == s->cookie_rx[i])
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static void sci_dma_rx_chan_invalidate(struct sci_port *s)
-{
-	unsigned int i;
+अटल व्योम sci_dma_rx_chan_invalidate(काष्ठा sci_port *s)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	s->chan_rx = NULL;
-	for (i = 0; i < ARRAY_SIZE(s->cookie_rx); i++)
+	s->chan_rx = शून्य;
+	क्रम (i = 0; i < ARRAY_SIZE(s->cookie_rx); i++)
 		s->cookie_rx[i] = -EINVAL;
 	s->active_rx = 0;
-}
+पूर्ण
 
-static void sci_dma_rx_release(struct sci_port *s)
-{
-	struct dma_chan *chan = s->chan_rx_saved;
+अटल व्योम sci_dma_rx_release(काष्ठा sci_port *s)
+अणु
+	काष्ठा dma_chan *chan = s->chan_rx_saved;
 
-	s->chan_rx_saved = NULL;
+	s->chan_rx_saved = शून्य;
 	sci_dma_rx_chan_invalidate(s);
 	dmaengine_terminate_sync(chan);
-	dma_free_coherent(chan->device->dev, s->buf_len_rx * 2, s->rx_buf[0],
+	dma_मुक्त_coherent(chan->device->dev, s->buf_len_rx * 2, s->rx_buf[0],
 			  sg_dma_address(&s->sg_rx[0]));
 	dma_release_channel(chan);
-}
+पूर्ण
 
-static void start_hrtimer_us(struct hrtimer *hrt, unsigned long usec)
-{
-	long sec = usec / 1000000;
-	long nsec = (usec % 1000000) * 1000;
-	ktime_t t = ktime_set(sec, nsec);
+अटल व्योम start_hrसमयr_us(काष्ठा hrसमयr *hrt, अचिन्हित दीर्घ usec)
+अणु
+	दीर्घ sec = usec / 1000000;
+	दीर्घ nsec = (usec % 1000000) * 1000;
+	kसमय_प्रकार t = kसमय_set(sec, nsec);
 
-	hrtimer_start(hrt, t, HRTIMER_MODE_REL);
-}
+	hrसमयr_start(hrt, t, HRTIMER_MODE_REL);
+पूर्ण
 
-static void sci_dma_rx_reenable_irq(struct sci_port *s)
-{
-	struct uart_port *port = &s->port;
+अटल व्योम sci_dma_rx_reenable_irq(काष्ठा sci_port *s)
+अणु
+	काष्ठा uart_port *port = &s->port;
 	u16 scr;
 
-	/* Direct new serial port interrupts back to CPU */
+	/* Direct new serial port पूर्णांकerrupts back to CPU */
 	scr = serial_port_in(port, SCSCR);
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		scr &= ~SCSCR_RDRQE;
 		enable_irq(s->irqs[SCIx_RXI_IRQ]);
-	}
+	पूर्ण
 	serial_port_out(port, SCSCR, scr | SCSCR_RIE);
-}
+पूर्ण
 
-static void sci_dma_rx_complete(void *arg)
-{
-	struct sci_port *s = arg;
-	struct dma_chan *chan = s->chan_rx;
-	struct uart_port *port = &s->port;
-	struct dma_async_tx_descriptor *desc;
-	unsigned long flags;
-	int active, count = 0;
+अटल व्योम sci_dma_rx_complete(व्योम *arg)
+अणु
+	काष्ठा sci_port *s = arg;
+	काष्ठा dma_chan *chan = s->chan_rx;
+	काष्ठा uart_port *port = &s->port;
+	काष्ठा dma_async_tx_descriptor *desc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक active, count = 0;
 
 	dev_dbg(port->dev, "%s(%d) active cookie %d\n", __func__, port->line,
 		s->active_rx);
@@ -1295,25 +1296,25 @@ static void sci_dma_rx_complete(void *arg)
 	spin_lock_irqsave(&port->lock, flags);
 
 	active = sci_dma_rx_find_active(s);
-	if (active >= 0)
+	अगर (active >= 0)
 		count = sci_dma_rx_push(s, s->rx_buf[active], s->buf_len_rx);
 
-	start_hrtimer_us(&s->rx_timer, s->rx_timeout);
+	start_hrसमयr_us(&s->rx_समयr, s->rx_समयout);
 
-	if (count)
+	अगर (count)
 		tty_flip_buffer_push(&port->state->port);
 
 	desc = dmaengine_prep_slave_sg(s->chan_rx, &s->sg_rx[active], 1,
 				       DMA_DEV_TO_MEM,
 				       DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!desc)
-		goto fail;
+	अगर (!desc)
+		जाओ fail;
 
 	desc->callback = sci_dma_rx_complete;
 	desc->callback_param = s;
 	s->cookie_rx[active] = dmaengine_submit(desc);
-	if (dma_submit_error(s->cookie_rx[active]))
-		goto fail;
+	अगर (dma_submit_error(s->cookie_rx[active]))
+		जाओ fail;
 
 	s->active_rx = s->cookie_rx[!active];
 
@@ -1322,7 +1323,7 @@ static void sci_dma_rx_complete(void *arg)
 	spin_unlock_irqrestore(&port->lock, flags);
 	dev_dbg(port->dev, "%s: cookie %d #%d, new active cookie %d\n",
 		__func__, s->cookie_rx[active], active, s->active_rx);
-	return;
+	वापस;
 
 fail:
 	spin_unlock_irqrestore(&port->lock, flags);
@@ -1333,78 +1334,78 @@ fail:
 	sci_dma_rx_chan_invalidate(s);
 	sci_dma_rx_reenable_irq(s);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void sci_dma_tx_release(struct sci_port *s)
-{
-	struct dma_chan *chan = s->chan_tx_saved;
+अटल व्योम sci_dma_tx_release(काष्ठा sci_port *s)
+अणु
+	काष्ठा dma_chan *chan = s->chan_tx_saved;
 
 	cancel_work_sync(&s->work_tx);
-	s->chan_tx_saved = s->chan_tx = NULL;
+	s->chan_tx_saved = s->chan_tx = शून्य;
 	s->cookie_tx = -EINVAL;
 	dmaengine_terminate_sync(chan);
 	dma_unmap_single(chan->device->dev, s->tx_dma_addr, UART_XMIT_SIZE,
 			 DMA_TO_DEVICE);
 	dma_release_channel(chan);
-}
+पूर्ण
 
-static int sci_dma_rx_submit(struct sci_port *s, bool port_lock_held)
-{
-	struct dma_chan *chan = s->chan_rx;
-	struct uart_port *port = &s->port;
-	unsigned long flags;
-	int i;
+अटल पूर्णांक sci_dma_rx_submit(काष्ठा sci_port *s, bool port_lock_held)
+अणु
+	काष्ठा dma_chan *chan = s->chan_rx;
+	काष्ठा uart_port *port = &s->port;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		struct scatterlist *sg = &s->sg_rx[i];
-		struct dma_async_tx_descriptor *desc;
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा scatterlist *sg = &s->sg_rx[i];
+		काष्ठा dma_async_tx_descriptor *desc;
 
 		desc = dmaengine_prep_slave_sg(chan,
 			sg, 1, DMA_DEV_TO_MEM,
 			DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-		if (!desc)
-			goto fail;
+		अगर (!desc)
+			जाओ fail;
 
 		desc->callback = sci_dma_rx_complete;
 		desc->callback_param = s;
 		s->cookie_rx[i] = dmaengine_submit(desc);
-		if (dma_submit_error(s->cookie_rx[i]))
-			goto fail;
+		अगर (dma_submit_error(s->cookie_rx[i]))
+			जाओ fail;
 
-	}
+	पूर्ण
 
 	s->active_rx = s->cookie_rx[0];
 
 	dma_async_issue_pending(chan);
-	return 0;
+	वापस 0;
 
 fail:
 	/* Switch to PIO */
-	if (!port_lock_held)
+	अगर (!port_lock_held)
 		spin_lock_irqsave(&port->lock, flags);
-	if (i)
+	अगर (i)
 		dmaengine_terminate_async(chan);
 	sci_dma_rx_chan_invalidate(s);
 	sci_start_rx(port);
-	if (!port_lock_held)
+	अगर (!port_lock_held)
 		spin_unlock_irqrestore(&port->lock, flags);
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static void sci_dma_tx_work_fn(struct work_struct *work)
-{
-	struct sci_port *s = container_of(work, struct sci_port, work_tx);
-	struct dma_async_tx_descriptor *desc;
-	struct dma_chan *chan = s->chan_tx;
-	struct uart_port *port = &s->port;
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned long flags;
+अटल व्योम sci_dma_tx_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा sci_port *s = container_of(work, काष्ठा sci_port, work_tx);
+	काष्ठा dma_async_tx_descriptor *desc;
+	काष्ठा dma_chan *chan = s->chan_tx;
+	काष्ठा uart_port *port = &s->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित दीर्घ flags;
 	dma_addr_t buf;
-	int head, tail;
+	पूर्णांक head, tail;
 
 	/*
 	 * DMA is idle now.
-	 * Port xmit buffer is already mapped, and it is one page... Just adjust
+	 * Port xmit buffer is alपढ़ोy mapped, and it is one page... Just adjust
 	 * offsets and lengths. Since it is a circular buffer, we have to
 	 * transmit till the end, and then the rest. Take the port lock to get a
 	 * consistent xmit buffer state.
@@ -1413,219 +1414,219 @@ static void sci_dma_tx_work_fn(struct work_struct *work)
 	head = xmit->head;
 	tail = xmit->tail;
 	buf = s->tx_dma_addr + (tail & (UART_XMIT_SIZE - 1));
-	s->tx_dma_len = min_t(unsigned int,
+	s->tx_dma_len = min_t(अचिन्हित पूर्णांक,
 		CIRC_CNT(head, tail, UART_XMIT_SIZE),
 		CIRC_CNT_TO_END(head, tail, UART_XMIT_SIZE));
-	if (!s->tx_dma_len) {
+	अगर (!s->tx_dma_len) अणु
 		/* Transmit buffer has been flushed */
 		spin_unlock_irq(&port->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	desc = dmaengine_prep_slave_single(chan, buf, s->tx_dma_len,
 					   DMA_MEM_TO_DEV,
 					   DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!desc) {
+	अगर (!desc) अणु
 		spin_unlock_irq(&port->lock);
 		dev_warn(port->dev, "Failed preparing Tx DMA descriptor\n");
-		goto switch_to_pio;
-	}
+		जाओ चयन_to_pio;
+	पूर्ण
 
-	dma_sync_single_for_device(chan->device->dev, buf, s->tx_dma_len,
+	dma_sync_single_क्रम_device(chan->device->dev, buf, s->tx_dma_len,
 				   DMA_TO_DEVICE);
 
 	desc->callback = sci_dma_tx_complete;
 	desc->callback_param = s;
 	s->cookie_tx = dmaengine_submit(desc);
-	if (dma_submit_error(s->cookie_tx)) {
+	अगर (dma_submit_error(s->cookie_tx)) अणु
 		spin_unlock_irq(&port->lock);
 		dev_warn(port->dev, "Failed submitting Tx DMA descriptor\n");
-		goto switch_to_pio;
-	}
+		जाओ चयन_to_pio;
+	पूर्ण
 
 	spin_unlock_irq(&port->lock);
 	dev_dbg(port->dev, "%s: %p: %d...%d, cookie %d\n",
 		__func__, xmit->buf, tail, head, s->cookie_tx);
 
 	dma_async_issue_pending(chan);
-	return;
+	वापस;
 
-switch_to_pio:
+चयन_to_pio:
 	spin_lock_irqsave(&port->lock, flags);
-	s->chan_tx = NULL;
+	s->chan_tx = शून्य;
 	sci_start_tx(port);
 	spin_unlock_irqrestore(&port->lock, flags);
-	return;
-}
+	वापस;
+पूर्ण
 
-static enum hrtimer_restart sci_dma_rx_timer_fn(struct hrtimer *t)
-{
-	struct sci_port *s = container_of(t, struct sci_port, rx_timer);
-	struct dma_chan *chan = s->chan_rx;
-	struct uart_port *port = &s->port;
-	struct dma_tx_state state;
-	enum dma_status status;
-	unsigned long flags;
-	unsigned int read;
-	int active, count;
+अटल क्रमागत hrसमयr_restart sci_dma_rx_समयr_fn(काष्ठा hrसमयr *t)
+अणु
+	काष्ठा sci_port *s = container_of(t, काष्ठा sci_port, rx_समयr);
+	काष्ठा dma_chan *chan = s->chan_rx;
+	काष्ठा uart_port *port = &s->port;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status status;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक पढ़ो;
+	पूर्णांक active, count;
 
 	dev_dbg(port->dev, "DMA Rx timed out\n");
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	active = sci_dma_rx_find_active(s);
-	if (active < 0) {
+	अगर (active < 0) अणु
 		spin_unlock_irqrestore(&port->lock, flags);
-		return HRTIMER_NORESTART;
-	}
+		वापस HRTIMER_NORESTART;
+	पूर्ण
 
 	status = dmaengine_tx_status(s->chan_rx, s->active_rx, &state);
-	if (status == DMA_COMPLETE) {
+	अगर (status == DMA_COMPLETE) अणु
 		spin_unlock_irqrestore(&port->lock, flags);
 		dev_dbg(port->dev, "Cookie %d #%d has already completed\n",
 			s->active_rx, active);
 
 		/* Let packet complete handler take care of the packet */
-		return HRTIMER_NORESTART;
-	}
+		वापस HRTIMER_NORESTART;
+	पूर्ण
 
-	dmaengine_pause(chan);
+	dmaengine_छोड़ो(chan);
 
 	/*
-	 * sometimes DMA transfer doesn't stop even if it is stopped and
+	 * someबार DMA transfer करोesn't stop even अगर it is stopped and
 	 * data keeps on coming until transaction is complete so check
-	 * for DMA_COMPLETE again
+	 * क्रम DMA_COMPLETE again
 	 * Let packet complete handler take care of the packet
 	 */
 	status = dmaengine_tx_status(s->chan_rx, s->active_rx, &state);
-	if (status == DMA_COMPLETE) {
+	अगर (status == DMA_COMPLETE) अणु
 		spin_unlock_irqrestore(&port->lock, flags);
 		dev_dbg(port->dev, "Transaction complete after DMA engine was stopped");
-		return HRTIMER_NORESTART;
-	}
+		वापस HRTIMER_NORESTART;
+	पूर्ण
 
 	/* Handle incomplete DMA receive */
 	dmaengine_terminate_async(s->chan_rx);
-	read = sg_dma_len(&s->sg_rx[active]) - state.residue;
+	पढ़ो = sg_dma_len(&s->sg_rx[active]) - state.residue;
 
-	if (read) {
-		count = sci_dma_rx_push(s, s->rx_buf[active], read);
-		if (count)
+	अगर (पढ़ो) अणु
+		count = sci_dma_rx_push(s, s->rx_buf[active], पढ़ो);
+		अगर (count)
 			tty_flip_buffer_push(&port->state->port);
-	}
+	पूर्ण
 
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
 		sci_dma_rx_submit(s, true);
 
 	sci_dma_rx_reenable_irq(s);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-static struct dma_chan *sci_request_dma_chan(struct uart_port *port,
-					     enum dma_transfer_direction dir)
-{
-	struct dma_chan *chan;
-	struct dma_slave_config cfg;
-	int ret;
+अटल काष्ठा dma_chan *sci_request_dma_chan(काष्ठा uart_port *port,
+					     क्रमागत dma_transfer_direction dir)
+अणु
+	काष्ठा dma_chan *chan;
+	काष्ठा dma_slave_config cfg;
+	पूर्णांक ret;
 
 	chan = dma_request_slave_channel(port->dev,
 					 dir == DMA_MEM_TO_DEV ? "tx" : "rx");
-	if (!chan) {
+	अगर (!chan) अणु
 		dev_dbg(port->dev, "dma_request_slave_channel failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 	cfg.direction = dir;
-	if (dir == DMA_MEM_TO_DEV) {
+	अगर (dir == DMA_MEM_TO_DEV) अणु
 		cfg.dst_addr = port->mapbase +
-			(sci_getreg(port, SCxTDR)->offset << port->regshift);
+			(sci_getreg(port, SCxTDR)->offset << port->regshअगरt);
 		cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	} else {
+	पूर्ण अन्यथा अणु
 		cfg.src_addr = port->mapbase +
-			(sci_getreg(port, SCxRDR)->offset << port->regshift);
+			(sci_getreg(port, SCxRDR)->offset << port->regshअगरt);
 		cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	}
+	पूर्ण
 
 	ret = dmaengine_slave_config(chan, &cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(port->dev, "dmaengine_slave_config failed %d\n", ret);
 		dma_release_channel(chan);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static void sci_request_dma(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	struct dma_chan *chan;
+अटल व्योम sci_request_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	काष्ठा dma_chan *chan;
 
 	dev_dbg(port->dev, "%s: port %d\n", __func__, port->line);
 
 	/*
-	 * DMA on console may interfere with Kernel log messages which use
-	 * plain putchar(). So, simply don't use it with a console.
+	 * DMA on console may पूर्णांकerfere with Kernel log messages which use
+	 * plain अक्षर_दो(). So, simply करोn't use it with a console.
 	 */
-	if (uart_console(port))
-		return;
+	अगर (uart_console(port))
+		वापस;
 
-	if (!port->dev->of_node)
-		return;
+	अगर (!port->dev->of_node)
+		वापस;
 
 	s->cookie_tx = -EINVAL;
 
 	/*
-	 * Don't request a dma channel if no channel was specified
+	 * Don't request a dma channel अगर no channel was specअगरied
 	 * in the device tree.
 	 */
-	if (!of_find_property(port->dev->of_node, "dmas", NULL))
-		return;
+	अगर (!of_find_property(port->dev->of_node, "dmas", शून्य))
+		वापस;
 
 	chan = sci_request_dma_chan(port, DMA_MEM_TO_DEV);
 	dev_dbg(port->dev, "%s: TX: got channel %p\n", __func__, chan);
-	if (chan) {
+	अगर (chan) अणु
 		/* UART circular tx buffer is an aligned page. */
 		s->tx_dma_addr = dma_map_single(chan->device->dev,
 						port->state->xmit.buf,
 						UART_XMIT_SIZE,
 						DMA_TO_DEVICE);
-		if (dma_mapping_error(chan->device->dev, s->tx_dma_addr)) {
+		अगर (dma_mapping_error(chan->device->dev, s->tx_dma_addr)) अणु
 			dev_warn(port->dev, "Failed mapping Tx DMA descriptor\n");
 			dma_release_channel(chan);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(port->dev, "%s: mapped %lu@%p to %pad\n",
 				__func__, UART_XMIT_SIZE,
 				port->state->xmit.buf, &s->tx_dma_addr);
 
 			INIT_WORK(&s->work_tx, sci_dma_tx_work_fn);
 			s->chan_tx_saved = s->chan_tx = chan;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	chan = sci_request_dma_chan(port, DMA_DEV_TO_MEM);
 	dev_dbg(port->dev, "%s: RX: got channel %p\n", __func__, chan);
-	if (chan) {
-		unsigned int i;
+	अगर (chan) अणु
+		अचिन्हित पूर्णांक i;
 		dma_addr_t dma;
-		void *buf;
+		व्योम *buf;
 
-		s->buf_len_rx = 2 * max_t(size_t, 16, port->fifosize);
+		s->buf_len_rx = 2 * max_t(माप_प्रकार, 16, port->fअगरosize);
 		buf = dma_alloc_coherent(chan->device->dev, s->buf_len_rx * 2,
 					 &dma, GFP_KERNEL);
-		if (!buf) {
+		अगर (!buf) अणु
 			dev_warn(port->dev,
 				 "Failed to allocate Rx dma buffer, using PIO\n");
 			dma_release_channel(chan);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		for (i = 0; i < 2; i++) {
-			struct scatterlist *sg = &s->sg_rx[i];
+		क्रम (i = 0; i < 2; i++) अणु
+			काष्ठा scatterlist *sg = &s->sg_rx[i];
 
 			sg_init_table(sg, 1);
 			s->rx_buf[i] = buf;
@@ -1634,31 +1635,31 @@ static void sci_request_dma(struct uart_port *port)
 
 			buf += s->buf_len_rx;
 			dma += s->buf_len_rx;
-		}
+		पूर्ण
 
-		hrtimer_init(&s->rx_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-		s->rx_timer.function = sci_dma_rx_timer_fn;
+		hrसमयr_init(&s->rx_समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+		s->rx_समयr.function = sci_dma_rx_समयr_fn;
 
 		s->chan_rx_saved = s->chan_rx = chan;
 
-		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+		अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
 			sci_dma_rx_submit(s, false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sci_free_dma(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
+अटल व्योम sci_मुक्त_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
 
-	if (s->chan_tx_saved)
+	अगर (s->chan_tx_saved)
 		sci_dma_tx_release(s);
-	if (s->chan_rx_saved)
+	अगर (s->chan_rx_saved)
 		sci_dma_rx_release(s);
-}
+पूर्ण
 
-static void sci_flush_buffer(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
+अटल व्योम sci_flush_buffer(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
 
 	/*
 	 * In uart_flush_buffer(), the xmit circular buffer has just been
@@ -1666,813 +1667,813 @@ static void sci_flush_buffer(struct uart_port *port)
 	 * pending transfers
 	 */
 	s->tx_dma_len = 0;
-	if (s->chan_tx) {
+	अगर (s->chan_tx) अणु
 		dmaengine_terminate_async(s->chan_tx);
 		s->cookie_tx = -EINVAL;
-	}
-}
-#else /* !CONFIG_SERIAL_SH_SCI_DMA */
-static inline void sci_request_dma(struct uart_port *port)
-{
-}
+	पूर्ण
+पूर्ण
+#अन्यथा /* !CONFIG_SERIAL_SH_SCI_DMA */
+अटल अंतरभूत व्योम sci_request_dma(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static inline void sci_free_dma(struct uart_port *port)
-{
-}
+अटल अंतरभूत व्योम sci_मुक्त_dma(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-#define sci_flush_buffer	NULL
-#endif /* !CONFIG_SERIAL_SH_SCI_DMA */
+#घोषणा sci_flush_buffer	शून्य
+#पूर्ण_अगर /* !CONFIG_SERIAL_SH_SCI_DMA */
 
-static irqreturn_t sci_rx_interrupt(int irq, void *ptr)
-{
-	struct uart_port *port = ptr;
-	struct sci_port *s = to_sci_port(port);
+अटल irqवापस_t sci_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा uart_port *port = ptr;
+	काष्ठा sci_port *s = to_sci_port(port);
 
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-	if (s->chan_rx) {
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+	अगर (s->chan_rx) अणु
 		u16 scr = serial_port_in(port, SCSCR);
 		u16 ssr = serial_port_in(port, SCxSR);
 
-		/* Disable future Rx interrupts */
-		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+		/* Disable future Rx पूर्णांकerrupts */
+		अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 			disable_irq_nosync(irq);
 			scr |= SCSCR_RDRQE;
-		} else {
-			if (sci_dma_rx_submit(s, false) < 0)
-				goto handle_pio;
+		पूर्ण अन्यथा अणु
+			अगर (sci_dma_rx_submit(s, false) < 0)
+				जाओ handle_pio;
 
 			scr &= ~SCSCR_RIE;
-		}
+		पूर्ण
 		serial_port_out(port, SCSCR, scr);
-		/* Clear current interrupt */
+		/* Clear current पूर्णांकerrupt */
 		serial_port_out(port, SCxSR,
 				ssr & ~(SCIF_DR | SCxSR_RDxF(port)));
 		dev_dbg(port->dev, "Rx IRQ %lu: setup t-out in %u us\n",
-			jiffies, s->rx_timeout);
-		start_hrtimer_us(&s->rx_timer, s->rx_timeout);
+			jअगरfies, s->rx_समयout);
+		start_hrसमयr_us(&s->rx_समयr, s->rx_समयout);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 handle_pio:
-#endif
+#पूर्ण_अगर
 
-	if (s->rx_trigger > 1 && s->rx_fifo_timeout > 0) {
-		if (!scif_rtrg_enabled(port))
-			scif_set_rtrg(port, s->rx_trigger);
+	अगर (s->rx_trigger > 1 && s->rx_fअगरo_समयout > 0) अणु
+		अगर (!scअगर_rtrg_enabled(port))
+			scअगर_set_rtrg(port, s->rx_trigger);
 
-		mod_timer(&s->rx_fifo_timer, jiffies + DIV_ROUND_UP(
-			  s->rx_frame * HZ * s->rx_fifo_timeout, 1000000));
-	}
+		mod_समयr(&s->rx_fअगरo_समयr, jअगरfies + DIV_ROUND_UP(
+			  s->rx_frame * HZ * s->rx_fअगरo_समयout, 1000000));
+	पूर्ण
 
-	/* I think sci_receive_chars has to be called irrespective
-	 * of whether the I_IXOFF is set, otherwise, how is the interrupt
+	/* I think sci_receive_अक्षरs has to be called irrespective
+	 * of whether the I_IXOFF is set, otherwise, how is the पूर्णांकerrupt
 	 * to be disabled?
 	 */
-	sci_receive_chars(port);
+	sci_receive_अक्षरs(port);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sci_tx_interrupt(int irq, void *ptr)
-{
-	struct uart_port *port = ptr;
-	unsigned long flags;
+अटल irqवापस_t sci_tx_पूर्णांकerrupt(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा uart_port *port = ptr;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	sci_transmit_chars(port);
+	sci_transmit_अक्षरs(port);
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sci_br_interrupt(int irq, void *ptr)
-{
-	struct uart_port *port = ptr;
+अटल irqवापस_t sci_br_पूर्णांकerrupt(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा uart_port *port = ptr;
 
 	/* Handle BREAKs */
-	sci_handle_breaks(port);
+	sci_handle_अवरोधs(port);
 	sci_clear_SCxSR(port, SCxSR_BREAK_CLEAR(port));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sci_er_interrupt(int irq, void *ptr)
-{
-	struct uart_port *port = ptr;
-	struct sci_port *s = to_sci_port(port);
+अटल irqवापस_t sci_er_पूर्णांकerrupt(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा uart_port *port = ptr;
+	काष्ठा sci_port *s = to_sci_port(port);
 
-	if (s->irqs[SCIx_ERI_IRQ] == s->irqs[SCIx_BRI_IRQ]) {
-		/* Break and Error interrupts are muxed */
-		unsigned short ssr_status = serial_port_in(port, SCxSR);
+	अगर (s->irqs[SCIx_ERI_IRQ] == s->irqs[SCIx_BRI_IRQ]) अणु
+		/* Break and Error पूर्णांकerrupts are muxed */
+		अचिन्हित लघु ssr_status = serial_port_in(port, SCxSR);
 
 		/* Break Interrupt */
-		if (ssr_status & SCxSR_BRK(port))
-			sci_br_interrupt(irq, ptr);
+		अगर (ssr_status & SCxSR_BRK(port))
+			sci_br_पूर्णांकerrupt(irq, ptr);
 
 		/* Break only? */
-		if (!(ssr_status & SCxSR_ERRORS(port)))
-			return IRQ_HANDLED;
-	}
+		अगर (!(ssr_status & SCxSR_ERRORS(port)))
+			वापस IRQ_HANDLED;
+	पूर्ण
 
 	/* Handle errors */
-	if (port->type == PORT_SCI) {
-		if (sci_handle_errors(port)) {
-			/* discard character in rx buffer */
+	अगर (port->type == PORT_SCI) अणु
+		अगर (sci_handle_errors(port)) अणु
+			/* discard अक्षरacter in rx buffer */
 			serial_port_in(port, SCxSR);
 			sci_clear_SCxSR(port, SCxSR_RDxF_CLEAR(port));
-		}
-	} else {
-		sci_handle_fifo_overrun(port);
-		if (!s->chan_rx)
-			sci_receive_chars(port);
-	}
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		sci_handle_fअगरo_overrun(port);
+		अगर (!s->chan_rx)
+			sci_receive_अक्षरs(port);
+	पूर्ण
 
 	sci_clear_SCxSR(port, SCxSR_ERROR_CLEAR(port));
 
 	/* Kick the transmission */
-	if (!s->chan_tx)
-		sci_tx_interrupt(irq, ptr);
+	अगर (!s->chan_tx)
+		sci_tx_पूर्णांकerrupt(irq, ptr);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t sci_mpxed_interrupt(int irq, void *ptr)
-{
-	unsigned short ssr_status, scr_status, err_enabled, orer_status = 0;
-	struct uart_port *port = ptr;
-	struct sci_port *s = to_sci_port(port);
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t sci_mpxed_पूर्णांकerrupt(पूर्णांक irq, व्योम *ptr)
+अणु
+	अचिन्हित लघु ssr_status, scr_status, err_enabled, orer_status = 0;
+	काष्ठा uart_port *port = ptr;
+	काष्ठा sci_port *s = to_sci_port(port);
+	irqवापस_t ret = IRQ_NONE;
 
 	ssr_status = serial_port_in(port, SCxSR);
 	scr_status = serial_port_in(port, SCSCR);
-	if (s->params->overrun_reg == SCxSR)
+	अगर (s->params->overrun_reg == SCxSR)
 		orer_status = ssr_status;
-	else if (sci_getreg(port, s->params->overrun_reg)->size)
+	अन्यथा अगर (sci_getreg(port, s->params->overrun_reg)->size)
 		orer_status = serial_port_in(port, s->params->overrun_reg);
 
 	err_enabled = scr_status & port_rx_irq_mask(port);
 
 	/* Tx Interrupt */
-	if ((ssr_status & SCxSR_TDxE(port)) && (scr_status & SCSCR_TIE) &&
+	अगर ((ssr_status & SCxSR_TDxE(port)) && (scr_status & SCSCR_TIE) &&
 	    !s->chan_tx)
-		ret = sci_tx_interrupt(irq, ptr);
+		ret = sci_tx_पूर्णांकerrupt(irq, ptr);
 
 	/*
-	 * Rx Interrupt: if we're using DMA, the DMA controller clears RDF /
+	 * Rx Interrupt: अगर we're using DMA, the DMA controller clears RDF /
 	 * DR flags
 	 */
-	if (((ssr_status & SCxSR_RDxF(port)) || s->chan_rx) &&
+	अगर (((ssr_status & SCxSR_RDxF(port)) || s->chan_rx) &&
 	    (scr_status & SCSCR_RIE))
-		ret = sci_rx_interrupt(irq, ptr);
+		ret = sci_rx_पूर्णांकerrupt(irq, ptr);
 
 	/* Error Interrupt */
-	if ((ssr_status & SCxSR_ERRORS(port)) && err_enabled)
-		ret = sci_er_interrupt(irq, ptr);
+	अगर ((ssr_status & SCxSR_ERRORS(port)) && err_enabled)
+		ret = sci_er_पूर्णांकerrupt(irq, ptr);
 
 	/* Break Interrupt */
-	if ((ssr_status & SCxSR_BRK(port)) && err_enabled)
-		ret = sci_br_interrupt(irq, ptr);
+	अगर ((ssr_status & SCxSR_BRK(port)) && err_enabled)
+		ret = sci_br_पूर्णांकerrupt(irq, ptr);
 
 	/* Overrun Interrupt */
-	if (orer_status & s->params->overrun_mask) {
-		sci_handle_fifo_overrun(port);
+	अगर (orer_status & s->params->overrun_mask) अणु
+		sci_handle_fअगरo_overrun(port);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sci_irq_desc {
-	const char	*desc;
+अटल स्थिर काष्ठा sci_irq_desc अणु
+	स्थिर अक्षर	*desc;
 	irq_handler_t	handler;
-} sci_irq_desc[] = {
+पूर्ण sci_irq_desc[] = अणु
 	/*
-	 * Split out handlers, the default case.
+	 * Split out handlers, the शेष हाल.
 	 */
-	[SCIx_ERI_IRQ] = {
+	[SCIx_ERI_IRQ] = अणु
 		.desc = "rx err",
-		.handler = sci_er_interrupt,
-	},
+		.handler = sci_er_पूर्णांकerrupt,
+	पूर्ण,
 
-	[SCIx_RXI_IRQ] = {
+	[SCIx_RXI_IRQ] = अणु
 		.desc = "rx full",
-		.handler = sci_rx_interrupt,
-	},
+		.handler = sci_rx_पूर्णांकerrupt,
+	पूर्ण,
 
-	[SCIx_TXI_IRQ] = {
+	[SCIx_TXI_IRQ] = अणु
 		.desc = "tx empty",
-		.handler = sci_tx_interrupt,
-	},
+		.handler = sci_tx_पूर्णांकerrupt,
+	पूर्ण,
 
-	[SCIx_BRI_IRQ] = {
+	[SCIx_BRI_IRQ] = अणु
 		.desc = "break",
-		.handler = sci_br_interrupt,
-	},
+		.handler = sci_br_पूर्णांकerrupt,
+	पूर्ण,
 
-	[SCIx_DRI_IRQ] = {
+	[SCIx_DRI_IRQ] = अणु
 		.desc = "rx ready",
-		.handler = sci_rx_interrupt,
-	},
+		.handler = sci_rx_पूर्णांकerrupt,
+	पूर्ण,
 
-	[SCIx_TEI_IRQ] = {
+	[SCIx_TEI_IRQ] = अणु
 		.desc = "tx end",
-		.handler = sci_tx_interrupt,
-	},
+		.handler = sci_tx_पूर्णांकerrupt,
+	पूर्ण,
 
 	/*
 	 * Special muxed handler.
 	 */
-	[SCIx_MUX_IRQ] = {
+	[SCIx_MUX_IRQ] = अणु
 		.desc = "mux",
-		.handler = sci_mpxed_interrupt,
-	},
-};
+		.handler = sci_mpxed_पूर्णांकerrupt,
+	पूर्ण,
+पूर्ण;
 
-static int sci_request_irq(struct sci_port *port)
-{
-	struct uart_port *up = &port->port;
-	int i, j, w, ret = 0;
+अटल पूर्णांक sci_request_irq(काष्ठा sci_port *port)
+अणु
+	काष्ठा uart_port *up = &port->port;
+	पूर्णांक i, j, w, ret = 0;
 
-	for (i = j = 0; i < SCIx_NR_IRQS; i++, j++) {
-		const struct sci_irq_desc *desc;
-		int irq;
+	क्रम (i = j = 0; i < SCIx_NR_IRQS; i++, j++) अणु
+		स्थिर काष्ठा sci_irq_desc *desc;
+		पूर्णांक irq;
 
-		/* Check if already registered (muxed) */
-		for (w = 0; w < i; w++)
-			if (port->irqs[w] == port->irqs[i])
+		/* Check अगर alपढ़ोy रेजिस्टरed (muxed) */
+		क्रम (w = 0; w < i; w++)
+			अगर (port->irqs[w] == port->irqs[i])
 				w = i + 1;
-		if (w > i)
-			continue;
+		अगर (w > i)
+			जारी;
 
-		if (SCIx_IRQ_IS_MUXED(port)) {
+		अगर (SCIx_IRQ_IS_MUXED(port)) अणु
 			i = SCIx_MUX_IRQ;
 			irq = up->irq;
-		} else {
+		पूर्ण अन्यथा अणु
 			irq = port->irqs[i];
 
 			/*
 			 * Certain port types won't support all of the
-			 * available interrupt sources.
+			 * available पूर्णांकerrupt sources.
 			 */
-			if (unlikely(irq < 0))
-				continue;
-		}
+			अगर (unlikely(irq < 0))
+				जारी;
+		पूर्ण
 
 		desc = sci_irq_desc + i;
-		port->irqstr[j] = kasprintf(GFP_KERNEL, "%s:%s",
+		port->irqstr[j] = kaप्र_लिखो(GFP_KERNEL, "%s:%s",
 					    dev_name(up->dev), desc->desc);
-		if (!port->irqstr[j]) {
+		अगर (!port->irqstr[j]) अणु
 			ret = -ENOMEM;
-			goto out_nomem;
-		}
+			जाओ out_nomem;
+		पूर्ण
 
 		ret = request_irq(irq, desc->handler, up->irqflags,
 				  port->irqstr[j], port);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			dev_err(up->dev, "Can't allocate %s IRQ\n", desc->desc);
-			goto out_noirq;
-		}
-	}
+			जाओ out_noirq;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_noirq:
-	while (--i >= 0)
-		free_irq(port->irqs[i], port);
+	जबतक (--i >= 0)
+		मुक्त_irq(port->irqs[i], port);
 
 out_nomem:
-	while (--j >= 0)
-		kfree(port->irqstr[j]);
+	जबतक (--j >= 0)
+		kमुक्त(port->irqstr[j]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void sci_free_irq(struct sci_port *port)
-{
-	int i, j;
+अटल व्योम sci_मुक्त_irq(काष्ठा sci_port *port)
+अणु
+	पूर्णांक i, j;
 
 	/*
 	 * Intentionally in reverse order so we iterate over the muxed
 	 * IRQ first.
 	 */
-	for (i = 0; i < SCIx_NR_IRQS; i++) {
-		int irq = port->irqs[i];
+	क्रम (i = 0; i < SCIx_NR_IRQS; i++) अणु
+		पूर्णांक irq = port->irqs[i];
 
 		/*
 		 * Certain port types won't support all of the available
-		 * interrupt sources.
+		 * पूर्णांकerrupt sources.
 		 */
-		if (unlikely(irq < 0))
-			continue;
+		अगर (unlikely(irq < 0))
+			जारी;
 
-		/* Check if already freed (irq was muxed) */
-		for (j = 0; j < i; j++)
-			if (port->irqs[j] == irq)
+		/* Check अगर alपढ़ोy मुक्तd (irq was muxed) */
+		क्रम (j = 0; j < i; j++)
+			अगर (port->irqs[j] == irq)
 				j = i + 1;
-		if (j > i)
-			continue;
+		अगर (j > i)
+			जारी;
 
-		free_irq(port->irqs[i], port);
-		kfree(port->irqstr[i]);
+		मुक्त_irq(port->irqs[i], port);
+		kमुक्त(port->irqstr[i]);
 
-		if (SCIx_IRQ_IS_MUXED(port)) {
-			/* If there's only one IRQ, we're done. */
-			return;
-		}
-	}
-}
+		अगर (SCIx_IRQ_IS_MUXED(port)) अणु
+			/* If there's only one IRQ, we're करोne. */
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static unsigned int sci_tx_empty(struct uart_port *port)
-{
-	unsigned short status = serial_port_in(port, SCxSR);
-	unsigned short in_tx_fifo = sci_txfill(port);
+अटल अचिन्हित पूर्णांक sci_tx_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित लघु status = serial_port_in(port, SCxSR);
+	अचिन्हित लघु in_tx_fअगरo = sci_txfill(port);
 
-	return (status & SCxSR_TEND(port)) && !in_tx_fifo ? TIOCSER_TEMT : 0;
-}
+	वापस (status & SCxSR_TEND(port)) && !in_tx_fअगरo ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static void sci_set_rts(struct uart_port *port, bool state)
-{
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+अटल व्योम sci_set_rts(काष्ठा uart_port *port, bool state)
+अणु
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		u16 data = serial_port_in(port, SCPDR);
 
 		/* Active low */
-		if (state)
+		अगर (state)
 			data &= ~SCPDR_RTSD;
-		else
+		अन्यथा
 			data |= SCPDR_RTSD;
 		serial_port_out(port, SCPDR, data);
 
 		/* RTS# is output */
 		serial_port_out(port, SCPCR,
 				serial_port_in(port, SCPCR) | SCPCR_RTSC);
-	} else if (sci_getreg(port, SCSPTR)->size) {
+	पूर्ण अन्यथा अगर (sci_getreg(port, SCSPTR)->size) अणु
 		u16 ctrl = serial_port_in(port, SCSPTR);
 
 		/* Active low */
-		if (state)
+		अगर (state)
 			ctrl &= ~SCSPTR_RTSDT;
-		else
+		अन्यथा
 			ctrl |= SCSPTR_RTSDT;
 		serial_port_out(port, SCSPTR, ctrl);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool sci_get_cts(struct uart_port *port)
-{
-	if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+अटल bool sci_get_cts(काष्ठा uart_port *port)
+अणु
+	अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 		/* Active low */
-		return !(serial_port_in(port, SCPDR) & SCPDR_CTSD);
-	} else if (sci_getreg(port, SCSPTR)->size) {
+		वापस !(serial_port_in(port, SCPDR) & SCPDR_CTSD);
+	पूर्ण अन्यथा अगर (sci_getreg(port, SCSPTR)->size) अणु
 		/* Active low */
-		return !(serial_port_in(port, SCSPTR) & SCSPTR_CTSDT);
-	}
+		वापस !(serial_port_in(port, SCSPTR) & SCSPTR_CTSDT);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Modem control is a bit of a mixed bag for SCI(F) ports. Generally
+ * Modem control is a bit of a mixed bag क्रम SCI(F) ports. Generally
  * CTS/RTS is supported in hardware by at least one port and controlled
- * via SCSPTR (SCxPCR for SCIFA/B parts), or external pins (presently
+ * via SCSPTR (SCxPCR क्रम SCIFA/B parts), or बाह्यal pins (presently
  * handled via the ->init_pins() op, which is a bit of a one-way street,
  * lacking any ability to defer pin control -- this will later be
  * converted over to the GPIO framework).
  *
  * Other modes (such as loopback) are supported generically on certain
- * port types, but not others. For these it's sufficient to test for the
- * existence of the support register and simply ignore the port type.
+ * port types, but not others. For these it's sufficient to test क्रम the
+ * existence of the support रेजिस्टर and simply ignore the port type.
  */
-static void sci_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct sci_port *s = to_sci_port(port);
+अटल व्योम sci_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
 
-	if (mctrl & TIOCM_LOOP) {
-		const struct plat_sci_reg *reg;
+	अगर (mctrl & TIOCM_LOOP) अणु
+		स्थिर काष्ठा plat_sci_reg *reg;
 
 		/*
-		 * Standard loopback mode for SCFCR ports.
+		 * Standard loopback mode क्रम SCFCR ports.
 		 */
 		reg = sci_getreg(port, SCFCR);
-		if (reg->size)
+		अगर (reg->size)
 			serial_port_out(port, SCFCR,
 					serial_port_in(port, SCFCR) |
 					SCFCR_LOOP);
-	}
+	पूर्ण
 
 	mctrl_gpio_set(s->gpios, mctrl);
 
-	if (!s->has_rtscts)
-		return;
+	अगर (!s->has_rtscts)
+		वापस;
 
-	if (!(mctrl & TIOCM_RTS)) {
+	अगर (!(mctrl & TIOCM_RTS)) अणु
 		/* Disable Auto RTS */
 		serial_port_out(port, SCFCR,
 				serial_port_in(port, SCFCR) & ~SCFCR_MCE);
 
 		/* Clear RTS */
 		sci_set_rts(port, 0);
-	} else if (s->autorts) {
-		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB) {
+	पूर्ण अन्यथा अगर (s->स्वतःrts) अणु
+		अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB) अणु
 			/* Enable RTS# pin function */
 			serial_port_out(port, SCPCR,
 				serial_port_in(port, SCPCR) & ~SCPCR_RTSC);
-		}
+		पूर्ण
 
 		/* Enable Auto RTS */
 		serial_port_out(port, SCFCR,
 				serial_port_in(port, SCFCR) | SCFCR_MCE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Set RTS */
 		sci_set_rts(port, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int sci_get_mctrl(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	struct mctrl_gpios *gpios = s->gpios;
-	unsigned int mctrl = 0;
+अटल अचिन्हित पूर्णांक sci_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	काष्ठा mctrl_gpios *gpios = s->gpios;
+	अचिन्हित पूर्णांक mctrl = 0;
 
 	mctrl_gpio_get(gpios, &mctrl);
 
 	/*
-	 * CTS/RTS is handled in hardware when supported, while nothing
-	 * else is wired up.
+	 * CTS/RTS is handled in hardware when supported, जबतक nothing
+	 * अन्यथा is wired up.
 	 */
-	if (s->autorts) {
-		if (sci_get_cts(port))
+	अगर (s->स्वतःrts) अणु
+		अगर (sci_get_cts(port))
 			mctrl |= TIOCM_CTS;
-	} else if (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_CTS)) {
+	पूर्ण अन्यथा अगर (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_CTS)) अणु
 		mctrl |= TIOCM_CTS;
-	}
-	if (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_DSR))
+	पूर्ण
+	अगर (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_DSR))
 		mctrl |= TIOCM_DSR;
-	if (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_DCD))
+	अगर (!mctrl_gpio_to_gpiod(gpios, UART_GPIO_DCD))
 		mctrl |= TIOCM_CAR;
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static void sci_enable_ms(struct uart_port *port)
-{
+अटल व्योम sci_enable_ms(काष्ठा uart_port *port)
+अणु
 	mctrl_gpio_enable_ms(to_sci_port(port)->gpios);
-}
+पूर्ण
 
-static void sci_break_ctl(struct uart_port *port, int break_state)
-{
-	unsigned short scscr, scsptr;
-	unsigned long flags;
+अटल व्योम sci_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित लघु scscr, scsptr;
+	अचिन्हित दीर्घ flags;
 
 	/* check whether the port has SCSPTR */
-	if (!sci_getreg(port, SCSPTR)->size) {
+	अगर (!sci_getreg(port, SCSPTR)->size) अणु
 		/*
-		 * Not supported by hardware. Most parts couple break and rx
-		 * interrupts together, with break detection always enabled.
+		 * Not supported by hardware. Most parts couple अवरोध and rx
+		 * पूर्णांकerrupts together, with अवरोध detection always enabled.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 	scsptr = serial_port_in(port, SCSPTR);
 	scscr = serial_port_in(port, SCSCR);
 
-	if (break_state == -1) {
+	अगर (अवरोध_state == -1) अणु
 		scsptr = (scsptr | SCSPTR_SPB2IO) & ~SCSPTR_SPB2DT;
 		scscr &= ~SCSCR_TE;
-	} else {
+	पूर्ण अन्यथा अणु
 		scsptr = (scsptr | SCSPTR_SPB2DT) & ~SCSPTR_SPB2IO;
 		scscr |= SCSCR_TE;
-	}
+	पूर्ण
 
 	serial_port_out(port, SCSPTR, scsptr);
 	serial_port_out(port, SCSCR, scscr);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int sci_startup(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	int ret;
+अटल पूर्णांक sci_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	पूर्णांक ret;
 
 	dev_dbg(port->dev, "%s(%d)\n", __func__, port->line);
 
 	sci_request_dma(port);
 
 	ret = sci_request_irq(s);
-	if (unlikely(ret < 0)) {
-		sci_free_dma(port);
-		return ret;
-	}
+	अगर (unlikely(ret < 0)) अणु
+		sci_मुक्त_dma(port);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sci_shutdown(struct uart_port *port)
-{
-	struct sci_port *s = to_sci_port(port);
-	unsigned long flags;
+अटल व्योम sci_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *s = to_sci_port(port);
+	अचिन्हित दीर्घ flags;
 	u16 scr;
 
 	dev_dbg(port->dev, "%s(%d)\n", __func__, port->line);
 
-	s->autorts = false;
+	s->स्वतःrts = false;
 	mctrl_gpio_disable_ms(to_sci_port(port)->gpios);
 
 	spin_lock_irqsave(&port->lock, flags);
 	sci_stop_rx(port);
 	sci_stop_tx(port);
 	/*
-	 * Stop RX and TX, disable related interrupts, keep clock source
+	 * Stop RX and TX, disable related पूर्णांकerrupts, keep घड़ी source
 	 * and HSCIF TOT bits
 	 */
 	scr = serial_port_in(port, SCSCR);
 	serial_port_out(port, SCSCR, scr &
-			(SCSCR_CKE1 | SCSCR_CKE0 | s->hscif_tot));
+			(SCSCR_CKE1 | SCSCR_CKE0 | s->hscअगर_tot));
 	spin_unlock_irqrestore(&port->lock, flags);
 
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-	if (s->chan_rx_saved) {
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+	अगर (s->chan_rx_saved) अणु
 		dev_dbg(port->dev, "%s(%d) deleting rx_timer\n", __func__,
 			port->line);
-		hrtimer_cancel(&s->rx_timer);
-	}
-#endif
+		hrसमयr_cancel(&s->rx_समयr);
+	पूर्ण
+#पूर्ण_अगर
 
-	if (s->rx_trigger > 1 && s->rx_fifo_timeout > 0)
-		del_timer_sync(&s->rx_fifo_timer);
-	sci_free_irq(s);
-	sci_free_dma(port);
-}
+	अगर (s->rx_trigger > 1 && s->rx_fअगरo_समयout > 0)
+		del_समयr_sync(&s->rx_fअगरo_समयr);
+	sci_मुक्त_irq(s);
+	sci_मुक्त_dma(port);
+पूर्ण
 
-static int sci_sck_calc(struct sci_port *s, unsigned int bps,
-			unsigned int *srr)
-{
-	unsigned long freq = s->clk_rates[SCI_SCK];
-	int err, min_err = INT_MAX;
-	unsigned int sr;
+अटल पूर्णांक sci_sck_calc(काष्ठा sci_port *s, अचिन्हित पूर्णांक bps,
+			अचिन्हित पूर्णांक *srr)
+अणु
+	अचिन्हित दीर्घ freq = s->clk_rates[SCI_SCK];
+	पूर्णांक err, min_err = पूर्णांक_उच्च;
+	अचिन्हित पूर्णांक sr;
 
-	if (s->port.type != PORT_HSCIF)
+	अगर (s->port.type != PORT_HSCIF)
 		freq *= 2;
 
-	for_each_sr(sr, s) {
+	क्रम_each_sr(sr, s) अणु
 		err = DIV_ROUND_CLOSEST(freq, sr) - bps;
-		if (abs(err) >= abs(min_err))
-			continue;
+		अगर (असल(err) >= असल(min_err))
+			जारी;
 
 		min_err = err;
 		*srr = sr - 1;
 
-		if (!err)
-			break;
-	}
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	dev_dbg(s->port.dev, "SCK: %u%+d bps using SR %u\n", bps, min_err,
 		*srr + 1);
-	return min_err;
-}
+	वापस min_err;
+पूर्ण
 
-static int sci_brg_calc(struct sci_port *s, unsigned int bps,
-			unsigned long freq, unsigned int *dlr,
-			unsigned int *srr)
-{
-	int err, min_err = INT_MAX;
-	unsigned int sr, dl;
+अटल पूर्णांक sci_brg_calc(काष्ठा sci_port *s, अचिन्हित पूर्णांक bps,
+			अचिन्हित दीर्घ freq, अचिन्हित पूर्णांक *dlr,
+			अचिन्हित पूर्णांक *srr)
+अणु
+	पूर्णांक err, min_err = पूर्णांक_उच्च;
+	अचिन्हित पूर्णांक sr, dl;
 
-	if (s->port.type != PORT_HSCIF)
+	अगर (s->port.type != PORT_HSCIF)
 		freq *= 2;
 
-	for_each_sr(sr, s) {
+	क्रम_each_sr(sr, s) अणु
 		dl = DIV_ROUND_CLOSEST(freq, sr * bps);
 		dl = clamp(dl, 1U, 65535U);
 
 		err = DIV_ROUND_CLOSEST(freq, sr * dl) - bps;
-		if (abs(err) >= abs(min_err))
-			continue;
+		अगर (असल(err) >= असल(min_err))
+			जारी;
 
 		min_err = err;
 		*dlr = dl;
 		*srr = sr - 1;
 
-		if (!err)
-			break;
-	}
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	dev_dbg(s->port.dev, "BRG: %u%+d bps using DL %u SR %u\n", bps,
 		min_err, *dlr, *srr + 1);
-	return min_err;
-}
+	वापस min_err;
+पूर्ण
 
-/* calculate sample rate, BRR, and clock select */
-static int sci_scbrr_calc(struct sci_port *s, unsigned int bps,
-			  unsigned int *brr, unsigned int *srr,
-			  unsigned int *cks)
-{
-	unsigned long freq = s->clk_rates[SCI_FCK];
-	unsigned int sr, br, prediv, scrate, c;
-	int err, min_err = INT_MAX;
+/* calculate sample rate, BRR, and घड़ी select */
+अटल पूर्णांक sci_scbrr_calc(काष्ठा sci_port *s, अचिन्हित पूर्णांक bps,
+			  अचिन्हित पूर्णांक *brr, अचिन्हित पूर्णांक *srr,
+			  अचिन्हित पूर्णांक *cks)
+अणु
+	अचिन्हित दीर्घ freq = s->clk_rates[SCI_FCK];
+	अचिन्हित पूर्णांक sr, br, preभाग, scrate, c;
+	पूर्णांक err, min_err = पूर्णांक_उच्च;
 
-	if (s->port.type != PORT_HSCIF)
+	अगर (s->port.type != PORT_HSCIF)
 		freq *= 2;
 
 	/*
-	 * Find the combination of sample rate and clock select with the
+	 * Find the combination of sample rate and घड़ी select with the
 	 * smallest deviation from the desired baud rate.
 	 * Prefer high sample rates to maximise the receive margin.
 	 *
 	 * M: Receive margin (%)
-	 * N: Ratio of bit rate to clock (N = sampling rate)
+	 * N: Ratio of bit rate to घड़ी (N = sampling rate)
 	 * D: Clock duty (D = 0 to 1.0)
 	 * L: Frame length (L = 9 to 12)
-	 * F: Absolute value of clock frequency deviation
+	 * F: Absolute value of घड़ी frequency deviation
 	 *
 	 *  M = |(0.5 - 1 / 2 * N) - ((L - 0.5) * F) -
 	 *      (|D - 0.5| / N * (1 + F))|
-	 *  NOTE: Usually, treat D for 0.5, F is 0 by this calculation.
+	 *  NOTE: Usually, treat D क्रम 0.5, F is 0 by this calculation.
 	 */
-	for_each_sr(sr, s) {
-		for (c = 0; c <= 3; c++) {
-			/* integerized formulas from HSCIF documentation */
-			prediv = sr * (1 << (2 * c + 1));
+	क्रम_each_sr(sr, s) अणु
+		क्रम (c = 0; c <= 3; c++) अणु
+			/* पूर्णांकegerized क्रमmulas from HSCIF करोcumentation */
+			preभाग = sr * (1 << (2 * c + 1));
 
 			/*
 			 * We need to calculate:
 			 *
-			 *     br = freq / (prediv * bps) clamped to [1..256]
-			 *     err = freq / (br * prediv) - bps
+			 *     br = freq / (preभाग * bps) clamped to [1..256]
+			 *     err = freq / (br * preभाग) - bps
 			 *
-			 * Watch out for overflow when calculating the desired
-			 * sampling clock rate!
+			 * Watch out क्रम overflow when calculating the desired
+			 * sampling घड़ी rate!
 			 */
-			if (bps > UINT_MAX / prediv)
-				break;
+			अगर (bps > अच_पूर्णांक_उच्च / preभाग)
+				अवरोध;
 
-			scrate = prediv * bps;
+			scrate = preभाग * bps;
 			br = DIV_ROUND_CLOSEST(freq, scrate);
 			br = clamp(br, 1U, 256U);
 
-			err = DIV_ROUND_CLOSEST(freq, br * prediv) - bps;
-			if (abs(err) >= abs(min_err))
-				continue;
+			err = DIV_ROUND_CLOSEST(freq, br * preभाग) - bps;
+			अगर (असल(err) >= असल(min_err))
+				जारी;
 
 			min_err = err;
 			*brr = br - 1;
 			*srr = sr - 1;
 			*cks = c;
 
-			if (!err)
-				goto found;
-		}
-	}
+			अगर (!err)
+				जाओ found;
+		पूर्ण
+	पूर्ण
 
 found:
 	dev_dbg(s->port.dev, "BRR: %u%+d bps using N %u SR %u cks %u\n", bps,
 		min_err, *brr, *srr + 1, *cks);
-	return min_err;
-}
+	वापस min_err;
+पूर्ण
 
-static void sci_reset(struct uart_port *port)
-{
-	const struct plat_sci_reg *reg;
-	unsigned int status;
-	struct sci_port *s = to_sci_port(port);
+अटल व्योम sci_reset(काष्ठा uart_port *port)
+अणु
+	स्थिर काष्ठा plat_sci_reg *reg;
+	अचिन्हित पूर्णांक status;
+	काष्ठा sci_port *s = to_sci_port(port);
 
-	serial_port_out(port, SCSCR, s->hscif_tot);	/* TE=0, RE=0, CKE1=0 */
+	serial_port_out(port, SCSCR, s->hscअगर_tot);	/* TE=0, RE=0, CKE1=0 */
 
 	reg = sci_getreg(port, SCFCR);
-	if (reg->size)
+	अगर (reg->size)
 		serial_port_out(port, SCFCR, SCFCR_RFRST | SCFCR_TFRST);
 
 	sci_clear_SCxSR(port,
 			SCxSR_RDxF_CLEAR(port) & SCxSR_ERROR_CLEAR(port) &
 			SCxSR_BREAK_CLEAR(port));
-	if (sci_getreg(port, SCLSR)->size) {
+	अगर (sci_getreg(port, SCLSR)->size) अणु
 		status = serial_port_in(port, SCLSR);
 		status &= ~(SCLSR_TO | SCLSR_ORER);
 		serial_port_out(port, SCLSR, status);
-	}
+	पूर्ण
 
-	if (s->rx_trigger > 1) {
-		if (s->rx_fifo_timeout) {
-			scif_set_rtrg(port, 1);
-			timer_setup(&s->rx_fifo_timer, rx_fifo_timer_fn, 0);
-		} else {
-			if (port->type == PORT_SCIFA ||
+	अगर (s->rx_trigger > 1) अणु
+		अगर (s->rx_fअगरo_समयout) अणु
+			scअगर_set_rtrg(port, 1);
+			समयr_setup(&s->rx_fअगरo_समयr, rx_fअगरo_समयr_fn, 0);
+		पूर्ण अन्यथा अणु
+			अगर (port->type == PORT_SCIFA ||
 			    port->type == PORT_SCIFB)
-				scif_set_rtrg(port, 1);
-			else
-				scif_set_rtrg(port, s->rx_trigger);
-		}
-	}
-}
+				scअगर_set_rtrg(port, 1);
+			अन्यथा
+				scअगर_set_rtrg(port, s->rx_trigger);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sci_set_termios(struct uart_port *port, struct ktermios *termios,
-			    struct ktermios *old)
-{
-	unsigned int baud, smr_val = SCSMR_ASYNC, scr_val = 0, i, bits;
-	unsigned int brr = 255, cks = 0, srr = 15, dl = 0, sccks = 0;
-	unsigned int brr1 = 255, cks1 = 0, srr1 = 15, dl1 = 0;
-	struct sci_port *s = to_sci_port(port);
-	const struct plat_sci_reg *reg;
-	int min_err = INT_MAX, err;
-	unsigned long max_freq = 0;
-	int best_clk = -1;
-	unsigned long flags;
+अटल व्योम sci_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			    काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक baud, smr_val = SCSMR_ASYNC, scr_val = 0, i, bits;
+	अचिन्हित पूर्णांक brr = 255, cks = 0, srr = 15, dl = 0, sccks = 0;
+	अचिन्हित पूर्णांक brr1 = 255, cks1 = 0, srr1 = 15, dl1 = 0;
+	काष्ठा sci_port *s = to_sci_port(port);
+	स्थिर काष्ठा plat_sci_reg *reg;
+	पूर्णांक min_err = पूर्णांक_उच्च, err;
+	अचिन्हित दीर्घ max_freq = 0;
+	पूर्णांक best_clk = -1;
+	अचिन्हित दीर्घ flags;
 
-	if ((termios->c_cflag & CSIZE) == CS7)
+	अगर ((termios->c_cflag & CSIZE) == CS7)
 		smr_val |= SCSMR_CHR;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		smr_val |= SCSMR_PE;
-	if (termios->c_cflag & PARODD)
+	अगर (termios->c_cflag & PARODD)
 		smr_val |= SCSMR_PE | SCSMR_ODD;
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		smr_val |= SCSMR_STOP;
 
 	/*
-	 * earlyprintk comes here early on with port->uartclk set to zero.
-	 * the clock framework is not up and running at this point so here
+	 * earlyprपूर्णांकk comes here early on with port->uartclk set to zero.
+	 * the घड़ी framework is not up and running at this poपूर्णांक so here
 	 * we assume that 115200 is the maximum baud rate. please note that
-	 * the baud rate is not programmed during earlyprintk - it is assumed
-	 * that the previous boot loader has enabled required clocks and
-	 * setup the baud rate generator hardware for us already.
+	 * the baud rate is not programmed during earlyprपूर्णांकk - it is assumed
+	 * that the previous boot loader has enabled required घड़ीs and
+	 * setup the baud rate generator hardware क्रम us alपढ़ोy.
 	 */
-	if (!port->uartclk) {
+	अगर (!port->uartclk) अणु
 		baud = uart_get_baud_rate(port, termios, old, 0, 115200);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	for (i = 0; i < SCI_NUM_CLKS; i++)
+	क्रम (i = 0; i < SCI_NUM_CLKS; i++)
 		max_freq = max(max_freq, s->clk_rates[i]);
 
 	baud = uart_get_baud_rate(port, termios, old, 0, max_freq / min_sr(s));
-	if (!baud)
-		goto done;
+	अगर (!baud)
+		जाओ करोne;
 
 	/*
-	 * There can be multiple sources for the sampling clock.  Find the one
+	 * There can be multiple sources क्रम the sampling घड़ी.  Find the one
 	 * that gives us the smallest deviation from the desired baud rate.
 	 */
 
-	/* Optional Undivided External Clock */
-	if (s->clk_rates[SCI_SCK] && port->type != PORT_SCIFA &&
-	    port->type != PORT_SCIFB) {
+	/* Optional Unभागided External Clock */
+	अगर (s->clk_rates[SCI_SCK] && port->type != PORT_SCIFA &&
+	    port->type != PORT_SCIFB) अणु
 		err = sci_sck_calc(s, baud, &srr1);
-		if (abs(err) < abs(min_err)) {
+		अगर (असल(err) < असल(min_err)) अणु
 			best_clk = SCI_SCK;
 			scr_val = SCSCR_CKE1;
 			sccks = SCCKS_CKS;
 			min_err = err;
 			srr = srr1;
-			if (!err)
-				goto done;
-		}
-	}
+			अगर (!err)
+				जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* Optional BRG Frequency Divided External Clock */
-	if (s->clk_rates[SCI_SCIF_CLK] && sci_getreg(port, SCDL)->size) {
+	अगर (s->clk_rates[SCI_SCIF_CLK] && sci_getreg(port, SCDL)->size) अणु
 		err = sci_brg_calc(s, baud, s->clk_rates[SCI_SCIF_CLK], &dl1,
 				   &srr1);
-		if (abs(err) < abs(min_err)) {
+		अगर (असल(err) < असल(min_err)) अणु
 			best_clk = SCI_SCIF_CLK;
 			scr_val = SCSCR_CKE1;
 			sccks = 0;
 			min_err = err;
 			dl = dl1;
 			srr = srr1;
-			if (!err)
-				goto done;
-		}
-	}
+			अगर (!err)
+				जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* Optional BRG Frequency Divided Internal Clock */
-	if (s->clk_rates[SCI_BRG_INT] && sci_getreg(port, SCDL)->size) {
+	अगर (s->clk_rates[SCI_BRG_INT] && sci_getreg(port, SCDL)->size) अणु
 		err = sci_brg_calc(s, baud, s->clk_rates[SCI_BRG_INT], &dl1,
 				   &srr1);
-		if (abs(err) < abs(min_err)) {
+		अगर (असल(err) < असल(min_err)) अणु
 			best_clk = SCI_BRG_INT;
 			scr_val = SCSCR_CKE1;
 			sccks = SCCKS_XIN;
 			min_err = err;
 			dl = dl1;
 			srr = srr1;
-			if (!min_err)
-				goto done;
-		}
-	}
+			अगर (!min_err)
+				जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* Divided Functional Clock using standard Bit Rate Register */
 	err = sci_scbrr_calc(s, baud, &brr1, &srr1, &cks1);
-	if (abs(err) < abs(min_err)) {
+	अगर (असल(err) < असल(min_err)) अणु
 		best_clk = SCI_FCK;
 		scr_val = 0;
 		min_err = err;
 		brr = brr1;
 		srr = srr1;
 		cks = cks1;
-	}
+	पूर्ण
 
-done:
-	if (best_clk >= 0)
+करोne:
+	अगर (best_clk >= 0)
 		dev_dbg(port->dev, "Using clk %pC for %u%+d bps\n",
 			s->clks[best_clk], baud, min_err);
 
@@ -2480,269 +2481,269 @@ done:
 
 	/*
 	 * Program the optional External Baud Rate Generator (BRG) first.
-	 * It controls the mux to select (H)SCK or frequency divided clock.
+	 * It controls the mux to select (H)SCK or frequency भागided घड़ी.
 	 */
-	if (best_clk >= 0 && sci_getreg(port, SCCKS)->size) {
+	अगर (best_clk >= 0 && sci_getreg(port, SCCKS)->size) अणु
 		serial_port_out(port, SCDL, dl);
 		serial_port_out(port, SCCKS, sccks);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	sci_reset(port);
 
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/* byte size and parity */
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		bits = 7;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		bits = 8;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		bits = 9;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		bits = 10;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		bits++;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		bits++;
 
-	if (best_clk >= 0) {
-		if (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
-			switch (srr + 1) {
-			case 5:  smr_val |= SCSMR_SRC_5;  break;
-			case 7:  smr_val |= SCSMR_SRC_7;  break;
-			case 11: smr_val |= SCSMR_SRC_11; break;
-			case 13: smr_val |= SCSMR_SRC_13; break;
-			case 16: smr_val |= SCSMR_SRC_16; break;
-			case 17: smr_val |= SCSMR_SRC_17; break;
-			case 19: smr_val |= SCSMR_SRC_19; break;
-			case 27: smr_val |= SCSMR_SRC_27; break;
-			}
+	अगर (best_clk >= 0) अणु
+		अगर (port->type == PORT_SCIFA || port->type == PORT_SCIFB)
+			चयन (srr + 1) अणु
+			हाल 5:  smr_val |= SCSMR_SRC_5;  अवरोध;
+			हाल 7:  smr_val |= SCSMR_SRC_7;  अवरोध;
+			हाल 11: smr_val |= SCSMR_SRC_11; अवरोध;
+			हाल 13: smr_val |= SCSMR_SRC_13; अवरोध;
+			हाल 16: smr_val |= SCSMR_SRC_16; अवरोध;
+			हाल 17: smr_val |= SCSMR_SRC_17; अवरोध;
+			हाल 19: smr_val |= SCSMR_SRC_19; अवरोध;
+			हाल 27: smr_val |= SCSMR_SRC_27; अवरोध;
+			पूर्ण
 		smr_val |= cks;
-		serial_port_out(port, SCSCR, scr_val | s->hscif_tot);
+		serial_port_out(port, SCSCR, scr_val | s->hscअगर_tot);
 		serial_port_out(port, SCSMR, smr_val);
 		serial_port_out(port, SCBRR, brr);
-		if (sci_getreg(port, HSSRR)->size) {
-			unsigned int hssrr = srr | HSCIF_SRE;
-			/* Calculate deviation from intended rate at the
-			 * center of the last stop bit in sampling clocks.
+		अगर (sci_getreg(port, HSSRR)->size) अणु
+			अचिन्हित पूर्णांक hssrr = srr | HSCIF_SRE;
+			/* Calculate deviation from पूर्णांकended rate at the
+			 * center of the last stop bit in sampling घड़ीs.
 			 */
-			int last_stop = bits * 2 - 1;
-			int deviation = DIV_ROUND_CLOSEST(min_err * last_stop *
-							  (int)(srr + 1),
-							  2 * (int)baud);
+			पूर्णांक last_stop = bits * 2 - 1;
+			पूर्णांक deviation = DIV_ROUND_CLOSEST(min_err * last_stop *
+							  (पूर्णांक)(srr + 1),
+							  2 * (पूर्णांक)baud);
 
-			if (abs(deviation) >= 2) {
-				/* At least two sampling clocks off at the
+			अगर (असल(deviation) >= 2) अणु
+				/* At least two sampling घड़ीs off at the
 				 * last stop bit; we can increase the error
-				 * margin by shifting the sampling point.
+				 * margin by shअगरting the sampling poपूर्णांक.
 				 */
-				int shift = clamp(deviation / 2, -8, 7);
+				पूर्णांक shअगरt = clamp(deviation / 2, -8, 7);
 
-				hssrr |= (shift << HSCIF_SRHP_SHIFT) &
+				hssrr |= (shअगरt << HSCIF_SRHP_SHIFT) &
 					 HSCIF_SRHP_MASK;
 				hssrr |= HSCIF_SRDE;
-			}
+			पूर्ण
 			serial_port_out(port, HSSRR, hssrr);
-		}
+		पूर्ण
 
-		/* Wait one bit interval */
+		/* Wait one bit पूर्णांकerval */
 		udelay((1000000 + (baud - 1)) / baud);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Don't touch the bit rate configuration */
 		scr_val = s->cfg->scscr & (SCSCR_CKE1 | SCSCR_CKE0);
 		smr_val |= serial_port_in(port, SCSMR) &
 			   (SCSMR_CKEDG | SCSMR_SRC_MASK | SCSMR_CKS);
-		serial_port_out(port, SCSCR, scr_val | s->hscif_tot);
+		serial_port_out(port, SCSCR, scr_val | s->hscअगर_tot);
 		serial_port_out(port, SCSMR, smr_val);
-	}
+	पूर्ण
 
 	sci_init_pins(port, termios->c_cflag);
 
 	port->status &= ~UPSTAT_AUTOCTS;
-	s->autorts = false;
+	s->स्वतःrts = false;
 	reg = sci_getreg(port, SCFCR);
-	if (reg->size) {
-		unsigned short ctrl = serial_port_in(port, SCFCR);
+	अगर (reg->size) अणु
+		अचिन्हित लघु ctrl = serial_port_in(port, SCFCR);
 
-		if ((port->flags & UPF_HARD_FLOW) &&
-		    (termios->c_cflag & CRTSCTS)) {
-			/* There is no CTS interrupt to restart the hardware */
+		अगर ((port->flags & UPF_HARD_FLOW) &&
+		    (termios->c_cflag & CRTSCTS)) अणु
+			/* There is no CTS पूर्णांकerrupt to restart the hardware */
 			port->status |= UPSTAT_AUTOCTS;
-			/* MCE is enabled when RTS is raised */
-			s->autorts = true;
-		}
+			/* MCE is enabled when RTS is उठाओd */
+			s->स्वतःrts = true;
+		पूर्ण
 
 		/*
 		 * As we've done a sci_reset() above, ensure we don't
-		 * interfere with the FIFOs while toggling MCE. As the
+		 * पूर्णांकerfere with the FIFOs जबतक toggling MCE. As the
 		 * reset values could still be set, simply mask them out.
 		 */
 		ctrl &= ~(SCFCR_RFRST | SCFCR_TFRST);
 
 		serial_port_out(port, SCFCR, ctrl);
-	}
-	if (port->flags & UPF_HARD_FLOW) {
+	पूर्ण
+	अगर (port->flags & UPF_HARD_FLOW) अणु
 		/* Refresh (Auto) RTS */
 		sci_set_mctrl(port, port->mctrl);
-	}
+	पूर्ण
 
 	scr_val |= SCSCR_RE | SCSCR_TE |
 		   (s->cfg->scscr & ~(SCSCR_CKE1 | SCSCR_CKE0));
-	serial_port_out(port, SCSCR, scr_val | s->hscif_tot);
-	if ((srr + 1 == 5) &&
-	    (port->type == PORT_SCIFA || port->type == PORT_SCIFB)) {
+	serial_port_out(port, SCSCR, scr_val | s->hscअगर_tot);
+	अगर ((srr + 1 == 5) &&
+	    (port->type == PORT_SCIFA || port->type == PORT_SCIFB)) अणु
 		/*
 		 * In asynchronous mode, when the sampling rate is 1/5, first
 		 * received data may become invalid on some SCIFA and SCIFB.
-		 * To avoid this problem wait more than 1 serial data time (1
-		 * bit time x serial data number) after setting SCSCR.RE = 1.
+		 * To aव्योम this problem रुको more than 1 serial data समय (1
+		 * bit समय x serial data number) after setting SCSCR.RE = 1.
 		 */
 		udelay(DIV_ROUND_UP(10 * 1000000, baud));
-	}
+	पूर्ण
 
-	/* Calculate delay for 2 DMA buffers (4 FIFO). */
+	/* Calculate delay क्रम 2 DMA buffers (4 FIFO). */
 	s->rx_frame = (10000 * bits) / (baud / 100);
-#ifdef CONFIG_SERIAL_SH_SCI_DMA
-	s->rx_timeout = s->buf_len_rx * 2 * s->rx_frame;
-#endif
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_DMA
+	s->rx_समयout = s->buf_len_rx * 2 * s->rx_frame;
+#पूर्ण_अगर
 
-	if ((termios->c_cflag & CREAD) != 0)
+	अगर ((termios->c_cflag & CREAD) != 0)
 		sci_start_rx(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
 	sci_port_disable(s);
 
-	if (UART_ENABLE_MS(port, termios->c_cflag))
+	अगर (UART_ENABLE_MS(port, termios->c_cflag))
 		sci_enable_ms(port);
-}
+पूर्ण
 
-static void sci_pm(struct uart_port *port, unsigned int state,
-		   unsigned int oldstate)
-{
-	struct sci_port *sci_port = to_sci_port(port);
+अटल व्योम sci_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
+		   अचिन्हित पूर्णांक oldstate)
+अणु
+	काष्ठा sci_port *sci_port = to_sci_port(port);
 
-	switch (state) {
-	case UART_PM_STATE_OFF:
+	चयन (state) अणु
+	हाल UART_PM_STATE_OFF:
 		sci_port_disable(sci_port);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sci_port_enable(sci_port);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const char *sci_type(struct uart_port *port)
-{
-	switch (port->type) {
-	case PORT_IRDA:
-		return "irda";
-	case PORT_SCI:
-		return "sci";
-	case PORT_SCIF:
-		return "scif";
-	case PORT_SCIFA:
-		return "scifa";
-	case PORT_SCIFB:
-		return "scifb";
-	case PORT_HSCIF:
-		return "hscif";
-	}
+अटल स्थिर अक्षर *sci_type(काष्ठा uart_port *port)
+अणु
+	चयन (port->type) अणु
+	हाल PORT_IRDA:
+		वापस "irda";
+	हाल PORT_SCI:
+		वापस "sci";
+	हाल PORT_SCIF:
+		वापस "scif";
+	हाल PORT_SCIFA:
+		वापस "scifa";
+	हाल PORT_SCIFB:
+		वापस "scifb";
+	हाल PORT_HSCIF:
+		वापस "hscif";
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int sci_remap_port(struct uart_port *port)
-{
-	struct sci_port *sport = to_sci_port(port);
+अटल पूर्णांक sci_remap_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *sport = to_sci_port(port);
 
 	/*
-	 * Nothing to do if there's already an established membase.
+	 * Nothing to करो अगर there's alपढ़ोy an established membase.
 	 */
-	if (port->membase)
-		return 0;
+	अगर (port->membase)
+		वापस 0;
 
-	if (port->dev->of_node || (port->flags & UPF_IOREMAP)) {
+	अगर (port->dev->of_node || (port->flags & UPF_IOREMAP)) अणु
 		port->membase = ioremap(port->mapbase, sport->reg_size);
-		if (unlikely(!port->membase)) {
+		अगर (unlikely(!port->membase)) अणु
 			dev_err(port->dev, "can't remap port#%d\n", port->line);
-			return -ENXIO;
-		}
-	} else {
+			वापस -ENXIO;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * For the simple (and majority of) cases where we don't
-		 * need to do any remapping, just cast the cookie
+		 * For the simple (and majority of) हालs where we करोn't
+		 * need to करो any remapping, just cast the cookie
 		 * directly.
 		 */
-		port->membase = (void __iomem *)(uintptr_t)port->mapbase;
-	}
+		port->membase = (व्योम __iomem *)(uपूर्णांकptr_t)port->mapbase;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sci_release_port(struct uart_port *port)
-{
-	struct sci_port *sport = to_sci_port(port);
+अटल व्योम sci_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा sci_port *sport = to_sci_port(port);
 
-	if (port->dev->of_node || (port->flags & UPF_IOREMAP)) {
+	अगर (port->dev->of_node || (port->flags & UPF_IOREMAP)) अणु
 		iounmap(port->membase);
-		port->membase = NULL;
-	}
+		port->membase = शून्य;
+	पूर्ण
 
 	release_mem_region(port->mapbase, sport->reg_size);
-}
+पूर्ण
 
-static int sci_request_port(struct uart_port *port)
-{
-	struct resource *res;
-	struct sci_port *sport = to_sci_port(port);
-	int ret;
+अटल पूर्णांक sci_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा resource *res;
+	काष्ठा sci_port *sport = to_sci_port(port);
+	पूर्णांक ret;
 
 	res = request_mem_region(port->mapbase, sport->reg_size,
 				 dev_name(port->dev));
-	if (unlikely(res == NULL)) {
+	अगर (unlikely(res == शून्य)) अणु
 		dev_err(port->dev, "request_mem_region failed.");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ret = sci_remap_port(port);
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		release_resource(res);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sci_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
-		struct sci_port *sport = to_sci_port(port);
+अटल व्योम sci_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
+		काष्ठा sci_port *sport = to_sci_port(port);
 
 		port->type = sport->cfg->type;
 		sci_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sci_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	if (ser->baud_base < 2400)
-		/* No paper tape reader for Mitch.. */
-		return -EINVAL;
+अटल पूर्णांक sci_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	अगर (ser->baud_base < 2400)
+		/* No paper tape पढ़ोer क्रम Mitch.. */
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct uart_ops sci_uart_ops = {
+अटल स्थिर काष्ठा uart_ops sci_uart_ops = अणु
 	.tx_empty	= sci_tx_empty,
 	.set_mctrl	= sci_set_mctrl,
 	.get_mctrl	= sci_get_mctrl,
@@ -2750,9 +2751,9 @@ static const struct uart_ops sci_uart_ops = {
 	.stop_tx	= sci_stop_tx,
 	.stop_rx	= sci_stop_rx,
 	.enable_ms	= sci_enable_ms,
-	.break_ctl	= sci_break_ctl,
+	.अवरोध_ctl	= sci_अवरोध_ctl,
 	.startup	= sci_startup,
-	.shutdown	= sci_shutdown,
+	.shutकरोwn	= sci_shutकरोwn,
 	.flush_buffer	= sci_flush_buffer,
 	.set_termios	= sci_set_termios,
 	.pm		= sci_pm,
@@ -2760,119 +2761,119 @@ static const struct uart_ops sci_uart_ops = {
 	.release_port	= sci_release_port,
 	.request_port	= sci_request_port,
 	.config_port	= sci_config_port,
-	.verify_port	= sci_verify_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= sci_poll_get_char,
-	.poll_put_char	= sci_poll_put_char,
-#endif
-};
+	.verअगरy_port	= sci_verअगरy_port,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= sci_poll_get_अक्षर,
+	.poll_put_अक्षर	= sci_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-static int sci_init_clocks(struct sci_port *sci_port, struct device *dev)
-{
-	const char *clk_names[] = {
+अटल पूर्णांक sci_init_घड़ीs(काष्ठा sci_port *sci_port, काष्ठा device *dev)
+अणु
+	स्थिर अक्षर *clk_names[] = अणु
 		[SCI_FCK] = "fck",
 		[SCI_SCK] = "sck",
 		[SCI_BRG_INT] = "brg_int",
 		[SCI_SCIF_CLK] = "scif_clk",
-	};
-	struct clk *clk;
-	unsigned int i;
+	पूर्ण;
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	if (sci_port->cfg->type == PORT_HSCIF)
+	अगर (sci_port->cfg->type == PORT_HSCIF)
 		clk_names[SCI_SCK] = "hsck";
 
-	for (i = 0; i < SCI_NUM_CLKS; i++) {
+	क्रम (i = 0; i < SCI_NUM_CLKS; i++) अणु
 		clk = devm_clk_get(dev, clk_names[i]);
-		if (PTR_ERR(clk) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+		अगर (PTR_ERR(clk) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 
-		if (IS_ERR(clk) && i == SCI_FCK) {
+		अगर (IS_ERR(clk) && i == SCI_FCK) अणु
 			/*
 			 * "fck" used to be called "sci_ick", and we need to
-			 * maintain DT backward compatibility.
+			 * मुख्यtain DT backward compatibility.
 			 */
 			clk = devm_clk_get(dev, "sci_ick");
-			if (PTR_ERR(clk) == -EPROBE_DEFER)
-				return -EPROBE_DEFER;
+			अगर (PTR_ERR(clk) == -EPROBE_DEFER)
+				वापस -EPROBE_DEFER;
 
-			if (!IS_ERR(clk))
-				goto found;
+			अगर (!IS_ERR(clk))
+				जाओ found;
 
 			/*
-			 * Not all SH platforms declare a clock lookup entry
-			 * for SCI devices, in which case we need to get the
-			 * global "peripheral_clk" clock.
+			 * Not all SH platक्रमms declare a घड़ी lookup entry
+			 * क्रम SCI devices, in which हाल we need to get the
+			 * global "peripheral_clk" घड़ी.
 			 */
 			clk = devm_clk_get(dev, "peripheral_clk");
-			if (!IS_ERR(clk))
-				goto found;
+			अगर (!IS_ERR(clk))
+				जाओ found;
 
 			dev_err(dev, "failed to get %s (%ld)\n", clk_names[i],
 				PTR_ERR(clk));
-			return PTR_ERR(clk);
-		}
+			वापस PTR_ERR(clk);
+		पूर्ण
 
 found:
-		if (IS_ERR(clk))
+		अगर (IS_ERR(clk))
 			dev_dbg(dev, "failed to get %s (%ld)\n", clk_names[i],
 				PTR_ERR(clk));
-		else
+		अन्यथा
 			dev_dbg(dev, "clk %s is %pC rate %lu\n", clk_names[i],
 				clk, clk_get_rate(clk));
-		sci_port->clks[i] = IS_ERR(clk) ? NULL : clk;
-	}
-	return 0;
-}
+		sci_port->clks[i] = IS_ERR(clk) ? शून्य : clk;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct sci_port_params *
-sci_probe_regmap(const struct plat_sci_port *cfg)
-{
-	unsigned int regtype;
+अटल स्थिर काष्ठा sci_port_params *
+sci_probe_regmap(स्थिर काष्ठा plat_sci_port *cfg)
+अणु
+	अचिन्हित पूर्णांक regtype;
 
-	if (cfg->regtype != SCIx_PROBE_REGTYPE)
-		return &sci_port_params[cfg->regtype];
+	अगर (cfg->regtype != SCIx_PROBE_REGTYPE)
+		वापस &sci_port_params[cfg->regtype];
 
-	switch (cfg->type) {
-	case PORT_SCI:
+	चयन (cfg->type) अणु
+	हाल PORT_SCI:
 		regtype = SCIx_SCI_REGTYPE;
-		break;
-	case PORT_IRDA:
+		अवरोध;
+	हाल PORT_IRDA:
 		regtype = SCIx_IRDA_REGTYPE;
-		break;
-	case PORT_SCIFA:
+		अवरोध;
+	हाल PORT_SCIFA:
 		regtype = SCIx_SCIFA_REGTYPE;
-		break;
-	case PORT_SCIFB:
+		अवरोध;
+	हाल PORT_SCIFB:
 		regtype = SCIx_SCIFB_REGTYPE;
-		break;
-	case PORT_SCIF:
+		अवरोध;
+	हाल PORT_SCIF:
 		/*
 		 * The SH-4 is a bit of a misnomer here, although that's
 		 * where this particular port layout originated. This
 		 * configuration (or some slight variation thereof)
-		 * remains the dominant model for all SCIFs.
+		 * reमुख्यs the करोminant model क्रम all SCIFs.
 		 */
 		regtype = SCIx_SH4_SCIF_REGTYPE;
-		break;
-	case PORT_HSCIF:
+		अवरोध;
+	हाल PORT_HSCIF:
 		regtype = SCIx_HSCIF_REGTYPE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Can't probe register map for given port\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return &sci_port_params[regtype];
-}
+	वापस &sci_port_params[regtype];
+पूर्ण
 
-static int sci_init_single(struct platform_device *dev,
-			   struct sci_port *sci_port, unsigned int index,
-			   const struct plat_sci_port *p, bool early)
-{
-	struct uart_port *port = &sci_port->port;
-	const struct resource *res;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक sci_init_single(काष्ठा platक्रमm_device *dev,
+			   काष्ठा sci_port *sci_port, अचिन्हित पूर्णांक index,
+			   स्थिर काष्ठा plat_sci_port *p, bool early)
+अणु
+	काष्ठा uart_port *port = &sci_port->port;
+	स्थिर काष्ठा resource *res;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	sci_port->cfg	= p;
 
@@ -2881,98 +2882,98 @@ static int sci_init_single(struct platform_device *dev,
 	port->line	= index;
 	port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_SH_SCI_CONSOLE);
 
-	res = platform_get_resource(dev, IORESOURCE_MEM, 0);
-	if (res == NULL)
-		return -ENOMEM;
+	res = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य)
+		वापस -ENOMEM;
 
 	port->mapbase = res->start;
 	sci_port->reg_size = resource_size(res);
 
-	for (i = 0; i < ARRAY_SIZE(sci_port->irqs); ++i) {
-		if (i)
-			sci_port->irqs[i] = platform_get_irq_optional(dev, i);
-		else
-			sci_port->irqs[i] = platform_get_irq(dev, i);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sci_port->irqs); ++i) अणु
+		अगर (i)
+			sci_port->irqs[i] = platक्रमm_get_irq_optional(dev, i);
+		अन्यथा
+			sci_port->irqs[i] = platक्रमm_get_irq(dev, i);
+	पूर्ण
 
-	/* The SCI generates several interrupts. They can be muxed together or
-	 * connected to different interrupt lines. In the muxed case only one
-	 * interrupt resource is specified as there is only one interrupt ID.
-	 * In the non-muxed case, up to 6 interrupt signals might be generated
-	 * from the SCI, however those signals might have their own individual
-	 * interrupt ID numbers, or muxed together with another interrupt.
+	/* The SCI generates several पूर्णांकerrupts. They can be muxed together or
+	 * connected to dअगरferent पूर्णांकerrupt lines. In the muxed हाल only one
+	 * पूर्णांकerrupt resource is specअगरied as there is only one पूर्णांकerrupt ID.
+	 * In the non-muxed हाल, up to 6 पूर्णांकerrupt संकेतs might be generated
+	 * from the SCI, however those संकेतs might have their own inभागidual
+	 * पूर्णांकerrupt ID numbers, or muxed together with another पूर्णांकerrupt.
 	 */
-	if (sci_port->irqs[0] < 0)
-		return -ENXIO;
+	अगर (sci_port->irqs[0] < 0)
+		वापस -ENXIO;
 
-	if (sci_port->irqs[1] < 0)
-		for (i = 1; i < ARRAY_SIZE(sci_port->irqs); i++)
+	अगर (sci_port->irqs[1] < 0)
+		क्रम (i = 1; i < ARRAY_SIZE(sci_port->irqs); i++)
 			sci_port->irqs[i] = sci_port->irqs[0];
 
 	sci_port->params = sci_probe_regmap(p);
-	if (unlikely(sci_port->params == NULL))
-		return -EINVAL;
+	अगर (unlikely(sci_port->params == शून्य))
+		वापस -EINVAL;
 
-	switch (p->type) {
-	case PORT_SCIFB:
+	चयन (p->type) अणु
+	हाल PORT_SCIFB:
 		sci_port->rx_trigger = 48;
-		break;
-	case PORT_HSCIF:
+		अवरोध;
+	हाल PORT_HSCIF:
 		sci_port->rx_trigger = 64;
-		break;
-	case PORT_SCIFA:
+		अवरोध;
+	हाल PORT_SCIFA:
 		sci_port->rx_trigger = 32;
-		break;
-	case PORT_SCIF:
-		if (p->regtype == SCIx_SH7705_SCIF_REGTYPE)
-			/* RX triggering not implemented for this IP */
+		अवरोध;
+	हाल PORT_SCIF:
+		अगर (p->regtype == SCIx_SH7705_SCIF_REGTYPE)
+			/* RX triggering not implemented क्रम this IP */
 			sci_port->rx_trigger = 1;
-		else
+		अन्यथा
 			sci_port->rx_trigger = 8;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sci_port->rx_trigger = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	sci_port->rx_fifo_timeout = 0;
-	sci_port->hscif_tot = 0;
+	sci_port->rx_fअगरo_समयout = 0;
+	sci_port->hscअगर_tot = 0;
 
-	/* SCIFA on sh7723 and sh7724 need a custom sampling rate that doesn't
-	 * match the SoC datasheet, this should be investigated. Let platform
-	 * data override the sampling rate for now.
+	/* SCIFA on sh7723 and sh7724 need a custom sampling rate that करोesn't
+	 * match the SoC datasheet, this should be investigated. Let platक्रमm
+	 * data override the sampling rate क्रम now.
 	 */
 	sci_port->sampling_rate_mask = p->sampling_rate
 				     ? SCI_SR(p->sampling_rate)
 				     : sci_port->params->sampling_rate_mask;
 
-	if (!early) {
-		ret = sci_init_clocks(sci_port, &dev->dev);
-		if (ret < 0)
-			return ret;
+	अगर (!early) अणु
+		ret = sci_init_घड़ीs(sci_port, &dev->dev);
+		अगर (ret < 0)
+			वापस ret;
 
 		port->dev = &dev->dev;
 
-		pm_runtime_enable(&dev->dev);
-	}
+		pm_runसमय_enable(&dev->dev);
+	पूर्ण
 
 	port->type		= p->type;
 	port->flags		= UPF_FIXED_PORT | UPF_BOOT_AUTOCONF | p->flags;
-	port->fifosize		= sci_port->params->fifosize;
+	port->fअगरosize		= sci_port->params->fअगरosize;
 
-	if (port->type == PORT_SCI) {
-		if (sci_port->reg_size >= 0x20)
-			port->regshift = 2;
-		else
-			port->regshift = 1;
-	}
+	अगर (port->type == PORT_SCI) अणु
+		अगर (sci_port->reg_size >= 0x20)
+			port->regshअगरt = 2;
+		अन्यथा
+			port->regshअगरt = 1;
+	पूर्ण
 
 	/*
 	 * The UART port needs an IRQ value, so we peg this to the RX IRQ
-	 * for the multi-IRQ ports, which is where we are primarily
-	 * concerned with the shutdown path synchronization.
+	 * क्रम the multi-IRQ ports, which is where we are primarily
+	 * concerned with the shutकरोwn path synchronization.
 	 *
-	 * For the muxed case there's nothing more to do.
+	 * For the muxed हाल there's nothing more to करो.
 	 */
 	port->irq		= sci_port->irqs[SCIx_RXI_IRQ];
 	port->irqflags		= 0;
@@ -2980,77 +2981,77 @@ static int sci_init_single(struct platform_device *dev,
 	port->serial_in		= sci_serial_in;
 	port->serial_out	= sci_serial_out;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sci_cleanup_single(struct sci_port *port)
-{
-	pm_runtime_disable(port->port.dev);
-}
+अटल व्योम sci_cleanup_single(काष्ठा sci_port *port)
+अणु
+	pm_runसमय_disable(port->port.dev);
+पूर्ण
 
-#if defined(CONFIG_SERIAL_SH_SCI_CONSOLE) || \
+#अगर defined(CONFIG_SERIAL_SH_SCI_CONSOLE) || \
     defined(CONFIG_SERIAL_SH_SCI_EARLYCON)
-static void serial_console_putchar(struct uart_port *port, int ch)
-{
-	sci_poll_put_char(port, ch);
-}
+अटल व्योम serial_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	sci_poll_put_अक्षर(port, ch);
+पूर्ण
 
 /*
- *	Print a string to the serial port trying not to disturb
+ *	Prपूर्णांक a string to the serial port trying not to disturb
  *	any possible real use of the port...
  */
-static void serial_console_write(struct console *co, const char *s,
-				 unsigned count)
-{
-	struct sci_port *sci_port = &sci_ports[co->index];
-	struct uart_port *port = &sci_port->port;
-	unsigned short bits, ctrl, ctrl_temp;
-	unsigned long flags;
-	int locked = 1;
+अटल व्योम serial_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				 अचिन्हित count)
+अणु
+	काष्ठा sci_port *sci_port = &sci_ports[co->index];
+	काष्ठा uart_port *port = &sci_port->port;
+	अचिन्हित लघु bits, ctrl, ctrl_temp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक locked = 1;
 
-	if (port->sysrq)
+	अगर (port->sysrq)
 		locked = 0;
-	else if (oops_in_progress)
+	अन्यथा अगर (oops_in_progress)
 		locked = spin_trylock_irqsave(&port->lock, flags);
-	else
+	अन्यथा
 		spin_lock_irqsave(&port->lock, flags);
 
-	/* first save SCSCR then disable interrupts, keep clock source */
+	/* first save SCSCR then disable पूर्णांकerrupts, keep घड़ी source */
 	ctrl = serial_port_in(port, SCSCR);
 	ctrl_temp = SCSCR_RE | SCSCR_TE |
 		    (sci_port->cfg->scscr & ~(SCSCR_CKE1 | SCSCR_CKE0)) |
 		    (ctrl & (SCSCR_CKE1 | SCSCR_CKE0));
-	serial_port_out(port, SCSCR, ctrl_temp | sci_port->hscif_tot);
+	serial_port_out(port, SCSCR, ctrl_temp | sci_port->hscअगर_tot);
 
-	uart_console_write(port, s, count, serial_console_putchar);
+	uart_console_ग_लिखो(port, s, count, serial_console_अक्षर_दो);
 
-	/* wait until fifo is empty and last bit has been transmitted */
+	/* रुको until fअगरo is empty and last bit has been transmitted */
 	bits = SCxSR_TDxE(port) | SCxSR_TEND(port);
-	while ((serial_port_in(port, SCxSR) & bits) != bits)
+	जबतक ((serial_port_in(port, SCxSR) & bits) != bits)
 		cpu_relax();
 
 	/* restore the SCSCR */
 	serial_port_out(port, SCSCR, ctrl);
 
-	if (locked)
+	अगर (locked)
 		spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int serial_console_setup(struct console *co, char *options)
-{
-	struct sci_port *sci_port;
-	struct uart_port *port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int ret;
+अटल पूर्णांक serial_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा sci_port *sci_port;
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक ret;
 
 	/*
 	 * Refuse to handle any bogus ports.
 	 */
-	if (co->index < 0 || co->index >= SCI_NPORTS)
-		return -ENODEV;
+	अगर (co->index < 0 || co->index >= SCI_NPORTS)
+		वापस -ENODEV;
 
 	sci_port = &sci_ports[co->index];
 	port = &sci_port->port;
@@ -3058,45 +3059,45 @@ static int serial_console_setup(struct console *co, char *options)
 	/*
 	 * Refuse to handle uninitialized ports.
 	 */
-	if (!port->ops)
-		return -ENODEV;
+	अगर (!port->ops)
+		वापस -ENODEV;
 
 	ret = sci_remap_port(port);
-	if (unlikely(ret != 0))
-		return ret;
+	अगर (unlikely(ret != 0))
+		वापस ret;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console serial_console = {
+अटल काष्ठा console serial_console = अणु
 	.name		= "ttySC",
 	.device		= uart_console_device,
-	.write		= serial_console_write,
+	.ग_लिखो		= serial_console_ग_लिखो,
 	.setup		= serial_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &sci_uart_driver,
-};
+पूर्ण;
 
-#ifdef CONFIG_SUPERH
-static struct console early_serial_console = {
+#अगर_घोषित CONFIG_SUPERH
+अटल काष्ठा console early_serial_console = अणु
 	.name           = "early_ttySC",
-	.write          = serial_console_write,
+	.ग_लिखो          = serial_console_ग_लिखो,
 	.flags          = CON_PRINTBUFFER,
 	.index		= -1,
-};
+पूर्ण;
 
-static char early_serial_buf[32];
+अटल अक्षर early_serial_buf[32];
 
-static int sci_probe_earlyprintk(struct platform_device *pdev)
-{
-	const struct plat_sci_port *cfg = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक sci_probe_earlyprपूर्णांकk(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा plat_sci_port *cfg = dev_get_platdata(&pdev->dev);
 
-	if (early_serial_console.data)
-		return -EEXIST;
+	अगर (early_serial_console.data)
+		वापस -EEXIST;
 
 	early_serial_console.index = pdev->id;
 
@@ -3104,30 +3105,30 @@ static int sci_probe_earlyprintk(struct platform_device *pdev)
 
 	serial_console_setup(&early_serial_console, early_serial_buf);
 
-	if (!strstr(early_serial_buf, "keep"))
+	अगर (!म_माला(early_serial_buf, "keep"))
 		early_serial_console.flags |= CON_BOOT;
 
-	register_console(&early_serial_console);
-	return 0;
-}
-#endif
+	रेजिस्टर_console(&early_serial_console);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#define SCI_CONSOLE	(&serial_console)
+#घोषणा SCI_CONSOLE	(&serial_console)
 
-#else
-static inline int sci_probe_earlyprintk(struct platform_device *pdev)
-{
-	return -EINVAL;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक sci_probe_earlyprपूर्णांकk(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#define SCI_CONSOLE	NULL
+#घोषणा SCI_CONSOLE	शून्य
 
-#endif /* CONFIG_SERIAL_SH_SCI_CONSOLE || CONFIG_SERIAL_SH_SCI_EARLYCON */
+#पूर्ण_अगर /* CONFIG_SERIAL_SH_SCI_CONSOLE || CONFIG_SERIAL_SH_SCI_EARLYCON */
 
-static const char banner[] __initconst = "SuperH (H)SCI(F) driver initialized";
+अटल स्थिर अक्षर banner[] __initस्थिर = "SuperH (H)SCI(F) driver initialized";
 
-static DEFINE_MUTEX(sci_uart_registration_lock);
-static struct uart_driver sci_uart_driver = {
+अटल DEFINE_MUTEX(sci_uart_registration_lock);
+अटल काष्ठा uart_driver sci_uart_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "sci",
 	.dev_name	= "ttySC",
@@ -3135,104 +3136,104 @@ static struct uart_driver sci_uart_driver = {
 	.minor		= SCI_MINOR_START,
 	.nr		= SCI_NPORTS,
 	.cons		= SCI_CONSOLE,
-};
+पूर्ण;
 
-static int sci_remove(struct platform_device *dev)
-{
-	struct sci_port *port = platform_get_drvdata(dev);
-	unsigned int type = port->port.type;	/* uart_remove_... clears it */
+अटल पूर्णांक sci_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा sci_port *port = platक्रमm_get_drvdata(dev);
+	अचिन्हित पूर्णांक type = port->port.type;	/* uart_हटाओ_... clears it */
 
 	sci_ports_in_use &= ~BIT(port->port.line);
-	uart_remove_one_port(&sci_uart_driver, &port->port);
+	uart_हटाओ_one_port(&sci_uart_driver, &port->port);
 
 	sci_cleanup_single(port);
 
-	if (port->port.fifosize > 1)
-		device_remove_file(&dev->dev, &dev_attr_rx_fifo_trigger);
-	if (type == PORT_SCIFA || type == PORT_SCIFB || type == PORT_HSCIF)
-		device_remove_file(&dev->dev, &dev_attr_rx_fifo_timeout);
+	अगर (port->port.fअगरosize > 1)
+		device_हटाओ_file(&dev->dev, &dev_attr_rx_fअगरo_trigger);
+	अगर (type == PORT_SCIFA || type == PORT_SCIFB || type == PORT_HSCIF)
+		device_हटाओ_file(&dev->dev, &dev_attr_rx_fअगरo_समयout);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-#define SCI_OF_DATA(type, regtype)	(void *)((type) << 16 | (regtype))
-#define SCI_OF_TYPE(data)		((unsigned long)(data) >> 16)
-#define SCI_OF_REGTYPE(data)		((unsigned long)(data) & 0xffff)
+#घोषणा SCI_OF_DATA(type, regtype)	(व्योम *)((type) << 16 | (regtype))
+#घोषणा SCI_OF_TYPE(data)		((अचिन्हित दीर्घ)(data) >> 16)
+#घोषणा SCI_OF_REGTYPE(data)		((अचिन्हित दीर्घ)(data) & 0xffff)
 
-static const struct of_device_id of_sci_match[] = {
-	/* SoC-specific types */
-	{
+अटल स्थिर काष्ठा of_device_id of_sci_match[] = अणु
+	/* SoC-specअगरic types */
+	अणु
 		.compatible = "renesas,scif-r7s72100",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_SH2_SCIF_FIFODATA_REGTYPE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "renesas,scif-r7s9210",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_RZ_SCIFA_REGTYPE),
-	},
-	/* Family-specific types */
-	{
+	पूर्ण,
+	/* Family-specअगरic types */
+	अणु
 		.compatible = "renesas,rcar-gen1-scif",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_SH4_SCIF_BRG_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,rcar-gen2-scif",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_SH4_SCIF_BRG_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,rcar-gen3-scif",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_SH4_SCIF_BRG_REGTYPE),
-	},
+	पूर्ण,
 	/* Generic types */
-	{
+	अणु
 		.compatible = "renesas,scif",
 		.data = SCI_OF_DATA(PORT_SCIF, SCIx_SH4_SCIF_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,scifa",
 		.data = SCI_OF_DATA(PORT_SCIFA, SCIx_SCIFA_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,scifb",
 		.data = SCI_OF_DATA(PORT_SCIFB, SCIx_SCIFB_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,hscif",
 		.data = SCI_OF_DATA(PORT_HSCIF, SCIx_HSCIF_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		.compatible = "renesas,sci",
 		.data = SCI_OF_DATA(PORT_SCI, SCIx_SCI_REGTYPE),
-	}, {
+	पूर्ण, अणु
 		/* Terminator */
-	},
-};
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_sci_match);
 
-static struct plat_sci_port *sci_parse_dt(struct platform_device *pdev,
-					  unsigned int *dev_id)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct plat_sci_port *p;
-	struct sci_port *sp;
-	const void *data;
-	int id;
+अटल काष्ठा plat_sci_port *sci_parse_dt(काष्ठा platक्रमm_device *pdev,
+					  अचिन्हित पूर्णांक *dev_id)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा plat_sci_port *p;
+	काष्ठा sci_port *sp;
+	स्थिर व्योम *data;
+	पूर्णांक id;
 
-	if (!IS_ENABLED(CONFIG_OF) || !np)
-		return NULL;
+	अगर (!IS_ENABLED(CONFIG_OF) || !np)
+		वापस शून्य;
 
 	data = of_device_get_match_data(&pdev->dev);
 
-	p = devm_kzalloc(&pdev->dev, sizeof(struct plat_sci_port), GFP_KERNEL);
-	if (!p)
-		return NULL;
+	p = devm_kzalloc(&pdev->dev, माप(काष्ठा plat_sci_port), GFP_KERNEL);
+	अगर (!p)
+		वापस शून्य;
 
 	/* Get the line number from the aliases node. */
 	id = of_alias_get_id(np, "serial");
-	if (id < 0 && ~sci_ports_in_use)
+	अगर (id < 0 && ~sci_ports_in_use)
 		id = ffz(sci_ports_in_use);
-	if (id < 0) {
+	अगर (id < 0) अणु
 		dev_err(&pdev->dev, "failed to get alias id (%d)\n", id);
-		return NULL;
-	}
-	if (id >= ARRAY_SIZE(sci_ports)) {
+		वापस शून्य;
+	पूर्ण
+	अगर (id >= ARRAY_SIZE(sci_ports)) अणु
 		dev_err(&pdev->dev, "serial%d out of range\n", id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	sp = &sci_ports[id];
 	*dev_id = id;
@@ -3240,192 +3241,192 @@ static struct plat_sci_port *sci_parse_dt(struct platform_device *pdev,
 	p->type = SCI_OF_TYPE(data);
 	p->regtype = SCI_OF_REGTYPE(data);
 
-	sp->has_rtscts = of_property_read_bool(np, "uart-has-rtscts");
+	sp->has_rtscts = of_property_पढ़ो_bool(np, "uart-has-rtscts");
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int sci_probe_single(struct platform_device *dev,
-				      unsigned int index,
-				      struct plat_sci_port *p,
-				      struct sci_port *sciport)
-{
-	int ret;
+अटल पूर्णांक sci_probe_single(काष्ठा platक्रमm_device *dev,
+				      अचिन्हित पूर्णांक index,
+				      काष्ठा plat_sci_port *p,
+				      काष्ठा sci_port *sciport)
+अणु
+	पूर्णांक ret;
 
 	/* Sanity check */
-	if (unlikely(index >= SCI_NPORTS)) {
+	अगर (unlikely(index >= SCI_NPORTS)) अणु
 		dev_notice(&dev->dev, "Attempting to register port %d when only %d are available\n",
 			   index+1, SCI_NPORTS);
 		dev_notice(&dev->dev, "Consider bumping CONFIG_SERIAL_SH_SCI_NR_UARTS!\n");
-		return -EINVAL;
-	}
-	BUILD_BUG_ON(SCI_NPORTS > sizeof(sci_ports_in_use) * 8);
-	if (sci_ports_in_use & BIT(index))
-		return -EBUSY;
+		वापस -EINVAL;
+	पूर्ण
+	BUILD_BUG_ON(SCI_NPORTS > माप(sci_ports_in_use) * 8);
+	अगर (sci_ports_in_use & BIT(index))
+		वापस -EBUSY;
 
 	mutex_lock(&sci_uart_registration_lock);
-	if (!sci_uart_driver.state) {
-		ret = uart_register_driver(&sci_uart_driver);
-		if (ret) {
+	अगर (!sci_uart_driver.state) अणु
+		ret = uart_रेजिस्टर_driver(&sci_uart_driver);
+		अगर (ret) अणु
 			mutex_unlock(&sci_uart_registration_lock);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&sci_uart_registration_lock);
 
 	ret = sci_init_single(dev, sciport, index, p, false);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sciport->gpios = mctrl_gpio_init(&sciport->port, 0);
-	if (IS_ERR(sciport->gpios))
-		return PTR_ERR(sciport->gpios);
+	अगर (IS_ERR(sciport->gpios))
+		वापस PTR_ERR(sciport->gpios);
 
-	if (sciport->has_rtscts) {
-		if (mctrl_gpio_to_gpiod(sciport->gpios, UART_GPIO_CTS) ||
-		    mctrl_gpio_to_gpiod(sciport->gpios, UART_GPIO_RTS)) {
+	अगर (sciport->has_rtscts) अणु
+		अगर (mctrl_gpio_to_gpiod(sciport->gpios, UART_GPIO_CTS) ||
+		    mctrl_gpio_to_gpiod(sciport->gpios, UART_GPIO_RTS)) अणु
 			dev_err(&dev->dev, "Conflicting RTS/CTS config\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		sciport->port.flags |= UPF_HARD_FLOW;
-	}
+	पूर्ण
 
 	ret = uart_add_one_port(&sci_uart_driver, &sciport->port);
-	if (ret) {
+	अगर (ret) अणु
 		sci_cleanup_single(sciport);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sci_probe(struct platform_device *dev)
-{
-	struct plat_sci_port *p;
-	struct sci_port *sp;
-	unsigned int dev_id;
-	int ret;
+अटल पूर्णांक sci_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा plat_sci_port *p;
+	काष्ठा sci_port *sp;
+	अचिन्हित पूर्णांक dev_id;
+	पूर्णांक ret;
 
 	/*
-	 * If we've come here via earlyprintk initialization, head off to
-	 * the special early probe. We don't have sufficient device state
+	 * If we've come here via earlyprपूर्णांकk initialization, head off to
+	 * the special early probe. We करोn't have sufficient device state
 	 * to make it beyond this yet.
 	 */
-#ifdef CONFIG_SUPERH
-	if (is_sh_early_platform_device(dev))
-		return sci_probe_earlyprintk(dev);
-#endif
+#अगर_घोषित CONFIG_SUPERH
+	अगर (is_sh_early_platक्रमm_device(dev))
+		वापस sci_probe_earlyprपूर्णांकk(dev);
+#पूर्ण_अगर
 
-	if (dev->dev.of_node) {
+	अगर (dev->dev.of_node) अणु
 		p = sci_parse_dt(dev, &dev_id);
-		if (p == NULL)
-			return -EINVAL;
-	} else {
-		p = dev->dev.platform_data;
-		if (p == NULL) {
+		अगर (p == शून्य)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		p = dev->dev.platक्रमm_data;
+		अगर (p == शून्य) अणु
 			dev_err(&dev->dev, "no platform data supplied\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		dev_id = dev->id;
-	}
+	पूर्ण
 
 	sp = &sci_ports[dev_id];
-	platform_set_drvdata(dev, sp);
+	platक्रमm_set_drvdata(dev, sp);
 
 	ret = sci_probe_single(dev, dev_id, p, sp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (sp->port.fifosize > 1) {
-		ret = device_create_file(&dev->dev, &dev_attr_rx_fifo_trigger);
-		if (ret)
-			return ret;
-	}
-	if (sp->port.type == PORT_SCIFA || sp->port.type == PORT_SCIFB ||
-	    sp->port.type == PORT_HSCIF) {
-		ret = device_create_file(&dev->dev, &dev_attr_rx_fifo_timeout);
-		if (ret) {
-			if (sp->port.fifosize > 1) {
-				device_remove_file(&dev->dev,
-						   &dev_attr_rx_fifo_trigger);
-			}
-			return ret;
-		}
-	}
+	अगर (sp->port.fअगरosize > 1) अणु
+		ret = device_create_file(&dev->dev, &dev_attr_rx_fअगरo_trigger);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (sp->port.type == PORT_SCIFA || sp->port.type == PORT_SCIFB ||
+	    sp->port.type == PORT_HSCIF) अणु
+		ret = device_create_file(&dev->dev, &dev_attr_rx_fअगरo_समयout);
+		अगर (ret) अणु
+			अगर (sp->port.fअगरosize > 1) अणु
+				device_हटाओ_file(&dev->dev,
+						   &dev_attr_rx_fअगरo_trigger);
+			पूर्ण
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_SH_STANDARD_BIOS
+#अगर_घोषित CONFIG_SH_STANDARD_BIOS
 	sh_bios_gdb_detach();
-#endif
+#पूर्ण_अगर
 
 	sci_ports_in_use |= BIT(dev_id);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int sci_suspend(struct device *dev)
-{
-	struct sci_port *sport = dev_get_drvdata(dev);
+अटल __maybe_unused पूर्णांक sci_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sci_port *sport = dev_get_drvdata(dev);
 
-	if (sport)
+	अगर (sport)
 		uart_suspend_port(&sci_uart_driver, &sport->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int sci_resume(struct device *dev)
-{
-	struct sci_port *sport = dev_get_drvdata(dev);
+अटल __maybe_unused पूर्णांक sci_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sci_port *sport = dev_get_drvdata(dev);
 
-	if (sport)
+	अगर (sport)
 		uart_resume_port(&sci_uart_driver, &sport->port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(sci_dev_pm_ops, sci_suspend, sci_resume);
+अटल SIMPLE_DEV_PM_OPS(sci_dev_pm_ops, sci_suspend, sci_resume);
 
-static struct platform_driver sci_driver = {
+अटल काष्ठा platक्रमm_driver sci_driver = अणु
 	.probe		= sci_probe,
-	.remove		= sci_remove,
-	.driver		= {
+	.हटाओ		= sci_हटाओ,
+	.driver		= अणु
 		.name	= "sh-sci",
 		.pm	= &sci_dev_pm_ops,
 		.of_match_table = of_match_ptr(of_sci_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init sci_init(void)
-{
+अटल पूर्णांक __init sci_init(व्योम)
+अणु
 	pr_info("%s\n", banner);
 
-	return platform_driver_register(&sci_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&sci_driver);
+पूर्ण
 
-static void __exit sci_exit(void)
-{
-	platform_driver_unregister(&sci_driver);
+अटल व्योम __निकास sci_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&sci_driver);
 
-	if (sci_uart_driver.state)
-		uart_unregister_driver(&sci_uart_driver);
-}
+	अगर (sci_uart_driver.state)
+		uart_unरेजिस्टर_driver(&sci_uart_driver);
+पूर्ण
 
-#if defined(CONFIG_SUPERH) && defined(CONFIG_SERIAL_SH_SCI_CONSOLE)
-sh_early_platform_init_buffer("earlyprintk", &sci_driver,
+#अगर defined(CONFIG_SUPERH) && defined(CONFIG_SERIAL_SH_SCI_CONSOLE)
+sh_early_platक्रमm_init_buffer("earlyprintk", &sci_driver,
 			   early_serial_buf, ARRAY_SIZE(early_serial_buf));
-#endif
-#ifdef CONFIG_SERIAL_SH_SCI_EARLYCON
-static struct plat_sci_port port_cfg __initdata;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SERIAL_SH_SCI_EARLYCON
+अटल काष्ठा plat_sci_port port_cfg __initdata;
 
-static int __init early_console_setup(struct earlycon_device *device,
-				      int type)
-{
-	if (!device->port.membase)
-		return -ENODEV;
+अटल पूर्णांक __init early_console_setup(काष्ठा earlycon_device *device,
+				      पूर्णांक type)
+अणु
+	अगर (!device->port.membase)
+		वापस -ENODEV;
 
 	device->port.serial_in = sci_serial_in;
 	device->port.serial_out	= sci_serial_out;
 	device->port.type = type;
-	memcpy(&sci_ports[0].port, &device->port, sizeof(struct uart_port));
+	स_नकल(&sci_ports[0].port, &device->port, माप(काष्ठा uart_port));
 	port_cfg.type = type;
 	sci_ports[0].cfg = &port_cfg;
 	sci_ports[0].params = sci_probe_regmap(&port_cfg);
@@ -3433,51 +3434,51 @@ static int __init early_console_setup(struct earlycon_device *device,
 	sci_serial_out(&sci_ports[0].port, SCSCR,
 		       SCSCR_RE | SCSCR_TE | port_cfg.scscr);
 
-	device->con->write = serial_console_write;
-	return 0;
-}
-static int __init sci_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	return early_console_setup(device, PORT_SCI);
-}
-static int __init scif_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	return early_console_setup(device, PORT_SCIF);
-}
-static int __init rzscifa_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
+	device->con->ग_लिखो = serial_console_ग_लिखो;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक __init sci_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	वापस early_console_setup(device, PORT_SCI);
+पूर्ण
+अटल पूर्णांक __init scअगर_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	वापस early_console_setup(device, PORT_SCIF);
+पूर्ण
+अटल पूर्णांक __init rzscअगरa_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
 	port_cfg.regtype = SCIx_RZ_SCIFA_REGTYPE;
-	return early_console_setup(device, PORT_SCIF);
-}
-static int __init scifa_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	return early_console_setup(device, PORT_SCIFA);
-}
-static int __init scifb_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	return early_console_setup(device, PORT_SCIFB);
-}
-static int __init hscif_early_console_setup(struct earlycon_device *device,
-					  const char *opt)
-{
-	return early_console_setup(device, PORT_HSCIF);
-}
+	वापस early_console_setup(device, PORT_SCIF);
+पूर्ण
+अटल पूर्णांक __init scअगरa_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	वापस early_console_setup(device, PORT_SCIFA);
+पूर्ण
+अटल पूर्णांक __init scअगरb_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	वापस early_console_setup(device, PORT_SCIFB);
+पूर्ण
+अटल पूर्णांक __init hscअगर_early_console_setup(काष्ठा earlycon_device *device,
+					  स्थिर अक्षर *opt)
+अणु
+	वापस early_console_setup(device, PORT_HSCIF);
+पूर्ण
 
 OF_EARLYCON_DECLARE(sci, "renesas,sci", sci_early_console_setup);
-OF_EARLYCON_DECLARE(scif, "renesas,scif", scif_early_console_setup);
-OF_EARLYCON_DECLARE(scif, "renesas,scif-r7s9210", rzscifa_early_console_setup);
-OF_EARLYCON_DECLARE(scifa, "renesas,scifa", scifa_early_console_setup);
-OF_EARLYCON_DECLARE(scifb, "renesas,scifb", scifb_early_console_setup);
-OF_EARLYCON_DECLARE(hscif, "renesas,hscif", hscif_early_console_setup);
-#endif /* CONFIG_SERIAL_SH_SCI_EARLYCON */
+OF_EARLYCON_DECLARE(scअगर, "renesas,scif", scअगर_early_console_setup);
+OF_EARLYCON_DECLARE(scअगर, "renesas,scif-r7s9210", rzscअगरa_early_console_setup);
+OF_EARLYCON_DECLARE(scअगरa, "renesas,scifa", scअगरa_early_console_setup);
+OF_EARLYCON_DECLARE(scअगरb, "renesas,scifb", scअगरb_early_console_setup);
+OF_EARLYCON_DECLARE(hscअगर, "renesas,hscif", hscअगर_early_console_setup);
+#पूर्ण_अगर /* CONFIG_SERIAL_SH_SCI_EARLYCON */
 
 module_init(sci_init);
-module_exit(sci_exit);
+module_निकास(sci_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:sh-sci");

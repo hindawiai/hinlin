@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  */
 
-#include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/netfilter.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <net/netns/generic.h>
-#include <net/route.h>
-#include <net/ip.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/netns/generic.h>
+#समावेश <net/route.h>
+#समावेश <net/ip.h>
 
-#include <linux/netfilter_bridge.h>
-#include <linux/netfilter_ipv4.h>
-#include <net/netfilter/ipv4/nf_defrag_ipv4.h>
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-#include <net/netfilter/nf_conntrack.h>
-#endif
-#include <net/netfilter/nf_conntrack_zones.h>
+#समावेश <linux/netfilter_bridge.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <net/netfilter/ipv4/nf_defrag_ipv4.h>
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+#समावेश <net/netfilter/nf_conntrack.h>
+#पूर्ण_अगर
+#समावेश <net/netfilter/nf_conntrack_zones.h>
 
-static unsigned int defrag4_pernet_id __read_mostly;
-static DEFINE_MUTEX(defrag4_mutex);
+अटल अचिन्हित पूर्णांक defrag4_pernet_id __पढ़ो_mostly;
+अटल DEFINE_MUTEX(defrag4_mutex);
 
-struct defrag4_pernet {
-	unsigned int users;
-};
+काष्ठा defrag4_pernet अणु
+	अचिन्हित पूर्णांक users;
+पूर्ण;
 
-static int nf_ct_ipv4_gather_frags(struct net *net, struct sk_buff *skb,
-				   u_int32_t user)
-{
-	int err;
+अटल पूर्णांक nf_ct_ipv4_gather_frags(काष्ठा net *net, काष्ठा sk_buff *skb,
+				   u_पूर्णांक32_t user)
+अणु
+	पूर्णांक err;
 
 	local_bh_disable();
 	err = ip_defrag(net, skb, user);
 	local_bh_enable();
 
-	if (!err)
+	अगर (!err)
 		skb->ignore_df = 1;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static enum ip_defrag_users nf_ct_defrag_user(unsigned int hooknum,
-					      struct sk_buff *skb)
-{
+अटल क्रमागत ip_defrag_users nf_ct_defrag_user(अचिन्हित पूर्णांक hooknum,
+					      काष्ठा sk_buff *skb)
+अणु
 	u16 zone_id = NF_CT_DEFAULT_ZONE_ID;
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-	if (skb_nfct(skb)) {
-		enum ip_conntrack_info ctinfo;
-		const struct nf_conn *ct = nf_ct_get(skb, &ctinfo);
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+	अगर (skb_nfct(skb)) अणु
+		क्रमागत ip_conntrack_info ctinfo;
+		स्थिर काष्ठा nf_conn *ct = nf_ct_get(skb, &ctinfo);
 
-		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2DIR(ctinfo));
-	}
-#endif
-	if (nf_bridge_in_prerouting(skb))
-		return IP_DEFRAG_CONNTRACK_BRIDGE_IN + zone_id;
+		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2सूची(ctinfo));
+	पूर्ण
+#पूर्ण_अगर
+	अगर (nf_bridge_in_prerouting(skb))
+		वापस IP_DEFRAG_CONNTRACK_BRIDGE_IN + zone_id;
 
-	if (hooknum == NF_INET_PRE_ROUTING)
-		return IP_DEFRAG_CONNTRACK_IN + zone_id;
-	else
-		return IP_DEFRAG_CONNTRACK_OUT + zone_id;
-}
+	अगर (hooknum == NF_INET_PRE_ROUTING)
+		वापस IP_DEFRAG_CONNTRACK_IN + zone_id;
+	अन्यथा
+		वापस IP_DEFRAG_CONNTRACK_OUT + zone_id;
+पूर्ण
 
-static unsigned int ipv4_conntrack_defrag(void *priv,
-					  struct sk_buff *skb,
-					  const struct nf_hook_state *state)
-{
-	struct sock *sk = skb->sk;
+अटल अचिन्हित पूर्णांक ipv4_conntrack_defrag(व्योम *priv,
+					  काष्ठा sk_buff *skb,
+					  स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा sock *sk = skb->sk;
 
-	if (sk && sk_fullsock(sk) && (sk->sk_family == PF_INET) &&
+	अगर (sk && sk_fullsock(sk) && (sk->sk_family == PF_INET) &&
 	    inet_sk(sk)->nodefrag)
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
-#if IS_ENABLED(CONFIG_NF_CONNTRACK)
-#if !IS_ENABLED(CONFIG_NF_NAT)
-	/* Previously seen (loopback)?  Ignore.  Do this before
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+#अगर !IS_ENABLED(CONFIG_NF_NAT)
+	/* Previously seen (loopback)?  Ignore.  Do this beक्रमe
 	   fragment check. */
-	if (skb_nfct(skb) && !nf_ct_is_template((struct nf_conn *)skb_nfct(skb)))
-		return NF_ACCEPT;
-#endif
-	if (skb->_nfct == IP_CT_UNTRACKED)
-		return NF_ACCEPT;
-#endif
+	अगर (skb_nfct(skb) && !nf_ct_is_ढाँचा((काष्ठा nf_conn *)skb_nfct(skb)))
+		वापस NF_ACCEPT;
+#पूर्ण_अगर
+	अगर (skb->_nfct == IP_CT_UNTRACKED)
+		वापस NF_ACCEPT;
+#पूर्ण_अगर
 	/* Gather fragments. */
-	if (ip_is_fragment(ip_hdr(skb))) {
-		enum ip_defrag_users user =
+	अगर (ip_is_fragment(ip_hdr(skb))) अणु
+		क्रमागत ip_defrag_users user =
 			nf_ct_defrag_user(state->hook, skb);
 
-		if (nf_ct_ipv4_gather_frags(state->net, skb, user))
-			return NF_STOLEN;
-	}
-	return NF_ACCEPT;
-}
+		अगर (nf_ct_ipv4_gather_frags(state->net, skb, user))
+			वापस NF_STOLEN;
+	पूर्ण
+	वापस NF_ACCEPT;
+पूर्ण
 
-static const struct nf_hook_ops ipv4_defrag_ops[] = {
-	{
+अटल स्थिर काष्ठा nf_hook_ops ipv4_defrag_ops[] = अणु
+	अणु
 		.hook		= ipv4_conntrack_defrag,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_PRE_ROUTING,
 		.priority	= NF_IP_PRI_CONNTRACK_DEFRAG,
-	},
-	{
+	पूर्ण,
+	अणु
 		.hook           = ipv4_conntrack_defrag,
 		.pf             = NFPROTO_IPV4,
 		.hooknum        = NF_INET_LOCAL_OUT,
 		.priority       = NF_IP_PRI_CONNTRACK_DEFRAG,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void __net_exit defrag4_net_exit(struct net *net)
-{
-	struct defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
+अटल व्योम __net_निकास defrag4_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
 
-	if (nf_defrag->users) {
-		nf_unregister_net_hooks(net, ipv4_defrag_ops,
+	अगर (nf_defrag->users) अणु
+		nf_unरेजिस्टर_net_hooks(net, ipv4_defrag_ops,
 					ARRAY_SIZE(ipv4_defrag_ops));
 		nf_defrag->users = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct pernet_operations defrag4_net_ops = {
-	.exit = defrag4_net_exit,
+अटल काष्ठा pernet_operations defrag4_net_ops = अणु
+	.निकास = defrag4_net_निकास,
 	.id   = &defrag4_pernet_id,
-	.size = sizeof(struct defrag4_pernet),
-};
+	.size = माप(काष्ठा defrag4_pernet),
+पूर्ण;
 
-static int __init nf_defrag_init(void)
-{
-	return register_pernet_subsys(&defrag4_net_ops);
-}
+अटल पूर्णांक __init nf_defrag_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&defrag4_net_ops);
+पूर्ण
 
-static void __exit nf_defrag_fini(void)
-{
-	unregister_pernet_subsys(&defrag4_net_ops);
-}
+अटल व्योम __निकास nf_defrag_fini(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&defrag4_net_ops);
+पूर्ण
 
-int nf_defrag_ipv4_enable(struct net *net)
-{
-	struct defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
-	int err = 0;
+पूर्णांक nf_defrag_ipv4_enable(काष्ठा net *net)
+अणु
+	काष्ठा defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
+	पूर्णांक err = 0;
 
 	mutex_lock(&defrag4_mutex);
-	if (nf_defrag->users == UINT_MAX) {
+	अगर (nf_defrag->users == अच_पूर्णांक_उच्च) अणु
 		err = -EOVERFLOW;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (nf_defrag->users) {
+	अगर (nf_defrag->users) अणु
 		nf_defrag->users++;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	err = nf_register_net_hooks(net, ipv4_defrag_ops,
+	err = nf_रेजिस्टर_net_hooks(net, ipv4_defrag_ops,
 				    ARRAY_SIZE(ipv4_defrag_ops));
-	if (err == 0)
+	अगर (err == 0)
 		nf_defrag->users = 1;
 
  out_unlock:
 	mutex_unlock(&defrag4_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_defrag_ipv4_enable);
 
-void nf_defrag_ipv4_disable(struct net *net)
-{
-	struct defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
+व्योम nf_defrag_ipv4_disable(काष्ठा net *net)
+अणु
+	काष्ठा defrag4_pernet *nf_defrag = net_generic(net, defrag4_pernet_id);
 
 	mutex_lock(&defrag4_mutex);
-	if (nf_defrag->users) {
+	अगर (nf_defrag->users) अणु
 		nf_defrag->users--;
-		if (nf_defrag->users == 0)
-			nf_unregister_net_hooks(net, ipv4_defrag_ops,
+		अगर (nf_defrag->users == 0)
+			nf_unरेजिस्टर_net_hooks(net, ipv4_defrag_ops,
 						ARRAY_SIZE(ipv4_defrag_ops));
-	}
+	पूर्ण
 
 	mutex_unlock(&defrag4_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_defrag_ipv4_disable);
 
 module_init(nf_defrag_init);
-module_exit(nf_defrag_fini);
+module_निकास(nf_defrag_fini);
 
 MODULE_LICENSE("GPL");

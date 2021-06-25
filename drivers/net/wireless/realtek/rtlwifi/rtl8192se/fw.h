@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#ifndef __REALTEK_FIRMWARE92S_H__
-#define __REALTEK_FIRMWARE92S_H__
+#अगर_अघोषित __REALTEK_FIRMWARE92S_H__
+#घोषणा __REALTEK_FIRMWARE92S_H__
 
-#define RTL8190_MAX_FIRMWARE_CODE_SIZE		64000
-#define RTL8190_MAX_RAW_FIRMWARE_CODE_SIZE	90000
-#define RTL8190_CPU_START_OFFSET		0x80
+#घोषणा RTL8190_MAX_FIRMWARE_CODE_SIZE		64000
+#घोषणा RTL8190_MAX_RAW_FIRMWARE_CODE_SIZE	90000
+#घोषणा RTL8190_CPU_START_OFFSET		0x80
 /* Firmware Local buffer size. 64k */
-#define	MAX_FIRMWARE_CODE_SIZE			0xFF00
+#घोषणा	MAX_FIRMWARE_CODE_SIZE			0xFF00
 
-#define	RT_8192S_FIRMWARE_HDR_SIZE		80
-#define RT_8192S_FIRMWARE_HDR_EXCLUDE_PRI_SIZE	32
+#घोषणा	RT_8192S_FIRMWARE_HDR_SIZE		80
+#घोषणा RT_8192S_FIRMWARE_HDR_EXCLUDE_PRI_SIZE	32
 
 /* support till 64 bit bus width OS */
-#define MAX_DEV_ADDR_SIZE			8
-#define MAX_FIRMWARE_INFORMATION_SIZE		32
-#define MAX_802_11_HEADER_LENGTH		(40 + \
+#घोषणा MAX_DEV_ADDR_SIZE			8
+#घोषणा MAX_FIRMWARE_INFORMATION_SIZE		32
+#घोषणा MAX_802_11_HEADER_LENGTH		(40 + \
 						MAX_FIRMWARE_INFORMATION_SIZE)
-#define ENCRYPTION_MAX_OVERHEAD			128
-#define MAX_FRAGMENT_COUNT			8
-#define MAX_TRANSMIT_BUFFER_SIZE		(1600 + \
+#घोषणा ENCRYPTION_MAX_OVERHEAD			128
+#घोषणा MAX_FRAGMENT_COUNT			8
+#घोषणा MAX_TRANSMIT_BUFFER_SIZE		(1600 + \
 						(MAX_802_11_HEADER_LENGTH + \
 						ENCRYPTION_MAX_OVERHEAD) *\
 						MAX_FRAGMENT_COUNT)
 
-#define H2C_TX_CMD_HDR_LEN			8
+#घोषणा H2C_TX_CMD_HDR_LEN			8
 
-/* The following DM control code are for Reg0x364, */
-#define	FW_DIG_ENABLE_CTL			BIT(0)
-#define	FW_HIGH_PWR_ENABLE_CTL			BIT(1)
-#define	FW_SS_CTL				BIT(2)
-#define	FW_RA_INIT_CTL				BIT(3)
-#define	FW_RA_BG_CTL				BIT(4)
-#define	FW_RA_N_CTL				BIT(5)
-#define	FW_PWR_TRK_CTL				BIT(6)
-#define	FW_IQK_CTL				BIT(7)
-#define	FW_FA_CTL				BIT(8)
-#define	FW_DRIVER_CTRL_DM_CTL			BIT(9)
-#define	FW_PAPE_CTL_BY_SW_HW			BIT(10)
-#define	FW_DISABLE_ALL_DM			0
-#define	FW_PWR_TRK_PARAM_CLR			0x0000ffff
-#define	FW_RA_PARAM_CLR				0xffff0000
+/* The following DM control code are क्रम Reg0x364, */
+#घोषणा	FW_DIG_ENABLE_CTL			BIT(0)
+#घोषणा	FW_HIGH_PWR_ENABLE_CTL			BIT(1)
+#घोषणा	FW_SS_CTL				BIT(2)
+#घोषणा	FW_RA_INIT_CTL				BIT(3)
+#घोषणा	FW_RA_BG_CTL				BIT(4)
+#घोषणा	FW_RA_N_CTL				BIT(5)
+#घोषणा	FW_PWR_TRK_CTL				BIT(6)
+#घोषणा	FW_IQK_CTL				BIT(7)
+#घोषणा	FW_FA_CTL				BIT(8)
+#घोषणा	FW_DRIVER_CTRL_DM_CTL			BIT(9)
+#घोषणा	FW_PAPE_CTL_BY_SW_HW			BIT(10)
+#घोषणा	FW_DISABLE_ALL_DM			0
+#घोषणा	FW_PWR_TRK_PARAM_CLR			0x0000ffff
+#घोषणा	FW_RA_PARAM_CLR				0xffff0000
 
-enum desc_packet_type {
+क्रमागत desc_packet_type अणु
 	DESC_PACKET_TYPE_INIT = 0,
 	DESC_PACKET_TYPE_NORMAL = 1,
-};
+पूर्ण;
 
 /* 8-bytes alignment required */
-struct fw_priv {
-	/* --- long word 0 ---- */
+काष्ठा fw_priv अणु
+	/* --- दीर्घ word 0 ---- */
 	/* 0x12: CE product, 0x92: IT product */
 	u8 signature_0;
 	/* 0x87: CE product, 0x81: IT product */
@@ -70,7 +71,7 @@ struct fw_priv {
 	/* 4: 4EP, 6: 6EP, 11: 11EP */
 	u8 usb_ep_num;
 
-	/* --- long word 1 ---- */
+	/* --- दीर्घ word 1 ---- */
 	/* regulatory class bit map 0 */
 	u8 regulatory_class_0;
 	/* regulatory class bit map 1 */
@@ -80,15 +81,15 @@ struct fw_priv {
 	/* regulatory class bit map 3 */
 	u8 regulatory_class_3;
 	/* 0:SWSI, 1:HWSI, 2:HWPI */
-	u8 rfintfs;
+	u8 rfपूर्णांकfs;
 	u8 def_nettype;
 	u8 rsvd010;
 	u8 rsvd011;
 
-	/* --- long word 2 ---- */
+	/* --- दीर्घ word 2 ---- */
 	/* 0x00: normal, 0x03: MACLBK, 0x01: PHYLBK */
 	u8 lbk_mode;
-	/* 1: for MP use, 0: for normal
+	/* 1: क्रम MP use, 0: क्रम normal
 	 * driver (to be discussed) */
 	u8 mp_mode;
 	u8 rsvd020;
@@ -98,7 +99,7 @@ struct fw_priv {
 	u8 rsvd024;
 	u8 rsvd025;
 
-	/* --- long word 3 ---- */
+	/* --- दीर्घ word 3 ---- */
 	/* QoS enable */
 	u8 qos_en;
 	/* 40MHz BW enable */
@@ -114,7 +115,7 @@ struct fw_priv {
 	u8 rsvd030;
 	u8 rsvd031;
 
-	/* --- long word 4 ---- */
+	/* --- दीर्घ word 4 ---- */
 	/* 1. FW offloads, 0: driver handles */
 	u8 beacon_offload;
 	/* 2. FW offloads, 0: driver handles */
@@ -131,7 +132,7 @@ struct fw_priv {
 	u8 wwlan_offload;
 	u8 rsvd040;
 
-	/* --- long word 5 ---- */
+	/* --- दीर्घ word 5 ---- */
 	/* tcp tx packet length low byte */
 	u8 tcp_tx_frame_len_L;
 	/* tcp tx packet length high byte */
@@ -144,15 +145,15 @@ struct fw_priv {
 	u8 rsvd051;
 	u8 rsvd052;
 	u8 rsvd053;
-};
+पूर्ण;
 
 /* 8-byte alinment required */
-struct fw_hdr {
+काष्ठा fw_hdr अणु
 
 	/* --- LONG WORD 0 ---- */
 	u16 signature;
-	/* 0x8000 ~ 0x8FFF for FPGA version,
-	 * 0x0000 ~ 0x7FFF for ASIC version, */
+	/* 0x8000 ~ 0x8FFF क्रम FPGA version,
+	 * 0x0000 ~ 0x7FFF क्रम ASIC version, */
 	u16 version;
 	/* define the size of boot loader */
 	u32 dmem_size;
@@ -173,32 +174,32 @@ struct fw_hdr {
 	u32 rsvd1;
 	u32 rsvd2;
 
-	struct fw_priv fwpriv;
+	काष्ठा fw_priv fwpriv;
 
-} ;
+पूर्ण ;
 
-enum fw_status {
+क्रमागत fw_status अणु
 	FW_STATUS_INIT = 0,
 	FW_STATUS_LOAD_IMEM = 1,
 	FW_STATUS_LOAD_EMEM = 2,
 	FW_STATUS_LOAD_DMEM = 3,
 	FW_STATUS_READY = 4,
-};
+पूर्ण;
 
-struct rt_firmware {
-	struct fw_hdr *pfwheader;
-	enum fw_status fwstatus;
+काष्ठा rt_firmware अणु
+	काष्ठा fw_hdr *pfwheader;
+	क्रमागत fw_status fwstatus;
 	u16 firmwareversion;
 	u8 fw_imem[RTL8190_MAX_FIRMWARE_CODE_SIZE];
 	u8 fw_emem[RTL8190_MAX_FIRMWARE_CODE_SIZE];
 	u32 fw_imem_len;
 	u32 fw_emem_len;
-	u8 sz_fw_tmpbuffer[RTL8190_MAX_RAW_FIRMWARE_CODE_SIZE];
-	u32 sz_fw_tmpbufferlen;
+	u8 sz_fw_पंचांगpbuffer[RTL8190_MAX_RAW_FIRMWARE_CODE_SIZE];
+	u32 sz_fw_पंचांगpbufferlen;
 	u16 cmdpacket_fragthresold;
-};
+पूर्ण;
 
-struct h2c_set_pwrmode_parm {
+काष्ठा h2c_set_pwrmode_parm अणु
 	u8 mode;
 	u8 flag_low_traffic_en;
 	u8 flag_lpnav_en;
@@ -207,58 +208,58 @@ struct h2c_set_pwrmode_parm {
 	u8 flag_dps_en;
 	u8 bcn_rx_en;
 	u8 bcn_pass_cnt;
-	/* beacon TO (ms). ¡§=0¡¨ no limit. */
+	/* beacon TO (ms). तँतई=0तँतउ no limit. */
 	u8 bcn_to;
 	u16	bcn_itv;
-	/* only for VOIP mode. */
+	/* only क्रम VOIP mode. */
 	u8 app_itv;
 	u8 awake_bcn_itvl;
 	u8 smart_ps;
 	/* unit: 100 ms */
 	u8 bcn_pass_period;
-};
+पूर्ण;
 
-struct h2c_joinbss_rpt_parm {
+काष्ठा h2c_joinbss_rpt_parm अणु
 	u8 opmode;
 	u8 ps_qos_info;
 	u8 bssid[6];
 	u16 bcnitv;
 	u16 aid;
-} ;
+पूर्ण ;
 
-struct h2c_wpa_ptk {
+काष्ठा h2c_wpa_ptk अणु
 	/* EAPOL-Key Key Confirmation Key (KCK) */
 	u8 kck[16];
 	/* EAPOL-Key Key Encryption Key (KEK) */
 	u8 kek[16];
 	/* Temporal Key 1 (TK1) */
 	u8 tk1[16];
-	union {
+	जोड़ अणु
 		/* Temporal Key 2 (TK2) */
 		u8 tk2[16];
-		struct {
+		काष्ठा अणु
 			u8 tx_mic_key[8];
 			u8 rx_mic_key[8];
-		} athu;
-	} u;
-};
+		पूर्ण athu;
+	पूर्ण u;
+पूर्ण;
 
-struct h2c_wpa_two_way_parm {
+काष्ठा h2c_wpa_two_way_parm अणु
 	/* algorithm TKIP or AES */
 	u8 pairwise_en_alg;
 	u8 group_en_alg;
-	struct h2c_wpa_ptk wpa_ptk_value;
-} ;
+	काष्ठा h2c_wpa_ptk wpa_ptk_value;
+पूर्ण ;
 
-enum h2c_cmd {
+क्रमागत h2c_cmd अणु
 	FW_H2C_SETPWRMODE = 0,
 	FW_H2C_JOINBSSRPT = 1,
 	FW_H2C_WOWLAN_UPDATE_GTK = 2,
 	FW_H2C_WOWLAN_UPDATE_IV = 3,
 	FW_H2C_WOWLAN_OFFLOAD = 4,
-};
+पूर्ण;
 
-enum fw_h2c_cmd {
+क्रमागत fw_h2c_cmd अणु
 	H2C_READ_MACREG_CMD,				/*0*/
 	H2C_WRITE_MACREG_CMD,
 	H2C_READBB_CMD,
@@ -311,40 +312,40 @@ enum fw_h2c_cmd {
 	H2C_TMP3,
 	H2C_WOWLAN_UPDATE_IV_CMD,			/*50*/
 	H2C_TMP4,
-};
+पूर्ण;
 
-/* The following macros are used for FW
+/* The following macros are used क्रम FW
  * CMD map and parameter updated. */
-#define FW_CMD_IO_CLR(rtlpriv, _bit)				\
-	do {							\
+#घोषणा FW_CMD_IO_CLR(rtlpriv, _bit)				\
+	करो अणु							\
 		udelay(1000);					\
 		rtlpriv->rtlhal.fwcmd_iomap &= (~_bit);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define FW_CMD_IO_UPDATE(rtlpriv, _val)				\
+#घोषणा FW_CMD_IO_UPDATE(rtlpriv, _val)				\
 	rtlpriv->rtlhal.fwcmd_iomap = _val;
 
-#define FW_CMD_IO_SET(rtlpriv, _val)				\
-	do {							\
-		rtl_write_word(rtlpriv, LBUS_MON_ADDR, (u16)_val);	\
+#घोषणा FW_CMD_IO_SET(rtlpriv, _val)				\
+	करो अणु							\
+		rtl_ग_लिखो_word(rtlpriv, LBUS_MON_ADDR, (u16)_val);	\
 		FW_CMD_IO_UPDATE(rtlpriv, _val);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define FW_CMD_PARA_SET(rtlpriv, _val)				\
-	do {							\
-		rtl_write_dword(rtlpriv, LBUS_ADDR_MASK, _val);	\
+#घोषणा FW_CMD_PARA_SET(rtlpriv, _val)				\
+	करो अणु							\
+		rtl_ग_लिखो_dword(rtlpriv, LBUS_ADDR_MASK, _val);	\
 		rtlpriv->rtlhal.fwcmd_ioparam = _val;		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define FW_CMD_IO_QUERY(rtlpriv)				\
+#घोषणा FW_CMD_IO_QUERY(rtlpriv)				\
 	(u16)(rtlpriv->rtlhal.fwcmd_iomap)
-#define FW_CMD_IO_PARA_QUERY(rtlpriv)				\
+#घोषणा FW_CMD_IO_PARA_QUERY(rtlpriv)				\
 	((u32)(rtlpriv->rtlhal.fwcmd_ioparam))
 
-int rtl92s_download_fw(struct ieee80211_hw *hw);
-void rtl92s_set_fw_pwrmode_cmd(struct ieee80211_hw *hw, u8 mode);
-void rtl92s_set_fw_joinbss_report_cmd(struct ieee80211_hw *hw,
+पूर्णांक rtl92s_करोwnload_fw(काष्ठा ieee80211_hw *hw);
+व्योम rtl92s_set_fw_pwrmode_cmd(काष्ठा ieee80211_hw *hw, u8 mode);
+व्योम rtl92s_set_fw_joinbss_report_cmd(काष्ठा ieee80211_hw *hw,
 				      u8 mstatus, u8 ps_qosinfo);
 
-#endif
+#पूर्ण_अगर
 

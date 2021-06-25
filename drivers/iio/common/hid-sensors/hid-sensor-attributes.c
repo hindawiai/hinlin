@@ -1,352 +1,353 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HID Sensors Driver
  * Copyright (c) 2012, Intel Corporation.
  */
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/time.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
 
-#include <linux/hid-sensor-hub.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
+#समावेश <linux/hid-sensor-hub.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
 
-#define HZ_PER_MHZ	1000000L
+#घोषणा HZ_PER_MHZ	1000000L
 
-static struct {
+अटल काष्ठा अणु
 	u32 usage_id;
-	int unit; /* 0 for default others from HID sensor spec */
-	int scale_val0; /* scale, whole number */
-	int scale_val1; /* scale, fraction in nanos */
-} unit_conversion[] = {
-	{HID_USAGE_SENSOR_ACCEL_3D, 0, 9, 806650000},
-	{HID_USAGE_SENSOR_ACCEL_3D,
-		HID_USAGE_SENSOR_UNITS_METERS_PER_SEC_SQRD, 1, 0},
-	{HID_USAGE_SENSOR_ACCEL_3D,
-		HID_USAGE_SENSOR_UNITS_G, 9, 806650000},
+	पूर्णांक unit; /* 0 क्रम शेष others from HID sensor spec */
+	पूर्णांक scale_val0; /* scale, whole number */
+	पूर्णांक scale_val1; /* scale, fraction in nanos */
+पूर्ण unit_conversion[] = अणु
+	अणुHID_USAGE_SENSOR_ACCEL_3D, 0, 9, 806650000पूर्ण,
+	अणुHID_USAGE_SENSOR_ACCEL_3D,
+		HID_USAGE_SENSOR_UNITS_METERS_PER_SEC_SQRD, 1, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_ACCEL_3D,
+		HID_USAGE_SENSOR_UNITS_G, 9, 806650000पूर्ण,
 
-	{HID_USAGE_SENSOR_GRAVITY_VECTOR, 0, 9, 806650000},
-	{HID_USAGE_SENSOR_GRAVITY_VECTOR,
-		HID_USAGE_SENSOR_UNITS_METERS_PER_SEC_SQRD, 1, 0},
-	{HID_USAGE_SENSOR_GRAVITY_VECTOR,
-		HID_USAGE_SENSOR_UNITS_G, 9, 806650000},
+	अणुHID_USAGE_SENSOR_GRAVITY_VECTOR, 0, 9, 806650000पूर्ण,
+	अणुHID_USAGE_SENSOR_GRAVITY_VECTOR,
+		HID_USAGE_SENSOR_UNITS_METERS_PER_SEC_SQRD, 1, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_GRAVITY_VECTOR,
+		HID_USAGE_SENSOR_UNITS_G, 9, 806650000पूर्ण,
 
-	{HID_USAGE_SENSOR_GYRO_3D, 0, 0, 17453293},
-	{HID_USAGE_SENSOR_GYRO_3D,
-		HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND, 1, 0},
-	{HID_USAGE_SENSOR_GYRO_3D,
-		HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND, 0, 17453293},
+	अणुHID_USAGE_SENSOR_GYRO_3D, 0, 0, 17453293पूर्ण,
+	अणुHID_USAGE_SENSOR_GYRO_3D,
+		HID_USAGE_SENSOR_UNITS_RADIANS_PER_SECOND, 1, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_GYRO_3D,
+		HID_USAGE_SENSOR_UNITS_DEGREES_PER_SECOND, 0, 17453293पूर्ण,
 
-	{HID_USAGE_SENSOR_COMPASS_3D, 0, 0, 1000000},
-	{HID_USAGE_SENSOR_COMPASS_3D, HID_USAGE_SENSOR_UNITS_GAUSS, 1, 0},
+	अणुHID_USAGE_SENSOR_COMPASS_3D, 0, 0, 1000000पूर्ण,
+	अणुHID_USAGE_SENSOR_COMPASS_3D, HID_USAGE_SENSOR_UNITS_GAUSS, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_INCLINOMETER_3D, 0, 0, 17453293},
-	{HID_USAGE_SENSOR_INCLINOMETER_3D,
-		HID_USAGE_SENSOR_UNITS_DEGREES, 0, 17453293},
-	{HID_USAGE_SENSOR_INCLINOMETER_3D,
-		HID_USAGE_SENSOR_UNITS_RADIANS, 1, 0},
+	अणुHID_USAGE_SENSOR_INCLINOMETER_3D, 0, 0, 17453293पूर्ण,
+	अणुHID_USAGE_SENSOR_INCLINOMETER_3D,
+		HID_USAGE_SENSOR_UNITS_DEGREES, 0, 17453293पूर्ण,
+	अणुHID_USAGE_SENSOR_INCLINOMETER_3D,
+		HID_USAGE_SENSOR_UNITS_RADIANS, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_ALS, 0, 1, 0},
-	{HID_USAGE_SENSOR_ALS, HID_USAGE_SENSOR_UNITS_LUX, 1, 0},
+	अणुHID_USAGE_SENSOR_ALS, 0, 1, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_ALS, HID_USAGE_SENSOR_UNITS_LUX, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_PRESSURE, 0, 100, 0},
-	{HID_USAGE_SENSOR_PRESSURE, HID_USAGE_SENSOR_UNITS_PASCAL, 0, 1000000},
+	अणुHID_USAGE_SENSOR_PRESSURE, 0, 100, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_PRESSURE, HID_USAGE_SENSOR_UNITS_PASCAL, 0, 1000000पूर्ण,
 
-	{HID_USAGE_SENSOR_TIME_TIMESTAMP, 0, 1000000000, 0},
-	{HID_USAGE_SENSOR_TIME_TIMESTAMP, HID_USAGE_SENSOR_UNITS_MILLISECOND,
-		1000000, 0},
+	अणुHID_USAGE_SENSOR_TIME_TIMESTAMP, 0, 1000000000, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_TIME_TIMESTAMP, HID_USAGE_SENSOR_UNITS_MILLISECOND,
+		1000000, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_DEVICE_ORIENTATION, 0, 1, 0},
+	अणुHID_USAGE_SENSOR_DEVICE_ORIENTATION, 0, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_RELATIVE_ORIENTATION, 0, 1, 0},
+	अणुHID_USAGE_SENSOR_RELATIVE_ORIENTATION, 0, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_GEOMAGNETIC_ORIENTATION, 0, 1, 0},
+	अणुHID_USAGE_SENSOR_GEOMAGNETIC_ORIENTATION, 0, 1, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_TEMPERATURE, 0, 1000, 0},
-	{HID_USAGE_SENSOR_TEMPERATURE, HID_USAGE_SENSOR_UNITS_DEGREES, 1000, 0},
+	अणुHID_USAGE_SENSOR_TEMPERATURE, 0, 1000, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_TEMPERATURE, HID_USAGE_SENSOR_UNITS_DEGREES, 1000, 0पूर्ण,
 
-	{HID_USAGE_SENSOR_HUMIDITY, 0, 1000, 0},
-	{HID_USAGE_SENSOR_HINGE, 0, 0, 17453293},
-	{HID_USAGE_SENSOR_HINGE, HID_USAGE_SENSOR_UNITS_DEGREES, 0, 17453293},
-};
+	अणुHID_USAGE_SENSOR_HUMIDITY, 0, 1000, 0पूर्ण,
+	अणुHID_USAGE_SENSOR_HINGE, 0, 0, 17453293पूर्ण,
+	अणुHID_USAGE_SENSOR_HINGE, HID_USAGE_SENSOR_UNITS_DEGREES, 0, 17453293पूर्ण,
+पूर्ण;
 
-static void simple_div(int dividend, int divisor, int *whole,
-				int *micro_frac)
-{
-	int rem;
-	int exp = 0;
+अटल व्योम simple_भाग(पूर्णांक भागidend, पूर्णांक भागisor, पूर्णांक *whole,
+				पूर्णांक *micro_frac)
+अणु
+	पूर्णांक rem;
+	पूर्णांक exp = 0;
 
 	*micro_frac = 0;
-	if (divisor == 0) {
+	अगर (भागisor == 0) अणु
 		*whole = 0;
-		return;
-	}
-	*whole = dividend/divisor;
-	rem = dividend % divisor;
-	if (rem) {
-		while (rem <= divisor) {
+		वापस;
+	पूर्ण
+	*whole = भागidend/भागisor;
+	rem = भागidend % भागisor;
+	अगर (rem) अणु
+		जबतक (rem <= भागisor) अणु
 			rem *= 10;
 			exp++;
-		}
-		*micro_frac = (rem / divisor) * int_pow(10, 6 - exp);
-	}
-}
+		पूर्ण
+		*micro_frac = (rem / भागisor) * पूर्णांक_घात(10, 6 - exp);
+	पूर्ण
+पूर्ण
 
-static void split_micro_fraction(unsigned int no, int exp, int *val1, int *val2)
-{
-	int divisor = int_pow(10, exp);
+अटल व्योम split_micro_fraction(अचिन्हित पूर्णांक no, पूर्णांक exp, पूर्णांक *val1, पूर्णांक *val2)
+अणु
+	पूर्णांक भागisor = पूर्णांक_घात(10, exp);
 
-	*val1 = no / divisor;
-	*val2 = no % divisor * int_pow(10, 6 - exp);
-}
+	*val1 = no / भागisor;
+	*val2 = no % भागisor * पूर्णांक_घात(10, 6 - exp);
+पूर्ण
 
 /*
-VTF format uses exponent and variable size format.
-For example if the size is 2 bytes
-0x0067 with VTF16E14 format -> +1.03
+VTF क्रमmat uses exponent and variable size क्रमmat.
+For example अगर the size is 2 bytes
+0x0067 with VTF16E14 क्रमmat -> +1.03
 To convert just change to 0x67 to decimal and use two decimal as E14 stands
-for 10^-2.
+क्रम 10^-2.
 Negative numbers are 2's complement
 */
-static void convert_from_vtf_format(u32 value, int size, int exp,
-					int *val1, int *val2)
-{
-	int sign = 1;
+अटल व्योम convert_from_vtf_क्रमmat(u32 value, पूर्णांक size, पूर्णांक exp,
+					पूर्णांक *val1, पूर्णांक *val2)
+अणु
+	पूर्णांक sign = 1;
 
-	if (value & BIT(size*8 - 1)) {
+	अगर (value & BIT(size*8 - 1)) अणु
 		value =  ((1LL << (size * 8)) - value);
 		sign = -1;
-	}
+	पूर्ण
 	exp = hid_sensor_convert_exponent(exp);
-	if (exp >= 0) {
-		*val1 = sign * value * int_pow(10, exp);
+	अगर (exp >= 0) अणु
+		*val1 = sign * value * पूर्णांक_घात(10, exp);
 		*val2 = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		split_micro_fraction(value, -exp, val1, val2);
-		if (*val1)
+		अगर (*val1)
 			*val1 = sign * (*val1);
-		else
+		अन्यथा
 			*val2 = sign * (*val2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 convert_to_vtf_format(int size, int exp, int val1, int val2)
-{
-	int divisor;
+अटल u32 convert_to_vtf_क्रमmat(पूर्णांक size, पूर्णांक exp, पूर्णांक val1, पूर्णांक val2)
+अणु
+	पूर्णांक भागisor;
 	u32 value;
-	int sign = 1;
+	पूर्णांक sign = 1;
 
-	if (val1 < 0 || val2 < 0)
+	अगर (val1 < 0 || val2 < 0)
 		sign = -1;
 	exp = hid_sensor_convert_exponent(exp);
-	if (exp < 0) {
-		divisor = int_pow(10, 6 + exp);
-		value = abs(val1) * int_pow(10, -exp);
-		value += abs(val2) / divisor;
-	} else {
-		divisor = int_pow(10, exp);
-		value = abs(val1) / divisor;
-	}
-	if (sign < 0)
+	अगर (exp < 0) अणु
+		भागisor = पूर्णांक_घात(10, 6 + exp);
+		value = असल(val1) * पूर्णांक_घात(10, -exp);
+		value += असल(val2) / भागisor;
+	पूर्ण अन्यथा अणु
+		भागisor = पूर्णांक_घात(10, exp);
+		value = असल(val1) / भागisor;
+	पूर्ण
+	अगर (sign < 0)
 		value =  ((1LL << (size * 8)) - value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-s32 hid_sensor_read_poll_value(struct hid_sensor_common *st)
-{
+s32 hid_sensor_पढ़ो_poll_value(काष्ठा hid_sensor_common *st)
+अणु
 	s32 value = 0;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->poll.report_id,
-				     st->poll.index, sizeof(value), &value);
+				     st->poll.index, माप(value), &value);
 
-	if (ret < 0 || value < 0) {
-		return -EINVAL;
-	} else {
-		if (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
+	अगर (ret < 0 || value < 0) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
 			value = value * 1000;
-	}
+	पूर्ण
 
-	return value;
-}
-EXPORT_SYMBOL(hid_sensor_read_poll_value);
+	वापस value;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_पढ़ो_poll_value);
 
-int hid_sensor_read_samp_freq_value(struct hid_sensor_common *st,
-				int *val1, int *val2)
-{
+पूर्णांक hid_sensor_पढ़ो_samp_freq_value(काष्ठा hid_sensor_common *st,
+				पूर्णांक *val1, पूर्णांक *val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->poll.report_id,
-				     st->poll.index, sizeof(value), &value);
-	if (ret < 0 || value < 0) {
+				     st->poll.index, माप(value), &value);
+	अगर (ret < 0 || value < 0) अणु
 		*val1 = *val2 = 0;
-		return -EINVAL;
-	} else {
-		if (st->poll.units == HID_USAGE_SENSOR_UNITS_MILLISECOND)
-			simple_div(1000, value, val1, val2);
-		else if (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
-			simple_div(1, value, val1, val2);
-		else {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (st->poll.units == HID_USAGE_SENSOR_UNITS_MILLISECOND)
+			simple_भाग(1000, value, val1, val2);
+		अन्यथा अगर (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
+			simple_भाग(1, value, val1, val2);
+		अन्यथा अणु
 			*val1 = *val2 = 0;
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
-EXPORT_SYMBOL(hid_sensor_read_samp_freq_value);
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_पढ़ो_samp_freq_value);
 
-int hid_sensor_write_samp_freq_value(struct hid_sensor_common *st,
-				int val1, int val2)
-{
+पूर्णांक hid_sensor_ग_लिखो_samp_freq_value(काष्ठा hid_sensor_common *st,
+				पूर्णांक val1, पूर्णांक val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (val1 < 0 || val2 < 0)
-		return -EINVAL;
+	अगर (val1 < 0 || val2 < 0)
+		वापस -EINVAL;
 
 	value = val1 * HZ_PER_MHZ + val2;
-	if (value) {
-		if (st->poll.units == HID_USAGE_SENSOR_UNITS_MILLISECOND)
+	अगर (value) अणु
+		अगर (st->poll.units == HID_USAGE_SENSOR_UNITS_MILLISECOND)
 			value = NSEC_PER_SEC / value;
-		else if (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
+		अन्यथा अगर (st->poll.units == HID_USAGE_SENSOR_UNITS_SECOND)
 			value = USEC_PER_SEC / value;
-		else
+		अन्यथा
 			value = 0;
-	}
+	पूर्ण
 	ret = sensor_hub_set_feature(st->hsdev, st->poll.report_id,
-				     st->poll.index, sizeof(value), &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+				     st->poll.index, माप(value), &value);
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->poll.report_id,
-				     st->poll.index, sizeof(value), &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+				     st->poll.index, माप(value), &value);
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
-	st->poll_interval = value;
+	st->poll_पूर्णांकerval = value;
 
-	return 0;
-}
-EXPORT_SYMBOL(hid_sensor_write_samp_freq_value);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_ग_लिखो_samp_freq_value);
 
-int hid_sensor_read_raw_hyst_value(struct hid_sensor_common *st,
-				int *val1, int *val2)
-{
+पूर्णांक hid_sensor_पढ़ो_raw_hyst_value(काष्ठा hid_sensor_common *st,
+				पूर्णांक *val1, पूर्णांक *val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->sensitivity.report_id,
-				     st->sensitivity.index, sizeof(value),
+				     st->sensitivity.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0) {
+	अगर (ret < 0 || value < 0) अणु
 		*val1 = *val2 = 0;
-		return -EINVAL;
-	} else {
-		convert_from_vtf_format(value, st->sensitivity.size,
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		convert_from_vtf_क्रमmat(value, st->sensitivity.size,
 					st->sensitivity.unit_expo,
 					val1, val2);
-	}
+	पूर्ण
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
-EXPORT_SYMBOL(hid_sensor_read_raw_hyst_value);
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_पढ़ो_raw_hyst_value);
 
-int hid_sensor_read_raw_hyst_rel_value(struct hid_sensor_common *st, int *val1,
-				       int *val2)
-{
+पूर्णांक hid_sensor_पढ़ो_raw_hyst_rel_value(काष्ठा hid_sensor_common *st, पूर्णांक *val1,
+				       पूर्णांक *val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->sensitivity_rel.report_id,
-				     st->sensitivity_rel.index, sizeof(value),
+				     st->sensitivity_rel.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0) {
+	अगर (ret < 0 || value < 0) अणु
 		*val1 = *val2 = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	convert_from_vtf_format(value, st->sensitivity_rel.size,
+	convert_from_vtf_क्रमmat(value, st->sensitivity_rel.size,
 				st->sensitivity_rel.unit_expo, val1, val2);
 
-	return IIO_VAL_INT_PLUS_MICRO;
-}
-EXPORT_SYMBOL(hid_sensor_read_raw_hyst_rel_value);
+	वापस IIO_VAL_INT_PLUS_MICRO;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_पढ़ो_raw_hyst_rel_value);
 
 
-int hid_sensor_write_raw_hyst_value(struct hid_sensor_common *st,
-					int val1, int val2)
-{
+पूर्णांक hid_sensor_ग_लिखो_raw_hyst_value(काष्ठा hid_sensor_common *st,
+					पूर्णांक val1, पूर्णांक val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (val1 < 0 || val2 < 0)
-		return -EINVAL;
+	अगर (val1 < 0 || val2 < 0)
+		वापस -EINVAL;
 
-	value = convert_to_vtf_format(st->sensitivity.size,
+	value = convert_to_vtf_क्रमmat(st->sensitivity.size,
 				st->sensitivity.unit_expo,
 				val1, val2);
 	ret = sensor_hub_set_feature(st->hsdev, st->sensitivity.report_id,
-				     st->sensitivity.index, sizeof(value),
+				     st->sensitivity.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->sensitivity.report_id,
-				     st->sensitivity.index, sizeof(value),
+				     st->sensitivity.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
 	st->raw_hystersis = value;
 
-	return 0;
-}
-EXPORT_SYMBOL(hid_sensor_write_raw_hyst_value);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_ग_लिखो_raw_hyst_value);
 
-int hid_sensor_write_raw_hyst_rel_value(struct hid_sensor_common *st,
-					int val1, int val2)
-{
+पूर्णांक hid_sensor_ग_लिखो_raw_hyst_rel_value(काष्ठा hid_sensor_common *st,
+					पूर्णांक val1, पूर्णांक val2)
+अणु
 	s32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (val1 < 0 || val2 < 0)
-		return -EINVAL;
+	अगर (val1 < 0 || val2 < 0)
+		वापस -EINVAL;
 
-	value = convert_to_vtf_format(st->sensitivity_rel.size,
+	value = convert_to_vtf_क्रमmat(st->sensitivity_rel.size,
 				st->sensitivity_rel.unit_expo,
 				val1, val2);
 	ret = sensor_hub_set_feature(st->hsdev, st->sensitivity_rel.report_id,
-				     st->sensitivity_rel.index, sizeof(value),
+				     st->sensitivity_rel.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
 	ret = sensor_hub_get_feature(st->hsdev,
 				     st->sensitivity_rel.report_id,
-				     st->sensitivity_rel.index, sizeof(value),
+				     st->sensitivity_rel.index, माप(value),
 				     &value);
-	if (ret < 0 || value < 0)
-		return -EINVAL;
+	अगर (ret < 0 || value < 0)
+		वापस -EINVAL;
 
 	st->raw_hystersis = value;
 
-	return 0;
-}
-EXPORT_SYMBOL(hid_sensor_write_raw_hyst_rel_value);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_ग_लिखो_raw_hyst_rel_value);
 
 /*
  * This fuction applies the unit exponent to the scale.
@@ -359,109 +360,109 @@ EXPORT_SYMBOL(hid_sensor_write_raw_hyst_rel_value);
  * 1.001745329 ->exp:4-> val0[10017]val1[453290000]
  * 9.806650000 ->exp:-2-> val0[0]val1[98066500]
  */
-static void adjust_exponent_nano(int *val0, int *val1, int scale0,
-				  int scale1, int exp)
-{
-	int divisor;
-	int i;
-	int x;
-	int res;
-	int rem;
+अटल व्योम adjust_exponent_nano(पूर्णांक *val0, पूर्णांक *val1, पूर्णांक scale0,
+				  पूर्णांक scale1, पूर्णांक exp)
+अणु
+	पूर्णांक भागisor;
+	पूर्णांक i;
+	पूर्णांक x;
+	पूर्णांक res;
+	पूर्णांक rem;
 
-	if (exp > 0) {
-		*val0 = scale0 * int_pow(10, exp);
+	अगर (exp > 0) अणु
+		*val0 = scale0 * पूर्णांक_घात(10, exp);
 		res = 0;
-		if (exp > 9) {
+		अगर (exp > 9) अणु
 			*val1 = 0;
-			return;
-		}
-		for (i = 0; i < exp; ++i) {
-			divisor = int_pow(10, 8 - i);
-			x = scale1 / divisor;
-			res += int_pow(10, exp - 1 - i) * x;
-			scale1 = scale1 % divisor;
-		}
+			वापस;
+		पूर्ण
+		क्रम (i = 0; i < exp; ++i) अणु
+			भागisor = पूर्णांक_घात(10, 8 - i);
+			x = scale1 / भागisor;
+			res += पूर्णांक_घात(10, exp - 1 - i) * x;
+			scale1 = scale1 % भागisor;
+		पूर्ण
 		*val0 += res;
-		*val1 = scale1 * int_pow(10, exp);
-	} else if (exp < 0) {
-		exp = abs(exp);
-		if (exp > 9) {
+		*val1 = scale1 * पूर्णांक_घात(10, exp);
+	पूर्ण अन्यथा अगर (exp < 0) अणु
+		exp = असल(exp);
+		अगर (exp > 9) अणु
 			*val0 = *val1 = 0;
-			return;
-		}
-		divisor = int_pow(10, exp);
-		*val0 = scale0 / divisor;
-		rem = scale0 % divisor;
+			वापस;
+		पूर्ण
+		भागisor = पूर्णांक_घात(10, exp);
+		*val0 = scale0 / भागisor;
+		rem = scale0 % भागisor;
 		res = 0;
-		for (i = 0; i < (9 - exp); ++i) {
-			divisor = int_pow(10, 8 - i);
-			x = scale1 / divisor;
-			res += int_pow(10, 8 - exp - i) * x;
-			scale1 = scale1 % divisor;
-		}
-		*val1 = rem * int_pow(10, 9 - exp) + res;
-	} else {
+		क्रम (i = 0; i < (9 - exp); ++i) अणु
+			भागisor = पूर्णांक_घात(10, 8 - i);
+			x = scale1 / भागisor;
+			res += पूर्णांक_घात(10, 8 - exp - i) * x;
+			scale1 = scale1 % भागisor;
+		पूर्ण
+		*val1 = rem * पूर्णांक_घात(10, 9 - exp) + res;
+	पूर्ण अन्यथा अणु
 		*val0 = scale0;
 		*val1 = scale1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int hid_sensor_format_scale(u32 usage_id,
-			struct hid_sensor_hub_attribute_info *attr_info,
-			int *val0, int *val1)
-{
-	int i;
-	int exp;
+पूर्णांक hid_sensor_क्रमmat_scale(u32 usage_id,
+			काष्ठा hid_sensor_hub_attribute_info *attr_info,
+			पूर्णांक *val0, पूर्णांक *val1)
+अणु
+	पूर्णांक i;
+	पूर्णांक exp;
 
 	*val0 = 1;
 	*val1 = 0;
 
-	for (i = 0; i < ARRAY_SIZE(unit_conversion); ++i) {
-		if (unit_conversion[i].usage_id == usage_id &&
-			unit_conversion[i].unit == attr_info->units) {
+	क्रम (i = 0; i < ARRAY_SIZE(unit_conversion); ++i) अणु
+		अगर (unit_conversion[i].usage_id == usage_id &&
+			unit_conversion[i].unit == attr_info->units) अणु
 			exp  = hid_sensor_convert_exponent(
 						attr_info->unit_expo);
 			adjust_exponent_nano(val0, val1,
 					unit_conversion[i].scale_val0,
 					unit_conversion[i].scale_val1, exp);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return IIO_VAL_INT_PLUS_NANO;
-}
-EXPORT_SYMBOL(hid_sensor_format_scale);
+	वापस IIO_VAL_INT_PLUS_न_अंकO;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_क्रमmat_scale);
 
-int64_t hid_sensor_convert_timestamp(struct hid_sensor_common *st,
-				     int64_t raw_value)
-{
-	return st->timestamp_ns_scale * raw_value;
-}
-EXPORT_SYMBOL(hid_sensor_convert_timestamp);
+पूर्णांक64_t hid_sensor_convert_बारtamp(काष्ठा hid_sensor_common *st,
+				     पूर्णांक64_t raw_value)
+अणु
+	वापस st->बारtamp_ns_scale * raw_value;
+पूर्ण
+EXPORT_SYMBOL(hid_sensor_convert_बारtamp);
 
-static
-int hid_sensor_get_reporting_interval(struct hid_sensor_hub_device *hsdev,
+अटल
+पूर्णांक hid_sensor_get_reporting_पूर्णांकerval(काष्ठा hid_sensor_hub_device *hsdev,
 					u32 usage_id,
-					struct hid_sensor_common *st)
-{
+					काष्ठा hid_sensor_common *st)
+अणु
 	sensor_hub_input_get_attribute_info(hsdev,
 					HID_FEATURE_REPORT, usage_id,
 					HID_USAGE_SENSOR_PROP_REPORT_INTERVAL,
 					&st->poll);
 	/* Default unit of measure is milliseconds */
-	if (st->poll.units == 0)
+	अगर (st->poll.units == 0)
 		st->poll.units = HID_USAGE_SENSOR_UNITS_MILLISECOND;
 
-	st->poll_interval = -1;
+	st->poll_पूर्णांकerval = -1;
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static void hid_sensor_get_report_latency_info(struct hid_sensor_hub_device *hsdev,
+अटल व्योम hid_sensor_get_report_latency_info(काष्ठा hid_sensor_hub_device *hsdev,
 					       u32 usage_id,
-					       struct hid_sensor_common *st)
-{
+					       काष्ठा hid_sensor_common *st)
+अणु
 	sensor_hub_input_get_attribute_info(hsdev, HID_FEATURE_REPORT,
 					    usage_id,
 					    HID_USAGE_SENSOR_PROP_REPORT_LATENCY,
@@ -469,50 +470,50 @@ static void hid_sensor_get_report_latency_info(struct hid_sensor_hub_device *hsd
 
 	hid_dbg(hsdev->hdev, "Report latency attributes: %x:%x\n",
 		st->report_latency.index, st->report_latency.report_id);
-}
+पूर्ण
 
-int hid_sensor_get_report_latency(struct hid_sensor_common *st)
-{
-	int ret;
-	int value;
+पूर्णांक hid_sensor_get_report_latency(काष्ठा hid_sensor_common *st)
+अणु
+	पूर्णांक ret;
+	पूर्णांक value;
 
 	ret = sensor_hub_get_feature(st->hsdev, st->report_latency.report_id,
-				     st->report_latency.index, sizeof(value),
+				     st->report_latency.index, माप(value),
 				     &value);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 EXPORT_SYMBOL(hid_sensor_get_report_latency);
 
-int hid_sensor_set_report_latency(struct hid_sensor_common *st, int latency_ms)
-{
-	return sensor_hub_set_feature(st->hsdev, st->report_latency.report_id,
+पूर्णांक hid_sensor_set_report_latency(काष्ठा hid_sensor_common *st, पूर्णांक latency_ms)
+अणु
+	वापस sensor_hub_set_feature(st->hsdev, st->report_latency.report_id,
 				      st->report_latency.index,
-				      sizeof(latency_ms), &latency_ms);
-}
+				      माप(latency_ms), &latency_ms);
+पूर्ण
 EXPORT_SYMBOL(hid_sensor_set_report_latency);
 
-bool hid_sensor_batch_mode_supported(struct hid_sensor_common *st)
-{
-	return st->report_latency.index > 0 && st->report_latency.report_id > 0;
-}
+bool hid_sensor_batch_mode_supported(काष्ठा hid_sensor_common *st)
+अणु
+	वापस st->report_latency.index > 0 && st->report_latency.report_id > 0;
+पूर्ण
 EXPORT_SYMBOL(hid_sensor_batch_mode_supported);
 
-int hid_sensor_parse_common_attributes(struct hid_sensor_hub_device *hsdev,
+पूर्णांक hid_sensor_parse_common_attributes(काष्ठा hid_sensor_hub_device *hsdev,
 					u32 usage_id,
-					struct hid_sensor_common *st,
-					const u32 *sensitivity_addresses,
+					काष्ठा hid_sensor_common *st,
+					स्थिर u32 *sensitivity_addresses,
 					u32 sensitivity_addresses_len)
-{
+अणु
 
-	struct hid_sensor_hub_attribute_info timestamp;
+	काष्ठा hid_sensor_hub_attribute_info बारtamp;
 	s32 value;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	hid_sensor_get_reporting_interval(hsdev, usage_id, st);
+	hid_sensor_get_reporting_पूर्णांकerval(hsdev, usage_id, st);
 
 	sensor_hub_input_get_attribute_info(hsdev,
 					HID_FEATURE_REPORT, usage_id,
@@ -522,9 +523,9 @@ int hid_sensor_parse_common_attributes(struct hid_sensor_hub_device *hsdev,
 	sensor_hub_input_get_attribute_info(hsdev,
 					HID_FEATURE_REPORT, usage_id,
 					HID_USAGE_SENSOR_PROY_POWER_STATE,
-					&st->power_state);
+					&st->घातer_state);
 
-	st->power_state.logical_minimum = 1;
+	st->घातer_state.logical_minimum = 1;
 	st->report_state.logical_minimum = 1;
 
 	sensor_hub_input_get_attribute_info(hsdev,
@@ -537,59 +538,59 @@ int hid_sensor_parse_common_attributes(struct hid_sensor_hub_device *hsdev,
 			HID_USAGE_SENSOR_PROP_SENSITIVITY_REL_PCT,
 			&st->sensitivity_rel);
 	/*
-	 * Set Sensitivity field ids, when there is no individual modifier, will
-	 * check absolute sensitivity and relative sensitivity of data field
+	 * Set Sensitivity field ids, when there is no inभागidual modअगरier, will
+	 * check असलolute sensitivity and relative sensitivity of data field
 	 */
-	for (i = 0; i < sensitivity_addresses_len; i++) {
-		if (st->sensitivity.index < 0)
+	क्रम (i = 0; i < sensitivity_addresses_len; i++) अणु
+		अगर (st->sensitivity.index < 0)
 			sensor_hub_input_get_attribute_info(
 				hsdev, HID_FEATURE_REPORT, usage_id,
 				HID_USAGE_SENSOR_DATA_MOD_CHANGE_SENSITIVITY_ABS |
 					sensitivity_addresses[i],
 				&st->sensitivity);
 
-		if (st->sensitivity_rel.index < 0)
+		अगर (st->sensitivity_rel.index < 0)
 			sensor_hub_input_get_attribute_info(
 				hsdev, HID_FEATURE_REPORT, usage_id,
 				HID_USAGE_SENSOR_DATA_MOD_CHANGE_SENSITIVITY_REL_PCT |
 					sensitivity_addresses[i],
 				&st->sensitivity_rel);
-	}
+	पूर्ण
 
 	st->raw_hystersis = -1;
 
 	sensor_hub_input_get_attribute_info(hsdev,
 					    HID_INPUT_REPORT, usage_id,
 					    HID_USAGE_SENSOR_TIME_TIMESTAMP,
-					    &timestamp);
-	if (timestamp.index >= 0 && timestamp.report_id) {
-		int val0, val1;
+					    &बारtamp);
+	अगर (बारtamp.index >= 0 && बारtamp.report_id) अणु
+		पूर्णांक val0, val1;
 
-		hid_sensor_format_scale(HID_USAGE_SENSOR_TIME_TIMESTAMP,
-					&timestamp, &val0, &val1);
-		st->timestamp_ns_scale = val0;
-	} else
-		st->timestamp_ns_scale = 1000000000;
+		hid_sensor_क्रमmat_scale(HID_USAGE_SENSOR_TIME_TIMESTAMP,
+					&बारtamp, &val0, &val1);
+		st->बारtamp_ns_scale = val0;
+	पूर्ण अन्यथा
+		st->बारtamp_ns_scale = 1000000000;
 
 	hid_sensor_get_report_latency_info(hsdev, usage_id, st);
 
 	hid_dbg(hsdev->hdev, "common attributes: %x:%x, %x:%x, %x:%x %x:%x %x:%x\n",
 		st->poll.index, st->poll.report_id,
 		st->report_state.index, st->report_state.report_id,
-		st->power_state.index, st->power_state.report_id,
+		st->घातer_state.index, st->घातer_state.report_id,
 		st->sensitivity.index, st->sensitivity.report_id,
-		timestamp.index, timestamp.report_id);
+		बारtamp.index, बारtamp.report_id);
 
 	ret = sensor_hub_get_feature(hsdev,
-				st->power_state.report_id,
-				st->power_state.index, sizeof(value), &value);
-	if (ret < 0)
-		return ret;
-	if (value < 0)
-		return -EINVAL;
+				st->घातer_state.report_id,
+				st->घातer_state.index, माप(value), &value);
+	अगर (ret < 0)
+		वापस ret;
+	अगर (value < 0)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(hid_sensor_parse_common_attributes);
 
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@intel.com>");

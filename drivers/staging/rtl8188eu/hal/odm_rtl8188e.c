@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#include "odm_precomp.h"
-#include "phy.h"
+#समावेश "odm_precomp.h"
+#समावेश "phy.h"
 
-static void dm_rx_hw_antena_div_init(struct odm_dm_struct *dm_odm)
-{
-	struct adapter *adapter = dm_odm->Adapter;
+अटल व्योम dm_rx_hw_antena_भाग_init(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	काष्ठा adapter *adapter = dm_odm->Adapter;
 	u32 value32;
 
-	if (*dm_odm->mp_mode == 1) {
+	अगर (*dm_odm->mp_mode == 1) अणु
 		dm_odm->AntDivType = CGCS_RX_SW_ANTDIV;
 		phy_set_bb_reg(adapter, ODM_REG_IGI_A_11N, BIT(7), 0);
 		phy_set_bb_reg(adapter, ODM_REG_LNA_SWITCH_11N, BIT(31), 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* MAC Setting */
 	value32 = phy_query_bb_reg(adapter, ODM_REG_ANTSEL_PIN_11N, bMaskDWord);
@@ -37,20 +38,20 @@ static void dm_rx_hw_antena_div_init(struct odm_dm_struct *dm_odm)
 	phy_set_bb_reg(adapter, ODM_REG_CCK_ANTDIV_PARA2_11N, BIT(4), 1);
 	rtl88eu_dm_update_rx_idle_ant(dm_odm, MAIN_ANT);
 	phy_set_bb_reg(adapter, ODM_REG_ANT_MAPPING1_11N, 0xFFFF, 0x0201);
-}
+पूर्ण
 
-static void dm_trx_hw_antenna_div_init(struct odm_dm_struct *dm_odm)
-{
-	struct adapter *adapter = dm_odm->Adapter;
+अटल व्योम dm_trx_hw_antenna_भाग_init(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	काष्ठा adapter *adapter = dm_odm->Adapter;
 	u32	value32;
 
-	if (*dm_odm->mp_mode == 1) {
+	अगर (*dm_odm->mp_mode == 1) अणु
 		dm_odm->AntDivType = CGCS_RX_SW_ANTDIV;
 		phy_set_bb_reg(adapter, ODM_REG_IGI_A_11N, BIT(7), 0);
 		phy_set_bb_reg(adapter, ODM_REG_RX_ANT_CTRL_11N,
 			       BIT(5) | BIT(4) | BIT(3), 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* MAC Setting */
 	value32 = phy_query_bb_reg(adapter, ODM_REG_ANTSEL_PIN_11N, bMaskDWord);
@@ -72,32 +73,32 @@ static void dm_trx_hw_antenna_div_init(struct odm_dm_struct *dm_odm)
 	rtl88eu_dm_update_rx_idle_ant(dm_odm, MAIN_ANT);
 
 	/* antenna mapping table */
-	if (!dm_odm->bIsMPChip) { /* testchip */
+	अगर (!dm_odm->bIsMPChip) अणु /* testchip */
 		phy_set_bb_reg(adapter, ODM_REG_RX_DEFAULT_A_11N,
 			       BIT(10) | BIT(9) | BIT(8), 1);
 		phy_set_bb_reg(adapter, ODM_REG_RX_DEFAULT_A_11N,
 			       BIT(13) | BIT(12) | BIT(11), 2);
-	} else { /* MPchip */
+	पूर्ण अन्यथा अणु /* MPchip */
 		phy_set_bb_reg(adapter, ODM_REG_ANT_MAPPING1_11N, bMaskDWord,
 			       0x0201);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dm_fast_training_init(struct odm_dm_struct *dm_odm)
-{
-	struct adapter *adapter = dm_odm->Adapter;
+अटल व्योम dm_fast_training_init(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	काष्ठा adapter *adapter = dm_odm->Adapter;
 	u32 value32, i;
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
 
-	if (*dm_odm->mp_mode == 1)
-		return;
+	अगर (*dm_odm->mp_mode == 1)
+		वापस;
 
-	for (i = 0; i < 6; i++) {
+	क्रम (i = 0; i < 6; i++) अणु
 		dm_fat_tbl->Bssid[i] = 0;
 		dm_fat_tbl->antSumRSSI[i] = 0;
 		dm_fat_tbl->antRSSIcnt[i] = 0;
 		dm_fat_tbl->antAveRSSI[i] = 0;
-	}
+	पूर्ण
 	dm_fat_tbl->TrainIdx = 0;
 	dm_fat_tbl->FAT_State = FAT_NORMAL_STATE;
 
@@ -120,13 +121,13 @@ static void dm_fast_training_init(struct odm_dm_struct *dm_odm)
 	phy_set_bb_reg(adapter, 0xca4, bMaskDWord, 0x000000a0);
 
 	/* antenna mapping table */
-	if (!dm_odm->bIsMPChip) { /* testchip */
+	अगर (!dm_odm->bIsMPChip) अणु /* testchip */
 		phy_set_bb_reg(adapter, 0x858, BIT(10) | BIT(9) | BIT(8), 1);
 		phy_set_bb_reg(adapter, 0x858, BIT(13) | BIT(12) | BIT(11), 2);
-	} else { /* MPchip */
+	पूर्ण अन्यथा अणु /* MPchip */
 		phy_set_bb_reg(adapter, 0x914, bMaskByte0, 1);
 		phy_set_bb_reg(adapter, 0x914, bMaskByte1, 2);
-	}
+	पूर्ण
 
 	/* Default Ant Setting when no fast training */
 	phy_set_bb_reg(adapter, 0x80c, BIT(21), 1);
@@ -136,206 +137,206 @@ static void dm_fast_training_init(struct odm_dm_struct *dm_odm)
 	/* Enter Traing state */
 	phy_set_bb_reg(adapter, 0x864, BIT(2) | BIT(1) | BIT(0), 1);
 	phy_set_bb_reg(adapter, 0xc50, BIT(7), 1);
-}
+पूर्ण
 
-void rtl88eu_dm_antenna_div_init(struct odm_dm_struct *dm_odm)
-{
-	if (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV)
-		dm_rx_hw_antena_div_init(dm_odm);
-	else if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
-		dm_trx_hw_antenna_div_init(dm_odm);
-	else if (dm_odm->AntDivType == CG_TRX_SMART_ANTDIV)
+व्योम rtl88eu_dm_antenna_भाग_init(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	अगर (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV)
+		dm_rx_hw_antena_भाग_init(dm_odm);
+	अन्यथा अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
+		dm_trx_hw_antenna_भाग_init(dm_odm);
+	अन्यथा अगर (dm_odm->AntDivType == CG_TRX_SMART_ANTDIV)
 		dm_fast_training_init(dm_odm);
-}
+पूर्ण
 
-void rtl88eu_dm_update_rx_idle_ant(struct odm_dm_struct *dm_odm, u8 ant)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
-	struct adapter *adapter = dm_odm->Adapter;
-	u32 default_ant, optional_ant;
+व्योम rtl88eu_dm_update_rx_idle_ant(काष्ठा odm_dm_काष्ठा *dm_odm, u8 ant)
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+	काष्ठा adapter *adapter = dm_odm->Adapter;
+	u32 शेष_ant, optional_ant;
 
-	if (dm_fat_tbl->RxIdleAnt == ant)
-		return;
+	अगर (dm_fat_tbl->RxIdleAnt == ant)
+		वापस;
 
-	if (ant == MAIN_ANT) {
-		default_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
+	अगर (ant == MAIN_ANT) अणु
+		शेष_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
 			       MAIN_ANT_CG_TRX : MAIN_ANT_CGCS_RX;
 		optional_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
 				AUX_ANT_CG_TRX : AUX_ANT_CGCS_RX;
-	} else {
-		default_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
+	पूर्ण अन्यथा अणु
+		शेष_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
 			       AUX_ANT_CG_TRX : AUX_ANT_CGCS_RX;
 		optional_ant = (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ?
 				MAIN_ANT_CG_TRX : MAIN_ANT_CGCS_RX;
-	}
+	पूर्ण
 
-	if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) {
+	अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) अणु
 		phy_set_bb_reg(adapter, ODM_REG_RX_ANT_CTRL_11N,
-			       BIT(5) | BIT(4) | BIT(3), default_ant);
+			       BIT(5) | BIT(4) | BIT(3), शेष_ant);
 		phy_set_bb_reg(adapter, ODM_REG_RX_ANT_CTRL_11N,
 			       BIT(8) | BIT(7) | BIT(6), optional_ant);
 		phy_set_bb_reg(adapter, ODM_REG_ANTSEL_CTRL_11N,
-			       BIT(14) | BIT(13) | BIT(12), default_ant);
+			       BIT(14) | BIT(13) | BIT(12), शेष_ant);
 		phy_set_bb_reg(adapter, ODM_REG_RESP_TX_11N,
-			       BIT(6) | BIT(7), default_ant);
-	} else if (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV) {
+			       BIT(6) | BIT(7), शेष_ant);
+	पूर्ण अन्यथा अगर (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV) अणु
 		phy_set_bb_reg(adapter, ODM_REG_RX_ANT_CTRL_11N,
-			       BIT(5) | BIT(4) | BIT(3), default_ant);
+			       BIT(5) | BIT(4) | BIT(3), शेष_ant);
 		phy_set_bb_reg(adapter, ODM_REG_RX_ANT_CTRL_11N,
 			       BIT(8) | BIT(7) | BIT(6), optional_ant);
-	}
+	पूर्ण
 
 	dm_fat_tbl->RxIdleAnt = ant;
-}
+पूर्ण
 
-static void update_tx_ant_88eu(struct odm_dm_struct *dm_odm, u8 ant, u32 mac_id)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+अटल व्योम update_tx_ant_88eu(काष्ठा odm_dm_काष्ठा *dm_odm, u8 ant, u32 mac_id)
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
 	u8 target_ant;
 
-	if (ant == MAIN_ANT)
+	अगर (ant == MAIN_ANT)
 		target_ant = MAIN_ANT_CG_TRX;
-	else
+	अन्यथा
 		target_ant = AUX_ANT_CG_TRX;
 	dm_fat_tbl->antsel_a[mac_id] = target_ant & BIT(0);
 	dm_fat_tbl->antsel_b[mac_id] = (target_ant & BIT(1)) >> 1;
 	dm_fat_tbl->antsel_c[mac_id] = (target_ant & BIT(2)) >> 2;
-}
+पूर्ण
 
-void rtl88eu_dm_set_tx_ant_by_tx_info(struct odm_dm_struct *dm_odm,
+व्योम rtl88eu_dm_set_tx_ant_by_tx_info(काष्ठा odm_dm_काष्ठा *dm_odm,
 				      u8 *desc, u8 mac_id)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
 
-	if ((dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ||
-	    (dm_odm->AntDivType == CG_TRX_SMART_ANTDIV)) {
+	अगर ((dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ||
+	    (dm_odm->AntDivType == CG_TRX_SMART_ANTDIV)) अणु
 		SET_TX_DESC_ANTSEL_A_88E(desc, dm_fat_tbl->antsel_a[mac_id]);
 		SET_TX_DESC_ANTSEL_B_88E(desc, dm_fat_tbl->antsel_b[mac_id]);
 		SET_TX_DESC_ANTSEL_C_88E(desc, dm_fat_tbl->antsel_c[mac_id]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rtl88eu_dm_ant_sel_statistics(struct odm_dm_struct *dm_odm,
+व्योम rtl88eu_dm_ant_sel_statistics(काष्ठा odm_dm_काष्ठा *dm_odm,
 				   u8 antsel_tr_mux, u32 mac_id, u8 rx_pwdb_all)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
 
-	if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) {
-		if (antsel_tr_mux == MAIN_ANT_CG_TRX) {
+	अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV) अणु
+		अगर (antsel_tr_mux == MAIN_ANT_CG_TRX) अणु
 			dm_fat_tbl->MainAnt_Sum[mac_id] += rx_pwdb_all;
 			dm_fat_tbl->MainAnt_Cnt[mac_id]++;
-		} else {
+		पूर्ण अन्यथा अणु
 			dm_fat_tbl->AuxAnt_Sum[mac_id] += rx_pwdb_all;
 			dm_fat_tbl->AuxAnt_Cnt[mac_id]++;
-		}
-	} else if (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV) {
-		if (antsel_tr_mux == MAIN_ANT_CGCS_RX) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV) अणु
+		अगर (antsel_tr_mux == MAIN_ANT_CGCS_RX) अणु
 			dm_fat_tbl->MainAnt_Sum[mac_id] += rx_pwdb_all;
 			dm_fat_tbl->MainAnt_Cnt[mac_id]++;
-		} else {
+		पूर्ण अन्यथा अणु
 			dm_fat_tbl->AuxAnt_Sum[mac_id] += rx_pwdb_all;
 			dm_fat_tbl->AuxAnt_Cnt[mac_id]++;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void rtl88eu_dm_hw_ant_div(struct odm_dm_struct *dm_odm)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
-	struct rtw_dig *dig_table = &dm_odm->DM_DigTable;
-	struct sta_info *entry;
-	u32 i, min_rssi = 0xFF, ant_div_max_rssi = 0, max_rssi = 0;
+अटल व्योम rtl88eu_dm_hw_ant_भाग(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+	काष्ठा rtw_dig *dig_table = &dm_odm->DM_DigTable;
+	काष्ठा sta_info *entry;
+	u32 i, min_rssi = 0xFF, ant_भाग_max_rssi = 0, max_rssi = 0;
 	u32 local_min_rssi, local_max_rssi;
-	u32 main_rssi, aux_rssi;
+	u32 मुख्य_rssi, aux_rssi;
 	u8 RxIdleAnt = 0, target_ant = 7;
 
-	for (i = 0; i < ODM_ASSOCIATE_ENTRY_NUM; i++) {
+	क्रम (i = 0; i < ODM_ASSOCIATE_ENTRY_NUM; i++) अणु
 		entry = dm_odm->pODM_StaInfo[i];
-		if (IS_STA_VALID(entry)) {
+		अगर (IS_STA_VALID(entry)) अणु
 			/* 2 Calculate RSSI per Antenna */
-			main_rssi = (dm_fat_tbl->MainAnt_Cnt[i] != 0) ?
+			मुख्य_rssi = (dm_fat_tbl->MainAnt_Cnt[i] != 0) ?
 				     (dm_fat_tbl->MainAnt_Sum[i] /
 				      dm_fat_tbl->MainAnt_Cnt[i]) : 0;
 			aux_rssi = (dm_fat_tbl->AuxAnt_Cnt[i] != 0) ?
 				    (dm_fat_tbl->AuxAnt_Sum[i] /
 				     dm_fat_tbl->AuxAnt_Cnt[i]) : 0;
-			target_ant = (main_rssi >= aux_rssi) ? MAIN_ANT : AUX_ANT;
-			/* 2 Select max_rssi for DIG */
-			local_max_rssi = max(main_rssi, aux_rssi);
-			if ((local_max_rssi > ant_div_max_rssi) &&
+			target_ant = (मुख्य_rssi >= aux_rssi) ? MAIN_ANT : AUX_ANT;
+			/* 2 Select max_rssi क्रम DIG */
+			local_max_rssi = max(मुख्य_rssi, aux_rssi);
+			अगर ((local_max_rssi > ant_भाग_max_rssi) &&
 			    (local_max_rssi < 40))
-				ant_div_max_rssi = local_max_rssi;
-			if (local_max_rssi > max_rssi)
+				ant_भाग_max_rssi = local_max_rssi;
+			अगर (local_max_rssi > max_rssi)
 				max_rssi = local_max_rssi;
 
 			/* 2 Select RX Idle Antenna */
-			if ((dm_fat_tbl->RxIdleAnt == MAIN_ANT) &&
-			    (main_rssi == 0))
-				main_rssi = aux_rssi;
-			else if ((dm_fat_tbl->RxIdleAnt == AUX_ANT) &&
+			अगर ((dm_fat_tbl->RxIdleAnt == MAIN_ANT) &&
+			    (मुख्य_rssi == 0))
+				मुख्य_rssi = aux_rssi;
+			अन्यथा अगर ((dm_fat_tbl->RxIdleAnt == AUX_ANT) &&
 				 (aux_rssi == 0))
-				aux_rssi = main_rssi;
+				aux_rssi = मुख्य_rssi;
 
-			local_min_rssi = min(main_rssi, aux_rssi);
-			if (local_min_rssi < min_rssi) {
+			local_min_rssi = min(मुख्य_rssi, aux_rssi);
+			अगर (local_min_rssi < min_rssi) अणु
 				min_rssi = local_min_rssi;
 				RxIdleAnt = target_ant;
-			}
+			पूर्ण
 			/* 2 Select TRX Antenna */
-			if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
+			अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
 				update_tx_ant_88eu(dm_odm, target_ant, i);
-		}
+		पूर्ण
 		dm_fat_tbl->MainAnt_Sum[i] = 0;
 		dm_fat_tbl->AuxAnt_Sum[i] = 0;
 		dm_fat_tbl->MainAnt_Cnt[i] = 0;
 		dm_fat_tbl->AuxAnt_Cnt[i] = 0;
-	}
+	पूर्ण
 
 	/* 2 Set RX Idle Antenna */
 	rtl88eu_dm_update_rx_idle_ant(dm_odm, RxIdleAnt);
 
-	dig_table->AntDiv_RSSI_max = ant_div_max_rssi;
+	dig_table->AntDiv_RSSI_max = ant_भाग_max_rssi;
 	dig_table->RSSI_max = max_rssi;
-}
+पूर्ण
 
-void rtl88eu_dm_antenna_diversity(struct odm_dm_struct *dm_odm)
-{
-	struct fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
-	struct adapter *adapter = dm_odm->Adapter;
+व्योम rtl88eu_dm_antenna_भागersity(काष्ठा odm_dm_काष्ठा *dm_odm)
+अणु
+	काष्ठा fast_ant_train *dm_fat_tbl = &dm_odm->DM_FatTable;
+	काष्ठा adapter *adapter = dm_odm->Adapter;
 
-	if (!(dm_odm->SupportAbility & ODM_BB_ANT_DIV))
-		return;
+	अगर (!(dm_odm->SupportAbility & ODM_BB_ANT_DIV))
+		वापस;
 
-	if (!dm_odm->bLinked) {
+	अगर (!dm_odm->bLinked) अणु
 		ODM_RT_TRACE(dm_odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD,
 			     ("ODM_AntennaDiversity_88E(): No Link.\n"));
-		if (dm_fat_tbl->bBecomeLinked) {
+		अगर (dm_fat_tbl->bBecomeLinked) अणु
 			ODM_RT_TRACE(dm_odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD,
 				     ("Need to Turn off HW AntDiv\n"));
 			phy_set_bb_reg(adapter, ODM_REG_IGI_A_11N, BIT(7), 0);
 			phy_set_bb_reg(adapter, ODM_REG_CCK_ANTDIV_PARA1_11N,
 				       BIT(15), 0);
-			if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
+			अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
 				phy_set_bb_reg(adapter, ODM_REG_TX_ANT_CTRL_11N,
 					       BIT(21), 0);
 			dm_fat_tbl->bBecomeLinked = dm_odm->bLinked;
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	if (!dm_fat_tbl->bBecomeLinked) {
+	अगर (!dm_fat_tbl->bBecomeLinked) अणु
 		ODM_RT_TRACE(dm_odm, ODM_COMP_ANT_DIV, ODM_DBG_LOUD,
 			     ("Need to Turn on HW AntDiv\n"));
 		phy_set_bb_reg(adapter, ODM_REG_IGI_A_11N, BIT(7), 1);
 		phy_set_bb_reg(adapter, ODM_REG_CCK_ANTDIV_PARA1_11N,
 			       BIT(15), 1);
-		if (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
+		अगर (dm_odm->AntDivType == CG_TRX_HW_ANTDIV)
 			phy_set_bb_reg(adapter, ODM_REG_TX_ANT_CTRL_11N,
 				       BIT(21), 1);
 		dm_fat_tbl->bBecomeLinked = dm_odm->bLinked;
-	}
+	पूर्ण
 
-	if ((dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ||
+	अगर ((dm_odm->AntDivType == CG_TRX_HW_ANTDIV) ||
 	    (dm_odm->AntDivType == CGCS_RX_HW_ANTDIV))
-		rtl88eu_dm_hw_ant_div(dm_odm);
-}
+		rtl88eu_dm_hw_ant_भाग(dm_odm);
+पूर्ण

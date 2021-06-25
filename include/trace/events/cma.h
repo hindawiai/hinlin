@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM cma
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM cma
 
-#if !defined(_TRACE_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_CMA_H
+#अगर !defined(_TRACE_CMA_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_CMA_H
 
-#include <linux/types.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 DECLARE_EVENT_CLASS(cma_alloc_class,
 
-	TP_PROTO(const char *name, unsigned long pfn, const struct page *page,
-		 unsigned long count, unsigned int align),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित दीर्घ pfn, स्थिर काष्ठा page *page,
+		 अचिन्हित दीर्घ count, अचिन्हित पूर्णांक align),
 
 	TP_ARGS(name, pfn, page, count, align),
 
 	TP_STRUCT__entry(
 		__string(name, name)
-		__field(unsigned long, pfn)
-		__field(const struct page *, page)
-		__field(unsigned long, count)
-		__field(unsigned int, align)
+		__field(अचिन्हित दीर्घ, pfn)
+		__field(स्थिर काष्ठा page *, page)
+		__field(अचिन्हित दीर्घ, count)
+		__field(अचिन्हित पूर्णांक, align)
 	),
 
 	TP_fast_assign(
@@ -31,7 +32,7 @@ DECLARE_EVENT_CLASS(cma_alloc_class,
 		__entry->align = align;
 	),
 
-	TP_printk("name=%s pfn=%lx page=%p count=%lu align=%u",
+	TP_prपूर्णांकk("name=%s pfn=%lx page=%p count=%lu align=%u",
 		  __get_str(name),
 		  __entry->pfn,
 		  __entry->page,
@@ -41,16 +42,16 @@ DECLARE_EVENT_CLASS(cma_alloc_class,
 
 TRACE_EVENT(cma_release,
 
-	TP_PROTO(const char *name, unsigned long pfn, const struct page *page,
-		 unsigned long count),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित दीर्घ pfn, स्थिर काष्ठा page *page,
+		 अचिन्हित दीर्घ count),
 
 	TP_ARGS(name, pfn, page, count),
 
 	TP_STRUCT__entry(
 		__string(name, name)
-		__field(unsigned long, pfn)
-		__field(const struct page *, page)
-		__field(unsigned long, count)
+		__field(अचिन्हित दीर्घ, pfn)
+		__field(स्थिर काष्ठा page *, page)
+		__field(अचिन्हित दीर्घ, count)
 	),
 
 	TP_fast_assign(
@@ -60,7 +61,7 @@ TRACE_EVENT(cma_release,
 		__entry->count = count;
 	),
 
-	TP_printk("name=%s pfn=%lx page=%p count=%lu",
+	TP_prपूर्णांकk("name=%s pfn=%lx page=%p count=%lu",
 		  __get_str(name),
 		  __entry->pfn,
 		  __entry->page,
@@ -69,14 +70,14 @@ TRACE_EVENT(cma_release,
 
 TRACE_EVENT(cma_alloc_start,
 
-	TP_PROTO(const char *name, unsigned long count, unsigned int align),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित दीर्घ count, अचिन्हित पूर्णांक align),
 
 	TP_ARGS(name, count, align),
 
 	TP_STRUCT__entry(
 		__string(name, name)
-		__field(unsigned long, count)
-		__field(unsigned int, align)
+		__field(अचिन्हित दीर्घ, count)
+		__field(अचिन्हित पूर्णांक, align)
 	),
 
 	TP_fast_assign(
@@ -85,7 +86,7 @@ TRACE_EVENT(cma_alloc_start,
 		__entry->align = align;
 	),
 
-	TP_printk("name=%s count=%lu align=%u",
+	TP_prपूर्णांकk("name=%s count=%lu align=%u",
 		  __get_str(name),
 		  __entry->count,
 		  __entry->align)
@@ -93,21 +94,21 @@ TRACE_EVENT(cma_alloc_start,
 
 DEFINE_EVENT(cma_alloc_class, cma_alloc_finish,
 
-	TP_PROTO(const char *name, unsigned long pfn, const struct page *page,
-		 unsigned long count, unsigned int align),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित दीर्घ pfn, स्थिर काष्ठा page *page,
+		 अचिन्हित दीर्घ count, अचिन्हित पूर्णांक align),
 
 	TP_ARGS(name, pfn, page, count, align)
 );
 
 DEFINE_EVENT(cma_alloc_class, cma_alloc_busy_retry,
 
-	TP_PROTO(const char *name, unsigned long pfn, const struct page *page,
-		 unsigned long count, unsigned int align),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित दीर्घ pfn, स्थिर काष्ठा page *page,
+		 अचिन्हित दीर्घ count, अचिन्हित पूर्णांक align),
 
 	TP_ARGS(name, pfn, page, count, align)
 );
 
-#endif /* _TRACE_CMA_H */
+#पूर्ण_अगर /* _TRACE_CMA_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

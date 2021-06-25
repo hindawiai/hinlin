@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NV10_GR_H__
-#define __NV10_GR_H__
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NV10_GR_H__
+#घोषणा __NV10_GR_H__
+#समावेश "priv.h"
 
-int nv10_gr_new_(const struct nvkm_gr_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		 struct nvkm_gr **);
-int nv10_gr_init(struct nvkm_gr *);
-void nv10_gr_intr(struct nvkm_gr *);
-void nv10_gr_tile(struct nvkm_gr *, int, struct nvkm_fb_tile *);
+पूर्णांक nv10_gr_new_(स्थिर काष्ठा nvkm_gr_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		 काष्ठा nvkm_gr **);
+पूर्णांक nv10_gr_init(काष्ठा nvkm_gr *);
+व्योम nv10_gr_पूर्णांकr(काष्ठा nvkm_gr *);
+व्योम nv10_gr_tile(काष्ठा nvkm_gr *, पूर्णांक, काष्ठा nvkm_fb_tile *);
 
-int nv10_gr_chan_new(struct nvkm_gr *, struct nvkm_fifo_chan *,
-		     const struct nvkm_oclass *, struct nvkm_object **);
-#endif
+पूर्णांक nv10_gr_chan_new(काष्ठा nvkm_gr *, काष्ठा nvkm_fअगरo_chan *,
+		     स्थिर काष्ठा nvkm_oclass *, काष्ठा nvkm_object **);
+#पूर्ण_अगर

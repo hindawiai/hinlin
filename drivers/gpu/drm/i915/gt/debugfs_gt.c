@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-#include "debugfs_engines.h"
-#include "debugfs_gt.h"
-#include "debugfs_gt_pm.h"
-#include "intel_sseu_debugfs.h"
-#include "uc/intel_uc_debugfs.h"
-#include "i915_drv.h"
+#समावेश "debugfs_engines.h"
+#समावेश "debugfs_gt.h"
+#समावेश "debugfs_gt_pm.h"
+#समावेश "intel_sseu_debugfs.h"
+#समावेश "uc/intel_uc_debugfs.h"
+#समावेश "i915_drv.h"
 
-void debugfs_gt_register(struct intel_gt *gt)
-{
-	struct dentry *root;
+व्योम debugfs_gt_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt)
+अणु
+	काष्ठा dentry *root;
 
-	if (!gt->i915->drm.primary->debugfs_root)
-		return;
+	अगर (!gt->i915->drm.primary->debugfs_root)
+		वापस;
 
 	root = debugfs_create_dir("gt", gt->i915->drm.primary->debugfs_root);
-	if (IS_ERR(root))
-		return;
+	अगर (IS_ERR(root))
+		वापस;
 
-	debugfs_engines_register(gt, root);
-	debugfs_gt_pm_register(gt, root);
-	intel_sseu_debugfs_register(gt, root);
+	debugfs_engines_रेजिस्टर(gt, root);
+	debugfs_gt_pm_रेजिस्टर(gt, root);
+	पूर्णांकel_sseu_debugfs_रेजिस्टर(gt, root);
 
-	intel_uc_debugfs_register(&gt->uc, root);
-}
+	पूर्णांकel_uc_debugfs_रेजिस्टर(&gt->uc, root);
+पूर्ण
 
-void intel_gt_debugfs_register_files(struct dentry *root,
-				     const struct debugfs_gt_file *files,
-				     unsigned long count, void *data)
-{
-	while (count--) {
-		umode_t mode = files->fops->write ? 0644 : 0444;
+व्योम पूर्णांकel_gt_debugfs_रेजिस्टर_files(काष्ठा dentry *root,
+				     स्थिर काष्ठा debugfs_gt_file *files,
+				     अचिन्हित दीर्घ count, व्योम *data)
+अणु
+	जबतक (count--) अणु
+		umode_t mode = files->fops->ग_लिखो ? 0644 : 0444;
 
-		if (!files->eval || files->eval(data))
+		अगर (!files->eval || files->eval(data))
 			debugfs_create_file(files->name,
 					    mode, root, data,
 					    files->fops);
 
 		files++;
-	}
-}
+	पूर्ण
+पूर्ण

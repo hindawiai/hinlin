@@ -1,161 +1,162 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AK4104 ALSA SoC (ASoC) driver
  *
  * Copyright (c) 2009 Daniel Mack <daniel@caiaq.de>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
-#include <linux/of_device.h>
-#include <linux/gpio/consumer.h>
-#include <linux/regulator/consumer.h>
-#include <sound/asoundef.h>
-#include <sound/core.h>
-#include <sound/soc.h>
-#include <sound/initval.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <sound/asoundef.h>
+#समावेश <sound/core.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/initval.h>
 
-/* AK4104 registers addresses */
-#define AK4104_REG_CONTROL1		0x00
-#define AK4104_REG_RESERVED		0x01
-#define AK4104_REG_CONTROL2		0x02
-#define AK4104_REG_TX			0x03
-#define AK4104_REG_CHN_STATUS(x)	((x) + 0x04)
-#define AK4104_NUM_REGS			10
+/* AK4104 रेजिस्टरs addresses */
+#घोषणा AK4104_REG_CONTROL1		0x00
+#घोषणा AK4104_REG_RESERVED		0x01
+#घोषणा AK4104_REG_CONTROL2		0x02
+#घोषणा AK4104_REG_TX			0x03
+#घोषणा AK4104_REG_CHN_STATUS(x)	((x) + 0x04)
+#घोषणा AK4104_NUM_REGS			10
 
-#define AK4104_REG_MASK			0x1f
-#define AK4104_READ			0xc0
-#define AK4104_WRITE			0xe0
-#define AK4104_RESERVED_VAL		0x5b
+#घोषणा AK4104_REG_MASK			0x1f
+#घोषणा AK4104_READ			0xc0
+#घोषणा AK4104_WRITE			0xe0
+#घोषणा AK4104_RESERVED_VAL		0x5b
 
-/* Bit masks for AK4104 registers */
-#define AK4104_CONTROL1_RSTN		(1 << 0)
-#define AK4104_CONTROL1_PW		(1 << 1)
-#define AK4104_CONTROL1_DIF0		(1 << 2)
-#define AK4104_CONTROL1_DIF1		(1 << 3)
+/* Bit masks क्रम AK4104 रेजिस्टरs */
+#घोषणा AK4104_CONTROL1_RSTN		(1 << 0)
+#घोषणा AK4104_CONTROL1_PW		(1 << 1)
+#घोषणा AK4104_CONTROL1_DIF0		(1 << 2)
+#घोषणा AK4104_CONTROL1_DIF1		(1 << 3)
 
-#define AK4104_CONTROL2_SEL0		(1 << 0)
-#define AK4104_CONTROL2_SEL1		(1 << 1)
-#define AK4104_CONTROL2_MODE		(1 << 2)
+#घोषणा AK4104_CONTROL2_SEL0		(1 << 0)
+#घोषणा AK4104_CONTROL2_SEL1		(1 << 1)
+#घोषणा AK4104_CONTROL2_MODE		(1 << 2)
 
-#define AK4104_TX_TXE			(1 << 0)
-#define AK4104_TX_V			(1 << 1)
+#घोषणा AK4104_TX_TXE			(1 << 0)
+#घोषणा AK4104_TX_V			(1 << 1)
 
-struct ak4104_private {
-	struct regmap *regmap;
-	struct regulator *regulator;
-};
+काष्ठा ak4104_निजी अणु
+	काष्ठा regmap *regmap;
+	काष्ठा regulator *regulator;
+पूर्ण;
 
-static const struct snd_soc_dapm_widget ak4104_dapm_widgets[] = {
-SND_SOC_DAPM_PGA("TXE", AK4104_REG_TX, AK4104_TX_TXE, 0, NULL, 0),
+अटल स्थिर काष्ठा snd_soc_dapm_widget ak4104_dapm_widमाला_लो[] = अणु
+SND_SOC_DAPM_PGA("TXE", AK4104_REG_TX, AK4104_TX_TXE, 0, शून्य, 0),
 
 SND_SOC_DAPM_OUTPUT("TX"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route ak4104_dapm_routes[] = {
-	{ "TXE", NULL, "Playback" },
-	{ "TX", NULL, "TXE" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route ak4104_dapm_routes[] = अणु
+	अणु "TXE", शून्य, "Playback" पूर्ण,
+	अणु "TX", शून्य, "TXE" पूर्ण,
+पूर्ण;
 
-static int ak4104_set_dai_fmt(struct snd_soc_dai *codec_dai,
-			      unsigned int format)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct ak4104_private *ak4104 = snd_soc_component_get_drvdata(component);
-	int val = 0;
-	int ret;
+अटल पूर्णांक ak4104_set_dai_fmt(काष्ठा snd_soc_dai *codec_dai,
+			      अचिन्हित पूर्णांक क्रमmat)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा ak4104_निजी *ak4104 = snd_soc_component_get_drvdata(component);
+	पूर्णांक val = 0;
+	पूर्णांक ret;
 
-	/* set DAI format */
-	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_RIGHT_J:
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+	/* set DAI क्रमmat */
+	चयन (क्रमmat & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_RIGHT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		val |= AK4104_CONTROL1_DIF0;
-		break;
-	case SND_SOC_DAIFMT_I2S:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_I2S:
 		val |= AK4104_CONTROL1_DIF0 | AK4104_CONTROL1_DIF1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "invalid dai format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* This device can only be slave */
-	if ((format & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
-		return -EINVAL;
+	अगर ((क्रमmat & SND_SOC_DAIFMT_MASTER_MASK) != SND_SOC_DAIFMT_CBS_CFS)
+		वापस -EINVAL;
 
 	ret = regmap_update_bits(ak4104->regmap, AK4104_REG_CONTROL1,
 				 AK4104_CONTROL1_DIF0 | AK4104_CONTROL1_DIF1,
 				 val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4104_hw_params(struct snd_pcm_substream *substream,
-			    struct snd_pcm_hw_params *params,
-			    struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct ak4104_private *ak4104 = snd_soc_component_get_drvdata(component);
-	int ret, val = 0;
+अटल पूर्णांक ak4104_hw_params(काष्ठा snd_pcm_substream *substream,
+			    काष्ठा snd_pcm_hw_params *params,
+			    काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा ak4104_निजी *ak4104 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret, val = 0;
 
 	/* set the IEC958 bits: consumer mode, no copyright bit */
 	val |= IEC958_AES0_CON_NOT_COPYRIGHT;
-	regmap_write(ak4104->regmap, AK4104_REG_CHN_STATUS(0), val);
+	regmap_ग_लिखो(ak4104->regmap, AK4104_REG_CHN_STATUS(0), val);
 
 	val = 0;
 
-	switch (params_rate(params)) {
-	case 22050:
+	चयन (params_rate(params)) अणु
+	हाल 22050:
 		val |= IEC958_AES3_CON_FS_22050;
-		break;
-	case 24000:
+		अवरोध;
+	हाल 24000:
 		val |= IEC958_AES3_CON_FS_24000;
-		break;
-	case 32000:
+		अवरोध;
+	हाल 32000:
 		val |= IEC958_AES3_CON_FS_32000;
-		break;
-	case 44100:
+		अवरोध;
+	हाल 44100:
 		val |= IEC958_AES3_CON_FS_44100;
-		break;
-	case 48000:
+		अवरोध;
+	हाल 48000:
 		val |= IEC958_AES3_CON_FS_48000;
-		break;
-	case 88200:
+		अवरोध;
+	हाल 88200:
 		val |= IEC958_AES3_CON_FS_88200;
-		break;
-	case 96000:
+		अवरोध;
+	हाल 96000:
 		val |= IEC958_AES3_CON_FS_96000;
-		break;
-	case 176400:
+		अवरोध;
+	हाल 176400:
 		val |= IEC958_AES3_CON_FS_176400;
-		break;
-	case 192000:
+		अवरोध;
+	हाल 192000:
 		val |= IEC958_AES3_CON_FS_192000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(component->dev, "unsupported sampling rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = regmap_write(ak4104->regmap, AK4104_REG_CHN_STATUS(3), val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_ग_लिखो(ak4104->regmap, AK4104_REG_CHN_STATUS(3), val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops ak4101_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops ak4101_dai_ops = अणु
 	.hw_params = ak4104_hw_params,
 	.set_fmt = ak4104_set_dai_fmt,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver ak4104_dai = {
+अटल काष्ठा snd_soc_dai_driver ak4104_dai = अणु
 	.name = "ak4104-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
@@ -163,177 +164,177 @@ static struct snd_soc_dai_driver ak4104_dai = {
 			 SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
 			 SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000 |
 			 SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_192000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE  |
+		.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE  |
 			   SNDRV_PCM_FMTBIT_S24_3LE |
 			   SNDRV_PCM_FMTBIT_S24_LE
-	},
+	पूर्ण,
 	.ops = &ak4101_dai_ops,
-};
+पूर्ण;
 
-static int ak4104_probe(struct snd_soc_component *component)
-{
-	struct ak4104_private *ak4104 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक ak4104_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4104_निजी *ak4104 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
 	ret = regulator_enable(ak4104->regulator);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(component->dev, "Unable to enable regulator: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* set power-up and non-reset bits */
+	/* set घातer-up and non-reset bits */
 	ret = regmap_update_bits(ak4104->regmap, AK4104_REG_CONTROL1,
 				 AK4104_CONTROL1_PW | AK4104_CONTROL1_RSTN,
 				 AK4104_CONTROL1_PW | AK4104_CONTROL1_RSTN);
-	if (ret < 0)
-		goto exit_disable_regulator;
+	अगर (ret < 0)
+		जाओ निकास_disable_regulator;
 
 	/* enable transmitter */
 	ret = regmap_update_bits(ak4104->regmap, AK4104_REG_TX,
 				 AK4104_TX_TXE, AK4104_TX_TXE);
-	if (ret < 0)
-		goto exit_disable_regulator;
+	अगर (ret < 0)
+		जाओ निकास_disable_regulator;
 
-	return 0;
+	वापस 0;
 
-exit_disable_regulator:
+निकास_disable_regulator:
 	regulator_disable(ak4104->regulator);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ak4104_remove(struct snd_soc_component *component)
-{
-	struct ak4104_private *ak4104 = snd_soc_component_get_drvdata(component);
+अटल व्योम ak4104_हटाओ(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4104_निजी *ak4104 = snd_soc_component_get_drvdata(component);
 
 	regmap_update_bits(ak4104->regmap, AK4104_REG_CONTROL1,
 			   AK4104_CONTROL1_PW | AK4104_CONTROL1_RSTN, 0);
 	regulator_disable(ak4104->regulator);
-}
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ak4104_soc_suspend(struct snd_soc_component *component)
-{
-	struct ak4104_private *priv = snd_soc_component_get_drvdata(component);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ak4104_soc_suspend(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4104_निजी *priv = snd_soc_component_get_drvdata(component);
 
 	regulator_disable(priv->regulator);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ak4104_soc_resume(struct snd_soc_component *component)
-{
-	struct ak4104_private *priv = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक ak4104_soc_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा ak4104_निजी *priv = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
 	ret = regulator_enable(priv->regulator);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
-#else
-#define ak4104_soc_suspend	NULL
-#define ak4104_soc_resume	NULL
-#endif /* CONFIG_PM */
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा ak4104_soc_suspend	शून्य
+#घोषणा ak4104_soc_resume	शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct snd_soc_component_driver soc_component_device_ak4104 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_device_ak4104 = अणु
 	.probe			= ak4104_probe,
-	.remove			= ak4104_remove,
+	.हटाओ			= ak4104_हटाओ,
 	.suspend		= ak4104_soc_suspend,
 	.resume			= ak4104_soc_resume,
-	.dapm_widgets		= ak4104_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(ak4104_dapm_widgets),
+	.dapm_widमाला_लो		= ak4104_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(ak4104_dapm_widमाला_लो),
 	.dapm_routes		= ak4104_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(ak4104_dapm_routes),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config ak4104_regmap = {
+अटल स्थिर काष्ठा regmap_config ak4104_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = AK4104_NUM_REGS - 1,
-	.read_flag_mask = AK4104_READ,
-	.write_flag_mask = AK4104_WRITE,
+	.max_रेजिस्टर = AK4104_NUM_REGS - 1,
+	.पढ़ो_flag_mask = AK4104_READ,
+	.ग_लिखो_flag_mask = AK4104_WRITE,
 
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static int ak4104_spi_probe(struct spi_device *spi)
-{
-	struct ak4104_private *ak4104;
-	struct gpio_desc *reset_gpiod;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक ak4104_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ak4104_निजी *ak4104;
+	काष्ठा gpio_desc *reset_gpiod;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_0;
 	ret = spi_setup(spi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ak4104 = devm_kzalloc(&spi->dev, sizeof(struct ak4104_private),
+	ak4104 = devm_kzalloc(&spi->dev, माप(काष्ठा ak4104_निजी),
 			      GFP_KERNEL);
-	if (ak4104 == NULL)
-		return -ENOMEM;
+	अगर (ak4104 == शून्य)
+		वापस -ENOMEM;
 
 	ak4104->regulator = devm_regulator_get(&spi->dev, "vdd");
-	if (IS_ERR(ak4104->regulator)) {
+	अगर (IS_ERR(ak4104->regulator)) अणु
 		ret = PTR_ERR(ak4104->regulator);
 		dev_err(&spi->dev, "Unable to get Vdd regulator: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ak4104->regmap = devm_regmap_init_spi(spi, &ak4104_regmap);
-	if (IS_ERR(ak4104->regmap)) {
+	अगर (IS_ERR(ak4104->regmap)) अणु
 		ret = PTR_ERR(ak4104->regmap);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	reset_gpiod = devm_gpiod_get_optional(&spi->dev, "reset",
 					      GPIOD_OUT_HIGH);
-	if (PTR_ERR(reset_gpiod) == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
+	अगर (PTR_ERR(reset_gpiod) == -EPROBE_DEFER)
+		वापस -EPROBE_DEFER;
 
-	/* read the 'reserved' register - according to the datasheet, it
-	 * should contain 0x5b. Not a good way to verify the presence of
-	 * the device, but there is no hardware ID register. */
-	ret = regmap_read(ak4104->regmap, AK4104_REG_RESERVED, &val);
-	if (ret != 0)
-		return ret;
-	if (val != AK4104_RESERVED_VAL)
-		return -ENODEV;
+	/* पढ़ो the 'reserved' रेजिस्टर - according to the datasheet, it
+	 * should contain 0x5b. Not a good way to verअगरy the presence of
+	 * the device, but there is no hardware ID रेजिस्टर. */
+	ret = regmap_पढ़ो(ak4104->regmap, AK4104_REG_RESERVED, &val);
+	अगर (ret != 0)
+		वापस ret;
+	अगर (val != AK4104_RESERVED_VAL)
+		वापस -ENODEV;
 
 	spi_set_drvdata(spi, ak4104);
 
-	ret = devm_snd_soc_register_component(&spi->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&spi->dev,
 			&soc_component_device_ak4104, &ak4104_dai, 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id ak4104_of_match[] = {
-	{ .compatible = "asahi-kasei,ak4104", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ak4104_of_match[] = अणु
+	अणु .compatible = "asahi-kasei,ak4104", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ak4104_of_match);
 
-static const struct spi_device_id ak4104_id_table[] = {
-	{ "ak4104", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा spi_device_id ak4104_id_table[] = अणु
+	अणु "ak4104", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, ak4104_id_table);
 
-static struct spi_driver ak4104_spi_driver = {
-	.driver  = {
+अटल काष्ठा spi_driver ak4104_spi_driver = अणु
+	.driver  = अणु
 		.name   = "ak4104",
 		.of_match_table = ak4104_of_match,
-	},
+	पूर्ण,
 	.id_table = ak4104_id_table,
 	.probe  = ak4104_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(ak4104_spi_driver);
 

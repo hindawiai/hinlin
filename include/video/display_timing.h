@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>
  *
  * description of display timings
  */
 
-#ifndef __LINUX_DISPLAY_TIMING_H
-#define __LINUX_DISPLAY_TIMING_H
+#अगर_अघोषित __LINUX_DISPLAY_TIMING_H
+#घोषणा __LINUX_DISPLAY_TIMING_H
 
-#include <linux/bitops.h>
-#include <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/types.h>
 
-enum display_flags {
+क्रमागत display_flags अणु
 	DISPLAY_FLAGS_HSYNC_LOW		= BIT(0),
 	DISPLAY_FLAGS_HSYNC_HIGH	= BIT(1),
 	DISPLAY_FLAGS_VSYNC_LOW		= BIT(2),
@@ -31,23 +32,23 @@ enum display_flags {
 	DISPLAY_FLAGS_SYNC_POSEDGE	= BIT(11),
 	/* drive sync on neg. edge */
 	DISPLAY_FLAGS_SYNC_NEGEDGE	= BIT(12),
-};
+पूर्ण;
 
 /*
- * A single signal can be specified via a range of minimal and maximal values
+ * A single संकेत can be specअगरied via a range of minimal and maximal values
  * with a typical value, that lies somewhere inbetween.
  */
-struct timing_entry {
+काष्ठा timing_entry अणु
 	u32 min;
 	u32 typ;
 	u32 max;
-};
+पूर्ण;
 
 /*
- * Single "mode" entry. This describes one set of signal timings a display can
- * have in one setting. This struct can later be converted to struct videomode
+ * Single "mode" entry. This describes one set of संकेत timings a display can
+ * have in one setting. This काष्ठा can later be converted to काष्ठा videomode
  * (see include/video/videomode.h). As each timing_entry can be defined as a
- * range, one struct display_timing may become multiple struct videomodes.
+ * range, one काष्ठा display_timing may become multiple काष्ठा videomodes.
  *
  * Example: hsync active high, vsync active low
  *
@@ -56,50 +57,50 @@ struct timing_entry {
  *	  |<- sync ->|<- back ->|<----- active ----->|<- front ->|<- sync..
  *	  |	     |	 porch  |		     |	 porch	 |
  *
- * HSync _|¯¯¯¯¯¯¯¯¯¯|___________________________________________|¯¯¯¯¯¯¯¯¯
+ * HSync _|त/त/त/त/त/त/त/त/त/त/|___________________________________________|त/त/त/त/त/त/त/त/त/
  *
- * VSync ¯|__________|¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|_________
+ * VSync त/|__________|त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/त/|_________
  */
-struct display_timing {
-	struct timing_entry pixelclock;
+काष्ठा display_timing अणु
+	काष्ठा timing_entry pixelघड़ी;
 
-	struct timing_entry hactive;		/* hor. active video */
-	struct timing_entry hfront_porch;	/* hor. front porch */
-	struct timing_entry hback_porch;	/* hor. back porch */
-	struct timing_entry hsync_len;		/* hor. sync len */
+	काष्ठा timing_entry hactive;		/* hor. active video */
+	काष्ठा timing_entry hfront_porch;	/* hor. front porch */
+	काष्ठा timing_entry hback_porch;	/* hor. back porch */
+	काष्ठा timing_entry hsync_len;		/* hor. sync len */
 
-	struct timing_entry vactive;		/* ver. active video */
-	struct timing_entry vfront_porch;	/* ver. front porch */
-	struct timing_entry vback_porch;	/* ver. back porch */
-	struct timing_entry vsync_len;		/* ver. sync len */
+	काष्ठा timing_entry vactive;		/* ver. active video */
+	काष्ठा timing_entry vfront_porch;	/* ver. front porch */
+	काष्ठा timing_entry vback_porch;	/* ver. back porch */
+	काष्ठा timing_entry vsync_len;		/* ver. sync len */
 
-	enum display_flags flags;		/* display flags */
-};
+	क्रमागत display_flags flags;		/* display flags */
+पूर्ण;
 
 /*
  * This describes all timing settings a display provides.
- * The native_mode is the default setting for this display.
- * Drivers that can handle multiple videomodes should work with this struct and
+ * The native_mode is the शेष setting क्रम this display.
+ * Drivers that can handle multiple videomodes should work with this काष्ठा and
  * convert each entry to the desired end result.
  */
-struct display_timings {
-	unsigned int num_timings;
-	unsigned int native_mode;
+काष्ठा display_timings अणु
+	अचिन्हित पूर्णांक num_timings;
+	अचिन्हित पूर्णांक native_mode;
 
-	struct display_timing **timings;
-};
+	काष्ठा display_timing **timings;
+पूर्ण;
 
-/* get one entry from struct display_timings */
-static inline struct display_timing *display_timings_get(const struct
+/* get one entry from काष्ठा display_timings */
+अटल अंतरभूत काष्ठा display_timing *display_timings_get(स्थिर काष्ठा
 							 display_timings *disp,
-							 unsigned int index)
-{
-	if (disp->num_timings > index)
-		return disp->timings[index];
-	else
-		return NULL;
-}
+							 अचिन्हित पूर्णांक index)
+अणु
+	अगर (disp->num_timings > index)
+		वापस disp->timings[index];
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-void display_timings_release(struct display_timings *disp);
+व्योम display_timings_release(काष्ठा display_timings *disp);
 
-#endif
+#पूर्ण_अगर

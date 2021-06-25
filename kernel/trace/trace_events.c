@@ -1,392 +1,393 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * event tracer
  *
  * Copyright (C) 2008 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
- *  - Added format output of fields of the trace point.
+ *  - Added क्रमmat output of fields of the trace poपूर्णांक.
  *    This was based off of work by Tom Zanussi <tzanussi@gmail.com>.
  *
  */
 
-#define pr_fmt(fmt) fmt
+#घोषणा pr_fmt(fmt) fmt
 
-#include <linux/workqueue.h>
-#include <linux/security.h>
-#include <linux/spinlock.h>
-#include <linux/kthread.h>
-#include <linux/tracefs.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/ctype.h>
-#include <linux/sort.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/security.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/tracefs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/sort.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
 
-#include <trace/events/sched.h>
-#include <trace/syscall.h>
+#समावेश <trace/events/sched.h>
+#समावेश <trace/syscall.h>
 
-#include <asm/setup.h>
+#समावेश <यंत्र/setup.h>
 
-#include "trace_output.h"
+#समावेश "trace_output.h"
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM "TRACE_SYSTEM"
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM "TRACE_SYSTEM"
 
 DEFINE_MUTEX(event_mutex);
 
 LIST_HEAD(ftrace_events);
-static LIST_HEAD(ftrace_generic_fields);
-static LIST_HEAD(ftrace_common_fields);
-static bool eventdir_initialized;
+अटल LIST_HEAD(ftrace_generic_fields);
+अटल LIST_HEAD(ftrace_common_fields);
+अटल bool eventdir_initialized;
 
-#define GFP_TRACE (GFP_KERNEL | __GFP_ZERO)
+#घोषणा GFP_TRACE (GFP_KERNEL | __GFP_ZERO)
 
-static struct kmem_cache *field_cachep;
-static struct kmem_cache *file_cachep;
+अटल काष्ठा kmem_cache *field_cachep;
+अटल काष्ठा kmem_cache *file_cachep;
 
-static inline int system_refcount(struct event_subsystem *system)
-{
-	return system->ref_count;
-}
+अटल अंतरभूत पूर्णांक प्रणाली_refcount(काष्ठा event_subप्रणाली *प्रणाली)
+अणु
+	वापस प्रणाली->ref_count;
+पूर्ण
 
-static int system_refcount_inc(struct event_subsystem *system)
-{
-	return system->ref_count++;
-}
+अटल पूर्णांक प्रणाली_refcount_inc(काष्ठा event_subप्रणाली *प्रणाली)
+अणु
+	वापस प्रणाली->ref_count++;
+पूर्ण
 
-static int system_refcount_dec(struct event_subsystem *system)
-{
-	return --system->ref_count;
-}
+अटल पूर्णांक प्रणाली_refcount_dec(काष्ठा event_subप्रणाली *प्रणाली)
+अणु
+	वापस --प्रणाली->ref_count;
+पूर्ण
 
-/* Double loops, do not use break, only goto's work */
-#define do_for_each_event_file(tr, file)			\
-	list_for_each_entry(tr, &ftrace_trace_arrays, list) {	\
-		list_for_each_entry(file, &tr->events, list)
+/* Double loops, करो not use अवरोध, only जाओ's work */
+#घोषणा करो_क्रम_each_event_file(tr, file)			\
+	list_क्रम_each_entry(tr, &ftrace_trace_arrays, list) अणु	\
+		list_क्रम_each_entry(file, &tr->events, list)
 
-#define do_for_each_event_file_safe(tr, file)			\
-	list_for_each_entry(tr, &ftrace_trace_arrays, list) {	\
-		struct trace_event_file *___n;				\
-		list_for_each_entry_safe(file, ___n, &tr->events, list)
+#घोषणा करो_क्रम_each_event_file_safe(tr, file)			\
+	list_क्रम_each_entry(tr, &ftrace_trace_arrays, list) अणु	\
+		काष्ठा trace_event_file *___n;				\
+		list_क्रम_each_entry_safe(file, ___n, &tr->events, list)
 
-#define while_for_each_event_file()		\
-	}
+#घोषणा जबतक_क्रम_each_event_file()		\
+	पूर्ण
 
-static struct ftrace_event_field *
-__find_event_field(struct list_head *head, char *name)
-{
-	struct ftrace_event_field *field;
+अटल काष्ठा ftrace_event_field *
+__find_event_field(काष्ठा list_head *head, अक्षर *name)
+अणु
+	काष्ठा ftrace_event_field *field;
 
-	list_for_each_entry(field, head, link) {
-		if (!strcmp(field->name, name))
-			return field;
-	}
+	list_क्रम_each_entry(field, head, link) अणु
+		अगर (!म_भेद(field->name, name))
+			वापस field;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct ftrace_event_field *
-trace_find_event_field(struct trace_event_call *call, char *name)
-{
-	struct ftrace_event_field *field;
-	struct list_head *head;
+काष्ठा ftrace_event_field *
+trace_find_event_field(काष्ठा trace_event_call *call, अक्षर *name)
+अणु
+	काष्ठा ftrace_event_field *field;
+	काष्ठा list_head *head;
 
 	head = trace_get_fields(call);
 	field = __find_event_field(head, name);
-	if (field)
-		return field;
+	अगर (field)
+		वापस field;
 
 	field = __find_event_field(&ftrace_generic_fields, name);
-	if (field)
-		return field;
+	अगर (field)
+		वापस field;
 
-	return __find_event_field(&ftrace_common_fields, name);
-}
+	वापस __find_event_field(&ftrace_common_fields, name);
+पूर्ण
 
-static int __trace_define_field(struct list_head *head, const char *type,
-				const char *name, int offset, int size,
-				int is_signed, int filter_type)
-{
-	struct ftrace_event_field *field;
+अटल पूर्णांक __trace_define_field(काष्ठा list_head *head, स्थिर अक्षर *type,
+				स्थिर अक्षर *name, पूर्णांक offset, पूर्णांक size,
+				पूर्णांक is_चिन्हित, पूर्णांक filter_type)
+अणु
+	काष्ठा ftrace_event_field *field;
 
 	field = kmem_cache_alloc(field_cachep, GFP_TRACE);
-	if (!field)
-		return -ENOMEM;
+	अगर (!field)
+		वापस -ENOMEM;
 
 	field->name = name;
 	field->type = type;
 
-	if (filter_type == FILTER_OTHER)
+	अगर (filter_type == FILTER_OTHER)
 		field->filter_type = filter_assign_type(type);
-	else
+	अन्यथा
 		field->filter_type = filter_type;
 
 	field->offset = offset;
 	field->size = size;
-	field->is_signed = is_signed;
+	field->is_चिन्हित = is_चिन्हित;
 
 	list_add(&field->link, head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int trace_define_field(struct trace_event_call *call, const char *type,
-		       const char *name, int offset, int size, int is_signed,
-		       int filter_type)
-{
-	struct list_head *head;
+पूर्णांक trace_define_field(काष्ठा trace_event_call *call, स्थिर अक्षर *type,
+		       स्थिर अक्षर *name, पूर्णांक offset, पूर्णांक size, पूर्णांक is_चिन्हित,
+		       पूर्णांक filter_type)
+अणु
+	काष्ठा list_head *head;
 
-	if (WARN_ON(!call->class))
-		return 0;
+	अगर (WARN_ON(!call->class))
+		वापस 0;
 
 	head = trace_get_fields(call);
-	return __trace_define_field(head, type, name, offset, size,
-				    is_signed, filter_type);
-}
+	वापस __trace_define_field(head, type, name, offset, size,
+				    is_चिन्हित, filter_type);
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_define_field);
 
-#define __generic_field(type, item, filter_type)			\
+#घोषणा __generic_field(type, item, filter_type)			\
 	ret = __trace_define_field(&ftrace_generic_fields, #type,	\
-				   #item, 0, 0, is_signed_type(type),	\
+				   #item, 0, 0, is_चिन्हित_type(type),	\
 				   filter_type);			\
-	if (ret)							\
-		return ret;
+	अगर (ret)							\
+		वापस ret;
 
-#define __common_field(type, item)					\
+#घोषणा __common_field(type, item)					\
 	ret = __trace_define_field(&ftrace_common_fields, #type,	\
 				   "common_" #item,			\
-				   offsetof(typeof(ent), item),		\
-				   sizeof(ent.item),			\
-				   is_signed_type(type), FILTER_OTHER);	\
-	if (ret)							\
-		return ret;
+				   दुरत्व(typeof(ent), item),		\
+				   माप(ent.item),			\
+				   is_चिन्हित_type(type), FILTER_OTHER);	\
+	अगर (ret)							\
+		वापस ret;
 
-static int trace_define_generic_fields(void)
-{
-	int ret;
+अटल पूर्णांक trace_define_generic_fields(व्योम)
+अणु
+	पूर्णांक ret;
 
-	__generic_field(int, CPU, FILTER_CPU);
-	__generic_field(int, cpu, FILTER_CPU);
-	__generic_field(char *, COMM, FILTER_COMM);
-	__generic_field(char *, comm, FILTER_COMM);
+	__generic_field(पूर्णांक, CPU, FILTER_CPU);
+	__generic_field(पूर्णांक, cpu, FILTER_CPU);
+	__generic_field(अक्षर *, COMM, FILTER_COMM);
+	__generic_field(अक्षर *, comm, FILTER_COMM);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int trace_define_common_fields(void)
-{
-	int ret;
-	struct trace_entry ent;
+अटल पूर्णांक trace_define_common_fields(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा trace_entry ent;
 
-	__common_field(unsigned short, type);
-	__common_field(unsigned char, flags);
-	__common_field(unsigned char, preempt_count);
-	__common_field(int, pid);
+	__common_field(अचिन्हित लघु, type);
+	__common_field(अचिन्हित अक्षर, flags);
+	__common_field(अचिन्हित अक्षर, preempt_count);
+	__common_field(पूर्णांक, pid);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void trace_destroy_fields(struct trace_event_call *call)
-{
-	struct ftrace_event_field *field, *next;
-	struct list_head *head;
+अटल व्योम trace_destroy_fields(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा ftrace_event_field *field, *next;
+	काष्ठा list_head *head;
 
 	head = trace_get_fields(call);
-	list_for_each_entry_safe(field, next, head, link) {
+	list_क्रम_each_entry_safe(field, next, head, link) अणु
 		list_del(&field->link);
-		kmem_cache_free(field_cachep, field);
-	}
-}
+		kmem_cache_मुक्त(field_cachep, field);
+	पूर्ण
+पूर्ण
 
 /*
- * run-time version of trace_event_get_offsets_<call>() that returns the last
+ * run-समय version of trace_event_get_offsets_<call>() that वापसs the last
  * accessible offset of trace fields excluding __dynamic_array bytes
  */
-int trace_event_get_offsets(struct trace_event_call *call)
-{
-	struct ftrace_event_field *tail;
-	struct list_head *head;
+पूर्णांक trace_event_get_offsets(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा ftrace_event_field *tail;
+	काष्ठा list_head *head;
 
 	head = trace_get_fields(call);
 	/*
-	 * head->next points to the last field with the largest offset,
+	 * head->next poपूर्णांकs to the last field with the largest offset,
 	 * since it was added last by trace_define_field()
 	 */
-	tail = list_first_entry(head, struct ftrace_event_field, link);
-	return tail->offset + tail->size;
-}
+	tail = list_first_entry(head, काष्ठा ftrace_event_field, link);
+	वापस tail->offset + tail->size;
+पूर्ण
 
 /*
- * Check if the referenced field is an array and return true,
+ * Check अगर the referenced field is an array and वापस true,
  * as arrays are OK to dereference.
  */
-static bool test_field(const char *fmt, struct trace_event_call *call)
-{
-	struct trace_event_fields *field = call->class->fields_array;
-	const char *array_descriptor;
-	const char *p = fmt;
-	int len;
+अटल bool test_field(स्थिर अक्षर *fmt, काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_event_fields *field = call->class->fields_array;
+	स्थिर अक्षर *array_descriptor;
+	स्थिर अक्षर *p = fmt;
+	पूर्णांक len;
 
-	if (!(len = str_has_prefix(fmt, "REC->")))
-		return false;
+	अगर (!(len = str_has_prefix(fmt, "REC->")))
+		वापस false;
 	fmt += len;
-	for (p = fmt; *p; p++) {
-		if (!isalnum(*p) && *p != '_')
-			break;
-	}
+	क्रम (p = fmt; *p; p++) अणु
+		अगर (!है_अक्षर_अंक(*p) && *p != '_')
+			अवरोध;
+	पूर्ण
 	len = p - fmt;
 
-	for (; field->type; field++) {
-		if (strncmp(field->name, fmt, len) ||
+	क्रम (; field->type; field++) अणु
+		अगर (म_भेदन(field->name, fmt, len) ||
 		    field->name[len])
-			continue;
-		array_descriptor = strchr(field->type, '[');
+			जारी;
+		array_descriptor = म_अक्षर(field->type, '[');
 		/* This is an array and is OK to dereference. */
-		return array_descriptor != NULL;
-	}
-	return false;
-}
+		वापस array_descriptor != शून्य;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
- * Examine the print fmt of the event looking for unsafe dereference
- * pointers using %p* that could be recorded in the trace event and
- * much later referenced after the pointer was freed. Dereferencing
- * pointers are OK, if it is dereferenced into the event itself.
+ * Examine the prपूर्णांक fmt of the event looking क्रम unsafe dereference
+ * poपूर्णांकers using %p* that could be recorded in the trace event and
+ * much later referenced after the poपूर्णांकer was मुक्तd. Dereferencing
+ * poपूर्णांकers are OK, अगर it is dereferenced पूर्णांकo the event itself.
  */
-static void test_event_printk(struct trace_event_call *call)
-{
+अटल व्योम test_event_prपूर्णांकk(काष्ठा trace_event_call *call)
+अणु
 	u64 dereference_flags = 0;
 	bool first = true;
-	const char *fmt, *c, *r, *a;
-	int parens = 0;
-	char in_quote = 0;
-	int start_arg = 0;
-	int arg = 0;
-	int i;
+	स्थिर अक्षर *fmt, *c, *r, *a;
+	पूर्णांक parens = 0;
+	अक्षर in_quote = 0;
+	पूर्णांक start_arg = 0;
+	पूर्णांक arg = 0;
+	पूर्णांक i;
 
-	fmt = call->print_fmt;
+	fmt = call->prपूर्णांक_fmt;
 
-	if (!fmt)
-		return;
+	अगर (!fmt)
+		वापस;
 
-	for (i = 0; fmt[i]; i++) {
-		switch (fmt[i]) {
-		case '\\':
+	क्रम (i = 0; fmt[i]; i++) अणु
+		चयन (fmt[i]) अणु
+		हाल '\\':
 			i++;
-			if (!fmt[i])
-				return;
-			continue;
-		case '"':
-		case '\'':
+			अगर (!fmt[i])
+				वापस;
+			जारी;
+		हाल '"':
+		हाल '\'':
 			/*
-			 * The print fmt starts with a string that
+			 * The prपूर्णांक fmt starts with a string that
 			 * is processed first to find %p* usage,
-			 * then after the first string, the print fmt
+			 * then after the first string, the prपूर्णांक fmt
 			 * contains arguments that are used to check
-			 * if the dereferenced %p* usage is safe.
+			 * अगर the dereferenced %p* usage is safe.
 			 */
-			if (first) {
-				if (fmt[i] == '\'')
-					continue;
-				if (in_quote) {
+			अगर (first) अणु
+				अगर (fmt[i] == '\'')
+					जारी;
+				अगर (in_quote) अणु
 					arg = 0;
 					first = false;
 					/*
 					 * If there was no %p* uses
 					 * the fmt is OK.
 					 */
-					if (!dereference_flags)
-						return;
-				}
-			}
-			if (in_quote) {
-				if (in_quote == fmt[i])
+					अगर (!dereference_flags)
+						वापस;
+				पूर्ण
+			पूर्ण
+			अगर (in_quote) अणु
+				अगर (in_quote == fmt[i])
 					in_quote = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				in_quote = fmt[i];
-			}
-			continue;
-		case '%':
-			if (!first || !in_quote)
-				continue;
+			पूर्ण
+			जारी;
+		हाल '%':
+			अगर (!first || !in_quote)
+				जारी;
 			i++;
-			if (!fmt[i])
-				return;
-			switch (fmt[i]) {
-			case '%':
-				continue;
-			case 'p':
+			अगर (!fmt[i])
+				वापस;
+			चयन (fmt[i]) अणु
+			हाल '%':
+				जारी;
+			हाल 'p':
 				/* Find dereferencing fields */
-				switch (fmt[i + 1]) {
-				case 'B': case 'R': case 'r':
-				case 'b': case 'M': case 'm':
-				case 'I': case 'i': case 'E':
-				case 'U': case 'V': case 'N':
-				case 'a': case 'd': case 'D':
-				case 'g': case 't': case 'C':
-				case 'O': case 'f':
-					if (WARN_ONCE(arg == 63,
+				चयन (fmt[i + 1]) अणु
+				हाल 'B': case 'R': case 'r':
+				हाल 'b': case 'M': case 'm':
+				हाल 'I': case 'i': case 'E':
+				हाल 'U': case 'V': case 'N':
+				हाल 'a': case 'd': case 'D':
+				हाल 'g': case 't': case 'C':
+				हाल 'O': case 'f':
+					अगर (WARN_ONCE(arg == 63,
 						      "Too many args for event: %s",
 						      trace_event_name(call)))
-						return;
+						वापस;
 					dereference_flags |= 1ULL << arg;
-				}
-				break;
-			default:
-			{
+				पूर्ण
+				अवरोध;
+			शेष:
+			अणु
 				bool star = false;
-				int j;
+				पूर्णांक j;
 
-				/* Increment arg if %*s exists. */
-				for (j = 0; fmt[i + j]; j++) {
-					if (isdigit(fmt[i + j]) ||
+				/* Increment arg अगर %*s exists. */
+				क्रम (j = 0; fmt[i + j]; j++) अणु
+					अगर (है_अंक(fmt[i + j]) ||
 					    fmt[i + j] == '.')
-						continue;
-					if (fmt[i + j] == '*') {
+						जारी;
+					अगर (fmt[i + j] == '*') अणु
 						star = true;
-						continue;
-					}
-					if ((fmt[i + j] == 's') && star)
+						जारी;
+					पूर्ण
+					अगर ((fmt[i + j] == 's') && star)
 						arg++;
-					break;
-				}
-				break;
-			} /* default */
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			पूर्ण /* शेष */
 
-			} /* switch */
+			पूर्ण /* चयन */
 			arg++;
-			continue;
-		case '(':
-			if (in_quote)
-				continue;
+			जारी;
+		हाल '(':
+			अगर (in_quote)
+				जारी;
 			parens++;
-			continue;
-		case ')':
-			if (in_quote)
-				continue;
+			जारी;
+		हाल ')':
+			अगर (in_quote)
+				जारी;
 			parens--;
-			if (WARN_ONCE(parens < 0,
+			अगर (WARN_ONCE(parens < 0,
 				      "Paren mismatch for event: %s\narg='%s'\n%*s",
 				      trace_event_name(call),
 				      fmt + start_arg,
 				      (i - start_arg) + 5, "^"))
-				return;
-			continue;
-		case ',':
-			if (in_quote || parens)
-				continue;
+				वापस;
+			जारी;
+		हाल ',':
+			अगर (in_quote || parens)
+				जारी;
 			i++;
-			while (isspace(fmt[i]))
+			जबतक (है_खाली(fmt[i]))
 				i++;
 			start_arg = i;
-			if (!(dereference_flags & (1ULL << arg)))
-				goto next_arg;
+			अगर (!(dereference_flags & (1ULL << arg)))
+				जाओ next_arg;
 
 			/* Find the REC-> in the argument */
-			c = strchr(fmt + i, ',');
-			r = strstr(fmt + i, "REC->");
-			if (r && (!c || r < c)) {
+			c = म_अक्षर(fmt + i, ',');
+			r = म_माला(fmt + i, "REC->");
+			अगर (r && (!c || r < c)) अणु
 				/*
 				 * Addresses of events on the buffer,
 				 * or an array on the buffer is
@@ -395,83 +396,83 @@ static void test_event_printk(struct trace_event_call *call)
 				 * this is to catch common mistakes,
 				 * not malicious code.
 				 */
-				a = strchr(fmt + i, '&');
-				if ((a && (a < r)) || test_field(r, call))
+				a = म_अक्षर(fmt + i, '&');
+				अगर ((a && (a < r)) || test_field(r, call))
 					dereference_flags &= ~(1ULL << arg);
-			}
+			पूर्ण
 		next_arg:
 			i--;
 			arg++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If you triggered the below warning, the trace event reported
-	 * uses an unsafe dereference pointer %p*. As the data stored
-	 * at the trace event time may no longer exist when the trace
-	 * event is printed, dereferencing to the original source is
-	 * unsafe. The source of the dereference must be copied into the
+	 * uses an unsafe dereference poपूर्णांकer %p*. As the data stored
+	 * at the trace event समय may no दीर्घer exist when the trace
+	 * event is prपूर्णांकed, dereferencing to the original source is
+	 * unsafe. The source of the dereference must be copied पूर्णांकo the
 	 * event itself, and the dereference must access the copy instead.
 	 */
-	if (WARN_ON_ONCE(dereference_flags)) {
+	अगर (WARN_ON_ONCE(dereference_flags)) अणु
 		arg = 1;
-		while (!(dereference_flags & 1)) {
+		जबतक (!(dereference_flags & 1)) अणु
 			dereference_flags >>= 1;
 			arg++;
-		}
+		पूर्ण
 		pr_warn("event %s has unsafe dereference of argument %d\n",
 			trace_event_name(call), arg);
 		pr_warn("print_fmt: %s\n", fmt);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int trace_event_raw_init(struct trace_event_call *call)
-{
-	int id;
+पूर्णांक trace_event_raw_init(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक id;
 
-	id = register_trace_event(&call->event);
-	if (!id)
-		return -ENODEV;
+	id = रेजिस्टर_trace_event(&call->event);
+	अगर (!id)
+		वापस -ENODEV;
 
-	test_event_printk(call);
+	test_event_prपूर्णांकk(call);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_event_raw_init);
 
-bool trace_event_ignore_this_pid(struct trace_event_file *trace_file)
-{
-	struct trace_array *tr = trace_file->tr;
-	struct trace_array_cpu *data;
-	struct trace_pid_list *no_pid_list;
-	struct trace_pid_list *pid_list;
+bool trace_event_ignore_this_pid(काष्ठा trace_event_file *trace_file)
+अणु
+	काष्ठा trace_array *tr = trace_file->tr;
+	काष्ठा trace_array_cpu *data;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_pid_list *pid_list;
 
 	pid_list = rcu_dereference_raw(tr->filtered_pids);
 	no_pid_list = rcu_dereference_raw(tr->filtered_no_pids);
 
-	if (!pid_list && !no_pid_list)
-		return false;
+	अगर (!pid_list && !no_pid_list)
+		वापस false;
 
 	data = this_cpu_ptr(tr->array_buffer.data);
 
-	return data->ignore_pid;
-}
+	वापस data->ignore_pid;
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_event_ignore_this_pid);
 
-void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
-				 struct trace_event_file *trace_file,
-				 unsigned long len)
-{
-	struct trace_event_call *event_call = trace_file->event_call;
+व्योम *trace_event_buffer_reserve(काष्ठा trace_event_buffer *fbuffer,
+				 काष्ठा trace_event_file *trace_file,
+				 अचिन्हित दीर्घ len)
+अणु
+	काष्ठा trace_event_call *event_call = trace_file->event_call;
 
-	if ((trace_file->flags & EVENT_FILE_FL_PID_FILTER) &&
+	अगर ((trace_file->flags & EVENT_खाता_FL_PID_FILTER) &&
 	    trace_event_ignore_this_pid(trace_file))
-		return NULL;
+		वापस शून्य;
 
 	/*
-	 * If CONFIG_PREEMPTION is enabled, then the tracepoint itself disables
+	 * If CONFIG_PREEMPTION is enabled, then the tracepoपूर्णांक itself disables
 	 * preemption (adding one to the preempt_count). Since we are
-	 * interested in the preempt_count at the time the tracepoint was
+	 * पूर्णांकerested in the preempt_count at the समय the tracepoपूर्णांक was
 	 * hit, we need to subtract one to offset the increment.
 	 */
 	fbuffer->trace_ctx = tracing_gen_ctx_dec();
@@ -481,1076 +482,1076 @@ void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
 		trace_event_buffer_lock_reserve(&fbuffer->buffer, trace_file,
 						event_call->event.type, len,
 						fbuffer->trace_ctx);
-	if (!fbuffer->event)
-		return NULL;
+	अगर (!fbuffer->event)
+		वापस शून्य;
 
-	fbuffer->regs = NULL;
+	fbuffer->regs = शून्य;
 	fbuffer->entry = ring_buffer_event_data(fbuffer->event);
-	return fbuffer->entry;
-}
+	वापस fbuffer->entry;
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_event_buffer_reserve);
 
-int trace_event_reg(struct trace_event_call *call,
-		    enum trace_reg type, void *data)
-{
-	struct trace_event_file *file = data;
+पूर्णांक trace_event_reg(काष्ठा trace_event_call *call,
+		    क्रमागत trace_reg type, व्योम *data)
+अणु
+	काष्ठा trace_event_file *file = data;
 
 	WARN_ON(!(call->flags & TRACE_EVENT_FL_TRACEPOINT));
-	switch (type) {
-	case TRACE_REG_REGISTER:
-		return tracepoint_probe_register(call->tp,
+	चयन (type) अणु
+	हाल TRACE_REG_REGISTER:
+		वापस tracepoपूर्णांक_probe_रेजिस्टर(call->tp,
 						 call->class->probe,
 						 file);
-	case TRACE_REG_UNREGISTER:
-		tracepoint_probe_unregister(call->tp,
+	हाल TRACE_REG_UNREGISTER:
+		tracepoपूर्णांक_probe_unरेजिस्टर(call->tp,
 					    call->class->probe,
 					    file);
-		return 0;
+		वापस 0;
 
-#ifdef CONFIG_PERF_EVENTS
-	case TRACE_REG_PERF_REGISTER:
-		return tracepoint_probe_register(call->tp,
+#अगर_घोषित CONFIG_PERF_EVENTS
+	हाल TRACE_REG_PERF_REGISTER:
+		वापस tracepoपूर्णांक_probe_रेजिस्टर(call->tp,
 						 call->class->perf_probe,
 						 call);
-	case TRACE_REG_PERF_UNREGISTER:
-		tracepoint_probe_unregister(call->tp,
+	हाल TRACE_REG_PERF_UNREGISTER:
+		tracepoपूर्णांक_probe_unरेजिस्टर(call->tp,
 					    call->class->perf_probe,
 					    call);
-		return 0;
-	case TRACE_REG_PERF_OPEN:
-	case TRACE_REG_PERF_CLOSE:
-	case TRACE_REG_PERF_ADD:
-	case TRACE_REG_PERF_DEL:
-		return 0;
-#endif
-	}
-	return 0;
-}
+		वापस 0;
+	हाल TRACE_REG_PERF_OPEN:
+	हाल TRACE_REG_PERF_CLOSE:
+	हाल TRACE_REG_PERF_ADD:
+	हाल TRACE_REG_PERF_DEL:
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_event_reg);
 
-void trace_event_enable_cmd_record(bool enable)
-{
-	struct trace_event_file *file;
-	struct trace_array *tr;
+व्योम trace_event_enable_cmd_record(bool enable)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	do_for_each_event_file(tr, file) {
+	करो_क्रम_each_event_file(tr, file) अणु
 
-		if (!(file->flags & EVENT_FILE_FL_ENABLED))
-			continue;
+		अगर (!(file->flags & EVENT_खाता_FL_ENABLED))
+			जारी;
 
-		if (enable) {
+		अगर (enable) अणु
 			tracing_start_cmdline_record();
-			set_bit(EVENT_FILE_FL_RECORDED_CMD_BIT, &file->flags);
-		} else {
+			set_bit(EVENT_खाता_FL_RECORDED_CMD_BIT, &file->flags);
+		पूर्ण अन्यथा अणु
 			tracing_stop_cmdline_record();
-			clear_bit(EVENT_FILE_FL_RECORDED_CMD_BIT, &file->flags);
-		}
-	} while_for_each_event_file();
-}
+			clear_bit(EVENT_खाता_FL_RECORDED_CMD_BIT, &file->flags);
+		पूर्ण
+	पूर्ण जबतक_क्रम_each_event_file();
+पूर्ण
 
-void trace_event_enable_tgid_record(bool enable)
-{
-	struct trace_event_file *file;
-	struct trace_array *tr;
+व्योम trace_event_enable_tgid_record(bool enable)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
-	do_for_each_event_file(tr, file) {
-		if (!(file->flags & EVENT_FILE_FL_ENABLED))
-			continue;
+	करो_क्रम_each_event_file(tr, file) अणु
+		अगर (!(file->flags & EVENT_खाता_FL_ENABLED))
+			जारी;
 
-		if (enable) {
+		अगर (enable) अणु
 			tracing_start_tgid_record();
-			set_bit(EVENT_FILE_FL_RECORDED_TGID_BIT, &file->flags);
-		} else {
+			set_bit(EVENT_खाता_FL_RECORDED_TGID_BIT, &file->flags);
+		पूर्ण अन्यथा अणु
 			tracing_stop_tgid_record();
-			clear_bit(EVENT_FILE_FL_RECORDED_TGID_BIT,
+			clear_bit(EVENT_खाता_FL_RECORDED_TGID_BIT,
 				  &file->flags);
-		}
-	} while_for_each_event_file();
-}
+		पूर्ण
+	पूर्ण जबतक_क्रम_each_event_file();
+पूर्ण
 
-static int __ftrace_event_enable_disable(struct trace_event_file *file,
-					 int enable, int soft_disable)
-{
-	struct trace_event_call *call = file->event_call;
-	struct trace_array *tr = file->tr;
-	unsigned long file_flags = file->flags;
-	int ret = 0;
-	int disable;
+अटल पूर्णांक __ftrace_event_enable_disable(काष्ठा trace_event_file *file,
+					 पूर्णांक enable, पूर्णांक soft_disable)
+अणु
+	काष्ठा trace_event_call *call = file->event_call;
+	काष्ठा trace_array *tr = file->tr;
+	अचिन्हित दीर्घ file_flags = file->flags;
+	पूर्णांक ret = 0;
+	पूर्णांक disable;
 
-	switch (enable) {
-	case 0:
+	चयन (enable) अणु
+	हाल 0:
 		/*
 		 * When soft_disable is set and enable is cleared, the sm_ref
 		 * reference counter is decremented. If it reaches 0, we want
 		 * to clear the SOFT_DISABLED flag but leave the event in the
-		 * state that it was. That is, if the event was enabled and
-		 * SOFT_DISABLED isn't set, then do nothing. But if SOFT_DISABLED
-		 * is set we do not want the event to be enabled before we
+		 * state that it was. That is, अगर the event was enabled and
+		 * SOFT_DISABLED isn't set, then करो nothing. But अगर SOFT_DISABLED
+		 * is set we करो not want the event to be enabled beक्रमe we
 		 * clear the bit.
 		 *
 		 * When soft_disable is not set but the SOFT_MODE flag is,
-		 * we do nothing. Do not disable the tracepoint, otherwise
+		 * we करो nothing. Do not disable the tracepoपूर्णांक, otherwise
 		 * "soft enable"s (clearing the SOFT_DISABLED bit) wont work.
 		 */
-		if (soft_disable) {
-			if (atomic_dec_return(&file->sm_ref) > 0)
-				break;
-			disable = file->flags & EVENT_FILE_FL_SOFT_DISABLED;
-			clear_bit(EVENT_FILE_FL_SOFT_MODE_BIT, &file->flags);
-		} else
-			disable = !(file->flags & EVENT_FILE_FL_SOFT_MODE);
+		अगर (soft_disable) अणु
+			अगर (atomic_dec_वापस(&file->sm_ref) > 0)
+				अवरोध;
+			disable = file->flags & EVENT_खाता_FL_SOFT_DISABLED;
+			clear_bit(EVENT_खाता_FL_SOFT_MODE_BIT, &file->flags);
+		पूर्ण अन्यथा
+			disable = !(file->flags & EVENT_खाता_FL_SOFT_MODE);
 
-		if (disable && (file->flags & EVENT_FILE_FL_ENABLED)) {
-			clear_bit(EVENT_FILE_FL_ENABLED_BIT, &file->flags);
-			if (file->flags & EVENT_FILE_FL_RECORDED_CMD) {
+		अगर (disable && (file->flags & EVENT_खाता_FL_ENABLED)) अणु
+			clear_bit(EVENT_खाता_FL_ENABLED_BIT, &file->flags);
+			अगर (file->flags & EVENT_खाता_FL_RECORDED_CMD) अणु
 				tracing_stop_cmdline_record();
-				clear_bit(EVENT_FILE_FL_RECORDED_CMD_BIT, &file->flags);
-			}
+				clear_bit(EVENT_खाता_FL_RECORDED_CMD_BIT, &file->flags);
+			पूर्ण
 
-			if (file->flags & EVENT_FILE_FL_RECORDED_TGID) {
+			अगर (file->flags & EVENT_खाता_FL_RECORDED_TGID) अणु
 				tracing_stop_tgid_record();
-				clear_bit(EVENT_FILE_FL_RECORDED_TGID_BIT, &file->flags);
-			}
+				clear_bit(EVENT_खाता_FL_RECORDED_TGID_BIT, &file->flags);
+			पूर्ण
 
 			call->class->reg(call, TRACE_REG_UNREGISTER, file);
-		}
-		/* If in SOFT_MODE, just set the SOFT_DISABLE_BIT, else clear it */
-		if (file->flags & EVENT_FILE_FL_SOFT_MODE)
-			set_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags);
-		else
-			clear_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags);
-		break;
-	case 1:
+		पूर्ण
+		/* If in SOFT_MODE, just set the SOFT_DISABLE_BIT, अन्यथा clear it */
+		अगर (file->flags & EVENT_खाता_FL_SOFT_MODE)
+			set_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &file->flags);
+		अन्यथा
+			clear_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &file->flags);
+		अवरोध;
+	हाल 1:
 		/*
 		 * When soft_disable is set and enable is set, we want to
-		 * register the tracepoint for the event, but leave the event
-		 * as is. That means, if the event was already enabled, we do
+		 * रेजिस्टर the tracepoपूर्णांक क्रम the event, but leave the event
+		 * as is. That means, अगर the event was alपढ़ोy enabled, we करो
 		 * nothing (but set SOFT_MODE). If the event is disabled, we
-		 * set SOFT_DISABLED before enabling the event tracepoint, so
+		 * set SOFT_DISABLED beक्रमe enabling the event tracepoपूर्णांक, so
 		 * it still seems to be disabled.
 		 */
-		if (!soft_disable)
-			clear_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags);
-		else {
-			if (atomic_inc_return(&file->sm_ref) > 1)
-				break;
-			set_bit(EVENT_FILE_FL_SOFT_MODE_BIT, &file->flags);
-		}
+		अगर (!soft_disable)
+			clear_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &file->flags);
+		अन्यथा अणु
+			अगर (atomic_inc_वापस(&file->sm_ref) > 1)
+				अवरोध;
+			set_bit(EVENT_खाता_FL_SOFT_MODE_BIT, &file->flags);
+		पूर्ण
 
-		if (!(file->flags & EVENT_FILE_FL_ENABLED)) {
+		अगर (!(file->flags & EVENT_खाता_FL_ENABLED)) अणु
 			bool cmd = false, tgid = false;
 
 			/* Keep the event disabled, when going to SOFT_MODE. */
-			if (soft_disable)
-				set_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &file->flags);
+			अगर (soft_disable)
+				set_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &file->flags);
 
-			if (tr->trace_flags & TRACE_ITER_RECORD_CMD) {
+			अगर (tr->trace_flags & TRACE_ITER_RECORD_CMD) अणु
 				cmd = true;
 				tracing_start_cmdline_record();
-				set_bit(EVENT_FILE_FL_RECORDED_CMD_BIT, &file->flags);
-			}
+				set_bit(EVENT_खाता_FL_RECORDED_CMD_BIT, &file->flags);
+			पूर्ण
 
-			if (tr->trace_flags & TRACE_ITER_RECORD_TGID) {
+			अगर (tr->trace_flags & TRACE_ITER_RECORD_TGID) अणु
 				tgid = true;
 				tracing_start_tgid_record();
-				set_bit(EVENT_FILE_FL_RECORDED_TGID_BIT, &file->flags);
-			}
+				set_bit(EVENT_खाता_FL_RECORDED_TGID_BIT, &file->flags);
+			पूर्ण
 
 			ret = call->class->reg(call, TRACE_REG_REGISTER, file);
-			if (ret) {
-				if (cmd)
+			अगर (ret) अणु
+				अगर (cmd)
 					tracing_stop_cmdline_record();
-				if (tgid)
+				अगर (tgid)
 					tracing_stop_tgid_record();
 				pr_info("event trace: Could not enable event "
 					"%s\n", trace_event_name(call));
-				break;
-			}
-			set_bit(EVENT_FILE_FL_ENABLED_BIT, &file->flags);
+				अवरोध;
+			पूर्ण
+			set_bit(EVENT_खाता_FL_ENABLED_BIT, &file->flags);
 
-			/* WAS_ENABLED gets set but never cleared. */
-			set_bit(EVENT_FILE_FL_WAS_ENABLED_BIT, &file->flags);
-		}
-		break;
-	}
+			/* WAS_ENABLED माला_लो set but never cleared. */
+			set_bit(EVENT_खाता_FL_WAS_ENABLED_BIT, &file->flags);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	/* Enable or disable use of trace_buffered_event */
-	if ((file_flags & EVENT_FILE_FL_SOFT_DISABLED) !=
-	    (file->flags & EVENT_FILE_FL_SOFT_DISABLED)) {
-		if (file->flags & EVENT_FILE_FL_SOFT_DISABLED)
+	अगर ((file_flags & EVENT_खाता_FL_SOFT_DISABLED) !=
+	    (file->flags & EVENT_खाता_FL_SOFT_DISABLED)) अणु
+		अगर (file->flags & EVENT_खाता_FL_SOFT_DISABLED)
 			trace_buffered_event_enable();
-		else
+		अन्यथा
 			trace_buffered_event_disable();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int trace_event_enable_disable(struct trace_event_file *file,
-			       int enable, int soft_disable)
-{
-	return __ftrace_event_enable_disable(file, enable, soft_disable);
-}
+पूर्णांक trace_event_enable_disable(काष्ठा trace_event_file *file,
+			       पूर्णांक enable, पूर्णांक soft_disable)
+अणु
+	वापस __ftrace_event_enable_disable(file, enable, soft_disable);
+पूर्ण
 
-static int ftrace_event_enable_disable(struct trace_event_file *file,
-				       int enable)
-{
-	return __ftrace_event_enable_disable(file, enable, 0);
-}
+अटल पूर्णांक ftrace_event_enable_disable(काष्ठा trace_event_file *file,
+				       पूर्णांक enable)
+अणु
+	वापस __ftrace_event_enable_disable(file, enable, 0);
+पूर्ण
 
-static void ftrace_clear_events(struct trace_array *tr)
-{
-	struct trace_event_file *file;
+अटल व्योम ftrace_clear_events(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
 	mutex_lock(&event_mutex);
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 		ftrace_event_enable_disable(file, 0);
-	}
+	पूर्ण
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static void
-event_filter_pid_sched_process_exit(void *data, struct task_struct *task)
-{
-	struct trace_pid_list *pid_list;
-	struct trace_array *tr = data;
+अटल व्योम
+event_filter_pid_sched_process_निकास(व्योम *data, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_array *tr = data;
 
 	pid_list = rcu_dereference_raw(tr->filtered_pids);
-	trace_filter_add_remove_task(pid_list, NULL, task);
+	trace_filter_add_हटाओ_task(pid_list, शून्य, task);
 
 	pid_list = rcu_dereference_raw(tr->filtered_no_pids);
-	trace_filter_add_remove_task(pid_list, NULL, task);
-}
+	trace_filter_add_हटाओ_task(pid_list, शून्य, task);
+पूर्ण
 
-static void
-event_filter_pid_sched_process_fork(void *data,
-				    struct task_struct *self,
-				    struct task_struct *task)
-{
-	struct trace_pid_list *pid_list;
-	struct trace_array *tr = data;
+अटल व्योम
+event_filter_pid_sched_process_विभाजन(व्योम *data,
+				    काष्ठा task_काष्ठा *self,
+				    काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_array *tr = data;
 
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
-	trace_filter_add_remove_task(pid_list, self, task);
+	trace_filter_add_हटाओ_task(pid_list, self, task);
 
 	pid_list = rcu_dereference_sched(tr->filtered_no_pids);
-	trace_filter_add_remove_task(pid_list, self, task);
-}
+	trace_filter_add_हटाओ_task(pid_list, self, task);
+पूर्ण
 
-void trace_event_follow_fork(struct trace_array *tr, bool enable)
-{
-	if (enable) {
-		register_trace_prio_sched_process_fork(event_filter_pid_sched_process_fork,
-						       tr, INT_MIN);
-		register_trace_prio_sched_process_free(event_filter_pid_sched_process_exit,
-						       tr, INT_MAX);
-	} else {
-		unregister_trace_sched_process_fork(event_filter_pid_sched_process_fork,
+व्योम trace_event_follow_विभाजन(काष्ठा trace_array *tr, bool enable)
+अणु
+	अगर (enable) अणु
+		रेजिस्टर_trace_prio_sched_process_विभाजन(event_filter_pid_sched_process_विभाजन,
+						       tr, पूर्णांक_न्यून);
+		रेजिस्टर_trace_prio_sched_process_मुक्त(event_filter_pid_sched_process_निकास,
+						       tr, पूर्णांक_उच्च);
+	पूर्ण अन्यथा अणु
+		unरेजिस्टर_trace_sched_process_विभाजन(event_filter_pid_sched_process_विभाजन,
 						    tr);
-		unregister_trace_sched_process_free(event_filter_pid_sched_process_exit,
+		unरेजिस्टर_trace_sched_process_मुक्त(event_filter_pid_sched_process_निकास,
 						    tr);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-event_filter_pid_sched_switch_probe_pre(void *data, bool preempt,
-		    struct task_struct *prev, struct task_struct *next)
-{
-	struct trace_array *tr = data;
-	struct trace_pid_list *no_pid_list;
-	struct trace_pid_list *pid_list;
+अटल व्योम
+event_filter_pid_sched_चयन_probe_pre(व्योम *data, bool preempt,
+		    काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_pid_list *pid_list;
 	bool ret;
 
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
 	no_pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
 	/*
-	 * Sched switch is funny, as we only want to ignore it
-	 * in the notrace case if both prev and next should be ignored.
+	 * Sched चयन is funny, as we only want to ignore it
+	 * in the notrace हाल अगर both prev and next should be ignored.
 	 */
-	ret = trace_ignore_this_task(NULL, no_pid_list, prev) &&
-		trace_ignore_this_task(NULL, no_pid_list, next);
+	ret = trace_ignore_this_task(शून्य, no_pid_list, prev) &&
+		trace_ignore_this_task(शून्य, no_pid_list, next);
 
-	this_cpu_write(tr->array_buffer.data->ignore_pid, ret ||
-		       (trace_ignore_this_task(pid_list, NULL, prev) &&
-			trace_ignore_this_task(pid_list, NULL, next)));
-}
+	this_cpu_ग_लिखो(tr->array_buffer.data->ignore_pid, ret ||
+		       (trace_ignore_this_task(pid_list, शून्य, prev) &&
+			trace_ignore_this_task(pid_list, शून्य, next)));
+पूर्ण
 
-static void
-event_filter_pid_sched_switch_probe_post(void *data, bool preempt,
-		    struct task_struct *prev, struct task_struct *next)
-{
-	struct trace_array *tr = data;
-	struct trace_pid_list *no_pid_list;
-	struct trace_pid_list *pid_list;
+अटल व्योम
+event_filter_pid_sched_चयन_probe_post(व्योम *data, bool preempt,
+		    काष्ठा task_काष्ठा *prev, काष्ठा task_काष्ठा *next)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_pid_list *pid_list;
 
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
 	no_pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
-	this_cpu_write(tr->array_buffer.data->ignore_pid,
+	this_cpu_ग_लिखो(tr->array_buffer.data->ignore_pid,
 		       trace_ignore_this_task(pid_list, no_pid_list, next));
-}
+पूर्ण
 
-static void
-event_filter_pid_sched_wakeup_probe_pre(void *data, struct task_struct *task)
-{
-	struct trace_array *tr = data;
-	struct trace_pid_list *no_pid_list;
-	struct trace_pid_list *pid_list;
+अटल व्योम
+event_filter_pid_sched_wakeup_probe_pre(व्योम *data, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_pid_list *pid_list;
 
-	/* Nothing to do if we are already tracing */
-	if (!this_cpu_read(tr->array_buffer.data->ignore_pid))
-		return;
+	/* Nothing to करो अगर we are alपढ़ोy tracing */
+	अगर (!this_cpu_पढ़ो(tr->array_buffer.data->ignore_pid))
+		वापस;
 
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
 	no_pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
-	this_cpu_write(tr->array_buffer.data->ignore_pid,
+	this_cpu_ग_लिखो(tr->array_buffer.data->ignore_pid,
 		       trace_ignore_this_task(pid_list, no_pid_list, task));
-}
+पूर्ण
 
-static void
-event_filter_pid_sched_wakeup_probe_post(void *data, struct task_struct *task)
-{
-	struct trace_array *tr = data;
-	struct trace_pid_list *no_pid_list;
-	struct trace_pid_list *pid_list;
+अटल व्योम
+event_filter_pid_sched_wakeup_probe_post(व्योम *data, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_pid_list *pid_list;
 
-	/* Nothing to do if we are not tracing */
-	if (this_cpu_read(tr->array_buffer.data->ignore_pid))
-		return;
+	/* Nothing to करो अगर we are not tracing */
+	अगर (this_cpu_पढ़ो(tr->array_buffer.data->ignore_pid))
+		वापस;
 
 	pid_list = rcu_dereference_sched(tr->filtered_pids);
 	no_pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
-	/* Set tracing if current is enabled */
-	this_cpu_write(tr->array_buffer.data->ignore_pid,
+	/* Set tracing अगर current is enabled */
+	this_cpu_ग_लिखो(tr->array_buffer.data->ignore_pid,
 		       trace_ignore_this_task(pid_list, no_pid_list, current));
-}
+पूर्ण
 
-static void unregister_pid_events(struct trace_array *tr)
-{
-	unregister_trace_sched_switch(event_filter_pid_sched_switch_probe_pre, tr);
-	unregister_trace_sched_switch(event_filter_pid_sched_switch_probe_post, tr);
+अटल व्योम unरेजिस्टर_pid_events(काष्ठा trace_array *tr)
+अणु
+	unरेजिस्टर_trace_sched_चयन(event_filter_pid_sched_चयन_probe_pre, tr);
+	unरेजिस्टर_trace_sched_चयन(event_filter_pid_sched_चयन_probe_post, tr);
 
-	unregister_trace_sched_wakeup(event_filter_pid_sched_wakeup_probe_pre, tr);
-	unregister_trace_sched_wakeup(event_filter_pid_sched_wakeup_probe_post, tr);
+	unरेजिस्टर_trace_sched_wakeup(event_filter_pid_sched_wakeup_probe_pre, tr);
+	unरेजिस्टर_trace_sched_wakeup(event_filter_pid_sched_wakeup_probe_post, tr);
 
-	unregister_trace_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_pre, tr);
-	unregister_trace_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_post, tr);
+	unरेजिस्टर_trace_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_pre, tr);
+	unरेजिस्टर_trace_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_post, tr);
 
-	unregister_trace_sched_waking(event_filter_pid_sched_wakeup_probe_pre, tr);
-	unregister_trace_sched_waking(event_filter_pid_sched_wakeup_probe_post, tr);
-}
+	unरेजिस्टर_trace_sched_waking(event_filter_pid_sched_wakeup_probe_pre, tr);
+	unरेजिस्टर_trace_sched_waking(event_filter_pid_sched_wakeup_probe_post, tr);
+पूर्ण
 
-static void __ftrace_clear_event_pids(struct trace_array *tr, int type)
-{
-	struct trace_pid_list *pid_list;
-	struct trace_pid_list *no_pid_list;
-	struct trace_event_file *file;
-	int cpu;
+अटल व्योम __ftrace_clear_event_pids(काष्ठा trace_array *tr, पूर्णांक type)
+अणु
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_pid_list *no_pid_list;
+	काष्ठा trace_event_file *file;
+	पूर्णांक cpu;
 
-	pid_list = rcu_dereference_protected(tr->filtered_pids,
+	pid_list = rcu_dereference_रक्षित(tr->filtered_pids,
 					     lockdep_is_held(&event_mutex));
-	no_pid_list = rcu_dereference_protected(tr->filtered_no_pids,
+	no_pid_list = rcu_dereference_रक्षित(tr->filtered_no_pids,
 					     lockdep_is_held(&event_mutex));
 
-	/* Make sure there's something to do */
-	if (!pid_type_enabled(type, pid_list, no_pid_list))
-		return;
+	/* Make sure there's something to करो */
+	अगर (!pid_type_enabled(type, pid_list, no_pid_list))
+		वापस;
 
-	if (!still_need_pid_events(type, pid_list, no_pid_list)) {
-		unregister_pid_events(tr);
+	अगर (!still_need_pid_events(type, pid_list, no_pid_list)) अणु
+		unरेजिस्टर_pid_events(tr);
 
-		list_for_each_entry(file, &tr->events, list) {
-			clear_bit(EVENT_FILE_FL_PID_FILTER_BIT, &file->flags);
-		}
+		list_क्रम_each_entry(file, &tr->events, list) अणु
+			clear_bit(EVENT_खाता_FL_PID_FILTER_BIT, &file->flags);
+		पूर्ण
 
-		for_each_possible_cpu(cpu)
+		क्रम_each_possible_cpu(cpu)
 			per_cpu_ptr(tr->array_buffer.data, cpu)->ignore_pid = false;
-	}
+	पूर्ण
 
-	if (type & TRACE_PIDS)
-		rcu_assign_pointer(tr->filtered_pids, NULL);
+	अगर (type & TRACE_PIDS)
+		rcu_assign_poपूर्णांकer(tr->filtered_pids, शून्य);
 
-	if (type & TRACE_NO_PIDS)
-		rcu_assign_pointer(tr->filtered_no_pids, NULL);
+	अगर (type & TRACE_NO_PIDS)
+		rcu_assign_poपूर्णांकer(tr->filtered_no_pids, शून्य);
 
-	/* Wait till all users are no longer using pid filtering */
-	tracepoint_synchronize_unregister();
+	/* Wait till all users are no दीर्घer using pid filtering */
+	tracepoपूर्णांक_synchronize_unरेजिस्टर();
 
-	if ((type & TRACE_PIDS) && pid_list)
-		trace_free_pid_list(pid_list);
+	अगर ((type & TRACE_PIDS) && pid_list)
+		trace_मुक्त_pid_list(pid_list);
 
-	if ((type & TRACE_NO_PIDS) && no_pid_list)
-		trace_free_pid_list(no_pid_list);
-}
+	अगर ((type & TRACE_NO_PIDS) && no_pid_list)
+		trace_मुक्त_pid_list(no_pid_list);
+पूर्ण
 
-static void ftrace_clear_event_pids(struct trace_array *tr, int type)
-{
+अटल व्योम ftrace_clear_event_pids(काष्ठा trace_array *tr, पूर्णांक type)
+अणु
 	mutex_lock(&event_mutex);
 	__ftrace_clear_event_pids(tr, type);
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static void __put_system(struct event_subsystem *system)
-{
-	struct event_filter *filter = system->filter;
+अटल व्योम __put_प्रणाली(काष्ठा event_subप्रणाली *प्रणाली)
+अणु
+	काष्ठा event_filter *filter = प्रणाली->filter;
 
-	WARN_ON_ONCE(system_refcount(system) == 0);
-	if (system_refcount_dec(system))
-		return;
+	WARN_ON_ONCE(प्रणाली_refcount(प्रणाली) == 0);
+	अगर (प्रणाली_refcount_dec(प्रणाली))
+		वापस;
 
-	list_del(&system->list);
+	list_del(&प्रणाली->list);
 
-	if (filter) {
-		kfree(filter->filter_string);
-		kfree(filter);
-	}
-	kfree_const(system->name);
-	kfree(system);
-}
+	अगर (filter) अणु
+		kमुक्त(filter->filter_string);
+		kमुक्त(filter);
+	पूर्ण
+	kमुक्त_स्थिर(प्रणाली->name);
+	kमुक्त(प्रणाली);
+पूर्ण
 
-static void __get_system(struct event_subsystem *system)
-{
-	WARN_ON_ONCE(system_refcount(system) == 0);
-	system_refcount_inc(system);
-}
+अटल व्योम __get_प्रणाली(काष्ठा event_subप्रणाली *प्रणाली)
+अणु
+	WARN_ON_ONCE(प्रणाली_refcount(प्रणाली) == 0);
+	प्रणाली_refcount_inc(प्रणाली);
+पूर्ण
 
-static void __get_system_dir(struct trace_subsystem_dir *dir)
-{
+अटल व्योम __get_प्रणाली_dir(काष्ठा trace_subप्रणाली_dir *dir)
+अणु
 	WARN_ON_ONCE(dir->ref_count == 0);
 	dir->ref_count++;
-	__get_system(dir->subsystem);
-}
+	__get_प्रणाली(dir->subप्रणाली);
+पूर्ण
 
-static void __put_system_dir(struct trace_subsystem_dir *dir)
-{
+अटल व्योम __put_प्रणाली_dir(काष्ठा trace_subप्रणाली_dir *dir)
+अणु
 	WARN_ON_ONCE(dir->ref_count == 0);
-	/* If the subsystem is about to be freed, the dir must be too */
-	WARN_ON_ONCE(system_refcount(dir->subsystem) == 1 && dir->ref_count != 1);
+	/* If the subप्रणाली is about to be मुक्तd, the dir must be too */
+	WARN_ON_ONCE(प्रणाली_refcount(dir->subप्रणाली) == 1 && dir->ref_count != 1);
 
-	__put_system(dir->subsystem);
-	if (!--dir->ref_count)
-		kfree(dir);
-}
+	__put_प्रणाली(dir->subप्रणाली);
+	अगर (!--dir->ref_count)
+		kमुक्त(dir);
+पूर्ण
 
-static void put_system(struct trace_subsystem_dir *dir)
-{
+अटल व्योम put_प्रणाली(काष्ठा trace_subप्रणाली_dir *dir)
+अणु
 	mutex_lock(&event_mutex);
-	__put_system_dir(dir);
+	__put_प्रणाली_dir(dir);
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static void remove_subsystem(struct trace_subsystem_dir *dir)
-{
-	if (!dir)
-		return;
+अटल व्योम हटाओ_subप्रणाली(काष्ठा trace_subप्रणाली_dir *dir)
+अणु
+	अगर (!dir)
+		वापस;
 
-	if (!--dir->nr_events) {
-		tracefs_remove(dir->entry);
+	अगर (!--dir->nr_events) अणु
+		tracefs_हटाओ(dir->entry);
 		list_del(&dir->list);
-		__put_system_dir(dir);
-	}
-}
+		__put_प्रणाली_dir(dir);
+	पूर्ण
+पूर्ण
 
-static void remove_event_file_dir(struct trace_event_file *file)
-{
-	struct dentry *dir = file->dir;
-	struct dentry *child;
+अटल व्योम हटाओ_event_file_dir(काष्ठा trace_event_file *file)
+अणु
+	काष्ठा dentry *dir = file->dir;
+	काष्ठा dentry *child;
 
-	if (dir) {
+	अगर (dir) अणु
 		spin_lock(&dir->d_lock);	/* probably unneeded */
-		list_for_each_entry(child, &dir->d_subdirs, d_child) {
-			if (d_really_is_positive(child))	/* probably unneeded */
-				d_inode(child)->i_private = NULL;
-		}
+		list_क्रम_each_entry(child, &dir->d_subdirs, d_child) अणु
+			अगर (d_really_is_positive(child))	/* probably unneeded */
+				d_inode(child)->i_निजी = शून्य;
+		पूर्ण
 		spin_unlock(&dir->d_lock);
 
-		tracefs_remove(dir);
-	}
+		tracefs_हटाओ(dir);
+	पूर्ण
 
 	list_del(&file->list);
-	remove_subsystem(file->system);
-	free_event_filter(file->filter);
-	kmem_cache_free(file_cachep, file);
-}
+	हटाओ_subप्रणाली(file->प्रणाली);
+	मुक्त_event_filter(file->filter);
+	kmem_cache_मुक्त(file_cachep, file);
+पूर्ण
 
 /*
- * __ftrace_set_clr_event(NULL, NULL, NULL, set) will set/unset all events.
+ * __ftrace_set_clr_event(शून्य, शून्य, शून्य, set) will set/unset all events.
  */
-static int
-__ftrace_set_clr_event_nolock(struct trace_array *tr, const char *match,
-			      const char *sub, const char *event, int set)
-{
-	struct trace_event_file *file;
-	struct trace_event_call *call;
-	const char *name;
-	int ret = -EINVAL;
-	int eret = 0;
+अटल पूर्णांक
+__ftrace_set_clr_event_nolock(काष्ठा trace_array *tr, स्थिर अक्षर *match,
+			      स्थिर अक्षर *sub, स्थिर अक्षर *event, पूर्णांक set)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_event_call *call;
+	स्थिर अक्षर *name;
+	पूर्णांक ret = -EINVAL;
+	पूर्णांक eret = 0;
 
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 
 		call = file->event_call;
 		name = trace_event_name(call);
 
-		if (!name || !call->class || !call->class->reg)
-			continue;
+		अगर (!name || !call->class || !call->class->reg)
+			जारी;
 
-		if (call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
-			continue;
+		अगर (call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
+			जारी;
 
-		if (match &&
-		    strcmp(match, name) != 0 &&
-		    strcmp(match, call->class->system) != 0)
-			continue;
+		अगर (match &&
+		    म_भेद(match, name) != 0 &&
+		    म_भेद(match, call->class->प्रणाली) != 0)
+			जारी;
 
-		if (sub && strcmp(sub, call->class->system) != 0)
-			continue;
+		अगर (sub && म_भेद(sub, call->class->प्रणाली) != 0)
+			जारी;
 
-		if (event && strcmp(event, name) != 0)
-			continue;
+		अगर (event && म_भेद(event, name) != 0)
+			जारी;
 
 		ret = ftrace_event_enable_disable(file, set);
 
 		/*
-		 * Save the first error and return that. Some events
+		 * Save the first error and वापस that. Some events
 		 * may still have been enabled, but let the user
 		 * know that something went wrong.
 		 */
-		if (ret && !eret)
+		अगर (ret && !eret)
 			eret = ret;
 
 		ret = eret;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __ftrace_set_clr_event(struct trace_array *tr, const char *match,
-				  const char *sub, const char *event, int set)
-{
-	int ret;
+अटल पूर्णांक __ftrace_set_clr_event(काष्ठा trace_array *tr, स्थिर अक्षर *match,
+				  स्थिर अक्षर *sub, स्थिर अक्षर *event, पूर्णांक set)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&event_mutex);
 	ret = __ftrace_set_clr_event_nolock(tr, match, sub, event, set);
 	mutex_unlock(&event_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ftrace_set_clr_event(struct trace_array *tr, char *buf, int set)
-{
-	char *event = NULL, *sub = NULL, *match;
-	int ret;
+पूर्णांक ftrace_set_clr_event(काष्ठा trace_array *tr, अक्षर *buf, पूर्णांक set)
+अणु
+	अक्षर *event = शून्य, *sub = शून्य, *match;
+	पूर्णांक ret;
 
-	if (!tr)
-		return -ENOENT;
+	अगर (!tr)
+		वापस -ENOENT;
 	/*
-	 * The buf format can be <subsystem>:<event-name>
+	 * The buf क्रमmat can be <subप्रणाली>:<event-name>
 	 *  *:<event-name> means any event by that name.
 	 *  :<event-name> is the same.
 	 *
-	 *  <subsystem>:* means all events in that subsystem
-	 *  <subsystem>: means the same.
+	 *  <subप्रणाली>:* means all events in that subप्रणाली
+	 *  <subप्रणाली>: means the same.
 	 *
-	 *  <name> (no ':') means all events in a subsystem with
+	 *  <name> (no ':') means all events in a subप्रणाली with
 	 *  the name <name> or any event that matches <name>
 	 */
 
 	match = strsep(&buf, ":");
-	if (buf) {
+	अगर (buf) अणु
 		sub = match;
 		event = buf;
-		match = NULL;
+		match = शून्य;
 
-		if (!strlen(sub) || strcmp(sub, "*") == 0)
-			sub = NULL;
-		if (!strlen(event) || strcmp(event, "*") == 0)
-			event = NULL;
-	}
+		अगर (!म_माप(sub) || म_भेद(sub, "*") == 0)
+			sub = शून्य;
+		अगर (!म_माप(event) || म_भेद(event, "*") == 0)
+			event = शून्य;
+	पूर्ण
 
 	ret = __ftrace_set_clr_event(tr, match, sub, event, set);
 
 	/* Put back the colon to allow this to be called again */
-	if (buf)
+	अगर (buf)
 		*(buf - 1) = ':';
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * trace_set_clr_event - enable or disable an event
- * @system: system name to match (NULL for any system)
- * @event: event name to match (NULL for all events, within system)
+ * @प्रणाली: प्रणाली name to match (शून्य क्रम any प्रणाली)
+ * @event: event name to match (शून्य क्रम all events, within प्रणाली)
  * @set: 1 to enable, 0 to disable
  *
- * This is a way for other parts of the kernel to enable or disable
+ * This is a way क्रम other parts of the kernel to enable or disable
  * event recording.
  *
- * Returns 0 on success, -EINVAL if the parameters do not match any
- * registered events.
+ * Returns 0 on success, -EINVAL अगर the parameters करो not match any
+ * रेजिस्टरed events.
  */
-int trace_set_clr_event(const char *system, const char *event, int set)
-{
-	struct trace_array *tr = top_trace_array();
+पूर्णांक trace_set_clr_event(स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event, पूर्णांक set)
+अणु
+	काष्ठा trace_array *tr = top_trace_array();
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
-	return __ftrace_set_clr_event(tr, NULL, system, event, set);
-}
+	वापस __ftrace_set_clr_event(tr, शून्य, प्रणाली, event, set);
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_set_clr_event);
 
 /**
- * trace_array_set_clr_event - enable or disable an event for a trace array.
+ * trace_array_set_clr_event - enable or disable an event क्रम a trace array.
  * @tr: concerned trace array.
- * @system: system name to match (NULL for any system)
- * @event: event name to match (NULL for all events, within system)
+ * @प्रणाली: प्रणाली name to match (शून्य क्रम any प्रणाली)
+ * @event: event name to match (शून्य क्रम all events, within प्रणाली)
  * @enable: true to enable, false to disable
  *
- * This is a way for other parts of the kernel to enable or disable
+ * This is a way क्रम other parts of the kernel to enable or disable
  * event recording.
  *
- * Returns 0 on success, -EINVAL if the parameters do not match any
- * registered events.
+ * Returns 0 on success, -EINVAL अगर the parameters करो not match any
+ * रेजिस्टरed events.
  */
-int trace_array_set_clr_event(struct trace_array *tr, const char *system,
-		const char *event, bool enable)
-{
-	int set;
+पूर्णांक trace_array_set_clr_event(काष्ठा trace_array *tr, स्थिर अक्षर *प्रणाली,
+		स्थिर अक्षर *event, bool enable)
+अणु
+	पूर्णांक set;
 
-	if (!tr)
-		return -ENOENT;
+	अगर (!tr)
+		वापस -ENOENT;
 
 	set = (enable == true) ? 1 : 0;
-	return __ftrace_set_clr_event(tr, NULL, system, event, set);
-}
+	वापस __ftrace_set_clr_event(tr, शून्य, प्रणाली, event, set);
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_array_set_clr_event);
 
 /* 128 should be much more than enough */
-#define EVENT_BUF_SIZE		127
+#घोषणा EVENT_BUF_SIZE		127
 
-static ssize_t
-ftrace_event_write(struct file *file, const char __user *ubuf,
-		   size_t cnt, loff_t *ppos)
-{
-	struct trace_parser parser;
-	struct seq_file *m = file->private_data;
-	struct trace_array *tr = m->private;
-	ssize_t read, ret;
+अटल sमाप_प्रकार
+ftrace_event_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+		   माप_प्रकार cnt, loff_t *ppos)
+अणु
+	काष्ठा trace_parser parser;
+	काष्ठा seq_file *m = file->निजी_data;
+	काष्ठा trace_array *tr = m->निजी;
+	sमाप_प्रकार पढ़ो, ret;
 
-	if (!cnt)
-		return 0;
+	अगर (!cnt)
+		वापस 0;
 
 	ret = tracing_update_buffers();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (trace_parser_get_init(&parser, EVENT_BUF_SIZE + 1))
-		return -ENOMEM;
+	अगर (trace_parser_get_init(&parser, EVENT_BUF_SIZE + 1))
+		वापस -ENOMEM;
 
-	read = trace_get_user(&parser, ubuf, cnt, ppos);
+	पढ़ो = trace_get_user(&parser, ubuf, cnt, ppos);
 
-	if (read >= 0 && trace_parser_loaded((&parser))) {
-		int set = 1;
+	अगर (पढ़ो >= 0 && trace_parser_loaded((&parser))) अणु
+		पूर्णांक set = 1;
 
-		if (*parser.buffer == '!')
+		अगर (*parser.buffer == '!')
 			set = 0;
 
 		ret = ftrace_set_clr_event(tr, parser.buffer + !set, set);
-		if (ret)
-			goto out_put;
-	}
+		अगर (ret)
+			जाओ out_put;
+	पूर्ण
 
-	ret = read;
+	ret = पढ़ो;
 
  out_put:
 	trace_parser_put(&parser);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void *
-t_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct trace_event_file *file = v;
-	struct trace_event_call *call;
-	struct trace_array *tr = m->private;
+अटल व्योम *
+t_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *file = v;
+	काष्ठा trace_event_call *call;
+	काष्ठा trace_array *tr = m->निजी;
 
 	(*pos)++;
 
-	list_for_each_entry_continue(file, &tr->events, list) {
+	list_क्रम_each_entry_जारी(file, &tr->events, list) अणु
 		call = file->event_call;
 		/*
-		 * The ftrace subsystem is for showing formats only.
+		 * The ftrace subप्रणाली is क्रम showing क्रमmats only.
 		 * They can not be enabled or disabled via the event files.
 		 */
-		if (call->class && call->class->reg &&
+		अगर (call->class && call->class->reg &&
 		    !(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
-			return file;
-	}
+			वापस file;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *t_start(struct seq_file *m, loff_t *pos)
-{
-	struct trace_event_file *file;
-	struct trace_array *tr = m->private;
+अटल व्योम *t_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr = m->निजी;
 	loff_t l;
 
 	mutex_lock(&event_mutex);
 
-	file = list_entry(&tr->events, struct trace_event_file, list);
-	for (l = 0; l <= *pos; ) {
+	file = list_entry(&tr->events, काष्ठा trace_event_file, list);
+	क्रम (l = 0; l <= *pos; ) अणु
 		file = t_next(m, file, &l);
-		if (!file)
-			break;
-	}
-	return file;
-}
+		अगर (!file)
+			अवरोध;
+	पूर्ण
+	वापस file;
+पूर्ण
 
-static void *
-s_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct trace_event_file *file = v;
-	struct trace_array *tr = m->private;
+अटल व्योम *
+s_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *file = v;
+	काष्ठा trace_array *tr = m->निजी;
 
 	(*pos)++;
 
-	list_for_each_entry_continue(file, &tr->events, list) {
-		if (file->flags & EVENT_FILE_FL_ENABLED)
-			return file;
-	}
+	list_क्रम_each_entry_जारी(file, &tr->events, list) अणु
+		अगर (file->flags & EVENT_खाता_FL_ENABLED)
+			वापस file;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *s_start(struct seq_file *m, loff_t *pos)
-{
-	struct trace_event_file *file;
-	struct trace_array *tr = m->private;
+अटल व्योम *s_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr = m->निजी;
 	loff_t l;
 
 	mutex_lock(&event_mutex);
 
-	file = list_entry(&tr->events, struct trace_event_file, list);
-	for (l = 0; l <= *pos; ) {
+	file = list_entry(&tr->events, काष्ठा trace_event_file, list);
+	क्रम (l = 0; l <= *pos; ) अणु
 		file = s_next(m, file, &l);
-		if (!file)
-			break;
-	}
-	return file;
-}
+		अगर (!file)
+			अवरोध;
+	पूर्ण
+	वापस file;
+पूर्ण
 
-static int t_show(struct seq_file *m, void *v)
-{
-	struct trace_event_file *file = v;
-	struct trace_event_call *call = file->event_call;
+अटल पूर्णांक t_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा trace_event_file *file = v;
+	काष्ठा trace_event_call *call = file->event_call;
 
-	if (strcmp(call->class->system, TRACE_SYSTEM) != 0)
-		seq_printf(m, "%s:", call->class->system);
-	seq_printf(m, "%s\n", trace_event_name(call));
+	अगर (म_भेद(call->class->प्रणाली, TRACE_SYSTEM) != 0)
+		seq_म_लिखो(m, "%s:", call->class->प्रणाली);
+	seq_म_लिखो(m, "%s\n", trace_event_name(call));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void t_stop(struct seq_file *m, void *p)
-{
+अटल व्योम t_stop(काष्ठा seq_file *m, व्योम *p)
+अणु
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static void *
-__next(struct seq_file *m, void *v, loff_t *pos, int type)
-{
-	struct trace_array *tr = m->private;
-	struct trace_pid_list *pid_list;
+अटल व्योम *
+__next(काष्ठा seq_file *m, व्योम *v, loff_t *pos, पूर्णांक type)
+अणु
+	काष्ठा trace_array *tr = m->निजी;
+	काष्ठा trace_pid_list *pid_list;
 
-	if (type == TRACE_PIDS)
+	अगर (type == TRACE_PIDS)
 		pid_list = rcu_dereference_sched(tr->filtered_pids);
-	else
+	अन्यथा
 		pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
-	return trace_pid_next(pid_list, v, pos);
-}
+	वापस trace_pid_next(pid_list, v, pos);
+पूर्ण
 
-static void *
-p_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	return __next(m, v, pos, TRACE_PIDS);
-}
+अटल व्योम *
+p_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	वापस __next(m, v, pos, TRACE_PIDS);
+पूर्ण
 
-static void *
-np_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	return __next(m, v, pos, TRACE_NO_PIDS);
-}
+अटल व्योम *
+np_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	वापस __next(m, v, pos, TRACE_NO_PIDS);
+पूर्ण
 
-static void *__start(struct seq_file *m, loff_t *pos, int type)
+अटल व्योम *__start(काष्ठा seq_file *m, loff_t *pos, पूर्णांक type)
 	__acquires(RCU)
-{
-	struct trace_pid_list *pid_list;
-	struct trace_array *tr = m->private;
+अणु
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_array *tr = m->निजी;
 
 	/*
 	 * Grab the mutex, to keep calls to p_next() having the same
 	 * tr->filtered_pids as p_start() has.
 	 * If we just passed the tr->filtered_pids around, then RCU would
-	 * have been enough, but doing that makes things more complex.
+	 * have been enough, but करोing that makes things more complex.
 	 */
 	mutex_lock(&event_mutex);
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 
-	if (type == TRACE_PIDS)
+	अगर (type == TRACE_PIDS)
 		pid_list = rcu_dereference_sched(tr->filtered_pids);
-	else
+	अन्यथा
 		pid_list = rcu_dereference_sched(tr->filtered_no_pids);
 
-	if (!pid_list)
-		return NULL;
+	अगर (!pid_list)
+		वापस शून्य;
 
-	return trace_pid_start(pid_list, pos);
-}
+	वापस trace_pid_start(pid_list, pos);
+पूर्ण
 
-static void *p_start(struct seq_file *m, loff_t *pos)
+अटल व्योम *p_start(काष्ठा seq_file *m, loff_t *pos)
 	__acquires(RCU)
-{
-	return __start(m, pos, TRACE_PIDS);
-}
+अणु
+	वापस __start(m, pos, TRACE_PIDS);
+पूर्ण
 
-static void *np_start(struct seq_file *m, loff_t *pos)
+अटल व्योम *np_start(काष्ठा seq_file *m, loff_t *pos)
 	__acquires(RCU)
-{
-	return __start(m, pos, TRACE_NO_PIDS);
-}
+अणु
+	वापस __start(m, pos, TRACE_NO_PIDS);
+पूर्ण
 
-static void p_stop(struct seq_file *m, void *p)
+अटल व्योम p_stop(काष्ठा seq_file *m, व्योम *p)
 	__releases(RCU)
-{
-	rcu_read_unlock_sched();
+अणु
+	rcu_पढ़ो_unlock_sched();
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static ssize_t
-event_enable_read(struct file *filp, char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+event_enable_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
 		  loff_t *ppos)
-{
-	struct trace_event_file *file;
-	unsigned long flags;
-	char buf[4] = "0";
+अणु
+	काष्ठा trace_event_file *file;
+	अचिन्हित दीर्घ flags;
+	अक्षर buf[4] = "0";
 
 	mutex_lock(&event_mutex);
 	file = event_file_data(filp);
-	if (likely(file))
+	अगर (likely(file))
 		flags = file->flags;
 	mutex_unlock(&event_mutex);
 
-	if (!file)
-		return -ENODEV;
+	अगर (!file)
+		वापस -ENODEV;
 
-	if (flags & EVENT_FILE_FL_ENABLED &&
-	    !(flags & EVENT_FILE_FL_SOFT_DISABLED))
-		strcpy(buf, "1");
+	अगर (flags & EVENT_खाता_FL_ENABLED &&
+	    !(flags & EVENT_खाता_FL_SOFT_DISABLED))
+		म_नकल(buf, "1");
 
-	if (flags & EVENT_FILE_FL_SOFT_DISABLED ||
-	    flags & EVENT_FILE_FL_SOFT_MODE)
-		strcat(buf, "*");
+	अगर (flags & EVENT_खाता_FL_SOFT_DISABLED ||
+	    flags & EVENT_खाता_FL_SOFT_MODE)
+		म_जोड़ो(buf, "*");
 
-	strcat(buf, "\n");
+	म_जोड़ो(buf, "\n");
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, strlen(buf));
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, म_माप(buf));
+पूर्ण
 
-static ssize_t
-event_enable_write(struct file *filp, const char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+event_enable_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
 		   loff_t *ppos)
-{
-	struct trace_event_file *file;
-	unsigned long val;
-	int ret;
+अणु
+	काष्ठा trace_event_file *file;
+	अचिन्हित दीर्घ val;
+	पूर्णांक ret;
 
-	ret = kstrtoul_from_user(ubuf, cnt, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ_from_user(ubuf, cnt, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	ret = tracing_update_buffers();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (val) {
-	case 0:
-	case 1:
+	चयन (val) अणु
+	हाल 0:
+	हाल 1:
 		ret = -ENODEV;
 		mutex_lock(&event_mutex);
 		file = event_file_data(filp);
-		if (likely(file))
+		अगर (likely(file))
 			ret = ftrace_event_enable_disable(file, val);
 		mutex_unlock(&event_mutex);
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	*ppos += cnt;
 
-	return ret ? ret : cnt;
-}
+	वापस ret ? ret : cnt;
+पूर्ण
 
-static ssize_t
-system_enable_read(struct file *filp, char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+प्रणाली_enable_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
 		   loff_t *ppos)
-{
-	const char set_to_char[4] = { '?', '0', '1', 'X' };
-	struct trace_subsystem_dir *dir = filp->private_data;
-	struct event_subsystem *system = dir->subsystem;
-	struct trace_event_call *call;
-	struct trace_event_file *file;
-	struct trace_array *tr = dir->tr;
-	char buf[2];
-	int set = 0;
-	int ret;
+अणु
+	स्थिर अक्षर set_to_अक्षर[4] = अणु '?', '0', '1', 'X' पूर्ण;
+	काष्ठा trace_subप्रणाली_dir *dir = filp->निजी_data;
+	काष्ठा event_subप्रणाली *प्रणाली = dir->subप्रणाली;
+	काष्ठा trace_event_call *call;
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr = dir->tr;
+	अक्षर buf[2];
+	पूर्णांक set = 0;
+	पूर्णांक ret;
 
 	mutex_lock(&event_mutex);
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 		call = file->event_call;
-		if ((call->flags & TRACE_EVENT_FL_IGNORE_ENABLE) ||
+		अगर ((call->flags & TRACE_EVENT_FL_IGNORE_ENABLE) ||
 		    !trace_event_name(call) || !call->class || !call->class->reg)
-			continue;
+			जारी;
 
-		if (system && strcmp(call->class->system, system->name) != 0)
-			continue;
+		अगर (प्रणाली && म_भेद(call->class->प्रणाली, प्रणाली->name) != 0)
+			जारी;
 
 		/*
-		 * We need to find out if all the events are set
-		 * or if all events or cleared, or if we have
+		 * We need to find out अगर all the events are set
+		 * or अगर all events or cleared, or अगर we have
 		 * a mixture.
 		 */
-		set |= (1 << !!(file->flags & EVENT_FILE_FL_ENABLED));
+		set |= (1 << !!(file->flags & EVENT_खाता_FL_ENABLED));
 
 		/*
 		 * If we have a mixture, no need to look further.
 		 */
-		if (set == 3)
-			break;
-	}
+		अगर (set == 3)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&event_mutex);
 
-	buf[0] = set_to_char[set];
+	buf[0] = set_to_अक्षर[set];
 	buf[1] = '\n';
 
-	ret = simple_read_from_buffer(ubuf, cnt, ppos, buf, 2);
+	ret = simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, 2);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-system_enable_write(struct file *filp, const char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+प्रणाली_enable_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
 		    loff_t *ppos)
-{
-	struct trace_subsystem_dir *dir = filp->private_data;
-	struct event_subsystem *system = dir->subsystem;
-	const char *name = NULL;
-	unsigned long val;
-	ssize_t ret;
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir = filp->निजी_data;
+	काष्ठा event_subप्रणाली *प्रणाली = dir->subप्रणाली;
+	स्थिर अक्षर *name = शून्य;
+	अचिन्हित दीर्घ val;
+	sमाप_प्रकार ret;
 
-	ret = kstrtoul_from_user(ubuf, cnt, 10, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ_from_user(ubuf, cnt, 10, &val);
+	अगर (ret)
+		वापस ret;
 
 	ret = tracing_update_buffers();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (val != 0 && val != 1)
-		return -EINVAL;
+	अगर (val != 0 && val != 1)
+		वापस -EINVAL;
 
 	/*
-	 * Opening of "enable" adds a ref count to system,
+	 * Opening of "enable" adds a ref count to प्रणाली,
 	 * so the name is safe to use.
 	 */
-	if (system)
-		name = system->name;
+	अगर (प्रणाली)
+		name = प्रणाली->name;
 
-	ret = __ftrace_set_clr_event(dir->tr, NULL, name, NULL, val);
-	if (ret)
-		goto out;
+	ret = __ftrace_set_clr_event(dir->tr, शून्य, name, शून्य, val);
+	अगर (ret)
+		जाओ out;
 
 	ret = cnt;
 
 out:
 	*ppos += cnt;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	FORMAT_HEADER		= 1,
 	FORMAT_FIELD_SEPERATOR	= 2,
 	FORMAT_PRINTFMT		= 3,
-};
+पूर्ण;
 
-static void *f_next(struct seq_file *m, void *v, loff_t *pos)
-{
-	struct trace_event_call *call = event_file_data(m->private);
-	struct list_head *common_head = &ftrace_common_fields;
-	struct list_head *head = trace_get_fields(call);
-	struct list_head *node = v;
+अटल व्योम *f_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा trace_event_call *call = event_file_data(m->निजी);
+	काष्ठा list_head *common_head = &ftrace_common_fields;
+	काष्ठा list_head *head = trace_get_fields(call);
+	काष्ठा list_head *node = v;
 
 	(*pos)++;
 
-	switch ((unsigned long)v) {
-	case FORMAT_HEADER:
+	चयन ((अचिन्हित दीर्घ)v) अणु
+	हाल FORMAT_HEADER:
 		node = common_head;
-		break;
+		अवरोध;
 
-	case FORMAT_FIELD_SEPERATOR:
+	हाल FORMAT_FIELD_SEPERATOR:
 		node = head;
-		break;
+		अवरोध;
 
-	case FORMAT_PRINTFMT:
-		/* all done */
-		return NULL;
-	}
+	हाल FORMAT_PRINTFMT:
+		/* all करोne */
+		वापस शून्य;
+	पूर्ण
 
 	node = node->prev;
-	if (node == common_head)
-		return (void *)FORMAT_FIELD_SEPERATOR;
-	else if (node == head)
-		return (void *)FORMAT_PRINTFMT;
-	else
-		return node;
-}
+	अगर (node == common_head)
+		वापस (व्योम *)FORMAT_FIELD_SEPERATOR;
+	अन्यथा अगर (node == head)
+		वापस (व्योम *)FORMAT_PRINTFMT;
+	अन्यथा
+		वापस node;
+पूर्ण
 
-static int f_show(struct seq_file *m, void *v)
-{
-	struct trace_event_call *call = event_file_data(m->private);
-	struct ftrace_event_field *field;
-	const char *array_descriptor;
+अटल पूर्णांक f_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा trace_event_call *call = event_file_data(m->निजी);
+	काष्ठा ftrace_event_field *field;
+	स्थिर अक्षर *array_descriptor;
 
-	switch ((unsigned long)v) {
-	case FORMAT_HEADER:
-		seq_printf(m, "name: %s\n", trace_event_name(call));
-		seq_printf(m, "ID: %d\n", call->event.type);
-		seq_puts(m, "format:\n");
-		return 0;
+	चयन ((अचिन्हित दीर्घ)v) अणु
+	हाल FORMAT_HEADER:
+		seq_म_लिखो(m, "name: %s\n", trace_event_name(call));
+		seq_म_लिखो(m, "ID: %d\n", call->event.type);
+		seq_माला_दो(m, "format:\n");
+		वापस 0;
 
-	case FORMAT_FIELD_SEPERATOR:
-		seq_putc(m, '\n');
-		return 0;
+	हाल FORMAT_FIELD_SEPERATOR:
+		seq_अ_दो(m, '\n');
+		वापस 0;
 
-	case FORMAT_PRINTFMT:
-		seq_printf(m, "\nprint fmt: %s\n",
-			   call->print_fmt);
-		return 0;
-	}
+	हाल FORMAT_PRINTFMT:
+		seq_म_लिखो(m, "\nprint fmt: %s\n",
+			   call->prपूर्णांक_fmt);
+		वापस 0;
+	पूर्ण
 
-	field = list_entry(v, struct ftrace_event_field, link);
+	field = list_entry(v, काष्ठा ftrace_event_field, link);
 	/*
 	 * Smartly shows the array type(except dynamic array).
 	 * Normal:
@@ -1558,1446 +1559,1446 @@ static int f_show(struct seq_file *m, void *v)
 	 * If TYPE := TYPE[LEN], it is shown:
 	 *	field:TYPE VAR[LEN]
 	 */
-	array_descriptor = strchr(field->type, '[');
+	array_descriptor = म_अक्षर(field->type, '[');
 
-	if (str_has_prefix(field->type, "__data_loc"))
-		array_descriptor = NULL;
+	अगर (str_has_prefix(field->type, "__data_loc"))
+		array_descriptor = शून्य;
 
-	if (!array_descriptor)
-		seq_printf(m, "\tfield:%s %s;\toffset:%u;\tsize:%u;\tsigned:%d;\n",
+	अगर (!array_descriptor)
+		seq_म_लिखो(m, "\tfield:%s %s;\toffset:%u;\tsize:%u;\tsigned:%d;\n",
 			   field->type, field->name, field->offset,
-			   field->size, !!field->is_signed);
-	else
-		seq_printf(m, "\tfield:%.*s %s%s;\toffset:%u;\tsize:%u;\tsigned:%d;\n",
-			   (int)(array_descriptor - field->type),
+			   field->size, !!field->is_चिन्हित);
+	अन्यथा
+		seq_म_लिखो(m, "\tfield:%.*s %s%s;\toffset:%u;\tsize:%u;\tsigned:%d;\n",
+			   (पूर्णांक)(array_descriptor - field->type),
 			   field->type, field->name,
 			   array_descriptor, field->offset,
-			   field->size, !!field->is_signed);
+			   field->size, !!field->is_चिन्हित);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *f_start(struct seq_file *m, loff_t *pos)
-{
-	void *p = (void *)FORMAT_HEADER;
+अटल व्योम *f_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	व्योम *p = (व्योम *)FORMAT_HEADER;
 	loff_t l = 0;
 
-	/* ->stop() is called even if ->start() fails */
+	/* ->stop() is called even अगर ->start() fails */
 	mutex_lock(&event_mutex);
-	if (!event_file_data(m->private))
-		return ERR_PTR(-ENODEV);
+	अगर (!event_file_data(m->निजी))
+		वापस ERR_PTR(-ENODEV);
 
-	while (l < *pos && p)
+	जबतक (l < *pos && p)
 		p = f_next(m, p, &l);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void f_stop(struct seq_file *m, void *p)
-{
+अटल व्योम f_stop(काष्ठा seq_file *m, व्योम *p)
+अणु
 	mutex_unlock(&event_mutex);
-}
+पूर्ण
 
-static const struct seq_operations trace_format_seq_ops = {
+अटल स्थिर काष्ठा seq_operations trace_क्रमmat_seq_ops = अणु
 	.start		= f_start,
 	.next		= f_next,
 	.stop		= f_stop,
 	.show		= f_show,
-};
+पूर्ण;
 
-static int trace_format_open(struct inode *inode, struct file *file)
-{
-	struct seq_file *m;
-	int ret;
+अटल पूर्णांक trace_क्रमmat_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा seq_file *m;
+	पूर्णांक ret;
 
-	/* Do we want to hide event format files on tracefs lockdown? */
+	/* Do we want to hide event क्रमmat files on tracefs lockकरोwn? */
 
-	ret = seq_open(file, &trace_format_seq_ops);
-	if (ret < 0)
-		return ret;
+	ret = seq_खोलो(file, &trace_क्रमmat_seq_ops);
+	अगर (ret < 0)
+		वापस ret;
 
-	m = file->private_data;
-	m->private = file;
+	m = file->निजी_data;
+	m->निजी = file;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-event_id_read(struct file *filp, char __user *ubuf, size_t cnt, loff_t *ppos)
-{
-	int id = (long)event_file_data(filp);
-	char buf[32];
-	int len;
+अटल sमाप_प्रकार
+event_id_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt, loff_t *ppos)
+अणु
+	पूर्णांक id = (दीर्घ)event_file_data(filp);
+	अक्षर buf[32];
+	पूर्णांक len;
 
-	if (unlikely(!id))
-		return -ENODEV;
+	अगर (unlikely(!id))
+		वापस -ENODEV;
 
-	len = sprintf(buf, "%d\n", id);
+	len = प्र_लिखो(buf, "%d\n", id);
 
-	return simple_read_from_buffer(ubuf, cnt, ppos, buf, len);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, cnt, ppos, buf, len);
+पूर्ण
 
-static ssize_t
-event_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+event_filter_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
 		  loff_t *ppos)
-{
-	struct trace_event_file *file;
-	struct trace_seq *s;
-	int r = -ENODEV;
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_seq *s;
+	पूर्णांक r = -ENODEV;
 
-	if (*ppos)
-		return 0;
+	अगर (*ppos)
+		वापस 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+	s = kदो_स्मृति(माप(*s), GFP_KERNEL);
 
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
 	trace_seq_init(s);
 
 	mutex_lock(&event_mutex);
 	file = event_file_data(filp);
-	if (file)
-		print_event_filter(file, s);
+	अगर (file)
+		prपूर्णांक_event_filter(file, s);
 	mutex_unlock(&event_mutex);
 
-	if (file)
-		r = simple_read_from_buffer(ubuf, cnt, ppos,
+	अगर (file)
+		r = simple_पढ़ो_from_buffer(ubuf, cnt, ppos,
 					    s->buffer, trace_seq_used(s));
 
-	kfree(s);
+	kमुक्त(s);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static ssize_t
-event_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+event_filter_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
 		   loff_t *ppos)
-{
-	struct trace_event_file *file;
-	char *buf;
-	int err = -ENODEV;
+अणु
+	काष्ठा trace_event_file *file;
+	अक्षर *buf;
+	पूर्णांक err = -ENODEV;
 
-	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+	अगर (cnt >= PAGE_SIZE)
+		वापस -EINVAL;
 
 	buf = memdup_user_nul(ubuf, cnt);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
 	mutex_lock(&event_mutex);
 	file = event_file_data(filp);
-	if (file)
+	अगर (file)
 		err = apply_event_filter(file, buf);
 	mutex_unlock(&event_mutex);
 
-	kfree(buf);
-	if (err < 0)
-		return err;
+	kमुक्त(buf);
+	अगर (err < 0)
+		वापस err;
 
 	*ppos += cnt;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static LIST_HEAD(event_subsystems);
+अटल LIST_HEAD(event_subप्रणालीs);
 
-static int subsystem_open(struct inode *inode, struct file *filp)
-{
-	struct event_subsystem *system = NULL;
-	struct trace_subsystem_dir *dir = NULL; /* Initialize for gcc */
-	struct trace_array *tr;
-	int ret;
+अटल पूर्णांक subप्रणाली_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा event_subप्रणाली *प्रणाली = शून्य;
+	काष्ठा trace_subप्रणाली_dir *dir = शून्य; /* Initialize क्रम gcc */
+	काष्ठा trace_array *tr;
+	पूर्णांक ret;
 
-	if (tracing_is_disabled())
-		return -ENODEV;
+	अगर (tracing_is_disabled())
+		वापस -ENODEV;
 
-	/* Make sure the system still exists */
+	/* Make sure the प्रणाली still exists */
 	mutex_lock(&event_mutex);
 	mutex_lock(&trace_types_lock);
-	list_for_each_entry(tr, &ftrace_trace_arrays, list) {
-		list_for_each_entry(dir, &tr->systems, list) {
-			if (dir == inode->i_private) {
-				/* Don't open systems with no events */
-				if (dir->nr_events) {
-					__get_system_dir(dir);
-					system = dir->subsystem;
-				}
-				goto exit_loop;
-			}
-		}
-	}
- exit_loop:
+	list_क्रम_each_entry(tr, &ftrace_trace_arrays, list) अणु
+		list_क्रम_each_entry(dir, &tr->प्रणालीs, list) अणु
+			अगर (dir == inode->i_निजी) अणु
+				/* Don't खोलो प्रणालीs with no events */
+				अगर (dir->nr_events) अणु
+					__get_प्रणाली_dir(dir);
+					प्रणाली = dir->subप्रणाली;
+				पूर्ण
+				जाओ निकास_loop;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+ निकास_loop:
 	mutex_unlock(&trace_types_lock);
 	mutex_unlock(&event_mutex);
 
-	if (!system)
-		return -ENODEV;
+	अगर (!प्रणाली)
+		वापस -ENODEV;
 
 	/* Some versions of gcc think dir can be uninitialized here */
 	WARN_ON(!dir);
 
-	/* Still need to increment the ref count of the system */
-	if (trace_array_get(tr) < 0) {
-		put_system(dir);
-		return -ENODEV;
-	}
+	/* Still need to increment the ref count of the प्रणाली */
+	अगर (trace_array_get(tr) < 0) अणु
+		put_प्रणाली(dir);
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = tracing_open_generic(inode, filp);
-	if (ret < 0) {
+	ret = tracing_खोलो_generic(inode, filp);
+	अगर (ret < 0) अणु
 		trace_array_put(tr);
-		put_system(dir);
-	}
+		put_प्रणाली(dir);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int system_tr_open(struct inode *inode, struct file *filp)
-{
-	struct trace_subsystem_dir *dir;
-	struct trace_array *tr = inode->i_private;
-	int ret;
+अटल पूर्णांक प्रणाली_tr_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir;
+	काष्ठा trace_array *tr = inode->i_निजी;
+	पूर्णांक ret;
 
-	/* Make a temporary dir that has no system but points to tr */
-	dir = kzalloc(sizeof(*dir), GFP_KERNEL);
-	if (!dir)
-		return -ENOMEM;
+	/* Make a temporary dir that has no प्रणाली but poपूर्णांकs to tr */
+	dir = kzalloc(माप(*dir), GFP_KERNEL);
+	अगर (!dir)
+		वापस -ENOMEM;
 
-	ret = tracing_open_generic_tr(inode, filp);
-	if (ret < 0) {
-		kfree(dir);
-		return ret;
-	}
+	ret = tracing_खोलो_generic_tr(inode, filp);
+	अगर (ret < 0) अणु
+		kमुक्त(dir);
+		वापस ret;
+	पूर्ण
 	dir->tr = tr;
-	filp->private_data = dir;
+	filp->निजी_data = dir;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int subsystem_release(struct inode *inode, struct file *file)
-{
-	struct trace_subsystem_dir *dir = file->private_data;
+अटल पूर्णांक subप्रणाली_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir = file->निजी_data;
 
 	trace_array_put(dir->tr);
 
 	/*
-	 * If dir->subsystem is NULL, then this is a temporary
-	 * descriptor that was made for a trace_array to enable
-	 * all subsystems.
+	 * If dir->subप्रणाली is शून्य, then this is a temporary
+	 * descriptor that was made क्रम a trace_array to enable
+	 * all subप्रणालीs.
 	 */
-	if (dir->subsystem)
-		put_system(dir);
-	else
-		kfree(dir);
+	अगर (dir->subप्रणाली)
+		put_प्रणाली(dir);
+	अन्यथा
+		kमुक्त(dir);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t
-subsystem_filter_read(struct file *filp, char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+subप्रणाली_filter_पढ़ो(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt,
 		      loff_t *ppos)
-{
-	struct trace_subsystem_dir *dir = filp->private_data;
-	struct event_subsystem *system = dir->subsystem;
-	struct trace_seq *s;
-	int r;
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir = filp->निजी_data;
+	काष्ठा event_subप्रणाली *प्रणाली = dir->subप्रणाली;
+	काष्ठा trace_seq *s;
+	पूर्णांक r;
 
-	if (*ppos)
-		return 0;
+	अगर (*ppos)
+		वापस 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
-	if (!s)
-		return -ENOMEM;
+	s = kदो_स्मृति(माप(*s), GFP_KERNEL);
+	अगर (!s)
+		वापस -ENOMEM;
 
 	trace_seq_init(s);
 
-	print_subsystem_event_filter(system, s);
-	r = simple_read_from_buffer(ubuf, cnt, ppos,
+	prपूर्णांक_subप्रणाली_event_filter(प्रणाली, s);
+	r = simple_पढ़ो_from_buffer(ubuf, cnt, ppos,
 				    s->buffer, trace_seq_used(s));
 
-	kfree(s);
+	kमुक्त(s);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static ssize_t
-subsystem_filter_write(struct file *filp, const char __user *ubuf, size_t cnt,
+अटल sमाप_प्रकार
+subप्रणाली_filter_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf, माप_प्रकार cnt,
 		       loff_t *ppos)
-{
-	struct trace_subsystem_dir *dir = filp->private_data;
-	char *buf;
-	int err;
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir = filp->निजी_data;
+	अक्षर *buf;
+	पूर्णांक err;
 
-	if (cnt >= PAGE_SIZE)
-		return -EINVAL;
+	अगर (cnt >= PAGE_SIZE)
+		वापस -EINVAL;
 
 	buf = memdup_user_nul(ubuf, cnt);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	err = apply_subsystem_event_filter(dir, buf);
-	kfree(buf);
-	if (err < 0)
-		return err;
+	err = apply_subप्रणाली_event_filter(dir, buf);
+	kमुक्त(buf);
+	अगर (err < 0)
+		वापस err;
 
 	*ppos += cnt;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static ssize_t
-show_header(struct file *filp, char __user *ubuf, size_t cnt, loff_t *ppos)
-{
-	int (*func)(struct trace_seq *s) = filp->private_data;
-	struct trace_seq *s;
-	int r;
+अटल sमाप_प्रकार
+show_header(काष्ठा file *filp, अक्षर __user *ubuf, माप_प्रकार cnt, loff_t *ppos)
+अणु
+	पूर्णांक (*func)(काष्ठा trace_seq *s) = filp->निजी_data;
+	काष्ठा trace_seq *s;
+	पूर्णांक r;
 
-	if (*ppos)
-		return 0;
+	अगर (*ppos)
+		वापस 0;
 
-	s = kmalloc(sizeof(*s), GFP_KERNEL);
-	if (!s)
-		return -ENOMEM;
+	s = kदो_स्मृति(माप(*s), GFP_KERNEL);
+	अगर (!s)
+		वापस -ENOMEM;
 
 	trace_seq_init(s);
 
 	func(s);
-	r = simple_read_from_buffer(ubuf, cnt, ppos,
+	r = simple_पढ़ो_from_buffer(ubuf, cnt, ppos,
 				    s->buffer, trace_seq_used(s));
 
-	kfree(s);
+	kमुक्त(s);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void ignore_task_cpu(void *data)
-{
-	struct trace_array *tr = data;
-	struct trace_pid_list *pid_list;
-	struct trace_pid_list *no_pid_list;
+अटल व्योम ignore_task_cpu(व्योम *data)
+अणु
+	काष्ठा trace_array *tr = data;
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_pid_list *no_pid_list;
 
 	/*
-	 * This function is called by on_each_cpu() while the
+	 * This function is called by on_each_cpu() जबतक the
 	 * event_mutex is held.
 	 */
-	pid_list = rcu_dereference_protected(tr->filtered_pids,
+	pid_list = rcu_dereference_रक्षित(tr->filtered_pids,
 					     mutex_is_locked(&event_mutex));
-	no_pid_list = rcu_dereference_protected(tr->filtered_no_pids,
+	no_pid_list = rcu_dereference_रक्षित(tr->filtered_no_pids,
 					     mutex_is_locked(&event_mutex));
 
-	this_cpu_write(tr->array_buffer.data->ignore_pid,
+	this_cpu_ग_लिखो(tr->array_buffer.data->ignore_pid,
 		       trace_ignore_this_task(pid_list, no_pid_list, current));
-}
+पूर्ण
 
-static void register_pid_events(struct trace_array *tr)
-{
+अटल व्योम रेजिस्टर_pid_events(काष्ठा trace_array *tr)
+अणु
 	/*
-	 * Register a probe that is called before all other probes
-	 * to set ignore_pid if next or prev do not match.
+	 * Register a probe that is called beक्रमe all other probes
+	 * to set ignore_pid अगर next or prev करो not match.
 	 * Register a probe this is called after all other probes
-	 * to only keep ignore_pid set if next pid matches.
+	 * to only keep ignore_pid set अगर next pid matches.
 	 */
-	register_trace_prio_sched_switch(event_filter_pid_sched_switch_probe_pre,
-					 tr, INT_MAX);
-	register_trace_prio_sched_switch(event_filter_pid_sched_switch_probe_post,
+	रेजिस्टर_trace_prio_sched_चयन(event_filter_pid_sched_चयन_probe_pre,
+					 tr, पूर्णांक_उच्च);
+	रेजिस्टर_trace_prio_sched_चयन(event_filter_pid_sched_चयन_probe_post,
 					 tr, 0);
 
-	register_trace_prio_sched_wakeup(event_filter_pid_sched_wakeup_probe_pre,
-					 tr, INT_MAX);
-	register_trace_prio_sched_wakeup(event_filter_pid_sched_wakeup_probe_post,
+	रेजिस्टर_trace_prio_sched_wakeup(event_filter_pid_sched_wakeup_probe_pre,
+					 tr, पूर्णांक_उच्च);
+	रेजिस्टर_trace_prio_sched_wakeup(event_filter_pid_sched_wakeup_probe_post,
 					 tr, 0);
 
-	register_trace_prio_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_pre,
-					     tr, INT_MAX);
-	register_trace_prio_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_post,
+	रेजिस्टर_trace_prio_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_pre,
+					     tr, पूर्णांक_उच्च);
+	रेजिस्टर_trace_prio_sched_wakeup_new(event_filter_pid_sched_wakeup_probe_post,
 					     tr, 0);
 
-	register_trace_prio_sched_waking(event_filter_pid_sched_wakeup_probe_pre,
-					 tr, INT_MAX);
-	register_trace_prio_sched_waking(event_filter_pid_sched_wakeup_probe_post,
+	रेजिस्टर_trace_prio_sched_waking(event_filter_pid_sched_wakeup_probe_pre,
+					 tr, पूर्णांक_उच्च);
+	रेजिस्टर_trace_prio_sched_waking(event_filter_pid_sched_wakeup_probe_post,
 					 tr, 0);
-}
+पूर्ण
 
-static ssize_t
-event_pid_write(struct file *filp, const char __user *ubuf,
-		size_t cnt, loff_t *ppos, int type)
-{
-	struct seq_file *m = filp->private_data;
-	struct trace_array *tr = m->private;
-	struct trace_pid_list *filtered_pids = NULL;
-	struct trace_pid_list *other_pids = NULL;
-	struct trace_pid_list *pid_list;
-	struct trace_event_file *file;
-	ssize_t ret;
+अटल sमाप_प्रकार
+event_pid_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+		माप_प्रकार cnt, loff_t *ppos, पूर्णांक type)
+अणु
+	काष्ठा seq_file *m = filp->निजी_data;
+	काष्ठा trace_array *tr = m->निजी;
+	काष्ठा trace_pid_list *filtered_pids = शून्य;
+	काष्ठा trace_pid_list *other_pids = शून्य;
+	काष्ठा trace_pid_list *pid_list;
+	काष्ठा trace_event_file *file;
+	sमाप_प्रकार ret;
 
-	if (!cnt)
-		return 0;
+	अगर (!cnt)
+		वापस 0;
 
 	ret = tracing_update_buffers();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_lock(&event_mutex);
 
-	if (type == TRACE_PIDS) {
-		filtered_pids = rcu_dereference_protected(tr->filtered_pids,
+	अगर (type == TRACE_PIDS) अणु
+		filtered_pids = rcu_dereference_रक्षित(tr->filtered_pids,
 							  lockdep_is_held(&event_mutex));
-		other_pids = rcu_dereference_protected(tr->filtered_no_pids,
+		other_pids = rcu_dereference_रक्षित(tr->filtered_no_pids,
 							  lockdep_is_held(&event_mutex));
-	} else {
-		filtered_pids = rcu_dereference_protected(tr->filtered_no_pids,
+	पूर्ण अन्यथा अणु
+		filtered_pids = rcu_dereference_रक्षित(tr->filtered_no_pids,
 							  lockdep_is_held(&event_mutex));
-		other_pids = rcu_dereference_protected(tr->filtered_pids,
+		other_pids = rcu_dereference_रक्षित(tr->filtered_pids,
 							  lockdep_is_held(&event_mutex));
-	}
+	पूर्ण
 
-	ret = trace_pid_write(filtered_pids, &pid_list, ubuf, cnt);
-	if (ret < 0)
-		goto out;
+	ret = trace_pid_ग_लिखो(filtered_pids, &pid_list, ubuf, cnt);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (type == TRACE_PIDS)
-		rcu_assign_pointer(tr->filtered_pids, pid_list);
-	else
-		rcu_assign_pointer(tr->filtered_no_pids, pid_list);
+	अगर (type == TRACE_PIDS)
+		rcu_assign_poपूर्णांकer(tr->filtered_pids, pid_list);
+	अन्यथा
+		rcu_assign_poपूर्णांकer(tr->filtered_no_pids, pid_list);
 
-	list_for_each_entry(file, &tr->events, list) {
-		set_bit(EVENT_FILE_FL_PID_FILTER_BIT, &file->flags);
-	}
+	list_क्रम_each_entry(file, &tr->events, list) अणु
+		set_bit(EVENT_खाता_FL_PID_FILTER_BIT, &file->flags);
+	पूर्ण
 
-	if (filtered_pids) {
-		tracepoint_synchronize_unregister();
-		trace_free_pid_list(filtered_pids);
-	} else if (pid_list && !other_pids) {
-		register_pid_events(tr);
-	}
+	अगर (filtered_pids) अणु
+		tracepoपूर्णांक_synchronize_unरेजिस्टर();
+		trace_मुक्त_pid_list(filtered_pids);
+	पूर्ण अन्यथा अगर (pid_list && !other_pids) अणु
+		रेजिस्टर_pid_events(tr);
+	पूर्ण
 
 	/*
-	 * Ignoring of pids is done at task switch. But we have to
-	 * check for those tasks that are currently running.
-	 * Always do this in case a pid was appended or removed.
+	 * Ignoring of pids is करोne at task चयन. But we have to
+	 * check क्रम those tasks that are currently running.
+	 * Always करो this in हाल a pid was appended or हटाओd.
 	 */
 	on_each_cpu(ignore_task_cpu, tr, 1);
 
  out:
 	mutex_unlock(&event_mutex);
 
-	if (ret > 0)
+	अगर (ret > 0)
 		*ppos += ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-ftrace_event_pid_write(struct file *filp, const char __user *ubuf,
-		       size_t cnt, loff_t *ppos)
-{
-	return event_pid_write(filp, ubuf, cnt, ppos, TRACE_PIDS);
-}
+अटल sमाप_प्रकार
+ftrace_event_pid_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+		       माप_प्रकार cnt, loff_t *ppos)
+अणु
+	वापस event_pid_ग_लिखो(filp, ubuf, cnt, ppos, TRACE_PIDS);
+पूर्ण
 
-static ssize_t
-ftrace_event_npid_write(struct file *filp, const char __user *ubuf,
-			size_t cnt, loff_t *ppos)
-{
-	return event_pid_write(filp, ubuf, cnt, ppos, TRACE_NO_PIDS);
-}
+अटल sमाप_प्रकार
+ftrace_event_npid_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *ubuf,
+			माप_प्रकार cnt, loff_t *ppos)
+अणु
+	वापस event_pid_ग_लिखो(filp, ubuf, cnt, ppos, TRACE_NO_PIDS);
+पूर्ण
 
-static int ftrace_event_avail_open(struct inode *inode, struct file *file);
-static int ftrace_event_set_open(struct inode *inode, struct file *file);
-static int ftrace_event_set_pid_open(struct inode *inode, struct file *file);
-static int ftrace_event_set_npid_open(struct inode *inode, struct file *file);
-static int ftrace_event_release(struct inode *inode, struct file *file);
+अटल पूर्णांक ftrace_event_avail_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक ftrace_event_set_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक ftrace_event_set_pid_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक ftrace_event_set_npid_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक ftrace_event_release(काष्ठा inode *inode, काष्ठा file *file);
 
-static const struct seq_operations show_event_seq_ops = {
+अटल स्थिर काष्ठा seq_operations show_event_seq_ops = अणु
 	.start = t_start,
 	.next = t_next,
 	.show = t_show,
 	.stop = t_stop,
-};
+पूर्ण;
 
-static const struct seq_operations show_set_event_seq_ops = {
+अटल स्थिर काष्ठा seq_operations show_set_event_seq_ops = अणु
 	.start = s_start,
 	.next = s_next,
 	.show = t_show,
 	.stop = t_stop,
-};
+पूर्ण;
 
-static const struct seq_operations show_set_pid_seq_ops = {
+अटल स्थिर काष्ठा seq_operations show_set_pid_seq_ops = अणु
 	.start = p_start,
 	.next = p_next,
 	.show = trace_pid_show,
 	.stop = p_stop,
-};
+पूर्ण;
 
-static const struct seq_operations show_set_no_pid_seq_ops = {
+अटल स्थिर काष्ठा seq_operations show_set_no_pid_seq_ops = अणु
 	.start = np_start,
 	.next = np_next,
 	.show = trace_pid_show,
 	.stop = p_stop,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_avail_fops = {
-	.open = ftrace_event_avail_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations ftrace_avail_fops = अणु
+	.खोलो = ftrace_event_avail_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = seq_release,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_set_event_fops = {
-	.open = ftrace_event_set_open,
-	.read = seq_read,
-	.write = ftrace_event_write,
+अटल स्थिर काष्ठा file_operations ftrace_set_event_fops = अणु
+	.खोलो = ftrace_event_set_खोलो,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = ftrace_event_ग_लिखो,
 	.llseek = seq_lseek,
 	.release = ftrace_event_release,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_set_event_pid_fops = {
-	.open = ftrace_event_set_pid_open,
-	.read = seq_read,
-	.write = ftrace_event_pid_write,
+अटल स्थिर काष्ठा file_operations ftrace_set_event_pid_fops = अणु
+	.खोलो = ftrace_event_set_pid_खोलो,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = ftrace_event_pid_ग_लिखो,
 	.llseek = seq_lseek,
 	.release = ftrace_event_release,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_set_event_notrace_pid_fops = {
-	.open = ftrace_event_set_npid_open,
-	.read = seq_read,
-	.write = ftrace_event_npid_write,
+अटल स्थिर काष्ठा file_operations ftrace_set_event_notrace_pid_fops = अणु
+	.खोलो = ftrace_event_set_npid_खोलो,
+	.पढ़ो = seq_पढ़ो,
+	.ग_लिखो = ftrace_event_npid_ग_लिखो,
 	.llseek = seq_lseek,
 	.release = ftrace_event_release,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_enable_fops = {
-	.open = tracing_open_generic,
-	.read = event_enable_read,
-	.write = event_enable_write,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations ftrace_enable_fops = अणु
+	.खोलो = tracing_खोलो_generic,
+	.पढ़ो = event_enable_पढ़ो,
+	.ग_लिखो = event_enable_ग_लिखो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static const struct file_operations ftrace_event_format_fops = {
-	.open = trace_format_open,
-	.read = seq_read,
+अटल स्थिर काष्ठा file_operations ftrace_event_क्रमmat_fops = अणु
+	.खोलो = trace_क्रमmat_खोलो,
+	.पढ़ो = seq_पढ़ो,
 	.llseek = seq_lseek,
 	.release = seq_release,
-};
+पूर्ण;
 
-static const struct file_operations ftrace_event_id_fops = {
-	.read = event_id_read,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations ftrace_event_id_fops = अणु
+	.पढ़ो = event_id_पढ़ो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static const struct file_operations ftrace_event_filter_fops = {
-	.open = tracing_open_generic,
-	.read = event_filter_read,
-	.write = event_filter_write,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations ftrace_event_filter_fops = अणु
+	.खोलो = tracing_खोलो_generic,
+	.पढ़ो = event_filter_पढ़ो,
+	.ग_लिखो = event_filter_ग_लिखो,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static const struct file_operations ftrace_subsystem_filter_fops = {
-	.open = subsystem_open,
-	.read = subsystem_filter_read,
-	.write = subsystem_filter_write,
-	.llseek = default_llseek,
-	.release = subsystem_release,
-};
+अटल स्थिर काष्ठा file_operations ftrace_subप्रणाली_filter_fops = अणु
+	.खोलो = subप्रणाली_खोलो,
+	.पढ़ो = subप्रणाली_filter_पढ़ो,
+	.ग_लिखो = subप्रणाली_filter_ग_लिखो,
+	.llseek = शेष_llseek,
+	.release = subप्रणाली_release,
+पूर्ण;
 
-static const struct file_operations ftrace_system_enable_fops = {
-	.open = subsystem_open,
-	.read = system_enable_read,
-	.write = system_enable_write,
-	.llseek = default_llseek,
-	.release = subsystem_release,
-};
+अटल स्थिर काष्ठा file_operations ftrace_प्रणाली_enable_fops = अणु
+	.खोलो = subप्रणाली_खोलो,
+	.पढ़ो = प्रणाली_enable_पढ़ो,
+	.ग_लिखो = प्रणाली_enable_ग_लिखो,
+	.llseek = शेष_llseek,
+	.release = subप्रणाली_release,
+पूर्ण;
 
-static const struct file_operations ftrace_tr_enable_fops = {
-	.open = system_tr_open,
-	.read = system_enable_read,
-	.write = system_enable_write,
-	.llseek = default_llseek,
-	.release = subsystem_release,
-};
+अटल स्थिर काष्ठा file_operations ftrace_tr_enable_fops = अणु
+	.खोलो = प्रणाली_tr_खोलो,
+	.पढ़ो = प्रणाली_enable_पढ़ो,
+	.ग_लिखो = प्रणाली_enable_ग_लिखो,
+	.llseek = शेष_llseek,
+	.release = subप्रणाली_release,
+पूर्ण;
 
-static const struct file_operations ftrace_show_header_fops = {
-	.open = tracing_open_generic,
-	.read = show_header,
-	.llseek = default_llseek,
-};
+अटल स्थिर काष्ठा file_operations ftrace_show_header_fops = अणु
+	.खोलो = tracing_खोलो_generic,
+	.पढ़ो = show_header,
+	.llseek = शेष_llseek,
+पूर्ण;
 
-static int
-ftrace_event_open(struct inode *inode, struct file *file,
-		  const struct seq_operations *seq_ops)
-{
-	struct seq_file *m;
-	int ret;
+अटल पूर्णांक
+ftrace_event_खोलो(काष्ठा inode *inode, काष्ठा file *file,
+		  स्थिर काष्ठा seq_operations *seq_ops)
+अणु
+	काष्ठा seq_file *m;
+	पूर्णांक ret;
 
-	ret = security_locked_down(LOCKDOWN_TRACEFS);
-	if (ret)
-		return ret;
+	ret = security_locked_करोwn(LOCKDOWN_TRACEFS);
+	अगर (ret)
+		वापस ret;
 
-	ret = seq_open(file, seq_ops);
-	if (ret < 0)
-		return ret;
-	m = file->private_data;
+	ret = seq_खोलो(file, seq_ops);
+	अगर (ret < 0)
+		वापस ret;
+	m = file->निजी_data;
 	/* copy tr over to seq ops */
-	m->private = inode->i_private;
+	m->निजी = inode->i_निजी;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ftrace_event_release(struct inode *inode, struct file *file)
-{
-	struct trace_array *tr = inode->i_private;
+अटल पूर्णांक ftrace_event_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा trace_array *tr = inode->i_निजी;
 
 	trace_array_put(tr);
 
-	return seq_release(inode, file);
-}
+	वापस seq_release(inode, file);
+पूर्ण
 
-static int
-ftrace_event_avail_open(struct inode *inode, struct file *file)
-{
-	const struct seq_operations *seq_ops = &show_event_seq_ops;
+अटल पूर्णांक
+ftrace_event_avail_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	स्थिर काष्ठा seq_operations *seq_ops = &show_event_seq_ops;
 
-	/* Checks for tracefs lockdown */
-	return ftrace_event_open(inode, file, seq_ops);
-}
+	/* Checks क्रम tracefs lockकरोwn */
+	वापस ftrace_event_खोलो(inode, file, seq_ops);
+पूर्ण
 
-static int
-ftrace_event_set_open(struct inode *inode, struct file *file)
-{
-	const struct seq_operations *seq_ops = &show_set_event_seq_ops;
-	struct trace_array *tr = inode->i_private;
-	int ret;
+अटल पूर्णांक
+ftrace_event_set_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	स्थिर काष्ठा seq_operations *seq_ops = &show_set_event_seq_ops;
+	काष्ठा trace_array *tr = inode->i_निजी;
+	पूर्णांक ret;
 
-	ret = tracing_check_open_get_tr(tr);
-	if (ret)
-		return ret;
+	ret = tracing_check_खोलो_get_tr(tr);
+	अगर (ret)
+		वापस ret;
 
-	if ((file->f_mode & FMODE_WRITE) &&
+	अगर ((file->f_mode & FMODE_WRITE) &&
 	    (file->f_flags & O_TRUNC))
 		ftrace_clear_events(tr);
 
-	ret = ftrace_event_open(inode, file, seq_ops);
-	if (ret < 0)
+	ret = ftrace_event_खोलो(inode, file, seq_ops);
+	अगर (ret < 0)
 		trace_array_put(tr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ftrace_event_set_pid_open(struct inode *inode, struct file *file)
-{
-	const struct seq_operations *seq_ops = &show_set_pid_seq_ops;
-	struct trace_array *tr = inode->i_private;
-	int ret;
+अटल पूर्णांक
+ftrace_event_set_pid_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	स्थिर काष्ठा seq_operations *seq_ops = &show_set_pid_seq_ops;
+	काष्ठा trace_array *tr = inode->i_निजी;
+	पूर्णांक ret;
 
-	ret = tracing_check_open_get_tr(tr);
-	if (ret)
-		return ret;
+	ret = tracing_check_खोलो_get_tr(tr);
+	अगर (ret)
+		वापस ret;
 
-	if ((file->f_mode & FMODE_WRITE) &&
+	अगर ((file->f_mode & FMODE_WRITE) &&
 	    (file->f_flags & O_TRUNC))
 		ftrace_clear_event_pids(tr, TRACE_PIDS);
 
-	ret = ftrace_event_open(inode, file, seq_ops);
-	if (ret < 0)
+	ret = ftrace_event_खोलो(inode, file, seq_ops);
+	अगर (ret < 0)
 		trace_array_put(tr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-ftrace_event_set_npid_open(struct inode *inode, struct file *file)
-{
-	const struct seq_operations *seq_ops = &show_set_no_pid_seq_ops;
-	struct trace_array *tr = inode->i_private;
-	int ret;
+अटल पूर्णांक
+ftrace_event_set_npid_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	स्थिर काष्ठा seq_operations *seq_ops = &show_set_no_pid_seq_ops;
+	काष्ठा trace_array *tr = inode->i_निजी;
+	पूर्णांक ret;
 
-	ret = tracing_check_open_get_tr(tr);
-	if (ret)
-		return ret;
+	ret = tracing_check_खोलो_get_tr(tr);
+	अगर (ret)
+		वापस ret;
 
-	if ((file->f_mode & FMODE_WRITE) &&
+	अगर ((file->f_mode & FMODE_WRITE) &&
 	    (file->f_flags & O_TRUNC))
 		ftrace_clear_event_pids(tr, TRACE_NO_PIDS);
 
-	ret = ftrace_event_open(inode, file, seq_ops);
-	if (ret < 0)
+	ret = ftrace_event_खोलो(inode, file, seq_ops);
+	अगर (ret < 0)
 		trace_array_put(tr);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct event_subsystem *
-create_new_subsystem(const char *name)
-{
-	struct event_subsystem *system;
+अटल काष्ठा event_subप्रणाली *
+create_new_subप्रणाली(स्थिर अक्षर *name)
+अणु
+	काष्ठा event_subप्रणाली *प्रणाली;
 
 	/* need to create new entry */
-	system = kmalloc(sizeof(*system), GFP_KERNEL);
-	if (!system)
-		return NULL;
+	प्रणाली = kदो_स्मृति(माप(*प्रणाली), GFP_KERNEL);
+	अगर (!प्रणाली)
+		वापस शून्य;
 
-	system->ref_count = 1;
+	प्रणाली->ref_count = 1;
 
-	/* Only allocate if dynamic (kprobes and modules) */
-	system->name = kstrdup_const(name, GFP_KERNEL);
-	if (!system->name)
-		goto out_free;
+	/* Only allocate अगर dynamic (kprobes and modules) */
+	प्रणाली->name = kstrdup_स्थिर(name, GFP_KERNEL);
+	अगर (!प्रणाली->name)
+		जाओ out_मुक्त;
 
-	system->filter = NULL;
+	प्रणाली->filter = शून्य;
 
-	system->filter = kzalloc(sizeof(struct event_filter), GFP_KERNEL);
-	if (!system->filter)
-		goto out_free;
+	प्रणाली->filter = kzalloc(माप(काष्ठा event_filter), GFP_KERNEL);
+	अगर (!प्रणाली->filter)
+		जाओ out_मुक्त;
 
-	list_add(&system->list, &event_subsystems);
+	list_add(&प्रणाली->list, &event_subप्रणालीs);
 
-	return system;
+	वापस प्रणाली;
 
- out_free:
-	kfree_const(system->name);
-	kfree(system);
-	return NULL;
-}
+ out_मुक्त:
+	kमुक्त_स्थिर(प्रणाली->name);
+	kमुक्त(प्रणाली);
+	वापस शून्य;
+पूर्ण
 
-static struct dentry *
-event_subsystem_dir(struct trace_array *tr, const char *name,
-		    struct trace_event_file *file, struct dentry *parent)
-{
-	struct trace_subsystem_dir *dir;
-	struct event_subsystem *system;
-	struct dentry *entry;
+अटल काष्ठा dentry *
+event_subप्रणाली_dir(काष्ठा trace_array *tr, स्थिर अक्षर *name,
+		    काष्ठा trace_event_file *file, काष्ठा dentry *parent)
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir;
+	काष्ठा event_subप्रणाली *प्रणाली;
+	काष्ठा dentry *entry;
 
-	/* First see if we did not already create this dir */
-	list_for_each_entry(dir, &tr->systems, list) {
-		system = dir->subsystem;
-		if (strcmp(system->name, name) == 0) {
+	/* First see अगर we did not alपढ़ोy create this dir */
+	list_क्रम_each_entry(dir, &tr->प्रणालीs, list) अणु
+		प्रणाली = dir->subप्रणाली;
+		अगर (म_भेद(प्रणाली->name, name) == 0) अणु
 			dir->nr_events++;
-			file->system = dir;
-			return dir->entry;
-		}
-	}
+			file->प्रणाली = dir;
+			वापस dir->entry;
+		पूर्ण
+	पूर्ण
 
-	/* Now see if the system itself exists. */
-	list_for_each_entry(system, &event_subsystems, list) {
-		if (strcmp(system->name, name) == 0)
-			break;
-	}
-	/* Reset system variable when not found */
-	if (&system->list == &event_subsystems)
-		system = NULL;
+	/* Now see अगर the प्रणाली itself exists. */
+	list_क्रम_each_entry(प्रणाली, &event_subप्रणालीs, list) अणु
+		अगर (म_भेद(प्रणाली->name, name) == 0)
+			अवरोध;
+	पूर्ण
+	/* Reset प्रणाली variable when not found */
+	अगर (&प्रणाली->list == &event_subप्रणालीs)
+		प्रणाली = शून्य;
 
-	dir = kmalloc(sizeof(*dir), GFP_KERNEL);
-	if (!dir)
-		goto out_fail;
+	dir = kदो_स्मृति(माप(*dir), GFP_KERNEL);
+	अगर (!dir)
+		जाओ out_fail;
 
-	if (!system) {
-		system = create_new_subsystem(name);
-		if (!system)
-			goto out_free;
-	} else
-		__get_system(system);
+	अगर (!प्रणाली) अणु
+		प्रणाली = create_new_subप्रणाली(name);
+		अगर (!प्रणाली)
+			जाओ out_मुक्त;
+	पूर्ण अन्यथा
+		__get_प्रणाली(प्रणाली);
 
 	dir->entry = tracefs_create_dir(name, parent);
-	if (!dir->entry) {
+	अगर (!dir->entry) अणु
 		pr_warn("Failed to create system directory %s\n", name);
-		__put_system(system);
-		goto out_free;
-	}
+		__put_प्रणाली(प्रणाली);
+		जाओ out_मुक्त;
+	पूर्ण
 
 	dir->tr = tr;
 	dir->ref_count = 1;
 	dir->nr_events = 1;
-	dir->subsystem = system;
-	file->system = dir;
+	dir->subप्रणाली = प्रणाली;
+	file->प्रणाली = dir;
 
-	/* the ftrace system is special, do not create enable or filter files */
-	if (strcmp(name, "ftrace") != 0) {
+	/* the ftrace प्रणाली is special, करो not create enable or filter files */
+	अगर (म_भेद(name, "ftrace") != 0) अणु
 
 		entry = tracefs_create_file("filter", 0644, dir->entry, dir,
-					    &ftrace_subsystem_filter_fops);
-		if (!entry) {
-			kfree(system->filter);
-			system->filter = NULL;
+					    &ftrace_subप्रणाली_filter_fops);
+		अगर (!entry) अणु
+			kमुक्त(प्रणाली->filter);
+			प्रणाली->filter = शून्य;
 			pr_warn("Could not create tracefs '%s/filter' entry\n", name);
-		}
+		पूर्ण
 
 		trace_create_file("enable", 0644, dir->entry, dir,
-				  &ftrace_system_enable_fops);
-	}
+				  &ftrace_प्रणाली_enable_fops);
+	पूर्ण
 
-	list_add(&dir->list, &tr->systems);
+	list_add(&dir->list, &tr->प्रणालीs);
 
-	return dir->entry;
+	वापस dir->entry;
 
- out_free:
-	kfree(dir);
+ out_मुक्त:
+	kमुक्त(dir);
  out_fail:
-	/* Only print this message if failed on memory allocation */
-	if (!dir || !system)
+	/* Only prपूर्णांक this message अगर failed on memory allocation */
+	अगर (!dir || !प्रणाली)
 		pr_warn("No memory to create event subsystem %s\n", name);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int
-event_define_fields(struct trace_event_call *call)
-{
-	struct list_head *head;
-	int ret = 0;
+अटल पूर्णांक
+event_define_fields(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा list_head *head;
+	पूर्णांक ret = 0;
 
 	/*
 	 * Other events may have the same class. Only update
-	 * the fields if they are not already defined.
+	 * the fields अगर they are not alपढ़ोy defined.
 	 */
 	head = trace_get_fields(call);
-	if (list_empty(head)) {
-		struct trace_event_fields *field = call->class->fields_array;
-		unsigned int offset = sizeof(struct trace_entry);
+	अगर (list_empty(head)) अणु
+		काष्ठा trace_event_fields *field = call->class->fields_array;
+		अचिन्हित पूर्णांक offset = माप(काष्ठा trace_entry);
 
-		for (; field->type; field++) {
-			if (field->type == TRACE_FUNCTION_TYPE) {
+		क्रम (; field->type; field++) अणु
+			अगर (field->type == TRACE_FUNCTION_TYPE) अणु
 				field->define_fields(call);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			offset = ALIGN(offset, field->align);
 			ret = trace_define_field(call, field->type, field->name,
 						 offset, field->size,
-						 field->is_signed, field->filter_type);
-			if (WARN_ON_ONCE(ret)) {
+						 field->is_चिन्हित, field->filter_type);
+			अगर (WARN_ON_ONCE(ret)) अणु
 				pr_err("error code is %d\n", ret);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			offset += field->size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-event_create_dir(struct dentry *parent, struct trace_event_file *file)
-{
-	struct trace_event_call *call = file->event_call;
-	struct trace_array *tr = file->tr;
-	struct dentry *d_events;
-	const char *name;
-	int ret;
+अटल पूर्णांक
+event_create_dir(काष्ठा dentry *parent, काष्ठा trace_event_file *file)
+अणु
+	काष्ठा trace_event_call *call = file->event_call;
+	काष्ठा trace_array *tr = file->tr;
+	काष्ठा dentry *d_events;
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
 
 	/*
-	 * If the trace point header did not define TRACE_SYSTEM
-	 * then the system would be called "TRACE_SYSTEM".
+	 * If the trace poपूर्णांक header did not define TRACE_SYSTEM
+	 * then the प्रणाली would be called "TRACE_SYSTEM".
 	 */
-	if (strcmp(call->class->system, TRACE_SYSTEM) != 0) {
-		d_events = event_subsystem_dir(tr, call->class->system, file, parent);
-		if (!d_events)
-			return -ENOMEM;
-	} else
+	अगर (म_भेद(call->class->प्रणाली, TRACE_SYSTEM) != 0) अणु
+		d_events = event_subप्रणाली_dir(tr, call->class->प्रणाली, file, parent);
+		अगर (!d_events)
+			वापस -ENOMEM;
+	पूर्ण अन्यथा
 		d_events = parent;
 
 	name = trace_event_name(call);
 	file->dir = tracefs_create_dir(name, d_events);
-	if (!file->dir) {
+	अगर (!file->dir) अणु
 		pr_warn("Could not create tracefs '%s' directory\n", name);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (call->class->reg && !(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
+	अगर (call->class->reg && !(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE))
 		trace_create_file("enable", 0644, file->dir, file,
 				  &ftrace_enable_fops);
 
-#ifdef CONFIG_PERF_EVENTS
-	if (call->event.type && call->class->reg)
+#अगर_घोषित CONFIG_PERF_EVENTS
+	अगर (call->event.type && call->class->reg)
 		trace_create_file("id", 0444, file->dir,
-				  (void *)(long)call->event.type,
+				  (व्योम *)(दीर्घ)call->event.type,
 				  &ftrace_event_id_fops);
-#endif
+#पूर्ण_अगर
 
 	ret = event_define_fields(call);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_warn("Could not initialize trace point events/%s\n", name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Only event directories that can be enabled should have
 	 * triggers or filters.
 	 */
-	if (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) {
+	अगर (!(call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)) अणु
 		trace_create_file("filter", 0644, file->dir, file,
 				  &ftrace_event_filter_fops);
 
 		trace_create_file("trigger", 0644, file->dir, file,
 				  &event_trigger_fops);
-	}
+	पूर्ण
 
-#ifdef CONFIG_HIST_TRIGGERS
+#अगर_घोषित CONFIG_HIST_TRIGGERS
 	trace_create_file("hist", 0444, file->dir, file,
 			  &event_hist_fops);
-#endif
-#ifdef CONFIG_HIST_TRIGGERS_DEBUG
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HIST_TRIGGERS_DEBUG
 	trace_create_file("hist_debug", 0444, file->dir, file,
 			  &event_hist_debug_fops);
-#endif
+#पूर्ण_अगर
 	trace_create_file("format", 0444, file->dir, call,
-			  &ftrace_event_format_fops);
+			  &ftrace_event_क्रमmat_fops);
 
-#ifdef CONFIG_TRACE_EVENT_INJECT
-	if (call->event.type && call->class->reg)
+#अगर_घोषित CONFIG_TRACE_EVENT_INJECT
+	अगर (call->event.type && call->class->reg)
 		trace_create_file("inject", 0200, file->dir, file,
 				  &event_inject_fops);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void remove_event_from_tracers(struct trace_event_call *call)
-{
-	struct trace_event_file *file;
-	struct trace_array *tr;
+अटल व्योम हटाओ_event_from_tracers(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_array *tr;
 
-	do_for_each_event_file_safe(tr, file) {
-		if (file->event_call != call)
-			continue;
+	करो_क्रम_each_event_file_safe(tr, file) अणु
+		अगर (file->event_call != call)
+			जारी;
 
-		remove_event_file_dir(file);
+		हटाओ_event_file_dir(file);
 		/*
-		 * The do_for_each_event_file_safe() is
-		 * a double loop. After finding the call for this
-		 * trace_array, we use break to jump to the next
+		 * The करो_क्रम_each_event_file_safe() is
+		 * a द्विगुन loop. After finding the call क्रम this
+		 * trace_array, we use अवरोध to jump to the next
 		 * trace_array.
 		 */
-		break;
-	} while_for_each_event_file();
-}
+		अवरोध;
+	पूर्ण जबतक_क्रम_each_event_file();
+पूर्ण
 
-static void event_remove(struct trace_event_call *call)
-{
-	struct trace_array *tr;
-	struct trace_event_file *file;
+अटल व्योम event_हटाओ(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr;
+	काष्ठा trace_event_file *file;
 
-	do_for_each_event_file(tr, file) {
-		if (file->event_call != call)
-			continue;
+	करो_क्रम_each_event_file(tr, file) अणु
+		अगर (file->event_call != call)
+			जारी;
 
-		if (file->flags & EVENT_FILE_FL_WAS_ENABLED)
+		अगर (file->flags & EVENT_खाता_FL_WAS_ENABLED)
 			tr->clear_trace = true;
 
 		ftrace_event_enable_disable(file, 0);
 		/*
-		 * The do_for_each_event_file() is
-		 * a double loop. After finding the call for this
-		 * trace_array, we use break to jump to the next
+		 * The करो_क्रम_each_event_file() is
+		 * a द्विगुन loop. After finding the call क्रम this
+		 * trace_array, we use अवरोध to jump to the next
 		 * trace_array.
 		 */
-		break;
-	} while_for_each_event_file();
+		अवरोध;
+	पूर्ण जबतक_क्रम_each_event_file();
 
-	if (call->event.funcs)
-		__unregister_trace_event(&call->event);
-	remove_event_from_tracers(call);
+	अगर (call->event.funcs)
+		__unरेजिस्टर_trace_event(&call->event);
+	हटाओ_event_from_tracers(call);
 	list_del(&call->list);
-}
+पूर्ण
 
-static int event_init(struct trace_event_call *call)
-{
-	int ret = 0;
-	const char *name;
+अटल पूर्णांक event_init(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक ret = 0;
+	स्थिर अक्षर *name;
 
 	name = trace_event_name(call);
-	if (WARN_ON(!name))
-		return -EINVAL;
+	अगर (WARN_ON(!name))
+		वापस -EINVAL;
 
-	if (call->class->raw_init) {
+	अगर (call->class->raw_init) अणु
 		ret = call->class->raw_init(call);
-		if (ret < 0 && ret != -ENOSYS)
+		अगर (ret < 0 && ret != -ENOSYS)
 			pr_warn("Could not initialize trace events/%s\n", name);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-__register_event(struct trace_event_call *call, struct module *mod)
-{
-	int ret;
+अटल पूर्णांक
+__रेजिस्टर_event(काष्ठा trace_event_call *call, काष्ठा module *mod)
+अणु
+	पूर्णांक ret;
 
 	ret = event_init(call);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	list_add(&call->list, &ftrace_events);
 	call->mod = mod;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *eval_replace(char *ptr, struct trace_eval_map *map, int len)
-{
-	int rlen;
-	int elen;
+अटल अक्षर *eval_replace(अक्षर *ptr, काष्ठा trace_eval_map *map, पूर्णांक len)
+अणु
+	पूर्णांक rlen;
+	पूर्णांक elen;
 
 	/* Find the length of the eval value as a string */
-	elen = snprintf(ptr, 0, "%ld", map->eval_value);
+	elen = snम_लिखो(ptr, 0, "%ld", map->eval_value);
 	/* Make sure there's enough room to replace the string with the value */
-	if (len < elen)
-		return NULL;
+	अगर (len < elen)
+		वापस शून्य;
 
-	snprintf(ptr, elen + 1, "%ld", map->eval_value);
+	snम_लिखो(ptr, elen + 1, "%ld", map->eval_value);
 
 	/* Get the rest of the string of ptr */
-	rlen = strlen(ptr + len);
-	memmove(ptr + elen, ptr + len, rlen);
+	rlen = म_माप(ptr + len);
+	स_हटाओ(ptr + elen, ptr + len, rlen);
 	/* Make sure we end the new string */
 	ptr[elen + rlen] = 0;
 
-	return ptr + elen;
-}
+	वापस ptr + elen;
+पूर्ण
 
-static void update_event_printk(struct trace_event_call *call,
-				struct trace_eval_map *map)
-{
-	char *ptr;
-	int quote = 0;
-	int len = strlen(map->eval_string);
+अटल व्योम update_event_prपूर्णांकk(काष्ठा trace_event_call *call,
+				काष्ठा trace_eval_map *map)
+अणु
+	अक्षर *ptr;
+	पूर्णांक quote = 0;
+	पूर्णांक len = म_माप(map->eval_string);
 
-	for (ptr = call->print_fmt; *ptr; ptr++) {
-		if (*ptr == '\\') {
+	क्रम (ptr = call->prपूर्णांक_fmt; *ptr; ptr++) अणु
+		अगर (*ptr == '\\') अणु
 			ptr++;
 			/* paranoid */
-			if (!*ptr)
-				break;
-			continue;
-		}
-		if (*ptr == '"') {
+			अगर (!*ptr)
+				अवरोध;
+			जारी;
+		पूर्ण
+		अगर (*ptr == '"') अणु
 			quote ^= 1;
-			continue;
-		}
-		if (quote)
-			continue;
-		if (isdigit(*ptr)) {
+			जारी;
+		पूर्ण
+		अगर (quote)
+			जारी;
+		अगर (है_अंक(*ptr)) अणु
 			/* skip numbers */
-			do {
+			करो अणु
 				ptr++;
-				/* Check for alpha chars like ULL */
-			} while (isalnum(*ptr));
-			if (!*ptr)
-				break;
+				/* Check क्रम alpha अक्षरs like ULL */
+			पूर्ण जबतक (है_अक्षर_अंक(*ptr));
+			अगर (!*ptr)
+				अवरोध;
 			/*
 			 * A number must have some kind of delimiter after
 			 * it, and we can ignore that too.
 			 */
-			continue;
-		}
-		if (isalpha(*ptr) || *ptr == '_') {
-			if (strncmp(map->eval_string, ptr, len) == 0 &&
-			    !isalnum(ptr[len]) && ptr[len] != '_') {
+			जारी;
+		पूर्ण
+		अगर (है_अक्षर(*ptr) || *ptr == '_') अणु
+			अगर (म_भेदन(map->eval_string, ptr, len) == 0 &&
+			    !है_अक्षर_अंक(ptr[len]) && ptr[len] != '_') अणु
 				ptr = eval_replace(ptr, map, len);
-				/* enum/sizeof string smaller than value */
-				if (WARN_ON_ONCE(!ptr))
-					return;
+				/* क्रमागत/माप string smaller than value */
+				अगर (WARN_ON_ONCE(!ptr))
+					वापस;
 				/*
 				 * No need to decrement here, as eval_replace()
-				 * returns the pointer to the character passed
+				 * वापसs the poपूर्णांकer to the अक्षरacter passed
 				 * the eval, and two evals can not be placed
 				 * back to back without something in between.
 				 * We can skip that something in between.
 				 */
-				continue;
-			}
+				जारी;
+			पूर्ण
 		skip_more:
-			do {
+			करो अणु
 				ptr++;
-			} while (isalnum(*ptr) || *ptr == '_');
-			if (!*ptr)
-				break;
+			पूर्ण जबतक (है_अक्षर_अंक(*ptr) || *ptr == '_');
+			अगर (!*ptr)
+				अवरोध;
 			/*
 			 * If what comes after this variable is a '.' or
-			 * '->' then we can continue to ignore that string.
+			 * '->' then we can जारी to ignore that string.
 			 */
-			if (*ptr == '.' || (ptr[0] == '-' && ptr[1] == '>')) {
+			अगर (*ptr == '.' || (ptr[0] == '-' && ptr[1] == '>')) अणु
 				ptr += *ptr == '.' ? 1 : 2;
-				if (!*ptr)
-					break;
-				goto skip_more;
-			}
+				अगर (!*ptr)
+					अवरोध;
+				जाओ skip_more;
+			पूर्ण
 			/*
 			 * Once again, we can skip the delimiter that came
 			 * after the string.
 			 */
-			continue;
-		}
-	}
-}
+			जारी;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void trace_event_eval_update(struct trace_eval_map **map, int len)
-{
-	struct trace_event_call *call, *p;
-	const char *last_system = NULL;
+व्योम trace_event_eval_update(काष्ठा trace_eval_map **map, पूर्णांक len)
+अणु
+	काष्ठा trace_event_call *call, *p;
+	स्थिर अक्षर *last_प्रणाली = शून्य;
 	bool first = false;
-	int last_i;
-	int i;
+	पूर्णांक last_i;
+	पूर्णांक i;
 
-	down_write(&trace_event_sem);
-	list_for_each_entry_safe(call, p, &ftrace_events, list) {
-		/* events are usually grouped together with systems */
-		if (!last_system || call->class->system != last_system) {
+	करोwn_ग_लिखो(&trace_event_sem);
+	list_क्रम_each_entry_safe(call, p, &ftrace_events, list) अणु
+		/* events are usually grouped together with प्रणालीs */
+		अगर (!last_प्रणाली || call->class->प्रणाली != last_प्रणाली) अणु
 			first = true;
 			last_i = 0;
-			last_system = call->class->system;
-		}
+			last_प्रणाली = call->class->प्रणाली;
+		पूर्ण
 
 		/*
-		 * Since calls are grouped by systems, the likelihood that the
-		 * next call in the iteration belongs to the same system as the
+		 * Since calls are grouped by प्रणालीs, the likelihood that the
+		 * next call in the iteration beदीर्घs to the same प्रणाली as the
 		 * previous call is high. As an optimization, we skip searching
-		 * for a map[] that matches the call's system if the last call
-		 * was from the same system. That's what last_i is for. If the
-		 * call has the same system as the previous call, then last_i
+		 * क्रम a map[] that matches the call's प्रणाली अगर the last call
+		 * was from the same प्रणाली. That's what last_i is क्रम. If the
+		 * call has the same प्रणाली as the previous call, then last_i
 		 * will be the index of the first map[] that has a matching
-		 * system.
+		 * प्रणाली.
 		 */
-		for (i = last_i; i < len; i++) {
-			if (call->class->system == map[i]->system) {
-				/* Save the first system if need be */
-				if (first) {
+		क्रम (i = last_i; i < len; i++) अणु
+			अगर (call->class->प्रणाली == map[i]->प्रणाली) अणु
+				/* Save the first प्रणाली अगर need be */
+				अगर (first) अणु
 					last_i = i;
 					first = false;
-				}
-				update_event_printk(call, map[i]);
-			}
-		}
-	}
-	up_write(&trace_event_sem);
-}
+				पूर्ण
+				update_event_prपूर्णांकk(call, map[i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	up_ग_लिखो(&trace_event_sem);
+पूर्ण
 
-static struct trace_event_file *
-trace_create_new_event(struct trace_event_call *call,
-		       struct trace_array *tr)
-{
-	struct trace_event_file *file;
+अटल काष्ठा trace_event_file *
+trace_create_new_event(काष्ठा trace_event_call *call,
+		       काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
 	file = kmem_cache_alloc(file_cachep, GFP_TRACE);
-	if (!file)
-		return NULL;
+	अगर (!file)
+		वापस शून्य;
 
 	file->event_call = call;
 	file->tr = tr;
 	atomic_set(&file->sm_ref, 0);
-	atomic_set(&file->tm_ref, 0);
+	atomic_set(&file->पंचांग_ref, 0);
 	INIT_LIST_HEAD(&file->triggers);
 	list_add(&file->list, &tr->events);
 
-	return file;
-}
+	वापस file;
+पूर्ण
 
 /* Add an event to a trace directory */
-static int
-__trace_add_new_event(struct trace_event_call *call, struct trace_array *tr)
-{
-	struct trace_event_file *file;
+अटल पूर्णांक
+__trace_add_new_event(काष्ठा trace_event_call *call, काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
 	file = trace_create_new_event(call, tr);
-	if (!file)
-		return -ENOMEM;
+	अगर (!file)
+		वापस -ENOMEM;
 
-	if (eventdir_initialized)
-		return event_create_dir(tr->event_dir, file);
-	else
-		return event_define_fields(call);
-}
+	अगर (eventdir_initialized)
+		वापस event_create_dir(tr->event_dir, file);
+	अन्यथा
+		वापस event_define_fields(call);
+पूर्ण
 
 /*
- * Just create a descriptor for early init. A descriptor is required
- * for enabling events at boot. We want to enable events before
- * the filesystem is initialized.
+ * Just create a descriptor क्रम early init. A descriptor is required
+ * क्रम enabling events at boot. We want to enable events beक्रमe
+ * the fileप्रणाली is initialized.
  */
-static int
-__trace_early_add_new_event(struct trace_event_call *call,
-			    struct trace_array *tr)
-{
-	struct trace_event_file *file;
+अटल पूर्णांक
+__trace_early_add_new_event(काष्ठा trace_event_call *call,
+			    काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
 
 	file = trace_create_new_event(call, tr);
-	if (!file)
-		return -ENOMEM;
+	अगर (!file)
+		वापस -ENOMEM;
 
-	return event_define_fields(call);
-}
+	वापस event_define_fields(call);
+पूर्ण
 
-struct ftrace_module_file_ops;
-static void __add_event_to_tracers(struct trace_event_call *call);
+काष्ठा ftrace_module_file_ops;
+अटल व्योम __add_event_to_tracers(काष्ठा trace_event_call *call);
 
 /* Add an additional event_call dynamically */
-int trace_add_event_call(struct trace_event_call *call)
-{
-	int ret;
-	lockdep_assert_held(&event_mutex);
+पूर्णांक trace_add_event_call(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक ret;
+	lockdep_निश्चित_held(&event_mutex);
 
 	mutex_lock(&trace_types_lock);
 
-	ret = __register_event(call, NULL);
-	if (ret >= 0)
+	ret = __रेजिस्टर_event(call, शून्य);
+	अगर (ret >= 0)
 		__add_event_to_tracers(call);
 
 	mutex_unlock(&trace_types_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Must be called under locking of trace_types_lock, event_mutex and
  * trace_event_sem.
  */
-static void __trace_remove_event_call(struct trace_event_call *call)
-{
-	event_remove(call);
+अटल व्योम __trace_हटाओ_event_call(काष्ठा trace_event_call *call)
+अणु
+	event_हटाओ(call);
 	trace_destroy_fields(call);
-	free_event_filter(call->filter);
-	call->filter = NULL;
-}
+	मुक्त_event_filter(call->filter);
+	call->filter = शून्य;
+पूर्ण
 
-static int probe_remove_event_call(struct trace_event_call *call)
-{
-	struct trace_array *tr;
-	struct trace_event_file *file;
+अटल पूर्णांक probe_हटाओ_event_call(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr;
+	काष्ठा trace_event_file *file;
 
-#ifdef CONFIG_PERF_EVENTS
-	if (call->perf_refcount)
-		return -EBUSY;
-#endif
-	do_for_each_event_file(tr, file) {
-		if (file->event_call != call)
-			continue;
+#अगर_घोषित CONFIG_PERF_EVENTS
+	अगर (call->perf_refcount)
+		वापस -EBUSY;
+#पूर्ण_अगर
+	करो_क्रम_each_event_file(tr, file) अणु
+		अगर (file->event_call != call)
+			जारी;
 		/*
 		 * We can't rely on ftrace_event_enable_disable(enable => 0)
-		 * we are going to do, EVENT_FILE_FL_SOFT_MODE can suppress
+		 * we are going to करो, EVENT_खाता_FL_SOFT_MODE can suppress
 		 * TRACE_REG_UNREGISTER.
 		 */
-		if (file->flags & EVENT_FILE_FL_ENABLED)
-			return -EBUSY;
+		अगर (file->flags & EVENT_खाता_FL_ENABLED)
+			वापस -EBUSY;
 		/*
-		 * The do_for_each_event_file_safe() is
-		 * a double loop. After finding the call for this
-		 * trace_array, we use break to jump to the next
+		 * The करो_क्रम_each_event_file_safe() is
+		 * a द्विगुन loop. After finding the call क्रम this
+		 * trace_array, we use अवरोध to jump to the next
 		 * trace_array.
 		 */
-		break;
-	} while_for_each_event_file();
+		अवरोध;
+	पूर्ण जबतक_क्रम_each_event_file();
 
-	__trace_remove_event_call(call);
+	__trace_हटाओ_event_call(call);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Remove an event_call */
-int trace_remove_event_call(struct trace_event_call *call)
-{
-	int ret;
+पूर्णांक trace_हटाओ_event_call(काष्ठा trace_event_call *call)
+अणु
+	पूर्णांक ret;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
 	mutex_lock(&trace_types_lock);
-	down_write(&trace_event_sem);
-	ret = probe_remove_event_call(call);
-	up_write(&trace_event_sem);
+	करोwn_ग_लिखो(&trace_event_sem);
+	ret = probe_हटाओ_event_call(call);
+	up_ग_लिखो(&trace_event_sem);
 	mutex_unlock(&trace_types_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define for_each_event(event, start, end)			\
-	for (event = start;					\
-	     (unsigned long)event < (unsigned long)end;		\
+#घोषणा क्रम_each_event(event, start, end)			\
+	क्रम (event = start;					\
+	     (अचिन्हित दीर्घ)event < (अचिन्हित दीर्घ)end;		\
 	     event++)
 
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 
-static void trace_module_add_events(struct module *mod)
-{
-	struct trace_event_call **call, **start, **end;
+अटल व्योम trace_module_add_events(काष्ठा module *mod)
+अणु
+	काष्ठा trace_event_call **call, **start, **end;
 
-	if (!mod->num_trace_events)
-		return;
+	अगर (!mod->num_trace_events)
+		वापस;
 
-	/* Don't add infrastructure for mods without tracepoints */
-	if (trace_module_has_bad_taint(mod)) {
+	/* Don't add infraकाष्ठाure क्रम mods without tracepoपूर्णांकs */
+	अगर (trace_module_has_bad_taपूर्णांक(mod)) अणु
 		pr_err("%s: module has bad taint, not creating trace events\n",
 		       mod->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	start = mod->trace_events;
 	end = mod->trace_events + mod->num_trace_events;
 
-	for_each_event(call, start, end) {
-		__register_event(*call, mod);
+	क्रम_each_event(call, start, end) अणु
+		__रेजिस्टर_event(*call, mod);
 		__add_event_to_tracers(*call);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void trace_module_remove_events(struct module *mod)
-{
-	struct trace_event_call *call, *p;
+अटल व्योम trace_module_हटाओ_events(काष्ठा module *mod)
+अणु
+	काष्ठा trace_event_call *call, *p;
 
-	down_write(&trace_event_sem);
-	list_for_each_entry_safe(call, p, &ftrace_events, list) {
-		if (call->mod == mod)
-			__trace_remove_event_call(call);
-	}
-	up_write(&trace_event_sem);
+	करोwn_ग_लिखो(&trace_event_sem);
+	list_क्रम_each_entry_safe(call, p, &ftrace_events, list) अणु
+		अगर (call->mod == mod)
+			__trace_हटाओ_event_call(call);
+	पूर्ण
+	up_ग_लिखो(&trace_event_sem);
 
 	/*
-	 * It is safest to reset the ring buffer if the module being unloaded
-	 * registered any events that were used. The only worry is if
-	 * a new module gets loaded, and takes on the same id as the events
-	 * of this module. When printing out the buffer, traced events left
+	 * It is safest to reset the ring buffer अगर the module being unloaded
+	 * रेजिस्टरed any events that were used. The only worry is अगर
+	 * a new module माला_लो loaded, and takes on the same id as the events
+	 * of this module. When prपूर्णांकing out the buffer, traced events left
 	 * over from this module may be passed to the new module events and
 	 * unexpected results may occur.
 	 */
 	tracing_reset_all_online_cpus();
-}
+पूर्ण
 
-static int trace_module_notify(struct notifier_block *self,
-			       unsigned long val, void *data)
-{
-	struct module *mod = data;
+अटल पूर्णांक trace_module_notअगरy(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	काष्ठा module *mod = data;
 
 	mutex_lock(&event_mutex);
 	mutex_lock(&trace_types_lock);
-	switch (val) {
-	case MODULE_STATE_COMING:
+	चयन (val) अणु
+	हाल MODULE_STATE_COMING:
 		trace_module_add_events(mod);
-		break;
-	case MODULE_STATE_GOING:
-		trace_module_remove_events(mod);
-		break;
-	}
+		अवरोध;
+	हाल MODULE_STATE_GOING:
+		trace_module_हटाओ_events(mod);
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&trace_types_lock);
 	mutex_unlock(&event_mutex);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block trace_module_nb = {
-	.notifier_call = trace_module_notify,
-	.priority = 1, /* higher than trace.c module notify */
-};
-#endif /* CONFIG_MODULES */
+अटल काष्ठा notअगरier_block trace_module_nb = अणु
+	.notअगरier_call = trace_module_notअगरy,
+	.priority = 1, /* higher than trace.c module notअगरy */
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MODULES */
 
-/* Create a new event directory structure for a trace directory. */
-static void
-__trace_add_event_dirs(struct trace_array *tr)
-{
-	struct trace_event_call *call;
-	int ret;
+/* Create a new event directory काष्ठाure क्रम a trace directory. */
+अटल व्योम
+__trace_add_event_dirs(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_call *call;
+	पूर्णांक ret;
 
-	list_for_each_entry(call, &ftrace_events, list) {
+	list_क्रम_each_entry(call, &ftrace_events, list) अणु
 		ret = __trace_add_new_event(call, tr);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_warn("Could not create directory for event %s\n",
 				trace_event_name(call));
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Returns any file that matches the system and event */
-struct trace_event_file *
-__find_event_file(struct trace_array *tr, const char *system, const char *event)
-{
-	struct trace_event_file *file;
-	struct trace_event_call *call;
-	const char *name;
+/* Returns any file that matches the प्रणाली and event */
+काष्ठा trace_event_file *
+__find_event_file(काष्ठा trace_array *tr, स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_event_call *call;
+	स्थिर अक्षर *name;
 
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 
 		call = file->event_call;
 		name = trace_event_name(call);
 
-		if (!name || !call->class)
-			continue;
+		अगर (!name || !call->class)
+			जारी;
 
-		if (strcmp(event, name) == 0 &&
-		    strcmp(system, call->class->system) == 0)
-			return file;
-	}
-	return NULL;
-}
+		अगर (म_भेद(event, name) == 0 &&
+		    म_भेद(प्रणाली, call->class->प्रणाली) == 0)
+			वापस file;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-/* Returns valid trace event files that match system and event */
-struct trace_event_file *
-find_event_file(struct trace_array *tr, const char *system, const char *event)
-{
-	struct trace_event_file *file;
+/* Returns valid trace event files that match प्रणाली and event */
+काष्ठा trace_event_file *
+find_event_file(काष्ठा trace_array *tr, स्थिर अक्षर *प्रणाली, स्थिर अक्षर *event)
+अणु
+	काष्ठा trace_event_file *file;
 
-	file = __find_event_file(tr, system, event);
-	if (!file || !file->event_call->class->reg ||
+	file = __find_event_file(tr, प्रणाली, event);
+	अगर (!file || !file->event_call->class->reg ||
 	    file->event_call->flags & TRACE_EVENT_FL_IGNORE_ENABLE)
-		return NULL;
+		वापस शून्य;
 
-	return file;
-}
+	वापस file;
+पूर्ण
 
 /**
- * trace_get_event_file - Find and return a trace event file
+ * trace_get_event_file - Find and वापस a trace event file
  * @instance: The name of the trace instance containing the event
- * @system: The name of the system containing the event
+ * @प्रणाली: The name of the प्रणाली containing the event
  * @event: The name of the event
  *
  * Return a trace event file given the trace instance name, trace
- * system, and trace event name.  If the instance name is NULL, it
+ * प्रणाली, and trace event name.  If the instance name is शून्य, it
  * refers to the top-level trace array.
  *
- * This function will look it up and return it if found, after calling
+ * This function will look it up and वापस it अगर found, after calling
  * trace_array_get() to prevent the instance from going away, and
  * increment the event's module refcount to prevent it from being
- * removed.
+ * हटाओd.
  *
  * To release the file, call trace_put_event_file(), which will call
  * trace_array_put() and decrement the event's module refcount.
  *
  * Return: The trace event on success, ERR_PTR otherwise.
  */
-struct trace_event_file *trace_get_event_file(const char *instance,
-					      const char *system,
-					      const char *event)
-{
-	struct trace_array *tr = top_trace_array();
-	struct trace_event_file *file = NULL;
-	int ret = -EINVAL;
+काष्ठा trace_event_file *trace_get_event_file(स्थिर अक्षर *instance,
+					      स्थिर अक्षर *प्रणाली,
+					      स्थिर अक्षर *event)
+अणु
+	काष्ठा trace_array *tr = top_trace_array();
+	काष्ठा trace_event_file *file = शून्य;
+	पूर्णांक ret = -EINVAL;
 
-	if (instance) {
+	अगर (instance) अणु
 		tr = trace_array_find_get(instance);
-		if (!tr)
-			return ERR_PTR(-ENOENT);
-	} else {
+		अगर (!tr)
+			वापस ERR_PTR(-ENOENT);
+	पूर्ण अन्यथा अणु
 		ret = trace_array_get(tr);
-		if (ret)
-			return ERR_PTR(ret);
-	}
+		अगर (ret)
+			वापस ERR_PTR(ret);
+	पूर्ण
 
 	mutex_lock(&event_mutex);
 
-	file = find_event_file(tr, system, event);
-	if (!file) {
+	file = find_event_file(tr, प्रणाली, event);
+	अगर (!file) अणु
 		trace_array_put(tr);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Don't let event modules unload while in use */
+	/* Don't let event modules unload जबतक in use */
 	ret = try_module_get(file->event_call->mod);
-	if (!ret) {
+	अगर (!ret) अणु
 		trace_array_put(tr);
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = 0;
  out:
 	mutex_unlock(&event_mutex);
 
-	if (ret)
+	अगर (ret)
 		file = ERR_PTR(ret);
 
-	return file;
-}
+	वापस file;
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_get_event_file);
 
 /**
@@ -3005,480 +3006,480 @@ EXPORT_SYMBOL_GPL(trace_get_event_file);
  * @file: The trace event file
  *
  * If a file was retrieved using trace_get_event_file(), this should
- * be called when it's no longer needed.  It will cancel the previous
+ * be called when it's no दीर्घer needed.  It will cancel the previous
  * trace_array_get() called by that function, and decrement the
  * event's module refcount.
  */
-void trace_put_event_file(struct trace_event_file *file)
-{
+व्योम trace_put_event_file(काष्ठा trace_event_file *file)
+अणु
 	mutex_lock(&event_mutex);
 	module_put(file->event_call->mod);
 	mutex_unlock(&event_mutex);
 
 	trace_array_put(file->tr);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(trace_put_event_file);
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 
-/* Avoid typos */
-#define ENABLE_EVENT_STR	"enable_event"
-#define DISABLE_EVENT_STR	"disable_event"
+/* Aव्योम typos */
+#घोषणा ENABLE_EVENT_STR	"enable_event"
+#घोषणा DISABLE_EVENT_STR	"disable_event"
 
-struct event_probe_data {
-	struct trace_event_file	*file;
-	unsigned long			count;
-	int				ref;
+काष्ठा event_probe_data अणु
+	काष्ठा trace_event_file	*file;
+	अचिन्हित दीर्घ			count;
+	पूर्णांक				ref;
 	bool				enable;
-};
+पूर्ण;
 
-static void update_event_probe(struct event_probe_data *data)
-{
-	if (data->enable)
-		clear_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &data->file->flags);
-	else
-		set_bit(EVENT_FILE_FL_SOFT_DISABLED_BIT, &data->file->flags);
-}
+अटल व्योम update_event_probe(काष्ठा event_probe_data *data)
+अणु
+	अगर (data->enable)
+		clear_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &data->file->flags);
+	अन्यथा
+		set_bit(EVENT_खाता_FL_SOFT_DISABLED_BIT, &data->file->flags);
+पूर्ण
 
-static void
-event_enable_probe(unsigned long ip, unsigned long parent_ip,
-		   struct trace_array *tr, struct ftrace_probe_ops *ops,
-		   void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	struct event_probe_data *edata;
-	void **pdata;
+अटल व्योम
+event_enable_probe(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		   काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		   व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	काष्ठा event_probe_data *edata;
+	व्योम **pdata;
 
 	pdata = ftrace_func_mapper_find_ip(mapper, ip);
-	if (!pdata || !*pdata)
-		return;
+	अगर (!pdata || !*pdata)
+		वापस;
 
 	edata = *pdata;
 	update_event_probe(edata);
-}
+पूर्ण
 
-static void
-event_enable_count_probe(unsigned long ip, unsigned long parent_ip,
-			 struct trace_array *tr, struct ftrace_probe_ops *ops,
-			 void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	struct event_probe_data *edata;
-	void **pdata;
+अटल व्योम
+event_enable_count_probe(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			 काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+			 व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	काष्ठा event_probe_data *edata;
+	व्योम **pdata;
 
 	pdata = ftrace_func_mapper_find_ip(mapper, ip);
-	if (!pdata || !*pdata)
-		return;
+	अगर (!pdata || !*pdata)
+		वापस;
 
 	edata = *pdata;
 
-	if (!edata->count)
-		return;
+	अगर (!edata->count)
+		वापस;
 
-	/* Skip if the event is in a state we want to switch to */
-	if (edata->enable == !(edata->file->flags & EVENT_FILE_FL_SOFT_DISABLED))
-		return;
+	/* Skip अगर the event is in a state we want to चयन to */
+	अगर (edata->enable == !(edata->file->flags & EVENT_खाता_FL_SOFT_DISABLED))
+		वापस;
 
-	if (edata->count != -1)
+	अगर (edata->count != -1)
 		(edata->count)--;
 
 	update_event_probe(edata);
-}
+पूर्ण
 
-static int
-event_enable_print(struct seq_file *m, unsigned long ip,
-		   struct ftrace_probe_ops *ops, void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	struct event_probe_data *edata;
-	void **pdata;
+अटल पूर्णांक
+event_enable_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+		   काष्ठा ftrace_probe_ops *ops, व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	काष्ठा event_probe_data *edata;
+	व्योम **pdata;
 
 	pdata = ftrace_func_mapper_find_ip(mapper, ip);
 
-	if (WARN_ON_ONCE(!pdata || !*pdata))
-		return 0;
+	अगर (WARN_ON_ONCE(!pdata || !*pdata))
+		वापस 0;
 
 	edata = *pdata;
 
-	seq_printf(m, "%ps:", (void *)ip);
+	seq_म_लिखो(m, "%ps:", (व्योम *)ip);
 
-	seq_printf(m, "%s:%s:%s",
+	seq_म_लिखो(m, "%s:%s:%s",
 		   edata->enable ? ENABLE_EVENT_STR : DISABLE_EVENT_STR,
-		   edata->file->event_call->class->system,
+		   edata->file->event_call->class->प्रणाली,
 		   trace_event_name(edata->file->event_call));
 
-	if (edata->count == -1)
-		seq_puts(m, ":unlimited\n");
-	else
-		seq_printf(m, ":count=%ld\n", edata->count);
+	अगर (edata->count == -1)
+		seq_माला_दो(m, ":unlimited\n");
+	अन्यथा
+		seq_म_लिखो(m, ":count=%ld\n", edata->count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-event_enable_init(struct ftrace_probe_ops *ops, struct trace_array *tr,
-		  unsigned long ip, void *init_data, void **data)
-{
-	struct ftrace_func_mapper *mapper = *data;
-	struct event_probe_data *edata = init_data;
-	int ret;
+अटल पूर्णांक
+event_enable_init(काष्ठा ftrace_probe_ops *ops, काष्ठा trace_array *tr,
+		  अचिन्हित दीर्घ ip, व्योम *init_data, व्योम **data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = *data;
+	काष्ठा event_probe_data *edata = init_data;
+	पूर्णांक ret;
 
-	if (!mapper) {
+	अगर (!mapper) अणु
 		mapper = allocate_ftrace_func_mapper();
-		if (!mapper)
-			return -ENODEV;
+		अगर (!mapper)
+			वापस -ENODEV;
 		*data = mapper;
-	}
+	पूर्ण
 
 	ret = ftrace_func_mapper_add_ip(mapper, ip, edata);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	edata->ref++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int free_probe_data(void *data)
-{
-	struct event_probe_data *edata = data;
+अटल पूर्णांक मुक्त_probe_data(व्योम *data)
+अणु
+	काष्ठा event_probe_data *edata = data;
 
 	edata->ref--;
-	if (!edata->ref) {
+	अगर (!edata->ref) अणु
 		/* Remove the SOFT_MODE flag */
 		__ftrace_event_enable_disable(edata->file, 0, 1);
 		module_put(edata->file->event_call->mod);
-		kfree(edata);
-	}
-	return 0;
-}
+		kमुक्त(edata);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-event_enable_free(struct ftrace_probe_ops *ops, struct trace_array *tr,
-		  unsigned long ip, void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	struct event_probe_data *edata;
+अटल व्योम
+event_enable_मुक्त(काष्ठा ftrace_probe_ops *ops, काष्ठा trace_array *tr,
+		  अचिन्हित दीर्घ ip, व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	काष्ठा event_probe_data *edata;
 
-	if (!ip) {
-		if (!mapper)
-			return;
-		free_ftrace_func_mapper(mapper, free_probe_data);
-		return;
-	}
+	अगर (!ip) अणु
+		अगर (!mapper)
+			वापस;
+		मुक्त_ftrace_func_mapper(mapper, मुक्त_probe_data);
+		वापस;
+	पूर्ण
 
-	edata = ftrace_func_mapper_remove_ip(mapper, ip);
+	edata = ftrace_func_mapper_हटाओ_ip(mapper, ip);
 
-	if (WARN_ON_ONCE(!edata))
-		return;
+	अगर (WARN_ON_ONCE(!edata))
+		वापस;
 
-	if (WARN_ON_ONCE(edata->ref <= 0))
-		return;
+	अगर (WARN_ON_ONCE(edata->ref <= 0))
+		वापस;
 
-	free_probe_data(edata);
-}
+	मुक्त_probe_data(edata);
+पूर्ण
 
-static struct ftrace_probe_ops event_enable_probe_ops = {
+अटल काष्ठा ftrace_probe_ops event_enable_probe_ops = अणु
 	.func			= event_enable_probe,
-	.print			= event_enable_print,
+	.prपूर्णांक			= event_enable_prपूर्णांक,
 	.init			= event_enable_init,
-	.free			= event_enable_free,
-};
+	.मुक्त			= event_enable_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops event_enable_count_probe_ops = {
+अटल काष्ठा ftrace_probe_ops event_enable_count_probe_ops = अणु
 	.func			= event_enable_count_probe,
-	.print			= event_enable_print,
+	.prपूर्णांक			= event_enable_prपूर्णांक,
 	.init			= event_enable_init,
-	.free			= event_enable_free,
-};
+	.मुक्त			= event_enable_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops event_disable_probe_ops = {
+अटल काष्ठा ftrace_probe_ops event_disable_probe_ops = अणु
 	.func			= event_enable_probe,
-	.print			= event_enable_print,
+	.prपूर्णांक			= event_enable_prपूर्णांक,
 	.init			= event_enable_init,
-	.free			= event_enable_free,
-};
+	.मुक्त			= event_enable_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops event_disable_count_probe_ops = {
+अटल काष्ठा ftrace_probe_ops event_disable_count_probe_ops = अणु
 	.func			= event_enable_count_probe,
-	.print			= event_enable_print,
+	.prपूर्णांक			= event_enable_prपूर्णांक,
 	.init			= event_enable_init,
-	.free			= event_enable_free,
-};
+	.मुक्त			= event_enable_मुक्त,
+पूर्ण;
 
-static int
-event_enable_func(struct trace_array *tr, struct ftrace_hash *hash,
-		  char *glob, char *cmd, char *param, int enabled)
-{
-	struct trace_event_file *file;
-	struct ftrace_probe_ops *ops;
-	struct event_probe_data *data;
-	const char *system;
-	const char *event;
-	char *number;
+अटल पूर्णांक
+event_enable_func(काष्ठा trace_array *tr, काष्ठा ftrace_hash *hash,
+		  अक्षर *glob, अक्षर *cmd, अक्षर *param, पूर्णांक enabled)
+अणु
+	काष्ठा trace_event_file *file;
+	काष्ठा ftrace_probe_ops *ops;
+	काष्ठा event_probe_data *data;
+	स्थिर अक्षर *प्रणाली;
+	स्थिर अक्षर *event;
+	अक्षर *number;
 	bool enable;
-	int ret;
+	पूर्णांक ret;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
 	/* hash funcs only work with set_ftrace_filter */
-	if (!enabled || !param)
-		return -EINVAL;
+	अगर (!enabled || !param)
+		वापस -EINVAL;
 
-	system = strsep(&param, ":");
-	if (!param)
-		return -EINVAL;
+	प्रणाली = strsep(&param, ":");
+	अगर (!param)
+		वापस -EINVAL;
 
 	event = strsep(&param, ":");
 
 	mutex_lock(&event_mutex);
 
 	ret = -EINVAL;
-	file = find_event_file(tr, system, event);
-	if (!file)
-		goto out;
+	file = find_event_file(tr, प्रणाली, event);
+	अगर (!file)
+		जाओ out;
 
-	enable = strcmp(cmd, ENABLE_EVENT_STR) == 0;
+	enable = म_भेद(cmd, ENABLE_EVENT_STR) == 0;
 
-	if (enable)
+	अगर (enable)
 		ops = param ? &event_enable_count_probe_ops : &event_enable_probe_ops;
-	else
+	अन्यथा
 		ops = param ? &event_disable_count_probe_ops : &event_disable_probe_ops;
 
-	if (glob[0] == '!') {
-		ret = unregister_ftrace_function_probe_func(glob+1, tr, ops);
-		goto out;
-	}
+	अगर (glob[0] == '!') अणु
+		ret = unरेजिस्टर_ftrace_function_probe_func(glob+1, tr, ops);
+		जाओ out;
+	पूर्ण
 
 	ret = -ENOMEM;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		goto out;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		जाओ out;
 
 	data->enable = enable;
 	data->count = -1;
 	data->file = file;
 
-	if (!param)
-		goto out_reg;
+	अगर (!param)
+		जाओ out_reg;
 
 	number = strsep(&param, ":");
 
 	ret = -EINVAL;
-	if (!strlen(number))
-		goto out_free;
+	अगर (!म_माप(number))
+		जाओ out_मुक्त;
 
 	/*
-	 * We use the callback data field (which is a pointer)
+	 * We use the callback data field (which is a poपूर्णांकer)
 	 * as our counter.
 	 */
-	ret = kstrtoul(number, 0, &data->count);
-	if (ret)
-		goto out_free;
+	ret = kम_से_अदीर्घ(number, 0, &data->count);
+	अगर (ret)
+		जाओ out_मुक्त;
 
  out_reg:
-	/* Don't let event modules unload while probe registered */
+	/* Don't let event modules unload जबतक probe रेजिस्टरed */
 	ret = try_module_get(file->event_call->mod);
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = -EBUSY;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = __ftrace_event_enable_disable(file, 1, 1);
-	if (ret < 0)
-		goto out_put;
+	अगर (ret < 0)
+		जाओ out_put;
 
-	ret = register_ftrace_function_probe(glob, tr, ops, data);
+	ret = रेजिस्टर_ftrace_function_probe(glob, tr, ops, data);
 	/*
-	 * The above returns on success the # of functions enabled,
-	 * but if it didn't find any functions it returns zero.
+	 * The above वापसs on success the # of functions enabled,
+	 * but अगर it didn't find any functions it वापसs zero.
 	 * Consider no functions a failure too.
 	 */
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = -ENOENT;
-		goto out_disable;
-	} else if (ret < 0)
-		goto out_disable;
-	/* Just return zero, not the number of enabled functions */
+		जाओ out_disable;
+	पूर्ण अन्यथा अगर (ret < 0)
+		जाओ out_disable;
+	/* Just वापस zero, not the number of enabled functions */
 	ret = 0;
  out:
 	mutex_unlock(&event_mutex);
-	return ret;
+	वापस ret;
 
  out_disable:
 	__ftrace_event_enable_disable(file, 0, 1);
  out_put:
 	module_put(file->event_call->mod);
- out_free:
-	kfree(data);
-	goto out;
-}
+ out_मुक्त:
+	kमुक्त(data);
+	जाओ out;
+पूर्ण
 
-static struct ftrace_func_command event_enable_cmd = {
+अटल काष्ठा ftrace_func_command event_enable_cmd = अणु
 	.name			= ENABLE_EVENT_STR,
 	.func			= event_enable_func,
-};
+पूर्ण;
 
-static struct ftrace_func_command event_disable_cmd = {
+अटल काष्ठा ftrace_func_command event_disable_cmd = अणु
 	.name			= DISABLE_EVENT_STR,
 	.func			= event_enable_func,
-};
+पूर्ण;
 
-static __init int register_event_cmds(void)
-{
-	int ret;
+अटल __init पूर्णांक रेजिस्टर_event_cmds(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_ftrace_command(&event_enable_cmd);
-	if (WARN_ON(ret < 0))
-		return ret;
-	ret = register_ftrace_command(&event_disable_cmd);
-	if (WARN_ON(ret < 0))
-		unregister_ftrace_command(&event_enable_cmd);
-	return ret;
-}
-#else
-static inline int register_event_cmds(void) { return 0; }
-#endif /* CONFIG_DYNAMIC_FTRACE */
+	ret = रेजिस्टर_ftrace_command(&event_enable_cmd);
+	अगर (WARN_ON(ret < 0))
+		वापस ret;
+	ret = रेजिस्टर_ftrace_command(&event_disable_cmd);
+	अगर (WARN_ON(ret < 0))
+		unरेजिस्टर_ftrace_command(&event_enable_cmd);
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक रेजिस्टर_event_cmds(व्योम) अणु वापस 0; पूर्ण
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
 
 /*
- * The top level array and trace arrays created by boot-time tracing
- * have already had its trace_event_file descriptors created in order
- * to allow for early events to be recorded.
+ * The top level array and trace arrays created by boot-समय tracing
+ * have alपढ़ोy had its trace_event_file descriptors created in order
+ * to allow क्रम early events to be recorded.
  * This function is called after the tracefs has been initialized,
  * and we now have to create the files associated to the events.
  */
-static void __trace_early_add_event_dirs(struct trace_array *tr)
-{
-	struct trace_event_file *file;
-	int ret;
+अटल व्योम __trace_early_add_event_dirs(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file;
+	पूर्णांक ret;
 
 
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 		ret = event_create_dir(tr->event_dir, file);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_warn("Could not create directory for event %s\n",
 				trace_event_name(file->event_call));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * For early boot up, the top trace array and the trace arrays created
- * by boot-time tracing require to have a list of events that can be
- * enabled. This must be done before the filesystem is set up in order
+ * by boot-समय tracing require to have a list of events that can be
+ * enabled. This must be करोne beक्रमe the fileप्रणाली is set up in order
  * to allow events to be traced early.
  */
-void __trace_early_add_events(struct trace_array *tr)
-{
-	struct trace_event_call *call;
-	int ret;
+व्योम __trace_early_add_events(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_call *call;
+	पूर्णांक ret;
 
-	list_for_each_entry(call, &ftrace_events, list) {
+	list_क्रम_each_entry(call, &ftrace_events, list) अणु
 		/* Early boot up should not have any modules loaded */
-		if (WARN_ON_ONCE(call->mod))
-			continue;
+		अगर (WARN_ON_ONCE(call->mod))
+			जारी;
 
 		ret = __trace_early_add_new_event(call, tr);
-		if (ret < 0)
+		अगर (ret < 0)
 			pr_warn("Could not create early event %s\n",
 				trace_event_name(call));
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Remove the event directory structure for a trace directory. */
-static void
-__trace_remove_event_dirs(struct trace_array *tr)
-{
-	struct trace_event_file *file, *next;
+/* Remove the event directory काष्ठाure क्रम a trace directory. */
+अटल व्योम
+__trace_हटाओ_event_dirs(काष्ठा trace_array *tr)
+अणु
+	काष्ठा trace_event_file *file, *next;
 
-	list_for_each_entry_safe(file, next, &tr->events, list)
-		remove_event_file_dir(file);
-}
+	list_क्रम_each_entry_safe(file, next, &tr->events, list)
+		हटाओ_event_file_dir(file);
+पूर्ण
 
-static void __add_event_to_tracers(struct trace_event_call *call)
-{
-	struct trace_array *tr;
+अटल व्योम __add_event_to_tracers(काष्ठा trace_event_call *call)
+अणु
+	काष्ठा trace_array *tr;
 
-	list_for_each_entry(tr, &ftrace_trace_arrays, list)
+	list_क्रम_each_entry(tr, &ftrace_trace_arrays, list)
 		__trace_add_new_event(call, tr);
-}
+पूर्ण
 
-extern struct trace_event_call *__start_ftrace_events[];
-extern struct trace_event_call *__stop_ftrace_events[];
+बाह्य काष्ठा trace_event_call *__start_ftrace_events[];
+बाह्य काष्ठा trace_event_call *__stop_ftrace_events[];
 
-static char bootup_event_buf[COMMAND_LINE_SIZE] __initdata;
+अटल अक्षर bootup_event_buf[COMMAND_LINE_SIZE] __initdata;
 
-static __init int setup_trace_event(char *str)
-{
+अटल __init पूर्णांक setup_trace_event(अक्षर *str)
+अणु
 	strlcpy(bootup_event_buf, str, COMMAND_LINE_SIZE);
 	ring_buffer_expanded = true;
 	disable_tracing_selftest("running event tracing");
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("trace_event=", setup_trace_event);
 
 /* Expects to have event_mutex held when called */
-static int
-create_event_toplevel_files(struct dentry *parent, struct trace_array *tr)
-{
-	struct dentry *d_events;
-	struct dentry *entry;
+अटल पूर्णांक
+create_event_toplevel_files(काष्ठा dentry *parent, काष्ठा trace_array *tr)
+अणु
+	काष्ठा dentry *d_events;
+	काष्ठा dentry *entry;
 
 	entry = tracefs_create_file("set_event", 0644, parent,
 				    tr, &ftrace_set_event_fops);
-	if (!entry) {
+	अगर (!entry) अणु
 		pr_warn("Could not create tracefs 'set_event' entry\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	d_events = tracefs_create_dir("events", parent);
-	if (!d_events) {
+	अगर (!d_events) अणु
 		pr_warn("Could not create tracefs 'events' directory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	entry = trace_create_file("enable", 0644, d_events,
 				  tr, &ftrace_tr_enable_fops);
-	if (!entry) {
+	अगर (!entry) अणु
 		pr_warn("Could not create tracefs 'enable' entry\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* There are not as crucial, just warn if they are not created */
+	/* There are not as crucial, just warn अगर they are not created */
 
 	entry = tracefs_create_file("set_event_pid", 0644, parent,
 				    tr, &ftrace_set_event_pid_fops);
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'set_event_pid' entry\n");
 
 	entry = tracefs_create_file("set_event_notrace_pid", 0644, parent,
 				    tr, &ftrace_set_event_notrace_pid_fops);
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'set_event_notrace_pid' entry\n");
 
-	/* ring buffer internal formats */
+	/* ring buffer पूर्णांकernal क्रमmats */
 	entry = trace_create_file("header_page", 0444, d_events,
-				  ring_buffer_print_page_header,
+				  ring_buffer_prपूर्णांक_page_header,
 				  &ftrace_show_header_fops);
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'header_page' entry\n");
 
 	entry = trace_create_file("header_event", 0444, d_events,
-				  ring_buffer_print_entry_header,
+				  ring_buffer_prपूर्णांक_entry_header,
 				  &ftrace_show_header_fops);
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'header_event' entry\n");
 
 	tr->event_dir = d_events;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * event_trace_add_tracer - add a instance of a trace_array to events
- * @parent: The parent dentry to place the files/directories for events in
+ * @parent: The parent dentry to place the files/directories क्रम events in
  * @tr: The trace array associated with these events
  *
  * When a new instance is created, it needs to set up its events
@@ -3489,57 +3490,57 @@ create_event_toplevel_files(struct dentry *parent, struct trace_array *tr)
  *
  * Must be called with event_mutex held.
  */
-int event_trace_add_tracer(struct dentry *parent, struct trace_array *tr)
-{
-	int ret;
+पूर्णांक event_trace_add_tracer(काष्ठा dentry *parent, काष्ठा trace_array *tr)
+अणु
+	पूर्णांक ret;
 
-	lockdep_assert_held(&event_mutex);
+	lockdep_निश्चित_held(&event_mutex);
 
 	ret = create_event_toplevel_files(parent, tr);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	down_write(&trace_event_sem);
-	/* If tr already has the event list, it is initialized in early boot. */
-	if (unlikely(!list_empty(&tr->events)))
+	करोwn_ग_लिखो(&trace_event_sem);
+	/* If tr alपढ़ोy has the event list, it is initialized in early boot. */
+	अगर (unlikely(!list_empty(&tr->events)))
 		__trace_early_add_event_dirs(tr);
-	else
+	अन्यथा
 		__trace_add_event_dirs(tr);
-	up_write(&trace_event_sem);
+	up_ग_लिखो(&trace_event_sem);
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * The top trace array already had its file descriptors created.
+ * The top trace array alपढ़ोy had its file descriptors created.
  * Now the files themselves need to be created.
  */
-static __init int
-early_event_add_tracer(struct dentry *parent, struct trace_array *tr)
-{
-	int ret;
+अटल __init पूर्णांक
+early_event_add_tracer(काष्ठा dentry *parent, काष्ठा trace_array *tr)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&event_mutex);
 
 	ret = create_event_toplevel_files(parent, tr);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
-	down_write(&trace_event_sem);
+	करोwn_ग_लिखो(&trace_event_sem);
 	__trace_early_add_event_dirs(tr);
-	up_write(&trace_event_sem);
+	up_ग_लिखो(&trace_event_sem);
 
  out_unlock:
 	mutex_unlock(&event_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Must be called with event_mutex held */
-int event_trace_del_tracer(struct trace_array *tr)
-{
-	lockdep_assert_held(&event_mutex);
+पूर्णांक event_trace_del_tracer(काष्ठा trace_array *tr)
+अणु
+	lockdep_निश्चित_held(&event_mutex);
 
 	/* Disable any event triggers and associated soft-disabled events */
 	clear_event_triggers(tr);
@@ -3548,77 +3549,77 @@ int event_trace_del_tracer(struct trace_array *tr)
 	__ftrace_clear_event_pids(tr, TRACE_PIDS | TRACE_NO_PIDS);
 
 	/* Disable any running events */
-	__ftrace_set_clr_event_nolock(tr, NULL, NULL, NULL, 0);
+	__ftrace_set_clr_event_nolock(tr, शून्य, शून्य, शून्य, 0);
 
 	/* Make sure no more events are being executed */
-	tracepoint_synchronize_unregister();
+	tracepoपूर्णांक_synchronize_unरेजिस्टर();
 
-	down_write(&trace_event_sem);
-	__trace_remove_event_dirs(tr);
-	tracefs_remove(tr->event_dir);
-	up_write(&trace_event_sem);
+	करोwn_ग_लिखो(&trace_event_sem);
+	__trace_हटाओ_event_dirs(tr);
+	tracefs_हटाओ(tr->event_dir);
+	up_ग_लिखो(&trace_event_sem);
 
-	tr->event_dir = NULL;
+	tr->event_dir = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int event_trace_memsetup(void)
-{
+अटल __init पूर्णांक event_trace_स_रखोup(व्योम)
+अणु
 	field_cachep = KMEM_CACHE(ftrace_event_field, SLAB_PANIC);
 	file_cachep = KMEM_CACHE(trace_event_file, SLAB_PANIC);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init void
-early_enable_events(struct trace_array *tr, bool disable_first)
-{
-	char *buf = bootup_event_buf;
-	char *token;
-	int ret;
+अटल __init व्योम
+early_enable_events(काष्ठा trace_array *tr, bool disable_first)
+अणु
+	अक्षर *buf = bootup_event_buf;
+	अक्षर *token;
+	पूर्णांक ret;
 
-	while (true) {
+	जबतक (true) अणु
 		token = strsep(&buf, ",");
 
-		if (!token)
-			break;
+		अगर (!token)
+			अवरोध;
 
-		if (*token) {
+		अगर (*token) अणु
 			/* Restarting syscalls requires that we stop them first */
-			if (disable_first)
+			अगर (disable_first)
 				ftrace_set_clr_event(tr, token, 0);
 
 			ret = ftrace_set_clr_event(tr, token, 1);
-			if (ret)
+			अगर (ret)
 				pr_warn("Failed to enable trace event: %s\n", token);
-		}
+		पूर्ण
 
 		/* Put back the comma to allow this to be called again */
-		if (buf)
+		अगर (buf)
 			*(buf - 1) = ',';
-	}
-}
+	पूर्ण
+पूर्ण
 
-static __init int event_trace_enable(void)
-{
-	struct trace_array *tr = top_trace_array();
-	struct trace_event_call **iter, *call;
-	int ret;
+अटल __init पूर्णांक event_trace_enable(व्योम)
+अणु
+	काष्ठा trace_array *tr = top_trace_array();
+	काष्ठा trace_event_call **iter, *call;
+	पूर्णांक ret;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
-	for_each_event(iter, __start_ftrace_events, __stop_ftrace_events) {
+	क्रम_each_event(iter, __start_ftrace_events, __stop_ftrace_events) अणु
 
 		call = *iter;
 		ret = event_init(call);
-		if (!ret)
+		अगर (!ret)
 			list_add(&call->list, &ftrace_events);
-	}
+	पूर्ण
 
 	/*
 	 * We need the top trace array to have a working set of trace
-	 * points at early init, before the debug files and directories
+	 * poपूर्णांकs at early init, beक्रमe the debug files and directories
 	 * are created. Create the file entries now, and attach them
 	 * to the actual file dentries later.
 	 */
@@ -3626,98 +3627,98 @@ static __init int event_trace_enable(void)
 
 	early_enable_events(tr, false);
 
-	trace_printk_start_comm();
+	trace_prपूर्णांकk_start_comm();
 
-	register_event_cmds();
+	रेजिस्टर_event_cmds();
 
-	register_trigger_cmds();
+	रेजिस्टर_trigger_cmds();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * event_trace_enable() is called from trace_event_init() first to
  * initialize events and perhaps start any events that are on the
- * command line. Unfortunately, there are some events that will not
- * start this early, like the system call tracepoints that need
+ * command line. Unक्रमtunately, there are some events that will not
+ * start this early, like the प्रणाली call tracepoपूर्णांकs that need
  * to set the %SYSCALL_WORK_SYSCALL_TRACEPOINT flag of pid 1. But
- * event_trace_enable() is called before pid 1 starts, and this flag
- * is never set, making the syscall tracepoint never get reached, but
- * the event is enabled regardless (and not doing anything).
+ * event_trace_enable() is called beक्रमe pid 1 starts, and this flag
+ * is never set, making the syscall tracepoपूर्णांक never get reached, but
+ * the event is enabled regardless (and not करोing anything).
  */
-static __init int event_trace_enable_again(void)
-{
-	struct trace_array *tr;
+अटल __init पूर्णांक event_trace_enable_again(व्योम)
+अणु
+	काष्ठा trace_array *tr;
 
 	tr = top_trace_array();
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
 	early_enable_events(tr, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_initcall(event_trace_enable_again);
 
-/* Init fields which doesn't related to the tracefs */
-static __init int event_trace_init_fields(void)
-{
-	if (trace_define_generic_fields())
+/* Init fields which करोesn't related to the tracefs */
+अटल __init पूर्णांक event_trace_init_fields(व्योम)
+अणु
+	अगर (trace_define_generic_fields())
 		pr_warn("tracing: Failed to allocated generic fields");
 
-	if (trace_define_common_fields())
+	अगर (trace_define_common_fields())
 		pr_warn("tracing: Failed to allocate common fields");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__init int event_trace_init(void)
-{
-	struct trace_array *tr;
-	struct dentry *entry;
-	int ret;
+__init पूर्णांक event_trace_init(व्योम)
+अणु
+	काष्ठा trace_array *tr;
+	काष्ठा dentry *entry;
+	पूर्णांक ret;
 
 	tr = top_trace_array();
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
-	entry = tracefs_create_file("available_events", 0444, NULL,
+	entry = tracefs_create_file("available_events", 0444, शून्य,
 				    tr, &ftrace_avail_fops);
-	if (!entry)
+	अगर (!entry)
 		pr_warn("Could not create tracefs 'available_events' entry\n");
 
-	ret = early_event_add_tracer(NULL, tr);
-	if (ret)
-		return ret;
+	ret = early_event_add_tracer(शून्य, tr);
+	अगर (ret)
+		वापस ret;
 
-#ifdef CONFIG_MODULES
-	ret = register_module_notifier(&trace_module_nb);
-	if (ret)
+#अगर_घोषित CONFIG_MODULES
+	ret = रेजिस्टर_module_notअगरier(&trace_module_nb);
+	अगर (ret)
 		pr_warn("Failed to register trace events module notifier\n");
-#endif
+#पूर्ण_अगर
 
 	eventdir_initialized = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init trace_event_init(void)
-{
-	event_trace_memsetup();
+व्योम __init trace_event_init(व्योम)
+अणु
+	event_trace_स_रखोup();
 	init_ftrace_syscalls();
 	event_trace_enable();
 	event_trace_init_fields();
-}
+पूर्ण
 
-#ifdef CONFIG_EVENT_TRACE_STARTUP_TEST
+#अगर_घोषित CONFIG_EVENT_TRACE_STARTUP_TEST
 
-static DEFINE_SPINLOCK(test_spinlock);
-static DEFINE_SPINLOCK(test_spinlock_irq);
-static DEFINE_MUTEX(test_mutex);
+अटल DEFINE_SPINLOCK(test_spinlock);
+अटल DEFINE_SPINLOCK(test_spinlock_irq);
+अटल DEFINE_MUTEX(test_mutex);
 
-static __init void test_work(struct work_struct *dummy)
-{
+अटल __init व्योम test_work(काष्ठा work_काष्ठा *dummy)
+अणु
 	spin_lock(&test_spinlock);
 	spin_lock_irq(&test_spinlock_irq);
 	udelay(1);
@@ -3727,186 +3728,186 @@ static __init void test_work(struct work_struct *dummy)
 	mutex_lock(&test_mutex);
 	msleep(1);
 	mutex_unlock(&test_mutex);
-}
+पूर्ण
 
-static __init int event_test_thread(void *unused)
-{
-	void *test_malloc;
+अटल __init पूर्णांक event_test_thपढ़ो(व्योम *unused)
+अणु
+	व्योम *test_दो_स्मृति;
 
-	test_malloc = kmalloc(1234, GFP_KERNEL);
-	if (!test_malloc)
+	test_दो_स्मृति = kदो_स्मृति(1234, GFP_KERNEL);
+	अगर (!test_दो_स्मृति)
 		pr_info("failed to kmalloc\n");
 
 	schedule_on_each_cpu(test_work);
 
-	kfree(test_malloc);
+	kमुक्त(test_दो_स्मृति);
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	while (!kthread_should_stop()) {
+	जबतक (!kthपढ़ो_should_stop()) अणु
 		schedule();
 		set_current_state(TASK_INTERRUPTIBLE);
-	}
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Do various things that may trigger events.
  */
-static __init void event_test_stuff(void)
-{
-	struct task_struct *test_thread;
+अटल __init व्योम event_test_stuff(व्योम)
+अणु
+	काष्ठा task_काष्ठा *test_thपढ़ो;
 
-	test_thread = kthread_run(event_test_thread, NULL, "test-events");
+	test_thपढ़ो = kthपढ़ो_run(event_test_thपढ़ो, शून्य, "test-events");
 	msleep(1);
-	kthread_stop(test_thread);
-}
+	kthपढ़ो_stop(test_thपढ़ो);
+पूर्ण
 
 /*
- * For every trace event defined, we will test each trace point separately,
- * and then by groups, and finally all trace points.
+ * For every trace event defined, we will test each trace poपूर्णांक separately,
+ * and then by groups, and finally all trace poपूर्णांकs.
  */
-static __init void event_trace_self_tests(void)
-{
-	struct trace_subsystem_dir *dir;
-	struct trace_event_file *file;
-	struct trace_event_call *call;
-	struct event_subsystem *system;
-	struct trace_array *tr;
-	int ret;
+अटल __init व्योम event_trace_self_tests(व्योम)
+अणु
+	काष्ठा trace_subप्रणाली_dir *dir;
+	काष्ठा trace_event_file *file;
+	काष्ठा trace_event_call *call;
+	काष्ठा event_subप्रणाली *प्रणाली;
+	काष्ठा trace_array *tr;
+	पूर्णांक ret;
 
 	tr = top_trace_array();
-	if (!tr)
-		return;
+	अगर (!tr)
+		वापस;
 
 	pr_info("Running tests on trace events:\n");
 
-	list_for_each_entry(file, &tr->events, list) {
+	list_क्रम_each_entry(file, &tr->events, list) अणु
 
 		call = file->event_call;
 
 		/* Only test those that have a probe */
-		if (!call->class || !call->class->probe)
-			continue;
+		अगर (!call->class || !call->class->probe)
+			जारी;
 
 /*
  * Testing syscall events here is pretty useless, but
- * we still do it if configured. But this is time consuming.
- * What we really need is a user thread to perform the
+ * we still करो it अगर configured. But this is समय consuming.
+ * What we really need is a user thपढ़ो to perक्रमm the
  * syscalls as we test.
  */
-#ifndef CONFIG_EVENT_TRACE_TEST_SYSCALLS
-		if (call->class->system &&
-		    strcmp(call->class->system, "syscalls") == 0)
-			continue;
-#endif
+#अगर_अघोषित CONFIG_EVENT_TRACE_TEST_SYSCALLS
+		अगर (call->class->प्रणाली &&
+		    म_भेद(call->class->प्रणाली, "syscalls") == 0)
+			जारी;
+#पूर्ण_अगर
 
 		pr_info("Testing event %s: ", trace_event_name(call));
 
 		/*
-		 * If an event is already enabled, someone is using
+		 * If an event is alपढ़ोy enabled, someone is using
 		 * it and the self test should not be on.
 		 */
-		if (file->flags & EVENT_FILE_FL_ENABLED) {
+		अगर (file->flags & EVENT_खाता_FL_ENABLED) अणु
 			pr_warn("Enabled event during self test!\n");
 			WARN_ON_ONCE(1);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ftrace_event_enable_disable(file, 1);
 		event_test_stuff();
 		ftrace_event_enable_disable(file, 0);
 
 		pr_cont("OK\n");
-	}
+	पूर्ण
 
-	/* Now test at the sub system level */
+	/* Now test at the sub प्रणाली level */
 
 	pr_info("Running tests on trace event systems:\n");
 
-	list_for_each_entry(dir, &tr->systems, list) {
+	list_क्रम_each_entry(dir, &tr->प्रणालीs, list) अणु
 
-		system = dir->subsystem;
+		प्रणाली = dir->subप्रणाली;
 
-		/* the ftrace system is special, skip it */
-		if (strcmp(system->name, "ftrace") == 0)
-			continue;
+		/* the ftrace प्रणाली is special, skip it */
+		अगर (म_भेद(प्रणाली->name, "ftrace") == 0)
+			जारी;
 
-		pr_info("Testing event system %s: ", system->name);
+		pr_info("Testing event system %s: ", प्रणाली->name);
 
-		ret = __ftrace_set_clr_event(tr, NULL, system->name, NULL, 1);
-		if (WARN_ON_ONCE(ret)) {
+		ret = __ftrace_set_clr_event(tr, शून्य, प्रणाली->name, शून्य, 1);
+		अगर (WARN_ON_ONCE(ret)) अणु
 			pr_warn("error enabling system %s\n",
-				system->name);
-			continue;
-		}
+				प्रणाली->name);
+			जारी;
+		पूर्ण
 
 		event_test_stuff();
 
-		ret = __ftrace_set_clr_event(tr, NULL, system->name, NULL, 0);
-		if (WARN_ON_ONCE(ret)) {
+		ret = __ftrace_set_clr_event(tr, शून्य, प्रणाली->name, शून्य, 0);
+		अगर (WARN_ON_ONCE(ret)) अणु
 			pr_warn("error disabling system %s\n",
-				system->name);
-			continue;
-		}
+				प्रणाली->name);
+			जारी;
+		पूर्ण
 
 		pr_cont("OK\n");
-	}
+	पूर्ण
 
 	/* Test with all events enabled */
 
 	pr_info("Running tests on all trace events:\n");
 	pr_info("Testing all events: ");
 
-	ret = __ftrace_set_clr_event(tr, NULL, NULL, NULL, 1);
-	if (WARN_ON_ONCE(ret)) {
+	ret = __ftrace_set_clr_event(tr, शून्य, शून्य, शून्य, 1);
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error enabling all events\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	event_test_stuff();
 
 	/* reset sysname */
-	ret = __ftrace_set_clr_event(tr, NULL, NULL, NULL, 0);
-	if (WARN_ON_ONCE(ret)) {
+	ret = __ftrace_set_clr_event(tr, शून्य, शून्य, शून्य, 0);
+	अगर (WARN_ON_ONCE(ret)) अणु
 		pr_warn("error disabling all events\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_cont("OK\n");
-}
+पूर्ण
 
-#ifdef CONFIG_FUNCTION_TRACER
+#अगर_घोषित CONFIG_FUNCTION_TRACER
 
-static DEFINE_PER_CPU(atomic_t, ftrace_test_event_disable);
+अटल DEFINE_PER_CPU(atomic_t, ftrace_test_event_disable);
 
-static struct trace_event_file event_trace_file __initdata;
+अटल काष्ठा trace_event_file event_trace_file __initdata;
 
-static void __init
-function_test_events_call(unsigned long ip, unsigned long parent_ip,
-			  struct ftrace_ops *op, struct ftrace_regs *regs)
-{
-	struct trace_buffer *buffer;
-	struct ring_buffer_event *event;
-	struct ftrace_entry *entry;
-	unsigned int trace_ctx;
-	long disabled;
-	int cpu;
+अटल व्योम __init
+function_test_events_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			  काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *regs)
+अणु
+	काष्ठा trace_buffer *buffer;
+	काष्ठा ring_buffer_event *event;
+	काष्ठा ftrace_entry *entry;
+	अचिन्हित पूर्णांक trace_ctx;
+	दीर्घ disabled;
+	पूर्णांक cpu;
 
 	trace_ctx = tracing_gen_ctx();
 	preempt_disable_notrace();
 	cpu = raw_smp_processor_id();
-	disabled = atomic_inc_return(&per_cpu(ftrace_test_event_disable, cpu));
+	disabled = atomic_inc_वापस(&per_cpu(ftrace_test_event_disable, cpu));
 
-	if (disabled != 1)
-		goto out;
+	अगर (disabled != 1)
+		जाओ out;
 
 	event = trace_event_buffer_lock_reserve(&buffer, &event_trace_file,
-						TRACE_FN, sizeof(*entry),
+						TRACE_FN, माप(*entry),
 						trace_ctx);
-	if (!event)
-		goto out;
+	अगर (!event)
+		जाओ out;
 	entry	= ring_buffer_event_data(event);
 	entry->ip			= ip;
 	entry->parent_ip		= parent_ip;
@@ -3916,46 +3917,46 @@ function_test_events_call(unsigned long ip, unsigned long parent_ip,
  out:
 	atomic_dec(&per_cpu(ftrace_test_event_disable, cpu));
 	preempt_enable_notrace();
-}
+पूर्ण
 
-static struct ftrace_ops trace_ops __initdata  =
-{
+अटल काष्ठा ftrace_ops trace_ops __initdata  =
+अणु
 	.func = function_test_events_call,
-};
+पूर्ण;
 
-static __init void event_trace_self_test_with_function(void)
-{
-	int ret;
+अटल __init व्योम event_trace_self_test_with_function(व्योम)
+अणु
+	पूर्णांक ret;
 
 	event_trace_file.tr = top_trace_array();
-	if (WARN_ON(!event_trace_file.tr))
-		return;
+	अगर (WARN_ON(!event_trace_file.tr))
+		वापस;
 
-	ret = register_ftrace_function(&trace_ops);
-	if (WARN_ON(ret < 0)) {
+	ret = रेजिस्टर_ftrace_function(&trace_ops);
+	अगर (WARN_ON(ret < 0)) अणु
 		pr_info("Failed to enable function tracer for event tests\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	pr_info("Running tests again, along with the function tracer\n");
 	event_trace_self_tests();
-	unregister_ftrace_function(&trace_ops);
-}
-#else
-static __init void event_trace_self_test_with_function(void)
-{
-}
-#endif
+	unरेजिस्टर_ftrace_function(&trace_ops);
+पूर्ण
+#अन्यथा
+अटल __init व्योम event_trace_self_test_with_function(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static __init int event_trace_self_tests_init(void)
-{
-	if (!tracing_selftest_disabled) {
+अटल __init पूर्णांक event_trace_self_tests_init(व्योम)
+अणु
+	अगर (!tracing_selftest_disabled) अणु
 		event_trace_self_tests();
 		event_trace_self_test_with_function();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(event_trace_self_tests_init);
 
-#endif
+#पूर्ण_अगर

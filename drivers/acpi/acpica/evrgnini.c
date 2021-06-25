@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: evrgnini- ACPI address_space (op_region) init
@@ -7,86 +8,86 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acevents.h"
-#include "acnamesp.h"
-#include "acinterp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acevents.h"
+#समावेश "acnamesp.h"
+#समावेश "acinterp.h"
 
-#define _COMPONENT          ACPI_EVENTS
+#घोषणा _COMPONENT          ACPI_EVENTS
 ACPI_MODULE_NAME("evrgnini")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ev_system_memory_region_setup
+ * FUNCTION:    acpi_ev_प्रणाली_memory_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Setup a system_memory operation region
+ * DESCRIPTION: Setup a प्रणाली_memory operation region
  *
  ******************************************************************************/
 acpi_status
-acpi_ev_system_memory_region_setup(acpi_handle handle,
+acpi_ev_प्रणाली_memory_region_setup(acpi_handle handle,
 				   u32 function,
-				   void *handler_context, void **region_context)
-{
-	union acpi_operand_object *region_desc =
-	    (union acpi_operand_object *)handle;
-	struct acpi_mem_space_context *local_region_context;
-	struct acpi_mem_mapping *mm;
+				   व्योम *handler_context, व्योम **region_context)
+अणु
+	जोड़ acpi_opeअक्रम_object *region_desc =
+	    (जोड़ acpi_opeअक्रम_object *)handle;
+	काष्ठा acpi_mem_space_context *local_region_context;
+	काष्ठा acpi_mem_mapping *mm;
 
-	ACPI_FUNCTION_TRACE(ev_system_memory_region_setup);
+	ACPI_FUNCTION_TRACE(ev_प्रणाली_memory_region_setup);
 
-	if (function == ACPI_REGION_DEACTIVATE) {
-		if (*region_context) {
+	अगर (function == ACPI_REGION_DEACTIVATE) अणु
+		अगर (*region_context) अणु
 			local_region_context =
-			    (struct acpi_mem_space_context *)*region_context;
+			    (काष्ठा acpi_mem_space_context *)*region_context;
 
-			/* Delete memory mappings if present */
+			/* Delete memory mappings अगर present */
 
-			while (local_region_context->first_mm) {
+			जबतक (local_region_context->first_mm) अणु
 				mm = local_region_context->first_mm;
 				local_region_context->first_mm = mm->next_mm;
 				acpi_os_unmap_memory(mm->logical_address,
 						     mm->length);
 				ACPI_FREE(mm);
-			}
+			पूर्ण
 			ACPI_FREE(local_region_context);
-			*region_context = NULL;
-		}
-		return_ACPI_STATUS(AE_OK);
-	}
+			*region_context = शून्य;
+		पूर्ण
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Create a new context */
 
 	local_region_context =
-	    ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_mem_space_context));
-	if (!(local_region_context)) {
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+	    ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_mem_space_context));
+	अगर (!(local_region_context)) अणु
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
-	/* Save the region length and address for use in the handler */
+	/* Save the region length and address क्रम use in the handler */
 
 	local_region_context->length = region_desc->region.length;
 	local_region_context->address = region_desc->region.address;
 
 	*region_context = local_region_context;
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_io_space_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
@@ -97,27 +98,27 @@ acpi_ev_system_memory_region_setup(acpi_handle handle,
 acpi_status
 acpi_ev_io_space_region_setup(acpi_handle handle,
 			      u32 function,
-			      void *handler_context, void **region_context)
-{
+			      व्योम *handler_context, व्योम **region_context)
+अणु
 	ACPI_FUNCTION_TRACE(ev_io_space_region_setup);
 
-	if (function == ACPI_REGION_DEACTIVATE) {
-		*region_context = NULL;
-	} else {
+	अगर (function == ACPI_REGION_DEACTIVATE) अणु
+		*region_context = शून्य;
+	पूर्ण अन्यथा अणु
 		*region_context = handler_context;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_pci_config_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
@@ -130,39 +131,39 @@ acpi_ev_io_space_region_setup(acpi_handle handle,
 acpi_status
 acpi_ev_pci_config_region_setup(acpi_handle handle,
 				u32 function,
-				void *handler_context, void **region_context)
-{
+				व्योम *handler_context, व्योम **region_context)
+अणु
 	acpi_status status = AE_OK;
 	u64 pci_value;
-	struct acpi_pci_id *pci_id = *region_context;
-	union acpi_operand_object *handler_obj;
-	struct acpi_namespace_node *parent_node;
-	struct acpi_namespace_node *pci_root_node;
-	struct acpi_namespace_node *pci_device_node;
-	union acpi_operand_object *region_obj =
-	    (union acpi_operand_object *)handle;
+	काष्ठा acpi_pci_id *pci_id = *region_context;
+	जोड़ acpi_opeअक्रम_object *handler_obj;
+	काष्ठा acpi_namespace_node *parent_node;
+	काष्ठा acpi_namespace_node *pci_root_node;
+	काष्ठा acpi_namespace_node *pci_device_node;
+	जोड़ acpi_opeअक्रम_object *region_obj =
+	    (जोड़ acpi_opeअक्रम_object *)handle;
 
 	ACPI_FUNCTION_TRACE(ev_pci_config_region_setup);
 
 	handler_obj = region_obj->region.handler;
-	if (!handler_obj) {
+	अगर (!handler_obj) अणु
 		/*
 		 * No installed handler. This shouldn't happen because the dispatch
-		 * routine checks before we get here, but we check again just in case.
+		 * routine checks beक्रमe we get here, but we check again just in हाल.
 		 */
 		ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 				  "Attempting to init a region %p, with no handler\n",
 				  region_obj));
-		return_ACPI_STATUS(AE_NOT_EXIST);
-	}
+		वापस_ACPI_STATUS(AE_NOT_EXIST);
+	पूर्ण
 
-	*region_context = NULL;
-	if (function == ACPI_REGION_DEACTIVATE) {
-		if (pci_id) {
+	*region_context = शून्य;
+	अगर (function == ACPI_REGION_DEACTIVATE) अणु
+		अगर (pci_id) अणु
 			ACPI_FREE(pci_id);
-		}
-		return_ACPI_STATUS(status);
-	}
+		पूर्ण
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	parent_node = region_obj->region.node->parent;
 
@@ -171,68 +172,68 @@ acpi_ev_pci_config_region_setup(acpi_handle handle,
 	 * is installed.
 	 *
 	 * We need to get the _SEG and _BBN objects relative to the PCI BUS device.
-	 * This is the device the handler has been registered to handle.
+	 * This is the device the handler has been रेजिस्टरed to handle.
 	 */
 
 	/*
-	 * If the address_space.Node is still pointing to the root, we need
-	 * to scan upward for a PCI Root bridge and re-associate the op_region
+	 * If the address_space.Node is still poपूर्णांकing to the root, we need
+	 * to scan upward क्रम a PCI Root bridge and re-associate the op_region
 	 * handlers with that device.
 	 */
-	if (handler_obj->address_space.node == acpi_gbl_root_node) {
+	अगर (handler_obj->address_space.node == acpi_gbl_root_node) अणु
 
 		/* Start search from the parent object */
 
 		pci_root_node = parent_node;
-		while (pci_root_node != acpi_gbl_root_node) {
+		जबतक (pci_root_node != acpi_gbl_root_node) अणु
 
 			/* Get the _HID/_CID in order to detect a root_bridge */
 
-			if (acpi_ev_is_pci_root_bridge(pci_root_node)) {
+			अगर (acpi_ev_is_pci_root_bridge(pci_root_node)) अणु
 
-				/* Install a handler for this PCI root bridge */
+				/* Install a handler क्रम this PCI root bridge */
 
-				status = acpi_install_address_space_handler((acpi_handle)pci_root_node, ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, NULL, NULL);
-				if (ACPI_FAILURE(status)) {
-					if (status == AE_SAME_HANDLER) {
+				status = acpi_install_address_space_handler((acpi_handle)pci_root_node, ACPI_ADR_SPACE_PCI_CONFIG, ACPI_DEFAULT_HANDLER, शून्य, शून्य);
+				अगर (ACPI_FAILURE(status)) अणु
+					अगर (status == AE_SAME_HANDLER) अणु
 						/*
-						 * It is OK if the handler is already installed on the
-						 * root bridge. Still need to return a context object
-						 * for the new PCI_Config operation region, however.
+						 * It is OK अगर the handler is alपढ़ोy installed on the
+						 * root bridge. Still need to वापस a context object
+						 * क्रम the new PCI_Config operation region, however.
 						 */
-					} else {
+					पूर्ण अन्यथा अणु
 						ACPI_EXCEPTION((AE_INFO, status,
 								"Could not install PciConfig handler "
 								"for Root Bridge %4.4s",
 								acpi_ut_get_node_name
 								(pci_root_node)));
-					}
-				}
-				break;
-			}
+					पूर्ण
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
 			pci_root_node = pci_root_node->parent;
-		}
+		पूर्ण
 
 		/* PCI root bridge not found, use namespace root node */
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_root_node = handler_obj->address_space.node;
-	}
+	पूर्ण
 
 	/*
-	 * If this region is now initialized, we are done.
+	 * If this region is now initialized, we are करोne.
 	 * (install_address_space_handler could have initialized it)
 	 */
-	if (region_obj->region.flags & AOPOBJ_SETUP_COMPLETE) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (region_obj->region.flags & AOPOBJ_SETUP_COMPLETE) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Region is still not initialized. Create a new context */
 
-	pci_id = ACPI_ALLOCATE_ZEROED(sizeof(struct acpi_pci_id));
-	if (!pci_id) {
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+	pci_id = ACPI_ALLOCATE_ZEROED(माप(काष्ठा acpi_pci_id));
+	अगर (!pci_id) अणु
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
 	/*
 	 * For PCI_Config space access, we need the segment, bus, device and
@@ -242,14 +243,14 @@ acpi_ev_pci_config_region_setup(acpi_handle handle,
 	 * within a subscope under the device, such as a control method.)
 	 */
 	pci_device_node = region_obj->region.node;
-	while (pci_device_node && (pci_device_node->type != ACPI_TYPE_DEVICE)) {
+	जबतक (pci_device_node && (pci_device_node->type != ACPI_TYPE_DEVICE)) अणु
 		pci_device_node = pci_device_node->parent;
-	}
+	पूर्ण
 
-	if (!pci_device_node) {
+	अगर (!pci_device_node) अणु
 		ACPI_FREE(pci_id);
-		return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-	}
+		वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+	पूर्ण
 
 	/*
 	 * Get the PCI device and function numbers from the _ADR object
@@ -259,43 +260,43 @@ acpi_ev_pci_config_region_setup(acpi_handle handle,
 						 pci_device_node, &pci_value);
 
 	/*
-	 * The default is zero, and since the allocation above zeroed the data,
-	 * just do nothing on failure.
+	 * The शेष is zero, and since the allocation above zeroed the data,
+	 * just करो nothing on failure.
 	 */
-	if (ACPI_SUCCESS(status)) {
+	अगर (ACPI_SUCCESS(status)) अणु
 		pci_id->device = ACPI_HIWORD(ACPI_LODWORD(pci_value));
 		pci_id->function = ACPI_LOWORD(ACPI_LODWORD(pci_value));
-	}
+	पूर्ण
 
 	/* The PCI segment number comes from the _SEG method */
 
 	status = acpi_ut_evaluate_numeric_object(METHOD_NAME__SEG,
 						 pci_root_node, &pci_value);
-	if (ACPI_SUCCESS(status)) {
+	अगर (ACPI_SUCCESS(status)) अणु
 		pci_id->segment = ACPI_LOWORD(pci_value);
-	}
+	पूर्ण
 
 	/* The PCI bus number comes from the _BBN method */
 
 	status = acpi_ut_evaluate_numeric_object(METHOD_NAME__BBN,
 						 pci_root_node, &pci_value);
-	if (ACPI_SUCCESS(status)) {
+	अगर (ACPI_SUCCESS(status)) अणु
 		pci_id->bus = ACPI_LOWORD(pci_value);
-	}
+	पूर्ण
 
-	/* Complete/update the PCI ID for this device */
+	/* Complete/update the PCI ID क्रम this device */
 
 	status =
 	    acpi_hw_derive_pci_id(pci_id, pci_root_node,
 				  region_obj->region.node);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_FREE(pci_id);
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	*region_context = pci_id;
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -303,63 +304,63 @@ acpi_ev_pci_config_region_setup(acpi_handle handle,
  *
  * PARAMETERS:  node            - Device node being examined
  *
- * RETURN:      TRUE if device is a PCI/PCI-Express Root Bridge
+ * RETURN:      TRUE अगर device is a PCI/PCI-Express Root Bridge
  *
- * DESCRIPTION: Determine if the input device represents a PCI Root Bridge by
- *              examining the _HID and _CID for the device.
+ * DESCRIPTION: Determine अगर the input device represents a PCI Root Bridge by
+ *              examining the _HID and _CID क्रम the device.
  *
  ******************************************************************************/
 
-u8 acpi_ev_is_pci_root_bridge(struct acpi_namespace_node *node)
-{
+u8 acpi_ev_is_pci_root_bridge(काष्ठा acpi_namespace_node *node)
+अणु
 	acpi_status status;
-	struct acpi_pnp_device_id *hid;
-	struct acpi_pnp_device_id_list *cid;
+	काष्ठा acpi_pnp_device_id *hid;
+	काष्ठा acpi_pnp_device_id_list *cid;
 	u32 i;
 	u8 match;
 
-	/* Get the _HID and check for a PCI Root Bridge */
+	/* Get the _HID and check क्रम a PCI Root Bridge */
 
 	status = acpi_ut_execute_HID(node, &hid);
-	if (ACPI_FAILURE(status)) {
-		return (FALSE);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (FALSE);
+	पूर्ण
 
 	match = acpi_ut_is_pci_root_bridge(hid->string);
 	ACPI_FREE(hid);
 
-	if (match) {
-		return (TRUE);
-	}
+	अगर (match) अणु
+		वापस (TRUE);
+	पूर्ण
 
-	/* The _HID did not match. Get the _CID and check for a PCI Root Bridge */
+	/* The _HID did not match. Get the _CID and check क्रम a PCI Root Bridge */
 
 	status = acpi_ut_execute_CID(node, &cid);
-	if (ACPI_FAILURE(status)) {
-		return (FALSE);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (FALSE);
+	पूर्ण
 
-	/* Check all _CIDs in the returned list */
+	/* Check all _CIDs in the वापसed list */
 
-	for (i = 0; i < cid->count; i++) {
-		if (acpi_ut_is_pci_root_bridge(cid->ids[i].string)) {
+	क्रम (i = 0; i < cid->count; i++) अणु
+		अगर (acpi_ut_is_pci_root_bridge(cid->ids[i].string)) अणु
 			ACPI_FREE(cid);
-			return (TRUE);
-		}
-	}
+			वापस (TRUE);
+		पूर्ण
+	पूर्ण
 
 	ACPI_FREE(cid);
-	return (FALSE);
-}
+	वापस (FALSE);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_pci_bar_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
@@ -372,21 +373,21 @@ u8 acpi_ev_is_pci_root_bridge(struct acpi_namespace_node *node)
 acpi_status
 acpi_ev_pci_bar_region_setup(acpi_handle handle,
 			     u32 function,
-			     void *handler_context, void **region_context)
-{
+			     व्योम *handler_context, व्योम **region_context)
+अणु
 	ACPI_FUNCTION_TRACE(ev_pci_bar_region_setup);
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ev_cmos_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
@@ -399,21 +400,21 @@ acpi_ev_pci_bar_region_setup(acpi_handle handle,
 acpi_status
 acpi_ev_cmos_region_setup(acpi_handle handle,
 			  u32 function,
-			  void *handler_context, void **region_context)
-{
+			  व्योम *handler_context, व्योम **region_context)
+अणु
 	ACPI_FUNCTION_TRACE(ev_cmos_region_setup);
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ev_default_region_setup
+ * FUNCTION:    acpi_ev_शेष_region_setup
  *
- * PARAMETERS:  handle              - Region we are interested in
+ * PARAMETERS:  handle              - Region we are पूर्णांकerested in
  *              function            - Start or stop
  *              handler_context     - Address space handler context
- *              region_context      - Region specific context
+ *              region_context      - Region specअगरic context
  *
  * RETURN:      Status
  *
@@ -422,20 +423,20 @@ acpi_ev_cmos_region_setup(acpi_handle handle,
  ******************************************************************************/
 
 acpi_status
-acpi_ev_default_region_setup(acpi_handle handle,
+acpi_ev_शेष_region_setup(acpi_handle handle,
 			     u32 function,
-			     void *handler_context, void **region_context)
-{
-	ACPI_FUNCTION_TRACE(ev_default_region_setup);
+			     व्योम *handler_context, व्योम **region_context)
+अणु
+	ACPI_FUNCTION_TRACE(ev_शेष_region_setup);
 
-	if (function == ACPI_REGION_DEACTIVATE) {
-		*region_context = NULL;
-	} else {
+	अगर (function == ACPI_REGION_DEACTIVATE) अणु
+		*region_context = शून्य;
+	पूर्ण अन्यथा अणु
 		*region_context = handler_context;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -446,26 +447,26 @@ acpi_ev_default_region_setup(acpi_handle handle,
  * RETURN:      Status
  *
  * DESCRIPTION: Initializes the region, finds any _REG methods and saves them
- *              for execution at a later time
+ *              क्रम execution at a later समय
  *
- *              Get the appropriate address space handler for a newly
+ *              Get the appropriate address space handler क्रम a newly
  *              created region.
  *
- *              This also performs address space specific initialization. For
+ *              This also perक्रमms address space specअगरic initialization. For
  *              example, PCI regions must have an _ADR object that contains
  *              a PCI address in the scope of the definition. This address is
- *              required to perform an access to PCI config space.
+ *              required to perक्रमm an access to PCI config space.
  *
  * MUTEX:       Interpreter should be unlocked, because we may run the _REG
- *              method for this region.
+ *              method क्रम this region.
  *
  * NOTE:        Possible incompliance:
- *              There is a behavior conflict in automatic _REG execution:
- *              1. When the interpreter is evaluating a method, we can only
- *                 automatically run _REG for the following case:
+ *              There is a behavior conflict in स्वतःmatic _REG execution:
+ *              1. When the पूर्णांकerpreter is evaluating a method, we can only
+ *                 स्वतःmatically run _REG क्रम the following हाल:
  *                   operation_region (OPR1, 0x80, 0x1000010, 0x4)
- *              2. When the interpreter is loading a table, we can also
- *                 automatically run _REG for the following case:
+ *              2. When the पूर्णांकerpreter is loading a table, we can also
+ *                 स्वतःmatically run _REG क्रम the following हाल:
  *                   operation_region (OPR1, 0x80, 0x1000010, 0x4)
  *              Though this may not be compliant to the de-facto standard, the
  *              logic is kept in order not to trigger regressions. And keeping
@@ -473,22 +474,22 @@ acpi_ev_default_region_setup(acpi_handle handle,
  *
  ******************************************************************************/
 
-acpi_status acpi_ev_initialize_region(union acpi_operand_object *region_obj)
-{
-	union acpi_operand_object *handler_obj;
-	union acpi_operand_object *obj_desc;
+acpi_status acpi_ev_initialize_region(जोड़ acpi_opeअक्रम_object *region_obj)
+अणु
+	जोड़ acpi_opeअक्रम_object *handler_obj;
+	जोड़ acpi_opeअक्रम_object *obj_desc;
 	acpi_adr_space_type space_id;
-	struct acpi_namespace_node *node;
+	काष्ठा acpi_namespace_node *node;
 
 	ACPI_FUNCTION_TRACE(ev_initialize_region);
 
-	if (!region_obj) {
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+	अगर (!region_obj) अणु
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (region_obj->common.flags & AOPOBJ_OBJECT_INITIALIZED) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (region_obj->common.flags & AOPOBJ_OBJECT_INITIALIZED) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	region_obj->common.flags |= AOPOBJ_OBJECT_INITIALIZED;
 
@@ -497,36 +498,36 @@ acpi_status acpi_ev_initialize_region(union acpi_operand_object *region_obj)
 
 	/*
 	 * The following loop depends upon the root Node having no parent
-	 * ie: acpi_gbl_root_node->Parent being set to NULL
+	 * ie: acpi_gbl_root_node->Parent being set to शून्य
 	 */
-	while (node) {
+	जबतक (node) अणु
 
-		/* Check to see if a handler exists */
+		/* Check to see अगर a handler exists */
 
-		handler_obj = NULL;
+		handler_obj = शून्य;
 		obj_desc = acpi_ns_get_attached_object(node);
-		if (obj_desc) {
+		अगर (obj_desc) अणु
 
-			/* Can only be a handler if the object exists */
+			/* Can only be a handler अगर the object exists */
 
-			switch (node->type) {
-			case ACPI_TYPE_DEVICE:
-			case ACPI_TYPE_PROCESSOR:
-			case ACPI_TYPE_THERMAL:
+			चयन (node->type) अणु
+			हाल ACPI_TYPE_DEVICE:
+			हाल ACPI_TYPE_PROCESSOR:
+			हाल ACPI_TYPE_THERMAL:
 
-				handler_obj = obj_desc->common_notify.handler;
-				break;
+				handler_obj = obj_desc->common_notअगरy.handler;
+				अवरोध;
 
-			default:
+			शेष:
 
 				/* Ignore other objects */
 
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			handler_obj =
 			    acpi_ev_find_region_handler(space_id, handler_obj);
-			if (handler_obj) {
+			अगर (handler_obj) अणु
 
 				/* Found correct handler */
 
@@ -535,35 +536,35 @@ acpi_status acpi_ev_initialize_region(union acpi_operand_object *region_obj)
 						  handler_obj, region_obj,
 						  obj_desc));
 
-				(void)acpi_ev_attach_region(handler_obj,
+				(व्योम)acpi_ev_attach_region(handler_obj,
 							    region_obj, FALSE);
 
 				/*
 				 * Tell all users that this region is usable by
 				 * running the _REG method
 				 */
-				acpi_ex_exit_interpreter();
-				(void)acpi_ev_execute_reg_method(region_obj,
+				acpi_ex_निकास_पूर्णांकerpreter();
+				(व्योम)acpi_ev_execute_reg_method(region_obj,
 								 ACPI_REG_CONNECT);
-				acpi_ex_enter_interpreter();
-				return_ACPI_STATUS(AE_OK);
-			}
-		}
+				acpi_ex_enter_पूर्णांकerpreter();
+				वापस_ACPI_STATUS(AE_OK);
+			पूर्ण
+		पूर्ण
 
-		/* This node does not have the handler we need; Pop up one level */
+		/* This node करोes not have the handler we need; Pop up one level */
 
 		node = node->parent;
-	}
+	पूर्ण
 
 	/*
-	 * If we get here, there is no handler for this region. This is not
-	 * fatal because many regions get created before a handler is installed
-	 * for said region.
+	 * If we get here, there is no handler क्रम this region. This is not
+	 * fatal because many regions get created beक्रमe a handler is installed
+	 * क्रम said region.
 	 */
 	ACPI_DEBUG_PRINT((ACPI_DB_OPREGION,
 			  "No handler for RegionType %s(%X) (RegionObj %p)\n",
 			  acpi_ut_get_region_name(space_id), space_id,
 			  region_obj));
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण

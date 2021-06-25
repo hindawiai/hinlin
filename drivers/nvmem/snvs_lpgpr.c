@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Pengutronix, Steffen Trumtrar <kernel@pengutronix.de>
  * Copyright (c) 2017 Pengutronix, Oleksij Rempel <kernel@pengutronix.de>
  */
 
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/nvmem-provider.h>
-#include <linux/of_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/regmap.h>
 
-#define IMX6Q_SNVS_HPLR		0x00
-#define IMX6Q_SNVS_LPLR		0x34
-#define IMX6Q_SNVS_LPGPR	0x68
+#घोषणा IMX6Q_SNVS_HPLR		0x00
+#घोषणा IMX6Q_SNVS_LPLR		0x34
+#घोषणा IMX6Q_SNVS_LPGPR	0x68
 
-#define IMX7D_SNVS_HPLR		0x00
-#define IMX7D_SNVS_LPLR		0x34
-#define IMX7D_SNVS_LPGPR	0x90
+#घोषणा IMX7D_SNVS_HPLR		0x00
+#घोषणा IMX7D_SNVS_LPLR		0x34
+#घोषणा IMX7D_SNVS_LPGPR	0x90
 
-#define IMX_GPR_SL		BIT(5)
-#define IMX_GPR_HL		BIT(5)
+#घोषणा IMX_GPR_SL		BIT(5)
+#घोषणा IMX_GPR_HL		BIT(5)
 
-struct snvs_lpgpr_cfg {
-	int offset;
-	int offset_hplr;
-	int offset_lplr;
-	int size;
-};
+काष्ठा snvs_lpgpr_cfg अणु
+	पूर्णांक offset;
+	पूर्णांक offset_hplr;
+	पूर्णांक offset_lplr;
+	पूर्णांक size;
+पूर्ण;
 
-struct snvs_lpgpr_priv {
-	struct device_d			*dev;
-	struct regmap			*regmap;
-	struct nvmem_config		cfg;
-	const struct snvs_lpgpr_cfg	*dcfg;
-};
+काष्ठा snvs_lpgpr_priv अणु
+	काष्ठा device_d			*dev;
+	काष्ठा regmap			*regmap;
+	काष्ठा nvmem_config		cfg;
+	स्थिर काष्ठा snvs_lpgpr_cfg	*dcfg;
+पूर्ण;
 
-static const struct snvs_lpgpr_cfg snvs_lpgpr_cfg_imx6q = {
+अटल स्थिर काष्ठा snvs_lpgpr_cfg snvs_lpgpr_cfg_imx6q = अणु
 	.offset		= IMX6Q_SNVS_LPGPR,
 	.offset_hplr	= IMX6Q_SNVS_HPLR,
 	.offset_lplr	= IMX6Q_SNVS_LPLR,
 	.size		= 4,
-};
+पूर्ण;
 
-static const struct snvs_lpgpr_cfg snvs_lpgpr_cfg_imx7d = {
+अटल स्थिर काष्ठा snvs_lpgpr_cfg snvs_lpgpr_cfg_imx7d = अणु
 	.offset		= IMX7D_SNVS_LPGPR,
 	.offset_hplr	= IMX7D_SNVS_HPLR,
 	.offset_lplr	= IMX7D_SNVS_LPLR,
 	.size		= 16,
-};
+पूर्ण;
 
-static int snvs_lpgpr_write(void *context, unsigned int offset, void *val,
-			    size_t bytes)
-{
-	struct snvs_lpgpr_priv *priv = context;
-	const struct snvs_lpgpr_cfg *dcfg = priv->dcfg;
-	unsigned int lock_reg;
-	int ret;
+अटल पूर्णांक snvs_lpgpr_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक offset, व्योम *val,
+			    माप_प्रकार bytes)
+अणु
+	काष्ठा snvs_lpgpr_priv *priv = context;
+	स्थिर काष्ठा snvs_lpgpr_cfg *dcfg = priv->dcfg;
+	अचिन्हित पूर्णांक lock_reg;
+	पूर्णांक ret;
 
-	ret = regmap_read(priv->regmap, dcfg->offset_hplr, &lock_reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, dcfg->offset_hplr, &lock_reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (lock_reg & IMX_GPR_SL)
-		return -EPERM;
+	अगर (lock_reg & IMX_GPR_SL)
+		वापस -EPERM;
 
-	ret = regmap_read(priv->regmap, dcfg->offset_lplr, &lock_reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, dcfg->offset_lplr, &lock_reg);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (lock_reg & IMX_GPR_HL)
-		return -EPERM;
+	अगर (lock_reg & IMX_GPR_HL)
+		वापस -EPERM;
 
-	return regmap_bulk_write(priv->regmap, dcfg->offset + offset, val,
+	वापस regmap_bulk_ग_लिखो(priv->regmap, dcfg->offset + offset, val,
 				bytes / 4);
-}
+पूर्ण
 
-static int snvs_lpgpr_read(void *context, unsigned int offset, void *val,
-			   size_t bytes)
-{
-	struct snvs_lpgpr_priv *priv = context;
-	const struct snvs_lpgpr_cfg *dcfg = priv->dcfg;
+अटल पूर्णांक snvs_lpgpr_पढ़ो(व्योम *context, अचिन्हित पूर्णांक offset, व्योम *val,
+			   माप_प्रकार bytes)
+अणु
+	काष्ठा snvs_lpgpr_priv *priv = context;
+	स्थिर काष्ठा snvs_lpgpr_cfg *dcfg = priv->dcfg;
 
-	return regmap_bulk_read(priv->regmap, dcfg->offset + offset,
+	वापस regmap_bulk_पढ़ो(priv->regmap, dcfg->offset + offset,
 			       val, bytes / 4);
-}
+पूर्ण
 
-static int snvs_lpgpr_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *node = dev->of_node;
-	struct device_node *syscon_node;
-	struct snvs_lpgpr_priv *priv;
-	struct nvmem_config *cfg;
-	struct nvmem_device *nvmem;
-	const struct snvs_lpgpr_cfg *dcfg;
+अटल पूर्णांक snvs_lpgpr_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = dev->of_node;
+	काष्ठा device_node *syscon_node;
+	काष्ठा snvs_lpgpr_priv *priv;
+	काष्ठा nvmem_config *cfg;
+	काष्ठा nvmem_device *nvmem;
+	स्थिर काष्ठा snvs_lpgpr_cfg *dcfg;
 
-	if (!node)
-		return -ENOENT;
+	अगर (!node)
+		वापस -ENOENT;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	dcfg = of_device_get_match_data(dev);
-	if (!dcfg)
-		return -EINVAL;
+	अगर (!dcfg)
+		वापस -EINVAL;
 
 	syscon_node = of_get_parent(node);
-	if (!syscon_node)
-		return -ENODEV;
+	अगर (!syscon_node)
+		वापस -ENODEV;
 
 	priv->regmap = syscon_node_to_regmap(syscon_node);
 	of_node_put(syscon_node);
-	if (IS_ERR(priv->regmap))
-		return PTR_ERR(priv->regmap);
+	अगर (IS_ERR(priv->regmap))
+		वापस PTR_ERR(priv->regmap);
 
 	priv->dcfg = dcfg;
 
@@ -125,31 +126,31 @@ static int snvs_lpgpr_probe(struct platform_device *pdev)
 	cfg->word_size = 4;
 	cfg->size = dcfg->size;
 	cfg->owner = THIS_MODULE;
-	cfg->reg_read  = snvs_lpgpr_read;
-	cfg->reg_write = snvs_lpgpr_write;
+	cfg->reg_पढ़ो  = snvs_lpgpr_पढ़ो;
+	cfg->reg_ग_लिखो = snvs_lpgpr_ग_लिखो;
 
-	nvmem = devm_nvmem_register(dev, cfg);
+	nvmem = devm_nvmem_रेजिस्टर(dev, cfg);
 
-	return PTR_ERR_OR_ZERO(nvmem);
-}
+	वापस PTR_ERR_OR_ZERO(nvmem);
+पूर्ण
 
-static const struct of_device_id snvs_lpgpr_dt_ids[] = {
-	{ .compatible = "fsl,imx6q-snvs-lpgpr", .data = &snvs_lpgpr_cfg_imx6q },
-	{ .compatible = "fsl,imx6ul-snvs-lpgpr",
-	  .data = &snvs_lpgpr_cfg_imx6q },
-	{ .compatible = "fsl,imx7d-snvs-lpgpr",	.data = &snvs_lpgpr_cfg_imx7d },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id snvs_lpgpr_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx6q-snvs-lpgpr", .data = &snvs_lpgpr_cfg_imx6q पूर्ण,
+	अणु .compatible = "fsl,imx6ul-snvs-lpgpr",
+	  .data = &snvs_lpgpr_cfg_imx6q पूर्ण,
+	अणु .compatible = "fsl,imx7d-snvs-lpgpr",	.data = &snvs_lpgpr_cfg_imx7d पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, snvs_lpgpr_dt_ids);
 
-static struct platform_driver snvs_lpgpr_driver = {
+अटल काष्ठा platक्रमm_driver snvs_lpgpr_driver = अणु
 	.probe	= snvs_lpgpr_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "snvs_lpgpr",
 		.of_match_table = snvs_lpgpr_dt_ids,
-	},
-};
-module_platform_driver(snvs_lpgpr_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(snvs_lpgpr_driver);
 
 MODULE_AUTHOR("Oleksij Rempel <o.rempel@pengutronix.de>");
 MODULE_DESCRIPTION("Low Power General Purpose Register in i.MX6 and i.MX7 Secure Non-Volatile Storage");

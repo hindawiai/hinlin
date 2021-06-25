@@ -1,181 +1,182 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (c) 2018 Covalent IO, Inc. http://covalent.io
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <string.h>
-#include <linux/bpf.h>
-#include <linux/if_ether.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <linux/pkt_cls.h>
-#include <linux/tcp.h>
-#include <sys/socket.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <मानकघोष.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <linux/tcp.h>
+#समावेश <sys/socket.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-int _version SEC("version") = 1;
-char _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;
+अक्षर _license[] SEC("license") = "GPL";
 
-/* Fill 'tuple' with L3 info, and attempt to find L4. On fail, return NULL. */
-static struct bpf_sock_tuple *get_tuple(void *data, __u64 nh_off,
-					void *data_end, __u16 eth_proto,
+/* Fill 'tuple' with L3 info, and attempt to find L4. On fail, वापस शून्य. */
+अटल काष्ठा bpf_sock_tuple *get_tuple(व्योम *data, __u64 nh_off,
+					व्योम *data_end, __u16 eth_proto,
 					bool *ipv4)
-{
-	struct bpf_sock_tuple *result;
+अणु
+	काष्ठा bpf_sock_tuple *result;
 	__u8 proto = 0;
 	__u64 ihl_len;
 
-	if (eth_proto == bpf_htons(ETH_P_IP)) {
-		struct iphdr *iph = (struct iphdr *)(data + nh_off);
+	अगर (eth_proto == bpf_htons(ETH_P_IP)) अणु
+		काष्ठा iphdr *iph = (काष्ठा iphdr *)(data + nh_off);
 
-		if (iph + 1 > data_end)
-			return NULL;
+		अगर (iph + 1 > data_end)
+			वापस शून्य;
 		ihl_len = iph->ihl * 4;
 		proto = iph->protocol;
 		*ipv4 = true;
-		result = (struct bpf_sock_tuple *)&iph->saddr;
-	} else if (eth_proto == bpf_htons(ETH_P_IPV6)) {
-		struct ipv6hdr *ip6h = (struct ipv6hdr *)(data + nh_off);
+		result = (काष्ठा bpf_sock_tuple *)&iph->saddr;
+	पूर्ण अन्यथा अगर (eth_proto == bpf_htons(ETH_P_IPV6)) अणु
+		काष्ठा ipv6hdr *ip6h = (काष्ठा ipv6hdr *)(data + nh_off);
 
-		if (ip6h + 1 > data_end)
-			return NULL;
-		ihl_len = sizeof(*ip6h);
+		अगर (ip6h + 1 > data_end)
+			वापस शून्य;
+		ihl_len = माप(*ip6h);
 		proto = ip6h->nexthdr;
 		*ipv4 = true;
-		result = (struct bpf_sock_tuple *)&ip6h->saddr;
-	}
+		result = (काष्ठा bpf_sock_tuple *)&ip6h->saddr;
+	पूर्ण
 
-	if (data + nh_off + ihl_len > data_end || proto != IPPROTO_TCP)
-		return NULL;
+	अगर (data + nh_off + ihl_len > data_end || proto != IPPROTO_TCP)
+		वापस शून्य;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 SEC("classifier/sk_lookup_success")
-int bpf_sk_lookup_test0(struct __sk_buff *skb)
-{
-	void *data_end = (void *)(long)skb->data_end;
-	void *data = (void *)(long)skb->data;
-	struct ethhdr *eth = (struct ethhdr *)(data);
-	struct bpf_sock_tuple *tuple;
-	struct bpf_sock *sk;
-	size_t tuple_len;
+पूर्णांक bpf_sk_lookup_test0(काष्ठा __sk_buff *skb)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)skb->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)skb->data;
+	काष्ठा ethhdr *eth = (काष्ठा ethhdr *)(data);
+	काष्ठा bpf_sock_tuple *tuple;
+	काष्ठा bpf_sock *sk;
+	माप_प्रकार tuple_len;
 	bool ipv4;
 
-	if (eth + 1 > data_end)
-		return TC_ACT_SHOT;
+	अगर (eth + 1 > data_end)
+		वापस TC_ACT_SHOT;
 
-	tuple = get_tuple(data, sizeof(*eth), data_end, eth->h_proto, &ipv4);
-	if (!tuple || tuple + sizeof *tuple > data_end)
-		return TC_ACT_SHOT;
+	tuple = get_tuple(data, माप(*eth), data_end, eth->h_proto, &ipv4);
+	अगर (!tuple || tuple + माप *tuple > data_end)
+		वापस TC_ACT_SHOT;
 
-	tuple_len = ipv4 ? sizeof(tuple->ipv4) : sizeof(tuple->ipv6);
+	tuple_len = ipv4 ? माप(tuple->ipv4) : माप(tuple->ipv6);
 	sk = bpf_sk_lookup_tcp(skb, tuple, tuple_len, BPF_F_CURRENT_NETNS, 0);
-	bpf_printk("sk=%d\n", sk ? 1 : 0);
-	if (sk)
+	bpf_prपूर्णांकk("sk=%d\n", sk ? 1 : 0);
+	अगर (sk)
 		bpf_sk_release(sk);
-	return sk ? TC_ACT_OK : TC_ACT_UNSPEC;
-}
+	वापस sk ? TC_ACT_OK : TC_ACT_UNSPEC;
+पूर्ण
 
 SEC("classifier/sk_lookup_success_simple")
-int bpf_sk_lookup_test1(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_test1(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
-	if (sk)
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
+	अगर (sk)
 		bpf_sk_release(sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("classifier/fail_use_after_free")
-int bpf_sk_lookup_uaf(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_uaf(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 	__u32 family = 0;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
-	if (sk) {
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
+	अगर (sk) अणु
 		bpf_sk_release(sk);
 		family = sk->family;
-	}
-	return family;
-}
+	पूर्ण
+	वापस family;
+पूर्ण
 
 SEC("classifier/fail_modify_sk_pointer")
-int bpf_sk_lookup_modptr(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_modptr(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 	__u32 family;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
-	if (sk) {
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
+	अगर (sk) अणु
 		sk += 1;
 		bpf_sk_release(sk);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 SEC("classifier/fail_modify_sk_or_null_pointer")
-int bpf_sk_lookup_modptr_or_null(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_modptr_or_null(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 	__u32 family;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
 	sk += 1;
-	if (sk)
+	अगर (sk)
 		bpf_sk_release(sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("classifier/fail_no_release")
-int bpf_sk_lookup_test2(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
+पूर्णांक bpf_sk_lookup_test2(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
 
-	bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
-	return 0;
-}
+	bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
+	वापस 0;
+पूर्ण
 
 SEC("classifier/fail_release_twice")
-int bpf_sk_lookup_test3(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_test3(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
 	bpf_sk_release(sk);
 	bpf_sk_release(sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("classifier/fail_release_unchecked")
-int bpf_sk_lookup_test4(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	struct bpf_sock *sk;
+पूर्णांक bpf_sk_lookup_test4(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	काष्ठा bpf_sock *sk;
 
-	sk = bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
+	sk = bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
 	bpf_sk_release(sk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void lookup_no_release(struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple tuple = {};
-	bpf_sk_lookup_tcp(skb, &tuple, sizeof(tuple), BPF_F_CURRENT_NETNS, 0);
-}
+व्योम lookup_no_release(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple tuple = अणुपूर्ण;
+	bpf_sk_lookup_tcp(skb, &tuple, माप(tuple), BPF_F_CURRENT_NETNS, 0);
+पूर्ण
 
 SEC("classifier/fail_no_release_subcall")
-int bpf_sk_lookup_test5(struct __sk_buff *skb)
-{
+पूर्णांक bpf_sk_lookup_test5(काष्ठा __sk_buff *skb)
+अणु
 	lookup_no_release(skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण

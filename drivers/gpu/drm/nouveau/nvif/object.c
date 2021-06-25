@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,265 +23,265 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 
-#include <nvif/object.h>
-#include <nvif/client.h>
-#include <nvif/driver.h>
-#include <nvif/ioctl.h>
+#समावेश <nvअगर/object.h>
+#समावेश <nvअगर/client.h>
+#समावेश <nvअगर/driver.h>
+#समावेश <nvअगर/ioctl.h>
 
-int
-nvif_object_ioctl(struct nvif_object *object, void *data, u32 size, void **hack)
-{
-	struct nvif_client *client = object->client;
-	union {
-		struct nvif_ioctl_v0 v0;
-	} *args = data;
+पूर्णांक
+nvअगर_object_ioctl(काष्ठा nvअगर_object *object, व्योम *data, u32 size, व्योम **hack)
+अणु
+	काष्ठा nvअगर_client *client = object->client;
+	जोड़ अणु
+		काष्ठा nvअगर_ioctl_v0 v0;
+	पूर्ण *args = data;
 
-	if (size >= sizeof(*args) && args->v0.version == 0) {
-		if (object != &client->object)
-			args->v0.object = nvif_handle(object);
-		else
+	अगर (size >= माप(*args) && args->v0.version == 0) अणु
+		अगर (object != &client->object)
+			args->v0.object = nvअगर_handle(object);
+		अन्यथा
 			args->v0.object = 0;
 		args->v0.owner = NVIF_IOCTL_V0_OWNER_ANY;
-	} else
-		return -ENOSYS;
+	पूर्ण अन्यथा
+		वापस -ENOSYS;
 
-	return client->driver->ioctl(client->object.priv, client->super,
+	वापस client->driver->ioctl(client->object.priv, client->super,
 				     data, size, hack);
-}
+पूर्ण
 
-void
-nvif_object_sclass_put(struct nvif_sclass **psclass)
-{
-	kfree(*psclass);
-	*psclass = NULL;
-}
+व्योम
+nvअगर_object_sclass_put(काष्ठा nvअगर_sclass **psclass)
+अणु
+	kमुक्त(*psclass);
+	*psclass = शून्य;
+पूर्ण
 
-int
-nvif_object_sclass_get(struct nvif_object *object, struct nvif_sclass **psclass)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_sclass_v0 sclass;
-	} *args = NULL;
-	int ret, cnt = 0, i;
+पूर्णांक
+nvअगर_object_sclass_get(काष्ठा nvअगर_object *object, काष्ठा nvअगर_sclass **psclass)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_sclass_v0 sclass;
+	पूर्ण *args = शून्य;
+	पूर्णांक ret, cnt = 0, i;
 	u32 size;
 
-	while (1) {
-		size = sizeof(*args) + cnt * sizeof(args->sclass.oclass[0]);
-		if (!(args = kmalloc(size, GFP_KERNEL)))
-			return -ENOMEM;
+	जबतक (1) अणु
+		size = माप(*args) + cnt * माप(args->sclass.oclass[0]);
+		अगर (!(args = kदो_स्मृति(size, GFP_KERNEL)))
+			वापस -ENOMEM;
 		args->ioctl.version = 0;
 		args->ioctl.type = NVIF_IOCTL_V0_SCLASS;
 		args->sclass.version = 0;
 		args->sclass.count = cnt;
 
-		ret = nvif_object_ioctl(object, args, size, NULL);
-		if (ret == 0 && args->sclass.count <= cnt)
-			break;
+		ret = nvअगर_object_ioctl(object, args, size, शून्य);
+		अगर (ret == 0 && args->sclass.count <= cnt)
+			अवरोध;
 		cnt = args->sclass.count;
-		kfree(args);
-		if (ret != 0)
-			return ret;
-	}
+		kमुक्त(args);
+		अगर (ret != 0)
+			वापस ret;
+	पूर्ण
 
-	*psclass = kcalloc(args->sclass.count, sizeof(**psclass), GFP_KERNEL);
-	if (*psclass) {
-		for (i = 0; i < args->sclass.count; i++) {
+	*psclass = kसुस्मृति(args->sclass.count, माप(**psclass), GFP_KERNEL);
+	अगर (*psclass) अणु
+		क्रम (i = 0; i < args->sclass.count; i++) अणु
 			(*psclass)[i].oclass = args->sclass.oclass[i].oclass;
 			(*psclass)[i].minver = args->sclass.oclass[i].minver;
 			(*psclass)[i].maxver = args->sclass.oclass[i].maxver;
-		}
+		पूर्ण
 		ret = args->sclass.count;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ENOMEM;
-	}
+	पूर्ण
 
-	kfree(args);
-	return ret;
-}
+	kमुक्त(args);
+	वापस ret;
+पूर्ण
 
 u32
-nvif_object_rd(struct nvif_object *object, int size, u64 addr)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_rd_v0 rd;
-	} args = {
+nvअगर_object_rd(काष्ठा nvअगर_object *object, पूर्णांक size, u64 addr)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_rd_v0 rd;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_RD,
 		.rd.size = size,
 		.rd.addr = addr,
-	};
-	int ret = nvif_object_ioctl(object, &args, sizeof(args), NULL);
-	if (ret) {
+	पूर्ण;
+	पूर्णांक ret = nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+	अगर (ret) अणु
 		/*XXX: warn? */
-		return 0;
-	}
-	return args.rd.data;
-}
+		वापस 0;
+	पूर्ण
+	वापस args.rd.data;
+पूर्ण
 
-void
-nvif_object_wr(struct nvif_object *object, int size, u64 addr, u32 data)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_wr_v0 wr;
-	} args = {
+व्योम
+nvअगर_object_wr(काष्ठा nvअगर_object *object, पूर्णांक size, u64 addr, u32 data)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_wr_v0 wr;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_WR,
 		.wr.size = size,
 		.wr.addr = addr,
 		.wr.data = data,
-	};
-	int ret = nvif_object_ioctl(object, &args, sizeof(args), NULL);
-	if (ret) {
+	पूर्ण;
+	पूर्णांक ret = nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+	अगर (ret) अणु
 		/*XXX: warn? */
-	}
-}
+	पूर्ण
+पूर्ण
 
-int
-nvif_object_mthd(struct nvif_object *object, u32 mthd, void *data, u32 size)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_mthd_v0 mthd;
-	} *args;
+पूर्णांक
+nvअगर_object_mthd(काष्ठा nvअगर_object *object, u32 mthd, व्योम *data, u32 size)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_mthd_v0 mthd;
+	पूर्ण *args;
 	u8 stack[128];
-	int ret;
+	पूर्णांक ret;
 
-	if (sizeof(*args) + size > sizeof(stack)) {
-		if (!(args = kmalloc(sizeof(*args) + size, GFP_KERNEL)))
-			return -ENOMEM;
-	} else {
-		args = (void *)stack;
-	}
+	अगर (माप(*args) + size > माप(stack)) अणु
+		अगर (!(args = kदो_स्मृति(माप(*args) + size, GFP_KERNEL)))
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
+		args = (व्योम *)stack;
+	पूर्ण
 	args->ioctl.version = 0;
 	args->ioctl.type = NVIF_IOCTL_V0_MTHD;
 	args->mthd.version = 0;
 	args->mthd.method = mthd;
 
-	memcpy(args->mthd.data, data, size);
-	ret = nvif_object_ioctl(object, args, sizeof(*args) + size, NULL);
-	memcpy(data, args->mthd.data, size);
-	if (args != (void *)stack)
-		kfree(args);
-	return ret;
-}
+	स_नकल(args->mthd.data, data, size);
+	ret = nvअगर_object_ioctl(object, args, माप(*args) + size, शून्य);
+	स_नकल(data, args->mthd.data, size);
+	अगर (args != (व्योम *)stack)
+		kमुक्त(args);
+	वापस ret;
+पूर्ण
 
-void
-nvif_object_unmap_handle(struct nvif_object *object)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_unmap unmap;
-	} args = {
+व्योम
+nvअगर_object_unmap_handle(काष्ठा nvअगर_object *object)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_unmap unmap;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_UNMAP,
-	};
+	पूर्ण;
 
-	nvif_object_ioctl(object, &args, sizeof(args), NULL);
-}
+	nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+पूर्ण
 
-int
-nvif_object_map_handle(struct nvif_object *object, void *argv, u32 argc,
+पूर्णांक
+nvअगर_object_map_handle(काष्ठा nvअगर_object *object, व्योम *argv, u32 argc,
 		       u64 *handle, u64 *length)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_map_v0 map;
-	} *args;
-	u32 argn = sizeof(*args) + argc;
-	int ret, maptype;
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_map_v0 map;
+	पूर्ण *args;
+	u32 argn = माप(*args) + argc;
+	पूर्णांक ret, maptype;
 
-	if (!(args = kzalloc(argn, GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(args = kzalloc(argn, GFP_KERNEL)))
+		वापस -ENOMEM;
 	args->ioctl.type = NVIF_IOCTL_V0_MAP;
-	memcpy(args->map.data, argv, argc);
+	स_नकल(args->map.data, argv, argc);
 
-	ret = nvif_object_ioctl(object, args, argn, NULL);
+	ret = nvअगर_object_ioctl(object, args, argn, शून्य);
 	*handle = args->map.handle;
 	*length = args->map.length;
 	maptype = args->map.type;
-	kfree(args);
-	return ret ? ret : (maptype == NVIF_IOCTL_MAP_V0_IO);
-}
+	kमुक्त(args);
+	वापस ret ? ret : (maptype == NVIF_IOCTL_MAP_V0_IO);
+पूर्ण
 
-void
-nvif_object_unmap(struct nvif_object *object)
-{
-	struct nvif_client *client = object->client;
-	if (object->map.ptr) {
-		if (object->map.size) {
+व्योम
+nvअगर_object_unmap(काष्ठा nvअगर_object *object)
+अणु
+	काष्ठा nvअगर_client *client = object->client;
+	अगर (object->map.ptr) अणु
+		अगर (object->map.size) अणु
 			client->driver->unmap(client, object->map.ptr,
 						      object->map.size);
 			object->map.size = 0;
-		}
-		object->map.ptr = NULL;
-		nvif_object_unmap_handle(object);
-	}
-}
+		पूर्ण
+		object->map.ptr = शून्य;
+		nvअगर_object_unmap_handle(object);
+	पूर्ण
+पूर्ण
 
-int
-nvif_object_map(struct nvif_object *object, void *argv, u32 argc)
-{
-	struct nvif_client *client = object->client;
+पूर्णांक
+nvअगर_object_map(काष्ठा nvअगर_object *object, व्योम *argv, u32 argc)
+अणु
+	काष्ठा nvअगर_client *client = object->client;
 	u64 handle, length;
-	int ret = nvif_object_map_handle(object, argv, argc, &handle, &length);
-	if (ret >= 0) {
-		if (ret) {
+	पूर्णांक ret = nvअगर_object_map_handle(object, argv, argc, &handle, &length);
+	अगर (ret >= 0) अणु
+		अगर (ret) अणु
 			object->map.ptr = client->driver->map(client,
 							      handle,
 							      length);
-			if (ret = -ENOMEM, object->map.ptr) {
+			अगर (ret = -ENOMEM, object->map.ptr) अणु
 				object->map.size = length;
-				return 0;
-			}
-		} else {
-			object->map.ptr = (void *)(unsigned long)handle;
-			return 0;
-		}
-		nvif_object_unmap_handle(object);
-	}
-	return ret;
-}
+				वापस 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			object->map.ptr = (व्योम *)(अचिन्हित दीर्घ)handle;
+			वापस 0;
+		पूर्ण
+		nvअगर_object_unmap_handle(object);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void
-nvif_object_dtor(struct nvif_object *object)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_del del;
-	} args = {
+व्योम
+nvअगर_object_dtor(काष्ठा nvअगर_object *object)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_del del;
+	पूर्ण args = अणु
 		.ioctl.type = NVIF_IOCTL_V0_DEL,
-	};
+	पूर्ण;
 
-	if (!object->client)
-		return;
+	अगर (!object->client)
+		वापस;
 
-	nvif_object_unmap(object);
-	nvif_object_ioctl(object, &args, sizeof(args), NULL);
-	object->client = NULL;
-}
+	nvअगर_object_unmap(object);
+	nvअगर_object_ioctl(object, &args, माप(args), शून्य);
+	object->client = शून्य;
+पूर्ण
 
-int
-nvif_object_ctor(struct nvif_object *parent, const char *name, u32 handle,
-		 s32 oclass, void *data, u32 size, struct nvif_object *object)
-{
-	struct {
-		struct nvif_ioctl_v0 ioctl;
-		struct nvif_ioctl_new_v0 new;
-	} *args;
-	int ret = 0;
+पूर्णांक
+nvअगर_object_ctor(काष्ठा nvअगर_object *parent, स्थिर अक्षर *name, u32 handle,
+		 s32 oclass, व्योम *data, u32 size, काष्ठा nvअगर_object *object)
+अणु
+	काष्ठा अणु
+		काष्ठा nvअगर_ioctl_v0 ioctl;
+		काष्ठा nvअगर_ioctl_new_v0 new;
+	पूर्ण *args;
+	पूर्णांक ret = 0;
 
-	object->client = NULL;
+	object->client = शून्य;
 	object->name = name ? name : "nvifObject";
 	object->handle = handle;
 	object->oclass = oclass;
-	object->map.ptr = NULL;
+	object->map.ptr = शून्य;
 	object->map.size = 0;
 
-	if (parent) {
-		if (!(args = kmalloc(sizeof(*args) + size, GFP_KERNEL))) {
-			nvif_object_dtor(object);
-			return -ENOMEM;
-		}
+	अगर (parent) अणु
+		अगर (!(args = kदो_स्मृति(माप(*args) + size, GFP_KERNEL))) अणु
+			nvअगर_object_dtor(object);
+			वापस -ENOMEM;
+		पूर्ण
 
 		object->parent = parent->parent;
 
@@ -288,21 +289,21 @@ nvif_object_ctor(struct nvif_object *parent, const char *name, u32 handle,
 		args->ioctl.type = NVIF_IOCTL_V0_NEW;
 		args->new.version = 0;
 		args->new.route = parent->client->route;
-		args->new.token = nvif_handle(object);
-		args->new.object = nvif_handle(object);
+		args->new.token = nvअगर_handle(object);
+		args->new.object = nvअगर_handle(object);
 		args->new.handle = handle;
 		args->new.oclass = oclass;
 
-		memcpy(args->new.data, data, size);
-		ret = nvif_object_ioctl(parent, args, sizeof(*args) + size,
+		स_नकल(args->new.data, data, size);
+		ret = nvअगर_object_ioctl(parent, args, माप(*args) + size,
 					&object->priv);
-		memcpy(data, args->new.data, size);
-		kfree(args);
-		if (ret == 0)
+		स_नकल(data, args->new.data, size);
+		kमुक्त(args);
+		अगर (ret == 0)
 			object->client = parent->client;
-	}
+	पूर्ण
 
-	if (ret)
-		nvif_object_dtor(object);
-	return ret;
-}
+	अगर (ret)
+		nvअगर_object_dtor(object);
+	वापस ret;
+पूर्ण

@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#include <linux/pm_qos.h>
-#include <linux/sort.h>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/sort.h>
 
-#include "intel_engine_heartbeat.h"
-#include "intel_engine_pm.h"
-#include "intel_gpu_commands.h"
-#include "intel_gt_clock_utils.h"
-#include "intel_gt_pm.h"
-#include "intel_rc6.h"
-#include "selftest_engine_heartbeat.h"
-#include "selftest_rps.h"
-#include "selftests/igt_flush_test.h"
-#include "selftests/igt_spinner.h"
-#include "selftests/librapl.h"
+#समावेश "intel_engine_heartbeat.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "intel_gpu_commands.h"
+#समावेश "intel_gt_clock_utils.h"
+#समावेश "intel_gt_pm.h"
+#समावेश "intel_rc6.h"
+#समावेश "selftest_engine_heartbeat.h"
+#समावेश "selftest_rps.h"
+#समावेश "selftests/igt_flush_test.h"
+#समावेश "selftests/igt_spinner.h"
+#समावेश "selftests/librapl.h"
 
 /* Try to isolate the impact of cstates from determing frequency response */
-#define CPU_LATENCY 0 /* -1 to disable pm_qos, 0 to disable cstates */
+#घोषणा CPU_LATENCY 0 /* -1 to disable pm_qos, 0 to disable cstates */
 
-static void dummy_rps_work(struct work_struct *wrk)
-{
-}
+अटल व्योम dummy_rps_work(काष्ठा work_काष्ठा *wrk)
+अणु
+पूर्ण
 
-static int cmp_u64(const void *A, const void *B)
-{
-	const u64 *a = A, *b = B;
+अटल पूर्णांक cmp_u64(स्थिर व्योम *A, स्थिर व्योम *B)
+अणु
+	स्थिर u64 *a = A, *b = B;
 
-	if (*a < *b)
-		return -1;
-	else if (*a > *b)
-		return 1;
-	else
-		return 0;
-}
+	अगर (*a < *b)
+		वापस -1;
+	अन्यथा अगर (*a > *b)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int cmp_u32(const void *A, const void *B)
-{
-	const u32 *a = A, *b = B;
+अटल पूर्णांक cmp_u32(स्थिर व्योम *A, स्थिर व्योम *B)
+अणु
+	स्थिर u32 *a = A, *b = B;
 
-	if (*a < *b)
-		return -1;
-	else if (*a > *b)
-		return 1;
-	else
-		return 0;
-}
+	अगर (*a < *b)
+		वापस -1;
+	अन्यथा अगर (*a > *b)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static struct i915_vma *
-create_spin_counter(struct intel_engine_cs *engine,
-		    struct i915_address_space *vm,
+अटल काष्ठा i915_vma *
+create_spin_counter(काष्ठा पूर्णांकel_engine_cs *engine,
+		    काष्ठा i915_address_space *vm,
 		    bool srm,
 		    u32 **cancel,
 		    u32 **counter)
-{
-	enum {
+अणु
+	क्रमागत अणु
 		COUNT,
 		INC,
 		__NGPR__,
-	};
-#define CS_GPR(x) GEN8_RING_CS_GPR(engine->mmio_base, x)
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
-	unsigned long end;
+	पूर्ण;
+#घोषणा CS_GPR(x) GEN8_RING_CS_GPR(engine->mmio_base, x)
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
+	अचिन्हित दीर्घ end;
 	u32 *base, *cs;
-	int loop, i;
-	int err;
+	पूर्णांक loop, i;
+	पूर्णांक err;
 
-	obj = i915_gem_object_create_internal(vm->i915, 64 << 10);
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+	obj = i915_gem_object_create_पूर्णांकernal(vm->i915, 64 << 10);
+	अगर (IS_ERR(obj))
+		वापस ERR_CAST(obj);
 
-	end = obj->base.size / sizeof(u32) - 1;
+	end = obj->base.size / माप(u32) - 1;
 
-	vma = i915_vma_instance(obj, vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		err = PTR_ERR(vma);
-		goto err_put;
-	}
+		जाओ err_put;
+	पूर्ण
 
 	err = i915_vma_pin(vma, 0, 0, PIN_USER);
-	if (err)
-		goto err_unlock;
+	अगर (err)
+		जाओ err_unlock;
 
 	i915_vma_lock(vma);
 
 	base = i915_gem_object_pin_map(obj, I915_MAP_WC);
-	if (IS_ERR(base)) {
+	अगर (IS_ERR(base)) अणु
 		err = PTR_ERR(base);
-		goto err_unpin;
-	}
+		जाओ err_unpin;
+	पूर्ण
 	cs = base;
 
 	*cs++ = MI_LOAD_REGISTER_IMM(__NGPR__ * 2);
-	for (i = 0; i < __NGPR__; i++) {
+	क्रम (i = 0; i < __NGPR__; i++) अणु
 		*cs++ = i915_mmio_reg_offset(CS_GPR(i));
 		*cs++ = 0;
 		*cs++ = i915_mmio_reg_offset(CS_GPR(i)) + 4;
 		*cs++ = 0;
-	}
+	पूर्ण
 
 	*cs++ = MI_LOAD_REGISTER_IMM(1);
 	*cs++ = i915_mmio_reg_offset(CS_GPR(INC));
@@ -108,32 +109,32 @@ create_spin_counter(struct intel_engine_cs *engine,
 
 	loop = cs - base;
 
-	/* Unroll the loop to avoid MI_BB_START stalls impacting measurements */
-	for (i = 0; i < 1024; i++) {
+	/* Unroll the loop to aव्योम MI_BB_START stalls impacting measurements */
+	क्रम (i = 0; i < 1024; i++) अणु
 		*cs++ = MI_MATH(4);
 		*cs++ = MI_MATH_LOAD(MI_MATH_REG_SRCA, MI_MATH_REG(COUNT));
 		*cs++ = MI_MATH_LOAD(MI_MATH_REG_SRCB, MI_MATH_REG(INC));
 		*cs++ = MI_MATH_ADD;
 		*cs++ = MI_MATH_STORE(MI_MATH_REG(COUNT), MI_MATH_REG_ACCU);
 
-		if (srm) {
+		अगर (srm) अणु
 			*cs++ = MI_STORE_REGISTER_MEM_GEN8;
 			*cs++ = i915_mmio_reg_offset(CS_GPR(COUNT));
-			*cs++ = lower_32_bits(vma->node.start + end * sizeof(*cs));
-			*cs++ = upper_32_bits(vma->node.start + end * sizeof(*cs));
-		}
-	}
+			*cs++ = lower_32_bits(vma->node.start + end * माप(*cs));
+			*cs++ = upper_32_bits(vma->node.start + end * माप(*cs));
+		पूर्ण
+	पूर्ण
 
 	*cs++ = MI_BATCH_BUFFER_START_GEN8;
-	*cs++ = lower_32_bits(vma->node.start + loop * sizeof(*cs));
-	*cs++ = upper_32_bits(vma->node.start + loop * sizeof(*cs));
+	*cs++ = lower_32_bits(vma->node.start + loop * माप(*cs));
+	*cs++ = upper_32_bits(vma->node.start + loop * माप(*cs));
 	GEM_BUG_ON(cs - base > end);
 
 	i915_gem_object_flush_map(obj);
 
 	*cancel = base + loop;
-	*counter = srm ? memset32(base + end, 0, 1) : NULL;
-	return vma;
+	*counter = srm ? स_रखो32(base + end, 0, 1) : शून्य;
+	वापस vma;
 
 err_unpin:
 	i915_vma_unpin(vma);
@@ -141,532 +142,532 @@ err_unlock:
 	i915_vma_unlock(vma);
 err_put:
 	i915_gem_object_put(obj);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static u8 wait_for_freq(struct intel_rps *rps, u8 freq, int timeout_ms)
-{
+अटल u8 रुको_क्रम_freq(काष्ठा पूर्णांकel_rps *rps, u8 freq, पूर्णांक समयout_ms)
+अणु
 	u8 history[64], i;
-	unsigned long end;
-	int sleep;
+	अचिन्हित दीर्घ end;
+	पूर्णांक sleep;
 
 	i = 0;
-	memset(history, freq, sizeof(history));
+	स_रखो(history, freq, माप(history));
 	sleep = 20;
 
-	/* The PCU does not change instantly, but drifts towards the goal? */
-	end = jiffies + msecs_to_jiffies(timeout_ms);
-	do {
+	/* The PCU करोes not change instantly, but drअगरts towards the goal? */
+	end = jअगरfies + msecs_to_jअगरfies(समयout_ms);
+	करो अणु
 		u8 act;
 
-		act = read_cagf(rps);
-		if (time_after(jiffies, end))
-			return act;
+		act = पढ़ो_cagf(rps);
+		अगर (समय_after(jअगरfies, end))
+			वापस act;
 
 		/* Target acquired */
-		if (act == freq)
-			return act;
+		अगर (act == freq)
+			वापस act;
 
 		/* Any change within the last N samples? */
-		if (!memchr_inv(history, act, sizeof(history)))
-			return act;
+		अगर (!स_प्रथम_inv(history, act, माप(history)))
+			वापस act;
 
 		history[i] = act;
 		i = (i + 1) % ARRAY_SIZE(history);
 
 		usleep_range(sleep, 2 * sleep);
 		sleep *= 2;
-		if (sleep > timeout_ms * 20)
-			sleep = timeout_ms * 20;
-	} while (1);
-}
+		अगर (sleep > समयout_ms * 20)
+			sleep = समयout_ms * 20;
+	पूर्ण जबतक (1);
+पूर्ण
 
-static u8 rps_set_check(struct intel_rps *rps, u8 freq)
-{
+अटल u8 rps_set_check(काष्ठा पूर्णांकel_rps *rps, u8 freq)
+अणु
 	mutex_lock(&rps->lock);
-	GEM_BUG_ON(!intel_rps_is_active(rps));
-	if (wait_for(!intel_rps_set(rps, freq), 50)) {
+	GEM_BUG_ON(!पूर्णांकel_rps_is_active(rps));
+	अगर (रुको_क्रम(!पूर्णांकel_rps_set(rps, freq), 50)) अणु
 		mutex_unlock(&rps->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	GEM_BUG_ON(rps->last_freq != freq);
 	mutex_unlock(&rps->lock);
 
-	return wait_for_freq(rps, freq, 50);
-}
+	वापस रुको_क्रम_freq(rps, freq, 50);
+पूर्ण
 
-static void show_pstate_limits(struct intel_rps *rps)
-{
-	struct drm_i915_private *i915 = rps_to_i915(rps);
+अटल व्योम show_pstate_limits(काष्ठा पूर्णांकel_rps *rps)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rps_to_i915(rps);
 
-	if (IS_BROXTON(i915)) {
+	अगर (IS_BROXTON(i915)) अणु
 		pr_info("P_STATE_CAP[%x]: 0x%08x\n",
 			i915_mmio_reg_offset(BXT_RP_STATE_CAP),
-			intel_uncore_read(rps_to_uncore(rps),
+			पूर्णांकel_uncore_पढ़ो(rps_to_uncore(rps),
 					  BXT_RP_STATE_CAP));
-	} else if (IS_GEN(i915, 9)) {
+	पूर्ण अन्यथा अगर (IS_GEN(i915, 9)) अणु
 		pr_info("P_STATE_LIMITS[%x]: 0x%08x\n",
 			i915_mmio_reg_offset(GEN9_RP_STATE_LIMITS),
-			intel_uncore_read(rps_to_uncore(rps),
+			पूर्णांकel_uncore_पढ़ो(rps_to_uncore(rps),
 					  GEN9_RP_STATE_LIMITS));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int live_rps_clock_interval(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
-	int err = 0;
+पूर्णांक live_rps_घड़ी_पूर्णांकerval(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
+	पूर्णांक err = 0;
 
-	if (!intel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
+		वापस 0;
 
-	if (igt_spinner_init(&spin, gt))
-		return -ENOMEM;
+	अगर (igt_spinner_init(&spin, gt))
+		वापस -ENOMEM;
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	intel_gt_pm_get(gt);
-	intel_rps_disable(&gt->rps);
+	पूर्णांकel_gt_pm_get(gt);
+	पूर्णांकel_rps_disable(&gt->rps);
 
-	intel_gt_check_clock_frequency(gt);
+	पूर्णांकel_gt_check_घड़ी_frequency(gt);
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
 		u32 cycles;
 		u64 dt;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
 		st_engine_heartbeat_disable(engine);
 
 		rq = igt_spinner_create_request(&spin,
 						engine->kernel_context,
 						MI_NOOP);
-		if (IS_ERR(rq)) {
+		अगर (IS_ERR(rq)) अणु
 			st_engine_heartbeat_enable(engine);
 			err = PTR_ERR(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		i915_request_add(rq);
 
-		if (!igt_wait_for_spinner(&spin, rq)) {
+		अगर (!igt_रुको_क्रम_spinner(&spin, rq)) अणु
 			pr_err("%s: RPS spinner did not start\n",
 			       engine->name);
 			igt_spinner_end(&spin);
 			st_engine_heartbeat_enable(engine);
-			intel_gt_set_wedged(engine->gt);
+			पूर्णांकel_gt_set_wedged(engine->gt);
 			err = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
+		पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
 
-		intel_uncore_write_fw(gt->uncore, GEN6_RP_CUR_UP_EI, 0);
+		पूर्णांकel_uncore_ग_लिखो_fw(gt->uncore, GEN6_RP_CUR_UP_EI, 0);
 
-		/* Set the evaluation interval to infinity! */
-		intel_uncore_write_fw(gt->uncore,
+		/* Set the evaluation पूर्णांकerval to infinity! */
+		पूर्णांकel_uncore_ग_लिखो_fw(gt->uncore,
 				      GEN6_RP_UP_EI, 0xffffffff);
-		intel_uncore_write_fw(gt->uncore,
+		पूर्णांकel_uncore_ग_लिखो_fw(gt->uncore,
 				      GEN6_RP_UP_THRESHOLD, 0xffffffff);
 
-		intel_uncore_write_fw(gt->uncore, GEN6_RP_CONTROL,
+		पूर्णांकel_uncore_ग_लिखो_fw(gt->uncore, GEN6_RP_CONTROL,
 				      GEN6_RP_ENABLE | GEN6_RP_UP_BUSY_AVG);
 
-		if (wait_for(intel_uncore_read_fw(gt->uncore,
+		अगर (रुको_क्रम(पूर्णांकel_uncore_पढ़ो_fw(gt->uncore,
 						  GEN6_RP_CUR_UP_EI),
-			     10)) {
+			     10)) अणु
 			/* Just skip the test; assume lack of HW support */
 			pr_notice("%s: rps evaluation interval not ticking\n",
 				  engine->name);
 			err = -ENODEV;
-		} else {
-			ktime_t dt_[5];
+		पूर्ण अन्यथा अणु
+			kसमय_प्रकार dt_[5];
 			u32 cycles_[5];
-			int i;
+			पूर्णांक i;
 
-			for (i = 0; i < 5; i++) {
+			क्रम (i = 0; i < 5; i++) अणु
 				preempt_disable();
 
-				dt_[i] = ktime_get();
-				cycles_[i] = -intel_uncore_read_fw(gt->uncore, GEN6_RP_CUR_UP_EI);
+				dt_[i] = kसमय_get();
+				cycles_[i] = -पूर्णांकel_uncore_पढ़ो_fw(gt->uncore, GEN6_RP_CUR_UP_EI);
 
 				udelay(1000);
 
-				dt_[i] = ktime_sub(ktime_get(), dt_[i]);
-				cycles_[i] += intel_uncore_read_fw(gt->uncore, GEN6_RP_CUR_UP_EI);
+				dt_[i] = kसमय_sub(kसमय_get(), dt_[i]);
+				cycles_[i] += पूर्णांकel_uncore_पढ़ो_fw(gt->uncore, GEN6_RP_CUR_UP_EI);
 
 				preempt_enable();
-			}
+			पूर्ण
 
-			/* Use the median of both cycle/dt; close enough */
-			sort(cycles_, 5, sizeof(*cycles_), cmp_u32, NULL);
+			/* Use the median of both cycle/dt; बंद enough */
+			sort(cycles_, 5, माप(*cycles_), cmp_u32, शून्य);
 			cycles = (cycles_[1] + 2 * cycles_[2] + cycles_[3]) / 4;
-			sort(dt_, 5, sizeof(*dt_), cmp_u64, NULL);
-			dt = div_u64(dt_[1] + 2 * dt_[2] + dt_[3], 4);
-		}
+			sort(dt_, 5, माप(*dt_), cmp_u64, शून्य);
+			dt = भाग_u64(dt_[1] + 2 * dt_[2] + dt_[3], 4);
+		पूर्ण
 
-		intel_uncore_write_fw(gt->uncore, GEN6_RP_CONTROL, 0);
-		intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+		पूर्णांकel_uncore_ग_लिखो_fw(gt->uncore, GEN6_RP_CONTROL, 0);
+		पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
 
 		igt_spinner_end(&spin);
 		st_engine_heartbeat_enable(engine);
 
-		if (err == 0) {
-			u64 time = intel_gt_pm_interval_to_ns(gt, cycles);
+		अगर (err == 0) अणु
+			u64 समय = पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(gt, cycles);
 			u32 expected =
-				intel_gt_ns_to_pm_interval(gt, dt);
+				पूर्णांकel_gt_ns_to_pm_पूर्णांकerval(gt, dt);
 
 			pr_info("%s: rps counted %d C0 cycles [%lldns] in %lldns [%d cycles], using GT clock frequency of %uKHz\n",
-				engine->name, cycles, time, dt, expected,
-				gt->clock_frequency / 1000);
+				engine->name, cycles, समय, dt, expected,
+				gt->घड़ी_frequency / 1000);
 
-			if (10 * time < 8 * dt ||
-			    8 * time > 10 * dt) {
+			अगर (10 * समय < 8 * dt ||
+			    8 * समय > 10 * dt) अणु
 				pr_err("%s: rps clock time does not match walltime!\n",
 				       engine->name);
 				err = -EINVAL;
-			}
+			पूर्ण
 
-			if (10 * expected < 8 * cycles ||
-			    8 * expected > 10 * cycles) {
+			अगर (10 * expected < 8 * cycles ||
+			    8 * expected > 10 * cycles) अणु
 				pr_err("%s: walltime does not match rps clock ticks!\n",
 				       engine->name);
 				err = -EINVAL;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (igt_flush_test(gt->i915))
+		अगर (igt_flush_test(gt->i915))
 			err = -EIO;
 
-		break; /* once is enough */
-	}
+		अवरोध; /* once is enough */
+	पूर्ण
 
-	intel_rps_enable(&gt->rps);
-	intel_gt_pm_put(gt);
+	पूर्णांकel_rps_enable(&gt->rps);
+	पूर्णांकel_gt_pm_put(gt);
 
 	igt_spinner_fini(&spin);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	if (err == -ENODEV) /* skipped, don't report a fail */
+	अगर (err == -ENODEV) /* skipped, करोn't report a fail */
 		err = 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int live_rps_control(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
-	int err = 0;
+पूर्णांक live_rps_control(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
+	पूर्णांक err = 0;
 
 	/*
 	 * Check that the actual frequency matches our requested frequency,
-	 * to verify our control mechanism. We have to be careful that the
-	 * PCU may throttle the GPU in which case the actual frequency used
+	 * to verअगरy our control mechanism. We have to be careful that the
+	 * PCU may throttle the GPU in which हाल the actual frequency used
 	 * will be lowered than requested.
 	 */
 
-	if (!intel_rps_is_enabled(rps))
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps))
+		वापस 0;
 
-	if (IS_CHERRYVIEW(gt->i915)) /* XXX fragile PCU */
-		return 0;
+	अगर (IS_CHERRYVIEW(gt->i915)) /* XXX fragile PCU */
+		वापस 0;
 
-	if (igt_spinner_init(&spin, gt))
-		return -ENOMEM;
+	अगर (igt_spinner_init(&spin, gt))
+		वापस -ENOMEM;
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	intel_gt_pm_get(gt);
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
-		ktime_t min_dt, max_dt;
-		int f, limit;
-		int min, max;
+	पूर्णांकel_gt_pm_get(gt);
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
+		kसमय_प्रकार min_dt, max_dt;
+		पूर्णांक f, limit;
+		पूर्णांक min, max;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
 		st_engine_heartbeat_disable(engine);
 
 		rq = igt_spinner_create_request(&spin,
 						engine->kernel_context,
 						MI_NOOP);
-		if (IS_ERR(rq)) {
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		i915_request_add(rq);
 
-		if (!igt_wait_for_spinner(&spin, rq)) {
+		अगर (!igt_रुको_क्रम_spinner(&spin, rq)) अणु
 			pr_err("%s: RPS spinner did not start\n",
 			       engine->name);
 			igt_spinner_end(&spin);
 			st_engine_heartbeat_enable(engine);
-			intel_gt_set_wedged(engine->gt);
+			पूर्णांकel_gt_set_wedged(engine->gt);
 			err = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rps_set_check(rps, rps->min_freq) != rps->min_freq) {
+		अगर (rps_set_check(rps, rps->min_freq) != rps->min_freq) अणु
 			pr_err("%s: could not set minimum frequency [%x], only %x!\n",
-			       engine->name, rps->min_freq, read_cagf(rps));
+			       engine->name, rps->min_freq, पढ़ो_cagf(rps));
 			igt_spinner_end(&spin);
 			st_engine_heartbeat_enable(engine);
 			show_pstate_limits(rps);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		for (f = rps->min_freq + 1; f < rps->max_freq; f++) {
-			if (rps_set_check(rps, f) < f)
-				break;
-		}
+		क्रम (f = rps->min_freq + 1; f < rps->max_freq; f++) अणु
+			अगर (rps_set_check(rps, f) < f)
+				अवरोध;
+		पूर्ण
 
 		limit = rps_set_check(rps, f);
 
-		if (rps_set_check(rps, rps->min_freq) != rps->min_freq) {
+		अगर (rps_set_check(rps, rps->min_freq) != rps->min_freq) अणु
 			pr_err("%s: could not restore minimum frequency [%x], only %x!\n",
-			       engine->name, rps->min_freq, read_cagf(rps));
+			       engine->name, rps->min_freq, पढ़ो_cagf(rps));
 			igt_spinner_end(&spin);
 			st_engine_heartbeat_enable(engine);
 			show_pstate_limits(rps);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		max_dt = ktime_get();
+		max_dt = kसमय_get();
 		max = rps_set_check(rps, limit);
-		max_dt = ktime_sub(ktime_get(), max_dt);
+		max_dt = kसमय_sub(kसमय_get(), max_dt);
 
-		min_dt = ktime_get();
+		min_dt = kसमय_get();
 		min = rps_set_check(rps, rps->min_freq);
-		min_dt = ktime_sub(ktime_get(), min_dt);
+		min_dt = kसमय_sub(kसमय_get(), min_dt);
 
 		igt_spinner_end(&spin);
 		st_engine_heartbeat_enable(engine);
 
 		pr_info("%s: range:[%x:%uMHz, %x:%uMHz] limit:[%x:%uMHz], %x:%x response %lluns:%lluns\n",
 			engine->name,
-			rps->min_freq, intel_gpu_freq(rps, rps->min_freq),
-			rps->max_freq, intel_gpu_freq(rps, rps->max_freq),
-			limit, intel_gpu_freq(rps, limit),
-			min, max, ktime_to_ns(min_dt), ktime_to_ns(max_dt));
+			rps->min_freq, पूर्णांकel_gpu_freq(rps, rps->min_freq),
+			rps->max_freq, पूर्णांकel_gpu_freq(rps, rps->max_freq),
+			limit, पूर्णांकel_gpu_freq(rps, limit),
+			min, max, kसमय_प्रकारo_ns(min_dt), kसमय_प्रकारo_ns(max_dt));
 
-		if (limit == rps->min_freq) {
+		अगर (limit == rps->min_freq) अणु
 			pr_err("%s: GPU throttled to minimum!\n",
 			       engine->name);
 			show_pstate_limits(rps);
 			err = -ENODEV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (igt_flush_test(gt->i915)) {
+		अगर (igt_flush_test(gt->i915)) अणु
 			err = -EIO;
-			break;
-		}
-	}
-	intel_gt_pm_put(gt);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	पूर्णांकel_gt_pm_put(gt);
 
 	igt_spinner_fini(&spin);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void show_pcu_config(struct intel_rps *rps)
-{
-	struct drm_i915_private *i915 = rps_to_i915(rps);
-	unsigned int max_gpu_freq, min_gpu_freq;
-	intel_wakeref_t wakeref;
-	int gpu_freq;
+अटल व्योम show_pcu_config(काष्ठा पूर्णांकel_rps *rps)
+अणु
+	काष्ठा drm_i915_निजी *i915 = rps_to_i915(rps);
+	अचिन्हित पूर्णांक max_gpu_freq, min_gpu_freq;
+	पूर्णांकel_wakeref_t wakeref;
+	पूर्णांक gpu_freq;
 
-	if (!HAS_LLC(i915))
-		return;
+	अगर (!HAS_LLC(i915))
+		वापस;
 
 	min_gpu_freq = rps->min_freq;
 	max_gpu_freq = rps->max_freq;
-	if (INTEL_GEN(i915) >= 9) {
+	अगर (INTEL_GEN(i915) >= 9) अणु
 		/* Convert GT frequency to 50 HZ units */
 		min_gpu_freq /= GEN9_FREQ_SCALER;
 		max_gpu_freq /= GEN9_FREQ_SCALER;
-	}
+	पूर्ण
 
-	wakeref = intel_runtime_pm_get(rps_to_uncore(rps)->rpm);
+	wakeref = पूर्णांकel_runसमय_pm_get(rps_to_uncore(rps)->rpm);
 
 	pr_info("%5s  %5s  %5s\n", "GPU", "eCPU", "eRing");
-	for (gpu_freq = min_gpu_freq; gpu_freq <= max_gpu_freq; gpu_freq++) {
-		int ia_freq = gpu_freq;
+	क्रम (gpu_freq = min_gpu_freq; gpu_freq <= max_gpu_freq; gpu_freq++) अणु
+		पूर्णांक ia_freq = gpu_freq;
 
-		sandybridge_pcode_read(i915,
+		sandybridge_pcode_पढ़ो(i915,
 				       GEN6_PCODE_READ_MIN_FREQ_TABLE,
-				       &ia_freq, NULL);
+				       &ia_freq, शून्य);
 
 		pr_info("%5d  %5d  %5d\n",
 			gpu_freq * 50,
 			((ia_freq >> 0) & 0xff) * 100,
 			((ia_freq >> 8) & 0xff) * 100);
-	}
+	पूर्ण
 
-	intel_runtime_pm_put(rps_to_uncore(rps)->rpm, wakeref);
-}
+	पूर्णांकel_runसमय_pm_put(rps_to_uncore(rps)->rpm, wakeref);
+पूर्ण
 
-static u64 __measure_frequency(u32 *cntr, int duration_ms)
-{
+अटल u64 __measure_frequency(u32 *cntr, पूर्णांक duration_ms)
+अणु
 	u64 dc, dt;
 
-	dt = ktime_get();
+	dt = kसमय_get();
 	dc = READ_ONCE(*cntr);
 	usleep_range(1000 * duration_ms, 2000 * duration_ms);
 	dc = READ_ONCE(*cntr) - dc;
-	dt = ktime_get() - dt;
+	dt = kसमय_get() - dt;
 
-	return div64_u64(1000 * 1000 * dc, dt);
-}
+	वापस भाग64_u64(1000 * 1000 * dc, dt);
+पूर्ण
 
-static u64 measure_frequency_at(struct intel_rps *rps, u32 *cntr, int *freq)
-{
+अटल u64 measure_frequency_at(काष्ठा पूर्णांकel_rps *rps, u32 *cntr, पूर्णांक *freq)
+अणु
 	u64 x[5];
-	int i;
+	पूर्णांक i;
 
 	*freq = rps_set_check(rps, *freq);
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		x[i] = __measure_frequency(cntr, 2);
-	*freq = (*freq + read_cagf(rps)) / 2;
+	*freq = (*freq + पढ़ो_cagf(rps)) / 2;
 
-	/* A simple triangle filter for better result stability */
-	sort(x, 5, sizeof(*x), cmp_u64, NULL);
-	return div_u64(x[1] + 2 * x[2] + x[3], 4);
-}
+	/* A simple triangle filter क्रम better result stability */
+	sort(x, 5, माप(*x), cmp_u64, शून्य);
+	वापस भाग_u64(x[1] + 2 * x[2] + x[3], 4);
+पूर्ण
 
-static u64 __measure_cs_frequency(struct intel_engine_cs *engine,
-				  int duration_ms)
-{
+अटल u64 __measure_cs_frequency(काष्ठा पूर्णांकel_engine_cs *engine,
+				  पूर्णांक duration_ms)
+अणु
 	u64 dc, dt;
 
-	dt = ktime_get();
-	dc = intel_uncore_read_fw(engine->uncore, CS_GPR(0));
+	dt = kसमय_get();
+	dc = पूर्णांकel_uncore_पढ़ो_fw(engine->uncore, CS_GPR(0));
 	usleep_range(1000 * duration_ms, 2000 * duration_ms);
-	dc = intel_uncore_read_fw(engine->uncore, CS_GPR(0)) - dc;
-	dt = ktime_get() - dt;
+	dc = पूर्णांकel_uncore_पढ़ो_fw(engine->uncore, CS_GPR(0)) - dc;
+	dt = kसमय_get() - dt;
 
-	return div64_u64(1000 * 1000 * dc, dt);
-}
+	वापस भाग64_u64(1000 * 1000 * dc, dt);
+पूर्ण
 
-static u64 measure_cs_frequency_at(struct intel_rps *rps,
-				   struct intel_engine_cs *engine,
-				   int *freq)
-{
+अटल u64 measure_cs_frequency_at(काष्ठा पूर्णांकel_rps *rps,
+				   काष्ठा पूर्णांकel_engine_cs *engine,
+				   पूर्णांक *freq)
+अणु
 	u64 x[5];
-	int i;
+	पूर्णांक i;
 
 	*freq = rps_set_check(rps, *freq);
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		x[i] = __measure_cs_frequency(engine, 2);
-	*freq = (*freq + read_cagf(rps)) / 2;
+	*freq = (*freq + पढ़ो_cagf(rps)) / 2;
 
-	/* A simple triangle filter for better result stability */
-	sort(x, 5, sizeof(*x), cmp_u64, NULL);
-	return div_u64(x[1] + 2 * x[2] + x[3], 4);
-}
+	/* A simple triangle filter क्रम better result stability */
+	sort(x, 5, माप(*x), cmp_u64, शून्य);
+	वापस भाग_u64(x[1] + 2 * x[2] + x[3], 4);
+पूर्ण
 
-static bool scaled_within(u64 x, u64 y, u32 f_n, u32 f_d)
-{
-	return f_d * x > f_n * y && f_n * x < f_d * y;
-}
+अटल bool scaled_within(u64 x, u64 y, u32 f_n, u32 f_d)
+अणु
+	वापस f_d * x > f_n * y && f_n * x < f_d * y;
+पूर्ण
 
-int live_rps_frequency_cs(void *arg)
-{
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	struct intel_engine_cs *engine;
-	struct pm_qos_request qos;
-	enum intel_engine_id id;
-	int err = 0;
+पूर्णांक live_rps_frequency_cs(व्योम *arg)
+अणु
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा pm_qos_request qos;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/*
-	 * The premise is that the GPU does change freqency at our behest.
+	 * The premise is that the GPU करोes change freqency at our behest.
 	 * Let's check there is a correspondence between the requested
-	 * frequency, the actual frequency, and the observed clock rate.
+	 * frequency, the actual frequency, and the observed घड़ी rate.
 	 */
 
-	if (!intel_rps_is_enabled(rps))
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps))
+		वापस 0;
 
-	if (INTEL_GEN(gt->i915) < 8) /* for CS simplicity */
-		return 0;
+	अगर (INTEL_GEN(gt->i915) < 8) /* क्रम CS simplicity */
+		वापस 0;
 
-	if (CPU_LATENCY >= 0)
+	अगर (CPU_LATENCY >= 0)
 		cpu_latency_qos_add_request(&qos, CPU_LATENCY);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
-		struct i915_vma *vma;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
+		काष्ठा i915_vma *vma;
 		u32 *cancel, *cntr;
-		struct {
+		काष्ठा अणु
 			u64 count;
-			int freq;
-		} min, max;
+			पूर्णांक freq;
+		पूर्ण min, max;
 
 		st_engine_heartbeat_disable(engine);
 
 		vma = create_spin_counter(engine,
 					  engine->kernel_context->vm, false,
 					  &cancel, &cntr);
-		if (IS_ERR(vma)) {
+		अगर (IS_ERR(vma)) अणु
 			err = PTR_ERR(vma);
 			st_engine_heartbeat_enable(engine);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rq = intel_engine_create_kernel_request(engine);
-		if (IS_ERR(rq)) {
+		rq = पूर्णांकel_engine_create_kernel_request(engine);
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			goto err_vma;
-		}
+			जाओ err_vma;
+		पूर्ण
 
-		err = i915_request_await_object(rq, vma->obj, false);
-		if (!err)
+		err = i915_request_aरुको_object(rq, vma->obj, false);
+		अगर (!err)
 			err = i915_vma_move_to_active(vma, rq, 0);
-		if (!err)
+		अगर (!err)
 			err = rq->engine->emit_bb_start(rq,
 							vma->node.start,
 							PAGE_SIZE, 0);
 		i915_request_add(rq);
-		if (err)
-			goto err_vma;
+		अगर (err)
+			जाओ err_vma;
 
-		if (wait_for(intel_uncore_read(engine->uncore, CS_GPR(0)),
-			     10)) {
+		अगर (रुको_क्रम(पूर्णांकel_uncore_पढ़ो(engine->uncore, CS_GPR(0)),
+			     10)) अणु
 			pr_err("%s: timed loop did not start\n",
 			       engine->name);
-			goto err_vma;
-		}
+			जाओ err_vma;
+		पूर्ण
 
 		min.freq = rps->min_freq;
 		min.count = measure_cs_frequency_at(rps, engine, &min.freq);
@@ -676,15 +677,15 @@ int live_rps_frequency_cs(void *arg)
 
 		pr_info("%s: min:%lluKHz @ %uMHz, max:%lluKHz @ %uMHz [%d%%]\n",
 			engine->name,
-			min.count, intel_gpu_freq(rps, min.freq),
-			max.count, intel_gpu_freq(rps, max.freq),
-			(int)DIV64_U64_ROUND_CLOSEST(100 * min.freq * max.count,
+			min.count, पूर्णांकel_gpu_freq(rps, min.freq),
+			max.count, पूर्णांकel_gpu_freq(rps, max.freq),
+			(पूर्णांक)DIV64_U64_ROUND_CLOSEST(100 * min.freq * max.count,
 						     max.freq * min.count));
 
-		if (!scaled_within(max.freq * min.count,
+		अगर (!scaled_within(max.freq * min.count,
 				   min.freq * max.count,
-				   2, 3)) {
-			int f;
+				   2, 3)) अणु
+			पूर्णांक f;
 
 			pr_err("%s: CS did not scale with frequency! scaled min:%llu, max:%llu\n",
 			       engine->name,
@@ -692,25 +693,25 @@ int live_rps_frequency_cs(void *arg)
 			       min.freq * max.count);
 			show_pcu_config(rps);
 
-			for (f = min.freq + 1; f <= rps->max_freq; f++) {
-				int act = f;
+			क्रम (f = min.freq + 1; f <= rps->max_freq; f++) अणु
+				पूर्णांक act = f;
 				u64 count;
 
 				count = measure_cs_frequency_at(rps, engine, &act);
-				if (act < f)
-					break;
+				अगर (act < f)
+					अवरोध;
 
 				pr_info("%s: %x:%uMHz: %lluKHz [%d%%]\n",
 					engine->name,
-					act, intel_gpu_freq(rps, act), count,
-					(int)DIV64_U64_ROUND_CLOSEST(100 * min.freq * count,
+					act, पूर्णांकel_gpu_freq(rps, act), count,
+					(पूर्णांक)DIV64_U64_ROUND_CLOSEST(100 * min.freq * count,
 								     act * min.count));
 
 				f = act; /* may skip ahead [pcu granularity] */
-			}
+			पूर्ण
 
-			err = -EINTR; /* ignore error, continue on with test */
-		}
+			err = -EINTR; /* ignore error, जारी on with test */
+		पूर्ण
 
 err_vma:
 		*cancel = MI_BATCH_BUFFER_END;
@@ -721,92 +722,92 @@ err_vma:
 		i915_vma_put(vma);
 
 		st_engine_heartbeat_enable(engine);
-		if (igt_flush_test(gt->i915))
+		अगर (igt_flush_test(gt->i915))
 			err = -EIO;
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	if (CPU_LATENCY >= 0)
-		cpu_latency_qos_remove_request(&qos);
+	अगर (CPU_LATENCY >= 0)
+		cpu_latency_qos_हटाओ_request(&qos);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int live_rps_frequency_srm(void *arg)
-{
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	struct intel_engine_cs *engine;
-	struct pm_qos_request qos;
-	enum intel_engine_id id;
-	int err = 0;
+पूर्णांक live_rps_frequency_srm(व्योम *arg)
+अणु
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	काष्ठा pm_qos_request qos;
+	क्रमागत पूर्णांकel_engine_id id;
+	पूर्णांक err = 0;
 
 	/*
-	 * The premise is that the GPU does change freqency at our behest.
+	 * The premise is that the GPU करोes change freqency at our behest.
 	 * Let's check there is a correspondence between the requested
-	 * frequency, the actual frequency, and the observed clock rate.
+	 * frequency, the actual frequency, and the observed घड़ी rate.
 	 */
 
-	if (!intel_rps_is_enabled(rps))
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps))
+		वापस 0;
 
-	if (INTEL_GEN(gt->i915) < 8) /* for CS simplicity */
-		return 0;
+	अगर (INTEL_GEN(gt->i915) < 8) /* क्रम CS simplicity */
+		वापस 0;
 
-	if (CPU_LATENCY >= 0)
+	अगर (CPU_LATENCY >= 0)
 		cpu_latency_qos_add_request(&qos, CPU_LATENCY);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
-		struct i915_vma *vma;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
+		काष्ठा i915_vma *vma;
 		u32 *cancel, *cntr;
-		struct {
+		काष्ठा अणु
 			u64 count;
-			int freq;
-		} min, max;
+			पूर्णांक freq;
+		पूर्ण min, max;
 
 		st_engine_heartbeat_disable(engine);
 
 		vma = create_spin_counter(engine,
 					  engine->kernel_context->vm, true,
 					  &cancel, &cntr);
-		if (IS_ERR(vma)) {
+		अगर (IS_ERR(vma)) अणु
 			err = PTR_ERR(vma);
 			st_engine_heartbeat_enable(engine);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		rq = intel_engine_create_kernel_request(engine);
-		if (IS_ERR(rq)) {
+		rq = पूर्णांकel_engine_create_kernel_request(engine);
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			goto err_vma;
-		}
+			जाओ err_vma;
+		पूर्ण
 
-		err = i915_request_await_object(rq, vma->obj, false);
-		if (!err)
+		err = i915_request_aरुको_object(rq, vma->obj, false);
+		अगर (!err)
 			err = i915_vma_move_to_active(vma, rq, 0);
-		if (!err)
+		अगर (!err)
 			err = rq->engine->emit_bb_start(rq,
 							vma->node.start,
 							PAGE_SIZE, 0);
 		i915_request_add(rq);
-		if (err)
-			goto err_vma;
+		अगर (err)
+			जाओ err_vma;
 
-		if (wait_for(READ_ONCE(*cntr), 10)) {
+		अगर (रुको_क्रम(READ_ONCE(*cntr), 10)) अणु
 			pr_err("%s: timed loop did not start\n",
 			       engine->name);
-			goto err_vma;
-		}
+			जाओ err_vma;
+		पूर्ण
 
 		min.freq = rps->min_freq;
 		min.count = measure_frequency_at(rps, cntr, &min.freq);
@@ -816,15 +817,15 @@ int live_rps_frequency_srm(void *arg)
 
 		pr_info("%s: min:%lluKHz @ %uMHz, max:%lluKHz @ %uMHz [%d%%]\n",
 			engine->name,
-			min.count, intel_gpu_freq(rps, min.freq),
-			max.count, intel_gpu_freq(rps, max.freq),
-			(int)DIV64_U64_ROUND_CLOSEST(100 * min.freq * max.count,
+			min.count, पूर्णांकel_gpu_freq(rps, min.freq),
+			max.count, पूर्णांकel_gpu_freq(rps, max.freq),
+			(पूर्णांक)DIV64_U64_ROUND_CLOSEST(100 * min.freq * max.count,
 						     max.freq * min.count));
 
-		if (!scaled_within(max.freq * min.count,
+		अगर (!scaled_within(max.freq * min.count,
 				   min.freq * max.count,
-				   1, 2)) {
-			int f;
+				   1, 2)) अणु
+			पूर्णांक f;
 
 			pr_err("%s: CS did not scale with frequency! scaled min:%llu, max:%llu\n",
 			       engine->name,
@@ -832,25 +833,25 @@ int live_rps_frequency_srm(void *arg)
 			       min.freq * max.count);
 			show_pcu_config(rps);
 
-			for (f = min.freq + 1; f <= rps->max_freq; f++) {
-				int act = f;
+			क्रम (f = min.freq + 1; f <= rps->max_freq; f++) अणु
+				पूर्णांक act = f;
 				u64 count;
 
 				count = measure_frequency_at(rps, cntr, &act);
-				if (act < f)
-					break;
+				अगर (act < f)
+					अवरोध;
 
 				pr_info("%s: %x:%uMHz: %lluKHz [%d%%]\n",
 					engine->name,
-					act, intel_gpu_freq(rps, act), count,
-					(int)DIV64_U64_ROUND_CLOSEST(100 * min.freq * count,
+					act, पूर्णांकel_gpu_freq(rps, act), count,
+					(पूर्णांक)DIV64_U64_ROUND_CLOSEST(100 * min.freq * count,
 								     act * min.count));
 
 				f = act; /* may skip ahead [pcu granularity] */
-			}
+			पूर्ण
 
-			err = -EINTR; /* ignore error, continue on with test */
-		}
+			err = -EINTR; /* ignore error, जारी on with test */
+		पूर्ण
 
 err_vma:
 		*cancel = MI_BATCH_BUFFER_END;
@@ -861,457 +862,457 @@ err_vma:
 		i915_vma_put(vma);
 
 		st_engine_heartbeat_enable(engine);
-		if (igt_flush_test(gt->i915))
+		अगर (igt_flush_test(gt->i915))
 			err = -EIO;
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	if (CPU_LATENCY >= 0)
-		cpu_latency_qos_remove_request(&qos);
+	अगर (CPU_LATENCY >= 0)
+		cpu_latency_qos_हटाओ_request(&qos);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sleep_for_ei(struct intel_rps *rps, int timeout_us)
-{
+अटल व्योम sleep_क्रम_ei(काष्ठा पूर्णांकel_rps *rps, पूर्णांक समयout_us)
+अणु
 	/* Flush any previous EI */
-	usleep_range(timeout_us, 2 * timeout_us);
+	usleep_range(समयout_us, 2 * समयout_us);
 
-	/* Reset the interrupt status */
-	rps_disable_interrupts(rps);
+	/* Reset the पूर्णांकerrupt status */
+	rps_disable_पूर्णांकerrupts(rps);
 	GEM_BUG_ON(rps->pm_iir);
-	rps_enable_interrupts(rps);
+	rps_enable_पूर्णांकerrupts(rps);
 
-	/* And then wait for the timeout, for real this time */
-	usleep_range(2 * timeout_us, 3 * timeout_us);
-}
+	/* And then रुको क्रम the समयout, क्रम real this समय */
+	usleep_range(2 * समयout_us, 3 * समयout_us);
+पूर्ण
 
-static int __rps_up_interrupt(struct intel_rps *rps,
-			      struct intel_engine_cs *engine,
-			      struct igt_spinner *spin)
-{
-	struct intel_uncore *uncore = engine->uncore;
-	struct i915_request *rq;
-	u32 timeout;
+अटल पूर्णांक __rps_up_पूर्णांकerrupt(काष्ठा पूर्णांकel_rps *rps,
+			      काष्ठा पूर्णांकel_engine_cs *engine,
+			      काष्ठा igt_spinner *spin)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	काष्ठा i915_request *rq;
+	u32 समयout;
 
-	if (!intel_engine_can_store_dword(engine))
-		return 0;
+	अगर (!पूर्णांकel_engine_can_store_dword(engine))
+		वापस 0;
 
 	rps_set_check(rps, rps->min_freq);
 
 	rq = igt_spinner_create_request(spin, engine->kernel_context, MI_NOOP);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	if (!igt_wait_for_spinner(spin, rq)) {
+	अगर (!igt_रुको_क्रम_spinner(spin, rq)) अणु
 		pr_err("%s: RPS spinner did not start\n",
 		       engine->name);
 		i915_request_put(rq);
-		intel_gt_set_wedged(engine->gt);
-		return -EIO;
-	}
+		पूर्णांकel_gt_set_wedged(engine->gt);
+		वापस -EIO;
+	पूर्ण
 
-	if (!intel_rps_is_active(rps)) {
+	अगर (!पूर्णांकel_rps_is_active(rps)) अणु
 		pr_err("%s: RPS not enabled on starting spinner\n",
 		       engine->name);
 		igt_spinner_end(spin);
 		i915_request_put(rq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(rps->pm_events & GEN6_PM_RP_UP_THRESHOLD)) {
+	अगर (!(rps->pm_events & GEN6_PM_RP_UP_THRESHOLD)) अणु
 		pr_err("%s: RPS did not register UP interrupt\n",
 		       engine->name);
 		i915_request_put(rq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rps->last_freq != rps->min_freq) {
+	अगर (rps->last_freq != rps->min_freq) अणु
 		pr_err("%s: RPS did not program min frequency\n",
 		       engine->name);
 		i915_request_put(rq);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	timeout = intel_uncore_read(uncore, GEN6_RP_UP_EI);
-	timeout = intel_gt_pm_interval_to_ns(engine->gt, timeout);
-	timeout = DIV_ROUND_UP(timeout, 1000);
+	समयout = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_EI);
+	समयout = पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(engine->gt, समयout);
+	समयout = DIV_ROUND_UP(समयout, 1000);
 
-	sleep_for_ei(rps, timeout);
+	sleep_क्रम_ei(rps, समयout);
 	GEM_BUG_ON(i915_request_completed(rq));
 
 	igt_spinner_end(spin);
 	i915_request_put(rq);
 
-	if (rps->cur_freq != rps->min_freq) {
+	अगर (rps->cur_freq != rps->min_freq) अणु
 		pr_err("%s: Frequency unexpectedly changed [up], now %d!\n",
-		       engine->name, intel_rps_read_actual_frequency(rps));
-		return -EINVAL;
-	}
+		       engine->name, पूर्णांकel_rps_पढ़ो_actual_frequency(rps));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(rps->pm_iir & GEN6_PM_RP_UP_THRESHOLD)) {
+	अगर (!(rps->pm_iir & GEN6_PM_RP_UP_THRESHOLD)) अणु
 		pr_err("%s: UP interrupt not recorded for spinner, pm_iir:%x, prev_up:%x, up_threshold:%x, up_ei:%x\n",
 		       engine->name, rps->pm_iir,
-		       intel_uncore_read(uncore, GEN6_RP_PREV_UP),
-		       intel_uncore_read(uncore, GEN6_RP_UP_THRESHOLD),
-		       intel_uncore_read(uncore, GEN6_RP_UP_EI));
-		return -EINVAL;
-	}
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_PREV_UP),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_THRESHOLD),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_EI));
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __rps_down_interrupt(struct intel_rps *rps,
-				struct intel_engine_cs *engine)
-{
-	struct intel_uncore *uncore = engine->uncore;
-	u32 timeout;
+अटल पूर्णांक __rps_करोwn_पूर्णांकerrupt(काष्ठा पूर्णांकel_rps *rps,
+				काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = engine->uncore;
+	u32 समयout;
 
 	rps_set_check(rps, rps->max_freq);
 
-	if (!(rps->pm_events & GEN6_PM_RP_DOWN_THRESHOLD)) {
+	अगर (!(rps->pm_events & GEN6_PM_RP_DOWN_THRESHOLD)) अणु
 		pr_err("%s: RPS did not register DOWN interrupt\n",
 		       engine->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (rps->last_freq != rps->max_freq) {
+	अगर (rps->last_freq != rps->max_freq) अणु
 		pr_err("%s: RPS did not program max frequency\n",
 		       engine->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	timeout = intel_uncore_read(uncore, GEN6_RP_DOWN_EI);
-	timeout = intel_gt_pm_interval_to_ns(engine->gt, timeout);
-	timeout = DIV_ROUND_UP(timeout, 1000);
+	समयout = पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_EI);
+	समयout = पूर्णांकel_gt_pm_पूर्णांकerval_to_ns(engine->gt, समयout);
+	समयout = DIV_ROUND_UP(समयout, 1000);
 
-	sleep_for_ei(rps, timeout);
+	sleep_क्रम_ei(rps, समयout);
 
-	if (rps->cur_freq != rps->max_freq) {
+	अगर (rps->cur_freq != rps->max_freq) अणु
 		pr_err("%s: Frequency unexpectedly changed [down], now %d!\n",
 		       engine->name,
-		       intel_rps_read_actual_frequency(rps));
-		return -EINVAL;
-	}
+		       पूर्णांकel_rps_पढ़ो_actual_frequency(rps));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(rps->pm_iir & (GEN6_PM_RP_DOWN_THRESHOLD | GEN6_PM_RP_DOWN_TIMEOUT))) {
+	अगर (!(rps->pm_iir & (GEN6_PM_RP_DOWN_THRESHOLD | GEN6_PM_RP_DOWN_TIMEOUT))) अणु
 		pr_err("%s: DOWN interrupt not recorded for idle, pm_iir:%x, prev_down:%x, down_threshold:%x, down_ei:%x [prev_up:%x, up_threshold:%x, up_ei:%x]\n",
 		       engine->name, rps->pm_iir,
-		       intel_uncore_read(uncore, GEN6_RP_PREV_DOWN),
-		       intel_uncore_read(uncore, GEN6_RP_DOWN_THRESHOLD),
-		       intel_uncore_read(uncore, GEN6_RP_DOWN_EI),
-		       intel_uncore_read(uncore, GEN6_RP_PREV_UP),
-		       intel_uncore_read(uncore, GEN6_RP_UP_THRESHOLD),
-		       intel_uncore_read(uncore, GEN6_RP_UP_EI));
-		return -EINVAL;
-	}
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_PREV_DOWN),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_THRESHOLD),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_DOWN_EI),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_PREV_UP),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_THRESHOLD),
+		       पूर्णांकel_uncore_पढ़ो(uncore, GEN6_RP_UP_EI));
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int live_rps_interrupt(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
+पूर्णांक live_rps_पूर्णांकerrupt(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
 	u32 pm_events;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	/*
-	 * First, let's check whether or not we are receiving interrupts.
+	 * First, let's check whether or not we are receiving पूर्णांकerrupts.
 	 */
 
-	if (!intel_rps_has_interrupts(rps) || INTEL_GEN(gt->i915) < 6)
-		return 0;
+	अगर (!पूर्णांकel_rps_has_पूर्णांकerrupts(rps) || INTEL_GEN(gt->i915) < 6)
+		वापस 0;
 
-	intel_gt_pm_get(gt);
+	पूर्णांकel_gt_pm_get(gt);
 	pm_events = rps->pm_events;
-	intel_gt_pm_put(gt);
-	if (!pm_events) {
+	पूर्णांकel_gt_pm_put(gt);
+	अगर (!pm_events) अणु
 		pr_err("No RPS PM events registered, but RPS is enabled?\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (igt_spinner_init(&spin, gt))
-		return -ENOMEM;
+	अगर (igt_spinner_init(&spin, gt))
+		वापस -ENOMEM;
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	for_each_engine(engine, gt, id) {
+	क्रम_each_engine(engine, gt, id) अणु
 		/* Keep the engine busy with a spinner; expect an UP! */
-		if (pm_events & GEN6_PM_RP_UP_THRESHOLD) {
-			intel_gt_pm_wait_for_idle(engine->gt);
-			GEM_BUG_ON(intel_rps_is_active(rps));
+		अगर (pm_events & GEN6_PM_RP_UP_THRESHOLD) अणु
+			पूर्णांकel_gt_pm_रुको_क्रम_idle(engine->gt);
+			GEM_BUG_ON(पूर्णांकel_rps_is_active(rps));
 
 			st_engine_heartbeat_disable(engine);
 
-			err = __rps_up_interrupt(rps, engine, &spin);
+			err = __rps_up_पूर्णांकerrupt(rps, engine, &spin);
 
 			st_engine_heartbeat_enable(engine);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			intel_gt_pm_wait_for_idle(engine->gt);
-		}
+			पूर्णांकel_gt_pm_रुको_क्रम_idle(engine->gt);
+		पूर्ण
 
-		/* Keep the engine awake but idle and check for DOWN */
-		if (pm_events & GEN6_PM_RP_DOWN_THRESHOLD) {
+		/* Keep the engine awake but idle and check क्रम DOWN */
+		अगर (pm_events & GEN6_PM_RP_DOWN_THRESHOLD) अणु
 			st_engine_heartbeat_disable(engine);
-			intel_rc6_disable(&gt->rc6);
+			पूर्णांकel_rc6_disable(&gt->rc6);
 
-			err = __rps_down_interrupt(rps, engine);
+			err = __rps_करोwn_पूर्णांकerrupt(rps, engine);
 
-			intel_rc6_enable(&gt->rc6);
+			पूर्णांकel_rc6_enable(&gt->rc6);
 			st_engine_heartbeat_enable(engine);
-			if (err)
-				goto out;
-		}
-	}
+			अगर (err)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	if (igt_flush_test(gt->i915))
+	अगर (igt_flush_test(gt->i915))
 		err = -EIO;
 
 	igt_spinner_fini(&spin);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u64 __measure_power(int duration_ms)
-{
+अटल u64 __measure_घातer(पूर्णांक duration_ms)
+अणु
 	u64 dE, dt;
 
-	dt = ktime_get();
+	dt = kसमय_get();
 	dE = librapl_energy_uJ();
 	usleep_range(1000 * duration_ms, 2000 * duration_ms);
 	dE = librapl_energy_uJ() - dE;
-	dt = ktime_get() - dt;
+	dt = kसमय_get() - dt;
 
-	return div64_u64(1000 * 1000 * dE, dt);
-}
+	वापस भाग64_u64(1000 * 1000 * dE, dt);
+पूर्ण
 
-static u64 measure_power_at(struct intel_rps *rps, int *freq)
-{
+अटल u64 measure_घातer_at(काष्ठा पूर्णांकel_rps *rps, पूर्णांक *freq)
+अणु
 	u64 x[5];
-	int i;
+	पूर्णांक i;
 
 	*freq = rps_set_check(rps, *freq);
-	for (i = 0; i < 5; i++)
-		x[i] = __measure_power(5);
-	*freq = (*freq + read_cagf(rps)) / 2;
+	क्रम (i = 0; i < 5; i++)
+		x[i] = __measure_घातer(5);
+	*freq = (*freq + पढ़ो_cagf(rps)) / 2;
 
-	/* A simple triangle filter for better result stability */
-	sort(x, 5, sizeof(*x), cmp_u64, NULL);
-	return div_u64(x[1] + 2 * x[2] + x[3], 4);
-}
+	/* A simple triangle filter क्रम better result stability */
+	sort(x, 5, माप(*x), cmp_u64, शून्य);
+	वापस भाग_u64(x[1] + 2 * x[2] + x[3], 4);
+पूर्ण
 
-int live_rps_power(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	void (*saved_work)(struct work_struct *wrk);
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
-	int err = 0;
+पूर्णांक live_rps_घातer(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	व्योम (*saved_work)(काष्ठा work_काष्ठा *wrk);
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
+	पूर्णांक err = 0;
 
 	/*
 	 * Our fundamental assumption is that running at lower frequency
-	 * actually saves power. Let's see if our RAPL measurement support
+	 * actually saves घातer. Let's see अगर our RAPL measurement support
 	 * that theory.
 	 */
 
-	if (!intel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
+		वापस 0;
 
-	if (!librapl_energy_uJ())
-		return 0;
+	अगर (!librapl_energy_uJ())
+		वापस 0;
 
-	if (igt_spinner_init(&spin, gt))
-		return -ENOMEM;
+	अगर (igt_spinner_init(&spin, gt))
+		वापस -ENOMEM;
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	saved_work = rps->work.func;
 	rps->work.func = dummy_rps_work;
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
-		struct {
-			u64 power;
-			int freq;
-		} min, max;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
+		काष्ठा अणु
+			u64 घातer;
+			पूर्णांक freq;
+		पूर्ण min, max;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
 		st_engine_heartbeat_disable(engine);
 
 		rq = igt_spinner_create_request(&spin,
 						engine->kernel_context,
 						MI_NOOP);
-		if (IS_ERR(rq)) {
+		अगर (IS_ERR(rq)) अणु
 			st_engine_heartbeat_enable(engine);
 			err = PTR_ERR(rq);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		i915_request_add(rq);
 
-		if (!igt_wait_for_spinner(&spin, rq)) {
+		अगर (!igt_रुको_क्रम_spinner(&spin, rq)) अणु
 			pr_err("%s: RPS spinner did not start\n",
 			       engine->name);
 			igt_spinner_end(&spin);
 			st_engine_heartbeat_enable(engine);
-			intel_gt_set_wedged(engine->gt);
+			पूर्णांकel_gt_set_wedged(engine->gt);
 			err = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		max.freq = rps->max_freq;
-		max.power = measure_power_at(rps, &max.freq);
+		max.घातer = measure_घातer_at(rps, &max.freq);
 
 		min.freq = rps->min_freq;
-		min.power = measure_power_at(rps, &min.freq);
+		min.घातer = measure_घातer_at(rps, &min.freq);
 
 		igt_spinner_end(&spin);
 		st_engine_heartbeat_enable(engine);
 
 		pr_info("%s: min:%llumW @ %uMHz, max:%llumW @ %uMHz\n",
 			engine->name,
-			min.power, intel_gpu_freq(rps, min.freq),
-			max.power, intel_gpu_freq(rps, max.freq));
+			min.घातer, पूर्णांकel_gpu_freq(rps, min.freq),
+			max.घातer, पूर्णांकel_gpu_freq(rps, max.freq));
 
-		if (10 * min.freq >= 9 * max.freq) {
+		अगर (10 * min.freq >= 9 * max.freq) अणु
 			pr_notice("Could not control frequency, ran at [%d:%uMHz, %d:%uMhz]\n",
-				  min.freq, intel_gpu_freq(rps, min.freq),
-				  max.freq, intel_gpu_freq(rps, max.freq));
-			continue;
-		}
+				  min.freq, पूर्णांकel_gpu_freq(rps, min.freq),
+				  max.freq, पूर्णांकel_gpu_freq(rps, max.freq));
+			जारी;
+		पूर्ण
 
-		if (11 * min.power > 10 * max.power) {
+		अगर (11 * min.घातer > 10 * max.घातer) अणु
 			pr_err("%s: did not conserve power when setting lower frequency!\n",
 			       engine->name);
 			err = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (igt_flush_test(gt->i915)) {
+		अगर (igt_flush_test(gt->i915)) अणु
 			err = -EIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	igt_spinner_fini(&spin);
 
-	intel_gt_pm_wait_for_idle(gt);
+	पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
 	rps->work.func = saved_work;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int live_rps_dynamic(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_rps *rps = &gt->rps;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
-	struct igt_spinner spin;
-	int err = 0;
+पूर्णांक live_rps_dynamic(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_rps *rps = &gt->rps;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
+	काष्ठा igt_spinner spin;
+	पूर्णांक err = 0;
 
 	/*
 	 * We've looked at the bascs, and have established that we
-	 * can change the clock frequency and that the HW will generate
-	 * interrupts based on load. Now we check how we integrate those
-	 * moving parts into dynamic reclocking based on load.
+	 * can change the घड़ी frequency and that the HW will generate
+	 * पूर्णांकerrupts based on load. Now we check how we पूर्णांकegrate those
+	 * moving parts पूर्णांकo dynamic reघड़ीing based on load.
 	 */
 
-	if (!intel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
-		return 0;
+	अगर (!पूर्णांकel_rps_is_enabled(rps) || INTEL_GEN(gt->i915) < 6)
+		वापस 0;
 
-	if (igt_spinner_init(&spin, gt))
-		return -ENOMEM;
+	अगर (igt_spinner_init(&spin, gt))
+		वापस -ENOMEM;
 
-	if (intel_rps_has_interrupts(rps))
+	अगर (पूर्णांकel_rps_has_पूर्णांकerrupts(rps))
 		pr_info("RPS has interrupt support\n");
-	if (intel_rps_uses_timer(rps))
+	अगर (पूर्णांकel_rps_uses_समयr(rps))
 		pr_info("RPS has timer support\n");
 
-	for_each_engine(engine, gt, id) {
-		struct i915_request *rq;
-		struct {
-			ktime_t dt;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_request *rq;
+		काष्ठा अणु
+			kसमय_प्रकार dt;
 			u8 freq;
-		} min, max;
+		पूर्ण min, max;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		intel_gt_pm_wait_for_idle(gt);
-		GEM_BUG_ON(intel_rps_is_active(rps));
+		पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
+		GEM_BUG_ON(पूर्णांकel_rps_is_active(rps));
 		rps->cur_freq = rps->min_freq;
 
-		intel_engine_pm_get(engine);
-		intel_rc6_disable(&gt->rc6);
+		पूर्णांकel_engine_pm_get(engine);
+		पूर्णांकel_rc6_disable(&gt->rc6);
 		GEM_BUG_ON(rps->last_freq != rps->min_freq);
 
 		rq = igt_spinner_create_request(&spin,
 						engine->kernel_context,
 						MI_NOOP);
-		if (IS_ERR(rq)) {
+		अगर (IS_ERR(rq)) अणु
 			err = PTR_ERR(rq);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		i915_request_add(rq);
 
-		max.dt = ktime_get();
-		max.freq = wait_for_freq(rps, rps->max_freq, 500);
-		max.dt = ktime_sub(ktime_get(), max.dt);
+		max.dt = kसमय_get();
+		max.freq = रुको_क्रम_freq(rps, rps->max_freq, 500);
+		max.dt = kसमय_sub(kसमय_get(), max.dt);
 
 		igt_spinner_end(&spin);
 
-		min.dt = ktime_get();
-		min.freq = wait_for_freq(rps, rps->min_freq, 2000);
-		min.dt = ktime_sub(ktime_get(), min.dt);
+		min.dt = kसमय_get();
+		min.freq = रुको_क्रम_freq(rps, rps->min_freq, 2000);
+		min.dt = kसमय_sub(kसमय_get(), min.dt);
 
 		pr_info("%s: dynamically reclocked to %u:%uMHz while busy in %lluns, and %u:%uMHz while idle in %lluns\n",
 			engine->name,
-			max.freq, intel_gpu_freq(rps, max.freq),
-			ktime_to_ns(max.dt),
-			min.freq, intel_gpu_freq(rps, min.freq),
-			ktime_to_ns(min.dt));
-		if (min.freq >= max.freq) {
+			max.freq, पूर्णांकel_gpu_freq(rps, max.freq),
+			kसमय_प्रकारo_ns(max.dt),
+			min.freq, पूर्णांकel_gpu_freq(rps, min.freq),
+			kसमय_प्रकारo_ns(min.dt));
+		अगर (min.freq >= max.freq) अणु
 			pr_err("%s: dynamic reclocking of spinner failed\n!",
 			       engine->name);
 			err = -EINVAL;
-		}
+		पूर्ण
 
 err:
-		intel_rc6_enable(&gt->rc6);
-		intel_engine_pm_put(engine);
+		पूर्णांकel_rc6_enable(&gt->rc6);
+		पूर्णांकel_engine_pm_put(engine);
 
-		if (igt_flush_test(gt->i915))
+		अगर (igt_flush_test(gt->i915))
 			err = -EIO;
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
 	igt_spinner_fini(&spin);
 
-	return err;
-}
+	वापस err;
+पूर्ण

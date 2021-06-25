@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
- * SGI specific setup.
+ * SGI specअगरic setup.
  *
  * Copyright (C) 1995 - 1997, 1999 Silcon Graphics, Inc.
  * Copyright (C) 1999 Ralf Baechle (ralf@gnu.org)
  */
-#ifndef _ASM_SN_ARCH_H
-#define _ASM_SN_ARCH_H
+#अगर_अघोषित _ASM_SN_ARCH_H
+#घोषणा _ASM_SN_ARCH_H
 
-#include <linux/types.h>
-#include <asm/sn/types.h>
-#ifdef CONFIG_SGI_IP27
-#include <asm/sn/sn0/arch.h>
-#endif
+#समावेश <linux/types.h>
+#समावेश <यंत्र/sn/types.h>
+#अगर_घोषित CONFIG_SGI_IP27
+#समावेश <यंत्र/sn/sn0/arch.h>
+#पूर्ण_अगर
 
-#define cputonasid(cpu)		(sn_cpu_info[(cpu)].p_nasid)
-#define cputoslice(cpu)		(sn_cpu_info[(cpu)].p_slice)
+#घोषणा cputonasid(cpu)		(sn_cpu_info[(cpu)].p_nasid)
+#घोषणा cputoslice(cpu)		(sn_cpu_info[(cpu)].p_slice)
 
-#define INVALID_NASID		(nasid_t)-1
-#define INVALID_PNODEID		(pnodeid_t)-1
-#define INVALID_MODULE		(moduleid_t)-1
-#define INVALID_PARTID		(partid_t)-1
+#घोषणा INVALID_NASID		(nasid_t)-1
+#घोषणा INVALID_PNODEID		(pnodeid_t)-1
+#घोषणा INVALID_MODULE		(moduleid_t)-1
+#घोषणा INVALID_PARTID		(partid_t)-1
 
-#endif /* _ASM_SN_ARCH_H */
+#पूर्ण_अगर /* _ASM_SN_ARCH_H */

@@ -1,100 +1,101 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  *
  * This program shows how to use bpf_xdp_adjust_head() by
  * encapsulating the incoming packet in an IPv4/v6 header
  * and then XDP_TX it out.
  */
-#define KBUILD_MODNAME "foo"
-#include <uapi/linux/bpf.h>
-#include <linux/in.h>
-#include <linux/if_ether.h>
-#include <linux/if_packet.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <bpf/bpf_helpers.h>
-#include "xdp_tx_iptunnel_common.h"
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <uapi/linux/bpf.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_packet.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश "xdp_tx_iptunnel_common.h"
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, __u32);
 	__type(value, __u64);
-	__uint(max_entries, 256);
-} rxcnt SEC(".maps");
+	__uपूर्णांक(max_entries, 256);
+पूर्ण rxcnt SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__type(key, struct vip);
-	__type(value, struct iptnl_info);
-	__uint(max_entries, MAX_IPTNL_ENTRIES);
-} vip2tnl SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__type(key, काष्ठा vip);
+	__type(value, काष्ठा iptnl_info);
+	__uपूर्णांक(max_entries, MAX_IPTNL_ENTRIES);
+पूर्ण vip2tnl SEC(".maps");
 
-static __always_inline void count_tx(u32 protocol)
-{
+अटल __always_अंतरभूत व्योम count_tx(u32 protocol)
+अणु
 	u64 *rxcnt_count;
 
 	rxcnt_count = bpf_map_lookup_elem(&rxcnt, &protocol);
-	if (rxcnt_count)
+	अगर (rxcnt_count)
 		*rxcnt_count += 1;
-}
+पूर्ण
 
-static __always_inline int get_dport(void *trans_data, void *data_end,
+अटल __always_अंतरभूत पूर्णांक get_dport(व्योम *trans_data, व्योम *data_end,
 				     u8 protocol)
-{
-	struct tcphdr *th;
-	struct udphdr *uh;
+अणु
+	काष्ठा tcphdr *th;
+	काष्ठा udphdr *uh;
 
-	switch (protocol) {
-	case IPPROTO_TCP:
-		th = (struct tcphdr *)trans_data;
-		if (th + 1 > data_end)
-			return -1;
-		return th->dest;
-	case IPPROTO_UDP:
-		uh = (struct udphdr *)trans_data;
-		if (uh + 1 > data_end)
-			return -1;
-		return uh->dest;
-	default:
-		return 0;
-	}
-}
+	चयन (protocol) अणु
+	हाल IPPROTO_TCP:
+		th = (काष्ठा tcphdr *)trans_data;
+		अगर (th + 1 > data_end)
+			वापस -1;
+		वापस th->dest;
+	हाल IPPROTO_UDP:
+		uh = (काष्ठा udphdr *)trans_data;
+		अगर (uh + 1 > data_end)
+			वापस -1;
+		वापस uh->dest;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static __always_inline void set_ethhdr(struct ethhdr *new_eth,
-				       const struct ethhdr *old_eth,
-				       const struct iptnl_info *tnl,
+अटल __always_अंतरभूत व्योम set_ethhdr(काष्ठा ethhdr *new_eth,
+				       स्थिर काष्ठा ethhdr *old_eth,
+				       स्थिर काष्ठा iptnl_info *tnl,
 				       __be16 h_proto)
-{
-	memcpy(new_eth->h_source, old_eth->h_dest, sizeof(new_eth->h_source));
-	memcpy(new_eth->h_dest, tnl->dmac, sizeof(new_eth->h_dest));
+अणु
+	स_नकल(new_eth->h_source, old_eth->h_dest, माप(new_eth->h_source));
+	स_नकल(new_eth->h_dest, tnl->dmac, माप(new_eth->h_dest));
 	new_eth->h_proto = h_proto;
-}
+पूर्ण
 
-static __always_inline int handle_ipv4(struct xdp_md *xdp)
-{
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	struct iptnl_info *tnl;
-	struct ethhdr *new_eth;
-	struct ethhdr *old_eth;
-	struct iphdr *iph = data + sizeof(struct ethhdr);
+अटल __always_अंतरभूत पूर्णांक handle_ipv4(काष्ठा xdp_md *xdp)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	काष्ठा iptnl_info *tnl;
+	काष्ठा ethhdr *new_eth;
+	काष्ठा ethhdr *old_eth;
+	काष्ठा iphdr *iph = data + माप(काष्ठा ethhdr);
 	u16 *next_iph_u16;
 	u16 payload_len;
-	struct vip vip = {};
-	int dport;
+	काष्ठा vip vip = अणुपूर्ण;
+	पूर्णांक dport;
 	u32 csum = 0;
-	int i;
+	पूर्णांक i;
 
-	if (iph + 1 > data_end)
-		return XDP_DROP;
+	अगर (iph + 1 > data_end)
+		वापस XDP_DROP;
 
 	dport = get_dport(iph + 1, data_end, iph->protocol);
-	if (dport == -1)
-		return XDP_DROP;
+	अगर (dport == -1)
+		वापस XDP_DROP;
 
 	vip.protocol = iph->protocol;
 	vip.family = AF_INET;
@@ -103,135 +104,135 @@ static __always_inline int handle_ipv4(struct xdp_md *xdp)
 	payload_len = ntohs(iph->tot_len);
 
 	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
-	/* It only does v4-in-v4 */
-	if (!tnl || tnl->family != AF_INET)
-		return XDP_PASS;
+	/* It only करोes v4-in-v4 */
+	अगर (!tnl || tnl->family != AF_INET)
+		वापस XDP_PASS;
 
 	/* The vip key is found.  Add an IP header and send it out */
 
-	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct iphdr)))
-		return XDP_DROP;
+	अगर (bpf_xdp_adjust_head(xdp, 0 - (पूर्णांक)माप(काष्ठा iphdr)))
+		वापस XDP_DROP;
 
-	data = (void *)(long)xdp->data;
-	data_end = (void *)(long)xdp->data_end;
+	data = (व्योम *)(दीर्घ)xdp->data;
+	data_end = (व्योम *)(दीर्घ)xdp->data_end;
 
 	new_eth = data;
-	iph = data + sizeof(*new_eth);
-	old_eth = data + sizeof(*iph);
+	iph = data + माप(*new_eth);
+	old_eth = data + माप(*iph);
 
-	if (new_eth + 1 > data_end ||
+	अगर (new_eth + 1 > data_end ||
 	    old_eth + 1 > data_end ||
 	    iph + 1 > data_end)
-		return XDP_DROP;
+		वापस XDP_DROP;
 
 	set_ethhdr(new_eth, old_eth, tnl, htons(ETH_P_IP));
 
 	iph->version = 4;
-	iph->ihl = sizeof(*iph) >> 2;
+	iph->ihl = माप(*iph) >> 2;
 	iph->frag_off =	0;
 	iph->protocol = IPPROTO_IPIP;
 	iph->check = 0;
 	iph->tos = 0;
-	iph->tot_len = htons(payload_len + sizeof(*iph));
+	iph->tot_len = htons(payload_len + माप(*iph));
 	iph->daddr = tnl->daddr.v4;
 	iph->saddr = tnl->saddr.v4;
 	iph->ttl = 8;
 
 	next_iph_u16 = (u16 *)iph;
-#pragma clang loop unroll(full)
-	for (i = 0; i < sizeof(*iph) >> 1; i++)
+#आशय clang loop unroll(full)
+	क्रम (i = 0; i < माप(*iph) >> 1; i++)
 		csum += *next_iph_u16++;
 
 	iph->check = ~((csum & 0xffff) + (csum >> 16));
 
 	count_tx(vip.protocol);
 
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
-static __always_inline int handle_ipv6(struct xdp_md *xdp)
-{
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	struct iptnl_info *tnl;
-	struct ethhdr *new_eth;
-	struct ethhdr *old_eth;
-	struct ipv6hdr *ip6h = data + sizeof(struct ethhdr);
+अटल __always_अंतरभूत पूर्णांक handle_ipv6(काष्ठा xdp_md *xdp)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	काष्ठा iptnl_info *tnl;
+	काष्ठा ethhdr *new_eth;
+	काष्ठा ethhdr *old_eth;
+	काष्ठा ipv6hdr *ip6h = data + माप(काष्ठा ethhdr);
 	__u16 payload_len;
-	struct vip vip = {};
-	int dport;
+	काष्ठा vip vip = अणुपूर्ण;
+	पूर्णांक dport;
 
-	if (ip6h + 1 > data_end)
-		return XDP_DROP;
+	अगर (ip6h + 1 > data_end)
+		वापस XDP_DROP;
 
 	dport = get_dport(ip6h + 1, data_end, ip6h->nexthdr);
-	if (dport == -1)
-		return XDP_DROP;
+	अगर (dport == -1)
+		वापस XDP_DROP;
 
 	vip.protocol = ip6h->nexthdr;
 	vip.family = AF_INET6;
-	memcpy(vip.daddr.v6, ip6h->daddr.s6_addr32, sizeof(vip.daddr));
+	स_नकल(vip.daddr.v6, ip6h->daddr.s6_addr32, माप(vip.daddr));
 	vip.dport = dport;
 	payload_len = ip6h->payload_len;
 
 	tnl = bpf_map_lookup_elem(&vip2tnl, &vip);
-	/* It only does v6-in-v6 */
-	if (!tnl || tnl->family != AF_INET6)
-		return XDP_PASS;
+	/* It only करोes v6-in-v6 */
+	अगर (!tnl || tnl->family != AF_INET6)
+		वापस XDP_PASS;
 
 	/* The vip key is found.  Add an IP header and send it out */
 
-	if (bpf_xdp_adjust_head(xdp, 0 - (int)sizeof(struct ipv6hdr)))
-		return XDP_DROP;
+	अगर (bpf_xdp_adjust_head(xdp, 0 - (पूर्णांक)माप(काष्ठा ipv6hdr)))
+		वापस XDP_DROP;
 
-	data = (void *)(long)xdp->data;
-	data_end = (void *)(long)xdp->data_end;
+	data = (व्योम *)(दीर्घ)xdp->data;
+	data_end = (व्योम *)(दीर्घ)xdp->data_end;
 
 	new_eth = data;
-	ip6h = data + sizeof(*new_eth);
-	old_eth = data + sizeof(*ip6h);
+	ip6h = data + माप(*new_eth);
+	old_eth = data + माप(*ip6h);
 
-	if (new_eth + 1 > data_end ||
+	अगर (new_eth + 1 > data_end ||
 	    old_eth + 1 > data_end ||
 	    ip6h + 1 > data_end)
-		return XDP_DROP;
+		वापस XDP_DROP;
 
 	set_ethhdr(new_eth, old_eth, tnl, htons(ETH_P_IPV6));
 
 	ip6h->version = 6;
 	ip6h->priority = 0;
-	memset(ip6h->flow_lbl, 0, sizeof(ip6h->flow_lbl));
-	ip6h->payload_len = htons(ntohs(payload_len) + sizeof(*ip6h));
+	स_रखो(ip6h->flow_lbl, 0, माप(ip6h->flow_lbl));
+	ip6h->payload_len = htons(ntohs(payload_len) + माप(*ip6h));
 	ip6h->nexthdr = IPPROTO_IPV6;
 	ip6h->hop_limit = 8;
-	memcpy(ip6h->saddr.s6_addr32, tnl->saddr.v6, sizeof(tnl->saddr.v6));
-	memcpy(ip6h->daddr.s6_addr32, tnl->daddr.v6, sizeof(tnl->daddr.v6));
+	स_नकल(ip6h->saddr.s6_addr32, tnl->saddr.v6, माप(tnl->saddr.v6));
+	स_नकल(ip6h->daddr.s6_addr32, tnl->daddr.v6, माप(tnl->daddr.v6));
 
 	count_tx(vip.protocol);
 
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
 SEC("xdp_tx_iptunnel")
-int _xdp_tx_iptunnel(struct xdp_md *xdp)
-{
-	void *data_end = (void *)(long)xdp->data_end;
-	void *data = (void *)(long)xdp->data;
-	struct ethhdr *eth = data;
+पूर्णांक _xdp_tx_iptunnel(काष्ठा xdp_md *xdp)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)xdp->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)xdp->data;
+	काष्ठा ethhdr *eth = data;
 	__u16 h_proto;
 
-	if (eth + 1 > data_end)
-		return XDP_DROP;
+	अगर (eth + 1 > data_end)
+		वापस XDP_DROP;
 
 	h_proto = eth->h_proto;
 
-	if (h_proto == htons(ETH_P_IP))
-		return handle_ipv4(xdp);
-	else if (h_proto == htons(ETH_P_IPV6))
+	अगर (h_proto == htons(ETH_P_IP))
+		वापस handle_ipv4(xdp);
+	अन्यथा अगर (h_proto == htons(ETH_P_IPV6))
 
-		return handle_ipv6(xdp);
-	else
-		return XDP_PASS;
-}
+		वापस handle_ipv6(xdp);
+	अन्यथा
+		वापस XDP_PASS;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,7 +1,8 @@
-{
+<शैली गुरु>
+अणु
 	"calls: two calls returning different map pointers for lookup (hash, array)",
-	.insns = {
-	/* main prog */
+	.insns = अणु
+	/* मुख्य prog */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 2),
 	BPF_CALL_REL(11),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 1),
@@ -12,7 +13,7 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 2),
-	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
+	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
 	/* subprog 1 */
@@ -21,17 +22,17 @@
 	/* subprog 2 */
 	BPF_LD_MAP_FD(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-	.fixup_map_hash_48b = { 13 },
-	.fixup_map_array_48b = { 16 },
+	.fixup_map_hash_48b = अणु 13 पूर्ण,
+	.fixup_map_array_48b = अणु 16 पूर्ण,
 	.result = ACCEPT,
 	.retval = 1,
-},
-{
+पूर्ण,
+अणु
 	"calls: two calls returning different map pointers for lookup (hash, map in map)",
-	.insns = {
-	/* main prog */
+	.insns = अणु
+	/* मुख्य prog */
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_1, 0, 2),
 	BPF_CALL_REL(11),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 1),
@@ -42,7 +43,7 @@
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 2),
-	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, offsetof(struct test_val, foo)),
+	BPF_ST_MEM(BPF_DW, BPF_REG_0, 0, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
 	/* subprog 1 */
@@ -51,18 +52,18 @@
 	/* subprog 2 */
 	BPF_LD_MAP_FD(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.prog_type = BPF_PROG_TYPE_SCHED_CLS,
-	.fixup_map_in_map = { 16 },
-	.fixup_map_array_48b = { 13 },
+	.fixup_map_in_map = अणु 16 पूर्ण,
+	.fixup_map_array_48b = अणु 13 पूर्ण,
 	.result = REJECT,
 	.errstr = "only read from bpf_array is supported",
-},
-{
+पूर्ण,
+अणु
 	"cond: two branches returning different map pointers for lookup (tail, tail)",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_JMP_IMM(BPF_JNE, BPF_REG_6, 0, 3),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
@@ -71,19 +72,19 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog1 = { 5 },
-	.fixup_prog2 = { 2 },
+	पूर्ण,
+	.fixup_prog1 = अणु 5 पूर्ण,
+	.fixup_prog2 = अणु 2 पूर्ण,
 	.result_unpriv = REJECT,
 	.errstr_unpriv = "tail_call abusing map_ptr",
 	.result = ACCEPT,
 	.retval = 42,
-},
-{
+पूर्ण,
+अणु
 	"cond: two branches returning same map pointers for lookup (tail, tail)",
-	.insns = {
+	.insns = अणु
 	BPF_LDX_MEM(BPF_W, BPF_REG_6, BPF_REG_1,
-		    offsetof(struct __sk_buff, mark)),
+		    दुरत्व(काष्ठा __sk_buff, mark)),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_6, 0, 3),
 	BPF_LD_MAP_FD(BPF_REG_2, 0),
 	BPF_JMP_IMM(BPF_JA, 0, 0, 2),
@@ -92,9 +93,9 @@
 	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_tail_call),
 	BPF_MOV64_IMM(BPF_REG_0, 1),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_prog2 = { 2, 5 },
+	पूर्ण,
+	.fixup_prog2 = अणु 2, 5 पूर्ण,
 	.result_unpriv = ACCEPT,
 	.result = ACCEPT,
 	.retval = 42,
-},
+पूर्ण,

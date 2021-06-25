@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 //
-// OWL factor clock driver
+// OWL factor घड़ी driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -8,76 +9,76 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#ifndef _OWL_FACTOR_H_
-#define _OWL_FACTOR_H_
+#अगर_अघोषित _OWL_FACTOR_H_
+#घोषणा _OWL_FACTOR_H_
 
-#include "owl-common.h"
+#समावेश "owl-common.h"
 
-struct clk_factor_table {
-	unsigned int		val;
-	unsigned int		mul;
-	unsigned int		div;
-};
+काष्ठा clk_factor_table अणु
+	अचिन्हित पूर्णांक		val;
+	अचिन्हित पूर्णांक		mul;
+	अचिन्हित पूर्णांक		भाग;
+पूर्ण;
 
-struct owl_factor_hw {
+काष्ठा owl_factor_hw अणु
 	u32			reg;
-	u8			shift;
+	u8			shअगरt;
 	u8			width;
 	u8			fct_flags;
-	struct clk_factor_table	*table;
-};
+	काष्ठा clk_factor_table	*table;
+पूर्ण;
 
-struct owl_factor {
-	struct owl_factor_hw	factor_hw;
-	struct owl_clk_common	common;
-};
+काष्ठा owl_factor अणु
+	काष्ठा owl_factor_hw	factor_hw;
+	काष्ठा owl_clk_common	common;
+पूर्ण;
 
-#define OWL_FACTOR_HW(_reg, _shift, _width, _fct_flags, _table)		\
-	{								\
+#घोषणा OWL_FACTOR_HW(_reg, _shअगरt, _width, _fct_flags, _table)		\
+	अणु								\
 		.reg		= _reg,					\
-		.shift		= _shift,				\
+		.shअगरt		= _shअगरt,				\
 		.width		= _width,				\
 		.fct_flags	= _fct_flags,				\
 		.table		= _table,				\
-	}
+	पूर्ण
 
-#define OWL_FACTOR(_struct, _name, _parent, _reg,			\
-		   _shift, _width, _table, _fct_flags, _flags)		\
-	struct owl_factor _struct = {					\
-		.factor_hw = OWL_FACTOR_HW(_reg, _shift,		\
+#घोषणा OWL_FACTOR(_काष्ठा, _name, _parent, _reg,			\
+		   _shअगरt, _width, _table, _fct_flags, _flags)		\
+	काष्ठा owl_factor _काष्ठा = अणु					\
+		.factor_hw = OWL_FACTOR_HW(_reg, _shअगरt,		\
 					   _width, _fct_flags, _table),	\
-		.common = {						\
-			.regmap		= NULL,				\
+		.common = अणु						\
+			.regmap		= शून्य,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &owl_factor_ops,	\
 						      _flags),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-#define div_mask(d) ((1 << ((d)->width)) - 1)
+#घोषणा भाग_mask(d) ((1 << ((d)->width)) - 1)
 
-static inline struct owl_factor *hw_to_owl_factor(const struct clk_hw *hw)
-{
-	struct owl_clk_common *common = hw_to_owl_clk_common(hw);
+अटल अंतरभूत काष्ठा owl_factor *hw_to_owl_factor(स्थिर काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_clk_common *common = hw_to_owl_clk_common(hw);
 
-	return container_of(common, struct owl_factor, common);
-}
+	वापस container_of(common, काष्ठा owl_factor, common);
+पूर्ण
 
-long owl_factor_helper_round_rate(struct owl_clk_common *common,
-				const struct owl_factor_hw *factor_hw,
-				unsigned long rate,
-				unsigned long *parent_rate);
+दीर्घ owl_factor_helper_round_rate(काष्ठा owl_clk_common *common,
+				स्थिर काष्ठा owl_factor_hw *factor_hw,
+				अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate);
 
-unsigned long owl_factor_helper_recalc_rate(struct owl_clk_common *common,
-					 const struct owl_factor_hw *factor_hw,
-					 unsigned long parent_rate);
+अचिन्हित दीर्घ owl_factor_helper_recalc_rate(काष्ठा owl_clk_common *common,
+					 स्थिर काष्ठा owl_factor_hw *factor_hw,
+					 अचिन्हित दीर्घ parent_rate);
 
-int owl_factor_helper_set_rate(const struct owl_clk_common *common,
-				const struct owl_factor_hw *factor_hw,
-				unsigned long rate,
-				unsigned long parent_rate);
+पूर्णांक owl_factor_helper_set_rate(स्थिर काष्ठा owl_clk_common *common,
+				स्थिर काष्ठा owl_factor_hw *factor_hw,
+				अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate);
 
-extern const struct clk_ops owl_factor_ops;
+बाह्य स्थिर काष्ठा clk_ops owl_factor_ops;
 
-#endif /* _OWL_FACTOR_H_ */
+#पूर्ण_अगर /* _OWL_FACTOR_H_ */

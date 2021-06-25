@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ring buffer based function tracer
  *
@@ -10,34 +11,34 @@
  *  Copyright (C) 2004-2006 Ingo Molnar
  *  Copyright (C) 2004 Nadia Yvette Chambers
  */
-#include <linux/ring_buffer.h>
-#include <linux/debugfs.h>
-#include <linux/uaccess.h>
-#include <linux/ftrace.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
+#समावेश <linux/ring_buffer.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
 
-#include "trace.h"
+#समावेश "trace.h"
 
-static void tracing_start_function_trace(struct trace_array *tr);
-static void tracing_stop_function_trace(struct trace_array *tr);
-static void
-function_trace_call(unsigned long ip, unsigned long parent_ip,
-		    struct ftrace_ops *op, struct ftrace_regs *fregs);
-static void
-function_stack_trace_call(unsigned long ip, unsigned long parent_ip,
-			  struct ftrace_ops *op, struct ftrace_regs *fregs);
-static void
-function_no_repeats_trace_call(unsigned long ip, unsigned long parent_ip,
-			       struct ftrace_ops *op, struct ftrace_regs *fregs);
-static void
-function_stack_no_repeats_trace_call(unsigned long ip, unsigned long parent_ip,
-				     struct ftrace_ops *op,
-				     struct ftrace_regs *fregs);
-static struct tracer_flags func_flags;
+अटल व्योम tracing_start_function_trace(काष्ठा trace_array *tr);
+अटल व्योम tracing_stop_function_trace(काष्ठा trace_array *tr);
+अटल व्योम
+function_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		    काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs);
+अटल व्योम
+function_stack_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			  काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs);
+अटल व्योम
+function_no_repeats_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			       काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs);
+अटल व्योम
+function_stack_no_repeats_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+				     काष्ठा ftrace_ops *op,
+				     काष्ठा ftrace_regs *fregs);
+अटल काष्ठा tracer_flags func_flags;
 
 /* Our option */
-enum {
+क्रमागत अणु
 
 	TRACE_FUNC_NO_OPTS		= 0x0, /* No flags set. */
 	TRACE_FUNC_OPT_STACK		= 0x1,
@@ -45,107 +46,107 @@ enum {
 
 	/* Update this to next highest bit. */
 	TRACE_FUNC_OPT_HIGHEST_BIT	= 0x4
-};
+पूर्ण;
 
-#define TRACE_FUNC_OPT_MASK	(TRACE_FUNC_OPT_HIGHEST_BIT - 1)
+#घोषणा TRACE_FUNC_OPT_MASK	(TRACE_FUNC_OPT_HIGHEST_BIT - 1)
 
-int ftrace_allocate_ftrace_ops(struct trace_array *tr)
-{
-	struct ftrace_ops *ops;
+पूर्णांक ftrace_allocate_ftrace_ops(काष्ठा trace_array *tr)
+अणु
+	काष्ठा ftrace_ops *ops;
 
 	/* The top level array uses the "global_ops" */
-	if (tr->flags & TRACE_ARRAY_FL_GLOBAL)
-		return 0;
+	अगर (tr->flags & TRACE_ARRAY_FL_GLOBAL)
+		वापस 0;
 
-	ops = kzalloc(sizeof(*ops), GFP_KERNEL);
-	if (!ops)
-		return -ENOMEM;
+	ops = kzalloc(माप(*ops), GFP_KERNEL);
+	अगर (!ops)
+		वापस -ENOMEM;
 
 	/* Currently only the non stack version is supported */
 	ops->func = function_trace_call;
 	ops->flags = FTRACE_OPS_FL_PID;
 
 	tr->ops = ops;
-	ops->private = tr;
+	ops->निजी = tr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ftrace_free_ftrace_ops(struct trace_array *tr)
-{
-	kfree(tr->ops);
-	tr->ops = NULL;
-}
+व्योम ftrace_मुक्त_ftrace_ops(काष्ठा trace_array *tr)
+अणु
+	kमुक्त(tr->ops);
+	tr->ops = शून्य;
+पूर्ण
 
-int ftrace_create_function_files(struct trace_array *tr,
-				 struct dentry *parent)
-{
+पूर्णांक ftrace_create_function_files(काष्ठा trace_array *tr,
+				 काष्ठा dentry *parent)
+अणु
 	/*
 	 * The top level array uses the "global_ops", and the files are
 	 * created on boot up.
 	 */
-	if (tr->flags & TRACE_ARRAY_FL_GLOBAL)
-		return 0;
+	अगर (tr->flags & TRACE_ARRAY_FL_GLOBAL)
+		वापस 0;
 
-	if (!tr->ops)
-		return -EINVAL;
+	अगर (!tr->ops)
+		वापस -EINVAL;
 
 	ftrace_create_filter_files(tr->ops, parent);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ftrace_destroy_function_files(struct trace_array *tr)
-{
+व्योम ftrace_destroy_function_files(काष्ठा trace_array *tr)
+अणु
 	ftrace_destroy_filter_files(tr->ops);
-	ftrace_free_ftrace_ops(tr);
-}
+	ftrace_मुक्त_ftrace_ops(tr);
+पूर्ण
 
-static ftrace_func_t select_trace_function(u32 flags_val)
-{
-	switch (flags_val & TRACE_FUNC_OPT_MASK) {
-	case TRACE_FUNC_NO_OPTS:
-		return function_trace_call;
-	case TRACE_FUNC_OPT_STACK:
-		return function_stack_trace_call;
-	case TRACE_FUNC_OPT_NO_REPEATS:
-		return function_no_repeats_trace_call;
-	case TRACE_FUNC_OPT_STACK | TRACE_FUNC_OPT_NO_REPEATS:
-		return function_stack_no_repeats_trace_call;
-	default:
-		return NULL;
-	}
-}
+अटल ftrace_func_t select_trace_function(u32 flags_val)
+अणु
+	चयन (flags_val & TRACE_FUNC_OPT_MASK) अणु
+	हाल TRACE_FUNC_NO_OPTS:
+		वापस function_trace_call;
+	हाल TRACE_FUNC_OPT_STACK:
+		वापस function_stack_trace_call;
+	हाल TRACE_FUNC_OPT_NO_REPEATS:
+		वापस function_no_repeats_trace_call;
+	हाल TRACE_FUNC_OPT_STACK | TRACE_FUNC_OPT_NO_REPEATS:
+		वापस function_stack_no_repeats_trace_call;
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static bool handle_func_repeats(struct trace_array *tr, u32 flags_val)
-{
-	if (!tr->last_func_repeats &&
-	    (flags_val & TRACE_FUNC_OPT_NO_REPEATS)) {
-		tr->last_func_repeats = alloc_percpu(struct trace_func_repeats);
-		if (!tr->last_func_repeats)
-			return false;
-	}
+अटल bool handle_func_repeats(काष्ठा trace_array *tr, u32 flags_val)
+अणु
+	अगर (!tr->last_func_repeats &&
+	    (flags_val & TRACE_FUNC_OPT_NO_REPEATS)) अणु
+		tr->last_func_repeats = alloc_percpu(काष्ठा trace_func_repeats);
+		अगर (!tr->last_func_repeats)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int function_trace_init(struct trace_array *tr)
-{
+अटल पूर्णांक function_trace_init(काष्ठा trace_array *tr)
+अणु
 	ftrace_func_t func;
 	/*
 	 * Instance trace_arrays get their ops allocated
 	 * at instance creation. Unless it failed
 	 * the allocation.
 	 */
-	if (!tr->ops)
-		return -ENOMEM;
+	अगर (!tr->ops)
+		वापस -ENOMEM;
 
 	func = select_trace_function(func_flags.val);
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
-	if (!handle_func_repeats(tr, func_flags.val))
-		return -ENOMEM;
+	अगर (!handle_func_repeats(tr, func_flags.val))
+		वापस -ENOMEM;
 
 	ftrace_init_array_ops(tr, func);
 
@@ -153,168 +154,168 @@ static int function_trace_init(struct trace_array *tr)
 
 	tracing_start_cmdline_record();
 	tracing_start_function_trace(tr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void function_trace_reset(struct trace_array *tr)
-{
+अटल व्योम function_trace_reset(काष्ठा trace_array *tr)
+अणु
 	tracing_stop_function_trace(tr);
 	tracing_stop_cmdline_record();
 	ftrace_reset_array_ops(tr);
-}
+पूर्ण
 
-static void function_trace_start(struct trace_array *tr)
-{
+अटल व्योम function_trace_start(काष्ठा trace_array *tr)
+अणु
 	tracing_reset_online_cpus(&tr->array_buffer);
-}
+पूर्ण
 
-static void
-function_trace_call(unsigned long ip, unsigned long parent_ip,
-		    struct ftrace_ops *op, struct ftrace_regs *fregs)
-{
-	struct trace_array *tr = op->private;
-	struct trace_array_cpu *data;
-	unsigned int trace_ctx;
-	int bit;
-	int cpu;
+अटल व्योम
+function_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		    काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा trace_array *tr = op->निजी;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित पूर्णांक trace_ctx;
+	पूर्णांक bit;
+	पूर्णांक cpu;
 
-	if (unlikely(!tr->function_enabled))
-		return;
+	अगर (unlikely(!tr->function_enabled))
+		वापस;
 
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
-	if (bit < 0)
-		return;
+	अगर (bit < 0)
+		वापस;
 
 	trace_ctx = tracing_gen_ctx();
 	preempt_disable_notrace();
 
 	cpu = smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	if (!atomic_read(&data->disabled))
+	अगर (!atomic_पढ़ो(&data->disabled))
 		trace_function(tr, ip, parent_ip, trace_ctx);
 
 	ftrace_test_recursion_unlock(bit);
 	preempt_enable_notrace();
-}
+पूर्ण
 
-#ifdef CONFIG_UNWINDER_ORC
+#अगर_घोषित CONFIG_UNWINDER_ORC
 /*
  * Skip 2:
  *
  *   function_stack_trace_call()
  *   ftrace_call()
  */
-#define STACK_SKIP 2
-#else
+#घोषणा STACK_SKIP 2
+#अन्यथा
 /*
  * Skip 3:
  *   __trace_stack()
  *   function_stack_trace_call()
  *   ftrace_call()
  */
-#define STACK_SKIP 3
-#endif
+#घोषणा STACK_SKIP 3
+#पूर्ण_अगर
 
-static void
-function_stack_trace_call(unsigned long ip, unsigned long parent_ip,
-			  struct ftrace_ops *op, struct ftrace_regs *fregs)
-{
-	struct trace_array *tr = op->private;
-	struct trace_array_cpu *data;
-	unsigned long flags;
-	long disabled;
-	int cpu;
-	unsigned int trace_ctx;
+अटल व्योम
+function_stack_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			  काष्ठा ftrace_ops *op, काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा trace_array *tr = op->निजी;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित दीर्घ flags;
+	दीर्घ disabled;
+	पूर्णांक cpu;
+	अचिन्हित पूर्णांक trace_ctx;
 
-	if (unlikely(!tr->function_enabled))
-		return;
+	अगर (unlikely(!tr->function_enabled))
+		वापस;
 
 	/*
-	 * Need to use raw, since this must be called before the
-	 * recursive protection is performed.
+	 * Need to use raw, since this must be called beक्रमe the
+	 * recursive protection is perक्रमmed.
 	 */
 	local_irq_save(flags);
 	cpu = raw_smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	disabled = atomic_inc_return(&data->disabled);
+	disabled = atomic_inc_वापस(&data->disabled);
 
-	if (likely(disabled == 1)) {
+	अगर (likely(disabled == 1)) अणु
 		trace_ctx = tracing_gen_ctx_flags(flags);
 		trace_function(tr, ip, parent_ip, trace_ctx);
 		__trace_stack(tr, trace_ctx, STACK_SKIP);
-	}
+	पूर्ण
 
 	atomic_dec(&data->disabled);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static inline bool is_repeat_check(struct trace_array *tr,
-				   struct trace_func_repeats *last_info,
-				   unsigned long ip, unsigned long parent_ip)
-{
-	if (last_info->ip == ip &&
+अटल अंतरभूत bool is_repeat_check(काष्ठा trace_array *tr,
+				   काष्ठा trace_func_repeats *last_info,
+				   अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip)
+अणु
+	अगर (last_info->ip == ip &&
 	    last_info->parent_ip == parent_ip &&
-	    last_info->count < U16_MAX) {
+	    last_info->count < U16_MAX) अणु
 		last_info->ts_last_call =
-			ring_buffer_time_stamp(tr->array_buffer.buffer);
+			ring_buffer_समय_stamp(tr->array_buffer.buffer);
 		last_info->count++;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void process_repeats(struct trace_array *tr,
-				   unsigned long ip, unsigned long parent_ip,
-				   struct trace_func_repeats *last_info,
-				   unsigned int trace_ctx)
-{
-	if (last_info->count) {
+अटल अंतरभूत व्योम process_repeats(काष्ठा trace_array *tr,
+				   अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+				   काष्ठा trace_func_repeats *last_info,
+				   अचिन्हित पूर्णांक trace_ctx)
+अणु
+	अगर (last_info->count) अणु
 		trace_last_func_repeats(tr, last_info, trace_ctx);
 		last_info->count = 0;
-	}
+	पूर्ण
 
 	last_info->ip = ip;
 	last_info->parent_ip = parent_ip;
-}
+पूर्ण
 
-static void
-function_no_repeats_trace_call(unsigned long ip, unsigned long parent_ip,
-			       struct ftrace_ops *op,
-			       struct ftrace_regs *fregs)
-{
-	struct trace_func_repeats *last_info;
-	struct trace_array *tr = op->private;
-	struct trace_array_cpu *data;
-	unsigned int trace_ctx;
-	unsigned long flags;
-	int bit;
-	int cpu;
+अटल व्योम
+function_no_repeats_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			       काष्ठा ftrace_ops *op,
+			       काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा trace_func_repeats *last_info;
+	काष्ठा trace_array *tr = op->निजी;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित पूर्णांक trace_ctx;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक bit;
+	पूर्णांक cpu;
 
-	if (unlikely(!tr->function_enabled))
-		return;
+	अगर (unlikely(!tr->function_enabled))
+		वापस;
 
 	bit = ftrace_test_recursion_trylock(ip, parent_ip);
-	if (bit < 0)
-		return;
+	अगर (bit < 0)
+		वापस;
 
 	preempt_disable_notrace();
 
 	cpu = smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	if (atomic_read(&data->disabled))
-		goto out;
+	अगर (atomic_पढ़ो(&data->disabled))
+		जाओ out;
 
 	/*
-	 * An interrupt may happen at any place here. But as far as I can see,
+	 * An पूर्णांकerrupt may happen at any place here. But as far as I can see,
 	 * the only damage that this can cause is to mess up the repetition
 	 * counter without valuable data being lost.
 	 * TODO: think about a solution that is better than just hoping to be
 	 * lucky.
 	 */
 	last_info = per_cpu_ptr(tr->last_func_repeats, cpu);
-	if (is_repeat_check(tr, last_info, ip, parent_ip))
-		goto out;
+	अगर (is_repeat_check(tr, last_info, ip, parent_ip))
+		जाओ out;
 
 	local_save_flags(flags);
 	trace_ctx = tracing_gen_ctx_flags(flags);
@@ -325,113 +326,113 @@ function_no_repeats_trace_call(unsigned long ip, unsigned long parent_ip,
 out:
 	ftrace_test_recursion_unlock(bit);
 	preempt_enable_notrace();
-}
+पूर्ण
 
-static void
-function_stack_no_repeats_trace_call(unsigned long ip, unsigned long parent_ip,
-				     struct ftrace_ops *op,
-				     struct ftrace_regs *fregs)
-{
-	struct trace_func_repeats *last_info;
-	struct trace_array *tr = op->private;
-	struct trace_array_cpu *data;
-	unsigned long flags;
-	long disabled;
-	int cpu;
-	unsigned int trace_ctx;
+अटल व्योम
+function_stack_no_repeats_trace_call(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+				     काष्ठा ftrace_ops *op,
+				     काष्ठा ftrace_regs *fregs)
+अणु
+	काष्ठा trace_func_repeats *last_info;
+	काष्ठा trace_array *tr = op->निजी;
+	काष्ठा trace_array_cpu *data;
+	अचिन्हित दीर्घ flags;
+	दीर्घ disabled;
+	पूर्णांक cpu;
+	अचिन्हित पूर्णांक trace_ctx;
 
-	if (unlikely(!tr->function_enabled))
-		return;
+	अगर (unlikely(!tr->function_enabled))
+		वापस;
 
 	/*
-	 * Need to use raw, since this must be called before the
-	 * recursive protection is performed.
+	 * Need to use raw, since this must be called beक्रमe the
+	 * recursive protection is perक्रमmed.
 	 */
 	local_irq_save(flags);
 	cpu = raw_smp_processor_id();
 	data = per_cpu_ptr(tr->array_buffer.data, cpu);
-	disabled = atomic_inc_return(&data->disabled);
+	disabled = atomic_inc_वापस(&data->disabled);
 
-	if (likely(disabled == 1)) {
+	अगर (likely(disabled == 1)) अणु
 		last_info = per_cpu_ptr(tr->last_func_repeats, cpu);
-		if (is_repeat_check(tr, last_info, ip, parent_ip))
-			goto out;
+		अगर (is_repeat_check(tr, last_info, ip, parent_ip))
+			जाओ out;
 
 		trace_ctx = tracing_gen_ctx_flags(flags);
 		process_repeats(tr, ip, parent_ip, last_info, trace_ctx);
 
 		trace_function(tr, ip, parent_ip, trace_ctx);
 		__trace_stack(tr, trace_ctx, STACK_SKIP);
-	}
+	पूर्ण
 
  out:
 	atomic_dec(&data->disabled);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static struct tracer_opt func_opts[] = {
-#ifdef CONFIG_STACKTRACE
-	{ TRACER_OPT(func_stack_trace, TRACE_FUNC_OPT_STACK) },
-#endif
-	{ TRACER_OPT(func-no-repeats, TRACE_FUNC_OPT_NO_REPEATS) },
-	{ } /* Always set a last empty entry */
-};
+अटल काष्ठा tracer_opt func_opts[] = अणु
+#अगर_घोषित CONFIG_STACKTRACE
+	अणु TRACER_OPT(func_stack_trace, TRACE_FUNC_OPT_STACK) पूर्ण,
+#पूर्ण_अगर
+	अणु TRACER_OPT(func-no-repeats, TRACE_FUNC_OPT_NO_REPEATS) पूर्ण,
+	अणु पूर्ण /* Always set a last empty entry */
+पूर्ण;
 
-static struct tracer_flags func_flags = {
-	.val = TRACE_FUNC_NO_OPTS, /* By default: all flags disabled */
+अटल काष्ठा tracer_flags func_flags = अणु
+	.val = TRACE_FUNC_NO_OPTS, /* By शेष: all flags disabled */
 	.opts = func_opts
-};
+पूर्ण;
 
-static void tracing_start_function_trace(struct trace_array *tr)
-{
+अटल व्योम tracing_start_function_trace(काष्ठा trace_array *tr)
+अणु
 	tr->function_enabled = 0;
-	register_ftrace_function(tr->ops);
+	रेजिस्टर_ftrace_function(tr->ops);
 	tr->function_enabled = 1;
-}
+पूर्ण
 
-static void tracing_stop_function_trace(struct trace_array *tr)
-{
+अटल व्योम tracing_stop_function_trace(काष्ठा trace_array *tr)
+अणु
 	tr->function_enabled = 0;
-	unregister_ftrace_function(tr->ops);
-}
+	unरेजिस्टर_ftrace_function(tr->ops);
+पूर्ण
 
-static struct tracer function_trace;
+अटल काष्ठा tracer function_trace;
 
-static int
-func_set_flag(struct trace_array *tr, u32 old_flags, u32 bit, int set)
-{
+अटल पूर्णांक
+func_set_flag(काष्ठा trace_array *tr, u32 old_flags, u32 bit, पूर्णांक set)
+अणु
 	ftrace_func_t func;
 	u32 new_flags;
 
-	/* Do nothing if already set. */
-	if (!!set == !!(func_flags.val & bit))
-		return 0;
+	/* Do nothing अगर alपढ़ोy set. */
+	अगर (!!set == !!(func_flags.val & bit))
+		वापस 0;
 
 	/* We can change this flag only when not running. */
-	if (tr->current_trace != &function_trace)
-		return 0;
+	अगर (tr->current_trace != &function_trace)
+		वापस 0;
 
 	new_flags = (func_flags.val & ~bit) | (set ? bit : 0);
 	func = select_trace_function(new_flags);
-	if (!func)
-		return -EINVAL;
+	अगर (!func)
+		वापस -EINVAL;
 
-	/* Check if there's anything to change. */
-	if (tr->ops->func == func)
-		return 0;
+	/* Check अगर there's anything to change. */
+	अगर (tr->ops->func == func)
+		वापस 0;
 
-	if (!handle_func_repeats(tr, new_flags))
-		return -ENOMEM;
+	अगर (!handle_func_repeats(tr, new_flags))
+		वापस -ENOMEM;
 
-	unregister_ftrace_function(tr->ops);
+	unरेजिस्टर_ftrace_function(tr->ops);
 	tr->ops->func = func;
-	register_ftrace_function(tr->ops);
+	रेजिस्टर_ftrace_function(tr->ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct tracer function_trace __tracer_data =
-{
+अटल काष्ठा tracer function_trace __tracer_data =
+अणु
 	.name		= "function",
 	.init		= function_trace_init,
 	.reset		= function_trace_reset,
@@ -439,112 +440,112 @@ static struct tracer function_trace __tracer_data =
 	.flags		= &func_flags,
 	.set_flag	= func_set_flag,
 	.allow_instances = true,
-#ifdef CONFIG_FTRACE_SELFTEST
+#अगर_घोषित CONFIG_FTRACE_SELFTEST
 	.selftest	= trace_selftest_startup_function,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_DYNAMIC_FTRACE
-static void update_traceon_count(struct ftrace_probe_ops *ops,
-				 unsigned long ip,
-				 struct trace_array *tr, bool on,
-				 void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	long *count;
-	long old_count;
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
+अटल व्योम update_traceon_count(काष्ठा ftrace_probe_ops *ops,
+				 अचिन्हित दीर्घ ip,
+				 काष्ठा trace_array *tr, bool on,
+				 व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	दीर्घ *count;
+	दीर्घ old_count;
 
 	/*
-	 * Tracing gets disabled (or enabled) once per count.
-	 * This function can be called at the same time on multiple CPUs.
-	 * It is fine if both disable (or enable) tracing, as disabling
-	 * (or enabling) the second time doesn't do anything as the
-	 * state of the tracer is already disabled (or enabled).
-	 * What needs to be synchronized in this case is that the count
-	 * only gets decremented once, even if the tracer is disabled
+	 * Tracing माला_लो disabled (or enabled) once per count.
+	 * This function can be called at the same समय on multiple CPUs.
+	 * It is fine अगर both disable (or enable) tracing, as disabling
+	 * (or enabling) the second समय करोesn't करो anything as the
+	 * state of the tracer is alपढ़ोy disabled (or enabled).
+	 * What needs to be synchronized in this हाल is that the count
+	 * only माला_लो decremented once, even अगर the tracer is disabled
 	 * (or enabled) twice, as the second one is really a nop.
 	 *
 	 * The memory barriers guarantee that we only decrement the
-	 * counter once. First the count is read to a local variable
-	 * and a read barrier is used to make sure that it is loaded
-	 * before checking if the tracer is in the state we want.
+	 * counter once. First the count is पढ़ो to a local variable
+	 * and a पढ़ो barrier is used to make sure that it is loaded
+	 * beक्रमe checking अगर the tracer is in the state we want.
 	 * If the tracer is not in the state we want, then the count
 	 * is guaranteed to be the old count.
 	 *
 	 * Next the tracer is set to the state we want (disabled or enabled)
-	 * then a write memory barrier is used to make sure that
-	 * the new state is visible before changing the counter by
+	 * then a ग_लिखो memory barrier is used to make sure that
+	 * the new state is visible beक्रमe changing the counter by
 	 * one minus the old counter. This guarantees that another CPU
-	 * executing this code will see the new state before seeing
-	 * the new counter value, and would not do anything if the new
+	 * executing this code will see the new state beक्रमe seeing
+	 * the new counter value, and would not करो anything अगर the new
 	 * counter is seen.
 	 *
 	 * Note, there is no synchronization between this and a user
-	 * setting the tracing_on file. But we currently don't care
+	 * setting the tracing_on file. But we currently करोn't care
 	 * about that.
 	 */
-	count = (long *)ftrace_func_mapper_find_ip(mapper, ip);
+	count = (दीर्घ *)ftrace_func_mapper_find_ip(mapper, ip);
 	old_count = *count;
 
-	if (old_count <= 0)
-		return;
+	अगर (old_count <= 0)
+		वापस;
 
-	/* Make sure we see count before checking tracing state */
+	/* Make sure we see count beक्रमe checking tracing state */
 	smp_rmb();
 
-	if (on == !!tracer_tracing_is_on(tr))
-		return;
+	अगर (on == !!tracer_tracing_is_on(tr))
+		वापस;
 
-	if (on)
+	अगर (on)
 		tracer_tracing_on(tr);
-	else
+	अन्यथा
 		tracer_tracing_off(tr);
 
-	/* Make sure tracing state is visible before updating count */
+	/* Make sure tracing state is visible beक्रमe updating count */
 	smp_wmb();
 
 	*count = old_count - 1;
-}
+पूर्ण
 
-static void
-ftrace_traceon_count(unsigned long ip, unsigned long parent_ip,
-		     struct trace_array *tr, struct ftrace_probe_ops *ops,
-		     void *data)
-{
+अटल व्योम
+ftrace_traceon_count(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		     काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		     व्योम *data)
+अणु
 	update_traceon_count(ops, ip, tr, 1, data);
-}
+पूर्ण
 
-static void
-ftrace_traceoff_count(unsigned long ip, unsigned long parent_ip,
-		      struct trace_array *tr, struct ftrace_probe_ops *ops,
-		      void *data)
-{
+अटल व्योम
+ftrace_traceoff_count(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		      काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		      व्योम *data)
+अणु
 	update_traceon_count(ops, ip, tr, 0, data);
-}
+पूर्ण
 
-static void
-ftrace_traceon(unsigned long ip, unsigned long parent_ip,
-	       struct trace_array *tr, struct ftrace_probe_ops *ops,
-	       void *data)
-{
-	if (tracer_tracing_is_on(tr))
-		return;
+अटल व्योम
+ftrace_traceon(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+	       काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+	       व्योम *data)
+अणु
+	अगर (tracer_tracing_is_on(tr))
+		वापस;
 
 	tracer_tracing_on(tr);
-}
+पूर्ण
 
-static void
-ftrace_traceoff(unsigned long ip, unsigned long parent_ip,
-		struct trace_array *tr, struct ftrace_probe_ops *ops,
-		void *data)
-{
-	if (!tracer_tracing_is_on(tr))
-		return;
+अटल व्योम
+ftrace_traceoff(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		व्योम *data)
+अणु
+	अगर (!tracer_tracing_is_on(tr))
+		वापस;
 
 	tracer_tracing_off(tr);
-}
+पूर्ण
 
-#ifdef CONFIG_UNWINDER_ORC
+#अगर_घोषित CONFIG_UNWINDER_ORC
 /*
  * Skip 3:
  *
@@ -552,8 +553,8 @@ ftrace_traceoff(unsigned long ip, unsigned long parent_ip,
  *   ftrace_ops_assist_func()
  *   ftrace_call()
  */
-#define FTRACE_STACK_SKIP 3
-#else
+#घोषणा FTRACE_STACK_SKIP 3
+#अन्यथा
 /*
  * Skip 5:
  *
@@ -563,417 +564,417 @@ ftrace_traceoff(unsigned long ip, unsigned long parent_ip,
  *   ftrace_ops_assist_func()
  *   ftrace_call()
  */
-#define FTRACE_STACK_SKIP 5
-#endif
+#घोषणा FTRACE_STACK_SKIP 5
+#पूर्ण_अगर
 
-static __always_inline void trace_stack(struct trace_array *tr)
-{
-	unsigned int trace_ctx;
+अटल __always_अंतरभूत व्योम trace_stack(काष्ठा trace_array *tr)
+अणु
+	अचिन्हित पूर्णांक trace_ctx;
 
 	trace_ctx = tracing_gen_ctx();
 
 	__trace_stack(tr, trace_ctx, FTRACE_STACK_SKIP);
-}
+पूर्ण
 
-static void
-ftrace_stacktrace(unsigned long ip, unsigned long parent_ip,
-		  struct trace_array *tr, struct ftrace_probe_ops *ops,
-		  void *data)
-{
+अटल व्योम
+ftrace_stacktrace(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		  काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		  व्योम *data)
+अणु
 	trace_stack(tr);
-}
+पूर्ण
 
-static void
-ftrace_stacktrace_count(unsigned long ip, unsigned long parent_ip,
-			struct trace_array *tr, struct ftrace_probe_ops *ops,
-			void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	long *count;
-	long old_count;
-	long new_count;
+अटल व्योम
+ftrace_stacktrace_count(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+			काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+			व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	दीर्घ *count;
+	दीर्घ old_count;
+	दीर्घ new_count;
 
-	if (!tracing_is_on())
-		return;
+	अगर (!tracing_is_on())
+		वापस;
 
 	/* unlimited? */
-	if (!mapper) {
+	अगर (!mapper) अणु
 		trace_stack(tr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	count = (long *)ftrace_func_mapper_find_ip(mapper, ip);
+	count = (दीर्घ *)ftrace_func_mapper_find_ip(mapper, ip);
 
 	/*
-	 * Stack traces should only execute the number of times the
-	 * user specified in the counter.
+	 * Stack traces should only execute the number of बार the
+	 * user specअगरied in the counter.
 	 */
-	do {
+	करो अणु
 		old_count = *count;
 
-		if (!old_count)
-			return;
+		अगर (!old_count)
+			वापस;
 
 		new_count = old_count - 1;
 		new_count = cmpxchg(count, old_count, new_count);
-		if (new_count == old_count)
+		अगर (new_count == old_count)
 			trace_stack(tr);
 
-		if (!tracing_is_on())
-			return;
+		अगर (!tracing_is_on())
+			वापस;
 
-	} while (new_count != old_count);
-}
+	पूर्ण जबतक (new_count != old_count);
+पूर्ण
 
-static int update_count(struct ftrace_probe_ops *ops, unsigned long ip,
-			void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	long *count = NULL;
+अटल पूर्णांक update_count(काष्ठा ftrace_probe_ops *ops, अचिन्हित दीर्घ ip,
+			व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	दीर्घ *count = शून्य;
 
-	if (mapper)
-		count = (long *)ftrace_func_mapper_find_ip(mapper, ip);
+	अगर (mapper)
+		count = (दीर्घ *)ftrace_func_mapper_find_ip(mapper, ip);
 
-	if (count) {
-		if (*count <= 0)
-			return 0;
+	अगर (count) अणु
+		अगर (*count <= 0)
+			वापस 0;
 		(*count)--;
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void
-ftrace_dump_probe(unsigned long ip, unsigned long parent_ip,
-		  struct trace_array *tr, struct ftrace_probe_ops *ops,
-		  void *data)
-{
-	if (update_count(ops, ip, data))
+अटल व्योम
+ftrace_dump_probe(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		  काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		  व्योम *data)
+अणु
+	अगर (update_count(ops, ip, data))
 		ftrace_dump(DUMP_ALL);
-}
+पूर्ण
 
 /* Only dump the current CPU buffer. */
-static void
-ftrace_cpudump_probe(unsigned long ip, unsigned long parent_ip,
-		     struct trace_array *tr, struct ftrace_probe_ops *ops,
-		     void *data)
-{
-	if (update_count(ops, ip, data))
+अटल व्योम
+ftrace_cpudump_probe(अचिन्हित दीर्घ ip, अचिन्हित दीर्घ parent_ip,
+		     काष्ठा trace_array *tr, काष्ठा ftrace_probe_ops *ops,
+		     व्योम *data)
+अणु
+	अगर (update_count(ops, ip, data))
 		ftrace_dump(DUMP_ORIG);
-}
+पूर्ण
 
-static int
-ftrace_probe_print(const char *name, struct seq_file *m,
-		   unsigned long ip, struct ftrace_probe_ops *ops,
-		   void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
-	long *count = NULL;
+अटल पूर्णांक
+ftrace_probe_prपूर्णांक(स्थिर अक्षर *name, काष्ठा seq_file *m,
+		   अचिन्हित दीर्घ ip, काष्ठा ftrace_probe_ops *ops,
+		   व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
+	दीर्घ *count = शून्य;
 
-	seq_printf(m, "%ps:%s", (void *)ip, name);
+	seq_म_लिखो(m, "%ps:%s", (व्योम *)ip, name);
 
-	if (mapper)
-		count = (long *)ftrace_func_mapper_find_ip(mapper, ip);
+	अगर (mapper)
+		count = (दीर्घ *)ftrace_func_mapper_find_ip(mapper, ip);
 
-	if (count)
-		seq_printf(m, ":count=%ld\n", *count);
-	else
-		seq_puts(m, ":unlimited\n");
+	अगर (count)
+		seq_म_लिखो(m, ":count=%ld\n", *count);
+	अन्यथा
+		seq_माला_दो(m, ":unlimited\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-ftrace_traceon_print(struct seq_file *m, unsigned long ip,
-		     struct ftrace_probe_ops *ops,
-		     void *data)
-{
-	return ftrace_probe_print("traceon", m, ip, ops, data);
-}
+अटल पूर्णांक
+ftrace_traceon_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+		     काष्ठा ftrace_probe_ops *ops,
+		     व्योम *data)
+अणु
+	वापस ftrace_probe_prपूर्णांक("traceon", m, ip, ops, data);
+पूर्ण
 
-static int
-ftrace_traceoff_print(struct seq_file *m, unsigned long ip,
-			 struct ftrace_probe_ops *ops, void *data)
-{
-	return ftrace_probe_print("traceoff", m, ip, ops, data);
-}
+अटल पूर्णांक
+ftrace_traceoff_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+			 काष्ठा ftrace_probe_ops *ops, व्योम *data)
+अणु
+	वापस ftrace_probe_prपूर्णांक("traceoff", m, ip, ops, data);
+पूर्ण
 
-static int
-ftrace_stacktrace_print(struct seq_file *m, unsigned long ip,
-			struct ftrace_probe_ops *ops, void *data)
-{
-	return ftrace_probe_print("stacktrace", m, ip, ops, data);
-}
+अटल पूर्णांक
+ftrace_stacktrace_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+			काष्ठा ftrace_probe_ops *ops, व्योम *data)
+अणु
+	वापस ftrace_probe_prपूर्णांक("stacktrace", m, ip, ops, data);
+पूर्ण
 
-static int
-ftrace_dump_print(struct seq_file *m, unsigned long ip,
-			struct ftrace_probe_ops *ops, void *data)
-{
-	return ftrace_probe_print("dump", m, ip, ops, data);
-}
+अटल पूर्णांक
+ftrace_dump_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+			काष्ठा ftrace_probe_ops *ops, व्योम *data)
+अणु
+	वापस ftrace_probe_prपूर्णांक("dump", m, ip, ops, data);
+पूर्ण
 
-static int
-ftrace_cpudump_print(struct seq_file *m, unsigned long ip,
-			struct ftrace_probe_ops *ops, void *data)
-{
-	return ftrace_probe_print("cpudump", m, ip, ops, data);
-}
+अटल पूर्णांक
+ftrace_cpudump_prपूर्णांक(काष्ठा seq_file *m, अचिन्हित दीर्घ ip,
+			काष्ठा ftrace_probe_ops *ops, व्योम *data)
+अणु
+	वापस ftrace_probe_prपूर्णांक("cpudump", m, ip, ops, data);
+पूर्ण
 
 
-static int
-ftrace_count_init(struct ftrace_probe_ops *ops, struct trace_array *tr,
-		  unsigned long ip, void *init_data, void **data)
-{
-	struct ftrace_func_mapper *mapper = *data;
+अटल पूर्णांक
+ftrace_count_init(काष्ठा ftrace_probe_ops *ops, काष्ठा trace_array *tr,
+		  अचिन्हित दीर्घ ip, व्योम *init_data, व्योम **data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = *data;
 
-	if (!mapper) {
+	अगर (!mapper) अणु
 		mapper = allocate_ftrace_func_mapper();
-		if (!mapper)
-			return -ENOMEM;
+		अगर (!mapper)
+			वापस -ENOMEM;
 		*data = mapper;
-	}
+	पूर्ण
 
-	return ftrace_func_mapper_add_ip(mapper, ip, init_data);
-}
+	वापस ftrace_func_mapper_add_ip(mapper, ip, init_data);
+पूर्ण
 
-static void
-ftrace_count_free(struct ftrace_probe_ops *ops, struct trace_array *tr,
-		  unsigned long ip, void *data)
-{
-	struct ftrace_func_mapper *mapper = data;
+अटल व्योम
+ftrace_count_मुक्त(काष्ठा ftrace_probe_ops *ops, काष्ठा trace_array *tr,
+		  अचिन्हित दीर्घ ip, व्योम *data)
+अणु
+	काष्ठा ftrace_func_mapper *mapper = data;
 
-	if (!ip) {
-		free_ftrace_func_mapper(mapper, NULL);
-		return;
-	}
+	अगर (!ip) अणु
+		मुक्त_ftrace_func_mapper(mapper, शून्य);
+		वापस;
+	पूर्ण
 
-	ftrace_func_mapper_remove_ip(mapper, ip);
-}
+	ftrace_func_mapper_हटाओ_ip(mapper, ip);
+पूर्ण
 
-static struct ftrace_probe_ops traceon_count_probe_ops = {
+अटल काष्ठा ftrace_probe_ops traceon_count_probe_ops = अणु
 	.func			= ftrace_traceon_count,
-	.print			= ftrace_traceon_print,
+	.prपूर्णांक			= ftrace_traceon_prपूर्णांक,
 	.init			= ftrace_count_init,
-	.free			= ftrace_count_free,
-};
+	.मुक्त			= ftrace_count_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops traceoff_count_probe_ops = {
+अटल काष्ठा ftrace_probe_ops traceoff_count_probe_ops = अणु
 	.func			= ftrace_traceoff_count,
-	.print			= ftrace_traceoff_print,
+	.prपूर्णांक			= ftrace_traceoff_prपूर्णांक,
 	.init			= ftrace_count_init,
-	.free			= ftrace_count_free,
-};
+	.मुक्त			= ftrace_count_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops stacktrace_count_probe_ops = {
+अटल काष्ठा ftrace_probe_ops stacktrace_count_probe_ops = अणु
 	.func			= ftrace_stacktrace_count,
-	.print			= ftrace_stacktrace_print,
+	.prपूर्णांक			= ftrace_stacktrace_prपूर्णांक,
 	.init			= ftrace_count_init,
-	.free			= ftrace_count_free,
-};
+	.मुक्त			= ftrace_count_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops dump_probe_ops = {
+अटल काष्ठा ftrace_probe_ops dump_probe_ops = अणु
 	.func			= ftrace_dump_probe,
-	.print			= ftrace_dump_print,
+	.prपूर्णांक			= ftrace_dump_prपूर्णांक,
 	.init			= ftrace_count_init,
-	.free			= ftrace_count_free,
-};
+	.मुक्त			= ftrace_count_मुक्त,
+पूर्ण;
 
-static struct ftrace_probe_ops cpudump_probe_ops = {
+अटल काष्ठा ftrace_probe_ops cpudump_probe_ops = अणु
 	.func			= ftrace_cpudump_probe,
-	.print			= ftrace_cpudump_print,
-};
+	.prपूर्णांक			= ftrace_cpudump_prपूर्णांक,
+पूर्ण;
 
-static struct ftrace_probe_ops traceon_probe_ops = {
+अटल काष्ठा ftrace_probe_ops traceon_probe_ops = अणु
 	.func			= ftrace_traceon,
-	.print			= ftrace_traceon_print,
-};
+	.prपूर्णांक			= ftrace_traceon_prपूर्णांक,
+पूर्ण;
 
-static struct ftrace_probe_ops traceoff_probe_ops = {
+अटल काष्ठा ftrace_probe_ops traceoff_probe_ops = अणु
 	.func			= ftrace_traceoff,
-	.print			= ftrace_traceoff_print,
-};
+	.prपूर्णांक			= ftrace_traceoff_prपूर्णांक,
+पूर्ण;
 
-static struct ftrace_probe_ops stacktrace_probe_ops = {
+अटल काष्ठा ftrace_probe_ops stacktrace_probe_ops = अणु
 	.func			= ftrace_stacktrace,
-	.print			= ftrace_stacktrace_print,
-};
+	.prपूर्णांक			= ftrace_stacktrace_prपूर्णांक,
+पूर्ण;
 
-static int
-ftrace_trace_probe_callback(struct trace_array *tr,
-			    struct ftrace_probe_ops *ops,
-			    struct ftrace_hash *hash, char *glob,
-			    char *cmd, char *param, int enable)
-{
-	void *count = (void *)-1;
-	char *number;
-	int ret;
+अटल पूर्णांक
+ftrace_trace_probe_callback(काष्ठा trace_array *tr,
+			    काष्ठा ftrace_probe_ops *ops,
+			    काष्ठा ftrace_hash *hash, अक्षर *glob,
+			    अक्षर *cmd, अक्षर *param, पूर्णांक enable)
+अणु
+	व्योम *count = (व्योम *)-1;
+	अक्षर *number;
+	पूर्णांक ret;
 
 	/* hash funcs only work with set_ftrace_filter */
-	if (!enable)
-		return -EINVAL;
+	अगर (!enable)
+		वापस -EINVAL;
 
-	if (glob[0] == '!')
-		return unregister_ftrace_function_probe_func(glob+1, tr, ops);
+	अगर (glob[0] == '!')
+		वापस unरेजिस्टर_ftrace_function_probe_func(glob+1, tr, ops);
 
-	if (!param)
-		goto out_reg;
+	अगर (!param)
+		जाओ out_reg;
 
 	number = strsep(&param, ":");
 
-	if (!strlen(number))
-		goto out_reg;
+	अगर (!म_माप(number))
+		जाओ out_reg;
 
 	/*
-	 * We use the callback data field (which is a pointer)
+	 * We use the callback data field (which is a poपूर्णांकer)
 	 * as our counter.
 	 */
-	ret = kstrtoul(number, 0, (unsigned long *)&count);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(number, 0, (अचिन्हित दीर्घ *)&count);
+	अगर (ret)
+		वापस ret;
 
  out_reg:
-	ret = register_ftrace_function_probe(glob, tr, ops, count);
+	ret = रेजिस्टर_ftrace_function_probe(glob, tr, ops, count);
 
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static int
-ftrace_trace_onoff_callback(struct trace_array *tr, struct ftrace_hash *hash,
-			    char *glob, char *cmd, char *param, int enable)
-{
-	struct ftrace_probe_ops *ops;
+अटल पूर्णांक
+ftrace_trace_onoff_callback(काष्ठा trace_array *tr, काष्ठा ftrace_hash *hash,
+			    अक्षर *glob, अक्षर *cmd, अक्षर *param, पूर्णांक enable)
+अणु
+	काष्ठा ftrace_probe_ops *ops;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
-	/* we register both traceon and traceoff to this callback */
-	if (strcmp(cmd, "traceon") == 0)
+	/* we रेजिस्टर both traceon and traceoff to this callback */
+	अगर (म_भेद(cmd, "traceon") == 0)
 		ops = param ? &traceon_count_probe_ops : &traceon_probe_ops;
-	else
+	अन्यथा
 		ops = param ? &traceoff_count_probe_ops : &traceoff_probe_ops;
 
-	return ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
+	वापस ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
 					   param, enable);
-}
+पूर्ण
 
-static int
-ftrace_stacktrace_callback(struct trace_array *tr, struct ftrace_hash *hash,
-			   char *glob, char *cmd, char *param, int enable)
-{
-	struct ftrace_probe_ops *ops;
+अटल पूर्णांक
+ftrace_stacktrace_callback(काष्ठा trace_array *tr, काष्ठा ftrace_hash *hash,
+			   अक्षर *glob, अक्षर *cmd, अक्षर *param, पूर्णांक enable)
+अणु
+	काष्ठा ftrace_probe_ops *ops;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
 	ops = param ? &stacktrace_count_probe_ops : &stacktrace_probe_ops;
 
-	return ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
+	वापस ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
 					   param, enable);
-}
+पूर्ण
 
-static int
-ftrace_dump_callback(struct trace_array *tr, struct ftrace_hash *hash,
-			   char *glob, char *cmd, char *param, int enable)
-{
-	struct ftrace_probe_ops *ops;
+अटल पूर्णांक
+ftrace_dump_callback(काष्ठा trace_array *tr, काष्ठा ftrace_hash *hash,
+			   अक्षर *glob, अक्षर *cmd, अक्षर *param, पूर्णांक enable)
+अणु
+	काष्ठा ftrace_probe_ops *ops;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
 	ops = &dump_probe_ops;
 
 	/* Only dump once. */
-	return ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
+	वापस ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
 					   "1", enable);
-}
+पूर्ण
 
-static int
-ftrace_cpudump_callback(struct trace_array *tr, struct ftrace_hash *hash,
-			   char *glob, char *cmd, char *param, int enable)
-{
-	struct ftrace_probe_ops *ops;
+अटल पूर्णांक
+ftrace_cpudump_callback(काष्ठा trace_array *tr, काष्ठा ftrace_hash *hash,
+			   अक्षर *glob, अक्षर *cmd, अक्षर *param, पूर्णांक enable)
+अणु
+	काष्ठा ftrace_probe_ops *ops;
 
-	if (!tr)
-		return -ENODEV;
+	अगर (!tr)
+		वापस -ENODEV;
 
 	ops = &cpudump_probe_ops;
 
 	/* Only dump once. */
-	return ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
+	वापस ftrace_trace_probe_callback(tr, ops, hash, glob, cmd,
 					   "1", enable);
-}
+पूर्ण
 
-static struct ftrace_func_command ftrace_traceon_cmd = {
+अटल काष्ठा ftrace_func_command ftrace_traceon_cmd = अणु
 	.name			= "traceon",
 	.func			= ftrace_trace_onoff_callback,
-};
+पूर्ण;
 
-static struct ftrace_func_command ftrace_traceoff_cmd = {
+अटल काष्ठा ftrace_func_command ftrace_traceoff_cmd = अणु
 	.name			= "traceoff",
 	.func			= ftrace_trace_onoff_callback,
-};
+पूर्ण;
 
-static struct ftrace_func_command ftrace_stacktrace_cmd = {
+अटल काष्ठा ftrace_func_command ftrace_stacktrace_cmd = अणु
 	.name			= "stacktrace",
 	.func			= ftrace_stacktrace_callback,
-};
+पूर्ण;
 
-static struct ftrace_func_command ftrace_dump_cmd = {
+अटल काष्ठा ftrace_func_command ftrace_dump_cmd = अणु
 	.name			= "dump",
 	.func			= ftrace_dump_callback,
-};
+पूर्ण;
 
-static struct ftrace_func_command ftrace_cpudump_cmd = {
+अटल काष्ठा ftrace_func_command ftrace_cpudump_cmd = अणु
 	.name			= "cpudump",
 	.func			= ftrace_cpudump_callback,
-};
+पूर्ण;
 
-static int __init init_func_cmd_traceon(void)
-{
-	int ret;
+अटल पूर्णांक __init init_func_cmd_traceon(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_ftrace_command(&ftrace_traceoff_cmd);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_ftrace_command(&ftrace_traceoff_cmd);
+	अगर (ret)
+		वापस ret;
 
-	ret = register_ftrace_command(&ftrace_traceon_cmd);
-	if (ret)
-		goto out_free_traceoff;
+	ret = रेजिस्टर_ftrace_command(&ftrace_traceon_cmd);
+	अगर (ret)
+		जाओ out_मुक्त_traceoff;
 
-	ret = register_ftrace_command(&ftrace_stacktrace_cmd);
-	if (ret)
-		goto out_free_traceon;
+	ret = रेजिस्टर_ftrace_command(&ftrace_stacktrace_cmd);
+	अगर (ret)
+		जाओ out_मुक्त_traceon;
 
-	ret = register_ftrace_command(&ftrace_dump_cmd);
-	if (ret)
-		goto out_free_stacktrace;
+	ret = रेजिस्टर_ftrace_command(&ftrace_dump_cmd);
+	अगर (ret)
+		जाओ out_मुक्त_stacktrace;
 
-	ret = register_ftrace_command(&ftrace_cpudump_cmd);
-	if (ret)
-		goto out_free_dump;
+	ret = रेजिस्टर_ftrace_command(&ftrace_cpudump_cmd);
+	अगर (ret)
+		जाओ out_मुक्त_dump;
 
-	return 0;
+	वापस 0;
 
- out_free_dump:
-	unregister_ftrace_command(&ftrace_dump_cmd);
- out_free_stacktrace:
-	unregister_ftrace_command(&ftrace_stacktrace_cmd);
- out_free_traceon:
-	unregister_ftrace_command(&ftrace_traceon_cmd);
- out_free_traceoff:
-	unregister_ftrace_command(&ftrace_traceoff_cmd);
+ out_मुक्त_dump:
+	unरेजिस्टर_ftrace_command(&ftrace_dump_cmd);
+ out_मुक्त_stacktrace:
+	unरेजिस्टर_ftrace_command(&ftrace_stacktrace_cmd);
+ out_मुक्त_traceon:
+	unरेजिस्टर_ftrace_command(&ftrace_traceon_cmd);
+ out_मुक्त_traceoff:
+	unरेजिस्टर_ftrace_command(&ftrace_traceoff_cmd);
 
-	return ret;
-}
-#else
-static inline int init_func_cmd_traceon(void)
-{
-	return 0;
-}
-#endif /* CONFIG_DYNAMIC_FTRACE */
+	वापस ret;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक init_func_cmd_traceon(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
 
-__init int init_function_trace(void)
-{
+__init पूर्णांक init_function_trace(व्योम)
+अणु
 	init_func_cmd_traceon();
-	return register_tracer(&function_trace);
-}
+	वापस रेजिस्टर_tracer(&function_trace);
+पूर्ण

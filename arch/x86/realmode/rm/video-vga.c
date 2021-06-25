@@ -1,1 +1,2 @@
-#include "../../boot/video-vga.c"
+<शैली गुरु>
+#समावेश "../../boot/video-vga.c"

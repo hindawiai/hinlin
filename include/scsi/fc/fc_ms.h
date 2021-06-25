@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright(c) 2011 Intel Corporation. All rights reserved.
  *
- * Maintained at www.Open-FCoE.org
+ * Maपूर्णांकained at www.Open-FCoE.org
  */
 
-#ifndef _FC_MS_H_
-#define	_FC_MS_H_
+#अगर_अघोषित _FC_MS_H_
+#घोषणा	_FC_MS_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * Fibre Channel Services - Management Service (MS)
@@ -20,14 +21,14 @@
  */
 
 /*
- * Common-transport sub-type for FDMI
+ * Common-transport sub-type क्रम FDMI
  */
-#define	FC_FDMI_SUBTYPE	    0x10 /* fs_ct_hdr.ct_fs_subtype */
+#घोषणा	FC_FDMI_SUBTYPE	    0x10 /* fs_ct_hdr.ct_fs_subtype */
 
 /*
  * Management server FDMI Requests.
  */
-enum fc_fdmi_req {
+क्रमागत fc_fdmi_req अणु
 	FC_FDMI_GRHL = 0x0100,	/* Get Registered HBA List */
 	FC_FDMI_GHAT = 0x0101,	/* Get HBA Attributes */
 	FC_FDMI_GRPL = 0x0102,	/* Get Registered Port List */
@@ -36,16 +37,16 @@ enum fc_fdmi_req {
 	FC_FDMI_RHAT = 0x0201,	/* Register HBA Attributes */
 	FC_FDMI_RPRT = 0x0210,	/* Register Port */
 	FC_FDMI_RPA = 0x0211,	/* Register Port Attributes */
-	FC_FDMI_DHBA = 0x0300,	/* Deregister HBA */
-	FC_FDMI_DHAT = 0x0301,	/* Deregister HBA Attributes */
-	FC_FDMI_DPRT = 0x0310,	/* Deregister Port */
-	FC_FDMI_DPA = 0x0311,	/* Deregister Port Attributes */
-};
+	FC_FDMI_DHBA = 0x0300,	/* Deरेजिस्टर HBA */
+	FC_FDMI_DHAT = 0x0301,	/* Deरेजिस्टर HBA Attributes */
+	FC_FDMI_DPRT = 0x0310,	/* Deरेजिस्टर Port */
+	FC_FDMI_DPA = 0x0311,	/* Deरेजिस्टर Port Attributes */
+पूर्ण;
 
 /*
  * HBA Attribute Entry Type
  */
-enum fc_fdmi_hba_attr_type {
+क्रमागत fc_fdmi_hba_attr_type अणु
 	FC_FDMI_HBA_ATTR_NODENAME = 0x0001,
 	FC_FDMI_HBA_ATTR_MANUFACTURER = 0x0002,
 	FC_FDMI_HBA_ATTR_SERIALNUMBER = 0x0003,
@@ -57,146 +58,146 @@ enum fc_fdmi_hba_attr_type {
 	FC_FDMI_HBA_ATTR_FIRMWAREVERSION = 0x0009,
 	FC_FDMI_HBA_ATTR_OSNAMEVERSION = 0x000A,
 	FC_FDMI_HBA_ATTR_MAXCTPAYLOAD = 0x000B,
-};
+पूर्ण;
 
 /*
  * HBA Attribute Length
  */
-#define FC_FDMI_HBA_ATTR_NODENAME_LEN		8
-#define FC_FDMI_HBA_ATTR_MANUFACTURER_LEN	80
-#define FC_FDMI_HBA_ATTR_SERIALNUMBER_LEN	80
-#define FC_FDMI_HBA_ATTR_MODEL_LEN		256
-#define FC_FDMI_HBA_ATTR_MODELDESCR_LEN		256
-#define FC_FDMI_HBA_ATTR_HARDWAREVERSION_LEN	256
-#define FC_FDMI_HBA_ATTR_DRIVERVERSION_LEN	256
-#define FC_FDMI_HBA_ATTR_OPTIONROMVERSION_LEN	256
-#define FC_FDMI_HBA_ATTR_FIRMWAREVERSION_LEN	256
-#define FC_FDMI_HBA_ATTR_OSNAMEVERSION_LEN	256
-#define FC_FDMI_HBA_ATTR_MAXCTPAYLOAD_LEN	4
+#घोषणा FC_FDMI_HBA_ATTR_NODENAME_LEN		8
+#घोषणा FC_FDMI_HBA_ATTR_MANUFACTURER_LEN	80
+#घोषणा FC_FDMI_HBA_ATTR_SERIALNUMBER_LEN	80
+#घोषणा FC_FDMI_HBA_ATTR_MODEL_LEN		256
+#घोषणा FC_FDMI_HBA_ATTR_MODELDESCR_LEN		256
+#घोषणा FC_FDMI_HBA_ATTR_HARDWAREVERSION_LEN	256
+#घोषणा FC_FDMI_HBA_ATTR_DRIVERVERSION_LEN	256
+#घोषणा FC_FDMI_HBA_ATTR_OPTIONROMVERSION_LEN	256
+#घोषणा FC_FDMI_HBA_ATTR_FIRMWAREVERSION_LEN	256
+#घोषणा FC_FDMI_HBA_ATTR_OSNAMEVERSION_LEN	256
+#घोषणा FC_FDMI_HBA_ATTR_MAXCTPAYLOAD_LEN	4
 
 /*
  * Port Attribute Type
  */
-enum fc_fdmi_port_attr_type {
+क्रमागत fc_fdmi_port_attr_type अणु
 	FC_FDMI_PORT_ATTR_FC4TYPES = 0x0001,
 	FC_FDMI_PORT_ATTR_SUPPORTEDSPEED = 0x0002,
 	FC_FDMI_PORT_ATTR_CURRENTPORTSPEED = 0x0003,
 	FC_FDMI_PORT_ATTR_MAXFRAMESIZE = 0x0004,
 	FC_FDMI_PORT_ATTR_OSDEVICENAME = 0x0005,
 	FC_FDMI_PORT_ATTR_HOSTNAME = 0x0006,
-};
+पूर्ण;
 
 /*
  * Port Attribute Length
  */
-#define FC_FDMI_PORT_ATTR_FC4TYPES_LEN		32
-#define FC_FDMI_PORT_ATTR_SUPPORTEDSPEED_LEN	4
-#define FC_FDMI_PORT_ATTR_CURRENTPORTSPEED_LEN	4
-#define FC_FDMI_PORT_ATTR_MAXFRAMESIZE_LEN	4
-#define FC_FDMI_PORT_ATTR_OSDEVICENAME_LEN	256
-#define FC_FDMI_PORT_ATTR_HOSTNAME_LEN		256
+#घोषणा FC_FDMI_PORT_ATTR_FC4TYPES_LEN		32
+#घोषणा FC_FDMI_PORT_ATTR_SUPPORTEDSPEED_LEN	4
+#घोषणा FC_FDMI_PORT_ATTR_CURRENTPORTSPEED_LEN	4
+#घोषणा FC_FDMI_PORT_ATTR_MAXFRAMESIZE_LEN	4
+#घोषणा FC_FDMI_PORT_ATTR_OSDEVICENAME_LEN	256
+#घोषणा FC_FDMI_PORT_ATTR_HOSTNAME_LEN		256
 
 /*
  * HBA Attribute ID
  */
-struct fc_fdmi_hba_identifier {
+काष्ठा fc_fdmi_hba_identअगरier अणु
 	__be64		id;
-};
+पूर्ण;
 
 /*
  * Port Name
  */
-struct fc_fdmi_port_name {
+काष्ठा fc_fdmi_port_name अणु
 	__be64		portname;
-};
+पूर्ण;
 
 /*
- * Attribute Entry Block for HBA/Port Attributes
+ * Attribute Entry Block क्रम HBA/Port Attributes
  */
-#define FC_FDMI_ATTR_ENTRY_HEADER_LEN	4
-struct fc_fdmi_attr_entry {
+#घोषणा FC_FDMI_ATTR_ENTRY_HEADER_LEN	4
+काष्ठा fc_fdmi_attr_entry अणु
 	__be16		type;
 	__be16		len;
 	__u8		value[1];
-} __attribute__((__packed__));
+पूर्ण __attribute__((__packed__));
 
 /*
- * Common for HBA/Port Attributes
+ * Common क्रम HBA/Port Attributes
  */
-struct fs_fdmi_attrs {
+काष्ठा fs_fdmi_attrs अणु
 	__be32				numattrs;
-	struct fc_fdmi_attr_entry	attr[1];
-} __attribute__((__packed__));
+	काष्ठा fc_fdmi_attr_entry	attr[1];
+पूर्ण __attribute__((__packed__));
 
 /*
  * Registered Port List
  */
-struct fc_fdmi_rpl {
+काष्ठा fc_fdmi_rpl अणु
 	__be32				numport;
-	struct fc_fdmi_port_name	port[1];
-} __attribute__((__packed__));
+	काष्ठा fc_fdmi_port_name	port[1];
+पूर्ण __attribute__((__packed__));
 
 /*
  * Register HBA (RHBA)
  */
-struct fc_fdmi_rhba {
-	struct fc_fdmi_hba_identifier hbaid;
-	struct fc_fdmi_rpl		 port;
-	struct fs_fdmi_attrs		 hba_attrs;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_rhba अणु
+	काष्ठा fc_fdmi_hba_identअगरier hbaid;
+	काष्ठा fc_fdmi_rpl		 port;
+	काष्ठा fs_fdmi_attrs		 hba_attrs;
+पूर्ण __attribute__((__packed__));
 
 /*
  * Register HBA Attributes (RHAT)
  */
-struct fc_fdmi_rhat {
-	struct fc_fdmi_hba_identifier hbaid;
-	struct fs_fdmi_attrs		 hba_attrs;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_rhat अणु
+	काष्ठा fc_fdmi_hba_identअगरier hbaid;
+	काष्ठा fs_fdmi_attrs		 hba_attrs;
+पूर्ण __attribute__((__packed__));
 
 /*
  * Register Port (RPRT)
  */
-struct fc_fdmi_rprt {
-	struct fc_fdmi_hba_identifier hbaid;
-	struct fc_fdmi_port_name	 port;
-	struct fs_fdmi_attrs		 hba_attrs;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_rprt अणु
+	काष्ठा fc_fdmi_hba_identअगरier hbaid;
+	काष्ठा fc_fdmi_port_name	 port;
+	काष्ठा fs_fdmi_attrs		 hba_attrs;
+पूर्ण __attribute__((__packed__));
 
 /*
  * Register Port Attributes (RPA)
  */
-struct fc_fdmi_rpa {
-	struct fc_fdmi_port_name	 port;
-	struct fs_fdmi_attrs		 hba_attrs;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_rpa अणु
+	काष्ठा fc_fdmi_port_name	 port;
+	काष्ठा fs_fdmi_attrs		 hba_attrs;
+पूर्ण __attribute__((__packed__));
 
 /*
- * Deregister Port (DPRT)
+ * Deरेजिस्टर Port (DPRT)
  */
-struct fc_fdmi_dprt {
-	struct fc_fdmi_port_name	 port;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_dprt अणु
+	काष्ठा fc_fdmi_port_name	 port;
+पूर्ण __attribute__((__packed__));
 
 /*
- * Deregister Port Attributes (DPA)
+ * Deरेजिस्टर Port Attributes (DPA)
  */
-struct fc_fdmi_dpa {
-	struct fc_fdmi_port_name	 port;
-	struct fs_fdmi_attrs		 hba_attrs;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_dpa अणु
+	काष्ठा fc_fdmi_port_name	 port;
+	काष्ठा fs_fdmi_attrs		 hba_attrs;
+पूर्ण __attribute__((__packed__));
 
 /*
- * Deregister HBA Attributes (DHAT)
+ * Deरेजिस्टर HBA Attributes (DHAT)
  */
-struct fc_fdmi_dhat {
-	struct fc_fdmi_hba_identifier hbaid;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_dhat अणु
+	काष्ठा fc_fdmi_hba_identअगरier hbaid;
+पूर्ण __attribute__((__packed__));
 
 /*
- * Deregister HBA (DHBA)
+ * Deरेजिस्टर HBA (DHBA)
  */
-struct fc_fdmi_dhba {
-	struct fc_fdmi_hba_identifier hbaid;
-} __attribute__((__packed__));
+काष्ठा fc_fdmi_dhba अणु
+	काष्ठा fc_fdmi_hba_identअगरier hbaid;
+पूर्ण __attribute__((__packed__));
 
-#endif /* _FC_MS_H_ */
+#पूर्ण_अगर /* _FC_MS_H_ */

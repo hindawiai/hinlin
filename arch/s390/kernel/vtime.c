@@ -1,455 +1,456 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    Virtual cpu timer based timer functions.
+ *    Virtual cpu समयr based समयr functions.
  *
  *    Copyright IBM Corp. 2004, 2012
  *    Author(s): Jan Glauber <jan.glauber@de.ibm.com>
  */
 
-#include <linux/kernel_stat.h>
-#include <linux/sched/cputime.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/timex.h>
-#include <linux/types.h>
-#include <linux/time.h>
-#include <asm/alternative.h>
-#include <asm/vtimer.h>
-#include <asm/vtime.h>
-#include <asm/cpu_mf.h>
-#include <asm/smp.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय.स>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/vसमयr.h>
+#समावेश <यंत्र/vसमय.स>
+#समावेश <यंत्र/cpu_mf.h>
+#समावेश <यंत्र/smp.h>
 
-#include "entry.h"
+#समावेश "entry.h"
 
-static void virt_timer_expire(void);
+अटल व्योम virt_समयr_expire(व्योम);
 
-static LIST_HEAD(virt_timer_list);
-static DEFINE_SPINLOCK(virt_timer_lock);
-static atomic64_t virt_timer_current;
-static atomic64_t virt_timer_elapsed;
+अटल LIST_HEAD(virt_समयr_list);
+अटल DEFINE_SPINLOCK(virt_समयr_lock);
+अटल atomic64_t virt_समयr_current;
+अटल atomic64_t virt_समयr_elapsed;
 
 DEFINE_PER_CPU(u64, mt_cycles[8]);
-static DEFINE_PER_CPU(u64, mt_scaling_mult) = { 1 };
-static DEFINE_PER_CPU(u64, mt_scaling_div) = { 1 };
-static DEFINE_PER_CPU(u64, mt_scaling_jiffies);
+अटल DEFINE_PER_CPU(u64, mt_scaling_mult) = अणु 1 पूर्ण;
+अटल DEFINE_PER_CPU(u64, mt_scaling_भाग) = अणु 1 पूर्ण;
+अटल DEFINE_PER_CPU(u64, mt_scaling_jअगरfies);
 
-static inline u64 get_vtimer(void)
-{
-	u64 timer;
+अटल अंतरभूत u64 get_vसमयr(व्योम)
+अणु
+	u64 समयr;
 
-	asm volatile("stpt %0" : "=Q" (timer));
-	return timer;
-}
+	यंत्र अस्थिर("stpt %0" : "=Q" (समयr));
+	वापस समयr;
+पूर्ण
 
-static inline void set_vtimer(u64 expires)
-{
-	u64 timer;
+अटल अंतरभूत व्योम set_vसमयr(u64 expires)
+अणु
+	u64 समयr;
 
-	asm volatile(
-		"	stpt	%0\n"	/* Store current cpu timer value */
+	यंत्र अस्थिर(
+		"	stpt	%0\n"	/* Store current cpu समयr value */
 		"	spt	%1"	/* Set new value imm. afterwards */
-		: "=Q" (timer) : "Q" (expires));
-	S390_lowcore.system_timer += S390_lowcore.last_update_timer - timer;
-	S390_lowcore.last_update_timer = expires;
-}
+		: "=Q" (समयr) : "Q" (expires));
+	S390_lowcore.प्रणाली_समयr += S390_lowcore.last_update_समयr - समयr;
+	S390_lowcore.last_update_समयr = expires;
+पूर्ण
 
-static inline int virt_timer_forward(u64 elapsed)
-{
+अटल अंतरभूत पूर्णांक virt_समयr_क्रमward(u64 elapsed)
+अणु
 	BUG_ON(!irqs_disabled());
 
-	if (list_empty(&virt_timer_list))
-		return 0;
-	elapsed = atomic64_add_return(elapsed, &virt_timer_elapsed);
-	return elapsed >= atomic64_read(&virt_timer_current);
-}
+	अगर (list_empty(&virt_समयr_list))
+		वापस 0;
+	elapsed = atomic64_add_वापस(elapsed, &virt_समयr_elapsed);
+	वापस elapsed >= atomic64_पढ़ो(&virt_समयr_current);
+पूर्ण
 
-static void update_mt_scaling(void)
-{
+अटल व्योम update_mt_scaling(व्योम)
+अणु
 	u64 cycles_new[8], *cycles_old;
-	u64 delta, fac, mult, div;
-	int i;
+	u64 delta, fac, mult, भाग;
+	पूर्णांक i;
 
-	stcctm(MT_DIAG, smp_cpu_mtid + 1, cycles_new);
+	stccपंचांग(MT_DIAG, smp_cpu_mtid + 1, cycles_new);
 	cycles_old = this_cpu_ptr(mt_cycles);
 	fac = 1;
-	mult = div = 0;
-	for (i = 0; i <= smp_cpu_mtid; i++) {
+	mult = भाग = 0;
+	क्रम (i = 0; i <= smp_cpu_mtid; i++) अणु
 		delta = cycles_new[i] - cycles_old[i];
-		div += delta;
+		भाग += delta;
 		mult *= i + 1;
 		mult += delta * fac;
 		fac *= i + 1;
-	}
-	div *= fac;
-	if (div > 0) {
+	पूर्ण
+	भाग *= fac;
+	अगर (भाग > 0) अणु
 		/* Update scaling factor */
-		__this_cpu_write(mt_scaling_mult, mult);
-		__this_cpu_write(mt_scaling_div, div);
-		memcpy(cycles_old, cycles_new,
-		       sizeof(u64) * (smp_cpu_mtid + 1));
-	}
-	__this_cpu_write(mt_scaling_jiffies, jiffies_64);
-}
+		__this_cpu_ग_लिखो(mt_scaling_mult, mult);
+		__this_cpu_ग_लिखो(mt_scaling_भाग, भाग);
+		स_नकल(cycles_old, cycles_new,
+		       माप(u64) * (smp_cpu_mtid + 1));
+	पूर्ण
+	__this_cpu_ग_लिखो(mt_scaling_jअगरfies, jअगरfies_64);
+पूर्ण
 
-static inline u64 update_tsk_timer(unsigned long *tsk_vtime, u64 new)
-{
+अटल अंतरभूत u64 update_tsk_समयr(अचिन्हित दीर्घ *tsk_vसमय, u64 new)
+अणु
 	u64 delta;
 
-	delta = new - *tsk_vtime;
-	*tsk_vtime = new;
-	return delta;
-}
+	delta = new - *tsk_vसमय;
+	*tsk_vसमय = new;
+	वापस delta;
+पूर्ण
 
 
-static inline u64 scale_vtime(u64 vtime)
-{
-	u64 mult = __this_cpu_read(mt_scaling_mult);
-	u64 div = __this_cpu_read(mt_scaling_div);
+अटल अंतरभूत u64 scale_vसमय(u64 vसमय)
+अणु
+	u64 mult = __this_cpu_पढ़ो(mt_scaling_mult);
+	u64 भाग = __this_cpu_पढ़ो(mt_scaling_भाग);
 
-	if (smp_cpu_mtid)
-		return vtime * mult / div;
-	return vtime;
-}
+	अगर (smp_cpu_mtid)
+		वापस vसमय * mult / भाग;
+	वापस vसमय;
+पूर्ण
 
-static void account_system_index_scaled(struct task_struct *p, u64 cputime,
-					enum cpu_usage_stat index)
-{
-	p->stimescaled += cputime_to_nsecs(scale_vtime(cputime));
-	account_system_index_time(p, cputime_to_nsecs(cputime), index);
-}
+अटल व्योम account_प्रणाली_index_scaled(काष्ठा task_काष्ठा *p, u64 cpuसमय,
+					क्रमागत cpu_usage_stat index)
+अणु
+	p->sबारcaled += cpuसमय_प्रकारo_nsecs(scale_vसमय(cpuसमय));
+	account_प्रणाली_index_समय(p, cpuसमय_प्रकारo_nsecs(cpuसमय), index);
+पूर्ण
 
 /*
- * Update process times based on virtual cpu times stored by entry.S
- * to the lowcore fields user_timer, system_timer & steal_clock.
+ * Update process बार based on भव cpu बार stored by entry.S
+ * to the lowcore fields user_समयr, प्रणाली_समयr & steal_घड़ी.
  */
-static int do_account_vtime(struct task_struct *tsk)
-{
-	u64 timer, clock, user, guest, system, hardirq, softirq;
+अटल पूर्णांक करो_account_vसमय(काष्ठा task_काष्ठा *tsk)
+अणु
+	u64 समयr, घड़ी, user, guest, प्रणाली, hardirq, softirq;
 
-	timer = S390_lowcore.last_update_timer;
-	clock = S390_lowcore.last_update_clock;
-	/* Use STORE CLOCK by default, STORE CLOCK FAST if available. */
+	समयr = S390_lowcore.last_update_समयr;
+	घड़ी = S390_lowcore.last_update_घड़ी;
+	/* Use STORE CLOCK by शेष, STORE CLOCK FAST अगर available. */
 	alternative_io("stpt %0\n .insn s,0xb2050000,%1\n",
 		       "stpt %0\n .insn s,0xb27c0000,%1\n",
 		       25,
-		       ASM_OUTPUT2("=Q" (S390_lowcore.last_update_timer),
-				   "=Q" (S390_lowcore.last_update_clock)),
+		       ASM_OUTPUT2("=Q" (S390_lowcore.last_update_समयr),
+				   "=Q" (S390_lowcore.last_update_घड़ी)),
 		       ASM_NO_INPUT_CLOBBER("cc"));
-	clock = S390_lowcore.last_update_clock - clock;
-	timer -= S390_lowcore.last_update_timer;
+	घड़ी = S390_lowcore.last_update_घड़ी - घड़ी;
+	समयr -= S390_lowcore.last_update_समयr;
 
-	if (hardirq_count())
-		S390_lowcore.hardirq_timer += timer;
-	else
-		S390_lowcore.system_timer += timer;
+	अगर (hardirq_count())
+		S390_lowcore.hardirq_समयr += समयr;
+	अन्यथा
+		S390_lowcore.प्रणाली_समयr += समयr;
 
 	/* Update MT utilization calculation */
-	if (smp_cpu_mtid &&
-	    time_after64(jiffies_64, this_cpu_read(mt_scaling_jiffies)))
+	अगर (smp_cpu_mtid &&
+	    समय_after64(jअगरfies_64, this_cpu_पढ़ो(mt_scaling_jअगरfies)))
 		update_mt_scaling();
 
-	/* Calculate cputime delta */
-	user = update_tsk_timer(&tsk->thread.user_timer,
-				READ_ONCE(S390_lowcore.user_timer));
-	guest = update_tsk_timer(&tsk->thread.guest_timer,
-				 READ_ONCE(S390_lowcore.guest_timer));
-	system = update_tsk_timer(&tsk->thread.system_timer,
-				  READ_ONCE(S390_lowcore.system_timer));
-	hardirq = update_tsk_timer(&tsk->thread.hardirq_timer,
-				   READ_ONCE(S390_lowcore.hardirq_timer));
-	softirq = update_tsk_timer(&tsk->thread.softirq_timer,
-				   READ_ONCE(S390_lowcore.softirq_timer));
-	S390_lowcore.steal_timer +=
-		clock - user - guest - system - hardirq - softirq;
+	/* Calculate cpuसमय delta */
+	user = update_tsk_समयr(&tsk->thपढ़ो.user_समयr,
+				READ_ONCE(S390_lowcore.user_समयr));
+	guest = update_tsk_समयr(&tsk->thपढ़ो.guest_समयr,
+				 READ_ONCE(S390_lowcore.guest_समयr));
+	प्रणाली = update_tsk_समयr(&tsk->thपढ़ो.प्रणाली_समयr,
+				  READ_ONCE(S390_lowcore.प्रणाली_समयr));
+	hardirq = update_tsk_समयr(&tsk->thपढ़ो.hardirq_समयr,
+				   READ_ONCE(S390_lowcore.hardirq_समयr));
+	softirq = update_tsk_समयr(&tsk->thपढ़ो.softirq_समयr,
+				   READ_ONCE(S390_lowcore.softirq_समयr));
+	S390_lowcore.steal_समयr +=
+		घड़ी - user - guest - प्रणाली - hardirq - softirq;
 
 	/* Push account value */
-	if (user) {
-		account_user_time(tsk, cputime_to_nsecs(user));
-		tsk->utimescaled += cputime_to_nsecs(scale_vtime(user));
-	}
+	अगर (user) अणु
+		account_user_समय(tsk, cpuसमय_प्रकारo_nsecs(user));
+		tsk->uबारcaled += cpuसमय_प्रकारo_nsecs(scale_vसमय(user));
+	पूर्ण
 
-	if (guest) {
-		account_guest_time(tsk, cputime_to_nsecs(guest));
-		tsk->utimescaled += cputime_to_nsecs(scale_vtime(guest));
-	}
+	अगर (guest) अणु
+		account_guest_समय(tsk, cpuसमय_प्रकारo_nsecs(guest));
+		tsk->uबारcaled += cpuसमय_प्रकारo_nsecs(scale_vसमय(guest));
+	पूर्ण
 
-	if (system)
-		account_system_index_scaled(tsk, system, CPUTIME_SYSTEM);
-	if (hardirq)
-		account_system_index_scaled(tsk, hardirq, CPUTIME_IRQ);
-	if (softirq)
-		account_system_index_scaled(tsk, softirq, CPUTIME_SOFTIRQ);
+	अगर (प्रणाली)
+		account_प्रणाली_index_scaled(tsk, प्रणाली, CPUTIME_SYSTEM);
+	अगर (hardirq)
+		account_प्रणाली_index_scaled(tsk, hardirq, CPUTIME_IRQ);
+	अगर (softirq)
+		account_प्रणाली_index_scaled(tsk, softirq, CPUTIME_SOFTIRQ);
 
-	return virt_timer_forward(user + guest + system + hardirq + softirq);
-}
+	वापस virt_समयr_क्रमward(user + guest + प्रणाली + hardirq + softirq);
+पूर्ण
 
-void vtime_task_switch(struct task_struct *prev)
-{
-	do_account_vtime(prev);
-	prev->thread.user_timer = S390_lowcore.user_timer;
-	prev->thread.guest_timer = S390_lowcore.guest_timer;
-	prev->thread.system_timer = S390_lowcore.system_timer;
-	prev->thread.hardirq_timer = S390_lowcore.hardirq_timer;
-	prev->thread.softirq_timer = S390_lowcore.softirq_timer;
-	S390_lowcore.user_timer = current->thread.user_timer;
-	S390_lowcore.guest_timer = current->thread.guest_timer;
-	S390_lowcore.system_timer = current->thread.system_timer;
-	S390_lowcore.hardirq_timer = current->thread.hardirq_timer;
-	S390_lowcore.softirq_timer = current->thread.softirq_timer;
-}
+व्योम vसमय_प्रकारask_चयन(काष्ठा task_काष्ठा *prev)
+अणु
+	करो_account_vसमय(prev);
+	prev->thपढ़ो.user_समयr = S390_lowcore.user_समयr;
+	prev->thपढ़ो.guest_समयr = S390_lowcore.guest_समयr;
+	prev->thपढ़ो.प्रणाली_समयr = S390_lowcore.प्रणाली_समयr;
+	prev->thपढ़ो.hardirq_समयr = S390_lowcore.hardirq_समयr;
+	prev->thपढ़ो.softirq_समयr = S390_lowcore.softirq_समयr;
+	S390_lowcore.user_समयr = current->thपढ़ो.user_समयr;
+	S390_lowcore.guest_समयr = current->thपढ़ो.guest_समयr;
+	S390_lowcore.प्रणाली_समयr = current->thपढ़ो.प्रणाली_समयr;
+	S390_lowcore.hardirq_समयr = current->thपढ़ो.hardirq_समयr;
+	S390_lowcore.softirq_समयr = current->thपढ़ो.softirq_समयr;
+पूर्ण
 
 /*
- * In s390, accounting pending user time also implies
- * accounting system time in order to correctly compute
- * the stolen time accounting.
+ * In s390, accounting pending user समय also implies
+ * accounting प्रणाली समय in order to correctly compute
+ * the stolen समय accounting.
  */
-void vtime_flush(struct task_struct *tsk)
-{
+व्योम vसमय_flush(काष्ठा task_काष्ठा *tsk)
+अणु
 	u64 steal, avg_steal;
 
-	if (do_account_vtime(tsk))
-		virt_timer_expire();
+	अगर (करो_account_vसमय(tsk))
+		virt_समयr_expire();
 
-	steal = S390_lowcore.steal_timer;
-	avg_steal = S390_lowcore.avg_steal_timer / 2;
-	if ((s64) steal > 0) {
-		S390_lowcore.steal_timer = 0;
-		account_steal_time(cputime_to_nsecs(steal));
+	steal = S390_lowcore.steal_समयr;
+	avg_steal = S390_lowcore.avg_steal_समयr / 2;
+	अगर ((s64) steal > 0) अणु
+		S390_lowcore.steal_समयr = 0;
+		account_steal_समय(cpuसमय_प्रकारo_nsecs(steal));
 		avg_steal += steal;
-	}
-	S390_lowcore.avg_steal_timer = avg_steal;
-}
+	पूर्ण
+	S390_lowcore.avg_steal_समयr = avg_steal;
+पूर्ण
 
-static u64 vtime_delta(void)
-{
-	u64 timer = S390_lowcore.last_update_timer;
+अटल u64 vसमय_delta(व्योम)
+अणु
+	u64 समयr = S390_lowcore.last_update_समयr;
 
-	S390_lowcore.last_update_timer = get_vtimer();
+	S390_lowcore.last_update_समयr = get_vसमयr();
 
-	return timer - S390_lowcore.last_update_timer;
-}
+	वापस समयr - S390_lowcore.last_update_समयr;
+पूर्ण
 
 /*
- * Update process times based on virtual cpu times stored by entry.S
- * to the lowcore fields user_timer, system_timer & steal_clock.
+ * Update process बार based on भव cpu बार stored by entry.S
+ * to the lowcore fields user_समयr, प्रणाली_समयr & steal_घड़ी.
  */
-void vtime_account_kernel(struct task_struct *tsk)
-{
-	u64 delta = vtime_delta();
+व्योम vसमय_account_kernel(काष्ठा task_काष्ठा *tsk)
+अणु
+	u64 delta = vसमय_delta();
 
-	if (tsk->flags & PF_VCPU)
-		S390_lowcore.guest_timer += delta;
-	else
-		S390_lowcore.system_timer += delta;
+	अगर (tsk->flags & PF_VCPU)
+		S390_lowcore.guest_समयr += delta;
+	अन्यथा
+		S390_lowcore.प्रणाली_समयr += delta;
 
-	virt_timer_forward(delta);
-}
-EXPORT_SYMBOL_GPL(vtime_account_kernel);
+	virt_समयr_क्रमward(delta);
+पूर्ण
+EXPORT_SYMBOL_GPL(vसमय_account_kernel);
 
-void vtime_account_softirq(struct task_struct *tsk)
-{
-	u64 delta = vtime_delta();
+व्योम vसमय_account_softirq(काष्ठा task_काष्ठा *tsk)
+अणु
+	u64 delta = vसमय_delta();
 
-	S390_lowcore.softirq_timer += delta;
+	S390_lowcore.softirq_समयr += delta;
 
-	virt_timer_forward(delta);
-}
+	virt_समयr_क्रमward(delta);
+पूर्ण
 
-void vtime_account_hardirq(struct task_struct *tsk)
-{
-	u64 delta = vtime_delta();
+व्योम vसमय_account_hardirq(काष्ठा task_काष्ठा *tsk)
+अणु
+	u64 delta = vसमय_delta();
 
-	S390_lowcore.hardirq_timer += delta;
+	S390_lowcore.hardirq_समयr += delta;
 
-	virt_timer_forward(delta);
-}
+	virt_समयr_क्रमward(delta);
+पूर्ण
 
 /*
  * Sorted add to a list. List is linear searched until first bigger
  * element is found.
  */
-static void list_add_sorted(struct vtimer_list *timer, struct list_head *head)
-{
-	struct vtimer_list *tmp;
+अटल व्योम list_add_sorted(काष्ठा vसमयr_list *समयr, काष्ठा list_head *head)
+अणु
+	काष्ठा vसमयr_list *पंचांगp;
 
-	list_for_each_entry(tmp, head, entry) {
-		if (tmp->expires > timer->expires) {
-			list_add_tail(&timer->entry, &tmp->entry);
-			return;
-		}
-	}
-	list_add_tail(&timer->entry, head);
-}
+	list_क्रम_each_entry(पंचांगp, head, entry) अणु
+		अगर (पंचांगp->expires > समयr->expires) अणु
+			list_add_tail(&समयr->entry, &पंचांगp->entry);
+			वापस;
+		पूर्ण
+	पूर्ण
+	list_add_tail(&समयr->entry, head);
+पूर्ण
 
 /*
- * Handler for expired virtual CPU timer.
+ * Handler क्रम expired भव CPU समयr.
  */
-static void virt_timer_expire(void)
-{
-	struct vtimer_list *timer, *tmp;
-	unsigned long elapsed;
+अटल व्योम virt_समयr_expire(व्योम)
+अणु
+	काष्ठा vसमयr_list *समयr, *पंचांगp;
+	अचिन्हित दीर्घ elapsed;
 	LIST_HEAD(cb_list);
 
-	/* walk timer list, fire all expired timers */
-	spin_lock(&virt_timer_lock);
-	elapsed = atomic64_read(&virt_timer_elapsed);
-	list_for_each_entry_safe(timer, tmp, &virt_timer_list, entry) {
-		if (timer->expires < elapsed)
-			/* move expired timer to the callback queue */
-			list_move_tail(&timer->entry, &cb_list);
-		else
-			timer->expires -= elapsed;
-	}
-	if (!list_empty(&virt_timer_list)) {
-		timer = list_first_entry(&virt_timer_list,
-					 struct vtimer_list, entry);
-		atomic64_set(&virt_timer_current, timer->expires);
-	}
-	atomic64_sub(elapsed, &virt_timer_elapsed);
-	spin_unlock(&virt_timer_lock);
+	/* walk समयr list, fire all expired समयrs */
+	spin_lock(&virt_समयr_lock);
+	elapsed = atomic64_पढ़ो(&virt_समयr_elapsed);
+	list_क्रम_each_entry_safe(समयr, पंचांगp, &virt_समयr_list, entry) अणु
+		अगर (समयr->expires < elapsed)
+			/* move expired समयr to the callback queue */
+			list_move_tail(&समयr->entry, &cb_list);
+		अन्यथा
+			समयr->expires -= elapsed;
+	पूर्ण
+	अगर (!list_empty(&virt_समयr_list)) अणु
+		समयr = list_first_entry(&virt_समयr_list,
+					 काष्ठा vसमयr_list, entry);
+		atomic64_set(&virt_समयr_current, समयr->expires);
+	पूर्ण
+	atomic64_sub(elapsed, &virt_समयr_elapsed);
+	spin_unlock(&virt_समयr_lock);
 
-	/* Do callbacks and recharge periodic timers */
-	list_for_each_entry_safe(timer, tmp, &cb_list, entry) {
-		list_del_init(&timer->entry);
-		timer->function(timer->data);
-		if (timer->interval) {
-			/* Recharge interval timer */
-			timer->expires = timer->interval +
-				atomic64_read(&virt_timer_elapsed);
-			spin_lock(&virt_timer_lock);
-			list_add_sorted(timer, &virt_timer_list);
-			spin_unlock(&virt_timer_lock);
-		}
-	}
-}
+	/* Do callbacks and reअक्षरge periodic समयrs */
+	list_क्रम_each_entry_safe(समयr, पंचांगp, &cb_list, entry) अणु
+		list_del_init(&समयr->entry);
+		समयr->function(समयr->data);
+		अगर (समयr->पूर्णांकerval) अणु
+			/* Reअक्षरge पूर्णांकerval समयr */
+			समयr->expires = समयr->पूर्णांकerval +
+				atomic64_पढ़ो(&virt_समयr_elapsed);
+			spin_lock(&virt_समयr_lock);
+			list_add_sorted(समयr, &virt_समयr_list);
+			spin_unlock(&virt_समयr_lock);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void init_virt_timer(struct vtimer_list *timer)
-{
-	timer->function = NULL;
-	INIT_LIST_HEAD(&timer->entry);
-}
-EXPORT_SYMBOL(init_virt_timer);
+व्योम init_virt_समयr(काष्ठा vसमयr_list *समयr)
+अणु
+	समयr->function = शून्य;
+	INIT_LIST_HEAD(&समयr->entry);
+पूर्ण
+EXPORT_SYMBOL(init_virt_समयr);
 
-static inline int vtimer_pending(struct vtimer_list *timer)
-{
-	return !list_empty(&timer->entry);
-}
+अटल अंतरभूत पूर्णांक vसमयr_pending(काष्ठा vसमयr_list *समयr)
+अणु
+	वापस !list_empty(&समयr->entry);
+पूर्ण
 
-static void internal_add_vtimer(struct vtimer_list *timer)
-{
-	if (list_empty(&virt_timer_list)) {
-		/* First timer, just program it. */
-		atomic64_set(&virt_timer_current, timer->expires);
-		atomic64_set(&virt_timer_elapsed, 0);
-		list_add(&timer->entry, &virt_timer_list);
-	} else {
-		/* Update timer against current base. */
-		timer->expires += atomic64_read(&virt_timer_elapsed);
-		if (likely((s64) timer->expires <
-			   (s64) atomic64_read(&virt_timer_current)))
-			/* The new timer expires before the current timer. */
-			atomic64_set(&virt_timer_current, timer->expires);
-		/* Insert new timer into the list. */
-		list_add_sorted(timer, &virt_timer_list);
-	}
-}
+अटल व्योम पूर्णांकernal_add_vसमयr(काष्ठा vसमयr_list *समयr)
+अणु
+	अगर (list_empty(&virt_समयr_list)) अणु
+		/* First समयr, just program it. */
+		atomic64_set(&virt_समयr_current, समयr->expires);
+		atomic64_set(&virt_समयr_elapsed, 0);
+		list_add(&समयr->entry, &virt_समयr_list);
+	पूर्ण अन्यथा अणु
+		/* Update समयr against current base. */
+		समयr->expires += atomic64_पढ़ो(&virt_समयr_elapsed);
+		अगर (likely((s64) समयr->expires <
+			   (s64) atomic64_पढ़ो(&virt_समयr_current)))
+			/* The new समयr expires beक्रमe the current समयr. */
+			atomic64_set(&virt_समयr_current, समयr->expires);
+		/* Insert new समयr पूर्णांकo the list. */
+		list_add_sorted(समयr, &virt_समयr_list);
+	पूर्ण
+पूर्ण
 
-static void __add_vtimer(struct vtimer_list *timer, int periodic)
-{
-	unsigned long flags;
+अटल व्योम __add_vसमयr(काष्ठा vसमयr_list *समयr, पूर्णांक periodic)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	timer->interval = periodic ? timer->expires : 0;
-	spin_lock_irqsave(&virt_timer_lock, flags);
-	internal_add_vtimer(timer);
-	spin_unlock_irqrestore(&virt_timer_lock, flags);
-}
+	समयr->पूर्णांकerval = periodic ? समयr->expires : 0;
+	spin_lock_irqsave(&virt_समयr_lock, flags);
+	पूर्णांकernal_add_vसमयr(समयr);
+	spin_unlock_irqrestore(&virt_समयr_lock, flags);
+पूर्ण
 
 /*
- * add_virt_timer - add a oneshot virtual CPU timer
+ * add_virt_समयr - add a oneshot भव CPU समयr
  */
-void add_virt_timer(struct vtimer_list *timer)
-{
-	__add_vtimer(timer, 0);
-}
-EXPORT_SYMBOL(add_virt_timer);
+व्योम add_virt_समयr(काष्ठा vसमयr_list *समयr)
+अणु
+	__add_vसमयr(समयr, 0);
+पूर्ण
+EXPORT_SYMBOL(add_virt_समयr);
 
 /*
- * add_virt_timer_int - add an interval virtual CPU timer
+ * add_virt_समयr_पूर्णांक - add an पूर्णांकerval भव CPU समयr
  */
-void add_virt_timer_periodic(struct vtimer_list *timer)
-{
-	__add_vtimer(timer, 1);
-}
-EXPORT_SYMBOL(add_virt_timer_periodic);
+व्योम add_virt_समयr_periodic(काष्ठा vसमयr_list *समयr)
+अणु
+	__add_vसमयr(समयr, 1);
+पूर्ण
+EXPORT_SYMBOL(add_virt_समयr_periodic);
 
-static int __mod_vtimer(struct vtimer_list *timer, u64 expires, int periodic)
-{
-	unsigned long flags;
-	int rc;
+अटल पूर्णांक __mod_vसमयr(काष्ठा vसमयr_list *समयr, u64 expires, पूर्णांक periodic)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
 
-	BUG_ON(!timer->function);
+	BUG_ON(!समयr->function);
 
-	if (timer->expires == expires && vtimer_pending(timer))
-		return 1;
-	spin_lock_irqsave(&virt_timer_lock, flags);
-	rc = vtimer_pending(timer);
-	if (rc)
-		list_del_init(&timer->entry);
-	timer->interval = periodic ? expires : 0;
-	timer->expires = expires;
-	internal_add_vtimer(timer);
-	spin_unlock_irqrestore(&virt_timer_lock, flags);
-	return rc;
-}
+	अगर (समयr->expires == expires && vसमयr_pending(समयr))
+		वापस 1;
+	spin_lock_irqsave(&virt_समयr_lock, flags);
+	rc = vसमयr_pending(समयr);
+	अगर (rc)
+		list_del_init(&समयr->entry);
+	समयr->पूर्णांकerval = periodic ? expires : 0;
+	समयr->expires = expires;
+	पूर्णांकernal_add_vसमयr(समयr);
+	spin_unlock_irqrestore(&virt_समयr_lock, flags);
+	वापस rc;
+पूर्ण
 
 /*
- * returns whether it has modified a pending timer (1) or not (0)
+ * वापसs whether it has modअगरied a pending समयr (1) or not (0)
  */
-int mod_virt_timer(struct vtimer_list *timer, u64 expires)
-{
-	return __mod_vtimer(timer, expires, 0);
-}
-EXPORT_SYMBOL(mod_virt_timer);
+पूर्णांक mod_virt_समयr(काष्ठा vसमयr_list *समयr, u64 expires)
+अणु
+	वापस __mod_vसमयr(समयr, expires, 0);
+पूर्ण
+EXPORT_SYMBOL(mod_virt_समयr);
 
 /*
- * returns whether it has modified a pending timer (1) or not (0)
+ * वापसs whether it has modअगरied a pending समयr (1) or not (0)
  */
-int mod_virt_timer_periodic(struct vtimer_list *timer, u64 expires)
-{
-	return __mod_vtimer(timer, expires, 1);
-}
-EXPORT_SYMBOL(mod_virt_timer_periodic);
+पूर्णांक mod_virt_समयr_periodic(काष्ठा vसमयr_list *समयr, u64 expires)
+अणु
+	वापस __mod_vसमयr(समयr, expires, 1);
+पूर्ण
+EXPORT_SYMBOL(mod_virt_समयr_periodic);
 
 /*
- * Delete a virtual timer.
+ * Delete a भव समयr.
  *
- * returns whether the deleted timer was pending (1) or not (0)
+ * वापसs whether the deleted समयr was pending (1) or not (0)
  */
-int del_virt_timer(struct vtimer_list *timer)
-{
-	unsigned long flags;
+पूर्णांक del_virt_समयr(काष्ठा vसमयr_list *समयr)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!vtimer_pending(timer))
-		return 0;
-	spin_lock_irqsave(&virt_timer_lock, flags);
-	list_del_init(&timer->entry);
-	spin_unlock_irqrestore(&virt_timer_lock, flags);
-	return 1;
-}
-EXPORT_SYMBOL(del_virt_timer);
+	अगर (!vसमयr_pending(समयr))
+		वापस 0;
+	spin_lock_irqsave(&virt_समयr_lock, flags);
+	list_del_init(&समयr->entry);
+	spin_unlock_irqrestore(&virt_समयr_lock, flags);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL(del_virt_समयr);
 
 /*
- * Start the virtual CPU timer on the current CPU.
+ * Start the भव CPU समयr on the current CPU.
  */
-void vtime_init(void)
-{
-	/* set initial cpu timer */
-	set_vtimer(VTIMER_MAX_SLICE);
+व्योम vसमय_init(व्योम)
+अणु
+	/* set initial cpu समयr */
+	set_vसमयr(VTIMER_MAX_SLICE);
 	/* Setup initial MT scaling values */
-	if (smp_cpu_mtid) {
-		__this_cpu_write(mt_scaling_jiffies, jiffies);
-		__this_cpu_write(mt_scaling_mult, 1);
-		__this_cpu_write(mt_scaling_div, 1);
-		stcctm(MT_DIAG, smp_cpu_mtid + 1, this_cpu_ptr(mt_cycles));
-	}
-}
+	अगर (smp_cpu_mtid) अणु
+		__this_cpu_ग_लिखो(mt_scaling_jअगरfies, jअगरfies);
+		__this_cpu_ग_लिखो(mt_scaling_mult, 1);
+		__this_cpu_ग_लिखो(mt_scaling_भाग, 1);
+		stccपंचांग(MT_DIAG, smp_cpu_mtid + 1, this_cpu_ptr(mt_cycles));
+	पूर्ण
+पूर्ण

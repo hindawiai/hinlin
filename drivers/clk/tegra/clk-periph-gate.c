@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, NVIDIA CORPORATION.  All rights reserved.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-static DEFINE_SPINLOCK(periph_ref_lock);
+अटल DEFINE_SPINLOCK(periph_ref_lock);
 
-/* Macros to assist peripheral gate clock */
-#define read_enb(gate) \
-	readl_relaxed(gate->clk_base + (gate->regs->enb_reg))
-#define write_enb_set(val, gate) \
-	writel_relaxed(val, gate->clk_base + (gate->regs->enb_set_reg))
-#define write_enb_clr(val, gate) \
-	writel_relaxed(val, gate->clk_base + (gate->regs->enb_clr_reg))
+/* Macros to assist peripheral gate घड़ी */
+#घोषणा पढ़ो_enb(gate) \
+	पढ़ोl_relaxed(gate->clk_base + (gate->regs->enb_reg))
+#घोषणा ग_लिखो_enb_set(val, gate) \
+	ग_लिखोl_relaxed(val, gate->clk_base + (gate->regs->enb_set_reg))
+#घोषणा ग_लिखो_enb_clr(val, gate) \
+	ग_लिखोl_relaxed(val, gate->clk_base + (gate->regs->enb_clr_reg))
 
-#define read_rst(gate) \
-	readl_relaxed(gate->clk_base + (gate->regs->rst_reg))
-#define write_rst_clr(val, gate) \
-	writel_relaxed(val, gate->clk_base + (gate->regs->rst_clr_reg))
+#घोषणा पढ़ो_rst(gate) \
+	पढ़ोl_relaxed(gate->clk_base + (gate->regs->rst_reg))
+#घोषणा ग_लिखो_rst_clr(val, gate) \
+	ग_लिखोl_relaxed(val, gate->clk_base + (gate->regs->rst_clr_reg))
 
-#define periph_clk_to_bit(gate) (1 << (gate->clk_num % 32))
+#घोषणा periph_clk_to_bit(gate) (1 << (gate->clk_num % 32))
 
-#define LVL2_CLK_GATE_OVRE 0x554
+#घोषणा LVL2_CLK_GATE_OVRE 0x554
 
-/* Peripheral gate clock ops */
-static int clk_periph_is_enabled(struct clk_hw *hw)
-{
-	struct tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
-	int state = 1;
+/* Peripheral gate घड़ी ops */
+अटल पूर्णांक clk_periph_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
+	पूर्णांक state = 1;
 
-	if (!(read_enb(gate) & periph_clk_to_bit(gate)))
+	अगर (!(पढ़ो_enb(gate) & periph_clk_to_bit(gate)))
 		state = 0;
 
-	if (!(gate->flags & TEGRA_PERIPH_NO_RESET))
-		if (read_rst(gate) & periph_clk_to_bit(gate))
+	अगर (!(gate->flags & TEGRA_PERIPH_NO_RESET))
+		अगर (पढ़ो_rst(gate) & periph_clk_to_bit(gate))
 			state = 0;
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static int clk_periph_enable(struct clk_hw *hw)
-{
-	struct tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
-	unsigned long flags = 0;
+अटल पूर्णांक clk_periph_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
+	अचिन्हित दीर्घ flags = 0;
 
 	spin_lock_irqsave(&periph_ref_lock, flags);
 
 	gate->enable_refcnt[gate->clk_num]++;
-	if (gate->enable_refcnt[gate->clk_num] > 1) {
+	अगर (gate->enable_refcnt[gate->clk_num] > 1) अणु
 		spin_unlock_irqrestore(&periph_ref_lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	write_enb_set(periph_clk_to_bit(gate), gate);
+	ग_लिखो_enb_set(periph_clk_to_bit(gate), gate);
 	udelay(2);
 
-	if (!(gate->flags & TEGRA_PERIPH_NO_RESET) &&
-	    !(gate->flags & TEGRA_PERIPH_MANUAL_RESET)) {
-		if (read_rst(gate) & periph_clk_to_bit(gate)) {
+	अगर (!(gate->flags & TEGRA_PERIPH_NO_RESET) &&
+	    !(gate->flags & TEGRA_PERIPH_MANUAL_RESET)) अणु
+		अगर (पढ़ो_rst(gate) & periph_clk_to_bit(gate)) अणु
 			udelay(5); /* reset propogation delay */
-			write_rst_clr(periph_clk_to_bit(gate), gate);
-		}
-	}
+			ग_लिखो_rst_clr(periph_clk_to_bit(gate), gate);
+		पूर्ण
+	पूर्ण
 
-	if (gate->flags & TEGRA_PERIPH_WAR_1005168) {
-		writel_relaxed(0, gate->clk_base + LVL2_CLK_GATE_OVRE);
-		writel_relaxed(BIT(22), gate->clk_base + LVL2_CLK_GATE_OVRE);
+	अगर (gate->flags & TEGRA_PERIPH_WAR_1005168) अणु
+		ग_लिखोl_relaxed(0, gate->clk_base + LVL2_CLK_GATE_OVRE);
+		ग_लिखोl_relaxed(BIT(22), gate->clk_base + LVL2_CLK_GATE_OVRE);
 		udelay(1);
-		writel_relaxed(0, gate->clk_base + LVL2_CLK_GATE_OVRE);
-	}
+		ग_लिखोl_relaxed(0, gate->clk_base + LVL2_CLK_GATE_OVRE);
+	पूर्ण
 
 	spin_unlock_irqrestore(&periph_ref_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_periph_disable(struct clk_hw *hw)
-{
-	struct tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
-	unsigned long flags = 0;
+अटल व्योम clk_periph_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा tegra_clk_periph_gate *gate = to_clk_periph_gate(hw);
+	अचिन्हित दीर्घ flags = 0;
 
 	spin_lock_irqsave(&periph_ref_lock, flags);
 
 	gate->enable_refcnt[gate->clk_num]--;
-	if (gate->enable_refcnt[gate->clk_num] > 0) {
+	अगर (gate->enable_refcnt[gate->clk_num] > 0) अणु
 		spin_unlock_irqrestore(&periph_ref_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If peripheral is in the APB bus then read the APB bus to
-	 * flush the write operation in apb bus. This will avoid the
-	 * peripheral access after disabling clock
+	 * If peripheral is in the APB bus then पढ़ो the APB bus to
+	 * flush the ग_लिखो operation in apb bus. This will aव्योम the
+	 * peripheral access after disabling घड़ी
 	 */
-	if (gate->flags & TEGRA_PERIPH_ON_APB)
-		tegra_read_chipid();
+	अगर (gate->flags & TEGRA_PERIPH_ON_APB)
+		tegra_पढ़ो_chipid();
 
-	write_enb_clr(periph_clk_to_bit(gate), gate);
+	ग_लिखो_enb_clr(periph_clk_to_bit(gate), gate);
 
 	spin_unlock_irqrestore(&periph_ref_lock, flags);
-}
+पूर्ण
 
-const struct clk_ops tegra_clk_periph_gate_ops = {
+स्थिर काष्ठा clk_ops tegra_clk_periph_gate_ops = अणु
 	.is_enabled = clk_periph_is_enabled,
 	.enable = clk_periph_enable,
 	.disable = clk_periph_disable,
-};
+पूर्ण;
 
-struct clk *tegra_clk_register_periph_gate(const char *name,
-		const char *parent_name, u8 gate_flags, void __iomem *clk_base,
-		unsigned long flags, int clk_num, int *enable_refcnt)
-{
-	struct tegra_clk_periph_gate *gate;
-	struct clk *clk;
-	struct clk_init_data init;
-	const struct tegra_clk_periph_regs *pregs;
+काष्ठा clk *tegra_clk_रेजिस्टर_periph_gate(स्थिर अक्षर *name,
+		स्थिर अक्षर *parent_name, u8 gate_flags, व्योम __iomem *clk_base,
+		अचिन्हित दीर्घ flags, पूर्णांक clk_num, पूर्णांक *enable_refcnt)
+अणु
+	काष्ठा tegra_clk_periph_gate *gate;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
+	स्थिर काष्ठा tegra_clk_periph_regs *pregs;
 
 	pregs = get_reg_bank(clk_num);
-	if (!pregs)
-		return ERR_PTR(-EINVAL);
+	अगर (!pregs)
+		वापस ERR_PTR(-EINVAL);
 
-	gate = kzalloc(sizeof(*gate), GFP_KERNEL);
-	if (!gate) {
+	gate = kzalloc(माप(*gate), GFP_KERNEL);
+	अगर (!gate) अणु
 		pr_err("%s: could not allocate periph gate clk\n", __func__);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	init.name = name;
 	init.flags = flags;
-	init.parent_names = parent_name ? &parent_name : NULL;
+	init.parent_names = parent_name ? &parent_name : शून्य;
 	init.num_parents = parent_name ? 1 : 0;
 	init.ops = &tegra_clk_periph_gate_ops;
 
@@ -148,15 +149,15 @@ struct clk *tegra_clk_register_periph_gate(const char *name,
 	gate->enable_refcnt = enable_refcnt;
 	gate->regs = pregs;
 
-	if (read_enb(gate) & periph_clk_to_bit(gate))
+	अगर (पढ़ो_enb(gate) & periph_clk_to_bit(gate))
 		enable_refcnt[clk_num]++;
 
-	/* Data in .init is copied by clk_register(), so stack variable OK */
+	/* Data in .init is copied by clk_रेजिस्टर(), so stack variable OK */
 	gate->hw.init = &init;
 
-	clk = clk_register(NULL, &gate->hw);
-	if (IS_ERR(clk))
-		kfree(gate);
+	clk = clk_रेजिस्टर(शून्य, &gate->hw);
+	अगर (IS_ERR(clk))
+		kमुक्त(gate);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण

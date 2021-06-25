@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * memfd test file-system
- * This file uses FUSE to create a dummy file-system with only one file /memfd.
- * This file is read-only and takes 1s per read.
+ * memfd test file-प्रणाली
+ * This file uses FUSE to create a dummy file-प्रणाली with only one file /memfd.
+ * This file is पढ़ो-only and takes 1s per पढ़ो.
  *
- * This file-system is used by the memfd test-cases to force the kernel to pin
- * pages during reads(). Due to the 1s delay of this file-system, this is a
+ * This file-प्रणाली is used by the memfd test-हालs to क्रमce the kernel to pin
+ * pages during पढ़ोs(). Due to the 1s delay of this file-प्रणाली, this is a
  * nice way to test race-conditions against get_user_pages() in the kernel.
  *
- * We use direct_io==1 to force the kernel to use direct-IO for this
- * file-system.
+ * We use direct_io==1 to क्रमce the kernel to use direct-IO क्रम this
+ * file-प्रणाली.
  */
 
-#define FUSE_USE_VERSION 26
+#घोषणा FUSE_USE_VERSION 26
 
-#include <fuse.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <unistd.h>
+#समावेश <fuse.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <unistd.h>
 
-static const char memfd_content[] = "memfd-example-content";
-static const char memfd_path[] = "/memfd";
+अटल स्थिर अक्षर memfd_content[] = "memfd-example-content";
+अटल स्थिर अक्षर memfd_path[] = "/memfd";
 
-static int memfd_getattr(const char *path, struct stat *st)
-{
-	memset(st, 0, sizeof(*st));
+अटल पूर्णांक memfd_getattr(स्थिर अक्षर *path, काष्ठा stat *st)
+अणु
+	स_रखो(st, 0, माप(*st));
 
-	if (!strcmp(path, "/")) {
-		st->st_mode = S_IFDIR | 0755;
+	अगर (!म_भेद(path, "/")) अणु
+		st->st_mode = S_IFसूची | 0755;
 		st->st_nlink = 2;
-	} else if (!strcmp(path, memfd_path)) {
+	पूर्ण अन्यथा अगर (!म_भेद(path, memfd_path)) अणु
 		st->st_mode = S_IFREG | 0444;
 		st->st_nlink = 1;
-		st->st_size = strlen(memfd_content);
-	} else {
-		return -ENOENT;
-	}
+		st->st_size = म_माप(memfd_content);
+	पूर्ण अन्यथा अणु
+		वापस -ENOENT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memfd_readdir(const char *path,
-			 void *buf,
+अटल पूर्णांक memfd_सूची_पढ़ो(स्थिर अक्षर *path,
+			 व्योम *buf,
 			 fuse_fill_dir_t filler,
 			 off_t offset,
-			 struct fuse_file_info *fi)
-{
-	if (strcmp(path, "/"))
-		return -ENOENT;
+			 काष्ठा fuse_file_info *fi)
+अणु
+	अगर (म_भेद(path, "/"))
+		वापस -ENOENT;
 
-	filler(buf, ".", NULL, 0);
-	filler(buf, "..", NULL, 0);
-	filler(buf, memfd_path + 1, NULL, 0);
+	filler(buf, ".", शून्य, 0);
+	filler(buf, "..", शून्य, 0);
+	filler(buf, memfd_path + 1, शून्य, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memfd_open(const char *path, struct fuse_file_info *fi)
-{
-	if (strcmp(path, memfd_path))
-		return -ENOENT;
+अटल पूर्णांक memfd_खोलो(स्थिर अक्षर *path, काष्ठा fuse_file_info *fi)
+अणु
+	अगर (म_भेद(path, memfd_path))
+		वापस -ENOENT;
 
-	if ((fi->flags & 3) != O_RDONLY)
-		return -EACCES;
+	अगर ((fi->flags & 3) != O_RDONLY)
+		वापस -EACCES;
 
-	/* force direct-IO */
+	/* क्रमce direct-IO */
 	fi->direct_io = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memfd_read(const char *path,
-		      char *buf,
-		      size_t size,
+अटल पूर्णांक memfd_पढ़ो(स्थिर अक्षर *path,
+		      अक्षर *buf,
+		      माप_प्रकार size,
 		      off_t offset,
-		      struct fuse_file_info *fi)
-{
-	size_t len;
+		      काष्ठा fuse_file_info *fi)
+अणु
+	माप_प्रकार len;
 
-	if (strcmp(path, memfd_path) != 0)
-		return -ENOENT;
+	अगर (म_भेद(path, memfd_path) != 0)
+		वापस -ENOENT;
 
 	sleep(1);
 
-	len = strlen(memfd_content);
-	if (offset < len) {
-		if (offset + size > len)
+	len = म_माप(memfd_content);
+	अगर (offset < len) अणु
+		अगर (offset + size > len)
 			size = len - offset;
 
-		memcpy(buf, memfd_content + offset, size);
-	} else {
+		स_नकल(buf, memfd_content + offset, size);
+	पूर्ण अन्यथा अणु
 		size = 0;
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static struct fuse_operations memfd_ops = {
+अटल काष्ठा fuse_operations memfd_ops = अणु
 	.getattr	= memfd_getattr,
-	.readdir	= memfd_readdir,
-	.open		= memfd_open,
-	.read		= memfd_read,
-};
+	.सूची_पढ़ो	= memfd_सूची_पढ़ो,
+	.खोलो		= memfd_खोलो,
+	.पढ़ो		= memfd_पढ़ो,
+पूर्ण;
 
-int main(int argc, char *argv[])
-{
-	return fuse_main(argc, argv, &memfd_ops, NULL);
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस fuse_मुख्य(argc, argv, &memfd_ops, शून्य);
+पूर्ण

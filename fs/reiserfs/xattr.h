@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/reiserfs_xattr.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/rwsem.h>
-#include <linux/xattr.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/reiserfs_xattr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/xattr.h>
 
-struct inode;
-struct dentry;
-struct iattr;
-struct super_block;
+काष्ठा inode;
+काष्ठा dentry;
+काष्ठा iattr;
+काष्ठा super_block;
 
-int reiserfs_xattr_register_handlers(void) __init;
-void reiserfs_xattr_unregister_handlers(void);
-int reiserfs_xattr_init(struct super_block *sb, int mount_flags);
-int reiserfs_lookup_privroot(struct super_block *sb);
-int reiserfs_delete_xattrs(struct inode *inode);
-int reiserfs_chown_xattrs(struct inode *inode, struct iattr *attrs);
-int reiserfs_permission(struct user_namespace *mnt_userns,
-			struct inode *inode, int mask);
+पूर्णांक reiserfs_xattr_रेजिस्टर_handlers(व्योम) __init;
+व्योम reiserfs_xattr_unरेजिस्टर_handlers(व्योम);
+पूर्णांक reiserfs_xattr_init(काष्ठा super_block *sb, पूर्णांक mount_flags);
+पूर्णांक reiserfs_lookup_privroot(काष्ठा super_block *sb);
+पूर्णांक reiserfs_delete_xattrs(काष्ठा inode *inode);
+पूर्णांक reiserfs_chown_xattrs(काष्ठा inode *inode, काष्ठा iattr *attrs);
+पूर्णांक reiserfs_permission(काष्ठा user_namespace *mnt_userns,
+			काष्ठा inode *inode, पूर्णांक mask);
 
-#ifdef CONFIG_REISERFS_FS_XATTR
-#define has_xattr_dir(inode) (REISERFS_I(inode)->i_flags & i_has_xattr_dir)
-ssize_t reiserfs_listxattr(struct dentry *dentry, char *buffer, size_t size);
+#अगर_घोषित CONFIG_REISERFS_FS_XATTR
+#घोषणा has_xattr_dir(inode) (REISERFS_I(inode)->i_flags & i_has_xattr_dir)
+sमाप_प्रकार reiserfs_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size);
 
-int reiserfs_xattr_get(struct inode *, const char *, void *, size_t);
-int reiserfs_xattr_set(struct inode *, const char *, const void *, size_t, int);
-int reiserfs_xattr_set_handle(struct reiserfs_transaction_handle *,
-			      struct inode *, const char *, const void *,
-			      size_t, int);
+पूर्णांक reiserfs_xattr_get(काष्ठा inode *, स्थिर अक्षर *, व्योम *, माप_प्रकार);
+पूर्णांक reiserfs_xattr_set(काष्ठा inode *, स्थिर अक्षर *, स्थिर व्योम *, माप_प्रकार, पूर्णांक);
+पूर्णांक reiserfs_xattr_set_handle(काष्ठा reiserfs_transaction_handle *,
+			      काष्ठा inode *, स्थिर अक्षर *, स्थिर व्योम *,
+			      माप_प्रकार, पूर्णांक);
 
-extern const struct xattr_handler reiserfs_xattr_user_handler;
-extern const struct xattr_handler reiserfs_xattr_trusted_handler;
-extern const struct xattr_handler reiserfs_xattr_security_handler;
-#ifdef CONFIG_REISERFS_FS_SECURITY
-int reiserfs_security_init(struct inode *dir, struct inode *inode,
-			   const struct qstr *qstr,
-			   struct reiserfs_security_handle *sec);
-int reiserfs_security_write(struct reiserfs_transaction_handle *th,
-			    struct inode *inode,
-			    struct reiserfs_security_handle *sec);
-void reiserfs_security_free(struct reiserfs_security_handle *sec);
-#endif
+बाह्य स्थिर काष्ठा xattr_handler reiserfs_xattr_user_handler;
+बाह्य स्थिर काष्ठा xattr_handler reiserfs_xattr_trusted_handler;
+बाह्य स्थिर काष्ठा xattr_handler reiserfs_xattr_security_handler;
+#अगर_घोषित CONFIG_REISERFS_FS_SECURITY
+पूर्णांक reiserfs_security_init(काष्ठा inode *dir, काष्ठा inode *inode,
+			   स्थिर काष्ठा qstr *qstr,
+			   काष्ठा reiserfs_security_handle *sec);
+पूर्णांक reiserfs_security_ग_लिखो(काष्ठा reiserfs_transaction_handle *th,
+			    काष्ठा inode *inode,
+			    काष्ठा reiserfs_security_handle *sec);
+व्योम reiserfs_security_मुक्त(काष्ठा reiserfs_security_handle *sec);
+#पूर्ण_अगर
 
-static inline int reiserfs_xattrs_initialized(struct super_block *sb)
-{
-	return REISERFS_SB(sb)->priv_root && REISERFS_SB(sb)->xattr_root;
-}
+अटल अंतरभूत पूर्णांक reiserfs_xattrs_initialized(काष्ठा super_block *sb)
+अणु
+	वापस REISERFS_SB(sb)->priv_root && REISERFS_SB(sb)->xattr_root;
+पूर्ण
 
-#define xattr_size(size) ((size) + sizeof(struct reiserfs_xattr_header))
-static inline loff_t reiserfs_xattr_nblocks(struct inode *inode, loff_t size)
-{
+#घोषणा xattr_size(size) ((size) + माप(काष्ठा reiserfs_xattr_header))
+अटल अंतरभूत loff_t reiserfs_xattr_nblocks(काष्ठा inode *inode, loff_t size)
+अणु
 	loff_t ret = 0;
-	if (reiserfs_file_data_log(inode)) {
+	अगर (reiserfs_file_data_log(inode)) अणु
 		ret = _ROUND_UP(xattr_size(size), inode->i_sb->s_blocksize);
 		ret >>= inode->i_sb->s_blocksize_bits;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * We may have to create up to 3 objects: xattr root, xattr dir, xattr file.
  * Let's try to be smart about it.
  * xattr root: We cache it. If it's not cached, we may need to create it.
- * xattr dir: If anything has been loaded for this inode, we can set a flag
+ * xattr dir: If anything has been loaded क्रम this inode, we can set a flag
  *            saying so.
- * xattr file: Since we don't cache xattrs, we can't tell. We always include
- *             blocks for it.
+ * xattr file: Since we करोn't cache xattrs, we can't tell. We always include
+ *             blocks क्रम it.
  *
  * However, since root and dir can be created between calls - YOU MUST SAVE
  * THIS VALUE.
  */
-static inline size_t reiserfs_xattr_jcreate_nblocks(struct inode *inode)
-{
-	size_t nblocks = JOURNAL_BLOCKS_PER_OBJECT(inode->i_sb);
+अटल अंतरभूत माप_प्रकार reiserfs_xattr_jcreate_nblocks(काष्ठा inode *inode)
+अणु
+	माप_प्रकार nblocks = JOURNAL_BLOCKS_PER_OBJECT(inode->i_sb);
 
-	if ((REISERFS_I(inode)->i_flags & i_has_xattr_dir) == 0) {
+	अगर ((REISERFS_I(inode)->i_flags & i_has_xattr_dir) == 0) अणु
 		nblocks += JOURNAL_BLOCKS_PER_OBJECT(inode->i_sb);
-		if (d_really_is_negative(REISERFS_SB(inode->i_sb)->xattr_root))
+		अगर (d_really_is_negative(REISERFS_SB(inode->i_sb)->xattr_root))
 			nblocks += JOURNAL_BLOCKS_PER_OBJECT(inode->i_sb);
-	}
+	पूर्ण
 
-	return nblocks;
-}
+	वापस nblocks;
+पूर्ण
 
-static inline void reiserfs_init_xattr_rwsem(struct inode *inode)
-{
+अटल अंतरभूत व्योम reiserfs_init_xattr_rwsem(काष्ठा inode *inode)
+अणु
 	init_rwsem(&REISERFS_I(inode)->i_xattr_sem);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define reiserfs_listxattr NULL
+#घोषणा reiserfs_listxattr शून्य
 
-static inline void reiserfs_init_xattr_rwsem(struct inode *inode)
-{
-}
-#endif  /*  CONFIG_REISERFS_FS_XATTR  */
+अटल अंतरभूत व्योम reiserfs_init_xattr_rwsem(काष्ठा inode *inode)
+अणु
+पूर्ण
+#पूर्ण_अगर  /*  CONFIG_REISERFS_FS_XATTR  */
 
-#ifndef CONFIG_REISERFS_FS_SECURITY
-static inline int reiserfs_security_init(struct inode *dir,
-					 struct inode *inode,
-					 const struct qstr *qstr,
-					 struct reiserfs_security_handle *sec)
-{
-	return 0;
-}
-static inline int
-reiserfs_security_write(struct reiserfs_transaction_handle *th,
-			struct inode *inode,
-			struct reiserfs_security_handle *sec)
-{
-	return 0;
-}
-static inline void reiserfs_security_free(struct reiserfs_security_handle *sec)
-{}
-#endif
+#अगर_अघोषित CONFIG_REISERFS_FS_SECURITY
+अटल अंतरभूत पूर्णांक reiserfs_security_init(काष्ठा inode *dir,
+					 काष्ठा inode *inode,
+					 स्थिर काष्ठा qstr *qstr,
+					 काष्ठा reiserfs_security_handle *sec)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक
+reiserfs_security_ग_लिखो(काष्ठा reiserfs_transaction_handle *th,
+			काष्ठा inode *inode,
+			काष्ठा reiserfs_security_handle *sec)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम reiserfs_security_मुक्त(काष्ठा reiserfs_security_handle *sec)
+अणुपूर्ण
+#पूर्ण_अगर

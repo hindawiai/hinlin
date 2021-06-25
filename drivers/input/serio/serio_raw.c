@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Raw serio device providing access to a raw byte stream from underlying
  * serio port. Closely emulates behavior of pre-2.6 /dev/psaux device
@@ -6,317 +7,317 @@
  * Copyright (c) 2004 Dmitry Torokhov
  */
 
-#include <linux/kref.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/module.h>
-#include <linux/serio.h>
-#include <linux/major.h>
-#include <linux/device.h>
-#include <linux/miscdevice.h>
-#include <linux/wait.h>
-#include <linux/mutex.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/serपन.स>
+#समावेश <linux/major.h>
+#समावेश <linux/device.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mutex.h>
 
-#define DRIVER_DESC	"Raw serio driver"
+#घोषणा DRIVER_DESC	"Raw serio driver"
 
 MODULE_AUTHOR("Dmitry Torokhov <dtor@mail.ru>");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#define SERIO_RAW_QUEUE_LEN	64
-struct serio_raw {
-	unsigned char queue[SERIO_RAW_QUEUE_LEN];
-	unsigned int tail, head;
+#घोषणा SERIO_RAW_QUEUE_LEN	64
+काष्ठा serio_raw अणु
+	अचिन्हित अक्षर queue[SERIO_RAW_QUEUE_LEN];
+	अचिन्हित पूर्णांक tail, head;
 
-	char name[16];
-	struct kref kref;
-	struct serio *serio;
-	struct miscdevice dev;
-	wait_queue_head_t wait;
-	struct list_head client_list;
-	struct list_head node;
+	अक्षर name[16];
+	काष्ठा kref kref;
+	काष्ठा serio *serio;
+	काष्ठा miscdevice dev;
+	रुको_queue_head_t रुको;
+	काष्ठा list_head client_list;
+	काष्ठा list_head node;
 	bool dead;
-};
+पूर्ण;
 
-struct serio_raw_client {
-	struct fasync_struct *fasync;
-	struct serio_raw *serio_raw;
-	struct list_head node;
-};
+काष्ठा serio_raw_client अणु
+	काष्ठा fasync_काष्ठा *fasync;
+	काष्ठा serio_raw *serio_raw;
+	काष्ठा list_head node;
+पूर्ण;
 
-static DEFINE_MUTEX(serio_raw_mutex);
-static LIST_HEAD(serio_raw_list);
+अटल DEFINE_MUTEX(serio_raw_mutex);
+अटल LIST_HEAD(serio_raw_list);
 
 /*********************************************************************
  *             Interface with userspace (file operations)            *
  *********************************************************************/
 
-static int serio_raw_fasync(int fd, struct file *file, int on)
-{
-	struct serio_raw_client *client = file->private_data;
+अटल पूर्णांक serio_raw_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा serio_raw_client *client = file->निजी_data;
 
-	return fasync_helper(fd, file, on, &client->fasync);
-}
+	वापस fasync_helper(fd, file, on, &client->fasync);
+पूर्ण
 
-static struct serio_raw *serio_raw_locate(int minor)
-{
-	struct serio_raw *serio_raw;
+अटल काष्ठा serio_raw *serio_raw_locate(पूर्णांक minor)
+अणु
+	काष्ठा serio_raw *serio_raw;
 
-	list_for_each_entry(serio_raw, &serio_raw_list, node) {
-		if (serio_raw->dev.minor == minor)
-			return serio_raw;
-	}
+	list_क्रम_each_entry(serio_raw, &serio_raw_list, node) अणु
+		अगर (serio_raw->dev.minor == minor)
+			वापस serio_raw;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int serio_raw_open(struct inode *inode, struct file *file)
-{
-	struct serio_raw *serio_raw;
-	struct serio_raw_client *client;
-	int retval;
+अटल पूर्णांक serio_raw_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा serio_raw *serio_raw;
+	काष्ठा serio_raw_client *client;
+	पूर्णांक retval;
 
-	retval = mutex_lock_interruptible(&serio_raw_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&serio_raw_mutex);
+	अगर (retval)
+		वापस retval;
 
 	serio_raw = serio_raw_locate(iminor(inode));
-	if (!serio_raw) {
+	अगर (!serio_raw) अणु
 		retval = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (serio_raw->dead) {
+	अगर (serio_raw->dead) अणु
 		retval = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	client = kzalloc(sizeof(struct serio_raw_client), GFP_KERNEL);
-	if (!client) {
+	client = kzalloc(माप(काष्ठा serio_raw_client), GFP_KERNEL);
+	अगर (!client) अणु
 		retval = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	client->serio_raw = serio_raw;
-	file->private_data = client;
+	file->निजी_data = client;
 
 	kref_get(&serio_raw->kref);
 
-	serio_pause_rx(serio_raw->serio);
+	serio_छोड़ो_rx(serio_raw->serio);
 	list_add_tail(&client->node, &serio_raw->client_list);
-	serio_continue_rx(serio_raw->serio);
+	serio_जारी_rx(serio_raw->serio);
 
 out:
 	mutex_unlock(&serio_raw_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void serio_raw_free(struct kref *kref)
-{
-	struct serio_raw *serio_raw =
-			container_of(kref, struct serio_raw, kref);
+अटल व्योम serio_raw_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा serio_raw *serio_raw =
+			container_of(kref, काष्ठा serio_raw, kref);
 
 	put_device(&serio_raw->serio->dev);
-	kfree(serio_raw);
-}
+	kमुक्त(serio_raw);
+पूर्ण
 
-static int serio_raw_release(struct inode *inode, struct file *file)
-{
-	struct serio_raw_client *client = file->private_data;
-	struct serio_raw *serio_raw = client->serio_raw;
+अटल पूर्णांक serio_raw_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा serio_raw_client *client = file->निजी_data;
+	काष्ठा serio_raw *serio_raw = client->serio_raw;
 
-	serio_pause_rx(serio_raw->serio);
+	serio_छोड़ो_rx(serio_raw->serio);
 	list_del(&client->node);
-	serio_continue_rx(serio_raw->serio);
+	serio_जारी_rx(serio_raw->serio);
 
-	kfree(client);
+	kमुक्त(client);
 
-	kref_put(&serio_raw->kref, serio_raw_free);
+	kref_put(&serio_raw->kref, serio_raw_मुक्त);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool serio_raw_fetch_byte(struct serio_raw *serio_raw, char *c)
-{
+अटल bool serio_raw_fetch_byte(काष्ठा serio_raw *serio_raw, अक्षर *c)
+अणु
 	bool empty;
 
-	serio_pause_rx(serio_raw->serio);
+	serio_छोड़ो_rx(serio_raw->serio);
 
 	empty = serio_raw->head == serio_raw->tail;
-	if (!empty) {
+	अगर (!empty) अणु
 		*c = serio_raw->queue[serio_raw->tail];
 		serio_raw->tail = (serio_raw->tail + 1) % SERIO_RAW_QUEUE_LEN;
-	}
+	पूर्ण
 
-	serio_continue_rx(serio_raw->serio);
+	serio_जारी_rx(serio_raw->serio);
 
-	return !empty;
-}
+	वापस !empty;
+पूर्ण
 
-static ssize_t serio_raw_read(struct file *file, char __user *buffer,
-			      size_t count, loff_t *ppos)
-{
-	struct serio_raw_client *client = file->private_data;
-	struct serio_raw *serio_raw = client->serio_raw;
-	char c;
-	ssize_t read = 0;
-	int error;
+अटल sमाप_प्रकार serio_raw_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा serio_raw_client *client = file->निजी_data;
+	काष्ठा serio_raw *serio_raw = client->serio_raw;
+	अक्षर c;
+	sमाप_प्रकार पढ़ो = 0;
+	पूर्णांक error;
 
-	for (;;) {
-		if (serio_raw->dead)
-			return -ENODEV;
+	क्रम (;;) अणु
+		अगर (serio_raw->dead)
+			वापस -ENODEV;
 
-		if (serio_raw->head == serio_raw->tail &&
+		अगर (serio_raw->head == serio_raw->tail &&
 		    (file->f_flags & O_NONBLOCK))
-			return -EAGAIN;
+			वापस -EAGAIN;
 
-		if (count == 0)
-			break;
+		अगर (count == 0)
+			अवरोध;
 
-		while (read < count && serio_raw_fetch_byte(serio_raw, &c)) {
-			if (put_user(c, buffer++))
-				return -EFAULT;
-			read++;
-		}
+		जबतक (पढ़ो < count && serio_raw_fetch_byte(serio_raw, &c)) अणु
+			अगर (put_user(c, buffer++))
+				वापस -EFAULT;
+			पढ़ो++;
+		पूर्ण
 
-		if (read)
-			break;
+		अगर (पढ़ो)
+			अवरोध;
 
-		if (!(file->f_flags & O_NONBLOCK)) {
-			error = wait_event_interruptible(serio_raw->wait,
+		अगर (!(file->f_flags & O_NONBLOCK)) अणु
+			error = रुको_event_पूर्णांकerruptible(serio_raw->रुको,
 					serio_raw->head != serio_raw->tail ||
 					serio_raw->dead);
-			if (error)
-				return error;
-		}
-	}
+			अगर (error)
+				वापस error;
+		पूर्ण
+	पूर्ण
 
-	return read;
-}
+	वापस पढ़ो;
+पूर्ण
 
-static ssize_t serio_raw_write(struct file *file, const char __user *buffer,
-			       size_t count, loff_t *ppos)
-{
-	struct serio_raw_client *client = file->private_data;
-	struct serio_raw *serio_raw = client->serio_raw;
-	int retval = 0;
-	unsigned char c;
+अटल sमाप_प्रकार serio_raw_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा serio_raw_client *client = file->निजी_data;
+	काष्ठा serio_raw *serio_raw = client->serio_raw;
+	पूर्णांक retval = 0;
+	अचिन्हित अक्षर c;
 
-	retval = mutex_lock_interruptible(&serio_raw_mutex);
-	if (retval)
-		return retval;
+	retval = mutex_lock_पूर्णांकerruptible(&serio_raw_mutex);
+	अगर (retval)
+		वापस retval;
 
-	if (serio_raw->dead) {
+	अगर (serio_raw->dead) अणु
 		retval = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (count > 32)
+	अगर (count > 32)
 		count = 32;
 
-	while (count--) {
-		if (get_user(c, buffer++)) {
+	जबतक (count--) अणु
+		अगर (get_user(c, buffer++)) अणु
 			retval = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (serio_write(serio_raw->serio, c)) {
-			/* Either signal error or partial write */
-			if (retval == 0)
+		अगर (serio_ग_लिखो(serio_raw->serio, c)) अणु
+			/* Either संकेत error or partial ग_लिखो */
+			अगर (retval == 0)
 				retval = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		retval++;
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&serio_raw_mutex);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static __poll_t serio_raw_poll(struct file *file, poll_table *wait)
-{
-	struct serio_raw_client *client = file->private_data;
-	struct serio_raw *serio_raw = client->serio_raw;
+अटल __poll_t serio_raw_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा serio_raw_client *client = file->निजी_data;
+	काष्ठा serio_raw *serio_raw = client->serio_raw;
 	__poll_t mask;
 
-	poll_wait(file, &serio_raw->wait, wait);
+	poll_रुको(file, &serio_raw->रुको, रुको);
 
 	mask = serio_raw->dead ? EPOLLHUP | EPOLLERR : EPOLLOUT | EPOLLWRNORM;
-	if (serio_raw->head != serio_raw->tail)
+	अगर (serio_raw->head != serio_raw->tail)
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct file_operations serio_raw_fops = {
+अटल स्थिर काष्ठा file_operations serio_raw_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= serio_raw_open,
+	.खोलो		= serio_raw_खोलो,
 	.release	= serio_raw_release,
-	.read		= serio_raw_read,
-	.write		= serio_raw_write,
+	.पढ़ो		= serio_raw_पढ़ो,
+	.ग_लिखो		= serio_raw_ग_लिखो,
 	.poll		= serio_raw_poll,
 	.fasync		= serio_raw_fasync,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
 
 /*********************************************************************
  *                   Interface with serio port                       *
  *********************************************************************/
 
-static irqreturn_t serio_raw_interrupt(struct serio *serio, unsigned char data,
-					unsigned int dfl)
-{
-	struct serio_raw *serio_raw = serio_get_drvdata(serio);
-	struct serio_raw_client *client;
-	unsigned int head = serio_raw->head;
+अटल irqवापस_t serio_raw_पूर्णांकerrupt(काष्ठा serio *serio, अचिन्हित अक्षर data,
+					अचिन्हित पूर्णांक dfl)
+अणु
+	काष्ठा serio_raw *serio_raw = serio_get_drvdata(serio);
+	काष्ठा serio_raw_client *client;
+	अचिन्हित पूर्णांक head = serio_raw->head;
 
-	/* we are holding serio->lock here so we are protected */
+	/* we are holding serio->lock here so we are रक्षित */
 	serio_raw->queue[head] = data;
 	head = (head + 1) % SERIO_RAW_QUEUE_LEN;
-	if (likely(head != serio_raw->tail)) {
+	अगर (likely(head != serio_raw->tail)) अणु
 		serio_raw->head = head;
-		list_for_each_entry(client, &serio_raw->client_list, node)
-			kill_fasync(&client->fasync, SIGIO, POLL_IN);
-		wake_up_interruptible(&serio_raw->wait);
-	}
+		list_क्रम_each_entry(client, &serio_raw->client_list, node)
+			समाप्त_fasync(&client->fasync, SIGIO, POLL_IN);
+		wake_up_पूर्णांकerruptible(&serio_raw->रुको);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int serio_raw_connect(struct serio *serio, struct serio_driver *drv)
-{
-	static atomic_t serio_raw_no = ATOMIC_INIT(-1);
-	struct serio_raw *serio_raw;
-	int err;
+अटल पूर्णांक serio_raw_connect(काष्ठा serio *serio, काष्ठा serio_driver *drv)
+अणु
+	अटल atomic_t serio_raw_no = ATOMIC_INIT(-1);
+	काष्ठा serio_raw *serio_raw;
+	पूर्णांक err;
 
-	serio_raw = kzalloc(sizeof(struct serio_raw), GFP_KERNEL);
-	if (!serio_raw) {
+	serio_raw = kzalloc(माप(काष्ठा serio_raw), GFP_KERNEL);
+	अगर (!serio_raw) अणु
 		dev_dbg(&serio->dev, "can't allocate memory for a device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	snprintf(serio_raw->name, sizeof(serio_raw->name),
-		 "serio_raw%ld", (long)atomic_inc_return(&serio_raw_no));
+	snम_लिखो(serio_raw->name, माप(serio_raw->name),
+		 "serio_raw%ld", (दीर्घ)atomic_inc_वापस(&serio_raw_no));
 	kref_init(&serio_raw->kref);
 	INIT_LIST_HEAD(&serio_raw->client_list);
-	init_waitqueue_head(&serio_raw->wait);
+	init_रुकोqueue_head(&serio_raw->रुको);
 
 	serio_raw->serio = serio;
 	get_device(&serio->dev);
 
 	serio_set_drvdata(serio, serio_raw);
 
-	err = serio_open(serio, drv);
-	if (err)
-		goto err_free;
+	err = serio_खोलो(serio, drv);
+	अगर (err)
+		जाओ err_मुक्त;
 
-	err = mutex_lock_killable(&serio_raw_mutex);
-	if (err)
-		goto err_close;
+	err = mutex_lock_समाप्तable(&serio_raw_mutex);
+	अगर (err)
+		जाओ err_बंद;
 
 	list_add_tail(&serio_raw->node, &serio_raw_list);
 	mutex_unlock(&serio_raw_mutex);
@@ -326,73 +327,73 @@ static int serio_raw_connect(struct serio *serio, struct serio_driver *drv)
 	serio_raw->dev.parent = &serio->dev;
 	serio_raw->dev.fops = &serio_raw_fops;
 
-	err = misc_register(&serio_raw->dev);
-	if (err) {
+	err = misc_रेजिस्टर(&serio_raw->dev);
+	अगर (err) अणु
 		serio_raw->dev.minor = MISC_DYNAMIC_MINOR;
-		err = misc_register(&serio_raw->dev);
-	}
+		err = misc_रेजिस्टर(&serio_raw->dev);
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		dev_err(&serio->dev,
 			"failed to register raw access device for %s\n",
 			serio->phys);
-		goto err_unlink;
-	}
+		जाओ err_unlink;
+	पूर्ण
 
 	dev_info(&serio->dev, "raw access enabled on %s (%s, minor %d)\n",
 		 serio->phys, serio_raw->name, serio_raw->dev.minor);
-	return 0;
+	वापस 0;
 
 err_unlink:
 	list_del_init(&serio_raw->node);
-err_close:
-	serio_close(serio);
-err_free:
-	serio_set_drvdata(serio, NULL);
-	kref_put(&serio_raw->kref, serio_raw_free);
-	return err;
-}
+err_बंद:
+	serio_बंद(serio);
+err_मुक्त:
+	serio_set_drvdata(serio, शून्य);
+	kref_put(&serio_raw->kref, serio_raw_मुक्त);
+	वापस err;
+पूर्ण
 
-static int serio_raw_reconnect(struct serio *serio)
-{
-	struct serio_raw *serio_raw = serio_get_drvdata(serio);
-	struct serio_driver *drv = serio->drv;
+अटल पूर्णांक serio_raw_reconnect(काष्ठा serio *serio)
+अणु
+	काष्ठा serio_raw *serio_raw = serio_get_drvdata(serio);
+	काष्ठा serio_driver *drv = serio->drv;
 
-	if (!drv || !serio_raw) {
+	अगर (!drv || !serio_raw) अणु
 		dev_dbg(&serio->dev,
 			"reconnect request, but serio is disconnected, ignoring...\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * Nothing needs to be done here, we just need this method to
+	 * Nothing needs to be करोne here, we just need this method to
 	 * keep the same device.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Wake up users waiting for IO so they can disconnect from
+ * Wake up users रुकोing क्रम IO so they can disconnect from
  * dead device.
  */
-static void serio_raw_hangup(struct serio_raw *serio_raw)
-{
-	struct serio_raw_client *client;
+अटल व्योम serio_raw_hangup(काष्ठा serio_raw *serio_raw)
+अणु
+	काष्ठा serio_raw_client *client;
 
-	serio_pause_rx(serio_raw->serio);
-	list_for_each_entry(client, &serio_raw->client_list, node)
-		kill_fasync(&client->fasync, SIGIO, POLL_HUP);
-	serio_continue_rx(serio_raw->serio);
+	serio_छोड़ो_rx(serio_raw->serio);
+	list_क्रम_each_entry(client, &serio_raw->client_list, node)
+		समाप्त_fasync(&client->fasync, SIGIO, POLL_HUP);
+	serio_जारी_rx(serio_raw->serio);
 
-	wake_up_interruptible(&serio_raw->wait);
-}
+	wake_up_पूर्णांकerruptible(&serio_raw->रुको);
+पूर्ण
 
 
-static void serio_raw_disconnect(struct serio *serio)
-{
-	struct serio_raw *serio_raw = serio_get_drvdata(serio);
+अटल व्योम serio_raw_disconnect(काष्ठा serio *serio)
+अणु
+	काष्ठा serio_raw *serio_raw = serio_get_drvdata(serio);
 
-	misc_deregister(&serio_raw->dev);
+	misc_deरेजिस्टर(&serio_raw->dev);
 
 	mutex_lock(&serio_raw_mutex);
 	serio_raw->dead = true;
@@ -401,41 +402,41 @@ static void serio_raw_disconnect(struct serio *serio)
 
 	serio_raw_hangup(serio_raw);
 
-	serio_close(serio);
-	kref_put(&serio_raw->kref, serio_raw_free);
+	serio_बंद(serio);
+	kref_put(&serio_raw->kref, serio_raw_मुक्त);
 
-	serio_set_drvdata(serio, NULL);
-}
+	serio_set_drvdata(serio, शून्य);
+पूर्ण
 
-static const struct serio_device_id serio_raw_serio_ids[] = {
-	{
+अटल स्थिर काष्ठा serio_device_id serio_raw_serio_ids[] = अणु
+	अणु
 		.type	= SERIO_8042,
 		.proto	= SERIO_ANY,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	},
-	{
+	पूर्ण,
+	अणु
 		.type	= SERIO_8042_XL,
 		.proto	= SERIO_ANY,
 		.id	= SERIO_ANY,
 		.extra	= SERIO_ANY,
-	},
-	{ 0 }
-};
+	पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(serio, serio_raw_serio_ids);
 
-static struct serio_driver serio_raw_drv = {
-	.driver		= {
+अटल काष्ठा serio_driver serio_raw_drv = अणु
+	.driver		= अणु
 		.name	= "serio_raw",
-	},
+	पूर्ण,
 	.description	= DRIVER_DESC,
 	.id_table	= serio_raw_serio_ids,
-	.interrupt	= serio_raw_interrupt,
+	.पूर्णांकerrupt	= serio_raw_पूर्णांकerrupt,
 	.connect	= serio_raw_connect,
 	.reconnect	= serio_raw_reconnect,
 	.disconnect	= serio_raw_disconnect,
 	.manual_bind	= true,
-};
+पूर्ण;
 
 module_serio_driver(serio_raw_drv);

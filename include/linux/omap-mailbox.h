@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * omap-mailbox: interprocessor communication module for OMAP
+ * omap-mailbox: पूर्णांकerprocessor communication module क्रम OMAP
  */
 
-#ifndef OMAP_MAILBOX_H
-#define OMAP_MAILBOX_H
+#अगर_अघोषित OMAP_MAILBOX_H
+#घोषणा OMAP_MAILBOX_H
 
-typedef uintptr_t mbox_msg_t;
+प्रकार uपूर्णांकptr_t mbox_msg_t;
 
-#define omap_mbox_message(data) (u32)(mbox_msg_t)(data)
+#घोषणा omap_mbox_message(data) (u32)(mbox_msg_t)(data)
 
-typedef int __bitwise omap_mbox_irq_t;
-#define IRQ_TX ((__force omap_mbox_irq_t) 1)
-#define IRQ_RX ((__force omap_mbox_irq_t) 2)
+प्रकार पूर्णांक __bitwise omap_mbox_irq_t;
+#घोषणा IRQ_TX ((__क्रमce omap_mbox_irq_t) 1)
+#घोषणा IRQ_RX ((__क्रमce omap_mbox_irq_t) 2)
 
-struct mbox_chan;
-struct mbox_client;
+काष्ठा mbox_chan;
+काष्ठा mbox_client;
 
-struct mbox_chan *omap_mbox_request_channel(struct mbox_client *cl,
-					    const char *chan_name);
+काष्ठा mbox_chan *omap_mbox_request_channel(काष्ठा mbox_client *cl,
+					    स्थिर अक्षर *chan_name);
 
-void omap_mbox_enable_irq(struct mbox_chan *chan, omap_mbox_irq_t irq);
-void omap_mbox_disable_irq(struct mbox_chan *chan, omap_mbox_irq_t irq);
+व्योम omap_mbox_enable_irq(काष्ठा mbox_chan *chan, omap_mbox_irq_t irq);
+व्योम omap_mbox_disable_irq(काष्ठा mbox_chan *chan, omap_mbox_irq_t irq);
 
-#endif /* OMAP_MAILBOX_H */
+#पूर्ण_अगर /* OMAP_MAILBOX_H */

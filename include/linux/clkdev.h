@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  include/linux/clkdev.h
  *
  *  Copyright (C) 2008 Russell King.
  *
- * Helper for the clk API to assist looking up a struct clk.
+ * Helper क्रम the clk API to assist looking up a काष्ठा clk.
  */
-#ifndef __CLKDEV_H
-#define __CLKDEV_H
+#अगर_अघोषित __CLKDEV_H
+#घोषणा __CLKDEV_H
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-struct clk;
-struct clk_hw;
-struct device;
+काष्ठा clk;
+काष्ठा clk_hw;
+काष्ठा device;
 
-struct clk_lookup {
-	struct list_head	node;
-	const char		*dev_id;
-	const char		*con_id;
-	struct clk		*clk;
-	struct clk_hw		*clk_hw;
-};
+काष्ठा clk_lookup अणु
+	काष्ठा list_head	node;
+	स्थिर अक्षर		*dev_id;
+	स्थिर अक्षर		*con_id;
+	काष्ठा clk		*clk;
+	काष्ठा clk_hw		*clk_hw;
+पूर्ण;
 
-#define CLKDEV_INIT(d, n, c)	\
-	{			\
+#घोषणा CLKDEV_INIT(d, n, c)	\
+	अणु			\
 		.dev_id = d,	\
 		.con_id = n,	\
 		.clk = c,	\
-	}
+	पूर्ण
 
-struct clk_lookup *clkdev_alloc(struct clk *clk, const char *con_id,
-	const char *dev_fmt, ...) __printf(3, 4);
-struct clk_lookup *clkdev_hw_alloc(struct clk_hw *hw, const char *con_id,
-	const char *dev_fmt, ...) __printf(3, 4);
+काष्ठा clk_lookup *clkdev_alloc(काष्ठा clk *clk, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...) __म_लिखो(3, 4);
+काष्ठा clk_lookup *clkdev_hw_alloc(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...) __म_लिखो(3, 4);
 
-void clkdev_add(struct clk_lookup *cl);
-void clkdev_drop(struct clk_lookup *cl);
+व्योम clkdev_add(काष्ठा clk_lookup *cl);
+व्योम clkdev_drop(काष्ठा clk_lookup *cl);
 
-struct clk_lookup *clkdev_create(struct clk *clk, const char *con_id,
-	const char *dev_fmt, ...) __printf(3, 4);
-struct clk_lookup *clkdev_hw_create(struct clk_hw *hw, const char *con_id,
-	const char *dev_fmt, ...) __printf(3, 4);
+काष्ठा clk_lookup *clkdev_create(काष्ठा clk *clk, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...) __म_लिखो(3, 4);
+काष्ठा clk_lookup *clkdev_hw_create(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...) __म_लिखो(3, 4);
 
-void clkdev_add_table(struct clk_lookup *, size_t);
-int clk_add_alias(const char *, const char *, const char *, struct device *);
+व्योम clkdev_add_table(काष्ठा clk_lookup *, माप_प्रकार);
+पूर्णांक clk_add_alias(स्थिर अक्षर *, स्थिर अक्षर *, स्थिर अक्षर *, काष्ठा device *);
 
-int clk_register_clkdev(struct clk *, const char *, const char *);
-int clk_hw_register_clkdev(struct clk_hw *, const char *, const char *);
+पूर्णांक clk_रेजिस्टर_clkdev(काष्ठा clk *, स्थिर अक्षर *, स्थिर अक्षर *);
+पूर्णांक clk_hw_रेजिस्टर_clkdev(काष्ठा clk_hw *, स्थिर अक्षर *, स्थिर अक्षर *);
 
-int devm_clk_hw_register_clkdev(struct device *dev, struct clk_hw *hw,
-				const char *con_id, const char *dev_id);
-void devm_clk_release_clkdev(struct device *dev, const char *con_id,
-			     const char *dev_id);
-#endif
+पूर्णांक devm_clk_hw_रेजिस्टर_clkdev(काष्ठा device *dev, काष्ठा clk_hw *hw,
+				स्थिर अक्षर *con_id, स्थिर अक्षर *dev_id);
+व्योम devm_clk_release_clkdev(काष्ठा device *dev, स्थिर अक्षर *con_id,
+			     स्थिर अक्षर *dev_id);
+#पूर्ण_अगर

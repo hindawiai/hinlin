@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_I2C_PRIV_H__
-#define __NVKM_I2C_PRIV_H__
-#define nvkm_i2c(p) container_of((p), struct nvkm_i2c, subdev)
-#include <subdev/i2c.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_I2C_PRIV_H__
+#घोषणा __NVKM_I2C_PRIV_H__
+#घोषणा nvkm_i2c(p) container_of((p), काष्ठा nvkm_i2c, subdev)
+#समावेश <subdev/i2c.h>
 
-int nvkm_i2c_new_(const struct nvkm_i2c_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		  struct nvkm_i2c **);
+पूर्णांक nvkm_i2c_new_(स्थिर काष्ठा nvkm_i2c_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		  काष्ठा nvkm_i2c **);
 
-struct nvkm_i2c_func {
-	int (*pad_x_new)(struct nvkm_i2c *, int id, struct nvkm_i2c_pad **);
-	int (*pad_s_new)(struct nvkm_i2c *, int id, struct nvkm_i2c_pad **);
+काष्ठा nvkm_i2c_func अणु
+	पूर्णांक (*pad_x_new)(काष्ठा nvkm_i2c *, पूर्णांक id, काष्ठा nvkm_i2c_pad **);
+	पूर्णांक (*pad_s_new)(काष्ठा nvkm_i2c *, पूर्णांक id, काष्ठा nvkm_i2c_pad **);
 
 	/* number of native dp aux channels present */
-	int aux;
+	पूर्णांक aux;
 
-	/* read and ack pending interrupts, returning only data
-	 * for ports that have not been masked off, while still
-	 * performing the ack for anything that was pending.
+	/* पढ़ो and ack pending पूर्णांकerrupts, वापसing only data
+	 * क्रम ports that have not been masked off, जबतक still
+	 * perक्रमming the ack क्रम anything that was pending.
 	 */
-	void (*aux_stat)(struct nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
+	व्योम (*aux_stat)(काष्ठा nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
 
-	/* mask on/off interrupt types for a given set of auxch
+	/* mask on/off पूर्णांकerrupt types क्रम a given set of auxch
 	 */
-	void (*aux_mask)(struct nvkm_i2c *, u32, u32, u32);
+	व्योम (*aux_mask)(काष्ठा nvkm_i2c *, u32, u32, u32);
 
-	/* enable/disable HW-initiated DPCD reads
+	/* enable/disable HW-initiated DPCD पढ़ोs
 	 */
-	void (*aux_autodpcd)(struct nvkm_i2c *, int aux, bool enable);
-};
+	व्योम (*aux_स्वतःdpcd)(काष्ठा nvkm_i2c *, पूर्णांक aux, bool enable);
+पूर्ण;
 
-void g94_aux_stat(struct nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
-void g94_aux_mask(struct nvkm_i2c *, u32, u32, u32);
+व्योम g94_aux_stat(काष्ठा nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
+व्योम g94_aux_mask(काष्ठा nvkm_i2c *, u32, u32, u32);
 
-void gk104_aux_stat(struct nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
-void gk104_aux_mask(struct nvkm_i2c *, u32, u32, u32);
-#endif
+व्योम gk104_aux_stat(काष्ठा nvkm_i2c *, u32 *, u32 *, u32 *, u32 *);
+व्योम gk104_aux_mask(काष्ठा nvkm_i2c *, u32, u32, u32);
+#पूर्ण_अगर

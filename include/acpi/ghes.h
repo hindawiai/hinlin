@@ -1,148 +1,149 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef GHES_H
-#define GHES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित GHES_H
+#घोषणा GHES_H
 
-#include <acpi/apei.h>
-#include <acpi/hed.h>
+#समावेश <acpi/apei.h>
+#समावेश <acpi/hed.h>
 
 /*
- * One struct ghes is created for each generic hardware error source.
- * It provides the context for APEI hardware error timer/IRQ/SCI/NMI
+ * One काष्ठा ghes is created क्रम each generic hardware error source.
+ * It provides the context क्रम APEI hardware error समयr/IRQ/SCI/NMI
  * handler.
  *
- * estatus: memory buffer for error status block, allocated during
+ * estatus: memory buffer क्रम error status block, allocated during
  * HEST parsing.
  */
-#define GHES_EXITING		0x0002
+#घोषणा GHES_EXITING		0x0002
 
-struct ghes {
-	union {
-		struct acpi_hest_generic *generic;
-		struct acpi_hest_generic_v2 *generic_v2;
-	};
-	struct acpi_hest_generic_status *estatus;
-	unsigned long flags;
-	union {
-		struct list_head list;
-		struct timer_list timer;
-		unsigned int irq;
-	};
-};
+काष्ठा ghes अणु
+	जोड़ अणु
+		काष्ठा acpi_hest_generic *generic;
+		काष्ठा acpi_hest_generic_v2 *generic_v2;
+	पूर्ण;
+	काष्ठा acpi_hest_generic_status *estatus;
+	अचिन्हित दीर्घ flags;
+	जोड़ अणु
+		काष्ठा list_head list;
+		काष्ठा समयr_list समयr;
+		अचिन्हित पूर्णांक irq;
+	पूर्ण;
+पूर्ण;
 
-struct ghes_estatus_node {
-	struct llist_node llnode;
-	struct acpi_hest_generic *generic;
-	struct ghes *ghes;
+काष्ठा ghes_estatus_node अणु
+	काष्ठा llist_node llnode;
+	काष्ठा acpi_hest_generic *generic;
+	काष्ठा ghes *ghes;
 
-	int task_work_cpu;
-	struct callback_head task_work;
-};
+	पूर्णांक task_work_cpu;
+	काष्ठा callback_head task_work;
+पूर्ण;
 
-struct ghes_estatus_cache {
+काष्ठा ghes_estatus_cache अणु
 	u32 estatus_len;
 	atomic_t count;
-	struct acpi_hest_generic *generic;
-	unsigned long long time_in;
-	struct rcu_head rcu;
-};
+	काष्ठा acpi_hest_generic *generic;
+	अचिन्हित दीर्घ दीर्घ समय_in;
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	GHES_SEV_NO = 0x0,
 	GHES_SEV_CORRECTED = 0x1,
 	GHES_SEV_RECOVERABLE = 0x2,
 	GHES_SEV_PANIC = 0x3,
-};
+पूर्ण;
 
-#ifdef CONFIG_ACPI_APEI_GHES
+#अगर_घोषित CONFIG_ACPI_APEI_GHES
 /**
- * ghes_register_vendor_record_notifier - register a notifier for vendor
+ * ghes_रेजिस्टर_venकरोr_record_notअगरier - रेजिस्टर a notअगरier क्रम venकरोr
  * records that the kernel would otherwise ignore.
- * @nb: pointer to the notifier_block structure of the event handler.
+ * @nb: poपूर्णांकer to the notअगरier_block काष्ठाure of the event handler.
  *
- * return 0 : SUCCESS, non-zero : FAIL
+ * वापस 0 : SUCCESS, non-zero : FAIL
  */
-int ghes_register_vendor_record_notifier(struct notifier_block *nb);
+पूर्णांक ghes_रेजिस्टर_venकरोr_record_notअगरier(काष्ठा notअगरier_block *nb);
 
 /**
- * ghes_unregister_vendor_record_notifier - unregister the previously
- * registered vendor record notifier.
- * @nb: pointer to the notifier_block structure of the vendor record handler.
+ * ghes_unरेजिस्टर_venकरोr_record_notअगरier - unरेजिस्टर the previously
+ * रेजिस्टरed venकरोr record notअगरier.
+ * @nb: poपूर्णांकer to the notअगरier_block काष्ठाure of the venकरोr record handler.
  */
-void ghes_unregister_vendor_record_notifier(struct notifier_block *nb);
-#endif
+व्योम ghes_unरेजिस्टर_venकरोr_record_notअगरier(काष्ठा notअगरier_block *nb);
+#पूर्ण_अगर
 
-int ghes_estatus_pool_init(int num_ghes);
+पूर्णांक ghes_estatus_pool_init(पूर्णांक num_ghes);
 
 /* From drivers/edac/ghes_edac.c */
 
-#ifdef CONFIG_EDAC_GHES
-void ghes_edac_report_mem_error(int sev, struct cper_sec_mem_err *mem_err);
+#अगर_घोषित CONFIG_EDAC_GHES
+व्योम ghes_edac_report_mem_error(पूर्णांक sev, काष्ठा cper_sec_mem_err *mem_err);
 
-int ghes_edac_register(struct ghes *ghes, struct device *dev);
+पूर्णांक ghes_edac_रेजिस्टर(काष्ठा ghes *ghes, काष्ठा device *dev);
 
-void ghes_edac_unregister(struct ghes *ghes);
+व्योम ghes_edac_unरेजिस्टर(काष्ठा ghes *ghes);
 
-#else
-static inline void ghes_edac_report_mem_error(int sev,
-				       struct cper_sec_mem_err *mem_err)
-{
-}
+#अन्यथा
+अटल अंतरभूत व्योम ghes_edac_report_mem_error(पूर्णांक sev,
+				       काष्ठा cper_sec_mem_err *mem_err)
+अणु
+पूर्ण
 
-static inline int ghes_edac_register(struct ghes *ghes, struct device *dev)
-{
-	return -ENODEV;
-}
+अटल अंतरभूत पूर्णांक ghes_edac_रेजिस्टर(काष्ठा ghes *ghes, काष्ठा device *dev)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline void ghes_edac_unregister(struct ghes *ghes)
-{
-}
-#endif
+अटल अंतरभूत व्योम ghes_edac_unरेजिस्टर(काष्ठा ghes *ghes)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline int acpi_hest_get_version(struct acpi_hest_generic_data *gdata)
-{
-	return gdata->revision >> 8;
-}
+अटल अंतरभूत पूर्णांक acpi_hest_get_version(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	वापस gdata->revision >> 8;
+पूर्ण
 
-static inline void *acpi_hest_get_payload(struct acpi_hest_generic_data *gdata)
-{
-	if (acpi_hest_get_version(gdata) >= 3)
-		return (void *)(((struct acpi_hest_generic_data_v300 *)(gdata)) + 1);
+अटल अंतरभूत व्योम *acpi_hest_get_payload(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	अगर (acpi_hest_get_version(gdata) >= 3)
+		वापस (व्योम *)(((काष्ठा acpi_hest_generic_data_v300 *)(gdata)) + 1);
 
-	return gdata + 1;
-}
+	वापस gdata + 1;
+पूर्ण
 
-static inline int acpi_hest_get_error_length(struct acpi_hest_generic_data *gdata)
-{
-	return ((struct acpi_hest_generic_data *)(gdata))->error_data_length;
-}
+अटल अंतरभूत पूर्णांक acpi_hest_get_error_length(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	वापस ((काष्ठा acpi_hest_generic_data *)(gdata))->error_data_length;
+पूर्ण
 
-static inline int acpi_hest_get_size(struct acpi_hest_generic_data *gdata)
-{
-	if (acpi_hest_get_version(gdata) >= 3)
-		return sizeof(struct acpi_hest_generic_data_v300);
+अटल अंतरभूत पूर्णांक acpi_hest_get_size(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	अगर (acpi_hest_get_version(gdata) >= 3)
+		वापस माप(काष्ठा acpi_hest_generic_data_v300);
 
-	return sizeof(struct acpi_hest_generic_data);
-}
+	वापस माप(काष्ठा acpi_hest_generic_data);
+पूर्ण
 
-static inline int acpi_hest_get_record_size(struct acpi_hest_generic_data *gdata)
-{
-	return (acpi_hest_get_size(gdata) + acpi_hest_get_error_length(gdata));
-}
+अटल अंतरभूत पूर्णांक acpi_hest_get_record_size(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	वापस (acpi_hest_get_size(gdata) + acpi_hest_get_error_length(gdata));
+पूर्ण
 
-static inline void *acpi_hest_get_next(struct acpi_hest_generic_data *gdata)
-{
-	return (void *)(gdata) + acpi_hest_get_record_size(gdata);
-}
+अटल अंतरभूत व्योम *acpi_hest_get_next(काष्ठा acpi_hest_generic_data *gdata)
+अणु
+	वापस (व्योम *)(gdata) + acpi_hest_get_record_size(gdata);
+पूर्ण
 
-#define apei_estatus_for_each_section(estatus, section)			\
-	for (section = (struct acpi_hest_generic_data *)(estatus + 1);	\
-	     (void *)section - (void *)(estatus + 1) < estatus->data_length; \
+#घोषणा apei_estatus_क्रम_each_section(estatus, section)			\
+	क्रम (section = (काष्ठा acpi_hest_generic_data *)(estatus + 1);	\
+	     (व्योम *)section - (व्योम *)(estatus + 1) < estatus->data_length; \
 	     section = acpi_hest_get_next(section))
 
-#ifdef CONFIG_ACPI_APEI_SEA
-int ghes_notify_sea(void);
-#else
-static inline int ghes_notify_sea(void) { return -ENOENT; }
-#endif
+#अगर_घोषित CONFIG_ACPI_APEI_SEA
+पूर्णांक ghes_notअगरy_sea(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ghes_notअगरy_sea(व्योम) अणु वापस -ENOENT; पूर्ण
+#पूर्ण_अगर
 
-#endif /* GHES_H */
+#पूर्ण_अगर /* GHES_H */

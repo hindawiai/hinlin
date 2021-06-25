@@ -1,348 +1,349 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright 2011-2014 Autronica Fire and Security AS
  *
  * Author(s):
  *	2011-2014 Arvid Brodin, arvid.brodin@alten.se
- * This file contains device methods for creating, using and destroying
- * virtual HSR or PRP devices.
+ * This file contains device methods क्रम creating, using and destroying
+ * भव HSR or PRP devices.
  */
 
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/etherdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/pkt_sched.h>
-#include "hsr_device.h"
-#include "hsr_slave.h"
-#include "hsr_framereg.h"
-#include "hsr_main.h"
-#include "hsr_forward.h"
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश "hsr_device.h"
+#समावेश "hsr_slave.h"
+#समावेश "hsr_framereg.h"
+#समावेश "hsr_main.h"
+#समावेश "hsr_forward.h"
 
-static bool is_admin_up(struct net_device *dev)
-{
-	return dev && (dev->flags & IFF_UP);
-}
+अटल bool is_admin_up(काष्ठा net_device *dev)
+अणु
+	वापस dev && (dev->flags & IFF_UP);
+पूर्ण
 
-static bool is_slave_up(struct net_device *dev)
-{
-	return dev && is_admin_up(dev) && netif_oper_up(dev);
-}
+अटल bool is_slave_up(काष्ठा net_device *dev)
+अणु
+	वापस dev && is_admin_up(dev) && netअगर_oper_up(dev);
+पूर्ण
 
-static void __hsr_set_operstate(struct net_device *dev, int transition)
-{
-	write_lock_bh(&dev_base_lock);
-	if (dev->operstate != transition) {
+अटल व्योम __hsr_set_operstate(काष्ठा net_device *dev, पूर्णांक transition)
+अणु
+	ग_लिखो_lock_bh(&dev_base_lock);
+	अगर (dev->operstate != transition) अणु
 		dev->operstate = transition;
-		write_unlock_bh(&dev_base_lock);
+		ग_लिखो_unlock_bh(&dev_base_lock);
 		netdev_state_change(dev);
-	} else {
-		write_unlock_bh(&dev_base_lock);
-	}
-}
+	पूर्ण अन्यथा अणु
+		ग_लिखो_unlock_bh(&dev_base_lock);
+	पूर्ण
+पूर्ण
 
-static void hsr_set_operstate(struct hsr_port *master, bool has_carrier)
-{
-	if (!is_admin_up(master->dev)) {
+अटल व्योम hsr_set_operstate(काष्ठा hsr_port *master, bool has_carrier)
+अणु
+	अगर (!is_admin_up(master->dev)) अणु
 		__hsr_set_operstate(master->dev, IF_OPER_DOWN);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (has_carrier)
+	अगर (has_carrier)
 		__hsr_set_operstate(master->dev, IF_OPER_UP);
-	else
+	अन्यथा
 		__hsr_set_operstate(master->dev, IF_OPER_LOWERLAYERDOWN);
-}
+पूर्ण
 
-static bool hsr_check_carrier(struct hsr_port *master)
-{
-	struct hsr_port *port;
+अटल bool hsr_check_carrier(काष्ठा hsr_port *master)
+अणु
+	काष्ठा hsr_port *port;
 
 	ASSERT_RTNL();
 
-	hsr_for_each_port(master->hsr, port) {
-		if (port->type != HSR_PT_MASTER && is_slave_up(port->dev)) {
-			netif_carrier_on(master->dev);
-			return true;
-		}
-	}
+	hsr_क्रम_each_port(master->hsr, port) अणु
+		अगर (port->type != HSR_PT_MASTER && is_slave_up(port->dev)) अणु
+			netअगर_carrier_on(master->dev);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	netif_carrier_off(master->dev);
+	netअगर_carrier_off(master->dev);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void hsr_check_announce(struct net_device *hsr_dev,
-			       unsigned char old_operstate)
-{
-	struct hsr_priv *hsr;
+अटल व्योम hsr_check_announce(काष्ठा net_device *hsr_dev,
+			       अचिन्हित अक्षर old_operstate)
+अणु
+	काष्ठा hsr_priv *hsr;
 
 	hsr = netdev_priv(hsr_dev);
 
-	if (hsr_dev->operstate == IF_OPER_UP && old_operstate != IF_OPER_UP) {
+	अगर (hsr_dev->operstate == IF_OPER_UP && old_operstate != IF_OPER_UP) अणु
 		/* Went up */
 		hsr->announce_count = 0;
-		mod_timer(&hsr->announce_timer,
-			  jiffies + msecs_to_jiffies(HSR_ANNOUNCE_INTERVAL));
-	}
+		mod_समयr(&hsr->announce_समयr,
+			  jअगरfies + msecs_to_jअगरfies(HSR_ANNOUNCE_INTERVAL));
+	पूर्ण
 
-	if (hsr_dev->operstate != IF_OPER_UP && old_operstate == IF_OPER_UP)
-		/* Went down */
-		del_timer(&hsr->announce_timer);
-}
+	अगर (hsr_dev->operstate != IF_OPER_UP && old_operstate == IF_OPER_UP)
+		/* Went करोwn */
+		del_समयr(&hsr->announce_समयr);
+पूर्ण
 
-void hsr_check_carrier_and_operstate(struct hsr_priv *hsr)
-{
-	struct hsr_port *master;
-	unsigned char old_operstate;
+व्योम hsr_check_carrier_and_operstate(काष्ठा hsr_priv *hsr)
+अणु
+	काष्ठा hsr_port *master;
+	अचिन्हित अक्षर old_operstate;
 	bool has_carrier;
 
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-	/* netif_stacked_transfer_operstate() cannot be used here since
-	 * it doesn't set IF_OPER_LOWERLAYERDOWN (?)
+	/* netअगर_stacked_transfer_operstate() cannot be used here since
+	 * it करोesn't set IF_OPER_LOWERLAYERDOWN (?)
 	 */
 	old_operstate = master->dev->operstate;
 	has_carrier = hsr_check_carrier(master);
 	hsr_set_operstate(master, has_carrier);
 	hsr_check_announce(master->dev, old_operstate);
-}
+पूर्ण
 
-int hsr_get_max_mtu(struct hsr_priv *hsr)
-{
-	unsigned int mtu_max;
-	struct hsr_port *port;
+पूर्णांक hsr_get_max_mtu(काष्ठा hsr_priv *hsr)
+अणु
+	अचिन्हित पूर्णांक mtu_max;
+	काष्ठा hsr_port *port;
 
 	mtu_max = ETH_DATA_LEN;
-	hsr_for_each_port(hsr, port)
-		if (port->type != HSR_PT_MASTER)
+	hsr_क्रम_each_port(hsr, port)
+		अगर (port->type != HSR_PT_MASTER)
 			mtu_max = min(port->dev->mtu, mtu_max);
 
-	if (mtu_max < HSR_HLEN)
-		return 0;
-	return mtu_max - HSR_HLEN;
-}
+	अगर (mtu_max < HSR_HLEN)
+		वापस 0;
+	वापस mtu_max - HSR_HLEN;
+पूर्ण
 
-static int hsr_dev_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct hsr_priv *hsr;
+अटल पूर्णांक hsr_dev_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा hsr_priv *hsr;
 
 	hsr = netdev_priv(dev);
 
-	if (new_mtu > hsr_get_max_mtu(hsr)) {
+	अगर (new_mtu > hsr_get_max_mtu(hsr)) अणु
 		netdev_info(dev, "A HSR master's MTU cannot be greater than the smallest MTU of its slaves minus the HSR Tag length (%d octets).\n",
 			    HSR_HLEN);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev->mtu = new_mtu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hsr_dev_open(struct net_device *dev)
-{
-	struct hsr_priv *hsr;
-	struct hsr_port *port;
-	char designation;
+अटल पूर्णांक hsr_dev_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा hsr_priv *hsr;
+	काष्ठा hsr_port *port;
+	अक्षर designation;
 
 	hsr = netdev_priv(dev);
 	designation = '\0';
 
-	hsr_for_each_port(hsr, port) {
-		if (port->type == HSR_PT_MASTER)
-			continue;
-		switch (port->type) {
-		case HSR_PT_SLAVE_A:
+	hsr_क्रम_each_port(hsr, port) अणु
+		अगर (port->type == HSR_PT_MASTER)
+			जारी;
+		चयन (port->type) अणु
+		हाल HSR_PT_SLAVE_A:
 			designation = 'A';
-			break;
-		case HSR_PT_SLAVE_B:
+			अवरोध;
+		हाल HSR_PT_SLAVE_B:
 			designation = 'B';
-			break;
-		default:
+			अवरोध;
+		शेष:
 			designation = '?';
-		}
-		if (!is_slave_up(port->dev))
+		पूर्ण
+		अगर (!is_slave_up(port->dev))
 			netdev_warn(dev, "Slave %c (%s) is not up; please bring it up to get a fully working HSR network\n",
 				    designation, port->dev->name);
-	}
+	पूर्ण
 
-	if (designation == '\0')
+	अगर (designation == '\0')
 		netdev_warn(dev, "No slave devices configured\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hsr_dev_close(struct net_device *dev)
-{
-	/* Nothing to do here. */
-	return 0;
-}
+अटल पूर्णांक hsr_dev_बंद(काष्ठा net_device *dev)
+अणु
+	/* Nothing to करो here. */
+	वापस 0;
+पूर्ण
 
-static netdev_features_t hsr_features_recompute(struct hsr_priv *hsr,
+अटल netdev_features_t hsr_features_recompute(काष्ठा hsr_priv *hsr,
 						netdev_features_t features)
-{
+अणु
 	netdev_features_t mask;
-	struct hsr_port *port;
+	काष्ठा hsr_port *port;
 
 	mask = features;
 
-	/* Mask out all features that, if supported by one device, should be
-	 * enabled for all devices (see NETIF_F_ONE_FOR_ALL).
+	/* Mask out all features that, अगर supported by one device, should be
+	 * enabled क्रम all devices (see NETIF_F_ONE_FOR_ALL).
 	 *
 	 * Anything that's off in mask will not be enabled - so only things
 	 * that were in features originally, and also is in NETIF_F_ONE_FOR_ALL,
 	 * may become enabled.
 	 */
 	features &= ~NETIF_F_ONE_FOR_ALL;
-	hsr_for_each_port(hsr, port)
+	hsr_क्रम_each_port(hsr, port)
 		features = netdev_increment_features(features,
 						     port->dev->features,
 						     mask);
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static netdev_features_t hsr_fix_features(struct net_device *dev,
+अटल netdev_features_t hsr_fix_features(काष्ठा net_device *dev,
 					  netdev_features_t features)
-{
-	struct hsr_priv *hsr = netdev_priv(dev);
+अणु
+	काष्ठा hsr_priv *hsr = netdev_priv(dev);
 
-	return hsr_features_recompute(hsr, features);
-}
+	वापस hsr_features_recompute(hsr, features);
+पूर्ण
 
-static netdev_tx_t hsr_dev_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct hsr_priv *hsr = netdev_priv(dev);
-	struct hsr_port *master;
+अटल netdev_tx_t hsr_dev_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा hsr_priv *hsr = netdev_priv(dev);
+	काष्ठा hsr_port *master;
 
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-	if (master) {
+	अगर (master) अणु
 		skb->dev = master->dev;
 		skb_reset_mac_header(skb);
 		skb_reset_mac_len(skb);
-		hsr_forward_skb(skb, master);
-	} else {
-		atomic_long_inc(&dev->tx_dropped);
-		dev_kfree_skb_any(skb);
-	}
-	return NETDEV_TX_OK;
-}
+		hsr_क्रमward_skb(skb, master);
+	पूर्ण अन्यथा अणु
+		atomic_दीर्घ_inc(&dev->tx_dropped);
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static const struct header_ops hsr_header_ops = {
+अटल स्थिर काष्ठा header_ops hsr_header_ops = अणु
 	.create	 = eth_header,
 	.parse	 = eth_header_parse,
-};
+पूर्ण;
 
-static struct sk_buff *hsr_init_skb(struct hsr_port *master)
-{
-	struct hsr_priv *hsr = master->hsr;
-	struct sk_buff *skb;
-	int hlen, tlen;
+अटल काष्ठा sk_buff *hsr_init_skb(काष्ठा hsr_port *master)
+अणु
+	काष्ठा hsr_priv *hsr = master->hsr;
+	काष्ठा sk_buff *skb;
+	पूर्णांक hlen, tlen;
 
 	hlen = LL_RESERVED_SPACE(master->dev);
 	tlen = master->dev->needed_tailroom;
-	/* skb size is same for PRP/HSR frames, only difference
-	 * being, for PRP it is a trailer and for HSR it is a
+	/* skb size is same क्रम PRP/HSR frames, only dअगरference
+	 * being, क्रम PRP it is a trailer and क्रम HSR it is a
 	 * header
 	 */
-	skb = dev_alloc_skb(sizeof(struct hsr_sup_tag) +
-			    sizeof(struct hsr_sup_payload) + hlen + tlen);
+	skb = dev_alloc_skb(माप(काष्ठा hsr_sup_tag) +
+			    माप(काष्ठा hsr_sup_payload) + hlen + tlen);
 
-	if (!skb)
-		return skb;
+	अगर (!skb)
+		वापस skb;
 
 	skb_reserve(skb, hlen);
 	skb->dev = master->dev;
 	skb->priority = TC_PRIO_CONTROL;
 
-	if (dev_hard_header(skb, skb->dev, ETH_P_PRP,
+	अगर (dev_hard_header(skb, skb->dev, ETH_P_PRP,
 			    hsr->sup_multicast_addr,
 			    skb->dev->dev_addr, skb->len) <= 0)
-		goto out;
+		जाओ out;
 
 	skb_reset_mac_header(skb);
 	skb_reset_mac_len(skb);
 	skb_reset_network_header(skb);
 	skb_reset_transport_header(skb);
 
-	return skb;
+	वापस skb;
 out:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void send_hsr_supervision_frame(struct hsr_port *master,
-				       unsigned long *interval)
-{
-	struct hsr_priv *hsr = master->hsr;
+अटल व्योम send_hsr_supervision_frame(काष्ठा hsr_port *master,
+				       अचिन्हित दीर्घ *पूर्णांकerval)
+अणु
+	काष्ठा hsr_priv *hsr = master->hsr;
 	__u8 type = HSR_TLV_LIFE_CHECK;
-	struct hsr_sup_payload *hsr_sp;
-	struct hsr_sup_tag *hsr_stag;
-	unsigned long irqflags;
-	struct sk_buff *skb;
+	काष्ठा hsr_sup_payload *hsr_sp;
+	काष्ठा hsr_sup_tag *hsr_stag;
+	अचिन्हित दीर्घ irqflags;
+	काष्ठा sk_buff *skb;
 
-	*interval = msecs_to_jiffies(HSR_LIFE_CHECK_INTERVAL);
-	if (hsr->announce_count < 3 && hsr->prot_version == 0) {
+	*पूर्णांकerval = msecs_to_jअगरfies(HSR_LIFE_CHECK_INTERVAL);
+	अगर (hsr->announce_count < 3 && hsr->prot_version == 0) अणु
 		type = HSR_TLV_ANNOUNCE;
-		*interval = msecs_to_jiffies(HSR_ANNOUNCE_INTERVAL);
+		*पूर्णांकerval = msecs_to_jअगरfies(HSR_ANNOUNCE_INTERVAL);
 		hsr->announce_count++;
-	}
+	पूर्ण
 
 	skb = hsr_init_skb(master);
-	if (!skb) {
+	अगर (!skb) अणु
 		WARN_ONCE(1, "HSR: Could not send supervision frame\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	hsr_stag = skb_put(skb, sizeof(struct hsr_sup_tag));
+	hsr_stag = skb_put(skb, माप(काष्ठा hsr_sup_tag));
 	set_hsr_stag_path(hsr_stag, (hsr->prot_version ? 0x0 : 0xf));
 	set_hsr_stag_HSR_ver(hsr_stag, hsr->prot_version);
 
 	/* From HSRv1 on we have separate supervision sequence numbers. */
 	spin_lock_irqsave(&master->hsr->seqnr_lock, irqflags);
-	if (hsr->prot_version > 0) {
+	अगर (hsr->prot_version > 0) अणु
 		hsr_stag->sequence_nr = htons(hsr->sup_sequence_nr);
 		hsr->sup_sequence_nr++;
-	} else {
+	पूर्ण अन्यथा अणु
 		hsr_stag->sequence_nr = htons(hsr->sequence_nr);
 		hsr->sequence_nr++;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&master->hsr->seqnr_lock, irqflags);
 
 	hsr_stag->HSR_TLV_type = type;
 	/* TODO: Why 12 in HSRv0? */
 	hsr_stag->HSR_TLV_length = hsr->prot_version ?
-				sizeof(struct hsr_sup_payload) : 12;
+				माप(काष्ठा hsr_sup_payload) : 12;
 
 	/* Payload: MacAddressA */
-	hsr_sp = skb_put(skb, sizeof(struct hsr_sup_payload));
+	hsr_sp = skb_put(skb, माप(काष्ठा hsr_sup_payload));
 	ether_addr_copy(hsr_sp->macaddress_A, master->dev->dev_addr);
 
-	if (skb_put_padto(skb, ETH_ZLEN))
-		return;
+	अगर (skb_put_padto(skb, ETH_ZLEN))
+		वापस;
 
-	hsr_forward_skb(skb, master);
+	hsr_क्रमward_skb(skb, master);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void send_prp_supervision_frame(struct hsr_port *master,
-				       unsigned long *interval)
-{
-	struct hsr_priv *hsr = master->hsr;
-	struct hsr_sup_payload *hsr_sp;
-	struct hsr_sup_tag *hsr_stag;
-	unsigned long irqflags;
-	struct sk_buff *skb;
+अटल व्योम send_prp_supervision_frame(काष्ठा hsr_port *master,
+				       अचिन्हित दीर्घ *पूर्णांकerval)
+अणु
+	काष्ठा hsr_priv *hsr = master->hsr;
+	काष्ठा hsr_sup_payload *hsr_sp;
+	काष्ठा hsr_sup_tag *hsr_stag;
+	अचिन्हित दीर्घ irqflags;
+	काष्ठा sk_buff *skb;
 
 	skb = hsr_init_skb(master);
-	if (!skb) {
+	अगर (!skb) अणु
 		WARN_ONCE(1, "PRP: Could not send supervision frame\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	*interval = msecs_to_jiffies(HSR_LIFE_CHECK_INTERVAL);
-	hsr_stag = skb_put(skb, sizeof(struct hsr_sup_tag));
+	*पूर्णांकerval = msecs_to_jअगरfies(HSR_LIFE_CHECK_INTERVAL);
+	hsr_stag = skb_put(skb, माप(काष्ठा hsr_sup_tag));
 	set_hsr_stag_path(hsr_stag, (hsr->prot_version ? 0x0 : 0xf));
 	set_hsr_stag_HSR_ver(hsr_stag, (hsr->prot_version ? 1 : 0));
 
@@ -351,81 +352,81 @@ static void send_prp_supervision_frame(struct hsr_port *master,
 	hsr_stag->sequence_nr = htons(hsr->sup_sequence_nr);
 	hsr->sup_sequence_nr++;
 	hsr_stag->HSR_TLV_type = PRP_TLV_LIFE_CHECK_DD;
-	hsr_stag->HSR_TLV_length = sizeof(struct hsr_sup_payload);
+	hsr_stag->HSR_TLV_length = माप(काष्ठा hsr_sup_payload);
 
 	/* Payload: MacAddressA */
-	hsr_sp = skb_put(skb, sizeof(struct hsr_sup_payload));
+	hsr_sp = skb_put(skb, माप(काष्ठा hsr_sup_payload));
 	ether_addr_copy(hsr_sp->macaddress_A, master->dev->dev_addr);
 
-	if (skb_put_padto(skb, ETH_ZLEN)) {
+	अगर (skb_put_padto(skb, ETH_ZLEN)) अणु
 		spin_unlock_irqrestore(&master->hsr->seqnr_lock, irqflags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_unlock_irqrestore(&master->hsr->seqnr_lock, irqflags);
 
-	hsr_forward_skb(skb, master);
-}
+	hsr_क्रमward_skb(skb, master);
+पूर्ण
 
-/* Announce (supervision frame) timer function
+/* Announce (supervision frame) समयr function
  */
-static void hsr_announce(struct timer_list *t)
-{
-	struct hsr_priv *hsr;
-	struct hsr_port *master;
-	unsigned long interval;
+अटल व्योम hsr_announce(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hsr_priv *hsr;
+	काष्ठा hsr_port *master;
+	अचिन्हित दीर्घ पूर्णांकerval;
 
-	hsr = from_timer(hsr, t, announce_timer);
+	hsr = from_समयr(hsr, t, announce_समयr);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	master = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-	hsr->proto_ops->send_sv_frame(master, &interval);
+	hsr->proto_ops->send_sv_frame(master, &पूर्णांकerval);
 
-	if (is_admin_up(master->dev))
-		mod_timer(&hsr->announce_timer, jiffies + interval);
+	अगर (is_admin_up(master->dev))
+		mod_समयr(&hsr->announce_समयr, jअगरfies + पूर्णांकerval);
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void hsr_del_ports(struct hsr_priv *hsr)
-{
-	struct hsr_port *port;
+व्योम hsr_del_ports(काष्ठा hsr_priv *hsr)
+अणु
+	काष्ठा hsr_port *port;
 
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_A);
-	if (port)
+	अगर (port)
 		hsr_del_port(port);
 
 	port = hsr_port_get_hsr(hsr, HSR_PT_SLAVE_B);
-	if (port)
+	अगर (port)
 		hsr_del_port(port);
 
 	port = hsr_port_get_hsr(hsr, HSR_PT_MASTER);
-	if (port)
+	अगर (port)
 		hsr_del_port(port);
-}
+पूर्ण
 
-static const struct net_device_ops hsr_device_ops = {
-	.ndo_change_mtu = hsr_dev_change_mtu,
-	.ndo_open = hsr_dev_open,
-	.ndo_stop = hsr_dev_close,
-	.ndo_start_xmit = hsr_dev_xmit,
-	.ndo_fix_features = hsr_fix_features,
-};
+अटल स्थिर काष्ठा net_device_ops hsr_device_ops = अणु
+	.nकरो_change_mtu = hsr_dev_change_mtu,
+	.nकरो_खोलो = hsr_dev_खोलो,
+	.nकरो_stop = hsr_dev_बंद,
+	.nकरो_start_xmit = hsr_dev_xmit,
+	.nकरो_fix_features = hsr_fix_features,
+पूर्ण;
 
-static struct device_type hsr_type = {
+अटल काष्ठा device_type hsr_type = अणु
 	.name = "hsr",
-};
+पूर्ण;
 
-static struct hsr_proto_ops hsr_ops = {
+अटल काष्ठा hsr_proto_ops hsr_ops = अणु
 	.send_sv_frame = send_hsr_supervision_frame,
 	.create_tagged_frame = hsr_create_tagged_frame,
 	.get_untagged_frame = hsr_get_untagged_frame,
 	.drop_frame = hsr_drop_frame,
 	.fill_frame_info = hsr_fill_frame_info,
 	.invalid_dan_ingress_frame = hsr_invalid_dan_ingress_frame,
-};
+पूर्ण;
 
-static struct hsr_proto_ops prp_ops = {
+अटल काष्ठा hsr_proto_ops prp_ops = अणु
 	.send_sv_frame = send_prp_supervision_frame,
 	.create_tagged_frame = prp_create_tagged_frame,
 	.get_untagged_frame = prp_get_untagged_frame,
@@ -433,11 +434,11 @@ static struct hsr_proto_ops prp_ops = {
 	.fill_frame_info = prp_fill_frame_info,
 	.handle_san_frame = prp_handle_san_frame,
 	.update_san_info = prp_update_san_info,
-};
+पूर्ण;
 
-void hsr_dev_setup(struct net_device *dev)
-{
-	eth_hw_addr_random(dev);
+व्योम hsr_dev_setup(काष्ठा net_device *dev)
+अणु
+	eth_hw_addr_अक्रमom(dev);
 
 	ether_setup(dev);
 	dev->min_mtu = 0;
@@ -446,7 +447,7 @@ void hsr_dev_setup(struct net_device *dev)
 	SET_NETDEV_DEVTYPE(dev, &hsr_type);
 	dev->priv_flags |= IFF_NO_QUEUE;
 
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 
 	dev->hw_features = NETIF_F_SG | NETIF_F_FRAGLIST | NETIF_F_HIGHDMA |
 			   NETIF_F_GSO_MASK | NETIF_F_HW_CSUM |
@@ -464,28 +465,28 @@ void hsr_dev_setup(struct net_device *dev)
 	 * it means "Does not change network namespaces".
 	 */
 	dev->features |= NETIF_F_NETNS_LOCAL;
-}
+पूर्ण
 
-/* Return true if dev is a HSR master; return false otherwise.
+/* Return true अगर dev is a HSR master; वापस false otherwise.
  */
-bool is_hsr_master(struct net_device *dev)
-{
-	return (dev->netdev_ops->ndo_start_xmit == hsr_dev_xmit);
-}
+bool is_hsr_master(काष्ठा net_device *dev)
+अणु
+	वापस (dev->netdev_ops->nकरो_start_xmit == hsr_dev_xmit);
+पूर्ण
 EXPORT_SYMBOL(is_hsr_master);
 
-/* Default multicast address for HSR Supervision frames */
-static const unsigned char def_multicast_addr[ETH_ALEN] __aligned(2) = {
+/* Default multicast address क्रम HSR Supervision frames */
+अटल स्थिर अचिन्हित अक्षर def_multicast_addr[ETH_ALEN] __aligned(2) = अणु
 	0x01, 0x15, 0x4e, 0x00, 0x01, 0x00
-};
+पूर्ण;
 
-int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
-		     unsigned char multicast_spec, u8 protocol_version,
-		     struct netlink_ext_ack *extack)
-{
-	bool unregister = false;
-	struct hsr_priv *hsr;
-	int res;
+पूर्णांक hsr_dev_finalize(काष्ठा net_device *hsr_dev, काष्ठा net_device *slave[2],
+		     अचिन्हित अक्षर multicast_spec, u8 protocol_version,
+		     काष्ठा netlink_ext_ack *extack)
+अणु
+	bool unरेजिस्टर = false;
+	काष्ठा hsr_priv *hsr;
+	पूर्णांक res;
 
 	hsr = netdev_priv(hsr_dev);
 	INIT_LIST_HEAD(&hsr->ports);
@@ -495,68 +496,68 @@ int hsr_dev_finalize(struct net_device *hsr_dev, struct net_device *slave[2],
 
 	ether_addr_copy(hsr_dev->dev_addr, slave[0]->dev_addr);
 
-	/* initialize protocol specific functions */
-	if (protocol_version == PRP_V1) {
-		/* For PRP, lan_id has most significant 3 bits holding
+	/* initialize protocol specअगरic functions */
+	अगर (protocol_version == PRP_V1) अणु
+		/* For PRP, lan_id has most signअगरicant 3 bits holding
 		 * the net_id of PRP_LAN_ID
 		 */
 		hsr->net_id = PRP_LAN_ID << 1;
 		hsr->proto_ops = &prp_ops;
-	} else {
+	पूर्ण अन्यथा अणु
 		hsr->proto_ops = &hsr_ops;
-	}
+	पूर्ण
 
 	/* Make sure we recognize frames from ourselves in hsr_rcv() */
 	res = hsr_create_self_node(hsr, hsr_dev->dev_addr,
 				   slave[1]->dev_addr);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
 	spin_lock_init(&hsr->seqnr_lock);
 	/* Overflow soon to find bugs easier: */
 	hsr->sequence_nr = HSR_SEQNR_START;
 	hsr->sup_sequence_nr = HSR_SUP_SEQNR_START;
 
-	timer_setup(&hsr->announce_timer, hsr_announce, 0);
-	timer_setup(&hsr->prune_timer, hsr_prune_nodes, 0);
+	समयr_setup(&hsr->announce_समयr, hsr_announce, 0);
+	समयr_setup(&hsr->prune_समयr, hsr_prune_nodes, 0);
 
 	ether_addr_copy(hsr->sup_multicast_addr, def_multicast_addr);
 	hsr->sup_multicast_addr[ETH_ALEN - 1] = multicast_spec;
 
 	hsr->prot_version = protocol_version;
 
-	/* Make sure the 1st call to netif_carrier_on() gets through */
-	netif_carrier_off(hsr_dev);
+	/* Make sure the 1st call to netअगर_carrier_on() माला_लो through */
+	netअगर_carrier_off(hsr_dev);
 
 	res = hsr_add_port(hsr, hsr_dev, HSR_PT_MASTER, extack);
-	if (res)
-		goto err_add_master;
+	अगर (res)
+		जाओ err_add_master;
 
-	res = register_netdevice(hsr_dev);
-	if (res)
-		goto err_unregister;
+	res = रेजिस्टर_netdevice(hsr_dev);
+	अगर (res)
+		जाओ err_unरेजिस्टर;
 
-	unregister = true;
+	unरेजिस्टर = true;
 
 	res = hsr_add_port(hsr, slave[0], HSR_PT_SLAVE_A, extack);
-	if (res)
-		goto err_unregister;
+	अगर (res)
+		जाओ err_unरेजिस्टर;
 
 	res = hsr_add_port(hsr, slave[1], HSR_PT_SLAVE_B, extack);
-	if (res)
-		goto err_unregister;
+	अगर (res)
+		जाओ err_unरेजिस्टर;
 
 	hsr_debugfs_init(hsr, hsr_dev);
-	mod_timer(&hsr->prune_timer, jiffies + msecs_to_jiffies(PRUNE_PERIOD));
+	mod_समयr(&hsr->prune_समयr, jअगरfies + msecs_to_jअगरfies(PRUNE_PERIOD));
 
-	return 0;
+	वापस 0;
 
-err_unregister:
+err_unरेजिस्टर:
 	hsr_del_ports(hsr);
 err_add_master:
 	hsr_del_self_node(hsr);
 
-	if (unregister)
-		unregister_netdevice(hsr_dev);
-	return res;
-}
+	अगर (unरेजिस्टर)
+		unरेजिस्टर_netdevice(hsr_dev);
+	वापस res;
+पूर्ण

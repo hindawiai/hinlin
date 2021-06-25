@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2017-2018 NXP
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/platform_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx8mm_pads {
+क्रमागत imx8mm_pads अणु
 	MX8MM_PAD_RESERVE0 = 0,
 	MX8MM_PAD_RESERVE1 = 1,
 	MX8MM_PAD_RESERVE2 = 2,
@@ -74,25 +75,25 @@ enum imx8mm_pads {
 	MX8MM_IOMUXC_SD2_DATA3 = 58,
 	MX8MM_IOMUXC_SD2_RESET_B = 59,
 	MX8MM_IOMUXC_SD2_WP = 60,
-	MX8MM_IOMUXC_NAND_ALE = 61,
-	MX8MM_IOMUXC_NAND_CE0 = 62,
-	MX8MM_IOMUXC_NAND_CE1 = 63,
-	MX8MM_IOMUXC_NAND_CE2 = 64,
-	MX8MM_IOMUXC_NAND_CE3 = 65,
-	MX8MM_IOMUXC_NAND_CLE = 66,
-	MX8MM_IOMUXC_NAND_DATA00 = 67,
-	MX8MM_IOMUXC_NAND_DATA01 = 68,
-	MX8MM_IOMUXC_NAND_DATA02 = 69,
-	MX8MM_IOMUXC_NAND_DATA03 = 70,
-	MX8MM_IOMUXC_NAND_DATA04 = 71,
-	MX8MM_IOMUXC_NAND_DATA05 = 72,
-	MX8MM_IOMUXC_NAND_DATA06 = 73,
-	MX8MM_IOMUXC_NAND_DATA07 = 74,
-	MX8MM_IOMUXC_NAND_DQS = 75,
-	MX8MM_IOMUXC_NAND_RE_B = 76,
-	MX8MM_IOMUXC_NAND_READY_B = 77,
-	MX8MM_IOMUXC_NAND_WE_B = 78,
-	MX8MM_IOMUXC_NAND_WP_B = 79,
+	MX8MM_IOMUXC_न_अंकD_ALE = 61,
+	MX8MM_IOMUXC_न_अंकD_CE0 = 62,
+	MX8MM_IOMUXC_न_अंकD_CE1 = 63,
+	MX8MM_IOMUXC_न_अंकD_CE2 = 64,
+	MX8MM_IOMUXC_न_अंकD_CE3 = 65,
+	MX8MM_IOMUXC_न_अंकD_CLE = 66,
+	MX8MM_IOMUXC_न_अंकD_DATA00 = 67,
+	MX8MM_IOMUXC_न_अंकD_DATA01 = 68,
+	MX8MM_IOMUXC_न_अंकD_DATA02 = 69,
+	MX8MM_IOMUXC_न_अंकD_DATA03 = 70,
+	MX8MM_IOMUXC_न_अंकD_DATA04 = 71,
+	MX8MM_IOMUXC_न_अंकD_DATA05 = 72,
+	MX8MM_IOMUXC_न_अंकD_DATA06 = 73,
+	MX8MM_IOMUXC_न_अंकD_DATA07 = 74,
+	MX8MM_IOMUXC_न_अंकD_DQS = 75,
+	MX8MM_IOMUXC_न_अंकD_RE_B = 76,
+	MX8MM_IOMUXC_न_अंकD_READY_B = 77,
+	MX8MM_IOMUXC_न_अंकD_WE_B = 78,
+	MX8MM_IOMUXC_न_अंकD_WP_B = 79,
 	MX8MM_IOMUXC_SAI5_RXFS = 80,
 	MX8MM_IOMUXC_SAI5_RXC = 81,
 	MX8MM_IOMUXC_SAI5_RXD0 = 82,
@@ -162,10 +163,10 @@ enum imx8mm_pads {
 	MX8MM_IOMUXC_UART3_TXD = 146,
 	MX8MM_IOMUXC_UART4_RXD = 147,
 	MX8MM_IOMUXC_UART4_TXD = 148,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx8mm_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx8mm_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(MX8MM_PAD_RESERVE0),
 	IMX_PINCTRL_PIN(MX8MM_PAD_RESERVE1),
 	IMX_PINCTRL_PIN(MX8MM_PAD_RESERVE2),
@@ -227,25 +228,25 @@ static const struct pinctrl_pin_desc imx8mm_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SD2_DATA3),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SD2_RESET_B),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SD2_WP),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_ALE),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_CE0),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_CE1),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_CE2),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_CE3),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_CLE),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA00),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA01),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA02),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA03),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA04),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA05),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA06),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DATA07),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_DQS),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_RE_B),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_READY_B),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_WE_B),
-	IMX_PINCTRL_PIN(MX8MM_IOMUXC_NAND_WP_B),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_ALE),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_CE0),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_CE1),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_CE2),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_CE3),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_CLE),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA00),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA01),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA02),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA03),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA04),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA05),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA06),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DATA07),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_DQS),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_RE_B),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_READY_B),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_WE_B),
+	IMX_PINCTRL_PIN(MX8MM_IOMUXC_न_अंकD_WP_B),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SAI5_RXFS),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SAI5_RXC),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_SAI5_RXD0),
@@ -315,38 +316,38 @@ static const struct pinctrl_pin_desc imx8mm_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_UART3_TXD),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_UART4_RXD),
 	IMX_PINCTRL_PIN(MX8MM_IOMUXC_UART4_TXD),
-};
+पूर्ण;
 
-static const struct imx_pinctrl_soc_info imx8mm_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx8mm_pinctrl_info = अणु
 	.pins = imx8mm_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx8mm_pinctrl_pads),
 	.gpr_compatible = "fsl,imx8mm-iomuxc-gpr",
-};
+पूर्ण;
 
-static const struct of_device_id imx8mm_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx8mm-iomuxc", .data = &imx8mm_pinctrl_info, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx8mm_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx8mm-iomuxc", .data = &imx8mm_pinctrl_info, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx8mm_pinctrl_of_match);
 
-static int imx8mm_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx8mm_pinctrl_info);
-}
+अटल पूर्णांक imx8mm_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx8mm_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx8mm_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx8mm_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx8mm-pinctrl",
 		.of_match_table = imx8mm_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx8mm_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx8mm_pinctrl_init(void)
-{
-	return platform_driver_register(&imx8mm_pinctrl_driver);
-}
+अटल पूर्णांक __init imx8mm_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx8mm_pinctrl_driver);
+पूर्ण
 arch_initcall(imx8mm_pinctrl_init);
 
 MODULE_AUTHOR("Bai Ping <ping.bai@nxp.com>");

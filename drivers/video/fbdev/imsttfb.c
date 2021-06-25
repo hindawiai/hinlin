@@ -1,46 +1,47 @@
+<शैली गुरु>
 /*
- *  drivers/video/imsttfb.c -- frame buffer device for IMS TwinTurbo
+ *  drivers/video/imsttfb.c -- frame buffer device क्रम IMS TwinTurbo
  *
- *  This file is derived from the powermac console "imstt" driver:
+ *  This file is derived from the घातermac console "imstt" driver:
  *  Copyright (C) 1997 Sigurdur Asgeirsson
- *  With additional hacking by Jeffrey Kuskin (jsk@mojave.stanford.edu)
- *  Modified by Danilo Beuche 1998
- *  Some register values added by Damien Doligez, INRIA Rocquencourt
+ *  With additional hacking by Jeffrey Kuskin (jsk@mojave.stanक्रमd.edu)
+ *  Modअगरied by Danilo Beuche 1998
+ *  Some रेजिस्टर values added by Damien Doligez, INRIA Rocquencourt
  *  Various cleanups by Paul Mundt (lethal@chaoticdreams.org)
  *
- *  This file was written by Ryan Nielsen (ran@krazynet.com)
+ *  This file was written by Ryan Niअन्यथाn (ran@krazynet.com)
  *  Most of the frame buffer device stuff was copied from atyfb.c
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the main directory of this archive for
+ *  License. See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/vmalloc.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-#if defined(CONFIG_PPC_PMAC)
-#include <linux/nvram.h>
-#include "macmodes.h"
-#endif
+#अगर defined(CONFIG_PPC_PMAC)
+#समावेश <linux/nvram.h>
+#समावेश "macmodes.h"
+#पूर्ण_अगर
 
-#ifndef __powerpc__
-#define eieio()		/* Enforce In-order Execution of I/O */
-#endif
+#अगर_अघोषित __घातerpc__
+#घोषणा eieio()		/* Enक्रमce In-order Execution of I/O */
+#पूर्ण_अगर
 
-/* TwinTurbo (Cosmo) registers */
-enum {
+/* TwinTurbo (Cosmo) रेजिस्टरs */
+क्रमागत अणु
 	S1SA	=  0, /* 0x00 */
 	S2SA	=  1, /* 0x04 */
 	SP	=  2, /* 0x08 */
@@ -86,7 +87,7 @@ enum {
 	SSTATUS	= 36, /* 0x90 */
 	PRC	= 37, /* 0x94 */
 
-#if 0	
+#अगर 0	
 	/* PCI Registers */
 	DVID	= 0x00000000L,
 	SC	= 0x00000004L,
@@ -94,11 +95,11 @@ enum {
 	OG	= 0x0000000CL,
 	BARM	= 0x00000010L,
 	BARER	= 0x00000030L,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* IBM 624 RAMDAC Direct Registers */
-enum {
+क्रमागत अणु
 	PADDRW	= 0x00,
 	PDATA	= 0x04,
 	PPMASK	= 0x08,
@@ -107,10 +108,10 @@ enum {
 	PIDXHI	= 0x14,	
 	PIDXDATA= 0x18,
 	PIDXCTL	= 0x1c
-};
+पूर्ण;
 
 /* IBM 624 RAMDAC Indirect Registers */
-enum {
+क्रमागत अणु
 	CLKCTL		= 0x02,	/* (0x01) Miscellaneous Clock Control */
 	SYNCCTL		= 0x03,	/* (0x00) Sync Control */
 	HSYNCPOS	= 0x04,	/* (0x00) Horizontal Sync Position */
@@ -120,7 +121,7 @@ enum {
 	SYSCLKCTL	= 0x08,	/* (0x01) System Clock Control */
 	PIXFMT		= 0x0a,	/* () Pixel Format  [bpp >> 3 + 2] */
 	BPP8		= 0x0b,	/* () 8 Bits/Pixel Control */
-	BPP16		= 0x0c, /* () 16 Bits/Pixel Control  [bit 1=1 for 565] */
+	BPP16		= 0x0c, /* () 16 Bits/Pixel Control  [bit 1=1 क्रम 565] */
 	BPP24		= 0x0d,	/* () 24 Bits/Pixel Control */
 	BPP32		= 0x0e,	/* () 32 Bits/Pixel Control */
 	PIXCTL1		= 0x10, /* (0x05) Pixel PLL Control 1 */
@@ -130,8 +131,8 @@ enum {
 	SYSCLKP		= 0x17,	/* () System Clock P */
 	SYSCLKC		= 0x18,	/* () System Clock C */
 	/*
-	 * Dot clock rate is 20MHz * (m + 1) / ((n + 1) * (p ? 2 * p : 1)
-	 * c is charge pump bias which depends on the VCO frequency  
+	 * Dot घड़ी rate is 20MHz * (m + 1) / ((n + 1) * (p ? 2 * p : 1)
+	 * c is अक्षरge pump bias which depends on the VCO frequency  
 	 */
 	PIXM0		= 0x20,	/* () Pixel M 0 */
 	PIXN0		= 0x21,	/* () Pixel N 0 */
@@ -162,10 +163,10 @@ enum {
 	MISCTL2		= 0x71,	/* (0x00) Miscellaneous Control 2 */
 	MISCTL3		= 0x72,	/* (0x00) Miscellaneous Control 3 */
 	KEYCTL		= 0x78	/* (0x00) Key Control/DB Operation */
-};
+पूर्ण;
 
 /* TI TVP 3030 RAMDAC Direct Registers */
-enum {
+क्रमागत अणु
 	TVPADDRW = 0x00,	/* 0  Palette/Cursor RAM Write Address/Index */
 	TVPPDATA = 0x04,	/* 1  Palette Data RAM Data */
 	TVPPMASK = 0x08,	/* 2  Pixel Read-Mask */
@@ -182,10 +183,10 @@ enum {
 	TVPCXPOH = 0x34,	/* 13 Cursor-Position X MSB */
 	TVPCYPOL = 0x38,	/* 14 Cursor-Position Y LSB */
 	TVPCYPOH = 0x3c,	/* 15 Cursor-Position Y MSB */
-};
+पूर्ण;
 
 /* TI TVP 3030 RAMDAC Indirect Registers */
-enum {
+क्रमागत अणु
 	TVPIRREV = 0x01,	/* Silicon Revision [RO] */
 	TVPIRICC = 0x06,	/* Indirect Cursor Control 	(0x00) */
 	TVPIRBRC = 0x07,	/* Byte Router Control 	(0xe4) */
@@ -212,291 +213,291 @@ enum {
 	TVPIRMLC = 0x39,	/* MCLK/Loop Clock Control	(0x18) */
 	TVPIRSEN = 0x3a,	/* Sense Test			(0x00) */
 	TVPIRTMD = 0x3b,	/* Test Mode Data */
-	TVPIRRML = 0x3c,	/* CRC Remainder LSB [RO] */
-	TVPIRRMM = 0x3d,	/* CRC Remainder MSB [RO] */
+	TVPIRRML = 0x3c,	/* CRC Reमुख्यder LSB [RO] */
+	TVPIRRMM = 0x3d,	/* CRC Reमुख्यder MSB [RO] */
 	TVPIRRMS = 0x3e,	/* CRC  Bit Select [WO] */
 	TVPIRDID = 0x3f,	/* Device ID [RO] 		(0x30) */
 	TVPIRRES = 0xff		/* Software Reset [WO] */
-};
+पूर्ण;
 
-struct initvalues {
+काष्ठा initvalues अणु
 	__u8 addr, value;
-};
+पूर्ण;
 
-static struct initvalues ibm_initregs[] = {
-	{ CLKCTL,	0x21 },
-	{ SYNCCTL,	0x00 },
-	{ HSYNCPOS,	0x00 },
-	{ PWRMNGMT,	0x00 },
-	{ DACOP,	0x02 },
-	{ PALETCTL,	0x00 },
-	{ SYSCLKCTL,	0x01 },
+अटल काष्ठा initvalues ibm_initregs[] = अणु
+	अणु CLKCTL,	0x21 पूर्ण,
+	अणु SYNCCTL,	0x00 पूर्ण,
+	अणु HSYNCPOS,	0x00 पूर्ण,
+	अणु PWRMNGMT,	0x00 पूर्ण,
+	अणु DACOP,	0x02 पूर्ण,
+	अणु PALETCTL,	0x00 पूर्ण,
+	अणु SYSCLKCTL,	0x01 पूर्ण,
 
 	/*
-	 * Note that colors in X are correct only if all video data is
+	 * Note that colors in X are correct only अगर all video data is
 	 * passed through the palette in the DAC.  That is, "indirect
-	 * color" must be configured.  This is the case for the IBM DAC
+	 * color" must be configured.  This is the हाल क्रम the IBM DAC
 	 * used in the 2MB and 4MB cards, at least.
 	 */
-	{ BPP8,		0x00 },
-	{ BPP16,	0x01 },
-	{ BPP24,	0x00 },
-	{ BPP32,	0x00 },
+	अणु BPP8,		0x00 पूर्ण,
+	अणु BPP16,	0x01 पूर्ण,
+	अणु BPP24,	0x00 पूर्ण,
+	अणु BPP32,	0x00 पूर्ण,
 
-	{ PIXCTL1,	0x05 },
-	{ PIXCTL2,	0x00 },
-	{ SYSCLKN,	0x08 },
-	{ SYSCLKM,	0x4f },
-	{ SYSCLKP,	0x00 },
-	{ SYSCLKC,	0x00 },
-	{ CURSCTL,	0x00 },
-	{ CURSACCTL,	0x01 },
-	{ CURSACATTR,	0xa8 },
-	{ CURS1R,	0xff },
-	{ CURS1G,	0xff },
-	{ CURS1B,	0xff },
-	{ CURS2R,	0xff },
-	{ CURS2G,	0xff },
-	{ CURS2B,	0xff },
-	{ CURS3R,	0xff },
-	{ CURS3G,	0xff },
-	{ CURS3B,	0xff },
-	{ BORDR,	0xff },
-	{ BORDG,	0xff },
-	{ BORDB,	0xff },
-	{ MISCTL1,	0x01 },
-	{ MISCTL2,	0x45 },
-	{ MISCTL3,	0x00 },
-	{ KEYCTL,	0x00 }
-};
+	अणु PIXCTL1,	0x05 पूर्ण,
+	अणु PIXCTL2,	0x00 पूर्ण,
+	अणु SYSCLKN,	0x08 पूर्ण,
+	अणु SYSCLKM,	0x4f पूर्ण,
+	अणु SYSCLKP,	0x00 पूर्ण,
+	अणु SYSCLKC,	0x00 पूर्ण,
+	अणु CURSCTL,	0x00 पूर्ण,
+	अणु CURSACCTL,	0x01 पूर्ण,
+	अणु CURSACATTR,	0xa8 पूर्ण,
+	अणु CURS1R,	0xff पूर्ण,
+	अणु CURS1G,	0xff पूर्ण,
+	अणु CURS1B,	0xff पूर्ण,
+	अणु CURS2R,	0xff पूर्ण,
+	अणु CURS2G,	0xff पूर्ण,
+	अणु CURS2B,	0xff पूर्ण,
+	अणु CURS3R,	0xff पूर्ण,
+	अणु CURS3G,	0xff पूर्ण,
+	अणु CURS3B,	0xff पूर्ण,
+	अणु BORDR,	0xff पूर्ण,
+	अणु BORDG,	0xff पूर्ण,
+	अणु BORDB,	0xff पूर्ण,
+	अणु MISCTL1,	0x01 पूर्ण,
+	अणु MISCTL2,	0x45 पूर्ण,
+	अणु MISCTL3,	0x00 पूर्ण,
+	अणु KEYCTL,	0x00 पूर्ण
+पूर्ण;
 
-static struct initvalues tvp_initregs[] = {
-	{ TVPIRICC,	0x00 },
-	{ TVPIRBRC,	0xe4 },
-	{ TVPIRLAC,	0x06 },
-	{ TVPIRTCC,	0x80 },
-	{ TVPIRMXC,	0x4d },
-	{ TVPIRCLS,	0x05 },
-	{ TVPIRPPG,	0x00 },
-	{ TVPIRGEC,	0x00 },
-	{ TVPIRMIC,	0x08 },
-	{ TVPIRCKL,	0xff },
-	{ TVPIRCKH,	0xff },
-	{ TVPIRCRL,	0xff },
-	{ TVPIRCRH,	0xff },
-	{ TVPIRCGL,	0xff },
-	{ TVPIRCGH,	0xff },
-	{ TVPIRCBL,	0xff },
-	{ TVPIRCBH,	0xff },
-	{ TVPIRCKC,	0x00 },
-	{ TVPIRPLA,	0x00 },
-	{ TVPIRPPD,	0xc0 },
-	{ TVPIRPPD,	0xd5 },
-	{ TVPIRPPD,	0xea },
-	{ TVPIRPLA,	0x00 },
-	{ TVPIRMPD,	0xb9 },
-	{ TVPIRMPD,	0x3a },
-	{ TVPIRMPD,	0xb1 },
-	{ TVPIRPLA,	0x00 },
-	{ TVPIRLPD,	0xc1 },
-	{ TVPIRLPD,	0x3d },
-	{ TVPIRLPD,	0xf3 },
-};
+अटल काष्ठा initvalues tvp_initregs[] = अणु
+	अणु TVPIRICC,	0x00 पूर्ण,
+	अणु TVPIRBRC,	0xe4 पूर्ण,
+	अणु TVPIRLAC,	0x06 पूर्ण,
+	अणु TVPIRTCC,	0x80 पूर्ण,
+	अणु TVPIRMXC,	0x4d पूर्ण,
+	अणु TVPIRCLS,	0x05 पूर्ण,
+	अणु TVPIRPPG,	0x00 पूर्ण,
+	अणु TVPIRGEC,	0x00 पूर्ण,
+	अणु TVPIRMIC,	0x08 पूर्ण,
+	अणु TVPIRCKL,	0xff पूर्ण,
+	अणु TVPIRCKH,	0xff पूर्ण,
+	अणु TVPIRCRL,	0xff पूर्ण,
+	अणु TVPIRCRH,	0xff पूर्ण,
+	अणु TVPIRCGL,	0xff पूर्ण,
+	अणु TVPIRCGH,	0xff पूर्ण,
+	अणु TVPIRCBL,	0xff पूर्ण,
+	अणु TVPIRCBH,	0xff पूर्ण,
+	अणु TVPIRCKC,	0x00 पूर्ण,
+	अणु TVPIRPLA,	0x00 पूर्ण,
+	अणु TVPIRPPD,	0xc0 पूर्ण,
+	अणु TVPIRPPD,	0xd5 पूर्ण,
+	अणु TVPIRPPD,	0xea पूर्ण,
+	अणु TVPIRPLA,	0x00 पूर्ण,
+	अणु TVPIRMPD,	0xb9 पूर्ण,
+	अणु TVPIRMPD,	0x3a पूर्ण,
+	अणु TVPIRMPD,	0xb1 पूर्ण,
+	अणु TVPIRPLA,	0x00 पूर्ण,
+	अणु TVPIRLPD,	0xc1 पूर्ण,
+	अणु TVPIRLPD,	0x3d पूर्ण,
+	अणु TVPIRLPD,	0xf3 पूर्ण,
+पूर्ण;
 
-struct imstt_regvals {
+काष्ठा imstt_regvals अणु
 	__u32 pitch;
 	__u16 hes, heb, hsb, ht, ves, veb, vsb, vt, vil;
 	__u8 pclk_m, pclk_n, pclk_p;
 	/* Values of the tvp which change depending on colormode x resolution */
 	__u8 mlc[3];	/* Memory Loop Config 0x39 */
 	__u8 lckl_p[3];	/* P value of LCKL PLL */
-};
+पूर्ण;
 
-struct imstt_par {
-	struct imstt_regvals init;
+काष्ठा imstt_par अणु
+	काष्ठा imstt_regvals init;
 	__u32 __iomem *dc_regs;
-	unsigned long cmap_regs_phys;
+	अचिन्हित दीर्घ cmap_regs_phys;
 	__u8 *cmap_regs;
 	__u32 ramdac;
 	__u32 palette[16];
-};
+पूर्ण;
  
-enum {
+क्रमागत अणु
 	IBM = 0,
 	TVP = 1
-};
+पूर्ण;
 
-#define INIT_BPP		8
-#define INIT_XRES		640
-#define INIT_YRES		480
+#घोषणा INIT_BPP		8
+#घोषणा INIT_XRES		640
+#घोषणा INIT_YRES		480
 
-static int inverse = 0;
-static char fontname[40] __initdata = { 0 };
-#if defined(CONFIG_PPC_PMAC)
-static signed char init_vmode = -1, init_cmode = -1;
-#endif
+अटल पूर्णांक inverse = 0;
+अटल अक्षर fontname[40] __initdata = अणु 0 पूर्ण;
+#अगर defined(CONFIG_PPC_PMAC)
+अटल चिन्हित अक्षर init_vmode = -1, init_cmode = -1;
+#पूर्ण_अगर
 
-static struct imstt_regvals tvp_reg_init_2 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_2 = अणु
 	512,
 	0x0002, 0x0006, 0x0026, 0x0028, 0x0003, 0x0016, 0x0196, 0x0197, 0x0196,
 	0xec, 0x2a, 0xf3,
-	{ 0x3c, 0x3b, 0x39 }, { 0xf3, 0xf3, 0xf3 }
-};
+	अणु 0x3c, 0x3b, 0x39 पूर्ण, अणु 0xf3, 0xf3, 0xf3 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_6 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_6 = अणु
 	640,
 	0x0004, 0x0009, 0x0031, 0x0036, 0x0003, 0x002a, 0x020a, 0x020d, 0x020a,
 	0xef, 0x2e, 0xb2,
-	{ 0x39, 0x39, 0x38 }, { 0xf3, 0xf3, 0xf3 }
-};
+	अणु 0x39, 0x39, 0x38 पूर्ण, अणु 0xf3, 0xf3, 0xf3 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_12 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_12 = अणु
 	800,
 	0x0005, 0x000e, 0x0040, 0x0042, 0x0003, 0x018, 0x270, 0x271, 0x270,
 	0xf6, 0x2e, 0xf2,
-	{ 0x3a, 0x39, 0x38 }, { 0xf3, 0xf3, 0xf3 }
-};
+	अणु 0x3a, 0x39, 0x38 पूर्ण, अणु 0xf3, 0xf3, 0xf3 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_13 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_13 = अणु
 	832,
 	0x0004, 0x0011, 0x0045, 0x0048, 0x0003, 0x002a, 0x029a, 0x029b, 0x0000,
 	0xfe, 0x3e, 0xf1,
-	{ 0x39, 0x38, 0x38 }, { 0xf3, 0xf3, 0xf2 }
-};
+	अणु 0x39, 0x38, 0x38 पूर्ण, अणु 0xf3, 0xf3, 0xf2 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_17 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_17 = अणु
 	1024,
 	0x0006, 0x0210, 0x0250, 0x0053, 0x1003, 0x0021, 0x0321, 0x0324, 0x0000,
 	0xfc, 0x3a, 0xf1,
-	{ 0x39, 0x38, 0x38 }, { 0xf3, 0xf3, 0xf2 }
-};
+	अणु 0x39, 0x38, 0x38 पूर्ण, अणु 0xf3, 0xf3, 0xf2 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_18 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_18 = अणु
 	1152,
   	0x0009, 0x0011, 0x059, 0x5b, 0x0003, 0x0031, 0x0397, 0x039a, 0x0000, 
 	0xfd, 0x3a, 0xf1,
-	{ 0x39, 0x38, 0x38 }, { 0xf3, 0xf3, 0xf2 }
-};
+	अणु 0x39, 0x38, 0x38 पूर्ण, अणु 0xf3, 0xf3, 0xf2 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_19 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_19 = अणु
 	1280,
 	0x0009, 0x0016, 0x0066, 0x0069, 0x0003, 0x0027, 0x03e7, 0x03e8, 0x03e7,
 	0xf7, 0x36, 0xf0,
-	{ 0x38, 0x38, 0x38 }, { 0xf3, 0xf2, 0xf1 }
-};
+	अणु 0x38, 0x38, 0x38 पूर्ण, अणु 0xf3, 0xf2, 0xf1 पूर्ण
+पूर्ण;
 
-static struct imstt_regvals tvp_reg_init_20 = {
+अटल काष्ठा imstt_regvals tvp_reg_init_20 = अणु
 	1280,
 	0x0009, 0x0018, 0x0068, 0x006a, 0x0003, 0x0029, 0x0429, 0x042a, 0x0000,
 	0xf0, 0x2d, 0xf0,
-	{ 0x38, 0x38, 0x38 }, { 0xf3, 0xf2, 0xf1 }
-};
+	अणु 0x38, 0x38, 0x38 पूर्ण, अणु 0xf3, 0xf2, 0xf1 पूर्ण
+पूर्ण;
 
 /*
  * PCI driver prototypes
  */
-static int imsttfb_probe(struct pci_dev *pdev, const struct pci_device_id *ent);
-static void imsttfb_remove(struct pci_dev *pdev);
+अटल पूर्णांक imsttfb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent);
+अटल व्योम imsttfb_हटाओ(काष्ठा pci_dev *pdev);
 
 /*
  * Register access
  */
-static inline u32 read_reg_le32(volatile u32 __iomem *base, int regindex)
-{
-#ifdef __powerpc__
-	return in_le32(base + regindex);
-#else
-	return readl(base + regindex);
-#endif
-}
+अटल अंतरभूत u32 पढ़ो_reg_le32(अस्थिर u32 __iomem *base, पूर्णांक regindex)
+अणु
+#अगर_घोषित __घातerpc__
+	वापस in_le32(base + regindex);
+#अन्यथा
+	वापस पढ़ोl(base + regindex);
+#पूर्ण_अगर
+पूर्ण
 
-static inline void write_reg_le32(volatile u32 __iomem *base, int regindex, u32 val)
-{
-#ifdef __powerpc__
+अटल अंतरभूत व्योम ग_लिखो_reg_le32(अस्थिर u32 __iomem *base, पूर्णांक regindex, u32 val)
+अणु
+#अगर_घोषित __घातerpc__
 	out_le32(base + regindex, val);
-#else
-	writel(val, base + regindex);
-#endif
-}
+#अन्यथा
+	ग_लिखोl(val, base + regindex);
+#पूर्ण_अगर
+पूर्ण
 
-static __u32
-getclkMHz(struct imstt_par *par)
-{
+अटल __u32
+अ_लोlkMHz(काष्ठा imstt_par *par)
+अणु
 	__u32 clk_m, clk_n, clk_p;
 
 	clk_m = par->init.pclk_m;
 	clk_n = par->init.pclk_n;
 	clk_p = par->init.pclk_p;
 
-	return 20 * (clk_m + 1) / ((clk_n + 1) * (clk_p ? 2 * clk_p : 1));
-}
+	वापस 20 * (clk_m + 1) / ((clk_n + 1) * (clk_p ? 2 * clk_p : 1));
+पूर्ण
 
-static void
-setclkMHz(struct imstt_par *par, __u32 MHz)
-{
+अटल व्योम
+setclkMHz(काष्ठा imstt_par *par, __u32 MHz)
+अणु
 	__u32 clk_m, clk_n, x, stage, spilled;
 
 	clk_m = clk_n = 0;
 	stage = spilled = 0;
-	for (;;) {
-		switch (stage) {
-			case 0:
+	क्रम (;;) अणु
+		चयन (stage) अणु
+			हाल 0:
 				clk_m++;
-				break;
-			case 1:
+				अवरोध;
+			हाल 1:
 				clk_n++;
-				break;
-		}
+				अवरोध;
+		पूर्ण
 		x = 20 * (clk_m + 1) / (clk_n + 1);
-		if (x == MHz)
-			break;
-		if (x > MHz) {
+		अगर (x == MHz)
+			अवरोध;
+		अगर (x > MHz) अणु
 			spilled = 1;
 			stage = 1;
-		} else if (spilled && x < MHz) {
+		पूर्ण अन्यथा अगर (spilled && x < MHz) अणु
 			stage = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	par->init.pclk_m = clk_m;
 	par->init.pclk_n = clk_n;
 	par->init.pclk_p = 0;
-}
+पूर्ण
 
-static struct imstt_regvals *
-compute_imstt_regvals_ibm(struct imstt_par *par, int xres, int yres)
-{
-	struct imstt_regvals *init = &par->init;
+अटल काष्ठा imstt_regvals *
+compute_imstt_regvals_ibm(काष्ठा imstt_par *par, पूर्णांक xres, पूर्णांक yres)
+अणु
+	काष्ठा imstt_regvals *init = &par->init;
 	__u32 MHz, hes, heb, veb, htp, vtp;
 
-	switch (xres) {
-		case 640:
+	चयन (xres) अणु
+		हाल 640:
 			hes = 0x0008; heb = 0x0012; veb = 0x002a; htp = 10; vtp = 2;
 			MHz = 30 /* .25 */ ;
-			break;
-		case 832:
+			अवरोध;
+		हाल 832:
 			hes = 0x0005; heb = 0x0020; veb = 0x0028; htp = 8; vtp = 3;
 			MHz = 57 /* .27_ */ ;
-			break;
-		case 1024:
+			अवरोध;
+		हाल 1024:
 			hes = 0x000a; heb = 0x001c; veb = 0x0020; htp = 8; vtp = 3;
 			MHz = 80;
-			break;
-		case 1152:
+			अवरोध;
+		हाल 1152:
 			hes = 0x0012; heb = 0x0022; veb = 0x0031; htp = 4; vtp = 3;
 			MHz = 101 /* .6_ */ ;
-			break;
-		case 1280:
+			अवरोध;
+		हाल 1280:
 			hes = 0x0012; heb = 0x002f; veb = 0x0029; htp = 4; vtp = 1;
 			MHz = yres == 960 ? 126 : 135;
-			break;
-		case 1600:
+			अवरोध;
+		हाल 1600:
 			hes = 0x0018; heb = 0x0040; veb = 0x002a; htp = 4; vtp = 3;
 			MHz = 200;
-			break;
-		default:
-			return NULL;
-	}
+			अवरोध;
+		शेष:
+			वापस शून्य;
+	पूर्ण
 
 	setclkMHz(par, MHz);
 
@@ -511,57 +512,57 @@ compute_imstt_regvals_ibm(struct imstt_par *par, int xres, int yres)
 	init->vil = init->vsb;
 
 	init->pitch = xres;
-	return init;
-}
+	वापस init;
+पूर्ण
 
-static struct imstt_regvals *
-compute_imstt_regvals_tvp(struct imstt_par *par, int xres, int yres)
-{
-	struct imstt_regvals *init;
+अटल काष्ठा imstt_regvals *
+compute_imstt_regvals_tvp(काष्ठा imstt_par *par, पूर्णांक xres, पूर्णांक yres)
+अणु
+	काष्ठा imstt_regvals *init;
 
-	switch (xres) {
-		case 512:
+	चयन (xres) अणु
+		हाल 512:
 			init = &tvp_reg_init_2;
-			break;
-		case 640:
+			अवरोध;
+		हाल 640:
 			init = &tvp_reg_init_6;
-			break;
-		case 800:
+			अवरोध;
+		हाल 800:
 			init = &tvp_reg_init_12;
-			break;
-		case 832:
+			अवरोध;
+		हाल 832:
 			init = &tvp_reg_init_13;
-			break;
-		case 1024:
+			अवरोध;
+		हाल 1024:
 			init = &tvp_reg_init_17;
-			break;
-		case 1152:
+			अवरोध;
+		हाल 1152:
 			init = &tvp_reg_init_18;
-			break;
-		case 1280:
+			अवरोध;
+		हाल 1280:
 			init = yres == 960 ? &tvp_reg_init_19 : &tvp_reg_init_20;
-			break;
-		default:
-			return NULL;
-	}
+			अवरोध;
+		शेष:
+			वापस शून्य;
+	पूर्ण
 	par->init = *init;
-	return init;
-}
+	वापस init;
+पूर्ण
 
-static struct imstt_regvals *
-compute_imstt_regvals (struct imstt_par *par, u_int xres, u_int yres)
-{
-	if (par->ramdac == IBM)
-		return compute_imstt_regvals_ibm(par, xres, yres);
-	else
-		return compute_imstt_regvals_tvp(par, xres, yres);
-}
+अटल काष्ठा imstt_regvals *
+compute_imstt_regvals (काष्ठा imstt_par *par, u_पूर्णांक xres, u_पूर्णांक yres)
+अणु
+	अगर (par->ramdac == IBM)
+		वापस compute_imstt_regvals_ibm(par, xres, yres);
+	अन्यथा
+		वापस compute_imstt_regvals_tvp(par, xres, yres);
+पूर्ण
 
-static void
-set_imstt_regvals_ibm (struct imstt_par *par, u_int bpp)
-{
-	struct imstt_regvals *init = &par->init;
-	__u8 pformat = (bpp >> 3) + 2;
+अटल व्योम
+set_imstt_regvals_ibm (काष्ठा imstt_par *par, u_पूर्णांक bpp)
+अणु
+	काष्ठा imstt_regvals *init = &par->init;
+	__u8 pक्रमmat = (bpp >> 3) + 2;
 
 	par->cmap_regs[PIDXHI] = 0;		eieio();
 	par->cmap_regs[PIDXLO] = PIXM0;		eieio();
@@ -574,47 +575,47 @@ set_imstt_regvals_ibm (struct imstt_par *par, u_int bpp)
 	par->cmap_regs[PIDXDATA] = 0x02;	eieio();
 
 	par->cmap_regs[PIDXLO] = PIXFMT;	eieio();
-	par->cmap_regs[PIDXDATA] = pformat;	eieio();
-}
+	par->cmap_regs[PIDXDATA] = pक्रमmat;	eieio();
+पूर्ण
 
-static void
-set_imstt_regvals_tvp (struct imstt_par *par, u_int bpp)
-{
-	struct imstt_regvals *init = &par->init;
+अटल व्योम
+set_imstt_regvals_tvp (काष्ठा imstt_par *par, u_पूर्णांक bpp)
+अणु
+	काष्ठा imstt_regvals *init = &par->init;
 	__u8 tcc, mxc, lckl_n, mic;
 	__u8 mlc, lckl_p;
 
-	switch (bpp) {
-		default:
-		case 8:
+	चयन (bpp) अणु
+		शेष:
+		हाल 8:
 			tcc = 0x80;
 			mxc = 0x4d;
 			lckl_n = 0xc1;
 			mlc = init->mlc[0];
 			lckl_p = init->lckl_p[0];
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			tcc = 0x44;
 			mxc = 0x55;
 			lckl_n = 0xe1;
 			mlc = init->mlc[1];
 			lckl_p = init->lckl_p[1];
-			break;
-		case 24:
+			अवरोध;
+		हाल 24:
 			tcc = 0x5e;
 			mxc = 0x5d;
 			lckl_n = 0xf1;
 			mlc = init->mlc[2];
 			lckl_p = init->lckl_p[2];
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			tcc = 0x46;
 			mxc = 0x5d;
 			lckl_n = 0xf1;
 			mlc = init->mlc[2];
 			lckl_p = init->lckl_p[2];
-			break;
-	}
+			अवरोध;
+	पूर्ण
 	mic = 0x08;
 
 	par->cmap_regs[TVPADDRW] = TVPIRPLA;		eieio();
@@ -647,23 +648,23 @@ set_imstt_regvals_tvp (struct imstt_par *par, u_int bpp)
 	par->cmap_regs[TVPIDATA] = 0x2a;		eieio();
 	par->cmap_regs[TVPADDRW] = TVPIRLPD;		eieio();
 	par->cmap_regs[TVPIDATA] = lckl_p;		eieio();
-}
+पूर्ण
 
-static void
-set_imstt_regvals (struct fb_info *info, u_int bpp)
-{
-	struct imstt_par *par = info->par;
-	struct imstt_regvals *init = &par->init;
+अटल व्योम
+set_imstt_regvals (काष्ठा fb_info *info, u_पूर्णांक bpp)
+अणु
+	काष्ठा imstt_par *par = info->par;
+	काष्ठा imstt_regvals *init = &par->init;
 	__u32 ctl, pitch, byteswap, scr;
 
-	if (par->ramdac == IBM)
+	अगर (par->ramdac == IBM)
 		set_imstt_regvals_ibm(par, bpp);
-	else
+	अन्यथा
 		set_imstt_regvals_tvp(par, bpp);
 
   /*
    * From what I (jsk) can gather poking around with MacsBug,
-   * bits 8 and 9 in the SCR register control endianness
+   * bits 8 and 9 in the SCR रेजिस्टर control endianness
    * correction (byte swapping).  These bits must be set according
    * to the color depth as follows:
    *     Color depth    Bit 9   Bit 8
@@ -672,126 +673,126 @@ set_imstt_regvals (struct fb_info *info, u_int bpp)
    *       16bpp          0       1
    *       32bpp          1       1
    */
-	switch (bpp) {
-		default:
-		case 8:
+	चयन (bpp) अणु
+		शेष:
+		हाल 8:
 			ctl = 0x17b1;
 			pitch = init->pitch >> 2;
 			byteswap = 0x000;
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			ctl = 0x17b3;
 			pitch = init->pitch >> 1;
 			byteswap = 0x100;
-			break;
-		case 24:
+			अवरोध;
+		हाल 24:
 			ctl = 0x17b9;
 			pitch = init->pitch - (init->pitch >> 2);
 			byteswap = 0x200;
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			ctl = 0x17b5;
 			pitch = init->pitch;
 			byteswap = 0x300;
-			break;
-	}
-	if (par->ramdac == TVP)
+			अवरोध;
+	पूर्ण
+	अगर (par->ramdac == TVP)
 		ctl -= 0x30;
 
-	write_reg_le32(par->dc_regs, HES, init->hes);
-	write_reg_le32(par->dc_regs, HEB, init->heb);
-	write_reg_le32(par->dc_regs, HSB, init->hsb);
-	write_reg_le32(par->dc_regs, HT, init->ht);
-	write_reg_le32(par->dc_regs, VES, init->ves);
-	write_reg_le32(par->dc_regs, VEB, init->veb);
-	write_reg_le32(par->dc_regs, VSB, init->vsb);
-	write_reg_le32(par->dc_regs, VT, init->vt);
-	write_reg_le32(par->dc_regs, VIL, init->vil);
-	write_reg_le32(par->dc_regs, HCIV, 1);
-	write_reg_le32(par->dc_regs, VCIV, 1);
-	write_reg_le32(par->dc_regs, TCDR, 4);
-	write_reg_le32(par->dc_regs, RRCIV, 1);
-	write_reg_le32(par->dc_regs, RRSC, 0x980);
-	write_reg_le32(par->dc_regs, RRCR, 0x11);
+	ग_लिखो_reg_le32(par->dc_regs, HES, init->hes);
+	ग_लिखो_reg_le32(par->dc_regs, HEB, init->heb);
+	ग_लिखो_reg_le32(par->dc_regs, HSB, init->hsb);
+	ग_लिखो_reg_le32(par->dc_regs, HT, init->ht);
+	ग_लिखो_reg_le32(par->dc_regs, VES, init->ves);
+	ग_लिखो_reg_le32(par->dc_regs, VEB, init->veb);
+	ग_लिखो_reg_le32(par->dc_regs, VSB, init->vsb);
+	ग_लिखो_reg_le32(par->dc_regs, VT, init->vt);
+	ग_लिखो_reg_le32(par->dc_regs, VIL, init->vil);
+	ग_लिखो_reg_le32(par->dc_regs, HCIV, 1);
+	ग_लिखो_reg_le32(par->dc_regs, VCIV, 1);
+	ग_लिखो_reg_le32(par->dc_regs, TCDR, 4);
+	ग_लिखो_reg_le32(par->dc_regs, RRCIV, 1);
+	ग_लिखो_reg_le32(par->dc_regs, RRSC, 0x980);
+	ग_लिखो_reg_le32(par->dc_regs, RRCR, 0x11);
 
-	if (par->ramdac == IBM) {
-		write_reg_le32(par->dc_regs, HRIR, 0x0100);
-		write_reg_le32(par->dc_regs, CMR, 0x00ff);
-		write_reg_le32(par->dc_regs, SRGCTL, 0x0073);
-	} else {
-		write_reg_le32(par->dc_regs, HRIR, 0x0200);
-		write_reg_le32(par->dc_regs, CMR, 0x01ff);
-		write_reg_le32(par->dc_regs, SRGCTL, 0x0003);
-	}
+	अगर (par->ramdac == IBM) अणु
+		ग_लिखो_reg_le32(par->dc_regs, HRIR, 0x0100);
+		ग_लिखो_reg_le32(par->dc_regs, CMR, 0x00ff);
+		ग_लिखो_reg_le32(par->dc_regs, SRGCTL, 0x0073);
+	पूर्ण अन्यथा अणु
+		ग_लिखो_reg_le32(par->dc_regs, HRIR, 0x0200);
+		ग_लिखो_reg_le32(par->dc_regs, CMR, 0x01ff);
+		ग_लिखो_reg_le32(par->dc_regs, SRGCTL, 0x0003);
+	पूर्ण
 
-	switch (info->fix.smem_len) {
-		case 0x200000:
+	चयन (info->fix.smem_len) अणु
+		हाल 0x200000:
 			scr = 0x059d | byteswap;
-			break;
-		/* case 0x400000:
-		   case 0x800000: */
-		default:
+			अवरोध;
+		/* हाल 0x400000:
+		   हाल 0x800000: */
+		शेष:
 			pitch >>= 1;
 			scr = 0x150dd | byteswap;
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	write_reg_le32(par->dc_regs, SCR, scr);
-	write_reg_le32(par->dc_regs, SPR, pitch);
-	write_reg_le32(par->dc_regs, STGCTL, ctl);
-}
+	ग_लिखो_reg_le32(par->dc_regs, SCR, scr);
+	ग_लिखो_reg_le32(par->dc_regs, SPR, pitch);
+	ग_लिखो_reg_le32(par->dc_regs, STGCTL, ctl);
+पूर्ण
 
-static inline void
-set_offset (struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	struct imstt_par *par = info->par;
+अटल अंतरभूत व्योम
+set_offset (काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	काष्ठा imstt_par *par = info->par;
 	__u32 off = var->yoffset * (info->fix.line_length >> 3)
 		    + ((var->xoffset * (info->var.bits_per_pixel >> 3)) >> 3);
-	write_reg_le32(par->dc_regs, SSR, off);
-}
+	ग_लिखो_reg_le32(par->dc_regs, SSR, off);
+पूर्ण
 
-static inline void
-set_555 (struct imstt_par *par)
-{
-	if (par->ramdac == IBM) {
+अटल अंतरभूत व्योम
+set_555 (काष्ठा imstt_par *par)
+अणु
+	अगर (par->ramdac == IBM) अणु
 		par->cmap_regs[PIDXHI] = 0;		eieio();
 		par->cmap_regs[PIDXLO] = BPP16;		eieio();
 		par->cmap_regs[PIDXDATA] = 0x01;	eieio();
-	} else {
+	पूर्ण अन्यथा अणु
 		par->cmap_regs[TVPADDRW] = TVPIRTCC;	eieio();
 		par->cmap_regs[TVPIDATA] = 0x44;	eieio();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void
-set_565 (struct imstt_par *par)
-{
-	if (par->ramdac == IBM) {
+अटल अंतरभूत व्योम
+set_565 (काष्ठा imstt_par *par)
+अणु
+	अगर (par->ramdac == IBM) अणु
 		par->cmap_regs[PIDXHI] = 0;		eieio();
 		par->cmap_regs[PIDXLO] = BPP16;		eieio();
 		par->cmap_regs[PIDXDATA] = 0x03;	eieio();
-	} else {
+	पूर्ण अन्यथा अणु
 		par->cmap_regs[TVPADDRW] = TVPIRTCC;	eieio();
 		par->cmap_regs[TVPIDATA] = 0x45;	eieio();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-imsttfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	if ((var->bits_per_pixel != 8 && var->bits_per_pixel != 16
+अटल पूर्णांक
+imsttfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	अगर ((var->bits_per_pixel != 8 && var->bits_per_pixel != 16
 	    && var->bits_per_pixel != 24 && var->bits_per_pixel != 32)
-	    || var->xres_virtual < var->xres || var->yres_virtual < var->yres
+	    || var->xres_भव < var->xres || var->yres_भव < var->yres
 	    || var->nonstd
 	    || (var->vmode & FB_VMODE_MASK) != FB_VMODE_NONINTERLACED)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((var->xres * var->yres) * (var->bits_per_pixel >> 3) > info->fix.smem_len
-	    || (var->xres_virtual * var->yres_virtual) * (var->bits_per_pixel >> 3) > info->fix.smem_len)
-		return -EINVAL;
+	अगर ((var->xres * var->yres) * (var->bits_per_pixel >> 3) > info->fix.smem_len
+	    || (var->xres_भव * var->yres_भव) * (var->bits_per_pixel >> 3) > info->fix.smem_len)
+		वापस -EINVAL;
 
-	switch (var->bits_per_pixel) {
-		case 8:
+	चयन (var->bits_per_pixel) अणु
+		हाल 8:
 			var->red.offset = 0;
 			var->red.length = 8;
 			var->green.offset = 0;
@@ -800,20 +801,20 @@ imsttfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 			var->blue.length = 8;
 			var->transp.offset = 0;
 			var->transp.length = 0;
-			break;
-		case 16:	/* RGB 555 or 565 */
-			if (var->green.length != 6)
+			अवरोध;
+		हाल 16:	/* RGB 555 or 565 */
+			अगर (var->green.length != 6)
 				var->red.offset = 10;
 			var->red.length = 5;
 			var->green.offset = 5;
-			if (var->green.length != 6)
+			अगर (var->green.length != 6)
 				var->green.length = 5;
 			var->blue.offset = 0;
 			var->blue.length = 5;
 			var->transp.offset = 0;
 			var->transp.length = 0;
-			break;
-		case 24:	/* RGB 888 */
+			अवरोध;
+		हाल 24:	/* RGB 888 */
 			var->red.offset = 16;
 			var->red.length = 8;
 			var->green.offset = 8;
@@ -822,8 +823,8 @@ imsttfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 			var->blue.length = 8;
 			var->transp.offset = 0;
 			var->transp.length = 0;
-			break;
-		case 32:	/* RGBA 8888 */
+			अवरोध;
+		हाल 32:	/* RGBA 8888 */
 			var->red.offset = 16;
 			var->red.length = 8;
 			var->green.offset = 8;
@@ -832,15 +833,15 @@ imsttfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 			var->blue.length = 8;
 			var->transp.offset = 24;
 			var->transp.length = 8;
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (var->yres == var->yres_virtual) {
+	अगर (var->yres == var->yres_भव) अणु
 		__u32 vram = (info->fix.smem_len - (PAGE_SIZE << 2));
-		var->yres_virtual = ((vram << 3) / var->bits_per_pixel) / var->xres_virtual;
-		if (var->yres_virtual < var->yres)
-			var->yres_virtual = var->yres;
-	}
+		var->yres_भव = ((vram << 3) / var->bits_per_pixel) / var->xres_भव;
+		अगर (var->yres_भव < var->yres)
+			var->yres_भव = var->yres;
+	पूर्ण
 
 	var->red.msb_right = 0;
 	var->green.msb_right = 0;
@@ -852,44 +853,44 @@ imsttfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 	var->left_margin = var->right_margin = 16;
 	var->upper_margin = var->lower_margin = 16;
 	var->hsync_len = var->vsync_len = 8;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-imsttfb_set_par(struct fb_info *info) 
-{
-	struct imstt_par *par = info->par;
+अटल पूर्णांक
+imsttfb_set_par(काष्ठा fb_info *info) 
+अणु
+	काष्ठा imstt_par *par = info->par;
 		
-	if (!compute_imstt_regvals(par, info->var.xres, info->var.yres))
-		return -EINVAL;
+	अगर (!compute_imstt_regvals(par, info->var.xres, info->var.yres))
+		वापस -EINVAL;
 
-	if (info->var.green.length == 6)
+	अगर (info->var.green.length == 6)
 		set_565(par);
-	else
+	अन्यथा
 		set_555(par);
 	set_imstt_regvals(info, info->var.bits_per_pixel);
-	info->var.pixclock = 1000000 / getclkMHz(par);
-	return 0;
-}
+	info->var.pixघड़ी = 1000000 / अ_लोlkMHz(par);
+	वापस 0;
+पूर्ण
 
-static int
-imsttfb_setcolreg (u_int regno, u_int red, u_int green, u_int blue,
-		   u_int transp, struct fb_info *info)
-{
-	struct imstt_par *par = info->par;
-	u_int bpp = info->var.bits_per_pixel;
+अटल पूर्णांक
+imsttfb_setcolreg (u_पूर्णांक regno, u_पूर्णांक red, u_पूर्णांक green, u_पूर्णांक blue,
+		   u_पूर्णांक transp, काष्ठा fb_info *info)
+अणु
+	काष्ठा imstt_par *par = info->par;
+	u_पूर्णांक bpp = info->var.bits_per_pixel;
 
-	if (regno > 255)
-		return 1;
+	अगर (regno > 255)
+		वापस 1;
 
 	red >>= 8;
 	green >>= 8;
 	blue >>= 8;
 
 	/* PADDRW/PDATA are the same as TVPPADDRW/TVPPDATA */
-	if (0 && bpp == 16)	/* screws up X */
+	अगर (0 && bpp == 16)	/* screws up X */
 		par->cmap_regs[PADDRW] = regno << 3;
-	else
+	अन्यथा
 		par->cmap_regs[PADDRW] = regno;
 	eieio();
 
@@ -897,52 +898,52 @@ imsttfb_setcolreg (u_int regno, u_int red, u_int green, u_int blue,
 	par->cmap_regs[PDATA] = green;	eieio();
 	par->cmap_regs[PDATA] = blue;	eieio();
 
-	if (regno < 16)
-		switch (bpp) {
-			case 16:
+	अगर (regno < 16)
+		चयन (bpp) अणु
+			हाल 16:
 				par->palette[regno] =
 					(regno << (info->var.green.length ==
 					5 ? 10 : 11)) | (regno << 5) | regno;
-				break;
-			case 24:
+				अवरोध;
+			हाल 24:
 				par->palette[regno] =
 					(regno << 16) | (regno << 8) | regno;
-				break;
-			case 32: {
-				int i = (regno << 8) | regno;
+				अवरोध;
+			हाल 32: अणु
+				पूर्णांक i = (regno << 8) | regno;
 				par->palette[regno] = (i << 16) |i;
-				break;
-			}
-		}
-	return 0;
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-imsttfb_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	if (var->xoffset + info->var.xres > info->var.xres_virtual
-	    || var->yoffset + info->var.yres > info->var.yres_virtual)
-		return -EINVAL;
+अटल पूर्णांक
+imsttfb_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	अगर (var->xoffset + info->var.xres > info->var.xres_भव
+	    || var->yoffset + info->var.yres > info->var.yres_भव)
+		वापस -EINVAL;
 
 	info->var.xoffset = var->xoffset;
 	info->var.yoffset = var->yoffset;
 	set_offset(var, info);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int 
-imsttfb_blank(int blank, struct fb_info *info)
-{
-	struct imstt_par *par = info->par;
+अटल पूर्णांक 
+imsttfb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा imstt_par *par = info->par;
 	__u32 ctrl;
 
-	ctrl = read_reg_le32(par->dc_regs, STGCTL);
-	if (blank > 0) {
-		switch (blank) {
-		case FB_BLANK_NORMAL:
-		case FB_BLANK_POWERDOWN:
+	ctrl = पढ़ो_reg_le32(par->dc_regs, STGCTL);
+	अगर (blank > 0) अणु
+		चयन (blank) अणु
+		हाल FB_BLANK_NORMAL:
+		हाल FB_BLANK_POWERDOWN:
 			ctrl &= ~0x00000380;
-			if (par->ramdac == IBM) {
+			अगर (par->ramdac == IBM) अणु
 				par->cmap_regs[PIDXHI] = 0;		eieio();
 				par->cmap_regs[PIDXLO] = MISCTL2;	eieio();
 				par->cmap_regs[PIDXDATA] = 0x55;	eieio();
@@ -954,17 +955,17 @@ imsttfb_blank(int blank, struct fb_info *info)
 				par->cmap_regs[PIDXDATA] = 0x1f;	eieio();
 				par->cmap_regs[PIDXLO] = CLKCTL;	eieio();
 				par->cmap_regs[PIDXDATA] = 0xc0;
-			}
-			break;
-		case FB_BLANK_VSYNC_SUSPEND:
+			पूर्ण
+			अवरोध;
+		हाल FB_BLANK_VSYNC_SUSPEND:
 			ctrl &= ~0x00000020;
-			break;
-		case FB_BLANK_HSYNC_SUSPEND:
+			अवरोध;
+		हाल FB_BLANK_HSYNC_SUSPEND:
 			ctrl &= ~0x00000010;
-			break;
-		}
-	} else {
-		if (par->ramdac == IBM) {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (par->ramdac == IBM) अणु
 			ctrl |= 0x000017b0;
 			par->cmap_regs[PIDXHI] = 0;		eieio();
 			par->cmap_regs[PIDXLO] = CLKCTL;	eieio();
@@ -977,17 +978,17 @@ imsttfb_blank(int blank, struct fb_info *info)
 			par->cmap_regs[PIDXDATA] = 0x01;	eieio();
 			par->cmap_regs[PIDXLO] = MISCTL2;	eieio();
 			par->cmap_regs[PIDXDATA] = 0x45;	eieio();
-		} else
+		पूर्ण अन्यथा
 			ctrl |= 0x00001780;
-	}
-	write_reg_le32(par->dc_regs, STGCTL, ctrl);
-	return 0;
-}
+	पूर्ण
+	ग_लिखो_reg_le32(par->dc_regs, STGCTL, ctrl);
+	वापस 0;
+पूर्ण
 
-static void
-imsttfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
-{ 
-	struct imstt_par *par = info->par;
+अटल व्योम
+imsttfb_fillrect(काष्ठा fb_info *info, स्थिर काष्ठा fb_fillrect *rect)
+अणु 
+	काष्ठा imstt_par *par = info->par;
 	__u32 Bpp, line_pitch, bgc, dx, dy, width, height;
 
 	bgc = rect->color;
@@ -1004,34 +1005,34 @@ imsttfb_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 	width = rect->width * Bpp;
 	width--;
 
-	if (rect->rop == ROP_COPY) {
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-		write_reg_le32(par->dc_regs, DSA, dy + dx);
-		write_reg_le32(par->dc_regs, CNT, (height << 16) | width);
-		write_reg_le32(par->dc_regs, DP_OCTL, line_pitch);
-		write_reg_le32(par->dc_regs, BI, 0xffffffff);
-		write_reg_le32(par->dc_regs, MBC, 0xffffffff);
-		write_reg_le32(par->dc_regs, CLR, bgc);
-		write_reg_le32(par->dc_regs, BLTCTL, 0x840); /* 0x200000 */
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x40);
-	} else {
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-		write_reg_le32(par->dc_regs, DSA, dy + dx);
-		write_reg_le32(par->dc_regs, S1SA, dy + dx);
-		write_reg_le32(par->dc_regs, CNT, (height << 16) | width);
-		write_reg_le32(par->dc_regs, DP_OCTL, line_pitch);
-		write_reg_le32(par->dc_regs, SP, line_pitch);
-		write_reg_le32(par->dc_regs, BLTCTL, 0x40005);
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-		while(read_reg_le32(par->dc_regs, SSTATUS) & 0x40);
-	}
-}
+	अगर (rect->rop == ROP_COPY) अणु
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+		ग_लिखो_reg_le32(par->dc_regs, DSA, dy + dx);
+		ग_लिखो_reg_le32(par->dc_regs, CNT, (height << 16) | width);
+		ग_लिखो_reg_le32(par->dc_regs, DP_OCTL, line_pitch);
+		ग_लिखो_reg_le32(par->dc_regs, BI, 0xffffffff);
+		ग_लिखो_reg_le32(par->dc_regs, MBC, 0xffffffff);
+		ग_लिखो_reg_le32(par->dc_regs, CLR, bgc);
+		ग_लिखो_reg_le32(par->dc_regs, BLTCTL, 0x840); /* 0x200000 */
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x40);
+	पूर्ण अन्यथा अणु
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+		ग_लिखो_reg_le32(par->dc_regs, DSA, dy + dx);
+		ग_लिखो_reg_le32(par->dc_regs, S1SA, dy + dx);
+		ग_लिखो_reg_le32(par->dc_regs, CNT, (height << 16) | width);
+		ग_लिखो_reg_le32(par->dc_regs, DP_OCTL, line_pitch);
+		ग_लिखो_reg_le32(par->dc_regs, SP, line_pitch);
+		ग_लिखो_reg_le32(par->dc_regs, BLTCTL, 0x40005);
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+		जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x40);
+	पूर्ण
+पूर्ण
 
-static void
-imsttfb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
-{
-	struct imstt_par *par = info->par;
+अटल व्योम
+imsttfb_copyarea(काष्ठा fb_info *info, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा imstt_par *par = info->par;
 	__u32 Bpp, line_pitch, fb_offset_old, fb_offset_new, sp, dp_octl;
  	__u32 cnt, bltctl, sx, sy, dx, dy, height, width;
 
@@ -1051,58 +1052,58 @@ imsttfb_copyarea(struct fb_info *info, const struct fb_copyarea *area)
 	sp = line_pitch << 16;
 	cnt = height << 16;
 
-	if (sy < dy) {
+	अगर (sy < dy) अणु
 		sy += height;
 		dy += height;
 		sp |= -(line_pitch) & 0xffff;
 		dp_octl = -(line_pitch) & 0xffff;
-	} else {
+	पूर्ण अन्यथा अणु
 		sp |= line_pitch;
 		dp_octl = line_pitch;
-	}
-	if (sx < dx) {
+	पूर्ण
+	अगर (sx < dx) अणु
 		sx += width;
 		dx += width;
 		bltctl |= 0x80;
 		cnt |= -(width) & 0xffff;
-	} else {
+	पूर्ण अन्यथा अणु
 		cnt |= width;
-	}
+	पूर्ण
 	fb_offset_old = sy * line_pitch + sx;
 	fb_offset_new = dy * line_pitch + dx;
 
-	while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-	write_reg_le32(par->dc_regs, S1SA, fb_offset_old);
-	write_reg_le32(par->dc_regs, SP, sp);
-	write_reg_le32(par->dc_regs, DSA, fb_offset_new);
-	write_reg_le32(par->dc_regs, CNT, cnt);
-	write_reg_le32(par->dc_regs, DP_OCTL, dp_octl);
-	write_reg_le32(par->dc_regs, BLTCTL, bltctl);
-	while(read_reg_le32(par->dc_regs, SSTATUS) & 0x80);
-	while(read_reg_le32(par->dc_regs, SSTATUS) & 0x40);
-}
+	जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+	ग_लिखो_reg_le32(par->dc_regs, S1SA, fb_offset_old);
+	ग_लिखो_reg_le32(par->dc_regs, SP, sp);
+	ग_लिखो_reg_le32(par->dc_regs, DSA, fb_offset_new);
+	ग_लिखो_reg_le32(par->dc_regs, CNT, cnt);
+	ग_लिखो_reg_le32(par->dc_regs, DP_OCTL, dp_octl);
+	ग_लिखो_reg_le32(par->dc_regs, BLTCTL, bltctl);
+	जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x80);
+	जबतक(पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x40);
+पूर्ण
 
-#if 0
-static int
-imsttfb_load_cursor_image(struct imstt_par *par, int width, int height, __u8 fgc)
-{
-	u_int x, y;
+#अगर 0
+अटल पूर्णांक
+imsttfb_load_cursor_image(काष्ठा imstt_par *par, पूर्णांक width, पूर्णांक height, __u8 fgc)
+अणु
+	u_पूर्णांक x, y;
 
-	if (width > 32 || height > 32)
-		return -EINVAL;
+	अगर (width > 32 || height > 32)
+		वापस -EINVAL;
 
-	if (par->ramdac == IBM) {
+	अगर (par->ramdac == IBM) अणु
 		par->cmap_regs[PIDXHI] = 1;	eieio();
-		for (x = 0; x < 0x100; x++) {
+		क्रम (x = 0; x < 0x100; x++) अणु
 			par->cmap_regs[PIDXLO] = x;		eieio();
 			par->cmap_regs[PIDXDATA] = 0x00;	eieio();
-		}
+		पूर्ण
 		par->cmap_regs[PIDXHI] = 1;	eieio();
-		for (y = 0; y < height; y++)
-			for (x = 0; x < width >> 2; x++) {
+		क्रम (y = 0; y < height; y++)
+			क्रम (x = 0; x < width >> 2; x++) अणु
 				par->cmap_regs[PIDXLO] = x + y * 8;	eieio();
 				par->cmap_regs[PIDXDATA] = 0xff;	eieio();
-			}
+			पूर्ण
 		par->cmap_regs[PIDXHI] = 0;		eieio();
 		par->cmap_regs[PIDXLO] = CURS1R;	eieio();
 		par->cmap_regs[PIDXDATA] = fgc;		eieio();
@@ -1122,48 +1123,48 @@ imsttfb_load_cursor_image(struct imstt_par *par, int width, int height, __u8 fgc
 		par->cmap_regs[PIDXDATA] = fgc;		eieio();
 		par->cmap_regs[PIDXLO] = CURS3B;	eieio();
 		par->cmap_regs[PIDXDATA] = fgc;		eieio();
-	} else {
+	पूर्ण अन्यथा अणु
 		par->cmap_regs[TVPADDRW] = TVPIRICC;	eieio();
 		par->cmap_regs[TVPIDATA] &= 0x03;	eieio();
 		par->cmap_regs[TVPADDRW] = 0;		eieio();
-		for (x = 0; x < 0x200; x++) {
+		क्रम (x = 0; x < 0x200; x++) अणु
 			par->cmap_regs[TVPCRDAT] = 0x00;	eieio();
-		}
-		for (x = 0; x < 0x200; x++) {
+		पूर्ण
+		क्रम (x = 0; x < 0x200; x++) अणु
 			par->cmap_regs[TVPCRDAT] = 0xff;	eieio();
-		}
+		पूर्ण
 		par->cmap_regs[TVPADDRW] = TVPIRICC;	eieio();
 		par->cmap_regs[TVPIDATA] &= 0x03;	eieio();
-		for (y = 0; y < height; y++)
-			for (x = 0; x < width >> 3; x++) {
+		क्रम (y = 0; y < height; y++)
+			क्रम (x = 0; x < width >> 3; x++) अणु
 				par->cmap_regs[TVPADDRW] = x + y * 8;	eieio();
 				par->cmap_regs[TVPCRDAT] = 0xff;		eieio();
-			}
+			पूर्ण
 		par->cmap_regs[TVPADDRW] = TVPIRICC;	eieio();
 		par->cmap_regs[TVPIDATA] |= 0x08;	eieio();
-		for (y = 0; y < height; y++)
-			for (x = 0; x < width >> 3; x++) {
+		क्रम (y = 0; y < height; y++)
+			क्रम (x = 0; x < width >> 3; x++) अणु
 				par->cmap_regs[TVPADDRW] = x + y * 8;	eieio();
 				par->cmap_regs[TVPCRDAT] = 0xff;		eieio();
-			}
+			पूर्ण
 		par->cmap_regs[TVPCADRW] = 0x00;	eieio();
-		for (x = 0; x < 12; x++) {
+		क्रम (x = 0; x < 12; x++) अणु
 			par->cmap_regs[TVPCDATA] = fgc;
 			eieio();
-		}
-	}
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static void
-imstt_set_cursor(struct imstt_par *par, struct fb_image *d, int on)
-{
-	if (par->ramdac == IBM) {
+अटल व्योम
+imstt_set_cursor(काष्ठा imstt_par *par, काष्ठा fb_image *d, पूर्णांक on)
+अणु
+	अगर (par->ramdac == IBM) अणु
 		par->cmap_regs[PIDXHI] = 0;	eieio();
-		if (!on) {
+		अगर (!on) अणु
 			par->cmap_regs[PIDXLO] = CURSCTL;	eieio();
 			par->cmap_regs[PIDXDATA] = 0x00;	eieio();
-		} else {
+		पूर्ण अन्यथा अणु
 			par->cmap_regs[PIDXLO] = CURSXHI;	eieio();
 			par->cmap_regs[PIDXDATA] = d->dx >> 8;	eieio();
 			par->cmap_regs[PIDXLO] = CURSXLO;	eieio();
@@ -1174,12 +1175,12 @@ imstt_set_cursor(struct imstt_par *par, struct fb_image *d, int on)
 			par->cmap_regs[PIDXDATA] = d->dy & 0xff;eieio();
 			par->cmap_regs[PIDXLO] = CURSCTL;	eieio();
 			par->cmap_regs[PIDXDATA] = 0x02;	eieio();
-		}
-	} else {
-		if (!on) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!on) अणु
 			par->cmap_regs[TVPADDRW] = TVPIRICC;	eieio();
 			par->cmap_regs[TVPIDATA] = 0x00;	eieio();
-		} else {
+		पूर्ण अन्यथा अणु
 			__u16 x = d->dx + 0x40, y = d->dy + 0x40;
 
 			par->cmap_regs[TVPCXPOH] = x >> 8;	eieio();
@@ -1188,152 +1189,152 @@ imstt_set_cursor(struct imstt_par *par, struct fb_image *d, int on)
 			par->cmap_regs[TVPCYPOL] = y & 0xff;	eieio();
 			par->cmap_regs[TVPADDRW] = TVPIRICC;	eieio();
 			par->cmap_regs[TVPIDATA] = 0x02;	eieio();
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int 
-imsttfb_cursor(struct fb_info *info, struct fb_cursor *cursor)
-{
-	struct imstt_par *par = info->par;
+अटल पूर्णांक 
+imsttfb_cursor(काष्ठा fb_info *info, काष्ठा fb_cursor *cursor)
+अणु
+	काष्ठा imstt_par *par = info->par;
         u32 flags = cursor->set, fg, bg, xx, yy;
 
-	if (cursor->dest == NULL && cursor->rop == ROP_XOR)
-		return 1;
+	अगर (cursor->dest == शून्य && cursor->rop == ROP_XOR)
+		वापस 1;
 	
 	imstt_set_cursor(info, cursor, 0);
 
-	if (flags & FB_CUR_SETPOS) {
+	अगर (flags & FB_CUR_SETPOS) अणु
 		xx = cursor->image.dx - info->var.xoffset;
 		yy = cursor->image.dy - info->var.yoffset;
-	}
+	पूर्ण
 
-	if (flags & FB_CUR_SETSIZE) {
-        }
+	अगर (flags & FB_CUR_SETSIZE) अणु
+        पूर्ण
 
-        if (flags & (FB_CUR_SETSHAPE | FB_CUR_SETCMAP)) {
-                int fg_idx = cursor->image.fg_color;
-                int width = (cursor->image.width+7)/8;
+        अगर (flags & (FB_CUR_SETSHAPE | FB_CUR_SETCMAP)) अणु
+                पूर्णांक fg_idx = cursor->image.fg_color;
+                पूर्णांक width = (cursor->image.width+7)/8;
                 u8 *dat = (u8 *) cursor->image.data;
                 u8 *dst = (u8 *) cursor->dest;
                 u8 *msk = (u8 *) cursor->mask;
 
-                switch (cursor->rop) {
-                case ROP_XOR:
-                        for (i = 0; i < cursor->image.height; i++) {
-                                for (j = 0; j < width; j++) {
+                चयन (cursor->rop) अणु
+                हाल ROP_XOR:
+                        क्रम (i = 0; i < cursor->image.height; i++) अणु
+                                क्रम (j = 0; j < width; j++) अणु
                                         d_idx = i * MAX_CURS/8  + j;
                                         data[d_idx] =  byte_rev[dat[s_idx] ^
                                                                 dst[s_idx]];
                                         mask[d_idx] = byte_rev[msk[s_idx]];
                                         s_idx++;
-                                }
-                        }
-                        break;
-                case ROP_COPY:
-                default:
-                        for (i = 0; i < cursor->image.height; i++) {
-                                for (j = 0; j < width; j++) {
+                                पूर्ण
+                        पूर्ण
+                        अवरोध;
+                हाल ROP_COPY:
+                शेष:
+                        क्रम (i = 0; i < cursor->image.height; i++) अणु
+                                क्रम (j = 0; j < width; j++) अणु
                                         d_idx = i * MAX_CURS/8 + j;
                                         data[d_idx] = byte_rev[dat[s_idx]];
                                         mask[d_idx] = byte_rev[msk[s_idx]];
                                         s_idx++;
-                                }
-			}
-			break;
-		}
+                                पूर्ण
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		fg = ((info->cmap.red[fg_idx] & 0xf8) << 7) |
                      ((info->cmap.green[fg_idx] & 0xf8) << 2) |
                      ((info->cmap.blue[fg_idx] & 0xf8) >> 3) | 1 << 15;
 
 		imsttfb_load_cursor_image(par, xx, yy, fgc);
-	}
-	if (cursor->enable)
+	पूर्ण
+	अगर (cursor->enable)
 		imstt_set_cursor(info, cursor, 1);
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#define FBIMSTT_SETREG		0x545401
-#define FBIMSTT_GETREG		0x545402
-#define FBIMSTT_SETCMAPREG	0x545403
-#define FBIMSTT_GETCMAPREG	0x545404
-#define FBIMSTT_SETIDXREG	0x545405
-#define FBIMSTT_GETIDXREG	0x545406
+#घोषणा FBIMSTT_SETREG		0x545401
+#घोषणा FBIMSTT_GETREG		0x545402
+#घोषणा FBIMSTT_SETCMAPREG	0x545403
+#घोषणा FBIMSTT_GETCMAPREG	0x545404
+#घोषणा FBIMSTT_SETIDXREG	0x545405
+#घोषणा FBIMSTT_GETIDXREG	0x545406
 
-static int
-imsttfb_ioctl(struct fb_info *info, u_int cmd, u_long arg)
-{
-	struct imstt_par *par = info->par;
-	void __user *argp = (void __user *)arg;
+अटल पूर्णांक
+imsttfb_ioctl(काष्ठा fb_info *info, u_पूर्णांक cmd, u_दीर्घ arg)
+अणु
+	काष्ठा imstt_par *par = info->par;
+	व्योम __user *argp = (व्योम __user *)arg;
 	__u32 reg[2];
 	__u8 idx[2];
 
-	switch (cmd) {
-		case FBIMSTT_SETREG:
-			if (copy_from_user(reg, argp, 8) || reg[0] > (0x1000 - sizeof(reg[0])) / sizeof(reg[0]))
-				return -EFAULT;
-			write_reg_le32(par->dc_regs, reg[0], reg[1]);
-			return 0;
-		case FBIMSTT_GETREG:
-			if (copy_from_user(reg, argp, 4) || reg[0] > (0x1000 - sizeof(reg[0])) / sizeof(reg[0]))
-				return -EFAULT;
-			reg[1] = read_reg_le32(par->dc_regs, reg[0]);
-			if (copy_to_user((void __user *)(arg + 4), &reg[1], 4))
-				return -EFAULT;
-			return 0;
-		case FBIMSTT_SETCMAPREG:
-			if (copy_from_user(reg, argp, 8) || reg[0] > (0x1000 - sizeof(reg[0])) / sizeof(reg[0]))
-				return -EFAULT;
-			write_reg_le32(((u_int __iomem *)par->cmap_regs), reg[0], reg[1]);
-			return 0;
-		case FBIMSTT_GETCMAPREG:
-			if (copy_from_user(reg, argp, 4) || reg[0] > (0x1000 - sizeof(reg[0])) / sizeof(reg[0]))
-				return -EFAULT;
-			reg[1] = read_reg_le32(((u_int __iomem *)par->cmap_regs), reg[0]);
-			if (copy_to_user((void __user *)(arg + 4), &reg[1], 4))
-				return -EFAULT;
-			return 0;
-		case FBIMSTT_SETIDXREG:
-			if (copy_from_user(idx, argp, 2))
-				return -EFAULT;
+	चयन (cmd) अणु
+		हाल FBIMSTT_SETREG:
+			अगर (copy_from_user(reg, argp, 8) || reg[0] > (0x1000 - माप(reg[0])) / माप(reg[0]))
+				वापस -EFAULT;
+			ग_लिखो_reg_le32(par->dc_regs, reg[0], reg[1]);
+			वापस 0;
+		हाल FBIMSTT_GETREG:
+			अगर (copy_from_user(reg, argp, 4) || reg[0] > (0x1000 - माप(reg[0])) / माप(reg[0]))
+				वापस -EFAULT;
+			reg[1] = पढ़ो_reg_le32(par->dc_regs, reg[0]);
+			अगर (copy_to_user((व्योम __user *)(arg + 4), &reg[1], 4))
+				वापस -EFAULT;
+			वापस 0;
+		हाल FBIMSTT_SETCMAPREG:
+			अगर (copy_from_user(reg, argp, 8) || reg[0] > (0x1000 - माप(reg[0])) / माप(reg[0]))
+				वापस -EFAULT;
+			ग_लिखो_reg_le32(((u_पूर्णांक __iomem *)par->cmap_regs), reg[0], reg[1]);
+			वापस 0;
+		हाल FBIMSTT_GETCMAPREG:
+			अगर (copy_from_user(reg, argp, 4) || reg[0] > (0x1000 - माप(reg[0])) / माप(reg[0]))
+				वापस -EFAULT;
+			reg[1] = पढ़ो_reg_le32(((u_पूर्णांक __iomem *)par->cmap_regs), reg[0]);
+			अगर (copy_to_user((व्योम __user *)(arg + 4), &reg[1], 4))
+				वापस -EFAULT;
+			वापस 0;
+		हाल FBIMSTT_SETIDXREG:
+			अगर (copy_from_user(idx, argp, 2))
+				वापस -EFAULT;
 			par->cmap_regs[PIDXHI] = 0;		eieio();
 			par->cmap_regs[PIDXLO] = idx[0];	eieio();
 			par->cmap_regs[PIDXDATA] = idx[1];	eieio();
-			return 0;
-		case FBIMSTT_GETIDXREG:
-			if (copy_from_user(idx, argp, 1))
-				return -EFAULT;
+			वापस 0;
+		हाल FBIMSTT_GETIDXREG:
+			अगर (copy_from_user(idx, argp, 1))
+				वापस -EFAULT;
 			par->cmap_regs[PIDXHI] = 0;		eieio();
 			par->cmap_regs[PIDXLO] = idx[0];	eieio();
 			idx[1] = par->cmap_regs[PIDXDATA];
-			if (copy_to_user((void __user *)(arg + 1), &idx[1], 1))
-				return -EFAULT;
-			return 0;
-		default:
-			return -ENOIOCTLCMD;
-	}
-}
+			अगर (copy_to_user((व्योम __user *)(arg + 1), &idx[1], 1))
+				वापस -EFAULT;
+			वापस 0;
+		शेष:
+			वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-static const struct pci_device_id imsttfb_pci_tbl[] = {
-	{ PCI_VENDOR_ID_IMS, PCI_DEVICE_ID_IMS_TT128,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, IBM },
-	{ PCI_VENDOR_ID_IMS, PCI_DEVICE_ID_IMS_TT3D,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, TVP },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id imsttfb_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_IMS, PCI_DEVICE_ID_IMS_TT128,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, IBM पूर्ण,
+	अणु PCI_VENDOR_ID_IMS, PCI_DEVICE_ID_IMS_TT3D,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, TVP पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, imsttfb_pci_tbl);
 
-static struct pci_driver imsttfb_pci_driver = {
+अटल काष्ठा pci_driver imsttfb_pci_driver = अणु
 	.name =		"imsttfb",
 	.id_table =	imsttfb_pci_tbl,
 	.probe =	imsttfb_probe,
-	.remove =	imsttfb_remove,
-};
+	.हटाओ =	imsttfb_हटाओ,
+पूर्ण;
 
-static const struct fb_ops imsttfb_ops = {
+अटल स्थिर काष्ठा fb_ops imsttfb_ops = अणु
 	.owner 		= THIS_MODULE,
 	.fb_check_var	= imsttfb_check_var,
 	.fb_set_par 	= imsttfb_set_par,
@@ -1344,90 +1345,90 @@ static const struct fb_ops imsttfb_ops = {
 	.fb_copyarea	= imsttfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
 	.fb_ioctl 	= imsttfb_ioctl,
-};
+पूर्ण;
 
-static void init_imstt(struct fb_info *info)
-{
-	struct imstt_par *par = info->par;
-	__u32 i, tmp, *ip, *end;
+अटल व्योम init_imstt(काष्ठा fb_info *info)
+अणु
+	काष्ठा imstt_par *par = info->par;
+	__u32 i, पंचांगp, *ip, *end;
 
-	tmp = read_reg_le32(par->dc_regs, PRC);
-	if (par->ramdac == IBM)
-		info->fix.smem_len = (tmp & 0x0004) ? 0x400000 : 0x200000;
-	else
+	पंचांगp = पढ़ो_reg_le32(par->dc_regs, PRC);
+	अगर (par->ramdac == IBM)
+		info->fix.smem_len = (पंचांगp & 0x0004) ? 0x400000 : 0x200000;
+	अन्यथा
 		info->fix.smem_len = 0x800000;
 
 	ip = (__u32 *)info->screen_base;
 	end = (__u32 *)(info->screen_base + info->fix.smem_len);
-	while (ip < end)
+	जबतक (ip < end)
 		*ip++ = 0;
 
 	/* initialize the card */
-	tmp = read_reg_le32(par->dc_regs, STGCTL);
-	write_reg_le32(par->dc_regs, STGCTL, tmp & ~0x1);
-	write_reg_le32(par->dc_regs, SSR, 0);
+	पंचांगp = पढ़ो_reg_le32(par->dc_regs, STGCTL);
+	ग_लिखो_reg_le32(par->dc_regs, STGCTL, पंचांगp & ~0x1);
+	ग_लिखो_reg_le32(par->dc_regs, SSR, 0);
 
-	/* set default values for DAC registers */
-	if (par->ramdac == IBM) {
+	/* set शेष values क्रम DAC रेजिस्टरs */
+	अगर (par->ramdac == IBM) अणु
 		par->cmap_regs[PPMASK] = 0xff;
 		eieio();
 		par->cmap_regs[PIDXHI] = 0;
 		eieio();
-		for (i = 0; i < ARRAY_SIZE(ibm_initregs); i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(ibm_initregs); i++) अणु
 			par->cmap_regs[PIDXLO] = ibm_initregs[i].addr;
 			eieio();
 			par->cmap_regs[PIDXDATA] = ibm_initregs[i].value;
 			eieio();
-		}
-	} else {
-		for (i = 0; i < ARRAY_SIZE(tvp_initregs); i++) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < ARRAY_SIZE(tvp_initregs); i++) अणु
 			par->cmap_regs[TVPADDRW] = tvp_initregs[i].addr;
 			eieio();
 			par->cmap_regs[TVPIDATA] = tvp_initregs[i].value;
 			eieio();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#if defined(CONFIG_PPC_PMAC) && defined(CONFIG_PPC32)
-	if (IS_REACHABLE(CONFIG_NVRAM) && machine_is(powermac)) {
-		int vmode = init_vmode, cmode = init_cmode;
+#अगर defined(CONFIG_PPC_PMAC) && defined(CONFIG_PPC32)
+	अगर (IS_REACHABLE(CONFIG_NVRAM) && machine_is(घातermac)) अणु
+		पूर्णांक vmode = init_vmode, cmode = init_cmode;
 
-		if (vmode == -1) {
-			vmode = nvram_read_byte(NV_VMODE);
-			if (vmode <= 0 || vmode > VMODE_MAX)
+		अगर (vmode == -1) अणु
+			vmode = nvram_पढ़ो_byte(NV_VMODE);
+			अगर (vmode <= 0 || vmode > VMODE_MAX)
 				vmode = VMODE_640_480_67;
-		}
-		if (cmode == -1) {
-			cmode = nvram_read_byte(NV_CMODE);
-			if (cmode < CMODE_8 || cmode > CMODE_32)
+		पूर्ण
+		अगर (cmode == -1) अणु
+			cmode = nvram_पढ़ो_byte(NV_CMODE);
+			अगर (cmode < CMODE_8 || cmode > CMODE_32)
 				cmode = CMODE_8;
-		}
-		if (mac_vmode_to_var(vmode, cmode, &info->var)) {
-			info->var.xres = info->var.xres_virtual = INIT_XRES;
-			info->var.yres = info->var.yres_virtual = INIT_YRES;
+		पूर्ण
+		अगर (mac_vmode_to_var(vmode, cmode, &info->var)) अणु
+			info->var.xres = info->var.xres_भव = INIT_XRES;
+			info->var.yres = info->var.yres_भव = INIT_YRES;
 			info->var.bits_per_pixel = INIT_BPP;
-		}
-	} else
-#endif
-	{
-		info->var.xres = info->var.xres_virtual = INIT_XRES;
-		info->var.yres = info->var.yres_virtual = INIT_YRES;
+		पूर्ण
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		info->var.xres = info->var.xres_भव = INIT_XRES;
+		info->var.yres = info->var.yres_भव = INIT_YRES;
 		info->var.bits_per_pixel = INIT_BPP;
-	}
+	पूर्ण
 
-	if ((info->var.xres * info->var.yres) * (info->var.bits_per_pixel >> 3) > info->fix.smem_len
-	    || !(compute_imstt_regvals(par, info->var.xres, info->var.yres))) {
-		printk("imsttfb: %ux%ux%u not supported\n", info->var.xres, info->var.yres, info->var.bits_per_pixel);
+	अगर ((info->var.xres * info->var.yres) * (info->var.bits_per_pixel >> 3) > info->fix.smem_len
+	    || !(compute_imstt_regvals(par, info->var.xres, info->var.yres))) अणु
+		prपूर्णांकk("imsttfb: %ux%ux%u not supported\n", info->var.xres, info->var.yres, info->var.bits_per_pixel);
 		framebuffer_release(info);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	sprintf(info->fix.id, "IMS TT (%s)", par->ramdac == IBM ? "IBM" : "TVP");
+	प्र_लिखो(info->fix.id, "IMS TT (%s)", par->ramdac == IBM ? "IBM" : "TVP");
 	info->fix.mmio_len = 0x1000;
 	info->fix.accel = FB_ACCEL_IMS_TWINTURBO;
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = info->var.bits_per_pixel == 8 ? FB_VISUAL_PSEUDOCOLOR
-							: FB_VISUAL_DIRECTCOLOR;
+							: FB_VISUAL_सूचीECTCOLOR;
 	info->fix.line_length = info->var.xres * (info->var.bits_per_pixel >> 3);
 	info->fix.xpanstep = 8;
 	info->fix.ypanstep = 1;
@@ -1435,15 +1436,15 @@ static void init_imstt(struct fb_info *info)
 
 	info->var.accel_flags = FB_ACCELF_TEXT;
 
-//	if (par->ramdac == IBM)
+//	अगर (par->ramdac == IBM)
 //		imstt_cursor_init(info);
-	if (info->var.green.length == 6)
+	अगर (info->var.green.length == 6)
 		set_565(par);
-	else
+	अन्यथा
 		set_555(par);
 	set_imstt_regvals(info, info->var.bits_per_pixel);
 
-	info->var.pixclock = 1000000 / getclkMHz(par);
+	info->var.pixघड़ी = 1000000 / अ_लोlkMHz(par);
 
 	info->fbops = &imsttfb_ops;
 	info->flags = FBINFO_DEFAULT |
@@ -1453,180 +1454,180 @@ static void init_imstt(struct fb_info *info)
 
 	fb_alloc_cmap(&info->cmap, 0, 0);
 
-	if (register_framebuffer(info) < 0) {
+	अगर (रेजिस्टर_framebuffer(info) < 0) अणु
 		framebuffer_release(info);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	tmp = (read_reg_le32(par->dc_regs, SSTATUS) & 0x0f00) >> 8;
+	पंचांगp = (पढ़ो_reg_le32(par->dc_regs, SSTATUS) & 0x0f00) >> 8;
 	fb_info(info, "%s frame buffer; %uMB vram; chip version %u\n",
-		info->fix.id, info->fix.smem_len >> 20, tmp);
-}
+		info->fix.id, info->fix.smem_len >> 20, पंचांगp);
+पूर्ण
 
-static int imsttfb_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	unsigned long addr, size;
-	struct imstt_par *par;
-	struct fb_info *info;
-	struct device_node *dp;
-	int ret = -ENOMEM;
+अटल पूर्णांक imsttfb_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित दीर्घ addr, size;
+	काष्ठा imstt_par *par;
+	काष्ठा fb_info *info;
+	काष्ठा device_node *dp;
+	पूर्णांक ret = -ENOMEM;
 	
 	dp = pci_device_to_OF_node(pdev);
-	if(dp)
-		printk(KERN_INFO "%s: OF name %pOFn\n",__func__, dp);
-	else if (IS_ENABLED(CONFIG_OF))
-		printk(KERN_ERR "imsttfb: no OF node for pci device\n");
+	अगर(dp)
+		prपूर्णांकk(KERN_INFO "%s: OF name %pOFn\n",__func__, dp);
+	अन्यथा अगर (IS_ENABLED(CONFIG_OF))
+		prपूर्णांकk(KERN_ERR "imsttfb: no OF node for pci device\n");
 
-	info = framebuffer_alloc(sizeof(struct imstt_par), &pdev->dev);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(काष्ठा imstt_par), &pdev->dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 
 	addr = pci_resource_start (pdev, 0);
 	size = pci_resource_len (pdev, 0);
 
-	if (!request_mem_region(addr, size, "imsttfb")) {
-		printk(KERN_ERR "imsttfb: Can't reserve memory region\n");
+	अगर (!request_mem_region(addr, size, "imsttfb")) अणु
+		prपूर्णांकk(KERN_ERR "imsttfb: Can't reserve memory region\n");
 		framebuffer_release(info);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (pdev->device) {
-		case PCI_DEVICE_ID_IMS_TT128: /* IMS,tt128mbA */
+	चयन (pdev->device) अणु
+		हाल PCI_DEVICE_ID_IMS_TT128: /* IMS,tt128mbA */
 			par->ramdac = IBM;
-			if (of_node_name_eq(dp, "IMS,tt128mb8") ||
+			अगर (of_node_name_eq(dp, "IMS,tt128mb8") ||
 			    of_node_name_eq(dp, "IMS,tt128mb8A"))
 				par->ramdac = TVP;
-			break;
-		case PCI_DEVICE_ID_IMS_TT3D:  /* IMS,tt3d */
+			अवरोध;
+		हाल PCI_DEVICE_ID_IMS_TT3D:  /* IMS,tt3d */
 			par->ramdac = TVP;
-			break;
-		default:
-			printk(KERN_INFO "imsttfb: Device 0x%x unknown, "
+			अवरोध;
+		शेष:
+			prपूर्णांकk(KERN_INFO "imsttfb: Device 0x%x unknown, "
 					 "contact maintainer.\n", pdev->device);
 			ret = -ENODEV;
-			goto error;
-	}
+			जाओ error;
+	पूर्ण
 
 	info->fix.smem_start = addr;
 	info->screen_base = (__u8 *)ioremap(addr, par->ramdac == IBM ?
 					    0x400000 : 0x800000);
-	if (!info->screen_base)
-		goto error;
+	अगर (!info->screen_base)
+		जाओ error;
 	info->fix.mmio_start = addr + 0x800000;
 	par->dc_regs = ioremap(addr + 0x800000, 0x1000);
-	if (!par->dc_regs)
-		goto error;
+	अगर (!par->dc_regs)
+		जाओ error;
 	par->cmap_regs_phys = addr + 0x840000;
 	par->cmap_regs = (__u8 *)ioremap(addr + 0x840000, 0x1000);
-	if (!par->cmap_regs)
-		goto error;
-	info->pseudo_palette = par->palette;
+	अगर (!par->cmap_regs)
+		जाओ error;
+	info->pseuकरो_palette = par->palette;
 	init_imstt(info);
 
 	pci_set_drvdata(pdev, info);
-	return 0;
+	वापस 0;
 
 error:
-	if (par->dc_regs)
+	अगर (par->dc_regs)
 		iounmap(par->dc_regs);
-	if (info->screen_base)
+	अगर (info->screen_base)
 		iounmap(info->screen_base);
 	release_mem_region(addr, size);
 	framebuffer_release(info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void imsttfb_remove(struct pci_dev *pdev)
-{
-	struct fb_info *info = pci_get_drvdata(pdev);
-	struct imstt_par *par = info->par;
-	int size = pci_resource_len(pdev, 0);
+अटल व्योम imsttfb_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
+	काष्ठा imstt_par *par = info->par;
+	पूर्णांक size = pci_resource_len(pdev, 0);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	iounmap(par->cmap_regs);
 	iounmap(par->dc_regs);
 	iounmap(info->screen_base);
 	release_mem_region(info->fix.smem_start, size);
 	framebuffer_release(info);
-}
+पूर्ण
 
-#ifndef MODULE
-static int __init
-imsttfb_setup(char *options)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init
+imsttfb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	if (!options || !*options)
-		return 0;
+	अगर (!options || !*options)
+		वापस 0;
 
-	while ((this_opt = strsep(&options, ",")) != NULL) {
-		if (!strncmp(this_opt, "font:", 5)) {
-			char *p;
-			int i;
+	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!म_भेदन(this_opt, "font:", 5)) अणु
+			अक्षर *p;
+			पूर्णांक i;
 
 			p = this_opt + 5;
-			for (i = 0; i < sizeof(fontname) - 1; i++)
-				if (!*p || *p == ' ' || *p == ',')
-					break;
-			memcpy(fontname, this_opt + 5, i);
+			क्रम (i = 0; i < माप(fontname) - 1; i++)
+				अगर (!*p || *p == ' ' || *p == ',')
+					अवरोध;
+			स_नकल(fontname, this_opt + 5, i);
 			fontname[i] = 0;
-		} else if (!strncmp(this_opt, "inverse", 7)) {
+		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "inverse", 7)) अणु
 			inverse = 1;
 			fb_invert_cmaps();
-		}
-#if defined(CONFIG_PPC_PMAC)
-		else if (!strncmp(this_opt, "vmode:", 6)) {
-			int vmode = simple_strtoul(this_opt+6, NULL, 0);
-			if (vmode > 0 && vmode <= VMODE_MAX)
+		पूर्ण
+#अगर defined(CONFIG_PPC_PMAC)
+		अन्यथा अगर (!म_भेदन(this_opt, "vmode:", 6)) अणु
+			पूर्णांक vmode = simple_म_से_अदीर्घ(this_opt+6, शून्य, 0);
+			अगर (vmode > 0 && vmode <= VMODE_MAX)
 				init_vmode = vmode;
-		} else if (!strncmp(this_opt, "cmode:", 6)) {
-			int cmode = simple_strtoul(this_opt+6, NULL, 0);
-			switch (cmode) {
-				case CMODE_8:
-				case 8:
+		पूर्ण अन्यथा अगर (!म_भेदन(this_opt, "cmode:", 6)) अणु
+			पूर्णांक cmode = simple_म_से_अदीर्घ(this_opt+6, शून्य, 0);
+			चयन (cmode) अणु
+				हाल CMODE_8:
+				हाल 8:
 					init_cmode = CMODE_8;
-					break;
-				case CMODE_16:
-				case 15:
-				case 16:
+					अवरोध;
+				हाल CMODE_16:
+				हाल 15:
+				हाल 16:
 					init_cmode = CMODE_16;
-					break;
-				case CMODE_32:
-				case 24:
-				case 32:
+					अवरोध;
+				हाल CMODE_32:
+				हाल 24:
+				हाल 32:
 					init_cmode = CMODE_32;
-					break;
-			}
-		}
-#endif
-	}
-	return 0;
-}
+					अवरोध;
+			पूर्ण
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#endif /* MODULE */
+#पूर्ण_अगर /* MODULE */
 
-static int __init imsttfb_init(void)
-{
-#ifndef MODULE
-	char *option = NULL;
+अटल पूर्णांक __init imsttfb_init(व्योम)
+अणु
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("imsttfb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("imsttfb", &option))
+		वापस -ENODEV;
 
 	imsttfb_setup(option);
-#endif
-	return pci_register_driver(&imsttfb_pci_driver);
-}
+#पूर्ण_अगर
+	वापस pci_रेजिस्टर_driver(&imsttfb_pci_driver);
+पूर्ण
  
-static void __exit imsttfb_exit(void)
-{
-	pci_unregister_driver(&imsttfb_pci_driver);
-}
+अटल व्योम __निकास imsttfb_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&imsttfb_pci_driver);
+पूर्ण
 
 MODULE_LICENSE("GPL");
 
 module_init(imsttfb_init);
-module_exit(imsttfb_exit);
+module_निकास(imsttfb_निकास);
 

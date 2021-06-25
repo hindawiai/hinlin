@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Regulator Driver for Freescale MC13783 PMIC
+// Regulator Driver क्रम Freescale MC13783 PMIC
 //
 // Copyright 2010 Yong Shen <yong.shen@linaro.org>
 // Copyright (C) 2008 Sascha Hauer, Pengutronix <s.hauer@pengutronix.de>
 // Copyright 2009 Alberto Panizzo <maramaopercheseimorto@gmail.com>
 
-#include <linux/mfd/mc13783.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/driver.h>
-#include <linux/platform_device.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include "mc13xxx.h"
+#समावेश <linux/mfd/mc13783.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश "mc13xxx.h"
 
-#define MC13783_REG_SWITCHERS0			24
-/* Enable does not exist for SW1A */
-#define MC13783_REG_SWITCHERS0_SW1AEN			0
-#define MC13783_REG_SWITCHERS0_SW1AVSEL			0
-#define MC13783_REG_SWITCHERS0_SW1AVSEL_M		(63 << 0)
+#घोषणा MC13783_REG_SWITCHERS0			24
+/* Enable करोes not exist क्रम SW1A */
+#घोषणा MC13783_REG_SWITCHERS0_SW1AEN			0
+#घोषणा MC13783_REG_SWITCHERS0_SW1AVSEL			0
+#घोषणा MC13783_REG_SWITCHERS0_SW1AVSEL_M		(63 << 0)
 
-#define MC13783_REG_SWITCHERS1			25
-/* Enable does not exist for SW1B */
-#define MC13783_REG_SWITCHERS1_SW1BEN			0
-#define MC13783_REG_SWITCHERS1_SW1BVSEL			0
-#define MC13783_REG_SWITCHERS1_SW1BVSEL_M		(63 << 0)
+#घोषणा MC13783_REG_SWITCHERS1			25
+/* Enable करोes not exist क्रम SW1B */
+#घोषणा MC13783_REG_SWITCHERS1_SW1BEN			0
+#घोषणा MC13783_REG_SWITCHERS1_SW1BVSEL			0
+#घोषणा MC13783_REG_SWITCHERS1_SW1BVSEL_M		(63 << 0)
 
-#define MC13783_REG_SWITCHERS2			26
-/* Enable does not exist for SW2A */
-#define MC13783_REG_SWITCHERS2_SW2AEN			0
-#define MC13783_REG_SWITCHERS2_SW2AVSEL			0
-#define MC13783_REG_SWITCHERS2_SW2AVSEL_M		(63 << 0)
+#घोषणा MC13783_REG_SWITCHERS2			26
+/* Enable करोes not exist क्रम SW2A */
+#घोषणा MC13783_REG_SWITCHERS2_SW2AEN			0
+#घोषणा MC13783_REG_SWITCHERS2_SW2AVSEL			0
+#घोषणा MC13783_REG_SWITCHERS2_SW2AVSEL_M		(63 << 0)
 
-#define MC13783_REG_SWITCHERS3			27
-/* Enable does not exist for SW2B */
-#define MC13783_REG_SWITCHERS3_SW2BEN			0
-#define MC13783_REG_SWITCHERS3_SW2BVSEL			0
-#define MC13783_REG_SWITCHERS3_SW2BVSEL_M		(63 << 0)
+#घोषणा MC13783_REG_SWITCHERS3			27
+/* Enable करोes not exist क्रम SW2B */
+#घोषणा MC13783_REG_SWITCHERS3_SW2BEN			0
+#घोषणा MC13783_REG_SWITCHERS3_SW2BVSEL			0
+#घोषणा MC13783_REG_SWITCHERS3_SW2BVSEL_M		(63 << 0)
 
-#define MC13783_REG_SWITCHERS5			29
-#define MC13783_REG_SWITCHERS5_SW3EN			(1 << 20)
-#define MC13783_REG_SWITCHERS5_SW3VSEL			18
-#define MC13783_REG_SWITCHERS5_SW3VSEL_M		(3 << 18)
+#घोषणा MC13783_REG_SWITCHERS5			29
+#घोषणा MC13783_REG_SWITCHERS5_SW3EN			(1 << 20)
+#घोषणा MC13783_REG_SWITCHERS5_SW3VSEL			18
+#घोषणा MC13783_REG_SWITCHERS5_SW3VSEL_M		(3 << 18)
 
-#define MC13783_REG_REGULATORSETTING0		30
-#define MC13783_REG_REGULATORSETTING0_VIOLOVSEL		2
-#define MC13783_REG_REGULATORSETTING0_VDIGVSEL		4
-#define MC13783_REG_REGULATORSETTING0_VGENVSEL		6
-#define MC13783_REG_REGULATORSETTING0_VRFDIGVSEL	9
-#define MC13783_REG_REGULATORSETTING0_VRFREFVSEL	11
-#define MC13783_REG_REGULATORSETTING0_VRFCPVSEL		13
-#define MC13783_REG_REGULATORSETTING0_VSIMVSEL		14
-#define MC13783_REG_REGULATORSETTING0_VESIMVSEL		15
-#define MC13783_REG_REGULATORSETTING0_VCAMVSEL		16
+#घोषणा MC13783_REG_REGULATORSETTING0		30
+#घोषणा MC13783_REG_REGULATORSETTING0_VIOLOVSEL		2
+#घोषणा MC13783_REG_REGULATORSETTING0_VDIGVSEL		4
+#घोषणा MC13783_REG_REGULATORSETTING0_VGENVSEL		6
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFDIGVSEL	9
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFREFVSEL	11
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFCPVSEL		13
+#घोषणा MC13783_REG_REGULATORSETTING0_VSIMVSEL		14
+#घोषणा MC13783_REG_REGULATORSETTING0_VESIMVSEL		15
+#घोषणा MC13783_REG_REGULATORSETTING0_VCAMVSEL		16
 
-#define MC13783_REG_REGULATORSETTING0_VIOLOVSEL_M	(3 << 2)
-#define MC13783_REG_REGULATORSETTING0_VDIGVSEL_M	(3 << 4)
-#define MC13783_REG_REGULATORSETTING0_VGENVSEL_M	(7 << 6)
-#define MC13783_REG_REGULATORSETTING0_VRFDIGVSEL_M	(3 << 9)
-#define MC13783_REG_REGULATORSETTING0_VRFREFVSEL_M	(3 << 11)
-#define MC13783_REG_REGULATORSETTING0_VRFCPVSEL_M	(1 << 13)
-#define MC13783_REG_REGULATORSETTING0_VSIMVSEL_M	(1 << 14)
-#define MC13783_REG_REGULATORSETTING0_VESIMVSEL_M	(1 << 15)
-#define MC13783_REG_REGULATORSETTING0_VCAMVSEL_M	(7 << 16)
+#घोषणा MC13783_REG_REGULATORSETTING0_VIOLOVSEL_M	(3 << 2)
+#घोषणा MC13783_REG_REGULATORSETTING0_VDIGVSEL_M	(3 << 4)
+#घोषणा MC13783_REG_REGULATORSETTING0_VGENVSEL_M	(7 << 6)
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFDIGVSEL_M	(3 << 9)
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFREFVSEL_M	(3 << 11)
+#घोषणा MC13783_REG_REGULATORSETTING0_VRFCPVSEL_M	(1 << 13)
+#घोषणा MC13783_REG_REGULATORSETTING0_VSIMVSEL_M	(1 << 14)
+#घोषणा MC13783_REG_REGULATORSETTING0_VESIMVSEL_M	(1 << 15)
+#घोषणा MC13783_REG_REGULATORSETTING0_VCAMVSEL_M	(7 << 16)
 
-#define MC13783_REG_REGULATORSETTING1		31
-#define MC13783_REG_REGULATORSETTING1_VVIBVSEL		0
-#define MC13783_REG_REGULATORSETTING1_VRF1VSEL		2
-#define MC13783_REG_REGULATORSETTING1_VRF2VSEL		4
-#define MC13783_REG_REGULATORSETTING1_VMMC1VSEL		6
-#define MC13783_REG_REGULATORSETTING1_VMMC2VSEL		9
+#घोषणा MC13783_REG_REGULATORSETTING1		31
+#घोषणा MC13783_REG_REGULATORSETTING1_VVIBVSEL		0
+#घोषणा MC13783_REG_REGULATORSETTING1_VRF1VSEL		2
+#घोषणा MC13783_REG_REGULATORSETTING1_VRF2VSEL		4
+#घोषणा MC13783_REG_REGULATORSETTING1_VMMC1VSEL		6
+#घोषणा MC13783_REG_REGULATORSETTING1_VMMC2VSEL		9
 
-#define MC13783_REG_REGULATORSETTING1_VVIBVSEL_M	(3 << 0)
-#define MC13783_REG_REGULATORSETTING1_VRF1VSEL_M	(3 << 2)
-#define MC13783_REG_REGULATORSETTING1_VRF2VSEL_M	(3 << 4)
-#define MC13783_REG_REGULATORSETTING1_VMMC1VSEL_M	(7 << 6)
-#define MC13783_REG_REGULATORSETTING1_VMMC2VSEL_M	(7 << 9)
+#घोषणा MC13783_REG_REGULATORSETTING1_VVIBVSEL_M	(3 << 0)
+#घोषणा MC13783_REG_REGULATORSETTING1_VRF1VSEL_M	(3 << 2)
+#घोषणा MC13783_REG_REGULATORSETTING1_VRF2VSEL_M	(3 << 4)
+#घोषणा MC13783_REG_REGULATORSETTING1_VMMC1VSEL_M	(7 << 6)
+#घोषणा MC13783_REG_REGULATORSETTING1_VMMC2VSEL_M	(7 << 9)
 
-#define MC13783_REG_REGULATORMODE0		32
-#define MC13783_REG_REGULATORMODE0_VAUDIOEN		(1 << 0)
-#define MC13783_REG_REGULATORMODE0_VIOHIEN		(1 << 3)
-#define MC13783_REG_REGULATORMODE0_VIOLOEN		(1 << 6)
-#define MC13783_REG_REGULATORMODE0_VDIGEN		(1 << 9)
-#define MC13783_REG_REGULATORMODE0_VGENEN		(1 << 12)
-#define MC13783_REG_REGULATORMODE0_VRFDIGEN		(1 << 15)
-#define MC13783_REG_REGULATORMODE0_VRFREFEN		(1 << 18)
-#define MC13783_REG_REGULATORMODE0_VRFCPEN		(1 << 21)
+#घोषणा MC13783_REG_REGULATORMODE0		32
+#घोषणा MC13783_REG_REGULATORMODE0_VAUDIOEN		(1 << 0)
+#घोषणा MC13783_REG_REGULATORMODE0_VIOHIEN		(1 << 3)
+#घोषणा MC13783_REG_REGULATORMODE0_VIOLOEN		(1 << 6)
+#घोषणा MC13783_REG_REGULATORMODE0_VDIGEN		(1 << 9)
+#घोषणा MC13783_REG_REGULATORMODE0_VGENEN		(1 << 12)
+#घोषणा MC13783_REG_REGULATORMODE0_VRFDIGEN		(1 << 15)
+#घोषणा MC13783_REG_REGULATORMODE0_VRFREFEN		(1 << 18)
+#घोषणा MC13783_REG_REGULATORMODE0_VRFCPEN		(1 << 21)
 
-#define MC13783_REG_REGULATORMODE1		33
-#define MC13783_REG_REGULATORMODE1_VSIMEN		(1 << 0)
-#define MC13783_REG_REGULATORMODE1_VESIMEN		(1 << 3)
-#define MC13783_REG_REGULATORMODE1_VCAMEN		(1 << 6)
-#define MC13783_REG_REGULATORMODE1_VRFBGEN		(1 << 9)
-#define MC13783_REG_REGULATORMODE1_VVIBEN		(1 << 11)
-#define MC13783_REG_REGULATORMODE1_VRF1EN		(1 << 12)
-#define MC13783_REG_REGULATORMODE1_VRF2EN		(1 << 15)
-#define MC13783_REG_REGULATORMODE1_VMMC1EN		(1 << 18)
-#define MC13783_REG_REGULATORMODE1_VMMC2EN		(1 << 21)
+#घोषणा MC13783_REG_REGULATORMODE1		33
+#घोषणा MC13783_REG_REGULATORMODE1_VSIMEN		(1 << 0)
+#घोषणा MC13783_REG_REGULATORMODE1_VESIMEN		(1 << 3)
+#घोषणा MC13783_REG_REGULATORMODE1_VCAMEN		(1 << 6)
+#घोषणा MC13783_REG_REGULATORMODE1_VRFBGEN		(1 << 9)
+#घोषणा MC13783_REG_REGULATORMODE1_VVIBEN		(1 << 11)
+#घोषणा MC13783_REG_REGULATORMODE1_VRF1EN		(1 << 12)
+#घोषणा MC13783_REG_REGULATORMODE1_VRF2EN		(1 << 15)
+#घोषणा MC13783_REG_REGULATORMODE1_VMMC1EN		(1 << 18)
+#घोषणा MC13783_REG_REGULATORMODE1_VMMC2EN		(1 << 21)
 
-#define MC13783_REG_POWERMISC			34
-#define MC13783_REG_POWERMISC_GPO1EN			(1 << 6)
-#define MC13783_REG_POWERMISC_GPO2EN			(1 << 8)
-#define MC13783_REG_POWERMISC_GPO3EN			(1 << 10)
-#define MC13783_REG_POWERMISC_GPO4EN			(1 << 12)
-#define MC13783_REG_POWERMISC_PWGT1SPIEN		(1 << 15)
-#define MC13783_REG_POWERMISC_PWGT2SPIEN		(1 << 16)
+#घोषणा MC13783_REG_POWERMISC			34
+#घोषणा MC13783_REG_POWERMISC_GPO1EN			(1 << 6)
+#घोषणा MC13783_REG_POWERMISC_GPO2EN			(1 << 8)
+#घोषणा MC13783_REG_POWERMISC_GPO3EN			(1 << 10)
+#घोषणा MC13783_REG_POWERMISC_GPO4EN			(1 << 12)
+#घोषणा MC13783_REG_POWERMISC_PWGT1SPIEN		(1 << 15)
+#घोषणा MC13783_REG_POWERMISC_PWGT2SPIEN		(1 << 16)
 
-#define MC13783_REG_POWERMISC_PWGTSPI_M			(3 << 15)
+#घोषणा MC13783_REG_POWERMISC_PWGTSPI_M			(3 << 15)
 
 
 /* Voltage Values */
-static const int mc13783_sw1x_val[] = {
+अटल स्थिर पूर्णांक mc13783_sw1x_val[] = अणु
 	900000, 925000, 950000, 975000,
 	1000000, 1025000, 1050000, 1075000,
 	1100000, 1125000, 1150000, 1175000,
@@ -130,9 +131,9 @@ static const int mc13783_sw1x_val[] = {
 	2200000, 2200000, 2200000, 2200000,
 	2200000, 2200000, 2200000, 2200000,
 	2200000, 2200000, 2200000, 2200000,
-};
+पूर्ण;
 
-static const int mc13783_sw2x_val[] = {
+अटल स्थिर पूर्णांक mc13783_sw2x_val[] = अणु
 	900000, 925000, 950000, 975000,
 	1000000, 1025000, 1050000, 1075000,
 	1100000, 1125000, 1150000, 1175000,
@@ -149,103 +150,103 @@ static const int mc13783_sw2x_val[] = {
 	2200000, 2200000, 2200000, 2200000,
 	2200000, 2200000, 2200000, 2200000,
 	2200000, 2200000, 2200000, 2200000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_sw3_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_sw3_val[] = अणु
 	5000000, 5000000, 5000000, 5500000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vaudio_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vaudio_val[] = अणु
 	2775000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_viohi_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_viohi_val[] = अणु
 	2775000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_violo_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_violo_val[] = अणु
 	1200000, 1300000, 1500000, 1800000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vdig_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vdig_val[] = अणु
 	1200000, 1300000, 1500000, 1800000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vgen_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vgen_val[] = अणु
 	1200000, 1300000, 1500000, 1800000,
 	1100000, 2000000, 2775000, 2400000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vrfdig_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vrfdig_val[] = अणु
 	1200000, 1500000, 1800000, 1875000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vrfref_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vrfref_val[] = अणु
 	2475000, 2600000, 2700000, 2775000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vrfcp_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vrfcp_val[] = अणु
 	2700000, 2775000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vsim_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vsim_val[] = अणु
 	1800000, 2900000, 3000000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vesim_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vesim_val[] = अणु
 	1800000, 2900000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vcam_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vcam_val[] = अणु
 	1500000, 1800000, 2500000, 2550000,
 	2600000, 2750000, 2800000, 3000000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vrfbg_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vrfbg_val[] = अणु
 	1250000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vvib_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vvib_val[] = अणु
 	1300000, 1800000, 2000000, 3000000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vmmc_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vmmc_val[] = अणु
 	1600000, 1800000, 2000000, 2600000,
 	2700000, 2800000, 2900000, 3000000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_vrf_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_vrf_val[] = अणु
 	1500000, 1875000, 2700000, 2775000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_gpo_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_gpo_val[] = अणु
 	3100000,
-};
+पूर्ण;
 
-static const unsigned int mc13783_pwgtdrv_val[] = {
+अटल स्थिर अचिन्हित पूर्णांक mc13783_pwgtdrv_val[] = अणु
 	5500000,
-};
+पूर्ण;
 
-static const struct regulator_ops mc13783_gpo_regulator_ops;
+अटल स्थिर काष्ठा regulator_ops mc13783_gpo_regulator_ops;
 
-#define MC13783_DEFINE(prefix, name, node, reg, vsel_reg, voltages)	\
+#घोषणा MC13783_DEFINE(prefix, name, node, reg, vsel_reg, voltages)	\
 	MC13xxx_DEFINE(MC13783_REG_, name, node, reg, vsel_reg, voltages, \
 			mc13xxx_regulator_ops)
 
-#define MC13783_FIXED_DEFINE(prefix, name, node, reg, voltages)		\
+#घोषणा MC13783_FIXED_DEFINE(prefix, name, node, reg, voltages)		\
 	MC13xxx_FIXED_DEFINE(MC13783_REG_, name, node, reg, voltages,	\
 			mc13xxx_fixed_regulator_ops)
 
-#define MC13783_GPO_DEFINE(prefix, name, node, reg, voltages)		\
+#घोषणा MC13783_GPO_DEFINE(prefix, name, node, reg, voltages)		\
 	MC13xxx_GPO_DEFINE(MC13783_REG_, name, node, reg, voltages,	\
 			mc13783_gpo_regulator_ops)
 
-#define MC13783_DEFINE_SW(_name, _node, _reg, _vsel_reg, _voltages)	\
+#घोषणा MC13783_DEFINE_SW(_name, _node, _reg, _vsel_reg, _voltages)	\
 	MC13783_DEFINE(REG, _name, _node, _reg, _vsel_reg, _voltages)
-#define MC13783_DEFINE_REGU(_name, _node, _reg, _vsel_reg, _voltages)	\
+#घोषणा MC13783_DEFINE_REGU(_name, _node, _reg, _vsel_reg, _voltages)	\
 	MC13783_DEFINE(REG, _name, _node, _reg, _vsel_reg, _voltages)
 
-static struct mc13xxx_regulator mc13783_regulators[] = {
+अटल काष्ठा mc13xxx_regulator mc13783_regulators[] = अणु
 	MC13783_DEFINE_SW(SW1A, sw1a, SWITCHERS0, SWITCHERS0, mc13783_sw1x_val),
 	MC13783_DEFINE_SW(SW1B, sw1b, SWITCHERS1, SWITCHERS1, mc13783_sw1x_val),
 	MC13783_DEFINE_SW(SW2A, sw2a, SWITCHERS2, SWITCHERS2, mc13783_sw2x_val),
@@ -289,150 +290,150 @@ static struct mc13xxx_regulator mc13783_regulators[] = {
 	MC13783_GPO_DEFINE(REG, GPO4, gpo1, POWERMISC, mc13783_gpo_val),
 	MC13783_GPO_DEFINE(REG, PWGT1SPI, pwgt1spi, POWERMISC, mc13783_pwgtdrv_val),
 	MC13783_GPO_DEFINE(REG, PWGT2SPI, pwgt2spi, POWERMISC, mc13783_pwgtdrv_val),
-};
+पूर्ण;
 
-static int mc13783_powermisc_rmw(struct mc13xxx_regulator_priv *priv, u32 mask,
+अटल पूर्णांक mc13783_घातermisc_rmw(काष्ठा mc13xxx_regulator_priv *priv, u32 mask,
 		u32 val)
-{
-	struct mc13xxx *mc13783 = priv->mc13xxx;
-	int ret;
-	u32 valread;
+अणु
+	काष्ठा mc13xxx *mc13783 = priv->mc13xxx;
+	पूर्णांक ret;
+	u32 valपढ़ो;
 
 	BUG_ON(val & ~mask);
 
 	mc13xxx_lock(priv->mc13xxx);
-	ret = mc13xxx_reg_read(mc13783, MC13783_REG_POWERMISC, &valread);
-	if (ret)
-		goto out;
+	ret = mc13xxx_reg_पढ़ो(mc13783, MC13783_REG_POWERMISC, &valपढ़ो);
+	अगर (ret)
+		जाओ out;
 
-	/* Update the stored state for Power Gates. */
-	priv->powermisc_pwgt_state =
-				(priv->powermisc_pwgt_state & ~mask) | val;
-	priv->powermisc_pwgt_state &= MC13783_REG_POWERMISC_PWGTSPI_M;
+	/* Update the stored state क्रम Power Gates. */
+	priv->घातermisc_pwgt_state =
+				(priv->घातermisc_pwgt_state & ~mask) | val;
+	priv->घातermisc_pwgt_state &= MC13783_REG_POWERMISC_PWGTSPI_M;
 
-	/* Construct the new register value */
-	valread = (valread & ~mask) | val;
-	/* Overwrite the PWGTxEN with the stored version */
-	valread = (valread & ~MC13783_REG_POWERMISC_PWGTSPI_M) |
-						priv->powermisc_pwgt_state;
+	/* Conकाष्ठा the new रेजिस्टर value */
+	valपढ़ो = (valपढ़ो & ~mask) | val;
+	/* Overग_लिखो the PWGTxEN with the stored version */
+	valपढ़ो = (valपढ़ो & ~MC13783_REG_POWERMISC_PWGTSPI_M) |
+						priv->घातermisc_pwgt_state;
 
-	ret = mc13xxx_reg_write(mc13783, MC13783_REG_POWERMISC, valread);
+	ret = mc13xxx_reg_ग_लिखो(mc13783, MC13783_REG_POWERMISC, valपढ़ो);
 out:
 	mc13xxx_unlock(priv->mc13xxx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mc13783_gpo_regulator_enable(struct regulator_dev *rdev)
-{
-	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	int id = rdev_get_id(rdev);
+अटल पूर्णांक mc13783_gpo_regulator_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	पूर्णांक id = rdev_get_id(rdev);
 	u32 en_val = mc13xxx_regulators[id].enable_bit;
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d\n", __func__, id);
 
 	/* Power Gate enable value is 0 */
-	if (id == MC13783_REG_PWGT1SPI ||
+	अगर (id == MC13783_REG_PWGT1SPI ||
 	    id == MC13783_REG_PWGT2SPI)
 		en_val = 0;
 
-	return mc13783_powermisc_rmw(priv, mc13xxx_regulators[id].enable_bit,
+	वापस mc13783_घातermisc_rmw(priv, mc13xxx_regulators[id].enable_bit,
 					en_val);
-}
+पूर्ण
 
-static int mc13783_gpo_regulator_disable(struct regulator_dev *rdev)
-{
-	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	int id = rdev_get_id(rdev);
+अटल पूर्णांक mc13783_gpo_regulator_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	पूर्णांक id = rdev_get_id(rdev);
 	u32 dis_val = 0;
 
 	dev_dbg(rdev_get_dev(rdev), "%s id: %d\n", __func__, id);
 
 	/* Power Gate disable value is 1 */
-	if (id == MC13783_REG_PWGT1SPI ||
+	अगर (id == MC13783_REG_PWGT1SPI ||
 	    id == MC13783_REG_PWGT2SPI)
 		dis_val = mc13xxx_regulators[id].enable_bit;
 
-	return mc13783_powermisc_rmw(priv, mc13xxx_regulators[id].enable_bit,
+	वापस mc13783_घातermisc_rmw(priv, mc13xxx_regulators[id].enable_bit,
 					dis_val);
-}
+पूर्ण
 
-static int mc13783_gpo_regulator_is_enabled(struct regulator_dev *rdev)
-{
-	struct mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
-	struct mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
-	int ret, id = rdev_get_id(rdev);
-	unsigned int val;
+अटल पूर्णांक mc13783_gpo_regulator_is_enabled(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा mc13xxx_regulator_priv *priv = rdev_get_drvdata(rdev);
+	काष्ठा mc13xxx_regulator *mc13xxx_regulators = priv->mc13xxx_regulators;
+	पूर्णांक ret, id = rdev_get_id(rdev);
+	अचिन्हित पूर्णांक val;
 
 	mc13xxx_lock(priv->mc13xxx);
-	ret = mc13xxx_reg_read(priv->mc13xxx, mc13xxx_regulators[id].reg, &val);
+	ret = mc13xxx_reg_पढ़ो(priv->mc13xxx, mc13xxx_regulators[id].reg, &val);
 	mc13xxx_unlock(priv->mc13xxx);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Power Gates state is stored in powermisc_pwgt_state
+	/* Power Gates state is stored in घातermisc_pwgt_state
 	 * where the meaning of bits is negated */
 	val = (val & ~MC13783_REG_POWERMISC_PWGTSPI_M) |
-	      (priv->powermisc_pwgt_state ^ MC13783_REG_POWERMISC_PWGTSPI_M);
+	      (priv->घातermisc_pwgt_state ^ MC13783_REG_POWERMISC_PWGTSPI_M);
 
-	return (val & mc13xxx_regulators[id].enable_bit) != 0;
-}
+	वापस (val & mc13xxx_regulators[id].enable_bit) != 0;
+पूर्ण
 
-static const struct regulator_ops mc13783_gpo_regulator_ops = {
+अटल स्थिर काष्ठा regulator_ops mc13783_gpo_regulator_ops = अणु
 	.enable = mc13783_gpo_regulator_enable,
 	.disable = mc13783_gpo_regulator_disable,
 	.is_enabled = mc13783_gpo_regulator_is_enabled,
 	.list_voltage = regulator_list_voltage_table,
 	.set_voltage = mc13xxx_fixed_regulator_set_voltage,
-};
+पूर्ण;
 
-static int mc13783_regulator_probe(struct platform_device *pdev)
-{
-	struct mc13xxx_regulator_priv *priv;
-	struct mc13xxx *mc13783 = dev_get_drvdata(pdev->dev.parent);
-	struct mc13xxx_regulator_platform_data *pdata =
+अटल पूर्णांक mc13783_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mc13xxx_regulator_priv *priv;
+	काष्ठा mc13xxx *mc13783 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा mc13xxx_regulator_platक्रमm_data *pdata =
 		dev_get_platdata(&pdev->dev);
-	struct mc13xxx_regulator_init_data *mc13xxx_data;
-	struct regulator_config config = { };
-	int i, num_regulators;
+	काष्ठा mc13xxx_regulator_init_data *mc13xxx_data;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक i, num_regulators;
 
 	num_regulators = mc13xxx_get_num_regulators_dt(pdev);
 
-	if (num_regulators <= 0 && pdata)
+	अगर (num_regulators <= 0 && pdata)
 		num_regulators = pdata->num_regulators;
-	if (num_regulators <= 0)
-		return -EINVAL;
+	अगर (num_regulators <= 0)
+		वापस -EINVAL;
 
 	priv = devm_kzalloc(&pdev->dev,
-			    struct_size(priv, regulators, num_regulators),
+			    काष्ठा_size(priv, regulators, num_regulators),
 			    GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->num_regulators = num_regulators;
 	priv->mc13xxx_regulators = mc13783_regulators;
 	priv->mc13xxx = mc13783;
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	mc13xxx_data = mc13xxx_parse_regulators_dt(pdev, mc13783_regulators,
 					ARRAY_SIZE(mc13783_regulators));
 
-	for (i = 0; i < priv->num_regulators; i++) {
-		struct regulator_init_data *init_data;
-		struct regulator_desc *desc;
-		struct device_node *node = NULL;
-		int id;
+	क्रम (i = 0; i < priv->num_regulators; i++) अणु
+		काष्ठा regulator_init_data *init_data;
+		काष्ठा regulator_desc *desc;
+		काष्ठा device_node *node = शून्य;
+		पूर्णांक id;
 
-		if (mc13xxx_data) {
+		अगर (mc13xxx_data) अणु
 			id = mc13xxx_data[i].id;
 			init_data = mc13xxx_data[i].init_data;
 			node = mc13xxx_data[i].node;
-		} else {
+		पूर्ण अन्यथा अणु
 			id = pdata->regulators[i].id;
 			init_data = pdata->regulators[i].init_data;
-		}
+		पूर्ण
 		desc = &mc13783_regulators[id].desc;
 
 		config.dev = &pdev->dev;
@@ -440,36 +441,36 @@ static int mc13783_regulator_probe(struct platform_device *pdev)
 		config.driver_data = priv;
 		config.of_node = node;
 
-		priv->regulators[i] = devm_regulator_register(&pdev->dev, desc,
+		priv->regulators[i] = devm_regulator_रेजिस्टर(&pdev->dev, desc,
 							      &config);
-		if (IS_ERR(priv->regulators[i])) {
+		अगर (IS_ERR(priv->regulators[i])) अणु
 			dev_err(&pdev->dev, "failed to register regulator %s\n",
 				mc13783_regulators[i].desc.name);
-			return PTR_ERR(priv->regulators[i]);
-		}
-	}
+			वापस PTR_ERR(priv->regulators[i]);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mc13783_regulator_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver mc13783_regulator_driver = अणु
+	.driver	= अणु
 		.name	= "mc13783-regulator",
-	},
+	पूर्ण,
 	.probe		= mc13783_regulator_probe,
-};
+पूर्ण;
 
-static int __init mc13783_regulator_init(void)
-{
-	return platform_driver_register(&mc13783_regulator_driver);
-}
+अटल पूर्णांक __init mc13783_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mc13783_regulator_driver);
+पूर्ण
 subsys_initcall(mc13783_regulator_init);
 
-static void __exit mc13783_regulator_exit(void)
-{
-	platform_driver_unregister(&mc13783_regulator_driver);
-}
-module_exit(mc13783_regulator_exit);
+अटल व्योम __निकास mc13783_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mc13783_regulator_driver);
+पूर्ण
+module_निकास(mc13783_regulator_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Sascha Hauer <s.hauer@pengutronix.de>");

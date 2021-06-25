@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004 Topspin Communications.  All rights reserved.
  * Copyright (c) 2005 Mellanox Technologies. All rights reserved.
@@ -5,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,18 +32,18 @@
  * SOFTWARE.
  */
 
-#ifndef MTHCA_CONFIG_REG_H
-#define MTHCA_CONFIG_REG_H
+#अगर_अघोषित MTHCA_CONFIG_REG_H
+#घोषणा MTHCA_CONFIG_REG_H
 
-#define MTHCA_HCR_BASE         0x80680
-#define MTHCA_HCR_SIZE         0x0001c
-#define MTHCA_ECR_BASE         0x80700
-#define MTHCA_ECR_SIZE         0x00008
-#define MTHCA_ECR_CLR_BASE     0x80708
-#define MTHCA_ECR_CLR_SIZE     0x00008
-#define MTHCA_MAP_ECR_SIZE     (MTHCA_ECR_SIZE + MTHCA_ECR_CLR_SIZE)
-#define MTHCA_CLR_INT_BASE     0xf00d8
-#define MTHCA_CLR_INT_SIZE     0x00008
-#define MTHCA_EQ_SET_CI_SIZE   (8 * 32)
+#घोषणा MTHCA_HCR_BASE         0x80680
+#घोषणा MTHCA_HCR_SIZE         0x0001c
+#घोषणा MTHCA_ECR_BASE         0x80700
+#घोषणा MTHCA_ECR_SIZE         0x00008
+#घोषणा MTHCA_ECR_CLR_BASE     0x80708
+#घोषणा MTHCA_ECR_CLR_SIZE     0x00008
+#घोषणा MTHCA_MAP_ECR_SIZE     (MTHCA_ECR_SIZE + MTHCA_ECR_CLR_SIZE)
+#घोषणा MTHCA_CLR_INT_BASE     0xf00d8
+#घोषणा MTHCA_CLR_INT_SIZE     0x00008
+#घोषणा MTHCA_EQ_SET_CI_SIZE   (8 * 32)
 
-#endif /* MTHCA_CONFIG_REG_H */
+#पूर्ण_अगर /* MTHCA_CONFIG_REG_H */

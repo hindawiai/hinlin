@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
-  FUSE: Filesystem in Userspace
+  FUSE: Fileप्रणाली in Userspace
   Copyright (C) 2001-2018  Miklos Szeredi <miklos@szeredi.hu>
 
   This program can be distributed under the terms of the GNU GPL.
@@ -7,79 +8,79 @@
 */
 
 
-#include "fuse_i.h"
-#include <linux/iversion.h>
-#include <linux/posix_acl.h>
-#include <linux/pagemap.h>
-#include <linux/highmem.h>
+#समावेश "fuse_i.h"
+#समावेश <linux/iversion.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/highस्मृति.स>
 
-static bool fuse_use_readdirplus(struct inode *dir, struct dir_context *ctx)
-{
-	struct fuse_conn *fc = get_fuse_conn(dir);
-	struct fuse_inode *fi = get_fuse_inode(dir);
+अटल bool fuse_use_सूची_पढ़ोplus(काष्ठा inode *dir, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा fuse_conn *fc = get_fuse_conn(dir);
+	काष्ठा fuse_inode *fi = get_fuse_inode(dir);
 
-	if (!fc->do_readdirplus)
-		return false;
-	if (!fc->readdirplus_auto)
-		return true;
-	if (test_and_clear_bit(FUSE_I_ADVISE_RDPLUS, &fi->state))
-		return true;
-	if (ctx->pos == 0)
-		return true;
-	return false;
-}
+	अगर (!fc->करो_सूची_पढ़ोplus)
+		वापस false;
+	अगर (!fc->सूची_पढ़ोplus_स्वतः)
+		वापस true;
+	अगर (test_and_clear_bit(FUSE_I_ADVISE_RDPLUS, &fi->state))
+		वापस true;
+	अगर (ctx->pos == 0)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static void fuse_add_dirent_to_cache(struct file *file,
-				     struct fuse_dirent *dirent, loff_t pos)
-{
-	struct fuse_inode *fi = get_fuse_inode(file_inode(file));
-	size_t reclen = FUSE_DIRENT_SIZE(dirent);
+अटल व्योम fuse_add_dirent_to_cache(काष्ठा file *file,
+				     काष्ठा fuse_dirent *dirent, loff_t pos)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(file_inode(file));
+	माप_प्रकार reclen = FUSE_सूचीENT_SIZE(dirent);
 	pgoff_t index;
-	struct page *page;
+	काष्ठा page *page;
 	loff_t size;
 	u64 version;
-	unsigned int offset;
-	void *addr;
+	अचिन्हित पूर्णांक offset;
+	व्योम *addr;
 
 	spin_lock(&fi->rdc.lock);
 	/*
-	 * Is cache already completed?  Or this entry does not go at the end of
+	 * Is cache alपढ़ोy completed?  Or this entry करोes not go at the end of
 	 * cache?
 	 */
-	if (fi->rdc.cached || pos != fi->rdc.pos) {
+	अगर (fi->rdc.cached || pos != fi->rdc.pos) अणु
 		spin_unlock(&fi->rdc.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	version = fi->rdc.version;
 	size = fi->rdc.size;
 	offset = size & ~PAGE_MASK;
 	index = size >> PAGE_SHIFT;
-	/* Dirent doesn't fit in current page?  Jump to next page. */
-	if (offset + reclen > PAGE_SIZE) {
+	/* Dirent करोesn't fit in current page?  Jump to next page. */
+	अगर (offset + reclen > PAGE_SIZE) अणु
 		index++;
 		offset = 0;
-	}
+	पूर्ण
 	spin_unlock(&fi->rdc.lock);
 
-	if (offset) {
+	अगर (offset) अणु
 		page = find_lock_page(file->f_mapping, index);
-	} else {
+	पूर्ण अन्यथा अणु
 		page = find_or_create_page(file->f_mapping, index,
 					   mapping_gfp_mask(file->f_mapping));
-	}
-	if (!page)
-		return;
+	पूर्ण
+	अगर (!page)
+		वापस;
 
 	spin_lock(&fi->rdc.lock);
-	/* Raced with another readdir */
-	if (fi->rdc.version != version || fi->rdc.size != size ||
+	/* Raced with another सूची_पढ़ो */
+	अगर (fi->rdc.version != version || fi->rdc.size != size ||
 	    WARN_ON(fi->rdc.pos != pos))
-		goto unlock;
+		जाओ unlock;
 
 	addr = kmap_atomic(page);
-	if (!offset)
+	अगर (!offset)
 		clear_page(addr);
-	memcpy(addr + offset, dirent, reclen);
+	स_नकल(addr + offset, dirent, reclen);
 	kunmap_atomic(addr);
 	fi->rdc.size = (index << PAGE_SHIFT) + offset + reclen;
 	fi->rdc.pos = dirent->off;
@@ -87,19 +88,19 @@ unlock:
 	spin_unlock(&fi->rdc.lock);
 	unlock_page(page);
 	put_page(page);
-}
+पूर्ण
 
-static void fuse_readdir_cache_end(struct file *file, loff_t pos)
-{
-	struct fuse_inode *fi = get_fuse_inode(file_inode(file));
+अटल व्योम fuse_सूची_पढ़ो_cache_end(काष्ठा file *file, loff_t pos)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(file_inode(file));
 	loff_t end;
 
 	spin_lock(&fi->rdc.lock);
-	/* does cache end position match current position? */
-	if (fi->rdc.pos != pos) {
+	/* करोes cache end position match current position? */
+	अगर (fi->rdc.pos != pos) अणु
 		spin_unlock(&fi->rdc.lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fi->rdc.cached = true;
 	end = ALIGN(fi->rdc.size, PAGE_SIZE);
@@ -107,433 +108,433 @@ static void fuse_readdir_cache_end(struct file *file, loff_t pos)
 
 	/* truncate unused tail of cache */
 	truncate_inode_pages(file->f_mapping, end);
-}
+पूर्ण
 
-static bool fuse_emit(struct file *file, struct dir_context *ctx,
-		      struct fuse_dirent *dirent)
-{
-	struct fuse_file *ff = file->private_data;
+अटल bool fuse_emit(काष्ठा file *file, काष्ठा dir_context *ctx,
+		      काष्ठा fuse_dirent *dirent)
+अणु
+	काष्ठा fuse_file *ff = file->निजी_data;
 
-	if (ff->open_flags & FOPEN_CACHE_DIR)
+	अगर (ff->खोलो_flags & FOPEN_CACHE_सूची)
 		fuse_add_dirent_to_cache(file, dirent, ctx->pos);
 
-	return dir_emit(ctx, dirent->name, dirent->namelen, dirent->ino,
+	वापस dir_emit(ctx, dirent->name, dirent->namelen, dirent->ino,
 			dirent->type);
-}
+पूर्ण
 
-static int parse_dirfile(char *buf, size_t nbytes, struct file *file,
-			 struct dir_context *ctx)
-{
-	while (nbytes >= FUSE_NAME_OFFSET) {
-		struct fuse_dirent *dirent = (struct fuse_dirent *) buf;
-		size_t reclen = FUSE_DIRENT_SIZE(dirent);
-		if (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
-			return -EIO;
-		if (reclen > nbytes)
-			break;
-		if (memchr(dirent->name, '/', dirent->namelen) != NULL)
-			return -EIO;
+अटल पूर्णांक parse_dirfile(अक्षर *buf, माप_प्रकार nbytes, काष्ठा file *file,
+			 काष्ठा dir_context *ctx)
+अणु
+	जबतक (nbytes >= FUSE_NAME_OFFSET) अणु
+		काष्ठा fuse_dirent *dirent = (काष्ठा fuse_dirent *) buf;
+		माप_प्रकार reclen = FUSE_सूचीENT_SIZE(dirent);
+		अगर (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
+			वापस -EIO;
+		अगर (reclen > nbytes)
+			अवरोध;
+		अगर (स_प्रथम(dirent->name, '/', dirent->namelen) != शून्य)
+			वापस -EIO;
 
-		if (!fuse_emit(file, ctx, dirent))
-			break;
+		अगर (!fuse_emit(file, ctx, dirent))
+			अवरोध;
 
 		buf += reclen;
 		nbytes -= reclen;
 		ctx->pos = dirent->off;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fuse_direntplus_link(struct file *file,
-				struct fuse_direntplus *direntplus,
+अटल पूर्णांक fuse_direntplus_link(काष्ठा file *file,
+				काष्ठा fuse_direntplus *direntplus,
 				u64 attr_version)
-{
-	struct fuse_entry_out *o = &direntplus->entry_out;
-	struct fuse_dirent *dirent = &direntplus->dirent;
-	struct dentry *parent = file->f_path.dentry;
-	struct qstr name = QSTR_INIT(dirent->name, dirent->namelen);
-	struct dentry *dentry;
-	struct dentry *alias;
-	struct inode *dir = d_inode(parent);
-	struct fuse_conn *fc;
-	struct inode *inode;
+अणु
+	काष्ठा fuse_entry_out *o = &direntplus->entry_out;
+	काष्ठा fuse_dirent *dirent = &direntplus->dirent;
+	काष्ठा dentry *parent = file->f_path.dentry;
+	काष्ठा qstr name = QSTR_INIT(dirent->name, dirent->namelen);
+	काष्ठा dentry *dentry;
+	काष्ठा dentry *alias;
+	काष्ठा inode *dir = d_inode(parent);
+	काष्ठा fuse_conn *fc;
+	काष्ठा inode *inode;
 	DECLARE_WAIT_QUEUE_HEAD_ONSTACK(wq);
 
-	if (!o->nodeid) {
+	अगर (!o->nodeid) अणु
 		/*
-		 * Unlike in the case of fuse_lookup, zero nodeid does not mean
-		 * ENOENT. Instead, it only means the userspace filesystem did
-		 * not want to return attributes/handle for this entry.
+		 * Unlike in the हाल of fuse_lookup, zero nodeid करोes not mean
+		 * ENOENT. Instead, it only means the userspace fileप्रणाली did
+		 * not want to वापस attributes/handle क्रम this entry.
 		 *
-		 * So do nothing.
+		 * So करो nothing.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (name.name[0] == '.') {
+	अगर (name.name[0] == '.') अणु
 		/*
 		 * We could potentially refresh the attributes of the directory
 		 * and its parent?
 		 */
-		if (name.len == 1)
-			return 0;
-		if (name.name[1] == '.' && name.len == 2)
-			return 0;
-	}
+		अगर (name.len == 1)
+			वापस 0;
+		अगर (name.name[1] == '.' && name.len == 2)
+			वापस 0;
+	पूर्ण
 
-	if (invalid_nodeid(o->nodeid))
-		return -EIO;
-	if (fuse_invalid_attr(&o->attr))
-		return -EIO;
+	अगर (invalid_nodeid(o->nodeid))
+		वापस -EIO;
+	अगर (fuse_invalid_attr(&o->attr))
+		वापस -EIO;
 
 	fc = get_fuse_conn(dir);
 
 	name.hash = full_name_hash(parent, name.name, name.len);
 	dentry = d_lookup(parent, &name);
-	if (!dentry) {
+	अगर (!dentry) अणु
 retry:
 		dentry = d_alloc_parallel(parent, &name, &wq);
-		if (IS_ERR(dentry))
-			return PTR_ERR(dentry);
-	}
-	if (!d_in_lookup(dentry)) {
-		struct fuse_inode *fi;
+		अगर (IS_ERR(dentry))
+			वापस PTR_ERR(dentry);
+	पूर्ण
+	अगर (!d_in_lookup(dentry)) अणु
+		काष्ठा fuse_inode *fi;
 		inode = d_inode(dentry);
-		if (!inode ||
+		अगर (!inode ||
 		    get_node_id(inode) != o->nodeid ||
-		    inode_wrong_type(inode, o->attr.mode)) {
+		    inode_wrong_type(inode, o->attr.mode)) अणु
 			d_invalidate(dentry);
 			dput(dentry);
-			goto retry;
-		}
-		if (fuse_is_bad(inode)) {
+			जाओ retry;
+		पूर्ण
+		अगर (fuse_is_bad(inode)) अणु
 			dput(dentry);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		fi = get_fuse_inode(inode);
 		spin_lock(&fi->lock);
 		fi->nlookup++;
 		spin_unlock(&fi->lock);
 
-		forget_all_cached_acls(inode);
+		क्रमget_all_cached_acls(inode);
 		fuse_change_attributes(inode, &o->attr,
-				       entry_attr_timeout(o),
+				       entry_attr_समयout(o),
 				       attr_version);
 		/*
 		 * The other branch comes via fuse_iget()
 		 * which bumps nlookup inside
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		inode = fuse_iget(dir->i_sb, o->nodeid, o->generation,
-				  &o->attr, entry_attr_timeout(o),
+				  &o->attr, entry_attr_समयout(o),
 				  attr_version);
-		if (!inode)
+		अगर (!inode)
 			inode = ERR_PTR(-ENOMEM);
 
 		alias = d_splice_alias(inode, dentry);
-		d_lookup_done(dentry);
-		if (alias) {
+		d_lookup_करोne(dentry);
+		अगर (alias) अणु
 			dput(dentry);
 			dentry = alias;
-		}
-		if (IS_ERR(dentry))
-			return PTR_ERR(dentry);
-	}
-	if (fc->readdirplus_auto)
+		पूर्ण
+		अगर (IS_ERR(dentry))
+			वापस PTR_ERR(dentry);
+	पूर्ण
+	अगर (fc->सूची_पढ़ोplus_स्वतः)
 		set_bit(FUSE_I_INIT_RDPLUS, &get_fuse_inode(inode)->state);
-	fuse_change_entry_timeout(dentry, o);
+	fuse_change_entry_समयout(dentry, o);
 
 	dput(dentry);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fuse_force_forget(struct file *file, u64 nodeid)
-{
-	struct inode *inode = file_inode(file);
-	struct fuse_mount *fm = get_fuse_mount(inode);
-	struct fuse_forget_in inarg;
+अटल व्योम fuse_क्रमce_क्रमget(काष्ठा file *file, u64 nodeid)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+	काष्ठा fuse_क्रमget_in inarg;
 	FUSE_ARGS(args);
 
-	memset(&inarg, 0, sizeof(inarg));
+	स_रखो(&inarg, 0, माप(inarg));
 	inarg.nlookup = 1;
 	args.opcode = FUSE_FORGET;
 	args.nodeid = nodeid;
 	args.in_numargs = 1;
-	args.in_args[0].size = sizeof(inarg);
+	args.in_args[0].size = माप(inarg);
 	args.in_args[0].value = &inarg;
-	args.force = true;
+	args.क्रमce = true;
 	args.noreply = true;
 
 	fuse_simple_request(fm, &args);
 	/* ignore errors */
-}
+पूर्ण
 
-static int parse_dirplusfile(char *buf, size_t nbytes, struct file *file,
-			     struct dir_context *ctx, u64 attr_version)
-{
-	struct fuse_direntplus *direntplus;
-	struct fuse_dirent *dirent;
-	size_t reclen;
-	int over = 0;
-	int ret;
+अटल पूर्णांक parse_dirplusfile(अक्षर *buf, माप_प्रकार nbytes, काष्ठा file *file,
+			     काष्ठा dir_context *ctx, u64 attr_version)
+अणु
+	काष्ठा fuse_direntplus *direntplus;
+	काष्ठा fuse_dirent *dirent;
+	माप_प्रकार reclen;
+	पूर्णांक over = 0;
+	पूर्णांक ret;
 
-	while (nbytes >= FUSE_NAME_OFFSET_DIRENTPLUS) {
-		direntplus = (struct fuse_direntplus *) buf;
+	जबतक (nbytes >= FUSE_NAME_OFFSET_सूचीENTPLUS) अणु
+		direntplus = (काष्ठा fuse_direntplus *) buf;
 		dirent = &direntplus->dirent;
-		reclen = FUSE_DIRENTPLUS_SIZE(direntplus);
+		reclen = FUSE_सूचीENTPLUS_SIZE(direntplus);
 
-		if (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
-			return -EIO;
-		if (reclen > nbytes)
-			break;
-		if (memchr(dirent->name, '/', dirent->namelen) != NULL)
-			return -EIO;
+		अगर (!dirent->namelen || dirent->namelen > FUSE_NAME_MAX)
+			वापस -EIO;
+		अगर (reclen > nbytes)
+			अवरोध;
+		अगर (स_प्रथम(dirent->name, '/', dirent->namelen) != शून्य)
+			वापस -EIO;
 
-		if (!over) {
-			/* We fill entries into dstbuf only as much as
-			   it can hold. But we still continue iterating
-			   over remaining entries to link them. If not,
-			   we need to send a FORGET for each of those
+		अगर (!over) अणु
+			/* We fill entries पूर्णांकo dstbuf only as much as
+			   it can hold. But we still जारी iterating
+			   over reमुख्यing entries to link them. If not,
+			   we need to send a FORGET क्रम each of those
 			   which we did not link.
 			*/
 			over = !fuse_emit(file, ctx, dirent);
-			if (!over)
+			अगर (!over)
 				ctx->pos = dirent->off;
-		}
+		पूर्ण
 
 		buf += reclen;
 		nbytes -= reclen;
 
 		ret = fuse_direntplus_link(file, direntplus, attr_version);
-		if (ret)
-			fuse_force_forget(file, direntplus->entry_out.nodeid);
-	}
+		अगर (ret)
+			fuse_क्रमce_क्रमget(file, direntplus->entry_out.nodeid);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fuse_readdir_uncached(struct file *file, struct dir_context *ctx)
-{
-	int plus;
-	ssize_t res;
-	struct page *page;
-	struct inode *inode = file_inode(file);
-	struct fuse_mount *fm = get_fuse_mount(inode);
-	struct fuse_io_args ia = {};
-	struct fuse_args_pages *ap = &ia.ap;
-	struct fuse_page_desc desc = { .length = PAGE_SIZE };
+अटल पूर्णांक fuse_सूची_पढ़ो_uncached(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	पूर्णांक plus;
+	sमाप_प्रकार res;
+	काष्ठा page *page;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fuse_mount *fm = get_fuse_mount(inode);
+	काष्ठा fuse_io_args ia = अणुपूर्ण;
+	काष्ठा fuse_args_pages *ap = &ia.ap;
+	काष्ठा fuse_page_desc desc = अणु .length = PAGE_SIZE पूर्ण;
 	u64 attr_version = 0;
 	bool locked;
 
 	page = alloc_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 
-	plus = fuse_use_readdirplus(inode, ctx);
+	plus = fuse_use_सूची_पढ़ोplus(inode, ctx);
 	ap->args.out_pages = true;
 	ap->num_pages = 1;
 	ap->pages = &page;
 	ap->descs = &desc;
-	if (plus) {
+	अगर (plus) अणु
 		attr_version = fuse_get_attr_version(fm->fc);
-		fuse_read_args_fill(&ia, file, ctx->pos, PAGE_SIZE,
-				    FUSE_READDIRPLUS);
-	} else {
-		fuse_read_args_fill(&ia, file, ctx->pos, PAGE_SIZE,
-				    FUSE_READDIR);
-	}
+		fuse_पढ़ो_args_fill(&ia, file, ctx->pos, PAGE_SIZE,
+				    FUSE_READसूचीPLUS);
+	पूर्ण अन्यथा अणु
+		fuse_पढ़ो_args_fill(&ia, file, ctx->pos, PAGE_SIZE,
+				    FUSE_READसूची);
+	पूर्ण
 	locked = fuse_lock_inode(inode);
 	res = fuse_simple_request(fm, &ap->args);
 	fuse_unlock_inode(inode, locked);
-	if (res >= 0) {
-		if (!res) {
-			struct fuse_file *ff = file->private_data;
+	अगर (res >= 0) अणु
+		अगर (!res) अणु
+			काष्ठा fuse_file *ff = file->निजी_data;
 
-			if (ff->open_flags & FOPEN_CACHE_DIR)
-				fuse_readdir_cache_end(file, ctx->pos);
-		} else if (plus) {
+			अगर (ff->खोलो_flags & FOPEN_CACHE_सूची)
+				fuse_सूची_पढ़ो_cache_end(file, ctx->pos);
+		पूर्ण अन्यथा अगर (plus) अणु
 			res = parse_dirplusfile(page_address(page), res,
 						file, ctx, attr_version);
-		} else {
+		पूर्ण अन्यथा अणु
 			res = parse_dirfile(page_address(page), res, file,
 					    ctx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	__free_page(page);
-	fuse_invalidate_atime(inode);
-	return res;
-}
+	__मुक्त_page(page);
+	fuse_invalidate_aसमय(inode);
+	वापस res;
+पूर्ण
 
-enum fuse_parse_result {
+क्रमागत fuse_parse_result अणु
 	FOUND_ERR = -1,
 	FOUND_NONE = 0,
 	FOUND_SOME,
 	FOUND_ALL,
-};
+पूर्ण;
 
-static enum fuse_parse_result fuse_parse_cache(struct fuse_file *ff,
-					       void *addr, unsigned int size,
-					       struct dir_context *ctx)
-{
-	unsigned int offset = ff->readdir.cache_off & ~PAGE_MASK;
-	enum fuse_parse_result res = FOUND_NONE;
+अटल क्रमागत fuse_parse_result fuse_parse_cache(काष्ठा fuse_file *ff,
+					       व्योम *addr, अचिन्हित पूर्णांक size,
+					       काष्ठा dir_context *ctx)
+अणु
+	अचिन्हित पूर्णांक offset = ff->सूची_पढ़ो.cache_off & ~PAGE_MASK;
+	क्रमागत fuse_parse_result res = FOUND_NONE;
 
 	WARN_ON(offset >= size);
 
-	for (;;) {
-		struct fuse_dirent *dirent = addr + offset;
-		unsigned int nbytes = size - offset;
-		size_t reclen;
+	क्रम (;;) अणु
+		काष्ठा fuse_dirent *dirent = addr + offset;
+		अचिन्हित पूर्णांक nbytes = size - offset;
+		माप_प्रकार reclen;
 
-		if (nbytes < FUSE_NAME_OFFSET || !dirent->namelen)
-			break;
+		अगर (nbytes < FUSE_NAME_OFFSET || !dirent->namelen)
+			अवरोध;
 
-		reclen = FUSE_DIRENT_SIZE(dirent); /* derefs ->namelen */
+		reclen = FUSE_सूचीENT_SIZE(dirent); /* derefs ->namelen */
 
-		if (WARN_ON(dirent->namelen > FUSE_NAME_MAX))
-			return FOUND_ERR;
-		if (WARN_ON(reclen > nbytes))
-			return FOUND_ERR;
-		if (WARN_ON(memchr(dirent->name, '/', dirent->namelen) != NULL))
-			return FOUND_ERR;
+		अगर (WARN_ON(dirent->namelen > FUSE_NAME_MAX))
+			वापस FOUND_ERR;
+		अगर (WARN_ON(reclen > nbytes))
+			वापस FOUND_ERR;
+		अगर (WARN_ON(स_प्रथम(dirent->name, '/', dirent->namelen) != शून्य))
+			वापस FOUND_ERR;
 
-		if (ff->readdir.pos == ctx->pos) {
+		अगर (ff->सूची_पढ़ो.pos == ctx->pos) अणु
 			res = FOUND_SOME;
-			if (!dir_emit(ctx, dirent->name, dirent->namelen,
+			अगर (!dir_emit(ctx, dirent->name, dirent->namelen,
 				      dirent->ino, dirent->type))
-				return FOUND_ALL;
+				वापस FOUND_ALL;
 			ctx->pos = dirent->off;
-		}
-		ff->readdir.pos = dirent->off;
-		ff->readdir.cache_off += reclen;
+		पूर्ण
+		ff->सूची_पढ़ो.pos = dirent->off;
+		ff->सूची_पढ़ो.cache_off += reclen;
 
 		offset += reclen;
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void fuse_rdc_reset(struct inode *inode)
-{
-	struct fuse_inode *fi = get_fuse_inode(inode);
+अटल व्योम fuse_rdc_reset(काष्ठा inode *inode)
+अणु
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
 
 	fi->rdc.cached = false;
 	fi->rdc.version++;
 	fi->rdc.size = 0;
 	fi->rdc.pos = 0;
-}
+पूर्ण
 
-#define UNCACHED 1
+#घोषणा UNCACHED 1
 
-static int fuse_readdir_cached(struct file *file, struct dir_context *ctx)
-{
-	struct fuse_file *ff = file->private_data;
-	struct inode *inode = file_inode(file);
-	struct fuse_conn *fc = get_fuse_conn(inode);
-	struct fuse_inode *fi = get_fuse_inode(inode);
-	enum fuse_parse_result res;
+अटल पूर्णांक fuse_सूची_पढ़ो_cached(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा fuse_file *ff = file->निजी_data;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fuse_conn *fc = get_fuse_conn(inode);
+	काष्ठा fuse_inode *fi = get_fuse_inode(inode);
+	क्रमागत fuse_parse_result res;
 	pgoff_t index;
-	unsigned int size;
-	struct page *page;
-	void *addr;
+	अचिन्हित पूर्णांक size;
+	काष्ठा page *page;
+	व्योम *addr;
 
 	/* Seeked?  If so, reset the cache stream */
-	if (ff->readdir.pos != ctx->pos) {
-		ff->readdir.pos = 0;
-		ff->readdir.cache_off = 0;
-	}
+	अगर (ff->सूची_पढ़ो.pos != ctx->pos) अणु
+		ff->सूची_पढ़ो.pos = 0;
+		ff->सूची_पढ़ो.cache_off = 0;
+	पूर्ण
 
 	/*
-	 * We're just about to start reading into the cache or reading the
-	 * cache; both cases require an up-to-date mtime value.
+	 * We're just about to start पढ़ोing पूर्णांकo the cache or पढ़ोing the
+	 * cache; both हालs require an up-to-date mसमय value.
 	 */
-	if (!ctx->pos && fc->auto_inval_data) {
-		int err = fuse_update_attributes(inode, file);
+	अगर (!ctx->pos && fc->स्वतः_inval_data) अणु
+		पूर्णांक err = fuse_update_attributes(inode, file);
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 retry:
 	spin_lock(&fi->rdc.lock);
 retry_locked:
-	if (!fi->rdc.cached) {
-		/* Starting cache? Set cache mtime. */
-		if (!ctx->pos && !fi->rdc.size) {
-			fi->rdc.mtime = inode->i_mtime;
+	अगर (!fi->rdc.cached) अणु
+		/* Starting cache? Set cache mसमय. */
+		अगर (!ctx->pos && !fi->rdc.size) अणु
+			fi->rdc.mसमय = inode->i_mसमय;
 			fi->rdc.iversion = inode_query_iversion(inode);
-		}
+		पूर्ण
 		spin_unlock(&fi->rdc.lock);
-		return UNCACHED;
-	}
+		वापस UNCACHED;
+	पूर्ण
 	/*
-	 * When at the beginning of the directory (i.e. just after opendir(3) or
-	 * rewinddir(3)), then need to check whether directory contents have
-	 * changed, and reset the cache if so.
+	 * When at the beginning of the directory (i.e. just after सूची_खोलो(3) or
+	 * सूची_शुरु(3)), then need to check whether directory contents have
+	 * changed, and reset the cache अगर so.
 	 */
-	if (!ctx->pos) {
-		if (inode_peek_iversion(inode) != fi->rdc.iversion ||
-		    !timespec64_equal(&fi->rdc.mtime, &inode->i_mtime)) {
+	अगर (!ctx->pos) अणु
+		अगर (inode_peek_iversion(inode) != fi->rdc.iversion ||
+		    !बारpec64_equal(&fi->rdc.mसमय, &inode->i_mसमय)) अणु
 			fuse_rdc_reset(inode);
-			goto retry_locked;
-		}
-	}
+			जाओ retry_locked;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If cache version changed since the last getdents() call, then reset
 	 * the cache stream.
 	 */
-	if (ff->readdir.version != fi->rdc.version) {
-		ff->readdir.pos = 0;
-		ff->readdir.cache_off = 0;
-	}
+	अगर (ff->सूची_पढ़ो.version != fi->rdc.version) अणु
+		ff->सूची_पढ़ो.pos = 0;
+		ff->सूची_पढ़ो.cache_off = 0;
+	पूर्ण
 	/*
 	 * If at the beginning of the cache, than reset version to
 	 * current.
 	 */
-	if (ff->readdir.pos == 0)
-		ff->readdir.version = fi->rdc.version;
+	अगर (ff->सूची_पढ़ो.pos == 0)
+		ff->सूची_पढ़ो.version = fi->rdc.version;
 
-	WARN_ON(fi->rdc.size < ff->readdir.cache_off);
+	WARN_ON(fi->rdc.size < ff->सूची_पढ़ो.cache_off);
 
-	index = ff->readdir.cache_off >> PAGE_SHIFT;
+	index = ff->सूची_पढ़ो.cache_off >> PAGE_SHIFT;
 
-	if (index == (fi->rdc.size >> PAGE_SHIFT))
+	अगर (index == (fi->rdc.size >> PAGE_SHIFT))
 		size = fi->rdc.size & ~PAGE_MASK;
-	else
+	अन्यथा
 		size = PAGE_SIZE;
 	spin_unlock(&fi->rdc.lock);
 
-	/* EOF? */
-	if ((ff->readdir.cache_off & ~PAGE_MASK) == size)
-		return 0;
+	/* खातापूर्ण? */
+	अगर ((ff->सूची_पढ़ो.cache_off & ~PAGE_MASK) == size)
+		वापस 0;
 
 	page = find_get_page_flags(file->f_mapping, index,
 				   FGP_ACCESSED | FGP_LOCK);
 	spin_lock(&fi->rdc.lock);
-	if (!page) {
+	अगर (!page) अणु
 		/*
 		 * Uh-oh: page gone missing, cache is useless
 		 */
-		if (fi->rdc.version == ff->readdir.version)
+		अगर (fi->rdc.version == ff->सूची_पढ़ो.version)
 			fuse_rdc_reset(inode);
-		goto retry_locked;
-	}
+		जाओ retry_locked;
+	पूर्ण
 
 	/* Make sure it's still the same version after getting the page. */
-	if (ff->readdir.version != fi->rdc.version) {
+	अगर (ff->सूची_पढ़ो.version != fi->rdc.version) अणु
 		spin_unlock(&fi->rdc.lock);
 		unlock_page(page);
 		put_page(page);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 	spin_unlock(&fi->rdc.lock);
 
 	/*
-	 * Contents of the page are now protected against changing by holding
+	 * Contents of the page are now रक्षित against changing by holding
 	 * the page lock.
 	 */
 	addr = kmap(page);
@@ -542,44 +543,44 @@ retry_locked:
 	unlock_page(page);
 	put_page(page);
 
-	if (res == FOUND_ERR)
-		return -EIO;
+	अगर (res == FOUND_ERR)
+		वापस -EIO;
 
-	if (res == FOUND_ALL)
-		return 0;
+	अगर (res == FOUND_ALL)
+		वापस 0;
 
-	if (size == PAGE_SIZE) {
+	अगर (size == PAGE_SIZE) अणु
 		/* We hit end of page: skip to next page. */
-		ff->readdir.cache_off = ALIGN(ff->readdir.cache_off, PAGE_SIZE);
-		goto retry;
-	}
+		ff->सूची_पढ़ो.cache_off = ALIGN(ff->सूची_पढ़ो.cache_off, PAGE_SIZE);
+		जाओ retry;
+	पूर्ण
 
 	/*
-	 * End of cache reached.  If found position, then we are done, otherwise
-	 * need to fall back to uncached, since the position we were looking for
+	 * End of cache reached.  If found position, then we are करोne, otherwise
+	 * need to fall back to uncached, since the position we were looking क्रम
 	 * wasn't in the cache.
 	 */
-	return res == FOUND_SOME ? 0 : UNCACHED;
-}
+	वापस res == FOUND_SOME ? 0 : UNCACHED;
+पूर्ण
 
-int fuse_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct fuse_file *ff = file->private_data;
-	struct inode *inode = file_inode(file);
-	int err;
+पूर्णांक fuse_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा fuse_file *ff = file->निजी_data;
+	काष्ठा inode *inode = file_inode(file);
+	पूर्णांक err;
 
-	if (fuse_is_bad(inode))
-		return -EIO;
+	अगर (fuse_is_bad(inode))
+		वापस -EIO;
 
-	mutex_lock(&ff->readdir.lock);
+	mutex_lock(&ff->सूची_पढ़ो.lock);
 
 	err = UNCACHED;
-	if (ff->open_flags & FOPEN_CACHE_DIR)
-		err = fuse_readdir_cached(file, ctx);
-	if (err == UNCACHED)
-		err = fuse_readdir_uncached(file, ctx);
+	अगर (ff->खोलो_flags & FOPEN_CACHE_सूची)
+		err = fuse_सूची_पढ़ो_cached(file, ctx);
+	अगर (err == UNCACHED)
+		err = fuse_सूची_पढ़ो_uncached(file, ctx);
 
-	mutex_unlock(&ff->readdir.lock);
+	mutex_unlock(&ff->सूची_पढ़ो.lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण

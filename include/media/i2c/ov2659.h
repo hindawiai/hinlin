@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Omnivision OV2659 CMOS Image Sensor driver
  *
@@ -6,7 +7,7 @@
  * Benoit Parrot <bparrot@ti.com>
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -20,15 +21,15 @@
  * SOFTWARE.
  */
 
-#ifndef OV2659_H
-#define OV2659_H
+#अगर_अघोषित OV2659_H
+#घोषणा OV2659_H
 
 /**
- * struct ov2659_platform_data - ov2659 driver platform data
- * @link_frequency: target pixel clock frequency
+ * काष्ठा ov2659_platक्रमm_data - ov2659 driver platक्रमm data
+ * @link_frequency: target pixel घड़ी frequency
  */
-struct ov2659_platform_data {
+काष्ठा ov2659_platक्रमm_data अणु
 	s64 link_frequency;
-};
+पूर्ण;
 
-#endif /* OV2659_H */
+#पूर्ण_अगर /* OV2659_H */

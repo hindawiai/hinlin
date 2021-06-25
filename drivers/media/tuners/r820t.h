@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Elonics R820T silicon tuner driver
  *
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef R820T_H
-#define R820T_H
+#अगर_अघोषित R820T_H
+#घोषणा R820T_H
 
-#include <media/dvb_frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-enum r820t_chip {
+क्रमागत r820t_chip अणु
 	CHIP_R820T,
 	CHIP_R620D,
 	CHIP_R828D,
 	CHIP_R828,
 	CHIP_R828S,
 	CHIP_R820C,
-};
+पूर्ण;
 
-struct r820t_config {
+काष्ठा r820t_config अणु
 	u8 i2c_addr;		/* 0x34 */
 	u32 xtal;
-	enum r820t_chip rafael_chip;
-	unsigned max_i2c_msg_len;
+	क्रमागत r820t_chip rafael_chip;
+	अचिन्हित max_i2c_msg_len;
 	bool use_diplexer;
 	bool use_predetect;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_R820T)
-struct dvb_frontend *r820t_attach(struct dvb_frontend *fe,
-				  struct i2c_adapter *i2c,
-				  const struct r820t_config *cfg);
-#else
-static inline struct dvb_frontend *r820t_attach(struct dvb_frontend *fe,
-						struct i2c_adapter *i2c,
-						const struct r820t_config *cfg)
-{
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_R820T)
+काष्ठा dvb_frontend *r820t_attach(काष्ठा dvb_frontend *fe,
+				  काष्ठा i2c_adapter *i2c,
+				  स्थिर काष्ठा r820t_config *cfg);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *r820t_attach(काष्ठा dvb_frontend *fe,
+						काष्ठा i2c_adapter *i2c,
+						स्थिर काष्ठा r820t_config *cfg)
+अणु
 	pr_warn("%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

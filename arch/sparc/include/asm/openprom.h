@@ -1,145 +1,146 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC_OPENPROM_H
-#define __SPARC_OPENPROM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC_OPENPROM_H
+#घोषणा __SPARC_OPENPROM_H
 
-/* openprom.h:  Prom structures and defines for access to the OPENBOOT
+/* खोलोprom.h:  Prom काष्ठाures and defines क्रम access to the OPENBOOT
  *              prom routines and data areas.
  *
  * Copyright (C) 1995,1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
-/* Empirical constants... */
-#define LINUX_OPPROM_MAGIC      0x10010407
+/* Empirical स्थिरants... */
+#घोषणा LINUX_OPPROM_MAGIC      0x10010407
 
-#ifndef __ASSEMBLY__
-#include <linux/of.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/of.h>
 
 /* V0 prom device operations. */
-struct linux_dev_v0_funcs {
-	int (*v0_devopen)(char *device_str);
-	int (*v0_devclose)(int dev_desc);
-	int (*v0_rdblkdev)(int dev_desc, int num_blks, int blk_st, char *buf);
-	int (*v0_wrblkdev)(int dev_desc, int num_blks, int blk_st, char *buf);
-	int (*v0_wrnetdev)(int dev_desc, int num_bytes, char *buf);
-	int (*v0_rdnetdev)(int dev_desc, int num_bytes, char *buf);
-	int (*v0_rdchardev)(int dev_desc, int num_bytes, int dummy, char *buf);
-	int (*v0_wrchardev)(int dev_desc, int num_bytes, int dummy, char *buf);
-	int (*v0_seekdev)(int dev_desc, long logical_offst, int from);
-};
+काष्ठा linux_dev_v0_funcs अणु
+	पूर्णांक (*v0_devखोलो)(अक्षर *device_str);
+	पूर्णांक (*v0_devबंद)(पूर्णांक dev_desc);
+	पूर्णांक (*v0_rdblkdev)(पूर्णांक dev_desc, पूर्णांक num_blks, पूर्णांक blk_st, अक्षर *buf);
+	पूर्णांक (*v0_wrblkdev)(पूर्णांक dev_desc, पूर्णांक num_blks, पूर्णांक blk_st, अक्षर *buf);
+	पूर्णांक (*v0_wrnetdev)(पूर्णांक dev_desc, पूर्णांक num_bytes, अक्षर *buf);
+	पूर्णांक (*v0_rdnetdev)(पूर्णांक dev_desc, पूर्णांक num_bytes, अक्षर *buf);
+	पूर्णांक (*v0_rdअक्षरdev)(पूर्णांक dev_desc, पूर्णांक num_bytes, पूर्णांक dummy, अक्षर *buf);
+	पूर्णांक (*v0_wrअक्षरdev)(पूर्णांक dev_desc, पूर्णांक num_bytes, पूर्णांक dummy, अक्षर *buf);
+	पूर्णांक (*v0_seekdev)(पूर्णांक dev_desc, दीर्घ logical_offst, पूर्णांक from);
+पूर्ण;
 
 /* V2 and later prom device operations. */
-struct linux_dev_v2_funcs {
-	phandle (*v2_inst2pkg)(int d);	/* Convert ihandle to phandle */
-	char * (*v2_dumb_mem_alloc)(char *va, unsigned int sz);
-	void (*v2_dumb_mem_free)(char *va, unsigned int sz);
+काष्ठा linux_dev_v2_funcs अणु
+	phandle (*v2_inst2pkg)(पूर्णांक d);	/* Convert ihandle to phandle */
+	अक्षर * (*v2_dumb_mem_alloc)(अक्षर *va, अचिन्हित पूर्णांक sz);
+	व्योम (*v2_dumb_mem_मुक्त)(अक्षर *va, अचिन्हित पूर्णांक sz);
 
-	/* To map devices into virtual I/O space. */
-	char * (*v2_dumb_mmap)(char *virta, int which_io, unsigned int paddr, unsigned int sz);
-	void (*v2_dumb_munmap)(char *virta, unsigned int size);
+	/* To map devices पूर्णांकo भव I/O space. */
+	अक्षर * (*v2_dumb_mmap)(अक्षर *virta, पूर्णांक which_io, अचिन्हित पूर्णांक paddr, अचिन्हित पूर्णांक sz);
+	व्योम (*v2_dumb_munmap)(अक्षर *virta, अचिन्हित पूर्णांक size);
 
-	int (*v2_dev_open)(char *devpath);
-	void (*v2_dev_close)(int d);
-	int (*v2_dev_read)(int d, char *buf, int nbytes);
-	int (*v2_dev_write)(int d, const char *buf, int nbytes);
-	int (*v2_dev_seek)(int d, int hi, int lo);
+	पूर्णांक (*v2_dev_खोलो)(अक्षर *devpath);
+	व्योम (*v2_dev_बंद)(पूर्णांक d);
+	पूर्णांक (*v2_dev_पढ़ो)(पूर्णांक d, अक्षर *buf, पूर्णांक nbytes);
+	पूर्णांक (*v2_dev_ग_लिखो)(पूर्णांक d, स्थिर अक्षर *buf, पूर्णांक nbytes);
+	पूर्णांक (*v2_dev_seek)(पूर्णांक d, पूर्णांक hi, पूर्णांक lo);
 
 	/* Never issued (multistage load support) */
-	void (*v2_wheee2)(void);
-	void (*v2_wheee3)(void);
-};
+	व्योम (*v2_wheee2)(व्योम);
+	व्योम (*v2_wheee3)(व्योम);
+पूर्ण;
 
-struct linux_mlist_v0 {
-	struct linux_mlist_v0 *theres_more;
-	unsigned int start_adr;
-	unsigned int num_bytes;
-};
+काष्ठा linux_mlist_v0 अणु
+	काष्ठा linux_mlist_v0 *theres_more;
+	अचिन्हित पूर्णांक start_adr;
+	अचिन्हित पूर्णांक num_bytes;
+पूर्ण;
 
-struct linux_mem_v0 {
-	struct linux_mlist_v0 **v0_totphys;
-	struct linux_mlist_v0 **v0_prommap;
-	struct linux_mlist_v0 **v0_available; /* What we can use */
-};
+काष्ठा linux_mem_v0 अणु
+	काष्ठा linux_mlist_v0 **v0_totphys;
+	काष्ठा linux_mlist_v0 **v0_prommap;
+	काष्ठा linux_mlist_v0 **v0_available; /* What we can use */
+पूर्ण;
 
 /* Arguments sent to the kernel from the boot prompt. */
-struct linux_arguments_v0 {
-	char *argv[8];
-	char args[100];
-	char boot_dev[2];
-	int boot_dev_ctrl;
-	int boot_dev_unit;
-	int dev_partition;
-	char *kernel_file_name;
-	void *aieee1;           /* XXX */
-};
+काष्ठा linux_arguments_v0 अणु
+	अक्षर *argv[8];
+	अक्षर args[100];
+	अक्षर boot_dev[2];
+	पूर्णांक boot_dev_ctrl;
+	पूर्णांक boot_dev_unit;
+	पूर्णांक dev_partition;
+	अक्षर *kernel_file_name;
+	व्योम *aieee1;           /* XXX */
+पूर्ण;
 
 /* V2 and up boot things. */
-struct linux_bootargs_v2 {
-	char **bootpath;
-	char **bootargs;
-	int *fd_stdin;
-	int *fd_stdout;
-};
+काष्ठा linux_bootargs_v2 अणु
+	अक्षर **bootpath;
+	अक्षर **bootargs;
+	पूर्णांक *fd_मानक_निवेश;
+	पूर्णांक *fd_मानक_निकास;
+पूर्ण;
 
 /* The top level PROM vector. */
-struct linux_romvec {
+काष्ठा linux_romvec अणु
 	/* Version numbers. */
-	unsigned int pv_magic_cookie;
-	unsigned int pv_romvers;
-	unsigned int pv_plugin_revision;
-	unsigned int pv_printrev;
+	अचिन्हित पूर्णांक pv_magic_cookie;
+	अचिन्हित पूर्णांक pv_romvers;
+	अचिन्हित पूर्णांक pv_plugin_revision;
+	अचिन्हित पूर्णांक pv_prपूर्णांकrev;
 
 	/* Version 0 memory descriptors. */
-	struct linux_mem_v0 pv_v0mem;
+	काष्ठा linux_mem_v0 pv_v0mem;
 
 	/* Node operations. */
-	struct linux_nodeops *pv_nodeops;
+	काष्ठा linux_nodeops *pv_nodeops;
 
-	char **pv_bootstr;
-	struct linux_dev_v0_funcs pv_v0devops;
+	अक्षर **pv_bootstr;
+	काष्ठा linux_dev_v0_funcs pv_v0devops;
 
-	char *pv_stdin;
-	char *pv_stdout;
-#define	PROMDEV_KBD	0		/* input from keyboard */
-#define	PROMDEV_SCREEN	0		/* output to screen */
-#define	PROMDEV_TTYA	1		/* in/out to ttya */
-#define	PROMDEV_TTYB	2		/* in/out to ttyb */
+	अक्षर *pv_मानक_निवेश;
+	अक्षर *pv_मानक_निकास;
+#घोषणा	PROMDEV_KBD	0		/* input from keyboard */
+#घोषणा	PROMDEV_SCREEN	0		/* output to screen */
+#घोषणा	PROMDEV_TTYA	1		/* in/out to ttya */
+#घोषणा	PROMDEV_TTYB	2		/* in/out to ttyb */
 
-	/* Blocking getchar/putchar.  NOT REENTRANT! (grr) */
-	int (*pv_getchar)(void);
-	void (*pv_putchar)(int ch);
+	/* Blocking अक्षर_लो/अक्षर_दो.  NOT REENTRANT! (grr) */
+	पूर्णांक (*pv_अक्षर_लो)(व्योम);
+	व्योम (*pv_अक्षर_दो)(पूर्णांक ch);
 
 	/* Non-blocking variants. */
-	int (*pv_nbgetchar)(void);
-	int (*pv_nbputchar)(int ch);
+	पूर्णांक (*pv_nbअक्षर_लो)(व्योम);
+	पूर्णांक (*pv_nbअक्षर_दो)(पूर्णांक ch);
 
-	void (*pv_putstr)(char *str, int len);
+	व्योम (*pv_माला_दोtr)(अक्षर *str, पूर्णांक len);
 
 	/* Miscellany. */
-	void (*pv_reboot)(char *bootstr);
-	void (*pv_printf)(__const__ char *fmt, ...);
-	void (*pv_abort)(void);
-	__volatile__ int *pv_ticks;
-	void (*pv_halt)(void);
-	void (**pv_synchook)(void);
+	व्योम (*pv_reboot)(अक्षर *bootstr);
+	व्योम (*pv_म_लिखो)(__स्थिर__ अक्षर *fmt, ...);
+	व्योम (*pv_पात)(व्योम);
+	__अस्थिर__ पूर्णांक *pv_ticks;
+	व्योम (*pv_halt)(व्योम);
+	व्योम (**pv_synchook)(व्योम);
 
-	/* Evaluate a forth string, not different proto for V0 and V2->up. */
-	union {
-		void (*v0_eval)(int len, char *str);
-		void (*v2_eval)(char *str);
-	} pv_fortheval;
+	/* Evaluate a क्रमth string, not dअगरferent proto क्रम V0 and V2->up. */
+	जोड़ अणु
+		व्योम (*v0_eval)(पूर्णांक len, अक्षर *str);
+		व्योम (*v2_eval)(अक्षर *str);
+	पूर्ण pv_क्रमtheval;
 
-	struct linux_arguments_v0 **pv_v0bootargs;
+	काष्ठा linux_arguments_v0 **pv_v0bootargs;
 
 	/* Get ether address. */
-	unsigned int (*pv_enaddr)(int d, char *enaddr);
+	अचिन्हित पूर्णांक (*pv_enaddr)(पूर्णांक d, अक्षर *enaddr);
 
-	struct linux_bootargs_v2 pv_v2bootargs;
-	struct linux_dev_v2_funcs pv_v2devops;
+	काष्ठा linux_bootargs_v2 pv_v2bootargs;
+	काष्ठा linux_dev_v2_funcs pv_v2devops;
 
-	int filler[15];
+	पूर्णांक filler[15];
 
 	/* This one is sun4c/sun4 only. */
-	void (*pv_setctxt)(int ctxt, char *va, int pmeg);
+	व्योम (*pv_setctxt)(पूर्णांक ctxt, अक्षर *va, पूर्णांक pmeg);
 
 	/* Prom version 3 Multiprocessor routines. This stuff is crazy.
 	 * No joke. Calling these when there is only one cpu probably
@@ -149,132 +150,132 @@ struct linux_romvec {
 	/* v3_cpustart() will start the cpu 'whichcpu' in mmu-context
 	 * 'thiscontext' executing at address 'prog_counter'
 	 */
-	int (*v3_cpustart)(unsigned int whichcpu, int ctxtbl_ptr,
-			   int thiscontext, char *prog_counter);
+	पूर्णांक (*v3_cpustart)(अचिन्हित पूर्णांक whichcpu, पूर्णांक ctxtbl_ptr,
+			   पूर्णांक thiscontext, अक्षर *prog_counter);
 
 	/* v3_cpustop() will cause cpu 'whichcpu' to stop executing
 	 * until a resume cpu call is made.
 	 */
-	int (*v3_cpustop)(unsigned int whichcpu);
+	पूर्णांक (*v3_cpustop)(अचिन्हित पूर्णांक whichcpu);
 
 	/* v3_cpuidle() will idle cpu 'whichcpu' until a stop or
 	 * resume cpu call is made.
 	 */
-	int (*v3_cpuidle)(unsigned int whichcpu);
+	पूर्णांक (*v3_cpuidle)(अचिन्हित पूर्णांक whichcpu);
 
 	/* v3_cpuresume() will resume processor 'whichcpu' executing
 	 * starting with whatever 'pc' and 'npc' were left at the
 	 * last 'idle' or 'stop' call.
 	 */
-	int (*v3_cpuresume)(unsigned int whichcpu);
-};
+	पूर्णांक (*v3_cpuresume)(अचिन्हित पूर्णांक whichcpu);
+पूर्ण;
 
-/* Routines for traversing the prom device tree. */
-struct linux_nodeops {
+/* Routines क्रम traversing the prom device tree. */
+काष्ठा linux_nodeops अणु
 	phandle (*no_nextnode)(phandle node);
 	phandle (*no_child)(phandle node);
-	int (*no_proplen)(phandle node, const char *name);
-	int (*no_getprop)(phandle node, const char *name, char *val);
-	int (*no_setprop)(phandle node, const char *name, char *val, int len);
-	char * (*no_nextprop)(phandle node, char *name);
-};
+	पूर्णांक (*no_proplen)(phandle node, स्थिर अक्षर *name);
+	पूर्णांक (*no_getprop)(phandle node, स्थिर अक्षर *name, अक्षर *val);
+	पूर्णांक (*no_setprop)(phandle node, स्थिर अक्षर *name, अक्षर *val, पूर्णांक len);
+	अक्षर * (*no_nextprop)(phandle node, अक्षर *name);
+पूर्ण;
 
-/* More fun PROM structures for device probing. */
-#if defined(__sparc__) && defined(__arch64__)
-#define PROMREG_MAX     24
-#define PROMVADDR_MAX   16
-#define PROMINTR_MAX    32
-#else
-#define PROMREG_MAX     16
-#define PROMVADDR_MAX   16
-#define PROMINTR_MAX    15
-#endif
+/* More fun PROM काष्ठाures क्रम device probing. */
+#अगर defined(__sparc__) && defined(__arch64__)
+#घोषणा PROMREG_MAX     24
+#घोषणा PROMVADDR_MAX   16
+#घोषणा PROMINTR_MAX    32
+#अन्यथा
+#घोषणा PROMREG_MAX     16
+#घोषणा PROMVADDR_MAX   16
+#घोषणा PROMINTR_MAX    15
+#पूर्ण_अगर
 
-struct linux_prom_registers {
-	unsigned int which_io;	/* hi part of physical address */
-	unsigned int phys_addr;	/* The physical address of this register */
-	unsigned int reg_size;	/* How many bytes does this register take up? */
-};
+काष्ठा linux_prom_रेजिस्टरs अणु
+	अचिन्हित पूर्णांक which_io;	/* hi part of physical address */
+	अचिन्हित पूर्णांक phys_addr;	/* The physical address of this रेजिस्टर */
+	अचिन्हित पूर्णांक reg_size;	/* How many bytes करोes this रेजिस्टर take up? */
+पूर्ण;
 
-struct linux_prom64_registers {
-	unsigned long phys_addr;
-	unsigned long reg_size;
-};
+काष्ठा linux_prom64_रेजिस्टरs अणु
+	अचिन्हित दीर्घ phys_addr;
+	अचिन्हित दीर्घ reg_size;
+पूर्ण;
 
-struct linux_prom_irqs {
-	int pri;    /* IRQ priority */
-	int vector; /* This is foobar, what does it do? */
-};
+काष्ठा linux_prom_irqs अणु
+	पूर्णांक pri;    /* IRQ priority */
+	पूर्णांक vector; /* This is foobar, what करोes it करो? */
+पूर्ण;
 
 /* Element of the "ranges" vector */
-struct linux_prom_ranges {
-	unsigned int ot_child_space;
-	unsigned int ot_child_base;		/* Bus feels this */
-	unsigned int ot_parent_space;
-	unsigned int ot_parent_base;		/* CPU looks from here */
-	unsigned int or_size;
-};
+काष्ठा linux_prom_ranges अणु
+	अचिन्हित पूर्णांक ot_child_space;
+	अचिन्हित पूर्णांक ot_child_base;		/* Bus feels this */
+	अचिन्हित पूर्णांक ot_parent_space;
+	अचिन्हित पूर्णांक ot_parent_base;		/* CPU looks from here */
+	अचिन्हित पूर्णांक or_size;
+पूर्ण;
 
 /*
- * Ranges and reg properties are a bit different for PCI.
+ * Ranges and reg properties are a bit dअगरferent क्रम PCI.
  */
-#if defined(__sparc__) && defined(__arch64__)
-struct linux_prom_pci_registers {
-	unsigned int phys_hi;
-	unsigned int phys_mid;
-	unsigned int phys_lo;
+#अगर defined(__sparc__) && defined(__arch64__)
+काष्ठा linux_prom_pci_रेजिस्टरs अणु
+	अचिन्हित पूर्णांक phys_hi;
+	अचिन्हित पूर्णांक phys_mid;
+	अचिन्हित पूर्णांक phys_lo;
 
-	unsigned int size_hi;
-	unsigned int size_lo;
-};
-#else
-struct linux_prom_pci_registers {
+	अचिन्हित पूर्णांक size_hi;
+	अचिन्हित पूर्णांक size_lo;
+पूर्ण;
+#अन्यथा
+काष्ठा linux_prom_pci_रेजिस्टरs अणु
 	/*
-	 * We don't know what information this field contain.
+	 * We करोn't know what inक्रमmation this field contain.
 	 * We guess, PCI device function is in bits 15:8
 	 * So, ...
 	 */
-	unsigned int which_io;  /* Let it be which_io */
+	अचिन्हित पूर्णांक which_io;  /* Let it be which_io */
 
-	unsigned int phys_hi;
-	unsigned int phys_lo;
+	अचिन्हित पूर्णांक phys_hi;
+	अचिन्हित पूर्णांक phys_lo;
 
-	unsigned int size_hi;
-	unsigned int size_lo;
-};
+	अचिन्हित पूर्णांक size_hi;
+	अचिन्हित पूर्णांक size_lo;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
-struct linux_prom_pci_ranges {
-	unsigned int child_phys_hi;	/* Only certain bits are encoded here. */
-	unsigned int child_phys_mid;
-	unsigned int child_phys_lo;
+काष्ठा linux_prom_pci_ranges अणु
+	अचिन्हित पूर्णांक child_phys_hi;	/* Only certain bits are encoded here. */
+	अचिन्हित पूर्णांक child_phys_mid;
+	अचिन्हित पूर्णांक child_phys_lo;
 
-	unsigned int parent_phys_hi;
-	unsigned int parent_phys_lo;
+	अचिन्हित पूर्णांक parent_phys_hi;
+	अचिन्हित पूर्णांक parent_phys_lo;
 
-	unsigned int size_hi;
-	unsigned int size_lo;
-};
+	अचिन्हित पूर्णांक size_hi;
+	अचिन्हित पूर्णांक size_lo;
+पूर्ण;
 
-struct linux_prom_pci_intmap {
-	unsigned int phys_hi;
-	unsigned int phys_mid;
-	unsigned int phys_lo;
+काष्ठा linux_prom_pci_पूर्णांकmap अणु
+	अचिन्हित पूर्णांक phys_hi;
+	अचिन्हित पूर्णांक phys_mid;
+	अचिन्हित पूर्णांक phys_lo;
 
-	unsigned int interrupt;
+	अचिन्हित पूर्णांक पूर्णांकerrupt;
 
-	int          cnode;
-	unsigned int cinterrupt;
-};
+	पूर्णांक          cnode;
+	अचिन्हित पूर्णांक cपूर्णांकerrupt;
+पूर्ण;
 
-struct linux_prom_pci_intmask {
-	unsigned int phys_hi;
-	unsigned int phys_mid;
-	unsigned int phys_lo;
-	unsigned int interrupt;
-};
+काष्ठा linux_prom_pci_पूर्णांकmask अणु
+	अचिन्हित पूर्णांक phys_hi;
+	अचिन्हित पूर्णांक phys_mid;
+	अचिन्हित पूर्णांक phys_lo;
+	अचिन्हित पूर्णांक पूर्णांकerrupt;
+पूर्ण;
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#endif /* !(__SPARC_OPENPROM_H) */
+#पूर्ण_अगर /* !(__SPARC_OPENPROM_H) */

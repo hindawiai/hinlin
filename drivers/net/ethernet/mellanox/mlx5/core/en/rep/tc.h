@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies. */
 
-#ifndef __MLX5_EN_REP_TC_H__
-#define __MLX5_EN_REP_TC_H__
+#अगर_अघोषित __MLX5_EN_REP_TC_H__
+#घोषणा __MLX5_EN_REP_TC_H__
 
-#include <linux/skbuff.h>
-#include "en_tc.h"
-#include "en_rep.h"
+#समावेश <linux/skbuff.h>
+#समावेश "en_tc.h"
+#समावेश "en_rep.h"
 
-#if IS_ENABLED(CONFIG_MLX5_CLS_ACT)
+#अगर IS_ENABLED(CONFIG_MLX5_CLS_ACT)
 
-int mlx5e_rep_tc_init(struct mlx5e_rep_priv *rpriv);
-void mlx5e_rep_tc_cleanup(struct mlx5e_rep_priv *rpriv);
+पूर्णांक mlx5e_rep_tc_init(काष्ठा mlx5e_rep_priv *rpriv);
+व्योम mlx5e_rep_tc_cleanup(काष्ठा mlx5e_rep_priv *rpriv);
 
-int mlx5e_rep_tc_netdevice_event_register(struct mlx5e_rep_priv *rpriv);
-void mlx5e_rep_tc_netdevice_event_unregister(struct mlx5e_rep_priv *rpriv);
+पूर्णांक mlx5e_rep_tc_netdevice_event_रेजिस्टर(काष्ठा mlx5e_rep_priv *rpriv);
+व्योम mlx5e_rep_tc_netdevice_event_unरेजिस्टर(काष्ठा mlx5e_rep_priv *rpriv);
 
-void mlx5e_rep_tc_enable(struct mlx5e_priv *priv);
-void mlx5e_rep_tc_disable(struct mlx5e_priv *priv);
+व्योम mlx5e_rep_tc_enable(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_rep_tc_disable(काष्ठा mlx5e_priv *priv);
 
-int mlx5e_rep_tc_event_port_affinity(struct mlx5e_priv *priv);
+पूर्णांक mlx5e_rep_tc_event_port_affinity(काष्ठा mlx5e_priv *priv);
 
-void mlx5e_rep_update_flows(struct mlx5e_priv *priv,
-			    struct mlx5e_encap_entry *e,
+व्योम mlx5e_rep_update_flows(काष्ठा mlx5e_priv *priv,
+			    काष्ठा mlx5e_encap_entry *e,
 			    bool neigh_connected,
-			    unsigned char ha[ETH_ALEN]);
+			    अचिन्हित अक्षर ha[ETH_ALEN]);
 
-int mlx5e_rep_encap_entry_attach(struct mlx5e_priv *priv,
-				 struct mlx5e_encap_entry *e,
-				 struct mlx5e_neigh *m_neigh,
-				 struct net_device *neigh_dev);
-void mlx5e_rep_encap_entry_detach(struct mlx5e_priv *priv,
-				  struct mlx5e_encap_entry *e);
+पूर्णांक mlx5e_rep_encap_entry_attach(काष्ठा mlx5e_priv *priv,
+				 काष्ठा mlx5e_encap_entry *e,
+				 काष्ठा mlx5e_neigh *m_neigh,
+				 काष्ठा net_device *neigh_dev);
+व्योम mlx5e_rep_encap_entry_detach(काष्ठा mlx5e_priv *priv,
+				  काष्ठा mlx5e_encap_entry *e);
 
-int mlx5e_rep_setup_tc(struct net_device *dev, enum tc_setup_type type,
-		       void *type_data);
+पूर्णांक mlx5e_rep_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+		       व्योम *type_data);
 
-bool mlx5e_rep_tc_update_skb(struct mlx5_cqe64 *cqe,
-			     struct sk_buff *skb,
-			     struct mlx5e_tc_update_priv *tc_priv);
-void mlx5_rep_tc_post_napi_receive(struct mlx5e_tc_update_priv *tc_priv);
+bool mlx5e_rep_tc_update_skb(काष्ठा mlx5_cqe64 *cqe,
+			     काष्ठा sk_buff *skb,
+			     काष्ठा mlx5e_tc_update_priv *tc_priv);
+व्योम mlx5_rep_tc_post_napi_receive(काष्ठा mlx5e_tc_update_priv *tc_priv);
 
-#else /* CONFIG_MLX5_CLS_ACT */
+#अन्यथा /* CONFIG_MLX5_CLS_ACT */
 
-struct mlx5e_rep_priv;
-static inline int
-mlx5e_rep_tc_init(struct mlx5e_rep_priv *rpriv) { return 0; }
-static inline void
-mlx5e_rep_tc_cleanup(struct mlx5e_rep_priv *rpriv) {}
+काष्ठा mlx5e_rep_priv;
+अटल अंतरभूत पूर्णांक
+mlx5e_rep_tc_init(काष्ठा mlx5e_rep_priv *rpriv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम
+mlx5e_rep_tc_cleanup(काष्ठा mlx5e_rep_priv *rpriv) अणुपूर्ण
 
-static inline int
-mlx5e_rep_tc_netdevice_event_register(struct mlx5e_rep_priv *rpriv) { return 0; }
-static inline void
-mlx5e_rep_tc_netdevice_event_unregister(struct mlx5e_rep_priv *rpriv) {}
+अटल अंतरभूत पूर्णांक
+mlx5e_rep_tc_netdevice_event_रेजिस्टर(काष्ठा mlx5e_rep_priv *rpriv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम
+mlx5e_rep_tc_netdevice_event_unरेजिस्टर(काष्ठा mlx5e_rep_priv *rpriv) अणुपूर्ण
 
-static inline void
-mlx5e_rep_tc_enable(struct mlx5e_priv *priv) {}
-static inline void
-mlx5e_rep_tc_disable(struct mlx5e_priv *priv) {}
+अटल अंतरभूत व्योम
+mlx5e_rep_tc_enable(काष्ठा mlx5e_priv *priv) अणुपूर्ण
+अटल अंतरभूत व्योम
+mlx5e_rep_tc_disable(काष्ठा mlx5e_priv *priv) अणुपूर्ण
 
-static inline int
-mlx5e_rep_tc_event_port_affinity(struct mlx5e_priv *priv) { return NOTIFY_DONE; }
+अटल अंतरभूत पूर्णांक
+mlx5e_rep_tc_event_port_affinity(काष्ठा mlx5e_priv *priv) अणु वापस NOTIFY_DONE; पूर्ण
 
-static inline int
-mlx5e_rep_setup_tc(struct net_device *dev, enum tc_setup_type type,
-		   void *type_data) { return -EOPNOTSUPP; }
+अटल अंतरभूत पूर्णांक
+mlx5e_rep_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+		   व्योम *type_data) अणु वापस -EOPNOTSUPP; पूर्ण
 
-struct mlx5e_tc_update_priv;
-static inline bool
-mlx5e_rep_tc_update_skb(struct mlx5_cqe64 *cqe,
-			struct sk_buff *skb,
-			struct mlx5e_tc_update_priv *tc_priv) { return true; }
-static inline void
-mlx5_rep_tc_post_napi_receive(struct mlx5e_tc_update_priv *tc_priv) {}
+काष्ठा mlx5e_tc_update_priv;
+अटल अंतरभूत bool
+mlx5e_rep_tc_update_skb(काष्ठा mlx5_cqe64 *cqe,
+			काष्ठा sk_buff *skb,
+			काष्ठा mlx5e_tc_update_priv *tc_priv) अणु वापस true; पूर्ण
+अटल अंतरभूत व्योम
+mlx5_rep_tc_post_napi_receive(काष्ठा mlx5e_tc_update_priv *tc_priv) अणुपूर्ण
 
-#endif /* CONFIG_MLX5_CLS_ACT */
+#पूर्ण_अगर /* CONFIG_MLX5_CLS_ACT */
 
-#endif /* __MLX5_EN_REP_TC_H__ */
+#पूर्ण_अगर /* __MLX5_EN_REP_TC_H__ */

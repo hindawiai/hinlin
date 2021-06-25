@@ -1,237 +1,238 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/fs/9p/vfs_dir.c
  *
- * This file contains vfs directory ops for the 9P2000 protocol.
+ * This file contains vfs directory ops क्रम the 9P2000 protocol.
  *
  *  Copyright (C) 2004 by Eric Van Hensbergen <ericvh@gmail.com>
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/file.h>
-#include <linux/stat.h>
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/inet.h>
-#include <linux/idr.h>
-#include <linux/slab.h>
-#include <linux/uio.h>
-#include <net/9p/9p.h>
-#include <net/9p/client.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/file.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uपन.स>
+#समावेश <net/9p/9p.h>
+#समावेश <net/9p/client.h>
 
-#include "v9fs.h"
-#include "v9fs_vfs.h"
-#include "fid.h"
+#समावेश "v9fs.h"
+#समावेश "v9fs_vfs.h"
+#समावेश "fid.h"
 
 /**
- * struct p9_rdir - readdir accounting
- * @head: start offset of current dirread buffer
- * @tail: end offset of current dirread buffer
- * @buf: dirread buffer
+ * काष्ठा p9_rdir - सूची_पढ़ो accounting
+ * @head: start offset of current dirपढ़ो buffer
+ * @tail: end offset of current dirपढ़ो buffer
+ * @buf: dirपढ़ो buffer
  *
- * private structure for keeping track of readdir
+ * निजी काष्ठाure क्रम keeping track of सूची_पढ़ो
  * allocated on demand
  */
 
-struct p9_rdir {
-	int head;
-	int tail;
-	uint8_t buf[];
-};
+काष्ठा p9_rdir अणु
+	पूर्णांक head;
+	पूर्णांक tail;
+	uपूर्णांक8_t buf[];
+पूर्ण;
 
 /**
- * dt_type - return file type
- * @mistat: mistat structure
+ * dt_type - वापस file type
+ * @mistat: mistat काष्ठाure
  *
  */
 
-static inline int dt_type(struct p9_wstat *mistat)
-{
-	unsigned long perm = mistat->mode;
-	int rettype = DT_REG;
+अटल अंतरभूत पूर्णांक dt_type(काष्ठा p9_wstat *mistat)
+अणु
+	अचिन्हित दीर्घ perm = mistat->mode;
+	पूर्णांक rettype = DT_REG;
 
-	if (perm & P9_DMDIR)
-		rettype = DT_DIR;
-	if (perm & P9_DMSYMLINK)
+	अगर (perm & P9_DMसूची)
+		rettype = DT_सूची;
+	अगर (perm & P9_DMSYMLINK)
 		rettype = DT_LNK;
 
-	return rettype;
-}
+	वापस rettype;
+पूर्ण
 
 /**
- * v9fs_alloc_rdir_buf - Allocate buffer used for read and readdir
- * @filp: opened file structure
+ * v9fs_alloc_rdir_buf - Allocate buffer used क्रम पढ़ो and सूची_पढ़ो
+ * @filp: खोलोed file काष्ठाure
  * @buflen: Length in bytes of buffer to allocate
  *
  */
 
-static struct p9_rdir *v9fs_alloc_rdir_buf(struct file *filp, int buflen)
-{
-	struct p9_fid *fid = filp->private_data;
-	if (!fid->rdir)
-		fid->rdir = kzalloc(sizeof(struct p9_rdir) + buflen, GFP_KERNEL);
-	return fid->rdir;
-}
+अटल काष्ठा p9_rdir *v9fs_alloc_rdir_buf(काष्ठा file *filp, पूर्णांक buflen)
+अणु
+	काष्ठा p9_fid *fid = filp->निजी_data;
+	अगर (!fid->rdir)
+		fid->rdir = kzalloc(माप(काष्ठा p9_rdir) + buflen, GFP_KERNEL);
+	वापस fid->rdir;
+पूर्ण
 
 /**
- * v9fs_dir_readdir - iterate through a directory
- * @file: opened file structure
+ * v9fs_dir_सूची_पढ़ो - iterate through a directory
+ * @file: खोलोed file काष्ठाure
  * @ctx: actor we feed the entries to
  *
  */
 
-static int v9fs_dir_readdir(struct file *file, struct dir_context *ctx)
-{
+अटल पूर्णांक v9fs_dir_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
 	bool over;
-	struct p9_wstat st;
-	int err = 0;
-	struct p9_fid *fid;
-	int buflen;
-	struct p9_rdir *rdir;
-	struct kvec kvec;
+	काष्ठा p9_wstat st;
+	पूर्णांक err = 0;
+	काष्ठा p9_fid *fid;
+	पूर्णांक buflen;
+	काष्ठा p9_rdir *rdir;
+	काष्ठा kvec kvec;
 
 	p9_debug(P9_DEBUG_VFS, "name %pD\n", file);
-	fid = file->private_data;
+	fid = file->निजी_data;
 
 	buflen = fid->clnt->msize - P9_IOHDRSZ;
 
 	rdir = v9fs_alloc_rdir_buf(file, buflen);
-	if (!rdir)
-		return -ENOMEM;
+	अगर (!rdir)
+		वापस -ENOMEM;
 	kvec.iov_base = rdir->buf;
 	kvec.iov_len = buflen;
 
-	while (1) {
-		if (rdir->tail == rdir->head) {
-			struct iov_iter to;
-			int n;
+	जबतक (1) अणु
+		अगर (rdir->tail == rdir->head) अणु
+			काष्ठा iov_iter to;
+			पूर्णांक n;
 			iov_iter_kvec(&to, READ, &kvec, 1, buflen);
-			n = p9_client_read(file->private_data, ctx->pos, &to,
+			n = p9_client_पढ़ो(file->निजी_data, ctx->pos, &to,
 					   &err);
-			if (err)
-				return err;
-			if (n == 0)
-				return 0;
+			अगर (err)
+				वापस err;
+			अगर (n == 0)
+				वापस 0;
 
 			rdir->head = 0;
 			rdir->tail = n;
-		}
-		while (rdir->head < rdir->tail) {
-			err = p9stat_read(fid->clnt, rdir->buf + rdir->head,
+		पूर्ण
+		जबतक (rdir->head < rdir->tail) अणु
+			err = p9stat_पढ़ो(fid->clnt, rdir->buf + rdir->head,
 					  rdir->tail - rdir->head, &st);
-			if (err <= 0) {
+			अगर (err <= 0) अणु
 				p9_debug(P9_DEBUG_VFS, "returned %d\n", err);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
-			over = !dir_emit(ctx, st.name, strlen(st.name),
+			over = !dir_emit(ctx, st.name, म_माप(st.name),
 					 v9fs_qid2ino(&st.qid), dt_type(&st));
-			p9stat_free(&st);
-			if (over)
-				return 0;
+			p9stat_मुक्त(&st);
+			अगर (over)
+				वापस 0;
 
 			rdir->head += err;
 			ctx->pos += err;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * v9fs_dir_readdir_dotl - iterate through a directory
- * @file: opened file structure
+ * v9fs_dir_सूची_पढ़ो_करोtl - iterate through a directory
+ * @file: खोलोed file काष्ठाure
  * @ctx: actor we feed the entries to
  *
  */
-static int v9fs_dir_readdir_dotl(struct file *file, struct dir_context *ctx)
-{
-	int err = 0;
-	struct p9_fid *fid;
-	int buflen;
-	struct p9_rdir *rdir;
-	struct p9_dirent curdirent;
+अटल पूर्णांक v9fs_dir_सूची_पढ़ो_करोtl(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा p9_fid *fid;
+	पूर्णांक buflen;
+	काष्ठा p9_rdir *rdir;
+	काष्ठा p9_dirent curdirent;
 
 	p9_debug(P9_DEBUG_VFS, "name %pD\n", file);
-	fid = file->private_data;
+	fid = file->निजी_data;
 
-	buflen = fid->clnt->msize - P9_READDIRHDRSZ;
+	buflen = fid->clnt->msize - P9_READसूचीHDRSZ;
 
 	rdir = v9fs_alloc_rdir_buf(file, buflen);
-	if (!rdir)
-		return -ENOMEM;
+	अगर (!rdir)
+		वापस -ENOMEM;
 
-	while (1) {
-		if (rdir->tail == rdir->head) {
-			err = p9_client_readdir(fid, rdir->buf, buflen,
+	जबतक (1) अणु
+		अगर (rdir->tail == rdir->head) अणु
+			err = p9_client_सूची_पढ़ो(fid, rdir->buf, buflen,
 						ctx->pos);
-			if (err <= 0)
-				return err;
+			अगर (err <= 0)
+				वापस err;
 
 			rdir->head = 0;
 			rdir->tail = err;
-		}
+		पूर्ण
 
-		while (rdir->head < rdir->tail) {
+		जबतक (rdir->head < rdir->tail) अणु
 
-			err = p9dirent_read(fid->clnt, rdir->buf + rdir->head,
+			err = p9dirent_पढ़ो(fid->clnt, rdir->buf + rdir->head,
 					    rdir->tail - rdir->head,
 					    &curdirent);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				p9_debug(P9_DEBUG_VFS, "returned %d\n", err);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
-			if (!dir_emit(ctx, curdirent.d_name,
-				      strlen(curdirent.d_name),
+			अगर (!dir_emit(ctx, curdirent.d_name,
+				      म_माप(curdirent.d_name),
 				      v9fs_qid2ino(&curdirent.qid),
 				      curdirent.d_type))
-				return 0;
+				वापस 0;
 
 			ctx->pos = curdirent.d_off;
 			rdir->head += err;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 /**
- * v9fs_dir_release - close a directory
+ * v9fs_dir_release - बंद a directory
  * @inode: inode of the directory
- * @filp: file pointer to a directory
+ * @filp: file poपूर्णांकer to a directory
  *
  */
 
-int v9fs_dir_release(struct inode *inode, struct file *filp)
-{
-	struct p9_fid *fid;
+पूर्णांक v9fs_dir_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा p9_fid *fid;
 
-	fid = filp->private_data;
+	fid = filp->निजी_data;
 	p9_debug(P9_DEBUG_VFS, "inode: %p filp: %p fid: %d\n",
 		 inode, filp, fid ? fid->fid : -1);
-	if (fid) {
+	अगर (fid) अणु
 		spin_lock(&inode->i_lock);
 		hlist_del(&fid->ilist);
 		spin_unlock(&inode->i_lock);
 		p9_client_clunk(fid);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-const struct file_operations v9fs_dir_operations = {
-	.read = generic_read_dir,
+स्थिर काष्ठा file_operations v9fs_dir_operations = अणु
+	.पढ़ो = generic_पढ़ो_dir,
 	.llseek = generic_file_llseek,
-	.iterate_shared = v9fs_dir_readdir,
-	.open = v9fs_file_open,
+	.iterate_shared = v9fs_dir_सूची_पढ़ो,
+	.खोलो = v9fs_file_खोलो,
 	.release = v9fs_dir_release,
-};
+पूर्ण;
 
-const struct file_operations v9fs_dir_operations_dotl = {
-	.read = generic_read_dir,
+स्थिर काष्ठा file_operations v9fs_dir_operations_करोtl = अणु
+	.पढ़ो = generic_पढ़ो_dir,
 	.llseek = generic_file_llseek,
-	.iterate_shared = v9fs_dir_readdir_dotl,
-	.open = v9fs_file_open,
+	.iterate_shared = v9fs_dir_सूची_पढ़ो_करोtl,
+	.खोलो = v9fs_file_खोलो,
 	.release = v9fs_dir_release,
-        .fsync = v9fs_file_fsync_dotl,
-};
+        .fsync = v9fs_file_fsync_करोtl,
+पूर्ण;

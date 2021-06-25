@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Test cases for using floating point operations inside a kernel module.
+ * Test हालs क्रम using भग्नing poपूर्णांक operations inside a kernel module.
  *
  * This tests kernel_fpu_begin() and kernel_fpu_end() functions, especially
- * when userland has modified the floating point control registers. The kernel
- * state might depend on the state set by the userland thread that was active
- * before a syscall.
+ * when userland has modअगरied the भग्नing poपूर्णांक control रेजिस्टरs. The kernel
+ * state might depend on the state set by the userland thपढ़ो that was active
+ * beक्रमe a syscall.
  *
- * To facilitate the test, this module registers file
- * /sys/kernel/debug/selftest_helpers/test_fpu, which when read causes a
- * sequence of floating point operations. If the operations fail, either the
- * read returns error status or the kernel crashes.
- * If the operations succeed, the read returns "1\n".
+ * To facilitate the test, this module रेजिस्टरs file
+ * /sys/kernel/debug/selftest_helpers/test_fpu, which when पढ़ो causes a
+ * sequence of भग्नing poपूर्णांक operations. If the operations fail, either the
+ * पढ़ो वापसs error status or the kernel crashes.
+ * If the operations succeed, the पढ़ो वापसs "1\n".
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/debugfs.h>
-#include <asm/fpu/api.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/debugfs.h>
+#समावेश <यंत्र/fpu/api.h>
 
-static int test_fpu(void)
-{
+अटल पूर्णांक test_fpu(व्योम)
+अणु
 	/*
 	 * This sequence of operations tests that rounding mode is
 	 * to nearest and that denormal numbers are supported.
-	 * Volatile variables are used to avoid compiler optimizing
+	 * Volatile variables are used to aव्योम compiler optimizing
 	 * the calculations away.
 	 */
-	volatile double a, b, c, d, e, f, g;
+	अस्थिर द्विगुन a, b, c, d, e, f, g;
 
 	a = 4.0;
 	b = 1e-15;
@@ -45,45 +46,45 @@ static int test_fpu(void)
 	/* Depends on denormal support */
 	g = a + c * f;
 
-	if (d > a && e > a && g > a)
-		return 0;
-	else
-		return -EINVAL;
-}
+	अगर (d > a && e > a && g > a)
+		वापस 0;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int test_fpu_get(void *data, u64 *val)
-{
-	int status = -EINVAL;
+अटल पूर्णांक test_fpu_get(व्योम *data, u64 *val)
+अणु
+	पूर्णांक status = -EINVAL;
 
 	kernel_fpu_begin();
 	status = test_fpu();
 	kernel_fpu_end();
 
 	*val = 1;
-	return status;
-}
+	वापस status;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(test_fpu_fops, test_fpu_get, NULL, "%lld\n");
-static struct dentry *selftest_dir;
+DEFINE_DEBUGFS_ATTRIBUTE(test_fpu_fops, test_fpu_get, शून्य, "%lld\n");
+अटल काष्ठा dentry *selftest_dir;
 
-static int __init test_fpu_init(void)
-{
-	selftest_dir = debugfs_create_dir("selftest_helpers", NULL);
-	if (!selftest_dir)
-		return -ENOMEM;
+अटल पूर्णांक __init test_fpu_init(व्योम)
+अणु
+	selftest_dir = debugfs_create_dir("selftest_helpers", शून्य);
+	अगर (!selftest_dir)
+		वापस -ENOMEM;
 
-	debugfs_create_file_unsafe("test_fpu", 0444, selftest_dir, NULL,
+	debugfs_create_file_unsafe("test_fpu", 0444, selftest_dir, शून्य,
 				   &test_fpu_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit test_fpu_exit(void)
-{
-	debugfs_remove(selftest_dir);
-}
+अटल व्योम __निकास test_fpu_निकास(व्योम)
+अणु
+	debugfs_हटाओ(selftest_dir);
+पूर्ण
 
 module_init(test_fpu_init);
-module_exit(test_fpu_exit);
+module_निकास(test_fpu_निकास);
 
 MODULE_LICENSE("GPL");

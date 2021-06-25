@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,106 +22,106 @@
  *
  */
 
-#include "radeon.h"
-#include "trinityd.h"
-#include "trinity_dpm.h"
-#include "ppsmc.h"
+#समावेश "radeon.h"
+#समावेश "trinityd.h"
+#समावेश "trinity_dpm.h"
+#समावेश "ppsmc.h"
 
-static int trinity_notify_message_to_smu(struct radeon_device *rdev, u32 id)
-{
-	int i;
+अटल पूर्णांक trinity_notअगरy_message_to_smu(काष्ठा radeon_device *rdev, u32 id)
+अणु
+	पूर्णांक i;
 	u32 v = 0;
 
 	WREG32(SMC_MESSAGE_0, id);
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if (RREG32(SMC_RESP_0) != 0)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर (RREG32(SMC_RESP_0) != 0)
+			अवरोध;
 		udelay(1);
-	}
+	पूर्ण
 	v = RREG32(SMC_RESP_0);
 
-	if (v != 1) {
-		if (v == 0xFF) {
+	अगर (v != 1) अणु
+		अगर (v == 0xFF) अणु
 			DRM_ERROR("SMC failed to handle the message!\n");
-			return -EINVAL;
-		} else if (v == 0xFE) {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (v == 0xFE) अणु
 			DRM_ERROR("Unknown SMC message!\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int trinity_dpm_bapm_enable(struct radeon_device *rdev, bool enable)
-{
-	if (enable)
-		return trinity_notify_message_to_smu(rdev, PPSMC_MSG_EnableBAPM);
-	else
-		return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DisableBAPM);
-}
+पूर्णांक trinity_dpm_bapm_enable(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	अगर (enable)
+		वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_EnableBAPM);
+	अन्यथा
+		वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DisableBAPM);
+पूर्ण
 
-int trinity_dpm_config(struct radeon_device *rdev, bool enable)
-{
-	if (enable)
+पूर्णांक trinity_dpm_config(काष्ठा radeon_device *rdev, bool enable)
+अणु
+	अगर (enable)
 		WREG32_SMC(SMU_SCRATCH0, 1);
-	else
+	अन्यथा
 		WREG32_SMC(SMU_SCRATCH0, 0);
 
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DPM_Config);
-}
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DPM_Config);
+पूर्ण
 
-int trinity_dpm_force_state(struct radeon_device *rdev, u32 n)
-{
+पूर्णांक trinity_dpm_क्रमce_state(काष्ठा radeon_device *rdev, u32 n)
+अणु
 	WREG32_SMC(SMU_SCRATCH0, n);
 
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DPM_ForceState);
-}
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DPM_ForceState);
+पूर्ण
 
-int trinity_dpm_n_levels_disabled(struct radeon_device *rdev, u32 n)
-{
+पूर्णांक trinity_dpm_n_levels_disabled(काष्ठा radeon_device *rdev, u32 n)
+अणु
 	WREG32_SMC(SMU_SCRATCH0, n);
 
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DPM_N_LevelsDisabled);
-}
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DPM_N_LevelsDisabled);
+पूर्ण
 
-int trinity_uvd_dpm_config(struct radeon_device *rdev)
-{
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_UVD_DPM_Config);
-}
+पूर्णांक trinity_uvd_dpm_config(काष्ठा radeon_device *rdev)
+अणु
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_UVD_DPM_Config);
+पूर्ण
 
-int trinity_dpm_no_forced_level(struct radeon_device *rdev)
-{
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_NoForcedLevel);
-}
+पूर्णांक trinity_dpm_no_क्रमced_level(काष्ठा radeon_device *rdev)
+अणु
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_NoForcedLevel);
+पूर्ण
 
-int trinity_dce_enable_voltage_adjustment(struct radeon_device *rdev,
+पूर्णांक trinity_dce_enable_voltage_adjusपंचांगent(काष्ठा radeon_device *rdev,
 					  bool enable)
-{
-	if (enable)
-		return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DCE_AllowVoltageAdjustment);
-	else
-		return trinity_notify_message_to_smu(rdev, PPSMC_MSG_DCE_RemoveVoltageAdjustment);
-}
+अणु
+	अगर (enable)
+		वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DCE_AllowVoltageAdjusपंचांगent);
+	अन्यथा
+		वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_DCE_RemoveVoltageAdjusपंचांगent);
+पूर्ण
 
-int trinity_gfx_dynamic_mgpg_config(struct radeon_device *rdev)
-{
-	return trinity_notify_message_to_smu(rdev, PPSMC_MSG_PG_SIMD_Config);
-}
+पूर्णांक trinity_gfx_dynamic_mgpg_config(काष्ठा radeon_device *rdev)
+अणु
+	वापस trinity_notअगरy_message_to_smu(rdev, PPSMC_MSG_PG_SIMD_Config);
+पूर्ण
 
-void trinity_acquire_mutex(struct radeon_device *rdev)
-{
-	int i;
+व्योम trinity_acquire_mutex(काष्ठा radeon_device *rdev)
+अणु
+	पूर्णांक i;
 
 	WREG32(SMC_INT_REQ, 1);
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		if ((RREG32(SMC_INT_REQ) & 0xffff) == 1)
-			break;
+	क्रम (i = 0; i < rdev->usec_समयout; i++) अणु
+		अगर ((RREG32(SMC_INT_REQ) & 0xffff) == 1)
+			अवरोध;
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void trinity_release_mutex(struct radeon_device *rdev)
-{
+व्योम trinity_release_mutex(काष्ठा radeon_device *rdev)
+अणु
 	WREG32(SMC_INT_REQ, 0);
-}
+पूर्ण

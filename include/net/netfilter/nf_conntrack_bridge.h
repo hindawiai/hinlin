@@ -1,19 +1,20 @@
-#ifndef NF_CONNTRACK_BRIDGE_
-#define NF_CONNTRACK_BRIDGE_
+<शैली गुरु>
+#अगर_अघोषित NF_CONNTRACK_BRIDGE_
+#घोषणा NF_CONNTRACK_BRIDGE_
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <uapi/linux/if_ether.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <uapi/linux/अगर_ether.h>
 
-struct nf_hook_ops;
+काष्ठा nf_hook_ops;
 
-struct nf_ct_bridge_info {
-	struct nf_hook_ops	*ops;
-	unsigned int		ops_size;
-	struct module		*me;
-};
+काष्ठा nf_ct_bridge_info अणु
+	काष्ठा nf_hook_ops	*ops;
+	अचिन्हित पूर्णांक		ops_size;
+	काष्ठा module		*me;
+पूर्ण;
 
-void nf_ct_bridge_register(struct nf_ct_bridge_info *info);
-void nf_ct_bridge_unregister(struct nf_ct_bridge_info *info);
+व्योम nf_ct_bridge_रेजिस्टर(काष्ठा nf_ct_bridge_info *info);
+व्योम nf_ct_bridge_unरेजिस्टर(काष्ठा nf_ct_bridge_info *info);
 
-#endif
+#पूर्ण_अगर

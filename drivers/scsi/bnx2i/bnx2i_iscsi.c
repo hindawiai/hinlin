@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * bnx2i_iscsi.c: QLogic NetXtreme II iSCSI driver.
  *
@@ -6,389 +7,389 @@
  * Copyright (c) 2007, 2008 Mike Christie
  * Copyright (c) 2014, QLogic Corporation
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
  * Written by: Anil Veerabhadrappa (anilgv@broadcom.com)
- * Previously Maintained by: Eddie Wai (eddie.wai@broadcom.com)
- * Maintained by: QLogic-Storage-Upstream@qlogic.com
+ * Previously Maपूर्णांकained by: Eddie Wai (eddie.wai@broadcom.com)
+ * Maपूर्णांकained by: QLogic-Storage-Upstream@qlogic.com
  */
 
-#include <linux/slab.h>
-#include <scsi/scsi_tcq.h>
-#include <scsi/libiscsi.h>
-#include "bnx2i.h"
+#समावेश <linux/slab.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <scsi/libiscsi.h>
+#समावेश "bnx2i.h"
 
-struct scsi_transport_template *bnx2i_scsi_xport_template;
-struct iscsi_transport bnx2i_iscsi_transport;
-static struct scsi_host_template bnx2i_host_template;
+काष्ठा scsi_transport_ढाँचा *bnx2i_scsi_xport_ढाँचा;
+काष्ठा iscsi_transport bnx2i_iscsi_transport;
+अटल काष्ठा scsi_host_ढाँचा bnx2i_host_ढाँचा;
 
 /*
- * Global endpoint resource info
+ * Global endpoपूर्णांक resource info
  */
-static DEFINE_SPINLOCK(bnx2i_resc_lock); /* protects global resources */
+अटल DEFINE_SPINLOCK(bnx2i_resc_lock); /* protects global resources */
 
-DECLARE_PER_CPU(struct bnx2i_percpu_s, bnx2i_percpu);
+DECLARE_PER_CPU(काष्ठा bnx2i_percpu_s, bnx2i_percpu);
 
-static int bnx2i_adapter_ready(struct bnx2i_hba *hba)
-{
-	int retval = 0;
+अटल पूर्णांक bnx2i_adapter_पढ़ोy(काष्ठा bnx2i_hba *hba)
+अणु
+	पूर्णांक retval = 0;
 
-	if (!hba || !test_bit(ADAPTER_STATE_UP, &hba->adapter_state) ||
+	अगर (!hba || !test_bit(ADAPTER_STATE_UP, &hba->adapter_state) ||
 	    test_bit(ADAPTER_STATE_GOING_DOWN, &hba->adapter_state) ||
 	    test_bit(ADAPTER_STATE_LINK_DOWN, &hba->adapter_state))
 		retval = -EPERM;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**
- * bnx2i_get_write_cmd_bd_idx - identifies various BD bookmarks
- * @cmd:		iscsi cmd struct pointer
- * @buf_off:		absolute buffer offset
- * @start_bd_off:	u32 pointer to return the offset within the BD
+ * bnx2i_get_ग_लिखो_cmd_bd_idx - identअगरies various BD bookmarks
+ * @cmd:		iscsi cmd काष्ठा poपूर्णांकer
+ * @buf_off:		असलolute buffer offset
+ * @start_bd_off:	u32 poपूर्णांकer to वापस the offset within the BD
  *			indicated by 'start_bd_idx' on which 'buf_off' falls
  * @start_bd_idx:	index of the BD on which 'buf_off' falls
  *
- * identifies & marks various bd info for scsi command's imm data,
+ * identअगरies & marks various bd info क्रम scsi command's imm data,
  * unsolicited data and the first solicited data seq.
  */
-static void bnx2i_get_write_cmd_bd_idx(struct bnx2i_cmd *cmd, u32 buf_off,
+अटल व्योम bnx2i_get_ग_लिखो_cmd_bd_idx(काष्ठा bnx2i_cmd *cmd, u32 buf_off,
 				       u32 *start_bd_off, u32 *start_bd_idx)
-{
-	struct iscsi_bd *bd_tbl = cmd->io_tbl.bd_tbl;
+अणु
+	काष्ठा iscsi_bd *bd_tbl = cmd->io_tbl.bd_tbl;
 	u32 cur_offset = 0;
 	u32 cur_bd_idx = 0;
 
-	if (buf_off) {
-		while (buf_off >= (cur_offset + bd_tbl->buffer_length)) {
+	अगर (buf_off) अणु
+		जबतक (buf_off >= (cur_offset + bd_tbl->buffer_length)) अणु
 			cur_offset += bd_tbl->buffer_length;
 			cur_bd_idx++;
 			bd_tbl++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*start_bd_off = buf_off - cur_offset;
 	*start_bd_idx = cur_bd_idx;
-}
+पूर्ण
 
 /**
- * bnx2i_setup_write_cmd_bd_info - sets up BD various information
- * @task:	transport layer's cmd struct pointer
+ * bnx2i_setup_ग_लिखो_cmd_bd_info - sets up BD various inक्रमmation
+ * @task:	transport layer's cmd काष्ठा poपूर्णांकer
  *
- * identifies & marks various bd info for scsi command's immediate data,
+ * identअगरies & marks various bd info क्रम scsi command's immediate data,
  * unsolicited data and first solicited data seq which includes BD start
- * index & BD buf off. his function takes into account iscsi parameter such
+ * index & BD buf off. his function takes पूर्णांकo account iscsi parameter such
  * as immediate data and unsolicited data is support on this connection.
  */
-static void bnx2i_setup_write_cmd_bd_info(struct iscsi_task *task)
-{
-	struct bnx2i_cmd *cmd = task->dd_data;
+अटल व्योम bnx2i_setup_ग_लिखो_cmd_bd_info(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा bnx2i_cmd *cmd = task->dd_data;
 	u32 start_bd_offset;
 	u32 start_bd_idx;
 	u32 buffer_offset = 0;
 	u32 cmd_len = cmd->req.total_data_transfer_length;
 
-	/* if ImmediateData is turned off & IntialR2T is turned on,
-	 * there will be no immediate or unsolicited data, just return.
+	/* अगर ImmediateData is turned off & IntialR2T is turned on,
+	 * there will be no immediate or unsolicited data, just वापस.
 	 */
-	if (!iscsi_task_has_unsol_data(task) && !task->imm_count)
-		return;
+	अगर (!iscsi_task_has_unsol_data(task) && !task->imm_count)
+		वापस;
 
 	/* Immediate data */
 	buffer_offset += task->imm_count;
-	if (task->imm_count == cmd_len)
-		return;
+	अगर (task->imm_count == cmd_len)
+		वापस;
 
-	if (iscsi_task_has_unsol_data(task)) {
-		bnx2i_get_write_cmd_bd_idx(cmd, buffer_offset,
+	अगर (iscsi_task_has_unsol_data(task)) अणु
+		bnx2i_get_ग_लिखो_cmd_bd_idx(cmd, buffer_offset,
 					   &start_bd_offset, &start_bd_idx);
 		cmd->req.ud_buffer_offset = start_bd_offset;
 		cmd->req.ud_start_bd_index = start_bd_idx;
 		buffer_offset += task->unsol_r2t.data_length;
-	}
+	पूर्ण
 
-	if (buffer_offset != cmd_len) {
-		bnx2i_get_write_cmd_bd_idx(cmd, buffer_offset,
+	अगर (buffer_offset != cmd_len) अणु
+		bnx2i_get_ग_लिखो_cmd_bd_idx(cmd, buffer_offset,
 					   &start_bd_offset, &start_bd_idx);
-		if ((start_bd_offset > task->conn->session->first_burst) ||
-		    (start_bd_idx > scsi_sg_count(cmd->scsi_cmd))) {
-			int i = 0;
+		अगर ((start_bd_offset > task->conn->session->first_burst) ||
+		    (start_bd_idx > scsi_sg_count(cmd->scsi_cmd))) अणु
+			पूर्णांक i = 0;
 
-			iscsi_conn_printk(KERN_ALERT, task->conn,
+			iscsi_conn_prपूर्णांकk(KERN_ALERT, task->conn,
 					  "bnx2i- error, buf offset 0x%x "
 					  "bd_valid %d use_sg %d\n",
 					  buffer_offset, cmd->io_tbl.bd_valid,
 					  scsi_sg_count(cmd->scsi_cmd));
-			for (i = 0; i < cmd->io_tbl.bd_valid; i++)
-				iscsi_conn_printk(KERN_ALERT, task->conn,
+			क्रम (i = 0; i < cmd->io_tbl.bd_valid; i++)
+				iscsi_conn_prपूर्णांकk(KERN_ALERT, task->conn,
 						  "bnx2i err, bd[%d]: len %x\n",
 						  i, cmd->io_tbl.bd_tbl[i].\
 						  buffer_length);
-		}
+		पूर्ण
 		cmd->req.sd_buffer_offset = start_bd_offset;
 		cmd->req.sd_start_bd_index = start_bd_idx;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 
 /**
  * bnx2i_map_scsi_sg - maps IO buffer and prepares the BD table
  * @hba:	adapter instance
- * @cmd:	iscsi cmd struct pointer
+ * @cmd:	iscsi cmd काष्ठा poपूर्णांकer
  *
  * map SG list
  */
-static int bnx2i_map_scsi_sg(struct bnx2i_hba *hba, struct bnx2i_cmd *cmd)
-{
-	struct scsi_cmnd *sc = cmd->scsi_cmd;
-	struct iscsi_bd *bd = cmd->io_tbl.bd_tbl;
-	struct scatterlist *sg;
-	int byte_count = 0;
-	int bd_count = 0;
-	int sg_count;
-	int sg_len;
+अटल पूर्णांक bnx2i_map_scsi_sg(काष्ठा bnx2i_hba *hba, काष्ठा bnx2i_cmd *cmd)
+अणु
+	काष्ठा scsi_cmnd *sc = cmd->scsi_cmd;
+	काष्ठा iscsi_bd *bd = cmd->io_tbl.bd_tbl;
+	काष्ठा scatterlist *sg;
+	पूर्णांक byte_count = 0;
+	पूर्णांक bd_count = 0;
+	पूर्णांक sg_count;
+	पूर्णांक sg_len;
 	u64 addr;
-	int i;
+	पूर्णांक i;
 
 	BUG_ON(scsi_sg_count(sc) > ISCSI_MAX_BDS_PER_CMD);
 
 	sg_count = scsi_dma_map(sc);
 
-	scsi_for_each_sg(sc, sg, sg_count, i) {
+	scsi_क्रम_each_sg(sc, sg, sg_count, i) अणु
 		sg_len = sg_dma_len(sg);
 		addr = (u64) sg_dma_address(sg);
 		bd[bd_count].buffer_addr_lo = addr & 0xffffffff;
 		bd[bd_count].buffer_addr_hi = addr >> 32;
 		bd[bd_count].buffer_length = sg_len;
 		bd[bd_count].flags = 0;
-		if (bd_count == 0)
+		अगर (bd_count == 0)
 			bd[bd_count].flags = ISCSI_BD_FIRST_IN_BD_CHAIN;
 
 		byte_count += sg_len;
 		bd_count++;
-	}
+	पूर्ण
 
-	if (bd_count)
+	अगर (bd_count)
 		bd[bd_count - 1].flags |= ISCSI_BD_LAST_IN_BD_CHAIN;
 
 	BUG_ON(byte_count != scsi_bufflen(sc));
-	return bd_count;
-}
+	वापस bd_count;
+पूर्ण
 
 /**
  * bnx2i_iscsi_map_sg_list - maps SG list
- * @cmd:	iscsi cmd struct pointer
+ * @cmd:	iscsi cmd काष्ठा poपूर्णांकer
  *
- * creates BD list table for the command
+ * creates BD list table क्रम the command
  */
-static void bnx2i_iscsi_map_sg_list(struct bnx2i_cmd *cmd)
-{
-	int bd_count;
+अटल व्योम bnx2i_iscsi_map_sg_list(काष्ठा bnx2i_cmd *cmd)
+अणु
+	पूर्णांक bd_count;
 
 	bd_count  = bnx2i_map_scsi_sg(cmd->conn->hba, cmd);
-	if (!bd_count) {
-		struct iscsi_bd *bd = cmd->io_tbl.bd_tbl;
+	अगर (!bd_count) अणु
+		काष्ठा iscsi_bd *bd = cmd->io_tbl.bd_tbl;
 
 		bd[0].buffer_addr_lo = bd[0].buffer_addr_hi = 0;
 		bd[0].buffer_length = bd[0].flags = 0;
-	}
+	पूर्ण
 	cmd->io_tbl.bd_valid = bd_count;
-}
+पूर्ण
 
 
 /**
  * bnx2i_iscsi_unmap_sg_list - unmaps SG list
- * @cmd:	iscsi cmd struct pointer
+ * @cmd:	iscsi cmd काष्ठा poपूर्णांकer
  *
  * unmap IO buffers and invalidate the BD table
  */
-void bnx2i_iscsi_unmap_sg_list(struct bnx2i_cmd *cmd)
-{
-	struct scsi_cmnd *sc = cmd->scsi_cmd;
+व्योम bnx2i_iscsi_unmap_sg_list(काष्ठा bnx2i_cmd *cmd)
+अणु
+	काष्ठा scsi_cmnd *sc = cmd->scsi_cmd;
 
-	if (cmd->io_tbl.bd_valid && sc) {
+	अगर (cmd->io_tbl.bd_valid && sc) अणु
 		scsi_dma_unmap(sc);
 		cmd->io_tbl.bd_valid = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnx2i_setup_cmd_wqe_template(struct bnx2i_cmd *cmd)
-{
-	memset(&cmd->req, 0x00, sizeof(cmd->req));
+अटल व्योम bnx2i_setup_cmd_wqe_ढाँचा(काष्ठा bnx2i_cmd *cmd)
+अणु
+	स_रखो(&cmd->req, 0x00, माप(cmd->req));
 	cmd->req.op_code = 0xFF;
 	cmd->req.bd_list_addr_lo = (u32) cmd->io_tbl.bd_tbl_dma;
 	cmd->req.bd_list_addr_hi =
 		(u32) ((u64) cmd->io_tbl.bd_tbl_dma >> 32);
 
-}
+पूर्ण
 
 
 /**
- * bnx2i_bind_conn_to_iscsi_cid - bind conn structure to 'iscsi_cid'
- * @hba:	pointer to adapter instance
- * @bnx2i_conn:	pointer to iscsi connection
+ * bnx2i_bind_conn_to_iscsi_cid - bind conn काष्ठाure to 'iscsi_cid'
+ * @hba:	poपूर्णांकer to adapter instance
+ * @bnx2i_conn:	poपूर्णांकer to iscsi connection
  * @iscsi_cid:	iscsi context ID, range 0 - (MAX_CONN - 1)
  *
- * update iscsi cid table entry with connection pointer. This enables
- *	driver to quickly get hold of connection structure pointer in
- *	completion/interrupt thread using iscsi context ID
+ * update iscsi cid table entry with connection poपूर्णांकer. This enables
+ *	driver to quickly get hold of connection काष्ठाure poपूर्णांकer in
+ *	completion/पूर्णांकerrupt thपढ़ो using iscsi context ID
  */
-static int bnx2i_bind_conn_to_iscsi_cid(struct bnx2i_hba *hba,
-					struct bnx2i_conn *bnx2i_conn,
+अटल पूर्णांक bnx2i_bind_conn_to_iscsi_cid(काष्ठा bnx2i_hba *hba,
+					काष्ठा bnx2i_conn *bnx2i_conn,
 					u32 iscsi_cid)
-{
-	if (hba && hba->cid_que.conn_cid_tbl[iscsi_cid]) {
-		iscsi_conn_printk(KERN_ALERT, bnx2i_conn->cls_conn->dd_data,
+अणु
+	अगर (hba && hba->cid_que.conn_cid_tbl[iscsi_cid]) अणु
+		iscsi_conn_prपूर्णांकk(KERN_ALERT, bnx2i_conn->cls_conn->dd_data,
 				 "conn bind - entry #%d not free\n", iscsi_cid);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	hba->cid_que.conn_cid_tbl[iscsi_cid] = bnx2i_conn;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
  * bnx2i_get_conn_from_id - maps an iscsi cid to corresponding conn ptr
- * @hba:	pointer to adapter instance
+ * @hba:	poपूर्णांकer to adapter instance
  * @iscsi_cid:	iscsi context ID, range 0 - (MAX_CONN - 1)
  */
-struct bnx2i_conn *bnx2i_get_conn_from_id(struct bnx2i_hba *hba,
+काष्ठा bnx2i_conn *bnx2i_get_conn_from_id(काष्ठा bnx2i_hba *hba,
 					  u16 iscsi_cid)
-{
-	if (!hba->cid_que.conn_cid_tbl) {
-		printk(KERN_ERR "bnx2i: ERROR - missing conn<->cid table\n");
-		return NULL;
+अणु
+	अगर (!hba->cid_que.conn_cid_tbl) अणु
+		prपूर्णांकk(KERN_ERR "bnx2i: ERROR - missing conn<->cid table\n");
+		वापस शून्य;
 
-	} else if (iscsi_cid >= hba->max_active_conns) {
-		printk(KERN_ERR "bnx2i: wrong cid #%d\n", iscsi_cid);
-		return NULL;
-	}
-	return hba->cid_que.conn_cid_tbl[iscsi_cid];
-}
+	पूर्ण अन्यथा अगर (iscsi_cid >= hba->max_active_conns) अणु
+		prपूर्णांकk(KERN_ERR "bnx2i: wrong cid #%d\n", iscsi_cid);
+		वापस शून्य;
+	पूर्ण
+	वापस hba->cid_que.conn_cid_tbl[iscsi_cid];
+पूर्ण
 
 
 /**
- * bnx2i_alloc_iscsi_cid - allocates a iscsi_cid from free pool
- * @hba:	pointer to adapter instance
+ * bnx2i_alloc_iscsi_cid - allocates a iscsi_cid from मुक्त pool
+ * @hba:	poपूर्णांकer to adapter instance
  */
-static u32 bnx2i_alloc_iscsi_cid(struct bnx2i_hba *hba)
-{
-	int idx;
+अटल u32 bnx2i_alloc_iscsi_cid(काष्ठा bnx2i_hba *hba)
+अणु
+	पूर्णांक idx;
 
-	if (!hba->cid_que.cid_free_cnt)
-		return -1;
+	अगर (!hba->cid_que.cid_मुक्त_cnt)
+		वापस -1;
 
 	idx = hba->cid_que.cid_q_cons_idx;
 	hba->cid_que.cid_q_cons_idx++;
-	if (hba->cid_que.cid_q_cons_idx == hba->cid_que.cid_q_max_idx)
+	अगर (hba->cid_que.cid_q_cons_idx == hba->cid_que.cid_q_max_idx)
 		hba->cid_que.cid_q_cons_idx = 0;
 
-	hba->cid_que.cid_free_cnt--;
-	return hba->cid_que.cid_que[idx];
-}
+	hba->cid_que.cid_मुक्त_cnt--;
+	वापस hba->cid_que.cid_que[idx];
+पूर्ण
 
 
 /**
- * bnx2i_free_iscsi_cid - returns tcp port to free list
- * @hba: 		pointer to adapter instance
- * @iscsi_cid:		iscsi context ID to free
+ * bnx2i_मुक्त_iscsi_cid - वापसs tcp port to मुक्त list
+ * @hba: 		poपूर्णांकer to adapter instance
+ * @iscsi_cid:		iscsi context ID to मुक्त
  */
-static void bnx2i_free_iscsi_cid(struct bnx2i_hba *hba, u16 iscsi_cid)
-{
-	int idx;
+अटल व्योम bnx2i_मुक्त_iscsi_cid(काष्ठा bnx2i_hba *hba, u16 iscsi_cid)
+अणु
+	पूर्णांक idx;
 
-	if (iscsi_cid == (u16) -1)
-		return;
+	अगर (iscsi_cid == (u16) -1)
+		वापस;
 
-	hba->cid_que.cid_free_cnt++;
+	hba->cid_que.cid_मुक्त_cnt++;
 
 	idx = hba->cid_que.cid_q_prod_idx;
 	hba->cid_que.cid_que[idx] = iscsi_cid;
-	hba->cid_que.conn_cid_tbl[iscsi_cid] = NULL;
+	hba->cid_que.conn_cid_tbl[iscsi_cid] = शून्य;
 	hba->cid_que.cid_q_prod_idx++;
-	if (hba->cid_que.cid_q_prod_idx == hba->cid_que.cid_q_max_idx)
+	अगर (hba->cid_que.cid_q_prod_idx == hba->cid_que.cid_q_max_idx)
 		hba->cid_que.cid_q_prod_idx = 0;
-}
+पूर्ण
 
 
 /**
- * bnx2i_setup_free_cid_que - sets up free iscsi cid queue
- * @hba:	pointer to adapter instance
+ * bnx2i_setup_मुक्त_cid_que - sets up मुक्त iscsi cid queue
+ * @hba:	poपूर्णांकer to adapter instance
  *
- * allocates memory for iscsi cid queue & 'cid - conn ptr' mapping table,
+ * allocates memory क्रम iscsi cid queue & 'cid - conn ptr' mapping table,
  * 	and initialize table attributes
  */
-static int bnx2i_setup_free_cid_que(struct bnx2i_hba *hba)
-{
-	int mem_size;
-	int i;
+अटल पूर्णांक bnx2i_setup_मुक्त_cid_que(काष्ठा bnx2i_hba *hba)
+अणु
+	पूर्णांक mem_size;
+	पूर्णांक i;
 
-	mem_size = hba->max_active_conns * sizeof(u32);
+	mem_size = hba->max_active_conns * माप(u32);
 	mem_size = (mem_size + (PAGE_SIZE - 1)) & PAGE_MASK;
 
-	hba->cid_que.cid_que_base = kmalloc(mem_size, GFP_KERNEL);
-	if (!hba->cid_que.cid_que_base)
-		return -ENOMEM;
+	hba->cid_que.cid_que_base = kदो_स्मृति(mem_size, GFP_KERNEL);
+	अगर (!hba->cid_que.cid_que_base)
+		वापस -ENOMEM;
 
-	mem_size = hba->max_active_conns * sizeof(struct bnx2i_conn *);
+	mem_size = hba->max_active_conns * माप(काष्ठा bnx2i_conn *);
 	mem_size = (mem_size + (PAGE_SIZE - 1)) & PAGE_MASK;
-	hba->cid_que.conn_cid_tbl = kmalloc(mem_size, GFP_KERNEL);
-	if (!hba->cid_que.conn_cid_tbl) {
-		kfree(hba->cid_que.cid_que_base);
-		hba->cid_que.cid_que_base = NULL;
-		return -ENOMEM;
-	}
+	hba->cid_que.conn_cid_tbl = kदो_स्मृति(mem_size, GFP_KERNEL);
+	अगर (!hba->cid_que.conn_cid_tbl) अणु
+		kमुक्त(hba->cid_que.cid_que_base);
+		hba->cid_que.cid_que_base = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
 	hba->cid_que.cid_que = (u32 *)hba->cid_que.cid_que_base;
 	hba->cid_que.cid_q_prod_idx = 0;
 	hba->cid_que.cid_q_cons_idx = 0;
 	hba->cid_que.cid_q_max_idx = hba->max_active_conns;
-	hba->cid_que.cid_free_cnt = hba->max_active_conns;
+	hba->cid_que.cid_मुक्त_cnt = hba->max_active_conns;
 
-	for (i = 0; i < hba->max_active_conns; i++) {
+	क्रम (i = 0; i < hba->max_active_conns; i++) अणु
 		hba->cid_que.cid_que[i] = i;
-		hba->cid_que.conn_cid_tbl[i] = NULL;
-	}
-	return 0;
-}
+		hba->cid_que.conn_cid_tbl[i] = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /**
- * bnx2i_release_free_cid_que - releases 'iscsi_cid' queue resources
- * @hba:	pointer to adapter instance
+ * bnx2i_release_मुक्त_cid_que - releases 'iscsi_cid' queue resources
+ * @hba:	poपूर्णांकer to adapter instance
  */
-static void bnx2i_release_free_cid_que(struct bnx2i_hba *hba)
-{
-	kfree(hba->cid_que.cid_que_base);
-	hba->cid_que.cid_que_base = NULL;
+अटल व्योम bnx2i_release_मुक्त_cid_que(काष्ठा bnx2i_hba *hba)
+अणु
+	kमुक्त(hba->cid_que.cid_que_base);
+	hba->cid_que.cid_que_base = शून्य;
 
-	kfree(hba->cid_que.conn_cid_tbl);
-	hba->cid_que.conn_cid_tbl = NULL;
-}
+	kमुक्त(hba->cid_que.conn_cid_tbl);
+	hba->cid_que.conn_cid_tbl = शून्य;
+पूर्ण
 
 
 /**
- * bnx2i_alloc_ep - allocates ep structure from global pool
- * @hba:	pointer to adapter instance
+ * bnx2i_alloc_ep - allocates ep काष्ठाure from global pool
+ * @hba:	poपूर्णांकer to adapter instance
  *
- * routine allocates a free endpoint structure from global pool and
- *	a tcp port to be used for this connection.  Global resource lock,
- *	'bnx2i_resc_lock' is held while accessing shared global data structures
+ * routine allocates a मुक्त endpoपूर्णांक काष्ठाure from global pool and
+ *	a tcp port to be used क्रम this connection.  Global resource lock,
+ *	'bnx2i_resc_lock' is held जबतक accessing shared global data काष्ठाures
  */
-static struct iscsi_endpoint *bnx2i_alloc_ep(struct bnx2i_hba *hba)
-{
-	struct iscsi_endpoint *ep;
-	struct bnx2i_endpoint *bnx2i_ep;
-	u32 ec_div;
+अटल काष्ठा iscsi_endpoपूर्णांक *bnx2i_alloc_ep(काष्ठा bnx2i_hba *hba)
+अणु
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+	u32 ec_भाग;
 
-	ep = iscsi_create_endpoint(sizeof(*bnx2i_ep));
-	if (!ep) {
-		printk(KERN_ERR "bnx2i: Could not allocate ep\n");
-		return NULL;
-	}
+	ep = iscsi_create_endpoपूर्णांक(माप(*bnx2i_ep));
+	अगर (!ep) अणु
+		prपूर्णांकk(KERN_ERR "bnx2i: Could not allocate ep\n");
+		वापस शून्य;
+	पूर्ण
 
 	bnx2i_ep = ep->dd_data;
 	bnx2i_ep->cls_ep = ep;
@@ -398,399 +399,399 @@ static struct iscsi_endpoint *bnx2i_alloc_ep(struct bnx2i_hba *hba)
 	bnx2i_ep->hba = hba;
 	bnx2i_ep->hba_age = hba->age;
 
-	ec_div = event_coal_div;
-	while (ec_div >>= 1)
-		bnx2i_ep->ec_shift += 1;
+	ec_भाग = event_coal_भाग;
+	जबतक (ec_भाग >>= 1)
+		bnx2i_ep->ec_shअगरt += 1;
 
 	hba->ofld_conns_active++;
-	init_waitqueue_head(&bnx2i_ep->ofld_wait);
-	return ep;
-}
+	init_रुकोqueue_head(&bnx2i_ep->ofld_रुको);
+	वापस ep;
+पूर्ण
 
 
 /**
- * bnx2i_free_ep - free endpoint
- * @ep:		pointer to iscsi endpoint structure
+ * bnx2i_मुक्त_ep - मुक्त endpoपूर्णांक
+ * @ep:		poपूर्णांकer to iscsi endpoपूर्णांक काष्ठाure
  */
-static void bnx2i_free_ep(struct iscsi_endpoint *ep)
-{
-	struct bnx2i_endpoint *bnx2i_ep = ep->dd_data;
-	unsigned long flags;
+अटल व्योम bnx2i_मुक्त_ep(काष्ठा iscsi_endpoपूर्णांक *ep)
+अणु
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep = ep->dd_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&bnx2i_resc_lock, flags);
 	bnx2i_ep->state = EP_STATE_IDLE;
 	bnx2i_ep->hba->ofld_conns_active--;
 
-	if (bnx2i_ep->ep_iscsi_cid != (u16) -1)
-		bnx2i_free_iscsi_cid(bnx2i_ep->hba, bnx2i_ep->ep_iscsi_cid);
+	अगर (bnx2i_ep->ep_iscsi_cid != (u16) -1)
+		bnx2i_मुक्त_iscsi_cid(bnx2i_ep->hba, bnx2i_ep->ep_iscsi_cid);
 
-	if (bnx2i_ep->conn) {
-		bnx2i_ep->conn->ep = NULL;
-		bnx2i_ep->conn = NULL;
-	}
+	अगर (bnx2i_ep->conn) अणु
+		bnx2i_ep->conn->ep = शून्य;
+		bnx2i_ep->conn = शून्य;
+	पूर्ण
 
-	bnx2i_ep->hba = NULL;
+	bnx2i_ep->hba = शून्य;
 	spin_unlock_irqrestore(&bnx2i_resc_lock, flags);
-	iscsi_destroy_endpoint(ep);
-}
+	iscsi_destroy_endpoपूर्णांक(ep);
+पूर्ण
 
 
 /**
- * bnx2i_alloc_bdt - allocates buffer descriptor (BD) table for the command
- * @hba:	adapter instance pointer
- * @session:	iscsi session pointer
- * @cmd:	iscsi command structure
+ * bnx2i_alloc_bdt - allocates buffer descriptor (BD) table क्रम the command
+ * @hba:	adapter instance poपूर्णांकer
+ * @session:	iscsi session poपूर्णांकer
+ * @cmd:	iscsi command काष्ठाure
  */
-static int bnx2i_alloc_bdt(struct bnx2i_hba *hba, struct iscsi_session *session,
-			   struct bnx2i_cmd *cmd)
-{
-	struct io_bdt *io = &cmd->io_tbl;
-	struct iscsi_bd *bd;
+अटल पूर्णांक bnx2i_alloc_bdt(काष्ठा bnx2i_hba *hba, काष्ठा iscsi_session *session,
+			   काष्ठा bnx2i_cmd *cmd)
+अणु
+	काष्ठा io_bdt *io = &cmd->io_tbl;
+	काष्ठा iscsi_bd *bd;
 
 	io->bd_tbl = dma_alloc_coherent(&hba->pcidev->dev,
-					ISCSI_MAX_BDS_PER_CMD * sizeof(*bd),
+					ISCSI_MAX_BDS_PER_CMD * माप(*bd),
 					&io->bd_tbl_dma, GFP_KERNEL);
-	if (!io->bd_tbl) {
-		iscsi_session_printk(KERN_ERR, session, "Could not "
+	अगर (!io->bd_tbl) अणु
+		iscsi_session_prपूर्णांकk(KERN_ERR, session, "Could not "
 				     "allocate bdt.\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	io->bd_valid = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bnx2i_destroy_cmd_pool - destroys iscsi command pool and release BD table
- * @hba:	adapter instance pointer
- * @session:	iscsi session pointer
+ * @hba:	adapter instance poपूर्णांकer
+ * @session:	iscsi session poपूर्णांकer
  */
-static void bnx2i_destroy_cmd_pool(struct bnx2i_hba *hba,
-				   struct iscsi_session *session)
-{
-	int i;
+अटल व्योम bnx2i_destroy_cmd_pool(काष्ठा bnx2i_hba *hba,
+				   काष्ठा iscsi_session *session)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < session->cmds_max; i++) {
-		struct iscsi_task *task = session->cmds[i];
-		struct bnx2i_cmd *cmd = task->dd_data;
+	क्रम (i = 0; i < session->cmds_max; i++) अणु
+		काष्ठा iscsi_task *task = session->cmds[i];
+		काष्ठा bnx2i_cmd *cmd = task->dd_data;
 
-		if (cmd->io_tbl.bd_tbl)
-			dma_free_coherent(&hba->pcidev->dev,
+		अगर (cmd->io_tbl.bd_tbl)
+			dma_मुक्त_coherent(&hba->pcidev->dev,
 					  ISCSI_MAX_BDS_PER_CMD *
-					  sizeof(struct iscsi_bd),
+					  माप(काष्ठा iscsi_bd),
 					  cmd->io_tbl.bd_tbl,
 					  cmd->io_tbl.bd_tbl_dma);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 
 /**
- * bnx2i_setup_cmd_pool - sets up iscsi command pool for the session
- * @hba:	adapter instance pointer
- * @session:	iscsi session pointer
+ * bnx2i_setup_cmd_pool - sets up iscsi command pool क्रम the session
+ * @hba:	adapter instance poपूर्णांकer
+ * @session:	iscsi session poपूर्णांकer
  */
-static int bnx2i_setup_cmd_pool(struct bnx2i_hba *hba,
-				struct iscsi_session *session)
-{
-	int i;
+अटल पूर्णांक bnx2i_setup_cmd_pool(काष्ठा bnx2i_hba *hba,
+				काष्ठा iscsi_session *session)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < session->cmds_max; i++) {
-		struct iscsi_task *task = session->cmds[i];
-		struct bnx2i_cmd *cmd = task->dd_data;
+	क्रम (i = 0; i < session->cmds_max; i++) अणु
+		काष्ठा iscsi_task *task = session->cmds[i];
+		काष्ठा bnx2i_cmd *cmd = task->dd_data;
 
 		task->hdr = &cmd->hdr;
-		task->hdr_max = sizeof(struct iscsi_hdr);
+		task->hdr_max = माप(काष्ठा iscsi_hdr);
 
-		if (bnx2i_alloc_bdt(hba, session, cmd))
-			goto free_bdts;
-	}
+		अगर (bnx2i_alloc_bdt(hba, session, cmd))
+			जाओ मुक्त_bdts;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_bdts:
+मुक्त_bdts:
 	bnx2i_destroy_cmd_pool(hba, session);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 
 /**
  * bnx2i_setup_mp_bdt - allocate BD table resources
- * @hba:	pointer to adapter structure
+ * @hba:	poपूर्णांकer to adapter काष्ठाure
  *
- * Allocate memory for dummy buffer and associated BD
+ * Allocate memory क्रम dummy buffer and associated BD
  * table to be used by middle path (MP) requests
  */
-static int bnx2i_setup_mp_bdt(struct bnx2i_hba *hba)
-{
-	int rc = 0;
-	struct iscsi_bd *mp_bdt;
+अटल पूर्णांक bnx2i_setup_mp_bdt(काष्ठा bnx2i_hba *hba)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा iscsi_bd *mp_bdt;
 	u64 addr;
 
 	hba->mp_bd_tbl = dma_alloc_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 					    &hba->mp_bd_dma, GFP_KERNEL);
-	if (!hba->mp_bd_tbl) {
-		printk(KERN_ERR "unable to allocate Middle Path BDT\n");
+	अगर (!hba->mp_bd_tbl) अणु
+		prपूर्णांकk(KERN_ERR "unable to allocate Middle Path BDT\n");
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hba->dummy_buffer = dma_alloc_coherent(&hba->pcidev->dev,
 					       CNIC_PAGE_SIZE,
 					       &hba->dummy_buf_dma, GFP_KERNEL);
-	if (!hba->dummy_buffer) {
-		printk(KERN_ERR "unable to alloc Middle Path Dummy Buffer\n");
-		dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+	अगर (!hba->dummy_buffer) अणु
+		prपूर्णांकk(KERN_ERR "unable to alloc Middle Path Dummy Buffer\n");
+		dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				  hba->mp_bd_tbl, hba->mp_bd_dma);
-		hba->mp_bd_tbl = NULL;
+		hba->mp_bd_tbl = शून्य;
 		rc = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	mp_bdt = (struct iscsi_bd *) hba->mp_bd_tbl;
-	addr = (unsigned long) hba->dummy_buf_dma;
+	mp_bdt = (काष्ठा iscsi_bd *) hba->mp_bd_tbl;
+	addr = (अचिन्हित दीर्घ) hba->dummy_buf_dma;
 	mp_bdt->buffer_addr_lo = addr & 0xffffffff;
 	mp_bdt->buffer_addr_hi = addr >> 32;
 	mp_bdt->buffer_length = CNIC_PAGE_SIZE;
 	mp_bdt->flags = ISCSI_BD_LAST_IN_BD_CHAIN |
 			ISCSI_BD_FIRST_IN_BD_CHAIN;
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /**
- * bnx2i_free_mp_bdt - releases ITT back to free pool
- * @hba:	pointer to adapter instance
+ * bnx2i_मुक्त_mp_bdt - releases ITT back to मुक्त pool
+ * @hba:	poपूर्णांकer to adapter instance
  *
- * free MP dummy buffer and associated BD table
+ * मुक्त MP dummy buffer and associated BD table
  */
-static void bnx2i_free_mp_bdt(struct bnx2i_hba *hba)
-{
-	if (hba->mp_bd_tbl) {
-		dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+अटल व्योम bnx2i_मुक्त_mp_bdt(काष्ठा bnx2i_hba *hba)
+अणु
+	अगर (hba->mp_bd_tbl) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				  hba->mp_bd_tbl, hba->mp_bd_dma);
-		hba->mp_bd_tbl = NULL;
-	}
-	if (hba->dummy_buffer) {
-		dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+		hba->mp_bd_tbl = शून्य;
+	पूर्ण
+	अगर (hba->dummy_buffer) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				  hba->dummy_buffer, hba->dummy_buf_dma);
-		hba->dummy_buffer = NULL;
-	}
-	return;
-}
+		hba->dummy_buffer = शून्य;
+	पूर्ण
+	वापस;
+पूर्ण
 
 /**
- * bnx2i_drop_session - notifies iscsid of connection error.
- * @cls_session:	iscsi cls session pointer
+ * bnx2i_drop_session - notअगरies iscsid of connection error.
+ * @cls_session:	iscsi cls session poपूर्णांकer
  *
- * This notifies iscsid that there is a error, so it can initiate
+ * This notअगरies iscsid that there is a error, so it can initiate
  * recovery.
  *
  * This relies on caller using the iscsi class iterator so the object
- * is refcounted and does not disapper from under us.
+ * is refcounted and करोes not disapper from under us.
  */
-void bnx2i_drop_session(struct iscsi_cls_session *cls_session)
-{
+व्योम bnx2i_drop_session(काष्ठा iscsi_cls_session *cls_session)
+अणु
 	iscsi_session_failure(cls_session->dd_data, ISCSI_ERR_CONN_FAILED);
-}
+पूर्ण
 
 /**
  * bnx2i_ep_destroy_list_add - add an entry to EP destroy list
- * @hba:	pointer to adapter instance
- * @ep:		pointer to endpoint (transport identifier) structure
+ * @hba:	poपूर्णांकer to adapter instance
+ * @ep:		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * EP destroy queue manager
  */
-static int bnx2i_ep_destroy_list_add(struct bnx2i_hba *hba,
-				     struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल पूर्णांक bnx2i_ep_destroy_list_add(काष्ठा bnx2i_hba *hba,
+				     काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_add_tail(&ep->link, &hba->ep_destroy_list);
-	write_unlock_bh(&hba->ep_rdwr_lock);
-	return 0;
-}
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
+	वापस 0;
+पूर्ण
 
 /**
  * bnx2i_ep_destroy_list_del - add an entry to EP destroy list
  *
- * @hba: 		pointer to adapter instance
- * @ep: 		pointer to endpoint (transport identifier) structure
+ * @hba: 		poपूर्णांकer to adapter instance
+ * @ep: 		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * EP destroy queue manager
  */
-static int bnx2i_ep_destroy_list_del(struct bnx2i_hba *hba,
-				     struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल पूर्णांक bnx2i_ep_destroy_list_del(काष्ठा bnx2i_hba *hba,
+				     काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_del_init(&ep->link);
-	write_unlock_bh(&hba->ep_rdwr_lock);
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bnx2i_ep_ofld_list_add - add an entry to ep offload pending list
- * @hba:	pointer to adapter instance
- * @ep:		pointer to endpoint (transport identifier) structure
+ * @hba:	poपूर्णांकer to adapter instance
+ * @ep:		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * pending conn offload completion queue manager
  */
-static int bnx2i_ep_ofld_list_add(struct bnx2i_hba *hba,
-				  struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल पूर्णांक bnx2i_ep_ofld_list_add(काष्ठा bnx2i_hba *hba,
+				  काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_add_tail(&ep->link, &hba->ep_ofld_list);
-	write_unlock_bh(&hba->ep_rdwr_lock);
-	return 0;
-}
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
+	वापस 0;
+पूर्ण
 
 /**
  * bnx2i_ep_ofld_list_del - add an entry to ep offload pending list
- * @hba: 		pointer to adapter instance
- * @ep: 		pointer to endpoint (transport identifier) structure
+ * @hba: 		poपूर्णांकer to adapter instance
+ * @ep: 		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * pending conn offload completion queue manager
  */
-static int bnx2i_ep_ofld_list_del(struct bnx2i_hba *hba,
-				  struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल पूर्णांक bnx2i_ep_ofld_list_del(काष्ठा bnx2i_hba *hba,
+				  काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_del_init(&ep->link);
-	write_unlock_bh(&hba->ep_rdwr_lock);
-	return 0;
-}
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
+	वापस 0;
+पूर्ण
 
 
 /**
- * bnx2i_find_ep_in_ofld_list - find iscsi_cid in pending list of endpoints
+ * bnx2i_find_ep_in_ofld_list - find iscsi_cid in pending list of endpoपूर्णांकs
  *
- * @hba: 		pointer to adapter instance
+ * @hba: 		poपूर्णांकer to adapter instance
  * @iscsi_cid:		iscsi context ID to find
  *
  */
-struct bnx2i_endpoint *
-bnx2i_find_ep_in_ofld_list(struct bnx2i_hba *hba, u32 iscsi_cid)
-{
-	struct list_head *list;
-	struct list_head *tmp;
-	struct bnx2i_endpoint *ep = NULL;
+काष्ठा bnx2i_endpoपूर्णांक *
+bnx2i_find_ep_in_ofld_list(काष्ठा bnx2i_hba *hba, u32 iscsi_cid)
+अणु
+	काष्ठा list_head *list;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा bnx2i_endpoपूर्णांक *ep = शून्य;
 
-	read_lock_bh(&hba->ep_rdwr_lock);
-	list_for_each_safe(list, tmp, &hba->ep_ofld_list) {
-		ep = (struct bnx2i_endpoint *)list;
+	पढ़ो_lock_bh(&hba->ep_rdwr_lock);
+	list_क्रम_each_safe(list, पंचांगp, &hba->ep_ofld_list) अणु
+		ep = (काष्ठा bnx2i_endpoपूर्णांक *)list;
 
-		if (ep->ep_iscsi_cid == iscsi_cid)
-			break;
-		ep = NULL;
-	}
-	read_unlock_bh(&hba->ep_rdwr_lock);
+		अगर (ep->ep_iscsi_cid == iscsi_cid)
+			अवरोध;
+		ep = शून्य;
+	पूर्ण
+	पढ़ो_unlock_bh(&hba->ep_rdwr_lock);
 
-	if (!ep)
-		printk(KERN_ERR "l5 cid %d not found\n", iscsi_cid);
-	return ep;
-}
+	अगर (!ep)
+		prपूर्णांकk(KERN_ERR "l5 cid %d not found\n", iscsi_cid);
+	वापस ep;
+पूर्ण
 
 /**
  * bnx2i_find_ep_in_destroy_list - find iscsi_cid in destroy list
- * @hba: 		pointer to adapter instance
+ * @hba: 		poपूर्णांकer to adapter instance
  * @iscsi_cid:		iscsi context ID to find
  *
  */
-struct bnx2i_endpoint *
-bnx2i_find_ep_in_destroy_list(struct bnx2i_hba *hba, u32 iscsi_cid)
-{
-	struct list_head *list;
-	struct list_head *tmp;
-	struct bnx2i_endpoint *ep = NULL;
+काष्ठा bnx2i_endpoपूर्णांक *
+bnx2i_find_ep_in_destroy_list(काष्ठा bnx2i_hba *hba, u32 iscsi_cid)
+अणु
+	काष्ठा list_head *list;
+	काष्ठा list_head *पंचांगp;
+	काष्ठा bnx2i_endpoपूर्णांक *ep = शून्य;
 
-	read_lock_bh(&hba->ep_rdwr_lock);
-	list_for_each_safe(list, tmp, &hba->ep_destroy_list) {
-		ep = (struct bnx2i_endpoint *)list;
+	पढ़ो_lock_bh(&hba->ep_rdwr_lock);
+	list_क्रम_each_safe(list, पंचांगp, &hba->ep_destroy_list) अणु
+		ep = (काष्ठा bnx2i_endpoपूर्णांक *)list;
 
-		if (ep->ep_iscsi_cid == iscsi_cid)
-			break;
-		ep = NULL;
-	}
-	read_unlock_bh(&hba->ep_rdwr_lock);
+		अगर (ep->ep_iscsi_cid == iscsi_cid)
+			अवरोध;
+		ep = शून्य;
+	पूर्ण
+	पढ़ो_unlock_bh(&hba->ep_rdwr_lock);
 
-	if (!ep)
-		printk(KERN_ERR "l5 cid %d not found\n", iscsi_cid);
+	अगर (!ep)
+		prपूर्णांकk(KERN_ERR "l5 cid %d not found\n", iscsi_cid);
 
-	return ep;
-}
+	वापस ep;
+पूर्ण
 
 /**
  * bnx2i_ep_active_list_add - add an entry to ep active list
- * @hba:	pointer to adapter instance
- * @ep:		pointer to endpoint (transport identifier) structure
+ * @hba:	poपूर्णांकer to adapter instance
+ * @ep:		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * current active conn queue manager
  */
-static void bnx2i_ep_active_list_add(struct bnx2i_hba *hba,
-				     struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल व्योम bnx2i_ep_active_list_add(काष्ठा bnx2i_hba *hba,
+				     काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_add_tail(&ep->link, &hba->ep_active_list);
-	write_unlock_bh(&hba->ep_rdwr_lock);
-}
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
+पूर्ण
 
 
 /**
  * bnx2i_ep_active_list_del - deletes an entry to ep active list
- * @hba:	pointer to adapter instance
- * @ep:		pointer to endpoint (transport identifier) structure
+ * @hba:	poपूर्णांकer to adapter instance
+ * @ep:		poपूर्णांकer to endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
  * current active conn queue manager
  */
-static void bnx2i_ep_active_list_del(struct bnx2i_hba *hba,
-				     struct bnx2i_endpoint *ep)
-{
-	write_lock_bh(&hba->ep_rdwr_lock);
+अटल व्योम bnx2i_ep_active_list_del(काष्ठा bnx2i_hba *hba,
+				     काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	ग_लिखो_lock_bh(&hba->ep_rdwr_lock);
 	list_del_init(&ep->link);
-	write_unlock_bh(&hba->ep_rdwr_lock);
-}
+	ग_लिखो_unlock_bh(&hba->ep_rdwr_lock);
+पूर्ण
 
 
 /**
  * bnx2i_setup_host_queue_size - assigns shost->can_queue param
- * @hba:	pointer to adapter instance
- * @shost:	scsi host pointer
+ * @hba:	poपूर्णांकer to adapter instance
+ * @shost:	scsi host poपूर्णांकer
  *
  * Initializes 'can_queue' parameter based on how many outstanding commands
- * 	the device can handle. Each device 5708/5709/57710 has different
+ * 	the device can handle. Each device 5708/5709/57710 has dअगरferent
  *	capabilities
  */
-static void bnx2i_setup_host_queue_size(struct bnx2i_hba *hba,
-					struct Scsi_Host *shost)
-{
-	if (test_bit(BNX2I_NX2_DEV_5708, &hba->cnic_dev_type))
+अटल व्योम bnx2i_setup_host_queue_size(काष्ठा bnx2i_hba *hba,
+					काष्ठा Scsi_Host *shost)
+अणु
+	अगर (test_bit(BNX2I_NX2_DEV_5708, &hba->cnic_dev_type))
 		shost->can_queue = ISCSI_MAX_CMDS_PER_HBA_5708;
-	else if (test_bit(BNX2I_NX2_DEV_5709, &hba->cnic_dev_type))
+	अन्यथा अगर (test_bit(BNX2I_NX2_DEV_5709, &hba->cnic_dev_type))
 		shost->can_queue = ISCSI_MAX_CMDS_PER_HBA_5709;
-	else if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type))
+	अन्यथा अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type))
 		shost->can_queue = ISCSI_MAX_CMDS_PER_HBA_57710;
-	else
+	अन्यथा
 		shost->can_queue = ISCSI_MAX_CMDS_PER_HBA_5708;
-}
+पूर्ण
 
 
 /**
  * bnx2i_alloc_hba - allocate and init adapter instance
- * @cnic:	cnic device pointer
+ * @cnic:	cnic device poपूर्णांकer
  *
- * allocate & initialize adapter structure and call other
- *	support routines to do per adapter initialization
+ * allocate & initialize adapter काष्ठाure and call other
+ *	support routines to करो per adapter initialization
  */
-struct bnx2i_hba *bnx2i_alloc_hba(struct cnic_dev *cnic)
-{
-	struct Scsi_Host *shost;
-	struct bnx2i_hba *hba;
+काष्ठा bnx2i_hba *bnx2i_alloc_hba(काष्ठा cnic_dev *cnic)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा bnx2i_hba *hba;
 
-	shost = iscsi_host_alloc(&bnx2i_host_template, sizeof(*hba), 0);
-	if (!shost)
-		return NULL;
+	shost = iscsi_host_alloc(&bnx2i_host_ढाँचा, माप(*hba), 0);
+	अगर (!shost)
+		वापस शून्य;
 	shost->dma_boundary = cnic->pcidev->dma_mask;
-	shost->transportt = bnx2i_scsi_xport_template;
+	shost->transportt = bnx2i_scsi_xport_ढाँचा;
 	shost->max_id = ISCSI_MAX_CONNS_PER_HBA;
 	shost->max_channel = 0;
 	shost->max_lun = 512;
@@ -799,32 +800,32 @@ struct bnx2i_hba *bnx2i_alloc_hba(struct cnic_dev *cnic)
 	hba = iscsi_host_priv(shost);
 	hba->shost = shost;
 	hba->netdev = cnic->netdev;
-	/* Get PCI related information and update hba struct members */
+	/* Get PCI related inक्रमmation and update hba काष्ठा members */
 	hba->pcidev = cnic->pcidev;
 	pci_dev_get(hba->pcidev);
 	hba->pci_did = hba->pcidev->device;
-	hba->pci_vid = hba->pcidev->vendor;
-	hba->pci_sdid = hba->pcidev->subsystem_device;
-	hba->pci_svid = hba->pcidev->subsystem_vendor;
+	hba->pci_vid = hba->pcidev->venकरोr;
+	hba->pci_sdid = hba->pcidev->subप्रणाली_device;
+	hba->pci_svid = hba->pcidev->subप्रणाली_venकरोr;
 	hba->pci_func = PCI_FUNC(hba->pcidev->devfn);
 	hba->pci_devno = PCI_SLOT(hba->pcidev->devfn);
 
-	bnx2i_identify_device(hba, cnic);
+	bnx2i_identअगरy_device(hba, cnic);
 	bnx2i_setup_host_queue_size(hba, shost);
 
 	hba->reg_base = pci_resource_start(hba->pcidev, 0);
-	if (test_bit(BNX2I_NX2_DEV_5709, &hba->cnic_dev_type)) {
+	अगर (test_bit(BNX2I_NX2_DEV_5709, &hba->cnic_dev_type)) अणु
 		hba->regview = pci_iomap(hba->pcidev, 0, BNX2_MQ_CONFIG2);
-		if (!hba->regview)
-			goto ioreg_map_err;
-	} else if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) {
+		अगर (!hba->regview)
+			जाओ ioreg_map_err;
+	पूर्ण अन्यथा अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) अणु
 		hba->regview = pci_iomap(hba->pcidev, 0, 4096);
-		if (!hba->regview)
-			goto ioreg_map_err;
-	}
+		अगर (!hba->regview)
+			जाओ ioreg_map_err;
+	पूर्ण
 
-	if (bnx2i_setup_mp_bdt(hba))
-		goto mp_bdt_mem_err;
+	अगर (bnx2i_setup_mp_bdt(hba))
+		जाओ mp_bdt_mem_err;
 
 	INIT_LIST_HEAD(&hba->ep_ofld_list);
 	INIT_LIST_HEAD(&hba->ep_active_list);
@@ -833,156 +834,156 @@ struct bnx2i_hba *bnx2i_alloc_hba(struct cnic_dev *cnic)
 
 	hba->mtu_supported = BNX2I_MAX_MTU_SUPPORTED;
 
-	/* different values for 5708/5709/57710 */
+	/* dअगरferent values क्रम 5708/5709/57710 */
 	hba->max_active_conns = ISCSI_MAX_CONNS_PER_HBA;
 
-	if (bnx2i_setup_free_cid_que(hba))
-		goto cid_que_err;
+	अगर (bnx2i_setup_मुक्त_cid_que(hba))
+		जाओ cid_que_err;
 
-	/* SQ/RQ/CQ size can be changed via sysfx interface */
-	if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) {
-		if (sq_size && sq_size <= BNX2I_5770X_SQ_WQES_MAX)
+	/* SQ/RQ/CQ size can be changed via sysfx पूर्णांकerface */
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) अणु
+		अगर (sq_size && sq_size <= BNX2I_5770X_SQ_WQES_MAX)
 			hba->max_sqes = sq_size;
-		else
+		अन्यथा
 			hba->max_sqes = BNX2I_5770X_SQ_WQES_DEFAULT;
-	} else {	/* 5706/5708/5709 */
-		if (sq_size && sq_size <= BNX2I_570X_SQ_WQES_MAX)
+	पूर्ण अन्यथा अणु	/* 5706/5708/5709 */
+		अगर (sq_size && sq_size <= BNX2I_570X_SQ_WQES_MAX)
 			hba->max_sqes = sq_size;
-		else
+		अन्यथा
 			hba->max_sqes = BNX2I_570X_SQ_WQES_DEFAULT;
-	}
+	पूर्ण
 
 	hba->max_rqes = rq_size;
 	hba->max_cqes = hba->max_sqes + rq_size;
-	if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) {
-		if (hba->max_cqes > BNX2I_5770X_CQ_WQES_MAX)
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) अणु
+		अगर (hba->max_cqes > BNX2I_5770X_CQ_WQES_MAX)
 			hba->max_cqes = BNX2I_5770X_CQ_WQES_MAX;
-	} else if (hba->max_cqes > BNX2I_570X_CQ_WQES_MAX)
+	पूर्ण अन्यथा अगर (hba->max_cqes > BNX2I_570X_CQ_WQES_MAX)
 		hba->max_cqes = BNX2I_570X_CQ_WQES_MAX;
 
 	hba->num_ccell = hba->max_sqes / 2;
 
 	spin_lock_init(&hba->lock);
 	mutex_init(&hba->net_dev_lock);
-	init_waitqueue_head(&hba->eh_wait);
-	if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) {
-		hba->hba_shutdown_tmo = 30 * HZ;
-		hba->conn_teardown_tmo = 20 * HZ;
-		hba->conn_ctx_destroy_tmo = 6 * HZ;
-	} else {	/* 5706/5708/5709 */
-		hba->hba_shutdown_tmo = 20 * HZ;
-		hba->conn_teardown_tmo = 10 * HZ;
-		hba->conn_ctx_destroy_tmo = 2 * HZ;
-	}
+	init_रुकोqueue_head(&hba->eh_रुको);
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type)) अणु
+		hba->hba_shutकरोwn_पंचांगo = 30 * HZ;
+		hba->conn_tearकरोwn_पंचांगo = 20 * HZ;
+		hba->conn_ctx_destroy_पंचांगo = 6 * HZ;
+	पूर्ण अन्यथा अणु	/* 5706/5708/5709 */
+		hba->hba_shutकरोwn_पंचांगo = 20 * HZ;
+		hba->conn_tearकरोwn_पंचांगo = 10 * HZ;
+		hba->conn_ctx_destroy_पंचांगo = 2 * HZ;
+	पूर्ण
 
-#ifdef CONFIG_32BIT
+#अगर_घोषित CONFIG_32BIT
 	spin_lock_init(&hba->stat_lock);
-#endif
-	memset(&hba->stats, 0, sizeof(struct iscsi_stats_info));
+#पूर्ण_अगर
+	स_रखो(&hba->stats, 0, माप(काष्ठा iscsi_stats_info));
 
-	if (iscsi_host_add(shost, &hba->pcidev->dev))
-		goto free_dump_mem;
-	return hba;
+	अगर (iscsi_host_add(shost, &hba->pcidev->dev))
+		जाओ मुक्त_dump_mem;
+	वापस hba;
 
-free_dump_mem:
-	bnx2i_release_free_cid_que(hba);
+मुक्त_dump_mem:
+	bnx2i_release_मुक्त_cid_que(hba);
 cid_que_err:
-	bnx2i_free_mp_bdt(hba);
+	bnx2i_मुक्त_mp_bdt(hba);
 mp_bdt_mem_err:
-	if (hba->regview) {
+	अगर (hba->regview) अणु
 		pci_iounmap(hba->pcidev, hba->regview);
-		hba->regview = NULL;
-	}
+		hba->regview = शून्य;
+	पूर्ण
 ioreg_map_err:
 	pci_dev_put(hba->pcidev);
 	scsi_host_put(shost);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * bnx2i_free_hba- releases hba structure and resources held by the adapter
- * @hba:	pointer to adapter instance
+ * bnx2i_मुक्त_hba- releases hba काष्ठाure and resources held by the adapter
+ * @hba:	poपूर्णांकer to adapter instance
  *
- * free adapter structure and call various cleanup routines.
+ * मुक्त adapter काष्ठाure and call various cleanup routines.
  */
-void bnx2i_free_hba(struct bnx2i_hba *hba)
-{
-	struct Scsi_Host *shost = hba->shost;
+व्योम bnx2i_मुक्त_hba(काष्ठा bnx2i_hba *hba)
+अणु
+	काष्ठा Scsi_Host *shost = hba->shost;
 
-	iscsi_host_remove(shost);
+	iscsi_host_हटाओ(shost);
 	INIT_LIST_HEAD(&hba->ep_ofld_list);
 	INIT_LIST_HEAD(&hba->ep_active_list);
 	INIT_LIST_HEAD(&hba->ep_destroy_list);
 
-	if (hba->regview) {
+	अगर (hba->regview) अणु
 		pci_iounmap(hba->pcidev, hba->regview);
-		hba->regview = NULL;
-	}
+		hba->regview = शून्य;
+	पूर्ण
 	pci_dev_put(hba->pcidev);
-	bnx2i_free_mp_bdt(hba);
-	bnx2i_release_free_cid_que(hba);
-	iscsi_host_free(shost);
-}
+	bnx2i_मुक्त_mp_bdt(hba);
+	bnx2i_release_मुक्त_cid_que(hba);
+	iscsi_host_मुक्त(shost);
+पूर्ण
 
 /**
- * bnx2i_conn_free_login_resources - free DMA resources used for login process
- * @hba:		pointer to adapter instance
- * @bnx2i_conn:		iscsi connection pointer
+ * bnx2i_conn_मुक्त_login_resources - मुक्त DMA resources used क्रम login process
+ * @hba:		poपूर्णांकer to adapter instance
+ * @bnx2i_conn:		iscsi connection poपूर्णांकer
  *
- * Login related resources, mostly BDT & payload DMA memory is freed
+ * Login related resources, mostly BDT & payload DMA memory is मुक्तd
  */
-static void bnx2i_conn_free_login_resources(struct bnx2i_hba *hba,
-					    struct bnx2i_conn *bnx2i_conn)
-{
-	if (bnx2i_conn->gen_pdu.resp_bd_tbl) {
-		dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+अटल व्योम bnx2i_conn_मुक्त_login_resources(काष्ठा bnx2i_hba *hba,
+					    काष्ठा bnx2i_conn *bnx2i_conn)
+अणु
+	अगर (bnx2i_conn->gen_pdu.resp_bd_tbl) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				  bnx2i_conn->gen_pdu.resp_bd_tbl,
 				  bnx2i_conn->gen_pdu.resp_bd_dma);
-		bnx2i_conn->gen_pdu.resp_bd_tbl = NULL;
-	}
+		bnx2i_conn->gen_pdu.resp_bd_tbl = शून्य;
+	पूर्ण
 
-	if (bnx2i_conn->gen_pdu.req_bd_tbl) {
-		dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+	अगर (bnx2i_conn->gen_pdu.req_bd_tbl) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				  bnx2i_conn->gen_pdu.req_bd_tbl,
 				  bnx2i_conn->gen_pdu.req_bd_dma);
-		bnx2i_conn->gen_pdu.req_bd_tbl = NULL;
-	}
+		bnx2i_conn->gen_pdu.req_bd_tbl = शून्य;
+	पूर्ण
 
-	if (bnx2i_conn->gen_pdu.resp_buf) {
-		dma_free_coherent(&hba->pcidev->dev,
+	अगर (bnx2i_conn->gen_pdu.resp_buf) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev,
 				  ISCSI_DEF_MAX_RECV_SEG_LEN,
 				  bnx2i_conn->gen_pdu.resp_buf,
 				  bnx2i_conn->gen_pdu.resp_dma_addr);
-		bnx2i_conn->gen_pdu.resp_buf = NULL;
-	}
+		bnx2i_conn->gen_pdu.resp_buf = शून्य;
+	पूर्ण
 
-	if (bnx2i_conn->gen_pdu.req_buf) {
-		dma_free_coherent(&hba->pcidev->dev,
+	अगर (bnx2i_conn->gen_pdu.req_buf) अणु
+		dma_मुक्त_coherent(&hba->pcidev->dev,
 				  ISCSI_DEF_MAX_RECV_SEG_LEN,
 				  bnx2i_conn->gen_pdu.req_buf,
 				  bnx2i_conn->gen_pdu.req_dma_addr);
-		bnx2i_conn->gen_pdu.req_buf = NULL;
-	}
-}
+		bnx2i_conn->gen_pdu.req_buf = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * bnx2i_conn_alloc_login_resources - alloc DMA resources for login/nop.
- * @hba:		pointer to adapter instance
- * @bnx2i_conn:		iscsi connection pointer
+ * bnx2i_conn_alloc_login_resources - alloc DMA resources क्रम login/nop.
+ * @hba:		poपूर्णांकer to adapter instance
+ * @bnx2i_conn:		iscsi connection poपूर्णांकer
  *
  * Mgmt task DNA resources are allocated in this routine.
  */
-static int bnx2i_conn_alloc_login_resources(struct bnx2i_hba *hba,
-					    struct bnx2i_conn *bnx2i_conn)
-{
-	/* Allocate memory for login request/response buffers */
+अटल पूर्णांक bnx2i_conn_alloc_login_resources(काष्ठा bnx2i_hba *hba,
+					    काष्ठा bnx2i_conn *bnx2i_conn)
+अणु
+	/* Allocate memory क्रम login request/response buffers */
 	bnx2i_conn->gen_pdu.req_buf =
 		dma_alloc_coherent(&hba->pcidev->dev,
 				   ISCSI_DEF_MAX_RECV_SEG_LEN,
 				   &bnx2i_conn->gen_pdu.req_dma_addr,
 				   GFP_KERNEL);
-	if (bnx2i_conn->gen_pdu.req_buf == NULL)
-		goto login_req_buf_failure;
+	अगर (bnx2i_conn->gen_pdu.req_buf == शून्य)
+		जाओ login_req_buf_failure;
 
 	bnx2i_conn->gen_pdu.req_buf_size = 0;
 	bnx2i_conn->gen_pdu.req_wr_ptr = bnx2i_conn->gen_pdu.req_buf;
@@ -992,8 +993,8 @@ static int bnx2i_conn_alloc_login_resources(struct bnx2i_hba *hba,
 				   ISCSI_DEF_MAX_RECV_SEG_LEN,
 				   &bnx2i_conn->gen_pdu.resp_dma_addr,
 				   GFP_KERNEL);
-	if (bnx2i_conn->gen_pdu.resp_buf == NULL)
-		goto login_resp_buf_failure;
+	अगर (bnx2i_conn->gen_pdu.resp_buf == शून्य)
+		जाओ login_resp_buf_failure;
 
 	bnx2i_conn->gen_pdu.resp_buf_size = ISCSI_DEF_MAX_RECV_SEG_LEN;
 	bnx2i_conn->gen_pdu.resp_wr_ptr = bnx2i_conn->gen_pdu.resp_buf;
@@ -1001,54 +1002,54 @@ static int bnx2i_conn_alloc_login_resources(struct bnx2i_hba *hba,
 	bnx2i_conn->gen_pdu.req_bd_tbl =
 		dma_alloc_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				   &bnx2i_conn->gen_pdu.req_bd_dma, GFP_KERNEL);
-	if (bnx2i_conn->gen_pdu.req_bd_tbl == NULL)
-		goto login_req_bd_tbl_failure;
+	अगर (bnx2i_conn->gen_pdu.req_bd_tbl == शून्य)
+		जाओ login_req_bd_tbl_failure;
 
 	bnx2i_conn->gen_pdu.resp_bd_tbl =
 		dma_alloc_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 				   &bnx2i_conn->gen_pdu.resp_bd_dma,
 				   GFP_KERNEL);
-	if (bnx2i_conn->gen_pdu.resp_bd_tbl == NULL)
-		goto login_resp_bd_tbl_failure;
+	अगर (bnx2i_conn->gen_pdu.resp_bd_tbl == शून्य)
+		जाओ login_resp_bd_tbl_failure;
 
-	return 0;
+	वापस 0;
 
 login_resp_bd_tbl_failure:
-	dma_free_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
+	dma_मुक्त_coherent(&hba->pcidev->dev, CNIC_PAGE_SIZE,
 			  bnx2i_conn->gen_pdu.req_bd_tbl,
 			  bnx2i_conn->gen_pdu.req_bd_dma);
-	bnx2i_conn->gen_pdu.req_bd_tbl = NULL;
+	bnx2i_conn->gen_pdu.req_bd_tbl = शून्य;
 
 login_req_bd_tbl_failure:
-	dma_free_coherent(&hba->pcidev->dev, ISCSI_DEF_MAX_RECV_SEG_LEN,
+	dma_मुक्त_coherent(&hba->pcidev->dev, ISCSI_DEF_MAX_RECV_SEG_LEN,
 			  bnx2i_conn->gen_pdu.resp_buf,
 			  bnx2i_conn->gen_pdu.resp_dma_addr);
-	bnx2i_conn->gen_pdu.resp_buf = NULL;
+	bnx2i_conn->gen_pdu.resp_buf = शून्य;
 login_resp_buf_failure:
-	dma_free_coherent(&hba->pcidev->dev, ISCSI_DEF_MAX_RECV_SEG_LEN,
+	dma_मुक्त_coherent(&hba->pcidev->dev, ISCSI_DEF_MAX_RECV_SEG_LEN,
 			  bnx2i_conn->gen_pdu.req_buf,
 			  bnx2i_conn->gen_pdu.req_dma_addr);
-	bnx2i_conn->gen_pdu.req_buf = NULL;
+	bnx2i_conn->gen_pdu.req_buf = शून्य;
 login_req_buf_failure:
-	iscsi_conn_printk(KERN_ERR, bnx2i_conn->cls_conn->dd_data,
+	iscsi_conn_prपूर्णांकk(KERN_ERR, bnx2i_conn->cls_conn->dd_data,
 			  "login resource alloc failed!!\n");
-	return -ENOMEM;
+	वापस -ENOMEM;
 
-}
+पूर्ण
 
 
 /**
  * bnx2i_iscsi_prep_generic_pdu_bd - prepares BD table.
- * @bnx2i_conn:		iscsi connection pointer
+ * @bnx2i_conn:		iscsi connection poपूर्णांकer
  *
- * Allocates buffers and BD tables before shipping requests to cnic
- *	for PDUs prepared by 'iscsid' daemon
+ * Allocates buffers and BD tables beक्रमe shipping requests to cnic
+ *	क्रम PDUs prepared by 'iscsid' daemon
  */
-static void bnx2i_iscsi_prep_generic_pdu_bd(struct bnx2i_conn *bnx2i_conn)
-{
-	struct iscsi_bd *bd_tbl;
+अटल व्योम bnx2i_iscsi_prep_generic_pdu_bd(काष्ठा bnx2i_conn *bnx2i_conn)
+अणु
+	काष्ठा iscsi_bd *bd_tbl;
 
-	bd_tbl = (struct iscsi_bd *) bnx2i_conn->gen_pdu.req_bd_tbl;
+	bd_tbl = (काष्ठा iscsi_bd *) bnx2i_conn->gen_pdu.req_bd_tbl;
 
 	bd_tbl->buffer_addr_hi =
 		(u32) ((u64) bnx2i_conn->gen_pdu.req_dma_addr >> 32);
@@ -1059,62 +1060,62 @@ static void bnx2i_iscsi_prep_generic_pdu_bd(struct bnx2i_conn *bnx2i_conn)
 	bd_tbl->flags = ISCSI_BD_LAST_IN_BD_CHAIN |
 			ISCSI_BD_FIRST_IN_BD_CHAIN;
 
-	bd_tbl = (struct iscsi_bd  *) bnx2i_conn->gen_pdu.resp_bd_tbl;
+	bd_tbl = (काष्ठा iscsi_bd  *) bnx2i_conn->gen_pdu.resp_bd_tbl;
 	bd_tbl->buffer_addr_hi = (u64) bnx2i_conn->gen_pdu.resp_dma_addr >> 32;
 	bd_tbl->buffer_addr_lo = (u32) bnx2i_conn->gen_pdu.resp_dma_addr;
 	bd_tbl->buffer_length = ISCSI_DEF_MAX_RECV_SEG_LEN;
 	bd_tbl->reserved0 = 0;
 	bd_tbl->flags = ISCSI_BD_LAST_IN_BD_CHAIN |
 			ISCSI_BD_FIRST_IN_BD_CHAIN;
-}
+पूर्ण
 
 
 /**
  * bnx2i_iscsi_send_generic_request - called to send mgmt tasks.
- * @task:	transport layer task pointer
+ * @task:	transport layer task poपूर्णांकer
  *
  * called to transmit PDUs prepared by the 'iscsid' daemon. iSCSI login,
  *	Nop-out and Logout requests flow through this path.
  */
-static int bnx2i_iscsi_send_generic_request(struct iscsi_task *task)
-{
-	struct bnx2i_cmd *cmd = task->dd_data;
-	struct bnx2i_conn *bnx2i_conn = cmd->conn;
-	int rc = 0;
-	char *buf;
-	int data_len;
+अटल पूर्णांक bnx2i_iscsi_send_generic_request(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा bnx2i_cmd *cmd = task->dd_data;
+	काष्ठा bnx2i_conn *bnx2i_conn = cmd->conn;
+	पूर्णांक rc = 0;
+	अक्षर *buf;
+	पूर्णांक data_len;
 
 	bnx2i_iscsi_prep_generic_pdu_bd(bnx2i_conn);
-	switch (task->hdr->opcode & ISCSI_OPCODE_MASK) {
-	case ISCSI_OP_LOGIN:
+	चयन (task->hdr->opcode & ISCSI_OPCODE_MASK) अणु
+	हाल ISCSI_OP_LOGIN:
 		bnx2i_send_iscsi_login(bnx2i_conn, task);
-		break;
-	case ISCSI_OP_NOOP_OUT:
+		अवरोध;
+	हाल ISCSI_OP_NOOP_OUT:
 		data_len = bnx2i_conn->gen_pdu.req_buf_size;
 		buf = bnx2i_conn->gen_pdu.req_buf;
-		if (data_len)
+		अगर (data_len)
 			rc = bnx2i_send_iscsi_nopout(bnx2i_conn, task,
 						     buf, data_len, 1);
-		else
+		अन्यथा
 			rc = bnx2i_send_iscsi_nopout(bnx2i_conn, task,
-						     NULL, 0, 1);
-		break;
-	case ISCSI_OP_LOGOUT:
+						     शून्य, 0, 1);
+		अवरोध;
+	हाल ISCSI_OP_LOGOUT:
 		rc = bnx2i_send_iscsi_logout(bnx2i_conn, task);
-		break;
-	case ISCSI_OP_SCSI_TMFUNC:
-		rc = bnx2i_send_iscsi_tmf(bnx2i_conn, task);
-		break;
-	case ISCSI_OP_TEXT:
+		अवरोध;
+	हाल ISCSI_OP_SCSI_TMFUNC:
+		rc = bnx2i_send_iscsi_पंचांगf(bnx2i_conn, task);
+		अवरोध;
+	हाल ISCSI_OP_TEXT:
 		rc = bnx2i_send_iscsi_text(bnx2i_conn, task);
-		break;
-	default:
-		iscsi_conn_printk(KERN_ALERT, bnx2i_conn->cls_conn->dd_data,
+		अवरोध;
+	शेष:
+		iscsi_conn_prपूर्णांकk(KERN_ALERT, bnx2i_conn->cls_conn->dd_data,
 				  "send_gen: unsupported op 0x%x\n",
 				  task->hdr->opcode);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 
 /**********************************************************************
@@ -1122,122 +1123,122 @@ static int bnx2i_iscsi_send_generic_request(struct iscsi_task *task)
  **********************************************************************/
 
 /**
- * bnx2i_cpy_scsi_cdb - copies LUN & CDB fields in required format to sq wqe
- * @sc:		SCSI-ML command pointer
- * @cmd:	iscsi cmd pointer
+ * bnx2i_cpy_scsi_cdb - copies LUN & CDB fields in required क्रमmat to sq wqe
+ * @sc:		SCSI-ML command poपूर्णांकer
+ * @cmd:	iscsi cmd poपूर्णांकer
  */
-static void bnx2i_cpy_scsi_cdb(struct scsi_cmnd *sc, struct bnx2i_cmd *cmd)
-{
+अटल व्योम bnx2i_cpy_scsi_cdb(काष्ठा scsi_cmnd *sc, काष्ठा bnx2i_cmd *cmd)
+अणु
 	u32 dword;
-	int lpcnt;
+	पूर्णांक lpcnt;
 	u8 *srcp;
 	u32 *dstp;
 	u32 scsi_lun[2];
 
-	int_to_scsilun(sc->device->lun, (struct scsi_lun *) scsi_lun);
+	पूर्णांक_to_scsilun(sc->device->lun, (काष्ठा scsi_lun *) scsi_lun);
 	cmd->req.lun[0] = be32_to_cpu(scsi_lun[0]);
 	cmd->req.lun[1] = be32_to_cpu(scsi_lun[1]);
 
-	lpcnt = cmd->scsi_cmd->cmd_len / sizeof(dword);
+	lpcnt = cmd->scsi_cmd->cmd_len / माप(dword);
 	srcp = (u8 *) sc->cmnd;
 	dstp = (u32 *) cmd->req.cdb;
-	while (lpcnt--) {
-		memcpy(&dword, (const void *) srcp, 4);
+	जबतक (lpcnt--) अणु
+		स_नकल(&dword, (स्थिर व्योम *) srcp, 4);
 		*dstp = cpu_to_be32(dword);
 		srcp += 4;
 		dstp++;
-	}
-	if (sc->cmd_len & 0x3) {
+	पूर्ण
+	अगर (sc->cmd_len & 0x3) अणु
 		dword = (u32) srcp[0] | ((u32) srcp[1] << 8);
 		*dstp = cpu_to_be32(dword);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bnx2i_cleanup_task(struct iscsi_task *task)
-{
-	struct iscsi_conn *conn = task->conn;
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
-	struct bnx2i_hba *hba = bnx2i_conn->hba;
+अटल व्योम bnx2i_cleanup_task(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_conn *conn = task->conn;
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
+	काष्ठा bnx2i_hba *hba = bnx2i_conn->hba;
 
 	/*
 	 * mgmt task or cmd was never sent to us to transmit.
 	 */
-	if (!task->sc || task->state == ISCSI_TASK_PENDING)
-		return;
+	अगर (!task->sc || task->state == ISCSI_TASK_PENDING)
+		वापस;
 	/*
 	 * need to clean-up task context to claim dma buffers
 	 */
-	if (task->state == ISCSI_TASK_ABRT_TMF) {
+	अगर (task->state == ISCSI_TASK_ABRT_TMF) अणु
 		bnx2i_send_cmd_cleanup_req(hba, task->dd_data);
 
 		spin_unlock_bh(&conn->session->back_lock);
-		wait_for_completion_timeout(&bnx2i_conn->cmd_cleanup_cmpl,
-				msecs_to_jiffies(ISCSI_CMD_CLEANUP_TIMEOUT));
+		रुको_क्रम_completion_समयout(&bnx2i_conn->cmd_cleanup_cmpl,
+				msecs_to_jअगरfies(ISCSI_CMD_CLEANUP_TIMEOUT));
 		spin_lock_bh(&conn->session->back_lock);
-	}
+	पूर्ण
 	bnx2i_iscsi_unmap_sg_list(task->dd_data);
-}
+पूर्ण
 
 /**
- * bnx2i_mtask_xmit - transmit mtask to chip for further processing
- * @conn:	transport layer conn structure pointer
- * @task:	transport layer command structure pointer
+ * bnx2i_mtask_xmit - transmit mtask to chip क्रम further processing
+ * @conn:	transport layer conn काष्ठाure poपूर्णांकer
+ * @task:	transport layer command काष्ठाure poपूर्णांकer
  */
-static int
-bnx2i_mtask_xmit(struct iscsi_conn *conn, struct iscsi_task *task)
-{
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
-	struct bnx2i_hba *hba = bnx2i_conn->hba;
-	struct bnx2i_cmd *cmd = task->dd_data;
+अटल पूर्णांक
+bnx2i_mtask_xmit(काष्ठा iscsi_conn *conn, काष्ठा iscsi_task *task)
+अणु
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
+	काष्ठा bnx2i_hba *hba = bnx2i_conn->hba;
+	काष्ठा bnx2i_cmd *cmd = task->dd_data;
 
-	memset(bnx2i_conn->gen_pdu.req_buf, 0, ISCSI_DEF_MAX_RECV_SEG_LEN);
+	स_रखो(bnx2i_conn->gen_pdu.req_buf, 0, ISCSI_DEF_MAX_RECV_SEG_LEN);
 
-	bnx2i_setup_cmd_wqe_template(cmd);
+	bnx2i_setup_cmd_wqe_ढाँचा(cmd);
 	bnx2i_conn->gen_pdu.req_buf_size = task->data_count;
 
 	/* Tx PDU/data length count */
 	ADD_STATS_64(hba, tx_pdus, 1);
 	ADD_STATS_64(hba, tx_bytes, task->data_count);
 
-	if (task->data_count) {
-		memcpy(bnx2i_conn->gen_pdu.req_buf, task->data,
+	अगर (task->data_count) अणु
+		स_नकल(bnx2i_conn->gen_pdu.req_buf, task->data,
 		       task->data_count);
 		bnx2i_conn->gen_pdu.req_wr_ptr =
 			bnx2i_conn->gen_pdu.req_buf + task->data_count;
-	}
+	पूर्ण
 	cmd->conn = conn->dd_data;
-	cmd->scsi_cmd = NULL;
-	return bnx2i_iscsi_send_generic_request(task);
-}
+	cmd->scsi_cmd = शून्य;
+	वापस bnx2i_iscsi_send_generic_request(task);
+पूर्ण
 
 /**
- * bnx2i_task_xmit - transmit iscsi command to chip for further processing
- * @task:	transport layer command structure pointer
+ * bnx2i_task_xmit - transmit iscsi command to chip क्रम further processing
+ * @task:	transport layer command काष्ठाure poपूर्णांकer
  *
- * maps SG buffers and send request to chip/firmware in the form of SQ WQE
+ * maps SG buffers and send request to chip/firmware in the क्रमm of SQ WQE
  */
-static int bnx2i_task_xmit(struct iscsi_task *task)
-{
-	struct iscsi_conn *conn = task->conn;
-	struct iscsi_session *session = conn->session;
-	struct Scsi_Host *shost = iscsi_session_to_shost(session->cls_session);
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
-	struct scsi_cmnd *sc = task->sc;
-	struct bnx2i_cmd *cmd = task->dd_data;
-	struct iscsi_scsi_req *hdr = (struct iscsi_scsi_req *)task->hdr;
+अटल पूर्णांक bnx2i_task_xmit(काष्ठा iscsi_task *task)
+अणु
+	काष्ठा iscsi_conn *conn = task->conn;
+	काष्ठा iscsi_session *session = conn->session;
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(session->cls_session);
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
+	काष्ठा scsi_cmnd *sc = task->sc;
+	काष्ठा bnx2i_cmd *cmd = task->dd_data;
+	काष्ठा iscsi_scsi_req *hdr = (काष्ठा iscsi_scsi_req *)task->hdr;
 
-	if (atomic_read(&bnx2i_conn->ep->num_active_cmds) + 1  >
+	अगर (atomic_पढ़ो(&bnx2i_conn->ep->num_active_cmds) + 1  >
 	    hba->max_sqes)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
 	/*
 	 * If there is no scsi_cmnd this must be a mgmt task
 	 */
-	if (!sc)
-		return bnx2i_mtask_xmit(conn, task);
+	अगर (!sc)
+		वापस bnx2i_mtask_xmit(conn, task);
 
-	bnx2i_setup_cmd_wqe_template(cmd);
+	bnx2i_setup_cmd_wqe_ढाँचा(cmd);
 	cmd->req.op_code = ISCSI_OP_SCSI_CMD;
 	cmd->conn = bnx2i_conn;
 	cmd->scsi_cmd = sc;
@@ -1248,122 +1249,122 @@ static int bnx2i_task_xmit(struct iscsi_task *task)
 	bnx2i_cpy_scsi_cdb(sc, cmd);
 
 	cmd->req.op_attr = ISCSI_ATTR_SIMPLE;
-	if (sc->sc_data_direction == DMA_TO_DEVICE) {
+	अगर (sc->sc_data_direction == DMA_TO_DEVICE) अणु
 		cmd->req.op_attr |= ISCSI_CMD_REQUEST_WRITE;
 		cmd->req.itt = task->itt |
 			(ISCSI_TASK_TYPE_WRITE << ISCSI_CMD_REQUEST_TYPE_SHIFT);
-		bnx2i_setup_write_cmd_bd_info(task);
-	} else {
-		if (scsi_bufflen(sc))
+		bnx2i_setup_ग_लिखो_cmd_bd_info(task);
+	पूर्ण अन्यथा अणु
+		अगर (scsi_bufflen(sc))
 			cmd->req.op_attr |= ISCSI_CMD_REQUEST_READ;
 		cmd->req.itt = task->itt |
 			(ISCSI_TASK_TYPE_READ << ISCSI_CMD_REQUEST_TYPE_SHIFT);
-	}
+	पूर्ण
 
 	cmd->req.num_bds = cmd->io_tbl.bd_valid;
-	if (!cmd->io_tbl.bd_valid) {
+	अगर (!cmd->io_tbl.bd_valid) अणु
 		cmd->req.bd_list_addr_lo = (u32) hba->mp_bd_dma;
 		cmd->req.bd_list_addr_hi = (u32) ((u64) hba->mp_bd_dma >> 32);
 		cmd->req.num_bds = 1;
-	}
+	पूर्ण
 
 	bnx2i_send_iscsi_scsicmd(bnx2i_conn, cmd);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * bnx2i_session_create - create a new iscsi session
- * @ep:		pointer to iscsi endpoint
- * @cmds_max:		user specified maximum commands
+ * @ep:		poपूर्णांकer to iscsi endpoपूर्णांक
+ * @cmds_max:		user specअगरied maximum commands
  * @qdepth:		scsi queue depth to support
- * @initial_cmdsn:	initial iscsi CMDSN to be used for this session
+ * @initial_cmdsn:	initial iscsi CMDSN to be used क्रम this session
  *
  * Creates a new iSCSI session instance on given device.
  */
-static struct iscsi_cls_session *
-bnx2i_session_create(struct iscsi_endpoint *ep,
-		     uint16_t cmds_max, uint16_t qdepth,
-		     uint32_t initial_cmdsn)
-{
-	struct Scsi_Host *shost;
-	struct iscsi_cls_session *cls_session;
-	struct bnx2i_hba *hba;
-	struct bnx2i_endpoint *bnx2i_ep;
+अटल काष्ठा iscsi_cls_session *
+bnx2i_session_create(काष्ठा iscsi_endpoपूर्णांक *ep,
+		     uपूर्णांक16_t cmds_max, uपूर्णांक16_t qdepth,
+		     uपूर्णांक32_t initial_cmdsn)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा iscsi_cls_session *cls_session;
+	काष्ठा bnx2i_hba *hba;
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
 
-	if (!ep) {
-		printk(KERN_ERR "bnx2i: missing ep.\n");
-		return NULL;
-	}
+	अगर (!ep) अणु
+		prपूर्णांकk(KERN_ERR "bnx2i: missing ep.\n");
+		वापस शून्य;
+	पूर्ण
 
 	bnx2i_ep = ep->dd_data;
 	shost = bnx2i_ep->hba->shost;
 	hba = iscsi_host_priv(shost);
-	if (bnx2i_adapter_ready(hba))
-		return NULL;
+	अगर (bnx2i_adapter_पढ़ोy(hba))
+		वापस शून्य;
 
 	/*
-	 * user can override hw limit as long as it is within
+	 * user can override hw limit as दीर्घ as it is within
 	 * the min/max.
 	 */
-	if (cmds_max > hba->max_sqes)
+	अगर (cmds_max > hba->max_sqes)
 		cmds_max = hba->max_sqes;
-	else if (cmds_max < BNX2I_SQ_WQES_MIN)
+	अन्यथा अगर (cmds_max < BNX2I_SQ_WQES_MIN)
 		cmds_max = BNX2I_SQ_WQES_MIN;
 
 	cls_session = iscsi_session_setup(&bnx2i_iscsi_transport, shost,
-					  cmds_max, 0, sizeof(struct bnx2i_cmd),
+					  cmds_max, 0, माप(काष्ठा bnx2i_cmd),
 					  initial_cmdsn, ISCSI_MAX_TARGET);
-	if (!cls_session)
-		return NULL;
+	अगर (!cls_session)
+		वापस शून्य;
 
-	if (bnx2i_setup_cmd_pool(hba, cls_session->dd_data))
-		goto session_teardown;
-	return cls_session;
+	अगर (bnx2i_setup_cmd_pool(hba, cls_session->dd_data))
+		जाओ session_tearकरोwn;
+	वापस cls_session;
 
-session_teardown:
-	iscsi_session_teardown(cls_session);
-	return NULL;
-}
+session_tearकरोwn:
+	iscsi_session_tearकरोwn(cls_session);
+	वापस शून्य;
+पूर्ण
 
 
 /**
  * bnx2i_session_destroy - destroys iscsi session
- * @cls_session:	pointer to iscsi cls session
+ * @cls_session:	poपूर्णांकer to iscsi cls session
  *
  * Destroys previously created iSCSI session instance and releases
  *	all resources held by it
  */
-static void bnx2i_session_destroy(struct iscsi_cls_session *cls_session)
-{
-	struct iscsi_session *session = cls_session->dd_data;
-	struct Scsi_Host *shost = iscsi_session_to_shost(cls_session);
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
+अटल व्योम bnx2i_session_destroy(काष्ठा iscsi_cls_session *cls_session)
+अणु
+	काष्ठा iscsi_session *session = cls_session->dd_data;
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(cls_session);
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
 
 	bnx2i_destroy_cmd_pool(hba, session);
-	iscsi_session_teardown(cls_session);
-}
+	iscsi_session_tearकरोwn(cls_session);
+पूर्ण
 
 
 /**
  * bnx2i_conn_create - create iscsi connection instance
- * @cls_session:	pointer to iscsi cls session
+ * @cls_session:	poपूर्णांकer to iscsi cls session
  * @cid:		iscsi cid as per rfc (not NX2's CID terminology)
  *
- * Creates a new iSCSI connection instance for a given session
+ * Creates a new iSCSI connection instance क्रम a given session
  */
-static struct iscsi_cls_conn *
-bnx2i_conn_create(struct iscsi_cls_session *cls_session, uint32_t cid)
-{
-	struct Scsi_Host *shost = iscsi_session_to_shost(cls_session);
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
-	struct bnx2i_conn *bnx2i_conn;
-	struct iscsi_cls_conn *cls_conn;
-	struct iscsi_conn *conn;
+अटल काष्ठा iscsi_cls_conn *
+bnx2i_conn_create(काष्ठा iscsi_cls_session *cls_session, uपूर्णांक32_t cid)
+अणु
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(cls_session);
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
+	काष्ठा bnx2i_conn *bnx2i_conn;
+	काष्ठा iscsi_cls_conn *cls_conn;
+	काष्ठा iscsi_conn *conn;
 
-	cls_conn = iscsi_conn_setup(cls_session, sizeof(*bnx2i_conn),
+	cls_conn = iscsi_conn_setup(cls_session, माप(*bnx2i_conn),
 				    cid);
-	if (!cls_conn)
-		return NULL;
+	अगर (!cls_conn)
+		वापस शून्य;
 	conn = cls_conn->dd_data;
 
 	bnx2i_conn = conn->dd_data;
@@ -1372,77 +1373,77 @@ bnx2i_conn_create(struct iscsi_cls_session *cls_session, uint32_t cid)
 
 	atomic_set(&bnx2i_conn->work_cnt, 0);
 
-	/* 'ep' ptr will be assigned in bind() call */
-	bnx2i_conn->ep = NULL;
+	/* 'ep' ptr will be asचिन्हित in bind() call */
+	bnx2i_conn->ep = शून्य;
 	init_completion(&bnx2i_conn->cmd_cleanup_cmpl);
 
-	if (bnx2i_conn_alloc_login_resources(hba, bnx2i_conn)) {
-		iscsi_conn_printk(KERN_ALERT, conn,
+	अगर (bnx2i_conn_alloc_login_resources(hba, bnx2i_conn)) अणु
+		iscsi_conn_prपूर्णांकk(KERN_ALERT, conn,
 				  "conn_new: login resc alloc failed!!\n");
-		goto free_conn;
-	}
+		जाओ मुक्त_conn;
+	पूर्ण
 
-	return cls_conn;
+	वापस cls_conn;
 
-free_conn:
-	iscsi_conn_teardown(cls_conn);
-	return NULL;
-}
+मुक्त_conn:
+	iscsi_conn_tearकरोwn(cls_conn);
+	वापस शून्य;
+पूर्ण
 
 /**
  * bnx2i_conn_bind - binds iscsi sess, conn and ep objects together
- * @cls_session:	pointer to iscsi cls session
- * @cls_conn:		pointer to iscsi cls conn
+ * @cls_session:	poपूर्णांकer to iscsi cls session
+ * @cls_conn:		poपूर्णांकer to iscsi cls conn
  * @transport_fd:	64-bit EP handle
  * @is_leading:		leading connection on this session?
  *
  * Binds together iSCSI session instance, iSCSI connection instance
- *	and the TCP connection. This routine returns error code if
- *	TCP connection does not belong on the device iSCSI sess/conn
+ *	and the TCP connection. This routine वापसs error code अगर
+ *	TCP connection करोes not beदीर्घ on the device iSCSI sess/conn
  *	is bound
  */
-static int bnx2i_conn_bind(struct iscsi_cls_session *cls_session,
-			   struct iscsi_cls_conn *cls_conn,
-			   uint64_t transport_fd, int is_leading)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
-	struct Scsi_Host *shost = iscsi_session_to_shost(cls_session);
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
-	struct bnx2i_endpoint *bnx2i_ep;
-	struct iscsi_endpoint *ep;
-	int ret_code;
+अटल पूर्णांक bnx2i_conn_bind(काष्ठा iscsi_cls_session *cls_session,
+			   काष्ठा iscsi_cls_conn *cls_conn,
+			   uपूर्णांक64_t transport_fd, पूर्णांक is_leading)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
+	काष्ठा Scsi_Host *shost = iscsi_session_to_shost(cls_session);
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	पूर्णांक ret_code;
 
-	ep = iscsi_lookup_endpoint(transport_fd);
-	if (!ep)
-		return -EINVAL;
+	ep = iscsi_lookup_endpoपूर्णांक(transport_fd);
+	अगर (!ep)
+		वापस -EINVAL;
 	/*
 	 * Forcefully terminate all in progress connection recovery at the
 	 * earliest, either in bind(), send_pdu(LOGIN), or conn_start()
 	 */
-	if (bnx2i_adapter_ready(hba))
-		return -EIO;
+	अगर (bnx2i_adapter_पढ़ोy(hba))
+		वापस -EIO;
 
 	bnx2i_ep = ep->dd_data;
-	if ((bnx2i_ep->state == EP_STATE_TCP_FIN_RCVD) ||
+	अगर ((bnx2i_ep->state == EP_STATE_TCP_FIN_RCVD) ||
 	    (bnx2i_ep->state == EP_STATE_TCP_RST_RCVD))
 		/* Peer disconnect via' FIN or RST */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (iscsi_conn_bind(cls_session, cls_conn, is_leading))
-		return -EINVAL;
+	अगर (iscsi_conn_bind(cls_session, cls_conn, is_leading))
+		वापस -EINVAL;
 
-	if (bnx2i_ep->hba != hba) {
-		/* Error - TCP connection does not belong to this device
+	अगर (bnx2i_ep->hba != hba) अणु
+		/* Error - TCP connection करोes not beदीर्घ to this device
 		 */
-		iscsi_conn_printk(KERN_ALERT, cls_conn->dd_data,
+		iscsi_conn_prपूर्णांकk(KERN_ALERT, cls_conn->dd_data,
 				  "conn bind, ep=0x%p (%s) does not",
 				  bnx2i_ep, bnx2i_ep->hba->netdev->name);
-		iscsi_conn_printk(KERN_ALERT, cls_conn->dd_data,
+		iscsi_conn_prपूर्णांकk(KERN_ALERT, cls_conn->dd_data,
 				  "belong to hba (%s)\n",
 				  hba->netdev->name);
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 	bnx2i_ep->conn = bnx2i_conn;
 	bnx2i_conn->ep = bnx2i_ep;
 	bnx2i_conn->iscsi_conn_cid = bnx2i_ep->ep_iscsi_cid;
@@ -1451,188 +1452,188 @@ static int bnx2i_conn_bind(struct iscsi_cls_session *cls_session,
 	ret_code = bnx2i_bind_conn_to_iscsi_cid(hba, bnx2i_conn,
 						bnx2i_ep->ep_iscsi_cid);
 
-	/* 5706/5708/5709 FW takes RQ as full when initiated, but for 57710
+	/* 5706/5708/5709 FW takes RQ as full when initiated, but क्रम 57710
 	 * driver needs to explicitly replenish RQ index during setup.
 	 */
-	if (test_bit(BNX2I_NX2_DEV_57710, &bnx2i_ep->hba->cnic_dev_type))
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &bnx2i_ep->hba->cnic_dev_type))
 		bnx2i_put_rq_buf(bnx2i_conn, 0);
 
 	bnx2i_arm_cq_event_coalescing(bnx2i_conn->ep, CNIC_ARM_CQE);
-	return ret_code;
-}
+	वापस ret_code;
+पूर्ण
 
 
 /**
  * bnx2i_conn_destroy - destroy iscsi connection instance & release resources
- * @cls_conn:	pointer to iscsi cls conn
+ * @cls_conn:	poपूर्णांकer to iscsi cls conn
  *
  * Destroy an iSCSI connection instance and release memory resources held by
  *	this connection
  */
-static void bnx2i_conn_destroy(struct iscsi_cls_conn *cls_conn)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
-	struct Scsi_Host *shost;
-	struct bnx2i_hba *hba;
-	struct bnx2i_work *work, *tmp;
-	unsigned cpu = 0;
-	struct bnx2i_percpu_s *p;
+अटल व्योम bnx2i_conn_destroy(काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
+	काष्ठा Scsi_Host *shost;
+	काष्ठा bnx2i_hba *hba;
+	काष्ठा bnx2i_work *work, *पंचांगp;
+	अचिन्हित cpu = 0;
+	काष्ठा bnx2i_percpu_s *p;
 
 	shost = iscsi_session_to_shost(iscsi_conn_to_session(cls_conn));
 	hba = iscsi_host_priv(shost);
 
-	bnx2i_conn_free_login_resources(hba, bnx2i_conn);
+	bnx2i_conn_मुक्त_login_resources(hba, bnx2i_conn);
 
-	if (atomic_read(&bnx2i_conn->work_cnt)) {
-		for_each_online_cpu(cpu) {
+	अगर (atomic_पढ़ो(&bnx2i_conn->work_cnt)) अणु
+		क्रम_each_online_cpu(cpu) अणु
 			p = &per_cpu(bnx2i_percpu, cpu);
 			spin_lock_bh(&p->p_work_lock);
-			list_for_each_entry_safe(work, tmp,
-						 &p->work_list, list) {
-				if (work->session == conn->session &&
-				    work->bnx2i_conn == bnx2i_conn) {
+			list_क्रम_each_entry_safe(work, पंचांगp,
+						 &p->work_list, list) अणु
+				अगर (work->session == conn->session &&
+				    work->bnx2i_conn == bnx2i_conn) अणु
 					list_del_init(&work->list);
-					kfree(work);
-					if (!atomic_dec_and_test(
+					kमुक्त(work);
+					अगर (!atomic_dec_and_test(
 							&bnx2i_conn->work_cnt))
-						break;
-				}
-			}
+						अवरोध;
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&p->p_work_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	iscsi_conn_teardown(cls_conn);
-}
+	iscsi_conn_tearकरोwn(cls_conn);
+पूर्ण
 
 
 /**
- * bnx2i_ep_get_param - return iscsi ep parameter to caller
- * @ep:		pointer to iscsi endpoint
- * @param:	parameter type identifier
- * @buf: 	buffer pointer
+ * bnx2i_ep_get_param - वापस iscsi ep parameter to caller
+ * @ep:		poपूर्णांकer to iscsi endpoपूर्णांक
+ * @param:	parameter type identअगरier
+ * @buf: 	buffer poपूर्णांकer
  *
- * returns iSCSI ep parameters
+ * वापसs iSCSI ep parameters
  */
-static int bnx2i_ep_get_param(struct iscsi_endpoint *ep,
-			      enum iscsi_param param, char *buf)
-{
-	struct bnx2i_endpoint *bnx2i_ep = ep->dd_data;
-	struct bnx2i_hba *hba = bnx2i_ep->hba;
-	int len = -ENOTCONN;
+अटल पूर्णांक bnx2i_ep_get_param(काष्ठा iscsi_endpoपूर्णांक *ep,
+			      क्रमागत iscsi_param param, अक्षर *buf)
+अणु
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep = ep->dd_data;
+	काष्ठा bnx2i_hba *hba = bnx2i_ep->hba;
+	पूर्णांक len = -ENOTCONN;
 
-	if (!hba)
-		return -ENOTCONN;
+	अगर (!hba)
+		वापस -ENOTCONN;
 
-	switch (param) {
-	case ISCSI_PARAM_CONN_PORT:
+	चयन (param) अणु
+	हाल ISCSI_PARAM_CONN_PORT:
 		mutex_lock(&hba->net_dev_lock);
-		if (bnx2i_ep->cm_sk)
-			len = sprintf(buf, "%hu\n", bnx2i_ep->cm_sk->dst_port);
+		अगर (bnx2i_ep->cm_sk)
+			len = प्र_लिखो(buf, "%hu\n", bnx2i_ep->cm_sk->dst_port);
 		mutex_unlock(&hba->net_dev_lock);
-		break;
-	case ISCSI_PARAM_CONN_ADDRESS:
+		अवरोध;
+	हाल ISCSI_PARAM_CONN_ADDRESS:
 		mutex_lock(&hba->net_dev_lock);
-		if (bnx2i_ep->cm_sk)
-			len = sprintf(buf, "%pI4\n", &bnx2i_ep->cm_sk->dst_ip);
+		अगर (bnx2i_ep->cm_sk)
+			len = प्र_लिखो(buf, "%pI4\n", &bnx2i_ep->cm_sk->dst_ip);
 		mutex_unlock(&hba->net_dev_lock);
-		break;
-	default:
-		return -ENOSYS;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOSYS;
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
- * bnx2i_host_get_param - returns host (adapter) related parameters
- * @shost:	scsi host pointer
- * @param:	parameter type identifier
- * @buf:	buffer pointer
+ * bnx2i_host_get_param - वापसs host (adapter) related parameters
+ * @shost:	scsi host poपूर्णांकer
+ * @param:	parameter type identअगरier
+ * @buf:	buffer poपूर्णांकer
  */
-static int bnx2i_host_get_param(struct Scsi_Host *shost,
-				enum iscsi_host_param param, char *buf)
-{
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
-	int len = 0;
+अटल पूर्णांक bnx2i_host_get_param(काष्ठा Scsi_Host *shost,
+				क्रमागत iscsi_host_param param, अक्षर *buf)
+अणु
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
+	पूर्णांक len = 0;
 
-	switch (param) {
-	case ISCSI_HOST_PARAM_HWADDRESS:
-		len = sysfs_format_mac(buf, hba->cnic->mac_addr, 6);
-		break;
-	case ISCSI_HOST_PARAM_NETDEV_NAME:
-		len = sprintf(buf, "%s\n", hba->netdev->name);
-		break;
-	case ISCSI_HOST_PARAM_IPADDRESS: {
-		struct list_head *active_list = &hba->ep_active_list;
+	चयन (param) अणु
+	हाल ISCSI_HOST_PARAM_HWADDRESS:
+		len = sysfs_क्रमmat_mac(buf, hba->cnic->mac_addr, 6);
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_NETDEV_NAME:
+		len = प्र_लिखो(buf, "%s\n", hba->netdev->name);
+		अवरोध;
+	हाल ISCSI_HOST_PARAM_IPADDRESS: अणु
+		काष्ठा list_head *active_list = &hba->ep_active_list;
 
-		read_lock_bh(&hba->ep_rdwr_lock);
-		if (!list_empty(&hba->ep_active_list)) {
-			struct bnx2i_endpoint *bnx2i_ep;
-			struct cnic_sock *csk;
+		पढ़ो_lock_bh(&hba->ep_rdwr_lock);
+		अगर (!list_empty(&hba->ep_active_list)) अणु
+			काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+			काष्ठा cnic_sock *csk;
 
 			bnx2i_ep = list_first_entry(active_list,
-						    struct bnx2i_endpoint,
+						    काष्ठा bnx2i_endpoपूर्णांक,
 						    link);
 			csk = bnx2i_ep->cm_sk;
-			if (test_bit(SK_F_IPV6, &csk->flags))
-				len = sprintf(buf, "%pI6\n", csk->src_ip);
-			else
-				len = sprintf(buf, "%pI4\n", csk->src_ip);
-		}
-		read_unlock_bh(&hba->ep_rdwr_lock);
-		break;
-	}
-	default:
-		return iscsi_host_get_param(shost, param, buf);
-	}
-	return len;
-}
+			अगर (test_bit(SK_F_IPV6, &csk->flags))
+				len = प्र_लिखो(buf, "%pI6\n", csk->src_ip);
+			अन्यथा
+				len = प्र_लिखो(buf, "%pI4\n", csk->src_ip);
+		पूर्ण
+		पढ़ो_unlock_bh(&hba->ep_rdwr_lock);
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस iscsi_host_get_param(shost, param, buf);
+	पूर्ण
+	वापस len;
+पूर्ण
 
 /**
  * bnx2i_conn_start - completes iscsi connection migration to FFP
- * @cls_conn:	pointer to iscsi cls conn
+ * @cls_conn:	poपूर्णांकer to iscsi cls conn
  *
- * last call in FFP migration to handover iscsi conn to the driver
+ * last call in FFP migration to hanकरोver iscsi conn to the driver
  */
-static int bnx2i_conn_start(struct iscsi_cls_conn *cls_conn)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
-	struct bnx2i_conn *bnx2i_conn = conn->dd_data;
+अटल पूर्णांक bnx2i_conn_start(काष्ठा iscsi_cls_conn *cls_conn)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
+	काष्ठा bnx2i_conn *bnx2i_conn = conn->dd_data;
 
 	bnx2i_conn->ep->state = EP_STATE_ULP_UPDATE_START;
 	bnx2i_update_iscsi_conn(conn);
 
 	/*
-	 * this should normally not sleep for a long time so it should
+	 * this should normally not sleep क्रम a दीर्घ समय so it should
 	 * not disrupt the caller.
 	 */
-	timer_setup(&bnx2i_conn->ep->ofld_timer, bnx2i_ep_ofld_timer, 0);
-	bnx2i_conn->ep->ofld_timer.expires = 1 * HZ + jiffies;
-	add_timer(&bnx2i_conn->ep->ofld_timer);
-	/* update iSCSI context for this conn, wait for CNIC to complete */
-	wait_event_interruptible(bnx2i_conn->ep->ofld_wait,
+	समयr_setup(&bnx2i_conn->ep->ofld_समयr, bnx2i_ep_ofld_समयr, 0);
+	bnx2i_conn->ep->ofld_समयr.expires = 1 * HZ + jअगरfies;
+	add_समयr(&bnx2i_conn->ep->ofld_समयr);
+	/* update iSCSI context क्रम this conn, रुको क्रम CNIC to complete */
+	रुको_event_पूर्णांकerruptible(bnx2i_conn->ep->ofld_रुको,
 			bnx2i_conn->ep->state != EP_STATE_ULP_UPDATE_START);
 
-	if (signal_pending(current))
-		flush_signals(current);
-	del_timer_sync(&bnx2i_conn->ep->ofld_timer);
+	अगर (संकेत_pending(current))
+		flush_संकेतs(current);
+	del_समयr_sync(&bnx2i_conn->ep->ofld_समयr);
 
 	iscsi_conn_start(cls_conn);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * bnx2i_conn_get_stats - returns iSCSI stats
- * @cls_conn:	pointer to iscsi cls conn
- * @stats:	pointer to iscsi statistic struct
+ * bnx2i_conn_get_stats - वापसs iSCSI stats
+ * @cls_conn:	poपूर्णांकer to iscsi cls conn
+ * @stats:	poपूर्णांकer to iscsi statistic काष्ठा
  */
-static void bnx2i_conn_get_stats(struct iscsi_cls_conn *cls_conn,
-				 struct iscsi_stats *stats)
-{
-	struct iscsi_conn *conn = cls_conn->dd_data;
+अटल व्योम bnx2i_conn_get_stats(काष्ठा iscsi_cls_conn *cls_conn,
+				 काष्ठा iscsi_stats *stats)
+अणु
+	काष्ठा iscsi_conn *conn = cls_conn->dd_data;
 
 	stats->txdata_octets = conn->txdata_octets;
 	stats->rxdata_octets = conn->rxdata_octets;
@@ -1641,115 +1642,115 @@ static void bnx2i_conn_get_stats(struct iscsi_cls_conn *cls_conn,
 	stats->scsirsp_pdus = conn->scsirsp_pdus_cnt;
 	stats->datain_pdus = conn->datain_pdus_cnt;
 	stats->r2t_pdus = conn->r2t_pdus_cnt;
-	stats->tmfcmd_pdus = conn->tmfcmd_pdus_cnt;
-	stats->tmfrsp_pdus = conn->tmfrsp_pdus_cnt;
+	stats->पंचांगfcmd_pdus = conn->पंचांगfcmd_pdus_cnt;
+	stats->पंचांगfrsp_pdus = conn->पंचांगfrsp_pdus_cnt;
 	stats->digest_err = 0;
-	stats->timeout_err = 0;
-	strcpy(stats->custom[0].desc, "eh_abort_cnt");
-	stats->custom[0].value = conn->eh_abort_cnt;
+	stats->समयout_err = 0;
+	म_नकल(stats->custom[0].desc, "eh_abort_cnt");
+	stats->custom[0].value = conn->eh_पात_cnt;
 	stats->custom_length = 1;
-}
+पूर्ण
 
 
 /**
- * bnx2i_check_route - checks if target IP route belongs to one of NX2 devices
+ * bnx2i_check_route - checks अगर target IP route beदीर्घs to one of NX2 devices
  * @dst_addr:	target IP address
  *
- * check if route resolves to BNX2 device
+ * check अगर route resolves to BNX2 device
  */
-static struct bnx2i_hba *bnx2i_check_route(struct sockaddr *dst_addr)
-{
-	struct sockaddr_in *desti = (struct sockaddr_in *) dst_addr;
-	struct bnx2i_hba *hba;
-	struct cnic_dev *cnic = NULL;
+अटल काष्ठा bnx2i_hba *bnx2i_check_route(काष्ठा sockaddr *dst_addr)
+अणु
+	काष्ठा sockaddr_in *desti = (काष्ठा sockaddr_in *) dst_addr;
+	काष्ठा bnx2i_hba *hba;
+	काष्ठा cnic_dev *cnic = शून्य;
 
 	hba = get_adapter_list_head();
-	if (hba && hba->cnic)
+	अगर (hba && hba->cnic)
 		cnic = hba->cnic->cm_select_dev(desti, CNIC_ULP_ISCSI);
-	if (!cnic) {
-		printk(KERN_ALERT "bnx2i: no route,"
+	अगर (!cnic) अणु
+		prपूर्णांकk(KERN_ALERT "bnx2i: no route,"
 		       "can't connect using cnic\n");
-		goto no_nx2_route;
-	}
-	hba = bnx2i_find_hba_for_cnic(cnic);
-	if (!hba)
-		goto no_nx2_route;
+		जाओ no_nx2_route;
+	पूर्ण
+	hba = bnx2i_find_hba_क्रम_cnic(cnic);
+	अगर (!hba)
+		जाओ no_nx2_route;
 
-	if (bnx2i_adapter_ready(hba)) {
-		printk(KERN_ALERT "bnx2i: check route, hba not found\n");
-		goto no_nx2_route;
-	}
-	if (hba->netdev->mtu > hba->mtu_supported) {
-		printk(KERN_ALERT "bnx2i: %s network i/f mtu is set to %d\n",
+	अगर (bnx2i_adapter_पढ़ोy(hba)) अणु
+		prपूर्णांकk(KERN_ALERT "bnx2i: check route, hba not found\n");
+		जाओ no_nx2_route;
+	पूर्ण
+	अगर (hba->netdev->mtu > hba->mtu_supported) अणु
+		prपूर्णांकk(KERN_ALERT "bnx2i: %s network i/f mtu is set to %d\n",
 				  hba->netdev->name, hba->netdev->mtu);
-		printk(KERN_ALERT "bnx2i: iSCSI HBA can support mtu of %d\n",
+		prपूर्णांकk(KERN_ALERT "bnx2i: iSCSI HBA can support mtu of %d\n",
 				  hba->mtu_supported);
-		goto no_nx2_route;
-	}
-	return hba;
+		जाओ no_nx2_route;
+	पूर्ण
+	वापस hba;
 no_nx2_route:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
 /**
- * bnx2i_tear_down_conn - tear down iscsi/tcp connection and free resources
- * @hba:	pointer to adapter instance
- * @ep:		endpoint (transport identifier) structure
+ * bnx2i_tear_करोwn_conn - tear करोwn iscsi/tcp connection and मुक्त resources
+ * @hba:	poपूर्णांकer to adapter instance
+ * @ep:		endpoपूर्णांक (transport identअगरier) काष्ठाure
  *
- * destroys cm_sock structure and on chip iscsi context
+ * destroys cm_sock काष्ठाure and on chip iscsi context
  */
-static int bnx2i_tear_down_conn(struct bnx2i_hba *hba,
-				 struct bnx2i_endpoint *ep)
-{
-	if (test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic) && ep->cm_sk)
+अटल पूर्णांक bnx2i_tear_करोwn_conn(काष्ठा bnx2i_hba *hba,
+				 काष्ठा bnx2i_endpoपूर्णांक *ep)
+अणु
+	अगर (test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic) && ep->cm_sk)
 		hba->cnic->cm_destroy(ep->cm_sk);
 
-	if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type) &&
-	    ep->state == EP_STATE_DISCONN_TIMEDOUT) {
-		if (ep->conn && ep->conn->cls_conn &&
-		    ep->conn->cls_conn->dd_data) {
-			struct iscsi_conn *conn = ep->conn->cls_conn->dd_data;
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type) &&
+	    ep->state == EP_STATE_DISCONN_TIMEDOUT) अणु
+		अगर (ep->conn && ep->conn->cls_conn &&
+		    ep->conn->cls_conn->dd_data) अणु
+			काष्ठा iscsi_conn *conn = ep->conn->cls_conn->dd_data;
 
-			/* Must suspend all rx queue activity for this ep */
+			/* Must suspend all rx queue activity क्रम this ep */
 			set_bit(ISCSI_SUSPEND_BIT, &conn->suspend_rx);
-		}
-		/* CONN_DISCONNECT timeout may or may not be an issue depending
-		 * on what transcribed in TCP layer, different targets behave
-		 * differently
+		पूर्ण
+		/* CONN_DISCONNECT समयout may or may not be an issue depending
+		 * on what transcribed in TCP layer, dअगरferent tarमाला_लो behave
+		 * dअगरferently
 		 */
-		printk(KERN_ALERT "bnx2i (%s): - WARN - CONN_DISCON timed out, "
+		prपूर्णांकk(KERN_ALERT "bnx2i (%s): - WARN - CONN_DISCON timed out, "
 				  "please submit GRC Dump, NW/PCIe trace, "
 				  "driver msgs to developers for analysis\n",
 				  hba->netdev->name);
-	}
+	पूर्ण
 
 	ep->state = EP_STATE_CLEANUP_START;
-	timer_setup(&ep->ofld_timer, bnx2i_ep_ofld_timer, 0);
-	ep->ofld_timer.expires = hba->conn_ctx_destroy_tmo + jiffies;
-	add_timer(&ep->ofld_timer);
+	समयr_setup(&ep->ofld_समयr, bnx2i_ep_ofld_समयr, 0);
+	ep->ofld_समयr.expires = hba->conn_ctx_destroy_पंचांगo + jअगरfies;
+	add_समयr(&ep->ofld_समयr);
 
 	bnx2i_ep_destroy_list_add(hba, ep);
 
-	/* destroy iSCSI context, wait for it to complete */
-	if (bnx2i_send_conn_destroy(hba, ep))
+	/* destroy iSCSI context, रुको क्रम it to complete */
+	अगर (bnx2i_send_conn_destroy(hba, ep))
 		ep->state = EP_STATE_CLEANUP_CMPL;
 
-	wait_event_interruptible(ep->ofld_wait,
+	रुको_event_पूर्णांकerruptible(ep->ofld_रुको,
 				 (ep->state != EP_STATE_CLEANUP_START));
 
-	if (signal_pending(current))
-		flush_signals(current);
-	del_timer_sync(&ep->ofld_timer);
+	अगर (संकेत_pending(current))
+		flush_संकेतs(current);
+	del_समयr_sync(&ep->ofld_समयr);
 
 	bnx2i_ep_destroy_list_del(hba, ep);
 
-	if (ep->state != EP_STATE_CLEANUP_CMPL)
+	अगर (ep->state != EP_STATE_CLEANUP_CMPL)
 		/* should never happen */
-		printk(KERN_ALERT "bnx2i - conn destroy failed\n");
+		prपूर्णांकk(KERN_ALERT "bnx2i - conn destroy failed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
@@ -1761,497 +1762,497 @@ static int bnx2i_tear_down_conn(struct bnx2i_hba *hba,
  * this routine initiates the TCP/IP connection by invoking Option-2 i/f
  *	with l5_core and the CNIC. This is a multi-step process of resolving
  *	route to target, create a iscsi connection context, handshaking with
- *	CNIC module to create/initialize the socket struct and finally
- *	sending down option-2 request to complete TCP 3-way handshake
+ *	CNIC module to create/initialize the socket काष्ठा and finally
+ *	sending करोwn option-2 request to complete TCP 3-way handshake
  */
-static struct iscsi_endpoint *bnx2i_ep_connect(struct Scsi_Host *shost,
-					       struct sockaddr *dst_addr,
-					       int non_blocking)
-{
+अटल काष्ठा iscsi_endpoपूर्णांक *bnx2i_ep_connect(काष्ठा Scsi_Host *shost,
+					       काष्ठा sockaddr *dst_addr,
+					       पूर्णांक non_blocking)
+अणु
 	u32 iscsi_cid = BNX2I_CID_RESERVED;
-	struct sockaddr_in *desti = (struct sockaddr_in *) dst_addr;
-	struct sockaddr_in6 *desti6;
-	struct bnx2i_endpoint *bnx2i_ep;
-	struct bnx2i_hba *hba;
-	struct cnic_dev *cnic;
-	struct cnic_sockaddr saddr;
-	struct iscsi_endpoint *ep;
-	int rc = 0;
+	काष्ठा sockaddr_in *desti = (काष्ठा sockaddr_in *) dst_addr;
+	काष्ठा sockaddr_in6 *desti6;
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+	काष्ठा bnx2i_hba *hba;
+	काष्ठा cnic_dev *cnic;
+	काष्ठा cnic_sockaddr saddr;
+	काष्ठा iscsi_endpoपूर्णांक *ep;
+	पूर्णांक rc = 0;
 
-	if (shost) {
+	अगर (shost) अणु
 		/* driver is given scsi host to work with */
 		hba = iscsi_host_priv(shost);
-	} else
+	पूर्ण अन्यथा
 		/*
-		 * check if the given destination can be reached through
+		 * check अगर the given destination can be reached through
 		 * a iscsi capable NetXtreme2 device
 		 */
 		hba = bnx2i_check_route(dst_addr);
 
-	if (!hba) {
+	अगर (!hba) अणु
 		rc = -EINVAL;
-		goto nohba;
-	}
+		जाओ nohba;
+	पूर्ण
 	mutex_lock(&hba->net_dev_lock);
 
-	if (bnx2i_adapter_ready(hba) || !hba->cid_que.cid_free_cnt) {
+	अगर (bnx2i_adapter_पढ़ोy(hba) || !hba->cid_que.cid_मुक्त_cnt) अणु
 		rc = -EPERM;
-		goto check_busy;
-	}
+		जाओ check_busy;
+	पूर्ण
 	cnic = hba->cnic;
 	ep = bnx2i_alloc_ep(hba);
-	if (!ep) {
+	अगर (!ep) अणु
 		rc = -ENOMEM;
-		goto check_busy;
-	}
+		जाओ check_busy;
+	पूर्ण
 	bnx2i_ep = ep->dd_data;
 
 	atomic_set(&bnx2i_ep->num_active_cmds, 0);
 	iscsi_cid = bnx2i_alloc_iscsi_cid(hba);
-	if (iscsi_cid == -1) {
-		printk(KERN_ALERT "bnx2i (%s): alloc_ep - unable to allocate "
+	अगर (iscsi_cid == -1) अणु
+		prपूर्णांकk(KERN_ALERT "bnx2i (%s): alloc_ep - unable to allocate "
 			"iscsi cid\n", hba->netdev->name);
 		rc = -ENOMEM;
-		bnx2i_free_ep(ep);
-		goto check_busy;
-	}
+		bnx2i_मुक्त_ep(ep);
+		जाओ check_busy;
+	पूर्ण
 	bnx2i_ep->hba_age = hba->age;
 
 	rc = bnx2i_alloc_qp_resc(hba, bnx2i_ep);
-	if (rc != 0) {
-		printk(KERN_ALERT "bnx2i (%s): ep_conn - alloc QP resc error"
+	अगर (rc != 0) अणु
+		prपूर्णांकk(KERN_ALERT "bnx2i (%s): ep_conn - alloc QP resc error"
 			"\n", hba->netdev->name);
 		rc = -ENOMEM;
-		goto qp_resc_err;
-	}
+		जाओ qp_resc_err;
+	पूर्ण
 
 	bnx2i_ep->ep_iscsi_cid = (u16)iscsi_cid;
 	bnx2i_ep->state = EP_STATE_OFLD_START;
 	bnx2i_ep_ofld_list_add(hba, bnx2i_ep);
 
-	timer_setup(&bnx2i_ep->ofld_timer, bnx2i_ep_ofld_timer, 0);
-	bnx2i_ep->ofld_timer.expires = 2 * HZ + jiffies;
-	add_timer(&bnx2i_ep->ofld_timer);
+	समयr_setup(&bnx2i_ep->ofld_समयr, bnx2i_ep_ofld_समयr, 0);
+	bnx2i_ep->ofld_समयr.expires = 2 * HZ + jअगरfies;
+	add_समयr(&bnx2i_ep->ofld_समयr);
 
-	if (bnx2i_send_conn_ofld_req(hba, bnx2i_ep)) {
-		if (bnx2i_ep->state == EP_STATE_OFLD_FAILED_CID_BUSY) {
-			printk(KERN_ALERT "bnx2i (%s): iscsi cid %d is busy\n",
+	अगर (bnx2i_send_conn_ofld_req(hba, bnx2i_ep)) अणु
+		अगर (bnx2i_ep->state == EP_STATE_OFLD_FAILED_CID_BUSY) अणु
+			prपूर्णांकk(KERN_ALERT "bnx2i (%s): iscsi cid %d is busy\n",
 				hba->netdev->name, bnx2i_ep->ep_iscsi_cid);
 			rc = -EBUSY;
-		} else
+		पूर्ण अन्यथा
 			rc = -ENOSPC;
-		printk(KERN_ALERT "bnx2i (%s): unable to send conn offld kwqe"
+		prपूर्णांकk(KERN_ALERT "bnx2i (%s): unable to send conn offld kwqe"
 			"\n", hba->netdev->name);
 		bnx2i_ep_ofld_list_del(hba, bnx2i_ep);
-		goto conn_failed;
-	}
+		जाओ conn_failed;
+	पूर्ण
 
-	/* Wait for CNIC hardware to setup conn context and return 'cid' */
-	wait_event_interruptible(bnx2i_ep->ofld_wait,
+	/* Wait क्रम CNIC hardware to setup conn context and वापस 'cid' */
+	रुको_event_पूर्णांकerruptible(bnx2i_ep->ofld_रुको,
 				 bnx2i_ep->state != EP_STATE_OFLD_START);
 
-	if (signal_pending(current))
-		flush_signals(current);
-	del_timer_sync(&bnx2i_ep->ofld_timer);
+	अगर (संकेत_pending(current))
+		flush_संकेतs(current);
+	del_समयr_sync(&bnx2i_ep->ofld_समयr);
 
 	bnx2i_ep_ofld_list_del(hba, bnx2i_ep);
 
-	if (bnx2i_ep->state != EP_STATE_OFLD_COMPL) {
-		if (bnx2i_ep->state == EP_STATE_OFLD_FAILED_CID_BUSY) {
-			printk(KERN_ALERT "bnx2i (%s): iscsi cid %d is busy\n",
+	अगर (bnx2i_ep->state != EP_STATE_OFLD_COMPL) अणु
+		अगर (bnx2i_ep->state == EP_STATE_OFLD_FAILED_CID_BUSY) अणु
+			prपूर्णांकk(KERN_ALERT "bnx2i (%s): iscsi cid %d is busy\n",
 				hba->netdev->name, bnx2i_ep->ep_iscsi_cid);
 			rc = -EBUSY;
-		} else
+		पूर्ण अन्यथा
 			rc = -ENOSPC;
-		goto conn_failed;
-	}
+		जाओ conn_failed;
+	पूर्ण
 
 	rc = cnic->cm_create(cnic, CNIC_ULP_ISCSI, bnx2i_ep->ep_cid,
 			     iscsi_cid, &bnx2i_ep->cm_sk, bnx2i_ep);
-	if (rc) {
+	अगर (rc) अणु
 		rc = -EINVAL;
 		/* Need to terminate and cleanup the connection */
-		goto release_ep;
-	}
+		जाओ release_ep;
+	पूर्ण
 
 	bnx2i_ep->cm_sk->rcv_buf = 256 * 1024;
 	bnx2i_ep->cm_sk->snd_buf = 256 * 1024;
 	clear_bit(SK_TCP_TIMESTAMP, &bnx2i_ep->cm_sk->tcp_flags);
 
-	memset(&saddr, 0, sizeof(saddr));
-	if (dst_addr->sa_family == AF_INET) {
-		desti = (struct sockaddr_in *) dst_addr;
+	स_रखो(&saddr, 0, माप(saddr));
+	अगर (dst_addr->sa_family == AF_INET) अणु
+		desti = (काष्ठा sockaddr_in *) dst_addr;
 		saddr.remote.v4 = *desti;
 		saddr.local.v4.sin_family = desti->sin_family;
-	} else if (dst_addr->sa_family == AF_INET6) {
-		desti6 = (struct sockaddr_in6 *) dst_addr;
+	पूर्ण अन्यथा अगर (dst_addr->sa_family == AF_INET6) अणु
+		desti6 = (काष्ठा sockaddr_in6 *) dst_addr;
 		saddr.remote.v6 = *desti6;
 		saddr.local.v6.sin6_family = desti6->sin6_family;
-	}
+	पूर्ण
 
-	bnx2i_ep->timestamp = jiffies;
+	bnx2i_ep->बारtamp = jअगरfies;
 	bnx2i_ep->state = EP_STATE_CONNECT_START;
-	if (!test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic)) {
+	अगर (!test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic)) अणु
 		rc = -EINVAL;
-		goto conn_failed;
-	} else
+		जाओ conn_failed;
+	पूर्ण अन्यथा
 		rc = cnic->cm_connect(bnx2i_ep->cm_sk, &saddr);
-	if (rc)
-		goto release_ep;
+	अगर (rc)
+		जाओ release_ep;
 
 	bnx2i_ep_active_list_add(hba, bnx2i_ep);
 
 	rc = bnx2i_map_ep_dbell_regs(bnx2i_ep);
-	if (rc)
-		goto del_active_ep;
+	अगर (rc)
+		जाओ del_active_ep;
 
 	mutex_unlock(&hba->net_dev_lock);
-	return ep;
+	वापस ep;
 
 del_active_ep:
 	bnx2i_ep_active_list_del(hba, bnx2i_ep);
 release_ep:
-	if (bnx2i_tear_down_conn(hba, bnx2i_ep)) {
+	अगर (bnx2i_tear_करोwn_conn(hba, bnx2i_ep)) अणु
 		mutex_unlock(&hba->net_dev_lock);
-		return ERR_PTR(rc);
-	}
+		वापस ERR_PTR(rc);
+	पूर्ण
 conn_failed:
-	bnx2i_free_qp_resc(hba, bnx2i_ep);
+	bnx2i_मुक्त_qp_resc(hba, bnx2i_ep);
 qp_resc_err:
-	bnx2i_free_ep(ep);
+	bnx2i_मुक्त_ep(ep);
 check_busy:
 	mutex_unlock(&hba->net_dev_lock);
 nohba:
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
 
 /**
- * bnx2i_ep_poll - polls for TCP connection establishement
- * @ep:			TCP connection (endpoint) handle
- * @timeout_ms:		timeout value in milli secs
+ * bnx2i_ep_poll - polls क्रम TCP connection establishement
+ * @ep:			TCP connection (endpoपूर्णांक) handle
+ * @समयout_ms:		समयout value in milli secs
  *
- * polls for TCP connect request to complete
+ * polls क्रम TCP connect request to complete
  */
-static int bnx2i_ep_poll(struct iscsi_endpoint *ep, int timeout_ms)
-{
-	struct bnx2i_endpoint *bnx2i_ep;
-	int rc = 0;
+अटल पूर्णांक bnx2i_ep_poll(काष्ठा iscsi_endpoपूर्णांक *ep, पूर्णांक समयout_ms)
+अणु
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+	पूर्णांक rc = 0;
 
 	bnx2i_ep = ep->dd_data;
-	if ((bnx2i_ep->state == EP_STATE_IDLE) ||
+	अगर ((bnx2i_ep->state == EP_STATE_IDLE) ||
 	    (bnx2i_ep->state == EP_STATE_CONNECT_FAILED) ||
 	    (bnx2i_ep->state == EP_STATE_OFLD_FAILED))
-		return -1;
-	if (bnx2i_ep->state == EP_STATE_CONNECT_COMPL)
-		return 1;
+		वापस -1;
+	अगर (bnx2i_ep->state == EP_STATE_CONNECT_COMPL)
+		वापस 1;
 
-	rc = wait_event_interruptible_timeout(bnx2i_ep->ofld_wait,
+	rc = रुको_event_पूर्णांकerruptible_समयout(bnx2i_ep->ofld_रुको,
 					      ((bnx2i_ep->state ==
 						EP_STATE_OFLD_FAILED) ||
 					       (bnx2i_ep->state ==
 						EP_STATE_CONNECT_FAILED) ||
 					       (bnx2i_ep->state ==
 						EP_STATE_CONNECT_COMPL)),
-					      msecs_to_jiffies(timeout_ms));
-	if (bnx2i_ep->state == EP_STATE_OFLD_FAILED)
+					      msecs_to_jअगरfies(समयout_ms));
+	अगर (bnx2i_ep->state == EP_STATE_OFLD_FAILED)
 		rc = -1;
 
-	if (rc > 0)
-		return 1;
-	else if (!rc)
-		return 0;	/* timeout */
-	else
-		return rc;
-}
+	अगर (rc > 0)
+		वापस 1;
+	अन्यथा अगर (!rc)
+		वापस 0;	/* समयout */
+	अन्यथा
+		वापस rc;
+पूर्ण
 
 
 /**
  * bnx2i_ep_tcp_conn_active - check EP state transition
- * @bnx2i_ep:		endpoint pointer
+ * @bnx2i_ep:		endpoपूर्णांक poपूर्णांकer
  *
- * check if underlying TCP connection is active
+ * check अगर underlying TCP connection is active
  */
-static int bnx2i_ep_tcp_conn_active(struct bnx2i_endpoint *bnx2i_ep)
-{
-	int ret;
-	int cnic_dev_10g = 0;
+अटल पूर्णांक bnx2i_ep_tcp_conn_active(काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep)
+अणु
+	पूर्णांक ret;
+	पूर्णांक cnic_dev_10g = 0;
 
-	if (test_bit(BNX2I_NX2_DEV_57710, &bnx2i_ep->hba->cnic_dev_type))
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &bnx2i_ep->hba->cnic_dev_type))
 		cnic_dev_10g = 1;
 
-	switch (bnx2i_ep->state) {
-	case EP_STATE_CLEANUP_FAILED:
-	case EP_STATE_OFLD_FAILED:
-	case EP_STATE_DISCONN_TIMEDOUT:
+	चयन (bnx2i_ep->state) अणु
+	हाल EP_STATE_CLEANUP_FAILED:
+	हाल EP_STATE_OFLD_FAILED:
+	हाल EP_STATE_DISCONN_TIMEDOUT:
 		ret = 0;
-		break;
-	case EP_STATE_CONNECT_START:
-	case EP_STATE_CONNECT_FAILED:
-	case EP_STATE_CONNECT_COMPL:
-	case EP_STATE_ULP_UPDATE_START:
-	case EP_STATE_ULP_UPDATE_COMPL:
-	case EP_STATE_TCP_FIN_RCVD:
-	case EP_STATE_LOGOUT_SENT:
-	case EP_STATE_LOGOUT_RESP_RCVD:
-	case EP_STATE_ULP_UPDATE_FAILED:
+		अवरोध;
+	हाल EP_STATE_CONNECT_START:
+	हाल EP_STATE_CONNECT_FAILED:
+	हाल EP_STATE_CONNECT_COMPL:
+	हाल EP_STATE_ULP_UPDATE_START:
+	हाल EP_STATE_ULP_UPDATE_COMPL:
+	हाल EP_STATE_TCP_FIN_RCVD:
+	हाल EP_STATE_LOGOUT_SENT:
+	हाल EP_STATE_LOGOUT_RESP_RCVD:
+	हाल EP_STATE_ULP_UPDATE_FAILED:
 		ret = 1;
-		break;
-	case EP_STATE_TCP_RST_RCVD:
-		if (cnic_dev_10g)
+		अवरोध;
+	हाल EP_STATE_TCP_RST_RCVD:
+		अगर (cnic_dev_10g)
 			ret = 0;
-		else
+		अन्यथा
 			ret = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
- * bnx2i_hw_ep_disconnect - executes TCP connection teardown process in the hw
- * @bnx2i_ep:		TCP connection (bnx2i endpoint) handle
+ * bnx2i_hw_ep_disconnect - executes TCP connection tearकरोwn process in the hw
+ * @bnx2i_ep:		TCP connection (bnx2i endpoपूर्णांक) handle
  *
- * executes  TCP connection teardown process
+ * executes  TCP connection tearकरोwn process
  */
-int bnx2i_hw_ep_disconnect(struct bnx2i_endpoint *bnx2i_ep)
-{
-	struct bnx2i_hba *hba = bnx2i_ep->hba;
-	struct cnic_dev *cnic;
-	struct iscsi_session *session = NULL;
-	struct iscsi_conn *conn = NULL;
-	int ret = 0;
-	int close = 0;
-	int close_ret = 0;
+पूर्णांक bnx2i_hw_ep_disconnect(काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep)
+अणु
+	काष्ठा bnx2i_hba *hba = bnx2i_ep->hba;
+	काष्ठा cnic_dev *cnic;
+	काष्ठा iscsi_session *session = शून्य;
+	काष्ठा iscsi_conn *conn = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक बंद = 0;
+	पूर्णांक बंद_ret = 0;
 
-	if (!hba)
-		return 0;
+	अगर (!hba)
+		वापस 0;
 
 	cnic = hba->cnic;
-	if (!cnic)
-		return 0;
+	अगर (!cnic)
+		वापस 0;
 
-	if (bnx2i_ep->state == EP_STATE_IDLE ||
+	अगर (bnx2i_ep->state == EP_STATE_IDLE ||
 	    bnx2i_ep->state == EP_STATE_DISCONN_TIMEDOUT)
-		return 0;
+		वापस 0;
 
-	if (!bnx2i_ep_tcp_conn_active(bnx2i_ep))
-		goto destroy_conn;
+	अगर (!bnx2i_ep_tcp_conn_active(bnx2i_ep))
+		जाओ destroy_conn;
 
-	if (bnx2i_ep->conn) {
+	अगर (bnx2i_ep->conn) अणु
 		conn = bnx2i_ep->conn->cls_conn->dd_data;
 		session = conn->session;
-	}
+	पूर्ण
 
-	timer_setup(&bnx2i_ep->ofld_timer, bnx2i_ep_ofld_timer, 0);
-	bnx2i_ep->ofld_timer.expires = hba->conn_teardown_tmo + jiffies;
-	add_timer(&bnx2i_ep->ofld_timer);
+	समयr_setup(&bnx2i_ep->ofld_समयr, bnx2i_ep_ofld_समयr, 0);
+	bnx2i_ep->ofld_समयr.expires = hba->conn_tearकरोwn_पंचांगo + jअगरfies;
+	add_समयr(&bnx2i_ep->ofld_समयr);
 
-	if (!test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic))
-		goto out;
+	अगर (!test_bit(BNX2I_CNIC_REGISTERED, &hba->reg_with_cnic))
+		जाओ out;
 
-	if (session) {
+	अगर (session) अणु
 		spin_lock_bh(&session->frwd_lock);
-		if (bnx2i_ep->state != EP_STATE_TCP_FIN_RCVD) {
-			if (session->state == ISCSI_STATE_LOGGING_OUT) {
-				if (bnx2i_ep->state == EP_STATE_LOGOUT_SENT) {
+		अगर (bnx2i_ep->state != EP_STATE_TCP_FIN_RCVD) अणु
+			अगर (session->state == ISCSI_STATE_LOGGING_OUT) अणु
+				अगर (bnx2i_ep->state == EP_STATE_LOGOUT_SENT) अणु
 					/* Logout sent, but no resp */
-					printk(KERN_ALERT "bnx2i (%s): WARNING"
+					prपूर्णांकk(KERN_ALERT "bnx2i (%s): WARNING"
 						" logout response was not "
 						"received!\n",
 						bnx2i_ep->hba->netdev->name);
-				} else if (bnx2i_ep->state ==
+				पूर्ण अन्यथा अगर (bnx2i_ep->state ==
 					   EP_STATE_LOGOUT_RESP_RCVD)
-					close = 1;
-			}
-		} else
-			close = 1;
+					बंद = 1;
+			पूर्ण
+		पूर्ण अन्यथा
+			बंद = 1;
 
 		spin_unlock_bh(&session->frwd_lock);
-	}
+	पूर्ण
 
 	bnx2i_ep->state = EP_STATE_DISCONN_START;
 
-	if (close)
-		close_ret = cnic->cm_close(bnx2i_ep->cm_sk);
-	else
-		close_ret = cnic->cm_abort(bnx2i_ep->cm_sk);
+	अगर (बंद)
+		बंद_ret = cnic->cm_बंद(bnx2i_ep->cm_sk);
+	अन्यथा
+		बंद_ret = cnic->cm_पात(bnx2i_ep->cm_sk);
 
-	if (close_ret)
-		printk(KERN_ALERT "bnx2i (%s): close/abort(%d) returned %d\n",
-			bnx2i_ep->hba->netdev->name, close, close_ret);
-	else
-		/* wait for option-2 conn teardown */
-		wait_event_interruptible(bnx2i_ep->ofld_wait,
+	अगर (बंद_ret)
+		prपूर्णांकk(KERN_ALERT "bnx2i (%s): close/abort(%d) returned %d\n",
+			bnx2i_ep->hba->netdev->name, बंद, बंद_ret);
+	अन्यथा
+		/* रुको क्रम option-2 conn tearकरोwn */
+		रुको_event_पूर्णांकerruptible(bnx2i_ep->ofld_रुको,
 				((bnx2i_ep->state != EP_STATE_DISCONN_START)
 				&& (bnx2i_ep->state != EP_STATE_TCP_FIN_RCVD)));
 
-	if (signal_pending(current))
-		flush_signals(current);
-	del_timer_sync(&bnx2i_ep->ofld_timer);
+	अगर (संकेत_pending(current))
+		flush_संकेतs(current);
+	del_समयr_sync(&bnx2i_ep->ofld_समयr);
 
 destroy_conn:
 	bnx2i_ep_active_list_del(hba, bnx2i_ep);
-	if (bnx2i_tear_down_conn(hba, bnx2i_ep))
-		return -EINVAL;
+	अगर (bnx2i_tear_करोwn_conn(hba, bnx2i_ep))
+		वापस -EINVAL;
 out:
 	bnx2i_ep->state = EP_STATE_IDLE;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /**
- * bnx2i_ep_disconnect - executes TCP connection teardown process
- * @ep:		TCP connection (iscsi endpoint) handle
+ * bnx2i_ep_disconnect - executes TCP connection tearकरोwn process
+ * @ep:		TCP connection (iscsi endpoपूर्णांक) handle
  *
- * executes  TCP connection teardown process
+ * executes  TCP connection tearकरोwn process
  */
-static void bnx2i_ep_disconnect(struct iscsi_endpoint *ep)
-{
-	struct bnx2i_endpoint *bnx2i_ep;
-	struct bnx2i_conn *bnx2i_conn = NULL;
-	struct iscsi_conn *conn = NULL;
-	struct bnx2i_hba *hba;
+अटल व्योम bnx2i_ep_disconnect(काष्ठा iscsi_endpoपूर्णांक *ep)
+अणु
+	काष्ठा bnx2i_endpoपूर्णांक *bnx2i_ep;
+	काष्ठा bnx2i_conn *bnx2i_conn = शून्य;
+	काष्ठा iscsi_conn *conn = शून्य;
+	काष्ठा bnx2i_hba *hba;
 
 	bnx2i_ep = ep->dd_data;
 
 	/* driver should not attempt connection cleanup until TCP_CONNECT
 	 * completes either successfully or fails. Timeout is 9-secs, so
-	 * wait for it to complete
+	 * रुको क्रम it to complete
 	 */
-	while ((bnx2i_ep->state == EP_STATE_CONNECT_START) &&
-		!time_after(jiffies, bnx2i_ep->timestamp + (12 * HZ)))
+	जबतक ((bnx2i_ep->state == EP_STATE_CONNECT_START) &&
+		!समय_after(jअगरfies, bnx2i_ep->बारtamp + (12 * HZ)))
 		msleep(250);
 
-	if (bnx2i_ep->conn) {
+	अगर (bnx2i_ep->conn) अणु
 		bnx2i_conn = bnx2i_ep->conn;
 		conn = bnx2i_conn->cls_conn->dd_data;
 		iscsi_suspend_queue(conn);
-	}
+	पूर्ण
 	hba = bnx2i_ep->hba;
 
 	mutex_lock(&hba->net_dev_lock);
 
-	if (bnx2i_ep->state == EP_STATE_DISCONN_TIMEDOUT)
-		goto out;
+	अगर (bnx2i_ep->state == EP_STATE_DISCONN_TIMEDOUT)
+		जाओ out;
 
-	if (bnx2i_ep->state == EP_STATE_IDLE)
-		goto free_resc;
+	अगर (bnx2i_ep->state == EP_STATE_IDLE)
+		जाओ मुक्त_resc;
 
-	if (!test_bit(ADAPTER_STATE_UP, &hba->adapter_state) ||
-	    (bnx2i_ep->hba_age != hba->age)) {
+	अगर (!test_bit(ADAPTER_STATE_UP, &hba->adapter_state) ||
+	    (bnx2i_ep->hba_age != hba->age)) अणु
 		bnx2i_ep_active_list_del(hba, bnx2i_ep);
-		goto free_resc;
-	}
+		जाओ मुक्त_resc;
+	पूर्ण
 
 	/* Do all chip cleanup here */
-	if (bnx2i_hw_ep_disconnect(bnx2i_ep)) {
+	अगर (bnx2i_hw_ep_disconnect(bnx2i_ep)) अणु
 		mutex_unlock(&hba->net_dev_lock);
-		return;
-	}
-free_resc:
-	bnx2i_free_qp_resc(hba, bnx2i_ep);
+		वापस;
+	पूर्ण
+मुक्त_resc:
+	bnx2i_मुक्त_qp_resc(hba, bnx2i_ep);
 
-	if (bnx2i_conn)
-		bnx2i_conn->ep = NULL;
+	अगर (bnx2i_conn)
+		bnx2i_conn->ep = शून्य;
 
-	bnx2i_free_ep(ep);
+	bnx2i_मुक्त_ep(ep);
 out:
 	mutex_unlock(&hba->net_dev_lock);
 
-	wake_up_interruptible(&hba->eh_wait);
-}
+	wake_up_पूर्णांकerruptible(&hba->eh_रुको);
+पूर्ण
 
 
 /**
  * bnx2i_nl_set_path - ISCSI_UEVENT_PATH_UPDATE user message handler
- * @shost:	scsi host pointer
- * @params:	pointer to buffer containing iscsi path message
+ * @shost:	scsi host poपूर्णांकer
+ * @params:	poपूर्णांकer to buffer containing iscsi path message
  */
-static int bnx2i_nl_set_path(struct Scsi_Host *shost, struct iscsi_path *params)
-{
-	struct bnx2i_hba *hba = iscsi_host_priv(shost);
-	char *buf = (char *) params;
-	u16 len = sizeof(*params);
+अटल पूर्णांक bnx2i_nl_set_path(काष्ठा Scsi_Host *shost, काष्ठा iscsi_path *params)
+अणु
+	काष्ठा bnx2i_hba *hba = iscsi_host_priv(shost);
+	अक्षर *buf = (अक्षर *) params;
+	u16 len = माप(*params);
 
 	/* handled by cnic driver */
 	hba->cnic->iscsi_nl_msg_recv(hba->cnic, ISCSI_UEVENT_PATH_UPDATE, buf,
 				     len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static umode_t bnx2i_attr_is_visible(int param_type, int param)
-{
-	switch (param_type) {
-	case ISCSI_HOST_PARAM:
-		switch (param) {
-		case ISCSI_HOST_PARAM_NETDEV_NAME:
-		case ISCSI_HOST_PARAM_HWADDRESS:
-		case ISCSI_HOST_PARAM_IPADDRESS:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	case ISCSI_PARAM:
-		switch (param) {
-		case ISCSI_PARAM_MAX_RECV_DLENGTH:
-		case ISCSI_PARAM_MAX_XMIT_DLENGTH:
-		case ISCSI_PARAM_HDRDGST_EN:
-		case ISCSI_PARAM_DATADGST_EN:
-		case ISCSI_PARAM_CONN_ADDRESS:
-		case ISCSI_PARAM_CONN_PORT:
-		case ISCSI_PARAM_EXP_STATSN:
-		case ISCSI_PARAM_PERSISTENT_ADDRESS:
-		case ISCSI_PARAM_PERSISTENT_PORT:
-		case ISCSI_PARAM_PING_TMO:
-		case ISCSI_PARAM_RECV_TMO:
-		case ISCSI_PARAM_INITIAL_R2T_EN:
-		case ISCSI_PARAM_MAX_R2T:
-		case ISCSI_PARAM_IMM_DATA_EN:
-		case ISCSI_PARAM_FIRST_BURST:
-		case ISCSI_PARAM_MAX_BURST:
-		case ISCSI_PARAM_PDU_INORDER_EN:
-		case ISCSI_PARAM_DATASEQ_INORDER_EN:
-		case ISCSI_PARAM_ERL:
-		case ISCSI_PARAM_TARGET_NAME:
-		case ISCSI_PARAM_TPGT:
-		case ISCSI_PARAM_USERNAME:
-		case ISCSI_PARAM_PASSWORD:
-		case ISCSI_PARAM_USERNAME_IN:
-		case ISCSI_PARAM_PASSWORD_IN:
-		case ISCSI_PARAM_FAST_ABORT:
-		case ISCSI_PARAM_ABORT_TMO:
-		case ISCSI_PARAM_LU_RESET_TMO:
-		case ISCSI_PARAM_TGT_RESET_TMO:
-		case ISCSI_PARAM_IFACE_NAME:
-		case ISCSI_PARAM_INITIATOR_NAME:
-		case ISCSI_PARAM_BOOT_ROOT:
-		case ISCSI_PARAM_BOOT_NIC:
-		case ISCSI_PARAM_BOOT_TARGET:
-			return S_IRUGO;
-		default:
-			return 0;
-		}
-	}
+अटल umode_t bnx2i_attr_is_visible(पूर्णांक param_type, पूर्णांक param)
+अणु
+	चयन (param_type) अणु
+	हाल ISCSI_HOST_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_HOST_PARAM_NETDEV_NAME:
+		हाल ISCSI_HOST_PARAM_HWADDRESS:
+		हाल ISCSI_HOST_PARAM_IPADDRESS:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	हाल ISCSI_PARAM:
+		चयन (param) अणु
+		हाल ISCSI_PARAM_MAX_RECV_DLENGTH:
+		हाल ISCSI_PARAM_MAX_XMIT_DLENGTH:
+		हाल ISCSI_PARAM_HDRDGST_EN:
+		हाल ISCSI_PARAM_DATADGST_EN:
+		हाल ISCSI_PARAM_CONN_ADDRESS:
+		हाल ISCSI_PARAM_CONN_PORT:
+		हाल ISCSI_PARAM_EXP_STATSN:
+		हाल ISCSI_PARAM_PERSISTENT_ADDRESS:
+		हाल ISCSI_PARAM_PERSISTENT_PORT:
+		हाल ISCSI_PARAM_PING_TMO:
+		हाल ISCSI_PARAM_RECV_TMO:
+		हाल ISCSI_PARAM_INITIAL_R2T_EN:
+		हाल ISCSI_PARAM_MAX_R2T:
+		हाल ISCSI_PARAM_IMM_DATA_EN:
+		हाल ISCSI_PARAM_FIRST_BURST:
+		हाल ISCSI_PARAM_MAX_BURST:
+		हाल ISCSI_PARAM_PDU_INORDER_EN:
+		हाल ISCSI_PARAM_DATASEQ_INORDER_EN:
+		हाल ISCSI_PARAM_ERL:
+		हाल ISCSI_PARAM_TARGET_NAME:
+		हाल ISCSI_PARAM_TPGT:
+		हाल ISCSI_PARAM_USERNAME:
+		हाल ISCSI_PARAM_PASSWORD:
+		हाल ISCSI_PARAM_USERNAME_IN:
+		हाल ISCSI_PARAM_PASSWORD_IN:
+		हाल ISCSI_PARAM_FAST_ABORT:
+		हाल ISCSI_PARAM_ABORT_TMO:
+		हाल ISCSI_PARAM_LU_RESET_TMO:
+		हाल ISCSI_PARAM_TGT_RESET_TMO:
+		हाल ISCSI_PARAM_IFACE_NAME:
+		हाल ISCSI_PARAM_INITIATOR_NAME:
+		हाल ISCSI_PARAM_BOOT_ROOT:
+		हाल ISCSI_PARAM_BOOT_NIC:
+		हाल ISCSI_PARAM_BOOT_TARGET:
+			वापस S_IRUGO;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 'Scsi_Host_Template' structure and 'iscsi_tranport' structure template
- * used while registering with the scsi host and iSCSI transport module.
+ * 'Scsi_Host_Template' structure and 'iscsi_tranport' काष्ठाure ढाँचा
+ * used जबतक रेजिस्टरing with the scsi host and iSCSI transport module.
  */
-static struct scsi_host_template bnx2i_host_template = {
+अटल काष्ठा scsi_host_ढाँचा bnx2i_host_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= "QLogic Offload iSCSI Initiator",
 	.proc_name		= "bnx2i",
 	.queuecommand		= iscsi_queuecommand,
-	.eh_timed_out		= iscsi_eh_cmd_timed_out,
-	.eh_abort_handler	= iscsi_eh_abort,
+	.eh_समयd_out		= iscsi_eh_cmd_समयd_out,
+	.eh_पात_handler	= iscsi_eh_पात,
 	.eh_device_reset_handler = iscsi_eh_device_reset,
 	.eh_target_reset_handler = iscsi_eh_recover_target,
 	.change_queue_depth	= scsi_change_queue_depth,
@@ -2263,9 +2264,9 @@ static struct scsi_host_template bnx2i_host_template = {
 	.sg_tablesize		= ISCSI_MAX_BDS_PER_CMD,
 	.shost_attrs		= bnx2i_dev_attributes,
 	.track_queue_depth	= 1,
-};
+पूर्ण;
 
-struct iscsi_transport bnx2i_iscsi_transport = {
+काष्ठा iscsi_transport bnx2i_iscsi_transport = अणु
 	.owner			= THIS_MODULE,
 	.name			= "bnx2i",
 	.caps			= CAP_RECOVERY_L0 | CAP_HDRDGST |
@@ -2287,13 +2288,13 @@ struct iscsi_transport bnx2i_iscsi_transport = {
 	.send_pdu		= iscsi_conn_send_pdu,
 	.xmit_task		= bnx2i_task_xmit,
 	.get_stats		= bnx2i_conn_get_stats,
-	/* TCP connect - disconnect - option-2 interface calls */
+	/* TCP connect - disconnect - option-2 पूर्णांकerface calls */
 	.get_ep_param		= bnx2i_ep_get_param,
 	.ep_connect		= bnx2i_ep_connect,
 	.ep_poll		= bnx2i_ep_poll,
 	.ep_disconnect		= bnx2i_ep_disconnect,
 	.set_path		= bnx2i_nl_set_path,
-	/* Error recovery timeout call */
-	.session_recovery_timedout = iscsi_session_recovery_timedout,
+	/* Error recovery समयout call */
+	.session_recovery_समयकरोut = iscsi_session_recovery_समयकरोut,
 	.cleanup_task		= bnx2i_cleanup_task,
-};
+पूर्ण;

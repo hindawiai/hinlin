@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright IBM Corp. 2020
  *
- * This test attempts to cause a FP denormal exception on POWER8 CPUs. Unfortunately
- * if the denormal handler is not configured or working properly, this can cause a bad
- * crash in kernel mode when the kernel tries to save FP registers when the process
- * exits.
+ * This test attempts to cause a FP denormal exception on POWER8 CPUs. Unक्रमtunately
+ * अगर the denormal handler is not configured or working properly, this can cause a bad
+ * crash in kernel mode when the kernel tries to save FP रेजिस्टरs when the process
+ * निकासs.
  */
 
-#include <stdio.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-static int test_denormal_fpu(void)
-{
-	unsigned int m32;
-	unsigned long m64;
-	volatile float f;
-	volatile double d;
+अटल पूर्णांक test_denormal_fpu(व्योम)
+अणु
+	अचिन्हित पूर्णांक m32;
+	अचिन्हित दीर्घ m64;
+	अस्थिर भग्न f;
+	अस्थिर द्विगुन d;
 
 	/* try to induce lfs <denormal> ; stfd */
 
-	m32 = 0x00715fcf; /* random denormal */
-	memcpy((float *)&f, &m32, sizeof(f));
+	m32 = 0x00715fcf; /* अक्रमom denormal */
+	स_नकल((भग्न *)&f, &m32, माप(f));
 	d = f;
-	memcpy(&m64, (double *)&d, sizeof(d));
+	स_नकल(&m64, (द्विगुन *)&d, माप(d));
 
-	FAIL_IF((long)(m64 != 0x380c57f3c0000000)); /* renormalised value */
+	FAIL_IF((दीर्घ)(m64 != 0x380c57f3c0000000)); /* renormalised value */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	return test_harness(test_denormal_fpu, "fpu_denormal");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	वापस test_harness(test_denormal_fpu, "fpu_denormal");
+पूर्ण

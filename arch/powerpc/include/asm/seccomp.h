@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_SECCOMP_H
-#define _ASM_POWERPC_SECCOMP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_SECCOMP_H
+#घोषणा _ASM_POWERPC_SECCOMP_H
 
-#include <linux/unistd.h>
+#समावेश <linux/unistd.h>
 
-#define __NR_seccomp_sigreturn_32 __NR_sigreturn
+#घोषणा __NR_seccomp_sigवापस_32 __NR_sigवापस
 
-#include <asm-generic/seccomp.h>
+#समावेश <यंत्र-generic/seccomp.h>
 
-#ifdef __LITTLE_ENDIAN__
-#define __SECCOMP_ARCH_LE		__AUDIT_ARCH_LE
-#define __SECCOMP_ARCH_LE_NAME		"le"
-#else
-#define __SECCOMP_ARCH_LE		0
-#define __SECCOMP_ARCH_LE_NAME
-#endif
+#अगर_घोषित __LITTLE_ENDIAN__
+#घोषणा __SECCOMP_ARCH_LE		__AUDIT_ARCH_LE
+#घोषणा __SECCOMP_ARCH_LE_NAME		"le"
+#अन्यथा
+#घोषणा __SECCOMP_ARCH_LE		0
+#घोषणा __SECCOMP_ARCH_LE_NAME
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 # define SECCOMP_ARCH_NATIVE		(AUDIT_ARCH_PPC64 | __SECCOMP_ARCH_LE)
 # define SECCOMP_ARCH_NATIVE_NR		NR_syscalls
 # define SECCOMP_ARCH_NATIVE_NAME	"ppc64" __SECCOMP_ARCH_LE_NAME
-# ifdef CONFIG_COMPAT
+# अगरdef CONFIG_COMPAT
 #  define SECCOMP_ARCH_COMPAT		(AUDIT_ARCH_PPC | __SECCOMP_ARCH_LE)
 #  define SECCOMP_ARCH_COMPAT_NR	NR_syscalls
 #  define SECCOMP_ARCH_COMPAT_NAME	"ppc" __SECCOMP_ARCH_LE_NAME
-# endif
-#else /* !CONFIG_PPC64 */
+# endअगर
+#अन्यथा /* !CONFIG_PPC64 */
 # define SECCOMP_ARCH_NATIVE		(AUDIT_ARCH_PPC | __SECCOMP_ARCH_LE)
 # define SECCOMP_ARCH_NATIVE_NR		NR_syscalls
 # define SECCOMP_ARCH_NATIVE_NAME	"ppc" __SECCOMP_ARCH_LE_NAME
-#endif
+#पूर्ण_अगर
 
-#endif	/* _ASM_POWERPC_SECCOMP_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_SECCOMP_H */

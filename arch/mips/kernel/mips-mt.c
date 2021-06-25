@@ -1,246 +1,247 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * General MIPS MT support routines, usable in AP/SP and SMVP.
  * Copyright (C) 2005 Mips Technologies, Inc
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/export.h>
-#include <linux/interrupt.h>
-#include <linux/security.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/export.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/security.h>
 
-#include <asm/cpu.h>
-#include <asm/processor.h>
-#include <linux/atomic.h>
-#include <asm/hardirq.h>
-#include <asm/mmu_context.h>
-#include <asm/mipsmtregs.h>
-#include <asm/r4kcache.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/hardirq.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mipsmtregs.h>
+#समावेश <यंत्र/r4kcache.h>
+#समावेश <यंत्र/cacheflush.h>
 
-int vpelimit;
+पूर्णांक vpelimit;
 
-static int __init maxvpes(char *str)
-{
+अटल पूर्णांक __init maxvpes(अक्षर *str)
+अणु
 	get_option(&str, &vpelimit);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("maxvpes=", maxvpes);
 
-int tclimit;
+पूर्णांक tclimit;
 
-static int __init maxtcs(char *str)
-{
+अटल पूर्णांक __init maxtcs(अक्षर *str)
+अणु
 	get_option(&str, &tclimit);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("maxtcs=", maxtcs);
 
 /*
- * Dump new MIPS MT state for the core. Does not leave TCs halted.
+ * Dump new MIPS MT state क्रम the core. Does not leave TCs halted.
  * Takes an argument which taken to be a pre-call MVPControl value.
  */
 
-void mips_mt_regdump(unsigned long mvpctl)
-{
-	unsigned long flags;
-	unsigned long vpflags;
-	unsigned long mvpconf0;
-	int nvpe;
-	int ntc;
-	int i;
-	int tc;
-	unsigned long haltval;
-	unsigned long tcstatval;
+व्योम mips_mt_regdump(अचिन्हित दीर्घ mvpctl)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ vpflags;
+	अचिन्हित दीर्घ mvpconf0;
+	पूर्णांक nvpe;
+	पूर्णांक ntc;
+	पूर्णांक i;
+	पूर्णांक tc;
+	अचिन्हित दीर्घ haltval;
+	अचिन्हित दीर्घ tcstatval;
 
 	local_irq_save(flags);
 	vpflags = dvpe();
-	printk("=== MIPS MT State Dump ===\n");
-	printk("-- Global State --\n");
-	printk("   MVPControl Passed: %08lx\n", mvpctl);
-	printk("   MVPControl Read: %08lx\n", vpflags);
-	printk("   MVPConf0 : %08lx\n", (mvpconf0 = read_c0_mvpconf0()));
+	prपूर्णांकk("=== MIPS MT State Dump ===\n");
+	prपूर्णांकk("-- Global State --\n");
+	prपूर्णांकk("   MVPControl Passed: %08lx\n", mvpctl);
+	prपूर्णांकk("   MVPControl Read: %08lx\n", vpflags);
+	prपूर्णांकk("   MVPConf0 : %08lx\n", (mvpconf0 = पढ़ो_c0_mvpconf0()));
 	nvpe = ((mvpconf0 & MVPCONF0_PVPE) >> MVPCONF0_PVPE_SHIFT) + 1;
 	ntc = ((mvpconf0 & MVPCONF0_PTC) >> MVPCONF0_PTC_SHIFT) + 1;
-	printk("-- per-VPE State --\n");
-	for (i = 0; i < nvpe; i++) {
-		for (tc = 0; tc < ntc; tc++) {
+	prपूर्णांकk("-- per-VPE State --\n");
+	क्रम (i = 0; i < nvpe; i++) अणु
+		क्रम (tc = 0; tc < ntc; tc++) अणु
 			settc(tc);
-			if ((read_tc_c0_tcbind() & TCBIND_CURVPE) == i) {
-				printk("  VPE %d\n", i);
-				printk("   VPEControl : %08lx\n",
-				       read_vpe_c0_vpecontrol());
-				printk("   VPEConf0 : %08lx\n",
-				       read_vpe_c0_vpeconf0());
-				printk("   VPE%d.Status : %08lx\n",
-				       i, read_vpe_c0_status());
-				printk("   VPE%d.EPC : %08lx %pS\n",
-				       i, read_vpe_c0_epc(),
-				       (void *) read_vpe_c0_epc());
-				printk("   VPE%d.Cause : %08lx\n",
-				       i, read_vpe_c0_cause());
-				printk("   VPE%d.Config7 : %08lx\n",
-				       i, read_vpe_c0_config7());
-				break; /* Next VPE */
-			}
-		}
-	}
-	printk("-- per-TC State --\n");
-	for (tc = 0; tc < ntc; tc++) {
+			अगर ((पढ़ो_tc_c0_tcbind() & TCBIND_CURVPE) == i) अणु
+				prपूर्णांकk("  VPE %d\n", i);
+				prपूर्णांकk("   VPEControl : %08lx\n",
+				       पढ़ो_vpe_c0_vpecontrol());
+				prपूर्णांकk("   VPEConf0 : %08lx\n",
+				       पढ़ो_vpe_c0_vpeconf0());
+				prपूर्णांकk("   VPE%d.Status : %08lx\n",
+				       i, पढ़ो_vpe_c0_status());
+				prपूर्णांकk("   VPE%d.EPC : %08lx %pS\n",
+				       i, पढ़ो_vpe_c0_epc(),
+				       (व्योम *) पढ़ो_vpe_c0_epc());
+				prपूर्णांकk("   VPE%d.Cause : %08lx\n",
+				       i, पढ़ो_vpe_c0_cause());
+				prपूर्णांकk("   VPE%d.Config7 : %08lx\n",
+				       i, पढ़ो_vpe_c0_config7());
+				अवरोध; /* Next VPE */
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk("-- per-TC State --\n");
+	क्रम (tc = 0; tc < ntc; tc++) अणु
 		settc(tc);
-		if (read_tc_c0_tcbind() == read_c0_tcbind()) {
+		अगर (पढ़ो_tc_c0_tcbind() == पढ़ो_c0_tcbind()) अणु
 			/* Are we dumping ourself?  */
 			haltval = 0; /* Then we're not halted, and mustn't be */
 			tcstatval = flags; /* And pre-dump TCStatus is flags */
-			printk("  TC %d (current TC with VPE EPC above)\n", tc);
-		} else {
-			haltval = read_tc_c0_tchalt();
-			write_tc_c0_tchalt(1);
-			tcstatval = read_tc_c0_tcstatus();
-			printk("  TC %d\n", tc);
-		}
-		printk("   TCStatus : %08lx\n", tcstatval);
-		printk("   TCBind : %08lx\n", read_tc_c0_tcbind());
-		printk("   TCRestart : %08lx %pS\n",
-		       read_tc_c0_tcrestart(), (void *) read_tc_c0_tcrestart());
-		printk("   TCHalt : %08lx\n", haltval);
-		printk("   TCContext : %08lx\n", read_tc_c0_tccontext());
-		if (!haltval)
-			write_tc_c0_tchalt(0);
-	}
-	printk("===========================\n");
+			prपूर्णांकk("  TC %d (current TC with VPE EPC above)\n", tc);
+		पूर्ण अन्यथा अणु
+			haltval = पढ़ो_tc_c0_tchalt();
+			ग_लिखो_tc_c0_tchalt(1);
+			tcstatval = पढ़ो_tc_c0_tcstatus();
+			prपूर्णांकk("  TC %d\n", tc);
+		पूर्ण
+		prपूर्णांकk("   TCStatus : %08lx\n", tcstatval);
+		prपूर्णांकk("   TCBind : %08lx\n", पढ़ो_tc_c0_tcbind());
+		prपूर्णांकk("   TCRestart : %08lx %pS\n",
+		       पढ़ो_tc_c0_tcrestart(), (व्योम *) पढ़ो_tc_c0_tcrestart());
+		prपूर्णांकk("   TCHalt : %08lx\n", haltval);
+		prपूर्णांकk("   TCContext : %08lx\n", पढ़ो_tc_c0_tccontext());
+		अगर (!haltval)
+			ग_लिखो_tc_c0_tchalt(0);
+	पूर्ण
+	prपूर्णांकk("===========================\n");
 	evpe(vpflags);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static int mt_opt_rpsctl = -1;
-static int mt_opt_nblsu = -1;
-static int mt_opt_forceconfig7;
-static int mt_opt_config7 = -1;
+अटल पूर्णांक mt_opt_rpsctl = -1;
+अटल पूर्णांक mt_opt_nblsu = -1;
+अटल पूर्णांक mt_opt_क्रमceconfig7;
+अटल पूर्णांक mt_opt_config7 = -1;
 
-static int __init rpsctl_set(char *str)
-{
+अटल पूर्णांक __init rpsctl_set(अक्षर *str)
+अणु
 	get_option(&str, &mt_opt_rpsctl);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("rpsctl=", rpsctl_set);
 
-static int __init nblsu_set(char *str)
-{
+अटल पूर्णांक __init nblsu_set(अक्षर *str)
+अणु
 	get_option(&str, &mt_opt_nblsu);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("nblsu=", nblsu_set);
 
-static int __init config7_set(char *str)
-{
+अटल पूर्णांक __init config7_set(अक्षर *str)
+अणु
 	get_option(&str, &mt_opt_config7);
-	mt_opt_forceconfig7 = 1;
-	return 1;
-}
+	mt_opt_क्रमceconfig7 = 1;
+	वापस 1;
+पूर्ण
 __setup("config7=", config7_set);
 
-static unsigned int itc_base;
+अटल अचिन्हित पूर्णांक itc_base;
 
-static int __init set_itc_base(char *str)
-{
+अटल पूर्णांक __init set_itc_base(अक्षर *str)
+अणु
 	get_option(&str, &itc_base);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("itcbase=", set_itc_base);
 
-void mips_mt_set_cpuoptions(void)
-{
-	unsigned int oconfig7 = read_c0_config7();
-	unsigned int nconfig7 = oconfig7;
+व्योम mips_mt_set_cpuoptions(व्योम)
+अणु
+	अचिन्हित पूर्णांक oconfig7 = पढ़ो_c0_config7();
+	अचिन्हित पूर्णांक nconfig7 = oconfig7;
 
-	if (mt_opt_rpsctl >= 0) {
-		printk("34K return prediction stack override set to %d.\n",
+	अगर (mt_opt_rpsctl >= 0) अणु
+		prपूर्णांकk("34K return prediction stack override set to %d.\n",
 			mt_opt_rpsctl);
-		if (mt_opt_rpsctl)
+		अगर (mt_opt_rpsctl)
 			nconfig7 |= (1 << 2);
-		else
+		अन्यथा
 			nconfig7 &= ~(1 << 2);
-	}
-	if (mt_opt_nblsu >= 0) {
-		printk("34K ALU/LSU sync override set to %d.\n", mt_opt_nblsu);
-		if (mt_opt_nblsu)
+	पूर्ण
+	अगर (mt_opt_nblsu >= 0) अणु
+		prपूर्णांकk("34K ALU/LSU sync override set to %d.\n", mt_opt_nblsu);
+		अगर (mt_opt_nblsu)
 			nconfig7 |= (1 << 5);
-		else
+		अन्यथा
 			nconfig7 &= ~(1 << 5);
-	}
-	if (mt_opt_forceconfig7) {
-		printk("CP0.Config7 forced to 0x%08x.\n", mt_opt_config7);
+	पूर्ण
+	अगर (mt_opt_क्रमceconfig7) अणु
+		prपूर्णांकk("CP0.Config7 forced to 0x%08x.\n", mt_opt_config7);
 		nconfig7 = mt_opt_config7;
-	}
-	if (oconfig7 != nconfig7) {
-		__asm__ __volatile("sync");
-		write_c0_config7(nconfig7);
+	पूर्ण
+	अगर (oconfig7 != nconfig7) अणु
+		__यंत्र__ __अस्थिर("sync");
+		ग_लिखो_c0_config7(nconfig7);
 		ehb();
-		printk("Config7: 0x%08x\n", read_c0_config7());
-	}
+		prपूर्णांकk("Config7: 0x%08x\n", पढ़ो_c0_config7());
+	पूर्ण
 
-	if (itc_base != 0) {
+	अगर (itc_base != 0) अणु
 		/*
 		 * Configure ITC mapping.  This code is very
-		 * specific to the 34K core family, which uses
+		 * specअगरic to the 34K core family, which uses
 		 * a special mode bit ("ITC") in the ErrCtl
-		 * register to enable access to ITC control
-		 * registers via cache "tag" operations.
+		 * रेजिस्टर to enable access to ITC control
+		 * रेजिस्टरs via cache "tag" operations.
 		 */
-		unsigned long ectlval;
-		unsigned long itcblkgrn;
+		अचिन्हित दीर्घ ectlval;
+		अचिन्हित दीर्घ itcblkgrn;
 
-		/* ErrCtl register is known as "ecc" to Linux */
-		ectlval = read_c0_ecc();
-		write_c0_ecc(ectlval | (0x1 << 26));
+		/* ErrCtl रेजिस्टर is known as "ecc" to Linux */
+		ectlval = पढ़ो_c0_ecc();
+		ग_लिखो_c0_ecc(ectlval | (0x1 << 26));
 		ehb();
-#define INDEX_0 (0x80000000)
-#define INDEX_8 (0x80000008)
-		/* Read "cache tag" for Dcache pseudo-index 8 */
+#घोषणा INDEX_0 (0x80000000)
+#घोषणा INDEX_8 (0x80000008)
+		/* Read "cache tag" क्रम Dcache pseuकरो-index 8 */
 		cache_op(Index_Load_Tag_D, INDEX_8);
 		ehb();
-		itcblkgrn = read_c0_dtaglo();
+		itcblkgrn = पढ़ो_c0_dtaglo();
 		itcblkgrn &= 0xfffe0000;
-		/* Set for 128 byte pitch of ITC cells */
+		/* Set क्रम 128 byte pitch of ITC cells */
 		itcblkgrn |= 0x00000c00;
-		/* Stage in Tag register */
-		write_c0_dtaglo(itcblkgrn);
+		/* Stage in Tag रेजिस्टर */
+		ग_लिखो_c0_dtaglo(itcblkgrn);
 		ehb();
 		/* Write out to ITU with CACHE op */
 		cache_op(Index_Store_Tag_D, INDEX_8);
 		/* Now set base address, and turn ITC on with 0x1 bit */
-		write_c0_dtaglo((itc_base & 0xfffffc00) | 0x1 );
+		ग_लिखो_c0_dtaglo((itc_base & 0xfffffc00) | 0x1 );
 		ehb();
 		/* Write out to ITU with CACHE op */
 		cache_op(Index_Store_Tag_D, INDEX_0);
-		write_c0_ecc(ectlval);
+		ग_लिखो_c0_ecc(ectlval);
 		ehb();
-		printk("Mapped %ld ITC cells starting at 0x%08x\n",
+		prपूर्णांकk("Mapped %ld ITC cells starting at 0x%08x\n",
 			((itcblkgrn & 0x7fe00000) >> 20), itc_base);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct class *mt_class;
+काष्ठा class *mt_class;
 
-static int __init mt_init(void)
-{
-	struct class *mtc;
+अटल पूर्णांक __init mt_init(व्योम)
+अणु
+	काष्ठा class *mtc;
 
 	mtc = class_create(THIS_MODULE, "mt");
-	if (IS_ERR(mtc))
-		return PTR_ERR(mtc);
+	अगर (IS_ERR(mtc))
+		वापस PTR_ERR(mtc);
 
 	mt_class = mtc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(mt_init);

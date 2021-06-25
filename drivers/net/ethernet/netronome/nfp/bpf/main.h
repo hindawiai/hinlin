@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2016-2018 Netronome Systems, Inc. */
 
-#ifndef __NFP_BPF_H__
-#define __NFP_BPF_H__ 1
+#अगर_अघोषित __NFP_BPF_H__
+#घोषणा __NFP_BPF_H__ 1
 
-#include <linux/bitfield.h>
-#include <linux/bpf.h>
-#include <linux/bpf_verifier.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/rhashtable.h>
-#include <linux/skbuff.h>
-#include <linux/types.h>
-#include <linux/wait.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/bpf_verअगरier.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/types.h>
+#समावेश <linux/रुको.h>
 
-#include "../ccm.h"
-#include "../nfp_asm.h"
-#include "fw.h"
+#समावेश "../ccm.h"
+#समावेश "../nfp_asm.h"
+#समावेश "fw.h"
 
-#define cmsg_warn(bpf, msg...)	nn_dp_warn(&(bpf)->app->ctrl->dp, msg)
+#घोषणा cmsg_warn(bpf, msg...)	nn_dp_warn(&(bpf)->app->ctrl->dp, msg)
 
-/* For relocation logic use up-most byte of branch instruction as scratch
- * area.  Remember to clear this before sending instructions to HW!
+/* For relocation logic use up-most byte of branch inकाष्ठाion as scratch
+ * area.  Remember to clear this beक्रमe sending inकाष्ठाions to HW!
  */
-#define OP_RELO_TYPE	0xff00000000000000ULL
+#घोषणा OP_RELO_TYPE	0xff00000000000000ULL
 
-enum nfp_relo_type {
+क्रमागत nfp_relo_type अणु
 	RELO_NONE = 0,
-	/* standard internal jumps */
+	/* standard पूर्णांकernal jumps */
 	RELO_BR_REL,
-	/* internal jumps to parts of the outro */
+	/* पूर्णांकernal jumps to parts of the outro */
 	RELO_BR_GO_OUT,
 	RELO_BR_GO_ABORT,
 	RELO_BR_GO_CALL_PUSH_REGS,
 	RELO_BR_GO_CALL_POP_REGS,
-	/* external jumps to fixed addresses */
+	/* बाह्यal jumps to fixed addresses */
 	RELO_BR_NEXT_PKT,
 	RELO_BR_HELPER,
 	/* immediate relocation against load address */
 	RELO_IMMED_REL,
-};
+पूर्ण;
 
-/* To make absolute relocated branches (branches other than RELO_BR_REL)
+/* To make असलolute relocated branches (branches other than RELO_BR_REL)
  * distinguishable in user space dumps from normal jumps, add a large offset
  * to them.
  */
-#define BR_OFF_RELO		15000
+#घोषणा BR_OFF_RELO		15000
 
-enum static_regs {
+क्रमागत अटल_regs अणु
 	STATIC_REG_IMMA		= 20, /* Bank AB */
 	STATIC_REG_IMM		= 21, /* Bank AB */
 	STATIC_REG_STACK	= 22, /* Bank A */
 	STATIC_REG_PKT_LEN	= 22, /* Bank B */
-};
+पूर्ण;
 
-enum pkt_vec {
+क्रमागत pkt_vec अणु
 	PKT_VEC_PKT_LEN		= 0,
 	PKT_VEC_PKT_PTR		= 2,
 	PKT_VEC_QSEL_SET	= 4,
 	PKT_VEC_QSEL_VAL	= 6,
-};
+पूर्ण;
 
-#define PKT_VEL_QSEL_SET_BIT	4
+#घोषणा PKT_VEL_QSEL_SET_BIT	4
 
-#define pv_len(np)	reg_lm(1, PKT_VEC_PKT_LEN)
-#define pv_ctm_ptr(np)	reg_lm(1, PKT_VEC_PKT_PTR)
-#define pv_qsel_set(np)	reg_lm(1, PKT_VEC_QSEL_SET)
-#define pv_qsel_val(np)	reg_lm(1, PKT_VEC_QSEL_VAL)
+#घोषणा pv_len(np)	reg_lm(1, PKT_VEC_PKT_LEN)
+#घोषणा pv_cपंचांग_ptr(np)	reg_lm(1, PKT_VEC_PKT_PTR)
+#घोषणा pv_qsel_set(np)	reg_lm(1, PKT_VEC_QSEL_SET)
+#घोषणा pv_qsel_val(np)	reg_lm(1, PKT_VEC_QSEL_VAL)
 
-#define stack_reg(np)	reg_a(STATIC_REG_STACK)
-#define stack_imm(np)	imm_b(np)
-#define plen_reg(np)	reg_b(STATIC_REG_PKT_LEN)
-#define pptr_reg(np)	pv_ctm_ptr(np)
-#define imm_a(np)	reg_a(STATIC_REG_IMM)
-#define imm_b(np)	reg_b(STATIC_REG_IMM)
-#define imma_a(np)	reg_a(STATIC_REG_IMMA)
-#define imma_b(np)	reg_b(STATIC_REG_IMMA)
-#define imm_both(np)	reg_both(STATIC_REG_IMM)
-#define ret_reg(np)	imm_a(np)
+#घोषणा stack_reg(np)	reg_a(STATIC_REG_STACK)
+#घोषणा stack_imm(np)	imm_b(np)
+#घोषणा plen_reg(np)	reg_b(STATIC_REG_PKT_LEN)
+#घोषणा pptr_reg(np)	pv_cपंचांग_ptr(np)
+#घोषणा imm_a(np)	reg_a(STATIC_REG_IMM)
+#घोषणा imm_b(np)	reg_b(STATIC_REG_IMM)
+#घोषणा imma_a(np)	reg_a(STATIC_REG_IMMA)
+#घोषणा imma_b(np)	reg_b(STATIC_REG_IMMA)
+#घोषणा imm_both(np)	reg_both(STATIC_REG_IMM)
+#घोषणा ret_reg(np)	imm_a(np)
 
-#define NFP_BPF_ABI_FLAGS	reg_imm(0)
-#define   NFP_BPF_ABI_FLAG_MARK	1
+#घोषणा NFP_BPF_ABI_FLAGS	reg_imm(0)
+#घोषणा   NFP_BPF_ABI_FLAG_MARK	1
 
 /**
- * struct nfp_app_bpf - bpf app priv structure
- * @app:		backpointer to the app
+ * काष्ठा nfp_app_bpf - bpf app priv काष्ठाure
+ * @app:		backpoपूर्णांकer to the app
  * @ccm:		common control message handler data
  *
  * @bpf_dev:		BPF offload device handle
@@ -96,17 +97,17 @@ enum pkt_vec {
  * @maps_in_use:	number of currently offloaded maps
  * @map_elems_in_use:	number of elements allocated to offloaded maps
  *
- * @maps_neutral:	hash table of offload-neutral maps (on pointer)
+ * @maps_neutral:	hash table of offload-neutral maps (on poपूर्णांकer)
  *
  * @abi_version:	global BPF ABI version
- * @cmsg_cache_cnt:	number of entries to read for caching
+ * @cmsg_cache_cnt:	number of entries to पढ़ो क्रम caching
  *
  * @adjust_head:	adjust head capability
- * @adjust_head.flags:		extra flags for adjust head
+ * @adjust_head.flags:		extra flags क्रम adjust head
  * @adjust_head.off_min:	minimal packet offset within buffer required
  * @adjust_head.off_max:	maximum packet offset within buffer required
- * @adjust_head.guaranteed_sub:	negative adjustment guaranteed possible
- * @adjust_head.guaranteed_add:	positive adjustment guaranteed possible
+ * @adjust_head.guaranteed_sub:	negative adjusपंचांगent guaranteed possible
+ * @adjust_head.guaranteed_add:	positive adjusपंचांगent guaranteed possible
  *
  * @maps:		map capability
  * @maps.types:			supported map types
@@ -116,498 +117,498 @@ enum pkt_vec {
  * @maps.max_val_sz:		max size of map value
  * @maps.max_elem_sz:		max size of map entry (key + value)
  *
- * @helpers:		helper addressess for various calls
+ * @helpers:		helper addressess क्रम various calls
  * @helpers.map_lookup:		map lookup helper address
  * @helpers.map_update:		map update helper address
  * @helpers.map_delete:		map delete helper address
  * @helpers.perf_event_output:	output perf event to a ring buffer
  *
- * @pseudo_random:	FW initialized the pseudo-random machinery (CSRs)
+ * @pseuकरो_अक्रमom:	FW initialized the pseuकरो-अक्रमom machinery (CSRs)
  * @queue_select:	BPF can set the RX queue ID in packet vector
- * @adjust_tail:	BPF can simply trunc packet size for adjust tail
+ * @adjust_tail:	BPF can simply trunc packet size क्रम adjust tail
  * @cmsg_multi_ent:	FW can pack multiple map entries in a single cmsg
  */
-struct nfp_app_bpf {
-	struct nfp_app *app;
-	struct nfp_ccm ccm;
+काष्ठा nfp_app_bpf अणु
+	काष्ठा nfp_app *app;
+	काष्ठा nfp_ccm ccm;
 
-	struct bpf_offload_dev *bpf_dev;
+	काष्ठा bpf_offload_dev *bpf_dev;
 
-	unsigned int cmsg_key_sz;
-	unsigned int cmsg_val_sz;
+	अचिन्हित पूर्णांक cmsg_key_sz;
+	अचिन्हित पूर्णांक cmsg_val_sz;
 
-	unsigned int cmsg_cache_cnt;
+	अचिन्हित पूर्णांक cmsg_cache_cnt;
 
-	struct list_head map_list;
-	unsigned int maps_in_use;
-	unsigned int map_elems_in_use;
+	काष्ठा list_head map_list;
+	अचिन्हित पूर्णांक maps_in_use;
+	अचिन्हित पूर्णांक map_elems_in_use;
 
-	struct rhashtable maps_neutral;
+	काष्ठा rhashtable maps_neutral;
 
 	u32 abi_version;
 
-	struct nfp_bpf_cap_adjust_head {
+	काष्ठा nfp_bpf_cap_adjust_head अणु
 		u32 flags;
-		int off_min;
-		int off_max;
-		int guaranteed_sub;
-		int guaranteed_add;
-	} adjust_head;
+		पूर्णांक off_min;
+		पूर्णांक off_max;
+		पूर्णांक guaranteed_sub;
+		पूर्णांक guaranteed_add;
+	पूर्ण adjust_head;
 
-	struct {
+	काष्ठा अणु
 		u32 types;
 		u32 max_maps;
 		u32 max_elems;
 		u32 max_key_sz;
 		u32 max_val_sz;
 		u32 max_elem_sz;
-	} maps;
+	पूर्ण maps;
 
-	struct {
+	काष्ठा अणु
 		u32 map_lookup;
 		u32 map_update;
 		u32 map_delete;
 		u32 perf_event_output;
-	} helpers;
+	पूर्ण helpers;
 
-	bool pseudo_random;
+	bool pseuकरो_अक्रमom;
 	bool queue_select;
 	bool adjust_tail;
 	bool cmsg_multi_ent;
-};
+पूर्ण;
 
-enum nfp_bpf_map_use {
+क्रमागत nfp_bpf_map_use अणु
 	NFP_MAP_UNUSED = 0,
 	NFP_MAP_USE_READ,
 	NFP_MAP_USE_WRITE,
 	NFP_MAP_USE_ATOMIC_CNT,
-};
+पूर्ण;
 
-struct nfp_bpf_map_word {
-	unsigned char type		:4;
-	unsigned char non_zero_update	:1;
-};
+काष्ठा nfp_bpf_map_word अणु
+	अचिन्हित अक्षर type		:4;
+	अचिन्हित अक्षर non_zero_update	:1;
+पूर्ण;
 
-#define NFP_BPF_MAP_CACHE_CNT		4U
-#define NFP_BPF_MAP_CACHE_TIME_NS	(250 * 1000)
+#घोषणा NFP_BPF_MAP_CACHE_CNT		4U
+#घोषणा NFP_BPF_MAP_CACHE_TIME_NS	(250 * 1000)
 
 /**
- * struct nfp_bpf_map - private per-map data attached to BPF maps for offload
- * @offmap:	pointer to the offloaded BPF map
- * @bpf:	back pointer to bpf app private structure
- * @tid:	table id identifying map on datapath
+ * काष्ठा nfp_bpf_map - निजी per-map data attached to BPF maps क्रम offload
+ * @offmap:	poपूर्णांकer to the offloaded BPF map
+ * @bpf:	back poपूर्णांकer to bpf app निजी काष्ठाure
+ * @tid:	table id identअगरying map on datapath
  *
  * @cache_lock:	protects @cache_blockers, @cache_to, @cache
  * @cache_blockers:	number of ops in flight which block caching
- * @cache_gen:	counter incremented by every blocker on exit
- * @cache_to:	time when cache will no longer be valid (ns)
+ * @cache_gen:	counter incremented by every blocker on निकास
+ * @cache_to:	समय when cache will no दीर्घer be valid (ns)
  * @cache:	skb with cached response
  *
  * @l:		link on the nfp_app_bpf->map_list list
  * @use_map:	map of how the value is used (in 4B chunks)
  */
-struct nfp_bpf_map {
-	struct bpf_offloaded_map *offmap;
-	struct nfp_app_bpf *bpf;
+काष्ठा nfp_bpf_map अणु
+	काष्ठा bpf_offloaded_map *offmap;
+	काष्ठा nfp_app_bpf *bpf;
 	u32 tid;
 
 	spinlock_t cache_lock;
 	u32 cache_blockers;
 	u32 cache_gen;
 	u64 cache_to;
-	struct sk_buff *cache;
+	काष्ठा sk_buff *cache;
 
-	struct list_head l;
-	struct nfp_bpf_map_word use_map[];
-};
+	काष्ठा list_head l;
+	काष्ठा nfp_bpf_map_word use_map[];
+पूर्ण;
 
-struct nfp_bpf_neutral_map {
-	struct rhash_head l;
-	struct bpf_map *ptr;
+काष्ठा nfp_bpf_neutral_map अणु
+	काष्ठा rhash_head l;
+	काष्ठा bpf_map *ptr;
 	u32 map_id;
 	u32 count;
-};
+पूर्ण;
 
-extern const struct rhashtable_params nfp_bpf_maps_neutral_params;
+बाह्य स्थिर काष्ठा rhashtable_params nfp_bpf_maps_neutral_params;
 
-struct nfp_prog;
-struct nfp_insn_meta;
-typedef int (*instr_cb_t)(struct nfp_prog *, struct nfp_insn_meta *);
+काष्ठा nfp_prog;
+काष्ठा nfp_insn_meta;
+प्रकार पूर्णांक (*instr_cb_t)(काष्ठा nfp_prog *, काष्ठा nfp_insn_meta *);
 
-#define nfp_prog_first_meta(nfp_prog)					\
-	list_first_entry(&(nfp_prog)->insns, struct nfp_insn_meta, l)
-#define nfp_prog_last_meta(nfp_prog)					\
-	list_last_entry(&(nfp_prog)->insns, struct nfp_insn_meta, l)
-#define nfp_meta_next(meta)	list_next_entry(meta, l)
-#define nfp_meta_prev(meta)	list_prev_entry(meta, l)
+#घोषणा nfp_prog_first_meta(nfp_prog)					\
+	list_first_entry(&(nfp_prog)->insns, काष्ठा nfp_insn_meta, l)
+#घोषणा nfp_prog_last_meta(nfp_prog)					\
+	list_last_entry(&(nfp_prog)->insns, काष्ठा nfp_insn_meta, l)
+#घोषणा nfp_meta_next(meta)	list_next_entry(meta, l)
+#घोषणा nfp_meta_prev(meta)	list_prev_entry(meta, l)
 
 /**
- * struct nfp_bpf_reg_state - register state for calls
- * @reg: BPF register state from latest path
- * @var_off: for stack arg - changes stack offset on different paths
+ * काष्ठा nfp_bpf_reg_state - रेजिस्टर state क्रम calls
+ * @reg: BPF रेजिस्टर state from latest path
+ * @var_off: क्रम stack arg - changes stack offset on dअगरferent paths
  */
-struct nfp_bpf_reg_state {
-	struct bpf_reg_state reg;
+काष्ठा nfp_bpf_reg_state अणु
+	काष्ठा bpf_reg_state reg;
 	bool var_off;
-};
+पूर्ण;
 
-#define FLAG_INSN_IS_JUMP_DST			BIT(0)
-#define FLAG_INSN_IS_SUBPROG_START		BIT(1)
-#define FLAG_INSN_PTR_CALLER_STACK_FRAME	BIT(2)
-/* Instruction is pointless, noop even on its own */
-#define FLAG_INSN_SKIP_NOOP			BIT(3)
-/* Instruction is optimized out based on preceding instructions */
-#define FLAG_INSN_SKIP_PREC_DEPENDENT		BIT(4)
-/* Instruction is optimized by the verifier */
-#define FLAG_INSN_SKIP_VERIFIER_OPT		BIT(5)
-/* Instruction needs to zero extend to high 32-bit */
-#define FLAG_INSN_DO_ZEXT			BIT(6)
+#घोषणा FLAG_INSN_IS_JUMP_DST			BIT(0)
+#घोषणा FLAG_INSN_IS_SUBPROG_START		BIT(1)
+#घोषणा FLAG_INSN_PTR_CALLER_STACK_FRAME	BIT(2)
+/* Inकाष्ठाion is poपूर्णांकless, noop even on its own */
+#घोषणा FLAG_INSN_SKIP_NOOP			BIT(3)
+/* Inकाष्ठाion is optimized out based on preceding inकाष्ठाions */
+#घोषणा FLAG_INSN_SKIP_PREC_DEPENDENT		BIT(4)
+/* Inकाष्ठाion is optimized by the verअगरier */
+#घोषणा FLAG_INSN_SKIP_VERIFIER_OPT		BIT(5)
+/* Inकाष्ठाion needs to zero extend to high 32-bit */
+#घोषणा FLAG_INSN_DO_ZEXT			BIT(6)
 
-#define FLAG_INSN_SKIP_MASK		(FLAG_INSN_SKIP_NOOP | \
+#घोषणा FLAG_INSN_SKIP_MASK		(FLAG_INSN_SKIP_NOOP | \
 					 FLAG_INSN_SKIP_PREC_DEPENDENT | \
 					 FLAG_INSN_SKIP_VERIFIER_OPT)
 
 /**
- * struct nfp_insn_meta - BPF instruction wrapper
- * @insn: BPF instruction
- * @ptr: pointer type for memory operations
- * @ldst_gather_len: memcpy length gathered from load/store sequence
+ * काष्ठा nfp_insn_meta - BPF inकाष्ठाion wrapper
+ * @insn: BPF inकाष्ठाion
+ * @ptr: poपूर्णांकer type क्रम memory operations
+ * @ldst_gather_len: स_नकल length gathered from load/store sequence
  * @paired_st: the paired store insn at the head of the sequence
- * @ptr_not_const: pointer is not always constant
- * @pkt_cache: packet data cache information
- * @pkt_cache.range_start: start offset for associated packet data cache
- * @pkt_cache.range_end: end offset for associated packet data cache
- * @pkt_cache.do_init: this read needs to initialize packet data cache
+ * @ptr_not_स्थिर: poपूर्णांकer is not always स्थिरant
+ * @pkt_cache: packet data cache inक्रमmation
+ * @pkt_cache.range_start: start offset क्रम associated packet data cache
+ * @pkt_cache.range_end: end offset क्रम associated packet data cache
+ * @pkt_cache.करो_init: this पढ़ो needs to initialize packet data cache
  * @xadd_over_16bit: 16bit immediate is not guaranteed
  * @xadd_maybe_16bit: 16bit immediate is possible
- * @jmp_dst: destination info for jump instructions
- * @jump_neg_op: jump instruction has inverted immediate, use ADD instead of SUB
- * @num_insns_after_br: number of insns following a branch jump, used for fixup
- * @func_id: function id for call instructions
- * @arg1: arg1 for call instructions
- * @arg2: arg2 for call instructions
- * @umin_src: copy of core verifier umin_value for src opearnd.
- * @umax_src: copy of core verifier umax_value for src operand.
- * @umin_dst: copy of core verifier umin_value for dst opearnd.
- * @umax_dst: copy of core verifier umax_value for dst operand.
- * @off: index of first generated machine instruction (in nfp_prog.prog)
- * @n: eBPF instruction number
- * @flags: eBPF instruction extra optimization flags
- * @subprog_idx: index of subprogram to which the instruction belongs
- * @double_cb: callback for second part of the instruction
+ * @jmp_dst: destination info क्रम jump inकाष्ठाions
+ * @jump_neg_op: jump inकाष्ठाion has inverted immediate, use ADD instead of SUB
+ * @num_insns_after_br: number of insns following a branch jump, used क्रम fixup
+ * @func_id: function id क्रम call inकाष्ठाions
+ * @arg1: arg1 क्रम call inकाष्ठाions
+ * @arg2: arg2 क्रम call inकाष्ठाions
+ * @umin_src: copy of core verअगरier umin_value क्रम src opearnd.
+ * @umax_src: copy of core verअगरier umax_value क्रम src opeअक्रम.
+ * @umin_dst: copy of core verअगरier umin_value क्रम dst opearnd.
+ * @umax_dst: copy of core verअगरier umax_value क्रम dst opeअक्रम.
+ * @off: index of first generated machine inकाष्ठाion (in nfp_prog.prog)
+ * @n: eBPF inकाष्ठाion number
+ * @flags: eBPF inकाष्ठाion extra optimization flags
+ * @subprog_idx: index of subprogram to which the inकाष्ठाion beदीर्घs
+ * @द्विगुन_cb: callback क्रम second part of the inकाष्ठाion
  * @l: link on nfp_prog->insns list
  */
-struct nfp_insn_meta {
-	struct bpf_insn insn;
-	union {
-		/* pointer ops (ld/st/xadd) */
-		struct {
-			struct bpf_reg_state ptr;
-			struct bpf_insn *paired_st;
+काष्ठा nfp_insn_meta अणु
+	काष्ठा bpf_insn insn;
+	जोड़ अणु
+		/* poपूर्णांकer ops (ld/st/xadd) */
+		काष्ठा अणु
+			काष्ठा bpf_reg_state ptr;
+			काष्ठा bpf_insn *paired_st;
 			s16 ldst_gather_len;
-			bool ptr_not_const;
-			struct {
+			bool ptr_not_स्थिर;
+			काष्ठा अणु
 				s16 range_start;
 				s16 range_end;
-				bool do_init;
-			} pkt_cache;
+				bool करो_init;
+			पूर्ण pkt_cache;
 			bool xadd_over_16bit;
 			bool xadd_maybe_16bit;
-		};
+		पूर्ण;
 		/* jump */
-		struct {
-			struct nfp_insn_meta *jmp_dst;
+		काष्ठा अणु
+			काष्ठा nfp_insn_meta *jmp_dst;
 			bool jump_neg_op;
-			u32 num_insns_after_br; /* only for BPF-to-BPF calls */
-		};
+			u32 num_insns_after_br; /* only क्रम BPF-to-BPF calls */
+		पूर्ण;
 		/* function calls */
-		struct {
+		काष्ठा अणु
 			u32 func_id;
-			struct bpf_reg_state arg1;
-			struct nfp_bpf_reg_state arg2;
-		};
-		/* We are interested in range info for operands of ALU
-		 * operations. For example, shift amount, multiplicand and
+			काष्ठा bpf_reg_state arg1;
+			काष्ठा nfp_bpf_reg_state arg2;
+		पूर्ण;
+		/* We are पूर्णांकerested in range info क्रम opeअक्रमs of ALU
+		 * operations. For example, shअगरt amount, multiplicand and
 		 * multiplier etc.
 		 */
-		struct {
+		काष्ठा अणु
 			u64 umin_src;
 			u64 umax_src;
 			u64 umin_dst;
 			u64 umax_dst;
-		};
-	};
-	unsigned int off;
-	unsigned short n;
-	unsigned short flags;
-	unsigned short subprog_idx;
-	instr_cb_t double_cb;
+		पूर्ण;
+	पूर्ण;
+	अचिन्हित पूर्णांक off;
+	अचिन्हित लघु n;
+	अचिन्हित लघु flags;
+	अचिन्हित लघु subprog_idx;
+	instr_cb_t द्विगुन_cb;
 
-	struct list_head l;
-};
+	काष्ठा list_head l;
+पूर्ण;
 
-#define BPF_SIZE_MASK	0x18
+#घोषणा BPF_SIZE_MASK	0x18
 
-static inline u8 mbpf_class(const struct nfp_insn_meta *meta)
-{
-	return BPF_CLASS(meta->insn.code);
-}
+अटल अंतरभूत u8 mbpf_class(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस BPF_CLASS(meta->insn.code);
+पूर्ण
 
-static inline u8 mbpf_src(const struct nfp_insn_meta *meta)
-{
-	return BPF_SRC(meta->insn.code);
-}
+अटल अंतरभूत u8 mbpf_src(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस BPF_SRC(meta->insn.code);
+पूर्ण
 
-static inline u8 mbpf_op(const struct nfp_insn_meta *meta)
-{
-	return BPF_OP(meta->insn.code);
-}
+अटल अंतरभूत u8 mbpf_op(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस BPF_OP(meta->insn.code);
+पूर्ण
 
-static inline u8 mbpf_mode(const struct nfp_insn_meta *meta)
-{
-	return BPF_MODE(meta->insn.code);
-}
+अटल अंतरभूत u8 mbpf_mode(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस BPF_MODE(meta->insn.code);
+पूर्ण
 
-static inline bool is_mbpf_alu(const struct nfp_insn_meta *meta)
-{
-	return mbpf_class(meta) == BPF_ALU64 || mbpf_class(meta) == BPF_ALU;
-}
+अटल अंतरभूत bool is_mbpf_alu(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस mbpf_class(meta) == BPF_ALU64 || mbpf_class(meta) == BPF_ALU;
+पूर्ण
 
-static inline bool is_mbpf_load(const struct nfp_insn_meta *meta)
-{
-	return (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_LDX | BPF_MEM);
-}
+अटल अंतरभूत bool is_mbpf_load(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_LDX | BPF_MEM);
+पूर्ण
 
-static inline bool is_mbpf_jmp32(const struct nfp_insn_meta *meta)
-{
-	return mbpf_class(meta) == BPF_JMP32;
-}
+अटल अंतरभूत bool is_mbpf_jmp32(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस mbpf_class(meta) == BPF_JMP32;
+पूर्ण
 
-static inline bool is_mbpf_jmp64(const struct nfp_insn_meta *meta)
-{
-	return mbpf_class(meta) == BPF_JMP;
-}
+अटल अंतरभूत bool is_mbpf_jmp64(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस mbpf_class(meta) == BPF_JMP;
+पूर्ण
 
-static inline bool is_mbpf_jmp(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_jmp32(meta) || is_mbpf_jmp64(meta);
-}
+अटल अंतरभूत bool is_mbpf_jmp(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_jmp32(meta) || is_mbpf_jmp64(meta);
+पूर्ण
 
-static inline bool is_mbpf_store(const struct nfp_insn_meta *meta)
-{
-	return (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_STX | BPF_MEM);
-}
+अटल अंतरभूत bool is_mbpf_store(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_STX | BPF_MEM);
+पूर्ण
 
-static inline bool is_mbpf_load_pkt(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_load(meta) && meta->ptr.type == PTR_TO_PACKET;
-}
+अटल अंतरभूत bool is_mbpf_load_pkt(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_load(meta) && meta->ptr.type == PTR_TO_PACKET;
+पूर्ण
 
-static inline bool is_mbpf_store_pkt(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_store(meta) && meta->ptr.type == PTR_TO_PACKET;
-}
+अटल अंतरभूत bool is_mbpf_store_pkt(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_store(meta) && meta->ptr.type == PTR_TO_PACKET;
+पूर्ण
 
-static inline bool is_mbpf_classic_load(const struct nfp_insn_meta *meta)
-{
+अटल अंतरभूत bool is_mbpf_classic_load(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
 	u8 code = meta->insn.code;
 
-	return BPF_CLASS(code) == BPF_LD &&
+	वापस BPF_CLASS(code) == BPF_LD &&
 	       (BPF_MODE(code) == BPF_ABS || BPF_MODE(code) == BPF_IND);
-}
+पूर्ण
 
-static inline bool is_mbpf_classic_store(const struct nfp_insn_meta *meta)
-{
+अटल अंतरभूत bool is_mbpf_classic_store(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
 	u8 code = meta->insn.code;
 
-	return BPF_CLASS(code) == BPF_ST && BPF_MODE(code) == BPF_MEM;
-}
+	वापस BPF_CLASS(code) == BPF_ST && BPF_MODE(code) == BPF_MEM;
+पूर्ण
 
-static inline bool is_mbpf_classic_store_pkt(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_classic_store(meta) && meta->ptr.type == PTR_TO_PACKET;
-}
+अटल अंतरभूत bool is_mbpf_classic_store_pkt(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_classic_store(meta) && meta->ptr.type == PTR_TO_PACKET;
+पूर्ण
 
-static inline bool is_mbpf_atomic(const struct nfp_insn_meta *meta)
-{
-	return (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_STX | BPF_ATOMIC);
-}
+अटल अंतरभूत bool is_mbpf_atomic(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस (meta->insn.code & ~BPF_SIZE_MASK) == (BPF_STX | BPF_ATOMIC);
+पूर्ण
 
-static inline bool is_mbpf_mul(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_alu(meta) && mbpf_op(meta) == BPF_MUL;
-}
+अटल अंतरभूत bool is_mbpf_mul(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_alu(meta) && mbpf_op(meta) == BPF_MUL;
+पूर्ण
 
-static inline bool is_mbpf_div(const struct nfp_insn_meta *meta)
-{
-	return is_mbpf_alu(meta) && mbpf_op(meta) == BPF_DIV;
-}
+अटल अंतरभूत bool is_mbpf_भाग(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	वापस is_mbpf_alu(meta) && mbpf_op(meta) == BPF_DIV;
+पूर्ण
 
-static inline bool is_mbpf_cond_jump(const struct nfp_insn_meta *meta)
-{
+अटल अंतरभूत bool is_mbpf_cond_jump(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
 	u8 op;
 
-	if (is_mbpf_jmp32(meta))
-		return true;
+	अगर (is_mbpf_jmp32(meta))
+		वापस true;
 
-	if (!is_mbpf_jmp64(meta))
-		return false;
+	अगर (!is_mbpf_jmp64(meta))
+		वापस false;
 
 	op = mbpf_op(meta);
-	return op != BPF_JA && op != BPF_EXIT && op != BPF_CALL;
-}
+	वापस op != BPF_JA && op != BPF_EXIT && op != BPF_CALL;
+पूर्ण
 
-static inline bool is_mbpf_helper_call(const struct nfp_insn_meta *meta)
-{
-	struct bpf_insn insn = meta->insn;
+अटल अंतरभूत bool is_mbpf_helper_call(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	काष्ठा bpf_insn insn = meta->insn;
 
-	return insn.code == (BPF_JMP | BPF_CALL) &&
+	वापस insn.code == (BPF_JMP | BPF_CALL) &&
 		insn.src_reg != BPF_PSEUDO_CALL;
-}
+पूर्ण
 
-static inline bool is_mbpf_pseudo_call(const struct nfp_insn_meta *meta)
-{
-	struct bpf_insn insn = meta->insn;
+अटल अंतरभूत bool is_mbpf_pseuकरो_call(स्थिर काष्ठा nfp_insn_meta *meta)
+अणु
+	काष्ठा bpf_insn insn = meta->insn;
 
-	return insn.code == (BPF_JMP | BPF_CALL) &&
+	वापस insn.code == (BPF_JMP | BPF_CALL) &&
 		insn.src_reg == BPF_PSEUDO_CALL;
-}
+पूर्ण
 
-#define STACK_FRAME_ALIGN 64
+#घोषणा STACK_FRAME_ALIGN 64
 
 /**
- * struct nfp_bpf_subprog_info - nfp BPF sub-program (a.k.a. function) info
+ * काष्ठा nfp_bpf_subprog_info - nfp BPF sub-program (a.k.a. function) info
  * @stack_depth:	maximum stack depth used by this sub-program
- * @needs_reg_push:	whether sub-program uses callee-saved registers
+ * @needs_reg_push:	whether sub-program uses callee-saved रेजिस्टरs
  */
-struct nfp_bpf_subprog_info {
+काष्ठा nfp_bpf_subprog_info अणु
 	u16 stack_depth;
 	u8 needs_reg_push : 1;
-};
+पूर्ण;
 
 /**
- * struct nfp_prog - nfp BPF program
- * @bpf: backpointer to the bpf app priv structure
+ * काष्ठा nfp_prog - nfp BPF program
+ * @bpf: backpoपूर्णांकer to the bpf app priv काष्ठाure
  * @prog: machine code
- * @prog_len: number of valid instructions in @prog array
+ * @prog_len: number of valid inकाष्ठाions in @prog array
  * @__prog_alloc_len: alloc size of @prog array
  * @stack_size: total amount of stack used
- * @verifier_meta: temporary storage for verifier's insn meta
+ * @verअगरier_meta: temporary storage क्रम verअगरier's insn meta
  * @type: BPF program type
- * @last_bpf_off: address of the last instruction translated from BPF
- * @tgt_out: jump target for normal exit
- * @tgt_abort: jump target for abort (e.g. access outside of packet buffer)
- * @tgt_call_push_regs: jump target for subroutine for saving R6~R9 to stack
- * @tgt_call_pop_regs: jump target for subroutine used for restoring R6~R9
- * @n_translated: number of successfully translated instructions (for errors)
- * @error: error code if something went wrong
- * @stack_frame_depth: max stack depth for current frame
- * @adjust_head_location: if program has single adjust head call - the insn no.
- * @map_records_cnt: the number of map pointers recorded for this prog
- * @subprog_cnt: number of sub-programs, including main function
- * @map_records: the map record pointers from bpf->maps_neutral
- * @subprog: pointer to an array of objects holding info about sub-programs
- * @n_insns: number of instructions on @insns list
- * @insns: list of BPF instruction wrappers (struct nfp_insn_meta)
+ * @last_bpf_off: address of the last inकाष्ठाion translated from BPF
+ * @tgt_out: jump target क्रम normal निकास
+ * @tgt_पात: jump target क्रम पात (e.g. access outside of packet buffer)
+ * @tgt_call_push_regs: jump target क्रम subroutine क्रम saving R6~R9 to stack
+ * @tgt_call_pop_regs: jump target क्रम subroutine used क्रम restoring R6~R9
+ * @n_translated: number of successfully translated inकाष्ठाions (क्रम errors)
+ * @error: error code अगर something went wrong
+ * @stack_frame_depth: max stack depth क्रम current frame
+ * @adjust_head_location: अगर program has single adjust head call - the insn no.
+ * @map_records_cnt: the number of map poपूर्णांकers recorded क्रम this prog
+ * @subprog_cnt: number of sub-programs, including मुख्य function
+ * @map_records: the map record poपूर्णांकers from bpf->maps_neutral
+ * @subprog: poपूर्णांकer to an array of objects holding info about sub-programs
+ * @n_insns: number of inकाष्ठाions on @insns list
+ * @insns: list of BPF inकाष्ठाion wrappers (काष्ठा nfp_insn_meta)
  */
-struct nfp_prog {
-	struct nfp_app_bpf *bpf;
+काष्ठा nfp_prog अणु
+	काष्ठा nfp_app_bpf *bpf;
 
 	u64 *prog;
-	unsigned int prog_len;
-	unsigned int __prog_alloc_len;
+	अचिन्हित पूर्णांक prog_len;
+	अचिन्हित पूर्णांक __prog_alloc_len;
 
-	unsigned int stack_size;
+	अचिन्हित पूर्णांक stack_size;
 
-	struct nfp_insn_meta *verifier_meta;
+	काष्ठा nfp_insn_meta *verअगरier_meta;
 
-	enum bpf_prog_type type;
+	क्रमागत bpf_prog_type type;
 
-	unsigned int last_bpf_off;
-	unsigned int tgt_out;
-	unsigned int tgt_abort;
-	unsigned int tgt_call_push_regs;
-	unsigned int tgt_call_pop_regs;
+	अचिन्हित पूर्णांक last_bpf_off;
+	अचिन्हित पूर्णांक tgt_out;
+	अचिन्हित पूर्णांक tgt_पात;
+	अचिन्हित पूर्णांक tgt_call_push_regs;
+	अचिन्हित पूर्णांक tgt_call_pop_regs;
 
-	unsigned int n_translated;
-	int error;
+	अचिन्हित पूर्णांक n_translated;
+	पूर्णांक error;
 
-	unsigned int stack_frame_depth;
-	unsigned int adjust_head_location;
+	अचिन्हित पूर्णांक stack_frame_depth;
+	अचिन्हित पूर्णांक adjust_head_location;
 
-	unsigned int map_records_cnt;
-	unsigned int subprog_cnt;
-	struct nfp_bpf_neutral_map **map_records;
-	struct nfp_bpf_subprog_info *subprog;
+	अचिन्हित पूर्णांक map_records_cnt;
+	अचिन्हित पूर्णांक subprog_cnt;
+	काष्ठा nfp_bpf_neutral_map **map_records;
+	काष्ठा nfp_bpf_subprog_info *subprog;
 
-	unsigned int n_insns;
-	struct list_head insns;
-};
+	अचिन्हित पूर्णांक n_insns;
+	काष्ठा list_head insns;
+पूर्ण;
 
 /**
- * struct nfp_bpf_vnic - per-vNIC BPF priv structure
+ * काष्ठा nfp_bpf_vnic - per-vNIC BPF priv काष्ठाure
  * @tc_prog:	currently loaded cls_bpf program
- * @start_off:	address of the first instruction in the memory
- * @tgt_done:	jump target to get the next packet
+ * @start_off:	address of the first inकाष्ठाion in the memory
+ * @tgt_करोne:	jump target to get the next packet
  */
-struct nfp_bpf_vnic {
-	struct bpf_prog *tc_prog;
-	unsigned int start_off;
-	unsigned int tgt_done;
-};
+काष्ठा nfp_bpf_vnic अणु
+	काष्ठा bpf_prog *tc_prog;
+	अचिन्हित पूर्णांक start_off;
+	अचिन्हित पूर्णांक tgt_करोne;
+पूर्ण;
 
-bool nfp_is_subprog_start(struct nfp_insn_meta *meta);
-void nfp_bpf_jit_prepare(struct nfp_prog *nfp_prog);
-int nfp_bpf_jit(struct nfp_prog *prog);
+bool nfp_is_subprog_start(काष्ठा nfp_insn_meta *meta);
+व्योम nfp_bpf_jit_prepare(काष्ठा nfp_prog *nfp_prog);
+पूर्णांक nfp_bpf_jit(काष्ठा nfp_prog *prog);
 bool nfp_bpf_supported_opcode(u8 code);
 
-int nfp_verify_insn(struct bpf_verifier_env *env, int insn_idx,
-		    int prev_insn_idx);
-int nfp_bpf_finalize(struct bpf_verifier_env *env);
+पूर्णांक nfp_verअगरy_insn(काष्ठा bpf_verअगरier_env *env, पूर्णांक insn_idx,
+		    पूर्णांक prev_insn_idx);
+पूर्णांक nfp_bpf_finalize(काष्ठा bpf_verअगरier_env *env);
 
-int nfp_bpf_opt_replace_insn(struct bpf_verifier_env *env, u32 off,
-			     struct bpf_insn *insn);
-int nfp_bpf_opt_remove_insns(struct bpf_verifier_env *env, u32 off, u32 cnt);
+पूर्णांक nfp_bpf_opt_replace_insn(काष्ठा bpf_verअगरier_env *env, u32 off,
+			     काष्ठा bpf_insn *insn);
+पूर्णांक nfp_bpf_opt_हटाओ_insns(काष्ठा bpf_verअगरier_env *env, u32 off, u32 cnt);
 
-extern const struct bpf_prog_offload_ops nfp_bpf_dev_ops;
+बाह्य स्थिर काष्ठा bpf_prog_offload_ops nfp_bpf_dev_ops;
 
-struct netdev_bpf;
-struct nfp_app;
-struct nfp_net;
+काष्ठा netdev_bpf;
+काष्ठा nfp_app;
+काष्ठा nfp_net;
 
-int nfp_ndo_bpf(struct nfp_app *app, struct nfp_net *nn,
-		struct netdev_bpf *bpf);
-int nfp_net_bpf_offload(struct nfp_net *nn, struct bpf_prog *prog,
-			bool old_prog, struct netlink_ext_ack *extack);
+पूर्णांक nfp_nकरो_bpf(काष्ठा nfp_app *app, काष्ठा nfp_net *nn,
+		काष्ठा netdev_bpf *bpf);
+पूर्णांक nfp_net_bpf_offload(काष्ठा nfp_net *nn, काष्ठा bpf_prog *prog,
+			bool old_prog, काष्ठा netlink_ext_ack *extack);
 
-struct nfp_insn_meta *
-nfp_bpf_goto_meta(struct nfp_prog *nfp_prog, struct nfp_insn_meta *meta,
-		  unsigned int insn_idx);
+काष्ठा nfp_insn_meta *
+nfp_bpf_जाओ_meta(काष्ठा nfp_prog *nfp_prog, काष्ठा nfp_insn_meta *meta,
+		  अचिन्हित पूर्णांक insn_idx);
 
-void *nfp_bpf_relo_for_vnic(struct nfp_prog *nfp_prog, struct nfp_bpf_vnic *bv);
+व्योम *nfp_bpf_relo_क्रम_vnic(काष्ठा nfp_prog *nfp_prog, काष्ठा nfp_bpf_vnic *bv);
 
-unsigned int nfp_bpf_ctrl_cmsg_min_mtu(struct nfp_app_bpf *bpf);
-unsigned int nfp_bpf_ctrl_cmsg_mtu(struct nfp_app_bpf *bpf);
-unsigned int nfp_bpf_ctrl_cmsg_cache_cnt(struct nfp_app_bpf *bpf);
-long long int
-nfp_bpf_ctrl_alloc_map(struct nfp_app_bpf *bpf, struct bpf_map *map);
-void
-nfp_bpf_ctrl_free_map(struct nfp_app_bpf *bpf, struct nfp_bpf_map *nfp_map);
-int nfp_bpf_ctrl_getfirst_entry(struct bpf_offloaded_map *offmap,
-				void *next_key);
-int nfp_bpf_ctrl_update_entry(struct bpf_offloaded_map *offmap,
-			      void *key, void *value, u64 flags);
-int nfp_bpf_ctrl_del_entry(struct bpf_offloaded_map *offmap, void *key);
-int nfp_bpf_ctrl_lookup_entry(struct bpf_offloaded_map *offmap,
-			      void *key, void *value);
-int nfp_bpf_ctrl_getnext_entry(struct bpf_offloaded_map *offmap,
-			       void *key, void *next_key);
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_min_mtu(काष्ठा nfp_app_bpf *bpf);
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_mtu(काष्ठा nfp_app_bpf *bpf);
+अचिन्हित पूर्णांक nfp_bpf_ctrl_cmsg_cache_cnt(काष्ठा nfp_app_bpf *bpf);
+दीर्घ दीर्घ पूर्णांक
+nfp_bpf_ctrl_alloc_map(काष्ठा nfp_app_bpf *bpf, काष्ठा bpf_map *map);
+व्योम
+nfp_bpf_ctrl_मुक्त_map(काष्ठा nfp_app_bpf *bpf, काष्ठा nfp_bpf_map *nfp_map);
+पूर्णांक nfp_bpf_ctrl_getfirst_entry(काष्ठा bpf_offloaded_map *offmap,
+				व्योम *next_key);
+पूर्णांक nfp_bpf_ctrl_update_entry(काष्ठा bpf_offloaded_map *offmap,
+			      व्योम *key, व्योम *value, u64 flags);
+पूर्णांक nfp_bpf_ctrl_del_entry(काष्ठा bpf_offloaded_map *offmap, व्योम *key);
+पूर्णांक nfp_bpf_ctrl_lookup_entry(काष्ठा bpf_offloaded_map *offmap,
+			      व्योम *key, व्योम *value);
+पूर्णांक nfp_bpf_ctrl_getnext_entry(काष्ठा bpf_offloaded_map *offmap,
+			       व्योम *key, व्योम *next_key);
 
-int nfp_bpf_event_output(struct nfp_app_bpf *bpf, const void *data,
-			 unsigned int len);
+पूर्णांक nfp_bpf_event_output(काष्ठा nfp_app_bpf *bpf, स्थिर व्योम *data,
+			 अचिन्हित पूर्णांक len);
 
-void nfp_bpf_ctrl_msg_rx(struct nfp_app *app, struct sk_buff *skb);
-void
-nfp_bpf_ctrl_msg_rx_raw(struct nfp_app *app, const void *data,
-			unsigned int len);
-#endif
+व्योम nfp_bpf_ctrl_msg_rx(काष्ठा nfp_app *app, काष्ठा sk_buff *skb);
+व्योम
+nfp_bpf_ctrl_msg_rx_raw(काष्ठा nfp_app *app, स्थिर व्योम *data,
+			अचिन्हित पूर्णांक len);
+#पूर्ण_अगर

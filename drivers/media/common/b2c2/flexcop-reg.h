@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Linux driver for digital TV devices equipped with B2C2 FlexcopII(b)/III
- * flexcop-reg.h - register abstraction for FlexCopII, FlexCopIIb and FlexCopIII
- * see flexcop.c for copyright information
+ * Linux driver क्रम digital TV devices equipped with B2C2 FlexcopII(b)/III
+ * flexcop-reg.h - रेजिस्टर असलtraction क्रम FlexCopII, FlexCopIIb and FlexCopIII
+ * see flexcop.c क्रम copyright inक्रमmation
  */
-#ifndef __FLEXCOP_REG_H__
-#define __FLEXCOP_REG_H__
+#अगर_अघोषित __FLEXCOP_REG_H__
+#घोषणा __FLEXCOP_REG_H__
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FLEXCOP_UNK = 0,
 	FLEXCOP_II,
 	FLEXCOP_IIB,
 	FLEXCOP_III,
-} flexcop_revision_t;
+पूर्ण flexcop_revision_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_UNK = 0,
 	FC_CABLE,
 	FC_AIR_DVBT,
@@ -26,85 +27,85 @@ typedef enum {
 	FC_SKY_REV27,
 	FC_SKY_REV28,
 	FC_SKYS2_REV33,
-} flexcop_device_type_t;
+पूर्ण flexcop_device_type_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_USB = 0,
 	FC_PCI,
-} flexcop_bus_t;
+पूर्ण flexcop_bus_t;
 
 /* FlexCop IBI Registers */
-#if defined(__LITTLE_ENDIAN)
-#include "flexcop_ibi_value_le.h"
-#else
-#if defined(__BIG_ENDIAN)
-#include "flexcop_ibi_value_be.h"
-#else
-#error no endian defined
-#endif
-#endif
+#अगर defined(__LITTLE_ENDIAN)
+#समावेश "flexcop_ibi_value_le.h"
+#अन्यथा
+#अगर defined(__BIG_ENDIAN)
+#समावेश "flexcop_ibi_value_be.h"
+#अन्यथा
+#त्रुटि no endian defined
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#define fc_data_Tag_ID_DVB  0x3e
-#define fc_data_Tag_ID_ATSC 0x3f
-#define fc_data_Tag_ID_IDSB 0x8b
+#घोषणा fc_data_Tag_ID_DVB  0x3e
+#घोषणा fc_data_Tag_ID_ATSC 0x3f
+#घोषणा fc_data_Tag_ID_IDSB 0x8b
 
-#define fc_key_code_default 0x1
-#define fc_key_code_even    0x2
-#define fc_key_code_odd     0x3
+#घोषणा fc_key_code_शेष 0x1
+#घोषणा fc_key_code_even    0x2
+#घोषणा fc_key_code_odd     0x3
 
-extern flexcop_ibi_value ibi_zero;
+बाह्य flexcop_ibi_value ibi_zero;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_I2C_PORT_DEMOD  = 1,
 	FC_I2C_PORT_EEPROM = 2,
 	FC_I2C_PORT_TUNER  = 3,
-} flexcop_i2c_port_t;
+पूर्ण flexcop_i2c_port_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_WRITE = 0,
 	FC_READ  = 1,
-} flexcop_access_op_t;
+पूर्ण flexcop_access_op_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_SRAM_DEST_NET   = 1,
 	FC_SRAM_DEST_CAI   = 2,
 	FC_SRAM_DEST_CAO   = 4,
 	FC_SRAM_DEST_MEDIA = 8
-} flexcop_sram_dest_t;
+पूर्ण flexcop_sram_dest_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_SRAM_DEST_TARGET_WAN_USB = 0,
 	FC_SRAM_DEST_TARGET_DMA1    = 1,
 	FC_SRAM_DEST_TARGET_DMA2    = 2,
 	FC_SRAM_DEST_TARGET_FC3_CA  = 3
-} flexcop_sram_dest_target_t;
+पूर्ण flexcop_sram_dest_target_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_SRAM_2_32KB  = 0, /*  64KB */
-	FC_SRAM_1_32KB  = 1, /*  32KB - default fow FCII */
+	FC_SRAM_1_32KB  = 1, /*  32KB - शेष fow FCII */
 	FC_SRAM_1_128KB = 2, /* 128KB */
-	FC_SRAM_1_48KB  = 3, /*  48KB - default for FCIII */
-} flexcop_sram_type_t;
+	FC_SRAM_1_48KB  = 3, /*  48KB - शेष क्रम FCIII */
+पूर्ण flexcop_sram_type_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_WAN_SPEED_4MBITS  = 0,
 	FC_WAN_SPEED_8MBITS  = 1,
 	FC_WAN_SPEED_12MBITS = 2,
 	FC_WAN_SPEED_16MBITS = 3,
-} flexcop_wan_speed_t;
+पूर्ण flexcop_wan_speed_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_DMA_1 = 1,
 	FC_DMA_2 = 2,
-} flexcop_dma_index_t;
+पूर्ण flexcop_dma_index_t;
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC_DMA_SUBADDR_0 = 1,
 	FC_DMA_SUBADDR_1 = 2,
-} flexcop_dma_addr_index_t;
+पूर्ण flexcop_dma_addr_index_t;
 
-/* names of the particular registers */
-typedef enum {
+/* names of the particular रेजिस्टरs */
+प्रकार क्रमागत अणु
 	dma1_000            = 0x000,
 	dma1_004            = 0x004,
 	dma1_008            = 0x008,
@@ -120,7 +121,7 @@ typedef enum {
 	tw_sm_c_10c         = 0x10c,
 	tw_sm_c_110         = 0x110,
 
-	lnb_switch_freq_200 = 0x200,
+	lnb_चयन_freq_200 = 0x200,
 	misc_204            = 0x204,
 	ctrl_208            = 0x208,
 	irq_20c             = 0x20c,
@@ -157,12 +158,12 @@ typedef enum {
 	sram_dest_reg_714   = 0x714,
 	net_buf_reg_718     = 0x718,
 	wan_ctrl_reg_71c    = 0x71c,
-} flexcop_ibi_register;
+पूर्ण flexcop_ibi_रेजिस्टर;
 
-#define flexcop_set_ibi_value(reg,attr,val) { \
-	flexcop_ibi_value v = fc->read_ibi_reg(fc,reg); \
+#घोषणा flexcop_set_ibi_value(reg,attr,val) अणु \
+	flexcop_ibi_value v = fc->पढ़ो_ibi_reg(fc,reg); \
 	v.reg.attr = val; \
-	fc->write_ibi_reg(fc,reg,v); \
-}
+	fc->ग_लिखो_ibi_reg(fc,reg,v); \
+पूर्ण
 
-#endif
+#पूर्ण_अगर

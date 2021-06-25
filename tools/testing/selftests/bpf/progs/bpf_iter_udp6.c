@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include "bpf_iter.h"
-#include "bpf_tracing_net.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_endian.h>
+#समावेश "bpf_iter.h"
+#समावेश "bpf_tracing_net.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <bpf/bpf_endian.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-#define IPV6_SEQ_DGRAM_HEADER				\
+#घोषणा IPV6_SEQ_DGRAM_HEADER				\
 	"  sl  "					\
 	"local_address                         "	\
 	"remote_address                        "	\
 	"st tx_queue rx_queue tr tm->when retrnsmt"	\
 	"   uid  timeout inode ref pointer drops\n"
 
-static long sock_i_ino(const struct sock *sk)
-{
-	const struct socket *sk_socket = sk->sk_socket;
-	const struct inode *inode;
-	unsigned long ino;
+अटल दीर्घ sock_i_ino(स्थिर काष्ठा sock *sk)
+अणु
+	स्थिर काष्ठा socket *sk_socket = sk->sk_socket;
+	स्थिर काष्ठा inode *inode;
+	अचिन्हित दीर्घ ino;
 
-	if (!sk_socket)
-		return 0;
+	अगर (!sk_socket)
+		वापस 0;
 
-	inode = &container_of(sk_socket, struct socket_alloc, socket)->vfs_inode;
-	bpf_probe_read_kernel(&ino, sizeof(ino), &inode->i_ino);
-	return ino;
-}
+	inode = &container_of(sk_socket, काष्ठा socket_alloc, socket)->vfs_inode;
+	bpf_probe_पढ़ो_kernel(&ino, माप(ino), &inode->i_ino);
+	वापस ino;
+पूर्ण
 
 SEC("iter/udp")
-int dump_udp6(struct bpf_iter__udp *ctx)
-{
-	struct seq_file *seq = ctx->meta->seq;
-	struct udp_sock *udp_sk = ctx->udp_sk;
-	const struct in6_addr *dest, *src;
-	struct udp6_sock *udp6_sk;
-	struct inet_sock *inet;
+पूर्णांक dump_udp6(काष्ठा bpf_iter__udp *ctx)
+अणु
+	काष्ठा seq_file *seq = ctx->meta->seq;
+	काष्ठा udp_sock *udp_sk = ctx->udp_sk;
+	स्थिर काष्ठा in6_addr *dest, *src;
+	काष्ठा udp6_sock *udp6_sk;
+	काष्ठा inet_sock *inet;
 	__u16 srcp, destp;
 	__u32 seq_num;
-	int rqueue;
+	पूर्णांक rqueue;
 
-	if (udp_sk == (void *)0)
-		return 0;
+	अगर (udp_sk == (व्योम *)0)
+		वापस 0;
 
 	seq_num = ctx->meta->seq_num;
-	if (seq_num == 0)
+	अगर (seq_num == 0)
 		BPF_SEQ_PRINTF(seq, IPV6_SEQ_DGRAM_HEADER);
 
 	udp6_sk = bpf_skc_to_udp6_sock(udp_sk);
-	if (udp6_sk == (void *)0)
-		return 0;
+	अगर (udp6_sk == (व्योम *)0)
+		वापस 0;
 
 	inet = &udp_sk->inet;
 	srcp = bpf_ntohs(inet->inet_sport);
 	destp = bpf_ntohs(inet->inet_dport);
-	rqueue = inet->sk.sk_rmem_alloc.counter - udp_sk->forward_deficit;
+	rqueue = inet->sk.sk_rmem_alloc.counter - udp_sk->क्रमward_deficit;
 	dest  = &inet->sk.sk_v6_daddr;
 	src   = &inet->sk.sk_v6_rcv_saddr;
 
@@ -75,5 +76,5 @@ int dump_udp6(struct bpf_iter__udp *ctx)
 		       inet->sk.sk_refcnt.refs.counter, udp_sk,
 		       inet->sk.sk_drops.counter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

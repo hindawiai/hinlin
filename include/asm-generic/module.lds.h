@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef __ASM_GENERIC_MODULE_LDS_H
-#define __ASM_GENERIC_MODULE_LDS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित __ASM_GENERIC_MODULE_LDS_H
+#घोषणा __ASM_GENERIC_MODULE_LDS_H
 
 /*
- * <asm/module.lds.h> can specify arch-specific sections for linking modules.
- * Empty for the asm-generic header.
+ * <यंत्र/module.lds.h> can specअगरy arch-specअगरic sections क्रम linking modules.
+ * Empty क्रम the यंत्र-generic header.
  */
 
-#endif /* __ASM_GENERIC_MODULE_LDS_H */
+#पूर्ण_अगर /* __ASM_GENERIC_MODULE_LDS_H */

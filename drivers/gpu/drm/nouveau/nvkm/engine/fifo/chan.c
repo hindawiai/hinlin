@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,168 +22,168 @@
  *
  * Authors: Ben Skeggs
  */
-#include "chan.h"
+#समावेश "chan.h"
 
-#include <core/client.h>
-#include <core/gpuobj.h>
-#include <core/oproxy.h>
-#include <subdev/mmu.h>
-#include <engine/dma.h>
+#समावेश <core/client.h>
+#समावेश <core/gpuobj.h>
+#समावेश <core/oproxy.h>
+#समावेश <subdev/mmu.h>
+#समावेश <engine/dma.h>
 
-struct nvkm_fifo_chan_object {
-	struct nvkm_oproxy oproxy;
-	struct nvkm_fifo_chan *chan;
-	int hash;
-};
+काष्ठा nvkm_fअगरo_chan_object अणु
+	काष्ठा nvkm_oproxy oproxy;
+	काष्ठा nvkm_fअगरo_chan *chan;
+	पूर्णांक hash;
+पूर्ण;
 
-static struct nvkm_fifo_engn *
-nvkm_fifo_chan_engn(struct nvkm_fifo_chan *chan, struct nvkm_engine *engine)
-{
-	int engi = chan->fifo->func->engine_id(chan->fifo, engine);
-	if (engi >= 0)
-		return &chan->engn[engi];
-	return NULL;
-}
+अटल काष्ठा nvkm_fअगरo_engn *
+nvkm_fअगरo_chan_engn(काष्ठा nvkm_fअगरo_chan *chan, काष्ठा nvkm_engine *engine)
+अणु
+	पूर्णांक engi = chan->fअगरo->func->engine_id(chan->fअगरo, engine);
+	अगर (engi >= 0)
+		वापस &chan->engn[engi];
+	वापस शून्य;
+पूर्ण
 
-static int
-nvkm_fifo_chan_child_fini(struct nvkm_oproxy *base, bool suspend)
-{
-	struct nvkm_fifo_chan_object *object =
+अटल पूर्णांक
+nvkm_fअगरo_chan_child_fini(काष्ठा nvkm_oproxy *base, bool suspend)
+अणु
+	काष्ठा nvkm_fअगरo_chan_object *object =
 		container_of(base, typeof(*object), oproxy);
-	struct nvkm_engine *engine  = object->oproxy.object->engine;
-	struct nvkm_fifo_chan *chan = object->chan;
-	struct nvkm_fifo_engn *engn = nvkm_fifo_chan_engn(chan, engine);
-	const char *name = engine->subdev.name;
-	int ret = 0;
+	काष्ठा nvkm_engine *engine  = object->oproxy.object->engine;
+	काष्ठा nvkm_fअगरo_chan *chan = object->chan;
+	काष्ठा nvkm_fअगरo_engn *engn = nvkm_fअगरo_chan_engn(chan, engine);
+	स्थिर अक्षर *name = engine->subdev.name;
+	पूर्णांक ret = 0;
 
-	if (--engn->usecount)
-		return 0;
+	अगर (--engn->usecount)
+		वापस 0;
 
-	if (chan->func->engine_fini) {
+	अगर (chan->func->engine_fini) अणु
 		ret = chan->func->engine_fini(chan, engine, suspend);
-		if (ret) {
-			nvif_error(&chan->object,
+		अगर (ret) अणु
+			nvअगर_error(&chan->object,
 				   "detach %s failed, %d\n", name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (engn->object) {
+	अगर (engn->object) अणु
 		ret = nvkm_object_fini(engn->object, suspend);
-		if (ret && suspend)
-			return ret;
-	}
+		अगर (ret && suspend)
+			वापस ret;
+	पूर्ण
 
-	nvif_trace(&chan->object, "detached %s\n", name);
-	return ret;
-}
+	nvअगर_trace(&chan->object, "detached %s\n", name);
+	वापस ret;
+पूर्ण
 
-static int
-nvkm_fifo_chan_child_init(struct nvkm_oproxy *base)
-{
-	struct nvkm_fifo_chan_object *object =
+अटल पूर्णांक
+nvkm_fअगरo_chan_child_init(काष्ठा nvkm_oproxy *base)
+अणु
+	काष्ठा nvkm_fअगरo_chan_object *object =
 		container_of(base, typeof(*object), oproxy);
-	struct nvkm_engine *engine  = object->oproxy.object->engine;
-	struct nvkm_fifo_chan *chan = object->chan;
-	struct nvkm_fifo_engn *engn = nvkm_fifo_chan_engn(chan, engine);
-	const char *name = engine->subdev.name;
-	int ret;
+	काष्ठा nvkm_engine *engine  = object->oproxy.object->engine;
+	काष्ठा nvkm_fअगरo_chan *chan = object->chan;
+	काष्ठा nvkm_fअगरo_engn *engn = nvkm_fअगरo_chan_engn(chan, engine);
+	स्थिर अक्षर *name = engine->subdev.name;
+	पूर्णांक ret;
 
-	if (engn->usecount++)
-		return 0;
+	अगर (engn->usecount++)
+		वापस 0;
 
-	if (engn->object) {
+	अगर (engn->object) अणु
 		ret = nvkm_object_init(engn->object);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (chan->func->engine_init) {
+	अगर (chan->func->engine_init) अणु
 		ret = chan->func->engine_init(chan, engine);
-		if (ret) {
-			nvif_error(&chan->object,
+		अगर (ret) अणु
+			nvअगर_error(&chan->object,
 				   "attach %s failed, %d\n", name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	nvif_trace(&chan->object, "attached %s\n", name);
-	return 0;
-}
+	nvअगर_trace(&chan->object, "attached %s\n", name);
+	वापस 0;
+पूर्ण
 
-static void
-nvkm_fifo_chan_child_del(struct nvkm_oproxy *base)
-{
-	struct nvkm_fifo_chan_object *object =
+अटल व्योम
+nvkm_fअगरo_chan_child_del(काष्ठा nvkm_oproxy *base)
+अणु
+	काष्ठा nvkm_fअगरo_chan_object *object =
 		container_of(base, typeof(*object), oproxy);
-	struct nvkm_engine *engine  = object->oproxy.base.engine;
-	struct nvkm_fifo_chan *chan = object->chan;
-	struct nvkm_fifo_engn *engn = nvkm_fifo_chan_engn(chan, engine);
+	काष्ठा nvkm_engine *engine  = object->oproxy.base.engine;
+	काष्ठा nvkm_fअगरo_chan *chan = object->chan;
+	काष्ठा nvkm_fअगरo_engn *engn = nvkm_fअगरo_chan_engn(chan, engine);
 
-	if (chan->func->object_dtor)
+	अगर (chan->func->object_dtor)
 		chan->func->object_dtor(chan, object->hash);
 
-	if (!--engn->refcount) {
-		if (chan->func->engine_dtor)
+	अगर (!--engn->refcount) अणु
+		अगर (chan->func->engine_dtor)
 			chan->func->engine_dtor(chan, engine);
 		nvkm_object_del(&engn->object);
-		if (chan->vmm)
+		अगर (chan->vmm)
 			atomic_dec(&chan->vmm->engref[engine->subdev.type]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_oproxy_func
-nvkm_fifo_chan_child_func = {
-	.dtor[0] = nvkm_fifo_chan_child_del,
-	.init[0] = nvkm_fifo_chan_child_init,
-	.fini[0] = nvkm_fifo_chan_child_fini,
-};
+अटल स्थिर काष्ठा nvkm_oproxy_func
+nvkm_fअगरo_chan_child_func = अणु
+	.dtor[0] = nvkm_fअगरo_chan_child_del,
+	.init[0] = nvkm_fअगरo_chan_child_init,
+	.fini[0] = nvkm_fअगरo_chan_child_fini,
+पूर्ण;
 
-static int
-nvkm_fifo_chan_child_new(const struct nvkm_oclass *oclass, void *data, u32 size,
-			 struct nvkm_object **pobject)
-{
-	struct nvkm_engine *engine = oclass->engine;
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(oclass->parent);
-	struct nvkm_fifo_engn *engn = nvkm_fifo_chan_engn(chan, engine);
-	struct nvkm_fifo_chan_object *object;
-	int ret = 0;
+अटल पूर्णांक
+nvkm_fअगरo_chan_child_new(स्थिर काष्ठा nvkm_oclass *oclass, व्योम *data, u32 size,
+			 काष्ठा nvkm_object **pobject)
+अणु
+	काष्ठा nvkm_engine *engine = oclass->engine;
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(oclass->parent);
+	काष्ठा nvkm_fअगरo_engn *engn = nvkm_fअगरo_chan_engn(chan, engine);
+	काष्ठा nvkm_fअगरo_chan_object *object;
+	पूर्णांक ret = 0;
 
-	if (!(object = kzalloc(sizeof(*object), GFP_KERNEL)))
-		return -ENOMEM;
-	nvkm_oproxy_ctor(&nvkm_fifo_chan_child_func, oclass, &object->oproxy);
+	अगर (!(object = kzalloc(माप(*object), GFP_KERNEL)))
+		वापस -ENOMEM;
+	nvkm_oproxy_ctor(&nvkm_fअगरo_chan_child_func, oclass, &object->oproxy);
 	object->chan = chan;
 	*pobject = &object->oproxy.base;
 
-	if (!engn->refcount++) {
-		struct nvkm_oclass cclass = {
+	अगर (!engn->refcount++) अणु
+		काष्ठा nvkm_oclass cclass = अणु
 			.client = oclass->client,
 			.engine = oclass->engine,
-		};
+		पूर्ण;
 
-		if (chan->vmm)
+		अगर (chan->vmm)
 			atomic_inc(&chan->vmm->engref[engine->subdev.type]);
 
-		if (engine->func->fifo.cclass) {
-			ret = engine->func->fifo.cclass(chan, &cclass,
+		अगर (engine->func->fअगरo.cclass) अणु
+			ret = engine->func->fअगरo.cclass(chan, &cclass,
 							&engn->object);
-		} else
-		if (engine->func->cclass) {
+		पूर्ण अन्यथा
+		अगर (engine->func->cclass) अणु
 			ret = nvkm_object_new_(engine->func->cclass, &cclass,
-					       NULL, 0, &engn->object);
-		}
-		if (ret)
-			return ret;
+					       शून्य, 0, &engn->object);
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 
-		if (chan->func->engine_ctor) {
+		अगर (chan->func->engine_ctor) अणु
 			ret = chan->func->engine_ctor(chan, oclass->engine,
 						      engn->object);
-			if (ret)
-				return ret;
-		}
-	}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = oclass->base.ctor(&(const struct nvkm_oclass) {
+	ret = oclass->base.ctor(&(स्थिर काष्ठा nvkm_oclass) अणु
 					.base = oclass->base,
 					.engn = oclass->engn,
 					.handle = oclass->handle,
@@ -192,239 +193,239 @@ nvkm_fifo_chan_child_new(const struct nvkm_oclass *oclass, void *data, u32 size,
 						  engn->object :
 						  oclass->parent,
 					.engine = engine,
-				}, data, size, &object->oproxy.object);
-	if (ret)
-		return ret;
+				पूर्ण, data, size, &object->oproxy.object);
+	अगर (ret)
+		वापस ret;
 
-	if (chan->func->object_ctor) {
+	अगर (chan->func->object_ctor) अणु
 		object->hash =
 			chan->func->object_ctor(chan, object->oproxy.object);
-		if (object->hash < 0)
-			return object->hash;
-	}
+		अगर (object->hash < 0)
+			वापस object->hash;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_chan_child_get(struct nvkm_object *object, int index,
-			 struct nvkm_oclass *oclass)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	struct nvkm_fifo *fifo = chan->fifo;
-	struct nvkm_engine *engine;
+अटल पूर्णांक
+nvkm_fअगरo_chan_child_get(काष्ठा nvkm_object *object, पूर्णांक index,
+			 काष्ठा nvkm_oclass *oclass)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	काष्ठा nvkm_fअगरo *fअगरo = chan->fअगरo;
+	काष्ठा nvkm_engine *engine;
 	u32 engm = chan->engm;
-	int engi, ret, c;
+	पूर्णांक engi, ret, c;
 
-	for (; c = 0, engi = __ffs(engm), engm; engm &= ~(1ULL << engi)) {
-		if (!(engine = fifo->func->id_engine(fifo, engi)))
-			continue;
+	क्रम (; c = 0, engi = __ffs(engm), engm; engm &= ~(1ULL << engi)) अणु
+		अगर (!(engine = fअगरo->func->id_engine(fअगरo, engi)))
+			जारी;
 		oclass->engine = engine;
 		oclass->base.oclass = 0;
 
-		if (engine->func->fifo.sclass) {
-			ret = engine->func->fifo.sclass(oclass, index);
-			if (oclass->base.oclass) {
-				if (!oclass->base.ctor)
+		अगर (engine->func->fअगरo.sclass) अणु
+			ret = engine->func->fअगरo.sclass(oclass, index);
+			अगर (oclass->base.oclass) अणु
+				अगर (!oclass->base.ctor)
 					oclass->base.ctor = nvkm_object_new;
-				oclass->ctor = nvkm_fifo_chan_child_new;
-				return 0;
-			}
+				oclass->ctor = nvkm_fअगरo_chan_child_new;
+				वापस 0;
+			पूर्ण
 
 			index -= ret;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		while (engine->func->sclass[c].oclass) {
-			if (c++ == index) {
+		जबतक (engine->func->sclass[c].oclass) अणु
+			अगर (c++ == index) अणु
 				oclass->base = engine->func->sclass[index];
-				if (!oclass->base.ctor)
+				अगर (!oclass->base.ctor)
 					oclass->base.ctor = nvkm_object_new;
-				oclass->ctor = nvkm_fifo_chan_child_new;
-				return 0;
-			}
-		}
+				oclass->ctor = nvkm_fअगरo_chan_child_new;
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		index -= c;
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-nvkm_fifo_chan_ntfy(struct nvkm_object *object, u32 type,
-		    struct nvkm_event **pevent)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	if (chan->func->ntfy)
-		return chan->func->ntfy(chan, type, pevent);
-	return -ENODEV;
-}
+अटल पूर्णांक
+nvkm_fअगरo_chan_ntfy(काष्ठा nvkm_object *object, u32 type,
+		    काष्ठा nvkm_event **pevent)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	अगर (chan->func->ntfy)
+		वापस chan->func->ntfy(chan, type, pevent);
+	वापस -ENODEV;
+पूर्ण
 
-static int
-nvkm_fifo_chan_map(struct nvkm_object *object, void *argv, u32 argc,
-		   enum nvkm_object_map *type, u64 *addr, u64 *size)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+अटल पूर्णांक
+nvkm_fअगरo_chan_map(काष्ठा nvkm_object *object, व्योम *argv, u32 argc,
+		   क्रमागत nvkm_object_map *type, u64 *addr, u64 *size)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
 	*type = NVKM_OBJECT_MAP_IO;
 	*addr = chan->addr;
 	*size = chan->size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_chan_rd32(struct nvkm_object *object, u64 addr, u32 *data)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	if (unlikely(!chan->user)) {
+अटल पूर्णांक
+nvkm_fअगरo_chan_rd32(काष्ठा nvkm_object *object, u64 addr, u32 *data)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	अगर (unlikely(!chan->user)) अणु
 		chan->user = ioremap(chan->addr, chan->size);
-		if (!chan->user)
-			return -ENOMEM;
-	}
-	if (unlikely(addr + 4 > chan->size))
-		return -EINVAL;
-	*data = ioread32_native(chan->user + addr);
-	return 0;
-}
+		अगर (!chan->user)
+			वापस -ENOMEM;
+	पूर्ण
+	अगर (unlikely(addr + 4 > chan->size))
+		वापस -EINVAL;
+	*data = ioपढ़ो32_native(chan->user + addr);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_chan_wr32(struct nvkm_object *object, u64 addr, u32 data)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	if (unlikely(!chan->user)) {
+अटल पूर्णांक
+nvkm_fअगरo_chan_wr32(काष्ठा nvkm_object *object, u64 addr, u32 data)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	अगर (unlikely(!chan->user)) अणु
 		chan->user = ioremap(chan->addr, chan->size);
-		if (!chan->user)
-			return -ENOMEM;
-	}
-	if (unlikely(addr + 4 > chan->size))
-		return -EINVAL;
-	iowrite32_native(data, chan->user + addr);
-	return 0;
-}
+		अगर (!chan->user)
+			वापस -ENOMEM;
+	पूर्ण
+	अगर (unlikely(addr + 4 > chan->size))
+		वापस -EINVAL;
+	ioग_लिखो32_native(data, chan->user + addr);
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_chan_fini(struct nvkm_object *object, bool suspend)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+अटल पूर्णांक
+nvkm_fअगरo_chan_fini(काष्ठा nvkm_object *object, bool suspend)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
 	chan->func->fini(chan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nvkm_fifo_chan_init(struct nvkm_object *object)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+अटल पूर्णांक
+nvkm_fअगरo_chan_init(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
 	chan->func->init(chan);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *
-nvkm_fifo_chan_dtor(struct nvkm_object *object)
-{
-	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
-	struct nvkm_fifo *fifo = chan->fifo;
-	void *data = chan->func->dtor(chan);
-	unsigned long flags;
+अटल व्योम *
+nvkm_fअगरo_chan_dtor(काष्ठा nvkm_object *object)
+अणु
+	काष्ठा nvkm_fअगरo_chan *chan = nvkm_fअगरo_chan(object);
+	काष्ठा nvkm_fअगरo *fअगरo = chan->fअगरo;
+	व्योम *data = chan->func->dtor(chan);
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&fifo->lock, flags);
-	if (!list_empty(&chan->head)) {
-		__clear_bit(chan->chid, fifo->mask);
+	spin_lock_irqsave(&fअगरo->lock, flags);
+	अगर (!list_empty(&chan->head)) अणु
+		__clear_bit(chan->chid, fअगरo->mask);
 		list_del(&chan->head);
-	}
-	spin_unlock_irqrestore(&fifo->lock, flags);
+	पूर्ण
+	spin_unlock_irqrestore(&fअगरo->lock, flags);
 
-	if (chan->user)
+	अगर (chan->user)
 		iounmap(chan->user);
 
-	if (chan->vmm) {
+	अगर (chan->vmm) अणु
 		nvkm_vmm_part(chan->vmm, chan->inst->memory);
 		nvkm_vmm_unref(&chan->vmm);
-	}
+	पूर्ण
 
 	nvkm_gpuobj_del(&chan->push);
 	nvkm_gpuobj_del(&chan->inst);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static const struct nvkm_object_func
-nvkm_fifo_chan_func = {
-	.dtor = nvkm_fifo_chan_dtor,
-	.init = nvkm_fifo_chan_init,
-	.fini = nvkm_fifo_chan_fini,
-	.ntfy = nvkm_fifo_chan_ntfy,
-	.map = nvkm_fifo_chan_map,
-	.rd32 = nvkm_fifo_chan_rd32,
-	.wr32 = nvkm_fifo_chan_wr32,
-	.sclass = nvkm_fifo_chan_child_get,
-};
+अटल स्थिर काष्ठा nvkm_object_func
+nvkm_fअगरo_chan_func = अणु
+	.dtor = nvkm_fअगरo_chan_dtor,
+	.init = nvkm_fअगरo_chan_init,
+	.fini = nvkm_fअगरo_chan_fini,
+	.ntfy = nvkm_fअगरo_chan_ntfy,
+	.map = nvkm_fअगरo_chan_map,
+	.rd32 = nvkm_fअगरo_chan_rd32,
+	.wr32 = nvkm_fअगरo_chan_wr32,
+	.sclass = nvkm_fअगरo_chan_child_get,
+पूर्ण;
 
-int
-nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
-		    struct nvkm_fifo *fifo, u32 size, u32 align, bool zero,
-		    u64 hvmm, u64 push, u32 engm, int bar, u32 base,
-		    u32 user, const struct nvkm_oclass *oclass,
-		    struct nvkm_fifo_chan *chan)
-{
-	struct nvkm_client *client = oclass->client;
-	struct nvkm_device *device = fifo->engine.subdev.device;
-	struct nvkm_dmaobj *dmaobj;
-	unsigned long flags;
-	int ret;
+पूर्णांक
+nvkm_fअगरo_chan_ctor(स्थिर काष्ठा nvkm_fअगरo_chan_func *func,
+		    काष्ठा nvkm_fअगरo *fअगरo, u32 size, u32 align, bool zero,
+		    u64 hvmm, u64 push, u32 engm, पूर्णांक bar, u32 base,
+		    u32 user, स्थिर काष्ठा nvkm_oclass *oclass,
+		    काष्ठा nvkm_fअगरo_chan *chan)
+अणु
+	काष्ठा nvkm_client *client = oclass->client;
+	काष्ठा nvkm_device *device = fअगरo->engine.subdev.device;
+	काष्ठा nvkm_dmaobj *dmaobj;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	nvkm_object_ctor(&nvkm_fifo_chan_func, oclass, &chan->object);
+	nvkm_object_ctor(&nvkm_fअगरo_chan_func, oclass, &chan->object);
 	chan->func = func;
-	chan->fifo = fifo;
+	chan->fअगरo = fअगरo;
 	chan->engm = engm;
 	INIT_LIST_HEAD(&chan->head);
 
 	/* instance memory */
-	ret = nvkm_gpuobj_new(device, size, align, zero, NULL, &chan->inst);
-	if (ret)
-		return ret;
+	ret = nvkm_gpuobj_new(device, size, align, zero, शून्य, &chan->inst);
+	अगर (ret)
+		वापस ret;
 
 	/* allocate push buffer ctxdma instance */
-	if (push) {
+	अगर (push) अणु
 		dmaobj = nvkm_dmaobj_search(client, push);
-		if (IS_ERR(dmaobj))
-			return PTR_ERR(dmaobj);
+		अगर (IS_ERR(dmaobj))
+			वापस PTR_ERR(dmaobj);
 
 		ret = nvkm_object_bind(&dmaobj->object, chan->inst, -16,
 				       &chan->push);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* channel address space */
-	if (hvmm) {
-		struct nvkm_vmm *vmm = nvkm_uvmm_search(client, hvmm);
-		if (IS_ERR(vmm))
-			return PTR_ERR(vmm);
+	अगर (hvmm) अणु
+		काष्ठा nvkm_vmm *vmm = nvkm_uvmm_search(client, hvmm);
+		अगर (IS_ERR(vmm))
+			वापस PTR_ERR(vmm);
 
-		if (vmm->mmu != device->mmu)
-			return -EINVAL;
+		अगर (vmm->mmu != device->mmu)
+			वापस -EINVAL;
 
 		ret = nvkm_vmm_join(vmm, chan->inst->memory);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		chan->vmm = nvkm_vmm_ref(vmm);
-	}
+	पूर्ण
 
 	/* allocate channel id */
-	spin_lock_irqsave(&fifo->lock, flags);
-	chan->chid = find_first_zero_bit(fifo->mask, NVKM_FIFO_CHID_NR);
-	if (chan->chid >= NVKM_FIFO_CHID_NR) {
-		spin_unlock_irqrestore(&fifo->lock, flags);
-		return -ENOSPC;
-	}
-	list_add(&chan->head, &fifo->chan);
-	__set_bit(chan->chid, fifo->mask);
-	spin_unlock_irqrestore(&fifo->lock, flags);
+	spin_lock_irqsave(&fअगरo->lock, flags);
+	chan->chid = find_first_zero_bit(fअगरo->mask, NVKM_FIFO_CHID_NR);
+	अगर (chan->chid >= NVKM_FIFO_CHID_NR) अणु
+		spin_unlock_irqrestore(&fअगरo->lock, flags);
+		वापस -ENOSPC;
+	पूर्ण
+	list_add(&chan->head, &fअगरo->chan);
+	__set_bit(chan->chid, fअगरo->mask);
+	spin_unlock_irqrestore(&fअगरo->lock, flags);
 
-	/* determine address of this channel's user registers */
+	/* determine address of this channel's user रेजिस्टरs */
 	chan->addr = device->func->resource_addr(device, bar) +
 		     base + user * chan->chid;
 	chan->size = user;
 
-	nvkm_fifo_cevent(fifo);
-	return 0;
-}
+	nvkm_fअगरo_cevent(fअगरo);
+	वापस 0;
+पूर्ण

@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* r8169.h: RealTek 8169/8168/8101 ethernet driver.
  *
  * Copyright (c) 2002 ShuChen <shuchen@realtek.com.tw>
  * Copyright (c) 2003 - 2007 Francois Romieu <romieu@fr.zoreil.com>
  * Copyright (c) a lot of people too. Please respect their work.
  *
- * See MAINTAINERS file for support contact information.
+ * See MAINTAINERS file क्रम support contact inक्रमmation.
  */
 
-#include <linux/types.h>
-#include <linux/phy.h>
+#समावेश <linux/types.h>
+#समावेश <linux/phy.h>
 
-enum mac_version {
-	/* support for ancient RTL_GIGA_MAC_VER_01 has been removed */
+क्रमागत mac_version अणु
+	/* support क्रम ancient RTL_GIGA_MAC_VER_01 has been हटाओd */
 	RTL_GIGA_MAC_VER_02,
 	RTL_GIGA_MAC_VER_03,
 	RTL_GIGA_MAC_VER_04,
@@ -68,12 +69,12 @@ enum mac_version {
 	RTL_GIGA_MAC_VER_61,
 	RTL_GIGA_MAC_VER_63,
 	RTL_GIGA_MAC_NONE
-};
+पूर्ण;
 
-struct rtl8169_private;
+काष्ठा rtl8169_निजी;
 
-void r8169_apply_firmware(struct rtl8169_private *tp);
-u16 rtl8168h_2_get_adc_bias_ioffset(struct rtl8169_private *tp);
-u8 rtl8168d_efuse_read(struct rtl8169_private *tp, int reg_addr);
-void r8169_hw_phy_config(struct rtl8169_private *tp, struct phy_device *phydev,
-			 enum mac_version ver);
+व्योम r8169_apply_firmware(काष्ठा rtl8169_निजी *tp);
+u16 rtl8168h_2_get_adc_bias_ioffset(काष्ठा rtl8169_निजी *tp);
+u8 rtl8168d_efuse_पढ़ो(काष्ठा rtl8169_निजी *tp, पूर्णांक reg_addr);
+व्योम r8169_hw_phy_config(काष्ठा rtl8169_निजी *tp, काष्ठा phy_device *phydev,
+			 क्रमागत mac_version ver);

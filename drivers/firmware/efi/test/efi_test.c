@@ -1,637 +1,638 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * EFI Test Driver for Runtime Services
+ * EFI Test Driver क्रम Runसमय Services
  *
  * Copyright(C) 2012-2016 Canonical Ltd.
  *
- * This driver exports EFI runtime services interfaces into userspace, which
- * allow to use and test UEFI runtime services provided by firmware.
+ * This driver exports EFI runसमय services पूर्णांकerfaces पूर्णांकo userspace, which
+ * allow to use and test UEFI runसमय services provided by firmware.
  *
  */
 
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/efi.h>
-#include <linux/security.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/security.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
 
-#include "efi_test.h"
+#समावेश "efi_test.h"
 
 MODULE_AUTHOR("Ivan Hu <ivan.hu@canonical.com>");
 MODULE_DESCRIPTION("EFI Test Driver");
 MODULE_LICENSE("GPL");
 
 /*
- * Count the bytes in 'str', including the terminating NULL.
+ * Count the bytes in 'str', including the terminating शून्य.
  *
- * Note this function returns the number of *bytes*, not the number of
- * ucs2 characters.
+ * Note this function वापसs the number of *bytes*, not the number of
+ * ucs2 अक्षरacters.
  */
-static inline size_t user_ucs2_strsize(efi_char16_t  __user *str)
-{
-	efi_char16_t *s = str, c;
-	size_t len;
+अटल अंतरभूत माप_प्रकार user_ucs2_strsize(efi_अक्षर16_t  __user *str)
+अणु
+	efi_अक्षर16_t *s = str, c;
+	माप_प्रकार len;
 
-	if (!str)
-		return 0;
+	अगर (!str)
+		वापस 0;
 
-	/* Include terminating NULL */
-	len = sizeof(efi_char16_t);
+	/* Include terminating शून्य */
+	len = माप(efi_अक्षर16_t);
 
-	if (get_user(c, s++)) {
-		/* Can't read userspace memory for size */
-		return 0;
-	}
+	अगर (get_user(c, s++)) अणु
+		/* Can't पढ़ो userspace memory क्रम size */
+		वापस 0;
+	पूर्ण
 
-	while (c != 0) {
-		if (get_user(c, s++)) {
-			/* Can't read userspace memory for size */
-			return 0;
-		}
-		len += sizeof(efi_char16_t);
-	}
-	return len;
-}
+	जबतक (c != 0) अणु
+		अगर (get_user(c, s++)) अणु
+			/* Can't पढ़ो userspace memory क्रम size */
+			वापस 0;
+		पूर्ण
+		len += माप(efi_अक्षर16_t);
+	पूर्ण
+	वापस len;
+पूर्ण
 
 /*
- * Allocate a buffer and copy a ucs2 string from user space into it.
+ * Allocate a buffer and copy a ucs2 string from user space पूर्णांकo it.
  */
-static inline int
-copy_ucs2_from_user_len(efi_char16_t **dst, efi_char16_t __user *src,
-			size_t len)
-{
-	efi_char16_t *buf;
+अटल अंतरभूत पूर्णांक
+copy_ucs2_from_user_len(efi_अक्षर16_t **dst, efi_अक्षर16_t __user *src,
+			माप_प्रकार len)
+अणु
+	efi_अक्षर16_t *buf;
 
-	if (!src) {
-		*dst = NULL;
-		return 0;
-	}
+	अगर (!src) अणु
+		*dst = शून्य;
+		वापस 0;
+	पूर्ण
 
 	buf = memdup_user(src, len);
-	if (IS_ERR(buf)) {
-		*dst = NULL;
-		return PTR_ERR(buf);
-	}
+	अगर (IS_ERR(buf)) अणु
+		*dst = शून्य;
+		वापस PTR_ERR(buf);
+	पूर्ण
 	*dst = buf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Count the bytes in 'str', including the terminating NULL.
+ * Count the bytes in 'str', including the terminating शून्य.
  *
- * Just a wrap for user_ucs2_strsize
+ * Just a wrap क्रम user_ucs2_strsize
  */
-static inline int
-get_ucs2_strsize_from_user(efi_char16_t __user *src, size_t *len)
-{
+अटल अंतरभूत पूर्णांक
+get_ucs2_strsize_from_user(efi_अक्षर16_t __user *src, माप_प्रकार *len)
+अणु
 	*len = user_ucs2_strsize(src);
-	if (*len == 0)
-		return -EFAULT;
+	अगर (*len == 0)
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Calculate the required buffer allocation size and copy a ucs2 string
- * from user space into it.
+ * from user space पूर्णांकo it.
  *
- * This function differs from copy_ucs2_from_user_len() because it
+ * This function dअगरfers from copy_ucs2_from_user_len() because it
  * calculates the size of the buffer to allocate by taking the length of
  * the string 'src'.
  *
- * If a non-zero value is returned, the caller MUST NOT access 'dst'.
+ * If a non-zero value is वापसed, the caller MUST NOT access 'dst'.
  *
  * It is the caller's responsibility to free 'dst'.
  */
-static inline int
-copy_ucs2_from_user(efi_char16_t **dst, efi_char16_t __user *src)
-{
-	size_t len;
+अटल अंतरभूत पूर्णांक
+copy_ucs2_from_user(efi_अक्षर16_t **dst, efi_अक्षर16_t __user *src)
+अणु
+	माप_प्रकार len;
 
 	len = user_ucs2_strsize(src);
-	if (len == 0)
-		return -EFAULT;
-	return copy_ucs2_from_user_len(dst, src, len);
-}
+	अगर (len == 0)
+		वापस -EFAULT;
+	वापस copy_ucs2_from_user_len(dst, src, len);
+पूर्ण
 
 /*
  * Copy a ucs2 string to a user buffer.
  *
- * This function is a simple wrapper around copy_to_user() that does
- * nothing if 'src' is NULL, which is useful for reducing the amount of
- * NULL checking the caller has to do.
+ * This function is a simple wrapper around copy_to_user() that करोes
+ * nothing अगर 'src' is शून्य, which is useful क्रम reducing the amount of
+ * शून्य checking the caller has to करो.
  *
- * 'len' specifies the number of bytes to copy.
+ * 'len' specअगरies the number of bytes to copy.
  */
-static inline int
-copy_ucs2_to_user_len(efi_char16_t __user *dst, efi_char16_t *src, size_t len)
-{
-	if (!src)
-		return 0;
+अटल अंतरभूत पूर्णांक
+copy_ucs2_to_user_len(efi_अक्षर16_t __user *dst, efi_अक्षर16_t *src, माप_प्रकार len)
+अणु
+	अगर (!src)
+		वापस 0;
 
-	return copy_to_user(dst, src, len);
-}
+	वापस copy_to_user(dst, src, len);
+पूर्ण
 
-static long efi_runtime_get_variable(unsigned long arg)
-{
-	struct efi_getvariable __user *getvariable_user;
-	struct efi_getvariable getvariable;
-	unsigned long datasize = 0, prev_datasize, *dz;
-	efi_guid_t vendor_guid, *vd = NULL;
+अटल दीर्घ efi_runसमय_get_variable(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_getvariable __user *getvariable_user;
+	काष्ठा efi_getvariable getvariable;
+	अचिन्हित दीर्घ datasize = 0, prev_datasize, *dz;
+	efi_guid_t venकरोr_guid, *vd = शून्य;
 	efi_status_t status;
-	efi_char16_t *name = NULL;
+	efi_अक्षर16_t *name = शून्य;
 	u32 attr, *at;
-	void *data = NULL;
-	int rv = 0;
+	व्योम *data = शून्य;
+	पूर्णांक rv = 0;
 
-	getvariable_user = (struct efi_getvariable __user *)arg;
+	getvariable_user = (काष्ठा efi_getvariable __user *)arg;
 
-	if (copy_from_user(&getvariable, getvariable_user,
-			   sizeof(getvariable)))
-		return -EFAULT;
-	if (getvariable.data_size &&
+	अगर (copy_from_user(&getvariable, getvariable_user,
+			   माप(getvariable)))
+		वापस -EFAULT;
+	अगर (getvariable.data_size &&
 	    get_user(datasize, getvariable.data_size))
-		return -EFAULT;
-	if (getvariable.vendor_guid) {
-		if (copy_from_user(&vendor_guid, getvariable.vendor_guid,
-					sizeof(vendor_guid)))
-			return -EFAULT;
-		vd = &vendor_guid;
-	}
+		वापस -EFAULT;
+	अगर (getvariable.venकरोr_guid) अणु
+		अगर (copy_from_user(&venकरोr_guid, getvariable.venकरोr_guid,
+					माप(venकरोr_guid)))
+			वापस -EFAULT;
+		vd = &venकरोr_guid;
+	पूर्ण
 
-	if (getvariable.variable_name) {
+	अगर (getvariable.variable_name) अणु
 		rv = copy_ucs2_from_user(&name, getvariable.variable_name);
-		if (rv)
-			return rv;
-	}
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
-	at = getvariable.attributes ? &attr : NULL;
-	dz = getvariable.data_size ? &datasize : NULL;
+	at = getvariable.attributes ? &attr : शून्य;
+	dz = getvariable.data_size ? &datasize : शून्य;
 
-	if (getvariable.data_size && getvariable.data) {
-		data = kmalloc(datasize, GFP_KERNEL);
-		if (!data) {
-			kfree(name);
-			return -ENOMEM;
-		}
-	}
+	अगर (getvariable.data_size && getvariable.data) अणु
+		data = kदो_स्मृति(datasize, GFP_KERNEL);
+		अगर (!data) अणु
+			kमुक्त(name);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	prev_datasize = datasize;
 	status = efi.get_variable(name, vd, at, dz, data);
-	kfree(name);
+	kमुक्त(name);
 
-	if (put_user(status, getvariable.status)) {
+	अगर (put_user(status, getvariable.status)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (status != EFI_SUCCESS) {
-		if (status == EFI_BUFFER_TOO_SMALL) {
-			if (dz && put_user(datasize, getvariable.data_size)) {
+	अगर (status != EFI_SUCCESS) अणु
+		अगर (status == EFI_BUFFER_TOO_SMALL) अणु
+			अगर (dz && put_user(datasize, getvariable.data_size)) अणु
 				rv = -EFAULT;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (prev_datasize < datasize) {
+	अगर (prev_datasize < datasize) अणु
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (data) {
-		if (copy_to_user(getvariable.data, data, datasize)) {
+	अगर (data) अणु
+		अगर (copy_to_user(getvariable.data, data, datasize)) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (at && put_user(attr, getvariable.attributes)) {
+	अगर (at && put_user(attr, getvariable.attributes)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dz && put_user(datasize, getvariable.data_size))
+	अगर (dz && put_user(datasize, getvariable.data_size))
 		rv = -EFAULT;
 
 out:
-	kfree(data);
-	return rv;
+	kमुक्त(data);
+	वापस rv;
 
-}
+पूर्ण
 
-static long efi_runtime_set_variable(unsigned long arg)
-{
-	struct efi_setvariable __user *setvariable_user;
-	struct efi_setvariable setvariable;
-	efi_guid_t vendor_guid;
+अटल दीर्घ efi_runसमय_set_variable(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_setvariable __user *setvariable_user;
+	काष्ठा efi_setvariable setvariable;
+	efi_guid_t venकरोr_guid;
 	efi_status_t status;
-	efi_char16_t *name = NULL;
-	void *data;
-	int rv = 0;
+	efi_अक्षर16_t *name = शून्य;
+	व्योम *data;
+	पूर्णांक rv = 0;
 
-	setvariable_user = (struct efi_setvariable __user *)arg;
+	setvariable_user = (काष्ठा efi_setvariable __user *)arg;
 
-	if (copy_from_user(&setvariable, setvariable_user, sizeof(setvariable)))
-		return -EFAULT;
-	if (copy_from_user(&vendor_guid, setvariable.vendor_guid,
-				sizeof(vendor_guid)))
-		return -EFAULT;
+	अगर (copy_from_user(&setvariable, setvariable_user, माप(setvariable)))
+		वापस -EFAULT;
+	अगर (copy_from_user(&venकरोr_guid, setvariable.venकरोr_guid,
+				माप(venकरोr_guid)))
+		वापस -EFAULT;
 
-	if (setvariable.variable_name) {
+	अगर (setvariable.variable_name) अणु
 		rv = copy_ucs2_from_user(&name, setvariable.variable_name);
-		if (rv)
-			return rv;
-	}
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
 	data = memdup_user(setvariable.data, setvariable.data_size);
-	if (IS_ERR(data)) {
-		kfree(name);
-		return PTR_ERR(data);
-	}
+	अगर (IS_ERR(data)) अणु
+		kमुक्त(name);
+		वापस PTR_ERR(data);
+	पूर्ण
 
-	status = efi.set_variable(name, &vendor_guid,
+	status = efi.set_variable(name, &venकरोr_guid,
 				setvariable.attributes,
 				setvariable.data_size, data);
 
-	if (put_user(status, setvariable.status)) {
+	अगर (put_user(status, setvariable.status)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rv = status == EFI_SUCCESS ? 0 : -EINVAL;
 
 out:
-	kfree(data);
-	kfree(name);
+	kमुक्त(data);
+	kमुक्त(name);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static long efi_runtime_get_time(unsigned long arg)
-{
-	struct efi_gettime __user *gettime_user;
-	struct efi_gettime  gettime;
+अटल दीर्घ efi_runसमय_get_समय(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_समय_लो __user *समय_लो_user;
+	काष्ठा efi_समय_लो  समय_लो;
 	efi_status_t status;
-	efi_time_cap_t cap;
-	efi_time_t efi_time;
+	efi_समय_cap_t cap;
+	efi_समय_प्रकार efi_समय;
 
-	gettime_user = (struct efi_gettime __user *)arg;
-	if (copy_from_user(&gettime, gettime_user, sizeof(gettime)))
-		return -EFAULT;
+	समय_लो_user = (काष्ठा efi_समय_लो __user *)arg;
+	अगर (copy_from_user(&समय_लो, समय_लो_user, माप(समय_लो)))
+		वापस -EFAULT;
 
-	status = efi.get_time(gettime.time ? &efi_time : NULL,
-			      gettime.capabilities ? &cap : NULL);
+	status = efi.get_समय(समय_लो.समय ? &efi_समय : शून्य,
+			      समय_लो.capabilities ? &cap : शून्य);
 
-	if (put_user(status, gettime.status))
-		return -EFAULT;
+	अगर (put_user(status, समय_लो.status))
+		वापस -EFAULT;
 
-	if (status != EFI_SUCCESS)
-		return -EINVAL;
+	अगर (status != EFI_SUCCESS)
+		वापस -EINVAL;
 
-	if (gettime.capabilities) {
-		efi_time_cap_t __user *cap_local;
+	अगर (समय_लो.capabilities) अणु
+		efi_समय_cap_t __user *cap_local;
 
-		cap_local = (efi_time_cap_t *)gettime.capabilities;
-		if (put_user(cap.resolution, &(cap_local->resolution)) ||
+		cap_local = (efi_समय_cap_t *)समय_लो.capabilities;
+		अगर (put_user(cap.resolution, &(cap_local->resolution)) ||
 			put_user(cap.accuracy, &(cap_local->accuracy)) ||
 			put_user(cap.sets_to_zero, &(cap_local->sets_to_zero)))
-			return -EFAULT;
-	}
-	if (gettime.time) {
-		if (copy_to_user(gettime.time, &efi_time, sizeof(efi_time_t)))
-			return -EFAULT;
-	}
+			वापस -EFAULT;
+	पूर्ण
+	अगर (समय_लो.समय) अणु
+		अगर (copy_to_user(समय_लो.समय, &efi_समय, माप(efi_समय_प्रकार)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long efi_runtime_set_time(unsigned long arg)
-{
-	struct efi_settime __user *settime_user;
-	struct efi_settime settime;
+अटल दीर्घ efi_runसमय_set_समय(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_समय_रखो __user *समय_रखो_user;
+	काष्ठा efi_समय_रखो समय_रखो;
 	efi_status_t status;
-	efi_time_t efi_time;
+	efi_समय_प्रकार efi_समय;
 
-	settime_user = (struct efi_settime __user *)arg;
-	if (copy_from_user(&settime, settime_user, sizeof(settime)))
-		return -EFAULT;
-	if (copy_from_user(&efi_time, settime.time,
-					sizeof(efi_time_t)))
-		return -EFAULT;
-	status = efi.set_time(&efi_time);
+	समय_रखो_user = (काष्ठा efi_समय_रखो __user *)arg;
+	अगर (copy_from_user(&समय_रखो, समय_रखो_user, माप(समय_रखो)))
+		वापस -EFAULT;
+	अगर (copy_from_user(&efi_समय, समय_रखो.समय,
+					माप(efi_समय_प्रकार)))
+		वापस -EFAULT;
+	status = efi.set_समय(&efi_समय);
 
-	if (put_user(status, settime.status))
-		return -EFAULT;
+	अगर (put_user(status, समय_रखो.status))
+		वापस -EFAULT;
 
-	return status == EFI_SUCCESS ? 0 : -EINVAL;
-}
+	वापस status == EFI_SUCCESS ? 0 : -EINVAL;
+पूर्ण
 
-static long efi_runtime_get_waketime(unsigned long arg)
-{
-	struct efi_getwakeuptime __user *getwakeuptime_user;
-	struct efi_getwakeuptime getwakeuptime;
+अटल दीर्घ efi_runसमय_get_wakeसमय(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_getwakeupसमय __user *getwakeupसमय_user;
+	काष्ठा efi_getwakeupसमय getwakeupसमय;
 	efi_bool_t enabled, pending;
 	efi_status_t status;
-	efi_time_t efi_time;
+	efi_समय_प्रकार efi_समय;
 
-	getwakeuptime_user = (struct efi_getwakeuptime __user *)arg;
-	if (copy_from_user(&getwakeuptime, getwakeuptime_user,
-				sizeof(getwakeuptime)))
-		return -EFAULT;
+	getwakeupसमय_user = (काष्ठा efi_getwakeupसमय __user *)arg;
+	अगर (copy_from_user(&getwakeupसमय, getwakeupसमय_user,
+				माप(getwakeupसमय)))
+		वापस -EFAULT;
 
-	status = efi.get_wakeup_time(
-		getwakeuptime.enabled ? (efi_bool_t *)&enabled : NULL,
-		getwakeuptime.pending ? (efi_bool_t *)&pending : NULL,
-		getwakeuptime.time ? &efi_time : NULL);
+	status = efi.get_wakeup_समय(
+		getwakeupसमय.enabled ? (efi_bool_t *)&enabled : शून्य,
+		getwakeupसमय.pending ? (efi_bool_t *)&pending : शून्य,
+		getwakeupसमय.समय ? &efi_समय : शून्य);
 
-	if (put_user(status, getwakeuptime.status))
-		return -EFAULT;
+	अगर (put_user(status, getwakeupसमय.status))
+		वापस -EFAULT;
 
-	if (status != EFI_SUCCESS)
-		return -EINVAL;
+	अगर (status != EFI_SUCCESS)
+		वापस -EINVAL;
 
-	if (getwakeuptime.enabled && put_user(enabled,
-						getwakeuptime.enabled))
-		return -EFAULT;
+	अगर (getwakeupसमय.enabled && put_user(enabled,
+						getwakeupसमय.enabled))
+		वापस -EFAULT;
 
-	if (getwakeuptime.time) {
-		if (copy_to_user(getwakeuptime.time, &efi_time,
-				sizeof(efi_time_t)))
-			return -EFAULT;
-	}
+	अगर (getwakeupसमय.समय) अणु
+		अगर (copy_to_user(getwakeupसमय.समय, &efi_समय,
+				माप(efi_समय_प्रकार)))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long efi_runtime_set_waketime(unsigned long arg)
-{
-	struct efi_setwakeuptime __user *setwakeuptime_user;
-	struct efi_setwakeuptime setwakeuptime;
+अटल दीर्घ efi_runसमय_set_wakeसमय(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_setwakeupसमय __user *setwakeupसमय_user;
+	काष्ठा efi_setwakeupसमय setwakeupसमय;
 	efi_bool_t enabled;
 	efi_status_t status;
-	efi_time_t efi_time;
+	efi_समय_प्रकार efi_समय;
 
-	setwakeuptime_user = (struct efi_setwakeuptime __user *)arg;
+	setwakeupसमय_user = (काष्ठा efi_setwakeupसमय __user *)arg;
 
-	if (copy_from_user(&setwakeuptime, setwakeuptime_user,
-				sizeof(setwakeuptime)))
-		return -EFAULT;
+	अगर (copy_from_user(&setwakeupसमय, setwakeupसमय_user,
+				माप(setwakeupसमय)))
+		वापस -EFAULT;
 
-	enabled = setwakeuptime.enabled;
-	if (setwakeuptime.time) {
-		if (copy_from_user(&efi_time, setwakeuptime.time,
-					sizeof(efi_time_t)))
-			return -EFAULT;
+	enabled = setwakeupसमय.enabled;
+	अगर (setwakeupसमय.समय) अणु
+		अगर (copy_from_user(&efi_समय, setwakeupसमय.समय,
+					माप(efi_समय_प्रकार)))
+			वापस -EFAULT;
 
-		status = efi.set_wakeup_time(enabled, &efi_time);
-	} else
-		status = efi.set_wakeup_time(enabled, NULL);
+		status = efi.set_wakeup_समय(enabled, &efi_समय);
+	पूर्ण अन्यथा
+		status = efi.set_wakeup_समय(enabled, शून्य);
 
-	if (put_user(status, setwakeuptime.status))
-		return -EFAULT;
+	अगर (put_user(status, setwakeupसमय.status))
+		वापस -EFAULT;
 
-	return status == EFI_SUCCESS ? 0 : -EINVAL;
-}
+	वापस status == EFI_SUCCESS ? 0 : -EINVAL;
+पूर्ण
 
-static long efi_runtime_get_nextvariablename(unsigned long arg)
-{
-	struct efi_getnextvariablename __user *getnextvariablename_user;
-	struct efi_getnextvariablename getnextvariablename;
-	unsigned long name_size, prev_name_size = 0, *ns = NULL;
+अटल दीर्घ efi_runसमय_get_nextvariablename(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_getnextvariablename __user *getnextvariablename_user;
+	काष्ठा efi_getnextvariablename getnextvariablename;
+	अचिन्हित दीर्घ name_size, prev_name_size = 0, *ns = शून्य;
 	efi_status_t status;
-	efi_guid_t *vd = NULL;
-	efi_guid_t vendor_guid;
-	efi_char16_t *name = NULL;
-	int rv = 0;
+	efi_guid_t *vd = शून्य;
+	efi_guid_t venकरोr_guid;
+	efi_अक्षर16_t *name = शून्य;
+	पूर्णांक rv = 0;
 
-	getnextvariablename_user = (struct efi_getnextvariablename __user *)arg;
+	getnextvariablename_user = (काष्ठा efi_getnextvariablename __user *)arg;
 
-	if (copy_from_user(&getnextvariablename, getnextvariablename_user,
-			   sizeof(getnextvariablename)))
-		return -EFAULT;
+	अगर (copy_from_user(&getnextvariablename, getnextvariablename_user,
+			   माप(getnextvariablename)))
+		वापस -EFAULT;
 
-	if (getnextvariablename.variable_name_size) {
-		if (get_user(name_size, getnextvariablename.variable_name_size))
-			return -EFAULT;
+	अगर (getnextvariablename.variable_name_size) अणु
+		अगर (get_user(name_size, getnextvariablename.variable_name_size))
+			वापस -EFAULT;
 		ns = &name_size;
 		prev_name_size = name_size;
-	}
+	पूर्ण
 
-	if (getnextvariablename.vendor_guid) {
-		if (copy_from_user(&vendor_guid,
-				getnextvariablename.vendor_guid,
-				sizeof(vendor_guid)))
-			return -EFAULT;
-		vd = &vendor_guid;
-	}
+	अगर (getnextvariablename.venकरोr_guid) अणु
+		अगर (copy_from_user(&venकरोr_guid,
+				getnextvariablename.venकरोr_guid,
+				माप(venकरोr_guid)))
+			वापस -EFAULT;
+		vd = &venकरोr_guid;
+	पूर्ण
 
-	if (getnextvariablename.variable_name) {
-		size_t name_string_size = 0;
+	अगर (getnextvariablename.variable_name) अणु
+		माप_प्रकार name_string_size = 0;
 
 		rv = get_ucs2_strsize_from_user(
 				getnextvariablename.variable_name,
 				&name_string_size);
-		if (rv)
-			return rv;
+		अगर (rv)
+			वापस rv;
 		/*
 		 * The name_size may be smaller than the real buffer size where
-		 * variable name located in some use cases. The most typical
-		 * case is passing a 0 to get the required buffer size for the
-		 * 1st time call. So we need to copy the content from user
-		 * space for at least the string size of variable name, or else
+		 * variable name located in some use हालs. The most typical
+		 * हाल is passing a 0 to get the required buffer size क्रम the
+		 * 1st समय call. So we need to copy the content from user
+		 * space क्रम at least the string size of variable name, or अन्यथा
 		 * the name passed to UEFI may not be terminated as we expected.
 		 */
 		rv = copy_ucs2_from_user_len(&name,
 				getnextvariablename.variable_name,
 				prev_name_size > name_string_size ?
 				prev_name_size : name_string_size);
-		if (rv)
-			return rv;
-	}
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
 	status = efi.get_next_variable(ns, name, vd);
 
-	if (put_user(status, getnextvariablename.status)) {
+	अगर (put_user(status, getnextvariablename.status)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (status != EFI_SUCCESS) {
-		if (status == EFI_BUFFER_TOO_SMALL) {
-			if (ns && put_user(*ns,
-				getnextvariablename.variable_name_size)) {
+	अगर (status != EFI_SUCCESS) अणु
+		अगर (status == EFI_BUFFER_TOO_SMALL) अणु
+			अगर (ns && put_user(*ns,
+				getnextvariablename.variable_name_size)) अणु
 				rv = -EFAULT;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (name) {
-		if (copy_ucs2_to_user_len(getnextvariablename.variable_name,
-						name, prev_name_size)) {
+	अगर (name) अणु
+		अगर (copy_ucs2_to_user_len(getnextvariablename.variable_name,
+						name, prev_name_size)) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (ns) {
-		if (put_user(*ns, getnextvariablename.variable_name_size)) {
+	अगर (ns) अणु
+		अगर (put_user(*ns, getnextvariablename.variable_name_size)) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (vd) {
-		if (copy_to_user(getnextvariablename.vendor_guid, vd,
-							sizeof(efi_guid_t)))
+	अगर (vd) अणु
+		अगर (copy_to_user(getnextvariablename.venकरोr_guid, vd,
+							माप(efi_guid_t)))
 			rv = -EFAULT;
-	}
+	पूर्ण
 
 out:
-	kfree(name);
-	return rv;
-}
+	kमुक्त(name);
+	वापस rv;
+पूर्ण
 
-static long efi_runtime_get_nexthighmonocount(unsigned long arg)
-{
-	struct efi_getnexthighmonotoniccount __user *getnexthighmonocount_user;
-	struct efi_getnexthighmonotoniccount getnexthighmonocount;
+अटल दीर्घ efi_runसमय_get_nexthighmonocount(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_getnexthighmonotoniccount __user *getnexthighmonocount_user;
+	काष्ठा efi_getnexthighmonotoniccount getnexthighmonocount;
 	efi_status_t status;
 	u32 count;
 
-	getnexthighmonocount_user = (struct
+	getnexthighmonocount_user = (काष्ठा
 			efi_getnexthighmonotoniccount __user *)arg;
 
-	if (copy_from_user(&getnexthighmonocount,
+	अगर (copy_from_user(&getnexthighmonocount,
 			   getnexthighmonocount_user,
-			   sizeof(getnexthighmonocount)))
-		return -EFAULT;
+			   माप(getnexthighmonocount)))
+		वापस -EFAULT;
 
 	status = efi.get_next_high_mono_count(
-		getnexthighmonocount.high_count ? &count : NULL);
+		getnexthighmonocount.high_count ? &count : शून्य);
 
-	if (put_user(status, getnexthighmonocount.status))
-		return -EFAULT;
+	अगर (put_user(status, getnexthighmonocount.status))
+		वापस -EFAULT;
 
-	if (status != EFI_SUCCESS)
-		return -EINVAL;
+	अगर (status != EFI_SUCCESS)
+		वापस -EINVAL;
 
-	if (getnexthighmonocount.high_count &&
+	अगर (getnexthighmonocount.high_count &&
 	    put_user(count, getnexthighmonocount.high_count))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long efi_runtime_reset_system(unsigned long arg)
-{
-	struct efi_resetsystem __user *resetsystem_user;
-	struct efi_resetsystem resetsystem;
-	void *data = NULL;
+अटल दीर्घ efi_runसमय_reset_प्रणाली(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_resetप्रणाली __user *resetप्रणाली_user;
+	काष्ठा efi_resetप्रणाली resetप्रणाली;
+	व्योम *data = शून्य;
 
-	resetsystem_user = (struct efi_resetsystem __user *)arg;
-	if (copy_from_user(&resetsystem, resetsystem_user,
-						sizeof(resetsystem)))
-		return -EFAULT;
-	if (resetsystem.data_size != 0) {
-		data = memdup_user((void *)resetsystem.data,
-						resetsystem.data_size);
-		if (IS_ERR(data))
-			return PTR_ERR(data);
-	}
+	resetप्रणाली_user = (काष्ठा efi_resetप्रणाली __user *)arg;
+	अगर (copy_from_user(&resetप्रणाली, resetप्रणाली_user,
+						माप(resetप्रणाली)))
+		वापस -EFAULT;
+	अगर (resetप्रणाली.data_size != 0) अणु
+		data = memdup_user((व्योम *)resetप्रणाली.data,
+						resetप्रणाली.data_size);
+		अगर (IS_ERR(data))
+			वापस PTR_ERR(data);
+	पूर्ण
 
-	efi.reset_system(resetsystem.reset_type, resetsystem.status,
-				resetsystem.data_size, (efi_char16_t *)data);
+	efi.reset_प्रणाली(resetप्रणाली.reset_type, resetप्रणाली.status,
+				resetप्रणाली.data_size, (efi_अक्षर16_t *)data);
 
-	kfree(data);
-	return 0;
-}
+	kमुक्त(data);
+	वापस 0;
+पूर्ण
 
-static long efi_runtime_query_variableinfo(unsigned long arg)
-{
-	struct efi_queryvariableinfo __user *queryvariableinfo_user;
-	struct efi_queryvariableinfo queryvariableinfo;
+अटल दीर्घ efi_runसमय_query_variableinfo(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_queryvariableinfo __user *queryvariableinfo_user;
+	काष्ठा efi_queryvariableinfo queryvariableinfo;
 	efi_status_t status;
-	u64 max_storage, remaining, max_size;
+	u64 max_storage, reमुख्यing, max_size;
 
-	queryvariableinfo_user = (struct efi_queryvariableinfo __user *)arg;
+	queryvariableinfo_user = (काष्ठा efi_queryvariableinfo __user *)arg;
 
-	if (copy_from_user(&queryvariableinfo, queryvariableinfo_user,
-			   sizeof(queryvariableinfo)))
-		return -EFAULT;
+	अगर (copy_from_user(&queryvariableinfo, queryvariableinfo_user,
+			   माप(queryvariableinfo)))
+		वापस -EFAULT;
 
 	status = efi.query_variable_info(queryvariableinfo.attributes,
-					 &max_storage, &remaining, &max_size);
+					 &max_storage, &reमुख्यing, &max_size);
 
-	if (put_user(status, queryvariableinfo.status))
-		return -EFAULT;
+	अगर (put_user(status, queryvariableinfo.status))
+		वापस -EFAULT;
 
-	if (status != EFI_SUCCESS)
-		return -EINVAL;
+	अगर (status != EFI_SUCCESS)
+		वापस -EINVAL;
 
-	if (put_user(max_storage,
+	अगर (put_user(max_storage,
 		     queryvariableinfo.maximum_variable_storage_size))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	if (put_user(remaining,
-		     queryvariableinfo.remaining_variable_storage_size))
-		return -EFAULT;
+	अगर (put_user(reमुख्यing,
+		     queryvariableinfo.reमुख्यing_variable_storage_size))
+		वापस -EFAULT;
 
-	if (put_user(max_size, queryvariableinfo.maximum_variable_size))
-		return -EFAULT;
+	अगर (put_user(max_size, queryvariableinfo.maximum_variable_size))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long efi_runtime_query_capsulecaps(unsigned long arg)
-{
-	struct efi_querycapsulecapabilities __user *qcaps_user;
-	struct efi_querycapsulecapabilities qcaps;
+अटल दीर्घ efi_runसमय_query_capsulecaps(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा efi_querycapsulecapabilities __user *qcaps_user;
+	काष्ठा efi_querycapsulecapabilities qcaps;
 	efi_capsule_header_t *capsules;
 	efi_status_t status;
 	u64 max_size;
-	int i, reset_type;
-	int rv = 0;
+	पूर्णांक i, reset_type;
+	पूर्णांक rv = 0;
 
-	qcaps_user = (struct efi_querycapsulecapabilities __user *)arg;
+	qcaps_user = (काष्ठा efi_querycapsulecapabilities __user *)arg;
 
-	if (copy_from_user(&qcaps, qcaps_user, sizeof(qcaps)))
-		return -EFAULT;
+	अगर (copy_from_user(&qcaps, qcaps_user, माप(qcaps)))
+		वापस -EFAULT;
 
-	if (qcaps.capsule_count == ULONG_MAX)
-		return -EINVAL;
+	अगर (qcaps.capsule_count == अच_दीर्घ_उच्च)
+		वापस -EINVAL;
 
-	capsules = kcalloc(qcaps.capsule_count + 1,
-			   sizeof(efi_capsule_header_t), GFP_KERNEL);
-	if (!capsules)
-		return -ENOMEM;
+	capsules = kसुस्मृति(qcaps.capsule_count + 1,
+			   माप(efi_capsule_header_t), GFP_KERNEL);
+	अगर (!capsules)
+		वापस -ENOMEM;
 
-	for (i = 0; i < qcaps.capsule_count; i++) {
+	क्रम (i = 0; i < qcaps.capsule_count; i++) अणु
 		efi_capsule_header_t *c;
 		/*
 		 * We cannot dereference qcaps.capsule_header_array directly to
 		 * obtain the address of the capsule as it resides in the
 		 * user space
 		 */
-		if (get_user(c, qcaps.capsule_header_array + i)) {
+		अगर (get_user(c, qcaps.capsule_header_array + i)) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-		if (copy_from_user(&capsules[i], c,
-				sizeof(efi_capsule_header_t))) {
+			जाओ out;
+		पूर्ण
+		अगर (copy_from_user(&capsules[i], c,
+				माप(efi_capsule_header_t))) अणु
 			rv = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	qcaps.capsule_header_array = &capsules;
 
@@ -640,143 +641,143 @@ static long efi_runtime_query_capsulecaps(unsigned long arg)
 					qcaps.capsule_count,
 					&max_size, &reset_type);
 
-	if (put_user(status, qcaps.status)) {
+	अगर (put_user(status, qcaps.status)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (status != EFI_SUCCESS) {
+	अगर (status != EFI_SUCCESS) अणु
 		rv = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (put_user(max_size, qcaps.maximum_capsule_size)) {
+	अगर (put_user(max_size, qcaps.maximum_capsule_size)) अणु
 		rv = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (put_user(reset_type, qcaps.reset_type))
+	अगर (put_user(reset_type, qcaps.reset_type))
 		rv = -EFAULT;
 
 out:
-	kfree(capsules);
-	return rv;
-}
+	kमुक्त(capsules);
+	वापस rv;
+पूर्ण
 
-static long efi_runtime_get_supported_mask(unsigned long arg)
-{
-	unsigned int __user *supported_mask;
-	int rv = 0;
+अटल दीर्घ efi_runसमय_get_supported_mask(अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक __user *supported_mask;
+	पूर्णांक rv = 0;
 
-	supported_mask = (unsigned int *)arg;
+	supported_mask = (अचिन्हित पूर्णांक *)arg;
 
-	if (put_user(efi.runtime_supported_mask, supported_mask))
+	अगर (put_user(efi.runसमय_supported_mask, supported_mask))
 		rv = -EFAULT;
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static long efi_test_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	switch (cmd) {
-	case EFI_RUNTIME_GET_VARIABLE:
-		return efi_runtime_get_variable(arg);
+अटल दीर्घ efi_test_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल EFI_RUNTIME_GET_VARIABLE:
+		वापस efi_runसमय_get_variable(arg);
 
-	case EFI_RUNTIME_SET_VARIABLE:
-		return efi_runtime_set_variable(arg);
+	हाल EFI_RUNTIME_SET_VARIABLE:
+		वापस efi_runसमय_set_variable(arg);
 
-	case EFI_RUNTIME_GET_TIME:
-		return efi_runtime_get_time(arg);
+	हाल EFI_RUNTIME_GET_TIME:
+		वापस efi_runसमय_get_समय(arg);
 
-	case EFI_RUNTIME_SET_TIME:
-		return efi_runtime_set_time(arg);
+	हाल EFI_RUNTIME_SET_TIME:
+		वापस efi_runसमय_set_समय(arg);
 
-	case EFI_RUNTIME_GET_WAKETIME:
-		return efi_runtime_get_waketime(arg);
+	हाल EFI_RUNTIME_GET_WAKETIME:
+		वापस efi_runसमय_get_wakeसमय(arg);
 
-	case EFI_RUNTIME_SET_WAKETIME:
-		return efi_runtime_set_waketime(arg);
+	हाल EFI_RUNTIME_SET_WAKETIME:
+		वापस efi_runसमय_set_wakeसमय(arg);
 
-	case EFI_RUNTIME_GET_NEXTVARIABLENAME:
-		return efi_runtime_get_nextvariablename(arg);
+	हाल EFI_RUNTIME_GET_NEXTVARIABLENAME:
+		वापस efi_runसमय_get_nextvariablename(arg);
 
-	case EFI_RUNTIME_GET_NEXTHIGHMONOTONICCOUNT:
-		return efi_runtime_get_nexthighmonocount(arg);
+	हाल EFI_RUNTIME_GET_NEXTHIGHMONOTONICCOUNT:
+		वापस efi_runसमय_get_nexthighmonocount(arg);
 
-	case EFI_RUNTIME_QUERY_VARIABLEINFO:
-		return efi_runtime_query_variableinfo(arg);
+	हाल EFI_RUNTIME_QUERY_VARIABLEINFO:
+		वापस efi_runसमय_query_variableinfo(arg);
 
-	case EFI_RUNTIME_QUERY_CAPSULECAPABILITIES:
-		return efi_runtime_query_capsulecaps(arg);
+	हाल EFI_RUNTIME_QUERY_CAPSULECAPABILITIES:
+		वापस efi_runसमय_query_capsulecaps(arg);
 
-	case EFI_RUNTIME_RESET_SYSTEM:
-		return efi_runtime_reset_system(arg);
+	हाल EFI_RUNTIME_RESET_SYSTEM:
+		वापस efi_runसमय_reset_प्रणाली(arg);
 
-	case EFI_RUNTIME_GET_SUPPORTED_MASK:
-		return efi_runtime_get_supported_mask(arg);
-	}
+	हाल EFI_RUNTIME_GET_SUPPORTED_MASK:
+		वापस efi_runसमय_get_supported_mask(arg);
+	पूर्ण
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-static int efi_test_open(struct inode *inode, struct file *file)
-{
-	int ret = security_locked_down(LOCKDOWN_EFI_TEST);
+अटल पूर्णांक efi_test_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret = security_locked_करोwn(LOCKDOWN_EFI_TEST);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 	/*
-	 * nothing special to do here
-	 * We do accept multiple open files at the same time as we
+	 * nothing special to करो here
+	 * We करो accept multiple खोलो files at the same समय as we
 	 * synchronize on the per call operation.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int efi_test_close(struct inode *inode, struct file *file)
-{
-	return 0;
-}
+अटल पूर्णांक efi_test_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  *	The various file operations we support.
  */
-static const struct file_operations efi_test_fops = {
+अटल स्थिर काष्ठा file_operations efi_test_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= efi_test_ioctl,
-	.open		= efi_test_open,
-	.release	= efi_test_close,
+	.खोलो		= efi_test_खोलो,
+	.release	= efi_test_बंद,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice efi_test_dev = {
+अटल काष्ठा miscdevice efi_test_dev = अणु
 	MISC_DYNAMIC_MINOR,
 	"efi_test",
 	&efi_test_fops
-};
+पूर्ण;
 
-static int __init efi_test_init(void)
-{
-	int ret;
+अटल पूर्णांक __init efi_test_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = misc_register(&efi_test_dev);
-	if (ret) {
+	ret = misc_रेजिस्टर(&efi_test_dev);
+	अगर (ret) अणु
 		pr_err("efi_test: can't misc_register on minor=%d\n",
 			MISC_DYNAMIC_MINOR);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit efi_test_exit(void)
-{
-	misc_deregister(&efi_test_dev);
-}
+अटल व्योम __निकास efi_test_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&efi_test_dev);
+पूर्ण
 
 module_init(efi_test_init);
-module_exit(efi_test_exit);
+module_निकास(efi_test_निकास);

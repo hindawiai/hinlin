@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
  * Licensed under the GPL
  */
 
-#ifndef __UM_SYSDEP_CHECKSUM_H
-#define __UM_SYSDEP_CHECKSUM_H
+#अगर_अघोषित __UM_SYSDEP_CHECKSUM_H
+#घोषणा __UM_SYSDEP_CHECKSUM_H
 
-static inline unsigned add32_with_carry(unsigned a, unsigned b)
-{
-        asm("addl %2,%0\n\t"
+अटल अंतरभूत अचिन्हित add32_with_carry(अचिन्हित a, अचिन्हित b)
+अणु
+        यंत्र("addl %2,%0\n\t"
             "adcl $0,%0"
             : "=r" (a)
             : "0" (a), "r" (b));
-        return a;
-}
+        वापस a;
+पूर्ण
 
-extern __sum16 ip_compute_csum(const void *buff, int len);
+बाह्य __sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len);
 
-#endif
+#पूर्ण_अगर

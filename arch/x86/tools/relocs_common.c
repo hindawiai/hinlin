@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "relocs.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "relocs.h"
 
-void die(char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	exit(1);
-}
+व्योम die(अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	बहु_शुरू(ap, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, ap);
+	बहु_पूर्ण(ap);
+	निकास(1);
+पूर्ण
 
-static void usage(void)
-{
+अटल व्योम usage(व्योम)
+अणु
 	die("relocs [--abs-syms|--abs-relocs|--reloc-info|--text|--realmode]" \
 	    " vmlinux\n");
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	int show_absolute_syms, show_absolute_relocs, show_reloc_info;
-	int as_text, use_real_mode;
-	const char *fname;
-	FILE *fp;
-	int i;
-	unsigned char e_ident[EI_NIDENT];
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक show_असलolute_syms, show_असलolute_relocs, show_reloc_info;
+	पूर्णांक as_text, use_real_mode;
+	स्थिर अक्षर *fname;
+	खाता *fp;
+	पूर्णांक i;
+	अचिन्हित अक्षर e_ident[EI_NIDENT];
 
-	show_absolute_syms = 0;
-	show_absolute_relocs = 0;
+	show_असलolute_syms = 0;
+	show_असलolute_relocs = 0;
 	show_reloc_info = 0;
 	as_text = 0;
 	use_real_mode = 0;
-	fname = NULL;
-	for (i = 1; i < argc; i++) {
-		char *arg = argv[i];
-		if (*arg == '-') {
-			if (strcmp(arg, "--abs-syms") == 0) {
-				show_absolute_syms = 1;
-				continue;
-			}
-			if (strcmp(arg, "--abs-relocs") == 0) {
-				show_absolute_relocs = 1;
-				continue;
-			}
-			if (strcmp(arg, "--reloc-info") == 0) {
+	fname = शून्य;
+	क्रम (i = 1; i < argc; i++) अणु
+		अक्षर *arg = argv[i];
+		अगर (*arg == '-') अणु
+			अगर (म_भेद(arg, "--abs-syms") == 0) अणु
+				show_असलolute_syms = 1;
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--abs-relocs") == 0) अणु
+				show_असलolute_relocs = 1;
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--reloc-info") == 0) अणु
 				show_reloc_info = 1;
-				continue;
-			}
-			if (strcmp(arg, "--text") == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--text") == 0) अणु
 				as_text = 1;
-				continue;
-			}
-			if (strcmp(arg, "--realmode") == 0) {
+				जारी;
+			पूर्ण
+			अगर (म_भेद(arg, "--realmode") == 0) अणु
 				use_real_mode = 1;
-				continue;
-			}
-		}
-		else if (!fname) {
+				जारी;
+			पूर्ण
+		पूर्ण
+		अन्यथा अगर (!fname) अणु
 			fname = arg;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		usage();
-	}
-	if (!fname) {
+	पूर्ण
+	अगर (!fname) अणु
 		usage();
-	}
-	fp = fopen(fname, "r");
-	if (!fp) {
-		die("Cannot open %s: %s\n", fname, strerror(errno));
-	}
-	if (fread(&e_ident, 1, EI_NIDENT, fp) != EI_NIDENT) {
-		die("Cannot read %s: %s", fname, strerror(errno));
-	}
-	rewind(fp);
-	if (e_ident[EI_CLASS] == ELFCLASS64)
+	पूर्ण
+	fp = ख_खोलो(fname, "r");
+	अगर (!fp) अणु
+		die("Cannot open %s: %s\n", fname, म_त्रुटि(त्रुटि_सं));
+	पूर्ण
+	अगर (ख_पढ़ो(&e_ident, 1, EI_NIDENT, fp) != EI_NIDENT) अणु
+		die("Cannot read %s: %s", fname, म_त्रुटि(त्रुटि_सं));
+	पूर्ण
+	शुरुआत(fp);
+	अगर (e_ident[EI_CLASS] == ELFCLASS64)
 		process_64(fp, use_real_mode, as_text,
-			   show_absolute_syms, show_absolute_relocs,
+			   show_असलolute_syms, show_असलolute_relocs,
 			   show_reloc_info);
-	else
+	अन्यथा
 		process_32(fp, use_real_mode, as_text,
-			   show_absolute_syms, show_absolute_relocs,
+			   show_असलolute_syms, show_असलolute_relocs,
 			   show_reloc_info);
-	fclose(fp);
-	return 0;
-}
+	ख_बंद(fp);
+	वापस 0;
+पूर्ण

@@ -1,147 +1,148 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright:	(C) 2018 Socionext Inc.
  * Copyright:	(C) 2015 Linaro Ltd.
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/irqchip/arm-gic.h>
-#include <linux/of_address.h>
-#include <linux/suspend.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/irqchip/arm-gic.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/suspend.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/idmap.h>
-#include <asm/smp_plat.h>
-#include <asm/suspend.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/idmap.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/suspend.h>
 
-#define M10V_MAX_CPU	4
-#define KERNEL_UNBOOT_FLAG	0x12345678
+#घोषणा M10V_MAX_CPU	4
+#घोषणा KERNEL_UNBOOT_FLAG	0x12345678
 
-static void __iomem *m10v_smp_base;
+अटल व्योम __iomem *m10v_smp_base;
 
-static int m10v_boot_secondary(unsigned int l_cpu, struct task_struct *idle)
-{
-	unsigned int mpidr, cpu, cluster;
+अटल पूर्णांक m10v_boot_secondary(अचिन्हित पूर्णांक l_cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
 
-	if (!m10v_smp_base)
-		return -ENXIO;
+	अगर (!m10v_smp_base)
+		वापस -ENXIO;
 
 	mpidr = cpu_logical_map(l_cpu);
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	if (cpu >= M10V_MAX_CPU)
-		return -EINVAL;
+	अगर (cpu >= M10V_MAX_CPU)
+		वापस -EINVAL;
 
 	pr_info("%s: cpu %u l_cpu %u cluster %u\n",
 			__func__, cpu, l_cpu, cluster);
 
-	writel(__pa_symbol(secondary_startup), m10v_smp_base + cpu * 4);
+	ग_लिखोl(__pa_symbol(secondary_startup), m10v_smp_base + cpu * 4);
 	arch_send_wakeup_ipi_mask(cpumask_of(l_cpu));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void m10v_smp_init(unsigned int max_cpus)
-{
-	unsigned int mpidr, cpu, cluster;
-	struct device_node *np;
+अटल व्योम m10v_smp_init(अचिन्हित पूर्णांक max_cpus)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "socionext,milbeaut-smp-sram");
-	if (!np)
-		return;
+	np = of_find_compatible_node(शून्य, शून्य, "socionext,milbeaut-smp-sram");
+	अगर (!np)
+		वापस;
 
 	m10v_smp_base = of_iomap(np, 0);
-	if (!m10v_smp_base)
-		return;
+	अगर (!m10v_smp_base)
+		वापस;
 
-	mpidr = read_cpuid_mpidr();
+	mpidr = पढ़ो_cpuid_mpidr();
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 	pr_info("MCPM boot on cpu_%u cluster_%u\n", cpu, cluster);
 
-	for (cpu = 0; cpu < M10V_MAX_CPU; cpu++)
-		writel(KERNEL_UNBOOT_FLAG, m10v_smp_base + cpu * 4);
-}
+	क्रम (cpu = 0; cpu < M10V_MAX_CPU; cpu++)
+		ग_लिखोl(KERNEL_UNBOOT_FLAG, m10v_smp_base + cpu * 4);
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void m10v_cpu_die(unsigned int l_cpu)
-{
-	gic_cpu_if_down(0);
-	v7_exit_coherency_flush(louis);
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम m10v_cpu_die(अचिन्हित पूर्णांक l_cpu)
+अणु
+	gic_cpu_अगर_करोwn(0);
+	v7_निकास_coherency_flush(louis);
 	wfi();
-}
+पूर्ण
 
-static int m10v_cpu_kill(unsigned int l_cpu)
-{
-	unsigned int mpidr, cpu;
+अटल पूर्णांक m10v_cpu_समाप्त(अचिन्हित पूर्णांक l_cpu)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu;
 
 	mpidr = cpu_logical_map(l_cpu);
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 
-	writel(KERNEL_UNBOOT_FLAG, m10v_smp_base + cpu * 4);
+	ग_लिखोl(KERNEL_UNBOOT_FLAG, m10v_smp_base + cpu * 4);
 
-	return 1;
-}
-#endif
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
 
-static struct smp_operations m10v_smp_ops __initdata = {
+अटल काष्ठा smp_operations m10v_smp_ops __initdata = अणु
 	.smp_prepare_cpus	= m10v_smp_init,
 	.smp_boot_secondary	= m10v_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_die		= m10v_cpu_die,
-	.cpu_kill		= m10v_cpu_kill,
-#endif
-};
+	.cpu_समाप्त		= m10v_cpu_समाप्त,
+#पूर्ण_अगर
+पूर्ण;
 CPU_METHOD_OF_DECLARE(m10v_smp, "socionext,milbeaut-m10v-smp", &m10v_smp_ops);
 
-static int m10v_pm_valid(suspend_state_t state)
-{
-	return (state == PM_SUSPEND_STANDBY) || (state == PM_SUSPEND_MEM);
-}
+अटल पूर्णांक m10v_pm_valid(suspend_state_t state)
+अणु
+	वापस (state == PM_SUSPEND_STANDBY) || (state == PM_SUSPEND_MEM);
+पूर्ण
 
-typedef void (*phys_reset_t)(unsigned long);
-static phys_reset_t phys_reset;
+प्रकार व्योम (*phys_reset_t)(अचिन्हित दीर्घ);
+अटल phys_reset_t phys_reset;
 
-static int m10v_die(unsigned long arg)
-{
-	setup_mm_for_reboot();
-	asm("wfi");
+अटल पूर्णांक m10v_die(अचिन्हित दीर्घ arg)
+अणु
+	setup_mm_क्रम_reboot();
+	यंत्र("wfi");
 	/* Boot just like a secondary */
-	phys_reset = (phys_reset_t)(unsigned long)virt_to_phys(cpu_reset);
+	phys_reset = (phys_reset_t)(अचिन्हित दीर्घ)virt_to_phys(cpu_reset);
 	phys_reset(virt_to_phys(cpu_resume));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int m10v_pm_enter(suspend_state_t state)
-{
-	switch (state) {
-	case PM_SUSPEND_STANDBY:
-		asm("wfi");
-		break;
-	case PM_SUSPEND_MEM:
+अटल पूर्णांक m10v_pm_enter(suspend_state_t state)
+अणु
+	चयन (state) अणु
+	हाल PM_SUSPEND_STANDBY:
+		यंत्र("wfi");
+		अवरोध;
+	हाल PM_SUSPEND_MEM:
 		cpu_pm_enter();
 		cpu_suspend(0, m10v_die);
-		cpu_pm_exit();
-		break;
-	}
-	return 0;
-}
+		cpu_pm_निकास();
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops m10v_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops m10v_pm_ops = अणु
 	.valid		= m10v_pm_valid,
 	.enter		= m10v_pm_enter,
-};
+पूर्ण;
 
-struct clk *m10v_clclk_register(struct device *cpu_dev);
+काष्ठा clk *m10v_clclk_रेजिस्टर(काष्ठा device *cpu_dev);
 
-static int __init m10v_pm_init(void)
-{
-	if (of_machine_is_compatible("socionext,milbeaut-evb"))
+अटल पूर्णांक __init m10v_pm_init(व्योम)
+अणु
+	अगर (of_machine_is_compatible("socionext,milbeaut-evb"))
 		suspend_set_ops(&m10v_pm_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 late_initcall(m10v_pm_init);

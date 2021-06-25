@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_GENERIC_MSGBUF_H
-#define __ASM_GENERIC_MSGBUF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_GENERIC_MSGBUF_H
+#घोषणा __ASM_GENERIC_MSGBUF_H
 
-#include <asm/bitsperlong.h>
-#include <asm/ipcbuf.h>
+#समावेश <यंत्र/bitsperदीर्घ.h>
+#समावेश <यंत्र/ipcbuf.h>
 
 /*
- * generic msqid64_ds structure.
+ * generic msqid64_ds काष्ठाure.
  *
- * Note extra padding because this structure is passed back and forth
+ * Note extra padding because this काष्ठाure is passed back and क्रमth
  * between kernel and user space.
  *
- * msqid64_ds was originally meant to be architecture specific, but
- * everyone just ended up making identical copies without specific
+ * msqid64_ds was originally meant to be architecture specअगरic, but
+ * everyone just ended up making identical copies without specअगरic
  * optimizations, so we may just as well all use the same one.
  *
- * 64 bit architectures use a 64-bit long time field here, while
- * 32 bit architectures have a pair of unsigned long values.
- * On big-endian systems, the lower half is in the wrong place.
+ * 64 bit architectures use a 64-bit दीर्घ समय field here, जबतक
+ * 32 bit architectures have a pair of अचिन्हित दीर्घ values.
+ * On big-endian प्रणालीs, the lower half is in the wrong place.
  *
- * Pad space is left for:
+ * Pad space is left क्रम:
  * - 2 miscellaneous 32-bit values
  */
 
-struct msqid64_ds {
-	struct ipc64_perm msg_perm;
-#if __BITS_PER_LONG == 64
-	long		 msg_stime;	/* last msgsnd time */
-	long		 msg_rtime;	/* last msgrcv time */
-	long		 msg_ctime;	/* last change time */
-#else
-	unsigned long	msg_stime;	/* last msgsnd time */
-	unsigned long	msg_stime_high;
-	unsigned long	msg_rtime;	/* last msgrcv time */
-	unsigned long	msg_rtime_high;
-	unsigned long	msg_ctime;	/* last change time */
-	unsigned long	msg_ctime_high;
-#endif
-	unsigned long	msg_cbytes;	/* current number of bytes on queue */
-	unsigned long	msg_qnum;	/* number of messages in queue */
-	unsigned long	 msg_qbytes;	/* max number of bytes on queue */
+काष्ठा msqid64_ds अणु
+	काष्ठा ipc64_perm msg_perm;
+#अगर __BITS_PER_LONG == 64
+	दीर्घ		 msg_sसमय;	/* last msgsnd समय */
+	दीर्घ		 msg_rसमय;	/* last msgrcv समय */
+	दीर्घ		 msg_स_समय;	/* last change समय */
+#अन्यथा
+	अचिन्हित दीर्घ	msg_sसमय;	/* last msgsnd समय */
+	अचिन्हित दीर्घ	msg_sसमय_high;
+	अचिन्हित दीर्घ	msg_rसमय;	/* last msgrcv समय */
+	अचिन्हित दीर्घ	msg_rसमय_high;
+	अचिन्हित दीर्घ	msg_स_समय;	/* last change समय */
+	अचिन्हित दीर्घ	msg_स_समय_high;
+#पूर्ण_अगर
+	अचिन्हित दीर्घ	msg_cbytes;	/* current number of bytes on queue */
+	अचिन्हित दीर्घ	msg_qnum;	/* number of messages in queue */
+	अचिन्हित दीर्घ	 msg_qbytes;	/* max number of bytes on queue */
 	__kernel_pid_t msg_lspid;	/* pid of last msgsnd */
 	__kernel_pid_t msg_lrpid;	/* last receive pid */
-	unsigned long	 __unused4;
-	unsigned long	 __unused5;
-};
+	अचिन्हित दीर्घ	 __unused4;
+	अचिन्हित दीर्घ	 __unused5;
+पूर्ण;
 
-#endif /* __ASM_GENERIC_MSGBUF_H */
+#पूर्ण_अगर /* __ASM_GENERIC_MSGBUF_H */

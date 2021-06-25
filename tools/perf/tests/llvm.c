@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "tests.h"
-#include "debug.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश "tests.h"
+#समावेश "debug.h"
 
-#ifdef HAVE_LIBBPF_SUPPORT
-#include <bpf/libbpf.h>
-#include <util/llvm-utils.h>
-#include "llvm.h"
-static int test__bpf_parsing(void *obj_buf, size_t obj_buf_sz)
-{
-	struct bpf_object *obj;
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+#समावेश <bpf/libbpf.h>
+#समावेश <util/llvm-utils.h>
+#समावेश "llvm.h"
+अटल पूर्णांक test__bpf_parsing(व्योम *obj_buf, माप_प्रकार obj_buf_sz)
+अणु
+	काष्ठा bpf_object *obj;
 
-	obj = bpf_object__open_buffer(obj_buf, obj_buf_sz, NULL);
-	if (libbpf_get_error(obj))
-		return TEST_FAIL;
-	bpf_object__close(obj);
-	return TEST_OK;
-}
+	obj = bpf_object__खोलो_buffer(obj_buf, obj_buf_sz, शून्य);
+	अगर (libbpf_get_error(obj))
+		वापस TEST_FAIL;
+	bpf_object__बंद(obj);
+	वापस TEST_OK;
+पूर्ण
 
-static struct {
-	const char *source;
-	const char *desc;
+अटल काष्ठा अणु
+	स्थिर अक्षर *source;
+	स्थिर अक्षर *desc;
 	bool should_load_fail;
-} bpf_source_table[__LLVM_TESTCASE_MAX] = {
-	[LLVM_TESTCASE_BASE] = {
+पूर्ण bpf_source_table[__LLVM_TESTCASE_MAX] = अणु
+	[LLVM_TESTCASE_BASE] = अणु
 		.source = test_llvm__bpf_base_prog,
 		.desc = "Basic BPF llvm compile",
-	},
-	[LLVM_TESTCASE_KBUILD] = {
+	पूर्ण,
+	[LLVM_TESTCASE_KBUILD] = अणु
 		.source = test_llvm__bpf_test_kbuild_prog,
 		.desc = "kbuild searching",
-	},
-	[LLVM_TESTCASE_BPF_PROLOGUE] = {
+	पूर्ण,
+	[LLVM_TESTCASE_BPF_PROLOGUE] = अणु
 		.source = test_llvm__bpf_test_prologue_prog,
 		.desc = "Compile source for BPF prologue generation",
-	},
-	[LLVM_TESTCASE_BPF_RELOCATION] = {
+	पूर्ण,
+	[LLVM_TESTCASE_BPF_RELOCATION] = अणु
 		.source = test_llvm__bpf_test_relocation,
 		.desc = "Compile source for BPF relocation",
 		.should_load_fail = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int
-test_llvm__fetch_bpf_obj(void **p_obj_buf,
-			 size_t *p_obj_buf_sz,
-			 enum test_llvm__testcase idx,
-			 bool force,
+पूर्णांक
+test_llvm__fetch_bpf_obj(व्योम **p_obj_buf,
+			 माप_प्रकार *p_obj_buf_sz,
+			 क्रमागत test_llvm__testहाल idx,
+			 bool क्रमce,
 			 bool *should_load_fail)
-{
-	const char *source;
-	const char *desc;
-	const char *tmpl_old, *clang_opt_old;
-	char *tmpl_new = NULL, *clang_opt_new = NULL;
-	int err, old_verbose, ret = TEST_FAIL;
+अणु
+	स्थिर अक्षर *source;
+	स्थिर अक्षर *desc;
+	स्थिर अक्षर *पंचांगpl_old, *clang_opt_old;
+	अक्षर *पंचांगpl_new = शून्य, *clang_opt_new = शून्य;
+	पूर्णांक err, old_verbose, ret = TEST_FAIL;
 
-	if (idx >= __LLVM_TESTCASE_MAX)
-		return TEST_FAIL;
+	अगर (idx >= __LLVM_TESTCASE_MAX)
+		वापस TEST_FAIL;
 
 	source = bpf_source_table[idx].source;
 	desc = bpf_source_table[idx].desc;
-	if (should_load_fail)
+	अगर (should_load_fail)
 		*should_load_fail = bpf_source_table[idx].should_load_fail;
 
 	/*
-	 * Skip this test if user's .perfconfig doesn't set [llvm] section
+	 * Skip this test अगर user's .perfconfig doesn't set [llvm] section
 	 * and clang is not found in $PATH, and this is not perf test -v
 	 */
-	if (!force && (verbose <= 0 &&
+	अगर (!क्रमce && (verbose <= 0 &&
 		       !llvm_param.user_set_param &&
-		       llvm__search_clang())) {
+		       llvm__search_clang())) अणु
 		pr_debug("No clang and no verbosive, skip this test\n");
-		return TEST_SKIP;
-	}
+		वापस TEST_SKIP;
+	पूर्ण
 
 	/*
-	 * llvm is verbosity when error. Suppress all error output if
+	 * llvm is verbosity when error. Suppress all error output अगर
 	 * not 'perf test -v'.
 	 */
 	old_verbose = verbose;
-	if (verbose == 0)
+	अगर (verbose == 0)
 		verbose = -1;
 
-	*p_obj_buf = NULL;
+	*p_obj_buf = शून्य;
 	*p_obj_buf_sz = 0;
 
-	if (!llvm_param.clang_bpf_cmd_template)
-		goto out;
+	अगर (!llvm_param.clang_bpf_cmd_ढाँचा)
+		जाओ out;
 
-	if (!llvm_param.clang_opt)
+	अगर (!llvm_param.clang_opt)
 		llvm_param.clang_opt = strdup("");
 
-	err = asprintf(&tmpl_new, "echo '%s' | %s%s", source,
-		       llvm_param.clang_bpf_cmd_template,
+	err = aप्र_लिखो(&पंचांगpl_new, "echo '%s' | %s%s", source,
+		       llvm_param.clang_bpf_cmd_ढाँचा,
 		       old_verbose ? "" : " 2>/dev/null");
-	if (err < 0)
-		goto out;
-	err = asprintf(&clang_opt_new, "-xc %s", llvm_param.clang_opt);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
+	err = aप्र_लिखो(&clang_opt_new, "-xc %s", llvm_param.clang_opt);
+	अगर (err < 0)
+		जाओ out;
 
-	tmpl_old = llvm_param.clang_bpf_cmd_template;
-	llvm_param.clang_bpf_cmd_template = tmpl_new;
+	पंचांगpl_old = llvm_param.clang_bpf_cmd_ढाँचा;
+	llvm_param.clang_bpf_cmd_ढाँचा = पंचांगpl_new;
 	clang_opt_old = llvm_param.clang_opt;
 	llvm_param.clang_opt = clang_opt_new;
 
 	err = llvm__compile_bpf("-", p_obj_buf, p_obj_buf_sz);
 
-	llvm_param.clang_bpf_cmd_template = tmpl_old;
+	llvm_param.clang_bpf_cmd_ढाँचा = पंचांगpl_old;
 	llvm_param.clang_opt = clang_opt_old;
 
 	verbose = old_verbose;
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	ret = TEST_OK;
 out:
-	free(tmpl_new);
-	free(clang_opt_new);
-	if (ret != TEST_OK)
+	मुक्त(पंचांगpl_new);
+	मुक्त(clang_opt_new);
+	अगर (ret != TEST_OK)
 		pr_debug("Failed to compile test case: '%s'\n", desc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int test__llvm(struct test *test __maybe_unused, int subtest)
-{
-	int ret;
-	void *obj_buf = NULL;
-	size_t obj_buf_sz = 0;
+पूर्णांक test__llvm(काष्ठा test *test __maybe_unused, पूर्णांक subtest)
+अणु
+	पूर्णांक ret;
+	व्योम *obj_buf = शून्य;
+	माप_प्रकार obj_buf_sz = 0;
 	bool should_load_fail = false;
 
-	if ((subtest < 0) || (subtest >= __LLVM_TESTCASE_MAX))
-		return TEST_FAIL;
+	अगर ((subtest < 0) || (subtest >= __LLVM_TESTCASE_MAX))
+		वापस TEST_FAIL;
 
 	ret = test_llvm__fetch_bpf_obj(&obj_buf, &obj_buf_sz,
 				       subtest, false, &should_load_fail);
 
-	if (ret == TEST_OK && !should_load_fail) {
+	अगर (ret == TEST_OK && !should_load_fail) अणु
 		ret = test__bpf_parsing(obj_buf, obj_buf_sz);
-		if (ret != TEST_OK) {
+		अगर (ret != TEST_OK) अणु
 			pr_debug("Failed to parse test case '%s'\n",
 				 bpf_source_table[subtest].desc);
-		}
-	}
-	free(obj_buf);
+		पूर्ण
+	पूर्ण
+	मुक्त(obj_buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int test__llvm_subtest_get_nr(void)
-{
-	return __LLVM_TESTCASE_MAX;
-}
+पूर्णांक test__llvm_subtest_get_nr(व्योम)
+अणु
+	वापस __LLVM_TESTCASE_MAX;
+पूर्ण
 
-const char *test__llvm_subtest_get_desc(int subtest)
-{
-	if ((subtest < 0) || (subtest >= __LLVM_TESTCASE_MAX))
-		return NULL;
+स्थिर अक्षर *test__llvm_subtest_get_desc(पूर्णांक subtest)
+अणु
+	अगर ((subtest < 0) || (subtest >= __LLVM_TESTCASE_MAX))
+		वापस शून्य;
 
-	return bpf_source_table[subtest].desc;
-}
-#else //HAVE_LIBBPF_SUPPORT
-int test__llvm(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	return TEST_SKIP;
-}
+	वापस bpf_source_table[subtest].desc;
+पूर्ण
+#अन्यथा //HAVE_LIBBPF_SUPPORT
+पूर्णांक test__llvm(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	वापस TEST_SKIP;
+पूर्ण
 
-int test__llvm_subtest_get_nr(void)
-{
-	return 0;
-}
+पूर्णांक test__llvm_subtest_get_nr(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-const char *test__llvm_subtest_get_desc(int subtest __maybe_unused)
-{
-	return NULL;
-}
-#endif // HAVE_LIBBPF_SUPPORT
+स्थिर अक्षर *test__llvm_subtest_get_desc(पूर्णांक subtest __maybe_unused)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT

@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	6LoWPAN Extension Header compression according to RFC7400
  */
 
-#include "nhc.h"
+#समावेश "nhc.h"
 
-#define LOWPAN_GHC_EXT_FRAG_IDLEN	1
-#define LOWPAN_GHC_EXT_FRAG_ID_0	0xb4
-#define LOWPAN_GHC_EXT_FRAG_MASK_0	0xfe
+#घोषणा LOWPAN_GHC_EXT_FRAG_IDLEN	1
+#घोषणा LOWPAN_GHC_EXT_FRAG_ID_0	0xb4
+#घोषणा LOWPAN_GHC_EXT_FRAG_MASK_0	0xfe
 
-static void frag_ghid_setup(struct lowpan_nhc *nhc)
-{
+अटल व्योम frag_ghid_setup(काष्ठा lowpan_nhc *nhc)
+अणु
 	nhc->id[0] = LOWPAN_GHC_EXT_FRAG_ID_0;
 	nhc->idmask[0] = LOWPAN_GHC_EXT_FRAG_MASK_0;
-}
+पूर्ण
 
 LOWPAN_NHC(ghc_ext_frag, "RFC7400 Fragmentation Extension Header",
 	   NEXTHDR_FRAGMENT, 0, frag_ghid_setup,
-	   LOWPAN_GHC_EXT_FRAG_IDLEN, NULL, NULL);
+	   LOWPAN_GHC_EXT_FRAG_IDLEN, शून्य, शून्य);
 
 module_lowpan_nhc(ghc_ext_frag);
 MODULE_DESCRIPTION("6LoWPAN generic header fragmentation extension compression");

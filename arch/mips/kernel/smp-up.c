@@ -1,70 +1,71 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2006, 07 by Ralf Baechle (ralf@linux-mips.org)
  *
  * Symmetric Uniprocessor (TM) Support
  */
-#include <linux/kernel.h>
-#include <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
 
 /*
- * Send inter-processor interrupt
+ * Send पूर्णांकer-processor पूर्णांकerrupt
  */
-static void up_send_ipi_single(int cpu, unsigned int action)
-{
+अटल व्योम up_send_ipi_single(पूर्णांक cpu, अचिन्हित पूर्णांक action)
+अणु
 	panic(KERN_ERR "%s called", __func__);
-}
+पूर्ण
 
-static inline void up_send_ipi_mask(const struct cpumask *mask,
-				    unsigned int action)
-{
+अटल अंतरभूत व्योम up_send_ipi_mask(स्थिर काष्ठा cpumask *mask,
+				    अचिन्हित पूर्णांक action)
+अणु
 	panic(KERN_ERR "%s called", __func__);
-}
+पूर्ण
 
 /*
- *  After we've done initial boot, this function is called to allow the
- *  board code to clean up state, if needed
+ *  After we've करोne initial boot, this function is called to allow the
+ *  board code to clean up state, अगर needed
  */
-static void up_init_secondary(void)
-{
-}
+अटल व्योम up_init_secondary(व्योम)
+अणु
+पूर्ण
 
-static void up_smp_finish(void)
-{
-}
+अटल व्योम up_smp_finish(व्योम)
+अणु
+पूर्ण
 
 /*
  * Firmware CPU startup hook
  */
-static int up_boot_secondary(int cpu, struct task_struct *idle)
-{
-	return 0;
-}
+अटल पूर्णांक up_boot_secondary(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __init up_smp_setup(void)
-{
-}
+अटल व्योम __init up_smp_setup(व्योम)
+अणु
+पूर्ण
 
-static void __init up_prepare_cpus(unsigned int max_cpus)
-{
-}
+अटल व्योम __init up_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static int up_cpu_disable(void)
-{
-	return -ENOSYS;
-}
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल पूर्णांक up_cpu_disable(व्योम)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static void up_cpu_die(unsigned int cpu)
-{
+अटल व्योम up_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
 	BUG();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-const struct plat_smp_ops up_smp_ops = {
+स्थिर काष्ठा plat_smp_ops up_smp_ops = अणु
 	.send_ipi_single	= up_send_ipi_single,
 	.send_ipi_mask		= up_send_ipi_mask,
 	.init_secondary		= up_init_secondary,
@@ -72,8 +73,8 @@ const struct plat_smp_ops up_smp_ops = {
 	.boot_secondary		= up_boot_secondary,
 	.smp_setup		= up_smp_setup,
 	.prepare_cpus		= up_prepare_cpus,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_disable		= up_cpu_disable,
 	.cpu_die		= up_cpu_die,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;

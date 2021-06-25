@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,31 +16,31 @@
  * SOFTWARE.
  */
 
-#ifndef __SNIC_FWINT_H
-#define __SNIC_FWINT_H
+#अगर_अघोषित __SNIC_FWINT_H
+#घोषणा __SNIC_FWINT_H
 
-#define SNIC_CDB_LEN	32	/* SCSI CDB size 32, can be used for 16 bytes */
-#define LUN_ADDR_LEN	8
+#घोषणा SNIC_CDB_LEN	32	/* SCSI CDB size 32, can be used क्रम 16 bytes */
+#घोषणा LUN_ADDR_LEN	8
 
 /*
  * Command entry type
  */
-enum snic_io_type {
+क्रमागत snic_io_type अणु
 	/*
 	 * Initiator request types
 	 */
-	SNIC_REQ_REPORT_TGTS = 0x2,	/* Report Targets */
-	SNIC_REQ_ICMND,			/* Initiator command for SCSI IO */
-	SNIC_REQ_ITMF,			/* Initiator command for Task Mgmt */
+	SNIC_REQ_REPORT_TGTS = 0x2,	/* Report Tarमाला_लो */
+	SNIC_REQ_ICMND,			/* Initiator command क्रम SCSI IO */
+	SNIC_REQ_ITMF,			/* Initiator command क्रम Task Mgmt */
 	SNIC_REQ_HBA_RESET,		/* SNIC Reset */
-	SNIC_REQ_EXCH_VER,		/* Exchange Version Information */
-	SNIC_REQ_TGT_INFO,		/* Backend/Target Information */
+	SNIC_REQ_EXCH_VER,		/* Exchange Version Inक्रमmation */
+	SNIC_REQ_TGT_INFO,		/* Backend/Target Inक्रमmation */
 	SNIC_REQ_BOOT_LUNS,
 
 	/*
 	 * Response type
 	 */
-	SNIC_RSP_REPORT_TGTS_CMPL = 0x12,/* Report Targets Completion */
+	SNIC_RSP_REPORT_TGTS_CMPL = 0x12,/* Report Tarमाला_लो Completion */
 	SNIC_RSP_ICMND_CMPL,		/* SCSI IO Completion */
 	SNIC_RSP_ITMF_CMPL,		/* Task Management Completion */
 	SNIC_RSP_HBA_RESET_CMPL,	/* SNIC Reset Completion */
@@ -49,20 +50,20 @@ enum snic_io_type {
 	/*
 	 * Misc Request types
 	 */
-	SNIC_MSG_ACK = 0x80,		/* Ack: snic_notify_msg */
-	SNIC_MSG_ASYNC_EVNOTIFY,	/* Asynchronous Event Notification */
-}; /* end of enum snic_io_type */
+	SNIC_MSG_ACK = 0x80,		/* Ack: snic_notअगरy_msg */
+	SNIC_MSG_ASYNC_EVNOTIFY,	/* Asynchronous Event Notअगरication */
+पूर्ण; /* end of क्रमागत snic_io_type */
 
 
 /*
  * Header status codes from firmware
  */
-enum snic_io_status {
+क्रमागत snic_io_status अणु
 	SNIC_STAT_IO_SUCCESS = 0,	/* request was successful */
 
 	/*
 	 * If a request to the fw is rejected, the original request header
-	 * will be returned with the status set to one of the following:
+	 * will be वापसed with the status set to one of the following:
 	 */
 	SNIC_STAT_INVALID_HDR,	/* header contains invalid data */
 	SNIC_STAT_OUT_OF_RES,	/* out of resources to complete request */
@@ -71,49 +72,49 @@ enum snic_io_status {
 	SNIC_STAT_IO_NOT_FOUND,	/* requested IO was not found */
 
 	/*
-	 * Once a request is processed, the fw will usually return
-	 * a cmpl message type. In cases where errors occurred,
+	 * Once a request is processed, the fw will usually वापस
+	 * a cmpl message type. In हालs where errors occurred,
 	 * the header status would be filled in with one of the following:
 	 */
-	SNIC_STAT_ABORTED,		/* req was aborted */
-	SNIC_STAT_TIMEOUT,		/* req was timed out */
-	SNIC_STAT_SGL_INVALID,		/* req was aborted due to sgl error */
+	SNIC_STAT_ABORTED,		/* req was पातed */
+	SNIC_STAT_TIMEOUT,		/* req was समयd out */
+	SNIC_STAT_SGL_INVALID,		/* req was पातed due to sgl error */
 	SNIC_STAT_DATA_CNT_MISMATCH,	/*recv/sent more/less data than expec */
 	SNIC_STAT_FW_ERR,		/* req was terminated due to fw error */
-	SNIC_STAT_ITMF_REJECT,		/* itmf req was rejected by target */
-	SNIC_STAT_ITMF_FAIL,		/* itmf req was failed */
-	SNIC_STAT_ITMF_INCORRECT_LUN,	/* itmf req has incorrect LUN id*/
+	SNIC_STAT_ITMF_REJECT,		/* iपंचांगf req was rejected by target */
+	SNIC_STAT_ITMF_FAIL,		/* iपंचांगf req was failed */
+	SNIC_STAT_ITMF_INCORRECT_LUN,	/* iपंचांगf req has incorrect LUN id*/
 	SNIC_STAT_CMND_REJECT,		/* req was invalid and rejected */
 	SNIC_STAT_DEV_OFFLINE,		/* req sent to offline device */
 	SNIC_STAT_NO_BOOTLUN,
-	SNIC_STAT_SCSI_ERR,		/* SCSI error returned by Target. */
-	SNIC_STAT_NOT_READY,		/* sNIC Subsystem is not ready */
+	SNIC_STAT_SCSI_ERR,		/* SCSI error वापसed by Target. */
+	SNIC_STAT_NOT_READY,		/* sNIC Subप्रणाली is not पढ़ोy */
 	SNIC_STAT_FATAL_ERROR,		/* sNIC is in unrecoverable state */
-}; /* end of enum snic_io_status */
+पूर्ण; /* end of क्रमागत snic_io_status */
 
 /*
  * snic_io_hdr : host <--> firmware
  *
- * for any other message that will be queued to firmware should
+ * क्रम any other message that will be queued to firmware should
  *  have the following request header
  */
-struct snic_io_hdr {
+काष्ठा snic_io_hdr अणु
 	__le32	hid;
 	__le32	cmnd_id;	/* tag here */
-	ulong	init_ctx;	/* initiator context */
+	uदीर्घ	init_ctx;	/* initiator context */
 	u8	type;		/* request/response type */
 	u8	status;		/* header status entry */
-	u8	protocol;	/* Protocol specific, may needed for RoCE*/
+	u8	protocol;	/* Protocol specअगरic, may needed क्रम RoCE*/
 	u8	flags;
 	__le16	sg_cnt;
 	u16	resvd;
-};
+पूर्ण;
 
-/* auxillary funciton for encoding the snic_io_hdr */
-static inline void
-snic_io_hdr_enc(struct snic_io_hdr *hdr, u8 typ, u8 status, u32 id, u32 hid,
-		u16 sg_cnt, ulong ctx)
-{
+/* auxillary funciton क्रम encoding the snic_io_hdr */
+अटल अंतरभूत व्योम
+snic_io_hdr_enc(काष्ठा snic_io_hdr *hdr, u8 typ, u8 status, u32 id, u32 hid,
+		u16 sg_cnt, uदीर्घ ctx)
+अणु
 	hdr->type = typ;
 	hdr->status = status;
 	hdr->protocol = 0;
@@ -122,57 +123,57 @@ snic_io_hdr_enc(struct snic_io_hdr *hdr, u8 typ, u8 status, u32 id, u32 hid,
 	hdr->sg_cnt = cpu_to_le16(sg_cnt);
 	hdr->init_ctx = ctx;
 	hdr->flags = 0;
-}
+पूर्ण
 
-/* auxillary funciton for decoding the snic_io_hdr */
-static inline void
-snic_io_hdr_dec(struct snic_io_hdr *hdr, u8 *typ, u8 *stat, u32 *cmnd_id,
-		u32 *hid, ulong *ctx)
-{
+/* auxillary funciton क्रम decoding the snic_io_hdr */
+अटल अंतरभूत व्योम
+snic_io_hdr_dec(काष्ठा snic_io_hdr *hdr, u8 *typ, u8 *stat, u32 *cmnd_id,
+		u32 *hid, uदीर्घ *ctx)
+अणु
 	*typ = hdr->type;
 	*stat = hdr->status;
 	*hid = le32_to_cpu(hdr->hid);
 	*cmnd_id = le32_to_cpu(hdr->cmnd_id);
 	*ctx = hdr->init_ctx;
-}
+पूर्ण
 
 /*
  * snic_host_info: host -> firmware
  *
- * Used for sending host information to firmware, and request fw version
+ * Used क्रम sending host inक्रमmation to firmware, and request fw version
  */
-struct snic_exch_ver_req {
-	__le32	drvr_ver;	/* for debugging, when fw dump captured */
-	__le32	os_type;	/* for OS specific features */
-};
+काष्ठा snic_exch_ver_req अणु
+	__le32	drvr_ver;	/* क्रम debugging, when fw dump captured */
+	__le32	os_type;	/* क्रम OS specअगरic features */
+पूर्ण;
 
 /*
  * os_type flags
- * Bit 0-7 : OS information
- * Bit 8-31: Feature/Capability Information
+ * Bit 0-7 : OS inक्रमmation
+ * Bit 8-31: Feature/Capability Inक्रमmation
  */
-#define SNIC_OS_LINUX	0x1
-#define SNIC_OS_WIN	0x2
-#define SNIC_OS_ESX	0x3
+#घोषणा SNIC_OS_LINUX	0x1
+#घोषणा SNIC_OS_WIN	0x2
+#घोषणा SNIC_OS_ESX	0x3
 
 /*
  * HBA Capabilities
  * Bit 1: Reserved.
  * Bit 2: Dynamic Discovery of LUNs.
- * Bit 3: Async event notifications on on tgt online/offline events.
- * Bit 4: IO timeout support in FW.
+ * Bit 3: Async event notअगरications on on tgt online/offline events.
+ * Bit 4: IO समयout support in FW.
  * Bit 5-31: Reserved.
  */
-#define SNIC_HBA_CAP_DDL	0x02	/* Supports Dynamic Discovery of LUNs */
-#define SNIC_HBA_CAP_AEN	0x04	/* Supports Async Event Noitifcation */
-#define SNIC_HBA_CAP_TMO	0x08	/* Supports IO timeout in FW */
+#घोषणा SNIC_HBA_CAP_DDL	0x02	/* Supports Dynamic Discovery of LUNs */
+#घोषणा SNIC_HBA_CAP_AEN	0x04	/* Supports Async Event Noitअगरcation */
+#घोषणा SNIC_HBA_CAP_TMO	0x08	/* Supports IO समयout in FW */
 
 /*
  * snic_exch_ver_rsp : firmware -> host
  *
  * Used by firmware to send response to version request
  */
-struct snic_exch_ver_rsp {
+काष्ठा snic_exch_ver_rsp अणु
 	__le32	version;
 	__le32	hid;
 	__le32	max_concur_ios;		/* max concurrent ios */
@@ -180,54 +181,54 @@ struct snic_exch_ver_rsp {
 	__le32	max_io_sz;		/* max io size supported */
 	__le32	hba_cap;		/* hba capabilities */
 	__le32	max_tgts;		/* max tgts supported */
-	__le16	io_timeout;		/* FW extended timeout */
+	__le16	io_समयout;		/* FW extended समयout */
 	u16	rsvd;
-};
+पूर्ण;
 
 
 /*
  * snic_report_tgts : host -> firmware request
  *
- * Used by the host to request list of targets
+ * Used by the host to request list of tarमाला_लो
  */
-struct snic_report_tgts {
+काष्ठा snic_report_tgts अणु
 	__le16	sg_cnt;
-	__le16	flags;		/* specific flags from fw */
+	__le16	flags;		/* specअगरic flags from fw */
 	u8	_resvd[4];
-	__le64	sg_addr;	/* Points to SGL */
+	__le64	sg_addr;	/* Poपूर्णांकs to SGL */
 	__le64	sense_addr;
-};
+पूर्ण;
 
-enum snic_type {
+क्रमागत snic_type अणु
 	SNIC_NONE = 0x0,
 	SNIC_DAS,
 	SNIC_SAN,
-};
+पूर्ण;
 
 
 /* Report Target Response */
-enum snic_tgt_type {
+क्रमागत snic_tgt_type अणु
 	SNIC_TGT_NONE = 0x0,
 	SNIC_TGT_DAS,	/* DAS Target */
 	SNIC_TGT_SAN,	/* SAN Target */
-};
+पूर्ण;
 
-/* target id format */
-struct snic_tgt_id {
+/* target id क्रमmat */
+काष्ठा snic_tgt_id अणु
 	__le32	tgt_id;		/* target id */
 	__le16	tgt_type;	/* tgt type */
 	__le16	vnic_id;	/* corresponding vnic id */
-};
+पूर्ण;
 
 /*
  * snic_report_tgts_cmpl : firmware -> host response
  *
- * Used by firmware to send response to Report Targets request
+ * Used by firmware to send response to Report Tarमाला_लो request
  */
-struct snic_report_tgts_cmpl {
-	__le32	tgt_cnt;	/* Number of Targets accessible */
+काष्ठा snic_report_tgts_cmpl अणु
+	__le32	tgt_cnt;	/* Number of Tarमाला_लो accessible */
 	u32	_resvd;
-};
+पूर्ण;
 
 /*
  * Command flags
@@ -244,27 +245,27 @@ struct snic_report_tgts_cmpl {
  * Bit 8-15: Reserved
  */
 
-#define SNIC_ICMND_WR		0x01	/* write command */
-#define SNIC_ICMND_RD		0x02	/* read command */
-#define SNIC_ICMND_ESGL		0x04	/* SGE/ESGE array contains valid data*/
+#घोषणा SNIC_ICMND_WR		0x01	/* ग_लिखो command */
+#घोषणा SNIC_ICMND_RD		0x02	/* पढ़ो command */
+#घोषणा SNIC_ICMND_ESGL		0x04	/* SGE/ESGE array contains valid data*/
 
 /*
  * Priority/Task Attribute settings
  */
-#define SNIC_ICMND_TSK_SHIFT		2	/* task attr starts at bit 2 */
-#define SNIC_ICMND_TSK_MASK(x)		((x>>SNIC_ICMND_TSK_SHIFT) & ~(0xffff))
-#define SNIC_ICMND_TSK_SIMPLE		0	/* simple task attr */
-#define SNIC_ICMND_TSK_HEAD_OF_QUEUE	1	/* head of qeuue task attr */
-#define SNIC_ICMND_TSK_ORDERED		2	/* ordered task attr */
+#घोषणा SNIC_ICMND_TSK_SHIFT		2	/* task attr starts at bit 2 */
+#घोषणा SNIC_ICMND_TSK_MASK(x)		((x>>SNIC_ICMND_TSK_SHIFT) & ~(0xffff))
+#घोषणा SNIC_ICMND_TSK_SIMPLE		0	/* simple task attr */
+#घोषणा SNIC_ICMND_TSK_HEAD_OF_QUEUE	1	/* head of qeuue task attr */
+#घोषणा SNIC_ICMND_TSK_ORDERED		2	/* ordered task attr */
 
-#define SNIC_ICMND_PRI_SHIFT		5	/* prio val starts at bit 5 */
+#घोषणा SNIC_ICMND_PRI_SHIFT		5	/* prio val starts at bit 5 */
 
 /*
  * snic_icmnd : host-> firmware request
  *
- * used for sending out an initiator SCSI 16/32-byte command
+ * used क्रम sending out an initiator SCSI 16/32-byte command
  */
-struct snic_icmnd {
+काष्ठा snic_icmnd अणु
 	__le16	sg_cnt;		/* Number of SG Elements */
 	__le16	flags;		/* flags */
 	__le32	sense_len;	/* Sense buffer length */
@@ -272,12 +273,12 @@ struct snic_icmnd {
 	__le64	lun_id;		/* Destination LUN ID */
 	u8	cdb_len;
 	u8	_resvd;
-	__le16	time_out;	/* ms time for Res allocations fw to handle io*/
+	__le16	समय_out;	/* ms समय क्रम Res allocations fw to handle io*/
 	__le32	data_len;	/* Total number of bytes to be transferred */
 	u8	cdb[SNIC_CDB_LEN];
-	__le64	sg_addr;	/* Points to SG List */
+	__le64	sg_addr;	/* Poपूर्णांकs to SG List */
 	__le64	sense_addr;	/* Sense buffer address */
-};
+पूर्ण;
 
 
 /* Response flags */
@@ -285,117 +286,117 @@ struct snic_icmnd {
  * Bit 1: Over Run
  * Bit 2-7: Reserved
  */
-#define SNIC_ICMND_CMPL_UNDR_RUN	0x01	/* resid under and valid */
-#define SNIC_ICMND_CMPL_OVER_RUN	0x02	/* resid over and valid */
+#घोषणा SNIC_ICMND_CMPL_UNDR_RUN	0x01	/* resid under and valid */
+#घोषणा SNIC_ICMND_CMPL_OVER_RUN	0x02	/* resid over and valid */
 
 /*
  * snic_icmnd_cmpl: firmware -> host response
  *
- * Used for sending the host a response to an icmnd (initiator command)
+ * Used क्रम sending the host a response to an icmnd (initiator command)
  */
-struct snic_icmnd_cmpl {
+काष्ठा snic_icmnd_cmpl अणु
 	u8	scsi_status;	/* value as per SAM */
 	u8	flags;
 	__le16	sense_len;	/* Sense Length */
 	__le32	resid;		/* Residue : # bytes under or over run */
-};
+पूर्ण;
 
 /*
- * snic_itmf: host->firmware request
+ * snic_iपंचांगf: host->firmware request
  *
- * used for requesting the firmware to abort a request and/or send out
+ * used क्रम requesting the firmware to पात a request and/or send out
  * a task management function
  *
- * the req_id field is valid in case of abort task and clear task
+ * the req_id field is valid in हाल of पात task and clear task
  */
-struct snic_itmf {
-	u8	tm_type;	/* SCSI Task Management request */
+काष्ठा snic_iपंचांगf अणु
+	u8	पंचांग_type;	/* SCSI Task Management request */
 	u8	resvd;
 	__le16	flags;		/* flags */
-	__le32	req_id;		/* Command id of snic req to be aborted */
+	__le32	req_id;		/* Command id of snic req to be पातed */
 	__le64	tgt_id;		/* Target ID */
 	__le64	lun_id;		/* Destination LUN ID */
-	__le16	timeout;	/* in sec */
-};
+	__le16	समयout;	/* in sec */
+पूर्ण;
 
 /*
  * Task Management Request
  */
-enum snic_itmf_tm_type {
+क्रमागत snic_iपंचांगf_पंचांग_type अणु
 	SNIC_ITMF_ABTS_TASK = 0x01,	/* Abort Task */
 	SNIC_ITMF_ABTS_TASK_SET,	/* Abort Task Set */
 	SNIC_ITMF_CLR_TASK,		/* Clear Task */
 	SNIC_ITMF_CLR_TASKSET,		/* Clear Task Set */
 	SNIC_ITMF_LUN_RESET,		/* Lun Reset */
-	SNIC_ITMF_ABTS_TASK_TERM,	/* Supported for SAN Targets */
-};
+	SNIC_ITMF_ABTS_TASK_TERM,	/* Supported क्रम SAN Tarमाला_लो */
+पूर्ण;
 
 /*
- * snic_itmf_cmpl: firmware -> host resposne
+ * snic_iपंचांगf_cmpl: firmware -> host resposne
  *
- * used for sending the host a response for a itmf request
+ * used क्रम sending the host a response क्रम a iपंचांगf request
  */
-struct snic_itmf_cmpl {
-	__le32	nterminated;	/* # IOs terminated as a result of tmf */
+काष्ठा snic_iपंचांगf_cmpl अणु
+	__le32	nterminated;	/* # IOs terminated as a result of पंचांगf */
 	u8	flags;		/* flags */
 	u8	_resvd[3];
-};
+पूर्ण;
 
 /*
- * itmfl_cmpl flags
+ * iपंचांगfl_cmpl flags
  * Bit 0 : 1 - Num terminated field valid
  * Bit 1 - 7 : Reserved
  */
-#define SNIC_NUM_TERM_VALID	0x01	/* Number of IOs terminated */
+#घोषणा SNIC_NUM_TERM_VALID	0x01	/* Number of IOs terminated */
 
 /*
  * snic_hba_reset: host -> firmware request
  *
- * used for requesting firmware to reset snic
+ * used क्रम requesting firmware to reset snic
  */
-struct snic_hba_reset {
+काष्ठा snic_hba_reset अणु
 	__le16	flags;		/* flags */
 	u8	_resvd[6];
-};
+पूर्ण;
 
 /*
  * snic_hba_reset_cmpl: firmware -> host response
  *
  * Used by firmware to respond to the host's hba reset request
  */
-struct snic_hba_reset_cmpl {
+काष्ठा snic_hba_reset_cmpl अणु
 	u8	flags;		/* flags : more info needs to be added*/
 	u8	_resvd[7];
-};
+पूर्ण;
 
 /*
- * snic_notify_msg: firmware -> host response
+ * snic_notअगरy_msg: firmware -> host response
  *
- * Used by firmware to notify host of the last work queue entry received
+ * Used by firmware to notअगरy host of the last work queue entry received
  */
-struct snic_notify_msg {
+काष्ठा snic_notअगरy_msg अणु
 	__le32	wqe_num;	/* wq entry number */
 	u8	flags;		/* flags, macros */
 	u8	_resvd[4];
-};
+पूर्ण;
 
 
-#define SNIC_EVDATA_LEN		24	/* in bytes */
-/* snic_async_evnotify: firmware -> host notification
+#घोषणा SNIC_EVDATA_LEN		24	/* in bytes */
+/* snic_async_evnotअगरy: firmware -> host notअगरication
  *
- * Used by firmware to notify the host about configuration/state changes
+ * Used by firmware to notअगरy the host about configuration/state changes
  */
-struct snic_async_evnotify {
+काष्ठा snic_async_evnotअगरy अणु
 	u8	FLS_EVENT_DESC;
 	u8	vnic;			/* vnic id */
 	u8	_resvd[2];
 	__le32	ev_id;			/* Event ID */
 	u8	ev_data[SNIC_EVDATA_LEN]; /* Event Data */
 	u8	_resvd2[4];
-};
+पूर्ण;
 
 /* async event flags */
-enum snic_ev_type {
+क्रमागत snic_ev_type अणु
 	SNIC_EV_TGT_OFFLINE = 0x01, /* Target Offline, PL contains TGT ID */
 	SNIC_EV_TGT_ONLINE,	/* Target Online, PL contains TGT ID */
 	SNIC_EV_LUN_OFFLINE,	/* LUN Offline, PL contains LUN ID */
@@ -407,121 +408,121 @@ enum snic_ev_type {
 	SNIC_EV_LUN_DELTD,	/* LUN Del'd, PL cont. TGT & LUN ID */
 
 	SNIC_EV_DISC_CMPL = 0x10, /* Discovery Completed Event */
-};
+पूर्ण;
 
 
-#define SNIC_HOST_REQ_LEN	128	/*Exp length of host req, wq desc sz*/
+#घोषणा SNIC_HOST_REQ_LEN	128	/*Exp length of host req, wq desc sz*/
 /* Payload 88 bytes = 128 - 24 - 16 */
-#define SNIC_HOST_REQ_PAYLOAD	((int)(SNIC_HOST_REQ_LEN -		\
-					sizeof(struct snic_io_hdr) -	\
-					(2 * sizeof(u64)) - sizeof(ulong)))
+#घोषणा SNIC_HOST_REQ_PAYLOAD	((पूर्णांक)(SNIC_HOST_REQ_LEN -		\
+					माप(काष्ठा snic_io_hdr) -	\
+					(2 * माप(u64)) - माप(uदीर्घ)))
 
 /*
  * snic_host_req: host -> firmware request
  *
- * Basic structure for all snic requests that are sent from the host to
+ * Basic काष्ठाure क्रम all snic requests that are sent from the host to
  * firmware. They are 128 bytes in size.
  */
-struct snic_host_req {
+काष्ठा snic_host_req अणु
 	u64	ctrl_data[2];	/*16 bytes - Control Data */
-	struct snic_io_hdr hdr;
-	union {
+	काष्ठा snic_io_hdr hdr;
+	जोड़ अणु
 		/*
-		 * Entry specific space, last byte contains color
+		 * Entry specअगरic space, last byte contains color
 		 */
 		u8	buf[SNIC_HOST_REQ_PAYLOAD];
 
 		/*
 		 * Exchange firmware version
 		 */
-		struct snic_exch_ver_req	exch_ver;
+		काष्ठा snic_exch_ver_req	exch_ver;
 
-		/* report targets */
-		struct snic_report_tgts		rpt_tgts;
+		/* report tarमाला_लो */
+		काष्ठा snic_report_tgts		rpt_tgts;
 
 		/* io request */
-		struct snic_icmnd		icmnd;
+		काष्ठा snic_icmnd		icmnd;
 
 		/* task management request */
-		struct snic_itmf		itmf;
+		काष्ठा snic_iपंचांगf		iपंचांगf;
 
 		/* hba reset */
-		struct snic_hba_reset		reset;
-	} u;
+		काष्ठा snic_hba_reset		reset;
+	पूर्ण u;
 
-	ulong req_pa;
-}; /* end of snic_host_req structure */
+	uदीर्घ req_pa;
+पूर्ण; /* end of snic_host_req काष्ठाure */
 
 
-#define SNIC_FW_REQ_LEN		64 /* Expected length of fw req */
-struct snic_fw_req {
-	struct snic_io_hdr hdr;
-	union {
+#घोषणा SNIC_FW_REQ_LEN		64 /* Expected length of fw req */
+काष्ठा snic_fw_req अणु
+	काष्ठा snic_io_hdr hdr;
+	जोड़ अणु
 		/*
-		 * Entry specific space, last byte contains color
+		 * Entry specअगरic space, last byte contains color
 		 */
-		u8	buf[SNIC_FW_REQ_LEN - sizeof(struct snic_io_hdr)];
+		u8	buf[SNIC_FW_REQ_LEN - माप(काष्ठा snic_io_hdr)];
 
 		/* Exchange Version Response */
-		struct snic_exch_ver_rsp	exch_ver_cmpl;
+		काष्ठा snic_exch_ver_rsp	exch_ver_cmpl;
 
-		/* Report Targets Response */
-		struct snic_report_tgts_cmpl	rpt_tgts_cmpl;
+		/* Report Tarमाला_लो Response */
+		काष्ठा snic_report_tgts_cmpl	rpt_tgts_cmpl;
 
 		/* scsi response */
-		struct snic_icmnd_cmpl		icmnd_cmpl;
+		काष्ठा snic_icmnd_cmpl		icmnd_cmpl;
 
 		/* task management response */
-		struct snic_itmf_cmpl		itmf_cmpl;
+		काष्ठा snic_iपंचांगf_cmpl		iपंचांगf_cmpl;
 
 		/* hba reset response */
-		struct snic_hba_reset_cmpl	reset_cmpl;
+		काष्ठा snic_hba_reset_cmpl	reset_cmpl;
 
-		/* notify message */
-		struct snic_notify_msg		ack;
+		/* notअगरy message */
+		काष्ठा snic_notअगरy_msg		ack;
 
-		/* async notification event */
-		struct snic_async_evnotify	async_ev;
+		/* async notअगरication event */
+		काष्ठा snic_async_evnotअगरy	async_ev;
 
-	} u;
-}; /* end of snic_fw_req structure */
+	पूर्ण u;
+पूर्ण; /* end of snic_fw_req काष्ठाure */
 
 /*
- * Auxillary macro to verify specific snic req/cmpl structures
+ * Auxillary macro to verअगरy specअगरic snic req/cmpl काष्ठाures
  * to ensure that it will be aligned to 64 bit, and not using
  * color bit field
  */
-#define VERIFY_REQ_SZ(x)
-#define VERIFY_CMPL_SZ(x)
+#घोषणा VERIFY_REQ_SZ(x)
+#घोषणा VERIFY_CMPL_SZ(x)
 
 /*
  * Access routines to encode and decode the color bit, which is the most
- * significant bit of the structure.
+ * signअगरicant bit of the काष्ठाure.
  */
-static inline void
-snic_color_enc(struct snic_fw_req *req, u8 color)
-{
-	u8 *c = ((u8 *) req) + sizeof(struct snic_fw_req) - 1;
+अटल अंतरभूत व्योम
+snic_color_enc(काष्ठा snic_fw_req *req, u8 color)
+अणु
+	u8 *c = ((u8 *) req) + माप(काष्ठा snic_fw_req) - 1;
 
-	if (color)
+	अगर (color)
 		*c |= 0x80;
-	else
+	अन्यथा
 		*c &= ~0x80;
-}
+पूर्ण
 
-static inline void
-snic_color_dec(struct snic_fw_req *req, u8 *color)
-{
-	u8 *c = ((u8 *) req) + sizeof(struct snic_fw_req) - 1;
+अटल अंतरभूत व्योम
+snic_color_dec(काष्ठा snic_fw_req *req, u8 *color)
+अणु
+	u8 *c = ((u8 *) req) + माप(काष्ठा snic_fw_req) - 1;
 
 	*color = *c >> 7;
 
-	/* Make sure color bit is read from desc *before* other fields
-	 * are read from desc. Hardware guarantees color bit is last
+	/* Make sure color bit is पढ़ो from desc *beक्रमe* other fields
+	 * are पढ़ो from desc. Hardware guarantees color bit is last
 	 * bit (byte) written. Adding the rmb() prevents the compiler
-	 * and/or CPU from reordering the reads which would potentially
-	 * result in reading stale values.
+	 * and/or CPU from reordering the पढ़ोs which would potentially
+	 * result in पढ़ोing stale values.
 	 */
 	rmb();
-}
-#endif /* end of __SNIC_FWINT_H */
+पूर्ण
+#पूर्ण_अगर /* end of __SNIC_FWINT_H */

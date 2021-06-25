@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Driver for
+ * Driver क्रम
  *    Samsung S5H1420 and
  *    PnpNetwork PN1010 QPSK Demodulator
  *
  * Copyright (C) 2005 Andrew de Quincey <adq_dvb@lidskialf.net>
  * Copyright (C) 2005-8 Patrick Boettcher <pb@linuxtv.org>
  */
-#ifndef S5H1420_H
-#define S5H1420_H
+#अगर_अघोषित S5H1420_H
+#घोषणा S5H1420_H
 
-#include <linux/dvb/frontend.h>
+#समावेश <linux/dvb/frontend.h>
 
-struct s5h1420_config
-{
+काष्ठा s5h1420_config
+अणु
 	/* the demodulator's i2c address */
 	u8 demod_address;
 
-	/* does the inversion require inversion? */
+	/* करोes the inversion require inversion? */
 	u8 invert:1;
 
 	u8 repeated_start_workaround:1;
 	u8 cdclk_polarity:1; /* 1 == falling edge, 0 == raising edge */
 
 	u8 serial_mpeg:1;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_S5H1420)
-extern struct dvb_frontend *s5h1420_attach(const struct s5h1420_config *config,
-	     struct i2c_adapter *i2c);
-extern struct i2c_adapter *s5h1420_get_tuner_i2c_adapter(struct dvb_frontend *fe);
-#else
-static inline struct dvb_frontend *s5h1420_attach(const struct s5h1420_config *config,
-					   struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
+#अगर IS_REACHABLE(CONFIG_DVB_S5H1420)
+बाह्य काष्ठा dvb_frontend *s5h1420_attach(स्थिर काष्ठा s5h1420_config *config,
+	     काष्ठा i2c_adapter *i2c);
+बाह्य काष्ठा i2c_adapter *s5h1420_get_tuner_i2c_adapter(काष्ठा dvb_frontend *fe);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *s5h1420_attach(स्थिर काष्ठा s5h1420_config *config,
+					   काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
 
-static inline struct i2c_adapter *s5h1420_get_tuner_i2c_adapter(struct dvb_frontend *fe)
-{
-	return NULL;
-}
-#endif // CONFIG_DVB_S5H1420
+अटल अंतरभूत काष्ठा i2c_adapter *s5h1420_get_tuner_i2c_adapter(काष्ठा dvb_frontend *fe)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर // CONFIG_DVB_S5H1420
 
-#endif // S5H1420_H
+#पूर्ण_अगर // S5H1420_H

@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * csum_partial_copy - do IP checksumming and copy
+ * csum_partial_copy - करो IP checksumming and copy
  *
  * (C) Copyright 1996 Linus Torvalds
  * accelerated versions (and 21264 assembly versions ) contributed by
  *	Rick Gorton	<rick.gorton@alpha-processor.com>
  *
  * Don't look at this too closely - you'll go mad. The things
- * we do for performance..
+ * we करो क्रम perक्रमmance..
  */
 
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <net/checksum.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <net/checksum.h>
 
 
-#define ldq_u(x,y) \
-__asm__ __volatile__("ldq_u %0,%1":"=r" (x):"m" (*(const unsigned long *)(y)))
+#घोषणा ldq_u(x,y) \
+__यंत्र__ __अस्थिर__("ldq_u %0,%1":"=r" (x):"m" (*(स्थिर अचिन्हित दीर्घ *)(y)))
 
-#define stq_u(x,y) \
-__asm__ __volatile__("stq_u %1,%0":"=m" (*(unsigned long *)(y)):"r" (x))
+#घोषणा stq_u(x,y) \
+__यंत्र__ __अस्थिर__("stq_u %1,%0":"=m" (*(अचिन्हित दीर्घ *)(y)):"r" (x))
 
-#define extql(x,y,z) \
-__asm__ __volatile__("extql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा extql(x,y,z) \
+__यंत्र__ __अस्थिर__("extql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define extqh(x,y,z) \
-__asm__ __volatile__("extqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा extqh(x,y,z) \
+__यंत्र__ __अस्थिर__("extqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define mskql(x,y,z) \
-__asm__ __volatile__("mskql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा mskql(x,y,z) \
+__यंत्र__ __अस्थिर__("mskql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define mskqh(x,y,z) \
-__asm__ __volatile__("mskqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा mskqh(x,y,z) \
+__यंत्र__ __अस्थिर__("mskqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define insql(x,y,z) \
-__asm__ __volatile__("insql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा insql(x,y,z) \
+__यंत्र__ __अस्थिर__("insql %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define insqh(x,y,z) \
-__asm__ __volatile__("insqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
+#घोषणा insqh(x,y,z) \
+__यंत्र__ __अस्थिर__("insqh %1,%2,%0":"=r" (z):"r" (x),"r" (y))
 
-#define __get_word(insn,x,ptr)				\
-({							\
-	long __guu_err;					\
-	__asm__ __volatile__(				\
+#घोषणा __get_word(insn,x,ptr)				\
+(अणु							\
+	दीर्घ __guu_err;					\
+	__यंत्र__ __अस्थिर__(				\
 	"1:	"#insn" %0,%2\n"			\
 	"2:\n"						\
 	EXC(1b,2b,%0,%1)				\
 		: "=r"(x), "=r"(__guu_err)		\
 		: "m"(__m(ptr)), "1"(0));		\
 	__guu_err;					\
-})
+पूर्ण)
 
-static inline unsigned short from64to16(unsigned long x)
-{
-	/* Using extract instructions is a bit more efficient
-	   than the original shift/bitmask version.  */
+अटल अंतरभूत अचिन्हित लघु from64to16(अचिन्हित दीर्घ x)
+अणु
+	/* Using extract inकाष्ठाions is a bit more efficient
+	   than the original shअगरt/biपंचांगask version.  */
 
-	union {
-		unsigned long	ul;
-		unsigned int	ui[2];
-		unsigned short	us[4];
-	} in_v, tmp_v, out_v;
+	जोड़ अणु
+		अचिन्हित दीर्घ	ul;
+		अचिन्हित पूर्णांक	ui[2];
+		अचिन्हित लघु	us[4];
+	पूर्ण in_v, पंचांगp_v, out_v;
 
 	in_v.ul = x;
-	tmp_v.ul = (unsigned long) in_v.ui[0] + (unsigned long) in_v.ui[1];
+	पंचांगp_v.ul = (अचिन्हित दीर्घ) in_v.ui[0] + (अचिन्हित दीर्घ) in_v.ui[1];
 
-	/* Since the bits of tmp_v.sh[3] are going to always be zero,
-	   we don't have to bother to add that in.  */
-	out_v.ul = (unsigned long) tmp_v.us[0] + (unsigned long) tmp_v.us[1]
-			+ (unsigned long) tmp_v.us[2];
+	/* Since the bits of पंचांगp_v.sh[3] are going to always be zero,
+	   we करोn't have to bother to add that in.  */
+	out_v.ul = (अचिन्हित दीर्घ) पंचांगp_v.us[0] + (अचिन्हित दीर्घ) पंचांगp_v.us[1]
+			+ (अचिन्हित दीर्घ) पंचांगp_v.us[2];
 
-	/* Similarly, out_v.us[2] is always zero for the final add.  */
-	return out_v.us[0] + out_v.us[1];
-}
+	/* Similarly, out_v.us[2] is always zero क्रम the final add.  */
+	वापस out_v.us[0] + out_v.us[1];
+पूर्ण
 
 
 
 /*
- * Ok. This isn't fun, but this is the EASY case.
+ * Ok. This isn't fun, but this is the EASY हाल.
  */
-static inline unsigned long
-csum_partial_cfu_aligned(const unsigned long __user *src, unsigned long *dst,
-			 long len)
-{
-	unsigned long checksum = ~0U;
-	unsigned long carry = 0;
+अटल अंतरभूत अचिन्हित दीर्घ
+csum_partial_cfu_aligned(स्थिर अचिन्हित दीर्घ __user *src, अचिन्हित दीर्घ *dst,
+			 दीर्घ len)
+अणु
+	अचिन्हित दीर्घ checksum = ~0U;
+	अचिन्हित दीर्घ carry = 0;
 
-	while (len >= 0) {
-		unsigned long word;
-		if (__get_word(ldq, word, src))
-			return 0;
+	जबतक (len >= 0) अणु
+		अचिन्हित दीर्घ word;
+		अगर (__get_word(ldq, word, src))
+			वापस 0;
 		checksum += carry;
 		src++;
 		checksum += word;
@@ -98,47 +99,47 @@ csum_partial_cfu_aligned(const unsigned long __user *src, unsigned long *dst,
 		carry = checksum < word;
 		*dst = word;
 		dst++;
-	}
+	पूर्ण
 	len += 8;
 	checksum += carry;
-	if (len) {
-		unsigned long word, tmp;
-		if (__get_word(ldq, word, src))
-			return 0;
-		tmp = *dst;
+	अगर (len) अणु
+		अचिन्हित दीर्घ word, पंचांगp;
+		अगर (__get_word(ldq, word, src))
+			वापस 0;
+		पंचांगp = *dst;
 		mskql(word, len, word);
 		checksum += word;
-		mskqh(tmp, len, tmp);
+		mskqh(पंचांगp, len, पंचांगp);
 		carry = checksum < word;
-		*dst = word | tmp;
+		*dst = word | पंचांगp;
 		checksum += carry;
-	}
-	return checksum;
-}
+	पूर्ण
+	वापस checksum;
+पूर्ण
 
 /*
  * This is even less fun, but this is still reasonably
  * easy.
  */
-static inline unsigned long
-csum_partial_cfu_dest_aligned(const unsigned long __user *src,
-			      unsigned long *dst,
-			      unsigned long soff,
-			      long len)
-{
-	unsigned long first;
-	unsigned long word, carry;
-	unsigned long lastsrc = 7+len+(unsigned long)src;
-	unsigned long checksum = ~0U;
+अटल अंतरभूत अचिन्हित दीर्घ
+csum_partial_cfu_dest_aligned(स्थिर अचिन्हित दीर्घ __user *src,
+			      अचिन्हित दीर्घ *dst,
+			      अचिन्हित दीर्घ soff,
+			      दीर्घ len)
+अणु
+	अचिन्हित दीर्घ first;
+	अचिन्हित दीर्घ word, carry;
+	अचिन्हित दीर्घ lastsrc = 7+len+(अचिन्हित दीर्घ)src;
+	अचिन्हित दीर्घ checksum = ~0U;
 
-	if (__get_word(ldq_u, first,src))
-		return 0;
+	अगर (__get_word(ldq_u, first,src))
+		वापस 0;
 	carry = 0;
-	while (len >= 0) {
-		unsigned long second;
+	जबतक (len >= 0) अणु
+		अचिन्हित दीर्घ second;
 
-		if (__get_word(ldq_u, second, src+1))
-			return 0;
+		अगर (__get_word(ldq_u, second, src+1))
+			वापस 0;
 		extql(first, soff, word);
 		len -= 8;
 		src++;
@@ -150,110 +151,110 @@ csum_partial_cfu_dest_aligned(const unsigned long __user *src,
 		*dst = word;
 		dst++;
 		carry = checksum < word;
-	}
+	पूर्ण
 	len += 8;
 	checksum += carry;
-	if (len) {
-		unsigned long tmp;
-		unsigned long second;
-		if (__get_word(ldq_u, second, lastsrc))
-			return 0;
-		tmp = *dst;
+	अगर (len) अणु
+		अचिन्हित दीर्घ पंचांगp;
+		अचिन्हित दीर्घ second;
+		अगर (__get_word(ldq_u, second, lastsrc))
+			वापस 0;
+		पंचांगp = *dst;
 		extql(first, soff, word);
 		extqh(second, soff, first);
 		word |= first;
 		mskql(word, len, word);
 		checksum += word;
-		mskqh(tmp, len, tmp);
+		mskqh(पंचांगp, len, पंचांगp);
 		carry = checksum < word;
-		*dst = word | tmp;
+		*dst = word | पंचांगp;
 		checksum += carry;
-	}
-	return checksum;
-}
+	पूर्ण
+	वापस checksum;
+पूर्ण
 
 /*
  * This is slightly less fun than the above..
  */
-static inline unsigned long
-csum_partial_cfu_src_aligned(const unsigned long __user *src,
-			     unsigned long *dst,
-			     unsigned long doff,
-			     long len,
-			     unsigned long partial_dest)
-{
-	unsigned long carry = 0;
-	unsigned long word;
-	unsigned long second_dest;
-	unsigned long checksum = ~0U;
+अटल अंतरभूत अचिन्हित दीर्घ
+csum_partial_cfu_src_aligned(स्थिर अचिन्हित दीर्घ __user *src,
+			     अचिन्हित दीर्घ *dst,
+			     अचिन्हित दीर्घ करोff,
+			     दीर्घ len,
+			     अचिन्हित दीर्घ partial_dest)
+अणु
+	अचिन्हित दीर्घ carry = 0;
+	अचिन्हित दीर्घ word;
+	अचिन्हित दीर्घ second_dest;
+	अचिन्हित दीर्घ checksum = ~0U;
 
-	mskql(partial_dest, doff, partial_dest);
-	while (len >= 0) {
-		if (__get_word(ldq, word, src))
-			return 0;
+	mskql(partial_dest, करोff, partial_dest);
+	जबतक (len >= 0) अणु
+		अगर (__get_word(ldq, word, src))
+			वापस 0;
 		len -= 8;
-		insql(word, doff, second_dest);
+		insql(word, करोff, second_dest);
 		checksum += carry;
 		stq_u(partial_dest | second_dest, dst);
 		src++;
 		checksum += word;
-		insqh(word, doff, partial_dest);
+		insqh(word, करोff, partial_dest);
 		carry = checksum < word;
 		dst++;
-	}
+	पूर्ण
 	len += 8;
-	if (len) {
+	अगर (len) अणु
 		checksum += carry;
-		if (__get_word(ldq, word, src))
-			return 0;
+		अगर (__get_word(ldq, word, src))
+			वापस 0;
 		mskql(word, len, word);
 		len -= 8;
 		checksum += word;
-		insql(word, doff, second_dest);
-		len += doff;
+		insql(word, करोff, second_dest);
+		len += करोff;
 		carry = checksum < word;
 		partial_dest |= second_dest;
-		if (len >= 0) {
+		अगर (len >= 0) अणु
 			stq_u(partial_dest, dst);
-			if (!len) goto out;
+			अगर (!len) जाओ out;
 			dst++;
-			insqh(word, doff, partial_dest);
-		}
-		doff = len;
-	}
+			insqh(word, करोff, partial_dest);
+		पूर्ण
+		करोff = len;
+	पूर्ण
 	ldq_u(second_dest, dst);
-	mskqh(second_dest, doff, second_dest);
+	mskqh(second_dest, करोff, second_dest);
 	stq_u(partial_dest | second_dest, dst);
 out:
 	checksum += carry;
-	return checksum;
-}
+	वापस checksum;
+पूर्ण
 
 /*
  * This is so totally un-fun that it's frightening. Don't
- * look at this too closely, you'll go blind.
+ * look at this too बंदly, you'll go blind.
  */
-static inline unsigned long
-csum_partial_cfu_unaligned(const unsigned long __user * src,
-			   unsigned long * dst,
-			   unsigned long soff, unsigned long doff,
-			   long len, unsigned long partial_dest)
-{
-	unsigned long carry = 0;
-	unsigned long first;
-	unsigned long lastsrc;
-	unsigned long checksum = ~0U;
+अटल अंतरभूत अचिन्हित दीर्घ
+csum_partial_cfu_unaligned(स्थिर अचिन्हित दीर्घ __user * src,
+			   अचिन्हित दीर्घ * dst,
+			   अचिन्हित दीर्घ soff, अचिन्हित दीर्घ करोff,
+			   दीर्घ len, अचिन्हित दीर्घ partial_dest)
+अणु
+	अचिन्हित दीर्घ carry = 0;
+	अचिन्हित दीर्घ first;
+	अचिन्हित दीर्घ lastsrc;
+	अचिन्हित दीर्घ checksum = ~0U;
 
-	if (__get_word(ldq_u, first, src))
-		return 0;
-	lastsrc = 7+len+(unsigned long)src;
-	mskql(partial_dest, doff, partial_dest);
-	while (len >= 0) {
-		unsigned long second, word;
-		unsigned long second_dest;
+	अगर (__get_word(ldq_u, first, src))
+		वापस 0;
+	lastsrc = 7+len+(अचिन्हित दीर्घ)src;
+	mskql(partial_dest, करोff, partial_dest);
+	जबतक (len >= 0) अणु
+		अचिन्हित दीर्घ second, word;
+		अचिन्हित दीर्घ second_dest;
 
-		if (__get_word(ldq_u, second, src+1))
-			return 0;
+		अगर (__get_word(ldq_u, second, src+1))
+			वापस 0;
 		extql(first, soff, word);
 		checksum += carry;
 		len -= 8;
@@ -261,104 +262,104 @@ csum_partial_cfu_unaligned(const unsigned long __user * src,
 		src++;
 		word |= first;
 		first = second;
-		insql(word, doff, second_dest);
+		insql(word, करोff, second_dest);
 		checksum += word;
 		stq_u(partial_dest | second_dest, dst);
 		carry = checksum < word;
-		insqh(word, doff, partial_dest);
+		insqh(word, करोff, partial_dest);
 		dst++;
-	}
-	len += doff;
+	पूर्ण
+	len += करोff;
 	checksum += carry;
-	if (len >= 0) {
-		unsigned long second, word;
-		unsigned long second_dest;
+	अगर (len >= 0) अणु
+		अचिन्हित दीर्घ second, word;
+		अचिन्हित दीर्घ second_dest;
 
-		if (__get_word(ldq_u, second, lastsrc))
-			return 0;
+		अगर (__get_word(ldq_u, second, lastsrc))
+			वापस 0;
 		extql(first, soff, word);
 		extqh(second, soff, first);
 		word |= first;
 		first = second;
-		mskql(word, len-doff, word);
+		mskql(word, len-करोff, word);
 		checksum += word;
-		insql(word, doff, second_dest);
+		insql(word, करोff, second_dest);
 		carry = checksum < word;
 		stq_u(partial_dest | second_dest, dst);
-		if (len) {
+		अगर (len) अणु
 			ldq_u(second_dest, dst+1);
-			insqh(word, doff, partial_dest);
+			insqh(word, करोff, partial_dest);
 			mskqh(second_dest, len, second_dest);
 			stq_u(partial_dest | second_dest, dst+1);
-		}
+		पूर्ण
 		checksum += carry;
-	} else {
-		unsigned long second, word;
-		unsigned long second_dest;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ second, word;
+		अचिन्हित दीर्घ second_dest;
 
-		if (__get_word(ldq_u, second, lastsrc))
-			return 0;
+		अगर (__get_word(ldq_u, second, lastsrc))
+			वापस 0;
 		extql(first, soff, word);
 		extqh(second, soff, first);
 		word |= first;
 		ldq_u(second_dest, dst);
-		mskql(word, len-doff, word);
+		mskql(word, len-करोff, word);
 		checksum += word;
 		mskqh(second_dest, len, second_dest);
 		carry = checksum < word;
-		insql(word, doff, word);
+		insql(word, करोff, word);
 		stq_u(partial_dest | word | second_dest, dst);
 		checksum += carry;
-	}
-	return checksum;
-}
+	पूर्ण
+	वापस checksum;
+पूर्ण
 
-static __wsum __csum_and_copy(const void __user *src, void *dst, int len)
-{
-	unsigned long soff = 7 & (unsigned long) src;
-	unsigned long doff = 7 & (unsigned long) dst;
-	unsigned long checksum;
+अटल __wsum __csum_and_copy(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len)
+अणु
+	अचिन्हित दीर्घ soff = 7 & (अचिन्हित दीर्घ) src;
+	अचिन्हित दीर्घ करोff = 7 & (अचिन्हित दीर्घ) dst;
+	अचिन्हित दीर्घ checksum;
 
-	if (!doff) {
-		if (!soff)
+	अगर (!करोff) अणु
+		अगर (!soff)
 			checksum = csum_partial_cfu_aligned(
-				(const unsigned long __user *) src,
-				(unsigned long *) dst, len-8);
-		else
+				(स्थिर अचिन्हित दीर्घ __user *) src,
+				(अचिन्हित दीर्घ *) dst, len-8);
+		अन्यथा
 			checksum = csum_partial_cfu_dest_aligned(
-				(const unsigned long __user *) src,
-				(unsigned long *) dst,
+				(स्थिर अचिन्हित दीर्घ __user *) src,
+				(अचिन्हित दीर्घ *) dst,
 				soff, len-8);
-	} else {
-		unsigned long partial_dest;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ partial_dest;
 		ldq_u(partial_dest, dst);
-		if (!soff)
+		अगर (!soff)
 			checksum = csum_partial_cfu_src_aligned(
-				(const unsigned long __user *) src,
-				(unsigned long *) dst,
-				doff, len-8, partial_dest);
-		else
+				(स्थिर अचिन्हित दीर्घ __user *) src,
+				(अचिन्हित दीर्घ *) dst,
+				करोff, len-8, partial_dest);
+		अन्यथा
 			checksum = csum_partial_cfu_unaligned(
-				(const unsigned long __user *) src,
-				(unsigned long *) dst,
-				soff, doff, len-8, partial_dest);
-	}
-	return (__force __wsum)from64to16 (checksum);
-}
+				(स्थिर अचिन्हित दीर्घ __user *) src,
+				(अचिन्हित दीर्घ *) dst,
+				soff, करोff, len-8, partial_dest);
+	पूर्ण
+	वापस (__क्रमce __wsum)from64to16 (checksum);
+पूर्ण
 
 __wsum
-csum_and_copy_from_user(const void __user *src, void *dst, int len)
-{
-	if (!access_ok(src, len))
-		return 0;
-	return __csum_and_copy(src, dst, len);
-}
+csum_and_copy_from_user(स्थिर व्योम __user *src, व्योम *dst, पूर्णांक len)
+अणु
+	अगर (!access_ok(src, len))
+		वापस 0;
+	वापस __csum_and_copy(src, dst, len);
+पूर्ण
 EXPORT_SYMBOL(csum_and_copy_from_user);
 
 __wsum
-csum_partial_copy_nocheck(const void *src, void *dst, int len)
-{
-	return __csum_and_copy((__force const void __user *)src,
+csum_partial_copy_nocheck(स्थिर व्योम *src, व्योम *dst, पूर्णांक len)
+अणु
+	वापस __csum_and_copy((__क्रमce स्थिर व्योम __user *)src,
 						dst, len);
-}
+पूर्ण
 EXPORT_SYMBOL(csum_partial_copy_nocheck);

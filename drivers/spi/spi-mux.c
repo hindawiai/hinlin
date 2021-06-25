@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // General Purpose SPI multiplexer
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mux/consumer.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mux/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
 
-#define SPI_MUX_NO_CS	((unsigned int)-1)
+#घोषणा SPI_MUX_NO_CS	((अचिन्हित पूर्णांक)-1)
 
 /**
  * DOC: Driver description
@@ -23,93 +24,93 @@
  */
 
 /**
- * struct spi_mux_priv - the basic spi_mux structure
- * @spi:		pointer to the device struct attached to the parent
+ * काष्ठा spi_mux_priv - the basic spi_mux काष्ठाure
+ * @spi:		poपूर्णांकer to the device काष्ठा attached to the parent
  *			spi controller
  * @current_cs:		The current chip select set in the mux
  * @child_msg_complete: The mux replaces the complete callback in the child's
  *			message to its own callback; this field is used by the
  *			driver to store the child's callback during a transfer
  * @child_msg_context:	Used to store the child's context to the callback
- * @child_msg_dev:	Used to store the spi_device pointer to the child
- * @mux:		mux_control structure used to provide chip selects for
- *			downstream spi devices
+ * @child_msg_dev:	Used to store the spi_device poपूर्णांकer to the child
+ * @mux:		mux_control काष्ठाure used to provide chip selects क्रम
+ *			करोwnstream spi devices
  */
-struct spi_mux_priv {
-	struct spi_device	*spi;
-	unsigned int		current_cs;
+काष्ठा spi_mux_priv अणु
+	काष्ठा spi_device	*spi;
+	अचिन्हित पूर्णांक		current_cs;
 
-	void			(*child_msg_complete)(void *context);
-	void			*child_msg_context;
-	struct spi_device	*child_msg_dev;
-	struct mux_control	*mux;
-};
+	व्योम			(*child_msg_complete)(व्योम *context);
+	व्योम			*child_msg_context;
+	काष्ठा spi_device	*child_msg_dev;
+	काष्ठा mux_control	*mux;
+पूर्ण;
 
-/* should not get called when the parent controller is doing a transfer */
-static int spi_mux_select(struct spi_device *spi)
-{
-	struct spi_mux_priv *priv = spi_controller_get_devdata(spi->controller);
-	int ret;
+/* should not get called when the parent controller is करोing a transfer */
+अटल पूर्णांक spi_mux_select(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spi_mux_priv *priv = spi_controller_get_devdata(spi->controller);
+	पूर्णांक ret;
 
 	ret = mux_control_select(priv->mux, spi->chip_select);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (priv->current_cs == spi->chip_select)
-		return 0;
+	अगर (priv->current_cs == spi->chip_select)
+		वापस 0;
 
 	dev_dbg(&priv->spi->dev, "setting up the mux for cs %d\n",
 		spi->chip_select);
 
-	/* copy the child device's settings except for the cs */
+	/* copy the child device's settings except क्रम the cs */
 	priv->spi->max_speed_hz = spi->max_speed_hz;
 	priv->spi->mode = spi->mode;
 	priv->spi->bits_per_word = spi->bits_per_word;
 
 	priv->current_cs = spi->chip_select;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spi_mux_setup(struct spi_device *spi)
-{
-	struct spi_mux_priv *priv = spi_controller_get_devdata(spi->controller);
+अटल पूर्णांक spi_mux_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spi_mux_priv *priv = spi_controller_get_devdata(spi->controller);
 
 	/*
-	 * can be called multiple times, won't do a valid setup now but we will
-	 * change the settings when we do a transfer (necessary because we
+	 * can be called multiple बार, won't करो a valid setup now but we will
+	 * change the settings when we करो a transfer (necessary because we
 	 * can't predict from which device it will be anyway)
 	 */
-	return spi_setup(priv->spi);
-}
+	वापस spi_setup(priv->spi);
+पूर्ण
 
-static void spi_mux_complete_cb(void *context)
-{
-	struct spi_mux_priv *priv = (struct spi_mux_priv *)context;
-	struct spi_controller *ctlr = spi_get_drvdata(priv->spi);
-	struct spi_message *m = ctlr->cur_msg;
+अटल व्योम spi_mux_complete_cb(व्योम *context)
+अणु
+	काष्ठा spi_mux_priv *priv = (काष्ठा spi_mux_priv *)context;
+	काष्ठा spi_controller *ctlr = spi_get_drvdata(priv->spi);
+	काष्ठा spi_message *m = ctlr->cur_msg;
 
 	m->complete = priv->child_msg_complete;
 	m->context = priv->child_msg_context;
 	m->spi = priv->child_msg_dev;
 	spi_finalize_current_message(ctlr);
 	mux_control_deselect(priv->mux);
-}
+पूर्ण
 
-static int spi_mux_transfer_one_message(struct spi_controller *ctlr,
-						struct spi_message *m)
-{
-	struct spi_mux_priv *priv = spi_controller_get_devdata(ctlr);
-	struct spi_device *spi = m->spi;
-	int ret;
+अटल पूर्णांक spi_mux_transfer_one_message(काष्ठा spi_controller *ctlr,
+						काष्ठा spi_message *m)
+अणु
+	काष्ठा spi_mux_priv *priv = spi_controller_get_devdata(ctlr);
+	काष्ठा spi_device *spi = m->spi;
+	पूर्णांक ret;
 
 	ret = spi_mux_select(spi);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Replace the complete callback, context and spi_device with our own
-	 * pointers. Save originals
+	 * poपूर्णांकers. Save originals
 	 */
 	priv->child_msg_complete = m->complete;
 	priv->child_msg_context = m->context;
@@ -119,30 +120,30 @@ static int spi_mux_transfer_one_message(struct spi_controller *ctlr,
 	m->context = priv;
 	m->spi = priv->spi;
 
-	/* do the transfer */
-	return spi_async(priv->spi, m);
-}
+	/* करो the transfer */
+	वापस spi_async(priv->spi, m);
+पूर्ण
 
-static int spi_mux_probe(struct spi_device *spi)
-{
-	struct spi_controller *ctlr;
-	struct spi_mux_priv *priv;
-	int ret;
+अटल पूर्णांक spi_mux_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spi_controller *ctlr;
+	काष्ठा spi_mux_priv *priv;
+	पूर्णांक ret;
 
-	ctlr = spi_alloc_master(&spi->dev, sizeof(*priv));
-	if (!ctlr)
-		return -ENOMEM;
+	ctlr = spi_alloc_master(&spi->dev, माप(*priv));
+	अगर (!ctlr)
+		वापस -ENOMEM;
 
 	spi_set_drvdata(spi, ctlr);
 	priv = spi_controller_get_devdata(ctlr);
 	priv->spi = spi;
 
-	priv->mux = devm_mux_control_get(&spi->dev, NULL);
-	if (IS_ERR(priv->mux)) {
+	priv->mux = devm_mux_control_get(&spi->dev, शून्य);
+	अगर (IS_ERR(priv->mux)) अणु
 		ret = dev_err_probe(&spi->dev, PTR_ERR(priv->mux),
 				    "failed to get control-mux\n");
-		goto err_put_ctlr;
-	}
+		जाओ err_put_ctlr;
+	पूर्ण
 
 	priv->current_cs = SPI_MUX_NO_CS;
 
@@ -155,30 +156,30 @@ static int spi_mux_probe(struct spi_device *spi)
 	ctlr->bus_num = -1;
 	ctlr->dev.of_node = spi->dev.of_node;
 
-	ret = devm_spi_register_controller(&spi->dev, ctlr);
-	if (ret)
-		goto err_put_ctlr;
+	ret = devm_spi_रेजिस्टर_controller(&spi->dev, ctlr);
+	अगर (ret)
+		जाओ err_put_ctlr;
 
-	return 0;
+	वापस 0;
 
 err_put_ctlr:
 	spi_controller_put(ctlr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id spi_mux_of_match[] = {
-	{ .compatible = "spi-mux" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id spi_mux_of_match[] = अणु
+	अणु .compatible = "spi-mux" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct spi_driver spi_mux_driver = {
+अटल काष्ठा spi_driver spi_mux_driver = अणु
 	.probe  = spi_mux_probe,
-	.driver = {
+	.driver = अणु
 		.name   = "spi-mux",
 		.of_match_table = spi_mux_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_spi_driver(spi_mux_driver);
 

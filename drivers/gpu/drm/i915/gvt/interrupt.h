@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,23 +22,23 @@
  * SOFTWARE.
  *
  * Authors:
- *    Kevin Tian <kevin.tian@intel.com>
- *    Zhi Wang <zhi.a.wang@intel.com>
+ *    Kevin Tian <kevin.tian@पूर्णांकel.com>
+ *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
  *
  * Contributors:
- *    Min he <min.he@intel.com>
+ *    Min he <min.he@पूर्णांकel.com>
  *
  */
 
-#ifndef _GVT_INTERRUPT_H_
-#define _GVT_INTERRUPT_H_
+#अगर_अघोषित _GVT_INTERRUPT_H_
+#घोषणा _GVT_INTERRUPT_H_
 
-#include <linux/hrtimer.h>
-#include <linux/kernel.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/kernel.h>
 
-#include "i915_reg.h"
+#समावेश "i915_reg.h"
 
-enum intel_gvt_event_type {
+क्रमागत पूर्णांकel_gvt_event_type अणु
 	RCS_MI_USER_INTERRUPT = 0,
 	RCS_DEBUG,
 	RCS_MMIO_SYNC_FLUSH,
@@ -45,7 +46,7 @@ enum intel_gvt_event_type {
 	RCS_PIPE_CONTROL,
 	RCS_L3_PARITY_ERR,
 	RCS_WATCHDOG_EXCEEDED,
-	RCS_PAGE_DIRECTORY_FAULT,
+	RCS_PAGE_सूचीECTORY_FAULT,
 	RCS_AS_CONTEXT_SWITCH,
 	RCS_MONITOR_BUFF_HALF_FULL,
 
@@ -54,7 +55,7 @@ enum intel_gvt_event_type {
 	VCS_CMD_STREAMER_ERR,
 	VCS_MI_FLUSH_DW,
 	VCS_WATCHDOG_EXCEEDED,
-	VCS_PAGE_DIRECTORY_FAULT,
+	VCS_PAGE_सूचीECTORY_FAULT,
 	VCS_AS_CONTEXT_SWITCH,
 
 	VCS2_MI_USER_INTERRUPT,
@@ -65,7 +66,7 @@ enum intel_gvt_event_type {
 	BCS_MMIO_SYNC_FLUSH,
 	BCS_CMD_STREAMER_ERR,
 	BCS_MI_FLUSH_DW,
-	BCS_PAGE_DIRECTORY_FAULT,
+	BCS_PAGE_सूचीECTORY_FAULT,
 	BCS_AS_CONTEXT_SWITCH,
 
 	VECS_MI_USER_INTERRUPT,
@@ -136,22 +137,22 @@ enum intel_gvt_event_type {
 
 	INTEL_GVT_EVENT_RESERVED,
 	INTEL_GVT_EVENT_MAX,
-};
+पूर्ण;
 
-struct intel_gvt_irq;
-struct intel_gvt;
-struct intel_vgpu;
+काष्ठा पूर्णांकel_gvt_irq;
+काष्ठा पूर्णांकel_gvt;
+काष्ठा पूर्णांकel_vgpu;
 
-typedef void (*gvt_event_virt_handler_t)(struct intel_gvt_irq *irq,
-	enum intel_gvt_event_type event, struct intel_vgpu *vgpu);
+प्रकार व्योम (*gvt_event_virt_handler_t)(काष्ठा पूर्णांकel_gvt_irq *irq,
+	क्रमागत पूर्णांकel_gvt_event_type event, काष्ठा पूर्णांकel_vgpu *vgpu);
 
-struct intel_gvt_irq_ops {
-	void (*init_irq)(struct intel_gvt_irq *irq);
-	void (*check_pending_irq)(struct intel_vgpu *vgpu);
-};
+काष्ठा पूर्णांकel_gvt_irq_ops अणु
+	व्योम (*init_irq)(काष्ठा पूर्णांकel_gvt_irq *irq);
+	व्योम (*check_pending_irq)(काष्ठा पूर्णांकel_vgpu *vgpu);
+पूर्ण;
 
-/* the list of physical interrupt control register groups */
-enum intel_gvt_irq_type {
+/* the list of physical पूर्णांकerrupt control रेजिस्टर groups */
+क्रमागत पूर्णांकel_gvt_irq_type अणु
 	INTEL_GVT_IRQ_INFO_GT,
 	INTEL_GVT_IRQ_INFO_DPY,
 	INTEL_GVT_IRQ_INFO_PCH,
@@ -171,62 +172,62 @@ enum intel_gvt_irq_type {
 	INTEL_GVT_IRQ_INFO_PCU,
 
 	INTEL_GVT_IRQ_INFO_MAX,
-};
+पूर्ण;
 
-#define INTEL_GVT_IRQ_BITWIDTH	32
+#घोषणा INTEL_GVT_IRQ_BITWIDTH	32
 
-/* device specific interrupt bit definitions */
-struct intel_gvt_irq_info {
-	char *name;
+/* device specअगरic पूर्णांकerrupt bit definitions */
+काष्ठा पूर्णांकel_gvt_irq_info अणु
+	अक्षर *name;
 	i915_reg_t reg_base;
-	enum intel_gvt_event_type bit_to_event[INTEL_GVT_IRQ_BITWIDTH];
-	unsigned long warned;
-	int group;
-	DECLARE_BITMAP(downstream_irq_bitmap, INTEL_GVT_IRQ_BITWIDTH);
+	क्रमागत पूर्णांकel_gvt_event_type bit_to_event[INTEL_GVT_IRQ_BITWIDTH];
+	अचिन्हित दीर्घ warned;
+	पूर्णांक group;
+	DECLARE_BITMAP(करोwnstream_irq_biपंचांगap, INTEL_GVT_IRQ_BITWIDTH);
 	bool has_upstream_irq;
-};
+पूर्ण;
 
-/* per-event information */
-struct intel_gvt_event_info {
-	int bit;				/* map to register bit */
-	int policy;				/* forwarding policy */
-	struct intel_gvt_irq_info *info;	/* register info */
-	gvt_event_virt_handler_t v_handler;	/* for v_event */
-};
+/* per-event inक्रमmation */
+काष्ठा पूर्णांकel_gvt_event_info अणु
+	पूर्णांक bit;				/* map to रेजिस्टर bit */
+	पूर्णांक policy;				/* क्रमwarding policy */
+	काष्ठा पूर्णांकel_gvt_irq_info *info;	/* रेजिस्टर info */
+	gvt_event_virt_handler_t v_handler;	/* क्रम v_event */
+पूर्ण;
 
-struct intel_gvt_irq_map {
-	int up_irq_group;
-	int up_irq_bit;
-	int down_irq_group;
-	u32 down_irq_bitmask;
-};
+काष्ठा पूर्णांकel_gvt_irq_map अणु
+	पूर्णांक up_irq_group;
+	पूर्णांक up_irq_bit;
+	पूर्णांक करोwn_irq_group;
+	u32 करोwn_irq_biपंचांगask;
+पूर्ण;
 
-/* structure containing device specific IRQ state */
-struct intel_gvt_irq {
-	struct intel_gvt_irq_ops *ops;
-	struct intel_gvt_irq_info *info[INTEL_GVT_IRQ_INFO_MAX];
-	DECLARE_BITMAP(irq_info_bitmap, INTEL_GVT_IRQ_INFO_MAX);
-	struct intel_gvt_event_info events[INTEL_GVT_EVENT_MAX];
+/* काष्ठाure containing device specअगरic IRQ state */
+काष्ठा पूर्णांकel_gvt_irq अणु
+	काष्ठा पूर्णांकel_gvt_irq_ops *ops;
+	काष्ठा पूर्णांकel_gvt_irq_info *info[INTEL_GVT_IRQ_INFO_MAX];
+	DECLARE_BITMAP(irq_info_biपंचांगap, INTEL_GVT_IRQ_INFO_MAX);
+	काष्ठा पूर्णांकel_gvt_event_info events[INTEL_GVT_EVENT_MAX];
 	DECLARE_BITMAP(pending_events, INTEL_GVT_EVENT_MAX);
-	struct intel_gvt_irq_map *irq_map;
-};
+	काष्ठा पूर्णांकel_gvt_irq_map *irq_map;
+पूर्ण;
 
-int intel_gvt_init_irq(struct intel_gvt *gvt);
+पूर्णांक पूर्णांकel_gvt_init_irq(काष्ठा पूर्णांकel_gvt *gvt);
 
-void intel_vgpu_trigger_virtual_event(struct intel_vgpu *vgpu,
-	enum intel_gvt_event_type event);
+व्योम पूर्णांकel_vgpu_trigger_भव_event(काष्ठा पूर्णांकel_vgpu *vgpu,
+	क्रमागत पूर्णांकel_gvt_event_type event);
 
-int intel_vgpu_reg_iir_handler(struct intel_vgpu *vgpu, unsigned int reg,
-	void *p_data, unsigned int bytes);
-int intel_vgpu_reg_ier_handler(struct intel_vgpu *vgpu,
-	unsigned int reg, void *p_data, unsigned int bytes);
-int intel_vgpu_reg_master_irq_handler(struct intel_vgpu *vgpu,
-	unsigned int reg, void *p_data, unsigned int bytes);
-int intel_vgpu_reg_imr_handler(struct intel_vgpu *vgpu,
-	unsigned int reg, void *p_data, unsigned int bytes);
+पूर्णांक पूर्णांकel_vgpu_reg_iir_handler(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक reg,
+	व्योम *p_data, अचिन्हित पूर्णांक bytes);
+पूर्णांक पूर्णांकel_vgpu_reg_ier_handler(काष्ठा पूर्णांकel_vgpu *vgpu,
+	अचिन्हित पूर्णांक reg, व्योम *p_data, अचिन्हित पूर्णांक bytes);
+पूर्णांक पूर्णांकel_vgpu_reg_master_irq_handler(काष्ठा पूर्णांकel_vgpu *vgpu,
+	अचिन्हित पूर्णांक reg, व्योम *p_data, अचिन्हित पूर्णांक bytes);
+पूर्णांक पूर्णांकel_vgpu_reg_imr_handler(काष्ठा पूर्णांकel_vgpu *vgpu,
+	अचिन्हित पूर्णांक reg, व्योम *p_data, अचिन्हित पूर्णांक bytes);
 
-int gvt_ring_id_to_pipe_control_notify_event(int ring_id);
-int gvt_ring_id_to_mi_flush_dw_event(int ring_id);
-int gvt_ring_id_to_mi_user_interrupt_event(int ring_id);
+पूर्णांक gvt_ring_id_to_pipe_control_notअगरy_event(पूर्णांक ring_id);
+पूर्णांक gvt_ring_id_to_mi_flush_dw_event(पूर्णांक ring_id);
+पूर्णांक gvt_ring_id_to_mi_user_पूर्णांकerrupt_event(पूर्णांक ring_id);
 
-#endif /* _GVT_INTERRUPT_H_ */
+#पूर्ण_अगर /* _GVT_INTERRUPT_H_ */

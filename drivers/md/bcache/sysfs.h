@@ -1,128 +1,129 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _BCACHE_SYSFS_H_
-#define _BCACHE_SYSFS_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _BCACHE_SYSFS_H_
+#घोषणा _BCACHE_SYSFS_H_
 
-#define KTYPE(type)							\
-struct kobj_type type ## _ktype = {					\
+#घोषणा KTYPE(type)							\
+काष्ठा kobj_type type ## _ktype = अणु					\
 	.release	= type ## _release,				\
-	.sysfs_ops	= &((const struct sysfs_ops) {			\
+	.sysfs_ops	= &((स्थिर काष्ठा sysfs_ops) अणु			\
 		.show	= type ## _show,				\
 		.store	= type ## _store				\
-	}),								\
-	.default_attrs	= type ## _files				\
-}
+	पूर्ण),								\
+	.शेष_attrs	= type ## _files				\
+पूर्ण
 
-#define SHOW(fn)							\
-static ssize_t fn ## _show(struct kobject *kobj, struct attribute *attr,\
-			   char *buf)					\
+#घोषणा SHOW(fn)							\
+अटल sमाप_प्रकार fn ## _show(काष्ठा kobject *kobj, काष्ठा attribute *attr,\
+			   अक्षर *buf)					\
 
-#define STORE(fn)							\
-static ssize_t fn ## _store(struct kobject *kobj, struct attribute *attr,\
-			    const char *buf, size_t size)		\
+#घोषणा STORE(fn)							\
+अटल sमाप_प्रकार fn ## _store(काष्ठा kobject *kobj, काष्ठा attribute *attr,\
+			    स्थिर अक्षर *buf, माप_प्रकार size)		\
 
-#define SHOW_LOCKED(fn)							\
+#घोषणा SHOW_LOCKED(fn)							\
 SHOW(fn)								\
-{									\
-	ssize_t ret;							\
-	mutex_lock(&bch_register_lock);					\
+अणु									\
+	sमाप_प्रकार ret;							\
+	mutex_lock(&bch_रेजिस्टर_lock);					\
 	ret = __ ## fn ## _show(kobj, attr, buf);			\
-	mutex_unlock(&bch_register_lock);				\
-	return ret;							\
-}
+	mutex_unlock(&bch_रेजिस्टर_lock);				\
+	वापस ret;							\
+पूर्ण
 
-#define STORE_LOCKED(fn)						\
+#घोषणा STORE_LOCKED(fn)						\
 STORE(fn)								\
-{									\
-	ssize_t ret;							\
-	mutex_lock(&bch_register_lock);					\
+अणु									\
+	sमाप_प्रकार ret;							\
+	mutex_lock(&bch_रेजिस्टर_lock);					\
 	ret = __ ## fn ## _store(kobj, attr, buf, size);		\
-	mutex_unlock(&bch_register_lock);				\
-	return ret;							\
-}
+	mutex_unlock(&bch_रेजिस्टर_lock);				\
+	वापस ret;							\
+पूर्ण
 
-#define __sysfs_attribute(_name, _mode)					\
-	static struct attribute sysfs_##_name =				\
-		{ .name = #_name, .mode = _mode }
+#घोषणा __sysfs_attribute(_name, _mode)					\
+	अटल काष्ठा attribute sysfs_##_name =				\
+		अणु .name = #_name, .mode = _mode पूर्ण
 
-#define write_attribute(n)	__sysfs_attribute(n, 0200)
-#define read_attribute(n)	__sysfs_attribute(n, 0444)
-#define rw_attribute(n)		__sysfs_attribute(n, 0644)
+#घोषणा ग_लिखो_attribute(n)	__sysfs_attribute(n, 0200)
+#घोषणा पढ़ो_attribute(n)	__sysfs_attribute(n, 0444)
+#घोषणा rw_attribute(n)		__sysfs_attribute(n, 0644)
 
-#define sysfs_printf(file, fmt, ...)					\
-do {									\
-	if (attr == &sysfs_ ## file)					\
-		return snprintf(buf, PAGE_SIZE, fmt "\n", __VA_ARGS__);	\
-} while (0)
+#घोषणा sysfs_म_लिखो(file, fmt, ...)					\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file)					\
+		वापस snम_लिखो(buf, PAGE_SIZE, fmt "\n", __VA_ARGS__);	\
+पूर्ण जबतक (0)
 
-#define sysfs_print(file, var)						\
-do {									\
-	if (attr == &sysfs_ ## file)					\
-		return snprint(buf, PAGE_SIZE, var);			\
-} while (0)
+#घोषणा sysfs_prपूर्णांक(file, var)						\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file)					\
+		वापस snprपूर्णांक(buf, PAGE_SIZE, var);			\
+पूर्ण जबतक (0)
 
-#define sysfs_hprint(file, val)						\
-do {									\
-	if (attr == &sysfs_ ## file) {					\
-		ssize_t ret = bch_hprint(buf, val);			\
-		strcat(buf, "\n");					\
-		return ret + 1;						\
-	}								\
-} while (0)
+#घोषणा sysfs_hprपूर्णांक(file, val)						\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file) अणु					\
+		sमाप_प्रकार ret = bch_hprपूर्णांक(buf, val);			\
+		म_जोड़ो(buf, "\n");					\
+		वापस ret + 1;						\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define var_printf(_var, fmt)	sysfs_printf(_var, fmt, var(_var))
-#define var_print(_var)		sysfs_print(_var, var(_var))
-#define var_hprint(_var)	sysfs_hprint(_var, var(_var))
+#घोषणा var_म_लिखो(_var, fmt)	sysfs_म_लिखो(_var, fmt, var(_var))
+#घोषणा var_prपूर्णांक(_var)		sysfs_prपूर्णांक(_var, var(_var))
+#घोषणा var_hprपूर्णांक(_var)	sysfs_hprपूर्णांक(_var, var(_var))
 
-#define sysfs_strtoul(file, var)					\
-do {									\
-	if (attr == &sysfs_ ## file)					\
-		return strtoul_safe(buf, var) ?: (ssize_t) size;	\
-} while (0)
+#घोषणा sysfs_म_से_अदीर्घ(file, var)					\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file)					\
+		वापस म_से_अदीर्घ_safe(buf, var) ?: (sमाप_प्रकार) size;	\
+पूर्ण जबतक (0)
 
-#define sysfs_strtoul_bool(file, var)					\
-do {									\
-	if (attr == &sysfs_ ## file) {					\
-		unsigned long v = strtoul_or_return(buf);		\
+#घोषणा sysfs_म_से_अदीर्घ_bool(file, var)					\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file) अणु					\
+		अचिन्हित दीर्घ v = म_से_अदीर्घ_or_वापस(buf);		\
 									\
 		var = v ? 1 : 0;					\
-		return size;						\
-	}								\
-} while (0)
+		वापस size;						\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define sysfs_strtoul_clamp(file, var, min, max)			\
-do {									\
-	if (attr == &sysfs_ ## file) {					\
-		unsigned long v = 0;					\
-		ssize_t ret;						\
-		ret = strtoul_safe_clamp(buf, v, min, max);		\
-		if (!ret) {						\
+#घोषणा sysfs_म_से_अदीर्घ_clamp(file, var, min, max)			\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file) अणु					\
+		अचिन्हित दीर्घ v = 0;					\
+		sमाप_प्रकार ret;						\
+		ret = म_से_अदीर्घ_safe_clamp(buf, v, min, max);		\
+		अगर (!ret) अणु						\
 			var = v;					\
-			return size;					\
-		}							\
-		return ret;						\
-	}								\
-} while (0)
+			वापस size;					\
+		पूर्ण							\
+		वापस ret;						\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#define strtoul_or_return(cp)						\
-({									\
-	unsigned long _v;						\
-	int _r = kstrtoul(cp, 10, &_v);					\
-	if (_r)								\
-		return _r;						\
+#घोषणा म_से_अदीर्घ_or_वापस(cp)						\
+(अणु									\
+	अचिन्हित दीर्घ _v;						\
+	पूर्णांक _r = kम_से_अदीर्घ(cp, 10, &_v);					\
+	अगर (_r)								\
+		वापस _r;						\
 	_v;								\
-})
+पूर्ण)
 
-#define strtoi_h_or_return(cp, v)					\
-do {									\
-	int _r = strtoi_h(cp, &v);					\
-	if (_r)								\
-		return _r;						\
-} while (0)
+#घोषणा strtoi_h_or_वापस(cp, v)					\
+करो अणु									\
+	पूर्णांक _r = strtoi_h(cp, &v);					\
+	अगर (_r)								\
+		वापस _r;						\
+पूर्ण जबतक (0)
 
-#define sysfs_hatoi(file, var)						\
-do {									\
-	if (attr == &sysfs_ ## file)					\
-		return strtoi_h(buf, &var) ?: (ssize_t) size;		\
-} while (0)
+#घोषणा sysfs_hम_से_प(file, var)						\
+करो अणु									\
+	अगर (attr == &sysfs_ ## file)					\
+		वापस strtoi_h(buf, &var) ?: (sमाप_प्रकार) size;		\
+पूर्ण जबतक (0)
 
-#endif  /* _BCACHE_SYSFS_H_ */
+#पूर्ण_अगर  /* _BCACHE_SYSFS_H_ */

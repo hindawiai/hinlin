@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_CRT_H__
-#define __INTEL_CRT_H__
+#अगर_अघोषित __INTEL_CRT_H__
+#घोषणा __INTEL_CRT_H__
 
-#include "i915_reg.h"
+#समावेश "i915_reg.h"
 
-enum pipe;
-struct drm_encoder;
-struct drm_i915_private;
+क्रमागत pipe;
+काष्ठा drm_encoder;
+काष्ठा drm_i915_निजी;
 
-bool intel_crt_port_enabled(struct drm_i915_private *dev_priv,
-			    i915_reg_t adpa_reg, enum pipe *pipe);
-void intel_crt_init(struct drm_i915_private *dev_priv);
-void intel_crt_reset(struct drm_encoder *encoder);
+bool पूर्णांकel_crt_port_enabled(काष्ठा drm_i915_निजी *dev_priv,
+			    i915_reg_t adpa_reg, क्रमागत pipe *pipe);
+व्योम पूर्णांकel_crt_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_crt_reset(काष्ठा drm_encoder *encoder);
 
-#endif /* __INTEL_CRT_H__ */
+#पूर्ण_अगर /* __INTEL_CRT_H__ */

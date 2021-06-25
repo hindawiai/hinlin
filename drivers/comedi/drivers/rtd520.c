@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * comedi/drivers/rtd520.c
- * Comedi driver for Real Time Devices (RTD) PCI4520/DM7520
+ * Comedi driver क्रम Real Time Devices (RTD) PCI4520/DM7520
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2001 David A. Schleef <ds@schleef.org>
@@ -15,7 +16,7 @@
  * Author: Dan Christian
  * Status: Works. Only tested on DM7520-8. Not SMP safe.
  *
- * Configuration options: not applicable, uses PCI auto config
+ * Configuration options: not applicable, uses PCI स्वतः config
  */
 
 /*
@@ -24,211 +25,211 @@
  * The PCI4520 is a PCI card. The DM7520 is a PC/104-plus card.
  * Both have:
  *   8/16 12 bit ADC with FIFO and channel gain table
- *   8 bits high speed digital out (for external MUX) (or 8 in or 8 out)
- *   8 bits high speed digital in with FIFO and interrupt on change (or 8 IO)
+ *   8 bits high speed digital out (क्रम बाह्यal MUX) (or 8 in or 8 out)
+ *   8 bits high speed digital in with FIFO and पूर्णांकerrupt on change (or 8 IO)
  *   2 12 bit DACs with FIFOs
  *   2 bits output
  *   2 bits input
  *   bus mastering DMA
- *   timers: ADC sample, pacer, burst, about, delay, DA1, DA2
+ *   समयrs: ADC sample, pacer, burst, about, delay, DA1, DA2
  *   sample counter
- *   3 user timer/counters (8254)
- *   external interrupt
+ *   3 user समयr/counters (8254)
+ *   बाह्यal पूर्णांकerrupt
  *
  * The DM7520 has slightly fewer features (fewer gain steps).
  *
- * These boards can support external multiplexors and multi-board
- * synchronization, but this driver doesn't support that.
+ * These boards can support बाह्यal multiplexors and multi-board
+ * synchronization, but this driver करोesn't support that.
  *
- * Board docs: http://www.rtdusa.com/PC104/DM/analog%20IO/dm7520.htm
+ * Board करोcs: http://www.rtdusa.com/PC104/DM/analog%20IO/dm7520.hपंचांग
  * Data sheet: http://www.rtdusa.com/pdf/dm7520.pdf
  * Example source: http://www.rtdusa.com/examples/dm/dm7520.zip
- * Call them and ask for the register level manual.
+ * Call them and ask क्रम the रेजिस्टर level manual.
  * PCI chip: http://www.plxtech.com/products/io/pci9080
  *
  * Notes:
  * This board is memory mapped. There is some IO stuff, but it isn't needed.
  *
  * I use a pretty loose naming style within the driver (rtd_blah).
- * All externally visible names should be rtd520_blah.
- * I use camelCase for structures (and inside them).
- * I may also use upper CamelCase for function names (old habit).
+ * All बाह्यally visible names should be rtd520_blah.
+ * I use camelCase क्रम काष्ठाures (and inside them).
+ * I may also use upper CamelCase क्रम function names (old habit).
  *
  * This board is somewhat related to the RTD PCI4400 board.
  *
- * I borrowed heavily from the ni_mio_common, ni_atmio16d, mite, and
- * das1800, since they have the best documented code. Driver cb_pcidas64.c
+ * I borrowed heavily from the ni_mio_common, ni_aपंचांगio16d, mite, and
+ * das1800, since they have the best करोcumented code. Driver cb_pcidas64.c
  * uses the same DMA controller.
  *
- * As far as I can tell, the About interrupt doesn't work if Sample is
+ * As far as I can tell, the About पूर्णांकerrupt करोesn't work अगर Sample is
  * also enabled. It turns out that About really isn't needed, since
- * we always count down samples read.
+ * we always count करोwn samples पढ़ो.
  */
 
 /*
  * driver status:
  *
- * Analog-In supports instruction and command mode.
+ * Analog-In supports inकाष्ठाion and command mode.
  *
  * With DMA, you can sample at 1.15Mhz with 70% idle on a 400Mhz K6-2
- * (single channel, 64K read buffer). I get random system lockups when
- * using DMA with ALI-15xx based systems. I haven't been able to test
+ * (single channel, 64K पढ़ो buffer). I get अक्रमom प्रणाली lockups when
+ * using DMA with ALI-15xx based प्रणालीs. I haven't been able to test
  * any other chipsets. The lockups happen soon after the start of an
- * acquistion, not in the middle of a long run.
+ * acquistion, not in the middle of a दीर्घ run.
  *
- * Without DMA, you can do 620Khz sampling with 20% idle on a 400Mhz K6-2
- * (with a 256K read buffer).
+ * Without DMA, you can करो 620Khz sampling with 20% idle on a 400Mhz K6-2
+ * (with a 256K पढ़ो buffer).
  *
- * Digital-IO and Analog-Out only support instruction mode.
+ * Digital-IO and Analog-Out only support inकाष्ठाion mode.
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-#include "comedi_8254.h"
-#include "plx9080.h"
+#समावेश "comedi_8254.h"
+#समावेश "plx9080.h"
 
 /*
  * Local Address Space 0 Offsets
  */
-#define LAS0_USER_IO		0x0008	/* User I/O */
-#define LAS0_ADC		0x0010	/* FIFO Status/Software A/D Start */
-#define FS_DAC1_NOT_EMPTY	BIT(0)	/* DAC1 FIFO not empty */
-#define FS_DAC1_HEMPTY		BIT(1)	/* DAC1 FIFO half empty */
-#define FS_DAC1_NOT_FULL	BIT(2)	/* DAC1 FIFO not full */
-#define FS_DAC2_NOT_EMPTY	BIT(4)	/* DAC2 FIFO not empty */
-#define FS_DAC2_HEMPTY		BIT(5)	/* DAC2 FIFO half empty */
-#define FS_DAC2_NOT_FULL	BIT(6)	/* DAC2 FIFO not full */
-#define FS_ADC_NOT_EMPTY	BIT(8)	/* ADC FIFO not empty */
-#define FS_ADC_HEMPTY		BIT(9)	/* ADC FIFO half empty */
-#define FS_ADC_NOT_FULL		BIT(10)	/* ADC FIFO not full */
-#define FS_DIN_NOT_EMPTY	BIT(12)	/* DIN FIFO not empty */
-#define FS_DIN_HEMPTY		BIT(13)	/* DIN FIFO half empty */
-#define FS_DIN_NOT_FULL		BIT(14)	/* DIN FIFO not full */
-#define LAS0_UPDATE_DAC(x)	(0x0014 + ((x) * 0x4))	/* D/Ax Update (w) */
-#define LAS0_DAC		0x0024	/* Software Simultaneous Update (w) */
-#define LAS0_PACER		0x0028	/* Software Pacer Start/Stop */
-#define LAS0_TIMER		0x002c	/* Timer Status/HDIN Software Trig. */
-#define LAS0_IT			0x0030	/* Interrupt Status/Enable */
-#define IRQM_ADC_FIFO_WRITE	BIT(0)	/* ADC FIFO Write */
-#define IRQM_CGT_RESET		BIT(1)	/* Reset CGT */
-#define IRQM_CGT_PAUSE		BIT(3)	/* Pause CGT */
-#define IRQM_ADC_ABOUT_CNT	BIT(4)	/* About Counter out */
-#define IRQM_ADC_DELAY_CNT	BIT(5)	/* Delay Counter out */
-#define IRQM_ADC_SAMPLE_CNT	BIT(6)	/* ADC Sample Counter */
-#define IRQM_DAC1_UCNT		BIT(7)	/* DAC1 Update Counter */
-#define IRQM_DAC2_UCNT		BIT(8)	/* DAC2 Update Counter */
-#define IRQM_UTC1		BIT(9)	/* User TC1 out */
-#define IRQM_UTC1_INV		BIT(10)	/* User TC1 out, inverted */
-#define IRQM_UTC2		BIT(11)	/* User TC2 out */
-#define IRQM_DIGITAL_IT		BIT(12)	/* Digital Interrupt */
-#define IRQM_EXTERNAL_IT	BIT(13)	/* External Interrupt */
-#define IRQM_ETRIG_RISING	BIT(14)	/* Ext Trigger rising-edge */
-#define IRQM_ETRIG_FALLING	BIT(15)	/* Ext Trigger falling-edge */
-#define LAS0_CLEAR		0x0034	/* Clear/Set Interrupt Clear Mask */
-#define LAS0_OVERRUN		0x0038	/* Pending interrupts/Clear Overrun */
-#define LAS0_PCLK		0x0040	/* Pacer Clock (24bit) */
-#define LAS0_BCLK		0x0044	/* Burst Clock (10bit) */
-#define LAS0_ADC_SCNT		0x0048	/* A/D Sample counter (10bit) */
-#define LAS0_DAC1_UCNT		0x004c	/* D/A1 Update counter (10 bit) */
-#define LAS0_DAC2_UCNT		0x0050	/* D/A2 Update counter (10 bit) */
-#define LAS0_DCNT		0x0054	/* Delay counter (16 bit) */
-#define LAS0_ACNT		0x0058	/* About counter (16 bit) */
-#define LAS0_DAC_CLK		0x005c	/* DAC clock (16bit) */
-#define LAS0_8254_TIMER_BASE	0x0060	/* 8254 timer/counter base */
-#define LAS0_DIO0		0x0070	/* Digital I/O Port 0 */
-#define LAS0_DIO1		0x0074	/* Digital I/O Port 1 */
-#define LAS0_DIO0_CTRL		0x0078	/* Digital I/O Control */
-#define LAS0_DIO_STATUS		0x007c	/* Digital I/O Status */
-#define LAS0_BOARD_RESET	0x0100	/* Board reset */
-#define LAS0_DMA0_SRC		0x0104	/* DMA 0 Sources select */
-#define LAS0_DMA1_SRC		0x0108	/* DMA 1 Sources select */
-#define LAS0_ADC_CONVERSION	0x010c	/* A/D Conversion Signal select */
-#define LAS0_BURST_START	0x0110	/* Burst Clock Start Trigger select */
-#define LAS0_PACER_START	0x0114	/* Pacer Clock Start Trigger select */
-#define LAS0_PACER_STOP		0x0118	/* Pacer Clock Stop Trigger select */
-#define LAS0_ACNT_STOP_ENABLE	0x011c	/* About Counter Stop Enable */
-#define LAS0_PACER_REPEAT	0x0120	/* Pacer Start Trigger Mode select */
-#define LAS0_DIN_START		0x0124	/* HiSpd DI Sampling Signal select */
-#define LAS0_DIN_FIFO_CLEAR	0x0128	/* Digital Input FIFO Clear */
-#define LAS0_ADC_FIFO_CLEAR	0x012c	/* A/D FIFO Clear */
-#define LAS0_CGT_WRITE		0x0130	/* Channel Gain Table Write */
-#define LAS0_CGL_WRITE		0x0134	/* Channel Gain Latch Write */
-#define LAS0_CG_DATA		0x0138	/* Digital Table Write */
-#define LAS0_CGT_ENABLE		0x013c	/* Channel Gain Table Enable */
-#define LAS0_CG_ENABLE		0x0140	/* Digital Table Enable */
-#define LAS0_CGT_PAUSE		0x0144	/* Table Pause Enable */
-#define LAS0_CGT_RESET		0x0148	/* Reset Channel Gain Table */
-#define LAS0_CGT_CLEAR		0x014c	/* Clear Channel Gain Table */
-#define LAS0_DAC_CTRL(x)	(0x0150	+ ((x) * 0x14))	/* D/Ax type/range */
-#define LAS0_DAC_SRC(x)		(0x0154 + ((x) * 0x14))	/* D/Ax update source */
-#define LAS0_DAC_CYCLE(x)	(0x0158 + ((x) * 0x14))	/* D/Ax cycle mode */
-#define LAS0_DAC_RESET(x)	(0x015c + ((x) * 0x14))	/* D/Ax FIFO reset */
-#define LAS0_DAC_FIFO_CLEAR(x)	(0x0160 + ((x) * 0x14))	/* D/Ax FIFO clear */
-#define LAS0_ADC_SCNT_SRC	0x0178	/* A/D Sample Counter Source select */
-#define LAS0_PACER_SELECT	0x0180	/* Pacer Clock select */
-#define LAS0_SBUS0_SRC		0x0184	/* SyncBus 0 Source select */
-#define LAS0_SBUS0_ENABLE	0x0188	/* SyncBus 0 enable */
-#define LAS0_SBUS1_SRC		0x018c	/* SyncBus 1 Source select */
-#define LAS0_SBUS1_ENABLE	0x0190	/* SyncBus 1 enable */
-#define LAS0_SBUS2_SRC		0x0198	/* SyncBus 2 Source select */
-#define LAS0_SBUS2_ENABLE	0x019c	/* SyncBus 2 enable */
-#define LAS0_ETRG_POLARITY	0x01a4	/* Ext. Trigger polarity select */
-#define LAS0_EINT_POLARITY	0x01a8	/* Ext. Interrupt polarity select */
-#define LAS0_8254_CLK_SEL(x)	(0x01ac + ((x) * 0x8))	/* 8254 clock select */
-#define LAS0_8254_GATE_SEL(x)	(0x01b0 + ((x) * 0x8))	/* 8254 gate select */
-#define LAS0_UOUT0_SELECT	0x01c4	/* User Output 0 source select */
-#define LAS0_UOUT1_SELECT	0x01c8	/* User Output 1 source select */
-#define LAS0_DMA0_RESET		0x01cc	/* DMA0 Request state machine reset */
-#define LAS0_DMA1_RESET		0x01d0	/* DMA1 Request state machine reset */
+#घोषणा LAS0_USER_IO		0x0008	/* User I/O */
+#घोषणा LAS0_ADC		0x0010	/* FIFO Status/Software A/D Start */
+#घोषणा FS_DAC1_NOT_EMPTY	BIT(0)	/* DAC1 FIFO not empty */
+#घोषणा FS_DAC1_HEMPTY		BIT(1)	/* DAC1 FIFO half empty */
+#घोषणा FS_DAC1_NOT_FULL	BIT(2)	/* DAC1 FIFO not full */
+#घोषणा FS_DAC2_NOT_EMPTY	BIT(4)	/* DAC2 FIFO not empty */
+#घोषणा FS_DAC2_HEMPTY		BIT(5)	/* DAC2 FIFO half empty */
+#घोषणा FS_DAC2_NOT_FULL	BIT(6)	/* DAC2 FIFO not full */
+#घोषणा FS_ADC_NOT_EMPTY	BIT(8)	/* ADC FIFO not empty */
+#घोषणा FS_ADC_HEMPTY		BIT(9)	/* ADC FIFO half empty */
+#घोषणा FS_ADC_NOT_FULL		BIT(10)	/* ADC FIFO not full */
+#घोषणा FS_DIN_NOT_EMPTY	BIT(12)	/* DIN FIFO not empty */
+#घोषणा FS_DIN_HEMPTY		BIT(13)	/* DIN FIFO half empty */
+#घोषणा FS_DIN_NOT_FULL		BIT(14)	/* DIN FIFO not full */
+#घोषणा LAS0_UPDATE_DAC(x)	(0x0014 + ((x) * 0x4))	/* D/Ax Update (w) */
+#घोषणा LAS0_DAC		0x0024	/* Software Simultaneous Update (w) */
+#घोषणा LAS0_PACER		0x0028	/* Software Pacer Start/Stop */
+#घोषणा LAS0_TIMER		0x002c	/* Timer Status/HDIN Software Trig. */
+#घोषणा LAS0_IT			0x0030	/* Interrupt Status/Enable */
+#घोषणा IRQM_ADC_FIFO_WRITE	BIT(0)	/* ADC FIFO Write */
+#घोषणा IRQM_CGT_RESET		BIT(1)	/* Reset CGT */
+#घोषणा IRQM_CGT_PAUSE		BIT(3)	/* Pause CGT */
+#घोषणा IRQM_ADC_ABOUT_CNT	BIT(4)	/* About Counter out */
+#घोषणा IRQM_ADC_DELAY_CNT	BIT(5)	/* Delay Counter out */
+#घोषणा IRQM_ADC_SAMPLE_CNT	BIT(6)	/* ADC Sample Counter */
+#घोषणा IRQM_DAC1_UCNT		BIT(7)	/* DAC1 Update Counter */
+#घोषणा IRQM_DAC2_UCNT		BIT(8)	/* DAC2 Update Counter */
+#घोषणा IRQM_UTC1		BIT(9)	/* User TC1 out */
+#घोषणा IRQM_UTC1_INV		BIT(10)	/* User TC1 out, inverted */
+#घोषणा IRQM_UTC2		BIT(11)	/* User TC2 out */
+#घोषणा IRQM_DIGITAL_IT		BIT(12)	/* Digital Interrupt */
+#घोषणा IRQM_EXTERNAL_IT	BIT(13)	/* External Interrupt */
+#घोषणा IRQM_ETRIG_RISING	BIT(14)	/* Ext Trigger rising-edge */
+#घोषणा IRQM_ETRIG_FALLING	BIT(15)	/* Ext Trigger falling-edge */
+#घोषणा LAS0_CLEAR		0x0034	/* Clear/Set Interrupt Clear Mask */
+#घोषणा LAS0_OVERRUN		0x0038	/* Pending पूर्णांकerrupts/Clear Overrun */
+#घोषणा LAS0_PCLK		0x0040	/* Pacer Clock (24bit) */
+#घोषणा LAS0_BCLK		0x0044	/* Burst Clock (10bit) */
+#घोषणा LAS0_ADC_SCNT		0x0048	/* A/D Sample counter (10bit) */
+#घोषणा LAS0_DAC1_UCNT		0x004c	/* D/A1 Update counter (10 bit) */
+#घोषणा LAS0_DAC2_UCNT		0x0050	/* D/A2 Update counter (10 bit) */
+#घोषणा LAS0_DCNT		0x0054	/* Delay counter (16 bit) */
+#घोषणा LAS0_ACNT		0x0058	/* About counter (16 bit) */
+#घोषणा LAS0_DAC_CLK		0x005c	/* DAC घड़ी (16bit) */
+#घोषणा LAS0_8254_TIMER_BASE	0x0060	/* 8254 समयr/counter base */
+#घोषणा LAS0_DIO0		0x0070	/* Digital I/O Port 0 */
+#घोषणा LAS0_DIO1		0x0074	/* Digital I/O Port 1 */
+#घोषणा LAS0_DIO0_CTRL		0x0078	/* Digital I/O Control */
+#घोषणा LAS0_DIO_STATUS		0x007c	/* Digital I/O Status */
+#घोषणा LAS0_BOARD_RESET	0x0100	/* Board reset */
+#घोषणा LAS0_DMA0_SRC		0x0104	/* DMA 0 Sources select */
+#घोषणा LAS0_DMA1_SRC		0x0108	/* DMA 1 Sources select */
+#घोषणा LAS0_ADC_CONVERSION	0x010c	/* A/D Conversion Signal select */
+#घोषणा LAS0_BURST_START	0x0110	/* Burst Clock Start Trigger select */
+#घोषणा LAS0_PACER_START	0x0114	/* Pacer Clock Start Trigger select */
+#घोषणा LAS0_PACER_STOP		0x0118	/* Pacer Clock Stop Trigger select */
+#घोषणा LAS0_ACNT_STOP_ENABLE	0x011c	/* About Counter Stop Enable */
+#घोषणा LAS0_PACER_REPEAT	0x0120	/* Pacer Start Trigger Mode select */
+#घोषणा LAS0_DIN_START		0x0124	/* HiSpd DI Sampling Signal select */
+#घोषणा LAS0_DIN_FIFO_CLEAR	0x0128	/* Digital Input FIFO Clear */
+#घोषणा LAS0_ADC_FIFO_CLEAR	0x012c	/* A/D FIFO Clear */
+#घोषणा LAS0_CGT_WRITE		0x0130	/* Channel Gain Table Write */
+#घोषणा LAS0_CGL_WRITE		0x0134	/* Channel Gain Latch Write */
+#घोषणा LAS0_CG_DATA		0x0138	/* Digital Table Write */
+#घोषणा LAS0_CGT_ENABLE		0x013c	/* Channel Gain Table Enable */
+#घोषणा LAS0_CG_ENABLE		0x0140	/* Digital Table Enable */
+#घोषणा LAS0_CGT_PAUSE		0x0144	/* Table Pause Enable */
+#घोषणा LAS0_CGT_RESET		0x0148	/* Reset Channel Gain Table */
+#घोषणा LAS0_CGT_CLEAR		0x014c	/* Clear Channel Gain Table */
+#घोषणा LAS0_DAC_CTRL(x)	(0x0150	+ ((x) * 0x14))	/* D/Ax type/range */
+#घोषणा LAS0_DAC_SRC(x)		(0x0154 + ((x) * 0x14))	/* D/Ax update source */
+#घोषणा LAS0_DAC_CYCLE(x)	(0x0158 + ((x) * 0x14))	/* D/Ax cycle mode */
+#घोषणा LAS0_DAC_RESET(x)	(0x015c + ((x) * 0x14))	/* D/Ax FIFO reset */
+#घोषणा LAS0_DAC_FIFO_CLEAR(x)	(0x0160 + ((x) * 0x14))	/* D/Ax FIFO clear */
+#घोषणा LAS0_ADC_SCNT_SRC	0x0178	/* A/D Sample Counter Source select */
+#घोषणा LAS0_PACER_SELECT	0x0180	/* Pacer Clock select */
+#घोषणा LAS0_SBUS0_SRC		0x0184	/* SyncBus 0 Source select */
+#घोषणा LAS0_SBUS0_ENABLE	0x0188	/* SyncBus 0 enable */
+#घोषणा LAS0_SBUS1_SRC		0x018c	/* SyncBus 1 Source select */
+#घोषणा LAS0_SBUS1_ENABLE	0x0190	/* SyncBus 1 enable */
+#घोषणा LAS0_SBUS2_SRC		0x0198	/* SyncBus 2 Source select */
+#घोषणा LAS0_SBUS2_ENABLE	0x019c	/* SyncBus 2 enable */
+#घोषणा LAS0_ETRG_POLARITY	0x01a4	/* Ext. Trigger polarity select */
+#घोषणा LAS0_EINT_POLARITY	0x01a8	/* Ext. Interrupt polarity select */
+#घोषणा LAS0_8254_CLK_SEL(x)	(0x01ac + ((x) * 0x8))	/* 8254 घड़ी select */
+#घोषणा LAS0_8254_GATE_SEL(x)	(0x01b0 + ((x) * 0x8))	/* 8254 gate select */
+#घोषणा LAS0_UOUT0_SELECT	0x01c4	/* User Output 0 source select */
+#घोषणा LAS0_UOUT1_SELECT	0x01c8	/* User Output 1 source select */
+#घोषणा LAS0_DMA0_RESET		0x01cc	/* DMA0 Request state machine reset */
+#घोषणा LAS0_DMA1_RESET		0x01d0	/* DMA1 Request state machine reset */
 
 /*
  * Local Address Space 1 Offsets
  */
-#define LAS1_ADC_FIFO		0x0000	/* A/D FIFO (16bit) */
-#define LAS1_HDIO_FIFO		0x0004	/* HiSpd DI FIFO (16bit) */
-#define LAS1_DAC_FIFO(x)	(0x0008 + ((x) * 0x4))	/* D/Ax FIFO (16bit) */
+#घोषणा LAS1_ADC_FIFO		0x0000	/* A/D FIFO (16bit) */
+#घोषणा LAS1_HDIO_FIFO		0x0004	/* HiSpd DI FIFO (16bit) */
+#घोषणा LAS1_DAC_FIFO(x)	(0x0008 + ((x) * 0x4))	/* D/Ax FIFO (16bit) */
 
 /*
- * Driver specific stuff (tunable)
+ * Driver specअगरic stuff (tunable)
  */
 
 /*
  * We really only need 2 buffers.  More than that means being much
  * smarter about knowing which ones are full.
  */
-#define DMA_CHAIN_COUNT 2	/* max DMA segments/buffers in a ring (min 2) */
+#घोषणा DMA_CHAIN_COUNT 2	/* max DMA segments/buffers in a ring (min 2) */
 
-/* Target period for periodic transfers.  This sets the user read latency. */
+/* Target period क्रम periodic transfers.  This sets the user पढ़ो latency. */
 /* Note: There are certain rates where we give this up and transfer 1/2 FIFO */
 /* If this is too low, efficiency is poor */
-#define TRANS_TARGET_PERIOD 10000000	/* 10 ms (in nanoseconds) */
+#घोषणा TRANS_TARGET_PERIOD 10000000	/* 10 ms (in nanoseconds) */
 
-/* Set a practical limit on how long a list to support (affects memory use) */
+/* Set a practical limit on how दीर्घ a list to support (affects memory use) */
 /* The board support a channel list up to the FIFO length (1K or 8K) */
-#define RTD_MAX_CHANLIST	128	/* max channel list that we allow */
+#घोषणा RTD_MAX_CHANLIST	128	/* max channel list that we allow */
 
 /*
- * Board specific stuff
+ * Board specअगरic stuff
  */
 
-#define RTD_CLOCK_RATE	8000000	/* 8Mhz onboard clock */
-#define RTD_CLOCK_BASE	125	/* clock period in ns */
+#घोषणा RTD_CLOCK_RATE	8000000	/* 8Mhz onboard घड़ी */
+#घोषणा RTD_CLOCK_BASE	125	/* घड़ी period in ns */
 
 /* Note: these speed are slower than the spec, but fit the counter resolution*/
-#define RTD_MAX_SPEED	1625	/* when sampling, in nanoseconds */
-/* max speed if we don't have to wait for settling */
-#define RTD_MAX_SPEED_1	875	/* if single channel, in nanoseconds */
+#घोषणा RTD_MAX_SPEED	1625	/* when sampling, in nanoseconds */
+/* max speed अगर we करोn't have to रुको क्रम settling */
+#घोषणा RTD_MAX_SPEED_1	875	/* अगर single channel, in nanoseconds */
 
-#define RTD_MIN_SPEED	2097151875	/* (24bit counter) in nanoseconds */
+#घोषणा RTD_MIN_SPEED	2097151875	/* (24bit counter) in nanoseconds */
 /* min speed when only 1 channel (no burst counter) */
-#define RTD_MIN_SPEED_1	5000000	/* 200Hz, in nanoseconds */
+#घोषणा RTD_MIN_SPEED_1	5000000	/* 200Hz, in nanoseconds */
 
 /* Setup continuous ring of 1/2 FIFO transfers.  See RTD manual p91 */
-#define DMA_MODE_BITS (\
+#घोषणा DMA_MODE_BITS (\
 		       PLX_LOCAL_BUS_16_WIDE_BITS \
 		       | PLX_DMA_EN_READYIN_BIT \
 		       | PLX_DMA_LOCAL_BURST_EN_BIT \
@@ -237,20 +238,20 @@
 		       | PLX_LOCAL_ADDR_CONST_BIT \
 		       | PLX_DEMAND_MODE_BIT)
 
-#define DMA_TRANSFER_BITS (\
+#घोषणा DMA_TRANSFER_BITS (\
 /* descriptors in PCI memory*/  PLX_DESC_IN_PCI_BIT \
-/* interrupt at end of block */ | PLX_INTR_TERM_COUNT \
+/* पूर्णांकerrupt at end of block */ | PLX_INTR_TERM_COUNT \
 /* from board to PCI */		| PLX_XFER_LOCAL_TO_PCI)
 
 /*
- * Comedi specific stuff
+ * Comedi specअगरic stuff
  */
 
 /*
  * The board has 3 input modes and the gains of 1,2,4,...32 (, 64, 128)
  */
-static const struct comedi_lrange rtd_ai_7520_range = {
-	18, {
+अटल स्थिर काष्ठा comedi_lrange rtd_ai_7520_range = अणु
+	18, अणु
 		/* +-5V input range gain steps */
 		BIP_RANGE(5.0),
 		BIP_RANGE(5.0 / 2),
@@ -272,12 +273,12 @@ static const struct comedi_lrange rtd_ai_7520_range = {
 		UNI_RANGE(10.0 / 8),
 		UNI_RANGE(10.0 / 16),
 		UNI_RANGE(10.0 / 32),
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* PCI4520 has two more gains (6 more entries) */
-static const struct comedi_lrange rtd_ai_4520_range = {
-	24, {
+अटल स्थिर काष्ठा comedi_lrange rtd_ai_4520_range = अणु
+	24, अणु
 		/* +-5V input range gain steps */
 		BIP_RANGE(5.0),
 		BIP_RANGE(5.0 / 2),
@@ -305,393 +306,393 @@ static const struct comedi_lrange rtd_ai_4520_range = {
 		UNI_RANGE(10.0 / 32),
 		UNI_RANGE(10.0 / 64),
 		UNI_RANGE(10.0 / 128),
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* Table order matches range values */
-static const struct comedi_lrange rtd_ao_range = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange rtd_ao_range = अणु
+	4, अणु
 		UNI_RANGE(5),
 		UNI_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(10),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-enum rtd_boardid {
+क्रमागत rtd_boardid अणु
 	BOARD_DM7520,
 	BOARD_PCI4520,
-};
+पूर्ण;
 
-struct rtd_boardinfo {
-	const char *name;
-	int range_bip10;	/* start of +-10V range */
-	int range_uni10;	/* start of +10V range */
-	const struct comedi_lrange *ai_range;
-};
+काष्ठा rtd_boardinfo अणु
+	स्थिर अक्षर *name;
+	पूर्णांक range_bip10;	/* start of +-10V range */
+	पूर्णांक range_uni10;	/* start of +10V range */
+	स्थिर काष्ठा comedi_lrange *ai_range;
+पूर्ण;
 
-static const struct rtd_boardinfo rtd520_boards[] = {
-	[BOARD_DM7520] = {
+अटल स्थिर काष्ठा rtd_boardinfo rtd520_boards[] = अणु
+	[BOARD_DM7520] = अणु
 		.name		= "DM7520",
 		.range_bip10	= 6,
 		.range_uni10	= 12,
 		.ai_range	= &rtd_ai_7520_range,
-	},
-	[BOARD_PCI4520] = {
+	पूर्ण,
+	[BOARD_PCI4520] = अणु
 		.name		= "PCI4520",
 		.range_bip10	= 8,
 		.range_uni10	= 16,
 		.ai_range	= &rtd_ai_4520_range,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct rtd_private {
-	/* memory mapped board structures */
-	void __iomem *las1;
-	void __iomem *lcfg;
+काष्ठा rtd_निजी अणु
+	/* memory mapped board काष्ठाures */
+	व्योम __iomem *las1;
+	व्योम __iomem *lcfg;
 
-	long ai_count;		/* total transfer size (samples) */
-	int xfer_count;		/* # to transfer data. 0->1/2FIFO */
-	int flags;		/* flag event modes */
-	unsigned int fifosz;
+	दीर्घ ai_count;		/* total transfer size (samples) */
+	पूर्णांक xfer_count;		/* # to transfer data. 0->1/2FIFO */
+	पूर्णांक flags;		/* flag event modes */
+	अचिन्हित पूर्णांक fअगरosz;
 
-	/* 8254 Timer/Counter gate and clock sources */
-	unsigned char timer_gate_src[3];
-	unsigned char timer_clk_src[3];
-};
+	/* 8254 Timer/Counter gate and घड़ी sources */
+	अचिन्हित अक्षर समयr_gate_src[3];
+	अचिन्हित अक्षर समयr_clk_src[3];
+पूर्ण;
 
-/* bit defines for "flags" */
-#define SEND_EOS	0x01	/* send End Of Scan events */
-#define DMA0_ACTIVE	0x02	/* DMA0 is active */
-#define DMA1_ACTIVE	0x04	/* DMA1 is active */
+/* bit defines क्रम "flags" */
+#घोषणा SEND_EOS	0x01	/* send End Of Scan events */
+#घोषणा DMA0_ACTIVE	0x02	/* DMA0 is active */
+#घोषणा DMA1_ACTIVE	0x04	/* DMA1 is active */
 
 /*
- * Given a desired period and the clock period (both in ns), return the
- * proper counter value (divider-1). Sets the original period to be the
+ * Given a desired period and the घड़ी period (both in ns), वापस the
+ * proper counter value (भागider-1). Sets the original period to be the
  * true value.
- * Note: you have to check if the value is larger than the counter range!
+ * Note: you have to check अगर the value is larger than the counter range!
  */
-static int rtd_ns_to_timer_base(unsigned int *nanosec,
-				unsigned int flags, int base)
-{
-	int divider;
+अटल पूर्णांक rtd_ns_to_समयr_base(अचिन्हित पूर्णांक *nanosec,
+				अचिन्हित पूर्णांक flags, पूर्णांक base)
+अणु
+	पूर्णांक भागider;
 
-	switch (flags & CMDF_ROUND_MASK) {
-	case CMDF_ROUND_NEAREST:
-	default:
-		divider = DIV_ROUND_CLOSEST(*nanosec, base);
-		break;
-	case CMDF_ROUND_DOWN:
-		divider = (*nanosec) / base;
-		break;
-	case CMDF_ROUND_UP:
-		divider = DIV_ROUND_UP(*nanosec, base);
-		break;
-	}
-	if (divider < 2)
-		divider = 2;	/* min is divide by 2 */
+	चयन (flags & CMDF_ROUND_MASK) अणु
+	हाल CMDF_ROUND_NEAREST:
+	शेष:
+		भागider = DIV_ROUND_CLOSEST(*nanosec, base);
+		अवरोध;
+	हाल CMDF_ROUND_DOWN:
+		भागider = (*nanosec) / base;
+		अवरोध;
+	हाल CMDF_ROUND_UP:
+		भागider = DIV_ROUND_UP(*nanosec, base);
+		अवरोध;
+	पूर्ण
+	अगर (भागider < 2)
+		भागider = 2;	/* min is भागide by 2 */
 
 	/*
-	 * Note: we don't check for max, because different timers
-	 * have different ranges
+	 * Note: we करोn't check क्रम max, because dअगरferent समयrs
+	 * have dअगरferent ranges
 	 */
 
-	*nanosec = base * divider;
-	return divider - 1;	/* countdown is divisor+1 */
-}
+	*nanosec = base * भागider;
+	वापस भागider - 1;	/* countकरोwn is भागisor+1 */
+पूर्ण
 
 /*
- * Given a desired period (in ns), return the proper counter value
- * (divider-1) for the internal clock. Sets the original period to
+ * Given a desired period (in ns), वापस the proper counter value
+ * (भागider-1) क्रम the पूर्णांकernal घड़ी. Sets the original period to
  * be the true value.
  */
-static int rtd_ns_to_timer(unsigned int *ns, unsigned int flags)
-{
-	return rtd_ns_to_timer_base(ns, flags, RTD_CLOCK_BASE);
-}
+अटल पूर्णांक rtd_ns_to_समयr(अचिन्हित पूर्णांक *ns, अचिन्हित पूर्णांक flags)
+अणु
+	वापस rtd_ns_to_समयr_base(ns, flags, RTD_CLOCK_BASE);
+पूर्ण
 
 /* Convert a single comedi channel-gain entry to a RTD520 table entry */
-static unsigned short rtd_convert_chan_gain(struct comedi_device *dev,
-					    unsigned int chanspec, int index)
-{
-	const struct rtd_boardinfo *board = dev->board_ptr;
-	unsigned int chan = CR_CHAN(chanspec);
-	unsigned int range = CR_RANGE(chanspec);
-	unsigned int aref = CR_AREF(chanspec);
-	unsigned short r = 0;
+अटल अचिन्हित लघु rtd_convert_chan_gain(काष्ठा comedi_device *dev,
+					    अचिन्हित पूर्णांक chanspec, पूर्णांक index)
+अणु
+	स्थिर काष्ठा rtd_boardinfo *board = dev->board_ptr;
+	अचिन्हित पूर्णांक chan = CR_CHAN(chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(chanspec);
+	अचिन्हित पूर्णांक aref = CR_AREF(chanspec);
+	अचिन्हित लघु r = 0;
 
 	r |= chan & 0xf;
 
 	/* Note: we also setup the channel list bipolar flag array */
-	if (range < board->range_bip10) {
+	अगर (range < board->range_bip10) अणु
 		/* +-5 range */
 		r |= 0x000;
 		r |= (range & 0x7) << 4;
-	} else if (range < board->range_uni10) {
+	पूर्ण अन्यथा अगर (range < board->range_uni10) अणु
 		/* +-10 range */
 		r |= 0x100;
 		r |= ((range - board->range_bip10) & 0x7) << 4;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* +10 range */
 		r |= 0x200;
 		r |= ((range - board->range_uni10) & 0x7) << 4;
-	}
+	पूर्ण
 
-	switch (aref) {
-	case AREF_GROUND:	/* on-board ground */
-		break;
+	चयन (aref) अणु
+	हाल AREF_GROUND:	/* on-board ground */
+		अवरोध;
 
-	case AREF_COMMON:
-		r |= 0x80;	/* ref external analog common */
-		break;
+	हाल AREF_COMMON:
+		r |= 0x80;	/* ref बाह्यal analog common */
+		अवरोध;
 
-	case AREF_DIFF:
-		r |= 0x400;	/* differential inputs */
-		break;
+	हाल AREF_DIFF:
+		r |= 0x400;	/* dअगरferential inमाला_दो */
+		अवरोध;
 
-	case AREF_OTHER:	/* ??? */
-		break;
-	}
-	return r;
-}
+	हाल AREF_OTHER:	/* ??? */
+		अवरोध;
+	पूर्ण
+	वापस r;
+पूर्ण
 
 /* Setup the channel-gain table from a comedi list */
-static void rtd_load_channelgain_list(struct comedi_device *dev,
-				      unsigned int n_chan, unsigned int *list)
-{
-	if (n_chan > 1) {	/* setup channel gain table */
-		int ii;
+अटल व्योम rtd_load_channelgain_list(काष्ठा comedi_device *dev,
+				      अचिन्हित पूर्णांक n_chan, अचिन्हित पूर्णांक *list)
+अणु
+	अगर (n_chan > 1) अणु	/* setup channel gain table */
+		पूर्णांक ii;
 
-		writel(0, dev->mmio + LAS0_CGT_CLEAR);
-		writel(1, dev->mmio + LAS0_CGT_ENABLE);
-		for (ii = 0; ii < n_chan; ii++) {
-			writel(rtd_convert_chan_gain(dev, list[ii], ii),
+		ग_लिखोl(0, dev->mmio + LAS0_CGT_CLEAR);
+		ग_लिखोl(1, dev->mmio + LAS0_CGT_ENABLE);
+		क्रम (ii = 0; ii < n_chan; ii++) अणु
+			ग_लिखोl(rtd_convert_chan_gain(dev, list[ii], ii),
 			       dev->mmio + LAS0_CGT_WRITE);
-		}
-	} else {		/* just use the channel gain latch */
-		writel(0, dev->mmio + LAS0_CGT_ENABLE);
-		writel(rtd_convert_chan_gain(dev, list[0], 0),
+		पूर्ण
+	पूर्ण अन्यथा अणु		/* just use the channel gain latch */
+		ग_लिखोl(0, dev->mmio + LAS0_CGT_ENABLE);
+		ग_लिखोl(rtd_convert_chan_gain(dev, list[0], 0),
 		       dev->mmio + LAS0_CGL_WRITE);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Determine fifo size by doing adc conversions until the fifo half
+ * Determine fअगरo size by करोing adc conversions until the fअगरo half
  * empty status flag clears.
  */
-static int rtd520_probe_fifo_depth(struct comedi_device *dev)
-{
-	unsigned int chanspec = CR_PACK(0, 0, AREF_GROUND);
-	unsigned int i;
-	static const unsigned int limit = 0x2000;
-	unsigned int fifo_size = 0;
+अटल पूर्णांक rtd520_probe_fअगरo_depth(काष्ठा comedi_device *dev)
+अणु
+	अचिन्हित पूर्णांक chanspec = CR_PACK(0, 0, AREF_GROUND);
+	अचिन्हित पूर्णांक i;
+	अटल स्थिर अचिन्हित पूर्णांक limit = 0x2000;
+	अचिन्हित पूर्णांक fअगरo_size = 0;
 
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
 	rtd_load_channelgain_list(dev, 1, &chanspec);
 	/* ADC conversion trigger source: SOFTWARE */
-	writel(0, dev->mmio + LAS0_ADC_CONVERSION);
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_CONVERSION);
 	/* convert  samples */
-	for (i = 0; i < limit; ++i) {
-		unsigned int fifo_status;
+	क्रम (i = 0; i < limit; ++i) अणु
+		अचिन्हित पूर्णांक fअगरo_status;
 		/* trigger conversion */
-		writew(0, dev->mmio + LAS0_ADC);
+		ग_लिखोw(0, dev->mmio + LAS0_ADC);
 		usleep_range(1, 1000);
-		fifo_status = readl(dev->mmio + LAS0_ADC);
-		if ((fifo_status & FS_ADC_HEMPTY) == 0) {
-			fifo_size = 2 * i;
-			break;
-		}
-	}
-	if (i == limit) {
+		fअगरo_status = पढ़ोl(dev->mmio + LAS0_ADC);
+		अगर ((fअगरo_status & FS_ADC_HEMPTY) == 0) अणु
+			fअगरo_size = 2 * i;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (i == limit) अणु
 		dev_info(dev->class_dev, "failed to probe fifo size.\n");
-		return -EIO;
-	}
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
-	if (fifo_size != 0x400 && fifo_size != 0x2000) {
+		वापस -EIO;
+	पूर्ण
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	अगर (fअगरo_size != 0x400 && fअगरo_size != 0x2000) अणु
 		dev_info(dev->class_dev,
 			 "unexpected fifo size of %i, expected 1024 or 8192.\n",
-			 fifo_size);
-		return -EIO;
-	}
-	return fifo_size;
-}
+			 fअगरo_size);
+		वापस -EIO;
+	पूर्ण
+	वापस fअगरo_size;
+पूर्ण
 
-static int rtd_ai_eoc(struct comedi_device *dev,
-		      struct comedi_subdevice *s,
-		      struct comedi_insn *insn,
-		      unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक rtd_ai_eoc(काष्ठा comedi_device *dev,
+		      काष्ठा comedi_subdevice *s,
+		      काष्ठा comedi_insn *insn,
+		      अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
-	status = readl(dev->mmio + LAS0_ADC);
-	if (status & FS_ADC_NOT_EMPTY)
-		return 0;
-	return -EBUSY;
-}
+	status = पढ़ोl(dev->mmio + LAS0_ADC);
+	अगर (status & FS_ADC_NOT_EMPTY)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int rtd_ai_rinsn(struct comedi_device *dev,
-			struct comedi_subdevice *s, struct comedi_insn *insn,
-			unsigned int *data)
-{
-	struct rtd_private *devpriv = dev->private;
-	unsigned int range = CR_RANGE(insn->chanspec);
-	int ret;
-	int n;
+अटल पूर्णांक rtd_ai_rinsn(काष्ठा comedi_device *dev,
+			काष्ठा comedi_subdevice *s, काष्ठा comedi_insn *insn,
+			अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	पूर्णांक ret;
+	पूर्णांक n;
 
-	/* clear any old fifo data */
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	/* clear any old fअगरo data */
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
 
-	/* write channel to multiplexer and clear channel gain table */
+	/* ग_लिखो channel to multiplexer and clear channel gain table */
 	rtd_load_channelgain_list(dev, 1, &insn->chanspec);
 
 	/* ADC conversion trigger source: SOFTWARE */
-	writel(0, dev->mmio + LAS0_ADC_CONVERSION);
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_CONVERSION);
 
 	/* convert n samples */
-	for (n = 0; n < insn->n; n++) {
-		unsigned short d;
+	क्रम (n = 0; n < insn->n; n++) अणु
+		अचिन्हित लघु d;
 		/* trigger conversion */
-		writew(0, dev->mmio + LAS0_ADC);
+		ग_लिखोw(0, dev->mmio + LAS0_ADC);
 
-		ret = comedi_timeout(dev, s, insn, rtd_ai_eoc, 0);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, rtd_ai_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
-		/* read data */
-		d = readw(devpriv->las1 + LAS1_ADC_FIFO);
+		/* पढ़ो data */
+		d = पढ़ोw(devpriv->las1 + LAS1_ADC_FIFO);
 		d >>= 3;	/* low 3 bits are marker lines */
 
-		/* convert bipolar data to comedi unsigned data */
-		if (comedi_range_is_bipolar(s, range))
+		/* convert bipolar data to comedi अचिन्हित data */
+		अगर (comedi_range_is_bipolar(s, range))
 			d = comedi_offset_munge(s, d);
 
 		data[n] = d & s->maxdata;
-	}
+	पूर्ण
 
-	/* return the number of samples read/written */
-	return n;
-}
+	/* वापस the number of samples पढ़ो/written */
+	वापस n;
+पूर्ण
 
-static int ai_read_n(struct comedi_device *dev, struct comedi_subdevice *s,
-		     int count)
-{
-	struct rtd_private *devpriv = dev->private;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	int ii;
+अटल पूर्णांक ai_पढ़ो_n(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+		     पूर्णांक count)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	पूर्णांक ii;
 
-	for (ii = 0; ii < count; ii++) {
-		unsigned int range = CR_RANGE(cmd->chanlist[async->cur_chan]);
-		unsigned short d;
+	क्रम (ii = 0; ii < count; ii++) अणु
+		अचिन्हित पूर्णांक range = CR_RANGE(cmd->chanlist[async->cur_chan]);
+		अचिन्हित लघु d;
 
-		if (devpriv->ai_count == 0) {	/* done */
-			d = readw(devpriv->las1 + LAS1_ADC_FIFO);
-			continue;
-		}
+		अगर (devpriv->ai_count == 0) अणु	/* करोne */
+			d = पढ़ोw(devpriv->las1 + LAS1_ADC_FIFO);
+			जारी;
+		पूर्ण
 
-		d = readw(devpriv->las1 + LAS1_ADC_FIFO);
+		d = पढ़ोw(devpriv->las1 + LAS1_ADC_FIFO);
 		d >>= 3;	/* low 3 bits are marker lines */
 
-		/* convert bipolar data to comedi unsigned data */
-		if (comedi_range_is_bipolar(s, range))
+		/* convert bipolar data to comedi अचिन्हित data */
+		अगर (comedi_range_is_bipolar(s, range))
 			d = comedi_offset_munge(s, d);
 		d &= s->maxdata;
 
-		if (!comedi_buf_write_samples(s, &d, 1))
-			return -1;
+		अगर (!comedi_buf_ग_लिखो_samples(s, &d, 1))
+			वापस -1;
 
-		if (devpriv->ai_count > 0)	/* < 0, means read forever */
+		अगर (devpriv->ai_count > 0)	/* < 0, means पढ़ो क्रमever */
 			devpriv->ai_count--;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rtd_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct rtd_private *devpriv = dev->private;
+अटल irqवापस_t rtd_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
 	u32 overrun;
 	u16 status;
-	u16 fifo_status;
+	u16 fअगरo_status;
 
-	if (!dev->attached)
-		return IRQ_NONE;
+	अगर (!dev->attached)
+		वापस IRQ_NONE;
 
-	fifo_status = readl(dev->mmio + LAS0_ADC);
-	/* check for FIFO full, this automatically halts the ADC! */
-	if (!(fifo_status & FS_ADC_NOT_FULL))	/* 0 -> full */
-		goto xfer_abort;
+	fअगरo_status = पढ़ोl(dev->mmio + LAS0_ADC);
+	/* check क्रम FIFO full, this स्वतःmatically halts the ADC! */
+	अगर (!(fअगरo_status & FS_ADC_NOT_FULL))	/* 0 -> full */
+		जाओ xfer_पात;
 
-	status = readw(dev->mmio + LAS0_IT);
-	/* if interrupt was not caused by our board, or handled above */
-	if (status == 0)
-		return IRQ_HANDLED;
+	status = पढ़ोw(dev->mmio + LAS0_IT);
+	/* अगर पूर्णांकerrupt was not caused by our board, or handled above */
+	अगर (status == 0)
+		वापस IRQ_HANDLED;
 
-	if (status & IRQM_ADC_ABOUT_CNT) {	/* sample count -> read FIFO */
+	अगर (status & IRQM_ADC_ABOUT_CNT) अणु	/* sample count -> पढ़ो FIFO */
 		/*
-		 * since the priority interrupt controller may have queued
-		 * a sample counter interrupt, even though we have already
+		 * since the priority पूर्णांकerrupt controller may have queued
+		 * a sample counter पूर्णांकerrupt, even though we have alपढ़ोy
 		 * finished, we must handle the possibility that there is
 		 * no data here
 		 */
-		if (!(fifo_status & FS_ADC_HEMPTY)) {
+		अगर (!(fअगरo_status & FS_ADC_HEMPTY)) अणु
 			/* FIFO half full */
-			if (ai_read_n(dev, s, devpriv->fifosz / 2) < 0)
-				goto xfer_abort;
+			अगर (ai_पढ़ो_n(dev, s, devpriv->fअगरosz / 2) < 0)
+				जाओ xfer_पात;
 
-			if (devpriv->ai_count == 0)
-				goto xfer_done;
-		} else if (devpriv->xfer_count > 0) {
-			if (fifo_status & FS_ADC_NOT_EMPTY) {
+			अगर (devpriv->ai_count == 0)
+				जाओ xfer_करोne;
+		पूर्ण अन्यथा अगर (devpriv->xfer_count > 0) अणु
+			अगर (fअगरo_status & FS_ADC_NOT_EMPTY) अणु
 				/* FIFO not empty */
-				if (ai_read_n(dev, s, devpriv->xfer_count) < 0)
-					goto xfer_abort;
+				अगर (ai_पढ़ो_n(dev, s, devpriv->xfer_count) < 0)
+					जाओ xfer_पात;
 
-				if (devpriv->ai_count == 0)
-					goto xfer_done;
-			}
-		}
-	}
+				अगर (devpriv->ai_count == 0)
+					जाओ xfer_करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	overrun = readl(dev->mmio + LAS0_OVERRUN) & 0xffff;
-	if (overrun)
-		goto xfer_abort;
+	overrun = पढ़ोl(dev->mmio + LAS0_OVERRUN) & 0xffff;
+	अगर (overrun)
+		जाओ xfer_पात;
 
-	/* clear the interrupt */
-	writew(status, dev->mmio + LAS0_CLEAR);
-	readw(dev->mmio + LAS0_CLEAR);
+	/* clear the पूर्णांकerrupt */
+	ग_लिखोw(status, dev->mmio + LAS0_CLEAR);
+	पढ़ोw(dev->mmio + LAS0_CLEAR);
 
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
-xfer_abort:
+xfer_पात:
 	s->async->events |= COMEDI_CB_ERROR;
 
-xfer_done:
+xfer_करोne:
 	s->async->events |= COMEDI_CB_EOA;
 
-	/* clear the interrupt */
-	status = readw(dev->mmio + LAS0_IT);
-	writew(status, dev->mmio + LAS0_CLEAR);
-	readw(dev->mmio + LAS0_CLEAR);
+	/* clear the पूर्णांकerrupt */
+	status = पढ़ोw(dev->mmio + LAS0_IT);
+	ग_लिखोw(status, dev->mmio + LAS0_CLEAR);
+	पढ़ोw(dev->mmio + LAS0_CLEAR);
 
-	fifo_status = readl(dev->mmio + LAS0_ADC);
-	overrun = readl(dev->mmio + LAS0_OVERRUN) & 0xffff;
+	fअगरo_status = पढ़ोl(dev->mmio + LAS0_ADC);
+	overrun = पढ़ोl(dev->mmio + LAS0_OVERRUN) & 0xffff;
 
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rtd_ai_cmdtest(struct comedi_device *dev,
-			  struct comedi_subdevice *s, struct comedi_cmd *cmd)
-{
-	int err = 0;
-	unsigned int arg;
+अटल पूर्णांक rtd_ai_cmdtest(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_subdevice *s, काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक arg;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src,
@@ -701,8 +702,8 @@ static int rtd_ai_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -712,394 +713,394 @@ static int rtd_ai_cmdtest(struct comedi_device *dev,
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 
-	if (cmd->scan_begin_src == TRIG_TIMER) {
-		/* Note: these are time periods, not actual rates */
-		if (cmd->chanlist_len == 1) {	/* no scanning */
-			if (comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
-							 RTD_MAX_SPEED_1)) {
-				rtd_ns_to_timer(&cmd->scan_begin_arg,
+	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
+		/* Note: these are समय periods, not actual rates */
+		अगर (cmd->chanlist_len == 1) अणु	/* no scanning */
+			अगर (comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
+							 RTD_MAX_SPEED_1)) अणु
+				rtd_ns_to_समयr(&cmd->scan_begin_arg,
 						CMDF_ROUND_UP);
 				err |= -EINVAL;
-			}
-			if (comedi_check_trigger_arg_max(&cmd->scan_begin_arg,
-							 RTD_MIN_SPEED_1)) {
-				rtd_ns_to_timer(&cmd->scan_begin_arg,
+			पूर्ण
+			अगर (comedi_check_trigger_arg_max(&cmd->scan_begin_arg,
+							 RTD_MIN_SPEED_1)) अणु
+				rtd_ns_to_समयr(&cmd->scan_begin_arg,
 						CMDF_ROUND_DOWN);
 				err |= -EINVAL;
-			}
-		} else {
-			if (comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
-							 RTD_MAX_SPEED)) {
-				rtd_ns_to_timer(&cmd->scan_begin_arg,
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (comedi_check_trigger_arg_min(&cmd->scan_begin_arg,
+							 RTD_MAX_SPEED)) अणु
+				rtd_ns_to_समयr(&cmd->scan_begin_arg,
 						CMDF_ROUND_UP);
 				err |= -EINVAL;
-			}
-			if (comedi_check_trigger_arg_max(&cmd->scan_begin_arg,
-							 RTD_MIN_SPEED)) {
-				rtd_ns_to_timer(&cmd->scan_begin_arg,
+			पूर्ण
+			अगर (comedi_check_trigger_arg_max(&cmd->scan_begin_arg,
+							 RTD_MIN_SPEED)) अणु
+				rtd_ns_to_समयr(&cmd->scan_begin_arg,
 						CMDF_ROUND_DOWN);
 				err |= -EINVAL;
-			}
-		}
-	} else {
-		/* external trigger */
-		/* should be level/edge, hi/lo specification here */
-		/* should specify multiple external triggers */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* बाह्यal trigger */
+		/* should be level/edge, hi/lo specअगरication here */
+		/* should specअगरy multiple बाह्यal triggers */
 		err |= comedi_check_trigger_arg_max(&cmd->scan_begin_arg, 9);
-	}
+	पूर्ण
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		if (cmd->chanlist_len == 1) {	/* no scanning */
-			if (comedi_check_trigger_arg_min(&cmd->convert_arg,
-							 RTD_MAX_SPEED_1)) {
-				rtd_ns_to_timer(&cmd->convert_arg,
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		अगर (cmd->chanlist_len == 1) अणु	/* no scanning */
+			अगर (comedi_check_trigger_arg_min(&cmd->convert_arg,
+							 RTD_MAX_SPEED_1)) अणु
+				rtd_ns_to_समयr(&cmd->convert_arg,
 						CMDF_ROUND_UP);
 				err |= -EINVAL;
-			}
-			if (comedi_check_trigger_arg_max(&cmd->convert_arg,
-							 RTD_MIN_SPEED_1)) {
-				rtd_ns_to_timer(&cmd->convert_arg,
+			पूर्ण
+			अगर (comedi_check_trigger_arg_max(&cmd->convert_arg,
+							 RTD_MIN_SPEED_1)) अणु
+				rtd_ns_to_समयr(&cmd->convert_arg,
 						CMDF_ROUND_DOWN);
 				err |= -EINVAL;
-			}
-		} else {
-			if (comedi_check_trigger_arg_min(&cmd->convert_arg,
-							 RTD_MAX_SPEED)) {
-				rtd_ns_to_timer(&cmd->convert_arg,
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (comedi_check_trigger_arg_min(&cmd->convert_arg,
+							 RTD_MAX_SPEED)) अणु
+				rtd_ns_to_समयr(&cmd->convert_arg,
 						CMDF_ROUND_UP);
 				err |= -EINVAL;
-			}
-			if (comedi_check_trigger_arg_max(&cmd->convert_arg,
-							 RTD_MIN_SPEED)) {
-				rtd_ns_to_timer(&cmd->convert_arg,
+			पूर्ण
+			अगर (comedi_check_trigger_arg_max(&cmd->convert_arg,
+							 RTD_MIN_SPEED)) अणु
+				rtd_ns_to_समयr(&cmd->convert_arg,
 						CMDF_ROUND_DOWN);
 				err |= -EINVAL;
-			}
-		}
-	} else {
-		/* external trigger */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* बाह्यal trigger */
 		/* see above */
 		err |= comedi_check_trigger_arg_max(&cmd->convert_arg, 9);
-	}
+	पूर्ण
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* step 4: fix up any arguments */
 
-	if (cmd->scan_begin_src == TRIG_TIMER) {
+	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
 		arg = cmd->scan_begin_arg;
-		rtd_ns_to_timer(&arg, cmd->flags);
+		rtd_ns_to_समयr(&arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, arg);
-	}
+	पूर्ण
 
-	if (cmd->convert_src == TRIG_TIMER) {
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		arg = cmd->convert_arg;
-		rtd_ns_to_timer(&arg, cmd->flags);
+		rtd_ns_to_समयr(&arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, arg);
 
-		if (cmd->scan_begin_src == TRIG_TIMER) {
+		अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
 			arg = cmd->convert_arg * cmd->scan_end_arg;
 			err |= comedi_check_trigger_arg_min(
 					&cmd->scan_begin_arg, arg);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (err)
-		return 4;
+	अगर (err)
+		वापस 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtd_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct rtd_private *devpriv = dev->private;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	int timer;
+अटल पूर्णांक rtd_ai_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	पूर्णांक समयr;
 
 	/* stop anything currently running */
 	/* pacer stop source: SOFTWARE */
-	writel(0, dev->mmio + LAS0_PACER_STOP);
-	writel(0, dev->mmio + LAS0_PACER);	/* stop pacer */
-	writel(0, dev->mmio + LAS0_ADC_CONVERSION);
-	writew(0, dev->mmio + LAS0_IT);
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
-	writel(0, dev->mmio + LAS0_OVERRUN);
+	ग_लिखोl(0, dev->mmio + LAS0_PACER_STOP);
+	ग_लिखोl(0, dev->mmio + LAS0_PACER);	/* stop pacer */
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_CONVERSION);
+	ग_लिखोw(0, dev->mmio + LAS0_IT);
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	ग_लिखोl(0, dev->mmio + LAS0_OVERRUN);
 
 	/* start configuration */
 	/* load channel list and reset CGT */
 	rtd_load_channelgain_list(dev, cmd->chanlist_len, cmd->chanlist);
 
-	/* setup the common case and override if needed */
-	if (cmd->chanlist_len > 1) {
+	/* setup the common हाल and override अगर needed */
+	अगर (cmd->chanlist_len > 1) अणु
 		/* pacer start source: SOFTWARE */
-		writel(0, dev->mmio + LAS0_PACER_START);
+		ग_लिखोl(0, dev->mmio + LAS0_PACER_START);
 		/* burst trigger source: PACER */
-		writel(1, dev->mmio + LAS0_BURST_START);
+		ग_लिखोl(1, dev->mmio + LAS0_BURST_START);
 		/* ADC conversion trigger source: BURST */
-		writel(2, dev->mmio + LAS0_ADC_CONVERSION);
-	} else {		/* single channel */
+		ग_लिखोl(2, dev->mmio + LAS0_ADC_CONVERSION);
+	पूर्ण अन्यथा अणु		/* single channel */
 		/* pacer start source: SOFTWARE */
-		writel(0, dev->mmio + LAS0_PACER_START);
+		ग_लिखोl(0, dev->mmio + LAS0_PACER_START);
 		/* ADC conversion trigger source: PACER */
-		writel(1, dev->mmio + LAS0_ADC_CONVERSION);
-	}
-	writel((devpriv->fifosz / 2 - 1) & 0xffff, dev->mmio + LAS0_ACNT);
+		ग_लिखोl(1, dev->mmio + LAS0_ADC_CONVERSION);
+	पूर्ण
+	ग_लिखोl((devpriv->fअगरosz / 2 - 1) & 0xffff, dev->mmio + LAS0_ACNT);
 
-	if (cmd->scan_begin_src == TRIG_TIMER) {
+	अगर (cmd->scan_begin_src == TRIG_TIMER) अणु
 		/* scan_begin_arg is in nanoseconds */
-		/* find out how many samples to wait before transferring */
-		if (cmd->flags & CMDF_WAKE_EOS) {
+		/* find out how many samples to रुको beक्रमe transferring */
+		अगर (cmd->flags & CMDF_WAKE_EOS) अणु
 			/*
-			 * this may generate un-sustainable interrupt rates
-			 * the application is responsible for doing the
+			 * this may generate un-sustainable पूर्णांकerrupt rates
+			 * the application is responsible क्रम करोing the
 			 * right thing
 			 */
 			devpriv->xfer_count = cmd->chanlist_len;
 			devpriv->flags |= SEND_EOS;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* arrange to transfer data periodically */
 			devpriv->xfer_count =
 			    (TRANS_TARGET_PERIOD * cmd->chanlist_len) /
 			    cmd->scan_begin_arg;
-			if (devpriv->xfer_count < cmd->chanlist_len) {
-				/* transfer after each scan (and avoid 0) */
+			अगर (devpriv->xfer_count < cmd->chanlist_len) अणु
+				/* transfer after each scan (and aव्योम 0) */
 				devpriv->xfer_count = cmd->chanlist_len;
-			} else {	/* make a multiple of scan length */
+			पूर्ण अन्यथा अणु	/* make a multiple of scan length */
 				devpriv->xfer_count =
 				    DIV_ROUND_UP(devpriv->xfer_count,
 						 cmd->chanlist_len);
 				devpriv->xfer_count *= cmd->chanlist_len;
-			}
+			पूर्ण
 			devpriv->flags |= SEND_EOS;
-		}
-		if (devpriv->xfer_count >= (devpriv->fifosz / 2)) {
-			/* out of counter range, use 1/2 fifo instead */
+		पूर्ण
+		अगर (devpriv->xfer_count >= (devpriv->fअगरosz / 2)) अणु
+			/* out of counter range, use 1/2 fअगरo instead */
 			devpriv->xfer_count = 0;
 			devpriv->flags &= ~SEND_EOS;
-		} else {
-			/* interrupt for each transfer */
-			writel((devpriv->xfer_count - 1) & 0xffff,
+		पूर्ण अन्यथा अणु
+			/* पूर्णांकerrupt क्रम each transfer */
+			ग_लिखोl((devpriv->xfer_count - 1) & 0xffff,
 			       dev->mmio + LAS0_ACNT);
-		}
-	} else {		/* unknown timing, just use 1/2 FIFO */
+		पूर्ण
+	पूर्ण अन्यथा अणु		/* unknown timing, just use 1/2 FIFO */
 		devpriv->xfer_count = 0;
 		devpriv->flags &= ~SEND_EOS;
-	}
-	/* pacer clock source: INTERNAL 8MHz */
-	writel(1, dev->mmio + LAS0_PACER_SELECT);
-	/* just interrupt, don't stop */
-	writel(1, dev->mmio + LAS0_ACNT_STOP_ENABLE);
+	पूर्ण
+	/* pacer घड़ी source: INTERNAL 8MHz */
+	ग_लिखोl(1, dev->mmio + LAS0_PACER_SELECT);
+	/* just पूर्णांकerrupt, करोn't stop */
+	ग_लिखोl(1, dev->mmio + LAS0_ACNT_STOP_ENABLE);
 
-	/* BUG??? these look like enumerated values, but they are bit fields */
+	/* BUG??? these look like क्रमागतerated values, but they are bit fields */
 
 	/* First, setup when to stop */
-	switch (cmd->stop_src) {
-	case TRIG_COUNT:	/* stop after N scans */
+	चयन (cmd->stop_src) अणु
+	हाल TRIG_COUNT:	/* stop after N scans */
 		devpriv->ai_count = cmd->stop_arg * cmd->chanlist_len;
-		if ((devpriv->xfer_count > 0) &&
-		    (devpriv->xfer_count > devpriv->ai_count)) {
+		अगर ((devpriv->xfer_count > 0) &&
+		    (devpriv->xfer_count > devpriv->ai_count)) अणु
 			devpriv->xfer_count = devpriv->ai_count;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case TRIG_NONE:	/* stop when cancel is called */
-		devpriv->ai_count = -1;	/* read forever */
-		break;
-	}
+	हाल TRIG_NONE:	/* stop when cancel is called */
+		devpriv->ai_count = -1;	/* पढ़ो क्रमever */
+		अवरोध;
+	पूर्ण
 
 	/* Scan timing */
-	switch (cmd->scan_begin_src) {
-	case TRIG_TIMER:	/* periodic scanning */
-		timer = rtd_ns_to_timer(&cmd->scan_begin_arg,
+	चयन (cmd->scan_begin_src) अणु
+	हाल TRIG_TIMER:	/* periodic scanning */
+		समयr = rtd_ns_to_समयr(&cmd->scan_begin_arg,
 					CMDF_ROUND_NEAREST);
-		/* set PACER clock */
-		writel(timer & 0xffffff, dev->mmio + LAS0_PCLK);
+		/* set PACER घड़ी */
+		ग_लिखोl(समयr & 0xffffff, dev->mmio + LAS0_PCLK);
 
-		break;
+		अवरोध;
 
-	case TRIG_EXT:
+	हाल TRIG_EXT:
 		/* pacer start source: EXTERNAL */
-		writel(1, dev->mmio + LAS0_PACER_START);
-		break;
-	}
+		ग_लिखोl(1, dev->mmio + LAS0_PACER_START);
+		अवरोध;
+	पूर्ण
 
 	/* Sample timing within a scan */
-	switch (cmd->convert_src) {
-	case TRIG_TIMER:	/* periodic */
-		if (cmd->chanlist_len > 1) {
-			/* only needed for multi-channel */
-			timer = rtd_ns_to_timer(&cmd->convert_arg,
+	चयन (cmd->convert_src) अणु
+	हाल TRIG_TIMER:	/* periodic */
+		अगर (cmd->chanlist_len > 1) अणु
+			/* only needed क्रम multi-channel */
+			समयr = rtd_ns_to_समयr(&cmd->convert_arg,
 						CMDF_ROUND_NEAREST);
-			/* setup BURST clock */
-			writel(timer & 0x3ff, dev->mmio + LAS0_BCLK);
-		}
+			/* setup BURST घड़ी */
+			ग_लिखोl(समयr & 0x3ff, dev->mmio + LAS0_BCLK);
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case TRIG_EXT:		/* external */
+	हाल TRIG_EXT:		/* बाह्यal */
 		/* burst trigger source: EXTERNAL */
-		writel(2, dev->mmio + LAS0_BURST_START);
-		break;
-	}
+		ग_लिखोl(2, dev->mmio + LAS0_BURST_START);
+		अवरोध;
+	पूर्ण
 	/* end configuration */
 
 	/*
-	 * This doesn't seem to work.  There is no way to clear an interrupt
+	 * This करोesn't seem to work.  There is no way to clear an पूर्णांकerrupt
 	 * that the priority controller has queued!
 	 */
-	writew(~0, dev->mmio + LAS0_CLEAR);
-	readw(dev->mmio + LAS0_CLEAR);
+	ग_लिखोw(~0, dev->mmio + LAS0_CLEAR);
+	पढ़ोw(dev->mmio + LAS0_CLEAR);
 
-	/* TODO: allow multiple interrupt sources */
+	/* TODO: allow multiple पूर्णांकerrupt sources */
 	/* transfer every N samples */
-	writew(IRQM_ADC_ABOUT_CNT, dev->mmio + LAS0_IT);
+	ग_लिखोw(IRQM_ADC_ABOUT_CNT, dev->mmio + LAS0_IT);
 
 	/* BUG: start_src is ASSUMED to be TRIG_NOW */
-	/* BUG? it seems like things are running before the "start" */
-	readl(dev->mmio + LAS0_PACER);	/* start pacer */
-	return 0;
-}
+	/* BUG? it seems like things are running beक्रमe the "start" */
+	पढ़ोl(dev->mmio + LAS0_PACER);	/* start pacer */
+	वापस 0;
+पूर्ण
 
-static int rtd_ai_cancel(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct rtd_private *devpriv = dev->private;
+अटल पूर्णांक rtd_ai_cancel(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
 
 	/* pacer stop source: SOFTWARE */
-	writel(0, dev->mmio + LAS0_PACER_STOP);
-	writel(0, dev->mmio + LAS0_PACER);	/* stop pacer */
-	writel(0, dev->mmio + LAS0_ADC_CONVERSION);
-	writew(0, dev->mmio + LAS0_IT);
-	devpriv->ai_count = 0;	/* stop and don't transfer any more */
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
-	return 0;
-}
+	ग_लिखोl(0, dev->mmio + LAS0_PACER_STOP);
+	ग_लिखोl(0, dev->mmio + LAS0_PACER);	/* stop pacer */
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_CONVERSION);
+	ग_लिखोw(0, dev->mmio + LAS0_IT);
+	devpriv->ai_count = 0;	/* stop and करोn't transfer any more */
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	वापस 0;
+पूर्ण
 
-static int rtd_ao_eoc(struct comedi_device *dev,
-		      struct comedi_subdevice *s,
-		      struct comedi_insn *insn,
-		      unsigned long context)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int bit = (chan == 0) ? FS_DAC1_NOT_EMPTY : FS_DAC2_NOT_EMPTY;
-	unsigned int status;
+अटल पूर्णांक rtd_ao_eoc(काष्ठा comedi_device *dev,
+		      काष्ठा comedi_subdevice *s,
+		      काष्ठा comedi_insn *insn,
+		      अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक bit = (chan == 0) ? FS_DAC1_NOT_EMPTY : FS_DAC2_NOT_EMPTY;
+	अचिन्हित पूर्णांक status;
 
-	status = readl(dev->mmio + LAS0_ADC);
-	if (status & bit)
-		return 0;
-	return -EBUSY;
-}
+	status = पढ़ोl(dev->mmio + LAS0_ADC);
+	अगर (status & bit)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int rtd_ao_insn_write(struct comedi_device *dev,
-			     struct comedi_subdevice *s,
-			     struct comedi_insn *insn,
-			     unsigned int *data)
-{
-	struct rtd_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	int ret;
-	int i;
+अटल पूर्णांक rtd_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+			     काष्ठा comedi_subdevice *s,
+			     काष्ठा comedi_insn *insn,
+			     अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/* Configure the output range (table index matches the range values) */
-	writew(range & 7, dev->mmio + LAS0_DAC_CTRL(chan));
+	ग_लिखोw(range & 7, dev->mmio + LAS0_DAC_CTRL(chan));
 
-	for (i = 0; i < insn->n; ++i) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; ++i) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
 		/* bipolar uses 2's complement values with an extended sign */
-		if (comedi_range_is_bipolar(s, range)) {
+		अगर (comedi_range_is_bipolar(s, range)) अणु
 			val = comedi_offset_munge(s, val);
 			val |= (val & ((s->maxdata + 1) >> 1)) << 1;
-		}
+		पूर्ण
 
-		/* shift the 12-bit data (+ sign) to match the register */
+		/* shअगरt the 12-bit data (+ sign) to match the रेजिस्टर */
 		val <<= 3;
 
-		writew(val, devpriv->las1 + LAS1_DAC_FIFO(chan));
-		writew(0, dev->mmio + LAS0_UPDATE_DAC(chan));
+		ग_लिखोw(val, devpriv->las1 + LAS1_DAC_FIFO(chan));
+		ग_लिखोw(0, dev->mmio + LAS0_UPDATE_DAC(chan));
 
-		ret = comedi_timeout(dev, s, insn, rtd_ao_eoc, 0);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, rtd_ao_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
-		s->readback[chan] = data[i];
-	}
+		s->पढ़ोback[chan] = data[i];
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int rtd_dio_insn_bits(struct comedi_device *dev,
-			     struct comedi_subdevice *s,
-			     struct comedi_insn *insn,
-			     unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
-		writew(s->state & 0xff, dev->mmio + LAS0_DIO0);
+अटल पूर्णांक rtd_dio_insn_bits(काष्ठा comedi_device *dev,
+			     काष्ठा comedi_subdevice *s,
+			     काष्ठा comedi_insn *insn,
+			     अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
+		ग_लिखोw(s->state & 0xff, dev->mmio + LAS0_DIO0);
 
-	data[1] = readw(dev->mmio + LAS0_DIO0) & 0xff;
+	data[1] = पढ़ोw(dev->mmio + LAS0_DIO0) & 0xff;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int rtd_dio_insn_config(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक rtd_dio_insn_config(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* TODO support digital match interrupts and strobes */
+	/* TODO support digital match पूर्णांकerrupts and strobes */
 
 	/* set direction */
-	writew(0x01, dev->mmio + LAS0_DIO_STATUS);
-	writew(s->io_bits & 0xff, dev->mmio + LAS0_DIO0_CTRL);
+	ग_लिखोw(0x01, dev->mmio + LAS0_DIO_STATUS);
+	ग_लिखोw(s->io_bits & 0xff, dev->mmio + LAS0_DIO0_CTRL);
 
-	/* clear interrupts */
-	writew(0x00, dev->mmio + LAS0_DIO_STATUS);
+	/* clear पूर्णांकerrupts */
+	ग_लिखोw(0x00, dev->mmio + LAS0_DIO_STATUS);
 
 	/* port1 can only be all input or all output */
 
 	/* there are also 2 user input lines and 2 user output lines */
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int rtd_counter_insn_config(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   struct comedi_insn *insn,
-				   unsigned int *data)
-{
-	struct rtd_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int max_src;
-	unsigned int src;
+अटल पूर्णांक rtd_counter_insn_config(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   काष्ठा comedi_insn *insn,
+				   अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक max_src;
+	अचिन्हित पूर्णांक src;
 
-	switch (data[0]) {
-	case INSN_CONFIG_SET_GATE_SRC:
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_SET_GATE_SRC:
 		/*
 		 * 8254 Timer/Counter gate sources:
 		 *
-		 * 0 = Not gated, free running (reset state)
+		 * 0 = Not gated, मुक्त running (reset state)
 		 * 1 = Gated, off
 		 * 2 = Ext. TC Gate 1
 		 * 3 = Ext. TC Gate 2
@@ -1107,145 +1108,145 @@ static int rtd_counter_insn_config(struct comedi_device *dev,
 		 */
 		src = data[2];
 		max_src = (chan == 0) ? 3 : 4;
-		if (src > max_src)
-			return -EINVAL;
+		अगर (src > max_src)
+			वापस -EINVAL;
 
-		devpriv->timer_gate_src[chan] = src;
-		writeb(src, dev->mmio + LAS0_8254_GATE_SEL(chan));
-		break;
-	case INSN_CONFIG_GET_GATE_SRC:
-		data[2] = devpriv->timer_gate_src[chan];
-		break;
-	case INSN_CONFIG_SET_CLOCK_SRC:
+		devpriv->समयr_gate_src[chan] = src;
+		ग_लिखोb(src, dev->mmio + LAS0_8254_GATE_SEL(chan));
+		अवरोध;
+	हाल INSN_CONFIG_GET_GATE_SRC:
+		data[2] = devpriv->समयr_gate_src[chan];
+		अवरोध;
+	हाल INSN_CONFIG_SET_CLOCK_SRC:
 		/*
-		 * 8254 Timer/Counter clock sources:
+		 * 8254 Timer/Counter घड़ी sources:
 		 *
 		 * 0 = 8 MHz (reset state)
 		 * 1 = Ext. TC Clock 1
 		 * 2 = Ext. TX Clock 2
 		 * 3 = Ext. Pacer Clock
 		 * 4 = Previous TC out (chan 1 and 2 only)
-		 * 5 = High-Speed Digital Input Sampling signal (chan 1 only)
+		 * 5 = High-Speed Digital Input Sampling संकेत (chan 1 only)
 		 */
 		src = data[1];
-		switch (chan) {
-		case 0:
+		चयन (chan) अणु
+		हाल 0:
 			max_src = 3;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			max_src = 5;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			max_src = 4;
-			break;
-		default:
-			return -EINVAL;
-		}
-		if (src > max_src)
-			return -EINVAL;
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अगर (src > max_src)
+			वापस -EINVAL;
 
-		devpriv->timer_clk_src[chan] = src;
-		writeb(src, dev->mmio + LAS0_8254_CLK_SEL(chan));
-		break;
-	case INSN_CONFIG_GET_CLOCK_SRC:
-		src = devpriv->timer_clk_src[chan];
-		data[1] = devpriv->timer_clk_src[chan];
+		devpriv->समयr_clk_src[chan] = src;
+		ग_लिखोb(src, dev->mmio + LAS0_8254_CLK_SEL(chan));
+		अवरोध;
+	हाल INSN_CONFIG_GET_CLOCK_SRC:
+		src = devpriv->समयr_clk_src[chan];
+		data[1] = devpriv->समयr_clk_src[chan];
 		data[2] = (src == 0) ? RTD_CLOCK_BASE : 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void rtd_reset(struct comedi_device *dev)
-{
-	struct rtd_private *devpriv = dev->private;
+अटल व्योम rtd_reset(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
 
-	writel(0, dev->mmio + LAS0_BOARD_RESET);
+	ग_लिखोl(0, dev->mmio + LAS0_BOARD_RESET);
 	usleep_range(100, 1000);	/* needed? */
-	writel(0, devpriv->lcfg + PLX_REG_INTCSR);
-	writew(0, dev->mmio + LAS0_IT);
-	writew(~0, dev->mmio + LAS0_CLEAR);
-	readw(dev->mmio + LAS0_CLEAR);
-}
+	ग_लिखोl(0, devpriv->lcfg + PLX_REG_INTCSR);
+	ग_लिखोw(0, dev->mmio + LAS0_IT);
+	ग_लिखोw(~0, dev->mmio + LAS0_CLEAR);
+	पढ़ोw(dev->mmio + LAS0_CLEAR);
+पूर्ण
 
 /*
  * initialize board, per RTD spec
- * also, initialize shadow registers
+ * also, initialize shaकरोw रेजिस्टरs
  */
-static void rtd_init_board(struct comedi_device *dev)
-{
+अटल व्योम rtd_init_board(काष्ठा comedi_device *dev)
+अणु
 	rtd_reset(dev);
 
-	writel(0, dev->mmio + LAS0_OVERRUN);
-	writel(0, dev->mmio + LAS0_CGT_CLEAR);
-	writel(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
-	writel(0, dev->mmio + LAS0_DAC_RESET(0));
-	writel(0, dev->mmio + LAS0_DAC_RESET(1));
-	/* clear digital IO fifo */
-	writew(0, dev->mmio + LAS0_DIO_STATUS);
+	ग_लिखोl(0, dev->mmio + LAS0_OVERRUN);
+	ग_लिखोl(0, dev->mmio + LAS0_CGT_CLEAR);
+	ग_लिखोl(0, dev->mmio + LAS0_ADC_FIFO_CLEAR);
+	ग_लिखोl(0, dev->mmio + LAS0_DAC_RESET(0));
+	ग_लिखोl(0, dev->mmio + LAS0_DAC_RESET(1));
+	/* clear digital IO fअगरo */
+	ग_लिखोw(0, dev->mmio + LAS0_DIO_STATUS);
 	/* TODO: set user out source ??? */
-}
+पूर्ण
 
-/* The RTD driver does this */
-static void rtd_pci_latency_quirk(struct comedi_device *dev,
-				  struct pci_dev *pcidev)
-{
-	unsigned char pci_latency;
+/* The RTD driver करोes this */
+अटल व्योम rtd_pci_latency_quirk(काष्ठा comedi_device *dev,
+				  काष्ठा pci_dev *pcidev)
+अणु
+	अचिन्हित अक्षर pci_latency;
 
-	pci_read_config_byte(pcidev, PCI_LATENCY_TIMER, &pci_latency);
-	if (pci_latency < 32) {
+	pci_पढ़ो_config_byte(pcidev, PCI_LATENCY_TIMER, &pci_latency);
+	अगर (pci_latency < 32) अणु
 		dev_info(dev->class_dev,
 			 "PCI latency changed from %d to %d\n",
 			 pci_latency, 32);
-		pci_write_config_byte(pcidev, PCI_LATENCY_TIMER, 32);
-	}
-}
+		pci_ग_लिखो_config_byte(pcidev, PCI_LATENCY_TIMER, 32);
+	पूर्ण
+पूर्ण
 
-static int rtd_auto_attach(struct comedi_device *dev,
-			   unsigned long context)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	const struct rtd_boardinfo *board = NULL;
-	struct rtd_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक rtd_स्वतः_attach(काष्ठा comedi_device *dev,
+			   अचिन्हित दीर्घ context)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	स्थिर काष्ठा rtd_boardinfo *board = शून्य;
+	काष्ठा rtd_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
-	if (context < ARRAY_SIZE(rtd520_boards))
+	अगर (context < ARRAY_SIZE(rtd520_boards))
 		board = &rtd520_boards[context];
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dev->mmio = pci_ioremap_bar(pcidev, 2);
 	devpriv->las1 = pci_ioremap_bar(pcidev, 3);
 	devpriv->lcfg = pci_ioremap_bar(pcidev, 0);
-	if (!dev->mmio || !devpriv->las1 || !devpriv->lcfg)
-		return -ENOMEM;
+	अगर (!dev->mmio || !devpriv->las1 || !devpriv->lcfg)
+		वापस -ENOMEM;
 
 	rtd_pci_latency_quirk(dev, pcidev);
 
-	if (pcidev->irq) {
-		ret = request_irq(pcidev->irq, rtd_interrupt, IRQF_SHARED,
+	अगर (pcidev->irq) अणु
+		ret = request_irq(pcidev->irq, rtd_पूर्णांकerrupt, IRQF_SHARED,
 				  dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = pcidev->irq;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, 4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[0];
 	/* analog input subdevice */
@@ -1255,14 +1256,14 @@ static int rtd_auto_attach(struct comedi_device *dev,
 	s->maxdata	= 0x0fff;
 	s->range_table	= board->ai_range;
 	s->len_chanlist	= RTD_MAX_CHANLIST;
-	s->insn_read	= rtd_ai_rinsn;
-	if (dev->irq) {
-		dev->read_subdev = s;
+	s->insn_पढ़ो	= rtd_ai_rinsn;
+	अगर (dev->irq) अणु
+		dev->पढ़ो_subdev = s;
 		s->subdev_flags	|= SDF_CMD_READ;
-		s->do_cmd	= rtd_ai_cmd;
-		s->do_cmdtest	= rtd_ai_cmdtest;
+		s->करो_cmd	= rtd_ai_cmd;
+		s->करो_cmdtest	= rtd_ai_cmdtest;
 		s->cancel	= rtd_ai_cancel;
-	}
+	पूर्ण
 
 	s = &dev->subdevices[1];
 	/* analog output subdevice */
@@ -1271,11 +1272,11 @@ static int rtd_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 2;
 	s->maxdata	= 0x0fff;
 	s->range_table	= &rtd_ao_range;
-	s->insn_write	= rtd_ao_insn_write;
+	s->insn_ग_लिखो	= rtd_ao_insn_ग_लिखो;
 
-	ret = comedi_alloc_subdev_readback(s);
-	if (ret)
-		return ret;
+	ret = comedi_alloc_subdev_पढ़ोback(s);
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[2];
 	/* digital i/o subdevice */
@@ -1292,72 +1293,72 @@ static int rtd_auto_attach(struct comedi_device *dev,
 	s = &dev->subdevices[3];
 	dev->pacer = comedi_8254_mm_init(dev->mmio + LAS0_8254_TIMER_BASE,
 					 RTD_CLOCK_BASE, I8254_IO8, 2);
-	if (!dev->pacer)
-		return -ENOMEM;
+	अगर (!dev->pacer)
+		वापस -ENOMEM;
 
 	comedi_8254_subdevice_init(s, dev->pacer);
 	dev->pacer->insn_config = rtd_counter_insn_config;
 
 	rtd_init_board(dev);
 
-	ret = rtd520_probe_fifo_depth(dev);
-	if (ret < 0)
-		return ret;
-	devpriv->fifosz = ret;
+	ret = rtd520_probe_fअगरo_depth(dev);
+	अगर (ret < 0)
+		वापस ret;
+	devpriv->fअगरosz = ret;
 
-	if (dev->irq)
-		writel(PLX_INTCSR_PIEN | PLX_INTCSR_PLIEN,
+	अगर (dev->irq)
+		ग_लिखोl(PLX_INTCSR_PIEN | PLX_INTCSR_PLIEN,
 		       devpriv->lcfg + PLX_REG_INTCSR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtd_detach(struct comedi_device *dev)
-{
-	struct rtd_private *devpriv = dev->private;
+अटल व्योम rtd_detach(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा rtd_निजी *devpriv = dev->निजी;
 
-	if (devpriv) {
-		/* Shut down any board ops by resetting it */
-		if (dev->mmio && devpriv->lcfg)
+	अगर (devpriv) अणु
+		/* Shut करोwn any board ops by resetting it */
+		अगर (dev->mmio && devpriv->lcfg)
 			rtd_reset(dev);
-		if (dev->irq)
-			free_irq(dev->irq, dev);
-		if (dev->mmio)
+		अगर (dev->irq)
+			मुक्त_irq(dev->irq, dev);
+		अगर (dev->mmio)
 			iounmap(dev->mmio);
-		if (devpriv->las1)
+		अगर (devpriv->las1)
 			iounmap(devpriv->las1);
-		if (devpriv->lcfg)
+		अगर (devpriv->lcfg)
 			iounmap(devpriv->lcfg);
-	}
+	पूर्ण
 	comedi_pci_disable(dev);
-}
+पूर्ण
 
-static struct comedi_driver rtd520_driver = {
+अटल काष्ठा comedi_driver rtd520_driver = अणु
 	.driver_name	= "rtd520",
 	.module		= THIS_MODULE,
-	.auto_attach	= rtd_auto_attach,
+	.स्वतः_attach	= rtd_स्वतः_attach,
 	.detach		= rtd_detach,
-};
+पूर्ण;
 
-static int rtd520_pci_probe(struct pci_dev *dev,
-			    const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &rtd520_driver, id->driver_data);
-}
+अटल पूर्णांक rtd520_pci_probe(काष्ठा pci_dev *dev,
+			    स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &rtd520_driver, id->driver_data);
+पूर्ण
 
-static const struct pci_device_id rtd520_pci_table[] = {
-	{ PCI_VDEVICE(RTD, 0x7520), BOARD_DM7520 },
-	{ PCI_VDEVICE(RTD, 0x4520), BOARD_PCI4520 },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id rtd520_pci_table[] = अणु
+	अणु PCI_VDEVICE(RTD, 0x7520), BOARD_DM7520 पूर्ण,
+	अणु PCI_VDEVICE(RTD, 0x4520), BOARD_PCI4520 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, rtd520_pci_table);
 
-static struct pci_driver rtd520_pci_driver = {
+अटल काष्ठा pci_driver rtd520_pci_driver = अणु
 	.name		= "rtd520",
 	.id_table	= rtd520_pci_table,
 	.probe		= rtd520_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(rtd520_driver, rtd520_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

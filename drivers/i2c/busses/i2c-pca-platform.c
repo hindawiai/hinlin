@@ -1,254 +1,255 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  i2c_pca_platform.c
+ *  i2c_pca_platक्रमm.c
  *
- *  Platform driver for the PCA9564 I2C controller.
+ *  Platक्रमm driver क्रम the PCA9564 I2C controller.
  *
  *  Copyright (C) 2008 Pengutronix
  *
 
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/jiffies.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/i2c-algo-pca.h>
-#include <linux/platform_data/i2c-pca-platform.h>
-#include <linux/gpio/consumer.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/i2c-algo-pca.h>
+#समावेश <linux/platक्रमm_data/i2c-pca-platक्रमm.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-struct i2c_pca_pf_data {
-	void __iomem			*reg_base;
-	int				irq;	/* if 0, use polling */
-	struct gpio_desc		*gpio;
-	wait_queue_head_t		wait;
-	struct i2c_adapter		adap;
-	struct i2c_algo_pca_data	algo_data;
-};
+काष्ठा i2c_pca_pf_data अणु
+	व्योम __iomem			*reg_base;
+	पूर्णांक				irq;	/* अगर 0, use polling */
+	काष्ठा gpio_desc		*gpio;
+	रुको_queue_head_t		रुको;
+	काष्ठा i2c_adapter		adap;
+	काष्ठा i2c_algo_pca_data	algo_data;
+पूर्ण;
 
-/* Read/Write functions for different register alignments */
+/* Read/Write functions क्रम dअगरferent रेजिस्टर alignments */
 
-static int i2c_pca_pf_readbyte8(void *pd, int reg)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	return ioread8(i2c->reg_base + reg);
-}
+अटल पूर्णांक i2c_pca_pf_पढ़ोbyte8(व्योम *pd, पूर्णांक reg)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	वापस ioपढ़ो8(i2c->reg_base + reg);
+पूर्ण
 
-static int i2c_pca_pf_readbyte16(void *pd, int reg)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	return ioread8(i2c->reg_base + reg * 2);
-}
+अटल पूर्णांक i2c_pca_pf_पढ़ोbyte16(व्योम *pd, पूर्णांक reg)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	वापस ioपढ़ो8(i2c->reg_base + reg * 2);
+पूर्ण
 
-static int i2c_pca_pf_readbyte32(void *pd, int reg)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	return ioread8(i2c->reg_base + reg * 4);
-}
+अटल पूर्णांक i2c_pca_pf_पढ़ोbyte32(व्योम *pd, पूर्णांक reg)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	वापस ioपढ़ो8(i2c->reg_base + reg * 4);
+पूर्ण
 
-static void i2c_pca_pf_writebyte8(void *pd, int reg, int val)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	iowrite8(val, i2c->reg_base + reg);
-}
+अटल व्योम i2c_pca_pf_ग_लिखोbyte8(व्योम *pd, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	ioग_लिखो8(val, i2c->reg_base + reg);
+पूर्ण
 
-static void i2c_pca_pf_writebyte16(void *pd, int reg, int val)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	iowrite8(val, i2c->reg_base + reg * 2);
-}
+अटल व्योम i2c_pca_pf_ग_लिखोbyte16(व्योम *pd, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	ioग_लिखो8(val, i2c->reg_base + reg * 2);
+पूर्ण
 
-static void i2c_pca_pf_writebyte32(void *pd, int reg, int val)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	iowrite8(val, i2c->reg_base + reg * 4);
-}
+अटल व्योम i2c_pca_pf_ग_लिखोbyte32(व्योम *pd, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	ioग_लिखो8(val, i2c->reg_base + reg * 4);
+पूर्ण
 
 
-static int i2c_pca_pf_waitforcompletion(void *pd)
-{
-	struct i2c_pca_pf_data *i2c = pd;
-	unsigned long timeout;
-	long ret;
+अटल पूर्णांक i2c_pca_pf_रुकोक्रमcompletion(व्योम *pd)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
+	अचिन्हित दीर्घ समयout;
+	दीर्घ ret;
 
-	if (i2c->irq) {
-		ret = wait_event_timeout(i2c->wait,
-			i2c->algo_data.read_byte(i2c, I2C_PCA_CON)
-			& I2C_PCA_CON_SI, i2c->adap.timeout);
-	} else {
+	अगर (i2c->irq) अणु
+		ret = रुको_event_समयout(i2c->रुको,
+			i2c->algo_data.पढ़ो_byte(i2c, I2C_PCA_CON)
+			& I2C_PCA_CON_SI, i2c->adap.समयout);
+	पूर्ण अन्यथा अणु
 		/* Do polling */
-		timeout = jiffies + i2c->adap.timeout;
-		do {
-			ret = time_before(jiffies, timeout);
-			if (i2c->algo_data.read_byte(i2c, I2C_PCA_CON)
+		समयout = jअगरfies + i2c->adap.समयout;
+		करो अणु
+			ret = समय_beक्रमe(jअगरfies, समयout);
+			अगर (i2c->algo_data.पढ़ो_byte(i2c, I2C_PCA_CON)
 					& I2C_PCA_CON_SI)
-				break;
+				अवरोध;
 			udelay(100);
-		} while (ret);
-	}
+		पूर्ण जबतक (ret);
+	पूर्ण
 
-	return ret > 0;
-}
+	वापस ret > 0;
+पूर्ण
 
-static void i2c_pca_pf_dummyreset(void *pd)
-{
-	struct i2c_pca_pf_data *i2c = pd;
+अटल व्योम i2c_pca_pf_dummyreset(व्योम *pd)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
 
 	dev_warn(&i2c->adap.dev, "No reset-pin found. Chip may get stuck!\n");
-}
+पूर्ण
 
-static void i2c_pca_pf_resetchip(void *pd)
-{
-	struct i2c_pca_pf_data *i2c = pd;
+अटल व्योम i2c_pca_pf_resetchip(व्योम *pd)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = pd;
 
 	gpiod_set_value(i2c->gpio, 1);
 	ndelay(100);
 	gpiod_set_value(i2c->gpio, 0);
-}
+पूर्ण
 
-static irqreturn_t i2c_pca_pf_handler(int this_irq, void *dev_id)
-{
-	struct i2c_pca_pf_data *i2c = dev_id;
+अटल irqवापस_t i2c_pca_pf_handler(पूर्णांक this_irq, व्योम *dev_id)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = dev_id;
 
-	if ((i2c->algo_data.read_byte(i2c, I2C_PCA_CON) & I2C_PCA_CON_SI) == 0)
-		return IRQ_NONE;
+	अगर ((i2c->algo_data.पढ़ो_byte(i2c, I2C_PCA_CON) & I2C_PCA_CON_SI) == 0)
+		वापस IRQ_NONE;
 
-	wake_up(&i2c->wait);
+	wake_up(&i2c->रुको);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static int i2c_pca_pf_probe(struct platform_device *pdev)
-{
-	struct i2c_pca_pf_data *i2c;
-	struct resource *res;
-	struct i2c_pca9564_pf_platform_data *platform_data =
+अटल पूर्णांक i2c_pca_pf_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c;
+	काष्ठा resource *res;
+	काष्ठा i2c_pca9564_pf_platक्रमm_data *platक्रमm_data =
 				dev_get_platdata(&pdev->dev);
-	struct device_node *np = pdev->dev.of_node;
-	int ret = 0;
-	int irq;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक ret = 0;
+	पूर्णांक irq;
 
-	irq = platform_get_irq_optional(pdev, 0);
-	/* If irq is 0, we do polling. */
-	if (irq < 0)
+	irq = platक्रमm_get_irq_optional(pdev, 0);
+	/* If irq is 0, we करो polling. */
+	अगर (irq < 0)
 		irq = 0;
 
-	i2c = devm_kzalloc(&pdev->dev, sizeof(*i2c), GFP_KERNEL);
-	if (!i2c)
-		return -ENOMEM;
+	i2c = devm_kzalloc(&pdev->dev, माप(*i2c), GFP_KERNEL);
+	अगर (!i2c)
+		वापस -ENOMEM;
 
-	i2c->reg_base = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
-	if (IS_ERR(i2c->reg_base))
-		return PTR_ERR(i2c->reg_base);
+	i2c->reg_base = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &res);
+	अगर (IS_ERR(i2c->reg_base))
+		वापस PTR_ERR(i2c->reg_base);
 
 
-	init_waitqueue_head(&i2c->wait);
+	init_रुकोqueue_head(&i2c->रुको);
 
 	i2c->irq = irq;
 
 	i2c->adap.nr = pdev->id;
 	i2c->adap.owner = THIS_MODULE;
-	snprintf(i2c->adap.name, sizeof(i2c->adap.name),
+	snम_लिखो(i2c->adap.name, माप(i2c->adap.name),
 		 "PCA9564/PCA9665 at 0x%08lx",
-		 (unsigned long) res->start);
+		 (अचिन्हित दीर्घ) res->start);
 	i2c->adap.algo_data = &i2c->algo_data;
 	i2c->adap.dev.parent = &pdev->dev;
 	i2c->adap.dev.of_node = np;
 
 	i2c->gpio = devm_gpiod_get_optional(&pdev->dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(i2c->gpio))
-		return PTR_ERR(i2c->gpio);
+	अगर (IS_ERR(i2c->gpio))
+		वापस PTR_ERR(i2c->gpio);
 
-	i2c->adap.timeout = HZ;
-	ret = device_property_read_u32(&pdev->dev, "clock-frequency",
-				       &i2c->algo_data.i2c_clock);
-	if (ret)
-		i2c->algo_data.i2c_clock = 59000;
+	i2c->adap.समयout = HZ;
+	ret = device_property_पढ़ो_u32(&pdev->dev, "clock-frequency",
+				       &i2c->algo_data.i2c_घड़ी);
+	अगर (ret)
+		i2c->algo_data.i2c_घड़ी = 59000;
 
-	if (platform_data) {
-		i2c->adap.timeout = platform_data->timeout;
-		i2c->algo_data.i2c_clock = platform_data->i2c_clock_speed;
-	}
+	अगर (platक्रमm_data) अणु
+		i2c->adap.समयout = platक्रमm_data->समयout;
+		i2c->algo_data.i2c_घड़ी = platक्रमm_data->i2c_घड़ी_speed;
+	पूर्ण
 
 	i2c->algo_data.data = i2c;
-	i2c->algo_data.wait_for_completion = i2c_pca_pf_waitforcompletion;
-	if (i2c->gpio)
+	i2c->algo_data.रुको_क्रम_completion = i2c_pca_pf_रुकोक्रमcompletion;
+	अगर (i2c->gpio)
 		i2c->algo_data.reset_chip = i2c_pca_pf_resetchip;
-	else
+	अन्यथा
 		i2c->algo_data.reset_chip = i2c_pca_pf_dummyreset;
 
-	switch (res->flags & IORESOURCE_MEM_TYPE_MASK) {
-	case IORESOURCE_MEM_32BIT:
-		i2c->algo_data.write_byte = i2c_pca_pf_writebyte32;
-		i2c->algo_data.read_byte = i2c_pca_pf_readbyte32;
-		break;
-	case IORESOURCE_MEM_16BIT:
-		i2c->algo_data.write_byte = i2c_pca_pf_writebyte16;
-		i2c->algo_data.read_byte = i2c_pca_pf_readbyte16;
-		break;
-	case IORESOURCE_MEM_8BIT:
-	default:
-		i2c->algo_data.write_byte = i2c_pca_pf_writebyte8;
-		i2c->algo_data.read_byte = i2c_pca_pf_readbyte8;
-		break;
-	}
+	चयन (res->flags & IORESOURCE_MEM_TYPE_MASK) अणु
+	हाल IORESOURCE_MEM_32BIT:
+		i2c->algo_data.ग_लिखो_byte = i2c_pca_pf_ग_लिखोbyte32;
+		i2c->algo_data.पढ़ो_byte = i2c_pca_pf_पढ़ोbyte32;
+		अवरोध;
+	हाल IORESOURCE_MEM_16BIT:
+		i2c->algo_data.ग_लिखो_byte = i2c_pca_pf_ग_लिखोbyte16;
+		i2c->algo_data.पढ़ो_byte = i2c_pca_pf_पढ़ोbyte16;
+		अवरोध;
+	हाल IORESOURCE_MEM_8BIT:
+	शेष:
+		i2c->algo_data.ग_लिखो_byte = i2c_pca_pf_ग_लिखोbyte8;
+		i2c->algo_data.पढ़ो_byte = i2c_pca_pf_पढ़ोbyte8;
+		अवरोध;
+	पूर्ण
 
-	if (irq) {
+	अगर (irq) अणु
 		ret = devm_request_irq(&pdev->dev, irq, i2c_pca_pf_handler,
 			IRQF_TRIGGER_FALLING, pdev->name, i2c);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = i2c_pca_add_numbered_bus(&i2c->adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, i2c);
+	platक्रमm_set_drvdata(pdev, i2c);
 
 	dev_info(&pdev->dev, "registered.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_pca_pf_remove(struct platform_device *pdev)
-{
-	struct i2c_pca_pf_data *i2c = platform_get_drvdata(pdev);
+अटल पूर्णांक i2c_pca_pf_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा i2c_pca_pf_data *i2c = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&i2c->adap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id i2c_pca_of_match_table[] = {
-	{ .compatible = "nxp,pca9564" },
-	{ .compatible = "nxp,pca9665" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id i2c_pca_of_match_table[] = अणु
+	अणु .compatible = "nxp,pca9564" पूर्ण,
+	अणु .compatible = "nxp,pca9665" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, i2c_pca_of_match_table);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver i2c_pca_pf_driver = {
+अटल काष्ठा platक्रमm_driver i2c_pca_pf_driver = अणु
 	.probe = i2c_pca_pf_probe,
-	.remove = i2c_pca_pf_remove,
-	.driver = {
+	.हटाओ = i2c_pca_pf_हटाओ,
+	.driver = अणु
 		.name = "i2c-pca-platform",
 		.of_match_table = of_match_ptr(i2c_pca_of_match_table),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(i2c_pca_pf_driver);
+module_platक्रमm_driver(i2c_pca_pf_driver);
 
 MODULE_AUTHOR("Wolfram Sang <kernel@pengutronix.de>");
 MODULE_DESCRIPTION("I2C-PCA9564/PCA9665 platform driver");

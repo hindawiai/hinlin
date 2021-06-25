@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * This file implement the Wireless Extensions proc API.
  *
@@ -8,45 +9,45 @@
  */
 
 /*
- * The /proc/net/wireless file is a human readable user-space interface
- * exporting various wireless specific statistics from the wireless devices.
+ * The /proc/net/wireless file is a human पढ़ोable user-space पूर्णांकerface
+ * exporting various wireless specअगरic statistics from the wireless devices.
  * This is the most popular part of the Wireless Extensions ;-)
  *
- * This interface is a pure clone of /proc/net/dev (in net/core/dev.c).
+ * This पूर्णांकerface is a pure clone of /proc/net/dev (in net/core/dev.c).
  * The content of the file is basically the content of "struct iw_statistics".
  */
 
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/wireless.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <net/iw_handler.h>
-#include <net/wext.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/iw_handler.h>
+#समावेश <net/wext.h>
 
 
-static void wireless_seq_printf_stats(struct seq_file *seq,
-				      struct net_device *dev)
-{
+अटल व्योम wireless_seq_म_लिखो_stats(काष्ठा seq_file *seq,
+				      काष्ठा net_device *dev)
+अणु
 	/* Get stats from the driver */
-	struct iw_statistics *stats = get_wireless_stats(dev);
-	static struct iw_statistics nullstats = {};
+	काष्ठा iw_statistics *stats = get_wireless_stats(dev);
+	अटल काष्ठा iw_statistics nullstats = अणुपूर्ण;
 
-	/* show device if it's wireless regardless of current stats */
-	if (!stats) {
-#ifdef CONFIG_WIRELESS_EXT
-		if (dev->wireless_handlers)
+	/* show device अगर it's wireless regardless of current stats */
+	अगर (!stats) अणु
+#अगर_घोषित CONFIG_WIRELESS_EXT
+		अगर (dev->wireless_handlers)
 			stats = &nullstats;
-#endif
-#ifdef CONFIG_CFG80211
-		if (dev->ieee80211_ptr)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CFG80211
+		अगर (dev->ieee80211_ptr)
 			stats = &nullstats;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	if (stats) {
-		seq_printf(seq, "%6s: %04x  %3d%c  %3d%c  %3d%c  %6d %6d %6d "
+	अगर (stats) अणु
+		seq_म_लिखो(seq, "%6s: %04x  %3d%c  %3d%c  %3d%c  %6d %6d %6d "
 				"%6d %6d   %6d\n",
 			   dev->name, stats->status, stats->qual.qual,
 			   stats->qual.updated & IW_QUAL_QUAL_UPDATED
@@ -63,80 +64,80 @@ static void wireless_seq_printf_stats(struct seq_file *seq,
 			   stats->discard.fragment, stats->discard.retries,
 			   stats->discard.misc, stats->miss.beacon);
 
-		if (stats != &nullstats)
+		अगर (stats != &nullstats)
 			stats->qual.updated &= ~IW_QUAL_ALL_UPDATED;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* ---------------------------------------------------------------- */
 /*
- * Print info for /proc/net/wireless (print all entries)
+ * Prपूर्णांक info क्रम /proc/net/wireless (prपूर्णांक all entries)
  */
-static int wireless_dev_seq_show(struct seq_file *seq, void *v)
-{
+अटल पूर्णांक wireless_dev_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
 	might_sleep();
 
-	if (v == SEQ_START_TOKEN)
-		seq_printf(seq, "Inter-| sta-|   Quality        |   Discarded "
+	अगर (v == SEQ_START_TOKEN)
+		seq_म_लिखो(seq, "Inter-| sta-|   Quality        |   Discarded "
 				"packets               | Missed | WE\n"
 				" face | tus | link level noise |  nwid  "
 				"crypt   frag  retry   misc | beacon | %d\n",
 			   WIRELESS_EXT);
-	else
-		wireless_seq_printf_stats(seq, v);
-	return 0;
-}
+	अन्यथा
+		wireless_seq_म_लिखो_stats(seq, v);
+	वापस 0;
+पूर्ण
 
-static void *wireless_dev_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
+अटल व्योम *wireless_dev_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
 	loff_t off;
-	struct net_device *dev;
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	if (!*pos)
-		return SEQ_START_TOKEN;
+	अगर (!*pos)
+		वापस SEQ_START_TOKEN;
 
 	off = 1;
-	for_each_netdev(net, dev)
-		if (off++ == *pos)
-			return dev;
-	return NULL;
-}
+	क्रम_each_netdev(net, dev)
+		अगर (off++ == *pos)
+			वापस dev;
+	वापस शून्य;
+पूर्ण
 
-static void *wireless_dev_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
+अटल व्योम *wireless_dev_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
 
 	++*pos;
 
-	return v == SEQ_START_TOKEN ?
+	वापस v == SEQ_START_TOKEN ?
 		first_net_device(net) : next_net_device(v);
-}
+पूर्ण
 
-static void wireless_dev_seq_stop(struct seq_file *seq, void *v)
-{
+अटल व्योम wireless_dev_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
 	rtnl_unlock();
-}
+पूर्ण
 
-static const struct seq_operations wireless_seq_ops = {
+अटल स्थिर काष्ठा seq_operations wireless_seq_ops = अणु
 	.start = wireless_dev_seq_start,
 	.next  = wireless_dev_seq_next,
 	.stop  = wireless_dev_seq_stop,
 	.show  = wireless_dev_seq_show,
-};
+पूर्ण;
 
-int __net_init wext_proc_init(struct net *net)
-{
+पूर्णांक __net_init wext_proc_init(काष्ठा net *net)
+अणु
 	/* Create /proc/net/wireless entry */
-	if (!proc_create_net("wireless", 0444, net->proc_net,
-			&wireless_seq_ops, sizeof(struct seq_net_private)))
-		return -ENOMEM;
+	अगर (!proc_create_net("wireless", 0444, net->proc_net,
+			&wireless_seq_ops, माप(काष्ठा seq_net_निजी)))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __net_exit wext_proc_exit(struct net *net)
-{
-	remove_proc_entry("wireless", net->proc_net);
-}
+व्योम __net_निकास wext_proc_निकास(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("wireless", net->proc_net);
+पूर्ण

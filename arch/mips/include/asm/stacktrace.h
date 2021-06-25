@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_STACKTRACE_H
-#define _ASM_STACKTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_STACKTRACE_H
+#घोषणा _ASM_STACKTRACE_H
 
-#include <asm/ptrace.h>
-#include <asm/asm.h>
-#include <linux/stringify.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <linux/stringअगरy.h>
 
-#ifdef CONFIG_KALLSYMS
-extern int raw_show_trace;
-extern unsigned long unwind_stack(struct task_struct *task, unsigned long *sp,
-				  unsigned long pc, unsigned long *ra);
-extern unsigned long unwind_stack_by_address(unsigned long stack_page,
-					     unsigned long *sp,
-					     unsigned long pc,
-					     unsigned long *ra);
-#else
-#define raw_show_trace 1
-static inline unsigned long unwind_stack(struct task_struct *task,
-	unsigned long *sp, unsigned long pc, unsigned long *ra)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_KALLSYMS
+बाह्य पूर्णांक raw_show_trace;
+बाह्य अचिन्हित दीर्घ unwind_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *sp,
+				  अचिन्हित दीर्घ pc, अचिन्हित दीर्घ *ra);
+बाह्य अचिन्हित दीर्घ unwind_stack_by_address(अचिन्हित दीर्घ stack_page,
+					     अचिन्हित दीर्घ *sp,
+					     अचिन्हित दीर्घ pc,
+					     अचिन्हित दीर्घ *ra);
+#अन्यथा
+#घोषणा raw_show_trace 1
+अटल अंतरभूत अचिन्हित दीर्घ unwind_stack(काष्ठा task_काष्ठा *task,
+	अचिन्हित दीर्घ *sp, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ *ra)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#define STR_PTR_LA    __stringify(PTR_LA)
-#define STR_LONG_S    __stringify(LONG_S)
-#define STR_LONG_L    __stringify(LONG_L)
-#define STR_LONGSIZE  __stringify(LONGSIZE)
+#घोषणा STR_PTR_LA    __stringअगरy(PTR_LA)
+#घोषणा STR_LONG_S    __stringअगरy(LONG_S)
+#घोषणा STR_LONG_L    __stringअगरy(LONG_L)
+#घोषणा STR_LONGSIZE  __stringअगरy(LONGSIZE)
 
-#define STORE_ONE_REG(r) \
-    STR_LONG_S   " $" __stringify(r)",("STR_LONGSIZE"*"__stringify(r)")(%1)\n\t"
+#घोषणा STORE_ONE_REG(r) \
+    STR_LONG_S   " $" __stringअगरy(r)",("STR_LONGSIZE"*"__stringअगरy(r)")(%1)\n\t"
 
-static __always_inline void prepare_frametrace(struct pt_regs *regs)
-{
-#ifndef CONFIG_KALLSYMS
+अटल __always_अंतरभूत व्योम prepare_frametrace(काष्ठा pt_regs *regs)
+अणु
+#अगर_अघोषित CONFIG_KALLSYMS
 	/*
 	 * Remove any garbage that may be in regs (specially func
-	 * addresses) to avoid show_raw_backtrace() to report them
+	 * addresses) to aव्योम show_raw_backtrace() to report them
 	 */
-	memset(regs, 0, sizeof(*regs));
-#endif
-	__asm__ __volatile__(
+	स_रखो(regs, 0, माप(*regs));
+#पूर्ण_अगर
+	__यंत्र__ __अस्थिर__(
 		".set push\n\t"
 		".set noat\n\t"
 		/* Store $1 so we can use it */
@@ -84,6 +85,6 @@ static __always_inline void prepare_frametrace(struct pt_regs *regs)
 		: "=m" (regs->cp0_epc)
 		: "r" (regs->regs)
 		: "memory");
-}
+पूर्ण
 
-#endif /* _ASM_STACKTRACE_H */
+#पूर्ण_अगर /* _ASM_STACKTRACE_H */

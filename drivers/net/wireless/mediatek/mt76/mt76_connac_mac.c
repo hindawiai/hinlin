@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /* Copyright (C) 2020 MediaTek Inc. */
 
-#include "mt76_connac.h"
+#समावेश "mt76_connac.h"
 
-int mt76_connac_pm_wake(struct mt76_phy *phy, struct mt76_connac_pm *pm)
-{
-	struct mt76_dev *dev = phy->dev;
+पूर्णांक mt76_connac_pm_wake(काष्ठा mt76_phy *phy, काष्ठा mt76_connac_pm *pm)
+अणु
+	काष्ठा mt76_dev *dev = phy->dev;
 
-	if (!pm->enable)
-		return 0;
+	अगर (!pm->enable)
+		वापस 0;
 
-	if (!mt76_is_mmio(dev))
-		return 0;
+	अगर (!mt76_is_mmio(dev))
+		वापस 0;
 
 	cancel_delayed_work_sync(&pm->ps_work);
-	if (!test_bit(MT76_STATE_PM, &phy->state))
-		return 0;
+	अगर (!test_bit(MT76_STATE_PM, &phy->state))
+		वापस 0;
 
 	queue_work(dev->wq, &pm->wake_work);
-	if (!wait_event_timeout(pm->wait,
+	अगर (!रुको_event_समयout(pm->रुको,
 				!test_bit(MT76_STATE_PM, &phy->state),
-				3 * HZ)) {
+				3 * HZ)) अणु
 		ieee80211_wake_queues(phy->hw);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_connac_pm_wake);
 
-void mt76_connac_power_save_sched(struct mt76_phy *phy,
-				  struct mt76_connac_pm *pm)
-{
-	struct mt76_dev *dev = phy->dev;
+व्योम mt76_connac_घातer_save_sched(काष्ठा mt76_phy *phy,
+				  काष्ठा mt76_connac_pm *pm)
+अणु
+	काष्ठा mt76_dev *dev = phy->dev;
 
-	if (!mt76_is_mmio(dev))
-		return;
+	अगर (!mt76_is_mmio(dev))
+		वापस;
 
-	if (!pm->enable)
-		return;
+	अगर (!pm->enable)
+		वापस;
 
-	pm->last_activity = jiffies;
+	pm->last_activity = jअगरfies;
 
-	if (!test_bit(MT76_STATE_PM, &phy->state)) {
+	अगर (!test_bit(MT76_STATE_PM, &phy->state)) अणु
 		cancel_delayed_work(&phy->mac_work);
-		queue_delayed_work(dev->wq, &pm->ps_work, pm->idle_timeout);
-	}
-}
-EXPORT_SYMBOL_GPL(mt76_connac_power_save_sched);
+		queue_delayed_work(dev->wq, &pm->ps_work, pm->idle_समयout);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76_connac_घातer_save_sched);
 
-void mt76_connac_free_pending_tx_skbs(struct mt76_connac_pm *pm,
-				      struct mt76_wcid *wcid)
-{
-	int i;
+व्योम mt76_connac_मुक्त_pending_tx_skbs(काष्ठा mt76_connac_pm *pm,
+				      काष्ठा mt76_wcid *wcid)
+अणु
+	पूर्णांक i;
 
 	spin_lock_bh(&pm->txq_lock);
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		if (wcid && pm->tx_q[i].wcid != wcid)
-			continue;
+	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+		अगर (wcid && pm->tx_q[i].wcid != wcid)
+			जारी;
 
-		dev_kfree_skb(pm->tx_q[i].skb);
-		pm->tx_q[i].skb = NULL;
-	}
+		dev_kमुक्त_skb(pm->tx_q[i].skb);
+		pm->tx_q[i].skb = शून्य;
+	पूर्ण
 	spin_unlock_bh(&pm->txq_lock);
-}
-EXPORT_SYMBOL_GPL(mt76_connac_free_pending_tx_skbs);
+पूर्ण
+EXPORT_SYMBOL_GPL(mt76_connac_मुक्त_pending_tx_skbs);
 
-void mt76_connac_pm_queue_skb(struct ieee80211_hw *hw,
-			      struct mt76_connac_pm *pm,
-			      struct mt76_wcid *wcid,
-			      struct sk_buff *skb)
-{
-	int qid = skb_get_queue_mapping(skb);
-	struct mt76_phy *phy = hw->priv;
+व्योम mt76_connac_pm_queue_skb(काष्ठा ieee80211_hw *hw,
+			      काष्ठा mt76_connac_pm *pm,
+			      काष्ठा mt76_wcid *wcid,
+			      काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक qid = skb_get_queue_mapping(skb);
+	काष्ठा mt76_phy *phy = hw->priv;
 
 	spin_lock_bh(&pm->txq_lock);
-	if (!pm->tx_q[qid].skb) {
+	अगर (!pm->tx_q[qid].skb) अणु
 		ieee80211_stop_queues(hw);
 		pm->tx_q[qid].wcid = wcid;
 		pm->tx_q[qid].skb = skb;
 		queue_work(phy->dev->wq, &pm->wake_work);
-	} else {
-		dev_kfree_skb(skb);
-	}
+	पूर्ण अन्यथा अणु
+		dev_kमुक्त_skb(skb);
+	पूर्ण
 	spin_unlock_bh(&pm->txq_lock);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_connac_pm_queue_skb);
 
-void mt76_connac_pm_dequeue_skbs(struct mt76_phy *phy,
-				 struct mt76_connac_pm *pm)
-{
-	int i;
+व्योम mt76_connac_pm_dequeue_skbs(काष्ठा mt76_phy *phy,
+				 काष्ठा mt76_connac_pm *pm)
+अणु
+	पूर्णांक i;
 
 	spin_lock_bh(&pm->txq_lock);
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		struct mt76_wcid *wcid = pm->tx_q[i].wcid;
-		struct ieee80211_sta *sta = NULL;
+	क्रम (i = 0; i < IEEE80211_NUM_ACS; i++) अणु
+		काष्ठा mt76_wcid *wcid = pm->tx_q[i].wcid;
+		काष्ठा ieee80211_sta *sta = शून्य;
 
-		if (!pm->tx_q[i].skb)
-			continue;
+		अगर (!pm->tx_q[i].skb)
+			जारी;
 
-		if (wcid && wcid->sta)
-			sta = container_of((void *)wcid, struct ieee80211_sta,
+		अगर (wcid && wcid->sta)
+			sta = container_of((व्योम *)wcid, काष्ठा ieee80211_sta,
 					   drv_priv);
 
 		mt76_tx(phy, sta, wcid, pm->tx_q[i].skb);
-		pm->tx_q[i].skb = NULL;
-	}
+		pm->tx_q[i].skb = शून्य;
+	पूर्ण
 	spin_unlock_bh(&pm->txq_lock);
 
 	mt76_worker_schedule(&phy->dev->tx_worker);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(mt76_connac_pm_dequeue_skbs);

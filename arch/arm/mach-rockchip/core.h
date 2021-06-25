@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright (c) 2013 MundoReader S.L.
+ * Copyright (c) 2013 MunकरोReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
  */
 
-extern char rockchip_secondary_trampoline;
-extern char rockchip_secondary_trampoline_end;
+बाह्य अक्षर rockchip_secondary_trampoline;
+बाह्य अक्षर rockchip_secondary_trampoline_end;
 
-extern unsigned long rockchip_boot_fn;
+बाह्य अचिन्हित दीर्घ rockchip_boot_fn;

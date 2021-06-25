@@ -1,6 +1,7 @@
-#include <xen/arm/page.h>
+<शैली गुरु>
+#समावेश <xen/arm/page.h>
 
-static inline bool xen_kernel_unmapped_at_usr(void)
-{
-	return false;
-}
+अटल अंतरभूत bool xen_kernel_unmapped_at_usr(व्योम)
+अणु
+	वापस false;
+पूर्ण

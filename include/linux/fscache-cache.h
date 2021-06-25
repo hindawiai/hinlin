@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* General filesystem caching backing cache interface
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* General fileप्रणाली caching backing cache पूर्णांकerface
  *
  * Copyright (C) 2004-2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
  * NOTE!!! See:
  *
- *	Documentation/filesystems/caching/backend-api.rst
+ *	Documentation/fileप्रणालीs/caching/backend-api.rst
  *
- * for a description of the cache backend interface declared here.
+ * क्रम a description of the cache backend पूर्णांकerface declared here.
  */
 
-#ifndef _LINUX_FSCACHE_CACHE_H
-#define _LINUX_FSCACHE_CACHE_H
+#अगर_अघोषित _LINUX_FSCACHE_CACHE_H
+#घोषणा _LINUX_FSCACHE_CACHE_H
 
-#include <linux/fscache.h>
-#include <linux/sched.h>
-#include <linux/workqueue.h>
+#समावेश <linux/fscache.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/workqueue.h>
 
-#define NR_MAXCACHES BITS_PER_LONG
+#घोषणा NR_MAXCACHES BITS_PER_LONG
 
-struct fscache_cache;
-struct fscache_cache_ops;
-struct fscache_object;
-struct fscache_operation;
+काष्ठा fscache_cache;
+काष्ठा fscache_cache_ops;
+काष्ठा fscache_object;
+काष्ठा fscache_operation;
 
-enum fscache_obj_ref_trace {
+क्रमागत fscache_obj_ref_trace अणु
 	fscache_obj_get_add_to_deps,
 	fscache_obj_get_queue,
 	fscache_obj_put_alloc_fail,
@@ -35,56 +36,56 @@ enum fscache_obj_ref_trace {
 	fscache_obj_put_queue,
 	fscache_obj_put_work,
 	fscache_obj_ref__nr_traces
-};
+पूर्ण;
 
 /*
  * cache tag definition
  */
-struct fscache_cache_tag {
-	struct list_head	link;
-	struct fscache_cache	*cache;		/* cache referred to by this tag */
-	unsigned long		flags;
-#define FSCACHE_TAG_RESERVED	0		/* T if tag is reserved for a cache */
+काष्ठा fscache_cache_tag अणु
+	काष्ठा list_head	link;
+	काष्ठा fscache_cache	*cache;		/* cache referred to by this tag */
+	अचिन्हित दीर्घ		flags;
+#घोषणा FSCACHE_TAG_RESERVED	0		/* T अगर tag is reserved क्रम a cache */
 	atomic_t		usage;
-	char			name[];	/* tag name */
-};
+	अक्षर			name[];	/* tag name */
+पूर्ण;
 
 /*
  * cache definition
  */
-struct fscache_cache {
-	const struct fscache_cache_ops *ops;
-	struct fscache_cache_tag *tag;		/* tag representing this cache */
-	struct kobject		*kobj;		/* system representation of this cache */
-	struct list_head	link;		/* link in list of caches */
-	size_t			max_index_size;	/* maximum size of index data */
-	char			identifier[36];	/* cache label */
+काष्ठा fscache_cache अणु
+	स्थिर काष्ठा fscache_cache_ops *ops;
+	काष्ठा fscache_cache_tag *tag;		/* tag representing this cache */
+	काष्ठा kobject		*kobj;		/* प्रणाली representation of this cache */
+	काष्ठा list_head	link;		/* link in list of caches */
+	माप_प्रकार			max_index_size;	/* maximum size of index data */
+	अक्षर			identअगरier[36];	/* cache label */
 
 	/* node management */
-	struct work_struct	op_gc;		/* operation garbage collector */
-	struct list_head	object_list;	/* list of data/index objects */
-	struct list_head	op_gc_list;	/* list of ops to be deleted */
+	काष्ठा work_काष्ठा	op_gc;		/* operation garbage collector */
+	काष्ठा list_head	object_list;	/* list of data/index objects */
+	काष्ठा list_head	op_gc_list;	/* list of ops to be deleted */
 	spinlock_t		object_list_lock;
 	spinlock_t		op_gc_list_lock;
 	atomic_t		object_count;	/* no. of live objects in this cache */
-	struct fscache_object	*fsdef;		/* object for the fsdef index */
-	unsigned long		flags;
-#define FSCACHE_IOERROR		0	/* cache stopped on I/O error */
-#define FSCACHE_CACHE_WITHDRAWN	1	/* cache has been withdrawn */
-};
+	काष्ठा fscache_object	*fsdef;		/* object क्रम the fsdef index */
+	अचिन्हित दीर्घ		flags;
+#घोषणा FSCACHE_IOERROR		0	/* cache stopped on I/O error */
+#घोषणा FSCACHE_CACHE_WITHDRAWN	1	/* cache has been withdrawn */
+पूर्ण;
 
-extern wait_queue_head_t fscache_cache_cleared_wq;
+बाह्य रुको_queue_head_t fscache_cache_cleared_wq;
 
 /*
  * operation to be applied to a cache object
- * - retrieval initiation operations are done in the context of the process
- *   that issued them, and not in an async thread pool
+ * - retrieval initiation operations are करोne in the context of the process
+ *   that issued them, and not in an async thपढ़ो pool
  */
-typedef void (*fscache_operation_release_t)(struct fscache_operation *op);
-typedef void (*fscache_operation_processor_t)(struct fscache_operation *op);
-typedef void (*fscache_operation_cancel_t)(struct fscache_operation *op);
+प्रकार व्योम (*fscache_operation_release_t)(काष्ठा fscache_operation *op);
+प्रकार व्योम (*fscache_operation_processor_t)(काष्ठा fscache_operation *op);
+प्रकार व्योम (*fscache_operation_cancel_t)(काष्ठा fscache_operation *op);
 
-enum fscache_operation_state {
+क्रमागत fscache_operation_state अणु
 	FSCACHE_OP_ST_BLANK,		/* Op is not yet submitted */
 	FSCACHE_OP_ST_INITIALISED,	/* Op is initialised */
 	FSCACHE_OP_ST_PENDING,		/* Op is blocked from running */
@@ -92,30 +93,30 @@ enum fscache_operation_state {
 	FSCACHE_OP_ST_COMPLETE,		/* Op is complete */
 	FSCACHE_OP_ST_CANCELLED,	/* Op has been cancelled */
 	FSCACHE_OP_ST_DEAD		/* Op is now dead */
-};
+पूर्ण;
 
-struct fscache_operation {
-	struct work_struct	work;		/* record for async ops */
-	struct list_head	pend_link;	/* link in object->pending_ops */
-	struct fscache_object	*object;	/* object to be operated upon */
+काष्ठा fscache_operation अणु
+	काष्ठा work_काष्ठा	work;		/* record क्रम async ops */
+	काष्ठा list_head	pend_link;	/* link in object->pending_ops */
+	काष्ठा fscache_object	*object;	/* object to be operated upon */
 
-	unsigned long		flags;
-#define FSCACHE_OP_TYPE		0x000f	/* operation type */
-#define FSCACHE_OP_ASYNC	0x0001	/* - async op, processor may sleep for disk */
-#define FSCACHE_OP_MYTHREAD	0x0002	/* - processing is done be issuing thread, not pool */
-#define FSCACHE_OP_WAITING	4	/* cleared when op is woken */
-#define FSCACHE_OP_EXCLUSIVE	5	/* exclusive op, other ops must wait */
-#define FSCACHE_OP_DEC_READ_CNT	6	/* decrement object->n_reads on destruction */
-#define FSCACHE_OP_UNUSE_COOKIE	7	/* call fscache_unuse_cookie() on completion */
-#define FSCACHE_OP_KEEP_FLAGS	0x00f0	/* flags to keep when repurposing an op */
+	अचिन्हित दीर्घ		flags;
+#घोषणा FSCACHE_OP_TYPE		0x000f	/* operation type */
+#घोषणा FSCACHE_OP_ASYNC	0x0001	/* - async op, processor may sleep क्रम disk */
+#घोषणा FSCACHE_OP_MYTHREAD	0x0002	/* - processing is करोne be issuing thपढ़ो, not pool */
+#घोषणा FSCACHE_OP_WAITING	4	/* cleared when op is woken */
+#घोषणा FSCACHE_OP_EXCLUSIVE	5	/* exclusive op, other ops must रुको */
+#घोषणा FSCACHE_OP_DEC_READ_CNT	6	/* decrement object->n_पढ़ोs on deकाष्ठाion */
+#घोषणा FSCACHE_OP_UNUSE_COOKIE	7	/* call fscache_unuse_cookie() on completion */
+#घोषणा FSCACHE_OP_KEEP_FLAGS	0x00f0	/* flags to keep when repurposing an op */
 
-	enum fscache_operation_state state;
+	क्रमागत fscache_operation_state state;
 	atomic_t		usage;
-	unsigned		debug_id;	/* debugging ID */
+	अचिन्हित		debug_id;	/* debugging ID */
 
 	/* operation processor callback
-	 * - can be NULL if FSCACHE_OP_WAITING is going to be used to perform
-	 *   the op in a non-pool thread */
+	 * - can be शून्य अगर FSCACHE_OP_WAITING is going to be used to perक्रमm
+	 *   the op in a non-pool thपढ़ो */
 	fscache_operation_processor_t processor;
 
 	/* Operation cancellation cleanup (optional) */
@@ -123,41 +124,41 @@ struct fscache_operation {
 
 	/* operation releaser */
 	fscache_operation_release_t release;
-};
+पूर्ण;
 
-extern atomic_t fscache_op_debug_id;
-extern void fscache_op_work_func(struct work_struct *work);
+बाह्य atomic_t fscache_op_debug_id;
+बाह्य व्योम fscache_op_work_func(काष्ठा work_काष्ठा *work);
 
-extern void fscache_enqueue_operation(struct fscache_operation *);
-extern void fscache_op_complete(struct fscache_operation *, bool);
-extern void fscache_put_operation(struct fscache_operation *);
-extern void fscache_operation_init(struct fscache_cookie *,
-				   struct fscache_operation *,
+बाह्य व्योम fscache_enqueue_operation(काष्ठा fscache_operation *);
+बाह्य व्योम fscache_op_complete(काष्ठा fscache_operation *, bool);
+बाह्य व्योम fscache_put_operation(काष्ठा fscache_operation *);
+बाह्य व्योम fscache_operation_init(काष्ठा fscache_cookie *,
+				   काष्ठा fscache_operation *,
 				   fscache_operation_processor_t,
 				   fscache_operation_cancel_t,
 				   fscache_operation_release_t);
 
 /*
- * data read operation
+ * data पढ़ो operation
  */
-struct fscache_retrieval {
-	struct fscache_operation op;
-	struct fscache_cookie	*cookie;	/* The netfs cookie */
-	struct address_space	*mapping;	/* netfs pages */
+काष्ठा fscache_retrieval अणु
+	काष्ठा fscache_operation op;
+	काष्ठा fscache_cookie	*cookie;	/* The netfs cookie */
+	काष्ठा address_space	*mapping;	/* netfs pages */
 	fscache_rw_complete_t	end_io_func;	/* function to call on I/O completion */
-	void			*context;	/* netfs read context (pinned) */
-	struct list_head	to_do;		/* list of things to be done by the backend */
-	unsigned long		start_time;	/* time at which retrieval started */
+	व्योम			*context;	/* netfs पढ़ो context (pinned) */
+	काष्ठा list_head	to_करो;		/* list of things to be करोne by the backend */
+	अचिन्हित दीर्घ		start_समय;	/* समय at which retrieval started */
 	atomic_t		n_pages;	/* number of pages to be retrieved */
-};
+पूर्ण;
 
-typedef int (*fscache_page_retrieval_func_t)(struct fscache_retrieval *op,
-					     struct page *page,
+प्रकार पूर्णांक (*fscache_page_retrieval_func_t)(काष्ठा fscache_retrieval *op,
+					     काष्ठा page *page,
 					     gfp_t gfp);
 
-typedef int (*fscache_pages_retrieval_func_t)(struct fscache_retrieval *op,
-					      struct list_head *pages,
-					      unsigned *nr_pages,
+प्रकार पूर्णांक (*fscache_pages_retrieval_func_t)(काष्ठा fscache_retrieval *op,
+					      काष्ठा list_head *pages,
+					      अचिन्हित *nr_pages,
 					      gfp_t gfp);
 
 /**
@@ -166,35 +167,35 @@ typedef int (*fscache_pages_retrieval_func_t)(struct fscache_retrieval *op,
  *
  * Get an extra reference on a retrieval operation.
  */
-static inline
-struct fscache_retrieval *fscache_get_retrieval(struct fscache_retrieval *op)
-{
+अटल अंतरभूत
+काष्ठा fscache_retrieval *fscache_get_retrieval(काष्ठा fscache_retrieval *op)
+अणु
 	atomic_inc(&op->op.usage);
-	return op;
-}
+	वापस op;
+पूर्ण
 
 /**
- * fscache_enqueue_retrieval - Enqueue a retrieval operation for processing
+ * fscache_enqueue_retrieval - Enqueue a retrieval operation क्रम processing
  * @op: The retrieval operation affected
  *
- * Enqueue a retrieval operation for processing by the FS-Cache thread pool.
+ * Enqueue a retrieval operation क्रम processing by the FS-Cache thपढ़ो pool.
  */
-static inline void fscache_enqueue_retrieval(struct fscache_retrieval *op)
-{
+अटल अंतरभूत व्योम fscache_enqueue_retrieval(काष्ठा fscache_retrieval *op)
+अणु
 	fscache_enqueue_operation(&op->op);
-}
+पूर्ण
 
 /**
  * fscache_retrieval_complete - Record (partial) completion of a retrieval
  * @op: The retrieval operation affected
- * @n_pages: The number of pages to account for
+ * @n_pages: The number of pages to account क्रम
  */
-static inline void fscache_retrieval_complete(struct fscache_retrieval *op,
-					      int n_pages)
-{
-	if (atomic_sub_return_relaxed(n_pages, &op->n_pages) <= 0)
+अटल अंतरभूत व्योम fscache_retrieval_complete(काष्ठा fscache_retrieval *op,
+					      पूर्णांक n_pages)
+अणु
+	अगर (atomic_sub_वापस_relaxed(n_pages, &op->n_pages) <= 0)
 		fscache_op_complete(&op->op, false);
-}
+पूर्ण
 
 /**
  * fscache_put_retrieval - Drop a reference to a retrieval operation
@@ -202,241 +203,241 @@ static inline void fscache_retrieval_complete(struct fscache_retrieval *op,
  *
  * Drop a reference to a retrieval operation.
  */
-static inline void fscache_put_retrieval(struct fscache_retrieval *op)
-{
+अटल अंतरभूत व्योम fscache_put_retrieval(काष्ठा fscache_retrieval *op)
+अणु
 	fscache_put_operation(&op->op);
-}
+पूर्ण
 
 /*
  * cached page storage work item
- * - used to do three things:
- *   - batch writes to the cache
- *   - do cache writes asynchronously
- *   - defer writes until cache object lookup completion
+ * - used to करो three things:
+ *   - batch ग_लिखोs to the cache
+ *   - करो cache ग_लिखोs asynchronously
+ *   - defer ग_लिखोs until cache object lookup completion
  */
-struct fscache_storage {
-	struct fscache_operation op;
-	pgoff_t			store_limit;	/* don't write more than this */
-};
+काष्ठा fscache_storage अणु
+	काष्ठा fscache_operation op;
+	pgoff_t			store_limit;	/* करोn't ग_लिखो more than this */
+पूर्ण;
 
 /*
  * cache operations
  */
-struct fscache_cache_ops {
+काष्ठा fscache_cache_ops अणु
 	/* name of cache provider */
-	const char *name;
+	स्थिर अक्षर *name;
 
-	/* allocate an object record for a cookie */
-	struct fscache_object *(*alloc_object)(struct fscache_cache *cache,
-					       struct fscache_cookie *cookie);
+	/* allocate an object record क्रम a cookie */
+	काष्ठा fscache_object *(*alloc_object)(काष्ठा fscache_cache *cache,
+					       काष्ठा fscache_cookie *cookie);
 
-	/* look up the object for a cookie
-	 * - return -ETIMEDOUT to be requeued
+	/* look up the object क्रम a cookie
+	 * - वापस -ETIMEDOUT to be requeued
 	 */
-	int (*lookup_object)(struct fscache_object *object);
+	पूर्णांक (*lookup_object)(काष्ठा fscache_object *object);
 
 	/* finished looking up */
-	void (*lookup_complete)(struct fscache_object *object);
+	व्योम (*lookup_complete)(काष्ठा fscache_object *object);
 
-	/* increment the usage count on this object (may fail if unmounting) */
-	struct fscache_object *(*grab_object)(struct fscache_object *object,
-					      enum fscache_obj_ref_trace why);
+	/* increment the usage count on this object (may fail अगर unmounting) */
+	काष्ठा fscache_object *(*grab_object)(काष्ठा fscache_object *object,
+					      क्रमागत fscache_obj_ref_trace why);
 
 	/* pin an object in the cache */
-	int (*pin_object)(struct fscache_object *object);
+	पूर्णांक (*pin_object)(काष्ठा fscache_object *object);
 
 	/* unpin an object in the cache */
-	void (*unpin_object)(struct fscache_object *object);
+	व्योम (*unpin_object)(काष्ठा fscache_object *object);
 
 	/* check the consistency between the backing cache and the FS-Cache
 	 * cookie */
-	int (*check_consistency)(struct fscache_operation *op);
+	पूर्णांक (*check_consistency)(काष्ठा fscache_operation *op);
 
 	/* store the updated auxiliary data on an object */
-	void (*update_object)(struct fscache_object *object);
+	व्योम (*update_object)(काष्ठा fscache_object *object);
 
 	/* Invalidate an object */
-	void (*invalidate_object)(struct fscache_operation *op);
+	व्योम (*invalidate_object)(काष्ठा fscache_operation *op);
 
-	/* discard the resources pinned by an object and effect retirement if
+	/* discard the resources pinned by an object and effect retirement अगर
 	 * necessary */
-	void (*drop_object)(struct fscache_object *object);
+	व्योम (*drop_object)(काष्ठा fscache_object *object);
 
 	/* dispose of a reference to an object */
-	void (*put_object)(struct fscache_object *object,
-			   enum fscache_obj_ref_trace why);
+	व्योम (*put_object)(काष्ठा fscache_object *object,
+			   क्रमागत fscache_obj_ref_trace why);
 
 	/* sync a cache */
-	void (*sync_cache)(struct fscache_cache *cache);
+	व्योम (*sync_cache)(काष्ठा fscache_cache *cache);
 
-	/* notification that the attributes of a non-index object (such as
+	/* notअगरication that the attributes of a non-index object (such as
 	 * i_size) have changed */
-	int (*attr_changed)(struct fscache_object *object);
+	पूर्णांक (*attr_changed)(काष्ठा fscache_object *object);
 
-	/* reserve space for an object's data and associated metadata */
-	int (*reserve_space)(struct fscache_object *object, loff_t i_size);
+	/* reserve space क्रम an object's data and associated metadata */
+	पूर्णांक (*reserve_space)(काष्ठा fscache_object *object, loff_t i_size);
 
-	/* request a backing block for a page be read or allocated in the
+	/* request a backing block क्रम a page be पढ़ो or allocated in the
 	 * cache */
-	fscache_page_retrieval_func_t read_or_alloc_page;
+	fscache_page_retrieval_func_t पढ़ो_or_alloc_page;
 
-	/* request backing blocks for a list of pages be read or allocated in
+	/* request backing blocks क्रम a list of pages be पढ़ो or allocated in
 	 * the cache */
-	fscache_pages_retrieval_func_t read_or_alloc_pages;
+	fscache_pages_retrieval_func_t पढ़ो_or_alloc_pages;
 
-	/* request a backing block for a page be allocated in the cache so that
+	/* request a backing block क्रम a page be allocated in the cache so that
 	 * it can be written directly */
 	fscache_page_retrieval_func_t allocate_page;
 
-	/* request backing blocks for pages be allocated in the cache so that
+	/* request backing blocks क्रम pages be allocated in the cache so that
 	 * they can be written directly */
 	fscache_pages_retrieval_func_t allocate_pages;
 
-	/* write a page to its backing block in the cache */
-	int (*write_page)(struct fscache_storage *op, struct page *page);
+	/* ग_लिखो a page to its backing block in the cache */
+	पूर्णांक (*ग_लिखो_page)(काष्ठा fscache_storage *op, काष्ठा page *page);
 
 	/* detach backing block from a page (optional)
-	 * - must release the cookie lock before returning
+	 * - must release the cookie lock beक्रमe वापसing
 	 * - may sleep
 	 */
-	void (*uncache_page)(struct fscache_object *object,
-			     struct page *page);
+	व्योम (*uncache_page)(काष्ठा fscache_object *object,
+			     काष्ठा page *page);
 
 	/* dissociate a cache from all the pages it was backing */
-	void (*dissociate_pages)(struct fscache_cache *cache);
+	व्योम (*dissociate_pages)(काष्ठा fscache_cache *cache);
 
-	/* Begin a read operation for the netfs lib */
-	int (*begin_read_operation)(struct netfs_read_request *rreq,
-				    struct fscache_retrieval *op);
-};
+	/* Begin a पढ़ो operation क्रम the netfs lib */
+	पूर्णांक (*begin_पढ़ो_operation)(काष्ठा netfs_पढ़ो_request *rreq,
+				    काष्ठा fscache_retrieval *op);
+पूर्ण;
 
-extern struct fscache_cookie fscache_fsdef_index;
+बाह्य काष्ठा fscache_cookie fscache_fsdef_index;
 
 /*
- * Event list for fscache_object::{event_mask,events}
+ * Event list क्रम fscache_object::अणुevent_mask,eventsपूर्ण
  */
-enum {
-	FSCACHE_OBJECT_EV_NEW_CHILD,	/* T if object has a new child */
-	FSCACHE_OBJECT_EV_PARENT_READY,	/* T if object's parent is ready */
-	FSCACHE_OBJECT_EV_UPDATE,	/* T if object should be updated */
-	FSCACHE_OBJECT_EV_INVALIDATE,	/* T if cache requested object invalidation */
-	FSCACHE_OBJECT_EV_CLEARED,	/* T if accessors all gone */
-	FSCACHE_OBJECT_EV_ERROR,	/* T if fatal error occurred during processing */
-	FSCACHE_OBJECT_EV_KILL,		/* T if netfs relinquished or cache withdrew object */
+क्रमागत अणु
+	FSCACHE_OBJECT_EV_NEW_CHILD,	/* T अगर object has a new child */
+	FSCACHE_OBJECT_EV_PARENT_READY,	/* T अगर object's parent is पढ़ोy */
+	FSCACHE_OBJECT_EV_UPDATE,	/* T अगर object should be updated */
+	FSCACHE_OBJECT_EV_INVALIDATE,	/* T अगर cache requested object invalidation */
+	FSCACHE_OBJECT_EV_CLEARED,	/* T अगर accessors all gone */
+	FSCACHE_OBJECT_EV_ERROR,	/* T अगर fatal error occurred during processing */
+	FSCACHE_OBJECT_EV_KILL,		/* T अगर netfs relinquished or cache withdrew object */
 	NR_FSCACHE_OBJECT_EVENTS
-};
+पूर्ण;
 
-#define FSCACHE_OBJECT_EVENTS_MASK ((1UL << NR_FSCACHE_OBJECT_EVENTS) - 1)
+#घोषणा FSCACHE_OBJECT_EVENTS_MASK ((1UL << NR_FSCACHE_OBJECT_EVENTS) - 1)
 
 /*
- * States for object state machine.
+ * States क्रम object state machine.
  */
-struct fscache_transition {
-	unsigned long events;
-	const struct fscache_state *transit_to;
-};
+काष्ठा fscache_transition अणु
+	अचिन्हित दीर्घ events;
+	स्थिर काष्ठा fscache_state *transit_to;
+पूर्ण;
 
-struct fscache_state {
-	char name[24];
-	char short_name[8];
-	const struct fscache_state *(*work)(struct fscache_object *object,
-					    int event);
-	const struct fscache_transition transitions[];
-};
+काष्ठा fscache_state अणु
+	अक्षर name[24];
+	अक्षर लघु_name[8];
+	स्थिर काष्ठा fscache_state *(*work)(काष्ठा fscache_object *object,
+					    पूर्णांक event);
+	स्थिर काष्ठा fscache_transition transitions[];
+पूर्ण;
 
 /*
  * on-disk cache file or index handle
  */
-struct fscache_object {
-	const struct fscache_state *state;	/* Object state machine state */
-	const struct fscache_transition *oob_table; /* OOB state transition table */
-	int			debug_id;	/* debugging ID */
-	int			n_children;	/* number of child objects */
-	int			n_ops;		/* number of extant ops on object */
-	int			n_obj_ops;	/* number of object ops outstanding on object */
-	int			n_in_progress;	/* number of ops in progress */
-	int			n_exclusive;	/* number of exclusive ops queued or in progress */
-	atomic_t		n_reads;	/* number of read ops in progress */
+काष्ठा fscache_object अणु
+	स्थिर काष्ठा fscache_state *state;	/* Object state machine state */
+	स्थिर काष्ठा fscache_transition *oob_table; /* OOB state transition table */
+	पूर्णांक			debug_id;	/* debugging ID */
+	पूर्णांक			n_children;	/* number of child objects */
+	पूर्णांक			n_ops;		/* number of extant ops on object */
+	पूर्णांक			n_obj_ops;	/* number of object ops outstanding on object */
+	पूर्णांक			n_in_progress;	/* number of ops in progress */
+	पूर्णांक			n_exclusive;	/* number of exclusive ops queued or in progress */
+	atomic_t		n_पढ़ोs;	/* number of पढ़ो ops in progress */
 	spinlock_t		lock;		/* state and operations lock */
 
-	unsigned long		lookup_jif;	/* time at which lookup started */
-	unsigned long		oob_event_mask;	/* OOB events this object is interested in */
-	unsigned long		event_mask;	/* events this object is interested in */
-	unsigned long		events;		/* events to be processed by this object
+	अचिन्हित दीर्घ		lookup_jअगर;	/* समय at which lookup started */
+	अचिन्हित दीर्घ		oob_event_mask;	/* OOB events this object is पूर्णांकerested in */
+	अचिन्हित दीर्घ		event_mask;	/* events this object is पूर्णांकerested in */
+	अचिन्हित दीर्घ		events;		/* events to be processed by this object
 						 * (order is important - using fls) */
 
-	unsigned long		flags;
-#define FSCACHE_OBJECT_LOCK		0	/* T if object is busy being processed */
-#define FSCACHE_OBJECT_PENDING_WRITE	1	/* T if object has pending write */
-#define FSCACHE_OBJECT_WAITING		2	/* T if object is waiting on its parent */
-#define FSCACHE_OBJECT_IS_LIVE		3	/* T if object is not withdrawn or relinquished */
-#define FSCACHE_OBJECT_IS_LOOKED_UP	4	/* T if object has been looked up */
-#define FSCACHE_OBJECT_IS_AVAILABLE	5	/* T if object has become active */
-#define FSCACHE_OBJECT_RETIRED		6	/* T if object was retired on relinquishment */
-#define FSCACHE_OBJECT_KILLED_BY_CACHE	7	/* T if object was killed by the cache */
-#define FSCACHE_OBJECT_RUN_AFTER_DEAD	8	/* T if object has been dispatched after death */
+	अचिन्हित दीर्घ		flags;
+#घोषणा FSCACHE_OBJECT_LOCK		0	/* T अगर object is busy being processed */
+#घोषणा FSCACHE_OBJECT_PENDING_WRITE	1	/* T अगर object has pending ग_लिखो */
+#घोषणा FSCACHE_OBJECT_WAITING		2	/* T अगर object is रुकोing on its parent */
+#घोषणा FSCACHE_OBJECT_IS_LIVE		3	/* T अगर object is not withdrawn or relinquished */
+#घोषणा FSCACHE_OBJECT_IS_LOOKED_UP	4	/* T अगर object has been looked up */
+#घोषणा FSCACHE_OBJECT_IS_AVAILABLE	5	/* T अगर object has become active */
+#घोषणा FSCACHE_OBJECT_RETIRED		6	/* T अगर object was retired on relinquishment */
+#घोषणा FSCACHE_OBJECT_KILLED_BY_CACHE	7	/* T अगर object was समाप्तed by the cache */
+#घोषणा FSCACHE_OBJECT_RUN_AFTER_DEAD	8	/* T अगर object has been dispatched after death */
 
-	struct list_head	cache_link;	/* link in cache->object_list */
-	struct hlist_node	cookie_link;	/* link in cookie->backing_objects */
-	struct fscache_cache	*cache;		/* cache that supplied this object */
-	struct fscache_cookie	*cookie;	/* netfs's file/index object */
-	struct fscache_object	*parent;	/* parent object */
-	struct work_struct	work;		/* attention scheduling record */
-	struct list_head	dependents;	/* FIFO of dependent objects */
-	struct list_head	dep_link;	/* link in parent's dependents list */
-	struct list_head	pending_ops;	/* unstarted operations on this object */
-#ifdef CONFIG_FSCACHE_OBJECT_LIST
-	struct rb_node		objlist_link;	/* link in global object list */
-#endif
+	काष्ठा list_head	cache_link;	/* link in cache->object_list */
+	काष्ठा hlist_node	cookie_link;	/* link in cookie->backing_objects */
+	काष्ठा fscache_cache	*cache;		/* cache that supplied this object */
+	काष्ठा fscache_cookie	*cookie;	/* netfs's file/index object */
+	काष्ठा fscache_object	*parent;	/* parent object */
+	काष्ठा work_काष्ठा	work;		/* attention scheduling record */
+	काष्ठा list_head	dependents;	/* FIFO of dependent objects */
+	काष्ठा list_head	dep_link;	/* link in parent's dependents list */
+	काष्ठा list_head	pending_ops;	/* unstarted operations on this object */
+#अगर_घोषित CONFIG_FSCACHE_OBJECT_LIST
+	काष्ठा rb_node		objlist_link;	/* link in global object list */
+#पूर्ण_अगर
 	pgoff_t			store_limit;	/* current storage limit */
 	loff_t			store_limit_l;	/* current storage limit */
-};
+पूर्ण;
 
-extern void fscache_object_init(struct fscache_object *, struct fscache_cookie *,
-				struct fscache_cache *);
-extern void fscache_object_destroy(struct fscache_object *);
+बाह्य व्योम fscache_object_init(काष्ठा fscache_object *, काष्ठा fscache_cookie *,
+				काष्ठा fscache_cache *);
+बाह्य व्योम fscache_object_destroy(काष्ठा fscache_object *);
 
-extern void fscache_object_lookup_negative(struct fscache_object *object);
-extern void fscache_obtained_object(struct fscache_object *object);
+बाह्य व्योम fscache_object_lookup_negative(काष्ठा fscache_object *object);
+बाह्य व्योम fscache_obtained_object(काष्ठा fscache_object *object);
 
-static inline bool fscache_object_is_live(struct fscache_object *object)
-{
-	return test_bit(FSCACHE_OBJECT_IS_LIVE, &object->flags);
-}
+अटल अंतरभूत bool fscache_object_is_live(काष्ठा fscache_object *object)
+अणु
+	वापस test_bit(FSCACHE_OBJECT_IS_LIVE, &object->flags);
+पूर्ण
 
-static inline bool fscache_object_is_dying(struct fscache_object *object)
-{
-	return !fscache_object_is_live(object);
-}
+अटल अंतरभूत bool fscache_object_is_dying(काष्ठा fscache_object *object)
+अणु
+	वापस !fscache_object_is_live(object);
+पूर्ण
 
-static inline bool fscache_object_is_available(struct fscache_object *object)
-{
-	return test_bit(FSCACHE_OBJECT_IS_AVAILABLE, &object->flags);
-}
+अटल अंतरभूत bool fscache_object_is_available(काष्ठा fscache_object *object)
+अणु
+	वापस test_bit(FSCACHE_OBJECT_IS_AVAILABLE, &object->flags);
+पूर्ण
 
-static inline bool fscache_cache_is_broken(struct fscache_object *object)
-{
-	return test_bit(FSCACHE_IOERROR, &object->cache->flags);
-}
+अटल अंतरभूत bool fscache_cache_is_broken(काष्ठा fscache_object *object)
+अणु
+	वापस test_bit(FSCACHE_IOERROR, &object->cache->flags);
+पूर्ण
 
-static inline bool fscache_object_is_active(struct fscache_object *object)
-{
-	return fscache_object_is_available(object) &&
+अटल अंतरभूत bool fscache_object_is_active(काष्ठा fscache_object *object)
+अणु
+	वापस fscache_object_is_available(object) &&
 		fscache_object_is_live(object) &&
 		!fscache_cache_is_broken(object);
-}
+पूर्ण
 
 /**
- * fscache_object_destroyed - Note destruction of an object in a cache
+ * fscache_object_destroyed - Note deकाष्ठाion of an object in a cache
  * @cache: The cache from which the object came
  *
- * Note the destruction and deallocation of an object record in a cache.
+ * Note the deकाष्ठाion and deallocation of an object record in a cache.
  */
-static inline void fscache_object_destroyed(struct fscache_cache *cache)
-{
-	if (atomic_dec_and_test(&cache->object_count))
+अटल अंतरभूत व्योम fscache_object_destroyed(काष्ठा fscache_cache *cache)
+अणु
+	अगर (atomic_dec_and_test(&cache->object_count))
 		wake_up_all(&fscache_cache_cleared_wq);
-}
+पूर्ण
 
 /**
  * fscache_object_lookup_error - Note an object encountered an error
@@ -445,10 +446,10 @@ static inline void fscache_object_destroyed(struct fscache_cache *cache)
  * Note that an object encountered a fatal error (usually an I/O error) and
  * that it should be withdrawn as soon as possible.
  */
-static inline void fscache_object_lookup_error(struct fscache_object *object)
-{
+अटल अंतरभूत व्योम fscache_object_lookup_error(काष्ठा fscache_object *object)
+अणु
 	set_bit(FSCACHE_OBJECT_EV_ERROR, &object->events);
-}
+पूर्ण
 
 /**
  * fscache_set_store_limit - Set the maximum size to be stored in an object
@@ -458,60 +459,60 @@ static inline void fscache_object_lookup_error(struct fscache_object *object)
  * Set the maximum size an object is permitted to reach, implying the highest
  * byte that may be written.  Intended to be called by the attr_changed() op.
  *
- * See Documentation/filesystems/caching/backend-api.rst for a complete
+ * See Documentation/fileप्रणालीs/caching/backend-api.rst क्रम a complete
  * description.
  */
-static inline
-void fscache_set_store_limit(struct fscache_object *object, loff_t i_size)
-{
+अटल अंतरभूत
+व्योम fscache_set_store_limit(काष्ठा fscache_object *object, loff_t i_size)
+अणु
 	object->store_limit_l = i_size;
 	object->store_limit = i_size >> PAGE_SHIFT;
-	if (i_size & ~PAGE_MASK)
+	अगर (i_size & ~PAGE_MASK)
 		object->store_limit++;
-}
+पूर्ण
 
 /**
  * fscache_end_io - End a retrieval operation on a page
  * @op: The FS-Cache operation covering the retrieval
  * @page: The page that was to be fetched
- * @error: The error code (0 if successful)
+ * @error: The error code (0 अगर successful)
  *
  * Note the end of an operation to retrieve a page, as covered by a particular
  * operation record.
  */
-static inline void fscache_end_io(struct fscache_retrieval *op,
-				  struct page *page, int error)
-{
+अटल अंतरभूत व्योम fscache_end_io(काष्ठा fscache_retrieval *op,
+				  काष्ठा page *page, पूर्णांक error)
+अणु
 	op->end_io_func(page, op->context, error);
-}
+पूर्ण
 
-static inline void __fscache_use_cookie(struct fscache_cookie *cookie)
-{
+अटल अंतरभूत व्योम __fscache_use_cookie(काष्ठा fscache_cookie *cookie)
+अणु
 	atomic_inc(&cookie->n_active);
-}
+पूर्ण
 
 /**
  * fscache_use_cookie - Request usage of cookie attached to an object
  * @object: Object description
  * 
- * Request usage of the cookie attached to an object.  NULL is returned if the
+ * Request usage of the cookie attached to an object.  शून्य is वापसed अगर the
  * relinquishment had reduced the cookie usage count to 0.
  */
-static inline bool fscache_use_cookie(struct fscache_object *object)
-{
-	struct fscache_cookie *cookie = object->cookie;
-	return atomic_inc_not_zero(&cookie->n_active) != 0;
-}
+अटल अंतरभूत bool fscache_use_cookie(काष्ठा fscache_object *object)
+अणु
+	काष्ठा fscache_cookie *cookie = object->cookie;
+	वापस atomic_inc_not_zero(&cookie->n_active) != 0;
+पूर्ण
 
-static inline bool __fscache_unuse_cookie(struct fscache_cookie *cookie)
-{
-	return atomic_dec_and_test(&cookie->n_active);
-}
+अटल अंतरभूत bool __fscache_unuse_cookie(काष्ठा fscache_cookie *cookie)
+अणु
+	वापस atomic_dec_and_test(&cookie->n_active);
+पूर्ण
 
-static inline void __fscache_wake_unused_cookie(struct fscache_cookie *cookie)
-{
+अटल अंतरभूत व्योम __fscache_wake_unused_cookie(काष्ठा fscache_cookie *cookie)
+अणु
 	wake_up_var(&cookie->n_active);
-}
+पूर्ण
 
 /**
  * fscache_unuse_cookie - Cease usage of cookie attached to an object
@@ -520,50 +521,50 @@ static inline void __fscache_wake_unused_cookie(struct fscache_cookie *cookie)
  * Cease usage of the cookie attached to an object.  When the users count
  * reaches zero then the cookie relinquishment will be permitted to proceed.
  */
-static inline void fscache_unuse_cookie(struct fscache_object *object)
-{
-	struct fscache_cookie *cookie = object->cookie;
-	if (__fscache_unuse_cookie(cookie))
+अटल अंतरभूत व्योम fscache_unuse_cookie(काष्ठा fscache_object *object)
+अणु
+	काष्ठा fscache_cookie *cookie = object->cookie;
+	अगर (__fscache_unuse_cookie(cookie))
 		__fscache_wake_unused_cookie(cookie);
-}
+पूर्ण
 
 /*
  * out-of-line cache backend functions
  */
-extern __printf(3, 4)
-void fscache_init_cache(struct fscache_cache *cache,
-			const struct fscache_cache_ops *ops,
-			const char *idfmt, ...);
+बाह्य __म_लिखो(3, 4)
+व्योम fscache_init_cache(काष्ठा fscache_cache *cache,
+			स्थिर काष्ठा fscache_cache_ops *ops,
+			स्थिर अक्षर *idfmt, ...);
 
-extern int fscache_add_cache(struct fscache_cache *cache,
-			     struct fscache_object *fsdef,
-			     const char *tagname);
-extern void fscache_withdraw_cache(struct fscache_cache *cache);
+बाह्य पूर्णांक fscache_add_cache(काष्ठा fscache_cache *cache,
+			     काष्ठा fscache_object *fsdef,
+			     स्थिर अक्षर *tagname);
+बाह्य व्योम fscache_withdraw_cache(काष्ठा fscache_cache *cache);
 
-extern void fscache_io_error(struct fscache_cache *cache);
+बाह्य व्योम fscache_io_error(काष्ठा fscache_cache *cache);
 
-extern void fscache_mark_page_cached(struct fscache_retrieval *op,
-				     struct page *page);
+बाह्य व्योम fscache_mark_page_cached(काष्ठा fscache_retrieval *op,
+				     काष्ठा page *page);
 
-extern void fscache_mark_pages_cached(struct fscache_retrieval *op,
-				      struct pagevec *pagevec);
+बाह्य व्योम fscache_mark_pages_cached(काष्ठा fscache_retrieval *op,
+				      काष्ठा pagevec *pagevec);
 
-extern bool fscache_object_sleep_till_congested(signed long *timeoutp);
+बाह्य bool fscache_object_sleep_till_congested(चिन्हित दीर्घ *समयoutp);
 
-extern enum fscache_checkaux fscache_check_aux(struct fscache_object *object,
-					       const void *data,
-					       uint16_t datalen,
+बाह्य क्रमागत fscache_checkaux fscache_check_aux(काष्ठा fscache_object *object,
+					       स्थिर व्योम *data,
+					       uपूर्णांक16_t datalen,
 					       loff_t object_size);
 
-extern void fscache_object_retrying_stale(struct fscache_object *object);
+बाह्य व्योम fscache_object_retrying_stale(काष्ठा fscache_object *object);
 
-enum fscache_why_object_killed {
+क्रमागत fscache_why_object_समाप्तed अणु
 	FSCACHE_OBJECT_IS_STALE,
 	FSCACHE_OBJECT_NO_SPACE,
 	FSCACHE_OBJECT_WAS_RETIRED,
 	FSCACHE_OBJECT_WAS_CULLED,
-};
-extern void fscache_object_mark_killed(struct fscache_object *object,
-				       enum fscache_why_object_killed why);
+पूर्ण;
+बाह्य व्योम fscache_object_mark_समाप्तed(काष्ठा fscache_object *object,
+				       क्रमागत fscache_why_object_समाप्तed why);
 
-#endif /* _LINUX_FSCACHE_CACHE_H */
+#पूर्ण_अगर /* _LINUX_FSCACHE_CACHE_H */

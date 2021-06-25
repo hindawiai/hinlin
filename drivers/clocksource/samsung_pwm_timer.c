@@ -1,501 +1,502 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2011 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com/
  *
- * samsung - Common hr-timer support (s3c and s5p)
+ * samsung - Common hr-समयr support (s3c and s5p)
 */
 
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/sched_clock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched_घड़ी.h>
 
-#include <clocksource/samsung_pwm.h>
+#समावेश <घड़ीsource/samsung_pwm.h>
 
 
 /*
  * Clocksource driver
  */
 
-#define REG_TCFG0			0x00
-#define REG_TCFG1			0x04
-#define REG_TCON			0x08
-#define REG_TINT_CSTAT			0x44
+#घोषणा REG_TCFG0			0x00
+#घोषणा REG_TCFG1			0x04
+#घोषणा REG_TCON			0x08
+#घोषणा REG_TINT_CSTAT			0x44
 
-#define REG_TCNTB(chan)			(0x0c + 12 * (chan))
-#define REG_TCMPB(chan)			(0x10 + 12 * (chan))
+#घोषणा REG_TCNTB(chan)			(0x0c + 12 * (chan))
+#घोषणा REG_TCMPB(chan)			(0x10 + 12 * (chan))
 
-#define TCFG0_PRESCALER_MASK		0xff
-#define TCFG0_PRESCALER1_SHIFT		8
+#घोषणा TCFG0_PRESCALER_MASK		0xff
+#घोषणा TCFG0_PRESCALER1_SHIFT		8
 
-#define TCFG1_SHIFT(x)	  		((x) * 4)
-#define TCFG1_MUX_MASK	  		0xf
+#घोषणा TCFG1_SHIFT(x)	  		((x) * 4)
+#घोषणा TCFG1_MUX_MASK	  		0xf
 
 /*
- * Each channel occupies 4 bits in TCON register, but there is a gap of 4
- * bits (one channel) after channel 0, so channels have different numbering
- * when accessing TCON register.
+ * Each channel occupies 4 bits in TCON रेजिस्टर, but there is a gap of 4
+ * bits (one channel) after channel 0, so channels have dअगरferent numbering
+ * when accessing TCON रेजिस्टर.
  *
- * In addition, the location of autoreload bit for channel 4 (TCON channel 5)
- * in its set of bits is 2 as opposed to 3 for other channels.
+ * In addition, the location of स्वतःreload bit क्रम channel 4 (TCON channel 5)
+ * in its set of bits is 2 as opposed to 3 क्रम other channels.
  */
-#define TCON_START(chan)		(1 << (4 * (chan) + 0))
-#define TCON_MANUALUPDATE(chan)		(1 << (4 * (chan) + 1))
-#define TCON_INVERT(chan)		(1 << (4 * (chan) + 2))
-#define _TCON_AUTORELOAD(chan)		(1 << (4 * (chan) + 3))
-#define _TCON_AUTORELOAD4(chan)		(1 << (4 * (chan) + 2))
-#define TCON_AUTORELOAD(chan)		\
+#घोषणा TCON_START(chan)		(1 << (4 * (chan) + 0))
+#घोषणा TCON_MANUALUPDATE(chan)		(1 << (4 * (chan) + 1))
+#घोषणा TCON_INVERT(chan)		(1 << (4 * (chan) + 2))
+#घोषणा _TCON_AUTORELOAD(chan)		(1 << (4 * (chan) + 3))
+#घोषणा _TCON_AUTORELOAD4(chan)		(1 << (4 * (chan) + 2))
+#घोषणा TCON_AUTORELOAD(chan)		\
 	((chan < 5) ? _TCON_AUTORELOAD(chan) : _TCON_AUTORELOAD4(chan))
 
 DEFINE_SPINLOCK(samsung_pwm_lock);
 EXPORT_SYMBOL(samsung_pwm_lock);
 
-struct samsung_pwm_clocksource {
-	void __iomem *base;
-	void __iomem *source_reg;
-	unsigned int irq[SAMSUNG_PWM_NUM];
-	struct samsung_pwm_variant variant;
+काष्ठा samsung_pwm_घड़ीsource अणु
+	व्योम __iomem *base;
+	व्योम __iomem *source_reg;
+	अचिन्हित पूर्णांक irq[SAMSUNG_PWM_NUM];
+	काष्ठा samsung_pwm_variant variant;
 
-	struct clk *timerclk;
+	काष्ठा clk *समयrclk;
 
-	unsigned int event_id;
-	unsigned int source_id;
-	unsigned int tcnt_max;
-	unsigned int tscaler_div;
-	unsigned int tdiv;
+	अचिन्हित पूर्णांक event_id;
+	अचिन्हित पूर्णांक source_id;
+	अचिन्हित पूर्णांक tcnt_max;
+	अचिन्हित पूर्णांक tscaler_भाग;
+	अचिन्हित पूर्णांक tभाग;
 
-	unsigned long clock_count_per_tick;
-};
+	अचिन्हित दीर्घ घड़ी_count_per_tick;
+पूर्ण;
 
-static struct samsung_pwm_clocksource pwm;
+अटल काष्ठा samsung_pwm_घड़ीsource pwm;
 
-static void samsung_timer_set_prescale(unsigned int channel, u16 prescale)
-{
-	unsigned long flags;
-	u8 shift = 0;
+अटल व्योम samsung_समयr_set_prescale(अचिन्हित पूर्णांक channel, u16 prescale)
+अणु
+	अचिन्हित दीर्घ flags;
+	u8 shअगरt = 0;
 	u32 reg;
 
-	if (channel >= 2)
-		shift = TCFG0_PRESCALER1_SHIFT;
+	अगर (channel >= 2)
+		shअगरt = TCFG0_PRESCALER1_SHIFT;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	reg = readl(pwm.base + REG_TCFG0);
-	reg &= ~(TCFG0_PRESCALER_MASK << shift);
-	reg |= (prescale - 1) << shift;
-	writel(reg, pwm.base + REG_TCFG0);
+	reg = पढ़ोl(pwm.base + REG_TCFG0);
+	reg &= ~(TCFG0_PRESCALER_MASK << shअगरt);
+	reg |= (prescale - 1) << shअगरt;
+	ग_लिखोl(reg, pwm.base + REG_TCFG0);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-}
+पूर्ण
 
-static void samsung_timer_set_divisor(unsigned int channel, u8 divisor)
-{
-	u8 shift = TCFG1_SHIFT(channel);
-	unsigned long flags;
+अटल व्योम samsung_समयr_set_भागisor(अचिन्हित पूर्णांक channel, u8 भागisor)
+अणु
+	u8 shअगरt = TCFG1_SHIFT(channel);
+	अचिन्हित दीर्घ flags;
 	u32 reg;
 	u8 bits;
 
-	bits = (fls(divisor) - 1) - pwm.variant.div_base;
+	bits = (fls(भागisor) - 1) - pwm.variant.भाग_base;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	reg = readl(pwm.base + REG_TCFG1);
-	reg &= ~(TCFG1_MUX_MASK << shift);
-	reg |= bits << shift;
-	writel(reg, pwm.base + REG_TCFG1);
+	reg = पढ़ोl(pwm.base + REG_TCFG1);
+	reg &= ~(TCFG1_MUX_MASK << shअगरt);
+	reg |= bits << shअगरt;
+	ग_लिखोl(reg, pwm.base + REG_TCFG1);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-}
+पूर्ण
 
-static void samsung_time_stop(unsigned int channel)
-{
-	unsigned long tcon;
-	unsigned long flags;
+अटल व्योम samsung_समय_stop(अचिन्हित पूर्णांक channel)
+अणु
+	अचिन्हित दीर्घ tcon;
+	अचिन्हित दीर्घ flags;
 
-	if (channel > 0)
+	अगर (channel > 0)
 		++channel;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = readl_relaxed(pwm.base + REG_TCON);
+	tcon = पढ़ोl_relaxed(pwm.base + REG_TCON);
 	tcon &= ~TCON_START(channel);
-	writel_relaxed(tcon, pwm.base + REG_TCON);
+	ग_लिखोl_relaxed(tcon, pwm.base + REG_TCON);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-}
+पूर्ण
 
-static void samsung_time_setup(unsigned int channel, unsigned long tcnt)
-{
-	unsigned long tcon;
-	unsigned long flags;
-	unsigned int tcon_chan = channel;
+अटल व्योम samsung_समय_setup(अचिन्हित पूर्णांक channel, अचिन्हित दीर्घ tcnt)
+अणु
+	अचिन्हित दीर्घ tcon;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक tcon_chan = channel;
 
-	if (tcon_chan > 0)
+	अगर (tcon_chan > 0)
 		++tcon_chan;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = readl_relaxed(pwm.base + REG_TCON);
+	tcon = पढ़ोl_relaxed(pwm.base + REG_TCON);
 
 	tcon &= ~(TCON_START(tcon_chan) | TCON_AUTORELOAD(tcon_chan));
 	tcon |= TCON_MANUALUPDATE(tcon_chan);
 
-	writel_relaxed(tcnt, pwm.base + REG_TCNTB(channel));
-	writel_relaxed(tcnt, pwm.base + REG_TCMPB(channel));
-	writel_relaxed(tcon, pwm.base + REG_TCON);
+	ग_लिखोl_relaxed(tcnt, pwm.base + REG_TCNTB(channel));
+	ग_लिखोl_relaxed(tcnt, pwm.base + REG_TCMPB(channel));
+	ग_लिखोl_relaxed(tcon, pwm.base + REG_TCON);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-}
+पूर्ण
 
-static void samsung_time_start(unsigned int channel, bool periodic)
-{
-	unsigned long tcon;
-	unsigned long flags;
+अटल व्योम samsung_समय_start(अचिन्हित पूर्णांक channel, bool periodic)
+अणु
+	अचिन्हित दीर्घ tcon;
+	अचिन्हित दीर्घ flags;
 
-	if (channel > 0)
+	अगर (channel > 0)
 		++channel;
 
 	spin_lock_irqsave(&samsung_pwm_lock, flags);
 
-	tcon = readl_relaxed(pwm.base + REG_TCON);
+	tcon = पढ़ोl_relaxed(pwm.base + REG_TCON);
 
 	tcon &= ~TCON_MANUALUPDATE(channel);
 	tcon |= TCON_START(channel);
 
-	if (periodic)
+	अगर (periodic)
 		tcon |= TCON_AUTORELOAD(channel);
-	else
+	अन्यथा
 		tcon &= ~TCON_AUTORELOAD(channel);
 
-	writel_relaxed(tcon, pwm.base + REG_TCON);
+	ग_लिखोl_relaxed(tcon, pwm.base + REG_TCON);
 
 	spin_unlock_irqrestore(&samsung_pwm_lock, flags);
-}
+पूर्ण
 
-static int samsung_set_next_event(unsigned long cycles,
-				struct clock_event_device *evt)
-{
+अटल पूर्णांक samsung_set_next_event(अचिन्हित दीर्घ cycles,
+				काष्ठा घड़ी_event_device *evt)
+अणु
 	/*
-	 * This check is needed to account for internal rounding
-	 * errors inside clockevents core, which might result in
+	 * This check is needed to account क्रम पूर्णांकernal rounding
+	 * errors inside घड़ीevents core, which might result in
 	 * passing cycles = 0, which in turn would not generate any
-	 * timer interrupt and hang the system.
+	 * समयr पूर्णांकerrupt and hang the प्रणाली.
 	 *
-	 * Another solution would be to set up the clockevent device
+	 * Another solution would be to set up the घड़ीevent device
 	 * with min_delta = 2, but this would unnecessarily increase
 	 * the minimum sleep period.
 	 */
-	if (!cycles)
+	अगर (!cycles)
 		cycles = 1;
 
-	samsung_time_setup(pwm.event_id, cycles);
-	samsung_time_start(pwm.event_id, false);
+	samsung_समय_setup(pwm.event_id, cycles);
+	samsung_समय_start(pwm.event_id, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int samsung_shutdown(struct clock_event_device *evt)
-{
-	samsung_time_stop(pwm.event_id);
-	return 0;
-}
+अटल पूर्णांक samsung_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	samsung_समय_stop(pwm.event_id);
+	वापस 0;
+पूर्ण
 
-static int samsung_set_periodic(struct clock_event_device *evt)
-{
-	samsung_time_stop(pwm.event_id);
-	samsung_time_setup(pwm.event_id, pwm.clock_count_per_tick - 1);
-	samsung_time_start(pwm.event_id, true);
-	return 0;
-}
+अटल पूर्णांक samsung_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	samsung_समय_stop(pwm.event_id);
+	samsung_समय_setup(pwm.event_id, pwm.घड़ी_count_per_tick - 1);
+	samsung_समय_start(pwm.event_id, true);
+	वापस 0;
+पूर्ण
 
-static void samsung_clockevent_resume(struct clock_event_device *cev)
-{
-	samsung_timer_set_prescale(pwm.event_id, pwm.tscaler_div);
-	samsung_timer_set_divisor(pwm.event_id, pwm.tdiv);
+अटल व्योम samsung_घड़ीevent_resume(काष्ठा घड़ी_event_device *cev)
+अणु
+	samsung_समयr_set_prescale(pwm.event_id, pwm.tscaler_भाग);
+	samsung_समयr_set_भागisor(pwm.event_id, pwm.tभाग);
 
-	if (pwm.variant.has_tint_cstat) {
+	अगर (pwm.variant.has_tपूर्णांक_cstat) अणु
 		u32 mask = (1 << pwm.event_id);
-		writel(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
-	}
-}
+		ग_लिखोl(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
+	पूर्ण
+पूर्ण
 
-static struct clock_event_device time_event_device = {
+अटल काष्ठा घड़ी_event_device समय_event_device = अणु
 	.name			= "samsung_event_timer",
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT,
 	.rating			= 200,
 	.set_next_event		= samsung_set_next_event,
-	.set_state_shutdown	= samsung_shutdown,
+	.set_state_shutकरोwn	= samsung_shutकरोwn,
 	.set_state_periodic	= samsung_set_periodic,
-	.set_state_oneshot	= samsung_shutdown,
-	.tick_resume		= samsung_shutdown,
-	.resume			= samsung_clockevent_resume,
-};
+	.set_state_oneshot	= samsung_shutकरोwn,
+	.tick_resume		= samsung_shutकरोwn,
+	.resume			= samsung_घड़ीevent_resume,
+पूर्ण;
 
-static irqreturn_t samsung_clock_event_isr(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
+अटल irqवापस_t samsung_घड़ी_event_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
 
-	if (pwm.variant.has_tint_cstat) {
+	अगर (pwm.variant.has_tपूर्णांक_cstat) अणु
 		u32 mask = (1 << pwm.event_id);
-		writel(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
-	}
+		ग_लिखोl(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
+	पूर्ण
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void __init samsung_clockevent_init(void)
-{
-	unsigned long pclk;
-	unsigned long clock_rate;
-	unsigned int irq_number;
+अटल व्योम __init samsung_घड़ीevent_init(व्योम)
+अणु
+	अचिन्हित दीर्घ pclk;
+	अचिन्हित दीर्घ घड़ी_rate;
+	अचिन्हित पूर्णांक irq_number;
 
-	pclk = clk_get_rate(pwm.timerclk);
+	pclk = clk_get_rate(pwm.समयrclk);
 
-	samsung_timer_set_prescale(pwm.event_id, pwm.tscaler_div);
-	samsung_timer_set_divisor(pwm.event_id, pwm.tdiv);
+	samsung_समयr_set_prescale(pwm.event_id, pwm.tscaler_भाग);
+	samsung_समयr_set_भागisor(pwm.event_id, pwm.tभाग);
 
-	clock_rate = pclk / (pwm.tscaler_div * pwm.tdiv);
-	pwm.clock_count_per_tick = clock_rate / HZ;
+	घड़ी_rate = pclk / (pwm.tscaler_भाग * pwm.tभाग);
+	pwm.घड़ी_count_per_tick = घड़ी_rate / HZ;
 
-	time_event_device.cpumask = cpumask_of(0);
-	clockevents_config_and_register(&time_event_device,
-						clock_rate, 1, pwm.tcnt_max);
+	समय_event_device.cpumask = cpumask_of(0);
+	घड़ीevents_config_and_रेजिस्टर(&समय_event_device,
+						घड़ी_rate, 1, pwm.tcnt_max);
 
 	irq_number = pwm.irq[pwm.event_id];
-	if (request_irq(irq_number, samsung_clock_event_isr,
+	अगर (request_irq(irq_number, samsung_घड़ी_event_isr,
 			IRQF_TIMER | IRQF_IRQPOLL, "samsung_time_irq",
-			&time_event_device))
+			&समय_event_device))
 		pr_err("%s: request_irq() failed\n", "samsung_time_irq");
 
-	if (pwm.variant.has_tint_cstat) {
+	अगर (pwm.variant.has_tपूर्णांक_cstat) अणु
 		u32 mask = (1 << pwm.event_id);
-		writel(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
-	}
-}
+		ग_लिखोl(mask | (mask << 5), pwm.base + REG_TINT_CSTAT);
+	पूर्ण
+पूर्ण
 
-static void samsung_clocksource_suspend(struct clocksource *cs)
-{
-	samsung_time_stop(pwm.source_id);
-}
+अटल व्योम samsung_घड़ीsource_suspend(काष्ठा घड़ीsource *cs)
+अणु
+	samsung_समय_stop(pwm.source_id);
+पूर्ण
 
-static void samsung_clocksource_resume(struct clocksource *cs)
-{
-	samsung_timer_set_prescale(pwm.source_id, pwm.tscaler_div);
-	samsung_timer_set_divisor(pwm.source_id, pwm.tdiv);
+अटल व्योम samsung_घड़ीsource_resume(काष्ठा घड़ीsource *cs)
+अणु
+	samsung_समयr_set_prescale(pwm.source_id, pwm.tscaler_भाग);
+	samsung_समयr_set_भागisor(pwm.source_id, pwm.tभाग);
 
-	samsung_time_setup(pwm.source_id, pwm.tcnt_max);
-	samsung_time_start(pwm.source_id, true);
-}
+	samsung_समय_setup(pwm.source_id, pwm.tcnt_max);
+	samsung_समय_start(pwm.source_id, true);
+पूर्ण
 
-static u64 notrace samsung_clocksource_read(struct clocksource *c)
-{
-	return ~readl_relaxed(pwm.source_reg);
-}
+अटल u64 notrace samsung_घड़ीsource_पढ़ो(काष्ठा घड़ीsource *c)
+अणु
+	वापस ~पढ़ोl_relaxed(pwm.source_reg);
+पूर्ण
 
-static struct clocksource samsung_clocksource = {
+अटल काष्ठा घड़ीsource samsung_घड़ीsource = अणु
 	.name		= "samsung_clocksource_timer",
 	.rating		= 250,
-	.read		= samsung_clocksource_read,
-	.suspend	= samsung_clocksource_suspend,
-	.resume		= samsung_clocksource_resume,
+	.पढ़ो		= samsung_घड़ीsource_पढ़ो,
+	.suspend	= samsung_घड़ीsource_suspend,
+	.resume		= samsung_घड़ीsource_resume,
 	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
-};
+पूर्ण;
 
 /*
- * Override the global weak sched_clock symbol with this
- * local implementation which uses the clocksource to get some
+ * Override the global weak sched_घड़ी symbol with this
+ * local implementation which uses the घड़ीsource to get some
  * better resolution when scheduling the kernel. We accept that
- * this wraps around for now, since it is just a relative time
+ * this wraps around क्रम now, since it is just a relative समय
  * stamp. (Inspired by U300 implementation.)
  */
-static u64 notrace samsung_read_sched_clock(void)
-{
-	return samsung_clocksource_read(NULL);
-}
+अटल u64 notrace samsung_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस samsung_घड़ीsource_पढ़ो(शून्य);
+पूर्ण
 
-static int __init samsung_clocksource_init(void)
-{
-	unsigned long pclk;
-	unsigned long clock_rate;
+अटल पूर्णांक __init samsung_घड़ीsource_init(व्योम)
+अणु
+	अचिन्हित दीर्घ pclk;
+	अचिन्हित दीर्घ घड़ी_rate;
 
-	pclk = clk_get_rate(pwm.timerclk);
+	pclk = clk_get_rate(pwm.समयrclk);
 
-	samsung_timer_set_prescale(pwm.source_id, pwm.tscaler_div);
-	samsung_timer_set_divisor(pwm.source_id, pwm.tdiv);
+	samsung_समयr_set_prescale(pwm.source_id, pwm.tscaler_भाग);
+	samsung_समयr_set_भागisor(pwm.source_id, pwm.tभाग);
 
-	clock_rate = pclk / (pwm.tscaler_div * pwm.tdiv);
+	घड़ी_rate = pclk / (pwm.tscaler_भाग * pwm.tभाग);
 
-	samsung_time_setup(pwm.source_id, pwm.tcnt_max);
-	samsung_time_start(pwm.source_id, true);
+	samsung_समय_setup(pwm.source_id, pwm.tcnt_max);
+	samsung_समय_start(pwm.source_id, true);
 
-	if (pwm.source_id == 4)
+	अगर (pwm.source_id == 4)
 		pwm.source_reg = pwm.base + 0x40;
-	else
+	अन्यथा
 		pwm.source_reg = pwm.base + pwm.source_id * 0x0c + 0x14;
 
-	sched_clock_register(samsung_read_sched_clock,
-						pwm.variant.bits, clock_rate);
+	sched_घड़ी_रेजिस्टर(samsung_पढ़ो_sched_घड़ी,
+						pwm.variant.bits, घड़ी_rate);
 
-	samsung_clocksource.mask = CLOCKSOURCE_MASK(pwm.variant.bits);
-	return clocksource_register_hz(&samsung_clocksource, clock_rate);
-}
+	samsung_घड़ीsource.mask = CLOCKSOURCE_MASK(pwm.variant.bits);
+	वापस घड़ीsource_रेजिस्टर_hz(&samsung_घड़ीsource, घड़ी_rate);
+पूर्ण
 
-static void __init samsung_timer_resources(void)
-{
-	clk_prepare_enable(pwm.timerclk);
+अटल व्योम __init samsung_समयr_resources(व्योम)
+अणु
+	clk_prepare_enable(pwm.समयrclk);
 
 	pwm.tcnt_max = (1UL << pwm.variant.bits) - 1;
-	if (pwm.variant.bits == 16) {
-		pwm.tscaler_div = 25;
-		pwm.tdiv = 2;
-	} else {
-		pwm.tscaler_div = 2;
-		pwm.tdiv = 1;
-	}
-}
+	अगर (pwm.variant.bits == 16) अणु
+		pwm.tscaler_भाग = 25;
+		pwm.tभाग = 2;
+	पूर्ण अन्यथा अणु
+		pwm.tscaler_भाग = 2;
+		pwm.tभाग = 1;
+	पूर्ण
+पूर्ण
 
 /*
  * PWM master driver
  */
-static int __init _samsung_pwm_clocksource_init(void)
-{
+अटल पूर्णांक __init _samsung_pwm_घड़ीsource_init(व्योम)
+अणु
 	u8 mask;
-	int channel;
+	पूर्णांक channel;
 
 	mask = ~pwm.variant.output_mask & ((1 << SAMSUNG_PWM_NUM) - 1);
 	channel = fls(mask) - 1;
-	if (channel < 0) {
+	अगर (channel < 0) अणु
 		pr_crit("failed to find PWM channel for clocksource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pwm.source_id = channel;
 
 	mask &= ~(1 << channel);
 	channel = fls(mask) - 1;
-	if (channel < 0) {
+	अगर (channel < 0) अणु
 		pr_crit("failed to find PWM channel for clock event\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pwm.event_id = channel;
 
-	samsung_timer_resources();
-	samsung_clockevent_init();
+	samsung_समयr_resources();
+	samsung_घड़ीevent_init();
 
-	return samsung_clocksource_init();
-}
+	वापस samsung_घड़ीsource_init();
+पूर्ण
 
-void __init samsung_pwm_clocksource_init(void __iomem *base,
-			unsigned int *irqs, struct samsung_pwm_variant *variant)
-{
+व्योम __init samsung_pwm_घड़ीsource_init(व्योम __iomem *base,
+			अचिन्हित पूर्णांक *irqs, काष्ठा samsung_pwm_variant *variant)
+अणु
 	pwm.base = base;
-	memcpy(&pwm.variant, variant, sizeof(pwm.variant));
-	memcpy(pwm.irq, irqs, SAMSUNG_PWM_NUM * sizeof(*irqs));
+	स_नकल(&pwm.variant, variant, माप(pwm.variant));
+	स_नकल(pwm.irq, irqs, SAMSUNG_PWM_NUM * माप(*irqs));
 
-	pwm.timerclk = clk_get(NULL, "timers");
-	if (IS_ERR(pwm.timerclk))
+	pwm.समयrclk = clk_get(शून्य, "timers");
+	अगर (IS_ERR(pwm.समयrclk))
 		panic("failed to get timers clock for timer");
 
-	_samsung_pwm_clocksource_init();
-}
+	_samsung_pwm_घड़ीsource_init();
+पूर्ण
 
-#ifdef CONFIG_TIMER_OF
-static int __init samsung_pwm_alloc(struct device_node *np,
-				    const struct samsung_pwm_variant *variant)
-{
-	struct property *prop;
-	const __be32 *cur;
+#अगर_घोषित CONFIG_TIMER_OF
+अटल पूर्णांक __init samsung_pwm_alloc(काष्ठा device_node *np,
+				    स्थिर काष्ठा samsung_pwm_variant *variant)
+अणु
+	काष्ठा property *prop;
+	स्थिर __be32 *cur;
 	u32 val;
-	int i;
+	पूर्णांक i;
 
-	memcpy(&pwm.variant, variant, sizeof(pwm.variant));
-	for (i = 0; i < SAMSUNG_PWM_NUM; ++i)
+	स_नकल(&pwm.variant, variant, माप(pwm.variant));
+	क्रम (i = 0; i < SAMSUNG_PWM_NUM; ++i)
 		pwm.irq[i] = irq_of_parse_and_map(np, i);
 
-	of_property_for_each_u32(np, "samsung,pwm-outputs", prop, cur, val) {
-		if (val >= SAMSUNG_PWM_NUM) {
+	of_property_क्रम_each_u32(np, "samsung,pwm-outputs", prop, cur, val) अणु
+		अगर (val >= SAMSUNG_PWM_NUM) अणु
 			pr_warn("%s: invalid channel index in samsung,pwm-outputs property\n", __func__);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pwm.variant.output_mask |= 1 << val;
-	}
+	पूर्ण
 
 	pwm.base = of_iomap(np, 0);
-	if (!pwm.base) {
+	अगर (!pwm.base) अणु
 		pr_err("%s: failed to map PWM registers\n", __func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	pwm.timerclk = of_clk_get_by_name(np, "timers");
-	if (IS_ERR(pwm.timerclk)) {
+	pwm.समयrclk = of_clk_get_by_name(np, "timers");
+	अगर (IS_ERR(pwm.समयrclk)) अणु
 		pr_crit("failed to get timers clock for timer\n");
-		return PTR_ERR(pwm.timerclk);
-	}
+		वापस PTR_ERR(pwm.समयrclk);
+	पूर्ण
 
-	return _samsung_pwm_clocksource_init();
-}
+	वापस _samsung_pwm_घड़ीsource_init();
+पूर्ण
 
-static const struct samsung_pwm_variant s3c24xx_variant = {
+अटल स्थिर काष्ठा samsung_pwm_variant s3c24xx_variant = अणु
 	.bits		= 16,
-	.div_base	= 1,
-	.has_tint_cstat	= false,
+	.भाग_base	= 1,
+	.has_tपूर्णांक_cstat	= false,
 	.tclk_mask	= (1 << 4),
-};
+पूर्ण;
 
-static int __init s3c2410_pwm_clocksource_init(struct device_node *np)
-{
-	return samsung_pwm_alloc(np, &s3c24xx_variant);
-}
-TIMER_OF_DECLARE(s3c2410_pwm, "samsung,s3c2410-pwm", s3c2410_pwm_clocksource_init);
+अटल पूर्णांक __init s3c2410_pwm_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	वापस samsung_pwm_alloc(np, &s3c24xx_variant);
+पूर्ण
+TIMER_OF_DECLARE(s3c2410_pwm, "samsung,s3c2410-pwm", s3c2410_pwm_घड़ीsource_init);
 
-static const struct samsung_pwm_variant s3c64xx_variant = {
+अटल स्थिर काष्ठा samsung_pwm_variant s3c64xx_variant = अणु
 	.bits		= 32,
-	.div_base	= 0,
-	.has_tint_cstat	= true,
+	.भाग_base	= 0,
+	.has_tपूर्णांक_cstat	= true,
 	.tclk_mask	= (1 << 7) | (1 << 6) | (1 << 5),
-};
+पूर्ण;
 
-static int __init s3c64xx_pwm_clocksource_init(struct device_node *np)
-{
-	return samsung_pwm_alloc(np, &s3c64xx_variant);
-}
-TIMER_OF_DECLARE(s3c6400_pwm, "samsung,s3c6400-pwm", s3c64xx_pwm_clocksource_init);
+अटल पूर्णांक __init s3c64xx_pwm_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	वापस samsung_pwm_alloc(np, &s3c64xx_variant);
+पूर्ण
+TIMER_OF_DECLARE(s3c6400_pwm, "samsung,s3c6400-pwm", s3c64xx_pwm_घड़ीsource_init);
 
-static const struct samsung_pwm_variant s5p64x0_variant = {
+अटल स्थिर काष्ठा samsung_pwm_variant s5p64x0_variant = अणु
 	.bits		= 32,
-	.div_base	= 0,
-	.has_tint_cstat	= true,
+	.भाग_base	= 0,
+	.has_tपूर्णांक_cstat	= true,
 	.tclk_mask	= 0,
-};
+पूर्ण;
 
-static int __init s5p64x0_pwm_clocksource_init(struct device_node *np)
-{
-	return samsung_pwm_alloc(np, &s5p64x0_variant);
-}
-TIMER_OF_DECLARE(s5p6440_pwm, "samsung,s5p6440-pwm", s5p64x0_pwm_clocksource_init);
+अटल पूर्णांक __init s5p64x0_pwm_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	वापस samsung_pwm_alloc(np, &s5p64x0_variant);
+पूर्ण
+TIMER_OF_DECLARE(s5p6440_pwm, "samsung,s5p6440-pwm", s5p64x0_pwm_घड़ीsource_init);
 
-static const struct samsung_pwm_variant s5p_variant = {
+अटल स्थिर काष्ठा samsung_pwm_variant s5p_variant = अणु
 	.bits		= 32,
-	.div_base	= 0,
-	.has_tint_cstat	= true,
+	.भाग_base	= 0,
+	.has_tपूर्णांक_cstat	= true,
 	.tclk_mask	= (1 << 5),
-};
+पूर्ण;
 
-static int __init s5p_pwm_clocksource_init(struct device_node *np)
-{
-	return samsung_pwm_alloc(np, &s5p_variant);
-}
-TIMER_OF_DECLARE(s5pc100_pwm, "samsung,s5pc100-pwm", s5p_pwm_clocksource_init);
-#endif
+अटल पूर्णांक __init s5p_pwm_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	वापस samsung_pwm_alloc(np, &s5p_variant);
+पूर्ण
+TIMER_OF_DECLARE(s5pc100_pwm, "samsung,s5pc100-pwm", s5p_pwm_घड़ीsource_init);
+#पूर्ण_अगर

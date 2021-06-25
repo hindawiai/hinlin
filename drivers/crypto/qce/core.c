@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2010-2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/platform_device.h>
-#include <linux/spinlock.h>
-#include <linux/types.h>
-#include <crypto/algapi.h>
-#include <crypto/internal/hash.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
 
-#include "core.h"
-#include "cipher.h"
-#include "sha.h"
+#समावेश "core.h"
+#समावेश "cipher.h"
+#समावेश "sha.h"
 
-#define QCE_MAJOR_VERSION5	0x05
-#define QCE_QUEUE_LENGTH	1
+#घोषणा QCE_MAJOR_VERSION5	0x05
+#घोषणा QCE_QUEUE_LENGTH	1
 
-static const struct qce_algo_ops *qce_ops[] = {
-#ifdef CONFIG_CRYPTO_DEV_QCE_SKCIPHER
+अटल स्थिर काष्ठा qce_algo_ops *qce_ops[] = अणु
+#अगर_घोषित CONFIG_CRYPTO_DEV_QCE_SKCIPHER
 	&skcipher_ops,
-#endif
-#ifdef CONFIG_CRYPTO_DEV_QCE_SHA
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CRYPTO_DEV_QCE_SHA
 	&ahash_ops,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void qce_unregister_algs(struct qce_device *qce)
-{
-	const struct qce_algo_ops *ops;
-	int i;
+अटल व्योम qce_unरेजिस्टर_algs(काष्ठा qce_device *qce)
+अणु
+	स्थिर काष्ठा qce_algo_ops *ops;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(qce_ops); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(qce_ops); i++) अणु
 		ops = qce_ops[i];
-		ops->unregister_algs(qce);
-	}
-}
+		ops->unरेजिस्टर_algs(qce);
+	पूर्ण
+पूर्ण
 
-static int qce_register_algs(struct qce_device *qce)
-{
-	const struct qce_algo_ops *ops;
-	int i, ret = -ENODEV;
+अटल पूर्णांक qce_रेजिस्टर_algs(काष्ठा qce_device *qce)
+अणु
+	स्थिर काष्ठा qce_algo_ops *ops;
+	पूर्णांक i, ret = -ENODEV;
 
-	for (i = 0; i < ARRAY_SIZE(qce_ops); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(qce_ops); i++) अणु
 		ops = qce_ops[i];
-		ret = ops->register_algs(qce);
-		if (ret)
-			break;
-	}
+		ret = ops->रेजिस्टर_algs(qce);
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qce_handle_request(struct crypto_async_request *async_req)
-{
-	int ret = -EINVAL, i;
-	const struct qce_algo_ops *ops;
+अटल पूर्णांक qce_handle_request(काष्ठा crypto_async_request *async_req)
+अणु
+	पूर्णांक ret = -EINVAL, i;
+	स्थिर काष्ठा qce_algo_ops *ops;
 	u32 type = crypto_tfm_alg_type(async_req->tfm);
 
-	for (i = 0; i < ARRAY_SIZE(qce_ops); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(qce_ops); i++) अणु
 		ops = qce_ops[i];
-		if (type != ops->type)
-			continue;
+		अगर (type != ops->type)
+			जारी;
 		ret = ops->async_req_handle(async_req);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qce_handle_queue(struct qce_device *qce,
-			    struct crypto_async_request *req)
-{
-	struct crypto_async_request *async_req, *backlog;
-	unsigned long flags;
-	int ret = 0, err;
+अटल पूर्णांक qce_handle_queue(काष्ठा qce_device *qce,
+			    काष्ठा crypto_async_request *req)
+अणु
+	काष्ठा crypto_async_request *async_req, *backlog;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0, err;
 
 	spin_lock_irqsave(&qce->lock, flags);
 
-	if (req)
+	अगर (req)
 		ret = crypto_enqueue_request(&qce->queue, req);
 
-	/* busy, do not dequeue request */
-	if (qce->req) {
+	/* busy, करो not dequeue request */
+	अगर (qce->req) अणु
 		spin_unlock_irqrestore(&qce->lock, flags);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	backlog = crypto_get_backlog(&qce->queue);
 	async_req = crypto_dequeue_request(&qce->queue);
-	if (async_req)
+	अगर (async_req)
 		qce->req = async_req;
 
 	spin_unlock_irqrestore(&qce->lock, flags);
 
-	if (!async_req)
-		return ret;
+	अगर (!async_req)
+		वापस ret;
 
-	if (backlog) {
+	अगर (backlog) अणु
 		spin_lock_bh(&qce->lock);
 		backlog->complete(backlog, -EINPROGRESS);
 		spin_unlock_bh(&qce->lock);
-	}
+	पूर्ण
 
 	err = qce_handle_request(async_req);
-	if (err) {
+	अगर (err) अणु
 		qce->result = err;
-		tasklet_schedule(&qce->done_tasklet);
-	}
+		tasklet_schedule(&qce->करोne_tasklet);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qce_tasklet_req_done(unsigned long data)
-{
-	struct qce_device *qce = (struct qce_device *)data;
-	struct crypto_async_request *req;
-	unsigned long flags;
+अटल व्योम qce_tasklet_req_करोne(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा qce_device *qce = (काष्ठा qce_device *)data;
+	काष्ठा crypto_async_request *req;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qce->lock, flags);
 	req = qce->req;
-	qce->req = NULL;
+	qce->req = शून्य;
 	spin_unlock_irqrestore(&qce->lock, flags);
 
-	if (req)
+	अगर (req)
 		req->complete(req, qce->result);
 
-	qce_handle_queue(qce, NULL);
-}
+	qce_handle_queue(qce, शून्य);
+पूर्ण
 
-static int qce_async_request_enqueue(struct qce_device *qce,
-				     struct crypto_async_request *req)
-{
-	return qce_handle_queue(qce, req);
-}
+अटल पूर्णांक qce_async_request_enqueue(काष्ठा qce_device *qce,
+				     काष्ठा crypto_async_request *req)
+अणु
+	वापस qce_handle_queue(qce, req);
+पूर्ण
 
-static void qce_async_request_done(struct qce_device *qce, int ret)
-{
+अटल व्योम qce_async_request_करोne(काष्ठा qce_device *qce, पूर्णांक ret)
+अणु
 	qce->result = ret;
-	tasklet_schedule(&qce->done_tasklet);
-}
+	tasklet_schedule(&qce->करोne_tasklet);
+पूर्ण
 
-static int qce_check_version(struct qce_device *qce)
-{
+अटल पूर्णांक qce_check_version(काष्ठा qce_device *qce)
+अणु
 	u32 major, minor, step;
 
 	qce_get_version(qce, &major, &minor, &step);
 
 	/*
-	 * the driver does not support v5 with minor 0 because it has special
+	 * the driver करोes not support v5 with minor 0 because it has special
 	 * alignment requirements.
 	 */
-	if (major != QCE_MAJOR_VERSION5 || minor == 0)
-		return -ENODEV;
+	अगर (major != QCE_MAJOR_VERSION5 || minor == 0)
+		वापस -ENODEV;
 
 	qce->burst_size = QCE_BAM_BURST_SIZE;
 
 	/*
 	 * Rx and tx pipes are treated as a pair inside CE.
 	 * Pipe pair number depends on the actual BAM dma pipe
-	 * that is used for transfers. The BAM dma pipes are passed
+	 * that is used क्रम transfers. The BAM dma pipes are passed
 	 * from the device tree and used to derive the pipe pair
 	 * id in the CE driver as follows.
 	 * 	BAM dma pipes(rx, tx)		CE pipe pair id
@@ -178,116 +179,116 @@ static int qce_check_version(struct qce_device *qce)
 	dev_dbg(qce->dev, "Crypto device found, version %d.%d.%d\n",
 		major, minor, step);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qce_crypto_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct qce_device *qce;
-	int ret;
+अटल पूर्णांक qce_crypto_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा qce_device *qce;
+	पूर्णांक ret;
 
-	qce = devm_kzalloc(dev, sizeof(*qce), GFP_KERNEL);
-	if (!qce)
-		return -ENOMEM;
+	qce = devm_kzalloc(dev, माप(*qce), GFP_KERNEL);
+	अगर (!qce)
+		वापस -ENOMEM;
 
 	qce->dev = dev;
-	platform_set_drvdata(pdev, qce);
+	platक्रमm_set_drvdata(pdev, qce);
 
-	qce->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(qce->base))
-		return PTR_ERR(qce->base);
+	qce->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(qce->base))
+		वापस PTR_ERR(qce->base);
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(32));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	qce->core = devm_clk_get(qce->dev, "core");
-	if (IS_ERR(qce->core))
-		return PTR_ERR(qce->core);
+	अगर (IS_ERR(qce->core))
+		वापस PTR_ERR(qce->core);
 
-	qce->iface = devm_clk_get(qce->dev, "iface");
-	if (IS_ERR(qce->iface))
-		return PTR_ERR(qce->iface);
+	qce->अगरace = devm_clk_get(qce->dev, "iface");
+	अगर (IS_ERR(qce->अगरace))
+		वापस PTR_ERR(qce->अगरace);
 
 	qce->bus = devm_clk_get(qce->dev, "bus");
-	if (IS_ERR(qce->bus))
-		return PTR_ERR(qce->bus);
+	अगर (IS_ERR(qce->bus))
+		वापस PTR_ERR(qce->bus);
 
 	ret = clk_prepare_enable(qce->core);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = clk_prepare_enable(qce->iface);
-	if (ret)
-		goto err_clks_core;
+	ret = clk_prepare_enable(qce->अगरace);
+	अगर (ret)
+		जाओ err_clks_core;
 
 	ret = clk_prepare_enable(qce->bus);
-	if (ret)
-		goto err_clks_iface;
+	अगर (ret)
+		जाओ err_clks_अगरace;
 
 	ret = qce_dma_request(qce->dev, &qce->dma);
-	if (ret)
-		goto err_clks;
+	अगर (ret)
+		जाओ err_clks;
 
 	ret = qce_check_version(qce);
-	if (ret)
-		goto err_clks;
+	अगर (ret)
+		जाओ err_clks;
 
 	spin_lock_init(&qce->lock);
-	tasklet_init(&qce->done_tasklet, qce_tasklet_req_done,
-		     (unsigned long)qce);
+	tasklet_init(&qce->करोne_tasklet, qce_tasklet_req_करोne,
+		     (अचिन्हित दीर्घ)qce);
 	crypto_init_queue(&qce->queue, QCE_QUEUE_LENGTH);
 
 	qce->async_req_enqueue = qce_async_request_enqueue;
-	qce->async_req_done = qce_async_request_done;
+	qce->async_req_करोne = qce_async_request_करोne;
 
-	ret = qce_register_algs(qce);
-	if (ret)
-		goto err_dma;
+	ret = qce_रेजिस्टर_algs(qce);
+	अगर (ret)
+		जाओ err_dma;
 
-	return 0;
+	वापस 0;
 
 err_dma:
 	qce_dma_release(&qce->dma);
 err_clks:
 	clk_disable_unprepare(qce->bus);
-err_clks_iface:
-	clk_disable_unprepare(qce->iface);
+err_clks_अगरace:
+	clk_disable_unprepare(qce->अगरace);
 err_clks_core:
 	clk_disable_unprepare(qce->core);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qce_crypto_remove(struct platform_device *pdev)
-{
-	struct qce_device *qce = platform_get_drvdata(pdev);
+अटल पूर्णांक qce_crypto_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qce_device *qce = platक्रमm_get_drvdata(pdev);
 
-	tasklet_kill(&qce->done_tasklet);
-	qce_unregister_algs(qce);
+	tasklet_समाप्त(&qce->करोne_tasklet);
+	qce_unरेजिस्टर_algs(qce);
 	qce_dma_release(&qce->dma);
 	clk_disable_unprepare(qce->bus);
-	clk_disable_unprepare(qce->iface);
+	clk_disable_unprepare(qce->अगरace);
 	clk_disable_unprepare(qce->core);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id qce_crypto_of_match[] = {
-	{ .compatible = "qcom,crypto-v5.1", },
-	{ .compatible = "qcom,crypto-v5.4", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id qce_crypto_of_match[] = अणु
+	अणु .compatible = "qcom,crypto-v5.1", पूर्ण,
+	अणु .compatible = "qcom,crypto-v5.4", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qce_crypto_of_match);
 
-static struct platform_driver qce_crypto_driver = {
+अटल काष्ठा platक्रमm_driver qce_crypto_driver = अणु
 	.probe = qce_crypto_probe,
-	.remove = qce_crypto_remove,
-	.driver = {
+	.हटाओ = qce_crypto_हटाओ,
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.of_match_table = qce_crypto_of_match,
-	},
-};
-module_platform_driver(qce_crypto_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qce_crypto_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Qualcomm crypto engine driver");

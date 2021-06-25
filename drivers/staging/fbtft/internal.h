@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (C) 2013 Noralf Tronnes */
 
-#ifndef __LINUX_FBTFT_INTERNAL_H
-#define __LINUX_FBTFT_INTERNAL_H
+#अगर_अघोषित __LINUX_FBTFT_INTERNAL_H
+#घोषणा __LINUX_FBTFT_INTERNAL_H
 
-void fbtft_sysfs_init(struct fbtft_par *par);
-void fbtft_sysfs_exit(struct fbtft_par *par);
-void fbtft_expand_debug_value(unsigned long *debug);
-int fbtft_gamma_parse_str(struct fbtft_par *par, u32 *curves,
-			  const char *str, int size);
+व्योम fbtft_sysfs_init(काष्ठा fbtft_par *par);
+व्योम fbtft_sysfs_निकास(काष्ठा fbtft_par *par);
+व्योम fbtft_expand_debug_value(अचिन्हित दीर्घ *debug);
+पूर्णांक fbtft_gamma_parse_str(काष्ठा fbtft_par *par, u32 *curves,
+			  स्थिर अक्षर *str, पूर्णांक size);
 
-#endif /* __LINUX_FBTFT_INTERNAL_H */
+#पूर्ण_अगर /* __LINUX_FBTFT_INTERNAL_H */

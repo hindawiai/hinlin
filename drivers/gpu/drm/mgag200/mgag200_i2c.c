@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -26,134 +27,134 @@
  * Authors: Dave Airlie <airlied@redhat.com>
  */
 
-#include <linux/export.h>
-#include <linux/i2c-algo-bit.h>
-#include <linux/i2c.h>
-#include <linux/pci.h>
+#समावेश <linux/export.h>
+#समावेश <linux/i2c-algo-bit.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/pci.h>
 
-#include "mgag200_drv.h"
+#समावेश "mgag200_drv.h"
 
-static int mga_i2c_read_gpio(struct mga_device *mdev)
-{
+अटल पूर्णांक mga_i2c_पढ़ो_gpio(काष्ठा mga_device *mdev)
+अणु
 	WREG8(DAC_INDEX, MGA1064_GEN_IO_DATA);
-	return RREG8(DAC_DATA);
-}
+	वापस RREG8(DAC_DATA);
+पूर्ण
 
-static void mga_i2c_set_gpio(struct mga_device *mdev, int mask, int val)
-{
-	int tmp;
+अटल व्योम mga_i2c_set_gpio(काष्ठा mga_device *mdev, पूर्णांक mask, पूर्णांक val)
+अणु
+	पूर्णांक पंचांगp;
 
 	WREG8(DAC_INDEX, MGA1064_GEN_IO_CTL);
-	tmp = (RREG8(DAC_DATA) & mask) | val;
-	WREG_DAC(MGA1064_GEN_IO_CTL, tmp);
+	पंचांगp = (RREG8(DAC_DATA) & mask) | val;
+	WREG_DAC(MGA1064_GEN_IO_CTL, पंचांगp);
 	WREG_DAC(MGA1064_GEN_IO_DATA, 0);
-}
+पूर्ण
 
-static inline void mga_i2c_set(struct mga_device *mdev, int mask, int state)
-{
-	if (state)
+अटल अंतरभूत व्योम mga_i2c_set(काष्ठा mga_device *mdev, पूर्णांक mask, पूर्णांक state)
+अणु
+	अगर (state)
 		state = 0;
-	else
+	अन्यथा
 		state = mask;
 	mga_i2c_set_gpio(mdev, ~mask, state);
-}
+पूर्ण
 
-static void mga_gpio_setsda(void *data, int state)
-{
-	struct mga_i2c_chan *i2c = data;
-	struct mga_device *mdev = to_mga_device(i2c->dev);
+अटल व्योम mga_gpio_setsda(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा mga_i2c_chan *i2c = data;
+	काष्ठा mga_device *mdev = to_mga_device(i2c->dev);
 	mga_i2c_set(mdev, i2c->data, state);
-}
+पूर्ण
 
-static void mga_gpio_setscl(void *data, int state)
-{
-	struct mga_i2c_chan *i2c = data;
-	struct mga_device *mdev = to_mga_device(i2c->dev);
-	mga_i2c_set(mdev, i2c->clock, state);
-}
+अटल व्योम mga_gpio_setscl(व्योम *data, पूर्णांक state)
+अणु
+	काष्ठा mga_i2c_chan *i2c = data;
+	काष्ठा mga_device *mdev = to_mga_device(i2c->dev);
+	mga_i2c_set(mdev, i2c->घड़ी, state);
+पूर्ण
 
-static int mga_gpio_getsda(void *data)
-{
-	struct mga_i2c_chan *i2c = data;
-	struct mga_device *mdev = to_mga_device(i2c->dev);
-	return (mga_i2c_read_gpio(mdev) & i2c->data) ? 1 : 0;
-}
+अटल पूर्णांक mga_gpio_माला_लोda(व्योम *data)
+अणु
+	काष्ठा mga_i2c_chan *i2c = data;
+	काष्ठा mga_device *mdev = to_mga_device(i2c->dev);
+	वापस (mga_i2c_पढ़ो_gpio(mdev) & i2c->data) ? 1 : 0;
+पूर्ण
 
-static int mga_gpio_getscl(void *data)
-{
-	struct mga_i2c_chan *i2c = data;
-	struct mga_device *mdev = to_mga_device(i2c->dev);
-	return (mga_i2c_read_gpio(mdev) & i2c->clock) ? 1 : 0;
-}
+अटल पूर्णांक mga_gpio_माला_लोcl(व्योम *data)
+अणु
+	काष्ठा mga_i2c_chan *i2c = data;
+	काष्ठा mga_device *mdev = to_mga_device(i2c->dev);
+	वापस (mga_i2c_पढ़ो_gpio(mdev) & i2c->घड़ी) ? 1 : 0;
+पूर्ण
 
-struct mga_i2c_chan *mgag200_i2c_create(struct drm_device *dev)
-{
-	struct mga_device *mdev = to_mga_device(dev);
-	struct mga_i2c_chan *i2c;
-	int ret;
-	int data, clock;
+काष्ठा mga_i2c_chan *mgag200_i2c_create(काष्ठा drm_device *dev)
+अणु
+	काष्ठा mga_device *mdev = to_mga_device(dev);
+	काष्ठा mga_i2c_chan *i2c;
+	पूर्णांक ret;
+	पूर्णांक data, घड़ी;
 
 	WREG_DAC(MGA1064_GEN_IO_CTL2, 1);
 	WREG_DAC(MGA1064_GEN_IO_DATA, 0xff);
 	WREG_DAC(MGA1064_GEN_IO_CTL, 0);
 
-	switch (mdev->type) {
-	case G200_SE_A:
-	case G200_SE_B:
-	case G200_EV:
-	case G200_WB:
-	case G200_EW3:
+	चयन (mdev->type) अणु
+	हाल G200_SE_A:
+	हाल G200_SE_B:
+	हाल G200_EV:
+	हाल G200_WB:
+	हाल G200_EW3:
 		data = 1;
-		clock = 2;
-		break;
-	case G200_EH:
-	case G200_EH3:
-	case G200_ER:
+		घड़ी = 2;
+		अवरोध;
+	हाल G200_EH:
+	हाल G200_EH3:
+	हाल G200_ER:
 		data = 2;
-		clock = 1;
-		break;
-	default:
+		घड़ी = 1;
+		अवरोध;
+	शेष:
 		data = 2;
-		clock = 8;
-		break;
-	}
+		घड़ी = 8;
+		अवरोध;
+	पूर्ण
 
-	i2c = kzalloc(sizeof(struct mga_i2c_chan), GFP_KERNEL);
-	if (!i2c)
-		return NULL;
+	i2c = kzalloc(माप(काष्ठा mga_i2c_chan), GFP_KERNEL);
+	अगर (!i2c)
+		वापस शून्य;
 
 	i2c->data = data;
-	i2c->clock = clock;
+	i2c->घड़ी = घड़ी;
 	i2c->adapter.owner = THIS_MODULE;
 	i2c->adapter.class = I2C_CLASS_DDC;
 	i2c->adapter.dev.parent = dev->dev;
 	i2c->dev = dev;
 	i2c_set_adapdata(&i2c->adapter, i2c);
-	snprintf(i2c->adapter.name, sizeof(i2c->adapter.name), "mga i2c");
+	snम_लिखो(i2c->adapter.name, माप(i2c->adapter.name), "mga i2c");
 
 	i2c->adapter.algo_data = &i2c->bit;
 
 	i2c->bit.udelay = 10;
-	i2c->bit.timeout = 2;
+	i2c->bit.समयout = 2;
 	i2c->bit.data = i2c;
 	i2c->bit.setsda		= mga_gpio_setsda;
 	i2c->bit.setscl		= mga_gpio_setscl;
-	i2c->bit.getsda		= mga_gpio_getsda;
-	i2c->bit.getscl		= mga_gpio_getscl;
+	i2c->bit.माला_लोda		= mga_gpio_माला_लोda;
+	i2c->bit.माला_लोcl		= mga_gpio_माला_लोcl;
 
 	ret = i2c_bit_add_bus(&i2c->adapter);
-	if (ret) {
-		kfree(i2c);
-		i2c = NULL;
-	}
-	return i2c;
-}
+	अगर (ret) अणु
+		kमुक्त(i2c);
+		i2c = शून्य;
+	पूर्ण
+	वापस i2c;
+पूर्ण
 
-void mgag200_i2c_destroy(struct mga_i2c_chan *i2c)
-{
-	if (!i2c)
-		return;
+व्योम mgag200_i2c_destroy(काष्ठा mga_i2c_chan *i2c)
+अणु
+	अगर (!i2c)
+		वापस;
 	i2c_del_adapter(&i2c->adapter);
-	kfree(i2c);
-}
+	kमुक्त(i2c);
+पूर्ण
 

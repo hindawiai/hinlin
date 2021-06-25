@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * RTC subsystem, proc interface
+ * RTC subप्रणाली, proc पूर्णांकerface
  *
  * Copyright (C) 2005-06 Tower Technologies
  * Author: Alessandro Zummo <a.zummo@towertech.it>
  *
- * based on arch/arm/common/rtctime.c
+ * based on arch/arm/common/rtस_समय.c
  */
 
-#include <linux/module.h>
-#include <linux/rtc.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
 
-#include "rtc-core.h"
+#समावेश "rtc-core.h"
 
-#define NAME_SIZE	10
+#घोषणा NAME_SIZE	10
 
-#if defined(CONFIG_RTC_HCTOSYS_DEVICE)
-static bool is_rtc_hctosys(struct rtc_device *rtc)
-{
-	int size;
-	char name[NAME_SIZE];
+#अगर defined(CONFIG_RTC_HCTOSYS_DEVICE)
+अटल bool is_rtc_hctosys(काष्ठा rtc_device *rtc)
+अणु
+	पूर्णांक size;
+	अक्षर name[NAME_SIZE];
 
-	size = scnprintf(name, NAME_SIZE, "rtc%d", rtc->id);
-	if (size > NAME_SIZE)
-		return false;
+	size = scnम_लिखो(name, NAME_SIZE, "rtc%d", rtc->id);
+	अगर (size > NAME_SIZE)
+		वापस false;
 
-	return !strncmp(name, CONFIG_RTC_HCTOSYS_DEVICE, NAME_SIZE);
-}
-#else
-static bool is_rtc_hctosys(struct rtc_device *rtc)
-{
-	return (rtc->id == 0);
-}
-#endif
+	वापस !म_भेदन(name, CONFIG_RTC_HCTOSYS_DEVICE, NAME_SIZE);
+पूर्ण
+#अन्यथा
+अटल bool is_rtc_hctosys(काष्ठा rtc_device *rtc)
+अणु
+	वापस (rtc->id == 0);
+पूर्ण
+#पूर्ण_अगर
 
-static int rtc_proc_show(struct seq_file *seq, void *offset)
-{
-	int err;
-	struct rtc_device *rtc = seq->private;
-	const struct rtc_class_ops *ops = rtc->ops;
-	struct rtc_wkalrm alrm;
-	struct rtc_time tm;
+अटल पूर्णांक rtc_proc_show(काष्ठा seq_file *seq, व्योम *offset)
+अणु
+	पूर्णांक err;
+	काष्ठा rtc_device *rtc = seq->निजी;
+	स्थिर काष्ठा rtc_class_ops *ops = rtc->ops;
+	काष्ठा rtc_wkalrm alrm;
+	काष्ठा rtc_समय पंचांग;
 
-	err = rtc_read_time(rtc, &tm);
-	if (err == 0) {
-		seq_printf(seq,
+	err = rtc_पढ़ो_समय(rtc, &पंचांग);
+	अगर (err == 0) अणु
+		seq_म_लिखो(seq,
 			   "rtc_time\t: %ptRt\n"
 			   "rtc_date\t: %ptRd\n",
-			   &tm, &tm);
-	}
+			   &पंचांग, &पंचांग);
+	पूर्ण
 
-	err = rtc_read_alarm(rtc, &alrm);
-	if (err == 0) {
-		seq_printf(seq, "alrm_time\t: %ptRt\n", &alrm.time);
-		seq_printf(seq, "alrm_date\t: %ptRd\n", &alrm.time);
-		seq_printf(seq, "alarm_IRQ\t: %s\n",
+	err = rtc_पढ़ो_alarm(rtc, &alrm);
+	अगर (err == 0) अणु
+		seq_म_लिखो(seq, "alrm_time\t: %ptRt\n", &alrm.समय);
+		seq_म_लिखो(seq, "alrm_date\t: %ptRd\n", &alrm.समय);
+		seq_म_लिखो(seq, "alarm_IRQ\t: %s\n",
 			   alrm.enabled ? "yes" : "no");
-		seq_printf(seq, "alrm_pending\t: %s\n",
+		seq_म_लिखो(seq, "alrm_pending\t: %s\n",
 			   alrm.pending ? "yes" : "no");
-		seq_printf(seq, "update IRQ enabled\t: %s\n",
-			   (rtc->uie_rtctimer.enabled) ? "yes" : "no");
-		seq_printf(seq, "periodic IRQ enabled\t: %s\n",
+		seq_म_लिखो(seq, "update IRQ enabled\t: %s\n",
+			   (rtc->uie_rtस_समयr.enabled) ? "yes" : "no");
+		seq_म_लिखो(seq, "periodic IRQ enabled\t: %s\n",
 			   (rtc->pie_enabled) ? "yes" : "no");
-		seq_printf(seq, "periodic IRQ frequency\t: %d\n",
+		seq_म_लिखो(seq, "periodic IRQ frequency\t: %d\n",
 			   rtc->irq_freq);
-		seq_printf(seq, "max user IRQ frequency\t: %d\n",
+		seq_म_लिखो(seq, "max user IRQ frequency\t: %d\n",
 			   rtc->max_user_freq);
-	}
+	पूर्ण
 
-	seq_printf(seq, "24hr\t\t: yes\n");
+	seq_म_लिखो(seq, "24hr\t\t: yes\n");
 
-	if (ops->proc)
+	अगर (ops->proc)
 		ops->proc(rtc->dev.parent, seq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rtc_proc_add_device(struct rtc_device *rtc)
-{
-	if (is_rtc_hctosys(rtc))
-		proc_create_single_data("driver/rtc", 0, NULL, rtc_proc_show,
+व्योम rtc_proc_add_device(काष्ठा rtc_device *rtc)
+अणु
+	अगर (is_rtc_hctosys(rtc))
+		proc_create_single_data("driver/rtc", 0, शून्य, rtc_proc_show,
 					rtc);
-}
+पूर्ण
 
-void rtc_proc_del_device(struct rtc_device *rtc)
-{
-	if (is_rtc_hctosys(rtc))
-		remove_proc_entry("driver/rtc", NULL);
-}
+व्योम rtc_proc_del_device(काष्ठा rtc_device *rtc)
+अणु
+	अगर (is_rtc_hctosys(rtc))
+		हटाओ_proc_entry("driver/rtc", शून्य);
+पूर्ण

@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2020 Texas Instruments Incorporated - https://www.ti.com/
  */
 
-#include <linux/clk-provider.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-struct ti_syscon_gate_clk_priv {
-	struct clk_hw hw;
-	struct regmap *regmap;
+काष्ठा ti_syscon_gate_clk_priv अणु
+	काष्ठा clk_hw hw;
+	काष्ठा regmap *regmap;
 	u32 reg;
 	u32 idx;
-};
+पूर्ण;
 
-struct ti_syscon_gate_clk_data {
-	char *name;
+काष्ठा ti_syscon_gate_clk_data अणु
+	अक्षर *name;
 	u32 offset;
 	u32 bit_idx;
-};
+पूर्ण;
 
-static struct
-ti_syscon_gate_clk_priv *to_ti_syscon_gate_clk_priv(struct clk_hw *hw)
-{
-	return container_of(hw, struct ti_syscon_gate_clk_priv, hw);
-}
+अटल काष्ठा
+ti_syscon_gate_clk_priv *to_ti_syscon_gate_clk_priv(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा ti_syscon_gate_clk_priv, hw);
+पूर्ण
 
-static int ti_syscon_gate_clk_enable(struct clk_hw *hw)
-{
-	struct ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
+अटल पूर्णांक ti_syscon_gate_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
 
-	return regmap_write_bits(priv->regmap, priv->reg, priv->idx,
+	वापस regmap_ग_लिखो_bits(priv->regmap, priv->reg, priv->idx,
 				 priv->idx);
-}
+पूर्ण
 
-static void ti_syscon_gate_clk_disable(struct clk_hw *hw)
-{
-	struct ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
+अटल व्योम ti_syscon_gate_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
 
-	regmap_write_bits(priv->regmap, priv->reg, priv->idx, 0);
-}
+	regmap_ग_लिखो_bits(priv->regmap, priv->reg, priv->idx, 0);
+पूर्ण
 
-static int ti_syscon_gate_clk_is_enabled(struct clk_hw *hw)
-{
-	unsigned int val;
-	struct ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
+अटल पूर्णांक ti_syscon_gate_clk_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	अचिन्हित पूर्णांक val;
+	काष्ठा ti_syscon_gate_clk_priv *priv = to_ti_syscon_gate_clk_priv(hw);
 
-	regmap_read(priv->regmap, priv->reg, &val);
+	regmap_पढ़ो(priv->regmap, priv->reg, &val);
 
-	return !!(val & priv->idx);
-}
+	वापस !!(val & priv->idx);
+पूर्ण
 
-static const struct clk_ops ti_syscon_gate_clk_ops = {
+अटल स्थिर काष्ठा clk_ops ti_syscon_gate_clk_ops = अणु
 	.enable		= ti_syscon_gate_clk_enable,
 	.disable	= ti_syscon_gate_clk_disable,
 	.is_enabled	= ti_syscon_gate_clk_is_enabled,
-};
+पूर्ण;
 
-static struct clk_hw
-*ti_syscon_gate_clk_register(struct device *dev, struct regmap *regmap,
-			     const struct ti_syscon_gate_clk_data *data)
-{
-	struct ti_syscon_gate_clk_priv *priv;
-	struct clk_init_data init;
-	int ret;
+अटल काष्ठा clk_hw
+*ti_syscon_gate_clk_रेजिस्टर(काष्ठा device *dev, काष्ठा regmap *regmap,
+			     स्थिर काष्ठा ti_syscon_gate_clk_data *data)
+अणु
+	काष्ठा ti_syscon_gate_clk_priv *priv;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return ERR_PTR(-ENOMEM);
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = data->name;
 	init.ops = &ti_syscon_gate_clk_ops;
-	init.parent_names = NULL;
+	init.parent_names = शून्य;
 	init.num_parents = 0;
 	init.flags = 0;
 
@@ -82,90 +83,90 @@ static struct clk_hw
 	priv->idx = BIT(data->bit_idx);
 	priv->hw.init = &init;
 
-	ret = devm_clk_hw_register(dev, &priv->hw);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = devm_clk_hw_रेजिस्टर(dev, &priv->hw);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return &priv->hw;
-}
+	वापस &priv->hw;
+पूर्ण
 
-static int ti_syscon_gate_clk_probe(struct platform_device *pdev)
-{
-	const struct ti_syscon_gate_clk_data *data, *p;
-	struct clk_hw_onecell_data *hw_data;
-	struct device *dev = &pdev->dev;
-	struct regmap *regmap;
-	int num_clks, i;
+अटल पूर्णांक ti_syscon_gate_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा ti_syscon_gate_clk_data *data, *p;
+	काष्ठा clk_hw_onecell_data *hw_data;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा regmap *regmap;
+	पूर्णांक num_clks, i;
 
 	data = device_get_match_data(dev);
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	regmap = syscon_node_to_regmap(dev->of_node);
-	if (IS_ERR(regmap)) {
-		if (PTR_ERR(regmap) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(regmap)) अणु
+		अगर (PTR_ERR(regmap) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_err(dev, "failed to find parent regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
 	num_clks = 0;
-	for (p = data; p->name; p++)
+	क्रम (p = data; p->name; p++)
 		num_clks++;
 
-	hw_data = devm_kzalloc(dev, struct_size(hw_data, hws, num_clks),
+	hw_data = devm_kzalloc(dev, काष्ठा_size(hw_data, hws, num_clks),
 			       GFP_KERNEL);
-	if (!hw_data)
-		return -ENOMEM;
+	अगर (!hw_data)
+		वापस -ENOMEM;
 
 	hw_data->num = num_clks;
 
-	for (i = 0; i < num_clks; i++) {
-		hw_data->hws[i] = ti_syscon_gate_clk_register(dev, regmap,
+	क्रम (i = 0; i < num_clks; i++) अणु
+		hw_data->hws[i] = ti_syscon_gate_clk_रेजिस्टर(dev, regmap,
 							      &data[i]);
-		if (IS_ERR(hw_data->hws[i]))
+		अगर (IS_ERR(hw_data->hws[i]))
 			dev_warn(dev, "failed to register %s\n",
 				 data[i].name);
-	}
+	पूर्ण
 
-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
+	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_onecell_get,
 					   hw_data);
-}
+पूर्ण
 
-#define TI_SYSCON_CLK_GATE(_name, _offset, _bit_idx)	\
-	{						\
+#घोषणा TI_SYSCON_CLK_GATE(_name, _offset, _bit_idx)	\
+	अणु						\
 		.name = _name,				\
 		.offset = (_offset),			\
 		.bit_idx = (_bit_idx),			\
-	}
+	पूर्ण
 
-static const struct ti_syscon_gate_clk_data am654_clk_data[] = {
+अटल स्थिर काष्ठा ti_syscon_gate_clk_data am654_clk_data[] = अणु
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk0", 0x0, 0),
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk1", 0x4, 0),
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk2", 0x8, 0),
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk3", 0xc, 0),
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk4", 0x10, 0),
 	TI_SYSCON_CLK_GATE("ehrpwm_tbclk5", 0x14, 0),
-	{ /* Sentinel */ },
-};
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
-static const struct of_device_id ti_syscon_gate_clk_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id ti_syscon_gate_clk_ids[] = अणु
+	अणु
 		.compatible = "ti,am654-ehrpwm-tbclk",
 		.data = &am654_clk_data,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ti_syscon_gate_clk_ids);
 
-static struct platform_driver ti_syscon_gate_clk_driver = {
+अटल काष्ठा platक्रमm_driver ti_syscon_gate_clk_driver = अणु
 	.probe = ti_syscon_gate_clk_probe,
-	.driver = {
+	.driver = अणु
 		.name = "ti-syscon-gate-clk",
 		.of_match_table = ti_syscon_gate_clk_ids,
-	},
-};
-module_platform_driver(ti_syscon_gate_clk_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(ti_syscon_gate_clk_driver);
 
 MODULE_AUTHOR("Vignesh Raghavendra <vigneshr@ti.com>");
 MODULE_DESCRIPTION("Syscon backed gate-clock driver");

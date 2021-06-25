@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2012-2013 Samsung Electronics Co., Ltd.
  */
 
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/buffer_head.h>
-#include <asm/unaligned.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "exfat_raw.h"
-#include "exfat_fs.h"
+#समावेश "exfat_raw.h"
+#समावेश "exfat_fs.h"
 
-/* Upcase table macro */
-#define EXFAT_NUM_UPCASE	(2918)
-#define UTBL_COUNT		(0x10000)
+/* Upहाल table macro */
+#घोषणा EXFAT_NUM_UPCASE	(2918)
+#घोषणा UTBL_COUNT		(0x10000)
 
 /*
- * Upcase table in compressed format (7.2.5.1 Recommended Up-case Table
- * in exfat specification, See:
- * https://docs.microsoft.com/en-us/windows/win32/fileio/exfat-specification).
+ * Upहाल table in compressed क्रमmat (7.2.5.1 Recommended Up-हाल Table
+ * in exfat specअगरication, See:
+ * https://करोcs.microsoft.com/en-us/winकरोws/win32/fileio/exfat-specअगरication).
  */
-static const unsigned short uni_def_upcase[EXFAT_NUM_UPCASE] = {
+अटल स्थिर अचिन्हित लघु uni_def_upहाल[EXFAT_NUM_UPCASE] = अणु
 	0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
 	0x0008, 0x0009, 0x000a, 0x000b, 0x000c, 0x000d, 0x000e, 0x000f,
 	0x0010, 0x0011, 0x0012, 0x0013, 0x0014, 0x0015, 0x0016, 0x0017,
@@ -386,237 +387,237 @@ static const unsigned short uni_def_upcase[EXFAT_NUM_UPCASE] = {
 	0xffea, 0xffeb, 0xffec, 0xffed, 0xffee, 0xffef, 0xfff0, 0xfff1,
 	0xfff2, 0xfff3, 0xfff4, 0xfff5, 0xfff6, 0xfff7, 0xfff8, 0xfff9,
 	0xfffa, 0xfffb, 0xfffc, 0xfffd, 0xfffe, 0xffff,
-};
+पूर्ण;
 
 /*
- * Allow full-width illegal characters :
- * "MS windows 7" supports full-width-invalid-name-characters.
- * So we should check half-width-invalid-name-characters(ASCII) only
- * for compatibility.
+ * Allow full-width illegal अक्षरacters :
+ * "MS windows 7" supports full-width-invalid-name-अक्षरacters.
+ * So we should check half-width-invalid-name-अक्षरacters(ASCII) only
+ * क्रम compatibility.
  *
  * " * / : < > ? \ |
  */
-static unsigned short bad_uni_chars[] = {
+अटल अचिन्हित लघु bad_uni_अक्षरs[] = अणु
 	0x0022,         0x002A, 0x002F, 0x003A,
 	0x003C, 0x003E, 0x003F, 0x005C, 0x007C,
 	0
-};
+पूर्ण;
 
-static int exfat_convert_char_to_ucs2(struct nls_table *nls,
-		const unsigned char *ch, int ch_len, unsigned short *ucs2,
-		int *lossy)
-{
-	int len;
+अटल पूर्णांक exfat_convert_अक्षर_to_ucs2(काष्ठा nls_table *nls,
+		स्थिर अचिन्हित अक्षर *ch, पूर्णांक ch_len, अचिन्हित लघु *ucs2,
+		पूर्णांक *lossy)
+अणु
+	पूर्णांक len;
 
 	*ucs2 = 0x0;
 
-	if (ch[0] < 0x80) {
+	अगर (ch[0] < 0x80) अणु
 		*ucs2 = ch[0];
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	len = nls->char2uni(ch, ch_len, ucs2);
-	if (len < 0) {
+	len = nls->अक्षर2uni(ch, ch_len, ucs2);
+	अगर (len < 0) अणु
 		/* conversion failed */
-		if (lossy != NULL)
+		अगर (lossy != शून्य)
 			*lossy |= NLS_NAME_LOSSY;
 		*ucs2 = '_';
-		return 1;
-	}
-	return len;
-}
+		वापस 1;
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static int exfat_convert_ucs2_to_char(struct nls_table *nls,
-		unsigned short ucs2, unsigned char *ch, int *lossy)
-{
-	int len;
+अटल पूर्णांक exfat_convert_ucs2_to_अक्षर(काष्ठा nls_table *nls,
+		अचिन्हित लघु ucs2, अचिन्हित अक्षर *ch, पूर्णांक *lossy)
+अणु
+	पूर्णांक len;
 
 	ch[0] = 0x0;
 
-	if (ucs2 < 0x0080) {
+	अगर (ucs2 < 0x0080) अणु
 		ch[0] = ucs2;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	len = nls->uni2char(ucs2, ch, MAX_CHARSET_SIZE);
-	if (len < 0) {
+	len = nls->uni2अक्षर(ucs2, ch, MAX_CHARSET_SIZE);
+	अगर (len < 0) अणु
 		/* conversion failed */
-		if (lossy != NULL)
+		अगर (lossy != शून्य)
 			*lossy |= NLS_NAME_LOSSY;
 		ch[0] = '_';
-		return 1;
-	}
-	return len;
-}
+		वापस 1;
+	पूर्ण
+	वापस len;
+पूर्ण
 
-unsigned short exfat_toupper(struct super_block *sb, unsigned short a)
-{
-	struct exfat_sb_info *sbi = EXFAT_SB(sb);
+अचिन्हित लघु exfat_बड़े(काष्ठा super_block *sb, अचिन्हित लघु a)
+अणु
+	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
 
-	return sbi->vol_utbl[a] ? sbi->vol_utbl[a] : a;
-}
+	वापस sbi->vol_utbl[a] ? sbi->vol_utbl[a] : a;
+पूर्ण
 
-static unsigned short *exfat_wstrchr(unsigned short *str, unsigned short wchar)
-{
-	while (*str) {
-		if (*(str++) == wchar)
-			return str;
-	}
-	return NULL;
-}
+अटल अचिन्हित लघु *exfat_wम_अक्षर(अचिन्हित लघु *str, अचिन्हित लघु wअक्षर)
+अणु
+	जबतक (*str) अणु
+		अगर (*(str++) == wअक्षर)
+			वापस str;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int exfat_uniname_ncmp(struct super_block *sb, unsigned short *a,
-		unsigned short *b, unsigned int len)
-{
-	int i;
+पूर्णांक exfat_uniname_ncmp(काष्ठा super_block *sb, अचिन्हित लघु *a,
+		अचिन्हित लघु *b, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++, a++, b++)
-		if (exfat_toupper(sb, *a) != exfat_toupper(sb, *b))
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; i < len; i++, a++, b++)
+		अगर (exfat_बड़े(sb, *a) != exfat_बड़े(sb, *b))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-static int exfat_utf16_to_utf8(struct super_block *sb,
-		struct exfat_uni_name *p_uniname, unsigned char *p_cstring,
-		int buflen)
-{
-	int len;
-	const unsigned short *uniname = p_uniname->name;
+अटल पूर्णांक exfat_utf16_to_utf8(काष्ठा super_block *sb,
+		काष्ठा exfat_uni_name *p_uniname, अचिन्हित अक्षर *p_cstring,
+		पूर्णांक buflen)
+अणु
+	पूर्णांक len;
+	स्थिर अचिन्हित लघु *uniname = p_uniname->name;
 
 	/* always len >= 0 */
 	len = utf16s_to_utf8s(uniname, MAX_NAME_LENGTH, UTF16_HOST_ENDIAN,
 		p_cstring, buflen);
 	p_cstring[len] = '\0';
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int exfat_utf8_to_utf16(struct super_block *sb,
-		const unsigned char *p_cstring, const int len,
-		struct exfat_uni_name *p_uniname, int *p_lossy)
-{
-	int i, unilen, lossy = NLS_NAME_NO_LOSSY;
+अटल पूर्णांक exfat_utf8_to_utf16(काष्ठा super_block *sb,
+		स्थिर अचिन्हित अक्षर *p_cstring, स्थिर पूर्णांक len,
+		काष्ठा exfat_uni_name *p_uniname, पूर्णांक *p_lossy)
+अणु
+	पूर्णांक i, unilen, lossy = NLS_NAME_NO_LOSSY;
 	__le16 upname[MAX_NAME_LENGTH + 1];
-	unsigned short *uniname = p_uniname->name;
+	अचिन्हित लघु *uniname = p_uniname->name;
 
 	WARN_ON(!len);
 
 	unilen = utf8s_to_utf16s(p_cstring, len, UTF16_HOST_ENDIAN,
-			(wchar_t *)uniname, MAX_NAME_LENGTH + 2);
-	if (unilen < 0) {
+			(ब_अक्षर_प्रकार *)uniname, MAX_NAME_LENGTH + 2);
+	अगर (unilen < 0) अणु
 		exfat_err(sb, "failed to %s (err : %d) nls len : %d",
 			  __func__, unilen, len);
-		return unilen;
-	}
+		वापस unilen;
+	पूर्ण
 
-	if (unilen > MAX_NAME_LENGTH) {
+	अगर (unilen > MAX_NAME_LENGTH) अणु
 		exfat_err(sb, "failed to %s (estr:ENAMETOOLONG) nls len : %d, unilen : %d > %d",
 			  __func__, len, unilen, MAX_NAME_LENGTH);
-		return -ENAMETOOLONG;
-	}
+		वापस -ENAMETOOLONG;
+	पूर्ण
 
-	for (i = 0; i < unilen; i++) {
-		if (*uniname < 0x0020 ||
-		    exfat_wstrchr(bad_uni_chars, *uniname))
+	क्रम (i = 0; i < unilen; i++) अणु
+		अगर (*uniname < 0x0020 ||
+		    exfat_wम_अक्षर(bad_uni_अक्षरs, *uniname))
 			lossy |= NLS_NAME_LOSSY;
 
-		upname[i] = cpu_to_le16(exfat_toupper(sb, *uniname));
+		upname[i] = cpu_to_le16(exfat_बड़े(sb, *uniname));
 		uniname++;
-	}
+	पूर्ण
 
 	*uniname = '\0';
 	p_uniname->name_len = unilen;
 	p_uniname->name_hash = exfat_calc_chksum16(upname, unilen << 1, 0,
 			CS_DEFAULT);
 
-	if (p_lossy)
+	अगर (p_lossy)
 		*p_lossy = lossy;
-	return unilen;
-}
+	वापस unilen;
+पूर्ण
 
-#define SURROGATE_MASK	0xfffff800
-#define SURROGATE_PAIR	0x0000d800
-#define SURROGATE_LOW	0x00000400
+#घोषणा SURROGATE_MASK	0xfffff800
+#घोषणा SURROGATE_PAIR	0x0000d800
+#घोषणा SURROGATE_LOW	0x00000400
 
-static int __exfat_utf16_to_nls(struct super_block *sb,
-		struct exfat_uni_name *p_uniname, unsigned char *p_cstring,
-		int buflen)
-{
-	int i, j, len, out_len = 0;
-	unsigned char buf[MAX_CHARSET_SIZE];
-	const unsigned short *uniname = p_uniname->name;
-	struct nls_table *nls = EXFAT_SB(sb)->nls_io;
+अटल पूर्णांक __exfat_utf16_to_nls(काष्ठा super_block *sb,
+		काष्ठा exfat_uni_name *p_uniname, अचिन्हित अक्षर *p_cstring,
+		पूर्णांक buflen)
+अणु
+	पूर्णांक i, j, len, out_len = 0;
+	अचिन्हित अक्षर buf[MAX_CHARSET_SIZE];
+	स्थिर अचिन्हित लघु *uniname = p_uniname->name;
+	काष्ठा nls_table *nls = EXFAT_SB(sb)->nls_io;
 
 	i = 0;
-	while (i < MAX_NAME_LENGTH && out_len < (buflen - 1)) {
-		if (*uniname == '\0')
-			break;
-		if ((*uniname & SURROGATE_MASK) != SURROGATE_PAIR) {
-			len = exfat_convert_ucs2_to_char(nls, *uniname, buf,
-				NULL);
-		} else {
-			/* Process UTF-16 surrogate pair as one character */
-			if (!(*uniname & SURROGATE_LOW) &&
+	जबतक (i < MAX_NAME_LENGTH && out_len < (buflen - 1)) अणु
+		अगर (*uniname == '\0')
+			अवरोध;
+		अगर ((*uniname & SURROGATE_MASK) != SURROGATE_PAIR) अणु
+			len = exfat_convert_ucs2_to_अक्षर(nls, *uniname, buf,
+				शून्य);
+		पूर्ण अन्यथा अणु
+			/* Process UTF-16 surrogate pair as one अक्षरacter */
+			अगर (!(*uniname & SURROGATE_LOW) &&
 			    i+1 < MAX_NAME_LENGTH &&
 			    (*(uniname+1) & SURROGATE_MASK) == SURROGATE_PAIR &&
-			    (*(uniname+1) & SURROGATE_LOW)) {
+			    (*(uniname+1) & SURROGATE_LOW)) अणु
 				uniname++;
 				i++;
-			}
+			पूर्ण
 
 			/*
-			 * UTF-16 surrogate pair encodes code points above
-			 * U+FFFF. Code points above U+FFFF are not supported
-			 * by kernel NLS framework therefore use replacement
-			 * character
+			 * UTF-16 surrogate pair encodes code poपूर्णांकs above
+			 * U+FFFF. Code poपूर्णांकs above U+FFFF are not supported
+			 * by kernel NLS framework thereक्रमe use replacement
+			 * अक्षरacter
 			 */
 			len = 1;
 			buf[0] = '_';
-		}
+		पूर्ण
 
-		if (out_len + len >= buflen)
+		अगर (out_len + len >= buflen)
 			len = buflen - 1 - out_len;
 		out_len += len;
 
-		if (len > 1) {
-			for (j = 0; j < len; j++)
+		अगर (len > 1) अणु
+			क्रम (j = 0; j < len; j++)
 				*p_cstring++ = buf[j];
-		} else { /* len == 1 */
+		पूर्ण अन्यथा अणु /* len == 1 */
 			*p_cstring++ = *buf;
-		}
+		पूर्ण
 
 		uniname++;
 		i++;
-	}
+	पूर्ण
 
 	*p_cstring = '\0';
-	return out_len;
-}
+	वापस out_len;
+पूर्ण
 
-static int exfat_nls_to_ucs2(struct super_block *sb,
-		const unsigned char *p_cstring, const int len,
-		struct exfat_uni_name *p_uniname, int *p_lossy)
-{
-	int i = 0, unilen = 0, lossy = NLS_NAME_NO_LOSSY;
+अटल पूर्णांक exfat_nls_to_ucs2(काष्ठा super_block *sb,
+		स्थिर अचिन्हित अक्षर *p_cstring, स्थिर पूर्णांक len,
+		काष्ठा exfat_uni_name *p_uniname, पूर्णांक *p_lossy)
+अणु
+	पूर्णांक i = 0, unilen = 0, lossy = NLS_NAME_NO_LOSSY;
 	__le16 upname[MAX_NAME_LENGTH + 1];
-	unsigned short *uniname = p_uniname->name;
-	struct nls_table *nls = EXFAT_SB(sb)->nls_io;
+	अचिन्हित लघु *uniname = p_uniname->name;
+	काष्ठा nls_table *nls = EXFAT_SB(sb)->nls_io;
 
 	WARN_ON(!len);
 
-	while (unilen < MAX_NAME_LENGTH && i < len) {
-		i += exfat_convert_char_to_ucs2(nls, p_cstring + i, len - i,
+	जबतक (unilen < MAX_NAME_LENGTH && i < len) अणु
+		i += exfat_convert_अक्षर_to_ucs2(nls, p_cstring + i, len - i,
 				uniname, &lossy);
 
-		if (*uniname < 0x0020 ||
-		    exfat_wstrchr(bad_uni_chars, *uniname))
+		अगर (*uniname < 0x0020 ||
+		    exfat_wम_अक्षर(bad_uni_अक्षरs, *uniname))
 			lossy |= NLS_NAME_LOSSY;
 
-		upname[unilen] = cpu_to_le16(exfat_toupper(sb, *uniname));
+		upname[unilen] = cpu_to_le16(exfat_बड़े(sb, *uniname));
 		uniname++;
 		unilen++;
-	}
+	पूर्ण
 
-	if (p_cstring[i] != '\0')
+	अगर (p_cstring[i] != '\0')
 		lossy |= NLS_NAME_OVERLEN;
 
 	*uniname = '\0';
@@ -624,184 +625,184 @@ static int exfat_nls_to_ucs2(struct super_block *sb,
 	p_uniname->name_hash = exfat_calc_chksum16(upname, unilen << 1, 0,
 			CS_DEFAULT);
 
-	if (p_lossy)
+	अगर (p_lossy)
 		*p_lossy = lossy;
-	return unilen;
-}
+	वापस unilen;
+पूर्ण
 
-int exfat_utf16_to_nls(struct super_block *sb, struct exfat_uni_name *uniname,
-		unsigned char *p_cstring, int buflen)
-{
-	if (EXFAT_SB(sb)->options.utf8)
-		return exfat_utf16_to_utf8(sb, uniname, p_cstring,
+पूर्णांक exfat_utf16_to_nls(काष्ठा super_block *sb, काष्ठा exfat_uni_name *uniname,
+		अचिन्हित अक्षर *p_cstring, पूर्णांक buflen)
+अणु
+	अगर (EXFAT_SB(sb)->options.utf8)
+		वापस exfat_utf16_to_utf8(sb, uniname, p_cstring,
 				buflen);
-	return __exfat_utf16_to_nls(sb, uniname, p_cstring, buflen);
-}
+	वापस __exfat_utf16_to_nls(sb, uniname, p_cstring, buflen);
+पूर्ण
 
-int exfat_nls_to_utf16(struct super_block *sb, const unsigned char *p_cstring,
-		const int len, struct exfat_uni_name *uniname, int *p_lossy)
-{
-	if (EXFAT_SB(sb)->options.utf8)
-		return exfat_utf8_to_utf16(sb, p_cstring, len,
+पूर्णांक exfat_nls_to_utf16(काष्ठा super_block *sb, स्थिर अचिन्हित अक्षर *p_cstring,
+		स्थिर पूर्णांक len, काष्ठा exfat_uni_name *uniname, पूर्णांक *p_lossy)
+अणु
+	अगर (EXFAT_SB(sb)->options.utf8)
+		वापस exfat_utf8_to_utf16(sb, p_cstring, len,
 				uniname, p_lossy);
-	return exfat_nls_to_ucs2(sb, p_cstring, len, uniname, p_lossy);
-}
+	वापस exfat_nls_to_ucs2(sb, p_cstring, len, uniname, p_lossy);
+पूर्ण
 
-static int exfat_load_upcase_table(struct super_block *sb,
-		sector_t sector, unsigned long long num_sectors,
-		unsigned int utbl_checksum)
-{
-	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-	unsigned int sect_size = sb->s_blocksize;
-	unsigned int i, index = 0;
+अटल पूर्णांक exfat_load_upहाल_table(काष्ठा super_block *sb,
+		sector_t sector, अचिन्हित दीर्घ दीर्घ num_sectors,
+		अचिन्हित पूर्णांक utbl_checksum)
+अणु
+	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+	अचिन्हित पूर्णांक sect_size = sb->s_blocksize;
+	अचिन्हित पूर्णांक i, index = 0;
 	u32 chksum = 0;
-	int ret;
-	unsigned char skip = false;
-	unsigned short *upcase_table;
+	पूर्णांक ret;
+	अचिन्हित अक्षर skip = false;
+	अचिन्हित लघु *upहाल_table;
 
-	upcase_table = kvcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
-	if (!upcase_table)
-		return -ENOMEM;
+	upहाल_table = kvसुस्मृति(UTBL_COUNT, माप(अचिन्हित लघु), GFP_KERNEL);
+	अगर (!upहाल_table)
+		वापस -ENOMEM;
 
-	sbi->vol_utbl = upcase_table;
+	sbi->vol_utbl = upहाल_table;
 	num_sectors += sector;
 
-	while (sector < num_sectors) {
-		struct buffer_head *bh;
+	जबतक (sector < num_sectors) अणु
+		काष्ठा buffer_head *bh;
 
-		bh = sb_bread(sb, sector);
-		if (!bh) {
+		bh = sb_bपढ़ो(sb, sector);
+		अगर (!bh) अणु
 			exfat_err(sb, "failed to read sector(0x%llx)\n",
-				  (unsigned long long)sector);
+				  (अचिन्हित दीर्घ दीर्घ)sector);
 			ret = -EIO;
-			goto free_table;
-		}
+			जाओ मुक्त_table;
+		पूर्ण
 		sector++;
-		for (i = 0; i < sect_size && index <= 0xFFFF; i += 2) {
-			unsigned short uni = get_unaligned_le16(bh->b_data + i);
+		क्रम (i = 0; i < sect_size && index <= 0xFFFF; i += 2) अणु
+			अचिन्हित लघु uni = get_unaligned_le16(bh->b_data + i);
 
-			if (skip) {
+			अगर (skip) अणु
 				index += uni;
 				skip = false;
-			} else if (uni == index) {
+			पूर्ण अन्यथा अगर (uni == index) अणु
 				index++;
-			} else if (uni == 0xFFFF) {
+			पूर्ण अन्यथा अगर (uni == 0xFFFF) अणु
 				skip = true;
-			} else { /* uni != index , uni != 0xFFFF */
-				upcase_table[index] = uni;
+			पूर्ण अन्यथा अणु /* uni != index , uni != 0xFFFF */
+				upहाल_table[index] = uni;
 				index++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		chksum = exfat_calc_chksum32(bh->b_data, i, chksum, CS_DEFAULT);
-		brelse(bh);
-	}
+		brअन्यथा(bh);
+	पूर्ण
 
-	if (index >= 0xFFFF && utbl_checksum == chksum)
-		return 0;
+	अगर (index >= 0xFFFF && utbl_checksum == chksum)
+		वापस 0;
 
 	exfat_err(sb, "failed to load upcase table (idx : 0x%08x, chksum : 0x%08x, utbl_chksum : 0x%08x)",
 		  index, chksum, utbl_checksum);
 	ret = -EINVAL;
-free_table:
-	exfat_free_upcase_table(sbi);
-	return ret;
-}
+मुक्त_table:
+	exfat_मुक्त_upहाल_table(sbi);
+	वापस ret;
+पूर्ण
 
-static int exfat_load_default_upcase_table(struct super_block *sb)
-{
-	int i, ret = -EIO;
-	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-	unsigned char skip = false;
-	unsigned short uni = 0, *upcase_table;
-	unsigned int index = 0;
+अटल पूर्णांक exfat_load_शेष_upहाल_table(काष्ठा super_block *sb)
+अणु
+	पूर्णांक i, ret = -EIO;
+	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+	अचिन्हित अक्षर skip = false;
+	अचिन्हित लघु uni = 0, *upहाल_table;
+	अचिन्हित पूर्णांक index = 0;
 
-	upcase_table = kvcalloc(UTBL_COUNT, sizeof(unsigned short), GFP_KERNEL);
-	if (!upcase_table)
-		return -ENOMEM;
+	upहाल_table = kvसुस्मृति(UTBL_COUNT, माप(अचिन्हित लघु), GFP_KERNEL);
+	अगर (!upहाल_table)
+		वापस -ENOMEM;
 
-	sbi->vol_utbl = upcase_table;
+	sbi->vol_utbl = upहाल_table;
 
-	for (i = 0; index <= 0xFFFF && i < EXFAT_NUM_UPCASE; i++) {
-		uni = uni_def_upcase[i];
-		if (skip) {
+	क्रम (i = 0; index <= 0xFFFF && i < EXFAT_NUM_UPCASE; i++) अणु
+		uni = uni_def_upहाल[i];
+		अगर (skip) अणु
 			index += uni;
 			skip = false;
-		} else if (uni == index) {
+		पूर्ण अन्यथा अगर (uni == index) अणु
 			index++;
-		} else if (uni == 0xFFFF) {
+		पूर्ण अन्यथा अगर (uni == 0xFFFF) अणु
 			skip = true;
-		} else {
-			upcase_table[index] = uni;
+		पूर्ण अन्यथा अणु
+			upहाल_table[index] = uni;
 			index++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (index >= 0xFFFF)
-		return 0;
+	अगर (index >= 0xFFFF)
+		वापस 0;
 
-	/* FATAL error: default upcase table has error */
-	exfat_free_upcase_table(sbi);
-	return ret;
-}
+	/* FATAL error: शेष upहाल table has error */
+	exfat_मुक्त_upहाल_table(sbi);
+	वापस ret;
+पूर्ण
 
-int exfat_create_upcase_table(struct super_block *sb)
-{
-	int i, ret;
-	unsigned int tbl_clu, type;
+पूर्णांक exfat_create_upहाल_table(काष्ठा super_block *sb)
+अणु
+	पूर्णांक i, ret;
+	अचिन्हित पूर्णांक tbl_clu, type;
 	sector_t sector;
-	unsigned long long tbl_size, num_sectors;
-	unsigned char blksize_bits = sb->s_blocksize_bits;
-	struct exfat_chain clu;
-	struct exfat_dentry *ep;
-	struct exfat_sb_info *sbi = EXFAT_SB(sb);
-	struct buffer_head *bh;
+	अचिन्हित दीर्घ दीर्घ tbl_size, num_sectors;
+	अचिन्हित अक्षर blksize_bits = sb->s_blocksize_bits;
+	काष्ठा exfat_chain clu;
+	काष्ठा exfat_dentry *ep;
+	काष्ठा exfat_sb_info *sbi = EXFAT_SB(sb);
+	काष्ठा buffer_head *bh;
 
 	clu.dir = sbi->root_dir;
 	clu.flags = ALLOC_FAT_CHAIN;
 
-	while (clu.dir != EXFAT_EOF_CLUSTER) {
-		for (i = 0; i < sbi->dentries_per_clu; i++) {
-			ep = exfat_get_dentry(sb, &clu, i, &bh, NULL);
-			if (!ep)
-				return -EIO;
+	जबतक (clu.dir != EXFAT_खातापूर्ण_CLUSTER) अणु
+		क्रम (i = 0; i < sbi->dentries_per_clu; i++) अणु
+			ep = exfat_get_dentry(sb, &clu, i, &bh, शून्य);
+			अगर (!ep)
+				वापस -EIO;
 
 			type = exfat_get_entry_type(ep);
-			if (type == TYPE_UNUSED) {
-				brelse(bh);
-				break;
-			}
+			अगर (type == TYPE_UNUSED) अणु
+				brअन्यथा(bh);
+				अवरोध;
+			पूर्ण
 
-			if (type != TYPE_UPCASE) {
-				brelse(bh);
-				continue;
-			}
+			अगर (type != TYPE_UPCASE) अणु
+				brअन्यथा(bh);
+				जारी;
+			पूर्ण
 
-			tbl_clu  = le32_to_cpu(ep->dentry.upcase.start_clu);
-			tbl_size = le64_to_cpu(ep->dentry.upcase.size);
+			tbl_clu  = le32_to_cpu(ep->dentry.upहाल.start_clu);
+			tbl_size = le64_to_cpu(ep->dentry.upहाल.size);
 
 			sector = exfat_cluster_to_sector(sbi, tbl_clu);
 			num_sectors = ((tbl_size - 1) >> blksize_bits) + 1;
-			ret = exfat_load_upcase_table(sb, sector, num_sectors,
-				le32_to_cpu(ep->dentry.upcase.checksum));
+			ret = exfat_load_upहाल_table(sb, sector, num_sectors,
+				le32_to_cpu(ep->dentry.upहाल.checksum));
 
-			brelse(bh);
-			if (ret && ret != -EIO)
-				goto load_default;
+			brअन्यथा(bh);
+			अगर (ret && ret != -EIO)
+				जाओ load_शेष;
 
 			/* load successfully */
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (exfat_get_next_cluster(sb, &(clu.dir)))
-			return -EIO;
-	}
+		अगर (exfat_get_next_cluster(sb, &(clu.dir)))
+			वापस -EIO;
+	पूर्ण
 
-load_default:
-	/* load default upcase table */
-	return exfat_load_default_upcase_table(sb);
-}
+load_शेष:
+	/* load शेष upहाल table */
+	वापस exfat_load_शेष_upहाल_table(sb);
+पूर्ण
 
-void exfat_free_upcase_table(struct exfat_sb_info *sbi)
-{
-	kvfree(sbi->vol_utbl);
-}
+व्योम exfat_मुक्त_upहाल_table(काष्ठा exfat_sb_info *sbi)
+अणु
+	kvमुक्त(sbi->vol_utbl);
+पूर्ण

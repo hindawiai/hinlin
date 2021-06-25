@@ -1,88 +1,89 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_SIGFRAME_H
-#define _ASM_X86_SIGFRAME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_SIGFRAME_H
+#घोषणा _ASM_X86_SIGFRAME_H
 
-#include <uapi/asm/sigcontext.h>
-#include <asm/siginfo.h>
-#include <asm/ucontext.h>
-#include <linux/compat.h>
+#समावेश <uapi/यंत्र/sigcontext.h>
+#समावेश <यंत्र/siginfo.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <linux/compat.h>
 
-#ifdef CONFIG_X86_32
-#define sigframe_ia32		sigframe
-#define rt_sigframe_ia32	rt_sigframe
-#define ucontext_ia32		ucontext
-#else /* !CONFIG_X86_32 */
+#अगर_घोषित CONFIG_X86_32
+#घोषणा sigframe_ia32		sigframe
+#घोषणा rt_sigframe_ia32	rt_sigframe
+#घोषणा ucontext_ia32		ucontext
+#अन्यथा /* !CONFIG_X86_32 */
 
-#ifdef CONFIG_IA32_EMULATION
-#include <asm/ia32.h>
-#endif /* CONFIG_IA32_EMULATION */
+#अगर_घोषित CONFIG_IA32_EMULATION
+#समावेश <यंत्र/ia32.h>
+#पूर्ण_अगर /* CONFIG_IA32_EMULATION */
 
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-#if defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
-struct sigframe_ia32 {
+#अगर defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION)
+काष्ठा sigframe_ia32 अणु
 	u32 pretcode;
-	int sig;
-	struct sigcontext_32 sc;
+	पूर्णांक sig;
+	काष्ठा sigcontext_32 sc;
 	/*
 	 * fpstate is unused. fpstate is moved/allocated after
 	 * retcode[] below. This movement allows to have the FP state and the
 	 * future state extensions (xsave) stay together.
-	 * And at the same time retaining the unused fpstate, prevents changing
+	 * And at the same समय retaining the unused fpstate, prevents changing
 	 * the offset of extramask[] in the sigframe and thus prevent any
-	 * legacy application accessing/modifying it.
+	 * legacy application accessing/modअगरying it.
 	 */
-	struct _fpstate_32 fpstate_unused;
-	unsigned int extramask[1];
-	char retcode[8];
+	काष्ठा _fpstate_32 fpstate_unused;
+	अचिन्हित पूर्णांक extramask[1];
+	अक्षर retcode[8];
 	/* fp state follows here */
-};
+पूर्ण;
 
-struct rt_sigframe_ia32 {
+काष्ठा rt_sigframe_ia32 अणु
 	u32 pretcode;
-	int sig;
+	पूर्णांक sig;
 	u32 pinfo;
 	u32 puc;
-#ifdef CONFIG_IA32_EMULATION
+#अगर_घोषित CONFIG_IA32_EMULATION
 	compat_siginfo_t info;
-#else /* !CONFIG_IA32_EMULATION */
-	struct siginfo info;
-#endif /* CONFIG_IA32_EMULATION */
-	struct ucontext_ia32 uc;
-	char retcode[8];
+#अन्यथा /* !CONFIG_IA32_EMULATION */
+	काष्ठा siginfo info;
+#पूर्ण_अगर /* CONFIG_IA32_EMULATION */
+	काष्ठा ucontext_ia32 uc;
+	अक्षर retcode[8];
 	/* fp state follows here */
-};
-#endif /* defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION) */
+पूर्ण;
+#पूर्ण_अगर /* defined(CONFIG_X86_32) || defined(CONFIG_IA32_EMULATION) */
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 
-struct rt_sigframe {
-	char __user *pretcode;
-	struct ucontext uc;
-	struct siginfo info;
+काष्ठा rt_sigframe अणु
+	अक्षर __user *pretcode;
+	काष्ठा ucontext uc;
+	काष्ठा siginfo info;
 	/* fp state follows here */
-};
+पूर्ण;
 
-#ifdef CONFIG_X86_X32_ABI
+#अगर_घोषित CONFIG_X86_X32_ABI
 
-struct ucontext_x32 {
-	unsigned int	  uc_flags;
-	unsigned int 	  uc_link;
+काष्ठा ucontext_x32 अणु
+	अचिन्हित पूर्णांक	  uc_flags;
+	अचिन्हित पूर्णांक 	  uc_link;
 	compat_stack_t	  uc_stack;
-	unsigned int	  uc__pad0;     /* needed for alignment */
-	struct sigcontext uc_mcontext;  /* the 64-bit sigcontext type */
-	compat_sigset_t	  uc_sigmask;	/* mask last for extensibility */
-};
+	अचिन्हित पूर्णांक	  uc__pad0;     /* needed क्रम alignment */
+	काष्ठा sigcontext uc_mcontext;  /* the 64-bit sigcontext type */
+	compat_sigset_t	  uc_sigmask;	/* mask last क्रम extensibility */
+पूर्ण;
 
-struct rt_sigframe_x32 {
+काष्ठा rt_sigframe_x32 अणु
 	u64 pretcode;
-	struct ucontext_x32 uc;
+	काष्ठा ucontext_x32 uc;
 	compat_siginfo_t info;
 	/* fp state follows here */
-};
+पूर्ण;
 
-#endif /* CONFIG_X86_X32_ABI */
+#पूर्ण_अगर /* CONFIG_X86_X32_ABI */
 
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-#endif /* _ASM_X86_SIGFRAME_H */
+#पूर्ण_अगर /* _ASM_X86_SIGFRAME_H */

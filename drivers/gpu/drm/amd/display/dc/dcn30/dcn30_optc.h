@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,13 +24,13 @@
  *
  */
 
-#ifndef __DC_OPTC_DCN30_H__
-#define __DC_OPTC_DCN30_H__
+#अगर_अघोषित __DC_OPTC_DCN30_H__
+#घोषणा __DC_OPTC_DCN30_H__
 
-#include "dcn20/dcn20_optc.h"
+#समावेश "dcn20/dcn20_optc.h"
 
 
-#define OPTC_COMMON_REG_LIST_DCN3_BASE(inst) \
+#घोषणा OPTC_COMMON_REG_LIST_DCN3_BASE(inst) \
 	SRI(OTG_VSTARTUP_PARAM, OTG, inst),\
 	SRI(OTG_VUPDATE_PARAM, OTG, inst),\
 	SRI(OTG_VREADY_PARAM, OTG, inst),\
@@ -90,7 +91,7 @@
 	SRI(OTG_TRIGA_MANUAL_TRIG, OTG, inst)
 
 
-#define OPTC_COMMON_REG_LIST_DCN3_0(inst) \
+#घोषणा OPTC_COMMON_REG_LIST_DCN3_0(inst) \
 	OPTC_COMMON_REG_LIST_DCN3_BASE(inst),\
 	SRI(OTG_GLOBAL_CONTROL1, OTG, inst),\
 	SRI(OTG_GLOBAL_CONTROL2, OTG, inst),\
@@ -108,7 +109,7 @@
 	SR(DWB_SOURCE_SELECT)
 
 
-#define OPTC_COMMON_MASK_SH_LIST_DCN3_BASE(mask_sh)\
+#घोषणा OPTC_COMMON_MASK_SH_LIST_DCN3_BASE(mask_sh)\
 	SF(OTG0_OTG_VSTARTUP_PARAM, VSTARTUP_START, mask_sh),\
 	SF(OTG0_OTG_VUPDATE_PARAM, VUPDATE_OFFSET, mask_sh),\
 	SF(OTG0_OTG_VUPDATE_PARAM, VUPDATE_WIDTH, mask_sh),\
@@ -235,7 +236,7 @@
 	SF(GSL_SOURCE_SELECT, GSL2_READY_SOURCE_SEL, mask_sh),\
 	SF(OTG0_OTG_GLOBAL_CONTROL2, MANUAL_FLOW_CONTROL_SEL, mask_sh)
 
-#define OPTC_COMMON_MASK_SH_LIST_DCN3_0(mask_sh)\
+#घोषणा OPTC_COMMON_MASK_SH_LIST_DCN3_0(mask_sh)\
 	OPTC_COMMON_MASK_SH_LIST_DCN3_BASE(mask_sh),\
 	SF(OTG0_OTG_GLOBAL_CONTROL2, GLOBAL_UPDATE_LOCK_EN, mask_sh),\
 	SF(OTG0_OTG_GSL_WINDOW_X, OTG_GSL_WINDOW_START_X, mask_sh),\
@@ -271,7 +272,7 @@
 	SF(OTG0_OTG_DOUBLE_BUFFER_CONTROL, OTG_DRR_TIMING_DBUF_UPDATE_MODE, mask_sh),\
 	SF(OTG0_OTG_DOUBLE_BUFFER_CONTROL, OTG_BLANK_DATA_DOUBLE_BUFFER_EN, mask_sh)
 
-#define OPTC_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
+#घोषणा OPTC_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
 	OPTC_COMMON_MASK_SH_LIST_DCN3_BASE(mask_sh),\
 	SF(OTG0_OTG_GLOBAL_CONTROL2, GLOBAL_UPDATE_LOCK_EN, mask_sh),\
 	SF(OTG0_OTG_GSL_WINDOW_X, OTG_GSL_WINDOW_START_X, mask_sh),\
@@ -308,39 +309,39 @@
 	SF(OTG0_OTG_H_TIMING_CNTL, OTG_H_TIMING_DIV_MODE, mask_sh),\
 	SF(OTG0_OTG_DOUBLE_BUFFER_CONTROL, OTG_DRR_TIMING_DBUF_UPDATE_MODE, mask_sh)
 
-void dcn30_timing_generator_init(struct optc *optc1);
+व्योम dcn30_timing_generator_init(काष्ठा optc *optc1);
 
-void optc3_set_out_mux(struct timing_generator *optc, enum otg_out_mux_dest dest);
+व्योम optc3_set_out_mux(काष्ठा timing_generator *optc, क्रमागत otg_out_mux_dest dest);
 
-void optc3_lock(struct timing_generator *optc);
+व्योम optc3_lock(काष्ठा timing_generator *optc);
 
-void optc3_lock_doublebuffer_enable(struct timing_generator *optc);
+व्योम optc3_lock_द्विगुनbuffer_enable(काष्ठा timing_generator *optc);
 
-void optc3_lock_doublebuffer_disable(struct timing_generator *optc);
+व्योम optc3_lock_द्विगुनbuffer_disable(काष्ठा timing_generator *optc);
 
-void optc3_set_vrr_m_const(struct timing_generator *optc,
-		double vtotal_avg);
+व्योम optc3_set_vrr_m_स्थिर(काष्ठा timing_generator *optc,
+		द्विगुन vtotal_avg);
 
-void optc3_set_drr_trigger_window(struct timing_generator *optc,
-		uint32_t window_start, uint32_t window_end);
+व्योम optc3_set_drr_trigger_winकरोw(काष्ठा timing_generator *optc,
+		uपूर्णांक32_t winकरोw_start, uपूर्णांक32_t winकरोw_end);
 
-void optc3_triplebuffer_lock(struct timing_generator *optc);
+व्योम optc3_triplebuffer_lock(काष्ठा timing_generator *optc);
 
-void optc3_program_blank_color(struct timing_generator *optc,
-		const struct tg_color *blank_color);
+व्योम optc3_program_blank_color(काष्ठा timing_generator *optc,
+		स्थिर काष्ठा tg_color *blank_color);
 
-void optc3_set_vtotal_change_limit(struct timing_generator *optc,
-		uint32_t limit);
+व्योम optc3_set_vtotal_change_limit(काष्ठा timing_generator *optc,
+		uपूर्णांक32_t limit);
 
-void optc3_set_dsc_config(struct timing_generator *optc,
-		enum optc_dsc_mode dsc_mode,
-		uint32_t dsc_bytes_per_pixel,
-		uint32_t dsc_slice_width);
+व्योम optc3_set_dsc_config(काष्ठा timing_generator *optc,
+		क्रमागत optc_dsc_mode dsc_mode,
+		uपूर्णांक32_t dsc_bytes_per_pixel,
+		uपूर्णांक32_t dsc_slice_width);
 
-void optc3_set_timing_db_mode(struct timing_generator *optc, bool enable);
+व्योम optc3_set_timing_db_mode(काष्ठा timing_generator *optc, bool enable);
 
-void optc3_set_odm_bypass(struct timing_generator *optc,
-		const struct dc_crtc_timing *dc_crtc_timing);
-void optc3_tg_init(struct timing_generator *optc);
+व्योम optc3_set_odm_bypass(काष्ठा timing_generator *optc,
+		स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing);
+व्योम optc3_tg_init(काष्ठा timing_generator *optc);
 
-#endif /* __DC_OPTC_DCN30_H__ */
+#पूर्ण_अगर /* __DC_OPTC_DCN30_H__ */

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Fifo-attached Serial Interface (FSI) support for SH7724
+// Fअगरo-attached Serial Interface (FSI) support क्रम SH7724
 //
 // Copyright (C) 2009 Renesas Solutions Corp.
 // Kuninori Morimoto <morimoto.kuninori@renesas.com>
@@ -8,126 +9,126 @@
 // Based on ssi.c
 // Copyright (c) 2007 Manuel Lauss <mano@roarinelk.homelinux.net>
 
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/pm_runtime.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/scatterlist.h>
-#include <linux/sh_dma.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/workqueue.h>
-#include <sound/soc.h>
-#include <sound/pcm_params.h>
-#include <sound/sh_fsi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/sh_dma.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/sh_fsi.h>
 
-/* PortA/PortB register */
-#define REG_DO_FMT	0x0000
-#define REG_DOFF_CTL	0x0004
-#define REG_DOFF_ST	0x0008
-#define REG_DI_FMT	0x000C
-#define REG_DIFF_CTL	0x0010
-#define REG_DIFF_ST	0x0014
-#define REG_CKG1	0x0018
-#define REG_CKG2	0x001C
-#define REG_DIDT	0x0020
-#define REG_DODT	0x0024
-#define REG_MUTE_ST	0x0028
-#define REG_OUT_DMAC	0x002C
-#define REG_OUT_SEL	0x0030
-#define REG_IN_DMAC	0x0038
+/* PortA/PortB रेजिस्टर */
+#घोषणा REG_DO_FMT	0x0000
+#घोषणा REG_DOFF_CTL	0x0004
+#घोषणा REG_DOFF_ST	0x0008
+#घोषणा REG_DI_FMT	0x000C
+#घोषणा REG_DIFF_CTL	0x0010
+#घोषणा REG_DIFF_ST	0x0014
+#घोषणा REG_CKG1	0x0018
+#घोषणा REG_CKG2	0x001C
+#घोषणा REG_DIDT	0x0020
+#घोषणा REG_DODT	0x0024
+#घोषणा REG_MUTE_ST	0x0028
+#घोषणा REG_OUT_DMAC	0x002C
+#घोषणा REG_OUT_SEL	0x0030
+#घोषणा REG_IN_DMAC	0x0038
 
-/* master register */
-#define MST_CLK_RST	0x0210
-#define MST_SOFT_RST	0x0214
-#define MST_FIFO_SZ	0x0218
+/* master रेजिस्टर */
+#घोषणा MST_CLK_RST	0x0210
+#घोषणा MST_SOFT_RST	0x0214
+#घोषणा MST_FIFO_SZ	0x0218
 
-/* core register (depend on FSI version) */
-#define A_MST_CTLR	0x0180
-#define B_MST_CTLR	0x01A0
-#define CPU_INT_ST	0x01F4
-#define CPU_IEMSK	0x01F8
-#define CPU_IMSK	0x01FC
-#define INT_ST		0x0200
-#define IEMSK		0x0204
-#define IMSK		0x0208
+/* core रेजिस्टर (depend on FSI version) */
+#घोषणा A_MST_CTLR	0x0180
+#घोषणा B_MST_CTLR	0x01A0
+#घोषणा CPU_INT_ST	0x01F4
+#घोषणा CPU_IEMSK	0x01F8
+#घोषणा CPU_IMSK	0x01FC
+#घोषणा INT_ST		0x0200
+#घोषणा IEMSK		0x0204
+#घोषणा IMSK		0x0208
 
 /* DO_FMT */
 /* DI_FMT */
-#define CR_BWS_MASK	(0x3 << 20) /* FSI2 */
-#define CR_BWS_24	(0x0 << 20) /* FSI2 */
-#define CR_BWS_16	(0x1 << 20) /* FSI2 */
-#define CR_BWS_20	(0x2 << 20) /* FSI2 */
+#घोषणा CR_BWS_MASK	(0x3 << 20) /* FSI2 */
+#घोषणा CR_BWS_24	(0x0 << 20) /* FSI2 */
+#घोषणा CR_BWS_16	(0x1 << 20) /* FSI2 */
+#घोषणा CR_BWS_20	(0x2 << 20) /* FSI2 */
 
-#define CR_DTMD_PCM		(0x0 << 8) /* FSI2 */
-#define CR_DTMD_SPDIF_PCM	(0x1 << 8) /* FSI2 */
-#define CR_DTMD_SPDIF_STREAM	(0x2 << 8) /* FSI2 */
+#घोषणा CR_DTMD_PCM		(0x0 << 8) /* FSI2 */
+#घोषणा CR_DTMD_SPDIF_PCM	(0x1 << 8) /* FSI2 */
+#घोषणा CR_DTMD_SPDIF_STREAM	(0x2 << 8) /* FSI2 */
 
-#define CR_MONO		(0x0 << 4)
-#define CR_MONO_D	(0x1 << 4)
-#define CR_PCM		(0x2 << 4)
-#define CR_I2S		(0x3 << 4)
-#define CR_TDM		(0x4 << 4)
-#define CR_TDM_D	(0x5 << 4)
+#घोषणा CR_MONO		(0x0 << 4)
+#घोषणा CR_MONO_D	(0x1 << 4)
+#घोषणा CR_PCM		(0x2 << 4)
+#घोषणा CR_I2S		(0x3 << 4)
+#घोषणा CR_TDM		(0x4 << 4)
+#घोषणा CR_TDM_D	(0x5 << 4)
 
 /* OUT_DMAC */
 /* IN_DMAC */
-#define VDMD_MASK	(0x3 << 4)
-#define VDMD_FRONT	(0x0 << 4) /* Package in front */
-#define VDMD_BACK	(0x1 << 4) /* Package in back */
-#define VDMD_STREAM	(0x2 << 4) /* Stream mode(16bit * 2) */
+#घोषणा VDMD_MASK	(0x3 << 4)
+#घोषणा VDMD_FRONT	(0x0 << 4) /* Package in front */
+#घोषणा VDMD_BACK	(0x1 << 4) /* Package in back */
+#घोषणा VDMD_STREAM	(0x2 << 4) /* Stream mode(16bit * 2) */
 
-#define DMA_ON		(0x1 << 0)
+#घोषणा DMA_ON		(0x1 << 0)
 
 /* DOFF_CTL */
 /* DIFF_CTL */
-#define IRQ_HALF	0x00100000
-#define FIFO_CLR	0x00000001
+#घोषणा IRQ_HALF	0x00100000
+#घोषणा FIFO_CLR	0x00000001
 
 /* DOFF_ST */
-#define ERR_OVER	0x00000010
-#define ERR_UNDER	0x00000001
-#define ST_ERR		(ERR_OVER | ERR_UNDER)
+#घोषणा ERR_OVER	0x00000010
+#घोषणा ERR_UNDER	0x00000001
+#घोषणा ST_ERR		(ERR_OVER | ERR_UNDER)
 
 /* CKG1 */
-#define ACKMD_MASK	0x00007000
-#define BPFMD_MASK	0x00000700
-#define DIMD		(1 << 4)
-#define DOMD		(1 << 0)
+#घोषणा ACKMD_MASK	0x00007000
+#घोषणा BPFMD_MASK	0x00000700
+#घोषणा DIMD		(1 << 4)
+#घोषणा DOMD		(1 << 0)
 
 /* A/B MST_CTLR */
-#define BP	(1 << 4)	/* Fix the signal of Biphase output */
-#define SE	(1 << 0)	/* Fix the master clock */
+#घोषणा BP	(1 << 4)	/* Fix the संकेत of Biphase output */
+#घोषणा SE	(1 << 0)	/* Fix the master घड़ी */
 
 /* CLK_RST */
-#define CRB	(1 << 4)
-#define CRA	(1 << 0)
+#घोषणा CRB	(1 << 4)
+#घोषणा CRA	(1 << 0)
 
 /* IO SHIFT / MACRO */
-#define BI_SHIFT	12
-#define BO_SHIFT	8
-#define AI_SHIFT	4
-#define AO_SHIFT	0
-#define AB_IO(param, shift)	(param << shift)
+#घोषणा BI_SHIFT	12
+#घोषणा BO_SHIFT	8
+#घोषणा AI_SHIFT	4
+#घोषणा AO_SHIFT	0
+#घोषणा AB_IO(param, shअगरt)	(param << shअगरt)
 
 /* SOFT_RST */
-#define PBSR		(1 << 12) /* Port B Software Reset */
-#define PASR		(1 <<  8) /* Port A Software Reset */
-#define IR		(1 <<  4) /* Interrupt Reset */
-#define FSISR		(1 <<  0) /* Software Reset */
+#घोषणा PBSR		(1 << 12) /* Port B Software Reset */
+#घोषणा PASR		(1 <<  8) /* Port A Software Reset */
+#घोषणा IR		(1 <<  4) /* Interrupt Reset */
+#घोषणा FSISR		(1 <<  0) /* Software Reset */
 
 /* OUT_SEL (FSI2) */
-#define DMMD		(1 << 4) /* SPDIF output timing 0: Biphase only */
+#घोषणा DMMD		(1 << 4) /* SPDIF output timing 0: Biphase only */
 				 /*			1: Biphase and serial */
 
 /* FIFO_SZ */
-#define FIFO_SZ_MASK	0x7
+#घोषणा FIFO_SZ_MASK	0x7
 
-#define FSI_RATES SNDRV_PCM_RATE_8000_96000
+#घोषणा FSI_RATES SNDRV_PCM_RATE_8000_96000
 
-#define FSI_FMTS (SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S16_LE)
+#घोषणा FSI_FMTS (SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S16_LE)
 
 /*
  * bus options
@@ -138,18 +139,18 @@
  * B : sample widtht 24bit setting
  */
 
-#define SHIFT_16DATA		0
-#define SHIFT_24DATA		4
+#घोषणा SHIFT_16DATA		0
+#घोषणा SHIFT_24DATA		4
 
-#define PACKAGE_24BITBUS_BACK		0
-#define PACKAGE_24BITBUS_FRONT		1
-#define PACKAGE_16BITBUS_STREAM		2
+#घोषणा PACKAGE_24BITBUS_BACK		0
+#घोषणा PACKAGE_24BITBUS_FRONT		1
+#घोषणा PACKAGE_16BITBUS_STREAM		2
 
-#define BUSOP_SET(s, a)	((a) << SHIFT_ ## s ## DATA)
-#define BUSOP_GET(s, a)	(((a) >> SHIFT_ ## s ## DATA) & 0xF)
+#घोषणा BUSOP_SET(s, a)	((a) << SHIFT_ ## s ## DATA)
+#घोषणा BUSOP_GET(s, a)	(((a) >> SHIFT_ ## s ## DATA) & 0xF)
 
 /*
- * FSI driver use below type name for variable
+ * FSI driver use below type name क्रम variable
  *
  * xxx_num	: number of data
  * xxx_pos	: position of data
@@ -186,32 +187,32 @@
  */
 
 /*
- *	FSI clock
+ *	FSI घड़ी
  *
  * FSIxCLK [CPG] (ick) ------->	|
- *				|-> FSI_DIV (div)-> FSI2
- * FSIxCK [external] (xck) --->	|
+ *				|-> FSI_DIV (भाग)-> FSI2
+ * FSIxCK [बाह्यal] (xck) --->	|
  */
 
 /*
- *		struct
+ *		काष्ठा
  */
 
-struct fsi_stream_handler;
-struct fsi_stream {
+काष्ठा fsi_stream_handler;
+काष्ठा fsi_stream अणु
 
 	/*
 	 * these are initialized by fsi_stream_init()
 	 */
-	struct snd_pcm_substream *substream;
-	int fifo_sample_capa;	/* sample capacity of FSI FIFO */
-	int buff_sample_capa;	/* sample capacity of ALSA buffer */
-	int buff_sample_pos;	/* sample position of ALSA buffer */
-	int period_samples;	/* sample number / 1 period */
-	int period_pos;		/* current period position */
-	int sample_width;	/* sample width */
-	int uerr_num;
-	int oerr_num;
+	काष्ठा snd_pcm_substream *substream;
+	पूर्णांक fअगरo_sample_capa;	/* sample capacity of FSI FIFO */
+	पूर्णांक buff_sample_capa;	/* sample capacity of ALSA buffer */
+	पूर्णांक buff_sample_pos;	/* sample position of ALSA buffer */
+	पूर्णांक period_samples;	/* sample number / 1 period */
+	पूर्णांक period_pos;		/* current period position */
+	पूर्णांक sample_width;	/* sample width */
+	पूर्णांक uerr_num;
+	पूर्णांक oerr_num;
 
 	/*
 	 * bus options
@@ -221,338 +222,338 @@ struct fsi_stream {
 	/*
 	 * thse are initialized by fsi_handler_init()
 	 */
-	struct fsi_stream_handler *handler;
-	struct fsi_priv		*priv;
+	काष्ठा fsi_stream_handler *handler;
+	काष्ठा fsi_priv		*priv;
 
 	/*
-	 * these are for DMAEngine
+	 * these are क्रम DMAEngine
 	 */
-	struct dma_chan		*chan;
-	int			dma_id;
-};
+	काष्ठा dma_chan		*chan;
+	पूर्णांक			dma_id;
+पूर्ण;
 
-struct fsi_clk {
-	/* see [FSI clock] */
-	struct clk *own;
-	struct clk *xck;
-	struct clk *ick;
-	struct clk *div;
-	int (*set_rate)(struct device *dev,
-			struct fsi_priv *fsi);
+काष्ठा fsi_clk अणु
+	/* see [FSI घड़ी] */
+	काष्ठा clk *own;
+	काष्ठा clk *xck;
+	काष्ठा clk *ick;
+	काष्ठा clk *भाग;
+	पूर्णांक (*set_rate)(काष्ठा device *dev,
+			काष्ठा fsi_priv *fsi);
 
-	unsigned long rate;
-	unsigned int count;
-};
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-struct fsi_priv {
-	void __iomem *base;
+काष्ठा fsi_priv अणु
+	व्योम __iomem *base;
 	phys_addr_t phys;
-	struct fsi_master *master;
+	काष्ठा fsi_master *master;
 
-	struct fsi_stream playback;
-	struct fsi_stream capture;
+	काष्ठा fsi_stream playback;
+	काष्ठा fsi_stream capture;
 
-	struct fsi_clk clock;
+	काष्ठा fsi_clk घड़ी;
 
 	u32 fmt;
 
-	int chan_num:16;
-	unsigned int clk_master:1;
-	unsigned int clk_cpg:1;
-	unsigned int spdif:1;
-	unsigned int enable_stream:1;
-	unsigned int bit_clk_inv:1;
-	unsigned int lr_clk_inv:1;
-};
+	पूर्णांक chan_num:16;
+	अचिन्हित पूर्णांक clk_master:1;
+	अचिन्हित पूर्णांक clk_cpg:1;
+	अचिन्हित पूर्णांक spdअगर:1;
+	अचिन्हित पूर्णांक enable_stream:1;
+	अचिन्हित पूर्णांक bit_clk_inv:1;
+	अचिन्हित पूर्णांक lr_clk_inv:1;
+पूर्ण;
 
-struct fsi_stream_handler {
-	int (*init)(struct fsi_priv *fsi, struct fsi_stream *io);
-	int (*quit)(struct fsi_priv *fsi, struct fsi_stream *io);
-	int (*probe)(struct fsi_priv *fsi, struct fsi_stream *io, struct device *dev);
-	int (*transfer)(struct fsi_priv *fsi, struct fsi_stream *io);
-	int (*remove)(struct fsi_priv *fsi, struct fsi_stream *io);
-	int (*start_stop)(struct fsi_priv *fsi, struct fsi_stream *io,
-			   int enable);
-};
-#define fsi_stream_handler_call(io, func, args...)	\
+काष्ठा fsi_stream_handler अणु
+	पूर्णांक (*init)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io);
+	पूर्णांक (*quit)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io);
+	पूर्णांक (*probe)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io, काष्ठा device *dev);
+	पूर्णांक (*transfer)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io);
+	पूर्णांक (*हटाओ)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io);
+	पूर्णांक (*start_stop)(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io,
+			   पूर्णांक enable);
+पूर्ण;
+#घोषणा fsi_stream_handler_call(io, func, args...)	\
 	(!(io) ? -ENODEV :				\
 	 !((io)->handler->func) ? 0 :			\
 	 (io)->handler->func(args))
 
-struct fsi_core {
-	int ver;
+काष्ठा fsi_core अणु
+	पूर्णांक ver;
 
-	u32 int_st;
+	u32 पूर्णांक_st;
 	u32 iemsk;
 	u32 imsk;
 	u32 a_mclk;
 	u32 b_mclk;
-};
+पूर्ण;
 
-struct fsi_master {
-	void __iomem *base;
-	struct fsi_priv fsia;
-	struct fsi_priv fsib;
-	const struct fsi_core *core;
+काष्ठा fsi_master अणु
+	व्योम __iomem *base;
+	काष्ठा fsi_priv fsia;
+	काष्ठा fsi_priv fsib;
+	स्थिर काष्ठा fsi_core *core;
 	spinlock_t lock;
-};
+पूर्ण;
 
-static inline int fsi_stream_is_play(struct fsi_priv *fsi,
-				     struct fsi_stream *io)
-{
-	return &fsi->playback == io;
-}
+अटल अंतरभूत पूर्णांक fsi_stream_is_play(काष्ठा fsi_priv *fsi,
+				     काष्ठा fsi_stream *io)
+अणु
+	वापस &fsi->playback == io;
+पूर्ण
 
 
 /*
- *		basic read write function
+ *		basic पढ़ो ग_लिखो function
  */
 
-static void __fsi_reg_write(u32 __iomem *reg, u32 data)
-{
+अटल व्योम __fsi_reg_ग_लिखो(u32 __iomem *reg, u32 data)
+अणु
 	/* valid data area is 24bit */
 	data &= 0x00ffffff;
 
-	__raw_writel(data, reg);
-}
+	__raw_ग_लिखोl(data, reg);
+पूर्ण
 
-static u32 __fsi_reg_read(u32 __iomem *reg)
-{
-	return __raw_readl(reg);
-}
+अटल u32 __fsi_reg_पढ़ो(u32 __iomem *reg)
+अणु
+	वापस __raw_पढ़ोl(reg);
+पूर्ण
 
-static void __fsi_reg_mask_set(u32 __iomem *reg, u32 mask, u32 data)
-{
-	u32 val = __fsi_reg_read(reg);
+अटल व्योम __fsi_reg_mask_set(u32 __iomem *reg, u32 mask, u32 data)
+अणु
+	u32 val = __fsi_reg_पढ़ो(reg);
 
 	val &= ~mask;
 	val |= data & mask;
 
-	__fsi_reg_write(reg, val);
-}
+	__fsi_reg_ग_लिखो(reg, val);
+पूर्ण
 
-#define fsi_reg_write(p, r, d)\
-	__fsi_reg_write((p->base + REG_##r), d)
+#घोषणा fsi_reg_ग_लिखो(p, r, d)\
+	__fsi_reg_ग_लिखो((p->base + REG_##r), d)
 
-#define fsi_reg_read(p, r)\
-	__fsi_reg_read((p->base + REG_##r))
+#घोषणा fsi_reg_पढ़ो(p, r)\
+	__fsi_reg_पढ़ो((p->base + REG_##r))
 
-#define fsi_reg_mask_set(p, r, m, d)\
+#घोषणा fsi_reg_mask_set(p, r, m, d)\
 	__fsi_reg_mask_set((p->base + REG_##r), m, d)
 
-#define fsi_master_read(p, r) _fsi_master_read(p, MST_##r)
-#define fsi_core_read(p, r)   _fsi_master_read(p, p->core->r)
-static u32 _fsi_master_read(struct fsi_master *master, u32 reg)
-{
+#घोषणा fsi_master_पढ़ो(p, r) _fsi_master_पढ़ो(p, MST_##r)
+#घोषणा fsi_core_पढ़ो(p, r)   _fsi_master_पढ़ो(p, p->core->r)
+अटल u32 _fsi_master_पढ़ो(काष्ठा fsi_master *master, u32 reg)
+अणु
 	u32 ret;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&master->lock, flags);
-	ret = __fsi_reg_read(master->base + reg);
+	ret = __fsi_reg_पढ़ो(master->base + reg);
 	spin_unlock_irqrestore(&master->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define fsi_master_mask_set(p, r, m, d) _fsi_master_mask_set(p, MST_##r, m, d)
-#define fsi_core_mask_set(p, r, m, d)  _fsi_master_mask_set(p, p->core->r, m, d)
-static void _fsi_master_mask_set(struct fsi_master *master,
+#घोषणा fsi_master_mask_set(p, r, m, d) _fsi_master_mask_set(p, MST_##r, m, d)
+#घोषणा fsi_core_mask_set(p, r, m, d)  _fsi_master_mask_set(p, p->core->r, m, d)
+अटल व्योम _fsi_master_mask_set(काष्ठा fsi_master *master,
 			       u32 reg, u32 mask, u32 data)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&master->lock, flags);
 	__fsi_reg_mask_set(master->base + reg, mask, data);
 	spin_unlock_irqrestore(&master->lock, flags);
-}
+पूर्ण
 
 /*
  *		basic function
  */
-static int fsi_version(struct fsi_master *master)
-{
-	return master->core->ver;
-}
+अटल पूर्णांक fsi_version(काष्ठा fsi_master *master)
+अणु
+	वापस master->core->ver;
+पूर्ण
 
-static struct fsi_master *fsi_get_master(struct fsi_priv *fsi)
-{
-	return fsi->master;
-}
+अटल काष्ठा fsi_master *fsi_get_master(काष्ठा fsi_priv *fsi)
+अणु
+	वापस fsi->master;
+पूर्ण
 
-static int fsi_is_clk_master(struct fsi_priv *fsi)
-{
-	return fsi->clk_master;
-}
+अटल पूर्णांक fsi_is_clk_master(काष्ठा fsi_priv *fsi)
+अणु
+	वापस fsi->clk_master;
+पूर्ण
 
-static int fsi_is_port_a(struct fsi_priv *fsi)
-{
-	return fsi->master->base == fsi->base;
-}
+अटल पूर्णांक fsi_is_port_a(काष्ठा fsi_priv *fsi)
+अणु
+	वापस fsi->master->base == fsi->base;
+पूर्ण
 
-static int fsi_is_spdif(struct fsi_priv *fsi)
-{
-	return fsi->spdif;
-}
+अटल पूर्णांक fsi_is_spdअगर(काष्ठा fsi_priv *fsi)
+अणु
+	वापस fsi->spdअगर;
+पूर्ण
 
-static int fsi_is_enable_stream(struct fsi_priv *fsi)
-{
-	return fsi->enable_stream;
-}
+अटल पूर्णांक fsi_is_enable_stream(काष्ठा fsi_priv *fsi)
+अणु
+	वापस fsi->enable_stream;
+पूर्ण
 
-static int fsi_is_play(struct snd_pcm_substream *substream)
-{
-	return substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
-}
+अटल पूर्णांक fsi_is_play(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस substream->stream == SNDRV_PCM_STREAM_PLAYBACK;
+पूर्ण
 
-static struct snd_soc_dai *fsi_get_dai(struct snd_pcm_substream *substream)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
+अटल काष्ठा snd_soc_dai *fsi_get_dai(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
 
-	return  asoc_rtd_to_cpu(rtd, 0);
-}
+	वापस  asoc_rtd_to_cpu(rtd, 0);
+पूर्ण
 
-static struct fsi_priv *fsi_get_priv_frm_dai(struct snd_soc_dai *dai)
-{
-	struct fsi_master *master = snd_soc_dai_get_drvdata(dai);
+अटल काष्ठा fsi_priv *fsi_get_priv_frm_dai(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा fsi_master *master = snd_soc_dai_get_drvdata(dai);
 
-	if (dai->id == 0)
-		return &master->fsia;
-	else
-		return &master->fsib;
-}
+	अगर (dai->id == 0)
+		वापस &master->fsia;
+	अन्यथा
+		वापस &master->fsib;
+पूर्ण
 
-static struct fsi_priv *fsi_get_priv(struct snd_pcm_substream *substream)
-{
-	return fsi_get_priv_frm_dai(fsi_get_dai(substream));
-}
+अटल काष्ठा fsi_priv *fsi_get_priv(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस fsi_get_priv_frm_dai(fsi_get_dai(substream));
+पूर्ण
 
-static u32 fsi_get_port_shift(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	int is_play = fsi_stream_is_play(fsi, io);
-	int is_porta = fsi_is_port_a(fsi);
-	u32 shift;
+अटल u32 fsi_get_port_shअगरt(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
+	पूर्णांक is_porta = fsi_is_port_a(fsi);
+	u32 shअगरt;
 
-	if (is_porta)
-		shift = is_play ? AO_SHIFT : AI_SHIFT;
-	else
-		shift = is_play ? BO_SHIFT : BI_SHIFT;
+	अगर (is_porta)
+		shअगरt = is_play ? AO_SHIFT : AI_SHIFT;
+	अन्यथा
+		shअगरt = is_play ? BO_SHIFT : BI_SHIFT;
 
-	return shift;
-}
+	वापस shअगरt;
+पूर्ण
 
-static int fsi_frame2sample(struct fsi_priv *fsi, int frames)
-{
-	return frames * fsi->chan_num;
-}
+अटल पूर्णांक fsi_frame2sample(काष्ठा fsi_priv *fsi, पूर्णांक frames)
+अणु
+	वापस frames * fsi->chan_num;
+पूर्ण
 
-static int fsi_sample2frame(struct fsi_priv *fsi, int samples)
-{
-	return samples / fsi->chan_num;
-}
+अटल पूर्णांक fsi_sample2frame(काष्ठा fsi_priv *fsi, पूर्णांक samples)
+अणु
+	वापस samples / fsi->chan_num;
+पूर्ण
 
-static int fsi_get_current_fifo_samples(struct fsi_priv *fsi,
-					struct fsi_stream *io)
-{
-	int is_play = fsi_stream_is_play(fsi, io);
+अटल पूर्णांक fsi_get_current_fअगरo_samples(काष्ठा fsi_priv *fsi,
+					काष्ठा fsi_stream *io)
+अणु
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
 	u32 status;
-	int frames;
+	पूर्णांक frames;
 
 	status = is_play ?
-		fsi_reg_read(fsi, DOFF_ST) :
-		fsi_reg_read(fsi, DIFF_ST);
+		fsi_reg_पढ़ो(fsi, DOFF_ST) :
+		fsi_reg_पढ़ो(fsi, DIFF_ST);
 
 	frames = 0x1ff & (status >> 8);
 
-	return fsi_frame2sample(fsi, frames);
-}
+	वापस fsi_frame2sample(fsi, frames);
+पूर्ण
 
-static void fsi_count_fifo_err(struct fsi_priv *fsi)
-{
-	u32 ostatus = fsi_reg_read(fsi, DOFF_ST);
-	u32 istatus = fsi_reg_read(fsi, DIFF_ST);
+अटल व्योम fsi_count_fअगरo_err(काष्ठा fsi_priv *fsi)
+अणु
+	u32 ostatus = fsi_reg_पढ़ो(fsi, DOFF_ST);
+	u32 istatus = fsi_reg_पढ़ो(fsi, DIFF_ST);
 
-	if (ostatus & ERR_OVER)
+	अगर (ostatus & ERR_OVER)
 		fsi->playback.oerr_num++;
 
-	if (ostatus & ERR_UNDER)
+	अगर (ostatus & ERR_UNDER)
 		fsi->playback.uerr_num++;
 
-	if (istatus & ERR_OVER)
+	अगर (istatus & ERR_OVER)
 		fsi->capture.oerr_num++;
 
-	if (istatus & ERR_UNDER)
+	अगर (istatus & ERR_UNDER)
 		fsi->capture.uerr_num++;
 
-	fsi_reg_write(fsi, DOFF_ST, 0);
-	fsi_reg_write(fsi, DIFF_ST, 0);
-}
+	fsi_reg_ग_लिखो(fsi, DOFF_ST, 0);
+	fsi_reg_ग_लिखो(fsi, DIFF_ST, 0);
+पूर्ण
 
 /*
  *		fsi_stream_xx() function
  */
-static inline struct fsi_stream *fsi_stream_get(struct fsi_priv *fsi,
-					struct snd_pcm_substream *substream)
-{
-	return fsi_is_play(substream) ? &fsi->playback : &fsi->capture;
-}
+अटल अंतरभूत काष्ठा fsi_stream *fsi_stream_get(काष्ठा fsi_priv *fsi,
+					काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस fsi_is_play(substream) ? &fsi->playback : &fsi->capture;
+पूर्ण
 
-static int fsi_stream_is_working(struct fsi_priv *fsi,
-				 struct fsi_stream *io)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक fsi_stream_is_working(काष्ठा fsi_priv *fsi,
+				 काष्ठा fsi_stream *io)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&master->lock, flags);
-	ret = !!(io->substream && io->substream->runtime);
+	ret = !!(io->substream && io->substream->runसमय);
 	spin_unlock_irqrestore(&master->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct fsi_priv *fsi_stream_to_priv(struct fsi_stream *io)
-{
-	return io->priv;
-}
+अटल काष्ठा fsi_priv *fsi_stream_to_priv(काष्ठा fsi_stream *io)
+अणु
+	वापस io->priv;
+पूर्ण
 
-static void fsi_stream_init(struct fsi_priv *fsi,
-			    struct fsi_stream *io,
-			    struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct fsi_master *master = fsi_get_master(fsi);
-	unsigned long flags;
+अटल व्योम fsi_stream_init(काष्ठा fsi_priv *fsi,
+			    काष्ठा fsi_stream *io,
+			    काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&master->lock, flags);
 	io->substream	= substream;
-	io->buff_sample_capa	= fsi_frame2sample(fsi, runtime->buffer_size);
+	io->buff_sample_capa	= fsi_frame2sample(fsi, runसमय->buffer_size);
 	io->buff_sample_pos	= 0;
-	io->period_samples	= fsi_frame2sample(fsi, runtime->period_size);
+	io->period_samples	= fsi_frame2sample(fsi, runसमय->period_size);
 	io->period_pos		= 0;
-	io->sample_width	= samples_to_bytes(runtime, 1);
+	io->sample_width	= samples_to_bytes(runसमय, 1);
 	io->bus_option		= 0;
 	io->oerr_num	= -1; /* ignore 1st err */
 	io->uerr_num	= -1; /* ignore 1st err */
 	fsi_stream_handler_call(io, init, fsi, io);
 	spin_unlock_irqrestore(&master->lock, flags);
-}
+पूर्ण
 
-static void fsi_stream_quit(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	struct snd_soc_dai *dai = fsi_get_dai(io->substream);
-	struct fsi_master *master = fsi_get_master(fsi);
-	unsigned long flags;
+अटल व्योम fsi_stream_quit(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	काष्ठा snd_soc_dai *dai = fsi_get_dai(io->substream);
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&master->lock, flags);
 
-	if (io->oerr_num > 0)
+	अगर (io->oerr_num > 0)
 		dev_err(dai->dev, "over_run = %d\n", io->oerr_num);
 
-	if (io->uerr_num > 0)
+	अगर (io->uerr_num > 0)
 		dev_err(dai->dev, "under_run = %d\n", io->uerr_num);
 
 	fsi_stream_handler_call(io, quit, fsi, io);
-	io->substream	= NULL;
+	io->substream	= शून्य;
 	io->buff_sample_capa	= 0;
 	io->buff_sample_pos	= 0;
 	io->period_samples	= 0;
@@ -562,27 +563,27 @@ static void fsi_stream_quit(struct fsi_priv *fsi, struct fsi_stream *io)
 	io->oerr_num	= 0;
 	io->uerr_num	= 0;
 	spin_unlock_irqrestore(&master->lock, flags);
-}
+पूर्ण
 
-static int fsi_stream_transfer(struct fsi_stream *io)
-{
-	struct fsi_priv *fsi = fsi_stream_to_priv(io);
-	if (!fsi)
-		return -EIO;
+अटल पूर्णांक fsi_stream_transfer(काष्ठा fsi_stream *io)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_stream_to_priv(io);
+	अगर (!fsi)
+		वापस -EIO;
 
-	return fsi_stream_handler_call(io, transfer, fsi, io);
-}
+	वापस fsi_stream_handler_call(io, transfer, fsi, io);
+पूर्ण
 
-#define fsi_stream_start(fsi, io)\
+#घोषणा fsi_stream_start(fsi, io)\
 	fsi_stream_handler_call(io, start_stop, fsi, io, 1)
 
-#define fsi_stream_stop(fsi, io)\
+#घोषणा fsi_stream_stop(fsi, io)\
 	fsi_stream_handler_call(io, start_stop, fsi, io, 0)
 
-static int fsi_stream_probe(struct fsi_priv *fsi, struct device *dev)
-{
-	struct fsi_stream *io;
-	int ret1, ret2;
+अटल पूर्णांक fsi_stream_probe(काष्ठा fsi_priv *fsi, काष्ठा device *dev)
+अणु
+	काष्ठा fsi_stream *io;
+	पूर्णांक ret1, ret2;
 
 	io = &fsi->playback;
 	ret1 = fsi_stream_handler_call(io, probe, fsi, io, dev);
@@ -590,127 +591,127 @@ static int fsi_stream_probe(struct fsi_priv *fsi, struct device *dev)
 	io = &fsi->capture;
 	ret2 = fsi_stream_handler_call(io, probe, fsi, io, dev);
 
-	if (ret1 < 0)
-		return ret1;
-	if (ret2 < 0)
-		return ret2;
+	अगर (ret1 < 0)
+		वापस ret1;
+	अगर (ret2 < 0)
+		वापस ret2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_stream_remove(struct fsi_priv *fsi)
-{
-	struct fsi_stream *io;
-	int ret1, ret2;
+अटल पूर्णांक fsi_stream_हटाओ(काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा fsi_stream *io;
+	पूर्णांक ret1, ret2;
 
 	io = &fsi->playback;
-	ret1 = fsi_stream_handler_call(io, remove, fsi, io);
+	ret1 = fsi_stream_handler_call(io, हटाओ, fsi, io);
 
 	io = &fsi->capture;
-	ret2 = fsi_stream_handler_call(io, remove, fsi, io);
+	ret2 = fsi_stream_handler_call(io, हटाओ, fsi, io);
 
-	if (ret1 < 0)
-		return ret1;
-	if (ret2 < 0)
-		return ret2;
+	अगर (ret1 < 0)
+		वापस ret1;
+	अगर (ret2 < 0)
+		वापस ret2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	format/bus/dma setting
+ *	क्रमmat/bus/dma setting
  */
-static void fsi_format_bus_setup(struct fsi_priv *fsi, struct fsi_stream *io,
-				 u32 bus, struct device *dev)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
-	int is_play = fsi_stream_is_play(fsi, io);
+अटल व्योम fsi_क्रमmat_bus_setup(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io,
+				 u32 bus, काष्ठा device *dev)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
 	u32 fmt = fsi->fmt;
 
-	if (fsi_version(master) >= 2) {
+	अगर (fsi_version(master) >= 2) अणु
 		u32 dma = 0;
 
 		/*
 		 * FSI2 needs DMA/Bus setting
 		 */
-		switch (bus) {
-		case PACKAGE_24BITBUS_FRONT:
+		चयन (bus) अणु
+		हाल PACKAGE_24BITBUS_FRONT:
 			fmt |= CR_BWS_24;
 			dma |= VDMD_FRONT;
 			dev_dbg(dev, "24bit bus / package in front\n");
-			break;
-		case PACKAGE_16BITBUS_STREAM:
+			अवरोध;
+		हाल PACKAGE_16BITBUS_STREAM:
 			fmt |= CR_BWS_16;
 			dma |= VDMD_STREAM;
 			dev_dbg(dev, "16bit bus / stream mode\n");
-			break;
-		case PACKAGE_24BITBUS_BACK:
-		default:
+			अवरोध;
+		हाल PACKAGE_24BITBUS_BACK:
+		शेष:
 			fmt |= CR_BWS_24;
 			dma |= VDMD_BACK;
 			dev_dbg(dev, "24bit bus / package in back\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (is_play)
-			fsi_reg_write(fsi, OUT_DMAC,	dma);
-		else
-			fsi_reg_write(fsi, IN_DMAC,	dma);
-	}
+		अगर (is_play)
+			fsi_reg_ग_लिखो(fsi, OUT_DMAC,	dma);
+		अन्यथा
+			fsi_reg_ग_लिखो(fsi, IN_DMAC,	dma);
+	पूर्ण
 
-	if (is_play)
-		fsi_reg_write(fsi, DO_FMT, fmt);
-	else
-		fsi_reg_write(fsi, DI_FMT, fmt);
-}
+	अगर (is_play)
+		fsi_reg_ग_लिखो(fsi, DO_FMT, fmt);
+	अन्यथा
+		fsi_reg_ग_लिखो(fsi, DI_FMT, fmt);
+पूर्ण
 
 /*
  *		irq function
  */
 
-static void fsi_irq_enable(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	u32 data = AB_IO(1, fsi_get_port_shift(fsi, io));
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल व्योम fsi_irq_enable(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	u32 data = AB_IO(1, fsi_get_port_shअगरt(fsi, io));
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 
 	fsi_core_mask_set(master, imsk,  data, data);
 	fsi_core_mask_set(master, iemsk, data, data);
-}
+पूर्ण
 
-static void fsi_irq_disable(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	u32 data = AB_IO(1, fsi_get_port_shift(fsi, io));
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल व्योम fsi_irq_disable(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	u32 data = AB_IO(1, fsi_get_port_shअगरt(fsi, io));
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 
 	fsi_core_mask_set(master, imsk,  data, 0);
 	fsi_core_mask_set(master, iemsk, data, 0);
-}
+पूर्ण
 
-static u32 fsi_irq_get_status(struct fsi_master *master)
-{
-	return fsi_core_read(master, int_st);
-}
+अटल u32 fsi_irq_get_status(काष्ठा fsi_master *master)
+अणु
+	वापस fsi_core_पढ़ो(master, पूर्णांक_st);
+पूर्ण
 
-static void fsi_irq_clear_status(struct fsi_priv *fsi)
-{
+अटल व्योम fsi_irq_clear_status(काष्ठा fsi_priv *fsi)
+अणु
 	u32 data = 0;
-	struct fsi_master *master = fsi_get_master(fsi);
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 
-	data |= AB_IO(1, fsi_get_port_shift(fsi, &fsi->playback));
-	data |= AB_IO(1, fsi_get_port_shift(fsi, &fsi->capture));
+	data |= AB_IO(1, fsi_get_port_shअगरt(fsi, &fsi->playback));
+	data |= AB_IO(1, fsi_get_port_shअगरt(fsi, &fsi->capture));
 
-	/* clear interrupt factor */
-	fsi_core_mask_set(master, int_st, data, 0);
-}
+	/* clear पूर्णांकerrupt factor */
+	fsi_core_mask_set(master, पूर्णांक_st, data, 0);
+पूर्ण
 
 /*
- *		SPDIF master clock function
+ *		SPDIF master घड़ी function
  *
  * These functions are used later FSI2
  */
-static void fsi_spdif_clk_ctrl(struct fsi_priv *fsi, int enable)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल व्योम fsi_spdअगर_clk_ctrl(काष्ठा fsi_priv *fsi, पूर्णांक enable)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 	u32 mask, val;
 
 	mask = BP | SE;
@@ -719,213 +720,213 @@ static void fsi_spdif_clk_ctrl(struct fsi_priv *fsi, int enable)
 	fsi_is_port_a(fsi) ?
 		fsi_core_mask_set(master, a_mclk, mask, val) :
 		fsi_core_mask_set(master, b_mclk, mask, val);
-}
+पूर्ण
 
 /*
- *		clock function
+ *		घड़ी function
  */
-static int fsi_clk_init(struct device *dev,
-			struct fsi_priv *fsi,
-			int xck,
-			int ick,
-			int div,
-			int (*set_rate)(struct device *dev,
-					struct fsi_priv *fsi))
-{
-	struct fsi_clk *clock = &fsi->clock;
-	int is_porta = fsi_is_port_a(fsi);
+अटल पूर्णांक fsi_clk_init(काष्ठा device *dev,
+			काष्ठा fsi_priv *fsi,
+			पूर्णांक xck,
+			पूर्णांक ick,
+			पूर्णांक भाग,
+			पूर्णांक (*set_rate)(काष्ठा device *dev,
+					काष्ठा fsi_priv *fsi))
+अणु
+	काष्ठा fsi_clk *घड़ी = &fsi->घड़ी;
+	पूर्णांक is_porta = fsi_is_port_a(fsi);
 
-	clock->xck	= NULL;
-	clock->ick	= NULL;
-	clock->div	= NULL;
-	clock->rate	= 0;
-	clock->count	= 0;
-	clock->set_rate	= set_rate;
+	घड़ी->xck	= शून्य;
+	घड़ी->ick	= शून्य;
+	घड़ी->भाग	= शून्य;
+	घड़ी->rate	= 0;
+	घड़ी->count	= 0;
+	घड़ी->set_rate	= set_rate;
 
-	clock->own = devm_clk_get(dev, NULL);
-	if (IS_ERR(clock->own))
-		return -EINVAL;
+	घड़ी->own = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(घड़ी->own))
+		वापस -EINVAL;
 
-	/* external clock */
-	if (xck) {
-		clock->xck = devm_clk_get(dev, is_porta ? "xcka" : "xckb");
-		if (IS_ERR(clock->xck)) {
+	/* बाह्यal घड़ी */
+	अगर (xck) अणु
+		घड़ी->xck = devm_clk_get(dev, is_porta ? "xcka" : "xckb");
+		अगर (IS_ERR(घड़ी->xck)) अणु
 			dev_err(dev, "can't get xck clock\n");
-			return -EINVAL;
-		}
-		if (clock->xck == clock->own) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (घड़ी->xck == घड़ी->own) अणु
 			dev_err(dev, "cpu doesn't support xck clock\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* FSIACLK/FSIBCLK */
-	if (ick) {
-		clock->ick = devm_clk_get(dev,  is_porta ? "icka" : "ickb");
-		if (IS_ERR(clock->ick)) {
+	अगर (ick) अणु
+		घड़ी->ick = devm_clk_get(dev,  is_porta ? "icka" : "ickb");
+		अगर (IS_ERR(घड़ी->ick)) अणु
 			dev_err(dev, "can't get ick clock\n");
-			return -EINVAL;
-		}
-		if (clock->ick == clock->own) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (घड़ी->ick == घड़ी->own) अणु
 			dev_err(dev, "cpu doesn't support ick clock\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* FSI-DIV */
-	if (div) {
-		clock->div = devm_clk_get(dev,  is_porta ? "diva" : "divb");
-		if (IS_ERR(clock->div)) {
+	अगर (भाग) अणु
+		घड़ी->भाग = devm_clk_get(dev,  is_porta ? "diva" : "divb");
+		अगर (IS_ERR(घड़ी->भाग)) अणु
 			dev_err(dev, "can't get div clock\n");
-			return -EINVAL;
-		}
-		if (clock->div == clock->own) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (घड़ी->भाग == घड़ी->own) अणु
 			dev_err(dev, "cpu doesn't support div clock\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define fsi_clk_invalid(fsi) fsi_clk_valid(fsi, 0)
-static void fsi_clk_valid(struct fsi_priv *fsi, unsigned long rate)
-{
-	fsi->clock.rate = rate;
-}
+#घोषणा fsi_clk_invalid(fsi) fsi_clk_valid(fsi, 0)
+अटल व्योम fsi_clk_valid(काष्ठा fsi_priv *fsi, अचिन्हित दीर्घ rate)
+अणु
+	fsi->घड़ी.rate = rate;
+पूर्ण
 
-static int fsi_clk_is_valid(struct fsi_priv *fsi)
-{
-	return	fsi->clock.set_rate &&
-		fsi->clock.rate;
-}
+अटल पूर्णांक fsi_clk_is_valid(काष्ठा fsi_priv *fsi)
+अणु
+	वापस	fsi->घड़ी.set_rate &&
+		fsi->घड़ी.rate;
+पूर्ण
 
-static int fsi_clk_enable(struct device *dev,
-			  struct fsi_priv *fsi)
-{
-	struct fsi_clk *clock = &fsi->clock;
-	int ret = -EINVAL;
+अटल पूर्णांक fsi_clk_enable(काष्ठा device *dev,
+			  काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा fsi_clk *घड़ी = &fsi->घड़ी;
+	पूर्णांक ret = -EINVAL;
 
-	if (!fsi_clk_is_valid(fsi))
-		return ret;
+	अगर (!fsi_clk_is_valid(fsi))
+		वापस ret;
 
-	if (0 == clock->count) {
-		ret = clock->set_rate(dev, fsi);
-		if (ret < 0) {
+	अगर (0 == घड़ी->count) अणु
+		ret = घड़ी->set_rate(dev, fsi);
+		अगर (ret < 0) अणु
 			fsi_clk_invalid(fsi);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		clk_enable(clock->xck);
-		clk_enable(clock->ick);
-		clk_enable(clock->div);
+		clk_enable(घड़ी->xck);
+		clk_enable(घड़ी->ick);
+		clk_enable(घड़ी->भाग);
 
-		clock->count++;
-	}
+		घड़ी->count++;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_clk_disable(struct device *dev,
-			    struct fsi_priv *fsi)
-{
-	struct fsi_clk *clock = &fsi->clock;
+अटल पूर्णांक fsi_clk_disable(काष्ठा device *dev,
+			    काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा fsi_clk *घड़ी = &fsi->घड़ी;
 
-	if (!fsi_clk_is_valid(fsi))
-		return -EINVAL;
+	अगर (!fsi_clk_is_valid(fsi))
+		वापस -EINVAL;
 
-	if (1 == clock->count--) {
-		clk_disable(clock->xck);
-		clk_disable(clock->ick);
-		clk_disable(clock->div);
-	}
+	अगर (1 == घड़ी->count--) अणु
+		clk_disable(घड़ी->xck);
+		clk_disable(घड़ी->ick);
+		clk_disable(घड़ी->भाग);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_clk_set_ackbpf(struct device *dev,
-			      struct fsi_priv *fsi,
-			      int ackmd, int bpfmd)
-{
+अटल पूर्णांक fsi_clk_set_ackbpf(काष्ठा device *dev,
+			      काष्ठा fsi_priv *fsi,
+			      पूर्णांक ackmd, पूर्णांक bpfmd)
+अणु
 	u32 data = 0;
 
 	/* check ackmd/bpfmd relationship */
-	if (bpfmd > ackmd) {
+	अगर (bpfmd > ackmd) अणु
 		dev_err(dev, "unsupported rate (%d/%d)\n", ackmd, bpfmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*  ACKMD */
-	switch (ackmd) {
-	case 512:
+	चयन (ackmd) अणु
+	हाल 512:
 		data |= (0x0 << 12);
-		break;
-	case 256:
+		अवरोध;
+	हाल 256:
 		data |= (0x1 << 12);
-		break;
-	case 128:
+		अवरोध;
+	हाल 128:
 		data |= (0x2 << 12);
-		break;
-	case 64:
+		अवरोध;
+	हाल 64:
 		data |= (0x3 << 12);
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		data |= (0x4 << 12);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported ackmd (%d)\n", ackmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* BPFMD */
-	switch (bpfmd) {
-	case 32:
+	चयन (bpfmd) अणु
+	हाल 32:
 		data |= (0x0 << 8);
-		break;
-	case 64:
+		अवरोध;
+	हाल 64:
 		data |= (0x1 << 8);
-		break;
-	case 128:
+		अवरोध;
+	हाल 128:
 		data |= (0x2 << 8);
-		break;
-	case 256:
+		अवरोध;
+	हाल 256:
 		data |= (0x3 << 8);
-		break;
-	case 512:
+		अवरोध;
+	हाल 512:
 		data |= (0x4 << 8);
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		data |= (0x7 << 8);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported bpfmd (%d)\n", bpfmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(dev, "ACKMD/BPFMD = %d/%d\n", ackmd, bpfmd);
 
 	fsi_reg_mask_set(fsi, CKG1, (ACKMD_MASK | BPFMD_MASK) , data);
 	udelay(10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_clk_set_rate_external(struct device *dev,
-				     struct fsi_priv *fsi)
-{
-	struct clk *xck = fsi->clock.xck;
-	struct clk *ick = fsi->clock.ick;
-	unsigned long rate = fsi->clock.rate;
-	unsigned long xrate;
-	int ackmd, bpfmd;
-	int ret = 0;
+अटल पूर्णांक fsi_clk_set_rate_बाह्यal(काष्ठा device *dev,
+				     काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा clk *xck = fsi->घड़ी.xck;
+	काष्ठा clk *ick = fsi->घड़ी.ick;
+	अचिन्हित दीर्घ rate = fsi->घड़ी.rate;
+	अचिन्हित दीर्घ xrate;
+	पूर्णांक ackmd, bpfmd;
+	पूर्णांक ret = 0;
 
-	/* check clock rate */
+	/* check घड़ी rate */
 	xrate = clk_get_rate(xck);
-	if (xrate % rate) {
+	अगर (xrate % rate) अणु
 		dev_err(dev, "unsupported clock rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	clk_set_parent(ick, xck);
 	clk_set_rate(ick, xrate);
@@ -936,126 +937,126 @@ static int fsi_clk_set_rate_external(struct device *dev,
 	dev_dbg(dev, "external/rate = %ld/%ld\n", xrate, rate);
 
 	ret = fsi_clk_set_ackbpf(dev, fsi, ackmd, bpfmd);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "%s failed", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_clk_set_rate_cpg(struct device *dev,
-				struct fsi_priv *fsi)
-{
-	struct clk *ick = fsi->clock.ick;
-	struct clk *div = fsi->clock.div;
-	unsigned long rate = fsi->clock.rate;
-	unsigned long target = 0; /* 12288000 or 11289600 */
-	unsigned long actual, cout;
-	unsigned long diff, min;
-	unsigned long best_cout, best_act;
-	int adj;
-	int ackmd, bpfmd;
-	int ret = -EINVAL;
+अटल पूर्णांक fsi_clk_set_rate_cpg(काष्ठा device *dev,
+				काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा clk *ick = fsi->घड़ी.ick;
+	काष्ठा clk *भाग = fsi->घड़ी.भाग;
+	अचिन्हित दीर्घ rate = fsi->घड़ी.rate;
+	अचिन्हित दीर्घ target = 0; /* 12288000 or 11289600 */
+	अचिन्हित दीर्घ actual, cout;
+	अचिन्हित दीर्घ dअगरf, min;
+	अचिन्हित दीर्घ best_cout, best_act;
+	पूर्णांक adj;
+	पूर्णांक ackmd, bpfmd;
+	पूर्णांक ret = -EINVAL;
 
-	if (!(12288000 % rate))
+	अगर (!(12288000 % rate))
 		target = 12288000;
-	if (!(11289600 % rate))
+	अगर (!(11289600 % rate))
 		target = 11289600;
-	if (!target) {
+	अगर (!target) अणु
 		dev_err(dev, "unsupported rate\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bpfmd = fsi->chan_num * 32;
 	ackmd = target / rate;
 	ret = fsi_clk_set_ackbpf(dev, fsi, ackmd, bpfmd);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s failed", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * The clock flow is
+	 * The घड़ी flow is
 	 *
 	 * [CPG] = cout => [FSI_DIV] = audio => [FSI] => [codec]
 	 *
 	 * But, it needs to find best match of CPG and FSI_DIV
-	 * combination, since it is difficult to generate correct
-	 * frequency of audio clock from ick clock only.
-	 * Because ick is created from its parent clock.
+	 * combination, since it is dअगरficult to generate correct
+	 * frequency of audio घड़ी from ick घड़ी only.
+	 * Because ick is created from its parent घड़ी.
 	 *
 	 * target	= rate x [512/256/128/64]fs
-	 * cout		= round(target x adjustment)
-	 * actual	= cout / adjustment (by FSI-DIV) ~= target
+	 * cout		= round(target x adjusपंचांगent)
+	 * actual	= cout / adjusपंचांगent (by FSI-DIV) ~= target
 	 * audio	= actual
 	 */
 	min = ~0;
 	best_cout = 0;
 	best_act = 0;
-	for (adj = 1; adj < 0xffff; adj++) {
+	क्रम (adj = 1; adj < 0xffff; adj++) अणु
 
 		cout = target * adj;
-		if (cout > 100000000) /* max clock = 100MHz */
-			break;
+		अगर (cout > 100000000) /* max घड़ी = 100MHz */
+			अवरोध;
 
-		/* cout/actual audio clock */
+		/* cout/actual audio घड़ी */
 		cout	= clk_round_rate(ick, cout);
 		actual	= cout / adj;
 
 		/* find best frequency */
-		diff = abs(actual - target);
-		if (diff < min) {
-			min		= diff;
+		dअगरf = असल(actual - target);
+		अगर (dअगरf < min) अणु
+			min		= dअगरf;
 			best_cout	= cout;
 			best_act	= actual;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = clk_set_rate(ick, best_cout);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "ick clock failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	ret = clk_set_rate(div, clk_round_rate(div, best_act));
-	if (ret < 0) {
+	ret = clk_set_rate(भाग, clk_round_rate(भाग, best_act));
+	अगर (ret < 0) अणु
 		dev_err(dev, "div clock failed\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	dev_dbg(dev, "ick/div = %ld/%ld\n",
-		clk_get_rate(ick), clk_get_rate(div));
+		clk_get_rate(ick), clk_get_rate(भाग));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void fsi_pointer_update(struct fsi_stream *io, int size)
-{
+अटल व्योम fsi_poपूर्णांकer_update(काष्ठा fsi_stream *io, पूर्णांक size)
+अणु
 	io->buff_sample_pos += size;
 
-	if (io->buff_sample_pos >=
-	    io->period_samples * (io->period_pos + 1)) {
-		struct snd_pcm_substream *substream = io->substream;
-		struct snd_pcm_runtime *runtime = substream->runtime;
+	अगर (io->buff_sample_pos >=
+	    io->period_samples * (io->period_pos + 1)) अणु
+		काष्ठा snd_pcm_substream *substream = io->substream;
+		काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 		io->period_pos++;
 
-		if (io->period_pos >= runtime->periods) {
+		अगर (io->period_pos >= runसमय->periods) अणु
 			io->buff_sample_pos = 0;
 			io->period_pos = 0;
-		}
+		पूर्ण
 
 		snd_pcm_period_elapsed(substream);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *		pio data transfer handler
  */
-static void fsi_pio_push16(struct fsi_priv *fsi, u8 *_buf, int samples)
-{
-	int i;
+अटल व्योम fsi_pio_push16(काष्ठा fsi_priv *fsi, u8 *_buf, पूर्णांक samples)
+अणु
+	पूर्णांक i;
 
-	if (fsi_is_enable_stream(fsi)) {
+	अगर (fsi_is_enable_stream(fsi)) अणु
 		/*
 		 * stream mode
 		 * see
@@ -1063,204 +1064,204 @@ static void fsi_pio_push16(struct fsi_priv *fsi, u8 *_buf, int samples)
 		 */
 		u32 *buf = (u32 *)_buf;
 
-		for (i = 0; i < samples / 2; i++)
-			fsi_reg_write(fsi, DODT, buf[i]);
-	} else {
+		क्रम (i = 0; i < samples / 2; i++)
+			fsi_reg_ग_लिखो(fsi, DODT, buf[i]);
+	पूर्ण अन्यथा अणु
 		/* normal mode */
 		u16 *buf = (u16 *)_buf;
 
-		for (i = 0; i < samples; i++)
-			fsi_reg_write(fsi, DODT, ((u32)*(buf + i) << 8));
-	}
-}
+		क्रम (i = 0; i < samples; i++)
+			fsi_reg_ग_लिखो(fsi, DODT, ((u32)*(buf + i) << 8));
+	पूर्ण
+पूर्ण
 
-static void fsi_pio_pop16(struct fsi_priv *fsi, u8 *_buf, int samples)
-{
+अटल व्योम fsi_pio_pop16(काष्ठा fsi_priv *fsi, u8 *_buf, पूर्णांक samples)
+अणु
 	u16 *buf = (u16 *)_buf;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < samples; i++)
-		*(buf + i) = (u16)(fsi_reg_read(fsi, DIDT) >> 8);
-}
+	क्रम (i = 0; i < samples; i++)
+		*(buf + i) = (u16)(fsi_reg_पढ़ो(fsi, DIDT) >> 8);
+पूर्ण
 
-static void fsi_pio_push32(struct fsi_priv *fsi, u8 *_buf, int samples)
-{
+अटल व्योम fsi_pio_push32(काष्ठा fsi_priv *fsi, u8 *_buf, पूर्णांक samples)
+अणु
 	u32 *buf = (u32 *)_buf;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < samples; i++)
-		fsi_reg_write(fsi, DODT, *(buf + i));
-}
+	क्रम (i = 0; i < samples; i++)
+		fsi_reg_ग_लिखो(fsi, DODT, *(buf + i));
+पूर्ण
 
-static void fsi_pio_pop32(struct fsi_priv *fsi, u8 *_buf, int samples)
-{
+अटल व्योम fsi_pio_pop32(काष्ठा fsi_priv *fsi, u8 *_buf, पूर्णांक samples)
+अणु
 	u32 *buf = (u32 *)_buf;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < samples; i++)
-		*(buf + i) = fsi_reg_read(fsi, DIDT);
-}
+	क्रम (i = 0; i < samples; i++)
+		*(buf + i) = fsi_reg_पढ़ो(fsi, DIDT);
+पूर्ण
 
-static u8 *fsi_pio_get_area(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	struct snd_pcm_runtime *runtime = io->substream->runtime;
+अटल u8 *fsi_pio_get_area(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = io->substream->runसमय;
 
-	return runtime->dma_area +
-		samples_to_bytes(runtime, io->buff_sample_pos);
-}
+	वापस runसमय->dma_area +
+		samples_to_bytes(runसमय, io->buff_sample_pos);
+पूर्ण
 
-static int fsi_pio_transfer(struct fsi_priv *fsi, struct fsi_stream *io,
-		void (*run16)(struct fsi_priv *fsi, u8 *buf, int samples),
-		void (*run32)(struct fsi_priv *fsi, u8 *buf, int samples),
-		int samples)
-{
+अटल पूर्णांक fsi_pio_transfer(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io,
+		व्योम (*run16)(काष्ठा fsi_priv *fsi, u8 *buf, पूर्णांक samples),
+		व्योम (*run32)(काष्ठा fsi_priv *fsi, u8 *buf, पूर्णांक samples),
+		पूर्णांक samples)
+अणु
 	u8 *buf;
 
-	if (!fsi_stream_is_working(fsi, io))
-		return -EINVAL;
+	अगर (!fsi_stream_is_working(fsi, io))
+		वापस -EINVAL;
 
 	buf = fsi_pio_get_area(fsi, io);
 
-	switch (io->sample_width) {
-	case 2:
+	चयन (io->sample_width) अणु
+	हाल 2:
 		run16(fsi, buf, samples);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		run32(fsi, buf, samples);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	fsi_pointer_update(io, samples);
+	fsi_poपूर्णांकer_update(io, samples);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_pio_pop(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	int sample_residues;	/* samples in FSI fifo */
-	int sample_space;	/* ALSA free samples space */
-	int samples;
+अटल पूर्णांक fsi_pio_pop(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	पूर्णांक sample_residues;	/* samples in FSI fअगरo */
+	पूर्णांक sample_space;	/* ALSA मुक्त samples space */
+	पूर्णांक samples;
 
-	sample_residues	= fsi_get_current_fifo_samples(fsi, io);
+	sample_residues	= fsi_get_current_fअगरo_samples(fsi, io);
 	sample_space	= io->buff_sample_capa - io->buff_sample_pos;
 
 	samples = min(sample_residues, sample_space);
 
-	return fsi_pio_transfer(fsi, io,
+	वापस fsi_pio_transfer(fsi, io,
 				  fsi_pio_pop16,
 				  fsi_pio_pop32,
 				  samples);
-}
+पूर्ण
 
-static int fsi_pio_push(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	int sample_residues;	/* ALSA residue samples */
-	int sample_space;	/* FSI fifo free samples space */
-	int samples;
+अटल पूर्णांक fsi_pio_push(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	पूर्णांक sample_residues;	/* ALSA residue samples */
+	पूर्णांक sample_space;	/* FSI fअगरo मुक्त samples space */
+	पूर्णांक samples;
 
 	sample_residues	= io->buff_sample_capa - io->buff_sample_pos;
-	sample_space	= io->fifo_sample_capa -
-		fsi_get_current_fifo_samples(fsi, io);
+	sample_space	= io->fअगरo_sample_capa -
+		fsi_get_current_fअगरo_samples(fsi, io);
 
 	samples = min(sample_residues, sample_space);
 
-	return fsi_pio_transfer(fsi, io,
+	वापस fsi_pio_transfer(fsi, io,
 				  fsi_pio_push16,
 				  fsi_pio_push32,
 				  samples);
-}
+पूर्ण
 
-static int fsi_pio_start_stop(struct fsi_priv *fsi, struct fsi_stream *io,
-			       int enable)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल पूर्णांक fsi_pio_start_stop(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io,
+			       पूर्णांक enable)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 	u32 clk  = fsi_is_port_a(fsi) ? CRA  : CRB;
 
-	if (enable)
+	अगर (enable)
 		fsi_irq_enable(fsi, io);
-	else
+	अन्यथा
 		fsi_irq_disable(fsi, io);
 
-	if (fsi_is_clk_master(fsi))
+	अगर (fsi_is_clk_master(fsi))
 		fsi_master_mask_set(master, CLK_RST, clk, (enable) ? clk : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_pio_push_init(struct fsi_priv *fsi, struct fsi_stream *io)
-{
+अटल पूर्णांक fsi_pio_push_init(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
 	/*
 	 * we can use 16bit stream mode
 	 * when "playback" and "16bit data"
-	 * and platform allows "stream mode"
+	 * and platक्रमm allows "stream mode"
 	 * see
 	 *	fsi_pio_push16()
 	 */
-	if (fsi_is_enable_stream(fsi))
+	अगर (fsi_is_enable_stream(fsi))
 		io->bus_option = BUSOP_SET(24, PACKAGE_24BITBUS_BACK) |
 				 BUSOP_SET(16, PACKAGE_16BITBUS_STREAM);
-	else
+	अन्यथा
 		io->bus_option = BUSOP_SET(24, PACKAGE_24BITBUS_BACK) |
 				 BUSOP_SET(16, PACKAGE_24BITBUS_BACK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_pio_pop_init(struct fsi_priv *fsi, struct fsi_stream *io)
-{
+अटल पूर्णांक fsi_pio_pop_init(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
 	/*
 	 * always 24bit bus, package back when "capture"
 	 */
 	io->bus_option = BUSOP_SET(24, PACKAGE_24BITBUS_BACK) |
 			 BUSOP_SET(16, PACKAGE_24BITBUS_BACK);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct fsi_stream_handler fsi_pio_push_handler = {
+अटल काष्ठा fsi_stream_handler fsi_pio_push_handler = अणु
 	.init		= fsi_pio_push_init,
 	.transfer	= fsi_pio_push,
 	.start_stop	= fsi_pio_start_stop,
-};
+पूर्ण;
 
-static struct fsi_stream_handler fsi_pio_pop_handler = {
+अटल काष्ठा fsi_stream_handler fsi_pio_pop_handler = अणु
 	.init		= fsi_pio_pop_init,
 	.transfer	= fsi_pio_pop,
 	.start_stop	= fsi_pio_start_stop,
-};
+पूर्ण;
 
-static irqreturn_t fsi_interrupt(int irq, void *data)
-{
-	struct fsi_master *master = data;
-	u32 int_st = fsi_irq_get_status(master);
+अटल irqवापस_t fsi_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा fsi_master *master = data;
+	u32 पूर्णांक_st = fsi_irq_get_status(master);
 
 	/* clear irq status */
 	fsi_master_mask_set(master, SOFT_RST, IR, 0);
 	fsi_master_mask_set(master, SOFT_RST, IR, IR);
 
-	if (int_st & AB_IO(1, AO_SHIFT))
+	अगर (पूर्णांक_st & AB_IO(1, AO_SHIFT))
 		fsi_stream_transfer(&master->fsia.playback);
-	if (int_st & AB_IO(1, BO_SHIFT))
+	अगर (पूर्णांक_st & AB_IO(1, BO_SHIFT))
 		fsi_stream_transfer(&master->fsib.playback);
-	if (int_st & AB_IO(1, AI_SHIFT))
+	अगर (पूर्णांक_st & AB_IO(1, AI_SHIFT))
 		fsi_stream_transfer(&master->fsia.capture);
-	if (int_st & AB_IO(1, BI_SHIFT))
+	अगर (पूर्णांक_st & AB_IO(1, BI_SHIFT))
 		fsi_stream_transfer(&master->fsib.capture);
 
-	fsi_count_fifo_err(&master->fsia);
-	fsi_count_fifo_err(&master->fsib);
+	fsi_count_fअगरo_err(&master->fsia);
+	fsi_count_fअगरo_err(&master->fsib);
 
 	fsi_irq_clear_status(&master->fsia);
 	fsi_irq_clear_status(&master->fsib);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  *		dma data transfer handler
  */
-static int fsi_dma_init(struct fsi_priv *fsi, struct fsi_stream *io)
-{
+अटल पूर्णांक fsi_dma_init(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
 	/*
 	 * 24bit data : 24bit bus / package in back
 	 * 16bit data : 16bit bus / stream mode
@@ -1268,80 +1269,80 @@ static int fsi_dma_init(struct fsi_priv *fsi, struct fsi_stream *io)
 	io->bus_option = BUSOP_SET(24, PACKAGE_24BITBUS_BACK) |
 			 BUSOP_SET(16, PACKAGE_16BITBUS_STREAM);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void fsi_dma_complete(void *data)
-{
-	struct fsi_stream *io = (struct fsi_stream *)data;
-	struct fsi_priv *fsi = fsi_stream_to_priv(io);
+अटल व्योम fsi_dma_complete(व्योम *data)
+अणु
+	काष्ठा fsi_stream *io = (काष्ठा fsi_stream *)data;
+	काष्ठा fsi_priv *fsi = fsi_stream_to_priv(io);
 
-	fsi_pointer_update(io, io->period_samples);
+	fsi_poपूर्णांकer_update(io, io->period_samples);
 
-	fsi_count_fifo_err(fsi);
-}
+	fsi_count_fअगरo_err(fsi);
+पूर्ण
 
-static int fsi_dma_transfer(struct fsi_priv *fsi, struct fsi_stream *io)
-{
-	struct snd_soc_dai *dai = fsi_get_dai(io->substream);
-	struct snd_pcm_substream *substream = io->substream;
-	struct dma_async_tx_descriptor *desc;
-	int is_play = fsi_stream_is_play(fsi, io);
-	enum dma_transfer_direction dir;
-	int ret = -EIO;
+अटल पूर्णांक fsi_dma_transfer(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
+	काष्ठा snd_soc_dai *dai = fsi_get_dai(io->substream);
+	काष्ठा snd_pcm_substream *substream = io->substream;
+	काष्ठा dma_async_tx_descriptor *desc;
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
+	क्रमागत dma_transfer_direction dir;
+	पूर्णांक ret = -EIO;
 
-	if (is_play)
+	अगर (is_play)
 		dir = DMA_MEM_TO_DEV;
-	else
+	अन्यथा
 		dir = DMA_DEV_TO_MEM;
 
 	desc = dmaengine_prep_dma_cyclic(io->chan,
-					 substream->runtime->dma_addr,
+					 substream->runसमय->dma_addr,
 					 snd_pcm_lib_buffer_bytes(substream),
 					 snd_pcm_lib_period_bytes(substream),
 					 dir,
 					 DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!desc) {
+	अगर (!desc) अणु
 		dev_err(dai->dev, "dmaengine_prep_dma_cyclic() fail\n");
-		goto fsi_dma_transfer_err;
-	}
+		जाओ fsi_dma_transfer_err;
+	पूर्ण
 
 	desc->callback		= fsi_dma_complete;
 	desc->callback_param	= io;
 
-	if (dmaengine_submit(desc) < 0) {
+	अगर (dmaengine_submit(desc) < 0) अणु
 		dev_err(dai->dev, "tx_submit() fail\n");
-		goto fsi_dma_transfer_err;
-	}
+		जाओ fsi_dma_transfer_err;
+	पूर्ण
 
 	dma_async_issue_pending(io->chan);
 
 	/*
 	 * FIXME
 	 *
-	 * In DMAEngine case, codec and FSI cannot be started simultaneously
+	 * In DMAEngine हाल, codec and FSI cannot be started simultaneously
 	 * since FSI is using the scheduler work queue.
-	 * Therefore, in capture case, probably FSI FIFO will have got
-	 * overflow error in this point.
-	 * in that case, DMA cannot start transfer until error was cleared.
+	 * Thereक्रमe, in capture हाल, probably FSI FIFO will have got
+	 * overflow error in this poपूर्णांक.
+	 * in that हाल, DMA cannot start transfer until error was cleared.
 	 */
-	if (!is_play) {
-		if (ERR_OVER & fsi_reg_read(fsi, DIFF_ST)) {
+	अगर (!is_play) अणु
+		अगर (ERR_OVER & fsi_reg_पढ़ो(fsi, DIFF_ST)) अणु
 			fsi_reg_mask_set(fsi, DIFF_CTL, FIFO_CLR, FIFO_CLR);
-			fsi_reg_write(fsi, DIFF_ST, 0);
-		}
-	}
+			fsi_reg_ग_लिखो(fsi, DIFF_ST, 0);
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 
 fsi_dma_transfer_err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_dma_push_start_stop(struct fsi_priv *fsi, struct fsi_stream *io,
-				 int start)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल पूर्णांक fsi_dma_push_start_stop(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io,
+				 पूर्णांक start)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 	u32 clk  = fsi_is_port_a(fsi) ? CRA  : CRB;
 	u32 enable = start ? DMA_ON : 0;
 
@@ -1349,112 +1350,112 @@ static int fsi_dma_push_start_stop(struct fsi_priv *fsi, struct fsi_stream *io,
 
 	dmaengine_terminate_all(io->chan);
 
-	if (fsi_is_clk_master(fsi))
+	अगर (fsi_is_clk_master(fsi))
 		fsi_master_mask_set(master, CLK_RST, clk, (enable) ? clk : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_dma_probe(struct fsi_priv *fsi, struct fsi_stream *io, struct device *dev)
-{
-	int is_play = fsi_stream_is_play(fsi, io);
+अटल पूर्णांक fsi_dma_probe(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io, काष्ठा device *dev)
+अणु
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
 
-#ifdef CONFIG_SUPERH
+#अगर_घोषित CONFIG_SUPERH
 	dma_cap_mask_t mask;
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
 	io->chan = dma_request_channel(mask, shdma_chan_filter,
-				       (void *)io->dma_id);
-#else
+				       (व्योम *)io->dma_id);
+#अन्यथा
 	io->chan = dma_request_slave_channel(dev, is_play ? "tx" : "rx");
-#endif
-	if (io->chan) {
-		struct dma_slave_config cfg = {};
-		int ret;
+#पूर्ण_अगर
+	अगर (io->chan) अणु
+		काष्ठा dma_slave_config cfg = अणुपूर्ण;
+		पूर्णांक ret;
 
-		if (is_play) {
+		अगर (is_play) अणु
 			cfg.dst_addr		= fsi->phys + REG_DODT;
 			cfg.dst_addr_width	= DMA_SLAVE_BUSWIDTH_4_BYTES;
 			cfg.direction		= DMA_MEM_TO_DEV;
-		} else {
+		पूर्ण अन्यथा अणु
 			cfg.src_addr		= fsi->phys + REG_DIDT;
 			cfg.src_addr_width	= DMA_SLAVE_BUSWIDTH_4_BYTES;
 			cfg.direction		= DMA_DEV_TO_MEM;
-		}
+		पूर्ण
 
 		ret = dmaengine_slave_config(io->chan, &cfg);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dma_release_channel(io->chan);
-			io->chan = NULL;
-		}
-	}
+			io->chan = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (!io->chan) {
+	अगर (!io->chan) अणु
 
-		/* switch to PIO handler */
-		if (is_play)
+		/* चयन to PIO handler */
+		अगर (is_play)
 			fsi->playback.handler	= &fsi_pio_push_handler;
-		else
+		अन्यथा
 			fsi->capture.handler	= &fsi_pio_pop_handler;
 
 		dev_info(dev, "switch handler (dma => pio)\n");
 
 		/* probe again */
-		return fsi_stream_probe(fsi, dev);
-	}
+		वापस fsi_stream_probe(fsi, dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_dma_remove(struct fsi_priv *fsi, struct fsi_stream *io)
-{
+अटल पूर्णांक fsi_dma_हटाओ(काष्ठा fsi_priv *fsi, काष्ठा fsi_stream *io)
+अणु
 	fsi_stream_stop(fsi, io);
 
-	if (io->chan)
+	अगर (io->chan)
 		dma_release_channel(io->chan);
 
-	io->chan = NULL;
-	return 0;
-}
+	io->chan = शून्य;
+	वापस 0;
+पूर्ण
 
-static struct fsi_stream_handler fsi_dma_push_handler = {
+अटल काष्ठा fsi_stream_handler fsi_dma_push_handler = अणु
 	.init		= fsi_dma_init,
 	.probe		= fsi_dma_probe,
 	.transfer	= fsi_dma_transfer,
-	.remove		= fsi_dma_remove,
+	.हटाओ		= fsi_dma_हटाओ,
 	.start_stop	= fsi_dma_push_start_stop,
-};
+पूर्ण;
 
 /*
  *		dai ops
  */
-static void fsi_fifo_init(struct fsi_priv *fsi,
-			  struct fsi_stream *io,
-			  struct device *dev)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
-	int is_play = fsi_stream_is_play(fsi, io);
-	u32 shift, i;
-	int frame_capa;
+अटल व्योम fsi_fअगरo_init(काष्ठा fsi_priv *fsi,
+			  काष्ठा fsi_stream *io,
+			  काष्ठा device *dev)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
+	पूर्णांक is_play = fsi_stream_is_play(fsi, io);
+	u32 shअगरt, i;
+	पूर्णांक frame_capa;
 
 	/* get on-chip RAM capacity */
-	shift = fsi_master_read(master, FIFO_SZ);
-	shift >>= fsi_get_port_shift(fsi, io);
-	shift &= FIFO_SZ_MASK;
-	frame_capa = 256 << shift;
+	shअगरt = fsi_master_पढ़ो(master, FIFO_SZ);
+	shअगरt >>= fsi_get_port_shअगरt(fsi, io);
+	shअगरt &= FIFO_SZ_MASK;
+	frame_capa = 256 << shअगरt;
 	dev_dbg(dev, "fifo = %d words\n", frame_capa);
 
 	/*
 	 * The maximum number of sample data varies depending
-	 * on the number of channels selected for the format.
+	 * on the number of channels selected क्रम the क्रमmat.
 	 *
 	 * FIFOs are used in 4-channel units in 3-channel mode
 	 * and in 8-channel units in 5- to 7-channel mode
 	 * meaning that more FIFOs than the required size of DPRAM
 	 * are used.
 	 *
-	 * ex) if 256 words of DP-RAM is connected
+	 * ex) अगर 256 words of DP-RAM is connected
 	 * 1 channel:  256 (256 x 1 = 256)
 	 * 2 channels: 128 (128 x 2 = 256)
 	 * 3 channels:  64 ( 64 x 3 = 192)
@@ -1464,249 +1465,249 @@ static void fsi_fifo_init(struct fsi_priv *fsi,
 	 * 7 channels:  32 ( 32 x 7 = 224)
 	 * 8 channels:  32 ( 32 x 8 = 256)
 	 */
-	for (i = 1; i < fsi->chan_num; i <<= 1)
+	क्रम (i = 1; i < fsi->chan_num; i <<= 1)
 		frame_capa >>= 1;
 	dev_dbg(dev, "%d channel %d store\n",
 		fsi->chan_num, frame_capa);
 
-	io->fifo_sample_capa = fsi_frame2sample(fsi, frame_capa);
+	io->fअगरo_sample_capa = fsi_frame2sample(fsi, frame_capa);
 
 	/*
-	 * set interrupt generation factor
+	 * set पूर्णांकerrupt generation factor
 	 * clear FIFO
 	 */
-	if (is_play) {
-		fsi_reg_write(fsi,	DOFF_CTL, IRQ_HALF);
+	अगर (is_play) अणु
+		fsi_reg_ग_लिखो(fsi,	DOFF_CTL, IRQ_HALF);
 		fsi_reg_mask_set(fsi,	DOFF_CTL, FIFO_CLR, FIFO_CLR);
-	} else {
-		fsi_reg_write(fsi,	DIFF_CTL, IRQ_HALF);
+	पूर्ण अन्यथा अणु
+		fsi_reg_ग_लिखो(fsi,	DIFF_CTL, IRQ_HALF);
 		fsi_reg_mask_set(fsi,	DIFF_CTL, FIFO_CLR, FIFO_CLR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fsi_hw_startup(struct fsi_priv *fsi,
-			  struct fsi_stream *io,
-			  struct device *dev)
-{
+अटल पूर्णांक fsi_hw_startup(काष्ठा fsi_priv *fsi,
+			  काष्ठा fsi_stream *io,
+			  काष्ठा device *dev)
+अणु
 	u32 data = 0;
 
-	/* clock setting */
-	if (fsi_is_clk_master(fsi))
+	/* घड़ी setting */
+	अगर (fsi_is_clk_master(fsi))
 		data = DIMD | DOMD;
 
 	fsi_reg_mask_set(fsi, CKG1, (DIMD | DOMD), data);
 
-	/* clock inversion (CKG2) */
+	/* घड़ी inversion (CKG2) */
 	data = 0;
-	if (fsi->bit_clk_inv)
+	अगर (fsi->bit_clk_inv)
 		data |= (1 << 0);
-	if (fsi->lr_clk_inv)
+	अगर (fsi->lr_clk_inv)
 		data |= (1 << 4);
-	if (fsi_is_clk_master(fsi))
+	अगर (fsi_is_clk_master(fsi))
 		data <<= 8;
-	fsi_reg_write(fsi, CKG2, data);
+	fsi_reg_ग_लिखो(fsi, CKG2, data);
 
-	/* spdif ? */
-	if (fsi_is_spdif(fsi)) {
-		fsi_spdif_clk_ctrl(fsi, 1);
+	/* spdअगर ? */
+	अगर (fsi_is_spdअगर(fsi)) अणु
+		fsi_spdअगर_clk_ctrl(fsi, 1);
 		fsi_reg_mask_set(fsi, OUT_SEL, DMMD, DMMD);
-	}
+	पूर्ण
 
 	/*
 	 * get bus settings
 	 */
 	data = 0;
-	switch (io->sample_width) {
-	case 2:
+	चयन (io->sample_width) अणु
+	हाल 2:
 		data = BUSOP_GET(16, io->bus_option);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		data = BUSOP_GET(24, io->bus_option);
-		break;
-	}
-	fsi_format_bus_setup(fsi, io, data, dev);
+		अवरोध;
+	पूर्ण
+	fsi_क्रमmat_bus_setup(fsi, io, data, dev);
 
 	/* irq clear */
 	fsi_irq_disable(fsi, io);
 	fsi_irq_clear_status(fsi);
 
-	/* fifo init */
-	fsi_fifo_init(fsi, io, dev);
+	/* fअगरo init */
+	fsi_fअगरo_init(fsi, io, dev);
 
-	/* start master clock */
-	if (fsi_is_clk_master(fsi))
-		return fsi_clk_enable(dev, fsi);
+	/* start master घड़ी */
+	अगर (fsi_is_clk_master(fsi))
+		वापस fsi_clk_enable(dev, fsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_hw_shutdown(struct fsi_priv *fsi,
-			    struct device *dev)
-{
-	/* stop master clock */
-	if (fsi_is_clk_master(fsi))
-		return fsi_clk_disable(dev, fsi);
+अटल पूर्णांक fsi_hw_shutकरोwn(काष्ठा fsi_priv *fsi,
+			    काष्ठा device *dev)
+अणु
+	/* stop master घड़ी */
+	अगर (fsi_is_clk_master(fsi))
+		वापस fsi_clk_disable(dev, fsi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_dai_startup(struct snd_pcm_substream *substream,
-			   struct snd_soc_dai *dai)
-{
-	struct fsi_priv *fsi = fsi_get_priv(substream);
-
-	fsi_clk_invalid(fsi);
-
-	return 0;
-}
-
-static void fsi_dai_shutdown(struct snd_pcm_substream *substream,
-			     struct snd_soc_dai *dai)
-{
-	struct fsi_priv *fsi = fsi_get_priv(substream);
+अटल पूर्णांक fsi_dai_startup(काष्ठा snd_pcm_substream *substream,
+			   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv(substream);
 
 	fsi_clk_invalid(fsi);
-}
 
-static int fsi_dai_trigger(struct snd_pcm_substream *substream, int cmd,
-			   struct snd_soc_dai *dai)
-{
-	struct fsi_priv *fsi = fsi_get_priv(substream);
-	struct fsi_stream *io = fsi_stream_get(fsi, substream);
-	int ret = 0;
+	वापस 0;
+पूर्ण
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+अटल व्योम fsi_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv(substream);
+
+	fsi_clk_invalid(fsi);
+पूर्ण
+
+अटल पूर्णांक fsi_dai_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+			   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv(substream);
+	काष्ठा fsi_stream *io = fsi_stream_get(fsi, substream);
+	पूर्णांक ret = 0;
+
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		fsi_stream_init(fsi, io, substream);
-		if (!ret)
+		अगर (!ret)
 			ret = fsi_hw_startup(fsi, io, dai->dev);
-		if (!ret)
+		अगर (!ret)
 			ret = fsi_stream_start(fsi, io);
-		if (!ret)
+		अगर (!ret)
 			ret = fsi_stream_transfer(io);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-		if (!ret)
-			ret = fsi_hw_shutdown(fsi, dai->dev);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+		अगर (!ret)
+			ret = fsi_hw_shutकरोwn(fsi, dai->dev);
 		fsi_stream_stop(fsi, io);
 		fsi_stream_quit(fsi, io);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_set_fmt_dai(struct fsi_priv *fsi, unsigned int fmt)
-{
-	switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
+अटल पूर्णांक fsi_set_fmt_dai(काष्ठा fsi_priv *fsi, अचिन्हित पूर्णांक fmt)
+अणु
+	चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+	हाल SND_SOC_DAIFMT_I2S:
 		fsi->fmt = CR_I2S;
 		fsi->chan_num = 2;
-		break;
-	case SND_SOC_DAIFMT_LEFT_J:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_LEFT_J:
 		fsi->fmt = CR_PCM;
 		fsi->chan_num = 2;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_set_fmt_spdif(struct fsi_priv *fsi)
-{
-	struct fsi_master *master = fsi_get_master(fsi);
+अटल पूर्णांक fsi_set_fmt_spdअगर(काष्ठा fsi_priv *fsi)
+अणु
+	काष्ठा fsi_master *master = fsi_get_master(fsi);
 
-	if (fsi_version(master) < 2)
-		return -EINVAL;
+	अगर (fsi_version(master) < 2)
+		वापस -EINVAL;
 
 	fsi->fmt = CR_DTMD_SPDIF_PCM | CR_PCM;
 	fsi->chan_num = 2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_dai_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
-{
-	struct fsi_priv *fsi = fsi_get_priv_frm_dai(dai);
-	int ret;
+अटल पूर्णांक fsi_dai_set_fmt(काष्ठा snd_soc_dai *dai, अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv_frm_dai(dai);
+	पूर्णांक ret;
 
-	/* set clock master audio interface */
-	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBM_CFM:
-		break;
-	case SND_SOC_DAIFMT_CBS_CFS:
+	/* set घड़ी master audio पूर्णांकerface */
+	चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+	हाल SND_SOC_DAIFMT_CBM_CFM:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_CBS_CFS:
 		fsi->clk_master = 1; /* cpu is master */
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* set clock inversion */
-	switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-	case SND_SOC_DAIFMT_NB_IF:
+	/* set घड़ी inversion */
+	चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+	हाल SND_SOC_DAIFMT_NB_IF:
 		fsi->bit_clk_inv = 0;
 		fsi->lr_clk_inv = 1;
-		break;
-	case SND_SOC_DAIFMT_IB_NF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_NF:
 		fsi->bit_clk_inv = 1;
 		fsi->lr_clk_inv = 0;
-		break;
-	case SND_SOC_DAIFMT_IB_IF:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_IB_IF:
 		fsi->bit_clk_inv = 1;
 		fsi->lr_clk_inv = 1;
-		break;
-	case SND_SOC_DAIFMT_NB_NF:
-	default:
+		अवरोध;
+	हाल SND_SOC_DAIFMT_NB_NF:
+	शेष:
 		fsi->bit_clk_inv = 0;
 		fsi->lr_clk_inv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (fsi_is_clk_master(fsi)) {
-		if (fsi->clk_cpg)
+	अगर (fsi_is_clk_master(fsi)) अणु
+		अगर (fsi->clk_cpg)
 			fsi_clk_init(dai->dev, fsi, 0, 1, 1,
 				     fsi_clk_set_rate_cpg);
-		else
+		अन्यथा
 			fsi_clk_init(dai->dev, fsi, 1, 1, 0,
-				     fsi_clk_set_rate_external);
-	}
+				     fsi_clk_set_rate_बाह्यal);
+	पूर्ण
 
-	/* set format */
-	if (fsi_is_spdif(fsi))
-		ret = fsi_set_fmt_spdif(fsi);
-	else
+	/* set क्रमmat */
+	अगर (fsi_is_spdअगर(fsi))
+		ret = fsi_set_fmt_spdअगर(fsi);
+	अन्यथा
 		ret = fsi_set_fmt_dai(fsi, fmt & SND_SOC_DAIFMT_FORMAT_MASK);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_dai_hw_params(struct snd_pcm_substream *substream,
-			     struct snd_pcm_hw_params *params,
-			     struct snd_soc_dai *dai)
-{
-	struct fsi_priv *fsi = fsi_get_priv(substream);
+अटल पूर्णांक fsi_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+			     काष्ठा snd_pcm_hw_params *params,
+			     काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv(substream);
 
-	if (fsi_is_clk_master(fsi))
+	अगर (fsi_is_clk_master(fsi))
 		fsi_clk_valid(fsi, params_rate(params));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops fsi_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops fsi_dai_ops = अणु
 	.startup	= fsi_dai_startup,
-	.shutdown	= fsi_dai_shutdown,
+	.shutकरोwn	= fsi_dai_shutकरोwn,
 	.trigger	= fsi_dai_trigger,
 	.set_fmt	= fsi_dai_set_fmt,
 	.hw_params	= fsi_dai_hw_params,
-};
+पूर्ण;
 
 /*
  *		pcm ops
  */
 
-static const struct snd_pcm_hardware fsi_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware fsi_pcm_hardware = अणु
 	.info =		SNDRV_PCM_INFO_INTERLEAVED	|
 			SNDRV_PCM_INFO_MMAP		|
 			SNDRV_PCM_INFO_MMAP_VALID,
@@ -1715,234 +1716,234 @@ static const struct snd_pcm_hardware fsi_pcm_hardware = {
 	.period_bytes_max	= 8192,
 	.periods_min		= 1,
 	.periods_max		= 32,
-	.fifo_size		= 256,
-};
+	.fअगरo_size		= 256,
+पूर्ण;
 
-static int fsi_pcm_open(struct snd_soc_component *component,
-			struct snd_pcm_substream *substream)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int ret = 0;
+अटल पूर्णांक fsi_pcm_खोलो(काष्ठा snd_soc_component *component,
+			काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक ret = 0;
 
-	snd_soc_set_runtime_hwparams(substream, &fsi_pcm_hardware);
+	snd_soc_set_runसमय_hwparams(substream, &fsi_pcm_hardware);
 
-	ret = snd_pcm_hw_constraint_integer(runtime,
+	ret = snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय,
 					    SNDRV_PCM_HW_PARAM_PERIODS);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static snd_pcm_uframes_t fsi_pointer(struct snd_soc_component *component,
-				     struct snd_pcm_substream *substream)
-{
-	struct fsi_priv *fsi = fsi_get_priv(substream);
-	struct fsi_stream *io = fsi_stream_get(fsi, substream);
+अटल snd_pcm_uframes_t fsi_poपूर्णांकer(काष्ठा snd_soc_component *component,
+				     काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा fsi_priv *fsi = fsi_get_priv(substream);
+	काष्ठा fsi_stream *io = fsi_stream_get(fsi, substream);
 
-	return fsi_sample2frame(fsi, io->buff_sample_pos);
-}
+	वापस fsi_sample2frame(fsi, io->buff_sample_pos);
+पूर्ण
 
 /*
  *		snd_soc_component
  */
 
-#define PREALLOC_BUFFER		(32 * 1024)
-#define PREALLOC_BUFFER_MAX	(32 * 1024)
+#घोषणा PREALLOC_BUFFER		(32 * 1024)
+#घोषणा PREALLOC_BUFFER_MAX	(32 * 1024)
 
-static int fsi_pcm_new(struct snd_soc_component *component,
-		       struct snd_soc_pcm_runtime *rtd)
-{
+अटल पूर्णांक fsi_pcm_new(काष्ठा snd_soc_component *component,
+		       काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
 	snd_pcm_set_managed_buffer_all(
 		rtd->pcm,
 		SNDRV_DMA_TYPE_DEV,
 		rtd->card->snd_card->dev,
 		PREALLOC_BUFFER, PREALLOC_BUFFER_MAX);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *		alsa struct
+ *		alsa काष्ठा
  */
 
-static struct snd_soc_dai_driver fsi_soc_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_driver fsi_soc_dai[] = अणु
+	अणु
 		.name			= "fsia-dai",
-		.playback = {
+		.playback = अणु
 			.rates		= FSI_RATES,
-			.formats	= FSI_FMTS,
+			.क्रमmats	= FSI_FMTS,
 			.channels_min	= 2,
 			.channels_max	= 2,
-		},
-		.capture = {
+		पूर्ण,
+		.capture = अणु
 			.rates		= FSI_RATES,
-			.formats	= FSI_FMTS,
+			.क्रमmats	= FSI_FMTS,
 			.channels_min	= 2,
 			.channels_max	= 2,
-		},
+		पूर्ण,
 		.ops = &fsi_dai_ops,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name			= "fsib-dai",
-		.playback = {
+		.playback = अणु
 			.rates		= FSI_RATES,
-			.formats	= FSI_FMTS,
+			.क्रमmats	= FSI_FMTS,
 			.channels_min	= 2,
 			.channels_max	= 2,
-		},
-		.capture = {
+		पूर्ण,
+		.capture = अणु
 			.rates		= FSI_RATES,
-			.formats	= FSI_FMTS,
+			.क्रमmats	= FSI_FMTS,
 			.channels_min	= 2,
 			.channels_max	= 2,
-		},
+		पूर्ण,
 		.ops = &fsi_dai_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_component_driver fsi_soc_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver fsi_soc_component = अणु
 	.name		= "fsi",
-	.open		= fsi_pcm_open,
-	.pointer	= fsi_pointer,
-	.pcm_construct	= fsi_pcm_new,
-};
+	.खोलो		= fsi_pcm_खोलो,
+	.poपूर्णांकer	= fsi_poपूर्णांकer,
+	.pcm_स्थिरruct	= fsi_pcm_new,
+पूर्ण;
 
 /*
- *		platform function
+ *		platक्रमm function
  */
-static void fsi_of_parse(char *name,
-			 struct device_node *np,
-			 struct sh_fsi_port_info *info,
-			 struct device *dev)
-{
-	int i;
-	char prop[128];
-	unsigned long flags = 0;
-	struct {
-		char *name;
-		unsigned int val;
-	} of_parse_property[] = {
-		{ "spdif-connection",		SH_FSI_FMT_SPDIF },
-		{ "stream-mode-support",	SH_FSI_ENABLE_STREAM_MODE },
-		{ "use-internal-clock",		SH_FSI_CLK_CPG },
-	};
+अटल व्योम fsi_of_parse(अक्षर *name,
+			 काष्ठा device_node *np,
+			 काष्ठा sh_fsi_port_info *info,
+			 काष्ठा device *dev)
+अणु
+	पूर्णांक i;
+	अक्षर prop[128];
+	अचिन्हित दीर्घ flags = 0;
+	काष्ठा अणु
+		अक्षर *name;
+		अचिन्हित पूर्णांक val;
+	पूर्ण of_parse_property[] = अणु
+		अणु "spdif-connection",		SH_FSI_FMT_SPDIF पूर्ण,
+		अणु "stream-mode-support",	SH_FSI_ENABLE_STREAM_MODE पूर्ण,
+		अणु "use-internal-clock",		SH_FSI_CLK_CPG पूर्ण,
+	पूर्ण;
 
-	for (i = 0; i < ARRAY_SIZE(of_parse_property); i++) {
-		sprintf(prop, "%s,%s", name, of_parse_property[i].name);
-		if (of_get_property(np, prop, NULL))
+	क्रम (i = 0; i < ARRAY_SIZE(of_parse_property); i++) अणु
+		प्र_लिखो(prop, "%s,%s", name, of_parse_property[i].name);
+		अगर (of_get_property(np, prop, शून्य))
 			flags |= of_parse_property[i].val;
-	}
+	पूर्ण
 	info->flags = flags;
 
 	dev_dbg(dev, "%s flags : %lx\n", name, info->flags);
-}
+पूर्ण
 
-static void fsi_port_info_init(struct fsi_priv *fsi,
-			       struct sh_fsi_port_info *info)
-{
-	if (info->flags & SH_FSI_FMT_SPDIF)
-		fsi->spdif = 1;
+अटल व्योम fsi_port_info_init(काष्ठा fsi_priv *fsi,
+			       काष्ठा sh_fsi_port_info *info)
+अणु
+	अगर (info->flags & SH_FSI_FMT_SPDIF)
+		fsi->spdअगर = 1;
 
-	if (info->flags & SH_FSI_CLK_CPG)
+	अगर (info->flags & SH_FSI_CLK_CPG)
 		fsi->clk_cpg = 1;
 
-	if (info->flags & SH_FSI_ENABLE_STREAM_MODE)
+	अगर (info->flags & SH_FSI_ENABLE_STREAM_MODE)
 		fsi->enable_stream = 1;
-}
+पूर्ण
 
-static void fsi_handler_init(struct fsi_priv *fsi,
-			     struct sh_fsi_port_info *info)
-{
-	fsi->playback.handler	= &fsi_pio_push_handler; /* default PIO */
+अटल व्योम fsi_handler_init(काष्ठा fsi_priv *fsi,
+			     काष्ठा sh_fsi_port_info *info)
+अणु
+	fsi->playback.handler	= &fsi_pio_push_handler; /* शेष PIO */
 	fsi->playback.priv	= fsi;
-	fsi->capture.handler	= &fsi_pio_pop_handler;  /* default PIO */
+	fsi->capture.handler	= &fsi_pio_pop_handler;  /* शेष PIO */
 	fsi->capture.priv	= fsi;
 
-	if (info->tx_id) {
+	अगर (info->tx_id) अणु
 		fsi->playback.dma_id  = info->tx_id;
 		fsi->playback.handler = &fsi_dma_push_handler;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct fsi_core fsi1_core = {
+अटल स्थिर काष्ठा fsi_core fsi1_core = अणु
 	.ver	= 1,
 
 	/* Interrupt */
-	.int_st	= INT_ST,
+	.पूर्णांक_st	= INT_ST,
 	.iemsk	= IEMSK,
 	.imsk	= IMSK,
-};
+पूर्ण;
 
-static const struct fsi_core fsi2_core = {
+अटल स्थिर काष्ठा fsi_core fsi2_core = अणु
 	.ver	= 2,
 
 	/* Interrupt */
-	.int_st	= CPU_INT_ST,
+	.पूर्णांक_st	= CPU_INT_ST,
 	.iemsk	= CPU_IEMSK,
 	.imsk	= CPU_IMSK,
 	.a_mclk	= A_MST_CTLR,
 	.b_mclk	= B_MST_CTLR,
-};
+पूर्ण;
 
-static const struct of_device_id fsi_of_match[] = {
-	{ .compatible = "renesas,sh_fsi",	.data = &fsi1_core},
-	{ .compatible = "renesas,sh_fsi2",	.data = &fsi2_core},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id fsi_of_match[] = अणु
+	अणु .compatible = "renesas,sh_fsi",	.data = &fsi1_coreपूर्ण,
+	अणु .compatible = "renesas,sh_fsi2",	.data = &fsi2_coreपूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, fsi_of_match);
 
-static const struct platform_device_id fsi_id_table[] = {
-	{ "sh_fsi",	(kernel_ulong_t)&fsi1_core },
-	{},
-};
-MODULE_DEVICE_TABLE(platform, fsi_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id fsi_id_table[] = अणु
+	अणु "sh_fsi",	(kernel_uदीर्घ_t)&fsi1_core पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, fsi_id_table);
 
-static int fsi_probe(struct platform_device *pdev)
-{
-	struct fsi_master *master;
-	struct device_node *np = pdev->dev.of_node;
-	struct sh_fsi_platform_info info;
-	const struct fsi_core *core;
-	struct fsi_priv *fsi;
-	struct resource *res;
-	unsigned int irq;
-	int ret;
+अटल पूर्णांक fsi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsi_master *master;
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा sh_fsi_platक्रमm_info info;
+	स्थिर काष्ठा fsi_core *core;
+	काष्ठा fsi_priv *fsi;
+	काष्ठा resource *res;
+	अचिन्हित पूर्णांक irq;
+	पूर्णांक ret;
 
-	memset(&info, 0, sizeof(info));
+	स_रखो(&info, 0, माप(info));
 
-	core = NULL;
-	if (np) {
+	core = शून्य;
+	अगर (np) अणु
 		core = of_device_get_match_data(&pdev->dev);
 		fsi_of_parse("fsia", np, &info.port_a, &pdev->dev);
 		fsi_of_parse("fsib", np, &info.port_b, &pdev->dev);
-	} else {
-		const struct platform_device_id	*id_entry = pdev->id_entry;
-		if (id_entry)
-			core = (struct fsi_core *)id_entry->driver_data;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा platक्रमm_device_id	*id_entry = pdev->id_entry;
+		अगर (id_entry)
+			core = (काष्ठा fsi_core *)id_entry->driver_data;
 
-		if (pdev->dev.platform_data)
-			memcpy(&info, pdev->dev.platform_data, sizeof(info));
-	}
+		अगर (pdev->dev.platक्रमm_data)
+			स_नकल(&info, pdev->dev.platक्रमm_data, माप(info));
+	पूर्ण
 
-	if (!core) {
+	अगर (!core) अणु
 		dev_err(&pdev->dev, "unknown fsi device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platform_get_irq(pdev, 0);
-	if (!res || (int)irq <= 0) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (!res || (पूर्णांक)irq <= 0) अणु
 		dev_err(&pdev->dev, "Not enough FSI platform resources.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	master = devm_kzalloc(&pdev->dev, sizeof(*master), GFP_KERNEL);
-	if (!master)
-		return -ENOMEM;
+	master = devm_kzalloc(&pdev->dev, माप(*master), GFP_KERNEL);
+	अगर (!master)
+		वापस -ENOMEM;
 
 	master->base = devm_ioremap(&pdev->dev, res->start, resource_size(res));
-	if (!master->base) {
+	अगर (!master->base) अणु
 		dev_err(&pdev->dev, "Unable to ioremap FSI registers.\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* master setting */
 	master->core		= core;
@@ -1956,10 +1957,10 @@ static int fsi_probe(struct platform_device *pdev)
 	fsi_port_info_init(fsi, &info.port_a);
 	fsi_handler_init(fsi, &info.port_a);
 	ret = fsi_stream_probe(fsi, &pdev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "FSIA stream probe failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* FSI B setting */
 	fsi		= &master->fsib;
@@ -1969,80 +1970,80 @@ static int fsi_probe(struct platform_device *pdev)
 	fsi_port_info_init(fsi, &info.port_b);
 	fsi_handler_init(fsi, &info.port_b);
 	ret = fsi_stream_probe(fsi, &pdev->dev);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "FSIB stream probe failed\n");
-		goto exit_fsia;
-	}
+		जाओ निकास_fsia;
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 	dev_set_drvdata(&pdev->dev, master);
 
-	ret = devm_request_irq(&pdev->dev, irq, &fsi_interrupt, 0,
+	ret = devm_request_irq(&pdev->dev, irq, &fsi_पूर्णांकerrupt, 0,
 			       dev_name(&pdev->dev), master);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "irq request err\n");
-		goto exit_fsib;
-	}
+		जाओ निकास_fsib;
+	पूर्ण
 
-	ret = devm_snd_soc_register_component(&pdev->dev, &fsi_soc_component,
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev, &fsi_soc_component,
 				    fsi_soc_dai, ARRAY_SIZE(fsi_soc_dai));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "cannot snd component register\n");
-		goto exit_fsib;
-	}
+		जाओ निकास_fsib;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
-exit_fsib:
-	pm_runtime_disable(&pdev->dev);
-	fsi_stream_remove(&master->fsib);
-exit_fsia:
-	fsi_stream_remove(&master->fsia);
+निकास_fsib:
+	pm_runसमय_disable(&pdev->dev);
+	fsi_stream_हटाओ(&master->fsib);
+निकास_fsia:
+	fsi_stream_हटाओ(&master->fsia);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fsi_remove(struct platform_device *pdev)
-{
-	struct fsi_master *master;
+अटल पूर्णांक fsi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा fsi_master *master;
 
 	master = dev_get_drvdata(&pdev->dev);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	fsi_stream_remove(&master->fsia);
-	fsi_stream_remove(&master->fsib);
+	fsi_stream_हटाओ(&master->fsia);
+	fsi_stream_हटाओ(&master->fsib);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __fsi_suspend(struct fsi_priv *fsi,
-			  struct fsi_stream *io,
-			  struct device *dev)
-{
-	if (!fsi_stream_is_working(fsi, io))
-		return;
+अटल व्योम __fsi_suspend(काष्ठा fsi_priv *fsi,
+			  काष्ठा fsi_stream *io,
+			  काष्ठा device *dev)
+अणु
+	अगर (!fsi_stream_is_working(fsi, io))
+		वापस;
 
 	fsi_stream_stop(fsi, io);
-	fsi_hw_shutdown(fsi, dev);
-}
+	fsi_hw_shutकरोwn(fsi, dev);
+पूर्ण
 
-static void __fsi_resume(struct fsi_priv *fsi,
-			 struct fsi_stream *io,
-			 struct device *dev)
-{
-	if (!fsi_stream_is_working(fsi, io))
-		return;
+अटल व्योम __fsi_resume(काष्ठा fsi_priv *fsi,
+			 काष्ठा fsi_stream *io,
+			 काष्ठा device *dev)
+अणु
+	अगर (!fsi_stream_is_working(fsi, io))
+		वापस;
 
 	fsi_hw_startup(fsi, io, dev);
 	fsi_stream_start(fsi, io);
-}
+पूर्ण
 
-static int fsi_suspend(struct device *dev)
-{
-	struct fsi_master *master = dev_get_drvdata(dev);
-	struct fsi_priv *fsia = &master->fsia;
-	struct fsi_priv *fsib = &master->fsib;
+अटल पूर्णांक fsi_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा fsi_master *master = dev_get_drvdata(dev);
+	काष्ठा fsi_priv *fsia = &master->fsia;
+	काष्ठा fsi_priv *fsib = &master->fsib;
 
 	__fsi_suspend(fsia, &fsia->playback, dev);
 	__fsi_suspend(fsia, &fsia->capture, dev);
@@ -2050,14 +2051,14 @@ static int fsi_suspend(struct device *dev)
 	__fsi_suspend(fsib, &fsib->playback, dev);
 	__fsi_suspend(fsib, &fsib->capture, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fsi_resume(struct device *dev)
-{
-	struct fsi_master *master = dev_get_drvdata(dev);
-	struct fsi_priv *fsia = &master->fsia;
-	struct fsi_priv *fsib = &master->fsib;
+अटल पूर्णांक fsi_resume(काष्ठा device *dev)
+अणु
+	काष्ठा fsi_master *master = dev_get_drvdata(dev);
+	काष्ठा fsi_priv *fsia = &master->fsia;
+	काष्ठा fsi_priv *fsib = &master->fsib;
 
 	__fsi_resume(fsia, &fsia->playback, dev);
 	__fsi_resume(fsia, &fsia->capture, dev);
@@ -2065,26 +2066,26 @@ static int fsi_resume(struct device *dev)
 	__fsi_resume(fsib, &fsib->playback, dev);
 	__fsi_resume(fsib, &fsib->capture, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops fsi_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops fsi_pm_ops = अणु
 	.suspend		= fsi_suspend,
 	.resume			= fsi_resume,
-};
+पूर्ण;
 
-static struct platform_driver fsi_driver = {
-	.driver 	= {
+अटल काष्ठा platक्रमm_driver fsi_driver = अणु
+	.driver 	= अणु
 		.name	= "fsi-pcm-audio",
 		.pm	= &fsi_pm_ops,
 		.of_match_table = fsi_of_match,
-	},
+	पूर्ण,
 	.probe		= fsi_probe,
-	.remove		= fsi_remove,
+	.हटाओ		= fsi_हटाओ,
 	.id_table	= fsi_id_table,
-};
+पूर्ण;
 
-module_platform_driver(fsi_driver);
+module_platक्रमm_driver(fsi_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("SuperH onchip FSI audio driver");

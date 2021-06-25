@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  * Copyright (C) 2014 Endless Mobile
  */
 
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/soc/amlogic/meson-canvas.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/soc/amlogic/meson-canvas.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
 
-#define NUM_CANVAS 256
+#घोषणा NUM_CANVAS 256
 
 /* DMC Registers */
-#define DMC_CAV_LUT_DATAL	0x00
-	#define CANVAS_WIDTH_LBIT	29
-	#define CANVAS_WIDTH_LWID	3
-#define DMC_CAV_LUT_DATAH	0x04
-	#define CANVAS_WIDTH_HBIT	0
-	#define CANVAS_HEIGHT_BIT	9
-	#define CANVAS_WRAP_BIT		22
-	#define CANVAS_BLKMODE_BIT	24
-	#define CANVAS_ENDIAN_BIT	26
-#define DMC_CAV_LUT_ADDR	0x08
-	#define CANVAS_LUT_WR_EN	BIT(9)
-	#define CANVAS_LUT_RD_EN	BIT(8)
+#घोषणा DMC_CAV_LUT_DATAL	0x00
+	#घोषणा CANVAS_WIDTH_LBIT	29
+	#घोषणा CANVAS_WIDTH_LWID	3
+#घोषणा DMC_CAV_LUT_DATAH	0x04
+	#घोषणा CANVAS_WIDTH_HBIT	0
+	#घोषणा CANVAS_HEIGHT_BIT	9
+	#घोषणा CANVAS_WRAP_BIT		22
+	#घोषणा CANVAS_BLKMODE_BIT	24
+	#घोषणा CANVAS_ENDIAN_BIT	26
+#घोषणा DMC_CAV_LUT_ADDR	0x08
+	#घोषणा CANVAS_LUT_WR_EN	BIT(9)
+	#घोषणा CANVAS_LUT_RD_EN	BIT(8)
 
-struct meson_canvas {
-	struct device *dev;
-	void __iomem *reg_base;
+काष्ठा meson_canvas अणु
+	काष्ठा device *dev;
+	व्योम __iomem *reg_base;
 	spinlock_t lock; /* canvas device lock */
 	u8 used[NUM_CANVAS];
 	bool supports_endianness;
-};
+पूर्ण;
 
-static void canvas_write(struct meson_canvas *canvas, u32 reg, u32 val)
-{
-	writel_relaxed(val, canvas->reg_base + reg);
-}
+अटल व्योम canvas_ग_लिखो(काष्ठा meson_canvas *canvas, u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, canvas->reg_base + reg);
+पूर्ण
 
-static u32 canvas_read(struct meson_canvas *canvas, u32 reg)
-{
-	return readl_relaxed(canvas->reg_base + reg);
-}
+अटल u32 canvas_पढ़ो(काष्ठा meson_canvas *canvas, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(canvas->reg_base + reg);
+पूर्ण
 
-struct meson_canvas *meson_canvas_get(struct device *dev)
-{
-	struct device_node *canvas_node;
-	struct platform_device *canvas_pdev;
-	struct meson_canvas *canvas;
+काष्ठा meson_canvas *meson_canvas_get(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *canvas_node;
+	काष्ठा platक्रमm_device *canvas_pdev;
+	काष्ठा meson_canvas *canvas;
 
 	canvas_node = of_parse_phandle(dev->of_node, "amlogic,canvas", 0);
-	if (!canvas_node)
-		return ERR_PTR(-ENODEV);
+	अगर (!canvas_node)
+		वापस ERR_PTR(-ENODEV);
 
 	canvas_pdev = of_find_device_by_node(canvas_node);
-	if (!canvas_pdev) {
+	अगर (!canvas_pdev) अणु
 		of_node_put(canvas_node);
-		return ERR_PTR(-EPROBE_DEFER);
-	}
+		वापस ERR_PTR(-EPROBE_DEFER);
+	पूर्ण
 
 	of_node_put(canvas_node);
 
 	/*
-	 * If priv is NULL, it's probably because the canvas hasn't
+	 * If priv is शून्य, it's probably because the canvas hasn't
 	 * properly initialized. Bail out with -EINVAL because, in the
-	 * current state, this driver probe cannot return -EPROBE_DEFER
+	 * current state, this driver probe cannot वापस -EPROBE_DEFER
 	 */
 	canvas = dev_get_drvdata(&canvas_pdev->dev);
-	if (!canvas) {
+	अगर (!canvas) अणु
 		put_device(&canvas_pdev->dev);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return canvas;
-}
+	वापस canvas;
+पूर्ण
 EXPORT_SYMBOL_GPL(meson_canvas_get);
 
-int meson_canvas_config(struct meson_canvas *canvas, u8 canvas_index,
+पूर्णांक meson_canvas_config(काष्ठा meson_canvas *canvas, u8 canvas_index,
 			u32 addr, u32 stride, u32 height,
-			unsigned int wrap,
-			unsigned int blkmode,
-			unsigned int endian)
-{
-	unsigned long flags;
+			अचिन्हित पूर्णांक wrap,
+			अचिन्हित पूर्णांक blkmode,
+			अचिन्हित पूर्णांक endian)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (endian && !canvas->supports_endianness) {
+	अगर (endian && !canvas->supports_endianness) अणु
 		dev_err(canvas->dev,
 			"Endianness is not supported on this SoC\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&canvas->lock, flags);
-	if (!canvas->used[canvas_index]) {
+	अगर (!canvas->used[canvas_index]) अणु
 		dev_err(canvas->dev,
 			"Trying to setup non allocated canvas %u\n",
 			canvas_index);
 		spin_unlock_irqrestore(&canvas->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	canvas_write(canvas, DMC_CAV_LUT_DATAL,
+	canvas_ग_लिखो(canvas, DMC_CAV_LUT_DATAL,
 		     ((addr + 7) >> 3) |
 		     (((stride + 7) >> 3) << CANVAS_WIDTH_LBIT));
 
-	canvas_write(canvas, DMC_CAV_LUT_DATAH,
+	canvas_ग_लिखो(canvas, DMC_CAV_LUT_DATAH,
 		     ((((stride + 7) >> 3) >> CANVAS_WIDTH_LWID) <<
 						CANVAS_WIDTH_HBIT) |
 		     (height << CANVAS_HEIGHT_BIT) |
@@ -116,70 +117,70 @@ int meson_canvas_config(struct meson_canvas *canvas, u8 canvas_index,
 		     (blkmode << CANVAS_BLKMODE_BIT) |
 		     (endian << CANVAS_ENDIAN_BIT));
 
-	canvas_write(canvas, DMC_CAV_LUT_ADDR,
+	canvas_ग_लिखो(canvas, DMC_CAV_LUT_ADDR,
 		     CANVAS_LUT_WR_EN | canvas_index);
 
-	/* Force a read-back to make sure everything is flushed. */
-	canvas_read(canvas, DMC_CAV_LUT_DATAH);
+	/* Force a पढ़ो-back to make sure everything is flushed. */
+	canvas_पढ़ो(canvas, DMC_CAV_LUT_DATAH);
 	spin_unlock_irqrestore(&canvas->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(meson_canvas_config);
 
-int meson_canvas_alloc(struct meson_canvas *canvas, u8 *canvas_index)
-{
-	int i;
-	unsigned long flags;
+पूर्णांक meson_canvas_alloc(काष्ठा meson_canvas *canvas, u8 *canvas_index)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&canvas->lock, flags);
-	for (i = 0; i < NUM_CANVAS; ++i) {
-		if (!canvas->used[i]) {
+	क्रम (i = 0; i < NUM_CANVAS; ++i) अणु
+		अगर (!canvas->used[i]) अणु
 			canvas->used[i] = 1;
 			spin_unlock_irqrestore(&canvas->lock, flags);
 			*canvas_index = i;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&canvas->lock, flags);
 
 	dev_err(canvas->dev, "No more canvas available\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL_GPL(meson_canvas_alloc);
 
-int meson_canvas_free(struct meson_canvas *canvas, u8 canvas_index)
-{
-	unsigned long flags;
+पूर्णांक meson_canvas_मुक्त(काष्ठा meson_canvas *canvas, u8 canvas_index)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&canvas->lock, flags);
-	if (!canvas->used[canvas_index]) {
+	अगर (!canvas->used[canvas_index]) अणु
 		dev_err(canvas->dev,
 			"Trying to free unused canvas %u\n", canvas_index);
 		spin_unlock_irqrestore(&canvas->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	canvas->used[canvas_index] = 0;
 	spin_unlock_irqrestore(&canvas->lock, flags);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(meson_canvas_free);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(meson_canvas_मुक्त);
 
-static int meson_canvas_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct meson_canvas *canvas;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक meson_canvas_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा meson_canvas *canvas;
+	काष्ठा device *dev = &pdev->dev;
 
-	canvas = devm_kzalloc(dev, sizeof(*canvas), GFP_KERNEL);
-	if (!canvas)
-		return -ENOMEM;
+	canvas = devm_kzalloc(dev, माप(*canvas), GFP_KERNEL);
+	अगर (!canvas)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	canvas->reg_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(canvas->reg_base))
-		return PTR_ERR(canvas->reg_base);
+	अगर (IS_ERR(canvas->reg_base))
+		वापस PTR_ERR(canvas->reg_base);
 
 	canvas->supports_endianness = of_device_get_match_data(dev);
 
@@ -187,26 +188,26 @@ static int meson_canvas_probe(struct platform_device *pdev)
 	spin_lock_init(&canvas->lock);
 	dev_set_drvdata(dev, canvas);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id canvas_dt_match[] = {
-	{ .compatible = "amlogic,meson8-canvas", .data = (void *)false, },
-	{ .compatible = "amlogic,meson8b-canvas", .data = (void *)false, },
-	{ .compatible = "amlogic,meson8m2-canvas", .data = (void *)false, },
-	{ .compatible = "amlogic,canvas", .data = (void *)true, },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id canvas_dt_match[] = अणु
+	अणु .compatible = "amlogic,meson8-canvas", .data = (व्योम *)false, पूर्ण,
+	अणु .compatible = "amlogic,meson8b-canvas", .data = (व्योम *)false, पूर्ण,
+	अणु .compatible = "amlogic,meson8m2-canvas", .data = (व्योम *)false, पूर्ण,
+	अणु .compatible = "amlogic,canvas", .data = (व्योम *)true, पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, canvas_dt_match);
 
-static struct platform_driver meson_canvas_driver = {
+अटल काष्ठा platक्रमm_driver meson_canvas_driver = अणु
 	.probe = meson_canvas_probe,
-	.driver = {
+	.driver = अणु
 		.name = "amlogic-canvas",
 		.of_match_table = canvas_dt_match,
-	},
-};
-module_platform_driver(meson_canvas_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(meson_canvas_driver);
 
 MODULE_DESCRIPTION("Amlogic Canvas driver");
 MODULE_AUTHOR("Maxime Jourdan <mjourdan@baylibre.com>");

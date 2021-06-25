@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* cx25840 VBI functions
  */
 
 
-#include <linux/videodev2.h>
-#include <linux/i2c.h>
-#include <media/v4l2-common.h>
-#include <media/drv-intf/cx25840.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/i2c.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/drv-पूर्णांकf/cx25840.h>
 
-#include "cx25840-core.h"
+#समावेश "cx25840-core.h"
 
-static int odd_parity(u8 c)
-{
+अटल पूर्णांक odd_parity(u8 c)
+अणु
 	c ^= (c >> 4);
 	c ^= (c >> 2);
 	c ^= (c >> 1);
 
-	return c & 1;
-}
+	वापस c & 1;
+पूर्ण
 
-static int decode_vps(u8 * dst, u8 * p)
-{
-	static const u8 biphase_tbl[] = {
+अटल पूर्णांक decode_vps(u8 * dst, u8 * p)
+अणु
+	अटल स्थिर u8 biphase_tbl[] = अणु
 		0xf0, 0x78, 0x70, 0xf0, 0xb4, 0x3c, 0x34, 0xb4,
 		0xb0, 0x38, 0x30, 0xb0, 0xf0, 0x78, 0x70, 0xf0,
 		0xd2, 0x5a, 0x52, 0xd2, 0x96, 0x1e, 0x16, 0x96,
@@ -54,176 +55,176 @@ static int decode_vps(u8 * dst, u8 * p)
 		0x90, 0x18, 0x10, 0x90, 0xd0, 0x58, 0x50, 0xd0,
 		0xf0, 0x78, 0x70, 0xf0, 0xb4, 0x3c, 0x34, 0xb4,
 		0xb0, 0x38, 0x30, 0xb0, 0xf0, 0x78, 0x70, 0xf0,
-	};
+	पूर्ण;
 
 	u8 c, err = 0;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 2 * 13; i += 2) {
+	क्रम (i = 0; i < 2 * 13; i += 2) अणु
 		err |= biphase_tbl[p[i]] | biphase_tbl[p[i + 1]];
 		c = (biphase_tbl[p[i + 1]] & 0xf) |
 		    ((biphase_tbl[p[i]] & 0xf) << 4);
 		dst[i / 2] = c;
-	}
+	पूर्ण
 
-	return err & 0xf0;
-}
+	वापस err & 0xf0;
+पूर्ण
 
-int cx25840_g_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct cx25840_state *state = to_state(sd);
-	static const u16 lcr2vbi[] = {
+पूर्णांक cx25840_g_sliced_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_sliced_vbi_क्रमmat *svbi)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा cx25840_state *state = to_state(sd);
+	अटल स्थिर u16 lcr2vbi[] = अणु
 		0, V4L2_SLICED_TELETEXT_B, 0,	/* 1 */
 		0, V4L2_SLICED_WSS_625, 0,	/* 4 */
 		V4L2_SLICED_CAPTION_525,	/* 6 */
 		0, 0, V4L2_SLICED_VPS, 0, 0,	/* 9 */
 		0, 0, 0, 0
-	};
-	int is_pal = !(state->std & V4L2_STD_525_60);
-	int i;
+	पूर्ण;
+	पूर्णांक is_pal = !(state->std & V4L2_STD_525_60);
+	पूर्णांक i;
 
-	memset(svbi->service_lines, 0, sizeof(svbi->service_lines));
+	स_रखो(svbi->service_lines, 0, माप(svbi->service_lines));
 	svbi->service_set = 0;
-	/* we're done if raw VBI is active */
-	/* TODO: this will have to be changed for generic_mode VBI */
-	if ((cx25840_read(client, 0x404) & 0x10) == 0)
-		return 0;
+	/* we're करोne अगर raw VBI is active */
+	/* TODO: this will have to be changed क्रम generic_mode VBI */
+	अगर ((cx25840_पढ़ो(client, 0x404) & 0x10) == 0)
+		वापस 0;
 
-	if (is_pal) {
-		for (i = 7; i <= 23; i++) {
-			u8 v = cx25840_read(client,
+	अगर (is_pal) अणु
+		क्रम (i = 7; i <= 23; i++) अणु
+			u8 v = cx25840_पढ़ो(client,
 				 state->vbi_regs_offset + 0x424 + i - 7);
 
 			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
 			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
 			svbi->service_set |= svbi->service_lines[0][i] |
 					     svbi->service_lines[1][i];
-		}
-	} else {
-		for (i = 10; i <= 21; i++) {
-			u8 v = cx25840_read(client,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 10; i <= 21; i++) अणु
+			u8 v = cx25840_पढ़ो(client,
 				state->vbi_regs_offset + 0x424 + i - 10);
 
 			svbi->service_lines[0][i] = lcr2vbi[v >> 4];
 			svbi->service_lines[1][i] = lcr2vbi[v & 0xf];
 			svbi->service_set |= svbi->service_lines[0][i] |
 					     svbi->service_lines[1][i];
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cx25840_s_raw_fmt(struct v4l2_subdev *sd, struct v4l2_vbi_format *fmt)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct cx25840_state *state = to_state(sd);
-	int is_pal = !(state->std & V4L2_STD_525_60);
-	int vbi_offset = is_pal ? 1 : 0;
+पूर्णांक cx25840_s_raw_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_vbi_क्रमmat *fmt)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा cx25840_state *state = to_state(sd);
+	पूर्णांक is_pal = !(state->std & V4L2_STD_525_60);
+	पूर्णांक vbi_offset = is_pal ? 1 : 0;
 
 	/* Setup standard */
 	cx25840_std_setup(client);
 
 	/* VBI Offset */
-	if (is_cx23888(state))
-		cx25840_write(client, 0x54f, vbi_offset);
-	else
-		cx25840_write(client, 0x47f, vbi_offset);
-	/* TODO: this will have to be changed for generic_mode VBI */
-	cx25840_write(client, 0x404, 0x2e);
-	return 0;
-}
+	अगर (is_cx23888(state))
+		cx25840_ग_लिखो(client, 0x54f, vbi_offset);
+	अन्यथा
+		cx25840_ग_लिखो(client, 0x47f, vbi_offset);
+	/* TODO: this will have to be changed क्रम generic_mode VBI */
+	cx25840_ग_लिखो(client, 0x404, 0x2e);
+	वापस 0;
+पूर्ण
 
-int cx25840_s_sliced_fmt(struct v4l2_subdev *sd, struct v4l2_sliced_vbi_format *svbi)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct cx25840_state *state = to_state(sd);
-	int is_pal = !(state->std & V4L2_STD_525_60);
-	int vbi_offset = is_pal ? 1 : 0;
-	int i, x;
+पूर्णांक cx25840_s_sliced_fmt(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_sliced_vbi_क्रमmat *svbi)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा cx25840_state *state = to_state(sd);
+	पूर्णांक is_pal = !(state->std & V4L2_STD_525_60);
+	पूर्णांक vbi_offset = is_pal ? 1 : 0;
+	पूर्णांक i, x;
 	u8 lcr[24];
 
-	for (x = 0; x <= 23; x++)
+	क्रम (x = 0; x <= 23; x++)
 		lcr[x] = 0x00;
 
 	/* Setup standard */
 	cx25840_std_setup(client);
 
 	/* Sliced VBI */
-	/* TODO: this will have to be changed for generic_mode VBI */
-	cx25840_write(client, 0x404, 0x32);	/* Ancillary data */
-	cx25840_write(client, 0x406, 0x13);
-	if (is_cx23888(state))
-		cx25840_write(client, 0x54f, vbi_offset);
-	else
-		cx25840_write(client, 0x47f, vbi_offset);
+	/* TODO: this will have to be changed क्रम generic_mode VBI */
+	cx25840_ग_लिखो(client, 0x404, 0x32);	/* Ancillary data */
+	cx25840_ग_लिखो(client, 0x406, 0x13);
+	अगर (is_cx23888(state))
+		cx25840_ग_लिखो(client, 0x54f, vbi_offset);
+	अन्यथा
+		cx25840_ग_लिखो(client, 0x47f, vbi_offset);
 
-	if (is_pal) {
-		for (i = 0; i <= 6; i++)
+	अगर (is_pal) अणु
+		क्रम (i = 0; i <= 6; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
-	} else {
-		for (i = 0; i <= 9; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i <= 9; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
 
-		for (i = 22; i <= 23; i++)
+		क्रम (i = 22; i <= 23; i++)
 			svbi->service_lines[0][i] =
 				svbi->service_lines[1][i] = 0;
-	}
+	पूर्ण
 
-	for (i = 7; i <= 23; i++) {
-		for (x = 0; x <= 1; x++) {
-			switch (svbi->service_lines[1-x][i]) {
-			case V4L2_SLICED_TELETEXT_B:
+	क्रम (i = 7; i <= 23; i++) अणु
+		क्रम (x = 0; x <= 1; x++) अणु
+			चयन (svbi->service_lines[1-x][i]) अणु
+			हाल V4L2_SLICED_TELETEXT_B:
 				lcr[i] |= 1 << (4 * x);
-				break;
-			case V4L2_SLICED_WSS_625:
+				अवरोध;
+			हाल V4L2_SLICED_WSS_625:
 				lcr[i] |= 4 << (4 * x);
-				break;
-			case V4L2_SLICED_CAPTION_525:
+				अवरोध;
+			हाल V4L2_SLICED_CAPTION_525:
 				lcr[i] |= 6 << (4 * x);
-				break;
-			case V4L2_SLICED_VPS:
+				अवरोध;
+			हाल V4L2_SLICED_VPS:
 				lcr[i] |= 9 << (4 * x);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (is_pal) {
-		for (x = 1, i = state->vbi_regs_offset + 0x424;
+	अगर (is_pal) अणु
+		क्रम (x = 1, i = state->vbi_regs_offset + 0x424;
 		     i <= state->vbi_regs_offset + 0x434; i++, x++)
-			cx25840_write(client, i, lcr[6 + x]);
-	} else {
-		for (x = 1, i = state->vbi_regs_offset + 0x424;
+			cx25840_ग_लिखो(client, i, lcr[6 + x]);
+	पूर्ण अन्यथा अणु
+		क्रम (x = 1, i = state->vbi_regs_offset + 0x424;
 		     i <= state->vbi_regs_offset + 0x430; i++, x++)
-			cx25840_write(client, i, lcr[9 + x]);
-		for (i = state->vbi_regs_offset + 0x431;
+			cx25840_ग_लिखो(client, i, lcr[9 + x]);
+		क्रम (i = state->vbi_regs_offset + 0x431;
 		     i <= state->vbi_regs_offset + 0x434; i++)
-			cx25840_write(client, i, 0);
-	}
+			cx25840_ग_लिखो(client, i, 0);
+	पूर्ण
 
-	cx25840_write(client, state->vbi_regs_offset + 0x43c, 0x16);
-	/* TODO: this will have to be changed for generic_mode VBI */
-	if (is_cx23888(state))
-		cx25840_write(client, 0x428, is_pal ? 0x2a : 0x22);
-	else
-		cx25840_write(client, 0x474, is_pal ? 0x2a : 0x22);
-	return 0;
-}
+	cx25840_ग_लिखो(client, state->vbi_regs_offset + 0x43c, 0x16);
+	/* TODO: this will have to be changed क्रम generic_mode VBI */
+	अगर (is_cx23888(state))
+		cx25840_ग_लिखो(client, 0x428, is_pal ? 0x2a : 0x22);
+	अन्यथा
+		cx25840_ग_लिखो(client, 0x474, is_pal ? 0x2a : 0x22);
+	वापस 0;
+पूर्ण
 
-int cx25840_decode_vbi_line(struct v4l2_subdev *sd, struct v4l2_decode_vbi_line *vbi)
-{
-	struct cx25840_state *state = to_state(sd);
+पूर्णांक cx25840_decode_vbi_line(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_decode_vbi_line *vbi)
+अणु
+	काष्ठा cx25840_state *state = to_state(sd);
 	u8 *p = vbi->p;
-	int id1, id2, l, err = 0;
+	पूर्णांक id1, id2, l, err = 0;
 
-	if (p[0] || p[1] != 0xff || p[2] != 0xff ||
-			(p[3] != 0x55 && p[3] != 0x91)) {
+	अगर (p[0] || p[1] != 0xff || p[2] != 0xff ||
+			(p[3] != 0x55 && p[3] != 0x91)) अणु
 		vbi->line = vbi->type = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	p += 4;
 	id1 = p[-1];
@@ -232,31 +233,31 @@ int cx25840_decode_vbi_line(struct v4l2_subdev *sd, struct v4l2_decode_vbi_line 
 	l += state->vbi_line_offset;
 	p += 4;
 
-	switch (id2) {
-	case 1:
+	चयन (id2) अणु
+	हाल 1:
 		id2 = V4L2_SLICED_TELETEXT_B;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		id2 = V4L2_SLICED_WSS_625;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		id2 = V4L2_SLICED_CAPTION_525;
 		err = !odd_parity(p[0]) || !odd_parity(p[1]);
-		break;
-	case 9:
+		अवरोध;
+	हाल 9:
 		id2 = V4L2_SLICED_VPS;
-		if (decode_vps(p, p) != 0)
+		अगर (decode_vps(p, p) != 0)
 			err = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		id2 = 0;
 		err = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	vbi->type = err ? 0 : id2;
 	vbi->line = err ? 0 : l;
 	vbi->is_second_field = err ? 0 : (id1 == 0x55);
 	vbi->p = p;
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Definitions for use by exception code on Book3-E
+ *  Definitions क्रम use by exception code on Book3-E
  *
  *  Copyright (C) 2008 Ben. Herrenschmidt (benh@kernel.crashing.org), IBM Corp.
  */
-#ifndef _ASM_POWERPC_EXCEPTION_64E_H
-#define _ASM_POWERPC_EXCEPTION_64E_H
+#अगर_अघोषित _ASM_POWERPC_EXCEPTION_64E_H
+#घोषणा _ASM_POWERPC_EXCEPTION_64E_H
 
 /*
  * SPRGs usage an other considerations...
  *
- * Since TLB miss and other standard exceptions can be interrupted by
- * critical exceptions which can themselves be interrupted by machine
+ * Since TLB miss and other standard exceptions can be पूर्णांकerrupted by
+ * critical exceptions which can themselves be पूर्णांकerrupted by machine
  * checks, and since the two later can themselves cause a TLB miss when
- * hitting the linear mapping for the kernel stacks, we need to be a bit
+ * hitting the linear mapping क्रम the kernel stacks, we need to be a bit
  * creative on how we use SPRGs.
  *
- * The base idea is that we have one SRPG reserved for critical and one
- * for machine check interrupts. Those are used to save a GPR that can
+ * The base idea is that we have one SRPG reserved क्रम critical and one
+ * क्रम machine check पूर्णांकerrupts. Those are used to save a GPR that can
  * then be used to get the PACA, and store as much context as we need
  * to save in there. That includes saving the SPRGs used by the TLB miss
- * handler for linear mapping misses and the associated SRR0/1 due to
+ * handler क्रम linear mapping misses and the associated SRR0/1 due to
  * the above re-entrancy issue.
  *
- * So here's the current usage pattern. It's done regardless of which
- * SPRGs are user-readable though, thus we might have to change some of
- * this later. In order to do that more easily, we use special constants
- * for naming them
+ * So here's the current usage pattern. It's करोne regardless of which
+ * SPRGs are user-पढ़ोable though, thus we might have to change some of
+ * this later. In order to करो that more easily, we use special स्थिरants
+ * क्रम naming them
  *
- * WARNING: Some of these SPRGs are user readable. We need to do something
- * about it as some point by making sure they can't be used to leak kernel
+ * WARNING: Some of these SPRGs are user पढ़ोable. We need to करो something
+ * about it as some poपूर्णांक by making sure they can't be used to leak kernel
  * critical data
  */
 
-#define PACA_EXGDBELL PACA_EXGEN
+#घोषणा PACA_EXGDBELL PACA_EXGEN
 
 /* We are out of SPRGs so we save some things in the PACA. The normal
  * exception frame is smaller than the CRIT or MC one though
  */
-#define EX_R1		(0 * 8)
-#define EX_CR		(1 * 8)
-#define EX_R10		(2 * 8)
-#define EX_R11		(3 * 8)
-#define EX_R14		(4 * 8)
-#define EX_R15		(5 * 8)
+#घोषणा EX_R1		(0 * 8)
+#घोषणा EX_CR		(1 * 8)
+#घोषणा EX_R10		(2 * 8)
+#घोषणा EX_R11		(3 * 8)
+#घोषणा EX_R14		(4 * 8)
+#घोषणा EX_R15		(5 * 8)
 
 /*
- * The TLB miss exception uses different slots.
+ * The TLB miss exception uses dअगरferent slots.
  *
  * The bolted variant uses only the first six fields,
  * which in combination with pgd and kernel_pgd fits in
  * one 64-byte cache line.
  */
 
-#define EX_TLB_R10	( 0 * 8)
-#define EX_TLB_R11	( 1 * 8)
-#define EX_TLB_R14	( 2 * 8)
-#define EX_TLB_R15	( 3 * 8)
-#define EX_TLB_R16	( 4 * 8)
-#define EX_TLB_CR	( 5 * 8)
-#define EX_TLB_R12	( 6 * 8)
-#define EX_TLB_R13	( 7 * 8)
-#define EX_TLB_DEAR	( 8 * 8) /* Level 0 and 2 only */
-#define EX_TLB_ESR	( 9 * 8) /* Level 0 and 2 only */
-#define EX_TLB_SRR0	(10 * 8)
-#define EX_TLB_SRR1	(11 * 8)
-#define EX_TLB_R7	(12 * 8)
-#define EX_TLB_SIZE	(13 * 8)
+#घोषणा EX_TLB_R10	( 0 * 8)
+#घोषणा EX_TLB_R11	( 1 * 8)
+#घोषणा EX_TLB_R14	( 2 * 8)
+#घोषणा EX_TLB_R15	( 3 * 8)
+#घोषणा EX_TLB_R16	( 4 * 8)
+#घोषणा EX_TLB_CR	( 5 * 8)
+#घोषणा EX_TLB_R12	( 6 * 8)
+#घोषणा EX_TLB_R13	( 7 * 8)
+#घोषणा EX_TLB_DEAR	( 8 * 8) /* Level 0 and 2 only */
+#घोषणा EX_TLB_ESR	( 9 * 8) /* Level 0 and 2 only */
+#घोषणा EX_TLB_SRR0	(10 * 8)
+#घोषणा EX_TLB_SRR1	(11 * 8)
+#घोषणा EX_TLB_R7	(12 * 8)
+#घोषणा EX_TLB_SIZE	(13 * 8)
 
-#define	START_EXCEPTION(label)						\
+#घोषणा	START_EXCEPTION(label)						\
 	.globl exc_##label##_book3e;					\
 exc_##label##_book3e:
 
 /* TLB miss exception prolog
  *
  * This prolog handles re-entrancy (up to 3 levels supported in the PACA
- * though we currently don't test for overflow). It provides you with a
+ * though we currently करोn't test क्रम overflow). It provides you with a
  * re-entrancy safe working space of r10...r16 and CR with r12 being used
- * as the exception area pointer in the PACA for that level of re-entrancy
- * and r13 containing the PACA pointer.
+ * as the exception area poपूर्णांकer in the PACA क्रम that level of re-entrancy
+ * and r13 containing the PACA poपूर्णांकer.
  *
- * SRR0 and SRR1 are saved, but DEAR and ESR are not, since they don't apply
- * as-is for instruction exceptions. It's up to the actual exception code
- * to save them as well if required.
+ * SRR0 and SRR1 are saved, but DEAR and ESR are not, since they करोn't apply
+ * as-is क्रम inकाष्ठाion exceptions. It's up to the actual exception code
+ * to save them as well अगर required.
  */
-#define TLB_MISS_PROLOG							    \
+#घोषणा TLB_MISS_PROLOG							    \
 	mtspr	SPRN_SPRG_TLB_SCRATCH,r12;				    \
 	mfspr	r12,SPRN_SPRG_TLB_EXFRAME;				    \
 	std	r10,EX_TLB_R10(r12);					    \
@@ -114,15 +115,15 @@ exc_##label##_book3e:
  * - ERROR_SPECIAL : restore from current level and reset
  *
  * Normal errors use ERROR, that is, they restore the initial fault context
- * and trigger a fault. However, there is a special case for linear mapping
- * errors. Those should basically never happen, but if they do happen, we
- * want the error to point out the context that did that linear mapping
+ * and trigger a fault. However, there is a special हाल क्रम linear mapping
+ * errors. Those should basically never happen, but अगर they करो happen, we
+ * want the error to poपूर्णांक out the context that did that linear mapping
  * fault, not the initial level 0 (basically, we got a bogus PGF or something
  * like that). For userland errors on the linear mapping, there is no
- * difference since those are always level 0 anyway
+ * dअगरference since those are always level 0 anyway
  */
 
-#define TLB_MISS_RESTORE(freg)						    \
+#घोषणा TLB_MISS_RESTORE(freg)						    \
 	ld	r14,EX_TLB_CR(r12);					    \
 	ld	r10,EX_TLB_R10(r12);					    \
 	ld	r15,EX_TLB_SRR0(r12);					    \
@@ -138,31 +139,31 @@ exc_##label##_book3e:
 	ld	r16,EX_TLB_R16(r12);					    \
 	ld	r12,EX_TLB_R12(r12);					    \
 
-#define TLB_MISS_EPILOG_SUCCESS						    \
+#घोषणा TLB_MISS_EPILOG_SUCCESS						    \
 	TLB_MISS_RESTORE(r12)
 
-#define TLB_MISS_EPILOG_ERROR						    \
+#घोषणा TLB_MISS_EPILOG_ERROR						    \
 	addi	r12,r13,PACA_EXTLB;					    \
 	TLB_MISS_RESTORE(r12)
 
-#define TLB_MISS_EPILOG_ERROR_SPECIAL					    \
+#घोषणा TLB_MISS_EPILOG_ERROR_SPECIAL					    \
 	addi	r11,r13,PACA_EXTLB;					    \
 	TLB_MISS_RESTORE(r11)
 
-#define SET_IVOR(vector_number, vector_offset)	\
-	LOAD_REG_ADDR(r3,interrupt_base_book3e);\
+#घोषणा SET_IVOR(vector_number, vector_offset)	\
+	LOAD_REG_ADDR(r3,पूर्णांकerrupt_base_book3e);\
 	ori	r3,r3,vector_offset@l;		\
 	mtspr	SPRN_IVOR##vector_number,r3;
 /*
- * powerpc relies on return from interrupt/syscall being context synchronising
+ * घातerpc relies on वापस from पूर्णांकerrupt/syscall being context synchronising
  * (which rfi is) to support ARCH_HAS_MEMBARRIER_SYNC_CORE without additional
- * synchronisation instructions.
+ * synchronisation inकाष्ठाions.
  */
-#define RFI_TO_KERNEL							\
+#घोषणा RFI_TO_KERNEL							\
 	rfi
 
-#define RFI_TO_USER							\
+#घोषणा RFI_TO_USER							\
 	rfi
 
-#endif /* _ASM_POWERPC_EXCEPTION_64E_H */
+#पूर्ण_अगर /* _ASM_POWERPC_EXCEPTION_64E_H */
 

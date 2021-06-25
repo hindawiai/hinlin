@@ -1,252 +1,253 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#define _GNU_SOURCE
-#include <assert.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/types.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <syscall.h>
-#include <sys/wait.h>
+#घोषणा _GNU_SOURCE
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <linux/types.h>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <syscall.h>
+#समावेश <sys/रुको.h>
 
-#include "pidfd.h"
-#include "../kselftest.h"
+#समावेश "pidfd.h"
+#समावेश "../kselftest.h"
 
-struct error {
-	int  code;
-	char msg[512];
-};
+काष्ठा error अणु
+	पूर्णांक  code;
+	अक्षर msg[512];
+पूर्ण;
 
-static int error_set(struct error *err, int code, const char *fmt, ...)
-{
-	va_list args;
-	int r;
+अटल पूर्णांक error_set(काष्ठा error *err, पूर्णांक code, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक r;
 
-	if (code == PIDFD_PASS || !err || err->code != PIDFD_PASS)
-		return code;
+	अगर (code == PIDFD_PASS || !err || err->code != PIDFD_PASS)
+		वापस code;
 
 	err->code = code;
-	va_start(args, fmt);
-	r = vsnprintf(err->msg, sizeof(err->msg), fmt, args);
-	assert((size_t)r < sizeof(err->msg));
-	va_end(args);
+	बहु_शुरू(args, fmt);
+	r = vsnम_लिखो(err->msg, माप(err->msg), fmt, args);
+	निश्चित((माप_प्रकार)r < माप(err->msg));
+	बहु_पूर्ण(args);
 
-	return code;
-}
+	वापस code;
+पूर्ण
 
-static void error_report(struct error *err, const char *test_name)
-{
-	switch (err->code) {
-	case PIDFD_ERROR:
-		ksft_exit_fail_msg("%s test: Fatal: %s\n", test_name, err->msg);
-		break;
+अटल व्योम error_report(काष्ठा error *err, स्थिर अक्षर *test_name)
+अणु
+	चयन (err->code) अणु
+	हाल PIDFD_ERROR:
+		ksft_निकास_fail_msg("%s test: Fatal: %s\n", test_name, err->msg);
+		अवरोध;
 
-	case PIDFD_FAIL:
+	हाल PIDFD_FAIL:
 		/* will be: not ok %d # error %s test: %s */
 		ksft_test_result_error("%s test: %s\n", test_name, err->msg);
-		break;
+		अवरोध;
 
-	case PIDFD_SKIP:
+	हाल PIDFD_SKIP:
 		/* will be: not ok %d # SKIP %s test: %s */
 		ksft_test_result_skip("%s test: %s\n", test_name, err->msg);
-		break;
+		अवरोध;
 
-	case PIDFD_XFAIL:
+	हाल PIDFD_XFAIL:
 		ksft_test_result_pass("%s test: Expected failure: %s\n",
 				      test_name, err->msg);
-		break;
+		अवरोध;
 
-	case PIDFD_PASS:
+	हाल PIDFD_PASS:
 		ksft_test_result_pass("%s test: Passed\n");
-		break;
+		अवरोध;
 
-	default:
-		ksft_exit_fail_msg("%s test: Unknown code: %d %s\n",
+	शेष:
+		ksft_निकास_fail_msg("%s test: Unknown code: %d %s\n",
 				   test_name, err->code, err->msg);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static inline int error_check(struct error *err, const char *test_name)
-{
-	/* In case of error we bail out and terminate the test program */
-	if (err->code == PIDFD_ERROR)
+अटल अंतरभूत पूर्णांक error_check(काष्ठा error *err, स्थिर अक्षर *test_name)
+अणु
+	/* In हाल of error we bail out and terminate the test program */
+	अगर (err->code == PIDFD_ERROR)
 		error_report(err, test_name);
 
-	return err->code;
-}
+	वापस err->code;
+पूर्ण
 
-struct child {
+काष्ठा child अणु
 	pid_t pid;
-	int   fd;
-};
+	पूर्णांक   fd;
+पूर्ण;
 
-static struct child clone_newns(int (*fn)(void *), void *args,
-				struct error *err)
-{
-	static int flags = CLONE_PIDFD | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD;
-	size_t stack_size = 1024;
-	char *stack[1024] = { 0 };
-	struct child ret;
+अटल काष्ठा child clone_newns(पूर्णांक (*fn)(व्योम *), व्योम *args,
+				काष्ठा error *err)
+अणु
+	अटल पूर्णांक flags = CLONE_PIDFD | CLONE_NEWPID | CLONE_NEWNS | SIGCHLD;
+	माप_प्रकार stack_size = 1024;
+	अक्षर *stack[1024] = अणु 0 पूर्ण;
+	काष्ठा child ret;
 
-	if (!(flags & CLONE_NEWUSER) && geteuid() != 0)
+	अगर (!(flags & CLONE_NEWUSER) && geteuid() != 0)
 		flags |= CLONE_NEWUSER;
 
-#ifdef __ia64__
+#अगर_घोषित __ia64__
 	ret.pid = __clone2(fn, stack, stack_size, flags, args, &ret.fd);
-#else
+#अन्यथा
 	ret.pid = clone(fn, stack + stack_size, flags, args, &ret.fd);
-#endif
+#पूर्ण_अगर
 
-	if (ret.pid < 0) {
+	अगर (ret.pid < 0) अणु
 		error_set(err, PIDFD_ERROR, "clone failed (ret %d, errno %d)",
-			  ret.fd, errno);
-		return ret;
-	}
+			  ret.fd, त्रुटि_सं);
+		वापस ret;
+	पूर्ण
 
-	ksft_print_msg("New child: %d, fd: %d\n", ret.pid, ret.fd);
+	ksft_prपूर्णांक_msg("New child: %d, fd: %d\n", ret.pid, ret.fd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void child_close(struct child *child)
-{
-	close(child->fd);
-}
+अटल अंतरभूत व्योम child_बंद(काष्ठा child *child)
+अणु
+	बंद(child->fd);
+पूर्ण
 
-static inline int child_join(struct child *child, struct error *err)
-{
-	int r;
+अटल अंतरभूत पूर्णांक child_join(काष्ठा child *child, काष्ठा error *err)
+अणु
+	पूर्णांक r;
 
-	r = wait_for_pid(child->pid);
-	if (r < 0)
+	r = रुको_क्रम_pid(child->pid);
+	अगर (r < 0)
 		error_set(err, PIDFD_ERROR, "waitpid failed (ret %d, errno %d)",
-			  r, errno);
-	else if (r > 0)
+			  r, त्रुटि_सं);
+	अन्यथा अगर (r > 0)
 		error_set(err, r, "child %d reported: %d", child->pid, r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static inline int child_join_close(struct child *child, struct error *err)
-{
-	child_close(child);
-	return child_join(child, err);
-}
+अटल अंतरभूत पूर्णांक child_join_बंद(काष्ठा child *child, काष्ठा error *err)
+अणु
+	child_बंद(child);
+	वापस child_join(child, err);
+पूर्ण
 
-static inline void trim_newline(char *str)
-{
-	char *pos = strrchr(str, '\n');
+अटल अंतरभूत व्योम trim_newline(अक्षर *str)
+अणु
+	अक्षर *pos = म_खोजप(str, '\n');
 
-	if (pos)
+	अगर (pos)
 		*pos = '\0';
-}
+पूर्ण
 
-static int verify_fdinfo(int pidfd, struct error *err, const char *prefix,
-			 size_t prefix_len, const char *expect, ...)
-{
-	char buffer[512] = {0, };
-	char path[512] = {0, };
-	va_list args;
-	FILE *f;
-	char *line = NULL;
-	size_t n = 0;
-	int found = 0;
-	int r;
+अटल पूर्णांक verअगरy_fdinfo(पूर्णांक pidfd, काष्ठा error *err, स्थिर अक्षर *prefix,
+			 माप_प्रकार prefix_len, स्थिर अक्षर *expect, ...)
+अणु
+	अक्षर buffer[512] = अणु0, पूर्ण;
+	अक्षर path[512] = अणु0, पूर्ण;
+	बहु_सूची args;
+	खाता *f;
+	अक्षर *line = शून्य;
+	माप_प्रकार n = 0;
+	पूर्णांक found = 0;
+	पूर्णांक r;
 
-	va_start(args, expect);
-	r = vsnprintf(buffer, sizeof(buffer), expect, args);
-	assert((size_t)r < sizeof(buffer));
-	va_end(args);
+	बहु_शुरू(args, expect);
+	r = vsnम_लिखो(buffer, माप(buffer), expect, args);
+	निश्चित((माप_प्रकार)r < माप(buffer));
+	बहु_पूर्ण(args);
 
-	snprintf(path, sizeof(path), "/proc/self/fdinfo/%d", pidfd);
-	f = fopen(path, "re");
-	if (!f)
-		return error_set(err, PIDFD_ERROR, "fdinfo open failed for %d",
+	snम_लिखो(path, माप(path), "/proc/self/fdinfo/%d", pidfd);
+	f = ख_खोलो(path, "re");
+	अगर (!f)
+		वापस error_set(err, PIDFD_ERROR, "fdinfo open failed for %d",
 				 pidfd);
 
-	while (getline(&line, &n, f) != -1) {
-		char *val;
+	जबतक (getline(&line, &n, f) != -1) अणु
+		अक्षर *val;
 
-		if (strncmp(line, prefix, prefix_len))
-			continue;
+		अगर (म_भेदन(line, prefix, prefix_len))
+			जारी;
 
 		found = 1;
 
 		val = line + prefix_len;
-		r = strcmp(val, buffer);
-		if (r != 0) {
+		r = म_भेद(val, buffer);
+		अगर (r != 0) अणु
 			trim_newline(line);
 			trim_newline(buffer);
 			error_set(err, PIDFD_FAIL, "%s '%s' != '%s'",
 				  prefix, val, buffer);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	free(line);
-	fclose(f);
+	मुक्त(line);
+	ख_बंद(f);
 
-	if (found == 0)
-		return error_set(err, PIDFD_FAIL, "%s not found for fd %d",
+	अगर (found == 0)
+		वापस error_set(err, PIDFD_FAIL, "%s not found for fd %d",
 				 prefix, pidfd);
 
-	return PIDFD_PASS;
-}
+	वापस PIDFD_PASS;
+पूर्ण
 
-static int child_fdinfo_nspid_test(void *args)
-{
-	struct error err;
-	int pidfd;
-	int r;
+अटल पूर्णांक child_fdinfo_nspid_test(व्योम *args)
+अणु
+	काष्ठा error err;
+	पूर्णांक pidfd;
+	पूर्णांक r;
 
-	/* if we got no fd for the sibling, we are done */
-	if (!args)
-		return PIDFD_PASS;
+	/* अगर we got no fd क्रम the sibling, we are करोne */
+	अगर (!args)
+		वापस PIDFD_PASS;
 
-	/* verify that we can not resolve the pidfd for a process
+	/* verअगरy that we can not resolve the pidfd क्रम a process
 	 * in a sibling pid namespace, i.e. a pid namespace it is
 	 * not in our or a descended namespace
 	 */
-	r = mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, 0);
-	if (r < 0) {
-		ksft_print_msg("Failed to remount / private\n");
-		return PIDFD_ERROR;
-	}
+	r = mount(शून्य, "/", शून्य, MS_REC | MS_PRIVATE, 0);
+	अगर (r < 0) अणु
+		ksft_prपूर्णांक_msg("Failed to remount / private\n");
+		वापस PIDFD_ERROR;
+	पूर्ण
 
-	(void)umount2("/proc", MNT_DETACH);
-	r = mount("proc", "/proc", "proc", 0, NULL);
-	if (r < 0) {
-		ksft_print_msg("Failed to remount /proc\n");
-		return PIDFD_ERROR;
-	}
+	(व्योम)umount2("/proc", MNT_DETACH);
+	r = mount("proc", "/proc", "proc", 0, शून्य);
+	अगर (r < 0) अणु
+		ksft_prपूर्णांक_msg("Failed to remount /proc\n");
+		वापस PIDFD_ERROR;
+	पूर्ण
 
-	pidfd = *(int *)args;
-	r = verify_fdinfo(pidfd, &err, "NSpid:", 6, "\t0\n");
+	pidfd = *(पूर्णांक *)args;
+	r = verअगरy_fdinfo(pidfd, &err, "NSpid:", 6, "\t0\n");
 
-	if (r != PIDFD_PASS)
-		ksft_print_msg("NSpid fdinfo check failed: %s\n", err.msg);
+	अगर (r != PIDFD_PASS)
+		ksft_prपूर्णांक_msg("NSpid fdinfo check failed: %s\n", err.msg);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void test_pidfd_fdinfo_nspid(void)
-{
-	struct child a, b;
-	struct error err = {0, };
-	const char *test_name = "pidfd check for NSpid in fdinfo";
+अटल व्योम test_pidfd_fdinfo_nspid(व्योम)
+अणु
+	काष्ठा child a, b;
+	काष्ठा error err = अणु0, पूर्ण;
+	स्थिर अक्षर *test_name = "pidfd check for NSpid in fdinfo";
 
 	/* Create a new child in a new pid and mount namespace */
-	a = clone_newns(child_fdinfo_nspid_test, NULL, &err);
+	a = clone_newns(child_fdinfo_nspid_test, शून्य, &err);
 	error_check(&err, test_name);
 
 	/* Pass the pidfd representing the first child to the
 	 * second child, which will be in a sibling pid namespace,
-	 * which means that the fdinfo NSpid entry for the pidfd
+	 * which means that the fdinfo NSpid entry क्रम the pidfd
 	 * should only contain '0'.
 	 */
 	b = clone_newns(child_fdinfo_nspid_test, &a.fd, &err);
@@ -255,42 +256,42 @@ static void test_pidfd_fdinfo_nspid(void)
 	/* The children will have pid 1 in the new pid namespace,
 	 * so the line must be 'NSPid:\t<pid>\t1'.
 	 */
-	verify_fdinfo(a.fd, &err, "NSpid:", 6, "\t%d\t%d\n", a.pid, 1);
-	verify_fdinfo(b.fd, &err, "NSpid:", 6, "\t%d\t%d\n", b.pid, 1);
+	verअगरy_fdinfo(a.fd, &err, "NSpid:", 6, "\t%d\t%d\n", a.pid, 1);
+	verअगरy_fdinfo(b.fd, &err, "NSpid:", 6, "\t%d\t%d\n", b.pid, 1);
 
-	/* wait for the process, check the exit status and set
-	 * 'err' accordingly, if it is not already set.
+	/* रुको क्रम the process, check the निकास status and set
+	 * 'err' accordingly, अगर it is not alपढ़ोy set.
 	 */
-	child_join_close(&a, &err);
-	child_join_close(&b, &err);
+	child_join_बंद(&a, &err);
+	child_join_बंद(&b, &err);
 
 	error_report(&err, test_name);
-}
+पूर्ण
 
-static void test_pidfd_dead_fdinfo(void)
-{
-	struct child a;
-	struct error err = {0, };
-	const char *test_name = "pidfd check fdinfo for dead process";
+अटल व्योम test_pidfd_dead_fdinfo(व्योम)
+अणु
+	काष्ठा child a;
+	काष्ठा error err = अणु0, पूर्ण;
+	स्थिर अक्षर *test_name = "pidfd check fdinfo for dead process";
 
 	/* Create a new child in a new pid and mount namespace */
-	a = clone_newns(child_fdinfo_nspid_test, NULL, &err);
+	a = clone_newns(child_fdinfo_nspid_test, शून्य, &err);
 	error_check(&err, test_name);
 	child_join(&a, &err);
 
-	verify_fdinfo(a.fd, &err, "Pid:", 4, "\t-1\n");
-	verify_fdinfo(a.fd, &err, "NSpid:", 6, "\t-1\n");
-	child_close(&a);
+	verअगरy_fdinfo(a.fd, &err, "Pid:", 4, "\t-1\n");
+	verअगरy_fdinfo(a.fd, &err, "NSpid:", 6, "\t-1\n");
+	child_बंद(&a);
 	error_report(&err, test_name);
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	ksft_print_header();
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(2);
 
 	test_pidfd_fdinfo_nspid();
 	test_pidfd_dead_fdinfo();
 
-	return ksft_exit_pass();
-}
+	वापस ksft_निकास_pass();
+पूर्ण

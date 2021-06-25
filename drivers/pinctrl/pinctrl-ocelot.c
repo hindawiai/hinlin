@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /*
  * Microsemi SoCs pinctrl driver
  *
- * Author: <alexandre.belloni@free-electrons.com>
+ * Author: <alexandre.belloni@मुक्त-electrons.com>
  * License: Dual MIT/GPL
  * Copyright (c) 2017 Microsemi Corporation
  */
 
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/of_device.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-#include "core.h"
-#include "pinconf.h"
-#include "pinmux.h"
+#समावेश "core.h"
+#समावेश "pinconf.h"
+#समावेश "pinmux.h"
 
-#define ocelot_clrsetbits(addr, clear, set) \
-	writel((readl(addr) & ~(clear)) | (set), (addr))
+#घोषणा ocelot_clrsetbits(addr, clear, set) \
+	ग_लिखोl((पढ़ोl(addr) & ~(clear)) | (set), (addr))
 
 /* PINCONFIG bits (sparx5 only) */
-enum {
+क्रमागत अणु
 	PINCONF_BIAS,
 	PINCONF_SCHMITT,
 	PINCONF_DRIVE_STRENGTH,
-};
+पूर्ण;
 
-#define BIAS_PD_BIT BIT(4)
-#define BIAS_PU_BIT BIT(3)
-#define BIAS_BITS   (BIAS_PD_BIT|BIAS_PU_BIT)
-#define SCHMITT_BIT BIT(2)
-#define DRIVE_BITS  GENMASK(1, 0)
+#घोषणा BIAS_PD_BIT BIT(4)
+#घोषणा BIAS_PU_BIT BIT(3)
+#घोषणा BIAS_BITS   (BIAS_PD_BIT|BIAS_PU_BIT)
+#घोषणा SCHMITT_BIT BIT(2)
+#घोषणा DRIVE_BITS  GENMASK(1, 0)
 
-/* GPIO standard registers */
-#define OCELOT_GPIO_OUT_SET	0x0
-#define OCELOT_GPIO_OUT_CLR	0x4
-#define OCELOT_GPIO_OUT		0x8
-#define OCELOT_GPIO_IN		0xc
-#define OCELOT_GPIO_OE		0x10
-#define OCELOT_GPIO_INTR	0x14
-#define OCELOT_GPIO_INTR_ENA	0x18
-#define OCELOT_GPIO_INTR_IDENT	0x1c
-#define OCELOT_GPIO_ALT0	0x20
-#define OCELOT_GPIO_ALT1	0x24
-#define OCELOT_GPIO_SD_MAP	0x28
+/* GPIO standard रेजिस्टरs */
+#घोषणा OCELOT_GPIO_OUT_SET	0x0
+#घोषणा OCELOT_GPIO_OUT_CLR	0x4
+#घोषणा OCELOT_GPIO_OUT		0x8
+#घोषणा OCELOT_GPIO_IN		0xc
+#घोषणा OCELOT_GPIO_OE		0x10
+#घोषणा OCELOT_GPIO_INTR	0x14
+#घोषणा OCELOT_GPIO_INTR_ENA	0x18
+#घोषणा OCELOT_GPIO_INTR_IDENT	0x1c
+#घोषणा OCELOT_GPIO_ALT0	0x20
+#घोषणा OCELOT_GPIO_ALT1	0x24
+#घोषणा OCELOT_GPIO_SD_MAP	0x28
 
-#define OCELOT_FUNC_PER_PIN	4
+#घोषणा OCELOT_FUNC_PER_PIN	4
 
-enum {
+क्रमागत अणु
 	FUNC_NONE,
 	FUNC_GPIO,
 	FUNC_IRQ0,
@@ -95,9 +96,9 @@ enum {
 	FUNC_REF_CLK,
 	FUNC_RCVRD_CLK,
 	FUNC_MAX
-};
+पूर्ण;
 
-static const char *const ocelot_function_names[] = {
+अटल स्थिर अक्षर *स्थिर ocelot_function_names[] = अणु
 	[FUNC_NONE]		= "none",
 	[FUNC_GPIO]		= "gpio",
 	[FUNC_IRQ0]		= "irq0",
@@ -135,36 +136,36 @@ static const char *const ocelot_function_names[] = {
 	[FUNC_EMMC]		= "emmc",
 	[FUNC_REF_CLK]		= "ref_clk",
 	[FUNC_RCVRD_CLK]	= "rcvrd_clk",
-};
+पूर्ण;
 
-struct ocelot_pmx_func {
-	const char **groups;
-	unsigned int ngroups;
-};
+काष्ठा ocelot_pmx_func अणु
+	स्थिर अक्षर **groups;
+	अचिन्हित पूर्णांक ngroups;
+पूर्ण;
 
-struct ocelot_pin_caps {
-	unsigned int pin;
-	unsigned char functions[OCELOT_FUNC_PER_PIN];
-};
+काष्ठा ocelot_pin_caps अणु
+	अचिन्हित पूर्णांक pin;
+	अचिन्हित अक्षर functions[OCELOT_FUNC_PER_PIN];
+पूर्ण;
 
-struct ocelot_pinctrl {
-	struct device *dev;
-	struct pinctrl_dev *pctl;
-	struct gpio_chip gpio_chip;
-	struct regmap *map;
-	void __iomem *pincfg;
-	struct pinctrl_desc *desc;
-	struct ocelot_pmx_func func[FUNC_MAX];
+काष्ठा ocelot_pinctrl अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctl;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा regmap *map;
+	व्योम __iomem *pincfg;
+	काष्ठा pinctrl_desc *desc;
+	काष्ठा ocelot_pmx_func func[FUNC_MAX];
 	u8 stride;
-};
+पूर्ण;
 
-#define LUTON_P(p, f0, f1)						\
-static struct ocelot_pin_caps luton_pin_##p = {				\
+#घोषणा LUTON_P(p, f0, f1)						\
+अटल काष्ठा ocelot_pin_caps luton_pin_##p = अणु				\
 	.pin = p,							\
-	.functions = {							\
+	.functions = अणु							\
 			FUNC_GPIO, FUNC_##f0, FUNC_##f1, FUNC_NONE,	\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
 LUTON_P(0,  SG0,       NONE);
 LUTON_P(1,  SG0,       NONE);
@@ -199,13 +200,13 @@ LUTON_P(29, PWM,       NONE);
 LUTON_P(30, UART,      NONE);
 LUTON_P(31, UART,      NONE);
 
-#define LUTON_PIN(n) {						\
+#घोषणा LUTON_PIN(n) अणु						\
 	.number = n,						\
 	.name = "GPIO_"#n,					\
 	.drv_data = &luton_pin_##n				\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc luton_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc luton_pins[] = अणु
 	LUTON_PIN(0),
 	LUTON_PIN(1),
 	LUTON_PIN(2),
@@ -238,15 +239,15 @@ static const struct pinctrl_pin_desc luton_pins[] = {
 	LUTON_PIN(29),
 	LUTON_PIN(30),
 	LUTON_PIN(31),
-};
+पूर्ण;
 
-#define SERVAL_P(p, f0, f1, f2)						\
-static struct ocelot_pin_caps serval_pin_##p = {			\
+#घोषणा SERVAL_P(p, f0, f1, f2)						\
+अटल काष्ठा ocelot_pin_caps serval_pin_##p = अणु			\
 	.pin = p,							\
-	.functions = {							\
+	.functions = अणु							\
 			FUNC_GPIO, FUNC_##f0, FUNC_##f1, FUNC_##f2,	\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
 SERVAL_P(0,  SG0,       NONE,      NONE);
 SERVAL_P(1,  SG0,       NONE,      NONE);
@@ -281,13 +282,13 @@ SERVAL_P(29, IRQ1,      NONE,      NONE);
 SERVAL_P(30, PTP0,      NONE,      NONE);
 SERVAL_P(31, PTP0,      NONE,      NONE);
 
-#define SERVAL_PIN(n) {						\
+#घोषणा SERVAL_PIN(n) अणु						\
 	.number = n,						\
 	.name = "GPIO_"#n,					\
 	.drv_data = &serval_pin_##n				\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc serval_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc serval_pins[] = अणु
 	SERVAL_PIN(0),
 	SERVAL_PIN(1),
 	SERVAL_PIN(2),
@@ -320,15 +321,15 @@ static const struct pinctrl_pin_desc serval_pins[] = {
 	SERVAL_PIN(29),
 	SERVAL_PIN(30),
 	SERVAL_PIN(31),
-};
+पूर्ण;
 
-#define OCELOT_P(p, f0, f1, f2)						\
-static struct ocelot_pin_caps ocelot_pin_##p = {			\
+#घोषणा OCELOT_P(p, f0, f1, f2)						\
+अटल काष्ठा ocelot_pin_caps ocelot_pin_##p = अणु			\
 	.pin = p,							\
-	.functions = {							\
+	.functions = अणु							\
 			FUNC_GPIO, FUNC_##f0, FUNC_##f1, FUNC_##f2,	\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
 OCELOT_P(0,  SG0,       NONE,      NONE);
 OCELOT_P(1,  SG0,       NONE,      NONE);
@@ -353,13 +354,13 @@ OCELOT_P(19, PTP1,      TWI_SCL_M, NONE);
 OCELOT_P(20, RECO_CLK,  TACHO,     TWI_SCL_M);
 OCELOT_P(21, RECO_CLK,  PWM,       TWI_SCL_M);
 
-#define OCELOT_PIN(n) {						\
+#घोषणा OCELOT_PIN(n) अणु						\
 	.number = n,						\
 	.name = "GPIO_"#n,					\
 	.drv_data = &ocelot_pin_##n				\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc ocelot_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc ocelot_pins[] = अणु
 	OCELOT_PIN(0),
 	OCELOT_PIN(1),
 	OCELOT_PIN(2),
@@ -382,15 +383,15 @@ static const struct pinctrl_pin_desc ocelot_pins[] = {
 	OCELOT_PIN(19),
 	OCELOT_PIN(20),
 	OCELOT_PIN(21),
-};
+पूर्ण;
 
-#define JAGUAR2_P(p, f0, f1)						\
-static struct ocelot_pin_caps jaguar2_pin_##p = {			\
+#घोषणा JAGUAR2_P(p, f0, f1)						\
+अटल काष्ठा ocelot_pin_caps jaguar2_pin_##p = अणु			\
 	.pin = p,							\
-	.functions = {							\
+	.functions = अणु							\
 			FUNC_GPIO, FUNC_##f0, FUNC_##f1, FUNC_NONE	\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
 JAGUAR2_P(0,  SG0,       NONE);
 JAGUAR2_P(1,  SG0,       NONE);
@@ -457,13 +458,13 @@ JAGUAR2_P(61, NONE,      NONE);
 JAGUAR2_P(62, NONE,      NONE);
 JAGUAR2_P(63, NONE,      NONE);
 
-#define JAGUAR2_PIN(n) {					\
+#घोषणा JAGUAR2_PIN(n) अणु					\
 	.number = n,						\
 	.name = "GPIO_"#n,					\
 	.drv_data = &jaguar2_pin_##n				\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc jaguar2_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc jaguar2_pins[] = अणु
 	JAGUAR2_PIN(0),
 	JAGUAR2_PIN(1),
 	JAGUAR2_PIN(2),
@@ -528,15 +529,15 @@ static const struct pinctrl_pin_desc jaguar2_pins[] = {
 	JAGUAR2_PIN(61),
 	JAGUAR2_PIN(62),
 	JAGUAR2_PIN(63),
-};
+पूर्ण;
 
-#define SPARX5_P(p, f0, f1, f2)					\
-static struct ocelot_pin_caps sparx5_pin_##p = {			\
+#घोषणा SPARX5_P(p, f0, f1, f2)					\
+अटल काष्ठा ocelot_pin_caps sparx5_pin_##p = अणु			\
 	.pin = p,							\
-	.functions = {							\
+	.functions = अणु							\
 		FUNC_GPIO, FUNC_##f0, FUNC_##f1, FUNC_##f2		\
-	},								\
-}
+	पूर्ण,								\
+पूर्ण
 
 SPARX5_P(0,  SG0,       PLL_STAT,  NONE);
 SPARX5_P(1,  SG0,       NONE,      NONE);
@@ -603,13 +604,13 @@ SPARX5_P(61, RECO_CLK,  NONE,      NONE);
 SPARX5_P(62, RECO_CLK,  PLL_STAT,  NONE);
 SPARX5_P(63, RECO_CLK,  NONE,      NONE);
 
-#define SPARX5_PIN(n) {					\
+#घोषणा SPARX5_PIN(n) अणु					\
 	.number = n,						\
 	.name = "GPIO_"#n,					\
 	.drv_data = &sparx5_pin_##n				\
-}
+पूर्ण
 
-static const struct pinctrl_pin_desc sparx5_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc sparx5_pins[] = अणु
 	SPARX5_PIN(0),
 	SPARX5_PIN(1),
 	SPARX5_PIN(2),
@@ -674,331 +675,331 @@ static const struct pinctrl_pin_desc sparx5_pins[] = {
 	SPARX5_PIN(61),
 	SPARX5_PIN(62),
 	SPARX5_PIN(63),
-};
+पूर्ण;
 
-static int ocelot_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(ocelot_function_names);
-}
+अटल पूर्णांक ocelot_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(ocelot_function_names);
+पूर्ण
 
-static const char *ocelot_get_function_name(struct pinctrl_dev *pctldev,
-					    unsigned int function)
-{
-	return ocelot_function_names[function];
-}
+अटल स्थिर अक्षर *ocelot_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित पूर्णांक function)
+अणु
+	वापस ocelot_function_names[function];
+पूर्ण
 
-static int ocelot_get_function_groups(struct pinctrl_dev *pctldev,
-				      unsigned int function,
-				      const char *const **groups,
-				      unsigned *const num_groups)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक ocelot_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक function,
+				      स्थिर अक्षर *स्थिर **groups,
+				      अचिन्हित *स्थिर num_groups)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups  = info->func[function].groups;
 	*num_groups = info->func[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_pin_function_idx(struct ocelot_pinctrl *info,
-				   unsigned int pin, unsigned int function)
-{
-	struct ocelot_pin_caps *p = info->desc->pins[pin].drv_data;
-	int i;
+अटल पूर्णांक ocelot_pin_function_idx(काष्ठा ocelot_pinctrl *info,
+				   अचिन्हित पूर्णांक pin, अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा ocelot_pin_caps *p = info->desc->pins[pin].drv_data;
+	पूर्णांक i;
 
-	for (i = 0; i < OCELOT_FUNC_PER_PIN; i++) {
-		if (function == p->functions[i])
-			return i;
-	}
+	क्रम (i = 0; i < OCELOT_FUNC_PER_PIN; i++) अणु
+		अगर (function == p->functions[i])
+			वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-#define REG_ALT(msb, info, p) (OCELOT_GPIO_ALT0 * (info)->stride + 4 * ((msb) + ((info)->stride * ((p) / 32))))
+#घोषणा REG_ALT(msb, info, p) (OCELOT_GPIO_ALT0 * (info)->stride + 4 * ((msb) + ((info)->stride * ((p) / 32))))
 
-static int ocelot_pinmux_set_mux(struct pinctrl_dev *pctldev,
-				 unsigned int selector, unsigned int group)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	struct ocelot_pin_caps *pin = info->desc->pins[group].drv_data;
-	unsigned int p = pin->pin % 32;
-	int f;
+अटल पूर्णांक ocelot_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+				 अचिन्हित पूर्णांक selector, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा ocelot_pin_caps *pin = info->desc->pins[group].drv_data;
+	अचिन्हित पूर्णांक p = pin->pin % 32;
+	पूर्णांक f;
 
 	f = ocelot_pin_function_idx(info, group, selector);
-	if (f < 0)
-		return -EINVAL;
+	अगर (f < 0)
+		वापस -EINVAL;
 
 	/*
 	 * f is encoded on two bits.
 	 * bit 0 of f goes in BIT(pin) of ALT[0], bit 1 of f goes in BIT(pin) of
 	 * ALT[1]
-	 * This is racy because both registers can't be updated at the same time
-	 * but it doesn't matter much for now.
-	 * Note: ALT0/ALT1 are organized specially for 64 gpio targets
+	 * This is racy because both रेजिस्टरs can't be updated at the same समय
+	 * but it करोesn't matter much क्रम now.
+	 * Note: ALT0/ALT1 are organized specially क्रम 64 gpio tarमाला_लो
 	 */
 	regmap_update_bits(info->map, REG_ALT(0, info, pin->pin),
 			   BIT(p), f << p);
 	regmap_update_bits(info->map, REG_ALT(1, info, pin->pin),
 			   BIT(p), f << (p - 1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define REG(r, info, p) ((r) * (info)->stride + (4 * ((p) / 32)))
+#घोषणा REG(r, info, p) ((r) * (info)->stride + (4 * ((p) / 32)))
 
-static int ocelot_gpio_set_direction(struct pinctrl_dev *pctldev,
-				     struct pinctrl_gpio_range *range,
-				     unsigned int pin, bool input)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int p = pin % 32;
+अटल पूर्णांक ocelot_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+				     काष्ठा pinctrl_gpio_range *range,
+				     अचिन्हित पूर्णांक pin, bool input)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक p = pin % 32;
 
 	regmap_update_bits(info->map, REG(OCELOT_GPIO_OE, info, pin), BIT(p),
 			   input ? 0 : BIT(p));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_gpio_request_enable(struct pinctrl_dev *pctldev,
-				      struct pinctrl_gpio_range *range,
-				      unsigned int offset)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
-	unsigned int p = offset % 32;
+अटल पूर्णांक ocelot_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा pinctrl_gpio_range *range,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+	अचिन्हित पूर्णांक p = offset % 32;
 
 	regmap_update_bits(info->map, REG_ALT(0, info, offset),
 			   BIT(p), 0);
 	regmap_update_bits(info->map, REG_ALT(1, info, offset),
 			   BIT(p), 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops ocelot_pmx_ops = {
+अटल स्थिर काष्ठा pinmux_ops ocelot_pmx_ops = अणु
 	.get_functions_count = ocelot_get_functions_count,
 	.get_function_name = ocelot_get_function_name,
 	.get_function_groups = ocelot_get_function_groups,
 	.set_mux = ocelot_pinmux_set_mux,
 	.gpio_set_direction = ocelot_gpio_set_direction,
 	.gpio_request_enable = ocelot_gpio_request_enable,
-};
+पूर्ण;
 
-static int ocelot_pctl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक ocelot_pctl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->desc->npins;
-}
+	वापस info->desc->npins;
+पूर्ण
 
-static const char *ocelot_pctl_get_group_name(struct pinctrl_dev *pctldev,
-					      unsigned int group)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *ocelot_pctl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					      अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
-	return info->desc->pins[group].name;
-}
+	वापस info->desc->pins[group].name;
+पूर्ण
 
-static int ocelot_pctl_get_group_pins(struct pinctrl_dev *pctldev,
-				      unsigned int group,
-				      const unsigned int **pins,
-				      unsigned int *num_pins)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक ocelot_pctl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक group,
+				      स्थिर अचिन्हित पूर्णांक **pins,
+				      अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = &info->desc->pins[group].number;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_hw_get_value(struct ocelot_pinctrl *info,
-			       unsigned int pin,
-			       unsigned int reg,
-			       int *val)
-{
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक ocelot_hw_get_value(काष्ठा ocelot_pinctrl *info,
+			       अचिन्हित पूर्णांक pin,
+			       अचिन्हित पूर्णांक reg,
+			       पूर्णांक *val)
+अणु
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (info->pincfg) {
-		u32 regcfg = readl(info->pincfg + (pin * sizeof(u32)));
+	अगर (info->pincfg) अणु
+		u32 regcfg = पढ़ोl(info->pincfg + (pin * माप(u32)));
 
 		ret = 0;
-		switch (reg) {
-		case PINCONF_BIAS:
+		चयन (reg) अणु
+		हाल PINCONF_BIAS:
 			*val = regcfg & BIAS_BITS;
-			break;
+			अवरोध;
 
-		case PINCONF_SCHMITT:
+		हाल PINCONF_SCHMITT:
 			*val = regcfg & SCHMITT_BIT;
-			break;
+			अवरोध;
 
-		case PINCONF_DRIVE_STRENGTH:
+		हाल PINCONF_DRIVE_STRENGTH:
 			*val = regcfg & DRIVE_BITS;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			ret = -EOPNOTSUPP;
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ocelot_hw_set_value(struct ocelot_pinctrl *info,
-			       unsigned int pin,
-			       unsigned int reg,
-			       int val)
-{
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक ocelot_hw_set_value(काष्ठा ocelot_pinctrl *info,
+			       अचिन्हित पूर्णांक pin,
+			       अचिन्हित पूर्णांक reg,
+			       पूर्णांक val)
+अणु
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (info->pincfg) {
-		void __iomem *regaddr = info->pincfg + (pin * sizeof(u32));
+	अगर (info->pincfg) अणु
+		व्योम __iomem *regaddr = info->pincfg + (pin * माप(u32));
 
 		ret = 0;
-		switch (reg) {
-		case PINCONF_BIAS:
+		चयन (reg) अणु
+		हाल PINCONF_BIAS:
 			ocelot_clrsetbits(regaddr, BIAS_BITS, val);
-			break;
+			अवरोध;
 
-		case PINCONF_SCHMITT:
+		हाल PINCONF_SCHMITT:
 			ocelot_clrsetbits(regaddr, SCHMITT_BIT, val);
-			break;
+			अवरोध;
 
-		case PINCONF_DRIVE_STRENGTH:
-			if (val <= 3)
+		हाल PINCONF_DRIVE_STRENGTH:
+			अगर (val <= 3)
 				ocelot_clrsetbits(regaddr, DRIVE_BITS, val);
-			else
+			अन्यथा
 				ret = -EINVAL;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			ret = -EOPNOTSUPP;
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ocelot_pinconf_get(struct pinctrl_dev *pctldev,
-			      unsigned int pin, unsigned long *config)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक ocelot_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+			      अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 	u32 param = pinconf_to_config_param(*config);
-	int val, err;
+	पूर्णांक val, err;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-	case PIN_CONFIG_BIAS_PULL_UP:
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		err = ocelot_hw_get_value(info, pin, PINCONF_BIAS, &val);
-		if (err)
-			return err;
-		if (param == PIN_CONFIG_BIAS_DISABLE)
+		अगर (err)
+			वापस err;
+		अगर (param == PIN_CONFIG_BIAS_DISABLE)
 			val = (val == 0);
-		else if (param == PIN_CONFIG_BIAS_PULL_DOWN)
+		अन्यथा अगर (param == PIN_CONFIG_BIAS_PULL_DOWN)
 			val = (val & BIAS_PD_BIT ? true : false);
-		else    /* PIN_CONFIG_BIAS_PULL_UP */
+		अन्यथा    /* PIN_CONFIG_BIAS_PULL_UP */
 			val = (val & BIAS_PU_BIT ? true : false);
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 		err = ocelot_hw_get_value(info, pin, PINCONF_SCHMITT, &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		val = (val & SCHMITT_BIT ? true : false);
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_DRIVE_STRENGTH:
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		err = ocelot_hw_get_value(info, pin, PINCONF_DRIVE_STRENGTH,
 					  &val);
-		if (err)
-			return err;
-		break;
+		अगर (err)
+			वापस err;
+		अवरोध;
 
-	case PIN_CONFIG_OUTPUT:
-		err = regmap_read(info->map, REG(OCELOT_GPIO_OUT, info, pin),
+	हाल PIN_CONFIG_OUTPUT:
+		err = regmap_पढ़ो(info->map, REG(OCELOT_GPIO_OUT, info, pin),
 				  &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		val = !!(val & BIT(pin % 32));
-		break;
+		अवरोध;
 
-	case PIN_CONFIG_INPUT_ENABLE:
-	case PIN_CONFIG_OUTPUT_ENABLE:
-		err = regmap_read(info->map, REG(OCELOT_GPIO_OE, info, pin),
+	हाल PIN_CONFIG_INPUT_ENABLE:
+	हाल PIN_CONFIG_OUTPUT_ENABLE:
+		err = regmap_पढ़ो(info->map, REG(OCELOT_GPIO_OE, info, pin),
 				  &val);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		val = val & BIT(pin % 32);
-		if (param == PIN_CONFIG_OUTPUT_ENABLE)
+		अगर (param == PIN_CONFIG_OUTPUT_ENABLE)
 			val = !!val;
-		else
+		अन्यथा
 			val = !val;
-		break;
+		अवरोध;
 
-	default:
-		return -EOPNOTSUPP;
-	}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *configs, unsigned int num_configs)
-{
-	struct ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक ocelot_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा ocelot_pinctrl *info = pinctrl_dev_get_drvdata(pctldev);
 	u32 param, arg, p;
-	int cfg, err = 0;
+	पूर्णांक cfg, err = 0;
 
-	for (cfg = 0; cfg < num_configs; cfg++) {
+	क्रम (cfg = 0; cfg < num_configs; cfg++) अणु
 		param = pinconf_to_config_param(configs[cfg]);
 		arg = pinconf_to_config_argument(configs[cfg]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_DISABLE:
-		case PIN_CONFIG_BIAS_PULL_UP:
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			arg = (param == PIN_CONFIG_BIAS_DISABLE) ? 0 :
 			(param == PIN_CONFIG_BIAS_PULL_UP) ? BIAS_PU_BIT :
 			BIAS_PD_BIT;
 
 			err = ocelot_hw_set_value(info, pin, PINCONF_BIAS, arg);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 			arg = arg ? SCHMITT_BIT : 0;
 			err = ocelot_hw_set_value(info, pin, PINCONF_SCHMITT,
 						  arg);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_STRENGTH:
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
 			err = ocelot_hw_set_value(info, pin,
 						  PINCONF_DRIVE_STRENGTH,
 						  arg);
-			if (err)
-				goto err;
+			अगर (err)
+				जाओ err;
 
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_OUTPUT_ENABLE:
-		case PIN_CONFIG_INPUT_ENABLE:
-		case PIN_CONFIG_OUTPUT:
+		हाल PIN_CONFIG_OUTPUT_ENABLE:
+		हाल PIN_CONFIG_INPUT_ENABLE:
+		हाल PIN_CONFIG_OUTPUT:
 			p = pin % 32;
-			if (arg)
-				regmap_write(info->map,
+			अगर (arg)
+				regmap_ग_लिखो(info->map,
 					     REG(OCELOT_GPIO_OUT_SET, info,
 						 pin),
 					     BIT(p));
-			else
-				regmap_write(info->map,
+			अन्यथा
+				regmap_ग_लिखो(info->map,
 					     REG(OCELOT_GPIO_OUT_CLR, info,
 						 pin),
 					     BIT(p));
@@ -1007,68 +1008,68 @@ static int ocelot_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
 					   BIT(p),
 					   param == PIN_CONFIG_INPUT_ENABLE ?
 					   0 : BIT(p));
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			err = -EOPNOTSUPP;
-		}
-	}
+		पूर्ण
+	पूर्ण
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct pinconf_ops ocelot_confops = {
+अटल स्थिर काष्ठा pinconf_ops ocelot_confops = अणु
 	.is_generic = true,
 	.pin_config_get = ocelot_pinconf_get,
 	.pin_config_set = ocelot_pinconf_set,
 	.pin_config_config_dbg_show = pinconf_generic_dump_config,
-};
+पूर्ण;
 
-static const struct pinctrl_ops ocelot_pctl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops ocelot_pctl_ops = अणु
 	.get_groups_count = ocelot_pctl_get_groups_count,
 	.get_group_name = ocelot_pctl_get_group_name,
 	.get_group_pins = ocelot_pctl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinconf_generic_dt_free_map,
-};
+	.dt_मुक्त_map = pinconf_generic_dt_मुक्त_map,
+पूर्ण;
 
-static struct pinctrl_desc luton_desc = {
+अटल काष्ठा pinctrl_desc luton_desc = अणु
 	.name = "luton-pinctrl",
 	.pins = luton_pins,
 	.npins = ARRAY_SIZE(luton_pins),
 	.pctlops = &ocelot_pctl_ops,
 	.pmxops = &ocelot_pmx_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct pinctrl_desc serval_desc = {
+अटल काष्ठा pinctrl_desc serval_desc = अणु
 	.name = "serval-pinctrl",
 	.pins = serval_pins,
 	.npins = ARRAY_SIZE(serval_pins),
 	.pctlops = &ocelot_pctl_ops,
 	.pmxops = &ocelot_pmx_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct pinctrl_desc ocelot_desc = {
+अटल काष्ठा pinctrl_desc ocelot_desc = अणु
 	.name = "ocelot-pinctrl",
 	.pins = ocelot_pins,
 	.npins = ARRAY_SIZE(ocelot_pins),
 	.pctlops = &ocelot_pctl_ops,
 	.pmxops = &ocelot_pmx_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct pinctrl_desc jaguar2_desc = {
+अटल काष्ठा pinctrl_desc jaguar2_desc = अणु
 	.name = "jaguar2-pinctrl",
 	.pins = jaguar2_pins,
 	.npins = ARRAY_SIZE(jaguar2_pins),
 	.pctlops = &ocelot_pctl_ops,
 	.pmxops = &ocelot_pmx_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct pinctrl_desc sparx5_desc = {
+अटल काष्ठा pinctrl_desc sparx5_desc = अणु
 	.name = "sparx5-pinctrl",
 	.pins = sparx5_pins,
 	.npins = ARRAY_SIZE(sparx5_pins),
@@ -1076,233 +1077,233 @@ static struct pinctrl_desc sparx5_desc = {
 	.pmxops = &ocelot_pmx_ops,
 	.confops = &ocelot_confops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int ocelot_create_group_func_map(struct device *dev,
-					struct ocelot_pinctrl *info)
-{
-	int f, npins, i;
-	u8 *pins = kcalloc(info->desc->npins, sizeof(u8), GFP_KERNEL);
+अटल पूर्णांक ocelot_create_group_func_map(काष्ठा device *dev,
+					काष्ठा ocelot_pinctrl *info)
+अणु
+	पूर्णांक f, npins, i;
+	u8 *pins = kसुस्मृति(info->desc->npins, माप(u8), GFP_KERNEL);
 
-	if (!pins)
-		return -ENOMEM;
+	अगर (!pins)
+		वापस -ENOMEM;
 
-	for (f = 0; f < FUNC_MAX; f++) {
-		for (npins = 0, i = 0; i < info->desc->npins; i++) {
-			if (ocelot_pin_function_idx(info, i, f) >= 0)
+	क्रम (f = 0; f < FUNC_MAX; f++) अणु
+		क्रम (npins = 0, i = 0; i < info->desc->npins; i++) अणु
+			अगर (ocelot_pin_function_idx(info, i, f) >= 0)
 				pins[npins++] = i;
-		}
+		पूर्ण
 
-		if (!npins)
-			continue;
+		अगर (!npins)
+			जारी;
 
 		info->func[f].ngroups = npins;
-		info->func[f].groups = devm_kcalloc(dev, npins, sizeof(char *),
+		info->func[f].groups = devm_kसुस्मृति(dev, npins, माप(अक्षर *),
 						    GFP_KERNEL);
-		if (!info->func[f].groups) {
-			kfree(pins);
-			return -ENOMEM;
-		}
+		अगर (!info->func[f].groups) अणु
+			kमुक्त(pins);
+			वापस -ENOMEM;
+		पूर्ण
 
-		for (i = 0; i < npins; i++)
+		क्रम (i = 0; i < npins; i++)
 			info->func[f].groups[i] =
 				info->desc->pins[pins[i]].name;
-	}
+	पूर्ण
 
-	kfree(pins);
+	kमुक्त(pins);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_pinctrl_register(struct platform_device *pdev,
-				   struct ocelot_pinctrl *info)
-{
-	int ret;
+अटल पूर्णांक ocelot_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				   काष्ठा ocelot_pinctrl *info)
+अणु
+	पूर्णांक ret;
 
 	ret = ocelot_create_group_func_map(&pdev->dev, info);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to create group func map.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	info->pctl = devm_pinctrl_register(&pdev->dev, info->desc, info);
-	if (IS_ERR(info->pctl)) {
+	info->pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, info->desc, info);
+	अगर (IS_ERR(info->pctl)) अणु
 		dev_err(&pdev->dev, "Failed to register pinctrl\n");
-		return PTR_ERR(info->pctl);
-	}
+		वापस PTR_ERR(info->pctl);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ocelot_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int val;
+अटल पूर्णांक ocelot_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(info->map, REG(OCELOT_GPIO_IN, info, offset), &val);
+	regmap_पढ़ो(info->map, REG(OCELOT_GPIO_IN, info, offset), &val);
 
-	return !!(val & BIT(offset % 32));
-}
+	वापस !!(val & BIT(offset % 32));
+पूर्ण
 
-static void ocelot_gpio_set(struct gpio_chip *chip, unsigned int offset,
-			    int value)
-{
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
+अटल व्योम ocelot_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			    पूर्णांक value)
+अणु
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
 
-	if (value)
-		regmap_write(info->map, REG(OCELOT_GPIO_OUT_SET, info, offset),
+	अगर (value)
+		regmap_ग_लिखो(info->map, REG(OCELOT_GPIO_OUT_SET, info, offset),
 			     BIT(offset % 32));
-	else
-		regmap_write(info->map, REG(OCELOT_GPIO_OUT_CLR, info, offset),
+	अन्यथा
+		regmap_ग_लिखो(info->map, REG(OCELOT_GPIO_OUT_CLR, info, offset),
 			     BIT(offset % 32));
-}
+पूर्ण
 
-static int ocelot_gpio_get_direction(struct gpio_chip *chip,
-				     unsigned int offset)
-{
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int val;
+अटल पूर्णांक ocelot_gpio_get_direction(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक val;
 
-	regmap_read(info->map, REG(OCELOT_GPIO_OE, info, offset), &val);
+	regmap_पढ़ो(info->map, REG(OCELOT_GPIO_OE, info, offset), &val);
 
-	if (val & BIT(offset % 32))
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (val & BIT(offset % 32))
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int ocelot_gpio_direction_input(struct gpio_chip *chip,
-				       unsigned int offset)
-{
-	return pinctrl_gpio_direction_input(chip->base + offset);
-}
+अटल पूर्णांक ocelot_gpio_direction_input(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset)
+अणु
+	वापस pinctrl_gpio_direction_input(chip->base + offset);
+पूर्ण
 
-static int ocelot_gpio_direction_output(struct gpio_chip *chip,
-					unsigned int offset, int value)
-{
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int pin = BIT(offset % 32);
+अटल पूर्णांक ocelot_gpio_direction_output(काष्ठा gpio_chip *chip,
+					अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक pin = BIT(offset % 32);
 
-	if (value)
-		regmap_write(info->map, REG(OCELOT_GPIO_OUT_SET, info, offset),
+	अगर (value)
+		regmap_ग_लिखो(info->map, REG(OCELOT_GPIO_OUT_SET, info, offset),
 			     pin);
-	else
-		regmap_write(info->map, REG(OCELOT_GPIO_OUT_CLR, info, offset),
+	अन्यथा
+		regmap_ग_लिखो(info->map, REG(OCELOT_GPIO_OUT_CLR, info, offset),
 			     pin);
 
-	return pinctrl_gpio_direction_output(chip->base + offset);
-}
+	वापस pinctrl_gpio_direction_output(chip->base + offset);
+पूर्ण
 
-static const struct gpio_chip ocelot_gpiolib_chip = {
+अटल स्थिर काष्ठा gpio_chip ocelot_gpiolib_chip = अणु
 	.request = gpiochip_generic_request,
-	.free = gpiochip_generic_free,
+	.मुक्त = gpiochip_generic_मुक्त,
 	.set = ocelot_gpio_set,
 	.get = ocelot_gpio_get,
 	.get_direction = ocelot_gpio_get_direction,
 	.direction_input = ocelot_gpio_direction_input,
 	.direction_output = ocelot_gpio_direction_output,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static void ocelot_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int gpio = irqd_to_hwirq(data);
+अटल व्योम ocelot_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = irqd_to_hwirq(data);
 
 	regmap_update_bits(info->map, REG(OCELOT_GPIO_INTR_ENA, info, gpio),
 			   BIT(gpio % 32), 0);
-}
+पूर्ण
 
-static void ocelot_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int gpio = irqd_to_hwirq(data);
+अटल व्योम ocelot_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = irqd_to_hwirq(data);
 
 	regmap_update_bits(info->map, REG(OCELOT_GPIO_INTR_ENA, info, gpio),
 			   BIT(gpio % 32), BIT(gpio % 32));
-}
+पूर्ण
 
-static void ocelot_irq_ack(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int gpio = irqd_to_hwirq(data);
+अटल व्योम ocelot_irq_ack(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक gpio = irqd_to_hwirq(data);
 
-	regmap_write_bits(info->map, REG(OCELOT_GPIO_INTR, info, gpio),
+	regmap_ग_लिखो_bits(info->map, REG(OCELOT_GPIO_INTR, info, gpio),
 			  BIT(gpio % 32), BIT(gpio % 32));
-}
+पूर्ण
 
-static int ocelot_irq_set_type(struct irq_data *data, unsigned int type);
+अटल पूर्णांक ocelot_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type);
 
-static struct irq_chip ocelot_eoi_irqchip = {
+अटल काष्ठा irq_chip ocelot_eoi_irqchip = अणु
 	.name		= "gpio",
 	.irq_mask	= ocelot_irq_mask,
 	.irq_eoi	= ocelot_irq_ack,
 	.irq_unmask	= ocelot_irq_unmask,
 	.flags          = IRQCHIP_EOI_THREADED | IRQCHIP_EOI_IF_HANDLED,
 	.irq_set_type	= ocelot_irq_set_type,
-};
+पूर्ण;
 
-static struct irq_chip ocelot_irqchip = {
+अटल काष्ठा irq_chip ocelot_irqchip = अणु
 	.name		= "gpio",
 	.irq_mask	= ocelot_irq_mask,
 	.irq_ack	= ocelot_irq_ack,
 	.irq_unmask	= ocelot_irq_unmask,
 	.irq_set_type	= ocelot_irq_set_type,
-};
+पूर्ण;
 
-static int ocelot_irq_set_type(struct irq_data *data, unsigned int type)
-{
+अटल पूर्णांक ocelot_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
 	type &= IRQ_TYPE_SENSE_MASK;
 
-	if (!(type & (IRQ_TYPE_EDGE_BOTH | IRQ_TYPE_LEVEL_HIGH)))
-		return -EINVAL;
+	अगर (!(type & (IRQ_TYPE_EDGE_BOTH | IRQ_TYPE_LEVEL_HIGH)))
+		वापस -EINVAL;
 
-	if (type & IRQ_TYPE_LEVEL_HIGH)
+	अगर (type & IRQ_TYPE_LEVEL_HIGH)
 		irq_set_chip_handler_name_locked(data, &ocelot_eoi_irqchip,
-						 handle_fasteoi_irq, NULL);
-	if (type & IRQ_TYPE_EDGE_BOTH)
+						 handle_fasteoi_irq, शून्य);
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_chip_handler_name_locked(data, &ocelot_irqchip,
-						 handle_edge_irq, NULL);
+						 handle_edge_irq, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ocelot_irq_handler(struct irq_desc *desc)
-{
-	struct irq_chip *parent_chip = irq_desc_get_chip(desc);
-	struct gpio_chip *chip = irq_desc_get_handler_data(desc);
-	struct ocelot_pinctrl *info = gpiochip_get_data(chip);
-	unsigned int id_reg = OCELOT_GPIO_INTR_IDENT * info->stride;
-	unsigned int reg = 0, irq, i;
-	unsigned long irqs;
+अटल व्योम ocelot_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *parent_chip = irq_desc_get_chip(desc);
+	काष्ठा gpio_chip *chip = irq_desc_get_handler_data(desc);
+	काष्ठा ocelot_pinctrl *info = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक id_reg = OCELOT_GPIO_INTR_IDENT * info->stride;
+	अचिन्हित पूर्णांक reg = 0, irq, i;
+	अचिन्हित दीर्घ irqs;
 
-	for (i = 0; i < info->stride; i++) {
-		regmap_read(info->map, id_reg + 4 * i, &reg);
-		if (!reg)
-			continue;
+	क्रम (i = 0; i < info->stride; i++) अणु
+		regmap_पढ़ो(info->map, id_reg + 4 * i, &reg);
+		अगर (!reg)
+			जारी;
 
 		chained_irq_enter(parent_chip, desc);
 
 		irqs = reg;
 
-		for_each_set_bit(irq, &irqs,
+		क्रम_each_set_bit(irq, &irqs,
 				 min(32U, info->desc->npins - 32 * i))
-			generic_handle_irq(irq_linear_revmap(chip->irq.domain,
+			generic_handle_irq(irq_linear_revmap(chip->irq.करोमुख्य,
 							     irq + 32 * i));
 
-		chained_irq_exit(parent_chip, desc);
-	}
-}
+		chained_irq_निकास(parent_chip, desc);
+	पूर्ण
+पूर्ण
 
-static int ocelot_gpiochip_register(struct platform_device *pdev,
-				    struct ocelot_pinctrl *info)
-{
-	struct gpio_chip *gc;
-	struct gpio_irq_chip *girq;
-	int irq;
+अटल पूर्णांक ocelot_gpiochip_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा ocelot_pinctrl *info)
+अणु
+	काष्ठा gpio_chip *gc;
+	काष्ठा gpio_irq_chip *girq;
+	पूर्णांक irq;
 
 	info->gpio_chip = ocelot_gpiolib_chip;
 
@@ -1314,100 +1315,100 @@ static int ocelot_gpiochip_register(struct platform_device *pdev,
 	gc->label = "ocelot-gpio";
 
 	irq = irq_of_parse_and_map(gc->of_node, 0);
-	if (irq) {
+	अगर (irq) अणु
 		girq = &gc->irq;
 		girq->chip = &ocelot_irqchip;
 		girq->parent_handler = ocelot_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(&pdev->dev, 1,
-					     sizeof(*girq->parents),
+		girq->parents = devm_kसुस्मृति(&pdev->dev, 1,
+					     माप(*girq->parents),
 					     GFP_KERNEL);
-		if (!girq->parents)
-			return -ENOMEM;
+		अगर (!girq->parents)
+			वापस -ENOMEM;
 		girq->parents[0] = irq;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_edge_irq;
-	}
+	पूर्ण
 
-	return devm_gpiochip_add_data(&pdev->dev, gc, info);
-}
+	वापस devm_gpiochip_add_data(&pdev->dev, gc, info);
+पूर्ण
 
-static const struct of_device_id ocelot_pinctrl_of_match[] = {
-	{ .compatible = "mscc,luton-pinctrl", .data = &luton_desc },
-	{ .compatible = "mscc,serval-pinctrl", .data = &serval_desc },
-	{ .compatible = "mscc,ocelot-pinctrl", .data = &ocelot_desc },
-	{ .compatible = "mscc,jaguar2-pinctrl", .data = &jaguar2_desc },
-	{ .compatible = "microchip,sparx5-pinctrl", .data = &sparx5_desc },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id ocelot_pinctrl_of_match[] = अणु
+	अणु .compatible = "mscc,luton-pinctrl", .data = &luton_desc पूर्ण,
+	अणु .compatible = "mscc,serval-pinctrl", .data = &serval_desc पूर्ण,
+	अणु .compatible = "mscc,ocelot-pinctrl", .data = &ocelot_desc पूर्ण,
+	अणु .compatible = "mscc,jaguar2-pinctrl", .data = &jaguar2_desc पूर्ण,
+	अणु .compatible = "microchip,sparx5-pinctrl", .data = &sparx5_desc पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int ocelot_pinctrl_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct ocelot_pinctrl *info;
-	void __iomem *base;
-	struct resource *res;
-	int ret;
-	struct regmap_config regmap_config = {
+अटल पूर्णांक ocelot_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ocelot_pinctrl *info;
+	व्योम __iomem *base;
+	काष्ठा resource *res;
+	पूर्णांक ret;
+	काष्ठा regmap_config regmap_config = अणु
 		.reg_bits = 32,
 		.val_bits = 32,
 		.reg_stride = 4,
-	};
+	पूर्ण;
 
-	info = devm_kzalloc(dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	info->desc = (struct pinctrl_desc *)device_get_match_data(dev);
+	info->desc = (काष्ठा pinctrl_desc *)device_get_match_data(dev);
 
 	base = devm_ioremap_resource(dev,
-			platform_get_resource(pdev, IORESOURCE_MEM, 0));
-	if (IS_ERR(base)) {
+			platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0));
+	अगर (IS_ERR(base)) अणु
 		dev_err(dev, "Failed to ioremap registers\n");
-		return PTR_ERR(base);
-	}
+		वापस PTR_ERR(base);
+	पूर्ण
 
 	info->stride = 1 + (info->desc->npins - 1) / 32;
 
-	regmap_config.max_register = OCELOT_GPIO_SD_MAP * info->stride + 15 * 4;
+	regmap_config.max_रेजिस्टर = OCELOT_GPIO_SD_MAP * info->stride + 15 * 4;
 
 	info->map = devm_regmap_init_mmio(dev, base, &regmap_config);
-	if (IS_ERR(info->map)) {
+	अगर (IS_ERR(info->map)) अणु
 		dev_err(dev, "Failed to create regmap\n");
-		return PTR_ERR(info->map);
-	}
+		वापस PTR_ERR(info->map);
+	पूर्ण
 	dev_set_drvdata(dev, info->map);
 	info->dev = dev;
 
-	/* Pinconf registers */
-	if (info->desc->confops) {
-		res = platform_get_resource(pdev, IORESOURCE_MEM, 1);
+	/* Pinconf रेजिस्टरs */
+	अगर (info->desc->confops) अणु
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
 		base = devm_ioremap_resource(dev, res);
-		if (IS_ERR(base))
+		अगर (IS_ERR(base))
 			dev_dbg(dev, "Failed to ioremap config registers (no extended pinconf)\n");
-		else
+		अन्यथा
 			info->pincfg = base;
-	}
+	पूर्ण
 
-	ret = ocelot_pinctrl_register(pdev, info);
-	if (ret)
-		return ret;
+	ret = ocelot_pinctrl_रेजिस्टर(pdev, info);
+	अगर (ret)
+		वापस ret;
 
-	ret = ocelot_gpiochip_register(pdev, info);
-	if (ret)
-		return ret;
+	ret = ocelot_gpiochip_रेजिस्टर(pdev, info);
+	अगर (ret)
+		वापस ret;
 
 	dev_info(dev, "driver registered\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ocelot_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ocelot_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "pinctrl-ocelot",
 		.of_match_table = of_match_ptr(ocelot_pinctrl_of_match),
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = ocelot_pinctrl_probe,
-};
-builtin_platform_driver(ocelot_pinctrl_driver);
+पूर्ण;
+builtin_platक्रमm_driver(ocelot_pinctrl_driver);

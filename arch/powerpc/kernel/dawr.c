@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * DAWR infrastructure
+ * DAWR infraकाष्ठाure
  *
  * Copyright 2019, Michael Neuling, IBM Corporation.
  */
 
-#include <linux/types.h>
-#include <linux/export.h>
-#include <linux/fs.h>
-#include <linux/debugfs.h>
-#include <asm/debugfs.h>
-#include <asm/machdep.h>
-#include <asm/hvcall.h>
+#समावेश <linux/types.h>
+#समावेश <linux/export.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/debugfs.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/hvcall.h>
 
-bool dawr_force_enable;
-EXPORT_SYMBOL_GPL(dawr_force_enable);
+bool dawr_क्रमce_enable;
+EXPORT_SYMBOL_GPL(dawr_क्रमce_enable);
 
-int set_dawr(int nr, struct arch_hw_breakpoint *brk)
-{
-	unsigned long dawr, dawrx, mrd;
+पूर्णांक set_dawr(पूर्णांक nr, काष्ठा arch_hw_अवरोधpoपूर्णांक *brk)
+अणु
+	अचिन्हित दीर्घ dawr, dawrx, mrd;
 
 	dawr = brk->address;
 
@@ -28,83 +29,83 @@ int set_dawr(int nr, struct arch_hw_breakpoint *brk)
 	dawrx |= (brk->type & (HW_BRK_TYPE_PRIV_ALL)) >> 3;
 	/*
 	 * DAWR length is stored in field MDR bits 48:53.  Matches range in
-	 * doublewords (64 bits) baised by -1 eg. 0b000000=1DW and
+	 * द्विगुनwords (64 bits) baised by -1 eg. 0b000000=1DW and
 	 * 0b111111=64DW.
 	 * brk->hw_len is in bytes.
-	 * This aligns up to double word size, shifts and does the bias.
+	 * This aligns up to द्विगुन word size, shअगरts and करोes the bias.
 	 */
 	mrd = ((brk->hw_len + 7) >> 3) - 1;
 	dawrx |= (mrd & 0x3f) << (63 - 53);
 
-	if (ppc_md.set_dawr)
-		return ppc_md.set_dawr(nr, dawr, dawrx);
+	अगर (ppc_md.set_dawr)
+		वापस ppc_md.set_dawr(nr, dawr, dawrx);
 
-	if (nr == 0) {
+	अगर (nr == 0) अणु
 		mtspr(SPRN_DAWR0, dawr);
 		mtspr(SPRN_DAWRX0, dawrx);
-	} else {
+	पूर्ण अन्यथा अणु
 		mtspr(SPRN_DAWR1, dawr);
 		mtspr(SPRN_DAWRX1, dawrx);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void disable_dawrs_cb(void *info)
-{
-	struct arch_hw_breakpoint null_brk = {0};
-	int i;
+अटल व्योम disable_dawrs_cb(व्योम *info)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक null_brk = अणु0पूर्ण;
+	पूर्णांक i;
 
-	for (i = 0; i < nr_wp_slots(); i++)
+	क्रम (i = 0; i < nr_wp_slots(); i++)
 		set_dawr(i, &null_brk);
-}
+पूर्ण
 
-static ssize_t dawr_write_file_bool(struct file *file,
-				    const char __user *user_buf,
-				    size_t count, loff_t *ppos)
-{
-	struct arch_hw_breakpoint null_brk = {0};
-	size_t rc;
+अटल sमाप_प्रकार dawr_ग_लिखो_file_bool(काष्ठा file *file,
+				    स्थिर अक्षर __user *user_buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक null_brk = अणु0पूर्ण;
+	माप_प्रकार rc;
 
-	/* Send error to user if they hypervisor won't allow us to write DAWR */
-	if (!dawr_force_enable &&
+	/* Send error to user अगर they hypervisor won't allow us to ग_लिखो DAWR */
+	अगर (!dawr_क्रमce_enable &&
 	    firmware_has_feature(FW_FEATURE_LPAR) &&
 	    set_dawr(0, &null_brk) != H_SUCCESS)
-		return -ENODEV;
+		वापस -ENODEV;
 
-	rc = debugfs_write_file_bool(file, user_buf, count, ppos);
-	if (rc)
-		return rc;
+	rc = debugfs_ग_लिखो_file_bool(file, user_buf, count, ppos);
+	अगर (rc)
+		वापस rc;
 
 	/* If we are clearing, make sure all CPUs have the DAWR cleared */
-	if (!dawr_force_enable)
-		smp_call_function(disable_dawrs_cb, NULL, 0);
+	अगर (!dawr_क्रमce_enable)
+		smp_call_function(disable_dawrs_cb, शून्य, 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct file_operations dawr_enable_fops = {
-	.read =		debugfs_read_file_bool,
-	.write =	dawr_write_file_bool,
-	.open =		simple_open,
-	.llseek =	default_llseek,
-};
+अटल स्थिर काष्ठा file_operations dawr_enable_fops = अणु
+	.पढ़ो =		debugfs_पढ़ो_file_bool,
+	.ग_लिखो =	dawr_ग_लिखो_file_bool,
+	.खोलो =		simple_खोलो,
+	.llseek =	शेष_llseek,
+पूर्ण;
 
-static int __init dawr_force_setup(void)
-{
-	if (cpu_has_feature(CPU_FTR_DAWR)) {
-		/* Don't setup sysfs file for user control on P8 */
-		dawr_force_enable = true;
-		return 0;
-	}
+अटल पूर्णांक __init dawr_क्रमce_setup(व्योम)
+अणु
+	अगर (cpu_has_feature(CPU_FTR_DAWR)) अणु
+		/* Don't setup sysfs file क्रम user control on P8 */
+		dawr_क्रमce_enable = true;
+		वापस 0;
+	पूर्ण
 
-	if (PVR_VER(mfspr(SPRN_PVR)) == PVR_POWER9) {
-		/* Turn DAWR off by default, but allow admin to turn it on */
+	अगर (PVR_VER(mfspr(SPRN_PVR)) == PVR_POWER9) अणु
+		/* Turn DAWR off by शेष, but allow admin to turn it on */
 		debugfs_create_file_unsafe("dawr_enable_dangerous", 0600,
-					   powerpc_debugfs_root,
-					   &dawr_force_enable,
+					   घातerpc_debugfs_root,
+					   &dawr_क्रमce_enable,
 					   &dawr_enable_fops);
-	}
-	return 0;
-}
-arch_initcall(dawr_force_setup);
+	पूर्ण
+	वापस 0;
+पूर्ण
+arch_initcall(dawr_क्रमce_setup);

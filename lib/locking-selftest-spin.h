@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef LOCK
-#define LOCK		L
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित LOCK
+#घोषणा LOCK		L
 
-#undef UNLOCK
-#define UNLOCK		U
+#अघोषित UNLOCK
+#घोषणा UNLOCK		U
 
-#undef RLOCK
-#undef WLOCK
+#अघोषित RLOCK
+#अघोषित WLOCK
 
-#undef INIT
-#define INIT		SI
+#अघोषित INIT
+#घोषणा INIT		SI

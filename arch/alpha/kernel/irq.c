@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/irq.c
  *
  *	Copyright (C) 1995 Linus Torvalds
  *
  * This file contains the code used by various IRQ handling routines:
- * asking for different IRQ's should be done through these routines
- * instead of just grabbing them. Thus setups with different IRQ numbers
+ * asking क्रम dअगरferent IRQ's should be करोne through these routines
+ * instead of just grabbing them. Thus setups with dअगरferent IRQ numbers
  * shouldn't result in any weird surprises, and installing new handlers
  * should be easier.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel_stat.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/ptrace.h>
-#include <linux/interrupt.h>
-#include <linux/random.h>
-#include <linux/irq.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/profile.h>
-#include <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/io.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
 
-volatile unsigned long irq_err_count;
-DEFINE_PER_CPU(unsigned long, irq_pmi_count);
+अस्थिर अचिन्हित दीर्घ irq_err_count;
+DEFINE_PER_CPU(अचिन्हित दीर्घ, irq_pmi_count);
 
-void ack_bad_irq(unsigned int irq)
-{
+व्योम ack_bad_irq(अचिन्हित पूर्णांक irq)
+अणु
 	irq_err_count++;
-	printk(KERN_CRIT "Unexpected IRQ trap at vector %u\n", irq);
-}
+	prपूर्णांकk(KERN_CRIT "Unexpected IRQ trap at vector %u\n", irq);
+पूर्ण
 
-#ifdef CONFIG_SMP 
-static char irq_user_affinity[NR_IRQS];
+#अगर_घोषित CONFIG_SMP 
+अटल अक्षर irq_user_affinity[NR_IRQS];
 
-int irq_select_affinity(unsigned int irq)
-{
-	struct irq_data *data = irq_get_irq_data(irq);
-	struct irq_chip *chip;
-	static int last_cpu;
-	int cpu = last_cpu + 1;
+पूर्णांक irq_select_affinity(अचिन्हित पूर्णांक irq)
+अणु
+	काष्ठा irq_data *data = irq_get_irq_data(irq);
+	काष्ठा irq_chip *chip;
+	अटल पूर्णांक last_cpu;
+	पूर्णांक cpu = last_cpu + 1;
 
-	if (!data)
-		return 1;
+	अगर (!data)
+		वापस 1;
 	chip = irq_data_get_irq_chip(data);
 
-	if (!chip->irq_set_affinity || irq_user_affinity[irq])
-		return 1;
+	अगर (!chip->irq_set_affinity || irq_user_affinity[irq])
+		वापस 1;
 
-	while (!cpu_possible(cpu) ||
-	       !cpumask_test_cpu(cpu, irq_default_affinity))
+	जबतक (!cpu_possible(cpu) ||
+	       !cpumask_test_cpu(cpu, irq_शेष_affinity))
 		cpu = (cpu < (NR_CPUS-1) ? cpu + 1 : 0);
 	last_cpu = cpu;
 
 	cpumask_copy(irq_data_get_affinity_mask(data), cpumask_of(cpu));
 	chip->irq_set_affinity(data, cpumask_of(cpu), false);
-	return 0;
-}
-#endif /* CONFIG_SMP */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-int arch_show_interrupts(struct seq_file *p, int prec)
-{
-	int j;
+पूर्णांक arch_show_पूर्णांकerrupts(काष्ठा seq_file *p, पूर्णांक prec)
+अणु
+	पूर्णांक j;
 
-#ifdef CONFIG_SMP
-	seq_puts(p, "IPI: ");
-	for_each_online_cpu(j)
-		seq_printf(p, "%10lu ", cpu_data[j].ipi_count);
-	seq_putc(p, '\n');
-#endif
-	seq_puts(p, "PMI: ");
-	for_each_online_cpu(j)
-		seq_printf(p, "%10lu ", per_cpu(irq_pmi_count, j));
-	seq_puts(p, "          Performance Monitoring\n");
-	seq_printf(p, "ERR: %10lu\n", irq_err_count);
-	return 0;
-}
+#अगर_घोषित CONFIG_SMP
+	seq_माला_दो(p, "IPI: ");
+	क्रम_each_online_cpu(j)
+		seq_म_लिखो(p, "%10lu ", cpu_data[j].ipi_count);
+	seq_अ_दो(p, '\n');
+#पूर्ण_अगर
+	seq_माला_दो(p, "PMI: ");
+	क्रम_each_online_cpu(j)
+		seq_म_लिखो(p, "%10lu ", per_cpu(irq_pmi_count, j));
+	seq_माला_दो(p, "          Performance Monitoring\n");
+	seq_म_लिखो(p, "ERR: %10lu\n", irq_err_count);
+	वापस 0;
+पूर्ण
 
 /*
  * handle_irq handles all normal device IRQ's (the special
- * SMP cross-CPU interrupts have their own specific
+ * SMP cross-CPU पूर्णांकerrupts have their own specअगरic
  * handlers).
  */
 
-#define MAX_ILLEGAL_IRQS 16
+#घोषणा MAX_ILLEGAL_IRQS 16
 
-void
-handle_irq(int irq)
-{	
+व्योम
+handle_irq(पूर्णांक irq)
+अणु	
 	/* 
-	 * We ack quickly, we don't want the irq controller
+	 * We ack quickly, we करोn't want the irq controller
 	 * thinking we're snobs just because some other CPU has
-	 * disabled global interrupts (we have already done the
+	 * disabled global पूर्णांकerrupts (we have alपढ़ोy करोne the
 	 * INT_ACK cycles, it's too late to try to pretend to the
-	 * controller that we aren't taking the interrupt).
+	 * controller that we aren't taking the पूर्णांकerrupt).
 	 *
-	 * 0 return value means that this irq is already being
+	 * 0 वापस value means that this irq is alपढ़ोy being
 	 * handled by some other CPU. (or is disabled)
 	 */
-	static unsigned int illegal_count=0;
-	struct irq_desc *desc = irq_to_desc(irq);
+	अटल अचिन्हित पूर्णांक illegal_count=0;
+	काष्ठा irq_desc *desc = irq_to_desc(irq);
 	
-	if (!desc || ((unsigned) irq > ACTUAL_NR_IRQS &&
-	    illegal_count < MAX_ILLEGAL_IRQS)) {
+	अगर (!desc || ((अचिन्हित) irq > ACTUAL_NR_IRQS &&
+	    illegal_count < MAX_ILLEGAL_IRQS)) अणु
 		irq_err_count++;
 		illegal_count++;
-		printk(KERN_CRIT "device_interrupt: invalid interrupt %d\n",
+		prपूर्णांकk(KERN_CRIT "device_interrupt: invalid interrupt %d\n",
 		       irq);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	irq_enter();
 	generic_handle_irq_desc(desc);
-	irq_exit();
-}
+	irq_निकास();
+पूर्ण

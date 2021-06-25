@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * pcl726.c
- * Comedi driver for 6/12-Channel D/A Output and DIO cards
+ * Comedi driver क्रम 6/12-Channel D/A Output and DIO cards
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 1998 David A. Schleef <ds@schleef.org>
@@ -18,22 +19,22 @@
  * Configuration Options:
  *   [0]  - IO Base
  *   [1]  - IRQ (ACL-6126 only)
- *   [2]  - D/A output range for channel 0
- *   [3]  - D/A output range for channel 1
+ *   [2]  - D/A output range क्रम channel 0
+ *   [3]  - D/A output range क्रम channel 1
  *
  * Boards with > 2 analog output channels:
- *   [4]  - D/A output range for channel 2
- *   [5]  - D/A output range for channel 3
- *   [6]  - D/A output range for channel 4
- *   [7]  - D/A output range for channel 5
+ *   [4]  - D/A output range क्रम channel 2
+ *   [5]  - D/A output range क्रम channel 3
+ *   [6]  - D/A output range क्रम channel 4
+ *   [7]  - D/A output range क्रम channel 5
  *
  * Boards with > 6 analog output channels:
- *   [8]  - D/A output range for channel 6
- *   [9]  - D/A output range for channel 7
- *   [10] - D/A output range for channel 8
- *   [11] - D/A output range for channel 9
- *   [12] - D/A output range for channel 10
- *   [13] - D/A output range for channel 11
+ *   [8]  - D/A output range क्रम channel 6
+ *   [9]  - D/A output range क्रम channel 7
+ *   [10] - D/A output range क्रम channel 8
+ *   [11] - D/A output range क्रम channel 9
+ *   [12] - D/A output range क्रम channel 10
+ *   [13] - D/A output range क्रम channel 11
  *
  * For PCL-726 the D/A output ranges are:
  *   0: 0-5V, 1: 0-10V, 2: +/-5V, 3: +/-10V, 4: 4-20mA, 5: unknown
@@ -48,68 +49,68 @@
  *   0: 0-5V, 1: 0-10V, 2: +/-5V, 3: +/-10V, 4: 4-20mA
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedidev.h"
+#समावेश "../comedidev.h"
 
-#define PCL726_AO_MSB_REG(x)	(0x00 + ((x) * 2))
-#define PCL726_AO_LSB_REG(x)	(0x01 + ((x) * 2))
-#define PCL726_DO_MSB_REG	0x0c
-#define PCL726_DO_LSB_REG	0x0d
-#define PCL726_DI_MSB_REG	0x0e
-#define PCL726_DI_LSB_REG	0x0f
+#घोषणा PCL726_AO_MSB_REG(x)	(0x00 + ((x) * 2))
+#घोषणा PCL726_AO_LSB_REG(x)	(0x01 + ((x) * 2))
+#घोषणा PCL726_DO_MSB_REG	0x0c
+#घोषणा PCL726_DO_LSB_REG	0x0d
+#घोषणा PCL726_DI_MSB_REG	0x0e
+#घोषणा PCL726_DI_LSB_REG	0x0f
 
-#define PCL727_DI_MSB_REG	0x00
-#define PCL727_DI_LSB_REG	0x01
-#define PCL727_DO_MSB_REG	0x18
-#define PCL727_DO_LSB_REG	0x19
+#घोषणा PCL727_DI_MSB_REG	0x00
+#घोषणा PCL727_DI_LSB_REG	0x01
+#घोषणा PCL727_DO_MSB_REG	0x18
+#घोषणा PCL727_DO_LSB_REG	0x19
 
-static const struct comedi_lrange *const rangelist_726[] = {
+अटल स्थिर काष्ठा comedi_lrange *स्थिर rangelist_726[] = अणु
 	&range_unipolar5,
 	&range_unipolar10,
 	&range_bipolar5,
 	&range_bipolar10,
 	&range_4_20mA,
 	&range_unknown
-};
+पूर्ण;
 
-static const struct comedi_lrange *const rangelist_727[] = {
+अटल स्थिर काष्ठा comedi_lrange *स्थिर rangelist_727[] = अणु
 	&range_unipolar5,
 	&range_unipolar10,
 	&range_bipolar5,
 	&range_4_20mA
-};
+पूर्ण;
 
-static const struct comedi_lrange *const rangelist_728[] = {
+अटल स्थिर काष्ठा comedi_lrange *स्थिर rangelist_728[] = अणु
 	&range_unipolar5,
 	&range_unipolar10,
 	&range_bipolar5,
 	&range_bipolar10,
 	&range_4_20mA,
 	&range_0_20mA
-};
+पूर्ण;
 
-struct pcl726_board {
-	const char *name;
-	unsigned long io_len;
-	unsigned int irq_mask;
-	const struct comedi_lrange *const *ao_ranges;
-	int ao_num_ranges;
-	int ao_nchan;
-	unsigned int have_dio:1;
-	unsigned int is_pcl727:1;
-};
+काष्ठा pcl726_board अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ io_len;
+	अचिन्हित पूर्णांक irq_mask;
+	स्थिर काष्ठा comedi_lrange *स्थिर *ao_ranges;
+	पूर्णांक ao_num_ranges;
+	पूर्णांक ao_nchan;
+	अचिन्हित पूर्णांक have_dio:1;
+	अचिन्हित पूर्णांक is_pcl727:1;
+पूर्ण;
 
-static const struct pcl726_board pcl726_boards[] = {
-	{
+अटल स्थिर काष्ठा pcl726_board pcl726_boards[] = अणु
+	अणु
 		.name		= "pcl726",
 		.io_len		= 0x10,
 		.ao_ranges	= &rangelist_726[0],
 		.ao_num_ranges	= ARRAY_SIZE(rangelist_726),
 		.ao_nchan	= 6,
 		.have_dio	= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl727",
 		.io_len		= 0x20,
 		.ao_ranges	= &rangelist_727[0],
@@ -117,13 +118,13 @@ static const struct pcl726_board pcl726_boards[] = {
 		.ao_nchan	= 12,
 		.have_dio	= 1,
 		.is_pcl727	= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl728",
 		.io_len		= 0x08,
 		.ao_num_ranges	= ARRAY_SIZE(rangelist_728),
 		.ao_ranges	= &rangelist_728[0],
 		.ao_nchan	= 2,
-	}, {
+	पूर्ण, अणु
 		.name		= "acl6126",
 		.io_len		= 0x10,
 		.irq_mask	= 0x96e8,
@@ -131,36 +132,36 @@ static const struct pcl726_board pcl726_boards[] = {
 		.ao_ranges	= &rangelist_726[0],
 		.ao_nchan	= 6,
 		.have_dio	= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "acl6128",
 		.io_len		= 0x08,
 		.ao_num_ranges	= ARRAY_SIZE(rangelist_728),
 		.ao_ranges	= &rangelist_728[0],
 		.ao_nchan	= 2,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct pcl726_private {
-	const struct comedi_lrange *rangelist[12];
-	unsigned int cmd_running:1;
-};
+काष्ठा pcl726_निजी अणु
+	स्थिर काष्ठा comedi_lrange *rangelist[12];
+	अचिन्हित पूर्णांक cmd_running:1;
+पूर्ण;
 
-static int pcl726_intr_insn_bits(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
+अटल पूर्णांक pcl726_पूर्णांकr_insn_bits(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = 0;
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl726_intr_cmdtest(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक pcl726_पूर्णांकr_cmdtest(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_EXT);
@@ -168,13 +169,13 @@ static int pcl726_intr_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 	/* Step 2b : and mutually compatible */
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
@@ -183,177 +184,177 @@ static int pcl726_intr_cmdtest(struct comedi_device *dev,
 					   cmd->chanlist_len);
 	err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* Step 4: fix up any arguments */
 
-	/* Step 5: check channel list if it exists */
+	/* Step 5: check channel list अगर it exists */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcl726_intr_cmd(struct comedi_device *dev,
-			   struct comedi_subdevice *s)
-{
-	struct pcl726_private *devpriv = dev->private;
+अटल पूर्णांक pcl726_पूर्णांकr_cmd(काष्ठा comedi_device *dev,
+			   काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pcl726_निजी *devpriv = dev->निजी;
 
 	devpriv->cmd_running = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcl726_intr_cancel(struct comedi_device *dev,
-			      struct comedi_subdevice *s)
-{
-	struct pcl726_private *devpriv = dev->private;
+अटल पूर्णांक pcl726_पूर्णांकr_cancel(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pcl726_निजी *devpriv = dev->निजी;
 
 	devpriv->cmd_running = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t pcl726_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct pcl726_private *devpriv = dev->private;
+अटल irqवापस_t pcl726_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा pcl726_निजी *devpriv = dev->निजी;
 
-	if (devpriv->cmd_running) {
-		unsigned short val = 0;
+	अगर (devpriv->cmd_running) अणु
+		अचिन्हित लघु val = 0;
 
-		pcl726_intr_cancel(dev, s);
+		pcl726_पूर्णांकr_cancel(dev, s);
 
-		comedi_buf_write_samples(s, &val, 1);
+		comedi_buf_ग_लिखो_samples(s, &val, 1);
 		comedi_handle_events(dev, s);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int pcl726_ao_insn_write(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	int i;
+अटल पूर्णांक pcl726_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
-		s->readback[chan] = val;
+		s->पढ़ोback[chan] = val;
 
 		/* bipolar data to the DAC is two's complement */
-		if (comedi_chan_range_is_bipolar(s, chan, range))
+		अगर (comedi_chan_range_is_bipolar(s, chan, range))
 			val = comedi_offset_munge(s, val);
 
 		/* order is important, MSB then LSB */
 		outb((val >> 8) & 0xff, dev->iobase + PCL726_AO_MSB_REG(chan));
 		outb(val & 0xff, dev->iobase + PCL726_AO_LSB_REG(chan));
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl726_di_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	const struct pcl726_board *board = dev->board_ptr;
-	unsigned int val;
+अटल पूर्णांक pcl726_di_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	स्थिर काष्ठा pcl726_board *board = dev->board_ptr;
+	अचिन्हित पूर्णांक val;
 
-	if (board->is_pcl727) {
+	अगर (board->is_pcl727) अणु
 		val = inb(dev->iobase + PCL727_DI_LSB_REG);
 		val |= (inb(dev->iobase + PCL727_DI_MSB_REG) << 8);
-	} else {
+	पूर्ण अन्यथा अणु
 		val = inb(dev->iobase + PCL726_DI_LSB_REG);
 		val |= (inb(dev->iobase + PCL726_DI_MSB_REG) << 8);
-	}
+	पूर्ण
 
 	data[1] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl726_do_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	const struct pcl726_board *board = dev->board_ptr;
-	unsigned long io = dev->iobase;
-	unsigned int mask;
+अटल पूर्णांक pcl726_करो_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	स्थिर काष्ठा pcl726_board *board = dev->board_ptr;
+	अचिन्हित दीर्घ io = dev->iobase;
+	अचिन्हित पूर्णांक mask;
 
 	mask = comedi_dio_update_state(s, data);
-	if (mask) {
-		if (board->is_pcl727) {
-			if (mask & 0x00ff)
+	अगर (mask) अणु
+		अगर (board->is_pcl727) अणु
+			अगर (mask & 0x00ff)
 				outb(s->state & 0xff, io + PCL727_DO_LSB_REG);
-			if (mask & 0xff00)
+			अगर (mask & 0xff00)
 				outb((s->state >> 8), io + PCL727_DO_MSB_REG);
-		} else {
-			if (mask & 0x00ff)
+		पूर्ण अन्यथा अणु
+			अगर (mask & 0x00ff)
 				outb(s->state & 0xff, io + PCL726_DO_LSB_REG);
-			if (mask & 0xff00)
+			अगर (mask & 0xff00)
 				outb((s->state >> 8), io + PCL726_DO_MSB_REG);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl726_attach(struct comedi_device *dev,
-			 struct comedi_devconfig *it)
-{
-	const struct pcl726_board *board = dev->board_ptr;
-	struct pcl726_private *devpriv;
-	struct comedi_subdevice *s;
-	int subdev;
-	int ret;
-	int i;
+अटल पूर्णांक pcl726_attach(काष्ठा comedi_device *dev,
+			 काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा pcl726_board *board = dev->board_ptr;
+	काष्ठा pcl726_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक subdev;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	ret = comedi_request_region(dev, it->options[0], board->io_len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	/*
-	 * Hook up the external trigger source interrupt only if the
-	 * user config option is valid and the board supports interrupts.
+	 * Hook up the बाह्यal trigger source पूर्णांकerrupt only अगर the
+	 * user config option is valid and the board supports पूर्णांकerrupts.
 	 */
-	if (it->options[1] && (board->irq_mask & (1 << it->options[1]))) {
-		ret = request_irq(it->options[1], pcl726_interrupt, 0,
+	अगर (it->options[1] && (board->irq_mask & (1 << it->options[1]))) अणु
+		ret = request_irq(it->options[1], pcl726_पूर्णांकerrupt, 0,
 				  dev->board_name, dev);
-		if (ret == 0) {
+		अगर (ret == 0) अणु
 			/* External trigger source is from Pin-17 of CN3 */
 			dev->irq = it->options[1];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* setup the per-channel analog output range_table_list */
-	for (i = 0; i < 12; i++) {
-		unsigned int opt = it->options[2 + i];
+	क्रम (i = 0; i < 12; i++) अणु
+		अचिन्हित पूर्णांक opt = it->options[2 + i];
 
-		if (opt < board->ao_num_ranges && i < board->ao_nchan)
+		अगर (opt < board->ao_num_ranges && i < board->ao_nchan)
 			devpriv->rangelist[i] = board->ao_ranges[opt];
-		else
+		अन्यथा
 			devpriv->rangelist[i] = &range_unknown;
-	}
+	पूर्ण
 
 	subdev = board->have_dio ? 3 : 1;
-	if (dev->irq)
+	अगर (dev->irq)
 		subdev++;
 	ret = comedi_alloc_subdevices(dev, subdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	subdev = 0;
 
@@ -364,13 +365,13 @@ static int pcl726_attach(struct comedi_device *dev,
 	s->n_chan	= board->ao_nchan;
 	s->maxdata	= 0x0fff;
 	s->range_table_list = devpriv->rangelist;
-	s->insn_write	= pcl726_ao_insn_write;
+	s->insn_ग_लिखो	= pcl726_ao_insn_ग_लिखो;
 
-	ret = comedi_alloc_subdev_readback(s);
-	if (ret)
-		return ret;
+	ret = comedi_alloc_subdev_पढ़ोback(s);
+	अगर (ret)
+		वापस ret;
 
-	if (board->have_dio) {
+	अगर (board->have_dio) अणु
 		/* Digital Input subdevice */
 		s = &dev->subdevices[subdev++];
 		s->type		= COMEDI_SUBD_DI;
@@ -386,38 +387,38 @@ static int pcl726_attach(struct comedi_device *dev,
 		s->subdev_flags	= SDF_WRITABLE;
 		s->n_chan	= 16;
 		s->maxdata	= 1;
-		s->insn_bits	= pcl726_do_insn_bits;
+		s->insn_bits	= pcl726_करो_insn_bits;
 		s->range_table	= &range_digital;
-	}
+	पूर्ण
 
-	if (dev->irq) {
+	अगर (dev->irq) अणु
 		/* Digital Input subdevice - Interrupt support */
 		s = &dev->subdevices[subdev++];
-		dev->read_subdev = s;
+		dev->पढ़ो_subdev = s;
 		s->type		= COMEDI_SUBD_DI;
 		s->subdev_flags	= SDF_READABLE | SDF_CMD_READ;
 		s->n_chan	= 1;
 		s->maxdata	= 1;
 		s->range_table	= &range_digital;
-		s->insn_bits	= pcl726_intr_insn_bits;
+		s->insn_bits	= pcl726_पूर्णांकr_insn_bits;
 		s->len_chanlist	= 1;
-		s->do_cmdtest	= pcl726_intr_cmdtest;
-		s->do_cmd	= pcl726_intr_cmd;
-		s->cancel	= pcl726_intr_cancel;
-	}
+		s->करो_cmdtest	= pcl726_पूर्णांकr_cmdtest;
+		s->करो_cmd	= pcl726_पूर्णांकr_cmd;
+		s->cancel	= pcl726_पूर्णांकr_cancel;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver pcl726_driver = {
+अटल काष्ठा comedi_driver pcl726_driver = अणु
 	.driver_name	= "pcl726",
 	.module		= THIS_MODULE,
 	.attach		= pcl726_attach,
 	.detach		= comedi_legacy_detach,
 	.board_name	= &pcl726_boards[0].name,
 	.num_names	= ARRAY_SIZE(pcl726_boards),
-	.offset		= sizeof(struct pcl726_board),
-};
+	.offset		= माप(काष्ठा pcl726_board),
+पूर्ण;
 module_comedi_driver(pcl726_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

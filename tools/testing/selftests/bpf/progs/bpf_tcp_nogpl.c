@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/bpf.h>
-#include <linux/types.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include "bpf_tcp_helpers.h"
+#समावेश <linux/bpf.h>
+#समावेश <linux/types.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश "bpf_tcp_helpers.h"
 
-char _license[] SEC("license") = "X";
+अक्षर _license[] SEC("license") = "X";
 
-void BPF_STRUCT_OPS(nogpltcp_init, struct sock *sk)
-{
-}
+व्योम BPF_STRUCT_OPS(nogpltcp_init, काष्ठा sock *sk)
+अणु
+पूर्ण
 
 SEC(".struct_ops")
-struct tcp_congestion_ops bpf_nogpltcp = {
-	.init           = (void *)nogpltcp_init,
+काष्ठा tcp_congestion_ops bpf_nogpltcp = अणु
+	.init           = (व्योम *)nogpltcp_init,
 	.name           = "bpf_nogpltcp",
-};
+पूर्ण;

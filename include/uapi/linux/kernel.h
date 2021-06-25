@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_LINUX_KERNEL_H
-#define _UAPI_LINUX_KERNEL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_LINUX_KERNEL_H
+#घोषणा _UAPI_LINUX_KERNEL_H
 
-#include <linux/sysinfo.h>
-#include <linux/const.h>
+#समावेश <linux/sysinfo.h>
+#समावेश <linux/स्थिर.h>
 
-#endif /* _UAPI_LINUX_KERNEL_H */
+#पूर्ण_अगर /* _UAPI_LINUX_KERNEL_H */

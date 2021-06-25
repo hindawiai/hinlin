@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * MSI support for PPC4xx SoCs using High Speed Transfer Assist (HSTA) for
- * generation of the interrupt.
+ * MSI support क्रम PPC4xx SoCs using High Speed Transfer Assist (HSTA) क्रम
+ * generation of the पूर्णांकerrupt.
  *
- * Copyright © 2013 Alistair Popple <alistair@popple.id.au> IBM Corporation
+ * Copyright तऊ 2013 Alistair Popple <alistair@popple.id.au> IBM Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/msi.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/pci.h>
-#include <linux/semaphore.h>
-#include <asm/msi_bitmap.h>
-#include <asm/ppc-pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/semaphore.h>
+#समावेश <यंत्र/msi_biपंचांगap.h>
+#समावेश <यंत्र/ppc-pci.h>
 
-struct ppc4xx_hsta_msi {
-	struct device *dev;
+काष्ठा ppc4xx_hsta_msi अणु
+	काष्ठा device *dev;
 
 	/* The ioremapped HSTA MSI IO space */
 	u32 __iomem *data;
 
 	/* Physical address of HSTA MSI IO space */
 	u64 address;
-	struct msi_bitmap bmp;
+	काष्ठा msi_biपंचांगap bmp;
 
 	/* An array mapping offsets to hardware IRQs */
-	int *irq_map;
+	पूर्णांक *irq_map;
 
 	/* Number of hwirqs supported */
-	int irq_count;
-};
-static struct ppc4xx_hsta_msi ppc4xx_hsta_msi;
+	पूर्णांक irq_count;
+पूर्ण;
+अटल काष्ठा ppc4xx_hsta_msi ppc4xx_hsta_msi;
 
-static int hsta_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
-{
-	struct msi_msg msg;
-	struct msi_desc *entry;
-	int irq, hwirq;
+अटल पूर्णांक hsta_setup_msi_irqs(काष्ठा pci_dev *dev, पूर्णांक nvec, पूर्णांक type)
+अणु
+	काष्ठा msi_msg msg;
+	काष्ठा msi_desc *entry;
+	पूर्णांक irq, hwirq;
 	u64 addr;
 
-	/* We don't support MSI-X */
-	if (type == PCI_CAP_ID_MSIX) {
+	/* We करोn't support MSI-X */
+	अगर (type == PCI_CAP_ID_MSIX) अणु
 		pr_debug("%s: MSI-X not supported.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for_each_pci_msi_entry(entry, dev) {
-		irq = msi_bitmap_alloc_hwirqs(&ppc4xx_hsta_msi.bmp, 1);
-		if (irq < 0) {
+	क्रम_each_pci_msi_entry(entry, dev) अणु
+		irq = msi_biपंचांगap_alloc_hwirqs(&ppc4xx_hsta_msi.bmp, 1);
+		अगर (irq < 0) अणु
 			pr_debug("%s: Failed to allocate msi interrupt\n",
 				 __func__);
-			return irq;
-		}
+			वापस irq;
+		पूर्ण
 
 		hwirq = ppc4xx_hsta_msi.irq_map[irq];
-		if (!hwirq) {
+		अगर (!hwirq) अणु
 			pr_err("%s: Failed mapping irq %d\n", __func__, irq);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
-		 * HSTA generates interrupts on writes to 128-bit aligned
+		 * HSTA generates पूर्णांकerrupts on ग_लिखोs to 128-bit aligned
 		 * addresses.
 		 */
 		addr = ppc4xx_hsta_msi.address + irq*0x10;
@@ -75,135 +76,135 @@ static int hsta_setup_msi_irqs(struct pci_dev *dev, int nvec, int type)
 		pr_debug("%s: Setup irq %d (0x%0llx)\n", __func__, hwirq,
 			 (((u64) msg.address_hi) << 32) | msg.address_lo);
 
-		if (irq_set_msi_desc(hwirq, entry)) {
+		अगर (irq_set_msi_desc(hwirq, entry)) अणु
 			pr_err(
 			"%s: Invalid hwirq %d specified in device tree\n",
 			__func__, hwirq);
-			msi_bitmap_free_hwirqs(&ppc4xx_hsta_msi.bmp, irq, 1);
-			return -EINVAL;
-		}
-		pci_write_msi_msg(hwirq, &msg);
-	}
+			msi_biपंचांगap_मुक्त_hwirqs(&ppc4xx_hsta_msi.bmp, irq, 1);
+			वापस -EINVAL;
+		पूर्ण
+		pci_ग_लिखो_msi_msg(hwirq, &msg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hsta_find_hwirq_offset(int hwirq)
-{
-	int irq;
+अटल पूर्णांक hsta_find_hwirq_offset(पूर्णांक hwirq)
+अणु
+	पूर्णांक irq;
 
 	/* Find the offset given the hwirq */
-	for (irq = 0; irq < ppc4xx_hsta_msi.irq_count; irq++)
-		if (ppc4xx_hsta_msi.irq_map[irq] == hwirq)
-			return irq;
+	क्रम (irq = 0; irq < ppc4xx_hsta_msi.irq_count; irq++)
+		अगर (ppc4xx_hsta_msi.irq_map[irq] == hwirq)
+			वापस irq;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void hsta_teardown_msi_irqs(struct pci_dev *dev)
-{
-	struct msi_desc *entry;
-	int irq;
+अटल व्योम hsta_tearकरोwn_msi_irqs(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा msi_desc *entry;
+	पूर्णांक irq;
 
-	for_each_pci_msi_entry(entry, dev) {
-		if (!entry->irq)
-			continue;
+	क्रम_each_pci_msi_entry(entry, dev) अणु
+		अगर (!entry->irq)
+			जारी;
 
 		irq = hsta_find_hwirq_offset(entry->irq);
 
 		/* entry->irq should always be in irq_map */
 		BUG_ON(irq < 0);
-		irq_set_msi_desc(entry->irq, NULL);
-		msi_bitmap_free_hwirqs(&ppc4xx_hsta_msi.bmp, irq, 1);
+		irq_set_msi_desc(entry->irq, शून्य);
+		msi_biपंचांगap_मुक्त_hwirqs(&ppc4xx_hsta_msi.bmp, irq, 1);
 		pr_debug("%s: Teardown IRQ %u (index %u)\n", __func__,
 			 entry->irq, irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int hsta_msi_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *mem;
-	int irq, ret, irq_count;
-	struct pci_controller *phb;
+अटल पूर्णांक hsta_msi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *mem;
+	पूर्णांक irq, ret, irq_count;
+	काष्ठा pci_controller *phb;
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!mem) {
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!mem) अणु
 		dev_err(dev, "Unable to get mmio space\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	irq_count = of_irq_count(dev->of_node);
-	if (!irq_count) {
+	अगर (!irq_count) अणु
 		dev_err(dev, "Unable to find IRQ range\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ppc4xx_hsta_msi.dev = dev;
 	ppc4xx_hsta_msi.address = mem->start;
 	ppc4xx_hsta_msi.data = ioremap(mem->start, resource_size(mem));
 	ppc4xx_hsta_msi.irq_count = irq_count;
-	if (!ppc4xx_hsta_msi.data) {
+	अगर (!ppc4xx_hsta_msi.data) अणु
 		dev_err(dev, "Unable to map memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = msi_bitmap_alloc(&ppc4xx_hsta_msi.bmp, irq_count, dev->of_node);
-	if (ret)
-		goto out;
+	ret = msi_biपंचांगap_alloc(&ppc4xx_hsta_msi.bmp, irq_count, dev->of_node);
+	अगर (ret)
+		जाओ out;
 
-	ppc4xx_hsta_msi.irq_map = kmalloc_array(irq_count, sizeof(int),
+	ppc4xx_hsta_msi.irq_map = kदो_स्मृति_array(irq_count, माप(पूर्णांक),
 						GFP_KERNEL);
-	if (!ppc4xx_hsta_msi.irq_map) {
+	अगर (!ppc4xx_hsta_msi.irq_map) अणु
 		ret = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	/* Setup a mapping from irq offsets to hardware irq numbers */
-	for (irq = 0; irq < irq_count; irq++) {
+	क्रम (irq = 0; irq < irq_count; irq++) अणु
 		ppc4xx_hsta_msi.irq_map[irq] =
 			irq_of_parse_and_map(dev->of_node, irq);
-		if (!ppc4xx_hsta_msi.irq_map[irq]) {
+		अगर (!ppc4xx_hsta_msi.irq_map[irq]) अणु
 			dev_err(dev, "Unable to map IRQ\n");
 			ret = -EINVAL;
-			goto out2;
-		}
-	}
+			जाओ out2;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(phb, &hose_list, list_node) {
+	list_क्रम_each_entry(phb, &hose_list, list_node) अणु
 		phb->controller_ops.setup_msi_irqs = hsta_setup_msi_irqs;
-		phb->controller_ops.teardown_msi_irqs = hsta_teardown_msi_irqs;
-	}
-	return 0;
+		phb->controller_ops.tearकरोwn_msi_irqs = hsta_tearकरोwn_msi_irqs;
+	पूर्ण
+	वापस 0;
 
 out2:
-	kfree(ppc4xx_hsta_msi.irq_map);
+	kमुक्त(ppc4xx_hsta_msi.irq_map);
 
 out1:
-	msi_bitmap_free(&ppc4xx_hsta_msi.bmp);
+	msi_biपंचांगap_मुक्त(&ppc4xx_hsta_msi.bmp);
 
 out:
 	iounmap(ppc4xx_hsta_msi.data);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id hsta_msi_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id hsta_msi_ids[] = अणु
+	अणु
 		.compatible = "ibm,hsta-msi",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver hsta_msi_driver = {
+अटल काष्ठा platक्रमm_driver hsta_msi_driver = अणु
 	.probe = hsta_msi_probe,
-	.driver = {
+	.driver = अणु
 		.name = "hsta-msi",
 		.of_match_table = hsta_msi_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int hsta_msi_init(void)
-{
-	return platform_driver_register(&hsta_msi_driver);
-}
+अटल पूर्णांक hsta_msi_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&hsta_msi_driver);
+पूर्ण
 subsys_initcall(hsta_msi_init);

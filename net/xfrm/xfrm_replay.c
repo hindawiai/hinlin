@@ -1,545 +1,546 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * xfrm_replay.c - xfrm replay detection, derived from xfrm_state.c.
  *
  * Copyright (C) 2010 secunet Security Networks AG
- * Copyright (C) 2010 Steffen Klassert <steffen.klassert@secunet.com>
+ * Copyright (C) 2010 Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  */
 
-#include <linux/export.h>
-#include <net/xfrm.h>
+#समावेश <linux/export.h>
+#समावेश <net/xfrm.h>
 
-u32 xfrm_replay_seqhi(struct xfrm_state *x, __be32 net_seq)
-{
+u32 xfrm_replay_seqhi(काष्ठा xfrm_state *x, __be32 net_seq)
+अणु
 	u32 seq, seq_hi, bottom;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 
-	if (!(x->props.flags & XFRM_STATE_ESN))
-		return 0;
+	अगर (!(x->props.flags & XFRM_STATE_ESN))
+		वापस 0;
 
 	seq = ntohl(net_seq);
 	seq_hi = replay_esn->seq_hi;
-	bottom = replay_esn->seq - replay_esn->replay_window + 1;
+	bottom = replay_esn->seq - replay_esn->replay_winकरोw + 1;
 
-	if (likely(replay_esn->seq >= replay_esn->replay_window - 1)) {
+	अगर (likely(replay_esn->seq >= replay_esn->replay_winकरोw - 1)) अणु
 		/* A. same subspace */
-		if (unlikely(seq < bottom))
+		अगर (unlikely(seq < bottom))
 			seq_hi++;
-	} else {
-		/* B. window spans two subspaces */
-		if (unlikely(seq >= bottom))
+	पूर्ण अन्यथा अणु
+		/* B. winकरोw spans two subspaces */
+		अगर (unlikely(seq >= bottom))
 			seq_hi--;
-	}
+	पूर्ण
 
-	return seq_hi;
-}
+	वापस seq_hi;
+पूर्ण
 EXPORT_SYMBOL(xfrm_replay_seqhi);
 ;
-static void xfrm_replay_notify(struct xfrm_state *x, int event)
-{
-	struct km_event c;
-	/* we send notify messages in case
-	 *  1. we updated on of the sequence numbers, and the seqno difference
-	 *     is at least x->replay_maxdiff, in this case we also update the
-	 *     timeout of our timer function
-	 *  2. if x->replay_maxage has elapsed since last update,
+अटल व्योम xfrm_replay_notअगरy(काष्ठा xfrm_state *x, पूर्णांक event)
+अणु
+	काष्ठा km_event c;
+	/* we send notअगरy messages in हाल
+	 *  1. we updated on of the sequence numbers, and the seqno dअगरference
+	 *     is at least x->replay_maxdअगरf, in this हाल we also update the
+	 *     समयout of our समयr function
+	 *  2. अगर x->replay_maxage has elapsed since last update,
 	 *     and there were changes
 	 *
-	 *  The state structure must be locked!
+	 *  The state काष्ठाure must be locked!
 	 */
 
-	switch (event) {
-	case XFRM_REPLAY_UPDATE:
-		if (!x->replay_maxdiff ||
-		    ((x->replay.seq - x->preplay.seq < x->replay_maxdiff) &&
-		    (x->replay.oseq - x->preplay.oseq < x->replay_maxdiff))) {
-			if (x->xflags & XFRM_TIME_DEFER)
+	चयन (event) अणु
+	हाल XFRM_REPLAY_UPDATE:
+		अगर (!x->replay_maxdअगरf ||
+		    ((x->replay.seq - x->preplay.seq < x->replay_maxdअगरf) &&
+		    (x->replay.oseq - x->preplay.oseq < x->replay_maxdअगरf))) अणु
+			अगर (x->xflags & XFRM_TIME_DEFER)
 				event = XFRM_REPLAY_TIMEOUT;
-			else
-				return;
-		}
+			अन्यथा
+				वापस;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case XFRM_REPLAY_TIMEOUT:
-		if (memcmp(&x->replay, &x->preplay,
-			   sizeof(struct xfrm_replay_state)) == 0) {
+	हाल XFRM_REPLAY_TIMEOUT:
+		अगर (स_भेद(&x->replay, &x->preplay,
+			   माप(काष्ठा xfrm_replay_state)) == 0) अणु
 			x->xflags |= XFRM_TIME_DEFER;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	memcpy(&x->preplay, &x->replay, sizeof(struct xfrm_replay_state));
+	स_नकल(&x->preplay, &x->replay, माप(काष्ठा xfrm_replay_state));
 	c.event = XFRM_MSG_NEWAE;
 	c.data.aevent = event;
-	km_state_notify(x, &c);
+	km_state_notअगरy(x, &c);
 
-	if (x->replay_maxage &&
-	    !mod_timer(&x->rtimer, jiffies + x->replay_maxage))
+	अगर (x->replay_maxage &&
+	    !mod_समयr(&x->rसमयr, jअगरfies + x->replay_maxage))
 		x->xflags &= ~XFRM_TIME_DEFER;
-}
+पूर्ण
 
-static int xfrm_replay_overflow(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct net *net = xs_net(x);
+अटल पूर्णांक xfrm_replay_overflow(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा net *net = xs_net(x);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
 		XFRM_SKB_CB(skb)->seq.output.low = ++x->replay.oseq;
 		XFRM_SKB_CB(skb)->seq.output.hi = 0;
-		if (unlikely(x->replay.oseq == 0) &&
-		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) {
+		अगर (unlikely(x->replay.oseq == 0) &&
+		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) अणु
 			x->replay.oseq--;
 			xfrm_audit_state_replay_overflow(x, skb);
 			err = -EOVERFLOW;
 
-			return err;
-		}
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+			वापस err;
+		पूर्ण
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm_replay_check(struct xfrm_state *x,
-		      struct sk_buff *skb, __be32 net_seq)
-{
-	u32 diff;
+अटल पूर्णांक xfrm_replay_check(काष्ठा xfrm_state *x,
+		      काष्ठा sk_buff *skb, __be32 net_seq)
+अणु
+	u32 dअगरf;
 	u32 seq = ntohl(net_seq);
 
-	if (!x->props.replay_window)
-		return 0;
+	अगर (!x->props.replay_winकरोw)
+		वापस 0;
 
-	if (unlikely(seq == 0))
-		goto err;
+	अगर (unlikely(seq == 0))
+		जाओ err;
 
-	if (likely(seq > x->replay.seq))
-		return 0;
+	अगर (likely(seq > x->replay.seq))
+		वापस 0;
 
-	diff = x->replay.seq - seq;
-	if (diff >= x->props.replay_window) {
-		x->stats.replay_window++;
-		goto err;
-	}
+	dअगरf = x->replay.seq - seq;
+	अगर (dअगरf >= x->props.replay_winकरोw) अणु
+		x->stats.replay_winकरोw++;
+		जाओ err;
+	पूर्ण
 
-	if (x->replay.bitmap & (1U << diff)) {
+	अगर (x->replay.biपंचांगap & (1U << dअगरf)) अणु
 		x->stats.replay++;
-		goto err;
-	}
-	return 0;
+		जाओ err;
+	पूर्ण
+	वापस 0;
 
 err:
 	xfrm_audit_state_replay(x, skb, net_seq);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void xfrm_replay_advance(struct xfrm_state *x, __be32 net_seq)
-{
-	u32 diff;
+अटल व्योम xfrm_replay_advance(काष्ठा xfrm_state *x, __be32 net_seq)
+अणु
+	u32 dअगरf;
 	u32 seq = ntohl(net_seq);
 
-	if (!x->props.replay_window)
-		return;
+	अगर (!x->props.replay_winकरोw)
+		वापस;
 
-	if (seq > x->replay.seq) {
-		diff = seq - x->replay.seq;
-		if (diff < x->props.replay_window)
-			x->replay.bitmap = ((x->replay.bitmap) << diff) | 1;
-		else
-			x->replay.bitmap = 1;
+	अगर (seq > x->replay.seq) अणु
+		dअगरf = seq - x->replay.seq;
+		अगर (dअगरf < x->props.replay_winकरोw)
+			x->replay.biपंचांगap = ((x->replay.biपंचांगap) << dअगरf) | 1;
+		अन्यथा
+			x->replay.biपंचांगap = 1;
 		x->replay.seq = seq;
-	} else {
-		diff = x->replay.seq - seq;
-		x->replay.bitmap |= (1U << diff);
-	}
+	पूर्ण अन्यथा अणु
+		dअगरf = x->replay.seq - seq;
+		x->replay.biपंचांगap |= (1U << dअगरf);
+	पूर्ण
 
-	if (xfrm_aevent_is_on(xs_net(x)))
-		x->repl->notify(x, XFRM_REPLAY_UPDATE);
-}
+	अगर (xfrm_aevent_is_on(xs_net(x)))
+		x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+पूर्ण
 
-static int xfrm_replay_overflow_bmp(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct net *net = xs_net(x);
+अटल पूर्णांक xfrm_replay_overflow_bmp(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा net *net = xs_net(x);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
 		XFRM_SKB_CB(skb)->seq.output.low = ++replay_esn->oseq;
 		XFRM_SKB_CB(skb)->seq.output.hi = 0;
-		if (unlikely(replay_esn->oseq == 0) &&
-		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) {
+		अगर (unlikely(replay_esn->oseq == 0) &&
+		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) अणु
 			replay_esn->oseq--;
 			xfrm_audit_state_replay_overflow(x, skb);
 			err = -EOVERFLOW;
 
-			return err;
-		}
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+			वापस err;
+		पूर्ण
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm_replay_check_bmp(struct xfrm_state *x,
-				 struct sk_buff *skb, __be32 net_seq)
-{
-	unsigned int bitnr, nr;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+अटल पूर्णांक xfrm_replay_check_bmp(काष्ठा xfrm_state *x,
+				 काष्ठा sk_buff *skb, __be32 net_seq)
+अणु
+	अचिन्हित पूर्णांक bitnr, nr;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 	u32 pos;
 	u32 seq = ntohl(net_seq);
-	u32 diff =  replay_esn->seq - seq;
+	u32 dअगरf =  replay_esn->seq - seq;
 
-	if (!replay_esn->replay_window)
-		return 0;
+	अगर (!replay_esn->replay_winकरोw)
+		वापस 0;
 
-	if (unlikely(seq == 0))
-		goto err;
+	अगर (unlikely(seq == 0))
+		जाओ err;
 
-	if (likely(seq > replay_esn->seq))
-		return 0;
+	अगर (likely(seq > replay_esn->seq))
+		वापस 0;
 
-	if (diff >= replay_esn->replay_window) {
-		x->stats.replay_window++;
-		goto err;
-	}
+	अगर (dअगरf >= replay_esn->replay_winकरोw) अणु
+		x->stats.replay_winकरोw++;
+		जाओ err;
+	पूर्ण
 
-	pos = (replay_esn->seq - 1) % replay_esn->replay_window;
+	pos = (replay_esn->seq - 1) % replay_esn->replay_winकरोw;
 
-	if (pos >= diff)
-		bitnr = (pos - diff) % replay_esn->replay_window;
-	else
-		bitnr = replay_esn->replay_window - (diff - pos);
+	अगर (pos >= dअगरf)
+		bitnr = (pos - dअगरf) % replay_esn->replay_winकरोw;
+	अन्यथा
+		bitnr = replay_esn->replay_winकरोw - (dअगरf - pos);
 
 	nr = bitnr >> 5;
 	bitnr = bitnr & 0x1F;
-	if (replay_esn->bmp[nr] & (1U << bitnr))
-		goto err_replay;
+	अगर (replay_esn->bmp[nr] & (1U << bitnr))
+		जाओ err_replay;
 
-	return 0;
+	वापस 0;
 
 err_replay:
 	x->stats.replay++;
 err:
 	xfrm_audit_state_replay(x, skb, net_seq);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void xfrm_replay_advance_bmp(struct xfrm_state *x, __be32 net_seq)
-{
-	unsigned int bitnr, nr, i;
-	u32 diff;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+अटल व्योम xfrm_replay_advance_bmp(काष्ठा xfrm_state *x, __be32 net_seq)
+अणु
+	अचिन्हित पूर्णांक bitnr, nr, i;
+	u32 dअगरf;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 	u32 seq = ntohl(net_seq);
 	u32 pos;
 
-	if (!replay_esn->replay_window)
-		return;
+	अगर (!replay_esn->replay_winकरोw)
+		वापस;
 
-	pos = (replay_esn->seq - 1) % replay_esn->replay_window;
+	pos = (replay_esn->seq - 1) % replay_esn->replay_winकरोw;
 
-	if (seq > replay_esn->seq) {
-		diff = seq - replay_esn->seq;
+	अगर (seq > replay_esn->seq) अणु
+		dअगरf = seq - replay_esn->seq;
 
-		if (diff < replay_esn->replay_window) {
-			for (i = 1; i < diff; i++) {
-				bitnr = (pos + i) % replay_esn->replay_window;
+		अगर (dअगरf < replay_esn->replay_winकरोw) अणु
+			क्रम (i = 1; i < dअगरf; i++) अणु
+				bitnr = (pos + i) % replay_esn->replay_winकरोw;
 				nr = bitnr >> 5;
 				bitnr = bitnr & 0x1F;
 				replay_esn->bmp[nr] &=  ~(1U << bitnr);
-			}
-		} else {
-			nr = (replay_esn->replay_window - 1) >> 5;
-			for (i = 0; i <= nr; i++)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			nr = (replay_esn->replay_winकरोw - 1) >> 5;
+			क्रम (i = 0; i <= nr; i++)
 				replay_esn->bmp[i] = 0;
-		}
+		पूर्ण
 
-		bitnr = (pos + diff) % replay_esn->replay_window;
+		bitnr = (pos + dअगरf) % replay_esn->replay_winकरोw;
 		replay_esn->seq = seq;
-	} else {
-		diff = replay_esn->seq - seq;
+	पूर्ण अन्यथा अणु
+		dअगरf = replay_esn->seq - seq;
 
-		if (pos >= diff)
-			bitnr = (pos - diff) % replay_esn->replay_window;
-		else
-			bitnr = replay_esn->replay_window - (diff - pos);
-	}
+		अगर (pos >= dअगरf)
+			bitnr = (pos - dअगरf) % replay_esn->replay_winकरोw;
+		अन्यथा
+			bitnr = replay_esn->replay_winकरोw - (dअगरf - pos);
+	पूर्ण
 
 	nr = bitnr >> 5;
 	bitnr = bitnr & 0x1F;
 	replay_esn->bmp[nr] |= (1U << bitnr);
 
-	if (xfrm_aevent_is_on(xs_net(x)))
-		x->repl->notify(x, XFRM_REPLAY_UPDATE);
-}
+	अगर (xfrm_aevent_is_on(xs_net(x)))
+		x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+पूर्ण
 
-static void xfrm_replay_notify_bmp(struct xfrm_state *x, int event)
-{
-	struct km_event c;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct xfrm_replay_state_esn *preplay_esn = x->preplay_esn;
+अटल व्योम xfrm_replay_notअगरy_bmp(काष्ठा xfrm_state *x, पूर्णांक event)
+अणु
+	काष्ठा km_event c;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा xfrm_replay_state_esn *preplay_esn = x->preplay_esn;
 
-	/* we send notify messages in case
-	 *  1. we updated on of the sequence numbers, and the seqno difference
-	 *     is at least x->replay_maxdiff, in this case we also update the
-	 *     timeout of our timer function
-	 *  2. if x->replay_maxage has elapsed since last update,
+	/* we send notअगरy messages in हाल
+	 *  1. we updated on of the sequence numbers, and the seqno dअगरference
+	 *     is at least x->replay_maxdअगरf, in this हाल we also update the
+	 *     समयout of our समयr function
+	 *  2. अगर x->replay_maxage has elapsed since last update,
 	 *     and there were changes
 	 *
-	 *  The state structure must be locked!
+	 *  The state काष्ठाure must be locked!
 	 */
 
-	switch (event) {
-	case XFRM_REPLAY_UPDATE:
-		if (!x->replay_maxdiff ||
-		    ((replay_esn->seq - preplay_esn->seq < x->replay_maxdiff) &&
+	चयन (event) अणु
+	हाल XFRM_REPLAY_UPDATE:
+		अगर (!x->replay_maxdअगरf ||
+		    ((replay_esn->seq - preplay_esn->seq < x->replay_maxdअगरf) &&
 		    (replay_esn->oseq - preplay_esn->oseq
-		     < x->replay_maxdiff))) {
-			if (x->xflags & XFRM_TIME_DEFER)
+		     < x->replay_maxdअगरf))) अणु
+			अगर (x->xflags & XFRM_TIME_DEFER)
 				event = XFRM_REPLAY_TIMEOUT;
-			else
-				return;
-		}
+			अन्यथा
+				वापस;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case XFRM_REPLAY_TIMEOUT:
-		if (memcmp(x->replay_esn, x->preplay_esn,
-			   xfrm_replay_state_esn_len(replay_esn)) == 0) {
+	हाल XFRM_REPLAY_TIMEOUT:
+		अगर (स_भेद(x->replay_esn, x->preplay_esn,
+			   xfrm_replay_state_esn_len(replay_esn)) == 0) अणु
 			x->xflags |= XFRM_TIME_DEFER;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	memcpy(x->preplay_esn, x->replay_esn,
+	स_नकल(x->preplay_esn, x->replay_esn,
 	       xfrm_replay_state_esn_len(replay_esn));
 	c.event = XFRM_MSG_NEWAE;
 	c.data.aevent = event;
-	km_state_notify(x, &c);
+	km_state_notअगरy(x, &c);
 
-	if (x->replay_maxage &&
-	    !mod_timer(&x->rtimer, jiffies + x->replay_maxage))
+	अगर (x->replay_maxage &&
+	    !mod_समयr(&x->rसमयr, jअगरfies + x->replay_maxage))
 		x->xflags &= ~XFRM_TIME_DEFER;
-}
+पूर्ण
 
-static void xfrm_replay_notify_esn(struct xfrm_state *x, int event)
-{
-	u32 seq_diff, oseq_diff;
-	struct km_event c;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct xfrm_replay_state_esn *preplay_esn = x->preplay_esn;
+अटल व्योम xfrm_replay_notअगरy_esn(काष्ठा xfrm_state *x, पूर्णांक event)
+अणु
+	u32 seq_dअगरf, oseq_dअगरf;
+	काष्ठा km_event c;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा xfrm_replay_state_esn *preplay_esn = x->preplay_esn;
 
-	/* we send notify messages in case
-	 *  1. we updated on of the sequence numbers, and the seqno difference
-	 *     is at least x->replay_maxdiff, in this case we also update the
-	 *     timeout of our timer function
-	 *  2. if x->replay_maxage has elapsed since last update,
+	/* we send notअगरy messages in हाल
+	 *  1. we updated on of the sequence numbers, and the seqno dअगरference
+	 *     is at least x->replay_maxdअगरf, in this हाल we also update the
+	 *     समयout of our समयr function
+	 *  2. अगर x->replay_maxage has elapsed since last update,
 	 *     and there were changes
 	 *
-	 *  The state structure must be locked!
+	 *  The state काष्ठाure must be locked!
 	 */
 
-	switch (event) {
-	case XFRM_REPLAY_UPDATE:
-		if (x->replay_maxdiff) {
-			if (replay_esn->seq_hi == preplay_esn->seq_hi)
-				seq_diff = replay_esn->seq - preplay_esn->seq;
-			else
-				seq_diff = ~preplay_esn->seq + replay_esn->seq
+	चयन (event) अणु
+	हाल XFRM_REPLAY_UPDATE:
+		अगर (x->replay_maxdअगरf) अणु
+			अगर (replay_esn->seq_hi == preplay_esn->seq_hi)
+				seq_dअगरf = replay_esn->seq - preplay_esn->seq;
+			अन्यथा
+				seq_dअगरf = ~preplay_esn->seq + replay_esn->seq
 					   + 1;
 
-			if (replay_esn->oseq_hi == preplay_esn->oseq_hi)
-				oseq_diff = replay_esn->oseq
+			अगर (replay_esn->oseq_hi == preplay_esn->oseq_hi)
+				oseq_dअगरf = replay_esn->oseq
 					    - preplay_esn->oseq;
-			else
-				oseq_diff = ~preplay_esn->oseq
+			अन्यथा
+				oseq_dअगरf = ~preplay_esn->oseq
 					    + replay_esn->oseq + 1;
 
-			if (seq_diff >= x->replay_maxdiff ||
-			    oseq_diff >= x->replay_maxdiff)
-				break;
-		}
+			अगर (seq_dअगरf >= x->replay_maxdअगरf ||
+			    oseq_dअगरf >= x->replay_maxdअगरf)
+				अवरोध;
+		पूर्ण
 
-		if (x->xflags & XFRM_TIME_DEFER)
+		अगर (x->xflags & XFRM_TIME_DEFER)
 			event = XFRM_REPLAY_TIMEOUT;
-		else
-			return;
+		अन्यथा
+			वापस;
 
-		break;
+		अवरोध;
 
-	case XFRM_REPLAY_TIMEOUT:
-		if (memcmp(x->replay_esn, x->preplay_esn,
-			   xfrm_replay_state_esn_len(replay_esn)) == 0) {
+	हाल XFRM_REPLAY_TIMEOUT:
+		अगर (स_भेद(x->replay_esn, x->preplay_esn,
+			   xfrm_replay_state_esn_len(replay_esn)) == 0) अणु
 			x->xflags |= XFRM_TIME_DEFER;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	memcpy(x->preplay_esn, x->replay_esn,
+	स_नकल(x->preplay_esn, x->replay_esn,
 	       xfrm_replay_state_esn_len(replay_esn));
 	c.event = XFRM_MSG_NEWAE;
 	c.data.aevent = event;
-	km_state_notify(x, &c);
+	km_state_notअगरy(x, &c);
 
-	if (x->replay_maxage &&
-	    !mod_timer(&x->rtimer, jiffies + x->replay_maxage))
+	अगर (x->replay_maxage &&
+	    !mod_समयr(&x->rसमयr, jअगरfies + x->replay_maxage))
 		x->xflags &= ~XFRM_TIME_DEFER;
-}
+पूर्ण
 
-static int xfrm_replay_overflow_esn(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct net *net = xs_net(x);
+अटल पूर्णांक xfrm_replay_overflow_esn(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा net *net = xs_net(x);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
 		XFRM_SKB_CB(skb)->seq.output.low = ++replay_esn->oseq;
 		XFRM_SKB_CB(skb)->seq.output.hi = replay_esn->oseq_hi;
 
-		if (unlikely(replay_esn->oseq == 0)) {
+		अगर (unlikely(replay_esn->oseq == 0)) अणु
 			XFRM_SKB_CB(skb)->seq.output.hi = ++replay_esn->oseq_hi;
 
-			if (replay_esn->oseq_hi == 0) {
+			अगर (replay_esn->oseq_hi == 0) अणु
 				replay_esn->oseq--;
 				replay_esn->oseq_hi--;
 				xfrm_audit_state_replay_overflow(x, skb);
 				err = -EOVERFLOW;
 
-				return err;
-			}
-		}
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+				वापस err;
+			पूर्ण
+		पूर्ण
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm_replay_check_esn(struct xfrm_state *x,
-				 struct sk_buff *skb, __be32 net_seq)
-{
-	unsigned int bitnr, nr;
-	u32 diff;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+अटल पूर्णांक xfrm_replay_check_esn(काष्ठा xfrm_state *x,
+				 काष्ठा sk_buff *skb, __be32 net_seq)
+अणु
+	अचिन्हित पूर्णांक bitnr, nr;
+	u32 dअगरf;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 	u32 pos;
 	u32 seq = ntohl(net_seq);
-	u32 wsize = replay_esn->replay_window;
+	u32 wsize = replay_esn->replay_winकरोw;
 	u32 top = replay_esn->seq;
 	u32 bottom = top - wsize + 1;
 
-	if (!wsize)
-		return 0;
+	अगर (!wsize)
+		वापस 0;
 
-	if (unlikely(seq == 0 && replay_esn->seq_hi == 0 &&
-		     (replay_esn->seq < replay_esn->replay_window - 1)))
-		goto err;
+	अगर (unlikely(seq == 0 && replay_esn->seq_hi == 0 &&
+		     (replay_esn->seq < replay_esn->replay_winकरोw - 1)))
+		जाओ err;
 
-	diff = top - seq;
+	dअगरf = top - seq;
 
-	if (likely(top >= wsize - 1)) {
+	अगर (likely(top >= wsize - 1)) अणु
 		/* A. same subspace */
-		if (likely(seq > top) || seq < bottom)
-			return 0;
-	} else {
-		/* B. window spans two subspaces */
-		if (likely(seq > top && seq < bottom))
-			return 0;
-		if (seq >= bottom)
-			diff = ~seq + top + 1;
-	}
+		अगर (likely(seq > top) || seq < bottom)
+			वापस 0;
+	पूर्ण अन्यथा अणु
+		/* B. winकरोw spans two subspaces */
+		अगर (likely(seq > top && seq < bottom))
+			वापस 0;
+		अगर (seq >= bottom)
+			dअगरf = ~seq + top + 1;
+	पूर्ण
 
-	if (diff >= replay_esn->replay_window) {
-		x->stats.replay_window++;
-		goto err;
-	}
+	अगर (dअगरf >= replay_esn->replay_winकरोw) अणु
+		x->stats.replay_winकरोw++;
+		जाओ err;
+	पूर्ण
 
-	pos = (replay_esn->seq - 1) % replay_esn->replay_window;
+	pos = (replay_esn->seq - 1) % replay_esn->replay_winकरोw;
 
-	if (pos >= diff)
-		bitnr = (pos - diff) % replay_esn->replay_window;
-	else
-		bitnr = replay_esn->replay_window - (diff - pos);
+	अगर (pos >= dअगरf)
+		bitnr = (pos - dअगरf) % replay_esn->replay_winकरोw;
+	अन्यथा
+		bitnr = replay_esn->replay_winकरोw - (dअगरf - pos);
 
 	nr = bitnr >> 5;
 	bitnr = bitnr & 0x1F;
-	if (replay_esn->bmp[nr] & (1U << bitnr))
-		goto err_replay;
+	अगर (replay_esn->bmp[nr] & (1U << bitnr))
+		जाओ err_replay;
 
-	return 0;
+	वापस 0;
 
 err_replay:
 	x->stats.replay++;
 err:
 	xfrm_audit_state_replay(x, skb, net_seq);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int xfrm_replay_recheck_esn(struct xfrm_state *x,
-				   struct sk_buff *skb, __be32 net_seq)
-{
-	if (unlikely(XFRM_SKB_CB(skb)->seq.input.hi !=
-		     htonl(xfrm_replay_seqhi(x, net_seq)))) {
-			x->stats.replay_window++;
-			return -EINVAL;
-	}
+अटल पूर्णांक xfrm_replay_recheck_esn(काष्ठा xfrm_state *x,
+				   काष्ठा sk_buff *skb, __be32 net_seq)
+अणु
+	अगर (unlikely(XFRM_SKB_CB(skb)->seq.input.hi !=
+		     htonl(xfrm_replay_seqhi(x, net_seq)))) अणु
+			x->stats.replay_winकरोw++;
+			वापस -EINVAL;
+	पूर्ण
 
-	return xfrm_replay_check_esn(x, skb, net_seq);
-}
+	वापस xfrm_replay_check_esn(x, skb, net_seq);
+पूर्ण
 
-static void xfrm_replay_advance_esn(struct xfrm_state *x, __be32 net_seq)
-{
-	unsigned int bitnr, nr, i;
-	int wrap;
-	u32 diff, pos, seq, seq_hi;
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+अटल व्योम xfrm_replay_advance_esn(काष्ठा xfrm_state *x, __be32 net_seq)
+अणु
+	अचिन्हित पूर्णांक bitnr, nr, i;
+	पूर्णांक wrap;
+	u32 dअगरf, pos, seq, seq_hi;
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 
-	if (!replay_esn->replay_window)
-		return;
+	अगर (!replay_esn->replay_winकरोw)
+		वापस;
 
 	seq = ntohl(net_seq);
-	pos = (replay_esn->seq - 1) % replay_esn->replay_window;
+	pos = (replay_esn->seq - 1) % replay_esn->replay_winकरोw;
 	seq_hi = xfrm_replay_seqhi(x, net_seq);
 	wrap = seq_hi - replay_esn->seq_hi;
 
-	if ((!wrap && seq > replay_esn->seq) || wrap > 0) {
-		if (likely(!wrap))
-			diff = seq - replay_esn->seq;
-		else
-			diff = ~replay_esn->seq + seq + 1;
+	अगर ((!wrap && seq > replay_esn->seq) || wrap > 0) अणु
+		अगर (likely(!wrap))
+			dअगरf = seq - replay_esn->seq;
+		अन्यथा
+			dअगरf = ~replay_esn->seq + seq + 1;
 
-		if (diff < replay_esn->replay_window) {
-			for (i = 1; i < diff; i++) {
-				bitnr = (pos + i) % replay_esn->replay_window;
+		अगर (dअगरf < replay_esn->replay_winकरोw) अणु
+			क्रम (i = 1; i < dअगरf; i++) अणु
+				bitnr = (pos + i) % replay_esn->replay_winकरोw;
 				nr = bitnr >> 5;
 				bitnr = bitnr & 0x1F;
 				replay_esn->bmp[nr] &=  ~(1U << bitnr);
-			}
-		} else {
-			nr = (replay_esn->replay_window - 1) >> 5;
-			for (i = 0; i <= nr; i++)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			nr = (replay_esn->replay_winकरोw - 1) >> 5;
+			क्रम (i = 0; i <= nr; i++)
 				replay_esn->bmp[i] = 0;
-		}
+		पूर्ण
 
-		bitnr = (pos + diff) % replay_esn->replay_window;
+		bitnr = (pos + dअगरf) % replay_esn->replay_winकरोw;
 		replay_esn->seq = seq;
 
-		if (unlikely(wrap > 0))
+		अगर (unlikely(wrap > 0))
 			replay_esn->seq_hi++;
-	} else {
-		diff = replay_esn->seq - seq;
+	पूर्ण अन्यथा अणु
+		dअगरf = replay_esn->seq - seq;
 
-		if (pos >= diff)
-			bitnr = (pos - diff) % replay_esn->replay_window;
-		else
-			bitnr = replay_esn->replay_window - (diff - pos);
-	}
+		अगर (pos >= dअगरf)
+			bitnr = (pos - dअगरf) % replay_esn->replay_winकरोw;
+		अन्यथा
+			bitnr = replay_esn->replay_winकरोw - (dअगरf - pos);
+	पूर्ण
 
 	xfrm_dev_state_advance_esn(x);
 
@@ -547,208 +548,208 @@ static void xfrm_replay_advance_esn(struct xfrm_state *x, __be32 net_seq)
 	bitnr = bitnr & 0x1F;
 	replay_esn->bmp[nr] |= (1U << bitnr);
 
-	if (xfrm_aevent_is_on(xs_net(x)))
-		x->repl->notify(x, XFRM_REPLAY_UPDATE);
-}
+	अगर (xfrm_aevent_is_on(xs_net(x)))
+		x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+पूर्ण
 
-#ifdef CONFIG_XFRM_OFFLOAD
-static int xfrm_replay_overflow_offload(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct net *net = xs_net(x);
-	struct xfrm_offload *xo = xfrm_offload(skb);
+#अगर_घोषित CONFIG_XFRM_OFFLOAD
+अटल पूर्णांक xfrm_replay_overflow_offload(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा net *net = xs_net(x);
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
 	__u32 oseq = x->replay.oseq;
 
-	if (!xo)
-		return xfrm_replay_overflow(x, skb);
+	अगर (!xo)
+		वापस xfrm_replay_overflow(x, skb);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
-		if (!skb_is_gso(skb)) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
+		अगर (!skb_is_gso(skb)) अणु
 			XFRM_SKB_CB(skb)->seq.output.low = ++oseq;
 			xo->seq.low = oseq;
-		} else {
+		पूर्ण अन्यथा अणु
 			XFRM_SKB_CB(skb)->seq.output.low = oseq + 1;
 			xo->seq.low = oseq + 1;
 			oseq += skb_shinfo(skb)->gso_segs;
-		}
+		पूर्ण
 
 		XFRM_SKB_CB(skb)->seq.output.hi = 0;
 		xo->seq.hi = 0;
-		if (unlikely(oseq < x->replay.oseq) &&
-		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) {
+		अगर (unlikely(oseq < x->replay.oseq) &&
+		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) अणु
 			xfrm_audit_state_replay_overflow(x, skb);
 			err = -EOVERFLOW;
 
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		x->replay.oseq = oseq;
 
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm_replay_overflow_offload_bmp(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct net *net = xs_net(x);
+अटल पूर्णांक xfrm_replay_overflow_offload_bmp(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा net *net = xs_net(x);
 	__u32 oseq = replay_esn->oseq;
 
-	if (!xo)
-		return xfrm_replay_overflow_bmp(x, skb);
+	अगर (!xo)
+		वापस xfrm_replay_overflow_bmp(x, skb);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
-		if (!skb_is_gso(skb)) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
+		अगर (!skb_is_gso(skb)) अणु
 			XFRM_SKB_CB(skb)->seq.output.low = ++oseq;
 			xo->seq.low = oseq;
-		} else {
+		पूर्ण अन्यथा अणु
 			XFRM_SKB_CB(skb)->seq.output.low = oseq + 1;
 			xo->seq.low = oseq + 1;
 			oseq += skb_shinfo(skb)->gso_segs;
-		}
+		पूर्ण
 
 		XFRM_SKB_CB(skb)->seq.output.hi = 0;
 		xo->seq.hi = 0;
-		if (unlikely(oseq < replay_esn->oseq) &&
-		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) {
+		अगर (unlikely(oseq < replay_esn->oseq) &&
+		    !(x->props.extra_flags & XFRM_SA_XFLAG_OSEQ_MAY_WRAP)) अणु
 			xfrm_audit_state_replay_overflow(x, skb);
 			err = -EOVERFLOW;
 
-			return err;
-		} else {
+			वापस err;
+		पूर्ण अन्यथा अणु
 			replay_esn->oseq = oseq;
-		}
+		पूर्ण
 
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int xfrm_replay_overflow_offload_esn(struct xfrm_state *x, struct sk_buff *skb)
-{
-	int err = 0;
-	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
-	struct net *net = xs_net(x);
+अटल पूर्णांक xfrm_replay_overflow_offload_esn(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
+	काष्ठा net *net = xs_net(x);
 	__u32 oseq = replay_esn->oseq;
 	__u32 oseq_hi = replay_esn->oseq_hi;
 
-	if (!xo)
-		return xfrm_replay_overflow_esn(x, skb);
+	अगर (!xo)
+		वापस xfrm_replay_overflow_esn(x, skb);
 
-	if (x->type->flags & XFRM_TYPE_REPLAY_PROT) {
-		if (!skb_is_gso(skb)) {
+	अगर (x->type->flags & XFRM_TYPE_REPLAY_PROT) अणु
+		अगर (!skb_is_gso(skb)) अणु
 			XFRM_SKB_CB(skb)->seq.output.low = ++oseq;
 			XFRM_SKB_CB(skb)->seq.output.hi = oseq_hi;
 			xo->seq.low = oseq;
 			xo->seq.hi = oseq_hi;
-		} else {
+		पूर्ण अन्यथा अणु
 			XFRM_SKB_CB(skb)->seq.output.low = oseq + 1;
 			XFRM_SKB_CB(skb)->seq.output.hi = oseq_hi;
 			xo->seq.low = oseq + 1;
 			xo->seq.hi = oseq_hi;
 			oseq += skb_shinfo(skb)->gso_segs;
-		}
+		पूर्ण
 
-		if (unlikely(oseq < replay_esn->oseq)) {
+		अगर (unlikely(oseq < replay_esn->oseq)) अणु
 			XFRM_SKB_CB(skb)->seq.output.hi = ++oseq_hi;
 			xo->seq.hi = oseq_hi;
 			replay_esn->oseq_hi = oseq_hi;
-			if (replay_esn->oseq_hi == 0) {
+			अगर (replay_esn->oseq_hi == 0) अणु
 				replay_esn->oseq--;
 				replay_esn->oseq_hi--;
 				xfrm_audit_state_replay_overflow(x, skb);
 				err = -EOVERFLOW;
 
-				return err;
-			}
-		}
+				वापस err;
+			पूर्ण
+		पूर्ण
 
 		replay_esn->oseq = oseq;
 
-		if (xfrm_aevent_is_on(net))
-			x->repl->notify(x, XFRM_REPLAY_UPDATE);
-	}
+		अगर (xfrm_aevent_is_on(net))
+			x->repl->notअगरy(x, XFRM_REPLAY_UPDATE);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct xfrm_replay xfrm_replay_legacy = {
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_legacy = अणु
 	.advance	= xfrm_replay_advance,
 	.check		= xfrm_replay_check,
 	.recheck	= xfrm_replay_check,
-	.notify		= xfrm_replay_notify,
+	.notअगरy		= xfrm_replay_notअगरy,
 	.overflow	= xfrm_replay_overflow_offload,
-};
+पूर्ण;
 
-static const struct xfrm_replay xfrm_replay_bmp = {
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_bmp = अणु
 	.advance	= xfrm_replay_advance_bmp,
 	.check		= xfrm_replay_check_bmp,
 	.recheck	= xfrm_replay_check_bmp,
-	.notify		= xfrm_replay_notify_bmp,
+	.notअगरy		= xfrm_replay_notअगरy_bmp,
 	.overflow	= xfrm_replay_overflow_offload_bmp,
-};
+पूर्ण;
 
-static const struct xfrm_replay xfrm_replay_esn = {
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_esn = अणु
 	.advance	= xfrm_replay_advance_esn,
 	.check		= xfrm_replay_check_esn,
 	.recheck	= xfrm_replay_recheck_esn,
-	.notify		= xfrm_replay_notify_esn,
+	.notअगरy		= xfrm_replay_notअगरy_esn,
 	.overflow	= xfrm_replay_overflow_offload_esn,
-};
-#else
-static const struct xfrm_replay xfrm_replay_legacy = {
+पूर्ण;
+#अन्यथा
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_legacy = अणु
 	.advance	= xfrm_replay_advance,
 	.check		= xfrm_replay_check,
 	.recheck	= xfrm_replay_check,
-	.notify		= xfrm_replay_notify,
+	.notअगरy		= xfrm_replay_notअगरy,
 	.overflow	= xfrm_replay_overflow,
-};
+पूर्ण;
 
-static const struct xfrm_replay xfrm_replay_bmp = {
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_bmp = अणु
 	.advance	= xfrm_replay_advance_bmp,
 	.check		= xfrm_replay_check_bmp,
 	.recheck	= xfrm_replay_check_bmp,
-	.notify		= xfrm_replay_notify_bmp,
+	.notअगरy		= xfrm_replay_notअगरy_bmp,
 	.overflow	= xfrm_replay_overflow_bmp,
-};
+पूर्ण;
 
-static const struct xfrm_replay xfrm_replay_esn = {
+अटल स्थिर काष्ठा xfrm_replay xfrm_replay_esn = अणु
 	.advance	= xfrm_replay_advance_esn,
 	.check		= xfrm_replay_check_esn,
 	.recheck	= xfrm_replay_recheck_esn,
-	.notify		= xfrm_replay_notify_esn,
+	.notअगरy		= xfrm_replay_notअगरy_esn,
 	.overflow	= xfrm_replay_overflow_esn,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-int xfrm_init_replay(struct xfrm_state *x)
-{
-	struct xfrm_replay_state_esn *replay_esn = x->replay_esn;
+पूर्णांक xfrm_init_replay(काष्ठा xfrm_state *x)
+अणु
+	काष्ठा xfrm_replay_state_esn *replay_esn = x->replay_esn;
 
-	if (replay_esn) {
-		if (replay_esn->replay_window >
-		    replay_esn->bmp_len * sizeof(__u32) * 8)
-			return -EINVAL;
+	अगर (replay_esn) अणु
+		अगर (replay_esn->replay_winकरोw >
+		    replay_esn->bmp_len * माप(__u32) * 8)
+			वापस -EINVAL;
 
-		if (x->props.flags & XFRM_STATE_ESN) {
-			if (replay_esn->replay_window == 0)
-				return -EINVAL;
+		अगर (x->props.flags & XFRM_STATE_ESN) अणु
+			अगर (replay_esn->replay_winकरोw == 0)
+				वापस -EINVAL;
 			x->repl = &xfrm_replay_esn;
-		} else {
+		पूर्ण अन्यथा अणु
 			x->repl = &xfrm_replay_bmp;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		x->repl = &xfrm_replay_legacy;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(xfrm_init_replay);

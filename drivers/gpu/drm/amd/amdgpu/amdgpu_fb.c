@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2007 David Airlie
+ * Copyright तऊ 2007 David Airlie
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -24,219 +25,219 @@
  *     David Airlie
  */
 
-#include <linux/module.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/vga_switcheroo.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/vga_चयनeroo.h>
 
-#include <drm/amdgpu_drm.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_fourcc.h>
+#समावेश <drm/amdgpu_drm.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_fourcc.h>
 
-#include "amdgpu.h"
-#include "cikd.h"
-#include "amdgpu_gem.h"
+#समावेश "amdgpu.h"
+#समावेश "cikd.h"
+#समावेश "amdgpu_gem.h"
 
-#include "amdgpu_display.h"
+#समावेश "amdgpu_display.h"
 
 /* object hierarchy -
    this contains a helper + a amdgpu fb
-   the helper contains a pointer to amdgpu framebuffer baseclass.
+   the helper contains a poपूर्णांकer to amdgpu framebuffer baseclass.
 */
 
-static int
-amdgpufb_open(struct fb_info *info, int user)
-{
-	struct drm_fb_helper *fb_helper = info->par;
-	int ret = pm_runtime_get_sync(fb_helper->dev->dev);
-	if (ret < 0 && ret != -EACCES) {
-		pm_runtime_mark_last_busy(fb_helper->dev->dev);
-		pm_runtime_put_autosuspend(fb_helper->dev->dev);
-		return ret;
-	}
-	return 0;
-}
+अटल पूर्णांक
+amdgpufb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा drm_fb_helper *fb_helper = info->par;
+	पूर्णांक ret = pm_runसमय_get_sync(fb_helper->dev->dev);
+	अगर (ret < 0 && ret != -EACCES) अणु
+		pm_runसमय_mark_last_busy(fb_helper->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(fb_helper->dev->dev);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-amdgpufb_release(struct fb_info *info, int user)
-{
-	struct drm_fb_helper *fb_helper = info->par;
+अटल पूर्णांक
+amdgpufb_release(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	काष्ठा drm_fb_helper *fb_helper = info->par;
 
-	pm_runtime_mark_last_busy(fb_helper->dev->dev);
-	pm_runtime_put_autosuspend(fb_helper->dev->dev);
-	return 0;
-}
+	pm_runसमय_mark_last_busy(fb_helper->dev->dev);
+	pm_runसमय_put_स्वतःsuspend(fb_helper->dev->dev);
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops amdgpufb_ops = {
+अटल स्थिर काष्ठा fb_ops amdgpufb_ops = अणु
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
-	.fb_open = amdgpufb_open,
+	.fb_खोलो = amdgpufb_खोलो,
 	.fb_release = amdgpufb_release,
 	.fb_fillrect = drm_fb_helper_cfb_fillrect,
 	.fb_copyarea = drm_fb_helper_cfb_copyarea,
 	.fb_imageblit = drm_fb_helper_cfb_imageblit,
-};
+पूर्ण;
 
 
-int amdgpu_align_pitch(struct amdgpu_device *adev, int width, int cpp, bool tiled)
-{
-	int aligned = width;
-	int pitch_mask = 0;
+पूर्णांक amdgpu_align_pitch(काष्ठा amdgpu_device *adev, पूर्णांक width, पूर्णांक cpp, bool tiled)
+अणु
+	पूर्णांक aligned = width;
+	पूर्णांक pitch_mask = 0;
 
-	switch (cpp) {
-	case 1:
+	चयन (cpp) अणु
+	हाल 1:
 		pitch_mask = 255;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		pitch_mask = 127;
-		break;
-	case 3:
-	case 4:
+		अवरोध;
+	हाल 3:
+	हाल 4:
 		pitch_mask = 63;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	aligned += pitch_mask;
 	aligned &= ~pitch_mask;
-	return aligned * cpp;
-}
+	वापस aligned * cpp;
+पूर्ण
 
-static void amdgpufb_destroy_pinned_object(struct drm_gem_object *gobj)
-{
-	struct amdgpu_bo *abo = gem_to_amdgpu_bo(gobj);
-	int ret;
+अटल व्योम amdgpufb_destroy_pinned_object(काष्ठा drm_gem_object *gobj)
+अणु
+	काष्ठा amdgpu_bo *abo = gem_to_amdgpu_bo(gobj);
+	पूर्णांक ret;
 
 	ret = amdgpu_bo_reserve(abo, true);
-	if (likely(ret == 0)) {
+	अगर (likely(ret == 0)) अणु
 		amdgpu_bo_kunmap(abo);
 		amdgpu_bo_unpin(abo);
 		amdgpu_bo_unreserve(abo);
-	}
+	पूर्ण
 	drm_gem_object_put(gobj);
-}
+पूर्ण
 
-static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
-					 struct drm_mode_fb_cmd2 *mode_cmd,
-					 struct drm_gem_object **gobj_p)
-{
-	const struct drm_format_info *info;
-	struct amdgpu_device *adev = rfbdev->adev;
-	struct drm_gem_object *gobj = NULL;
-	struct amdgpu_bo *abo = NULL;
-	bool fb_tiled = false; /* useful for testing */
-	u32 tiling_flags = 0, domain;
-	int ret;
-	int aligned_size, size;
-	int height = mode_cmd->height;
+अटल पूर्णांक amdgpufb_create_pinned_object(काष्ठा amdgpu_fbdev *rfbdev,
+					 काष्ठा drm_mode_fb_cmd2 *mode_cmd,
+					 काष्ठा drm_gem_object **gobj_p)
+अणु
+	स्थिर काष्ठा drm_क्रमmat_info *info;
+	काष्ठा amdgpu_device *adev = rfbdev->adev;
+	काष्ठा drm_gem_object *gobj = शून्य;
+	काष्ठा amdgpu_bo *abo = शून्य;
+	bool fb_tiled = false; /* useful क्रम testing */
+	u32 tiling_flags = 0, करोमुख्य;
+	पूर्णांक ret;
+	पूर्णांक aligned_size, size;
+	पूर्णांक height = mode_cmd->height;
 	u32 cpp;
 	u64 flags = AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED |
 			       AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS     |
 			       AMDGPU_GEM_CREATE_VRAM_CLEARED;
 
-	info = drm_get_format_info(adev_to_drm(adev), mode_cmd);
+	info = drm_get_क्रमmat_info(adev_to_drm(adev), mode_cmd);
 	cpp = info->cpp[0];
 
 	/* need to align pitch with crtc limits */
 	mode_cmd->pitches[0] = amdgpu_align_pitch(adev, mode_cmd->width, cpp,
 						  fb_tiled);
-	domain = amdgpu_display_supported_domains(adev, flags);
+	करोमुख्य = amdgpu_display_supported_करोमुख्यs(adev, flags);
 	height = ALIGN(mode_cmd->height, 8);
 	size = mode_cmd->pitches[0] * height;
 	aligned_size = ALIGN(size, PAGE_SIZE);
-	ret = amdgpu_gem_object_create(adev, aligned_size, 0, domain, flags,
-				       ttm_bo_type_device, NULL, &gobj);
-	if (ret) {
+	ret = amdgpu_gem_object_create(adev, aligned_size, 0, करोमुख्य, flags,
+				       tपंचांग_bo_type_device, शून्य, &gobj);
+	अगर (ret) अणु
 		pr_err("failed to allocate framebuffer (%d)\n", aligned_size);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	abo = gem_to_amdgpu_bo(gobj);
 
-	if (fb_tiled)
+	अगर (fb_tiled)
 		tiling_flags = AMDGPU_TILING_SET(ARRAY_MODE, GRPH_ARRAY_2D_TILED_THIN1);
 
 	ret = amdgpu_bo_reserve(abo, false);
-	if (unlikely(ret != 0))
-		goto out_unref;
+	अगर (unlikely(ret != 0))
+		जाओ out_unref;
 
-	if (tiling_flags) {
+	अगर (tiling_flags) अणु
 		ret = amdgpu_bo_set_tiling_flags(abo,
 						 tiling_flags);
-		if (ret)
+		अगर (ret)
 			dev_err(adev->dev, "FB failed to set tiling flags\n");
-	}
+	पूर्ण
 
-	ret = amdgpu_bo_pin(abo, domain);
-	if (ret) {
+	ret = amdgpu_bo_pin(abo, करोमुख्य);
+	अगर (ret) अणु
 		amdgpu_bo_unreserve(abo);
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
-	ret = amdgpu_ttm_alloc_gart(&abo->tbo);
-	if (ret) {
+	ret = amdgpu_tपंचांग_alloc_gart(&abo->tbo);
+	अगर (ret) अणु
 		amdgpu_bo_unreserve(abo);
 		dev_err(adev->dev, "%p bind failed\n", abo);
-		goto out_unref;
-	}
+		जाओ out_unref;
+	पूर्ण
 
-	ret = amdgpu_bo_kmap(abo, NULL);
+	ret = amdgpu_bo_kmap(abo, शून्य);
 	amdgpu_bo_unreserve(abo);
-	if (ret) {
-		goto out_unref;
-	}
+	अगर (ret) अणु
+		जाओ out_unref;
+	पूर्ण
 
 	*gobj_p = gobj;
-	return 0;
+	वापस 0;
 out_unref:
 	amdgpufb_destroy_pinned_object(gobj);
-	*gobj_p = NULL;
-	return ret;
-}
+	*gobj_p = शून्य;
+	वापस ret;
+पूर्ण
 
-static int amdgpufb_create(struct drm_fb_helper *helper,
-			   struct drm_fb_helper_surface_size *sizes)
-{
-	struct amdgpu_fbdev *rfbdev = (struct amdgpu_fbdev *)helper;
-	struct amdgpu_device *adev = rfbdev->adev;
-	struct fb_info *info;
-	struct drm_framebuffer *fb = NULL;
-	struct drm_mode_fb_cmd2 mode_cmd;
-	struct drm_gem_object *gobj = NULL;
-	struct amdgpu_bo *abo = NULL;
-	int ret;
+अटल पूर्णांक amdgpufb_create(काष्ठा drm_fb_helper *helper,
+			   काष्ठा drm_fb_helper_surface_size *sizes)
+अणु
+	काष्ठा amdgpu_fbdev *rfbdev = (काष्ठा amdgpu_fbdev *)helper;
+	काष्ठा amdgpu_device *adev = rfbdev->adev;
+	काष्ठा fb_info *info;
+	काष्ठा drm_framebuffer *fb = शून्य;
+	काष्ठा drm_mode_fb_cmd2 mode_cmd;
+	काष्ठा drm_gem_object *gobj = शून्य;
+	काष्ठा amdgpu_bo *abo = शून्य;
+	पूर्णांक ret;
 
-	memset(&mode_cmd, 0, sizeof(mode_cmd));
+	स_रखो(&mode_cmd, 0, माप(mode_cmd));
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 
-	if (sizes->surface_bpp == 24)
+	अगर (sizes->surface_bpp == 24)
 		sizes->surface_bpp = 32;
 
-	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
+	mode_cmd.pixel_क्रमmat = drm_mode_legacy_fb_क्रमmat(sizes->surface_bpp,
 							  sizes->surface_depth);
 
 	ret = amdgpufb_create_pinned_object(rfbdev, &mode_cmd, &gobj);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to create fbcon object %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	abo = gem_to_amdgpu_bo(gobj);
 
 	/* okay we have an object now allocate the framebuffer */
 	info = drm_fb_helper_alloc_fbi(helper);
-	if (IS_ERR(info)) {
+	अगर (IS_ERR(info)) अणु
 		ret = PTR_ERR(info);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = amdgpu_display_gem_fb_init(adev_to_drm(adev), &rfbdev->rfb,
 					 &mode_cmd, gobj);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fb = &rfbdev->rfb.base;
 
@@ -252,84 +253,84 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 
 	drm_fb_helper_fill_info(info, &rfbdev->helper, sizes);
 
-	/* setup aperture base/size for vesafb takeover */
+	/* setup aperture base/size क्रम vesafb takeover */
 	info->apertures->ranges[0].base = adev_to_drm(adev)->mode_config.fb_base;
 	info->apertures->ranges[0].size = adev->gmc.aper_size;
 
-	/* Use default scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
+	/* Use शेष scratch pixmap (info->pixmap.flags = FB_PIXMAP_SYSTEM) */
 
-	if (info->screen_base == NULL) {
+	अगर (info->screen_base == शून्य) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	DRM_INFO("fb mappable at 0x%lX\n",  info->fix.smem_start);
-	DRM_INFO("vram apper at 0x%lX\n",  (unsigned long)adev->gmc.aper_base);
-	DRM_INFO("size %lu\n", (unsigned long)amdgpu_bo_size(abo));
-	DRM_INFO("fb depth is %d\n", fb->format->depth);
+	DRM_INFO("vram apper at 0x%lX\n",  (अचिन्हित दीर्घ)adev->gmc.aper_base);
+	DRM_INFO("size %lu\n", (अचिन्हित दीर्घ)amdgpu_bo_size(abo));
+	DRM_INFO("fb depth is %d\n", fb->क्रमmat->depth);
 	DRM_INFO("   pitch is %d\n", fb->pitches[0]);
 
-	vga_switcheroo_client_fb_set(adev->pdev, info);
-	return 0;
+	vga_चयनeroo_client_fb_set(adev->pdev, info);
+	वापस 0;
 
 out:
-	if (abo) {
+	अगर (abo) अणु
 
-	}
-	if (fb && ret) {
+	पूर्ण
+	अगर (fb && ret) अणु
 		drm_gem_object_put(gobj);
-		drm_framebuffer_unregister_private(fb);
+		drm_framebuffer_unरेजिस्टर_निजी(fb);
 		drm_framebuffer_cleanup(fb);
-		kfree(fb);
-	}
-	return ret;
-}
+		kमुक्त(fb);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int amdgpu_fbdev_destroy(struct drm_device *dev, struct amdgpu_fbdev *rfbdev)
-{
-	struct amdgpu_framebuffer *rfb = &rfbdev->rfb;
-	int i;
+अटल पूर्णांक amdgpu_fbdev_destroy(काष्ठा drm_device *dev, काष्ठा amdgpu_fbdev *rfbdev)
+अणु
+	काष्ठा amdgpu_framebuffer *rfb = &rfbdev->rfb;
+	पूर्णांक i;
 
-	drm_fb_helper_unregister_fbi(&rfbdev->helper);
+	drm_fb_helper_unरेजिस्टर_fbi(&rfbdev->helper);
 
-	if (rfb->base.obj[0]) {
-		for (i = 0; i < rfb->base.format->num_planes; i++)
+	अगर (rfb->base.obj[0]) अणु
+		क्रम (i = 0; i < rfb->base.क्रमmat->num_planes; i++)
 			drm_gem_object_put(rfb->base.obj[0]);
 		amdgpufb_destroy_pinned_object(rfb->base.obj[0]);
-		rfb->base.obj[0] = NULL;
-		drm_framebuffer_unregister_private(&rfb->base);
+		rfb->base.obj[0] = शून्य;
+		drm_framebuffer_unरेजिस्टर_निजी(&rfb->base);
 		drm_framebuffer_cleanup(&rfb->base);
-	}
+	पूर्ण
 	drm_fb_helper_fini(&rfbdev->helper);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct drm_fb_helper_funcs amdgpu_fb_helper_funcs = {
+अटल स्थिर काष्ठा drm_fb_helper_funcs amdgpu_fb_helper_funcs = अणु
 	.fb_probe = amdgpufb_create,
-};
+पूर्ण;
 
-int amdgpu_fbdev_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_fbdev *rfbdev;
-	int bpp_sel = 32;
-	int ret;
+पूर्णांक amdgpu_fbdev_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_fbdev *rfbdev;
+	पूर्णांक bpp_sel = 32;
+	पूर्णांक ret;
 
-	/* don't init fbdev on hw without DCE */
-	if (!adev->mode_info.mode_config_initialized)
-		return 0;
+	/* करोn't init fbdev on hw without DCE */
+	अगर (!adev->mode_info.mode_config_initialized)
+		वापस 0;
 
-	/* don't init fbdev if there are no connectors */
-	if (list_empty(&adev_to_drm(adev)->mode_config.connector_list))
-		return 0;
+	/* करोn't init fbdev अगर there are no connectors */
+	अगर (list_empty(&adev_to_drm(adev)->mode_config.connector_list))
+		वापस 0;
 
 	/* select 8 bpp console on low vram cards */
-	if (adev->gmc.real_vram_size <= (32*1024*1024))
+	अगर (adev->gmc.real_vram_size <= (32*1024*1024))
 		bpp_sel = 8;
 
-	rfbdev = kzalloc(sizeof(struct amdgpu_fbdev), GFP_KERNEL);
-	if (!rfbdev)
-		return -ENOMEM;
+	rfbdev = kzalloc(माप(काष्ठा amdgpu_fbdev), GFP_KERNEL);
+	अगर (!rfbdev)
+		वापस -ENOMEM;
 
 	rfbdev->adev = adev;
 	adev->mode_info.rfbdev = rfbdev;
@@ -338,54 +339,54 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 			      &amdgpu_fb_helper_funcs);
 
 	ret = drm_fb_helper_init(adev_to_drm(adev), &rfbdev->helper);
-	if (ret) {
-		kfree(rfbdev);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(rfbdev);
+		वापस ret;
+	पूर्ण
 
-	/* disable all the possible outputs/crtcs before entering KMS mode */
-	if (!amdgpu_device_has_dc_support(adev))
+	/* disable all the possible outमाला_दो/crtcs beक्रमe entering KMS mode */
+	अगर (!amdgpu_device_has_dc_support(adev))
 		drm_helper_disable_unused_functions(adev_to_drm(adev));
 
 	drm_fb_helper_initial_config(&rfbdev->helper, bpp_sel);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void amdgpu_fbdev_fini(struct amdgpu_device *adev)
-{
-	if (!adev->mode_info.rfbdev)
-		return;
+व्योम amdgpu_fbdev_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (!adev->mode_info.rfbdev)
+		वापस;
 
 	amdgpu_fbdev_destroy(adev_to_drm(adev), adev->mode_info.rfbdev);
-	kfree(adev->mode_info.rfbdev);
-	adev->mode_info.rfbdev = NULL;
-}
+	kमुक्त(adev->mode_info.rfbdev);
+	adev->mode_info.rfbdev = शून्य;
+पूर्ण
 
-void amdgpu_fbdev_set_suspend(struct amdgpu_device *adev, int state)
-{
-	if (adev->mode_info.rfbdev)
+व्योम amdgpu_fbdev_set_suspend(काष्ठा amdgpu_device *adev, पूर्णांक state)
+अणु
+	अगर (adev->mode_info.rfbdev)
 		drm_fb_helper_set_suspend_unlocked(&adev->mode_info.rfbdev->helper,
 						   state);
-}
+पूर्ण
 
-int amdgpu_fbdev_total_size(struct amdgpu_device *adev)
-{
-	struct amdgpu_bo *robj;
-	int size = 0;
+पूर्णांक amdgpu_fbdev_total_size(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_bo *robj;
+	पूर्णांक size = 0;
 
-	if (!adev->mode_info.rfbdev)
-		return 0;
+	अगर (!adev->mode_info.rfbdev)
+		वापस 0;
 
 	robj = gem_to_amdgpu_bo(adev->mode_info.rfbdev->rfb.base.obj[0]);
 	size += amdgpu_bo_size(robj);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-bool amdgpu_fbdev_robj_is_fb(struct amdgpu_device *adev, struct amdgpu_bo *robj)
-{
-	if (!adev->mode_info.rfbdev)
-		return false;
-	if (robj == gem_to_amdgpu_bo(adev->mode_info.rfbdev->rfb.base.obj[0]))
-		return true;
-	return false;
-}
+bool amdgpu_fbdev_robj_is_fb(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_bo *robj)
+अणु
+	अगर (!adev->mode_info.rfbdev)
+		वापस false;
+	अगर (robj == gem_to_amdgpu_bo(adev->mode_info.rfbdev->rfb.base.obj[0]))
+		वापस true;
+	वापस false;
+पूर्ण

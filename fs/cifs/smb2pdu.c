@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
- *   fs/cifs/smb2pdu.c
+ *   fs/cअगरs/smb2pdu.c
  *
  *   Copyright (C) International Business Machines  Corp., 2009, 2013
  *                 Etersoft, 2012
  *   Author(s): Steve French (sfrench@us.ibm.com)
  *              Pavel Shilovsky (pshilovsky@samba.org) 2012
  *
- *   Contains the routines for constructing the SMB2 PDUs themselves
+ *   Contains the routines क्रम स्थिरructing the SMB2 PDUs themselves
  *
- *   This library is free software; you can redistribute it and/or modify
+ *   This library is मुक्त software; you can redistribute it and/or modअगरy
  *   it under the terms of the GNU Lesser General Public License as published
  *   by the Free Software Foundation; either version 2.1 of the License, or
  *   (at your option) any later version.
@@ -16,43 +17,43 @@
  *   This library is distributed in the hope that it will be useful,
  *   but WITHOUT ANY WARRANTY; without even the implied warranty of
  *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
- *   the GNU Lesser General Public License for more details.
+ *   the GNU Lesser General Public License क्रम more details.
  *
  *   You should have received a copy of the GNU Lesser General Public License
- *   along with this library; if not, write to the Free Software
+ *   aदीर्घ with this library; अगर not, ग_लिखो to the Free Software
  *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  */
 
- /* SMB2 PDU handling routines here - except for leftovers (eg session setup) */
+ /* SMB2 PDU handling routines here - except क्रम leftovers (eg session setup) */
  /* Note that there are handle based routines which must be		      */
- /* treated slightly differently for reconnection purposes since we never     */
+ /* treated slightly dअगरferently क्रम reconnection purposes since we never     */
  /* want to reuse a stale file handle and only the caller knows the file info */
 
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/vfs.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/uaccess.h>
-#include <linux/uuid.h>
-#include <linux/pagemap.h>
-#include <linux/xattr.h>
-#include "smb2pdu.h"
-#include "cifsglob.h"
-#include "cifsacl.h"
-#include "cifsproto.h"
-#include "smb2proto.h"
-#include "cifs_unicode.h"
-#include "cifs_debug.h"
-#include "ntlmssp.h"
-#include "smb2status.h"
-#include "smb2glob.h"
-#include "cifspdu.h"
-#include "cifs_spnego.h"
-#include "smbdirect.h"
-#include "trace.h"
-#ifdef CONFIG_CIFS_DFS_UPCALL
-#include "dfs_cache.h"
-#endif
+#समावेश <linux/fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/uuid.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/xattr.h>
+#समावेश "smb2pdu.h"
+#समावेश "cifsglob.h"
+#समावेश "cifsacl.h"
+#समावेश "cifsproto.h"
+#समावेश "smb2proto.h"
+#समावेश "cifs_unicode.h"
+#समावेश "cifs_debug.h"
+#समावेश "ntlmssp.h"
+#समावेश "smb2status.h"
+#समावेश "smb2glob.h"
+#समावेश "cifspdu.h"
+#समावेश "cifs_spnego.h"
+#समावेश "smbdirect.h"
+#समावेश "trace.h"
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
+#समावेश "dfs_cache.h"
+#पूर्ण_अगर
 
 /*
  *  The following table defines the expected "StructureSize" of SMB2 requests
@@ -61,7 +62,7 @@
  *  Note that commands are defined in smb2pdu.h in le16 but the array below is
  *  indexed by command in host byte order.
  */
-static const int smb2_req_struct_sizes[NUMBER_OF_SMB2_COMMANDS] = {
+अटल स्थिर पूर्णांक smb2_req_काष्ठा_sizes[NUMBER_OF_SMB2_COMMANDS] = अणु
 	/* SMB2_NEGOTIATE */ 36,
 	/* SMB2_SESSION_SETUP */ 25,
 	/* SMB2_LOGOFF */ 4,
@@ -76,414 +77,414 @@ static const int smb2_req_struct_sizes[NUMBER_OF_SMB2_COMMANDS] = {
 	/* SMB2_IOCTL */ 57,
 	/* SMB2_CANCEL */ 4,
 	/* SMB2_ECHO */ 4,
-	/* SMB2_QUERY_DIRECTORY */ 33,
+	/* SMB2_QUERY_सूचीECTORY */ 33,
 	/* SMB2_CHANGE_NOTIFY */ 32,
 	/* SMB2_QUERY_INFO */ 41,
 	/* SMB2_SET_INFO */ 33,
-	/* SMB2_OPLOCK_BREAK */ 24 /* BB this is 36 for LEASE_BREAK variant */
-};
+	/* SMB2_OPLOCK_BREAK */ 24 /* BB this is 36 क्रम LEASE_BREAK variant */
+पूर्ण;
 
-int smb3_encryption_required(const struct cifs_tcon *tcon)
-{
-	if (!tcon || !tcon->ses)
-		return 0;
-	if ((tcon->ses->session_flags & SMB2_SESSION_FLAG_ENCRYPT_DATA) ||
+पूर्णांक smb3_encryption_required(स्थिर काष्ठा cअगरs_tcon *tcon)
+अणु
+	अगर (!tcon || !tcon->ses)
+		वापस 0;
+	अगर ((tcon->ses->session_flags & SMB2_SESSION_FLAG_ENCRYPT_DATA) ||
 	    (tcon->share_flags & SHI1005_FLAGS_ENCRYPT_DATA))
-		return 1;
-	if (tcon->seal &&
+		वापस 1;
+	अगर (tcon->seal &&
 	    (tcon->ses->server->capabilities & SMB2_GLOBAL_CAP_ENCRYPTION))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static void
-smb2_hdr_assemble(struct smb2_sync_hdr *shdr, __le16 smb2_cmd,
-		  const struct cifs_tcon *tcon,
-		  struct TCP_Server_Info *server)
-{
+अटल व्योम
+smb2_hdr_assemble(काष्ठा smb2_sync_hdr *shdr, __le16 smb2_cmd,
+		  स्थिर काष्ठा cअगरs_tcon *tcon,
+		  काष्ठा TCP_Server_Info *server)
+अणु
 	shdr->ProtocolId = SMB2_PROTO_NUMBER;
 	shdr->StructureSize = cpu_to_le16(64);
 	shdr->Command = smb2_cmd;
-	if (server) {
+	अगर (server) अणु
 		spin_lock(&server->req_lock);
-		/* Request up to 10 credits but don't go over the limit. */
-		if (server->credits >= server->max_credits)
+		/* Request up to 10 credits but करोn't go over the limit. */
+		अगर (server->credits >= server->max_credits)
 			shdr->CreditRequest = cpu_to_le16(0);
-		else
+		अन्यथा
 			shdr->CreditRequest = cpu_to_le16(
-				min_t(int, server->max_credits -
+				min_t(पूर्णांक, server->max_credits -
 						server->credits, 10));
 		spin_unlock(&server->req_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		shdr->CreditRequest = cpu_to_le16(2);
-	}
+	पूर्ण
 	shdr->ProcessId = cpu_to_le32((__u16)current->tgid);
 
-	if (!tcon)
-		goto out;
+	अगर (!tcon)
+		जाओ out;
 
-	/* GLOBAL_CAP_LARGE_MTU will only be set if dialect > SMB2.02 */
+	/* GLOBAL_CAP_LARGE_MTU will only be set अगर dialect > SMB2.02 */
 	/* See sections 2.2.4 and 3.2.4.1.5 of MS-SMB2 */
-	if (server && (server->capabilities & SMB2_GLOBAL_CAP_LARGE_MTU))
+	अगर (server && (server->capabilities & SMB2_GLOBAL_CAP_LARGE_MTU))
 		shdr->CreditCharge = cpu_to_le16(1);
-	/* else CreditCharge MBZ */
+	/* अन्यथा CreditCharge MBZ */
 
 	shdr->TreeId = tcon->tid;
 	/* Uid is not converted */
-	if (tcon->ses)
+	अगर (tcon->ses)
 		shdr->SessionId = tcon->ses->Suid;
 
 	/*
-	 * If we would set SMB2_FLAGS_DFS_OPERATIONS on open we also would have
+	 * If we would set SMB2_FLAGS_DFS_OPERATIONS on खोलो we also would have
 	 * to pass the path on the Open SMB prefixed by \\server\share.
-	 * Not sure when we would need to do the augmented path (if ever) and
-	 * setting this flag breaks the SMB2 open operation since it is
+	 * Not sure when we would need to करो the augmented path (अगर ever) and
+	 * setting this flag अवरोधs the SMB2 खोलो operation since it is
 	 * illegal to send an empty path name (without \\server\share prefix)
-	 * when the DFS flag is set in the SMB open header. We could
-	 * consider setting the flag on all operations other than open
-	 * but it is safer to net set it for now.
+	 * when the DFS flag is set in the SMB खोलो header. We could
+	 * consider setting the flag on all operations other than खोलो
+	 * but it is safer to net set it क्रम now.
 	 */
-/*	if (tcon->share_flags & SHI1005_FLAGS_DFS)
+/*	अगर (tcon->share_flags & SHI1005_FLAGS_DFS)
 		shdr->Flags |= SMB2_FLAGS_DFS_OPERATIONS; */
 
-	if (server && server->sign && !smb3_encryption_required(tcon))
+	अगर (server && server->sign && !smb3_encryption_required(tcon))
 		shdr->Flags |= SMB2_FLAGS_SIGNED;
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-static int
-smb2_reconnect(__le16 smb2_command, struct cifs_tcon *tcon,
-	       struct TCP_Server_Info *server)
-{
-	int rc;
-	struct nls_table *nls_codepage;
-	struct cifs_ses *ses;
-	int retries;
+अटल पूर्णांक
+smb2_reconnect(__le16 smb2_command, काष्ठा cअगरs_tcon *tcon,
+	       काष्ठा TCP_Server_Info *server)
+अणु
+	पूर्णांक rc;
+	काष्ठा nls_table *nls_codepage;
+	काष्ठा cअगरs_ses *ses;
+	पूर्णांक retries;
 
 	/*
-	 * SMB2s NegProt, SessSetup, Logoff do not have tcon yet so
-	 * check for tcp and smb session status done differently
-	 * for those three - in the calling routine.
+	 * SMB2s NegProt, SessSetup, Logoff करो not have tcon yet so
+	 * check क्रम tcp and smb session status करोne dअगरferently
+	 * क्रम those three - in the calling routine.
 	 */
-	if (tcon == NULL)
-		return 0;
+	अगर (tcon == शून्य)
+		वापस 0;
 
-	if (smb2_command == SMB2_TREE_CONNECT)
-		return 0;
+	अगर (smb2_command == SMB2_TREE_CONNECT)
+		वापस 0;
 
-	if (tcon->tidStatus == CifsExiting) {
+	अगर (tcon->tidStatus == CअगरsExiting) अणु
 		/*
-		 * only tree disconnect, open, and write,
-		 * (and ulogoff which does not have tcon)
-		 * are allowed as we start force umount.
+		 * only tree disconnect, खोलो, and ग_लिखो,
+		 * (and ulogoff which करोes not have tcon)
+		 * are allowed as we start क्रमce umount.
 		 */
-		if ((smb2_command != SMB2_WRITE) &&
+		अगर ((smb2_command != SMB2_WRITE) &&
 		   (smb2_command != SMB2_CREATE) &&
-		   (smb2_command != SMB2_TREE_DISCONNECT)) {
-			cifs_dbg(FYI, "can not send cmd %d while umounting\n",
+		   (smb2_command != SMB2_TREE_DISCONNECT)) अणु
+			cअगरs_dbg(FYI, "can not send cmd %d while umounting\n",
 				 smb2_command);
-			return -ENODEV;
-		}
-	}
-	if ((!tcon->ses) || (tcon->ses->status == CifsExiting) ||
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
+	अगर ((!tcon->ses) || (tcon->ses->status == CअगरsExiting) ||
 	    (!tcon->ses->server) || !server)
-		return -EIO;
+		वापस -EIO;
 
 	ses = tcon->ses;
-	retries = server->nr_targets;
+	retries = server->nr_tarमाला_लो;
 
 	/*
-	 * Give demultiplex thread up to 10 seconds to each target available for
-	 * reconnect -- should be greater than cifs socket timeout which is 7
+	 * Give demultiplex thपढ़ो up to 10 seconds to each target available क्रम
+	 * reconnect -- should be greater than cअगरs socket समयout which is 7
 	 * seconds.
 	 */
-	while (server->tcpStatus == CifsNeedReconnect) {
+	जबतक (server->tcpStatus == CअगरsNeedReconnect) अणु
 		/*
-		 * Return to caller for TREE_DISCONNECT and LOGOFF and CLOSE
-		 * here since they are implicitly done when session drops.
+		 * Return to caller क्रम TREE_DISCONNECT and LOGOFF and CLOSE
+		 * here since they are implicitly करोne when session drops.
 		 */
-		switch (smb2_command) {
+		चयन (smb2_command) अणु
 		/*
-		 * BB Should we keep oplock break and add flush to exceptions?
+		 * BB Should we keep oplock अवरोध and add flush to exceptions?
 		 */
-		case SMB2_TREE_DISCONNECT:
-		case SMB2_CANCEL:
-		case SMB2_CLOSE:
-		case SMB2_OPLOCK_BREAK:
-			return -EAGAIN;
-		}
+		हाल SMB2_TREE_DISCONNECT:
+		हाल SMB2_CANCEL:
+		हाल SMB2_CLOSE:
+		हाल SMB2_OPLOCK_BREAK:
+			वापस -EAGAIN;
+		पूर्ण
 
-		rc = wait_event_interruptible_timeout(server->response_q,
-						      (server->tcpStatus != CifsNeedReconnect),
+		rc = रुको_event_पूर्णांकerruptible_समयout(server->response_q,
+						      (server->tcpStatus != CअगरsNeedReconnect),
 						      10 * HZ);
-		if (rc < 0) {
-			cifs_dbg(FYI, "%s: aborting reconnect due to a received signal by the process\n",
+		अगर (rc < 0) अणु
+			cअगरs_dbg(FYI, "%s: aborting reconnect due to a received signal by the process\n",
 				 __func__);
-			return -ERESTARTSYS;
-		}
+			वापस -ERESTARTSYS;
+		पूर्ण
 
 		/* are we still trying to reconnect? */
-		if (server->tcpStatus != CifsNeedReconnect)
-			break;
+		अगर (server->tcpStatus != CअगरsNeedReconnect)
+			अवरोध;
 
-		if (retries && --retries)
-			continue;
+		अगर (retries && --retries)
+			जारी;
 
 		/*
-		 * on "soft" mounts we wait once. Hard mounts keep
-		 * retrying until process is killed or server comes
+		 * on "soft" mounts we रुको once. Hard mounts keep
+		 * retrying until process is समाप्तed or server comes
 		 * back on-line
 		 */
-		if (!tcon->retry) {
-			cifs_dbg(FYI, "gave up waiting on reconnect in smb_init\n");
-			return -EHOSTDOWN;
-		}
-		retries = server->nr_targets;
-	}
+		अगर (!tcon->retry) अणु
+			cअगरs_dbg(FYI, "gave up waiting on reconnect in smb_init\n");
+			वापस -EHOSTDOWN;
+		पूर्ण
+		retries = server->nr_tarमाला_लो;
+	पूर्ण
 
-	if (!tcon->ses->need_reconnect && !tcon->need_reconnect)
-		return 0;
+	अगर (!tcon->ses->need_reconnect && !tcon->need_reconnect)
+		वापस 0;
 
-	nls_codepage = load_nls_default();
+	nls_codepage = load_nls_शेष();
 
 	/*
-	 * need to prevent multiple threads trying to simultaneously reconnect
+	 * need to prevent multiple thपढ़ोs trying to simultaneously reconnect
 	 * the same SMB session
 	 */
 	mutex_lock(&tcon->ses->session_mutex);
 
 	/*
-	 * Recheck after acquire mutex. If another thread is negotiating
-	 * and the server never sends an answer the socket will be closed
+	 * Recheck after acquire mutex. If another thपढ़ो is negotiating
+	 * and the server never sends an answer the socket will be बंदd
 	 * and tcpStatus set to reconnect.
 	 */
-	if (server->tcpStatus == CifsNeedReconnect) {
+	अगर (server->tcpStatus == CअगरsNeedReconnect) अणु
 		rc = -EHOSTDOWN;
 		mutex_unlock(&tcon->ses->session_mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * If we are reconnecting an extra channel, bind
 	 */
-	if (server->is_channel) {
+	अगर (server->is_channel) अणु
 		ses->binding = true;
-		ses->binding_chan = cifs_ses_find_chan(ses, server);
-	}
+		ses->binding_chan = cअगरs_ses_find_chan(ses, server);
+	पूर्ण
 
-	rc = cifs_negotiate_protocol(0, tcon->ses);
-	if (!rc && tcon->ses->need_reconnect) {
-		rc = cifs_setup_session(0, tcon->ses, nls_codepage);
-		if ((rc == -EACCES) && !tcon->retry) {
+	rc = cअगरs_negotiate_protocol(0, tcon->ses);
+	अगर (!rc && tcon->ses->need_reconnect) अणु
+		rc = cअगरs_setup_session(0, tcon->ses, nls_codepage);
+		अगर ((rc == -EACCES) && !tcon->retry) अणु
 			rc = -EHOSTDOWN;
 			ses->binding = false;
-			ses->binding_chan = NULL;
+			ses->binding_chan = शून्य;
 			mutex_unlock(&tcon->ses->session_mutex);
-			goto failed;
-		}
-	}
+			जाओ failed;
+		पूर्ण
+	पूर्ण
 	/*
 	 * End of channel binding
 	 */
 	ses->binding = false;
-	ses->binding_chan = NULL;
+	ses->binding_chan = शून्य;
 
-	if (rc || !tcon->need_reconnect) {
+	अगर (rc || !tcon->need_reconnect) अणु
 		mutex_unlock(&tcon->ses->session_mutex);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	cifs_mark_open_files_invalid(tcon);
-	if (tcon->use_persistent)
-		tcon->need_reopen_files = true;
+	cअगरs_mark_खोलो_files_invalid(tcon);
+	अगर (tcon->use_persistent)
+		tcon->need_reखोलो_files = true;
 
-	rc = cifs_tree_connect(0, tcon, nls_codepage);
+	rc = cअगरs_tree_connect(0, tcon, nls_codepage);
 	mutex_unlock(&tcon->ses->session_mutex);
 
-	cifs_dbg(FYI, "reconnect tcon rc = %d\n", rc);
-	if (rc) {
+	cअगरs_dbg(FYI, "reconnect tcon rc = %d\n", rc);
+	अगर (rc) अणु
 		/* If sess reconnected but tcon didn't, something strange ... */
 		pr_warn_once("reconnect tcon failed rc = %d\n", rc);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (smb2_command != SMB2_INTERNAL_CMD)
-		mod_delayed_work(cifsiod_wq, &server->reconnect, 0);
+	अगर (smb2_command != SMB2_INTERNAL_CMD)
+		mod_delayed_work(cअगरsiod_wq, &server->reconnect, 0);
 
 	atomic_inc(&tconInfoReconnectCount);
 out:
 	/*
-	 * Check if handle based operation so we know whether we can continue
-	 * or not without returning to caller to reset file handle.
+	 * Check अगर handle based operation so we know whether we can जारी
+	 * or not without वापसing to caller to reset file handle.
 	 */
 	/*
-	 * BB Is flush done by server on drop of tcp session? Should we special
-	 * case it and skip above?
+	 * BB Is flush करोne by server on drop of tcp session? Should we special
+	 * हाल it and skip above?
 	 */
-	switch (smb2_command) {
-	case SMB2_FLUSH:
-	case SMB2_READ:
-	case SMB2_WRITE:
-	case SMB2_LOCK:
-	case SMB2_IOCTL:
-	case SMB2_QUERY_DIRECTORY:
-	case SMB2_CHANGE_NOTIFY:
-	case SMB2_QUERY_INFO:
-	case SMB2_SET_INFO:
+	चयन (smb2_command) अणु
+	हाल SMB2_FLUSH:
+	हाल SMB2_READ:
+	हाल SMB2_WRITE:
+	हाल SMB2_LOCK:
+	हाल SMB2_IOCTL:
+	हाल SMB2_QUERY_सूचीECTORY:
+	हाल SMB2_CHANGE_NOTIFY:
+	हाल SMB2_QUERY_INFO:
+	हाल SMB2_SET_INFO:
 		rc = -EAGAIN;
-	}
+	पूर्ण
 failed:
 	unload_nls(nls_codepage);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-fill_small_buf(__le16 smb2_command, struct cifs_tcon *tcon,
-	       struct TCP_Server_Info *server,
-	       void *buf,
-	       unsigned int *total_len)
-{
-	struct smb2_sync_pdu *spdu = (struct smb2_sync_pdu *)buf;
+अटल व्योम
+fill_small_buf(__le16 smb2_command, काष्ठा cअगरs_tcon *tcon,
+	       काष्ठा TCP_Server_Info *server,
+	       व्योम *buf,
+	       अचिन्हित पूर्णांक *total_len)
+अणु
+	काष्ठा smb2_sync_pdu *spdu = (काष्ठा smb2_sync_pdu *)buf;
 	/* lookup word count ie StructureSize from table */
-	__u16 parmsize = smb2_req_struct_sizes[le16_to_cpu(smb2_command)];
+	__u16 parmsize = smb2_req_काष्ठा_sizes[le16_to_cpu(smb2_command)];
 
 	/*
 	 * smaller than SMALL_BUFFER_SIZE but bigger than fixed area of
 	 * largest operations (Create)
 	 */
-	memset(buf, 0, 256);
+	स_रखो(buf, 0, 256);
 
 	smb2_hdr_assemble(&spdu->sync_hdr, smb2_command, tcon, server);
 	spdu->StructureSize2 = cpu_to_le16(parmsize);
 
-	*total_len = parmsize + sizeof(struct smb2_sync_hdr);
-}
+	*total_len = parmsize + माप(काष्ठा smb2_sync_hdr);
+पूर्ण
 
 /*
- * Allocate and return pointer to an SMB request hdr, and set basic
- * SMB information in the SMB header. If the return code is zero, this
- * function must have filled in request_buf pointer.
+ * Allocate and वापस poपूर्णांकer to an SMB request hdr, and set basic
+ * SMB inक्रमmation in the SMB header. If the वापस code is zero, this
+ * function must have filled in request_buf poपूर्णांकer.
  */
-static int __smb2_plain_req_init(__le16 smb2_command, struct cifs_tcon *tcon,
-				 struct TCP_Server_Info *server,
-				 void **request_buf, unsigned int *total_len)
-{
-	/* BB eventually switch this to SMB2 specific small buf size */
-	if (smb2_command == SMB2_SET_INFO)
-		*request_buf = cifs_buf_get();
-	else
-		*request_buf = cifs_small_buf_get();
-	if (*request_buf == NULL) {
-		/* BB should we add a retry in here if not a writepage? */
-		return -ENOMEM;
-	}
+अटल पूर्णांक __smb2_plain_req_init(__le16 smb2_command, काष्ठा cअगरs_tcon *tcon,
+				 काष्ठा TCP_Server_Info *server,
+				 व्योम **request_buf, अचिन्हित पूर्णांक *total_len)
+अणु
+	/* BB eventually चयन this to SMB2 specअगरic small buf size */
+	अगर (smb2_command == SMB2_SET_INFO)
+		*request_buf = cअगरs_buf_get();
+	अन्यथा
+		*request_buf = cअगरs_small_buf_get();
+	अगर (*request_buf == शून्य) अणु
+		/* BB should we add a retry in here अगर not a ग_लिखोpage? */
+		वापस -ENOMEM;
+	पूर्ण
 
 	fill_small_buf(smb2_command, tcon, server,
-		       (struct smb2_sync_hdr *)(*request_buf),
+		       (काष्ठा smb2_sync_hdr *)(*request_buf),
 		       total_len);
 
-	if (tcon != NULL) {
-		uint16_t com_code = le16_to_cpu(smb2_command);
-		cifs_stats_inc(&tcon->stats.smb2_stats.smb2_com_sent[com_code]);
-		cifs_stats_inc(&tcon->num_smbs_sent);
-	}
+	अगर (tcon != शून्य) अणु
+		uपूर्णांक16_t com_code = le16_to_cpu(smb2_command);
+		cअगरs_stats_inc(&tcon->stats.smb2_stats.smb2_com_sent[com_code]);
+		cअगरs_stats_inc(&tcon->num_smbs_sent);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smb2_plain_req_init(__le16 smb2_command, struct cifs_tcon *tcon,
-			       struct TCP_Server_Info *server,
-			       void **request_buf, unsigned int *total_len)
-{
-	int rc;
+अटल पूर्णांक smb2_plain_req_init(__le16 smb2_command, काष्ठा cअगरs_tcon *tcon,
+			       काष्ठा TCP_Server_Info *server,
+			       व्योम **request_buf, अचिन्हित पूर्णांक *total_len)
+अणु
+	पूर्णांक rc;
 
 	rc = smb2_reconnect(smb2_command, tcon, server);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return __smb2_plain_req_init(smb2_command, tcon, server, request_buf,
+	वापस __smb2_plain_req_init(smb2_command, tcon, server, request_buf,
 				     total_len);
-}
+पूर्ण
 
-static int smb2_ioctl_req_init(u32 opcode, struct cifs_tcon *tcon,
-			       struct TCP_Server_Info *server,
-			       void **request_buf, unsigned int *total_len)
-{
-	/* Skip reconnect only for FSCTL_VALIDATE_NEGOTIATE_INFO IOCTLs */
-	if (opcode == FSCTL_VALIDATE_NEGOTIATE_INFO) {
-		return __smb2_plain_req_init(SMB2_IOCTL, tcon, server,
+अटल पूर्णांक smb2_ioctl_req_init(u32 opcode, काष्ठा cअगरs_tcon *tcon,
+			       काष्ठा TCP_Server_Info *server,
+			       व्योम **request_buf, अचिन्हित पूर्णांक *total_len)
+अणु
+	/* Skip reconnect only क्रम FSCTL_VALIDATE_NEGOTIATE_INFO IOCTLs */
+	अगर (opcode == FSCTL_VALIDATE_NEGOTIATE_INFO) अणु
+		वापस __smb2_plain_req_init(SMB2_IOCTL, tcon, server,
 					     request_buf, total_len);
-	}
-	return smb2_plain_req_init(SMB2_IOCTL, tcon, server,
+	पूर्ण
+	वापस smb2_plain_req_init(SMB2_IOCTL, tcon, server,
 				   request_buf, total_len);
-}
+पूर्ण
 
 /* For explanation of negotiate contexts see MS-SMB2 section 2.2.3.1 */
 
-static void
-build_preauth_ctxt(struct smb2_preauth_neg_context *pneg_ctxt)
-{
+अटल व्योम
+build_preauth_ctxt(काष्ठा smb2_preauth_neg_context *pneg_ctxt)
+अणु
 	pneg_ctxt->ContextType = SMB2_PREAUTH_INTEGRITY_CAPABILITIES;
 	pneg_ctxt->DataLength = cpu_to_le16(38);
 	pneg_ctxt->HashAlgorithmCount = cpu_to_le16(1);
 	pneg_ctxt->SaltLength = cpu_to_le16(SMB311_LINUX_CLIENT_SALT_SIZE);
-	get_random_bytes(pneg_ctxt->Salt, SMB311_LINUX_CLIENT_SALT_SIZE);
+	get_अक्रमom_bytes(pneg_ctxt->Salt, SMB311_LINUX_CLIENT_SALT_SIZE);
 	pneg_ctxt->HashAlgorithms = SMB2_PREAUTH_INTEGRITY_SHA512;
-}
+पूर्ण
 
-static void
-build_compression_ctxt(struct smb2_compression_capabilities_context *pneg_ctxt)
-{
+अटल व्योम
+build_compression_ctxt(काष्ठा smb2_compression_capabilities_context *pneg_ctxt)
+अणु
 	pneg_ctxt->ContextType = SMB2_COMPRESSION_CAPABILITIES;
 	pneg_ctxt->DataLength =
-		cpu_to_le16(sizeof(struct smb2_compression_capabilities_context)
-			  - sizeof(struct smb2_neg_context));
+		cpu_to_le16(माप(काष्ठा smb2_compression_capabilities_context)
+			  - माप(काष्ठा smb2_neg_context));
 	pneg_ctxt->CompressionAlgorithmCount = cpu_to_le16(3);
 	pneg_ctxt->CompressionAlgorithms[0] = SMB3_COMPRESS_LZ77;
 	pneg_ctxt->CompressionAlgorithms[1] = SMB3_COMPRESS_LZ77_HUFF;
 	pneg_ctxt->CompressionAlgorithms[2] = SMB3_COMPRESS_LZNT1;
-}
+पूर्ण
 
-static void
-build_encrypt_ctxt(struct smb2_encryption_neg_context *pneg_ctxt)
-{
+अटल व्योम
+build_encrypt_ctxt(काष्ठा smb2_encryption_neg_context *pneg_ctxt)
+अणु
 	pneg_ctxt->ContextType = SMB2_ENCRYPTION_CAPABILITIES;
-	if (require_gcm_256) {
+	अगर (require_gcm_256) अणु
 		pneg_ctxt->DataLength = cpu_to_le16(4); /* Cipher Count + 1 cipher */
 		pneg_ctxt->CipherCount = cpu_to_le16(1);
 		pneg_ctxt->Ciphers[0] = SMB2_ENCRYPTION_AES256_GCM;
-	} else if (enable_gcm_256) {
+	पूर्ण अन्यथा अगर (enable_gcm_256) अणु
 		pneg_ctxt->DataLength = cpu_to_le16(8); /* Cipher Count + 3 ciphers */
 		pneg_ctxt->CipherCount = cpu_to_le16(3);
 		pneg_ctxt->Ciphers[0] = SMB2_ENCRYPTION_AES128_GCM;
 		pneg_ctxt->Ciphers[1] = SMB2_ENCRYPTION_AES256_GCM;
 		pneg_ctxt->Ciphers[2] = SMB2_ENCRYPTION_AES128_CCM;
-	} else {
+	पूर्ण अन्यथा अणु
 		pneg_ctxt->DataLength = cpu_to_le16(6); /* Cipher Count + 2 ciphers */
 		pneg_ctxt->CipherCount = cpu_to_le16(2);
 		pneg_ctxt->Ciphers[0] = SMB2_ENCRYPTION_AES128_GCM;
 		pneg_ctxt->Ciphers[1] = SMB2_ENCRYPTION_AES128_CCM;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int
-build_netname_ctxt(struct smb2_netname_neg_context *pneg_ctxt, char *hostname)
-{
-	struct nls_table *cp = load_nls_default();
+अटल अचिन्हित पूर्णांक
+build_netname_ctxt(काष्ठा smb2_netname_neg_context *pneg_ctxt, अक्षर *hostname)
+अणु
+	काष्ठा nls_table *cp = load_nls_शेष();
 
 	pneg_ctxt->ContextType = SMB2_NETNAME_NEGOTIATE_CONTEXT_ID;
 
 	/* copy up to max of first 100 bytes of server name to NetName field */
-	pneg_ctxt->DataLength = cpu_to_le16(2 * cifs_strtoUTF16(pneg_ctxt->NetName, hostname, 100, cp));
+	pneg_ctxt->DataLength = cpu_to_le16(2 * cअगरs_strtoUTF16(pneg_ctxt->NetName, hostname, 100, cp));
 	/* context size is DataLength + minimal smb2_neg_context */
-	return DIV_ROUND_UP(le16_to_cpu(pneg_ctxt->DataLength) +
-			sizeof(struct smb2_neg_context), 8) * 8;
-}
+	वापस DIV_ROUND_UP(le16_to_cpu(pneg_ctxt->DataLength) +
+			माप(काष्ठा smb2_neg_context), 8) * 8;
+पूर्ण
 
-static void
-build_posix_ctxt(struct smb2_posix_neg_context *pneg_ctxt)
-{
+अटल व्योम
+build_posix_ctxt(काष्ठा smb2_posix_neg_context *pneg_ctxt)
+अणु
 	pneg_ctxt->ContextType = SMB2_POSIX_EXTENSIONS_AVAILABLE;
 	pneg_ctxt->DataLength = cpu_to_le16(POSIX_CTXT_DATA_LEN);
 	/* SMB2_CREATE_TAG_POSIX is "0x93AD25509CB411E7B42383DE968BCD7C" */
@@ -503,219 +504,219 @@ build_posix_ctxt(struct smb2_posix_neg_context *pneg_ctxt)
 	pneg_ctxt->Name[13] = 0x8B;
 	pneg_ctxt->Name[14] = 0xCD;
 	pneg_ctxt->Name[15] = 0x7C;
-}
+पूर्ण
 
-static void
-assemble_neg_contexts(struct smb2_negotiate_req *req,
-		      struct TCP_Server_Info *server, unsigned int *total_len)
-{
-	char *pneg_ctxt;
-	unsigned int ctxt_len;
+अटल व्योम
+assemble_neg_contexts(काष्ठा smb2_negotiate_req *req,
+		      काष्ठा TCP_Server_Info *server, अचिन्हित पूर्णांक *total_len)
+अणु
+	अक्षर *pneg_ctxt;
+	अचिन्हित पूर्णांक ctxt_len;
 
-	if (*total_len > 200) {
-		/* In case length corrupted don't want to overrun smb buffer */
-		cifs_server_dbg(VFS, "Bad frame length assembling neg contexts\n");
-		return;
-	}
+	अगर (*total_len > 200) अणु
+		/* In हाल length corrupted करोn't want to overrun smb buffer */
+		cअगरs_server_dbg(VFS, "Bad frame length assembling neg contexts\n");
+		वापस;
+	पूर्ण
 
 	/*
 	 * round up total_len of fixed part of SMB3 negotiate request to 8
-	 * byte boundary before adding negotiate contexts
+	 * byte boundary beक्रमe adding negotiate contexts
 	 */
 	*total_len = roundup(*total_len, 8);
 
-	pneg_ctxt = (*total_len) + (char *)req;
+	pneg_ctxt = (*total_len) + (अक्षर *)req;
 	req->NegotiateContextOffset = cpu_to_le32(*total_len);
 
-	build_preauth_ctxt((struct smb2_preauth_neg_context *)pneg_ctxt);
-	ctxt_len = DIV_ROUND_UP(sizeof(struct smb2_preauth_neg_context), 8) * 8;
+	build_preauth_ctxt((काष्ठा smb2_preauth_neg_context *)pneg_ctxt);
+	ctxt_len = DIV_ROUND_UP(माप(काष्ठा smb2_preauth_neg_context), 8) * 8;
 	*total_len += ctxt_len;
 	pneg_ctxt += ctxt_len;
 
-	build_encrypt_ctxt((struct smb2_encryption_neg_context *)pneg_ctxt);
-	ctxt_len = DIV_ROUND_UP(sizeof(struct smb2_encryption_neg_context), 8) * 8;
+	build_encrypt_ctxt((काष्ठा smb2_encryption_neg_context *)pneg_ctxt);
+	ctxt_len = DIV_ROUND_UP(माप(काष्ठा smb2_encryption_neg_context), 8) * 8;
 	*total_len += ctxt_len;
 	pneg_ctxt += ctxt_len;
 
-	if (server->compress_algorithm) {
-		build_compression_ctxt((struct smb2_compression_capabilities_context *)
+	अगर (server->compress_algorithm) अणु
+		build_compression_ctxt((काष्ठा smb2_compression_capabilities_context *)
 				pneg_ctxt);
 		ctxt_len = DIV_ROUND_UP(
-			sizeof(struct smb2_compression_capabilities_context),
+			माप(काष्ठा smb2_compression_capabilities_context),
 				8) * 8;
 		*total_len += ctxt_len;
 		pneg_ctxt += ctxt_len;
 		req->NegotiateContextCount = cpu_to_le16(5);
-	} else
+	पूर्ण अन्यथा
 		req->NegotiateContextCount = cpu_to_le16(4);
 
-	ctxt_len = build_netname_ctxt((struct smb2_netname_neg_context *)pneg_ctxt,
+	ctxt_len = build_netname_ctxt((काष्ठा smb2_netname_neg_context *)pneg_ctxt,
 					server->hostname);
 	*total_len += ctxt_len;
 	pneg_ctxt += ctxt_len;
 
-	build_posix_ctxt((struct smb2_posix_neg_context *)pneg_ctxt);
-	*total_len += sizeof(struct smb2_posix_neg_context);
-}
+	build_posix_ctxt((काष्ठा smb2_posix_neg_context *)pneg_ctxt);
+	*total_len += माप(काष्ठा smb2_posix_neg_context);
+पूर्ण
 
-static void decode_preauth_context(struct smb2_preauth_neg_context *ctxt)
-{
-	unsigned int len = le16_to_cpu(ctxt->DataLength);
+अटल व्योम decode_preauth_context(काष्ठा smb2_preauth_neg_context *ctxt)
+अणु
+	अचिन्हित पूर्णांक len = le16_to_cpu(ctxt->DataLength);
 
 	/* If invalid preauth context warn but use what we requested, SHA-512 */
-	if (len < MIN_PREAUTH_CTXT_DATA_LEN) {
+	अगर (len < MIN_PREAUTH_CTXT_DATA_LEN) अणु
 		pr_warn_once("server sent bad preauth context\n");
-		return;
-	} else if (len < MIN_PREAUTH_CTXT_DATA_LEN + le16_to_cpu(ctxt->SaltLength)) {
+		वापस;
+	पूर्ण अन्यथा अगर (len < MIN_PREAUTH_CTXT_DATA_LEN + le16_to_cpu(ctxt->SaltLength)) अणु
 		pr_warn_once("server sent invalid SaltLength\n");
-		return;
-	}
-	if (le16_to_cpu(ctxt->HashAlgorithmCount) != 1)
+		वापस;
+	पूर्ण
+	अगर (le16_to_cpu(ctxt->HashAlgorithmCount) != 1)
 		pr_warn_once("Invalid SMB3 hash algorithm count\n");
-	if (ctxt->HashAlgorithms != SMB2_PREAUTH_INTEGRITY_SHA512)
+	अगर (ctxt->HashAlgorithms != SMB2_PREAUTH_INTEGRITY_SHA512)
 		pr_warn_once("unknown SMB3 hash algorithm\n");
-}
+पूर्ण
 
-static void decode_compress_ctx(struct TCP_Server_Info *server,
-			 struct smb2_compression_capabilities_context *ctxt)
-{
-	unsigned int len = le16_to_cpu(ctxt->DataLength);
+अटल व्योम decode_compress_ctx(काष्ठा TCP_Server_Info *server,
+			 काष्ठा smb2_compression_capabilities_context *ctxt)
+अणु
+	अचिन्हित पूर्णांक len = le16_to_cpu(ctxt->DataLength);
 
-	/* sizeof compress context is a one element compression capbility struct */
-	if (len < 10) {
+	/* माप compress context is a one element compression capbility काष्ठा */
+	अगर (len < 10) अणु
 		pr_warn_once("server sent bad compression cntxt\n");
-		return;
-	}
-	if (le16_to_cpu(ctxt->CompressionAlgorithmCount) != 1) {
+		वापस;
+	पूर्ण
+	अगर (le16_to_cpu(ctxt->CompressionAlgorithmCount) != 1) अणु
 		pr_warn_once("Invalid SMB3 compress algorithm count\n");
-		return;
-	}
-	if (le16_to_cpu(ctxt->CompressionAlgorithms[0]) > 3) {
+		वापस;
+	पूर्ण
+	अगर (le16_to_cpu(ctxt->CompressionAlgorithms[0]) > 3) अणु
 		pr_warn_once("unknown compression algorithm\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	server->compress_algorithm = ctxt->CompressionAlgorithms[0];
-}
+पूर्ण
 
-static int decode_encrypt_ctx(struct TCP_Server_Info *server,
-			      struct smb2_encryption_neg_context *ctxt)
-{
-	unsigned int len = le16_to_cpu(ctxt->DataLength);
+अटल पूर्णांक decode_encrypt_ctx(काष्ठा TCP_Server_Info *server,
+			      काष्ठा smb2_encryption_neg_context *ctxt)
+अणु
+	अचिन्हित पूर्णांक len = le16_to_cpu(ctxt->DataLength);
 
-	cifs_dbg(FYI, "decode SMB3.11 encryption neg context of len %d\n", len);
-	if (len < MIN_ENCRYPT_CTXT_DATA_LEN) {
+	cअगरs_dbg(FYI, "decode SMB3.11 encryption neg context of len %d\n", len);
+	अगर (len < MIN_ENCRYPT_CTXT_DATA_LEN) अणु
 		pr_warn_once("server sent bad crypto ctxt len\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (le16_to_cpu(ctxt->CipherCount) != 1) {
+	अगर (le16_to_cpu(ctxt->CipherCount) != 1) अणु
 		pr_warn_once("Invalid SMB3.11 cipher count\n");
-		return -EINVAL;
-	}
-	cifs_dbg(FYI, "SMB311 cipher type:%d\n", le16_to_cpu(ctxt->Ciphers[0]));
-	if (require_gcm_256) {
-		if (ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES256_GCM) {
-			cifs_dbg(VFS, "Server does not support requested encryption type (AES256 GCM)\n");
-			return -EOPNOTSUPP;
-		}
-	} else if (ctxt->Ciphers[0] == 0) {
+		वापस -EINVAL;
+	पूर्ण
+	cअगरs_dbg(FYI, "SMB311 cipher type:%d\n", le16_to_cpu(ctxt->Ciphers[0]));
+	अगर (require_gcm_256) अणु
+		अगर (ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES256_GCM) अणु
+			cअगरs_dbg(VFS, "Server does not support requested encryption type (AES256 GCM)\n");
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण अन्यथा अगर (ctxt->Ciphers[0] == 0) अणु
 		/*
-		 * e.g. if server only supported AES256_CCM (very unlikely)
+		 * e.g. अगर server only supported AES256_CCM (very unlikely)
 		 * or server supported no encryption types or had all disabled.
-		 * Since GLOBAL_CAP_ENCRYPTION will be not set, in the case
+		 * Since GLOBAL_CAP_ENCRYPTION will be not set, in the हाल
 		 * in which mount requested encryption ("seal") checks later
-		 * on during tree connection will return proper rc, but if
+		 * on during tree connection will वापस proper rc, but अगर
 		 * seal not requested by client, since server is allowed to
-		 * return 0 to indicate no supported cipher, we can't fail here
+		 * वापस 0 to indicate no supported cipher, we can't fail here
 		 */
 		server->cipher_type = 0;
 		server->capabilities &= ~SMB2_GLOBAL_CAP_ENCRYPTION;
 		pr_warn_once("Server does not support requested encryption types\n");
-		return 0;
-	} else if ((ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES128_CCM) &&
+		वापस 0;
+	पूर्ण अन्यथा अगर ((ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES128_CCM) &&
 		   (ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES128_GCM) &&
-		   (ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES256_GCM)) {
-		/* server returned a cipher we didn't ask for */
+		   (ctxt->Ciphers[0] != SMB2_ENCRYPTION_AES256_GCM)) अणु
+		/* server वापसed a cipher we didn't ask क्रम */
 		pr_warn_once("Invalid SMB3.11 cipher returned\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	server->cipher_type = ctxt->Ciphers[0];
 	server->capabilities |= SMB2_GLOBAL_CAP_ENCRYPTION;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int smb311_decode_neg_context(struct smb2_negotiate_rsp *rsp,
-				     struct TCP_Server_Info *server,
-				     unsigned int len_of_smb)
-{
-	struct smb2_neg_context *pctx;
-	unsigned int offset = le32_to_cpu(rsp->NegotiateContextOffset);
-	unsigned int ctxt_cnt = le16_to_cpu(rsp->NegotiateContextCount);
-	unsigned int len_of_ctxts, i;
-	int rc = 0;
+अटल पूर्णांक smb311_decode_neg_context(काष्ठा smb2_negotiate_rsp *rsp,
+				     काष्ठा TCP_Server_Info *server,
+				     अचिन्हित पूर्णांक len_of_smb)
+अणु
+	काष्ठा smb2_neg_context *pctx;
+	अचिन्हित पूर्णांक offset = le32_to_cpu(rsp->NegotiateContextOffset);
+	अचिन्हित पूर्णांक ctxt_cnt = le16_to_cpu(rsp->NegotiateContextCount);
+	अचिन्हित पूर्णांक len_of_ctxts, i;
+	पूर्णांक rc = 0;
 
-	cifs_dbg(FYI, "decoding %d negotiate contexts\n", ctxt_cnt);
-	if (len_of_smb <= offset) {
-		cifs_server_dbg(VFS, "Invalid response: negotiate context offset\n");
-		return -EINVAL;
-	}
+	cअगरs_dbg(FYI, "decoding %d negotiate contexts\n", ctxt_cnt);
+	अगर (len_of_smb <= offset) अणु
+		cअगरs_server_dbg(VFS, "Invalid response: negotiate context offset\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	len_of_ctxts = len_of_smb - offset;
 
-	for (i = 0; i < ctxt_cnt; i++) {
-		int clen;
+	क्रम (i = 0; i < ctxt_cnt; i++) अणु
+		पूर्णांक clen;
 		/* check that offset is not beyond end of SMB */
-		if (len_of_ctxts == 0)
-			break;
+		अगर (len_of_ctxts == 0)
+			अवरोध;
 
-		if (len_of_ctxts < sizeof(struct smb2_neg_context))
-			break;
+		अगर (len_of_ctxts < माप(काष्ठा smb2_neg_context))
+			अवरोध;
 
-		pctx = (struct smb2_neg_context *)(offset + (char *)rsp);
+		pctx = (काष्ठा smb2_neg_context *)(offset + (अक्षर *)rsp);
 		clen = le16_to_cpu(pctx->DataLength);
-		if (clen > len_of_ctxts)
-			break;
+		अगर (clen > len_of_ctxts)
+			अवरोध;
 
-		if (pctx->ContextType == SMB2_PREAUTH_INTEGRITY_CAPABILITIES)
+		अगर (pctx->ContextType == SMB2_PREAUTH_INTEGRITY_CAPABILITIES)
 			decode_preauth_context(
-				(struct smb2_preauth_neg_context *)pctx);
-		else if (pctx->ContextType == SMB2_ENCRYPTION_CAPABILITIES)
+				(काष्ठा smb2_preauth_neg_context *)pctx);
+		अन्यथा अगर (pctx->ContextType == SMB2_ENCRYPTION_CAPABILITIES)
 			rc = decode_encrypt_ctx(server,
-				(struct smb2_encryption_neg_context *)pctx);
-		else if (pctx->ContextType == SMB2_COMPRESSION_CAPABILITIES)
+				(काष्ठा smb2_encryption_neg_context *)pctx);
+		अन्यथा अगर (pctx->ContextType == SMB2_COMPRESSION_CAPABILITIES)
 			decode_compress_ctx(server,
-				(struct smb2_compression_capabilities_context *)pctx);
-		else if (pctx->ContextType == SMB2_POSIX_EXTENSIONS_AVAILABLE)
+				(काष्ठा smb2_compression_capabilities_context *)pctx);
+		अन्यथा अगर (pctx->ContextType == SMB2_POSIX_EXTENSIONS_AVAILABLE)
 			server->posix_ext_supported = true;
-		else
-			cifs_server_dbg(VFS, "unknown negcontext of type %d ignored\n",
+		अन्यथा
+			cअगरs_server_dbg(VFS, "unknown negcontext of type %d ignored\n",
 				le16_to_cpu(pctx->ContextType));
 
-		if (rc)
-			break;
+		अगर (rc)
+			अवरोध;
 		/* offsets must be 8 byte aligned */
 		clen = (clen + 7) & ~0x7;
-		offset += clen + sizeof(struct smb2_neg_context);
+		offset += clen + माप(काष्ठा smb2_neg_context);
 		len_of_ctxts -= clen;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static struct create_posix *
+अटल काष्ठा create_posix *
 create_posix_buf(umode_t mode)
-{
-	struct create_posix *buf;
+अणु
+	काष्ठा create_posix *buf;
 
-	buf = kzalloc(sizeof(struct create_posix),
+	buf = kzalloc(माप(काष्ठा create_posix),
 			GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	अगर (!buf)
+		वापस शून्य;
 
 	buf->ccontext.DataOffset =
-		cpu_to_le16(offsetof(struct create_posix, Mode));
+		cpu_to_le16(दुरत्व(काष्ठा create_posix, Mode));
 	buf->ccontext.DataLength = cpu_to_le32(4);
 	buf->ccontext.NameOffset =
-		cpu_to_le16(offsetof(struct create_posix, Name));
+		cpu_to_le16(दुरत्व(काष्ठा create_posix, Name));
 	buf->ccontext.NameLength = cpu_to_le16(16);
 
 	/* SMB2_CREATE_TAG_POSIX is "0x93AD25509CB411E7B42383DE968BCD7C" */
@@ -736,646 +737,646 @@ create_posix_buf(umode_t mode)
 	buf->Name[14] = 0xCD;
 	buf->Name[15] = 0x7C;
 	buf->Mode = cpu_to_le32(mode);
-	cifs_dbg(FYI, "mode on posix create 0%o\n", mode);
-	return buf;
-}
+	cअगरs_dbg(FYI, "mode on posix create 0%o\n", mode);
+	वापस buf;
+पूर्ण
 
-static int
-add_posix_context(struct kvec *iov, unsigned int *num_iovec, umode_t mode)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_posix_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec, umode_t mode)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
 	iov[num].iov_base = create_posix_buf(mode);
-	if (mode == ACL_NO_MODE)
-		cifs_dbg(FYI, "Invalid mode\n");
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct create_posix);
-	if (!req->CreateContextsOffset)
+	अगर (mode == ACL_NO_MODE)
+		cअगरs_dbg(FYI, "Invalid mode\n");
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा create_posix);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset = cpu_to_le32(
-				sizeof(struct smb2_create_req) +
+				माप(काष्ठा smb2_create_req) +
 				iov[num - 1].iov_len);
-	le32_add_cpu(&req->CreateContextsLength, sizeof(struct create_posix));
+	le32_add_cpu(&req->CreateContextsLength, माप(काष्ठा create_posix));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *
  *	SMB2 Worker functions follow:
  *
- *	The general structure of the worker functions is:
+ *	The general काष्ठाure of the worker functions is:
  *	1) Call smb2_init (assembles SMB2 header)
- *	2) Initialize SMB2 command specific fields in fixed length area of SMB
- *	3) Call smb_sendrcv2 (sends request on socket and waits for response)
- *	4) Decode SMB2 command specific fields in the fixed length area
- *	5) Decode variable length data area (if any for this SMB2 command type)
- *	6) Call free smb buffer
- *	7) return
+ *	2) Initialize SMB2 command specअगरic fields in fixed length area of SMB
+ *	3) Call smb_sendrcv2 (sends request on socket and रुकोs क्रम response)
+ *	4) Decode SMB2 command specअगरic fields in the fixed length area
+ *	5) Decode variable length data area (अगर any क्रम this SMB2 command type)
+ *	6) Call मुक्त smb buffer
+ *	7) वापस
  *
  */
 
-int
-SMB2_negotiate(const unsigned int xid, struct cifs_ses *ses)
-{
-	struct smb_rqst rqst;
-	struct smb2_negotiate_req *req;
-	struct smb2_negotiate_rsp *rsp;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype;
-	struct TCP_Server_Info *server = cifs_ses_server(ses);
-	int blob_offset, blob_length;
-	char *security_blob;
-	int flags = CIFS_NEG_OP;
-	unsigned int total_len;
+पूर्णांक
+SMB2_negotiate(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_negotiate_req *req;
+	काष्ठा smb2_negotiate_rsp *rsp;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype;
+	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(ses);
+	पूर्णांक blob_offset, blob_length;
+	अक्षर *security_blob;
+	पूर्णांक flags = CIFS_NEG_OP;
+	अचिन्हित पूर्णांक total_len;
 
-	cifs_dbg(FYI, "Negotiate protocol\n");
+	cअगरs_dbg(FYI, "Negotiate protocol\n");
 
-	if (!server) {
+	अगर (!server) अणु
 		WARN(1, "%s: server is NULL!\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	rc = smb2_plain_req_init(SMB2_NEGOTIATE, NULL, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+	rc = smb2_plain_req_init(SMB2_NEGOTIATE, शून्य, server,
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->sync_hdr.SessionId = 0;
 
-	memset(server->preauth_sha_hash, 0, SMB2_PREAUTH_HASH_SIZE);
-	memset(ses->preauth_sha_hash, 0, SMB2_PREAUTH_HASH_SIZE);
+	स_रखो(server->preauth_sha_hash, 0, SMB2_PREAUTH_HASH_SIZE);
+	स_रखो(ses->preauth_sha_hash, 0, SMB2_PREAUTH_HASH_SIZE);
 
-	if (strcmp(server->vals->version_string,
-		   SMB3ANY_VERSION_STRING) == 0) {
+	अगर (म_भेद(server->vals->version_string,
+		   SMB3ANY_VERSION_STRING) == 0) अणु
 		req->Dialects[0] = cpu_to_le16(SMB30_PROT_ID);
 		req->Dialects[1] = cpu_to_le16(SMB302_PROT_ID);
 		req->Dialects[2] = cpu_to_le16(SMB311_PROT_ID);
 		req->DialectCount = cpu_to_le16(3);
 		total_len += 6;
-	} else if (strcmp(server->vals->version_string,
-		   SMBDEFAULT_VERSION_STRING) == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(server->vals->version_string,
+		   SMBDEFAULT_VERSION_STRING) == 0) अणु
 		req->Dialects[0] = cpu_to_le16(SMB21_PROT_ID);
 		req->Dialects[1] = cpu_to_le16(SMB30_PROT_ID);
 		req->Dialects[2] = cpu_to_le16(SMB302_PROT_ID);
 		req->Dialects[3] = cpu_to_le16(SMB311_PROT_ID);
 		req->DialectCount = cpu_to_le16(4);
 		total_len += 8;
-	} else {
-		/* otherwise send specific dialect */
+	पूर्ण अन्यथा अणु
+		/* otherwise send specअगरic dialect */
 		req->Dialects[0] = cpu_to_le16(server->vals->protocol_id);
 		req->DialectCount = cpu_to_le16(1);
 		total_len += 2;
-	}
+	पूर्ण
 
 	/* only one of SMB2 signing flags may be set in SMB2 request */
-	if (ses->sign)
+	अगर (ses->sign)
 		req->SecurityMode = cpu_to_le16(SMB2_NEGOTIATE_SIGNING_REQUIRED);
-	else if (global_secflags & CIFSSEC_MAY_SIGN)
+	अन्यथा अगर (global_secflags & CIFSSEC_MAY_SIGN)
 		req->SecurityMode = cpu_to_le16(SMB2_NEGOTIATE_SIGNING_ENABLED);
-	else
+	अन्यथा
 		req->SecurityMode = 0;
 
 	req->Capabilities = cpu_to_le32(server->vals->req_capabilities);
-	if (ses->chan_max > 1)
+	अगर (ses->chan_max > 1)
 		req->Capabilities |= cpu_to_le32(SMB2_GLOBAL_CAP_MULTI_CHANNEL);
 
-	/* ClientGUID must be zero for SMB2.02 dialect */
-	if (server->vals->protocol_id == SMB20_PROT_ID)
-		memset(req->ClientGUID, 0, SMB2_CLIENT_GUID_SIZE);
-	else {
-		memcpy(req->ClientGUID, server->client_guid,
+	/* ClientGUID must be zero क्रम SMB2.02 dialect */
+	अगर (server->vals->protocol_id == SMB20_PROT_ID)
+		स_रखो(req->ClientGUID, 0, SMB2_CLIENT_GUID_SIZE);
+	अन्यथा अणु
+		स_नकल(req->ClientGUID, server->client_guid,
 			SMB2_CLIENT_GUID_SIZE);
-		if ((server->vals->protocol_id == SMB311_PROT_ID) ||
-		    (strcmp(server->vals->version_string,
+		अगर ((server->vals->protocol_id == SMB311_PROT_ID) ||
+		    (म_भेद(server->vals->version_string,
 		     SMB3ANY_VERSION_STRING) == 0) ||
-		    (strcmp(server->vals->version_string,
+		    (म_भेद(server->vals->version_string,
 		     SMBDEFAULT_VERSION_STRING) == 0))
 			assemble_neg_contexts(req, server, &total_len);
-	}
-	iov[0].iov_base = (char *)req;
+	पूर्ण
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	cifs_small_buf_release(req);
-	rsp = (struct smb2_negotiate_rsp *)rsp_iov.iov_base;
+	cअगरs_small_buf_release(req);
+	rsp = (काष्ठा smb2_negotiate_rsp *)rsp_iov.iov_base;
 	/*
-	 * No tcon so can't do
-	 * cifs_stats_inc(&tcon->stats.smb2_stats.smb2_com_fail[SMB2...]);
+	 * No tcon so can't करो
+	 * cअगरs_stats_inc(&tcon->stats.smb2_stats.smb2_com_fail[SMB2...]);
 	 */
-	if (rc == -EOPNOTSUPP) {
-		cifs_server_dbg(VFS, "Dialect not supported by server. Consider  specifying vers=1.0 or vers=2.0 on mount for accessing older servers\n");
-		goto neg_exit;
-	} else if (rc != 0)
-		goto neg_exit;
+	अगर (rc == -EOPNOTSUPP) अणु
+		cअगरs_server_dbg(VFS, "Dialect not supported by server. Consider  specifying vers=1.0 or vers=2.0 on mount for accessing older servers\n");
+		जाओ neg_निकास;
+	पूर्ण अन्यथा अगर (rc != 0)
+		जाओ neg_निकास;
 
-	if (strcmp(server->vals->version_string,
-		   SMB3ANY_VERSION_STRING) == 0) {
-		if (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID)) {
-			cifs_server_dbg(VFS,
+	अगर (म_भेद(server->vals->version_string,
+		   SMB3ANY_VERSION_STRING) == 0) अणु
+		अगर (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID)) अणु
+			cअगरs_server_dbg(VFS,
 				"SMB2 dialect returned but not requested\n");
-			return -EIO;
-		} else if (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID)) {
-			cifs_server_dbg(VFS,
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID)) अणु
+			cअगरs_server_dbg(VFS,
 				"SMB2.1 dialect returned but not requested\n");
-			return -EIO;
-		} else if (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) {
-			/* ops set to 3.0 by default for default so update */
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) अणु
+			/* ops set to 3.0 by शेष क्रम शेष so update */
 			server->ops = &smb311_operations;
 			server->vals = &smb311_values;
-		}
-	} else if (strcmp(server->vals->version_string,
-		   SMBDEFAULT_VERSION_STRING) == 0) {
-		if (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID)) {
-			cifs_server_dbg(VFS,
+		पूर्ण
+	पूर्ण अन्यथा अगर (म_भेद(server->vals->version_string,
+		   SMBDEFAULT_VERSION_STRING) == 0) अणु
+		अगर (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID)) अणु
+			cअगरs_server_dbg(VFS,
 				"SMB2 dialect returned but not requested\n");
-			return -EIO;
-		} else if (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID)) {
-			/* ops set to 3.0 by default for default so update */
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID)) अणु
+			/* ops set to 3.0 by शेष क्रम शेष so update */
 			server->ops = &smb21_operations;
 			server->vals = &smb21_values;
-		} else if (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) {
+		पूर्ण अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) अणु
 			server->ops = &smb311_operations;
 			server->vals = &smb311_values;
-		}
-	} else if (le16_to_cpu(rsp->DialectRevision) !=
-				server->vals->protocol_id) {
-		/* if requested single dialect ensure returned dialect matched */
-		cifs_server_dbg(VFS, "Invalid 0x%x dialect returned: not requested\n",
+		पूर्ण
+	पूर्ण अन्यथा अगर (le16_to_cpu(rsp->DialectRevision) !=
+				server->vals->protocol_id) अणु
+		/* अगर requested single dialect ensure वापसed dialect matched */
+		cअगरs_server_dbg(VFS, "Invalid 0x%x dialect returned: not requested\n",
 				le16_to_cpu(rsp->DialectRevision));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	cifs_dbg(FYI, "mode 0x%x\n", rsp->SecurityMode);
+	cअगरs_dbg(FYI, "mode 0x%x\n", rsp->SecurityMode);
 
-	if (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID))
-		cifs_dbg(FYI, "negotiated smb2.0 dialect\n");
-	else if (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID))
-		cifs_dbg(FYI, "negotiated smb2.1 dialect\n");
-	else if (rsp->DialectRevision == cpu_to_le16(SMB30_PROT_ID))
-		cifs_dbg(FYI, "negotiated smb3.0 dialect\n");
-	else if (rsp->DialectRevision == cpu_to_le16(SMB302_PROT_ID))
-		cifs_dbg(FYI, "negotiated smb3.02 dialect\n");
-	else if (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID))
-		cifs_dbg(FYI, "negotiated smb3.1.1 dialect\n");
-	else {
-		cifs_server_dbg(VFS, "Invalid dialect returned by server 0x%x\n",
+	अगर (rsp->DialectRevision == cpu_to_le16(SMB20_PROT_ID))
+		cअगरs_dbg(FYI, "negotiated smb2.0 dialect\n");
+	अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB21_PROT_ID))
+		cअगरs_dbg(FYI, "negotiated smb2.1 dialect\n");
+	अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB30_PROT_ID))
+		cअगरs_dbg(FYI, "negotiated smb3.0 dialect\n");
+	अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB302_PROT_ID))
+		cअगरs_dbg(FYI, "negotiated smb3.02 dialect\n");
+	अन्यथा अगर (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID))
+		cअगरs_dbg(FYI, "negotiated smb3.1.1 dialect\n");
+	अन्यथा अणु
+		cअगरs_server_dbg(VFS, "Invalid dialect returned by server 0x%x\n",
 				le16_to_cpu(rsp->DialectRevision));
 		rc = -EIO;
-		goto neg_exit;
-	}
+		जाओ neg_निकास;
+	पूर्ण
 	server->dialect = le16_to_cpu(rsp->DialectRevision);
 
 	/*
 	 * Keep a copy of the hash after negprot. This hash will be
-	 * the starting hash value for all sessions made from this
+	 * the starting hash value क्रम all sessions made from this
 	 * server.
 	 */
-	memcpy(server->preauth_sha_hash, ses->preauth_sha_hash,
+	स_नकल(server->preauth_sha_hash, ses->preauth_sha_hash,
 	       SMB2_PREAUTH_HASH_SIZE);
 
 	/* SMB2 only has an extended negflavor */
 	server->negflavor = CIFS_NEGFLAVOR_EXTENDED;
 	/* set it to the maximum buffer size value we can send with 1 credit */
-	server->maxBuf = min_t(unsigned int, le32_to_cpu(rsp->MaxTransactSize),
+	server->maxBuf = min_t(अचिन्हित पूर्णांक, le32_to_cpu(rsp->MaxTransactSize),
 			       SMB2_MAX_BUFFER_SIZE);
-	server->max_read = le32_to_cpu(rsp->MaxReadSize);
-	server->max_write = le32_to_cpu(rsp->MaxWriteSize);
+	server->max_पढ़ो = le32_to_cpu(rsp->MaxReadSize);
+	server->max_ग_लिखो = le32_to_cpu(rsp->MaxWriteSize);
 	server->sec_mode = le16_to_cpu(rsp->SecurityMode);
-	if ((server->sec_mode & SMB2_SEC_MODE_FLAGS_ALL) != server->sec_mode)
-		cifs_dbg(FYI, "Server returned unexpected security mode 0x%x\n",
+	अगर ((server->sec_mode & SMB2_SEC_MODE_FLAGS_ALL) != server->sec_mode)
+		cअगरs_dbg(FYI, "Server returned unexpected security mode 0x%x\n",
 				server->sec_mode);
 	server->capabilities = le32_to_cpu(rsp->Capabilities);
 	/* Internal types */
-	server->capabilities |= SMB2_NT_FIND | SMB2_LARGE_FILES;
+	server->capabilities |= SMB2_NT_FIND | SMB2_LARGE_खाताS;
 
 	/*
-	 * SMB3.0 supports only 1 cipher and doesn't have a encryption neg context
+	 * SMB3.0 supports only 1 cipher and करोesn't have a encryption neg context
 	 * Set the cipher type manually.
 	 */
-	if (server->dialect == SMB30_PROT_ID && (server->capabilities & SMB2_GLOBAL_CAP_ENCRYPTION))
+	अगर (server->dialect == SMB30_PROT_ID && (server->capabilities & SMB2_GLOBAL_CAP_ENCRYPTION))
 		server->cipher_type = SMB2_ENCRYPTION_AES128_CCM;
 
 	security_blob = smb2_get_data_area_len(&blob_offset, &blob_length,
-					       (struct smb2_sync_hdr *)rsp);
+					       (काष्ठा smb2_sync_hdr *)rsp);
 	/*
-	 * See MS-SMB2 section 2.2.4: if no blob, client picks default which
-	 * for us will be
+	 * See MS-SMB2 section 2.2.4: अगर no blob, client picks शेष which
+	 * क्रम us will be
 	 *	ses->sectype = RawNTLMSSP;
-	 * but for time being this is our only auth choice so doesn't matter.
+	 * but क्रम समय being this is our only auth choice so करोesn't matter.
 	 * We just found a server which sets blob length to zero expecting raw.
 	 */
-	if (blob_length == 0) {
-		cifs_dbg(FYI, "missing security blob on negprot\n");
+	अगर (blob_length == 0) अणु
+		cअगरs_dbg(FYI, "missing security blob on negprot\n");
 		server->sec_ntlmssp = true;
-	}
+	पूर्ण
 
-	rc = cifs_enable_signing(server, ses->sign);
-	if (rc)
-		goto neg_exit;
-	if (blob_length) {
+	rc = cअगरs_enable_signing(server, ses->sign);
+	अगर (rc)
+		जाओ neg_निकास;
+	अगर (blob_length) अणु
 		rc = decode_negTokenInit(security_blob, blob_length, server);
-		if (rc == 1)
+		अगर (rc == 1)
 			rc = 0;
-		else if (rc == 0)
+		अन्यथा अगर (rc == 0)
 			rc = -EIO;
-	}
+	पूर्ण
 
-	if (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) {
-		if (rsp->NegotiateContextCount)
+	अगर (rsp->DialectRevision == cpu_to_le16(SMB311_PROT_ID)) अणु
+		अगर (rsp->NegotiateContextCount)
 			rc = smb311_decode_neg_context(rsp, server,
 						       rsp_iov.iov_len);
-		else
-			cifs_server_dbg(VFS, "Missing expected negotiate contexts\n");
-	}
-neg_exit:
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+		अन्यथा
+			cअगरs_server_dbg(VFS, "Missing expected negotiate contexts\n");
+	पूर्ण
+neg_निकास:
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
-int smb3_validate_negotiate(const unsigned int xid, struct cifs_tcon *tcon)
-{
-	int rc;
-	struct validate_negotiate_info_req *pneg_inbuf;
-	struct validate_negotiate_info_rsp *pneg_rsp = NULL;
+पूर्णांक smb3_validate_negotiate(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon)
+अणु
+	पूर्णांक rc;
+	काष्ठा validate_negotiate_info_req *pneg_inbuf;
+	काष्ठा validate_negotiate_info_rsp *pneg_rsp = शून्य;
 	u32 rsplen;
 	u32 inbuflen; /* max of 4 dialects */
-	struct TCP_Server_Info *server = tcon->ses->server;
+	काष्ठा TCP_Server_Info *server = tcon->ses->server;
 
-	cifs_dbg(FYI, "validate negotiate\n");
+	cअगरs_dbg(FYI, "validate negotiate\n");
 
-	/* In SMB3.11 preauth integrity supersedes validate negotiate */
-	if (server->dialect == SMB311_PROT_ID)
-		return 0;
+	/* In SMB3.11 preauth पूर्णांकegrity supersedes validate negotiate */
+	अगर (server->dialect == SMB311_PROT_ID)
+		वापस 0;
 
 	/*
-	 * validation ioctl must be signed, so no point sending this if we
-	 * can not sign it (ie are not known user).  Even if signing is not
-	 * required (enabled but not negotiated), in those cases we selectively
-	 * sign just this, the first and only signed request on a connection.
+	 * validation ioctl must be चिन्हित, so no poपूर्णांक sending this अगर we
+	 * can not sign it (ie are not known user).  Even अगर signing is not
+	 * required (enabled but not negotiated), in those हालs we selectively
+	 * sign just this, the first and only चिन्हित request on a connection.
 	 * Having validation of negotiate info  helps reduce attack vectors.
 	 */
-	if (tcon->ses->session_flags & SMB2_SESSION_FLAG_IS_GUEST)
-		return 0; /* validation requires signing */
+	अगर (tcon->ses->session_flags & SMB2_SESSION_FLAG_IS_GUEST)
+		वापस 0; /* validation requires signing */
 
-	if (tcon->ses->user_name == NULL) {
-		cifs_dbg(FYI, "Can't validate negotiate: null user mount\n");
-		return 0; /* validation requires signing */
-	}
+	अगर (tcon->ses->user_name == शून्य) अणु
+		cअगरs_dbg(FYI, "Can't validate negotiate: null user mount\n");
+		वापस 0; /* validation requires signing */
+	पूर्ण
 
-	if (tcon->ses->session_flags & SMB2_SESSION_FLAG_IS_NULL)
-		cifs_tcon_dbg(VFS, "Unexpected null user (anonymous) auth flag sent by server\n");
+	अगर (tcon->ses->session_flags & SMB2_SESSION_FLAG_IS_शून्य)
+		cअगरs_tcon_dbg(VFS, "Unexpected null user (anonymous) auth flag sent by server\n");
 
-	pneg_inbuf = kmalloc(sizeof(*pneg_inbuf), GFP_NOFS);
-	if (!pneg_inbuf)
-		return -ENOMEM;
+	pneg_inbuf = kदो_स्मृति(माप(*pneg_inbuf), GFP_NOFS);
+	अगर (!pneg_inbuf)
+		वापस -ENOMEM;
 
 	pneg_inbuf->Capabilities =
 			cpu_to_le32(server->vals->req_capabilities);
-	if (tcon->ses->chan_max > 1)
+	अगर (tcon->ses->chan_max > 1)
 		pneg_inbuf->Capabilities |= cpu_to_le32(SMB2_GLOBAL_CAP_MULTI_CHANNEL);
 
-	memcpy(pneg_inbuf->Guid, server->client_guid,
+	स_नकल(pneg_inbuf->Guid, server->client_guid,
 					SMB2_CLIENT_GUID_SIZE);
 
-	if (tcon->ses->sign)
+	अगर (tcon->ses->sign)
 		pneg_inbuf->SecurityMode =
 			cpu_to_le16(SMB2_NEGOTIATE_SIGNING_REQUIRED);
-	else if (global_secflags & CIFSSEC_MAY_SIGN)
+	अन्यथा अगर (global_secflags & CIFSSEC_MAY_SIGN)
 		pneg_inbuf->SecurityMode =
 			cpu_to_le16(SMB2_NEGOTIATE_SIGNING_ENABLED);
-	else
+	अन्यथा
 		pneg_inbuf->SecurityMode = 0;
 
 
-	if (strcmp(server->vals->version_string,
-		SMB3ANY_VERSION_STRING) == 0) {
+	अगर (म_भेद(server->vals->version_string,
+		SMB3ANY_VERSION_STRING) == 0) अणु
 		pneg_inbuf->Dialects[0] = cpu_to_le16(SMB30_PROT_ID);
 		pneg_inbuf->Dialects[1] = cpu_to_le16(SMB302_PROT_ID);
 		pneg_inbuf->Dialects[2] = cpu_to_le16(SMB311_PROT_ID);
 		pneg_inbuf->DialectCount = cpu_to_le16(3);
 		/* SMB 2.1 not included so subtract one dialect from len */
-		inbuflen = sizeof(*pneg_inbuf) -
-				(sizeof(pneg_inbuf->Dialects[0]));
-	} else if (strcmp(server->vals->version_string,
-		SMBDEFAULT_VERSION_STRING) == 0) {
+		inbuflen = माप(*pneg_inbuf) -
+				(माप(pneg_inbuf->Dialects[0]));
+	पूर्ण अन्यथा अगर (म_भेद(server->vals->version_string,
+		SMBDEFAULT_VERSION_STRING) == 0) अणु
 		pneg_inbuf->Dialects[0] = cpu_to_le16(SMB21_PROT_ID);
 		pneg_inbuf->Dialects[1] = cpu_to_le16(SMB30_PROT_ID);
 		pneg_inbuf->Dialects[2] = cpu_to_le16(SMB302_PROT_ID);
 		pneg_inbuf->Dialects[3] = cpu_to_le16(SMB311_PROT_ID);
 		pneg_inbuf->DialectCount = cpu_to_le16(4);
-		/* structure is big enough for 4 dialects */
-		inbuflen = sizeof(*pneg_inbuf);
-	} else {
-		/* otherwise specific dialect was requested */
+		/* काष्ठाure is big enough क्रम 4 dialects */
+		inbuflen = माप(*pneg_inbuf);
+	पूर्ण अन्यथा अणु
+		/* otherwise specअगरic dialect was requested */
 		pneg_inbuf->Dialects[0] =
 			cpu_to_le16(server->vals->protocol_id);
 		pneg_inbuf->DialectCount = cpu_to_le16(1);
-		/* structure is big enough for 3 dialects, sending only 1 */
-		inbuflen = sizeof(*pneg_inbuf) -
-				sizeof(pneg_inbuf->Dialects[0]) * 2;
-	}
+		/* काष्ठाure is big enough क्रम 3 dialects, sending only 1 */
+		inbuflen = माप(*pneg_inbuf) -
+				माप(pneg_inbuf->Dialects[0]) * 2;
+	पूर्ण
 
-	rc = SMB2_ioctl(xid, tcon, NO_FILE_ID, NO_FILE_ID,
+	rc = SMB2_ioctl(xid, tcon, NO_खाता_ID, NO_खाता_ID,
 		FSCTL_VALIDATE_NEGOTIATE_INFO, true /* is_fsctl */,
-		(char *)pneg_inbuf, inbuflen, CIFSMaxBufSize,
-		(char **)&pneg_rsp, &rsplen);
-	if (rc == -EOPNOTSUPP) {
+		(अक्षर *)pneg_inbuf, inbuflen, CIFSMaxBufSize,
+		(अक्षर **)&pneg_rsp, &rsplen);
+	अगर (rc == -EOPNOTSUPP) अणु
 		/*
-		 * Old Windows versions or Netapp SMB server can return
+		 * Old Winकरोws versions or Netapp SMB server can वापस
 		 * not supported error. Client should accept it.
 		 */
-		cifs_tcon_dbg(VFS, "Server does not support validate negotiate\n");
+		cअगरs_tcon_dbg(VFS, "Server does not support validate negotiate\n");
 		rc = 0;
-		goto out_free_inbuf;
-	} else if (rc != 0) {
-		cifs_tcon_dbg(VFS, "validate protocol negotiate failed: %d\n",
+		जाओ out_मुक्त_inbuf;
+	पूर्ण अन्यथा अगर (rc != 0) अणु
+		cअगरs_tcon_dbg(VFS, "validate protocol negotiate failed: %d\n",
 			      rc);
 		rc = -EIO;
-		goto out_free_inbuf;
-	}
+		जाओ out_मुक्त_inbuf;
+	पूर्ण
 
 	rc = -EIO;
-	if (rsplen != sizeof(*pneg_rsp)) {
-		cifs_tcon_dbg(VFS, "Invalid protocol negotiate response size: %d\n",
+	अगर (rsplen != माप(*pneg_rsp)) अणु
+		cअगरs_tcon_dbg(VFS, "Invalid protocol negotiate response size: %d\n",
 			      rsplen);
 
-		/* relax check since Mac returns max bufsize allowed on ioctl */
-		if (rsplen > CIFSMaxBufSize || rsplen < sizeof(*pneg_rsp))
-			goto out_free_rsp;
-	}
+		/* relax check since Mac वापसs max bufsize allowed on ioctl */
+		अगर (rsplen > CIFSMaxBufSize || rsplen < माप(*pneg_rsp))
+			जाओ out_मुक्त_rsp;
+	पूर्ण
 
 	/* check validate negotiate info response matches what we got earlier */
-	if (pneg_rsp->Dialect != cpu_to_le16(server->dialect))
-		goto vneg_out;
+	अगर (pneg_rsp->Dialect != cpu_to_le16(server->dialect))
+		जाओ vneg_out;
 
-	if (pneg_rsp->SecurityMode != cpu_to_le16(server->sec_mode))
-		goto vneg_out;
+	अगर (pneg_rsp->SecurityMode != cpu_to_le16(server->sec_mode))
+		जाओ vneg_out;
 
-	/* do not validate server guid because not saved at negprot time yet */
+	/* करो not validate server guid because not saved at negprot समय yet */
 
-	if ((le32_to_cpu(pneg_rsp->Capabilities) | SMB2_NT_FIND |
-	      SMB2_LARGE_FILES) != server->capabilities)
-		goto vneg_out;
+	अगर ((le32_to_cpu(pneg_rsp->Capabilities) | SMB2_NT_FIND |
+	      SMB2_LARGE_खाताS) != server->capabilities)
+		जाओ vneg_out;
 
 	/* validate negotiate successful */
 	rc = 0;
-	cifs_dbg(FYI, "validate negotiate info successful\n");
-	goto out_free_rsp;
+	cअगरs_dbg(FYI, "validate negotiate info successful\n");
+	जाओ out_मुक्त_rsp;
 
 vneg_out:
-	cifs_tcon_dbg(VFS, "protocol revalidation - security settings mismatch\n");
-out_free_rsp:
-	kfree(pneg_rsp);
-out_free_inbuf:
-	kfree(pneg_inbuf);
-	return rc;
-}
+	cअगरs_tcon_dbg(VFS, "protocol revalidation - security settings mismatch\n");
+out_मुक्त_rsp:
+	kमुक्त(pneg_rsp);
+out_मुक्त_inbuf:
+	kमुक्त(pneg_inbuf);
+	वापस rc;
+पूर्ण
 
-enum securityEnum
-smb2_select_sectype(struct TCP_Server_Info *server, enum securityEnum requested)
-{
-	switch (requested) {
-	case Kerberos:
-	case RawNTLMSSP:
-		return requested;
-	case NTLMv2:
-		return RawNTLMSSP;
-	case Unspecified:
-		if (server->sec_ntlmssp &&
+क्रमागत securityEnum
+smb2_select_sectype(काष्ठा TCP_Server_Info *server, क्रमागत securityEnum requested)
+अणु
+	चयन (requested) अणु
+	हाल Kerberos:
+	हाल RawNTLMSSP:
+		वापस requested;
+	हाल NTLMv2:
+		वापस RawNTLMSSP;
+	हाल Unspecअगरied:
+		अगर (server->sec_ntlmssp &&
 			(global_secflags & CIFSSEC_MAY_NTLMSSP))
-			return RawNTLMSSP;
-		if ((server->sec_kerberos || server->sec_mskerberos) &&
+			वापस RawNTLMSSP;
+		अगर ((server->sec_kerberos || server->sec_mskerberos) &&
 			(global_secflags & CIFSSEC_MAY_KRB5))
-			return Kerberos;
+			वापस Kerberos;
 		fallthrough;
-	default:
-		return Unspecified;
-	}
-}
+	शेष:
+		वापस Unspecअगरied;
+	पूर्ण
+पूर्ण
 
-struct SMB2_sess_data {
-	unsigned int xid;
-	struct cifs_ses *ses;
-	struct nls_table *nls_cp;
-	void (*func)(struct SMB2_sess_data *);
-	int result;
+काष्ठा SMB2_sess_data अणु
+	अचिन्हित पूर्णांक xid;
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा nls_table *nls_cp;
+	व्योम (*func)(काष्ठा SMB2_sess_data *);
+	पूर्णांक result;
 	u64 previous_session;
 
 	/* we will send the SMB in three pieces:
 	 * a fixed length beginning part, an optional
 	 * SPNEGO blob (which can be zero length), and a
 	 * last part which will include the strings
-	 * and rest of bcc area. This allows us to avoid
+	 * and rest of bcc area. This allows us to aव्योम
 	 * a large buffer 17K allocation
 	 */
-	int buf0_type;
-	struct kvec iov[2];
-};
+	पूर्णांक buf0_type;
+	काष्ठा kvec iov[2];
+पूर्ण;
 
-static int
-SMB2_sess_alloc_buffer(struct SMB2_sess_data *sess_data)
-{
-	int rc;
-	struct cifs_ses *ses = sess_data->ses;
-	struct smb2_sess_setup_req *req;
-	struct TCP_Server_Info *server = cifs_ses_server(ses);
-	unsigned int total_len;
+अटल पूर्णांक
+SMB2_sess_alloc_buffer(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	काष्ठा smb2_sess_setup_req *req;
+	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(ses);
+	अचिन्हित पूर्णांक total_len;
 
-	rc = smb2_plain_req_init(SMB2_SESSION_SETUP, NULL, server,
-				 (void **) &req,
+	rc = smb2_plain_req_init(SMB2_SESSION_SETUP, शून्य, server,
+				 (व्योम **) &req,
 				 &total_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (sess_data->ses->binding) {
+	अगर (sess_data->ses->binding) अणु
 		req->sync_hdr.SessionId = sess_data->ses->Suid;
 		req->sync_hdr.Flags |= SMB2_FLAGS_SIGNED;
 		req->PreviousSessionId = 0;
 		req->Flags = SMB2_SESSION_REQ_FLAG_BINDING;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* First session, not a reauthenticate */
 		req->sync_hdr.SessionId = 0;
 		/*
-		 * if reconnect, we need to send previous sess id
+		 * अगर reconnect, we need to send previous sess id
 		 * otherwise it is 0
 		 */
 		req->PreviousSessionId = sess_data->previous_session;
 		req->Flags = 0; /* MBZ */
-	}
+	पूर्ण
 
-	/* enough to enable echos and oplocks and one max size write */
+	/* enough to enable echos and oplocks and one max size ग_लिखो */
 	req->sync_hdr.CreditRequest = cpu_to_le16(130);
 
 	/* only one of SMB2 signing flags may be set in SMB2 request */
-	if (server->sign)
+	अगर (server->sign)
 		req->SecurityMode = SMB2_NEGOTIATE_SIGNING_REQUIRED;
-	else if (global_secflags & CIFSSEC_MAY_SIGN) /* one flag unlike MUST_ */
+	अन्यथा अगर (global_secflags & CIFSSEC_MAY_SIGN) /* one flag unlike MUST_ */
 		req->SecurityMode = SMB2_NEGOTIATE_SIGNING_ENABLED;
-	else
+	अन्यथा
 		req->SecurityMode = 0;
 
-#ifdef CONFIG_CIFS_DFS_UPCALL
+#अगर_घोषित CONFIG_CIFS_DFS_UPCALL
 	req->Capabilities = cpu_to_le32(SMB2_GLOBAL_CAP_DFS);
-#else
+#अन्यथा
 	req->Capabilities = 0;
-#endif /* DFS_UPCALL */
+#पूर्ण_अगर /* DFS_UPCALL */
 
 	req->Channel = 0; /* MBZ */
 
-	sess_data->iov[0].iov_base = (char *)req;
-	/* 1 for pad */
+	sess_data->iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम pad */
 	sess_data->iov[0].iov_len = total_len - 1;
 	/*
 	 * This variable will be used to clear the buffer
-	 * allocated above in case of any error in the calling function.
+	 * allocated above in हाल of any error in the calling function.
 	 */
 	sess_data->buf0_type = CIFS_SMALL_BUFFER;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-SMB2_sess_free_buffer(struct SMB2_sess_data *sess_data)
-{
-	free_rsp_buf(sess_data->buf0_type, sess_data->iov[0].iov_base);
+अटल व्योम
+SMB2_sess_मुक्त_buffer(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	मुक्त_rsp_buf(sess_data->buf0_type, sess_data->iov[0].iov_base);
 	sess_data->buf0_type = CIFS_NO_BUFFER;
-}
+पूर्ण
 
-static int
-SMB2_sess_sendreceive(struct SMB2_sess_data *sess_data)
-{
-	int rc;
-	struct smb_rqst rqst;
-	struct smb2_sess_setup_req *req = sess_data->iov[0].iov_base;
-	struct kvec rsp_iov = { NULL, 0 };
+अटल पूर्णांक
+SMB2_sess_sendreceive(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_sess_setup_req *req = sess_data->iov[0].iov_base;
+	काष्ठा kvec rsp_iov = अणु शून्य, 0 पूर्ण;
 
 	/* Testing shows that buffer offset must be at location of Buffer[0] */
 	req->SecurityBufferOffset =
-		cpu_to_le16(sizeof(struct smb2_sess_setup_req) - 1 /* pad */);
+		cpu_to_le16(माप(काष्ठा smb2_sess_setup_req) - 1 /* pad */);
 	req->SecurityBufferLength = cpu_to_le16(sess_data->iov[1].iov_len);
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = sess_data->iov;
 	rqst.rq_nvec = 2;
 
 	/* BB add code to build os and lm fields */
-	rc = cifs_send_recv(sess_data->xid, sess_data->ses,
-			    cifs_ses_server(sess_data->ses),
+	rc = cअगरs_send_recv(sess_data->xid, sess_data->ses,
+			    cअगरs_ses_server(sess_data->ses),
 			    &rqst,
 			    &sess_data->buf0_type,
 			    CIFS_LOG_ERROR | CIFS_SESS_OP, &rsp_iov);
-	cifs_small_buf_release(sess_data->iov[0].iov_base);
-	memcpy(&sess_data->iov[0], &rsp_iov, sizeof(struct kvec));
+	cअगरs_small_buf_release(sess_data->iov[0].iov_base);
+	स_नकल(&sess_data->iov[0], &rsp_iov, माप(काष्ठा kvec));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-SMB2_sess_establish_session(struct SMB2_sess_data *sess_data)
-{
-	int rc = 0;
-	struct cifs_ses *ses = sess_data->ses;
-	struct TCP_Server_Info *server = cifs_ses_server(ses);
+अटल पूर्णांक
+SMB2_sess_establish_session(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(ses);
 
 	mutex_lock(&server->srv_mutex);
-	if (server->ops->generate_signingkey) {
+	अगर (server->ops->generate_signingkey) अणु
 		rc = server->ops->generate_signingkey(ses);
-		if (rc) {
-			cifs_dbg(FYI,
+		अगर (rc) अणु
+			cअगरs_dbg(FYI,
 				"SMB3 session key generation failed\n");
 			mutex_unlock(&server->srv_mutex);
-			return rc;
-		}
-	}
-	if (!server->session_estab) {
+			वापस rc;
+		पूर्ण
+	पूर्ण
+	अगर (!server->session_estab) अणु
 		server->sequence_number = 0x2;
 		server->session_estab = true;
-	}
+	पूर्ण
 	mutex_unlock(&server->srv_mutex);
 
-	cifs_dbg(FYI, "SMB2/3 session established successfully\n");
-	/* keep existing ses state if binding */
-	if (!ses->binding) {
+	cअगरs_dbg(FYI, "SMB2/3 session established successfully\n");
+	/* keep existing ses state अगर binding */
+	अगर (!ses->binding) अणु
 		spin_lock(&GlobalMid_Lock);
-		ses->status = CifsGood;
+		ses->status = CअगरsGood;
 		ses->need_reconnect = false;
 		spin_unlock(&GlobalMid_Lock);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#ifdef CONFIG_CIFS_UPCALL
-static void
-SMB2_auth_kerberos(struct SMB2_sess_data *sess_data)
-{
-	int rc;
-	struct cifs_ses *ses = sess_data->ses;
-	struct cifs_spnego_msg *msg;
-	struct key *spnego_key = NULL;
-	struct smb2_sess_setup_rsp *rsp = NULL;
+#अगर_घोषित CONFIG_CIFS_UPCALL
+अटल व्योम
+SMB2_auth_kerberos(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	काष्ठा cअगरs_spnego_msg *msg;
+	काष्ठा key *spnego_key = शून्य;
+	काष्ठा smb2_sess_setup_rsp *rsp = शून्य;
 
 	rc = SMB2_sess_alloc_buffer(sess_data);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	spnego_key = cifs_get_spnego_key(ses);
-	if (IS_ERR(spnego_key)) {
+	spnego_key = cअगरs_get_spnego_key(ses);
+	अगर (IS_ERR(spnego_key)) अणु
 		rc = PTR_ERR(spnego_key);
-		if (rc == -ENOKEY)
-			cifs_dbg(VFS, "Verify user has a krb5 ticket and keyutils is installed\n");
-		spnego_key = NULL;
-		goto out;
-	}
+		अगर (rc == -ENOKEY)
+			cअगरs_dbg(VFS, "Verify user has a krb5 ticket and keyutils is installed\n");
+		spnego_key = शून्य;
+		जाओ out;
+	पूर्ण
 
 	msg = spnego_key->payload.data[0];
 	/*
-	 * check version field to make sure that cifs.upcall is
-	 * sending us a response in an expected form
+	 * check version field to make sure that cअगरs.upcall is
+	 * sending us a response in an expected क्रमm
 	 */
-	if (msg->version != CIFS_SPNEGO_UPCALL_VERSION) {
-		cifs_dbg(VFS, "bad cifs.upcall version. Expected %d got %d\n",
+	अगर (msg->version != CIFS_SPNEGO_UPCALL_VERSION) अणु
+		cअगरs_dbg(VFS, "bad cifs.upcall version. Expected %d got %d\n",
 			 CIFS_SPNEGO_UPCALL_VERSION, msg->version);
 		rc = -EKEYREJECTED;
-		goto out_put_spnego_key;
-	}
+		जाओ out_put_spnego_key;
+	पूर्ण
 
-	/* keep session key if binding */
-	if (!ses->binding) {
+	/* keep session key अगर binding */
+	अगर (!ses->binding) अणु
 		ses->auth_key.response = kmemdup(msg->data, msg->sesskey_len,
 						 GFP_KERNEL);
-		if (!ses->auth_key.response) {
-			cifs_dbg(VFS, "Kerberos can't allocate (%u bytes) memory\n",
+		अगर (!ses->auth_key.response) अणु
+			cअगरs_dbg(VFS, "Kerberos can't allocate (%u bytes) memory\n",
 				 msg->sesskey_len);
 			rc = -ENOMEM;
-			goto out_put_spnego_key;
-		}
+			जाओ out_put_spnego_key;
+		पूर्ण
 		ses->auth_key.len = msg->sesskey_len;
-	}
+	पूर्ण
 
 	sess_data->iov[1].iov_base = msg->data + msg->sesskey_len;
 	sess_data->iov[1].iov_len = msg->secblob_len;
 
 	rc = SMB2_sess_sendreceive(sess_data);
-	if (rc)
-		goto out_put_spnego_key;
+	अगर (rc)
+		जाओ out_put_spnego_key;
 
-	rsp = (struct smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
-	/* keep session id and flags if binding */
-	if (!ses->binding) {
+	rsp = (काष्ठा smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
+	/* keep session id and flags अगर binding */
+	अगर (!ses->binding) अणु
 		ses->Suid = rsp->sync_hdr.SessionId;
 		ses->session_flags = le16_to_cpu(rsp->SessionFlags);
-	}
+	पूर्ण
 
 	rc = SMB2_sess_establish_session(sess_data);
 out_put_spnego_key:
@@ -1383,590 +1384,590 @@ out_put_spnego_key:
 	key_put(spnego_key);
 out:
 	sess_data->result = rc;
-	sess_data->func = NULL;
-	SMB2_sess_free_buffer(sess_data);
-}
-#else
-static void
-SMB2_auth_kerberos(struct SMB2_sess_data *sess_data)
-{
-	cifs_dbg(VFS, "Kerberos negotiated but upcall support disabled!\n");
+	sess_data->func = शून्य;
+	SMB2_sess_मुक्त_buffer(sess_data);
+पूर्ण
+#अन्यथा
+अटल व्योम
+SMB2_auth_kerberos(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	cअगरs_dbg(VFS, "Kerberos negotiated but upcall support disabled!\n");
 	sess_data->result = -EOPNOTSUPP;
-	sess_data->func = NULL;
-}
-#endif
+	sess_data->func = शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static void
-SMB2_sess_auth_rawntlmssp_authenticate(struct SMB2_sess_data *sess_data);
+अटल व्योम
+SMB2_sess_auth_rawntlmssp_authenticate(काष्ठा SMB2_sess_data *sess_data);
 
-static void
-SMB2_sess_auth_rawntlmssp_negotiate(struct SMB2_sess_data *sess_data)
-{
-	int rc;
-	struct cifs_ses *ses = sess_data->ses;
-	struct smb2_sess_setup_rsp *rsp = NULL;
-	char *ntlmssp_blob = NULL;
-	bool use_spnego = false; /* else use raw ntlmssp */
+अटल व्योम
+SMB2_sess_auth_rawntlmssp_negotiate(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	काष्ठा smb2_sess_setup_rsp *rsp = शून्य;
+	अक्षर *ntlmssp_blob = शून्य;
+	bool use_spnego = false; /* अन्यथा use raw ntlmssp */
 	u16 blob_length = 0;
 
 	/*
 	 * If memory allocation is successful, caller of this function
-	 * frees it.
+	 * मुक्तs it.
 	 */
-	ses->ntlmssp = kmalloc(sizeof(struct ntlmssp_auth), GFP_KERNEL);
-	if (!ses->ntlmssp) {
+	ses->ntlmssp = kदो_स्मृति(माप(काष्ठा ntlmssp_auth), GFP_KERNEL);
+	अगर (!ses->ntlmssp) अणु
 		rc = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 	ses->ntlmssp->sesskey_per_smbsess = true;
 
 	rc = SMB2_sess_alloc_buffer(sess_data);
-	if (rc)
-		goto out_err;
+	अगर (rc)
+		जाओ out_err;
 
-	ntlmssp_blob = kmalloc(sizeof(struct _NEGOTIATE_MESSAGE),
+	ntlmssp_blob = kदो_स्मृति(माप(काष्ठा _NEGOTIATE_MESSAGE),
 			       GFP_KERNEL);
-	if (ntlmssp_blob == NULL) {
+	अगर (ntlmssp_blob == शून्य) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	build_ntlmssp_negotiate_blob(ntlmssp_blob, ses);
-	if (use_spnego) {
+	अगर (use_spnego) अणु
 		/* BB eventually need to add this */
-		cifs_dbg(VFS, "spnego not supported for SMB2 yet\n");
+		cअगरs_dbg(VFS, "spnego not supported for SMB2 yet\n");
 		rc = -EOPNOTSUPP;
-		goto out;
-	} else {
-		blob_length = sizeof(struct _NEGOTIATE_MESSAGE);
-		/* with raw NTLMSSP we don't encapsulate in SPNEGO */
-	}
+		जाओ out;
+	पूर्ण अन्यथा अणु
+		blob_length = माप(काष्ठा _NEGOTIATE_MESSAGE);
+		/* with raw NTLMSSP we करोn't encapsulate in SPNEGO */
+	पूर्ण
 	sess_data->iov[1].iov_base = ntlmssp_blob;
 	sess_data->iov[1].iov_len = blob_length;
 
 	rc = SMB2_sess_sendreceive(sess_data);
-	rsp = (struct smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
+	rsp = (काष्ठा smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
 
 	/* If true, rc here is expected and not an error */
-	if (sess_data->buf0_type != CIFS_NO_BUFFER &&
+	अगर (sess_data->buf0_type != CIFS_NO_BUFFER &&
 		rsp->sync_hdr.Status == STATUS_MORE_PROCESSING_REQUIRED)
 		rc = 0;
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (offsetof(struct smb2_sess_setup_rsp, Buffer) !=
-			le16_to_cpu(rsp->SecurityBufferOffset)) {
-		cifs_dbg(VFS, "Invalid security buffer offset %d\n",
+	अगर (दुरत्व(काष्ठा smb2_sess_setup_rsp, Buffer) !=
+			le16_to_cpu(rsp->SecurityBufferOffset)) अणु
+		cअगरs_dbg(VFS, "Invalid security buffer offset %d\n",
 			le16_to_cpu(rsp->SecurityBufferOffset));
 		rc = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rc = decode_ntlmssp_challenge(rsp->Buffer,
 			le16_to_cpu(rsp->SecurityBufferLength), ses);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	cifs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
+	cअगरs_dbg(FYI, "rawntlmssp session setup challenge phase\n");
 
-	/* keep existing ses id and flags if binding */
-	if (!ses->binding) {
+	/* keep existing ses id and flags अगर binding */
+	अगर (!ses->binding) अणु
 		ses->Suid = rsp->sync_hdr.SessionId;
 		ses->session_flags = le16_to_cpu(rsp->SessionFlags);
-	}
+	पूर्ण
 
 out:
-	kfree(ntlmssp_blob);
-	SMB2_sess_free_buffer(sess_data);
-	if (!rc) {
+	kमुक्त(ntlmssp_blob);
+	SMB2_sess_मुक्त_buffer(sess_data);
+	अगर (!rc) अणु
 		sess_data->result = 0;
 		sess_data->func = SMB2_sess_auth_rawntlmssp_authenticate;
-		return;
-	}
+		वापस;
+	पूर्ण
 out_err:
-	kfree(ses->ntlmssp);
-	ses->ntlmssp = NULL;
+	kमुक्त(ses->ntlmssp);
+	ses->ntlmssp = शून्य;
 	sess_data->result = rc;
-	sess_data->func = NULL;
-}
+	sess_data->func = शून्य;
+पूर्ण
 
-static void
-SMB2_sess_auth_rawntlmssp_authenticate(struct SMB2_sess_data *sess_data)
-{
-	int rc;
-	struct cifs_ses *ses = sess_data->ses;
-	struct smb2_sess_setup_req *req;
-	struct smb2_sess_setup_rsp *rsp = NULL;
-	unsigned char *ntlmssp_blob = NULL;
-	bool use_spnego = false; /* else use raw ntlmssp */
+अटल व्योम
+SMB2_sess_auth_rawntlmssp_authenticate(काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक rc;
+	काष्ठा cअगरs_ses *ses = sess_data->ses;
+	काष्ठा smb2_sess_setup_req *req;
+	काष्ठा smb2_sess_setup_rsp *rsp = शून्य;
+	अचिन्हित अक्षर *ntlmssp_blob = शून्य;
+	bool use_spnego = false; /* अन्यथा use raw ntlmssp */
 	u16 blob_length = 0;
 
 	rc = SMB2_sess_alloc_buffer(sess_data);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	req = (struct smb2_sess_setup_req *) sess_data->iov[0].iov_base;
+	req = (काष्ठा smb2_sess_setup_req *) sess_data->iov[0].iov_base;
 	req->sync_hdr.SessionId = ses->Suid;
 
 	rc = build_ntlmssp_auth_blob(&ntlmssp_blob, &blob_length, ses,
 					sess_data->nls_cp);
-	if (rc) {
-		cifs_dbg(FYI, "build_ntlmssp_auth_blob failed %d\n", rc);
-		goto out;
-	}
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "build_ntlmssp_auth_blob failed %d\n", rc);
+		जाओ out;
+	पूर्ण
 
-	if (use_spnego) {
+	अगर (use_spnego) अणु
 		/* BB eventually need to add this */
-		cifs_dbg(VFS, "spnego not supported for SMB2 yet\n");
+		cअगरs_dbg(VFS, "spnego not supported for SMB2 yet\n");
 		rc = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	sess_data->iov[1].iov_base = ntlmssp_blob;
 	sess_data->iov[1].iov_len = blob_length;
 
 	rc = SMB2_sess_sendreceive(sess_data);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rsp = (struct smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
+	rsp = (काष्ठा smb2_sess_setup_rsp *)sess_data->iov[0].iov_base;
 
-	/* keep existing ses id and flags if binding */
-	if (!ses->binding) {
+	/* keep existing ses id and flags अगर binding */
+	अगर (!ses->binding) अणु
 		ses->Suid = rsp->sync_hdr.SessionId;
 		ses->session_flags = le16_to_cpu(rsp->SessionFlags);
-	}
+	पूर्ण
 
 	rc = SMB2_sess_establish_session(sess_data);
-#ifdef CONFIG_CIFS_DEBUG_DUMP_KEYS
-	if (ses->server->dialect < SMB30_PROT_ID) {
-		cifs_dbg(VFS, "%s: dumping generated SMB2 session keys\n", __func__);
+#अगर_घोषित CONFIG_CIFS_DEBUG_DUMP_KEYS
+	अगर (ses->server->dialect < SMB30_PROT_ID) अणु
+		cअगरs_dbg(VFS, "%s: dumping generated SMB2 session keys\n", __func__);
 		/*
 		 * The session id is opaque in terms of endianness, so we can't
-		 * print it as a long long. we dump it as we got it on the wire
+		 * prपूर्णांक it as a दीर्घ दीर्घ. we dump it as we got it on the wire
 		 */
-		cifs_dbg(VFS, "Session Id    %*ph\n", (int)sizeof(ses->Suid),
+		cअगरs_dbg(VFS, "Session Id    %*ph\n", (पूर्णांक)माप(ses->Suid),
 			 &ses->Suid);
-		cifs_dbg(VFS, "Session Key   %*ph\n",
+		cअगरs_dbg(VFS, "Session Key   %*ph\n",
 			 SMB2_NTLMV2_SESSKEY_SIZE, ses->auth_key.response);
-		cifs_dbg(VFS, "Signing Key   %*ph\n",
+		cअगरs_dbg(VFS, "Signing Key   %*ph\n",
 			 SMB3_SIGN_KEY_SIZE, ses->auth_key.response);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 out:
-	kfree(ntlmssp_blob);
-	SMB2_sess_free_buffer(sess_data);
-	kfree(ses->ntlmssp);
-	ses->ntlmssp = NULL;
+	kमुक्त(ntlmssp_blob);
+	SMB2_sess_मुक्त_buffer(sess_data);
+	kमुक्त(ses->ntlmssp);
+	ses->ntlmssp = शून्य;
 	sess_data->result = rc;
-	sess_data->func = NULL;
-}
+	sess_data->func = शून्य;
+पूर्ण
 
-static int
-SMB2_select_sec(struct cifs_ses *ses, struct SMB2_sess_data *sess_data)
-{
-	int type;
+अटल पूर्णांक
+SMB2_select_sec(काष्ठा cअगरs_ses *ses, काष्ठा SMB2_sess_data *sess_data)
+अणु
+	पूर्णांक type;
 
-	type = smb2_select_sectype(cifs_ses_server(ses), ses->sectype);
-	cifs_dbg(FYI, "sess setup type %d\n", type);
-	if (type == Unspecified) {
-		cifs_dbg(VFS, "Unable to select appropriate authentication method!\n");
-		return -EINVAL;
-	}
+	type = smb2_select_sectype(cअगरs_ses_server(ses), ses->sectype);
+	cअगरs_dbg(FYI, "sess setup type %d\n", type);
+	अगर (type == Unspecअगरied) अणु
+		cअगरs_dbg(VFS, "Unable to select appropriate authentication method!\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (type) {
-	case Kerberos:
+	चयन (type) अणु
+	हाल Kerberos:
 		sess_data->func = SMB2_auth_kerberos;
-		break;
-	case RawNTLMSSP:
+		अवरोध;
+	हाल RawNTLMSSP:
 		sess_data->func = SMB2_sess_auth_rawntlmssp_negotiate;
-		break;
-	default:
-		cifs_dbg(VFS, "secType %d not supported!\n", type);
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		cअगरs_dbg(VFS, "secType %d not supported!\n", type);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB2_sess_setup(const unsigned int xid, struct cifs_ses *ses,
-		const struct nls_table *nls_cp)
-{
-	int rc = 0;
-	struct TCP_Server_Info *server = cifs_ses_server(ses);
-	struct SMB2_sess_data *sess_data;
+पूर्णांक
+SMB2_sess_setup(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses,
+		स्थिर काष्ठा nls_table *nls_cp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा TCP_Server_Info *server = cअगरs_ses_server(ses);
+	काष्ठा SMB2_sess_data *sess_data;
 
-	cifs_dbg(FYI, "Session Setup\n");
+	cअगरs_dbg(FYI, "Session Setup\n");
 
-	if (!server) {
+	अगर (!server) अणु
 		WARN(1, "%s: server is NULL!\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	sess_data = kzalloc(sizeof(struct SMB2_sess_data), GFP_KERNEL);
-	if (!sess_data)
-		return -ENOMEM;
+	sess_data = kzalloc(माप(काष्ठा SMB2_sess_data), GFP_KERNEL);
+	अगर (!sess_data)
+		वापस -ENOMEM;
 
 	rc = SMB2_select_sec(ses, sess_data);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 	sess_data->xid = xid;
 	sess_data->ses = ses;
 	sess_data->buf0_type = CIFS_NO_BUFFER;
-	sess_data->nls_cp = (struct nls_table *) nls_cp;
+	sess_data->nls_cp = (काष्ठा nls_table *) nls_cp;
 	sess_data->previous_session = ses->Suid;
 
 	/*
 	 * Initialize the session hash with the server one.
 	 */
-	memcpy(ses->preauth_sha_hash, server->preauth_sha_hash,
+	स_नकल(ses->preauth_sha_hash, server->preauth_sha_hash,
 	       SMB2_PREAUTH_HASH_SIZE);
 
-	while (sess_data->func)
+	जबतक (sess_data->func)
 		sess_data->func(sess_data);
 
-	if ((ses->session_flags & SMB2_SESSION_FLAG_IS_GUEST) && (ses->sign))
-		cifs_server_dbg(VFS, "signing requested but authenticated as guest\n");
+	अगर ((ses->session_flags & SMB2_SESSION_FLAG_IS_GUEST) && (ses->sign))
+		cअगरs_server_dbg(VFS, "signing requested but authenticated as guest\n");
 	rc = sess_data->result;
 out:
-	kfree(sess_data);
-	return rc;
-}
+	kमुक्त(sess_data);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_logoff(const unsigned int xid, struct cifs_ses *ses)
-{
-	struct smb_rqst rqst;
-	struct smb2_logoff_req *req; /* response is also trivial struct */
-	int rc = 0;
-	struct TCP_Server_Info *server;
-	int flags = 0;
-	unsigned int total_len;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int resp_buf_type;
+पूर्णांक
+SMB2_logoff(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_logoff_req *req; /* response is also trivial काष्ठा */
+	पूर्णांक rc = 0;
+	काष्ठा TCP_Server_Info *server;
+	पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buf_type;
 
-	cifs_dbg(FYI, "disconnect session %p\n", ses);
+	cअगरs_dbg(FYI, "disconnect session %p\n", ses);
 
-	if (ses && (ses->server))
+	अगर (ses && (ses->server))
 		server = ses->server;
-	else
-		return -EIO;
+	अन्यथा
+		वापस -EIO;
 
-	/* no need to send SMB logoff if uid already closed due to reconnect */
-	if (ses->need_reconnect)
-		goto smb2_session_already_dead;
+	/* no need to send SMB logoff अगर uid alपढ़ोy बंदd due to reconnect */
+	अगर (ses->need_reconnect)
+		जाओ smb2_session_alपढ़ोy_dead;
 
-	rc = smb2_plain_req_init(SMB2_LOGOFF, NULL, ses->server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+	rc = smb2_plain_req_init(SMB2_LOGOFF, शून्य, ses->server,
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	 /* since no tcon, smb2_init can not do this, so do here */
+	 /* since no tcon, smb2_init can not करो this, so करो here */
 	req->sync_hdr.SessionId = ses->Suid;
 
-	if (ses->session_flags & SMB2_SESSION_FLAG_ENCRYPT_DATA)
+	अगर (ses->session_flags & SMB2_SESSION_FLAG_ENCRYPT_DATA)
 		flags |= CIFS_TRANSFORM_REQ;
-	else if (server->sign)
+	अन्यथा अगर (server->sign)
 		req->sync_hdr.Flags |= SMB2_FLAGS_SIGNED;
 
 	flags |= CIFS_NO_RSP_BUF;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, ses->server,
+	rc = cअगरs_send_recv(xid, ses, ses->server,
 			    &rqst, &resp_buf_type, flags, &rsp_iov);
-	cifs_small_buf_release(req);
+	cअगरs_small_buf_release(req);
 	/*
-	 * No tcon so can't do
-	 * cifs_stats_inc(&tcon->stats.smb2_stats.smb2_com_fail[SMB2...]);
+	 * No tcon so can't करो
+	 * cअगरs_stats_inc(&tcon->stats.smb2_stats.smb2_com_fail[SMB2...]);
 	 */
 
-smb2_session_already_dead:
-	return rc;
-}
+smb2_session_alपढ़ोy_dead:
+	वापस rc;
+पूर्ण
 
-static inline void cifs_stats_fail_inc(struct cifs_tcon *tcon, uint16_t code)
-{
-	cifs_stats_inc(&tcon->stats.smb2_stats.smb2_com_failed[code]);
-}
+अटल अंतरभूत व्योम cअगरs_stats_fail_inc(काष्ठा cअगरs_tcon *tcon, uपूर्णांक16_t code)
+अणु
+	cअगरs_stats_inc(&tcon->stats.smb2_stats.smb2_com_failed[code]);
+पूर्ण
 
-#define MAX_SHARENAME_LENGTH (255 /* server */ + 80 /* share */ + 1 /* NULL */)
+#घोषणा MAX_SHARENAME_LENGTH (255 /* server */ + 80 /* share */ + 1 /* शून्य */)
 
-/* These are similar values to what Windows uses */
-static inline void init_copy_chunk_defaults(struct cifs_tcon *tcon)
-{
+/* These are similar values to what Winकरोws uses */
+अटल अंतरभूत व्योम init_copy_chunk_शेषs(काष्ठा cअगरs_tcon *tcon)
+अणु
 	tcon->max_chunks = 256;
 	tcon->max_bytes_chunk = 1048576;
 	tcon->max_bytes_copy = 16777216;
-}
+पूर्ण
 
-int
-SMB2_tcon(const unsigned int xid, struct cifs_ses *ses, const char *tree,
-	  struct cifs_tcon *tcon, const struct nls_table *cp)
-{
-	struct smb_rqst rqst;
-	struct smb2_tree_connect_req *req;
-	struct smb2_tree_connect_rsp *rsp = NULL;
-	struct kvec iov[2];
-	struct kvec rsp_iov = { NULL, 0 };
-	int rc = 0;
-	int resp_buftype;
-	int unc_path_len;
-	__le16 *unc_path = NULL;
-	int flags = 0;
-	unsigned int total_len;
-	struct TCP_Server_Info *server;
+पूर्णांक
+SMB2_tcon(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_ses *ses, स्थिर अक्षर *tree,
+	  काष्ठा cअगरs_tcon *tcon, स्थिर काष्ठा nls_table *cp)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_tree_connect_req *req;
+	काष्ठा smb2_tree_connect_rsp *rsp = शून्य;
+	काष्ठा kvec iov[2];
+	काष्ठा kvec rsp_iov = अणु शून्य, 0 पूर्ण;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype;
+	पूर्णांक unc_path_len;
+	__le16 *unc_path = शून्य;
+	पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा TCP_Server_Info *server;
 
 	/* always use master channel */
 	server = ses->server;
 
-	cifs_dbg(FYI, "TCON\n");
+	cअगरs_dbg(FYI, "TCON\n");
 
-	if (!server || !tree)
-		return -EIO;
+	अगर (!server || !tree)
+		वापस -EIO;
 
-	unc_path = kmalloc(MAX_SHARENAME_LENGTH * 2, GFP_KERNEL);
-	if (unc_path == NULL)
-		return -ENOMEM;
+	unc_path = kदो_स्मृति(MAX_SHARENAME_LENGTH * 2, GFP_KERNEL);
+	अगर (unc_path == शून्य)
+		वापस -ENOMEM;
 
-	unc_path_len = cifs_strtoUTF16(unc_path, tree, strlen(tree), cp) + 1;
+	unc_path_len = cअगरs_strtoUTF16(unc_path, tree, म_माप(tree), cp) + 1;
 	unc_path_len *= 2;
-	if (unc_path_len < 2) {
-		kfree(unc_path);
-		return -EINVAL;
-	}
+	अगर (unc_path_len < 2) अणु
+		kमुक्त(unc_path);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* SMB2 TREE_CONNECT request must be called with TreeId == 0 */
 	tcon->tid = 0;
-	atomic_set(&tcon->num_remote_opens, 0);
+	atomic_set(&tcon->num_remote_खोलोs, 0);
 	rc = smb2_plain_req_init(SMB2_TREE_CONNECT, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc) {
-		kfree(unc_path);
-		return rc;
-	}
+				 (व्योम **) &req, &total_len);
+	अगर (rc) अणु
+		kमुक्त(unc_path);
+		वापस rc;
+	पूर्ण
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	iov[0].iov_base = (char *)req;
-	/* 1 for pad */
+	iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम pad */
 	iov[0].iov_len = total_len - 1;
 
 	/* Testing shows that buffer offset must be at location of Buffer[0] */
-	req->PathOffset = cpu_to_le16(sizeof(struct smb2_tree_connect_req)
+	req->PathOffset = cpu_to_le16(माप(काष्ठा smb2_tree_connect_req)
 			- 1 /* pad */);
 	req->PathLength = cpu_to_le16(unc_path_len - 2);
 	iov[1].iov_base = unc_path;
 	iov[1].iov_len = unc_path_len;
 
 	/*
-	 * 3.11 tcon req must be signed if not encrypted. See MS-SMB2 3.2.4.1.1
+	 * 3.11 tcon req must be चिन्हित अगर not encrypted. See MS-SMB2 3.2.4.1.1
 	 * unless it is guest or anonymous user. See MS-SMB2 3.2.5.3.1
-	 * (Samba servers don't always set the flag so also check if null user)
+	 * (Samba servers करोn't always set the flag so also check अगर null user)
 	 */
-	if ((server->dialect == SMB311_PROT_ID) &&
+	अगर ((server->dialect == SMB311_PROT_ID) &&
 	    !smb3_encryption_required(tcon) &&
 	    !(ses->session_flags &
-		    (SMB2_SESSION_FLAG_IS_GUEST|SMB2_SESSION_FLAG_IS_NULL)) &&
-	    ((ses->user_name != NULL) || (ses->sectype == Kerberos)))
+		    (SMB2_SESSION_FLAG_IS_GUEST|SMB2_SESSION_FLAG_IS_शून्य)) &&
+	    ((ses->user_name != शून्य) || (ses->sectype == Kerberos)))
 		req->sync_hdr.Flags |= SMB2_FLAGS_SIGNED;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 2;
 
-	/* Need 64 for max size write so ask for more in case not there yet */
+	/* Need 64 क्रम max size ग_लिखो so ask क्रम more in हाल not there yet */
 	req->sync_hdr.CreditRequest = cpu_to_le16(64);
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	cifs_small_buf_release(req);
-	rsp = (struct smb2_tree_connect_rsp *)rsp_iov.iov_base;
+	cअगरs_small_buf_release(req);
+	rsp = (काष्ठा smb2_tree_connect_rsp *)rsp_iov.iov_base;
 	trace_smb3_tcon(xid, tcon->tid, ses->Suid, tree, rc);
-	if (rc != 0) {
-		if (tcon) {
-			cifs_stats_fail_inc(tcon, SMB2_TREE_CONNECT_HE);
+	अगर (rc != 0) अणु
+		अगर (tcon) अणु
+			cअगरs_stats_fail_inc(tcon, SMB2_TREE_CONNECT_HE);
 			tcon->need_reconnect = true;
-		}
-		goto tcon_error_exit;
-	}
+		पूर्ण
+		जाओ tcon_error_निकास;
+	पूर्ण
 
-	switch (rsp->ShareType) {
-	case SMB2_SHARE_TYPE_DISK:
-		cifs_dbg(FYI, "connection to disk share\n");
-		break;
-	case SMB2_SHARE_TYPE_PIPE:
+	चयन (rsp->ShareType) अणु
+	हाल SMB2_SHARE_TYPE_DISK:
+		cअगरs_dbg(FYI, "connection to disk share\n");
+		अवरोध;
+	हाल SMB2_SHARE_TYPE_PIPE:
 		tcon->pipe = true;
-		cifs_dbg(FYI, "connection to pipe share\n");
-		break;
-	case SMB2_SHARE_TYPE_PRINT:
-		tcon->print = true;
-		cifs_dbg(FYI, "connection to printer\n");
-		break;
-	default:
-		cifs_server_dbg(VFS, "unknown share type %d\n", rsp->ShareType);
+		cअगरs_dbg(FYI, "connection to pipe share\n");
+		अवरोध;
+	हाल SMB2_SHARE_TYPE_PRINT:
+		tcon->prपूर्णांक = true;
+		cअगरs_dbg(FYI, "connection to printer\n");
+		अवरोध;
+	शेष:
+		cअगरs_server_dbg(VFS, "unknown share type %d\n", rsp->ShareType);
 		rc = -EOPNOTSUPP;
-		goto tcon_error_exit;
-	}
+		जाओ tcon_error_निकास;
+	पूर्ण
 
 	tcon->share_flags = le32_to_cpu(rsp->ShareFlags);
 	tcon->capabilities = rsp->Capabilities; /* we keep caps little endian */
 	tcon->maximal_access = le32_to_cpu(rsp->MaximalAccess);
-	tcon->tidStatus = CifsGood;
+	tcon->tidStatus = CअगरsGood;
 	tcon->need_reconnect = false;
 	tcon->tid = rsp->sync_hdr.TreeId;
-	strlcpy(tcon->treeName, tree, sizeof(tcon->treeName));
+	strlcpy(tcon->treeName, tree, माप(tcon->treeName));
 
-	if ((rsp->Capabilities & SMB2_SHARE_CAP_DFS) &&
+	अगर ((rsp->Capabilities & SMB2_SHARE_CAP_DFS) &&
 	    ((tcon->share_flags & SHI1005_FLAGS_DFS) == 0))
-		cifs_tcon_dbg(VFS, "DFS capability contradicts DFS flag\n");
+		cअगरs_tcon_dbg(VFS, "DFS capability contradicts DFS flag\n");
 
-	if (tcon->seal &&
+	अगर (tcon->seal &&
 	    !(server->capabilities & SMB2_GLOBAL_CAP_ENCRYPTION))
-		cifs_tcon_dbg(VFS, "Encryption is requested but not supported\n");
+		cअगरs_tcon_dbg(VFS, "Encryption is requested but not supported\n");
 
-	init_copy_chunk_defaults(tcon);
-	if (server->ops->validate_negotiate)
+	init_copy_chunk_शेषs(tcon);
+	अगर (server->ops->validate_negotiate)
 		rc = server->ops->validate_negotiate(xid, tcon);
-tcon_exit:
+tcon_निकास:
 
-	free_rsp_buf(resp_buftype, rsp);
-	kfree(unc_path);
-	return rc;
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	kमुक्त(unc_path);
+	वापस rc;
 
-tcon_error_exit:
-	if (rsp && rsp->sync_hdr.Status == STATUS_BAD_NETWORK_NAME) {
-		cifs_tcon_dbg(VFS, "BAD_NETWORK_NAME: %s\n", tree);
-	}
-	goto tcon_exit;
-}
+tcon_error_निकास:
+	अगर (rsp && rsp->sync_hdr.Status == STATUS_BAD_NETWORK_NAME) अणु
+		cअगरs_tcon_dbg(VFS, "BAD_NETWORK_NAME: %s\n", tree);
+	पूर्ण
+	जाओ tcon_निकास;
+पूर्ण
 
-int
-SMB2_tdis(const unsigned int xid, struct cifs_tcon *tcon)
-{
-	struct smb_rqst rqst;
-	struct smb2_tree_disconnect_req *req; /* response is trivial */
-	int rc = 0;
-	struct cifs_ses *ses = tcon->ses;
-	int flags = 0;
-	unsigned int total_len;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int resp_buf_type;
+पूर्णांक
+SMB2_tdis(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_tree_disconnect_req *req; /* response is trivial */
+	पूर्णांक rc = 0;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buf_type;
 
-	cifs_dbg(FYI, "Tree Disconnect\n");
+	cअगरs_dbg(FYI, "Tree Disconnect\n");
 
-	if (!ses || !(ses->server))
-		return -EIO;
+	अगर (!ses || !(ses->server))
+		वापस -EIO;
 
-	if ((tcon->need_reconnect) || (tcon->ses->need_reconnect))
-		return 0;
+	अगर ((tcon->need_reconnect) || (tcon->ses->need_reconnect))
+		वापस 0;
 
-	close_cached_dir_lease(&tcon->crfid);
+	बंद_cached_dir_lease(&tcon->crfid);
 
 	rc = smb2_plain_req_init(SMB2_TREE_DISCONNECT, tcon, ses->server,
-				 (void **) &req,
+				 (व्योम **) &req,
 				 &total_len);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	flags |= CIFS_NO_RSP_BUF;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, ses->server,
+	rc = cअगरs_send_recv(xid, ses, ses->server,
 			    &rqst, &resp_buf_type, flags, &rsp_iov);
-	cifs_small_buf_release(req);
-	if (rc)
-		cifs_stats_fail_inc(tcon, SMB2_TREE_DISCONNECT_HE);
+	cअगरs_small_buf_release(req);
+	अगर (rc)
+		cअगरs_stats_fail_inc(tcon, SMB2_TREE_DISCONNECT_HE);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-static struct create_durable *
-create_durable_buf(void)
-{
-	struct create_durable *buf;
+अटल काष्ठा create_durable *
+create_durable_buf(व्योम)
+अणु
+	काष्ठा create_durable *buf;
 
-	buf = kzalloc(sizeof(struct create_durable), GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	buf = kzalloc(माप(काष्ठा create_durable), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
 
-	buf->ccontext.DataOffset = cpu_to_le16(offsetof
-					(struct create_durable, Data));
+	buf->ccontext.DataOffset = cpu_to_le16(दुरत्व
+					(काष्ठा create_durable, Data));
 	buf->ccontext.DataLength = cpu_to_le32(16);
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof
-				(struct create_durable, Name));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व
+				(काष्ठा create_durable, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 	/* SMB2_CREATE_DURABLE_HANDLE_REQUEST is "DHnQ" */
 	buf->Name[0] = 'D';
 	buf->Name[1] = 'H';
 	buf->Name[2] = 'n';
 	buf->Name[3] = 'Q';
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static struct create_durable *
-create_reconnect_durable_buf(struct cifs_fid *fid)
-{
-	struct create_durable *buf;
+अटल काष्ठा create_durable *
+create_reconnect_durable_buf(काष्ठा cअगरs_fid *fid)
+अणु
+	काष्ठा create_durable *buf;
 
-	buf = kzalloc(sizeof(struct create_durable), GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	buf = kzalloc(माप(काष्ठा create_durable), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
 
-	buf->ccontext.DataOffset = cpu_to_le16(offsetof
-					(struct create_durable, Data));
+	buf->ccontext.DataOffset = cpu_to_le16(दुरत्व
+					(काष्ठा create_durable, Data));
 	buf->ccontext.DataLength = cpu_to_le32(16);
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof
-				(struct create_durable, Name));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व
+				(काष्ठा create_durable, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 	buf->Data.Fid.PersistentFileId = fid->persistent_fid;
-	buf->Data.Fid.VolatileFileId = fid->volatile_fid;
+	buf->Data.Fid.VolatileFileId = fid->अस्थिर_fid;
 	/* SMB2_CREATE_DURABLE_HANDLE_RECONNECT is "DHnC" */
 	buf->Name[0] = 'D';
 	buf->Name[1] = 'H';
 	buf->Name[2] = 'n';
 	buf->Name[3] = 'C';
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void
-parse_query_id_ctxt(struct create_context *cc, struct smb2_file_all_info *buf)
-{
-	struct create_on_disk_id *pdisk_id = (struct create_on_disk_id *)cc;
+अटल व्योम
+parse_query_id_ctxt(काष्ठा create_context *cc, काष्ठा smb2_file_all_info *buf)
+अणु
+	काष्ठा create_on_disk_id *pdisk_id = (काष्ठा create_on_disk_id *)cc;
 
-	cifs_dbg(FYI, "parse query id context 0x%llx 0x%llx\n",
+	cअगरs_dbg(FYI, "parse query id context 0x%llx 0x%llx\n",
 		pdisk_id->DiskFileId, pdisk_id->VolumeId);
 	buf->IndexNumber = pdisk_id->DiskFileId;
-}
+पूर्ण
 
-static void
-parse_posix_ctxt(struct create_context *cc, struct smb2_file_all_info *info,
-		 struct create_posix_rsp *posix)
-{
-	int sid_len;
+अटल व्योम
+parse_posix_ctxt(काष्ठा create_context *cc, काष्ठा smb2_file_all_info *info,
+		 काष्ठा create_posix_rsp *posix)
+अणु
+	पूर्णांक sid_len;
 	u8 *beg = (u8 *)cc + le16_to_cpu(cc->DataOffset);
 	u8 *end = beg + le32_to_cpu(cc->DataLength);
 	u8 *sid;
 
-	memset(posix, 0, sizeof(*posix));
+	स_रखो(posix, 0, माप(*posix));
 
 	posix->nlink = le32_to_cpu(*(__le32 *)(beg + 0));
 	posix->reparse_tag = le32_to_cpu(*(__le32 *)(beg + 4));
@@ -1974,302 +1975,302 @@ parse_posix_ctxt(struct create_context *cc, struct smb2_file_all_info *info,
 
 	sid = beg + 12;
 	sid_len = posix_info_sid_size(sid, end);
-	if (sid_len < 0) {
-		cifs_dbg(VFS, "bad owner sid in posix create response\n");
-		return;
-	}
-	memcpy(&posix->owner, sid, sid_len);
+	अगर (sid_len < 0) अणु
+		cअगरs_dbg(VFS, "bad owner sid in posix create response\n");
+		वापस;
+	पूर्ण
+	स_नकल(&posix->owner, sid, sid_len);
 
 	sid = sid + sid_len;
 	sid_len = posix_info_sid_size(sid, end);
-	if (sid_len < 0) {
-		cifs_dbg(VFS, "bad group sid in posix create response\n");
-		return;
-	}
-	memcpy(&posix->group, sid, sid_len);
+	अगर (sid_len < 0) अणु
+		cअगरs_dbg(VFS, "bad group sid in posix create response\n");
+		वापस;
+	पूर्ण
+	स_नकल(&posix->group, sid, sid_len);
 
-	cifs_dbg(FYI, "nlink=%d mode=%o reparse_tag=%x\n",
+	cअगरs_dbg(FYI, "nlink=%d mode=%o reparse_tag=%x\n",
 		 posix->nlink, posix->mode, posix->reparse_tag);
-}
+पूर्ण
 
-void
-smb2_parse_contexts(struct TCP_Server_Info *server,
-		    struct smb2_create_rsp *rsp,
-		    unsigned int *epoch, char *lease_key, __u8 *oplock,
-		    struct smb2_file_all_info *buf,
-		    struct create_posix_rsp *posix)
-{
-	char *data_offset;
-	struct create_context *cc;
-	unsigned int next;
-	unsigned int remaining;
-	char *name;
-	static const char smb3_create_tag_posix[] = {
+व्योम
+smb2_parse_contexts(काष्ठा TCP_Server_Info *server,
+		    काष्ठा smb2_create_rsp *rsp,
+		    अचिन्हित पूर्णांक *epoch, अक्षर *lease_key, __u8 *oplock,
+		    काष्ठा smb2_file_all_info *buf,
+		    काष्ठा create_posix_rsp *posix)
+अणु
+	अक्षर *data_offset;
+	काष्ठा create_context *cc;
+	अचिन्हित पूर्णांक next;
+	अचिन्हित पूर्णांक reमुख्यing;
+	अक्षर *name;
+	अटल स्थिर अक्षर smb3_create_tag_posix[] = अणु
 		0x93, 0xAD, 0x25, 0x50, 0x9C,
 		0xB4, 0x11, 0xE7, 0xB4, 0x23, 0x83,
 		0xDE, 0x96, 0x8B, 0xCD, 0x7C
-	};
+	पूर्ण;
 
 	*oplock = 0;
-	data_offset = (char *)rsp + le32_to_cpu(rsp->CreateContextsOffset);
-	remaining = le32_to_cpu(rsp->CreateContextsLength);
-	cc = (struct create_context *)data_offset;
+	data_offset = (अक्षर *)rsp + le32_to_cpu(rsp->CreateContextsOffset);
+	reमुख्यing = le32_to_cpu(rsp->CreateContextsLength);
+	cc = (काष्ठा create_context *)data_offset;
 
-	/* Initialize inode number to 0 in case no valid data in qfid context */
-	if (buf)
+	/* Initialize inode number to 0 in हाल no valid data in qfid context */
+	अगर (buf)
 		buf->IndexNumber = 0;
 
-	while (remaining >= sizeof(struct create_context)) {
-		name = le16_to_cpu(cc->NameOffset) + (char *)cc;
-		if (le16_to_cpu(cc->NameLength) == 4 &&
-		    strncmp(name, SMB2_CREATE_REQUEST_LEASE, 4) == 0)
+	जबतक (reमुख्यing >= माप(काष्ठा create_context)) अणु
+		name = le16_to_cpu(cc->NameOffset) + (अक्षर *)cc;
+		अगर (le16_to_cpu(cc->NameLength) == 4 &&
+		    म_भेदन(name, SMB2_CREATE_REQUEST_LEASE, 4) == 0)
 			*oplock = server->ops->parse_lease_buf(cc, epoch,
 							   lease_key);
-		else if (buf && (le16_to_cpu(cc->NameLength) == 4) &&
-		    strncmp(name, SMB2_CREATE_QUERY_ON_DISK_ID, 4) == 0)
+		अन्यथा अगर (buf && (le16_to_cpu(cc->NameLength) == 4) &&
+		    म_भेदन(name, SMB2_CREATE_QUERY_ON_DISK_ID, 4) == 0)
 			parse_query_id_ctxt(cc, buf);
-		else if ((le16_to_cpu(cc->NameLength) == 16)) {
-			if (posix &&
-			    memcmp(name, smb3_create_tag_posix, 16) == 0)
+		अन्यथा अगर ((le16_to_cpu(cc->NameLength) == 16)) अणु
+			अगर (posix &&
+			    स_भेद(name, smb3_create_tag_posix, 16) == 0)
 				parse_posix_ctxt(cc, buf, posix);
-		}
-		/* else {
-			cifs_dbg(FYI, "Context not matched with len %d\n",
+		पूर्ण
+		/* अन्यथा अणु
+			cअगरs_dbg(FYI, "Context not matched with len %d\n",
 				le16_to_cpu(cc->NameLength));
-			cifs_dump_mem("Cctxt name: ", name, 4);
-		} */
+			cअगरs_dump_mem("Cctxt name: ", name, 4);
+		पूर्ण */
 
 		next = le32_to_cpu(cc->Next);
-		if (!next)
-			break;
-		remaining -= next;
-		cc = (struct create_context *)((char *)cc + next);
-	}
+		अगर (!next)
+			अवरोध;
+		reमुख्यing -= next;
+		cc = (काष्ठा create_context *)((अक्षर *)cc + next);
+	पूर्ण
 
-	if (rsp->OplockLevel != SMB2_OPLOCK_LEVEL_LEASE)
+	अगर (rsp->OplockLevel != SMB2_OPLOCK_LEVEL_LEASE)
 		*oplock = rsp->OplockLevel;
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int
-add_lease_context(struct TCP_Server_Info *server, struct kvec *iov,
-		  unsigned int *num_iovec, u8 *lease_key, __u8 *oplock)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_lease_context(काष्ठा TCP_Server_Info *server, काष्ठा kvec *iov,
+		  अचिन्हित पूर्णांक *num_iovec, u8 *lease_key, __u8 *oplock)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
 	iov[num].iov_base = server->ops->create_lease_buf(lease_key, *oplock);
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
 	iov[num].iov_len = server->vals->create_lease_size;
 	req->RequestedOplockLevel = SMB2_OPLOCK_LEVEL_LEASE;
-	if (!req->CreateContextsOffset)
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset = cpu_to_le32(
-				sizeof(struct smb2_create_req) +
+				माप(काष्ठा smb2_create_req) +
 				iov[num - 1].iov_len);
 	le32_add_cpu(&req->CreateContextsLength,
 		     server->vals->create_lease_size);
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct create_durable_v2 *
-create_durable_v2_buf(struct cifs_open_parms *oparms)
-{
-	struct cifs_fid *pfid = oparms->fid;
-	struct create_durable_v2 *buf;
+अटल काष्ठा create_durable_v2 *
+create_durable_v2_buf(काष्ठा cअगरs_खोलो_parms *oparms)
+अणु
+	काष्ठा cअगरs_fid *pfid = oparms->fid;
+	काष्ठा create_durable_v2 *buf;
 
-	buf = kzalloc(sizeof(struct create_durable_v2), GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	buf = kzalloc(माप(काष्ठा create_durable_v2), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
 
-	buf->ccontext.DataOffset = cpu_to_le16(offsetof
-					(struct create_durable_v2, dcontext));
-	buf->ccontext.DataLength = cpu_to_le32(sizeof(struct durable_context_v2));
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof
-				(struct create_durable_v2, Name));
+	buf->ccontext.DataOffset = cpu_to_le16(दुरत्व
+					(काष्ठा create_durable_v2, dcontext));
+	buf->ccontext.DataLength = cpu_to_le32(माप(काष्ठा durable_context_v2));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व
+				(काष्ठा create_durable_v2, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 
 	/*
-	 * NB: Handle timeout defaults to 0, which allows server to choose
-	 * (most servers default to 120 seconds) and most clients default to 0.
-	 * This can be overridden at mount ("handletimeout=") if the user wants
-	 * a different persistent (or resilient) handle timeout for all opens
-	 * opens on a particular SMB3 mount.
+	 * NB: Handle समयout शेषs to 0, which allows server to choose
+	 * (most servers शेष to 120 seconds) and most clients शेष to 0.
+	 * This can be overridden at mount ("handletimeout=") अगर the user wants
+	 * a dअगरferent persistent (or resilient) handle समयout क्रम all खोलोs
+	 * खोलोs on a particular SMB3 mount.
 	 */
-	buf->dcontext.Timeout = cpu_to_le32(oparms->tcon->handle_timeout);
+	buf->dcontext.Timeout = cpu_to_le32(oparms->tcon->handle_समयout);
 	buf->dcontext.Flags = cpu_to_le32(SMB2_DHANDLE_FLAG_PERSISTENT);
-	generate_random_uuid(buf->dcontext.CreateGuid);
-	memcpy(pfid->create_guid, buf->dcontext.CreateGuid, 16);
+	generate_अक्रमom_uuid(buf->dcontext.CreateGuid);
+	स_नकल(pfid->create_guid, buf->dcontext.CreateGuid, 16);
 
 	/* SMB2_CREATE_DURABLE_HANDLE_REQUEST is "DH2Q" */
 	buf->Name[0] = 'D';
 	buf->Name[1] = 'H';
 	buf->Name[2] = '2';
 	buf->Name[3] = 'Q';
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static struct create_durable_handle_reconnect_v2 *
-create_reconnect_durable_v2_buf(struct cifs_fid *fid)
-{
-	struct create_durable_handle_reconnect_v2 *buf;
+अटल काष्ठा create_durable_handle_reconnect_v2 *
+create_reconnect_durable_v2_buf(काष्ठा cअगरs_fid *fid)
+अणु
+	काष्ठा create_durable_handle_reconnect_v2 *buf;
 
-	buf = kzalloc(sizeof(struct create_durable_handle_reconnect_v2),
+	buf = kzalloc(माप(काष्ठा create_durable_handle_reconnect_v2),
 			GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	अगर (!buf)
+		वापस शून्य;
 
 	buf->ccontext.DataOffset =
-		cpu_to_le16(offsetof(struct create_durable_handle_reconnect_v2,
+		cpu_to_le16(दुरत्व(काष्ठा create_durable_handle_reconnect_v2,
 				     dcontext));
 	buf->ccontext.DataLength =
-		cpu_to_le32(sizeof(struct durable_reconnect_context_v2));
+		cpu_to_le32(माप(काष्ठा durable_reconnect_context_v2));
 	buf->ccontext.NameOffset =
-		cpu_to_le16(offsetof(struct create_durable_handle_reconnect_v2,
+		cpu_to_le16(दुरत्व(काष्ठा create_durable_handle_reconnect_v2,
 			    Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 
 	buf->dcontext.Fid.PersistentFileId = fid->persistent_fid;
-	buf->dcontext.Fid.VolatileFileId = fid->volatile_fid;
+	buf->dcontext.Fid.VolatileFileId = fid->अस्थिर_fid;
 	buf->dcontext.Flags = cpu_to_le32(SMB2_DHANDLE_FLAG_PERSISTENT);
-	memcpy(buf->dcontext.CreateGuid, fid->create_guid, 16);
+	स_नकल(buf->dcontext.CreateGuid, fid->create_guid, 16);
 
 	/* SMB2_CREATE_DURABLE_HANDLE_RECONNECT_V2 is "DH2C" */
 	buf->Name[0] = 'D';
 	buf->Name[1] = 'H';
 	buf->Name[2] = '2';
 	buf->Name[3] = 'C';
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int
-add_durable_v2_context(struct kvec *iov, unsigned int *num_iovec,
-		    struct cifs_open_parms *oparms)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_durable_v2_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec,
+		    काष्ठा cअगरs_खोलो_parms *oparms)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
 	iov[num].iov_base = create_durable_v2_buf(oparms);
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct create_durable_v2);
-	if (!req->CreateContextsOffset)
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा create_durable_v2);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset =
-			cpu_to_le32(sizeof(struct smb2_create_req) +
+			cpu_to_le32(माप(काष्ठा smb2_create_req) +
 								iov[1].iov_len);
-	le32_add_cpu(&req->CreateContextsLength, sizeof(struct create_durable_v2));
+	le32_add_cpu(&req->CreateContextsLength, माप(काष्ठा create_durable_v2));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-add_durable_reconnect_v2_context(struct kvec *iov, unsigned int *num_iovec,
-		    struct cifs_open_parms *oparms)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_durable_reconnect_v2_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec,
+		    काष्ठा cअगरs_खोलो_parms *oparms)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
-	/* indicate that we don't need to relock the file */
+	/* indicate that we करोn't need to relock the file */
 	oparms->reconnect = false;
 
 	iov[num].iov_base = create_reconnect_durable_v2_buf(oparms->fid);
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct create_durable_handle_reconnect_v2);
-	if (!req->CreateContextsOffset)
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा create_durable_handle_reconnect_v2);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset =
-			cpu_to_le32(sizeof(struct smb2_create_req) +
+			cpu_to_le32(माप(काष्ठा smb2_create_req) +
 								iov[1].iov_len);
 	le32_add_cpu(&req->CreateContextsLength,
-			sizeof(struct create_durable_handle_reconnect_v2));
+			माप(काष्ठा create_durable_handle_reconnect_v2));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-add_durable_context(struct kvec *iov, unsigned int *num_iovec,
-		    struct cifs_open_parms *oparms, bool use_persistent)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_durable_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec,
+		    काष्ठा cअगरs_खोलो_parms *oparms, bool use_persistent)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
-	if (use_persistent) {
-		if (oparms->reconnect)
-			return add_durable_reconnect_v2_context(iov, num_iovec,
+	अगर (use_persistent) अणु
+		अगर (oparms->reconnect)
+			वापस add_durable_reconnect_v2_context(iov, num_iovec,
 								oparms);
-		else
-			return add_durable_v2_context(iov, num_iovec, oparms);
-	}
+		अन्यथा
+			वापस add_durable_v2_context(iov, num_iovec, oparms);
+	पूर्ण
 
-	if (oparms->reconnect) {
+	अगर (oparms->reconnect) अणु
 		iov[num].iov_base = create_reconnect_durable_buf(oparms->fid);
-		/* indicate that we don't need to relock the file */
+		/* indicate that we करोn't need to relock the file */
 		oparms->reconnect = false;
-	} else
+	पूर्ण अन्यथा
 		iov[num].iov_base = create_durable_buf();
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct create_durable);
-	if (!req->CreateContextsOffset)
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा create_durable);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset =
-			cpu_to_le32(sizeof(struct smb2_create_req) +
+			cpu_to_le32(माप(काष्ठा smb2_create_req) +
 								iov[1].iov_len);
-	le32_add_cpu(&req->CreateContextsLength, sizeof(struct create_durable));
+	le32_add_cpu(&req->CreateContextsLength, माप(काष्ठा create_durable));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* See MS-SMB2 2.2.13.2.7 */
-static struct crt_twarp_ctxt *
-create_twarp_buf(__u64 timewarp)
-{
-	struct crt_twarp_ctxt *buf;
+अटल काष्ठा crt_twarp_ctxt *
+create_twarp_buf(__u64 समयwarp)
+अणु
+	काष्ठा crt_twarp_ctxt *buf;
 
-	buf = kzalloc(sizeof(struct crt_twarp_ctxt), GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	buf = kzalloc(माप(काष्ठा crt_twarp_ctxt), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
 
-	buf->ccontext.DataOffset = cpu_to_le16(offsetof
-					(struct crt_twarp_ctxt, Timestamp));
+	buf->ccontext.DataOffset = cpu_to_le16(दुरत्व
+					(काष्ठा crt_twarp_ctxt, Timestamp));
 	buf->ccontext.DataLength = cpu_to_le32(8);
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof
-				(struct crt_twarp_ctxt, Name));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व
+				(काष्ठा crt_twarp_ctxt, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 	/* SMB2_CREATE_TIMEWARP_TOKEN is "TWrp" */
 	buf->Name[0] = 'T';
 	buf->Name[1] = 'W';
 	buf->Name[2] = 'r';
 	buf->Name[3] = 'p';
-	buf->Timestamp = cpu_to_le64(timewarp);
-	return buf;
-}
+	buf->Timestamp = cpu_to_le64(समयwarp);
+	वापस buf;
+पूर्ण
 
 /* See MS-SMB2 2.2.13.2.7 */
-static int
-add_twarp_context(struct kvec *iov, unsigned int *num_iovec, __u64 timewarp)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_twarp_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec, __u64 समयwarp)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
-	iov[num].iov_base = create_twarp_buf(timewarp);
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct crt_twarp_ctxt);
-	if (!req->CreateContextsOffset)
+	iov[num].iov_base = create_twarp_buf(समयwarp);
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा crt_twarp_ctxt);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset = cpu_to_le32(
-				sizeof(struct smb2_create_req) +
+				माप(काष्ठा smb2_create_req) +
 				iov[num - 1].iov_len);
-	le32_add_cpu(&req->CreateContextsLength, sizeof(struct crt_twarp_ctxt));
+	le32_add_cpu(&req->CreateContextsLength, माप(काष्ठा crt_twarp_ctxt));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* See See http://technet.microsoft.com/en-us/library/hh509017(v=ws.10).aspx */
-static void setup_owner_group_sids(char *buf)
-{
-	struct owner_group_sids *sids = (struct owner_group_sids *)buf;
+अटल व्योम setup_owner_group_sids(अक्षर *buf)
+अणु
+	काष्ठा owner_group_sids *sids = (काष्ठा owner_group_sids *)buf;
 
 	/* Populate the user ownership fields S-1-5-88-1 */
 	sids->owner.Revision = 1;
@@ -2287,48 +2288,48 @@ static void setup_owner_group_sids(char *buf)
 	sids->group.SubAuthorities[1] = cpu_to_le32(2);
 	sids->group.SubAuthorities[2] = cpu_to_le32(current_fsgid().val);
 
-	cifs_dbg(FYI, "owner S-1-5-88-1-%d, group S-1-5-88-2-%d\n", current_fsuid().val, current_fsgid().val);
-}
+	cअगरs_dbg(FYI, "owner S-1-5-88-1-%d, group S-1-5-88-2-%d\n", current_fsuid().val, current_fsgid().val);
+पूर्ण
 
 /* See MS-SMB2 2.2.13.2.2 and MS-DTYP 2.4.6 */
-static struct crt_sd_ctxt *
-create_sd_buf(umode_t mode, bool set_owner, unsigned int *len)
-{
-	struct crt_sd_ctxt *buf;
+अटल काष्ठा crt_sd_ctxt *
+create_sd_buf(umode_t mode, bool set_owner, अचिन्हित पूर्णांक *len)
+अणु
+	काष्ठा crt_sd_ctxt *buf;
 	__u8 *ptr, *aclptr;
-	unsigned int acelen, acl_size, ace_count;
-	unsigned int owner_offset = 0;
-	unsigned int group_offset = 0;
-	struct smb3_acl acl;
+	अचिन्हित पूर्णांक acelen, acl_size, ace_count;
+	अचिन्हित पूर्णांक owner_offset = 0;
+	अचिन्हित पूर्णांक group_offset = 0;
+	काष्ठा smb3_acl acl;
 
-	*len = roundup(sizeof(struct crt_sd_ctxt) + (sizeof(struct cifs_ace) * 4), 8);
+	*len = roundup(माप(काष्ठा crt_sd_ctxt) + (माप(काष्ठा cअगरs_ace) * 4), 8);
 
-	if (set_owner) {
-		/* sizeof(struct owner_group_sids) is already multiple of 8 so no need to round */
-		*len += sizeof(struct owner_group_sids);
-	}
+	अगर (set_owner) अणु
+		/* माप(काष्ठा owner_group_sids) is alपढ़ोy multiple of 8 so no need to round */
+		*len += माप(काष्ठा owner_group_sids);
+	पूर्ण
 
 	buf = kzalloc(*len, GFP_KERNEL);
-	if (buf == NULL)
-		return buf;
+	अगर (buf == शून्य)
+		वापस buf;
 
 	ptr = (__u8 *)&buf[1];
-	if (set_owner) {
+	अगर (set_owner) अणु
 		/* offset fields are from beginning of security descriptor not of create context */
 		owner_offset = ptr - (__u8 *)&buf->sd;
 		buf->sd.OffsetOwner = cpu_to_le32(owner_offset);
-		group_offset = owner_offset + offsetof(struct owner_group_sids, group);
+		group_offset = owner_offset + दुरत्व(काष्ठा owner_group_sids, group);
 		buf->sd.OffsetGroup = cpu_to_le32(group_offset);
 
 		setup_owner_group_sids(ptr);
-		ptr += sizeof(struct owner_group_sids);
-	} else {
+		ptr += माप(काष्ठा owner_group_sids);
+	पूर्ण अन्यथा अणु
 		buf->sd.OffsetOwner = 0;
 		buf->sd.OffsetGroup = 0;
-	}
+	पूर्ण
 
-	buf->ccontext.DataOffset = cpu_to_le16(offsetof(struct crt_sd_ctxt, sd));
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof(struct crt_sd_ctxt, Name));
+	buf->ccontext.DataOffset = cpu_to_le16(दुरत्व(काष्ठा crt_sd_ctxt, sd));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व(काष्ठा crt_sd_ctxt, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 	/* SMB2_CREATE_SD_BUFFER_TOKEN is "SecD" */
 	buf->Name[0] = 'S';
@@ -2345,26 +2346,26 @@ create_sd_buf(umode_t mode, bool set_owner, unsigned int *len)
 
 	/* offset owner, group and Sbz1 and SACL are all zero */
 	buf->sd.OffsetDacl = cpu_to_le32(ptr - (__u8 *)&buf->sd);
-	/* Ship the ACL for now. we will copy it into buf later. */
+	/* Ship the ACL क्रम now. we will copy it पूर्णांकo buf later. */
 	aclptr = ptr;
-	ptr += sizeof(struct cifs_acl);
+	ptr += माप(काष्ठा cअगरs_acl);
 
 	/* create one ACE to hold the mode embedded in reserved special SID */
-	acelen = setup_special_mode_ACE((struct cifs_ace *)ptr, (__u64)mode);
+	acelen = setup_special_mode_ACE((काष्ठा cअगरs_ace *)ptr, (__u64)mode);
 	ptr += acelen;
-	acl_size = acelen + sizeof(struct smb3_acl);
+	acl_size = acelen + माप(काष्ठा smb3_acl);
 	ace_count = 1;
 
-	if (set_owner) {
-		/* we do not need to reallocate buffer to add the two more ACEs. plenty of space */
-		acelen = setup_special_user_owner_ACE((struct cifs_ace *)ptr);
+	अगर (set_owner) अणु
+		/* we करो not need to पुनः_स्मृतिate buffer to add the two more ACEs. plenty of space */
+		acelen = setup_special_user_owner_ACE((काष्ठा cअगरs_ace *)ptr);
 		ptr += acelen;
 		acl_size += acelen;
 		ace_count += 1;
-	}
+	पूर्ण
 
-	/* and one more ACE to allow access for authenticated users */
-	acelen = setup_authusers_ACE((struct cifs_ace *)ptr);
+	/* and one more ACE to allow access क्रम authenticated users */
+	acelen = setup_authusers_ACE((काष्ठा cअगरs_ace *)ptr);
 	ptr += acelen;
 	acl_size += acelen;
 	ace_count += 1;
@@ -2372,98 +2373,98 @@ create_sd_buf(umode_t mode, bool set_owner, unsigned int *len)
 	acl.AclRevision = ACL_REVISION; /* See 2.4.4.1 of MS-DTYP */
 	acl.AclSize = cpu_to_le16(acl_size);
 	acl.AceCount = cpu_to_le16(ace_count);
-	memcpy(aclptr, &acl, sizeof(struct cifs_acl));
+	स_नकल(aclptr, &acl, माप(काष्ठा cअगरs_acl));
 
 	buf->ccontext.DataLength = cpu_to_le32(ptr - (__u8 *)&buf->sd);
 	*len = ptr - (__u8 *)buf;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int
-add_sd_context(struct kvec *iov, unsigned int *num_iovec, umode_t mode, bool set_owner)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
-	unsigned int len = 0;
+अटल पूर्णांक
+add_sd_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec, umode_t mode, bool set_owner)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
+	अचिन्हित पूर्णांक len = 0;
 
 	iov[num].iov_base = create_sd_buf(mode, set_owner, &len);
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
 	iov[num].iov_len = len;
-	if (!req->CreateContextsOffset)
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset = cpu_to_le32(
-				sizeof(struct smb2_create_req) +
+				माप(काष्ठा smb2_create_req) +
 				iov[num - 1].iov_len);
 	le32_add_cpu(&req->CreateContextsLength, len);
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct crt_query_id_ctxt *
-create_query_id_buf(void)
-{
-	struct crt_query_id_ctxt *buf;
+अटल काष्ठा crt_query_id_ctxt *
+create_query_id_buf(व्योम)
+अणु
+	काष्ठा crt_query_id_ctxt *buf;
 
-	buf = kzalloc(sizeof(struct crt_query_id_ctxt), GFP_KERNEL);
-	if (!buf)
-		return NULL;
+	buf = kzalloc(माप(काष्ठा crt_query_id_ctxt), GFP_KERNEL);
+	अगर (!buf)
+		वापस शून्य;
 
 	buf->ccontext.DataOffset = cpu_to_le16(0);
 	buf->ccontext.DataLength = cpu_to_le32(0);
-	buf->ccontext.NameOffset = cpu_to_le16(offsetof
-				(struct crt_query_id_ctxt, Name));
+	buf->ccontext.NameOffset = cpu_to_le16(दुरत्व
+				(काष्ठा crt_query_id_ctxt, Name));
 	buf->ccontext.NameLength = cpu_to_le16(4);
 	/* SMB2_CREATE_QUERY_ON_DISK_ID is "QFid" */
 	buf->Name[0] = 'Q';
 	buf->Name[1] = 'F';
 	buf->Name[2] = 'i';
 	buf->Name[3] = 'd';
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 /* See MS-SMB2 2.2.13.2.9 */
-static int
-add_query_id_context(struct kvec *iov, unsigned int *num_iovec)
-{
-	struct smb2_create_req *req = iov[0].iov_base;
-	unsigned int num = *num_iovec;
+अटल पूर्णांक
+add_query_id_context(काष्ठा kvec *iov, अचिन्हित पूर्णांक *num_iovec)
+अणु
+	काष्ठा smb2_create_req *req = iov[0].iov_base;
+	अचिन्हित पूर्णांक num = *num_iovec;
 
 	iov[num].iov_base = create_query_id_buf();
-	if (iov[num].iov_base == NULL)
-		return -ENOMEM;
-	iov[num].iov_len = sizeof(struct crt_query_id_ctxt);
-	if (!req->CreateContextsOffset)
+	अगर (iov[num].iov_base == शून्य)
+		वापस -ENOMEM;
+	iov[num].iov_len = माप(काष्ठा crt_query_id_ctxt);
+	अगर (!req->CreateContextsOffset)
 		req->CreateContextsOffset = cpu_to_le32(
-				sizeof(struct smb2_create_req) +
+				माप(काष्ठा smb2_create_req) +
 				iov[num - 1].iov_len);
-	le32_add_cpu(&req->CreateContextsLength, sizeof(struct crt_query_id_ctxt));
+	le32_add_cpu(&req->CreateContextsLength, माप(काष्ठा crt_query_id_ctxt));
 	*num_iovec = num + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-alloc_path_with_tree_prefix(__le16 **out_path, int *out_size, int *out_len,
-			    const char *treename, const __le16 *path)
-{
-	int treename_len, path_len;
-	struct nls_table *cp;
-	const __le16 sep[] = {cpu_to_le16('\\'), cpu_to_le16(0x0000)};
+अटल पूर्णांक
+alloc_path_with_tree_prefix(__le16 **out_path, पूर्णांक *out_size, पूर्णांक *out_len,
+			    स्थिर अक्षर *treename, स्थिर __le16 *path)
+अणु
+	पूर्णांक treename_len, path_len;
+	काष्ठा nls_table *cp;
+	स्थिर __le16 sep[] = अणुcpu_to_le16('\\'), cpu_to_le16(0x0000)पूर्ण;
 
 	/*
 	 * skip leading "\\"
 	 */
-	treename_len = strlen(treename);
-	if (treename_len < 2 || !(treename[0] == '\\' && treename[1] == '\\'))
-		return -EINVAL;
+	treename_len = म_माप(treename);
+	अगर (treename_len < 2 || !(treename[0] == '\\' && treename[1] == '\\'))
+		वापस -EINVAL;
 
 	treename += 2;
 	treename_len -= 2;
 
-	path_len = UniStrnlen((wchar_t *)path, PATH_MAX);
+	path_len = UniStrnlen((ब_अक्षर_प्रकार *)path, PATH_MAX);
 
 	/*
-	 * make room for one path separator between the treename and
+	 * make room क्रम one path separator between the treename and
 	 * path
 	 */
 	*out_len = treename_len + 1 + path_len;
@@ -2475,1381 +2476,1381 @@ alloc_path_with_tree_prefix(__le16 **out_path, int *out_size, int *out_len,
 
 	*out_size = roundup((*out_len+1)*2, 8);
 	*out_path = kzalloc(*out_size, GFP_KERNEL);
-	if (!*out_path)
-		return -ENOMEM;
+	अगर (!*out_path)
+		वापस -ENOMEM;
 
-	cp = load_nls_default();
-	cifs_strtoUTF16(*out_path, treename, treename_len, cp);
+	cp = load_nls_शेष();
+	cअगरs_strtoUTF16(*out_path, treename, treename_len, cp);
 	UniStrcat(*out_path, sep);
 	UniStrcat(*out_path, path);
 	unload_nls(cp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int smb311_posix_mkdir(const unsigned int xid, struct inode *inode,
-			       umode_t mode, struct cifs_tcon *tcon,
-			       const char *full_path,
-			       struct cifs_sb_info *cifs_sb)
-{
-	struct smb_rqst rqst;
-	struct smb2_create_req *req;
-	struct smb2_create_rsp *rsp = NULL;
-	struct cifs_ses *ses = tcon->ses;
-	struct kvec iov[3]; /* make sure at least one for each open context */
-	struct kvec rsp_iov = {NULL, 0};
-	int resp_buftype;
-	int uni_path_len;
-	__le16 *copy_path = NULL;
-	int copy_size;
-	int rc = 0;
-	unsigned int n_iov = 2;
+पूर्णांक smb311_posix_सूची_गढ़ो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा inode *inode,
+			       umode_t mode, काष्ठा cअगरs_tcon *tcon,
+			       स्थिर अक्षर *full_path,
+			       काष्ठा cअगरs_sb_info *cअगरs_sb)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_create_req *req;
+	काष्ठा smb2_create_rsp *rsp = शून्य;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा kvec iov[3]; /* make sure at least one क्रम each खोलो context */
+	काष्ठा kvec rsp_iov = अणुशून्य, 0पूर्ण;
+	पूर्णांक resp_buftype;
+	पूर्णांक uni_path_len;
+	__le16 *copy_path = शून्य;
+	पूर्णांक copy_size;
+	पूर्णांक rc = 0;
+	अचिन्हित पूर्णांक n_iov = 2;
 	__u32 file_attributes = 0;
-	char *pc_buf = NULL;
-	int flags = 0;
-	unsigned int total_len;
-	__le16 *utf16_path = NULL;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
+	अक्षर *pc_buf = शून्य;
+	पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक total_len;
+	__le16 *utf16_path = शून्य;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
 
-	cifs_dbg(FYI, "mkdir\n");
+	cअगरs_dbg(FYI, "mkdir\n");
 
 	/* resource #1: path allocation */
-	utf16_path = cifs_convert_path_to_utf16(full_path, cifs_sb);
-	if (!utf16_path)
-		return -ENOMEM;
+	utf16_path = cअगरs_convert_path_to_utf16(full_path, cअगरs_sb);
+	अगर (!utf16_path)
+		वापस -ENOMEM;
 
-	if (!ses || !server) {
+	अगर (!ses || !server) अणु
 		rc = -EIO;
-		goto err_free_path;
-	}
+		जाओ err_मुक्त_path;
+	पूर्ण
 
 	/* resource #2: request */
 	rc = smb2_plain_req_init(SMB2_CREATE, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		goto err_free_path;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		जाओ err_मुक्त_path;
 
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	req->ImpersonationLevel = IL_IMPERSONATION;
-	req->DesiredAccess = cpu_to_le32(FILE_WRITE_ATTRIBUTES);
-	/* File attributes ignored on open (used in create though) */
+	req->DesiredAccess = cpu_to_le32(खाता_WRITE_ATTRIBUTES);
+	/* File attributes ignored on खोलो (used in create though) */
 	req->FileAttributes = cpu_to_le32(file_attributes);
-	req->ShareAccess = FILE_SHARE_ALL_LE;
-	req->CreateDisposition = cpu_to_le32(FILE_CREATE);
-	req->CreateOptions = cpu_to_le32(CREATE_NOT_FILE);
+	req->ShareAccess = खाता_SHARE_ALL_LE;
+	req->CreateDisposition = cpu_to_le32(खाता_CREATE);
+	req->CreateOptions = cpu_to_le32(CREATE_NOT_खाता);
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	/* -1 since last byte is buf[0] which is sent below (path) */
 	iov[0].iov_len = total_len - 1;
 
-	req->NameOffset = cpu_to_le16(sizeof(struct smb2_create_req));
+	req->NameOffset = cpu_to_le16(माप(काष्ठा smb2_create_req));
 
 	/* [MS-SMB2] 2.2.13 NameOffset:
 	 * If SMB2_FLAGS_DFS_OPERATIONS is set in the Flags field of
 	 * the SMB2 header, the file name includes a prefix that will
-	 * be processed during DFS name normalization as specified in
+	 * be processed during DFS name normalization as specअगरied in
 	 * section 3.3.5.9. Otherwise, the file name is relative to
-	 * the share that is identified by the TreeId in the SMB2
+	 * the share that is identअगरied by the TreeId in the SMB2
 	 * header.
 	 */
-	if (tcon->share_flags & SHI1005_FLAGS_DFS) {
-		int name_len;
+	अगर (tcon->share_flags & SHI1005_FLAGS_DFS) अणु
+		पूर्णांक name_len;
 
 		req->sync_hdr.Flags |= SMB2_FLAGS_DFS_OPERATIONS;
 		rc = alloc_path_with_tree_prefix(&copy_path, &copy_size,
 						 &name_len,
 						 tcon->treeName, utf16_path);
-		if (rc)
-			goto err_free_req;
+		अगर (rc)
+			जाओ err_मुक्त_req;
 
 		req->NameLength = cpu_to_le16(name_len * 2);
 		uni_path_len = copy_size;
-		/* free before overwriting resource */
-		kfree(utf16_path);
+		/* मुक्त beक्रमe overwriting resource */
+		kमुक्त(utf16_path);
 		utf16_path = copy_path;
-	} else {
-		uni_path_len = (2 * UniStrnlen((wchar_t *)utf16_path, PATH_MAX)) + 2;
-		/* MUST set path len (NameLength) to 0 opening root of share */
+	पूर्ण अन्यथा अणु
+		uni_path_len = (2 * UniStrnlen((ब_अक्षर_प्रकार *)utf16_path, PATH_MAX)) + 2;
+		/* MUST set path len (NameLength) to 0 खोलोing root of share */
 		req->NameLength = cpu_to_le16(uni_path_len - 2);
-		if (uni_path_len % 8 != 0) {
+		अगर (uni_path_len % 8 != 0) अणु
 			copy_size = roundup(uni_path_len, 8);
 			copy_path = kzalloc(copy_size, GFP_KERNEL);
-			if (!copy_path) {
+			अगर (!copy_path) अणु
 				rc = -ENOMEM;
-				goto err_free_req;
-			}
-			memcpy((char *)copy_path, (const char *)utf16_path,
+				जाओ err_मुक्त_req;
+			पूर्ण
+			स_नकल((अक्षर *)copy_path, (स्थिर अक्षर *)utf16_path,
 			       uni_path_len);
 			uni_path_len = copy_size;
-			/* free before overwriting resource */
-			kfree(utf16_path);
+			/* मुक्त beक्रमe overwriting resource */
+			kमुक्त(utf16_path);
 			utf16_path = copy_path;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	iov[1].iov_len = uni_path_len;
 	iov[1].iov_base = utf16_path;
 	req->RequestedOplockLevel = SMB2_OPLOCK_LEVEL_NONE;
 
-	if (tcon->posix_extensions) {
+	अगर (tcon->posix_extensions) अणु
 		/* resource #3: posix buf */
 		rc = add_posix_context(iov, &n_iov, mode);
-		if (rc)
-			goto err_free_req;
+		अगर (rc)
+			जाओ err_मुक्त_req;
 		pc_buf = iov[n_iov-1].iov_base;
-	}
+	पूर्ण
 
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = n_iov;
 
-	/* no need to inc num_remote_opens because we close it just below */
-	trace_smb3_posix_mkdir_enter(xid, tcon->tid, ses->Suid, CREATE_NOT_FILE,
-				    FILE_WRITE_ATTRIBUTES);
+	/* no need to inc num_remote_खोलोs because we बंद it just below */
+	trace_smb3_posix_सूची_गढ़ो_enter(xid, tcon->tid, ses->Suid, CREATE_NOT_खाता,
+				    खाता_WRITE_ATTRIBUTES);
 	/* resource #4: response buffer */
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_CREATE_HE);
-		trace_smb3_posix_mkdir_err(xid, tcon->tid, ses->Suid,
-					   CREATE_NOT_FILE,
-					   FILE_WRITE_ATTRIBUTES, rc);
-		goto err_free_rsp_buf;
-	}
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_CREATE_HE);
+		trace_smb3_posix_सूची_गढ़ो_err(xid, tcon->tid, ses->Suid,
+					   CREATE_NOT_खाता,
+					   खाता_WRITE_ATTRIBUTES, rc);
+		जाओ err_मुक्त_rsp_buf;
+	पूर्ण
 
-	rsp = (struct smb2_create_rsp *)rsp_iov.iov_base;
-	trace_smb3_posix_mkdir_done(xid, rsp->PersistentFileId, tcon->tid,
-				    ses->Suid, CREATE_NOT_FILE,
-				    FILE_WRITE_ATTRIBUTES);
+	rsp = (काष्ठा smb2_create_rsp *)rsp_iov.iov_base;
+	trace_smb3_posix_सूची_गढ़ो_करोne(xid, rsp->PersistentFileId, tcon->tid,
+				    ses->Suid, CREATE_NOT_खाता,
+				    खाता_WRITE_ATTRIBUTES);
 
-	SMB2_close(xid, tcon, rsp->PersistentFileId, rsp->VolatileFileId);
+	SMB2_बंद(xid, tcon, rsp->PersistentFileId, rsp->VolatileFileId);
 
-	/* Eventually save off posix specific response info and timestaps */
+	/* Eventually save off posix specअगरic response info and बारtaps */
 
-err_free_rsp_buf:
-	free_rsp_buf(resp_buftype, rsp);
-	kfree(pc_buf);
-err_free_req:
-	cifs_small_buf_release(req);
-err_free_path:
-	kfree(utf16_path);
-	return rc;
-}
+err_मुक्त_rsp_buf:
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	kमुक्त(pc_buf);
+err_मुक्त_req:
+	cअगरs_small_buf_release(req);
+err_मुक्त_path:
+	kमुक्त(utf16_path);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_open_init(struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-	       struct smb_rqst *rqst, __u8 *oplock,
-	       struct cifs_open_parms *oparms, __le16 *path)
-{
-	struct smb2_create_req *req;
-	unsigned int n_iov = 2;
+पूर्णांक
+SMB2_खोलो_init(काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+	       काष्ठा smb_rqst *rqst, __u8 *oplock,
+	       काष्ठा cअगरs_खोलो_parms *oparms, __le16 *path)
+अणु
+	काष्ठा smb2_create_req *req;
+	अचिन्हित पूर्णांक n_iov = 2;
 	__u32 file_attributes = 0;
-	int copy_size;
-	int uni_path_len;
-	unsigned int total_len;
-	struct kvec *iov = rqst->rq_iov;
+	पूर्णांक copy_size;
+	पूर्णांक uni_path_len;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec *iov = rqst->rq_iov;
 	__le16 *copy_path;
-	int rc;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_CREATE, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	/* -1 since last byte is buf[0] which is sent below (path) */
 	iov[0].iov_len = total_len - 1;
 
-	if (oparms->create_options & CREATE_OPTION_READONLY)
+	अगर (oparms->create_options & CREATE_OPTION_READONLY)
 		file_attributes |= ATTR_READONLY;
-	if (oparms->create_options & CREATE_OPTION_SPECIAL)
+	अगर (oparms->create_options & CREATE_OPTION_SPECIAL)
 		file_attributes |= ATTR_SYSTEM;
 
 	req->ImpersonationLevel = IL_IMPERSONATION;
 	req->DesiredAccess = cpu_to_le32(oparms->desired_access);
-	/* File attributes ignored on open (used in create though) */
+	/* File attributes ignored on खोलो (used in create though) */
 	req->FileAttributes = cpu_to_le32(file_attributes);
-	req->ShareAccess = FILE_SHARE_ALL_LE;
+	req->ShareAccess = खाता_SHARE_ALL_LE;
 
 	req->CreateDisposition = cpu_to_le32(oparms->disposition);
 	req->CreateOptions = cpu_to_le32(oparms->create_options & CREATE_OPTIONS_MASK);
-	req->NameOffset = cpu_to_le16(sizeof(struct smb2_create_req));
+	req->NameOffset = cpu_to_le16(माप(काष्ठा smb2_create_req));
 
 	/* [MS-SMB2] 2.2.13 NameOffset:
 	 * If SMB2_FLAGS_DFS_OPERATIONS is set in the Flags field of
 	 * the SMB2 header, the file name includes a prefix that will
-	 * be processed during DFS name normalization as specified in
+	 * be processed during DFS name normalization as specअगरied in
 	 * section 3.3.5.9. Otherwise, the file name is relative to
-	 * the share that is identified by the TreeId in the SMB2
+	 * the share that is identअगरied by the TreeId in the SMB2
 	 * header.
 	 */
-	if (tcon->share_flags & SHI1005_FLAGS_DFS) {
-		int name_len;
+	अगर (tcon->share_flags & SHI1005_FLAGS_DFS) अणु
+		पूर्णांक name_len;
 
 		req->sync_hdr.Flags |= SMB2_FLAGS_DFS_OPERATIONS;
 		rc = alloc_path_with_tree_prefix(&copy_path, &copy_size,
 						 &name_len,
 						 tcon->treeName, path);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 		req->NameLength = cpu_to_le16(name_len * 2);
 		uni_path_len = copy_size;
 		path = copy_path;
-	} else {
-		uni_path_len = (2 * UniStrnlen((wchar_t *)path, PATH_MAX)) + 2;
-		/* MUST set path len (NameLength) to 0 opening root of share */
+	पूर्ण अन्यथा अणु
+		uni_path_len = (2 * UniStrnlen((ब_अक्षर_प्रकार *)path, PATH_MAX)) + 2;
+		/* MUST set path len (NameLength) to 0 खोलोing root of share */
 		req->NameLength = cpu_to_le16(uni_path_len - 2);
 		copy_size = uni_path_len;
-		if (copy_size % 8 != 0)
+		अगर (copy_size % 8 != 0)
 			copy_size = roundup(copy_size, 8);
 		copy_path = kzalloc(copy_size, GFP_KERNEL);
-		if (!copy_path)
-			return -ENOMEM;
-		memcpy((char *)copy_path, (const char *)path,
+		अगर (!copy_path)
+			वापस -ENOMEM;
+		स_नकल((अक्षर *)copy_path, (स्थिर अक्षर *)path,
 		       uni_path_len);
 		uni_path_len = copy_size;
 		path = copy_path;
-	}
+	पूर्ण
 
 	iov[1].iov_len = uni_path_len;
 	iov[1].iov_base = path;
 
-	if ((!server->oplocks) || (tcon->no_lease))
+	अगर ((!server->oplocks) || (tcon->no_lease))
 		*oplock = SMB2_OPLOCK_LEVEL_NONE;
 
-	if (!(server->capabilities & SMB2_GLOBAL_CAP_LEASING) ||
+	अगर (!(server->capabilities & SMB2_GLOBAL_CAP_LEASING) ||
 	    *oplock == SMB2_OPLOCK_LEVEL_NONE)
 		req->RequestedOplockLevel = *oplock;
-	else if (!(server->capabilities & SMB2_GLOBAL_CAP_DIRECTORY_LEASING) &&
-		  (oparms->create_options & CREATE_NOT_FILE))
+	अन्यथा अगर (!(server->capabilities & SMB2_GLOBAL_CAP_सूचीECTORY_LEASING) &&
+		  (oparms->create_options & CREATE_NOT_खाता))
 		req->RequestedOplockLevel = *oplock; /* no srv lease support */
-	else {
+	अन्यथा अणु
 		rc = add_lease_context(server, iov, &n_iov,
 				       oparms->fid->lease_key, oplock);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (*oplock == SMB2_OPLOCK_LEVEL_BATCH) {
-		/* need to set Next field of lease context if we request it */
-		if (server->capabilities & SMB2_GLOBAL_CAP_LEASING) {
-			struct create_context *ccontext =
-			    (struct create_context *)iov[n_iov-1].iov_base;
+	अगर (*oplock == SMB2_OPLOCK_LEVEL_BATCH) अणु
+		/* need to set Next field of lease context अगर we request it */
+		अगर (server->capabilities & SMB2_GLOBAL_CAP_LEASING) अणु
+			काष्ठा create_context *ccontext =
+			    (काष्ठा create_context *)iov[n_iov-1].iov_base;
 			ccontext->Next =
 				cpu_to_le32(server->vals->create_lease_size);
-		}
+		पूर्ण
 
 		rc = add_durable_context(iov, &n_iov, oparms,
 					tcon->use_persistent);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (tcon->posix_extensions) {
-		if (n_iov > 2) {
-			struct create_context *ccontext =
-			    (struct create_context *)iov[n_iov-1].iov_base;
+	अगर (tcon->posix_extensions) अणु
+		अगर (n_iov > 2) अणु
+			काष्ठा create_context *ccontext =
+			    (काष्ठा create_context *)iov[n_iov-1].iov_base;
 			ccontext->Next =
 				cpu_to_le32(iov[n_iov-1].iov_len);
-		}
+		पूर्ण
 
 		rc = add_posix_context(iov, &n_iov, oparms->mode);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (tcon->snapshot_time) {
-		cifs_dbg(FYI, "adding snapshot context\n");
-		if (n_iov > 2) {
-			struct create_context *ccontext =
-			    (struct create_context *)iov[n_iov-1].iov_base;
+	अगर (tcon->snapshot_समय) अणु
+		cअगरs_dbg(FYI, "adding snapshot context\n");
+		अगर (n_iov > 2) अणु
+			काष्ठा create_context *ccontext =
+			    (काष्ठा create_context *)iov[n_iov-1].iov_base;
 			ccontext->Next =
 				cpu_to_le32(iov[n_iov-1].iov_len);
-		}
+		पूर्ण
 
-		rc = add_twarp_context(iov, &n_iov, tcon->snapshot_time);
-		if (rc)
-			return rc;
-	}
+		rc = add_twarp_context(iov, &n_iov, tcon->snapshot_समय);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if ((oparms->disposition != FILE_OPEN) && (oparms->cifs_sb)) {
+	अगर ((oparms->disposition != खाता_OPEN) && (oparms->cअगरs_sb)) अणु
 		bool set_mode;
 		bool set_owner;
 
-		if ((oparms->cifs_sb->mnt_cifs_flags & CIFS_MOUNT_MODE_FROM_SID) &&
+		अगर ((oparms->cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_MODE_FROM_SID) &&
 		    (oparms->mode != ACL_NO_MODE))
 			set_mode = true;
-		else {
+		अन्यथा अणु
 			set_mode = false;
 			oparms->mode = ACL_NO_MODE;
-		}
+		पूर्ण
 
-		if (oparms->cifs_sb->mnt_cifs_flags & CIFS_MOUNT_UID_FROM_ACL)
+		अगर (oparms->cअगरs_sb->mnt_cअगरs_flags & CIFS_MOUNT_UID_FROM_ACL)
 			set_owner = true;
-		else
+		अन्यथा
 			set_owner = false;
 
-		if (set_owner | set_mode) {
-			if (n_iov > 2) {
-				struct create_context *ccontext =
-				    (struct create_context *)iov[n_iov-1].iov_base;
+		अगर (set_owner | set_mode) अणु
+			अगर (n_iov > 2) अणु
+				काष्ठा create_context *ccontext =
+				    (काष्ठा create_context *)iov[n_iov-1].iov_base;
 				ccontext->Next = cpu_to_le32(iov[n_iov-1].iov_len);
-			}
+			पूर्ण
 
-			cifs_dbg(FYI, "add sd with mode 0x%x\n", oparms->mode);
+			cअगरs_dbg(FYI, "add sd with mode 0x%x\n", oparms->mode);
 			rc = add_sd_context(iov, &n_iov, oparms->mode, set_owner);
-			if (rc)
-				return rc;
-		}
-	}
+			अगर (rc)
+				वापस rc;
+		पूर्ण
+	पूर्ण
 
-	if (n_iov > 2) {
-		struct create_context *ccontext =
-			(struct create_context *)iov[n_iov-1].iov_base;
+	अगर (n_iov > 2) अणु
+		काष्ठा create_context *ccontext =
+			(काष्ठा create_context *)iov[n_iov-1].iov_base;
 		ccontext->Next = cpu_to_le32(iov[n_iov-1].iov_len);
-	}
+	पूर्ण
 	add_query_id_context(iov, &n_iov);
 
 	rqst->rq_nvec = n_iov;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* rq_iov[0] is the request and is released by cifs_small_buf_release().
- * All other vectors are freed by kfree().
+/* rq_iov[0] is the request and is released by cअगरs_small_buf_release().
+ * All other vectors are मुक्तd by kमुक्त().
  */
-void
-SMB2_open_free(struct smb_rqst *rqst)
-{
-	int i;
+व्योम
+SMB2_खोलो_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	पूर्णांक i;
 
-	if (rqst && rqst->rq_iov) {
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base);
-		for (i = 1; i < rqst->rq_nvec; i++)
-			if (rqst->rq_iov[i].iov_base != smb2_padding)
-				kfree(rqst->rq_iov[i].iov_base);
-	}
-}
+	अगर (rqst && rqst->rq_iov) अणु
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base);
+		क्रम (i = 1; i < rqst->rq_nvec; i++)
+			अगर (rqst->rq_iov[i].iov_base != smb2_padding)
+				kमुक्त(rqst->rq_iov[i].iov_base);
+	पूर्ण
+पूर्ण
 
-int
-SMB2_open(const unsigned int xid, struct cifs_open_parms *oparms, __le16 *path,
-	  __u8 *oplock, struct smb2_file_all_info *buf,
-	  struct create_posix_rsp *posix,
-	  struct kvec *err_iov, int *buftype)
-{
-	struct smb_rqst rqst;
-	struct smb2_create_rsp *rsp = NULL;
-	struct cifs_tcon *tcon = oparms->tcon;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	struct kvec iov[SMB2_CREATE_IOV_SIZE];
-	struct kvec rsp_iov = {NULL, 0};
-	int resp_buftype = CIFS_NO_BUFFER;
-	int rc = 0;
-	int flags = 0;
+पूर्णांक
+SMB2_खोलो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_खोलो_parms *oparms, __le16 *path,
+	  __u8 *oplock, काष्ठा smb2_file_all_info *buf,
+	  काष्ठा create_posix_rsp *posix,
+	  काष्ठा kvec *err_iov, पूर्णांक *buftype)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_create_rsp *rsp = शून्य;
+	काष्ठा cअगरs_tcon *tcon = oparms->tcon;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	काष्ठा kvec iov[SMB2_CREATE_IOV_SIZE];
+	काष्ठा kvec rsp_iov = अणुशून्य, 0पूर्ण;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	पूर्णांक rc = 0;
+	पूर्णांक flags = 0;
 
-	cifs_dbg(FYI, "create/open\n");
-	if (!ses || !server)
-		return -EIO;
+	cअगरs_dbg(FYI, "create/open\n");
+	अगर (!ses || !server)
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = SMB2_CREATE_IOV_SIZE;
 
-	rc = SMB2_open_init(tcon, server,
+	rc = SMB2_खोलो_init(tcon, server,
 			    &rqst, oplock, oparms, path);
-	if (rc)
-		goto creat_exit;
+	अगर (rc)
+		जाओ creat_निकास;
 
-	trace_smb3_open_enter(xid, tcon->tid, tcon->ses->Suid,
+	trace_smb3_खोलो_enter(xid, tcon->tid, tcon->ses->Suid,
 		oparms->create_options, oparms->desired_access);
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags,
 			    &rsp_iov);
-	rsp = (struct smb2_create_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_create_rsp *)rsp_iov.iov_base;
 
-	if (rc != 0) {
-		cifs_stats_fail_inc(tcon, SMB2_CREATE_HE);
-		if (err_iov && rsp) {
+	अगर (rc != 0) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_CREATE_HE);
+		अगर (err_iov && rsp) अणु
 			*err_iov = rsp_iov;
 			*buftype = resp_buftype;
 			resp_buftype = CIFS_NO_BUFFER;
-			rsp = NULL;
-		}
-		trace_smb3_open_err(xid, tcon->tid, ses->Suid,
+			rsp = शून्य;
+		पूर्ण
+		trace_smb3_खोलो_err(xid, tcon->tid, ses->Suid,
 				    oparms->create_options, oparms->desired_access, rc);
-		if (rc == -EREMCHG) {
+		अगर (rc == -EREMCHG) अणु
 			pr_warn_once("server share %s deleted\n",
 				     tcon->treeName);
 			tcon->need_reconnect = true;
-		}
-		goto creat_exit;
-	} else
-		trace_smb3_open_done(xid, rsp->PersistentFileId, tcon->tid,
+		पूर्ण
+		जाओ creat_निकास;
+	पूर्ण अन्यथा
+		trace_smb3_खोलो_करोne(xid, rsp->PersistentFileId, tcon->tid,
 				     ses->Suid, oparms->create_options,
 				     oparms->desired_access);
 
-	atomic_inc(&tcon->num_remote_opens);
+	atomic_inc(&tcon->num_remote_खोलोs);
 	oparms->fid->persistent_fid = rsp->PersistentFileId;
-	oparms->fid->volatile_fid = rsp->VolatileFileId;
+	oparms->fid->अस्थिर_fid = rsp->VolatileFileId;
 	oparms->fid->access = oparms->desired_access;
-#ifdef CONFIG_CIFS_DEBUG2
+#अगर_घोषित CONFIG_CIFS_DEBUG2
 	oparms->fid->mid = le64_to_cpu(rsp->sync_hdr.MessageId);
-#endif /* CIFS_DEBUG2 */
+#पूर्ण_अगर /* CIFS_DEBUG2 */
 
-	if (buf) {
-		memcpy(buf, &rsp->CreationTime, 32);
+	अगर (buf) अणु
+		स_नकल(buf, &rsp->CreationTime, 32);
 		buf->AllocationSize = rsp->AllocationSize;
-		buf->EndOfFile = rsp->EndofFile;
+		buf->EndOfFile = rsp->EnकरोfFile;
 		buf->Attributes = rsp->FileAttributes;
 		buf->NumberOfLinks = cpu_to_le32(1);
 		buf->DeletePending = 0;
-	}
+	पूर्ण
 
 
 	smb2_parse_contexts(server, rsp, &oparms->fid->epoch,
 			    oparms->fid->lease_key, oplock, buf, posix);
-creat_exit:
-	SMB2_open_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+creat_निकास:
+	SMB2_खोलो_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_ioctl_init(struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		struct smb_rqst *rqst,
-		u64 persistent_fid, u64 volatile_fid, u32 opcode,
-		bool is_fsctl, char *in_data, u32 indatalen,
+पूर्णांक
+SMB2_ioctl_init(काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		काष्ठा smb_rqst *rqst,
+		u64 persistent_fid, u64 अस्थिर_fid, u32 opcode,
+		bool is_fsctl, अक्षर *in_data, u32 indatalen,
 		__u32 max_response_size)
-{
-	struct smb2_ioctl_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int total_len;
-	int rc;
-	char *in_data_buf;
+अणु
+	काष्ठा smb2_ioctl_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक rc;
+	अक्षर *in_data_buf;
 
 	rc = smb2_ioctl_req_init(opcode, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (indatalen) {
+	अगर (indatalen) अणु
 		/*
 		 * indatalen is usually small at a couple of bytes max, so
 		 * just allocate through generic pool
 		 */
 		in_data_buf = kmemdup(in_data, indatalen, GFP_NOFS);
-		if (!in_data_buf) {
-			cifs_small_buf_release(req);
-			return -ENOMEM;
-		}
-	}
+		अगर (!in_data_buf) अणु
+			cअगरs_small_buf_release(req);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	req->CtlCode = cpu_to_le32(opcode);
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
+	req->VolatileFileId = अस्थिर_fid;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	/*
-	 * If no input data, the size of ioctl struct in
+	 * If no input data, the size of ioctl काष्ठा in
 	 * protocol spec still includes a 1 byte data buffer,
-	 * but if input data passed to ioctl, we do not
-	 * want to double count this, so we do not send
-	 * the dummy one byte of data in iovec[0] if sending
+	 * but अगर input data passed to ioctl, we करो not
+	 * want to द्विगुन count this, so we करो not send
+	 * the dummy one byte of data in iovec[0] अगर sending
 	 * input data (in iovec[1]).
 	 */
-	if (indatalen) {
+	अगर (indatalen) अणु
 		req->InputCount = cpu_to_le32(indatalen);
-		/* do not set InputOffset if no input data */
+		/* करो not set InputOffset अगर no input data */
 		req->InputOffset =
-		       cpu_to_le32(offsetof(struct smb2_ioctl_req, Buffer));
+		       cpu_to_le32(दुरत्व(काष्ठा smb2_ioctl_req, Buffer));
 		rqst->rq_nvec = 2;
 		iov[0].iov_len = total_len - 1;
 		iov[1].iov_base = in_data_buf;
 		iov[1].iov_len = indatalen;
-	} else {
+	पूर्ण अन्यथा अणु
 		rqst->rq_nvec = 1;
 		iov[0].iov_len = total_len;
-	}
+	पूर्ण
 
 	req->OutputOffset = 0;
 	req->OutputCount = 0; /* MBZ */
 
 	/*
-	 * In most cases max_response_size is set to 16K (CIFSMaxBufSize)
-	 * We Could increase default MaxOutputResponse, but that could require
-	 * more credits. Windows typically sets this smaller, but for some
-	 * ioctls it may be useful to allow server to send more. No point
-	 * limiting what the server can send as long as fits in one credit
+	 * In most हालs max_response_size is set to 16K (CIFSMaxBufSize)
+	 * We Could increase शेष MaxOutputResponse, but that could require
+	 * more credits. Winकरोws typically sets this smaller, but क्रम some
+	 * ioctls it may be useful to allow server to send more. No poपूर्णांक
+	 * limiting what the server can send as दीर्घ as fits in one credit
 	 * We can not handle more than CIFS_MAX_BUF_SIZE yet but may want
 	 * to increase this limit up in the future.
-	 * Note that for snapshot queries that servers like Azure expect that
+	 * Note that क्रम snapshot queries that servers like Azure expect that
 	 * the first query be minimal size (and just used to get the number/size
-	 * of previous versions) so response size must be specified as EXACTLY
-	 * sizeof(struct snapshot_array) which is 16 when rounded up to multiple
-	 * of eight bytes.  Currently that is the only case where we set max
+	 * of previous versions) so response size must be specअगरied as EXACTLY
+	 * माप(काष्ठा snapshot_array) which is 16 when rounded up to multiple
+	 * of eight bytes.  Currently that is the only हाल where we set max
 	 * response size smaller.
 	 */
 	req->MaxOutputResponse = cpu_to_le32(max_response_size);
 	req->sync_hdr.CreditCharge =
 		cpu_to_le16(DIV_ROUND_UP(max(indatalen, max_response_size),
 					 SMB2_MAX_BUFFER_SIZE));
-	if (is_fsctl)
+	अगर (is_fsctl)
 		req->Flags = cpu_to_le32(SMB2_0_IOCTL_IS_FSCTL);
-	else
+	अन्यथा
 		req->Flags = 0;
 
-	/* validate negotiate request must be signed - see MS-SMB2 3.2.5.5 */
-	if (opcode == FSCTL_VALIDATE_NEGOTIATE_INFO)
+	/* validate negotiate request must be चिन्हित - see MS-SMB2 3.2.5.5 */
+	अगर (opcode == FSCTL_VALIDATE_NEGOTIATE_INFO)
 		req->sync_hdr.Flags |= SMB2_FLAGS_SIGNED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-SMB2_ioctl_free(struct smb_rqst *rqst)
-{
-	int i;
-	if (rqst && rqst->rq_iov) {
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
-		for (i = 1; i < rqst->rq_nvec; i++)
-			if (rqst->rq_iov[i].iov_base != smb2_padding)
-				kfree(rqst->rq_iov[i].iov_base);
-	}
-}
+व्योम
+SMB2_ioctl_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	पूर्णांक i;
+	अगर (rqst && rqst->rq_iov) अणु
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+		क्रम (i = 1; i < rqst->rq_nvec; i++)
+			अगर (rqst->rq_iov[i].iov_base != smb2_padding)
+				kमुक्त(rqst->rq_iov[i].iov_base);
+	पूर्ण
+पूर्ण
 
 
 /*
- *	SMB2 IOCTL is used for both IOCTLs and FSCTLs
+ *	SMB2 IOCTL is used क्रम both IOCTLs and FSCTLs
  */
-int
-SMB2_ioctl(const unsigned int xid, struct cifs_tcon *tcon, u64 persistent_fid,
-	   u64 volatile_fid, u32 opcode, bool is_fsctl,
-	   char *in_data, u32 indatalen, u32 max_out_data_len,
-	   char **out_data, u32 *plen /* returned data len */)
-{
-	struct smb_rqst rqst;
-	struct smb2_ioctl_rsp *rsp = NULL;
-	struct cifs_ses *ses;
-	struct TCP_Server_Info *server;
-	struct kvec iov[SMB2_IOCTL_IOV_SIZE];
-	struct kvec rsp_iov = {NULL, 0};
-	int resp_buftype = CIFS_NO_BUFFER;
-	int rc = 0;
-	int flags = 0;
+पूर्णांक
+SMB2_ioctl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon, u64 persistent_fid,
+	   u64 अस्थिर_fid, u32 opcode, bool is_fsctl,
+	   अक्षर *in_data, u32 indatalen, u32 max_out_data_len,
+	   अक्षर **out_data, u32 *plen /* वापसed data len */)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_ioctl_rsp *rsp = शून्य;
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा TCP_Server_Info *server;
+	काष्ठा kvec iov[SMB2_IOCTL_IOV_SIZE];
+	काष्ठा kvec rsp_iov = अणुशून्य, 0पूर्ण;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	पूर्णांक rc = 0;
+	पूर्णांक flags = 0;
 
-	cifs_dbg(FYI, "SMB2 IOCTL\n");
+	cअगरs_dbg(FYI, "SMB2 IOCTL\n");
 
-	if (out_data != NULL)
-		*out_data = NULL;
+	अगर (out_data != शून्य)
+		*out_data = शून्य;
 
-	/* zero out returned data len, in case of error */
-	if (plen)
+	/* zero out वापसed data len, in हाल of error */
+	अगर (plen)
 		*plen = 0;
 
-	if (!tcon)
-		return -EIO;
+	अगर (!tcon)
+		वापस -EIO;
 
 	ses = tcon->ses;
-	if (!ses)
-		return -EIO;
+	अगर (!ses)
+		वापस -EIO;
 
-	server = cifs_pick_channel(ses);
-	if (!server)
-		return -EIO;
+	server = cअगरs_pick_channel(ses);
+	अगर (!server)
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = SMB2_IOCTL_IOV_SIZE;
 
 	rc = SMB2_ioctl_init(tcon, server,
-			     &rqst, persistent_fid, volatile_fid, opcode,
+			     &rqst, persistent_fid, अस्थिर_fid, opcode,
 			     is_fsctl, in_data, indatalen, max_out_data_len);
-	if (rc)
-		goto ioctl_exit;
+	अगर (rc)
+		जाओ ioctl_निकास;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags,
 			    &rsp_iov);
-	rsp = (struct smb2_ioctl_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_ioctl_rsp *)rsp_iov.iov_base;
 
-	if (rc != 0)
+	अगर (rc != 0)
 		trace_smb3_fsctl_err(xid, persistent_fid, tcon->tid,
 				ses->Suid, 0, opcode, rc);
 
-	if ((rc != 0) && (rc != -EINVAL) && (rc != -E2BIG)) {
-		cifs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
-		goto ioctl_exit;
-	} else if (rc == -EINVAL) {
-		if ((opcode != FSCTL_SRV_COPYCHUNK_WRITE) &&
-		    (opcode != FSCTL_SRV_COPYCHUNK)) {
-			cifs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
-			goto ioctl_exit;
-		}
-	} else if (rc == -E2BIG) {
-		if (opcode != FSCTL_QUERY_ALLOCATED_RANGES) {
-			cifs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
-			goto ioctl_exit;
-		}
-	}
+	अगर ((rc != 0) && (rc != -EINVAL) && (rc != -E2BIG)) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
+		जाओ ioctl_निकास;
+	पूर्ण अन्यथा अगर (rc == -EINVAL) अणु
+		अगर ((opcode != FSCTL_SRV_COPYCHUNK_WRITE) &&
+		    (opcode != FSCTL_SRV_COPYCHUNK)) अणु
+			cअगरs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
+			जाओ ioctl_निकास;
+		पूर्ण
+	पूर्ण अन्यथा अगर (rc == -E2BIG) अणु
+		अगर (opcode != FSCTL_QUERY_ALLOCATED_RANGES) अणु
+			cअगरs_stats_fail_inc(tcon, SMB2_IOCTL_HE);
+			जाओ ioctl_निकास;
+		पूर्ण
+	पूर्ण
 
-	/* check if caller wants to look at return data or just return rc */
-	if ((plen == NULL) || (out_data == NULL))
-		goto ioctl_exit;
+	/* check अगर caller wants to look at वापस data or just वापस rc */
+	अगर ((plen == शून्य) || (out_data == शून्य))
+		जाओ ioctl_निकास;
 
 	*plen = le32_to_cpu(rsp->OutputCount);
 
-	/* We check for obvious errors in the output buffer length and offset */
-	if (*plen == 0)
-		goto ioctl_exit; /* server returned no data */
-	else if (*plen > rsp_iov.iov_len || *plen > 0xFF00) {
-		cifs_tcon_dbg(VFS, "srv returned invalid ioctl length: %d\n", *plen);
+	/* We check क्रम obvious errors in the output buffer length and offset */
+	अगर (*plen == 0)
+		जाओ ioctl_निकास; /* server वापसed no data */
+	अन्यथा अगर (*plen > rsp_iov.iov_len || *plen > 0xFF00) अणु
+		cअगरs_tcon_dbg(VFS, "srv returned invalid ioctl length: %d\n", *plen);
 		*plen = 0;
 		rc = -EIO;
-		goto ioctl_exit;
-	}
+		जाओ ioctl_निकास;
+	पूर्ण
 
-	if (rsp_iov.iov_len - *plen < le32_to_cpu(rsp->OutputOffset)) {
-		cifs_tcon_dbg(VFS, "Malformed ioctl resp: len %d offset %d\n", *plen,
+	अगर (rsp_iov.iov_len - *plen < le32_to_cpu(rsp->OutputOffset)) अणु
+		cअगरs_tcon_dbg(VFS, "Malformed ioctl resp: len %d offset %d\n", *plen,
 			le32_to_cpu(rsp->OutputOffset));
 		*plen = 0;
 		rc = -EIO;
-		goto ioctl_exit;
-	}
+		जाओ ioctl_निकास;
+	पूर्ण
 
-	*out_data = kmemdup((char *)rsp + le32_to_cpu(rsp->OutputOffset),
+	*out_data = kmemdup((अक्षर *)rsp + le32_to_cpu(rsp->OutputOffset),
 			    *plen, GFP_KERNEL);
-	if (*out_data == NULL) {
+	अगर (*out_data == शून्य) अणु
 		rc = -ENOMEM;
-		goto ioctl_exit;
-	}
+		जाओ ioctl_निकास;
+	पूर्ण
 
-ioctl_exit:
-	SMB2_ioctl_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+ioctl_निकास:
+	SMB2_ioctl_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
 /*
- *   Individual callers to ioctl worker function follow
+ *   Inभागidual callers to ioctl worker function follow
  */
 
-int
-SMB2_set_compression(const unsigned int xid, struct cifs_tcon *tcon,
-		     u64 persistent_fid, u64 volatile_fid)
-{
-	int rc;
-	struct  compress_ioctl fsctl_input;
-	char *ret_data = NULL;
+पूर्णांक
+SMB2_set_compression(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		     u64 persistent_fid, u64 अस्थिर_fid)
+अणु
+	पूर्णांक rc;
+	काष्ठा  compress_ioctl fsctl_input;
+	अक्षर *ret_data = शून्य;
 
 	fsctl_input.CompressionState =
 			cpu_to_le16(COMPRESSION_FORMAT_DEFAULT);
 
-	rc = SMB2_ioctl(xid, tcon, persistent_fid, volatile_fid,
+	rc = SMB2_ioctl(xid, tcon, persistent_fid, अस्थिर_fid,
 			FSCTL_SET_COMPRESSION, true /* is_fsctl */,
-			(char *)&fsctl_input /* data input */,
+			(अक्षर *)&fsctl_input /* data input */,
 			2 /* in data len */, CIFSMaxBufSize /* max out data */,
-			&ret_data /* out data */, NULL);
+			&ret_data /* out data */, शून्य);
 
-	cifs_dbg(FYI, "set compression rc %d\n", rc);
+	cअगरs_dbg(FYI, "set compression rc %d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-SMB2_close_init(struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		struct smb_rqst *rqst,
-		u64 persistent_fid, u64 volatile_fid, bool query_attrs)
-{
-	struct smb2_close_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int total_len;
-	int rc;
+पूर्णांक
+SMB2_बंद_init(काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		काष्ठा smb_rqst *rqst,
+		u64 persistent_fid, u64 अस्थिर_fid, bool query_attrs)
+अणु
+	काष्ठा smb2_बंद_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_CLOSE, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
-	if (query_attrs)
+	req->VolatileFileId = अस्थिर_fid;
+	अगर (query_attrs)
 		req->Flags = SMB2_CLOSE_FLAG_POSTQUERY_ATTRIB;
-	else
+	अन्यथा
 		req->Flags = 0;
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-SMB2_close_free(struct smb_rqst *rqst)
-{
-	if (rqst && rqst->rq_iov)
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
-}
+व्योम
+SMB2_बंद_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	अगर (rqst && rqst->rq_iov)
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+पूर्ण
 
-int
-__SMB2_close(const unsigned int xid, struct cifs_tcon *tcon,
-	     u64 persistent_fid, u64 volatile_fid,
-	     struct smb2_file_network_open_info *pbuf)
-{
-	struct smb_rqst rqst;
-	struct smb2_close_rsp *rsp = NULL;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int resp_buftype = CIFS_NO_BUFFER;
-	int rc = 0;
-	int flags = 0;
+पूर्णांक
+__SMB2_बंद(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	     u64 persistent_fid, u64 अस्थिर_fid,
+	     काष्ठा smb2_file_network_खोलो_info *pbuf)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_बंद_rsp *rsp = शून्य;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	पूर्णांक rc = 0;
+	पूर्णांक flags = 0;
 	bool query_attrs = false;
 
-	cifs_dbg(FYI, "Close\n");
+	cअगरs_dbg(FYI, "Close\n");
 
-	if (!ses || !server)
-		return -EIO;
+	अगर (!ses || !server)
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	/* check if need to ask server to return timestamps in close response */
-	if (pbuf)
+	/* check अगर need to ask server to वापस बारtamps in बंद response */
+	अगर (pbuf)
 		query_attrs = true;
 
-	trace_smb3_close_enter(xid, persistent_fid, tcon->tid, ses->Suid);
-	rc = SMB2_close_init(tcon, server,
-			     &rqst, persistent_fid, volatile_fid,
+	trace_smb3_बंद_enter(xid, persistent_fid, tcon->tid, ses->Suid);
+	rc = SMB2_बंद_init(tcon, server,
+			     &rqst, persistent_fid, अस्थिर_fid,
 			     query_attrs);
-	if (rc)
-		goto close_exit;
+	अगर (rc)
+		जाओ बंद_निकास;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	rsp = (struct smb2_close_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_बंद_rsp *)rsp_iov.iov_base;
 
-	if (rc != 0) {
-		cifs_stats_fail_inc(tcon, SMB2_CLOSE_HE);
-		trace_smb3_close_err(xid, persistent_fid, tcon->tid, ses->Suid,
+	अगर (rc != 0) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_CLOSE_HE);
+		trace_smb3_बंद_err(xid, persistent_fid, tcon->tid, ses->Suid,
 				     rc);
-		goto close_exit;
-	} else {
-		trace_smb3_close_done(xid, persistent_fid, tcon->tid,
+		जाओ बंद_निकास;
+	पूर्ण अन्यथा अणु
+		trace_smb3_बंद_करोne(xid, persistent_fid, tcon->tid,
 				      ses->Suid);
 		/*
-		 * Note that have to subtract 4 since struct network_open_info
-		 * has a final 4 byte pad that close response does not have
+		 * Note that have to subtract 4 since काष्ठा network_खोलो_info
+		 * has a final 4 byte pad that बंद response करोes not have
 		 */
-		if (pbuf)
-			memcpy(pbuf, (char *)&rsp->CreationTime, sizeof(*pbuf) - 4);
-	}
+		अगर (pbuf)
+			स_नकल(pbuf, (अक्षर *)&rsp->CreationTime, माप(*pbuf) - 4);
+	पूर्ण
 
-	atomic_dec(&tcon->num_remote_opens);
-close_exit:
-	SMB2_close_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp);
+	atomic_dec(&tcon->num_remote_खोलोs);
+बंद_निकास:
+	SMB2_बंद_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp);
 
-	/* retry close in a worker thread if this one is interrupted */
-	if (is_interrupt_error(rc)) {
-		int tmp_rc;
+	/* retry बंद in a worker thपढ़ो अगर this one is पूर्णांकerrupted */
+	अगर (is_पूर्णांकerrupt_error(rc)) अणु
+		पूर्णांक पंचांगp_rc;
 
-		tmp_rc = smb2_handle_cancelled_close(tcon, persistent_fid,
-						     volatile_fid);
-		if (tmp_rc)
-			cifs_dbg(VFS, "handle cancelled close fid 0x%llx returned error %d\n",
-				 persistent_fid, tmp_rc);
-	}
-	return rc;
-}
+		पंचांगp_rc = smb2_handle_cancelled_बंद(tcon, persistent_fid,
+						     अस्थिर_fid);
+		अगर (पंचांगp_rc)
+			cअगरs_dbg(VFS, "handle cancelled close fid 0x%llx returned error %d\n",
+				 persistent_fid, पंचांगp_rc);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-int
-SMB2_close(const unsigned int xid, struct cifs_tcon *tcon,
-		u64 persistent_fid, u64 volatile_fid)
-{
-	return __SMB2_close(xid, tcon, persistent_fid, volatile_fid, NULL);
-}
+पूर्णांक
+SMB2_बंद(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		u64 persistent_fid, u64 अस्थिर_fid)
+अणु
+	वापस __SMB2_बंद(xid, tcon, persistent_fid, अस्थिर_fid, शून्य);
+पूर्ण
 
-int
-smb2_validate_iov(unsigned int offset, unsigned int buffer_length,
-		  struct kvec *iov, unsigned int min_buf_size)
-{
-	unsigned int smb_len = iov->iov_len;
-	char *end_of_smb = smb_len + (char *)iov->iov_base;
-	char *begin_of_buf = offset + (char *)iov->iov_base;
-	char *end_of_buf = begin_of_buf + buffer_length;
+पूर्णांक
+smb2_validate_iov(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक buffer_length,
+		  काष्ठा kvec *iov, अचिन्हित पूर्णांक min_buf_size)
+अणु
+	अचिन्हित पूर्णांक smb_len = iov->iov_len;
+	अक्षर *end_of_smb = smb_len + (अक्षर *)iov->iov_base;
+	अक्षर *begin_of_buf = offset + (अक्षर *)iov->iov_base;
+	अक्षर *end_of_buf = begin_of_buf + buffer_length;
 
 
-	if (buffer_length < min_buf_size) {
-		cifs_dbg(VFS, "buffer length %d smaller than minimum size %d\n",
+	अगर (buffer_length < min_buf_size) अणु
+		cअगरs_dbg(VFS, "buffer length %d smaller than minimum size %d\n",
 			 buffer_length, min_buf_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* check if beyond RFC1001 maximum length */
-	if ((smb_len > 0x7FFFFF) || (buffer_length > 0x7FFFFF)) {
-		cifs_dbg(VFS, "buffer length %d or smb length %d too large\n",
+	/* check अगर beyond RFC1001 maximum length */
+	अगर ((smb_len > 0x7FFFFF) || (buffer_length > 0x7FFFFF)) अणु
+		cअगरs_dbg(VFS, "buffer length %d or smb length %d too large\n",
 			 buffer_length, smb_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((begin_of_buf > end_of_smb) || (end_of_buf > end_of_smb)) {
-		cifs_dbg(VFS, "Invalid server response, bad offset to data\n");
-		return -EINVAL;
-	}
+	अगर ((begin_of_buf > end_of_smb) || (end_of_buf > end_of_smb)) अणु
+		cअगरs_dbg(VFS, "Invalid server response, bad offset to data\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If SMB buffer fields are valid, copy into temporary buffer to hold result.
- * Caller must free buffer.
+ * If SMB buffer fields are valid, copy पूर्णांकo temporary buffer to hold result.
+ * Caller must मुक्त buffer.
  */
-int
-smb2_validate_and_copy_iov(unsigned int offset, unsigned int buffer_length,
-			   struct kvec *iov, unsigned int minbufsize,
-			   char *data)
-{
-	char *begin_of_buf = offset + (char *)iov->iov_base;
-	int rc;
+पूर्णांक
+smb2_validate_and_copy_iov(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक buffer_length,
+			   काष्ठा kvec *iov, अचिन्हित पूर्णांक minbufsize,
+			   अक्षर *data)
+अणु
+	अक्षर *begin_of_buf = offset + (अक्षर *)iov->iov_base;
+	पूर्णांक rc;
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	rc = smb2_validate_iov(offset, buffer_length, iov, minbufsize);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	memcpy(data, begin_of_buf, buffer_length);
+	स_नकल(data, begin_of_buf, buffer_length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB2_query_info_init(struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		     struct smb_rqst *rqst,
-		     u64 persistent_fid, u64 volatile_fid,
+पूर्णांक
+SMB2_query_info_init(काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		     काष्ठा smb_rqst *rqst,
+		     u64 persistent_fid, u64 अस्थिर_fid,
 		     u8 info_class, u8 info_type, u32 additional_info,
-		     size_t output_len, size_t input_len, void *input)
-{
-	struct smb2_query_info_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int total_len;
-	int rc;
+		     माप_प्रकार output_len, माप_प्रकार input_len, व्योम *input)
+अणु
+	काष्ठा smb2_query_info_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_QUERY_INFO, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->InfoType = info_type;
 	req->FileInfoClass = info_class;
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
-	req->AdditionalInformation = cpu_to_le32(additional_info);
+	req->VolatileFileId = अस्थिर_fid;
+	req->AdditionalInक्रमmation = cpu_to_le32(additional_info);
 
 	req->OutputBufferLength = cpu_to_le32(output_len);
-	if (input_len) {
+	अगर (input_len) अणु
 		req->InputBufferLength = cpu_to_le32(input_len);
-		/* total_len for smb query request never close to le16 max */
+		/* total_len क्रम smb query request never बंद to le16 max */
 		req->InputBufferOffset = cpu_to_le16(total_len - 1);
-		memcpy(req->Buffer, input, input_len);
-	}
+		स_नकल(req->Buffer, input, input_len);
+	पूर्ण
 
-	iov[0].iov_base = (char *)req;
-	/* 1 for Buffer */
+	iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम Buffer */
 	iov[0].iov_len = total_len - 1 + input_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-SMB2_query_info_free(struct smb_rqst *rqst)
-{
-	if (rqst && rqst->rq_iov)
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
-}
+व्योम
+SMB2_query_info_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	अगर (rqst && rqst->rq_iov)
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+पूर्ण
 
-static int
-query_info(const unsigned int xid, struct cifs_tcon *tcon,
-	   u64 persistent_fid, u64 volatile_fid, u8 info_class, u8 info_type,
-	   u32 additional_info, size_t output_len, size_t min_len, void **data,
+अटल पूर्णांक
+query_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	   u64 persistent_fid, u64 अस्थिर_fid, u8 info_class, u8 info_type,
+	   u32 additional_info, माप_प्रकार output_len, माप_प्रकार min_len, व्योम **data,
 		u32 *dlen)
-{
-	struct smb_rqst rqst;
-	struct smb2_query_info_rsp *rsp = NULL;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype = CIFS_NO_BUFFER;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server;
-	int flags = 0;
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_query_info_rsp *rsp = शून्य;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server;
+	पूर्णांक flags = 0;
 	bool allocated = false;
 
-	cifs_dbg(FYI, "Query Info\n");
+	cअगरs_dbg(FYI, "Query Info\n");
 
-	if (!ses)
-		return -EIO;
-	server = cifs_pick_channel(ses);
-	if (!server)
-		return -EIO;
+	अगर (!ses)
+		वापस -EIO;
+	server = cअगरs_pick_channel(ses);
+	अगर (!server)
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
 	rc = SMB2_query_info_init(tcon, server,
-				  &rqst, persistent_fid, volatile_fid,
+				  &rqst, persistent_fid, अस्थिर_fid,
 				  info_class, info_type, additional_info,
-				  output_len, 0, NULL);
-	if (rc)
-		goto qinf_exit;
+				  output_len, 0, शून्य);
+	अगर (rc)
+		जाओ qinf_निकास;
 
 	trace_smb3_query_info_enter(xid, persistent_fid, tcon->tid,
 				    ses->Suid, info_class, (__u32)info_type);
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	rsp = (struct smb2_query_info_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_query_info_rsp *)rsp_iov.iov_base;
 
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
 		trace_smb3_query_info_err(xid, persistent_fid, tcon->tid,
 				ses->Suid, info_class, (__u32)info_type, rc);
-		goto qinf_exit;
-	}
+		जाओ qinf_निकास;
+	पूर्ण
 
-	trace_smb3_query_info_done(xid, persistent_fid, tcon->tid,
+	trace_smb3_query_info_करोne(xid, persistent_fid, tcon->tid,
 				ses->Suid, info_class, (__u32)info_type);
 
-	if (dlen) {
+	अगर (dlen) अणु
 		*dlen = le32_to_cpu(rsp->OutputBufferLength);
-		if (!*data) {
-			*data = kmalloc(*dlen, GFP_KERNEL);
-			if (!*data) {
-				cifs_tcon_dbg(VFS,
+		अगर (!*data) अणु
+			*data = kदो_स्मृति(*dlen, GFP_KERNEL);
+			अगर (!*data) अणु
+				cअगरs_tcon_dbg(VFS,
 					"Error %d allocating memory for acl\n",
 					rc);
 				*dlen = 0;
 				rc = -ENOMEM;
-				goto qinf_exit;
-			}
+				जाओ qinf_निकास;
+			पूर्ण
 			allocated = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rc = smb2_validate_and_copy_iov(le16_to_cpu(rsp->OutputBufferOffset),
 					le32_to_cpu(rsp->OutputBufferLength),
 					&rsp_iov, min_len, *data);
-	if (rc && allocated) {
-		kfree(*data);
-		*data = NULL;
+	अगर (rc && allocated) अणु
+		kमुक्त(*data);
+		*data = शून्य;
 		*dlen = 0;
-	}
+	पूर्ण
 
-qinf_exit:
-	SMB2_query_info_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+qinf_निकास:
+	SMB2_query_info_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
-int SMB2_query_info(const unsigned int xid, struct cifs_tcon *tcon,
-	u64 persistent_fid, u64 volatile_fid, struct smb2_file_all_info *data)
-{
-	return query_info(xid, tcon, persistent_fid, volatile_fid,
-			  FILE_ALL_INFORMATION, SMB2_O_INFO_FILE, 0,
-			  sizeof(struct smb2_file_all_info) + PATH_MAX * 2,
-			  sizeof(struct smb2_file_all_info), (void **)&data,
-			  NULL);
-}
+पूर्णांक SMB2_query_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	u64 persistent_fid, u64 अस्थिर_fid, काष्ठा smb2_file_all_info *data)
+अणु
+	वापस query_info(xid, tcon, persistent_fid, अस्थिर_fid,
+			  खाता_ALL_INFORMATION, SMB2_O_INFO_खाता, 0,
+			  माप(काष्ठा smb2_file_all_info) + PATH_MAX * 2,
+			  माप(काष्ठा smb2_file_all_info), (व्योम **)&data,
+			  शून्य);
+पूर्ण
 
-int
-SMB311_posix_query_info(const unsigned int xid, struct cifs_tcon *tcon,
-		u64 persistent_fid, u64 volatile_fid, struct smb311_posix_qinfo *data, u32 *plen)
-{
-	size_t output_len = sizeof(struct smb311_posix_qinfo *) +
-			(sizeof(struct cifs_sid) * 2) + (PATH_MAX * 2);
+पूर्णांक
+SMB311_posix_query_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		u64 persistent_fid, u64 अस्थिर_fid, काष्ठा smb311_posix_qinfo *data, u32 *plen)
+अणु
+	माप_प्रकार output_len = माप(काष्ठा smb311_posix_qinfo *) +
+			(माप(काष्ठा cअगरs_sid) * 2) + (PATH_MAX * 2);
 	*plen = 0;
 
-	return query_info(xid, tcon, persistent_fid, volatile_fid,
-			  SMB_FIND_FILE_POSIX_INFO, SMB2_O_INFO_FILE, 0,
-			  output_len, sizeof(struct smb311_posix_qinfo), (void **)&data, plen);
-}
+	वापस query_info(xid, tcon, persistent_fid, अस्थिर_fid,
+			  SMB_FIND_खाता_POSIX_INFO, SMB2_O_INFO_खाता, 0,
+			  output_len, माप(काष्ठा smb311_posix_qinfo), (व्योम **)&data, plen);
+पूर्ण
 
-int
-SMB2_query_acl(const unsigned int xid, struct cifs_tcon *tcon,
-	       u64 persistent_fid, u64 volatile_fid,
-	       void **data, u32 *plen, u32 extra_info)
-{
+पूर्णांक
+SMB2_query_acl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	       u64 persistent_fid, u64 अस्थिर_fid,
+	       व्योम **data, u32 *plen, u32 extra_info)
+अणु
 	__u32 additional_info = OWNER_SECINFO | GROUP_SECINFO | DACL_SECINFO |
 				extra_info;
 	*plen = 0;
 
-	return query_info(xid, tcon, persistent_fid, volatile_fid,
+	वापस query_info(xid, tcon, persistent_fid, अस्थिर_fid,
 			  0, SMB2_O_INFO_SECURITY, additional_info,
 			  SMB2_MAX_BUFFER_SIZE, MIN_SEC_DESC_LEN, data, plen);
-}
+पूर्ण
 
-int
-SMB2_get_srv_num(const unsigned int xid, struct cifs_tcon *tcon,
-		 u64 persistent_fid, u64 volatile_fid, __le64 *uniqueid)
-{
-	return query_info(xid, tcon, persistent_fid, volatile_fid,
-			  FILE_INTERNAL_INFORMATION, SMB2_O_INFO_FILE, 0,
-			  sizeof(struct smb2_file_internal_info),
-			  sizeof(struct smb2_file_internal_info),
-			  (void **)&uniqueid, NULL);
-}
+पूर्णांक
+SMB2_get_srv_num(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		 u64 persistent_fid, u64 अस्थिर_fid, __le64 *uniqueid)
+अणु
+	वापस query_info(xid, tcon, persistent_fid, अस्थिर_fid,
+			  खाता_INTERNAL_INFORMATION, SMB2_O_INFO_खाता, 0,
+			  माप(काष्ठा smb2_file_पूर्णांकernal_info),
+			  माप(काष्ठा smb2_file_पूर्णांकernal_info),
+			  (व्योम **)&uniqueid, शून्य);
+पूर्ण
 
 /*
- * CHANGE_NOTIFY Request is sent to get notifications on changes to a directory
+ * CHANGE_NOTIFY Request is sent to get notअगरications on changes to a directory
  * See MS-SMB2 2.2.35 and 2.2.36
  */
 
-static int
-SMB2_notify_init(const unsigned int xid, struct smb_rqst *rqst,
-		 struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		 u64 persistent_fid, u64 volatile_fid,
+अटल पूर्णांक
+SMB2_notअगरy_init(स्थिर अचिन्हित पूर्णांक xid, काष्ठा smb_rqst *rqst,
+		 काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		 u64 persistent_fid, u64 अस्थिर_fid,
 		 u32 completion_filter, bool watch_tree)
-{
-	struct smb2_change_notify_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int total_len;
-	int rc;
+अणु
+	काष्ठा smb2_change_notअगरy_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_CHANGE_NOTIFY, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
+	req->VolatileFileId = अस्थिर_fid;
 	/* See note 354 of MS-SMB2, 64K max */
 	req->OutputBufferLength =
 		cpu_to_le32(SMB2_MAX_BUFFER_SIZE - MAX_SMB2_HDR_SIZE);
 	req->CompletionFilter = cpu_to_le32(completion_filter);
-	if (watch_tree)
+	अगर (watch_tree)
 		req->Flags = cpu_to_le16(SMB2_WATCH_TREE);
-	else
+	अन्यथा
 		req->Flags = 0;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB2_change_notify(const unsigned int xid, struct cifs_tcon *tcon,
-		u64 persistent_fid, u64 volatile_fid, bool watch_tree,
+पूर्णांक
+SMB2_change_notअगरy(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		u64 persistent_fid, u64 अस्थिर_fid, bool watch_tree,
 		u32 completion_filter)
-{
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	struct smb_rqst rqst;
-	struct kvec iov[1];
-	struct kvec rsp_iov = {NULL, 0};
-	int resp_buftype = CIFS_NO_BUFFER;
-	int flags = 0;
-	int rc = 0;
+अणु
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	काष्ठा smb_rqst rqst;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov = अणुशून्य, 0पूर्ण;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	पूर्णांक flags = 0;
+	पूर्णांक rc = 0;
 
-	cifs_dbg(FYI, "change notify\n");
-	if (!ses || !server)
-		return -EIO;
+	cअगरs_dbg(FYI, "change notify\n");
+	अगर (!ses || !server)
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = SMB2_notify_init(xid, &rqst, tcon, server,
-			      persistent_fid, volatile_fid,
+	rc = SMB2_notअगरy_init(xid, &rqst, tcon, server,
+			      persistent_fid, अस्थिर_fid,
 			      completion_filter, watch_tree);
-	if (rc)
-		goto cnotify_exit;
+	अगर (rc)
+		जाओ cnotअगरy_निकास;
 
-	trace_smb3_notify_enter(xid, persistent_fid, tcon->tid, ses->Suid,
+	trace_smb3_notअगरy_enter(xid, persistent_fid, tcon->tid, ses->Suid,
 				(u8)watch_tree, completion_filter);
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
 
-	if (rc != 0) {
-		cifs_stats_fail_inc(tcon, SMB2_CHANGE_NOTIFY_HE);
-		trace_smb3_notify_err(xid, persistent_fid, tcon->tid, ses->Suid,
+	अगर (rc != 0) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_CHANGE_NOTIFY_HE);
+		trace_smb3_notअगरy_err(xid, persistent_fid, tcon->tid, ses->Suid,
 				(u8)watch_tree, completion_filter, rc);
-	} else
-		trace_smb3_notify_done(xid, persistent_fid, tcon->tid,
+	पूर्ण अन्यथा
+		trace_smb3_notअगरy_करोne(xid, persistent_fid, tcon->tid,
 				ses->Suid, (u8)watch_tree, completion_filter);
 
- cnotify_exit:
-	if (rqst.rq_iov)
-		cifs_small_buf_release(rqst.rq_iov[0].iov_base); /* request */
-	free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	return rc;
-}
+ cnotअगरy_निकास:
+	अगर (rqst.rq_iov)
+		cअगरs_small_buf_release(rqst.rq_iov[0].iov_base); /* request */
+	मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	वापस rc;
+पूर्ण
 
 
 
 /*
- * This is a no-op for now. We're not really interested in the reply, but
+ * This is a no-op क्रम now. We're not really पूर्णांकerested in the reply, but
  * rather in the fact that the server sent one and that server->lstrp
- * gets updated.
+ * माला_लो updated.
  *
  * FIXME: maybe we should consider checking that the reply matches request?
  */
-static void
-smb2_echo_callback(struct mid_q_entry *mid)
-{
-	struct TCP_Server_Info *server = mid->callback_data;
-	struct smb2_echo_rsp *rsp = (struct smb2_echo_rsp *)mid->resp_buf;
-	struct cifs_credits credits = { .value = 0, .instance = 0 };
+अटल व्योम
+smb2_echo_callback(काष्ठा mid_q_entry *mid)
+अणु
+	काष्ठा TCP_Server_Info *server = mid->callback_data;
+	काष्ठा smb2_echo_rsp *rsp = (काष्ठा smb2_echo_rsp *)mid->resp_buf;
+	काष्ठा cअगरs_credits credits = अणु .value = 0, .instance = 0 पूर्ण;
 
-	if (mid->mid_state == MID_RESPONSE_RECEIVED
-	    || mid->mid_state == MID_RESPONSE_MALFORMED) {
+	अगर (mid->mid_state == MID_RESPONSE_RECEIVED
+	    || mid->mid_state == MID_RESPONSE_MALFORMED) अणु
 		credits.value = le16_to_cpu(rsp->sync_hdr.CreditRequest);
 		credits.instance = server->reconnect_instance;
-	}
+	पूर्ण
 
 	DeleteMidQEntry(mid);
 	add_credits(server, &credits, CIFS_ECHO_OP);
-}
+पूर्ण
 
-void smb2_reconnect_server(struct work_struct *work)
-{
-	struct TCP_Server_Info *server = container_of(work,
-					struct TCP_Server_Info, reconnect.work);
-	struct cifs_ses *ses;
-	struct cifs_tcon *tcon, *tcon2;
-	struct list_head tmp_list;
-	int tcon_exist = false;
-	int rc;
-	int resched = false;
+व्योम smb2_reconnect_server(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा TCP_Server_Info *server = container_of(work,
+					काष्ठा TCP_Server_Info, reconnect.work);
+	काष्ठा cअगरs_ses *ses;
+	काष्ठा cअगरs_tcon *tcon, *tcon2;
+	काष्ठा list_head पंचांगp_list;
+	पूर्णांक tcon_exist = false;
+	पूर्णांक rc;
+	पूर्णांक resched = false;
 
 
 	/* Prevent simultaneous reconnects that can corrupt tcon->rlist list */
 	mutex_lock(&server->reconnect_mutex);
 
-	INIT_LIST_HEAD(&tmp_list);
-	cifs_dbg(FYI, "Need negotiate, reconnecting tcons\n");
+	INIT_LIST_HEAD(&पंचांगp_list);
+	cअगरs_dbg(FYI, "Need negotiate, reconnecting tcons\n");
 
-	spin_lock(&cifs_tcp_ses_lock);
-	list_for_each_entry(ses, &server->smb_ses_list, smb_ses_list) {
-		list_for_each_entry(tcon, &ses->tcon_list, tcon_list) {
-			if (tcon->need_reconnect || tcon->need_reopen_files) {
+	spin_lock(&cअगरs_tcp_ses_lock);
+	list_क्रम_each_entry(ses, &server->smb_ses_list, smb_ses_list) अणु
+		list_क्रम_each_entry(tcon, &ses->tcon_list, tcon_list) अणु
+			अगर (tcon->need_reconnect || tcon->need_reखोलो_files) अणु
 				tcon->tc_count++;
-				list_add_tail(&tcon->rlist, &tmp_list);
+				list_add_tail(&tcon->rlist, &पंचांगp_list);
 				tcon_exist = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		/*
-		 * IPC has the same lifetime as its session and uses its
+		 * IPC has the same lअगरeसमय as its session and uses its
 		 * refcount.
 		 */
-		if (ses->tcon_ipc && ses->tcon_ipc->need_reconnect) {
-			list_add_tail(&ses->tcon_ipc->rlist, &tmp_list);
+		अगर (ses->tcon_ipc && ses->tcon_ipc->need_reconnect) अणु
+			list_add_tail(&ses->tcon_ipc->rlist, &पंचांगp_list);
 			tcon_exist = true;
 			ses->ses_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
-	 * Get the reference to server struct to be sure that the last call of
-	 * cifs_put_tcon() in the loop below won't release the server pointer.
+	 * Get the reference to server काष्ठा to be sure that the last call of
+	 * cअगरs_put_tcon() in the loop below won't release the server poपूर्णांकer.
 	 */
-	if (tcon_exist)
+	अगर (tcon_exist)
 		server->srv_count++;
 
-	spin_unlock(&cifs_tcp_ses_lock);
+	spin_unlock(&cअगरs_tcp_ses_lock);
 
-	list_for_each_entry_safe(tcon, tcon2, &tmp_list, rlist) {
+	list_क्रम_each_entry_safe(tcon, tcon2, &पंचांगp_list, rlist) अणु
 		rc = smb2_reconnect(SMB2_INTERNAL_CMD, tcon, server);
-		if (!rc)
-			cifs_reopen_persistent_handles(tcon);
-		else
+		अगर (!rc)
+			cअगरs_reखोलो_persistent_handles(tcon);
+		अन्यथा
 			resched = true;
 		list_del_init(&tcon->rlist);
-		if (tcon->ipc)
-			cifs_put_smb_ses(tcon->ses);
-		else
-			cifs_put_tcon(tcon);
-	}
+		अगर (tcon->ipc)
+			cअगरs_put_smb_ses(tcon->ses);
+		अन्यथा
+			cअगरs_put_tcon(tcon);
+	पूर्ण
 
-	cifs_dbg(FYI, "Reconnecting tcons finished\n");
-	if (resched)
-		queue_delayed_work(cifsiod_wq, &server->reconnect, 2 * HZ);
+	cअगरs_dbg(FYI, "Reconnecting tcons finished\n");
+	अगर (resched)
+		queue_delayed_work(cअगरsiod_wq, &server->reconnect, 2 * HZ);
 	mutex_unlock(&server->reconnect_mutex);
 
-	/* now we can safely release srv struct */
-	if (tcon_exist)
-		cifs_put_tcp_session(server, 1);
-}
+	/* now we can safely release srv काष्ठा */
+	अगर (tcon_exist)
+		cअगरs_put_tcp_session(server, 1);
+पूर्ण
 
-int
-SMB2_echo(struct TCP_Server_Info *server)
-{
-	struct smb2_echo_req *req;
-	int rc = 0;
-	struct kvec iov[1];
-	struct smb_rqst rqst = { .rq_iov = iov,
-				 .rq_nvec = 1 };
-	unsigned int total_len;
+पूर्णांक
+SMB2_echo(काष्ठा TCP_Server_Info *server)
+अणु
+	काष्ठा smb2_echo_req *req;
+	पूर्णांक rc = 0;
+	काष्ठा kvec iov[1];
+	काष्ठा smb_rqst rqst = अणु .rq_iov = iov,
+				 .rq_nvec = 1 पूर्ण;
+	अचिन्हित पूर्णांक total_len;
 
-	cifs_dbg(FYI, "In echo request\n");
+	cअगरs_dbg(FYI, "In echo request\n");
 
-	if (server->tcpStatus == CifsNeedNegotiate) {
+	अगर (server->tcpStatus == CअगरsNeedNegotiate) अणु
 		/* No need to send echo on newly established connections */
-		mod_delayed_work(cifsiod_wq, &server->reconnect, 0);
-		return rc;
-	}
+		mod_delayed_work(cअगरsiod_wq, &server->reconnect, 0);
+		वापस rc;
+	पूर्ण
 
-	rc = smb2_plain_req_init(SMB2_ECHO, NULL, server,
-				 (void **)&req, &total_len);
-	if (rc)
-		return rc;
+	rc = smb2_plain_req_init(SMB2_ECHO, शून्य, server,
+				 (व्योम **)&req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->sync_hdr.CreditRequest = cpu_to_le16(1);
 
 	iov[0].iov_len = total_len;
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 
-	rc = cifs_call_async(server, &rqst, NULL, smb2_echo_callback, NULL,
-			     server, CIFS_ECHO_OP, NULL);
-	if (rc)
-		cifs_dbg(FYI, "Echo request failed: %d\n", rc);
+	rc = cअगरs_call_async(server, &rqst, शून्य, smb2_echo_callback, शून्य,
+			     server, CIFS_ECHO_OP, शून्य);
+	अगर (rc)
+		cअगरs_dbg(FYI, "Echo request failed: %d\n", rc);
 
-	cifs_small_buf_release(req);
-	return rc;
-}
+	cअगरs_small_buf_release(req);
+	वापस rc;
+पूर्ण
 
-void
-SMB2_flush_free(struct smb_rqst *rqst)
-{
-	if (rqst && rqst->rq_iov)
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
-}
+व्योम
+SMB2_flush_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	अगर (rqst && rqst->rq_iov)
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+पूर्ण
 
-int
-SMB2_flush_init(const unsigned int xid, struct smb_rqst *rqst,
-		struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		u64 persistent_fid, u64 volatile_fid)
-{
-	struct smb2_flush_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int total_len;
-	int rc;
+पूर्णांक
+SMB2_flush_init(स्थिर अचिन्हित पूर्णांक xid, काष्ठा smb_rqst *rqst,
+		काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		u64 persistent_fid, u64 अस्थिर_fid)
+अणु
+	काष्ठा smb2_flush_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_FLUSH, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
+	req->VolatileFileId = अस्थिर_fid;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB2_flush(const unsigned int xid, struct cifs_tcon *tcon, u64 persistent_fid,
-	   u64 volatile_fid)
-{
-	struct cifs_ses *ses = tcon->ses;
-	struct smb_rqst rqst;
-	struct kvec iov[1];
-	struct kvec rsp_iov = {NULL, 0};
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	int resp_buftype = CIFS_NO_BUFFER;
-	int flags = 0;
-	int rc = 0;
+पूर्णांक
+SMB2_flush(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon, u64 persistent_fid,
+	   u64 अस्थिर_fid)
+अणु
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा smb_rqst rqst;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov = अणुशून्य, 0पूर्ण;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	पूर्णांक flags = 0;
+	पूर्णांक rc = 0;
 
-	cifs_dbg(FYI, "flush\n");
-	if (!ses || !(ses->server))
-		return -EIO;
+	cअगरs_dbg(FYI, "flush\n");
+	अगर (!ses || !(ses->server))
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
 	rc = SMB2_flush_init(xid, &rqst, tcon, server,
-			     persistent_fid, volatile_fid);
-	if (rc)
-		goto flush_exit;
+			     persistent_fid, अस्थिर_fid);
+	अगर (rc)
+		जाओ flush_निकास;
 
 	trace_smb3_flush_enter(xid, persistent_fid, tcon->tid, ses->Suid);
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
 
-	if (rc != 0) {
-		cifs_stats_fail_inc(tcon, SMB2_FLUSH_HE);
+	अगर (rc != 0) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_FLUSH_HE);
 		trace_smb3_flush_err(xid, persistent_fid, tcon->tid, ses->Suid,
 				     rc);
-	} else
-		trace_smb3_flush_done(xid, persistent_fid, tcon->tid,
+	पूर्ण अन्यथा
+		trace_smb3_flush_करोne(xid, persistent_fid, tcon->tid,
 				      ses->Suid);
 
- flush_exit:
-	SMB2_flush_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	return rc;
-}
+ flush_निकास:
+	SMB2_flush_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	वापस rc;
+पूर्ण
 
 /*
- * To form a chain of read requests, any read requests after the first should
+ * To क्रमm a chain of पढ़ो requests, any पढ़ो requests after the first should
  * have the end_of_chain boolean set to true.
  */
-static int
-smb2_new_read_req(void **buf, unsigned int *total_len,
-	struct cifs_io_parms *io_parms, struct cifs_readdata *rdata,
-	unsigned int remaining_bytes, int request_type)
-{
-	int rc = -EACCES;
-	struct smb2_read_plain_req *req = NULL;
-	struct smb2_sync_hdr *shdr;
-	struct TCP_Server_Info *server = io_parms->server;
+अटल पूर्णांक
+smb2_new_पढ़ो_req(व्योम **buf, अचिन्हित पूर्णांक *total_len,
+	काष्ठा cअगरs_io_parms *io_parms, काष्ठा cअगरs_पढ़ोdata *rdata,
+	अचिन्हित पूर्णांक reमुख्यing_bytes, पूर्णांक request_type)
+अणु
+	पूर्णांक rc = -EACCES;
+	काष्ठा smb2_पढ़ो_plain_req *req = शून्य;
+	काष्ठा smb2_sync_hdr *shdr;
+	काष्ठा TCP_Server_Info *server = io_parms->server;
 
 	rc = smb2_plain_req_init(SMB2_READ, io_parms->tcon, server,
-				 (void **) &req, total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (server == NULL)
-		return -ECONNABORTED;
+	अगर (server == शून्य)
+		वापस -ECONNABORTED;
 
 	shdr = &req->sync_hdr;
 	shdr->ProcessId = cpu_to_le32(io_parms->pid);
 
 	req->PersistentFileId = io_parms->persistent_fid;
-	req->VolatileFileId = io_parms->volatile_fid;
+	req->VolatileFileId = io_parms->अस्थिर_fid;
 	req->ReadChannelInfoOffset = 0; /* reserved */
 	req->ReadChannelInfoLength = 0; /* reserved */
 	req->Channel = 0; /* reserved */
@@ -3857,480 +3858,480 @@ smb2_new_read_req(void **buf, unsigned int *total_len,
 	req->Length = cpu_to_le32(io_parms->length);
 	req->Offset = cpu_to_le64(io_parms->offset);
 
-	trace_smb3_read_enter(0 /* xid */,
+	trace_smb3_पढ़ो_enter(0 /* xid */,
 			io_parms->persistent_fid,
 			io_parms->tcon->tid, io_parms->tcon->ses->Suid,
 			io_parms->offset, io_parms->length);
-#ifdef CONFIG_CIFS_SMB_DIRECT
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
 	/*
-	 * If we want to do a RDMA write, fill in and append
-	 * smbd_buffer_descriptor_v1 to the end of read request
+	 * If we want to करो a RDMA ग_लिखो, fill in and append
+	 * smbd_buffer_descriptor_v1 to the end of पढ़ो request
 	 */
-	if (server->rdma && rdata && !server->sign &&
-		rdata->bytes >= server->smbd_conn->rdma_readwrite_threshold) {
+	अगर (server->rdma && rdata && !server->sign &&
+		rdata->bytes >= server->smbd_conn->rdma_पढ़ोग_लिखो_threshold) अणु
 
-		struct smbd_buffer_descriptor_v1 *v1;
+		काष्ठा smbd_buffer_descriptor_v1 *v1;
 		bool need_invalidate = server->dialect == SMB30_PROT_ID;
 
-		rdata->mr = smbd_register_mr(
+		rdata->mr = smbd_रेजिस्टर_mr(
 				server->smbd_conn, rdata->pages,
 				rdata->nr_pages, rdata->page_offset,
 				rdata->tailsz, true, need_invalidate);
-		if (!rdata->mr)
-			return -EAGAIN;
+		अगर (!rdata->mr)
+			वापस -EAGAIN;
 
 		req->Channel = SMB2_CHANNEL_RDMA_V1_INVALIDATE;
-		if (need_invalidate)
+		अगर (need_invalidate)
 			req->Channel = SMB2_CHANNEL_RDMA_V1;
 		req->ReadChannelInfoOffset =
-			cpu_to_le16(offsetof(struct smb2_read_plain_req, Buffer));
+			cpu_to_le16(दुरत्व(काष्ठा smb2_पढ़ो_plain_req, Buffer));
 		req->ReadChannelInfoLength =
-			cpu_to_le16(sizeof(struct smbd_buffer_descriptor_v1));
-		v1 = (struct smbd_buffer_descriptor_v1 *) &req->Buffer[0];
+			cpu_to_le16(माप(काष्ठा smbd_buffer_descriptor_v1));
+		v1 = (काष्ठा smbd_buffer_descriptor_v1 *) &req->Buffer[0];
 		v1->offset = cpu_to_le64(rdata->mr->mr->iova);
 		v1->token = cpu_to_le32(rdata->mr->mr->rkey);
 		v1->length = cpu_to_le32(rdata->mr->mr->length);
 
-		*total_len += sizeof(*v1) - 1;
-	}
-#endif
-	if (request_type & CHAINED_REQUEST) {
-		if (!(request_type & END_OF_CHAIN)) {
+		*total_len += माप(*v1) - 1;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (request_type & CHAINED_REQUEST) अणु
+		अगर (!(request_type & END_OF_CHAIN)) अणु
 			/* next 8-byte aligned request */
 			*total_len = DIV_ROUND_UP(*total_len, 8) * 8;
 			shdr->NextCommand = cpu_to_le32(*total_len);
-		} else /* END_OF_CHAIN */
+		पूर्ण अन्यथा /* END_OF_CHAIN */
 			shdr->NextCommand = 0;
-		if (request_type & RELATED_REQUEST) {
+		अगर (request_type & RELATED_REQUEST) अणु
 			shdr->Flags |= SMB2_FLAGS_RELATED_OPERATIONS;
 			/*
-			 * Related requests use info from previous read request
+			 * Related requests use info from previous पढ़ो request
 			 * in chain.
 			 */
 			shdr->SessionId = 0xFFFFFFFFFFFFFFFF;
 			shdr->TreeId = 0xFFFFFFFF;
 			req->PersistentFileId = 0xFFFFFFFFFFFFFFFF;
 			req->VolatileFileId = 0xFFFFFFFFFFFFFFFF;
-		}
-	}
-	if (remaining_bytes > io_parms->length)
-		req->RemainingBytes = cpu_to_le32(remaining_bytes);
-	else
-		req->RemainingBytes = 0;
+		पूर्ण
+	पूर्ण
+	अगर (reमुख्यing_bytes > io_parms->length)
+		req->Reमुख्यingBytes = cpu_to_le32(reमुख्यing_bytes);
+	अन्यथा
+		req->Reमुख्यingBytes = 0;
 
 	*buf = req;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void
-smb2_readv_callback(struct mid_q_entry *mid)
-{
-	struct cifs_readdata *rdata = mid->callback_data;
-	struct cifs_tcon *tcon = tlink_tcon(rdata->cfile->tlink);
-	struct TCP_Server_Info *server = rdata->server;
-	struct smb2_sync_hdr *shdr =
-				(struct smb2_sync_hdr *)rdata->iov[0].iov_base;
-	struct cifs_credits credits = { .value = 0, .instance = 0 };
-	struct smb_rqst rqst = { .rq_iov = &rdata->iov[1],
+अटल व्योम
+smb2_पढ़ोv_callback(काष्ठा mid_q_entry *mid)
+अणु
+	काष्ठा cअगरs_पढ़ोdata *rdata = mid->callback_data;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(rdata->cfile->tlink);
+	काष्ठा TCP_Server_Info *server = rdata->server;
+	काष्ठा smb2_sync_hdr *shdr =
+				(काष्ठा smb2_sync_hdr *)rdata->iov[0].iov_base;
+	काष्ठा cअगरs_credits credits = अणु .value = 0, .instance = 0 पूर्ण;
+	काष्ठा smb_rqst rqst = अणु .rq_iov = &rdata->iov[1],
 				 .rq_nvec = 1,
 				 .rq_pages = rdata->pages,
 				 .rq_offset = rdata->page_offset,
 				 .rq_npages = rdata->nr_pages,
 				 .rq_pagesz = rdata->pagesz,
-				 .rq_tailsz = rdata->tailsz };
+				 .rq_tailsz = rdata->tailsz पूर्ण;
 
 	WARN_ONCE(rdata->server != mid->server,
 		  "rdata server %p != mid server %p",
 		  rdata->server, mid->server);
 
-	cifs_dbg(FYI, "%s: mid=%llu state=%d result=%d bytes=%u\n",
+	cअगरs_dbg(FYI, "%s: mid=%llu state=%d result=%d bytes=%u\n",
 		 __func__, mid->mid, mid->mid_state, rdata->result,
 		 rdata->bytes);
 
-	switch (mid->mid_state) {
-	case MID_RESPONSE_RECEIVED:
+	चयन (mid->mid_state) अणु
+	हाल MID_RESPONSE_RECEIVED:
 		credits.value = le16_to_cpu(shdr->CreditRequest);
 		credits.instance = server->reconnect_instance;
-		/* result already set, check signature */
-		if (server->sign && !mid->decrypted) {
-			int rc;
+		/* result alपढ़ोy set, check signature */
+		अगर (server->sign && !mid->decrypted) अणु
+			पूर्णांक rc;
 
-			rc = smb2_verify_signature(&rqst, server);
-			if (rc)
-				cifs_tcon_dbg(VFS, "SMB signature verification returned error = %d\n",
+			rc = smb2_verअगरy_signature(&rqst, server);
+			अगर (rc)
+				cअगरs_tcon_dbg(VFS, "SMB signature verification returned error = %d\n",
 					 rc);
-		}
+		पूर्ण
 		/* FIXME: should this be counted toward the initiating task? */
-		task_io_account_read(rdata->got_bytes);
-		cifs_stats_bytes_read(tcon, rdata->got_bytes);
-		break;
-	case MID_REQUEST_SUBMITTED:
-	case MID_RETRY_NEEDED:
+		task_io_account_पढ़ो(rdata->got_bytes);
+		cअगरs_stats_bytes_पढ़ो(tcon, rdata->got_bytes);
+		अवरोध;
+	हाल MID_REQUEST_SUBMITTED:
+	हाल MID_RETRY_NEEDED:
 		rdata->result = -EAGAIN;
-		if (server->sign && rdata->got_bytes)
+		अगर (server->sign && rdata->got_bytes)
 			/* reset bytes number since we can not check a sign */
 			rdata->got_bytes = 0;
 		/* FIXME: should this be counted toward the initiating task? */
-		task_io_account_read(rdata->got_bytes);
-		cifs_stats_bytes_read(tcon, rdata->got_bytes);
-		break;
-	case MID_RESPONSE_MALFORMED:
+		task_io_account_पढ़ो(rdata->got_bytes);
+		cअगरs_stats_bytes_पढ़ो(tcon, rdata->got_bytes);
+		अवरोध;
+	हाल MID_RESPONSE_MALFORMED:
 		credits.value = le16_to_cpu(shdr->CreditRequest);
 		credits.instance = server->reconnect_instance;
 		fallthrough;
-	default:
+	शेष:
 		rdata->result = -EIO;
-	}
-#ifdef CONFIG_CIFS_SMB_DIRECT
+	पूर्ण
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
 	/*
-	 * If this rdata has a memmory registered, the MR can be freed
-	 * MR needs to be freed as soon as I/O finishes to prevent deadlock
-	 * because they have limited number and are used for future I/Os
+	 * If this rdata has a memmory रेजिस्टरed, the MR can be मुक्तd
+	 * MR needs to be मुक्तd as soon as I/O finishes to prevent deadlock
+	 * because they have limited number and are used क्रम future I/Os
 	 */
-	if (rdata->mr) {
-		smbd_deregister_mr(rdata->mr);
-		rdata->mr = NULL;
-	}
-#endif
-	if (rdata->result && rdata->result != -ENODATA) {
-		cifs_stats_fail_inc(tcon, SMB2_READ_HE);
-		trace_smb3_read_err(0 /* xid */,
+	अगर (rdata->mr) अणु
+		smbd_deरेजिस्टर_mr(rdata->mr);
+		rdata->mr = शून्य;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (rdata->result && rdata->result != -ENODATA) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_READ_HE);
+		trace_smb3_पढ़ो_err(0 /* xid */,
 				    rdata->cfile->fid.persistent_fid,
 				    tcon->tid, tcon->ses->Suid, rdata->offset,
 				    rdata->bytes, rdata->result);
-	} else
-		trace_smb3_read_done(0 /* xid */,
+	पूर्ण अन्यथा
+		trace_smb3_पढ़ो_करोne(0 /* xid */,
 				     rdata->cfile->fid.persistent_fid,
 				     tcon->tid, tcon->ses->Suid,
 				     rdata->offset, rdata->got_bytes);
 
-	queue_work(cifsiod_wq, &rdata->work);
+	queue_work(cअगरsiod_wq, &rdata->work);
 	DeleteMidQEntry(mid);
 	add_credits(server, &credits, 0);
-}
+पूर्ण
 
-/* smb2_async_readv - send an async read, and set up mid to handle result */
-int
-smb2_async_readv(struct cifs_readdata *rdata)
-{
-	int rc, flags = 0;
-	char *buf;
-	struct smb2_sync_hdr *shdr;
-	struct cifs_io_parms io_parms;
-	struct smb_rqst rqst = { .rq_iov = rdata->iov,
-				 .rq_nvec = 1 };
-	struct TCP_Server_Info *server;
-	struct cifs_tcon *tcon = tlink_tcon(rdata->cfile->tlink);
-	unsigned int total_len;
+/* smb2_async_पढ़ोv - send an async पढ़ो, and set up mid to handle result */
+पूर्णांक
+smb2_async_पढ़ोv(काष्ठा cअगरs_पढ़ोdata *rdata)
+अणु
+	पूर्णांक rc, flags = 0;
+	अक्षर *buf;
+	काष्ठा smb2_sync_hdr *shdr;
+	काष्ठा cअगरs_io_parms io_parms;
+	काष्ठा smb_rqst rqst = अणु .rq_iov = rdata->iov,
+				 .rq_nvec = 1 पूर्ण;
+	काष्ठा TCP_Server_Info *server;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(rdata->cfile->tlink);
+	अचिन्हित पूर्णांक total_len;
 
-	cifs_dbg(FYI, "%s: offset=%llu bytes=%u\n",
+	cअगरs_dbg(FYI, "%s: offset=%llu bytes=%u\n",
 		 __func__, rdata->offset, rdata->bytes);
 
-	if (!rdata->server)
-		rdata->server = cifs_pick_channel(tcon->ses);
+	अगर (!rdata->server)
+		rdata->server = cअगरs_pick_channel(tcon->ses);
 
 	io_parms.tcon = tlink_tcon(rdata->cfile->tlink);
 	io_parms.server = server = rdata->server;
 	io_parms.offset = rdata->offset;
 	io_parms.length = rdata->bytes;
 	io_parms.persistent_fid = rdata->cfile->fid.persistent_fid;
-	io_parms.volatile_fid = rdata->cfile->fid.volatile_fid;
+	io_parms.अस्थिर_fid = rdata->cfile->fid.अस्थिर_fid;
 	io_parms.pid = rdata->pid;
 
-	rc = smb2_new_read_req(
-		(void **) &buf, &total_len, &io_parms, rdata, 0, 0);
-	if (rc)
-		return rc;
+	rc = smb2_new_पढ़ो_req(
+		(व्योम **) &buf, &total_len, &io_parms, rdata, 0, 0);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(io_parms.tcon))
+	अगर (smb3_encryption_required(io_parms.tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	rdata->iov[0].iov_base = buf;
 	rdata->iov[0].iov_len = total_len;
 
-	shdr = (struct smb2_sync_hdr *)buf;
+	shdr = (काष्ठा smb2_sync_hdr *)buf;
 
-	if (rdata->credits.value > 0) {
+	अगर (rdata->credits.value > 0) अणु
 		shdr->CreditCharge = cpu_to_le16(DIV_ROUND_UP(rdata->bytes,
 						SMB2_MAX_BUFFER_SIZE));
 		shdr->CreditRequest = cpu_to_le16(le16_to_cpu(shdr->CreditCharge) + 8);
 
 		rc = adjust_credits(server, &rdata->credits, rdata->bytes);
-		if (rc)
-			goto async_readv_out;
+		अगर (rc)
+			जाओ async_पढ़ोv_out;
 
 		flags |= CIFS_HAS_CREDITS;
-	}
+	पूर्ण
 
 	kref_get(&rdata->refcount);
-	rc = cifs_call_async(server, &rqst,
-			     cifs_readv_receive, smb2_readv_callback,
-			     smb3_handle_read_data, rdata, flags,
+	rc = cअगरs_call_async(server, &rqst,
+			     cअगरs_पढ़ोv_receive, smb2_पढ़ोv_callback,
+			     smb3_handle_पढ़ो_data, rdata, flags,
 			     &rdata->credits);
-	if (rc) {
-		kref_put(&rdata->refcount, cifs_readdata_release);
-		cifs_stats_fail_inc(io_parms.tcon, SMB2_READ_HE);
-		trace_smb3_read_err(0 /* xid */, io_parms.persistent_fid,
+	अगर (rc) अणु
+		kref_put(&rdata->refcount, cअगरs_पढ़ोdata_release);
+		cअगरs_stats_fail_inc(io_parms.tcon, SMB2_READ_HE);
+		trace_smb3_पढ़ो_err(0 /* xid */, io_parms.persistent_fid,
 				    io_parms.tcon->tid,
 				    io_parms.tcon->ses->Suid,
 				    io_parms.offset, io_parms.length, rc);
-	}
+	पूर्ण
 
-async_readv_out:
-	cifs_small_buf_release(buf);
-	return rc;
-}
+async_पढ़ोv_out:
+	cअगरs_small_buf_release(buf);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_read(const unsigned int xid, struct cifs_io_parms *io_parms,
-	  unsigned int *nbytes, char **buf, int *buf_type)
-{
-	struct smb_rqst rqst;
-	int resp_buftype, rc;
-	struct smb2_read_plain_req *req = NULL;
-	struct smb2_read_rsp *rsp = NULL;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	unsigned int total_len;
-	int flags = CIFS_LOG_ERROR;
-	struct cifs_ses *ses = io_parms->tcon->ses;
+पूर्णांक
+SMB2_पढ़ो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_io_parms *io_parms,
+	  अचिन्हित पूर्णांक *nbytes, अक्षर **buf, पूर्णांक *buf_type)
+अणु
+	काष्ठा smb_rqst rqst;
+	पूर्णांक resp_buftype, rc;
+	काष्ठा smb2_पढ़ो_plain_req *req = शून्य;
+	काष्ठा smb2_पढ़ो_rsp *rsp = शून्य;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	अचिन्हित पूर्णांक total_len;
+	पूर्णांक flags = CIFS_LOG_ERROR;
+	काष्ठा cअगरs_ses *ses = io_parms->tcon->ses;
 
-	if (!io_parms->server)
-		io_parms->server = cifs_pick_channel(io_parms->tcon->ses);
+	अगर (!io_parms->server)
+		io_parms->server = cअगरs_pick_channel(io_parms->tcon->ses);
 
 	*nbytes = 0;
-	rc = smb2_new_read_req((void **)&req, &total_len, io_parms, NULL, 0, 0);
-	if (rc)
-		return rc;
+	rc = smb2_new_पढ़ो_req((व्योम **)&req, &total_len, io_parms, शून्य, 0, 0);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(io_parms->tcon))
+	अगर (smb3_encryption_required(io_parms->tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, io_parms->server,
+	rc = cअगरs_send_recv(xid, ses, io_parms->server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	rsp = (struct smb2_read_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_पढ़ो_rsp *)rsp_iov.iov_base;
 
-	if (rc) {
-		if (rc != -ENODATA) {
-			cifs_stats_fail_inc(io_parms->tcon, SMB2_READ_HE);
-			cifs_dbg(VFS, "Send error in read = %d\n", rc);
-			trace_smb3_read_err(xid, req->PersistentFileId,
+	अगर (rc) अणु
+		अगर (rc != -ENODATA) अणु
+			cअगरs_stats_fail_inc(io_parms->tcon, SMB2_READ_HE);
+			cअगरs_dbg(VFS, "Send error in read = %d\n", rc);
+			trace_smb3_पढ़ो_err(xid, req->PersistentFileId,
 					    io_parms->tcon->tid, ses->Suid,
 					    io_parms->offset, io_parms->length,
 					    rc);
-		} else
-			trace_smb3_read_done(xid, req->PersistentFileId,
+		पूर्ण अन्यथा
+			trace_smb3_पढ़ो_करोne(xid, req->PersistentFileId,
 				    io_parms->tcon->tid, ses->Suid,
 				    io_parms->offset, 0);
-		free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-		cifs_small_buf_release(req);
-		return rc == -ENODATA ? 0 : rc;
-	} else
-		trace_smb3_read_done(xid, req->PersistentFileId,
+		मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+		cअगरs_small_buf_release(req);
+		वापस rc == -ENODATA ? 0 : rc;
+	पूर्ण अन्यथा
+		trace_smb3_पढ़ो_करोne(xid, req->PersistentFileId,
 				    io_parms->tcon->tid, ses->Suid,
 				    io_parms->offset, io_parms->length);
 
-	cifs_small_buf_release(req);
+	cअगरs_small_buf_release(req);
 
 	*nbytes = le32_to_cpu(rsp->DataLength);
-	if ((*nbytes > CIFS_MAX_MSGSIZE) ||
-	    (*nbytes > io_parms->length)) {
-		cifs_dbg(FYI, "bad length %d for count %d\n",
+	अगर ((*nbytes > CIFS_MAX_MSGSIZE) ||
+	    (*nbytes > io_parms->length)) अणु
+		cअगरs_dbg(FYI, "bad length %d for count %d\n",
 			 *nbytes, io_parms->length);
 		rc = -EIO;
 		*nbytes = 0;
-	}
+	पूर्ण
 
-	if (*buf) {
-		memcpy(*buf, (char *)rsp + rsp->DataOffset, *nbytes);
-		free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	} else if (resp_buftype != CIFS_NO_BUFFER) {
+	अगर (*buf) अणु
+		स_नकल(*buf, (अक्षर *)rsp + rsp->DataOffset, *nbytes);
+		मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	पूर्ण अन्यथा अगर (resp_buftype != CIFS_NO_BUFFER) अणु
 		*buf = rsp_iov.iov_base;
-		if (resp_buftype == CIFS_SMALL_BUFFER)
+		अगर (resp_buftype == CIFS_SMALL_BUFFER)
 			*buf_type = CIFS_SMALL_BUFFER;
-		else if (resp_buftype == CIFS_LARGE_BUFFER)
+		अन्यथा अगर (resp_buftype == CIFS_LARGE_BUFFER)
 			*buf_type = CIFS_LARGE_BUFFER;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /*
- * Check the mid_state and signature on received buffer (if any), and queue the
+ * Check the mid_state and signature on received buffer (अगर any), and queue the
  * workqueue completion task.
  */
-static void
-smb2_writev_callback(struct mid_q_entry *mid)
-{
-	struct cifs_writedata *wdata = mid->callback_data;
-	struct cifs_tcon *tcon = tlink_tcon(wdata->cfile->tlink);
-	struct TCP_Server_Info *server = wdata->server;
-	unsigned int written;
-	struct smb2_write_rsp *rsp = (struct smb2_write_rsp *)mid->resp_buf;
-	struct cifs_credits credits = { .value = 0, .instance = 0 };
+अटल व्योम
+smb2_ग_लिखोv_callback(काष्ठा mid_q_entry *mid)
+अणु
+	काष्ठा cअगरs_ग_लिखोdata *wdata = mid->callback_data;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(wdata->cfile->tlink);
+	काष्ठा TCP_Server_Info *server = wdata->server;
+	अचिन्हित पूर्णांक written;
+	काष्ठा smb2_ग_लिखो_rsp *rsp = (काष्ठा smb2_ग_लिखो_rsp *)mid->resp_buf;
+	काष्ठा cअगरs_credits credits = अणु .value = 0, .instance = 0 पूर्ण;
 
 	WARN_ONCE(wdata->server != mid->server,
 		  "wdata server %p != mid server %p",
 		  wdata->server, mid->server);
 
-	switch (mid->mid_state) {
-	case MID_RESPONSE_RECEIVED:
+	चयन (mid->mid_state) अणु
+	हाल MID_RESPONSE_RECEIVED:
 		credits.value = le16_to_cpu(rsp->sync_hdr.CreditRequest);
 		credits.instance = server->reconnect_instance;
 		wdata->result = smb2_check_receive(mid, server, 0);
-		if (wdata->result != 0)
-			break;
+		अगर (wdata->result != 0)
+			अवरोध;
 
 		written = le32_to_cpu(rsp->DataLength);
 		/*
-		 * Mask off high 16 bits when bytes written as returned
+		 * Mask off high 16 bits when bytes written as वापसed
 		 * by the server is greater than bytes requested by the
 		 * client. OS/2 servers are known to set incorrect
 		 * CountHigh values.
 		 */
-		if (written > wdata->bytes)
+		अगर (written > wdata->bytes)
 			written &= 0xFFFF;
 
-		if (written < wdata->bytes)
+		अगर (written < wdata->bytes)
 			wdata->result = -ENOSPC;
-		else
+		अन्यथा
 			wdata->bytes = written;
-		break;
-	case MID_REQUEST_SUBMITTED:
-	case MID_RETRY_NEEDED:
+		अवरोध;
+	हाल MID_REQUEST_SUBMITTED:
+	हाल MID_RETRY_NEEDED:
 		wdata->result = -EAGAIN;
-		break;
-	case MID_RESPONSE_MALFORMED:
+		अवरोध;
+	हाल MID_RESPONSE_MALFORMED:
 		credits.value = le16_to_cpu(rsp->sync_hdr.CreditRequest);
 		credits.instance = server->reconnect_instance;
 		fallthrough;
-	default:
+	शेष:
 		wdata->result = -EIO;
-		break;
-	}
-#ifdef CONFIG_CIFS_SMB_DIRECT
+		अवरोध;
+	पूर्ण
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
 	/*
-	 * If this wdata has a memory registered, the MR can be freed
+	 * If this wdata has a memory रेजिस्टरed, the MR can be मुक्तd
 	 * The number of MRs available is limited, it's important to recover
-	 * used MR as soon as I/O is finished. Hold MR longer in the later
+	 * used MR as soon as I/O is finished. Hold MR दीर्घer in the later
 	 * I/O process can possibly result in I/O deadlock due to lack of MR
 	 * to send request on I/O retry
 	 */
-	if (wdata->mr) {
-		smbd_deregister_mr(wdata->mr);
-		wdata->mr = NULL;
-	}
-#endif
-	if (wdata->result) {
-		cifs_stats_fail_inc(tcon, SMB2_WRITE_HE);
-		trace_smb3_write_err(0 /* no xid */,
+	अगर (wdata->mr) अणु
+		smbd_deरेजिस्टर_mr(wdata->mr);
+		wdata->mr = शून्य;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (wdata->result) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_WRITE_HE);
+		trace_smb3_ग_लिखो_err(0 /* no xid */,
 				     wdata->cfile->fid.persistent_fid,
 				     tcon->tid, tcon->ses->Suid, wdata->offset,
 				     wdata->bytes, wdata->result);
-		if (wdata->result == -ENOSPC)
+		अगर (wdata->result == -ENOSPC)
 			pr_warn_once("Out of space writing to %s\n",
 				     tcon->treeName);
-	} else
-		trace_smb3_write_done(0 /* no xid */,
+	पूर्ण अन्यथा
+		trace_smb3_ग_लिखो_करोne(0 /* no xid */,
 				      wdata->cfile->fid.persistent_fid,
 				      tcon->tid, tcon->ses->Suid,
 				      wdata->offset, wdata->bytes);
 
-	queue_work(cifsiod_wq, &wdata->work);
+	queue_work(cअगरsiod_wq, &wdata->work);
 	DeleteMidQEntry(mid);
 	add_credits(server, &credits, 0);
-}
+पूर्ण
 
-/* smb2_async_writev - send an async write, and set up mid to handle result */
-int
-smb2_async_writev(struct cifs_writedata *wdata,
-		  void (*release)(struct kref *kref))
-{
-	int rc = -EACCES, flags = 0;
-	struct smb2_write_req *req = NULL;
-	struct smb2_sync_hdr *shdr;
-	struct cifs_tcon *tcon = tlink_tcon(wdata->cfile->tlink);
-	struct TCP_Server_Info *server = wdata->server;
-	struct kvec iov[1];
-	struct smb_rqst rqst = { };
-	unsigned int total_len;
+/* smb2_async_ग_लिखोv - send an async ग_लिखो, and set up mid to handle result */
+पूर्णांक
+smb2_async_ग_लिखोv(काष्ठा cअगरs_ग_लिखोdata *wdata,
+		  व्योम (*release)(काष्ठा kref *kref))
+अणु
+	पूर्णांक rc = -EACCES, flags = 0;
+	काष्ठा smb2_ग_लिखो_req *req = शून्य;
+	काष्ठा smb2_sync_hdr *shdr;
+	काष्ठा cअगरs_tcon *tcon = tlink_tcon(wdata->cfile->tlink);
+	काष्ठा TCP_Server_Info *server = wdata->server;
+	काष्ठा kvec iov[1];
+	काष्ठा smb_rqst rqst = अणु पूर्ण;
+	अचिन्हित पूर्णांक total_len;
 
-	if (!wdata->server)
-		server = wdata->server = cifs_pick_channel(tcon->ses);
+	अगर (!wdata->server)
+		server = wdata->server = cअगरs_pick_channel(tcon->ses);
 
 	rc = smb2_plain_req_init(SMB2_WRITE, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	shdr = (struct smb2_sync_hdr *)req;
+	shdr = (काष्ठा smb2_sync_hdr *)req;
 	shdr->ProcessId = cpu_to_le32(wdata->cfile->pid);
 
 	req->PersistentFileId = wdata->cfile->fid.persistent_fid;
-	req->VolatileFileId = wdata->cfile->fid.volatile_fid;
+	req->VolatileFileId = wdata->cfile->fid.अस्थिर_fid;
 	req->WriteChannelInfoOffset = 0;
 	req->WriteChannelInfoLength = 0;
 	req->Channel = 0;
 	req->Offset = cpu_to_le64(wdata->offset);
 	req->DataOffset = cpu_to_le16(
-				offsetof(struct smb2_write_req, Buffer));
-	req->RemainingBytes = 0;
+				दुरत्व(काष्ठा smb2_ग_लिखो_req, Buffer));
+	req->Reमुख्यingBytes = 0;
 
-	trace_smb3_write_enter(0 /* xid */, wdata->cfile->fid.persistent_fid,
+	trace_smb3_ग_लिखो_enter(0 /* xid */, wdata->cfile->fid.persistent_fid,
 		tcon->tid, tcon->ses->Suid, wdata->offset, wdata->bytes);
-#ifdef CONFIG_CIFS_SMB_DIRECT
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
 	/*
-	 * If we want to do a server RDMA read, fill in and append
-	 * smbd_buffer_descriptor_v1 to the end of write request
+	 * If we want to करो a server RDMA पढ़ो, fill in and append
+	 * smbd_buffer_descriptor_v1 to the end of ग_लिखो request
 	 */
-	if (server->rdma && !server->sign && wdata->bytes >=
-		server->smbd_conn->rdma_readwrite_threshold) {
+	अगर (server->rdma && !server->sign && wdata->bytes >=
+		server->smbd_conn->rdma_पढ़ोग_लिखो_threshold) अणु
 
-		struct smbd_buffer_descriptor_v1 *v1;
+		काष्ठा smbd_buffer_descriptor_v1 *v1;
 		bool need_invalidate = server->dialect == SMB30_PROT_ID;
 
-		wdata->mr = smbd_register_mr(
+		wdata->mr = smbd_रेजिस्टर_mr(
 				server->smbd_conn, wdata->pages,
 				wdata->nr_pages, wdata->page_offset,
 				wdata->tailsz, false, need_invalidate);
-		if (!wdata->mr) {
+		अगर (!wdata->mr) अणु
 			rc = -EAGAIN;
-			goto async_writev_out;
-		}
+			जाओ async_ग_लिखोv_out;
+		पूर्ण
 		req->Length = 0;
 		req->DataOffset = 0;
-		if (wdata->nr_pages > 1)
-			req->RemainingBytes =
+		अगर (wdata->nr_pages > 1)
+			req->Reमुख्यingBytes =
 				cpu_to_le32(
 					(wdata->nr_pages - 1) * wdata->pagesz -
 					wdata->page_offset + wdata->tailsz
 				);
-		else
-			req->RemainingBytes = cpu_to_le32(wdata->tailsz);
+		अन्यथा
+			req->Reमुख्यingBytes = cpu_to_le32(wdata->tailsz);
 		req->Channel = SMB2_CHANNEL_RDMA_V1_INVALIDATE;
-		if (need_invalidate)
+		अगर (need_invalidate)
 			req->Channel = SMB2_CHANNEL_RDMA_V1;
 		req->WriteChannelInfoOffset =
-			cpu_to_le16(offsetof(struct smb2_write_req, Buffer));
+			cpu_to_le16(दुरत्व(काष्ठा smb2_ग_लिखो_req, Buffer));
 		req->WriteChannelInfoLength =
-			cpu_to_le16(sizeof(struct smbd_buffer_descriptor_v1));
-		v1 = (struct smbd_buffer_descriptor_v1 *) &req->Buffer[0];
+			cpu_to_le16(माप(काष्ठा smbd_buffer_descriptor_v1));
+		v1 = (काष्ठा smbd_buffer_descriptor_v1 *) &req->Buffer[0];
 		v1->offset = cpu_to_le64(wdata->mr->mr->iova);
 		v1->token = cpu_to_le32(wdata->mr->mr->rkey);
 		v1->length = cpu_to_le32(wdata->mr->mr->length);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	iov[0].iov_len = total_len - 1;
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
@@ -4339,417 +4340,417 @@ smb2_async_writev(struct cifs_writedata *wdata,
 	rqst.rq_npages = wdata->nr_pages;
 	rqst.rq_pagesz = wdata->pagesz;
 	rqst.rq_tailsz = wdata->tailsz;
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	if (wdata->mr) {
-		iov[0].iov_len += sizeof(struct smbd_buffer_descriptor_v1);
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
+	अगर (wdata->mr) अणु
+		iov[0].iov_len += माप(काष्ठा smbd_buffer_descriptor_v1);
 		rqst.rq_npages = 0;
-	}
-#endif
-	cifs_dbg(FYI, "async write at %llu %u bytes\n",
+	पूर्ण
+#पूर्ण_अगर
+	cअगरs_dbg(FYI, "async write at %llu %u bytes\n",
 		 wdata->offset, wdata->bytes);
 
-#ifdef CONFIG_CIFS_SMB_DIRECT
-	/* For RDMA read, I/O size is in RemainingBytes not in Length */
-	if (!wdata->mr)
+#अगर_घोषित CONFIG_CIFS_SMB_सूचीECT
+	/* For RDMA पढ़ो, I/O size is in Reमुख्यingBytes not in Length */
+	अगर (!wdata->mr)
 		req->Length = cpu_to_le32(wdata->bytes);
-#else
+#अन्यथा
 	req->Length = cpu_to_le32(wdata->bytes);
-#endif
+#पूर्ण_अगर
 
-	if (wdata->credits.value > 0) {
+	अगर (wdata->credits.value > 0) अणु
 		shdr->CreditCharge = cpu_to_le16(DIV_ROUND_UP(wdata->bytes,
 						    SMB2_MAX_BUFFER_SIZE));
 		shdr->CreditRequest = cpu_to_le16(le16_to_cpu(shdr->CreditCharge) + 8);
 
 		rc = adjust_credits(server, &wdata->credits, wdata->bytes);
-		if (rc)
-			goto async_writev_out;
+		अगर (rc)
+			जाओ async_ग_लिखोv_out;
 
 		flags |= CIFS_HAS_CREDITS;
-	}
+	पूर्ण
 
 	kref_get(&wdata->refcount);
-	rc = cifs_call_async(server, &rqst, NULL, smb2_writev_callback, NULL,
+	rc = cअगरs_call_async(server, &rqst, शून्य, smb2_ग_लिखोv_callback, शून्य,
 			     wdata, flags, &wdata->credits);
 
-	if (rc) {
-		trace_smb3_write_err(0 /* no xid */, req->PersistentFileId,
+	अगर (rc) अणु
+		trace_smb3_ग_लिखो_err(0 /* no xid */, req->PersistentFileId,
 				     tcon->tid, tcon->ses->Suid, wdata->offset,
 				     wdata->bytes, rc);
 		kref_put(&wdata->refcount, release);
-		cifs_stats_fail_inc(tcon, SMB2_WRITE_HE);
-	}
+		cअगरs_stats_fail_inc(tcon, SMB2_WRITE_HE);
+	पूर्ण
 
-async_writev_out:
-	cifs_small_buf_release(req);
-	return rc;
-}
+async_ग_लिखोv_out:
+	cअगरs_small_buf_release(req);
+	वापस rc;
+पूर्ण
 
 /*
- * SMB2_write function gets iov pointer to kvec array with n_vec as a length.
+ * SMB2_ग_लिखो function माला_लो iov poपूर्णांकer to kvec array with n_vec as a length.
  * The length field from io_parms must be at least 1 and indicates a number of
- * elements with data to write that begins with position 1 in iov array. All
- * data length is specified by count.
+ * elements with data to ग_लिखो that begins with position 1 in iov array. All
+ * data length is specअगरied by count.
  */
-int
-SMB2_write(const unsigned int xid, struct cifs_io_parms *io_parms,
-	   unsigned int *nbytes, struct kvec *iov, int n_vec)
-{
-	struct smb_rqst rqst;
-	int rc = 0;
-	struct smb2_write_req *req = NULL;
-	struct smb2_write_rsp *rsp = NULL;
-	int resp_buftype;
-	struct kvec rsp_iov;
-	int flags = 0;
-	unsigned int total_len;
-	struct TCP_Server_Info *server;
+पूर्णांक
+SMB2_ग_लिखो(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_io_parms *io_parms,
+	   अचिन्हित पूर्णांक *nbytes, काष्ठा kvec *iov, पूर्णांक n_vec)
+अणु
+	काष्ठा smb_rqst rqst;
+	पूर्णांक rc = 0;
+	काष्ठा smb2_ग_लिखो_req *req = शून्य;
+	काष्ठा smb2_ग_लिखो_rsp *rsp = शून्य;
+	पूर्णांक resp_buftype;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक flags = 0;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा TCP_Server_Info *server;
 
 	*nbytes = 0;
 
-	if (n_vec < 1)
-		return rc;
+	अगर (n_vec < 1)
+		वापस rc;
 
-	if (!io_parms->server)
-		io_parms->server = cifs_pick_channel(io_parms->tcon->ses);
+	अगर (!io_parms->server)
+		io_parms->server = cअगरs_pick_channel(io_parms->tcon->ses);
 	server = io_parms->server;
-	if (server == NULL)
-		return -ECONNABORTED;
+	अगर (server == शून्य)
+		वापस -ECONNABORTED;
 
 	rc = smb2_plain_req_init(SMB2_WRITE, io_parms->tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(io_parms->tcon))
+	अगर (smb3_encryption_required(io_parms->tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	req->sync_hdr.ProcessId = cpu_to_le32(io_parms->pid);
 
 	req->PersistentFileId = io_parms->persistent_fid;
-	req->VolatileFileId = io_parms->volatile_fid;
+	req->VolatileFileId = io_parms->अस्थिर_fid;
 	req->WriteChannelInfoOffset = 0;
 	req->WriteChannelInfoLength = 0;
 	req->Channel = 0;
 	req->Length = cpu_to_le32(io_parms->length);
 	req->Offset = cpu_to_le64(io_parms->offset);
 	req->DataOffset = cpu_to_le16(
-				offsetof(struct smb2_write_req, Buffer));
-	req->RemainingBytes = 0;
+				दुरत्व(काष्ठा smb2_ग_लिखो_req, Buffer));
+	req->Reमुख्यingBytes = 0;
 
-	trace_smb3_write_enter(xid, io_parms->persistent_fid,
+	trace_smb3_ग_लिखो_enter(xid, io_parms->persistent_fid,
 		io_parms->tcon->tid, io_parms->tcon->ses->Suid,
 		io_parms->offset, io_parms->length);
 
-	iov[0].iov_base = (char *)req;
-	/* 1 for Buffer */
+	iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम Buffer */
 	iov[0].iov_len = total_len - 1;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = n_vec + 1;
 
-	rc = cifs_send_recv(xid, io_parms->tcon->ses, server,
+	rc = cअगरs_send_recv(xid, io_parms->tcon->ses, server,
 			    &rqst,
 			    &resp_buftype, flags, &rsp_iov);
-	rsp = (struct smb2_write_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_ग_लिखो_rsp *)rsp_iov.iov_base;
 
-	if (rc) {
-		trace_smb3_write_err(xid, req->PersistentFileId,
+	अगर (rc) अणु
+		trace_smb3_ग_लिखो_err(xid, req->PersistentFileId,
 				     io_parms->tcon->tid,
 				     io_parms->tcon->ses->Suid,
 				     io_parms->offset, io_parms->length, rc);
-		cifs_stats_fail_inc(io_parms->tcon, SMB2_WRITE_HE);
-		cifs_dbg(VFS, "Send error in write = %d\n", rc);
-	} else {
+		cअगरs_stats_fail_inc(io_parms->tcon, SMB2_WRITE_HE);
+		cअगरs_dbg(VFS, "Send error in write = %d\n", rc);
+	पूर्ण अन्यथा अणु
 		*nbytes = le32_to_cpu(rsp->DataLength);
-		trace_smb3_write_done(xid, req->PersistentFileId,
+		trace_smb3_ग_लिखो_करोne(xid, req->PersistentFileId,
 				     io_parms->tcon->tid,
 				     io_parms->tcon->ses->Suid,
 				     io_parms->offset, *nbytes);
-	}
+	पूर्ण
 
-	cifs_small_buf_release(req);
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+	cअगरs_small_buf_release(req);
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
-int posix_info_sid_size(const void *beg, const void *end)
-{
-	size_t subauth;
-	int total;
+पूर्णांक posix_info_sid_size(स्थिर व्योम *beg, स्थिर व्योम *end)
+अणु
+	माप_प्रकार subauth;
+	पूर्णांक total;
 
-	if (beg + 1 > end)
-		return -1;
+	अगर (beg + 1 > end)
+		वापस -1;
 
 	subauth = *(u8 *)(beg+1);
-	if (subauth < 1 || subauth > 15)
-		return -1;
+	अगर (subauth < 1 || subauth > 15)
+		वापस -1;
 
 	total = 1 + 1 + 6 + 4*subauth;
-	if (beg + total > end)
-		return -1;
+	अगर (beg + total > end)
+		वापस -1;
 
-	return total;
-}
+	वापस total;
+पूर्ण
 
-int posix_info_parse(const void *beg, const void *end,
-		     struct smb2_posix_info_parsed *out)
+पूर्णांक posix_info_parse(स्थिर व्योम *beg, स्थिर व्योम *end,
+		     काष्ठा smb2_posix_info_parsed *out)
 
-{
-	int total_len = 0;
-	int sid_len;
-	int name_len;
-	const void *owner_sid;
-	const void *group_sid;
-	const void *name;
+अणु
+	पूर्णांक total_len = 0;
+	पूर्णांक sid_len;
+	पूर्णांक name_len;
+	स्थिर व्योम *owner_sid;
+	स्थिर व्योम *group_sid;
+	स्थिर व्योम *name;
 
-	/* if no end bound given, assume payload to be correct */
-	if (!end) {
-		const struct smb2_posix_info *p = beg;
+	/* अगर no end bound given, assume payload to be correct */
+	अगर (!end) अणु
+		स्थिर काष्ठा smb2_posix_info *p = beg;
 
 		end = beg + le32_to_cpu(p->NextEntryOffset);
 		/* last element will have a 0 offset, pick a sensible bound */
-		if (end == beg)
+		अगर (end == beg)
 			end += 0xFFFF;
-	}
+	पूर्ण
 
 	/* check base buf */
-	if (beg + sizeof(struct smb2_posix_info) > end)
-		return -1;
-	total_len = sizeof(struct smb2_posix_info);
+	अगर (beg + माप(काष्ठा smb2_posix_info) > end)
+		वापस -1;
+	total_len = माप(काष्ठा smb2_posix_info);
 
 	/* check owner sid */
 	owner_sid = beg + total_len;
 	sid_len = posix_info_sid_size(owner_sid, end);
-	if (sid_len < 0)
-		return -1;
+	अगर (sid_len < 0)
+		वापस -1;
 	total_len += sid_len;
 
 	/* check group sid */
 	group_sid = beg + total_len;
 	sid_len = posix_info_sid_size(group_sid, end);
-	if (sid_len < 0)
-		return -1;
+	अगर (sid_len < 0)
+		वापस -1;
 	total_len += sid_len;
 
 	/* check name len */
-	if (beg + total_len + 4 > end)
-		return -1;
+	अगर (beg + total_len + 4 > end)
+		वापस -1;
 	name_len = le32_to_cpu(*(__le32 *)(beg + total_len));
-	if (name_len < 1 || name_len > 0xFFFF)
-		return -1;
+	अगर (name_len < 1 || name_len > 0xFFFF)
+		वापस -1;
 	total_len += 4;
 
 	/* check name */
 	name = beg + total_len;
-	if (name + name_len > end)
-		return -1;
+	अगर (name + name_len > end)
+		वापस -1;
 	total_len += name_len;
 
-	if (out) {
+	अगर (out) अणु
 		out->base = beg;
 		out->size = total_len;
 		out->name_len = name_len;
 		out->name = name;
-		memcpy(&out->owner, owner_sid,
+		स_नकल(&out->owner, owner_sid,
 		       posix_info_sid_size(owner_sid, end));
-		memcpy(&out->group, group_sid,
+		स_नकल(&out->group, group_sid,
 		       posix_info_sid_size(group_sid, end));
-	}
-	return total_len;
-}
+	पूर्ण
+	वापस total_len;
+पूर्ण
 
-static int posix_info_extra_size(const void *beg, const void *end)
-{
-	int len = posix_info_parse(beg, end, NULL);
+अटल पूर्णांक posix_info_extra_size(स्थिर व्योम *beg, स्थिर व्योम *end)
+अणु
+	पूर्णांक len = posix_info_parse(beg, end, शून्य);
 
-	if (len < 0)
-		return -1;
-	return len - sizeof(struct smb2_posix_info);
-}
+	अगर (len < 0)
+		वापस -1;
+	वापस len - माप(काष्ठा smb2_posix_info);
+पूर्ण
 
-static unsigned int
-num_entries(int infotype, char *bufstart, char *end_of_buf, char **lastentry,
-	    size_t size)
-{
-	int len;
-	unsigned int entrycount = 0;
-	unsigned int next_offset = 0;
-	char *entryptr;
-	FILE_DIRECTORY_INFO *dir_info;
+अटल अचिन्हित पूर्णांक
+num_entries(पूर्णांक infotype, अक्षर *bufstart, अक्षर *end_of_buf, अक्षर **lastentry,
+	    माप_प्रकार size)
+अणु
+	पूर्णांक len;
+	अचिन्हित पूर्णांक entrycount = 0;
+	अचिन्हित पूर्णांक next_offset = 0;
+	अक्षर *entryptr;
+	खाता_सूचीECTORY_INFO *dir_info;
 
-	if (bufstart == NULL)
-		return 0;
+	अगर (bufstart == शून्य)
+		वापस 0;
 
 	entryptr = bufstart;
 
-	while (1) {
-		if (entryptr + next_offset < entryptr ||
+	जबतक (1) अणु
+		अगर (entryptr + next_offset < entryptr ||
 		    entryptr + next_offset > end_of_buf ||
-		    entryptr + next_offset + size > end_of_buf) {
-			cifs_dbg(VFS, "malformed search entry would overflow\n");
-			break;
-		}
+		    entryptr + next_offset + size > end_of_buf) अणु
+			cअगरs_dbg(VFS, "malformed search entry would overflow\n");
+			अवरोध;
+		पूर्ण
 
 		entryptr = entryptr + next_offset;
-		dir_info = (FILE_DIRECTORY_INFO *)entryptr;
+		dir_info = (खाता_सूचीECTORY_INFO *)entryptr;
 
-		if (infotype == SMB_FIND_FILE_POSIX_INFO)
+		अगर (infotype == SMB_FIND_खाता_POSIX_INFO)
 			len = posix_info_extra_size(entryptr, end_of_buf);
-		else
+		अन्यथा
 			len = le32_to_cpu(dir_info->FileNameLength);
 
-		if (len < 0 ||
+		अगर (len < 0 ||
 		    entryptr + len < entryptr ||
 		    entryptr + len > end_of_buf ||
-		    entryptr + len + size > end_of_buf) {
-			cifs_dbg(VFS, "directory entry name would overflow frame end of buf %p\n",
+		    entryptr + len + size > end_of_buf) अणु
+			cअगरs_dbg(VFS, "directory entry name would overflow frame end of buf %p\n",
 				 end_of_buf);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*lastentry = entryptr;
 		entrycount++;
 
 		next_offset = le32_to_cpu(dir_info->NextEntryOffset);
-		if (!next_offset)
-			break;
-	}
+		अगर (!next_offset)
+			अवरोध;
+	पूर्ण
 
-	return entrycount;
-}
+	वापस entrycount;
+पूर्ण
 
 /*
  * Readdir/FindFirst
  */
-int SMB2_query_directory_init(const unsigned int xid,
-			      struct cifs_tcon *tcon,
-			      struct TCP_Server_Info *server,
-			      struct smb_rqst *rqst,
-			      u64 persistent_fid, u64 volatile_fid,
-			      int index, int info_level)
-{
-	struct smb2_query_directory_req *req;
-	unsigned char *bufptr;
+पूर्णांक SMB2_query_directory_init(स्थिर अचिन्हित पूर्णांक xid,
+			      काष्ठा cअगरs_tcon *tcon,
+			      काष्ठा TCP_Server_Info *server,
+			      काष्ठा smb_rqst *rqst,
+			      u64 persistent_fid, u64 अस्थिर_fid,
+			      पूर्णांक index, पूर्णांक info_level)
+अणु
+	काष्ठा smb2_query_directory_req *req;
+	अचिन्हित अक्षर *bufptr;
 	__le16 asteriks = cpu_to_le16('*');
-	unsigned int output_size = CIFSMaxBufSize -
+	अचिन्हित पूर्णांक output_size = CIFSMaxBufSize -
 		MAX_SMB2_CREATE_RESPONSE_SIZE -
 		MAX_SMB2_CLOSE_RESPONSE_SIZE;
-	unsigned int total_len;
-	struct kvec *iov = rqst->rq_iov;
-	int len, rc;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	पूर्णांक len, rc;
 
-	rc = smb2_plain_req_init(SMB2_QUERY_DIRECTORY, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+	rc = smb2_plain_req_init(SMB2_QUERY_सूचीECTORY, tcon, server,
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	switch (info_level) {
-	case SMB_FIND_FILE_DIRECTORY_INFO:
-		req->FileInformationClass = FILE_DIRECTORY_INFORMATION;
-		break;
-	case SMB_FIND_FILE_ID_FULL_DIR_INFO:
-		req->FileInformationClass = FILEID_FULL_DIRECTORY_INFORMATION;
-		break;
-	case SMB_FIND_FILE_POSIX_INFO:
-		req->FileInformationClass = SMB_FIND_FILE_POSIX_INFO;
-		break;
-	default:
-		cifs_tcon_dbg(VFS, "info level %u isn't supported\n",
+	चयन (info_level) अणु
+	हाल SMB_FIND_खाता_सूचीECTORY_INFO:
+		req->FileInक्रमmationClass = खाता_सूचीECTORY_INFORMATION;
+		अवरोध;
+	हाल SMB_FIND_खाता_ID_FULL_सूची_INFO:
+		req->FileInक्रमmationClass = खाताID_FULL_सूचीECTORY_INFORMATION;
+		अवरोध;
+	हाल SMB_FIND_खाता_POSIX_INFO:
+		req->FileInक्रमmationClass = SMB_FIND_खाता_POSIX_INFO;
+		अवरोध;
+	शेष:
+		cअगरs_tcon_dbg(VFS, "info level %u isn't supported\n",
 			info_level);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	req->FileIndex = cpu_to_le32(index);
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
+	req->VolatileFileId = अस्थिर_fid;
 
 	len = 0x2;
 	bufptr = req->Buffer;
-	memcpy(bufptr, &asteriks, len);
+	स_नकल(bufptr, &asteriks, len);
 
 	req->FileNameOffset =
-		cpu_to_le16(sizeof(struct smb2_query_directory_req) - 1);
+		cpu_to_le16(माप(काष्ठा smb2_query_directory_req) - 1);
 	req->FileNameLength = cpu_to_le16(len);
 	/*
-	 * BB could be 30 bytes or so longer if we used SMB2 specific
-	 * buffer lengths, but this is safe and close enough.
+	 * BB could be 30 bytes or so दीर्घer अगर we used SMB2 specअगरic
+	 * buffer lengths, but this is safe and बंद enough.
 	 */
-	output_size = min_t(unsigned int, output_size, server->maxBuf);
-	output_size = min_t(unsigned int, output_size, 2 << 15);
+	output_size = min_t(अचिन्हित पूर्णांक, output_size, server->maxBuf);
+	output_size = min_t(अचिन्हित पूर्णांक, output_size, 2 << 15);
 	req->OutputBufferLength = cpu_to_le32(output_size);
 
-	iov[0].iov_base = (char *)req;
-	/* 1 for Buffer */
+	iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम Buffer */
 	iov[0].iov_len = total_len - 1;
 
-	iov[1].iov_base = (char *)(req->Buffer);
+	iov[1].iov_base = (अक्षर *)(req->Buffer);
 	iov[1].iov_len = len;
 
 	trace_smb3_query_dir_enter(xid, persistent_fid, tcon->tid,
 			tcon->ses->Suid, index, output_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void SMB2_query_directory_free(struct smb_rqst *rqst)
-{
-	if (rqst && rqst->rq_iov) {
-		cifs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
-	}
-}
+व्योम SMB2_query_directory_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	अगर (rqst && rqst->rq_iov) अणु
+		cअगरs_small_buf_release(rqst->rq_iov[0].iov_base); /* request */
+	पूर्ण
+पूर्ण
 
-int
-smb2_parse_query_directory(struct cifs_tcon *tcon,
-			   struct kvec *rsp_iov,
-			   int resp_buftype,
-			   struct cifs_search_info *srch_inf)
-{
-	struct smb2_query_directory_rsp *rsp;
-	size_t info_buf_size;
-	char *end_of_smb;
-	int rc;
+पूर्णांक
+smb2_parse_query_directory(काष्ठा cअगरs_tcon *tcon,
+			   काष्ठा kvec *rsp_iov,
+			   पूर्णांक resp_buftype,
+			   काष्ठा cअगरs_search_info *srch_inf)
+अणु
+	काष्ठा smb2_query_directory_rsp *rsp;
+	माप_प्रकार info_buf_size;
+	अक्षर *end_of_smb;
+	पूर्णांक rc;
 
-	rsp = (struct smb2_query_directory_rsp *)rsp_iov->iov_base;
+	rsp = (काष्ठा smb2_query_directory_rsp *)rsp_iov->iov_base;
 
-	switch (srch_inf->info_level) {
-	case SMB_FIND_FILE_DIRECTORY_INFO:
-		info_buf_size = sizeof(FILE_DIRECTORY_INFO) - 1;
-		break;
-	case SMB_FIND_FILE_ID_FULL_DIR_INFO:
-		info_buf_size = sizeof(SEARCH_ID_FULL_DIR_INFO) - 1;
-		break;
-	case SMB_FIND_FILE_POSIX_INFO:
+	चयन (srch_inf->info_level) अणु
+	हाल SMB_FIND_खाता_सूचीECTORY_INFO:
+		info_buf_size = माप(खाता_सूचीECTORY_INFO) - 1;
+		अवरोध;
+	हाल SMB_FIND_खाता_ID_FULL_सूची_INFO:
+		info_buf_size = माप(SEARCH_ID_FULL_सूची_INFO) - 1;
+		अवरोध;
+	हाल SMB_FIND_खाता_POSIX_INFO:
 		/* note that posix payload are variable size */
-		info_buf_size = sizeof(struct smb2_posix_info);
-		break;
-	default:
-		cifs_tcon_dbg(VFS, "info level %u isn't supported\n",
+		info_buf_size = माप(काष्ठा smb2_posix_info);
+		अवरोध;
+	शेष:
+		cअगरs_tcon_dbg(VFS, "info level %u isn't supported\n",
 			 srch_inf->info_level);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = smb2_validate_iov(le16_to_cpu(rsp->OutputBufferOffset),
 			       le32_to_cpu(rsp->OutputBufferLength), rsp_iov,
 			       info_buf_size);
-	if (rc) {
-		cifs_tcon_dbg(VFS, "bad info payload");
-		return rc;
-	}
+	अगर (rc) अणु
+		cअगरs_tcon_dbg(VFS, "bad info payload");
+		वापस rc;
+	पूर्ण
 
 	srch_inf->unicode = true;
 
-	if (srch_inf->ntwrk_buf_start) {
-		if (srch_inf->smallBuf)
-			cifs_small_buf_release(srch_inf->ntwrk_buf_start);
-		else
-			cifs_buf_release(srch_inf->ntwrk_buf_start);
-	}
-	srch_inf->ntwrk_buf_start = (char *)rsp;
+	अगर (srch_inf->ntwrk_buf_start) अणु
+		अगर (srch_inf->smallBuf)
+			cअगरs_small_buf_release(srch_inf->ntwrk_buf_start);
+		अन्यथा
+			cअगरs_buf_release(srch_inf->ntwrk_buf_start);
+	पूर्ण
+	srch_inf->ntwrk_buf_start = (अक्षर *)rsp;
 	srch_inf->srch_entries_start = srch_inf->last_entry =
-		(char *)rsp + le16_to_cpu(rsp->OutputBufferOffset);
-	end_of_smb = rsp_iov->iov_len + (char *)rsp;
+		(अक्षर *)rsp + le16_to_cpu(rsp->OutputBufferOffset);
+	end_of_smb = rsp_iov->iov_len + (अक्षर *)rsp;
 
 	srch_inf->entries_in_buffer = num_entries(
 		srch_inf->info_level,
@@ -4759,674 +4760,674 @@ smb2_parse_query_directory(struct cifs_tcon *tcon,
 		info_buf_size);
 
 	srch_inf->index_of_last_entry += srch_inf->entries_in_buffer;
-	cifs_dbg(FYI, "num entries %d last_index %lld srch start %p srch end %p\n",
+	cअगरs_dbg(FYI, "num entries %d last_index %lld srch start %p srch end %p\n",
 		 srch_inf->entries_in_buffer, srch_inf->index_of_last_entry,
 		 srch_inf->srch_entries_start, srch_inf->last_entry);
-	if (resp_buftype == CIFS_LARGE_BUFFER)
+	अगर (resp_buftype == CIFS_LARGE_BUFFER)
 		srch_inf->smallBuf = false;
-	else if (resp_buftype == CIFS_SMALL_BUFFER)
+	अन्यथा अगर (resp_buftype == CIFS_SMALL_BUFFER)
 		srch_inf->smallBuf = true;
-	else
-		cifs_tcon_dbg(VFS, "Invalid search buffer type\n");
+	अन्यथा
+		cअगरs_tcon_dbg(VFS, "Invalid search buffer type\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB2_query_directory(const unsigned int xid, struct cifs_tcon *tcon,
-		     u64 persistent_fid, u64 volatile_fid, int index,
-		     struct cifs_search_info *srch_inf)
-{
-	struct smb_rqst rqst;
-	struct kvec iov[SMB2_QUERY_DIRECTORY_IOV_SIZE];
-	struct smb2_query_directory_rsp *rsp = NULL;
-	int resp_buftype = CIFS_NO_BUFFER;
-	struct kvec rsp_iov;
-	int rc = 0;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	int flags = 0;
+पूर्णांक
+SMB2_query_directory(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		     u64 persistent_fid, u64 अस्थिर_fid, पूर्णांक index,
+		     काष्ठा cअगरs_search_info *srch_inf)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा kvec iov[SMB2_QUERY_सूचीECTORY_IOV_SIZE];
+	काष्ठा smb2_query_directory_rsp *rsp = शून्य;
+	पूर्णांक resp_buftype = CIFS_NO_BUFFER;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	पूर्णांक flags = 0;
 
-	if (!ses || !(ses->server))
-		return -EIO;
+	अगर (!ses || !(ses->server))
+		वापस -EIO;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
-	memset(&iov, 0, sizeof(iov));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
+	स_रखो(&iov, 0, माप(iov));
 	rqst.rq_iov = iov;
-	rqst.rq_nvec = SMB2_QUERY_DIRECTORY_IOV_SIZE;
+	rqst.rq_nvec = SMB2_QUERY_सूचीECTORY_IOV_SIZE;
 
 	rc = SMB2_query_directory_init(xid, tcon, server,
 				       &rqst, persistent_fid,
-				       volatile_fid, index,
+				       अस्थिर_fid, index,
 				       srch_inf->info_level);
-	if (rc)
-		goto qdir_exit;
+	अगर (rc)
+		जाओ qdir_निकास;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	rsp = (struct smb2_query_directory_rsp *)rsp_iov.iov_base;
+	rsp = (काष्ठा smb2_query_directory_rsp *)rsp_iov.iov_base;
 
-	if (rc) {
-		if (rc == -ENODATA &&
-		    rsp->sync_hdr.Status == STATUS_NO_MORE_FILES) {
-			trace_smb3_query_dir_done(xid, persistent_fid,
+	अगर (rc) अणु
+		अगर (rc == -ENODATA &&
+		    rsp->sync_hdr.Status == STATUS_NO_MORE_खाताS) अणु
+			trace_smb3_query_dir_करोne(xid, persistent_fid,
 				tcon->tid, tcon->ses->Suid, index, 0);
 			srch_inf->endOfSearch = true;
 			rc = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			trace_smb3_query_dir_err(xid, persistent_fid, tcon->tid,
 				tcon->ses->Suid, index, 0, rc);
-			cifs_stats_fail_inc(tcon, SMB2_QUERY_DIRECTORY_HE);
-		}
-		goto qdir_exit;
-	}
+			cअगरs_stats_fail_inc(tcon, SMB2_QUERY_सूचीECTORY_HE);
+		पूर्ण
+		जाओ qdir_निकास;
+	पूर्ण
 
 	rc = smb2_parse_query_directory(tcon, &rsp_iov,	resp_buftype,
 					srch_inf);
-	if (rc) {
+	अगर (rc) अणु
 		trace_smb3_query_dir_err(xid, persistent_fid, tcon->tid,
 			tcon->ses->Suid, index, 0, rc);
-		goto qdir_exit;
-	}
+		जाओ qdir_निकास;
+	पूर्ण
 	resp_buftype = CIFS_NO_BUFFER;
 
-	trace_smb3_query_dir_done(xid, persistent_fid, tcon->tid,
+	trace_smb3_query_dir_करोne(xid, persistent_fid, tcon->tid,
 			tcon->ses->Suid, index, srch_inf->entries_in_buffer);
 
-qdir_exit:
-	SMB2_query_directory_free(&rqst);
-	free_rsp_buf(resp_buftype, rsp);
-	return rc;
-}
+qdir_निकास:
+	SMB2_query_directory_मुक्त(&rqst);
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_set_info_init(struct cifs_tcon *tcon, struct TCP_Server_Info *server,
-		   struct smb_rqst *rqst,
-		   u64 persistent_fid, u64 volatile_fid, u32 pid,
+पूर्णांक
+SMB2_set_info_init(काष्ठा cअगरs_tcon *tcon, काष्ठा TCP_Server_Info *server,
+		   काष्ठा smb_rqst *rqst,
+		   u64 persistent_fid, u64 अस्थिर_fid, u32 pid,
 		   u8 info_class, u8 info_type, u32 additional_info,
-		   void **data, unsigned int *size)
-{
-	struct smb2_set_info_req *req;
-	struct kvec *iov = rqst->rq_iov;
-	unsigned int i, total_len;
-	int rc;
+		   व्योम **data, अचिन्हित पूर्णांक *size)
+अणु
+	काष्ठा smb2_set_info_req *req;
+	काष्ठा kvec *iov = rqst->rq_iov;
+	अचिन्हित पूर्णांक i, total_len;
+	पूर्णांक rc;
 
 	rc = smb2_plain_req_init(SMB2_SET_INFO, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
 	req->sync_hdr.ProcessId = cpu_to_le32(pid);
 	req->InfoType = info_type;
 	req->FileInfoClass = info_class;
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
-	req->AdditionalInformation = cpu_to_le32(additional_info);
+	req->VolatileFileId = अस्थिर_fid;
+	req->AdditionalInक्रमmation = cpu_to_le32(additional_info);
 
 	req->BufferOffset =
-			cpu_to_le16(sizeof(struct smb2_set_info_req) - 1);
+			cpu_to_le16(माप(काष्ठा smb2_set_info_req) - 1);
 	req->BufferLength = cpu_to_le32(*size);
 
-	memcpy(req->Buffer, *data, *size);
+	स_नकल(req->Buffer, *data, *size);
 	total_len += *size;
 
-	iov[0].iov_base = (char *)req;
-	/* 1 for Buffer */
+	iov[0].iov_base = (अक्षर *)req;
+	/* 1 क्रम Buffer */
 	iov[0].iov_len = total_len - 1;
 
-	for (i = 1; i < rqst->rq_nvec; i++) {
+	क्रम (i = 1; i < rqst->rq_nvec; i++) अणु
 		le32_add_cpu(&req->BufferLength, size[i]);
-		iov[i].iov_base = (char *)data[i];
+		iov[i].iov_base = (अक्षर *)data[i];
 		iov[i].iov_len = size[i];
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-SMB2_set_info_free(struct smb_rqst *rqst)
-{
-	if (rqst && rqst->rq_iov)
-		cifs_buf_release(rqst->rq_iov[0].iov_base); /* request */
-}
+व्योम
+SMB2_set_info_मुक्त(काष्ठा smb_rqst *rqst)
+अणु
+	अगर (rqst && rqst->rq_iov)
+		cअगरs_buf_release(rqst->rq_iov[0].iov_base); /* request */
+पूर्ण
 
-static int
-send_set_info(const unsigned int xid, struct cifs_tcon *tcon,
-	       u64 persistent_fid, u64 volatile_fid, u32 pid, u8 info_class,
-	       u8 info_type, u32 additional_info, unsigned int num,
-		void **data, unsigned int *size)
-{
-	struct smb_rqst rqst;
-	struct smb2_set_info_rsp *rsp = NULL;
-	struct kvec *iov;
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	int flags = 0;
+अटल पूर्णांक
+send_set_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	       u64 persistent_fid, u64 अस्थिर_fid, u32 pid, u8 info_class,
+	       u8 info_type, u32 additional_info, अचिन्हित पूर्णांक num,
+		व्योम **data, अचिन्हित पूर्णांक *size)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_set_info_rsp *rsp = शून्य;
+	काष्ठा kvec *iov;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	पूर्णांक flags = 0;
 
-	if (!ses || !server)
-		return -EIO;
+	अगर (!ses || !server)
+		वापस -EIO;
 
-	if (!num)
-		return -EINVAL;
+	अगर (!num)
+		वापस -EINVAL;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	iov = kmalloc_array(num, sizeof(struct kvec), GFP_KERNEL);
-	if (!iov)
-		return -ENOMEM;
+	iov = kदो_स्मृति_array(num, माप(काष्ठा kvec), GFP_KERNEL);
+	अगर (!iov)
+		वापस -ENOMEM;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = num;
 
 	rc = SMB2_set_info_init(tcon, server,
-				&rqst, persistent_fid, volatile_fid, pid,
+				&rqst, persistent_fid, अस्थिर_fid, pid,
 				info_class, info_type, additional_info,
 				data, size);
-	if (rc) {
-		kfree(iov);
-		return rc;
-	}
+	अगर (rc) अणु
+		kमुक्त(iov);
+		वापस rc;
+	पूर्ण
 
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags,
 			    &rsp_iov);
-	SMB2_set_info_free(&rqst);
-	rsp = (struct smb2_set_info_rsp *)rsp_iov.iov_base;
+	SMB2_set_info_मुक्त(&rqst);
+	rsp = (काष्ठा smb2_set_info_rsp *)rsp_iov.iov_base;
 
-	if (rc != 0) {
-		cifs_stats_fail_inc(tcon, SMB2_SET_INFO_HE);
+	अगर (rc != 0) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_SET_INFO_HE);
 		trace_smb3_set_info_err(xid, persistent_fid, tcon->tid,
 				ses->Suid, info_class, (__u32)info_type, rc);
-	}
+	पूर्ण
 
-	free_rsp_buf(resp_buftype, rsp);
-	kfree(iov);
-	return rc;
-}
+	मुक्त_rsp_buf(resp_buftype, rsp);
+	kमुक्त(iov);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_set_eof(const unsigned int xid, struct cifs_tcon *tcon, u64 persistent_fid,
-	     u64 volatile_fid, u32 pid, __le64 *eof)
-{
-	struct smb2_file_eof_info info;
-	void *data;
-	unsigned int size;
+पूर्णांक
+SMB2_set_eof(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon, u64 persistent_fid,
+	     u64 अस्थिर_fid, u32 pid, __le64 *eof)
+अणु
+	काष्ठा smb2_file_eof_info info;
+	व्योम *data;
+	अचिन्हित पूर्णांक size;
 
 	info.EndOfFile = *eof;
 
 	data = &info;
-	size = sizeof(struct smb2_file_eof_info);
+	size = माप(काष्ठा smb2_file_eof_info);
 
-	return send_set_info(xid, tcon, persistent_fid, volatile_fid,
-			pid, FILE_END_OF_FILE_INFORMATION, SMB2_O_INFO_FILE,
+	वापस send_set_info(xid, tcon, persistent_fid, अस्थिर_fid,
+			pid, खाता_END_OF_खाता_INFORMATION, SMB2_O_INFO_खाता,
 			0, 1, &data, &size);
-}
+पूर्ण
 
-int
-SMB2_set_acl(const unsigned int xid, struct cifs_tcon *tcon,
-		u64 persistent_fid, u64 volatile_fid,
-		struct cifs_ntsd *pnntsd, int pacllen, int aclflag)
-{
-	return send_set_info(xid, tcon, persistent_fid, volatile_fid,
+पूर्णांक
+SMB2_set_acl(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		u64 persistent_fid, u64 अस्थिर_fid,
+		काष्ठा cअगरs_ntsd *pnntsd, पूर्णांक pacllen, पूर्णांक aclflag)
+अणु
+	वापस send_set_info(xid, tcon, persistent_fid, अस्थिर_fid,
 			current->tgid, 0, SMB2_O_INFO_SECURITY, aclflag,
-			1, (void **)&pnntsd, &pacllen);
-}
+			1, (व्योम **)&pnntsd, &pacllen);
+पूर्ण
 
-int
-SMB2_set_ea(const unsigned int xid, struct cifs_tcon *tcon,
-	    u64 persistent_fid, u64 volatile_fid,
-	    struct smb2_file_full_ea_info *buf, int len)
-{
-	return send_set_info(xid, tcon, persistent_fid, volatile_fid,
-		current->tgid, FILE_FULL_EA_INFORMATION, SMB2_O_INFO_FILE,
-		0, 1, (void **)&buf, &len);
-}
+पूर्णांक
+SMB2_set_ea(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	    u64 persistent_fid, u64 अस्थिर_fid,
+	    काष्ठा smb2_file_full_ea_info *buf, पूर्णांक len)
+अणु
+	वापस send_set_info(xid, tcon, persistent_fid, अस्थिर_fid,
+		current->tgid, खाता_FULL_EA_INFORMATION, SMB2_O_INFO_खाता,
+		0, 1, (व्योम **)&buf, &len);
+पूर्ण
 
-int
-SMB2_oplock_break(const unsigned int xid, struct cifs_tcon *tcon,
-		  const u64 persistent_fid, const u64 volatile_fid,
+पूर्णांक
+SMB2_oplock_अवरोध(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		  स्थिर u64 persistent_fid, स्थिर u64 अस्थिर_fid,
 		  __u8 oplock_level)
-{
-	struct smb_rqst rqst;
-	int rc;
-	struct smb2_oplock_break *req = NULL;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	int flags = CIFS_OBREAK_OP;
-	unsigned int total_len;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int resp_buf_type;
+अणु
+	काष्ठा smb_rqst rqst;
+	पूर्णांक rc;
+	काष्ठा smb2_oplock_अवरोध *req = शून्य;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	पूर्णांक flags = CIFS_OBREAK_OP;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buf_type;
 
-	cifs_dbg(FYI, "SMB2_oplock_break\n");
+	cअगरs_dbg(FYI, "SMB2_oplock_break\n");
 	rc = smb2_plain_req_init(SMB2_OPLOCK_BREAK, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	req->VolatileFid = volatile_fid;
+	req->VolatileFid = अस्थिर_fid;
 	req->PersistentFid = persistent_fid;
 	req->OplockLevel = oplock_level;
 	req->sync_hdr.CreditRequest = cpu_to_le16(1);
 
 	flags |= CIFS_NO_RSP_BUF;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buf_type, flags, &rsp_iov);
-	cifs_small_buf_release(req);
+	cअगरs_small_buf_release(req);
 
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_OPLOCK_BREAK_HE);
-		cifs_dbg(FYI, "Send error in Oplock Break = %d\n", rc);
-	}
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_OPLOCK_BREAK_HE);
+		cअगरs_dbg(FYI, "Send error in Oplock Break = %d\n", rc);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void
-smb2_copy_fs_info_to_kstatfs(struct smb2_fs_full_size_info *pfs_inf,
-			     struct kstatfs *kst)
-{
+व्योम
+smb2_copy_fs_info_to_kstatfs(काष्ठा smb2_fs_full_size_info *pfs_inf,
+			     काष्ठा kstatfs *kst)
+अणु
 	kst->f_bsize = le32_to_cpu(pfs_inf->BytesPerSector) *
 			  le32_to_cpu(pfs_inf->SectorsPerAllocationUnit);
 	kst->f_blocks = le64_to_cpu(pfs_inf->TotalAllocationUnits);
-	kst->f_bfree  = kst->f_bavail =
+	kst->f_bमुक्त  = kst->f_bavail =
 			le64_to_cpu(pfs_inf->CallerAvailableAllocationUnits);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void
-copy_posix_fs_info_to_kstatfs(FILE_SYSTEM_POSIX_INFO *response_data,
-			struct kstatfs *kst)
-{
+अटल व्योम
+copy_posix_fs_info_to_kstatfs(खाता_SYSTEM_POSIX_INFO *response_data,
+			काष्ठा kstatfs *kst)
+अणु
 	kst->f_bsize = le32_to_cpu(response_data->BlockSize);
 	kst->f_blocks = le64_to_cpu(response_data->TotalBlocks);
-	kst->f_bfree =  le64_to_cpu(response_data->BlocksAvail);
-	if (response_data->UserBlocksAvail == cpu_to_le64(-1))
-		kst->f_bavail = kst->f_bfree;
-	else
+	kst->f_bमुक्त =  le64_to_cpu(response_data->BlocksAvail);
+	अगर (response_data->UserBlocksAvail == cpu_to_le64(-1))
+		kst->f_bavail = kst->f_bमुक्त;
+	अन्यथा
 		kst->f_bavail = le64_to_cpu(response_data->UserBlocksAvail);
-	if (response_data->TotalFileNodes != cpu_to_le64(-1))
+	अगर (response_data->TotalFileNodes != cpu_to_le64(-1))
 		kst->f_files = le64_to_cpu(response_data->TotalFileNodes);
-	if (response_data->FreeFileNodes != cpu_to_le64(-1))
-		kst->f_ffree = le64_to_cpu(response_data->FreeFileNodes);
+	अगर (response_data->FreeFileNodes != cpu_to_le64(-1))
+		kst->f_fमुक्त = le64_to_cpu(response_data->FreeFileNodes);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int
-build_qfs_info_req(struct kvec *iov, struct cifs_tcon *tcon,
-		   struct TCP_Server_Info *server,
-		   int level, int outbuf_len, u64 persistent_fid,
-		   u64 volatile_fid)
-{
-	int rc;
-	struct smb2_query_info_req *req;
-	unsigned int total_len;
+अटल पूर्णांक
+build_qfs_info_req(काष्ठा kvec *iov, काष्ठा cअगरs_tcon *tcon,
+		   काष्ठा TCP_Server_Info *server,
+		   पूर्णांक level, पूर्णांक outbuf_len, u64 persistent_fid,
+		   u64 अस्थिर_fid)
+अणु
+	पूर्णांक rc;
+	काष्ठा smb2_query_info_req *req;
+	अचिन्हित पूर्णांक total_len;
 
-	cifs_dbg(FYI, "Query FSInfo level %d\n", level);
+	cअगरs_dbg(FYI, "Query FSInfo level %d\n", level);
 
-	if ((tcon->ses == NULL) || server == NULL)
-		return -EIO;
+	अगर ((tcon->ses == शून्य) || server == शून्य)
+		वापस -EIO;
 
 	rc = smb2_plain_req_init(SMB2_QUERY_INFO, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	req->InfoType = SMB2_O_INFO_FILESYSTEM;
+	req->InfoType = SMB2_O_INFO_खाताSYSTEM;
 	req->FileInfoClass = level;
 	req->PersistentFileId = persistent_fid;
-	req->VolatileFileId = volatile_fid;
-	/* 1 for pad */
+	req->VolatileFileId = अस्थिर_fid;
+	/* 1 क्रम pad */
 	req->InputBufferOffset =
-			cpu_to_le16(sizeof(struct smb2_query_info_req) - 1);
+			cpu_to_le16(माप(काष्ठा smb2_query_info_req) - 1);
 	req->OutputBufferLength = cpu_to_le32(
-		outbuf_len + sizeof(struct smb2_query_info_rsp) - 1);
+		outbuf_len + माप(काष्ठा smb2_query_info_rsp) - 1);
 
-	iov->iov_base = (char *)req;
+	iov->iov_base = (अक्षर *)req;
 	iov->iov_len = total_len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-SMB311_posix_qfs_info(const unsigned int xid, struct cifs_tcon *tcon,
-	      u64 persistent_fid, u64 volatile_fid, struct kstatfs *fsdata)
-{
-	struct smb_rqst rqst;
-	struct smb2_query_info_rsp *rsp = NULL;
-	struct kvec iov;
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	FILE_SYSTEM_POSIX_INFO *info = NULL;
-	int flags = 0;
+पूर्णांक
+SMB311_posix_qfs_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	      u64 persistent_fid, u64 अस्थिर_fid, काष्ठा kstatfs *fsdata)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_query_info_rsp *rsp = शून्य;
+	काष्ठा kvec iov;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	खाता_SYSTEM_POSIX_INFO *info = शून्य;
+	पूर्णांक flags = 0;
 
 	rc = build_qfs_info_req(&iov, tcon, server,
 				FS_POSIX_INFORMATION,
-				sizeof(FILE_SYSTEM_POSIX_INFO),
-				persistent_fid, volatile_fid);
-	if (rc)
-		return rc;
+				माप(खाता_SYSTEM_POSIX_INFO),
+				persistent_fid, अस्थिर_fid);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = &iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	cifs_small_buf_release(iov.iov_base);
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
-		goto posix_qfsinf_exit;
-	}
-	rsp = (struct smb2_query_info_rsp *)rsp_iov.iov_base;
+	cअगरs_small_buf_release(iov.iov_base);
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
+		जाओ posix_qfsinf_निकास;
+	पूर्ण
+	rsp = (काष्ठा smb2_query_info_rsp *)rsp_iov.iov_base;
 
-	info = (FILE_SYSTEM_POSIX_INFO *)(
-		le16_to_cpu(rsp->OutputBufferOffset) + (char *)rsp);
+	info = (खाता_SYSTEM_POSIX_INFO *)(
+		le16_to_cpu(rsp->OutputBufferOffset) + (अक्षर *)rsp);
 	rc = smb2_validate_iov(le16_to_cpu(rsp->OutputBufferOffset),
 			       le32_to_cpu(rsp->OutputBufferLength), &rsp_iov,
-			       sizeof(FILE_SYSTEM_POSIX_INFO));
-	if (!rc)
+			       माप(खाता_SYSTEM_POSIX_INFO));
+	अगर (!rc)
 		copy_posix_fs_info_to_kstatfs(info, fsdata);
 
-posix_qfsinf_exit:
-	free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	return rc;
-}
+posix_qfsinf_निकास:
+	मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_QFS_info(const unsigned int xid, struct cifs_tcon *tcon,
-	      u64 persistent_fid, u64 volatile_fid, struct kstatfs *fsdata)
-{
-	struct smb_rqst rqst;
-	struct smb2_query_info_rsp *rsp = NULL;
-	struct kvec iov;
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	struct smb2_fs_full_size_info *info = NULL;
-	int flags = 0;
+पूर्णांक
+SMB2_QFS_info(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	      u64 persistent_fid, u64 अस्थिर_fid, काष्ठा kstatfs *fsdata)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_query_info_rsp *rsp = शून्य;
+	काष्ठा kvec iov;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	काष्ठा smb2_fs_full_size_info *info = शून्य;
+	पूर्णांक flags = 0;
 
 	rc = build_qfs_info_req(&iov, tcon, server,
 				FS_FULL_SIZE_INFORMATION,
-				sizeof(struct smb2_fs_full_size_info),
-				persistent_fid, volatile_fid);
-	if (rc)
-		return rc;
+				माप(काष्ठा smb2_fs_full_size_info),
+				persistent_fid, अस्थिर_fid);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = &iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	cifs_small_buf_release(iov.iov_base);
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
-		goto qfsinf_exit;
-	}
-	rsp = (struct smb2_query_info_rsp *)rsp_iov.iov_base;
+	cअगरs_small_buf_release(iov.iov_base);
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
+		जाओ qfsinf_निकास;
+	पूर्ण
+	rsp = (काष्ठा smb2_query_info_rsp *)rsp_iov.iov_base;
 
-	info = (struct smb2_fs_full_size_info *)(
-		le16_to_cpu(rsp->OutputBufferOffset) + (char *)rsp);
+	info = (काष्ठा smb2_fs_full_size_info *)(
+		le16_to_cpu(rsp->OutputBufferOffset) + (अक्षर *)rsp);
 	rc = smb2_validate_iov(le16_to_cpu(rsp->OutputBufferOffset),
 			       le32_to_cpu(rsp->OutputBufferLength), &rsp_iov,
-			       sizeof(struct smb2_fs_full_size_info));
-	if (!rc)
+			       माप(काष्ठा smb2_fs_full_size_info));
+	अगर (!rc)
 		smb2_copy_fs_info_to_kstatfs(info, fsdata);
 
-qfsinf_exit:
-	free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	return rc;
-}
+qfsinf_निकास:
+	मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	वापस rc;
+पूर्ण
 
-int
-SMB2_QFS_attr(const unsigned int xid, struct cifs_tcon *tcon,
-	      u64 persistent_fid, u64 volatile_fid, int level)
-{
-	struct smb_rqst rqst;
-	struct smb2_query_info_rsp *rsp = NULL;
-	struct kvec iov;
-	struct kvec rsp_iov;
-	int rc = 0;
-	int resp_buftype, max_len, min_len;
-	struct cifs_ses *ses = tcon->ses;
-	struct TCP_Server_Info *server = cifs_pick_channel(ses);
-	unsigned int rsp_len, offset;
-	int flags = 0;
+पूर्णांक
+SMB2_QFS_attr(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	      u64 persistent_fid, u64 अस्थिर_fid, पूर्णांक level)
+अणु
+	काष्ठा smb_rqst rqst;
+	काष्ठा smb2_query_info_rsp *rsp = शून्य;
+	काष्ठा kvec iov;
+	काष्ठा kvec rsp_iov;
+	पूर्णांक rc = 0;
+	पूर्णांक resp_buftype, max_len, min_len;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(ses);
+	अचिन्हित पूर्णांक rsp_len, offset;
+	पूर्णांक flags = 0;
 
-	if (level == FS_DEVICE_INFORMATION) {
-		max_len = sizeof(FILE_SYSTEM_DEVICE_INFO);
-		min_len = sizeof(FILE_SYSTEM_DEVICE_INFO);
-	} else if (level == FS_ATTRIBUTE_INFORMATION) {
-		max_len = sizeof(FILE_SYSTEM_ATTRIBUTE_INFO);
+	अगर (level == FS_DEVICE_INFORMATION) अणु
+		max_len = माप(खाता_SYSTEM_DEVICE_INFO);
+		min_len = माप(खाता_SYSTEM_DEVICE_INFO);
+	पूर्ण अन्यथा अगर (level == FS_ATTRIBUTE_INFORMATION) अणु
+		max_len = माप(खाता_SYSTEM_ATTRIBUTE_INFO);
 		min_len = MIN_FS_ATTR_INFO_SIZE;
-	} else if (level == FS_SECTOR_SIZE_INFORMATION) {
-		max_len = sizeof(struct smb3_fs_ss_info);
-		min_len = sizeof(struct smb3_fs_ss_info);
-	} else if (level == FS_VOLUME_INFORMATION) {
-		max_len = sizeof(struct smb3_fs_vol_info) + MAX_VOL_LABEL_LEN;
-		min_len = sizeof(struct smb3_fs_vol_info);
-	} else {
-		cifs_dbg(FYI, "Invalid qfsinfo level %d\n", level);
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अगर (level == FS_SECTOR_SIZE_INFORMATION) अणु
+		max_len = माप(काष्ठा smb3_fs_ss_info);
+		min_len = माप(काष्ठा smb3_fs_ss_info);
+	पूर्ण अन्यथा अगर (level == FS_VOLUME_INFORMATION) अणु
+		max_len = माप(काष्ठा smb3_fs_vol_info) + MAX_VOL_LABEL_LEN;
+		min_len = माप(काष्ठा smb3_fs_vol_info);
+	पूर्ण अन्यथा अणु
+		cअगरs_dbg(FYI, "Invalid qfsinfo level %d\n", level);
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = build_qfs_info_req(&iov, tcon, server,
 				level, max_len,
-				persistent_fid, volatile_fid);
-	if (rc)
-		return rc;
+				persistent_fid, अस्थिर_fid);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = &iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buftype, flags, &rsp_iov);
-	cifs_small_buf_release(iov.iov_base);
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
-		goto qfsattr_exit;
-	}
-	rsp = (struct smb2_query_info_rsp *)rsp_iov.iov_base;
+	cअगरs_small_buf_release(iov.iov_base);
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_QUERY_INFO_HE);
+		जाओ qfsattr_निकास;
+	पूर्ण
+	rsp = (काष्ठा smb2_query_info_rsp *)rsp_iov.iov_base;
 
 	rsp_len = le32_to_cpu(rsp->OutputBufferLength);
 	offset = le16_to_cpu(rsp->OutputBufferOffset);
 	rc = smb2_validate_iov(offset, rsp_len, &rsp_iov, min_len);
-	if (rc)
-		goto qfsattr_exit;
+	अगर (rc)
+		जाओ qfsattr_निकास;
 
-	if (level == FS_ATTRIBUTE_INFORMATION)
-		memcpy(&tcon->fsAttrInfo, offset
-			+ (char *)rsp, min_t(unsigned int,
+	अगर (level == FS_ATTRIBUTE_INFORMATION)
+		स_नकल(&tcon->fsAttrInfo, offset
+			+ (अक्षर *)rsp, min_t(अचिन्हित पूर्णांक,
 			rsp_len, max_len));
-	else if (level == FS_DEVICE_INFORMATION)
-		memcpy(&tcon->fsDevInfo, offset
-			+ (char *)rsp, sizeof(FILE_SYSTEM_DEVICE_INFO));
-	else if (level == FS_SECTOR_SIZE_INFORMATION) {
-		struct smb3_fs_ss_info *ss_info = (struct smb3_fs_ss_info *)
-			(offset + (char *)rsp);
+	अन्यथा अगर (level == FS_DEVICE_INFORMATION)
+		स_नकल(&tcon->fsDevInfo, offset
+			+ (अक्षर *)rsp, माप(खाता_SYSTEM_DEVICE_INFO));
+	अन्यथा अगर (level == FS_SECTOR_SIZE_INFORMATION) अणु
+		काष्ठा smb3_fs_ss_info *ss_info = (काष्ठा smb3_fs_ss_info *)
+			(offset + (अक्षर *)rsp);
 		tcon->ss_flags = le32_to_cpu(ss_info->Flags);
 		tcon->perf_sector_size =
 			le32_to_cpu(ss_info->PhysicalBytesPerSectorForPerf);
-	} else if (level == FS_VOLUME_INFORMATION) {
-		struct smb3_fs_vol_info *vol_info = (struct smb3_fs_vol_info *)
-			(offset + (char *)rsp);
+	पूर्ण अन्यथा अगर (level == FS_VOLUME_INFORMATION) अणु
+		काष्ठा smb3_fs_vol_info *vol_info = (काष्ठा smb3_fs_vol_info *)
+			(offset + (अक्षर *)rsp);
 		tcon->vol_serial_number = vol_info->VolumeSerialNumber;
-		tcon->vol_create_time = vol_info->VolumeCreationTime;
-	}
+		tcon->vol_create_समय = vol_info->VolumeCreationTime;
+	पूर्ण
 
-qfsattr_exit:
-	free_rsp_buf(resp_buftype, rsp_iov.iov_base);
-	return rc;
-}
+qfsattr_निकास:
+	मुक्त_rsp_buf(resp_buftype, rsp_iov.iov_base);
+	वापस rc;
+पूर्ण
 
-int
-smb2_lockv(const unsigned int xid, struct cifs_tcon *tcon,
-	   const __u64 persist_fid, const __u64 volatile_fid, const __u32 pid,
-	   const __u32 num_lock, struct smb2_lock_element *buf)
-{
-	struct smb_rqst rqst;
-	int rc = 0;
-	struct smb2_lock_req *req = NULL;
-	struct kvec iov[2];
-	struct kvec rsp_iov;
-	int resp_buf_type;
-	unsigned int count;
-	int flags = CIFS_NO_RSP_BUF;
-	unsigned int total_len;
-	struct TCP_Server_Info *server = cifs_pick_channel(tcon->ses);
+पूर्णांक
+smb2_lockv(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	   स्थिर __u64 persist_fid, स्थिर __u64 अस्थिर_fid, स्थिर __u32 pid,
+	   स्थिर __u32 num_lock, काष्ठा smb2_lock_element *buf)
+अणु
+	काष्ठा smb_rqst rqst;
+	पूर्णांक rc = 0;
+	काष्ठा smb2_lock_req *req = शून्य;
+	काष्ठा kvec iov[2];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buf_type;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक flags = CIFS_NO_RSP_BUF;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(tcon->ses);
 
-	cifs_dbg(FYI, "smb2_lockv num lock %d\n", num_lock);
+	cअगरs_dbg(FYI, "smb2_lockv num lock %d\n", num_lock);
 
 	rc = smb2_plain_req_init(SMB2_LOCK, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	req->sync_hdr.ProcessId = cpu_to_le32(pid);
 	req->LockCount = cpu_to_le16(num_lock);
 
 	req->PersistentFileId = persist_fid;
-	req->VolatileFileId = volatile_fid;
+	req->VolatileFileId = अस्थिर_fid;
 
-	count = num_lock * sizeof(struct smb2_lock_element);
+	count = num_lock * माप(काष्ठा smb2_lock_element);
 
-	iov[0].iov_base = (char *)req;
-	iov[0].iov_len = total_len - sizeof(struct smb2_lock_element);
-	iov[1].iov_base = (char *)buf;
+	iov[0].iov_base = (अक्षर *)req;
+	iov[0].iov_len = total_len - माप(काष्ठा smb2_lock_element);
+	iov[1].iov_base = (अक्षर *)buf;
 	iov[1].iov_len = count;
 
-	cifs_stats_inc(&tcon->stats.cifs_stats.num_locks);
+	cअगरs_stats_inc(&tcon->stats.cअगरs_stats.num_locks);
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 2;
 
-	rc = cifs_send_recv(xid, tcon->ses, server,
+	rc = cअगरs_send_recv(xid, tcon->ses, server,
 			    &rqst, &resp_buf_type, flags,
 			    &rsp_iov);
-	cifs_small_buf_release(req);
-	if (rc) {
-		cifs_dbg(FYI, "Send error in smb2_lockv = %d\n", rc);
-		cifs_stats_fail_inc(tcon, SMB2_LOCK_HE);
+	cअगरs_small_buf_release(req);
+	अगर (rc) अणु
+		cअगरs_dbg(FYI, "Send error in smb2_lockv = %d\n", rc);
+		cअगरs_stats_fail_inc(tcon, SMB2_LOCK_HE);
 		trace_smb3_lock_err(xid, persist_fid, tcon->tid,
 				    tcon->ses->Suid, rc);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int
-SMB2_lock(const unsigned int xid, struct cifs_tcon *tcon,
-	  const __u64 persist_fid, const __u64 volatile_fid, const __u32 pid,
-	  const __u64 length, const __u64 offset, const __u32 lock_flags,
-	  const bool wait)
-{
-	struct smb2_lock_element lock;
+पूर्णांक
+SMB2_lock(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+	  स्थिर __u64 persist_fid, स्थिर __u64 अस्थिर_fid, स्थिर __u32 pid,
+	  स्थिर __u64 length, स्थिर __u64 offset, स्थिर __u32 lock_flags,
+	  स्थिर bool रुको)
+अणु
+	काष्ठा smb2_lock_element lock;
 
 	lock.Offset = cpu_to_le64(offset);
 	lock.Length = cpu_to_le64(length);
 	lock.Flags = cpu_to_le32(lock_flags);
-	if (!wait && lock_flags != SMB2_LOCKFLAG_UNLOCK)
+	अगर (!रुको && lock_flags != SMB2_LOCKFLAG_UNLOCK)
 		lock.Flags |= cpu_to_le32(SMB2_LOCKFLAG_FAIL_IMMEDIATELY);
 
-	return smb2_lockv(xid, tcon, persist_fid, volatile_fid, pid, 1, &lock);
-}
+	वापस smb2_lockv(xid, tcon, persist_fid, अस्थिर_fid, pid, 1, &lock);
+पूर्ण
 
-int
-SMB2_lease_break(const unsigned int xid, struct cifs_tcon *tcon,
-		 __u8 *lease_key, const __le32 lease_state)
-{
-	struct smb_rqst rqst;
-	int rc;
-	struct smb2_lease_ack *req = NULL;
-	struct cifs_ses *ses = tcon->ses;
-	int flags = CIFS_OBREAK_OP;
-	unsigned int total_len;
-	struct kvec iov[1];
-	struct kvec rsp_iov;
-	int resp_buf_type;
+पूर्णांक
+SMB2_lease_अवरोध(स्थिर अचिन्हित पूर्णांक xid, काष्ठा cअगरs_tcon *tcon,
+		 __u8 *lease_key, स्थिर __le32 lease_state)
+अणु
+	काष्ठा smb_rqst rqst;
+	पूर्णांक rc;
+	काष्ठा smb2_lease_ack *req = शून्य;
+	काष्ठा cअगरs_ses *ses = tcon->ses;
+	पूर्णांक flags = CIFS_OBREAK_OP;
+	अचिन्हित पूर्णांक total_len;
+	काष्ठा kvec iov[1];
+	काष्ठा kvec rsp_iov;
+	पूर्णांक resp_buf_type;
 	__u64 *please_key_high;
 	__u64 *please_key_low;
-	struct TCP_Server_Info *server = cifs_pick_channel(tcon->ses);
+	काष्ठा TCP_Server_Info *server = cअगरs_pick_channel(tcon->ses);
 
-	cifs_dbg(FYI, "SMB2_lease_break\n");
+	cअगरs_dbg(FYI, "SMB2_lease_break\n");
 	rc = smb2_plain_req_init(SMB2_OPLOCK_BREAK, tcon, server,
-				 (void **) &req, &total_len);
-	if (rc)
-		return rc;
+				 (व्योम **) &req, &total_len);
+	अगर (rc)
+		वापस rc;
 
-	if (smb3_encryption_required(tcon))
+	अगर (smb3_encryption_required(tcon))
 		flags |= CIFS_TRANSFORM_REQ;
 
 	req->sync_hdr.CreditRequest = cpu_to_le16(1);
 	req->StructureSize = cpu_to_le16(36);
 	total_len += 12;
 
-	memcpy(req->LeaseKey, lease_key, 16);
+	स_नकल(req->LeaseKey, lease_key, 16);
 	req->LeaseState = lease_state;
 
 	flags |= CIFS_NO_RSP_BUF;
 
-	iov[0].iov_base = (char *)req;
+	iov[0].iov_base = (अक्षर *)req;
 	iov[0].iov_len = total_len;
 
-	memset(&rqst, 0, sizeof(struct smb_rqst));
+	स_रखो(&rqst, 0, माप(काष्ठा smb_rqst));
 	rqst.rq_iov = iov;
 	rqst.rq_nvec = 1;
 
-	rc = cifs_send_recv(xid, ses, server,
+	rc = cअगरs_send_recv(xid, ses, server,
 			    &rqst, &resp_buf_type, flags, &rsp_iov);
-	cifs_small_buf_release(req);
+	cअगरs_small_buf_release(req);
 
 	please_key_low = (__u64 *)lease_key;
 	please_key_high = (__u64 *)(lease_key+8);
-	if (rc) {
-		cifs_stats_fail_inc(tcon, SMB2_OPLOCK_BREAK_HE);
+	अगर (rc) अणु
+		cअगरs_stats_fail_inc(tcon, SMB2_OPLOCK_BREAK_HE);
 		trace_smb3_lease_err(le32_to_cpu(lease_state), tcon->tid,
 			ses->Suid, *please_key_low, *please_key_high, rc);
-		cifs_dbg(FYI, "Send error in Lease Break = %d\n", rc);
-	} else
-		trace_smb3_lease_done(le32_to_cpu(lease_state), tcon->tid,
+		cअगरs_dbg(FYI, "Send error in Lease Break = %d\n", rc);
+	पूर्ण अन्यथा
+		trace_smb3_lease_करोne(le32_to_cpu(lease_state), tcon->tid,
 			ses->Suid, *please_key_low, *please_key_high);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_DECOMPRESS_INFLATE_H
-#define LINUX_DECOMPRESS_INFLATE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_DECOMPRESS_INFLATE_H
+#घोषणा LINUX_DECOMPRESS_INFLATE_H
 
-int gunzip(unsigned char *inbuf, long len,
-	   long (*fill)(void*, unsigned long),
-	   long (*flush)(void*, unsigned long),
-	   unsigned char *output,
-	   long *pos,
-	   void(*error_fn)(char *x));
-#endif
+पूर्णांक gunzip(अचिन्हित अक्षर *inbuf, दीर्घ len,
+	   दीर्घ (*fill)(व्योम*, अचिन्हित दीर्घ),
+	   दीर्घ (*flush)(व्योम*, अचिन्हित दीर्घ),
+	   अचिन्हित अक्षर *output,
+	   दीर्घ *pos,
+	   व्योम(*error_fn)(अक्षर *x));
+#पूर्ण_अगर

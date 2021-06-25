@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,55 +24,55 @@
  *
  */
 
-#ifndef __DAL_HW_FACTORY_H__
-#define __DAL_HW_FACTORY_H__
+#अगर_अघोषित __DAL_HW_FACTORY_H__
+#घोषणा __DAL_HW_FACTORY_H__
 
-struct hw_gpio_pin;
-struct hw_hpd;
-struct hw_ddc;
-struct hw_generic;
-struct gpio;
+काष्ठा hw_gpio_pin;
+काष्ठा hw_hpd;
+काष्ठा hw_ddc;
+काष्ठा hw_generic;
+काष्ठा gpio;
 
-struct hw_factory {
-	uint32_t number_of_pins[GPIO_ID_COUNT];
+काष्ठा hw_factory अणु
+	uपूर्णांक32_t number_of_pins[GPIO_ID_COUNT];
 
-	const struct hw_factory_funcs {
-		void (*init_ddc_data)(
-				struct hw_ddc **hw_ddc,
-				struct dc_context *ctx,
-				enum gpio_id id,
-				uint32_t en);
-		void (*init_generic)(
-				struct hw_generic **hw_generic,
-				struct dc_context *ctx,
-				enum gpio_id id,
-				uint32_t en);
-		void (*init_hpd)(
-				struct hw_hpd **hw_hpd,
-				struct dc_context *ctx,
-				enum gpio_id id,
-				uint32_t en);
-		struct hw_gpio_pin *(*get_hpd_pin)(
-				struct gpio *gpio);
-		struct hw_gpio_pin *(*get_ddc_pin)(
-				struct gpio *gpio);
-		struct hw_gpio_pin *(*get_generic_pin)(
-				struct gpio *gpio);
-		void (*define_hpd_registers)(
-				struct hw_gpio_pin *pin,
-				uint32_t en);
-		void (*define_ddc_registers)(
-				struct hw_gpio_pin *pin,
-				uint32_t en);
-		void (*define_generic_registers)(
-				struct hw_gpio_pin *pin,
-				uint32_t en);
-	} *funcs;
-};
+	स्थिर काष्ठा hw_factory_funcs अणु
+		व्योम (*init_ddc_data)(
+				काष्ठा hw_ddc **hw_ddc,
+				काष्ठा dc_context *ctx,
+				क्रमागत gpio_id id,
+				uपूर्णांक32_t en);
+		व्योम (*init_generic)(
+				काष्ठा hw_generic **hw_generic,
+				काष्ठा dc_context *ctx,
+				क्रमागत gpio_id id,
+				uपूर्णांक32_t en);
+		व्योम (*init_hpd)(
+				काष्ठा hw_hpd **hw_hpd,
+				काष्ठा dc_context *ctx,
+				क्रमागत gpio_id id,
+				uपूर्णांक32_t en);
+		काष्ठा hw_gpio_pin *(*get_hpd_pin)(
+				काष्ठा gpio *gpio);
+		काष्ठा hw_gpio_pin *(*get_ddc_pin)(
+				काष्ठा gpio *gpio);
+		काष्ठा hw_gpio_pin *(*get_generic_pin)(
+				काष्ठा gpio *gpio);
+		व्योम (*define_hpd_रेजिस्टरs)(
+				काष्ठा hw_gpio_pin *pin,
+				uपूर्णांक32_t en);
+		व्योम (*define_ddc_रेजिस्टरs)(
+				काष्ठा hw_gpio_pin *pin,
+				uपूर्णांक32_t en);
+		व्योम (*define_generic_रेजिस्टरs)(
+				काष्ठा hw_gpio_pin *pin,
+				uपूर्णांक32_t en);
+	पूर्ण *funcs;
+पूर्ण;
 
 bool dal_hw_factory_init(
-	struct hw_factory *factory,
-	enum dce_version dce_version,
-	enum dce_environment dce_environment);
+	काष्ठा hw_factory *factory,
+	क्रमागत dce_version dce_version,
+	क्रमागत dce_environment dce_environment);
 
-#endif
+#पूर्ण_अगर

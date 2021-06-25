@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_SYMSRC_
-#define __PERF_SYMSRC_ 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_SYMSRC_
+#घोषणा __PERF_SYMSRC_ 1
 
-#include <stdbool.h>
-#include <stddef.h>
-#include "dso.h"
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश "dso.h"
 
-#ifdef HAVE_LIBELF_SUPPORT
-#include <libelf.h>
-#include <gelf.h>
-#endif
-#include <elf.h>
+#अगर_घोषित HAVE_LIBELF_SUPPORT
+#समावेश <libelf.h>
+#समावेश <gelf.h>
+#पूर्ण_अगर
+#समावेश <elf.h>
 
-struct symsrc {
-	char		     *name;
-	int		     fd;
-	enum dso_binary_type type;
+काष्ठा symsrc अणु
+	अक्षर		     *name;
+	पूर्णांक		     fd;
+	क्रमागत dso_binary_type type;
 
-#ifdef HAVE_LIBELF_SUPPORT
+#अगर_घोषित HAVE_LIBELF_SUPPORT
 	Elf		     *elf;
 	GElf_Ehdr	     ehdr;
 
 	Elf_Scn		     *opdsec;
-	size_t		     opdidx;
+	माप_प्रकार		     opdidx;
 	GElf_Shdr	     opdshdr;
 
 	Elf_Scn		     *symtab;
 	GElf_Shdr	     symshdr;
 
 	Elf_Scn		     *dynsym;
-	size_t		     dynsym_idx;
+	माप_प्रकार		     dynsym_idx;
 	GElf_Shdr	     dynshdr;
 
 	bool		     adjust_symbols;
 	bool		     is_64_bit;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-int symsrc__init(struct symsrc *ss, struct dso *dso, const char *name, enum dso_binary_type type);
-void symsrc__destroy(struct symsrc *ss);
+पूर्णांक symsrc__init(काष्ठा symsrc *ss, काष्ठा dso *dso, स्थिर अक्षर *name, क्रमागत dso_binary_type type);
+व्योम symsrc__destroy(काष्ठा symsrc *ss);
 
-bool symsrc__has_symtab(struct symsrc *ss);
-bool symsrc__possibly_runtime(struct symsrc *ss);
+bool symsrc__has_symtab(काष्ठा symsrc *ss);
+bool symsrc__possibly_runसमय(काष्ठा symsrc *ss);
 
-#endif /* __PERF_SYMSRC_ */
+#पूर्ण_अगर /* __PERF_SYMSRC_ */

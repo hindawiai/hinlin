@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * MIPS-specific support for Broadcom STB S2/S3/S5 power management
+ * MIPS-specअगरic support क्रम Broadcom STB S2/S3/S5 घातer management
  *
  * Copyright (C) 2016-2017 Broadcom
  */
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/delay.h>
-#include <linux/suspend.h>
-#include <asm/bmips.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/suspend.h>
+#समावेश <यंत्र/bmips.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include "pm.h"
+#समावेश "pm.h"
 
-#define S2_NUM_PARAMS		6
-#define MAX_NUM_MEMC		3
+#घोषणा S2_NUM_PARAMS		6
+#घोषणा MAX_NUM_MEMC		3
 
-/* S3 constants */
-#define MAX_GP_REGS		16
-#define MAX_CP0_REGS		32
-#define NUM_MEMC_CLIENTS	128
-#define AON_CTRL_RAM_SIZE	128
-#define BRCMSTB_S3_MAGIC	0x5AFEB007
+/* S3 स्थिरants */
+#घोषणा MAX_GP_REGS		16
+#घोषणा MAX_CP0_REGS		32
+#घोषणा NUM_MEMC_CLIENTS	128
+#घोषणा AON_CTRL_RAM_SIZE	128
+#घोषणा BRCMSTB_S3_MAGIC	0x5AFEB007
 
-#define CLEAR_RESET_MASK	0x01
+#घोषणा CLEAR_RESET_MASK	0x01
 
-/* Index each CP0 register that needs to be saved */
-#define CONTEXT		0
-#define USER_LOCAL	1
-#define PGMK		2
-#define HWRENA		3
-#define COMPARE		4
-#define STATUS		5
-#define CONFIG		6
-#define MODE		7
-#define EDSP		8
-#define BOOT_VEC	9
-#define EBASE		10
+/* Index each CP0 रेजिस्टर that needs to be saved */
+#घोषणा CONTEXT		0
+#घोषणा USER_LOCAL	1
+#घोषणा PGMK		2
+#घोषणा HWRENA		3
+#घोषणा COMPARE		4
+#घोषणा STATUS		5
+#घोषणा CONFIG		6
+#घोषणा MODE		7
+#घोषणा EDSP		8
+#घोषणा BOOT_VEC	9
+#घोषणा EBASE		10
 
-struct brcmstb_memc {
-	void __iomem *ddr_phy_base;
-	void __iomem *arb_base;
-};
+काष्ठा brcmstb_memc अणु
+	व्योम __iomem *ddr_phy_base;
+	व्योम __iomem *arb_base;
+पूर्ण;
 
-struct brcmstb_pm_control {
-	void __iomem *aon_ctrl_base;
-	void __iomem *aon_sram_base;
-	void __iomem *timers_base;
-	struct brcmstb_memc memcs[MAX_NUM_MEMC];
-	int num_memc;
-};
+काष्ठा brcmstb_pm_control अणु
+	व्योम __iomem *aon_ctrl_base;
+	व्योम __iomem *aon_sram_base;
+	व्योम __iomem *समयrs_base;
+	काष्ठा brcmstb_memc memcs[MAX_NUM_MEMC];
+	पूर्णांक num_memc;
+पूर्ण;
 
-struct brcm_pm_s3_context {
+काष्ठा brcm_pm_s3_context अणु
 	u32			cp0_regs[MAX_CP0_REGS];
 	u32			memc0_rts[NUM_MEMC_CLIENTS];
 	u32			sc_boot_vec;
-};
+पूर्ण;
 
-struct brcmstb_mem_transfer;
+काष्ठा brcmstb_mem_transfer;
 
-struct brcmstb_mem_transfer {
-	struct brcmstb_mem_transfer	*next;
-	void				*src;
-	void				*dst;
+काष्ठा brcmstb_mem_transfer अणु
+	काष्ठा brcmstb_mem_transfer	*next;
+	व्योम				*src;
+	व्योम				*dst;
 	dma_addr_t			pa_src;
 	dma_addr_t			pa_dst;
 	u32				len;
@@ -75,187 +76,187 @@ struct brcmstb_mem_transfer {
 	u8				src_remapped;
 	u8				dst_remapped;
 	u8				src_dst_remapped;
-};
+पूर्ण;
 
-#define AON_SAVE_SRAM(base, idx, val) \
-	__raw_writel(val, base + (idx << 2))
+#घोषणा AON_SAVE_SRAM(base, idx, val) \
+	__raw_ग_लिखोl(val, base + (idx << 2))
 
-/* Used for saving registers in asm */
+/* Used क्रम saving रेजिस्टरs in यंत्र */
 u32 gp_regs[MAX_GP_REGS];
 
-#define	BSP_CLOCK_STOP		0x00
-#define PM_INITIATE		0x01
+#घोषणा	BSP_CLOCK_STOP		0x00
+#घोषणा PM_INITIATE		0x01
 
-static struct brcmstb_pm_control ctrl;
+अटल काष्ठा brcmstb_pm_control ctrl;
 
-static void brcm_pm_save_cp0_context(struct brcm_pm_s3_context *ctx)
-{
+अटल व्योम brcm_pm_save_cp0_context(काष्ठा brcm_pm_s3_context *ctx)
+अणु
 	/* Generic MIPS */
-	ctx->cp0_regs[CONTEXT] = read_c0_context();
-	ctx->cp0_regs[USER_LOCAL] = read_c0_userlocal();
-	ctx->cp0_regs[PGMK] = read_c0_pagemask();
-	ctx->cp0_regs[HWRENA] = read_c0_cache();
-	ctx->cp0_regs[COMPARE] = read_c0_compare();
-	ctx->cp0_regs[STATUS] = read_c0_status();
+	ctx->cp0_regs[CONTEXT] = पढ़ो_c0_context();
+	ctx->cp0_regs[USER_LOCAL] = पढ़ो_c0_userlocal();
+	ctx->cp0_regs[PGMK] = पढ़ो_c0_pagemask();
+	ctx->cp0_regs[HWRENA] = पढ़ो_c0_cache();
+	ctx->cp0_regs[COMPARE] = पढ़ो_c0_compare();
+	ctx->cp0_regs[STATUS] = पढ़ो_c0_status();
 
-	/* Broadcom specific */
-	ctx->cp0_regs[CONFIG] = read_c0_brcm_config();
-	ctx->cp0_regs[MODE] = read_c0_brcm_mode();
-	ctx->cp0_regs[EDSP] = read_c0_brcm_edsp();
-	ctx->cp0_regs[BOOT_VEC] = read_c0_brcm_bootvec();
-	ctx->cp0_regs[EBASE] = read_c0_ebase();
+	/* Broadcom specअगरic */
+	ctx->cp0_regs[CONFIG] = पढ़ो_c0_brcm_config();
+	ctx->cp0_regs[MODE] = पढ़ो_c0_brcm_mode();
+	ctx->cp0_regs[EDSP] = पढ़ो_c0_brcm_edsp();
+	ctx->cp0_regs[BOOT_VEC] = पढ़ो_c0_brcm_bootvec();
+	ctx->cp0_regs[EBASE] = पढ़ो_c0_ebase();
 
-	ctx->sc_boot_vec = bmips_read_zscm_reg(0xa0);
-}
+	ctx->sc_boot_vec = bmips_पढ़ो_zscm_reg(0xa0);
+पूर्ण
 
-static void brcm_pm_restore_cp0_context(struct brcm_pm_s3_context *ctx)
-{
+अटल व्योम brcm_pm_restore_cp0_context(काष्ठा brcm_pm_s3_context *ctx)
+अणु
 	/* Restore cp0 state */
-	bmips_write_zscm_reg(0xa0, ctx->sc_boot_vec);
+	bmips_ग_लिखो_zscm_reg(0xa0, ctx->sc_boot_vec);
 
 	/* Generic MIPS */
-	write_c0_context(ctx->cp0_regs[CONTEXT]);
-	write_c0_userlocal(ctx->cp0_regs[USER_LOCAL]);
-	write_c0_pagemask(ctx->cp0_regs[PGMK]);
-	write_c0_cache(ctx->cp0_regs[HWRENA]);
-	write_c0_compare(ctx->cp0_regs[COMPARE]);
-	write_c0_status(ctx->cp0_regs[STATUS]);
+	ग_लिखो_c0_context(ctx->cp0_regs[CONTEXT]);
+	ग_लिखो_c0_userlocal(ctx->cp0_regs[USER_LOCAL]);
+	ग_लिखो_c0_pagemask(ctx->cp0_regs[PGMK]);
+	ग_लिखो_c0_cache(ctx->cp0_regs[HWRENA]);
+	ग_लिखो_c0_compare(ctx->cp0_regs[COMPARE]);
+	ग_लिखो_c0_status(ctx->cp0_regs[STATUS]);
 
-	/* Broadcom specific */
-	write_c0_brcm_config(ctx->cp0_regs[CONFIG]);
-	write_c0_brcm_mode(ctx->cp0_regs[MODE]);
-	write_c0_brcm_edsp(ctx->cp0_regs[EDSP]);
-	write_c0_brcm_bootvec(ctx->cp0_regs[BOOT_VEC]);
-	write_c0_ebase(ctx->cp0_regs[EBASE]);
-}
+	/* Broadcom specअगरic */
+	ग_लिखो_c0_brcm_config(ctx->cp0_regs[CONFIG]);
+	ग_लिखो_c0_brcm_mode(ctx->cp0_regs[MODE]);
+	ग_लिखो_c0_brcm_edsp(ctx->cp0_regs[EDSP]);
+	ग_लिखो_c0_brcm_bootvec(ctx->cp0_regs[BOOT_VEC]);
+	ग_लिखो_c0_ebase(ctx->cp0_regs[EBASE]);
+पूर्ण
 
-static void  brcmstb_pm_handshake(void)
-{
-	void __iomem *base = ctrl.aon_ctrl_base;
-	u32 tmp;
+अटल व्योम  brcmstb_pm_handshake(व्योम)
+अणु
+	व्योम __iomem *base = ctrl.aon_ctrl_base;
+	u32 पंचांगp;
 
-	/* BSP power handshake, v1 */
-	tmp = __raw_readl(base + AON_CTRL_HOST_MISC_CMDS);
-	tmp &= ~1UL;
-	__raw_writel(tmp, base + AON_CTRL_HOST_MISC_CMDS);
-	(void)__raw_readl(base + AON_CTRL_HOST_MISC_CMDS);
+	/* BSP घातer handshake, v1 */
+	पंचांगp = __raw_पढ़ोl(base + AON_CTRL_HOST_MISC_CMDS);
+	पंचांगp &= ~1UL;
+	__raw_ग_लिखोl(पंचांगp, base + AON_CTRL_HOST_MISC_CMDS);
+	(व्योम)__raw_पढ़ोl(base + AON_CTRL_HOST_MISC_CMDS);
 
-	__raw_writel(0, base + AON_CTRL_PM_INITIATE);
-	(void)__raw_readl(base + AON_CTRL_PM_INITIATE);
-	__raw_writel(BSP_CLOCK_STOP | PM_INITIATE,
+	__raw_ग_लिखोl(0, base + AON_CTRL_PM_INITIATE);
+	(व्योम)__raw_पढ़ोl(base + AON_CTRL_PM_INITIATE);
+	__raw_ग_लिखोl(BSP_CLOCK_STOP | PM_INITIATE,
 		     base + AON_CTRL_PM_INITIATE);
 	/*
-	 * HACK: BSP may have internal race on the CLOCK_STOP command.
-	 * Avoid touching the BSP for a few milliseconds.
+	 * HACK: BSP may have पूर्णांकernal race on the CLOCK_STOP command.
+	 * Aव्योम touching the BSP क्रम a few milliseconds.
 	 */
 	mdelay(3);
-}
+पूर्ण
 
-static void brcmstb_pm_s5(void)
-{
-	void __iomem *base = ctrl.aon_ctrl_base;
+अटल व्योम brcmstb_pm_s5(व्योम)
+अणु
+	व्योम __iomem *base = ctrl.aon_ctrl_base;
 
 	brcmstb_pm_handshake();
 
 	/* Clear magic s3 warm-boot value */
 	AON_SAVE_SRAM(ctrl.aon_sram_base, 0, 0);
 
-	/* Set the countdown */
-	__raw_writel(0x10, base + AON_CTRL_PM_CPU_WAIT_COUNT);
-	(void)__raw_readl(base + AON_CTRL_PM_CPU_WAIT_COUNT);
+	/* Set the countकरोwn */
+	__raw_ग_लिखोl(0x10, base + AON_CTRL_PM_CPU_WAIT_COUNT);
+	(व्योम)__raw_पढ़ोl(base + AON_CTRL_PM_CPU_WAIT_COUNT);
 
 	/* Prepare to S5 cold boot */
-	__raw_writel(PM_COLD_CONFIG, base + AON_CTRL_PM_CTRL);
-	(void)__raw_readl(base + AON_CTRL_PM_CTRL);
+	__raw_ग_लिखोl(PM_COLD_CONFIG, base + AON_CTRL_PM_CTRL);
+	(व्योम)__raw_पढ़ोl(base + AON_CTRL_PM_CTRL);
 
-	__raw_writel((PM_COLD_CONFIG | PM_PWR_DOWN), base +
+	__raw_ग_लिखोl((PM_COLD_CONFIG | PM_PWR_DOWN), base +
 		      AON_CTRL_PM_CTRL);
-	(void)__raw_readl(base + AON_CTRL_PM_CTRL);
+	(व्योम)__raw_पढ़ोl(base + AON_CTRL_PM_CTRL);
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	wait\n"
 	: : : "memory");
-}
+पूर्ण
 
-static int brcmstb_pm_s3(void)
-{
-	struct brcm_pm_s3_context s3_context;
-	void __iomem *memc_arb_base;
-	unsigned long flags;
-	u32 tmp;
-	int i;
+अटल पूर्णांक brcmstb_pm_s3(व्योम)
+अणु
+	काष्ठा brcm_pm_s3_context s3_context;
+	व्योम __iomem *memc_arb_base;
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
+	पूर्णांक i;
 
-	/* Prepare for s3 */
+	/* Prepare क्रम s3 */
 	AON_SAVE_SRAM(ctrl.aon_sram_base, 0, BRCMSTB_S3_MAGIC);
 	AON_SAVE_SRAM(ctrl.aon_sram_base, 1, (u32)&s3_reentry);
 	AON_SAVE_SRAM(ctrl.aon_sram_base, 2, 0);
 
 	/* Clear RESET_HISTORY */
-	tmp = __raw_readl(ctrl.aon_ctrl_base + AON_CTRL_RESET_CTRL);
-	tmp &= ~CLEAR_RESET_MASK;
-	__raw_writel(tmp, ctrl.aon_ctrl_base + AON_CTRL_RESET_CTRL);
+	पंचांगp = __raw_पढ़ोl(ctrl.aon_ctrl_base + AON_CTRL_RESET_CTRL);
+	पंचांगp &= ~CLEAR_RESET_MASK;
+	__raw_ग_लिखोl(पंचांगp, ctrl.aon_ctrl_base + AON_CTRL_RESET_CTRL);
 
 	local_irq_save(flags);
 
-	/* Inhibit DDR_RSTb pulse for both MMCs*/
-	for (i = 0; i < ctrl.num_memc; i++) {
-		tmp = __raw_readl(ctrl.memcs[i].ddr_phy_base +
+	/* Inhibit DDR_RSTb pulse क्रम both MMCs*/
+	क्रम (i = 0; i < ctrl.num_memc; i++) अणु
+		पंचांगp = __raw_पढ़ोl(ctrl.memcs[i].ddr_phy_base +
 			DDR40_PHY_CONTROL_REGS_0_STANDBY_CTRL);
 
-		tmp &= ~0x0f;
-		__raw_writel(tmp, ctrl.memcs[i].ddr_phy_base +
+		पंचांगp &= ~0x0f;
+		__raw_ग_लिखोl(पंचांगp, ctrl.memcs[i].ddr_phy_base +
 			DDR40_PHY_CONTROL_REGS_0_STANDBY_CTRL);
-		tmp |= (0x05 | BIT(5));
-		__raw_writel(tmp, ctrl.memcs[i].ddr_phy_base +
+		पंचांगp |= (0x05 | BIT(5));
+		__raw_ग_लिखोl(पंचांगp, ctrl.memcs[i].ddr_phy_base +
 			DDR40_PHY_CONTROL_REGS_0_STANDBY_CTRL);
-	}
+	पूर्ण
 
 	/* Save CP0 context */
 	brcm_pm_save_cp0_context(&s3_context);
 
-	/* Save RTS(skip debug register) */
+	/* Save RTS(skip debug रेजिस्टर) */
 	memc_arb_base = ctrl.memcs[0].arb_base + 4;
-	for (i = 0; i < NUM_MEMC_CLIENTS; i++) {
-		s3_context.memc0_rts[i] = __raw_readl(memc_arb_base);
+	क्रम (i = 0; i < NUM_MEMC_CLIENTS; i++) अणु
+		s3_context.memc0_rts[i] = __raw_पढ़ोl(memc_arb_base);
 		memc_arb_base += 4;
-	}
+	पूर्ण
 
 	/* Save I/O context */
 	local_flush_tlb_all();
 	_dma_cache_wback_inv(0, ~0);
 
-	brcm_pm_do_s3(ctrl.aon_ctrl_base, current_cpu_data.dcache.linesz);
+	brcm_pm_करो_s3(ctrl.aon_ctrl_base, current_cpu_data.dcache.linesz);
 
 	/* CPU reconfiguration */
 	local_flush_tlb_all();
 	bmips_cpu_setup();
 	cpumask_clear(&bmips_booted_mask);
 
-	/* Restore RTS (skip debug register) */
+	/* Restore RTS (skip debug रेजिस्टर) */
 	memc_arb_base = ctrl.memcs[0].arb_base + 4;
-	for (i = 0; i < NUM_MEMC_CLIENTS; i++) {
-		__raw_writel(s3_context.memc0_rts[i], memc_arb_base);
+	क्रम (i = 0; i < NUM_MEMC_CLIENTS; i++) अणु
+		__raw_ग_लिखोl(s3_context.memc0_rts[i], memc_arb_base);
 		memc_arb_base += 4;
-	}
+	पूर्ण
 
 	/* restore CP0 context */
 	brcm_pm_restore_cp0_context(&s3_context);
 
 	local_irq_restore(flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_pm_s2(void)
-{
+अटल पूर्णांक brcmstb_pm_s2(व्योम)
+अणु
 	/*
-	 * We need to pass 6 arguments to an assembly function. Lets avoid the
+	 * We need to pass 6 arguments to an assembly function. Lets aव्योम the
 	 * stack and pass arguments in a explicit 4 byte array. The assembly
 	 * code assumes all arguments are 4 bytes and arguments are ordered
 	 * like so:
 	 *
-	 * 0: AON_CTRl base register
-	 * 1: DDR_PHY base register
+	 * 0: AON_CTRl base रेजिस्टर
+	 * 1: DDR_PHY base रेजिस्टर
 	 * 2: TIMERS base resgister
 	 * 3: I-Cache line size
 	 * 4: Restart vector address
@@ -266,20 +267,20 @@ static int brcmstb_pm_s2(void)
 	/* Prepare s2 parameters */
 	s2_params[0] = (u32)ctrl.aon_ctrl_base;
 	s2_params[1] = (u32)ctrl.memcs[0].ddr_phy_base;
-	s2_params[2] = (u32)ctrl.timers_base;
+	s2_params[2] = (u32)ctrl.समयrs_base;
 	s2_params[3] = (u32)current_cpu_data.icache.linesz;
 	s2_params[4] = (u32)BMIPS_WARM_RESTART_VEC;
-	s2_params[5] = (u32)(bmips_smp_int_vec_end -
-		bmips_smp_int_vec);
+	s2_params[5] = (u32)(bmips_smp_पूर्णांक_vec_end -
+		bmips_smp_पूर्णांक_vec);
 
 	/* Drop to standby */
-	brcm_pm_do_s2(s2_params);
+	brcm_pm_करो_s2(s2_params);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_pm_standby(bool deep_standby)
-{
+अटल पूर्णांक brcmstb_pm_standby(bool deep_standby)
+अणु
 	brcmstb_pm_handshake();
 
 	/* Send IRQs to BMIPS_WARM_RESTART_VEC */
@@ -288,166 +289,166 @@ static int brcmstb_pm_standby(bool deep_standby)
 	set_c0_status(ST0_BEV);
 	irq_disable_hazard();
 
-	if (deep_standby)
+	अगर (deep_standby)
 		brcmstb_pm_s3();
-	else
+	अन्यथा
 		brcmstb_pm_s2();
 
-	/* Send IRQs to normal runtime vectors */
+	/* Send IRQs to normal runसमय vectors */
 	clear_c0_status(ST0_BEV);
 	irq_disable_hazard();
 	set_c0_cause(CAUSEF_IV);
 	irq_disable_hazard();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmstb_pm_enter(suspend_state_t state)
-{
-	int ret = -EINVAL;
+अटल पूर्णांक brcmstb_pm_enter(suspend_state_t state)
+अणु
+	पूर्णांक ret = -EINVAL;
 
-	switch (state) {
-	case PM_SUSPEND_STANDBY:
+	चयन (state) अणु
+	हाल PM_SUSPEND_STANDBY:
 		ret = brcmstb_pm_standby(false);
-		break;
-	case PM_SUSPEND_MEM:
+		अवरोध;
+	हाल PM_SUSPEND_MEM:
 		ret = brcmstb_pm_standby(true);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmstb_pm_valid(suspend_state_t state)
-{
-	switch (state) {
-	case PM_SUSPEND_STANDBY:
-		return true;
-	case PM_SUSPEND_MEM:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल पूर्णांक brcmstb_pm_valid(suspend_state_t state)
+अणु
+	चयन (state) अणु
+	हाल PM_SUSPEND_STANDBY:
+		वापस true;
+	हाल PM_SUSPEND_MEM:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct platform_suspend_ops brcmstb_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops brcmstb_pm_ops = अणु
 	.enter		= brcmstb_pm_enter,
 	.valid		= brcmstb_pm_valid,
-};
+पूर्ण;
 
-static const struct of_device_id aon_ctrl_dt_ids[] = {
-	{ .compatible = "brcm,brcmstb-aon-ctrl" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id aon_ctrl_dt_ids[] = अणु
+	अणु .compatible = "brcm,brcmstb-aon-ctrl" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static const struct of_device_id ddr_phy_dt_ids[] = {
-	{ .compatible = "brcm,brcmstb-ddr-phy" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id ddr_phy_dt_ids[] = अणु
+	अणु .compatible = "brcm,brcmstb-ddr-phy" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static const struct of_device_id arb_dt_ids[] = {
-	{ .compatible = "brcm,brcmstb-memc-arb" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id arb_dt_ids[] = अणु
+	अणु .compatible = "brcm,brcmstb-memc-arb" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static const struct of_device_id timers_ids[] = {
-	{ .compatible = "brcm,brcmstb-timers" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id समयrs_ids[] = अणु
+	अणु .compatible = "brcm,brcmstb-timers" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static inline void __iomem *brcmstb_ioremap_node(struct device_node *dn,
-						 int index)
-{
-	return of_io_request_and_map(dn, index, dn->full_name);
-}
+अटल अंतरभूत व्योम __iomem *brcmstb_ioremap_node(काष्ठा device_node *dn,
+						 पूर्णांक index)
+अणु
+	वापस of_io_request_and_map(dn, index, dn->full_name);
+पूर्ण
 
-static void __iomem *brcmstb_ioremap_match(const struct of_device_id *matches,
-					   int index, const void **ofdata)
-{
-	struct device_node *dn;
-	const struct of_device_id *match;
+अटल व्योम __iomem *brcmstb_ioremap_match(स्थिर काष्ठा of_device_id *matches,
+					   पूर्णांक index, स्थिर व्योम **ofdata)
+अणु
+	काष्ठा device_node *dn;
+	स्थिर काष्ठा of_device_id *match;
 
-	dn = of_find_matching_node_and_match(NULL, matches, &match);
-	if (!dn)
-		return ERR_PTR(-EINVAL);
+	dn = of_find_matching_node_and_match(शून्य, matches, &match);
+	अगर (!dn)
+		वापस ERR_PTR(-EINVAL);
 
-	if (ofdata)
+	अगर (ofdata)
 		*ofdata = match->data;
 
-	return brcmstb_ioremap_node(dn, index);
-}
+	वापस brcmstb_ioremap_node(dn, index);
+पूर्ण
 
-static int brcmstb_pm_init(void)
-{
-	struct device_node *dn;
-	void __iomem *base;
-	int i;
+अटल पूर्णांक brcmstb_pm_init(व्योम)
+अणु
+	काष्ठा device_node *dn;
+	व्योम __iomem *base;
+	पूर्णांक i;
 
-	/* AON ctrl registers */
-	base = brcmstb_ioremap_match(aon_ctrl_dt_ids, 0, NULL);
-	if (IS_ERR(base)) {
+	/* AON ctrl रेजिस्टरs */
+	base = brcmstb_ioremap_match(aon_ctrl_dt_ids, 0, शून्य);
+	अगर (IS_ERR(base)) अणु
 		pr_err("error mapping AON_CTRL\n");
-		goto aon_err;
-	}
+		जाओ aon_err;
+	पूर्ण
 	ctrl.aon_ctrl_base = base;
 
-	/* AON SRAM registers */
-	base = brcmstb_ioremap_match(aon_ctrl_dt_ids, 1, NULL);
-	if (IS_ERR(base)) {
+	/* AON SRAM रेजिस्टरs */
+	base = brcmstb_ioremap_match(aon_ctrl_dt_ids, 1, शून्य);
+	अगर (IS_ERR(base)) अणु
 		pr_err("error mapping AON_SRAM\n");
-		goto sram_err;
-	}
+		जाओ sram_err;
+	पूर्ण
 	ctrl.aon_sram_base = base;
 
 	ctrl.num_memc = 0;
-	/* Map MEMC DDR PHY registers */
-	for_each_matching_node(dn, ddr_phy_dt_ids) {
+	/* Map MEMC DDR PHY रेजिस्टरs */
+	क्रम_each_matching_node(dn, ddr_phy_dt_ids) अणु
 		i = ctrl.num_memc;
-		if (i >= MAX_NUM_MEMC) {
+		अगर (i >= MAX_NUM_MEMC) अणु
 			pr_warn("Too many MEMCs (max %d)\n", MAX_NUM_MEMC);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		base = brcmstb_ioremap_node(dn, 0);
-		if (IS_ERR(base))
-			goto ddr_err;
+		अगर (IS_ERR(base))
+			जाओ ddr_err;
 
 		ctrl.memcs[i].ddr_phy_base = base;
 		ctrl.num_memc++;
-	}
+	पूर्ण
 
-	/* MEMC ARB registers */
-	base = brcmstb_ioremap_match(arb_dt_ids, 0, NULL);
-	if (IS_ERR(base)) {
+	/* MEMC ARB रेजिस्टरs */
+	base = brcmstb_ioremap_match(arb_dt_ids, 0, शून्य);
+	अगर (IS_ERR(base)) अणु
 		pr_err("error mapping MEMC ARB\n");
-		goto ddr_err;
-	}
+		जाओ ddr_err;
+	पूर्ण
 	ctrl.memcs[0].arb_base = base;
 
-	/* Timer registers */
-	base = brcmstb_ioremap_match(timers_ids, 0, NULL);
-	if (IS_ERR(base)) {
+	/* Timer रेजिस्टरs */
+	base = brcmstb_ioremap_match(समयrs_ids, 0, शून्य);
+	अगर (IS_ERR(base)) अणु
 		pr_err("error mapping timers\n");
-		goto tmr_err;
-	}
-	ctrl.timers_base = base;
+		जाओ पंचांगr_err;
+	पूर्ण
+	ctrl.समयrs_base = base;
 
 	/* s3 cold boot aka s5 */
-	pm_power_off = brcmstb_pm_s5;
+	pm_घातer_off = brcmstb_pm_s5;
 
 	suspend_set_ops(&brcmstb_pm_ops);
 
-	return 0;
+	वापस 0;
 
-tmr_err:
+पंचांगr_err:
 	iounmap(ctrl.memcs[0].arb_base);
 ddr_err:
-	for (i = 0; i < ctrl.num_memc; i++)
+	क्रम (i = 0; i < ctrl.num_memc; i++)
 		iounmap(ctrl.memcs[i].ddr_phy_base);
 
 	iounmap(ctrl.aon_sram_base);
 sram_err:
 	iounmap(ctrl.aon_ctrl_base);
 aon_err:
-	return PTR_ERR(base);
-}
+	वापस PTR_ERR(base);
+पूर्ण
 arch_initcall(brcmstb_pm_init);

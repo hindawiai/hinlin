@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Lightweight buffered reading library.
+ * Lightweight buffered पढ़ोing library.
  *
  * Copyright 2019 Google LLC.
  */
-#ifndef __API_IO__
-#define __API_IO__
+#अगर_अघोषित __API_IO__
+#घोषणा __API_IO__
 
-#include <stdlib.h>
-#include <unistd.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-struct io {
-	/* File descriptor being read/ */
-	int fd;
-	/* Size of the read buffer. */
-	unsigned int buf_len;
-	/* Pointer to storage for buffering read. */
-	char *buf;
+काष्ठा io अणु
+	/* File descriptor being पढ़ो/ */
+	पूर्णांक fd;
+	/* Size of the पढ़ो buffer. */
+	अचिन्हित पूर्णांक buf_len;
+	/* Poपूर्णांकer to storage क्रम buffering पढ़ो. */
+	अक्षर *buf;
 	/* End of the storage. */
-	char *end;
-	/* Currently accessed data pointer. */
-	char *data;
-	/* Set true on when the end of file on read error. */
+	अक्षर *end;
+	/* Currently accessed data poपूर्णांकer. */
+	अक्षर *data;
+	/* Set true on when the end of file on पढ़ो error. */
 	bool eof;
-};
+पूर्ण;
 
-static inline void io__init(struct io *io, int fd,
-			    char *buf, unsigned int buf_len)
-{
+अटल अंतरभूत व्योम io__init(काष्ठा io *io, पूर्णांक fd,
+			    अक्षर *buf, अचिन्हित पूर्णांक buf_len)
+अणु
 	io->fd = fd;
 	io->buf_len = buf_len;
 	io->buf = buf;
 	io->end = buf;
 	io->data = buf;
 	io->eof = false;
-}
+पूर्ण
 
-/* Reads one character from the "io" file with similar semantics to fgetc. */
-static inline int io__get_char(struct io *io)
-{
-	char *ptr = io->data;
+/* Reads one अक्षरacter from the "io" file with similar semantics to ख_अक्षर_लो. */
+अटल अंतरभूत पूर्णांक io__get_अक्षर(काष्ठा io *io)
+अणु
+	अक्षर *ptr = io->data;
 
-	if (io->eof)
-		return -1;
+	अगर (io->eof)
+		वापस -1;
 
-	if (ptr == io->end) {
-		ssize_t n = read(io->fd, io->buf, io->buf_len);
+	अगर (ptr == io->end) अणु
+		sमाप_प्रकार n = पढ़ो(io->fd, io->buf, io->buf_len);
 
-		if (n <= 0) {
+		अगर (n <= 0) अणु
 			io->eof = true;
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		ptr = &io->buf[0];
 		io->end = &io->buf[n];
-	}
+	पूर्ण
 	io->data = ptr + 1;
-	return *ptr;
-}
+	वापस *ptr;
+पूर्ण
 
-/* Read a hexadecimal value with no 0x prefix into the out argument hex. If the
- * first character isn't hexadecimal returns -2, io->eof returns -1, otherwise
- * returns the character after the hexadecimal value which may be -1 for eof.
- * If the read value is larger than a u64 the high-order bits will be dropped.
+/* Read a hexadecimal value with no 0x prefix पूर्णांकo the out argument hex. If the
+ * first अक्षरacter isn't hexadecimal वापसs -2, io->eof वापसs -1, otherwise
+ * वापसs the अक्षरacter after the hexadecimal value which may be -1 क्रम eof.
+ * If the पढ़ो value is larger than a u64 the high-order bits will be dropped.
  */
-static inline int io__get_hex(struct io *io, __u64 *hex)
-{
-	bool first_read = true;
+अटल अंतरभूत पूर्णांक io__get_hex(काष्ठा io *io, __u64 *hex)
+अणु
+	bool first_पढ़ो = true;
 
 	*hex = 0;
-	while (true) {
-		int ch = io__get_char(io);
+	जबतक (true) अणु
+		पूर्णांक ch = io__get_अक्षर(io);
 
-		if (ch < 0)
-			return ch;
-		if (ch >= '0' && ch <= '9')
+		अगर (ch < 0)
+			वापस ch;
+		अगर (ch >= '0' && ch <= '9')
 			*hex = (*hex << 4) | (ch - '0');
-		else if (ch >= 'a' && ch <= 'f')
+		अन्यथा अगर (ch >= 'a' && ch <= 'f')
 			*hex = (*hex << 4) | (ch - 'a' + 10);
-		else if (ch >= 'A' && ch <= 'F')
+		अन्यथा अगर (ch >= 'A' && ch <= 'F')
 			*hex = (*hex << 4) | (ch - 'A' + 10);
-		else if (first_read)
-			return -2;
-		else
-			return ch;
-		first_read = false;
-	}
-}
+		अन्यथा अगर (first_पढ़ो)
+			वापस -2;
+		अन्यथा
+			वापस ch;
+		first_पढ़ो = false;
+	पूर्ण
+पूर्ण
 
-/* Read a positive decimal value with out argument dec. If the first character
- * isn't a decimal returns -2, io->eof returns -1, otherwise returns the
- * character after the decimal value which may be -1 for eof. If the read value
+/* Read a positive decimal value with out argument dec. If the first अक्षरacter
+ * isn't a decimal वापसs -2, io->eof वापसs -1, otherwise वापसs the
+ * अक्षरacter after the decimal value which may be -1 क्रम eof. If the पढ़ो value
  * is larger than a u64 the high-order bits will be dropped.
  */
-static inline int io__get_dec(struct io *io, __u64 *dec)
-{
-	bool first_read = true;
+अटल अंतरभूत पूर्णांक io__get_dec(काष्ठा io *io, __u64 *dec)
+अणु
+	bool first_पढ़ो = true;
 
 	*dec = 0;
-	while (true) {
-		int ch = io__get_char(io);
+	जबतक (true) अणु
+		पूर्णांक ch = io__get_अक्षर(io);
 
-		if (ch < 0)
-			return ch;
-		if (ch >= '0' && ch <= '9')
+		अगर (ch < 0)
+			वापस ch;
+		अगर (ch >= '0' && ch <= '9')
 			*dec = (*dec * 10) + ch - '0';
-		else if (first_read)
-			return -2;
-		else
-			return ch;
-		first_read = false;
-	}
-}
+		अन्यथा अगर (first_पढ़ो)
+			वापस -2;
+		अन्यथा
+			वापस ch;
+		first_पढ़ो = false;
+	पूर्ण
+पूर्ण
 
-#endif /* __API_IO__ */
+#पूर्ण_अगर /* __API_IO__ */

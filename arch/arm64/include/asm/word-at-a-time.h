@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 ARM Ltd.
  */
-#ifndef __ASM_WORD_AT_A_TIME_H
-#define __ASM_WORD_AT_A_TIME_H
+#अगर_अघोषित __ASM_WORD_AT_A_TIME_H
+#घोषणा __ASM_WORD_AT_A_TIME_H
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#ifndef __AARCH64EB__
+#अगर_अघोषित __AARCH64EB__
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-struct word_at_a_time {
-	const unsigned long one_bits, high_bits;
-};
+काष्ठा word_at_a_समय अणु
+	स्थिर अचिन्हित दीर्घ one_bits, high_bits;
+पूर्ण;
 
-#define WORD_AT_A_TIME_CONSTANTS { REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) }
+#घोषणा WORD_AT_A_TIME_CONSTANTS अणु REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) पूर्ण
 
-static inline unsigned long has_zero(unsigned long a, unsigned long *bits,
-				     const struct word_at_a_time *c)
-{
-	unsigned long mask = ((a - c->one_bits) & ~a) & c->high_bits;
+अटल अंतरभूत अचिन्हित दीर्घ has_zero(अचिन्हित दीर्घ a, अचिन्हित दीर्घ *bits,
+				     स्थिर काष्ठा word_at_a_समय *c)
+अणु
+	अचिन्हित दीर्घ mask = ((a - c->one_bits) & ~a) & c->high_bits;
 	*bits = mask;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-#define prep_zero_mask(a, bits, c) (bits)
+#घोषणा prep_zero_mask(a, bits, c) (bits)
 
-static inline unsigned long create_zero_mask(unsigned long bits)
-{
+अटल अंतरभूत अचिन्हित दीर्घ create_zero_mask(अचिन्हित दीर्घ bits)
+अणु
 	bits = (bits - 1) & ~bits;
-	return bits >> 7;
-}
+	वापस bits >> 7;
+पूर्ण
 
-static inline unsigned long find_zero(unsigned long mask)
-{
-	return fls64(mask) >> 3;
-}
+अटल अंतरभूत अचिन्हित दीर्घ find_zero(अचिन्हित दीर्घ mask)
+अणु
+	वापस fls64(mask) >> 3;
+पूर्ण
 
-#define zero_bytemask(mask) (mask)
+#घोषणा zero_bytemask(mask) (mask)
 
-#else	/* __AARCH64EB__ */
-#include <asm-generic/word-at-a-time.h>
-#endif
+#अन्यथा	/* __AARCH64EB__ */
+#समावेश <यंत्र-generic/word-at-a-समय.स>
+#पूर्ण_अगर
 
 /*
  * Load an unaligned word from kernel space.
  *
- * In the (very unlikely) case of the word being a page-crosser
+ * In the (very unlikely) हाल of the word being a page-crosser
  * and the next page not being mapped, take the exception and
- * return zeroes in the non-existing part.
+ * वापस zeroes in the non-existing part.
  */
-static inline unsigned long load_unaligned_zeropad(const void *addr)
-{
-	unsigned long ret, tmp;
+अटल अंतरभूत अचिन्हित दीर्घ load_unaligned_zeropad(स्थिर व्योम *addr)
+अणु
+	अचिन्हित दीर्घ ret, पंचांगp;
 
 	__uaccess_enable_tco_async();
 
-	/* Load word from unaligned pointer addr */
-	asm(
+	/* Load word from unaligned poपूर्णांकer addr */
+	यंत्र(
 	"1:	ldr	%0, %3\n"
 	"2:\n"
 	"	.pushsection .fixup,\"ax\"\n"
@@ -67,20 +68,20 @@ static inline unsigned long load_unaligned_zeropad(const void *addr)
 	"	ldr	%0, [%1]\n"
 	"	and	%1, %2, #0x7\n"
 	"	lsl	%1, %1, #0x3\n"
-#ifndef __AARCH64EB__
+#अगर_अघोषित __AARCH64EB__
 	"	lsr	%0, %0, %1\n"
-#else
+#अन्यथा
 	"	lsl	%0, %0, %1\n"
-#endif
+#पूर्ण_अगर
 	"	b	2b\n"
 	"	.popsection\n"
 	_ASM_EXTABLE(1b, 3b)
-	: "=&r" (ret), "=&r" (tmp)
-	: "r" (addr), "Q" (*(unsigned long *)addr));
+	: "=&r" (ret), "=&r" (पंचांगp)
+	: "r" (addr), "Q" (*(अचिन्हित दीर्घ *)addr));
 
 	__uaccess_disable_tco_async();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* __ASM_WORD_AT_A_TIME_H */
+#पूर्ण_अगर /* __ASM_WORD_AT_A_TIME_H */

@@ -1,143 +1,144 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2002
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
-#ifndef _H_JFS_UNICODE
-#define _H_JFS_UNICODE
+#अगर_अघोषित _H_JFS_UNICODE
+#घोषणा _H_JFS_UNICODE
 
-#include <linux/slab.h>
-#include <asm/byteorder.h>
-#include "jfs_types.h"
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश "jfs_types.h"
 
-typedef struct {
-	wchar_t start;
-	wchar_t end;
-	signed char *table;
-} UNICASERANGE;
+प्रकार काष्ठा अणु
+	ब_अक्षर_प्रकार start;
+	ब_अक्षर_प्रकार end;
+	चिन्हित अक्षर *table;
+पूर्ण UNICASदुस्फल;
 
-extern signed char UniUpperTable[512];
-extern UNICASERANGE UniUpperRange[];
-extern int get_UCSname(struct component_name *, struct dentry *);
-extern int jfs_strfromUCS_le(char *, const __le16 *, int, struct nls_table *);
+बाह्य चिन्हित अक्षर UniUpperTable[512];
+बाह्य UNICASदुस्फल UniUpperRange[];
+बाह्य पूर्णांक get_UCSname(काष्ठा component_name *, काष्ठा dentry *);
+बाह्य पूर्णांक jfs_strfromUCS_le(अक्षर *, स्थिर __le16 *, पूर्णांक, काष्ठा nls_table *);
 
-#define free_UCSname(COMP) kfree((COMP)->name)
+#घोषणा मुक्त_UCSname(COMP) kमुक्त((COMP)->name)
 
 /*
  * UniStrcpy:  Copy a string
  */
-static inline wchar_t *UniStrcpy(wchar_t * ucs1, const wchar_t * ucs2)
-{
-	wchar_t *anchor = ucs1;	/* save the start of result string */
+अटल अंतरभूत ब_अक्षर_प्रकार *UniStrcpy(ब_अक्षर_प्रकार * ucs1, स्थिर ब_अक्षर_प्रकार * ucs2)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;	/* save the start of result string */
 
-	while ((*ucs1++ = *ucs2++));
-	return anchor;
-}
+	जबतक ((*ucs1++ = *ucs2++));
+	वापस anchor;
+पूर्ण
 
 
 
 /*
  * UniStrncpy:  Copy length limited string with pad
  */
-static inline __le16 *UniStrncpy_le(__le16 * ucs1, const __le16 * ucs2,
-				  size_t n)
-{
+अटल अंतरभूत __le16 *UniStrncpy_le(__le16 * ucs1, स्थिर __le16 * ucs2,
+				  माप_प्रकार n)
+अणु
 	__le16 *anchor = ucs1;
 
-	while (n-- && *ucs2)	/* Copy the strings */
+	जबतक (n-- && *ucs2)	/* Copy the strings */
 		*ucs1++ = *ucs2++;
 
 	n++;
-	while (n--)		/* Pad with nulls */
+	जबतक (n--)		/* Pad with nulls */
 		*ucs1++ = 0;
-	return anchor;
-}
+	वापस anchor;
+पूर्ण
 
 /*
  * UniStrncmp_le:  Compare length limited string - native to little-endian
  */
-static inline int UniStrncmp_le(const wchar_t * ucs1, const __le16 * ucs2,
-				size_t n)
-{
-	if (!n)
-		return 0;	/* Null strings are equal */
-	while ((*ucs1 == __le16_to_cpu(*ucs2)) && *ucs1 && --n) {
+अटल अंतरभूत पूर्णांक UniStrncmp_le(स्थिर ब_अक्षर_प्रकार * ucs1, स्थिर __le16 * ucs2,
+				माप_प्रकार n)
+अणु
+	अगर (!n)
+		वापस 0;	/* Null strings are equal */
+	जबतक ((*ucs1 == __le16_to_cpu(*ucs2)) && *ucs1 && --n) अणु
 		ucs1++;
 		ucs2++;
-	}
-	return (int) *ucs1 - (int) __le16_to_cpu(*ucs2);
-}
+	पूर्ण
+	वापस (पूर्णांक) *ucs1 - (पूर्णांक) __le16_to_cpu(*ucs2);
+पूर्ण
 
 /*
  * UniStrncpy_to_le:  Copy length limited string with pad to little-endian
  */
-static inline __le16 *UniStrncpy_to_le(__le16 * ucs1, const wchar_t * ucs2,
-				       size_t n)
-{
+अटल अंतरभूत __le16 *UniStrncpy_to_le(__le16 * ucs1, स्थिर ब_अक्षर_प्रकार * ucs2,
+				       माप_प्रकार n)
+अणु
 	__le16 *anchor = ucs1;
 
-	while (n-- && *ucs2)	/* Copy the strings */
+	जबतक (n-- && *ucs2)	/* Copy the strings */
 		*ucs1++ = cpu_to_le16(*ucs2++);
 
 	n++;
-	while (n--)		/* Pad with nulls */
+	जबतक (n--)		/* Pad with nulls */
 		*ucs1++ = 0;
-	return anchor;
-}
+	वापस anchor;
+पूर्ण
 
 /*
  * UniStrncpy_from_le:  Copy length limited string with pad from little-endian
  */
-static inline wchar_t *UniStrncpy_from_le(wchar_t * ucs1, const __le16 * ucs2,
-					  size_t n)
-{
-	wchar_t *anchor = ucs1;
+अटल अंतरभूत ब_अक्षर_प्रकार *UniStrncpy_from_le(ब_अक्षर_प्रकार * ucs1, स्थिर __le16 * ucs2,
+					  माप_प्रकार n)
+अणु
+	ब_अक्षर_प्रकार *anchor = ucs1;
 
-	while (n-- && *ucs2)	/* Copy the strings */
+	जबतक (n-- && *ucs2)	/* Copy the strings */
 		*ucs1++ = __le16_to_cpu(*ucs2++);
 
 	n++;
-	while (n--)		/* Pad with nulls */
+	जबतक (n--)		/* Pad with nulls */
 		*ucs1++ = 0;
-	return anchor;
-}
+	वापस anchor;
+पूर्ण
 
 /*
- * UniToupper:  Convert a unicode character to upper case
+ * UniToupper:  Convert a unicode अक्षरacter to upper हाल
  */
-static inline wchar_t UniToupper(wchar_t uc)
-{
-	UNICASERANGE *rp;
+अटल अंतरभूत ब_अक्षर_प्रकार UniToupper(ब_अक्षर_प्रकार uc)
+अणु
+	UNICASदुस्फल *rp;
 
-	if (uc < sizeof(UniUpperTable)) {	/* Latin characters */
-		return uc + UniUpperTable[uc];	/* Use base tables */
-	} else {
+	अगर (uc < माप(UniUpperTable)) अणु	/* Latin अक्षरacters */
+		वापस uc + UniUpperTable[uc];	/* Use base tables */
+	पूर्ण अन्यथा अणु
 		rp = UniUpperRange;	/* Use range tables */
-		while (rp->start) {
-			if (uc < rp->start)	/* Before start of range */
-				return uc;	/* Uppercase = input */
-			if (uc <= rp->end)	/* In range */
-				return uc + rp->table[uc - rp->start];
+		जबतक (rp->start) अणु
+			अगर (uc < rp->start)	/* Beक्रमe start of range */
+				वापस uc;	/* Upperहाल = input */
+			अगर (uc <= rp->end)	/* In range */
+				वापस uc + rp->table[uc - rp->start];
 			rp++;	/* Try next range */
-		}
-	}
-	return uc;		/* Past last range */
-}
+		पूर्ण
+	पूर्ण
+	वापस uc;		/* Past last range */
+पूर्ण
 
 
 /*
- * UniStrupr:  Upper case a unicode string
+ * UniStrupr:  Upper हाल a unicode string
  */
-static inline wchar_t *UniStrupr(wchar_t * upin)
-{
-	wchar_t *up;
+अटल अंतरभूत ब_अक्षर_प्रकार *UniStrupr(ब_अक्षर_प्रकार * upin)
+अणु
+	ब_अक्षर_प्रकार *up;
 
 	up = upin;
-	while (*up) {		/* For all characters */
+	जबतक (*up) अणु		/* For all अक्षरacters */
 		*up = UniToupper(*up);
 		up++;
-	}
-	return upin;		/* Return input pointer */
-}
+	पूर्ण
+	वापस upin;		/* Return input poपूर्णांकer */
+पूर्ण
 
-#endif				/* !_H_JFS_UNICODE */
+#पूर्ण_अगर				/* !_H_JFS_UNICODE */

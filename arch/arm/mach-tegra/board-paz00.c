@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/mach-tegra/board-paz00.c
  *
@@ -8,35 +9,35 @@
  * Copyright (C) 2010 Google, Inc.
  */
 
-#include <linux/property.h>
-#include <linux/gpio/machine.h>
-#include <linux/platform_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "board.h"
+#समावेश "board.h"
 
-static struct property_entry wifi_rfkill_prop[] __initdata = {
+अटल काष्ठा property_entry wअगरi_rfसमाप्त_prop[] __initdata = अणु
 	PROPERTY_ENTRY_STRING("name", "wifi_rfkill"),
 	PROPERTY_ENTRY_STRING("type", "wlan"),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_device wifi_rfkill_device = {
+अटल काष्ठा platक्रमm_device wअगरi_rfसमाप्त_device = अणु
 	.name	= "rfkill_gpio",
 	.id	= -1,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table wifi_gpio_lookup = {
+अटल काष्ठा gpiod_lookup_table wअगरi_gpio_lookup = अणु
 	.dev_id = "rfkill_gpio",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("tegra-gpio", 25, "reset", 0),
 		GPIO_LOOKUP("tegra-gpio", 85, "shutdown", 0),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-void __init tegra_paz00_wifikill_init(void)
-{
-	platform_device_add_properties(&wifi_rfkill_device, wifi_rfkill_prop);
-	gpiod_add_lookup_table(&wifi_gpio_lookup);
-	platform_device_register(&wifi_rfkill_device);
-}
+व्योम __init tegra_paz00_wअगरiसमाप्त_init(व्योम)
+अणु
+	platक्रमm_device_add_properties(&wअगरi_rfसमाप्त_device, wअगरi_rfसमाप्त_prop);
+	gpiod_add_lookup_table(&wअगरi_gpio_lookup);
+	platक्रमm_device_रेजिस्टर(&wअगरi_rfसमाप्त_device);
+पूर्ण

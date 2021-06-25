@@ -1,170 +1,171 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2000			Andre Hedrick <andre@linux-ide.org>
  * Copyright (C) 2000			Mark Lord <mlord@pobox.com>
  * Copyright (C) 2007			Bartlomiej Zolnierkiewicz
  *
- * May be copied or modified under the terms of the GNU General Public License
+ * May be copied or modअगरied under the terms of the GNU General Public License
  *
  * Development of this chipset driver was funded
  * by the nice folks at National Semiconductor.
  *
  * Documentation:
- *	CS5530 documentation available from National Semiconductor.
+ *	CS5530 करोcumentation available from National Semiconductor.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/ide.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ide.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define DRV_NAME "cs5530"
+#घोषणा DRV_NAME "cs5530"
 
 /*
- * Here are the standard PIO mode 0-4 timings for each "format".
+ * Here are the standard PIO mode 0-4 timings क्रम each "format".
  * Format-0 uses fast data reg timings, with slower command reg timings.
- * Format-1 uses fast timings for all registers, but won't work with all drives.
+ * Format-1 uses fast timings क्रम all रेजिस्टरs, but won't work with all drives.
  */
-static unsigned int cs5530_pio_timings[2][5] = {
-	{0x00009172, 0x00012171, 0x00020080, 0x00032010, 0x00040010},
-	{0xd1329172, 0x71212171, 0x30200080, 0x20102010, 0x00100010}
-};
+अटल अचिन्हित पूर्णांक cs5530_pio_timings[2][5] = अणु
+	अणु0x00009172, 0x00012171, 0x00020080, 0x00032010, 0x00040010पूर्ण,
+	अणु0xd1329172, 0x71212171, 0x30200080, 0x20102010, 0x00100010पूर्ण
+पूर्ण;
 
 /*
  * After chip reset, the PIO timings are set to 0x0000e132, which is not valid.
  */
-#define CS5530_BAD_PIO(timings) (((timings)&~0x80000000)==0x0000e132)
-#define CS5530_BASEREG(hwif)	(((hwif)->dma_base & ~0xf) + ((hwif)->channel ? 0x30 : 0x20))
+#घोषणा CS5530_BAD_PIO(timings) (((timings)&~0x80000000)==0x0000e132)
+#घोषणा CS5530_BASEREG(hwअगर)	(((hwअगर)->dma_base & ~0xf) + ((hwअगर)->channel ? 0x30 : 0x20))
 
 /**
- *	cs5530_set_pio_mode	-	set host controller for PIO mode
- *	@hwif: port
+ *	cs5530_set_pio_mode	-	set host controller क्रम PIO mode
+ *	@hwअगर: port
  *	@drive: drive
  *
- *	Handles setting of PIO mode for the chipset.
+ *	Handles setting of PIO mode क्रम the chipset.
  *
- *	The init_hwif_cs5530() routine guarantees that all drives
- *	will have valid default PIO timings set up before we get here.
+ *	The init_hwअगर_cs5530() routine guarantees that all drives
+ *	will have valid शेष PIO timings set up beक्रमe we get here.
  */
 
-static void cs5530_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	unsigned long basereg = CS5530_BASEREG(hwif);
-	unsigned int format = (inl(basereg + 4) >> 31) & 1;
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
+अटल व्योम cs5530_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	अचिन्हित दीर्घ basereg = CS5530_BASEREG(hwअगर);
+	अचिन्हित पूर्णांक क्रमmat = (inl(basereg + 4) >> 31) & 1;
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
 
-	outl(cs5530_pio_timings[format][pio], basereg + ((drive->dn & 1)<<3));
-}
+	outl(cs5530_pio_timings[क्रमmat][pio], basereg + ((drive->dn & 1)<<3));
+पूर्ण
 
 /**
  *	cs5530_udma_filter	-	UDMA filter
  *	@drive: drive
  *
- *	cs5530_udma_filter() does UDMA mask filtering for the given drive
- *	taking into the consideration capabilities of the mate device.
+ *	cs5530_udma_filter() करोes UDMA mask filtering क्रम the given drive
+ *	taking पूर्णांकo the consideration capabilities of the mate device.
  *
- *	The CS5530 specifies that two drives sharing a cable cannot mix
- *	UDMA/MDMA.  It has to be one or the other, for the pair, though
- *	different timings can still be chosen for each drive.  We could
+ *	The CS5530 specअगरies that two drives sharing a cable cannot mix
+ *	UDMA/MDMA.  It has to be one or the other, क्रम the pair, though
+ *	dअगरferent timings can still be chosen क्रम each drive.  We could
  *	set the appropriate timing bits on the fly, but that might be
- *	a bit confusing.  So, for now we statically handle this requirement
- *	by looking at our mate drive to see what it is capable of, before
- *	choosing a mode for our own drive.
+ *	a bit confusing.  So, क्रम now we अटलally handle this requirement
+ *	by looking at our mate drive to see what it is capable of, beक्रमe
+ *	choosing a mode क्रम our own drive.
  *
  *	Note: This relies on the fact we never fail from UDMA to MWDMA2
  *	but instead drop to PIO.
  */
 
-static u8 cs5530_udma_filter(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
+अटल u8 cs5530_udma_filter(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	ide_drive_t *mate = ide_get_pair_dev(drive);
 	u16 *mateid;
-	u8 mask = hwif->ultra_mask;
+	u8 mask = hwअगर->ultra_mask;
 
-	if (mate == NULL)
-		goto out;
+	अगर (mate == शून्य)
+		जाओ out;
 	mateid = mate->id;
 
-	if (ata_id_has_dma(mateid) && __ide_dma_bad_drive(mate) == 0) {
-		if ((mateid[ATA_ID_FIELD_VALID] & 4) &&
+	अगर (ata_id_has_dma(mateid) && __ide_dma_bad_drive(mate) == 0) अणु
+		अगर ((mateid[ATA_ID_FIELD_VALID] & 4) &&
 		    (mateid[ATA_ID_UDMA_MODES] & 7))
-			goto out;
-		if (mateid[ATA_ID_MWDMA_MODES] & 7)
+			जाओ out;
+		अगर (mateid[ATA_ID_MWDMA_MODES] & 7)
 			mask = 0;
-	}
+	पूर्ण
 out:
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static void cs5530_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	unsigned long basereg;
-	unsigned int reg, timings = 0;
+अटल व्योम cs5530_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	अचिन्हित दीर्घ basereg;
+	अचिन्हित पूर्णांक reg, timings = 0;
 
-	switch (drive->dma_mode) {
-		case XFER_UDMA_0:	timings = 0x00921250; break;
-		case XFER_UDMA_1:	timings = 0x00911140; break;
-		case XFER_UDMA_2:	timings = 0x00911030; break;
-		case XFER_MW_DMA_0:	timings = 0x00077771; break;
-		case XFER_MW_DMA_1:	timings = 0x00012121; break;
-		case XFER_MW_DMA_2:	timings = 0x00002020; break;
-	}
-	basereg = CS5530_BASEREG(hwif);
-	reg = inl(basereg + 4);			/* get drive0 config register */
-	timings |= reg & 0x80000000;		/* preserve PIO format bit */
-	if ((drive-> dn & 1) == 0) {		/* are we configuring drive0? */
-		outl(timings, basereg + 4);	/* write drive0 config register */
-	} else {
-		if (timings & 0x00100000)
-			reg |=  0x00100000;	/* enable UDMA timings for both drives */
-		else
-			reg &= ~0x00100000;	/* disable UDMA timings for both drives */
-		outl(reg, basereg + 4);		/* write drive0 config register */
-		outl(timings, basereg + 12);	/* write drive1 config register */
-	}
-}
+	चयन (drive->dma_mode) अणु
+		हाल XFER_UDMA_0:	timings = 0x00921250; अवरोध;
+		हाल XFER_UDMA_1:	timings = 0x00911140; अवरोध;
+		हाल XFER_UDMA_2:	timings = 0x00911030; अवरोध;
+		हाल XFER_MW_DMA_0:	timings = 0x00077771; अवरोध;
+		हाल XFER_MW_DMA_1:	timings = 0x00012121; अवरोध;
+		हाल XFER_MW_DMA_2:	timings = 0x00002020; अवरोध;
+	पूर्ण
+	basereg = CS5530_BASEREG(hwअगर);
+	reg = inl(basereg + 4);			/* get drive0 config रेजिस्टर */
+	timings |= reg & 0x80000000;		/* preserve PIO क्रमmat bit */
+	अगर ((drive-> dn & 1) == 0) अणु		/* are we configuring drive0? */
+		outl(timings, basereg + 4);	/* ग_लिखो drive0 config रेजिस्टर */
+	पूर्ण अन्यथा अणु
+		अगर (timings & 0x00100000)
+			reg |=  0x00100000;	/* enable UDMA timings क्रम both drives */
+		अन्यथा
+			reg &= ~0x00100000;	/* disable UDMA timings क्रम both drives */
+		outl(reg, basereg + 4);		/* ग_लिखो drive0 config रेजिस्टर */
+		outl(timings, basereg + 12);	/* ग_लिखो drive1 config रेजिस्टर */
+	पूर्ण
+पूर्ण
 
 /**
  *	init_chipset_5530	-	set up 5530 bridge
  *	@dev: PCI device
  *
- *	Initialize the cs5530 bridge for reliable IDE DMA operation.
+ *	Initialize the cs5530 bridge क्रम reliable IDE DMA operation.
  */
 
-static int init_chipset_cs5530(struct pci_dev *dev)
-{
-	struct pci_dev *master_0 = NULL, *cs5530_0 = NULL;
+अटल पूर्णांक init_chipset_cs5530(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा pci_dev *master_0 = शून्य, *cs5530_0 = शून्य;
 
-	if (pci_resource_start(dev, 4) == 0)
-		return -EFAULT;
+	अगर (pci_resource_start(dev, 4) == 0)
+		वापस -EFAULT;
 
-	dev = NULL;
-	while ((dev = pci_get_device(PCI_VENDOR_ID_CYRIX, PCI_ANY_ID, dev)) != NULL) {
-		switch (dev->device) {
-			case PCI_DEVICE_ID_CYRIX_PCI_MASTER:
+	dev = शून्य;
+	जबतक ((dev = pci_get_device(PCI_VENDOR_ID_CYRIX, PCI_ANY_ID, dev)) != शून्य) अणु
+		चयन (dev->device) अणु
+			हाल PCI_DEVICE_ID_CYRIX_PCI_MASTER:
 				master_0 = pci_dev_get(dev);
-				break;
-			case PCI_DEVICE_ID_CYRIX_5530_LEGACY:
+				अवरोध;
+			हाल PCI_DEVICE_ID_CYRIX_5530_LEGACY:
 				cs5530_0 = pci_dev_get(dev);
-				break;
-		}
-	}
-	if (!master_0) {
-		printk(KERN_ERR DRV_NAME ": unable to locate PCI MASTER function\n");
-		goto out;
-	}
-	if (!cs5530_0) {
-		printk(KERN_ERR DRV_NAME ": unable to locate CS5530 LEGACY function\n");
-		goto out;
-	}
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!master_0) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME ": unable to locate PCI MASTER function\n");
+		जाओ out;
+	पूर्ण
+	अगर (!cs5530_0) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME ": unable to locate CS5530 LEGACY function\n");
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Enable BusMaster and MemoryWriteAndInvalidate for the cs5530:
-	 * -->  OR 0x14 into 16-bit PCI COMMAND reg of function 0 of the cs5530
+	 * Enable BusMaster and MemoryWriteAndInvalidate क्रम the cs5530:
+	 * -->  OR 0x14 पूर्णांकo 16-bit PCI COMMAND reg of function 0 of the cs5530
 	 */
 
 	pci_set_master(cs5530_0);
@@ -172,123 +173,123 @@ static int init_chipset_cs5530(struct pci_dev *dev)
 
 	/*
 	 * Set PCI CacheLineSize to 16-bytes:
-	 * --> Write 0x04 into 8-bit PCI CACHELINESIZE reg of function 0 of the cs5530
+	 * --> Write 0x04 पूर्णांकo 8-bit PCI CACHELINESIZE reg of function 0 of the cs5530
 	 */
 
-	pci_write_config_byte(cs5530_0, PCI_CACHE_LINE_SIZE, 0x04);
+	pci_ग_लिखो_config_byte(cs5530_0, PCI_CACHE_LINE_SIZE, 0x04);
 
 	/*
-	 * Disable trapping of UDMA register accesses (Win98 hack):
-	 * --> Write 0x5006 into 16-bit reg at offset 0xd0 of function 0 of the cs5530
+	 * Disable trapping of UDMA रेजिस्टर accesses (Win98 hack):
+	 * --> Write 0x5006 पूर्णांकo 16-bit reg at offset 0xd0 of function 0 of the cs5530
 	 */
 
-	pci_write_config_word(cs5530_0, 0xd0, 0x5006);
+	pci_ग_लिखो_config_word(cs5530_0, 0xd0, 0x5006);
 
 	/*
-	 * Bit-1 at 0x40 enables MemoryWriteAndInvalidate on internal X-bus:
-	 * The other settings are what is necessary to get the register
-	 * into a sane state for IDE DMA operation.
+	 * Bit-1 at 0x40 enables MemoryWriteAndInvalidate on पूर्णांकernal X-bus:
+	 * The other settings are what is necessary to get the रेजिस्टर
+	 * पूर्णांकo a sane state क्रम IDE DMA operation.
 	 */
 
-	pci_write_config_byte(master_0, 0x40, 0x1e);
+	pci_ग_लिखो_config_byte(master_0, 0x40, 0x1e);
 
 	/* 
 	 * Set max PCI burst size (16-bytes seems to work best):
 	 *	   16bytes: set bit-1 at 0x41 (reg value of 0x16)
-	 *	all others: clear bit-1 at 0x41, and do:
+	 *	all others: clear bit-1 at 0x41, and करो:
 	 *	  128bytes: OR 0x00 at 0x41
 	 *	  256bytes: OR 0x04 at 0x41
 	 *	  512bytes: OR 0x08 at 0x41
 	 *	 1024bytes: OR 0x0c at 0x41
 	 */
 
-	pci_write_config_byte(master_0, 0x41, 0x14);
+	pci_ग_लिखो_config_byte(master_0, 0x41, 0x14);
 
 	/*
 	 * These settings are necessary to get the chip
-	 * into a sane state for IDE DMA operation.
+	 * पूर्णांकo a sane state क्रम IDE DMA operation.
 	 */
 
-	pci_write_config_byte(master_0, 0x42, 0x00);
-	pci_write_config_byte(master_0, 0x43, 0xc1);
+	pci_ग_लिखो_config_byte(master_0, 0x42, 0x00);
+	pci_ग_लिखो_config_byte(master_0, 0x43, 0xc1);
 
 out:
 	pci_dev_put(master_0);
 	pci_dev_put(cs5530_0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	init_hwif_cs5530	-	initialise an IDE channel
- *	@hwif: IDE to initialize
+ *	init_hwअगर_cs5530	-	initialise an IDE channel
+ *	@hwअगर: IDE to initialize
  *
- *	This gets invoked by the IDE driver once for each channel. It
- *	performs channel-specific pre-initialization before drive probing.
+ *	This माला_लो invoked by the IDE driver once क्रम each channel. It
+ *	perक्रमms channel-specअगरic pre-initialization beक्रमe drive probing.
  */
 
-static void init_hwif_cs5530 (ide_hwif_t *hwif)
-{
-	unsigned long basereg;
+अटल व्योम init_hwअगर_cs5530 (ide_hwअगर_t *hwअगर)
+अणु
+	अचिन्हित दीर्घ basereg;
 	u32 d0_timings;
 
-	basereg = CS5530_BASEREG(hwif);
+	basereg = CS5530_BASEREG(hwअगर);
 	d0_timings = inl(basereg + 0);
-	if (CS5530_BAD_PIO(d0_timings))
+	अगर (CS5530_BAD_PIO(d0_timings))
 		outl(cs5530_pio_timings[(d0_timings >> 31) & 1][0], basereg + 0);
-	if (CS5530_BAD_PIO(inl(basereg + 8)))
+	अगर (CS5530_BAD_PIO(inl(basereg + 8)))
 		outl(cs5530_pio_timings[(d0_timings >> 31) & 1][0], basereg + 8);
-}
+पूर्ण
 
-static const struct ide_port_ops cs5530_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops cs5530_port_ops = अणु
 	.set_pio_mode		= cs5530_set_pio_mode,
 	.set_dma_mode		= cs5530_set_dma_mode,
 	.udma_filter		= cs5530_udma_filter,
-};
+पूर्ण;
 
-static const struct ide_port_info cs5530_chipset = {
+अटल स्थिर काष्ठा ide_port_info cs5530_chipset = अणु
 	.name		= DRV_NAME,
 	.init_chipset	= init_chipset_cs5530,
-	.init_hwif	= init_hwif_cs5530,
+	.init_hwअगर	= init_hwअगर_cs5530,
 	.port_ops	= &cs5530_port_ops,
 	.host_flags	= IDE_HFLAG_SERIALIZE |
 			  IDE_HFLAG_POST_SET_MODE,
 	.pio_mask	= ATA_PIO4,
 	.mwdma_mask	= ATA_MWDMA2,
 	.udma_mask	= ATA_UDMA2,
-};
+पूर्ण;
 
-static int cs5530_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	return ide_pci_init_one(dev, &cs5530_chipset, NULL);
-}
+अटल पूर्णांक cs5530_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस ide_pci_init_one(dev, &cs5530_chipset, शून्य);
+पूर्ण
 
-static const struct pci_device_id cs5530_pci_tbl[] = {
-	{ PCI_VDEVICE(CYRIX, PCI_DEVICE_ID_CYRIX_5530_IDE), 0 },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id cs5530_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(CYRIX, PCI_DEVICE_ID_CYRIX_5530_IDE), 0 पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, cs5530_pci_tbl);
 
-static struct pci_driver cs5530_pci_driver = {
+अटल काष्ठा pci_driver cs5530_pci_driver = अणु
 	.name		= "CS5530 IDE",
 	.id_table	= cs5530_pci_tbl,
 	.probe		= cs5530_init_one,
-	.remove		= ide_pci_remove,
+	.हटाओ		= ide_pci_हटाओ,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-};
+पूर्ण;
 
-static int __init cs5530_ide_init(void)
-{
-	return ide_pci_register_driver(&cs5530_pci_driver);
-}
+अटल पूर्णांक __init cs5530_ide_init(व्योम)
+अणु
+	वापस ide_pci_रेजिस्टर_driver(&cs5530_pci_driver);
+पूर्ण
 
-static void __exit cs5530_ide_exit(void)
-{
-	pci_unregister_driver(&cs5530_pci_driver);
-}
+अटल व्योम __निकास cs5530_ide_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&cs5530_pci_driver);
+पूर्ण
 
 module_init(cs5530_ide_init);
-module_exit(cs5530_ide_exit);
+module_निकास(cs5530_ide_निकास);
 
 MODULE_AUTHOR("Mark Lord");
 MODULE_DESCRIPTION("PCI driver module for Cyrix/NS 5530 IDE");

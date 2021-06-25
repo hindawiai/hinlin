@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  ALSA PCM device for the
- *  ALSA interface to cobalt PCM capture streams
+ *  ALSA PCM device क्रम the
+ *  ALSA पूर्णांकerface to cobalt PCM capture streams
  *
  *  Copyright 2014-2015 Cisco Systems, Inc. and/or its affiliates.
  *  All rights reserved.
  */
 
-int snd_cobalt_pcm_create(struct snd_cobalt_card *cobsc);
+पूर्णांक snd_cobalt_pcm_create(काष्ठा snd_cobalt_card *cobsc);

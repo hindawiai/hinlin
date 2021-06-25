@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2005-2013 Solarflare Communications Inc.
  */
 
-#ifndef EF4_FILTER_H
-#define EF4_FILTER_H
+#अगर_अघोषित EF4_FILTER_H
+#घोषणा EF4_FILTER_H
 
-#include <linux/types.h>
-#include <linux/if_ether.h>
-#include <asm/byteorder.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <यंत्र/byteorder.h>
 
 /**
- * enum ef4_filter_match_flags - Flags for hardware filter match type
+ * क्रमागत ef4_filter_match_flags - Flags क्रम hardware filter match type
  * @EF4_FILTER_MATCH_REM_HOST: Match by remote IP host address
  * @EF4_FILTER_MATCH_LOC_HOST: Match by local IP host address
  * @EF4_FILTER_MATCH_REM_MAC: Match by remote MAC address
@@ -24,22 +25,22 @@
  * @EF4_FILTER_MATCH_OUTER_VID: Match by outer VLAN ID
  * @EF4_FILTER_MATCH_IP_PROTO: Match by IP transport protocol
  * @EF4_FILTER_MATCH_LOC_MAC_IG: Match by local MAC address I/G bit.
- *	Used for RX default unicast and multicast/broadcast filters.
+ *	Used क्रम RX शेष unicast and multicast/broadcast filters.
  *
  * Only some combinations are supported, depending on NIC type:
  *
- * - Falcon supports RX filters matching by {TCP,UDP}/IPv4 4-tuple or
- *   local 2-tuple (only implemented for Falcon B0)
+ * - Falcon supports RX filters matching by अणुTCP,UDPपूर्ण/IPv4 4-tuple or
+ *   local 2-tuple (only implemented क्रम Falcon B0)
  *
- * - Siena supports RX and TX filters matching by {TCP,UDP}/IPv4 4-tuple
+ * - Siena supports RX and TX filters matching by अणुTCP,UDPपूर्ण/IPv4 4-tuple
  *   or local 2-tuple, or local MAC with or without outer VID, and RX
- *   default filters
+ *   शेष filters
  *
  * - Huntington supports filter matching controlled by firmware, potentially
- *   using {TCP,UDP}/IPv{4,6} 4-tuple or local 2-tuple, local MAC or I/G bit,
+ *   using अणुTCP,UDPपूर्ण/IPvअणु4,6पूर्ण 4-tuple or local 2-tuple, local MAC or I/G bit,
  *   with or without outer and inner VID
  */
-enum ef4_filter_match_flags {
+क्रमागत ef4_filter_match_flags अणु
 	EF4_FILTER_MATCH_REM_HOST =	0x0001,
 	EF4_FILTER_MATCH_LOC_HOST =	0x0002,
 	EF4_FILTER_MATCH_REM_MAC =	0x0004,
@@ -51,73 +52,73 @@ enum ef4_filter_match_flags {
 	EF4_FILTER_MATCH_OUTER_VID =	0x0100,
 	EF4_FILTER_MATCH_IP_PROTO =	0x0200,
 	EF4_FILTER_MATCH_LOC_MAC_IG =	0x0400,
-};
+पूर्ण;
 
 /**
- * enum ef4_filter_priority - priority of a hardware filter specification
- * @EF4_FILTER_PRI_HINT: Performance hint
+ * क्रमागत ef4_filter_priority - priority of a hardware filter specअगरication
+ * @EF4_FILTER_PRI_HINT: Perक्रमmance hपूर्णांक
  * @EF4_FILTER_PRI_AUTO: Automatic filter based on device address list
  *	or hardware requirements.  This may only be used by the filter
- *	implementation for each NIC type.
+ *	implementation क्रम each NIC type.
  * @EF4_FILTER_PRI_MANUAL: Manually configured filter
- * @EF4_FILTER_PRI_REQUIRED: Required for correct behaviour (user-level
+ * @EF4_FILTER_PRI_REQUIRED: Required क्रम correct behaviour (user-level
  *	networking and SR-IOV)
  */
-enum ef4_filter_priority {
+क्रमागत ef4_filter_priority अणु
 	EF4_FILTER_PRI_HINT = 0,
 	EF4_FILTER_PRI_AUTO,
 	EF4_FILTER_PRI_MANUAL,
 	EF4_FILTER_PRI_REQUIRED,
-};
+पूर्ण;
 
 /**
- * enum ef4_filter_flags - flags for hardware filter specifications
- * @EF4_FILTER_FLAG_RX_RSS: Use RSS to spread across multiple queues.
- *	By default, matching packets will be delivered only to the
- *	specified queue. If this flag is set, they will be delivered
- *	to a range of queues offset from the specified queue number
+ * क्रमागत ef4_filter_flags - flags क्रम hardware filter specअगरications
+ * @EF4_FILTER_FLAG_RX_RSS: Use RSS to spपढ़ो across multiple queues.
+ *	By शेष, matching packets will be delivered only to the
+ *	specअगरied queue. If this flag is set, they will be delivered
+ *	to a range of queues offset from the specअगरied queue number
  *	according to the indirection table.
  * @EF4_FILTER_FLAG_RX_SCATTER: Enable DMA scatter on the receiving
  *	queue.
  * @EF4_FILTER_FLAG_RX_OVER_AUTO: Indicates a filter that is
- *	overriding an automatic filter (priority
+ *	overriding an स्वतःmatic filter (priority
  *	%EF4_FILTER_PRI_AUTO).  This may only be set by the filter
- *	implementation for each type.  A removal request will restore
- *	the automatic filter in its place.
- * @EF4_FILTER_FLAG_RX: Filter is for RX
- * @EF4_FILTER_FLAG_TX: Filter is for TX
+ *	implementation क्रम each type.  A removal request will restore
+ *	the स्वतःmatic filter in its place.
+ * @EF4_FILTER_FLAG_RX: Filter is क्रम RX
+ * @EF4_FILTER_FLAG_TX: Filter is क्रम TX
  */
-enum ef4_filter_flags {
+क्रमागत ef4_filter_flags अणु
 	EF4_FILTER_FLAG_RX_RSS = 0x01,
 	EF4_FILTER_FLAG_RX_SCATTER = 0x02,
 	EF4_FILTER_FLAG_RX_OVER_AUTO = 0x04,
 	EF4_FILTER_FLAG_RX = 0x08,
 	EF4_FILTER_FLAG_TX = 0x10,
-};
+पूर्ण;
 
 /**
- * struct ef4_filter_spec - specification for a hardware filter
- * @match_flags: Match type flags, from &enum ef4_filter_match_flags
- * @priority: Priority of the filter, from &enum ef4_filter_priority
- * @flags: Miscellaneous flags, from &enum ef4_filter_flags
- * @rss_context: RSS context to use, if %EF4_FILTER_FLAG_RX_RSS is set
- * @dmaq_id: Source/target queue index, or %EF4_FILTER_RX_DMAQ_ID_DROP for
+ * काष्ठा ef4_filter_spec - specअगरication क्रम a hardware filter
+ * @match_flags: Match type flags, from &क्रमागत ef4_filter_match_flags
+ * @priority: Priority of the filter, from &क्रमागत ef4_filter_priority
+ * @flags: Miscellaneous flags, from &क्रमागत ef4_filter_flags
+ * @rss_context: RSS context to use, अगर %EF4_FILTER_FLAG_RX_RSS is set
+ * @dmaq_id: Source/target queue index, or %EF4_FILTER_RX_DMAQ_ID_DROP क्रम
  *	an RX drop filter
- * @outer_vid: Outer VLAN ID to match, if %EF4_FILTER_MATCH_OUTER_VID is set
- * @inner_vid: Inner VLAN ID to match, if %EF4_FILTER_MATCH_INNER_VID is set
- * @loc_mac: Local MAC address to match, if %EF4_FILTER_MATCH_LOC_MAC or
+ * @outer_vid: Outer VLAN ID to match, अगर %EF4_FILTER_MATCH_OUTER_VID is set
+ * @inner_vid: Inner VLAN ID to match, अगर %EF4_FILTER_MATCH_INNER_VID is set
+ * @loc_mac: Local MAC address to match, अगर %EF4_FILTER_MATCH_LOC_MAC or
  *	%EF4_FILTER_MATCH_LOC_MAC_IG is set
- * @rem_mac: Remote MAC address to match, if %EF4_FILTER_MATCH_REM_MAC is set
- * @ether_type: Ether-type to match, if %EF4_FILTER_MATCH_ETHER_TYPE is set
- * @ip_proto: IP transport protocol to match, if %EF4_FILTER_MATCH_IP_PROTO
+ * @rem_mac: Remote MAC address to match, अगर %EF4_FILTER_MATCH_REM_MAC is set
+ * @ether_type: Ether-type to match, अगर %EF4_FILTER_MATCH_ETHER_TYPE is set
+ * @ip_proto: IP transport protocol to match, अगर %EF4_FILTER_MATCH_IP_PROTO
  *	is set
- * @loc_host: Local IP host to match, if %EF4_FILTER_MATCH_LOC_HOST is set
- * @rem_host: Remote IP host to match, if %EF4_FILTER_MATCH_REM_HOST is set
- * @loc_port: Local TCP/UDP port to match, if %EF4_FILTER_MATCH_LOC_PORT is set
- * @rem_port: Remote TCP/UDP port to match, if %EF4_FILTER_MATCH_REM_PORT is set
+ * @loc_host: Local IP host to match, अगर %EF4_FILTER_MATCH_LOC_HOST is set
+ * @rem_host: Remote IP host to match, अगर %EF4_FILTER_MATCH_REM_HOST is set
+ * @loc_port: Local TCP/UDP port to match, अगर %EF4_FILTER_MATCH_LOC_PORT is set
+ * @rem_port: Remote TCP/UDP port to match, अगर %EF4_FILTER_MATCH_REM_PORT is set
  *
  * The ef4_filter_init_rx() or ef4_filter_init_tx() function *must* be
- * used to initialise the structure.  The ef4_filter_set_*() functions
+ * used to initialise the काष्ठाure.  The ef4_filter_set_*() functions
  * may then be used to set @rss_context, @match_flags and related
  * fields.
  *
@@ -125,7 +126,7 @@ enum ef4_filter_flags {
  * filter may replace an old one.  The hardware priority of a filter
  * depends on which fields are matched.
  */
-struct ef4_filter_spec {
+काष्ठा ef4_filter_spec अणु
 	u32	match_flags:12;
 	u32	priority:2;
 	u32	flags:6;
@@ -142,45 +143,45 @@ struct ef4_filter_spec {
 	__be16	loc_port;
 	__be16	rem_port;
 	/* total 64 bytes */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	EF4_FILTER_RSS_CONTEXT_DEFAULT = 0xffffffff,
 	EF4_FILTER_RX_DMAQ_ID_DROP = 0xfff
-};
+पूर्ण;
 
-static inline void ef4_filter_init_rx(struct ef4_filter_spec *spec,
-				      enum ef4_filter_priority priority,
-				      enum ef4_filter_flags flags,
-				      unsigned rxq_id)
-{
-	memset(spec, 0, sizeof(*spec));
+अटल अंतरभूत व्योम ef4_filter_init_rx(काष्ठा ef4_filter_spec *spec,
+				      क्रमागत ef4_filter_priority priority,
+				      क्रमागत ef4_filter_flags flags,
+				      अचिन्हित rxq_id)
+अणु
+	स_रखो(spec, 0, माप(*spec));
 	spec->priority = priority;
 	spec->flags = EF4_FILTER_FLAG_RX | flags;
 	spec->rss_context = EF4_FILTER_RSS_CONTEXT_DEFAULT;
 	spec->dmaq_id = rxq_id;
-}
+पूर्ण
 
-static inline void ef4_filter_init_tx(struct ef4_filter_spec *spec,
-				      unsigned txq_id)
-{
-	memset(spec, 0, sizeof(*spec));
+अटल अंतरभूत व्योम ef4_filter_init_tx(काष्ठा ef4_filter_spec *spec,
+				      अचिन्हित txq_id)
+अणु
+	स_रखो(spec, 0, माप(*spec));
 	spec->priority = EF4_FILTER_PRI_REQUIRED;
 	spec->flags = EF4_FILTER_FLAG_TX;
 	spec->dmaq_id = txq_id;
-}
+पूर्ण
 
 /**
- * ef4_filter_set_ipv4_local - specify IPv4 host, transport protocol and port
- * @spec: Specification to initialise
+ * ef4_filter_set_ipv4_local - specअगरy IPv4 host, transport protocol and port
+ * @spec: Specअगरication to initialise
  * @proto: Transport layer protocol number
  * @host: Local host address (network byte order)
  * @port: Local port (network byte order)
  */
-static inline int
-ef4_filter_set_ipv4_local(struct ef4_filter_spec *spec, u8 proto,
+अटल अंतरभूत पूर्णांक
+ef4_filter_set_ipv4_local(काष्ठा ef4_filter_spec *spec, u8 proto,
 			  __be32 host, __be16 port)
-{
+अणु
 	spec->match_flags |=
 		EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_IP_PROTO |
 		EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_LOC_PORT;
@@ -188,23 +189,23 @@ ef4_filter_set_ipv4_local(struct ef4_filter_spec *spec, u8 proto,
 	spec->ip_proto = proto;
 	spec->loc_host[0] = host;
 	spec->loc_port = port;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ef4_filter_set_ipv4_full - specify IPv4 hosts, transport protocol and ports
- * @spec: Specification to initialise
+ * ef4_filter_set_ipv4_full - specअगरy IPv4 hosts, transport protocol and ports
+ * @spec: Specअगरication to initialise
  * @proto: Transport layer protocol number
  * @lhost: Local host address (network byte order)
  * @lport: Local port (network byte order)
  * @rhost: Remote host address (network byte order)
  * @rport: Remote port (network byte order)
  */
-static inline int
-ef4_filter_set_ipv4_full(struct ef4_filter_spec *spec, u8 proto,
+अटल अंतरभूत पूर्णांक
+ef4_filter_set_ipv4_full(काष्ठा ef4_filter_spec *spec, u8 proto,
 			 __be32 lhost, __be16 lport,
 			 __be32 rhost, __be16 rport)
-{
+अणु
 	spec->match_flags |=
 		EF4_FILTER_MATCH_ETHER_TYPE | EF4_FILTER_MATCH_IP_PROTO |
 		EF4_FILTER_MATCH_LOC_HOST | EF4_FILTER_MATCH_LOC_PORT |
@@ -215,55 +216,55 @@ ef4_filter_set_ipv4_full(struct ef4_filter_spec *spec, u8 proto,
 	spec->loc_port = lport;
 	spec->rem_host[0] = rhost;
 	spec->rem_port = rport;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	EF4_FILTER_VID_UNSPEC = 0xffff,
-};
+पूर्ण;
 
 /**
- * ef4_filter_set_eth_local - specify local Ethernet address and/or VID
- * @spec: Specification to initialise
+ * ef4_filter_set_eth_local - specअगरy local Ethernet address and/or VID
+ * @spec: Specअगरication to initialise
  * @vid: Outer VLAN ID to match, or %EF4_FILTER_VID_UNSPEC
- * @addr: Local Ethernet MAC address, or %NULL
+ * @addr: Local Ethernet MAC address, or %शून्य
  */
-static inline int ef4_filter_set_eth_local(struct ef4_filter_spec *spec,
-					   u16 vid, const u8 *addr)
-{
-	if (vid == EF4_FILTER_VID_UNSPEC && addr == NULL)
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक ef4_filter_set_eth_local(काष्ठा ef4_filter_spec *spec,
+					   u16 vid, स्थिर u8 *addr)
+अणु
+	अगर (vid == EF4_FILTER_VID_UNSPEC && addr == शून्य)
+		वापस -EINVAL;
 
-	if (vid != EF4_FILTER_VID_UNSPEC) {
+	अगर (vid != EF4_FILTER_VID_UNSPEC) अणु
 		spec->match_flags |= EF4_FILTER_MATCH_OUTER_VID;
 		spec->outer_vid = htons(vid);
-	}
-	if (addr != NULL) {
+	पूर्ण
+	अगर (addr != शून्य) अणु
 		spec->match_flags |= EF4_FILTER_MATCH_LOC_MAC;
 		ether_addr_copy(spec->loc_mac, addr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * ef4_filter_set_uc_def - specify matching otherwise-unmatched unicast
- * @spec: Specification to initialise
+ * ef4_filter_set_uc_def - specअगरy matching otherwise-unmatched unicast
+ * @spec: Specअगरication to initialise
  */
-static inline int ef4_filter_set_uc_def(struct ef4_filter_spec *spec)
-{
+अटल अंतरभूत पूर्णांक ef4_filter_set_uc_def(काष्ठा ef4_filter_spec *spec)
+अणु
 	spec->match_flags |= EF4_FILTER_MATCH_LOC_MAC_IG;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * ef4_filter_set_mc_def - specify matching otherwise-unmatched multicast
- * @spec: Specification to initialise
+ * ef4_filter_set_mc_def - specअगरy matching otherwise-unmatched multicast
+ * @spec: Specअगरication to initialise
  */
-static inline int ef4_filter_set_mc_def(struct ef4_filter_spec *spec)
-{
+अटल अंतरभूत पूर्णांक ef4_filter_set_mc_def(काष्ठा ef4_filter_spec *spec)
+अणु
 	spec->match_flags |= EF4_FILTER_MATCH_LOC_MAC_IG;
 	spec->loc_mac[0] = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif /* EF4_FILTER_H */
+#पूर्ण_अगर /* EF4_FILTER_H */

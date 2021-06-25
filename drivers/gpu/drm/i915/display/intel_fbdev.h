@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_FBDEV_H__
-#define __INTEL_FBDEV_H__
+#अगर_अघोषित __INTEL_FBDEV_H__
+#घोषणा __INTEL_FBDEV_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_device;
-struct drm_i915_private;
+काष्ठा drm_device;
+काष्ठा drm_i915_निजी;
 
-#ifdef CONFIG_DRM_FBDEV_EMULATION
-int intel_fbdev_init(struct drm_device *dev);
-void intel_fbdev_initial_config_async(struct drm_device *dev);
-void intel_fbdev_unregister(struct drm_i915_private *dev_priv);
-void intel_fbdev_fini(struct drm_i915_private *dev_priv);
-void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous);
-void intel_fbdev_output_poll_changed(struct drm_device *dev);
-void intel_fbdev_restore_mode(struct drm_device *dev);
-#else
-static inline int intel_fbdev_init(struct drm_device *dev)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_DRM_FBDEV_EMULATION
+पूर्णांक पूर्णांकel_fbdev_init(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_fbdev_initial_config_async(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_fbdev_unरेजिस्टर(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_fbdev_fini(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_fbdev_set_suspend(काष्ठा drm_device *dev, पूर्णांक state, bool synchronous);
+व्योम पूर्णांकel_fbdev_output_poll_changed(काष्ठा drm_device *dev);
+व्योम पूर्णांकel_fbdev_restore_mode(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक पूर्णांकel_fbdev_init(काष्ठा drm_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void intel_fbdev_initial_config_async(struct drm_device *dev)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_initial_config_async(काष्ठा drm_device *dev)
+अणु
+पूर्ण
 
-static inline void intel_fbdev_unregister(struct drm_i915_private *dev_priv)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_unरेजिस्टर(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+पूर्ण
 
-static inline void intel_fbdev_fini(struct drm_i915_private *dev_priv)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_fini(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+पूर्ण
 
-static inline void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_set_suspend(काष्ठा drm_device *dev, पूर्णांक state, bool synchronous)
+अणु
+पूर्ण
 
-static inline void intel_fbdev_output_poll_changed(struct drm_device *dev)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_output_poll_changed(काष्ठा drm_device *dev)
+अणु
+पूर्ण
 
-static inline void intel_fbdev_restore_mode(struct drm_device *dev)
-{
-}
-#endif
+अटल अंतरभूत व्योम पूर्णांकel_fbdev_restore_mode(काष्ठा drm_device *dev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __INTEL_FBDEV_H__ */
+#पूर्ण_अगर /* __INTEL_FBDEV_H__ */

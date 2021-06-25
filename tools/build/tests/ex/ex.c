@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-int a(void);
-int b(void);
-int c(void);
-int d(void);
-int e(void);
-int f(void);
-int inc(void);
+पूर्णांक a(व्योम);
+पूर्णांक b(व्योम);
+पूर्णांक c(व्योम);
+पूर्णांक d(व्योम);
+पूर्णांक e(व्योम);
+पूर्णांक f(व्योम);
+पूर्णांक inc(व्योम);
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	a();
 	b();
 	c();
@@ -18,5 +19,5 @@ int main(void)
 	f();
 	inc();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

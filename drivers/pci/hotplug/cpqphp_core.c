@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Compaq Hot Plug Controller Driver
  *
  * Copyright (C) 1995,2001 Compaq Computer Corporation
- * Copyright (C) 2001 Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright (C) 2001 Greg Kroah-Harपंचांगan <greg@kroah.com>
  * Copyright (C) 2001 IBM Corp.
  *
  * All rights reserved.
@@ -14,300 +15,300 @@
  *			Torben Mathiasen <torben.mathiasen@hp.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/proc_fs.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "cpqphp.h"
-#include "cpqphp_nvram.h"
+#समावेश "cpqphp.h"
+#समावेश "cpqphp_nvram.h"
 
 
 /* Global variables */
-int cpqhp_debug;
-int cpqhp_legacy_mode;
-struct controller *cpqhp_ctrl_list;	/* = NULL */
-struct pci_func *cpqhp_slot_list[256];
-struct irq_routing_table *cpqhp_routing_table;
+पूर्णांक cpqhp_debug;
+पूर्णांक cpqhp_legacy_mode;
+काष्ठा controller *cpqhp_ctrl_list;	/* = शून्य */
+काष्ठा pci_func *cpqhp_slot_list[256];
+काष्ठा irq_routing_table *cpqhp_routing_table;
 
 /* local variables */
-static void __iomem *smbios_table;
-static void __iomem *smbios_start;
-static void __iomem *cpqhp_rom_start;
-static bool power_mode;
-static bool debug;
-static int initialized;
+अटल व्योम __iomem *smbios_table;
+अटल व्योम __iomem *smbios_start;
+अटल व्योम __iomem *cpqhp_rom_start;
+अटल bool घातer_mode;
+अटल bool debug;
+अटल पूर्णांक initialized;
 
-#define DRIVER_VERSION	"0.9.8"
-#define DRIVER_AUTHOR	"Dan Zink <dan.zink@compaq.com>, Greg Kroah-Hartman <greg@kroah.com>"
-#define DRIVER_DESC	"Compaq Hot Plug PCI Controller Driver"
+#घोषणा DRIVER_VERSION	"0.9.8"
+#घोषणा DRIVER_AUTHOR	"Dan Zink <dan.zink@compaq.com>, Greg Kroah-Hartman <greg@kroah.com>"
+#घोषणा DRIVER_DESC	"Compaq Hot Plug PCI Controller Driver"
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-module_param(power_mode, bool, 0644);
-MODULE_PARM_DESC(power_mode, "Power mode enabled or not");
+module_param(घातer_mode, bool, 0644);
+MODULE_PARM_DESC(घातer_mode, "Power mode enabled or not");
 
 module_param(debug, bool, 0644);
 MODULE_PARM_DESC(debug, "Debugging mode enabled or not");
 
-#define CPQHPC_MODULE_MINOR 208
+#घोषणा CPQHPC_MODULE_MINOR 208
 
-static inline int is_slot64bit(struct slot *slot)
-{
-	return (readb(slot->p_sm_slot + SMBIOS_SLOT_WIDTH) == 0x06) ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक is_slot64bit(काष्ठा slot *slot)
+अणु
+	वापस (पढ़ोb(slot->p_sm_slot + SMBIOS_SLOT_WIDTH) == 0x06) ? 1 : 0;
+पूर्ण
 
-static inline int is_slot66mhz(struct slot *slot)
-{
-	return (readb(slot->p_sm_slot + SMBIOS_SLOT_TYPE) == 0x0E) ? 1 : 0;
-}
+अटल अंतरभूत पूर्णांक is_slot66mhz(काष्ठा slot *slot)
+अणु
+	वापस (पढ़ोb(slot->p_sm_slot + SMBIOS_SLOT_TYPE) == 0x0E) ? 1 : 0;
+पूर्ण
 
 /**
- * detect_SMBIOS_pointer - find the System Management BIOS Table in mem region.
- * @begin: begin pointer for region to be scanned.
- * @end: end pointer for region to be scanned.
+ * detect_SMBIOS_poपूर्णांकer - find the System Management BIOS Table in mem region.
+ * @begin: begin poपूर्णांकer क्रम region to be scanned.
+ * @end: end poपूर्णांकer क्रम region to be scanned.
  *
- * Returns pointer to the head of the SMBIOS tables (or %NULL).
+ * Returns poपूर्णांकer to the head of the SMBIOS tables (or %शून्य).
  */
-static void __iomem *detect_SMBIOS_pointer(void __iomem *begin, void __iomem *end)
-{
-	void __iomem *fp;
-	void __iomem *endp;
+अटल व्योम __iomem *detect_SMBIOS_poपूर्णांकer(व्योम __iomem *begin, व्योम __iomem *end)
+अणु
+	व्योम __iomem *fp;
+	व्योम __iomem *endp;
 	u8 temp1, temp2, temp3, temp4;
-	int status = 0;
+	पूर्णांक status = 0;
 
-	endp = (end - sizeof(u32) + 1);
+	endp = (end - माप(u32) + 1);
 
-	for (fp = begin; fp <= endp; fp += 16) {
-		temp1 = readb(fp);
-		temp2 = readb(fp+1);
-		temp3 = readb(fp+2);
-		temp4 = readb(fp+3);
-		if (temp1 == '_' &&
+	क्रम (fp = begin; fp <= endp; fp += 16) अणु
+		temp1 = पढ़ोb(fp);
+		temp2 = पढ़ोb(fp+1);
+		temp3 = पढ़ोb(fp+2);
+		temp4 = पढ़ोb(fp+3);
+		अगर (temp1 == '_' &&
 		    temp2 == 'S' &&
 		    temp3 == 'M' &&
-		    temp4 == '_') {
+		    temp4 == '_') अणु
 			status = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!status)
-		fp = NULL;
+	अगर (!status)
+		fp = शून्य;
 
 	dbg("Discovered SMBIOS Entry point at %p\n", fp);
 
-	return fp;
-}
+	वापस fp;
+पूर्ण
 
 /**
  * init_SERR - Initializes the per slot SERR generation.
  * @ctrl: controller to use
  *
- * For unexpected switch opens
+ * For unexpected चयन खोलोs
  */
-static int init_SERR(struct controller *ctrl)
-{
+अटल पूर्णांक init_SERR(काष्ठा controller *ctrl)
+अणु
 	u32 tempdword;
 	u32 number_of_slots;
 
-	if (!ctrl)
-		return 1;
+	अगर (!ctrl)
+		वापस 1;
 
 	tempdword = ctrl->first_slot;
 
-	number_of_slots = readb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
+	number_of_slots = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
 	/* Loop through slots */
-	while (number_of_slots) {
-		writeb(0, ctrl->hpc_reg + SLOT_SERR);
+	जबतक (number_of_slots) अणु
+		ग_लिखोb(0, ctrl->hpc_reg + SLOT_SERR);
 		tempdword++;
 		number_of_slots--;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_cpqhp_routing_table(void)
-{
-	int len;
+अटल पूर्णांक init_cpqhp_routing_table(व्योम)
+अणु
+	पूर्णांक len;
 
 	cpqhp_routing_table = pcibios_get_irq_routing_table();
-	if (cpqhp_routing_table == NULL)
-		return -ENOMEM;
+	अगर (cpqhp_routing_table == शून्य)
+		वापस -ENOMEM;
 
 	len = cpqhp_routing_table_length();
-	if (len == 0) {
-		kfree(cpqhp_routing_table);
-		cpqhp_routing_table = NULL;
-		return -1;
-	}
+	अगर (len == 0) अणु
+		kमुक्त(cpqhp_routing_table);
+		cpqhp_routing_table = शून्य;
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* nice debugging output */
-static void pci_print_IRQ_route(void)
-{
-	int len;
-	int loop;
+अटल व्योम pci_prपूर्णांक_IRQ_route(व्योम)
+अणु
+	पूर्णांक len;
+	पूर्णांक loop;
 	u8 tbus, tdevice, tslot;
 
 	len = cpqhp_routing_table_length();
 
 	dbg("bus dev func slot\n");
-	for (loop = 0; loop < len; ++loop) {
+	क्रम (loop = 0; loop < len; ++loop) अणु
 		tbus = cpqhp_routing_table->slots[loop].bus;
 		tdevice = cpqhp_routing_table->slots[loop].devfn;
 		tslot = cpqhp_routing_table->slots[loop].slot;
 		dbg("%d %d %d %d\n", tbus, tdevice >> 3, tdevice & 0x7, tslot);
 
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /**
  * get_subsequent_smbios_entry: get the next entry from bios table.
  * @smbios_start: where to start in the SMBIOS table
  * @smbios_table: location of the SMBIOS table
- * @curr: %NULL or pointer to previously returned structure
+ * @curr: %शून्य or poपूर्णांकer to previously वापसed काष्ठाure
  *
- * Gets the first entry if previous == NULL;
- * otherwise, returns the next entry.
- * Uses global SMBIOS Table pointer.
+ * Gets the first entry अगर previous == शून्य;
+ * otherwise, वापसs the next entry.
+ * Uses global SMBIOS Table poपूर्णांकer.
  *
- * Returns a pointer to an SMBIOS structure or NULL if none found.
+ * Returns a poपूर्णांकer to an SMBIOS काष्ठाure or शून्य अगर none found.
  */
-static void __iomem *get_subsequent_smbios_entry(void __iomem *smbios_start,
-						void __iomem *smbios_table,
-						void __iomem *curr)
-{
+अटल व्योम __iomem *get_subsequent_smbios_entry(व्योम __iomem *smbios_start,
+						व्योम __iomem *smbios_table,
+						व्योम __iomem *curr)
+अणु
 	u8 bail = 0;
 	u8 previous_byte = 1;
-	void __iomem *p_temp;
-	void __iomem *p_max;
+	व्योम __iomem *p_temp;
+	व्योम __iomem *p_max;
 
-	if (!smbios_table || !curr)
-		return NULL;
+	अगर (!smbios_table || !curr)
+		वापस शून्य;
 
 	/* set p_max to the end of the table */
-	p_max = smbios_start + readw(smbios_table + ST_LENGTH);
+	p_max = smbios_start + पढ़ोw(smbios_table + ST_LENGTH);
 
 	p_temp = curr;
-	p_temp += readb(curr + SMBIOS_GENERIC_LENGTH);
+	p_temp += पढ़ोb(curr + SMBIOS_GENERIC_LENGTH);
 
-	while ((p_temp < p_max) && !bail) {
-		/* Look for the double NULL terminator
+	जबतक ((p_temp < p_max) && !bail) अणु
+		/* Look क्रम the द्विगुन शून्य terminator
 		 * The first condition is the previous byte
 		 * and the second is the curr
 		 */
-		if (!previous_byte && !(readb(p_temp)))
+		अगर (!previous_byte && !(पढ़ोb(p_temp)))
 			bail = 1;
 
-		previous_byte = readb(p_temp);
+		previous_byte = पढ़ोb(p_temp);
 		p_temp++;
-	}
+	पूर्ण
 
-	if (p_temp < p_max)
-		return p_temp;
-	else
-		return NULL;
-}
+	अगर (p_temp < p_max)
+		वापस p_temp;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 
 /**
- * get_SMBIOS_entry - return the requested SMBIOS entry or %NULL
+ * get_SMBIOS_entry - वापस the requested SMBIOS entry or %शून्य
  * @smbios_start: where to start in the SMBIOS table
  * @smbios_table: location of the SMBIOS table
- * @type: SMBIOS structure type to be returned
- * @previous: %NULL or pointer to previously returned structure
+ * @type: SMBIOS काष्ठाure type to be वापसed
+ * @previous: %शून्य or poपूर्णांकer to previously वापसed काष्ठाure
  *
- * Gets the first entry of the specified type if previous == %NULL;
- * Otherwise, returns the next entry of the given type.
- * Uses global SMBIOS Table pointer.
+ * Gets the first entry of the specअगरied type अगर previous == %शून्य;
+ * Otherwise, वापसs the next entry of the given type.
+ * Uses global SMBIOS Table poपूर्णांकer.
  * Uses get_subsequent_smbios_entry.
  *
- * Returns a pointer to an SMBIOS structure or %NULL if none found.
+ * Returns a poपूर्णांकer to an SMBIOS काष्ठाure or %शून्य अगर none found.
  */
-static void __iomem *get_SMBIOS_entry(void __iomem *smbios_start,
-					void __iomem *smbios_table,
+अटल व्योम __iomem *get_SMBIOS_entry(व्योम __iomem *smbios_start,
+					व्योम __iomem *smbios_table,
 					u8 type,
-					void __iomem *previous)
-{
-	if (!smbios_table)
-		return NULL;
+					व्योम __iomem *previous)
+अणु
+	अगर (!smbios_table)
+		वापस शून्य;
 
-	if (!previous)
+	अगर (!previous)
 		previous = smbios_start;
-	else
+	अन्यथा
 		previous = get_subsequent_smbios_entry(smbios_start,
 					smbios_table, previous);
 
-	while (previous)
-		if (readb(previous + SMBIOS_GENERIC_TYPE) != type)
+	जबतक (previous)
+		अगर (पढ़ोb(previous + SMBIOS_GENERIC_TYPE) != type)
 			previous = get_subsequent_smbios_entry(smbios_start,
 						smbios_table, previous);
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
-	return previous;
-}
+	वापस previous;
+पूर्ण
 
-static int ctrl_slot_cleanup(struct controller *ctrl)
-{
-	struct slot *old_slot, *next_slot;
+अटल पूर्णांक ctrl_slot_cleanup(काष्ठा controller *ctrl)
+अणु
+	काष्ठा slot *old_slot, *next_slot;
 
 	old_slot = ctrl->slot;
-	ctrl->slot = NULL;
+	ctrl->slot = शून्य;
 
-	while (old_slot) {
+	जबतक (old_slot) अणु
 		next_slot = old_slot->next;
-		pci_hp_deregister(&old_slot->hotplug_slot);
-		kfree(old_slot);
+		pci_hp_deरेजिस्टर(&old_slot->hotplug_slot);
+		kमुक्त(old_slot);
 		old_slot = next_slot;
-	}
+	पूर्ण
 
-	cpqhp_remove_debugfs_files(ctrl);
+	cpqhp_हटाओ_debugfs_files(ctrl);
 
 	/* Free IRQ associated with hot plug device */
-	free_irq(ctrl->interrupt, ctrl);
+	मुक्त_irq(ctrl->पूर्णांकerrupt, ctrl);
 	/* Unmap the memory */
 	iounmap(ctrl->hpc_reg);
 	/* Finally reclaim PCI mem */
 	release_mem_region(pci_resource_start(ctrl->pci_dev, 0),
 			   pci_resource_len(ctrl->pci_dev, 0));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * get_slot_mapping - determine logical slot mapping for PCI device
+ * get_slot_mapping - determine logical slot mapping क्रम PCI device
  *
- * Won't work for more than one PCI-PCI bridge in a slot.
+ * Won't work क्रम more than one PCI-PCI bridge in a slot.
  *
  * @bus_num - bus number of PCI device
  * @dev_num - device number of PCI device
- * @slot - Pointer to u8 where slot number will	be returned
+ * @slot - Poपूर्णांकer to u8 where slot number will	be वापसed
  *
  * Output:	SUCCESS or FAILURE
  */
-static int
-get_slot_mapping(struct pci_bus *bus, u8 bus_num, u8 dev_num, u8 *slot)
-{
+अटल पूर्णांक
+get_slot_mapping(काष्ठा pci_bus *bus, u8 bus_num, u8 dev_num, u8 *slot)
+अणु
 	u32 work;
-	long len;
-	long loop;
+	दीर्घ len;
+	दीर्घ loop;
 
 	u8 tbus, tdevice, tslot, bridgeSlot;
 
@@ -316,106 +317,106 @@ get_slot_mapping(struct pci_bus *bus, u8 bus_num, u8 dev_num, u8 *slot)
 	bridgeSlot = 0xFF;
 
 	len = cpqhp_routing_table_length();
-	for (loop = 0; loop < len; ++loop) {
+	क्रम (loop = 0; loop < len; ++loop) अणु
 		tbus = cpqhp_routing_table->slots[loop].bus;
 		tdevice = cpqhp_routing_table->slots[loop].devfn >> 3;
 		tslot = cpqhp_routing_table->slots[loop].slot;
 
-		if ((tbus == bus_num) && (tdevice == dev_num)) {
+		अगर ((tbus == bus_num) && (tdevice == dev_num)) अणु
 			*slot = tslot;
-			return 0;
-		} else {
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			/* Did not get a match on the target PCI device. Check
-			 * if the current IRQ table entry is a PCI-to-PCI
+			 * अगर the current IRQ table entry is a PCI-to-PCI
 			 * bridge device.  If so, and it's secondary bus
-			 * matches the bus number for the target device, I need
+			 * matches the bus number क्रम the target device, I need
 			 * to save the bridge's slot number.  If I can not find
-			 * an entry for the target device, I will have to
+			 * an entry क्रम the target device, I will have to
 			 * assume it's on the other side of the bridge, and
 			 * assign it the bridge's slot.
 			 */
 			bus->number = tbus;
-			pci_bus_read_config_dword(bus, PCI_DEVFN(tdevice, 0),
+			pci_bus_पढ़ो_config_dword(bus, PCI_DEVFN(tdevice, 0),
 						PCI_CLASS_REVISION, &work);
 
-			if ((work >> 8) == PCI_TO_PCI_BRIDGE_CLASS) {
-				pci_bus_read_config_dword(bus,
+			अगर ((work >> 8) == PCI_TO_PCI_BRIDGE_CLASS) अणु
+				pci_bus_पढ़ो_config_dword(bus,
 							PCI_DEVFN(tdevice, 0),
 							PCI_PRIMARY_BUS, &work);
-				// See if bridge's secondary bus matches target bus.
-				if (((work >> 8) & 0x000000FF) == (long) bus_num)
+				// See अगर bridge's secondary bus matches target bus.
+				अगर (((work >> 8) & 0x000000FF) == (दीर्घ) bus_num)
 					bridgeSlot = tslot;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	/* If we got here, we didn't find an entry in the IRQ mapping table for
+	/* If we got here, we didn't find an entry in the IRQ mapping table क्रम
 	 * the target PCI device.  If we did determine that the target device
-	 * is on the other side of a PCI-to-PCI bridge, return the slot number
-	 * for the bridge.
+	 * is on the other side of a PCI-to-PCI bridge, वापस the slot number
+	 * क्रम the bridge.
 	 */
-	if (bridgeSlot != 0xFF) {
+	अगर (bridgeSlot != 0xFF) अणु
 		*slot = bridgeSlot;
-		return 0;
-	}
-	/* Couldn't find an entry in the routing table for this PCI device */
-	return -1;
-}
+		वापस 0;
+	पूर्ण
+	/* Couldn't find an entry in the routing table क्रम this PCI device */
+	वापस -1;
+पूर्ण
 
 
 /**
- * cpqhp_set_attention_status - Turns the Amber LED for a slot on or off
- * @ctrl: struct controller to use
+ * cpqhp_set_attention_status - Turns the Amber LED क्रम a slot on or off
+ * @ctrl: काष्ठा controller to use
  * @func: PCI device/function info
  * @status: LED control flag: 1 = LED on, 0 = LED off
  */
-static int
-cpqhp_set_attention_status(struct controller *ctrl, struct pci_func *func,
+अटल पूर्णांक
+cpqhp_set_attention_status(काष्ठा controller *ctrl, काष्ठा pci_func *func,
 				u32 status)
-{
+अणु
 	u8 hp_slot;
 
-	if (func == NULL)
-		return 1;
+	अगर (func == शून्य)
+		वापस 1;
 
 	hp_slot = func->device - ctrl->slot_device_offset;
 
-	/* Wait for exclusive access to hardware */
+	/* Wait क्रम exclusive access to hardware */
 	mutex_lock(&ctrl->crit_sect);
 
-	if (status == 1)
+	अगर (status == 1)
 		amber_LED_on(ctrl, hp_slot);
-	else if (status == 0)
+	अन्यथा अगर (status == 0)
 		amber_LED_off(ctrl, hp_slot);
-	else {
+	अन्यथा अणु
 		/* Done with exclusive hardware access */
 		mutex_unlock(&ctrl->crit_sect);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	set_SOGO(ctrl);
 
-	/* Wait for SOBS to be unset */
-	wait_for_ctrl_irq(ctrl);
+	/* Wait क्रम SOBS to be unset */
+	रुको_क्रम_ctrl_irq(ctrl);
 
 	/* Done with exclusive hardware access */
 	mutex_unlock(&ctrl->crit_sect);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /**
- * set_attention_status - Turns the Amber LED for a slot on or off
+ * set_attention_status - Turns the Amber LED क्रम a slot on or off
  * @hotplug_slot: slot to change LED on
  * @status: LED control flag
  */
-static int set_attention_status(struct hotplug_slot *hotplug_slot, u8 status)
-{
-	struct pci_func *slot_func;
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक set_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 status)
+अणु
+	काष्ठा pci_func *slot_func;
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 	u8 bus;
 	u8 devfn;
 	u8 device;
@@ -423,26 +424,26 @@ static int set_attention_status(struct hotplug_slot *hotplug_slot, u8 status)
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
-	if (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
-		return -ENODEV;
+	अगर (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
+		वापस -ENODEV;
 
 	device = devfn >> 3;
 	function = devfn & 0x7;
 	dbg("bus, dev, fn = %d, %d, %d\n", bus, device, function);
 
 	slot_func = cpqhp_slot_find(bus, device, function);
-	if (!slot_func)
-		return -ENODEV;
+	अगर (!slot_func)
+		वापस -ENODEV;
 
-	return cpqhp_set_attention_status(ctrl, slot_func, status);
-}
+	वापस cpqhp_set_attention_status(ctrl, slot_func, status);
+पूर्ण
 
 
-static int process_SI(struct hotplug_slot *hotplug_slot)
-{
-	struct pci_func *slot_func;
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक process_SI(काष्ठा hotplug_slot *hotplug_slot)
+अणु
+	काष्ठा pci_func *slot_func;
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 	u8 bus;
 	u8 devfn;
 	u8 device;
@@ -450,31 +451,31 @@ static int process_SI(struct hotplug_slot *hotplug_slot)
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
-	if (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
-		return -ENODEV;
+	अगर (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
+		वापस -ENODEV;
 
 	device = devfn >> 3;
 	function = devfn & 0x7;
 	dbg("bus, dev, fn = %d, %d, %d\n", bus, device, function);
 
 	slot_func = cpqhp_slot_find(bus, device, function);
-	if (!slot_func)
-		return -ENODEV;
+	अगर (!slot_func)
+		वापस -ENODEV;
 
 	slot_func->bus = bus;
 	slot_func->device = device;
 	slot_func->function = function;
 	slot_func->configured = 0;
 	dbg("board_added(%p, %p)\n", slot_func, ctrl);
-	return cpqhp_process_SI(ctrl, slot_func);
-}
+	वापस cpqhp_process_SI(ctrl, slot_func);
+पूर्ण
 
 
-static int process_SS(struct hotplug_slot *hotplug_slot)
-{
-	struct pci_func *slot_func;
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक process_SS(काष्ठा hotplug_slot *hotplug_slot)
+अणु
+	काष्ठा pci_func *slot_func;
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 	u8 bus;
 	u8 devfn;
 	u8 device;
@@ -482,121 +483,121 @@ static int process_SS(struct hotplug_slot *hotplug_slot)
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
-	if (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
-		return -ENODEV;
+	अगर (cpqhp_get_bus_dev(ctrl, &bus, &devfn, slot->number) == -1)
+		वापस -ENODEV;
 
 	device = devfn >> 3;
 	function = devfn & 0x7;
 	dbg("bus, dev, fn = %d, %d, %d\n", bus, device, function);
 
 	slot_func = cpqhp_slot_find(bus, device, function);
-	if (!slot_func)
-		return -ENODEV;
+	अगर (!slot_func)
+		वापस -ENODEV;
 
 	dbg("In %s, slot_func = %p, ctrl = %p\n", __func__, slot_func, ctrl);
-	return cpqhp_process_SS(ctrl, slot_func);
-}
+	वापस cpqhp_process_SS(ctrl, slot_func);
+पूर्ण
 
 
-static int hardware_test(struct hotplug_slot *hotplug_slot, u32 value)
-{
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक hardware_test(काष्ठा hotplug_slot *hotplug_slot, u32 value)
+अणु
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
-	return cpqhp_hardware_test(ctrl, value);
-}
+	वापस cpqhp_hardware_test(ctrl, value);
+पूर्ण
 
 
-static int get_power_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक get_घातer_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
 	*value = get_slot_enabled(ctrl, slot);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_attention_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक get_attention_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
 	*value = cpq_get_attention_status(ctrl, slot);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_latch_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक get_latch_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
 	*value = cpq_get_latch_status(ctrl, slot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_adapter_status(struct hotplug_slot *hotplug_slot, u8 *value)
-{
-	struct slot *slot = to_slot(hotplug_slot);
-	struct controller *ctrl = slot->ctrl;
+अटल पूर्णांक get_adapter_status(काष्ठा hotplug_slot *hotplug_slot, u8 *value)
+अणु
+	काष्ठा slot *slot = to_slot(hotplug_slot);
+	काष्ठा controller *ctrl = slot->ctrl;
 
 	dbg("%s - physical_slot = %s\n", __func__, slot_name(slot));
 
 	*value = get_presence_status(ctrl, slot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hotplug_slot_ops cpqphp_hotplug_slot_ops = {
+अटल स्थिर काष्ठा hotplug_slot_ops cpqphp_hotplug_slot_ops = अणु
 	.set_attention_status =	set_attention_status,
 	.enable_slot =		process_SI,
 	.disable_slot =		process_SS,
 	.hardware_test =	hardware_test,
-	.get_power_status =	get_power_status,
+	.get_घातer_status =	get_घातer_status,
 	.get_attention_status =	get_attention_status,
 	.get_latch_status =	get_latch_status,
 	.get_adapter_status =	get_adapter_status,
-};
+पूर्ण;
 
-#define SLOT_NAME_SIZE 10
+#घोषणा SLOT_NAME_SIZE 10
 
-static int ctrl_slot_setup(struct controller *ctrl,
-			void __iomem *smbios_start,
-			void __iomem *smbios_table)
-{
-	struct slot *slot;
-	struct pci_bus *bus = ctrl->pci_bus;
+अटल पूर्णांक ctrl_slot_setup(काष्ठा controller *ctrl,
+			व्योम __iomem *smbios_start,
+			व्योम __iomem *smbios_table)
+अणु
+	काष्ठा slot *slot;
+	काष्ठा pci_bus *bus = ctrl->pci_bus;
 	u8 number_of_slots;
 	u8 slot_device;
 	u8 slot_number;
 	u8 ctrl_slot;
 	u32 tempdword;
-	char name[SLOT_NAME_SIZE];
-	void __iomem *slot_entry = NULL;
-	int result;
+	अक्षर name[SLOT_NAME_SIZE];
+	व्योम __iomem *slot_entry = शून्य;
+	पूर्णांक result;
 
 	dbg("%s\n", __func__);
 
-	tempdword = readl(ctrl->hpc_reg + INT_INPUT_CLEAR);
+	tempdword = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-	number_of_slots = readb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
-	slot_device = readb(ctrl->hpc_reg + SLOT_MASK) >> 4;
+	number_of_slots = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
+	slot_device = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4;
 	slot_number = ctrl->first_slot;
 
-	while (number_of_slots) {
-		slot = kzalloc(sizeof(*slot), GFP_KERNEL);
-		if (!slot) {
+	जबतक (number_of_slots) अणु
+		slot = kzalloc(माप(*slot), GFP_KERNEL);
+		अगर (!slot) अणु
 			result = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		slot->ctrl = ctrl;
 		slot->bus = ctrl->bus;
@@ -607,60 +608,60 @@ static int ctrl_slot_setup(struct controller *ctrl,
 		slot_entry = get_SMBIOS_entry(smbios_start, smbios_table, 9,
 					slot_entry);
 
-		while (slot_entry && (readw(slot_entry + SMBIOS_SLOT_NUMBER) !=
-				slot->number)) {
+		जबतक (slot_entry && (पढ़ोw(slot_entry + SMBIOS_SLOT_NUMBER) !=
+				slot->number)) अणु
 			slot_entry = get_SMBIOS_entry(smbios_start,
 						smbios_table, 9, slot_entry);
-		}
+		पूर्ण
 
 		slot->p_sm_slot = slot_entry;
 
-		timer_setup(&slot->task_event, cpqhp_pushbutton_thread, 0);
-		slot->task_event.expires = jiffies + 5 * HZ;
+		समयr_setup(&slot->task_event, cpqhp_pushbutton_thपढ़ो, 0);
+		slot->task_event.expires = jअगरfies + 5 * HZ;
 
-		/*FIXME: these capabilities aren't used but if they are
+		/*FIXME: these capabilities aren't used but अगर they are
 		 *	 they need to be correctly implemented
 		 */
 		slot->capabilities |= PCISLOT_REPLACE_SUPPORTED;
 		slot->capabilities |= PCISLOT_INTERLOCK_SUPPORTED;
 
-		if (is_slot64bit(slot))
+		अगर (is_slot64bit(slot))
 			slot->capabilities |= PCISLOT_64_BIT_SUPPORTED;
-		if (is_slot66mhz(slot))
+		अगर (is_slot66mhz(slot))
 			slot->capabilities |= PCISLOT_66_MHZ_SUPPORTED;
-		if (bus->cur_bus_speed == PCI_SPEED_66MHz)
+		अगर (bus->cur_bus_speed == PCI_SPEED_66MHz)
 			slot->capabilities |= PCISLOT_66_MHZ_OPERATION;
 
 		ctrl_slot =
-			slot_device - (readb(ctrl->hpc_reg + SLOT_MASK) >> 4);
+			slot_device - (पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4);
 
 		/* Check presence */
 		slot->capabilities |=
 			((((~tempdword) >> 23) |
 			 ((~tempdword) >> 15)) >> ctrl_slot) & 0x02;
-		/* Check the switch state */
+		/* Check the चयन state */
 		slot->capabilities |=
 			((~tempdword & 0xFF) >> ctrl_slot) & 0x01;
 		/* Check the slot enable */
 		slot->capabilities |=
-			((read_slot_enable(ctrl) << 2) >> ctrl_slot) & 0x04;
+			((पढ़ो_slot_enable(ctrl) << 2) >> ctrl_slot) & 0x04;
 
-		/* register this slot with the hotplug pci core */
-		snprintf(name, SLOT_NAME_SIZE, "%u", slot->number);
+		/* रेजिस्टर this slot with the hotplug pci core */
+		snम_लिखो(name, SLOT_NAME_SIZE, "%u", slot->number);
 		slot->hotplug_slot.ops = &cpqphp_hotplug_slot_ops;
 
 		dbg("registering bus %d, dev %d, number %d, ctrl->slot_device_offset %d, slot %d\n",
 				slot->bus, slot->device,
 				slot->number, ctrl->slot_device_offset,
 				slot_number);
-		result = pci_hp_register(&slot->hotplug_slot,
+		result = pci_hp_रेजिस्टर(&slot->hotplug_slot,
 					 ctrl->pci_dev->bus,
 					 slot->device,
 					 name);
-		if (result) {
+		अगर (result) अणु
 			err("pci_hp_register failed with error %d\n", result);
-			goto error_slot;
-		}
+			जाओ error_slot;
+		पूर्ण
 
 		slot->next = ctrl->slot;
 		ctrl->slot = slot;
@@ -668,331 +669,331 @@ static int ctrl_slot_setup(struct controller *ctrl,
 		number_of_slots--;
 		slot_device++;
 		slot_number++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error_slot:
-	kfree(slot);
+	kमुक्त(slot);
 error:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int one_time_init(void)
-{
-	int loop;
-	int retval = 0;
+अटल पूर्णांक one_समय_init(व्योम)
+अणु
+	पूर्णांक loop;
+	पूर्णांक retval = 0;
 
-	if (initialized)
-		return 0;
+	अगर (initialized)
+		वापस 0;
 
-	power_mode = 0;
+	घातer_mode = 0;
 
 	retval = init_cpqhp_routing_table();
-	if (retval)
-		goto error;
+	अगर (retval)
+		जाओ error;
 
-	if (cpqhp_debug)
-		pci_print_IRQ_route();
+	अगर (cpqhp_debug)
+		pci_prपूर्णांक_IRQ_route();
 
 	dbg("Initialize + Start the notification mechanism\n");
 
-	retval = cpqhp_event_start_thread();
-	if (retval)
-		goto error;
+	retval = cpqhp_event_start_thपढ़ो();
+	अगर (retval)
+		जाओ error;
 
 	dbg("Initialize slot lists\n");
-	for (loop = 0; loop < 256; loop++)
-		cpqhp_slot_list[loop] = NULL;
+	क्रम (loop = 0; loop < 256; loop++)
+		cpqhp_slot_list[loop] = शून्य;
 
 	/* FIXME: We also need to hook the NMI handler eventually.
 	 * this also needs to be worked with Christoph
-	 * register_NMI_handler();
+	 * रेजिस्टर_NMI_handler();
 	 */
 	/* Map rom address */
 	cpqhp_rom_start = ioremap(ROM_PHY_ADDR, ROM_PHY_LEN);
-	if (!cpqhp_rom_start) {
+	अगर (!cpqhp_rom_start) अणु
 		err("Could not ioremap memory region for ROM\n");
 		retval = -EIO;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* Now, map the int15 entry point if we are on compaq specific
+	/* Now, map the पूर्णांक15 entry poपूर्णांक अगर we are on compaq specअगरic
 	 * hardware
 	 */
 	compaq_nvram_init(cpqhp_rom_start);
 
-	/* Map smbios table entry point structure */
-	smbios_table = detect_SMBIOS_pointer(cpqhp_rom_start,
+	/* Map smbios table entry poपूर्णांक काष्ठाure */
+	smbios_table = detect_SMBIOS_poपूर्णांकer(cpqhp_rom_start,
 					cpqhp_rom_start + ROM_PHY_LEN);
-	if (!smbios_table) {
+	अगर (!smbios_table) अणु
 		err("Could not find the SMBIOS pointer in memory\n");
 		retval = -EIO;
-		goto error_rom_start;
-	}
+		जाओ error_rom_start;
+	पूर्ण
 
-	smbios_start = ioremap(readl(smbios_table + ST_ADDRESS),
-					readw(smbios_table + ST_LENGTH));
-	if (!smbios_start) {
+	smbios_start = ioremap(पढ़ोl(smbios_table + ST_ADDRESS),
+					पढ़ोw(smbios_table + ST_LENGTH));
+	अगर (!smbios_start) अणु
 		err("Could not ioremap memory region taken from SMBIOS values\n");
 		retval = -EIO;
-		goto error_smbios_start;
-	}
+		जाओ error_smbios_start;
+	पूर्ण
 
 	initialized = 1;
 
-	return retval;
+	वापस retval;
 
 error_smbios_start:
 	iounmap(smbios_start);
 error_rom_start:
 	iounmap(cpqhp_rom_start);
 error:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int cpqhpc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
+अटल पूर्णांक cpqhpc_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
 	u8 num_of_slots = 0;
 	u8 hp_slot = 0;
 	u8 device;
 	u8 bus_cap;
 	u16 temp_word;
-	u16 vendor_id;
-	u16 subsystem_vid;
-	u16 subsystem_deviceid;
+	u16 venकरोr_id;
+	u16 subप्रणाली_vid;
+	u16 subप्रणाली_deviceid;
 	u32 rc;
-	struct controller *ctrl;
-	struct pci_func *func;
-	struct pci_bus *bus;
-	int err;
+	काष्ठा controller *ctrl;
+	काष्ठा pci_func *func;
+	काष्ठा pci_bus *bus;
+	पूर्णांक err;
 
 	err = pci_enable_device(pdev);
-	if (err) {
-		printk(KERN_ERR MY_NAME ": cannot enable PCI device %s (%d)\n",
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR MY_NAME ": cannot enable PCI device %s (%d)\n",
 			pci_name(pdev), err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	bus = pdev->subordinate;
-	if (!bus) {
+	अगर (!bus) अणु
 		pci_notice(pdev, "the device is not a bridge, skipping\n");
 		rc = -ENODEV;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
-	/* Need to read VID early b/c it's used to differentiate CPQ and INTC
+	/* Need to पढ़ो VID early b/c it's used to dअगरferentiate CPQ and INTC
 	 * discovery
 	 */
-	vendor_id = pdev->vendor;
-	if ((vendor_id != PCI_VENDOR_ID_COMPAQ) &&
-	    (vendor_id != PCI_VENDOR_ID_INTEL)) {
-		err(msg_HPC_non_compaq_or_intel);
+	venकरोr_id = pdev->venकरोr;
+	अगर ((venकरोr_id != PCI_VENDOR_ID_COMPAQ) &&
+	    (venकरोr_id != PCI_VENDOR_ID_INTEL)) अणु
+		err(msg_HPC_non_compaq_or_पूर्णांकel);
 		rc = -ENODEV;
-		goto err_disable_device;
-	}
-	dbg("Vendor ID: %x\n", vendor_id);
+		जाओ err_disable_device;
+	पूर्ण
+	dbg("Vendor ID: %x\n", venकरोr_id);
 
 	dbg("revision: %d\n", pdev->revision);
-	if ((vendor_id == PCI_VENDOR_ID_COMPAQ) && (!pdev->revision)) {
+	अगर ((venकरोr_id == PCI_VENDOR_ID_COMPAQ) && (!pdev->revision)) अणु
 		err(msg_HPC_rev_error);
 		rc = -ENODEV;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
-	/* Check for the proper subsystem IDs
-	 * Intel uses a different SSID programming model than Compaq.
-	 * For Intel, each SSID bit identifies a PHP capability.
+	/* Check क्रम the proper subप्रणाली IDs
+	 * Intel uses a dअगरferent SSID programming model than Compaq.
+	 * For Intel, each SSID bit identअगरies a PHP capability.
 	 * Also Intel HPCs may have RID=0.
 	 */
-	if ((pdev->revision <= 2) && (vendor_id != PCI_VENDOR_ID_INTEL)) {
+	अगर ((pdev->revision <= 2) && (venकरोr_id != PCI_VENDOR_ID_INTEL)) अणु
 		err(msg_HPC_not_supported);
 		rc = -ENODEV;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
 	/* TODO: This code can be made to support non-Compaq or Intel
-	 * subsystem IDs
+	 * subप्रणाली IDs
 	 */
-	subsystem_vid = pdev->subsystem_vendor;
-	dbg("Subsystem Vendor ID: %x\n", subsystem_vid);
-	if ((subsystem_vid != PCI_VENDOR_ID_COMPAQ) && (subsystem_vid != PCI_VENDOR_ID_INTEL)) {
-		err(msg_HPC_non_compaq_or_intel);
+	subप्रणाली_vid = pdev->subप्रणाली_venकरोr;
+	dbg("Subsystem Vendor ID: %x\n", subप्रणाली_vid);
+	अगर ((subप्रणाली_vid != PCI_VENDOR_ID_COMPAQ) && (subप्रणाली_vid != PCI_VENDOR_ID_INTEL)) अणु
+		err(msg_HPC_non_compaq_or_पूर्णांकel);
 		rc = -ENODEV;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
-	ctrl = kzalloc(sizeof(struct controller), GFP_KERNEL);
-	if (!ctrl) {
+	ctrl = kzalloc(माप(काष्ठा controller), GFP_KERNEL);
+	अगर (!ctrl) अणु
 		rc = -ENOMEM;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
-	subsystem_deviceid = pdev->subsystem_device;
+	subप्रणाली_deviceid = pdev->subप्रणाली_device;
 
-	info("Hot Plug Subsystem Device ID: %x\n", subsystem_deviceid);
+	info("Hot Plug Subsystem Device ID: %x\n", subप्रणाली_deviceid);
 
-	/* Set Vendor ID, so it can be accessed later from other
+	/* Set Venकरोr ID, so it can be accessed later from other
 	 * functions
 	 */
-	ctrl->vendor_id = vendor_id;
+	ctrl->venकरोr_id = venकरोr_id;
 
-	switch (subsystem_vid) {
-	case PCI_VENDOR_ID_COMPAQ:
-		if (pdev->revision >= 0x13) { /* CIOBX */
+	चयन (subप्रणाली_vid) अणु
+	हाल PCI_VENDOR_ID_COMPAQ:
+		अगर (pdev->revision >= 0x13) अणु /* CIOBX */
 			ctrl->push_flag = 1;
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			ctrl->push_button = 1;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 1;
 			ctrl->pcix_speed_capability = 1;
-			pci_read_config_byte(pdev, 0x41, &bus_cap);
-			if (bus_cap & 0x80) {
+			pci_पढ़ो_config_byte(pdev, 0x41, &bus_cap);
+			अगर (bus_cap & 0x80) अणु
 				dbg("bus max supports 133MHz PCI-X\n");
 				bus->max_bus_speed = PCI_SPEED_133MHz_PCIX;
-				break;
-			}
-			if (bus_cap & 0x40) {
+				अवरोध;
+			पूर्ण
+			अगर (bus_cap & 0x40) अणु
 				dbg("bus max supports 100MHz PCI-X\n");
 				bus->max_bus_speed = PCI_SPEED_100MHz_PCIX;
-				break;
-			}
-			if (bus_cap & 0x20) {
+				अवरोध;
+			पूर्ण
+			अगर (bus_cap & 0x20) अणु
 				dbg("bus max supports 66MHz PCI-X\n");
 				bus->max_bus_speed = PCI_SPEED_66MHz_PCIX;
-				break;
-			}
-			if (bus_cap & 0x10) {
+				अवरोध;
+			पूर्ण
+			अगर (bus_cap & 0x10) अणु
 				dbg("bus max supports 66MHz PCI\n");
 				bus->max_bus_speed = PCI_SPEED_66MHz;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (subsystem_deviceid) {
-		case PCI_SUB_HPC_ID:
+		चयन (subप्रणाली_deviceid) अणु
+		हाल PCI_SUB_HPC_ID:
 			/* Original 6500/7000 implementation */
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			bus->max_bus_speed = PCI_SPEED_33MHz;
 			ctrl->push_button = 0;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 0;
 			ctrl->pcix_speed_capability = 0;
-			break;
-		case PCI_SUB_HPC_ID2:
+			अवरोध;
+		हाल PCI_SUB_HPC_ID2:
 			/* First Pushbutton implementation */
 			ctrl->push_flag = 1;
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			bus->max_bus_speed = PCI_SPEED_33MHz;
 			ctrl->push_button = 1;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 0;
 			ctrl->pcix_speed_capability = 0;
-			break;
-		case PCI_SUB_HPC_ID_INTC:
+			अवरोध;
+		हाल PCI_SUB_HPC_ID_INTC:
 			/* Third party (6500/7000) */
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			bus->max_bus_speed = PCI_SPEED_33MHz;
 			ctrl->push_button = 0;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 0;
 			ctrl->pcix_speed_capability = 0;
-			break;
-		case PCI_SUB_HPC_ID3:
+			अवरोध;
+		हाल PCI_SUB_HPC_ID3:
 			/* First 66 Mhz implementation */
 			ctrl->push_flag = 1;
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			bus->max_bus_speed = PCI_SPEED_66MHz;
 			ctrl->push_button = 1;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 0;
 			ctrl->pcix_speed_capability = 0;
-			break;
-		case PCI_SUB_HPC_ID4:
+			अवरोध;
+		हाल PCI_SUB_HPC_ID4:
 			/* First PCI-X implementation, 100MHz */
 			ctrl->push_flag = 1;
-			ctrl->slot_switch_type = 1;
+			ctrl->slot_चयन_type = 1;
 			bus->max_bus_speed = PCI_SPEED_100MHz_PCIX;
 			ctrl->push_button = 1;
 			ctrl->pci_config_space = 1;
 			ctrl->defeature_PHP = 1;
 			ctrl->pcix_support = 1;
 			ctrl->pcix_speed_capability = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			err(msg_HPC_not_supported);
 			rc = -ENODEV;
-			goto err_free_ctrl;
-		}
-		break;
+			जाओ err_मुक्त_ctrl;
+		पूर्ण
+		अवरोध;
 
-	case PCI_VENDOR_ID_INTEL:
-		/* Check for speed capability (0=33, 1=66) */
-		if (subsystem_deviceid & 0x0001)
+	हाल PCI_VENDOR_ID_INTEL:
+		/* Check क्रम speed capability (0=33, 1=66) */
+		अगर (subप्रणाली_deviceid & 0x0001)
 			bus->max_bus_speed = PCI_SPEED_66MHz;
-		else
+		अन्यथा
 			bus->max_bus_speed = PCI_SPEED_33MHz;
 
-		/* Check for push button */
-		if (subsystem_deviceid & 0x0002)
+		/* Check क्रम push button */
+		अगर (subप्रणाली_deviceid & 0x0002)
 			ctrl->push_button = 0;
-		else
+		अन्यथा
 			ctrl->push_button = 1;
 
-		/* Check for slot switch type (0=mechanical, 1=not mechanical) */
-		if (subsystem_deviceid & 0x0004)
-			ctrl->slot_switch_type = 0;
-		else
-			ctrl->slot_switch_type = 1;
+		/* Check क्रम slot चयन type (0=mechanical, 1=not mechanical) */
+		अगर (subप्रणाली_deviceid & 0x0004)
+			ctrl->slot_चयन_type = 0;
+		अन्यथा
+			ctrl->slot_चयन_type = 1;
 
 		/* PHP Status (0=De-feature PHP, 1=Normal operation) */
-		if (subsystem_deviceid & 0x0008)
+		अगर (subप्रणाली_deviceid & 0x0008)
 			ctrl->defeature_PHP = 1;	/* PHP supported */
-		else
+		अन्यथा
 			ctrl->defeature_PHP = 0;	/* PHP not supported */
 
 		/* Alternate Base Address Register Interface
 		 * (0=not supported, 1=supported)
 		 */
-		if (subsystem_deviceid & 0x0010)
+		अगर (subप्रणाली_deviceid & 0x0010)
 			ctrl->alternate_base_address = 1;
-		else
+		अन्यथा
 			ctrl->alternate_base_address = 0;
 
 		/* PCI Config Space Index (0=not supported, 1=supported) */
-		if (subsystem_deviceid & 0x0020)
+		अगर (subप्रणाली_deviceid & 0x0020)
 			ctrl->pci_config_space = 1;
-		else
+		अन्यथा
 			ctrl->pci_config_space = 0;
 
 		/* PCI-X support */
-		if (subsystem_deviceid & 0x0080) {
+		अगर (subप्रणाली_deviceid & 0x0080) अणु
 			ctrl->pcix_support = 1;
-			if (subsystem_deviceid & 0x0040)
-				/* 133MHz PCI-X if bit 7 is 1 */
+			अगर (subप्रणाली_deviceid & 0x0040)
+				/* 133MHz PCI-X अगर bit 7 is 1 */
 				ctrl->pcix_speed_capability = 1;
-			else
-				/* 100MHz PCI-X if bit 7 is 1 and bit 0 is 0, */
-				/* 66MHz PCI-X if bit 7 is 1 and bit 0 is 1 */
+			अन्यथा
+				/* 100MHz PCI-X अगर bit 7 is 1 and bit 0 is 0, */
+				/* 66MHz PCI-X अगर bit 7 is 1 and bit 0 is 1 */
 				ctrl->pcix_speed_capability = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Conventional PCI */
 			ctrl->pcix_support = 0;
 			ctrl->pcix_speed_capability = 0;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		err(msg_HPC_not_supported);
 		rc = -ENODEV;
-		goto err_free_ctrl;
-	}
+		जाओ err_मुक्त_ctrl;
+	पूर्ण
 
 	/* Tell the user that we found one. */
 	info("Initializing the PCI hot plug controller residing on PCI bus %d\n",
@@ -1000,7 +1001,7 @@ static int cpqhpc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	dbg("Hotplug controller capabilities:\n");
 	dbg("    speed_capability       %d\n", bus->max_bus_speed);
-	dbg("    slot_switch_type       %s\n", ctrl->slot_switch_type ?
+	dbg("    slot_switch_type       %s\n", ctrl->slot_चयन_type ?
 					"switch present" : "no switch");
 	dbg("    defeature_PHP          %s\n", ctrl->defeature_PHP ?
 					"PHP supported" : "PHP not supported");
@@ -1016,14 +1017,14 @@ static int cpqhpc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	ctrl->pci_dev = pdev;
 	pci_set_drvdata(pdev, ctrl);
 
-	/* make our own copy of the pci bus structure,
+	/* make our own copy of the pci bus काष्ठाure,
 	 * as we like tweaking it a lot */
-	ctrl->pci_bus = kmemdup(pdev->bus, sizeof(*ctrl->pci_bus), GFP_KERNEL);
-	if (!ctrl->pci_bus) {
+	ctrl->pci_bus = kmemdup(pdev->bus, माप(*ctrl->pci_bus), GFP_KERNEL);
+	अगर (!ctrl->pci_bus) अणु
 		err("out of memory\n");
 		rc = -ENOMEM;
-		goto err_free_ctrl;
-	}
+		जाओ err_मुक्त_ctrl;
+	पूर्ण
 
 	ctrl->bus = pdev->bus->number;
 	ctrl->rev = pdev->revision;
@@ -1031,376 +1032,376 @@ static int cpqhpc_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 		PCI_SLOT(pdev->devfn), PCI_FUNC(pdev->devfn), ctrl->rev);
 
 	mutex_init(&ctrl->crit_sect);
-	init_waitqueue_head(&ctrl->queue);
+	init_रुकोqueue_head(&ctrl->queue);
 
-	/* initialize our threads if they haven't already been started up */
-	rc = one_time_init();
-	if (rc)
-		goto err_free_bus;
+	/* initialize our thपढ़ोs अगर they haven't alपढ़ोy been started up */
+	rc = one_समय_init();
+	अगर (rc)
+		जाओ err_मुक्त_bus;
 
 	dbg("pdev = %p\n", pdev);
-	dbg("pci resource start %llx\n", (unsigned long long)pci_resource_start(pdev, 0));
-	dbg("pci resource len %llx\n", (unsigned long long)pci_resource_len(pdev, 0));
+	dbg("pci resource start %llx\n", (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 0));
+	dbg("pci resource len %llx\n", (अचिन्हित दीर्घ दीर्घ)pci_resource_len(pdev, 0));
 
-	if (!request_mem_region(pci_resource_start(pdev, 0),
-				pci_resource_len(pdev, 0), MY_NAME)) {
+	अगर (!request_mem_region(pci_resource_start(pdev, 0),
+				pci_resource_len(pdev, 0), MY_NAME)) अणु
 		err("cannot reserve MMIO region\n");
 		rc = -ENOMEM;
-		goto err_free_bus;
-	}
+		जाओ err_मुक्त_bus;
+	पूर्ण
 
 	ctrl->hpc_reg = ioremap(pci_resource_start(pdev, 0),
 					pci_resource_len(pdev, 0));
-	if (!ctrl->hpc_reg) {
+	अगर (!ctrl->hpc_reg) अणु
 		err("cannot remap MMIO region %llx @ %llx\n",
-		    (unsigned long long)pci_resource_len(pdev, 0),
-		    (unsigned long long)pci_resource_start(pdev, 0));
+		    (अचिन्हित दीर्घ दीर्घ)pci_resource_len(pdev, 0),
+		    (अचिन्हित दीर्घ दीर्घ)pci_resource_start(pdev, 0));
 		rc = -ENODEV;
-		goto err_free_mem_region;
-	}
+		जाओ err_मुक्त_mem_region;
+	पूर्ण
 
-	/* Check for 66Mhz operation */
+	/* Check क्रम 66Mhz operation */
 	bus->cur_bus_speed = get_controller_speed(ctrl);
 
 
 	/********************************************************
 	 *
-	 *              Save configuration headers for this and
+	 *              Save configuration headers क्रम this and
 	 *              subordinate PCI buses
 	 *
 	 ********************************************************/
 
 	/* find the physical slot number of the first hot plug slot */
 
-	/* Get slot won't work for devices behind bridges, but
-	 * in this case it will always be called for the "base"
+	/* Get slot won't work क्रम devices behind bridges, but
+	 * in this हाल it will always be called क्रम the "base"
 	 * bus/dev/func of a slot.
 	 * CS: this is leveraging the PCIIRQ routing code from the kernel
 	 * (pci-pc.c: get_irq_routing_table) */
 	rc = get_slot_mapping(ctrl->pci_bus, pdev->bus->number,
-				(readb(ctrl->hpc_reg + SLOT_MASK) >> 4),
+				(पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4),
 				&(ctrl->first_slot));
 	dbg("get_slot_mapping: first_slot = %d, returned = %d\n",
 				ctrl->first_slot, rc);
-	if (rc) {
+	अगर (rc) अणु
 		err(msg_initialization_err, rc);
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	/* Store PCI Config Space for all devices on this bus */
-	rc = cpqhp_save_config(ctrl, ctrl->bus, readb(ctrl->hpc_reg + SLOT_MASK));
-	if (rc) {
+	/* Store PCI Config Space क्रम all devices on this bus */
+	rc = cpqhp_save_config(ctrl, ctrl->bus, पढ़ोb(ctrl->hpc_reg + SLOT_MASK));
+	अगर (rc) अणु
 		err("%s: unable to save PCI configuration data, error %d\n",
 				__func__, rc);
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	/*
-	 * Get IO, memory, and IRQ resources for new devices
+	 * Get IO, memory, and IRQ resources क्रम new devices
 	 */
-	/* The next line is required for cpqhp_find_available_resources */
-	ctrl->interrupt = pdev->irq;
-	if (ctrl->interrupt < 0x10) {
+	/* The next line is required क्रम cpqhp_find_available_resources */
+	ctrl->पूर्णांकerrupt = pdev->irq;
+	अगर (ctrl->पूर्णांकerrupt < 0x10) अणु
 		cpqhp_legacy_mode = 1;
 		dbg("System seems to be configured for Full Table Mapped MPS mode\n");
-	}
+	पूर्ण
 
 	ctrl->cfgspc_irq = 0;
-	pci_read_config_byte(pdev, PCI_INTERRUPT_LINE, &ctrl->cfgspc_irq);
+	pci_पढ़ो_config_byte(pdev, PCI_INTERRUPT_LINE, &ctrl->cfgspc_irq);
 
 	rc = cpqhp_find_available_resources(ctrl, cpqhp_rom_start);
 	ctrl->add_support = !rc;
-	if (rc) {
+	अगर (rc) अणु
 		dbg("cpqhp_find_available_resources = 0x%x\n", rc);
 		err("unable to locate PCI configuration resources for hot plug add.\n");
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	/*
 	 * Finish setting up the hot plug ctrl device
 	 */
-	ctrl->slot_device_offset = readb(ctrl->hpc_reg + SLOT_MASK) >> 4;
+	ctrl->slot_device_offset = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4;
 	dbg("NumSlots %d\n", ctrl->slot_device_offset);
 
 	ctrl->next_event = 0;
 
-	/* Setup the slot information structures */
+	/* Setup the slot inक्रमmation काष्ठाures */
 	rc = ctrl_slot_setup(ctrl, smbios_start, smbios_table);
-	if (rc) {
+	अगर (rc) अणु
 		err(msg_initialization_err, 6);
 		err("%s: unable to save PCI configuration data, error %d\n",
 			__func__, rc);
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	/* Mask all general input interrupts */
-	writel(0xFFFFFFFFL, ctrl->hpc_reg + INT_MASK);
+	/* Mask all general input पूर्णांकerrupts */
+	ग_लिखोl(0xFFFFFFFFL, ctrl->hpc_reg + INT_MASK);
 
-	/* set up the interrupt */
-	dbg("HPC interrupt = %d\n", ctrl->interrupt);
-	if (request_irq(ctrl->interrupt, cpqhp_ctrl_intr,
-			IRQF_SHARED, MY_NAME, ctrl)) {
+	/* set up the पूर्णांकerrupt */
+	dbg("HPC interrupt = %d\n", ctrl->पूर्णांकerrupt);
+	अगर (request_irq(ctrl->पूर्णांकerrupt, cpqhp_ctrl_पूर्णांकr,
+			IRQF_SHARED, MY_NAME, ctrl)) अणु
 		err("Can't get irq %d for the hotplug pci controller\n",
-			ctrl->interrupt);
+			ctrl->पूर्णांकerrupt);
 		rc = -ENODEV;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	/* Enable Shift Out interrupt and clear it, also enable SERR on power
+	/* Enable Shअगरt Out पूर्णांकerrupt and clear it, also enable SERR on घातer
 	 * fault
 	 */
-	temp_word = readw(ctrl->hpc_reg + MISC);
+	temp_word = पढ़ोw(ctrl->hpc_reg + MISC);
 	temp_word |= 0x4006;
-	writew(temp_word, ctrl->hpc_reg + MISC);
+	ग_लिखोw(temp_word, ctrl->hpc_reg + MISC);
 
-	/* Changed 05/05/97 to clear all interrupts at start */
-	writel(0xFFFFFFFFL, ctrl->hpc_reg + INT_INPUT_CLEAR);
+	/* Changed 05/05/97 to clear all पूर्णांकerrupts at start */
+	ग_लिखोl(0xFFFFFFFFL, ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-	ctrl->ctrl_int_comp = readl(ctrl->hpc_reg + INT_INPUT_CLEAR);
+	ctrl->ctrl_पूर्णांक_comp = पढ़ोl(ctrl->hpc_reg + INT_INPUT_CLEAR);
 
-	writel(0x0L, ctrl->hpc_reg + INT_MASK);
+	ग_लिखोl(0x0L, ctrl->hpc_reg + INT_MASK);
 
-	if (!cpqhp_ctrl_list) {
+	अगर (!cpqhp_ctrl_list) अणु
 		cpqhp_ctrl_list = ctrl;
-		ctrl->next = NULL;
-	} else {
+		ctrl->next = शून्य;
+	पूर्ण अन्यथा अणु
 		ctrl->next = cpqhp_ctrl_list;
 		cpqhp_ctrl_list = ctrl;
-	}
+	पूर्ण
 
 	/* turn off empty slots here unless command line option "ON" set
-	 * Wait for exclusive access to hardware
+	 * Wait क्रम exclusive access to hardware
 	 */
 	mutex_lock(&ctrl->crit_sect);
 
-	num_of_slots = readb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
+	num_of_slots = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) & 0x0F;
 
-	/* find first device number for the ctrl */
-	device = readb(ctrl->hpc_reg + SLOT_MASK) >> 4;
+	/* find first device number क्रम the ctrl */
+	device = पढ़ोb(ctrl->hpc_reg + SLOT_MASK) >> 4;
 
-	while (num_of_slots) {
+	जबतक (num_of_slots) अणु
 		dbg("num_of_slots: %d\n", num_of_slots);
 		func = cpqhp_slot_find(ctrl->bus, device, 0);
-		if (!func)
-			break;
+		अगर (!func)
+			अवरोध;
 
 		hp_slot = func->device - ctrl->slot_device_offset;
 		dbg("hp_slot: %d\n", hp_slot);
 
-		/* We have to save the presence info for these slots */
-		temp_word = ctrl->ctrl_int_comp >> 16;
+		/* We have to save the presence info क्रम these slots */
+		temp_word = ctrl->ctrl_पूर्णांक_comp >> 16;
 		func->presence_save = (temp_word >> hp_slot) & 0x01;
 		func->presence_save |= (temp_word >> (hp_slot + 7)) & 0x02;
 
-		if (ctrl->ctrl_int_comp & (0x1L << hp_slot))
-			func->switch_save = 0;
-		else
-			func->switch_save = 0x10;
+		अगर (ctrl->ctrl_पूर्णांक_comp & (0x1L << hp_slot))
+			func->चयन_save = 0;
+		अन्यथा
+			func->चयन_save = 0x10;
 
-		if (!power_mode)
-			if (!func->is_a_board) {
+		अगर (!घातer_mode)
+			अगर (!func->is_a_board) अणु
 				green_LED_off(ctrl, hp_slot);
 				slot_disable(ctrl, hp_slot);
-			}
+			पूर्ण
 
 		device++;
 		num_of_slots--;
-	}
+	पूर्ण
 
-	if (!power_mode) {
+	अगर (!घातer_mode) अणु
 		set_SOGO(ctrl);
-		/* Wait for SOBS to be unset */
-		wait_for_ctrl_irq(ctrl);
-	}
+		/* Wait क्रम SOBS to be unset */
+		रुको_क्रम_ctrl_irq(ctrl);
+	पूर्ण
 
 	rc = init_SERR(ctrl);
-	if (rc) {
+	अगर (rc) अणु
 		err("init_SERR failed\n");
 		mutex_unlock(&ctrl->crit_sect);
-		goto err_free_irq;
-	}
+		जाओ err_मुक्त_irq;
+	पूर्ण
 
 	/* Done with exclusive hardware access */
 	mutex_unlock(&ctrl->crit_sect);
 
 	cpqhp_create_debugfs_files(ctrl);
 
-	return 0;
+	वापस 0;
 
-err_free_irq:
-	free_irq(ctrl->interrupt, ctrl);
+err_मुक्त_irq:
+	मुक्त_irq(ctrl->पूर्णांकerrupt, ctrl);
 err_iounmap:
 	iounmap(ctrl->hpc_reg);
-err_free_mem_region:
+err_मुक्त_mem_region:
 	release_mem_region(pci_resource_start(pdev, 0), pci_resource_len(pdev, 0));
-err_free_bus:
-	kfree(ctrl->pci_bus);
-err_free_ctrl:
-	kfree(ctrl);
+err_मुक्त_bus:
+	kमुक्त(ctrl->pci_bus);
+err_मुक्त_ctrl:
+	kमुक्त(ctrl);
 err_disable_device:
 	pci_disable_device(pdev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit unload_cpqphpd(void)
-{
-	struct pci_func *next;
-	struct pci_func *TempSlot;
-	int loop;
+अटल व्योम __निकास unload_cpqphpd(व्योम)
+अणु
+	काष्ठा pci_func *next;
+	काष्ठा pci_func *TempSlot;
+	पूर्णांक loop;
 	u32 rc;
-	struct controller *ctrl;
-	struct controller *tctrl;
-	struct pci_resource *res;
-	struct pci_resource *tres;
+	काष्ठा controller *ctrl;
+	काष्ठा controller *tctrl;
+	काष्ठा pci_resource *res;
+	काष्ठा pci_resource *tres;
 
 	rc = compaq_nvram_store(cpqhp_rom_start);
 
 	ctrl = cpqhp_ctrl_list;
 
-	while (ctrl) {
-		if (ctrl->hpc_reg) {
+	जबतक (ctrl) अणु
+		अगर (ctrl->hpc_reg) अणु
 			u16 misc;
-			rc = read_slot_enable(ctrl);
+			rc = पढ़ो_slot_enable(ctrl);
 
-			writeb(0, ctrl->hpc_reg + SLOT_SERR);
-			writel(0xFFFFFFC0L | ~rc, ctrl->hpc_reg + INT_MASK);
+			ग_लिखोb(0, ctrl->hpc_reg + SLOT_SERR);
+			ग_लिखोl(0xFFFFFFC0L | ~rc, ctrl->hpc_reg + INT_MASK);
 
-			misc = readw(ctrl->hpc_reg + MISC);
+			misc = पढ़ोw(ctrl->hpc_reg + MISC);
 			misc &= 0xFFFD;
-			writew(misc, ctrl->hpc_reg + MISC);
-		}
+			ग_लिखोw(misc, ctrl->hpc_reg + MISC);
+		पूर्ण
 
 		ctrl_slot_cleanup(ctrl);
 
 		res = ctrl->io_head;
-		while (res) {
+		जबतक (res) अणु
 			tres = res;
 			res = res->next;
-			kfree(tres);
-		}
+			kमुक्त(tres);
+		पूर्ण
 
 		res = ctrl->mem_head;
-		while (res) {
+		जबतक (res) अणु
 			tres = res;
 			res = res->next;
-			kfree(tres);
-		}
+			kमुक्त(tres);
+		पूर्ण
 
 		res = ctrl->p_mem_head;
-		while (res) {
+		जबतक (res) अणु
 			tres = res;
 			res = res->next;
-			kfree(tres);
-		}
+			kमुक्त(tres);
+		पूर्ण
 
 		res = ctrl->bus_head;
-		while (res) {
+		जबतक (res) अणु
 			tres = res;
 			res = res->next;
-			kfree(tres);
-		}
+			kमुक्त(tres);
+		पूर्ण
 
-		kfree(ctrl->pci_bus);
+		kमुक्त(ctrl->pci_bus);
 
 		tctrl = ctrl;
 		ctrl = ctrl->next;
-		kfree(tctrl);
-	}
+		kमुक्त(tctrl);
+	पूर्ण
 
-	for (loop = 0; loop < 256; loop++) {
+	क्रम (loop = 0; loop < 256; loop++) अणु
 		next = cpqhp_slot_list[loop];
-		while (next != NULL) {
+		जबतक (next != शून्य) अणु
 			res = next->io_head;
-			while (res) {
+			जबतक (res) अणु
 				tres = res;
 				res = res->next;
-				kfree(tres);
-			}
+				kमुक्त(tres);
+			पूर्ण
 
 			res = next->mem_head;
-			while (res) {
+			जबतक (res) अणु
 				tres = res;
 				res = res->next;
-				kfree(tres);
-			}
+				kमुक्त(tres);
+			पूर्ण
 
 			res = next->p_mem_head;
-			while (res) {
+			जबतक (res) अणु
 				tres = res;
 				res = res->next;
-				kfree(tres);
-			}
+				kमुक्त(tres);
+			पूर्ण
 
 			res = next->bus_head;
-			while (res) {
+			जबतक (res) अणु
 				tres = res;
 				res = res->next;
-				kfree(tres);
-			}
+				kमुक्त(tres);
+			पूर्ण
 
 			TempSlot = next;
 			next = next->next;
-			kfree(TempSlot);
-		}
-	}
+			kमुक्त(TempSlot);
+		पूर्ण
+	पूर्ण
 
-	/* Stop the notification mechanism */
-	if (initialized)
-		cpqhp_event_stop_thread();
+	/* Stop the notअगरication mechanism */
+	अगर (initialized)
+		cpqhp_event_stop_thपढ़ो();
 
 	/* unmap the rom address */
-	if (cpqhp_rom_start)
+	अगर (cpqhp_rom_start)
 		iounmap(cpqhp_rom_start);
-	if (smbios_start)
+	अगर (smbios_start)
 		iounmap(smbios_start);
-}
+पूर्ण
 
-static const struct pci_device_id hpcd_pci_tbl[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id hpcd_pci_tbl[] = अणु
+	अणु
 	/* handle any PCI Hotplug controller */
 	.class =        ((PCI_CLASS_SYSTEM_PCI_HOTPLUG << 8) | 0x00),
 	.class_mask =   ~0,
 
 	/* no matter who makes it */
-	.vendor =       PCI_ANY_ID,
+	.venकरोr =       PCI_ANY_ID,
 	.device =       PCI_ANY_ID,
-	.subvendor =    PCI_ANY_ID,
+	.subvenकरोr =    PCI_ANY_ID,
 	.subdevice =    PCI_ANY_ID,
 
-	}, { /* end: all zeroes */ }
-};
+	पूर्ण, अणु /* end: all zeroes */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, hpcd_pci_tbl);
 
-static struct pci_driver cpqhpc_driver = {
+अटल काष्ठा pci_driver cpqhpc_driver = अणु
 	.name =		"compaq_pci_hotplug",
 	.id_table =	hpcd_pci_tbl,
 	.probe =	cpqhpc_probe,
-	/* remove:	cpqhpc_remove_one, */
-};
+	/* हटाओ:	cpqhpc_हटाओ_one, */
+पूर्ण;
 
-static int __init cpqhpc_init(void)
-{
-	int result;
+अटल पूर्णांक __init cpqhpc_init(व्योम)
+अणु
+	पूर्णांक result;
 
 	cpqhp_debug = debug;
 
 	info(DRIVER_DESC " version: " DRIVER_VERSION "\n");
 	cpqhp_initialize_debugfs();
-	result = pci_register_driver(&cpqhpc_driver);
+	result = pci_रेजिस्टर_driver(&cpqhpc_driver);
 	dbg("pci_register_driver = %d\n", result);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void __exit cpqhpc_cleanup(void)
-{
+अटल व्योम __निकास cpqhpc_cleanup(व्योम)
+अणु
 	dbg("unload_cpqphpd()\n");
 	unload_cpqphpd();
 
 	dbg("pci_unregister_driver\n");
-	pci_unregister_driver(&cpqhpc_driver);
-	cpqhp_shutdown_debugfs();
-}
+	pci_unरेजिस्टर_driver(&cpqhpc_driver);
+	cpqhp_shutकरोwn_debugfs();
+पूर्ण
 
 module_init(cpqhpc_init);
-module_exit(cpqhpc_cleanup);
+module_निकास(cpqhpc_cleanup);

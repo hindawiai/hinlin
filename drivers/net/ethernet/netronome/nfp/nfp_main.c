@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
- * nfp_main.c
+ * nfp_मुख्य.c
  * Authors: Jakub Kicinski <jakub.kicinski@netronome.com>
  *          Alejandro Lucero <alejandro.lucero@netronome.com>
  *          Jason McMullan <jason.mcmullan@netronome.com>
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/firmware.h>
-#include <linux/vmalloc.h>
-#include <net/devlink.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <net/devlink.h>
 
-#include "nfpcore/nfp.h"
-#include "nfpcore/nfp_cpp.h"
-#include "nfpcore/nfp_nffw.h"
-#include "nfpcore/nfp_nsp.h"
+#समावेश "nfpcore/nfp.h"
+#समावेश "nfpcore/nfp_cpp.h"
+#समावेश "nfpcore/nfp_nffw.h"
+#समावेश "nfpcore/nfp_nsp.h"
 
-#include "nfpcore/nfp6000_pcie.h"
+#समावेश "nfpcore/nfp6000_pcie.h"
 
-#include "nfp_abi.h"
-#include "nfp_app.h"
-#include "nfp_main.h"
-#include "nfp_net.h"
+#समावेश "nfp_abi.h"
+#समावेश "nfp_app.h"
+#समावेश "nfp_main.h"
+#समावेश "nfp_net.h"
 
-static const char nfp_driver_name[] = "nfp";
+अटल स्थिर अक्षर nfp_driver_name[] = "nfp";
 
-static const struct pci_device_id nfp_pci_device_ids[] = {
-	{ PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP6000,
+अटल स्थिर काष्ठा pci_device_id nfp_pci_device_ids[] = अणु
+	अणु PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP6000,
 	  PCI_VENDOR_ID_NETRONOME, PCI_ANY_ID,
 	  PCI_ANY_ID, 0,
-	},
-	{ PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP5000,
+	पूर्ण,
+	अणु PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP5000,
 	  PCI_VENDOR_ID_NETRONOME, PCI_ANY_ID,
 	  PCI_ANY_ID, 0,
-	},
-	{ PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP4000,
+	पूर्ण,
+	अणु PCI_VENDOR_ID_NETRONOME, PCI_DEVICE_ID_NETRONOME_NFP4000,
 	  PCI_VENDOR_ID_NETRONOME, PCI_ANY_ID,
 	  PCI_ANY_ID, 0,
-	},
-	{ 0, } /* Required last entry. */
-};
+	पूर्ण,
+	अणु 0, पूर्ण /* Required last entry. */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, nfp_pci_device_ids);
 
-int nfp_pf_rtsym_read_optional(struct nfp_pf *pf, const char *format,
-			       unsigned int default_val)
-{
-	char name[256];
-	int err = 0;
+पूर्णांक nfp_pf_rtsym_पढ़ो_optional(काष्ठा nfp_pf *pf, स्थिर अक्षर *क्रमmat,
+			       अचिन्हित पूर्णांक शेष_val)
+अणु
+	अक्षर name[256];
+	पूर्णांक err = 0;
 	u64 val;
 
-	snprintf(name, sizeof(name), format, nfp_cppcore_pcie_unit(pf->cpp));
+	snम_लिखो(name, माप(name), क्रमmat, nfp_cppcore_pcie_unit(pf->cpp));
 
-	val = nfp_rtsym_read_le(pf->rtbl, name, &err);
-	if (err) {
-		if (err == -ENOENT)
-			return default_val;
+	val = nfp_rtsym_पढ़ो_le(pf->rtbl, name, &err);
+	अगर (err) अणु
+		अगर (err == -ENOENT)
+			वापस शेष_val;
 		nfp_err(pf->cpp, "Unable to read symbol %s\n", name);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
 u8 __iomem *
-nfp_pf_map_rtsym(struct nfp_pf *pf, const char *name, const char *sym_fmt,
-		 unsigned int min_size, struct nfp_cpp_area **area)
-{
-	char pf_symbol[256];
+nfp_pf_map_rtsym(काष्ठा nfp_pf *pf, स्थिर अक्षर *name, स्थिर अक्षर *sym_fmt,
+		 अचिन्हित पूर्णांक min_size, काष्ठा nfp_cpp_area **area)
+अणु
+	अक्षर pf_symbol[256];
 
-	snprintf(pf_symbol, sizeof(pf_symbol), sym_fmt,
+	snम_लिखो(pf_symbol, माप(pf_symbol), sym_fmt,
 		 nfp_cppcore_pcie_unit(pf->cpp));
 
-	return nfp_rtsym_map(pf->rtbl, pf_symbol, name, min_size, area);
-}
+	वापस nfp_rtsym_map(pf->rtbl, pf_symbol, name, min_size, area);
+पूर्ण
 
 /* Callers should hold the devlink instance lock */
-int nfp_mbox_cmd(struct nfp_pf *pf, u32 cmd, void *in_data, u64 in_length,
-		 void *out_data, u64 out_length)
-{
-	unsigned long err_at;
+पूर्णांक nfp_mbox_cmd(काष्ठा nfp_pf *pf, u32 cmd, व्योम *in_data, u64 in_length,
+		 व्योम *out_data, u64 out_length)
+अणु
+	अचिन्हित दीर्घ err_at;
 	u64 max_data_sz;
 	u32 val = 0;
-	int n, err;
+	पूर्णांक n, err;
 
-	if (!pf->mbox)
-		return -EOPNOTSUPP;
+	अगर (!pf->mbox)
+		वापस -EOPNOTSUPP;
 
 	max_data_sz = nfp_rtsym_size(pf->mbox) - NFP_MBOX_SYM_MIN_SIZE;
 
-	/* Check if cmd field is clear */
-	err = nfp_rtsym_readl(pf->cpp, pf->mbox, NFP_MBOX_CMD, &val);
-	if (err || val) {
+	/* Check अगर cmd field is clear */
+	err = nfp_rtsym_पढ़ोl(pf->cpp, pf->mbox, NFP_MBOX_CMD, &val);
+	अगर (err || val) अणु
 		nfp_warn(pf->cpp, "failed to issue command (%u): %u, err: %d\n",
 			 cmd, val, err);
-		return err ?: -EBUSY;
-	}
+		वापस err ?: -EBUSY;
+	पूर्ण
 
 	in_length = min(in_length, max_data_sz);
-	n = nfp_rtsym_write(pf->cpp, pf->mbox, NFP_MBOX_DATA, in_data,
+	n = nfp_rtsym_ग_लिखो(pf->cpp, pf->mbox, NFP_MBOX_DATA, in_data,
 			    in_length);
-	if (n != in_length)
-		return -EIO;
+	अगर (n != in_length)
+		वापस -EIO;
 	/* Write data_len and wipe reserved */
-	err = nfp_rtsym_writeq(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, in_length);
-	if (err)
-		return err;
+	err = nfp_rtsym_ग_लिखोq(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, in_length);
+	अगर (err)
+		वापस err;
 
-	/* Read back for ordering */
-	err = nfp_rtsym_readl(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, &val);
-	if (err)
-		return err;
+	/* Read back क्रम ordering */
+	err = nfp_rtsym_पढ़ोl(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, &val);
+	अगर (err)
+		वापस err;
 
-	/* Write cmd and wipe return value */
-	err = nfp_rtsym_writeq(pf->cpp, pf->mbox, NFP_MBOX_CMD, cmd);
-	if (err)
-		return err;
+	/* Write cmd and wipe वापस value */
+	err = nfp_rtsym_ग_लिखोq(pf->cpp, pf->mbox, NFP_MBOX_CMD, cmd);
+	अगर (err)
+		वापस err;
 
-	err_at = jiffies + 5 * HZ;
-	while (true) {
-		/* Wait for command to go to 0 (NFP_MBOX_NO_CMD) */
-		err = nfp_rtsym_readl(pf->cpp, pf->mbox, NFP_MBOX_CMD, &val);
-		if (err)
-			return err;
-		if (!val)
-			break;
+	err_at = jअगरfies + 5 * HZ;
+	जबतक (true) अणु
+		/* Wait क्रम command to go to 0 (NFP_MBOX_NO_CMD) */
+		err = nfp_rtsym_पढ़ोl(pf->cpp, pf->mbox, NFP_MBOX_CMD, &val);
+		अगर (err)
+			वापस err;
+		अगर (!val)
+			अवरोध;
 
-		if (time_is_before_eq_jiffies(err_at))
-			return -ETIMEDOUT;
+		अगर (समय_is_beक्रमe_eq_jअगरfies(err_at))
+			वापस -ETIMEDOUT;
 
 		msleep(5);
-	}
+	पूर्ण
 
-	/* Copy output if any (could be error info, do it before reading ret) */
-	err = nfp_rtsym_readl(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, &val);
-	if (err)
-		return err;
+	/* Copy output अगर any (could be error info, करो it beक्रमe पढ़ोing ret) */
+	err = nfp_rtsym_पढ़ोl(pf->cpp, pf->mbox, NFP_MBOX_DATA_LEN, &val);
+	अगर (err)
+		वापस err;
 
 	out_length = min_t(u32, val, min(out_length, max_data_sz));
-	n = nfp_rtsym_read(pf->cpp, pf->mbox, NFP_MBOX_DATA,
+	n = nfp_rtsym_पढ़ो(pf->cpp, pf->mbox, NFP_MBOX_DATA,
 			   out_data, out_length);
-	if (n != out_length)
-		return -EIO;
+	अगर (n != out_length)
+		वापस -EIO;
 
-	/* Check if there is an error */
-	err = nfp_rtsym_readl(pf->cpp, pf->mbox, NFP_MBOX_RET, &val);
-	if (err)
-		return err;
-	if (val)
-		return -val;
+	/* Check अगर there is an error */
+	err = nfp_rtsym_पढ़ोl(pf->cpp, pf->mbox, NFP_MBOX_RET, &val);
+	अगर (err)
+		वापस err;
+	अगर (val)
+		वापस -val;
 
-	return out_length;
-}
+	वापस out_length;
+पूर्ण
 
-static bool nfp_board_ready(struct nfp_pf *pf)
-{
-	const char *cp;
-	long state;
-	int err;
+अटल bool nfp_board_पढ़ोy(काष्ठा nfp_pf *pf)
+अणु
+	स्थिर अक्षर *cp;
+	दीर्घ state;
+	पूर्णांक err;
 
 	cp = nfp_hwinfo_lookup(pf->hwinfo, "board.state");
-	if (!cp)
-		return false;
+	अगर (!cp)
+		वापस false;
 
-	err = kstrtol(cp, 0, &state);
-	if (err < 0)
-		return false;
+	err = kम_से_दीर्घ(cp, 0, &state);
+	अगर (err < 0)
+		वापस false;
 
-	return state == 15;
-}
+	वापस state == 15;
+पूर्ण
 
-static int nfp_pf_board_state_wait(struct nfp_pf *pf)
-{
-	const unsigned long wait_until = jiffies + 10 * HZ;
+अटल पूर्णांक nfp_pf_board_state_रुको(काष्ठा nfp_pf *pf)
+अणु
+	स्थिर अचिन्हित दीर्घ रुको_until = jअगरfies + 10 * HZ;
 
-	while (!nfp_board_ready(pf)) {
-		if (time_is_before_eq_jiffies(wait_until)) {
+	जबतक (!nfp_board_पढ़ोy(pf)) अणु
+		अगर (समय_is_beक्रमe_eq_jअगरfies(रुको_until)) अणु
 			nfp_err(pf->cpp, "NFP board initialization timeout\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		nfp_info(pf->cpp, "waiting for board initialization\n");
-		if (msleep_interruptible(500))
-			return -ERESTARTSYS;
+		अगर (msleep_पूर्णांकerruptible(500))
+			वापस -ERESTARTSYS;
 
-		/* Refresh cached information */
-		kfree(pf->hwinfo);
-		pf->hwinfo = nfp_hwinfo_read(pf->cpp);
-	}
+		/* Refresh cached inक्रमmation */
+		kमुक्त(pf->hwinfo);
+		pf->hwinfo = nfp_hwinfo_पढ़ो(pf->cpp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_pcie_sriov_read_nfd_limit(struct nfp_pf *pf)
-{
-	int err;
+अटल पूर्णांक nfp_pcie_sriov_पढ़ो_nfd_limit(काष्ठा nfp_pf *pf)
+अणु
+	पूर्णांक err;
 
-	pf->limit_vfs = nfp_rtsym_read_le(pf->rtbl, "nfd_vf_cfg_max_vfs", &err);
-	if (err) {
-		/* For backwards compatibility if symbol not found allow all */
+	pf->limit_vfs = nfp_rtsym_पढ़ो_le(pf->rtbl, "nfd_vf_cfg_max_vfs", &err);
+	अगर (err) अणु
+		/* For backwards compatibility अगर symbol not found allow all */
 		pf->limit_vfs = ~0;
-		if (err == -ENOENT)
-			return 0;
+		अगर (err == -ENOENT)
+			वापस 0;
 
 		nfp_warn(pf->cpp, "Warning: VF limit read failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = pci_sriov_set_totalvfs(pf->pdev, pf->limit_vfs);
-	if (err)
+	अगर (err)
 		nfp_warn(pf->cpp, "Failed to set VF count in sysfs: %d\n", err);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_pcie_sriov_enable(struct pci_dev *pdev, int num_vfs)
-{
-#ifdef CONFIG_PCI_IOV
-	struct nfp_pf *pf = pci_get_drvdata(pdev);
-	int err;
+अटल पूर्णांक nfp_pcie_sriov_enable(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
+अणु
+#अगर_घोषित CONFIG_PCI_IOV
+	काष्ठा nfp_pf *pf = pci_get_drvdata(pdev);
+	पूर्णांक err;
 
-	if (num_vfs > pf->limit_vfs) {
+	अगर (num_vfs > pf->limit_vfs) अणु
 		nfp_info(pf->cpp, "Firmware limits number of VFs to %u\n",
 			 pf->limit_vfs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	err = pci_enable_sriov(pdev, num_vfs);
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&pdev->dev, "Failed to enable PCI SR-IOV: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	mutex_lock(&pf->lock);
 
 	err = nfp_app_sriov_enable(pf->app, num_vfs);
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&pdev->dev,
 			 "App specific PCI SR-IOV configuration failed: %d\n",
 			 err);
-		goto err_sriov_disable;
-	}
+		जाओ err_sriov_disable;
+	पूर्ण
 
 	pf->num_vfs = num_vfs;
 
 	dev_dbg(&pdev->dev, "Created %d VFs.\n", pf->num_vfs);
 
 	mutex_unlock(&pf->lock);
-	return num_vfs;
+	वापस num_vfs;
 
 err_sriov_disable:
 	mutex_unlock(&pf->lock);
 	pci_disable_sriov(pdev);
-	return err;
-#endif
-	return 0;
-}
+	वापस err;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int nfp_pcie_sriov_disable(struct pci_dev *pdev)
-{
-#ifdef CONFIG_PCI_IOV
-	struct nfp_pf *pf = pci_get_drvdata(pdev);
+अटल पूर्णांक nfp_pcie_sriov_disable(काष्ठा pci_dev *pdev)
+अणु
+#अगर_घोषित CONFIG_PCI_IOV
+	काष्ठा nfp_pf *pf = pci_get_drvdata(pdev);
 
 	mutex_lock(&pf->lock);
 
-	/* If the VFs are assigned we cannot shut down SR-IOV without
+	/* If the VFs are asचिन्हित we cannot shut करोwn SR-IOV without
 	 * causing issues, so just leave the hardware available but
 	 * disabled
 	 */
-	if (pci_vfs_assigned(pdev)) {
+	अगर (pci_vfs_asचिन्हित(pdev)) अणु
 		dev_warn(&pdev->dev, "Disabling while VFs assigned - VFs will not be deallocated\n");
 		mutex_unlock(&pf->lock);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	nfp_app_sriov_disable(pf->app);
 
@@ -286,417 +287,417 @@ static int nfp_pcie_sriov_disable(struct pci_dev *pdev)
 
 	pci_disable_sriov(pdev);
 	dev_dbg(&pdev->dev, "Removed VFs.\n");
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int nfp_pcie_sriov_configure(struct pci_dev *pdev, int num_vfs)
-{
-	if (!pci_get_drvdata(pdev))
-		return -ENOENT;
+अटल पूर्णांक nfp_pcie_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
+अणु
+	अगर (!pci_get_drvdata(pdev))
+		वापस -ENOENT;
 
-	if (num_vfs == 0)
-		return nfp_pcie_sriov_disable(pdev);
-	else
-		return nfp_pcie_sriov_enable(pdev, num_vfs);
-}
+	अगर (num_vfs == 0)
+		वापस nfp_pcie_sriov_disable(pdev);
+	अन्यथा
+		वापस nfp_pcie_sriov_enable(pdev, num_vfs);
+पूर्ण
 
-int nfp_flash_update_common(struct nfp_pf *pf, const struct firmware *fw,
-			    struct netlink_ext_ack *extack)
-{
-	struct device *dev = &pf->pdev->dev;
-	struct nfp_nsp *nsp;
-	int err;
+पूर्णांक nfp_flash_update_common(काष्ठा nfp_pf *pf, स्थिर काष्ठा firmware *fw,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा device *dev = &pf->pdev->dev;
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err;
 
-	nsp = nfp_nsp_open(pf->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(pf->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		err = PTR_ERR(nsp);
-		if (extack)
+		अगर (extack)
 			NL_SET_ERR_MSG_MOD(extack, "can't access NSP");
-		else
+		अन्यथा
 			dev_err(dev, "Failed to access the NSP: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = nfp_nsp_write_flash(nsp, fw);
-	if (err < 0)
-		goto exit_close_nsp;
+	err = nfp_nsp_ग_लिखो_flash(nsp, fw);
+	अगर (err < 0)
+		जाओ निकास_बंद_nsp;
 	dev_info(dev, "Finished writing flash image\n");
 	err = 0;
 
-exit_close_nsp:
-	nfp_nsp_close(nsp);
-	return err;
-}
+निकास_बंद_nsp:
+	nfp_nsp_बंद(nsp);
+	वापस err;
+पूर्ण
 
-static const struct firmware *
-nfp_net_fw_request(struct pci_dev *pdev, struct nfp_pf *pf, const char *name)
-{
-	const struct firmware *fw = NULL;
-	int err;
+अटल स्थिर काष्ठा firmware *
+nfp_net_fw_request(काष्ठा pci_dev *pdev, काष्ठा nfp_pf *pf, स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा firmware *fw = शून्य;
+	पूर्णांक err;
 
 	err = request_firmware_direct(&fw, name, &pdev->dev);
 	nfp_info(pf->cpp, "  %s: %s\n",
 		 name, err ? "not found" : "found");
-	if (err)
-		return NULL;
+	अगर (err)
+		वापस शून्य;
 
-	return fw;
-}
+	वापस fw;
+पूर्ण
 
 /**
- * nfp_net_fw_find() - Find the correct firmware image for netdev mode
- * @pdev:	PCI Device structure
- * @pf:		NFP PF Device structure
+ * nfp_net_fw_find() - Find the correct firmware image क्रम netdev mode
+ * @pdev:	PCI Device काष्ठाure
+ * @pf:		NFP PF Device काष्ठाure
  *
- * Return: firmware if found and requested successfully.
+ * Return: firmware अगर found and requested successfully.
  */
-static const struct firmware *
-nfp_net_fw_find(struct pci_dev *pdev, struct nfp_pf *pf)
-{
-	struct nfp_eth_table_port *port;
-	const struct firmware *fw;
-	const char *fw_model;
-	char fw_name[256];
-	const u8 *serial;
-	u16 interface;
-	int spc, i, j;
+अटल स्थिर काष्ठा firmware *
+nfp_net_fw_find(काष्ठा pci_dev *pdev, काष्ठा nfp_pf *pf)
+अणु
+	काष्ठा nfp_eth_table_port *port;
+	स्थिर काष्ठा firmware *fw;
+	स्थिर अक्षर *fw_model;
+	अक्षर fw_name[256];
+	स्थिर u8 *serial;
+	u16 पूर्णांकerface;
+	पूर्णांक spc, i, j;
 
 	nfp_info(pf->cpp, "Looking for firmware file in order of priority:\n");
 
-	/* First try to find a firmware image specific for this device */
-	interface = nfp_cpp_interface(pf->cpp);
+	/* First try to find a firmware image specअगरic क्रम this device */
+	पूर्णांकerface = nfp_cpp_पूर्णांकerface(pf->cpp);
 	nfp_cpp_serial(pf->cpp, &serial);
-	sprintf(fw_name, "netronome/serial-%pMF-%02hhx-%02hhx.nffw",
-		serial, interface >> 8, interface & 0xff);
+	प्र_लिखो(fw_name, "netronome/serial-%pMF-%02hhx-%02hhx.nffw",
+		serial, पूर्णांकerface >> 8, पूर्णांकerface & 0xff);
 	fw = nfp_net_fw_request(pdev, pf, fw_name);
-	if (fw)
-		return fw;
+	अगर (fw)
+		वापस fw;
 
 	/* Then try the PCI name */
-	sprintf(fw_name, "netronome/pci-%s.nffw", pci_name(pdev));
+	प्र_लिखो(fw_name, "netronome/pci-%s.nffw", pci_name(pdev));
 	fw = nfp_net_fw_request(pdev, pf, fw_name);
-	if (fw)
-		return fw;
+	अगर (fw)
+		वापस fw;
 
 	/* Finally try the card type and media */
-	if (!pf->eth_tbl) {
+	अगर (!pf->eth_tbl) अणु
 		dev_err(&pdev->dev, "Error: can't identify media config\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	fw_model = nfp_hwinfo_lookup(pf->hwinfo, "assembly.partno");
-	if (!fw_model) {
+	अगर (!fw_model) अणु
 		dev_err(&pdev->dev, "Error: can't read part number\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	spc = ARRAY_SIZE(fw_name);
-	spc -= snprintf(fw_name, spc, "netronome/nic_%s", fw_model);
+	spc -= snम_लिखो(fw_name, spc, "netronome/nic_%s", fw_model);
 
-	for (i = 0; spc > 0 && i < pf->eth_tbl->count; i += j) {
+	क्रम (i = 0; spc > 0 && i < pf->eth_tbl->count; i += j) अणु
 		port = &pf->eth_tbl->ports[i];
 		j = 1;
-		while (i + j < pf->eth_tbl->count &&
+		जबतक (i + j < pf->eth_tbl->count &&
 		       port->speed == port[j].speed)
 			j++;
 
-		spc -= snprintf(&fw_name[ARRAY_SIZE(fw_name) - spc], spc,
+		spc -= snम_लिखो(&fw_name[ARRAY_SIZE(fw_name) - spc], spc,
 				"_%dx%d", j, port->speed / 1000);
-	}
+	पूर्ण
 
-	if (spc <= 0)
-		return NULL;
+	अगर (spc <= 0)
+		वापस शून्य;
 
-	spc -= snprintf(&fw_name[ARRAY_SIZE(fw_name) - spc], spc, ".nffw");
-	if (spc <= 0)
-		return NULL;
+	spc -= snम_लिखो(&fw_name[ARRAY_SIZE(fw_name) - spc], spc, ".nffw");
+	अगर (spc <= 0)
+		वापस शून्य;
 
-	return nfp_net_fw_request(pdev, pf, fw_name);
-}
+	वापस nfp_net_fw_request(pdev, pf, fw_name);
+पूर्ण
 
-static int
-nfp_get_fw_policy_value(struct pci_dev *pdev, struct nfp_nsp *nsp,
-			const char *key, const char *default_val, int max_val,
-			int *value)
-{
-	char hwinfo[64];
-	long hi_val;
-	int err;
+अटल पूर्णांक
+nfp_get_fw_policy_value(काष्ठा pci_dev *pdev, काष्ठा nfp_nsp *nsp,
+			स्थिर अक्षर *key, स्थिर अक्षर *शेष_val, पूर्णांक max_val,
+			पूर्णांक *value)
+अणु
+	अक्षर hwinfo[64];
+	दीर्घ hi_val;
+	पूर्णांक err;
 
-	snprintf(hwinfo, sizeof(hwinfo), key);
-	err = nfp_nsp_hwinfo_lookup_optional(nsp, hwinfo, sizeof(hwinfo),
-					     default_val);
-	if (err)
-		return err;
+	snम_लिखो(hwinfo, माप(hwinfo), key);
+	err = nfp_nsp_hwinfo_lookup_optional(nsp, hwinfo, माप(hwinfo),
+					     शेष_val);
+	अगर (err)
+		वापस err;
 
-	err = kstrtol(hwinfo, 0, &hi_val);
-	if (err || hi_val < 0 || hi_val > max_val) {
+	err = kम_से_दीर्घ(hwinfo, 0, &hi_val);
+	अगर (err || hi_val < 0 || hi_val > max_val) अणु
 		dev_warn(&pdev->dev,
 			 "Invalid value '%s' from '%s', ignoring\n",
 			 hwinfo, key);
-		err = kstrtol(default_val, 0, &hi_val);
-	}
+		err = kम_से_दीर्घ(शेष_val, 0, &hi_val);
+	पूर्ण
 
 	*value = hi_val;
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * nfp_fw_load() - Load the firmware image
- * @pdev:       PCI Device structure
- * @pf:		NFP PF Device structure
+ * @pdev:       PCI Device काष्ठाure
+ * @pf:		NFP PF Device काष्ठाure
  * @nsp:	NFP SP handle
  *
- * Return: -ERRNO, 0 for no firmware loaded, 1 for firmware loaded
+ * Return: -ERRNO, 0 क्रम no firmware loaded, 1 क्रम firmware loaded
  */
-static int
-nfp_fw_load(struct pci_dev *pdev, struct nfp_pf *pf, struct nfp_nsp *nsp)
-{
-	bool do_reset, fw_loaded = false;
-	const struct firmware *fw = NULL;
-	int err, reset, policy, ifcs = 0;
-	char *token, *ptr;
-	char hwinfo[64];
-	u16 interface;
+अटल पूर्णांक
+nfp_fw_load(काष्ठा pci_dev *pdev, काष्ठा nfp_pf *pf, काष्ठा nfp_nsp *nsp)
+अणु
+	bool करो_reset, fw_loaded = false;
+	स्थिर काष्ठा firmware *fw = शून्य;
+	पूर्णांक err, reset, policy, अगरcs = 0;
+	अक्षर *token, *ptr;
+	अक्षर hwinfo[64];
+	u16 पूर्णांकerface;
 
-	snprintf(hwinfo, sizeof(hwinfo), "abi_drv_load_ifc");
-	err = nfp_nsp_hwinfo_lookup_optional(nsp, hwinfo, sizeof(hwinfo),
+	snम_लिखो(hwinfo, माप(hwinfo), "abi_drv_load_ifc");
+	err = nfp_nsp_hwinfo_lookup_optional(nsp, hwinfo, माप(hwinfo),
 					     NFP_NSP_DRV_LOAD_IFC_DEFAULT);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	interface = nfp_cpp_interface(pf->cpp);
+	पूर्णांकerface = nfp_cpp_पूर्णांकerface(pf->cpp);
 	ptr = hwinfo;
-	while ((token = strsep(&ptr, ","))) {
-		unsigned long interface_hi;
+	जबतक ((token = strsep(&ptr, ","))) अणु
+		अचिन्हित दीर्घ पूर्णांकerface_hi;
 
-		err = kstrtoul(token, 0, &interface_hi);
-		if (err) {
+		err = kम_से_अदीर्घ(token, 0, &पूर्णांकerface_hi);
+		अगर (err) अणु
 			dev_err(&pdev->dev,
 				"Failed to parse interface '%s': %d\n",
 				token, err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		ifcs++;
-		if (interface == interface_hi)
-			break;
-	}
+		अगरcs++;
+		अगर (पूर्णांकerface == पूर्णांकerface_hi)
+			अवरोध;
+	पूर्ण
 
-	if (!token) {
+	अगर (!token) अणु
 		dev_info(&pdev->dev, "Firmware will be loaded by partner\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = nfp_get_fw_policy_value(pdev, nsp, "abi_drv_reset",
 				      NFP_NSP_DRV_RESET_DEFAULT,
 				      NFP_NSP_DRV_RESET_NEVER, &reset);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = nfp_get_fw_policy_value(pdev, nsp, "app_fw_from_flash",
 				      NFP_NSP_APP_FW_LOAD_DEFAULT,
 				      NFP_NSP_APP_FW_LOAD_PREF, &policy);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	fw = nfp_net_fw_find(pdev, pf);
-	do_reset = reset == NFP_NSP_DRV_RESET_ALWAYS ||
+	करो_reset = reset == NFP_NSP_DRV_RESET_ALWAYS ||
 		   (fw && reset == NFP_NSP_DRV_RESET_DISK);
 
-	if (do_reset) {
+	अगर (करो_reset) अणु
 		dev_info(&pdev->dev, "Soft-resetting the NFP\n");
 		err = nfp_nsp_device_soft_reset(nsp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev,
 				"Failed to soft reset the NFP: %d\n", err);
-			goto exit_release_fw;
-		}
-	}
+			जाओ निकास_release_fw;
+		पूर्ण
+	पूर्ण
 
-	if (fw && policy != NFP_NSP_APP_FW_LOAD_FLASH) {
-		if (nfp_nsp_has_fw_loaded(nsp) && nfp_nsp_fw_loaded(nsp))
-			goto exit_release_fw;
+	अगर (fw && policy != NFP_NSP_APP_FW_LOAD_FLASH) अणु
+		अगर (nfp_nsp_has_fw_loaded(nsp) && nfp_nsp_fw_loaded(nsp))
+			जाओ निकास_release_fw;
 
 		err = nfp_nsp_load_fw(nsp, fw);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "FW loading failed: %d\n",
 				err);
-			goto exit_release_fw;
-		}
+			जाओ निकास_release_fw;
+		पूर्ण
 		dev_info(&pdev->dev, "Finished loading FW image\n");
 		fw_loaded = true;
-	} else if (policy != NFP_NSP_APP_FW_LOAD_DISK &&
-		   nfp_nsp_has_stored_fw_load(nsp)) {
+	पूर्ण अन्यथा अगर (policy != NFP_NSP_APP_FW_LOAD_DISK &&
+		   nfp_nsp_has_stored_fw_load(nsp)) अणु
 
 		/* Don't propagate this error to stick with legacy driver
 		 * behavior, failure will be detected later during init.
 		 */
-		if (!nfp_nsp_load_stored_fw(nsp))
+		अगर (!nfp_nsp_load_stored_fw(nsp))
 			dev_info(&pdev->dev, "Finished loading stored FW image\n");
 
-		/* Don't flag the fw_loaded in this case since other devices
+		/* Don't flag the fw_loaded in this हाल since other devices
 		 * may reuse the firmware when configured this way
 		 */
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_warn(&pdev->dev, "Didn't load firmware, please update flash or reconfigure card\n");
-	}
+	पूर्ण
 
-exit_release_fw:
+निकास_release_fw:
 	release_firmware(fw);
 
-	/* We don't want to unload firmware when other devices may still be
-	 * dependent on it, which could be the case if there are multiple
+	/* We करोn't want to unload firmware when other devices may still be
+	 * dependent on it, which could be the हाल अगर there are multiple
 	 * devices that could load firmware.
 	 */
-	if (fw_loaded && ifcs == 1)
-		pf->unload_fw_on_remove = true;
+	अगर (fw_loaded && अगरcs == 1)
+		pf->unload_fw_on_हटाओ = true;
 
-	return err < 0 ? err : fw_loaded;
-}
+	वापस err < 0 ? err : fw_loaded;
+पूर्ण
 
-static void
-nfp_nsp_init_ports(struct pci_dev *pdev, struct nfp_pf *pf,
-		   struct nfp_nsp *nsp)
-{
+अटल व्योम
+nfp_nsp_init_ports(काष्ठा pci_dev *pdev, काष्ठा nfp_pf *pf,
+		   काष्ठा nfp_nsp *nsp)
+अणु
 	bool needs_reinit = false;
-	int i;
+	पूर्णांक i;
 
-	pf->eth_tbl = __nfp_eth_read_ports(pf->cpp, nsp);
-	if (!pf->eth_tbl)
-		return;
+	pf->eth_tbl = __nfp_eth_पढ़ो_ports(pf->cpp, nsp);
+	अगर (!pf->eth_tbl)
+		वापस;
 
-	if (!nfp_nsp_has_mac_reinit(nsp))
-		return;
+	अगर (!nfp_nsp_has_mac_reinit(nsp))
+		वापस;
 
-	for (i = 0; i < pf->eth_tbl->count; i++)
+	क्रम (i = 0; i < pf->eth_tbl->count; i++)
 		needs_reinit |= pf->eth_tbl->ports[i].override_changed;
-	if (!needs_reinit)
-		return;
+	अगर (!needs_reinit)
+		वापस;
 
-	kfree(pf->eth_tbl);
-	if (nfp_nsp_mac_reinit(nsp))
+	kमुक्त(pf->eth_tbl);
+	अगर (nfp_nsp_mac_reinit(nsp))
 		dev_warn(&pdev->dev, "MAC reinit failed\n");
 
-	pf->eth_tbl = __nfp_eth_read_ports(pf->cpp, nsp);
-}
+	pf->eth_tbl = __nfp_eth_पढ़ो_ports(pf->cpp, nsp);
+पूर्ण
 
-static int nfp_nsp_init(struct pci_dev *pdev, struct nfp_pf *pf)
-{
-	struct nfp_nsp *nsp;
-	int err;
+अटल पूर्णांक nfp_nsp_init(काष्ठा pci_dev *pdev, काष्ठा nfp_pf *pf)
+अणु
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err;
 
-	err = nfp_resource_wait(pf->cpp, NFP_RESOURCE_NSP, 30);
-	if (err)
-		return err;
+	err = nfp_resource_रुको(pf->cpp, NFP_RESOURCE_NSP, 30);
+	अगर (err)
+		वापस err;
 
-	nsp = nfp_nsp_open(pf->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(pf->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		err = PTR_ERR(nsp);
 		dev_err(&pdev->dev, "Failed to access the NSP: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = nfp_nsp_wait(nsp);
-	if (err < 0)
-		goto exit_close_nsp;
+	err = nfp_nsp_रुको(nsp);
+	अगर (err < 0)
+		जाओ निकास_बंद_nsp;
 
 	nfp_nsp_init_ports(pdev, pf, nsp);
 
-	pf->nspi = __nfp_nsp_identify(nsp);
-	if (pf->nspi)
+	pf->nspi = __nfp_nsp_identअगरy(nsp);
+	अगर (pf->nspi)
 		dev_info(&pdev->dev, "BSP: %s\n", pf->nspi->version);
 
 	err = nfp_fw_load(pdev, pf, nsp);
-	if (err < 0) {
-		kfree(pf->nspi);
-		kfree(pf->eth_tbl);
+	अगर (err < 0) अणु
+		kमुक्त(pf->nspi);
+		kमुक्त(pf->eth_tbl);
 		dev_err(&pdev->dev, "Failed to load FW\n");
-		goto exit_close_nsp;
-	}
+		जाओ निकास_बंद_nsp;
+	पूर्ण
 
 	pf->fw_loaded = !!err;
 	err = 0;
 
-exit_close_nsp:
-	nfp_nsp_close(nsp);
+निकास_बंद_nsp:
+	nfp_nsp_बंद(nsp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nfp_fw_unload(struct nfp_pf *pf)
-{
-	struct nfp_nsp *nsp;
-	int err;
+अटल व्योम nfp_fw_unload(काष्ठा nfp_pf *pf)
+अणु
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err;
 
-	nsp = nfp_nsp_open(pf->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(pf->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		nfp_err(pf->cpp, "Reset failed, can't open NSP\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	err = nfp_nsp_device_soft_reset(nsp);
-	if (err < 0)
+	अगर (err < 0)
 		dev_warn(&pf->pdev->dev, "Couldn't unload firmware: %d\n", err);
-	else
+	अन्यथा
 		dev_info(&pf->pdev->dev, "Firmware safely unloaded\n");
 
-	nfp_nsp_close(nsp);
-}
+	nfp_nsp_बंद(nsp);
+पूर्ण
 
-static int nfp_pf_find_rtsyms(struct nfp_pf *pf)
-{
-	char pf_symbol[256];
-	unsigned int pf_id;
+अटल पूर्णांक nfp_pf_find_rtsyms(काष्ठा nfp_pf *pf)
+अणु
+	अक्षर pf_symbol[256];
+	अचिन्हित पूर्णांक pf_id;
 
 	pf_id = nfp_cppcore_pcie_unit(pf->cpp);
 
 	/* Optional per-PCI PF mailbox */
-	snprintf(pf_symbol, sizeof(pf_symbol), NFP_MBOX_SYM_NAME, pf_id);
+	snम_लिखो(pf_symbol, माप(pf_symbol), NFP_MBOX_SYM_NAME, pf_id);
 	pf->mbox = nfp_rtsym_lookup(pf->rtbl, pf_symbol);
-	if (pf->mbox && nfp_rtsym_size(pf->mbox) < NFP_MBOX_SYM_MIN_SIZE) {
+	अगर (pf->mbox && nfp_rtsym_size(pf->mbox) < NFP_MBOX_SYM_MIN_SIZE) अणु
 		nfp_err(pf->cpp, "PF mailbox symbol too small: %llu < %d\n",
 			nfp_rtsym_size(pf->mbox), NFP_MBOX_SYM_MIN_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_pci_probe(struct pci_dev *pdev,
-			 const struct pci_device_id *pci_id)
-{
-	struct devlink *devlink;
-	struct nfp_pf *pf;
-	int err;
+अटल पूर्णांक nfp_pci_probe(काष्ठा pci_dev *pdev,
+			 स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा devlink *devlink;
+	काष्ठा nfp_pf *pf;
+	पूर्णांक err;
 
-	if (pdev->vendor == PCI_VENDOR_ID_NETRONOME &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_NETRONOME &&
 	    pdev->device == PCI_DEVICE_ID_NETRONOME_NFP6000_VF)
 		dev_warn(&pdev->dev, "Binding NFP VF device to the NFP PF driver, the VF driver is called 'nfp_netvf'\n");
 
 	err = pci_enable_device(pdev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	pci_set_master(pdev);
 
 	err = dma_set_mask_and_coherent(&pdev->dev,
 					DMA_BIT_MASK(NFP_NET_MAX_DMA_BITS));
-	if (err)
-		goto err_pci_disable;
+	अगर (err)
+		जाओ err_pci_disable;
 
 	err = pci_request_regions(pdev, nfp_driver_name);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&pdev->dev, "Unable to reserve pci resources.\n");
-		goto err_pci_disable;
-	}
+		जाओ err_pci_disable;
+	पूर्ण
 
-	devlink = devlink_alloc(&nfp_devlink_ops, sizeof(*pf));
-	if (!devlink) {
+	devlink = devlink_alloc(&nfp_devlink_ops, माप(*pf));
+	अगर (!devlink) अणु
 		err = -ENOMEM;
-		goto err_rel_regions;
-	}
+		जाओ err_rel_regions;
+	पूर्ण
 	pf = devlink_priv(devlink);
 	INIT_LIST_HEAD(&pf->vnics);
 	INIT_LIST_HEAD(&pf->ports);
@@ -705,22 +706,22 @@ static int nfp_pci_probe(struct pci_dev *pdev,
 	pf->pdev = pdev;
 
 	pf->wq = alloc_workqueue("nfp-%s", 0, 2, pci_name(pdev));
-	if (!pf->wq) {
+	अगर (!pf->wq) अणु
 		err = -ENOMEM;
-		goto err_pci_priv_unset;
-	}
+		जाओ err_pci_priv_unset;
+	पूर्ण
 
 	pf->cpp = nfp_cpp_from_nfp6000_pcie(pdev);
-	if (IS_ERR(pf->cpp)) {
+	अगर (IS_ERR(pf->cpp)) अणु
 		err = PTR_ERR(pf->cpp);
-		goto err_disable_msix;
-	}
+		जाओ err_disable_msix;
+	पूर्ण
 
 	err = nfp_resource_table_init(pf->cpp);
-	if (err)
-		goto err_cpp_free;
+	अगर (err)
+		जाओ err_cpp_मुक्त;
 
-	pf->hwinfo = nfp_hwinfo_read(pf->cpp);
+	pf->hwinfo = nfp_hwinfo_पढ़ो(pf->cpp);
 
 	dev_info(&pdev->dev, "Assembly: %s%s%s-%s CPLD: %s\n",
 		 nfp_hwinfo_lookup(pf->hwinfo, "assembly.vendor"),
@@ -729,164 +730,164 @@ static int nfp_pci_probe(struct pci_dev *pdev,
 		 nfp_hwinfo_lookup(pf->hwinfo, "assembly.revision"),
 		 nfp_hwinfo_lookup(pf->hwinfo, "cpld.version"));
 
-	err = nfp_pf_board_state_wait(pf);
-	if (err)
-		goto err_hwinfo_free;
+	err = nfp_pf_board_state_रुको(pf);
+	अगर (err)
+		जाओ err_hwinfo_मुक्त;
 
 	err = nfp_nsp_init(pdev, pf);
-	if (err)
-		goto err_hwinfo_free;
+	अगर (err)
+		जाओ err_hwinfo_मुक्त;
 
-	pf->mip = nfp_mip_open(pf->cpp);
-	pf->rtbl = __nfp_rtsym_table_read(pf->cpp, pf->mip);
+	pf->mip = nfp_mip_खोलो(pf->cpp);
+	pf->rtbl = __nfp_rtsym_table_पढ़ो(pf->cpp, pf->mip);
 
 	err = nfp_pf_find_rtsyms(pf);
-	if (err)
-		goto err_fw_unload;
+	अगर (err)
+		जाओ err_fw_unload;
 
 	pf->dump_flag = NFP_DUMP_NSP_DIAG;
 	pf->dumpspec = nfp_net_dump_load_dumpspec(pf->cpp, pf->rtbl);
 
-	err = nfp_pcie_sriov_read_nfd_limit(pf);
-	if (err)
-		goto err_fw_unload;
+	err = nfp_pcie_sriov_पढ़ो_nfd_limit(pf);
+	अगर (err)
+		जाओ err_fw_unload;
 
 	pf->num_vfs = pci_num_vf(pdev);
-	if (pf->num_vfs > pf->limit_vfs) {
+	अगर (pf->num_vfs > pf->limit_vfs) अणु
 		dev_err(&pdev->dev,
 			"Error: %d VFs already enabled, but loaded FW can only support %d\n",
 			pf->num_vfs, pf->limit_vfs);
 		err = -EINVAL;
-		goto err_fw_unload;
-	}
+		जाओ err_fw_unload;
+	पूर्ण
 
 	err = nfp_net_pci_probe(pf);
-	if (err)
-		goto err_fw_unload;
+	अगर (err)
+		जाओ err_fw_unload;
 
-	err = nfp_hwmon_register(pf);
-	if (err) {
+	err = nfp_hwmon_रेजिस्टर(pf);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to register hwmon info\n");
-		goto err_net_remove;
-	}
+		जाओ err_net_हटाओ;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_net_remove:
-	nfp_net_pci_remove(pf);
+err_net_हटाओ:
+	nfp_net_pci_हटाओ(pf);
 err_fw_unload:
-	kfree(pf->rtbl);
-	nfp_mip_close(pf->mip);
-	if (pf->unload_fw_on_remove)
+	kमुक्त(pf->rtbl);
+	nfp_mip_बंद(pf->mip);
+	अगर (pf->unload_fw_on_हटाओ)
 		nfp_fw_unload(pf);
-	kfree(pf->eth_tbl);
-	kfree(pf->nspi);
-	vfree(pf->dumpspec);
-err_hwinfo_free:
-	kfree(pf->hwinfo);
-err_cpp_free:
-	nfp_cpp_free(pf->cpp);
+	kमुक्त(pf->eth_tbl);
+	kमुक्त(pf->nspi);
+	vमुक्त(pf->dumpspec);
+err_hwinfo_मुक्त:
+	kमुक्त(pf->hwinfo);
+err_cpp_मुक्त:
+	nfp_cpp_मुक्त(pf->cpp);
 err_disable_msix:
 	destroy_workqueue(pf->wq);
 err_pci_priv_unset:
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 	mutex_destroy(&pf->lock);
-	devlink_free(devlink);
+	devlink_मुक्त(devlink);
 err_rel_regions:
 	pci_release_regions(pdev);
 err_pci_disable:
 	pci_disable_device(pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __nfp_pci_shutdown(struct pci_dev *pdev, bool unload_fw)
-{
-	struct nfp_pf *pf;
+अटल व्योम __nfp_pci_shutकरोwn(काष्ठा pci_dev *pdev, bool unload_fw)
+अणु
+	काष्ठा nfp_pf *pf;
 
 	pf = pci_get_drvdata(pdev);
-	if (!pf)
-		return;
+	अगर (!pf)
+		वापस;
 
-	nfp_hwmon_unregister(pf);
+	nfp_hwmon_unरेजिस्टर(pf);
 
 	nfp_pcie_sriov_disable(pdev);
 
-	nfp_net_pci_remove(pf);
+	nfp_net_pci_हटाओ(pf);
 
-	vfree(pf->dumpspec);
-	kfree(pf->rtbl);
-	nfp_mip_close(pf->mip);
-	if (unload_fw && pf->unload_fw_on_remove)
+	vमुक्त(pf->dumpspec);
+	kमुक्त(pf->rtbl);
+	nfp_mip_बंद(pf->mip);
+	अगर (unload_fw && pf->unload_fw_on_हटाओ)
 		nfp_fw_unload(pf);
 
 	destroy_workqueue(pf->wq);
-	pci_set_drvdata(pdev, NULL);
-	kfree(pf->hwinfo);
-	nfp_cpp_free(pf->cpp);
+	pci_set_drvdata(pdev, शून्य);
+	kमुक्त(pf->hwinfo);
+	nfp_cpp_मुक्त(pf->cpp);
 
-	kfree(pf->eth_tbl);
-	kfree(pf->nspi);
+	kमुक्त(pf->eth_tbl);
+	kमुक्त(pf->nspi);
 	mutex_destroy(&pf->lock);
-	devlink_free(priv_to_devlink(pf));
+	devlink_मुक्त(priv_to_devlink(pf));
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static void nfp_pci_remove(struct pci_dev *pdev)
-{
-	__nfp_pci_shutdown(pdev, true);
-}
+अटल व्योम nfp_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	__nfp_pci_shutकरोwn(pdev, true);
+पूर्ण
 
-static void nfp_pci_shutdown(struct pci_dev *pdev)
-{
-	__nfp_pci_shutdown(pdev, false);
-}
+अटल व्योम nfp_pci_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
+	__nfp_pci_shutकरोwn(pdev, false);
+पूर्ण
 
-static struct pci_driver nfp_pci_driver = {
+अटल काष्ठा pci_driver nfp_pci_driver = अणु
 	.name			= nfp_driver_name,
 	.id_table		= nfp_pci_device_ids,
 	.probe			= nfp_pci_probe,
-	.remove			= nfp_pci_remove,
-	.shutdown		= nfp_pci_shutdown,
+	.हटाओ			= nfp_pci_हटाओ,
+	.shutकरोwn		= nfp_pci_shutकरोwn,
 	.sriov_configure	= nfp_pcie_sriov_configure,
-};
+पूर्ण;
 
-static int __init nfp_main_init(void)
-{
-	int err;
+अटल पूर्णांक __init nfp_मुख्य_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_info("%s: NFP PCIe Driver, Copyright (C) 2014-2017 Netronome Systems\n",
 		nfp_driver_name);
 
 	nfp_net_debugfs_create();
 
-	err = pci_register_driver(&nfp_pci_driver);
-	if (err < 0)
-		goto err_destroy_debugfs;
+	err = pci_रेजिस्टर_driver(&nfp_pci_driver);
+	अगर (err < 0)
+		जाओ err_destroy_debugfs;
 
-	err = pci_register_driver(&nfp_netvf_pci_driver);
-	if (err)
-		goto err_unreg_pf;
+	err = pci_रेजिस्टर_driver(&nfp_netvf_pci_driver);
+	अगर (err)
+		जाओ err_unreg_pf;
 
-	return err;
+	वापस err;
 
 err_unreg_pf:
-	pci_unregister_driver(&nfp_pci_driver);
+	pci_unरेजिस्टर_driver(&nfp_pci_driver);
 err_destroy_debugfs:
 	nfp_net_debugfs_destroy();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit nfp_main_exit(void)
-{
-	pci_unregister_driver(&nfp_netvf_pci_driver);
-	pci_unregister_driver(&nfp_pci_driver);
+अटल व्योम __निकास nfp_मुख्य_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&nfp_netvf_pci_driver);
+	pci_unरेजिस्टर_driver(&nfp_pci_driver);
 	nfp_net_debugfs_destroy();
-}
+पूर्ण
 
-module_init(nfp_main_init);
-module_exit(nfp_main_exit);
+module_init(nfp_मुख्य_init);
+module_निकास(nfp_मुख्य_निकास);
 
 MODULE_FIRMWARE("netronome/nic_AMDA0058-0011_2x40.nffw");
 MODULE_FIRMWARE("netronome/nic_AMDA0058-0012_2x40.nffw");

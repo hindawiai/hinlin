@@ -1,188 +1,189 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Internal GPIO functions.
  *
  * Copyright (C) 2013, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#ifndef GPIOLIB_H
-#define GPIOLIB_H
+#अगर_अघोषित GPIOLIB_H
+#घोषणा GPIOLIB_H
 
-#include <linux/gpio/driver.h>
-#include <linux/gpio/consumer.h> /* for enum gpiod_flags */
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/cdev.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/gpio/consumer.h> /* क्रम क्रमागत gpiod_flags */
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cdev.h>
 
-#define GPIOCHIP_NAME	"gpiochip"
+#घोषणा GPIOCHIP_NAME	"gpiochip"
 
 /**
- * struct gpio_device - internal state container for GPIO devices
- * @id: numerical ID number for the GPIO chip
- * @dev: the GPIO device struct
- * @chrdev: character device for the GPIO device
- * @mockdev: class device used by the deprecated sysfs interface (may be
- * NULL)
+ * काष्ठा gpio_device - पूर्णांकernal state container क्रम GPIO devices
+ * @id: numerical ID number क्रम the GPIO chip
+ * @dev: the GPIO device काष्ठा
+ * @chrdev: अक्षरacter device क्रम the GPIO device
+ * @mockdev: class device used by the deprecated sysfs पूर्णांकerface (may be
+ * शून्य)
  * @owner: helps prevent removal of modules exporting active GPIOs
- * @chip: pointer to the corresponding gpiochip, holding static
- * data for this device
+ * @chip: poपूर्णांकer to the corresponding gpiochip, holding अटल
+ * data क्रम this device
  * @descs: array of ngpio descriptors.
  * @ngpio: the number of GPIO lines on this GPIO device, equal to the size
  * of the @descs array.
- * @base: GPIO base in the DEPRECATED global Linux GPIO numberspace, assigned
- * at device creation time.
- * @label: a descriptive name for the GPIO device, such as the part number
+ * @base: GPIO base in the DEPRECATED global Linux GPIO numberspace, asचिन्हित
+ * at device creation समय.
+ * @label: a descriptive name क्रम the GPIO device, such as the part number
  * or name of the IP component in a System on Chip.
- * @data: per-instance data assigned by the driver
- * @list: links gpio_device:s together for traversal
+ * @data: per-instance data asचिन्हित by the driver
+ * @list: links gpio_device:s together क्रम traversal
  *
- * This state container holds most of the runtime variable data
- * for a GPIO device and can hold references and live on after the
- * GPIO chip has been removed, if it is still being used from
+ * This state container holds most of the runसमय variable data
+ * क्रम a GPIO device and can hold references and live on after the
+ * GPIO chip has been हटाओd, अगर it is still being used from
  * userspace.
  */
-struct gpio_device {
-	int			id;
-	struct device		dev;
-	struct cdev		chrdev;
-	struct device		*mockdev;
-	struct module		*owner;
-	struct gpio_chip	*chip;
-	struct gpio_desc	*descs;
-	int			base;
+काष्ठा gpio_device अणु
+	पूर्णांक			id;
+	काष्ठा device		dev;
+	काष्ठा cdev		chrdev;
+	काष्ठा device		*mockdev;
+	काष्ठा module		*owner;
+	काष्ठा gpio_chip	*chip;
+	काष्ठा gpio_desc	*descs;
+	पूर्णांक			base;
 	u16			ngpio;
-	const char		*label;
-	void			*data;
-	struct list_head        list;
-	struct blocking_notifier_head notifier;
+	स्थिर अक्षर		*label;
+	व्योम			*data;
+	काष्ठा list_head        list;
+	काष्ठा blocking_notअगरier_head notअगरier;
 
-#ifdef CONFIG_PINCTRL
+#अगर_घोषित CONFIG_PINCTRL
 	/*
 	 * If CONFIG_PINCTRL is enabled, then gpio controllers can optionally
 	 * describe the actual pin range which they serve in an SoC. This
-	 * information would be used by pinctrl subsystem to configure
-	 * corresponding pins for gpio usage.
+	 * inक्रमmation would be used by pinctrl subप्रणाली to configure
+	 * corresponding pins क्रम gpio usage.
 	 */
-	struct list_head pin_ranges;
-#endif
-};
+	काष्ठा list_head pin_ranges;
+#पूर्ण_अगर
+पूर्ण;
 
-/* gpio suffixes used for ACPI and device tree lookup */
-static __maybe_unused const char * const gpio_suffixes[] = { "gpios", "gpio" };
+/* gpio suffixes used क्रम ACPI and device tree lookup */
+अटल __maybe_unused स्थिर अक्षर * स्थिर gpio_suffixes[] = अणु "gpios", "gpio" पूर्ण;
 
-struct gpio_array {
-	struct gpio_desc	**desc;
-	unsigned int		size;
-	struct gpio_chip	*chip;
-	unsigned long		*get_mask;
-	unsigned long		*set_mask;
-	unsigned long		invert_mask[];
-};
+काष्ठा gpio_array अणु
+	काष्ठा gpio_desc	**desc;
+	अचिन्हित पूर्णांक		size;
+	काष्ठा gpio_chip	*chip;
+	अचिन्हित दीर्घ		*get_mask;
+	अचिन्हित दीर्घ		*set_mask;
+	अचिन्हित दीर्घ		invert_mask[];
+पूर्ण;
 
-struct gpio_desc *gpiochip_get_desc(struct gpio_chip *gc, unsigned int hwnum);
-int gpiod_get_array_value_complex(bool raw, bool can_sleep,
-				  unsigned int array_size,
-				  struct gpio_desc **desc_array,
-				  struct gpio_array *array_info,
-				  unsigned long *value_bitmap);
-int gpiod_set_array_value_complex(bool raw, bool can_sleep,
-				  unsigned int array_size,
-				  struct gpio_desc **desc_array,
-				  struct gpio_array *array_info,
-				  unsigned long *value_bitmap);
+काष्ठा gpio_desc *gpiochip_get_desc(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक hwnum);
+पूर्णांक gpiod_get_array_value_complex(bool raw, bool can_sleep,
+				  अचिन्हित पूर्णांक array_size,
+				  काष्ठा gpio_desc **desc_array,
+				  काष्ठा gpio_array *array_info,
+				  अचिन्हित दीर्घ *value_biपंचांगap);
+पूर्णांक gpiod_set_array_value_complex(bool raw, bool can_sleep,
+				  अचिन्हित पूर्णांक array_size,
+				  काष्ठा gpio_desc **desc_array,
+				  काष्ठा gpio_array *array_info,
+				  अचिन्हित दीर्घ *value_biपंचांगap);
 
-extern spinlock_t gpio_lock;
-extern struct list_head gpio_devices;
+बाह्य spinlock_t gpio_lock;
+बाह्य काष्ठा list_head gpio_devices;
 
-struct gpio_desc {
-	struct gpio_device	*gdev;
-	unsigned long		flags;
+काष्ठा gpio_desc अणु
+	काष्ठा gpio_device	*gdev;
+	अचिन्हित दीर्घ		flags;
 /* flag symbols are bit numbers */
-#define FLAG_REQUESTED	0
-#define FLAG_IS_OUT	1
-#define FLAG_EXPORT	2	/* protected by sysfs_lock */
-#define FLAG_SYSFS	3	/* exported via /sys/class/gpio/control */
-#define FLAG_ACTIVE_LOW	6	/* value has active low */
-#define FLAG_OPEN_DRAIN	7	/* Gpio is open drain type */
-#define FLAG_OPEN_SOURCE 8	/* Gpio is open source type */
-#define FLAG_USED_AS_IRQ 9	/* GPIO is connected to an IRQ */
-#define FLAG_IRQ_IS_ENABLED 10	/* GPIO is connected to an enabled IRQ */
-#define FLAG_IS_HOGGED	11	/* GPIO is hogged */
-#define FLAG_TRANSITORY 12	/* GPIO may lose value in sleep or reset */
-#define FLAG_PULL_UP    13	/* GPIO has pull up enabled */
-#define FLAG_PULL_DOWN  14	/* GPIO has pull down enabled */
-#define FLAG_BIAS_DISABLE    15	/* GPIO has pull disabled */
-#define FLAG_EDGE_RISING     16	/* GPIO CDEV detects rising edge events */
-#define FLAG_EDGE_FALLING    17	/* GPIO CDEV detects falling edge events */
-#define FLAG_EVENT_CLOCK_REALTIME	18 /* GPIO CDEV reports REALTIME timestamps in events */
+#घोषणा FLAG_REQUESTED	0
+#घोषणा FLAG_IS_OUT	1
+#घोषणा FLAG_EXPORT	2	/* रक्षित by sysfs_lock */
+#घोषणा FLAG_SYSFS	3	/* exported via /sys/class/gpio/control */
+#घोषणा FLAG_ACTIVE_LOW	6	/* value has active low */
+#घोषणा FLAG_OPEN_DRAIN	7	/* Gpio is खोलो drain type */
+#घोषणा FLAG_OPEN_SOURCE 8	/* Gpio is खोलो source type */
+#घोषणा FLAG_USED_AS_IRQ 9	/* GPIO is connected to an IRQ */
+#घोषणा FLAG_IRQ_IS_ENABLED 10	/* GPIO is connected to an enabled IRQ */
+#घोषणा FLAG_IS_HOGGED	11	/* GPIO is hogged */
+#घोषणा FLAG_TRANSITORY 12	/* GPIO may lose value in sleep or reset */
+#घोषणा FLAG_PULL_UP    13	/* GPIO has pull up enabled */
+#घोषणा FLAG_PULL_DOWN  14	/* GPIO has pull करोwn enabled */
+#घोषणा FLAG_BIAS_DISABLE    15	/* GPIO has pull disabled */
+#घोषणा FLAG_EDGE_RISING     16	/* GPIO CDEV detects rising edge events */
+#घोषणा FLAG_EDGE_FALLING    17	/* GPIO CDEV detects falling edge events */
+#घोषणा FLAG_EVENT_CLOCK_REALTIME	18 /* GPIO CDEV reports REALTIME बारtamps in events */
 
 	/* Connection label */
-	const char		*label;
+	स्थिर अक्षर		*label;
 	/* Name of the GPIO */
-	const char		*name;
-#ifdef CONFIG_OF_DYNAMIC
-	struct device_node	*hog;
-#endif
-#ifdef CONFIG_GPIO_CDEV
+	स्थिर अक्षर		*name;
+#अगर_घोषित CONFIG_OF_DYNAMIC
+	काष्ठा device_node	*hog;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_GPIO_CDEV
 	/* debounce period in microseconds */
-	unsigned int		debounce_period_us;
-#endif
-};
+	अचिन्हित पूर्णांक		debounce_period_us;
+#पूर्ण_अगर
+पूर्ण;
 
-#define gpiod_not_found(desc)		(IS_ERR(desc) && PTR_ERR(desc) == -ENOENT)
+#घोषणा gpiod_not_found(desc)		(IS_ERR(desc) && PTR_ERR(desc) == -ENOENT)
 
-int gpiod_request(struct gpio_desc *desc, const char *label);
-void gpiod_free(struct gpio_desc *desc);
-int gpiod_configure_flags(struct gpio_desc *desc, const char *con_id,
-		unsigned long lflags, enum gpiod_flags dflags);
-int gpio_set_debounce_timeout(struct gpio_desc *desc, unsigned int debounce);
-int gpiod_hog(struct gpio_desc *desc, const char *name,
-		unsigned long lflags, enum gpiod_flags dflags);
+पूर्णांक gpiod_request(काष्ठा gpio_desc *desc, स्थिर अक्षर *label);
+व्योम gpiod_मुक्त(काष्ठा gpio_desc *desc);
+पूर्णांक gpiod_configure_flags(काष्ठा gpio_desc *desc, स्थिर अक्षर *con_id,
+		अचिन्हित दीर्घ lflags, क्रमागत gpiod_flags dflags);
+पूर्णांक gpio_set_debounce_समयout(काष्ठा gpio_desc *desc, अचिन्हित पूर्णांक debounce);
+पूर्णांक gpiod_hog(काष्ठा gpio_desc *desc, स्थिर अक्षर *name,
+		अचिन्हित दीर्घ lflags, क्रमागत gpiod_flags dflags);
 
 /*
  * Return the GPIO number of the passed descriptor relative to its chip
  */
-static inline int gpio_chip_hwgpio(const struct gpio_desc *desc)
-{
-	return desc - &desc->gdev->descs[0];
-}
+अटल अंतरभूत पूर्णांक gpio_chip_hwgpio(स्थिर काष्ठा gpio_desc *desc)
+अणु
+	वापस desc - &desc->gdev->descs[0];
+पूर्ण
 
 /* With descriptor prefix */
 
-#define gpiod_emerg(desc, fmt, ...)					       \
+#घोषणा gpiod_emerg(desc, fmt, ...)					       \
 	pr_emerg("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?",\
 		 ##__VA_ARGS__)
-#define gpiod_crit(desc, fmt, ...)					       \
+#घोषणा gpiod_crit(desc, fmt, ...)					       \
 	pr_crit("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?", \
 		 ##__VA_ARGS__)
-#define gpiod_err(desc, fmt, ...)					       \
+#घोषणा gpiod_err(desc, fmt, ...)					       \
 	pr_err("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?",  \
 		 ##__VA_ARGS__)
-#define gpiod_warn(desc, fmt, ...)					       \
+#घोषणा gpiod_warn(desc, fmt, ...)					       \
 	pr_warn("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?", \
 		 ##__VA_ARGS__)
-#define gpiod_info(desc, fmt, ...)					       \
+#घोषणा gpiod_info(desc, fmt, ...)					       \
 	pr_info("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?", \
 		 ##__VA_ARGS__)
-#define gpiod_dbg(desc, fmt, ...)					       \
+#घोषणा gpiod_dbg(desc, fmt, ...)					       \
 	pr_debug("gpio-%d (%s): " fmt, desc_to_gpio(desc), desc->label ? : "?",\
 		 ##__VA_ARGS__)
 
 /* With chip prefix */
 
-#define chip_emerg(gc, fmt, ...)					\
+#घोषणा chip_emerg(gc, fmt, ...)					\
 	dev_emerg(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
-#define chip_crit(gc, fmt, ...)					\
+#घोषणा chip_crit(gc, fmt, ...)					\
 	dev_crit(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
-#define chip_err(gc, fmt, ...)					\
+#घोषणा chip_err(gc, fmt, ...)					\
 	dev_err(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
-#define chip_warn(gc, fmt, ...)					\
+#घोषणा chip_warn(gc, fmt, ...)					\
 	dev_warn(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
-#define chip_info(gc, fmt, ...)					\
+#घोषणा chip_info(gc, fmt, ...)					\
 	dev_info(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
-#define chip_dbg(gc, fmt, ...)					\
+#घोषणा chip_dbg(gc, fmt, ...)					\
 	dev_dbg(&gc->gpiodev->dev, "(%s): " fmt, gc->label, ##__VA_ARGS__)
 
-#endif /* GPIOLIB_H */
+#पूर्ण_अगर /* GPIOLIB_H */

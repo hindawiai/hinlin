@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef ASM_ARC_DMA_H
-#define ASM_ARC_DMA_H
+#अगर_अघोषित ASM_ARC_DMA_H
+#घोषणा ASM_ARC_DMA_H
 
-#define MAX_DMA_ADDRESS 0xC0000000
-#ifdef CONFIG_PCI
-extern int isa_dma_bridge_buggy;
-#else
-#define isa_dma_bridge_buggy	0
-#endif
+#घोषणा MAX_DMA_ADDRESS 0xC0000000
+#अगर_घोषित CONFIG_PCI
+बाह्य पूर्णांक isa_dma_bridge_buggy;
+#अन्यथा
+#घोषणा isa_dma_bridge_buggy	0
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * This is a module which is used for setting the skb->priority field
- * of an skb for qdisc classification.
+ * This is a module which is used क्रम setting the skb->priority field
+ * of an skb क्रम qdisc classअगरication.
  */
 
 /* (C) 2001-2002 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ip.h>
-#include <net/checksum.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ip.h>
+#समावेश <net/checksum.h>
 
-#include <linux/netfilter_ipv4.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_CLASSIFY.h>
-#include <linux/netfilter_arp.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_CLASSIFY.h>
+#समावेश <linux/netfilter_arp.h>
 
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");
 MODULE_LICENSE("GPL");
@@ -25,46 +26,46 @@ MODULE_ALIAS("ipt_CLASSIFY");
 MODULE_ALIAS("ip6t_CLASSIFY");
 MODULE_ALIAS("arpt_CLASSIFY");
 
-static unsigned int
-classify_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_classify_target_info *clinfo = par->targinfo;
+अटल अचिन्हित पूर्णांक
+classअगरy_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_classअगरy_target_info *clinfo = par->targinfo;
 
 	skb->priority = clinfo->priority;
-	return XT_CONTINUE;
-}
+	वापस XT_CONTINUE;
+पूर्ण
 
-static struct xt_target classify_tg_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_target classअगरy_tg_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name       = "CLASSIFY",
 		.revision   = 0,
 		.family     = NFPROTO_UNSPEC,
 		.hooks      = (1 << NF_INET_LOCAL_OUT) | (1 << NF_INET_FORWARD) |
 		              (1 << NF_INET_POST_ROUTING),
-		.target     = classify_tg,
-		.targetsize = sizeof(struct xt_classify_target_info),
+		.target     = classअगरy_tg,
+		.tarमाला_लोize = माप(काष्ठा xt_classअगरy_target_info),
 		.me         = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name       = "CLASSIFY",
 		.revision   = 0,
 		.family     = NFPROTO_ARP,
 		.hooks      = (1 << NF_ARP_OUT) | (1 << NF_ARP_FORWARD),
-		.target     = classify_tg,
-		.targetsize = sizeof(struct xt_classify_target_info),
+		.target     = classअगरy_tg,
+		.tarमाला_लोize = माप(काष्ठा xt_classअगरy_target_info),
 		.me         = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init classify_tg_init(void)
-{
-	return xt_register_targets(classify_tg_reg, ARRAY_SIZE(classify_tg_reg));
-}
+अटल पूर्णांक __init classअगरy_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_tarमाला_लो(classअगरy_tg_reg, ARRAY_SIZE(classअगरy_tg_reg));
+पूर्ण
 
-static void __exit classify_tg_exit(void)
-{
-	xt_unregister_targets(classify_tg_reg, ARRAY_SIZE(classify_tg_reg));
-}
+अटल व्योम __निकास classअगरy_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(classअगरy_tg_reg, ARRAY_SIZE(classअगरy_tg_reg));
+पूर्ण
 
-module_init(classify_tg_init);
-module_exit(classify_tg_exit);
+module_init(classअगरy_tg_init);
+module_निकास(classअगरy_tg_निकास);

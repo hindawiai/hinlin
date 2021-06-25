@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * SCPI Message Protocol driver header
  *
  * Copyright (C) 2014 ARM Ltd.
  */
 
-#ifndef _LINUX_SCPI_PROTOCOL_H
-#define _LINUX_SCPI_PROTOCOL_H
+#अगर_अघोषित _LINUX_SCPI_PROTOCOL_H
+#घोषणा _LINUX_SCPI_PROTOCOL_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct scpi_opp {
+काष्ठा scpi_opp अणु
 	u32 freq;
 	u32 m_volt;
-} __packed;
+पूर्ण __packed;
 
-struct scpi_dvfs_info {
-	unsigned int count;
-	unsigned int latency; /* in nanoseconds */
-	struct scpi_opp *opps;
-};
+काष्ठा scpi_dvfs_info अणु
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक latency; /* in nanoseconds */
+	काष्ठा scpi_opp *opps;
+पूर्ण;
 
-enum scpi_sensor_class {
+क्रमागत scpi_sensor_class अणु
 	TEMPERATURE,
 	VOLTAGE,
 	CURRENT,
 	POWER,
 	ENERGY,
-};
+पूर्ण;
 
-struct scpi_sensor_info {
+काष्ठा scpi_sensor_info अणु
 	u16 sensor_id;
 	u8 class;
 	u8 trigger_type;
-	char name[20];
-} __packed;
+	अक्षर name[20];
+पूर्ण __packed;
 
 /**
- * struct scpi_ops - represents the various operations provided
+ * काष्ठा scpi_ops - represents the various operations provided
  *	by SCP through SCPI message protocol
- * @get_version: returns the major and minor revision on the SCPI
+ * @get_version: वापसs the major and minor revision on the SCPI
  *	message protocol
- * @clk_get_range: gets clock range limit(min - max in Hz)
- * @clk_get_val: gets clock value(in Hz)
- * @clk_set_val: sets the clock value, setting to 0 will disable the
- *	clock (if supported)
- * @dvfs_get_idx: gets the Operating Point of the given power domain.
- *	OPP is an index to the list return by @dvfs_get_info
- * @dvfs_set_idx: sets the Operating Point of the given power domain.
- *	OPP is an index to the list return by @dvfs_get_info
- * @dvfs_get_info: returns the DVFS capabilities of the given power
- *	domain. It includes the OPP list and the latency information
+ * @clk_get_range: माला_लो घड़ी range limit(min - max in Hz)
+ * @clk_get_val: माला_लो घड़ी value(in Hz)
+ * @clk_set_val: sets the घड़ी value, setting to 0 will disable the
+ *	घड़ी (अगर supported)
+ * @dvfs_get_idx: माला_लो the Operating Poपूर्णांक of the given घातer करोमुख्य.
+ *	OPP is an index to the list वापस by @dvfs_get_info
+ * @dvfs_set_idx: sets the Operating Poपूर्णांक of the given घातer करोमुख्य.
+ *	OPP is an index to the list वापस by @dvfs_get_info
+ * @dvfs_get_info: वापसs the DVFS capabilities of the given घातer
+ *	करोमुख्य. It includes the OPP list and the latency inक्रमmation
  */
-struct scpi_ops {
-	u32 (*get_version)(void);
-	int (*clk_get_range)(u16, unsigned long *, unsigned long *);
-	unsigned long (*clk_get_val)(u16);
-	int (*clk_set_val)(u16, unsigned long);
-	int (*dvfs_get_idx)(u8);
-	int (*dvfs_set_idx)(u8, u8);
-	struct scpi_dvfs_info *(*dvfs_get_info)(u8);
-	int (*device_domain_id)(struct device *);
-	int (*get_transition_latency)(struct device *);
-	int (*add_opps_to_device)(struct device *);
-	int (*sensor_get_capability)(u16 *sensors);
-	int (*sensor_get_info)(u16 sensor_id, struct scpi_sensor_info *);
-	int (*sensor_get_value)(u16, u64 *);
-	int (*device_get_power_state)(u16);
-	int (*device_set_power_state)(u16, u8);
-};
+काष्ठा scpi_ops अणु
+	u32 (*get_version)(व्योम);
+	पूर्णांक (*clk_get_range)(u16, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
+	अचिन्हित दीर्घ (*clk_get_val)(u16);
+	पूर्णांक (*clk_set_val)(u16, अचिन्हित दीर्घ);
+	पूर्णांक (*dvfs_get_idx)(u8);
+	पूर्णांक (*dvfs_set_idx)(u8, u8);
+	काष्ठा scpi_dvfs_info *(*dvfs_get_info)(u8);
+	पूर्णांक (*device_करोमुख्य_id)(काष्ठा device *);
+	पूर्णांक (*get_transition_latency)(काष्ठा device *);
+	पूर्णांक (*add_opps_to_device)(काष्ठा device *);
+	पूर्णांक (*sensor_get_capability)(u16 *sensors);
+	पूर्णांक (*sensor_get_info)(u16 sensor_id, काष्ठा scpi_sensor_info *);
+	पूर्णांक (*sensor_get_value)(u16, u64 *);
+	पूर्णांक (*device_get_घातer_state)(u16);
+	पूर्णांक (*device_set_घातer_state)(u16, u8);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_ARM_SCPI_PROTOCOL)
-struct scpi_ops *get_scpi_ops(void);
-#else
-static inline struct scpi_ops *get_scpi_ops(void) { return NULL; }
-#endif
+#अगर IS_REACHABLE(CONFIG_ARM_SCPI_PROTOCOL)
+काष्ठा scpi_ops *get_scpi_ops(व्योम);
+#अन्यथा
+अटल अंतरभूत काष्ठा scpi_ops *get_scpi_ops(व्योम) अणु वापस शून्य; पूर्ण
+#पूर्ण_अगर
 
-#endif /* _LINUX_SCPI_PROTOCOL_H */
+#पूर्ण_अगर /* _LINUX_SCPI_PROTOCOL_H */

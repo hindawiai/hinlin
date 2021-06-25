@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * SSM2518 amplifier audio driver
+ * SSM2518 amplअगरier audio driver
  *
  * Copyright 2013 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#ifndef __SND_SOC_CODECS_SSM2518_H__
-#define __SND_SOC_CODECS_SSM2518_H__
+#अगर_अघोषित __SND_SOC_CODECS_SSM2518_H__
+#घोषणा __SND_SOC_CODECS_SSM2518_H__
 
-#define SSM2518_SYSCLK 0
+#घोषणा SSM2518_SYSCLK 0
 
-enum ssm2518_sysclk_src {
+क्रमागत ssm2518_sysclk_src अणु
 	SSM2518_SYSCLK_SRC_MCLK = 0,
 	SSM2518_SYSCLK_SRC_BCLK = 1,
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

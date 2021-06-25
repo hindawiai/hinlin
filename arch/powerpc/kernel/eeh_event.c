@@ -1,135 +1,136 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (c) 2005 Linas Vepstas <linas@linas.org>
  */
 
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/sched.h>
-#include <linux/semaphore.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/kthread.h>
-#include <asm/eeh_event.h>
-#include <asm/ppc-pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <यंत्र/eeh_event.h>
+#समावेश <यंत्र/ppc-pci.h>
 
 /** Overview:
  *  EEH error states may be detected within exception handlers;
  *  however, the recovery processing needs to occur asynchronously
- *  in a normal kernel context and not an interrupt context.
+ *  in a normal kernel context and not an पूर्णांकerrupt context.
  *  This pair of routines creates an event and queues it onto a
- *  work-queue, where a worker thread can drive recovery.
+ *  work-queue, where a worker thपढ़ो can drive recovery.
  */
 
-static DEFINE_SPINLOCK(eeh_eventlist_lock);
-static DECLARE_COMPLETION(eeh_eventlist_event);
-static LIST_HEAD(eeh_eventlist);
+अटल DEFINE_SPINLOCK(eeh_eventlist_lock);
+अटल DECLARE_COMPLETION(eeh_eventlist_event);
+अटल LIST_HEAD(eeh_eventlist);
 
 /**
  * eeh_event_handler - Dispatch EEH events.
  * @dummy - unused
  *
- * The detection of a frozen slot can occur inside an interrupt,
- * where it can be hard to do anything about it.  The goal of this
+ * The detection of a frozen slot can occur inside an पूर्णांकerrupt,
+ * where it can be hard to करो anything about it.  The goal of this
  * routine is to pull these detection events out of the context
- * of the interrupt handler, and re-dispatch them for processing
- * at a later time in a normal context.
+ * of the पूर्णांकerrupt handler, and re-dispatch them क्रम processing
+ * at a later समय in a normal context.
  */
-static int eeh_event_handler(void * dummy)
-{
-	unsigned long flags;
-	struct eeh_event *event;
+अटल पूर्णांक eeh_event_handler(व्योम * dummy)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा eeh_event *event;
 
-	while (!kthread_should_stop()) {
-		if (wait_for_completion_interruptible(&eeh_eventlist_event))
-			break;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&eeh_eventlist_event))
+			अवरोध;
 
 		/* Fetch EEH event from the queue */
 		spin_lock_irqsave(&eeh_eventlist_lock, flags);
-		event = NULL;
-		if (!list_empty(&eeh_eventlist)) {
+		event = शून्य;
+		अगर (!list_empty(&eeh_eventlist)) अणु
 			event = list_entry(eeh_eventlist.next,
-					   struct eeh_event, list);
+					   काष्ठा eeh_event, list);
 			list_del(&event->list);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&eeh_eventlist_lock, flags);
-		if (!event)
-			continue;
+		अगर (!event)
+			जारी;
 
 		/* We might have event without binding PE */
-		if (event->pe)
+		अगर (event->pe)
 			eeh_handle_normal_event(event->pe);
-		else
+		अन्यथा
 			eeh_handle_special_event();
 
-		kfree(event);
-	}
+		kमुक्त(event);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * eeh_event_init - Start kernel thread to handle EEH events
+ * eeh_event_init - Start kernel thपढ़ो to handle EEH events
  *
- * This routine is called to start the kernel thread for processing
+ * This routine is called to start the kernel thपढ़ो क्रम processing
  * EEH event.
  */
-int eeh_event_init(void)
-{
-	struct task_struct *t;
-	int ret = 0;
+पूर्णांक eeh_event_init(व्योम)
+अणु
+	काष्ठा task_काष्ठा *t;
+	पूर्णांक ret = 0;
 
-	t = kthread_run(eeh_event_handler, NULL, "eehd");
-	if (IS_ERR(t)) {
+	t = kthपढ़ो_run(eeh_event_handler, शून्य, "eehd");
+	अगर (IS_ERR(t)) अणु
 		ret = PTR_ERR(t);
 		pr_err("%s: Failed to start EEH daemon (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * eeh_send_failure_event - Generate a PCI error event
  * @pe: EEH PE
  *
- * This routine can be called within an interrupt context;
+ * This routine can be called within an पूर्णांकerrupt context;
  * the actual event will be delivered in a normal context
  * (from a workqueue).
  */
-int __eeh_send_failure_event(struct eeh_pe *pe)
-{
-	unsigned long flags;
-	struct eeh_event *event;
+पूर्णांक __eeh_send_failure_event(काष्ठा eeh_pe *pe)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा eeh_event *event;
 
-	event = kzalloc(sizeof(*event), GFP_ATOMIC);
-	if (!event) {
+	event = kzalloc(माप(*event), GFP_ATOMIC);
+	अगर (!event) अणु
 		pr_err("EEH: out of memory, event not handled\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	event->pe = pe;
 
 	/*
-	 * Mark the PE as recovering before inserting it in the queue.
-	 * This prevents the PE from being free()ed by a hotplug driver
-	 * while the PE is sitting in the event queue.
+	 * Mark the PE as recovering beक्रमe inserting it in the queue.
+	 * This prevents the PE from being मुक्त()ed by a hotplug driver
+	 * जबतक the PE is sitting in the event queue.
 	 */
-	if (pe) {
-#ifdef CONFIG_STACKTRACE
+	अगर (pe) अणु
+#अगर_घोषित CONFIG_STACKTRACE
 		/*
 		 * Save the current stack trace so we can dump it from the
-		 * event handler thread.
+		 * event handler thपढ़ो.
 		 */
 		pe->trace_entries = stack_trace_save(pe->stack_trace,
 					 ARRAY_SIZE(pe->stack_trace), 0);
-#endif /* CONFIG_STACKTRACE */
+#पूर्ण_अगर /* CONFIG_STACKTRACE */
 
 		eeh_pe_state_mark(pe, EEH_PE_RECOVERING);
-	}
+	पूर्ण
 
-	/* We may or may not be called in an interrupt context */
+	/* We may or may not be called in an पूर्णांकerrupt context */
 	spin_lock_irqsave(&eeh_eventlist_lock, flags);
 	list_add(&event->list, &eeh_eventlist);
 	spin_unlock_irqrestore(&eeh_eventlist_lock, flags);
@@ -137,65 +138,65 @@ int __eeh_send_failure_event(struct eeh_pe *pe)
 	/* For EEH deamon to knick in */
 	complete(&eeh_eventlist_event);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int eeh_send_failure_event(struct eeh_pe *pe)
-{
+पूर्णांक eeh_send_failure_event(काष्ठा eeh_pe *pe)
+अणु
 	/*
 	 * If we've manually supressed recovery events via debugfs
-	 * then just drop it on the floor.
+	 * then just drop it on the न्यूनमान.
 	 */
-	if (eeh_debugfs_no_recover) {
+	अगर (eeh_debugfs_no_recover) अणु
 		pr_err("EEH: Event dropped due to no_recover setting\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return __eeh_send_failure_event(pe);
-}
+	वापस __eeh_send_failure_event(pe);
+पूर्ण
 
 /**
- * eeh_remove_event - Remove EEH event from the queue
+ * eeh_हटाओ_event - Remove EEH event from the queue
  * @pe: Event binding to the PE
- * @force: Event will be removed unconditionally
+ * @क्रमce: Event will be हटाओd unconditionally
  *
- * On PowerNV platform, we might have subsequent coming events
- * is part of the former one. For that case, those subsequent
+ * On PowerNV platक्रमm, we might have subsequent coming events
+ * is part of the क्रमmer one. For that हाल, those subsequent
  * coming events are totally duplicated and unnecessary, thus
- * they should be removed.
+ * they should be हटाओd.
  */
-void eeh_remove_event(struct eeh_pe *pe, bool force)
-{
-	unsigned long flags;
-	struct eeh_event *event, *tmp;
+व्योम eeh_हटाओ_event(काष्ठा eeh_pe *pe, bool क्रमce)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा eeh_event *event, *पंचांगp;
 
 	/*
-	 * If we have NULL PE passed in, we have dead IOC
+	 * If we have शून्य PE passed in, we have dead IOC
 	 * or we're sure we can report all existing errors
 	 * by the caller.
 	 *
 	 * With "force", the event with associated PE that
-	 * have been isolated, the event won't be removed
-	 * to avoid event lost.
+	 * have been isolated, the event won't be हटाओd
+	 * to aव्योम event lost.
 	 */
 	spin_lock_irqsave(&eeh_eventlist_lock, flags);
-	list_for_each_entry_safe(event, tmp, &eeh_eventlist, list) {
-		if (!force && event->pe &&
+	list_क्रम_each_entry_safe(event, पंचांगp, &eeh_eventlist, list) अणु
+		अगर (!क्रमce && event->pe &&
 		    (event->pe->state & EEH_PE_ISOLATED))
-			continue;
+			जारी;
 
-		if (!pe) {
+		अगर (!pe) अणु
 			list_del(&event->list);
-			kfree(event);
-		} else if (pe->type & EEH_PE_PHB) {
-			if (event->pe && event->pe->phb == pe->phb) {
+			kमुक्त(event);
+		पूर्ण अन्यथा अगर (pe->type & EEH_PE_PHB) अणु
+			अगर (event->pe && event->pe->phb == pe->phb) अणु
 				list_del(&event->list);
-				kfree(event);
-			}
-		} else if (event->pe == pe) {
+				kमुक्त(event);
+			पूर्ण
+		पूर्ण अन्यथा अगर (event->pe == pe) अणु
 			list_del(&event->list);
-			kfree(event);
-		}
-	}
+			kमुक्त(event);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&eeh_eventlist_lock, flags);
-}
+पूर्ण

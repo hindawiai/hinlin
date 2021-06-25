@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: Hongzhou.Yang <hongzhou.yang@mediatek.com>
  */
 
-#ifndef __PINCTRL_MTK_MT8135_H
-#define __PINCTRL_MTK_MT8135_H
+#अगर_अघोषित __PINCTRL_MTK_MT8135_H
+#घोषणा __PINCTRL_MTK_MT8135_H
 
-#include <linux/pinctrl/pinctrl.h>
-#include "pinctrl-mtk-common.h"
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश "pinctrl-mtk-common.h"
 
-static const struct mtk_desc_pin mtk_pins_mt8135[] = {
+अटल स्थिर काष्ठा mtk_desc_pin mtk_pins_mt8135[] = अणु
 	MTK_PIN(PINCTRL_PIN(0, "MSDC0_DAT7"),
 		"D21", "mt8135",
 		MTK_EINT_FUNCTION(2, 49),
@@ -278,7 +279,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(7, "TESTA_OUT18")
 	),
 	MTK_PIN(PINCTRL_PIN(25, "NLD8"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 154),
 		MTK_FUNCTION(0, "GPIO25"),
 		MTK_FUNCTION(1, "NLD8"),
@@ -286,7 +287,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_1X[8]")
 	),
 	MTK_PIN(PINCTRL_PIN(26, "NLD9"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 155),
 		MTK_FUNCTION(0, "GPIO26"),
 		MTK_FUNCTION(1, "NLD9"),
@@ -295,7 +296,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM1")
 	),
 	MTK_PIN(PINCTRL_PIN(27, "NLD10"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 156),
 		MTK_FUNCTION(0, "GPIO27"),
 		MTK_FUNCTION(1, "NLD10"),
@@ -304,7 +305,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM2")
 	),
 	MTK_PIN(PINCTRL_PIN(28, "NLD11"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 157),
 		MTK_FUNCTION(0, "GPIO28"),
 		MTK_FUNCTION(1, "NLD11"),
@@ -313,7 +314,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM3")
 	),
 	MTK_PIN(PINCTRL_PIN(29, "NLD12"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 158),
 		MTK_FUNCTION(0, "GPIO29"),
 		MTK_FUNCTION(1, "NLD12"),
@@ -323,7 +324,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PCM1_CK")
 	),
 	MTK_PIN(PINCTRL_PIN(30, "NLD13"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 159),
 		MTK_FUNCTION(0, "GPIO30"),
 		MTK_FUNCTION(1, "NLD13"),
@@ -333,7 +334,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PCM1_WS")
 	),
 	MTK_PIN(PINCTRL_PIN(31, "NLD14"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 160),
 		MTK_FUNCTION(0, "GPIO31"),
 		MTK_FUNCTION(1, "NLD14"),
@@ -343,7 +344,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PCM1_DO")
 	),
 	MTK_PIN(PINCTRL_PIN(32, "NLD15"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 161),
 		MTK_FUNCTION(0, "GPIO32"),
 		MTK_FUNCTION(1, "NLD15"),
@@ -1224,7 +1225,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(7, "A_FUNC_DIN[31]")
 	),
 	MTK_PIN(PINCTRL_PIN(121, "DPIDE"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 100),
 		MTK_FUNCTION(0, "GPIO121"),
 		MTK_FUNCTION(1, "DPI0_DE"),
@@ -1235,7 +1236,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(6, "IRDA_TXD")
 	),
 	MTK_PIN(PINCTRL_PIN(122, "DPICK"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 101),
 		MTK_FUNCTION(0, "GPIO122"),
 		MTK_FUNCTION(1, "DPI0_CK"),
@@ -1245,7 +1246,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(6, "IRDA_PDN")
 	),
 	MTK_PIN(PINCTRL_PIN(123, "DPIG4"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 114),
 		MTK_FUNCTION(0, "GPIO123"),
 		MTK_FUNCTION(1, "DPI0_G4"),
@@ -1254,7 +1255,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP2_ID")
 	),
 	MTK_PIN(PINCTRL_PIN(124, "DPIG5"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 115),
 		MTK_FUNCTION(0, "GPIO124"),
 		MTK_FUNCTION(1, "DPI0_G5"),
@@ -1263,7 +1264,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP2_ICK")
 	),
 	MTK_PIN(PINCTRL_PIN(125, "DPIR3"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 121),
 		MTK_FUNCTION(0, "GPIO125"),
 		MTK_FUNCTION(1, "DPI0_R3"),
@@ -1271,7 +1272,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[7]")
 	),
 	MTK_PIN(PINCTRL_PIN(126, "DPIG1"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 111),
 		MTK_FUNCTION(0, "GPIO126"),
 		MTK_FUNCTION(1, "DPI0_G1"),
@@ -1279,7 +1280,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP1_ICK")
 	),
 	MTK_PIN(PINCTRL_PIN(127, "DPIVSYNC"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 98),
 		MTK_FUNCTION(0, "GPIO127"),
 		MTK_FUNCTION(1, "DPI0_VSYNC"),
@@ -1289,7 +1290,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PCM1_CK")
 	),
 	MTK_PIN(PINCTRL_PIN(128, "DPIHSYNC"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 99),
 		MTK_FUNCTION(0, "GPIO128"),
 		MTK_FUNCTION(1, "DPI0_HSYNC"),
@@ -1300,7 +1301,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(6, "IRDA_RXD")
 	),
 	MTK_PIN(PINCTRL_PIN(129, "DPIB0"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 102),
 		MTK_FUNCTION(0, "GPIO129"),
 		MTK_FUNCTION(1, "DPI0_B0"),
@@ -1309,7 +1310,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DISP_PWM")
 	),
 	MTK_PIN(PINCTRL_PIN(130, "DPIB1"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 103),
 		MTK_FUNCTION(0, "GPIO130"),
 		MTK_FUNCTION(1, "DPI0_B1"),
@@ -1319,7 +1320,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM1")
 	),
 	MTK_PIN(PINCTRL_PIN(131, "DPIB2"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 104),
 		MTK_FUNCTION(0, "GPIO131"),
 		MTK_FUNCTION(1, "DPI0_B2"),
@@ -1329,7 +1330,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM2")
 	),
 	MTK_PIN(PINCTRL_PIN(132, "DPIB3"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 105),
 		MTK_FUNCTION(0, "GPIO132"),
 		MTK_FUNCTION(1, "DPI0_B3"),
@@ -1339,7 +1340,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM3")
 	),
 	MTK_PIN(PINCTRL_PIN(133, "DPIB4"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 106),
 		MTK_FUNCTION(0, "GPIO133"),
 		MTK_FUNCTION(1, "DPI0_B4"),
@@ -1349,7 +1350,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM4")
 	),
 	MTK_PIN(PINCTRL_PIN(134, "DPIB5"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 107),
 		MTK_FUNCTION(0, "GPIO134"),
 		MTK_FUNCTION(1, "DPI0_B5"),
@@ -1359,7 +1360,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM5")
 	),
 	MTK_PIN(PINCTRL_PIN(135, "DPIB6"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 108),
 		MTK_FUNCTION(0, "GPIO135"),
 		MTK_FUNCTION(1, "DPI0_B6"),
@@ -1369,7 +1370,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM6")
 	),
 	MTK_PIN(PINCTRL_PIN(136, "DPIB7"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 109),
 		MTK_FUNCTION(0, "GPIO136"),
 		MTK_FUNCTION(1, "DPI0_B7"),
@@ -1379,7 +1380,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "PWM7")
 	),
 	MTK_PIN(PINCTRL_PIN(137, "DPIG0"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 110),
 		MTK_FUNCTION(0, "GPIO137"),
 		MTK_FUNCTION(1, "DPI0_G0"),
@@ -1387,7 +1388,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP1_ID")
 	),
 	MTK_PIN(PINCTRL_PIN(138, "DPIG2"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 112),
 		MTK_FUNCTION(0, "GPIO138"),
 		MTK_FUNCTION(1, "DPI0_G2"),
@@ -1395,7 +1396,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP1_IMS")
 	),
 	MTK_PIN(PINCTRL_PIN(139, "DPIG3"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 113),
 		MTK_FUNCTION(0, "GPIO139"),
 		MTK_FUNCTION(1, "DPI0_G3"),
@@ -1403,7 +1404,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(5, "DSP2_IMS")
 	),
 	MTK_PIN(PINCTRL_PIN(140, "DPIG6"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 116),
 		MTK_FUNCTION(0, "GPIO140"),
 		MTK_FUNCTION(1, "DPI0_G6"),
@@ -1411,7 +1412,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[2]")
 	),
 	MTK_PIN(PINCTRL_PIN(141, "DPIG7"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 117),
 		MTK_FUNCTION(0, "GPIO141"),
 		MTK_FUNCTION(1, "DPI0_G7"),
@@ -1419,7 +1420,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[3]")
 	),
 	MTK_PIN(PINCTRL_PIN(142, "DPIR0"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 118),
 		MTK_FUNCTION(0, "GPIO142"),
 		MTK_FUNCTION(1, "DPI0_R0"),
@@ -1427,7 +1428,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[4]")
 	),
 	MTK_PIN(PINCTRL_PIN(143, "DPIR1"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 119),
 		MTK_FUNCTION(0, "GPIO143"),
 		MTK_FUNCTION(1, "DPI0_R1"),
@@ -1435,7 +1436,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[5]")
 	),
 	MTK_PIN(PINCTRL_PIN(144, "DPIR2"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 120),
 		MTK_FUNCTION(0, "GPIO144"),
 		MTK_FUNCTION(1, "DPI0_R2"),
@@ -1443,7 +1444,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[6]")
 	),
 	MTK_PIN(PINCTRL_PIN(145, "DPIR4"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 122),
 		MTK_FUNCTION(0, "GPIO145"),
 		MTK_FUNCTION(1, "DPI0_R4"),
@@ -1451,7 +1452,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[8]")
 	),
 	MTK_PIN(PINCTRL_PIN(146, "DPIR5"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 123),
 		MTK_FUNCTION(0, "GPIO146"),
 		MTK_FUNCTION(1, "DPI0_R5"),
@@ -1459,7 +1460,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2DAT_2X[9]")
 	),
 	MTK_PIN(PINCTRL_PIN(147, "DPIR6"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 124),
 		MTK_FUNCTION(0, "GPIO147"),
 		MTK_FUNCTION(1, "DPI0_R6"),
@@ -1467,7 +1468,7 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "CM2VSYNC_2X")
 	),
 	MTK_PIN(PINCTRL_PIN(148, "DPIR7"),
-		NULL, "mt8135",
+		शून्य, "mt8135",
 		MTK_EINT_FUNCTION(2, 125),
 		MTK_FUNCTION(0, "GPIO148"),
 		MTK_FUNCTION(1, "DPI0_R7"),
@@ -1898,6 +1899,6 @@ static const struct mtk_desc_pin mtk_pins_mt8135[] = {
 		MTK_FUNCTION(4, "PWM3"),
 		MTK_FUNCTION(5, "CLKM2")
 	),
-};
+पूर्ण;
 
-#endif /* __PINCTRL_MTK_MT8135_H */
+#पूर्ण_अगर /* __PINCTRL_MTK_MT8135_H */

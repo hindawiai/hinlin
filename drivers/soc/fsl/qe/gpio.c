@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * QUICC Engine GPIOs
  *
@@ -7,145 +8,145 @@
  * Author: Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/gpio/driver.h>
-/* FIXME: needed for gpio_to_chip() get rid of this */
-#include <linux/gpio.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <soc/fsl/qe/qe.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/gpio/driver.h>
+/* FIXME: needed क्रम gpio_to_chip() get rid of this */
+#समावेश <linux/gpपन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <soc/fsl/qe/qe.h>
 
-struct qe_gpio_chip {
-	struct of_mm_gpio_chip mm_gc;
+काष्ठा qe_gpio_chip अणु
+	काष्ठा of_mm_gpio_chip mm_gc;
 	spinlock_t lock;
 
-	unsigned long pin_flags[QE_PIO_PINS];
-#define QE_PIN_REQUESTED 0
+	अचिन्हित दीर्घ pin_flags[QE_PIO_PINS];
+#घोषणा QE_PIN_REQUESTED 0
 
-	/* shadowed data register to clear/set bits safely */
+	/* shaकरोwed data रेजिस्टर to clear/set bits safely */
 	u32 cpdata;
 
 	/* saved_regs used to restore dedicated functions */
-	struct qe_pio_regs saved_regs;
-};
+	काष्ठा qe_pio_regs saved_regs;
+पूर्ण;
 
-static void qe_gpio_save_regs(struct of_mm_gpio_chip *mm_gc)
-{
-	struct qe_gpio_chip *qe_gc =
-		container_of(mm_gc, struct qe_gpio_chip, mm_gc);
-	struct qe_pio_regs __iomem *regs = mm_gc->regs;
+अटल व्योम qe_gpio_save_regs(काष्ठा of_mm_gpio_chip *mm_gc)
+अणु
+	काष्ठा qe_gpio_chip *qe_gc =
+		container_of(mm_gc, काष्ठा qe_gpio_chip, mm_gc);
+	काष्ठा qe_pio_regs __iomem *regs = mm_gc->regs;
 
-	qe_gc->cpdata = ioread32be(&regs->cpdata);
+	qe_gc->cpdata = ioपढ़ो32be(&regs->cpdata);
 	qe_gc->saved_regs.cpdata = qe_gc->cpdata;
-	qe_gc->saved_regs.cpdir1 = ioread32be(&regs->cpdir1);
-	qe_gc->saved_regs.cpdir2 = ioread32be(&regs->cpdir2);
-	qe_gc->saved_regs.cppar1 = ioread32be(&regs->cppar1);
-	qe_gc->saved_regs.cppar2 = ioread32be(&regs->cppar2);
-	qe_gc->saved_regs.cpodr = ioread32be(&regs->cpodr);
-}
+	qe_gc->saved_regs.cpdir1 = ioपढ़ो32be(&regs->cpdir1);
+	qe_gc->saved_regs.cpdir2 = ioपढ़ो32be(&regs->cpdir2);
+	qe_gc->saved_regs.cppar1 = ioपढ़ो32be(&regs->cppar1);
+	qe_gc->saved_regs.cppar2 = ioपढ़ो32be(&regs->cppar2);
+	qe_gc->saved_regs.cpodr = ioपढ़ो32be(&regs->cpodr);
+पूर्ण
 
-static int qe_gpio_get(struct gpio_chip *gc, unsigned int gpio)
-{
-	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	struct qe_pio_regs __iomem *regs = mm_gc->regs;
+अटल पूर्णांक qe_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	काष्ठा qe_pio_regs __iomem *regs = mm_gc->regs;
 	u32 pin_mask = 1 << (QE_PIO_PINS - 1 - gpio);
 
-	return !!(ioread32be(&regs->cpdata) & pin_mask);
-}
+	वापस !!(ioपढ़ो32be(&regs->cpdata) & pin_mask);
+पूर्ण
 
-static void qe_gpio_set(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	struct qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
-	struct qe_pio_regs __iomem *regs = mm_gc->regs;
-	unsigned long flags;
+अटल व्योम qe_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	काष्ठा qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
+	काष्ठा qe_pio_regs __iomem *regs = mm_gc->regs;
+	अचिन्हित दीर्घ flags;
 	u32 pin_mask = 1 << (QE_PIO_PINS - 1 - gpio);
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	if (val)
+	अगर (val)
 		qe_gc->cpdata |= pin_mask;
-	else
+	अन्यथा
 		qe_gc->cpdata &= ~pin_mask;
 
-	iowrite32be(qe_gc->cpdata, &regs->cpdata);
+	ioग_लिखो32be(qe_gc->cpdata, &regs->cpdata);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
-}
+पूर्ण
 
-static void qe_gpio_set_multiple(struct gpio_chip *gc,
-				 unsigned long *mask, unsigned long *bits)
-{
-	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	struct qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
-	struct qe_pio_regs __iomem *regs = mm_gc->regs;
-	unsigned long flags;
-	int i;
+अटल व्योम qe_gpio_set_multiple(काष्ठा gpio_chip *gc,
+				 अचिन्हित दीर्घ *mask, अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	काष्ठा qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
+	काष्ठा qe_pio_regs __iomem *regs = mm_gc->regs;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	for (i = 0; i < gc->ngpio; i++) {
-		if (*mask == 0)
-			break;
-		if (__test_and_clear_bit(i, mask)) {
-			if (test_bit(i, bits))
+	क्रम (i = 0; i < gc->ngpio; i++) अणु
+		अगर (*mask == 0)
+			अवरोध;
+		अगर (__test_and_clear_bit(i, mask)) अणु
+			अगर (test_bit(i, bits))
 				qe_gc->cpdata |= (1U << (QE_PIO_PINS - 1 - i));
-			else
+			अन्यथा
 				qe_gc->cpdata &= ~(1U << (QE_PIO_PINS - 1 - i));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	iowrite32be(qe_gc->cpdata, &regs->cpdata);
+	ioग_लिखो32be(qe_gc->cpdata, &regs->cpdata);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
-}
+पूर्ण
 
-static int qe_gpio_dir_in(struct gpio_chip *gc, unsigned int gpio)
-{
-	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	struct qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल पूर्णांक qe_gpio_dir_in(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	काष्ठा qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	__par_io_config_pin(mm_gc->regs, gpio, QE_PIO_DIR_IN, 0, 0, 0);
+	__par_io_config_pin(mm_gc->regs, gpio, QE_PIO_सूची_IN, 0, 0, 0);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qe_gpio_dir_out(struct gpio_chip *gc, unsigned int gpio, int val)
-{
-	struct of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
-	struct qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल पूर्णांक qe_gpio_dir_out(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio, पूर्णांक val)
+अणु
+	काष्ठा of_mm_gpio_chip *mm_gc = to_of_mm_gpio_chip(gc);
+	काष्ठा qe_gpio_chip *qe_gc = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	qe_gpio_set(gc, gpio, val);
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	__par_io_config_pin(mm_gc->regs, gpio, QE_PIO_DIR_OUT, 0, 0, 0);
+	__par_io_config_pin(mm_gc->regs, gpio, QE_PIO_सूची_OUT, 0, 0, 0);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct qe_pin {
+काष्ठा qe_pin अणु
 	/*
-	 * The qe_gpio_chip name is unfortunate, we should change that to
+	 * The qe_gpio_chip name is unक्रमtunate, we should change that to
 	 * something like qe_pio_controller. Someday.
 	 */
-	struct qe_gpio_chip *controller;
-	int num;
-};
+	काष्ठा qe_gpio_chip *controller;
+	पूर्णांक num;
+पूर्ण;
 
 /**
  * qe_pin_request - Request a QE pin
@@ -153,166 +154,166 @@ struct qe_pin {
  * @index:	index of a pin in the device tree
  * Context:	non-atomic
  *
- * This function return qe_pin so that you could use it with the rest of
+ * This function वापस qe_pin so that you could use it with the rest of
  * the QE Pin Multiplexing API.
  */
-struct qe_pin *qe_pin_request(struct device_node *np, int index)
-{
-	struct qe_pin *qe_pin;
-	struct gpio_chip *gc;
-	struct qe_gpio_chip *qe_gc;
-	int err;
-	unsigned long flags;
+काष्ठा qe_pin *qe_pin_request(काष्ठा device_node *np, पूर्णांक index)
+अणु
+	काष्ठा qe_pin *qe_pin;
+	काष्ठा gpio_chip *gc;
+	काष्ठा qe_gpio_chip *qe_gc;
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
 
-	qe_pin = kzalloc(sizeof(*qe_pin), GFP_KERNEL);
-	if (!qe_pin) {
+	qe_pin = kzalloc(माप(*qe_pin), GFP_KERNEL);
+	अगर (!qe_pin) अणु
 		pr_debug("%s: can't allocate memory\n", __func__);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	err = of_get_gpio(np, index);
-	if (err < 0)
-		goto err0;
+	अगर (err < 0)
+		जाओ err0;
 	gc = gpio_to_chip(err);
-	if (WARN_ON(!gc)) {
+	अगर (WARN_ON(!gc)) अणु
 		err = -ENODEV;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
-	if (!of_device_is_compatible(gc->of_node, "fsl,mpc8323-qe-pario-bank")) {
+	अगर (!of_device_is_compatible(gc->of_node, "fsl,mpc8323-qe-pario-bank")) अणु
 		pr_debug("%s: tried to get a non-qe pin\n", __func__);
 		err = -EINVAL;
-		goto err0;
-	}
+		जाओ err0;
+	पूर्ण
 
 	qe_gc = gpiochip_get_data(gc);
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
 	err -= gc->base;
-	if (test_and_set_bit(QE_PIN_REQUESTED, &qe_gc->pin_flags[err]) == 0) {
+	अगर (test_and_set_bit(QE_PIN_REQUESTED, &qe_gc->pin_flags[err]) == 0) अणु
 		qe_pin->controller = qe_gc;
 		qe_pin->num = err;
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = -EBUSY;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
 
-	if (!err)
-		return qe_pin;
+	अगर (!err)
+		वापस qe_pin;
 err0:
-	kfree(qe_pin);
+	kमुक्त(qe_pin);
 	pr_debug("%s failed with status %d\n", __func__, err);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL(qe_pin_request);
 
 /**
- * qe_pin_free - Free a pin
- * @qe_pin:	pointer to the qe_pin structure
+ * qe_pin_मुक्त - Free a pin
+ * @qe_pin:	poपूर्णांकer to the qe_pin काष्ठाure
  * Context:	any
  *
- * This function frees the qe_pin structure and makes a pin available
- * for further qe_pin_request() calls.
+ * This function मुक्तs the qe_pin काष्ठाure and makes a pin available
+ * क्रम further qe_pin_request() calls.
  */
-void qe_pin_free(struct qe_pin *qe_pin)
-{
-	struct qe_gpio_chip *qe_gc = qe_pin->controller;
-	unsigned long flags;
-	const int pin = qe_pin->num;
+व्योम qe_pin_मुक्त(काष्ठा qe_pin *qe_pin)
+अणु
+	काष्ठा qe_gpio_chip *qe_gc = qe_pin->controller;
+	अचिन्हित दीर्घ flags;
+	स्थिर पूर्णांक pin = qe_pin->num;
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 	test_and_clear_bit(QE_PIN_REQUESTED, &qe_gc->pin_flags[pin]);
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
 
-	kfree(qe_pin);
-}
-EXPORT_SYMBOL(qe_pin_free);
+	kमुक्त(qe_pin);
+पूर्ण
+EXPORT_SYMBOL(qe_pin_मुक्त);
 
 /**
  * qe_pin_set_dedicated - Revert a pin to a dedicated peripheral function mode
- * @qe_pin:	pointer to the qe_pin structure
+ * @qe_pin:	poपूर्णांकer to the qe_pin काष्ठाure
  * Context:	any
  *
  * This function resets a pin to a dedicated peripheral function that
  * has been set up by the firmware.
  */
-void qe_pin_set_dedicated(struct qe_pin *qe_pin)
-{
-	struct qe_gpio_chip *qe_gc = qe_pin->controller;
-	struct qe_pio_regs __iomem *regs = qe_gc->mm_gc.regs;
-	struct qe_pio_regs *sregs = &qe_gc->saved_regs;
-	int pin = qe_pin->num;
+व्योम qe_pin_set_dedicated(काष्ठा qe_pin *qe_pin)
+अणु
+	काष्ठा qe_gpio_chip *qe_gc = qe_pin->controller;
+	काष्ठा qe_pio_regs __iomem *regs = qe_gc->mm_gc.regs;
+	काष्ठा qe_pio_regs *sregs = &qe_gc->saved_regs;
+	पूर्णांक pin = qe_pin->num;
 	u32 mask1 = 1 << (QE_PIO_PINS - (pin + 1));
 	u32 mask2 = 0x3 << (QE_PIO_PINS - (pin % (QE_PIO_PINS / 2) + 1) * 2);
 	bool second_reg = pin > (QE_PIO_PINS / 2) - 1;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	if (second_reg) {
+	अगर (second_reg) अणु
 		qe_clrsetbits_be32(&regs->cpdir2, mask2,
 				   sregs->cpdir2 & mask2);
 		qe_clrsetbits_be32(&regs->cppar2, mask2,
 				   sregs->cppar2 & mask2);
-	} else {
+	पूर्ण अन्यथा अणु
 		qe_clrsetbits_be32(&regs->cpdir1, mask2,
 				   sregs->cpdir1 & mask2);
 		qe_clrsetbits_be32(&regs->cppar1, mask2,
 				   sregs->cppar1 & mask2);
-	}
+	पूर्ण
 
-	if (sregs->cpdata & mask1)
+	अगर (sregs->cpdata & mask1)
 		qe_gc->cpdata |= mask1;
-	else
+	अन्यथा
 		qe_gc->cpdata &= ~mask1;
 
-	iowrite32be(qe_gc->cpdata, &regs->cpdata);
+	ioग_लिखो32be(qe_gc->cpdata, &regs->cpdata);
 	qe_clrsetbits_be32(&regs->cpodr, mask1, sregs->cpodr & mask1);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(qe_pin_set_dedicated);
 
 /**
  * qe_pin_set_gpio - Set a pin to the GPIO mode
- * @qe_pin:	pointer to the qe_pin structure
+ * @qe_pin:	poपूर्णांकer to the qe_pin काष्ठाure
  * Context:	any
  *
  * This function sets a pin to the GPIO mode.
  */
-void qe_pin_set_gpio(struct qe_pin *qe_pin)
-{
-	struct qe_gpio_chip *qe_gc = qe_pin->controller;
-	struct qe_pio_regs __iomem *regs = qe_gc->mm_gc.regs;
-	unsigned long flags;
+व्योम qe_pin_set_gpio(काष्ठा qe_pin *qe_pin)
+अणु
+	काष्ठा qe_gpio_chip *qe_gc = qe_pin->controller;
+	काष्ठा qe_pio_regs __iomem *regs = qe_gc->mm_gc.regs;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&qe_gc->lock, flags);
 
-	/* Let's make it input by default, GPIO API is able to change that. */
-	__par_io_config_pin(regs, qe_pin->num, QE_PIO_DIR_IN, 0, 0, 0);
+	/* Let's make it input by शेष, GPIO API is able to change that. */
+	__par_io_config_pin(regs, qe_pin->num, QE_PIO_सूची_IN, 0, 0, 0);
 
 	spin_unlock_irqrestore(&qe_gc->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(qe_pin_set_gpio);
 
-static int __init qe_add_gpiochips(void)
-{
-	struct device_node *np;
+अटल पूर्णांक __init qe_add_gpiochips(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	for_each_compatible_node(np, NULL, "fsl,mpc8323-qe-pario-bank") {
-		int ret;
-		struct qe_gpio_chip *qe_gc;
-		struct of_mm_gpio_chip *mm_gc;
-		struct gpio_chip *gc;
+	क्रम_each_compatible_node(np, शून्य, "fsl,mpc8323-qe-pario-bank") अणु
+		पूर्णांक ret;
+		काष्ठा qe_gpio_chip *qe_gc;
+		काष्ठा of_mm_gpio_chip *mm_gc;
+		काष्ठा gpio_chip *gc;
 
-		qe_gc = kzalloc(sizeof(*qe_gc), GFP_KERNEL);
-		if (!qe_gc) {
+		qe_gc = kzalloc(माप(*qe_gc), GFP_KERNEL);
+		अगर (!qe_gc) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		spin_lock_init(&qe_gc->lock);
 
@@ -328,15 +329,15 @@ static int __init qe_add_gpiochips(void)
 		gc->set_multiple = qe_gpio_set_multiple;
 
 		ret = of_mm_gpiochip_add_data(np, mm_gc, qe_gc);
-		if (ret)
-			goto err;
-		continue;
+		अगर (ret)
+			जाओ err;
+		जारी;
 err:
 		pr_err("%pOF: registration failed with status %d\n",
 		       np, ret);
-		kfree(qe_gc);
+		kमुक्त(qe_gc);
 		/* try others anyway */
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 arch_initcall(qe_add_gpiochips);

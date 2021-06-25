@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/page-nommu.h
+ *  arch/arm/include/यंत्र/page-nommu.h
  *
  *  Copyright (C) 2004 Hyok S. Choi
  */
 
-#ifndef _ASMARM_PAGE_NOMMU_H
-#define _ASMARM_PAGE_NOMMU_H
+#अगर_अघोषित _ASMARM_PAGE_NOMMU_H
+#घोषणा _ASMARM_PAGE_NOMMU_H
 
-#define clear_page(page)	memset((page), 0, PAGE_SIZE)
-#define copy_page(to,from)	memcpy((to), (from), PAGE_SIZE)
+#घोषणा clear_page(page)	स_रखो((page), 0, PAGE_SIZE)
+#घोषणा copy_page(to,from)	स_नकल((to), (from), PAGE_SIZE)
 
-#define clear_user_page(page, vaddr, pg)	clear_page(page)
-#define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
+#घोषणा clear_user_page(page, vaddr, pg)	clear_page(page)
+#घोषणा copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
 
 /*
  * These are used to make use of C type-checking..
  */
-typedef unsigned long pte_t;
-typedef unsigned long pmd_t;
-typedef unsigned long pgd_t[2];
-typedef unsigned long pgprot_t;
+प्रकार अचिन्हित दीर्घ pte_t;
+प्रकार अचिन्हित दीर्घ pmd_t;
+प्रकार अचिन्हित दीर्घ pgd_t[2];
+प्रकार अचिन्हित दीर्घ pgprot_t;
 
-#define pte_val(x)      (x)
-#define pmd_val(x)      (x)
-#define pgd_val(x)	((x)[0])
-#define pgprot_val(x)   (x)
+#घोषणा pte_val(x)      (x)
+#घोषणा pmd_val(x)      (x)
+#घोषणा pgd_val(x)	((x)[0])
+#घोषणा pgprot_val(x)   (x)
 
-#define __pte(x)        (x)
-#define __pmd(x)        (x)
-#define __pgprot(x)     (x)
+#घोषणा __pte(x)        (x)
+#घोषणा __pmd(x)        (x)
+#घोषणा __pgprot(x)     (x)
 
-#endif
+#पूर्ण_अगर

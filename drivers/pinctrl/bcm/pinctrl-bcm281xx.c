@@ -1,386 +1,387 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2013-2017 Broadcom
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include "../core.h"
-#include "../pinctrl-utils.h"
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश "../core.h"
+#समावेश "../pinctrl-utils.h"
 
 /* BCM281XX Pin Control Registers Definitions */
 
-/* Function Select bits are the same for all pin control registers */
-#define BCM281XX_PIN_REG_F_SEL_MASK		0x0700
-#define BCM281XX_PIN_REG_F_SEL_SHIFT		8
+/* Function Select bits are the same क्रम all pin control रेजिस्टरs */
+#घोषणा BCM281XX_PIN_REG_F_SEL_MASK		0x0700
+#घोषणा BCM281XX_PIN_REG_F_SEL_SHIFT		8
 
-/* Standard pin register */
-#define BCM281XX_STD_PIN_REG_DRV_STR_MASK	0x0007
-#define BCM281XX_STD_PIN_REG_DRV_STR_SHIFT	0
-#define BCM281XX_STD_PIN_REG_INPUT_DIS_MASK	0x0008
-#define BCM281XX_STD_PIN_REG_INPUT_DIS_SHIFT	3
-#define BCM281XX_STD_PIN_REG_SLEW_MASK		0x0010
-#define BCM281XX_STD_PIN_REG_SLEW_SHIFT		4
-#define BCM281XX_STD_PIN_REG_PULL_UP_MASK	0x0020
-#define BCM281XX_STD_PIN_REG_PULL_UP_SHIFT	5
-#define BCM281XX_STD_PIN_REG_PULL_DN_MASK	0x0040
-#define BCM281XX_STD_PIN_REG_PULL_DN_SHIFT	6
-#define BCM281XX_STD_PIN_REG_HYST_MASK		0x0080
-#define BCM281XX_STD_PIN_REG_HYST_SHIFT		7
+/* Standard pin रेजिस्टर */
+#घोषणा BCM281XX_STD_PIN_REG_DRV_STR_MASK	0x0007
+#घोषणा BCM281XX_STD_PIN_REG_DRV_STR_SHIFT	0
+#घोषणा BCM281XX_STD_PIN_REG_INPUT_DIS_MASK	0x0008
+#घोषणा BCM281XX_STD_PIN_REG_INPUT_DIS_SHIFT	3
+#घोषणा BCM281XX_STD_PIN_REG_SLEW_MASK		0x0010
+#घोषणा BCM281XX_STD_PIN_REG_SLEW_SHIFT		4
+#घोषणा BCM281XX_STD_PIN_REG_PULL_UP_MASK	0x0020
+#घोषणा BCM281XX_STD_PIN_REG_PULL_UP_SHIFT	5
+#घोषणा BCM281XX_STD_PIN_REG_PULL_DN_MASK	0x0040
+#घोषणा BCM281XX_STD_PIN_REG_PULL_DN_SHIFT	6
+#घोषणा BCM281XX_STD_PIN_REG_HYST_MASK		0x0080
+#घोषणा BCM281XX_STD_PIN_REG_HYST_SHIFT		7
 
-/* I2C pin register */
-#define BCM281XX_I2C_PIN_REG_INPUT_DIS_MASK	0x0004
-#define BCM281XX_I2C_PIN_REG_INPUT_DIS_SHIFT	2
-#define BCM281XX_I2C_PIN_REG_SLEW_MASK		0x0008
-#define BCM281XX_I2C_PIN_REG_SLEW_SHIFT		3
-#define BCM281XX_I2C_PIN_REG_PULL_UP_STR_MASK	0x0070
-#define BCM281XX_I2C_PIN_REG_PULL_UP_STR_SHIFT	4
+/* I2C pin रेजिस्टर */
+#घोषणा BCM281XX_I2C_PIN_REG_INPUT_DIS_MASK	0x0004
+#घोषणा BCM281XX_I2C_PIN_REG_INPUT_DIS_SHIFT	2
+#घोषणा BCM281XX_I2C_PIN_REG_SLEW_MASK		0x0008
+#घोषणा BCM281XX_I2C_PIN_REG_SLEW_SHIFT		3
+#घोषणा BCM281XX_I2C_PIN_REG_PULL_UP_STR_MASK	0x0070
+#घोषणा BCM281XX_I2C_PIN_REG_PULL_UP_STR_SHIFT	4
 
-/* HDMI pin register */
-#define BCM281XX_HDMI_PIN_REG_INPUT_DIS_MASK	0x0008
-#define BCM281XX_HDMI_PIN_REG_INPUT_DIS_SHIFT	3
-#define BCM281XX_HDMI_PIN_REG_MODE_MASK		0x0010
-#define BCM281XX_HDMI_PIN_REG_MODE_SHIFT	4
+/* HDMI pin रेजिस्टर */
+#घोषणा BCM281XX_HDMI_PIN_REG_INPUT_DIS_MASK	0x0008
+#घोषणा BCM281XX_HDMI_PIN_REG_INPUT_DIS_SHIFT	3
+#घोषणा BCM281XX_HDMI_PIN_REG_MODE_MASK		0x0010
+#घोषणा BCM281XX_HDMI_PIN_REG_MODE_SHIFT	4
 
 /*
- * bcm281xx_pin_type - types of pin register
+ * bcm281xx_pin_type - types of pin रेजिस्टर
  */
-enum bcm281xx_pin_type {
+क्रमागत bcm281xx_pin_type अणु
 	BCM281XX_PIN_TYPE_UNKNOWN = 0,
 	BCM281XX_PIN_TYPE_STD,
 	BCM281XX_PIN_TYPE_I2C,
 	BCM281XX_PIN_TYPE_HDMI,
-};
+पूर्ण;
 
-static enum bcm281xx_pin_type std_pin = BCM281XX_PIN_TYPE_STD;
-static enum bcm281xx_pin_type i2c_pin = BCM281XX_PIN_TYPE_I2C;
-static enum bcm281xx_pin_type hdmi_pin = BCM281XX_PIN_TYPE_HDMI;
+अटल क्रमागत bcm281xx_pin_type std_pin = BCM281XX_PIN_TYPE_STD;
+अटल क्रमागत bcm281xx_pin_type i2c_pin = BCM281XX_PIN_TYPE_I2C;
+अटल क्रमागत bcm281xx_pin_type hdmi_pin = BCM281XX_PIN_TYPE_HDMI;
 
 /*
  * bcm281xx_pin_function- define pin function
  */
-struct bcm281xx_pin_function {
-	const char *name;
-	const char * const *groups;
-	const unsigned ngroups;
-};
+काष्ठा bcm281xx_pin_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	स्थिर अचिन्हित ngroups;
+पूर्ण;
 
 /*
- * bcm281xx_pinctrl_data - Broadcom-specific pinctrl data
- * @reg_base - base of pinctrl registers
+ * bcm281xx_pinctrl_data - Broadcom-specअगरic pinctrl data
+ * @reg_base - base of pinctrl रेजिस्टरs
  */
-struct bcm281xx_pinctrl_data {
-	void __iomem *reg_base;
+काष्ठा bcm281xx_pinctrl_data अणु
+	व्योम __iomem *reg_base;
 
 	/* List of all pins */
-	const struct pinctrl_pin_desc *pins;
-	const unsigned npins;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	स्थिर अचिन्हित npins;
 
-	const struct bcm281xx_pin_function *functions;
-	const unsigned nfunctions;
+	स्थिर काष्ठा bcm281xx_pin_function *functions;
+	स्थिर अचिन्हित nfunctions;
 
-	struct regmap *regmap;
-};
+	काष्ठा regmap *regmap;
+पूर्ण;
 
 /*
  * Pin number definition.  The order here must be the same as defined in the
  * PADCTRLREG block in the RDB.
  */
-#define BCM281XX_PIN_ADCSYNC		0
-#define BCM281XX_PIN_BAT_RM		1
-#define BCM281XX_PIN_BSC1_SCL		2
-#define BCM281XX_PIN_BSC1_SDA		3
-#define BCM281XX_PIN_BSC2_SCL		4
-#define BCM281XX_PIN_BSC2_SDA		5
-#define BCM281XX_PIN_CLASSGPWR		6
-#define BCM281XX_PIN_CLK_CX8		7
-#define BCM281XX_PIN_CLKOUT_0		8
-#define BCM281XX_PIN_CLKOUT_1		9
-#define BCM281XX_PIN_CLKOUT_2		10
-#define BCM281XX_PIN_CLKOUT_3		11
-#define BCM281XX_PIN_CLKREQ_IN_0	12
-#define BCM281XX_PIN_CLKREQ_IN_1	13
-#define BCM281XX_PIN_CWS_SYS_REQ1	14
-#define BCM281XX_PIN_CWS_SYS_REQ2	15
-#define BCM281XX_PIN_CWS_SYS_REQ3	16
-#define BCM281XX_PIN_DIGMIC1_CLK	17
-#define BCM281XX_PIN_DIGMIC1_DQ		18
-#define BCM281XX_PIN_DIGMIC2_CLK	19
-#define BCM281XX_PIN_DIGMIC2_DQ		20
-#define BCM281XX_PIN_GPEN13		21
-#define BCM281XX_PIN_GPEN14		22
-#define BCM281XX_PIN_GPEN15		23
-#define BCM281XX_PIN_GPIO00		24
-#define BCM281XX_PIN_GPIO01		25
-#define BCM281XX_PIN_GPIO02		26
-#define BCM281XX_PIN_GPIO03		27
-#define BCM281XX_PIN_GPIO04		28
-#define BCM281XX_PIN_GPIO05		29
-#define BCM281XX_PIN_GPIO06		30
-#define BCM281XX_PIN_GPIO07		31
-#define BCM281XX_PIN_GPIO08		32
-#define BCM281XX_PIN_GPIO09		33
-#define BCM281XX_PIN_GPIO10		34
-#define BCM281XX_PIN_GPIO11		35
-#define BCM281XX_PIN_GPIO12		36
-#define BCM281XX_PIN_GPIO13		37
-#define BCM281XX_PIN_GPIO14		38
-#define BCM281XX_PIN_GPS_PABLANK	39
-#define BCM281XX_PIN_GPS_TMARK		40
-#define BCM281XX_PIN_HDMI_SCL		41
-#define BCM281XX_PIN_HDMI_SDA		42
-#define BCM281XX_PIN_IC_DM		43
-#define BCM281XX_PIN_IC_DP		44
-#define BCM281XX_PIN_KP_COL_IP_0	45
-#define BCM281XX_PIN_KP_COL_IP_1	46
-#define BCM281XX_PIN_KP_COL_IP_2	47
-#define BCM281XX_PIN_KP_COL_IP_3	48
-#define BCM281XX_PIN_KP_ROW_OP_0	49
-#define BCM281XX_PIN_KP_ROW_OP_1	50
-#define BCM281XX_PIN_KP_ROW_OP_2	51
-#define BCM281XX_PIN_KP_ROW_OP_3	52
-#define BCM281XX_PIN_LCD_B_0		53
-#define BCM281XX_PIN_LCD_B_1		54
-#define BCM281XX_PIN_LCD_B_2		55
-#define BCM281XX_PIN_LCD_B_3		56
-#define BCM281XX_PIN_LCD_B_4		57
-#define BCM281XX_PIN_LCD_B_5		58
-#define BCM281XX_PIN_LCD_B_6		59
-#define BCM281XX_PIN_LCD_B_7		60
-#define BCM281XX_PIN_LCD_G_0		61
-#define BCM281XX_PIN_LCD_G_1		62
-#define BCM281XX_PIN_LCD_G_2		63
-#define BCM281XX_PIN_LCD_G_3		64
-#define BCM281XX_PIN_LCD_G_4		65
-#define BCM281XX_PIN_LCD_G_5		66
-#define BCM281XX_PIN_LCD_G_6		67
-#define BCM281XX_PIN_LCD_G_7		68
-#define BCM281XX_PIN_LCD_HSYNC		69
-#define BCM281XX_PIN_LCD_OE		70
-#define BCM281XX_PIN_LCD_PCLK		71
-#define BCM281XX_PIN_LCD_R_0		72
-#define BCM281XX_PIN_LCD_R_1		73
-#define BCM281XX_PIN_LCD_R_2		74
-#define BCM281XX_PIN_LCD_R_3		75
-#define BCM281XX_PIN_LCD_R_4		76
-#define BCM281XX_PIN_LCD_R_5		77
-#define BCM281XX_PIN_LCD_R_6		78
-#define BCM281XX_PIN_LCD_R_7		79
-#define BCM281XX_PIN_LCD_VSYNC		80
-#define BCM281XX_PIN_MDMGPIO0		81
-#define BCM281XX_PIN_MDMGPIO1		82
-#define BCM281XX_PIN_MDMGPIO2		83
-#define BCM281XX_PIN_MDMGPIO3		84
-#define BCM281XX_PIN_MDMGPIO4		85
-#define BCM281XX_PIN_MDMGPIO5		86
-#define BCM281XX_PIN_MDMGPIO6		87
-#define BCM281XX_PIN_MDMGPIO7		88
-#define BCM281XX_PIN_MDMGPIO8		89
-#define BCM281XX_PIN_MPHI_DATA_0	90
-#define BCM281XX_PIN_MPHI_DATA_1	91
-#define BCM281XX_PIN_MPHI_DATA_2	92
-#define BCM281XX_PIN_MPHI_DATA_3	93
-#define BCM281XX_PIN_MPHI_DATA_4	94
-#define BCM281XX_PIN_MPHI_DATA_5	95
-#define BCM281XX_PIN_MPHI_DATA_6	96
-#define BCM281XX_PIN_MPHI_DATA_7	97
-#define BCM281XX_PIN_MPHI_DATA_8	98
-#define BCM281XX_PIN_MPHI_DATA_9	99
-#define BCM281XX_PIN_MPHI_DATA_10	100
-#define BCM281XX_PIN_MPHI_DATA_11	101
-#define BCM281XX_PIN_MPHI_DATA_12	102
-#define BCM281XX_PIN_MPHI_DATA_13	103
-#define BCM281XX_PIN_MPHI_DATA_14	104
-#define BCM281XX_PIN_MPHI_DATA_15	105
-#define BCM281XX_PIN_MPHI_HA0		106
-#define BCM281XX_PIN_MPHI_HAT0		107
-#define BCM281XX_PIN_MPHI_HAT1		108
-#define BCM281XX_PIN_MPHI_HCE0_N	109
-#define BCM281XX_PIN_MPHI_HCE1_N	110
-#define BCM281XX_PIN_MPHI_HRD_N		111
-#define BCM281XX_PIN_MPHI_HWR_N		112
-#define BCM281XX_PIN_MPHI_RUN0		113
-#define BCM281XX_PIN_MPHI_RUN1		114
-#define BCM281XX_PIN_MTX_SCAN_CLK	115
-#define BCM281XX_PIN_MTX_SCAN_DATA	116
-#define BCM281XX_PIN_NAND_AD_0		117
-#define BCM281XX_PIN_NAND_AD_1		118
-#define BCM281XX_PIN_NAND_AD_2		119
-#define BCM281XX_PIN_NAND_AD_3		120
-#define BCM281XX_PIN_NAND_AD_4		121
-#define BCM281XX_PIN_NAND_AD_5		122
-#define BCM281XX_PIN_NAND_AD_6		123
-#define BCM281XX_PIN_NAND_AD_7		124
-#define BCM281XX_PIN_NAND_ALE		125
-#define BCM281XX_PIN_NAND_CEN_0		126
-#define BCM281XX_PIN_NAND_CEN_1		127
-#define BCM281XX_PIN_NAND_CLE		128
-#define BCM281XX_PIN_NAND_OEN		129
-#define BCM281XX_PIN_NAND_RDY_0		130
-#define BCM281XX_PIN_NAND_RDY_1		131
-#define BCM281XX_PIN_NAND_WEN		132
-#define BCM281XX_PIN_NAND_WP		133
-#define BCM281XX_PIN_PC1		134
-#define BCM281XX_PIN_PC2		135
-#define BCM281XX_PIN_PMU_INT		136
-#define BCM281XX_PIN_PMU_SCL		137
-#define BCM281XX_PIN_PMU_SDA		138
-#define BCM281XX_PIN_RFST2G_MTSLOTEN3G	139
-#define BCM281XX_PIN_RGMII_0_RX_CTL	140
-#define BCM281XX_PIN_RGMII_0_RXC	141
-#define BCM281XX_PIN_RGMII_0_RXD_0	142
-#define BCM281XX_PIN_RGMII_0_RXD_1	143
-#define BCM281XX_PIN_RGMII_0_RXD_2	144
-#define BCM281XX_PIN_RGMII_0_RXD_3	145
-#define BCM281XX_PIN_RGMII_0_TX_CTL	146
-#define BCM281XX_PIN_RGMII_0_TXC	147
-#define BCM281XX_PIN_RGMII_0_TXD_0	148
-#define BCM281XX_PIN_RGMII_0_TXD_1	149
-#define BCM281XX_PIN_RGMII_0_TXD_2	150
-#define BCM281XX_PIN_RGMII_0_TXD_3	151
-#define BCM281XX_PIN_RGMII_1_RX_CTL	152
-#define BCM281XX_PIN_RGMII_1_RXC	153
-#define BCM281XX_PIN_RGMII_1_RXD_0	154
-#define BCM281XX_PIN_RGMII_1_RXD_1	155
-#define BCM281XX_PIN_RGMII_1_RXD_2	156
-#define BCM281XX_PIN_RGMII_1_RXD_3	157
-#define BCM281XX_PIN_RGMII_1_TX_CTL	158
-#define BCM281XX_PIN_RGMII_1_TXC	159
-#define BCM281XX_PIN_RGMII_1_TXD_0	160
-#define BCM281XX_PIN_RGMII_1_TXD_1	161
-#define BCM281XX_PIN_RGMII_1_TXD_2	162
-#define BCM281XX_PIN_RGMII_1_TXD_3	163
-#define BCM281XX_PIN_RGMII_GPIO_0	164
-#define BCM281XX_PIN_RGMII_GPIO_1	165
-#define BCM281XX_PIN_RGMII_GPIO_2	166
-#define BCM281XX_PIN_RGMII_GPIO_3	167
-#define BCM281XX_PIN_RTXDATA2G_TXDATA3G1	168
-#define BCM281XX_PIN_RTXEN2G_TXDATA3G2	169
-#define BCM281XX_PIN_RXDATA3G0		170
-#define BCM281XX_PIN_RXDATA3G1		171
-#define BCM281XX_PIN_RXDATA3G2		172
-#define BCM281XX_PIN_SDIO1_CLK		173
-#define BCM281XX_PIN_SDIO1_CMD		174
-#define BCM281XX_PIN_SDIO1_DATA_0	175
-#define BCM281XX_PIN_SDIO1_DATA_1	176
-#define BCM281XX_PIN_SDIO1_DATA_2	177
-#define BCM281XX_PIN_SDIO1_DATA_3	178
-#define BCM281XX_PIN_SDIO4_CLK		179
-#define BCM281XX_PIN_SDIO4_CMD		180
-#define BCM281XX_PIN_SDIO4_DATA_0	181
-#define BCM281XX_PIN_SDIO4_DATA_1	182
-#define BCM281XX_PIN_SDIO4_DATA_2	183
-#define BCM281XX_PIN_SDIO4_DATA_3	184
-#define BCM281XX_PIN_SIM_CLK		185
-#define BCM281XX_PIN_SIM_DATA		186
-#define BCM281XX_PIN_SIM_DET		187
-#define BCM281XX_PIN_SIM_RESETN		188
-#define BCM281XX_PIN_SIM2_CLK		189
-#define BCM281XX_PIN_SIM2_DATA		190
-#define BCM281XX_PIN_SIM2_DET		191
-#define BCM281XX_PIN_SIM2_RESETN	192
-#define BCM281XX_PIN_SRI_C		193
-#define BCM281XX_PIN_SRI_D		194
-#define BCM281XX_PIN_SRI_E		195
-#define BCM281XX_PIN_SSP_EXTCLK		196
-#define BCM281XX_PIN_SSP0_CLK		197
-#define BCM281XX_PIN_SSP0_FS		198
-#define BCM281XX_PIN_SSP0_RXD		199
-#define BCM281XX_PIN_SSP0_TXD		200
-#define BCM281XX_PIN_SSP2_CLK		201
-#define BCM281XX_PIN_SSP2_FS_0		202
-#define BCM281XX_PIN_SSP2_FS_1		203
-#define BCM281XX_PIN_SSP2_FS_2		204
-#define BCM281XX_PIN_SSP2_FS_3		205
-#define BCM281XX_PIN_SSP2_RXD_0		206
-#define BCM281XX_PIN_SSP2_RXD_1		207
-#define BCM281XX_PIN_SSP2_TXD_0		208
-#define BCM281XX_PIN_SSP2_TXD_1		209
-#define BCM281XX_PIN_SSP3_CLK		210
-#define BCM281XX_PIN_SSP3_FS		211
-#define BCM281XX_PIN_SSP3_RXD		212
-#define BCM281XX_PIN_SSP3_TXD		213
-#define BCM281XX_PIN_SSP4_CLK		214
-#define BCM281XX_PIN_SSP4_FS		215
-#define BCM281XX_PIN_SSP4_RXD		216
-#define BCM281XX_PIN_SSP4_TXD		217
-#define BCM281XX_PIN_SSP5_CLK		218
-#define BCM281XX_PIN_SSP5_FS		219
-#define BCM281XX_PIN_SSP5_RXD		220
-#define BCM281XX_PIN_SSP5_TXD		221
-#define BCM281XX_PIN_SSP6_CLK		222
-#define BCM281XX_PIN_SSP6_FS		223
-#define BCM281XX_PIN_SSP6_RXD		224
-#define BCM281XX_PIN_SSP6_TXD		225
-#define BCM281XX_PIN_STAT_1		226
-#define BCM281XX_PIN_STAT_2		227
-#define BCM281XX_PIN_SYSCLKEN		228
-#define BCM281XX_PIN_TRACECLK		229
-#define BCM281XX_PIN_TRACEDT00		230
-#define BCM281XX_PIN_TRACEDT01		231
-#define BCM281XX_PIN_TRACEDT02		232
-#define BCM281XX_PIN_TRACEDT03		233
-#define BCM281XX_PIN_TRACEDT04		234
-#define BCM281XX_PIN_TRACEDT05		235
-#define BCM281XX_PIN_TRACEDT06		236
-#define BCM281XX_PIN_TRACEDT07		237
-#define BCM281XX_PIN_TRACEDT08		238
-#define BCM281XX_PIN_TRACEDT09		239
-#define BCM281XX_PIN_TRACEDT10		240
-#define BCM281XX_PIN_TRACEDT11		241
-#define BCM281XX_PIN_TRACEDT12		242
-#define BCM281XX_PIN_TRACEDT13		243
-#define BCM281XX_PIN_TRACEDT14		244
-#define BCM281XX_PIN_TRACEDT15		245
-#define BCM281XX_PIN_TXDATA3G0		246
-#define BCM281XX_PIN_TXPWRIND		247
-#define BCM281XX_PIN_UARTB1_UCTS	248
-#define BCM281XX_PIN_UARTB1_URTS	249
-#define BCM281XX_PIN_UARTB1_URXD	250
-#define BCM281XX_PIN_UARTB1_UTXD	251
-#define BCM281XX_PIN_UARTB2_URXD	252
-#define BCM281XX_PIN_UARTB2_UTXD	253
-#define BCM281XX_PIN_UARTB3_UCTS	254
-#define BCM281XX_PIN_UARTB3_URTS	255
-#define BCM281XX_PIN_UARTB3_URXD	256
-#define BCM281XX_PIN_UARTB3_UTXD	257
-#define BCM281XX_PIN_UARTB4_UCTS	258
-#define BCM281XX_PIN_UARTB4_URTS	259
-#define BCM281XX_PIN_UARTB4_URXD	260
-#define BCM281XX_PIN_UARTB4_UTXD	261
-#define BCM281XX_PIN_VC_CAM1_SCL	262
-#define BCM281XX_PIN_VC_CAM1_SDA	263
-#define BCM281XX_PIN_VC_CAM2_SCL	264
-#define BCM281XX_PIN_VC_CAM2_SDA	265
-#define BCM281XX_PIN_VC_CAM3_SCL	266
-#define BCM281XX_PIN_VC_CAM3_SDA	267
+#घोषणा BCM281XX_PIN_ADCSYNC		0
+#घोषणा BCM281XX_PIN_BAT_RM		1
+#घोषणा BCM281XX_PIN_BSC1_SCL		2
+#घोषणा BCM281XX_PIN_BSC1_SDA		3
+#घोषणा BCM281XX_PIN_BSC2_SCL		4
+#घोषणा BCM281XX_PIN_BSC2_SDA		5
+#घोषणा BCM281XX_PIN_CLASSGPWR		6
+#घोषणा BCM281XX_PIN_CLK_CX8		7
+#घोषणा BCM281XX_PIN_CLKOUT_0		8
+#घोषणा BCM281XX_PIN_CLKOUT_1		9
+#घोषणा BCM281XX_PIN_CLKOUT_2		10
+#घोषणा BCM281XX_PIN_CLKOUT_3		11
+#घोषणा BCM281XX_PIN_CLKREQ_IN_0	12
+#घोषणा BCM281XX_PIN_CLKREQ_IN_1	13
+#घोषणा BCM281XX_PIN_CWS_SYS_REQ1	14
+#घोषणा BCM281XX_PIN_CWS_SYS_REQ2	15
+#घोषणा BCM281XX_PIN_CWS_SYS_REQ3	16
+#घोषणा BCM281XX_PIN_DIGMIC1_CLK	17
+#घोषणा BCM281XX_PIN_DIGMIC1_DQ		18
+#घोषणा BCM281XX_PIN_DIGMIC2_CLK	19
+#घोषणा BCM281XX_PIN_DIGMIC2_DQ		20
+#घोषणा BCM281XX_PIN_GPEN13		21
+#घोषणा BCM281XX_PIN_GPEN14		22
+#घोषणा BCM281XX_PIN_GPEN15		23
+#घोषणा BCM281XX_PIN_GPIO00		24
+#घोषणा BCM281XX_PIN_GPIO01		25
+#घोषणा BCM281XX_PIN_GPIO02		26
+#घोषणा BCM281XX_PIN_GPIO03		27
+#घोषणा BCM281XX_PIN_GPIO04		28
+#घोषणा BCM281XX_PIN_GPIO05		29
+#घोषणा BCM281XX_PIN_GPIO06		30
+#घोषणा BCM281XX_PIN_GPIO07		31
+#घोषणा BCM281XX_PIN_GPIO08		32
+#घोषणा BCM281XX_PIN_GPIO09		33
+#घोषणा BCM281XX_PIN_GPIO10		34
+#घोषणा BCM281XX_PIN_GPIO11		35
+#घोषणा BCM281XX_PIN_GPIO12		36
+#घोषणा BCM281XX_PIN_GPIO13		37
+#घोषणा BCM281XX_PIN_GPIO14		38
+#घोषणा BCM281XX_PIN_GPS_PABLANK	39
+#घोषणा BCM281XX_PIN_GPS_TMARK		40
+#घोषणा BCM281XX_PIN_HDMI_SCL		41
+#घोषणा BCM281XX_PIN_HDMI_SDA		42
+#घोषणा BCM281XX_PIN_IC_DM		43
+#घोषणा BCM281XX_PIN_IC_DP		44
+#घोषणा BCM281XX_PIN_KP_COL_IP_0	45
+#घोषणा BCM281XX_PIN_KP_COL_IP_1	46
+#घोषणा BCM281XX_PIN_KP_COL_IP_2	47
+#घोषणा BCM281XX_PIN_KP_COL_IP_3	48
+#घोषणा BCM281XX_PIN_KP_ROW_OP_0	49
+#घोषणा BCM281XX_PIN_KP_ROW_OP_1	50
+#घोषणा BCM281XX_PIN_KP_ROW_OP_2	51
+#घोषणा BCM281XX_PIN_KP_ROW_OP_3	52
+#घोषणा BCM281XX_PIN_LCD_B_0		53
+#घोषणा BCM281XX_PIN_LCD_B_1		54
+#घोषणा BCM281XX_PIN_LCD_B_2		55
+#घोषणा BCM281XX_PIN_LCD_B_3		56
+#घोषणा BCM281XX_PIN_LCD_B_4		57
+#घोषणा BCM281XX_PIN_LCD_B_5		58
+#घोषणा BCM281XX_PIN_LCD_B_6		59
+#घोषणा BCM281XX_PIN_LCD_B_7		60
+#घोषणा BCM281XX_PIN_LCD_G_0		61
+#घोषणा BCM281XX_PIN_LCD_G_1		62
+#घोषणा BCM281XX_PIN_LCD_G_2		63
+#घोषणा BCM281XX_PIN_LCD_G_3		64
+#घोषणा BCM281XX_PIN_LCD_G_4		65
+#घोषणा BCM281XX_PIN_LCD_G_5		66
+#घोषणा BCM281XX_PIN_LCD_G_6		67
+#घोषणा BCM281XX_PIN_LCD_G_7		68
+#घोषणा BCM281XX_PIN_LCD_HSYNC		69
+#घोषणा BCM281XX_PIN_LCD_OE		70
+#घोषणा BCM281XX_PIN_LCD_PCLK		71
+#घोषणा BCM281XX_PIN_LCD_R_0		72
+#घोषणा BCM281XX_PIN_LCD_R_1		73
+#घोषणा BCM281XX_PIN_LCD_R_2		74
+#घोषणा BCM281XX_PIN_LCD_R_3		75
+#घोषणा BCM281XX_PIN_LCD_R_4		76
+#घोषणा BCM281XX_PIN_LCD_R_5		77
+#घोषणा BCM281XX_PIN_LCD_R_6		78
+#घोषणा BCM281XX_PIN_LCD_R_7		79
+#घोषणा BCM281XX_PIN_LCD_VSYNC		80
+#घोषणा BCM281XX_PIN_MDMGPIO0		81
+#घोषणा BCM281XX_PIN_MDMGPIO1		82
+#घोषणा BCM281XX_PIN_MDMGPIO2		83
+#घोषणा BCM281XX_PIN_MDMGPIO3		84
+#घोषणा BCM281XX_PIN_MDMGPIO4		85
+#घोषणा BCM281XX_PIN_MDMGPIO5		86
+#घोषणा BCM281XX_PIN_MDMGPIO6		87
+#घोषणा BCM281XX_PIN_MDMGPIO7		88
+#घोषणा BCM281XX_PIN_MDMGPIO8		89
+#घोषणा BCM281XX_PIN_MPHI_DATA_0	90
+#घोषणा BCM281XX_PIN_MPHI_DATA_1	91
+#घोषणा BCM281XX_PIN_MPHI_DATA_2	92
+#घोषणा BCM281XX_PIN_MPHI_DATA_3	93
+#घोषणा BCM281XX_PIN_MPHI_DATA_4	94
+#घोषणा BCM281XX_PIN_MPHI_DATA_5	95
+#घोषणा BCM281XX_PIN_MPHI_DATA_6	96
+#घोषणा BCM281XX_PIN_MPHI_DATA_7	97
+#घोषणा BCM281XX_PIN_MPHI_DATA_8	98
+#घोषणा BCM281XX_PIN_MPHI_DATA_9	99
+#घोषणा BCM281XX_PIN_MPHI_DATA_10	100
+#घोषणा BCM281XX_PIN_MPHI_DATA_11	101
+#घोषणा BCM281XX_PIN_MPHI_DATA_12	102
+#घोषणा BCM281XX_PIN_MPHI_DATA_13	103
+#घोषणा BCM281XX_PIN_MPHI_DATA_14	104
+#घोषणा BCM281XX_PIN_MPHI_DATA_15	105
+#घोषणा BCM281XX_PIN_MPHI_HA0		106
+#घोषणा BCM281XX_PIN_MPHI_HAT0		107
+#घोषणा BCM281XX_PIN_MPHI_HAT1		108
+#घोषणा BCM281XX_PIN_MPHI_HCE0_N	109
+#घोषणा BCM281XX_PIN_MPHI_HCE1_N	110
+#घोषणा BCM281XX_PIN_MPHI_HRD_N		111
+#घोषणा BCM281XX_PIN_MPHI_HWR_N		112
+#घोषणा BCM281XX_PIN_MPHI_RUN0		113
+#घोषणा BCM281XX_PIN_MPHI_RUN1		114
+#घोषणा BCM281XX_PIN_MTX_SCAN_CLK	115
+#घोषणा BCM281XX_PIN_MTX_SCAN_DATA	116
+#घोषणा BCM281XX_PIN_न_अंकD_AD_0		117
+#घोषणा BCM281XX_PIN_न_अंकD_AD_1		118
+#घोषणा BCM281XX_PIN_न_अंकD_AD_2		119
+#घोषणा BCM281XX_PIN_न_अंकD_AD_3		120
+#घोषणा BCM281XX_PIN_न_अंकD_AD_4		121
+#घोषणा BCM281XX_PIN_न_अंकD_AD_5		122
+#घोषणा BCM281XX_PIN_न_अंकD_AD_6		123
+#घोषणा BCM281XX_PIN_न_अंकD_AD_7		124
+#घोषणा BCM281XX_PIN_न_अंकD_ALE		125
+#घोषणा BCM281XX_PIN_न_अंकD_CEN_0		126
+#घोषणा BCM281XX_PIN_न_अंकD_CEN_1		127
+#घोषणा BCM281XX_PIN_न_अंकD_CLE		128
+#घोषणा BCM281XX_PIN_न_अंकD_OEN		129
+#घोषणा BCM281XX_PIN_न_अंकD_RDY_0		130
+#घोषणा BCM281XX_PIN_न_अंकD_RDY_1		131
+#घोषणा BCM281XX_PIN_न_अंकD_WEN		132
+#घोषणा BCM281XX_PIN_न_अंकD_WP		133
+#घोषणा BCM281XX_PIN_PC1		134
+#घोषणा BCM281XX_PIN_PC2		135
+#घोषणा BCM281XX_PIN_PMU_INT		136
+#घोषणा BCM281XX_PIN_PMU_SCL		137
+#घोषणा BCM281XX_PIN_PMU_SDA		138
+#घोषणा BCM281XX_PIN_RFST2G_MTSLOTEN3G	139
+#घोषणा BCM281XX_PIN_RGMII_0_RX_CTL	140
+#घोषणा BCM281XX_PIN_RGMII_0_RXC	141
+#घोषणा BCM281XX_PIN_RGMII_0_RXD_0	142
+#घोषणा BCM281XX_PIN_RGMII_0_RXD_1	143
+#घोषणा BCM281XX_PIN_RGMII_0_RXD_2	144
+#घोषणा BCM281XX_PIN_RGMII_0_RXD_3	145
+#घोषणा BCM281XX_PIN_RGMII_0_TX_CTL	146
+#घोषणा BCM281XX_PIN_RGMII_0_TXC	147
+#घोषणा BCM281XX_PIN_RGMII_0_TXD_0	148
+#घोषणा BCM281XX_PIN_RGMII_0_TXD_1	149
+#घोषणा BCM281XX_PIN_RGMII_0_TXD_2	150
+#घोषणा BCM281XX_PIN_RGMII_0_TXD_3	151
+#घोषणा BCM281XX_PIN_RGMII_1_RX_CTL	152
+#घोषणा BCM281XX_PIN_RGMII_1_RXC	153
+#घोषणा BCM281XX_PIN_RGMII_1_RXD_0	154
+#घोषणा BCM281XX_PIN_RGMII_1_RXD_1	155
+#घोषणा BCM281XX_PIN_RGMII_1_RXD_2	156
+#घोषणा BCM281XX_PIN_RGMII_1_RXD_3	157
+#घोषणा BCM281XX_PIN_RGMII_1_TX_CTL	158
+#घोषणा BCM281XX_PIN_RGMII_1_TXC	159
+#घोषणा BCM281XX_PIN_RGMII_1_TXD_0	160
+#घोषणा BCM281XX_PIN_RGMII_1_TXD_1	161
+#घोषणा BCM281XX_PIN_RGMII_1_TXD_2	162
+#घोषणा BCM281XX_PIN_RGMII_1_TXD_3	163
+#घोषणा BCM281XX_PIN_RGMII_GPIO_0	164
+#घोषणा BCM281XX_PIN_RGMII_GPIO_1	165
+#घोषणा BCM281XX_PIN_RGMII_GPIO_2	166
+#घोषणा BCM281XX_PIN_RGMII_GPIO_3	167
+#घोषणा BCM281XX_PIN_RTXDATA2G_TXDATA3G1	168
+#घोषणा BCM281XX_PIN_RTXEN2G_TXDATA3G2	169
+#घोषणा BCM281XX_PIN_RXDATA3G0		170
+#घोषणा BCM281XX_PIN_RXDATA3G1		171
+#घोषणा BCM281XX_PIN_RXDATA3G2		172
+#घोषणा BCM281XX_PIN_SDIO1_CLK		173
+#घोषणा BCM281XX_PIN_SDIO1_CMD		174
+#घोषणा BCM281XX_PIN_SDIO1_DATA_0	175
+#घोषणा BCM281XX_PIN_SDIO1_DATA_1	176
+#घोषणा BCM281XX_PIN_SDIO1_DATA_2	177
+#घोषणा BCM281XX_PIN_SDIO1_DATA_3	178
+#घोषणा BCM281XX_PIN_SDIO4_CLK		179
+#घोषणा BCM281XX_PIN_SDIO4_CMD		180
+#घोषणा BCM281XX_PIN_SDIO4_DATA_0	181
+#घोषणा BCM281XX_PIN_SDIO4_DATA_1	182
+#घोषणा BCM281XX_PIN_SDIO4_DATA_2	183
+#घोषणा BCM281XX_PIN_SDIO4_DATA_3	184
+#घोषणा BCM281XX_PIN_SIM_CLK		185
+#घोषणा BCM281XX_PIN_SIM_DATA		186
+#घोषणा BCM281XX_PIN_SIM_DET		187
+#घोषणा BCM281XX_PIN_SIM_RESETN		188
+#घोषणा BCM281XX_PIN_SIM2_CLK		189
+#घोषणा BCM281XX_PIN_SIM2_DATA		190
+#घोषणा BCM281XX_PIN_SIM2_DET		191
+#घोषणा BCM281XX_PIN_SIM2_RESETN	192
+#घोषणा BCM281XX_PIN_SRI_C		193
+#घोषणा BCM281XX_PIN_SRI_D		194
+#घोषणा BCM281XX_PIN_SRI_E		195
+#घोषणा BCM281XX_PIN_SSP_EXTCLK		196
+#घोषणा BCM281XX_PIN_SSP0_CLK		197
+#घोषणा BCM281XX_PIN_SSP0_FS		198
+#घोषणा BCM281XX_PIN_SSP0_RXD		199
+#घोषणा BCM281XX_PIN_SSP0_TXD		200
+#घोषणा BCM281XX_PIN_SSP2_CLK		201
+#घोषणा BCM281XX_PIN_SSP2_FS_0		202
+#घोषणा BCM281XX_PIN_SSP2_FS_1		203
+#घोषणा BCM281XX_PIN_SSP2_FS_2		204
+#घोषणा BCM281XX_PIN_SSP2_FS_3		205
+#घोषणा BCM281XX_PIN_SSP2_RXD_0		206
+#घोषणा BCM281XX_PIN_SSP2_RXD_1		207
+#घोषणा BCM281XX_PIN_SSP2_TXD_0		208
+#घोषणा BCM281XX_PIN_SSP2_TXD_1		209
+#घोषणा BCM281XX_PIN_SSP3_CLK		210
+#घोषणा BCM281XX_PIN_SSP3_FS		211
+#घोषणा BCM281XX_PIN_SSP3_RXD		212
+#घोषणा BCM281XX_PIN_SSP3_TXD		213
+#घोषणा BCM281XX_PIN_SSP4_CLK		214
+#घोषणा BCM281XX_PIN_SSP4_FS		215
+#घोषणा BCM281XX_PIN_SSP4_RXD		216
+#घोषणा BCM281XX_PIN_SSP4_TXD		217
+#घोषणा BCM281XX_PIN_SSP5_CLK		218
+#घोषणा BCM281XX_PIN_SSP5_FS		219
+#घोषणा BCM281XX_PIN_SSP5_RXD		220
+#घोषणा BCM281XX_PIN_SSP5_TXD		221
+#घोषणा BCM281XX_PIN_SSP6_CLK		222
+#घोषणा BCM281XX_PIN_SSP6_FS		223
+#घोषणा BCM281XX_PIN_SSP6_RXD		224
+#घोषणा BCM281XX_PIN_SSP6_TXD		225
+#घोषणा BCM281XX_PIN_STAT_1		226
+#घोषणा BCM281XX_PIN_STAT_2		227
+#घोषणा BCM281XX_PIN_SYSCLKEN		228
+#घोषणा BCM281XX_PIN_TRACECLK		229
+#घोषणा BCM281XX_PIN_TRACEDT00		230
+#घोषणा BCM281XX_PIN_TRACEDT01		231
+#घोषणा BCM281XX_PIN_TRACEDT02		232
+#घोषणा BCM281XX_PIN_TRACEDT03		233
+#घोषणा BCM281XX_PIN_TRACEDT04		234
+#घोषणा BCM281XX_PIN_TRACEDT05		235
+#घोषणा BCM281XX_PIN_TRACEDT06		236
+#घोषणा BCM281XX_PIN_TRACEDT07		237
+#घोषणा BCM281XX_PIN_TRACEDT08		238
+#घोषणा BCM281XX_PIN_TRACEDT09		239
+#घोषणा BCM281XX_PIN_TRACEDT10		240
+#घोषणा BCM281XX_PIN_TRACEDT11		241
+#घोषणा BCM281XX_PIN_TRACEDT12		242
+#घोषणा BCM281XX_PIN_TRACEDT13		243
+#घोषणा BCM281XX_PIN_TRACEDT14		244
+#घोषणा BCM281XX_PIN_TRACEDT15		245
+#घोषणा BCM281XX_PIN_TXDATA3G0		246
+#घोषणा BCM281XX_PIN_TXPWRIND		247
+#घोषणा BCM281XX_PIN_UARTB1_UCTS	248
+#घोषणा BCM281XX_PIN_UARTB1_URTS	249
+#घोषणा BCM281XX_PIN_UARTB1_URXD	250
+#घोषणा BCM281XX_PIN_UARTB1_UTXD	251
+#घोषणा BCM281XX_PIN_UARTB2_URXD	252
+#घोषणा BCM281XX_PIN_UARTB2_UTXD	253
+#घोषणा BCM281XX_PIN_UARTB3_UCTS	254
+#घोषणा BCM281XX_PIN_UARTB3_URTS	255
+#घोषणा BCM281XX_PIN_UARTB3_URXD	256
+#घोषणा BCM281XX_PIN_UARTB3_UTXD	257
+#घोषणा BCM281XX_PIN_UARTB4_UCTS	258
+#घोषणा BCM281XX_PIN_UARTB4_URTS	259
+#घोषणा BCM281XX_PIN_UARTB4_URXD	260
+#घोषणा BCM281XX_PIN_UARTB4_UTXD	261
+#घोषणा BCM281XX_PIN_VC_CAM1_SCL	262
+#घोषणा BCM281XX_PIN_VC_CAM1_SDA	263
+#घोषणा BCM281XX_PIN_VC_CAM2_SCL	264
+#घोषणा BCM281XX_PIN_VC_CAM2_SDA	265
+#घोषणा BCM281XX_PIN_VC_CAM3_SCL	266
+#घोषणा BCM281XX_PIN_VC_CAM3_SDA	267
 
-#define BCM281XX_PIN_DESC(a, b, c) \
-	{ .number = a, .name = b, .drv_data = &c##_pin }
+#घोषणा BCM281XX_PIN_DESC(a, b, c) \
+	अणु .number = a, .name = b, .drv_data = &c##_pin पूर्ण
 
 /*
  * Pin description definition.  The order here must be the same as defined in
  * the PADCTRLREG block in the RDB, since the pin number is used as an index
- * into this array.
+ * पूर्णांकo this array.
  */
-static const struct pinctrl_pin_desc bcm281xx_pinctrl_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc bcm281xx_pinctrl_pins[] = अणु
 	BCM281XX_PIN_DESC(BCM281XX_PIN_ADCSYNC, "adcsync", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_BAT_RM, "bat_rm", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_BSC1_SCL, "bsc1_scl", i2c),
@@ -498,23 +499,23 @@ static const struct pinctrl_pin_desc bcm281xx_pinctrl_pins[] = {
 	BCM281XX_PIN_DESC(BCM281XX_PIN_MPHI_RUN1, "mphi_run1", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_MTX_SCAN_CLK, "mtx_scan_clk", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_MTX_SCAN_DATA, "mtx_scan_data", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_0, "nand_ad_0", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_1, "nand_ad_1", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_2, "nand_ad_2", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_3, "nand_ad_3", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_4, "nand_ad_4", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_5, "nand_ad_5", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_6, "nand_ad_6", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_AD_7, "nand_ad_7", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_ALE, "nand_ale", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_CEN_0, "nand_cen_0", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_CEN_1, "nand_cen_1", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_CLE, "nand_cle", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_OEN, "nand_oen", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_RDY_0, "nand_rdy_0", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_RDY_1, "nand_rdy_1", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_WEN, "nand_wen", std),
-	BCM281XX_PIN_DESC(BCM281XX_PIN_NAND_WP, "nand_wp", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_0, "nand_ad_0", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_1, "nand_ad_1", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_2, "nand_ad_2", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_3, "nand_ad_3", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_4, "nand_ad_4", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_5, "nand_ad_5", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_6, "nand_ad_6", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_AD_7, "nand_ad_7", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_ALE, "nand_ale", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_CEN_0, "nand_cen_0", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_CEN_1, "nand_cen_1", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_CLE, "nand_cle", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_OEN, "nand_oen", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_RDY_0, "nand_rdy_0", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_RDY_1, "nand_rdy_1", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_WEN, "nand_wen", std),
+	BCM281XX_PIN_DESC(BCM281XX_PIN_न_अंकD_WP, "nand_wp", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_PC1, "pc1", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_PC2, "pc2", std),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_PMU_INT, "pmu_int", std),
@@ -652,9 +653,9 @@ static const struct pinctrl_pin_desc bcm281xx_pinctrl_pins[] = {
 	BCM281XX_PIN_DESC(BCM281XX_PIN_VC_CAM2_SDA, "vc_cam2_sda", i2c),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_VC_CAM3_SCL, "vc_cam3_scl", i2c),
 	BCM281XX_PIN_DESC(BCM281XX_PIN_VC_CAM3_SDA, "vc_cam3_sda", i2c),
-};
+पूर्ण;
 
-static const char * const bcm281xx_alt_groups[] = {
+अटल स्थिर अक्षर * स्थिर bcm281xx_alt_groups[] = अणु
 	"adcsync",
 	"bat_rm",
 	"bsc1_scl",
@@ -923,147 +924,147 @@ static const char * const bcm281xx_alt_groups[] = {
 	"vc_cam2_sda",
 	"vc_cam3_scl",
 	"vc_cam3_sda",
-};
+पूर्ण;
 
 /* Every pin can implement all ALT1-ALT4 functions */
-#define BCM281XX_PIN_FUNCTION(fcn_name)			\
-{							\
+#घोषणा BCM281XX_PIN_FUNCTION(fcn_name)			\
+अणु							\
 	.name = #fcn_name,				\
 	.groups = bcm281xx_alt_groups,			\
 	.ngroups = ARRAY_SIZE(bcm281xx_alt_groups),	\
-}
+पूर्ण
 
-static const struct bcm281xx_pin_function bcm281xx_functions[] = {
+अटल स्थिर काष्ठा bcm281xx_pin_function bcm281xx_functions[] = अणु
 	BCM281XX_PIN_FUNCTION(alt1),
 	BCM281XX_PIN_FUNCTION(alt2),
 	BCM281XX_PIN_FUNCTION(alt3),
 	BCM281XX_PIN_FUNCTION(alt4),
-};
+पूर्ण;
 
-static struct bcm281xx_pinctrl_data bcm281xx_pinctrl = {
+अटल काष्ठा bcm281xx_pinctrl_data bcm281xx_pinctrl = अणु
 	.pins = bcm281xx_pinctrl_pins,
 	.npins = ARRAY_SIZE(bcm281xx_pinctrl_pins),
 	.functions = bcm281xx_functions,
 	.nfunctions = ARRAY_SIZE(bcm281xx_functions),
-};
+पूर्ण;
 
-static inline enum bcm281xx_pin_type pin_type_get(struct pinctrl_dev *pctldev,
-						  unsigned pin)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल अंतरभूत क्रमागत bcm281xx_pin_type pin_type_get(काष्ठा pinctrl_dev *pctldev,
+						  अचिन्हित pin)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	if (pin >= pdata->npins)
-		return BCM281XX_PIN_TYPE_UNKNOWN;
+	अगर (pin >= pdata->npins)
+		वापस BCM281XX_PIN_TYPE_UNKNOWN;
 
-	return *(enum bcm281xx_pin_type *)(pdata->pins[pin].drv_data);
-}
+	वापस *(क्रमागत bcm281xx_pin_type *)(pdata->pins[pin].drv_data);
+पूर्ण
 
-#define BCM281XX_PIN_SHIFT(type, param) \
+#घोषणा BCM281XX_PIN_SHIFT(type, param) \
 	(BCM281XX_ ## type ## _PIN_REG_ ## param ## _SHIFT)
 
-#define BCM281XX_PIN_MASK(type, param) \
+#घोषणा BCM281XX_PIN_MASK(type, param) \
 	(BCM281XX_ ## type ## _PIN_REG_ ## param ## _MASK)
 
 /*
- * This helper function is used to build up the value and mask used to write to
- * a pin register, but does not actually write to the register.
+ * This helper function is used to build up the value and mask used to ग_लिखो to
+ * a pin रेजिस्टर, but करोes not actually ग_लिखो to the रेजिस्टर.
  */
-static inline void bcm281xx_pin_update(u32 *reg_val, u32 *reg_mask,
-				       u32 param_val, u32 param_shift,
+अटल अंतरभूत व्योम bcm281xx_pin_update(u32 *reg_val, u32 *reg_mask,
+				       u32 param_val, u32 param_shअगरt,
 				       u32 param_mask)
-{
+अणु
 	*reg_val &= ~param_mask;
-	*reg_val |= (param_val << param_shift) & param_mask;
+	*reg_val |= (param_val << param_shअगरt) & param_mask;
 	*reg_mask |= param_mask;
-}
+पूर्ण
 
-static const struct regmap_config bcm281xx_pinctrl_regmap_config = {
+अटल स्थिर काष्ठा regmap_config bcm281xx_pinctrl_regmap_config = अणु
 	.reg_bits = 32,
 	.reg_stride = 4,
 	.val_bits = 32,
-	.max_register = BCM281XX_PIN_VC_CAM3_SDA,
-};
+	.max_रेजिस्टर = BCM281XX_PIN_VC_CAM3_SDA,
+पूर्ण;
 
-static int bcm281xx_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm281xx_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	return pdata->npins;
-}
+	वापस pdata->npins;
+पूर्ण
 
-static const char *bcm281xx_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-						   unsigned group)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *bcm281xx_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						   अचिन्हित group)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	return pdata->pins[group].name;
-}
+	वापस pdata->pins[group].name;
+पूर्ण
 
-static int bcm281xx_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-					   unsigned group,
-					   const unsigned **pins,
-					   unsigned *num_pins)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm281xx_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित group,
+					   स्थिर अचिन्हित **pins,
+					   अचिन्हित *num_pins)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = &pdata->pins[group].number;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm281xx_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
-					  struct seq_file *s,
-					  unsigned offset)
-{
-	seq_printf(s, " %s", dev_name(pctldev->dev));
-}
+अटल व्योम bcm281xx_pinctrl_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+					  काष्ठा seq_file *s,
+					  अचिन्हित offset)
+अणु
+	seq_म_लिखो(s, " %s", dev_name(pctldev->dev));
+पूर्ण
 
-static const struct pinctrl_ops bcm281xx_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops bcm281xx_pinctrl_ops = अणु
 	.get_groups_count = bcm281xx_pinctrl_get_groups_count,
 	.get_group_name = bcm281xx_pinctrl_get_group_name,
 	.get_group_pins = bcm281xx_pinctrl_get_group_pins,
 	.pin_dbg_show = bcm281xx_pinctrl_pin_dbg_show,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int bcm281xx_pinctrl_get_fcns_count(struct pinctrl_dev *pctldev)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm281xx_pinctrl_get_fcns_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	return pdata->nfunctions;
-}
+	वापस pdata->nfunctions;
+पूर्ण
 
-static const char *bcm281xx_pinctrl_get_fcn_name(struct pinctrl_dev *pctldev,
-						 unsigned function)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *bcm281xx_pinctrl_get_fcn_name(काष्ठा pinctrl_dev *pctldev,
+						 अचिन्हित function)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
-	return pdata->functions[function].name;
-}
+	वापस pdata->functions[function].name;
+पूर्ण
 
-static int bcm281xx_pinctrl_get_fcn_groups(struct pinctrl_dev *pctldev,
-					   unsigned function,
-					   const char * const **groups,
-					   unsigned * const num_groups)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक bcm281xx_pinctrl_get_fcn_groups(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित function,
+					   स्थिर अक्षर * स्थिर **groups,
+					   अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pdata->functions[function].groups;
 	*num_groups = pdata->functions[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm281xx_pinmux_set(struct pinctrl_dev *pctldev,
-			       unsigned function,
-			       unsigned group)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	const struct bcm281xx_pin_function *f = &pdata->functions[function];
+अटल पूर्णांक bcm281xx_pinmux_set(काष्ठा pinctrl_dev *pctldev,
+			       अचिन्हित function,
+			       अचिन्हित group)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा bcm281xx_pin_function *f = &pdata->functions[function];
 	u32 offset = 4 * pdata->pins[group].number;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	dev_dbg(pctldev->dev,
 		"%s(): Enable function %s (%d) of pin %s (%d) @offset 0x%x.\n",
@@ -1073,131 +1074,131 @@ static int bcm281xx_pinmux_set(struct pinctrl_dev *pctldev,
 	rc = regmap_update_bits(pdata->regmap, offset,
 		BCM281XX_PIN_REG_F_SEL_MASK,
 		function << BCM281XX_PIN_REG_F_SEL_SHIFT);
-	if (rc)
+	अगर (rc)
 		dev_err(pctldev->dev,
 			"Error updating register for pin %s (%d).\n",
 			pdata->pins[group].name, pdata->pins[group].number);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct pinmux_ops bcm281xx_pinctrl_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops bcm281xx_pinctrl_pinmux_ops = अणु
 	.get_functions_count = bcm281xx_pinctrl_get_fcns_count,
 	.get_function_name = bcm281xx_pinctrl_get_fcn_name,
 	.get_function_groups = bcm281xx_pinctrl_get_fcn_groups,
 	.set_mux = bcm281xx_pinmux_set,
-};
+पूर्ण;
 
-static int bcm281xx_pinctrl_pin_config_get(struct pinctrl_dev *pctldev,
-					   unsigned pin,
-					   unsigned long *config)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक bcm281xx_pinctrl_pin_config_get(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित pin,
+					   अचिन्हित दीर्घ *config)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
 
-/* Goes through the configs and update register val/mask */
-static int bcm281xx_std_pin_update(struct pinctrl_dev *pctldev,
-				   unsigned pin,
-				   unsigned long *configs,
-				   unsigned num_configs,
+/* Goes through the configs and update रेजिस्टर val/mask */
+अटल पूर्णांक bcm281xx_std_pin_update(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित pin,
+				   अचिन्हित दीर्घ *configs,
+				   अचिन्हित num_configs,
 				   u32 *val,
 				   u32 *mask)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	int i;
-	enum pin_config_param param;
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक i;
+	क्रमागत pin_config_param param;
 	u32 arg;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
 			arg = (arg >= 1 ? 1 : 0);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(STD, HYST),
 				BCM281XX_PIN_MASK(STD, HYST));
-			break;
+			अवरोध;
 		/*
-		 * The pin bias can only be one of pull-up, pull-down, or
-		 * disable.  The user does not need to specify a value for the
-		 * property, and the default value from pinconf-generic is
+		 * The pin bias can only be one of pull-up, pull-करोwn, or
+		 * disable.  The user करोes not need to specअगरy a value क्रम the
+		 * property, and the शेष value from pinconf-generic is
 		 * ignored.
 		 */
-		case PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			bcm281xx_pin_update(val, mask, 0,
 				BCM281XX_PIN_SHIFT(STD, PULL_UP),
 				BCM281XX_PIN_MASK(STD, PULL_UP));
 			bcm281xx_pin_update(val, mask, 0,
 				BCM281XX_PIN_SHIFT(STD, PULL_DN),
 				BCM281XX_PIN_MASK(STD, PULL_DN));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_UP:
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			bcm281xx_pin_update(val, mask, 1,
 				BCM281XX_PIN_SHIFT(STD, PULL_UP),
 				BCM281XX_PIN_MASK(STD, PULL_UP));
 			bcm281xx_pin_update(val, mask, 0,
 				BCM281XX_PIN_SHIFT(STD, PULL_DN),
 				BCM281XX_PIN_MASK(STD, PULL_DN));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			bcm281xx_pin_update(val, mask, 0,
 				BCM281XX_PIN_SHIFT(STD, PULL_UP),
 				BCM281XX_PIN_MASK(STD, PULL_UP));
 			bcm281xx_pin_update(val, mask, 1,
 				BCM281XX_PIN_SHIFT(STD, PULL_DN),
 				BCM281XX_PIN_MASK(STD, PULL_DN));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_SLEW_RATE:
+		हाल PIN_CONFIG_SLEW_RATE:
 			arg = (arg >= 1 ? 1 : 0);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(STD, SLEW),
 				BCM281XX_PIN_MASK(STD, SLEW));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_INPUT_ENABLE:
-			/* inversed since register is for input _disable_ */
+		हाल PIN_CONFIG_INPUT_ENABLE:
+			/* inversed since रेजिस्टर is क्रम input _disable_ */
 			arg = (arg >= 1 ? 0 : 1);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(STD, INPUT_DIS),
 				BCM281XX_PIN_MASK(STD, INPUT_DIS));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_DRIVE_STRENGTH:
+		हाल PIN_CONFIG_DRIVE_STRENGTH:
 			/* Valid range is 2-16 mA, even numbers only */
-			if ((arg < 2) || (arg > 16) || (arg % 2)) {
+			अगर ((arg < 2) || (arg > 16) || (arg % 2)) अणु
 				dev_err(pctldev->dev,
 					"Invalid Drive Strength value (%d) for "
 					"pin %s (%d). Valid values are "
 					"(2..16) mA, even numbers only.\n",
 					arg, pdata->pins[pin].name, pin);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			bcm281xx_pin_update(val, mask, (arg/2)-1,
 				BCM281XX_PIN_SHIFT(STD, DRV_STR),
 				BCM281XX_PIN_MASK(STD, DRV_STR));
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(pctldev->dev,
 				"Unrecognized pin config %d for pin %s (%d).\n",
 				param, pdata->pins[pin].name, pin);
-			return -EINVAL;
+			वापस -EINVAL;
 
-		} /* switch config */
-	} /* for each config */
+		पूर्ण /* चयन config */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The pull-up strength for an I2C pin is represented by bits 4-6 in the
- * register with the following mapping:
+ * The pull-up strength क्रम an I2C pin is represented by bits 4-6 in the
+ * रेजिस्टर with the following mapping:
  *   0b000: No pull-up
  *   0b001: 1200 Ohm
  *   0b010: 1800 Ohm
@@ -1206,241 +1207,241 @@ static int bcm281xx_std_pin_update(struct pinctrl_dev *pctldev,
  *   0b101: 831 Ohm
  *   0b110: 1080 Ohm
  *   0b111: 568 Ohm
- * This array maps pull-up strength in Ohms to register values (1+index).
+ * This array maps pull-up strength in Ohms to रेजिस्टर values (1+index).
  */
-static const u16 bcm281xx_pullup_map[] = {
+अटल स्थिर u16 bcm281xx_pullup_map[] = अणु
 	1200, 1800, 720, 2700, 831, 1080, 568
-};
+पूर्ण;
 
-/* Goes through the configs and update register val/mask */
-static int bcm281xx_i2c_pin_update(struct pinctrl_dev *pctldev,
-				   unsigned pin,
-				   unsigned long *configs,
-				   unsigned num_configs,
+/* Goes through the configs and update रेजिस्टर val/mask */
+अटल पूर्णांक bcm281xx_i2c_pin_update(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित pin,
+				   अचिन्हित दीर्घ *configs,
+				   अचिन्हित num_configs,
 				   u32 *val,
 				   u32 *mask)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	int i, j;
-	enum pin_config_param param;
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक i, j;
+	क्रमागत pin_config_param param;
 	u32 arg;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
-			for (j = 0; j < ARRAY_SIZE(bcm281xx_pullup_map); j++)
-				if (bcm281xx_pullup_map[j] == arg)
-					break;
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
+			क्रम (j = 0; j < ARRAY_SIZE(bcm281xx_pullup_map); j++)
+				अगर (bcm281xx_pullup_map[j] == arg)
+					अवरोध;
 
-			if (j == ARRAY_SIZE(bcm281xx_pullup_map)) {
+			अगर (j == ARRAY_SIZE(bcm281xx_pullup_map)) अणु
 				dev_err(pctldev->dev,
 					"Invalid pull-up value (%d) for pin %s "
 					"(%d). Valid values are 568, 720, 831, "
 					"1080, 1200, 1800, 2700 Ohms.\n",
 					arg, pdata->pins[pin].name, pin);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			bcm281xx_pin_update(val, mask, j+1,
 				BCM281XX_PIN_SHIFT(I2C, PULL_UP_STR),
 				BCM281XX_PIN_MASK(I2C, PULL_UP_STR));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_BIAS_DISABLE:
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			bcm281xx_pin_update(val, mask, 0,
 				BCM281XX_PIN_SHIFT(I2C, PULL_UP_STR),
 				BCM281XX_PIN_MASK(I2C, PULL_UP_STR));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_SLEW_RATE:
+		हाल PIN_CONFIG_SLEW_RATE:
 			arg = (arg >= 1 ? 1 : 0);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(I2C, SLEW),
 				BCM281XX_PIN_MASK(I2C, SLEW));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_INPUT_ENABLE:
-			/* inversed since register is for input _disable_ */
+		हाल PIN_CONFIG_INPUT_ENABLE:
+			/* inversed since रेजिस्टर is क्रम input _disable_ */
 			arg = (arg >= 1 ? 0 : 1);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(I2C, INPUT_DIS),
 				BCM281XX_PIN_MASK(I2C, INPUT_DIS));
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(pctldev->dev,
 				"Unrecognized pin config %d for pin %s (%d).\n",
 				param, pdata->pins[pin].name, pin);
-			return -EINVAL;
+			वापस -EINVAL;
 
-		} /* switch config */
-	} /* for each config */
+		पूर्ण /* चयन config */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Goes through the configs and update register val/mask */
-static int bcm281xx_hdmi_pin_update(struct pinctrl_dev *pctldev,
-				    unsigned pin,
-				    unsigned long *configs,
-				    unsigned num_configs,
+/* Goes through the configs and update रेजिस्टर val/mask */
+अटल पूर्णांक bcm281xx_hdmi_pin_update(काष्ठा pinctrl_dev *pctldev,
+				    अचिन्हित pin,
+				    अचिन्हित दीर्घ *configs,
+				    अचिन्हित num_configs,
 				    u32 *val,
 				    u32 *mask)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	int i;
-	enum pin_config_param param;
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक i;
+	क्रमागत pin_config_param param;
 	u32 arg;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_SLEW_RATE:
+		चयन (param) अणु
+		हाल PIN_CONFIG_SLEW_RATE:
 			arg = (arg >= 1 ? 1 : 0);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(HDMI, MODE),
 				BCM281XX_PIN_MASK(HDMI, MODE));
-			break;
+			अवरोध;
 
-		case PIN_CONFIG_INPUT_ENABLE:
-			/* inversed since register is for input _disable_ */
+		हाल PIN_CONFIG_INPUT_ENABLE:
+			/* inversed since रेजिस्टर is क्रम input _disable_ */
 			arg = (arg >= 1 ? 0 : 1);
 			bcm281xx_pin_update(val, mask, arg,
 				BCM281XX_PIN_SHIFT(HDMI, INPUT_DIS),
 				BCM281XX_PIN_MASK(HDMI, INPUT_DIS));
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(pctldev->dev,
 				"Unrecognized pin config %d for pin %s (%d).\n",
 				param, pdata->pins[pin].name, pin);
-			return -EINVAL;
+			वापस -EINVAL;
 
-		} /* switch config */
-	} /* for each config */
+		पूर्ण /* चयन config */
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm281xx_pinctrl_pin_config_set(struct pinctrl_dev *pctldev,
-					   unsigned pin,
-					   unsigned long *configs,
-					   unsigned num_configs)
-{
-	struct bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
-	enum bcm281xx_pin_type pin_type;
+अटल पूर्णांक bcm281xx_pinctrl_pin_config_set(काष्ठा pinctrl_dev *pctldev,
+					   अचिन्हित pin,
+					   अचिन्हित दीर्घ *configs,
+					   अचिन्हित num_configs)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = pinctrl_dev_get_drvdata(pctldev);
+	क्रमागत bcm281xx_pin_type pin_type;
 	u32 offset = 4 * pin;
 	u32 cfg_val, cfg_mask;
-	int rc;
+	पूर्णांक rc;
 
 	cfg_val = 0;
 	cfg_mask = 0;
 	pin_type = pin_type_get(pctldev, pin);
 
-	/* Different pins have different configuration options */
-	switch (pin_type) {
-	case BCM281XX_PIN_TYPE_STD:
+	/* Dअगरferent pins have dअगरferent configuration options */
+	चयन (pin_type) अणु
+	हाल BCM281XX_PIN_TYPE_STD:
 		rc = bcm281xx_std_pin_update(pctldev, pin, configs,
 			num_configs, &cfg_val, &cfg_mask);
-		break;
+		अवरोध;
 
-	case BCM281XX_PIN_TYPE_I2C:
+	हाल BCM281XX_PIN_TYPE_I2C:
 		rc = bcm281xx_i2c_pin_update(pctldev, pin, configs,
 			num_configs, &cfg_val, &cfg_mask);
-		break;
+		अवरोध;
 
-	case BCM281XX_PIN_TYPE_HDMI:
+	हाल BCM281XX_PIN_TYPE_HDMI:
 		rc = bcm281xx_hdmi_pin_update(pctldev, pin, configs,
 			num_configs, &cfg_val, &cfg_mask);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(pctldev->dev, "Unknown pin type for pin %s (%d).\n",
 			pdata->pins[pin].name, pin);
-		return -EINVAL;
+		वापस -EINVAL;
 
-	} /* switch pin type */
+	पूर्ण /* चयन pin type */
 
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	dev_dbg(pctldev->dev,
 		"%s(): Set pin %s (%d) with config 0x%x, mask 0x%x\n",
 		__func__, pdata->pins[pin].name, pin, cfg_val, cfg_mask);
 
 	rc = regmap_update_bits(pdata->regmap, offset, cfg_mask, cfg_val);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(pctldev->dev,
 			"Error updating register for pin %s (%d).\n",
 			pdata->pins[pin].name, pin);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops bcm281xx_pinctrl_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops bcm281xx_pinctrl_pinconf_ops = अणु
 	.pin_config_get = bcm281xx_pinctrl_pin_config_get,
 	.pin_config_set = bcm281xx_pinctrl_pin_config_set,
-};
+पूर्ण;
 
-static struct pinctrl_desc bcm281xx_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc bcm281xx_pinctrl_desc = अणु
 	/* name, pins, npins members initialized in probe function */
 	.pctlops = &bcm281xx_pinctrl_ops,
 	.pmxops = &bcm281xx_pinctrl_pinmux_ops,
 	.confops = &bcm281xx_pinctrl_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init bcm281xx_pinctrl_probe(struct platform_device *pdev)
-{
-	struct bcm281xx_pinctrl_data *pdata = &bcm281xx_pinctrl;
-	struct pinctrl_dev *pctl;
+अटल पूर्णांक __init bcm281xx_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm281xx_pinctrl_data *pdata = &bcm281xx_pinctrl;
+	काष्ठा pinctrl_dev *pctl;
 
-	/* So far We can assume there is only 1 bank of registers */
-	pdata->reg_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pdata->reg_base)) {
+	/* So far We can assume there is only 1 bank of रेजिस्टरs */
+	pdata->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pdata->reg_base)) अणु
 		dev_err(&pdev->dev, "Failed to ioremap MEM resource\n");
-		return PTR_ERR(pdata->reg_base);
-	}
+		वापस PTR_ERR(pdata->reg_base);
+	पूर्ण
 
 	/* Initialize the dynamic part of pinctrl_desc */
 	pdata->regmap = devm_regmap_init_mmio(&pdev->dev, pdata->reg_base,
 		&bcm281xx_pinctrl_regmap_config);
-	if (IS_ERR(pdata->regmap)) {
+	अगर (IS_ERR(pdata->regmap)) अणु
 		dev_err(&pdev->dev, "Regmap MMIO init failed.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	bcm281xx_pinctrl_desc.name = dev_name(&pdev->dev);
 	bcm281xx_pinctrl_desc.pins = bcm281xx_pinctrl.pins;
 	bcm281xx_pinctrl_desc.npins = bcm281xx_pinctrl.npins;
 
-	pctl = devm_pinctrl_register(&pdev->dev, &bcm281xx_pinctrl_desc, pdata);
-	if (IS_ERR(pctl)) {
+	pctl = devm_pinctrl_रेजिस्टर(&pdev->dev, &bcm281xx_pinctrl_desc, pdata);
+	अगर (IS_ERR(pctl)) अणु
 		dev_err(&pdev->dev, "Failed to register pinctrl\n");
-		return PTR_ERR(pctl);
-	}
+		वापस PTR_ERR(pctl);
+	पूर्ण
 
-	platform_set_drvdata(pdev, pdata);
+	platक्रमm_set_drvdata(pdev, pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bcm281xx_pinctrl_of_match[] = {
-	{ .compatible = "brcm,bcm11351-pinctrl", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bcm281xx_pinctrl_of_match[] = अणु
+	अणु .compatible = "brcm,bcm11351-pinctrl", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver bcm281xx_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcm281xx_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "bcm281xx-pinctrl",
 		.of_match_table = bcm281xx_pinctrl_of_match,
-	},
-};
-builtin_platform_driver_probe(bcm281xx_pinctrl_driver, bcm281xx_pinctrl_probe);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver_probe(bcm281xx_pinctrl_driver, bcm281xx_pinctrl_probe);

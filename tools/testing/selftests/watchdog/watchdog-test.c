@@ -1,257 +1,258 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Watchdog Driver Test Program
+ * Watchकरोg Driver Test Program
  */
 
-#include <errno.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <getopt.h>
-#include <sys/ioctl.h>
-#include <linux/types.h>
-#include <linux/watchdog.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <fcntl.h>
+#समावेश <संकेत.स>
+#समावेश <getopt.h>
+#समावेश <sys/ioctl.h>
+#समावेश <linux/types.h>
+#समावेश <linux/watchकरोg.h>
 
-#define DEFAULT_PING_RATE	1
+#घोषणा DEFAULT_PING_RATE	1
 
-int fd;
-const char v = 'V';
-static const char sopts[] = "bdehp:t:Tn:NLf:i";
-static const struct option lopts[] = {
-	{"bootstatus",          no_argument, NULL, 'b'},
-	{"disable",             no_argument, NULL, 'd'},
-	{"enable",              no_argument, NULL, 'e'},
-	{"help",                no_argument, NULL, 'h'},
-	{"pingrate",      required_argument, NULL, 'p'},
-	{"timeout",       required_argument, NULL, 't'},
-	{"gettimeout",          no_argument, NULL, 'T'},
-	{"pretimeout",    required_argument, NULL, 'n'},
-	{"getpretimeout",       no_argument, NULL, 'N'},
-	{"gettimeleft",		no_argument, NULL, 'L'},
-	{"file",          required_argument, NULL, 'f'},
-	{"info",		no_argument, NULL, 'i'},
-	{NULL,                  no_argument, NULL, 0x0}
-};
+पूर्णांक fd;
+स्थिर अक्षर v = 'V';
+अटल स्थिर अक्षर sopts[] = "bdehp:t:Tn:NLf:i";
+अटल स्थिर काष्ठा option lopts[] = अणु
+	अणु"bootstatus",          no_argument, शून्य, 'b'पूर्ण,
+	अणु"disable",             no_argument, शून्य, 'd'पूर्ण,
+	अणु"enable",              no_argument, शून्य, 'e'पूर्ण,
+	अणु"help",                no_argument, शून्य, 'h'पूर्ण,
+	अणु"pingrate",      required_argument, शून्य, 'p'पूर्ण,
+	अणु"timeout",       required_argument, शून्य, 't'पूर्ण,
+	अणु"gettimeout",          no_argument, शून्य, 'T'पूर्ण,
+	अणु"pretimeout",    required_argument, शून्य, 'n'पूर्ण,
+	अणु"getpretimeout",       no_argument, शून्य, 'N'पूर्ण,
+	अणु"gettimeleft",		no_argument, शून्य, 'L'पूर्ण,
+	अणु"file",          required_argument, शून्य, 'f'पूर्ण,
+	अणु"info",		no_argument, शून्य, 'i'पूर्ण,
+	अणुशून्य,                  no_argument, शून्य, 0x0पूर्ण
+पूर्ण;
 
 /*
  * This function simply sends an IOCTL to the driver, which in turn ticks
- * the PC Watchdog card to reset its internal timer so it doesn't trigger
+ * the PC Watchकरोg card to reset its पूर्णांकernal समयr so it करोesn't trigger
  * a computer reset.
  */
-static void keep_alive(void)
-{
-	int dummy;
-	int ret;
+अटल व्योम keep_alive(व्योम)
+अणु
+	पूर्णांक dummy;
+	पूर्णांक ret;
 
 	ret = ioctl(fd, WDIOC_KEEPALIVE, &dummy);
-	if (!ret)
-		printf(".");
-}
+	अगर (!ret)
+		म_लिखो(".");
+पूर्ण
 
 /*
- * The main program.  Run the program with "-d" to disable the card,
+ * The मुख्य program.  Run the program with "-d" to disable the card,
  * or "-e" to enable the card.
  */
 
-static void term(int sig)
-{
-	int ret = write(fd, &v, 1);
+अटल व्योम term(पूर्णांक sig)
+अणु
+	पूर्णांक ret = ग_लिखो(fd, &v, 1);
 
-	close(fd);
-	if (ret < 0)
-		printf("\nStopping watchdog ticks failed (%d)...\n", errno);
-	else
-		printf("\nStopping watchdog ticks...\n");
-	exit(0);
-}
+	बंद(fd);
+	अगर (ret < 0)
+		म_लिखो("\nStopping watchdog ticks failed (%d)...\n", त्रुटि_सं);
+	अन्यथा
+		म_लिखो("\nStopping watchdog ticks...\n");
+	निकास(0);
+पूर्ण
 
-static void usage(char *progname)
-{
-	printf("Usage: %s [options]\n", progname);
-	printf(" -f, --file\t\tOpen watchdog device file\n");
-	printf("\t\t\tDefault is /dev/watchdog\n");
-	printf(" -i, --info\t\tShow watchdog_info\n");
-	printf(" -b, --bootstatus\tGet last boot status (Watchdog/POR)\n");
-	printf(" -d, --disable\t\tTurn off the watchdog timer\n");
-	printf(" -e, --enable\t\tTurn on the watchdog timer\n");
-	printf(" -h, --help\t\tPrint the help message\n");
-	printf(" -p, --pingrate=P\tSet ping rate to P seconds (default %d)\n",
+अटल व्योम usage(अक्षर *progname)
+अणु
+	म_लिखो("Usage: %s [options]\n", progname);
+	म_लिखो(" -f, --file\t\tOpen watchdog device file\n");
+	म_लिखो("\t\t\tDefault is /dev/watchdog\n");
+	म_लिखो(" -i, --info\t\tShow watchdog_info\n");
+	म_लिखो(" -b, --bootstatus\tGet last boot status (Watchdog/POR)\n");
+	म_लिखो(" -d, --disable\t\tTurn off the watchdog timer\n");
+	म_लिखो(" -e, --enable\t\tTurn on the watchdog timer\n");
+	म_लिखो(" -h, --help\t\tPrint the help message\n");
+	म_लिखो(" -p, --pingrate=P\tSet ping rate to P seconds (default %d)\n",
 	       DEFAULT_PING_RATE);
-	printf(" -t, --timeout=T\tSet timeout to T seconds\n");
-	printf(" -T, --gettimeout\tGet the timeout\n");
-	printf(" -n, --pretimeout=T\tSet the pretimeout to T seconds\n");
-	printf(" -N, --getpretimeout\tGet the pretimeout\n");
-	printf(" -L, --gettimeleft\tGet the time left until timer expires\n");
-	printf("\n");
-	printf("Parameters are parsed left-to-right in real-time.\n");
-	printf("Example: %s -d -t 10 -p 5 -e\n", progname);
-	printf("Example: %s -t 12 -T -n 7 -N\n", progname);
-}
+	म_लिखो(" -t, --timeout=T\tSet timeout to T seconds\n");
+	म_लिखो(" -T, --gettimeout\tGet the timeout\n");
+	म_लिखो(" -n, --pretimeout=T\tSet the pretimeout to T seconds\n");
+	म_लिखो(" -N, --getpretimeout\tGet the pretimeout\n");
+	म_लिखो(" -L, --gettimeleft\tGet the time left until timer expires\n");
+	म_लिखो("\n");
+	म_लिखो("Parameters are parsed left-to-right in real-time.\n");
+	म_लिखो("Example: %s -d -t 10 -p 5 -e\n", progname);
+	म_लिखो("Example: %s -t 12 -T -n 7 -N\n", progname);
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int flags;
-	unsigned int ping_rate = DEFAULT_PING_RATE;
-	int ret;
-	int c;
-	int oneshot = 0;
-	char *file = "/dev/watchdog";
-	struct watchdog_info info;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक flags;
+	अचिन्हित पूर्णांक ping_rate = DEFAULT_PING_RATE;
+	पूर्णांक ret;
+	पूर्णांक c;
+	पूर्णांक oneshot = 0;
+	अक्षर *file = "/dev/watchdog";
+	काष्ठा watchकरोg_info info;
 
-	setbuf(stdout, NULL);
+	रखो_बफ(मानक_निकास, शून्य);
 
-	while ((c = getopt_long(argc, argv, sopts, lopts, NULL)) != -1) {
-		if (c == 'f')
+	जबतक ((c = getopt_दीर्घ(argc, argv, sopts, lopts, शून्य)) != -1) अणु
+		अगर (c == 'f')
 			file = optarg;
-	}
+	पूर्ण
 
-	fd = open(file, O_WRONLY);
+	fd = खोलो(file, O_WRONLY);
 
-	if (fd == -1) {
-		if (errno == ENOENT)
-			printf("Watchdog device (%s) not found.\n", file);
-		else if (errno == EACCES)
-			printf("Run watchdog as root.\n");
-		else
-			printf("Watchdog device open failed %s\n",
-				strerror(errno));
-		exit(-1);
-	}
+	अगर (fd == -1) अणु
+		अगर (त्रुटि_सं == ENOENT)
+			म_लिखो("Watchdog device (%s) not found.\n", file);
+		अन्यथा अगर (त्रुटि_सं == EACCES)
+			म_लिखो("Run watchdog as root.\n");
+		अन्यथा
+			म_लिखो("Watchdog device open failed %s\n",
+				म_त्रुटि(त्रुटि_सं));
+		निकास(-1);
+	पूर्ण
 
 	/*
-	 * Validate that `file` is a watchdog device
+	 * Validate that `file` is a watchकरोg device
 	 */
 	ret = ioctl(fd, WDIOC_GETSUPPORT, &info);
-	if (ret) {
-		printf("WDIOC_GETSUPPORT error '%s'\n", strerror(errno));
-		close(fd);
-		exit(ret);
-	}
+	अगर (ret) अणु
+		म_लिखो("WDIOC_GETSUPPORT error '%s'\n", म_त्रुटि(त्रुटि_सं));
+		बंद(fd);
+		निकास(ret);
+	पूर्ण
 
 	optind = 0;
 
-	while ((c = getopt_long(argc, argv, sopts, lopts, NULL)) != -1) {
-		switch (c) {
-		case 'b':
+	जबतक ((c = getopt_दीर्घ(argc, argv, sopts, lopts, शून्य)) != -1) अणु
+		चयन (c) अणु
+		हाल 'b':
 			flags = 0;
 			oneshot = 1;
 			ret = ioctl(fd, WDIOC_GETBOOTSTATUS, &flags);
-			if (!ret)
-				printf("Last boot is caused by: %s.\n", (flags != 0) ?
+			अगर (!ret)
+				म_लिखो("Last boot is caused by: %s.\n", (flags != 0) ?
 					"Watchdog" : "Power-On-Reset");
-			else
-				printf("WDIOC_GETBOOTSTATUS error '%s'\n", strerror(errno));
-			break;
-		case 'd':
+			अन्यथा
+				म_लिखो("WDIOC_GETBOOTSTATUS error '%s'\n", म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		हाल 'd':
 			flags = WDIOS_DISABLECARD;
 			ret = ioctl(fd, WDIOC_SETOPTIONS, &flags);
-			if (!ret)
-				printf("Watchdog card disabled.\n");
-			else {
-				printf("WDIOS_DISABLECARD error '%s'\n", strerror(errno));
+			अगर (!ret)
+				म_लिखो("Watchdog card disabled.\n");
+			अन्यथा अणु
+				म_लिखो("WDIOS_DISABLECARD error '%s'\n", म_त्रुटि(त्रुटि_सं));
 				oneshot = 1;
-			}
-			break;
-		case 'e':
+			पूर्ण
+			अवरोध;
+		हाल 'e':
 			flags = WDIOS_ENABLECARD;
 			ret = ioctl(fd, WDIOC_SETOPTIONS, &flags);
-			if (!ret)
-				printf("Watchdog card enabled.\n");
-			else {
-				printf("WDIOS_ENABLECARD error '%s'\n", strerror(errno));
+			अगर (!ret)
+				म_लिखो("Watchdog card enabled.\n");
+			अन्यथा अणु
+				म_लिखो("WDIOS_ENABLECARD error '%s'\n", म_त्रुटि(त्रुटि_सं));
 				oneshot = 1;
-			}
-			break;
-		case 'p':
-			ping_rate = strtoul(optarg, NULL, 0);
-			if (!ping_rate)
+			पूर्ण
+			अवरोध;
+		हाल 'p':
+			ping_rate = म_से_अदीर्घ(optarg, शून्य, 0);
+			अगर (!ping_rate)
 				ping_rate = DEFAULT_PING_RATE;
-			printf("Watchdog ping rate set to %u seconds.\n", ping_rate);
-			break;
-		case 't':
-			flags = strtoul(optarg, NULL, 0);
+			म_लिखो("Watchdog ping rate set to %u seconds.\n", ping_rate);
+			अवरोध;
+		हाल 't':
+			flags = म_से_अदीर्घ(optarg, शून्य, 0);
 			ret = ioctl(fd, WDIOC_SETTIMEOUT, &flags);
-			if (!ret)
-				printf("Watchdog timeout set to %u seconds.\n", flags);
-			else {
-				printf("WDIOC_SETTIMEOUT error '%s'\n", strerror(errno));
+			अगर (!ret)
+				म_लिखो("Watchdog timeout set to %u seconds.\n", flags);
+			अन्यथा अणु
+				म_लिखो("WDIOC_SETTIMEOUT error '%s'\n", म_त्रुटि(त्रुटि_सं));
 				oneshot = 1;
-			}
-			break;
-		case 'T':
+			पूर्ण
+			अवरोध;
+		हाल 'T':
 			oneshot = 1;
 			ret = ioctl(fd, WDIOC_GETTIMEOUT, &flags);
-			if (!ret)
-				printf("WDIOC_GETTIMEOUT returns %u seconds.\n", flags);
-			else
-				printf("WDIOC_GETTIMEOUT error '%s'\n", strerror(errno));
-			break;
-		case 'n':
-			flags = strtoul(optarg, NULL, 0);
+			अगर (!ret)
+				म_लिखो("WDIOC_GETTIMEOUT returns %u seconds.\n", flags);
+			अन्यथा
+				म_लिखो("WDIOC_GETTIMEOUT error '%s'\n", म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		हाल 'n':
+			flags = म_से_अदीर्घ(optarg, शून्य, 0);
 			ret = ioctl(fd, WDIOC_SETPRETIMEOUT, &flags);
-			if (!ret)
-				printf("Watchdog pretimeout set to %u seconds.\n", flags);
-			else {
-				printf("WDIOC_SETPRETIMEOUT error '%s'\n", strerror(errno));
+			अगर (!ret)
+				म_लिखो("Watchdog pretimeout set to %u seconds.\n", flags);
+			अन्यथा अणु
+				म_लिखो("WDIOC_SETPRETIMEOUT error '%s'\n", म_त्रुटि(त्रुटि_सं));
 				oneshot = 1;
-			}
-			break;
-		case 'N':
+			पूर्ण
+			अवरोध;
+		हाल 'N':
 			oneshot = 1;
 			ret = ioctl(fd, WDIOC_GETPRETIMEOUT, &flags);
-			if (!ret)
-				printf("WDIOC_GETPRETIMEOUT returns %u seconds.\n", flags);
-			else
-				printf("WDIOC_GETPRETIMEOUT error '%s'\n", strerror(errno));
-			break;
-		case 'L':
+			अगर (!ret)
+				म_लिखो("WDIOC_GETPRETIMEOUT returns %u seconds.\n", flags);
+			अन्यथा
+				म_लिखो("WDIOC_GETPRETIMEOUT error '%s'\n", म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		हाल 'L':
 			oneshot = 1;
 			ret = ioctl(fd, WDIOC_GETTIMELEFT, &flags);
-			if (!ret)
-				printf("WDIOC_GETTIMELEFT returns %u seconds.\n", flags);
-			else
-				printf("WDIOC_GETTIMELEFT error '%s'\n", strerror(errno));
-			break;
-		case 'f':
+			अगर (!ret)
+				म_लिखो("WDIOC_GETTIMELEFT returns %u seconds.\n", flags);
+			अन्यथा
+				म_लिखो("WDIOC_GETTIMELEFT error '%s'\n", म_त्रुटि(त्रुटि_सं));
+			अवरोध;
+		हाल 'f':
 			/* Handled above */
-			break;
-		case 'i':
+			अवरोध;
+		हाल 'i':
 			/*
-			 * watchdog_info was obtained as part of file open
+			 * watchकरोg_info was obtained as part of file खोलो
 			 * validation. So we just show it here.
 			 */
 			oneshot = 1;
-			printf("watchdog_info:\n");
-			printf(" identity:\t\t%s\n", info.identity);
-			printf(" firmware_version:\t%u\n",
+			म_लिखो("watchdog_info:\n");
+			म_लिखो(" identity:\t\t%s\n", info.identity);
+			म_लिखो(" firmware_version:\t%u\n",
 			       info.firmware_version);
-			printf(" options:\t\t%08x\n", info.options);
-			break;
+			म_लिखो(" options:\t\t%08x\n", info.options);
+			अवरोध;
 
-		default:
+		शेष:
 			usage(argv[0]);
-			goto end;
-		}
-	}
+			जाओ end;
+		पूर्ण
+	पूर्ण
 
-	if (oneshot)
-		goto end;
+	अगर (oneshot)
+		जाओ end;
 
-	printf("Watchdog Ticking Away!\n");
+	म_लिखो("Watchdog Ticking Away!\n");
 
-	signal(SIGINT, term);
+	संकेत(संक_विघ्न, term);
 
-	while (1) {
+	जबतक (1) अणु
 		keep_alive();
 		sleep(ping_rate);
-	}
+	पूर्ण
 end:
-	ret = write(fd, &v, 1);
-	if (ret < 0)
-		printf("Stopping watchdog ticks failed (%d)...\n", errno);
-	close(fd);
-	return 0;
-}
+	ret = ग_लिखो(fd, &v, 1);
+	अगर (ret < 0)
+		म_लिखो("Stopping watchdog ticks failed (%d)...\n", त्रुटि_सं);
+	बंद(fd);
+	वापस 0;
+पूर्ण

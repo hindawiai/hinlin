@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * intel_pt_log.h: Intel Processor Trace support
+ * पूर्णांकel_pt_log.h: Intel Processor Trace support
  * Copyright (c) 2013-2014, Intel Corporation.
  */
 
-#ifndef INCLUDE__INTEL_PT_LOG_H__
-#define INCLUDE__INTEL_PT_LOG_H__
+#अगर_अघोषित INCLUDE__INTEL_PT_LOG_H__
+#घोषणा INCLUDE__INTEL_PT_LOG_H__
 
-#include <linux/compiler.h>
-#include <stdint.h>
-#include <inttypes.h>
+#समावेश <linux/compiler.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <पूर्णांकtypes.h>
 
-struct intel_pt_pkt;
+काष्ठा पूर्णांकel_pt_pkt;
 
-void *intel_pt_log_fp(void);
-void intel_pt_log_enable(void);
-void intel_pt_log_disable(void);
-void intel_pt_log_set_name(const char *name);
+व्योम *पूर्णांकel_pt_log_fp(व्योम);
+व्योम पूर्णांकel_pt_log_enable(व्योम);
+व्योम पूर्णांकel_pt_log_disable(व्योम);
+व्योम पूर्णांकel_pt_log_set_name(स्थिर अक्षर *name);
 
-void __intel_pt_log_packet(const struct intel_pt_pkt *packet, int pkt_len,
-			   uint64_t pos, const unsigned char *buf);
+व्योम __पूर्णांकel_pt_log_packet(स्थिर काष्ठा पूर्णांकel_pt_pkt *packet, पूर्णांक pkt_len,
+			   uपूर्णांक64_t pos, स्थिर अचिन्हित अक्षर *buf);
 
-struct intel_pt_insn;
+काष्ठा पूर्णांकel_pt_insn;
 
-void __intel_pt_log_insn(struct intel_pt_insn *intel_pt_insn, uint64_t ip);
-void __intel_pt_log_insn_no_data(struct intel_pt_insn *intel_pt_insn,
-				 uint64_t ip);
+व्योम __पूर्णांकel_pt_log_insn(काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn, uपूर्णांक64_t ip);
+व्योम __पूर्णांकel_pt_log_insn_no_data(काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn,
+				 uपूर्णांक64_t ip);
 
-void __intel_pt_log(const char *fmt, ...) __printf(1, 2);
+व्योम __पूर्णांकel_pt_log(स्थिर अक्षर *fmt, ...) __म_लिखो(1, 2);
 
-#define intel_pt_log(fmt, ...) \
-	do { \
-		if (intel_pt_enable_logging) \
-			__intel_pt_log(fmt, ##__VA_ARGS__); \
-	} while (0)
+#घोषणा पूर्णांकel_pt_log(fmt, ...) \
+	करो अणु \
+		अगर (पूर्णांकel_pt_enable_logging) \
+			__पूर्णांकel_pt_log(fmt, ##__VA_ARGS__); \
+	पूर्ण जबतक (0)
 
-#define intel_pt_log_packet(arg, ...) \
-	do { \
-		if (intel_pt_enable_logging) \
-			__intel_pt_log_packet(arg, ##__VA_ARGS__); \
-	} while (0)
+#घोषणा पूर्णांकel_pt_log_packet(arg, ...) \
+	करो अणु \
+		अगर (पूर्णांकel_pt_enable_logging) \
+			__पूर्णांकel_pt_log_packet(arg, ##__VA_ARGS__); \
+	पूर्ण जबतक (0)
 
-#define intel_pt_log_insn(arg, ...) \
-	do { \
-		if (intel_pt_enable_logging) \
-			__intel_pt_log_insn(arg, ##__VA_ARGS__); \
-	} while (0)
+#घोषणा पूर्णांकel_pt_log_insn(arg, ...) \
+	करो अणु \
+		अगर (पूर्णांकel_pt_enable_logging) \
+			__पूर्णांकel_pt_log_insn(arg, ##__VA_ARGS__); \
+	पूर्ण जबतक (0)
 
-#define intel_pt_log_insn_no_data(arg, ...) \
-	do { \
-		if (intel_pt_enable_logging) \
-			__intel_pt_log_insn_no_data(arg, ##__VA_ARGS__); \
-	} while (0)
+#घोषणा पूर्णांकel_pt_log_insn_no_data(arg, ...) \
+	करो अणु \
+		अगर (पूर्णांकel_pt_enable_logging) \
+			__पूर्णांकel_pt_log_insn_no_data(arg, ##__VA_ARGS__); \
+	पूर्ण जबतक (0)
 
-#define x64_fmt "0x%" PRIx64
+#घोषणा x64_fmt "0x%" PRIx64
 
-extern bool intel_pt_enable_logging;
+बाह्य bool पूर्णांकel_pt_enable_logging;
 
-static inline void intel_pt_log_at(const char *msg, uint64_t u)
-{
-	intel_pt_log("%s at " x64_fmt "\n", msg, u);
-}
+अटल अंतरभूत व्योम पूर्णांकel_pt_log_at(स्थिर अक्षर *msg, uपूर्णांक64_t u)
+अणु
+	पूर्णांकel_pt_log("%s at " x64_fmt "\n", msg, u);
+पूर्ण
 
-static inline void intel_pt_log_to(const char *msg, uint64_t u)
-{
-	intel_pt_log("%s to " x64_fmt "\n", msg, u);
-}
+अटल अंतरभूत व्योम पूर्णांकel_pt_log_to(स्थिर अक्षर *msg, uपूर्णांक64_t u)
+अणु
+	पूर्णांकel_pt_log("%s to " x64_fmt "\n", msg, u);
+पूर्ण
 
-#endif
+#पूर्ण_अगर

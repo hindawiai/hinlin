@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef __ASM_SPINLOCK_TYPES_H
-#define __ASM_SPINLOCK_TYPES_H
+#अगर_अघोषित __ASM_SPINLOCK_TYPES_H
+#घोषणा __ASM_SPINLOCK_TYPES_H
 
-typedef struct {
-	volatile unsigned int slock;
-} arch_spinlock_t;
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित पूर्णांक slock;
+पूर्ण arch_spinlock_t;
 
-#define __ARCH_SPIN_LOCK_UNLOCKED__	0
-#define __ARCH_SPIN_LOCK_LOCKED__	1
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED__	0
+#घोषणा __ARCH_SPIN_LOCK_LOCKED__	1
 
-#define __ARCH_SPIN_LOCK_UNLOCKED	{ __ARCH_SPIN_LOCK_UNLOCKED__ }
-#define __ARCH_SPIN_LOCK_LOCKED		{ __ARCH_SPIN_LOCK_LOCKED__ }
+#घोषणा __ARCH_SPIN_LOCK_UNLOCKED	अणु __ARCH_SPIN_LOCK_UNLOCKED__ पूर्ण
+#घोषणा __ARCH_SPIN_LOCK_LOCKED		अणु __ARCH_SPIN_LOCK_LOCKED__ पूर्ण
 
 /*
  * Unlocked     : 0x0100_0000
  * Read lock(s) : 0x00FF_FFFF to 0x01  (Multiple Readers decrement it)
- * Write lock   : 0x0, but only if prior value is "unlocked" 0x0100_0000
+ * Write lock   : 0x0, but only अगर prior value is "unlocked" 0x0100_0000
  */
-typedef struct {
-	volatile unsigned int	counter;
-#ifndef CONFIG_ARC_HAS_LLSC
+प्रकार काष्ठा अणु
+	अस्थिर अचिन्हित पूर्णांक	counter;
+#अगर_अघोषित CONFIG_ARC_HAS_LLSC
 	arch_spinlock_t		lock_mutex;
-#endif
-} arch_rwlock_t;
+#पूर्ण_अगर
+पूर्ण arch_rwlock_t;
 
-#define __ARCH_RW_LOCK_UNLOCKED__	0x01000000
-#define __ARCH_RW_LOCK_UNLOCKED		{ .counter = __ARCH_RW_LOCK_UNLOCKED__ }
+#घोषणा __ARCH_RW_LOCK_UNLOCKED__	0x01000000
+#घोषणा __ARCH_RW_LOCK_UNLOCKED		अणु .counter = __ARCH_RW_LOCK_UNLOCKED__ पूर्ण
 
-#endif
+#पूर्ण_अगर

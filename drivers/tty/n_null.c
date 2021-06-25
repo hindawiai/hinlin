@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/tty.h>
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/tty.h>
+#समावेश <linux/module.h>
 
 /*
  *  n_null.c - Null line discipline used in the failure path
@@ -10,59 +11,59 @@
  *  Copyright (C) Intel 2017
  */
 
-static int n_null_open(struct tty_struct *tty)
-{
-	return 0;
-}
+अटल पूर्णांक n_null_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	वापस 0;
+पूर्ण
 
-static void n_null_close(struct tty_struct *tty)
-{
-}
+अटल व्योम n_null_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+पूर्ण
 
-static ssize_t n_null_read(struct tty_struct *tty, struct file *file,
-			   unsigned char *buf, size_t nr,
-			   void **cookie, unsigned long offset)
-{
-	return -EOPNOTSUPP;
-}
+अटल sमाप_प्रकार n_null_पढ़ो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			   अचिन्हित अक्षर *buf, माप_प्रकार nr,
+			   व्योम **cookie, अचिन्हित दीर्घ offset)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static ssize_t n_null_write(struct tty_struct *tty, struct file *file,
-			    const unsigned char *buf, size_t nr)
-{
-	return -EOPNOTSUPP;
-}
+अटल sमाप_प्रकार n_null_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			    स्थिर अचिन्हित अक्षर *buf, माप_प्रकार nr)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static void n_null_receivebuf(struct tty_struct *tty,
-				 const unsigned char *cp, char *fp,
-				 int cnt)
-{
-}
+अटल व्योम n_null_receivebuf(काष्ठा tty_काष्ठा *tty,
+				 स्थिर अचिन्हित अक्षर *cp, अक्षर *fp,
+				 पूर्णांक cnt)
+अणु
+पूर्ण
 
-static struct tty_ldisc_ops null_ldisc = {
+अटल काष्ठा tty_ldisc_ops null_ldisc = अणु
 	.owner		=	THIS_MODULE,
 	.name		=	"n_null",
-	.open		=	n_null_open,
-	.close		=	n_null_close,
-	.read		=	n_null_read,
-	.write		=	n_null_write,
+	.खोलो		=	n_null_खोलो,
+	.बंद		=	n_null_बंद,
+	.पढ़ो		=	n_null_पढ़ो,
+	.ग_लिखो		=	n_null_ग_लिखो,
 	.receive_buf	=	n_null_receivebuf
-};
+पूर्ण;
 
-static int __init n_null_init(void)
-{
-	BUG_ON(tty_register_ldisc(N_NULL, &null_ldisc));
-	return 0;
-}
+अटल पूर्णांक __init n_null_init(व्योम)
+अणु
+	BUG_ON(tty_रेजिस्टर_ldisc(N_शून्य, &null_ldisc));
+	वापस 0;
+पूर्ण
 
-static void __exit n_null_exit(void)
-{
-	tty_unregister_ldisc(N_NULL);
-}
+अटल व्योम __निकास n_null_निकास(व्योम)
+अणु
+	tty_unरेजिस्टर_ldisc(N_शून्य);
+पूर्ण
 
 module_init(n_null_init);
-module_exit(n_null_exit);
+module_निकास(n_null_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Alan Cox");
-MODULE_ALIAS_LDISC(N_NULL);
+MODULE_ALIAS_LDISC(N_शून्य);
 MODULE_DESCRIPTION("Null ldisc driver");

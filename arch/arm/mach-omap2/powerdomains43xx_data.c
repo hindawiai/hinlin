@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * AM43xx Power domains framework
+ * AM43xx Power करोमुख्यs framework
  *
  * Copyright (C) 2013 Texas Instruments, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
 
-#include "powerdomain.h"
+#समावेश "powerdomain.h"
 
-#include "prcm-common.h"
-#include "prcm44xx.h"
-#include "prcm43xx.h"
+#समावेश "prcm-common.h"
+#समावेश "prcm44xx.h"
+#समावेश "prcm43xx.h"
 
-static struct powerdomain gfx_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य gfx_43xx_pwrdm = अणु
 	.name		  = "gfx_pwrdm",
-	.voltdm		  = { .name = "core" },
+	.voltdm		  = अणु .name = "core" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_GFX_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_OFF_ON,
 	.banks		  = 1,
-	.pwrsts_mem_on	= {
+	.pwrsts_mem_on	= अणु
 		[0] = PWRSTS_ON,	/* gfx_mem */
-	},
+	पूर्ण,
 	.flags		  = PWRDM_HAS_LOWPOWERSTATECHANGE,
-};
+पूर्ण;
 
-static struct powerdomain mpu_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य mpu_43xx_pwrdm = अणु
 	.name		  = "mpu_pwrdm",
-	.voltdm		  = { .name = "mpu" },
+	.voltdm		  = अणु .name = "mpu" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_MPU_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_OFF_RET,
 	.banks		  = 3,
-	.pwrsts_mem_ret	= {
+	.pwrsts_mem_ret	= अणु
 		[0] = PWRSTS_OFF_RET,	/* mpu_l1 */
 		[1] = PWRSTS_OFF_RET,	/* mpu_l2 */
 		[2] = PWRSTS_OFF_RET,	/* mpu_ram */
-	},
-	.pwrsts_mem_on	= {
+	पूर्ण,
+	.pwrsts_mem_on	= अणु
 		[0] = PWRSTS_ON,	/* mpu_l1 */
 		[1] = PWRSTS_ON,	/* mpu_l2 */
 		[2] = PWRSTS_ON,	/* mpu_ram */
-	},
+	पूर्ण,
 	.flags		  = PWRDM_HAS_LOWPOWERSTATECHANGE,
-};
+पूर्ण;
 
-static struct powerdomain rtc_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य rtc_43xx_pwrdm = अणु
 	.name		  = "rtc_pwrdm",
-	.voltdm		  = { .name = "rtc" },
+	.voltdm		  = अणु .name = "rtc" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_RTC_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_ON,
-};
+पूर्ण;
 
-static struct powerdomain wkup_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य wkup_43xx_pwrdm = अणु
 	.name		  = "wkup_pwrdm",
-	.voltdm		  = { .name = "core" },
+	.voltdm		  = अणु .name = "core" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_WKUP_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_ON,
 	.banks		  = 1,
-	.pwrsts_mem_on	= {
+	.pwrsts_mem_on	= अणु
 		[0] = PWRSTS_ON,	/* debugss_mem */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct powerdomain tamper_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य tamper_43xx_pwrdm = अणु
 	.name		  = "tamper_pwrdm",
-	.voltdm		  = { .name = "tamper" },
+	.voltdm		  = अणु .name = "tamper" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_TAMPER_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_ON,
-};
+पूर्ण;
 
-static struct powerdomain cefuse_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य cefuse_43xx_pwrdm = अणु
 	.name		  = "cefuse_pwrdm",
-	.voltdm		  = { .name = "core" },
+	.voltdm		  = अणु .name = "core" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_CEFUSE_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_OFF_ON,
 	.flags		  = PWRDM_HAS_LOWPOWERSTATECHANGE,
-};
+पूर्ण;
 
-static struct powerdomain per_43xx_pwrdm = {
+अटल काष्ठा घातerकरोमुख्य per_43xx_pwrdm = अणु
 	.name		  = "per_pwrdm",
-	.voltdm		  = { .name = "core" },
+	.voltdm		  = अणु .name = "core" पूर्ण,
 	.prcm_offs	  = AM43XX_PRM_PER_INST,
 	.prcm_partition	  = AM43XX_PRM_PARTITION,
 	.pwrsts		  = PWRSTS_OFF_RET_ON,
 	.pwrsts_logic_ret = PWRSTS_OFF_RET,
 	.banks		  = 4,
-	.pwrsts_mem_ret	= {
+	.pwrsts_mem_ret	= अणु
 		[0] = PWRSTS_OFF_RET,	/* icss_mem */
 		[1] = PWRSTS_OFF_RET,	/* per_mem */
 		[2] = PWRSTS_OFF_RET,	/* ram1_mem */
 		[3] = PWRSTS_OFF_RET,	/* ram2_mem */
-	},
-	.pwrsts_mem_on	= {
+	पूर्ण,
+	.pwrsts_mem_on	= अणु
 		[0] = PWRSTS_ON,	/* icss_mem */
 		[1] = PWRSTS_ON,	/* per_mem */
 		[2] = PWRSTS_ON,	/* ram1_mem */
 		[3] = PWRSTS_ON,	/* ram2_mem */
-	},
+	पूर्ण,
 	.flags		  = PWRDM_HAS_LOWPOWERSTATECHANGE,
-};
+पूर्ण;
 
-static struct powerdomain *powerdomains_am43xx[] __initdata = {
+अटल काष्ठा घातerकरोमुख्य *घातerकरोमुख्यs_am43xx[] __initdata = अणु
 	&gfx_43xx_pwrdm,
 	&mpu_43xx_pwrdm,
 	&rtc_43xx_pwrdm,
@@ -116,18 +117,18 @@ static struct powerdomain *powerdomains_am43xx[] __initdata = {
 	&tamper_43xx_pwrdm,
 	&cefuse_43xx_pwrdm,
 	&per_43xx_pwrdm,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int am43xx_check_vcvp(void)
-{
-	return 0;
-}
+अटल पूर्णांक am43xx_check_vcvp(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-void __init am43xx_powerdomains_init(void)
-{
+व्योम __init am43xx_घातerकरोमुख्यs_init(व्योम)
+अणु
 	omap4_pwrdm_operations.pwrdm_has_voltdm = am43xx_check_vcvp;
-	pwrdm_register_platform_funcs(&omap4_pwrdm_operations);
-	pwrdm_register_pwrdms(powerdomains_am43xx);
+	pwrdm_रेजिस्टर_platक्रमm_funcs(&omap4_pwrdm_operations);
+	pwrdm_रेजिस्टर_pwrdms(घातerकरोमुख्यs_am43xx);
 	pwrdm_complete_init();
-}
+पूर्ण

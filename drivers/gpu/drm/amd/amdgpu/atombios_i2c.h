@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,13 +22,13 @@
  *
  */
 
-#ifndef __ATOMBIOS_I2C_H__
-#define __ATOMBIOS_I2C_H__
+#अगर_अघोषित __ATOMBIOS_I2C_H__
+#घोषणा __ATOMBIOS_I2C_H__
 
-int amdgpu_atombios_i2c_xfer(struct i2c_adapter *i2c_adap,
-		      struct i2c_msg *msgs, int num);
-u32 amdgpu_atombios_i2c_func(struct i2c_adapter *adap);
-void amdgpu_atombios_i2c_channel_trans(struct amdgpu_device* adev,
+पूर्णांक amdgpu_atombios_i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+		      काष्ठा i2c_msg *msgs, पूर्णांक num);
+u32 amdgpu_atombios_i2c_func(काष्ठा i2c_adapter *adap);
+व्योम amdgpu_atombios_i2c_channel_trans(काष्ठा amdgpu_device* adev,
 		u8 slave_addr, u8 line_number, u8 offset, u8 data);
 
-#endif
+#पूर्ण_अगर

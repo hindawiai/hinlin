@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008, Creative Technology Ltd. All Rights Reserved.
  *
  * @File    ctvmem.c
  *
  * @Brief
- * This file contains the implementation of virtual memory management object
- * for card device.
+ * This file contains the implementation of भव memory management object
+ * क्रम card device.
  *
  * @Author Liu Chun
  * @Date Apr 1 2008
  */
 
-#include "ctvmem.h"
-#include "ctatc.h"
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <sound/pcm.h>
+#समावेश "ctvmem.h"
+#समावेश "ctatc.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/pcm.h>
 
-#define CT_PTES_PER_PAGE (CT_PAGE_SIZE / sizeof(void *))
-#define CT_ADDRS_PER_PAGE (CT_PTES_PER_PAGE * CT_PAGE_SIZE)
+#घोषणा CT_PTES_PER_PAGE (CT_PAGE_SIZE / माप(व्योम *))
+#घोषणा CT_ADDRS_PER_PAGE (CT_PTES_PER_PAGE * CT_PAGE_SIZE)
 
 /* *
  * Find or create vm block based on requested @size.
  * @size must be page aligned.
  * */
-static struct ct_vm_block *
-get_vm_block(struct ct_vm *vm, unsigned int size, struct ct_atc *atc)
-{
-	struct ct_vm_block *block = NULL, *entry;
-	struct list_head *pos;
+अटल काष्ठा ct_vm_block *
+get_vm_block(काष्ठा ct_vm *vm, अचिन्हित पूर्णांक size, काष्ठा ct_atc *atc)
+अणु
+	काष्ठा ct_vm_block *block = शून्य, *entry;
+	काष्ठा list_head *pos;
 
 	size = CT_PAGE_ALIGN(size);
-	if (size > vm->size) {
+	अगर (size > vm->size) अणु
 		dev_err(atc->card->dev,
 			"Fail! No sufficient device virtual memory space available!\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	mutex_lock(&vm->lock);
-	list_for_each(pos, &vm->unused) {
-		entry = list_entry(pos, struct ct_vm_block, list);
-		if (entry->size >= size)
-			break; /* found a block that is big enough */
-	}
-	if (pos == &vm->unused)
-		goto out;
+	list_क्रम_each(pos, &vm->unused) अणु
+		entry = list_entry(pos, काष्ठा ct_vm_block, list);
+		अगर (entry->size >= size)
+			अवरोध; /* found a block that is big enough */
+	पूर्ण
+	अगर (pos == &vm->unused)
+		जाओ out;
 
-	if (entry->size == size) {
+	अगर (entry->size == size) अणु
 		/* Move the vm node from unused list to used list directly */
 		list_move(&entry->list, &vm->used);
 		vm->size -= size;
 		block = entry;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	block = kzalloc(sizeof(*block), GFP_KERNEL);
-	if (!block)
-		goto out;
+	block = kzalloc(माप(*block), GFP_KERNEL);
+	अगर (!block)
+		जाओ out;
 
 	block->addr = entry->addr;
 	block->size = size;
@@ -69,13 +70,13 @@ get_vm_block(struct ct_vm *vm, unsigned int size, struct ct_atc *atc)
 
  out:
 	mutex_unlock(&vm->lock);
-	return block;
-}
+	वापस block;
+पूर्ण
 
-static void put_vm_block(struct ct_vm *vm, struct ct_vm_block *block)
-{
-	struct ct_vm_block *entry, *pre_ent;
-	struct list_head *pos, *pre;
+अटल व्योम put_vm_block(काष्ठा ct_vm *vm, काष्ठा ct_vm_block *block)
+अणु
+	काष्ठा ct_vm_block *entry, *pre_ent;
+	काष्ठा list_head *pos, *pre;
 
 	block->size = CT_PAGE_ALIGN(block->size);
 
@@ -83,160 +84,160 @@ static void put_vm_block(struct ct_vm *vm, struct ct_vm_block *block)
 	list_del(&block->list);
 	vm->size += block->size;
 
-	list_for_each(pos, &vm->unused) {
-		entry = list_entry(pos, struct ct_vm_block, list);
-		if (entry->addr >= (block->addr + block->size))
-			break; /* found a position */
-	}
-	if (pos == &vm->unused) {
+	list_क्रम_each(pos, &vm->unused) अणु
+		entry = list_entry(pos, काष्ठा ct_vm_block, list);
+		अगर (entry->addr >= (block->addr + block->size))
+			अवरोध; /* found a position */
+	पूर्ण
+	अगर (pos == &vm->unused) अणु
 		list_add_tail(&block->list, &vm->unused);
 		entry = block;
-	} else {
-		if ((block->addr + block->size) == entry->addr) {
+	पूर्ण अन्यथा अणु
+		अगर ((block->addr + block->size) == entry->addr) अणु
 			entry->addr = block->addr;
 			entry->size += block->size;
-			kfree(block);
-		} else {
+			kमुक्त(block);
+		पूर्ण अन्यथा अणु
 			__list_add(&block->list, pos->prev, pos);
 			entry = block;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pos = &entry->list;
 	pre = pos->prev;
-	while (pre != &vm->unused) {
-		entry = list_entry(pos, struct ct_vm_block, list);
-		pre_ent = list_entry(pre, struct ct_vm_block, list);
-		if ((pre_ent->addr + pre_ent->size) > entry->addr)
-			break;
+	जबतक (pre != &vm->unused) अणु
+		entry = list_entry(pos, काष्ठा ct_vm_block, list);
+		pre_ent = list_entry(pre, काष्ठा ct_vm_block, list);
+		अगर ((pre_ent->addr + pre_ent->size) > entry->addr)
+			अवरोध;
 
 		pre_ent->size += entry->size;
 		list_del(pos);
-		kfree(entry);
+		kमुक्त(entry);
 		pos = pre;
 		pre = pos->prev;
-	}
+	पूर्ण
 	mutex_unlock(&vm->lock);
-}
+पूर्ण
 
-/* Map host addr (kmalloced/vmalloced) to device logical addr. */
-static struct ct_vm_block *
-ct_vm_map(struct ct_vm *vm, struct snd_pcm_substream *substream, int size)
-{
-	struct ct_vm_block *block;
-	unsigned int pte_start;
-	unsigned i, pages;
-	unsigned long *ptp;
-	struct ct_atc *atc = snd_pcm_substream_chip(substream);
+/* Map host addr (kदो_स्मृतिed/vदो_स्मृतिed) to device logical addr. */
+अटल काष्ठा ct_vm_block *
+ct_vm_map(काष्ठा ct_vm *vm, काष्ठा snd_pcm_substream *substream, पूर्णांक size)
+अणु
+	काष्ठा ct_vm_block *block;
+	अचिन्हित पूर्णांक pte_start;
+	अचिन्हित i, pages;
+	अचिन्हित दीर्घ *ptp;
+	काष्ठा ct_atc *atc = snd_pcm_substream_chip(substream);
 
 	block = get_vm_block(vm, size, atc);
-	if (block == NULL) {
+	अगर (block == शून्य) अणु
 		dev_err(atc->card->dev,
 			"No virtual memory block that is big enough to allocate!\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	ptp = (unsigned long *)vm->ptp[0].area;
+	ptp = (अचिन्हित दीर्घ *)vm->ptp[0].area;
 	pte_start = (block->addr >> CT_PAGE_SHIFT);
 	pages = block->size >> CT_PAGE_SHIFT;
-	for (i = 0; i < pages; i++) {
-		unsigned long addr;
+	क्रम (i = 0; i < pages; i++) अणु
+		अचिन्हित दीर्घ addr;
 		addr = snd_pcm_sgbuf_get_addr(substream, i << CT_PAGE_SHIFT);
 		ptp[pte_start + i] = addr;
-	}
+	पूर्ण
 
 	block->size = size;
-	return block;
-}
+	वापस block;
+पूर्ण
 
-static void ct_vm_unmap(struct ct_vm *vm, struct ct_vm_block *block)
-{
-	/* do unmapping */
+अटल व्योम ct_vm_unmap(काष्ठा ct_vm *vm, काष्ठा ct_vm_block *block)
+अणु
+	/* करो unmapping */
 	put_vm_block(vm, block);
-}
+पूर्ण
 
 /* *
- * return the host physical addr of the @index-th device
+ * वापस the host physical addr of the @index-th device
  * page table page on success, or ~0UL on failure.
- * The first returned ~0UL indicates the termination.
+ * The first वापसed ~0UL indicates the termination.
  * */
-static dma_addr_t
-ct_get_ptp_phys(struct ct_vm *vm, int index)
-{
-	return (index >= CT_PTP_NUM) ? ~0UL : vm->ptp[index].addr;
-}
+अटल dma_addr_t
+ct_get_ptp_phys(काष्ठा ct_vm *vm, पूर्णांक index)
+अणु
+	वापस (index >= CT_PTP_NUM) ? ~0UL : vm->ptp[index].addr;
+पूर्ण
 
-int ct_vm_create(struct ct_vm **rvm, struct pci_dev *pci)
-{
-	struct ct_vm *vm;
-	struct ct_vm_block *block;
-	int i, err = 0;
+पूर्णांक ct_vm_create(काष्ठा ct_vm **rvm, काष्ठा pci_dev *pci)
+अणु
+	काष्ठा ct_vm *vm;
+	काष्ठा ct_vm_block *block;
+	पूर्णांक i, err = 0;
 
-	*rvm = NULL;
+	*rvm = शून्य;
 
-	vm = kzalloc(sizeof(*vm), GFP_KERNEL);
-	if (!vm)
-		return -ENOMEM;
+	vm = kzalloc(माप(*vm), GFP_KERNEL);
+	अगर (!vm)
+		वापस -ENOMEM;
 
 	mutex_init(&vm->lock);
 
 	/* Allocate page table pages */
-	for (i = 0; i < CT_PTP_NUM; i++) {
+	क्रम (i = 0; i < CT_PTP_NUM; i++) अणु
 		err = snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV,
 					  &pci->dev,
 					  PAGE_SIZE, &vm->ptp[i]);
-		if (err < 0)
-			break;
-	}
-	if (err < 0) {
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
+	अगर (err < 0) अणु
 		/* no page table pages are allocated */
 		ct_vm_destroy(vm);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	vm->size = CT_ADDRS_PER_PAGE * i;
 	vm->map = ct_vm_map;
 	vm->unmap = ct_vm_unmap;
 	vm->get_ptp_phys = ct_get_ptp_phys;
 	INIT_LIST_HEAD(&vm->unused);
 	INIT_LIST_HEAD(&vm->used);
-	block = kzalloc(sizeof(*block), GFP_KERNEL);
-	if (NULL != block) {
+	block = kzalloc(माप(*block), GFP_KERNEL);
+	अगर (शून्य != block) अणु
 		block->addr = 0;
 		block->size = vm->size;
 		list_add(&block->list, &vm->unused);
-	}
+	पूर्ण
 
 	*rvm = vm;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* The caller must ensure no mapping pages are being used
- * by hardware before calling this function */
-void ct_vm_destroy(struct ct_vm *vm)
-{
-	int i;
-	struct list_head *pos;
-	struct ct_vm_block *entry;
+ * by hardware beक्रमe calling this function */
+व्योम ct_vm_destroy(काष्ठा ct_vm *vm)
+अणु
+	पूर्णांक i;
+	काष्ठा list_head *pos;
+	काष्ठा ct_vm_block *entry;
 
-	/* free used and unused list nodes */
-	while (!list_empty(&vm->used)) {
+	/* मुक्त used and unused list nodes */
+	जबतक (!list_empty(&vm->used)) अणु
 		pos = vm->used.next;
 		list_del(pos);
-		entry = list_entry(pos, struct ct_vm_block, list);
-		kfree(entry);
-	}
-	while (!list_empty(&vm->unused)) {
+		entry = list_entry(pos, काष्ठा ct_vm_block, list);
+		kमुक्त(entry);
+	पूर्ण
+	जबतक (!list_empty(&vm->unused)) अणु
 		pos = vm->unused.next;
 		list_del(pos);
-		entry = list_entry(pos, struct ct_vm_block, list);
-		kfree(entry);
-	}
+		entry = list_entry(pos, काष्ठा ct_vm_block, list);
+		kमुक्त(entry);
+	पूर्ण
 
-	/* free allocated page table pages */
-	for (i = 0; i < CT_PTP_NUM; i++)
-		snd_dma_free_pages(&vm->ptp[i]);
+	/* मुक्त allocated page table pages */
+	क्रम (i = 0; i < CT_PTP_NUM; i++)
+		snd_dma_मुक्त_pages(&vm->ptp[i]);
 
 	vm->size = 0;
 
-	kfree(vm);
-}
+	kमुक्त(vm);
+पूर्ण

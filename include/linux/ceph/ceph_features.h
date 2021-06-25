@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __CEPH_FEATURES
-#define __CEPH_FEATURES
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __CEPH_FEATURES
+#घोषणा __CEPH_FEATURES
 
 /*
- * Each time we reclaim bits for reuse we need to specify another bit
- * that, if present, indicates we have the new incarnation of that
- * feature.  Base case is 1 (first use).
+ * Each समय we reclaim bits क्रम reuse we need to specअगरy another bit
+ * that, अगर present, indicates we have the new incarnation of that
+ * feature.  Base हाल is 1 (first use).
  */
-#define CEPH_FEATURE_INCARNATION_1 (0ull)
-#define CEPH_FEATURE_INCARNATION_2 (1ull<<57)              // SERVER_JEWEL
-#define CEPH_FEATURE_INCARNATION_3 ((1ull<<57)|(1ull<<28)) // SERVER_MIMIC
+#घोषणा CEPH_FEATURE_INCARNATION_1 (0ull)
+#घोषणा CEPH_FEATURE_INCARNATION_2 (1ull<<57)              // SERVER_JEWEL
+#घोषणा CEPH_FEATURE_INCARNATION_3 ((1ull<<57)|(1ull<<28)) // SERVER_MIMIC
 
-#define DEFINE_CEPH_FEATURE(bit, incarnation, name)			\
-	static const uint64_t __maybe_unused CEPH_FEATURE_##name = (1ULL<<bit);		\
-	static const uint64_t __maybe_unused CEPH_FEATUREMASK_##name =			\
+#घोषणा DEFINE_CEPH_FEATURE(bit, incarnation, name)			\
+	अटल स्थिर uपूर्णांक64_t __maybe_unused CEPH_FEATURE_##name = (1ULL<<bit);		\
+	अटल स्थिर uपूर्णांक64_t __maybe_unused CEPH_FEATUREMASK_##name =			\
 		(1ULL<<bit | CEPH_FEATURE_INCARNATION_##incarnation);
 
 /* this bit is ignored but still advertised by release *when* */
-#define DEFINE_CEPH_FEATURE_DEPRECATED(bit, incarnation, name, when) \
-	static const uint64_t __maybe_unused DEPRECATED_CEPH_FEATURE_##name = (1ULL<<bit);	\
-	static const uint64_t __maybe_unused DEPRECATED_CEPH_FEATUREMASK_##name =		\
+#घोषणा DEFINE_CEPH_FEATURE_DEPRECATED(bit, incarnation, name, when) \
+	अटल स्थिर uपूर्णांक64_t __maybe_unused DEPRECATED_CEPH_FEATURE_##name = (1ULL<<bit);	\
+	अटल स्थिर uपूर्णांक64_t __maybe_unused DEPRECATED_CEPH_FEATUREMASK_##name =		\
 		(1ULL<<bit | CEPH_FEATURE_INCARNATION_##incarnation);
 
 /*
  * this bit is ignored by release *unused* and not advertised by
  * release *unadvertised*
  */
-#define DEFINE_CEPH_FEATURE_RETIRED(bit, inc, name, unused, unadvertised)
+#घोषणा DEFINE_CEPH_FEATURE_RETIRED(bit, inc, name, unused, unadvertised)
 
 
 /*
- * test for a feature.  this test is safer than a typical mask against
- * the bit because it ensures that we have the bit AND the marker for the
- * bit's incarnation.  this must be used in any case where the features
+ * test क्रम a feature.  this test is safer than a typical mask against
+ * the bit because it ensures that we have the bit AND the marker क्रम the
+ * bit's incarnation.  this must be used in any हाल where the features
  * bits may include an old meaning of the bit.
  */
-#define CEPH_HAVE_FEATURE(x, name)			\
+#घोषणा CEPH_HAVE_FEATURE(x, name)			\
 	(((x) & (CEPH_FEATUREMASK_##name)) == (CEPH_FEATUREMASK_##name))
 
 
@@ -50,26 +51,26 @@
  *
  *  - In the first phase we indicate that a feature is DEPRECATED as of
  *    a particular release.  This is the first major release X (say,
- *    jewel) that does not depend on its peers advertising the feature.
+ *    jewel) that करोes not depend on its peers advertising the feature.
  *    That is, it safely assumes its peers all have the feature.  We
  *    indicate this with the DEPRECATED macro.  For example,
  *
  *      DEFINE_CEPH_FEATURE_DEPRECATED( 2, 1, MONCLOCKCHECK, JEWEL)
  *
- *    because 10.2.z (jewel) did not care if its peers advertised this
+ *    because 10.2.z (jewel) did not care अगर its peers advertised this
  *    feature bit.
  *
  *  - In the second phase we stop advertising the bit and call it
- *    RETIRED.  This can normally be done in the *next* major release
+ *    RETIRED.  This can normally be करोne in the *next* major release
  *    following the one in which we marked the feature DEPRECATED.  In
- *    the above example, for 12.0.z (luminous) we can say:
+ *    the above example, क्रम 12.0.z (luminous) we can say:
  *
  *      DEFINE_CEPH_FEATURE_RETIRED( 2, 1, MONCLOCKCHECK, JEWEL, LUMINOUS)
  *
  *  - The bit can be reused in the first post-luminous release, 13.0.z
  *    (m).
  *
- * This ensures that no two versions who have different meanings for
+ * This ensures that no two versions who have dअगरferent meanings क्रम
  * the bit ever speak to each other.
  */
 
@@ -81,7 +82,7 @@ DEFINE_CEPH_FEATURE( 3, 1, FLOCK)
 DEFINE_CEPH_FEATURE( 4, 1, SUBSCRIBE2)
 DEFINE_CEPH_FEATURE( 5, 1, MONNAMES)
 DEFINE_CEPH_FEATURE( 6, 1, RECONNECT_SEQ)
-DEFINE_CEPH_FEATURE( 7, 1, DIRLAYOUTHASH)
+DEFINE_CEPH_FEATURE( 7, 1, सूचीLAYOUTHASH)
 DEFINE_CEPH_FEATURE( 8, 1, OBJECTLOCATOR)
 DEFINE_CEPH_FEATURE( 9, 1, PGID64)
 DEFINE_CEPH_FEATURE(10, 1, INCSUBOSDMAP)
@@ -98,7 +99,7 @@ DEFINE_CEPH_FEATURE_RETIRED(17, 1, INDEP_PG_MAP, JEWEL, LUMINOUS)
 DEFINE_CEPH_FEATURE(18, 1, CRUSH_TUNABLES)
 DEFINE_CEPH_FEATURE_RETIRED(19, 1, CHUNKY_SCRUB, JEWEL, LUMINOUS)
 
-DEFINE_CEPH_FEATURE_RETIRED(20, 1, MON_NULLROUTE, JEWEL, LUMINOUS)
+DEFINE_CEPH_FEATURE_RETIRED(20, 1, MON_शून्यROUTE, JEWEL, LUMINOUS)
 
 DEFINE_CEPH_FEATURE_RETIRED(21, 1, MON_GV, HAMMER, JEWEL)
 DEFINE_CEPH_FEATURE(21, 2, SERVER_LUMINOUS)
@@ -162,28 +163,28 @@ DEFINE_CEPH_FEATURE(57, 1, OSDSUBOP_NO_SNAPCONTEXT) // overlap
 DEFINE_CEPH_FEATURE(57, 1, SERVER_JEWEL) // overlap
 DEFINE_CEPH_FEATURE(58, 1, CRUSH_TUNABLES5)
 DEFINE_CEPH_FEATURE(58, 1, NEW_OSDOPREPLY_ENCODING) // overlap
-DEFINE_CEPH_FEATURE(58, 1, FS_FILE_LAYOUT_V2) // overlap
+DEFINE_CEPH_FEATURE(58, 1, FS_खाता_LAYOUT_V2) // overlap
 DEFINE_CEPH_FEATURE(59, 1, FS_BTIME)
 DEFINE_CEPH_FEATURE(59, 1, FS_CHANGE_ATTR) // overlap
 DEFINE_CEPH_FEATURE(59, 1, MSG_ADDR2) // overlap
-DEFINE_CEPH_FEATURE(60, 1, OSD_RECOVERY_DELETES) // *do not share this bit*
-DEFINE_CEPH_FEATURE(61, 1, CEPHX_V2)             // *do not share this bit*
+DEFINE_CEPH_FEATURE(60, 1, OSD_RECOVERY_DELETES) // *करो not share this bit*
+DEFINE_CEPH_FEATURE(61, 1, CEPHX_V2)             // *करो not share this bit*
 
-DEFINE_CEPH_FEATURE(62, 1, RESERVED)           // do not use; used as a sentinal
+DEFINE_CEPH_FEATURE(62, 1, RESERVED)           // करो not use; used as a sentinal
 DEFINE_CEPH_FEATURE_DEPRECATED(63, 1, RESERVED_BROKEN, LUMINOUS) // client-facing
 
 
 /*
  * Features supported.
  */
-#define CEPH_FEATURES_SUPPORTED_DEFAULT		\
+#घोषणा CEPH_FEATURES_SUPPORTED_DEFAULT		\
 	(CEPH_FEATURE_NOSRCADDR |		\
 	 CEPH_FEATURE_SERVER_NAUTILUS |		\
 	 CEPH_FEATURE_FLOCK |			\
 	 CEPH_FEATURE_SUBSCRIBE2 |		\
 	 CEPH_FEATURE_MONNAMES |		\
 	 CEPH_FEATURE_RECONNECT_SEQ |		\
-	 CEPH_FEATURE_DIRLAYOUTHASH |		\
+	 CEPH_FEATURE_सूचीLAYOUTHASH |		\
 	 CEPH_FEATURE_PGID64 |			\
 	 CEPH_FEATURE_PGPOOL3 |			\
 	 CEPH_FEATURE_OSDENC |			\
@@ -219,6 +220,6 @@ DEFINE_CEPH_FEATURE_DEPRECATED(63, 1, RESERVED_BROKEN, LUMINOUS) // client-facin
 	 CEPH_FEATURE_MSG_ADDR2 |		\
 	 CEPH_FEATURE_CEPHX_V2)
 
-#define CEPH_FEATURES_REQUIRED_DEFAULT	0
+#घोषणा CEPH_FEATURES_REQUIRED_DEFAULT	0
 
-#endif
+#पूर्ण_अगर

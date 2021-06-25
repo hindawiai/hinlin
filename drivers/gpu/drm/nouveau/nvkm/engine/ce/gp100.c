@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,82 +22,82 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
-#include <core/enum.h>
+#समावेश "priv.h"
+#समावेश <core/क्रमागत.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static const struct nvkm_enum
-gp100_ce_launcherr_report[] = {
-	{ 0x0, "NO_ERR" },
-	{ 0x1, "2D_LAYER_EXCEEDS_DEPTH" },
-	{ 0x2, "INVALID_ALIGNMENT" },
-	{ 0x3, "MEM2MEM_RECT_OUT_OF_BOUNDS" },
-	{ 0x4, "SRC_LINE_EXCEEDS_PITCH" },
-	{ 0x5, "SRC_LINE_EXCEEDS_NEG_PITCH" },
-	{ 0x6, "DST_LINE_EXCEEDS_PITCH" },
-	{ 0x7, "DST_LINE_EXCEEDS_NEG_PITCH" },
-	{ 0x8, "BAD_SRC_PIXEL_COMP_REF" },
-	{ 0x9, "INVALID_VALUE" },
-	{ 0xa, "UNUSED_FIELD" },
-	{ 0xb, "INVALID_OPERATION" },
-	{ 0xc, "NO_RESOURCES" },
-	{ 0xd, "INVALID_CONFIG" },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_क्रमागत
+gp100_ce_launcherr_report[] = अणु
+	अणु 0x0, "NO_ERR" पूर्ण,
+	अणु 0x1, "2D_LAYER_EXCEEDS_DEPTH" पूर्ण,
+	अणु 0x2, "INVALID_ALIGNMENT" पूर्ण,
+	अणु 0x3, "MEM2MEM_RECT_OUT_OF_BOUNDS" पूर्ण,
+	अणु 0x4, "SRC_LINE_EXCEEDS_PITCH" पूर्ण,
+	अणु 0x5, "SRC_LINE_EXCEEDS_NEG_PITCH" पूर्ण,
+	अणु 0x6, "DST_LINE_EXCEEDS_PITCH" पूर्ण,
+	अणु 0x7, "DST_LINE_EXCEEDS_NEG_PITCH" पूर्ण,
+	अणु 0x8, "BAD_SRC_PIXEL_COMP_REF" पूर्ण,
+	अणु 0x9, "INVALID_VALUE" पूर्ण,
+	अणु 0xa, "UNUSED_FIELD" पूर्ण,
+	अणु 0xb, "INVALID_OPERATION" पूर्ण,
+	अणु 0xc, "NO_RESOURCES" पूर्ण,
+	अणु 0xd, "INVALID_CONFIG" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static void
-gp100_ce_intr_launcherr(struct nvkm_engine *ce, const u32 base)
-{
-	struct nvkm_subdev *subdev = &ce->subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+gp100_ce_पूर्णांकr_launcherr(काष्ठा nvkm_engine *ce, स्थिर u32 base)
+अणु
+	काष्ठा nvkm_subdev *subdev = &ce->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 stat = nvkm_rd32(device, 0x104418 + base);
-	const struct nvkm_enum *en =
-		nvkm_enum_find(gp100_ce_launcherr_report, stat & 0x0000000f);
+	स्थिर काष्ठा nvkm_क्रमागत *en =
+		nvkm_क्रमागत_find(gp100_ce_launcherr_report, stat & 0x0000000f);
 	nvkm_warn(subdev, "LAUNCHERR %08x [%s]\n", stat, en ? en->name : "");
-}
+पूर्ण
 
-void
-gp100_ce_intr(struct nvkm_engine *ce)
-{
-	struct nvkm_subdev *subdev = &ce->subdev;
-	struct nvkm_device *device = subdev->device;
-	const u32 base = subdev->inst * 0x80;
+व्योम
+gp100_ce_पूर्णांकr(काष्ठा nvkm_engine *ce)
+अणु
+	काष्ठा nvkm_subdev *subdev = &ce->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	स्थिर u32 base = subdev->inst * 0x80;
 	u32 mask = nvkm_rd32(device, 0x10440c + base);
-	u32 intr = nvkm_rd32(device, 0x104410 + base) & mask;
-	if (intr & 0x00000001) { //XXX: guess
+	u32 पूर्णांकr = nvkm_rd32(device, 0x104410 + base) & mask;
+	अगर (पूर्णांकr & 0x00000001) अणु //XXX: guess
 		nvkm_warn(subdev, "BLOCKPIPE\n");
 		nvkm_wr32(device, 0x104410 + base, 0x00000001);
-		intr &= ~0x00000001;
-	}
-	if (intr & 0x00000002) { //XXX: guess
+		पूर्णांकr &= ~0x00000001;
+	पूर्ण
+	अगर (पूर्णांकr & 0x00000002) अणु //XXX: guess
 		nvkm_warn(subdev, "NONBLOCKPIPE\n");
 		nvkm_wr32(device, 0x104410 + base, 0x00000002);
-		intr &= ~0x00000002;
-	}
-	if (intr & 0x00000004) {
-		gp100_ce_intr_launcherr(ce, base);
+		पूर्णांकr &= ~0x00000002;
+	पूर्ण
+	अगर (पूर्णांकr & 0x00000004) अणु
+		gp100_ce_पूर्णांकr_launcherr(ce, base);
 		nvkm_wr32(device, 0x104410 + base, 0x00000004);
-		intr &= ~0x00000004;
-	}
-	if (intr) {
-		nvkm_warn(subdev, "intr %08x\n", intr);
-		nvkm_wr32(device, 0x104410 + base, intr);
-	}
-}
+		पूर्णांकr &= ~0x00000004;
+	पूर्ण
+	अगर (पूर्णांकr) अणु
+		nvkm_warn(subdev, "intr %08x\n", पूर्णांकr);
+		nvkm_wr32(device, 0x104410 + base, पूर्णांकr);
+	पूर्ण
+पूर्ण
 
-static const struct nvkm_engine_func
-gp100_ce = {
-	.intr = gp100_ce_intr,
-	.sclass = {
-		{ -1, -1, PASCAL_DMA_COPY_A },
-		{}
-	}
-};
+अटल स्थिर काष्ठा nvkm_engine_func
+gp100_ce = अणु
+	.पूर्णांकr = gp100_ce_पूर्णांकr,
+	.sclass = अणु
+		अणु -1, -1, PASCAL_DMA_COPY_A पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gp100_ce_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	     struct nvkm_engine **pengine)
-{
-	return nvkm_engine_new_(&gp100_ce, device, type, inst, true, pengine);
-}
+पूर्णांक
+gp100_ce_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	     काष्ठा nvkm_engine **pengine)
+अणु
+	वापस nvkm_engine_new_(&gp100_ce, device, type, inst, true, pengine);
+पूर्ण

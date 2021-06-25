@@ -1,736 +1,737 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/ext2/balloc.c
  *
  * Copyright (C) 1992, 1993, 1994, 1995
  * Remy Card (card@masi.ibp.fr)
- * Laboratoire MASI - Institut Blaise Pascal
+ * Laborम_से_पre MASI - Institut Blaise Pascal
  * Universite Pierre et Marie Curie (Paris VI)
  *
  *  Enhanced block allocation by Stephen Tweedie (sct@redhat.com), 1993
- *  Big-endian to little-endian byte-swapping/bitmaps by
+ *  Big-endian to little-endian byte-swapping/biपंचांगaps by
  *        David S. Miller (davem@caip.rutgers.edu), 1995
  */
 
-#include "ext2.h"
-#include <linux/quotaops.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/buffer_head.h>
-#include <linux/capability.h>
+#समावेश "ext2.h"
+#समावेश <linux/quotaops.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/capability.h>
 
 /*
  * balloc.c contains the blocks allocation and deallocation routines
  */
 
 /*
- * The free blocks are managed by bitmaps.  A file system contains several
- * blocks groups.  Each group contains 1 bitmap block for blocks, 1 bitmap
- * block for inodes, N blocks for the inode table and data blocks.
+ * The मुक्त blocks are managed by biपंचांगaps.  A file प्रणाली contains several
+ * blocks groups.  Each group contains 1 biपंचांगap block क्रम blocks, 1 biपंचांगap
+ * block क्रम inodes, N blocks क्रम the inode table and data blocks.
  *
- * The file system contains group descriptors which are located after the
- * super block.  Each descriptor contains the number of the bitmap block and
- * the free blocks count in the block.  The descriptors are loaded in memory
- * when a file system is mounted (see ext2_fill_super).
+ * The file प्रणाली contains group descriptors which are located after the
+ * super block.  Each descriptor contains the number of the biपंचांगap block and
+ * the मुक्त blocks count in the block.  The descriptors are loaded in memory
+ * when a file प्रणाली is mounted (see ext2_fill_super).
  */
 
 
-#define in_range(b, first, len)	((b) >= (first) && (b) <= (first) + (len) - 1)
+#घोषणा in_range(b, first, len)	((b) >= (first) && (b) <= (first) + (len) - 1)
 
-struct ext2_group_desc * ext2_get_group_desc(struct super_block * sb,
-					     unsigned int block_group,
-					     struct buffer_head ** bh)
-{
-	unsigned long group_desc;
-	unsigned long offset;
-	struct ext2_group_desc * desc;
-	struct ext2_sb_info *sbi = EXT2_SB(sb);
+काष्ठा ext2_group_desc * ext2_get_group_desc(काष्ठा super_block * sb,
+					     अचिन्हित पूर्णांक block_group,
+					     काष्ठा buffer_head ** bh)
+अणु
+	अचिन्हित दीर्घ group_desc;
+	अचिन्हित दीर्घ offset;
+	काष्ठा ext2_group_desc * desc;
+	काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
 
-	if (block_group >= sbi->s_groups_count) {
+	अगर (block_group >= sbi->s_groups_count) अणु
 		ext2_error (sb, "ext2_get_group_desc",
 			    "block_group >= groups_count - "
 			    "block_group = %d, groups_count = %lu",
 			    block_group, sbi->s_groups_count);
 
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	group_desc = block_group >> EXT2_DESC_PER_BLOCK_BITS(sb);
 	offset = block_group & (EXT2_DESC_PER_BLOCK(sb) - 1);
-	if (!sbi->s_group_desc[group_desc]) {
+	अगर (!sbi->s_group_desc[group_desc]) अणु
 		ext2_error (sb, "ext2_get_group_desc",
 			    "Group descriptor not loaded - "
 			    "block_group = %d, group_desc = %lu, desc = %lu",
 			     block_group, group_desc, offset);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	desc = (struct ext2_group_desc *) sbi->s_group_desc[group_desc]->b_data;
-	if (bh)
+	desc = (काष्ठा ext2_group_desc *) sbi->s_group_desc[group_desc]->b_data;
+	अगर (bh)
 		*bh = sbi->s_group_desc[group_desc];
-	return desc + offset;
-}
+	वापस desc + offset;
+पूर्ण
 
-static int ext2_valid_block_bitmap(struct super_block *sb,
-					struct ext2_group_desc *desc,
-					unsigned int block_group,
-					struct buffer_head *bh)
-{
+अटल पूर्णांक ext2_valid_block_biपंचांगap(काष्ठा super_block *sb,
+					काष्ठा ext2_group_desc *desc,
+					अचिन्हित पूर्णांक block_group,
+					काष्ठा buffer_head *bh)
+अणु
 	ext2_grpblk_t offset;
 	ext2_grpblk_t next_zero_bit;
-	ext2_fsblk_t bitmap_blk;
+	ext2_fsblk_t biपंचांगap_blk;
 	ext2_fsblk_t group_first_block;
 
 	group_first_block = ext2_group_first_block_no(sb, block_group);
 
-	/* check whether block bitmap block number is set */
-	bitmap_blk = le32_to_cpu(desc->bg_block_bitmap);
-	offset = bitmap_blk - group_first_block;
-	if (!ext2_test_bit(offset, bh->b_data))
-		/* bad block bitmap */
-		goto err_out;
+	/* check whether block biपंचांगap block number is set */
+	biपंचांगap_blk = le32_to_cpu(desc->bg_block_biपंचांगap);
+	offset = biपंचांगap_blk - group_first_block;
+	अगर (!ext2_test_bit(offset, bh->b_data))
+		/* bad block biपंचांगap */
+		जाओ err_out;
 
-	/* check whether the inode bitmap block number is set */
-	bitmap_blk = le32_to_cpu(desc->bg_inode_bitmap);
-	offset = bitmap_blk - group_first_block;
-	if (!ext2_test_bit(offset, bh->b_data))
-		/* bad block bitmap */
-		goto err_out;
+	/* check whether the inode biपंचांगap block number is set */
+	biपंचांगap_blk = le32_to_cpu(desc->bg_inode_biपंचांगap);
+	offset = biपंचांगap_blk - group_first_block;
+	अगर (!ext2_test_bit(offset, bh->b_data))
+		/* bad block biपंचांगap */
+		जाओ err_out;
 
 	/* check whether the inode table block number is set */
-	bitmap_blk = le32_to_cpu(desc->bg_inode_table);
-	offset = bitmap_blk - group_first_block;
+	biपंचांगap_blk = le32_to_cpu(desc->bg_inode_table);
+	offset = biपंचांगap_blk - group_first_block;
 	next_zero_bit = ext2_find_next_zero_bit(bh->b_data,
 				offset + EXT2_SB(sb)->s_itb_per_group,
 				offset);
-	if (next_zero_bit >= offset + EXT2_SB(sb)->s_itb_per_group)
-		/* good bitmap for inode tables */
-		return 1;
+	अगर (next_zero_bit >= offset + EXT2_SB(sb)->s_itb_per_group)
+		/* good biपंचांगap क्रम inode tables */
+		वापस 1;
 
 err_out:
 	ext2_error(sb, __func__,
 			"Invalid block bitmap - "
 			"block_group = %d, block = %lu",
-			block_group, bitmap_blk);
-	return 0;
-}
+			block_group, biपंचांगap_blk);
+	वापस 0;
+पूर्ण
 
 /*
- * Read the bitmap for a given block_group,and validate the
- * bits for block/inode/inode tables are set in the bitmaps
+ * Read the biपंचांगap क्रम a given block_group,and validate the
+ * bits क्रम block/inode/inode tables are set in the biपंचांगaps
  *
- * Return buffer_head on success or NULL in case of failure.
+ * Return buffer_head on success or शून्य in हाल of failure.
  */
-static struct buffer_head *
-read_block_bitmap(struct super_block *sb, unsigned int block_group)
-{
-	struct ext2_group_desc * desc;
-	struct buffer_head * bh = NULL;
-	ext2_fsblk_t bitmap_blk;
+अटल काष्ठा buffer_head *
+पढ़ो_block_biपंचांगap(काष्ठा super_block *sb, अचिन्हित पूर्णांक block_group)
+अणु
+	काष्ठा ext2_group_desc * desc;
+	काष्ठा buffer_head * bh = शून्य;
+	ext2_fsblk_t biपंचांगap_blk;
 
-	desc = ext2_get_group_desc(sb, block_group, NULL);
-	if (!desc)
-		return NULL;
-	bitmap_blk = le32_to_cpu(desc->bg_block_bitmap);
-	bh = sb_getblk(sb, bitmap_blk);
-	if (unlikely(!bh)) {
+	desc = ext2_get_group_desc(sb, block_group, शून्य);
+	अगर (!desc)
+		वापस शून्य;
+	biपंचांगap_blk = le32_to_cpu(desc->bg_block_biपंचांगap);
+	bh = sb_getblk(sb, biपंचांगap_blk);
+	अगर (unlikely(!bh)) अणु
 		ext2_error(sb, __func__,
 			    "Cannot read block bitmap - "
 			    "block_group = %d, block_bitmap = %u",
-			    block_group, le32_to_cpu(desc->bg_block_bitmap));
-		return NULL;
-	}
-	if (likely(bh_uptodate_or_lock(bh)))
-		return bh;
+			    block_group, le32_to_cpu(desc->bg_block_biपंचांगap));
+		वापस शून्य;
+	पूर्ण
+	अगर (likely(bh_uptodate_or_lock(bh)))
+		वापस bh;
 
-	if (bh_submit_read(bh) < 0) {
-		brelse(bh);
+	अगर (bh_submit_पढ़ो(bh) < 0) अणु
+		brअन्यथा(bh);
 		ext2_error(sb, __func__,
 			    "Cannot read block bitmap - "
 			    "block_group = %d, block_bitmap = %u",
-			    block_group, le32_to_cpu(desc->bg_block_bitmap));
-		return NULL;
-	}
+			    block_group, le32_to_cpu(desc->bg_block_biपंचांगap));
+		वापस शून्य;
+	पूर्ण
 
-	ext2_valid_block_bitmap(sb, desc, block_group, bh);
+	ext2_valid_block_biपंचांगap(sb, desc, block_group, bh);
 	/*
-	 * file system mounted not to panic on error, continue with corrupt
-	 * bitmap
+	 * file प्रणाली mounted not to panic on error, जारी with corrupt
+	 * biपंचांगap
 	 */
-	return bh;
-}
+	वापस bh;
+पूर्ण
 
-static void group_adjust_blocks(struct super_block *sb, int group_no,
-	struct ext2_group_desc *desc, struct buffer_head *bh, int count)
-{
-	if (count) {
-		struct ext2_sb_info *sbi = EXT2_SB(sb);
-		unsigned free_blocks;
+अटल व्योम group_adjust_blocks(काष्ठा super_block *sb, पूर्णांक group_no,
+	काष्ठा ext2_group_desc *desc, काष्ठा buffer_head *bh, पूर्णांक count)
+अणु
+	अगर (count) अणु
+		काष्ठा ext2_sb_info *sbi = EXT2_SB(sb);
+		अचिन्हित मुक्त_blocks;
 
 		spin_lock(sb_bgl_lock(sbi, group_no));
-		free_blocks = le16_to_cpu(desc->bg_free_blocks_count);
-		desc->bg_free_blocks_count = cpu_to_le16(free_blocks + count);
+		मुक्त_blocks = le16_to_cpu(desc->bg_मुक्त_blocks_count);
+		desc->bg_मुक्त_blocks_count = cpu_to_le16(मुक्त_blocks + count);
 		spin_unlock(sb_bgl_lock(sbi, group_no));
 		mark_buffer_dirty(bh);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * The reservation window structure operations
+ * The reservation winकरोw काष्ठाure operations
  * --------------------------------------------
  * Operations include:
- * dump, find, add, remove, is_empty, find_next_reservable_window, etc.
+ * dump, find, add, हटाओ, is_empty, find_next_reservable_winकरोw, etc.
  *
- * We use a red-black tree to represent per-filesystem reservation
- * windows.
+ * We use a red-black tree to represent per-fileप्रणाली reservation
+ * winकरोws.
  *
  */
 
 /**
- * __rsv_window_dump() -- Dump the filesystem block allocation reservation map
- * @root:		root of per-filesystem reservation rb tree
+ * __rsv_winकरोw_dump() -- Dump the fileप्रणाली block allocation reservation map
+ * @root:		root of per-fileप्रणाली reservation rb tree
  * @verbose:		verbose mode
  * @fn:			function which wishes to dump the reservation map
  *
- * If verbose is turned on, it will print the whole block reservation
- * windows(start, end). Otherwise, it will only print out the "bad" windows,
- * those windows that overlap with their immediate neighbors.
+ * If verbose is turned on, it will prपूर्णांक the whole block reservation
+ * winकरोws(start, end). Otherwise, it will only prपूर्णांक out the "bad" winकरोws,
+ * those winकरोws that overlap with their immediate neighbors.
  */
-#if 1
-static void __rsv_window_dump(struct rb_root *root, int verbose,
-			      const char *fn)
-{
-	struct rb_node *n;
-	struct ext2_reserve_window_node *rsv, *prev;
-	int bad;
+#अगर 1
+अटल व्योम __rsv_winकरोw_dump(काष्ठा rb_root *root, पूर्णांक verbose,
+			      स्थिर अक्षर *fn)
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा ext2_reserve_winकरोw_node *rsv, *prev;
+	पूर्णांक bad;
 
 restart:
 	n = rb_first(root);
 	bad = 0;
-	prev = NULL;
+	prev = शून्य;
 
-	printk("Block Allocation Reservation Windows Map (%s):\n", fn);
-	while (n) {
-		rsv = rb_entry(n, struct ext2_reserve_window_node, rsv_node);
-		if (verbose)
-			printk("reservation window 0x%p "
+	prपूर्णांकk("Block Allocation Reservation Windows Map (%s):\n", fn);
+	जबतक (n) अणु
+		rsv = rb_entry(n, काष्ठा ext2_reserve_winकरोw_node, rsv_node);
+		अगर (verbose)
+			prपूर्णांकk("reservation window 0x%p "
 				"start: %lu, end: %lu\n",
 				rsv, rsv->rsv_start, rsv->rsv_end);
-		if (rsv->rsv_start && rsv->rsv_start >= rsv->rsv_end) {
-			printk("Bad reservation %p (start >= end)\n",
+		अगर (rsv->rsv_start && rsv->rsv_start >= rsv->rsv_end) अणु
+			prपूर्णांकk("Bad reservation %p (start >= end)\n",
 			       rsv);
 			bad = 1;
-		}
-		if (prev && prev->rsv_end >= rsv->rsv_start) {
-			printk("Bad reservation %p (prev->end >= start)\n",
+		पूर्ण
+		अगर (prev && prev->rsv_end >= rsv->rsv_start) अणु
+			prपूर्णांकk("Bad reservation %p (prev->end >= start)\n",
 			       rsv);
 			bad = 1;
-		}
-		if (bad) {
-			if (!verbose) {
-				printk("Restarting reservation walk in verbose mode\n");
+		पूर्ण
+		अगर (bad) अणु
+			अगर (!verbose) अणु
+				prपूर्णांकk("Restarting reservation walk in verbose mode\n");
 				verbose = 1;
-				goto restart;
-			}
-		}
+				जाओ restart;
+			पूर्ण
+		पूर्ण
 		n = rb_next(n);
 		prev = rsv;
-	}
-	printk("Window map complete.\n");
+	पूर्ण
+	prपूर्णांकk("Window map complete.\n");
 	BUG_ON(bad);
-}
-#define rsv_window_dump(root, verbose) \
-	__rsv_window_dump((root), (verbose), __func__)
-#else
-#define rsv_window_dump(root, verbose) do {} while (0)
-#endif
+पूर्ण
+#घोषणा rsv_winकरोw_dump(root, verbose) \
+	__rsv_winकरोw_dump((root), (verbose), __func__)
+#अन्यथा
+#घोषणा rsv_winकरोw_dump(root, verbose) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /**
  * goal_in_my_reservation()
- * @rsv:		inode's reservation window
+ * @rsv:		inode's reservation winकरोw
  * @grp_goal:		given goal block relative to the allocation block group
  * @group:		the current allocation block group
- * @sb:			filesystem super block
+ * @sb:			fileप्रणाली super block
  *
- * Test if the given goal block (group relative) is within the file's
- * own block reservation window range.
+ * Test अगर the given goal block (group relative) is within the file's
+ * own block reservation winकरोw range.
  *
- * If the reservation window is outside the goal allocation group, return 0;
- * grp_goal (given goal block) could be -1, which means no specific
- * goal block. In this case, always return 1.
- * If the goal block is within the reservation window, return 1;
- * otherwise, return 0;
+ * If the reservation winकरोw is outside the goal allocation group, वापस 0;
+ * grp_goal (given goal block) could be -1, which means no specअगरic
+ * goal block. In this हाल, always वापस 1.
+ * If the goal block is within the reservation winकरोw, वापस 1;
+ * otherwise, वापस 0;
  */
-static int
-goal_in_my_reservation(struct ext2_reserve_window *rsv, ext2_grpblk_t grp_goal,
-			unsigned int group, struct super_block * sb)
-{
+अटल पूर्णांक
+goal_in_my_reservation(काष्ठा ext2_reserve_winकरोw *rsv, ext2_grpblk_t grp_goal,
+			अचिन्हित पूर्णांक group, काष्ठा super_block * sb)
+अणु
 	ext2_fsblk_t group_first_block, group_last_block;
 
 	group_first_block = ext2_group_first_block_no(sb, group);
 	group_last_block = ext2_group_last_block_no(sb, group);
 
-	if ((rsv->_rsv_start > group_last_block) ||
+	अगर ((rsv->_rsv_start > group_last_block) ||
 	    (rsv->_rsv_end < group_first_block))
-		return 0;
-	if ((grp_goal >= 0) && ((grp_goal + group_first_block < rsv->_rsv_start)
+		वापस 0;
+	अगर ((grp_goal >= 0) && ((grp_goal + group_first_block < rsv->_rsv_start)
 		|| (grp_goal + group_first_block > rsv->_rsv_end)))
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
- * search_reserve_window()
+ * search_reserve_winकरोw()
  * @root:		root of reservation tree
  * @goal:		target allocation block
  *
- * Find the reserved window which includes the goal, or the previous one
- * if the goal is not in any window.
- * Returns NULL if there are no windows or if all windows start after the goal.
+ * Find the reserved winकरोw which includes the goal, or the previous one
+ * अगर the goal is not in any winकरोw.
+ * Returns शून्य अगर there are no winकरोws or अगर all winकरोws start after the goal.
  */
-static struct ext2_reserve_window_node *
-search_reserve_window(struct rb_root *root, ext2_fsblk_t goal)
-{
-	struct rb_node *n = root->rb_node;
-	struct ext2_reserve_window_node *rsv;
+अटल काष्ठा ext2_reserve_winकरोw_node *
+search_reserve_winकरोw(काष्ठा rb_root *root, ext2_fsblk_t goal)
+अणु
+	काष्ठा rb_node *n = root->rb_node;
+	काष्ठा ext2_reserve_winकरोw_node *rsv;
 
-	if (!n)
-		return NULL;
+	अगर (!n)
+		वापस शून्य;
 
-	do {
-		rsv = rb_entry(n, struct ext2_reserve_window_node, rsv_node);
+	करो अणु
+		rsv = rb_entry(n, काष्ठा ext2_reserve_winकरोw_node, rsv_node);
 
-		if (goal < rsv->rsv_start)
+		अगर (goal < rsv->rsv_start)
 			n = n->rb_left;
-		else if (goal > rsv->rsv_end)
+		अन्यथा अगर (goal > rsv->rsv_end)
 			n = n->rb_right;
-		else
-			return rsv;
-	} while (n);
+		अन्यथा
+			वापस rsv;
+	पूर्ण जबतक (n);
 	/*
 	 * We've fallen off the end of the tree: the goal wasn't inside
 	 * any particular node.  OK, the previous node must be to one
-	 * side of the interval containing the goal.  If it's the RHS,
+	 * side of the पूर्णांकerval containing the goal.  If it's the RHS,
 	 * we need to back up one.
 	 */
-	if (rsv->rsv_start > goal) {
+	अगर (rsv->rsv_start > goal) अणु
 		n = rb_prev(&rsv->rsv_node);
-		rsv = rb_entry(n, struct ext2_reserve_window_node, rsv_node);
-	}
-	return rsv;
-}
+		rsv = rb_entry(n, काष्ठा ext2_reserve_winकरोw_node, rsv_node);
+	पूर्ण
+	वापस rsv;
+पूर्ण
 
 /*
- * ext2_rsv_window_add() -- Insert a window to the block reservation rb tree.
+ * ext2_rsv_winकरोw_add() -- Insert a winकरोw to the block reservation rb tree.
  * @sb:			super block
- * @rsv:		reservation window to add
+ * @rsv:		reservation winकरोw to add
  *
  * Must be called with rsv_lock held.
  */
-void ext2_rsv_window_add(struct super_block *sb,
-		    struct ext2_reserve_window_node *rsv)
-{
-	struct rb_root *root = &EXT2_SB(sb)->s_rsv_window_root;
-	struct rb_node *node = &rsv->rsv_node;
+व्योम ext2_rsv_winकरोw_add(काष्ठा super_block *sb,
+		    काष्ठा ext2_reserve_winकरोw_node *rsv)
+अणु
+	काष्ठा rb_root *root = &EXT2_SB(sb)->s_rsv_winकरोw_root;
+	काष्ठा rb_node *node = &rsv->rsv_node;
 	ext2_fsblk_t start = rsv->rsv_start;
 
-	struct rb_node ** p = &root->rb_node;
-	struct rb_node * parent = NULL;
-	struct ext2_reserve_window_node *this;
+	काष्ठा rb_node ** p = &root->rb_node;
+	काष्ठा rb_node * parent = शून्य;
+	काष्ठा ext2_reserve_winकरोw_node *this;
 
-	while (*p)
-	{
+	जबतक (*p)
+	अणु
 		parent = *p;
-		this = rb_entry(parent, struct ext2_reserve_window_node, rsv_node);
+		this = rb_entry(parent, काष्ठा ext2_reserve_winकरोw_node, rsv_node);
 
-		if (start < this->rsv_start)
+		अगर (start < this->rsv_start)
 			p = &(*p)->rb_left;
-		else if (start > this->rsv_end)
+		अन्यथा अगर (start > this->rsv_end)
 			p = &(*p)->rb_right;
-		else {
-			rsv_window_dump(root, 1);
+		अन्यथा अणु
+			rsv_winकरोw_dump(root, 1);
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rb_link_node(node, parent, p);
 	rb_insert_color(node, root);
-}
+पूर्ण
 
 /**
- * rsv_window_remove() -- unlink a window from the reservation rb tree
+ * rsv_winकरोw_हटाओ() -- unlink a winकरोw from the reservation rb tree
  * @sb:			super block
- * @rsv:		reservation window to remove
+ * @rsv:		reservation winकरोw to हटाओ
  *
- * Mark the block reservation window as not allocated, and unlink it
- * from the filesystem reservation window rb tree. Must be called with
+ * Mark the block reservation winकरोw as not allocated, and unlink it
+ * from the fileप्रणाली reservation winकरोw rb tree. Must be called with
  * rsv_lock held.
  */
-static void rsv_window_remove(struct super_block *sb,
-			      struct ext2_reserve_window_node *rsv)
-{
+अटल व्योम rsv_winकरोw_हटाओ(काष्ठा super_block *sb,
+			      काष्ठा ext2_reserve_winकरोw_node *rsv)
+अणु
 	rsv->rsv_start = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
 	rsv->rsv_end = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
 	rsv->rsv_alloc_hit = 0;
-	rb_erase(&rsv->rsv_node, &EXT2_SB(sb)->s_rsv_window_root);
-}
+	rb_erase(&rsv->rsv_node, &EXT2_SB(sb)->s_rsv_winकरोw_root);
+पूर्ण
 
 /*
- * rsv_is_empty() -- Check if the reservation window is allocated.
- * @rsv:		given reservation window to check
+ * rsv_is_empty() -- Check अगर the reservation winकरोw is allocated.
+ * @rsv:		given reservation winकरोw to check
  *
- * returns 1 if the end block is EXT2_RESERVE_WINDOW_NOT_ALLOCATED.
+ * वापसs 1 अगर the end block is EXT2_RESERVE_WINDOW_NOT_ALLOCATED.
  */
-static inline int rsv_is_empty(struct ext2_reserve_window *rsv)
-{
+अटल अंतरभूत पूर्णांक rsv_is_empty(काष्ठा ext2_reserve_winकरोw *rsv)
+अणु
 	/* a valid reservation end block could not be 0 */
-	return (rsv->_rsv_end == EXT2_RESERVE_WINDOW_NOT_ALLOCATED);
-}
+	वापस (rsv->_rsv_end == EXT2_RESERVE_WINDOW_NOT_ALLOCATED);
+पूर्ण
 
 /**
  * ext2_init_block_alloc_info()
- * @inode:		file inode structure
+ * @inode:		file inode काष्ठाure
  *
- * Allocate and initialize the  reservation window structure, and
- * link the window to the ext2 inode structure at last
+ * Allocate and initialize the  reservation winकरोw काष्ठाure, and
+ * link the winकरोw to the ext2 inode काष्ठाure at last
  *
- * The reservation window structure is only dynamically allocated
- * and linked to ext2 inode the first time the open file
- * needs a new block. So, before every ext2_new_block(s) call, for
- * regular files, we should check whether the reservation window
- * structure exists or not. In the latter case, this function is called.
- * Fail to do so will result in block reservation being turned off for that
- * open file.
+ * The reservation winकरोw काष्ठाure is only dynamically allocated
+ * and linked to ext2 inode the first समय the खोलो file
+ * needs a new block. So, beक्रमe every ext2_new_block(s) call, क्रम
+ * regular files, we should check whether the reservation winकरोw
+ * काष्ठाure exists or not. In the latter हाल, this function is called.
+ * Fail to करो so will result in block reservation being turned off क्रम that
+ * खोलो file.
  *
  * This function is called from ext2_get_blocks_handle(), also called
- * when setting the reservation window size through ioctl before the file
- * is open for write (needs block allocation).
+ * when setting the reservation winकरोw size through ioctl beक्रमe the file
+ * is खोलो क्रम ग_लिखो (needs block allocation).
  *
  * Needs truncate_mutex protection prior to calling this function.
  */
-void ext2_init_block_alloc_info(struct inode *inode)
-{
-	struct ext2_inode_info *ei = EXT2_I(inode);
-	struct ext2_block_alloc_info *block_i;
-	struct super_block *sb = inode->i_sb;
+व्योम ext2_init_block_alloc_info(काष्ठा inode *inode)
+अणु
+	काष्ठा ext2_inode_info *ei = EXT2_I(inode);
+	काष्ठा ext2_block_alloc_info *block_i;
+	काष्ठा super_block *sb = inode->i_sb;
 
-	block_i = kmalloc(sizeof(*block_i), GFP_NOFS);
-	if (block_i) {
-		struct ext2_reserve_window_node *rsv = &block_i->rsv_window_node;
+	block_i = kदो_स्मृति(माप(*block_i), GFP_NOFS);
+	अगर (block_i) अणु
+		काष्ठा ext2_reserve_winकरोw_node *rsv = &block_i->rsv_winकरोw_node;
 
 		rsv->rsv_start = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
 		rsv->rsv_end = EXT2_RESERVE_WINDOW_NOT_ALLOCATED;
 
 	 	/*
-		 * if filesystem is mounted with NORESERVATION, the goal
-		 * reservation window size is set to zero to indicate
+		 * अगर fileप्रणाली is mounted with NORESERVATION, the goal
+		 * reservation winकरोw size is set to zero to indicate
 		 * block reservation is off
 		 */
-		if (!test_opt(sb, RESERVATION))
+		अगर (!test_opt(sb, RESERVATION))
 			rsv->rsv_goal_size = 0;
-		else
+		अन्यथा
 			rsv->rsv_goal_size = EXT2_DEFAULT_RESERVE_BLOCKS;
 		rsv->rsv_alloc_hit = 0;
 		block_i->last_alloc_logical_block = 0;
 		block_i->last_alloc_physical_block = 0;
-	}
+	पूर्ण
 	ei->i_block_alloc_info = block_i;
-}
+पूर्ण
 
 /**
  * ext2_discard_reservation()
  * @inode:		inode
  *
- * Discard(free) block reservation window on last file close, or truncate
+ * Discard(मुक्त) block reservation winकरोw on last file बंद, or truncate
  * or at last iput().
  *
- * It is being called in three cases:
- * 	ext2_release_file(): last writer closes the file
+ * It is being called in three हालs:
+ * 	ext2_release_file(): last ग_लिखोr बंदs the file
  * 	ext2_clear_inode(): last iput(), when nobody links to this file.
  * 	ext2_truncate(): when the block indirect map is about to change.
  */
-void ext2_discard_reservation(struct inode *inode)
-{
-	struct ext2_inode_info *ei = EXT2_I(inode);
-	struct ext2_block_alloc_info *block_i = ei->i_block_alloc_info;
-	struct ext2_reserve_window_node *rsv;
-	spinlock_t *rsv_lock = &EXT2_SB(inode->i_sb)->s_rsv_window_lock;
+व्योम ext2_discard_reservation(काष्ठा inode *inode)
+अणु
+	काष्ठा ext2_inode_info *ei = EXT2_I(inode);
+	काष्ठा ext2_block_alloc_info *block_i = ei->i_block_alloc_info;
+	काष्ठा ext2_reserve_winकरोw_node *rsv;
+	spinlock_t *rsv_lock = &EXT2_SB(inode->i_sb)->s_rsv_winकरोw_lock;
 
-	if (!block_i)
-		return;
+	अगर (!block_i)
+		वापस;
 
-	rsv = &block_i->rsv_window_node;
-	if (!rsv_is_empty(&rsv->rsv_window)) {
+	rsv = &block_i->rsv_winकरोw_node;
+	अगर (!rsv_is_empty(&rsv->rsv_winकरोw)) अणु
 		spin_lock(rsv_lock);
-		if (!rsv_is_empty(&rsv->rsv_window))
-			rsv_window_remove(inode->i_sb, rsv);
+		अगर (!rsv_is_empty(&rsv->rsv_winकरोw))
+			rsv_winकरोw_हटाओ(inode->i_sb, rsv);
 		spin_unlock(rsv_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * ext2_free_blocks() -- Free given blocks and update quota and i_blocks
+ * ext2_मुक्त_blocks() -- Free given blocks and update quota and i_blocks
  * @inode:		inode
- * @block:		start physical block to free
- * @count:		number of blocks to free
+ * @block:		start physical block to मुक्त
+ * @count:		number of blocks to मुक्त
  */
-void ext2_free_blocks (struct inode * inode, unsigned long block,
-		       unsigned long count)
-{
-	struct buffer_head *bitmap_bh = NULL;
-	struct buffer_head * bh2;
-	unsigned long block_group;
-	unsigned long bit;
-	unsigned long i;
-	unsigned long overflow;
-	struct super_block * sb = inode->i_sb;
-	struct ext2_sb_info * sbi = EXT2_SB(sb);
-	struct ext2_group_desc * desc;
-	struct ext2_super_block * es = sbi->s_es;
-	unsigned freed = 0, group_freed;
+व्योम ext2_मुक्त_blocks (काष्ठा inode * inode, अचिन्हित दीर्घ block,
+		       अचिन्हित दीर्घ count)
+अणु
+	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
+	काष्ठा buffer_head * bh2;
+	अचिन्हित दीर्घ block_group;
+	अचिन्हित दीर्घ bit;
+	अचिन्हित दीर्घ i;
+	अचिन्हित दीर्घ overflow;
+	काष्ठा super_block * sb = inode->i_sb;
+	काष्ठा ext2_sb_info * sbi = EXT2_SB(sb);
+	काष्ठा ext2_group_desc * desc;
+	काष्ठा ext2_super_block * es = sbi->s_es;
+	अचिन्हित मुक्तd = 0, group_मुक्तd;
 
-	if (!ext2_data_block_valid(sbi, block, count)) {
+	अगर (!ext2_data_block_valid(sbi, block, count)) अणु
 		ext2_error (sb, "ext2_free_blocks",
 			    "Freeing blocks not in datazone - "
 			    "block = %lu, count = %lu", block, count);
-		goto error_return;
-	}
+		जाओ error_वापस;
+	पूर्ण
 
 	ext2_debug ("freeing block(s) %lu-%lu\n", block, block + count - 1);
 
-do_more:
+करो_more:
 	overflow = 0;
 	block_group = (block - le32_to_cpu(es->s_first_data_block)) /
 		      EXT2_BLOCKS_PER_GROUP(sb);
 	bit = (block - le32_to_cpu(es->s_first_data_block)) %
 		      EXT2_BLOCKS_PER_GROUP(sb);
 	/*
-	 * Check to see if we are freeing blocks across a group
+	 * Check to see अगर we are मुक्तing blocks across a group
 	 * boundary.
 	 */
-	if (bit + count > EXT2_BLOCKS_PER_GROUP(sb)) {
+	अगर (bit + count > EXT2_BLOCKS_PER_GROUP(sb)) अणु
 		overflow = bit + count - EXT2_BLOCKS_PER_GROUP(sb);
 		count -= overflow;
-	}
-	brelse(bitmap_bh);
-	bitmap_bh = read_block_bitmap(sb, block_group);
-	if (!bitmap_bh)
-		goto error_return;
+	पूर्ण
+	brअन्यथा(biपंचांगap_bh);
+	biपंचांगap_bh = पढ़ो_block_biपंचांगap(sb, block_group);
+	अगर (!biपंचांगap_bh)
+		जाओ error_वापस;
 
 	desc = ext2_get_group_desc (sb, block_group, &bh2);
-	if (!desc)
-		goto error_return;
+	अगर (!desc)
+		जाओ error_वापस;
 
-	if (in_range (le32_to_cpu(desc->bg_block_bitmap), block, count) ||
-	    in_range (le32_to_cpu(desc->bg_inode_bitmap), block, count) ||
+	अगर (in_range (le32_to_cpu(desc->bg_block_biपंचांगap), block, count) ||
+	    in_range (le32_to_cpu(desc->bg_inode_biपंचांगap), block, count) ||
 	    in_range (block, le32_to_cpu(desc->bg_inode_table),
 		      sbi->s_itb_per_group) ||
 	    in_range (block + count - 1, le32_to_cpu(desc->bg_inode_table),
-		      sbi->s_itb_per_group)) {
+		      sbi->s_itb_per_group)) अणु
 		ext2_error (sb, "ext2_free_blocks",
 			    "Freeing blocks in system zones - "
 			    "Block = %lu, count = %lu",
 			    block, count);
-		goto error_return;
-	}
+		जाओ error_वापस;
+	पूर्ण
 
-	for (i = 0, group_freed = 0; i < count; i++) {
-		if (!ext2_clear_bit_atomic(sb_bgl_lock(sbi, block_group),
-						bit + i, bitmap_bh->b_data)) {
+	क्रम (i = 0, group_मुक्तd = 0; i < count; i++) अणु
+		अगर (!ext2_clear_bit_atomic(sb_bgl_lock(sbi, block_group),
+						bit + i, biपंचांगap_bh->b_data)) अणु
 			ext2_error(sb, __func__,
 				"bit already cleared for block %lu", block + i);
-		} else {
-			group_freed++;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			group_मुक्तd++;
+		पूर्ण
+	पूर्ण
 
-	mark_buffer_dirty(bitmap_bh);
-	if (sb->s_flags & SB_SYNCHRONOUS)
-		sync_dirty_buffer(bitmap_bh);
+	mark_buffer_dirty(biपंचांगap_bh);
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
+		sync_dirty_buffer(biपंचांगap_bh);
 
-	group_adjust_blocks(sb, block_group, desc, bh2, group_freed);
-	freed += group_freed;
+	group_adjust_blocks(sb, block_group, desc, bh2, group_मुक्तd);
+	मुक्तd += group_मुक्तd;
 
-	if (overflow) {
+	अगर (overflow) अणु
 		block += count;
 		count = overflow;
-		goto do_more;
-	}
-error_return:
-	brelse(bitmap_bh);
-	if (freed) {
-		percpu_counter_add(&sbi->s_freeblocks_counter, freed);
-		dquot_free_block_nodirty(inode, freed);
+		जाओ करो_more;
+	पूर्ण
+error_वापस:
+	brअन्यथा(biपंचांगap_bh);
+	अगर (मुक्तd) अणु
+		percpu_counter_add(&sbi->s_मुक्तblocks_counter, मुक्तd);
+		dquot_मुक्त_block_nodirty(inode, मुक्तd);
 		mark_inode_dirty(inode);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * bitmap_search_next_usable_block()
+ * biपंचांगap_search_next_usable_block()
  * @start:		the starting block (group relative) of the search
- * @bh:			bufferhead contains the block group bitmap
+ * @bh:			bufferhead contains the block group biपंचांगap
  * @maxblocks:		the ending block (group relative) of the reservation
  *
- * The bitmap search --- search forward through the actual bitmap on disk until
- * we find a bit free.
+ * The biपंचांगap search --- search क्रमward through the actual biपंचांगap on disk until
+ * we find a bit मुक्त.
  */
-static ext2_grpblk_t
-bitmap_search_next_usable_block(ext2_grpblk_t start, struct buffer_head *bh,
+अटल ext2_grpblk_t
+biपंचांगap_search_next_usable_block(ext2_grpblk_t start, काष्ठा buffer_head *bh,
 					ext2_grpblk_t maxblocks)
-{
+अणु
 	ext2_grpblk_t next;
 
 	next = ext2_find_next_zero_bit(bh->b_data, maxblocks, start);
-	if (next >= maxblocks)
-		return -1;
-	return next;
-}
+	अगर (next >= maxblocks)
+		वापस -1;
+	वापस next;
+पूर्ण
 
 /**
  * find_next_usable_block()
  * @start:		the starting block (group relative) to find next
- * 			allocatable block in bitmap.
- * @bh:			bufferhead contains the block group bitmap
- * @maxblocks:		the ending block (group relative) for the search
+ * 			allocatable block in biपंचांगap.
+ * @bh:			bufferhead contains the block group biपंचांगap
+ * @maxblocks:		the ending block (group relative) क्रम the search
  *
- * Find an allocatable block in a bitmap.  We perform the "most
- * appropriate allocation" algorithm of looking for a free block near
- * the initial goal; then for a free byte somewhere in the bitmap;
- * then for any free bit in the bitmap.
+ * Find an allocatable block in a biपंचांगap.  We perक्रमm the "most
+ * appropriate allocation" algorithm of looking क्रम a मुक्त block near
+ * the initial goal; then क्रम a मुक्त byte somewhere in the biपंचांगap;
+ * then क्रम any मुक्त bit in the biपंचांगap.
  */
-static ext2_grpblk_t
-find_next_usable_block(int start, struct buffer_head *bh, int maxblocks)
-{
+अटल ext2_grpblk_t
+find_next_usable_block(पूर्णांक start, काष्ठा buffer_head *bh, पूर्णांक maxblocks)
+अणु
 	ext2_grpblk_t here, next;
-	char *p, *r;
+	अक्षर *p, *r;
 
-	if (start > 0) {
+	अगर (start > 0) अणु
 		/*
-		 * The goal was occupied; search forward for a free 
+		 * The goal was occupied; search क्रमward क्रम a मुक्त 
 		 * block within the next XX blocks.
 		 *
-		 * end_goal is more or less random, but it has to be
+		 * end_goal is more or less अक्रमom, but it has to be
 		 * less than EXT2_BLOCKS_PER_GROUP. Aligning up to the
 		 * next 64-bit boundary is simple..
 		 */
 		ext2_grpblk_t end_goal = (start + 63) & ~63;
-		if (end_goal > maxblocks)
+		अगर (end_goal > maxblocks)
 			end_goal = maxblocks;
 		here = ext2_find_next_zero_bit(bh->b_data, end_goal, start);
-		if (here < end_goal)
-			return here;
+		अगर (here < end_goal)
+			वापस here;
 		ext2_debug("Bit not found near goal\n");
-	}
+	पूर्ण
 
 	here = start;
-	if (here < 0)
+	अगर (here < 0)
 		here = 0;
 
-	p = ((char *)bh->b_data) + (here >> 3);
+	p = ((अक्षर *)bh->b_data) + (here >> 3);
 	r = memscan(p, 0, ((maxblocks + 7) >> 3) - (here >> 3));
-	next = (r - ((char *)bh->b_data)) << 3;
+	next = (r - ((अक्षर *)bh->b_data)) << 3;
 
-	if (next < maxblocks && next >= here)
-		return next;
+	अगर (next < maxblocks && next >= here)
+		वापस next;
 
-	here = bitmap_search_next_usable_block(here, bh, maxblocks);
-	return here;
-}
+	here = biपंचांगap_search_next_usable_block(here, bh, maxblocks);
+	वापस here;
+पूर्ण
 
 /**
  * ext2_try_to_allocate()
  * @sb:			superblock
  * @group:		given allocation block group
- * @bitmap_bh:		bufferhead holds the block bitmap
+ * @biपंचांगap_bh:		bufferhead holds the block biपंचांगap
  * @grp_goal:		given target block within the group
  * @count:		target number of blocks to allocate
- * @my_rsv:		reservation window
+ * @my_rsv:		reservation winकरोw
  *
  * Attempt to allocate blocks within a give range. Set the range of allocation
- * first, then find the first free bit(s) from the bitmap (within the range),
- * and at last, allocate the blocks by claiming the found free bit as allocated.
+ * first, then find the first मुक्त bit(s) from the biपंचांगap (within the range),
+ * and at last, allocate the blocks by claiming the found मुक्त bit as allocated.
  *
  * To set the range of this allocation:
- * 	if there is a reservation window, only try to allocate block(s)
- * 	from the file's own reservation window;
+ * 	अगर there is a reservation winकरोw, only try to allocate block(s)
+ * 	from the file's own reservation winकरोw;
  * 	Otherwise, the allocation range starts from the give goal block,
  * 	ends at the block group's last block.
  *
  * If we failed to allocate the desired block then we may end up crossing to a
- * new bitmap.
+ * new biपंचांगap.
  */
-static int
-ext2_try_to_allocate(struct super_block *sb, int group,
-			struct buffer_head *bitmap_bh, ext2_grpblk_t grp_goal,
-			unsigned long *count,
-			struct ext2_reserve_window *my_rsv)
-{
+अटल पूर्णांक
+ext2_try_to_allocate(काष्ठा super_block *sb, पूर्णांक group,
+			काष्ठा buffer_head *biपंचांगap_bh, ext2_grpblk_t grp_goal,
+			अचिन्हित दीर्घ *count,
+			काष्ठा ext2_reserve_winकरोw *my_rsv)
+अणु
 	ext2_fsblk_t group_first_block = ext2_group_first_block_no(sb, group);
 	ext2_fsblk_t group_last_block = ext2_group_last_block_no(sb, group);
        	ext2_grpblk_t start, end;
-	unsigned long num = 0;
+	अचिन्हित दीर्घ num = 0;
 
 	start = 0;
 	end = group_last_block - group_first_block + 1;
-	/* we do allocation within the reservation window if we have a window */
-	if (my_rsv) {
-		if (my_rsv->_rsv_start >= group_first_block)
+	/* we करो allocation within the reservation winकरोw अगर we have a winकरोw */
+	अगर (my_rsv) अणु
+		अगर (my_rsv->_rsv_start >= group_first_block)
 			start = my_rsv->_rsv_start - group_first_block;
-		if (my_rsv->_rsv_end < group_last_block)
+		अगर (my_rsv->_rsv_end < group_last_block)
 			end = my_rsv->_rsv_end - group_first_block + 1;
-		if (grp_goal < start || grp_goal >= end)
+		अगर (grp_goal < start || grp_goal >= end)
 			grp_goal = -1;
-	}
+	पूर्ण
 	BUG_ON(start > EXT2_BLOCKS_PER_GROUP(sb));
 
-	if (grp_goal < 0) {
-		grp_goal = find_next_usable_block(start, bitmap_bh, end);
-		if (grp_goal < 0)
-			goto fail_access;
-		if (!my_rsv) {
-			int i;
+	अगर (grp_goal < 0) अणु
+		grp_goal = find_next_usable_block(start, biपंचांगap_bh, end);
+		अगर (grp_goal < 0)
+			जाओ fail_access;
+		अगर (!my_rsv) अणु
+			पूर्णांक i;
 
-			for (i = 0; i < 7 && grp_goal > start &&
+			क्रम (i = 0; i < 7 && grp_goal > start &&
 					!ext2_test_bit(grp_goal - 1,
-					     		bitmap_bh->b_data);
+					     		biपंचांगap_bh->b_data);
 			     		i++, grp_goal--)
 				;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (; num < *count && grp_goal < end; grp_goal++) {
-		if (ext2_set_bit_atomic(sb_bgl_lock(EXT2_SB(sb), group),
-					grp_goal, bitmap_bh->b_data)) {
-			if (num == 0)
-				continue;
-			break;
-		}
+	क्रम (; num < *count && grp_goal < end; grp_goal++) अणु
+		अगर (ext2_set_bit_atomic(sb_bgl_lock(EXT2_SB(sb), group),
+					grp_goal, biपंचांगap_bh->b_data)) अणु
+			अगर (num == 0)
+				जारी;
+			अवरोध;
+		पूर्ण
 		num++;
-	}
+	पूर्ण
 
-	if (num == 0)
-		goto fail_access;
+	अगर (num == 0)
+		जाओ fail_access;
 
 	*count = num;
-	return grp_goal - num;
+	वापस grp_goal - num;
 fail_access:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
- * 	find_next_reservable_window():
+ * 	find_next_reservable_winकरोw():
  *		find a reservable space within the given range.
- *		It does not allocate the reservation window for now:
- *		alloc_new_reservation() will do the work later.
+ *		It करोes not allocate the reservation winकरोw क्रम now:
+ *		alloc_new_reservation() will करो the work later.
  *
  * 	@search_head: the head of the searching list;
- *		This is not necessarily the list head of the whole filesystem
+ *		This is not necessarily the list head of the whole fileप्रणाली
  *
  *		We have both head and start_block to assist the search
- *		for the reservable space. The list starts from head,
- *		but we will shift to the place where start_block is,
- *		then start from there, when looking for a reservable space.
+ *		क्रम the reservable space. The list starts from head,
+ *		but we will shअगरt to the place where start_block is,
+ *		then start from there, when looking क्रम a reservable space.
  *
  *	@sb: the super block.
  *
@@ -741,69 +742,69 @@ fail_access:
  *		could start from. This is normally the last block in this
  *		group. The search will end when we found the start of next
  *		possible reservable space is out of this boundary.
- *		This could handle the cross boundary reservation window
+ *		This could handle the cross boundary reservation winकरोw
  *		request.
  *
  * 	basically we search from the given range, rather than the whole
- * 	reservation double linked list, (start_block, last_block)
- * 	to find a free region that is of my size and has not
+ * 	reservation द्विगुन linked list, (start_block, last_block)
+ * 	to find a मुक्त region that is of my size and has not
  * 	been reserved.
  *
  */
-static int find_next_reservable_window(
-				struct ext2_reserve_window_node *search_head,
-				struct ext2_reserve_window_node *my_rsv,
-				struct super_block * sb,
+अटल पूर्णांक find_next_reservable_winकरोw(
+				काष्ठा ext2_reserve_winकरोw_node *search_head,
+				काष्ठा ext2_reserve_winकरोw_node *my_rsv,
+				काष्ठा super_block * sb,
 				ext2_fsblk_t start_block,
 				ext2_fsblk_t last_block)
-{
-	struct rb_node *next;
-	struct ext2_reserve_window_node *rsv, *prev;
+अणु
+	काष्ठा rb_node *next;
+	काष्ठा ext2_reserve_winकरोw_node *rsv, *prev;
 	ext2_fsblk_t cur;
-	int size = my_rsv->rsv_goal_size;
+	पूर्णांक size = my_rsv->rsv_goal_size;
 
-	/* TODO: make the start of the reservation window byte-aligned */
+	/* TODO: make the start of the reservation winकरोw byte-aligned */
 	/* cur = *start_block & ~7;*/
 	cur = start_block;
 	rsv = search_head;
-	if (!rsv)
-		return -1;
+	अगर (!rsv)
+		वापस -1;
 
-	while (1) {
-		if (cur <= rsv->rsv_end)
+	जबतक (1) अणु
+		अगर (cur <= rsv->rsv_end)
 			cur = rsv->rsv_end + 1;
 
 		/* TODO?
-		 * in the case we could not find a reservable space
+		 * in the हाल we could not find a reservable space
 		 * that is what is expected, during the re-search, we could
 		 * remember what's the largest reservable space we could have
-		 * and return that one.
+		 * and वापस that one.
 		 *
-		 * For now it will fail if we could not find the reservable
+		 * For now it will fail अगर we could not find the reservable
 		 * space with expected-size (or more)...
 		 */
-		if (cur > last_block)
-			return -1;		/* fail */
+		अगर (cur > last_block)
+			वापस -1;		/* fail */
 
 		prev = rsv;
 		next = rb_next(&rsv->rsv_node);
-		rsv = rb_entry(next,struct ext2_reserve_window_node,rsv_node);
+		rsv = rb_entry(next,काष्ठा ext2_reserve_winकरोw_node,rsv_node);
 
 		/*
 		 * Reached the last reservation, we can just append to the
 		 * previous one.
 		 */
-		if (!next)
-			break;
+		अगर (!next)
+			अवरोध;
 
-		if (cur + size <= rsv->rsv_start) {
+		अगर (cur + size <= rsv->rsv_start) अणु
 			/*
 			 * Found a reserveable space big enough.  We could
 			 * have a reservation across the group boundary here
 		 	 */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/*
 	 * we come here either :
 	 * when we reach the end of the whole list,
@@ -811,284 +812,284 @@ static int find_next_reservable_window(
 	 * append it to the end of the list.
 	 *
 	 * or we found one reservable space in the middle of the list,
-	 * return the reservation window that we could append to.
+	 * वापस the reservation winकरोw that we could append to.
 	 * succeed.
 	 */
 
-	if ((prev != my_rsv) && (!rsv_is_empty(&my_rsv->rsv_window)))
-		rsv_window_remove(sb, my_rsv);
+	अगर ((prev != my_rsv) && (!rsv_is_empty(&my_rsv->rsv_winकरोw)))
+		rsv_winकरोw_हटाओ(sb, my_rsv);
 
 	/*
-	 * Let's book the whole available window for now.  We will check the
-	 * disk bitmap later and then, if there are free blocks then we adjust
-	 * the window size if it's larger than requested.
-	 * Otherwise, we will remove this node from the tree next time
-	 * call find_next_reservable_window.
+	 * Let's book the whole available winकरोw क्रम now.  We will check the
+	 * disk biपंचांगap later and then, अगर there are मुक्त blocks then we adjust
+	 * the winकरोw size अगर it's larger than requested.
+	 * Otherwise, we will हटाओ this node from the tree next समय
+	 * call find_next_reservable_winकरोw.
 	 */
 	my_rsv->rsv_start = cur;
 	my_rsv->rsv_end = cur + size - 1;
 	my_rsv->rsv_alloc_hit = 0;
 
-	if (prev != my_rsv)
-		ext2_rsv_window_add(sb, my_rsv);
+	अगर (prev != my_rsv)
+		ext2_rsv_winकरोw_add(sb, my_rsv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * 	alloc_new_reservation()--allocate a new reservation window
+ * 	alloc_new_reservation()--allocate a new reservation winकरोw
  *
- *		To make a new reservation, we search part of the filesystem
+ *		To make a new reservation, we search part of the fileप्रणाली
  *		reservation list (the list that inside the group). We try to
- *		allocate a new reservation window near the allocation goal,
- *		or the beginning of the group, if there is no goal.
+ *		allocate a new reservation winकरोw near the allocation goal,
+ *		or the beginning of the group, अगर there is no goal.
  *
  *		We first find a reservable space after the goal, then from
- *		there, we check the bitmap for the first free block after
- *		it. If there is no free block until the end of group, then the
- *		whole group is full, we failed. Otherwise, check if the free
- *		block is inside the expected reservable space, if so, we
+ *		there, we check the biपंचांगap क्रम the first मुक्त block after
+ *		it. If there is no मुक्त block until the end of group, then the
+ *		whole group is full, we failed. Otherwise, check अगर the मुक्त
+ *		block is inside the expected reservable space, अगर so, we
  *		succeed.
- *		If the first free block is outside the reservable space, then
- *		start from the first free block, we search for next available
+ *		If the first मुक्त block is outside the reservable space, then
+ *		start from the first मुक्त block, we search क्रम next available
  *		space, and go on.
  *
- *	on succeed, a new reservation will be found and inserted into the list
- *	It contains at least one free block, and it does not overlap with other
- *	reservation windows.
+ *	on succeed, a new reservation will be found and inserted पूर्णांकo the list
+ *	It contains at least one मुक्त block, and it करोes not overlap with other
+ *	reservation winकरोws.
  *
- *	failed: we failed to find a reservation window in this group
+ *	failed: we failed to find a reservation winकरोw in this group
  *
  *	@my_rsv: the reservation
  *
- *	@grp_goal: The goal (group-relative).  It is where the search for a
- *		free reservable space should start from.
- *		if we have a goal(goal >0 ), then start from there,
+ *	@grp_goal: The goal (group-relative).  It is where the search क्रम a
+ *		मुक्त reservable space should start from.
+ *		अगर we have a goal(goal >0 ), then start from there,
  *		no goal(goal = -1), we start from the first block
  *		of the group.
  *
  *	@sb: the super block
  *	@group: the group we are trying to allocate in
- *	@bitmap_bh: the block group block bitmap
+ *	@biपंचांगap_bh: the block group block biपंचांगap
  *
  */
-static int alloc_new_reservation(struct ext2_reserve_window_node *my_rsv,
-		ext2_grpblk_t grp_goal, struct super_block *sb,
-		unsigned int group, struct buffer_head *bitmap_bh)
-{
-	struct ext2_reserve_window_node *search_head;
+अटल पूर्णांक alloc_new_reservation(काष्ठा ext2_reserve_winकरोw_node *my_rsv,
+		ext2_grpblk_t grp_goal, काष्ठा super_block *sb,
+		अचिन्हित पूर्णांक group, काष्ठा buffer_head *biपंचांगap_bh)
+अणु
+	काष्ठा ext2_reserve_winकरोw_node *search_head;
 	ext2_fsblk_t group_first_block, group_end_block, start_block;
-	ext2_grpblk_t first_free_block;
-	struct rb_root *fs_rsv_root = &EXT2_SB(sb)->s_rsv_window_root;
-	unsigned long size;
-	int ret;
-	spinlock_t *rsv_lock = &EXT2_SB(sb)->s_rsv_window_lock;
+	ext2_grpblk_t first_मुक्त_block;
+	काष्ठा rb_root *fs_rsv_root = &EXT2_SB(sb)->s_rsv_winकरोw_root;
+	अचिन्हित दीर्घ size;
+	पूर्णांक ret;
+	spinlock_t *rsv_lock = &EXT2_SB(sb)->s_rsv_winकरोw_lock;
 
 	group_first_block = ext2_group_first_block_no(sb, group);
 	group_end_block = ext2_group_last_block_no(sb, group);
 
-	if (grp_goal < 0)
+	अगर (grp_goal < 0)
 		start_block = group_first_block;
-	else
+	अन्यथा
 		start_block = grp_goal + group_first_block;
 
 	size = my_rsv->rsv_goal_size;
 
-	if (!rsv_is_empty(&my_rsv->rsv_window)) {
+	अगर (!rsv_is_empty(&my_rsv->rsv_winकरोw)) अणु
 		/*
-		 * if the old reservation is cross group boundary
-		 * and if the goal is inside the old reservation window,
+		 * अगर the old reservation is cross group boundary
+		 * and अगर the goal is inside the old reservation winकरोw,
 		 * we will come here when we just failed to allocate from
-		 * the first part of the window. We still have another part
-		 * that belongs to the next group. In this case, there is no
-		 * point to discard our window and try to allocate a new one
+		 * the first part of the winकरोw. We still have another part
+		 * that beदीर्घs to the next group. In this हाल, there is no
+		 * poपूर्णांक to discard our winकरोw and try to allocate a new one
 		 * in this group(which will fail). we should
-		 * keep the reservation window, just simply move on.
+		 * keep the reservation winकरोw, just simply move on.
 		 *
-		 * Maybe we could shift the start block of the reservation
-		 * window to the first block of next group.
+		 * Maybe we could shअगरt the start block of the reservation
+		 * winकरोw to the first block of next group.
 		 */
 
-		if ((my_rsv->rsv_start <= group_end_block) &&
+		अगर ((my_rsv->rsv_start <= group_end_block) &&
 				(my_rsv->rsv_end > group_end_block) &&
 				(start_block >= my_rsv->rsv_start))
-			return -1;
+			वापस -1;
 
-		if ((my_rsv->rsv_alloc_hit >
-		     (my_rsv->rsv_end - my_rsv->rsv_start + 1) / 2)) {
+		अगर ((my_rsv->rsv_alloc_hit >
+		     (my_rsv->rsv_end - my_rsv->rsv_start + 1) / 2)) अणु
 			/*
-			 * if the previously allocation hit ratio is
-			 * greater than 1/2, then we double the size of
-			 * the reservation window the next time,
-			 * otherwise we keep the same size window
+			 * अगर the previously allocation hit ratio is
+			 * greater than 1/2, then we द्विगुन the size of
+			 * the reservation winकरोw the next समय,
+			 * otherwise we keep the same size winकरोw
 			 */
 			size = size * 2;
-			if (size > EXT2_MAX_RESERVE_BLOCKS)
+			अगर (size > EXT2_MAX_RESERVE_BLOCKS)
 				size = EXT2_MAX_RESERVE_BLOCKS;
 			my_rsv->rsv_goal_size= size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock(rsv_lock);
 	/*
-	 * shift the search start to the window near the goal block
+	 * shअगरt the search start to the winकरोw near the goal block
 	 */
-	search_head = search_reserve_window(fs_rsv_root, start_block);
+	search_head = search_reserve_winकरोw(fs_rsv_root, start_block);
 
 	/*
-	 * find_next_reservable_window() simply finds a reservable window
+	 * find_next_reservable_winकरोw() simply finds a reservable winकरोw
 	 * inside the given range(start_block, group_end_block).
 	 *
-	 * To make sure the reservation window has a free bit inside it, we
-	 * need to check the bitmap after we found a reservable window.
+	 * To make sure the reservation winकरोw has a मुक्त bit inside it, we
+	 * need to check the biपंचांगap after we found a reservable winकरोw.
 	 */
 retry:
-	ret = find_next_reservable_window(search_head, my_rsv, sb,
+	ret = find_next_reservable_winकरोw(search_head, my_rsv, sb,
 						start_block, group_end_block);
 
-	if (ret == -1) {
-		if (!rsv_is_empty(&my_rsv->rsv_window))
-			rsv_window_remove(sb, my_rsv);
+	अगर (ret == -1) अणु
+		अगर (!rsv_is_empty(&my_rsv->rsv_winकरोw))
+			rsv_winकरोw_हटाओ(sb, my_rsv);
 		spin_unlock(rsv_lock);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	/*
-	 * On success, find_next_reservable_window() returns the
-	 * reservation window where there is a reservable space after it.
-	 * Before we reserve this reservable space, we need
-	 * to make sure there is at least a free block inside this region.
+	 * On success, find_next_reservable_winकरोw() वापसs the
+	 * reservation winकरोw where there is a reservable space after it.
+	 * Beक्रमe we reserve this reservable space, we need
+	 * to make sure there is at least a मुक्त block inside this region.
 	 *
-	 * Search the first free bit on the block bitmap.  Search starts from
+	 * Search the first मुक्त bit on the block biपंचांगap.  Search starts from
 	 * the start block of the reservable space we just found.
 	 */
 	spin_unlock(rsv_lock);
-	first_free_block = bitmap_search_next_usable_block(
+	first_मुक्त_block = biपंचांगap_search_next_usable_block(
 			my_rsv->rsv_start - group_first_block,
-			bitmap_bh, group_end_block - group_first_block + 1);
+			biपंचांगap_bh, group_end_block - group_first_block + 1);
 
-	if (first_free_block < 0) {
+	अगर (first_मुक्त_block < 0) अणु
 		/*
-		 * no free block left on the bitmap, no point
-		 * to reserve the space. return failed.
+		 * no मुक्त block left on the biपंचांगap, no poपूर्णांक
+		 * to reserve the space. वापस failed.
 		 */
 		spin_lock(rsv_lock);
-		if (!rsv_is_empty(&my_rsv->rsv_window))
-			rsv_window_remove(sb, my_rsv);
+		अगर (!rsv_is_empty(&my_rsv->rsv_winकरोw))
+			rsv_winकरोw_हटाओ(sb, my_rsv);
 		spin_unlock(rsv_lock);
-		return -1;		/* failed */
-	}
+		वापस -1;		/* failed */
+	पूर्ण
 
-	start_block = first_free_block + group_first_block;
+	start_block = first_मुक्त_block + group_first_block;
 	/*
-	 * check if the first free block is within the
-	 * free space we just reserved
+	 * check अगर the first मुक्त block is within the
+	 * मुक्त space we just reserved
 	 */
-	if (start_block >= my_rsv->rsv_start && start_block <= my_rsv->rsv_end)
-		return 0;		/* success */
+	अगर (start_block >= my_rsv->rsv_start && start_block <= my_rsv->rsv_end)
+		वापस 0;		/* success */
 	/*
-	 * if the first free bit we found is out of the reservable space
-	 * continue search for next reservable space,
-	 * start from where the free block is,
-	 * we also shift the list head to where we stopped last time
+	 * अगर the first मुक्त bit we found is out of the reservable space
+	 * जारी search क्रम next reservable space,
+	 * start from where the मुक्त block is,
+	 * we also shअगरt the list head to where we stopped last समय
 	 */
 	search_head = my_rsv;
 	spin_lock(rsv_lock);
-	goto retry;
-}
+	जाओ retry;
+पूर्ण
 
 /**
  * try_to_extend_reservation()
- * @my_rsv:		given reservation window
+ * @my_rsv:		given reservation winकरोw
  * @sb:			super block
  * @size:		the delta to extend
  *
- * Attempt to expand the reservation window large enough to have
- * required number of free blocks
+ * Attempt to expand the reservation winकरोw large enough to have
+ * required number of मुक्त blocks
  *
  * Since ext2_try_to_allocate() will always allocate blocks within
- * the reservation window range, if the window size is too small,
+ * the reservation winकरोw range, अगर the winकरोw size is too small,
  * multiple blocks allocation has to stop at the end of the reservation
- * window. To make this more efficient, given the total number of
- * blocks needed and the current size of the window, we try to
- * expand the reservation window size if necessary on a best-effort
- * basis before ext2_new_blocks() tries to allocate blocks.
+ * winकरोw. To make this more efficient, given the total number of
+ * blocks needed and the current size of the winकरोw, we try to
+ * expand the reservation winकरोw size अगर necessary on a best-efक्रमt
+ * basis beक्रमe ext2_new_blocks() tries to allocate blocks.
  */
-static void try_to_extend_reservation(struct ext2_reserve_window_node *my_rsv,
-			struct super_block *sb, int size)
-{
-	struct ext2_reserve_window_node *next_rsv;
-	struct rb_node *next;
-	spinlock_t *rsv_lock = &EXT2_SB(sb)->s_rsv_window_lock;
+अटल व्योम try_to_extend_reservation(काष्ठा ext2_reserve_winकरोw_node *my_rsv,
+			काष्ठा super_block *sb, पूर्णांक size)
+अणु
+	काष्ठा ext2_reserve_winकरोw_node *next_rsv;
+	काष्ठा rb_node *next;
+	spinlock_t *rsv_lock = &EXT2_SB(sb)->s_rsv_winकरोw_lock;
 
-	if (!spin_trylock(rsv_lock))
-		return;
+	अगर (!spin_trylock(rsv_lock))
+		वापस;
 
 	next = rb_next(&my_rsv->rsv_node);
 
-	if (!next)
+	अगर (!next)
 		my_rsv->rsv_end += size;
-	else {
-		next_rsv = rb_entry(next, struct ext2_reserve_window_node, rsv_node);
+	अन्यथा अणु
+		next_rsv = rb_entry(next, काष्ठा ext2_reserve_winकरोw_node, rsv_node);
 
-		if ((next_rsv->rsv_start - my_rsv->rsv_end - 1) >= size)
+		अगर ((next_rsv->rsv_start - my_rsv->rsv_end - 1) >= size)
 			my_rsv->rsv_end += size;
-		else
+		अन्यथा
 			my_rsv->rsv_end = next_rsv->rsv_start - 1;
-	}
+	पूर्ण
 	spin_unlock(rsv_lock);
-}
+पूर्ण
 
 /**
  * ext2_try_to_allocate_with_rsv()
  * @sb:			superblock
  * @group:		given allocation block group
- * @bitmap_bh:		bufferhead holds the block bitmap
+ * @biपंचांगap_bh:		bufferhead holds the block biपंचांगap
  * @grp_goal:		given target block within the group
  * @count:		target number of blocks to allocate
- * @my_rsv:		reservation window
+ * @my_rsv:		reservation winकरोw
  *
- * This is the main function used to allocate a new block and its reservation
- * window.
+ * This is the मुख्य function used to allocate a new block and its reservation
+ * winकरोw.
  *
- * Each time when a new block allocation is need, first try to allocate from
- * its own reservation.  If it does not have a reservation window, instead of
- * looking for a free bit on bitmap first, then look up the reservation list to
- * see if it is inside somebody else's reservation window, we try to allocate a
- * reservation window for it starting from the goal first. Then do the block
- * allocation within the reservation window.
+ * Each समय when a new block allocation is need, first try to allocate from
+ * its own reservation.  If it करोes not have a reservation winकरोw, instead of
+ * looking क्रम a मुक्त bit on biपंचांगap first, then look up the reservation list to
+ * see अगर it is inside somebody अन्यथा's reservation winकरोw, we try to allocate a
+ * reservation winकरोw क्रम it starting from the goal first. Then करो the block
+ * allocation within the reservation winकरोw.
  *
- * This will avoid keeping on searching the reservation list again and
- * again when somebody is looking for a free block (without
- * reservation), and there are lots of free blocks, but they are all
+ * This will aव्योम keeping on searching the reservation list again and
+ * again when somebody is looking क्रम a मुक्त block (without
+ * reservation), and there are lots of मुक्त blocks, but they are all
  * being reserved.
  *
- * We use a red-black tree for the per-filesystem reservation list.
+ * We use a red-black tree क्रम the per-fileप्रणाली reservation list.
  */
-static ext2_grpblk_t
-ext2_try_to_allocate_with_rsv(struct super_block *sb, unsigned int group,
-			struct buffer_head *bitmap_bh, ext2_grpblk_t grp_goal,
-			struct ext2_reserve_window_node * my_rsv,
-			unsigned long *count)
-{
+अटल ext2_grpblk_t
+ext2_try_to_allocate_with_rsv(काष्ठा super_block *sb, अचिन्हित पूर्णांक group,
+			काष्ठा buffer_head *biपंचांगap_bh, ext2_grpblk_t grp_goal,
+			काष्ठा ext2_reserve_winकरोw_node * my_rsv,
+			अचिन्हित दीर्घ *count)
+अणु
 	ext2_fsblk_t group_first_block, group_last_block;
 	ext2_grpblk_t ret = 0;
-	unsigned long num = *count;
+	अचिन्हित दीर्घ num = *count;
 
 	/*
-	 * we don't deal with reservation when
-	 * filesystem is mounted without reservation
+	 * we करोn't deal with reservation when
+	 * fileप्रणाली is mounted without reservation
 	 * or the file is not a regular file
 	 * or last attempt to allocate a block with reservation turned on failed
 	 */
-	if (my_rsv == NULL) {
-		return ext2_try_to_allocate(sb, group, bitmap_bh,
-						grp_goal, count, NULL);
-	}
+	अगर (my_rsv == शून्य) अणु
+		वापस ext2_try_to_allocate(sb, group, biपंचांगap_bh,
+						grp_goal, count, शून्य);
+	पूर्ण
 	/*
-	 * grp_goal is a group relative block number (if there is a goal)
+	 * grp_goal is a group relative block number (अगर there is a goal)
 	 * 0 <= grp_goal < EXT2_BLOCKS_PER_GROUP(sb)
-	 * first block is a filesystem wide block number
+	 * first block is a fileप्रणाली wide block number
 	 * first block is the block number of the first block in this group
 	 */
 	group_first_block = ext2_group_first_block_no(sb, group);
@@ -1096,177 +1097,177 @@ ext2_try_to_allocate_with_rsv(struct super_block *sb, unsigned int group,
 
 	/*
 	 * Basically we will allocate a new block from inode's reservation
-	 * window.
+	 * winकरोw.
 	 *
-	 * We need to allocate a new reservation window, if:
-	 * a) inode does not have a reservation window; or
+	 * We need to allocate a new reservation winकरोw, अगर:
+	 * a) inode करोes not have a reservation winकरोw; or
 	 * b) last attempt to allocate a block from existing reservation
 	 *    failed; or
-	 * c) we come here with a goal and with a reservation window
+	 * c) we come here with a goal and with a reservation winकरोw
 	 *
-	 * We do not need to allocate a new reservation window if we come here
-	 * at the beginning with a goal and the goal is inside the window, or
-	 * we don't have a goal but already have a reservation window.
-	 * then we could go to allocate from the reservation window directly.
+	 * We करो not need to allocate a new reservation winकरोw अगर we come here
+	 * at the beginning with a goal and the goal is inside the winकरोw, or
+	 * we करोn't have a goal but alपढ़ोy have a reservation winकरोw.
+	 * then we could go to allocate from the reservation winकरोw directly.
 	 */
-	while (1) {
-		if (rsv_is_empty(&my_rsv->rsv_window) || (ret < 0) ||
-			!goal_in_my_reservation(&my_rsv->rsv_window,
-						grp_goal, group, sb)) {
-			if (my_rsv->rsv_goal_size < *count)
+	जबतक (1) अणु
+		अगर (rsv_is_empty(&my_rsv->rsv_winकरोw) || (ret < 0) ||
+			!goal_in_my_reservation(&my_rsv->rsv_winकरोw,
+						grp_goal, group, sb)) अणु
+			अगर (my_rsv->rsv_goal_size < *count)
 				my_rsv->rsv_goal_size = *count;
 			ret = alloc_new_reservation(my_rsv, grp_goal, sb,
-							group, bitmap_bh);
-			if (ret < 0)
-				break;			/* failed */
+							group, biपंचांगap_bh);
+			अगर (ret < 0)
+				अवरोध;			/* failed */
 
-			if (!goal_in_my_reservation(&my_rsv->rsv_window,
+			अगर (!goal_in_my_reservation(&my_rsv->rsv_winकरोw,
 							grp_goal, group, sb))
 				grp_goal = -1;
-		} else if (grp_goal >= 0) {
-			int curr = my_rsv->rsv_end -
+		पूर्ण अन्यथा अगर (grp_goal >= 0) अणु
+			पूर्णांक curr = my_rsv->rsv_end -
 					(grp_goal + group_first_block) + 1;
 
-			if (curr < *count)
+			अगर (curr < *count)
 				try_to_extend_reservation(my_rsv, sb,
 							*count - curr);
-		}
+		पूर्ण
 
-		if ((my_rsv->rsv_start > group_last_block) ||
-				(my_rsv->rsv_end < group_first_block)) {
-			rsv_window_dump(&EXT2_SB(sb)->s_rsv_window_root, 1);
+		अगर ((my_rsv->rsv_start > group_last_block) ||
+				(my_rsv->rsv_end < group_first_block)) अणु
+			rsv_winकरोw_dump(&EXT2_SB(sb)->s_rsv_winकरोw_root, 1);
 			BUG();
-		}
-		ret = ext2_try_to_allocate(sb, group, bitmap_bh, grp_goal,
-					   &num, &my_rsv->rsv_window);
-		if (ret >= 0) {
+		पूर्ण
+		ret = ext2_try_to_allocate(sb, group, biपंचांगap_bh, grp_goal,
+					   &num, &my_rsv->rsv_winकरोw);
+		अगर (ret >= 0) अणु
 			my_rsv->rsv_alloc_hit += num;
 			*count = num;
-			break;				/* succeed */
-		}
+			अवरोध;				/* succeed */
+		पूर्ण
 		num = *count;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /**
- * ext2_has_free_blocks()
- * @sbi:		in-core super block structure.
+ * ext2_has_मुक्त_blocks()
+ * @sbi:		in-core super block काष्ठाure.
  *
- * Check if filesystem has at least 1 free block available for allocation.
+ * Check अगर fileप्रणाली has at least 1 मुक्त block available क्रम allocation.
  */
-static int ext2_has_free_blocks(struct ext2_sb_info *sbi)
-{
-	ext2_fsblk_t free_blocks, root_blocks;
+अटल पूर्णांक ext2_has_मुक्त_blocks(काष्ठा ext2_sb_info *sbi)
+अणु
+	ext2_fsblk_t मुक्त_blocks, root_blocks;
 
-	free_blocks = percpu_counter_read_positive(&sbi->s_freeblocks_counter);
+	मुक्त_blocks = percpu_counter_पढ़ो_positive(&sbi->s_मुक्तblocks_counter);
 	root_blocks = le32_to_cpu(sbi->s_es->s_r_blocks_count);
-	if (free_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
+	अगर (मुक्त_blocks < root_blocks + 1 && !capable(CAP_SYS_RESOURCE) &&
 		!uid_eq(sbi->s_resuid, current_fsuid()) &&
 		(gid_eq(sbi->s_resgid, GLOBAL_ROOT_GID) ||
-		 !in_group_p (sbi->s_resgid))) {
-		return 0;
-	}
-	return 1;
-}
+		 !in_group_p (sbi->s_resgid))) अणु
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
- * Returns 1 if the passed-in block region is valid; 0 if some part overlaps
- * with filesystem metadata blocks.
+ * Returns 1 अगर the passed-in block region is valid; 0 अगर some part overlaps
+ * with fileप्रणाली metadata blocks.
  */
-int ext2_data_block_valid(struct ext2_sb_info *sbi, ext2_fsblk_t start_blk,
-			  unsigned int count)
-{
-	if ((start_blk <= le32_to_cpu(sbi->s_es->s_first_data_block)) ||
+पूर्णांक ext2_data_block_valid(काष्ठा ext2_sb_info *sbi, ext2_fsblk_t start_blk,
+			  अचिन्हित पूर्णांक count)
+अणु
+	अगर ((start_blk <= le32_to_cpu(sbi->s_es->s_first_data_block)) ||
 	    (start_blk + count - 1 < start_blk) ||
 	    (start_blk + count - 1 >= le32_to_cpu(sbi->s_es->s_blocks_count)))
-		return 0;
+		वापस 0;
 
-	/* Ensure we do not step over superblock */
-	if ((start_blk <= sbi->s_sb_block) &&
+	/* Ensure we करो not step over superblock */
+	अगर ((start_blk <= sbi->s_sb_block) &&
 	    (start_blk + count - 1 >= sbi->s_sb_block))
-		return 0;
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * ext2_new_blocks() -- core block(s) allocation function
  * @inode:		file inode
- * @goal:		given target block(filesystem wide)
+ * @goal:		given target block(fileप्रणाली wide)
  * @count:		target number of blocks to allocate
  * @errp:		error code
  *
  * ext2_new_blocks uses a goal block to assist allocation.  If the goal is
- * free, or there is a free block within 32 blocks of the goal, that block
- * is allocated.  Otherwise a forward search is made for a free block; within 
- * each block group the search first looks for an entire free byte in the block
- * bitmap, and then for any free bit if that fails.
+ * मुक्त, or there is a मुक्त block within 32 blocks of the goal, that block
+ * is allocated.  Otherwise a क्रमward search is made क्रम a मुक्त block; within 
+ * each block group the search first looks क्रम an entire मुक्त byte in the block
+ * biपंचांगap, and then क्रम any मुक्त bit अगर that fails.
  * This function also updates quota and i_blocks field.
  */
-ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
-		    unsigned long *count, int *errp)
-{
-	struct buffer_head *bitmap_bh = NULL;
-	struct buffer_head *gdp_bh;
-	int group_no;
-	int goal_group;
+ext2_fsblk_t ext2_new_blocks(काष्ठा inode *inode, ext2_fsblk_t goal,
+		    अचिन्हित दीर्घ *count, पूर्णांक *errp)
+अणु
+	काष्ठा buffer_head *biपंचांगap_bh = शून्य;
+	काष्ठा buffer_head *gdp_bh;
+	पूर्णांक group_no;
+	पूर्णांक goal_group;
 	ext2_grpblk_t grp_target_blk;	/* blockgroup relative goal block */
 	ext2_grpblk_t grp_alloc_blk;	/* blockgroup-relative allocated block*/
 	ext2_fsblk_t ret_block;		/* filesyetem-wide allocated block */
-	int bgi;			/* blockgroup iteration index */
-	int performed_allocation = 0;
-	ext2_grpblk_t free_blocks;	/* number of free blocks in a group */
-	struct super_block *sb;
-	struct ext2_group_desc *gdp;
-	struct ext2_super_block *es;
-	struct ext2_sb_info *sbi;
-	struct ext2_reserve_window_node *my_rsv = NULL;
-	struct ext2_block_alloc_info *block_i;
-	unsigned short windowsz = 0;
-	unsigned long ngroups;
-	unsigned long num = *count;
-	int ret;
+	पूर्णांक bgi;			/* blockgroup iteration index */
+	पूर्णांक perक्रमmed_allocation = 0;
+	ext2_grpblk_t मुक्त_blocks;	/* number of मुक्त blocks in a group */
+	काष्ठा super_block *sb;
+	काष्ठा ext2_group_desc *gdp;
+	काष्ठा ext2_super_block *es;
+	काष्ठा ext2_sb_info *sbi;
+	काष्ठा ext2_reserve_winकरोw_node *my_rsv = शून्य;
+	काष्ठा ext2_block_alloc_info *block_i;
+	अचिन्हित लघु winकरोwsz = 0;
+	अचिन्हित दीर्घ ngroups;
+	अचिन्हित दीर्घ num = *count;
+	पूर्णांक ret;
 
 	*errp = -ENOSPC;
 	sb = inode->i_sb;
 
 	/*
-	 * Check quota for allocation of this block.
+	 * Check quota क्रम allocation of this block.
 	 */
 	ret = dquot_alloc_block(inode, num);
-	if (ret) {
+	अगर (ret) अणु
 		*errp = ret;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	sbi = EXT2_SB(sb);
 	es = EXT2_SB(sb)->s_es;
 	ext2_debug("goal=%lu.\n", goal);
 	/*
 	 * Allocate a block from reservation only when
-	 * filesystem is mounted with reservation(default,-o reservation), and
+	 * fileप्रणाली is mounted with reservation(शेष,-o reservation), and
 	 * it's a regular file, and
-	 * the desired window size is greater than 0 (One could use ioctl
-	 * command EXT2_IOC_SETRSVSZ to set the window size to 0 to turn off
+	 * the desired winकरोw size is greater than 0 (One could use ioctl
+	 * command EXT2_IOC_SETRSVSZ to set the winकरोw size to 0 to turn off
 	 * reservation on that particular file)
 	 */
 	block_i = EXT2_I(inode)->i_block_alloc_info;
-	if (block_i) {
-		windowsz = block_i->rsv_window_node.rsv_goal_size;
-		if (windowsz > 0)
-			my_rsv = &block_i->rsv_window_node;
-	}
+	अगर (block_i) अणु
+		winकरोwsz = block_i->rsv_winकरोw_node.rsv_goal_size;
+		अगर (winकरोwsz > 0)
+			my_rsv = &block_i->rsv_winकरोw_node;
+	पूर्ण
 
-	if (!ext2_has_free_blocks(sbi)) {
+	अगर (!ext2_has_मुक्त_blocks(sbi)) अणु
 		*errp = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * First, test whether the goal block is free.
+	 * First, test whether the goal block is मुक्त.
 	 */
-	if (goal < le32_to_cpu(es->s_first_data_block) ||
+	अगर (goal < le32_to_cpu(es->s_first_data_block) ||
 	    goal >= le32_to_cpu(es->s_blocks_count))
 		goal = le32_to_cpu(es->s_first_data_block);
 	group_no = (goal - le32_to_cpu(es->s_first_data_block)) /
@@ -1274,111 +1275,111 @@ ext2_fsblk_t ext2_new_blocks(struct inode *inode, ext2_fsblk_t goal,
 	goal_group = group_no;
 retry_alloc:
 	gdp = ext2_get_group_desc(sb, group_no, &gdp_bh);
-	if (!gdp)
-		goto io_error;
+	अगर (!gdp)
+		जाओ io_error;
 
-	free_blocks = le16_to_cpu(gdp->bg_free_blocks_count);
+	मुक्त_blocks = le16_to_cpu(gdp->bg_मुक्त_blocks_count);
 	/*
-	 * if there is not enough free blocks to make a new resevation
-	 * turn off reservation for this allocation
+	 * अगर there is not enough मुक्त blocks to make a new resevation
+	 * turn off reservation क्रम this allocation
 	 */
-	if (my_rsv && (free_blocks < windowsz)
-		&& (free_blocks > 0)
-		&& (rsv_is_empty(&my_rsv->rsv_window)))
-		my_rsv = NULL;
+	अगर (my_rsv && (मुक्त_blocks < winकरोwsz)
+		&& (मुक्त_blocks > 0)
+		&& (rsv_is_empty(&my_rsv->rsv_winकरोw)))
+		my_rsv = शून्य;
 
-	if (free_blocks > 0) {
+	अगर (मुक्त_blocks > 0) अणु
 		grp_target_blk = ((goal - le32_to_cpu(es->s_first_data_block)) %
 				EXT2_BLOCKS_PER_GROUP(sb));
 		/*
-		 * In case we retry allocation (due to fs reservation not
-		 * working out or fs corruption), the bitmap_bh is non-null
-		 * pointer and we have to release it before calling
-		 * read_block_bitmap().
+		 * In हाल we retry allocation (due to fs reservation not
+		 * working out or fs corruption), the biपंचांगap_bh is non-null
+		 * poपूर्णांकer and we have to release it beक्रमe calling
+		 * पढ़ो_block_biपंचांगap().
 		 */
-		brelse(bitmap_bh);
-		bitmap_bh = read_block_bitmap(sb, group_no);
-		if (!bitmap_bh)
-			goto io_error;
+		brअन्यथा(biपंचांगap_bh);
+		biपंचांगap_bh = पढ़ो_block_biपंचांगap(sb, group_no);
+		अगर (!biपंचांगap_bh)
+			जाओ io_error;
 		grp_alloc_blk = ext2_try_to_allocate_with_rsv(sb, group_no,
-					bitmap_bh, grp_target_blk,
+					biपंचांगap_bh, grp_target_blk,
 					my_rsv, &num);
-		if (grp_alloc_blk >= 0)
-			goto allocated;
-	}
+		अगर (grp_alloc_blk >= 0)
+			जाओ allocated;
+	पूर्ण
 
 	ngroups = EXT2_SB(sb)->s_groups_count;
 	smp_rmb();
 
 	/*
 	 * Now search the rest of the groups.  We assume that
-	 * group_no and gdp correctly point to the last group visited.
+	 * group_no and gdp correctly poपूर्णांक to the last group visited.
 	 */
-	for (bgi = 0; bgi < ngroups; bgi++) {
+	क्रम (bgi = 0; bgi < ngroups; bgi++) अणु
 		group_no++;
-		if (group_no >= ngroups)
+		अगर (group_no >= ngroups)
 			group_no = 0;
 		gdp = ext2_get_group_desc(sb, group_no, &gdp_bh);
-		if (!gdp)
-			goto io_error;
+		अगर (!gdp)
+			जाओ io_error;
 
-		free_blocks = le16_to_cpu(gdp->bg_free_blocks_count);
+		मुक्त_blocks = le16_to_cpu(gdp->bg_मुक्त_blocks_count);
 		/*
-		 * skip this group (and avoid loading bitmap) if there
-		 * are no free blocks
+		 * skip this group (and aव्योम loading biपंचांगap) अगर there
+		 * are no मुक्त blocks
 		 */
-		if (!free_blocks)
-			continue;
+		अगर (!मुक्त_blocks)
+			जारी;
 		/*
-		 * skip this group if the number of
-		 * free blocks is less than half of the reservation
-		 * window size.
+		 * skip this group अगर the number of
+		 * मुक्त blocks is less than half of the reservation
+		 * winकरोw size.
 		 */
-		if (my_rsv && (free_blocks <= (windowsz/2)))
-			continue;
+		अगर (my_rsv && (मुक्त_blocks <= (winकरोwsz/2)))
+			जारी;
 
-		brelse(bitmap_bh);
-		bitmap_bh = read_block_bitmap(sb, group_no);
-		if (!bitmap_bh)
-			goto io_error;
+		brअन्यथा(biपंचांगap_bh);
+		biपंचांगap_bh = पढ़ो_block_biपंचांगap(sb, group_no);
+		अगर (!biपंचांगap_bh)
+			जाओ io_error;
 		/*
 		 * try to allocate block(s) from this group, without a goal(-1).
 		 */
 		grp_alloc_blk = ext2_try_to_allocate_with_rsv(sb, group_no,
-					bitmap_bh, -1, my_rsv, &num);
-		if (grp_alloc_blk >= 0)
-			goto allocated;
-	}
+					biपंचांगap_bh, -1, my_rsv, &num);
+		अगर (grp_alloc_blk >= 0)
+			जाओ allocated;
+	पूर्ण
 	/*
 	 * We may end up a bogus earlier ENOSPC error due to
-	 * filesystem is "full" of reservations, but
-	 * there maybe indeed free blocks available on disk
-	 * In this case, we just forget about the reservations
-	 * just do block allocation as without reservations.
+	 * fileप्रणाली is "full" of reservations, but
+	 * there maybe indeed मुक्त blocks available on disk
+	 * In this हाल, we just क्रमget about the reservations
+	 * just करो block allocation as without reservations.
 	 */
-	if (my_rsv) {
-		my_rsv = NULL;
-		windowsz = 0;
+	अगर (my_rsv) अणु
+		my_rsv = शून्य;
+		winकरोwsz = 0;
 		group_no = goal_group;
-		goto retry_alloc;
-	}
+		जाओ retry_alloc;
+	पूर्ण
 	/* No space left on the device */
 	*errp = -ENOSPC;
-	goto out;
+	जाओ out;
 
 allocated:
 
 	ext2_debug("using block group %d(%d)\n",
-			group_no, gdp->bg_free_blocks_count);
+			group_no, gdp->bg_मुक्त_blocks_count);
 
 	ret_block = grp_alloc_blk + ext2_group_first_block_no(sb, group_no);
 
-	if (in_range(le32_to_cpu(gdp->bg_block_bitmap), ret_block, num) ||
-	    in_range(le32_to_cpu(gdp->bg_inode_bitmap), ret_block, num) ||
+	अगर (in_range(le32_to_cpu(gdp->bg_block_biपंचांगap), ret_block, num) ||
+	    in_range(le32_to_cpu(gdp->bg_inode_biपंचांगap), ret_block, num) ||
 	    in_range(ret_block, le32_to_cpu(gdp->bg_inode_table),
 		      EXT2_SB(sb)->s_itb_per_group) ||
 	    in_range(ret_block + num - 1, le32_to_cpu(gdp->bg_inode_table),
-		      EXT2_SB(sb)->s_itb_per_group)) {
+		      EXT2_SB(sb)->s_itb_per_group)) अणु
 		ext2_error(sb, "ext2_new_blocks",
 			    "Allocating block in system zone - "
 			    "blocks from "E2FSBLK", length %lu",
@@ -1386,156 +1387,156 @@ allocated:
 		/*
 		 * ext2_try_to_allocate marked the blocks we allocated as in
 		 * use.  So we may want to selectively mark some of the blocks
-		 * as free
+		 * as मुक्त
 		 */
 		num = *count;
-		goto retry_alloc;
-	}
+		जाओ retry_alloc;
+	पूर्ण
 
-	performed_allocation = 1;
+	perक्रमmed_allocation = 1;
 
-	if (ret_block + num - 1 >= le32_to_cpu(es->s_blocks_count)) {
+	अगर (ret_block + num - 1 >= le32_to_cpu(es->s_blocks_count)) अणु
 		ext2_error(sb, "ext2_new_blocks",
 			    "block("E2FSBLK") >= blocks count(%d) - "
 			    "block_group = %d, es == %p ", ret_block,
 			le32_to_cpu(es->s_blocks_count), group_no, es);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	group_adjust_blocks(sb, group_no, gdp, gdp_bh, -num);
-	percpu_counter_sub(&sbi->s_freeblocks_counter, num);
+	percpu_counter_sub(&sbi->s_मुक्तblocks_counter, num);
 
-	mark_buffer_dirty(bitmap_bh);
-	if (sb->s_flags & SB_SYNCHRONOUS)
-		sync_dirty_buffer(bitmap_bh);
+	mark_buffer_dirty(biपंचांगap_bh);
+	अगर (sb->s_flags & SB_SYNCHRONOUS)
+		sync_dirty_buffer(biपंचांगap_bh);
 
 	*errp = 0;
-	brelse(bitmap_bh);
-	if (num < *count) {
-		dquot_free_block_nodirty(inode, *count-num);
+	brअन्यथा(biपंचांगap_bh);
+	अगर (num < *count) अणु
+		dquot_मुक्त_block_nodirty(inode, *count-num);
 		mark_inode_dirty(inode);
 		*count = num;
-	}
-	return ret_block;
+	पूर्ण
+	वापस ret_block;
 
 io_error:
 	*errp = -EIO;
 out:
 	/*
-	 * Undo the block allocation
+	 * Unकरो the block allocation
 	 */
-	if (!performed_allocation) {
-		dquot_free_block_nodirty(inode, *count);
+	अगर (!perक्रमmed_allocation) अणु
+		dquot_मुक्त_block_nodirty(inode, *count);
 		mark_inode_dirty(inode);
-	}
-	brelse(bitmap_bh);
-	return 0;
-}
+	पूर्ण
+	brअन्यथा(biपंचांगap_bh);
+	वापस 0;
+पूर्ण
 
-ext2_fsblk_t ext2_new_block(struct inode *inode, unsigned long goal, int *errp)
-{
-	unsigned long count = 1;
+ext2_fsblk_t ext2_new_block(काष्ठा inode *inode, अचिन्हित दीर्घ goal, पूर्णांक *errp)
+अणु
+	अचिन्हित दीर्घ count = 1;
 
-	return ext2_new_blocks(inode, goal, &count, errp);
-}
+	वापस ext2_new_blocks(inode, goal, &count, errp);
+पूर्ण
 
-#ifdef EXT2FS_DEBUG
+#अगर_घोषित EXT2FS_DEBUG
 
-unsigned long ext2_count_free(struct buffer_head *map, unsigned int numchars)
-{
-	return numchars * BITS_PER_BYTE - memweight(map->b_data, numchars);
-}
+अचिन्हित दीर्घ ext2_count_मुक्त(काष्ठा buffer_head *map, अचिन्हित पूर्णांक numअक्षरs)
+अणु
+	वापस numअक्षरs * BITS_PER_BYTE - memweight(map->b_data, numअक्षरs);
+पूर्ण
 
-#endif  /*  EXT2FS_DEBUG  */
+#पूर्ण_अगर  /*  EXT2FS_DEBUG  */
 
-unsigned long ext2_count_free_blocks (struct super_block * sb)
-{
-	struct ext2_group_desc * desc;
-	unsigned long desc_count = 0;
-	int i;
-#ifdef EXT2FS_DEBUG
-	unsigned long bitmap_count, x;
-	struct ext2_super_block *es;
+अचिन्हित दीर्घ ext2_count_मुक्त_blocks (काष्ठा super_block * sb)
+अणु
+	काष्ठा ext2_group_desc * desc;
+	अचिन्हित दीर्घ desc_count = 0;
+	पूर्णांक i;
+#अगर_घोषित EXT2FS_DEBUG
+	अचिन्हित दीर्घ biपंचांगap_count, x;
+	काष्ठा ext2_super_block *es;
 
 	es = EXT2_SB(sb)->s_es;
 	desc_count = 0;
-	bitmap_count = 0;
-	desc = NULL;
-	for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) {
-		struct buffer_head *bitmap_bh;
-		desc = ext2_get_group_desc (sb, i, NULL);
-		if (!desc)
-			continue;
-		desc_count += le16_to_cpu(desc->bg_free_blocks_count);
-		bitmap_bh = read_block_bitmap(sb, i);
-		if (!bitmap_bh)
-			continue;
+	biपंचांगap_count = 0;
+	desc = शून्य;
+	क्रम (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) अणु
+		काष्ठा buffer_head *biपंचांगap_bh;
+		desc = ext2_get_group_desc (sb, i, शून्य);
+		अगर (!desc)
+			जारी;
+		desc_count += le16_to_cpu(desc->bg_मुक्त_blocks_count);
+		biपंचांगap_bh = पढ़ो_block_biपंचांगap(sb, i);
+		अगर (!biपंचांगap_bh)
+			जारी;
 		
-		x = ext2_count_free(bitmap_bh, sb->s_blocksize);
-		printk ("group %d: stored = %d, counted = %lu\n",
-			i, le16_to_cpu(desc->bg_free_blocks_count), x);
-		bitmap_count += x;
-		brelse(bitmap_bh);
-	}
-	printk("ext2_count_free_blocks: stored = %lu, computed = %lu, %lu\n",
-		(long)le32_to_cpu(es->s_free_blocks_count),
-		desc_count, bitmap_count);
-	return bitmap_count;
-#else
-        for (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) {
-                desc = ext2_get_group_desc (sb, i, NULL);
-                if (!desc)
-                        continue;
-                desc_count += le16_to_cpu(desc->bg_free_blocks_count);
-	}
-	return desc_count;
-#endif
-}
+		x = ext2_count_मुक्त(biपंचांगap_bh, sb->s_blocksize);
+		prपूर्णांकk ("group %d: stored = %d, counted = %lu\n",
+			i, le16_to_cpu(desc->bg_मुक्त_blocks_count), x);
+		biपंचांगap_count += x;
+		brअन्यथा(biपंचांगap_bh);
+	पूर्ण
+	prपूर्णांकk("ext2_count_free_blocks: stored = %lu, computed = %lu, %lu\n",
+		(दीर्घ)le32_to_cpu(es->s_मुक्त_blocks_count),
+		desc_count, biपंचांगap_count);
+	वापस biपंचांगap_count;
+#अन्यथा
+        क्रम (i = 0; i < EXT2_SB(sb)->s_groups_count; i++) अणु
+                desc = ext2_get_group_desc (sb, i, शून्य);
+                अगर (!desc)
+                        जारी;
+                desc_count += le16_to_cpu(desc->bg_मुक्त_blocks_count);
+	पूर्ण
+	वापस desc_count;
+#पूर्ण_अगर
+पूर्ण
 
-static inline int test_root(int a, int b)
-{
-	int num = b;
+अटल अंतरभूत पूर्णांक test_root(पूर्णांक a, पूर्णांक b)
+अणु
+	पूर्णांक num = b;
 
-	while (a > num)
+	जबतक (a > num)
 		num *= b;
-	return num == a;
-}
+	वापस num == a;
+पूर्ण
 
-static int ext2_group_sparse(int group)
-{
-	if (group <= 1)
-		return 1;
-	return (test_root(group, 3) || test_root(group, 5) ||
+अटल पूर्णांक ext2_group_sparse(पूर्णांक group)
+अणु
+	अगर (group <= 1)
+		वापस 1;
+	वापस (test_root(group, 3) || test_root(group, 5) ||
 		test_root(group, 7));
-}
+पूर्ण
 
 /**
  *	ext2_bg_has_super - number of blocks used by the superblock in group
- *	@sb: superblock for filesystem
+ *	@sb: superblock क्रम fileप्रणाली
  *	@group: group number to check
  *
  *	Return the number of blocks used by the superblock (primary or backup)
  *	in this group.  Currently this will be only 0 or 1.
  */
-int ext2_bg_has_super(struct super_block *sb, int group)
-{
-	if (EXT2_HAS_RO_COMPAT_FEATURE(sb,EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)&&
+पूर्णांक ext2_bg_has_super(काष्ठा super_block *sb, पूर्णांक group)
+अणु
+	अगर (EXT2_HAS_RO_COMPAT_FEATURE(sb,EXT2_FEATURE_RO_COMPAT_SPARSE_SUPER)&&
 	    !ext2_group_sparse(group))
-		return 0;
-	return 1;
-}
+		वापस 0;
+	वापस 1;
+पूर्ण
 
 /**
  *	ext2_bg_num_gdb - number of blocks used by the group table in group
- *	@sb: superblock for filesystem
+ *	@sb: superblock क्रम fileप्रणाली
  *	@group: group number to check
  *
  *	Return the number of blocks used by the group descriptor table
  *	(primary or backup) in this group.  In the future there may be a
- *	different number of descriptor blocks in each group.
+ *	dअगरferent number of descriptor blocks in each group.
  */
-unsigned long ext2_bg_num_gdb(struct super_block *sb, int group)
-{
-	return ext2_bg_has_super(sb, group) ? EXT2_SB(sb)->s_gdb_count : 0;
-}
+अचिन्हित दीर्घ ext2_bg_num_gdb(काष्ठा super_block *sb, पूर्णांक group)
+अणु
+	वापस ext2_bg_has_super(sb, group) ? EXT2_SB(sb)->s_gdb_count : 0;
+पूर्ण
 

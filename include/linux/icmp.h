@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		Definitions for the ICMP protocol.
+ *		Definitions क्रम the ICMP protocol.
  *
  * Version:	@(#)icmp.h	1.0.3	04/28/93
  *
  * Author:	Fred N. van Kempen, <waltje@uWalt.NL.Mugnet.ORG>
  */
-#ifndef _LINUX_ICMP_H
-#define	_LINUX_ICMP_H
+#अगर_अघोषित _LINUX_ICMP_H
+#घोषणा	_LINUX_ICMP_H
 
-#include <linux/skbuff.h>
-#include <uapi/linux/icmp.h>
-#include <uapi/linux/errqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <uapi/linux/icmp.h>
+#समावेश <uapi/linux/errqueue.h>
 
-static inline struct icmphdr *icmp_hdr(const struct sk_buff *skb)
-{
-	return (struct icmphdr *)skb_transport_header(skb);
-}
+अटल अंतरभूत काष्ठा icmphdr *icmp_hdr(स्थिर काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा icmphdr *)skb_transport_header(skb);
+पूर्ण
 
-static inline bool icmp_is_err(int type)
-{
-	switch (type) {
-	case ICMP_DEST_UNREACH:
-	case ICMP_SOURCE_QUENCH:
-	case ICMP_REDIRECT:
-	case ICMP_TIME_EXCEEDED:
-	case ICMP_PARAMETERPROB:
-		return true;
-	}
+अटल अंतरभूत bool icmp_is_err(पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल ICMP_DEST_UNREACH:
+	हाल ICMP_SOURCE_QUENCH:
+	हाल ICMP_REसूचीECT:
+	हाल ICMP_TIME_EXCEEDED:
+	हाल ICMP_PARAMETERPROB:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void ip_icmp_error_rfc4884(const struct sk_buff *skb,
-			   struct sock_ee_data_rfc4884 *out,
-			   int thlen, int off);
+व्योम ip_icmp_error_rfc4884(स्थिर काष्ठा sk_buff *skb,
+			   काष्ठा sock_ee_data_rfc4884 *out,
+			   पूर्णांक thlen, पूर्णांक off);
 
-#endif	/* _LINUX_ICMP_H */
+#पूर्ण_अगर	/* _LINUX_ICMP_H */

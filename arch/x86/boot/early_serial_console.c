@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Serial port routines for use during early boot reporting. This code is
+ * Serial port routines क्रम use during early boot reporting. This code is
  * included from both the compressed kernel and the regular kernel.
  */
-#include "boot.h"
+#समावेश "boot.h"
 
-#define DEFAULT_SERIAL_PORT 0x3f8 /* ttyS0 */
+#घोषणा DEFAULT_SERIAL_PORT 0x3f8 /* ttyS0 */
 
-#define DLAB		0x80
+#घोषणा DLAB		0x80
 
-#define TXR             0       /*  Transmit register (WRITE) */
-#define RXR             0       /*  Receive register  (READ)  */
-#define IER             1       /*  Interrupt Enable          */
-#define IIR             2       /*  Interrupt ID              */
-#define FCR             2       /*  FIFO control              */
-#define LCR             3       /*  Line control              */
-#define MCR             4       /*  Modem control             */
-#define LSR             5       /*  Line Status               */
-#define MSR             6       /*  Modem Status              */
-#define DLL             0       /*  Divisor Latch Low         */
-#define DLH             1       /*  Divisor latch High        */
+#घोषणा TXR             0       /*  Transmit रेजिस्टर (WRITE) */
+#घोषणा RXR             0       /*  Receive रेजिस्टर  (READ)  */
+#घोषणा IER             1       /*  Interrupt Enable          */
+#घोषणा IIR             2       /*  Interrupt ID              */
+#घोषणा FCR             2       /*  FIFO control              */
+#घोषणा LCR             3       /*  Line control              */
+#घोषणा MCR             4       /*  Modem control             */
+#घोषणा LSR             5       /*  Line Status               */
+#घोषणा MSR             6       /*  Modem Status              */
+#घोषणा DLL             0       /*  Divisor Latch Low         */
+#घोषणा DLH             1       /*  Divisor latch High        */
 
-#define DEFAULT_BAUD 9600
+#घोषणा DEFAULT_BAUD 9600
 
-static void early_serial_init(int port, int baud)
-{
-	unsigned char c;
-	unsigned divisor;
+अटल व्योम early_serial_init(पूर्णांक port, पूर्णांक baud)
+अणु
+	अचिन्हित अक्षर c;
+	अचिन्हित भागisor;
 
 	outb(0x3, port + LCR);	/* 8n1 */
-	outb(0, port + IER);	/* no interrupt */
-	outb(0, port + FCR);	/* no fifo */
+	outb(0, port + IER);	/* no पूर्णांकerrupt */
+	outb(0, port + FCR);	/* no fअगरo */
 	outb(0x3, port + MCR);	/* DTR + RTS */
 
-	divisor	= 115200 / baud;
+	भागisor	= 115200 / baud;
 	c = inb(port + LCR);
 	outb(c | DLAB, port + LCR);
-	outb(divisor & 0xff, port + DLL);
-	outb((divisor >> 8) & 0xff, port + DLH);
+	outb(भागisor & 0xff, port + DLL);
+	outb((भागisor >> 8) & 0xff, port + DLH);
 	outb(c & ~DLAB, port + LCR);
 
 	early_serial_base = port;
-}
+पूर्ण
 
-static void parse_earlyprintk(void)
-{
-	int baud = DEFAULT_BAUD;
-	char arg[32];
-	int pos = 0;
-	int port = 0;
+अटल व्योम parse_earlyprपूर्णांकk(व्योम)
+अणु
+	पूर्णांक baud = DEFAULT_BAUD;
+	अक्षर arg[32];
+	पूर्णांक pos = 0;
+	पूर्णांक port = 0;
 
-	if (cmdline_find_option("earlyprintk", arg, sizeof(arg)) > 0) {
-		char *e;
+	अगर (cmdline_find_option("earlyprintk", arg, माप(arg)) > 0) अणु
+		अक्षर *e;
 
-		if (!strncmp(arg, "serial", 6)) {
+		अगर (!म_भेदन(arg, "serial", 6)) अणु
 			port = DEFAULT_SERIAL_PORT;
 			pos += 6;
-		}
+		पूर्ण
 
-		if (arg[pos] == ',')
+		अगर (arg[pos] == ',')
 			pos++;
 
 		/*
@@ -67,42 +68,42 @@ static void parse_earlyprintk(void)
 		 *	"serial,ttyS0,115200"
 		 *	"ttyS0,115200"
 		 */
-		if (pos == 7 && !strncmp(arg + pos, "0x", 2)) {
-			port = simple_strtoull(arg + pos, &e, 16);
-			if (port == 0 || arg + pos == e)
+		अगर (pos == 7 && !म_भेदन(arg + pos, "0x", 2)) अणु
+			port = simple_म_से_अदीर्घl(arg + pos, &e, 16);
+			अगर (port == 0 || arg + pos == e)
 				port = DEFAULT_SERIAL_PORT;
-			else
+			अन्यथा
 				pos = e - arg;
-		} else if (!strncmp(arg + pos, "ttyS", 4)) {
-			static const int bases[] = { 0x3f8, 0x2f8 };
-			int idx = 0;
+		पूर्ण अन्यथा अगर (!म_भेदन(arg + pos, "ttyS", 4)) अणु
+			अटल स्थिर पूर्णांक bases[] = अणु 0x3f8, 0x2f8 पूर्ण;
+			पूर्णांक idx = 0;
 
-			/* += strlen("ttyS"); */
+			/* += म_माप("ttyS"); */
 			pos += 4;
 
-			if (arg[pos++] == '1')
+			अगर (arg[pos++] == '1')
 				idx = 1;
 
 			port = bases[idx];
-		}
+		पूर्ण
 
-		if (arg[pos] == ',')
+		अगर (arg[pos] == ',')
 			pos++;
 
-		baud = simple_strtoull(arg + pos, &e, 0);
-		if (baud == 0 || arg + pos == e)
+		baud = simple_म_से_अदीर्घl(arg + pos, &e, 0);
+		अगर (baud == 0 || arg + pos == e)
 			baud = DEFAULT_BAUD;
-	}
+	पूर्ण
 
-	if (port)
+	अगर (port)
 		early_serial_init(port, baud);
-}
+पूर्ण
 
-#define BASE_BAUD (1843200/16)
-static unsigned int probe_baud(int port)
-{
-	unsigned char lcr, dll, dlh;
-	unsigned int quot;
+#घोषणा BASE_BAUD (1843200/16)
+अटल अचिन्हित पूर्णांक probe_baud(पूर्णांक port)
+अणु
+	अचिन्हित अक्षर lcr, dll, dlh;
+	अचिन्हित पूर्णांक quot;
 
 	lcr = inb(port + LCR);
 	outb(lcr | DLAB, port + LCR);
@@ -111,44 +112,44 @@ static unsigned int probe_baud(int port)
 	outb(lcr, port + LCR);
 	quot = (dlh << 8) | dll;
 
-	return BASE_BAUD / quot;
-}
+	वापस BASE_BAUD / quot;
+पूर्ण
 
-static void parse_console_uart8250(void)
-{
-	char optstr[64], *options;
-	int baud = DEFAULT_BAUD;
-	int port = 0;
+अटल व्योम parse_console_uart8250(व्योम)
+अणु
+	अक्षर optstr[64], *options;
+	पूर्णांक baud = DEFAULT_BAUD;
+	पूर्णांक port = 0;
 
 	/*
 	 * console=uart8250,io,0x3f8,115200n8
 	 * need to make sure it is last one console !
 	 */
-	if (cmdline_find_option("console", optstr, sizeof(optstr)) <= 0)
-		return;
+	अगर (cmdline_find_option("console", optstr, माप(optstr)) <= 0)
+		वापस;
 
 	options = optstr;
 
-	if (!strncmp(options, "uart8250,io,", 12))
-		port = simple_strtoull(options + 12, &options, 0);
-	else if (!strncmp(options, "uart,io,", 8))
-		port = simple_strtoull(options + 8, &options, 0);
-	else
-		return;
+	अगर (!म_भेदन(options, "uart8250,io,", 12))
+		port = simple_म_से_अदीर्घl(options + 12, &options, 0);
+	अन्यथा अगर (!म_भेदन(options, "uart,io,", 8))
+		port = simple_म_से_अदीर्घl(options + 8, &options, 0);
+	अन्यथा
+		वापस;
 
-	if (options && (options[0] == ','))
-		baud = simple_strtoull(options + 1, &options, 0);
-	else
+	अगर (options && (options[0] == ','))
+		baud = simple_म_से_अदीर्घl(options + 1, &options, 0);
+	अन्यथा
 		baud = probe_baud(port);
 
-	if (port)
+	अगर (port)
 		early_serial_init(port, baud);
-}
+पूर्ण
 
-void console_init(void)
-{
-	parse_earlyprintk();
+व्योम console_init(व्योम)
+अणु
+	parse_earlyprपूर्णांकk();
 
-	if (!early_serial_base)
+	अगर (!early_serial_base)
 		parse_console_uart8250();
-}
+पूर्ण

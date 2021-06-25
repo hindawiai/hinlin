@@ -1,50 +1,51 @@
+<शैली गुरु>
 /*
  * Extracted fronm glob.c
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/glob.h>
-#include <linux/printk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/glob.h>
+#समावेश <linux/prपूर्णांकk.h>
 
 /* Boot with "glob.verbose=1" to show successful tests, too */
-static bool verbose = false;
+अटल bool verbose = false;
 module_param(verbose, bool, 0);
 
-struct glob_test {
-	char const *pat, *str;
+काष्ठा glob_test अणु
+	अक्षर स्थिर *pat, *str;
 	bool expected;
-};
+पूर्ण;
 
-static bool __pure __init test(char const *pat, char const *str, bool expected)
-{
+अटल bool __pure __init test(अक्षर स्थिर *pat, अक्षर स्थिर *str, bool expected)
+अणु
 	bool match = glob_match(pat, str);
 	bool success = match == expected;
 
-	/* Can't get string literals into a particular section, so... */
-	static char const msg_error[] __initconst =
+	/* Can't get string literals पूर्णांकo a particular section, so... */
+	अटल अक्षर स्थिर msg_error[] __initस्थिर =
 		KERN_ERR "glob: \"%s\" vs. \"%s\": %s *** ERROR ***\n";
-	static char const msg_ok[] __initconst =
+	अटल अक्षर स्थिर msg_ok[] __initस्थिर =
 		KERN_DEBUG "glob: \"%s\" vs. \"%s\": %s OK\n";
-	static char const mismatch[] __initconst = "mismatch";
-	char const *message;
+	अटल अक्षर स्थिर mismatch[] __initस्थिर = "mismatch";
+	अक्षर स्थिर *message;
 
-	if (!success)
+	अगर (!success)
 		message = msg_error;
-	else if (verbose)
+	अन्यथा अगर (verbose)
 		message = msg_ok;
-	else
-		return success;
+	अन्यथा
+		वापस success;
 
-	printk(message, pat, str, mismatch + 3*match);
-	return success;
-}
+	prपूर्णांकk(message, pat, str, mismatch + 3*match);
+	वापस success;
+पूर्ण
 
 /*
  * The tests are all jammed together in one array to make it simpler
  * to place that array in the .init.rodata section.  The obvious
- * "array of structures containing char *" has no way to force the
- * pointed-to strings to be in a particular section.
+ * "array of structures containing char *" has no way to क्रमce the
+ * poपूर्णांकed-to strings to be in a particular section.
  *
  * Anyway, a test consists of:
  * 1. Expected glob_match result: '1' or '0'.
@@ -52,9 +53,9 @@ static bool __pure __init test(char const *pat, char const *str, bool expected)
  * 3. String to match against: null-terminated string
  *
  * The list of tests is terminated with a final '\0' instead of
- * a glob_match result character.
+ * a glob_match result अक्षरacter.
  */
-static char const glob_tests[] __initconst =
+अटल अक्षर स्थिर glob_tests[] __initस्थिर =
 	/* Some basic tests */
 	"1" "a\0" "a\0"
 	"0" "a\0" "b\0"
@@ -62,7 +63,7 @@ static char const glob_tests[] __initconst =
 	"0" "a\0" "\0"
 	"1" "\0" "\0"
 	"0" "\0" "a\0"
-	/* Simple character class tests */
+	/* Simple अक्षरacter class tests */
 	"1" "[a]\0" "a\0"
 	"0" "[a]\0" "b\0"
 	"0" "[!a]\0" "a\0"
@@ -73,7 +74,7 @@ static char const glob_tests[] __initconst =
 	"1" "[!ab]\0" "c\0"
 	"1" "[a-c]\0" "b\0"
 	"0" "[a-c]\0" "d\0"
-	/* Corner cases in character class parsing */
+	/* Corner हालs in अक्षरacter class parsing */
 	"1" "[a-c-e-g]\0" "-\0"
 	"0" "[a-c-e-g]\0" "d\0"
 	"1" "[a-c-e-g]\0" "f\0"
@@ -126,12 +127,12 @@ static char const glob_tests[] __initconst =
 	"0" "*abcd*\0" "abcabcabcabcefg\0"
 	"0" "*ab*cd*\0" "abcabcabcabcefg\0";
 
-static int __init glob_init(void)
-{
-	unsigned successes = 0;
-	unsigned n = 0;
-	char const *p = glob_tests;
-	static char const message[] __initconst =
+अटल पूर्णांक __init glob_init(व्योम)
+अणु
+	अचिन्हित successes = 0;
+	अचिन्हित n = 0;
+	अक्षर स्थिर *p = glob_tests;
+	अटल अक्षर स्थिर message[] __initस्थिर =
 		KERN_INFO "glob: %u self-tests passed, %u failed\n";
 
 	/*
@@ -140,28 +141,28 @@ static int __init glob_init(void)
 	 * end of the tests.  Then come two null-terminated strings: the
 	 * pattern and the string to match it against.
 	 */
-	while (*p) {
+	जबतक (*p) अणु
 		bool expected = *p++ & 1;
-		char const *pat = p;
+		अक्षर स्थिर *pat = p;
 
-		p += strlen(p) + 1;
+		p += म_माप(p) + 1;
 		successes += test(pat, p, expected);
-		p += strlen(p) + 1;
+		p += म_माप(p) + 1;
 		n++;
-	}
+	पूर्ण
 
 	n -= successes;
-	printk(message, successes, n);
+	prपूर्णांकk(message, successes, n);
 
-	/* What's the errno for "kernel bug detected"?  Guess... */
-	return n ? -ECANCELED : 0;
-}
+	/* What's the त्रुटि_सं क्रम "kernel bug detected"?  Guess... */
+	वापस n ? -ECANCELED : 0;
+पूर्ण
 
-/* We need a dummy exit function to allow unload */
-static void __exit glob_fini(void) { }
+/* We need a dummy निकास function to allow unload */
+अटल व्योम __निकास glob_fini(व्योम) अणु पूर्ण
 
 module_init(glob_init);
-module_exit(glob_fini);
+module_निकास(glob_fini);
 
 MODULE_DESCRIPTION("glob(7) matching tests");
 MODULE_LICENSE("Dual MIT/GPL");

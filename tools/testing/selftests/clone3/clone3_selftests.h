@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _CLONE3_SELFTESTS_H
-#define _CLONE3_SELFTESTS_H
+#अगर_अघोषित _CLONE3_SELFTESTS_H
+#घोषणा _CLONE3_SELFTESTS_H
 
-#define _GNU_SOURCE
-#include <sched.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <stdint.h>
-#include <syscall.h>
-#include <sys/wait.h>
+#घोषणा _GNU_SOURCE
+#समावेश <sched.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <syscall.h>
+#समावेश <sys/रुको.h>
 
-#include "../kselftest.h"
+#समावेश "../kselftest.h"
 
-#define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
+#घोषणा ptr_to_u64(ptr) ((__u64)((uपूर्णांकptr_t)(ptr)))
 
-#ifndef CLONE_INTO_CGROUP
-#define CLONE_INTO_CGROUP 0x200000000ULL /* Clone into a specific cgroup given the right permissions. */
-#endif
+#अगर_अघोषित CLONE_INTO_CGROUP
+#घोषणा CLONE_INTO_CGROUP 0x200000000ULL /* Clone पूर्णांकo a specअगरic cgroup given the right permissions. */
+#पूर्ण_अगर
 
-#ifndef __NR_clone3
-#define __NR_clone3 -1
-#endif
+#अगर_अघोषित __NR_clone3
+#घोषणा __NR_clone3 -1
+#पूर्ण_अगर
 
-struct __clone_args {
+काष्ठा __clone_args अणु
 	__aligned_u64 flags;
 	__aligned_u64 pidfd;
 	__aligned_u64 child_tid;
 	__aligned_u64 parent_tid;
-	__aligned_u64 exit_signal;
+	__aligned_u64 निकास_संकेत;
 	__aligned_u64 stack;
 	__aligned_u64 stack_size;
 	__aligned_u64 tls;
-#ifndef CLONE_ARGS_SIZE_VER0
-#define CLONE_ARGS_SIZE_VER0 64	/* sizeof first published struct */
-#endif
+#अगर_अघोषित CLONE_ARGS_SIZE_VER0
+#घोषणा CLONE_ARGS_SIZE_VER0 64	/* माप first published काष्ठा */
+#पूर्ण_अगर
 	__aligned_u64 set_tid;
 	__aligned_u64 set_tid_size;
-#ifndef CLONE_ARGS_SIZE_VER1
-#define CLONE_ARGS_SIZE_VER1 80	/* sizeof second published struct */
-#endif
+#अगर_अघोषित CLONE_ARGS_SIZE_VER1
+#घोषणा CLONE_ARGS_SIZE_VER1 80	/* माप second published काष्ठा */
+#पूर्ण_अगर
 	__aligned_u64 cgroup;
-#ifndef CLONE_ARGS_SIZE_VER2
-#define CLONE_ARGS_SIZE_VER2 88	/* sizeof third published struct */
-#endif
-};
+#अगर_अघोषित CLONE_ARGS_SIZE_VER2
+#घोषणा CLONE_ARGS_SIZE_VER2 88	/* माप third published काष्ठा */
+#पूर्ण_अगर
+पूर्ण;
 
-static pid_t sys_clone3(struct __clone_args *args, size_t size)
-{
-	fflush(stdout);
-	fflush(stderr);
-	return syscall(__NR_clone3, args, size);
-}
+अटल pid_t sys_clone3(काष्ठा __clone_args *args, माप_प्रकार size)
+अणु
+	ख_साफ(मानक_निकास);
+	ख_साफ(मानक_त्रुटि);
+	वापस syscall(__NR_clone3, args, size);
+पूर्ण
 
-static inline void test_clone3_supported(void)
-{
+अटल अंतरभूत व्योम test_clone3_supported(व्योम)
+अणु
 	pid_t pid;
-	struct __clone_args args = {};
+	काष्ठा __clone_args args = अणुपूर्ण;
 
-	if (__NR_clone3 < 0)
-		ksft_exit_skip("clone3() syscall is not supported\n");
+	अगर (__NR_clone3 < 0)
+		ksft_निकास_skip("clone3() syscall is not supported\n");
 
 	/* Set to something that will always cause EINVAL. */
-	args.exit_signal = -1;
-	pid = sys_clone3(&args, sizeof(args));
-	if (!pid)
-		exit(EXIT_SUCCESS);
+	args.निकास_संकेत = -1;
+	pid = sys_clone3(&args, माप(args));
+	अगर (!pid)
+		निकास(निकास_सफल);
 
-	if (pid > 0) {
-		wait(NULL);
-		ksft_exit_fail_msg(
+	अगर (pid > 0) अणु
+		रुको(शून्य);
+		ksft_निकास_fail_msg(
 			"Managed to create child process with invalid exit_signal\n");
-	}
+	पूर्ण
 
-	if (errno == ENOSYS)
-		ksft_exit_skip("clone3() syscall is not supported\n");
+	अगर (त्रुटि_सं == ENOSYS)
+		ksft_निकास_skip("clone3() syscall is not supported\n");
 
-	ksft_print_msg("clone3() syscall supported\n");
-}
+	ksft_prपूर्णांक_msg("clone3() syscall supported\n");
+पूर्ण
 
-#endif /* _CLONE3_SELFTESTS_H */
+#पूर्ण_अगर /* _CLONE3_SELFTESTS_H */

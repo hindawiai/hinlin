@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * dwarf-regs.c : Mapping of DWARF debug register numbers into register names.
+ * dwarf-regs.c : Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
  * Extracted from probe-finder.c
  *
  * Written by Masami Hiramatsu <mhiramat@redhat.com>
  */
 
-#include <stddef.h>
-#include <errno.h> /* for EINVAL */
-#include <string.h> /* for strcmp */
-#include <linux/ptrace.h> /* for struct pt_regs */
-#include <linux/kernel.h> /* for offsetof */
-#include <dwarf-regs.h>
+#समावेश <मानकघोष.स>
+#समावेश <त्रुटिसं.स> /* क्रम EINVAL */
+#समावेश <माला.स> /* क्रम म_भेद */
+#समावेश <linux/ptrace.h> /* क्रम काष्ठा pt_regs */
+#समावेश <linux/kernel.h> /* क्रम दुरत्व */
+#समावेश <dwarf-regs.h>
 
 /*
  * See arch/x86/kernel/ptrace.c.
- * Different from it:
+ * Dअगरferent from it:
  *
- *  - Since struct pt_regs is defined differently for user and kernel,
- *    but we want to use 'ax, bx' instead of 'rax, rbx' (which is struct
+ *  - Since काष्ठा pt_regs is defined dअगरferently क्रम user and kernel,
+ *    but we want to use 'ax, bx' instead of 'rax, rbx' (which is काष्ठा
  *    field name of user's pt_regs), we make REG_OFFSET_NAME to accept
  *    both string name and reg field name.
  *
- *  - Since accessing x86_32's pt_regs from x86_64 building is difficult
+ *  - Since accessing x86_32's pt_regs from x86_64 building is dअगरficult
  *    and vise versa, we simply fill offset with -1, so
- *    get_arch_regstr() still works but regs_query_register_offset()
- *    returns error.
+ *    get_arch_regstr() still works but regs_query_रेजिस्टर_offset()
+ *    वापसs error.
  *    The only inconvenience caused by it now is that we are not allowed
- *    to generate BPF prologue for a x86_64 kernel if perf is built for
- *    x86_32. This is really a rare usecase.
+ *    to generate BPF prologue क्रम a x86_64 kernel अगर perf is built क्रम
+ *    x86_32. This is really a rare useहाल.
  *
- *  - Order is different from kernel's ptrace.c for get_arch_regstr(). Use
+ *  - Order is dअगरferent from kernel's ptrace.c क्रम get_arch_regstr(). Use
  *    the order defined by dwarf.
  */
 
-struct pt_regs_offset {
-	const char *name;
-	int offset;
-};
+काष्ठा pt_regs_offset अणु
+	स्थिर अक्षर *name;
+	पूर्णांक offset;
+पूर्ण;
 
-#define REG_OFFSET_END {.name = NULL, .offset = 0}
+#घोषणा REG_OFFSET_END अणु.name = शून्य, .offset = 0पूर्ण
 
-#ifdef __x86_64__
-# define REG_OFFSET_NAME_64(n, r) {.name = n, .offset = offsetof(struct pt_regs, r)}
-# define REG_OFFSET_NAME_32(n, r) {.name = n, .offset = -1}
-#else
-# define REG_OFFSET_NAME_64(n, r) {.name = n, .offset = -1}
-# define REG_OFFSET_NAME_32(n, r) {.name = n, .offset = offsetof(struct pt_regs, r)}
-#endif
+#अगर_घोषित __x86_64__
+# define REG_OFFSET_NAME_64(n, r) अणु.name = n, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
+# define REG_OFFSET_NAME_32(n, r) अणु.name = n, .offset = -1पूर्ण
+#अन्यथा
+# define REG_OFFSET_NAME_64(n, r) अणु.name = n, .offset = -1पूर्ण
+# define REG_OFFSET_NAME_32(n, r) अणु.name = n, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
+#पूर्ण_अगर
 
-/* TODO: switching by dwarf address size */
-#ifndef __x86_64__
-static const struct pt_regs_offset x86_32_regoffset_table[] = {
+/* TODO: चयनing by dwarf address size */
+#अगर_अघोषित __x86_64__
+अटल स्थिर काष्ठा pt_regs_offset x86_32_regoffset_table[] = अणु
 	REG_OFFSET_NAME_32("%ax",	eax),
 	REG_OFFSET_NAME_32("%cx",	ecx),
 	REG_OFFSET_NAME_32("%dx",	edx),
@@ -61,11 +62,11 @@ static const struct pt_regs_offset x86_32_regoffset_table[] = {
 	REG_OFFSET_NAME_32("%si",	esi),
 	REG_OFFSET_NAME_32("%di",	edi),
 	REG_OFFSET_END,
-};
+पूर्ण;
 
-#define regoffset_table x86_32_regoffset_table
-#else
-static const struct pt_regs_offset x86_64_regoffset_table[] = {
+#घोषणा regoffset_table x86_32_regoffset_table
+#अन्यथा
+अटल स्थिर काष्ठा pt_regs_offset x86_64_regoffset_table[] = अणु
 	REG_OFFSET_NAME_64("%ax",	rax),
 	REG_OFFSET_NAME_64("%dx",	rdx),
 	REG_OFFSET_NAME_64("%cx",	rcx),
@@ -83,33 +84,33 @@ static const struct pt_regs_offset x86_64_regoffset_table[] = {
 	REG_OFFSET_NAME_64("%r14",	r14),
 	REG_OFFSET_NAME_64("%r15",	r15),
 	REG_OFFSET_END,
-};
+पूर्ण;
 
-#define regoffset_table x86_64_regoffset_table
-#endif
+#घोषणा regoffset_table x86_64_regoffset_table
+#पूर्ण_अगर
 
-/* Minus 1 for the ending REG_OFFSET_END */
-#define ARCH_MAX_REGS ((sizeof(regoffset_table) / sizeof(regoffset_table[0])) - 1)
+/* Minus 1 क्रम the ending REG_OFFSET_END */
+#घोषणा ARCH_MAX_REGS ((माप(regoffset_table) / माप(regoffset_table[0])) - 1)
 
-/* Return architecture dependent register string (for kprobe-tracer) */
-const char *get_arch_regstr(unsigned int n)
-{
-	return (n < ARCH_MAX_REGS) ? regoffset_table[n].name : NULL;
-}
+/* Return architecture dependent रेजिस्टर string (क्रम kprobe-tracer) */
+स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
+अणु
+	वापस (n < ARCH_MAX_REGS) ? regoffset_table[n].name : शून्य;
+पूर्ण
 
 /* Reuse code from arch/x86/kernel/ptrace.c */
 /**
- * regs_query_register_offset() - query register offset from its name
- * @name:	the name of a register
+ * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
+ * @name:	the name of a रेजिस्टर
  *
- * regs_query_register_offset() returns the offset of a register in struct
- * pt_regs from its name. If the name is invalid, this returns -EINVAL;
+ * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
+ * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
  */
-int regs_query_register_offset(const char *name)
-{
-	const struct pt_regs_offset *roff;
-	for (roff = regoffset_table; roff->name != NULL; roff++)
-		if (!strcmp(roff->name, name))
-			return roff->offset;
-	return -EINVAL;
-}
+पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा pt_regs_offset *roff;
+	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
+		अगर (!म_भेद(roff->name, name))
+			वापस roff->offset;
+	वापस -EINVAL;
+पूर्ण

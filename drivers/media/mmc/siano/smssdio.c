@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  smssdio.c - Siano 1xxx SDIO interface driver
+ *  smssdio.c - Siano 1xxx SDIO पूर्णांकerface driver
  *
  *  Copyright 2008 Pierre Ossman
  *
  * Based on code by Siano Mobile Silicon, Inc.,
  * Copyright (C) 2006-2008, Uri Shkolnik
  *
- * This hardware is a bit odd in that all transfers should be done
- * to/from the SMSSDIO_DATA register, yet the "increase address" bit
+ * This hardware is a bit odd in that all transfers should be करोne
+ * to/from the SMSSDIO_DATA रेजिस्टर, yet the "increase address" bit
  * always needs to be set.
  *
  * Also, buffers from the card are always aligned to 128 byte
@@ -18,167 +19,167 @@
 /*
  * General cleanup notes:
  *
- * - only typedefs should be name *_t
+ * - only प्रकारs should be name *_t
  *
- * - use ERR_PTR and friends for smscore_register_device()
+ * - use ERR_PTR and मित्रs क्रम smscore_रेजिस्टर_device()
  *
  * - smscore_getbuffer should zero fields
  *
  * Fix stop command
  */
 
-#include "smscoreapi.h"
+#समावेश "smscoreapi.h"
 
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/firmware.h>
-#include <linux/delay.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/module.h>
 
-#include "sms-cards.h"
-#include "smsendian.h"
+#समावेश "sms-cards.h"
+#समावेश "smsendian.h"
 
 /* Registers */
 
-#define SMSSDIO_DATA		0x00
-#define SMSSDIO_INT		0x04
-#define SMSSDIO_BLOCK_SIZE	128
+#घोषणा SMSSDIO_DATA		0x00
+#घोषणा SMSSDIO_INT		0x04
+#घोषणा SMSSDIO_BLOCK_SIZE	128
 
-static const struct sdio_device_id smssdio_ids[] = {
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_STELLAR),
-	 .driver_data = SMS1XXX_BOARD_SIANO_STELLAR},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_NOVA_A0),
-	 .driver_data = SMS1XXX_BOARD_SIANO_NOVA_A},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_NOVA_B0),
-	 .driver_data = SMS1XXX_BOARD_SIANO_NOVA_B},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_VEGA_A0),
-	 .driver_data = SMS1XXX_BOARD_SIANO_VEGA},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_VENICE),
-	 .driver_data = SMS1XXX_BOARD_SIANO_VEGA},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_MING),
-	.driver_data = SMS1XXX_BOARD_SIANO_MING},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_PELE),
-	.driver_data = SMS1XXX_BOARD_SIANO_PELE},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_RIO),
-	.driver_data = SMS1XXX_BOARD_SIANO_RIO},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_DENVER_2160),
-	.driver_data = SMS1XXX_BOARD_SIANO_DENVER_2160},
-	{SDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_DENVER_1530),
-	.driver_data = SMS1XXX_BOARD_SIANO_DENVER_1530},
-	{ /* end: all zeroes */ },
-};
+अटल स्थिर काष्ठा sdio_device_id smssdio_ids[] = अणु
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_STELLAR),
+	 .driver_data = SMS1XXX_BOARD_SIANO_STELLARपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_NOVA_A0),
+	 .driver_data = SMS1XXX_BOARD_SIANO_NOVA_Aपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_NOVA_B0),
+	 .driver_data = SMS1XXX_BOARD_SIANO_NOVA_Bपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_VEGA_A0),
+	 .driver_data = SMS1XXX_BOARD_SIANO_VEGAपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_VENICE),
+	 .driver_data = SMS1XXX_BOARD_SIANO_VEGAपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_MING),
+	.driver_data = SMS1XXX_BOARD_SIANO_MINGपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_PELE),
+	.driver_data = SMS1XXX_BOARD_SIANO_PELEपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_RIO),
+	.driver_data = SMS1XXX_BOARD_SIANO_RIOपूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_DENVER_2160),
+	.driver_data = SMS1XXX_BOARD_SIANO_DENVER_2160पूर्ण,
+	अणुSDIO_DEVICE(SDIO_VENDOR_ID_SIANO, SDIO_DEVICE_ID_SIANO_DENVER_1530),
+	.driver_data = SMS1XXX_BOARD_SIANO_DENVER_1530पूर्ण,
+	अणु /* end: all zeroes */ पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(sdio, smssdio_ids);
 
-struct smssdio_device {
-	struct sdio_func *func;
+काष्ठा smssdio_device अणु
+	काष्ठा sdio_func *func;
 
-	struct smscore_device_t *coredev;
+	काष्ठा smscore_device_t *coredev;
 
-	struct smscore_buffer_t *split_cb;
-};
+	काष्ठा smscore_buffer_t *split_cb;
+पूर्ण;
 
 /*******************************************************************/
 /* Siano core callbacks                                            */
 /*******************************************************************/
 
-static int smssdio_sendrequest(void *context, void *buffer, size_t size)
-{
-	int ret = 0;
-	struct smssdio_device *smsdev;
+अटल पूर्णांक smssdio_sendrequest(व्योम *context, व्योम *buffer, माप_प्रकार size)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा smssdio_device *smsdev;
 
 	smsdev = context;
 
 	sdio_claim_host(smsdev->func);
 
-	smsendian_handle_tx_message((struct sms_msg_data *) buffer);
-	while (size >= smsdev->func->cur_blksize) {
-		ret = sdio_memcpy_toio(smsdev->func, SMSSDIO_DATA,
+	smsendian_handle_tx_message((काष्ठा sms_msg_data *) buffer);
+	जबतक (size >= smsdev->func->cur_blksize) अणु
+		ret = sdio_स_नकल_toio(smsdev->func, SMSSDIO_DATA,
 					buffer, smsdev->func->cur_blksize);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
 		buffer += smsdev->func->cur_blksize;
 		size -= smsdev->func->cur_blksize;
-	}
+	पूर्ण
 
-	if (size) {
-		ret = sdio_memcpy_toio(smsdev->func, SMSSDIO_DATA,
+	अगर (size) अणु
+		ret = sdio_स_नकल_toio(smsdev->func, SMSSDIO_DATA,
 					buffer, size);
-	}
+	पूर्ण
 
 out:
 	sdio_release_host(smsdev->func);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*******************************************************************/
 /* SDIO callbacks                                                  */
 /*******************************************************************/
 
-static void smssdio_interrupt(struct sdio_func *func)
-{
-	int ret;
+अटल व्योम smssdio_पूर्णांकerrupt(काष्ठा sdio_func *func)
+अणु
+	पूर्णांक ret;
 
-	struct smssdio_device *smsdev;
-	struct smscore_buffer_t *cb;
-	struct sms_msg_hdr *hdr;
-	size_t size;
+	काष्ठा smssdio_device *smsdev;
+	काष्ठा smscore_buffer_t *cb;
+	काष्ठा sms_msg_hdr *hdr;
+	माप_प्रकार size;
 
 	smsdev = sdio_get_drvdata(func);
 
 	/*
-	 * The interrupt register has no defined meaning. It is just
-	 * a way of turning of the level triggered interrupt.
+	 * The पूर्णांकerrupt रेजिस्टर has no defined meaning. It is just
+	 * a way of turning of the level triggered पूर्णांकerrupt.
 	 */
-	(void)sdio_readb(func, SMSSDIO_INT, &ret);
-	if (ret) {
+	(व्योम)sdio_पढ़ोb(func, SMSSDIO_INT, &ret);
+	अगर (ret) अणु
 		pr_err("Unable to read interrupt register!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (smsdev->split_cb == NULL) {
+	अगर (smsdev->split_cb == शून्य) अणु
 		cb = smscore_getbuffer(smsdev->coredev);
-		if (!cb) {
+		अगर (!cb) अणु
 			pr_err("Unable to allocate data buffer!\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		ret = sdio_memcpy_fromio(smsdev->func,
+		ret = sdio_स_नकल_fromio(smsdev->func,
 					 cb->p,
 					 SMSSDIO_DATA,
 					 SMSSDIO_BLOCK_SIZE);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("Error %d reading initial block!\n", ret);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		hdr = cb->p;
 
-		if (hdr->msg_flags & MSG_HDR_FLAG_SPLIT_MSG) {
+		अगर (hdr->msg_flags & MSG_HDR_FLAG_SPLIT_MSG) अणु
 			smsdev->split_cb = cb;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (hdr->msg_length > smsdev->func->cur_blksize)
+		अगर (hdr->msg_length > smsdev->func->cur_blksize)
 			size = hdr->msg_length - smsdev->func->cur_blksize;
-		else
+		अन्यथा
 			size = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		cb = smsdev->split_cb;
 		hdr = cb->p;
 
-		size = hdr->msg_length - sizeof(struct sms_msg_hdr);
+		size = hdr->msg_length - माप(काष्ठा sms_msg_hdr);
 
-		smsdev->split_cb = NULL;
-	}
+		smsdev->split_cb = शून्य;
+	पूर्ण
 
-	if (size) {
-		void *buffer;
+	अगर (size) अणु
+		व्योम *buffer;
 
 		buffer = cb->p + (hdr->msg_length - size);
 		size = ALIGN(size, SMSSDIO_BLOCK_SIZE);
@@ -188,121 +189,121 @@ static void smssdio_interrupt(struct sdio_func *func)
 		/*
 		 * First attempt to transfer all of it in one go...
 		 */
-		ret = sdio_memcpy_fromio(smsdev->func,
+		ret = sdio_स_नकल_fromio(smsdev->func,
 					 buffer,
 					 SMSSDIO_DATA,
 					 size);
-		if (ret && ret != -EINVAL) {
+		अगर (ret && ret != -EINVAL) अणु
 			smscore_putbuffer(smsdev->coredev, cb);
 			pr_err("Error %d reading data from card!\n", ret);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/*
-		 * ..then fall back to one block at a time if that is
+		 * ..then fall back to one block at a समय अगर that is
 		 * not possible...
 		 *
-		 * (we have to do this manually because of the
+		 * (we have to करो this manually because of the
 		 * problem with the "increase address" bit)
 		 */
-		if (ret == -EINVAL) {
-			while (size) {
-				ret = sdio_memcpy_fromio(smsdev->func,
+		अगर (ret == -EINVAL) अणु
+			जबतक (size) अणु
+				ret = sdio_स_नकल_fromio(smsdev->func,
 						  buffer, SMSSDIO_DATA,
 						  smsdev->func->cur_blksize);
-				if (ret) {
+				अगर (ret) अणु
 					smscore_putbuffer(smsdev->coredev, cb);
 					pr_err("Error %d reading data from card!\n",
 					       ret);
-					return;
-				}
+					वापस;
+				पूर्ण
 
 				buffer += smsdev->func->cur_blksize;
-				if (size > smsdev->func->cur_blksize)
+				अगर (size > smsdev->func->cur_blksize)
 					size -= smsdev->func->cur_blksize;
-				else
+				अन्यथा
 					size = 0;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	cb->size = hdr->msg_length;
 	cb->offset = 0;
 
-	smsendian_handle_rx_message((struct sms_msg_data *) cb->p);
+	smsendian_handle_rx_message((काष्ठा sms_msg_data *) cb->p);
 	smscore_onresponse(smsdev->coredev, cb);
-}
+पूर्ण
 
-static int smssdio_probe(struct sdio_func *func,
-			 const struct sdio_device_id *id)
-{
-	int ret;
+अटल पूर्णांक smssdio_probe(काष्ठा sdio_func *func,
+			 स्थिर काष्ठा sdio_device_id *id)
+अणु
+	पूर्णांक ret;
 
-	int board_id;
-	struct smssdio_device *smsdev;
-	struct smsdevice_params_t params;
+	पूर्णांक board_id;
+	काष्ठा smssdio_device *smsdev;
+	काष्ठा smsdevice_params_t params;
 
 	board_id = id->driver_data;
 
-	smsdev = kzalloc(sizeof(struct smssdio_device), GFP_KERNEL);
-	if (!smsdev)
-		return -ENOMEM;
+	smsdev = kzalloc(माप(काष्ठा smssdio_device), GFP_KERNEL);
+	अगर (!smsdev)
+		वापस -ENOMEM;
 
 	smsdev->func = func;
 
-	memset(&params, 0, sizeof(struct smsdevice_params_t));
+	स_रखो(&params, 0, माप(काष्ठा smsdevice_params_t));
 
 	params.device = &func->dev;
 	params.buffer_size = 0x5000;	/* ?? */
 	params.num_buffers = 22;	/* ?? */
 	params.context = smsdev;
 
-	snprintf(params.devpath, sizeof(params.devpath),
+	snम_लिखो(params.devpath, माप(params.devpath),
 		 "sdio\\%s", sdio_func_id(func));
 
 	params.sendrequest_handler = smssdio_sendrequest;
 
 	params.device_type = sms_get_board(board_id)->type;
 
-	if (params.device_type != SMS_STELLAR)
+	अगर (params.device_type != SMS_STELLAR)
 		params.flags |= SMS_DEVICE_FAMILY2;
-	else {
+	अन्यथा अणु
 		/*
 		 * FIXME: Stellar needs special handling...
 		 */
 		ret = -ENODEV;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	ret = smscore_register_device(&params, &smsdev->coredev, GFP_DMA, NULL);
-	if (ret < 0)
-		goto free;
+	ret = smscore_रेजिस्टर_device(&params, &smsdev->coredev, GFP_DMA, शून्य);
+	अगर (ret < 0)
+		जाओ मुक्त;
 
 	smscore_set_board_id(smsdev->coredev, board_id);
 
 	sdio_claim_host(func);
 
 	ret = sdio_enable_func(func);
-	if (ret)
-		goto release;
+	अगर (ret)
+		जाओ release;
 
 	ret = sdio_set_block_size(func, SMSSDIO_BLOCK_SIZE);
-	if (ret)
-		goto disable;
+	अगर (ret)
+		जाओ disable;
 
-	ret = sdio_claim_irq(func, smssdio_interrupt);
-	if (ret)
-		goto disable;
+	ret = sdio_claim_irq(func, smssdio_पूर्णांकerrupt);
+	अगर (ret)
+		जाओ disable;
 
 	sdio_set_drvdata(func, smsdev);
 
 	sdio_release_host(func);
 
 	ret = smscore_start_device(smsdev->coredev);
-	if (ret < 0)
-		goto reclaim;
+	अगर (ret < 0)
+		जाओ reclaim;
 
-	return 0;
+	वापस 0;
 
 reclaim:
 	sdio_claim_host(func);
@@ -311,63 +312,63 @@ disable:
 	sdio_disable_func(func);
 release:
 	sdio_release_host(func);
-	smscore_unregister_device(smsdev->coredev);
-free:
-	kfree(smsdev);
+	smscore_unरेजिस्टर_device(smsdev->coredev);
+मुक्त:
+	kमुक्त(smsdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void smssdio_remove(struct sdio_func *func)
-{
-	struct smssdio_device *smsdev;
+अटल व्योम smssdio_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा smssdio_device *smsdev;
 
 	smsdev = sdio_get_drvdata(func);
 
 	/* FIXME: racy! */
-	if (smsdev->split_cb)
+	अगर (smsdev->split_cb)
 		smscore_putbuffer(smsdev->coredev, smsdev->split_cb);
 
-	smscore_unregister_device(smsdev->coredev);
+	smscore_unरेजिस्टर_device(smsdev->coredev);
 
 	sdio_claim_host(func);
 	sdio_release_irq(func);
 	sdio_disable_func(func);
 	sdio_release_host(func);
 
-	kfree(smsdev);
-}
+	kमुक्त(smsdev);
+पूर्ण
 
-static struct sdio_driver smssdio_driver = {
+अटल काष्ठा sdio_driver smssdio_driver = अणु
 	.name = "smssdio",
 	.id_table = smssdio_ids,
 	.probe = smssdio_probe,
-	.remove = smssdio_remove,
-};
+	.हटाओ = smssdio_हटाओ,
+पूर्ण;
 
 /*******************************************************************/
 /* Module functions                                                */
 /*******************************************************************/
 
-static int __init smssdio_module_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init smssdio_module_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	printk(KERN_INFO "smssdio: Siano SMS1xxx SDIO driver\n");
-	printk(KERN_INFO "smssdio: Copyright Pierre Ossman\n");
+	prपूर्णांकk(KERN_INFO "smssdio: Siano SMS1xxx SDIO driver\n");
+	prपूर्णांकk(KERN_INFO "smssdio: Copyright Pierre Ossman\n");
 
-	ret = sdio_register_driver(&smssdio_driver);
+	ret = sdio_रेजिस्टर_driver(&smssdio_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit smssdio_module_exit(void)
-{
-	sdio_unregister_driver(&smssdio_driver);
-}
+अटल व्योम __निकास smssdio_module_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_driver(&smssdio_driver);
+पूर्ण
 
 module_init(smssdio_module_init);
-module_exit(smssdio_module_exit);
+module_निकास(smssdio_module_निकास);
 
 MODULE_DESCRIPTION("Siano SMS1xxx SDIO driver");
 MODULE_AUTHOR("Pierre Ossman");

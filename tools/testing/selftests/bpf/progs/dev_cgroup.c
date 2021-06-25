@@ -1,60 +1,61 @@
+<शैली गुरु>
 /* Copyright (c) 2017 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
 
-#include <linux/bpf.h>
-#include <linux/version.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/version.h>
+#समावेश <bpf/bpf_helpers.h>
 
 SEC("cgroup/dev")
-int bpf_prog1(struct bpf_cgroup_dev_ctx *ctx)
-{
-	short type = ctx->access_type & 0xFFFF;
-#ifdef DEBUG
-	short access = ctx->access_type >> 16;
-	char fmt[] = "  %d:%d    \n";
+पूर्णांक bpf_prog1(काष्ठा bpf_cgroup_dev_ctx *ctx)
+अणु
+	लघु type = ctx->access_type & 0xFFFF;
+#अगर_घोषित DEBUG
+	लघु access = ctx->access_type >> 16;
+	अक्षर fmt[] = "  %d:%d    \n";
 
-	switch (type) {
-	case BPF_DEVCG_DEV_BLOCK:
+	चयन (type) अणु
+	हाल BPF_DEVCG_DEV_BLOCK:
 		fmt[0] = 'b';
-		break;
-	case BPF_DEVCG_DEV_CHAR:
+		अवरोध;
+	हाल BPF_DEVCG_DEV_CHAR:
 		fmt[0] = 'c';
-		break;
-	default:
+		अवरोध;
+	शेष:
 		fmt[0] = '?';
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (access & BPF_DEVCG_ACC_READ)
+	अगर (access & BPF_DEVCG_ACC_READ)
 		fmt[8] = 'r';
 
-	if (access & BPF_DEVCG_ACC_WRITE)
+	अगर (access & BPF_DEVCG_ACC_WRITE)
 		fmt[9] = 'w';
 
-	if (access & BPF_DEVCG_ACC_MKNOD)
+	अगर (access & BPF_DEVCG_ACC_MKNOD)
 		fmt[10] = 'm';
 
-	bpf_trace_printk(fmt, sizeof(fmt), ctx->major, ctx->minor);
-#endif
+	bpf_trace_prपूर्णांकk(fmt, माप(fmt), ctx->major, ctx->minor);
+#पूर्ण_अगर
 
-	/* Allow access to /dev/zero and /dev/random.
-	 * Forbid everything else.
+	/* Allow access to /dev/zero and /dev/अक्रमom.
+	 * Forbid everything अन्यथा.
 	 */
-	if (ctx->major != 1 || type != BPF_DEVCG_DEV_CHAR)
-		return 0;
+	अगर (ctx->major != 1 || type != BPF_DEVCG_DEV_CHAR)
+		वापस 0;
 
-	switch (ctx->minor) {
-	case 5: /* 1:5 /dev/zero */
-	case 9: /* 1:9 /dev/urandom */
-		return 1;
-	}
+	चयन (ctx->minor) अणु
+	हाल 5: /* 1:5 /dev/zero */
+	हाल 9: /* 1:9 /dev/uअक्रमom */
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 __u32 _version SEC("version") = LINUX_VERSION_CODE;

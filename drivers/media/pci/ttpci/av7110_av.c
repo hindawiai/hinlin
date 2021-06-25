@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * av7110_av.c: audio and video MPEG decoder stuff
  *
  * Copyright (C) 1999-2002 Ralph  Metzler
- *                       & Marcus Metzler for convergence integrated media GmbH
+ *                       & Marcus Metzler क्रम convergence पूर्णांकegrated media GmbH
  *
  * originally based on code by:
  * Copyright (C) 1998,1999 Christian Theiss <mistert@rz.fh-augsburg.de>
@@ -11,332 +12,332 @@
  * the project's page is at https://linuxtv.org
  */
 
-#include <linux/ethtool.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
 
-#include "av7110.h"
-#include "av7110_hw.h"
-#include "av7110_av.h"
-#include "av7110_ipack.h"
+#समावेश "av7110.h"
+#समावेश "av7110_hw.h"
+#समावेश "av7110_av.h"
+#समावेश "av7110_ipack.h"
 
 /* MPEG-2 (ISO 13818 / H.222.0) stream types */
-#define PROG_STREAM_MAP  0xBC
-#define PRIVATE_STREAM1  0xBD
-#define PADDING_STREAM	 0xBE
-#define PRIVATE_STREAM2  0xBF
-#define AUDIO_STREAM_S	 0xC0
-#define AUDIO_STREAM_E	 0xDF
-#define VIDEO_STREAM_S	 0xE0
-#define VIDEO_STREAM_E	 0xEF
-#define ECM_STREAM	 0xF0
-#define EMM_STREAM	 0xF1
-#define DSM_CC_STREAM	 0xF2
-#define ISO13522_STREAM  0xF3
-#define PROG_STREAM_DIR  0xFF
+#घोषणा PROG_STREAM_MAP  0xBC
+#घोषणा PRIVATE_STREAM1  0xBD
+#घोषणा PADDING_STREAM	 0xBE
+#घोषणा PRIVATE_STREAM2  0xBF
+#घोषणा AUDIO_STREAM_S	 0xC0
+#घोषणा AUDIO_STREAM_E	 0xDF
+#घोषणा VIDEO_STREAM_S	 0xE0
+#घोषणा VIDEO_STREAM_E	 0xEF
+#घोषणा ECM_STREAM	 0xF0
+#घोषणा EMM_STREAM	 0xF1
+#घोषणा DSM_CC_STREAM	 0xF2
+#घोषणा ISO13522_STREAM  0xF3
+#घोषणा PROG_STREAM_सूची  0xFF
 
-#define PTS_DTS_FLAGS	 0xC0
+#घोषणा PTS_DTS_FLAGS	 0xC0
 
 //pts_dts flags
-#define PTS_ONLY	 0x80
-#define PTS_DTS		 0xC0
-#define TS_SIZE		 188
-#define TRANS_ERROR	 0x80
-#define PAY_START	 0x40
-#define TRANS_PRIO	 0x20
-#define PID_MASK_HI	 0x1F
+#घोषणा PTS_ONLY	 0x80
+#घोषणा PTS_DTS		 0xC0
+#घोषणा TS_SIZE		 188
+#घोषणा TRANS_ERROR	 0x80
+#घोषणा PAY_START	 0x40
+#घोषणा TRANS_PRIO	 0x20
+#घोषणा PID_MASK_HI	 0x1F
 //flags
-#define TRANS_SCRMBL1	 0x80
-#define TRANS_SCRMBL2	 0x40
-#define ADAPT_FIELD	 0x20
-#define PAYLOAD		 0x10
-#define COUNT_MASK	 0x0F
+#घोषणा TRANS_SCRMBL1	 0x80
+#घोषणा TRANS_SCRMBL2	 0x40
+#घोषणा ADAPT_FIELD	 0x20
+#घोषणा PAYLOAD		 0x10
+#घोषणा COUNT_MASK	 0x0F
 
 // adaptation flags
-#define DISCON_IND	 0x80
-#define RAND_ACC_IND	 0x40
-#define ES_PRI_IND	 0x20
-#define PCR_FLAG	 0x10
-#define OPCR_FLAG	 0x08
-#define SPLICE_FLAG	 0x04
-#define TRANS_PRIV	 0x02
-#define ADAP_EXT_FLAG	 0x01
+#घोषणा DISCON_IND	 0x80
+#घोषणा RAND_ACC_IND	 0x40
+#घोषणा ES_PRI_IND	 0x20
+#घोषणा PCR_FLAG	 0x10
+#घोषणा OPCR_FLAG	 0x08
+#घोषणा SPLICE_FLAG	 0x04
+#घोषणा TRANS_PRIV	 0x02
+#घोषणा ADAP_EXT_FLAG	 0x01
 
 // adaptation extension flags
-#define LTW_FLAG	 0x80
-#define PIECE_RATE	 0x40
-#define SEAM_SPLICE	 0x20
+#घोषणा LTW_FLAG	 0x80
+#घोषणा PIECE_RATE	 0x40
+#घोषणा SEAM_SPLICE	 0x20
 
 
-static void p_to_t(u8 const *buf, long int length, u16 pid,
-		   u8 *counter, struct dvb_demux_feed *feed);
-static int write_ts_to_decoder(struct av7110 *av7110, int type, const u8 *buf, size_t len);
+अटल व्योम p_to_t(u8 स्थिर *buf, दीर्घ पूर्णांक length, u16 pid,
+		   u8 *counter, काष्ठा dvb_demux_feed *feed);
+अटल पूर्णांक ग_लिखो_ts_to_decoder(काष्ठा av7110 *av7110, पूर्णांक type, स्थिर u8 *buf, माप_प्रकार len);
 
 
-int av7110_record_cb(struct dvb_filter_pes2ts *p2t, u8 *buf, size_t len)
-{
-	struct dvb_demux_feed *dvbdmxfeed = (struct dvb_demux_feed *) p2t->priv;
+पूर्णांक av7110_record_cb(काष्ठा dvb_filter_pes2ts *p2t, u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा dvb_demux_feed *dvbdmxfeed = (काष्ठा dvb_demux_feed *) p2t->priv;
 
-	if (!(dvbdmxfeed->ts_type & TS_PACKET))
-		return 0;
-	if (buf[3] == 0xe0)	 // video PES do not have a length in TS
+	अगर (!(dvbdmxfeed->ts_type & TS_PACKET))
+		वापस 0;
+	अगर (buf[3] == 0xe0)	 // video PES करो not have a length in TS
 		buf[4] = buf[5] = 0;
-	if (dvbdmxfeed->ts_type & TS_PAYLOAD_ONLY)
-		return dvbdmxfeed->cb.ts(buf, len, NULL, 0,
-					 &dvbdmxfeed->feed.ts, NULL);
-	else
-		return dvb_filter_pes2ts(p2t, buf, len, 1);
-}
+	अगर (dvbdmxfeed->ts_type & TS_PAYLOAD_ONLY)
+		वापस dvbdmxfeed->cb.ts(buf, len, शून्य, 0,
+					 &dvbdmxfeed->feed.ts, शून्य);
+	अन्यथा
+		वापस dvb_filter_pes2ts(p2t, buf, len, 1);
+पूर्ण
 
-static int dvb_filter_pes2ts_cb(void *priv, unsigned char *data)
-{
-	struct dvb_demux_feed *dvbdmxfeed = (struct dvb_demux_feed *) priv;
+अटल पूर्णांक dvb_filter_pes2ts_cb(व्योम *priv, अचिन्हित अक्षर *data)
+अणु
+	काष्ठा dvb_demux_feed *dvbdmxfeed = (काष्ठा dvb_demux_feed *) priv;
 
-	dvbdmxfeed->cb.ts(data, 188, NULL, 0,
-			  &dvbdmxfeed->feed.ts, NULL);
-	return 0;
-}
+	dvbdmxfeed->cb.ts(data, 188, शून्य, 0,
+			  &dvbdmxfeed->feed.ts, शून्य);
+	वापस 0;
+पूर्ण
 
-int av7110_av_start_record(struct av7110 *av7110, int av,
-			   struct dvb_demux_feed *dvbdmxfeed)
-{
-	int ret = 0;
-	struct dvb_demux *dvbdmx = dvbdmxfeed->demux;
+पूर्णांक av7110_av_start_record(काष्ठा av7110 *av7110, पूर्णांक av,
+			   काष्ठा dvb_demux_feed *dvbdmxfeed)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा dvb_demux *dvbdmx = dvbdmxfeed->demux;
 
-	dprintk(2, "av7110:%p, , dvb_demux_feed:%p\n", av7110, dvbdmxfeed);
+	dprपूर्णांकk(2, "av7110:%p, , dvb_demux_feed:%p\n", av7110, dvbdmxfeed);
 
-	if (av7110->playing || (av7110->rec_mode & av))
-		return -EBUSY;
+	अगर (av7110->playing || (av7110->rec_mode & av))
+		वापस -EBUSY;
 	av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Stop, 0);
 	dvbdmx->recording = 1;
 	av7110->rec_mode |= av;
 
-	switch (av7110->rec_mode) {
-	case RP_AUDIO:
+	चयन (av7110->rec_mode) अणु
+	हाल RP_AUDIO:
 		dvb_filter_pes2ts_init(&av7110->p2t[0],
 				       dvbdmx->pesfilter[0]->pid,
 				       dvb_filter_pes2ts_cb,
-				       (void *) dvbdmx->pesfilter[0]);
+				       (व्योम *) dvbdmx->pesfilter[0]);
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Record, 2, AudioPES, 0);
-		break;
+		अवरोध;
 
-	case RP_VIDEO:
+	हाल RP_VIDEO:
 		dvb_filter_pes2ts_init(&av7110->p2t[1],
 				       dvbdmx->pesfilter[1]->pid,
 				       dvb_filter_pes2ts_cb,
-				       (void *) dvbdmx->pesfilter[1]);
+				       (व्योम *) dvbdmx->pesfilter[1]);
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Record, 2, VideoPES, 0);
-		break;
+		अवरोध;
 
-	case RP_AV:
+	हाल RP_AV:
 		dvb_filter_pes2ts_init(&av7110->p2t[0],
 				       dvbdmx->pesfilter[0]->pid,
 				       dvb_filter_pes2ts_cb,
-				       (void *) dvbdmx->pesfilter[0]);
+				       (व्योम *) dvbdmx->pesfilter[0]);
 		dvb_filter_pes2ts_init(&av7110->p2t[1],
 				       dvbdmx->pesfilter[1]->pid,
 				       dvb_filter_pes2ts_cb,
-				       (void *) dvbdmx->pesfilter[1]);
+				       (व्योम *) dvbdmx->pesfilter[1]);
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Record, 2, AV_PES, 0);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int av7110_av_start_play(struct av7110 *av7110, int av)
-{
-	int ret = 0;
-	dprintk(2, "av7110:%p, \n", av7110);
+पूर्णांक av7110_av_start_play(काष्ठा av7110 *av7110, पूर्णांक av)
+अणु
+	पूर्णांक ret = 0;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (av7110->rec_mode)
-		return -EBUSY;
-	if (av7110->playing & av)
-		return -EBUSY;
+	अगर (av7110->rec_mode)
+		वापस -EBUSY;
+	अगर (av7110->playing & av)
+		वापस -EBUSY;
 
 	av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Stop, 0);
 
-	if (av7110->playing == RP_NONE) {
+	अगर (av7110->playing == RP_NONE) अणु
 		av7110_ipack_reset(&av7110->ipack[0]);
 		av7110_ipack_reset(&av7110->ipack[1]);
-	}
+	पूर्ण
 
 	av7110->playing |= av;
-	switch (av7110->playing) {
-	case RP_AUDIO:
+	चयन (av7110->playing) अणु
+	हाल RP_AUDIO:
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, AudioPES, 0);
-		break;
-	case RP_VIDEO:
+		अवरोध;
+	हाल RP_VIDEO:
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, VideoPES, 0);
 		av7110->sinfo = 0;
-		break;
-	case RP_AV:
+		अवरोध;
+	हाल RP_AV:
 		av7110->sinfo = 0;
 		ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, AV_PES, 0);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-int av7110_av_stop(struct av7110 *av7110, int av)
-{
-	int ret = 0;
-	dprintk(2, "av7110:%p, \n", av7110);
+पूर्णांक av7110_av_stop(काष्ठा av7110 *av7110, पूर्णांक av)
+अणु
+	पूर्णांक ret = 0;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (!(av7110->playing & av) && !(av7110->rec_mode & av))
-		return 0;
+	अगर (!(av7110->playing & av) && !(av7110->rec_mode & av))
+		वापस 0;
 	av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Stop, 0);
-	if (av7110->playing) {
+	अगर (av7110->playing) अणु
 		av7110->playing &= ~av;
-		switch (av7110->playing) {
-		case RP_AUDIO:
+		चयन (av7110->playing) अणु
+		हाल RP_AUDIO:
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, AudioPES, 0);
-			break;
-		case RP_VIDEO:
+			अवरोध;
+		हाल RP_VIDEO:
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Play, 2, VideoPES, 0);
-			break;
-		case RP_NONE:
+			अवरोध;
+		हाल RP_NONE:
 			ret = av7110_set_vidmode(av7110, av7110->vidmode);
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		av7110->rec_mode &= ~av;
-		switch (av7110->rec_mode) {
-		case RP_AUDIO:
+		चयन (av7110->rec_mode) अणु
+		हाल RP_AUDIO:
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Record, 2, AudioPES, 0);
-			break;
-		case RP_VIDEO:
+			अवरोध;
+		हाल RP_VIDEO:
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Record, 2, VideoPES, 0);
-			break;
-		case RP_NONE:
-			break;
-		}
-	}
-	return ret;
-}
+			अवरोध;
+		हाल RP_NONE:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-int av7110_pes_play(void *dest, struct dvb_ringbuffer *buf, int dlen)
-{
-	int len;
+पूर्णांक av7110_pes_play(व्योम *dest, काष्ठा dvb_ringbuffer *buf, पूर्णांक dlen)
+अणु
+	पूर्णांक len;
 	u32 sync;
 	u16 blen;
 
-	if (!dlen) {
+	अगर (!dlen) अणु
 		wake_up(&buf->queue);
-		return -1;
-	}
-	while (1) {
+		वापस -1;
+	पूर्ण
+	जबतक (1) अणु
 		len = dvb_ringbuffer_avail(buf);
-		if (len < 6) {
+		अगर (len < 6) अणु
 			wake_up(&buf->queue);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		sync =  DVB_RINGBUFFER_PEEK(buf, 0) << 24;
 		sync |= DVB_RINGBUFFER_PEEK(buf, 1) << 16;
 		sync |= DVB_RINGBUFFER_PEEK(buf, 2) << 8;
 		sync |= DVB_RINGBUFFER_PEEK(buf, 3);
 
-		if (((sync &~ 0x0f) == 0x000001e0) ||
+		अगर (((sync &~ 0x0f) == 0x000001e0) ||
 		    ((sync &~ 0x1f) == 0x000001c0) ||
 		    (sync == 0x000001bd))
-			break;
-		printk("resync\n");
+			अवरोध;
+		prपूर्णांकk("resync\n");
 		DVB_RINGBUFFER_SKIP(buf, 1);
-	}
+	पूर्ण
 	blen =  DVB_RINGBUFFER_PEEK(buf, 4) << 8;
 	blen |= DVB_RINGBUFFER_PEEK(buf, 5);
 	blen += 6;
-	if (len < blen || blen > dlen) {
-		//printk("buffer empty - avail %d blen %u dlen %d\n", len, blen, dlen);
+	अगर (len < blen || blen > dlen) अणु
+		//prपूर्णांकk("buffer empty - avail %d blen %u dlen %d\n", len, blen, dlen);
 		wake_up(&buf->queue);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	dvb_ringbuffer_read(buf, dest, (size_t) blen);
+	dvb_ringbuffer_पढ़ो(buf, dest, (माप_प्रकार) blen);
 
-	dprintk(2, "pread=0x%08lx, pwrite=0x%08lx\n",
-	       (unsigned long) buf->pread, (unsigned long) buf->pwrite);
+	dprपूर्णांकk(2, "pread=0x%08lx, pwrite=0x%08lx\n",
+	       (अचिन्हित दीर्घ) buf->pपढ़ो, (अचिन्हित दीर्घ) buf->pग_लिखो);
 	wake_up(&buf->queue);
-	return blen;
-}
+	वापस blen;
+पूर्ण
 
 
-int av7110_set_volume(struct av7110 *av7110, unsigned int volleft,
-		      unsigned int volright)
-{
-	unsigned int vol, val, balance = 0;
-	int err;
+पूर्णांक av7110_set_volume(काष्ठा av7110 *av7110, अचिन्हित पूर्णांक volleft,
+		      अचिन्हित पूर्णांक volright)
+अणु
+	अचिन्हित पूर्णांक vol, val, balance = 0;
+	पूर्णांक err;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
 	av7110->mixer.volume_left = volleft;
 	av7110->mixer.volume_right = volright;
 
-	switch (av7110->adac_type) {
-	case DVB_ADAC_TI:
+	चयन (av7110->adac_type) अणु
+	हाल DVB_ADAC_TI:
 		volleft = (volleft * 256) / 1036;
 		volright = (volright * 256) / 1036;
-		if (volleft > 0x3f)
+		अगर (volleft > 0x3f)
 			volleft = 0x3f;
-		if (volright > 0x3f)
+		अगर (volright > 0x3f)
 			volright = 0x3f;
-		if ((err = SendDAC(av7110, 3, 0x80 + volleft)))
-			return err;
-		return SendDAC(av7110, 4, volright);
+		अगर ((err = SendDAC(av7110, 3, 0x80 + volleft)))
+			वापस err;
+		वापस SendDAC(av7110, 4, volright);
 
-	case DVB_ADAC_CRYSTAL:
+	हाल DVB_ADAC_CRYSTAL:
 		volleft = 127 - volleft / 2;
 		volright = 127 - volright / 2;
-		i2c_writereg(av7110, 0x20, 0x03, volleft);
-		i2c_writereg(av7110, 0x20, 0x04, volright);
-		return 0;
+		i2c_ग_लिखोreg(av7110, 0x20, 0x03, volleft);
+		i2c_ग_लिखोreg(av7110, 0x20, 0x04, volright);
+		वापस 0;
 
-	case DVB_ADAC_MSP34x0:
+	हाल DVB_ADAC_MSP34x0:
 		vol  = (volleft > volright) ? volleft : volright;
 		val	= (vol * 0x73 / 255) << 8;
-		if (vol > 0)
+		अगर (vol > 0)
 		       balance = ((volright - volleft) * 127) / vol;
-		msp_writereg(av7110, MSP_WR_DSP, 0x0001, balance << 8);
-		msp_writereg(av7110, MSP_WR_DSP, 0x0000, val); /* loudspeaker */
-		msp_writereg(av7110, MSP_WR_DSP, 0x0006, val); /* headphonesr */
-		return 0;
+		msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0001, balance << 8);
+		msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0000, val); /* loudspeaker */
+		msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0006, val); /* headphonesr */
+		वापस 0;
 
-	case DVB_ADAC_MSP34x5:
+	हाल DVB_ADAC_MSP34x5:
 		vol = (volleft > volright) ? volleft : volright;
 		val = (vol * 0x73 / 255) << 8;
-		if (vol > 0)
+		अगर (vol > 0)
 			balance = ((volright - volleft) * 127) / vol;
-		msp_writereg(av7110, MSP_WR_DSP, 0x0001, balance << 8);
-		msp_writereg(av7110, MSP_WR_DSP, 0x0000, val); /* loudspeaker */
-		return 0;
-	}
+		msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0001, balance << 8);
+		msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0000, val); /* loudspeaker */
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int av7110_set_vidmode(struct av7110 *av7110, enum av7110_video_mode mode)
-{
-	int ret;
-	dprintk(2, "av7110:%p, \n", av7110);
+पूर्णांक av7110_set_vidmode(काष्ठा av7110 *av7110, क्रमागत av7110_video_mode mode)
+अणु
+	पूर्णांक ret;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
 	ret = av7110_fw_cmd(av7110, COMTYPE_ENCODER, LoadVidCode, 1, mode);
 
-	if (!ret && !av7110->playing) {
+	अगर (!ret && !av7110->playing) अणु
 		ret = ChangePIDs(av7110, av7110->pids[DMX_PES_VIDEO],
 			   av7110->pids[DMX_PES_AUDIO],
 			   av7110->pids[DMX_PES_TELETEXT],
 			   0, av7110->pids[DMX_PES_PCR]);
-		if (!ret)
+		अगर (!ret)
 			ret = av7110_fw_cmd(av7110, COMTYPE_PIDFILTER, Scan, 0);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-static enum av7110_video_mode sw2mode[16] = {
+अटल क्रमागत av7110_video_mode sw2mode[16] = अणु
 	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_NTSC,
 	AV7110_VIDEO_MODE_NTSC, AV7110_VIDEO_MODE_PAL,
 	AV7110_VIDEO_MODE_NTSC, AV7110_VIDEO_MODE_NTSC,
@@ -345,1172 +346,1172 @@ static enum av7110_video_mode sw2mode[16] = {
 	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
 	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
 	AV7110_VIDEO_MODE_PAL, AV7110_VIDEO_MODE_PAL,
-};
+पूर्ण;
 
-static int get_video_format(struct av7110 *av7110, u8 *buf, int count)
-{
-	int i;
-	int hsize, vsize;
-	int sw;
+अटल पूर्णांक get_video_क्रमmat(काष्ठा av7110 *av7110, u8 *buf, पूर्णांक count)
+अणु
+	पूर्णांक i;
+	पूर्णांक hsize, vsize;
+	पूर्णांक sw;
 	u8 *p;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (av7110->sinfo)
-		return 0;
-	for (i = 7; i < count - 10; i++) {
+	अगर (av7110->sinfo)
+		वापस 0;
+	क्रम (i = 7; i < count - 10; i++) अणु
 		p = buf + i;
-		if (p[0] || p[1] || p[2] != 0x01 || p[3] != 0xb3)
-			continue;
+		अगर (p[0] || p[1] || p[2] != 0x01 || p[3] != 0xb3)
+			जारी;
 		p += 4;
 		hsize = ((p[1] &0xF0) >> 4) | (p[0] << 4);
 		vsize = ((p[1] &0x0F) << 8) | (p[2]);
 		sw = (p[3] & 0x0F);
 		ret = av7110_set_vidmode(av7110, sw2mode[sw]);
-		if (!ret) {
-			dprintk(2, "playback %dx%d fr=%d\n", hsize, vsize, sw);
+		अगर (!ret) अणु
+			dprपूर्णांकk(2, "playback %dx%d fr=%d\n", hsize, vsize, sw);
 			av7110->sinfo = 1;
-		}
-		break;
-	}
-	return ret;
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
 /****************************************************************************
  * I/O buffer management and control
  ****************************************************************************/
 
-static inline long aux_ring_buffer_write(struct dvb_ringbuffer *rbuf,
-					 const u8 *buf, unsigned long count)
-{
-	unsigned long todo = count;
-	int free;
+अटल अंतरभूत दीर्घ aux_ring_buffer_ग_लिखो(काष्ठा dvb_ringbuffer *rbuf,
+					 स्थिर u8 *buf, अचिन्हित दीर्घ count)
+अणु
+	अचिन्हित दीर्घ toकरो = count;
+	पूर्णांक मुक्त;
 
-	while (todo > 0) {
-		if (dvb_ringbuffer_free(rbuf) < 2048) {
-			if (wait_event_interruptible(rbuf->queue,
-						     (dvb_ringbuffer_free(rbuf) >= 2048)))
-				return count - todo;
-		}
-		free = dvb_ringbuffer_free(rbuf);
-		if (free > todo)
-			free = todo;
-		dvb_ringbuffer_write(rbuf, buf, free);
-		todo -= free;
-		buf += free;
-	}
+	जबतक (toकरो > 0) अणु
+		अगर (dvb_ringbuffer_मुक्त(rbuf) < 2048) अणु
+			अगर (रुको_event_पूर्णांकerruptible(rbuf->queue,
+						     (dvb_ringbuffer_मुक्त(rbuf) >= 2048)))
+				वापस count - toकरो;
+		पूर्ण
+		मुक्त = dvb_ringbuffer_मुक्त(rbuf);
+		अगर (मुक्त > toकरो)
+			मुक्त = toकरो;
+		dvb_ringbuffer_ग_लिखो(rbuf, buf, मुक्त);
+		toकरो -= मुक्त;
+		buf += मुक्त;
+	पूर्ण
 
-	return count - todo;
-}
+	वापस count - toकरो;
+पूर्ण
 
-static void play_video_cb(u8 *buf, int count, void *priv)
-{
-	struct av7110 *av7110 = (struct av7110 *) priv;
-	dprintk(2, "av7110:%p, \n", av7110);
+अटल व्योम play_video_cb(u8 *buf, पूर्णांक count, व्योम *priv)
+अणु
+	काष्ठा av7110 *av7110 = (काष्ठा av7110 *) priv;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if ((buf[3] & 0xe0) == 0xe0) {
-		get_video_format(av7110, buf, count);
-		aux_ring_buffer_write(&av7110->avout, buf, count);
-	} else
-		aux_ring_buffer_write(&av7110->aout, buf, count);
-}
+	अगर ((buf[3] & 0xe0) == 0xe0) अणु
+		get_video_क्रमmat(av7110, buf, count);
+		aux_ring_buffer_ग_लिखो(&av7110->avout, buf, count);
+	पूर्ण अन्यथा
+		aux_ring_buffer_ग_लिखो(&av7110->aout, buf, count);
+पूर्ण
 
-static void play_audio_cb(u8 *buf, int count, void *priv)
-{
-	struct av7110 *av7110 = (struct av7110 *) priv;
-	dprintk(2, "av7110:%p, \n", av7110);
+अटल व्योम play_audio_cb(u8 *buf, पूर्णांक count, व्योम *priv)
+अणु
+	काष्ठा av7110 *av7110 = (काष्ठा av7110 *) priv;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	aux_ring_buffer_write(&av7110->aout, buf, count);
-}
+	aux_ring_buffer_ग_लिखो(&av7110->aout, buf, count);
+पूर्ण
 
 
-#define FREE_COND_TS (dvb_ringbuffer_free(rb) >= 4096)
+#घोषणा FREE_COND_TS (dvb_ringbuffer_मुक्त(rb) >= 4096)
 
-static ssize_t ts_play(struct av7110 *av7110, const char __user *buf,
-		       unsigned long count, int nonblock, int type)
-{
-	struct dvb_ringbuffer *rb;
+अटल sमाप_प्रकार ts_play(काष्ठा av7110 *av7110, स्थिर अक्षर __user *buf,
+		       अचिन्हित दीर्घ count, पूर्णांक nonblock, पूर्णांक type)
+अणु
+	काष्ठा dvb_ringbuffer *rb;
 	u8 *kb;
-	unsigned long todo = count;
+	अचिन्हित दीर्घ toकरो = count;
 
-	dprintk(2, "%s: type %d cnt %lu\n", __func__, type, count);
+	dprपूर्णांकk(2, "%s: type %d cnt %lu\n", __func__, type, count);
 
 	rb = (type) ? &av7110->avout : &av7110->aout;
 	kb = av7110->kbuf[type];
 
-	if (!kb)
-		return -ENOBUFS;
+	अगर (!kb)
+		वापस -ENOBUFS;
 
-	if (nonblock && !FREE_COND_TS)
-		return -EWOULDBLOCK;
+	अगर (nonblock && !FREE_COND_TS)
+		वापस -EWOULDBLOCK;
 
-	while (todo >= TS_SIZE) {
-		if (!FREE_COND_TS) {
-			if (nonblock)
-				return count - todo;
-			if (wait_event_interruptible(rb->queue, FREE_COND_TS))
-				return count - todo;
-		}
-		if (copy_from_user(kb, buf, TS_SIZE))
-			return -EFAULT;
-		write_ts_to_decoder(av7110, type, kb, TS_SIZE);
-		todo -= TS_SIZE;
+	जबतक (toकरो >= TS_SIZE) अणु
+		अगर (!FREE_COND_TS) अणु
+			अगर (nonblock)
+				वापस count - toकरो;
+			अगर (रुको_event_पूर्णांकerruptible(rb->queue, FREE_COND_TS))
+				वापस count - toकरो;
+		पूर्ण
+		अगर (copy_from_user(kb, buf, TS_SIZE))
+			वापस -EFAULT;
+		ग_लिखो_ts_to_decoder(av7110, type, kb, TS_SIZE);
+		toकरो -= TS_SIZE;
 		buf += TS_SIZE;
-	}
+	पूर्ण
 
-	return count - todo;
-}
+	वापस count - toकरो;
+पूर्ण
 
 
-#define FREE_COND (dvb_ringbuffer_free(&av7110->avout) >= 20 * 1024 && \
-		   dvb_ringbuffer_free(&av7110->aout) >= 20 * 1024)
+#घोषणा FREE_COND (dvb_ringbuffer_मुक्त(&av7110->avout) >= 20 * 1024 && \
+		   dvb_ringbuffer_मुक्त(&av7110->aout) >= 20 * 1024)
 
-static ssize_t dvb_play(struct av7110 *av7110, const char __user *buf,
-			unsigned long count, int nonblock, int type)
-{
-	unsigned long todo = count, n;
-	dprintk(2, "av7110:%p, \n", av7110);
+अटल sमाप_प्रकार dvb_play(काष्ठा av7110 *av7110, स्थिर अक्षर __user *buf,
+			अचिन्हित दीर्घ count, पूर्णांक nonblock, पूर्णांक type)
+अणु
+	अचिन्हित दीर्घ toकरो = count, n;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (!av7110->kbuf[type])
-		return -ENOBUFS;
+	अगर (!av7110->kbuf[type])
+		वापस -ENOBUFS;
 
-	if (nonblock && !FREE_COND)
-		return -EWOULDBLOCK;
+	अगर (nonblock && !FREE_COND)
+		वापस -EWOULDBLOCK;
 
-	while (todo > 0) {
-		if (!FREE_COND) {
-			if (nonblock)
-				return count - todo;
-			if (wait_event_interruptible(av7110->avout.queue,
+	जबतक (toकरो > 0) अणु
+		अगर (!FREE_COND) अणु
+			अगर (nonblock)
+				वापस count - toकरो;
+			अगर (रुको_event_पूर्णांकerruptible(av7110->avout.queue,
 						     FREE_COND))
-				return count - todo;
-		}
-		n = todo;
-		if (n > IPACKS * 2)
+				वापस count - toकरो;
+		पूर्ण
+		n = toकरो;
+		अगर (n > IPACKS * 2)
 			n = IPACKS * 2;
-		if (copy_from_user(av7110->kbuf[type], buf, n))
-			return -EFAULT;
+		अगर (copy_from_user(av7110->kbuf[type], buf, n))
+			वापस -EFAULT;
 		av7110_ipack_instant_repack(av7110->kbuf[type], n,
 					    &av7110->ipack[type]);
-		todo -= n;
+		toकरो -= n;
 		buf += n;
-	}
-	return count - todo;
-}
+	पूर्ण
+	वापस count - toकरो;
+पूर्ण
 
-static ssize_t dvb_play_kernel(struct av7110 *av7110, const u8 *buf,
-			unsigned long count, int nonblock, int type)
-{
-	unsigned long todo = count, n;
-	dprintk(2, "av7110:%p, \n", av7110);
+अटल sमाप_प्रकार dvb_play_kernel(काष्ठा av7110 *av7110, स्थिर u8 *buf,
+			अचिन्हित दीर्घ count, पूर्णांक nonblock, पूर्णांक type)
+अणु
+	अचिन्हित दीर्घ toकरो = count, n;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (!av7110->kbuf[type])
-		return -ENOBUFS;
+	अगर (!av7110->kbuf[type])
+		वापस -ENOBUFS;
 
-	if (nonblock && !FREE_COND)
-		return -EWOULDBLOCK;
+	अगर (nonblock && !FREE_COND)
+		वापस -EWOULDBLOCK;
 
-	while (todo > 0) {
-		if (!FREE_COND) {
-			if (nonblock)
-				return count - todo;
-			if (wait_event_interruptible(av7110->avout.queue,
+	जबतक (toकरो > 0) अणु
+		अगर (!FREE_COND) अणु
+			अगर (nonblock)
+				वापस count - toकरो;
+			अगर (रुको_event_पूर्णांकerruptible(av7110->avout.queue,
 						     FREE_COND))
-				return count - todo;
-		}
-		n = todo;
-		if (n > IPACKS * 2)
+				वापस count - toकरो;
+		पूर्ण
+		n = toकरो;
+		अगर (n > IPACKS * 2)
 			n = IPACKS * 2;
 		av7110_ipack_instant_repack(buf, n, &av7110->ipack[type]);
-		todo -= n;
+		toकरो -= n;
 		buf += n;
-	}
-	return count - todo;
-}
+	पूर्ण
+	वापस count - toकरो;
+पूर्ण
 
-static ssize_t dvb_aplay(struct av7110 *av7110, const char __user *buf,
-			 unsigned long count, int nonblock, int type)
-{
-	unsigned long todo = count, n;
-	dprintk(2, "av7110:%p, \n", av7110);
+अटल sमाप_प्रकार dvb_aplay(काष्ठा av7110 *av7110, स्थिर अक्षर __user *buf,
+			 अचिन्हित दीर्घ count, पूर्णांक nonblock, पूर्णांक type)
+अणु
+	अचिन्हित दीर्घ toकरो = count, n;
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (!av7110->kbuf[type])
-		return -ENOBUFS;
-	if (nonblock && dvb_ringbuffer_free(&av7110->aout) < 20 * 1024)
-		return -EWOULDBLOCK;
+	अगर (!av7110->kbuf[type])
+		वापस -ENOBUFS;
+	अगर (nonblock && dvb_ringbuffer_मुक्त(&av7110->aout) < 20 * 1024)
+		वापस -EWOULDBLOCK;
 
-	while (todo > 0) {
-		if (dvb_ringbuffer_free(&av7110->aout) < 20 * 1024) {
-			if (nonblock)
-				return count - todo;
-			if (wait_event_interruptible(av7110->aout.queue,
-					(dvb_ringbuffer_free(&av7110->aout) >= 20 * 1024)))
-				return count-todo;
-		}
-		n = todo;
-		if (n > IPACKS * 2)
+	जबतक (toकरो > 0) अणु
+		अगर (dvb_ringbuffer_मुक्त(&av7110->aout) < 20 * 1024) अणु
+			अगर (nonblock)
+				वापस count - toकरो;
+			अगर (रुको_event_पूर्णांकerruptible(av7110->aout.queue,
+					(dvb_ringbuffer_मुक्त(&av7110->aout) >= 20 * 1024)))
+				वापस count-toकरो;
+		पूर्ण
+		n = toकरो;
+		अगर (n > IPACKS * 2)
 			n = IPACKS * 2;
-		if (copy_from_user(av7110->kbuf[type], buf, n))
-			return -EFAULT;
+		अगर (copy_from_user(av7110->kbuf[type], buf, n))
+			वापस -EFAULT;
 		av7110_ipack_instant_repack(av7110->kbuf[type], n,
 					    &av7110->ipack[type]);
-		todo -= n;
+		toकरो -= n;
 		buf += n;
-	}
-	return count - todo;
-}
+	पूर्ण
+	वापस count - toकरो;
+पूर्ण
 
-void av7110_p2t_init(struct av7110_p2t *p, struct dvb_demux_feed *feed)
-{
-	memset(p->pes, 0, TS_SIZE);
+व्योम av7110_p2t_init(काष्ठा av7110_p2t *p, काष्ठा dvb_demux_feed *feed)
+अणु
+	स_रखो(p->pes, 0, TS_SIZE);
 	p->counter = 0;
 	p->pos = 0;
 	p->frags = 0;
-	if (feed)
+	अगर (feed)
 		p->feed = feed;
-}
+पूर्ण
 
-static void clear_p2t(struct av7110_p2t *p)
-{
-	memset(p->pes, 0, TS_SIZE);
+अटल व्योम clear_p2t(काष्ठा av7110_p2t *p)
+अणु
+	स_रखो(p->pes, 0, TS_SIZE);
 //	p->counter = 0;
 	p->pos = 0;
 	p->frags = 0;
-}
+पूर्ण
 
 
-static int find_pes_header(u8 const *buf, long int length, int *frags)
-{
-	int c = 0;
-	int found = 0;
+अटल पूर्णांक find_pes_header(u8 स्थिर *buf, दीर्घ पूर्णांक length, पूर्णांक *frags)
+अणु
+	पूर्णांक c = 0;
+	पूर्णांक found = 0;
 
 	*frags = 0;
 
-	while (c < length - 3 && !found) {
-		if (buf[c] == 0x00 && buf[c + 1] == 0x00 &&
-		    buf[c + 2] == 0x01) {
-			switch ( buf[c + 3] ) {
-			case PROG_STREAM_MAP:
-			case PRIVATE_STREAM2:
-			case PROG_STREAM_DIR:
-			case ECM_STREAM     :
-			case EMM_STREAM     :
-			case PADDING_STREAM :
-			case DSM_CC_STREAM  :
-			case ISO13522_STREAM:
-			case PRIVATE_STREAM1:
-			case AUDIO_STREAM_S ... AUDIO_STREAM_E:
-			case VIDEO_STREAM_S ... VIDEO_STREAM_E:
+	जबतक (c < length - 3 && !found) अणु
+		अगर (buf[c] == 0x00 && buf[c + 1] == 0x00 &&
+		    buf[c + 2] == 0x01) अणु
+			चयन ( buf[c + 3] ) अणु
+			हाल PROG_STREAM_MAP:
+			हाल PRIVATE_STREAM2:
+			हाल PROG_STREAM_सूची:
+			हाल ECM_STREAM     :
+			हाल EMM_STREAM     :
+			हाल PADDING_STREAM :
+			हाल DSM_CC_STREAM  :
+			हाल ISO13522_STREAM:
+			हाल PRIVATE_STREAM1:
+			हाल AUDIO_STREAM_S ... AUDIO_STREAM_E:
+			हाल VIDEO_STREAM_S ... VIDEO_STREAM_E:
 				found = 1;
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				c++;
-				break;
-			}
-		} else
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा
 			c++;
-	}
-	if (c == length - 3 && !found) {
-		if (buf[length - 1] == 0x00)
+	पूर्ण
+	अगर (c == length - 3 && !found) अणु
+		अगर (buf[length - 1] == 0x00)
 			*frags = 1;
-		if (buf[length - 2] == 0x00 &&
+		अगर (buf[length - 2] == 0x00 &&
 		    buf[length - 1] == 0x00)
 			*frags = 2;
-		if (buf[length - 3] == 0x00 &&
+		अगर (buf[length - 3] == 0x00 &&
 		    buf[length - 2] == 0x00 &&
 		    buf[length - 1] == 0x01)
 			*frags = 3;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void av7110_p2t_write(u8 const *buf, long int length, u16 pid, struct av7110_p2t *p)
-{
-	int c, c2, l, add;
-	int check, rest;
+व्योम av7110_p2t_ग_लिखो(u8 स्थिर *buf, दीर्घ पूर्णांक length, u16 pid, काष्ठा av7110_p2t *p)
+अणु
+	पूर्णांक c, c2, l, add;
+	पूर्णांक check, rest;
 
 	c = 0;
 	c2 = 0;
-	if (p->frags){
+	अगर (p->frags)अणु
 		check = 0;
-		switch(p->frags) {
-		case 1:
-			if (buf[c] == 0x00 && buf[c + 1] == 0x01) {
+		चयन(p->frags) अणु
+		हाल 1:
+			अगर (buf[c] == 0x00 && buf[c + 1] == 0x01) अणु
 				check = 1;
 				c += 2;
-			}
-			break;
-		case 2:
-			if (buf[c] == 0x01) {
+			पूर्ण
+			अवरोध;
+		हाल 2:
+			अगर (buf[c] == 0x01) अणु
 				check = 1;
 				c++;
-			}
-			break;
-		case 3:
+			पूर्ण
+			अवरोध;
+		हाल 3:
 			check = 1;
-		}
-		if (check) {
-			switch (buf[c]) {
-			case PROG_STREAM_MAP:
-			case PRIVATE_STREAM2:
-			case PROG_STREAM_DIR:
-			case ECM_STREAM     :
-			case EMM_STREAM     :
-			case PADDING_STREAM :
-			case DSM_CC_STREAM  :
-			case ISO13522_STREAM:
-			case PRIVATE_STREAM1:
-			case AUDIO_STREAM_S ... AUDIO_STREAM_E:
-			case VIDEO_STREAM_S ... VIDEO_STREAM_E:
+		पूर्ण
+		अगर (check) अणु
+			चयन (buf[c]) अणु
+			हाल PROG_STREAM_MAP:
+			हाल PRIVATE_STREAM2:
+			हाल PROG_STREAM_सूची:
+			हाल ECM_STREAM     :
+			हाल EMM_STREAM     :
+			हाल PADDING_STREAM :
+			हाल DSM_CC_STREAM  :
+			हाल ISO13522_STREAM:
+			हाल PRIVATE_STREAM1:
+			हाल AUDIO_STREAM_S ... AUDIO_STREAM_E:
+			हाल VIDEO_STREAM_S ... VIDEO_STREAM_E:
 				p->pes[0] = 0x00;
 				p->pes[1] = 0x00;
 				p->pes[2] = 0x01;
 				p->pes[3] = buf[c];
 				p->pos = 4;
-				memcpy(p->pes + p->pos, buf + c, (TS_SIZE - 4) - p->pos);
+				स_नकल(p->pes + p->pos, buf + c, (TS_SIZE - 4) - p->pos);
 				c += (TS_SIZE - 4) - p->pos;
 				p_to_t(p->pes, (TS_SIZE - 4), pid, &p->counter, p->feed);
 				clear_p2t(p);
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				c = 0;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		p->frags = 0;
-	}
+	पूर्ण
 
-	if (p->pos) {
+	अगर (p->pos) अणु
 		c2 = find_pes_header(buf + c, length - c, &p->frags);
-		if (c2 >= 0 && c2 < (TS_SIZE - 4) - p->pos)
+		अगर (c2 >= 0 && c2 < (TS_SIZE - 4) - p->pos)
 			l = c2+c;
-		else
+		अन्यथा
 			l = (TS_SIZE - 4) - p->pos;
-		memcpy(p->pes + p->pos, buf, l);
+		स_नकल(p->pes + p->pos, buf, l);
 		c += l;
 		p->pos += l;
 		p_to_t(p->pes, p->pos, pid, &p->counter, p->feed);
 		clear_p2t(p);
-	}
+	पूर्ण
 
 	add = 0;
-	while (c < length) {
+	जबतक (c < length) अणु
 		c2 = find_pes_header(buf + c + add, length - c - add, &p->frags);
-		if (c2 >= 0) {
+		अगर (c2 >= 0) अणु
 			c2 += c + add;
-			if (c2 > c){
+			अगर (c2 > c)अणु
 				p_to_t(buf + c, c2 - c, pid, &p->counter, p->feed);
 				c = c2;
 				clear_p2t(p);
 				add = 0;
-			} else
+			पूर्ण अन्यथा
 				add = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			l = length - c;
 			rest = l % (TS_SIZE - 4);
 			l -= rest;
 			p_to_t(buf + c, l, pid, &p->counter, p->feed);
-			memcpy(p->pes, buf + c + l, rest);
+			स_नकल(p->pes, buf + c + l, rest);
 			p->pos = rest;
 			c = length;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-static int write_ts_header2(u16 pid, u8 *counter, int pes_start, u8 *buf, u8 length)
-{
-	int i;
-	int c = 0;
-	int fill;
-	u8 tshead[4] = { 0x47, 0x00, 0x00, 0x10 };
+अटल पूर्णांक ग_लिखो_ts_header2(u16 pid, u8 *counter, पूर्णांक pes_start, u8 *buf, u8 length)
+अणु
+	पूर्णांक i;
+	पूर्णांक c = 0;
+	पूर्णांक fill;
+	u8 tshead[4] = अणु 0x47, 0x00, 0x00, 0x10 पूर्ण;
 
 	fill = (TS_SIZE - 4) - length;
-	if (pes_start)
+	अगर (pes_start)
 		tshead[1] = 0x40;
-	if (fill)
+	अगर (fill)
 		tshead[3] = 0x30;
 	tshead[1] |= (u8)((pid & 0x1F00) >> 8);
 	tshead[2] |= (u8)(pid & 0x00FF);
 	tshead[3] |= ((*counter)++ & 0x0F);
-	memcpy(buf, tshead, 4);
+	स_नकल(buf, tshead, 4);
 	c += 4;
 
-	if (fill) {
+	अगर (fill) अणु
 		buf[4] = fill - 1;
 		c++;
-		if (fill > 1) {
+		अगर (fill > 1) अणु
 			buf[5] = 0x00;
 			c++;
-		}
-		for (i = 6; i < fill + 4; i++) {
+		पूर्ण
+		क्रम (i = 6; i < fill + 4; i++) अणु
 			buf[i] = 0xFF;
 			c++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
 
-static void p_to_t(u8 const *buf, long int length, u16 pid, u8 *counter,
-		   struct dvb_demux_feed *feed)
-{
-	int l, pes_start;
+अटल व्योम p_to_t(u8 स्थिर *buf, दीर्घ पूर्णांक length, u16 pid, u8 *counter,
+		   काष्ठा dvb_demux_feed *feed)
+अणु
+	पूर्णांक l, pes_start;
 	u8 obuf[TS_SIZE];
-	long c = 0;
+	दीर्घ c = 0;
 
 	pes_start = 0;
-	if (length > 3 &&
+	अगर (length > 3 &&
 	     buf[0] == 0x00 && buf[1] == 0x00 && buf[2] == 0x01)
-		switch (buf[3]) {
-			case PROG_STREAM_MAP:
-			case PRIVATE_STREAM2:
-			case PROG_STREAM_DIR:
-			case ECM_STREAM     :
-			case EMM_STREAM     :
-			case PADDING_STREAM :
-			case DSM_CC_STREAM  :
-			case ISO13522_STREAM:
-			case PRIVATE_STREAM1:
-			case AUDIO_STREAM_S ... AUDIO_STREAM_E:
-			case VIDEO_STREAM_S ... VIDEO_STREAM_E:
+		चयन (buf[3]) अणु
+			हाल PROG_STREAM_MAP:
+			हाल PRIVATE_STREAM2:
+			हाल PROG_STREAM_सूची:
+			हाल ECM_STREAM     :
+			हाल EMM_STREAM     :
+			हाल PADDING_STREAM :
+			हाल DSM_CC_STREAM  :
+			हाल ISO13522_STREAM:
+			हाल PRIVATE_STREAM1:
+			हाल AUDIO_STREAM_S ... AUDIO_STREAM_E:
+			हाल VIDEO_STREAM_S ... VIDEO_STREAM_E:
 				pes_start = 1;
-				break;
+				अवरोध;
 
-			default:
-				break;
-		}
+			शेष:
+				अवरोध;
+		पूर्ण
 
-	while (c < length) {
-		memset(obuf, 0, TS_SIZE);
-		if (length - c >= (TS_SIZE - 4)){
-			l = write_ts_header2(pid, counter, pes_start,
+	जबतक (c < length) अणु
+		स_रखो(obuf, 0, TS_SIZE);
+		अगर (length - c >= (TS_SIZE - 4))अणु
+			l = ग_लिखो_ts_header2(pid, counter, pes_start,
 					     obuf, (TS_SIZE - 4));
-			memcpy(obuf + l, buf + c, TS_SIZE - l);
+			स_नकल(obuf + l, buf + c, TS_SIZE - l);
 			c += TS_SIZE - l;
-		} else {
-			l = write_ts_header2(pid, counter, pes_start,
+		पूर्ण अन्यथा अणु
+			l = ग_लिखो_ts_header2(pid, counter, pes_start,
 					     obuf, length - c);
-			memcpy(obuf + l, buf + c, TS_SIZE - l);
+			स_नकल(obuf + l, buf + c, TS_SIZE - l);
 			c = length;
-		}
-		feed->cb.ts(obuf, 188, NULL, 0, &feed->feed.ts, NULL);
+		पूर्ण
+		feed->cb.ts(obuf, 188, शून्य, 0, &feed->feed.ts, शून्य);
 		pes_start = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static int write_ts_to_decoder(struct av7110 *av7110, int type, const u8 *buf, size_t len)
-{
-	struct ipack *ipack = &av7110->ipack[type];
+अटल पूर्णांक ग_लिखो_ts_to_decoder(काष्ठा av7110 *av7110, पूर्णांक type, स्थिर u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा ipack *ipack = &av7110->ipack[type];
 
-	if (buf[1] & TRANS_ERROR) {
+	अगर (buf[1] & TRANS_ERROR) अणु
 		av7110_ipack_reset(ipack);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!(buf[3] & PAYLOAD))
-		return -1;
+	अगर (!(buf[3] & PAYLOAD))
+		वापस -1;
 
-	if (buf[1] & PAY_START)
+	अगर (buf[1] & PAY_START)
 		av7110_ipack_flush(ipack);
 
-	if (buf[3] & ADAPT_FIELD) {
+	अगर (buf[3] & ADAPT_FIELD) अणु
 		len -= buf[4] + 1;
 		buf += buf[4] + 1;
-		if (!len)
-			return 0;
-	}
+		अगर (!len)
+			वापस 0;
+	पूर्ण
 
 	av7110_ipack_instant_repack(buf + 4, len - 4, ipack);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int av7110_write_to_decoder(struct dvb_demux_feed *feed, const u8 *buf, size_t len)
-{
-	struct dvb_demux *demux = feed->demux;
-	struct av7110 *av7110 = (struct av7110 *) demux->priv;
+पूर्णांक av7110_ग_लिखो_to_decoder(काष्ठा dvb_demux_feed *feed, स्थिर u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा dvb_demux *demux = feed->demux;
+	काष्ठा av7110 *av7110 = (काष्ठा av7110 *) demux->priv;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (av7110->full_ts && demux->dmx.frontend->source != DMX_MEMORY_FE)
-		return 0;
+	अगर (av7110->full_ts && demux->dmx.frontend->source != DMX_MEMORY_FE)
+		वापस 0;
 
-	switch (feed->pes_type) {
-	case 0:
-		if (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
-			return -EINVAL;
-		break;
-	case 1:
-		if (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY)
-			return -EINVAL;
-		break;
-	default:
-		return -1;
-	}
+	चयन (feed->pes_type) अणु
+	हाल 0:
+		अगर (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
+			वापस -EINVAL;
+		अवरोध;
+	हाल 1:
+		अगर (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return write_ts_to_decoder(av7110, feed->pes_type, buf, len);
-}
+	वापस ग_लिखो_ts_to_decoder(av7110, feed->pes_type, buf, len);
+पूर्ण
 
 
 
 /******************************************************************************
  * Video MPEG decoder events
  ******************************************************************************/
-void dvb_video_add_event(struct av7110 *av7110, struct video_event *event)
-{
-	struct dvb_video_events *events = &av7110->video_events;
-	int wp;
+व्योम dvb_video_add_event(काष्ठा av7110 *av7110, काष्ठा video_event *event)
+अणु
+	काष्ठा dvb_video_events *events = &av7110->video_events;
+	पूर्णांक wp;
 
 	spin_lock_bh(&events->lock);
 
 	wp = (events->eventw + 1) % MAX_VIDEO_EVENT;
-	if (wp == events->eventr) {
+	अगर (wp == events->eventr) अणु
 		events->overflow = 1;
 		events->eventr = (events->eventr + 1) % MAX_VIDEO_EVENT;
-	}
+	पूर्ण
 
-	//FIXME: timestamp?
-	memcpy(&events->events[events->eventw], event, sizeof(struct video_event));
+	//FIXME: बारtamp?
+	स_नकल(&events->events[events->eventw], event, माप(काष्ठा video_event));
 	events->eventw = wp;
 
 	spin_unlock_bh(&events->lock);
 
-	wake_up_interruptible(&events->wait_queue);
-}
+	wake_up_पूर्णांकerruptible(&events->रुको_queue);
+पूर्ण
 
 
-static int dvb_video_get_event (struct av7110 *av7110, struct video_event *event, int flags)
-{
-	struct dvb_video_events *events = &av7110->video_events;
+अटल पूर्णांक dvb_video_get_event (काष्ठा av7110 *av7110, काष्ठा video_event *event, पूर्णांक flags)
+अणु
+	काष्ठा dvb_video_events *events = &av7110->video_events;
 
-	if (events->overflow) {
+	अगर (events->overflow) अणु
 		events->overflow = 0;
-		return -EOVERFLOW;
-	}
-	if (events->eventw == events->eventr) {
-		int ret;
+		वापस -EOVERFLOW;
+	पूर्ण
+	अगर (events->eventw == events->eventr) अणु
+		पूर्णांक ret;
 
-		if (flags & O_NONBLOCK)
-			return -EWOULDBLOCK;
+		अगर (flags & O_NONBLOCK)
+			वापस -EWOULDBLOCK;
 
-		ret = wait_event_interruptible(events->wait_queue,
+		ret = रुको_event_पूर्णांकerruptible(events->रुको_queue,
 					       events->eventw != events->eventr);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	spin_lock_bh(&events->lock);
 
-	memcpy(event, &events->events[events->eventr],
-	       sizeof(struct video_event));
+	स_नकल(event, &events->events[events->eventr],
+	       माप(काष्ठा video_event));
 	events->eventr = (events->eventr + 1) % MAX_VIDEO_EVENT;
 
 	spin_unlock_bh(&events->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /******************************************************************************
  * DVB device file operations
  ******************************************************************************/
 
-static __poll_t dvb_video_poll(struct file *file, poll_table *wait)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
+अटल __poll_t dvb_video_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
 	__poll_t mask = 0;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY)
-		poll_wait(file, &av7110->avout.queue, wait);
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY)
+		poll_रुको(file, &av7110->avout.queue, रुको);
 
-	poll_wait(file, &av7110->video_events.wait_queue, wait);
+	poll_रुको(file, &av7110->video_events.रुको_queue, रुको);
 
-	if (av7110->video_events.eventw != av7110->video_events.eventr)
+	अगर (av7110->video_events.eventw != av7110->video_events.eventr)
 		mask = EPOLLPRI;
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
-		if (av7110->playing) {
-			if (FREE_COND)
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY) अणु
+		अगर (av7110->playing) अणु
+			अगर (FREE_COND)
 				mask |= (EPOLLOUT | EPOLLWRNORM);
-		} else {
-			/* if not playing: may play if asked for */
+		पूर्ण अन्यथा अणु
+			/* अगर not playing: may play अगर asked क्रम */
 			mask |= (EPOLLOUT | EPOLLWRNORM);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static ssize_t dvb_video_write(struct file *file, const char __user *buf,
-			       size_t count, loff_t *ppos)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	unsigned char c;
+अटल sमाप_प्रकार dvb_video_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	अचिन्हित अक्षर c;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if ((file->f_flags & O_ACCMODE) == O_RDONLY)
-		return -EPERM;
+	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY)
+		वापस -EPERM;
 
-	if (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
-		return -EPERM;
+	अगर (av7110->videostate.stream_source != VIDEO_SOURCE_MEMORY)
+		वापस -EPERM;
 
-	if (get_user(c, buf))
-		return -EFAULT;
-	if (c == 0x47 && count % TS_SIZE == 0)
-		return ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
-	else
-		return dvb_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
-}
+	अगर (get_user(c, buf))
+		वापस -EFAULT;
+	अगर (c == 0x47 && count % TS_SIZE == 0)
+		वापस ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
+	अन्यथा
+		वापस dvb_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 1);
+पूर्ण
 
-static __poll_t dvb_audio_poll(struct file *file, poll_table *wait)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
+अटल __poll_t dvb_audio_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
 	__poll_t mask = 0;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	poll_wait(file, &av7110->aout.queue, wait);
+	poll_रुको(file, &av7110->aout.queue, रुको);
 
-	if (av7110->playing) {
-		if (dvb_ringbuffer_free(&av7110->aout) >= 20 * 1024)
+	अगर (av7110->playing) अणु
+		अगर (dvb_ringbuffer_मुक्त(&av7110->aout) >= 20 * 1024)
 			mask |= (EPOLLOUT | EPOLLWRNORM);
-	} else /* if not playing: may play if asked for */
+	पूर्ण अन्यथा /* अगर not playing: may play अगर asked क्रम */
 		mask = (EPOLLOUT | EPOLLWRNORM);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static ssize_t dvb_audio_write(struct file *file, const char __user *buf,
-			       size_t count, loff_t *ppos)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	unsigned char c;
+अटल sमाप_प्रकार dvb_audio_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	अचिन्हित अक्षर c;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (av7110->audiostate.stream_source != AUDIO_SOURCE_MEMORY) {
-		printk(KERN_ERR "not audio source memory\n");
-		return -EPERM;
-	}
+	अगर (av7110->audiostate.stream_source != AUDIO_SOURCE_MEMORY) अणु
+		prपूर्णांकk(KERN_ERR "not audio source memory\n");
+		वापस -EPERM;
+	पूर्ण
 
-	if (get_user(c, buf))
-		return -EFAULT;
-	if (c == 0x47 && count % TS_SIZE == 0)
-		return ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
-	else
-		return dvb_aplay(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
-}
+	अगर (get_user(c, buf))
+		वापस -EFAULT;
+	अगर (c == 0x47 && count % TS_SIZE == 0)
+		वापस ts_play(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
+	अन्यथा
+		वापस dvb_aplay(av7110, buf, count, file->f_flags & O_NONBLOCK, 0);
+पूर्ण
 
-static u8 iframe_header[] = { 0x00, 0x00, 0x01, 0xe0, 0x00, 0x00, 0x80, 0x00, 0x00 };
+अटल u8 अगरrame_header[] = अणु 0x00, 0x00, 0x01, 0xe0, 0x00, 0x00, 0x80, 0x00, 0x00 पूर्ण;
 
-#define MIN_IFRAME 400000
+#घोषणा MIN_IFRAME 400000
 
-static int play_iframe(struct av7110 *av7110, char __user *buf, unsigned int len, int nonblock)
-{
-	unsigned i, n;
-	int progressive = 0;
-	int match = 0;
+अटल पूर्णांक play_अगरrame(काष्ठा av7110 *av7110, अक्षर __user *buf, अचिन्हित पूर्णांक len, पूर्णांक nonblock)
+अणु
+	अचिन्हित i, n;
+	पूर्णांक progressive = 0;
+	पूर्णांक match = 0;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (len == 0)
-		return 0;
+	अगर (len == 0)
+		वापस 0;
 
-	if (!(av7110->playing & RP_VIDEO)) {
-		if (av7110_av_start_play(av7110, RP_VIDEO) < 0)
-			return -EBUSY;
-	}
+	अगर (!(av7110->playing & RP_VIDEO)) अणु
+		अगर (av7110_av_start_play(av7110, RP_VIDEO) < 0)
+			वापस -EBUSY;
+	पूर्ण
 
-	/* search in buf for instances of 00 00 01 b5 1? */
-	for (i = 0; i < len; i++) {
-		unsigned char c;
-		if (get_user(c, buf + i))
-			return -EFAULT;
-		if (match == 5) {
+	/* search in buf क्रम instances of 00 00 01 b5 1? */
+	क्रम (i = 0; i < len; i++) अणु
+		अचिन्हित अक्षर c;
+		अगर (get_user(c, buf + i))
+			वापस -EFAULT;
+		अगर (match == 5) अणु
 			progressive = c & 0x08;
 			match = 0;
-		}
-		if (c == 0x00) {
+		पूर्ण
+		अगर (c == 0x00) अणु
 			match = (match == 1 || match == 2) ? 2 : 1;
-			continue;
-		}
-		switch (match++) {
-		case 2: if (c == 0x01)
-				continue;
-			break;
-		case 3: if (c == 0xb5)
-				continue;
-			break;
-		case 4: if ((c & 0xf0) == 0x10)
-				continue;
-			break;
-		}
+			जारी;
+		पूर्ण
+		चयन (match++) अणु
+		हाल 2: अगर (c == 0x01)
+				जारी;
+			अवरोध;
+		हाल 3: अगर (c == 0xb5)
+				जारी;
+			अवरोध;
+		हाल 4: अगर ((c & 0xf0) == 0x10)
+				जारी;
+			अवरोध;
+		पूर्ण
 		match = 0;
-	}
+	पूर्ण
 
 	/* setting n always > 1, fixes problems when playing stillframes
 	   consisting of I- and P-Frames */
 	n = MIN_IFRAME / len + 1;
 
 	/* FIXME: nonblock? */
-	dvb_play_kernel(av7110, iframe_header, sizeof(iframe_header), 0, 1);
+	dvb_play_kernel(av7110, अगरrame_header, माप(अगरrame_header), 0, 1);
 
-	for (i = 0; i < n; i++)
+	क्रम (i = 0; i < n; i++)
 		dvb_play(av7110, buf, len, 0, 1);
 
 	av7110_ipack_flush(&av7110->ipack[1]);
 
-	if (progressive)
-		return vidcom(av7110, AV_VIDEO_CMD_FREEZE, 1);
-	else
-		return 0;
-}
+	अगर (progressive)
+		वापस vidcom(av7110, AV_VIDEO_CMD_FREEZE, 1);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_video_still_picture {
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_video_still_picture अणु
 	compat_uptr_t iFrame;
-	int32_t size;
-};
-#define VIDEO_STILLPICTURE32 _IOW('o', 30, struct compat_video_still_picture)
+	पूर्णांक32_t size;
+पूर्ण;
+#घोषणा VIDEO_STILLPICTURE32 _IOW('o', 30, काष्ठा compat_video_still_picture)
 
-struct compat_video_event {
+काष्ठा compat_video_event अणु
 	__s32 type;
-	/* unused, make sure to use atomic time for y2038 if it ever gets used */
-	compat_long_t timestamp;
-	union {
-		video_size_t size;
-		unsigned int frame_rate;        /* in frames per 1000sec */
-		unsigned char vsync_field;      /* unknown/odd/even/progressive */
-	} u;
-};
-#define VIDEO_GET_EVENT32 _IOR('o', 28, struct compat_video_event)
+	/* unused, make sure to use atomic समय क्रम y2038 अगर it ever माला_लो used */
+	compat_दीर्घ_t बारtamp;
+	जोड़ अणु
+		video_माप_प्रकार size;
+		अचिन्हित पूर्णांक frame_rate;        /* in frames per 1000sec */
+		अचिन्हित अक्षर vsync_field;      /* unknown/odd/even/progressive */
+	पूर्ण u;
+पूर्ण;
+#घोषणा VIDEO_GET_EVENT32 _IOR('o', 28, काष्ठा compat_video_event)
 
-static int dvb_compat_video_get_event(struct av7110 *av7110,
-				      struct compat_video_event *event, int flags)
-{
-	struct video_event ev;
-	int ret;
+अटल पूर्णांक dvb_compat_video_get_event(काष्ठा av7110 *av7110,
+				      काष्ठा compat_video_event *event, पूर्णांक flags)
+अणु
+	काष्ठा video_event ev;
+	पूर्णांक ret;
 
 	ret = dvb_video_get_event(av7110, &ev, flags);
 
-	*event = (struct compat_video_event) {
+	*event = (काष्ठा compat_video_event) अणु
 		.type = ev.type,
-		.timestamp = ev.timestamp,
+		.बारtamp = ev.बारtamp,
 		.u.size = ev.u.size,
-	};
+	पूर्ण;
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static int dvb_video_ioctl(struct file *file,
-			   unsigned int cmd, void *parg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	unsigned long arg = (unsigned long) parg;
-	int ret = 0;
+अटल पूर्णांक dvb_video_ioctl(काष्ठा file *file,
+			   अचिन्हित पूर्णांक cmd, व्योम *parg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	अचिन्हित दीर्घ arg = (अचिन्हित दीर्घ) parg;
+	पूर्णांक ret = 0;
 
-	dprintk(1, "av7110:%p, cmd=%04x\n", av7110,cmd);
+	dprपूर्णांकk(1, "av7110:%p, cmd=%04x\n", av7110,cmd);
 
-	if ((file->f_flags & O_ACCMODE) == O_RDONLY) {
-		if ( cmd != VIDEO_GET_STATUS && cmd != VIDEO_GET_EVENT &&
-		     cmd != VIDEO_GET_SIZE ) {
-			return -EPERM;
-		}
-	}
+	अगर ((file->f_flags & O_ACCMODE) == O_RDONLY) अणु
+		अगर ( cmd != VIDEO_GET_STATUS && cmd != VIDEO_GET_EVENT &&
+		     cmd != VIDEO_GET_SIZE ) अणु
+			वापस -EPERM;
+		पूर्ण
+	पूर्ण
 
-	if (mutex_lock_interruptible(&av7110->ioctl_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&av7110->ioctl_mutex))
+		वापस -ERESTARTSYS;
 
-	switch (cmd) {
-	case VIDEO_STOP:
+	चयन (cmd) अणु
+	हाल VIDEO_STOP:
 		av7110->videostate.play_state = VIDEO_STOPPED;
-		if (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY)
+		अगर (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY)
 			ret = av7110_av_stop(av7110, RP_VIDEO);
-		else
+		अन्यथा
 			ret = vidcom(av7110, AV_VIDEO_CMD_STOP,
 			       av7110->videostate.video_blank ? 0 : 1);
-		if (!ret)
+		अगर (!ret)
 			av7110->trickmode = TRICK_NONE;
-		break;
+		अवरोध;
 
-	case VIDEO_PLAY:
+	हाल VIDEO_PLAY:
 		av7110->trickmode = TRICK_NONE;
-		if (av7110->videostate.play_state == VIDEO_FREEZED) {
+		अगर (av7110->videostate.play_state == VIDEO_FREEZED) अणु
 			av7110->videostate.play_state = VIDEO_PLAYING;
 			ret = vidcom(av7110, AV_VIDEO_CMD_PLAY, 0);
-			if (ret)
-				break;
-		}
-		if (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY) {
-			if (av7110->playing == RP_AV) {
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+		अगर (av7110->videostate.stream_source == VIDEO_SOURCE_MEMORY) अणु
+			अगर (av7110->playing == RP_AV) अणु
 				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Stop, 0);
-				if (ret)
-					break;
+				अगर (ret)
+					अवरोध;
 				av7110->playing &= ~RP_VIDEO;
-			}
+			पूर्ण
 			ret = av7110_av_start_play(av7110, RP_VIDEO);
-		}
-		if (!ret)
+		पूर्ण
+		अगर (!ret)
 			ret = vidcom(av7110, AV_VIDEO_CMD_PLAY, 0);
-		if (!ret)
+		अगर (!ret)
 			av7110->videostate.play_state = VIDEO_PLAYING;
-		break;
+		अवरोध;
 
-	case VIDEO_FREEZE:
+	हाल VIDEO_FREEZE:
 		av7110->videostate.play_state = VIDEO_FREEZED;
-		if (av7110->playing & RP_VIDEO)
+		अगर (av7110->playing & RP_VIDEO)
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Pause, 0);
-		else
+		अन्यथा
 			ret = vidcom(av7110, AV_VIDEO_CMD_FREEZE, 1);
-		if (!ret)
+		अगर (!ret)
 			av7110->trickmode = TRICK_FREEZE;
-		break;
+		अवरोध;
 
-	case VIDEO_CONTINUE:
-		if (av7110->playing & RP_VIDEO)
+	हाल VIDEO_CONTINUE:
+		अगर (av7110->playing & RP_VIDEO)
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Continue, 0);
-		if (!ret)
+		अगर (!ret)
 			ret = vidcom(av7110, AV_VIDEO_CMD_PLAY, 0);
-		if (!ret) {
+		अगर (!ret) अणु
 			av7110->videostate.play_state = VIDEO_PLAYING;
 			av7110->trickmode = TRICK_NONE;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case VIDEO_SELECT_SOURCE:
+	हाल VIDEO_SELECT_SOURCE:
 		av7110->videostate.stream_source = (video_stream_source_t) arg;
-		break;
+		अवरोध;
 
-	case VIDEO_SET_BLANK:
-		av7110->videostate.video_blank = (int) arg;
-		break;
+	हाल VIDEO_SET_BLANK:
+		av7110->videostate.video_blank = (पूर्णांक) arg;
+		अवरोध;
 
-	case VIDEO_GET_STATUS:
-		memcpy(parg, &av7110->videostate, sizeof(struct video_status));
-		break;
+	हाल VIDEO_GET_STATUS:
+		स_नकल(parg, &av7110->videostate, माप(काष्ठा video_status));
+		अवरोध;
 
-#ifdef CONFIG_COMPAT
-	case VIDEO_GET_EVENT32:
+#अगर_घोषित CONFIG_COMPAT
+	हाल VIDEO_GET_EVENT32:
 		ret = dvb_compat_video_get_event(av7110, parg, file->f_flags);
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	case VIDEO_GET_EVENT:
+	हाल VIDEO_GET_EVENT:
 		ret = dvb_video_get_event(av7110, parg, file->f_flags);
-		break;
+		अवरोध;
 
-	case VIDEO_GET_SIZE:
-		memcpy(parg, &av7110->video_size, sizeof(video_size_t));
-		break;
+	हाल VIDEO_GET_SIZE:
+		स_नकल(parg, &av7110->video_size, माप(video_माप_प्रकार));
+		अवरोध;
 
-	case VIDEO_SET_DISPLAY_FORMAT:
-	{
-		video_displayformat_t format = (video_displayformat_t) arg;
-		switch (format) {
-		case VIDEO_PAN_SCAN:
+	हाल VIDEO_SET_DISPLAY_FORMAT:
+	अणु
+		video_displayक्रमmat_t क्रमmat = (video_displayक्रमmat_t) arg;
+		चयन (क्रमmat) अणु
+		हाल VIDEO_PAN_SCAN:
 			av7110->display_panscan = VID_PAN_SCAN_PREF;
-			break;
-		case VIDEO_LETTER_BOX:
+			अवरोध;
+		हाल VIDEO_LETTER_BOX:
 			av7110->display_panscan = VID_VC_AND_PS_PREF;
-			break;
-		case VIDEO_CENTER_CUT_OUT:
+			अवरोध;
+		हाल VIDEO_CENTER_CUT_OUT:
 			av7110->display_panscan = VID_CENTRE_CUT_PREF;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-		}
-		if (ret < 0)
-			break;
-		av7110->videostate.display_format = format;
+		पूर्ण
+		अगर (ret < 0)
+			अवरोध;
+		av7110->videostate.display_क्रमmat = क्रमmat;
 		ret = av7110_fw_cmd(av7110, COMTYPE_ENCODER, SetPanScanType,
 				    1, av7110->display_panscan);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case VIDEO_SET_FORMAT:
-		if (arg > 1) {
+	हाल VIDEO_SET_FORMAT:
+		अगर (arg > 1) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		av7110->display_ar = arg;
 		ret = av7110_fw_cmd(av7110, COMTYPE_ENCODER, SetMonitorType,
 				    1, (u16) arg);
-		break;
+		अवरोध;
 
-#ifdef CONFIG_COMPAT
-	case VIDEO_STILLPICTURE32:
-	{
-		struct compat_video_still_picture *pic =
-			(struct compat_video_still_picture *) parg;
+#अगर_घोषित CONFIG_COMPAT
+	हाल VIDEO_STILLPICTURE32:
+	अणु
+		काष्ठा compat_video_still_picture *pic =
+			(काष्ठा compat_video_still_picture *) parg;
 		av7110->videostate.stream_source = VIDEO_SOURCE_MEMORY;
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->avout);
-		ret = play_iframe(av7110, compat_ptr(pic->iFrame),
+		ret = play_अगरrame(av7110, compat_ptr(pic->iFrame),
 				  pic->size, file->f_flags & O_NONBLOCK);
-		break;
-	}
-#endif
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
 
-	case VIDEO_STILLPICTURE:
-	{
-		struct video_still_picture *pic =
-			(struct video_still_picture *) parg;
+	हाल VIDEO_STILLPICTURE:
+	अणु
+		काष्ठा video_still_picture *pic =
+			(काष्ठा video_still_picture *) parg;
 		av7110->videostate.stream_source = VIDEO_SOURCE_MEMORY;
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->avout);
-		ret = play_iframe(av7110, pic->iFrame, pic->size,
+		ret = play_अगरrame(av7110, pic->iFrame, pic->size,
 				  file->f_flags & O_NONBLOCK);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case VIDEO_FAST_FORWARD:
+	हाल VIDEO_FAST_FORWARD:
 		//note: arg is ignored by firmware
-		if (av7110->playing & RP_VIDEO)
+		अगर (av7110->playing & RP_VIDEO)
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 					    __Scan_I, 2, AV_PES, 0);
-		else
+		अन्यथा
 			ret = vidcom(av7110, AV_VIDEO_CMD_FFWD, arg);
-		if (!ret) {
+		अगर (!ret) अणु
 			av7110->trickmode = TRICK_FAST;
 			av7110->videostate.play_state = VIDEO_PLAYING;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case VIDEO_SLOWMOTION:
-		if (av7110->playing&RP_VIDEO) {
-			if (av7110->trickmode != TRICK_SLOW)
+	हाल VIDEO_SLOWMOTION:
+		अगर (av7110->playing&RP_VIDEO) अणु
+			अगर (av7110->trickmode != TRICK_SLOW)
 				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY, __Slow, 2, 0, 0);
-			if (!ret)
+			अगर (!ret)
 				ret = vidcom(av7110, AV_VIDEO_CMD_SLOW, arg);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = vidcom(av7110, AV_VIDEO_CMD_PLAY, 0);
-			if (!ret)
+			अगर (!ret)
 				ret = vidcom(av7110, AV_VIDEO_CMD_STOP, 0);
-			if (!ret)
+			अगर (!ret)
 				ret = vidcom(av7110, AV_VIDEO_CMD_SLOW, arg);
-		}
-		if (!ret) {
+		पूर्ण
+		अगर (!ret) अणु
 			av7110->trickmode = TRICK_SLOW;
 			av7110->videostate.play_state = VIDEO_PLAYING;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case VIDEO_GET_CAPABILITIES:
-		*(int *)parg = VIDEO_CAP_MPEG1 | VIDEO_CAP_MPEG2 |
+	हाल VIDEO_GET_CAPABILITIES:
+		*(पूर्णांक *)parg = VIDEO_CAP_MPEG1 | VIDEO_CAP_MPEG2 |
 			VIDEO_CAP_SYS | VIDEO_CAP_PROG;
-		break;
+		अवरोध;
 
-	case VIDEO_CLEAR_BUFFER:
+	हाल VIDEO_CLEAR_BUFFER:
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->avout);
 		av7110_ipack_reset(&av7110->ipack[1]);
-		if (av7110->playing == RP_AV) {
+		अगर (av7110->playing == RP_AV) अणु
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 					    __Play, 2, AV_PES, 0);
-			if (ret)
-				break;
-			if (av7110->trickmode == TRICK_FAST)
+			अगर (ret)
+				अवरोध;
+			अगर (av7110->trickmode == TRICK_FAST)
 				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 						    __Scan_I, 2, AV_PES, 0);
-			if (av7110->trickmode == TRICK_SLOW) {
+			अगर (av7110->trickmode == TRICK_SLOW) अणु
 				ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 						    __Slow, 2, 0, 0);
-				if (!ret)
+				अगर (!ret)
 					ret = vidcom(av7110, AV_VIDEO_CMD_SLOW, arg);
-			}
-			if (av7110->trickmode == TRICK_FREEZE)
+			पूर्ण
+			अगर (av7110->trickmode == TRICK_FREEZE)
 				ret = vidcom(av7110, AV_VIDEO_CMD_STOP, 1);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case VIDEO_SET_STREAMTYPE:
-		break;
+	हाल VIDEO_SET_STREAMTYPE:
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -ENOIOCTLCMD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&av7110->ioctl_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvb_audio_ioctl(struct file *file,
-			   unsigned int cmd, void *parg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	unsigned long arg = (unsigned long) parg;
-	int ret = 0;
+अटल पूर्णांक dvb_audio_ioctl(काष्ठा file *file,
+			   अचिन्हित पूर्णांक cmd, व्योम *parg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	अचिन्हित दीर्घ arg = (अचिन्हित दीर्घ) parg;
+	पूर्णांक ret = 0;
 
-	dprintk(1, "av7110:%p, cmd=%04x\n", av7110,cmd);
+	dprपूर्णांकk(1, "av7110:%p, cmd=%04x\n", av7110,cmd);
 
-	if (((file->f_flags & O_ACCMODE) == O_RDONLY) &&
+	अगर (((file->f_flags & O_ACCMODE) == O_RDONLY) &&
 	    (cmd != AUDIO_GET_STATUS))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (mutex_lock_interruptible(&av7110->ioctl_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&av7110->ioctl_mutex))
+		वापस -ERESTARTSYS;
 
-	switch (cmd) {
-	case AUDIO_STOP:
-		if (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
+	चयन (cmd) अणु
+	हाल AUDIO_STOP:
+		अगर (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
 			ret = av7110_av_stop(av7110, RP_AUDIO);
-		else
+		अन्यथा
 			ret = audcom(av7110, AUDIO_CMD_MUTE);
-		if (!ret)
+		अगर (!ret)
 			av7110->audiostate.play_state = AUDIO_STOPPED;
-		break;
+		अवरोध;
 
-	case AUDIO_PLAY:
-		if (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
+	हाल AUDIO_PLAY:
+		अगर (av7110->audiostate.stream_source == AUDIO_SOURCE_MEMORY)
 			ret = av7110_av_start_play(av7110, RP_AUDIO);
-		if (!ret)
+		अगर (!ret)
 			ret = audcom(av7110, AUDIO_CMD_UNMUTE);
-		if (!ret)
+		अगर (!ret)
 			av7110->audiostate.play_state = AUDIO_PLAYING;
-		break;
+		अवरोध;
 
-	case AUDIO_PAUSE:
+	हाल AUDIO_PAUSE:
 		ret = audcom(av7110, AUDIO_CMD_MUTE);
-		if (!ret)
+		अगर (!ret)
 			av7110->audiostate.play_state = AUDIO_PAUSED;
-		break;
+		अवरोध;
 
-	case AUDIO_CONTINUE:
-		if (av7110->audiostate.play_state == AUDIO_PAUSED) {
+	हाल AUDIO_CONTINUE:
+		अगर (av7110->audiostate.play_state == AUDIO_PAUSED) अणु
 			av7110->audiostate.play_state = AUDIO_PLAYING;
 			ret = audcom(av7110, AUDIO_CMD_UNMUTE | AUDIO_CMD_PCM16);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AUDIO_SELECT_SOURCE:
+	हाल AUDIO_SELECT_SOURCE:
 		av7110->audiostate.stream_source = (audio_stream_source_t) arg;
-		break;
+		अवरोध;
 
-	case AUDIO_SET_MUTE:
-	{
+	हाल AUDIO_SET_MUTE:
+	अणु
 		ret = audcom(av7110, arg ? AUDIO_CMD_MUTE : AUDIO_CMD_UNMUTE);
-		if (!ret)
-			av7110->audiostate.mute_state = (int) arg;
-		break;
-	}
+		अगर (!ret)
+			av7110->audiostate.mute_state = (पूर्णांक) arg;
+		अवरोध;
+	पूर्ण
 
-	case AUDIO_SET_AV_SYNC:
-		av7110->audiostate.AV_sync_state = (int) arg;
+	हाल AUDIO_SET_AV_SYNC:
+		av7110->audiostate.AV_sync_state = (पूर्णांक) arg;
 		ret = audcom(av7110, arg ? AUDIO_CMD_SYNC_ON : AUDIO_CMD_SYNC_OFF);
-		break;
+		अवरोध;
 
-	case AUDIO_SET_BYPASS_MODE:
-		if (FW_VERSION(av7110->arm_app) < 0x2621)
+	हाल AUDIO_SET_BYPASS_MODE:
+		अगर (FW_VERSION(av7110->arm_app) < 0x2621)
 			ret = -EINVAL;
-		av7110->audiostate.bypass_mode = (int)arg;
-		break;
+		av7110->audiostate.bypass_mode = (पूर्णांक)arg;
+		अवरोध;
 
-	case AUDIO_CHANNEL_SELECT:
+	हाल AUDIO_CHANNEL_SELECT:
 		av7110->audiostate.channel_select = (audio_channel_select_t) arg;
-		switch(av7110->audiostate.channel_select) {
-		case AUDIO_STEREO:
+		चयन(av7110->audiostate.channel_select) अणु
+		हाल AUDIO_STEREO:
 			ret = audcom(av7110, AUDIO_CMD_STEREO);
-			if (!ret) {
-				if (av7110->adac_type == DVB_ADAC_CRYSTAL)
-					i2c_writereg(av7110, 0x20, 0x02, 0x49);
-				else if (av7110->adac_type == DVB_ADAC_MSP34x5)
-					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0220);
-			}
-			break;
-		case AUDIO_MONO_LEFT:
+			अगर (!ret) अणु
+				अगर (av7110->adac_type == DVB_ADAC_CRYSTAL)
+					i2c_ग_लिखोreg(av7110, 0x20, 0x02, 0x49);
+				अन्यथा अगर (av7110->adac_type == DVB_ADAC_MSP34x5)
+					msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0008, 0x0220);
+			पूर्ण
+			अवरोध;
+		हाल AUDIO_MONO_LEFT:
 			ret = audcom(av7110, AUDIO_CMD_MONO_L);
-			if (!ret) {
-				if (av7110->adac_type == DVB_ADAC_CRYSTAL)
-					i2c_writereg(av7110, 0x20, 0x02, 0x4a);
-				else if (av7110->adac_type == DVB_ADAC_MSP34x5)
-					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0200);
-			}
-			break;
-		case AUDIO_MONO_RIGHT:
+			अगर (!ret) अणु
+				अगर (av7110->adac_type == DVB_ADAC_CRYSTAL)
+					i2c_ग_लिखोreg(av7110, 0x20, 0x02, 0x4a);
+				अन्यथा अगर (av7110->adac_type == DVB_ADAC_MSP34x5)
+					msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0008, 0x0200);
+			पूर्ण
+			अवरोध;
+		हाल AUDIO_MONO_RIGHT:
 			ret = audcom(av7110, AUDIO_CMD_MONO_R);
-			if (!ret) {
-				if (av7110->adac_type == DVB_ADAC_CRYSTAL)
-					i2c_writereg(av7110, 0x20, 0x02, 0x45);
-				else if (av7110->adac_type == DVB_ADAC_MSP34x5)
-					msp_writereg(av7110, MSP_WR_DSP, 0x0008, 0x0210);
-			}
-			break;
-		default:
+			अगर (!ret) अणु
+				अगर (av7110->adac_type == DVB_ADAC_CRYSTAL)
+					i2c_ग_लिखोreg(av7110, 0x20, 0x02, 0x45);
+				अन्यथा अगर (av7110->adac_type == DVB_ADAC_MSP34x5)
+					msp_ग_लिखोreg(av7110, MSP_WR_DSP, 0x0008, 0x0210);
+			पूर्ण
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case AUDIO_GET_STATUS:
-		memcpy(parg, &av7110->audiostate, sizeof(struct audio_status));
-		break;
+	हाल AUDIO_GET_STATUS:
+		स_नकल(parg, &av7110->audiostate, माप(काष्ठा audio_status));
+		अवरोध;
 
-	case AUDIO_GET_CAPABILITIES:
-		if (FW_VERSION(av7110->arm_app) < 0x2621)
-			*(unsigned int *)parg = AUDIO_CAP_LPCM | AUDIO_CAP_MP1 | AUDIO_CAP_MP2;
-		else
-			*(unsigned int *)parg = AUDIO_CAP_LPCM | AUDIO_CAP_DTS | AUDIO_CAP_AC3 |
+	हाल AUDIO_GET_CAPABILITIES:
+		अगर (FW_VERSION(av7110->arm_app) < 0x2621)
+			*(अचिन्हित पूर्णांक *)parg = AUDIO_CAP_LPCM | AUDIO_CAP_MP1 | AUDIO_CAP_MP2;
+		अन्यथा
+			*(अचिन्हित पूर्णांक *)parg = AUDIO_CAP_LPCM | AUDIO_CAP_DTS | AUDIO_CAP_AC3 |
 						AUDIO_CAP_MP1 | AUDIO_CAP_MP2;
-		break;
+		अवरोध;
 
-	case AUDIO_CLEAR_BUFFER:
+	हाल AUDIO_CLEAR_BUFFER:
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->aout);
 		av7110_ipack_reset(&av7110->ipack[0]);
-		if (av7110->playing == RP_AV)
+		अगर (av7110->playing == RP_AV)
 			ret = av7110_fw_cmd(av7110, COMTYPE_REC_PLAY,
 					    __Play, 2, AV_PES, 0);
-		break;
+		अवरोध;
 
-	case AUDIO_SET_ID:
-		break;
+	हाल AUDIO_SET_ID:
+		अवरोध;
 
-	case AUDIO_SET_MIXER:
-	{
-		struct audio_mixer *amix = (struct audio_mixer *)parg;
+	हाल AUDIO_SET_MIXER:
+	अणु
+		काष्ठा audio_mixer *amix = (काष्ठा audio_mixer *)parg;
 		ret = av7110_set_volume(av7110, amix->volume_left, amix->volume_right);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case AUDIO_SET_STREAMTYPE:
-		break;
+	हाल AUDIO_SET_STREAMTYPE:
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
 	mutex_unlock(&av7110->ioctl_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int dvb_video_open(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	int err;
+अटल पूर्णांक dvb_video_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	पूर्णांक err;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if ((err = dvb_generic_open(inode, file)) < 0)
-		return err;
+	अगर ((err = dvb_generic_खोलो(inode, file)) < 0)
+		वापस err;
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY) अणु
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->aout);
 		dvb_ringbuffer_flush_spinlock_wakeup(&av7110->avout);
 		av7110->video_blank = 1;
@@ -1519,50 +1520,50 @@ static int dvb_video_open(struct inode *inode, struct file *file)
 
 		/*  empty event queue */
 		av7110->video_events.eventr = av7110->video_events.eventw = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_video_release(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
+अटल पूर्णांक dvb_video_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY) {
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY) अणु
 		av7110_av_stop(av7110, RP_VIDEO);
-	}
+	पूर्ण
 
-	return dvb_generic_release(inode, file);
-}
+	वापस dvb_generic_release(inode, file);
+पूर्ण
 
-static int dvb_audio_open(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
-	int err = dvb_generic_open(inode, file);
+अटल पूर्णांक dvb_audio_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
+	पूर्णांक err = dvb_generic_खोलो(inode, file);
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	dvb_ringbuffer_flush_spinlock_wakeup(&av7110->aout);
 	av7110->audiostate.stream_source = AUDIO_SOURCE_DEMUX;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_audio_release(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct av7110 *av7110 = dvbdev->priv;
+अटल पूर्णांक dvb_audio_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा av7110 *av7110 = dvbdev->priv;
 
-	dprintk(2, "av7110:%p, \n", av7110);
+	dprपूर्णांकk(2, "av7110:%p, \n", av7110);
 
 	av7110_av_stop(av7110, RP_AUDIO);
-	return dvb_generic_release(inode, file);
-}
+	वापस dvb_generic_release(inode, file);
+पूर्ण
 
 
 
@@ -1570,48 +1571,48 @@ static int dvb_audio_release(struct inode *inode, struct file *file)
  * driver registration
  ******************************************************************************/
 
-static const struct file_operations dvb_video_fops = {
+अटल स्थिर काष्ठा file_operations dvb_video_fops = अणु
 	.owner		= THIS_MODULE,
-	.write		= dvb_video_write,
+	.ग_लिखो		= dvb_video_ग_लिखो,
 	.unlocked_ioctl	= dvb_generic_ioctl,
 	.compat_ioctl	= dvb_generic_ioctl,
-	.open		= dvb_video_open,
+	.खोलो		= dvb_video_खोलो,
 	.release	= dvb_video_release,
 	.poll		= dvb_video_poll,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static struct dvb_device dvbdev_video = {
-	.priv		= NULL,
+अटल काष्ठा dvb_device dvbdev_video = अणु
+	.priv		= शून्य,
 	.users		= 6,
-	.readers	= 5,	/* arbitrary */
-	.writers	= 1,
+	.पढ़ोers	= 5,	/* arbitrary */
+	.ग_लिखोrs	= 1,
 	.fops		= &dvb_video_fops,
 	.kernel_ioctl	= dvb_video_ioctl,
-};
+पूर्ण;
 
-static const struct file_operations dvb_audio_fops = {
+अटल स्थिर काष्ठा file_operations dvb_audio_fops = अणु
 	.owner		= THIS_MODULE,
-	.write		= dvb_audio_write,
+	.ग_लिखो		= dvb_audio_ग_लिखो,
 	.unlocked_ioctl	= dvb_generic_ioctl,
 	.compat_ioctl	= dvb_generic_ioctl,
-	.open		= dvb_audio_open,
+	.खोलो		= dvb_audio_खोलो,
 	.release	= dvb_audio_release,
 	.poll		= dvb_audio_poll,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static struct dvb_device dvbdev_audio = {
-	.priv		= NULL,
+अटल काष्ठा dvb_device dvbdev_audio = अणु
+	.priv		= शून्य,
 	.users		= 1,
-	.writers	= 1,
+	.ग_लिखोrs	= 1,
 	.fops		= &dvb_audio_fops,
 	.kernel_ioctl	= dvb_audio_ioctl,
-};
+पूर्ण;
 
 
-int av7110_av_register(struct av7110 *av7110)
-{
+पूर्णांक av7110_av_रेजिस्टर(काष्ठा av7110 *av7110)
+अणु
 	av7110->audiostate.AV_sync_state = 0;
 	av7110->audiostate.mute_state = 0;
 	av7110->audiostate.play_state = AUDIO_STOPPED;
@@ -1622,48 +1623,48 @@ int av7110_av_register(struct av7110 *av7110)
 	av7110->videostate.video_blank = 0;
 	av7110->videostate.play_state = VIDEO_STOPPED;
 	av7110->videostate.stream_source = VIDEO_SOURCE_DEMUX;
-	av7110->videostate.video_format = VIDEO_FORMAT_4_3;
-	av7110->videostate.display_format = VIDEO_LETTER_BOX;
+	av7110->videostate.video_क्रमmat = VIDEO_FORMAT_4_3;
+	av7110->videostate.display_क्रमmat = VIDEO_LETTER_BOX;
 	av7110->display_ar = VIDEO_FORMAT_4_3;
 	av7110->display_panscan = VID_VC_AND_PS_PREF;
 
-	init_waitqueue_head(&av7110->video_events.wait_queue);
+	init_रुकोqueue_head(&av7110->video_events.रुको_queue);
 	spin_lock_init(&av7110->video_events.lock);
 	av7110->video_events.eventw = av7110->video_events.eventr = 0;
 	av7110->video_events.overflow = 0;
-	memset(&av7110->video_size, 0, sizeof (video_size_t));
+	स_रखो(&av7110->video_size, 0, माप (video_माप_प्रकार));
 
-	dvb_register_device(&av7110->dvb_adapter, &av7110->video_dev,
+	dvb_रेजिस्टर_device(&av7110->dvb_adapter, &av7110->video_dev,
 			    &dvbdev_video, av7110, DVB_DEVICE_VIDEO, 0);
 
-	dvb_register_device(&av7110->dvb_adapter, &av7110->audio_dev,
+	dvb_रेजिस्टर_device(&av7110->dvb_adapter, &av7110->audio_dev,
 			    &dvbdev_audio, av7110, DVB_DEVICE_AUDIO, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void av7110_av_unregister(struct av7110 *av7110)
-{
-	dvb_unregister_device(av7110->audio_dev);
-	dvb_unregister_device(av7110->video_dev);
-}
+व्योम av7110_av_unरेजिस्टर(काष्ठा av7110 *av7110)
+अणु
+	dvb_unरेजिस्टर_device(av7110->audio_dev);
+	dvb_unरेजिस्टर_device(av7110->video_dev);
+पूर्ण
 
-int av7110_av_init(struct av7110 *av7110)
-{
-	void (*play[])(u8 *, int, void *) = { play_audio_cb, play_video_cb };
-	int i, ret;
+पूर्णांक av7110_av_init(काष्ठा av7110 *av7110)
+अणु
+	व्योम (*play[])(u8 *, पूर्णांक, व्योम *) = अणु play_audio_cb, play_video_cb पूर्ण;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < 2; i++) {
-		struct ipack *ipack = av7110->ipack + i;
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा ipack *ipack = av7110->ipack + i;
 
 		ret = av7110_ipack_init(ipack, IPACKS, play[i]);
-		if (ret < 0) {
-			if (i)
-				av7110_ipack_free(--ipack);
-			goto out;
-		}
+		अगर (ret < 0) अणु
+			अगर (i)
+				av7110_ipack_मुक्त(--ipack);
+			जाओ out;
+		पूर्ण
 		ipack->data = av7110;
-	}
+	पूर्ण
 
 	dvb_ringbuffer_init(&av7110->avout, av7110->iobuf, AVOUTLEN);
 	dvb_ringbuffer_init(&av7110->aout, av7110->iobuf + AVOUTLEN, AOUTLEN);
@@ -1671,11 +1672,11 @@ int av7110_av_init(struct av7110 *av7110)
 	av7110->kbuf[0] = (u8 *)(av7110->iobuf + AVOUTLEN + AOUTLEN + BMPLEN);
 	av7110->kbuf[1] = av7110->kbuf[0] + 2 * IPACKS;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void av7110_av_exit(struct av7110 *av7110)
-{
-	av7110_ipack_free(&av7110->ipack[0]);
-	av7110_ipack_free(&av7110->ipack[1]);
-}
+व्योम av7110_av_निकास(काष्ठा av7110 *av7110)
+अणु
+	av7110_ipack_मुक्त(&av7110->ipack[0]);
+	av7110_ipack_मुक्त(&av7110->ipack[1]);
+पूर्ण

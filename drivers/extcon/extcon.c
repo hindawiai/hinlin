@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/extcon/extcon.c - External Connector (extcon) framework.
  *
@@ -9,1141 +10,1141 @@
  * Author: Donggeun Kim <dg77.kim@samsung.com>
  * Author: MyungJoo Ham <myungjoo.ham@samsung.com>
  *
- * based on android/drivers/switch/switch_class.c
+ * based on android/drivers/चयन/चयन_class.c
  * Copyright (C) 2008 Google, Inc.
  * Author: Mike Lockwood <lockwood@android.com>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
 
-#include "extcon.h"
+#समावेश "extcon.h"
 
-#define SUPPORTED_CABLE_MAX	32
+#घोषणा SUPPORTED_CABLE_MAX	32
 
-static const struct __extcon_info {
-	unsigned int type;
-	unsigned int id;
-	const char *name;
+अटल स्थिर काष्ठा __extcon_info अणु
+	अचिन्हित पूर्णांक type;
+	अचिन्हित पूर्णांक id;
+	स्थिर अक्षर *name;
 
-} extcon_info[] = {
-	[EXTCON_NONE] = {
+पूर्ण extcon_info[] = अणु
+	[EXTCON_NONE] = अणु
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_NONE,
 		.name = "NONE",
-	},
+	पूर्ण,
 
-	/* USB external connector */
-	[EXTCON_USB] = {
+	/* USB बाह्यal connector */
+	[EXTCON_USB] = अणु
 		.type = EXTCON_TYPE_USB,
 		.id = EXTCON_USB,
 		.name = "USB",
-	},
-	[EXTCON_USB_HOST] = {
+	पूर्ण,
+	[EXTCON_USB_HOST] = अणु
 		.type = EXTCON_TYPE_USB,
 		.id = EXTCON_USB_HOST,
 		.name = "USB-HOST",
-	},
+	पूर्ण,
 
-	/* Charging external connector */
-	[EXTCON_CHG_USB_SDP] = {
+	/* Charging बाह्यal connector */
+	[EXTCON_CHG_USB_SDP] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_SDP,
 		.name = "SDP",
-	},
-	[EXTCON_CHG_USB_DCP] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_DCP] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_DCP,
 		.name = "DCP",
-	},
-	[EXTCON_CHG_USB_CDP] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_CDP] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_CDP,
 		.name = "CDP",
-	},
-	[EXTCON_CHG_USB_ACA] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_ACA] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_ACA,
 		.name = "ACA",
-	},
-	[EXTCON_CHG_USB_FAST] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_FAST] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_FAST,
 		.name = "FAST-CHARGER",
-	},
-	[EXTCON_CHG_USB_SLOW] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_SLOW] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_SLOW,
 		.name = "SLOW-CHARGER",
-	},
-	[EXTCON_CHG_WPT] = {
+	पूर्ण,
+	[EXTCON_CHG_WPT] = अणु
 		.type = EXTCON_TYPE_CHG,
 		.id = EXTCON_CHG_WPT,
 		.name = "WPT",
-	},
-	[EXTCON_CHG_USB_PD] = {
+	पूर्ण,
+	[EXTCON_CHG_USB_PD] = अणु
 		.type = EXTCON_TYPE_CHG | EXTCON_TYPE_USB,
 		.id = EXTCON_CHG_USB_PD,
 		.name = "PD",
-	},
+	पूर्ण,
 
-	/* Jack external connector */
-	[EXTCON_JACK_MICROPHONE] = {
+	/* Jack बाह्यal connector */
+	[EXTCON_JACK_MICROPHONE] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_MICROPHONE,
 		.name = "MICROPHONE",
-	},
-	[EXTCON_JACK_HEADPHONE] = {
+	पूर्ण,
+	[EXTCON_JACK_HEADPHONE] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_HEADPHONE,
 		.name = "HEADPHONE",
-	},
-	[EXTCON_JACK_LINE_IN] = {
+	पूर्ण,
+	[EXTCON_JACK_LINE_IN] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_LINE_IN,
 		.name = "LINE-IN",
-	},
-	[EXTCON_JACK_LINE_OUT] = {
+	पूर्ण,
+	[EXTCON_JACK_LINE_OUT] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_LINE_OUT,
 		.name = "LINE-OUT",
-	},
-	[EXTCON_JACK_VIDEO_IN] = {
+	पूर्ण,
+	[EXTCON_JACK_VIDEO_IN] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_VIDEO_IN,
 		.name = "VIDEO-IN",
-	},
-	[EXTCON_JACK_VIDEO_OUT] = {
+	पूर्ण,
+	[EXTCON_JACK_VIDEO_OUT] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_VIDEO_OUT,
 		.name = "VIDEO-OUT",
-	},
-	[EXTCON_JACK_SPDIF_IN] = {
+	पूर्ण,
+	[EXTCON_JACK_SPDIF_IN] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_SPDIF_IN,
 		.name = "SPDIF-IN",
-	},
-	[EXTCON_JACK_SPDIF_OUT] = {
+	पूर्ण,
+	[EXTCON_JACK_SPDIF_OUT] = अणु
 		.type = EXTCON_TYPE_JACK,
 		.id = EXTCON_JACK_SPDIF_OUT,
 		.name = "SPDIF-OUT",
-	},
+	पूर्ण,
 
-	/* Display external connector */
-	[EXTCON_DISP_HDMI] = {
+	/* Display बाह्यal connector */
+	[EXTCON_DISP_HDMI] = अणु
 		.type = EXTCON_TYPE_DISP,
 		.id = EXTCON_DISP_HDMI,
 		.name = "HDMI",
-	},
-	[EXTCON_DISP_MHL] = {
+	पूर्ण,
+	[EXTCON_DISP_MHL] = अणु
 		.type = EXTCON_TYPE_DISP,
 		.id = EXTCON_DISP_MHL,
 		.name = "MHL",
-	},
-	[EXTCON_DISP_DVI] = {
+	पूर्ण,
+	[EXTCON_DISP_DVI] = अणु
 		.type = EXTCON_TYPE_DISP,
 		.id = EXTCON_DISP_DVI,
 		.name = "DVI",
-	},
-	[EXTCON_DISP_VGA] = {
+	पूर्ण,
+	[EXTCON_DISP_VGA] = अणु
 		.type = EXTCON_TYPE_DISP,
 		.id = EXTCON_DISP_VGA,
 		.name = "VGA",
-	},
-	[EXTCON_DISP_DP] = {
+	पूर्ण,
+	[EXTCON_DISP_DP] = अणु
 		.type = EXTCON_TYPE_DISP | EXTCON_TYPE_USB,
 		.id = EXTCON_DISP_DP,
 		.name = "DP",
-	},
-	[EXTCON_DISP_HMD] = {
+	पूर्ण,
+	[EXTCON_DISP_HMD] = अणु
 		.type = EXTCON_TYPE_DISP | EXTCON_TYPE_USB,
 		.id = EXTCON_DISP_HMD,
 		.name = "HMD",
-	},
+	पूर्ण,
 
-	/* Miscellaneous external connector */
-	[EXTCON_DOCK] = {
+	/* Miscellaneous बाह्यal connector */
+	[EXTCON_DOCK] = अणु
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_DOCK,
 		.name = "DOCK",
-	},
-	[EXTCON_JIG] = {
+	पूर्ण,
+	[EXTCON_JIG] = अणु
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_JIG,
 		.name = "JIG",
-	},
-	[EXTCON_MECHANICAL] = {
+	पूर्ण,
+	[EXTCON_MECHANICAL] = अणु
 		.type = EXTCON_TYPE_MISC,
 		.id = EXTCON_MECHANICAL,
 		.name = "MECHANICAL",
-	},
+	पूर्ण,
 
-	{ /* sentinel */ }
-};
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
 /**
- * struct extcon_cable - An internal data for an external connector.
+ * काष्ठा extcon_cable - An पूर्णांकernal data क्रम an बाह्यal connector.
  * @edev:		the extcon device
  * @cable_index:	the index of this cable in the edev
- * @attr_g:		the attribute group for the cable
+ * @attr_g:		the attribute group क्रम the cable
  * @attr_name:		"name" sysfs entry
  * @attr_state:		"state" sysfs entry
- * @attrs:		the array pointing to attr_name and attr_state for attr_g
+ * @attrs:		the array poपूर्णांकing to attr_name and attr_state क्रम attr_g
  */
-struct extcon_cable {
-	struct extcon_dev *edev;
-	int cable_index;
+काष्ठा extcon_cable अणु
+	काष्ठा extcon_dev *edev;
+	पूर्णांक cable_index;
 
-	struct attribute_group attr_g;
-	struct device_attribute attr_name;
-	struct device_attribute attr_state;
+	काष्ठा attribute_group attr_g;
+	काष्ठा device_attribute attr_name;
+	काष्ठा device_attribute attr_state;
 
-	struct attribute *attrs[3]; /* to be fed to attr_g.attrs */
+	काष्ठा attribute *attrs[3]; /* to be fed to attr_g.attrs */
 
-	union extcon_property_value usb_propval[EXTCON_PROP_USB_CNT];
-	union extcon_property_value chg_propval[EXTCON_PROP_CHG_CNT];
-	union extcon_property_value jack_propval[EXTCON_PROP_JACK_CNT];
-	union extcon_property_value disp_propval[EXTCON_PROP_DISP_CNT];
+	जोड़ extcon_property_value usb_propval[EXTCON_PROP_USB_CNT];
+	जोड़ extcon_property_value chg_propval[EXTCON_PROP_CHG_CNT];
+	जोड़ extcon_property_value jack_propval[EXTCON_PROP_JACK_CNT];
+	जोड़ extcon_property_value disp_propval[EXTCON_PROP_DISP_CNT];
 
-	unsigned long usb_bits[BITS_TO_LONGS(EXTCON_PROP_USB_CNT)];
-	unsigned long chg_bits[BITS_TO_LONGS(EXTCON_PROP_CHG_CNT)];
-	unsigned long jack_bits[BITS_TO_LONGS(EXTCON_PROP_JACK_CNT)];
-	unsigned long disp_bits[BITS_TO_LONGS(EXTCON_PROP_DISP_CNT)];
-};
+	अचिन्हित दीर्घ usb_bits[BITS_TO_LONGS(EXTCON_PROP_USB_CNT)];
+	अचिन्हित दीर्घ chg_bits[BITS_TO_LONGS(EXTCON_PROP_CHG_CNT)];
+	अचिन्हित दीर्घ jack_bits[BITS_TO_LONGS(EXTCON_PROP_JACK_CNT)];
+	अचिन्हित दीर्घ disp_bits[BITS_TO_LONGS(EXTCON_PROP_DISP_CNT)];
+पूर्ण;
 
-static struct class *extcon_class;
+अटल काष्ठा class *extcon_class;
 
-static LIST_HEAD(extcon_dev_list);
-static DEFINE_MUTEX(extcon_dev_list_lock);
+अटल LIST_HEAD(extcon_dev_list);
+अटल DEFINE_MUTEX(extcon_dev_list_lock);
 
-static int check_mutually_exclusive(struct extcon_dev *edev, u32 new_state)
-{
-	int i = 0;
+अटल पूर्णांक check_mutually_exclusive(काष्ठा extcon_dev *edev, u32 new_state)
+अणु
+	पूर्णांक i = 0;
 
-	if (!edev->mutually_exclusive)
-		return 0;
+	अगर (!edev->mutually_exclusive)
+		वापस 0;
 
-	for (i = 0; edev->mutually_exclusive[i]; i++) {
-		int weight;
+	क्रम (i = 0; edev->mutually_exclusive[i]; i++) अणु
+		पूर्णांक weight;
 		u32 correspondants = new_state & edev->mutually_exclusive[i];
 
 		/* calculate the total number of bits set */
 		weight = hweight32(correspondants);
-		if (weight > 1)
-			return i + 1;
-	}
+		अगर (weight > 1)
+			वापस i + 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_cable_index_by_id(struct extcon_dev *edev, const unsigned int id)
-{
-	int i;
+अटल पूर्णांक find_cable_index_by_id(काष्ठा extcon_dev *edev, स्थिर अचिन्हित पूर्णांक id)
+अणु
+	पूर्णांक i;
 
 	/* Find the the index of extcon cable in edev->supported_cable */
-	for (i = 0; i < edev->max_supported; i++) {
-		if (edev->supported_cable[i] == id)
-			return i;
-	}
+	क्रम (i = 0; i < edev->max_supported; i++) अणु
+		अगर (edev->supported_cable[i] == id)
+			वापस i;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int get_extcon_type(unsigned int prop)
-{
-	switch (prop) {
-	case EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
-		return EXTCON_TYPE_USB;
-	case EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
-		return EXTCON_TYPE_CHG;
-	case EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
-		return EXTCON_TYPE_JACK;
-	case EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
-		return EXTCON_TYPE_DISP;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक get_extcon_type(अचिन्हित पूर्णांक prop)
+अणु
+	चयन (prop) अणु
+	हाल EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
+		वापस EXTCON_TYPE_USB;
+	हाल EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
+		वापस EXTCON_TYPE_CHG;
+	हाल EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
+		वापस EXTCON_TYPE_JACK;
+	हाल EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
+		वापस EXTCON_TYPE_DISP;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static bool is_extcon_attached(struct extcon_dev *edev, unsigned int index)
-{
-	return !!(edev->state & BIT(index));
-}
+अटल bool is_extcon_attached(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक index)
+अणु
+	वापस !!(edev->state & BIT(index));
+पूर्ण
 
-static bool is_extcon_changed(struct extcon_dev *edev, int index,
+अटल bool is_extcon_changed(काष्ठा extcon_dev *edev, पूर्णांक index,
 				bool new_state)
-{
-	int state = !!(edev->state & BIT(index));
-	return (state != new_state);
-}
+अणु
+	पूर्णांक state = !!(edev->state & BIT(index));
+	वापस (state != new_state);
+पूर्ण
 
-static bool is_extcon_property_supported(unsigned int id, unsigned int prop)
-{
-	int type;
-
-	/* Check whether the property is supported or not. */
-	type = get_extcon_type(prop);
-	if (type < 0)
-		return false;
-
-	/* Check whether a specific extcon id supports the property or not. */
-	return !!(extcon_info[id].type & type);
-}
-
-static int is_extcon_property_capability(struct extcon_dev *edev,
-				unsigned int id, int index,unsigned int prop)
-{
-	struct extcon_cable *cable;
-	int type, ret;
+अटल bool is_extcon_property_supported(अचिन्हित पूर्णांक id, अचिन्हित पूर्णांक prop)
+अणु
+	पूर्णांक type;
 
 	/* Check whether the property is supported or not. */
 	type = get_extcon_type(prop);
-	if (type < 0)
-		return type;
+	अगर (type < 0)
+		वापस false;
+
+	/* Check whether a specअगरic extcon id supports the property or not. */
+	वापस !!(extcon_info[id].type & type);
+पूर्ण
+
+अटल पूर्णांक is_extcon_property_capability(काष्ठा extcon_dev *edev,
+				अचिन्हित पूर्णांक id, पूर्णांक index,अचिन्हित पूर्णांक prop)
+अणु
+	काष्ठा extcon_cable *cable;
+	पूर्णांक type, ret;
+
+	/* Check whether the property is supported or not. */
+	type = get_extcon_type(prop);
+	अगर (type < 0)
+		वापस type;
 
 	cable = &edev->cables[index];
 
-	switch (type) {
-	case EXTCON_TYPE_USB:
+	चयन (type) अणु
+	हाल EXTCON_TYPE_USB:
 		ret = test_bit(prop - EXTCON_PROP_USB_MIN, cable->usb_bits);
-		break;
-	case EXTCON_TYPE_CHG:
+		अवरोध;
+	हाल EXTCON_TYPE_CHG:
 		ret = test_bit(prop - EXTCON_PROP_CHG_MIN, cable->chg_bits);
-		break;
-	case EXTCON_TYPE_JACK:
+		अवरोध;
+	हाल EXTCON_TYPE_JACK:
 		ret = test_bit(prop - EXTCON_PROP_JACK_MIN, cable->jack_bits);
-		break;
-	case EXTCON_TYPE_DISP:
+		अवरोध;
+	हाल EXTCON_TYPE_DISP:
 		ret = test_bit(prop - EXTCON_PROP_DISP_MIN, cable->disp_bits);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void init_property(struct extcon_dev *edev, unsigned int id, int index)
-{
-	unsigned int type = extcon_info[id].type;
-	struct extcon_cable *cable = &edev->cables[index];
+अटल व्योम init_property(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id, पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक type = extcon_info[id].type;
+	काष्ठा extcon_cable *cable = &edev->cables[index];
 
-	if (EXTCON_TYPE_USB & type)
-		memset(cable->usb_propval, 0, sizeof(cable->usb_propval));
-	if (EXTCON_TYPE_CHG & type)
-		memset(cable->chg_propval, 0, sizeof(cable->chg_propval));
-	if (EXTCON_TYPE_JACK & type)
-		memset(cable->jack_propval, 0, sizeof(cable->jack_propval));
-	if (EXTCON_TYPE_DISP & type)
-		memset(cable->disp_propval, 0, sizeof(cable->disp_propval));
-}
+	अगर (EXTCON_TYPE_USB & type)
+		स_रखो(cable->usb_propval, 0, माप(cable->usb_propval));
+	अगर (EXTCON_TYPE_CHG & type)
+		स_रखो(cable->chg_propval, 0, माप(cable->chg_propval));
+	अगर (EXTCON_TYPE_JACK & type)
+		स_रखो(cable->jack_propval, 0, माप(cable->jack_propval));
+	अगर (EXTCON_TYPE_DISP & type)
+		स_रखो(cable->disp_propval, 0, माप(cable->disp_propval));
+पूर्ण
 
-static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	int i, count = 0;
-	struct extcon_dev *edev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	पूर्णांक i, count = 0;
+	काष्ठा extcon_dev *edev = dev_get_drvdata(dev);
 
-	if (edev->max_supported == 0)
-		return sprintf(buf, "%u\n", edev->state);
+	अगर (edev->max_supported == 0)
+		वापस प्र_लिखो(buf, "%u\n", edev->state);
 
-	for (i = 0; i < edev->max_supported; i++) {
-		count += sprintf(buf + count, "%s=%d\n",
+	क्रम (i = 0; i < edev->max_supported; i++) अणु
+		count += प्र_लिखो(buf + count, "%s=%d\n",
 				extcon_info[edev->supported_cable[i]].name,
 				 !!(edev->state & BIT(i)));
-	}
+	पूर्ण
 
-	return count;
-}
-static DEVICE_ATTR_RO(state);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RO(state);
 
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct extcon_dev *edev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा extcon_dev *edev = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", edev->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", edev->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t cable_name_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct extcon_cable *cable = container_of(attr, struct extcon_cable,
+अटल sमाप_प्रकार cable_name_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा extcon_cable *cable = container_of(attr, काष्ठा extcon_cable,
 						  attr_name);
-	int i = cable->cable_index;
+	पूर्णांक i = cable->cable_index;
 
-	return sprintf(buf, "%s\n",
+	वापस प्र_लिखो(buf, "%s\n",
 			extcon_info[cable->edev->supported_cable[i]].name);
-}
+पूर्ण
 
-static ssize_t cable_state_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct extcon_cable *cable = container_of(attr, struct extcon_cable,
+अटल sमाप_प्रकार cable_state_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा extcon_cable *cable = container_of(attr, काष्ठा extcon_cable,
 						  attr_state);
 
-	int i = cable->cable_index;
+	पूर्णांक i = cable->cable_index;
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		extcon_get_state(cable->edev, cable->edev->supported_cable[i]));
-}
+पूर्ण
 
 /**
- * extcon_sync() - Synchronize the state for an external connector.
+ * extcon_sync() - Synchronize the state क्रम an बाह्यal connector.
  * @edev:	the extcon device
  *
- * Note that this function send a notification in order to synchronize
- * the state and property of an external connector.
+ * Note that this function send a notअगरication in order to synchronize
+ * the state and property of an बाह्यal connector.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_sync(struct extcon_dev *edev, unsigned int id)
-{
-	char name_buf[120];
-	char state_buf[120];
-	char *prop_buf;
-	char *envp[3];
-	int env_offset = 0;
-	int length;
-	int index;
-	int state;
-	unsigned long flags;
+पूर्णांक extcon_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id)
+अणु
+	अक्षर name_buf[120];
+	अक्षर state_buf[120];
+	अक्षर *prop_buf;
+	अक्षर *envp[3];
+	पूर्णांक env_offset = 0;
+	पूर्णांक length;
+	पूर्णांक index;
+	पूर्णांक state;
+	अचिन्हित दीर्घ flags;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	spin_lock_irqsave(&edev->lock, flags);
 	state = !!(edev->state & BIT(index));
 	spin_unlock_irqrestore(&edev->lock, flags);
 
 	/*
-	 * Call functions in a raw notifier chain for the specific one
-	 * external connector.
+	 * Call functions in a raw notअगरier chain क्रम the specअगरic one
+	 * बाह्यal connector.
 	 */
-	raw_notifier_call_chain(&edev->nh[index], state, edev);
+	raw_notअगरier_call_chain(&edev->nh[index], state, edev);
 
 	/*
-	 * Call functions in a raw notifier chain for the all supported
-	 * external connectors.
+	 * Call functions in a raw notअगरier chain क्रम the all supported
+	 * बाह्यal connectors.
 	 */
-	raw_notifier_call_chain(&edev->nh_all, state, edev);
+	raw_notअगरier_call_chain(&edev->nh_all, state, edev);
 
 	spin_lock_irqsave(&edev->lock, flags);
-	/* This could be in interrupt handler */
-	prop_buf = (char *)get_zeroed_page(GFP_ATOMIC);
-	if (!prop_buf) {
-		/* Unlock early before uevent */
+	/* This could be in पूर्णांकerrupt handler */
+	prop_buf = (अक्षर *)get_zeroed_page(GFP_ATOMIC);
+	अगर (!prop_buf) अणु
+		/* Unlock early beक्रमe uevent */
 		spin_unlock_irqrestore(&edev->lock, flags);
 
 		dev_err(&edev->dev, "out of memory in extcon_set_state\n");
 		kobject_uevent(&edev->dev.kobj, KOBJ_CHANGE);
 
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	length = name_show(&edev->dev, NULL, prop_buf);
-	if (length > 0) {
-		if (prop_buf[length - 1] == '\n')
+	length = name_show(&edev->dev, शून्य, prop_buf);
+	अगर (length > 0) अणु
+		अगर (prop_buf[length - 1] == '\n')
 			prop_buf[length - 1] = 0;
-		snprintf(name_buf, sizeof(name_buf), "NAME=%s", prop_buf);
+		snम_लिखो(name_buf, माप(name_buf), "NAME=%s", prop_buf);
 		envp[env_offset++] = name_buf;
-	}
+	पूर्ण
 
-	length = state_show(&edev->dev, NULL, prop_buf);
-	if (length > 0) {
-		if (prop_buf[length - 1] == '\n')
+	length = state_show(&edev->dev, शून्य, prop_buf);
+	अगर (length > 0) अणु
+		अगर (prop_buf[length - 1] == '\n')
 			prop_buf[length - 1] = 0;
-		snprintf(state_buf, sizeof(state_buf), "STATE=%s", prop_buf);
+		snम_लिखो(state_buf, माप(state_buf), "STATE=%s", prop_buf);
 		envp[env_offset++] = state_buf;
-	}
-	envp[env_offset] = NULL;
+	पूर्ण
+	envp[env_offset] = शून्य;
 
-	/* Unlock early before uevent */
+	/* Unlock early beक्रमe uevent */
 	spin_unlock_irqrestore(&edev->lock, flags);
 	kobject_uevent_env(&edev->dev.kobj, KOBJ_CHANGE, envp);
-	free_page((unsigned long)prop_buf);
+	मुक्त_page((अचिन्हित दीर्घ)prop_buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_sync);
 
 /**
- * extcon_get_state() - Get the state of an external connector.
+ * extcon_get_state() - Get the state of an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
+ * @id:		the unique id indicating an बाह्यal connector
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_get_state(struct extcon_dev *edev, const unsigned int id)
-{
-	int index, state;
-	unsigned long flags;
+पूर्णांक extcon_get_state(काष्ठा extcon_dev *edev, स्थिर अचिन्हित पूर्णांक id)
+अणु
+	पूर्णांक index, state;
+	अचिन्हित दीर्घ flags;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	spin_lock_irqsave(&edev->lock, flags);
 	state = is_extcon_attached(edev, index);
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return state;
-}
+	वापस state;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_get_state);
 
 /**
- * extcon_set_state() - Set the state of an external connector.
+ * extcon_set_state() - Set the state of an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
- * @state:	the new state of an external connector.
- *		the default semantics is true: attached / false: detached.
+ * @id:		the unique id indicating an बाह्यal connector
+ * @state:	the new state of an बाह्यal connector.
+ *		the शेष semantics is true: attached / false: detached.
  *
- * Note that this function set the state of an external connector without
- * a notification. To synchronize the state of an external connector,
+ * Note that this function set the state of an बाह्यal connector without
+ * a notअगरication. To synchronize the state of an बाह्यal connector,
  * have to use extcon_set_state_sync() and extcon_sync().
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_set_state(struct extcon_dev *edev, unsigned int id, bool state)
-{
-	unsigned long flags;
-	int index, ret = 0;
+पूर्णांक extcon_set_state(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id, bool state)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index, ret = 0;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	spin_lock_irqsave(&edev->lock, flags);
 
-	/* Check whether the external connector's state is changed. */
-	if (!is_extcon_changed(edev, index, state))
-		goto out;
+	/* Check whether the बाह्यal connector's state is changed. */
+	अगर (!is_extcon_changed(edev, index, state))
+		जाओ out;
 
-	if (check_mutually_exclusive(edev,
-		(edev->state & ~BIT(index)) | (state & BIT(index)))) {
+	अगर (check_mutually_exclusive(edev,
+		(edev->state & ~BIT(index)) | (state & BIT(index)))) अणु
 		ret = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Initialize the value of extcon property before setting
-	 * the detached state for an external connector.
+	 * Initialize the value of extcon property beक्रमe setting
+	 * the detached state क्रम an बाह्यal connector.
 	 */
-	if (!state)
+	अगर (!state)
 		init_property(edev, id, index);
 
-	/* Update the state for an external connector. */
-	if (state)
+	/* Update the state क्रम an बाह्यal connector. */
+	अगर (state)
 		edev->state |= BIT(index);
-	else
+	अन्यथा
 		edev->state &= ~(BIT(index));
 out:
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_set_state);
 
 /**
- * extcon_set_state_sync() - Set the state of an external connector with sync.
+ * extcon_set_state_sync() - Set the state of an बाह्यal connector with sync.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
- * @state:	the new state of external connector.
- *		the default semantics is true: attached / false: detached.
+ * @id:		the unique id indicating an बाह्यal connector
+ * @state:	the new state of बाह्यal connector.
+ *		the शेष semantics is true: attached / false: detached.
  *
- * Note that this function set the state of external connector
- * and synchronize the state by sending a notification.
+ * Note that this function set the state of बाह्यal connector
+ * and synchronize the state by sending a notअगरication.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_set_state_sync(struct extcon_dev *edev, unsigned int id, bool state)
-{
-	int ret, index;
-	unsigned long flags;
+पूर्णांक extcon_set_state_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id, bool state)
+अणु
+	पूर्णांक ret, index;
+	अचिन्हित दीर्घ flags;
 
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	/* Check whether the external connector's state is changed. */
+	/* Check whether the बाह्यal connector's state is changed. */
 	spin_lock_irqsave(&edev->lock, flags);
 	ret = is_extcon_changed(edev, index, state);
 	spin_unlock_irqrestore(&edev->lock, flags);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
 	ret = extcon_set_state(edev, id, state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return extcon_sync(edev, id);
-}
+	वापस extcon_sync(edev, id);
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_set_state_sync);
 
 /**
- * extcon_get_property() - Get the property value of an external connector.
+ * extcon_get_property() - Get the property value of an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
+ * @id:		the unique id indicating an बाह्यal connector
  * @prop:	the property id indicating an extcon property
- * @prop_val:	the pointer which store the value of extcon property
+ * @prop_val:	the poपूर्णांकer which store the value of extcon property
  *
- * Note that when getting the property value of external connector,
- * the external connector should be attached. If detached state, function
- * return 0 without property value. Also, the each property should be
+ * Note that when getting the property value of बाह्यal connector,
+ * the बाह्यal connector should be attached. If detached state, function
+ * वापस 0 without property value. Also, the each property should be
  * included in the list of supported properties according to extcon type.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_get_property(struct extcon_dev *edev, unsigned int id,
-				unsigned int prop,
-				union extcon_property_value *prop_val)
-{
-	struct extcon_cable *cable;
-	unsigned long flags;
-	int index, ret = 0;
+पूर्णांक extcon_get_property(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+				अचिन्हित पूर्णांक prop,
+				जोड़ extcon_property_value *prop_val)
+अणु
+	काष्ठा extcon_cable *cable;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index, ret = 0;
 
-	*prop_val = (union extcon_property_value){0};
+	*prop_val = (जोड़ extcon_property_value)अणु0पूर्ण;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	/* Check whether the property is supported or not */
-	if (!is_extcon_property_supported(id, prop))
-		return -EINVAL;
+	अगर (!is_extcon_property_supported(id, prop))
+		वापस -EINVAL;
 
-	/* Find the cable index of external connector by using id */
+	/* Find the cable index of बाह्यal connector by using id */
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	spin_lock_irqsave(&edev->lock, flags);
 
 	/* Check whether the property is available or not. */
-	if (!is_extcon_property_capability(edev, id, index, prop)) {
+	अगर (!is_extcon_property_capability(edev, id, index, prop)) अणु
 		spin_unlock_irqrestore(&edev->lock, flags);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/*
-	 * Check whether the external connector is attached.
-	 * If external connector is detached, the user can not
+	 * Check whether the बाह्यal connector is attached.
+	 * If बाह्यal connector is detached, the user can not
 	 * get the property value.
 	 */
-	if (!is_extcon_attached(edev, index)) {
+	अगर (!is_extcon_attached(edev, index)) अणु
 		spin_unlock_irqrestore(&edev->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cable = &edev->cables[index];
 
 	/* Get the property value according to extcon type */
-	switch (prop) {
-	case EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
+	चयन (prop) अणु
+	हाल EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
 		*prop_val = cable->usb_propval[prop - EXTCON_PROP_USB_MIN];
-		break;
-	case EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
 		*prop_val = cable->chg_propval[prop - EXTCON_PROP_CHG_MIN];
-		break;
-	case EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
 		*prop_val = cable->jack_propval[prop - EXTCON_PROP_JACK_MIN];
-		break;
-	case EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
 		*prop_val = cable->disp_propval[prop - EXTCON_PROP_DISP_MIN];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_get_property);
 
 /**
- * extcon_set_property() - Set the property value of an external connector.
+ * extcon_set_property() - Set the property value of an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
+ * @id:		the unique id indicating an बाह्यal connector
  * @prop:	the property id indicating an extcon property
- * @prop_val:	the pointer including the new value of extcon property
+ * @prop_val:	the poपूर्णांकer including the new value of extcon property
  *
  * Note that each property should be included in the list of supported
  * properties according to the extcon type.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_set_property(struct extcon_dev *edev, unsigned int id,
-				unsigned int prop,
-				union extcon_property_value prop_val)
-{
-	struct extcon_cable *cable;
-	unsigned long flags;
-	int index, ret = 0;
+पूर्णांक extcon_set_property(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+				अचिन्हित पूर्णांक prop,
+				जोड़ extcon_property_value prop_val)
+अणु
+	काष्ठा extcon_cable *cable;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक index, ret = 0;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	/* Check whether the property is supported or not */
-	if (!is_extcon_property_supported(id, prop))
-		return -EINVAL;
+	अगर (!is_extcon_property_supported(id, prop))
+		वापस -EINVAL;
 
-	/* Find the cable index of external connector by using id */
+	/* Find the cable index of बाह्यal connector by using id */
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	spin_lock_irqsave(&edev->lock, flags);
 
 	/* Check whether the property is available or not. */
-	if (!is_extcon_property_capability(edev, id, index, prop)) {
+	अगर (!is_extcon_property_capability(edev, id, index, prop)) अणु
 		spin_unlock_irqrestore(&edev->lock, flags);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	cable = &edev->cables[index];
 
 	/* Set the property value according to extcon type */
-	switch (prop) {
-	case EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
+	चयन (prop) अणु
+	हाल EXTCON_PROP_USB_MIN ... EXTCON_PROP_USB_MAX:
 		cable->usb_propval[prop - EXTCON_PROP_USB_MIN] = prop_val;
-		break;
-	case EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_CHG_MIN ... EXTCON_PROP_CHG_MAX:
 		cable->chg_propval[prop - EXTCON_PROP_CHG_MIN] = prop_val;
-		break;
-	case EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_JACK_MIN ... EXTCON_PROP_JACK_MAX:
 		cable->jack_propval[prop - EXTCON_PROP_JACK_MIN] = prop_val;
-		break;
-	case EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
+		अवरोध;
+	हाल EXTCON_PROP_DISP_MIN ... EXTCON_PROP_DISP_MAX:
 		cable->disp_propval[prop - EXTCON_PROP_DISP_MIN] = prop_val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_set_property);
 
 /**
- * extcon_set_property_sync() - Set property of an external connector with sync.
- * @prop_val:	the pointer including the new value of extcon property
+ * extcon_set_property_sync() - Set property of an बाह्यal connector with sync.
+ * @prop_val:	the poपूर्णांकer including the new value of extcon property
  *
- * Note that when setting the property value of external connector,
- * the external connector should be attached. The each property should
+ * Note that when setting the property value of बाह्यal connector,
+ * the बाह्यal connector should be attached. The each property should
  * be included in the list of supported properties according to extcon type.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_set_property_sync(struct extcon_dev *edev, unsigned int id,
-				unsigned int prop,
-				union extcon_property_value prop_val)
-{
-	int ret;
+पूर्णांक extcon_set_property_sync(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+				अचिन्हित पूर्णांक prop,
+				जोड़ extcon_property_value prop_val)
+अणु
+	पूर्णांक ret;
 
 	ret = extcon_set_property(edev, id, prop, prop_val);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return extcon_sync(edev, id);
-}
+	वापस extcon_sync(edev, id);
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_set_property_sync);
 
 /**
  * extcon_get_property_capability() - Get the capability of the property
- *					for an external connector.
+ *					क्रम an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
+ * @id:		the unique id indicating an बाह्यal connector
  * @prop:	the property id indicating an extcon property
  *
- * Returns 1 if the property is available or 0 if not available.
+ * Returns 1 अगर the property is available or 0 अगर not available.
  */
-int extcon_get_property_capability(struct extcon_dev *edev, unsigned int id,
-					unsigned int prop)
-{
-	int index;
+पूर्णांक extcon_get_property_capability(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+					अचिन्हित पूर्णांक prop)
+अणु
+	पूर्णांक index;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	/* Check whether the property is supported or not */
-	if (!is_extcon_property_supported(id, prop))
-		return -EINVAL;
+	अगर (!is_extcon_property_supported(id, prop))
+		वापस -EINVAL;
 
-	/* Find the cable index of external connector by using id */
+	/* Find the cable index of बाह्यal connector by using id */
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
-	return is_extcon_property_capability(edev, id, index, prop);
-}
+	वापस is_extcon_property_capability(edev, id, index, prop);
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_get_property_capability);
 
 /**
  * extcon_set_property_capability() - Set the capability of the property
- *					for an external connector.
+ *					क्रम an बाह्यal connector.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
+ * @id:		the unique id indicating an बाह्यal connector
  * @prop:	the property id indicating an extcon property
  *
  * Note that this function set the capability of the property
- * for an external connector in order to mark the bit in capability
- * bitmap which mean the available state of the property.
+ * क्रम an बाह्यal connector in order to mark the bit in capability
+ * biपंचांगap which mean the available state of the property.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_set_property_capability(struct extcon_dev *edev, unsigned int id,
-					unsigned int prop)
-{
-	struct extcon_cable *cable;
-	int index, type, ret = 0;
+पूर्णांक extcon_set_property_capability(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+					अचिन्हित पूर्णांक prop)
+अणु
+	काष्ठा extcon_cable *cable;
+	पूर्णांक index, type, ret = 0;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 
 	/* Check whether the property is supported or not. */
-	if (!is_extcon_property_supported(id, prop))
-		return -EINVAL;
+	अगर (!is_extcon_property_supported(id, prop))
+		वापस -EINVAL;
 
-	/* Find the cable index of external connector by using id. */
+	/* Find the cable index of बाह्यal connector by using id. */
 	index = find_cable_index_by_id(edev, id);
-	if (index < 0)
-		return index;
+	अगर (index < 0)
+		वापस index;
 
 	type = get_extcon_type(prop);
-	if (type < 0)
-		return type;
+	अगर (type < 0)
+		वापस type;
 
 	cable = &edev->cables[index];
 
-	switch (type) {
-	case EXTCON_TYPE_USB:
+	चयन (type) अणु
+	हाल EXTCON_TYPE_USB:
 		__set_bit(prop - EXTCON_PROP_USB_MIN, cable->usb_bits);
-		break;
-	case EXTCON_TYPE_CHG:
+		अवरोध;
+	हाल EXTCON_TYPE_CHG:
 		__set_bit(prop - EXTCON_PROP_CHG_MIN, cable->chg_bits);
-		break;
-	case EXTCON_TYPE_JACK:
+		अवरोध;
+	हाल EXTCON_TYPE_JACK:
 		__set_bit(prop - EXTCON_PROP_JACK_MIN, cable->jack_bits);
-		break;
-	case EXTCON_TYPE_DISP:
+		अवरोध;
+	हाल EXTCON_TYPE_DISP:
 		__set_bit(prop - EXTCON_PROP_DISP_MIN, cable->disp_bits);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_set_property_capability);
 
 /**
  * extcon_get_extcon_dev() - Get the extcon device instance from the name.
- * @extcon_name:	the extcon name provided with extcon_dev_register()
+ * @extcon_name:	the extcon name provided with extcon_dev_रेजिस्टर()
  *
- * Return the pointer of extcon device if success or ERR_PTR(err) if fail.
+ * Return the poपूर्णांकer of extcon device अगर success or ERR_PTR(err) अगर fail.
  */
-struct extcon_dev *extcon_get_extcon_dev(const char *extcon_name)
-{
-	struct extcon_dev *sd;
+काष्ठा extcon_dev *extcon_get_extcon_dev(स्थिर अक्षर *extcon_name)
+अणु
+	काष्ठा extcon_dev *sd;
 
-	if (!extcon_name)
-		return ERR_PTR(-EINVAL);
+	अगर (!extcon_name)
+		वापस ERR_PTR(-EINVAL);
 
 	mutex_lock(&extcon_dev_list_lock);
-	list_for_each_entry(sd, &extcon_dev_list, entry) {
-		if (!strcmp(sd->name, extcon_name))
-			goto out;
-	}
-	sd = NULL;
+	list_क्रम_each_entry(sd, &extcon_dev_list, entry) अणु
+		अगर (!म_भेद(sd->name, extcon_name))
+			जाओ out;
+	पूर्ण
+	sd = शून्य;
 out:
 	mutex_unlock(&extcon_dev_list_lock);
-	return sd;
-}
+	वापस sd;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_get_extcon_dev);
 
 /**
- * extcon_register_notifier() - Register a notifier block to get notified by
+ * extcon_रेजिस्टर_notअगरier() - Register a notअगरier block to get notअगरied by
  *				any state changes from the extcon.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
- * @nb:		a notifier block to be registered
+ * @id:		the unique id indicating an बाह्यal connector
+ * @nb:		a notअगरier block to be रेजिस्टरed
  *
  * Note that the second parameter given to the callback of nb (val) is
- * the current state of an external connector and the third pameter
- * is the pointer of extcon device.
+ * the current state of an बाह्यal connector and the third pameter
+ * is the poपूर्णांकer of extcon device.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_register_notifier(struct extcon_dev *edev, unsigned int id,
-			     struct notifier_block *nb)
-{
-	unsigned long flags;
-	int ret, idx;
+पूर्णांक extcon_रेजिस्टर_notअगरier(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+			     काष्ठा notअगरier_block *nb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret, idx;
 
-	if (!edev || !nb)
-		return -EINVAL;
+	अगर (!edev || !nb)
+		वापस -EINVAL;
 
 	idx = find_cable_index_by_id(edev, id);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	spin_lock_irqsave(&edev->lock, flags);
-	ret = raw_notifier_chain_register(&edev->nh[idx], nb);
+	ret = raw_notअगरier_chain_रेजिस्टर(&edev->nh[idx], nb);
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(extcon_register_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_रेजिस्टर_notअगरier);
 
 /**
- * extcon_unregister_notifier() - Unregister a notifier block from the extcon.
+ * extcon_unरेजिस्टर_notअगरier() - Unरेजिस्टर a notअगरier block from the extcon.
  * @edev:	the extcon device
- * @id:		the unique id indicating an external connector
- * @nb:		a notifier block to be registered
+ * @id:		the unique id indicating an बाह्यal connector
+ * @nb:		a notअगरier block to be रेजिस्टरed
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_unregister_notifier(struct extcon_dev *edev, unsigned int id,
-				struct notifier_block *nb)
-{
-	unsigned long flags;
-	int ret, idx;
+पूर्णांक extcon_unरेजिस्टर_notअगरier(काष्ठा extcon_dev *edev, अचिन्हित पूर्णांक id,
+				काष्ठा notअगरier_block *nb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret, idx;
 
-	if (!edev || !nb)
-		return -EINVAL;
+	अगर (!edev || !nb)
+		वापस -EINVAL;
 
 	idx = find_cable_index_by_id(edev, id);
-	if (idx < 0)
-		return idx;
+	अगर (idx < 0)
+		वापस idx;
 
 	spin_lock_irqsave(&edev->lock, flags);
-	ret = raw_notifier_chain_unregister(&edev->nh[idx], nb);
+	ret = raw_notअगरier_chain_unरेजिस्टर(&edev->nh[idx], nb);
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(extcon_unregister_notifier);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_unरेजिस्टर_notअगरier);
 
 /**
- * extcon_register_notifier_all() - Register a notifier block for all connectors.
+ * extcon_रेजिस्टर_notअगरier_all() - Register a notअगरier block क्रम all connectors.
  * @edev:	the extcon device
- * @nb:		a notifier block to be registered
+ * @nb:		a notअगरier block to be रेजिस्टरed
  *
- * Note that this function registers a notifier block in order to receive
- * the state change of all supported external connectors from extcon device.
+ * Note that this function रेजिस्टरs a notअगरier block in order to receive
+ * the state change of all supported बाह्यal connectors from extcon device.
  * And the second parameter given to the callback of nb (val) is
- * the current state and the third pameter is the pointer of extcon device.
+ * the current state and the third pameter is the poपूर्णांकer of extcon device.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_register_notifier_all(struct extcon_dev *edev,
-				struct notifier_block *nb)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक extcon_रेजिस्टर_notअगरier_all(काष्ठा extcon_dev *edev,
+				काष्ठा notअगरier_block *nb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!edev || !nb)
-		return -EINVAL;
+	अगर (!edev || !nb)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&edev->lock, flags);
-	ret = raw_notifier_chain_register(&edev->nh_all, nb);
+	ret = raw_notअगरier_chain_रेजिस्टर(&edev->nh_all, nb);
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(extcon_register_notifier_all);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_रेजिस्टर_notअगरier_all);
 
 /**
- * extcon_unregister_notifier_all() - Unregister a notifier block from extcon.
+ * extcon_unरेजिस्टर_notअगरier_all() - Unरेजिस्टर a notअगरier block from extcon.
  * @edev:	the extcon device
- * @nb:		a notifier block to be registered
+ * @nb:		a notअगरier block to be रेजिस्टरed
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_unregister_notifier_all(struct extcon_dev *edev,
-				struct notifier_block *nb)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक extcon_unरेजिस्टर_notअगरier_all(काष्ठा extcon_dev *edev,
+				काष्ठा notअगरier_block *nb)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	if (!edev || !nb)
-		return -EINVAL;
+	अगर (!edev || !nb)
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&edev->lock, flags);
-	ret = raw_notifier_chain_unregister(&edev->nh_all, nb);
+	ret = raw_notअगरier_chain_unरेजिस्टर(&edev->nh_all, nb);
 	spin_unlock_irqrestore(&edev->lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(extcon_unregister_notifier_all);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_unरेजिस्टर_notअगरier_all);
 
-static struct attribute *extcon_attrs[] = {
+अटल काष्ठा attribute *extcon_attrs[] = अणु
 	&dev_attr_state.attr,
 	&dev_attr_name.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(extcon);
 
-static int create_extcon_class(void)
-{
-	if (!extcon_class) {
+अटल पूर्णांक create_extcon_class(व्योम)
+अणु
+	अगर (!extcon_class) अणु
 		extcon_class = class_create(THIS_MODULE, "extcon");
-		if (IS_ERR(extcon_class))
-			return PTR_ERR(extcon_class);
+		अगर (IS_ERR(extcon_class))
+			वापस PTR_ERR(extcon_class);
 		extcon_class->dev_groups = extcon_groups;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void extcon_dev_release(struct device *dev)
-{
-}
+अटल व्योम extcon_dev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static const char *muex_name = "mutually_exclusive";
-static void dummy_sysfs_dev_release(struct device *dev)
-{
-}
+अटल स्थिर अक्षर *muex_name = "mutually_exclusive";
+अटल व्योम dummy_sysfs_dev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
 /*
  * extcon_dev_allocate() - Allocate the memory of extcon device.
- * @supported_cable:	the array of the supported external connectors
+ * @supported_cable:	the array of the supported बाह्यal connectors
  *			ending with EXTCON_NONE.
  *
- * Note that this function allocates the memory for extcon device 
- * and initialize default setting for the extcon device.
+ * Note that this function allocates the memory क्रम extcon device 
+ * and initialize शेष setting क्रम the extcon device.
  *
- * Returns the pointer memory of allocated extcon_dev if success
- * or ERR_PTR(err) if fail.
+ * Returns the poपूर्णांकer memory of allocated extcon_dev अगर success
+ * or ERR_PTR(err) अगर fail.
  */
-struct extcon_dev *extcon_dev_allocate(const unsigned int *supported_cable)
-{
-	struct extcon_dev *edev;
+काष्ठा extcon_dev *extcon_dev_allocate(स्थिर अचिन्हित पूर्णांक *supported_cable)
+अणु
+	काष्ठा extcon_dev *edev;
 
-	if (!supported_cable)
-		return ERR_PTR(-EINVAL);
+	अगर (!supported_cable)
+		वापस ERR_PTR(-EINVAL);
 
-	edev = kzalloc(sizeof(*edev), GFP_KERNEL);
-	if (!edev)
-		return ERR_PTR(-ENOMEM);
+	edev = kzalloc(माप(*edev), GFP_KERNEL);
+	अगर (!edev)
+		वापस ERR_PTR(-ENOMEM);
 
 	edev->max_supported = 0;
 	edev->supported_cable = supported_cable;
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
 /*
- * extcon_dev_free() - Free the memory of extcon device.
+ * extcon_dev_मुक्त() - Free the memory of extcon device.
  * @edev:	the extcon device
  */
-void extcon_dev_free(struct extcon_dev *edev)
-{
-	kfree(edev);
-}
-EXPORT_SYMBOL_GPL(extcon_dev_free);
+व्योम extcon_dev_मुक्त(काष्ठा extcon_dev *edev)
+अणु
+	kमुक्त(edev);
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_dev_मुक्त);
 
 /**
- * extcon_dev_register() - Register an new extcon device
- * @edev:	the extcon device to be registered
+ * extcon_dev_रेजिस्टर() - Register an new extcon device
+ * @edev:	the extcon device to be रेजिस्टरed
  *
- * Among the members of edev struct, please set the "user initializing data"
- * do not set the values of "internal data", which are initialized by
+ * Among the members of edev काष्ठा, please set the "user initializing data"
+ * करो not set the values of "internal data", which are initialized by
  * this function.
  *
- * Note that before calling this funciton, have to allocate the memory
+ * Note that beक्रमe calling this funciton, have to allocate the memory
  * of an extcon device by using the extcon_dev_allocate(). And the extcon
- * dev should include the supported_cable information.
+ * dev should include the supported_cable inक्रमmation.
  *
- * Returns 0 if success or error number if fail.
+ * Returns 0 अगर success or error number अगर fail.
  */
-int extcon_dev_register(struct extcon_dev *edev)
-{
-	int ret, index = 0;
-	static atomic_t edev_no = ATOMIC_INIT(-1);
+पूर्णांक extcon_dev_रेजिस्टर(काष्ठा extcon_dev *edev)
+अणु
+	पूर्णांक ret, index = 0;
+	अटल atomic_t edev_no = ATOMIC_INIT(-1);
 
-	if (!extcon_class) {
+	अगर (!extcon_class) अणु
 		ret = create_extcon_class();
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (!edev || !edev->supported_cable)
-		return -EINVAL;
+	अगर (!edev || !edev->supported_cable)
+		वापस -EINVAL;
 
-	for (; edev->supported_cable[index] != EXTCON_NONE; index++);
+	क्रम (; edev->supported_cable[index] != EXTCON_NONE; index++);
 
 	edev->max_supported = index;
-	if (index > SUPPORTED_CABLE_MAX) {
+	अगर (index > SUPPORTED_CABLE_MAX) अणु
 		dev_err(&edev->dev,
 			"exceed the maximum number of supported cables\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	edev->dev.class = extcon_class;
 	edev->dev.release = extcon_dev_release;
 
 	edev->name = dev_name(edev->dev.parent);
-	if (IS_ERR_OR_NULL(edev->name)) {
+	अगर (IS_ERR_OR_शून्य(edev->name)) अणु
 		dev_err(&edev->dev,
 			"extcon device name is null\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_set_name(&edev->dev, "extcon%lu",
-			(unsigned long)atomic_inc_return(&edev_no));
+			(अचिन्हित दीर्घ)atomic_inc_वापस(&edev_no));
 
-	if (edev->max_supported) {
-		char *str;
-		struct extcon_cable *cable;
+	अगर (edev->max_supported) अणु
+		अक्षर *str;
+		काष्ठा extcon_cable *cable;
 
-		edev->cables = kcalloc(edev->max_supported,
-				       sizeof(struct extcon_cable),
+		edev->cables = kसुस्मृति(edev->max_supported,
+				       माप(काष्ठा extcon_cable),
 				       GFP_KERNEL);
-		if (!edev->cables) {
+		अगर (!edev->cables) अणु
 			ret = -ENOMEM;
-			goto err_sysfs_alloc;
-		}
-		for (index = 0; index < edev->max_supported; index++) {
+			जाओ err_sysfs_alloc;
+		पूर्ण
+		क्रम (index = 0; index < edev->max_supported; index++) अणु
 			cable = &edev->cables[index];
 
-			str = kasprintf(GFP_KERNEL, "cable.%d", index);
-			if (!str) {
-				for (index--; index >= 0; index--) {
+			str = kaप्र_लिखो(GFP_KERNEL, "cable.%d", index);
+			अगर (!str) अणु
+				क्रम (index--; index >= 0; index--) अणु
 					cable = &edev->cables[index];
-					kfree(cable->attr_g.name);
-				}
+					kमुक्त(cable->attr_g.name);
+				पूर्ण
 				ret = -ENOMEM;
 
-				goto err_alloc_cables;
-			}
+				जाओ err_alloc_cables;
+			पूर्ण
 
 			cable->edev = edev;
 			cable->cable_index = index;
 			cable->attrs[0] = &cable->attr_name.attr;
 			cable->attrs[1] = &cable->attr_state.attr;
-			cable->attrs[2] = NULL;
+			cable->attrs[2] = शून्य;
 			cable->attr_g.name = str;
 			cable->attr_g.attrs = cable->attrs;
 
@@ -1156,96 +1157,96 @@ int extcon_dev_register(struct extcon_dev *edev)
 			cable->attr_state.attr.name = "state";
 			cable->attr_state.attr.mode = 0444;
 			cable->attr_state.show = cable_state_show;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (edev->max_supported && edev->mutually_exclusive) {
-		char *name;
+	अगर (edev->max_supported && edev->mutually_exclusive) अणु
+		अक्षर *name;
 
 		/* Count the size of mutually_exclusive array */
-		for (index = 0; edev->mutually_exclusive[index]; index++)
+		क्रम (index = 0; edev->mutually_exclusive[index]; index++)
 			;
 
-		edev->attrs_muex = kcalloc(index + 1,
-					   sizeof(struct attribute *),
+		edev->attrs_muex = kसुस्मृति(index + 1,
+					   माप(काष्ठा attribute *),
 					   GFP_KERNEL);
-		if (!edev->attrs_muex) {
+		अगर (!edev->attrs_muex) अणु
 			ret = -ENOMEM;
-			goto err_muex;
-		}
+			जाओ err_muex;
+		पूर्ण
 
-		edev->d_attrs_muex = kcalloc(index,
-					     sizeof(struct device_attribute),
+		edev->d_attrs_muex = kसुस्मृति(index,
+					     माप(काष्ठा device_attribute),
 					     GFP_KERNEL);
-		if (!edev->d_attrs_muex) {
+		अगर (!edev->d_attrs_muex) अणु
 			ret = -ENOMEM;
-			kfree(edev->attrs_muex);
-			goto err_muex;
-		}
+			kमुक्त(edev->attrs_muex);
+			जाओ err_muex;
+		पूर्ण
 
-		for (index = 0; edev->mutually_exclusive[index]; index++) {
-			name = kasprintf(GFP_KERNEL, "0x%x",
+		क्रम (index = 0; edev->mutually_exclusive[index]; index++) अणु
+			name = kaप्र_लिखो(GFP_KERNEL, "0x%x",
 					 edev->mutually_exclusive[index]);
-			if (!name) {
-				for (index--; index >= 0; index--) {
-					kfree(edev->d_attrs_muex[index].attr.
+			अगर (!name) अणु
+				क्रम (index--; index >= 0; index--) अणु
+					kमुक्त(edev->d_attrs_muex[index].attr.
 					      name);
-				}
-				kfree(edev->d_attrs_muex);
-				kfree(edev->attrs_muex);
+				पूर्ण
+				kमुक्त(edev->d_attrs_muex);
+				kमुक्त(edev->attrs_muex);
 				ret = -ENOMEM;
-				goto err_muex;
-			}
+				जाओ err_muex;
+			पूर्ण
 			sysfs_attr_init(&edev->d_attrs_muex[index].attr);
 			edev->d_attrs_muex[index].attr.name = name;
 			edev->d_attrs_muex[index].attr.mode = 0000;
 			edev->attrs_muex[index] = &edev->d_attrs_muex[index]
 							.attr;
-		}
+		पूर्ण
 		edev->attr_g_muex.name = muex_name;
 		edev->attr_g_muex.attrs = edev->attrs_muex;
 
-	}
+	पूर्ण
 
-	if (edev->max_supported) {
+	अगर (edev->max_supported) अणु
 		edev->extcon_dev_type.groups =
-			kcalloc(edev->max_supported + 2,
-				sizeof(struct attribute_group *),
+			kसुस्मृति(edev->max_supported + 2,
+				माप(काष्ठा attribute_group *),
 				GFP_KERNEL);
-		if (!edev->extcon_dev_type.groups) {
+		अगर (!edev->extcon_dev_type.groups) अणु
 			ret = -ENOMEM;
-			goto err_alloc_groups;
-		}
+			जाओ err_alloc_groups;
+		पूर्ण
 
 		edev->extcon_dev_type.name = dev_name(&edev->dev);
 		edev->extcon_dev_type.release = dummy_sysfs_dev_release;
 
-		for (index = 0; index < edev->max_supported; index++)
+		क्रम (index = 0; index < edev->max_supported; index++)
 			edev->extcon_dev_type.groups[index] =
 				&edev->cables[index].attr_g;
-		if (edev->mutually_exclusive)
+		अगर (edev->mutually_exclusive)
 			edev->extcon_dev_type.groups[index] =
 				&edev->attr_g_muex;
 
 		edev->dev.type = &edev->extcon_dev_type;
-	}
+	पूर्ण
 
-	ret = device_register(&edev->dev);
-	if (ret) {
+	ret = device_रेजिस्टर(&edev->dev);
+	अगर (ret) अणु
 		put_device(&edev->dev);
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 
 	spin_lock_init(&edev->lock);
-	edev->nh = devm_kcalloc(&edev->dev, edev->max_supported,
-				sizeof(*edev->nh), GFP_KERNEL);
-	if (!edev->nh) {
+	edev->nh = devm_kसुस्मृति(&edev->dev, edev->max_supported,
+				माप(*edev->nh), GFP_KERNEL);
+	अगर (!edev->nh) अणु
 		ret = -ENOMEM;
-		device_unregister(&edev->dev);
-		goto err_dev;
-	}
+		device_unरेजिस्टर(&edev->dev);
+		जाओ err_dev;
+	पूर्ण
 
-	for (index = 0; index < edev->max_supported; index++)
+	क्रम (index = 0; index < edev->max_supported; index++)
 		RAW_INIT_NOTIFIER_HEAD(&edev->nh[index]);
 
 	RAW_INIT_NOTIFIER_HEAD(&edev->nh_all);
@@ -1257,144 +1258,144 @@ int extcon_dev_register(struct extcon_dev *edev)
 	list_add(&edev->entry, &extcon_dev_list);
 	mutex_unlock(&extcon_dev_list_lock);
 
-	return 0;
+	वापस 0;
 
 err_dev:
-	if (edev->max_supported)
-		kfree(edev->extcon_dev_type.groups);
+	अगर (edev->max_supported)
+		kमुक्त(edev->extcon_dev_type.groups);
 err_alloc_groups:
-	if (edev->max_supported && edev->mutually_exclusive) {
-		for (index = 0; edev->mutually_exclusive[index]; index++)
-			kfree(edev->d_attrs_muex[index].attr.name);
-		kfree(edev->d_attrs_muex);
-		kfree(edev->attrs_muex);
-	}
+	अगर (edev->max_supported && edev->mutually_exclusive) अणु
+		क्रम (index = 0; edev->mutually_exclusive[index]; index++)
+			kमुक्त(edev->d_attrs_muex[index].attr.name);
+		kमुक्त(edev->d_attrs_muex);
+		kमुक्त(edev->attrs_muex);
+	पूर्ण
 err_muex:
-	for (index = 0; index < edev->max_supported; index++)
-		kfree(edev->cables[index].attr_g.name);
+	क्रम (index = 0; index < edev->max_supported; index++)
+		kमुक्त(edev->cables[index].attr_g.name);
 err_alloc_cables:
-	if (edev->max_supported)
-		kfree(edev->cables);
+	अगर (edev->max_supported)
+		kमुक्त(edev->cables);
 err_sysfs_alloc:
-	return ret;
-}
-EXPORT_SYMBOL_GPL(extcon_dev_register);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_dev_रेजिस्टर);
 
 /**
- * extcon_dev_unregister() - Unregister the extcon device.
- * @edev:	the extcon device to be unregistered.
+ * extcon_dev_unरेजिस्टर() - Unरेजिस्टर the extcon device.
+ * @edev:	the extcon device to be unरेजिस्टरed.
  *
- * Note that this does not call kfree(edev) because edev was not allocated
+ * Note that this करोes not call kमुक्त(edev) because edev was not allocated
  * by this class.
  */
-void extcon_dev_unregister(struct extcon_dev *edev)
-{
-	int index;
+व्योम extcon_dev_unरेजिस्टर(काष्ठा extcon_dev *edev)
+अणु
+	पूर्णांक index;
 
-	if (!edev)
-		return;
+	अगर (!edev)
+		वापस;
 
 	mutex_lock(&extcon_dev_list_lock);
 	list_del(&edev->entry);
 	mutex_unlock(&extcon_dev_list_lock);
 
-	if (IS_ERR_OR_NULL(get_device(&edev->dev))) {
+	अगर (IS_ERR_OR_शून्य(get_device(&edev->dev))) अणु
 		dev_err(&edev->dev, "Failed to unregister extcon_dev (%s)\n",
 				dev_name(&edev->dev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	device_unregister(&edev->dev);
+	device_unरेजिस्टर(&edev->dev);
 
-	if (edev->mutually_exclusive && edev->max_supported) {
-		for (index = 0; edev->mutually_exclusive[index];
+	अगर (edev->mutually_exclusive && edev->max_supported) अणु
+		क्रम (index = 0; edev->mutually_exclusive[index];
 				index++)
-			kfree(edev->d_attrs_muex[index].attr.name);
-		kfree(edev->d_attrs_muex);
-		kfree(edev->attrs_muex);
-	}
+			kमुक्त(edev->d_attrs_muex[index].attr.name);
+		kमुक्त(edev->d_attrs_muex);
+		kमुक्त(edev->attrs_muex);
+	पूर्ण
 
-	for (index = 0; index < edev->max_supported; index++)
-		kfree(edev->cables[index].attr_g.name);
+	क्रम (index = 0; index < edev->max_supported; index++)
+		kमुक्त(edev->cables[index].attr_g.name);
 
-	if (edev->max_supported) {
-		kfree(edev->extcon_dev_type.groups);
-		kfree(edev->cables);
-	}
+	अगर (edev->max_supported) अणु
+		kमुक्त(edev->extcon_dev_type.groups);
+		kमुक्त(edev->cables);
+	पूर्ण
 
 	put_device(&edev->dev);
-}
-EXPORT_SYMBOL_GPL(extcon_dev_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(extcon_dev_unरेजिस्टर);
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 
 /*
  * extcon_find_edev_by_node - Find the extcon device from devicetree.
- * @node	: OF node identifying edev
+ * @node	: OF node identअगरying edev
  *
- * Return the pointer of extcon device if success or ERR_PTR(err) if fail.
+ * Return the poपूर्णांकer of extcon device अगर success or ERR_PTR(err) अगर fail.
  */
-struct extcon_dev *extcon_find_edev_by_node(struct device_node *node)
-{
-	struct extcon_dev *edev;
+काष्ठा extcon_dev *extcon_find_edev_by_node(काष्ठा device_node *node)
+अणु
+	काष्ठा extcon_dev *edev;
 
 	mutex_lock(&extcon_dev_list_lock);
-	list_for_each_entry(edev, &extcon_dev_list, entry)
-		if (edev->dev.parent && edev->dev.parent->of_node == node)
-			goto out;
+	list_क्रम_each_entry(edev, &extcon_dev_list, entry)
+		अगर (edev->dev.parent && edev->dev.parent->of_node == node)
+			जाओ out;
 	edev = ERR_PTR(-EPROBE_DEFER);
 out:
 	mutex_unlock(&extcon_dev_list_lock);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
 /*
  * extcon_get_edev_by_phandle - Get the extcon device from devicetree.
  * @dev		: the instance to the given device
- * @index	: the index into list of extcon_dev
+ * @index	: the index पूर्णांकo list of extcon_dev
  *
- * Return the pointer of extcon device if success or ERR_PTR(err) if fail.
+ * Return the poपूर्णांकer of extcon device अगर success or ERR_PTR(err) अगर fail.
  */
-struct extcon_dev *extcon_get_edev_by_phandle(struct device *dev, int index)
-{
-	struct device_node *node;
-	struct extcon_dev *edev;
+काष्ठा extcon_dev *extcon_get_edev_by_phandle(काष्ठा device *dev, पूर्णांक index)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा extcon_dev *edev;
 
-	if (!dev)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!dev->of_node) {
+	अगर (!dev->of_node) अणु
 		dev_dbg(dev, "device does not have a device node entry\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	node = of_parse_phandle(dev->of_node, "extcon", index);
-	if (!node) {
+	अगर (!node) अणु
 		dev_dbg(dev, "failed to get phandle in %pOF node\n",
 			dev->of_node);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	edev = extcon_find_edev_by_node(node);
 	of_node_put(node);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 
-#else
+#अन्यथा
 
-struct extcon_dev *extcon_find_edev_by_node(struct device_node *node)
-{
-	return ERR_PTR(-ENOSYS);
-}
+काष्ठा extcon_dev *extcon_find_edev_by_node(काष्ठा device_node *node)
+अणु
+	वापस ERR_PTR(-ENOSYS);
+पूर्ण
 
-struct extcon_dev *extcon_get_edev_by_phandle(struct device *dev, int index)
-{
-	return ERR_PTR(-ENOSYS);
-}
+काष्ठा extcon_dev *extcon_get_edev_by_phandle(काष्ठा device *dev, पूर्णांक index)
+अणु
+	वापस ERR_PTR(-ENOSYS);
+पूर्ण
 
-#endif /* CONFIG_OF */
+#पूर्ण_अगर /* CONFIG_OF */
 
 EXPORT_SYMBOL_GPL(extcon_find_edev_by_node);
 EXPORT_SYMBOL_GPL(extcon_get_edev_by_phandle);
@@ -1403,23 +1404,23 @@ EXPORT_SYMBOL_GPL(extcon_get_edev_by_phandle);
  * extcon_get_edev_name() - Get the name of the extcon device.
  * @edev:	the extcon device
  */
-const char *extcon_get_edev_name(struct extcon_dev *edev)
-{
-	return !edev ? NULL : edev->name;
-}
+स्थिर अक्षर *extcon_get_edev_name(काष्ठा extcon_dev *edev)
+अणु
+	वापस !edev ? शून्य : edev->name;
+पूर्ण
 EXPORT_SYMBOL_GPL(extcon_get_edev_name);
 
-static int __init extcon_class_init(void)
-{
-	return create_extcon_class();
-}
+अटल पूर्णांक __init extcon_class_init(व्योम)
+अणु
+	वापस create_extcon_class();
+पूर्ण
 module_init(extcon_class_init);
 
-static void __exit extcon_class_exit(void)
-{
+अटल व्योम __निकास extcon_class_निकास(व्योम)
+अणु
 	class_destroy(extcon_class);
-}
-module_exit(extcon_class_exit);
+पूर्ण
+module_निकास(extcon_class_निकास);
 
 MODULE_AUTHOR("Chanwoo Choi <cw00.choi@samsung.com>");
 MODULE_AUTHOR("MyungJoo Ham <myungjoo.ham@samsung.com>");

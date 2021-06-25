@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * wlanfae <wlanfae@realtek.com>
  ******************************************************************************/
-#ifndef __INC_DOT11D_H
-#define __INC_DOT11D_H
+#अगर_अघोषित __INC_DOT11D_H
+#घोषणा __INC_DOT11D_H
 
-#include "rtllib.h"
+#समावेश "rtllib.h"
 
-struct chnl_txpow_triple {
+काष्ठा chnl_txघात_triple अणु
 	u8 first_channel;
 	u8  num_channels;
-	u8  max_tx_power;
-};
+	u8  max_tx_घातer;
+पूर्ण;
 
-enum dot11d_state {
+क्रमागत करोt11d_state अणु
 	DOT11D_STATE_NONE = 0,
 	DOT11D_STATE_LEARNED,
 	DOT11D_STATE_DONE,
-};
+पूर्ण;
 
 /**
- * struct rt_dot11d_info * @country_len: value greater than 0 if
- *		  @country_buffer contains valid country information element.
+ * काष्ठा rt_करोt11d_info * @country_len: value greater than 0 अगर
+ *		  @country_buffer contains valid country inक्रमmation element.
  * @channel_map: holds channel values
  *		0 - invalid,
  *		1 - valid (active scan),
@@ -32,53 +33,53 @@ enum dot11d_state {
  * @country_src_addr - Source AP of the country IE
  */
 
-struct rt_dot11d_info {
+काष्ठा rt_करोt11d_info अणु
 	bool enabled;
 
 	u16 country_len;
 	u8  country_buffer[MAX_IE_LEN];
 	u8  country_src_addr[6];
-	u8  country_watchdog;
+	u8  country_watchकरोg;
 
 	u8  channel_map[MAX_CHANNEL_NUMBER + 1];
-	u8  max_tx_power_list[MAX_CHANNEL_NUMBER + 1];
+	u8  max_tx_घातer_list[MAX_CHANNEL_NUMBER + 1];
 
-	enum dot11d_state state;
-};
+	क्रमागत करोt11d_state state;
+पूर्ण;
 
-static inline void copy_mac_addr(unsigned char *des, unsigned char *src)
-{
-	memcpy(des, src, 6);
-}
+अटल अंतरभूत व्योम copy_mac_addr(अचिन्हित अक्षर *des, अचिन्हित अक्षर *src)
+अणु
+	स_नकल(des, src, 6);
+पूर्ण
 
-#define GET_DOT11D_INFO(__ieee_dev)			\
-	 ((struct rt_dot11d_info *)((__ieee_dev)->dot11d_info))
+#घोषणा GET_DOT11D_INFO(__ieee_dev)			\
+	 ((काष्ठा rt_करोt11d_info *)((__ieee_dev)->करोt11d_info))
 
-#define IS_DOT11D_ENABLE(__ieee_dev)			\
+#घोषणा IS_DOT11D_ENABLE(__ieee_dev)			\
 	 (GET_DOT11D_INFO(__ieee_dev)->enabled)
-#define IS_COUNTRY_IE_VALID(__ieee_dev)			\
+#घोषणा IS_COUNTRY_IE_VALID(__ieee_dev)			\
 	(GET_DOT11D_INFO(__ieee_dev)->country_len > 0)
 
-#define IS_EQUAL_CIE_SRC(__ieee_dev, __address)		\
+#घोषणा IS_EQUAL_CIE_SRC(__ieee_dev, __address)		\
 	 ether_addr_equal_unaligned( \
 		GET_DOT11D_INFO(__ieee_dev)->country_src_addr, __address)
-#define UPDATE_CIE_SRC(__ieee_dev, __address)		\
+#घोषणा UPDATE_CIE_SRC(__ieee_dev, __address)		\
 	copy_mac_addr(GET_DOT11D_INFO(__ieee_dev)->country_src_addr, __address)
 
-#define GET_CIE_WATCHDOG(__ieee_dev)				\
-	 (GET_DOT11D_INFO(__ieee_dev)->country_watchdog)
-static inline void RESET_CIE_WATCHDOG(struct rtllib_device *__ieee_dev)
-{
+#घोषणा GET_CIE_WATCHDOG(__ieee_dev)				\
+	 (GET_DOT11D_INFO(__ieee_dev)->country_watchकरोg)
+अटल अंतरभूत व्योम RESET_CIE_WATCHDOG(काष्ठा rtllib_device *__ieee_dev)
+अणु
 	GET_CIE_WATCHDOG(__ieee_dev) = 0;
-}
+पूर्ण
 
-#define UPDATE_CIE_WATCHDOG(__ieee_dev) (++GET_CIE_WATCHDOG(__ieee_dev))
+#घोषणा UPDATE_CIE_WATCHDOG(__ieee_dev) (++GET_CIE_WATCHDOG(__ieee_dev))
 
-void dot11d_init(struct rtllib_device *dev);
-void dot11d_channel_map(u8 channel_plan, struct rtllib_device *ieee);
-void dot11d_reset(struct rtllib_device *dev);
-void dot11d_update_country(struct rtllib_device *dev, u8 *address,
+व्योम करोt11d_init(काष्ठा rtllib_device *dev);
+व्योम करोt11d_channel_map(u8 channel_plan, काष्ठा rtllib_device *ieee);
+व्योम करोt11d_reset(काष्ठा rtllib_device *dev);
+व्योम करोt11d_update_country(काष्ठा rtllib_device *dev, u8 *address,
 			   u16 country_len, u8 *country);
-void dot11d_scan_complete(struct rtllib_device *dev);
+व्योम करोt11d_scan_complete(काष्ठा rtllib_device *dev);
 
-#endif
+#पूर्ण_अगर

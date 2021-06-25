@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_DMA_H
-#define _ASM_DMA_H
+#अगर_अघोषित _ASM_DMA_H
+#घोषणा _ASM_DMA_H
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define MAX_DMA_CHANNELS 1
-#define MAX_DMA_ADDRESS  (PAGE_OFFSET)
+#घोषणा MAX_DMA_CHANNELS 1
+#घोषणा MAX_DMA_ADDRESS  (PAGE_OFFSET)
 
-extern size_t hexagon_coherent_pool_size;
+बाह्य माप_प्रकार hexagon_coherent_pool_size;
 
-#endif
+#पूर्ण_अगर

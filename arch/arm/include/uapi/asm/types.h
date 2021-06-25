@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI_ASM_TYPES_H
-#define _UAPI_ASM_TYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI_ASM_TYPES_H
+#घोषणा _UAPI_ASM_TYPES_H
 
-#include <asm-generic/int-ll64.h>
+#समावेश <यंत्र-generic/पूर्णांक-ll64.h>
 
 /*
- * The C99 types uintXX_t that are usually defined in 'stdint.h' are not as
+ * The C99 types uपूर्णांकXX_t that are usually defined in 'stdint.h' are not as
  * unambiguous on ARM as you would expect. For the types below, there is a
- * difference on ARM between GCC built for bare metal ARM, GCC built for glibc
- * and the kernel itself, which results in build errors if you try to build with
- * -ffreestanding and include 'stdint.h' (such as when you include 'arm_neon.h'
- * in order to use NEON intrinsics)
+ * dअगरference on ARM between GCC built क्रम bare metal ARM, GCC built क्रम glibc
+ * and the kernel itself, which results in build errors अगर you try to build with
+ * -fमुक्तstanding and include 'stdint.h' (such as when you include 'arm_neon.h'
+ * in order to use NEON पूर्णांकrinsics)
  *
- * As the typedefs for these types in 'stdint.h' are based on builtin defines
+ * As the प्रकारs क्रम these types in 'stdint.h' are based on builtin defines
  * supplied by GCC, we can tweak these to align with the kernel's idea of those
  * types, so 'linux/types.h' and 'stdint.h' can be safely included from the same
- * source file (provided that -ffreestanding is used).
+ * source file (provided that -fमुक्तstanding is used).
  *
- *                    int32_t         uint32_t               uintptr_t
- * bare metal GCC     long            unsigned long          unsigned int
- * glibc GCC          int             unsigned int           unsigned int
- * kernel             int             unsigned int           unsigned long
+ *                    पूर्णांक32_t         uपूर्णांक32_t               uपूर्णांकptr_t
+ * bare metal GCC     दीर्घ            अचिन्हित दीर्घ          अचिन्हित पूर्णांक
+ * glibc GCC          पूर्णांक             अचिन्हित पूर्णांक           अचिन्हित पूर्णांक
+ * kernel             पूर्णांक             अचिन्हित पूर्णांक           अचिन्हित दीर्घ
  */
 
-#ifdef __INT32_TYPE__
-#undef __INT32_TYPE__
-#define __INT32_TYPE__		int
-#endif
+#अगर_घोषित __INT32_TYPE__
+#अघोषित __INT32_TYPE__
+#घोषणा __INT32_TYPE__		पूर्णांक
+#पूर्ण_अगर
 
-#ifdef __UINT32_TYPE__
-#undef __UINT32_TYPE__
-#define __UINT32_TYPE__	unsigned int
-#endif
+#अगर_घोषित __UINT32_TYPE__
+#अघोषित __UINT32_TYPE__
+#घोषणा __UINT32_TYPE__	अचिन्हित पूर्णांक
+#पूर्ण_अगर
 
-#ifdef __UINTPTR_TYPE__
-#undef __UINTPTR_TYPE__
-#define __UINTPTR_TYPE__	unsigned long
-#endif
+#अगर_घोषित __UINTPTR_TYPE__
+#अघोषित __UINTPTR_TYPE__
+#घोषणा __UINTPTR_TYPE__	अचिन्हित दीर्घ
+#पूर्ण_अगर
 
-#endif /* _UAPI_ASM_TYPES_H */
+#पूर्ण_अगर /* _UAPI_ASM_TYPES_H */

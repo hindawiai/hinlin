@@ -1,191 +1,192 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * drivers/usb/core/endpoint.c
+ * drivers/usb/core/endpoपूर्णांक.c
  *
- * (C) Copyright 2002,2004,2006 Greg Kroah-Hartman
+ * (C) Copyright 2002,2004,2006 Greg Kroah-Harपंचांगan
  * (C) Copyright 2002,2004 IBM Corp.
  * (C) Copyright 2006 Novell Inc.
  *
  * Released under the GPLv2 only.
  *
- * Endpoint sysfs stuff
+ * Endpoपूर्णांक sysfs stuff
  */
 
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
-#include "usb.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश "usb.h"
 
-struct ep_device {
-	struct usb_endpoint_descriptor *desc;
-	struct usb_device *udev;
-	struct device dev;
-};
-#define to_ep_device(_dev) \
-	container_of(_dev, struct ep_device, dev)
+काष्ठा ep_device अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *desc;
+	काष्ठा usb_device *udev;
+	काष्ठा device dev;
+पूर्ण;
+#घोषणा to_ep_device(_dev) \
+	container_of(_dev, काष्ठा ep_device, dev)
 
-struct ep_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct usb_device *,
-			struct usb_endpoint_descriptor *, char *);
-};
-#define to_ep_attribute(_attr) \
-	container_of(_attr, struct ep_attribute, attr)
+काष्ठा ep_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा usb_device *,
+			काष्ठा usb_endpoपूर्णांक_descriptor *, अक्षर *);
+पूर्ण;
+#घोषणा to_ep_attribute(_attr) \
+	container_of(_attr, काष्ठा ep_attribute, attr)
 
-#define usb_ep_attr(field, format_string)			\
-static ssize_t field##_show(struct device *dev,			\
-			       struct device_attribute *attr,	\
-			       char *buf)			\
-{								\
-	struct ep_device *ep = to_ep_device(dev);		\
-	return sprintf(buf, format_string, ep->desc->field);	\
-}								\
-static DEVICE_ATTR_RO(field)
+#घोषणा usb_ep_attr(field, क्रमmat_string)			\
+अटल sमाप_प्रकार field##_show(काष्ठा device *dev,			\
+			       काष्ठा device_attribute *attr,	\
+			       अक्षर *buf)			\
+अणु								\
+	काष्ठा ep_device *ep = to_ep_device(dev);		\
+	वापस प्र_लिखो(buf, क्रमmat_string, ep->desc->field);	\
+पूर्ण								\
+अटल DEVICE_ATTR_RO(field)
 
 usb_ep_attr(bLength, "%02x\n");
-usb_ep_attr(bEndpointAddress, "%02x\n");
+usb_ep_attr(bEndpoपूर्णांकAddress, "%02x\n");
 usb_ep_attr(bmAttributes, "%02x\n");
 usb_ep_attr(bInterval, "%02x\n");
 
-static ssize_t wMaxPacketSize_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct ep_device *ep = to_ep_device(dev);
-	return sprintf(buf, "%04x\n", usb_endpoint_maxp(ep->desc));
-}
-static DEVICE_ATTR_RO(wMaxPacketSize);
+अटल sमाप_प्रकार wMaxPacketSize_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ep_device *ep = to_ep_device(dev);
+	वापस प्र_लिखो(buf, "%04x\n", usb_endpoपूर्णांक_maxp(ep->desc));
+पूर्ण
+अटल DEVICE_ATTR_RO(wMaxPacketSize);
 
-static ssize_t type_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct ep_device *ep = to_ep_device(dev);
-	char *type = "unknown";
+अटल sमाप_प्रकार type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा ep_device *ep = to_ep_device(dev);
+	अक्षर *type = "unknown";
 
-	switch (usb_endpoint_type(ep->desc)) {
-	case USB_ENDPOINT_XFER_CONTROL:
+	चयन (usb_endpoपूर्णांक_type(ep->desc)) अणु
+	हाल USB_ENDPOINT_XFER_CONTROL:
 		type = "Control";
-		break;
-	case USB_ENDPOINT_XFER_ISOC:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_ISOC:
 		type = "Isoc";
-		break;
-	case USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_BULK:
 		type = "Bulk";
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		type = "Interrupt";
-		break;
-	}
-	return sprintf(buf, "%s\n", type);
-}
-static DEVICE_ATTR_RO(type);
+		अवरोध;
+	पूर्ण
+	वापस प्र_लिखो(buf, "%s\n", type);
+पूर्ण
+अटल DEVICE_ATTR_RO(type);
 
-static ssize_t interval_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
-	struct ep_device *ep = to_ep_device(dev);
-	unsigned int interval;
-	char unit;
+अटल sमाप_प्रकार पूर्णांकerval_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा ep_device *ep = to_ep_device(dev);
+	अचिन्हित पूर्णांक पूर्णांकerval;
+	अक्षर unit;
 
-	interval = usb_decode_interval(ep->desc, ep->udev->speed);
-	if (interval % 1000) {
+	पूर्णांकerval = usb_decode_पूर्णांकerval(ep->desc, ep->udev->speed);
+	अगर (पूर्णांकerval % 1000) अणु
 		unit = 'u';
-	} else {
+	पूर्ण अन्यथा अणु
 		unit = 'm';
-		interval /= 1000;
-	}
+		पूर्णांकerval /= 1000;
+	पूर्ण
 
-	return sprintf(buf, "%d%cs\n", interval, unit);
-}
-static DEVICE_ATTR_RO(interval);
+	वापस प्र_लिखो(buf, "%d%cs\n", पूर्णांकerval, unit);
+पूर्ण
+अटल DEVICE_ATTR_RO(पूर्णांकerval);
 
-static ssize_t direction_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct ep_device *ep = to_ep_device(dev);
-	char *direction;
+अटल sमाप_प्रकार direction_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा ep_device *ep = to_ep_device(dev);
+	अक्षर *direction;
 
-	if (usb_endpoint_xfer_control(ep->desc))
+	अगर (usb_endpoपूर्णांक_xfer_control(ep->desc))
 		direction = "both";
-	else if (usb_endpoint_dir_in(ep->desc))
+	अन्यथा अगर (usb_endpoपूर्णांक_dir_in(ep->desc))
 		direction = "in";
-	else
+	अन्यथा
 		direction = "out";
-	return sprintf(buf, "%s\n", direction);
-}
-static DEVICE_ATTR_RO(direction);
+	वापस प्र_लिखो(buf, "%s\n", direction);
+पूर्ण
+अटल DEVICE_ATTR_RO(direction);
 
-static struct attribute *ep_dev_attrs[] = {
+अटल काष्ठा attribute *ep_dev_attrs[] = अणु
 	&dev_attr_bLength.attr,
-	&dev_attr_bEndpointAddress.attr,
+	&dev_attr_bEndpoपूर्णांकAddress.attr,
 	&dev_attr_bmAttributes.attr,
 	&dev_attr_bInterval.attr,
 	&dev_attr_wMaxPacketSize.attr,
-	&dev_attr_interval.attr,
+	&dev_attr_पूर्णांकerval.attr,
 	&dev_attr_type.attr,
 	&dev_attr_direction.attr,
-	NULL,
-};
-static const struct attribute_group ep_dev_attr_grp = {
+	शून्य,
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group ep_dev_attr_grp = अणु
 	.attrs = ep_dev_attrs,
-};
-static const struct attribute_group *ep_dev_groups[] = {
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group *ep_dev_groups[] = अणु
 	&ep_dev_attr_grp,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static void ep_device_release(struct device *dev)
-{
-	struct ep_device *ep_dev = to_ep_device(dev);
+अटल व्योम ep_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा ep_device *ep_dev = to_ep_device(dev);
 
-	kfree(ep_dev);
-}
+	kमुक्त(ep_dev);
+पूर्ण
 
-struct device_type usb_ep_device_type = {
+काष्ठा device_type usb_ep_device_type = अणु
 	.name =		"usb_endpoint",
 	.release = ep_device_release,
-};
+पूर्ण;
 
-int usb_create_ep_devs(struct device *parent,
-			struct usb_host_endpoint *endpoint,
-			struct usb_device *udev)
-{
-	struct ep_device *ep_dev;
-	int retval;
+पूर्णांक usb_create_ep_devs(काष्ठा device *parent,
+			काष्ठा usb_host_endpoपूर्णांक *endpoपूर्णांक,
+			काष्ठा usb_device *udev)
+अणु
+	काष्ठा ep_device *ep_dev;
+	पूर्णांक retval;
 
-	ep_dev = kzalloc(sizeof(*ep_dev), GFP_KERNEL);
-	if (!ep_dev) {
+	ep_dev = kzalloc(माप(*ep_dev), GFP_KERNEL);
+	अगर (!ep_dev) अणु
 		retval = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	ep_dev->desc = &endpoint->desc;
+	ep_dev->desc = &endpoपूर्णांक->desc;
 	ep_dev->udev = udev;
 	ep_dev->dev.groups = ep_dev_groups;
 	ep_dev->dev.type = &usb_ep_device_type;
 	ep_dev->dev.parent = parent;
-	dev_set_name(&ep_dev->dev, "ep_%02x", endpoint->desc.bEndpointAddress);
+	dev_set_name(&ep_dev->dev, "ep_%02x", endpoपूर्णांक->desc.bEndpoपूर्णांकAddress);
 
-	retval = device_register(&ep_dev->dev);
-	if (retval)
-		goto error_register;
+	retval = device_रेजिस्टर(&ep_dev->dev);
+	अगर (retval)
+		जाओ error_रेजिस्टर;
 
 	device_enable_async_suspend(&ep_dev->dev);
-	endpoint->ep_dev = ep_dev;
-	return retval;
+	endpoपूर्णांक->ep_dev = ep_dev;
+	वापस retval;
 
-error_register:
+error_रेजिस्टर:
 	put_device(&ep_dev->dev);
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
-void usb_remove_ep_devs(struct usb_host_endpoint *endpoint)
-{
-	struct ep_device *ep_dev = endpoint->ep_dev;
+व्योम usb_हटाओ_ep_devs(काष्ठा usb_host_endpoपूर्णांक *endpoपूर्णांक)
+अणु
+	काष्ठा ep_device *ep_dev = endpoपूर्णांक->ep_dev;
 
-	if (ep_dev) {
-		device_unregister(&ep_dev->dev);
-		endpoint->ep_dev = NULL;
-	}
-}
+	अगर (ep_dev) अणु
+		device_unरेजिस्टर(&ep_dev->dev);
+		endpoपूर्णांक->ep_dev = शून्य;
+	पूर्ण
+पूर्ण

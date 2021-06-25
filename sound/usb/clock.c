@@ -1,701 +1,702 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *   Clock domain and sample rate management functions
+ *   Clock करोमुख्य and sample rate management functions
  */
 
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/usb.h>
-#include <linux/usb/audio.h>
-#include <linux/usb/audio-v2.h>
-#include <linux/usb/audio-v3.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/audपन.स>
+#समावेश <linux/usb/audio-v2.h>
+#समावेश <linux/usb/audio-v3.h>
 
-#include <sound/core.h>
-#include <sound/info.h>
-#include <sound/pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/info.h>
+#समावेश <sound/pcm.h>
 
-#include "usbaudio.h"
-#include "card.h"
-#include "helper.h"
-#include "clock.h"
-#include "quirks.h"
+#समावेश "usbaudio.h"
+#समावेश "card.h"
+#समावेश "helper.h"
+#समावेश "clock.h"
+#समावेश "quirks.h"
 
-static void *find_uac_clock_desc(struct usb_host_interface *iface, int id,
-				 bool (*validator)(void *, int), u8 type)
-{
-	void *cs = NULL;
+अटल व्योम *find_uac_घड़ी_desc(काष्ठा usb_host_पूर्णांकerface *अगरace, पूर्णांक id,
+				 bool (*validator)(व्योम *, पूर्णांक), u8 type)
+अणु
+	व्योम *cs = शून्य;
 
-	while ((cs = snd_usb_find_csint_desc(iface->extra, iface->extralen,
-					     cs, type))) {
-		if (validator(cs, id))
-			return cs;
-	}
+	जबतक ((cs = snd_usb_find_csपूर्णांक_desc(अगरace->extra, अगरace->extralen,
+					     cs, type))) अणु
+		अगर (validator(cs, id))
+			वापस cs;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool validate_clock_source_v2(void *p, int id)
-{
-	struct uac_clock_source_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_source_v2(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac_घड़ी_source_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-static bool validate_clock_source_v3(void *p, int id)
-{
-	struct uac3_clock_source_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_source_v3(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac3_घड़ी_source_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-static bool validate_clock_selector_v2(void *p, int id)
-{
-	struct uac_clock_selector_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_selector_v2(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac_घड़ी_selector_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-static bool validate_clock_selector_v3(void *p, int id)
-{
-	struct uac3_clock_selector_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_selector_v3(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac3_घड़ी_selector_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-static bool validate_clock_multiplier_v2(void *p, int id)
-{
-	struct uac_clock_multiplier_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_multiplier_v2(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac_घड़ी_multiplier_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-static bool validate_clock_multiplier_v3(void *p, int id)
-{
-	struct uac3_clock_multiplier_descriptor *cs = p;
-	return cs->bClockID == id;
-}
+अटल bool validate_घड़ी_multiplier_v3(व्योम *p, पूर्णांक id)
+अणु
+	काष्ठा uac3_घड़ी_multiplier_descriptor *cs = p;
+	वापस cs->bClockID == id;
+पूर्ण
 
-#define DEFINE_FIND_HELPER(name, obj, validator, type)		\
-static obj *name(struct usb_host_interface *iface, int id)	\
-{								\
-	return find_uac_clock_desc(iface, id, validator, type);	\
-}
+#घोषणा DEFINE_FIND_HELPER(name, obj, validator, type)		\
+अटल obj *name(काष्ठा usb_host_पूर्णांकerface *अगरace, पूर्णांक id)	\
+अणु								\
+	वापस find_uac_घड़ी_desc(अगरace, id, validator, type);	\
+पूर्ण
 
-DEFINE_FIND_HELPER(snd_usb_find_clock_source,
-		   struct uac_clock_source_descriptor,
-		   validate_clock_source_v2, UAC2_CLOCK_SOURCE);
-DEFINE_FIND_HELPER(snd_usb_find_clock_source_v3,
-		   struct uac3_clock_source_descriptor,
-		   validate_clock_source_v3, UAC3_CLOCK_SOURCE);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_source,
+		   काष्ठा uac_घड़ी_source_descriptor,
+		   validate_घड़ी_source_v2, UAC2_CLOCK_SOURCE);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_source_v3,
+		   काष्ठा uac3_घड़ी_source_descriptor,
+		   validate_घड़ी_source_v3, UAC3_CLOCK_SOURCE);
 
-DEFINE_FIND_HELPER(snd_usb_find_clock_selector,
-		   struct uac_clock_selector_descriptor,
-		   validate_clock_selector_v2, UAC2_CLOCK_SELECTOR);
-DEFINE_FIND_HELPER(snd_usb_find_clock_selector_v3,
-		   struct uac3_clock_selector_descriptor,
-		   validate_clock_selector_v3, UAC3_CLOCK_SELECTOR);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_selector,
+		   काष्ठा uac_घड़ी_selector_descriptor,
+		   validate_घड़ी_selector_v2, UAC2_CLOCK_SELECTOR);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_selector_v3,
+		   काष्ठा uac3_घड़ी_selector_descriptor,
+		   validate_घड़ी_selector_v3, UAC3_CLOCK_SELECTOR);
 
-DEFINE_FIND_HELPER(snd_usb_find_clock_multiplier,
-		   struct uac_clock_multiplier_descriptor,
-		   validate_clock_multiplier_v2, UAC2_CLOCK_MULTIPLIER);
-DEFINE_FIND_HELPER(snd_usb_find_clock_multiplier_v3,
-		   struct uac3_clock_multiplier_descriptor,
-		   validate_clock_multiplier_v3, UAC3_CLOCK_MULTIPLIER);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_multiplier,
+		   काष्ठा uac_घड़ी_multiplier_descriptor,
+		   validate_घड़ी_multiplier_v2, UAC2_CLOCK_MULTIPLIER);
+DEFINE_FIND_HELPER(snd_usb_find_घड़ी_multiplier_v3,
+		   काष्ठा uac3_घड़ी_multiplier_descriptor,
+		   validate_घड़ी_multiplier_v3, UAC3_CLOCK_MULTIPLIER);
 
-static int uac_clock_selector_get_val(struct snd_usb_audio *chip, int selector_id)
-{
-	unsigned char buf;
-	int ret;
+अटल पूर्णांक uac_घड़ी_selector_get_val(काष्ठा snd_usb_audio *chip, पूर्णांक selector_id)
+अणु
+	अचिन्हित अक्षर buf;
+	पूर्णांक ret;
 
 	ret = snd_usb_ctl_msg(chip->dev, usb_rcvctrlpipe(chip->dev, 0),
 			      UAC2_CS_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_IN,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_IN,
 			      UAC2_CX_CLOCK_SELECTOR << 8,
-			      snd_usb_ctrl_intf(chip) | (selector_id << 8),
-			      &buf, sizeof(buf));
+			      snd_usb_ctrl_पूर्णांकf(chip) | (selector_id << 8),
+			      &buf, माप(buf));
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static int uac_clock_selector_set_val(struct snd_usb_audio *chip, int selector_id,
-					unsigned char pin)
-{
-	int ret;
+अटल पूर्णांक uac_घड़ी_selector_set_val(काष्ठा snd_usb_audio *chip, पूर्णांक selector_id,
+					अचिन्हित अक्षर pin)
+अणु
+	पूर्णांक ret;
 
 	ret = snd_usb_ctl_msg(chip->dev, usb_sndctrlpipe(chip->dev, 0),
 			      UAC2_CS_CUR,
-			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_DIR_OUT,
+			      USB_RECIP_INTERFACE | USB_TYPE_CLASS | USB_सूची_OUT,
 			      UAC2_CX_CLOCK_SELECTOR << 8,
-			      snd_usb_ctrl_intf(chip) | (selector_id << 8),
-			      &pin, sizeof(pin));
-	if (ret < 0)
-		return ret;
+			      snd_usb_ctrl_पूर्णांकf(chip) | (selector_id << 8),
+			      &pin, माप(pin));
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret != sizeof(pin)) {
+	अगर (ret != माप(pin)) अणु
 		usb_audio_err(chip,
 			"setting selector (id %d) unexpected length %d\n",
 			selector_id, ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = uac_clock_selector_get_val(chip, selector_id);
-	if (ret < 0)
-		return ret;
+	ret = uac_घड़ी_selector_get_val(chip, selector_id);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret != pin) {
+	अगर (ret != pin) अणु
 		usb_audio_err(chip,
 			"setting selector (id %d) to %x failed (current: %d)\n",
 			selector_id, pin, ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool uac_clock_source_is_valid_quirk(struct snd_usb_audio *chip,
-					    const struct audioformat *fmt,
-					    int source_id)
-{
+अटल bool uac_घड़ी_source_is_valid_quirk(काष्ठा snd_usb_audio *chip,
+					    स्थिर काष्ठा audioक्रमmat *fmt,
+					    पूर्णांक source_id)
+अणु
 	bool ret = false;
-	int count;
-	unsigned char data;
-	struct usb_device *dev = chip->dev;
+	पूर्णांक count;
+	अचिन्हित अक्षर data;
+	काष्ठा usb_device *dev = chip->dev;
 
-	if (fmt->protocol == UAC_VERSION_2) {
-		struct uac_clock_source_descriptor *cs_desc =
-			snd_usb_find_clock_source(chip->ctrl_intf, source_id);
+	अगर (fmt->protocol == UAC_VERSION_2) अणु
+		काष्ठा uac_घड़ी_source_descriptor *cs_desc =
+			snd_usb_find_घड़ी_source(chip->ctrl_पूर्णांकf, source_id);
 
-		if (!cs_desc)
-			return false;
+		अगर (!cs_desc)
+			वापस false;
 
 		/*
-		 * Assume the clock is valid if clock source supports only one
+		 * Assume the घड़ी is valid अगर घड़ी source supports only one
 		 * single sample rate, the terminal is connected directly to it
-		 * (there is no clock selector) and clock type is internal.
+		 * (there is no घड़ी selector) and घड़ी type is पूर्णांकernal.
 		 * This is to deal with some Denon DJ controllers that always
-		 * reports that clock is invalid.
+		 * reports that घड़ी is invalid.
 		 */
-		if (fmt->nr_rates == 1 &&
-		    (fmt->clock & 0xff) == cs_desc->bClockID &&
+		अगर (fmt->nr_rates == 1 &&
+		    (fmt->घड़ी & 0xff) == cs_desc->bClockID &&
 		    (cs_desc->bmAttributes & 0x3) !=
 				UAC_CLOCK_SOURCE_TYPE_EXT)
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
 	/*
 	 * MOTU MicroBook IIc
-	 * Sample rate changes takes more than 2 seconds for this device. Clock
-	 * validity request returns false during that period.
+	 * Sample rate changes takes more than 2 seconds क्रम this device. Clock
+	 * validity request वापसs false during that period.
 	 */
-	if (chip->usb_id == USB_ID(0x07fd, 0x0004)) {
+	अगर (chip->usb_id == USB_ID(0x07fd, 0x0004)) अणु
 		count = 0;
 
-		while ((!ret) && (count < 50)) {
-			int err;
+		जबतक ((!ret) && (count < 50)) अणु
+			पूर्णांक err;
 
 			msleep(100);
 
 			err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_CUR,
-					      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+					      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 					      UAC2_CS_CONTROL_CLOCK_VALID << 8,
-					      snd_usb_ctrl_intf(chip) | (source_id << 8),
-					      &data, sizeof(data));
-			if (err < 0) {
+					      snd_usb_ctrl_पूर्णांकf(chip) | (source_id << 8),
+					      &data, माप(data));
+			अगर (err < 0) अणु
 				dev_warn(&dev->dev,
 					 "%s(): cannot get clock validity for id %d\n",
 					   __func__, source_id);
-				return false;
-			}
+				वापस false;
+			पूर्ण
 
 			ret = !!data;
 			count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool uac_clock_source_is_valid(struct snd_usb_audio *chip,
-				      const struct audioformat *fmt,
-				      int source_id)
-{
-	int err;
-	unsigned char data;
-	struct usb_device *dev = chip->dev;
+अटल bool uac_घड़ी_source_is_valid(काष्ठा snd_usb_audio *chip,
+				      स्थिर काष्ठा audioक्रमmat *fmt,
+				      पूर्णांक source_id)
+अणु
+	पूर्णांक err;
+	अचिन्हित अक्षर data;
+	काष्ठा usb_device *dev = chip->dev;
 	u32 bmControls;
 
-	if (fmt->protocol == UAC_VERSION_3) {
-		struct uac3_clock_source_descriptor *cs_desc =
-			snd_usb_find_clock_source_v3(chip->ctrl_intf, source_id);
+	अगर (fmt->protocol == UAC_VERSION_3) अणु
+		काष्ठा uac3_घड़ी_source_descriptor *cs_desc =
+			snd_usb_find_घड़ी_source_v3(chip->ctrl_पूर्णांकf, source_id);
 
-		if (!cs_desc)
-			return false;
+		अगर (!cs_desc)
+			वापस false;
 		bmControls = le32_to_cpu(cs_desc->bmControls);
-	} else { /* UAC_VERSION_1/2 */
-		struct uac_clock_source_descriptor *cs_desc =
-			snd_usb_find_clock_source(chip->ctrl_intf, source_id);
+	पूर्ण अन्यथा अणु /* UAC_VERSION_1/2 */
+		काष्ठा uac_घड़ी_source_descriptor *cs_desc =
+			snd_usb_find_घड़ी_source(chip->ctrl_पूर्णांकf, source_id);
 
-		if (!cs_desc)
-			return false;
+		अगर (!cs_desc)
+			वापस false;
 		bmControls = cs_desc->bmControls;
-	}
+	पूर्ण
 
-	/* If a clock source can't tell us whether it's valid, we assume it is */
-	if (!uac_v2v3_control_is_readable(bmControls,
+	/* If a घड़ी source can't tell us whether it's valid, we assume it is */
+	अगर (!uac_v2v3_control_is_पढ़ोable(bmControls,
 				      UAC2_CS_CONTROL_CLOCK_VALID))
-		return true;
+		वापस true;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			      UAC2_CS_CONTROL_CLOCK_VALID << 8,
-			      snd_usb_ctrl_intf(chip) | (source_id << 8),
-			      &data, sizeof(data));
+			      snd_usb_ctrl_पूर्णांकf(chip) | (source_id << 8),
+			      &data, माप(data));
 
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_warn(&dev->dev,
 			 "%s(): cannot get clock validity for id %d\n",
 			   __func__, source_id);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (data)
-		return true;
-	else
-		return uac_clock_source_is_valid_quirk(chip, fmt, source_id);
-}
+	अगर (data)
+		वापस true;
+	अन्यथा
+		वापस uac_घड़ी_source_is_valid_quirk(chip, fmt, source_id);
+पूर्ण
 
-static int __uac_clock_find_source(struct snd_usb_audio *chip,
-				   const struct audioformat *fmt, int entity_id,
-				   unsigned long *visited, bool validate)
-{
-	struct uac_clock_source_descriptor *source;
-	struct uac_clock_selector_descriptor *selector;
-	struct uac_clock_multiplier_descriptor *multiplier;
+अटल पूर्णांक __uac_घड़ी_find_source(काष्ठा snd_usb_audio *chip,
+				   स्थिर काष्ठा audioक्रमmat *fmt, पूर्णांक entity_id,
+				   अचिन्हित दीर्घ *visited, bool validate)
+अणु
+	काष्ठा uac_घड़ी_source_descriptor *source;
+	काष्ठा uac_घड़ी_selector_descriptor *selector;
+	काष्ठा uac_घड़ी_multiplier_descriptor *multiplier;
 
 	entity_id &= 0xff;
 
-	if (test_and_set_bit(entity_id, visited)) {
+	अगर (test_and_set_bit(entity_id, visited)) अणु
 		usb_audio_warn(chip,
 			 "%s(): recursive clock topology detected, id %d.\n",
 			 __func__, entity_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* first, see if the ID we're looking for is a clock source already */
-	source = snd_usb_find_clock_source(chip->ctrl_intf, entity_id);
-	if (source) {
+	/* first, see अगर the ID we're looking क्रम is a घड़ी source alपढ़ोy */
+	source = snd_usb_find_घड़ी_source(chip->ctrl_पूर्णांकf, entity_id);
+	अगर (source) अणु
 		entity_id = source->bClockID;
-		if (validate && !uac_clock_source_is_valid(chip, fmt,
-								entity_id)) {
+		अगर (validate && !uac_घड़ी_source_is_valid(chip, fmt,
+								entity_id)) अणु
 			usb_audio_err(chip,
 				"clock source %d is not valid, cannot use\n",
 				entity_id);
-			return -ENXIO;
-		}
-		return entity_id;
-	}
+			वापस -ENXIO;
+		पूर्ण
+		वापस entity_id;
+	पूर्ण
 
-	selector = snd_usb_find_clock_selector(chip->ctrl_intf, entity_id);
-	if (selector) {
-		int ret, i, cur, err;
+	selector = snd_usb_find_घड़ी_selector(chip->ctrl_पूर्णांकf, entity_id);
+	अगर (selector) अणु
+		पूर्णांक ret, i, cur, err;
 
-		if (selector->bNrInPins == 1) {
+		अगर (selector->bNrInPins == 1) अणु
 			ret = 1;
-			goto find_source;
-		}
+			जाओ find_source;
+		पूर्ण
 
-		/* the entity ID we are looking for is a selector.
+		/* the entity ID we are looking क्रम is a selector.
 		 * find out what it currently selects */
-		ret = uac_clock_selector_get_val(chip, selector->bClockID);
-		if (ret < 0)
-			return ret;
+		ret = uac_घड़ी_selector_get_val(chip, selector->bClockID);
+		अगर (ret < 0)
+			वापस ret;
 
 		/* Selector values are one-based */
 
-		if (ret > selector->bNrInPins || ret < 1) {
+		अगर (ret > selector->bNrInPins || ret < 1) अणु
 			usb_audio_err(chip,
 				"%s(): selector reported illegal value, id %d, ret %d\n",
 				__func__, selector->bClockID, ret);
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 	find_source:
 		cur = ret;
-		ret = __uac_clock_find_source(chip, fmt,
+		ret = __uac_घड़ी_find_source(chip, fmt,
 					      selector->baCSourceID[ret - 1],
 					      visited, validate);
-		if (ret > 0) {
-			err = uac_clock_selector_set_val(chip, entity_id, cur);
-			if (err < 0)
-				return err;
-		}
+		अगर (ret > 0) अणु
+			err = uac_घड़ी_selector_set_val(chip, entity_id, cur);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		if (!validate || ret > 0 || !chip->autoclock)
-			return ret;
+		अगर (!validate || ret > 0 || !chip->स्वतःघड़ी)
+			वापस ret;
 
-		/* The current clock source is invalid, try others. */
-		for (i = 1; i <= selector->bNrInPins; i++) {
-			if (i == cur)
-				continue;
+		/* The current घड़ी source is invalid, try others. */
+		क्रम (i = 1; i <= selector->bNrInPins; i++) अणु
+			अगर (i == cur)
+				जारी;
 
-			ret = __uac_clock_find_source(chip, fmt,
+			ret = __uac_घड़ी_find_source(chip, fmt,
 						      selector->baCSourceID[i - 1],
 						      visited, true);
-			if (ret < 0)
-				continue;
+			अगर (ret < 0)
+				जारी;
 
-			err = uac_clock_selector_set_val(chip, entity_id, i);
-			if (err < 0)
-				continue;
+			err = uac_घड़ी_selector_set_val(chip, entity_id, i);
+			अगर (err < 0)
+				जारी;
 
 			usb_audio_info(chip,
 				 "found and selected valid clock source %d\n",
 				 ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	/* FIXME: multipliers only act as pass-thru element for now */
-	multiplier = snd_usb_find_clock_multiplier(chip->ctrl_intf, entity_id);
-	if (multiplier)
-		return __uac_clock_find_source(chip, fmt,
+	/* FIXME: multipliers only act as pass-thru element क्रम now */
+	multiplier = snd_usb_find_घड़ी_multiplier(chip->ctrl_पूर्णांकf, entity_id);
+	अगर (multiplier)
+		वापस __uac_घड़ी_find_source(chip, fmt,
 					       multiplier->bCSourceID,
 					       visited, validate);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int __uac3_clock_find_source(struct snd_usb_audio *chip,
-				    const struct audioformat *fmt, int entity_id,
-				    unsigned long *visited, bool validate)
-{
-	struct uac3_clock_source_descriptor *source;
-	struct uac3_clock_selector_descriptor *selector;
-	struct uac3_clock_multiplier_descriptor *multiplier;
+अटल पूर्णांक __uac3_घड़ी_find_source(काष्ठा snd_usb_audio *chip,
+				    स्थिर काष्ठा audioक्रमmat *fmt, पूर्णांक entity_id,
+				    अचिन्हित दीर्घ *visited, bool validate)
+अणु
+	काष्ठा uac3_घड़ी_source_descriptor *source;
+	काष्ठा uac3_घड़ी_selector_descriptor *selector;
+	काष्ठा uac3_घड़ी_multiplier_descriptor *multiplier;
 
 	entity_id &= 0xff;
 
-	if (test_and_set_bit(entity_id, visited)) {
+	अगर (test_and_set_bit(entity_id, visited)) अणु
 		usb_audio_warn(chip,
 			 "%s(): recursive clock topology detected, id %d.\n",
 			 __func__, entity_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* first, see if the ID we're looking for is a clock source already */
-	source = snd_usb_find_clock_source_v3(chip->ctrl_intf, entity_id);
-	if (source) {
+	/* first, see अगर the ID we're looking क्रम is a घड़ी source alपढ़ोy */
+	source = snd_usb_find_घड़ी_source_v3(chip->ctrl_पूर्णांकf, entity_id);
+	अगर (source) अणु
 		entity_id = source->bClockID;
-		if (validate && !uac_clock_source_is_valid(chip, fmt,
-								entity_id)) {
+		अगर (validate && !uac_घड़ी_source_is_valid(chip, fmt,
+								entity_id)) अणु
 			usb_audio_err(chip,
 				"clock source %d is not valid, cannot use\n",
 				entity_id);
-			return -ENXIO;
-		}
-		return entity_id;
-	}
+			वापस -ENXIO;
+		पूर्ण
+		वापस entity_id;
+	पूर्ण
 
-	selector = snd_usb_find_clock_selector_v3(chip->ctrl_intf, entity_id);
-	if (selector) {
-		int ret, i, cur, err;
+	selector = snd_usb_find_घड़ी_selector_v3(chip->ctrl_पूर्णांकf, entity_id);
+	अगर (selector) अणु
+		पूर्णांक ret, i, cur, err;
 
-		/* the entity ID we are looking for is a selector.
+		/* the entity ID we are looking क्रम is a selector.
 		 * find out what it currently selects */
-		ret = uac_clock_selector_get_val(chip, selector->bClockID);
-		if (ret < 0)
-			return ret;
+		ret = uac_घड़ी_selector_get_val(chip, selector->bClockID);
+		अगर (ret < 0)
+			वापस ret;
 
 		/* Selector values are one-based */
 
-		if (ret > selector->bNrInPins || ret < 1) {
+		अगर (ret > selector->bNrInPins || ret < 1) अणु
 			usb_audio_err(chip,
 				"%s(): selector reported illegal value, id %d, ret %d\n",
 				__func__, selector->bClockID, ret);
 
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		cur = ret;
-		ret = __uac3_clock_find_source(chip, fmt,
+		ret = __uac3_घड़ी_find_source(chip, fmt,
 					       selector->baCSourceID[ret - 1],
 					       visited, validate);
-		if (ret > 0) {
-			err = uac_clock_selector_set_val(chip, entity_id, cur);
-			if (err < 0)
-				return err;
-		}
+		अगर (ret > 0) अणु
+			err = uac_घड़ी_selector_set_val(chip, entity_id, cur);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
 
-		if (!validate || ret > 0 || !chip->autoclock)
-			return ret;
+		अगर (!validate || ret > 0 || !chip->स्वतःघड़ी)
+			वापस ret;
 
-		/* The current clock source is invalid, try others. */
-		for (i = 1; i <= selector->bNrInPins; i++) {
-			int err;
+		/* The current घड़ी source is invalid, try others. */
+		क्रम (i = 1; i <= selector->bNrInPins; i++) अणु
+			पूर्णांक err;
 
-			if (i == cur)
-				continue;
+			अगर (i == cur)
+				जारी;
 
-			ret = __uac3_clock_find_source(chip, fmt,
+			ret = __uac3_घड़ी_find_source(chip, fmt,
 						       selector->baCSourceID[i - 1],
 						       visited, true);
-			if (ret < 0)
-				continue;
+			अगर (ret < 0)
+				जारी;
 
-			err = uac_clock_selector_set_val(chip, entity_id, i);
-			if (err < 0)
-				continue;
+			err = uac_घड़ी_selector_set_val(chip, entity_id, i);
+			अगर (err < 0)
+				जारी;
 
 			usb_audio_info(chip,
 				 "found and selected valid clock source %d\n",
 				 ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	/* FIXME: multipliers only act as pass-thru element for now */
-	multiplier = snd_usb_find_clock_multiplier_v3(chip->ctrl_intf,
+	/* FIXME: multipliers only act as pass-thru element क्रम now */
+	multiplier = snd_usb_find_घड़ी_multiplier_v3(chip->ctrl_पूर्णांकf,
 						      entity_id);
-	if (multiplier)
-		return __uac3_clock_find_source(chip, fmt,
+	अगर (multiplier)
+		वापस __uac3_घड़ी_find_source(chip, fmt,
 						multiplier->bCSourceID,
 						visited, validate);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * For all kinds of sample rate settings and other device queries,
- * the clock source (end-leaf) must be used. However, clock selectors,
- * clock multipliers and sample rate converters may be specified as
- * clock source input to terminal. This functions walks the clock path
+ * the घड़ी source (end-leaf) must be used. However, घड़ी selectors,
+ * घड़ी multipliers and sample rate converters may be specअगरied as
+ * घड़ी source input to terminal. This functions walks the घड़ी path
  * to its end and tries to find the source.
  *
- * The 'visited' bitfield is used internally to detect recursive loops.
+ * The 'visited' bitfield is used पूर्णांकernally to detect recursive loops.
  *
- * Returns the clock source UnitID (>=0) on success, or an error.
+ * Returns the घड़ी source UnitID (>=0) on success, or an error.
  */
-int snd_usb_clock_find_source(struct snd_usb_audio *chip,
-			      const struct audioformat *fmt, bool validate)
-{
+पूर्णांक snd_usb_घड़ी_find_source(काष्ठा snd_usb_audio *chip,
+			      स्थिर काष्ठा audioक्रमmat *fmt, bool validate)
+अणु
 	DECLARE_BITMAP(visited, 256);
-	memset(visited, 0, sizeof(visited));
+	स_रखो(visited, 0, माप(visited));
 
-	switch (fmt->protocol) {
-	case UAC_VERSION_2:
-		return __uac_clock_find_source(chip, fmt, fmt->clock, visited,
+	चयन (fmt->protocol) अणु
+	हाल UAC_VERSION_2:
+		वापस __uac_घड़ी_find_source(chip, fmt, fmt->घड़ी, visited,
 					       validate);
-	case UAC_VERSION_3:
-		return __uac3_clock_find_source(chip, fmt, fmt->clock, visited,
+	हाल UAC_VERSION_3:
+		वापस __uac3_घड़ी_find_source(chip, fmt, fmt->घड़ी, visited,
 					       validate);
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int set_sample_rate_v1(struct snd_usb_audio *chip,
-			      const struct audioformat *fmt, int rate)
-{
-	struct usb_device *dev = chip->dev;
-	unsigned char data[3];
-	int err, crate;
+अटल पूर्णांक set_sample_rate_v1(काष्ठा snd_usb_audio *chip,
+			      स्थिर काष्ठा audioक्रमmat *fmt, पूर्णांक rate)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
+	अचिन्हित अक्षर data[3];
+	पूर्णांक err, crate;
 
-	/* if endpoint doesn't have sampling rate control, bail out */
-	if (!(fmt->attributes & UAC_EP_CS_ATTR_SAMPLE_RATE))
-		return 0;
+	/* अगर endpoपूर्णांक करोesn't have sampling rate control, bail out */
+	अगर (!(fmt->attributes & UAC_EP_CS_ATTR_SAMPLE_RATE))
+		वापस 0;
 
 	data[0] = rate;
 	data[1] = rate >> 8;
 	data[2] = rate >> 16;
 	err = snd_usb_ctl_msg(dev, usb_sndctrlpipe(dev, 0), UAC_SET_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_DIR_OUT,
+			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_सूची_OUT,
 			      UAC_EP_CS_ATTR_SAMPLE_RATE << 8,
-			      fmt->endpoint, data, sizeof(data));
-	if (err < 0) {
+			      fmt->endpoपूर्णांक, data, माप(data));
+	अगर (err < 0) अणु
 		dev_err(&dev->dev, "%d:%d: cannot set freq %d to ep %#x\n",
-			fmt->iface, fmt->altsetting, rate, fmt->endpoint);
-		return err;
-	}
+			fmt->अगरace, fmt->altsetting, rate, fmt->endpoपूर्णांक);
+		वापस err;
+	पूर्ण
 
 	/* Don't check the sample rate for devices which we know don't
-	 * support reading */
-	if (snd_usb_get_sample_rate_quirk(chip))
-		return 0;
-	/* the firmware is likely buggy, don't repeat to fail too many times */
-	if (chip->sample_rate_read_error > 2)
-		return 0;
+	 * support पढ़ोing */
+	अगर (snd_usb_get_sample_rate_quirk(chip))
+		वापस 0;
+	/* the firmware is likely buggy, करोn't repeat to fail too many बार */
+	अगर (chip->sample_rate_पढ़ो_error > 2)
+		वापस 0;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC_GET_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_ENDPOINT | USB_सूची_IN,
 			      UAC_EP_CS_ATTR_SAMPLE_RATE << 8,
-			      fmt->endpoint, data, sizeof(data));
-	if (err < 0) {
+			      fmt->endpoपूर्णांक, data, माप(data));
+	अगर (err < 0) अणु
 		dev_err(&dev->dev, "%d:%d: cannot get freq at ep %#x\n",
-			fmt->iface, fmt->altsetting, fmt->endpoint);
-		chip->sample_rate_read_error++;
-		return 0; /* some devices don't support reading */
-	}
+			fmt->अगरace, fmt->altsetting, fmt->endpoपूर्णांक);
+		chip->sample_rate_पढ़ो_error++;
+		वापस 0; /* some devices करोn't support पढ़ोing */
+	पूर्ण
 
 	crate = data[0] | (data[1] << 8) | (data[2] << 16);
-	if (!crate) {
+	अगर (!crate) अणु
 		dev_info(&dev->dev, "failed to read current rate; disabling the check\n");
-		chip->sample_rate_read_error = 3; /* three strikes, see above */
-		return 0;
-	}
+		chip->sample_rate_पढ़ो_error = 3; /* three strikes, see above */
+		वापस 0;
+	पूर्ण
 
-	if (crate != rate) {
+	अगर (crate != rate) अणु
 		dev_warn(&dev->dev, "current rate %d is different from the runtime rate %d\n", crate, rate);
-		// runtime->rate = crate;
-	}
+		// runसमय->rate = crate;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_sample_rate_v2v3(struct snd_usb_audio *chip, int iface,
-			      int altsetting, int clock)
-{
-	struct usb_device *dev = chip->dev;
+अटल पूर्णांक get_sample_rate_v2v3(काष्ठा snd_usb_audio *chip, पूर्णांक अगरace,
+			      पूर्णांक altsetting, पूर्णांक घड़ी)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
 	__le32 data;
-	int err;
+	पूर्णांक err;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			      UAC2_CS_CONTROL_SAM_FREQ << 8,
-			      snd_usb_ctrl_intf(chip) | (clock << 8),
-			      &data, sizeof(data));
-	if (err < 0) {
+			      snd_usb_ctrl_पूर्णांकf(chip) | (घड़ी << 8),
+			      &data, माप(data));
+	अगर (err < 0) अणु
 		dev_warn(&dev->dev, "%d:%d: cannot get freq (v2/v3): err %d\n",
-			 iface, altsetting, err);
-		return 0;
-	}
+			 अगरace, altsetting, err);
+		वापस 0;
+	पूर्ण
 
-	return le32_to_cpu(data);
-}
+	वापस le32_to_cpu(data);
+पूर्ण
 
 /*
  * Try to set the given sample rate:
  *
- * Return 0 if the clock source is read-only, the actual rate on success,
+ * Return 0 अगर the घड़ी source is पढ़ो-only, the actual rate on success,
  * or a negative error code.
  *
- * This function gets called from format.c to validate each sample rate, too.
+ * This function माला_लो called from क्रमmat.c to validate each sample rate, too.
  * Hence no message is shown upon error
  */
-int snd_usb_set_sample_rate_v2v3(struct snd_usb_audio *chip,
-				 const struct audioformat *fmt,
-				 int clock, int rate)
-{
-	bool writeable;
+पूर्णांक snd_usb_set_sample_rate_v2v3(काष्ठा snd_usb_audio *chip,
+				 स्थिर काष्ठा audioक्रमmat *fmt,
+				 पूर्णांक घड़ी, पूर्णांक rate)
+अणु
+	bool ग_लिखोable;
 	u32 bmControls;
 	__le32 data;
-	int err;
+	पूर्णांक err;
 
-	if (fmt->protocol == UAC_VERSION_3) {
-		struct uac3_clock_source_descriptor *cs_desc;
+	अगर (fmt->protocol == UAC_VERSION_3) अणु
+		काष्ठा uac3_घड़ी_source_descriptor *cs_desc;
 
-		cs_desc = snd_usb_find_clock_source_v3(chip->ctrl_intf, clock);
+		cs_desc = snd_usb_find_घड़ी_source_v3(chip->ctrl_पूर्णांकf, घड़ी);
 		bmControls = le32_to_cpu(cs_desc->bmControls);
-	} else {
-		struct uac_clock_source_descriptor *cs_desc;
+	पूर्ण अन्यथा अणु
+		काष्ठा uac_घड़ी_source_descriptor *cs_desc;
 
-		cs_desc = snd_usb_find_clock_source(chip->ctrl_intf, clock);
+		cs_desc = snd_usb_find_घड़ी_source(chip->ctrl_पूर्णांकf, घड़ी);
 		bmControls = cs_desc->bmControls;
-	}
+	पूर्ण
 
-	writeable = uac_v2v3_control_is_writeable(bmControls,
+	ग_लिखोable = uac_v2v3_control_is_ग_लिखोable(bmControls,
 						  UAC2_CS_CONTROL_SAM_FREQ);
-	if (!writeable)
-		return 0;
+	अगर (!ग_लिखोable)
+		वापस 0;
 
 	data = cpu_to_le32(rate);
 	err = snd_usb_ctl_msg(chip->dev, usb_sndctrlpipe(chip->dev, 0), UAC2_CS_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
 			      UAC2_CS_CONTROL_SAM_FREQ << 8,
-			      snd_usb_ctrl_intf(chip) | (clock << 8),
-			      &data, sizeof(data));
-	if (err < 0)
-		return err;
+			      snd_usb_ctrl_पूर्णांकf(chip) | (घड़ी << 8),
+			      &data, माप(data));
+	अगर (err < 0)
+		वापस err;
 
-	return get_sample_rate_v2v3(chip, fmt->iface, fmt->altsetting, clock);
-}
+	वापस get_sample_rate_v2v3(chip, fmt->अगरace, fmt->altsetting, घड़ी);
+पूर्ण
 
-static int set_sample_rate_v2v3(struct snd_usb_audio *chip,
-				const struct audioformat *fmt, int rate)
-{
-	int cur_rate, prev_rate;
-	int clock;
+अटल पूर्णांक set_sample_rate_v2v3(काष्ठा snd_usb_audio *chip,
+				स्थिर काष्ठा audioक्रमmat *fmt, पूर्णांक rate)
+अणु
+	पूर्णांक cur_rate, prev_rate;
+	पूर्णांक घड़ी;
 
-	/* First, try to find a valid clock. This may trigger
-	 * automatic clock selection if the current clock is not
+	/* First, try to find a valid घड़ी. This may trigger
+	 * स्वतःmatic घड़ी selection अगर the current घड़ी is not
 	 * valid.
 	 */
-	clock = snd_usb_clock_find_source(chip, fmt, true);
-	if (clock < 0) {
-		/* We did not find a valid clock, but that might be
-		 * because the current sample rate does not match an
-		 * external clock source. Try again without validation
-		 * and we will do another validation after setting the
+	घड़ी = snd_usb_घड़ी_find_source(chip, fmt, true);
+	अगर (घड़ी < 0) अणु
+		/* We did not find a valid घड़ी, but that might be
+		 * because the current sample rate करोes not match an
+		 * बाह्यal घड़ी source. Try again without validation
+		 * and we will करो another validation after setting the
 		 * rate.
 		 */
-		clock = snd_usb_clock_find_source(chip, fmt, false);
-		if (clock < 0)
-			return clock;
-	}
+		घड़ी = snd_usb_घड़ी_find_source(chip, fmt, false);
+		अगर (घड़ी < 0)
+			वापस घड़ी;
+	पूर्ण
 
-	prev_rate = get_sample_rate_v2v3(chip, fmt->iface, fmt->altsetting, clock);
-	if (prev_rate == rate)
-		goto validation;
+	prev_rate = get_sample_rate_v2v3(chip, fmt->अगरace, fmt->altsetting, घड़ी);
+	अगर (prev_rate == rate)
+		जाओ validation;
 
-	cur_rate = snd_usb_set_sample_rate_v2v3(chip, fmt, clock, rate);
-	if (cur_rate < 0) {
+	cur_rate = snd_usb_set_sample_rate_v2v3(chip, fmt, घड़ी, rate);
+	अगर (cur_rate < 0) अणु
 		usb_audio_err(chip,
 			      "%d:%d: cannot set freq %d (v2/v3): err %d\n",
-			      fmt->iface, fmt->altsetting, rate, cur_rate);
-		return cur_rate;
-	}
+			      fmt->अगरace, fmt->altsetting, rate, cur_rate);
+		वापस cur_rate;
+	पूर्ण
 
-	if (!cur_rate)
+	अगर (!cur_rate)
 		cur_rate = prev_rate;
 
-	if (cur_rate != rate) {
+	अगर (cur_rate != rate) अणु
 		usb_audio_dbg(chip,
 			      "%d:%d: freq mismatch: req %d, clock runs @%d\n",
-			      fmt->iface, fmt->altsetting, rate, cur_rate);
-		/* continue processing */
-	}
+			      fmt->अगरace, fmt->altsetting, rate, cur_rate);
+		/* जारी processing */
+	पूर्ण
 
 validation:
-	/* validate clock after rate change */
-	if (!uac_clock_source_is_valid(chip, fmt, clock))
-		return -ENXIO;
-	return 0;
-}
+	/* validate घड़ी after rate change */
+	अगर (!uac_घड़ी_source_is_valid(chip, fmt, घड़ी))
+		वापस -ENXIO;
+	वापस 0;
+पूर्ण
 
-int snd_usb_init_sample_rate(struct snd_usb_audio *chip,
-			     const struct audioformat *fmt, int rate)
-{
+पूर्णांक snd_usb_init_sample_rate(काष्ठा snd_usb_audio *chip,
+			     स्थिर काष्ठा audioक्रमmat *fmt, पूर्णांक rate)
+अणु
 	usb_audio_dbg(chip, "%d:%d Set sample rate %d, clock %d\n",
-		      fmt->iface, fmt->altsetting, rate, fmt->clock);
+		      fmt->अगरace, fmt->altsetting, rate, fmt->घड़ी);
 
-	switch (fmt->protocol) {
-	case UAC_VERSION_1:
-	default:
-		return set_sample_rate_v1(chip, fmt, rate);
+	चयन (fmt->protocol) अणु
+	हाल UAC_VERSION_1:
+	शेष:
+		वापस set_sample_rate_v1(chip, fmt, rate);
 
-	case UAC_VERSION_3:
-		if (chip->badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) {
-			if (rate != UAC3_BADD_SAMPLING_RATE)
-				return -ENXIO;
-			else
-				return 0;
-		}
+	हाल UAC_VERSION_3:
+		अगर (chip->badd_profile >= UAC3_FUNCTION_SUBCLASS_GENERIC_IO) अणु
+			अगर (rate != UAC3_BADD_SAMPLING_RATE)
+				वापस -ENXIO;
+			अन्यथा
+				वापस 0;
+		पूर्ण
 		fallthrough;
-	case UAC_VERSION_2:
-		return set_sample_rate_v2v3(chip, fmt, rate);
-	}
-}
+	हाल UAC_VERSION_2:
+		वापस set_sample_rate_v2v3(chip, fmt, rate);
+	पूर्ण
+पूर्ण
 

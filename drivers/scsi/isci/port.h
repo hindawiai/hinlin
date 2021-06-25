@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -26,25 +27,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Redistributions in binary क्रमm must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the documentation and/or other materials provided with the
+ *     the करोcumentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *     contributors may be used to enकरोrse or promote products derived
+ *     from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -53,55 +54,55 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ISCI_PORT_H_
-#define _ISCI_PORT_H_
+#अगर_अघोषित _ISCI_PORT_H_
+#घोषणा _ISCI_PORT_H_
 
-#include <scsi/libsas.h>
-#include "isci.h"
-#include "sas.h"
-#include "phy.h"
+#समावेश <scsi/libsas.h>
+#समावेश "isci.h"
+#समावेश "sas.h"
+#समावेश "phy.h"
 
-#define SCIC_SDS_DUMMY_PORT   0xFF
+#घोषणा SCIC_SDS_DUMMY_PORT   0xFF
 
-#define PF_NOTIFY (1 << 0)
-#define PF_RESUME (1 << 1)
+#घोषणा PF_NOTIFY (1 << 0)
+#घोषणा PF_RESUME (1 << 1)
 
-struct isci_phy;
-struct isci_host;
+काष्ठा isci_phy;
+काष्ठा isci_host;
 
-enum isci_status {
-	isci_freed        = 0x00,
+क्रमागत isci_status अणु
+	isci_मुक्तd        = 0x00,
 	isci_starting     = 0x01,
-	isci_ready        = 0x02,
-	isci_ready_for_io = 0x03,
+	isci_पढ़ोy        = 0x02,
+	isci_पढ़ोy_क्रम_io = 0x03,
 	isci_stopping     = 0x04,
 	isci_stopped      = 0x05,
-};
+पूर्ण;
 
 /**
- * struct isci_port - isci direct attached sas port object
- * @ready_exit: several states constitute 'ready'. When exiting ready we
- *              need to take extra port-teardown actions that are
- *              skipped when exiting to another 'ready' state.
+ * काष्ठा isci_port - isci direct attached sas port object
+ * @पढ़ोy_निकास: several states स्थिरitute 'ready'. When निकासing पढ़ोy we
+ *              need to take extra port-tearकरोwn actions that are
+ *              skipped when निकासing to another 'ready' state.
  * @logical_port_index: software port index
  * @physical_port_index: hardware port index
- * @active_phy_mask: identifies phy members
- * @enabled_phy_mask: phy mask for the port
- *                    that are already part of the port
+ * @active_phy_mask: identअगरies phy members
+ * @enabled_phy_mask: phy mask क्रम the port
+ *                    that are alपढ़ोy part of the port
  * @reserved_tag:
- * @reserved_rni: reserver for port task scheduler workaround
- * @started_request_count: reference count for outstanding commands
- * @not_ready_reason: set during state transitions and notified
- * @timer: timeout start/stop operations
+ * @reserved_rni: reserver क्रम port task scheduler workaround
+ * @started_request_count: reference count क्रम outstanding commands
+ * @not_पढ़ोy_reason: set during state transitions and notअगरied
+ * @समयr: समयout start/stop operations
  */
-struct isci_port {
-	struct isci_host *isci_host;
-	struct list_head remote_dev_list;
-	#define IPORT_RESET_PENDING 0
-	unsigned long state;
-	enum sci_status hard_reset_status;
-	struct sci_base_state_machine sm;
-	bool ready_exit;
+काष्ठा isci_port अणु
+	काष्ठा isci_host *isci_host;
+	काष्ठा list_head remote_dev_list;
+	#घोषणा IPORT_RESET_PENDING 0
+	अचिन्हित दीर्घ state;
+	क्रमागत sci_status hard_reset_status;
+	काष्ठा sci_base_state_machine sm;
+	bool पढ़ोy_निकास;
 	u8 logical_port_index;
 	u8 physical_port_index;
 	u8 active_phy_mask;
@@ -110,41 +111,41 @@ struct isci_port {
 	u16 reserved_rni;
 	u16 reserved_tag;
 	u32 started_request_count;
-	u32 assigned_device_count;
+	u32 asचिन्हित_device_count;
 	u32 hang_detect_users;
-	u32 not_ready_reason;
-	struct isci_phy *phy_table[SCI_MAX_PHYS];
-	struct isci_host *owning_controller;
-	struct sci_timer timer;
-	struct scu_port_task_scheduler_registers __iomem *port_task_scheduler_registers;
-	/* XXX rework: only one register, no need to replicate per-port */
-	u32 __iomem *port_pe_configuration_register;
-	struct scu_viit_entry __iomem *viit_registers;
-};
+	u32 not_पढ़ोy_reason;
+	काष्ठा isci_phy *phy_table[SCI_MAX_PHYS];
+	काष्ठा isci_host *owning_controller;
+	काष्ठा sci_समयr समयr;
+	काष्ठा scu_port_task_scheduler_रेजिस्टरs __iomem *port_task_scheduler_रेजिस्टरs;
+	/* XXX rework: only one रेजिस्टर, no need to replicate per-port */
+	u32 __iomem *port_pe_configuration_रेजिस्टर;
+	काष्ठा scu_viit_entry __iomem *viit_रेजिस्टरs;
+पूर्ण;
 
-enum sci_port_not_ready_reason_code {
+क्रमागत sci_port_not_पढ़ोy_reason_code अणु
 	SCIC_PORT_NOT_READY_NO_ACTIVE_PHYS,
 	SCIC_PORT_NOT_READY_HARD_RESET_REQUESTED,
 	SCIC_PORT_NOT_READY_INVALID_PORT_CONFIGURATION,
 	SCIC_PORT_NOT_READY_RECONFIGURING,
 
 	SCIC_PORT_NOT_READY_REASON_CODE_MAX
-};
+पूर्ण;
 
-struct sci_port_end_point_properties {
-	struct sci_sas_address sas_address;
-	struct sci_phy_proto protocols;
-};
+काष्ठा sci_port_end_poपूर्णांक_properties अणु
+	काष्ठा sci_sas_address sas_address;
+	काष्ठा sci_phy_proto protocols;
+पूर्ण;
 
-struct sci_port_properties {
+काष्ठा sci_port_properties अणु
 	u32 index;
-	struct sci_port_end_point_properties local;
-	struct sci_port_end_point_properties remote;
+	काष्ठा sci_port_end_poपूर्णांक_properties local;
+	काष्ठा sci_port_end_poपूर्णांक_properties remote;
 	u32 phy_mask;
-};
+पूर्ण;
 
 /**
- * enum sci_port_states - port state machine states
+ * क्रमागत sci_port_states - port state machine states
  * @SCI_PORT_STOPPED: port has successfully been stopped.  In this state
  *		      no new IO operations are permitted.  This state is
  *		      entered from the STOPPING state.
@@ -152,26 +153,26 @@ struct sci_port_properties {
  *		       state no new IO operations are permitted, but
  *		       existing IO operations are allowed to complete.
  *		       This state is entered from the READY state.
- * @SCI_PORT_READY: port is now ready.  Thus, the user is able to
- *		    perform IO operations on this port. This state is
+ * @SCI_PORT_READY: port is now पढ़ोy.  Thus, the user is able to
+ *		    perक्रमm IO operations on this port. This state is
  *		    entered from the STARTING state.
- * @SCI_PORT_SUB_WAITING: port is started and ready but has no active
+ * @SCI_PORT_SUB_WAITING: port is started and पढ़ोy but has no active
  *			  phys.
- * @SCI_PORT_SUB_OPERATIONAL: port is started and ready and there is at
+ * @SCI_PORT_SUB_OPERATIONAL: port is started and पढ़ोy and there is at
  *			      least one phy operational.
  * @SCI_PORT_SUB_CONFIGURING: port is started and there was an
- *			      add/remove phy event.  This state is only
+ *			      add/हटाओ phy event.  This state is only
  *			      used in Automatic Port Configuration Mode
  *			      (APC)
- * @SCI_PORT_RESETTING: port is in the process of performing a hard
- *			reset.  Thus, the user is unable to perform IO
+ * @SCI_PORT_RESETTING: port is in the process of perक्रमming a hard
+ *			reset.  Thus, the user is unable to perक्रमm IO
  *			operations on this port.  This state is entered
  *			from the READY state.
  * @SCI_PORT_FAILED: port has failed a reset request.  This state is
- *		     entered when a port reset request times out. This
+ *		     entered when a port reset request बार out. This
  *		     state is entered from the RESETTING state.
  */
-#define PORT_STATES {\
+#घोषणा PORT_STATES अणु\
 	C(PORT_STOPPED),\
 	C(PORT_STOPPING),\
 	C(PORT_READY),\
@@ -180,104 +181,104 @@ struct sci_port_properties {
 	C(PORT_SUB_CONFIGURING),\
 	C(PORT_RESETTING),\
 	C(PORT_FAILED),\
-	}
-#undef C
-#define C(a) SCI_##a
-enum sci_port_states PORT_STATES;
-#undef C
+	पूर्ण
+#अघोषित C
+#घोषणा C(a) SCI_##a
+क्रमागत sci_port_states PORT_STATES;
+#अघोषित C
 
-static inline void sci_port_decrement_request_count(struct isci_port *iport)
-{
-	if (WARN_ONCE(iport->started_request_count == 0,
+अटल अंतरभूत व्योम sci_port_decrement_request_count(काष्ठा isci_port *iport)
+अणु
+	अगर (WARN_ONCE(iport->started_request_count == 0,
 		       "%s: tried to decrement started_request_count past 0!?",
 			__func__))
 		/* pass */;
-	else
+	अन्यथा
 		iport->started_request_count--;
-}
+पूर्ण
 
-#define sci_port_active_phy(port, phy) \
+#घोषणा sci_port_active_phy(port, phy) \
 	(((port)->active_phy_mask & (1 << (phy)->phy_index)) != 0)
 
-void sci_port_construct(
-	struct isci_port *iport,
+व्योम sci_port_स्थिरruct(
+	काष्ठा isci_port *iport,
 	u8 port_index,
-	struct isci_host *ihost);
+	काष्ठा isci_host *ihost);
 
-enum sci_status sci_port_start(struct isci_port *iport);
-enum sci_status sci_port_stop(struct isci_port *iport);
+क्रमागत sci_status sci_port_start(काष्ठा isci_port *iport);
+क्रमागत sci_status sci_port_stop(काष्ठा isci_port *iport);
 
-enum sci_status sci_port_add_phy(
-	struct isci_port *iport,
-	struct isci_phy *iphy);
+क्रमागत sci_status sci_port_add_phy(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_phy *iphy);
 
-enum sci_status sci_port_remove_phy(
-	struct isci_port *iport,
-	struct isci_phy *iphy);
+क्रमागत sci_status sci_port_हटाओ_phy(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_phy *iphy);
 
-void sci_port_setup_transports(
-	struct isci_port *iport,
+व्योम sci_port_setup_transports(
+	काष्ठा isci_port *iport,
 	u32 device_id);
 
-void isci_port_bcn_enable(struct isci_host *, struct isci_port *);
+व्योम isci_port_bcn_enable(काष्ठा isci_host *, काष्ठा isci_port *);
 
-void sci_port_deactivate_phy(
-	struct isci_port *iport,
-	struct isci_phy *iphy,
-	bool do_notify_user);
+व्योम sci_port_deactivate_phy(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_phy *iphy,
+	bool करो_notअगरy_user);
 
 bool sci_port_link_detected(
-	struct isci_port *iport,
-	struct isci_phy *iphy);
+	काष्ठा isci_port *iport,
+	काष्ठा isci_phy *iphy);
 
-enum sci_status sci_port_get_properties(
-	struct isci_port *iport,
-	struct sci_port_properties *prop);
+क्रमागत sci_status sci_port_get_properties(
+	काष्ठा isci_port *iport,
+	काष्ठा sci_port_properties *prop);
 
-enum sci_status sci_port_link_up(struct isci_port *iport,
-				      struct isci_phy *iphy);
-enum sci_status sci_port_link_down(struct isci_port *iport,
-					struct isci_phy *iphy);
+क्रमागत sci_status sci_port_link_up(काष्ठा isci_port *iport,
+				      काष्ठा isci_phy *iphy);
+क्रमागत sci_status sci_port_link_करोwn(काष्ठा isci_port *iport,
+					काष्ठा isci_phy *iphy);
 
-struct isci_request;
-struct isci_remote_device;
-enum sci_status sci_port_start_io(
-	struct isci_port *iport,
-	struct isci_remote_device *idev,
-	struct isci_request *ireq);
+काष्ठा isci_request;
+काष्ठा isci_remote_device;
+क्रमागत sci_status sci_port_start_io(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_remote_device *idev,
+	काष्ठा isci_request *ireq);
 
-enum sci_status sci_port_complete_io(
-	struct isci_port *iport,
-	struct isci_remote_device *idev,
-	struct isci_request *ireq);
+क्रमागत sci_status sci_port_complete_io(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_remote_device *idev,
+	काष्ठा isci_request *ireq);
 
-enum sas_linkrate sci_port_get_max_allowed_speed(
-	struct isci_port *iport);
+क्रमागत sas_linkrate sci_port_get_max_allowed_speed(
+	काष्ठा isci_port *iport);
 
-void sci_port_broadcast_change_received(
-	struct isci_port *iport,
-	struct isci_phy *iphy);
+व्योम sci_port_broadcast_change_received(
+	काष्ठा isci_port *iport,
+	काष्ठा isci_phy *iphy);
 
 bool sci_port_is_valid_phy_assignment(
-	struct isci_port *iport,
+	काष्ठा isci_port *iport,
 	u32 phy_index);
 
-void sci_port_get_sas_address(
-	struct isci_port *iport,
-	struct sci_sas_address *sas_address);
+व्योम sci_port_get_sas_address(
+	काष्ठा isci_port *iport,
+	काष्ठा sci_sas_address *sas_address);
 
-void sci_port_get_attached_sas_address(
-	struct isci_port *iport,
-	struct sci_sas_address *sas_address);
+व्योम sci_port_get_attached_sas_address(
+	काष्ठा isci_port *iport,
+	काष्ठा sci_sas_address *sas_address);
 
-void sci_port_set_hang_detection_timeout(
-	struct isci_port *isci_port,
-	u32 timeout);
+व्योम sci_port_set_hang_detection_समयout(
+	काष्ठा isci_port *isci_port,
+	u32 समयout);
 
-void isci_port_formed(struct asd_sas_phy *);
-void isci_port_deformed(struct asd_sas_phy *);
+व्योम isci_port_क्रमmed(काष्ठा asd_sas_phy *);
+व्योम isci_port_deक्रमmed(काष्ठा asd_sas_phy *);
 
-int isci_port_perform_hard_reset(struct isci_host *ihost, struct isci_port *iport,
-				 struct isci_phy *iphy);
-int isci_ata_check_ready(struct domain_device *dev);
-#endif /* !defined(_ISCI_PORT_H_) */
+पूर्णांक isci_port_perक्रमm_hard_reset(काष्ठा isci_host *ihost, काष्ठा isci_port *iport,
+				 काष्ठा isci_phy *iphy);
+पूर्णांक isci_ata_check_पढ़ोy(काष्ठा करोमुख्य_device *dev);
+#पूर्ण_अगर /* !defined(_ISCI_PORT_H_) */

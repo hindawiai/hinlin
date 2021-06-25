@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_TIMEX_H
-#define __ASM_TIMEX_H
+#अगर_अघोषित __ASM_TIMEX_H
+#घोषणा __ASM_TIMEX_H
 
-#include <asm/arch_timer.h>
+#समावेश <यंत्र/arch_समयr.h>
 
 /*
- * Use the current timer as a cycle counter since this is what we use for
+ * Use the current समयr as a cycle counter since this is what we use क्रम
  * the delay loop.
  */
-#define get_cycles()	arch_timer_read_counter()
+#घोषणा get_cycles()	arch_समयr_पढ़ो_counter()
 
-#include <asm-generic/timex.h>
+#समावेश <यंत्र-generic/समयx.h>
 
-#endif
+#पूर्ण_अगर

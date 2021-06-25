@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#ifndef R8192E_PM_H
-#define R8192E_PM_H
+#अगर_अघोषित R8192E_PM_H
+#घोषणा R8192E_PM_H
 
-#include <linux/types.h>
-#include <linux/pci.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
 
-int rtl92e_suspend(struct device *dev_d);
-int rtl92e_resume(struct device *dev_d);
+पूर्णांक rtl92e_suspend(काष्ठा device *dev_d);
+पूर्णांक rtl92e_resume(काष्ठा device *dev_d);
 
-#endif
+#पूर्ण_अगर

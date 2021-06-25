@@ -1,191 +1,192 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * zylonite-wm97xx.c  --  Zylonite Continuous Touch screen driver
  *
  * Copyright 2004, 2007, 2008 Wolfson Microelectronics PLC.
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  * Parts Copyright : Ian Molton <spyro@f2s.com>
  *                   Andrew Zabolotny <zap@homelink.ru>
  *
  * Notes:
- *     This is a wm97xx extended touch driver supporting interrupt driven
- *     and continuous operation on Marvell Zylonite development systems
+ *     This is a wm97xx extended touch driver supporting पूर्णांकerrupt driven
+ *     and continuous operation on Marvell Zylonite development प्रणालीs
  *     (which have a WM9713 on board).
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/wm97xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/wm97xx.h>
 
-#include <mach/hardware.h>
-#include <mach/mfp.h>
-#include <mach/regs-ac97.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/mfp.h>
+#समावेश <mach/regs-ac97.h>
 
-struct continuous {
+काष्ठा continuous अणु
 	u16 id;    /* codec id */
 	u8 code;   /* continuous code */
-	u8 reads;  /* number of coord reads per read cycle */
+	u8 पढ़ोs;  /* number of coord पढ़ोs per पढ़ो cycle */
 	u32 speed; /* number of coords per second */
-};
+पूर्ण;
 
-#define WM_READS(sp) ((sp / HZ) + 1)
+#घोषणा WM_READS(sp) ((sp / HZ) + 1)
 
-static const struct continuous cinfo[] = {
-	{ WM9713_ID2, 0, WM_READS(94),  94  },
-	{ WM9713_ID2, 1, WM_READS(120), 120 },
-	{ WM9713_ID2, 2, WM_READS(154), 154 },
-	{ WM9713_ID2, 3, WM_READS(188), 188 },
-};
+अटल स्थिर काष्ठा continuous cinfo[] = अणु
+	अणु WM9713_ID2, 0, WM_READS(94),  94  पूर्ण,
+	अणु WM9713_ID2, 1, WM_READS(120), 120 पूर्ण,
+	अणु WM9713_ID2, 2, WM_READS(154), 154 पूर्ण,
+	अणु WM9713_ID2, 3, WM_READS(188), 188 पूर्ण,
+पूर्ण;
 
 /* continuous speed index */
-static int sp_idx;
+अटल पूर्णांक sp_idx;
 
 /*
  * Pen sampling frequency (Hz) in continuous mode.
  */
-static int cont_rate = 200;
-module_param(cont_rate, int, 0);
+अटल पूर्णांक cont_rate = 200;
+module_param(cont_rate, पूर्णांक, 0);
 MODULE_PARM_DESC(cont_rate, "Sampling rate in continuous mode (Hz)");
 
 /*
- * Pressure readback.
+ * Pressure पढ़ोback.
  *
- * Set to 1 to read back pen down pressure
+ * Set to 1 to पढ़ो back pen करोwn pressure
  */
-static int pressure;
-module_param(pressure, int, 0);
+अटल पूर्णांक pressure;
+module_param(pressure, पूर्णांक, 0);
 MODULE_PARM_DESC(pressure, "Pressure readback (1 = pressure, 0 = no pressure)");
 
 /*
  * AC97 touch data slot.
  *
- * Touch screen readback data ac97 slot
+ * Touch screen पढ़ोback data ac97 slot
  */
-static int ac97_touch_slot = 5;
-module_param(ac97_touch_slot, int, 0);
+अटल पूर्णांक ac97_touch_slot = 5;
+module_param(ac97_touch_slot, पूर्णांक, 0);
 MODULE_PARM_DESC(ac97_touch_slot, "Touch screen data slot AC97 number");
 
 
 /* flush AC97 slot 5 FIFO machines */
-static void wm97xx_acc_pen_up(struct wm97xx *wm)
-{
-	int i;
+अटल व्योम wm97xx_acc_pen_up(काष्ठा wm97xx *wm)
+अणु
+	पूर्णांक i;
 
 	msleep(1);
 
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		MODR;
-}
+पूर्ण
 
-static int wm97xx_acc_pen_down(struct wm97xx *wm)
-{
+अटल पूर्णांक wm97xx_acc_pen_करोwn(काष्ठा wm97xx *wm)
+अणु
 	u16 x, y, p = 0x100 | WM97XX_ADCSEL_PRES;
-	int reads = 0;
-	static u16 last, tries;
+	पूर्णांक पढ़ोs = 0;
+	अटल u16 last, tries;
 
-	/* When the AC97 queue has been drained we need to allow time
+	/* When the AC97 queue has been drained we need to allow समय
 	 * to buffer up samples otherwise we end up spinning polling
-	 * for samples.  The controller can't have a suitably low
-	 * threshold set to use the notifications it gives.
+	 * क्रम samples.  The controller can't have a suitably low
+	 * threshold set to use the notअगरications it gives.
 	 */
 	msleep(1);
 
-	if (tries > 5) {
+	अगर (tries > 5) अणु
 		tries = 0;
-		return RC_PENUP;
-	}
+		वापस RC_PENUP;
+	पूर्ण
 
 	x = MODR;
-	if (x == last) {
+	अगर (x == last) अणु
 		tries++;
-		return RC_AGAIN;
-	}
+		वापस RC_AGAIN;
+	पूर्ण
 	last = x;
-	do {
-		if (reads)
+	करो अणु
+		अगर (पढ़ोs)
 			x = MODR;
 		y = MODR;
-		if (pressure)
+		अगर (pressure)
 			p = MODR;
 
 		dev_dbg(wm->dev, "Raw coordinates: x=%x, y=%x, p=%x\n",
 			x, y, p);
 
 		/* are samples valid */
-		if ((x & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_X ||
+		अगर ((x & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_X ||
 		    (y & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_Y ||
 		    (p & WM97XX_ADCSEL_MASK) != WM97XX_ADCSEL_PRES)
-			goto up;
+			जाओ up;
 
 		/* coordinate is good */
 		tries = 0;
-		input_report_abs(wm->input_dev, ABS_X, x & 0xfff);
-		input_report_abs(wm->input_dev, ABS_Y, y & 0xfff);
-		input_report_abs(wm->input_dev, ABS_PRESSURE, p & 0xfff);
+		input_report_असल(wm->input_dev, ABS_X, x & 0xfff);
+		input_report_असल(wm->input_dev, ABS_Y, y & 0xfff);
+		input_report_असल(wm->input_dev, ABS_PRESSURE, p & 0xfff);
 		input_report_key(wm->input_dev, BTN_TOUCH, (p != 0));
 		input_sync(wm->input_dev);
-		reads++;
-	} while (reads < cinfo[sp_idx].reads);
+		पढ़ोs++;
+	पूर्ण जबतक (पढ़ोs < cinfo[sp_idx].पढ़ोs);
 up:
-	return RC_PENDOWN | RC_AGAIN;
-}
+	वापस RC_PENDOWN | RC_AGAIN;
+पूर्ण
 
-static int wm97xx_acc_startup(struct wm97xx *wm)
-{
-	int idx;
+अटल पूर्णांक wm97xx_acc_startup(काष्ठा wm97xx *wm)
+अणु
+	पूर्णांक idx;
 
 	/* check we have a codec */
-	if (wm->ac97 == NULL)
-		return -ENODEV;
+	अगर (wm->ac97 == शून्य)
+		वापस -ENODEV;
 
 	/* Go you big red fire engine */
-	for (idx = 0; idx < ARRAY_SIZE(cinfo); idx++) {
-		if (wm->id != cinfo[idx].id)
-			continue;
+	क्रम (idx = 0; idx < ARRAY_SIZE(cinfo); idx++) अणु
+		अगर (wm->id != cinfo[idx].id)
+			जारी;
 		sp_idx = idx;
-		if (cont_rate <= cinfo[idx].speed)
-			break;
-	}
+		अगर (cont_rate <= cinfo[idx].speed)
+			अवरोध;
+	पूर्ण
 	wm->acc_rate = cinfo[sp_idx].code;
 	wm->acc_slot = ac97_touch_slot;
 	dev_info(wm->dev,
 		 "zylonite accelerated touchscreen driver, %d samples/sec\n",
 		 cinfo[sp_idx].speed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void wm97xx_irq_enable(struct wm97xx *wm, int enable)
-{
-	if (enable)
+अटल व्योम wm97xx_irq_enable(काष्ठा wm97xx *wm, पूर्णांक enable)
+अणु
+	अगर (enable)
 		enable_irq(wm->pen_irq);
-	else
+	अन्यथा
 		disable_irq_nosync(wm->pen_irq);
-}
+पूर्ण
 
-static struct wm97xx_mach_ops zylonite_mach_ops = {
+अटल काष्ठा wm97xx_mach_ops zylonite_mach_ops = अणु
 	.acc_enabled	= 1,
 	.acc_pen_up	= wm97xx_acc_pen_up,
-	.acc_pen_down	= wm97xx_acc_pen_down,
+	.acc_pen_करोwn	= wm97xx_acc_pen_करोwn,
 	.acc_startup	= wm97xx_acc_startup,
 	.irq_enable	= wm97xx_irq_enable,
 	.irq_gpio	= WM97XX_GPIO_2,
-};
+पूर्ण;
 
-static int zylonite_wm97xx_probe(struct platform_device *pdev)
-{
-	struct wm97xx *wm = platform_get_drvdata(pdev);
-	int gpio_touch_irq;
+अटल पूर्णांक zylonite_wm97xx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm97xx *wm = platक्रमm_get_drvdata(pdev);
+	पूर्णांक gpio_touch_irq;
 
-	if (cpu_is_pxa320())
+	अगर (cpu_is_pxa320())
 		gpio_touch_irq = mfp_to_gpio(MFP_PIN_GPIO15);
-	else
+	अन्यथा
 		gpio_touch_irq = mfp_to_gpio(MFP_PIN_GPIO26);
 
 	wm->pen_irq = gpio_to_irq(gpio_touch_irq);
@@ -200,28 +201,28 @@ static int zylonite_wm97xx_probe(struct platform_device *pdev)
 			   WM97XX_GPIO_NOTSTICKY,
 			   WM97XX_GPIO_NOWAKE);
 
-	return wm97xx_register_mach_ops(wm, &zylonite_mach_ops);
-}
+	वापस wm97xx_रेजिस्टर_mach_ops(wm, &zylonite_mach_ops);
+पूर्ण
 
-static int zylonite_wm97xx_remove(struct platform_device *pdev)
-{
-	struct wm97xx *wm = platform_get_drvdata(pdev);
+अटल पूर्णांक zylonite_wm97xx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm97xx *wm = platक्रमm_get_drvdata(pdev);
 
-	wm97xx_unregister_mach_ops(wm);
+	wm97xx_unरेजिस्टर_mach_ops(wm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver zylonite_wm97xx_driver = {
+अटल काष्ठा platक्रमm_driver zylonite_wm97xx_driver = अणु
 	.probe	= zylonite_wm97xx_probe,
-	.remove	= zylonite_wm97xx_remove,
-	.driver	= {
+	.हटाओ	= zylonite_wm97xx_हटाओ,
+	.driver	= अणु
 		.name	= "wm97xx-touch",
-	},
-};
-module_platform_driver(zylonite_wm97xx_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(zylonite_wm97xx_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("wm97xx continuous touch driver for Zylonite");
 MODULE_LICENSE("GPL");

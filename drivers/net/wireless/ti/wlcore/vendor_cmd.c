@@ -1,207 +1,208 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wlcore
  *
  * Copyright (C) 2014 Texas Instruments. All rights reserved.
  */
 
-#include <linux/pm_runtime.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <net/mac80211.h>
-#include <net/netlink.h>
+#समावेश <net/mac80211.h>
+#समावेश <net/netlink.h>
 
-#include "wlcore.h"
-#include "debug.h"
-#include "hw_ops.h"
-#include "vendor_cmd.h"
+#समावेश "wlcore.h"
+#समावेश "debug.h"
+#समावेश "hw_ops.h"
+#समावेश "vendor_cmd.h"
 
-static const
-struct nla_policy wlcore_vendor_attr_policy[NUM_WLCORE_VENDOR_ATTR] = {
-	[WLCORE_VENDOR_ATTR_FREQ]		= { .type = NLA_U32 },
-	[WLCORE_VENDOR_ATTR_GROUP_ID]		= { .type = NLA_U32 },
-	[WLCORE_VENDOR_ATTR_GROUP_KEY]		= { .type = NLA_BINARY,
-						    .len = WLAN_MAX_KEY_LEN },
-};
+अटल स्थिर
+काष्ठा nla_policy wlcore_venकरोr_attr_policy[NUM_WLCORE_VENDOR_ATTR] = अणु
+	[WLCORE_VENDOR_ATTR_FREQ]		= अणु .type = NLA_U32 पूर्ण,
+	[WLCORE_VENDOR_ATTR_GROUP_ID]		= अणु .type = NLA_U32 पूर्ण,
+	[WLCORE_VENDOR_ATTR_GROUP_KEY]		= अणु .type = NLA_BINARY,
+						    .len = WLAN_MAX_KEY_LEN पूर्ण,
+पूर्ण;
 
-static int
-wlcore_vendor_cmd_smart_config_start(struct wiphy *wiphy,
-				     struct wireless_dev *wdev,
-				     const void *data, int data_len)
-{
-	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	struct wl1271 *wl = hw->priv;
-	struct nlattr *tb[NUM_WLCORE_VENDOR_ATTR];
-	int ret;
+अटल पूर्णांक
+wlcore_venकरोr_cmd_smart_config_start(काष्ठा wiphy *wiphy,
+				     काष्ठा wireless_dev *wdev,
+				     स्थिर व्योम *data, पूर्णांक data_len)
+अणु
+	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	काष्ठा wl1271 *wl = hw->priv;
+	काष्ठा nlattr *tb[NUM_WLCORE_VENDOR_ATTR];
+	पूर्णांक ret;
 
 	wl1271_debug(DEBUG_CMD, "vendor cmd smart config start");
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	ret = nla_parse_deprecated(tb, MAX_WLCORE_VENDOR_ATTR, data, data_len,
-				   wlcore_vendor_attr_policy, NULL);
-	if (ret)
-		return ret;
+				   wlcore_venकरोr_attr_policy, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (!tb[WLCORE_VENDOR_ATTR_GROUP_ID])
-		return -EINVAL;
+	अगर (!tb[WLCORE_VENDOR_ATTR_GROUP_ID])
+		वापस -EINVAL;
 
 	mutex_lock(&wl->mutex);
 
-	if (unlikely(wl->state != WLCORE_STATE_ON)) {
+	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(wl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(wl->dev);
-		goto out;
-	}
+	ret = pm_runसमय_get_sync(wl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(wl->dev);
+		जाओ out;
+	पूर्ण
 
 	ret = wlcore_smart_config_start(wl,
 			nla_get_u32(tb[WLCORE_VENDOR_ATTR_GROUP_ID]));
 
-	pm_runtime_mark_last_busy(wl->dev);
-	pm_runtime_put_autosuspend(wl->dev);
+	pm_runसमय_mark_last_busy(wl->dev);
+	pm_runसमय_put_स्वतःsuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-wlcore_vendor_cmd_smart_config_stop(struct wiphy *wiphy,
-				    struct wireless_dev *wdev,
-				    const void *data, int data_len)
-{
-	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	struct wl1271 *wl = hw->priv;
-	int ret;
+अटल पूर्णांक
+wlcore_venकरोr_cmd_smart_config_stop(काष्ठा wiphy *wiphy,
+				    काष्ठा wireless_dev *wdev,
+				    स्थिर व्योम *data, पूर्णांक data_len)
+अणु
+	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	काष्ठा wl1271 *wl = hw->priv;
+	पूर्णांक ret;
 
 	wl1271_debug(DEBUG_CMD, "testmode cmd smart config stop");
 
 	mutex_lock(&wl->mutex);
 
-	if (unlikely(wl->state != WLCORE_STATE_ON)) {
+	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(wl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(wl->dev);
-		goto out;
-	}
+	ret = pm_runसमय_get_sync(wl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(wl->dev);
+		जाओ out;
+	पूर्ण
 
 	ret = wlcore_smart_config_stop(wl);
 
-	pm_runtime_mark_last_busy(wl->dev);
-	pm_runtime_put_autosuspend(wl->dev);
+	pm_runसमय_mark_last_busy(wl->dev);
+	pm_runसमय_put_स्वतःsuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-wlcore_vendor_cmd_smart_config_set_group_key(struct wiphy *wiphy,
-					     struct wireless_dev *wdev,
-					     const void *data, int data_len)
-{
-	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
-	struct wl1271 *wl = hw->priv;
-	struct nlattr *tb[NUM_WLCORE_VENDOR_ATTR];
-	int ret;
+अटल पूर्णांक
+wlcore_venकरोr_cmd_smart_config_set_group_key(काष्ठा wiphy *wiphy,
+					     काष्ठा wireless_dev *wdev,
+					     स्थिर व्योम *data, पूर्णांक data_len)
+अणु
+	काष्ठा ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	काष्ठा wl1271 *wl = hw->priv;
+	काष्ठा nlattr *tb[NUM_WLCORE_VENDOR_ATTR];
+	पूर्णांक ret;
 
 	wl1271_debug(DEBUG_CMD, "testmode cmd smart config set group key");
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	ret = nla_parse_deprecated(tb, MAX_WLCORE_VENDOR_ATTR, data, data_len,
-				   wlcore_vendor_attr_policy, NULL);
-	if (ret)
-		return ret;
+				   wlcore_venकरोr_attr_policy, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	if (!tb[WLCORE_VENDOR_ATTR_GROUP_ID] ||
+	अगर (!tb[WLCORE_VENDOR_ATTR_GROUP_ID] ||
 	    !tb[WLCORE_VENDOR_ATTR_GROUP_KEY])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&wl->mutex);
 
-	if (unlikely(wl->state != WLCORE_STATE_ON)) {
+	अगर (unlikely(wl->state != WLCORE_STATE_ON)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = pm_runtime_get_sync(wl->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(wl->dev);
-		goto out;
-	}
+	ret = pm_runसमय_get_sync(wl->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(wl->dev);
+		जाओ out;
+	पूर्ण
 
 	ret = wlcore_smart_config_set_group_key(wl,
 			nla_get_u32(tb[WLCORE_VENDOR_ATTR_GROUP_ID]),
 			nla_len(tb[WLCORE_VENDOR_ATTR_GROUP_KEY]),
 			nla_data(tb[WLCORE_VENDOR_ATTR_GROUP_KEY]));
 
-	pm_runtime_mark_last_busy(wl->dev);
-	pm_runtime_put_autosuspend(wl->dev);
+	pm_runसमय_mark_last_busy(wl->dev);
+	pm_runसमय_put_स्वतःsuspend(wl->dev);
 out:
 	mutex_unlock(&wl->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct wiphy_vendor_command wlcore_vendor_commands[] = {
-	{
-		.info = {
-			.vendor_id = TI_OUI,
+अटल स्थिर काष्ठा wiphy_venकरोr_command wlcore_venकरोr_commands[] = अणु
+	अणु
+		.info = अणु
+			.venकरोr_id = TI_OUI,
 			.subcmd = WLCORE_VENDOR_CMD_SMART_CONFIG_START,
-		},
+		पूर्ण,
 		.flags = WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlcore_vendor_cmd_smart_config_start,
-		.policy = wlcore_vendor_attr_policy,
-	},
-	{
-		.info = {
-			.vendor_id = TI_OUI,
+		.करोit = wlcore_venकरोr_cmd_smart_config_start,
+		.policy = wlcore_venकरोr_attr_policy,
+	पूर्ण,
+	अणु
+		.info = अणु
+			.venकरोr_id = TI_OUI,
 			.subcmd = WLCORE_VENDOR_CMD_SMART_CONFIG_STOP,
-		},
+		पूर्ण,
 		.flags = WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlcore_vendor_cmd_smart_config_stop,
-		.policy = wlcore_vendor_attr_policy,
-	},
-	{
-		.info = {
-			.vendor_id = TI_OUI,
+		.करोit = wlcore_venकरोr_cmd_smart_config_stop,
+		.policy = wlcore_venकरोr_attr_policy,
+	पूर्ण,
+	अणु
+		.info = अणु
+			.venकरोr_id = TI_OUI,
 			.subcmd = WLCORE_VENDOR_CMD_SMART_CONFIG_SET_GROUP_KEY,
-		},
+		पूर्ण,
 		.flags = WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlcore_vendor_cmd_smart_config_set_group_key,
-		.policy = wlcore_vendor_attr_policy,
-	},
-};
+		.करोit = wlcore_venकरोr_cmd_smart_config_set_group_key,
+		.policy = wlcore_venकरोr_attr_policy,
+	पूर्ण,
+पूर्ण;
 
-static const struct nl80211_vendor_cmd_info wlcore_vendor_events[] = {
-	{
-		.vendor_id = TI_OUI,
+अटल स्थिर काष्ठा nl80211_venकरोr_cmd_info wlcore_venकरोr_events[] = अणु
+	अणु
+		.venकरोr_id = TI_OUI,
 		.subcmd = WLCORE_VENDOR_EVENT_SC_SYNC,
-	},
-	{
-		.vendor_id = TI_OUI,
+	पूर्ण,
+	अणु
+		.venकरोr_id = TI_OUI,
 		.subcmd = WLCORE_VENDOR_EVENT_SC_DECODE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-void wlcore_set_vendor_commands(struct wiphy *wiphy)
-{
-	wiphy->vendor_commands = wlcore_vendor_commands;
-	wiphy->n_vendor_commands = ARRAY_SIZE(wlcore_vendor_commands);
-	wiphy->vendor_events = wlcore_vendor_events;
-	wiphy->n_vendor_events = ARRAY_SIZE(wlcore_vendor_events);
-}
+व्योम wlcore_set_venकरोr_commands(काष्ठा wiphy *wiphy)
+अणु
+	wiphy->venकरोr_commands = wlcore_venकरोr_commands;
+	wiphy->n_venकरोr_commands = ARRAY_SIZE(wlcore_venकरोr_commands);
+	wiphy->venकरोr_events = wlcore_venकरोr_events;
+	wiphy->n_venकरोr_events = ARRAY_SIZE(wlcore_venकरोr_events);
+पूर्ण

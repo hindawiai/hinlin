@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: utdebug - Debug print/trace routines
+ * Module Name: utdebug - Debug prपूर्णांक/trace routines
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acinterp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acinterp.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utdebug")
 
-#ifdef ACPI_DEBUG_OUTPUT
-static acpi_thread_id acpi_gbl_previous_thread_id = (acpi_thread_id) 0xFFFFFFFF;
-static const char *acpi_gbl_function_entry_prefix = "----Entry";
-static const char *acpi_gbl_function_exit_prefix = "----Exit-";
+#अगर_घोषित ACPI_DEBUG_OUTPUT
+अटल acpi_thपढ़ो_id acpi_gbl_previous_thपढ़ो_id = (acpi_thपढ़ो_id) 0xFFFFFFFF;
+अटल स्थिर अक्षर *acpi_gbl_function_entry_prefix = "----Entry";
+अटल स्थिर अक्षर *acpi_gbl_function_निकास_prefix = "----Exit-";
 
 /*******************************************************************************
  *
@@ -29,16 +30,16 @@ static const char *acpi_gbl_function_exit_prefix = "----Exit-";
  *
  * RETURN:      None
  *
- * DESCRIPTION: Save the current CPU stack pointer at subsystem startup
+ * DESCRIPTION: Save the current CPU stack poपूर्णांकer at subप्रणाली startup
  *
  ******************************************************************************/
 
-void acpi_ut_init_stack_ptr_trace(void)
-{
+व्योम acpi_ut_init_stack_ptr_trace(व्योम)
+अणु
 	acpi_size current_sp;
 
-	acpi_gbl_entry_stack_pointer = &current_sp;
-}
+	acpi_gbl_entry_stack_poपूर्णांकer = &current_sp;
+पूर्ण
 
 /*******************************************************************************
  *
@@ -48,22 +49,22 @@ void acpi_ut_init_stack_ptr_trace(void)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Save the current CPU stack pointer
+ * DESCRIPTION: Save the current CPU stack poपूर्णांकer
  *
  ******************************************************************************/
 
-void acpi_ut_track_stack_ptr(void)
-{
+व्योम acpi_ut_track_stack_ptr(व्योम)
+अणु
 	acpi_size current_sp;
 
-	if (&current_sp < acpi_gbl_lowest_stack_pointer) {
-		acpi_gbl_lowest_stack_pointer = &current_sp;
-	}
+	अगर (&current_sp < acpi_gbl_lowest_stack_poपूर्णांकer) अणु
+		acpi_gbl_lowest_stack_poपूर्णांकer = &current_sp;
+	पूर्ण
 
-	if (acpi_gbl_nesting_level > acpi_gbl_deepest_nesting) {
+	अगर (acpi_gbl_nesting_level > acpi_gbl_deepest_nesting) अणु
 		acpi_gbl_deepest_nesting = acpi_gbl_nesting_level;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -71,168 +72,168 @@ void acpi_ut_track_stack_ptr(void)
  *
  * PARAMETERS:  function_name       - Ascii string containing a procedure name
  *
- * RETURN:      Updated pointer to the function name
+ * RETURN:      Updated poपूर्णांकer to the function name
  *
- * DESCRIPTION: Remove the "Acpi" prefix from the function name, if present.
+ * DESCRIPTION: Remove the "Acpi" prefix from the function name, अगर present.
  *              This allows compiler macros such as __func__ to be used
  *              with no change to the debug output.
  *
  ******************************************************************************/
 
-static const char *acpi_ut_trim_function_name(const char *function_name)
-{
+अटल स्थिर अक्षर *acpi_ut_trim_function_name(स्थिर अक्षर *function_name)
+अणु
 
-	/* All Function names are longer than 4 chars, check is safe */
+	/* All Function names are दीर्घer than 4 अक्षरs, check is safe */
 
-	if (*(ACPI_CAST_PTR(u32, function_name)) == ACPI_PREFIX_MIXED) {
+	अगर (*(ACPI_CAST_PTR(u32, function_name)) == ACPI_PREFIX_MIXED) अणु
 
-		/* This is the case where the original source has not been modified */
+		/* This is the हाल where the original source has not been modअगरied */
 
-		return (function_name + 4);
-	}
+		वापस (function_name + 4);
+	पूर्ण
 
-	if (*(ACPI_CAST_PTR(u32, function_name)) == ACPI_PREFIX_LOWER) {
+	अगर (*(ACPI_CAST_PTR(u32, function_name)) == ACPI_PREFIX_LOWER) अणु
 
-		/* This is the case where the source has been 'linuxized' */
+		/* This is the हाल where the source has been 'linuxized' */
 
-		return (function_name + 5);
-	}
+		वापस (function_name + 5);
+	पूर्ण
 
-	return (function_name);
-}
+	वापस (function_name);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_debug_print
+ * FUNCTION:    acpi_debug_prपूर्णांक
  *
- * PARAMETERS:  requested_debug_level - Requested debug print level
- *              line_number         - Caller's line number (for error output)
+ * PARAMETERS:  requested_debug_level - Requested debug prपूर्णांक level
+ *              line_number         - Caller's line number (क्रम error output)
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              format              - Printf format field
- *              ...                 - Optional printf arguments
+ *              क्रमmat              - Prपूर्णांकf क्रमmat field
+ *              ...                 - Optional म_लिखो arguments
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print error message with prefix consisting of the module name,
+ * DESCRIPTION: Prपूर्णांक error message with prefix consisting of the module name,
  *              line number, and component ID.
  *
  ******************************************************************************/
 
-void ACPI_INTERNAL_VAR_XFACE
-acpi_debug_print(u32 requested_debug_level,
+व्योम ACPI_INTERNAL_VAR_XFACE
+acpi_debug_prपूर्णांक(u32 requested_debug_level,
 		 u32 line_number,
-		 const char *function_name,
-		 const char *module_name,
-		 u32 component_id, const char *format, ...)
-{
-	acpi_thread_id thread_id;
-	va_list args;
-#ifdef ACPI_APPLICATION
-	int fill_count;
-#endif
+		 स्थिर अक्षर *function_name,
+		 स्थिर अक्षर *module_name,
+		 u32 component_id, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	acpi_thपढ़ो_id thपढ़ो_id;
+	बहु_सूची args;
+#अगर_घोषित ACPI_APPLICATION
+	पूर्णांक fill_count;
+#पूर्ण_अगर
 
-	/* Check if debug output enabled */
+	/* Check अगर debug output enabled */
 
-	if (!ACPI_IS_DEBUG_ENABLED(requested_debug_level, component_id)) {
-		return;
-	}
+	अगर (!ACPI_IS_DEBUG_ENABLED(requested_debug_level, component_id)) अणु
+		वापस;
+	पूर्ण
 
 	/*
-	 * Thread tracking and context switch notification
+	 * Thपढ़ो tracking and context चयन notअगरication
 	 */
-	thread_id = acpi_os_get_thread_id();
-	if (thread_id != acpi_gbl_previous_thread_id) {
-		if (ACPI_LV_THREADS & acpi_dbg_level) {
-			acpi_os_printf
+	thपढ़ो_id = acpi_os_get_thपढ़ो_id();
+	अगर (thपढ़ो_id != acpi_gbl_previous_thपढ़ो_id) अणु
+		अगर (ACPI_LV_THREADS & acpi_dbg_level) अणु
+			acpi_os_म_लिखो
 			    ("\n**** Context Switch from TID %u to TID %u ****\n\n",
-			     (u32)acpi_gbl_previous_thread_id, (u32)thread_id);
-		}
+			     (u32)acpi_gbl_previous_thपढ़ो_id, (u32)thपढ़ो_id);
+		पूर्ण
 
-		acpi_gbl_previous_thread_id = thread_id;
+		acpi_gbl_previous_thपढ़ो_id = thपढ़ो_id;
 		acpi_gbl_nesting_level = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Display the module name, current line number, thread ID (if requested),
+	 * Display the module name, current line number, thपढ़ो ID (अगर requested),
 	 * current procedure nesting level, and the current procedure name
 	 */
-	acpi_os_printf("%9s-%04d ", module_name, line_number);
+	acpi_os_म_लिखो("%9s-%04d ", module_name, line_number);
 
-#ifdef ACPI_APPLICATION
+#अगर_घोषित ACPI_APPLICATION
 	/*
-	 * For acpi_exec/iASL only, emit the thread ID and nesting level.
-	 * Note: nesting level is really only useful during a single-thread
-	 * execution. Otherwise, multiple threads will keep resetting the
+	 * For acpi_exec/iASL only, emit the thपढ़ो ID and nesting level.
+	 * Note: nesting level is really only useful during a single-thपढ़ो
+	 * execution. Otherwise, multiple thपढ़ोs will keep resetting the
 	 * level.
 	 */
-	if (ACPI_LV_THREADS & acpi_dbg_level) {
-		acpi_os_printf("[%u] ", (u32)thread_id);
-	}
+	अगर (ACPI_LV_THREADS & acpi_dbg_level) अणु
+		acpi_os_म_लिखो("[%u] ", (u32)thपढ़ो_id);
+	पूर्ण
 
 	fill_count = 48 - acpi_gbl_nesting_level -
-	    strlen(acpi_ut_trim_function_name(function_name));
-	if (fill_count < 0) {
+	    म_माप(acpi_ut_trim_function_name(function_name));
+	अगर (fill_count < 0) अणु
 		fill_count = 0;
-	}
+	पूर्ण
 
-	acpi_os_printf("[%02d] %*s",
+	acpi_os_म_लिखो("[%02d] %*s",
 		       acpi_gbl_nesting_level, acpi_gbl_nesting_level + 1, " ");
-	acpi_os_printf("%s%*s: ",
+	acpi_os_म_लिखो("%s%*s: ",
 		       acpi_ut_trim_function_name(function_name), fill_count,
 		       " ");
 
-#else
-	acpi_os_printf("%-22.22s: ", acpi_ut_trim_function_name(function_name));
-#endif
+#अन्यथा
+	acpi_os_म_लिखो("%-22.22s: ", acpi_ut_trim_function_name(function_name));
+#पूर्ण_अगर
 
-	va_start(args, format);
-	acpi_os_vprintf(format, args);
-	va_end(args);
-}
+	बहु_शुरू(args, क्रमmat);
+	acpi_os_भ_लिखो(क्रमmat, args);
+	बहु_पूर्ण(args);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_debug_print)
+ACPI_EXPORT_SYMBOL(acpi_debug_prपूर्णांक)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_debug_print_raw
+ * FUNCTION:    acpi_debug_prपूर्णांक_raw
  *
- * PARAMETERS:  requested_debug_level - Requested debug print level
+ * PARAMETERS:  requested_debug_level - Requested debug prपूर्णांक level
  *              line_number         - Caller's line number
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              format              - Printf format field
- *              ...                 - Optional printf arguments
+ *              क्रमmat              - Prपूर्णांकf क्रमmat field
+ *              ...                 - Optional म_लिखो arguments
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print message with no headers. Has same interface as
- *              debug_print so that the same macros can be used.
+ * DESCRIPTION: Prपूर्णांक message with no headers. Has same पूर्णांकerface as
+ *              debug_prपूर्णांक so that the same macros can be used.
  *
  ******************************************************************************/
-void ACPI_INTERNAL_VAR_XFACE
-acpi_debug_print_raw(u32 requested_debug_level,
+व्योम ACPI_INTERNAL_VAR_XFACE
+acpi_debug_prपूर्णांक_raw(u32 requested_debug_level,
 		     u32 line_number,
-		     const char *function_name,
-		     const char *module_name,
-		     u32 component_id, const char *format, ...)
-{
-	va_list args;
+		     स्थिर अक्षर *function_name,
+		     स्थिर अक्षर *module_name,
+		     u32 component_id, स्थिर अक्षर *क्रमmat, ...)
+अणु
+	बहु_सूची args;
 
-	/* Check if debug output enabled */
+	/* Check अगर debug output enabled */
 
-	if (!ACPI_IS_DEBUG_ENABLED(requested_debug_level, component_id)) {
-		return;
-	}
+	अगर (!ACPI_IS_DEBUG_ENABLED(requested_debug_level, component_id)) अणु
+		वापस;
+	पूर्ण
 
-	va_start(args, format);
-	acpi_os_vprintf(format, args);
-	va_end(args);
-}
+	बहु_शुरू(args, क्रमmat);
+	acpi_os_भ_लिखो(क्रमmat, args);
+	बहु_पूर्ण(args);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_debug_print_raw)
+ACPI_EXPORT_SYMBOL(acpi_debug_prपूर्णांक_raw)
 
 /*******************************************************************************
  *
@@ -245,28 +246,28 @@ ACPI_EXPORT_SYMBOL(acpi_debug_print_raw)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function entry trace. Prints only if TRACE_FUNCTIONS bit is
+ * DESCRIPTION: Function entry trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
  *              set in debug_level
  *
  ******************************************************************************/
-void
+व्योम
 acpi_ut_trace(u32 line_number,
-	      const char *function_name,
-	      const char *module_name, u32 component_id)
-{
+	      स्थिर अक्षर *function_name,
+	      स्थिर अक्षर *module_name, u32 component_id)
+अणु
 
 	acpi_gbl_nesting_level++;
 	acpi_ut_track_stack_ptr();
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s\n",
 				 acpi_gbl_function_entry_prefix);
-	}
-}
+	पूर्ण
+पूर्ण
 
 ACPI_EXPORT_SYMBOL(acpi_ut_trace)
 
@@ -278,33 +279,33 @@ ACPI_EXPORT_SYMBOL(acpi_ut_trace)
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              pointer             - Pointer to display
+ *              poपूर्णांकer             - Poपूर्णांकer to display
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function entry trace. Prints only if TRACE_FUNCTIONS bit is
+ * DESCRIPTION: Function entry trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
  *              set in debug_level
  *
  ******************************************************************************/
-void
+व्योम
 acpi_ut_trace_ptr(u32 line_number,
-		  const char *function_name,
-		  const char *module_name,
-		  u32 component_id, const void *pointer)
-{
+		  स्थिर अक्षर *function_name,
+		  स्थिर अक्षर *module_name,
+		  u32 component_id, स्थिर व्योम *poपूर्णांकer)
+अणु
 
 	acpi_gbl_nesting_level++;
 	acpi_ut_track_stack_ptr();
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %p\n",
-				 acpi_gbl_function_entry_prefix, pointer);
-	}
-}
+				 acpi_gbl_function_entry_prefix, poपूर्णांकer);
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -318,29 +319,29 @@ acpi_ut_trace_ptr(u32 line_number,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function entry trace. Prints only if TRACE_FUNCTIONS bit is
+ * DESCRIPTION: Function entry trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
  *              set in debug_level
  *
  ******************************************************************************/
 
-void
+व्योम
 acpi_ut_trace_str(u32 line_number,
-		  const char *function_name,
-		  const char *module_name, u32 component_id, const char *string)
-{
+		  स्थिर अक्षर *function_name,
+		  स्थिर अक्षर *module_name, u32 component_id, स्थिर अक्षर *string)
+अणु
 
 	acpi_gbl_nesting_level++;
 	acpi_ut_track_stack_ptr();
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %s\n",
 				 acpi_gbl_function_entry_prefix, string);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
@@ -350,37 +351,37 @@ acpi_ut_trace_str(u32 line_number,
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              integer             - Integer to display
+ *              पूर्णांकeger             - Integer to display
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function entry trace. Prints only if TRACE_FUNCTIONS bit is
+ * DESCRIPTION: Function entry trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
  *              set in debug_level
  *
  ******************************************************************************/
 
-void
+व्योम
 acpi_ut_trace_u32(u32 line_number,
-		  const char *function_name,
-		  const char *module_name, u32 component_id, u32 integer)
-{
+		  स्थिर अक्षर *function_name,
+		  स्थिर अक्षर *module_name, u32 component_id, u32 पूर्णांकeger)
+अणु
 
 	acpi_gbl_nesting_level++;
 	acpi_ut_track_stack_ptr();
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %08X\n",
-				 acpi_gbl_function_entry_prefix, integer);
-	}
-}
+				 acpi_gbl_function_entry_prefix, पूर्णांकeger);
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_exit
+ * FUNCTION:    acpi_ut_निकास
  *
  * PARAMETERS:  line_number         - Caller's line number
  *              function_name       - Caller's procedure name
@@ -389,36 +390,36 @@ acpi_ut_trace_u32(u32 line_number,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function exit trace. Prints only if TRACE_FUNCTIONS bit is
+ * DESCRIPTION: Function निकास trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
  *              set in debug_level
  *
  ******************************************************************************/
 
-void
-acpi_ut_exit(u32 line_number,
-	     const char *function_name,
-	     const char *module_name, u32 component_id)
-{
+व्योम
+acpi_ut_निकास(u32 line_number,
+	     स्थिर अक्षर *function_name,
+	     स्थिर अक्षर *module_name, u32 component_id)
+अणु
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s\n",
-				 acpi_gbl_function_exit_prefix);
-	}
+				 acpi_gbl_function_निकास_prefix);
+	पूर्ण
 
-	if (acpi_gbl_nesting_level) {
+	अगर (acpi_gbl_nesting_level) अणु
 		acpi_gbl_nesting_level--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_ut_exit)
+ACPI_EXPORT_SYMBOL(acpi_ut_निकास)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_status_exit
+ * FUNCTION:    acpi_ut_status_निकास
  *
  * PARAMETERS:  line_number         - Caller's line number
  *              function_name       - Caller's procedure name
@@ -428,121 +429,121 @@ ACPI_EXPORT_SYMBOL(acpi_ut_exit)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function exit trace. Prints only if TRACE_FUNCTIONS bit is
- *              set in debug_level. Prints exit status also.
+ * DESCRIPTION: Function निकास trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
+ *              set in debug_level. Prपूर्णांकs निकास status also.
  *
  ******************************************************************************/
-void
-acpi_ut_status_exit(u32 line_number,
-		    const char *function_name,
-		    const char *module_name,
+व्योम
+acpi_ut_status_निकास(u32 line_number,
+		    स्थिर अक्षर *function_name,
+		    स्थिर अक्षर *module_name,
 		    u32 component_id, acpi_status status)
-{
+अणु
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		if (ACPI_SUCCESS(status)) {
-			acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		अगर (ACPI_SUCCESS(status)) अणु
+			acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 					 line_number, function_name,
 					 module_name, component_id, "%s %s\n",
-					 acpi_gbl_function_exit_prefix,
-					 acpi_format_exception(status));
-		} else {
-			acpi_debug_print(ACPI_LV_FUNCTIONS,
+					 acpi_gbl_function_निकास_prefix,
+					 acpi_क्रमmat_exception(status));
+		पूर्ण अन्यथा अणु
+			acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 					 line_number, function_name,
 					 module_name, component_id,
 					 "%s ****Exception****: %s\n",
-					 acpi_gbl_function_exit_prefix,
-					 acpi_format_exception(status));
-		}
-	}
+					 acpi_gbl_function_निकास_prefix,
+					 acpi_क्रमmat_exception(status));
+		पूर्ण
+	पूर्ण
 
-	if (acpi_gbl_nesting_level) {
+	अगर (acpi_gbl_nesting_level) अणु
 		acpi_gbl_nesting_level--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_ut_status_exit)
+ACPI_EXPORT_SYMBOL(acpi_ut_status_निकास)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_value_exit
+ * FUNCTION:    acpi_ut_value_निकास
  *
  * PARAMETERS:  line_number         - Caller's line number
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              value               - Value to be printed with exit msg
+ *              value               - Value to be prपूर्णांकed with निकास msg
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function exit trace. Prints only if TRACE_FUNCTIONS bit is
- *              set in debug_level. Prints exit value also.
+ * DESCRIPTION: Function निकास trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
+ *              set in debug_level. Prपूर्णांकs निकास value also.
  *
  ******************************************************************************/
-void
-acpi_ut_value_exit(u32 line_number,
-		   const char *function_name,
-		   const char *module_name, u32 component_id, u64 value)
-{
+व्योम
+acpi_ut_value_निकास(u32 line_number,
+		   स्थिर अक्षर *function_name,
+		   स्थिर अक्षर *module_name, u32 component_id, u64 value)
+अणु
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %8.8X%8.8X\n",
-				 acpi_gbl_function_exit_prefix,
+				 acpi_gbl_function_निकास_prefix,
 				 ACPI_FORMAT_UINT64(value));
-	}
+	पूर्ण
 
-	if (acpi_gbl_nesting_level) {
+	अगर (acpi_gbl_nesting_level) अणु
 		acpi_gbl_nesting_level--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_ut_value_exit)
+ACPI_EXPORT_SYMBOL(acpi_ut_value_निकास)
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_ptr_exit
+ * FUNCTION:    acpi_ut_ptr_निकास
  *
  * PARAMETERS:  line_number         - Caller's line number
  *              function_name       - Caller's procedure name
  *              module_name         - Caller's module name
  *              component_id        - Caller's component ID
- *              ptr                 - Pointer to display
+ *              ptr                 - Poपूर्णांकer to display
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function exit trace. Prints only if TRACE_FUNCTIONS bit is
- *              set in debug_level. Prints exit value also.
+ * DESCRIPTION: Function निकास trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
+ *              set in debug_level. Prपूर्णांकs निकास value also.
  *
  ******************************************************************************/
-void
-acpi_ut_ptr_exit(u32 line_number,
-		 const char *function_name,
-		 const char *module_name, u32 component_id, u8 *ptr)
-{
+व्योम
+acpi_ut_ptr_निकास(u32 line_number,
+		 स्थिर अक्षर *function_name,
+		 स्थिर अक्षर *module_name, u32 component_id, u8 *ptr)
+अणु
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %p\n",
-				 acpi_gbl_function_exit_prefix, ptr);
-	}
+				 acpi_gbl_function_निकास_prefix, ptr);
+	पूर्ण
 
-	if (acpi_gbl_nesting_level) {
+	अगर (acpi_gbl_nesting_level) अणु
 		acpi_gbl_nesting_level--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ut_str_exit
+ * FUNCTION:    acpi_ut_str_निकास
  *
  * PARAMETERS:  line_number         - Caller's line number
  *              function_name       - Caller's procedure name
@@ -552,40 +553,40 @@ acpi_ut_ptr_exit(u32 line_number,
  *
  * RETURN:      None
  *
- * DESCRIPTION: Function exit trace. Prints only if TRACE_FUNCTIONS bit is
- *              set in debug_level. Prints exit value also.
+ * DESCRIPTION: Function निकास trace. Prपूर्णांकs only अगर TRACE_FUNCTIONS bit is
+ *              set in debug_level. Prपूर्णांकs निकास value also.
  *
  ******************************************************************************/
 
-void
-acpi_ut_str_exit(u32 line_number,
-		 const char *function_name,
-		 const char *module_name, u32 component_id, const char *string)
-{
+व्योम
+acpi_ut_str_निकास(u32 line_number,
+		 स्थिर अक्षर *function_name,
+		 स्थिर अक्षर *module_name, u32 component_id, स्थिर अक्षर *string)
+अणु
 
-	/* Check if enabled up-front for performance */
+	/* Check अगर enabled up-front क्रम perक्रमmance */
 
-	if (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) {
-		acpi_debug_print(ACPI_LV_FUNCTIONS,
+	अगर (ACPI_IS_DEBUG_ENABLED(ACPI_LV_FUNCTIONS, component_id)) अणु
+		acpi_debug_prपूर्णांक(ACPI_LV_FUNCTIONS,
 				 line_number, function_name, module_name,
 				 component_id, "%s %s\n",
-				 acpi_gbl_function_exit_prefix, string);
-	}
+				 acpi_gbl_function_निकास_prefix, string);
+	पूर्ण
 
-	if (acpi_gbl_nesting_level) {
+	अगर (acpi_gbl_nesting_level) अणु
 		acpi_gbl_nesting_level--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_trace_point
+ * FUNCTION:    acpi_trace_poपूर्णांक
  *
  * PARAMETERS:  type                - Trace event type
- *              begin               - TRUE if before execution
+ *              begin               - TRUE अगर beक्रमe execution
  *              aml                 - Executed AML address
  *              pathname            - Object path
- *              pointer             - Pointer to the related object
+ *              poपूर्णांकer             - Poपूर्णांकer to the related object
  *
  * RETURN:      None
  *
@@ -593,19 +594,19 @@ acpi_ut_str_exit(u32 line_number,
  *
  ******************************************************************************/
 
-void
-acpi_trace_point(acpi_trace_event_type type, u8 begin, u8 *aml, char *pathname)
-{
+व्योम
+acpi_trace_poपूर्णांक(acpi_trace_event_type type, u8 begin, u8 *aml, अक्षर *pathname)
+अणु
 
 	ACPI_FUNCTION_ENTRY();
 
-	acpi_ex_trace_point(type, begin, aml, pathname);
+	acpi_ex_trace_poपूर्णांक(type, begin, aml, pathname);
 
-#ifdef ACPI_USE_SYSTEM_TRACER
-	acpi_os_trace_point(type, begin, aml, pathname);
-#endif
-}
+#अगर_घोषित ACPI_USE_SYSTEM_TRACER
+	acpi_os_trace_poपूर्णांक(type, begin, aml, pathname);
+#पूर्ण_अगर
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_trace_point)
+ACPI_EXPORT_SYMBOL(acpi_trace_poपूर्णांक)
 
-#endif
+#पूर्ण_अगर

@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017-2018 HUAWEI, Inc.
  *             https://www.huawei.com/
  * Created by Gao Xiang <gaoxiang25@huawei.com>
  */
-#include "xattr.h"
+#समावेश "xattr.h"
 
-#include <trace/events/erofs.h>
+#समावेश <trace/events/erofs.h>
 
 /*
- * if inode is successfully read, return its inode page (or sometimes
- * the inode payload page if it's an extended inode) in order to fill
- * inline data if possible.
+ * अगर inode is successfully पढ़ो, वापस its inode page (or someबार
+ * the inode payload page अगर it's an extended inode) in order to fill
+ * अंतरभूत data अगर possible.
  */
-static struct page *erofs_read_inode(struct inode *inode,
-				     unsigned int *ofs)
-{
-	struct super_block *sb = inode->i_sb;
-	struct erofs_sb_info *sbi = EROFS_SB(sb);
-	struct erofs_inode *vi = EROFS_I(inode);
-	const erofs_off_t inode_loc = iloc(sbi, vi->nid);
+अटल काष्ठा page *erofs_पढ़ो_inode(काष्ठा inode *inode,
+				     अचिन्हित पूर्णांक *ofs)
+अणु
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा erofs_sb_info *sbi = EROFS_SB(sb);
+	काष्ठा erofs_inode *vi = EROFS_I(inode);
+	स्थिर erofs_off_t inode_loc = iloc(sbi, vi->nid);
 
 	erofs_blk_t blkaddr, nblks = 0;
-	struct page *page;
-	struct erofs_inode_compact *dic;
-	struct erofs_inode_extended *die, *copied = NULL;
-	unsigned int ifmt;
-	int err;
+	काष्ठा page *page;
+	काष्ठा erofs_inode_compact *dic;
+	काष्ठा erofs_inode_extended *die, *copied = शून्य;
+	अचिन्हित पूर्णांक अगरmt;
+	पूर्णांक err;
 
 	blkaddr = erofs_blknr(inode_loc);
 	*ofs = erofs_blkoff(inode_loc);
@@ -35,152 +36,152 @@ static struct page *erofs_read_inode(struct inode *inode,
 		  __func__, vi->nid, *ofs, blkaddr);
 
 	page = erofs_get_meta_page(sb, blkaddr);
-	if (IS_ERR(page)) {
+	अगर (IS_ERR(page)) अणु
 		erofs_err(sb, "failed to get inode (nid: %llu) page, err %ld",
 			  vi->nid, PTR_ERR(page));
-		return page;
-	}
+		वापस page;
+	पूर्ण
 
 	dic = page_address(page) + *ofs;
-	ifmt = le16_to_cpu(dic->i_format);
+	अगरmt = le16_to_cpu(dic->i_क्रमmat);
 
-	if (ifmt & ~EROFS_I_ALL) {
+	अगर (अगरmt & ~EROFS_I_ALL) अणु
 		erofs_err(inode->i_sb, "unsupported i_format %u of nid %llu",
-			  ifmt, vi->nid);
+			  अगरmt, vi->nid);
 		err = -EOPNOTSUPP;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	vi->datalayout = erofs_inode_datalayout(ifmt);
-	if (vi->datalayout >= EROFS_INODE_DATALAYOUT_MAX) {
+	vi->datalayout = erofs_inode_datalayout(अगरmt);
+	अगर (vi->datalayout >= EROFS_INODE_DATALAYOUT_MAX) अणु
 		erofs_err(inode->i_sb, "unsupported datalayout %u of nid %llu",
 			  vi->datalayout, vi->nid);
 		err = -EOPNOTSUPP;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	switch (erofs_inode_version(ifmt)) {
-	case EROFS_INODE_LAYOUT_EXTENDED:
-		vi->inode_isize = sizeof(struct erofs_inode_extended);
-		/* check if the inode acrosses page boundary */
-		if (*ofs + vi->inode_isize <= PAGE_SIZE) {
+	चयन (erofs_inode_version(अगरmt)) अणु
+	हाल EROFS_INODE_LAYOUT_EXTENDED:
+		vi->inode_isize = माप(काष्ठा erofs_inode_extended);
+		/* check अगर the inode acrosses page boundary */
+		अगर (*ofs + vi->inode_isize <= PAGE_SIZE) अणु
 			*ofs += vi->inode_isize;
-			die = (struct erofs_inode_extended *)dic;
-		} else {
-			const unsigned int gotten = PAGE_SIZE - *ofs;
+			die = (काष्ठा erofs_inode_extended *)dic;
+		पूर्ण अन्यथा अणु
+			स्थिर अचिन्हित पूर्णांक gotten = PAGE_SIZE - *ofs;
 
-			copied = kmalloc(vi->inode_isize, GFP_NOFS);
-			if (!copied) {
+			copied = kदो_स्मृति(vi->inode_isize, GFP_NOFS);
+			अगर (!copied) अणु
 				err = -ENOMEM;
-				goto err_out;
-			}
-			memcpy(copied, dic, gotten);
+				जाओ err_out;
+			पूर्ण
+			स_नकल(copied, dic, gotten);
 			unlock_page(page);
 			put_page(page);
 
 			page = erofs_get_meta_page(sb, blkaddr + 1);
-			if (IS_ERR(page)) {
+			अगर (IS_ERR(page)) अणु
 				erofs_err(sb, "failed to get inode payload page (nid: %llu), err %ld",
 					  vi->nid, PTR_ERR(page));
-				kfree(copied);
-				return page;
-			}
+				kमुक्त(copied);
+				वापस page;
+			पूर्ण
 			*ofs = vi->inode_isize - gotten;
-			memcpy((u8 *)copied + gotten, page_address(page), *ofs);
+			स_नकल((u8 *)copied + gotten, page_address(page), *ofs);
 			die = copied;
-		}
+		पूर्ण
 		vi->xattr_isize = erofs_xattr_ibody_size(die->i_xattr_icount);
 
 		inode->i_mode = le16_to_cpu(die->i_mode);
-		switch (inode->i_mode & S_IFMT) {
-		case S_IFREG:
-		case S_IFDIR:
-		case S_IFLNK:
+		चयन (inode->i_mode & S_IFMT) अणु
+		हाल S_IFREG:
+		हाल S_IFसूची:
+		हाल S_IFLNK:
 			vi->raw_blkaddr = le32_to_cpu(die->i_u.raw_blkaddr);
-			break;
-		case S_IFCHR:
-		case S_IFBLK:
+			अवरोध;
+		हाल S_IFCHR:
+		हाल S_IFBLK:
 			inode->i_rdev =
 				new_decode_dev(le32_to_cpu(die->i_u.rdev));
-			break;
-		case S_IFIFO:
-		case S_IFSOCK:
+			अवरोध;
+		हाल S_IFIFO:
+		हाल S_IFSOCK:
 			inode->i_rdev = 0;
-			break;
-		default:
-			goto bogusimode;
-		}
-		i_uid_write(inode, le32_to_cpu(die->i_uid));
-		i_gid_write(inode, le32_to_cpu(die->i_gid));
+			अवरोध;
+		शेष:
+			जाओ bogusimode;
+		पूर्ण
+		i_uid_ग_लिखो(inode, le32_to_cpu(die->i_uid));
+		i_gid_ग_लिखो(inode, le32_to_cpu(die->i_gid));
 		set_nlink(inode, le32_to_cpu(die->i_nlink));
 
-		/* extended inode has its own timestamp */
-		inode->i_ctime.tv_sec = le64_to_cpu(die->i_ctime);
-		inode->i_ctime.tv_nsec = le32_to_cpu(die->i_ctime_nsec);
+		/* extended inode has its own बारtamp */
+		inode->i_स_समय.tv_sec = le64_to_cpu(die->i_स_समय);
+		inode->i_स_समय.tv_nsec = le32_to_cpu(die->i_स_समय_nsec);
 
 		inode->i_size = le64_to_cpu(die->i_size);
 
-		/* total blocks for compressed files */
-		if (erofs_inode_is_data_compressed(vi->datalayout))
+		/* total blocks क्रम compressed files */
+		अगर (erofs_inode_is_data_compressed(vi->datalayout))
 			nblks = le32_to_cpu(die->i_u.compressed_blocks);
 
-		kfree(copied);
-		break;
-	case EROFS_INODE_LAYOUT_COMPACT:
-		vi->inode_isize = sizeof(struct erofs_inode_compact);
+		kमुक्त(copied);
+		अवरोध;
+	हाल EROFS_INODE_LAYOUT_COMPACT:
+		vi->inode_isize = माप(काष्ठा erofs_inode_compact);
 		*ofs += vi->inode_isize;
 		vi->xattr_isize = erofs_xattr_ibody_size(dic->i_xattr_icount);
 
 		inode->i_mode = le16_to_cpu(dic->i_mode);
-		switch (inode->i_mode & S_IFMT) {
-		case S_IFREG:
-		case S_IFDIR:
-		case S_IFLNK:
+		चयन (inode->i_mode & S_IFMT) अणु
+		हाल S_IFREG:
+		हाल S_IFसूची:
+		हाल S_IFLNK:
 			vi->raw_blkaddr = le32_to_cpu(dic->i_u.raw_blkaddr);
-			break;
-		case S_IFCHR:
-		case S_IFBLK:
+			अवरोध;
+		हाल S_IFCHR:
+		हाल S_IFBLK:
 			inode->i_rdev =
 				new_decode_dev(le32_to_cpu(dic->i_u.rdev));
-			break;
-		case S_IFIFO:
-		case S_IFSOCK:
+			अवरोध;
+		हाल S_IFIFO:
+		हाल S_IFSOCK:
 			inode->i_rdev = 0;
-			break;
-		default:
-			goto bogusimode;
-		}
-		i_uid_write(inode, le16_to_cpu(dic->i_uid));
-		i_gid_write(inode, le16_to_cpu(dic->i_gid));
+			अवरोध;
+		शेष:
+			जाओ bogusimode;
+		पूर्ण
+		i_uid_ग_लिखो(inode, le16_to_cpu(dic->i_uid));
+		i_gid_ग_लिखो(inode, le16_to_cpu(dic->i_gid));
 		set_nlink(inode, le16_to_cpu(dic->i_nlink));
 
-		/* use build time for compact inodes */
-		inode->i_ctime.tv_sec = sbi->build_time;
-		inode->i_ctime.tv_nsec = sbi->build_time_nsec;
+		/* use build समय क्रम compact inodes */
+		inode->i_स_समय.tv_sec = sbi->build_समय;
+		inode->i_स_समय.tv_nsec = sbi->build_समय_nsec;
 
 		inode->i_size = le32_to_cpu(dic->i_size);
-		if (erofs_inode_is_data_compressed(vi->datalayout))
+		अगर (erofs_inode_is_data_compressed(vi->datalayout))
 			nblks = le32_to_cpu(dic->i_u.compressed_blocks);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		erofs_err(inode->i_sb,
 			  "unsupported on-disk inode version %u of nid %llu",
-			  erofs_inode_version(ifmt), vi->nid);
+			  erofs_inode_version(अगरmt), vi->nid);
 		err = -EOPNOTSUPP;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	inode->i_mtime.tv_sec = inode->i_ctime.tv_sec;
-	inode->i_atime.tv_sec = inode->i_ctime.tv_sec;
-	inode->i_mtime.tv_nsec = inode->i_ctime.tv_nsec;
-	inode->i_atime.tv_nsec = inode->i_ctime.tv_nsec;
+	inode->i_mसमय.tv_sec = inode->i_स_समय.tv_sec;
+	inode->i_aसमय.tv_sec = inode->i_स_समय.tv_sec;
+	inode->i_mसमय.tv_nsec = inode->i_स_समय.tv_nsec;
+	inode->i_aसमय.tv_nsec = inode->i_स_समय.tv_nsec;
 
-	if (!nblks)
-		/* measure inode.i_blocks as generic filesystems */
+	अगर (!nblks)
+		/* measure inode.i_blocks as generic fileप्रणालीs */
 		inode->i_blocks = roundup(inode->i_size, EROFS_BLKSIZ) >> 9;
-	else
+	अन्यथा
 		inode->i_blocks = nblks << LOG_SECTORS_PER_BLOCK;
-	return page;
+	वापस page;
 
 bogusimode:
 	erofs_err(inode->i_sb, "bogus i_mode (%o) @ nid %llu",
@@ -188,163 +189,163 @@ bogusimode:
 	err = -EFSCORRUPTED;
 err_out:
 	DBG_BUGON(1);
-	kfree(copied);
+	kमुक्त(copied);
 	unlock_page(page);
 	put_page(page);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static int erofs_fill_symlink(struct inode *inode, void *data,
-			      unsigned int m_pofs)
-{
-	struct erofs_inode *vi = EROFS_I(inode);
-	char *lnk;
+अटल पूर्णांक erofs_fill_symlink(काष्ठा inode *inode, व्योम *data,
+			      अचिन्हित पूर्णांक m_pofs)
+अणु
+	काष्ठा erofs_inode *vi = EROFS_I(inode);
+	अक्षर *lnk;
 
-	/* if it cannot be handled with fast symlink scheme */
-	if (vi->datalayout != EROFS_INODE_FLAT_INLINE ||
-	    inode->i_size >= PAGE_SIZE) {
+	/* अगर it cannot be handled with fast symlink scheme */
+	अगर (vi->datalayout != EROFS_INODE_FLAT_INLINE ||
+	    inode->i_size >= PAGE_SIZE) अणु
 		inode->i_op = &erofs_symlink_iops;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	lnk = kmalloc(inode->i_size + 1, GFP_KERNEL);
-	if (!lnk)
-		return -ENOMEM;
+	lnk = kदो_स्मृति(inode->i_size + 1, GFP_KERNEL);
+	अगर (!lnk)
+		वापस -ENOMEM;
 
 	m_pofs += vi->xattr_isize;
-	/* inline symlink data shouldn't cross page boundary as well */
-	if (m_pofs + inode->i_size > PAGE_SIZE) {
-		kfree(lnk);
+	/* अंतरभूत symlink data shouldn't cross page boundary as well */
+	अगर (m_pofs + inode->i_size > PAGE_SIZE) अणु
+		kमुक्त(lnk);
 		erofs_err(inode->i_sb,
 			  "inline data cross block boundary @ nid %llu",
 			  vi->nid);
 		DBG_BUGON(1);
-		return -EFSCORRUPTED;
-	}
+		वापस -EFSCORRUPTED;
+	पूर्ण
 
-	memcpy(lnk, data + m_pofs, inode->i_size);
+	स_नकल(lnk, data + m_pofs, inode->i_size);
 	lnk[inode->i_size] = '\0';
 
 	inode->i_link = lnk;
 	inode->i_op = &erofs_fast_symlink_iops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int erofs_fill_inode(struct inode *inode, int isdir)
-{
-	struct erofs_inode *vi = EROFS_I(inode);
-	struct page *page;
-	unsigned int ofs;
-	int err = 0;
+अटल पूर्णांक erofs_fill_inode(काष्ठा inode *inode, पूर्णांक isdir)
+अणु
+	काष्ठा erofs_inode *vi = EROFS_I(inode);
+	काष्ठा page *page;
+	अचिन्हित पूर्णांक ofs;
+	पूर्णांक err = 0;
 
 	trace_erofs_fill_inode(inode, isdir);
 
-	/* read inode base data from disk */
-	page = erofs_read_inode(inode, &ofs);
-	if (IS_ERR(page))
-		return PTR_ERR(page);
+	/* पढ़ो inode base data from disk */
+	page = erofs_पढ़ो_inode(inode, &ofs);
+	अगर (IS_ERR(page))
+		वापस PTR_ERR(page);
 
 	/* setup the new inode */
-	switch (inode->i_mode & S_IFMT) {
-	case S_IFREG:
+	चयन (inode->i_mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_op = &erofs_generic_iops;
 		inode->i_fop = &generic_ro_fops;
-		break;
-	case S_IFDIR:
+		अवरोध;
+	हाल S_IFसूची:
 		inode->i_op = &erofs_dir_iops;
 		inode->i_fop = &erofs_dir_fops;
-		break;
-	case S_IFLNK:
+		अवरोध;
+	हाल S_IFLNK:
 		err = erofs_fill_symlink(inode, page_address(page), ofs);
-		if (err)
-			goto out_unlock;
+		अगर (err)
+			जाओ out_unlock;
 		inode_nohighmem(inode);
-		break;
-	case S_IFCHR:
-	case S_IFBLK:
-	case S_IFIFO:
-	case S_IFSOCK:
+		अवरोध;
+	हाल S_IFCHR:
+	हाल S_IFBLK:
+	हाल S_IFIFO:
+	हाल S_IFSOCK:
 		inode->i_op = &erofs_generic_iops;
 		init_special_inode(inode, inode->i_mode, inode->i_rdev);
-		goto out_unlock;
-	default:
+		जाओ out_unlock;
+	शेष:
 		err = -EFSCORRUPTED;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (erofs_inode_is_data_compressed(vi->datalayout)) {
+	अगर (erofs_inode_is_data_compressed(vi->datalayout)) अणु
 		err = z_erofs_fill_inode(inode);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	inode->i_mapping->a_ops = &erofs_raw_access_aops;
 
 out_unlock:
 	unlock_page(page);
 	put_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * erofs nid is 64bits, but i_ino is 'unsigned long', therefore
- * we should do more for 32-bit platform to find the right inode.
+ * erofs nid is 64bits, but i_ino is 'unsigned long', thereक्रमe
+ * we should करो more क्रम 32-bit platक्रमm to find the right inode.
  */
-static int erofs_ilookup_test_actor(struct inode *inode, void *opaque)
-{
-	const erofs_nid_t nid = *(erofs_nid_t *)opaque;
+अटल पूर्णांक erofs_ilookup_test_actor(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	स्थिर erofs_nid_t nid = *(erofs_nid_t *)opaque;
 
-	return EROFS_I(inode)->nid == nid;
-}
+	वापस EROFS_I(inode)->nid == nid;
+पूर्ण
 
-static int erofs_iget_set_actor(struct inode *inode, void *opaque)
-{
-	const erofs_nid_t nid = *(erofs_nid_t *)opaque;
+अटल पूर्णांक erofs_iget_set_actor(काष्ठा inode *inode, व्योम *opaque)
+अणु
+	स्थिर erofs_nid_t nid = *(erofs_nid_t *)opaque;
 
 	inode->i_ino = erofs_inode_hash(nid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline struct inode *erofs_iget_locked(struct super_block *sb,
+अटल अंतरभूत काष्ठा inode *erofs_iget_locked(काष्ठा super_block *sb,
 					      erofs_nid_t nid)
-{
-	const unsigned long hashval = erofs_inode_hash(nid);
+अणु
+	स्थिर अचिन्हित दीर्घ hashval = erofs_inode_hash(nid);
 
-	return iget5_locked(sb, hashval, erofs_ilookup_test_actor,
+	वापस iget5_locked(sb, hashval, erofs_ilookup_test_actor,
 		erofs_iget_set_actor, &nid);
-}
+पूर्ण
 
-struct inode *erofs_iget(struct super_block *sb,
+काष्ठा inode *erofs_iget(काष्ठा super_block *sb,
 			 erofs_nid_t nid,
 			 bool isdir)
-{
-	struct inode *inode = erofs_iget_locked(sb, nid);
+अणु
+	काष्ठा inode *inode = erofs_iget_locked(sb, nid);
 
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (inode->i_state & I_NEW) {
-		int err;
-		struct erofs_inode *vi = EROFS_I(inode);
+	अगर (inode->i_state & I_NEW) अणु
+		पूर्णांक err;
+		काष्ठा erofs_inode *vi = EROFS_I(inode);
 
 		vi->nid = nid;
 
 		err = erofs_fill_inode(inode, isdir);
-		if (!err)
+		अगर (!err)
 			unlock_new_inode(inode);
-		else {
+		अन्यथा अणु
 			iget_failed(inode);
 			inode = ERR_PTR(err);
-		}
-	}
-	return inode;
-}
+		पूर्ण
+	पूर्ण
+	वापस inode;
+पूर्ण
 
-int erofs_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		  struct kstat *stat, u32 request_mask,
-		  unsigned int query_flags)
-{
-	struct inode *const inode = d_inode(path->dentry);
+पूर्णांक erofs_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		  काष्ठा kstat *stat, u32 request_mask,
+		  अचिन्हित पूर्णांक query_flags)
+अणु
+	काष्ठा inode *स्थिर inode = d_inode(path->dentry);
 
-	if (erofs_inode_is_data_compressed(EROFS_I(inode)->datalayout))
+	अगर (erofs_inode_is_data_compressed(EROFS_I(inode)->datalayout))
 		stat->attributes |= STATX_ATTR_COMPRESSED;
 
 	stat->attributes |= STATX_ATTR_IMMUTABLE;
@@ -352,26 +353,26 @@ int erofs_getattr(struct user_namespace *mnt_userns, const struct path *path,
 				  STATX_ATTR_IMMUTABLE);
 
 	generic_fillattr(&init_user_ns, inode, stat);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct inode_operations erofs_generic_iops = {
+स्थिर काष्ठा inode_operations erofs_generic_iops = अणु
 	.getattr = erofs_getattr,
 	.listxattr = erofs_listxattr,
 	.get_acl = erofs_get_acl,
-};
+पूर्ण;
 
-const struct inode_operations erofs_symlink_iops = {
+स्थिर काष्ठा inode_operations erofs_symlink_iops = अणु
 	.get_link = page_get_link,
 	.getattr = erofs_getattr,
 	.listxattr = erofs_listxattr,
 	.get_acl = erofs_get_acl,
-};
+पूर्ण;
 
-const struct inode_operations erofs_fast_symlink_iops = {
+स्थिर काष्ठा inode_operations erofs_fast_symlink_iops = अणु
 	.get_link = simple_get_link,
 	.getattr = erofs_getattr,
 	.listxattr = erofs_listxattr,
 	.get_acl = erofs_get_acl,
-};
+पूर्ण;
 

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *	Berkshire PCI-PC Watchdog Card Driver
+ *	Berkshire PCI-PC Watchकरोg Card Driver
  *
  *	(c) Copyright 2003-2007 Wim Van Sebroeck <wim@iguana.be>.
  *
@@ -12,8 +13,8 @@
  *	  Rob Radez <rob@osinvestor.com>
  *
  *	Neither Wim Van Sebroeck nor Iguana vzw. admit liability nor
- *	provide warranty for any of this software. This material is
- *	provided "AS-IS" and at no charge.
+ *	provide warranty क्रम any of this software. This material is
+ *	provided "AS-IS" and at no अक्षरge.
  */
 
 /*
@@ -21,80 +22,80 @@
  *	http://www.kernel.org/pub/linux/kernel/people/wim/pcwd/pcwd_pci/
  *
  *	More info available at
- *	http://www.berkprod.com/ or http://www.pcwatchdog.com/
+ *	http://www.berkprod.com/ or http://www.pcwatchकरोg.com/
  */
 
 /*
  *	Includes, defines, variables, module parameters, ...
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>	/* For module specific items */
-#include <linux/moduleparam.h>	/* For new moduleparam's */
-#include <linux/types.h>	/* For standard types (like size_t) */
-#include <linux/errno.h>	/* For the -ENODEV/... values */
-#include <linux/kernel.h>	/* For printk/panic/... */
-#include <linux/delay.h>	/* For mdelay function */
-#include <linux/miscdevice.h>	/* For struct miscdevice */
-#include <linux/watchdog.h>	/* For the watchdog specific items */
-#include <linux/notifier.h>	/* For notifier support */
-#include <linux/reboot.h>	/* For reboot_notifier stuff */
-#include <linux/init.h>		/* For __init/__exit/... */
-#include <linux/fs.h>		/* For file operations */
-#include <linux/pci.h>		/* For pci functions */
-#include <linux/ioport.h>	/* For io-port access */
-#include <linux/spinlock.h>	/* For spin_lock/spin_unlock/... */
-#include <linux/uaccess.h>	/* For copy_to_user/put_user/... */
-#include <linux/io.h>		/* For inb/outb/... */
+#समावेश <linux/module.h>	/* For module specअगरic items */
+#समावेश <linux/moduleparam.h>	/* For new moduleparam's */
+#समावेश <linux/types.h>	/* For standard types (like माप_प्रकार) */
+#समावेश <linux/त्रुटिसं.स>	/* For the -ENODEV/... values */
+#समावेश <linux/kernel.h>	/* For prपूर्णांकk/panic/... */
+#समावेश <linux/delay.h>	/* For mdelay function */
+#समावेश <linux/miscdevice.h>	/* For काष्ठा miscdevice */
+#समावेश <linux/watchकरोg.h>	/* For the watchकरोg specअगरic items */
+#समावेश <linux/notअगरier.h>	/* For notअगरier support */
+#समावेश <linux/reboot.h>	/* For reboot_notअगरier stuff */
+#समावेश <linux/init.h>		/* For __init/__निकास/... */
+#समावेश <linux/fs.h>		/* For file operations */
+#समावेश <linux/pci.h>		/* For pci functions */
+#समावेश <linux/ioport.h>	/* For io-port access */
+#समावेश <linux/spinlock.h>	/* For spin_lock/spin_unlock/... */
+#समावेश <linux/uaccess.h>	/* For copy_to_user/put_user/... */
+#समावेश <linux/पन.स>		/* For inb/outb/... */
 
-/* Module and version information */
-#define WATCHDOG_VERSION "1.03"
-#define WATCHDOG_DRIVER_NAME "PCI-PC Watchdog"
-#define WATCHDOG_NAME "pcwd_pci"
-#define DRIVER_VERSION WATCHDOG_DRIVER_NAME " driver, v" WATCHDOG_VERSION
+/* Module and version inक्रमmation */
+#घोषणा WATCHDOG_VERSION "1.03"
+#घोषणा WATCHDOG_DRIVER_NAME "PCI-PC Watchdog"
+#घोषणा WATCHDOG_NAME "pcwd_pci"
+#घोषणा DRIVER_VERSION WATCHDOG_DRIVER_NAME " driver, v" WATCHDOG_VERSION
 
-/* Stuff for the PCI ID's  */
-#ifndef PCI_VENDOR_ID_QUICKLOGIC
-#define PCI_VENDOR_ID_QUICKLOGIC    0x11e3
-#endif
+/* Stuff क्रम the PCI ID's  */
+#अगर_अघोषित PCI_VENDOR_ID_QUICKLOGIC
+#घोषणा PCI_VENDOR_ID_QUICKLOGIC    0x11e3
+#पूर्ण_अगर
 
-#ifndef PCI_DEVICE_ID_WATCHDOG_PCIPCWD
-#define PCI_DEVICE_ID_WATCHDOG_PCIPCWD 0x5030
-#endif
+#अगर_अघोषित PCI_DEVICE_ID_WATCHDOG_PCIPCWD
+#घोषणा PCI_DEVICE_ID_WATCHDOG_PCIPCWD 0x5030
+#पूर्ण_अगर
 
 /*
- * These are the defines that describe the control status bits for the
- * PCI-PC Watchdog card.
+ * These are the defines that describe the control status bits क्रम the
+ * PCI-PC Watchकरोg card.
  */
 /* Port 1 : Control Status #1 */
-#define WD_PCI_WTRP		0x01	/* Watchdog Trip status */
-#define WD_PCI_HRBT		0x02	/* Watchdog Heartbeat */
-#define WD_PCI_TTRP		0x04	/* Temperature Trip status */
-#define WD_PCI_RL2A		0x08	/* Relay 2 Active */
-#define WD_PCI_RL1A		0x10	/* Relay 1 Active */
-#define WD_PCI_R2DS		0x40	/* Relay 2 Disable Temperature-trip /
+#घोषणा WD_PCI_WTRP		0x01	/* Watchकरोg Trip status */
+#घोषणा WD_PCI_HRBT		0x02	/* Watchकरोg Heartbeat */
+#घोषणा WD_PCI_TTRP		0x04	/* Temperature Trip status */
+#घोषणा WD_PCI_RL2A		0x08	/* Relay 2 Active */
+#घोषणा WD_PCI_RL1A		0x10	/* Relay 1 Active */
+#घोषणा WD_PCI_R2DS		0x40	/* Relay 2 Disable Temperature-trip /
 									reset */
-#define WD_PCI_RLY2		0x80	/* Activate Relay 2 on the board */
+#घोषणा WD_PCI_RLY2		0x80	/* Activate Relay 2 on the board */
 /* Port 2 : Control Status #2 */
-#define WD_PCI_WDIS		0x10	/* Watchdog Disable */
-#define WD_PCI_ENTP		0x20	/* Enable Temperature Trip Reset */
-#define WD_PCI_WRSP		0x40	/* Watchdog wrote response */
-#define WD_PCI_PCMD		0x80	/* PC has sent command */
+#घोषणा WD_PCI_WDIS		0x10	/* Watchकरोg Disable */
+#घोषणा WD_PCI_ENTP		0x20	/* Enable Temperature Trip Reset */
+#घोषणा WD_PCI_WRSP		0x40	/* Watchकरोg wrote response */
+#घोषणा WD_PCI_PCMD		0x80	/* PC has sent command */
 
-/* according to documentation max. time to process a command for the pci
- * watchdog card is 100 ms, so we give it 150 ms to do it's job */
-#define PCI_COMMAND_TIMEOUT	150
+/* according to करोcumentation max. समय to process a command क्रम the pci
+ * watchकरोg card is 100 ms, so we give it 150 ms to करो it's job */
+#घोषणा PCI_COMMAND_TIMEOUT	150
 
-/* Watchdog's internal commands */
-#define CMD_GET_STATUS				0x04
-#define CMD_GET_FIRMWARE_VERSION		0x08
-#define CMD_READ_WATCHDOG_TIMEOUT		0x18
-#define CMD_WRITE_WATCHDOG_TIMEOUT		0x19
-#define CMD_GET_CLEAR_RESET_COUNT		0x84
+/* Watchकरोg's पूर्णांकernal commands */
+#घोषणा CMD_GET_STATUS				0x04
+#घोषणा CMD_GET_FIRMWARE_VERSION		0x08
+#घोषणा CMD_READ_WATCHDOG_TIMEOUT		0x18
+#घोषणा CMD_WRITE_WATCHDOG_TIMEOUT		0x19
+#घोषणा CMD_GET_CLEAR_RESET_COUNT		0x84
 
-/* Watchdog's Dip Switch heartbeat values */
-static const int heartbeat_tbl[] = {
+/* Watchकरोg's Dip Switch heartbeat values */
+अटल स्थिर पूर्णांक heartbeat_tbl[] = अणु
 	5,	/* OFF-OFF-OFF	=  5 Sec  */
 	10,	/* OFF-OFF-ON	= 10 Sec  */
 	30,	/* OFF-ON-OFF	= 30 Sec  */
@@ -103,46 +104,46 @@ static const int heartbeat_tbl[] = {
 	600,	/* ON-OFF-ON	= 10 Min  */
 	1800,	/* ON-ON-OFF	= 30 Min  */
 	3600,	/* ON-ON-ON	=  1 hour */
-};
+पूर्ण;
 
-/* We can only use 1 card due to the /dev/watchdog restriction */
-static int cards_found;
+/* We can only use 1 card due to the /dev/watchकरोg restriction */
+अटल पूर्णांक cards_found;
 
-/* internal variables */
-static int temp_panic;
-static unsigned long is_active;
-static char expect_release;
-/* this is private data for each PCI-PC watchdog card */
-static struct {
+/* पूर्णांकernal variables */
+अटल पूर्णांक temp_panic;
+अटल अचिन्हित दीर्घ is_active;
+अटल अक्षर expect_release;
+/* this is निजी data क्रम each PCI-PC watchकरोg card */
+अटल काष्ठा अणु
 	/* Wether or not the card has a temperature device */
-	int supports_temp;
+	पूर्णांक supports_temp;
 	/* The card's boot status */
-	int boot_status;
+	पूर्णांक boot_status;
 	/* The cards I/O address */
-	unsigned long io_addr;
-	/* the lock for io operations */
+	अचिन्हित दीर्घ io_addr;
+	/* the lock क्रम io operations */
 	spinlock_t io_lock;
 	/* the PCI-device */
-	struct pci_dev *pdev;
-} pcipcwd_private;
+	काष्ठा pci_dev *pdev;
+पूर्ण pcipcwd_निजी;
 
 /* module parameters */
-#define QUIET	0	/* Default */
-#define VERBOSE	1	/* Verbose */
-#define DEBUG	2	/* print fancy stuff too */
-static int debug = QUIET;
-module_param(debug, int, 0);
+#घोषणा QUIET	0	/* Default */
+#घोषणा VERBOSE	1	/* Verbose */
+#घोषणा DEBUG	2	/* prपूर्णांक fancy stuff too */
+अटल पूर्णांक debug = QUIET;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug level: 0=Quiet, 1=Verbose, 2=Debug (default=0)");
 
-#define WATCHDOG_HEARTBEAT 0	/* default heartbeat =
-						delay-time from dip-switches */
-static int heartbeat = WATCHDOG_HEARTBEAT;
-module_param(heartbeat, int, 0);
+#घोषणा WATCHDOG_HEARTBEAT 0	/* शेष heartbeat =
+						delay-समय from dip-चयनes */
+अटल पूर्णांक heartbeat = WATCHDOG_HEARTBEAT;
+module_param(heartbeat, पूर्णांक, 0);
 MODULE_PARM_DESC(heartbeat, "Watchdog heartbeat in seconds. "
 	"(0<heartbeat<65536 or 0=delay-time from dip-switches, default="
 				__MODULE_STRING(WATCHDOG_HEARTBEAT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
 					__MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
@@ -151,321 +152,321 @@ MODULE_PARM_DESC(nowayout, "Watchdog cannot be stopped once started (default="
  *	Internal functions
  */
 
-static int send_command(int cmd, int *msb, int *lsb)
-{
-	int got_response, count;
+अटल पूर्णांक send_command(पूर्णांक cmd, पूर्णांक *msb, पूर्णांक *lsb)
+अणु
+	पूर्णांक got_response, count;
 
-	if (debug >= DEBUG)
+	अगर (debug >= DEBUG)
 		pr_debug("sending following data cmd=0x%02x msb=0x%02x lsb=0x%02x\n",
 			 cmd, *msb, *lsb);
 
-	spin_lock(&pcipcwd_private.io_lock);
+	spin_lock(&pcipcwd_निजी.io_lock);
 	/* If a command requires data it should be written first.
-	 * Data for commands with 8 bits of data should be written to port 4.
+	 * Data क्रम commands with 8 bits of data should be written to port 4.
 	 * Commands with 16 bits of data, should be written as LSB to port 4
 	 * and MSB to port 5.
-	 * After the required data has been written then write the command to
+	 * After the required data has been written then ग_लिखो the command to
 	 * port 6. */
-	outb_p(*lsb, pcipcwd_private.io_addr + 4);
-	outb_p(*msb, pcipcwd_private.io_addr + 5);
-	outb_p(cmd, pcipcwd_private.io_addr + 6);
+	outb_p(*lsb, pcipcwd_निजी.io_addr + 4);
+	outb_p(*msb, pcipcwd_निजी.io_addr + 5);
+	outb_p(cmd, pcipcwd_निजी.io_addr + 6);
 
-	/* wait till the pci card processed the command, signaled by
-	 * the WRSP bit in port 2 and give it a max. timeout of
+	/* रुको till the pci card processed the command, संकेतed by
+	 * the WRSP bit in port 2 and give it a max. समयout of
 	 * PCI_COMMAND_TIMEOUT to process */
-	got_response = inb_p(pcipcwd_private.io_addr + 2) & WD_PCI_WRSP;
-	for (count = 0; (count < PCI_COMMAND_TIMEOUT) && (!got_response);
-								count++) {
+	got_response = inb_p(pcipcwd_निजी.io_addr + 2) & WD_PCI_WRSP;
+	क्रम (count = 0; (count < PCI_COMMAND_TIMEOUT) && (!got_response);
+								count++) अणु
 		mdelay(1);
-		got_response = inb_p(pcipcwd_private.io_addr + 2) & WD_PCI_WRSP;
-	}
+		got_response = inb_p(pcipcwd_निजी.io_addr + 2) & WD_PCI_WRSP;
+	पूर्ण
 
-	if (debug >= DEBUG) {
-		if (got_response) {
+	अगर (debug >= DEBUG) अणु
+		अगर (got_response) अणु
 			pr_debug("time to process command was: %d ms\n",
 				 count);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("card did not respond on command!\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (got_response) {
-		/* read back response */
-		*lsb = inb_p(pcipcwd_private.io_addr + 4);
-		*msb = inb_p(pcipcwd_private.io_addr + 5);
+	अगर (got_response) अणु
+		/* पढ़ो back response */
+		*lsb = inb_p(pcipcwd_निजी.io_addr + 4);
+		*msb = inb_p(pcipcwd_निजी.io_addr + 5);
 
 		/* clear WRSP bit */
-		inb_p(pcipcwd_private.io_addr + 6);
+		inb_p(pcipcwd_निजी.io_addr + 6);
 
-		if (debug >= DEBUG)
+		अगर (debug >= DEBUG)
 			pr_debug("received following data for cmd=0x%02x: msb=0x%02x lsb=0x%02x\n",
 				 cmd, *msb, *lsb);
-	}
+	पूर्ण
 
-	spin_unlock(&pcipcwd_private.io_lock);
+	spin_unlock(&pcipcwd_निजी.io_lock);
 
-	return got_response;
-}
+	वापस got_response;
+पूर्ण
 
-static inline void pcipcwd_check_temperature_support(void)
-{
-	if (inb_p(pcipcwd_private.io_addr) != 0xF0)
-		pcipcwd_private.supports_temp = 1;
-}
+अटल अंतरभूत व्योम pcipcwd_check_temperature_support(व्योम)
+अणु
+	अगर (inb_p(pcipcwd_निजी.io_addr) != 0xF0)
+		pcipcwd_निजी.supports_temp = 1;
+पूर्ण
 
-static int pcipcwd_get_option_switches(void)
-{
-	int option_switches;
+अटल पूर्णांक pcipcwd_get_option_चयनes(व्योम)
+अणु
+	पूर्णांक option_चयनes;
 
-	option_switches = inb_p(pcipcwd_private.io_addr + 3);
-	return option_switches;
-}
+	option_चयनes = inb_p(pcipcwd_निजी.io_addr + 3);
+	वापस option_चयनes;
+पूर्ण
 
-static void pcipcwd_show_card_info(void)
-{
-	int got_fw_rev, fw_rev_major, fw_rev_minor;
-	char fw_ver_str[20];		/* The cards firmware version */
-	int option_switches;
+अटल व्योम pcipcwd_show_card_info(व्योम)
+अणु
+	पूर्णांक got_fw_rev, fw_rev_major, fw_rev_minor;
+	अक्षर fw_ver_str[20];		/* The cards firmware version */
+	पूर्णांक option_चयनes;
 
 	got_fw_rev = send_command(CMD_GET_FIRMWARE_VERSION, &fw_rev_major,
 								&fw_rev_minor);
-	if (got_fw_rev)
-		sprintf(fw_ver_str, "%u.%02u", fw_rev_major, fw_rev_minor);
-	else
-		sprintf(fw_ver_str, "<card no answer>");
+	अगर (got_fw_rev)
+		प्र_लिखो(fw_ver_str, "%u.%02u", fw_rev_major, fw_rev_minor);
+	अन्यथा
+		प्र_लिखो(fw_ver_str, "<card no answer>");
 
-	/* Get switch settings */
-	option_switches = pcipcwd_get_option_switches();
+	/* Get चयन settings */
+	option_चयनes = pcipcwd_get_option_चयनes();
 
 	pr_info("Found card at port 0x%04x (Firmware: %s) %s temp option\n",
-		(int) pcipcwd_private.io_addr, fw_ver_str,
-		(pcipcwd_private.supports_temp ? "with" : "without"));
+		(पूर्णांक) pcipcwd_निजी.io_addr, fw_ver_str,
+		(pcipcwd_निजी.supports_temp ? "with" : "without"));
 
 	pr_info("Option switches (0x%02x): Temperature Reset Enable=%s, Power On Delay=%s\n",
-		option_switches,
-		((option_switches & 0x10) ? "ON" : "OFF"),
-		((option_switches & 0x08) ? "ON" : "OFF"));
+		option_चयनes,
+		((option_चयनes & 0x10) ? "ON" : "OFF"),
+		((option_चयनes & 0x08) ? "ON" : "OFF"));
 
-	if (pcipcwd_private.boot_status & WDIOF_CARDRESET)
+	अगर (pcipcwd_निजी.boot_status & WDIOF_CARDRESET)
 		pr_info("Previous reset was caused by the Watchdog card\n");
 
-	if (pcipcwd_private.boot_status & WDIOF_OVERHEAT)
+	अगर (pcipcwd_निजी.boot_status & WDIOF_OVERHEAT)
 		pr_info("Card sensed a CPU Overheat\n");
 
-	if (pcipcwd_private.boot_status == 0)
+	अगर (pcipcwd_निजी.boot_status == 0)
 		pr_info("No previous trip detected - Cold boot or reset\n");
-}
+पूर्ण
 
-static int pcipcwd_start(void)
-{
-	int stat_reg;
+अटल पूर्णांक pcipcwd_start(व्योम)
+अणु
+	पूर्णांक stat_reg;
 
-	spin_lock(&pcipcwd_private.io_lock);
-	outb_p(0x00, pcipcwd_private.io_addr + 3);
+	spin_lock(&pcipcwd_निजी.io_lock);
+	outb_p(0x00, pcipcwd_निजी.io_addr + 3);
 	udelay(1000);
 
-	stat_reg = inb_p(pcipcwd_private.io_addr + 2);
-	spin_unlock(&pcipcwd_private.io_lock);
+	stat_reg = inb_p(pcipcwd_निजी.io_addr + 2);
+	spin_unlock(&pcipcwd_निजी.io_lock);
 
-	if (stat_reg & WD_PCI_WDIS) {
+	अगर (stat_reg & WD_PCI_WDIS) अणु
 		pr_err("Card timer not enabled\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (debug >= VERBOSE)
+	अगर (debug >= VERBOSE)
 		pr_debug("Watchdog started\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_stop(void)
-{
-	int stat_reg;
+अटल पूर्णांक pcipcwd_stop(व्योम)
+अणु
+	पूर्णांक stat_reg;
 
-	spin_lock(&pcipcwd_private.io_lock);
-	outb_p(0xA5, pcipcwd_private.io_addr + 3);
+	spin_lock(&pcipcwd_निजी.io_lock);
+	outb_p(0xA5, pcipcwd_निजी.io_addr + 3);
 	udelay(1000);
 
-	outb_p(0xA5, pcipcwd_private.io_addr + 3);
+	outb_p(0xA5, pcipcwd_निजी.io_addr + 3);
 	udelay(1000);
 
-	stat_reg = inb_p(pcipcwd_private.io_addr + 2);
-	spin_unlock(&pcipcwd_private.io_lock);
+	stat_reg = inb_p(pcipcwd_निजी.io_addr + 2);
+	spin_unlock(&pcipcwd_निजी.io_lock);
 
-	if (!(stat_reg & WD_PCI_WDIS)) {
+	अगर (!(stat_reg & WD_PCI_WDIS)) अणु
 		pr_err("Card did not acknowledge disable attempt\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (debug >= VERBOSE)
+	अगर (debug >= VERBOSE)
 		pr_debug("Watchdog stopped\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_keepalive(void)
-{
-	/* Re-trigger watchdog by writing to port 0 */
-	spin_lock(&pcipcwd_private.io_lock);
-	outb_p(0x42, pcipcwd_private.io_addr);	/* send out any data */
-	spin_unlock(&pcipcwd_private.io_lock);
+अटल पूर्णांक pcipcwd_keepalive(व्योम)
+अणु
+	/* Re-trigger watchकरोg by writing to port 0 */
+	spin_lock(&pcipcwd_निजी.io_lock);
+	outb_p(0x42, pcipcwd_निजी.io_addr);	/* send out any data */
+	spin_unlock(&pcipcwd_निजी.io_lock);
 
-	if (debug >= DEBUG)
+	अगर (debug >= DEBUG)
 		pr_debug("Watchdog keepalive signal send\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_set_heartbeat(int t)
-{
-	int t_msb = t / 256;
-	int t_lsb = t % 256;
+अटल पूर्णांक pcipcwd_set_heartbeat(पूर्णांक t)
+अणु
+	पूर्णांक t_msb = t / 256;
+	पूर्णांक t_lsb = t % 256;
 
-	if ((t < 0x0001) || (t > 0xFFFF))
-		return -EINVAL;
+	अगर ((t < 0x0001) || (t > 0xFFFF))
+		वापस -EINVAL;
 
-	/* Write new heartbeat to watchdog */
+	/* Write new heartbeat to watchकरोg */
 	send_command(CMD_WRITE_WATCHDOG_TIMEOUT, &t_msb, &t_lsb);
 
 	heartbeat = t;
-	if (debug >= VERBOSE)
+	अगर (debug >= VERBOSE)
 		pr_debug("New heartbeat: %d\n", heartbeat);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_get_status(int *status)
-{
-	int control_status;
+अटल पूर्णांक pcipcwd_get_status(पूर्णांक *status)
+अणु
+	पूर्णांक control_status;
 
 	*status = 0;
-	control_status = inb_p(pcipcwd_private.io_addr + 1);
-	if (control_status & WD_PCI_WTRP)
+	control_status = inb_p(pcipcwd_निजी.io_addr + 1);
+	अगर (control_status & WD_PCI_WTRP)
 		*status |= WDIOF_CARDRESET;
-	if (control_status & WD_PCI_TTRP) {
+	अगर (control_status & WD_PCI_TTRP) अणु
 		*status |= WDIOF_OVERHEAT;
-		if (temp_panic)
+		अगर (temp_panic)
 			panic(KBUILD_MODNAME ": Temperature overheat trip!\n");
-	}
+	पूर्ण
 
-	if (debug >= DEBUG)
+	अगर (debug >= DEBUG)
 		pr_debug("Control Status #1: 0x%02x\n", control_status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_clear_status(void)
-{
-	int control_status;
-	int msb;
-	int reset_counter;
+अटल पूर्णांक pcipcwd_clear_status(व्योम)
+अणु
+	पूर्णांक control_status;
+	पूर्णांक msb;
+	पूर्णांक reset_counter;
 
-	if (debug >= VERBOSE)
+	अगर (debug >= VERBOSE)
 		pr_info("clearing watchdog trip status & LED\n");
 
-	control_status = inb_p(pcipcwd_private.io_addr + 1);
+	control_status = inb_p(pcipcwd_निजी.io_addr + 1);
 
-	if (debug >= DEBUG) {
+	अगर (debug >= DEBUG) अणु
 		pr_debug("status was: 0x%02x\n", control_status);
 		pr_debug("sending: 0x%02x\n",
 			 (control_status & WD_PCI_R2DS) | WD_PCI_WTRP);
-	}
+	पूर्ण
 
 	/* clear trip status & LED and keep mode of relay 2 */
 	outb_p((control_status & WD_PCI_R2DS) | WD_PCI_WTRP,
-						pcipcwd_private.io_addr + 1);
+						pcipcwd_निजी.io_addr + 1);
 
 	/* clear reset counter */
 	msb = 0;
 	reset_counter = 0xff;
 	send_command(CMD_GET_CLEAR_RESET_COUNT, &msb, &reset_counter);
 
-	if (debug >= DEBUG) {
+	अगर (debug >= DEBUG) अणु
 		pr_debug("reset count was: 0x%02x\n", reset_counter);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_get_temperature(int *temperature)
-{
+अटल पूर्णांक pcipcwd_get_temperature(पूर्णांक *temperature)
+अणु
 	*temperature = 0;
-	if (!pcipcwd_private.supports_temp)
-		return -ENODEV;
+	अगर (!pcipcwd_निजी.supports_temp)
+		वापस -ENODEV;
 
-	spin_lock(&pcipcwd_private.io_lock);
-	*temperature = inb_p(pcipcwd_private.io_addr);
-	spin_unlock(&pcipcwd_private.io_lock);
+	spin_lock(&pcipcwd_निजी.io_lock);
+	*temperature = inb_p(pcipcwd_निजी.io_addr);
+	spin_unlock(&pcipcwd_निजी.io_lock);
 
 	/*
 	 * Convert celsius to fahrenheit, since this was
-	 * the decided 'standard' for this return value.
+	 * the decided 'standard' क्रम this वापस value.
 	 */
 	*temperature = (*temperature * 9 / 5) + 32;
 
-	if (debug >= DEBUG) {
+	अगर (debug >= DEBUG) अणु
 		pr_debug("temperature is: %d F\n", *temperature);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcipcwd_get_timeleft(int *time_left)
-{
-	int msb;
-	int lsb;
+अटल पूर्णांक pcipcwd_get_समयleft(पूर्णांक *समय_left)
+अणु
+	पूर्णांक msb;
+	पूर्णांक lsb;
 
-	/* Read the time that's left before rebooting */
-	/* Note: if the board is not yet armed then we will read 0xFFFF */
+	/* Read the समय that's left beक्रमe rebooting */
+	/* Note: अगर the board is not yet armed then we will पढ़ो 0xFFFF */
 	send_command(CMD_READ_WATCHDOG_TIMEOUT, &msb, &lsb);
 
-	*time_left = (msb << 8) + lsb;
+	*समय_left = (msb << 8) + lsb;
 
-	if (debug >= VERBOSE)
-		pr_debug("Time left before next reboot: %d\n", *time_left);
+	अगर (debug >= VERBOSE)
+		pr_debug("Time left before next reboot: %d\n", *समय_left);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	/dev/watchdog handling
+ *	/dev/watchकरोg handling
  */
 
-static ssize_t pcipcwd_write(struct file *file, const char __user *data,
-			     size_t len, loff_t *ppos)
-{
-	/* See if we got the magic character 'V' and reload the timer */
-	if (len) {
-		if (!nowayout) {
-			size_t i;
+अटल sमाप_प्रकार pcipcwd_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+			     माप_प्रकार len, loff_t *ppos)
+अणु
+	/* See अगर we got the magic अक्षरacter 'V' and reload the समयr */
+	अगर (len) अणु
+		अगर (!nowayout) अणु
+			माप_प्रकार i;
 
-			/* note: just in case someone wrote the magic character
+			/* note: just in हाल someone wrote the magic अक्षरacter
 			 * five months ago... */
 			expect_release = 0;
 
 			/* scan to see whether or not we got the
-			 * magic character */
-			for (i = 0; i != len; i++) {
-				char c;
-				if (get_user(c, data + i))
-					return -EFAULT;
-				if (c == 'V')
+			 * magic अक्षरacter */
+			क्रम (i = 0; i != len; i++) अणु
+				अक्षर c;
+				अगर (get_user(c, data + i))
+					वापस -EFAULT;
+				अगर (c == 'V')
 					expect_release = 42;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* someone wrote to us, we should reload the timer */
+		/* someone wrote to us, we should reload the समयr */
 		pcipcwd_keepalive();
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
-static long pcipcwd_ioctl(struct file *file, unsigned int cmd,
-						unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	int __user *p = argp;
-	static const struct watchdog_info ident = {
+अटल दीर्घ pcipcwd_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+						अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक __user *p = argp;
+	अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 		.options =		WDIOF_OVERHEAT |
 					WDIOF_CARDRESET |
 					WDIOF_KEEPALIVEPING |
@@ -473,250 +474,250 @@ static long pcipcwd_ioctl(struct file *file, unsigned int cmd,
 					WDIOF_MAGICCLOSE,
 		.firmware_version =	1,
 		.identity =		WATCHDOG_DRIVER_NAME,
-	};
+	पूर्ण;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		return copy_to_user(argp, &ident, sizeof(ident)) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		वापस copy_to_user(argp, &ident, माप(ident)) ? -EFAULT : 0;
 
-	case WDIOC_GETSTATUS:
-	{
-		int status;
+	हाल WDIOC_GETSTATUS:
+	अणु
+		पूर्णांक status;
 		pcipcwd_get_status(&status);
-		return put_user(status, p);
-	}
+		वापस put_user(status, p);
+	पूर्ण
 
-	case WDIOC_GETBOOTSTATUS:
-		return put_user(pcipcwd_private.boot_status, p);
+	हाल WDIOC_GETBOOTSTATUS:
+		वापस put_user(pcipcwd_निजी.boot_status, p);
 
-	case WDIOC_GETTEMP:
-	{
-		int temperature;
+	हाल WDIOC_GETTEMP:
+	अणु
+		पूर्णांक temperature;
 
-		if (pcipcwd_get_temperature(&temperature))
-			return -EFAULT;
+		अगर (pcipcwd_get_temperature(&temperature))
+			वापस -EFAULT;
 
-		return put_user(temperature, p);
-	}
+		वापस put_user(temperature, p);
+	पूर्ण
 
-	case WDIOC_SETOPTIONS:
-	{
-		int new_options, retval = -EINVAL;
+	हाल WDIOC_SETOPTIONS:
+	अणु
+		पूर्णांक new_options, retval = -EINVAL;
 
-		if (get_user(new_options, p))
-			return -EFAULT;
+		अगर (get_user(new_options, p))
+			वापस -EFAULT;
 
-		if (new_options & WDIOS_DISABLECARD) {
-			if (pcipcwd_stop())
-				return -EIO;
+		अगर (new_options & WDIOS_DISABLECARD) अणु
+			अगर (pcipcwd_stop())
+				वापस -EIO;
 			retval = 0;
-		}
+		पूर्ण
 
-		if (new_options & WDIOS_ENABLECARD) {
-			if (pcipcwd_start())
-				return -EIO;
+		अगर (new_options & WDIOS_ENABLECARD) अणु
+			अगर (pcipcwd_start())
+				वापस -EIO;
 			retval = 0;
-		}
+		पूर्ण
 
-		if (new_options & WDIOS_TEMPPANIC) {
+		अगर (new_options & WDIOS_TEMPPANIC) अणु
 			temp_panic = 1;
 			retval = 0;
-		}
+		पूर्ण
 
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		pcipcwd_keepalive();
-		return 0;
+		वापस 0;
 
-	case WDIOC_SETTIMEOUT:
-	{
-		int new_heartbeat;
+	हाल WDIOC_SETTIMEOUT:
+	अणु
+		पूर्णांक new_heartbeat;
 
-		if (get_user(new_heartbeat, p))
-			return -EFAULT;
+		अगर (get_user(new_heartbeat, p))
+			वापस -EFAULT;
 
-		if (pcipcwd_set_heartbeat(new_heartbeat))
-			return -EINVAL;
+		अगर (pcipcwd_set_heartbeat(new_heartbeat))
+			वापस -EINVAL;
 
 		pcipcwd_keepalive();
-	}
+	पूर्ण
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		return put_user(heartbeat, p);
+	हाल WDIOC_GETTIMEOUT:
+		वापस put_user(heartbeat, p);
 
-	case WDIOC_GETTIMELEFT:
-	{
-		int time_left;
+	हाल WDIOC_GETTIMELEFT:
+	अणु
+		पूर्णांक समय_left;
 
-		if (pcipcwd_get_timeleft(&time_left))
-			return -EFAULT;
+		अगर (pcipcwd_get_समयleft(&समय_left))
+			वापस -EFAULT;
 
-		return put_user(time_left, p);
-	}
+		वापस put_user(समय_left, p);
+	पूर्ण
 
-	default:
-		return -ENOTTY;
-	}
-}
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
+पूर्ण
 
-static int pcipcwd_open(struct inode *inode, struct file *file)
-{
-	/* /dev/watchdog can only be opened once */
-	if (test_and_set_bit(0, &is_active)) {
-		if (debug >= VERBOSE)
+अटल पूर्णांक pcipcwd_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	/* /dev/watchकरोg can only be खोलोed once */
+	अगर (test_and_set_bit(0, &is_active)) अणु
+		अगर (debug >= VERBOSE)
 			pr_err("Attempt to open already opened device\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	/* Activate */
 	pcipcwd_start();
 	pcipcwd_keepalive();
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int pcipcwd_release(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक pcipcwd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	/*
-	 *      Shut off the timer.
+	 *      Shut off the समयr.
 	 */
-	if (expect_release == 42) {
+	अगर (expect_release == 42) अणु
 		pcipcwd_stop();
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_crit("Unexpected close, not stopping watchdog!\n");
 		pcipcwd_keepalive();
-	}
+	पूर्ण
 	expect_release = 0;
 	clear_bit(0, &is_active);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	/dev/temperature handling
  */
 
-static ssize_t pcipcwd_temp_read(struct file *file, char __user *data,
-				size_t len, loff_t *ppos)
-{
-	int temperature;
+अटल sमाप_प्रकार pcipcwd_temp_पढ़ो(काष्ठा file *file, अक्षर __user *data,
+				माप_प्रकार len, loff_t *ppos)
+अणु
+	पूर्णांक temperature;
 
-	if (pcipcwd_get_temperature(&temperature))
-		return -EFAULT;
+	अगर (pcipcwd_get_temperature(&temperature))
+		वापस -EFAULT;
 
-	if (copy_to_user(data, &temperature, 1))
-		return -EFAULT;
+	अगर (copy_to_user(data, &temperature, 1))
+		वापस -EFAULT;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int pcipcwd_temp_open(struct inode *inode, struct file *file)
-{
-	if (!pcipcwd_private.supports_temp)
-		return -ENODEV;
+अटल पूर्णांक pcipcwd_temp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (!pcipcwd_निजी.supports_temp)
+		वापस -ENODEV;
 
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static int pcipcwd_temp_release(struct inode *inode, struct file *file)
-{
-	return 0;
-}
+अटल पूर्णांक pcipcwd_temp_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- *	Notify system
+ *	Notअगरy प्रणाली
  */
 
-static int pcipcwd_notify_sys(struct notifier_block *this, unsigned long code,
-								void *unused)
-{
-	if (code == SYS_DOWN || code == SYS_HALT)
+अटल पूर्णांक pcipcwd_notअगरy_sys(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ code,
+								व्योम *unused)
+अणु
+	अगर (code == SYS_DOWN || code == SYS_HALT)
 		pcipcwd_stop();	/* Turn the WDT off */
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /*
  *	Kernel Interfaces
  */
 
-static const struct file_operations pcipcwd_fops = {
+अटल स्थिर काष्ठा file_operations pcipcwd_fops = अणु
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.write =	pcipcwd_write,
+	.ग_लिखो =	pcipcwd_ग_लिखो,
 	.unlocked_ioctl = pcipcwd_ioctl,
 	.compat_ioctl = compat_ptr_ioctl,
-	.open =		pcipcwd_open,
+	.खोलो =		pcipcwd_खोलो,
 	.release =	pcipcwd_release,
-};
+पूर्ण;
 
-static struct miscdevice pcipcwd_miscdev = {
+अटल काष्ठा miscdevice pcipcwd_miscdev = अणु
 	.minor =	WATCHDOG_MINOR,
 	.name =		"watchdog",
 	.fops =		&pcipcwd_fops,
-};
+पूर्ण;
 
-static const struct file_operations pcipcwd_temp_fops = {
+अटल स्थिर काष्ठा file_operations pcipcwd_temp_fops = अणु
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.read =		pcipcwd_temp_read,
-	.open =		pcipcwd_temp_open,
+	.पढ़ो =		pcipcwd_temp_पढ़ो,
+	.खोलो =		pcipcwd_temp_खोलो,
 	.release =	pcipcwd_temp_release,
-};
+पूर्ण;
 
-static struct miscdevice pcipcwd_temp_miscdev = {
+अटल काष्ठा miscdevice pcipcwd_temp_miscdev = अणु
 	.minor =	TEMP_MINOR,
 	.name =		"temperature",
 	.fops =		&pcipcwd_temp_fops,
-};
+पूर्ण;
 
-static struct notifier_block pcipcwd_notifier = {
-	.notifier_call =	pcipcwd_notify_sys,
-};
+अटल काष्ठा notअगरier_block pcipcwd_notअगरier = अणु
+	.notअगरier_call =	pcipcwd_notअगरy_sys,
+पूर्ण;
 
 /*
- *	Init & exit routines
+ *	Init & निकास routines
  */
 
-static int pcipcwd_card_init(struct pci_dev *pdev,
-		const struct pci_device_id *ent)
-{
-	int ret = -EIO;
+अटल पूर्णांक pcipcwd_card_init(काष्ठा pci_dev *pdev,
+		स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक ret = -EIO;
 
 	cards_found++;
-	if (cards_found == 1)
+	अगर (cards_found == 1)
 		pr_info("%s\n", DRIVER_VERSION);
 
-	if (cards_found > 1) {
+	अगर (cards_found > 1) अणु
 		pr_err("This driver only supports 1 device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pci_enable_device(pdev)) {
+	अगर (pci_enable_device(pdev)) अणु
 		pr_err("Not possible to enable PCI Device\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pci_resource_start(pdev, 0) == 0x0000) {
+	अगर (pci_resource_start(pdev, 0) == 0x0000) अणु
 		pr_err("No I/O-Address for card detected\n");
 		ret = -ENODEV;
-		goto err_out_disable_device;
-	}
+		जाओ err_out_disable_device;
+	पूर्ण
 
-	spin_lock_init(&pcipcwd_private.io_lock);
-	pcipcwd_private.pdev = pdev;
-	pcipcwd_private.io_addr = pci_resource_start(pdev, 0);
+	spin_lock_init(&pcipcwd_निजी.io_lock);
+	pcipcwd_निजी.pdev = pdev;
+	pcipcwd_निजी.io_addr = pci_resource_start(pdev, 0);
 
-	if (pci_request_regions(pdev, WATCHDOG_NAME)) {
+	अगर (pci_request_regions(pdev, WATCHDOG_NAME)) अणु
 		pr_err("I/O address 0x%04x already in use\n",
-		       (int) pcipcwd_private.io_addr);
+		       (पूर्णांक) pcipcwd_निजी.io_addr);
 		ret = -EIO;
-		goto err_out_disable_device;
-	}
+		जाओ err_out_disable_device;
+	पूर्ण
 
 	/* get the boot_status */
-	pcipcwd_get_status(&pcipcwd_private.boot_status);
+	pcipcwd_get_status(&pcipcwd_निजी.boot_status);
 
 	/* clear the "card caused reboot" flag */
 	pcipcwd_clear_status();
@@ -730,87 +731,87 @@ static int pcipcwd_card_init(struct pci_dev *pdev,
 	/* Show info about the card itself */
 	pcipcwd_show_card_info();
 
-	/* If heartbeat = 0 then we use the heartbeat from the dip-switches */
-	if (heartbeat == 0)
+	/* If heartbeat = 0 then we use the heartbeat from the dip-चयनes */
+	अगर (heartbeat == 0)
 		heartbeat =
-			heartbeat_tbl[(pcipcwd_get_option_switches() & 0x07)];
+			heartbeat_tbl[(pcipcwd_get_option_चयनes() & 0x07)];
 
 	/* Check that the heartbeat value is within it's range ;
-	 * if not reset to the default */
-	if (pcipcwd_set_heartbeat(heartbeat)) {
+	 * अगर not reset to the शेष */
+	अगर (pcipcwd_set_heartbeat(heartbeat)) अणु
 		pcipcwd_set_heartbeat(WATCHDOG_HEARTBEAT);
 		pr_info("heartbeat value must be 0<heartbeat<65536, using %d\n",
 			WATCHDOG_HEARTBEAT);
-	}
+	पूर्ण
 
-	ret = register_reboot_notifier(&pcipcwd_notifier);
-	if (ret != 0) {
+	ret = रेजिस्टर_reboot_notअगरier(&pcipcwd_notअगरier);
+	अगर (ret != 0) अणु
 		pr_err("cannot register reboot notifier (err=%d)\n", ret);
-		goto err_out_release_region;
-	}
+		जाओ err_out_release_region;
+	पूर्ण
 
-	if (pcipcwd_private.supports_temp) {
-		ret = misc_register(&pcipcwd_temp_miscdev);
-		if (ret != 0) {
+	अगर (pcipcwd_निजी.supports_temp) अणु
+		ret = misc_रेजिस्टर(&pcipcwd_temp_miscdev);
+		अगर (ret != 0) अणु
 			pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 			       TEMP_MINOR, ret);
-			goto err_out_unregister_reboot;
-		}
-	}
+			जाओ err_out_unरेजिस्टर_reboot;
+		पूर्ण
+	पूर्ण
 
-	ret = misc_register(&pcipcwd_miscdev);
-	if (ret != 0) {
+	ret = misc_रेजिस्टर(&pcipcwd_miscdev);
+	अगर (ret != 0) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, ret);
-		goto err_out_misc_deregister;
-	}
+		जाओ err_out_misc_deरेजिस्टर;
+	पूर्ण
 
 	pr_info("initialized. heartbeat=%d sec (nowayout=%d)\n",
 		heartbeat, nowayout);
 
-	return 0;
+	वापस 0;
 
-err_out_misc_deregister:
-	if (pcipcwd_private.supports_temp)
-		misc_deregister(&pcipcwd_temp_miscdev);
-err_out_unregister_reboot:
-	unregister_reboot_notifier(&pcipcwd_notifier);
+err_out_misc_deरेजिस्टर:
+	अगर (pcipcwd_निजी.supports_temp)
+		misc_deरेजिस्टर(&pcipcwd_temp_miscdev);
+err_out_unरेजिस्टर_reboot:
+	unरेजिस्टर_reboot_notअगरier(&pcipcwd_notअगरier);
 err_out_release_region:
 	pci_release_regions(pdev);
 err_out_disable_device:
 	pci_disable_device(pdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void pcipcwd_card_exit(struct pci_dev *pdev)
-{
-	/* Stop the timer before we leave */
-	if (!nowayout)
+अटल व्योम pcipcwd_card_निकास(काष्ठा pci_dev *pdev)
+अणु
+	/* Stop the समयr beक्रमe we leave */
+	अगर (!nowayout)
 		pcipcwd_stop();
 
-	/* Deregister */
-	misc_deregister(&pcipcwd_miscdev);
-	if (pcipcwd_private.supports_temp)
-		misc_deregister(&pcipcwd_temp_miscdev);
-	unregister_reboot_notifier(&pcipcwd_notifier);
+	/* Deरेजिस्टर */
+	misc_deरेजिस्टर(&pcipcwd_miscdev);
+	अगर (pcipcwd_निजी.supports_temp)
+		misc_deरेजिस्टर(&pcipcwd_temp_miscdev);
+	unरेजिस्टर_reboot_notअगरier(&pcipcwd_notअगरier);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
 	cards_found--;
-}
+पूर्ण
 
-static const struct pci_device_id pcipcwd_pci_tbl[] = {
-	{ PCI_VENDOR_ID_QUICKLOGIC, PCI_DEVICE_ID_WATCHDOG_PCIPCWD,
-		PCI_ANY_ID, PCI_ANY_ID, },
-	{ 0 },			/* End of list */
-};
+अटल स्थिर काष्ठा pci_device_id pcipcwd_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_QUICKLOGIC, PCI_DEVICE_ID_WATCHDOG_PCIPCWD,
+		PCI_ANY_ID, PCI_ANY_ID, पूर्ण,
+	अणु 0 पूर्ण,			/* End of list */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pcipcwd_pci_tbl);
 
-static struct pci_driver pcipcwd_driver = {
+अटल काष्ठा pci_driver pcipcwd_driver = अणु
 	.name		= WATCHDOG_NAME,
 	.id_table	= pcipcwd_pci_tbl,
 	.probe		= pcipcwd_card_init,
-	.remove		= pcipcwd_card_exit,
-};
+	.हटाओ		= pcipcwd_card_निकास,
+पूर्ण;
 
 module_pci_driver(pcipcwd_driver);
 

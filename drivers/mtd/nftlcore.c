@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Linux driver for NAND Flash Translation Layer
+ * Linux driver क्रम न_अंकD Flash Translation Layer
  *
- * Copyright © 1999 Machine Vision Holdings, Inc.
- * Copyright © 1999-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 1999 Machine Vision Holdings, Inc.
+ * Copyright तऊ 1999-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#define PRERELEASE
+#घोषणा PRERELEASE
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/errno.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/hdreg.h>
-#include <linux/blkdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/blkdev.h>
 
-#include <linux/kmod.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/nftl.h>
-#include <linux/mtd/blktrans.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/nftl.h>
+#समावेश <linux/mtd/blktrans.h>
 
-/* maximum number of loops while examining next block, to have a
+/* maximum number of loops जबतक examining next block, to have a
    chance to detect consistency problems (they should never happen
-   because of the checks done in the mounting */
+   because of the checks करोne in the mounting */
 
-#define MAX_LOOPS 10000
+#घोषणा MAX_LOOPS 10000
 
 
-static void nftl_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
-{
-	struct NFTLrecord *nftl;
-	unsigned long temp;
+अटल व्योम nftl_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा NFTLrecord *nftl;
+	अचिन्हित दीर्घ temp;
 
-	if (!mtd_type_is_nand(mtd) || mtd->size > UINT_MAX)
-		return;
+	अगर (!mtd_type_is_nand(mtd) || mtd->size > अच_पूर्णांक_उच्च)
+		वापस;
 	/* OK, this is moderately ugly.  But probably safe.  Alternatives? */
-	if (memcmp(mtd->name, "DiskOnChip", 10))
-		return;
+	अगर (स_भेद(mtd->name, "DiskOnChip", 10))
+		वापस;
 
 	pr_debug("NFTL: add_mtd for %s\n", mtd->name);
 
-	nftl = kzalloc(sizeof(struct NFTLrecord), GFP_KERNEL);
+	nftl = kzalloc(माप(काष्ठा NFTLrecord), GFP_KERNEL);
 
-	if (!nftl)
-		return;
+	अगर (!nftl)
+		वापस;
 
 	nftl->mbd.mtd = mtd;
 	nftl->mbd.devnum = -1;
 
 	nftl->mbd.tr = tr;
 
-        if (NFTL_mount(nftl) < 0) {
-		printk(KERN_WARNING "NFTL: could not mount device\n");
-		kfree(nftl);
-		return;
-        }
+        अगर (NFTL_mount(nftl) < 0) अणु
+		prपूर्णांकk(KERN_WARNING "NFTL: could not mount device\n");
+		kमुक्त(nftl);
+		वापस;
+        पूर्ण
 
-	/* OK, it's a new one. Set up all the data structures. */
+	/* OK, it's a new one. Set up all the data काष्ठाures. */
 
 	/* Calculate geometry */
 	nftl->cylinders = 1024;
@@ -69,107 +70,107 @@ static void nftl_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
 
 	temp = nftl->cylinders * nftl->heads;
 	nftl->sectors = nftl->mbd.size / temp;
-	if (nftl->mbd.size % temp) {
+	अगर (nftl->mbd.size % temp) अणु
 		nftl->sectors++;
 		temp = nftl->cylinders * nftl->sectors;
 		nftl->heads = nftl->mbd.size / temp;
 
-		if (nftl->mbd.size % temp) {
+		अगर (nftl->mbd.size % temp) अणु
 			nftl->heads++;
 			temp = nftl->heads * nftl->sectors;
 			nftl->cylinders = nftl->mbd.size / temp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (nftl->mbd.size != nftl->heads * nftl->cylinders * nftl->sectors) {
+	अगर (nftl->mbd.size != nftl->heads * nftl->cylinders * nftl->sectors) अणु
 		/*
-		  Oh no we don't have
+		  Oh no we करोn't have
 		   mbd.size == heads * cylinders * sectors
 		*/
-		printk(KERN_WARNING "NFTL: cannot calculate a geometry to "
+		prपूर्णांकk(KERN_WARNING "NFTL: cannot calculate a geometry to "
 		       "match size of 0x%lx.\n", nftl->mbd.size);
-		printk(KERN_WARNING "NFTL: using C:%d H:%d S:%d "
+		prपूर्णांकk(KERN_WARNING "NFTL: using C:%d H:%d S:%d "
 			"(== 0x%lx sects)\n",
 			nftl->cylinders, nftl->heads , nftl->sectors,
-			(long)nftl->cylinders * (long)nftl->heads *
-			(long)nftl->sectors );
-	}
+			(दीर्घ)nftl->cylinders * (दीर्घ)nftl->heads *
+			(दीर्घ)nftl->sectors );
+	पूर्ण
 
-	if (add_mtd_blktrans_dev(&nftl->mbd)) {
-		kfree(nftl->ReplUnitTable);
-		kfree(nftl->EUNtable);
-		kfree(nftl);
-		return;
-	}
-#ifdef PSYCHO_DEBUG
-	printk(KERN_INFO "NFTL: Found new nftl%c\n", nftl->mbd.devnum + 'a');
-#endif
-}
+	अगर (add_mtd_blktrans_dev(&nftl->mbd)) अणु
+		kमुक्त(nftl->ReplUnitTable);
+		kमुक्त(nftl->EUNtable);
+		kमुक्त(nftl);
+		वापस;
+	पूर्ण
+#अगर_घोषित PSYCHO_DEBUG
+	prपूर्णांकk(KERN_INFO "NFTL: Found new nftl%c\n", nftl->mbd.devnum + 'a');
+#पूर्ण_अगर
+पूर्ण
 
-static void nftl_remove_dev(struct mtd_blktrans_dev *dev)
-{
-	struct NFTLrecord *nftl = (void *)dev;
+अटल व्योम nftl_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
+अणु
+	काष्ठा NFTLrecord *nftl = (व्योम *)dev;
 
 	pr_debug("NFTL: remove_dev (i=%d)\n", dev->devnum);
 
 	del_mtd_blktrans_dev(dev);
-	kfree(nftl->ReplUnitTable);
-	kfree(nftl->EUNtable);
-}
+	kमुक्त(nftl->ReplUnitTable);
+	kमुक्त(nftl->EUNtable);
+पूर्ण
 
 /*
  * Read oob data from flash
  */
-int nftl_read_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-		  size_t *retlen, uint8_t *buf)
-{
-	loff_t mask = mtd->writesize - 1;
-	struct mtd_oob_ops ops;
-	int res;
+पूर्णांक nftl_पढ़ो_oob(काष्ठा mtd_info *mtd, loff_t offs, माप_प्रकार len,
+		  माप_प्रकार *retlen, uपूर्णांक8_t *buf)
+अणु
+	loff_t mask = mtd->ग_लिखोsize - 1;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक res;
 
 	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = offs & mask;
 	ops.ooblen = len;
 	ops.oobbuf = buf;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 
-	res = mtd_read_oob(mtd, offs & ~mask, &ops);
+	res = mtd_पढ़ो_oob(mtd, offs & ~mask, &ops);
 	*retlen = ops.oobretlen;
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  * Write oob data to flash
  */
-int nftl_write_oob(struct mtd_info *mtd, loff_t offs, size_t len,
-		   size_t *retlen, uint8_t *buf)
-{
-	loff_t mask = mtd->writesize - 1;
-	struct mtd_oob_ops ops;
-	int res;
+पूर्णांक nftl_ग_लिखो_oob(काष्ठा mtd_info *mtd, loff_t offs, माप_प्रकार len,
+		   माप_प्रकार *retlen, uपूर्णांक8_t *buf)
+अणु
+	loff_t mask = mtd->ग_लिखोsize - 1;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक res;
 
 	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = offs & mask;
 	ops.ooblen = len;
 	ops.oobbuf = buf;
-	ops.datbuf = NULL;
+	ops.datbuf = शून्य;
 
-	res = mtd_write_oob(mtd, offs & ~mask, &ops);
+	res = mtd_ग_लिखो_oob(mtd, offs & ~mask, &ops);
 	*retlen = ops.oobretlen;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#ifdef CONFIG_NFTL_RW
+#अगर_घोषित CONFIG_NFTL_RW
 
 /*
  * Write data and oob to flash
  */
-static int nftl_write(struct mtd_info *mtd, loff_t offs, size_t len,
-		      size_t *retlen, uint8_t *buf, uint8_t *oob)
-{
-	loff_t mask = mtd->writesize - 1;
-	struct mtd_oob_ops ops;
-	int res;
+अटल पूर्णांक nftl_ग_लिखो(काष्ठा mtd_info *mtd, loff_t offs, माप_प्रकार len,
+		      माप_प्रकार *retlen, uपूर्णांक8_t *buf, uपूर्णांक8_t *oob)
+अणु
+	loff_t mask = mtd->ग_लिखोsize - 1;
+	काष्ठा mtd_oob_ops ops;
+	पूर्णांक res;
 
 	ops.mode = MTD_OPS_PLACE_OOB;
 	ops.ooboffs = offs & mask;
@@ -178,162 +179,162 @@ static int nftl_write(struct mtd_info *mtd, loff_t offs, size_t len,
 	ops.datbuf = buf;
 	ops.len = len;
 
-	res = mtd_write_oob(mtd, offs & ~mask, &ops);
+	res = mtd_ग_लिखो_oob(mtd, offs & ~mask, &ops);
 	*retlen = ops.retlen;
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* Actual NFTL access routines */
-/* NFTL_findfreeblock: Find a free Erase Unit on the NFTL partition. This function is used
+/* NFTL_findमुक्तblock: Find a मुक्त Erase Unit on the NFTL partition. This function is used
  *	when the give Virtual Unit Chain
  */
-static u16 NFTL_findfreeblock(struct NFTLrecord *nftl, int desperate )
-{
-	/* For a given Virtual Unit Chain: find or create a free block and
+अटल u16 NFTL_findमुक्तblock(काष्ठा NFTLrecord *nftl, पूर्णांक desperate )
+अणु
+	/* For a given Virtual Unit Chain: find or create a मुक्त block and
 	   add it to the chain */
 	/* We're passed the number of the last EUN in the chain, to save us from
 	   having to look it up again */
 	u16 pot = nftl->LastFreeEUN;
-	int silly = nftl->nb_blocks;
+	पूर्णांक silly = nftl->nb_blocks;
 
-	/* Normally, we force a fold to happen before we run out of free blocks completely */
-	if (!desperate && nftl->numfreeEUNs < 2) {
+	/* Normally, we क्रमce a fold to happen beक्रमe we run out of मुक्त blocks completely */
+	अगर (!desperate && nftl->numमुक्तEUNs < 2) अणु
 		pr_debug("NFTL_findfreeblock: there are too few free EUNs\n");
-		return BLOCK_NIL;
-	}
+		वापस BLOCK_NIL;
+	पूर्ण
 
-	/* Scan for a free block */
-	do {
-		if (nftl->ReplUnitTable[pot] == BLOCK_FREE) {
+	/* Scan क्रम a मुक्त block */
+	करो अणु
+		अगर (nftl->ReplUnitTable[pot] == BLOCK_FREE) अणु
 			nftl->LastFreeEUN = pot;
-			nftl->numfreeEUNs--;
-			return pot;
-		}
+			nftl->numमुक्तEUNs--;
+			वापस pot;
+		पूर्ण
 
-		/* This will probably point to the MediaHdr unit itself,
+		/* This will probably poपूर्णांक to the MediaHdr unit itself,
 		   right at the beginning of the partition. But that unit
 		   (and the backup unit too) should have the UCI set
-		   up so that it's not selected for overwriting */
-		if (++pot > nftl->lastEUN)
+		   up so that it's not selected क्रम overwriting */
+		अगर (++pot > nftl->lastEUN)
 			pot = le16_to_cpu(nftl->MediaHdr.FirstPhysicalEUN);
 
-		if (!silly--) {
-			printk("Argh! No free blocks found! LastFreeEUN = %d, "
+		अगर (!silly--) अणु
+			prपूर्णांकk("Argh! No free blocks found! LastFreeEUN = %d, "
 			       "FirstEUN = %d\n", nftl->LastFreeEUN,
 			       le16_to_cpu(nftl->MediaHdr.FirstPhysicalEUN));
-			return BLOCK_NIL;
-		}
-	} while (pot != nftl->LastFreeEUN);
+			वापस BLOCK_NIL;
+		पूर्ण
+	पूर्ण जबतक (pot != nftl->LastFreeEUN);
 
-	return BLOCK_NIL;
-}
+	वापस BLOCK_NIL;
+पूर्ण
 
-static u16 NFTL_foldchain (struct NFTLrecord *nftl, unsigned thisVUC, unsigned pendingblock )
-{
-	struct mtd_info *mtd = nftl->mbd.mtd;
+अटल u16 NFTL_foldchain (काष्ठा NFTLrecord *nftl, अचिन्हित thisVUC, अचिन्हित pendingblock )
+अणु
+	काष्ठा mtd_info *mtd = nftl->mbd.mtd;
 	u16 BlockMap[MAX_SECTORS_PER_UNIT];
-	unsigned char BlockLastState[MAX_SECTORS_PER_UNIT];
-	unsigned char BlockFreeFound[MAX_SECTORS_PER_UNIT];
-	unsigned int thisEUN;
-	int block;
-	int silly;
-	unsigned int targetEUN;
-	struct nftl_oob oob;
-	int inplace = 1;
-	size_t retlen;
+	अचिन्हित अक्षर BlockLastState[MAX_SECTORS_PER_UNIT];
+	अचिन्हित अक्षर BlockFreeFound[MAX_SECTORS_PER_UNIT];
+	अचिन्हित पूर्णांक thisEUN;
+	पूर्णांक block;
+	पूर्णांक silly;
+	अचिन्हित पूर्णांक targetEUN;
+	काष्ठा nftl_oob oob;
+	पूर्णांक inplace = 1;
+	माप_प्रकार retlen;
 
-	memset(BlockMap, 0xff, sizeof(BlockMap));
-	memset(BlockFreeFound, 0, sizeof(BlockFreeFound));
+	स_रखो(BlockMap, 0xff, माप(BlockMap));
+	स_रखो(BlockFreeFound, 0, माप(BlockFreeFound));
 
 	thisEUN = nftl->EUNtable[thisVUC];
 
-	if (thisEUN == BLOCK_NIL) {
-		printk(KERN_WARNING "Trying to fold non-existent "
+	अगर (thisEUN == BLOCK_NIL) अणु
+		prपूर्णांकk(KERN_WARNING "Trying to fold non-existent "
 		       "Virtual Unit Chain %d!\n", thisVUC);
-		return BLOCK_NIL;
-	}
+		वापस BLOCK_NIL;
+	पूर्ण
 
-	/* Scan to find the Erase Unit which holds the actual data for each
+	/* Scan to find the Erase Unit which holds the actual data क्रम each
 	   512-byte block within the Chain.
 	*/
 	silly = MAX_LOOPS;
 	targetEUN = BLOCK_NIL;
-	while (thisEUN <= nftl->lastEUN ) {
-		unsigned int status, foldmark;
+	जबतक (thisEUN <= nftl->lastEUN ) अणु
+		अचिन्हित पूर्णांक status, foldmark;
 
 		targetEUN = thisEUN;
-		for (block = 0; block < nftl->EraseSize / 512; block ++) {
-			nftl_read_oob(mtd, (thisEUN * nftl->EraseSize) +
+		क्रम (block = 0; block < nftl->EraseSize / 512; block ++) अणु
+			nftl_पढ़ो_oob(mtd, (thisEUN * nftl->EraseSize) +
 				      (block * 512), 16 , &retlen,
-				      (char *)&oob);
-			if (block == 2) {
+				      (अक्षर *)&oob);
+			अगर (block == 2) अणु
 				foldmark = oob.u.c.FoldMark | oob.u.c.FoldMark1;
-				if (foldmark == FOLD_MARK_IN_PROGRESS) {
+				अगर (foldmark == FOLD_MARK_IN_PROGRESS) अणु
 					pr_debug("Write Inhibited on EUN %d\n", thisEUN);
 					inplace = 0;
-				} else {
-					/* There's no other reason not to do inplace,
-					   except ones that come later. So we don't need
+				पूर्ण अन्यथा अणु
+					/* There's no other reason not to करो inplace,
+					   except ones that come later. So we करोn't need
 					   to preserve inplace */
 					inplace = 1;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			status = oob.b.Status | oob.b.Status1;
 			BlockLastState[block] = status;
 
-			switch(status) {
-			case SECTOR_FREE:
+			चयन(status) अणु
+			हाल SECTOR_FREE:
 				BlockFreeFound[block] = 1;
-				break;
+				अवरोध;
 
-			case SECTOR_USED:
-				if (!BlockFreeFound[block])
+			हाल SECTOR_USED:
+				अगर (!BlockFreeFound[block])
 					BlockMap[block] = thisEUN;
-				else
-					printk(KERN_WARNING
+				अन्यथा
+					prपूर्णांकk(KERN_WARNING
 					       "SECTOR_USED found after SECTOR_FREE "
 					       "in Virtual Unit Chain %d for block %d\n",
 					       thisVUC, block);
-				break;
-			case SECTOR_DELETED:
-				if (!BlockFreeFound[block])
+				अवरोध;
+			हाल SECTOR_DELETED:
+				अगर (!BlockFreeFound[block])
 					BlockMap[block] = BLOCK_NIL;
-				else
-					printk(KERN_WARNING
+				अन्यथा
+					prपूर्णांकk(KERN_WARNING
 					       "SECTOR_DELETED found after SECTOR_FREE "
 					       "in Virtual Unit Chain %d for block %d\n",
 					       thisVUC, block);
-				break;
+				अवरोध;
 
-			case SECTOR_IGNORE:
-				break;
-			default:
-				printk("Unknown status for block %d in EUN %d: %x\n",
+			हाल SECTOR_IGNORE:
+				अवरोध;
+			शेष:
+				prपूर्णांकk("Unknown status for block %d in EUN %d: %x\n",
 				       block, thisEUN, status);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (!silly--) {
-			printk(KERN_WARNING "Infinite loop in Virtual Unit Chain 0x%x\n",
+		अगर (!silly--) अणु
+			prपूर्णांकk(KERN_WARNING "Infinite loop in Virtual Unit Chain 0x%x\n",
 			       thisVUC);
-			return BLOCK_NIL;
-		}
+			वापस BLOCK_NIL;
+		पूर्ण
 
 		thisEUN = nftl->ReplUnitTable[thisEUN];
-	}
+	पूर्ण
 
-	if (inplace) {
+	अगर (inplace) अणु
 		/* We're being asked to be a fold-in-place. Check
 		   that all blocks which actually have data associated
 		   with them (i.e. BlockMap[block] != BLOCK_NIL) are
-		   either already present or SECTOR_FREE in the target
+		   either alपढ़ोy present or SECTOR_FREE in the target
 		   block. If not, we're going to have to fold out-of-place
 		   anyway.
 		*/
-		for (block = 0; block < nftl->EraseSize / 512 ; block++) {
-			if (BlockLastState[block] != SECTOR_FREE &&
+		क्रम (block = 0; block < nftl->EraseSize / 512 ; block++) अणु
+			अगर (BlockLastState[block] != SECTOR_FREE &&
 			    BlockMap[block] != BLOCK_NIL &&
-			    BlockMap[block] != targetEUN) {
+			    BlockMap[block] != targetEUN) अणु
 				pr_debug("Setting inplace to 0. VUC %d, "
 				      "block %d was %x lastEUN, "
 				      "and is in EUN %d (%s) %d\n",
@@ -342,438 +343,438 @@ static u16 NFTL_foldchain (struct NFTLrecord *nftl, unsigned thisVUC, unsigned p
 				      BlockMap[block]== targetEUN ? "==" : "!=",
 				      targetEUN);
 				inplace = 0;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (pendingblock >= (thisVUC * (nftl->EraseSize / 512)) &&
+		अगर (pendingblock >= (thisVUC * (nftl->EraseSize / 512)) &&
 		    pendingblock < ((thisVUC + 1)* (nftl->EraseSize / 512)) &&
 		    BlockLastState[pendingblock - (thisVUC * (nftl->EraseSize / 512))] !=
-		    SECTOR_FREE) {
+		    SECTOR_FREE) अणु
 			pr_debug("Pending write not free in EUN %d. "
 			      "Folding out of place.\n", targetEUN);
 			inplace = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!inplace) {
+	अगर (!inplace) अणु
 		pr_debug("Cannot fold Virtual Unit Chain %d in place. "
 		      "Trying out-of-place\n", thisVUC);
-		/* We need to find a targetEUN to fold into. */
-		targetEUN = NFTL_findfreeblock(nftl, 1);
-		if (targetEUN == BLOCK_NIL) {
-			/* Ouch. Now we're screwed. We need to do a
+		/* We need to find a targetEUN to fold पूर्णांकo. */
+		targetEUN = NFTL_findमुक्तblock(nftl, 1);
+		अगर (targetEUN == BLOCK_NIL) अणु
+			/* Ouch. Now we're screwed. We need to करो a
 			   fold-in-place of another chain to make room
-			   for this one. We need a better way of selecting
-			   which chain to fold, because makefreeblock will
+			   क्रम this one. We need a better way of selecting
+			   which chain to fold, because makeमुक्तblock will
 			   only ask us to fold the same one again.
 			*/
-			printk(KERN_WARNING
+			prपूर्णांकk(KERN_WARNING
 			       "NFTL_findfreeblock(desperate) returns 0xffff.\n");
-			return BLOCK_NIL;
-		}
-	} else {
-		/* We put a fold mark in the chain we are folding only if we
-               fold in place to help the mount check code. If we do not fold in
+			वापस BLOCK_NIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* We put a fold mark in the chain we are folding only अगर we
+               fold in place to help the mount check code. If we करो not fold in
                place, it is possible to find the valid chain by selecting the
-               longer one */
+               दीर्घer one */
 		oob.u.c.FoldMark = oob.u.c.FoldMark1 = cpu_to_le16(FOLD_MARK_IN_PROGRESS);
 		oob.u.c.unused = 0xffffffff;
-		nftl_write_oob(mtd, (nftl->EraseSize * targetEUN) + 2 * 512 + 8,
-			       8, &retlen, (char *)&oob.u);
-	}
+		nftl_ग_लिखो_oob(mtd, (nftl->EraseSize * targetEUN) + 2 * 512 + 8,
+			       8, &retlen, (अक्षर *)&oob.u);
+	पूर्ण
 
 	/* OK. We now know the location of every block in the Virtual Unit Chain,
-	   and the Erase Unit into which we are supposed to be copying.
-	   Go for it.
+	   and the Erase Unit पूर्णांकo which we are supposed to be copying.
+	   Go क्रम it.
 	*/
 	pr_debug("Folding chain %d into unit %d\n", thisVUC, targetEUN);
-	for (block = 0; block < nftl->EraseSize / 512 ; block++) {
-		unsigned char movebuf[512];
-		int ret;
+	क्रम (block = 0; block < nftl->EraseSize / 512 ; block++) अणु
+		अचिन्हित अक्षर movebuf[512];
+		पूर्णांक ret;
 
-		/* If it's in the target EUN already, or if it's pending write, do nothing */
-		if (BlockMap[block] == targetEUN ||
-		    (pendingblock == (thisVUC * (nftl->EraseSize / 512) + block))) {
-			continue;
-		}
+		/* If it's in the target EUN already, or if it's pending ग_लिखो, करो nothing */
+		अगर (BlockMap[block] == targetEUN ||
+		    (pendingblock == (thisVUC * (nftl->EraseSize / 512) + block))) अणु
+			जारी;
+		पूर्ण
 
-		/* copy only in non free block (free blocks can only
-                   happen in case of media errors or deleted blocks) */
-		if (BlockMap[block] == BLOCK_NIL)
-			continue;
+		/* copy only in non मुक्त block (मुक्त blocks can only
+                   happen in हाल of media errors or deleted blocks) */
+		अगर (BlockMap[block] == BLOCK_NIL)
+			जारी;
 
-		ret = mtd_read(mtd,
+		ret = mtd_पढ़ो(mtd,
 			       (nftl->EraseSize * BlockMap[block]) + (block * 512),
 			       512,
 			       &retlen,
 			       movebuf);
-		if (ret < 0 && !mtd_is_bitflip(ret)) {
-			ret = mtd_read(mtd,
+		अगर (ret < 0 && !mtd_is_bitflip(ret)) अणु
+			ret = mtd_पढ़ो(mtd,
 				       (nftl->EraseSize * BlockMap[block]) + (block * 512),
 				       512,
 				       &retlen,
 				       movebuf);
-			if (ret != -EIO)
-				printk("Error went away on retry.\n");
-		}
-		memset(&oob, 0xff, sizeof(struct nftl_oob));
+			अगर (ret != -EIO)
+				prपूर्णांकk("Error went away on retry.\n");
+		पूर्ण
+		स_रखो(&oob, 0xff, माप(काष्ठा nftl_oob));
 		oob.b.Status = oob.b.Status1 = SECTOR_USED;
 
-		nftl_write(nftl->mbd.mtd, (nftl->EraseSize * targetEUN) +
-			   (block * 512), 512, &retlen, movebuf, (char *)&oob);
-	}
+		nftl_ग_लिखो(nftl->mbd.mtd, (nftl->EraseSize * targetEUN) +
+			   (block * 512), 512, &retlen, movebuf, (अक्षर *)&oob);
+	पूर्ण
 
 	/* add the header so that it is now a valid chain */
 	oob.u.a.VirtUnitNum = oob.u.a.SpareVirtUnitNum = cpu_to_le16(thisVUC);
 	oob.u.a.ReplUnitNum = oob.u.a.SpareReplUnitNum = BLOCK_NIL;
 
-	nftl_write_oob(mtd, (nftl->EraseSize * targetEUN) + 8,
-		       8, &retlen, (char *)&oob.u);
+	nftl_ग_लिखो_oob(mtd, (nftl->EraseSize * targetEUN) + 8,
+		       8, &retlen, (अक्षर *)&oob.u);
 
-	/* OK. We've moved the whole lot into the new block. Now we have to free the original blocks. */
+	/* OK. We've moved the whole lot पूर्णांकo the new block. Now we have to मुक्त the original blocks. */
 
-	/* At this point, we have two different chains for this Virtual Unit, and no way to tell
+	/* At this poपूर्णांक, we have two dअगरferent chains क्रम this Virtual Unit, and no way to tell
 	   them apart. If we crash now, we get confused. However, both contain the same data, so we
 	   shouldn't actually lose data in this case. It's just that when we load up on a medium which
-	   has duplicate chains, we need to free one of the chains because it's not necessary any more.
+	   has duplicate chains, we need to मुक्त one of the chains because it's not necessary any more.
 	*/
 	thisEUN = nftl->EUNtable[thisVUC];
 	pr_debug("Want to erase\n");
 
 	/* For each block in the old chain (except the targetEUN of course),
-	   free it and make it available for future use */
-	while (thisEUN <= nftl->lastEUN && thisEUN != targetEUN) {
-		unsigned int EUNtmp;
+	   मुक्त it and make it available क्रम future use */
+	जबतक (thisEUN <= nftl->lastEUN && thisEUN != targetEUN) अणु
+		अचिन्हित पूर्णांक EUNपंचांगp;
 
-		EUNtmp = nftl->ReplUnitTable[thisEUN];
+		EUNपंचांगp = nftl->ReplUnitTable[thisEUN];
 
-		if (NFTL_formatblock(nftl, thisEUN) < 0) {
+		अगर (NFTL_क्रमmatblock(nftl, thisEUN) < 0) अणु
 			/* could not erase : mark block as reserved
 			 */
 			nftl->ReplUnitTable[thisEUN] = BLOCK_RESERVED;
-		} else {
-			/* correctly erased : mark it as free */
+		पूर्ण अन्यथा अणु
+			/* correctly erased : mark it as मुक्त */
 			nftl->ReplUnitTable[thisEUN] = BLOCK_FREE;
-			nftl->numfreeEUNs++;
-		}
-		thisEUN = EUNtmp;
-	}
+			nftl->numमुक्तEUNs++;
+		पूर्ण
+		thisEUN = EUNपंचांगp;
+	पूर्ण
 
-	/* Make this the new start of chain for thisVUC */
+	/* Make this the new start of chain क्रम thisVUC */
 	nftl->ReplUnitTable[targetEUN] = BLOCK_NIL;
 	nftl->EUNtable[thisVUC] = targetEUN;
 
-	return targetEUN;
-}
+	वापस targetEUN;
+पूर्ण
 
-static u16 NFTL_makefreeblock( struct NFTLrecord *nftl , unsigned pendingblock)
-{
+अटल u16 NFTL_makeमुक्तblock( काष्ठा NFTLrecord *nftl , अचिन्हित pendingblock)
+अणु
 	/* This is the part that needs some cleverness applied.
-	   For now, I'm doing the minimum applicable to actually
+	   For now, I'm करोing the minimum applicable to actually
 	   get the thing to work.
 	   Wear-levelling and other clever stuff needs to be implemented
-	   and we also need to do some assessment of the results when
-	   the system loses power half-way through the routine.
+	   and we also need to करो some assessment of the results when
+	   the प्रणाली loses घातer half-way through the routine.
 	*/
 	u16 LongestChain = 0;
 	u16 ChainLength = 0, thislen;
 	u16 chain, EUN;
 
-	for (chain = 0; chain < le32_to_cpu(nftl->MediaHdr.FormattedSize) / nftl->EraseSize; chain++) {
+	क्रम (chain = 0; chain < le32_to_cpu(nftl->MediaHdr.FormattedSize) / nftl->EraseSize; chain++) अणु
 		EUN = nftl->EUNtable[chain];
 		thislen = 0;
 
-		while (EUN <= nftl->lastEUN) {
+		जबतक (EUN <= nftl->lastEUN) अणु
 			thislen++;
-			//printk("VUC %d reaches len %d with EUN %d\n", chain, thislen, EUN);
+			//prपूर्णांकk("VUC %d reaches len %d with EUN %d\n", chain, thislen, EUN);
 			EUN = nftl->ReplUnitTable[EUN] & 0x7fff;
-			if (thislen > 0xff00) {
-				printk("Endless loop in Virtual Chain %d: Unit %x\n",
+			अगर (thislen > 0xff00) अणु
+				prपूर्णांकk("Endless loop in Virtual Chain %d: Unit %x\n",
 				       chain, EUN);
-			}
-			if (thislen > 0xff10) {
-				/* Actually, don't return failure. Just ignore this chain and
+			पूर्ण
+			अगर (thislen > 0xff10) अणु
+				/* Actually, करोn't वापस failure. Just ignore this chain and
 				   get on with it. */
 				thislen = 0;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (thislen > ChainLength) {
-			//printk("New longest chain is %d with length %d\n", chain, thislen);
+		अगर (thislen > ChainLength) अणु
+			//prपूर्णांकk("New longest chain is %d with length %d\n", chain, thislen);
 			ChainLength = thislen;
 			LongestChain = chain;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ChainLength < 2) {
-		printk(KERN_WARNING "No Virtual Unit Chains available for folding. "
+	अगर (ChainLength < 2) अणु
+		prपूर्णांकk(KERN_WARNING "No Virtual Unit Chains available for folding. "
 		       "Failing request\n");
-		return BLOCK_NIL;
-	}
+		वापस BLOCK_NIL;
+	पूर्ण
 
-	return NFTL_foldchain (nftl, LongestChain, pendingblock);
-}
+	वापस NFTL_foldchain (nftl, LongestChain, pendingblock);
+पूर्ण
 
-/* NFTL_findwriteunit: Return the unit number into which we can write
-                       for this block. Make it available if it isn't already
+/* NFTL_findग_लिखोunit: Return the unit number पूर्णांकo which we can ग_लिखो
+                       क्रम this block. Make it available अगर it isn't alपढ़ोy
 */
-static inline u16 NFTL_findwriteunit(struct NFTLrecord *nftl, unsigned block)
-{
+अटल अंतरभूत u16 NFTL_findग_लिखोunit(काष्ठा NFTLrecord *nftl, अचिन्हित block)
+अणु
 	u16 lastEUN;
 	u16 thisVUC = block / (nftl->EraseSize / 512);
-	struct mtd_info *mtd = nftl->mbd.mtd;
-	unsigned int writeEUN;
-	unsigned long blockofs = (block * 512) & (nftl->EraseSize -1);
-	size_t retlen;
-	int silly, silly2 = 3;
-	struct nftl_oob oob;
+	काष्ठा mtd_info *mtd = nftl->mbd.mtd;
+	अचिन्हित पूर्णांक ग_लिखोEUN;
+	अचिन्हित दीर्घ blockofs = (block * 512) & (nftl->EraseSize -1);
+	माप_प्रकार retlen;
+	पूर्णांक silly, silly2 = 3;
+	काष्ठा nftl_oob oob;
 
-	do {
+	करो अणु
 		/* Scan the media to find a unit in the VUC which has
-		   a free space for the block in question.
+		   a मुक्त space क्रम the block in question.
 		*/
 
-		/* This condition catches the 0x[7f]fff cases, as well as
-		   being a sanity check for past-end-of-media access
+		/* This condition catches the 0x[7f]fff हालs, as well as
+		   being a sanity check क्रम past-end-of-media access
 		*/
 		lastEUN = BLOCK_NIL;
-		writeEUN = nftl->EUNtable[thisVUC];
+		ग_लिखोEUN = nftl->EUNtable[thisVUC];
 		silly = MAX_LOOPS;
-		while (writeEUN <= nftl->lastEUN) {
-			struct nftl_bci bci;
-			size_t retlen;
-			unsigned int status;
+		जबतक (ग_लिखोEUN <= nftl->lastEUN) अणु
+			काष्ठा nftl_bci bci;
+			माप_प्रकार retlen;
+			अचिन्हित पूर्णांक status;
 
-			lastEUN = writeEUN;
+			lastEUN = ग_लिखोEUN;
 
-			nftl_read_oob(mtd,
-				      (writeEUN * nftl->EraseSize) + blockofs,
-				      8, &retlen, (char *)&bci);
+			nftl_पढ़ो_oob(mtd,
+				      (ग_लिखोEUN * nftl->EraseSize) + blockofs,
+				      8, &retlen, (अक्षर *)&bci);
 
 			pr_debug("Status of block %d in EUN %d is %x\n",
-			      block , writeEUN, le16_to_cpu(bci.Status));
+			      block , ग_लिखोEUN, le16_to_cpu(bci.Status));
 
 			status = bci.Status | bci.Status1;
-			switch(status) {
-			case SECTOR_FREE:
-				return writeEUN;
+			चयन(status) अणु
+			हाल SECTOR_FREE:
+				वापस ग_लिखोEUN;
 
-			case SECTOR_DELETED:
-			case SECTOR_USED:
-			case SECTOR_IGNORE:
-				break;
-			default:
+			हाल SECTOR_DELETED:
+			हाल SECTOR_USED:
+			हाल SECTOR_IGNORE:
+				अवरोध;
+			शेष:
 				// Invalid block. Don't use it any more. Must implement.
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (!silly--) {
-				printk(KERN_WARNING
+			अगर (!silly--) अणु
+				prपूर्णांकk(KERN_WARNING
 				       "Infinite loop in Virtual Unit Chain 0x%x\n",
 				       thisVUC);
-				return BLOCK_NIL;
-			}
+				वापस BLOCK_NIL;
+			पूर्ण
 
 			/* Skip to next block in chain */
-			writeEUN = nftl->ReplUnitTable[writeEUN];
-		}
+			ग_लिखोEUN = nftl->ReplUnitTable[ग_लिखोEUN];
+		पूर्ण
 
 		/* OK. We didn't find one in the existing chain, or there
 		   is no existing chain. */
 
-		/* Try to find an already-free block */
-		writeEUN = NFTL_findfreeblock(nftl, 0);
+		/* Try to find an alपढ़ोy-मुक्त block */
+		ग_लिखोEUN = NFTL_findमुक्तblock(nftl, 0);
 
-		if (writeEUN == BLOCK_NIL) {
-			/* That didn't work - there were no free blocks just
-			   waiting to be picked up. We're going to have to fold
+		अगर (ग_लिखोEUN == BLOCK_NIL) अणु
+			/* That didn't work - there were no मुक्त blocks just
+			   रुकोing to be picked up. We're going to have to fold
 			   a chain to make room.
 			*/
 
 			/* First remember the start of this chain */
 			//u16 startEUN = nftl->EUNtable[thisVUC];
 
-			//printk("Write to VirtualUnitChain %d, calling makefreeblock()\n", thisVUC);
-			writeEUN = NFTL_makefreeblock(nftl, BLOCK_NIL);
+			//prपूर्णांकk("Write to VirtualUnitChain %d, calling makefreeblock()\n", thisVUC);
+			ग_लिखोEUN = NFTL_makeमुक्तblock(nftl, BLOCK_NIL);
 
-			if (writeEUN == BLOCK_NIL) {
+			अगर (ग_लिखोEUN == BLOCK_NIL) अणु
 				/* OK, we accept that the above comment is
-				   lying - there may have been free blocks
-				   last time we called NFTL_findfreeblock(),
-				   but they are reserved for when we're
+				   lying - there may have been मुक्त blocks
+				   last समय we called NFTL_findमुक्तblock(),
+				   but they are reserved क्रम when we're
 				   desperate. Well, now we're desperate.
 				*/
 				pr_debug("Using desperate==1 to find free EUN to accommodate write to VUC %d\n", thisVUC);
-				writeEUN = NFTL_findfreeblock(nftl, 1);
-			}
-			if (writeEUN == BLOCK_NIL) {
+				ग_लिखोEUN = NFTL_findमुक्तblock(nftl, 1);
+			पूर्ण
+			अगर (ग_लिखोEUN == BLOCK_NIL) अणु
 				/* Ouch. This should never happen - we should
 				   always be able to make some room somehow.
 				   If we get here, we've allocated more storage
-				   space than actual media, or our makefreeblock
+				   space than actual media, or our makeमुक्तblock
 				   routine is missing something.
 				*/
-				printk(KERN_WARNING "Cannot make free space.\n");
-				return BLOCK_NIL;
-			}
-			//printk("Restarting scan\n");
+				prपूर्णांकk(KERN_WARNING "Cannot make free space.\n");
+				वापस BLOCK_NIL;
+			पूर्ण
+			//prपूर्णांकk("Restarting scan\n");
 			lastEUN = BLOCK_NIL;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* We've found a free block. Insert it into the chain. */
+		/* We've found a मुक्त block. Insert it पूर्णांकo the chain. */
 
-		if (lastEUN != BLOCK_NIL) {
+		अगर (lastEUN != BLOCK_NIL) अणु
 			thisVUC |= 0x8000; /* It's a replacement block */
-		} else {
+		पूर्ण अन्यथा अणु
 			/* The first block in a new chain */
-			nftl->EUNtable[thisVUC] = writeEUN;
-		}
+			nftl->EUNtable[thisVUC] = ग_लिखोEUN;
+		पूर्ण
 
-		/* set up the actual EUN we're writing into */
+		/* set up the actual EUN we're writing पूर्णांकo */
 		/* Both in our cache... */
-		nftl->ReplUnitTable[writeEUN] = BLOCK_NIL;
+		nftl->ReplUnitTable[ग_लिखोEUN] = BLOCK_NIL;
 
 		/* ... and on the flash itself */
-		nftl_read_oob(mtd, writeEUN * nftl->EraseSize + 8, 8,
-			      &retlen, (char *)&oob.u);
+		nftl_पढ़ो_oob(mtd, ग_लिखोEUN * nftl->EraseSize + 8, 8,
+			      &retlen, (अक्षर *)&oob.u);
 
 		oob.u.a.VirtUnitNum = oob.u.a.SpareVirtUnitNum = cpu_to_le16(thisVUC);
 
-		nftl_write_oob(mtd, writeEUN * nftl->EraseSize + 8, 8,
-			       &retlen, (char *)&oob.u);
+		nftl_ग_लिखो_oob(mtd, ग_लिखोEUN * nftl->EraseSize + 8, 8,
+			       &retlen, (अक्षर *)&oob.u);
 
 		/* we link the new block to the chain only after the
-                   block is ready. It avoids the case where the chain
-                   could point to a free block */
-		if (lastEUN != BLOCK_NIL) {
+                   block is पढ़ोy. It aव्योमs the हाल where the chain
+                   could poपूर्णांक to a मुक्त block */
+		अगर (lastEUN != BLOCK_NIL) अणु
 			/* Both in our cache... */
-			nftl->ReplUnitTable[lastEUN] = writeEUN;
+			nftl->ReplUnitTable[lastEUN] = ग_लिखोEUN;
 			/* ... and on the flash itself */
-			nftl_read_oob(mtd, (lastEUN * nftl->EraseSize) + 8,
-				      8, &retlen, (char *)&oob.u);
+			nftl_पढ़ो_oob(mtd, (lastEUN * nftl->EraseSize) + 8,
+				      8, &retlen, (अक्षर *)&oob.u);
 
 			oob.u.a.ReplUnitNum = oob.u.a.SpareReplUnitNum
-				= cpu_to_le16(writeEUN);
+				= cpu_to_le16(ग_लिखोEUN);
 
-			nftl_write_oob(mtd, (lastEUN * nftl->EraseSize) + 8,
-				       8, &retlen, (char *)&oob.u);
-		}
+			nftl_ग_लिखो_oob(mtd, (lastEUN * nftl->EraseSize) + 8,
+				       8, &retlen, (अक्षर *)&oob.u);
+		पूर्ण
 
-		return writeEUN;
+		वापस ग_लिखोEUN;
 
-	} while (silly2--);
+	पूर्ण जबतक (silly2--);
 
-	printk(KERN_WARNING "Error folding to make room for Virtual Unit Chain 0x%x\n",
+	prपूर्णांकk(KERN_WARNING "Error folding to make room for Virtual Unit Chain 0x%x\n",
 	       thisVUC);
-	return BLOCK_NIL;
-}
+	वापस BLOCK_NIL;
+पूर्ण
 
-static int nftl_writeblock(struct mtd_blktrans_dev *mbd, unsigned long block,
-			   char *buffer)
-{
-	struct NFTLrecord *nftl = (void *)mbd;
-	u16 writeEUN;
-	unsigned long blockofs = (block * 512) & (nftl->EraseSize - 1);
-	size_t retlen;
-	struct nftl_oob oob;
+अटल पूर्णांक nftl_ग_लिखोblock(काष्ठा mtd_blktrans_dev *mbd, अचिन्हित दीर्घ block,
+			   अक्षर *buffer)
+अणु
+	काष्ठा NFTLrecord *nftl = (व्योम *)mbd;
+	u16 ग_लिखोEUN;
+	अचिन्हित दीर्घ blockofs = (block * 512) & (nftl->EraseSize - 1);
+	माप_प्रकार retlen;
+	काष्ठा nftl_oob oob;
 
-	writeEUN = NFTL_findwriteunit(nftl, block);
+	ग_लिखोEUN = NFTL_findग_लिखोunit(nftl, block);
 
-	if (writeEUN == BLOCK_NIL) {
-		printk(KERN_WARNING
+	अगर (ग_लिखोEUN == BLOCK_NIL) अणु
+		prपूर्णांकk(KERN_WARNING
 		       "NFTL_writeblock(): Cannot find block to write to\n");
 		/* If we _still_ haven't got a block to use, we're screwed */
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	memset(&oob, 0xff, sizeof(struct nftl_oob));
+	स_रखो(&oob, 0xff, माप(काष्ठा nftl_oob));
 	oob.b.Status = oob.b.Status1 = SECTOR_USED;
 
-	nftl_write(nftl->mbd.mtd, (writeEUN * nftl->EraseSize) + blockofs,
-		   512, &retlen, (char *)buffer, (char *)&oob);
-	return 0;
-}
-#endif /* CONFIG_NFTL_RW */
+	nftl_ग_लिखो(nftl->mbd.mtd, (ग_लिखोEUN * nftl->EraseSize) + blockofs,
+		   512, &retlen, (अक्षर *)buffer, (अक्षर *)&oob);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NFTL_RW */
 
-static int nftl_readblock(struct mtd_blktrans_dev *mbd, unsigned long block,
-			  char *buffer)
-{
-	struct NFTLrecord *nftl = (void *)mbd;
-	struct mtd_info *mtd = nftl->mbd.mtd;
+अटल पूर्णांक nftl_पढ़ोblock(काष्ठा mtd_blktrans_dev *mbd, अचिन्हित दीर्घ block,
+			  अक्षर *buffer)
+अणु
+	काष्ठा NFTLrecord *nftl = (व्योम *)mbd;
+	काष्ठा mtd_info *mtd = nftl->mbd.mtd;
 	u16 lastgoodEUN;
 	u16 thisEUN = nftl->EUNtable[block / (nftl->EraseSize / 512)];
-	unsigned long blockofs = (block * 512) & (nftl->EraseSize - 1);
-	unsigned int status;
-	int silly = MAX_LOOPS;
-	size_t retlen;
-	struct nftl_bci bci;
+	अचिन्हित दीर्घ blockofs = (block * 512) & (nftl->EraseSize - 1);
+	अचिन्हित पूर्णांक status;
+	पूर्णांक silly = MAX_LOOPS;
+	माप_प्रकार retlen;
+	काष्ठा nftl_bci bci;
 
 	lastgoodEUN = BLOCK_NIL;
 
-	if (thisEUN != BLOCK_NIL) {
-		while (thisEUN < nftl->nb_blocks) {
-			if (nftl_read_oob(mtd, (thisEUN * nftl->EraseSize) +
+	अगर (thisEUN != BLOCK_NIL) अणु
+		जबतक (thisEUN < nftl->nb_blocks) अणु
+			अगर (nftl_पढ़ो_oob(mtd, (thisEUN * nftl->EraseSize) +
 					  blockofs, 8, &retlen,
-					  (char *)&bci) < 0)
+					  (अक्षर *)&bci) < 0)
 				status = SECTOR_IGNORE;
-			else
+			अन्यथा
 				status = bci.Status | bci.Status1;
 
-			switch (status) {
-			case SECTOR_FREE:
-				/* no modification of a sector should follow a free sector */
-				goto the_end;
-			case SECTOR_DELETED:
+			चयन (status) अणु
+			हाल SECTOR_FREE:
+				/* no modअगरication of a sector should follow a मुक्त sector */
+				जाओ the_end;
+			हाल SECTOR_DELETED:
 				lastgoodEUN = BLOCK_NIL;
-				break;
-			case SECTOR_USED:
+				अवरोध;
+			हाल SECTOR_USED:
 				lastgoodEUN = thisEUN;
-				break;
-			case SECTOR_IGNORE:
-				break;
-			default:
-				printk("Unknown status for block %ld in EUN %d: %x\n",
+				अवरोध;
+			हाल SECTOR_IGNORE:
+				अवरोध;
+			शेष:
+				prपूर्णांकk("Unknown status for block %ld in EUN %d: %x\n",
 				       block, thisEUN, status);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (!silly--) {
-				printk(KERN_WARNING "Infinite loop in Virtual Unit Chain 0x%lx\n",
+			अगर (!silly--) अणु
+				prपूर्णांकk(KERN_WARNING "Infinite loop in Virtual Unit Chain 0x%lx\n",
 				       block / (nftl->EraseSize / 512));
-				return 1;
-			}
+				वापस 1;
+			पूर्ण
 			thisEUN = nftl->ReplUnitTable[thisEUN];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
  the_end:
-	if (lastgoodEUN == BLOCK_NIL) {
-		/* the requested block is not on the media, return all 0x00 */
-		memset(buffer, 0, 512);
-	} else {
+	अगर (lastgoodEUN == BLOCK_NIL) अणु
+		/* the requested block is not on the media, वापस all 0x00 */
+		स_रखो(buffer, 0, 512);
+	पूर्ण अन्यथा अणु
 		loff_t ptr = (lastgoodEUN * nftl->EraseSize) + blockofs;
-		size_t retlen;
-		int res = mtd_read(mtd, ptr, 512, &retlen, buffer);
+		माप_प्रकार retlen;
+		पूर्णांक res = mtd_पढ़ो(mtd, ptr, 512, &retlen, buffer);
 
-		if (res < 0 && !mtd_is_bitflip(res))
-			return -EIO;
-	}
-	return 0;
-}
+		अगर (res < 0 && !mtd_is_bitflip(res))
+			वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int nftl_getgeo(struct mtd_blktrans_dev *dev,  struct hd_geometry *geo)
-{
-	struct NFTLrecord *nftl = (void *)dev;
+अटल पूर्णांक nftl_getgeo(काष्ठा mtd_blktrans_dev *dev,  काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा NFTLrecord *nftl = (व्योम *)dev;
 
 	geo->heads = nftl->heads;
 	geo->sectors = nftl->sectors;
 	geo->cylinders = nftl->cylinders;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************
  *
@@ -782,20 +783,20 @@ static int nftl_getgeo(struct mtd_blktrans_dev *dev,  struct hd_geometry *geo)
  ****************************************************************************/
 
 
-static struct mtd_blktrans_ops nftl_tr = {
+अटल काष्ठा mtd_blktrans_ops nftl_tr = अणु
 	.name		= "nftl",
 	.major		= NFTL_MAJOR,
 	.part_bits	= NFTL_PARTN_BITS,
 	.blksize 	= 512,
 	.getgeo		= nftl_getgeo,
-	.readsect	= nftl_readblock,
-#ifdef CONFIG_NFTL_RW
-	.writesect	= nftl_writeblock,
-#endif
+	.पढ़ोsect	= nftl_पढ़ोblock,
+#अगर_घोषित CONFIG_NFTL_RW
+	.ग_लिखोsect	= nftl_ग_लिखोblock,
+#पूर्ण_अगर
 	.add_mtd	= nftl_add_mtd,
-	.remove_dev	= nftl_remove_dev,
+	.हटाओ_dev	= nftl_हटाओ_dev,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 module_mtd_blktrans(nftl_tr);
 

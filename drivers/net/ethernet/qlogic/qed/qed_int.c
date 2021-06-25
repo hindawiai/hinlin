@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/types.h>
-#include <asm/byteorder.h>
-#include <linux/io.h>
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include "qed.h"
-#include "qed_hsi.h"
-#include "qed_hw.h"
-#include "qed_init_ops.h"
-#include "qed_int.h"
-#include "qed_mcp.h"
-#include "qed_reg_addr.h"
-#include "qed_sp.h"
-#include "qed_sriov.h"
-#include "qed_vf.h"
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश "qed.h"
+#समावेश "qed_hsi.h"
+#समावेश "qed_hw.h"
+#समावेश "qed_init_ops.h"
+#समावेश "qed_int.h"
+#समावेश "qed_mcp.h"
+#समावेश "qed_reg_addr.h"
+#समावेश "qed_sp.h"
+#समावेश "qed_sriov.h"
+#समावेश "qed_vf.h"
 
-struct qed_pi_info {
-	qed_int_comp_cb_t	comp_cb;
-	void			*cookie;
-};
+काष्ठा qed_pi_info अणु
+	qed_पूर्णांक_comp_cb_t	comp_cb;
+	व्योम			*cookie;
+पूर्ण;
 
-struct qed_sb_sp_info {
-	struct qed_sb_info sb_info;
+काष्ठा qed_sb_sp_info अणु
+	काष्ठा qed_sb_info sb_info;
 
 	/* per protocol index data */
-	struct qed_pi_info pi_info_arr[PIS_PER_SB_E4];
-};
+	काष्ठा qed_pi_info pi_info_arr[PIS_PER_SB_E4];
+पूर्ण;
 
-enum qed_attention_type {
+क्रमागत qed_attention_type अणु
 	QED_ATTN_TYPE_ATTN,
 	QED_ATTN_TYPE_PARITY,
-};
+पूर्ण;
 
-#define SB_ATTN_ALIGNED_SIZE(p_hwfn) \
-	ALIGNED_TYPE_SIZE(struct atten_status_block, p_hwfn)
+#घोषणा SB_ATTN_ALIGNED_SIZE(p_hwfn) \
+	ALIGNED_TYPE_SIZE(काष्ठा atten_status_block, p_hwfn)
 
-struct aeu_invert_reg_bit {
-	char bit_name[30];
+काष्ठा aeu_invert_reg_bit अणु
+	अक्षर bit_name[30];
 
-#define ATTENTION_PARITY                (1 << 0)
+#घोषणा ATTENTION_PARITY                (1 << 0)
 
-#define ATTENTION_LENGTH_MASK           (0x00000ff0)
-#define ATTENTION_LENGTH_SHIFT          (4)
-#define ATTENTION_LENGTH(flags)         (((flags) & ATTENTION_LENGTH_MASK) >> \
+#घोषणा ATTENTION_LENGTH_MASK           (0x00000ff0)
+#घोषणा ATTENTION_LENGTH_SHIFT          (4)
+#घोषणा ATTENTION_LENGTH(flags)         (((flags) & ATTENTION_LENGTH_MASK) >> \
 					 ATTENTION_LENGTH_SHIFT)
-#define ATTENTION_SINGLE                BIT(ATTENTION_LENGTH_SHIFT)
-#define ATTENTION_PAR                   (ATTENTION_SINGLE | ATTENTION_PARITY)
-#define ATTENTION_PAR_INT               ((2 << ATTENTION_LENGTH_SHIFT) | \
+#घोषणा ATTENTION_SINGLE                BIT(ATTENTION_LENGTH_SHIFT)
+#घोषणा ATTENTION_PAR                   (ATTENTION_SINGLE | ATTENTION_PARITY)
+#घोषणा ATTENTION_PAR_INT               ((2 << ATTENTION_LENGTH_SHIFT) | \
 					 ATTENTION_PARITY)
 
 /* Multiple bits start with this offset */
-#define ATTENTION_OFFSET_MASK           (0x000ff000)
-#define ATTENTION_OFFSET_SHIFT          (12)
+#घोषणा ATTENTION_OFFSET_MASK           (0x000ff000)
+#घोषणा ATTENTION_OFFSET_SHIFT          (12)
 
-#define ATTENTION_BB_MASK               (0x00700000)
-#define ATTENTION_BB_SHIFT              (20)
-#define ATTENTION_BB(value)             (value << ATTENTION_BB_SHIFT)
-#define ATTENTION_BB_DIFFERENT          BIT(23)
+#घोषणा ATTENTION_BB_MASK               (0x00700000)
+#घोषणा ATTENTION_BB_SHIFT              (20)
+#घोषणा ATTENTION_BB(value)             (value << ATTENTION_BB_SHIFT)
+#घोषणा ATTENTION_BB_DIFFERENT          BIT(23)
 
-#define ATTENTION_CLEAR_ENABLE          BIT(28)
-	unsigned int flags;
+#घोषणा ATTENTION_CLEAR_ENABLE          BIT(28)
+	अचिन्हित पूर्णांक flags;
 
-	/* Callback to call if attention will be triggered */
-	int (*cb)(struct qed_hwfn *p_hwfn);
+	/* Callback to call अगर attention will be triggered */
+	पूर्णांक (*cb)(काष्ठा qed_hwfn *p_hwfn);
 
-	enum block_id block_index;
-};
+	क्रमागत block_id block_index;
+पूर्ण;
 
-struct aeu_invert_reg {
-	struct aeu_invert_reg_bit bits[32];
-};
+काष्ठा aeu_invert_reg अणु
+	काष्ठा aeu_invert_reg_bit bits[32];
+पूर्ण;
 
-#define MAX_ATTN_GRPS           (8)
-#define NUM_ATTN_REGS           (9)
+#घोषणा MAX_ATTN_GRPS           (8)
+#घोषणा NUM_ATTN_REGS           (9)
 
-/* Specific HW attention callbacks */
-static int qed_mcp_attn_cb(struct qed_hwfn *p_hwfn)
-{
-	u32 tmp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, MCP_REG_CPU_STATE);
+/* Specअगरic HW attention callbacks */
+अटल पूर्णांक qed_mcp_attn_cb(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	u32 पंचांगp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, MCP_REG_CPU_STATE);
 
 	/* This might occur on certain instances; Log it once then mask it */
 	DP_INFO(p_hwfn->cdev, "MCP_REG_CPU_STATE: %08x - Masking...\n",
-		tmp);
+		पंचांगp);
 	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, MCP_REG_CPU_EVENT_MASK,
 	       0xffffffff);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define QED_PSWHST_ATTENTION_INCORRECT_ACCESS		(0x1)
-#define ATTENTION_INCORRECT_ACCESS_WR_MASK		(0x1)
-#define ATTENTION_INCORRECT_ACCESS_WR_SHIFT		(0)
-#define ATTENTION_INCORRECT_ACCESS_CLIENT_MASK		(0xf)
-#define ATTENTION_INCORRECT_ACCESS_CLIENT_SHIFT		(1)
-#define ATTENTION_INCORRECT_ACCESS_VF_VALID_MASK	(0x1)
-#define ATTENTION_INCORRECT_ACCESS_VF_VALID_SHIFT	(5)
-#define ATTENTION_INCORRECT_ACCESS_VF_ID_MASK		(0xff)
-#define ATTENTION_INCORRECT_ACCESS_VF_ID_SHIFT		(6)
-#define ATTENTION_INCORRECT_ACCESS_PF_ID_MASK		(0xf)
-#define ATTENTION_INCORRECT_ACCESS_PF_ID_SHIFT		(14)
-#define ATTENTION_INCORRECT_ACCESS_BYTE_EN_MASK		(0xff)
-#define ATTENTION_INCORRECT_ACCESS_BYTE_EN_SHIFT	(18)
-static int qed_pswhst_attn_cb(struct qed_hwfn *p_hwfn)
-{
-	u32 tmp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
+#घोषणा QED_PSWHST_ATTENTION_INCORRECT_ACCESS		(0x1)
+#घोषणा ATTENTION_INCORRECT_ACCESS_WR_MASK		(0x1)
+#घोषणा ATTENTION_INCORRECT_ACCESS_WR_SHIFT		(0)
+#घोषणा ATTENTION_INCORRECT_ACCESS_CLIENT_MASK		(0xf)
+#घोषणा ATTENTION_INCORRECT_ACCESS_CLIENT_SHIFT		(1)
+#घोषणा ATTENTION_INCORRECT_ACCESS_VF_VALID_MASK	(0x1)
+#घोषणा ATTENTION_INCORRECT_ACCESS_VF_VALID_SHIFT	(5)
+#घोषणा ATTENTION_INCORRECT_ACCESS_VF_ID_MASK		(0xff)
+#घोषणा ATTENTION_INCORRECT_ACCESS_VF_ID_SHIFT		(6)
+#घोषणा ATTENTION_INCORRECT_ACCESS_PF_ID_MASK		(0xf)
+#घोषणा ATTENTION_INCORRECT_ACCESS_PF_ID_SHIFT		(14)
+#घोषणा ATTENTION_INCORRECT_ACCESS_BYTE_EN_MASK		(0xff)
+#घोषणा ATTENTION_INCORRECT_ACCESS_BYTE_EN_SHIFT	(18)
+अटल पूर्णांक qed_pswhst_attn_cb(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	u32 पंचांगp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
 			 PSWHST_REG_INCORRECT_ACCESS_VALID);
 
-	if (tmp & QED_PSWHST_ATTENTION_INCORRECT_ACCESS) {
+	अगर (पंचांगp & QED_PSWHST_ATTENTION_INCORRECT_ACCESS) अणु
 		u32 addr, data, length;
 
 		addr = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
@@ -141,104 +142,104 @@ static int qed_pswhst_attn_cb(struct qed_hwfn *p_hwfn)
 			(u8) GET_FIELD(data,
 				       ATTENTION_INCORRECT_ACCESS_BYTE_EN),
 			data);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define QED_GRC_ATTENTION_VALID_BIT	(1 << 0)
-#define QED_GRC_ATTENTION_ADDRESS_MASK	(0x7fffff)
-#define QED_GRC_ATTENTION_ADDRESS_SHIFT	(0)
-#define QED_GRC_ATTENTION_RDWR_BIT	(1 << 23)
-#define QED_GRC_ATTENTION_MASTER_MASK	(0xf)
-#define QED_GRC_ATTENTION_MASTER_SHIFT	(24)
-#define QED_GRC_ATTENTION_PF_MASK	(0xf)
-#define QED_GRC_ATTENTION_PF_SHIFT	(0)
-#define QED_GRC_ATTENTION_VF_MASK	(0xff)
-#define QED_GRC_ATTENTION_VF_SHIFT	(4)
-#define QED_GRC_ATTENTION_PRIV_MASK	(0x3)
-#define QED_GRC_ATTENTION_PRIV_SHIFT	(14)
-#define QED_GRC_ATTENTION_PRIV_VF	(0)
-static const char *attn_master_to_str(u8 master)
-{
-	switch (master) {
-	case 1: return "PXP";
-	case 2: return "MCP";
-	case 3: return "MSDM";
-	case 4: return "PSDM";
-	case 5: return "YSDM";
-	case 6: return "USDM";
-	case 7: return "TSDM";
-	case 8: return "XSDM";
-	case 9: return "DBU";
-	case 10: return "DMAE";
-	default:
-		return "Unknown";
-	}
-}
+#घोषणा QED_GRC_ATTENTION_VALID_BIT	(1 << 0)
+#घोषणा QED_GRC_ATTENTION_ADDRESS_MASK	(0x7fffff)
+#घोषणा QED_GRC_ATTENTION_ADDRESS_SHIFT	(0)
+#घोषणा QED_GRC_ATTENTION_RDWR_BIT	(1 << 23)
+#घोषणा QED_GRC_ATTENTION_MASTER_MASK	(0xf)
+#घोषणा QED_GRC_ATTENTION_MASTER_SHIFT	(24)
+#घोषणा QED_GRC_ATTENTION_PF_MASK	(0xf)
+#घोषणा QED_GRC_ATTENTION_PF_SHIFT	(0)
+#घोषणा QED_GRC_ATTENTION_VF_MASK	(0xff)
+#घोषणा QED_GRC_ATTENTION_VF_SHIFT	(4)
+#घोषणा QED_GRC_ATTENTION_PRIV_MASK	(0x3)
+#घोषणा QED_GRC_ATTENTION_PRIV_SHIFT	(14)
+#घोषणा QED_GRC_ATTENTION_PRIV_VF	(0)
+अटल स्थिर अक्षर *attn_master_to_str(u8 master)
+अणु
+	चयन (master) अणु
+	हाल 1: वापस "PXP";
+	हाल 2: वापस "MCP";
+	हाल 3: वापस "MSDM";
+	हाल 4: वापस "PSDM";
+	हाल 5: वापस "YSDM";
+	हाल 6: वापस "USDM";
+	हाल 7: वापस "TSDM";
+	हाल 8: वापस "XSDM";
+	हाल 9: वापस "DBU";
+	हाल 10: वापस "DMAE";
+	शेष:
+		वापस "Unknown";
+	पूर्ण
+पूर्ण
 
-static int qed_grc_attn_cb(struct qed_hwfn *p_hwfn)
-{
-	u32 tmp, tmp2;
+अटल पूर्णांक qed_grc_attn_cb(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	u32 पंचांगp, पंचांगp2;
 
-	/* We've already cleared the timeout interrupt register, so we learn
-	 * of interrupts via the validity register
+	/* We've alपढ़ोy cleared the समयout पूर्णांकerrupt रेजिस्टर, so we learn
+	 * of पूर्णांकerrupts via the validity रेजिस्टर
 	 */
-	tmp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
+	पंचांगp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
 		     GRC_REG_TIMEOUT_ATTN_ACCESS_VALID);
-	if (!(tmp & QED_GRC_ATTENTION_VALID_BIT))
-		goto out;
+	अगर (!(पंचांगp & QED_GRC_ATTENTION_VALID_BIT))
+		जाओ out;
 
-	/* Read the GRC timeout information */
-	tmp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
+	/* Read the GRC समयout inक्रमmation */
+	पंचांगp = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
 		     GRC_REG_TIMEOUT_ATTN_ACCESS_DATA_0);
-	tmp2 = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
+	पंचांगp2 = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
 		      GRC_REG_TIMEOUT_ATTN_ACCESS_DATA_1);
 
 	DP_INFO(p_hwfn->cdev,
 		"GRC timeout [%08x:%08x] - %s Address [%08x] [Master %s] [PF: %02x %s %02x]\n",
-		tmp2, tmp,
-		(tmp & QED_GRC_ATTENTION_RDWR_BIT) ? "Write to" : "Read from",
-		GET_FIELD(tmp, QED_GRC_ATTENTION_ADDRESS) << 2,
-		attn_master_to_str(GET_FIELD(tmp, QED_GRC_ATTENTION_MASTER)),
-		GET_FIELD(tmp2, QED_GRC_ATTENTION_PF),
-		(GET_FIELD(tmp2, QED_GRC_ATTENTION_PRIV) ==
+		पंचांगp2, पंचांगp,
+		(पंचांगp & QED_GRC_ATTENTION_RDWR_BIT) ? "Write to" : "Read from",
+		GET_FIELD(पंचांगp, QED_GRC_ATTENTION_ADDRESS) << 2,
+		attn_master_to_str(GET_FIELD(पंचांगp, QED_GRC_ATTENTION_MASTER)),
+		GET_FIELD(पंचांगp2, QED_GRC_ATTENTION_PF),
+		(GET_FIELD(पंचांगp2, QED_GRC_ATTENTION_PRIV) ==
 		 QED_GRC_ATTENTION_PRIV_VF) ? "VF" : "(Irrelevant)",
-		GET_FIELD(tmp2, QED_GRC_ATTENTION_VF));
+		GET_FIELD(पंचांगp2, QED_GRC_ATTENTION_VF));
 
 out:
-	/* Regardles of anything else, clean the validity bit */
+	/* Regardles of anything अन्यथा, clean the validity bit */
 	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt,
 	       GRC_REG_TIMEOUT_ATTN_ACCESS_VALID, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PGLUE_ATTENTION_VALID			(1 << 29)
-#define PGLUE_ATTENTION_RD_VALID		(1 << 26)
-#define PGLUE_ATTENTION_DETAILS_PFID_MASK	(0xf)
-#define PGLUE_ATTENTION_DETAILS_PFID_SHIFT	(20)
-#define PGLUE_ATTENTION_DETAILS_VF_VALID_MASK	(0x1)
-#define PGLUE_ATTENTION_DETAILS_VF_VALID_SHIFT	(19)
-#define PGLUE_ATTENTION_DETAILS_VFID_MASK	(0xff)
-#define PGLUE_ATTENTION_DETAILS_VFID_SHIFT	(24)
-#define PGLUE_ATTENTION_DETAILS2_WAS_ERR_MASK	(0x1)
-#define PGLUE_ATTENTION_DETAILS2_WAS_ERR_SHIFT	(21)
-#define PGLUE_ATTENTION_DETAILS2_BME_MASK	(0x1)
-#define PGLUE_ATTENTION_DETAILS2_BME_SHIFT	(22)
-#define PGLUE_ATTENTION_DETAILS2_FID_EN_MASK	(0x1)
-#define PGLUE_ATTENTION_DETAILS2_FID_EN_SHIFT	(23)
-#define PGLUE_ATTENTION_ICPL_VALID		(1 << 23)
-#define PGLUE_ATTENTION_ZLR_VALID		(1 << 25)
-#define PGLUE_ATTENTION_ILT_VALID		(1 << 23)
+#घोषणा PGLUE_ATTENTION_VALID			(1 << 29)
+#घोषणा PGLUE_ATTENTION_RD_VALID		(1 << 26)
+#घोषणा PGLUE_ATTENTION_DETAILS_PFID_MASK	(0xf)
+#घोषणा PGLUE_ATTENTION_DETAILS_PFID_SHIFT	(20)
+#घोषणा PGLUE_ATTENTION_DETAILS_VF_VALID_MASK	(0x1)
+#घोषणा PGLUE_ATTENTION_DETAILS_VF_VALID_SHIFT	(19)
+#घोषणा PGLUE_ATTENTION_DETAILS_VFID_MASK	(0xff)
+#घोषणा PGLUE_ATTENTION_DETAILS_VFID_SHIFT	(24)
+#घोषणा PGLUE_ATTENTION_DETAILS2_WAS_ERR_MASK	(0x1)
+#घोषणा PGLUE_ATTENTION_DETAILS2_WAS_ERR_SHIFT	(21)
+#घोषणा PGLUE_ATTENTION_DETAILS2_BME_MASK	(0x1)
+#घोषणा PGLUE_ATTENTION_DETAILS2_BME_SHIFT	(22)
+#घोषणा PGLUE_ATTENTION_DETAILS2_FID_EN_MASK	(0x1)
+#घोषणा PGLUE_ATTENTION_DETAILS2_FID_EN_SHIFT	(23)
+#घोषणा PGLUE_ATTENTION_ICPL_VALID		(1 << 23)
+#घोषणा PGLUE_ATTENTION_ZLR_VALID		(1 << 25)
+#घोषणा PGLUE_ATTENTION_ILT_VALID		(1 << 23)
 
-int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
+पूर्णांक qed_pglueb_rbc_attn_handler(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
 				bool hw_init)
-{
-	char msg[256];
-	u32 tmp;
+अणु
+	अक्षर msg[256];
+	u32 पंचांगp;
 
-	tmp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_WR_DETAILS2);
-	if (tmp & PGLUE_ATTENTION_VALID) {
+	पंचांगp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_WR_DETAILS2);
+	अगर (पंचांगp & PGLUE_ATTENTION_VALID) अणु
 		u32 addr_lo, addr_hi, details;
 
 		addr_lo = qed_rd(p_hwfn, p_ptt,
@@ -248,7 +249,7 @@ int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 		details = qed_rd(p_hwfn, p_ptt,
 				 PGLUE_B_REG_TX_ERR_WR_DETAILS);
 
-		snprintf(msg, sizeof(msg),
+		snम_लिखो(msg, माप(msg),
 			 "Illegal write by chip to [%08x:%08x] blocked.\n"
 			 "Details: %08x [PFID %02x, VFID %02x, VF_VALID %02x]\n"
 			 "Details2 %08x [Was_error %02x BME deassert %02x FID_enable deassert %02x]",
@@ -256,19 +257,19 @@ int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 			 (u8)GET_FIELD(details, PGLUE_ATTENTION_DETAILS_PFID),
 			 (u8)GET_FIELD(details, PGLUE_ATTENTION_DETAILS_VFID),
 			 !!GET_FIELD(details, PGLUE_ATTENTION_DETAILS_VF_VALID),
-			 tmp,
-			 !!GET_FIELD(tmp, PGLUE_ATTENTION_DETAILS2_WAS_ERR),
-			 !!GET_FIELD(tmp, PGLUE_ATTENTION_DETAILS2_BME),
-			 !!GET_FIELD(tmp, PGLUE_ATTENTION_DETAILS2_FID_EN));
+			 पंचांगp,
+			 !!GET_FIELD(पंचांगp, PGLUE_ATTENTION_DETAILS2_WAS_ERR),
+			 !!GET_FIELD(पंचांगp, PGLUE_ATTENTION_DETAILS2_BME),
+			 !!GET_FIELD(पंचांगp, PGLUE_ATTENTION_DETAILS2_FID_EN));
 
-		if (hw_init)
+		अगर (hw_init)
 			DP_VERBOSE(p_hwfn, NETIF_MSG_INTR, "%s\n", msg);
-		else
+		अन्यथा
 			DP_NOTICE(p_hwfn, "%s\n", msg);
-	}
+	पूर्ण
 
-	tmp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_RD_DETAILS2);
-	if (tmp & PGLUE_ATTENTION_RD_VALID) {
+	पंचांगp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_RD_DETAILS2);
+	अगर (पंचांगp & PGLUE_ATTENTION_RD_VALID) अणु
 		u32 addr_lo, addr_hi, details;
 
 		addr_lo = qed_rd(p_hwfn, p_ptt,
@@ -287,27 +288,27 @@ int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 			  (u8)GET_FIELD(details, PGLUE_ATTENTION_DETAILS_VFID),
 			  GET_FIELD(details,
 				    PGLUE_ATTENTION_DETAILS_VF_VALID) ? 1 : 0,
-			  tmp,
-			  GET_FIELD(tmp,
+			  पंचांगp,
+			  GET_FIELD(पंचांगp,
 				    PGLUE_ATTENTION_DETAILS2_WAS_ERR) ? 1 : 0,
-			  GET_FIELD(tmp,
+			  GET_FIELD(पंचांगp,
 				    PGLUE_ATTENTION_DETAILS2_BME) ? 1 : 0,
-			  GET_FIELD(tmp,
+			  GET_FIELD(पंचांगp,
 				    PGLUE_ATTENTION_DETAILS2_FID_EN) ? 1 : 0);
-	}
+	पूर्ण
 
-	tmp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_WR_DETAILS_ICPL);
-	if (tmp & PGLUE_ATTENTION_ICPL_VALID) {
-		snprintf(msg, sizeof(msg), "ICPL error - %08x", tmp);
+	पंचांगp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_TX_ERR_WR_DETAILS_ICPL);
+	अगर (पंचांगp & PGLUE_ATTENTION_ICPL_VALID) अणु
+		snम_लिखो(msg, माप(msg), "ICPL error - %08x", पंचांगp);
 
-		if (hw_init)
+		अगर (hw_init)
 			DP_VERBOSE(p_hwfn, NETIF_MSG_INTR, "%s\n", msg);
-		else
+		अन्यथा
 			DP_NOTICE(p_hwfn, "%s\n", msg);
-	}
+	पूर्ण
 
-	tmp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_MASTER_ZLR_ERR_DETAILS);
-	if (tmp & PGLUE_ATTENTION_ZLR_VALID) {
+	पंचांगp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_MASTER_ZLR_ERR_DETAILS);
+	अगर (पंचांगp & PGLUE_ATTENTION_ZLR_VALID) अणु
 		u32 addr_hi, addr_lo;
 
 		addr_lo = qed_rd(p_hwfn, p_ptt,
@@ -316,11 +317,11 @@ int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 				 PGLUE_B_REG_MASTER_ZLR_ERR_ADD_63_32);
 
 		DP_NOTICE(p_hwfn, "ZLR error - %08x [Address %08x:%08x]\n",
-			  tmp, addr_hi, addr_lo);
-	}
+			  पंचांगp, addr_hi, addr_lo);
+	पूर्ण
 
-	tmp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_VF_ILT_ERR_DETAILS2);
-	if (tmp & PGLUE_ATTENTION_ILT_VALID) {
+	पंचांगp = qed_rd(p_hwfn, p_ptt, PGLUE_B_REG_VF_ILT_ERR_DETAILS2);
+	अगर (पंचांगp & PGLUE_ATTENTION_ILT_VALID) अणु
 		u32 addr_hi, addr_lo, details;
 
 		addr_lo = qed_rd(p_hwfn, p_ptt,
@@ -332,152 +333,152 @@ int qed_pglueb_rbc_attn_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
 
 		DP_NOTICE(p_hwfn,
 			  "ILT error - Details %08x Details2 %08x [Address %08x:%08x]\n",
-			  details, tmp, addr_hi, addr_lo);
-	}
+			  details, पंचांगp, addr_hi, addr_lo);
+	पूर्ण
 
 	/* Clear the indications */
 	qed_wr(p_hwfn, p_ptt, PGLUE_B_REG_LATCHED_ERRORS_CLR, BIT(2));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qed_pglueb_rbc_attn_cb(struct qed_hwfn *p_hwfn)
-{
-	return qed_pglueb_rbc_attn_handler(p_hwfn, p_hwfn->p_dpc_ptt, false);
-}
+अटल पूर्णांक qed_pglueb_rbc_attn_cb(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	वापस qed_pglueb_rbc_attn_handler(p_hwfn, p_hwfn->p_dpc_ptt, false);
+पूर्ण
 
-static int qed_fw_assertion(struct qed_hwfn *p_hwfn)
-{
-	qed_hw_err_notify(p_hwfn, p_hwfn->p_dpc_ptt, QED_HW_ERR_FW_ASSERT,
+अटल पूर्णांक qed_fw_निश्चितion(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	qed_hw_err_notअगरy(p_hwfn, p_hwfn->p_dpc_ptt, QED_HW_ERR_FW_ASSERT,
 			  "FW assertion!\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int qed_general_attention_35(struct qed_hwfn *p_hwfn)
-{
+अटल पूर्णांक qed_general_attention_35(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	DP_INFO(p_hwfn, "General attention 35!\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define QED_DORQ_ATTENTION_REASON_MASK  (0xfffff)
-#define QED_DORQ_ATTENTION_OPAQUE_MASK  (0xffff)
-#define QED_DORQ_ATTENTION_OPAQUE_SHIFT (0x0)
-#define QED_DORQ_ATTENTION_SIZE_MASK            (0x7f)
-#define QED_DORQ_ATTENTION_SIZE_SHIFT           (16)
+#घोषणा QED_DORQ_ATTENTION_REASON_MASK  (0xfffff)
+#घोषणा QED_DORQ_ATTENTION_OPAQUE_MASK  (0xffff)
+#घोषणा QED_DORQ_ATTENTION_OPAQUE_SHIFT (0x0)
+#घोषणा QED_DORQ_ATTENTION_SIZE_MASK            (0x7f)
+#घोषणा QED_DORQ_ATTENTION_SIZE_SHIFT           (16)
 
-#define QED_DB_REC_COUNT                        1000
-#define QED_DB_REC_INTERVAL                     100
+#घोषणा QED_DB_REC_COUNT                        1000
+#घोषणा QED_DB_REC_INTERVAL                     100
 
-static int qed_db_rec_flush_queue(struct qed_hwfn *p_hwfn,
-				  struct qed_ptt *p_ptt)
-{
+अटल पूर्णांक qed_db_rec_flush_queue(काष्ठा qed_hwfn *p_hwfn,
+				  काष्ठा qed_ptt *p_ptt)
+अणु
 	u32 count = QED_DB_REC_COUNT;
 	u32 usage = 1;
 
 	/* Flush any pending (e)dpms as they may never arrive */
 	qed_wr(p_hwfn, p_ptt, DORQ_REG_DPM_FORCE_ABORT, 0x1);
 
-	/* wait for usage to zero or count to run out. This is necessary since
-	 * EDPM doorbell transactions can take multiple 64b cycles, and as such
-	 * can "split" over the pci. Possibly, the doorbell drop can happen with
+	/* रुको क्रम usage to zero or count to run out. This is necessary since
+	 * EDPM करोorbell transactions can take multiple 64b cycles, and as such
+	 * can "split" over the pci. Possibly, the करोorbell drop can happen with
 	 * half an EDPM in the queue and other half dropped. Another EDPM
-	 * doorbell to the same address (from doorbell recovery mechanism or
-	 * from the doorbelling entity) could have first half dropped and second
-	 * half interpreted as continuation of the first. To prevent such
-	 * malformed doorbells from reaching the device, flush the queue before
+	 * करोorbell to the same address (from करोorbell recovery mechanism or
+	 * from the करोorbelling entity) could have first half dropped and second
+	 * half पूर्णांकerpreted as continuation of the first. To prevent such
+	 * malक्रमmed करोorbells from reaching the device, flush the queue beक्रमe
 	 * releasing the overflow sticky indication.
 	 */
-	while (count-- && usage) {
+	जबतक (count-- && usage) अणु
 		usage = qed_rd(p_hwfn, p_ptt, DORQ_REG_PF_USAGE_CNT);
 		udelay(QED_DB_REC_INTERVAL);
-	}
+	पूर्ण
 
 	/* should have been depleted by now */
-	if (usage) {
+	अगर (usage) अणु
 		DP_NOTICE(p_hwfn->cdev,
 			  "DB recovery: doorbell usage failed to zero after %d usec. usage was %x\n",
 			  QED_DB_REC_INTERVAL * QED_DB_REC_COUNT, usage);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qed_db_rec_handler(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
+पूर्णांक qed_db_rec_handler(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
 	u32 attn_ovfl, cur_ovfl;
-	int rc;
+	पूर्णांक rc;
 
 	attn_ovfl = test_and_clear_bit(QED_OVERFLOW_BIT,
 				       &p_hwfn->db_recovery_info.overflow);
 	cur_ovfl = qed_rd(p_hwfn, p_ptt, DORQ_REG_PF_OVFL_STICKY);
-	if (!cur_ovfl && !attn_ovfl)
-		return 0;
+	अगर (!cur_ovfl && !attn_ovfl)
+		वापस 0;
 
 	DP_NOTICE(p_hwfn, "PF Overflow sticky: attn %u current %u\n",
 		  attn_ovfl, cur_ovfl);
 
-	if (cur_ovfl && !p_hwfn->db_bar_no_edpm) {
+	अगर (cur_ovfl && !p_hwfn->db_bar_no_edpm) अणु
 		rc = qed_db_rec_flush_queue(p_hwfn, p_ptt);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	/* Release overflow sticky indication (stop silently dropping everything) */
 	qed_wr(p_hwfn, p_ptt, DORQ_REG_PF_OVFL_STICKY, 0x0);
 
-	/* Repeat all last doorbells (doorbell drop recovery) */
+	/* Repeat all last करोorbells (करोorbell drop recovery) */
 	qed_db_recovery_execute(p_hwfn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qed_dorq_attn_overflow(struct qed_hwfn *p_hwfn)
-{
-	struct qed_ptt *p_ptt = p_hwfn->p_dpc_ptt;
+अटल व्योम qed_करोrq_attn_overflow(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_dpc_ptt;
 	u32 overflow;
-	int rc;
+	पूर्णांक rc;
 
 	overflow = qed_rd(p_hwfn, p_ptt, DORQ_REG_PF_OVFL_STICKY);
-	if (!overflow)
-		goto out;
+	अगर (!overflow)
+		जाओ out;
 
-	/* Run PF doorbell recovery in next periodic handler */
+	/* Run PF करोorbell recovery in next periodic handler */
 	set_bit(QED_OVERFLOW_BIT, &p_hwfn->db_recovery_info.overflow);
 
-	if (!p_hwfn->db_bar_no_edpm) {
+	अगर (!p_hwfn->db_bar_no_edpm) अणु
 		rc = qed_db_rec_flush_queue(p_hwfn, p_ptt);
-		if (rc)
-			goto out;
-	}
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 	qed_wr(p_hwfn, p_ptt, DORQ_REG_PF_OVFL_STICKY, 0x0);
 out:
-	/* Schedule the handler even if overflow was not detected */
+	/* Schedule the handler even अगर overflow was not detected */
 	qed_periodic_db_rec_start(p_hwfn);
-}
+पूर्ण
 
-static int qed_dorq_attn_int_sts(struct qed_hwfn *p_hwfn)
-{
-	u32 int_sts, first_drop_reason, details, address, all_drops_reason;
-	struct qed_ptt *p_ptt = p_hwfn->p_dpc_ptt;
+अटल पूर्णांक qed_करोrq_attn_पूर्णांक_sts(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	u32 पूर्णांक_sts, first_drop_reason, details, address, all_drops_reason;
+	काष्ठा qed_ptt *p_ptt = p_hwfn->p_dpc_ptt;
 
-	/* int_sts may be zero since all PFs were interrupted for doorbell
-	 * overflow but another one already handled it. Can abort here. If
-	 * This PF also requires overflow recovery we will be interrupted again.
+	/* पूर्णांक_sts may be zero since all PFs were पूर्णांकerrupted क्रम करोorbell
+	 * overflow but another one alपढ़ोy handled it. Can पात here. If
+	 * This PF also requires overflow recovery we will be पूर्णांकerrupted again.
 	 * The masked almost full indication may also be set. Ignoring.
 	 */
-	int_sts = qed_rd(p_hwfn, p_ptt, DORQ_REG_INT_STS);
-	if (!(int_sts & ~DORQ_REG_INT_STS_DORQ_FIFO_AFULL))
-		return 0;
+	पूर्णांक_sts = qed_rd(p_hwfn, p_ptt, DORQ_REG_INT_STS);
+	अगर (!(पूर्णांक_sts & ~DORQ_REG_INT_STS_DORQ_FIFO_AFULL))
+		वापस 0;
 
-	DP_NOTICE(p_hwfn->cdev, "DORQ attention. int_sts was %x\n", int_sts);
+	DP_NOTICE(p_hwfn->cdev, "DORQ attention. int_sts was %x\n", पूर्णांक_sts);
 
-	/* check if db_drop or overflow happened */
-	if (int_sts & (DORQ_REG_INT_STS_DB_DROP |
-		       DORQ_REG_INT_STS_DORQ_FIFO_OVFL_ERR)) {
+	/* check अगर db_drop or overflow happened */
+	अगर (पूर्णांक_sts & (DORQ_REG_INT_STS_DB_DROP |
+		       DORQ_REG_INT_STS_DORQ_FIFO_OVFL_ERR)) अणु
 		/* Obtain data about db drop/overflow */
 		first_drop_reason = qed_rd(p_hwfn, p_ptt,
 					   DORQ_REG_DB_DROP_REASON) &
@@ -501,10 +502,10 @@ static int qed_dorq_attn_int_sts(struct qed_hwfn *p_hwfn)
 			  GET_FIELD(details, QED_DORQ_ATTENTION_SIZE) * 4,
 			  first_drop_reason, all_drops_reason);
 
-		/* Clear the doorbell drop details and prepare for next drop */
+		/* Clear the करोorbell drop details and prepare क्रम next drop */
 		qed_wr(p_hwfn, p_ptt, DORQ_REG_DB_DROP_DETAILS_REL, 0);
 
-		/* Mark interrupt as handled (note: even if drop was due to a different
+		/* Mark पूर्णांकerrupt as handled (note: even अगर drop was due to a dअगरferent
 		 * reason than overflow we mark as handled)
 		 */
 		qed_wr(p_hwfn,
@@ -514,283 +515,283 @@ static int qed_dorq_attn_int_sts(struct qed_hwfn *p_hwfn)
 		       DORQ_REG_INT_STS_DORQ_FIFO_OVFL_ERR);
 
 		/* If there are no indications other than drop indications, success */
-		if ((int_sts & ~(DORQ_REG_INT_STS_DB_DROP |
+		अगर ((पूर्णांक_sts & ~(DORQ_REG_INT_STS_DB_DROP |
 				 DORQ_REG_INT_STS_DORQ_FIFO_OVFL_ERR |
 				 DORQ_REG_INT_STS_DORQ_FIFO_AFULL)) == 0)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
 	/* Some other indication was present - non recoverable */
 	DP_INFO(p_hwfn, "DORQ fatal attention\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int qed_dorq_attn_cb(struct qed_hwfn *p_hwfn)
-{
-	p_hwfn->db_recovery_info.dorq_attn = true;
-	qed_dorq_attn_overflow(p_hwfn);
+अटल पूर्णांक qed_करोrq_attn_cb(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	p_hwfn->db_recovery_info.करोrq_attn = true;
+	qed_करोrq_attn_overflow(p_hwfn);
 
-	return qed_dorq_attn_int_sts(p_hwfn);
-}
+	वापस qed_करोrq_attn_पूर्णांक_sts(p_hwfn);
+पूर्ण
 
-static void qed_dorq_attn_handler(struct qed_hwfn *p_hwfn)
-{
-	if (p_hwfn->db_recovery_info.dorq_attn)
-		goto out;
+अटल व्योम qed_करोrq_attn_handler(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	अगर (p_hwfn->db_recovery_info.करोrq_attn)
+		जाओ out;
 
-	/* Call DORQ callback if the attention was missed */
-	qed_dorq_attn_cb(p_hwfn);
+	/* Call DORQ callback अगर the attention was missed */
+	qed_करोrq_attn_cb(p_hwfn);
 out:
-	p_hwfn->db_recovery_info.dorq_attn = false;
-}
+	p_hwfn->db_recovery_info.करोrq_attn = false;
+पूर्ण
 
-/* Instead of major changes to the data-structure, we have a some 'special'
- * identifiers for sources that changed meaning between adapters.
+/* Instead of major changes to the data-काष्ठाure, we have a some 'special'
+ * identअगरiers क्रम sources that changed meaning between adapters.
  */
-enum aeu_invert_reg_special_type {
+क्रमागत aeu_invert_reg_special_type अणु
 	AEU_INVERT_REG_SPECIAL_CNIG_0,
 	AEU_INVERT_REG_SPECIAL_CNIG_1,
 	AEU_INVERT_REG_SPECIAL_CNIG_2,
 	AEU_INVERT_REG_SPECIAL_CNIG_3,
 	AEU_INVERT_REG_SPECIAL_MAX,
-};
+पूर्ण;
 
-static struct aeu_invert_reg_bit
-aeu_descs_special[AEU_INVERT_REG_SPECIAL_MAX] = {
-	{"CNIG port 0", ATTENTION_SINGLE, NULL, BLOCK_CNIG},
-	{"CNIG port 1", ATTENTION_SINGLE, NULL, BLOCK_CNIG},
-	{"CNIG port 2", ATTENTION_SINGLE, NULL, BLOCK_CNIG},
-	{"CNIG port 3", ATTENTION_SINGLE, NULL, BLOCK_CNIG},
-};
+अटल काष्ठा aeu_invert_reg_bit
+aeu_descs_special[AEU_INVERT_REG_SPECIAL_MAX] = अणु
+	अणु"CNIG port 0", ATTENTION_SINGLE, शून्य, BLOCK_CNIGपूर्ण,
+	अणु"CNIG port 1", ATTENTION_SINGLE, शून्य, BLOCK_CNIGपूर्ण,
+	अणु"CNIG port 2", ATTENTION_SINGLE, शून्य, BLOCK_CNIGपूर्ण,
+	अणु"CNIG port 3", ATTENTION_SINGLE, शून्य, BLOCK_CNIGपूर्ण,
+पूर्ण;
 
 /* Notice aeu_invert_reg must be defined in the same order of bits as HW;  */
-static struct aeu_invert_reg aeu_descs[NUM_ATTN_REGS] = {
-	{
-		{       /* After Invert 1 */
-			{"GPIO0 function%d",
-			 (32 << ATTENTION_LENGTH_SHIFT), NULL, MAX_BLOCK_ID},
-		}
-	},
+अटल काष्ठा aeu_invert_reg aeu_descs[NUM_ATTN_REGS] = अणु
+	अणु
+		अणु       /* After Invert 1 */
+			अणु"GPIO0 function%d",
+			 (32 << ATTENTION_LENGTH_SHIFT), शून्य, MAX_BLOCK_IDपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 2 */
-			{"PGLUE config_space", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"PGLUE misc_flr", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"PGLUE B RBC", ATTENTION_PAR_INT,
-			 qed_pglueb_rbc_attn_cb, BLOCK_PGLUE_B},
-			{"PGLUE misc_mctp", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"Flash event", ATTENTION_SINGLE, NULL, MAX_BLOCK_ID},
-			{"SMB event", ATTENTION_SINGLE,	NULL, MAX_BLOCK_ID},
-			{"Main Power", ATTENTION_SINGLE, NULL, MAX_BLOCK_ID},
-			{"SW timers #%d", (8 << ATTENTION_LENGTH_SHIFT) |
+	अणु
+		अणु       /* After Invert 2 */
+			अणु"PGLUE config_space", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"PGLUE misc_flr", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"PGLUE B RBC", ATTENTION_PAR_INT,
+			 qed_pglueb_rbc_attn_cb, BLOCK_PGLUE_Bपूर्ण,
+			अणु"PGLUE misc_mctp", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"Flash event", ATTENTION_SINGLE, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"SMB event", ATTENTION_SINGLE,	शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"Main Power", ATTENTION_SINGLE, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"SW timers #%d", (8 << ATTENTION_LENGTH_SHIFT) |
 					  (1 << ATTENTION_OFFSET_SHIFT),
-			 NULL, MAX_BLOCK_ID},
-			{"PCIE glue/PXP VPD %d",
-			 (16 << ATTENTION_LENGTH_SHIFT), NULL, BLOCK_PGLCS},
-		}
-	},
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"PCIE glue/PXP VPD %d",
+			 (16 << ATTENTION_LENGTH_SHIFT), शून्य, BLOCK_PGLCSपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 3 */
-			{"General Attention %d",
-			 (32 << ATTENTION_LENGTH_SHIFT), NULL, MAX_BLOCK_ID},
-		}
-	},
+	अणु
+		अणु       /* After Invert 3 */
+			अणु"General Attention %d",
+			 (32 << ATTENTION_LENGTH_SHIFT), शून्य, MAX_BLOCK_IDपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 4 */
-			{"General Attention 32", ATTENTION_SINGLE |
-			 ATTENTION_CLEAR_ENABLE, qed_fw_assertion,
-			 MAX_BLOCK_ID},
-			{"General Attention %d",
+	अणु
+		अणु       /* After Invert 4 */
+			अणु"General Attention 32", ATTENTION_SINGLE |
+			 ATTENTION_CLEAR_ENABLE, qed_fw_निश्चितion,
+			 MAX_BLOCK_IDपूर्ण,
+			अणु"General Attention %d",
 			 (2 << ATTENTION_LENGTH_SHIFT) |
-			 (33 << ATTENTION_OFFSET_SHIFT), NULL, MAX_BLOCK_ID},
-			{"General Attention 35", ATTENTION_SINGLE |
+			 (33 << ATTENTION_OFFSET_SHIFT), शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"General Attention 35", ATTENTION_SINGLE |
 			 ATTENTION_CLEAR_ENABLE, qed_general_attention_35,
-			 MAX_BLOCK_ID},
-			{"NWS Parity",
+			 MAX_BLOCK_IDपूर्ण,
+			अणु"NWS Parity",
 			 ATTENTION_PAR | ATTENTION_BB_DIFFERENT |
 			 ATTENTION_BB(AEU_INVERT_REG_SPECIAL_CNIG_0),
-			 NULL, BLOCK_NWS},
-			{"NWS Interrupt",
+			 शून्य, BLOCK_NWSपूर्ण,
+			अणु"NWS Interrupt",
 			 ATTENTION_SINGLE | ATTENTION_BB_DIFFERENT |
 			 ATTENTION_BB(AEU_INVERT_REG_SPECIAL_CNIG_1),
-			 NULL, BLOCK_NWS},
-			{"NWM Parity",
+			 शून्य, BLOCK_NWSपूर्ण,
+			अणु"NWM Parity",
 			 ATTENTION_PAR | ATTENTION_BB_DIFFERENT |
 			 ATTENTION_BB(AEU_INVERT_REG_SPECIAL_CNIG_2),
-			 NULL, BLOCK_NWM},
-			{"NWM Interrupt",
+			 शून्य, BLOCK_NWMपूर्ण,
+			अणु"NWM Interrupt",
 			 ATTENTION_SINGLE | ATTENTION_BB_DIFFERENT |
 			 ATTENTION_BB(AEU_INVERT_REG_SPECIAL_CNIG_3),
-			 NULL, BLOCK_NWM},
-			{"MCP CPU", ATTENTION_SINGLE,
-			 qed_mcp_attn_cb, MAX_BLOCK_ID},
-			{"MCP Watchdog timer", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"MCP M2P", ATTENTION_SINGLE, NULL, MAX_BLOCK_ID},
-			{"AVS stop status ready", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"MSTAT", ATTENTION_PAR_INT, NULL, MAX_BLOCK_ID},
-			{"MSTAT per-path", ATTENTION_PAR_INT,
-			 NULL, MAX_BLOCK_ID},
-			{"Reserved %d", (6 << ATTENTION_LENGTH_SHIFT),
-			 NULL, MAX_BLOCK_ID},
-			{"NIG", ATTENTION_PAR_INT, NULL, BLOCK_NIG},
-			{"BMB/OPTE/MCP", ATTENTION_PAR_INT, NULL, BLOCK_BMB},
-			{"BTB",	ATTENTION_PAR_INT, NULL, BLOCK_BTB},
-			{"BRB",	ATTENTION_PAR_INT, NULL, BLOCK_BRB},
-			{"PRS",	ATTENTION_PAR_INT, NULL, BLOCK_PRS},
-		}
-	},
+			 शून्य, BLOCK_NWMपूर्ण,
+			अणु"MCP CPU", ATTENTION_SINGLE,
+			 qed_mcp_attn_cb, MAX_BLOCK_IDपूर्ण,
+			अणु"MCP Watchdog timer", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MCP M2P", ATTENTION_SINGLE, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"AVS stop status ready", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MSTAT", ATTENTION_PAR_INT, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MSTAT per-path", ATTENTION_PAR_INT,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"Reserved %d", (6 << ATTENTION_LENGTH_SHIFT),
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"NIG", ATTENTION_PAR_INT, शून्य, BLOCK_NIGपूर्ण,
+			अणु"BMB/OPTE/MCP", ATTENTION_PAR_INT, शून्य, BLOCK_BMBपूर्ण,
+			अणु"BTB",	ATTENTION_PAR_INT, शून्य, BLOCK_BTBपूर्ण,
+			अणु"BRB",	ATTENTION_PAR_INT, शून्य, BLOCK_BRBपूर्ण,
+			अणु"PRS",	ATTENTION_PAR_INT, शून्य, BLOCK_PRSपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 5 */
-			{"SRC", ATTENTION_PAR_INT, NULL, BLOCK_SRC},
-			{"PB Client1", ATTENTION_PAR_INT, NULL, BLOCK_PBF_PB1},
-			{"PB Client2", ATTENTION_PAR_INT, NULL, BLOCK_PBF_PB2},
-			{"RPB", ATTENTION_PAR_INT, NULL, BLOCK_RPB},
-			{"PBF", ATTENTION_PAR_INT, NULL, BLOCK_PBF},
-			{"QM", ATTENTION_PAR_INT, NULL, BLOCK_QM},
-			{"TM", ATTENTION_PAR_INT, NULL, BLOCK_TM},
-			{"MCM",  ATTENTION_PAR_INT, NULL, BLOCK_MCM},
-			{"MSDM", ATTENTION_PAR_INT, NULL, BLOCK_MSDM},
-			{"MSEM", ATTENTION_PAR_INT, NULL, BLOCK_MSEM},
-			{"PCM", ATTENTION_PAR_INT, NULL, BLOCK_PCM},
-			{"PSDM", ATTENTION_PAR_INT, NULL, BLOCK_PSDM},
-			{"PSEM", ATTENTION_PAR_INT, NULL, BLOCK_PSEM},
-			{"TCM", ATTENTION_PAR_INT, NULL, BLOCK_TCM},
-			{"TSDM", ATTENTION_PAR_INT, NULL, BLOCK_TSDM},
-			{"TSEM", ATTENTION_PAR_INT, NULL, BLOCK_TSEM},
-		}
-	},
+	अणु
+		अणु       /* After Invert 5 */
+			अणु"SRC", ATTENTION_PAR_INT, शून्य, BLOCK_SRCपूर्ण,
+			अणु"PB Client1", ATTENTION_PAR_INT, शून्य, BLOCK_PBF_PB1पूर्ण,
+			अणु"PB Client2", ATTENTION_PAR_INT, शून्य, BLOCK_PBF_PB2पूर्ण,
+			अणु"RPB", ATTENTION_PAR_INT, शून्य, BLOCK_RPBपूर्ण,
+			अणु"PBF", ATTENTION_PAR_INT, शून्य, BLOCK_PBFपूर्ण,
+			अणु"QM", ATTENTION_PAR_INT, शून्य, BLOCK_QMपूर्ण,
+			अणु"TM", ATTENTION_PAR_INT, शून्य, BLOCK_TMपूर्ण,
+			अणु"MCM",  ATTENTION_PAR_INT, शून्य, BLOCK_MCMपूर्ण,
+			अणु"MSDM", ATTENTION_PAR_INT, शून्य, BLOCK_MSDMपूर्ण,
+			अणु"MSEM", ATTENTION_PAR_INT, शून्य, BLOCK_MSEMपूर्ण,
+			अणु"PCM", ATTENTION_PAR_INT, शून्य, BLOCK_PCMपूर्ण,
+			अणु"PSDM", ATTENTION_PAR_INT, शून्य, BLOCK_PSDMपूर्ण,
+			अणु"PSEM", ATTENTION_PAR_INT, शून्य, BLOCK_PSEMपूर्ण,
+			अणु"TCM", ATTENTION_PAR_INT, शून्य, BLOCK_TCMपूर्ण,
+			अणु"TSDM", ATTENTION_PAR_INT, शून्य, BLOCK_TSDMपूर्ण,
+			अणु"TSEM", ATTENTION_PAR_INT, शून्य, BLOCK_TSEMपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 6 */
-			{"UCM", ATTENTION_PAR_INT, NULL, BLOCK_UCM},
-			{"USDM", ATTENTION_PAR_INT, NULL, BLOCK_USDM},
-			{"USEM", ATTENTION_PAR_INT, NULL, BLOCK_USEM},
-			{"XCM",	ATTENTION_PAR_INT, NULL, BLOCK_XCM},
-			{"XSDM", ATTENTION_PAR_INT, NULL, BLOCK_XSDM},
-			{"XSEM", ATTENTION_PAR_INT, NULL, BLOCK_XSEM},
-			{"YCM",	ATTENTION_PAR_INT, NULL, BLOCK_YCM},
-			{"YSDM", ATTENTION_PAR_INT, NULL, BLOCK_YSDM},
-			{"YSEM", ATTENTION_PAR_INT, NULL, BLOCK_YSEM},
-			{"XYLD", ATTENTION_PAR_INT, NULL, BLOCK_XYLD},
-			{"TMLD", ATTENTION_PAR_INT, NULL, BLOCK_TMLD},
-			{"MYLD", ATTENTION_PAR_INT, NULL, BLOCK_MULD},
-			{"YULD", ATTENTION_PAR_INT, NULL, BLOCK_YULD},
-			{"DORQ", ATTENTION_PAR_INT,
-			 qed_dorq_attn_cb, BLOCK_DORQ},
-			{"DBG", ATTENTION_PAR_INT, NULL, BLOCK_DBG},
-			{"IPC",	ATTENTION_PAR_INT, NULL, BLOCK_IPC},
-		}
-	},
+	अणु
+		अणु       /* After Invert 6 */
+			अणु"UCM", ATTENTION_PAR_INT, शून्य, BLOCK_UCMपूर्ण,
+			अणु"USDM", ATTENTION_PAR_INT, शून्य, BLOCK_USDMपूर्ण,
+			अणु"USEM", ATTENTION_PAR_INT, शून्य, BLOCK_USEMपूर्ण,
+			अणु"XCM",	ATTENTION_PAR_INT, शून्य, BLOCK_XCMपूर्ण,
+			अणु"XSDM", ATTENTION_PAR_INT, शून्य, BLOCK_XSDMपूर्ण,
+			अणु"XSEM", ATTENTION_PAR_INT, शून्य, BLOCK_XSEMपूर्ण,
+			अणु"YCM",	ATTENTION_PAR_INT, शून्य, BLOCK_YCMपूर्ण,
+			अणु"YSDM", ATTENTION_PAR_INT, शून्य, BLOCK_YSDMपूर्ण,
+			अणु"YSEM", ATTENTION_PAR_INT, शून्य, BLOCK_YSEMपूर्ण,
+			अणु"XYLD", ATTENTION_PAR_INT, शून्य, BLOCK_XYLDपूर्ण,
+			अणु"TMLD", ATTENTION_PAR_INT, शून्य, BLOCK_TMLDपूर्ण,
+			अणु"MYLD", ATTENTION_PAR_INT, शून्य, BLOCK_MULDपूर्ण,
+			अणु"YULD", ATTENTION_PAR_INT, शून्य, BLOCK_YULDपूर्ण,
+			अणु"DORQ", ATTENTION_PAR_INT,
+			 qed_करोrq_attn_cb, BLOCK_DORQपूर्ण,
+			अणु"DBG", ATTENTION_PAR_INT, शून्य, BLOCK_DBGपूर्ण,
+			अणु"IPC",	ATTENTION_PAR_INT, शून्य, BLOCK_IPCपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 7 */
-			{"CCFC", ATTENTION_PAR_INT, NULL, BLOCK_CCFC},
-			{"CDU", ATTENTION_PAR_INT, NULL, BLOCK_CDU},
-			{"DMAE", ATTENTION_PAR_INT, NULL, BLOCK_DMAE},
-			{"IGU", ATTENTION_PAR_INT, NULL, BLOCK_IGU},
-			{"ATC", ATTENTION_PAR_INT, NULL, MAX_BLOCK_ID},
-			{"CAU", ATTENTION_PAR_INT, NULL, BLOCK_CAU},
-			{"PTU", ATTENTION_PAR_INT, NULL, BLOCK_PTU},
-			{"PRM", ATTENTION_PAR_INT, NULL, BLOCK_PRM},
-			{"TCFC", ATTENTION_PAR_INT, NULL, BLOCK_TCFC},
-			{"RDIF", ATTENTION_PAR_INT, NULL, BLOCK_RDIF},
-			{"TDIF", ATTENTION_PAR_INT, NULL, BLOCK_TDIF},
-			{"RSS", ATTENTION_PAR_INT, NULL, BLOCK_RSS},
-			{"MISC", ATTENTION_PAR_INT, NULL, BLOCK_MISC},
-			{"MISCS", ATTENTION_PAR_INT, NULL, BLOCK_MISCS},
-			{"PCIE", ATTENTION_PAR, NULL, BLOCK_PCIE},
-			{"Vaux PCI core", ATTENTION_SINGLE, NULL, BLOCK_PGLCS},
-			{"PSWRQ", ATTENTION_PAR_INT, NULL, BLOCK_PSWRQ},
-		}
-	},
+	अणु
+		अणु       /* After Invert 7 */
+			अणु"CCFC", ATTENTION_PAR_INT, शून्य, BLOCK_CCFCपूर्ण,
+			अणु"CDU", ATTENTION_PAR_INT, शून्य, BLOCK_CDUपूर्ण,
+			अणु"DMAE", ATTENTION_PAR_INT, शून्य, BLOCK_DMAEपूर्ण,
+			अणु"IGU", ATTENTION_PAR_INT, शून्य, BLOCK_IGUपूर्ण,
+			अणु"ATC", ATTENTION_PAR_INT, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"CAU", ATTENTION_PAR_INT, शून्य, BLOCK_CAUपूर्ण,
+			अणु"PTU", ATTENTION_PAR_INT, शून्य, BLOCK_PTUपूर्ण,
+			अणु"PRM", ATTENTION_PAR_INT, शून्य, BLOCK_PRMपूर्ण,
+			अणु"TCFC", ATTENTION_PAR_INT, शून्य, BLOCK_TCFCपूर्ण,
+			अणु"RDIF", ATTENTION_PAR_INT, शून्य, BLOCK_RDIFपूर्ण,
+			अणु"TDIF", ATTENTION_PAR_INT, शून्य, BLOCK_TDIFपूर्ण,
+			अणु"RSS", ATTENTION_PAR_INT, शून्य, BLOCK_RSSपूर्ण,
+			अणु"MISC", ATTENTION_PAR_INT, शून्य, BLOCK_MISCपूर्ण,
+			अणु"MISCS", ATTENTION_PAR_INT, शून्य, BLOCK_MISCSपूर्ण,
+			अणु"PCIE", ATTENTION_PAR, शून्य, BLOCK_PCIEपूर्ण,
+			अणु"Vaux PCI core", ATTENTION_SINGLE, शून्य, BLOCK_PGLCSपूर्ण,
+			अणु"PSWRQ", ATTENTION_PAR_INT, शून्य, BLOCK_PSWRQपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 8 */
-			{"PSWRQ (pci_clk)", ATTENTION_PAR_INT,
-			 NULL, BLOCK_PSWRQ2},
-			{"PSWWR", ATTENTION_PAR_INT, NULL, BLOCK_PSWWR},
-			{"PSWWR (pci_clk)", ATTENTION_PAR_INT,
-			 NULL, BLOCK_PSWWR2},
-			{"PSWRD", ATTENTION_PAR_INT, NULL, BLOCK_PSWRD},
-			{"PSWRD (pci_clk)", ATTENTION_PAR_INT,
-			 NULL, BLOCK_PSWRD2},
-			{"PSWHST", ATTENTION_PAR_INT,
-			 qed_pswhst_attn_cb, BLOCK_PSWHST},
-			{"PSWHST (pci_clk)", ATTENTION_PAR_INT,
-			 NULL, BLOCK_PSWHST2},
-			{"GRC",	ATTENTION_PAR_INT,
-			 qed_grc_attn_cb, BLOCK_GRC},
-			{"CPMU", ATTENTION_PAR_INT, NULL, BLOCK_CPMU},
-			{"NCSI", ATTENTION_PAR_INT, NULL, BLOCK_NCSI},
-			{"MSEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"PSEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"TSEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"USEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"XSEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"YSEM PRAM", ATTENTION_PAR, NULL, MAX_BLOCK_ID},
-			{"pxp_misc_mps", ATTENTION_PAR, NULL, BLOCK_PGLCS},
-			{"PCIE glue/PXP Exp. ROM", ATTENTION_SINGLE,
-			 NULL, BLOCK_PGLCS},
-			{"PERST_B assertion", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"PERST_B deassertion", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"Reserved %d", (2 << ATTENTION_LENGTH_SHIFT),
-			 NULL, MAX_BLOCK_ID},
-		}
-	},
+	अणु
+		अणु       /* After Invert 8 */
+			अणु"PSWRQ (pci_clk)", ATTENTION_PAR_INT,
+			 शून्य, BLOCK_PSWRQ2पूर्ण,
+			अणु"PSWWR", ATTENTION_PAR_INT, शून्य, BLOCK_PSWWRपूर्ण,
+			अणु"PSWWR (pci_clk)", ATTENTION_PAR_INT,
+			 शून्य, BLOCK_PSWWR2पूर्ण,
+			अणु"PSWRD", ATTENTION_PAR_INT, शून्य, BLOCK_PSWRDपूर्ण,
+			अणु"PSWRD (pci_clk)", ATTENTION_PAR_INT,
+			 शून्य, BLOCK_PSWRD2पूर्ण,
+			अणु"PSWHST", ATTENTION_PAR_INT,
+			 qed_pswhst_attn_cb, BLOCK_PSWHSTपूर्ण,
+			अणु"PSWHST (pci_clk)", ATTENTION_PAR_INT,
+			 शून्य, BLOCK_PSWHST2पूर्ण,
+			अणु"GRC",	ATTENTION_PAR_INT,
+			 qed_grc_attn_cb, BLOCK_GRCपूर्ण,
+			अणु"CPMU", ATTENTION_PAR_INT, शून्य, BLOCK_CPMUपूर्ण,
+			अणु"NCSI", ATTENTION_PAR_INT, शून्य, BLOCK_NCSIपूर्ण,
+			अणु"MSEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"PSEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"TSEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"USEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"XSEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"YSEM PRAM", ATTENTION_PAR, शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"pxp_misc_mps", ATTENTION_PAR, शून्य, BLOCK_PGLCSपूर्ण,
+			अणु"PCIE glue/PXP Exp. ROM", ATTENTION_SINGLE,
+			 शून्य, BLOCK_PGLCSपूर्ण,
+			अणु"PERST_B assertion", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"PERST_B deassertion", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"Reserved %d", (2 << ATTENTION_LENGTH_SHIFT),
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+		पूर्ण
+	पूर्ण,
 
-	{
-		{       /* After Invert 9 */
-			{"MCP Latched memory", ATTENTION_PAR,
-			 NULL, MAX_BLOCK_ID},
-			{"MCP Latched scratchpad cache", ATTENTION_SINGLE,
-			 NULL, MAX_BLOCK_ID},
-			{"MCP Latched ump_tx", ATTENTION_PAR,
-			 NULL, MAX_BLOCK_ID},
-			{"MCP Latched scratchpad", ATTENTION_PAR,
-			 NULL, MAX_BLOCK_ID},
-			{"Reserved %d", (28 << ATTENTION_LENGTH_SHIFT),
-			 NULL, MAX_BLOCK_ID},
-		}
-	},
-};
+	अणु
+		अणु       /* After Invert 9 */
+			अणु"MCP Latched memory", ATTENTION_PAR,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MCP Latched scratchpad cache", ATTENTION_SINGLE,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MCP Latched ump_tx", ATTENTION_PAR,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"MCP Latched scratchpad", ATTENTION_PAR,
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+			अणु"Reserved %d", (28 << ATTENTION_LENGTH_SHIFT),
+			 शून्य, MAX_BLOCK_IDपूर्ण,
+		पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static struct aeu_invert_reg_bit *
-qed_int_aeu_translate(struct qed_hwfn *p_hwfn,
-		      struct aeu_invert_reg_bit *p_bit)
-{
-	if (!QED_IS_BB(p_hwfn->cdev))
-		return p_bit;
+अटल काष्ठा aeu_invert_reg_bit *
+qed_पूर्णांक_aeu_translate(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा aeu_invert_reg_bit *p_bit)
+अणु
+	अगर (!QED_IS_BB(p_hwfn->cdev))
+		वापस p_bit;
 
-	if (!(p_bit->flags & ATTENTION_BB_DIFFERENT))
-		return p_bit;
+	अगर (!(p_bit->flags & ATTENTION_BB_DIFFERENT))
+		वापस p_bit;
 
-	return &aeu_descs_special[(p_bit->flags & ATTENTION_BB_MASK) >>
+	वापस &aeu_descs_special[(p_bit->flags & ATTENTION_BB_MASK) >>
 				  ATTENTION_BB_SHIFT];
-}
+पूर्ण
 
-static bool qed_int_is_parity_flag(struct qed_hwfn *p_hwfn,
-				   struct aeu_invert_reg_bit *p_bit)
-{
-	return !!(qed_int_aeu_translate(p_hwfn, p_bit)->flags &
+अटल bool qed_पूर्णांक_is_parity_flag(काष्ठा qed_hwfn *p_hwfn,
+				   काष्ठा aeu_invert_reg_bit *p_bit)
+अणु
+	वापस !!(qed_पूर्णांक_aeu_translate(p_hwfn, p_bit)->flags &
 		   ATTENTION_PARITY);
-}
+पूर्ण
 
-#define ATTN_STATE_BITS         (0xfff)
-#define ATTN_BITS_MASKABLE      (0x3ff)
-struct qed_sb_attn_info {
+#घोषणा ATTN_STATE_BITS         (0xfff)
+#घोषणा ATTN_BITS_MASKABLE      (0x3ff)
+काष्ठा qed_sb_attn_info अणु
 	/* Virtual & Physical address of the SB */
-	struct atten_status_block       *sb_attn;
+	काष्ठा atten_status_block       *sb_attn;
 	dma_addr_t			sb_phys;
 
 	/* Last seen running index */
@@ -799,407 +800,407 @@ struct qed_sb_attn_info {
 	/* A mask of the AEU bits resulting in a parity error */
 	u32				parity_mask[NUM_ATTN_REGS];
 
-	/* A pointer to the attention description structure */
-	struct aeu_invert_reg		*p_aeu_desc;
+	/* A poपूर्णांकer to the attention description काष्ठाure */
+	काष्ठा aeu_invert_reg		*p_aeu_desc;
 
-	/* Previously asserted attentions, which are still unasserted */
+	/* Previously निश्चितed attentions, which are still unनिश्चितed */
 	u16				known_attn;
 
-	/* Cleanup address for the link's general hw attention */
+	/* Cleanup address क्रम the link's general hw attention */
 	u32				mfw_attn_addr;
-};
+पूर्ण;
 
-static inline u16 qed_attn_update_idx(struct qed_hwfn *p_hwfn,
-				      struct qed_sb_attn_info *p_sb_desc)
-{
+अटल अंतरभूत u16 qed_attn_update_idx(काष्ठा qed_hwfn *p_hwfn,
+				      काष्ठा qed_sb_attn_info *p_sb_desc)
+अणु
 	u16 rc = 0, index;
 
 	index = le16_to_cpu(p_sb_desc->sb_attn->sb_index);
-	if (p_sb_desc->index != index) {
+	अगर (p_sb_desc->index != index) अणु
 		p_sb_desc->index	= index;
 		rc		      = QED_SB_ATT_IDX;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * qed_int_assertion() - Handle asserted attention bits.
+ * qed_पूर्णांक_निश्चितion() - Handle निश्चितed attention bits.
  *
  * @p_hwfn: HW device data.
- * @asserted_bits: Newly asserted bits.
+ * @निश्चितed_bits: Newly निश्चितed bits.
  *
  * Return: Zero value.
  */
-static int qed_int_assertion(struct qed_hwfn *p_hwfn, u16 asserted_bits)
-{
-	struct qed_sb_attn_info *sb_attn_sw = p_hwfn->p_sb_attn;
+अटल पूर्णांक qed_पूर्णांक_निश्चितion(काष्ठा qed_hwfn *p_hwfn, u16 निश्चितed_bits)
+अणु
+	काष्ठा qed_sb_attn_info *sb_attn_sw = p_hwfn->p_sb_attn;
 	u32 igu_mask;
 
 	/* Mask the source of the attention in the IGU */
 	igu_mask = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, IGU_REG_ATTENTION_ENABLE);
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR, "IGU mask: 0x%08x --> 0x%08x\n",
-		   igu_mask, igu_mask & ~(asserted_bits & ATTN_BITS_MASKABLE));
-	igu_mask &= ~(asserted_bits & ATTN_BITS_MASKABLE);
+		   igu_mask, igu_mask & ~(निश्चितed_bits & ATTN_BITS_MASKABLE));
+	igu_mask &= ~(निश्चितed_bits & ATTN_BITS_MASKABLE);
 	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, IGU_REG_ATTENTION_ENABLE, igu_mask);
 
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 		   "inner known ATTN state: 0x%04x --> 0x%04x\n",
 		   sb_attn_sw->known_attn,
-		   sb_attn_sw->known_attn | asserted_bits);
-	sb_attn_sw->known_attn |= asserted_bits;
+		   sb_attn_sw->known_attn | निश्चितed_bits);
+	sb_attn_sw->known_attn |= निश्चितed_bits;
 
 	/* Handle MCP events */
-	if (asserted_bits & 0x100) {
+	अगर (निश्चितed_bits & 0x100) अणु
 		qed_mcp_handle_events(p_hwfn, p_hwfn->p_dpc_ptt);
 		/* Clean the MCP attention */
 		qed_wr(p_hwfn, p_hwfn->p_dpc_ptt,
 		       sb_attn_sw->mfw_attn_addr, 0);
-	}
+	पूर्ण
 
-	DIRECT_REG_WR((u8 __iomem *)p_hwfn->regview +
+	सूचीECT_REG_WR((u8 __iomem *)p_hwfn->regview +
 		      GTT_BAR0_MAP_REG_IGU_CMD +
 		      ((IGU_CMD_ATTN_BIT_SET_UPPER -
 			IGU_CMD_INT_ACK_BASE) << 3),
-		      (u32)asserted_bits);
+		      (u32)निश्चितed_bits);
 
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR, "set cmd IGU: 0x%04x\n",
-		   asserted_bits);
+		   निश्चितed_bits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qed_int_attn_print(struct qed_hwfn *p_hwfn,
-			       enum block_id id,
-			       enum dbg_attn_type type, bool b_clear)
-{
-	struct dbg_attn_block_result attn_results;
-	enum dbg_status status;
+अटल व्योम qed_पूर्णांक_attn_prपूर्णांक(काष्ठा qed_hwfn *p_hwfn,
+			       क्रमागत block_id id,
+			       क्रमागत dbg_attn_type type, bool b_clear)
+अणु
+	काष्ठा dbg_attn_block_result attn_results;
+	क्रमागत dbg_status status;
 
-	memset(&attn_results, 0, sizeof(attn_results));
+	स_रखो(&attn_results, 0, माप(attn_results));
 
-	status = qed_dbg_read_attn(p_hwfn, p_hwfn->p_dpc_ptt, id, type,
+	status = qed_dbg_पढ़ो_attn(p_hwfn, p_hwfn->p_dpc_ptt, id, type,
 				   b_clear, &attn_results);
-	if (status != DBG_STATUS_OK)
+	अगर (status != DBG_STATUS_OK)
 		DP_NOTICE(p_hwfn,
 			  "Failed to parse attention information [status: %s]\n",
 			  qed_dbg_get_status_str(status));
-	else
+	अन्यथा
 		qed_dbg_parse_attn(p_hwfn, &attn_results);
-}
+पूर्ण
 
 /**
- * qed_int_deassertion_aeu_bit() - Handles the effects of a single
+ * qed_पूर्णांक_deनिश्चितion_aeu_bit() - Handles the effects of a single
  * cause of the attention.
  *
  * @p_hwfn: HW device data.
  * @p_aeu: Descriptor of an AEU bit which caused the attention.
  * @aeu_en_reg: Register offset of the AEU enable reg. which configured
  *              this bit to this group.
- * @p_bit_name: AEU bit description for logging purposes.
- * @bitmask: Index of this bit in the aeu_en_reg.
+ * @p_bit_name: AEU bit description क्रम logging purposes.
+ * @biपंचांगask: Index of this bit in the aeu_en_reg.
  *
- * Return: Zero on success, negative errno otherwise.
+ * Return: Zero on success, negative त्रुटि_सं otherwise.
  */
-static int
-qed_int_deassertion_aeu_bit(struct qed_hwfn *p_hwfn,
-			    struct aeu_invert_reg_bit *p_aeu,
+अटल पूर्णांक
+qed_पूर्णांक_deनिश्चितion_aeu_bit(काष्ठा qed_hwfn *p_hwfn,
+			    काष्ठा aeu_invert_reg_bit *p_aeu,
 			    u32 aeu_en_reg,
-			    const char *p_bit_name, u32 bitmask)
-{
+			    स्थिर अक्षर *p_bit_name, u32 biपंचांगask)
+अणु
 	bool b_fatal = false;
-	int rc = -EINVAL;
+	पूर्णांक rc = -EINVAL;
 	u32 val;
 
 	DP_INFO(p_hwfn, "Deasserted attention `%s'[%08x]\n",
-		p_bit_name, bitmask);
+		p_bit_name, biपंचांगask);
 
-	/* Call callback before clearing the interrupt status */
-	if (p_aeu->cb) {
+	/* Call callback beक्रमe clearing the पूर्णांकerrupt status */
+	अगर (p_aeu->cb) अणु
 		DP_INFO(p_hwfn, "`%s (attention)': Calling Callback function\n",
 			p_bit_name);
 		rc = p_aeu->cb(p_hwfn);
-	}
+	पूर्ण
 
-	if (rc)
+	अगर (rc)
 		b_fatal = true;
 
-	/* Print HW block interrupt registers */
-	if (p_aeu->block_index != MAX_BLOCK_ID)
-		qed_int_attn_print(p_hwfn, p_aeu->block_index,
+	/* Prपूर्णांक HW block पूर्णांकerrupt रेजिस्टरs */
+	अगर (p_aeu->block_index != MAX_BLOCK_ID)
+		qed_पूर्णांक_attn_prपूर्णांक(p_hwfn, p_aeu->block_index,
 				   ATTN_TYPE_INTERRUPT, !b_fatal);
 
-	/* Reach assertion if attention is fatal */
-	if (b_fatal)
-		qed_hw_err_notify(p_hwfn, p_hwfn->p_dpc_ptt, QED_HW_ERR_HW_ATTN,
+	/* Reach निश्चितion अगर attention is fatal */
+	अगर (b_fatal)
+		qed_hw_err_notअगरy(p_hwfn, p_hwfn->p_dpc_ptt, QED_HW_ERR_HW_ATTN,
 				  "`%s': Fatal attention\n",
 				  p_bit_name);
-	else /* If the attention is benign, no need to prevent it */
-		goto out;
+	अन्यथा /* If the attention is benign, no need to prevent it */
+		जाओ out;
 
-	/* Prevent this Attention from being asserted in the future */
+	/* Prevent this Attention from being निश्चितed in the future */
 	val = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en_reg);
-	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en_reg, (val & ~bitmask));
+	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en_reg, (val & ~biपंचांगask));
 	DP_INFO(p_hwfn, "`%s' - Disabled future attentions\n",
 		p_bit_name);
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * qed_int_deassertion_parity() - Handle a single parity AEU source.
+ * qed_पूर्णांक_deनिश्चितion_parity() - Handle a single parity AEU source.
  *
  * @p_hwfn: HW device data.
  * @p_aeu: Descriptor of an AEU bit which caused the parity.
- * @aeu_en_reg: Address of the AEU enable register.
+ * @aeu_en_reg: Address of the AEU enable रेजिस्टर.
  * @bit_index: Index (0-31) of an AEU bit.
  */
-static void qed_int_deassertion_parity(struct qed_hwfn *p_hwfn,
-				       struct aeu_invert_reg_bit *p_aeu,
+अटल व्योम qed_पूर्णांक_deनिश्चितion_parity(काष्ठा qed_hwfn *p_hwfn,
+				       काष्ठा aeu_invert_reg_bit *p_aeu,
 				       u32 aeu_en_reg, u8 bit_index)
-{
+अणु
 	u32 block_id = p_aeu->block_index, mask, val;
 
 	DP_NOTICE(p_hwfn->cdev,
 		  "%s parity attention is set [address 0x%08x, bit %d]\n",
 		  p_aeu->bit_name, aeu_en_reg, bit_index);
 
-	if (block_id != MAX_BLOCK_ID) {
-		qed_int_attn_print(p_hwfn, block_id, ATTN_TYPE_PARITY, false);
+	अगर (block_id != MAX_BLOCK_ID) अणु
+		qed_पूर्णांक_attn_prपूर्णांक(p_hwfn, block_id, ATTN_TYPE_PARITY, false);
 
-		/* In BB, there's a single parity bit for several blocks */
-		if (block_id == BLOCK_BTB) {
-			qed_int_attn_print(p_hwfn, BLOCK_OPTE,
+		/* In BB, there's a single parity bit क्रम several blocks */
+		अगर (block_id == BLOCK_BTB) अणु
+			qed_पूर्णांक_attn_prपूर्णांक(p_hwfn, BLOCK_OPTE,
 					   ATTN_TYPE_PARITY, false);
-			qed_int_attn_print(p_hwfn, BLOCK_MCP,
+			qed_पूर्णांक_attn_prपूर्णांक(p_hwfn, BLOCK_MCP,
 					   ATTN_TYPE_PARITY, false);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Prevent this parity error from being re-asserted */
+	/* Prevent this parity error from being re-निश्चितed */
 	mask = ~BIT(bit_index);
 	val = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en_reg);
 	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en_reg, val & mask);
 	DP_INFO(p_hwfn, "`%s' - Disabled future parity errors\n",
 		p_aeu->bit_name);
-}
+पूर्ण
 
 /**
- * qed_int_deassertion() - Handle deassertion of previously asserted
+ * qed_पूर्णांक_deनिश्चितion() - Handle deनिश्चितion of previously निश्चितed
  * attentions.
  *
  * @p_hwfn: HW device data.
- * @deasserted_bits: newly deasserted bits.
+ * @deनिश्चितed_bits: newly deनिश्चितed bits.
  *
  * Return: Zero value.
  */
-static int qed_int_deassertion(struct qed_hwfn  *p_hwfn,
-			       u16 deasserted_bits)
-{
-	struct qed_sb_attn_info *sb_attn_sw = p_hwfn->p_sb_attn;
+अटल पूर्णांक qed_पूर्णांक_deनिश्चितion(काष्ठा qed_hwfn  *p_hwfn,
+			       u16 deनिश्चितed_bits)
+अणु
+	काष्ठा qed_sb_attn_info *sb_attn_sw = p_hwfn->p_sb_attn;
 	u32 aeu_inv_arr[NUM_ATTN_REGS], aeu_mask, aeu_en, en;
 	u8 i, j, k, bit_idx;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	/* Read the attention registers in the AEU */
-	for (i = 0; i < NUM_ATTN_REGS; i++) {
+	/* Read the attention रेजिस्टरs in the AEU */
+	क्रम (i = 0; i < NUM_ATTN_REGS; i++) अणु
 		aeu_inv_arr[i] = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt,
 					MISC_REG_AEU_AFTER_INVERT_1_IGU +
 					i * 0x4);
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "Deasserted bits [%d]: %08x\n",
 			   i, aeu_inv_arr[i]);
-	}
+	पूर्ण
 
 	/* Find parity attentions first */
-	for (i = 0; i < NUM_ATTN_REGS; i++) {
-		struct aeu_invert_reg *p_aeu = &sb_attn_sw->p_aeu_desc[i];
+	क्रम (i = 0; i < NUM_ATTN_REGS; i++) अणु
+		काष्ठा aeu_invert_reg *p_aeu = &sb_attn_sw->p_aeu_desc[i];
 		u32 parities;
 
-		aeu_en = MISC_REG_AEU_ENABLE1_IGU_OUT_0 + i * sizeof(u32);
+		aeu_en = MISC_REG_AEU_ENABLE1_IGU_OUT_0 + i * माप(u32);
 		en = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en);
 
-		/* Skip register in which no parity bit is currently set */
+		/* Skip रेजिस्टर in which no parity bit is currently set */
 		parities = sb_attn_sw->parity_mask[i] & aeu_inv_arr[i] & en;
-		if (!parities)
-			continue;
+		अगर (!parities)
+			जारी;
 
-		for (j = 0, bit_idx = 0; bit_idx < 32; j++) {
-			struct aeu_invert_reg_bit *p_bit = &p_aeu->bits[j];
+		क्रम (j = 0, bit_idx = 0; bit_idx < 32; j++) अणु
+			काष्ठा aeu_invert_reg_bit *p_bit = &p_aeu->bits[j];
 
-			if (qed_int_is_parity_flag(p_hwfn, p_bit) &&
+			अगर (qed_पूर्णांक_is_parity_flag(p_hwfn, p_bit) &&
 			    !!(parities & BIT(bit_idx)))
-				qed_int_deassertion_parity(p_hwfn, p_bit,
+				qed_पूर्णांक_deनिश्चितion_parity(p_hwfn, p_bit,
 							   aeu_en, bit_idx);
 
 			bit_idx += ATTENTION_LENGTH(p_bit->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Find non-parity cause for attention and act */
-	for (k = 0; k < MAX_ATTN_GRPS; k++) {
-		struct aeu_invert_reg_bit *p_aeu;
+	/* Find non-parity cause क्रम attention and act */
+	क्रम (k = 0; k < MAX_ATTN_GRPS; k++) अणु
+		काष्ठा aeu_invert_reg_bit *p_aeu;
 
-		/* Handle only groups whose attention is currently deasserted */
-		if (!(deasserted_bits & (1 << k)))
-			continue;
+		/* Handle only groups whose attention is currently deनिश्चितed */
+		अगर (!(deनिश्चितed_bits & (1 << k)))
+			जारी;
 
-		for (i = 0; i < NUM_ATTN_REGS; i++) {
+		क्रम (i = 0; i < NUM_ATTN_REGS; i++) अणु
 			u32 bits;
 
 			aeu_en = MISC_REG_AEU_ENABLE1_IGU_OUT_0 +
-				 i * sizeof(u32) +
-				 k * sizeof(u32) * NUM_ATTN_REGS;
+				 i * माप(u32) +
+				 k * माप(u32) * NUM_ATTN_REGS;
 
 			en = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, aeu_en);
 			bits = aeu_inv_arr[i] & en;
 
-			/* Skip if no bit from this group is currently set */
-			if (!bits)
-				continue;
+			/* Skip अगर no bit from this group is currently set */
+			अगर (!bits)
+				जारी;
 
-			/* Find all set bits from current register which belong
-			 * to current group, making them responsible for the
-			 * previous assertion.
+			/* Find all set bits from current रेजिस्टर which beदीर्घ
+			 * to current group, making them responsible क्रम the
+			 * previous निश्चितion.
 			 */
-			for (j = 0, bit_idx = 0; bit_idx < 32; j++) {
-				long unsigned int bitmask;
+			क्रम (j = 0, bit_idx = 0; bit_idx < 32; j++) अणु
+				दीर्घ अचिन्हित पूर्णांक biपंचांगask;
 				u8 bit, bit_len;
 
 				p_aeu = &sb_attn_sw->p_aeu_desc[i].bits[j];
-				p_aeu = qed_int_aeu_translate(p_hwfn, p_aeu);
+				p_aeu = qed_पूर्णांक_aeu_translate(p_hwfn, p_aeu);
 
 				bit = bit_idx;
 				bit_len = ATTENTION_LENGTH(p_aeu->flags);
-				if (qed_int_is_parity_flag(p_hwfn, p_aeu)) {
+				अगर (qed_पूर्णांक_is_parity_flag(p_hwfn, p_aeu)) अणु
 					/* Skip Parity */
 					bit++;
 					bit_len--;
-				}
+				पूर्ण
 
-				bitmask = bits & (((1 << bit_len) - 1) << bit);
-				bitmask >>= bit;
+				biपंचांगask = bits & (((1 << bit_len) - 1) << bit);
+				biपंचांगask >>= bit;
 
-				if (bitmask) {
+				अगर (biपंचांगask) अणु
 					u32 flags = p_aeu->flags;
-					char bit_name[30];
+					अक्षर bit_name[30];
 					u8 num;
 
-					num = (u8)find_first_bit(&bitmask,
+					num = (u8)find_first_bit(&biपंचांगask,
 								 bit_len);
 
 					/* Some bits represent more than a
-					 * a single interrupt. Correctly print
+					 * a single पूर्णांकerrupt. Correctly prपूर्णांक
 					 * their name.
 					 */
-					if (ATTENTION_LENGTH(flags) > 2 ||
+					अगर (ATTENTION_LENGTH(flags) > 2 ||
 					    ((flags & ATTENTION_PAR_INT) &&
 					     ATTENTION_LENGTH(flags) > 1))
-						snprintf(bit_name, 30,
+						snम_लिखो(bit_name, 30,
 							 p_aeu->bit_name, num);
-					else
+					अन्यथा
 						strlcpy(bit_name,
 							p_aeu->bit_name, 30);
 
-					/* We now need to pass bitmask in its
+					/* We now need to pass biपंचांगask in its
 					 * correct position.
 					 */
-					bitmask <<= bit;
+					biपंचांगask <<= bit;
 
 					/* Handle source of the attention */
-					qed_int_deassertion_aeu_bit(p_hwfn,
+					qed_पूर्णांक_deनिश्चितion_aeu_bit(p_hwfn,
 								    p_aeu,
 								    aeu_en,
 								    bit_name,
-								    bitmask);
-				}
+								    biपंचांगask);
+				पूर्ण
 
 				bit_idx += ATTENTION_LENGTH(p_aeu->flags);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Handle missed DORQ attention */
-	qed_dorq_attn_handler(p_hwfn);
+	qed_करोrq_attn_handler(p_hwfn);
 
-	/* Clear IGU indication for the deasserted bits */
-	DIRECT_REG_WR((u8 __iomem *)p_hwfn->regview +
+	/* Clear IGU indication क्रम the deनिश्चितed bits */
+	सूचीECT_REG_WR((u8 __iomem *)p_hwfn->regview +
 				    GTT_BAR0_MAP_REG_IGU_CMD +
 				    ((IGU_CMD_ATTN_BIT_CLR_UPPER -
 				      IGU_CMD_INT_ACK_BASE) << 3),
-				    ~((u32)deasserted_bits));
+				    ~((u32)deनिश्चितed_bits));
 
-	/* Unmask deasserted attentions in IGU */
+	/* Unmask deनिश्चितed attentions in IGU */
 	aeu_mask = qed_rd(p_hwfn, p_hwfn->p_dpc_ptt, IGU_REG_ATTENTION_ENABLE);
-	aeu_mask |= (deasserted_bits & ATTN_BITS_MASKABLE);
+	aeu_mask |= (deनिश्चितed_bits & ATTN_BITS_MASKABLE);
 	qed_wr(p_hwfn, p_hwfn->p_dpc_ptt, IGU_REG_ATTENTION_ENABLE, aeu_mask);
 
-	/* Clear deassertion from inner state */
-	sb_attn_sw->known_attn &= ~deasserted_bits;
+	/* Clear deनिश्चितion from inner state */
+	sb_attn_sw->known_attn &= ~deनिश्चितed_bits;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int qed_int_attentions(struct qed_hwfn *p_hwfn)
-{
-	struct qed_sb_attn_info *p_sb_attn_sw = p_hwfn->p_sb_attn;
-	struct atten_status_block *p_sb_attn = p_sb_attn_sw->sb_attn;
+अटल पूर्णांक qed_पूर्णांक_attentions(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_sb_attn_info *p_sb_attn_sw = p_hwfn->p_sb_attn;
+	काष्ठा atten_status_block *p_sb_attn = p_sb_attn_sw->sb_attn;
 	u32 attn_bits = 0, attn_acks = 0;
-	u16 asserted_bits, deasserted_bits;
+	u16 निश्चितed_bits, deनिश्चितed_bits;
 	__le16 index;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	/* Read current attention bits/acks - safeguard against attentions
-	 * by guaranting work on a synchronized timeframe
+	 * by guaranting work on a synchronized समयframe
 	 */
-	do {
+	करो अणु
 		index = p_sb_attn->sb_index;
-		/* finish reading index before the loop condition */
+		/* finish पढ़ोing index beक्रमe the loop condition */
 		dma_rmb();
 		attn_bits = le32_to_cpu(p_sb_attn->atten_bits);
 		attn_acks = le32_to_cpu(p_sb_attn->atten_ack);
-	} while (index != p_sb_attn->sb_index);
+	पूर्ण जबतक (index != p_sb_attn->sb_index);
 	p_sb_attn->sb_index = index;
 
-	/* Attention / Deassertion are meaningful (and in correct state)
-	 * only when they differ and consistent with known state - deassertion
-	 * when previous attention & current ack, and assertion when current
+	/* Attention / Deनिश्चितion are meaningful (and in correct state)
+	 * only when they dअगरfer and consistent with known state - deनिश्चितion
+	 * when previous attention & current ack, and निश्चितion when current
 	 * attention with no previous attention
 	 */
-	asserted_bits = (attn_bits & ~attn_acks & ATTN_STATE_BITS) &
+	निश्चितed_bits = (attn_bits & ~attn_acks & ATTN_STATE_BITS) &
 		~p_sb_attn_sw->known_attn;
-	deasserted_bits = (~attn_bits & attn_acks & ATTN_STATE_BITS) &
+	deनिश्चितed_bits = (~attn_bits & attn_acks & ATTN_STATE_BITS) &
 		p_sb_attn_sw->known_attn;
 
-	if ((asserted_bits & ~0x100) || (deasserted_bits & ~0x100)) {
+	अगर ((निश्चितed_bits & ~0x100) || (deनिश्चितed_bits & ~0x100)) अणु
 		DP_INFO(p_hwfn,
 			"Attention: Index: 0x%04x, Bits: 0x%08x, Acks: 0x%08x, asserted: 0x%04x, De-asserted 0x%04x [Prev. known: 0x%04x]\n",
-			index, attn_bits, attn_acks, asserted_bits,
-			deasserted_bits, p_sb_attn_sw->known_attn);
-	} else if (asserted_bits == 0x100) {
+			index, attn_bits, attn_acks, निश्चितed_bits,
+			deनिश्चितed_bits, p_sb_attn_sw->known_attn);
+	पूर्ण अन्यथा अगर (निश्चितed_bits == 0x100) अणु
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "MFW indication via attention\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "MFW indication [deassertion]\n");
-	}
+	पूर्ण
 
-	if (asserted_bits) {
-		rc = qed_int_assertion(p_hwfn, asserted_bits);
-		if (rc)
-			return rc;
-	}
+	अगर (निश्चितed_bits) अणु
+		rc = qed_पूर्णांक_निश्चितion(p_hwfn, निश्चितed_bits);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (deasserted_bits)
-		rc = qed_int_deassertion(p_hwfn, deasserted_bits);
+	अगर (deनिश्चितed_bits)
+		rc = qed_पूर्णांक_deनिश्चितion(p_hwfn, deनिश्चितed_bits);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void qed_sb_ack_attn(struct qed_hwfn *p_hwfn,
-			    void __iomem *igu_addr, u32 ack_cons)
-{
+अटल व्योम qed_sb_ack_attn(काष्ठा qed_hwfn *p_hwfn,
+			    व्योम __iomem *igu_addr, u32 ack_cons)
+अणु
 	u32 igu_ack;
 
 	igu_ack = ((ack_cons << IGU_PROD_CONS_UPDATE_SB_INDEX_SHIFT) |
@@ -1208,132 +1209,132 @@ static void qed_sb_ack_attn(struct qed_hwfn *p_hwfn,
 		   (IGU_SEG_ACCESS_ATTN <<
 		    IGU_PROD_CONS_UPDATE_SEGMENT_ACCESS_SHIFT));
 
-	DIRECT_REG_WR(igu_addr, igu_ack);
+	सूचीECT_REG_WR(igu_addr, igu_ack);
 
-	/* Both segments (interrupts & acks) are written to same place address;
+	/* Both segments (पूर्णांकerrupts & acks) are written to same place address;
 	 * Need to guarantee all commands will be received (in-order) by HW.
 	 */
 	barrier();
-}
+पूर्ण
 
-void qed_int_sp_dpc(struct tasklet_struct *t)
-{
-	struct qed_hwfn *p_hwfn = from_tasklet(p_hwfn, t, sp_dpc);
-	struct qed_pi_info *pi_info = NULL;
-	struct qed_sb_attn_info *sb_attn;
-	struct qed_sb_info *sb_info;
-	int arr_size;
+व्योम qed_पूर्णांक_sp_dpc(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा qed_hwfn *p_hwfn = from_tasklet(p_hwfn, t, sp_dpc);
+	काष्ठा qed_pi_info *pi_info = शून्य;
+	काष्ठा qed_sb_attn_info *sb_attn;
+	काष्ठा qed_sb_info *sb_info;
+	पूर्णांक arr_size;
 	u16 rc = 0;
 
-	if (!p_hwfn->p_sp_sb) {
+	अगर (!p_hwfn->p_sp_sb) अणु
 		DP_ERR(p_hwfn->cdev, "DPC called - no p_sp_sb\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sb_info = &p_hwfn->p_sp_sb->sb_info;
 	arr_size = ARRAY_SIZE(p_hwfn->p_sp_sb->pi_info_arr);
-	if (!sb_info) {
+	अगर (!sb_info) अणु
 		DP_ERR(p_hwfn->cdev,
 		       "Status block is NULL - cannot ack interrupts\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!p_hwfn->p_sb_attn) {
+	अगर (!p_hwfn->p_sb_attn) अणु
 		DP_ERR(p_hwfn->cdev, "DPC called - no p_sb_attn");
-		return;
-	}
+		वापस;
+	पूर्ण
 	sb_attn = p_hwfn->p_sb_attn;
 
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR, "DPC Called! (hwfn %p %d)\n",
 		   p_hwfn, p_hwfn->my_id);
 
-	/* Disable ack for def status block. Required both for msix +
-	 * inta in non-mask mode, in inta does no harm.
+	/* Disable ack क्रम def status block. Required both क्रम msix +
+	 * पूर्णांकa in non-mask mode, in पूर्णांकa करोes no harm.
 	 */
 	qed_sb_ack(sb_info, IGU_INT_DISABLE, 0);
 
-	/* Gather Interrupts/Attentions information */
-	if (!sb_info->sb_virt) {
+	/* Gather Interrupts/Attentions inक्रमmation */
+	अगर (!sb_info->sb_virt) अणु
 		DP_ERR(p_hwfn->cdev,
 		       "Interrupt Status block is NULL - cannot check for new interrupts!\n");
-	} else {
-		u32 tmp_index = sb_info->sb_ack;
+	पूर्ण अन्यथा अणु
+		u32 पंचांगp_index = sb_info->sb_ack;
 
 		rc = qed_sb_update_sb_idx(sb_info);
 		DP_VERBOSE(p_hwfn->cdev, NETIF_MSG_INTR,
 			   "Interrupt indices: 0x%08x --> 0x%08x\n",
-			   tmp_index, sb_info->sb_ack);
-	}
+			   पंचांगp_index, sb_info->sb_ack);
+	पूर्ण
 
-	if (!sb_attn || !sb_attn->sb_attn) {
+	अगर (!sb_attn || !sb_attn->sb_attn) अणु
 		DP_ERR(p_hwfn->cdev,
 		       "Attentions Status block is NULL - cannot check for new attentions!\n");
-	} else {
-		u16 tmp_index = sb_attn->index;
+	पूर्ण अन्यथा अणु
+		u16 पंचांगp_index = sb_attn->index;
 
 		rc |= qed_attn_update_idx(p_hwfn, sb_attn);
 		DP_VERBOSE(p_hwfn->cdev, NETIF_MSG_INTR,
 			   "Attention indices: 0x%08x --> 0x%08x\n",
-			   tmp_index, sb_attn->index);
-	}
+			   पंचांगp_index, sb_attn->index);
+	पूर्ण
 
-	/* Check if we expect interrupts at this time. if not just ack them */
-	if (!(rc & QED_SB_EVENT_MASK)) {
+	/* Check अगर we expect पूर्णांकerrupts at this समय. अगर not just ack them */
+	अगर (!(rc & QED_SB_EVENT_MASK)) अणु
 		qed_sb_ack(sb_info, IGU_INT_ENABLE, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check the validity of the DPC ptt. If not ack interrupts and fail */
-	if (!p_hwfn->p_dpc_ptt) {
+	/* Check the validity of the DPC ptt. If not ack पूर्णांकerrupts and fail */
+	अगर (!p_hwfn->p_dpc_ptt) अणु
 		DP_NOTICE(p_hwfn->cdev, "Failed to allocate PTT\n");
 		qed_sb_ack(sb_info, IGU_INT_ENABLE, 1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (rc & QED_SB_ATT_IDX)
-		qed_int_attentions(p_hwfn);
+	अगर (rc & QED_SB_ATT_IDX)
+		qed_पूर्णांक_attentions(p_hwfn);
 
-	if (rc & QED_SB_IDX) {
-		int pi;
+	अगर (rc & QED_SB_IDX) अणु
+		पूर्णांक pi;
 
-		/* Look for a free index */
-		for (pi = 0; pi < arr_size; pi++) {
+		/* Look क्रम a मुक्त index */
+		क्रम (pi = 0; pi < arr_size; pi++) अणु
 			pi_info = &p_hwfn->p_sp_sb->pi_info_arr[pi];
-			if (pi_info->comp_cb)
+			अगर (pi_info->comp_cb)
 				pi_info->comp_cb(p_hwfn, pi_info->cookie);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sb_attn && (rc & QED_SB_ATT_IDX))
-		/* This should be done before the interrupts are enabled,
+	अगर (sb_attn && (rc & QED_SB_ATT_IDX))
+		/* This should be करोne beक्रमe the पूर्णांकerrupts are enabled,
 		 * since otherwise a new attention will be generated.
 		 */
 		qed_sb_ack_attn(p_hwfn, sb_info->igu_addr, sb_attn->index);
 
 	qed_sb_ack(sb_info, IGU_INT_ENABLE, 1);
-}
+पूर्ण
 
-static void qed_int_sb_attn_free(struct qed_hwfn *p_hwfn)
-{
-	struct qed_sb_attn_info *p_sb = p_hwfn->p_sb_attn;
+अटल व्योम qed_पूर्णांक_sb_attn_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_sb_attn_info *p_sb = p_hwfn->p_sb_attn;
 
-	if (!p_sb)
-		return;
+	अगर (!p_sb)
+		वापस;
 
-	if (p_sb->sb_attn)
-		dma_free_coherent(&p_hwfn->cdev->pdev->dev,
+	अगर (p_sb->sb_attn)
+		dma_मुक्त_coherent(&p_hwfn->cdev->pdev->dev,
 				  SB_ATTN_ALIGNED_SIZE(p_hwfn),
 				  p_sb->sb_attn, p_sb->sb_phys);
-	kfree(p_sb);
-	p_hwfn->p_sb_attn = NULL;
-}
+	kमुक्त(p_sb);
+	p_hwfn->p_sb_attn = शून्य;
+पूर्ण
 
-static void qed_int_sb_attn_setup(struct qed_hwfn *p_hwfn,
-				  struct qed_ptt *p_ptt)
-{
-	struct qed_sb_attn_info *sb_info = p_hwfn->p_sb_attn;
+अटल व्योम qed_पूर्णांक_sb_attn_setup(काष्ठा qed_hwfn *p_hwfn,
+				  काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_sb_attn_info *sb_info = p_hwfn->p_sb_attn;
 
-	memset(sb_info->sb_attn, 0, sizeof(*sb_info->sb_attn));
+	स_रखो(sb_info->sb_attn, 0, माप(*sb_info->sb_attn));
 
 	sb_info->index = 0;
 	sb_info->known_attn = 0;
@@ -1343,89 +1344,89 @@ static void qed_int_sb_attn_setup(struct qed_hwfn *p_hwfn,
 	       lower_32_bits(p_hwfn->p_sb_attn->sb_phys));
 	qed_wr(p_hwfn, p_ptt, IGU_REG_ATTN_MSG_ADDR_H,
 	       upper_32_bits(p_hwfn->p_sb_attn->sb_phys));
-}
+पूर्ण
 
-static void qed_int_sb_attn_init(struct qed_hwfn *p_hwfn,
-				 struct qed_ptt *p_ptt,
-				 void *sb_virt_addr, dma_addr_t sb_phy_addr)
-{
-	struct qed_sb_attn_info *sb_info = p_hwfn->p_sb_attn;
-	int i, j, k;
+अटल व्योम qed_पूर्णांक_sb_attn_init(काष्ठा qed_hwfn *p_hwfn,
+				 काष्ठा qed_ptt *p_ptt,
+				 व्योम *sb_virt_addr, dma_addr_t sb_phy_addr)
+अणु
+	काष्ठा qed_sb_attn_info *sb_info = p_hwfn->p_sb_attn;
+	पूर्णांक i, j, k;
 
 	sb_info->sb_attn = sb_virt_addr;
 	sb_info->sb_phys = sb_phy_addr;
 
-	/* Set the pointer to the AEU descriptors */
+	/* Set the poपूर्णांकer to the AEU descriptors */
 	sb_info->p_aeu_desc = aeu_descs;
 
 	/* Calculate Parity Masks */
-	memset(sb_info->parity_mask, 0, sizeof(u32) * NUM_ATTN_REGS);
-	for (i = 0; i < NUM_ATTN_REGS; i++) {
+	स_रखो(sb_info->parity_mask, 0, माप(u32) * NUM_ATTN_REGS);
+	क्रम (i = 0; i < NUM_ATTN_REGS; i++) अणु
 		/* j is array index, k is bit index */
-		for (j = 0, k = 0; k < 32; j++) {
-			struct aeu_invert_reg_bit *p_aeu;
+		क्रम (j = 0, k = 0; k < 32; j++) अणु
+			काष्ठा aeu_invert_reg_bit *p_aeu;
 
 			p_aeu = &aeu_descs[i].bits[j];
-			if (qed_int_is_parity_flag(p_hwfn, p_aeu))
+			अगर (qed_पूर्णांक_is_parity_flag(p_hwfn, p_aeu))
 				sb_info->parity_mask[i] |= 1 << k;
 
 			k += ATTENTION_LENGTH(p_aeu->flags);
-		}
+		पूर्ण
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "Attn Mask [Reg %d]: 0x%08x\n",
 			   i, sb_info->parity_mask[i]);
-	}
+	पूर्ण
 
-	/* Set the address of cleanup for the mcp attention */
+	/* Set the address of cleanup क्रम the mcp attention */
 	sb_info->mfw_attn_addr = (p_hwfn->rel_pf_id << 3) +
 				 MISC_REG_AEU_GENERAL_ATTN_0;
 
-	qed_int_sb_attn_setup(p_hwfn, p_ptt);
-}
+	qed_पूर्णांक_sb_attn_setup(p_hwfn, p_ptt);
+पूर्ण
 
-static int qed_int_sb_attn_alloc(struct qed_hwfn *p_hwfn,
-				 struct qed_ptt *p_ptt)
-{
-	struct qed_dev *cdev = p_hwfn->cdev;
-	struct qed_sb_attn_info *p_sb;
+अटल पूर्णांक qed_पूर्णांक_sb_attn_alloc(काष्ठा qed_hwfn *p_hwfn,
+				 काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_dev *cdev = p_hwfn->cdev;
+	काष्ठा qed_sb_attn_info *p_sb;
 	dma_addr_t p_phys = 0;
-	void *p_virt;
+	व्योम *p_virt;
 
-	/* SB struct */
-	p_sb = kmalloc(sizeof(*p_sb), GFP_KERNEL);
-	if (!p_sb)
-		return -ENOMEM;
+	/* SB काष्ठा */
+	p_sb = kदो_स्मृति(माप(*p_sb), GFP_KERNEL);
+	अगर (!p_sb)
+		वापस -ENOMEM;
 
 	/* SB ring  */
 	p_virt = dma_alloc_coherent(&cdev->pdev->dev,
 				    SB_ATTN_ALIGNED_SIZE(p_hwfn),
 				    &p_phys, GFP_KERNEL);
 
-	if (!p_virt) {
-		kfree(p_sb);
-		return -ENOMEM;
-	}
+	अगर (!p_virt) अणु
+		kमुक्त(p_sb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Attention setup */
 	p_hwfn->p_sb_attn = p_sb;
-	qed_int_sb_attn_init(p_hwfn, p_ptt, p_virt, p_phys);
+	qed_पूर्णांक_sb_attn_init(p_hwfn, p_ptt, p_virt, p_phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* coalescing timeout = timeset << (timer_res + 1) */
-#define QED_CAU_DEF_RX_USECS 24
-#define QED_CAU_DEF_TX_USECS 48
+/* coalescing समयout = बारet << (समयr_res + 1) */
+#घोषणा QED_CAU_DEF_RX_USECS 24
+#घोषणा QED_CAU_DEF_TX_USECS 48
 
-void qed_init_cau_sb_entry(struct qed_hwfn *p_hwfn,
-			   struct cau_sb_entry *p_sb_entry,
+व्योम qed_init_cau_sb_entry(काष्ठा qed_hwfn *p_hwfn,
+			   काष्ठा cau_sb_entry *p_sb_entry,
 			   u8 pf_id, u16 vf_number, u8 vf_valid)
-{
-	struct qed_dev *cdev = p_hwfn->cdev;
+अणु
+	काष्ठा qed_dev *cdev = p_hwfn->cdev;
 	u32 cau_state, params = 0, data = 0;
-	u8 timer_res;
+	u8 समयr_res;
 
-	memset(p_sb_entry, 0, sizeof(*p_sb_entry));
+	स_रखो(p_sb_entry, 0, माप(*p_sb_entry));
 
 	SET_FIELD(params, CAU_SB_ENTRY_PF_NUMBER, pf_id);
 	SET_FIELD(params, CAU_SB_ENTRY_VF_NUMBER, vf_number);
@@ -1435,90 +1436,90 @@ void qed_init_cau_sb_entry(struct qed_hwfn *p_hwfn,
 
 	cau_state = CAU_HC_DISABLE_STATE;
 
-	if (cdev->int_coalescing_mode == QED_COAL_MODE_ENABLE) {
+	अगर (cdev->पूर्णांक_coalescing_mode == QED_COAL_MODE_ENABLE) अणु
 		cau_state = CAU_HC_ENABLE_STATE;
-		if (!cdev->rx_coalesce_usecs)
+		अगर (!cdev->rx_coalesce_usecs)
 			cdev->rx_coalesce_usecs = QED_CAU_DEF_RX_USECS;
-		if (!cdev->tx_coalesce_usecs)
+		अगर (!cdev->tx_coalesce_usecs)
 			cdev->tx_coalesce_usecs = QED_CAU_DEF_TX_USECS;
-	}
+	पूर्ण
 
-	/* Coalesce = (timeset << timer-res), timeset is 7bit wide */
-	if (cdev->rx_coalesce_usecs <= 0x7F)
-		timer_res = 0;
-	else if (cdev->rx_coalesce_usecs <= 0xFF)
-		timer_res = 1;
-	else
-		timer_res = 2;
+	/* Coalesce = (बारet << समयr-res), बारet is 7bit wide */
+	अगर (cdev->rx_coalesce_usecs <= 0x7F)
+		समयr_res = 0;
+	अन्यथा अगर (cdev->rx_coalesce_usecs <= 0xFF)
+		समयr_res = 1;
+	अन्यथा
+		समयr_res = 2;
 
-	SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES0, timer_res);
+	SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES0, समयr_res);
 
-	if (cdev->tx_coalesce_usecs <= 0x7F)
-		timer_res = 0;
-	else if (cdev->tx_coalesce_usecs <= 0xFF)
-		timer_res = 1;
-	else
-		timer_res = 2;
+	अगर (cdev->tx_coalesce_usecs <= 0x7F)
+		समयr_res = 0;
+	अन्यथा अगर (cdev->tx_coalesce_usecs <= 0xFF)
+		समयr_res = 1;
+	अन्यथा
+		समयr_res = 2;
 
-	SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES1, timer_res);
+	SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES1, समयr_res);
 	p_sb_entry->params = cpu_to_le32(params);
 
 	SET_FIELD(data, CAU_SB_ENTRY_STATE0, cau_state);
 	SET_FIELD(data, CAU_SB_ENTRY_STATE1, cau_state);
 	p_sb_entry->data = cpu_to_le32(data);
-}
+पूर्ण
 
-static void qed_int_cau_conf_pi(struct qed_hwfn *p_hwfn,
-				struct qed_ptt *p_ptt,
+अटल व्योम qed_पूर्णांक_cau_conf_pi(काष्ठा qed_hwfn *p_hwfn,
+				काष्ठा qed_ptt *p_ptt,
 				u16 igu_sb_id,
 				u32 pi_index,
-				enum qed_coalescing_fsm coalescing_fsm,
-				u8 timeset)
-{
+				क्रमागत qed_coalescing_fsm coalescing_fsm,
+				u8 बारet)
+अणु
 	u32 sb_offset, pi_offset;
 	u32 prod = 0;
 
-	if (IS_VF(p_hwfn->cdev))
-		return;
+	अगर (IS_VF(p_hwfn->cdev))
+		वापस;
 
-	SET_FIELD(prod, CAU_PI_ENTRY_PI_TIMESET, timeset);
-	if (coalescing_fsm == QED_COAL_RX_STATE_MACHINE)
+	SET_FIELD(prod, CAU_PI_ENTRY_PI_TIMESET, बारet);
+	अगर (coalescing_fsm == QED_COAL_RX_STATE_MACHINE)
 		SET_FIELD(prod, CAU_PI_ENTRY_FSM_SEL, 0);
-	else
+	अन्यथा
 		SET_FIELD(prod, CAU_PI_ENTRY_FSM_SEL, 1);
 
 	sb_offset = igu_sb_id * PIS_PER_SB_E4;
 	pi_offset = sb_offset + pi_index;
 
-	if (p_hwfn->hw_init_done)
+	अगर (p_hwfn->hw_init_करोne)
 		qed_wr(p_hwfn, p_ptt,
-		       CAU_REG_PI_MEMORY + pi_offset * sizeof(u32), prod);
-	else
+		       CAU_REG_PI_MEMORY + pi_offset * माप(u32), prod);
+	अन्यथा
 		STORE_RT_REG(p_hwfn, CAU_REG_PI_MEMORY_RT_OFFSET + pi_offset,
 			     prod);
-}
+पूर्ण
 
-void qed_int_cau_conf_sb(struct qed_hwfn *p_hwfn,
-			 struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_cau_conf_sb(काष्ठा qed_hwfn *p_hwfn,
+			 काष्ठा qed_ptt *p_ptt,
 			 dma_addr_t sb_phys,
 			 u16 igu_sb_id, u16 vf_number, u8 vf_valid)
-{
-	struct cau_sb_entry sb_entry;
+अणु
+	काष्ठा cau_sb_entry sb_entry;
 
 	qed_init_cau_sb_entry(p_hwfn, &sb_entry, p_hwfn->rel_pf_id,
 			      vf_number, vf_valid);
 
-	if (p_hwfn->hw_init_done) {
+	अगर (p_hwfn->hw_init_करोne) अणु
 		/* Wide-bus, initialize via DMAE */
 		u64 phys_addr = (u64)sb_phys;
 
-		qed_dmae_host2grc(p_hwfn, p_ptt, (u64)(uintptr_t)&phys_addr,
+		qed_dmae_host2grc(p_hwfn, p_ptt, (u64)(uपूर्णांकptr_t)&phys_addr,
 				  CAU_REG_SB_ADDR_MEMORY +
-				  igu_sb_id * sizeof(u64), 2, NULL);
-		qed_dmae_host2grc(p_hwfn, p_ptt, (u64)(uintptr_t)&sb_entry,
+				  igu_sb_id * माप(u64), 2, शून्य);
+		qed_dmae_host2grc(p_hwfn, p_ptt, (u64)(uपूर्णांकptr_t)&sb_entry,
 				  CAU_REG_SB_VAR_MEMORY +
-				  igu_sb_id * sizeof(u64), 2, NULL);
-	} else {
+				  igu_sb_id * माप(u64), 2, शून्य);
+	पूर्ण अन्यथा अणु
 		/* Initialize Status Block Address */
 		STORE_RT_REG_AGG(p_hwfn,
 				 CAU_REG_SB_ADDR_MEMORY_RT_OFFSET +
@@ -1529,367 +1530,367 @@ void qed_int_cau_conf_sb(struct qed_hwfn *p_hwfn,
 				 CAU_REG_SB_VAR_MEMORY_RT_OFFSET +
 				 igu_sb_id * 2,
 				 sb_entry);
-	}
+	पूर्ण
 
-	/* Configure pi coalescing if set */
-	if (p_hwfn->cdev->int_coalescing_mode == QED_COAL_MODE_ENABLE) {
+	/* Configure pi coalescing अगर set */
+	अगर (p_hwfn->cdev->पूर्णांक_coalescing_mode == QED_COAL_MODE_ENABLE) अणु
 		u8 num_tc = p_hwfn->hw_info.num_hw_tc;
-		u8 timeset, timer_res;
+		u8 बारet, समयr_res;
 		u8 i;
 
-		/* timeset = (coalesce >> timer-res), timeset is 7bit wide */
-		if (p_hwfn->cdev->rx_coalesce_usecs <= 0x7F)
-			timer_res = 0;
-		else if (p_hwfn->cdev->rx_coalesce_usecs <= 0xFF)
-			timer_res = 1;
-		else
-			timer_res = 2;
-		timeset = (u8)(p_hwfn->cdev->rx_coalesce_usecs >> timer_res);
-		qed_int_cau_conf_pi(p_hwfn, p_ptt, igu_sb_id, RX_PI,
-				    QED_COAL_RX_STATE_MACHINE, timeset);
+		/* बारet = (coalesce >> समयr-res), बारet is 7bit wide */
+		अगर (p_hwfn->cdev->rx_coalesce_usecs <= 0x7F)
+			समयr_res = 0;
+		अन्यथा अगर (p_hwfn->cdev->rx_coalesce_usecs <= 0xFF)
+			समयr_res = 1;
+		अन्यथा
+			समयr_res = 2;
+		बारet = (u8)(p_hwfn->cdev->rx_coalesce_usecs >> समयr_res);
+		qed_पूर्णांक_cau_conf_pi(p_hwfn, p_ptt, igu_sb_id, RX_PI,
+				    QED_COAL_RX_STATE_MACHINE, बारet);
 
-		if (p_hwfn->cdev->tx_coalesce_usecs <= 0x7F)
-			timer_res = 0;
-		else if (p_hwfn->cdev->tx_coalesce_usecs <= 0xFF)
-			timer_res = 1;
-		else
-			timer_res = 2;
-		timeset = (u8)(p_hwfn->cdev->tx_coalesce_usecs >> timer_res);
-		for (i = 0; i < num_tc; i++) {
-			qed_int_cau_conf_pi(p_hwfn, p_ptt,
+		अगर (p_hwfn->cdev->tx_coalesce_usecs <= 0x7F)
+			समयr_res = 0;
+		अन्यथा अगर (p_hwfn->cdev->tx_coalesce_usecs <= 0xFF)
+			समयr_res = 1;
+		अन्यथा
+			समयr_res = 2;
+		बारet = (u8)(p_hwfn->cdev->tx_coalesce_usecs >> समयr_res);
+		क्रम (i = 0; i < num_tc; i++) अणु
+			qed_पूर्णांक_cau_conf_pi(p_hwfn, p_ptt,
 					    igu_sb_id, TX_PI(i),
 					    QED_COAL_TX_STATE_MACHINE,
-					    timeset);
-		}
-	}
-}
+					    बारet);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void qed_int_sb_setup(struct qed_hwfn *p_hwfn,
-		      struct qed_ptt *p_ptt, struct qed_sb_info *sb_info)
-{
+व्योम qed_पूर्णांक_sb_setup(काष्ठा qed_hwfn *p_hwfn,
+		      काष्ठा qed_ptt *p_ptt, काष्ठा qed_sb_info *sb_info)
+अणु
 	/* zero status block and ack counter */
 	sb_info->sb_ack = 0;
-	memset(sb_info->sb_virt, 0, sizeof(*sb_info->sb_virt));
+	स_रखो(sb_info->sb_virt, 0, माप(*sb_info->sb_virt));
 
-	if (IS_PF(p_hwfn->cdev))
-		qed_int_cau_conf_sb(p_hwfn, p_ptt, sb_info->sb_phys,
+	अगर (IS_PF(p_hwfn->cdev))
+		qed_पूर्णांक_cau_conf_sb(p_hwfn, p_ptt, sb_info->sb_phys,
 				    sb_info->igu_sb_id, 0, 0);
-}
+पूर्ण
 
-struct qed_igu_block *qed_get_igu_free_sb(struct qed_hwfn *p_hwfn, bool b_is_pf)
-{
-	struct qed_igu_block *p_block;
+काष्ठा qed_igu_block *qed_get_igu_मुक्त_sb(काष्ठा qed_hwfn *p_hwfn, bool b_is_pf)
+अणु
+	काष्ठा qed_igu_block *p_block;
 	u16 igu_id;
 
-	for (igu_id = 0; igu_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev);
-	     igu_id++) {
+	क्रम (igu_id = 0; igu_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev);
+	     igu_id++) अणु
 		p_block = &p_hwfn->hw_info.p_igu_info->entry[igu_id];
 
-		if (!(p_block->status & QED_IGU_STATUS_VALID) ||
+		अगर (!(p_block->status & QED_IGU_STATUS_VALID) ||
 		    !(p_block->status & QED_IGU_STATUS_FREE))
-			continue;
+			जारी;
 
-		if (!!(p_block->status & QED_IGU_STATUS_PF) == b_is_pf)
-			return p_block;
-	}
+		अगर (!!(p_block->status & QED_IGU_STATUS_PF) == b_is_pf)
+			वापस p_block;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static u16 qed_get_pf_igu_sb_id(struct qed_hwfn *p_hwfn, u16 vector_id)
-{
-	struct qed_igu_block *p_block;
+अटल u16 qed_get_pf_igu_sb_id(काष्ठा qed_hwfn *p_hwfn, u16 vector_id)
+अणु
+	काष्ठा qed_igu_block *p_block;
 	u16 igu_id;
 
-	for (igu_id = 0; igu_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev);
-	     igu_id++) {
+	क्रम (igu_id = 0; igu_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev);
+	     igu_id++) अणु
 		p_block = &p_hwfn->hw_info.p_igu_info->entry[igu_id];
 
-		if (!(p_block->status & QED_IGU_STATUS_VALID) ||
+		अगर (!(p_block->status & QED_IGU_STATUS_VALID) ||
 		    !p_block->is_pf ||
 		    p_block->vector_number != vector_id)
-			continue;
+			जारी;
 
-		return igu_id;
-	}
+		वापस igu_id;
+	पूर्ण
 
-	return QED_SB_INVALID_IDX;
-}
+	वापस QED_SB_INVALID_IDX;
+पूर्ण
 
-u16 qed_get_igu_sb_id(struct qed_hwfn *p_hwfn, u16 sb_id)
-{
+u16 qed_get_igu_sb_id(काष्ठा qed_hwfn *p_hwfn, u16 sb_id)
+अणु
 	u16 igu_sb_id;
 
-	/* Assuming continuous set of IGU SBs dedicated for given PF */
-	if (sb_id == QED_SP_SB_ID)
+	/* Assuming continuous set of IGU SBs dedicated क्रम given PF */
+	अगर (sb_id == QED_SP_SB_ID)
 		igu_sb_id = p_hwfn->hw_info.p_igu_info->igu_dsb_id;
-	else if (IS_PF(p_hwfn->cdev))
+	अन्यथा अगर (IS_PF(p_hwfn->cdev))
 		igu_sb_id = qed_get_pf_igu_sb_id(p_hwfn, sb_id + 1);
-	else
+	अन्यथा
 		igu_sb_id = qed_vf_get_igu_sb_id(p_hwfn, sb_id);
 
-	if (sb_id == QED_SP_SB_ID)
+	अगर (sb_id == QED_SP_SB_ID)
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "Slowpath SB index in IGU is 0x%04x\n", igu_sb_id);
-	else
+	अन्यथा
 		DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 			   "SB [%04x] <--> IGU SB [%04x]\n", sb_id, igu_sb_id);
 
-	return igu_sb_id;
-}
+	वापस igu_sb_id;
+पूर्ण
 
-int qed_int_sb_init(struct qed_hwfn *p_hwfn,
-		    struct qed_ptt *p_ptt,
-		    struct qed_sb_info *sb_info,
-		    void *sb_virt_addr, dma_addr_t sb_phy_addr, u16 sb_id)
-{
+पूर्णांक qed_पूर्णांक_sb_init(काष्ठा qed_hwfn *p_hwfn,
+		    काष्ठा qed_ptt *p_ptt,
+		    काष्ठा qed_sb_info *sb_info,
+		    व्योम *sb_virt_addr, dma_addr_t sb_phy_addr, u16 sb_id)
+अणु
 	sb_info->sb_virt = sb_virt_addr;
 	sb_info->sb_phys = sb_phy_addr;
 
 	sb_info->igu_sb_id = qed_get_igu_sb_id(p_hwfn, sb_id);
 
-	if (sb_id != QED_SP_SB_ID) {
-		if (IS_PF(p_hwfn->cdev)) {
-			struct qed_igu_info *p_info;
-			struct qed_igu_block *p_block;
+	अगर (sb_id != QED_SP_SB_ID) अणु
+		अगर (IS_PF(p_hwfn->cdev)) अणु
+			काष्ठा qed_igu_info *p_info;
+			काष्ठा qed_igu_block *p_block;
 
 			p_info = p_hwfn->hw_info.p_igu_info;
 			p_block = &p_info->entry[sb_info->igu_sb_id];
 
 			p_block->sb_info = sb_info;
 			p_block->status &= ~QED_IGU_STATUS_FREE;
-			p_info->usage.free_cnt--;
-		} else {
+			p_info->usage.मुक्त_cnt--;
+		पूर्ण अन्यथा अणु
 			qed_vf_set_sb_info(p_hwfn, sb_id, sb_info);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	sb_info->cdev = p_hwfn->cdev;
 
-	/* The igu address will hold the absolute address that needs to be
-	 * written to for a specific status block
+	/* The igu address will hold the असलolute address that needs to be
+	 * written to क्रम a specअगरic status block
 	 */
-	if (IS_PF(p_hwfn->cdev)) {
+	अगर (IS_PF(p_hwfn->cdev)) अणु
 		sb_info->igu_addr = (u8 __iomem *)p_hwfn->regview +
 						  GTT_BAR0_MAP_REG_IGU_CMD +
 						  (sb_info->igu_sb_id << 3);
-	} else {
+	पूर्ण अन्यथा अणु
 		sb_info->igu_addr = (u8 __iomem *)p_hwfn->regview +
 						  PXP_VF_BAR0_START_IGU +
 						  ((IGU_CMD_INT_ACK_BASE +
 						    sb_info->igu_sb_id) << 3);
-	}
+	पूर्ण
 
 	sb_info->flags |= QED_SB_INFO_INIT;
 
-	qed_int_sb_setup(p_hwfn, p_ptt, sb_info);
+	qed_पूर्णांक_sb_setup(p_hwfn, p_ptt, sb_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qed_int_sb_release(struct qed_hwfn *p_hwfn,
-		       struct qed_sb_info *sb_info, u16 sb_id)
-{
-	struct qed_igu_block *p_block;
-	struct qed_igu_info *p_info;
+पूर्णांक qed_पूर्णांक_sb_release(काष्ठा qed_hwfn *p_hwfn,
+		       काष्ठा qed_sb_info *sb_info, u16 sb_id)
+अणु
+	काष्ठा qed_igu_block *p_block;
+	काष्ठा qed_igu_info *p_info;
 
-	if (!sb_info)
-		return 0;
+	अगर (!sb_info)
+		वापस 0;
 
 	/* zero status block and ack counter */
 	sb_info->sb_ack = 0;
-	memset(sb_info->sb_virt, 0, sizeof(*sb_info->sb_virt));
+	स_रखो(sb_info->sb_virt, 0, माप(*sb_info->sb_virt));
 
-	if (IS_VF(p_hwfn->cdev)) {
-		qed_vf_set_sb_info(p_hwfn, sb_id, NULL);
-		return 0;
-	}
+	अगर (IS_VF(p_hwfn->cdev)) अणु
+		qed_vf_set_sb_info(p_hwfn, sb_id, शून्य);
+		वापस 0;
+	पूर्ण
 
 	p_info = p_hwfn->hw_info.p_igu_info;
 	p_block = &p_info->entry[sb_info->igu_sb_id];
 
 	/* Vector 0 is reserved to Default SB */
-	if (!p_block->vector_number) {
+	अगर (!p_block->vector_number) अणु
 		DP_ERR(p_hwfn, "Do Not free sp sb using this function");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Lose reference to client's SB info, and fix counters */
-	p_block->sb_info = NULL;
+	p_block->sb_info = शून्य;
 	p_block->status |= QED_IGU_STATUS_FREE;
-	p_info->usage.free_cnt++;
+	p_info->usage.मुक्त_cnt++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qed_int_sp_sb_free(struct qed_hwfn *p_hwfn)
-{
-	struct qed_sb_sp_info *p_sb = p_hwfn->p_sp_sb;
+अटल व्योम qed_पूर्णांक_sp_sb_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_sb_sp_info *p_sb = p_hwfn->p_sp_sb;
 
-	if (!p_sb)
-		return;
+	अगर (!p_sb)
+		वापस;
 
-	if (p_sb->sb_info.sb_virt)
-		dma_free_coherent(&p_hwfn->cdev->pdev->dev,
+	अगर (p_sb->sb_info.sb_virt)
+		dma_मुक्त_coherent(&p_hwfn->cdev->pdev->dev,
 				  SB_ALIGNED_SIZE(p_hwfn),
 				  p_sb->sb_info.sb_virt,
 				  p_sb->sb_info.sb_phys);
-	kfree(p_sb);
-	p_hwfn->p_sp_sb = NULL;
-}
+	kमुक्त(p_sb);
+	p_hwfn->p_sp_sb = शून्य;
+पूर्ण
 
-static int qed_int_sp_sb_alloc(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_sb_sp_info *p_sb;
+अटल पूर्णांक qed_पूर्णांक_sp_sb_alloc(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_sb_sp_info *p_sb;
 	dma_addr_t p_phys = 0;
-	void *p_virt;
+	व्योम *p_virt;
 
-	/* SB struct */
-	p_sb = kmalloc(sizeof(*p_sb), GFP_KERNEL);
-	if (!p_sb)
-		return -ENOMEM;
+	/* SB काष्ठा */
+	p_sb = kदो_स्मृति(माप(*p_sb), GFP_KERNEL);
+	अगर (!p_sb)
+		वापस -ENOMEM;
 
 	/* SB ring  */
 	p_virt = dma_alloc_coherent(&p_hwfn->cdev->pdev->dev,
 				    SB_ALIGNED_SIZE(p_hwfn),
 				    &p_phys, GFP_KERNEL);
-	if (!p_virt) {
-		kfree(p_sb);
-		return -ENOMEM;
-	}
+	अगर (!p_virt) अणु
+		kमुक्त(p_sb);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Status Block setup */
 	p_hwfn->p_sp_sb = p_sb;
-	qed_int_sb_init(p_hwfn, p_ptt, &p_sb->sb_info, p_virt,
+	qed_पूर्णांक_sb_init(p_hwfn, p_ptt, &p_sb->sb_info, p_virt,
 			p_phys, QED_SP_SB_ID);
 
-	memset(p_sb->pi_info_arr, 0, sizeof(p_sb->pi_info_arr));
+	स_रखो(p_sb->pi_info_arr, 0, माप(p_sb->pi_info_arr));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qed_int_register_cb(struct qed_hwfn *p_hwfn,
-			qed_int_comp_cb_t comp_cb,
-			void *cookie, u8 *sb_idx, __le16 **p_fw_cons)
-{
-	struct qed_sb_sp_info *p_sp_sb = p_hwfn->p_sp_sb;
-	int rc = -ENOMEM;
+पूर्णांक qed_पूर्णांक_रेजिस्टर_cb(काष्ठा qed_hwfn *p_hwfn,
+			qed_पूर्णांक_comp_cb_t comp_cb,
+			व्योम *cookie, u8 *sb_idx, __le16 **p_fw_cons)
+अणु
+	काष्ठा qed_sb_sp_info *p_sp_sb = p_hwfn->p_sp_sb;
+	पूर्णांक rc = -ENOMEM;
 	u8 pi;
 
-	/* Look for a free index */
-	for (pi = 0; pi < ARRAY_SIZE(p_sp_sb->pi_info_arr); pi++) {
-		if (p_sp_sb->pi_info_arr[pi].comp_cb)
-			continue;
+	/* Look क्रम a मुक्त index */
+	क्रम (pi = 0; pi < ARRAY_SIZE(p_sp_sb->pi_info_arr); pi++) अणु
+		अगर (p_sp_sb->pi_info_arr[pi].comp_cb)
+			जारी;
 
 		p_sp_sb->pi_info_arr[pi].comp_cb = comp_cb;
 		p_sp_sb->pi_info_arr[pi].cookie = cookie;
 		*sb_idx = pi;
 		*p_fw_cons = &p_sp_sb->sb_info.sb_virt->pi_array[pi];
 		rc = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int qed_int_unregister_cb(struct qed_hwfn *p_hwfn, u8 pi)
-{
-	struct qed_sb_sp_info *p_sp_sb = p_hwfn->p_sp_sb;
+पूर्णांक qed_पूर्णांक_unरेजिस्टर_cb(काष्ठा qed_hwfn *p_hwfn, u8 pi)
+अणु
+	काष्ठा qed_sb_sp_info *p_sp_sb = p_hwfn->p_sp_sb;
 
-	if (p_sp_sb->pi_info_arr[pi].comp_cb == NULL)
-		return -ENOMEM;
+	अगर (p_sp_sb->pi_info_arr[pi].comp_cb == शून्य)
+		वापस -ENOMEM;
 
-	p_sp_sb->pi_info_arr[pi].comp_cb = NULL;
-	p_sp_sb->pi_info_arr[pi].cookie = NULL;
+	p_sp_sb->pi_info_arr[pi].comp_cb = शून्य;
+	p_sp_sb->pi_info_arr[pi].cookie = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-u16 qed_int_get_sp_sb_id(struct qed_hwfn *p_hwfn)
-{
-	return p_hwfn->p_sp_sb->sb_info.igu_sb_id;
-}
+u16 qed_पूर्णांक_get_sp_sb_id(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	वापस p_hwfn->p_sp_sb->sb_info.igu_sb_id;
+पूर्ण
 
-void qed_int_igu_enable_int(struct qed_hwfn *p_hwfn,
-			    struct qed_ptt *p_ptt, enum qed_int_mode int_mode)
-{
+व्योम qed_पूर्णांक_igu_enable_पूर्णांक(काष्ठा qed_hwfn *p_hwfn,
+			    काष्ठा qed_ptt *p_ptt, क्रमागत qed_पूर्णांक_mode पूर्णांक_mode)
+अणु
 	u32 igu_pf_conf = IGU_PF_CONF_FUNC_EN | IGU_PF_CONF_ATTN_BIT_EN;
 
-	p_hwfn->cdev->int_mode = int_mode;
-	switch (p_hwfn->cdev->int_mode) {
-	case QED_INT_MODE_INTA:
+	p_hwfn->cdev->पूर्णांक_mode = पूर्णांक_mode;
+	चयन (p_hwfn->cdev->पूर्णांक_mode) अणु
+	हाल QED_INT_MODE_INTA:
 		igu_pf_conf |= IGU_PF_CONF_INT_LINE_EN;
 		igu_pf_conf |= IGU_PF_CONF_SINGLE_ISR_EN;
-		break;
+		अवरोध;
 
-	case QED_INT_MODE_MSI:
+	हाल QED_INT_MODE_MSI:
 		igu_pf_conf |= IGU_PF_CONF_MSI_MSIX_EN;
 		igu_pf_conf |= IGU_PF_CONF_SINGLE_ISR_EN;
-		break;
+		अवरोध;
 
-	case QED_INT_MODE_MSIX:
+	हाल QED_INT_MODE_MSIX:
 		igu_pf_conf |= IGU_PF_CONF_MSI_MSIX_EN;
-		break;
-	case QED_INT_MODE_POLL:
-		break;
-	}
+		अवरोध;
+	हाल QED_INT_MODE_POLL:
+		अवरोध;
+	पूर्ण
 
 	qed_wr(p_hwfn, p_ptt, IGU_REG_PF_CONFIGURATION, igu_pf_conf);
-}
+पूर्ण
 
-static void qed_int_igu_enable_attn(struct qed_hwfn *p_hwfn,
-				    struct qed_ptt *p_ptt)
-{
+अटल व्योम qed_पूर्णांक_igu_enable_attn(काष्ठा qed_hwfn *p_hwfn,
+				    काष्ठा qed_ptt *p_ptt)
+अणु
 
-	/* Configure AEU signal change to produce attentions */
+	/* Configure AEU संकेत change to produce attentions */
 	qed_wr(p_hwfn, p_ptt, IGU_REG_ATTENTION_ENABLE, 0);
 	qed_wr(p_hwfn, p_ptt, IGU_REG_LEADING_EDGE_LATCH, 0xfff);
 	qed_wr(p_hwfn, p_ptt, IGU_REG_TRAILING_EDGE_LATCH, 0xfff);
 	qed_wr(p_hwfn, p_ptt, IGU_REG_ATTENTION_ENABLE, 0xfff);
 
-	/* Unmask AEU signals toward IGU */
+	/* Unmask AEU संकेतs toward IGU */
 	qed_wr(p_hwfn, p_ptt, MISC_REG_AEU_MASK_ATTN_IGU, 0xff);
-}
+पूर्ण
 
-int
-qed_int_igu_enable(struct qed_hwfn *p_hwfn,
-		   struct qed_ptt *p_ptt, enum qed_int_mode int_mode)
-{
-	int rc = 0;
+पूर्णांक
+qed_पूर्णांक_igu_enable(काष्ठा qed_hwfn *p_hwfn,
+		   काष्ठा qed_ptt *p_ptt, क्रमागत qed_पूर्णांक_mode पूर्णांक_mode)
+अणु
+	पूर्णांक rc = 0;
 
-	qed_int_igu_enable_attn(p_hwfn, p_ptt);
+	qed_पूर्णांक_igu_enable_attn(p_hwfn, p_ptt);
 
-	if ((int_mode != QED_INT_MODE_INTA) || IS_LEAD_HWFN(p_hwfn)) {
+	अगर ((पूर्णांक_mode != QED_INT_MODE_INTA) || IS_LEAD_HWFN(p_hwfn)) अणु
 		rc = qed_slowpath_irq_req(p_hwfn);
-		if (rc) {
+		अगर (rc) अणु
 			DP_NOTICE(p_hwfn, "Slowpath IRQ request failed\n");
-			return -EINVAL;
-		}
-		p_hwfn->b_int_requested = true;
-	}
-	/* Enable interrupt Generation */
-	qed_int_igu_enable_int(p_hwfn, p_ptt, int_mode);
-	p_hwfn->b_int_enabled = 1;
+			वापस -EINVAL;
+		पूर्ण
+		p_hwfn->b_पूर्णांक_requested = true;
+	पूर्ण
+	/* Enable पूर्णांकerrupt Generation */
+	qed_पूर्णांक_igu_enable_पूर्णांक(p_hwfn, p_ptt, पूर्णांक_mode);
+	p_hwfn->b_पूर्णांक_enabled = 1;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void qed_int_igu_disable_int(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	p_hwfn->b_int_enabled = 0;
+व्योम qed_पूर्णांक_igu_disable_पूर्णांक(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	p_hwfn->b_पूर्णांक_enabled = 0;
 
-	if (IS_VF(p_hwfn->cdev))
-		return;
+	अगर (IS_VF(p_hwfn->cdev))
+		वापस;
 
 	qed_wr(p_hwfn, p_ptt, IGU_REG_PF_CONFIGURATION, 0);
-}
+पूर्ण
 
-#define IGU_CLEANUP_SLEEP_LENGTH                (1000)
-static void qed_int_igu_cleanup_sb(struct qed_hwfn *p_hwfn,
-				   struct qed_ptt *p_ptt,
+#घोषणा IGU_CLEANUP_SLEEP_LENGTH                (1000)
+अटल व्योम qed_पूर्णांक_igu_cleanup_sb(काष्ठा qed_hwfn *p_hwfn,
+				   काष्ठा qed_ptt *p_ptt,
 				   u16 igu_sb_id,
 				   bool cleanup_set, u16 opaque_fid)
-{
+अणु
 	u32 cmd_ctrl = 0, val = 0, sb_bit = 0, sb_bit_addr = 0, data = 0;
 	u32 pxp_addr = IGU_CMD_INT_ACK_BASE + igu_sb_id;
 	u32 sleep_cnt = IGU_CLEANUP_SLEEP_LENGTH;
@@ -1899,7 +1900,7 @@ static void qed_int_igu_cleanup_sb(struct qed_hwfn *p_hwfn,
 	SET_FIELD(data, IGU_CLEANUP_CLEANUP_TYPE, 0);
 	SET_FIELD(data, IGU_CLEANUP_COMMAND_TYPE, IGU_COMMAND_TYPE_SET);
 
-	/* Set the control register */
+	/* Set the control रेजिस्टर */
 	SET_FIELD(cmd_ctrl, IGU_CTRL_REG_PXP_ADDR, pxp_addr);
 	SET_FIELD(cmd_ctrl, IGU_CTRL_REG_FID, opaque_fid);
 	SET_FIELD(cmd_ctrl, IGU_CTRL_REG_TYPE, IGU_CTRL_CMD_TYPE_WR);
@@ -1910,34 +1911,34 @@ static void qed_int_igu_cleanup_sb(struct qed_hwfn *p_hwfn,
 
 	qed_wr(p_hwfn, p_ptt, IGU_REG_COMMAND_REG_CTRL, cmd_ctrl);
 
-	/* calculate where to read the status bit from */
+	/* calculate where to पढ़ो the status bit from */
 	sb_bit = 1 << (igu_sb_id % 32);
-	sb_bit_addr = igu_sb_id / 32 * sizeof(u32);
+	sb_bit_addr = igu_sb_id / 32 * माप(u32);
 
 	sb_bit_addr += IGU_REG_CLEANUP_STATUS_0;
 
-	/* Now wait for the command to complete */
-	do {
+	/* Now रुको क्रम the command to complete */
+	करो अणु
 		val = qed_rd(p_hwfn, p_ptt, sb_bit_addr);
 
-		if ((val & sb_bit) == (cleanup_set ? sb_bit : 0))
-			break;
+		अगर ((val & sb_bit) == (cleanup_set ? sb_bit : 0))
+			अवरोध;
 
 		usleep_range(5000, 10000);
-	} while (--sleep_cnt);
+	पूर्ण जबतक (--sleep_cnt);
 
-	if (!sleep_cnt)
+	अगर (!sleep_cnt)
 		DP_NOTICE(p_hwfn,
 			  "Timeout waiting for clear status 0x%08x [for sb %d]\n",
 			  val, igu_sb_id);
-}
+पूर्ण
 
-void qed_int_igu_init_pure_rt_single(struct qed_hwfn *p_hwfn,
-				     struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_igu_init_pure_rt_single(काष्ठा qed_hwfn *p_hwfn,
+				     काष्ठा qed_ptt *p_ptt,
 				     u16 igu_sb_id, u16 opaque, bool b_set)
-{
-	struct qed_igu_block *p_block;
-	int pi, i;
+अणु
+	काष्ठा qed_igu_block *p_block;
+	पूर्णांक pi, i;
 
 	p_block = &p_hwfn->hw_info.p_igu_info->entry[igu_sb_id];
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
@@ -1947,41 +1948,41 @@ void qed_int_igu_init_pure_rt_single(struct qed_hwfn *p_hwfn,
 		   p_block->is_pf, p_block->vector_number);
 
 	/* Set */
-	if (b_set)
-		qed_int_igu_cleanup_sb(p_hwfn, p_ptt, igu_sb_id, 1, opaque);
+	अगर (b_set)
+		qed_पूर्णांक_igu_cleanup_sb(p_hwfn, p_ptt, igu_sb_id, 1, opaque);
 
 	/* Clear */
-	qed_int_igu_cleanup_sb(p_hwfn, p_ptt, igu_sb_id, 0, opaque);
+	qed_पूर्णांक_igu_cleanup_sb(p_hwfn, p_ptt, igu_sb_id, 0, opaque);
 
-	/* Wait for the IGU SB to cleanup */
-	for (i = 0; i < IGU_CLEANUP_SLEEP_LENGTH; i++) {
+	/* Wait क्रम the IGU SB to cleanup */
+	क्रम (i = 0; i < IGU_CLEANUP_SLEEP_LENGTH; i++) अणु
 		u32 val;
 
 		val = qed_rd(p_hwfn, p_ptt,
 			     IGU_REG_WRITE_DONE_PENDING +
 			     ((igu_sb_id / 32) * 4));
-		if (val & BIT((igu_sb_id % 32)))
+		अगर (val & BIT((igu_sb_id % 32)))
 			usleep_range(10, 20);
-		else
-			break;
-	}
-	if (i == IGU_CLEANUP_SLEEP_LENGTH)
+		अन्यथा
+			अवरोध;
+	पूर्ण
+	अगर (i == IGU_CLEANUP_SLEEP_LENGTH)
 		DP_NOTICE(p_hwfn,
 			  "Failed SB[0x%08x] still appearing in WRITE_DONE_PENDING\n",
 			  igu_sb_id);
 
-	/* Clear the CAU for the SB */
-	for (pi = 0; pi < 12; pi++)
+	/* Clear the CAU क्रम the SB */
+	क्रम (pi = 0; pi < 12; pi++)
 		qed_wr(p_hwfn, p_ptt,
 		       CAU_REG_PI_MEMORY + (igu_sb_id * 12 + pi) * 4, 0);
-}
+पूर्ण
 
-void qed_int_igu_init_pure_rt(struct qed_hwfn *p_hwfn,
-			      struct qed_ptt *p_ptt,
+व्योम qed_पूर्णांक_igu_init_pure_rt(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ptt *p_ptt,
 			      bool b_set, bool b_slowpath)
-{
-	struct qed_igu_info *p_info = p_hwfn->hw_info.p_igu_info;
-	struct qed_igu_block *p_block;
+अणु
+	काष्ठा qed_igu_info *p_info = p_hwfn->hw_info.p_igu_info;
+	काष्ठा qed_igu_block *p_block;
 	u16 igu_sb_id = 0;
 	u32 val = 0;
 
@@ -1990,84 +1991,84 @@ void qed_int_igu_init_pure_rt(struct qed_hwfn *p_hwfn,
 	val &= ~IGU_REG_BLOCK_CONFIGURATION_PXP_TPH_INTERFACE_EN;
 	qed_wr(p_hwfn, p_ptt, IGU_REG_BLOCK_CONFIGURATION, val);
 
-	for (igu_sb_id = 0;
-	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) {
+	क्रम (igu_sb_id = 0;
+	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) अणु
 		p_block = &p_info->entry[igu_sb_id];
 
-		if (!(p_block->status & QED_IGU_STATUS_VALID) ||
+		अगर (!(p_block->status & QED_IGU_STATUS_VALID) ||
 		    !p_block->is_pf ||
 		    (p_block->status & QED_IGU_STATUS_DSB))
-			continue;
+			जारी;
 
-		qed_int_igu_init_pure_rt_single(p_hwfn, p_ptt, igu_sb_id,
+		qed_पूर्णांक_igu_init_pure_rt_single(p_hwfn, p_ptt, igu_sb_id,
 						p_hwfn->hw_info.opaque_fid,
 						b_set);
-	}
+	पूर्ण
 
-	if (b_slowpath)
-		qed_int_igu_init_pure_rt_single(p_hwfn, p_ptt,
+	अगर (b_slowpath)
+		qed_पूर्णांक_igu_init_pure_rt_single(p_hwfn, p_ptt,
 						p_info->igu_dsb_id,
 						p_hwfn->hw_info.opaque_fid,
 						b_set);
-}
+पूर्ण
 
-int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_igu_info *p_info = p_hwfn->hw_info.p_igu_info;
-	struct qed_igu_block *p_block;
-	int pf_sbs, vf_sbs;
+पूर्णांक qed_पूर्णांक_igu_reset_cam(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_igu_info *p_info = p_hwfn->hw_info.p_igu_info;
+	काष्ठा qed_igu_block *p_block;
+	पूर्णांक pf_sbs, vf_sbs;
 	u16 igu_sb_id;
 	u32 val, rval;
 
-	if (!RESC_NUM(p_hwfn, QED_SB)) {
+	अगर (!RESC_NUM(p_hwfn, QED_SB)) अणु
 		p_info->b_allow_pf_vf_change = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Use the numbers the MFW have provided -
-		 * don't forget MFW accounts for the default SB as well.
+		 * करोn't क्रमget MFW accounts क्रम the शेष SB as well.
 		 */
 		p_info->b_allow_pf_vf_change = true;
 
-		if (p_info->usage.cnt != RESC_NUM(p_hwfn, QED_SB) - 1) {
+		अगर (p_info->usage.cnt != RESC_NUM(p_hwfn, QED_SB) - 1) अणु
 			DP_INFO(p_hwfn,
 				"MFW notifies of 0x%04x PF SBs; IGU indicates of only 0x%04x\n",
 				RESC_NUM(p_hwfn, QED_SB) - 1,
 				p_info->usage.cnt);
 			p_info->usage.cnt = RESC_NUM(p_hwfn, QED_SB) - 1;
-		}
+		पूर्ण
 
-		if (IS_PF_SRIOV(p_hwfn)) {
+		अगर (IS_PF_SRIOV(p_hwfn)) अणु
 			u16 vfs = p_hwfn->cdev->p_iov_info->total_vfs;
 
-			if (vfs != p_info->usage.iov_cnt)
+			अगर (vfs != p_info->usage.iov_cnt)
 				DP_VERBOSE(p_hwfn,
 					   NETIF_MSG_INTR,
 					   "0x%04x VF SBs in IGU CAM != PCI configuration 0x%04x\n",
 					   p_info->usage.iov_cnt, vfs);
 
-			/* At this point we know how many SBs we have totally
+			/* At this poपूर्णांक we know how many SBs we have totally
 			 * in IGU + number of PF SBs. So we can validate that
-			 * we'd have sufficient for VF.
+			 * we'd have sufficient क्रम VF.
 			 */
-			if (vfs > p_info->usage.free_cnt +
-			    p_info->usage.free_cnt_iov - p_info->usage.cnt) {
+			अगर (vfs > p_info->usage.मुक्त_cnt +
+			    p_info->usage.मुक्त_cnt_iov - p_info->usage.cnt) अणु
 				DP_NOTICE(p_hwfn,
 					  "Not enough SBs for VFs - 0x%04x SBs, from which %04x PFs and %04x are required\n",
-					  p_info->usage.free_cnt +
-					  p_info->usage.free_cnt_iov,
+					  p_info->usage.मुक्त_cnt +
+					  p_info->usage.मुक्त_cnt_iov,
 					  p_info->usage.cnt, vfs);
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
 			/* Currently cap the number of VFs SBs by the
 			 * number of VFs.
 			 */
 			p_info->usage.iov_cnt = vfs;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Mark all SBs as free, now in the right PF/VFs division */
-	p_info->usage.free_cnt = p_info->usage.cnt;
-	p_info->usage.free_cnt_iov = p_info->usage.iov_cnt;
+	/* Mark all SBs as मुक्त, now in the right PF/VFs भागision */
+	p_info->usage.मुक्त_cnt = p_info->usage.cnt;
+	p_info->usage.मुक्त_cnt_iov = p_info->usage.iov_cnt;
 	p_info->usage.orig = p_info->usage.cnt;
 	p_info->usage.iov_orig = p_info->usage.iov_cnt;
 
@@ -2077,22 +2078,22 @@ int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 	pf_sbs = p_info->usage.cnt;
 	vf_sbs = p_info->usage.iov_cnt;
 
-	for (igu_sb_id = p_info->igu_dsb_id;
-	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) {
+	क्रम (igu_sb_id = p_info->igu_dsb_id;
+	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) अणु
 		p_block = &p_info->entry[igu_sb_id];
 		val = 0;
 
-		if (!(p_block->status & QED_IGU_STATUS_VALID))
-			continue;
+		अगर (!(p_block->status & QED_IGU_STATUS_VALID))
+			जारी;
 
-		if (p_block->status & QED_IGU_STATUS_DSB) {
+		अगर (p_block->status & QED_IGU_STATUS_DSB) अणु
 			p_block->function_id = p_hwfn->rel_pf_id;
 			p_block->is_pf = 1;
 			p_block->vector_number = 0;
 			p_block->status = QED_IGU_STATUS_VALID |
 					  QED_IGU_STATUS_PF |
 					  QED_IGU_STATUS_DSB;
-		} else if (pf_sbs) {
+		पूर्ण अन्यथा अगर (pf_sbs) अणु
 			pf_sbs--;
 			p_block->function_id = p_hwfn->rel_pf_id;
 			p_block->is_pf = 1;
@@ -2100,7 +2101,7 @@ int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 			p_block->status = QED_IGU_STATUS_VALID |
 					  QED_IGU_STATUS_PF |
 					  QED_IGU_STATUS_FREE;
-		} else if (vf_sbs) {
+		पूर्ण अन्यथा अगर (vf_sbs) अणु
 			p_block->function_id =
 			    p_hwfn->cdev->p_iov_info->first_vf_in_pf +
 			    p_info->usage.iov_cnt - vf_sbs;
@@ -2109,11 +2110,11 @@ int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 			p_block->status = QED_IGU_STATUS_VALID |
 					  QED_IGU_STATUS_FREE;
 			vf_sbs--;
-		} else {
+		पूर्ण अन्यथा अणु
 			p_block->function_id = 0;
 			p_block->is_pf = 0;
 			p_block->vector_number = 0;
-		}
+		पूर्ण
 
 		SET_FIELD(val, IGU_MAPPING_LINE_FUNCTION_NUMBER,
 			  p_block->function_id);
@@ -2125,12 +2126,12 @@ int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 		SET_FIELD(val, IGU_MAPPING_LINE_VALID, p_block->is_pf);
 
 		rval = qed_rd(p_hwfn, p_ptt,
-			      IGU_REG_MAPPING_MEMORY + sizeof(u32) * igu_sb_id);
+			      IGU_REG_MAPPING_MEMORY + माप(u32) * igu_sb_id);
 
-		if (rval != val) {
+		अगर (rval != val) अणु
 			qed_wr(p_hwfn, p_ptt,
 			       IGU_REG_MAPPING_MEMORY +
-			       sizeof(u32) * igu_sb_id, val);
+			       माप(u32) * igu_sb_id, val);
 
 			DP_VERBOSE(p_hwfn,
 				   NETIF_MSG_INTR,
@@ -2139,243 +2140,243 @@ int qed_int_igu_reset_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
 				   p_block->function_id,
 				   p_block->is_pf,
 				   p_block->vector_number, rval, val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qed_int_igu_read_cam_block(struct qed_hwfn *p_hwfn,
-				       struct qed_ptt *p_ptt, u16 igu_sb_id)
-{
+अटल व्योम qed_पूर्णांक_igu_पढ़ो_cam_block(काष्ठा qed_hwfn *p_hwfn,
+				       काष्ठा qed_ptt *p_ptt, u16 igu_sb_id)
+अणु
 	u32 val = qed_rd(p_hwfn, p_ptt,
-			 IGU_REG_MAPPING_MEMORY + sizeof(u32) * igu_sb_id);
-	struct qed_igu_block *p_block;
+			 IGU_REG_MAPPING_MEMORY + माप(u32) * igu_sb_id);
+	काष्ठा qed_igu_block *p_block;
 
 	p_block = &p_hwfn->hw_info.p_igu_info->entry[igu_sb_id];
 
-	/* Fill the block information */
+	/* Fill the block inक्रमmation */
 	p_block->function_id = GET_FIELD(val, IGU_MAPPING_LINE_FUNCTION_NUMBER);
 	p_block->is_pf = GET_FIELD(val, IGU_MAPPING_LINE_PF_VALID);
 	p_block->vector_number = GET_FIELD(val, IGU_MAPPING_LINE_VECTOR_NUMBER);
 	p_block->igu_sb_id = igu_sb_id;
-}
+पूर्ण
 
-int qed_int_igu_read_cam(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	struct qed_igu_info *p_igu_info;
-	struct qed_igu_block *p_block;
+पूर्णांक qed_पूर्णांक_igu_पढ़ो_cam(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	काष्ठा qed_igu_info *p_igu_info;
+	काष्ठा qed_igu_block *p_block;
 	u32 min_vf = 0, max_vf = 0;
 	u16 igu_sb_id;
 
-	p_hwfn->hw_info.p_igu_info = kzalloc(sizeof(*p_igu_info), GFP_KERNEL);
-	if (!p_hwfn->hw_info.p_igu_info)
-		return -ENOMEM;
+	p_hwfn->hw_info.p_igu_info = kzalloc(माप(*p_igu_info), GFP_KERNEL);
+	अगर (!p_hwfn->hw_info.p_igu_info)
+		वापस -ENOMEM;
 
 	p_igu_info = p_hwfn->hw_info.p_igu_info;
 
-	/* Distinguish between existent and non-existent default SB */
+	/* Distinguish between existent and non-existent शेष SB */
 	p_igu_info->igu_dsb_id = QED_SB_INVALID_IDX;
 
-	/* Find the range of VF ids whose SB belong to this PF */
-	if (p_hwfn->cdev->p_iov_info) {
-		struct qed_hw_sriov_info *p_iov = p_hwfn->cdev->p_iov_info;
+	/* Find the range of VF ids whose SB beदीर्घ to this PF */
+	अगर (p_hwfn->cdev->p_iov_info) अणु
+		काष्ठा qed_hw_sriov_info *p_iov = p_hwfn->cdev->p_iov_info;
 
 		min_vf	= p_iov->first_vf_in_pf;
 		max_vf	= p_iov->first_vf_in_pf + p_iov->total_vfs;
-	}
+	पूर्ण
 
-	for (igu_sb_id = 0;
-	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) {
-		/* Read current entry; Notice it might not belong to this PF */
-		qed_int_igu_read_cam_block(p_hwfn, p_ptt, igu_sb_id);
+	क्रम (igu_sb_id = 0;
+	     igu_sb_id < QED_MAPPING_MEMORY_SIZE(p_hwfn->cdev); igu_sb_id++) अणु
+		/* Read current entry; Notice it might not beदीर्घ to this PF */
+		qed_पूर्णांक_igu_पढ़ो_cam_block(p_hwfn, p_ptt, igu_sb_id);
 		p_block = &p_igu_info->entry[igu_sb_id];
 
-		if ((p_block->is_pf) &&
-		    (p_block->function_id == p_hwfn->rel_pf_id)) {
+		अगर ((p_block->is_pf) &&
+		    (p_block->function_id == p_hwfn->rel_pf_id)) अणु
 			p_block->status = QED_IGU_STATUS_PF |
 					  QED_IGU_STATUS_VALID |
 					  QED_IGU_STATUS_FREE;
 
-			if (p_igu_info->igu_dsb_id != QED_SB_INVALID_IDX)
+			अगर (p_igu_info->igu_dsb_id != QED_SB_INVALID_IDX)
 				p_igu_info->usage.cnt++;
-		} else if (!(p_block->is_pf) &&
+		पूर्ण अन्यथा अगर (!(p_block->is_pf) &&
 			   (p_block->function_id >= min_vf) &&
-			   (p_block->function_id < max_vf)) {
-			/* Available for VFs of this PF */
+			   (p_block->function_id < max_vf)) अणु
+			/* Available क्रम VFs of this PF */
 			p_block->status = QED_IGU_STATUS_VALID |
 					  QED_IGU_STATUS_FREE;
 
-			if (p_igu_info->igu_dsb_id != QED_SB_INVALID_IDX)
+			अगर (p_igu_info->igu_dsb_id != QED_SB_INVALID_IDX)
 				p_igu_info->usage.iov_cnt++;
-		}
+		पूर्ण
 
-		/* Mark the First entry belonging to the PF or its VFs
-		 * as the default SB [we'll reset IGU prior to first usage].
+		/* Mark the First entry beदीर्घing to the PF or its VFs
+		 * as the शेष SB [we'll reset IGU prior to first usage].
 		 */
-		if ((p_block->status & QED_IGU_STATUS_VALID) &&
-		    (p_igu_info->igu_dsb_id == QED_SB_INVALID_IDX)) {
+		अगर ((p_block->status & QED_IGU_STATUS_VALID) &&
+		    (p_igu_info->igu_dsb_id == QED_SB_INVALID_IDX)) अणु
 			p_igu_info->igu_dsb_id = igu_sb_id;
 			p_block->status |= QED_IGU_STATUS_DSB;
-		}
+		पूर्ण
 
-		/* limit number of prints by having each PF print only its
-		 * entries with the exception of PF0 which would print
+		/* limit number of prपूर्णांकs by having each PF prपूर्णांक only its
+		 * entries with the exception of PF0 which would prपूर्णांक
 		 * everything.
 		 */
-		if ((p_block->status & QED_IGU_STATUS_VALID) ||
-		    (p_hwfn->abs_pf_id == 0)) {
+		अगर ((p_block->status & QED_IGU_STATUS_VALID) ||
+		    (p_hwfn->असल_pf_id == 0)) अणु
 			DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 				   "IGU_BLOCK: [SB 0x%04x] func_id = %d is_pf = %d vector_num = 0x%x\n",
 				   igu_sb_id, p_block->function_id,
 				   p_block->is_pf, p_block->vector_number);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (p_igu_info->igu_dsb_id == QED_SB_INVALID_IDX) {
+	अगर (p_igu_info->igu_dsb_id == QED_SB_INVALID_IDX) अणु
 		DP_NOTICE(p_hwfn,
 			  "IGU CAM returned invalid values igu_dsb_id=0x%x\n",
 			  p_igu_info->igu_dsb_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* All non default SB are considered free at this point */
-	p_igu_info->usage.free_cnt = p_igu_info->usage.cnt;
-	p_igu_info->usage.free_cnt_iov = p_igu_info->usage.iov_cnt;
+	/* All non शेष SB are considered मुक्त at this poपूर्णांक */
+	p_igu_info->usage.मुक्त_cnt = p_igu_info->usage.cnt;
+	p_igu_info->usage.मुक्त_cnt_iov = p_igu_info->usage.iov_cnt;
 
 	DP_VERBOSE(p_hwfn, NETIF_MSG_INTR,
 		   "igu_dsb_id=0x%x, num Free SBs - PF: %04x VF: %04x [might change after resource allocation]\n",
 		   p_igu_info->igu_dsb_id,
 		   p_igu_info->usage.cnt, p_igu_info->usage.iov_cnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * qed_int_igu_init_rt() - Initialize IGU runtime registers.
+ * qed_पूर्णांक_igu_init_rt() - Initialize IGU runसमय रेजिस्टरs.
  *
  * @p_hwfn: HW device data.
  */
-void qed_int_igu_init_rt(struct qed_hwfn *p_hwfn)
-{
+व्योम qed_पूर्णांक_igu_init_rt(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	u32 igu_pf_conf = IGU_PF_CONF_FUNC_EN;
 
 	STORE_RT_REG(p_hwfn, IGU_REG_PF_CONFIGURATION_RT_OFFSET, igu_pf_conf);
-}
+पूर्ण
 
-u64 qed_int_igu_read_sisr_reg(struct qed_hwfn *p_hwfn)
-{
+u64 qed_पूर्णांक_igu_पढ़ो_sisr_reg(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	u32 lsb_igu_cmd_addr = IGU_REG_SISR_MDPC_WMASK_LSB_UPPER -
 			       IGU_CMD_INT_ACK_BASE;
 	u32 msb_igu_cmd_addr = IGU_REG_SISR_MDPC_WMASK_MSB_UPPER -
 			       IGU_CMD_INT_ACK_BASE;
-	u32 intr_status_hi = 0, intr_status_lo = 0;
-	u64 intr_status = 0;
+	u32 पूर्णांकr_status_hi = 0, पूर्णांकr_status_lo = 0;
+	u64 पूर्णांकr_status = 0;
 
-	intr_status_lo = REG_RD(p_hwfn,
+	पूर्णांकr_status_lo = REG_RD(p_hwfn,
 				GTT_BAR0_MAP_REG_IGU_CMD +
 				lsb_igu_cmd_addr * 8);
-	intr_status_hi = REG_RD(p_hwfn,
+	पूर्णांकr_status_hi = REG_RD(p_hwfn,
 				GTT_BAR0_MAP_REG_IGU_CMD +
 				msb_igu_cmd_addr * 8);
-	intr_status = ((u64)intr_status_hi << 32) + (u64)intr_status_lo;
+	पूर्णांकr_status = ((u64)पूर्णांकr_status_hi << 32) + (u64)पूर्णांकr_status_lo;
 
-	return intr_status;
-}
+	वापस पूर्णांकr_status;
+पूर्ण
 
-static void qed_int_sp_dpc_setup(struct qed_hwfn *p_hwfn)
-{
-	tasklet_setup(&p_hwfn->sp_dpc, qed_int_sp_dpc);
+अटल व्योम qed_पूर्णांक_sp_dpc_setup(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	tasklet_setup(&p_hwfn->sp_dpc, qed_पूर्णांक_sp_dpc);
 	p_hwfn->b_sp_dpc_enabled = true;
-}
+पूर्ण
 
-int qed_int_alloc(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	int rc = 0;
+पूर्णांक qed_पूर्णांक_alloc(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	पूर्णांक rc = 0;
 
-	rc = qed_int_sp_sb_alloc(p_hwfn, p_ptt);
-	if (rc)
-		return rc;
+	rc = qed_पूर्णांक_sp_sb_alloc(p_hwfn, p_ptt);
+	अगर (rc)
+		वापस rc;
 
-	rc = qed_int_sb_attn_alloc(p_hwfn, p_ptt);
+	rc = qed_पूर्णांक_sb_attn_alloc(p_hwfn, p_ptt);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void qed_int_free(struct qed_hwfn *p_hwfn)
-{
-	qed_int_sp_sb_free(p_hwfn);
-	qed_int_sb_attn_free(p_hwfn);
-}
+व्योम qed_पूर्णांक_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	qed_पूर्णांक_sp_sb_मुक्त(p_hwfn);
+	qed_पूर्णांक_sb_attn_मुक्त(p_hwfn);
+पूर्ण
 
-void qed_int_setup(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt)
-{
-	qed_int_sb_setup(p_hwfn, p_ptt, &p_hwfn->p_sp_sb->sb_info);
-	qed_int_sb_attn_setup(p_hwfn, p_ptt);
-	qed_int_sp_dpc_setup(p_hwfn);
-}
+व्योम qed_पूर्णांक_setup(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt)
+अणु
+	qed_पूर्णांक_sb_setup(p_hwfn, p_ptt, &p_hwfn->p_sp_sb->sb_info);
+	qed_पूर्णांक_sb_attn_setup(p_hwfn, p_ptt);
+	qed_पूर्णांक_sp_dpc_setup(p_hwfn);
+पूर्ण
 
-void qed_int_get_num_sbs(struct qed_hwfn	*p_hwfn,
-			 struct qed_sb_cnt_info *p_sb_cnt_info)
-{
-	struct qed_igu_info *info = p_hwfn->hw_info.p_igu_info;
+व्योम qed_पूर्णांक_get_num_sbs(काष्ठा qed_hwfn	*p_hwfn,
+			 काष्ठा qed_sb_cnt_info *p_sb_cnt_info)
+अणु
+	काष्ठा qed_igu_info *info = p_hwfn->hw_info.p_igu_info;
 
-	if (!info || !p_sb_cnt_info)
-		return;
+	अगर (!info || !p_sb_cnt_info)
+		वापस;
 
-	memcpy(p_sb_cnt_info, &info->usage, sizeof(*p_sb_cnt_info));
-}
+	स_नकल(p_sb_cnt_info, &info->usage, माप(*p_sb_cnt_info));
+पूर्ण
 
-void qed_int_disable_post_isr_release(struct qed_dev *cdev)
-{
-	int i;
+व्योम qed_पूर्णांक_disable_post_isr_release(काष्ठा qed_dev *cdev)
+अणु
+	पूर्णांक i;
 
-	for_each_hwfn(cdev, i)
-		cdev->hwfns[i].b_int_requested = false;
-}
+	क्रम_each_hwfn(cdev, i)
+		cdev->hwfns[i].b_पूर्णांक_requested = false;
+पूर्ण
 
-void qed_int_attn_clr_enable(struct qed_dev *cdev, bool clr_enable)
-{
+व्योम qed_पूर्णांक_attn_clr_enable(काष्ठा qed_dev *cdev, bool clr_enable)
+अणु
 	cdev->attn_clr_en = clr_enable;
-}
+पूर्ण
 
-int qed_int_set_timer_res(struct qed_hwfn *p_hwfn, struct qed_ptt *p_ptt,
-			  u8 timer_res, u16 sb_id, bool tx)
-{
-	struct cau_sb_entry sb_entry;
+पूर्णांक qed_पूर्णांक_set_समयr_res(काष्ठा qed_hwfn *p_hwfn, काष्ठा qed_ptt *p_ptt,
+			  u8 समयr_res, u16 sb_id, bool tx)
+अणु
+	काष्ठा cau_sb_entry sb_entry;
 	u32 params;
-	int rc;
+	पूर्णांक rc;
 
-	if (!p_hwfn->hw_init_done) {
+	अगर (!p_hwfn->hw_init_करोne) अणु
 		DP_ERR(p_hwfn, "hardware not initialized yet\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rc = qed_dmae_grc2host(p_hwfn, p_ptt, CAU_REG_SB_VAR_MEMORY +
-			       sb_id * sizeof(u64),
-			       (u64)(uintptr_t)&sb_entry, 2, NULL);
-	if (rc) {
+			       sb_id * माप(u64),
+			       (u64)(uपूर्णांकptr_t)&sb_entry, 2, शून्य);
+	अगर (rc) अणु
 		DP_ERR(p_hwfn, "dmae_grc2host failed %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	params = le32_to_cpu(sb_entry.params);
 
-	if (tx)
-		SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES1, timer_res);
-	else
-		SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES0, timer_res);
+	अगर (tx)
+		SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES1, समयr_res);
+	अन्यथा
+		SET_FIELD(params, CAU_SB_ENTRY_TIMER_RES0, समयr_res);
 
 	sb_entry.params = cpu_to_le32(params);
 
 	rc = qed_dmae_host2grc(p_hwfn, p_ptt,
-			       (u64)(uintptr_t)&sb_entry,
+			       (u64)(uपूर्णांकptr_t)&sb_entry,
 			       CAU_REG_SB_VAR_MEMORY +
-			       sb_id * sizeof(u64), 2, NULL);
-	if (rc) {
+			       sb_id * माप(u64), 2, शून्य);
+	अगर (rc) अणु
 		DP_ERR(p_hwfn, "dmae_host2grc failed %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण

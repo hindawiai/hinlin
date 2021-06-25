@@ -1,4 +1,5 @@
-/* This file is part of the Emulex RoCE Device Driver for
+<शैली गुरु>
+/* This file is part of the Emulex RoCE Device Driver क्रम
  * RoCE (RDMA over Converged Ethernet) adapters.
  * Copyright (C) 2012-2015 Emulex. All rights reserved.
  * EMULEX and SLI are trademarks of Emulex.
@@ -6,25 +7,25 @@
  *
  * This software is available to you under a choice of one of two licenses.
  * You may choose to be licensed under the terms of the GNU General Public
- * License (GPL) Version 2, available from the file COPYING in the main
+ * License (GPL) Version 2, available from the file COPYING in the मुख्य
  * directory of this source tree, or the BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary form must reproduce the above copyright
+ * - Redistributions in binary क्रमm must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
- *   the documentation and/or other materials provided with the distribution.
+ *   the करोcumentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,7 +33,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -40,16 +41,16 @@
  * Costa Mesa, CA 92626
  */
 
-#ifndef __OCRDMA_STATS_H__
-#define __OCRDMA_STATS_H__
+#अगर_अघोषित __OCRDMA_STATS_H__
+#घोषणा __OCRDMA_STATS_H__
 
-#include <linux/debugfs.h>
-#include "ocrdma.h"
-#include "ocrdma_hw.h"
+#समावेश <linux/debugfs.h>
+#समावेश "ocrdma.h"
+#समावेश "ocrdma_hw.h"
 
-#define OCRDMA_MAX_DBGFS_MEM 4096
+#घोषणा OCRDMA_MAX_DBGFS_MEM 4096
 
-enum OCRDMA_STATS_TYPE {
+क्रमागत OCRDMA_STATS_TYPE अणु
 	OCRDMA_RSRC_STATS,
 	OCRDMA_RXSTATS,
 	OCRDMA_WQESTATS,
@@ -61,14 +62,14 @@ enum OCRDMA_STATS_TYPE {
 	OCRDMA_RX_DBG_STATS,
 	OCRDMA_DRV_STATS,
 	OCRDMA_RESET_STATS
-};
+पूर्ण;
 
-void ocrdma_rem_debugfs(void);
-void ocrdma_init_debugfs(void);
-bool ocrdma_alloc_stats_resources(struct ocrdma_dev *dev);
-void ocrdma_release_stats_resources(struct ocrdma_dev *dev);
-void ocrdma_rem_port_stats(struct ocrdma_dev *dev);
-void ocrdma_add_port_stats(struct ocrdma_dev *dev);
-void ocrdma_pma_counters(struct ocrdma_dev *dev, struct ib_mad *out_mad);
+व्योम ocrdma_rem_debugfs(व्योम);
+व्योम ocrdma_init_debugfs(व्योम);
+bool ocrdma_alloc_stats_resources(काष्ठा ocrdma_dev *dev);
+व्योम ocrdma_release_stats_resources(काष्ठा ocrdma_dev *dev);
+व्योम ocrdma_rem_port_stats(काष्ठा ocrdma_dev *dev);
+व्योम ocrdma_add_port_stats(काष्ठा ocrdma_dev *dev);
+व्योम ocrdma_pma_counters(काष्ठा ocrdma_dev *dev, काष्ठा ib_mad *out_mad);
 
-#endif	/* __OCRDMA_STATS_H__ */
+#पूर्ण_अगर	/* __OCRDMA_STATS_H__ */

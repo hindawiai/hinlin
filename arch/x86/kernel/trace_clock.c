@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * X86 trace clocks
+ * X86 trace घड़ीs
  */
-#include <asm/trace_clock.h>
-#include <asm/barrier.h>
-#include <asm/msr.h>
+#समावेश <यंत्र/trace_घड़ी.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/msr.h>
 
 /*
- * trace_clock_x86_tsc(): A clock that is just the cycle counter.
+ * trace_घड़ी_x86_tsc(): A घड़ी that is just the cycle counter.
  *
- * Unlike the other clocks, this is not in nanoseconds.
+ * Unlike the other घड़ीs, this is not in nanoseconds.
  */
-u64 notrace trace_clock_x86_tsc(void)
-{
-	return rdtsc_ordered();
-}
+u64 notrace trace_घड़ी_x86_tsc(व्योम)
+अणु
+	वापस rdtsc_ordered();
+पूर्ण

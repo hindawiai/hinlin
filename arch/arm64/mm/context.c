@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Based on arch/arm/mm/context.c
  *
@@ -6,200 +7,200 @@
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
 
-#include <asm/cpufeature.h>
-#include <asm/mmu_context.h>
-#include <asm/smp.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/tlbflush.h>
 
-static u32 asid_bits;
-static DEFINE_RAW_SPINLOCK(cpu_asid_lock);
+अटल u32 asid_bits;
+अटल DEFINE_RAW_SPINLOCK(cpu_asid_lock);
 
-static atomic64_t asid_generation;
-static unsigned long *asid_map;
+अटल atomic64_t asid_generation;
+अटल अचिन्हित दीर्घ *asid_map;
 
-static DEFINE_PER_CPU(atomic64_t, active_asids);
-static DEFINE_PER_CPU(u64, reserved_asids);
-static cpumask_t tlb_flush_pending;
+अटल DEFINE_PER_CPU(atomic64_t, active_asids);
+अटल DEFINE_PER_CPU(u64, reserved_asids);
+अटल cpumask_t tlb_flush_pending;
 
-static unsigned long max_pinned_asids;
-static unsigned long nr_pinned_asids;
-static unsigned long *pinned_asid_map;
+अटल अचिन्हित दीर्घ max_pinned_asids;
+अटल अचिन्हित दीर्घ nr_pinned_asids;
+अटल अचिन्हित दीर्घ *pinned_asid_map;
 
-#define ASID_MASK		(~GENMASK(asid_bits - 1, 0))
-#define ASID_FIRST_VERSION	(1UL << asid_bits)
+#घोषणा ASID_MASK		(~GENMASK(asid_bits - 1, 0))
+#घोषणा ASID_FIRST_VERSION	(1UL << asid_bits)
 
-#define NUM_USER_ASIDS		ASID_FIRST_VERSION
-#define asid2idx(asid)		((asid) & ~ASID_MASK)
-#define idx2asid(idx)		asid2idx(idx)
+#घोषणा NUM_USER_ASIDS		ASID_FIRST_VERSION
+#घोषणा asid2idx(asid)		((asid) & ~ASID_MASK)
+#घोषणा idx2asid(idx)		asid2idx(idx)
 
 /* Get the ASIDBits supported by the current CPU */
-static u32 get_cpu_asid_bits(void)
-{
+अटल u32 get_cpu_asid_bits(व्योम)
+अणु
 	u32 asid;
-	int fld = cpuid_feature_extract_unsigned_field(read_cpuid(ID_AA64MMFR0_EL1),
+	पूर्णांक fld = cpuid_feature_extract_अचिन्हित_field(पढ़ो_cpuid(ID_AA64MMFR0_EL1),
 						ID_AA64MMFR0_ASID_SHIFT);
 
-	switch (fld) {
-	default:
+	चयन (fld) अणु
+	शेष:
 		pr_warn("CPU%d: Unknown ASID size (%d); assuming 8-bit\n",
 					smp_processor_id(),  fld);
 		fallthrough;
-	case 0:
+	हाल 0:
 		asid = 8;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		asid = 16;
-	}
+	पूर्ण
 
-	return asid;
-}
+	वापस asid;
+पूर्ण
 
-/* Check if the current cpu's ASIDBits is compatible with asid_bits */
-void verify_cpu_asid_bits(void)
-{
+/* Check अगर the current cpu's ASIDBits is compatible with asid_bits */
+व्योम verअगरy_cpu_asid_bits(व्योम)
+अणु
 	u32 asid = get_cpu_asid_bits();
 
-	if (asid < asid_bits) {
+	अगर (asid < asid_bits) अणु
 		/*
-		 * We cannot decrease the ASID size at runtime, so panic if we support
+		 * We cannot decrease the ASID size at runसमय, so panic अगर we support
 		 * fewer ASID bits than the boot CPU.
 		 */
 		pr_crit("CPU%d: smaller ASID size(%u) than boot CPU (%u)\n",
 				smp_processor_id(), asid, asid_bits);
 		cpu_panic_kernel();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void set_kpti_asid_bits(unsigned long *map)
-{
-	unsigned int len = BITS_TO_LONGS(NUM_USER_ASIDS) * sizeof(unsigned long);
+अटल व्योम set_kpti_asid_bits(अचिन्हित दीर्घ *map)
+अणु
+	अचिन्हित पूर्णांक len = BITS_TO_LONGS(NUM_USER_ASIDS) * माप(अचिन्हित दीर्घ);
 	/*
-	 * In case of KPTI kernel/user ASIDs are allocated in
-	 * pairs, the bottom bit distinguishes the two: if it
+	 * In हाल of KPTI kernel/user ASIDs are allocated in
+	 * pairs, the bottom bit distinguishes the two: अगर it
 	 * is set, then the ASID will map only userspace. Thus
-	 * mark even as reserved for kernel.
+	 * mark even as reserved क्रम kernel.
 	 */
-	memset(map, 0xaa, len);
-}
+	स_रखो(map, 0xaa, len);
+पूर्ण
 
-static void set_reserved_asid_bits(void)
-{
-	if (pinned_asid_map)
-		bitmap_copy(asid_map, pinned_asid_map, NUM_USER_ASIDS);
-	else if (arm64_kernel_unmapped_at_el0())
+अटल व्योम set_reserved_asid_bits(व्योम)
+अणु
+	अगर (pinned_asid_map)
+		biपंचांगap_copy(asid_map, pinned_asid_map, NUM_USER_ASIDS);
+	अन्यथा अगर (arm64_kernel_unmapped_at_el0())
 		set_kpti_asid_bits(asid_map);
-	else
-		bitmap_clear(asid_map, 0, NUM_USER_ASIDS);
-}
+	अन्यथा
+		biपंचांगap_clear(asid_map, 0, NUM_USER_ASIDS);
+पूर्ण
 
-#define asid_gen_match(asid) \
-	(!(((asid) ^ atomic64_read(&asid_generation)) >> asid_bits))
+#घोषणा asid_gen_match(asid) \
+	(!(((asid) ^ atomic64_पढ़ो(&asid_generation)) >> asid_bits))
 
-static void flush_context(void)
-{
-	int i;
+अटल व्योम flush_context(व्योम)
+अणु
+	पूर्णांक i;
 	u64 asid;
 
-	/* Update the list of reserved ASIDs and the ASID bitmap. */
+	/* Update the list of reserved ASIDs and the ASID biपंचांगap. */
 	set_reserved_asid_bits();
 
-	for_each_possible_cpu(i) {
+	क्रम_each_possible_cpu(i) अणु
 		asid = atomic64_xchg_relaxed(&per_cpu(active_asids, i), 0);
 		/*
-		 * If this CPU has already been through a
+		 * If this CPU has alपढ़ोy been through a
 		 * rollover, but hasn't run another task in
-		 * the meantime, we must preserve its reserved
+		 * the meanसमय, we must preserve its reserved
 		 * ASID, as this is the only trace we have of
 		 * the process it is still running.
 		 */
-		if (asid == 0)
+		अगर (asid == 0)
 			asid = per_cpu(reserved_asids, i);
 		__set_bit(asid2idx(asid), asid_map);
 		per_cpu(reserved_asids, i) = asid;
-	}
+	पूर्ण
 
 	/*
-	 * Queue a TLB invalidation for each CPU to perform on next
-	 * context-switch
+	 * Queue a TLB invalidation क्रम each CPU to perक्रमm on next
+	 * context-चयन
 	 */
 	cpumask_setall(&tlb_flush_pending);
-}
+पूर्ण
 
-static bool check_update_reserved_asid(u64 asid, u64 newasid)
-{
-	int cpu;
+अटल bool check_update_reserved_asid(u64 asid, u64 newasid)
+अणु
+	पूर्णांक cpu;
 	bool hit = false;
 
 	/*
-	 * Iterate over the set of reserved ASIDs looking for a match.
+	 * Iterate over the set of reserved ASIDs looking क्रम a match.
 	 * If we find one, then we can update our mm to use newasid
 	 * (i.e. the same ASID in the current generation) but we can't
-	 * exit the loop early, since we need to ensure that all copies
-	 * of the old ASID are updated to reflect the mm. Failure to do
+	 * निकास the loop early, since we need to ensure that all copies
+	 * of the old ASID are updated to reflect the mm. Failure to करो
 	 * so could result in us missing the reserved ASID in a future
 	 * generation.
 	 */
-	for_each_possible_cpu(cpu) {
-		if (per_cpu(reserved_asids, cpu) == asid) {
+	क्रम_each_possible_cpu(cpu) अणु
+		अगर (per_cpu(reserved_asids, cpu) == asid) अणु
 			hit = true;
 			per_cpu(reserved_asids, cpu) = newasid;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return hit;
-}
+	वापस hit;
+पूर्ण
 
-static u64 new_context(struct mm_struct *mm)
-{
-	static u32 cur_idx = 1;
-	u64 asid = atomic64_read(&mm->context.id);
-	u64 generation = atomic64_read(&asid_generation);
+अटल u64 new_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अटल u32 cur_idx = 1;
+	u64 asid = atomic64_पढ़ो(&mm->context.id);
+	u64 generation = atomic64_पढ़ो(&asid_generation);
 
-	if (asid != 0) {
+	अगर (asid != 0) अणु
 		u64 newasid = generation | (asid & ~ASID_MASK);
 
 		/*
 		 * If our current ASID was active during a rollover, we
-		 * can continue to use it and this was just a false alarm.
+		 * can जारी to use it and this was just a false alarm.
 		 */
-		if (check_update_reserved_asid(asid, newasid))
-			return newasid;
+		अगर (check_update_reserved_asid(asid, newasid))
+			वापस newasid;
 
 		/*
 		 * If it is pinned, we can keep using it. Note that reserved
-		 * takes priority, because even if it is also pinned, we need to
-		 * update the generation into the reserved_asids.
+		 * takes priority, because even अगर it is also pinned, we need to
+		 * update the generation पूर्णांकo the reserved_asids.
 		 */
-		if (refcount_read(&mm->context.pinned))
-			return newasid;
+		अगर (refcount_पढ़ो(&mm->context.pinned))
+			वापस newasid;
 
 		/*
-		 * We had a valid ASID in a previous life, so try to re-use
-		 * it if possible.
+		 * We had a valid ASID in a previous lअगरe, so try to re-use
+		 * it अगर possible.
 		 */
-		if (!__test_and_set_bit(asid2idx(asid), asid_map))
-			return newasid;
-	}
+		अगर (!__test_and_set_bit(asid2idx(asid), asid_map))
+			वापस newasid;
+	पूर्ण
 
 	/*
-	 * Allocate a free ASID. If we can't find one, take a note of the
+	 * Allocate a मुक्त ASID. If we can't find one, take a note of the
 	 * currently active ASIDs and mark the TLBs as requiring flushes.  We
 	 * always count from ASID #2 (index 1), as we use ASID #0 when setting
-	 * a reserved TTBR0 for the init_mm and we allocate ASIDs in even/odd
+	 * a reserved TTBR0 क्रम the init_mm and we allocate ASIDs in even/odd
 	 * pairs.
 	 */
 	asid = find_next_zero_bit(asid_map, NUM_USER_ASIDS, cur_idx);
-	if (asid != NUM_USER_ASIDS)
-		goto set_asid;
+	अगर (asid != NUM_USER_ASIDS)
+		जाओ set_asid;
 
 	/* We're out of ASIDs, so increment the global generation count */
-	generation = atomic64_add_return_relaxed(ASID_FIRST_VERSION,
+	generation = atomic64_add_वापस_relaxed(ASID_FIRST_VERSION,
 						 &asid_generation);
 	flush_context();
 
@@ -209,19 +210,19 @@ static u64 new_context(struct mm_struct *mm)
 set_asid:
 	__set_bit(asid, asid_map);
 	cur_idx = asid;
-	return idx2asid(asid) | generation;
-}
+	वापस idx2asid(asid) | generation;
+पूर्ण
 
-void check_and_switch_context(struct mm_struct *mm)
-{
-	unsigned long flags;
-	unsigned int cpu;
+व्योम check_and_चयन_context(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक cpu;
 	u64 asid, old_active_asid;
 
-	if (system_supports_cnp())
+	अगर (प्रणाली_supports_cnp())
 		cpu_set_reserved_ttbr0();
 
-	asid = atomic64_read(&mm->context.id);
+	asid = atomic64_पढ़ो(&mm->context.id);
 
 	/*
 	 * The memory ordering here is subtle.
@@ -229,75 +230,75 @@ void check_and_switch_context(struct mm_struct *mm)
 	 * generation, then we update the active_asids entry with a relaxed
 	 * cmpxchg. Racing with a concurrent rollover means that either:
 	 *
-	 * - We get a zero back from the cmpxchg and end up waiting on the
+	 * - We get a zero back from the cmpxchg and end up रुकोing on the
 	 *   lock. Taking the lock synchronises with the rollover and so
-	 *   we are forced to see the updated generation.
+	 *   we are क्रमced to see the updated generation.
 	 *
 	 * - We get a valid ASID back from the cmpxchg, which means the
 	 *   relaxed xchg in flush_context will treat us as reserved
-	 *   because atomic RmWs are totally ordered for a given location.
+	 *   because atomic RmWs are totally ordered क्रम a given location.
 	 */
-	old_active_asid = atomic64_read(this_cpu_ptr(&active_asids));
-	if (old_active_asid && asid_gen_match(asid) &&
+	old_active_asid = atomic64_पढ़ो(this_cpu_ptr(&active_asids));
+	अगर (old_active_asid && asid_gen_match(asid) &&
 	    atomic64_cmpxchg_relaxed(this_cpu_ptr(&active_asids),
 				     old_active_asid, asid))
-		goto switch_mm_fastpath;
+		जाओ चयन_mm_fastpath;
 
 	raw_spin_lock_irqsave(&cpu_asid_lock, flags);
-	/* Check that our ASID belongs to the current generation. */
-	asid = atomic64_read(&mm->context.id);
-	if (!asid_gen_match(asid)) {
+	/* Check that our ASID beदीर्घs to the current generation. */
+	asid = atomic64_पढ़ो(&mm->context.id);
+	अगर (!asid_gen_match(asid)) अणु
 		asid = new_context(mm);
 		atomic64_set(&mm->context.id, asid);
-	}
+	पूर्ण
 
 	cpu = smp_processor_id();
-	if (cpumask_test_and_clear_cpu(cpu, &tlb_flush_pending))
+	अगर (cpumask_test_and_clear_cpu(cpu, &tlb_flush_pending))
 		local_flush_tlb_all();
 
 	atomic64_set(this_cpu_ptr(&active_asids), asid);
 	raw_spin_unlock_irqrestore(&cpu_asid_lock, flags);
 
-switch_mm_fastpath:
+चयन_mm_fastpath:
 
 	arm64_apply_bp_hardening();
 
 	/*
-	 * Defer TTBR0_EL1 setting for user threads to uaccess_enable() when
+	 * Defer TTBR0_EL1 setting क्रम user thपढ़ोs to uaccess_enable() when
 	 * emulating PAN.
 	 */
-	if (!system_uses_ttbr0_pan())
-		cpu_switch_mm(mm->pgd, mm);
-}
+	अगर (!प्रणाली_uses_ttbr0_pan())
+		cpu_चयन_mm(mm->pgd, mm);
+पूर्ण
 
-unsigned long arm64_mm_context_get(struct mm_struct *mm)
-{
-	unsigned long flags;
+अचिन्हित दीर्घ arm64_mm_context_get(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 asid;
 
-	if (!pinned_asid_map)
-		return 0;
+	अगर (!pinned_asid_map)
+		वापस 0;
 
 	raw_spin_lock_irqsave(&cpu_asid_lock, flags);
 
-	asid = atomic64_read(&mm->context.id);
+	asid = atomic64_पढ़ो(&mm->context.id);
 
-	if (refcount_inc_not_zero(&mm->context.pinned))
-		goto out_unlock;
+	अगर (refcount_inc_not_zero(&mm->context.pinned))
+		जाओ out_unlock;
 
-	if (nr_pinned_asids >= max_pinned_asids) {
+	अगर (nr_pinned_asids >= max_pinned_asids) अणु
 		asid = 0;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (!asid_gen_match(asid)) {
+	अगर (!asid_gen_match(asid)) अणु
 		/*
 		 * We went through one or more rollover since that ASID was
 		 * used. Ensure that it is still valid, or generate a new one.
 		 */
 		asid = new_context(mm);
 		atomic64_set(&mm->context.id, asid);
-	}
+	पूर्ण
 
 	nr_pinned_asids++;
 	__set_bit(asid2idx(asid), pinned_asid_map);
@@ -309,80 +310,80 @@ out_unlock:
 	asid &= ~ASID_MASK;
 
 	/* Set the equivalent of USER_ASID_BIT */
-	if (asid && arm64_kernel_unmapped_at_el0())
+	अगर (asid && arm64_kernel_unmapped_at_el0())
 		asid |= 1;
 
-	return asid;
-}
+	वापस asid;
+पूर्ण
 EXPORT_SYMBOL_GPL(arm64_mm_context_get);
 
-void arm64_mm_context_put(struct mm_struct *mm)
-{
-	unsigned long flags;
-	u64 asid = atomic64_read(&mm->context.id);
+व्योम arm64_mm_context_put(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ flags;
+	u64 asid = atomic64_पढ़ो(&mm->context.id);
 
-	if (!pinned_asid_map)
-		return;
+	अगर (!pinned_asid_map)
+		वापस;
 
 	raw_spin_lock_irqsave(&cpu_asid_lock, flags);
 
-	if (refcount_dec_and_test(&mm->context.pinned)) {
+	अगर (refcount_dec_and_test(&mm->context.pinned)) अणु
 		__clear_bit(asid2idx(asid), pinned_asid_map);
 		nr_pinned_asids--;
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&cpu_asid_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(arm64_mm_context_put);
 
 /* Errata workaround post TTBRx_EL1 update. */
-asmlinkage void post_ttbr_update_workaround(void)
-{
-	if (!IS_ENABLED(CONFIG_CAVIUM_ERRATUM_27456))
-		return;
+यंत्रlinkage व्योम post_ttbr_update_workaround(व्योम)
+अणु
+	अगर (!IS_ENABLED(CONFIG_CAVIUM_ERRATUM_27456))
+		वापस;
 
-	asm(ALTERNATIVE("nop; nop; nop",
+	यंत्र(ALTERNATIVE("nop; nop; nop",
 			"ic iallu; dsb nsh; isb",
 			ARM64_WORKAROUND_CAVIUM_27456));
-}
+पूर्ण
 
-void cpu_do_switch_mm(phys_addr_t pgd_phys, struct mm_struct *mm)
-{
-	unsigned long ttbr1 = read_sysreg(ttbr1_el1);
-	unsigned long asid = ASID(mm);
-	unsigned long ttbr0 = phys_to_ttbr(pgd_phys);
+व्योम cpu_करो_चयन_mm(phys_addr_t pgd_phys, काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ ttbr1 = पढ़ो_sysreg(ttbr1_el1);
+	अचिन्हित दीर्घ asid = ASID(mm);
+	अचिन्हित दीर्घ ttbr0 = phys_to_ttbr(pgd_phys);
 
-	/* Skip CNP for the reserved ASID */
-	if (system_supports_cnp() && asid)
+	/* Skip CNP क्रम the reserved ASID */
+	अगर (प्रणाली_supports_cnp() && asid)
 		ttbr0 |= TTBR_CNP_BIT;
 
-	/* SW PAN needs a copy of the ASID in TTBR0 for entry */
-	if (IS_ENABLED(CONFIG_ARM64_SW_TTBR0_PAN))
+	/* SW PAN needs a copy of the ASID in TTBR0 क्रम entry */
+	अगर (IS_ENABLED(CONFIG_ARM64_SW_TTBR0_PAN))
 		ttbr0 |= FIELD_PREP(TTBR_ASID_MASK, asid);
 
 	/* Set ASID in TTBR1 since TCR.A1 is set */
 	ttbr1 &= ~TTBR_ASID_MASK;
 	ttbr1 |= FIELD_PREP(TTBR_ASID_MASK, asid);
 
-	write_sysreg(ttbr1, ttbr1_el1);
+	ग_लिखो_sysreg(ttbr1, ttbr1_el1);
 	isb();
-	write_sysreg(ttbr0, ttbr0_el1);
+	ग_लिखो_sysreg(ttbr0, ttbr0_el1);
 	isb();
 	post_ttbr_update_workaround();
-}
+पूर्ण
 
-static int asids_update_limit(void)
-{
-	unsigned long num_available_asids = NUM_USER_ASIDS;
+अटल पूर्णांक asids_update_limit(व्योम)
+अणु
+	अचिन्हित दीर्घ num_available_asids = NUM_USER_ASIDS;
 
-	if (arm64_kernel_unmapped_at_el0()) {
+	अगर (arm64_kernel_unmapped_at_el0()) अणु
 		num_available_asids /= 2;
-		if (pinned_asid_map)
+		अगर (pinned_asid_map)
 			set_kpti_asid_bits(pinned_asid_map);
-	}
+	पूर्ण
 	/*
-	 * Expect allocation after rollover to fail if we don't have at least
-	 * one more ASID than CPUs. ASID #0 is reserved for init_mm.
+	 * Expect allocation after rollover to fail अगर we करोn't have at least
+	 * one more ASID than CPUs. ASID #0 is reserved क्रम init_mm.
 	 */
 	WARN_ON(num_available_asids - 1 <= num_possible_cpus());
 	pr_info("ASID allocator initialised with %lu entries\n",
@@ -390,26 +391,26 @@ static int asids_update_limit(void)
 
 	/*
 	 * There must always be an ASID available after rollover. Ensure that,
-	 * even if all CPUs have a reserved ASID and the maximum number of ASIDs
+	 * even अगर all CPUs have a reserved ASID and the maximum number of ASIDs
 	 * are pinned, there still is at least one empty slot in the ASID map.
 	 */
 	max_pinned_asids = num_available_asids - num_possible_cpus() - 2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(asids_update_limit);
 
-static int asids_init(void)
-{
+अटल पूर्णांक asids_init(व्योम)
+अणु
 	asid_bits = get_cpu_asid_bits();
 	atomic64_set(&asid_generation, ASID_FIRST_VERSION);
-	asid_map = kcalloc(BITS_TO_LONGS(NUM_USER_ASIDS), sizeof(*asid_map),
+	asid_map = kसुस्मृति(BITS_TO_LONGS(NUM_USER_ASIDS), माप(*asid_map),
 			   GFP_KERNEL);
-	if (!asid_map)
+	अगर (!asid_map)
 		panic("Failed to allocate bitmap for %lu ASIDs\n",
 		      NUM_USER_ASIDS);
 
-	pinned_asid_map = kcalloc(BITS_TO_LONGS(NUM_USER_ASIDS),
-				  sizeof(*pinned_asid_map), GFP_KERNEL);
+	pinned_asid_map = kसुस्मृति(BITS_TO_LONGS(NUM_USER_ASIDS),
+				  माप(*pinned_asid_map), GFP_KERNEL);
 	nr_pinned_asids = 0;
 
 	/*
@@ -417,8 +418,8 @@ static int asids_init(void)
 	 * caps are not finalized yet, so it is safer to assume KPTI
 	 * and reserve kernel ASID's from beginning.
 	 */
-	if (IS_ENABLED(CONFIG_UNMAP_KERNEL_AT_EL0))
+	अगर (IS_ENABLED(CONFIG_UNMAP_KERNEL_AT_EL0))
 		set_kpti_asid_bits(asid_map);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_initcall(asids_init);

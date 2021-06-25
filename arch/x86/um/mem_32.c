@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2011 Richard Weinberger <richrd@nod.at>
+ * Copyright (C) 2011 Riअक्षरd Weinberger <richrd@nod.at>
  */
 
-#include <linux/mm.h>
-#include <asm/elf.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/elf.h>
 
-static struct vm_area_struct gate_vma;
+अटल काष्ठा vm_area_काष्ठा gate_vma;
 
-static int __init gate_vma_init(void)
-{
-	if (!FIXADDR_USER_START)
-		return 0;
+अटल पूर्णांक __init gate_vma_init(व्योम)
+अणु
+	अगर (!FIXADDR_USER_START)
+		वापस 0;
 
-	vma_init(&gate_vma, NULL);
+	vma_init(&gate_vma, शून्य);
 	gate_vma.vm_start = FIXADDR_USER_START;
 	gate_vma.vm_end = FIXADDR_USER_END;
 	gate_vma.vm_flags = VM_READ | VM_MAYREAD | VM_EXEC | VM_MAYEXEC;
 	gate_vma.vm_page_prot = __P101;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __initcall(gate_vma_init);
 
-struct vm_area_struct *get_gate_vma(struct mm_struct *mm)
-{
-	return FIXADDR_USER_START ? &gate_vma : NULL;
-}
+काष्ठा vm_area_काष्ठा *get_gate_vma(काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस FIXADDR_USER_START ? &gate_vma : शून्य;
+पूर्ण
 
-int in_gate_area_no_mm(unsigned long addr)
-{
-	if (!FIXADDR_USER_START)
-		return 0;
+पूर्णांक in_gate_area_no_mm(अचिन्हित दीर्घ addr)
+अणु
+	अगर (!FIXADDR_USER_START)
+		वापस 0;
 
-	if ((addr >= FIXADDR_USER_START) && (addr < FIXADDR_USER_END))
-		return 1;
+	अगर ((addr >= FIXADDR_USER_START) && (addr < FIXADDR_USER_END))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int in_gate_area(struct mm_struct *mm, unsigned long addr)
-{
-	struct vm_area_struct *vma = get_gate_vma(mm);
+पूर्णांक in_gate_area(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = get_gate_vma(mm);
 
-	if (!vma)
-		return 0;
+	अगर (!vma)
+		वापस 0;
 
-	return (addr >= vma->vm_start) && (addr < vma->vm_end);
-}
+	वापस (addr >= vma->vm_start) && (addr < vma->vm_end);
+पूर्ण

@@ -1,560 +1,561 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
   STMMAC Ethernet Driver -- MDIO bus implementation
-  Provides Bus interface for MII registers
+  Provides Bus पूर्णांकerface क्रम MII रेजिस्टरs
 
   Copyright (C) 2007-2009  STMicroelectronics Ltd
 
 
   Author: Carl Shaw <carl.shaw@st.com>
-  Maintainer: Giuseppe Cavallaro <peppe.cavallaro@st.com>
+  Maपूर्णांकainer: Giuseppe Cavallaro <peppe.cavallaro@st.com>
 *******************************************************************************/
 
-#include <linux/gpio/consumer.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/mii.h>
-#include <linux/of_mdio.h>
-#include <linux/pm_runtime.h>
-#include <linux/phy.h>
-#include <linux/property.h>
-#include <linux/slab.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
 
-#include "dwxgmac2.h"
-#include "stmmac.h"
+#समावेश "dwxgmac2.h"
+#समावेश "stmmac.h"
 
-#define MII_BUSY 0x00000001
-#define MII_WRITE 0x00000002
-#define MII_DATA_MASK GENMASK(15, 0)
+#घोषणा MII_BUSY 0x00000001
+#घोषणा MII_WRITE 0x00000002
+#घोषणा MII_DATA_MASK GENMASK(15, 0)
 
 /* GMAC4 defines */
-#define MII_GMAC4_GOC_SHIFT		2
-#define MII_GMAC4_REG_ADDR_SHIFT	16
-#define MII_GMAC4_WRITE			(1 << MII_GMAC4_GOC_SHIFT)
-#define MII_GMAC4_READ			(3 << MII_GMAC4_GOC_SHIFT)
-#define MII_GMAC4_C45E			BIT(1)
+#घोषणा MII_GMAC4_GOC_SHIFT		2
+#घोषणा MII_GMAC4_REG_ADDR_SHIFT	16
+#घोषणा MII_GMAC4_WRITE			(1 << MII_GMAC4_GOC_SHIFT)
+#घोषणा MII_GMAC4_READ			(3 << MII_GMAC4_GOC_SHIFT)
+#घोषणा MII_GMAC4_C45E			BIT(1)
 
 /* XGMAC defines */
-#define MII_XGMAC_SADDR			BIT(18)
-#define MII_XGMAC_CMD_SHIFT		16
-#define MII_XGMAC_WRITE			(1 << MII_XGMAC_CMD_SHIFT)
-#define MII_XGMAC_READ			(3 << MII_XGMAC_CMD_SHIFT)
-#define MII_XGMAC_BUSY			BIT(22)
-#define MII_XGMAC_MAX_C22ADDR		3
-#define MII_XGMAC_C22P_MASK		GENMASK(MII_XGMAC_MAX_C22ADDR, 0)
-#define MII_XGMAC_PA_SHIFT		16
-#define MII_XGMAC_DA_SHIFT		21
+#घोषणा MII_XGMAC_SADDR			BIT(18)
+#घोषणा MII_XGMAC_CMD_SHIFT		16
+#घोषणा MII_XGMAC_WRITE			(1 << MII_XGMAC_CMD_SHIFT)
+#घोषणा MII_XGMAC_READ			(3 << MII_XGMAC_CMD_SHIFT)
+#घोषणा MII_XGMAC_BUSY			BIT(22)
+#घोषणा MII_XGMAC_MAX_C22ADDR		3
+#घोषणा MII_XGMAC_C22P_MASK		GENMASK(MII_XGMAC_MAX_C22ADDR, 0)
+#घोषणा MII_XGMAC_PA_SHIFT		16
+#घोषणा MII_XGMAC_DA_SHIFT		21
 
-static int stmmac_xgmac2_c45_format(struct stmmac_priv *priv, int phyaddr,
-				    int phyreg, u32 *hw_addr)
-{
-	u32 tmp;
+अटल पूर्णांक sपंचांगmac_xgmac2_c45_क्रमmat(काष्ठा sपंचांगmac_priv *priv, पूर्णांक phyaddr,
+				    पूर्णांक phyreg, u32 *hw_addr)
+अणु
+	u32 पंचांगp;
 
 	/* Set port as Clause 45 */
-	tmp = readl(priv->ioaddr + XGMAC_MDIO_C22P);
-	tmp &= ~BIT(phyaddr);
-	writel(tmp, priv->ioaddr + XGMAC_MDIO_C22P);
+	पंचांगp = पढ़ोl(priv->ioaddr + XGMAC_MDIO_C22P);
+	पंचांगp &= ~BIT(phyaddr);
+	ग_लिखोl(पंचांगp, priv->ioaddr + XGMAC_MDIO_C22P);
 
 	*hw_addr = (phyaddr << MII_XGMAC_PA_SHIFT) | (phyreg & 0xffff);
 	*hw_addr |= (phyreg >> MII_DEVADDR_C45_SHIFT) << MII_XGMAC_DA_SHIFT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_xgmac2_c22_format(struct stmmac_priv *priv, int phyaddr,
-				    int phyreg, u32 *hw_addr)
-{
-	u32 tmp;
+अटल पूर्णांक sपंचांगmac_xgmac2_c22_क्रमmat(काष्ठा sपंचांगmac_priv *priv, पूर्णांक phyaddr,
+				    पूर्णांक phyreg, u32 *hw_addr)
+अणु
+	u32 पंचांगp;
 
-	/* HW does not support C22 addr >= 4 */
-	if (phyaddr > MII_XGMAC_MAX_C22ADDR)
-		return -ENODEV;
+	/* HW करोes not support C22 addr >= 4 */
+	अगर (phyaddr > MII_XGMAC_MAX_C22ADDR)
+		वापस -ENODEV;
 
 	/* Set port as Clause 22 */
-	tmp = readl(priv->ioaddr + XGMAC_MDIO_C22P);
-	tmp &= ~MII_XGMAC_C22P_MASK;
-	tmp |= BIT(phyaddr);
-	writel(tmp, priv->ioaddr + XGMAC_MDIO_C22P);
+	पंचांगp = पढ़ोl(priv->ioaddr + XGMAC_MDIO_C22P);
+	पंचांगp &= ~MII_XGMAC_C22P_MASK;
+	पंचांगp |= BIT(phyaddr);
+	ग_लिखोl(पंचांगp, priv->ioaddr + XGMAC_MDIO_C22P);
 
 	*hw_addr = (phyaddr << MII_XGMAC_PA_SHIFT) | (phyreg & 0x1f);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stmmac_xgmac2_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
-{
-	struct net_device *ndev = bus->priv;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned int mii_address = priv->hw->mii.addr;
-	unsigned int mii_data = priv->hw->mii.data;
-	u32 tmp, addr, value = MII_XGMAC_BUSY;
-	int ret;
+अटल पूर्णांक sपंचांगmac_xgmac2_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक phyreg)
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक mii_address = priv->hw->mii.addr;
+	अचिन्हित पूर्णांक mii_data = priv->hw->mii.data;
+	u32 पंचांगp, addr, value = MII_XGMAC_BUSY;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(priv->device);
-	if (ret < 0) {
-		pm_runtime_put_noidle(priv->device);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(priv->device);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(priv->device);
+		वापस ret;
+	पूर्ण
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-			       !(tmp & MII_XGMAC_BUSY), 100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+			       !(पंचांगp & MII_XGMAC_BUSY), 100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	if (phyreg & MII_ADDR_C45) {
+	अगर (phyreg & MII_ADDR_C45) अणु
 		phyreg &= ~MII_ADDR_C45;
 
-		ret = stmmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
-		if (ret)
-			goto err_disable_clks;
-	} else {
-		ret = stmmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
-		if (ret)
-			goto err_disable_clks;
+		ret = sपंचांगmac_xgmac2_c45_क्रमmat(priv, phyaddr, phyreg, &addr);
+		अगर (ret)
+			जाओ err_disable_clks;
+	पूर्ण अन्यथा अणु
+		ret = sपंचांगmac_xgmac2_c22_क्रमmat(priv, phyaddr, phyreg, &addr);
+		अगर (ret)
+			जाओ err_disable_clks;
 
 		value |= MII_XGMAC_SADDR;
-	}
+	पूर्ण
 
-	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shअगरt)
 		& priv->hw->mii.clk_csr_mask;
 	value |= MII_XGMAC_READ;
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-			       !(tmp & MII_XGMAC_BUSY), 100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+			       !(पंचांगp & MII_XGMAC_BUSY), 100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	/* Set the MII address register to read */
-	writel(addr, priv->ioaddr + mii_address);
-	writel(value, priv->ioaddr + mii_data);
+	/* Set the MII address रेजिस्टर to पढ़ो */
+	ग_लिखोl(addr, priv->ioaddr + mii_address);
+	ग_लिखोl(value, priv->ioaddr + mii_data);
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-			       !(tmp & MII_XGMAC_BUSY), 100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+			       !(पंचांगp & MII_XGMAC_BUSY), 100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	/* Read the data from the MII data register */
-	ret = (int)readl(priv->ioaddr + mii_data) & GENMASK(15, 0);
+	/* Read the data from the MII data रेजिस्टर */
+	ret = (पूर्णांक)पढ़ोl(priv->ioaddr + mii_data) & GENMASK(15, 0);
 
 err_disable_clks:
-	pm_runtime_put(priv->device);
+	pm_runसमय_put(priv->device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stmmac_xgmac2_mdio_write(struct mii_bus *bus, int phyaddr,
-				    int phyreg, u16 phydata)
-{
-	struct net_device *ndev = bus->priv;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned int mii_address = priv->hw->mii.addr;
-	unsigned int mii_data = priv->hw->mii.data;
-	u32 addr, tmp, value = MII_XGMAC_BUSY;
-	int ret;
+अटल पूर्णांक sपंचांगmac_xgmac2_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr,
+				    पूर्णांक phyreg, u16 phydata)
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक mii_address = priv->hw->mii.addr;
+	अचिन्हित पूर्णांक mii_data = priv->hw->mii.data;
+	u32 addr, पंचांगp, value = MII_XGMAC_BUSY;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(priv->device);
-	if (ret < 0) {
-		pm_runtime_put_noidle(priv->device);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(priv->device);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(priv->device);
+		वापस ret;
+	पूर्ण
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-			       !(tmp & MII_XGMAC_BUSY), 100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+			       !(पंचांगp & MII_XGMAC_BUSY), 100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	if (phyreg & MII_ADDR_C45) {
+	अगर (phyreg & MII_ADDR_C45) अणु
 		phyreg &= ~MII_ADDR_C45;
 
-		ret = stmmac_xgmac2_c45_format(priv, phyaddr, phyreg, &addr);
-		if (ret)
-			goto err_disable_clks;
-	} else {
-		ret = stmmac_xgmac2_c22_format(priv, phyaddr, phyreg, &addr);
-		if (ret)
-			goto err_disable_clks;
+		ret = sपंचांगmac_xgmac2_c45_क्रमmat(priv, phyaddr, phyreg, &addr);
+		अगर (ret)
+			जाओ err_disable_clks;
+	पूर्ण अन्यथा अणु
+		ret = sपंचांगmac_xgmac2_c22_क्रमmat(priv, phyaddr, phyreg, &addr);
+		अगर (ret)
+			जाओ err_disable_clks;
 
 		value |= MII_XGMAC_SADDR;
-	}
+	पूर्ण
 
-	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shअगरt)
 		& priv->hw->mii.clk_csr_mask;
 	value |= phydata;
 	value |= MII_XGMAC_WRITE;
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-			       !(tmp & MII_XGMAC_BUSY), 100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+			       !(पंचांगp & MII_XGMAC_BUSY), 100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	/* Set the MII address register to write */
-	writel(addr, priv->ioaddr + mii_address);
-	writel(value, priv->ioaddr + mii_data);
+	/* Set the MII address रेजिस्टर to ग_लिखो */
+	ग_लिखोl(addr, priv->ioaddr + mii_address);
+	ग_लिखोl(value, priv->ioaddr + mii_data);
 
 	/* Wait until any existing MII operation is complete */
-	ret = readl_poll_timeout(priv->ioaddr + mii_data, tmp,
-				 !(tmp & MII_XGMAC_BUSY), 100, 10000);
+	ret = पढ़ोl_poll_समयout(priv->ioaddr + mii_data, पंचांगp,
+				 !(पंचांगp & MII_XGMAC_BUSY), 100, 10000);
 
 err_disable_clks:
-	pm_runtime_put(priv->device);
+	pm_runसमय_put(priv->device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * stmmac_mdio_read
- * @bus: points to the mii_bus structure
+ * sपंचांगmac_mdio_पढ़ो
+ * @bus: poपूर्णांकs to the mii_bus काष्ठाure
  * @phyaddr: MII addr
  * @phyreg: MII reg
- * Description: it reads data from the MII register from within the phy device.
- * For the 7111 GMAC, we must set the bit 0 in the MII address register while
- * accessing the PHY registers.
- * Fortunately, it seems this has no drawback for the 7109 MAC.
+ * Description: it पढ़ोs data from the MII रेजिस्टर from within the phy device.
+ * For the 7111 GMAC, we must set the bit 0 in the MII address रेजिस्टर जबतक
+ * accessing the PHY रेजिस्टरs.
+ * Fortunately, it seems this has no drawback क्रम the 7109 MAC.
  */
-static int stmmac_mdio_read(struct mii_bus *bus, int phyaddr, int phyreg)
-{
-	struct net_device *ndev = bus->priv;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned int mii_address = priv->hw->mii.addr;
-	unsigned int mii_data = priv->hw->mii.data;
+अटल पूर्णांक sपंचांगmac_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक phyreg)
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक mii_address = priv->hw->mii.addr;
+	अचिन्हित पूर्णांक mii_data = priv->hw->mii.data;
 	u32 value = MII_BUSY;
-	int data = 0;
+	पूर्णांक data = 0;
 	u32 v;
 
-	data = pm_runtime_get_sync(priv->device);
-	if (data < 0) {
-		pm_runtime_put_noidle(priv->device);
-		return data;
-	}
+	data = pm_runसमय_get_sync(priv->device);
+	अगर (data < 0) अणु
+		pm_runसमय_put_noidle(priv->device);
+		वापस data;
+	पूर्ण
 
-	value |= (phyaddr << priv->hw->mii.addr_shift)
+	value |= (phyaddr << priv->hw->mii.addr_shअगरt)
 		& priv->hw->mii.addr_mask;
-	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
-	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+	value |= (phyreg << priv->hw->mii.reg_shअगरt) & priv->hw->mii.reg_mask;
+	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shअगरt)
 		& priv->hw->mii.clk_csr_mask;
-	if (priv->plat->has_gmac4) {
+	अगर (priv->plat->has_gmac4) अणु
 		value |= MII_GMAC4_READ;
-		if (phyreg & MII_ADDR_C45) {
+		अगर (phyreg & MII_ADDR_C45) अणु
 			value |= MII_GMAC4_C45E;
 			value &= ~priv->hw->mii.reg_mask;
 			value |= ((phyreg >> MII_DEVADDR_C45_SHIFT) <<
-			       priv->hw->mii.reg_shift) &
+			       priv->hw->mii.reg_shअगरt) &
 			       priv->hw->mii.reg_mask;
 
 			data |= (phyreg & MII_REGADDR_C45_MASK) <<
 				MII_GMAC4_REG_ADDR_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
-			       100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
+			       100, 10000)) अणु
 		data = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	writel(data, priv->ioaddr + mii_data);
-	writel(value, priv->ioaddr + mii_address);
+	ग_लिखोl(data, priv->ioaddr + mii_data);
+	ग_लिखोl(value, priv->ioaddr + mii_address);
 
-	if (readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
-			       100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
+			       100, 10000)) अणु
 		data = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	/* Read the data from the MII data register */
-	data = (int)readl(priv->ioaddr + mii_data) & MII_DATA_MASK;
+	/* Read the data from the MII data रेजिस्टर */
+	data = (पूर्णांक)पढ़ोl(priv->ioaddr + mii_data) & MII_DATA_MASK;
 
 err_disable_clks:
-	pm_runtime_put(priv->device);
+	pm_runसमय_put(priv->device);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /**
- * stmmac_mdio_write
- * @bus: points to the mii_bus structure
+ * sपंचांगmac_mdio_ग_लिखो
+ * @bus: poपूर्णांकs to the mii_bus काष्ठाure
  * @phyaddr: MII addr
  * @phyreg: MII reg
  * @phydata: phy data
- * Description: it writes the data into the MII register from within the device.
+ * Description: it ग_लिखोs the data पूर्णांकo the MII रेजिस्टर from within the device.
  */
-static int stmmac_mdio_write(struct mii_bus *bus, int phyaddr, int phyreg,
+अटल पूर्णांक sपंचांगmac_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phyaddr, पूर्णांक phyreg,
 			     u16 phydata)
-{
-	struct net_device *ndev = bus->priv;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned int mii_address = priv->hw->mii.addr;
-	unsigned int mii_data = priv->hw->mii.data;
-	int ret, data = phydata;
+अणु
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक mii_address = priv->hw->mii.addr;
+	अचिन्हित पूर्णांक mii_data = priv->hw->mii.data;
+	पूर्णांक ret, data = phydata;
 	u32 value = MII_BUSY;
 	u32 v;
 
-	ret = pm_runtime_get_sync(priv->device);
-	if (ret < 0) {
-		pm_runtime_put_noidle(priv->device);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(priv->device);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(priv->device);
+		वापस ret;
+	पूर्ण
 
-	value |= (phyaddr << priv->hw->mii.addr_shift)
+	value |= (phyaddr << priv->hw->mii.addr_shअगरt)
 		& priv->hw->mii.addr_mask;
-	value |= (phyreg << priv->hw->mii.reg_shift) & priv->hw->mii.reg_mask;
+	value |= (phyreg << priv->hw->mii.reg_shअगरt) & priv->hw->mii.reg_mask;
 
-	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shift)
+	value |= (priv->clk_csr << priv->hw->mii.clk_csr_shअगरt)
 		& priv->hw->mii.clk_csr_mask;
-	if (priv->plat->has_gmac4) {
+	अगर (priv->plat->has_gmac4) अणु
 		value |= MII_GMAC4_WRITE;
-		if (phyreg & MII_ADDR_C45) {
+		अगर (phyreg & MII_ADDR_C45) अणु
 			value |= MII_GMAC4_C45E;
 			value &= ~priv->hw->mii.reg_mask;
 			value |= ((phyreg >> MII_DEVADDR_C45_SHIFT) <<
-			       priv->hw->mii.reg_shift) &
+			       priv->hw->mii.reg_shअगरt) &
 			       priv->hw->mii.reg_mask;
 
 			data |= (phyreg & MII_REGADDR_C45_MASK) <<
 				MII_GMAC4_REG_ADDR_SHIFT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		value |= MII_WRITE;
-	}
+	पूर्ण
 
 	/* Wait until any existing MII operation is complete */
-	if (readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
-			       100, 10000)) {
+	अगर (पढ़ोl_poll_समयout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
+			       100, 10000)) अणु
 		ret = -EBUSY;
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
-	/* Set the MII address register to write */
-	writel(data, priv->ioaddr + mii_data);
-	writel(value, priv->ioaddr + mii_address);
+	/* Set the MII address रेजिस्टर to ग_लिखो */
+	ग_लिखोl(data, priv->ioaddr + mii_data);
+	ग_लिखोl(value, priv->ioaddr + mii_address);
 
 	/* Wait until any existing MII operation is complete */
-	ret = readl_poll_timeout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
+	ret = पढ़ोl_poll_समयout(priv->ioaddr + mii_address, v, !(v & MII_BUSY),
 				 100, 10000);
 
 err_disable_clks:
-	pm_runtime_put(priv->device);
+	pm_runसमय_put(priv->device);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * stmmac_mdio_reset
- * @bus: points to the mii_bus structure
+ * sपंचांगmac_mdio_reset
+ * @bus: poपूर्णांकs to the mii_bus काष्ठाure
  * Description: reset the MII bus
  */
-int stmmac_mdio_reset(struct mii_bus *bus)
-{
-#if IS_ENABLED(CONFIG_STMMAC_PLATFORM)
-	struct net_device *ndev = bus->priv;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	unsigned int mii_address = priv->hw->mii.addr;
+पूर्णांक sपंचांगmac_mdio_reset(काष्ठा mii_bus *bus)
+अणु
+#अगर IS_ENABLED(CONFIG_STMMAC_PLATFORM)
+	काष्ठा net_device *ndev = bus->priv;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक mii_address = priv->hw->mii.addr;
 
-#ifdef CONFIG_OF
-	if (priv->device->of_node) {
-		struct gpio_desc *reset_gpio;
-		u32 delays[3] = { 0, 0, 0 };
+#अगर_घोषित CONFIG_OF
+	अगर (priv->device->of_node) अणु
+		काष्ठा gpio_desc *reset_gpio;
+		u32 delays[3] = अणु 0, 0, 0 पूर्ण;
 
 		reset_gpio = devm_gpiod_get_optional(priv->device,
 						     "snps,reset",
 						     GPIOD_OUT_LOW);
-		if (IS_ERR(reset_gpio))
-			return PTR_ERR(reset_gpio);
+		अगर (IS_ERR(reset_gpio))
+			वापस PTR_ERR(reset_gpio);
 
-		device_property_read_u32_array(priv->device,
+		device_property_पढ़ो_u32_array(priv->device,
 					       "snps,reset-delays-us",
 					       delays, ARRAY_SIZE(delays));
 
-		if (delays[0])
+		अगर (delays[0])
 			msleep(DIV_ROUND_UP(delays[0], 1000));
 
 		gpiod_set_value_cansleep(reset_gpio, 1);
-		if (delays[1])
+		अगर (delays[1])
 			msleep(DIV_ROUND_UP(delays[1], 1000));
 
 		gpiod_set_value_cansleep(reset_gpio, 0);
-		if (delays[2])
+		अगर (delays[2])
 			msleep(DIV_ROUND_UP(delays[2], 1000));
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	/* This is a workaround for problems with the STE101P PHY.
-	 * It doesn't complete its reset until at least one clock cycle
-	 * on MDC, so perform a dummy mdio read. To be updated for GMAC4
-	 * if needed.
+	/* This is a workaround क्रम problems with the STE101P PHY.
+	 * It करोesn't complete its reset until at least one घड़ी cycle
+	 * on MDC, so perक्रमm a dummy mdio पढ़ो. To be updated क्रम GMAC4
+	 * अगर needed.
 	 */
-	if (!priv->plat->has_gmac4)
-		writel(0, priv->ioaddr + mii_address);
-#endif
-	return 0;
-}
+	अगर (!priv->plat->has_gmac4)
+		ग_लिखोl(0, priv->ioaddr + mii_address);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /**
- * stmmac_mdio_register
- * @ndev: net device structure
- * Description: it registers the MII bus
+ * sपंचांगmac_mdio_रेजिस्टर
+ * @ndev: net device काष्ठाure
+ * Description: it रेजिस्टरs the MII bus
  */
-int stmmac_mdio_register(struct net_device *ndev)
-{
-	int err = 0;
-	struct mii_bus *new_bus;
-	struct stmmac_priv *priv = netdev_priv(ndev);
-	struct stmmac_mdio_bus_data *mdio_bus_data = priv->plat->mdio_bus_data;
-	struct device_node *mdio_node = priv->plat->mdio_node;
-	struct device *dev = ndev->dev.parent;
-	int addr, found, max_addr;
+पूर्णांक sपंचांगmac_mdio_रेजिस्टर(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा mii_bus *new_bus;
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
+	काष्ठा sपंचांगmac_mdio_bus_data *mdio_bus_data = priv->plat->mdio_bus_data;
+	काष्ठा device_node *mdio_node = priv->plat->mdio_node;
+	काष्ठा device *dev = ndev->dev.parent;
+	पूर्णांक addr, found, max_addr;
 
-	if (!mdio_bus_data)
-		return 0;
+	अगर (!mdio_bus_data)
+		वापस 0;
 
 	new_bus = mdiobus_alloc();
-	if (!new_bus)
-		return -ENOMEM;
+	अगर (!new_bus)
+		वापस -ENOMEM;
 
-	if (mdio_bus_data->irqs)
-		memcpy(new_bus->irq, mdio_bus_data->irqs, sizeof(new_bus->irq));
+	अगर (mdio_bus_data->irqs)
+		स_नकल(new_bus->irq, mdio_bus_data->irqs, माप(new_bus->irq));
 
 	new_bus->name = "stmmac";
 
-	if (priv->plat->has_gmac4)
+	अगर (priv->plat->has_gmac4)
 		new_bus->probe_capabilities = MDIOBUS_C22_C45;
 
-	if (priv->plat->has_xgmac) {
-		new_bus->read = &stmmac_xgmac2_mdio_read;
-		new_bus->write = &stmmac_xgmac2_mdio_write;
+	अगर (priv->plat->has_xgmac) अणु
+		new_bus->पढ़ो = &sपंचांगmac_xgmac2_mdio_पढ़ो;
+		new_bus->ग_लिखो = &sपंचांगmac_xgmac2_mdio_ग_लिखो;
 
 		/* Right now only C22 phys are supported */
 		max_addr = MII_XGMAC_MAX_C22ADDR + 1;
 
-		/* Check if DT specified an unsupported phy addr */
-		if (priv->plat->phy_addr > MII_XGMAC_MAX_C22ADDR)
+		/* Check अगर DT specअगरied an unsupported phy addr */
+		अगर (priv->plat->phy_addr > MII_XGMAC_MAX_C22ADDR)
 			dev_err(dev, "Unsupported phy_addr (max=%d)\n",
 					MII_XGMAC_MAX_C22ADDR);
-	} else {
-		new_bus->read = &stmmac_mdio_read;
-		new_bus->write = &stmmac_mdio_write;
+	पूर्ण अन्यथा अणु
+		new_bus->पढ़ो = &sपंचांगmac_mdio_पढ़ो;
+		new_bus->ग_लिखो = &sपंचांगmac_mdio_ग_लिखो;
 		max_addr = PHY_MAX_ADDR;
-	}
+	पूर्ण
 
-	if (mdio_bus_data->has_xpcs) {
+	अगर (mdio_bus_data->has_xpcs) अणु
 		priv->hw->xpcs = mdio_xpcs_get_ops();
-		if (!priv->hw->xpcs) {
+		अगर (!priv->hw->xpcs) अणु
 			err = -ENODEV;
-			goto bus_register_fail;
-		}
-	}
+			जाओ bus_रेजिस्टर_fail;
+		पूर्ण
+	पूर्ण
 
-	if (mdio_bus_data->needs_reset)
-		new_bus->reset = &stmmac_mdio_reset;
+	अगर (mdio_bus_data->needs_reset)
+		new_bus->reset = &sपंचांगmac_mdio_reset;
 
-	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snम_लिखो(new_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		 new_bus->name, priv->plat->bus_id);
 	new_bus->priv = ndev;
 	new_bus->phy_mask = mdio_bus_data->phy_mask;
 	new_bus->parent = priv->device;
 
-	err = of_mdiobus_register(new_bus, mdio_node);
-	if (err != 0) {
+	err = of_mdiobus_रेजिस्टर(new_bus, mdio_node);
+	अगर (err != 0) अणु
 		dev_err(dev, "Cannot register the MDIO bus\n");
-		goto bus_register_fail;
-	}
+		जाओ bus_रेजिस्टर_fail;
+	पूर्ण
 
-	/* Looks like we need a dummy read for XGMAC only and C45 PHYs */
-	if (priv->plat->has_xgmac)
-		stmmac_xgmac2_mdio_read(new_bus, 0, MII_ADDR_C45);
+	/* Looks like we need a dummy पढ़ो क्रम XGMAC only and C45 PHYs */
+	अगर (priv->plat->has_xgmac)
+		sपंचांगmac_xgmac2_mdio_पढ़ो(new_bus, 0, MII_ADDR_C45);
 
-	if (priv->plat->phy_node || mdio_node)
-		goto bus_register_done;
+	अगर (priv->plat->phy_node || mdio_node)
+		जाओ bus_रेजिस्टर_करोne;
 
 	found = 0;
-	for (addr = 0; addr < max_addr; addr++) {
-		struct phy_device *phydev = mdiobus_get_phy(new_bus, addr);
+	क्रम (addr = 0; addr < max_addr; addr++) अणु
+		काष्ठा phy_device *phydev = mdiobus_get_phy(new_bus, addr);
 
-		if (!phydev)
-			continue;
+		अगर (!phydev)
+			जारी;
 
 		/*
-		 * If an IRQ was provided to be assigned after
-		 * the bus probe, do it here.
+		 * If an IRQ was provided to be asचिन्हित after
+		 * the bus probe, करो it here.
 		 */
-		if (!mdio_bus_data->irqs &&
-		    (mdio_bus_data->probed_phy_irq > 0)) {
+		अगर (!mdio_bus_data->irqs &&
+		    (mdio_bus_data->probed_phy_irq > 0)) अणु
 			new_bus->irq[addr] = mdio_bus_data->probed_phy_irq;
 			phydev->irq = mdio_bus_data->probed_phy_irq;
-		}
+		पूर्ण
 
 		/*
 		 * If we're going to bind the MAC to this PHY bus,
 		 * and no PHY number was provided to the MAC,
 		 * use the one probed here.
 		 */
-		if (priv->plat->phy_addr == -1)
+		अगर (priv->plat->phy_addr == -1)
 			priv->plat->phy_addr = addr;
 
 		phy_attached_info(phydev);
 		found = 1;
-	}
+	पूर्ण
 
 	/* Try to probe the XPCS by scanning all addresses. */
-	if (priv->hw->xpcs) {
-		struct mdio_xpcs_args *xpcs = &priv->hw->xpcs_args;
-		int ret, mode = priv->plat->phy_interface;
+	अगर (priv->hw->xpcs) अणु
+		काष्ठा mdio_xpcs_args *xpcs = &priv->hw->xpcs_args;
+		पूर्णांक ret, mode = priv->plat->phy_पूर्णांकerface;
 		max_addr = PHY_MAX_ADDR;
 
 		xpcs->bus = new_bus;
 
-		for (addr = 0; addr < max_addr; addr++) {
+		क्रम (addr = 0; addr < max_addr; addr++) अणु
 			xpcs->addr = addr;
 
-			ret = stmmac_xpcs_probe(priv, xpcs, mode);
-			if (!ret) {
+			ret = sपंचांगmac_xpcs_probe(priv, xpcs, mode);
+			अगर (!ret) अणु
 				found = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!found && !mdio_node) {
+	अगर (!found && !mdio_node) अणु
 		dev_warn(dev, "No PHY found\n");
-		mdiobus_unregister(new_bus);
-		mdiobus_free(new_bus);
-		return -ENODEV;
-	}
+		mdiobus_unरेजिस्टर(new_bus);
+		mdiobus_मुक्त(new_bus);
+		वापस -ENODEV;
+	पूर्ण
 
-bus_register_done:
+bus_रेजिस्टर_करोne:
 	priv->mii = new_bus;
 
-	return 0;
+	वापस 0;
 
-bus_register_fail:
-	mdiobus_free(new_bus);
-	return err;
-}
+bus_रेजिस्टर_fail:
+	mdiobus_मुक्त(new_bus);
+	वापस err;
+पूर्ण
 
 /**
- * stmmac_mdio_unregister
- * @ndev: net device structure
- * Description: it unregisters the MII bus
+ * sपंचांगmac_mdio_unरेजिस्टर
+ * @ndev: net device काष्ठाure
+ * Description: it unरेजिस्टरs the MII bus
  */
-int stmmac_mdio_unregister(struct net_device *ndev)
-{
-	struct stmmac_priv *priv = netdev_priv(ndev);
+पूर्णांक sपंचांगmac_mdio_unरेजिस्टर(काष्ठा net_device *ndev)
+अणु
+	काष्ठा sपंचांगmac_priv *priv = netdev_priv(ndev);
 
-	if (!priv->mii)
-		return 0;
+	अगर (!priv->mii)
+		वापस 0;
 
-	mdiobus_unregister(priv->mii);
-	priv->mii->priv = NULL;
-	mdiobus_free(priv->mii);
-	priv->mii = NULL;
+	mdiobus_unरेजिस्टर(priv->mii);
+	priv->mii->priv = शून्य;
+	mdiobus_मुक्त(priv->mii);
+	priv->mii = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

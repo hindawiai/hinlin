@@ -1,349 +1,350 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2015 Microchip Technology
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/phy.h>
-#include <linux/microchipphy.h>
-#include <linux/delay.h>
-#include <linux/of.h>
-#include <dt-bindings/net/microchip-lan78xx.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/microchipphy.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/of.h>
+#समावेश <dt-bindings/net/microchip-lan78xx.h>
 
-#define DRIVER_AUTHOR	"WOOJUNG HUH <woojung.huh@microchip.com>"
-#define DRIVER_DESC	"Microchip LAN88XX PHY driver"
+#घोषणा DRIVER_AUTHOR	"WOOJUNG HUH <woojung.huh@microchip.com>"
+#घोषणा DRIVER_DESC	"Microchip LAN88XX PHY driver"
 
-struct lan88xx_priv {
-	int	chip_id;
-	int	chip_rev;
+काष्ठा lan88xx_priv अणु
+	पूर्णांक	chip_id;
+	पूर्णांक	chip_rev;
 	__u32	wolopts;
-};
+पूर्ण;
 
-static int lan88xx_read_page(struct phy_device *phydev)
-{
-	return __phy_read(phydev, LAN88XX_EXT_PAGE_ACCESS);
-}
+अटल पूर्णांक lan88xx_पढ़ो_page(काष्ठा phy_device *phydev)
+अणु
+	वापस __phy_पढ़ो(phydev, LAN88XX_EXT_PAGE_ACCESS);
+पूर्ण
 
-static int lan88xx_write_page(struct phy_device *phydev, int page)
-{
-	return __phy_write(phydev, LAN88XX_EXT_PAGE_ACCESS, page);
-}
+अटल पूर्णांक lan88xx_ग_लिखो_page(काष्ठा phy_device *phydev, पूर्णांक page)
+अणु
+	वापस __phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_ACCESS, page);
+पूर्ण
 
-static int lan88xx_phy_config_intr(struct phy_device *phydev)
-{
-	int rc;
+अटल पूर्णांक lan88xx_phy_config_पूर्णांकr(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक rc;
 
-	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
-		/* unmask all source and clear them before enable */
-		rc = phy_write(phydev, LAN88XX_INT_MASK, 0x7FFF);
-		rc = phy_read(phydev, LAN88XX_INT_STS);
-		rc = phy_write(phydev, LAN88XX_INT_MASK,
+	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
+		/* unmask all source and clear them beक्रमe enable */
+		rc = phy_ग_लिखो(phydev, LAN88XX_INT_MASK, 0x7FFF);
+		rc = phy_पढ़ो(phydev, LAN88XX_INT_STS);
+		rc = phy_ग_लिखो(phydev, LAN88XX_INT_MASK,
 			       LAN88XX_INT_MASK_MDINTPIN_EN_ |
 			       LAN88XX_INT_MASK_LINK_CHANGE_);
-	} else {
-		rc = phy_write(phydev, LAN88XX_INT_MASK, 0);
-		if (rc)
-			return rc;
+	पूर्ण अन्यथा अणु
+		rc = phy_ग_लिखो(phydev, LAN88XX_INT_MASK, 0);
+		अगर (rc)
+			वापस rc;
 
-		/* Ack interrupts after they have been disabled */
-		rc = phy_read(phydev, LAN88XX_INT_STS);
-	}
+		/* Ack पूर्णांकerrupts after they have been disabled */
+		rc = phy_पढ़ो(phydev, LAN88XX_INT_STS);
+	पूर्ण
 
-	return rc < 0 ? rc : 0;
-}
+	वापस rc < 0 ? rc : 0;
+पूर्ण
 
-static irqreturn_t lan88xx_handle_interrupt(struct phy_device *phydev)
-{
-	int irq_status;
+अटल irqवापस_t lan88xx_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक irq_status;
 
-	irq_status = phy_read(phydev, LAN88XX_INT_STS);
-	if (irq_status < 0) {
+	irq_status = phy_पढ़ो(phydev, LAN88XX_INT_STS);
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (!(irq_status & LAN88XX_INT_STS_LINK_CHANGE_))
-		return IRQ_NONE;
+	अगर (!(irq_status & LAN88XX_INT_STS_LINK_CHANGE_))
+		वापस IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int lan88xx_suspend(struct phy_device *phydev)
-{
-	struct lan88xx_priv *priv = phydev->priv;
+अटल पूर्णांक lan88xx_suspend(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा lan88xx_priv *priv = phydev->priv;
 
-	/* do not power down PHY when WOL is enabled */
-	if (!priv->wolopts)
+	/* करो not घातer करोwn PHY when WOL is enabled */
+	अगर (!priv->wolopts)
 		genphy_suspend(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lan88xx_TR_reg_set(struct phy_device *phydev, u16 regaddr,
+अटल पूर्णांक lan88xx_TR_reg_set(काष्ठा phy_device *phydev, u16 regaddr,
 			      u32 data)
-{
-	int val, save_page, ret = 0;
+अणु
+	पूर्णांक val, save_page, ret = 0;
 	u16 buf;
 
 	/* Save current page */
 	save_page = phy_save_page(phydev);
-	if (save_page < 0) {
+	अगर (save_page < 0) अणु
 		phydev_warn(phydev, "Failed to get current page\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Switch to TR page */
-	lan88xx_write_page(phydev, LAN88XX_EXT_PAGE_ACCESS_TR);
+	lan88xx_ग_लिखो_page(phydev, LAN88XX_EXT_PAGE_ACCESS_TR);
 
-	ret = __phy_write(phydev, LAN88XX_EXT_PAGE_TR_LOW_DATA,
+	ret = __phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_TR_LOW_DATA,
 			  (data & 0xFFFF));
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		phydev_warn(phydev, "Failed to write TR low data\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	ret = __phy_write(phydev, LAN88XX_EXT_PAGE_TR_HIGH_DATA,
+	ret = __phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_TR_HIGH_DATA,
 			  (data & 0x00FF0000) >> 16);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		phydev_warn(phydev, "Failed to write TR high data\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Config control bits [15:13] of register */
-	buf = (regaddr & ~(0x3 << 13));/* Clr [14:13] to write data in reg */
+	/* Config control bits [15:13] of रेजिस्टर */
+	buf = (regaddr & ~(0x3 << 13));/* Clr [14:13] to ग_लिखो data in reg */
 	buf |= 0x8000; /* Set [15] to Packet transmit */
 
-	ret = __phy_write(phydev, LAN88XX_EXT_PAGE_TR_CR, buf);
-	if (ret < 0) {
+	ret = __phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_TR_CR, buf);
+	अगर (ret < 0) अणु
 		phydev_warn(phydev, "Failed to write data in reg\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	usleep_range(1000, 2000);/* Wait for Data to be written */
-	val = __phy_read(phydev, LAN88XX_EXT_PAGE_TR_CR);
-	if (!(val & 0x8000))
+	usleep_range(1000, 2000);/* Wait क्रम Data to be written */
+	val = __phy_पढ़ो(phydev, LAN88XX_EXT_PAGE_TR_CR);
+	अगर (!(val & 0x8000))
 		phydev_warn(phydev, "TR Register[0x%X] configuration failed\n",
 			    regaddr);
 err:
-	return phy_restore_page(phydev, save_page, ret);
-}
+	वापस phy_restore_page(phydev, save_page, ret);
+पूर्ण
 
-static void lan88xx_config_TR_regs(struct phy_device *phydev)
-{
-	int err;
+अटल व्योम lan88xx_config_TR_regs(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
 	/* Get access to Channel 0x1, Node 0xF , Register 0x01.
-	 * Write 24-bit value 0x12B00A to register. Setting MrvlTrFix1000Kf,
+	 * Write 24-bit value 0x12B00A to रेजिस्टर. Setting MrvlTrFix1000Kf,
 	 * MrvlTrFix1000Kp, MasterEnableTR bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x0F82, 0x12B00A);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x0F82]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x06.
-	 * Write 24-bit value 0xD2C46F to register. Setting SSTrKf1000Slv,
+	 * Write 24-bit value 0xD2C46F to रेजिस्टर. Setting SSTrKf1000Slv,
 	 * SSTrKp1000Mas bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x168C, 0xD2C46F);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x168C]\n");
 
 	/* Get access to Channel b'10, Node b'1111, Register 0x11.
-	 * Write 24-bit value 0x620 to register. Setting rem_upd_done_thresh
+	 * Write 24-bit value 0x620 to रेजिस्टर. Setting rem_upd_करोne_thresh
 	 * bits
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x17A2, 0x620);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x17A2]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x10.
-	 * Write 24-bit value 0xEEFFDD to register. Setting
+	 * Write 24-bit value 0xEEFFDD to रेजिस्टर. Setting
 	 * eee_TrKp1Long_1000, eee_TrKp2Long_1000, eee_TrKp3Long_1000,
 	 * eee_TrKp1Short_1000,eee_TrKp2Short_1000, eee_TrKp3Short_1000 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x16A0, 0xEEFFDD);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x16A0]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x13.
-	 * Write 24-bit value 0x071448 to register. Setting
-	 * slv_lpi_tr_tmr_val1, slv_lpi_tr_tmr_val2 bits.
+	 * Write 24-bit value 0x071448 to रेजिस्टर. Setting
+	 * slv_lpi_tr_पंचांगr_val1, slv_lpi_tr_पंचांगr_val2 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x16A6, 0x071448);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x16A6]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x12.
-	 * Write 24-bit value 0x13132F to register. Setting
-	 * slv_sigdet_timer_val1, slv_sigdet_timer_val2 bits.
+	 * Write 24-bit value 0x13132F to रेजिस्टर. Setting
+	 * slv_sigdet_समयr_val1, slv_sigdet_समयr_val2 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x16A4, 0x13132F);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x16A4]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x14.
-	 * Write 24-bit value 0x0 to register. Setting eee_3level_delay,
-	 * eee_TrKf_freeze_delay bits.
+	 * Write 24-bit value 0x0 to रेजिस्टर. Setting eee_3level_delay,
+	 * eee_TrKf_मुक्तze_delay bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x16A8, 0x0);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x16A8]\n");
 
 	/* Get access to Channel b'01, Node b'1111, Register 0x34.
-	 * Write 24-bit value 0x91B06C to register. Setting
+	 * Write 24-bit value 0x91B06C to रेजिस्टर. Setting
 	 * FastMseSearchThreshLong1000, FastMseSearchThreshShort1000,
 	 * FastMseSearchUpdGain1000 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x0FE8, 0x91B06C);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x0FE8]\n");
 
 	/* Get access to Channel b'01, Node b'1111, Register 0x3E.
-	 * Write 24-bit value 0xC0A028 to register. Setting
+	 * Write 24-bit value 0xC0A028 to रेजिस्टर. Setting
 	 * FastMseKp2ThreshLong1000, FastMseKp2ThreshShort1000,
 	 * FastMseKp2UpdGain1000, FastMseKp2ExitEn1000 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x0FFC, 0xC0A028);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x0FFC]\n");
 
 	/* Get access to Channel b'01, Node b'1111, Register 0x35.
-	 * Write 24-bit value 0x041600 to register. Setting
+	 * Write 24-bit value 0x041600 to रेजिस्टर. Setting
 	 * FastMseSearchPhShNum1000, FastMseSearchClksPerPh1000,
 	 * FastMsePhChangeDelay1000 bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x0FEA, 0x041600);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x0FEA]\n");
 
 	/* Get access to Channel b'10, Node b'1101, Register 0x03.
-	 * Write 24-bit value 0x000004 to register. Setting TrFreeze bits.
+	 * Write 24-bit value 0x000004 to रेजिस्टर. Setting TrFreeze bits.
 	 */
 	err = lan88xx_TR_reg_set(phydev, 0x1686, 0x000004);
-	if (err < 0)
+	अगर (err < 0)
 		phydev_warn(phydev, "Failed to Set Register[0x1686]\n");
-}
+पूर्ण
 
-static int lan88xx_probe(struct phy_device *phydev)
-{
-	struct device *dev = &phydev->mdio.dev;
-	struct lan88xx_priv *priv;
+अटल पूर्णांक lan88xx_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	काष्ठा lan88xx_priv *priv;
 	u32 led_modes[4];
-	int len;
+	पूर्णांक len;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->wolopts = 0;
 
-	len = of_property_read_variable_u32_array(dev->of_node,
+	len = of_property_पढ़ो_variable_u32_array(dev->of_node,
 						  "microchip,led-modes",
 						  led_modes,
 						  0,
 						  ARRAY_SIZE(led_modes));
-	if (len >= 0) {
+	अगर (len >= 0) अणु
 		u32 reg = 0;
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < len; i++) {
-			if (led_modes[i] > 15)
-				return -EINVAL;
+		क्रम (i = 0; i < len; i++) अणु
+			अगर (led_modes[i] > 15)
+				वापस -EINVAL;
 			reg |= led_modes[i] << (i * 4);
-		}
-		for (; i < ARRAY_SIZE(led_modes); i++)
+		पूर्ण
+		क्रम (; i < ARRAY_SIZE(led_modes); i++)
 			reg |= LAN78XX_FORCE_LED_OFF << (i * 4);
-		(void)phy_write(phydev, LAN78XX_PHY_LED_MODE_SELECT, reg);
-	} else if (len == -EOVERFLOW) {
-		return -EINVAL;
-	}
+		(व्योम)phy_ग_लिखो(phydev, LAN78XX_PHY_LED_MODE_SELECT, reg);
+	पूर्ण अन्यथा अगर (len == -EOVERFLOW) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	/* these values can be used to identify internal PHY */
-	priv->chip_id = phy_read_mmd(phydev, 3, LAN88XX_MMD3_CHIP_ID);
-	priv->chip_rev = phy_read_mmd(phydev, 3, LAN88XX_MMD3_CHIP_REV);
+	/* these values can be used to identअगरy पूर्णांकernal PHY */
+	priv->chip_id = phy_पढ़ो_mmd(phydev, 3, LAN88XX_MMD3_CHIP_ID);
+	priv->chip_rev = phy_पढ़ो_mmd(phydev, 3, LAN88XX_MMD3_CHIP_REV);
 
 	phydev->priv = priv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lan88xx_remove(struct phy_device *phydev)
-{
-	struct device *dev = &phydev->mdio.dev;
-	struct lan88xx_priv *priv = phydev->priv;
+अटल व्योम lan88xx_हटाओ(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा device *dev = &phydev->mdio.dev;
+	काष्ठा lan88xx_priv *priv = phydev->priv;
 
-	if (priv)
-		devm_kfree(dev, priv);
-}
+	अगर (priv)
+		devm_kमुक्त(dev, priv);
+पूर्ण
 
-static int lan88xx_set_wol(struct phy_device *phydev,
-			   struct ethtool_wolinfo *wol)
-{
-	struct lan88xx_priv *priv = phydev->priv;
+अटल पूर्णांक lan88xx_set_wol(काष्ठा phy_device *phydev,
+			   काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा lan88xx_priv *priv = phydev->priv;
 
 	priv->wolopts = wol->wolopts;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lan88xx_set_mdix(struct phy_device *phydev)
-{
-	int buf;
-	int val;
+अटल व्योम lan88xx_set_mdix(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक buf;
+	पूर्णांक val;
 
-	switch (phydev->mdix_ctrl) {
-	case ETH_TP_MDI:
+	चयन (phydev->mdix_ctrl) अणु
+	हाल ETH_TP_MDI:
 		val = LAN88XX_EXT_MODE_CTRL_MDI_;
-		break;
-	case ETH_TP_MDI_X:
+		अवरोध;
+	हाल ETH_TP_MDI_X:
 		val = LAN88XX_EXT_MODE_CTRL_MDI_X_;
-		break;
-	case ETH_TP_MDI_AUTO:
+		अवरोध;
+	हाल ETH_TP_MDI_AUTO:
 		val = LAN88XX_EXT_MODE_CTRL_AUTO_MDIX_;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
-	phy_write(phydev, LAN88XX_EXT_PAGE_ACCESS, LAN88XX_EXT_PAGE_SPACE_1);
-	buf = phy_read(phydev, LAN88XX_EXT_MODE_CTRL);
+	phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_ACCESS, LAN88XX_EXT_PAGE_SPACE_1);
+	buf = phy_पढ़ो(phydev, LAN88XX_EXT_MODE_CTRL);
 	buf &= ~LAN88XX_EXT_MODE_CTRL_MDIX_MASK_;
 	buf |= val;
-	phy_write(phydev, LAN88XX_EXT_MODE_CTRL, buf);
-	phy_write(phydev, LAN88XX_EXT_PAGE_ACCESS, LAN88XX_EXT_PAGE_SPACE_0);
-}
+	phy_ग_लिखो(phydev, LAN88XX_EXT_MODE_CTRL, buf);
+	phy_ग_लिखो(phydev, LAN88XX_EXT_PAGE_ACCESS, LAN88XX_EXT_PAGE_SPACE_0);
+पूर्ण
 
-static int lan88xx_config_init(struct phy_device *phydev)
-{
-	int val;
+अटल पूर्णांक lan88xx_config_init(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक val;
 
 	/*Zerodetect delay enable */
-	val = phy_read_mmd(phydev, MDIO_MMD_PCS,
+	val = phy_पढ़ो_mmd(phydev, MDIO_MMD_PCS,
 			   PHY_ARDENNES_MMD_DEV_3_PHY_CFG);
 	val |= PHY_ARDENNES_MMD_DEV_3_PHY_CFG_ZD_DLY_EN_;
 
-	phy_write_mmd(phydev, MDIO_MMD_PCS, PHY_ARDENNES_MMD_DEV_3_PHY_CFG,
+	phy_ग_लिखो_mmd(phydev, MDIO_MMD_PCS, PHY_ARDENNES_MMD_DEV_3_PHY_CFG,
 		      val);
 
-	/* Config DSP registers */
+	/* Config DSP रेजिस्टरs */
 	lan88xx_config_TR_regs(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lan88xx_config_aneg(struct phy_device *phydev)
-{
+अटल पूर्णांक lan88xx_config_aneg(काष्ठा phy_device *phydev)
+अणु
 	lan88xx_set_mdix(phydev);
 
-	return genphy_config_aneg(phydev);
-}
+	वापस genphy_config_aneg(phydev);
+पूर्ण
 
-static struct phy_driver microchip_phy_driver[] = {
-{
+अटल काष्ठा phy_driver microchip_phy_driver[] = अणु
+अणु
 	.phy_id		= 0x0007c130,
 	.phy_id_mask	= 0xfffffff0,
 	.name		= "Microchip LAN88xx",
@@ -351,27 +352,27 @@ static struct phy_driver microchip_phy_driver[] = {
 	/* PHY_GBIT_FEATURES */
 
 	.probe		= lan88xx_probe,
-	.remove		= lan88xx_remove,
+	.हटाओ		= lan88xx_हटाओ,
 
 	.config_init	= lan88xx_config_init,
 	.config_aneg	= lan88xx_config_aneg,
 
-	.config_intr	= lan88xx_phy_config_intr,
-	.handle_interrupt = lan88xx_handle_interrupt,
+	.config_पूर्णांकr	= lan88xx_phy_config_पूर्णांकr,
+	.handle_पूर्णांकerrupt = lan88xx_handle_पूर्णांकerrupt,
 
 	.suspend	= lan88xx_suspend,
 	.resume		= genphy_resume,
 	.set_wol	= lan88xx_set_wol,
-	.read_page	= lan88xx_read_page,
-	.write_page	= lan88xx_write_page,
-} };
+	.पढ़ो_page	= lan88xx_पढ़ो_page,
+	.ग_लिखो_page	= lan88xx_ग_लिखो_page,
+पूर्ण पूर्ण;
 
 module_phy_driver(microchip_phy_driver);
 
-static struct mdio_device_id __maybe_unused microchip_tbl[] = {
-	{ 0x0007c130, 0xfffffff0 },
-	{ }
-};
+अटल काष्ठा mdio_device_id __maybe_unused microchip_tbl[] = अणु
+	अणु 0x0007c130, 0xfffffff0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(mdio, microchip_tbl);
 

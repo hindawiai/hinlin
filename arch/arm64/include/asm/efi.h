@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_EFI_H
-#define _ASM_EFI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_EFI_H
+#घोषणा _ASM_EFI_H
 
-#include <asm/boot.h>
-#include <asm/cpufeature.h>
-#include <asm/fpsimd.h>
-#include <asm/io.h>
-#include <asm/memory.h>
-#include <asm/mmu_context.h>
-#include <asm/neon.h>
-#include <asm/ptrace.h>
-#include <asm/tlbflush.h>
+#समावेश <यंत्र/boot.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/fpsimd.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#ifdef CONFIG_EFI
-extern void efi_init(void);
-#else
-#define efi_init()
-#endif
+#अगर_घोषित CONFIG_EFI
+बाह्य व्योम efi_init(व्योम);
+#अन्यथा
+#घोषणा efi_init()
+#पूर्ण_अगर
 
-int efi_create_mapping(struct mm_struct *mm, efi_memory_desc_t *md);
-int efi_set_mapping_permissions(struct mm_struct *mm, efi_memory_desc_t *md);
+पूर्णांक efi_create_mapping(काष्ठा mm_काष्ठा *mm, efi_memory_desc_t *md);
+पूर्णांक efi_set_mapping_permissions(काष्ठा mm_काष्ठा *mm, efi_memory_desc_t *md);
 
-#define arch_efi_call_virt_setup()					\
-({									\
-	efi_virtmap_load();						\
+#घोषणा arch_efi_call_virt_setup()					\
+(अणु									\
+	efi_virपंचांगap_load();						\
 	__efi_fpsimd_begin();						\
-})
+पूर्ण)
 
-#define arch_efi_call_virt(p, f, args...)				\
-({									\
+#घोषणा arch_efi_call_virt(p, f, args...)				\
+(अणु									\
 	efi_##f##_t *__f;						\
 	__f = p->f;							\
-	__efi_rt_asm_wrapper(__f, #f, args);				\
-})
+	__efi_rt_यंत्र_wrapper(__f, #f, args);				\
+पूर्ण)
 
-#define arch_efi_call_virt_teardown()					\
-({									\
+#घोषणा arch_efi_call_virt_tearकरोwn()					\
+(अणु									\
 	__efi_fpsimd_end();						\
-	efi_virtmap_unload();						\
-})
+	efi_virपंचांगap_unload();						\
+पूर्ण)
 
-efi_status_t __efi_rt_asm_wrapper(void *, const char *, ...);
+efi_status_t __efi_rt_यंत्र_wrapper(व्योम *, स्थिर अक्षर *, ...);
 
-#define ARCH_EFI_IRQ_FLAGS_MASK (PSR_D_BIT | PSR_A_BIT | PSR_I_BIT | PSR_F_BIT)
+#घोषणा ARCH_EFI_IRQ_FLAGS_MASK (PSR_D_BIT | PSR_A_BIT | PSR_I_BIT | PSR_F_BIT)
 
 /*
- * Even when Linux uses IRQ priorities for IRQ disabling, EFI does not.
+ * Even when Linux uses IRQ priorities क्रम IRQ disabling, EFI करोes not.
  * And EFI shouldn't really play around with priority masking as it is not aware
- * which priorities the OS has assigned to its interrupts.
+ * which priorities the OS has asचिन्हित to its पूर्णांकerrupts.
  */
-#define arch_efi_save_flags(state_flags)		\
-	((void)((state_flags) = read_sysreg(daif)))
+#घोषणा arch_efi_save_flags(state_flags)		\
+	((व्योम)((state_flags) = पढ़ो_sysreg(daअगर)))
 
-#define arch_efi_restore_flags(state_flags)	write_sysreg(state_flags, daif)
+#घोषणा arch_efi_restore_flags(state_flags)	ग_लिखो_sysreg(state_flags, daअगर)
 
 
-/* arch specific definitions used by the stub code */
+/* arch specअगरic definitions used by the stub code */
 
 /*
- * In some configurations (e.g. VMAP_STACK && 64K pages), stacks built into the
+ * In some configurations (e.g. VMAP_STACK && 64K pages), stacks built पूर्णांकo the
  * kernel need greater alignment than we require the segments to be padded to.
  */
-#define EFI_KIMG_ALIGN	\
+#घोषणा EFI_KIMG_ALIGN	\
 	(SEGMENT_ALIGN > THREAD_ALIGN ? SEGMENT_ALIGN : THREAD_ALIGN)
 
 /*
@@ -71,73 +72,73 @@ efi_status_t __efi_rt_asm_wrapper(void *, const char *, ...);
  *
  * Since the EFI stub is part of the kernel Image, we can relax the
  * usual requirements in Documentation/arm64/booting.rst, which still
- * apply to other bootloaders, and are required for some kernel
+ * apply to other bootloaders, and are required क्रम some kernel
  * configurations.
  */
-static inline unsigned long efi_get_max_initrd_addr(unsigned long image_addr)
-{
-	return (image_addr & ~(SZ_1G - 1UL)) + (1UL << (VA_BITS_MIN - 1));
-}
+अटल अंतरभूत अचिन्हित दीर्घ efi_get_max_initrd_addr(अचिन्हित दीर्घ image_addr)
+अणु
+	वापस (image_addr & ~(SZ_1G - 1UL)) + (1UL << (VA_BITS_MIN - 1));
+पूर्ण
 
-#define alloc_screen_info(x...)		&screen_info
+#घोषणा alloc_screen_info(x...)		&screen_info
 
-static inline void free_screen_info(struct screen_info *si)
-{
-}
+अटल अंतरभूत व्योम मुक्त_screen_info(काष्ठा screen_info *si)
+अणु
+पूर्ण
 
-static inline void efifb_setup_from_dmi(struct screen_info *si, const char *opt)
-{
-}
+अटल अंतरभूत व्योम efअगरb_setup_from_dmi(काष्ठा screen_info *si, स्थिर अक्षर *opt)
+अणु
+पूर्ण
 
-#define EFI_ALLOC_ALIGN		SZ_64K
+#घोषणा EFI_ALLOC_ALIGN		SZ_64K
 
 /*
- * On ARM systems, virtually remapped UEFI runtime services are set up in two
+ * On ARM प्रणालीs, भवly remapped UEFI runसमय services are set up in two
  * distinct stages:
  * - The stub retrieves the final version of the memory map from UEFI, populates
- *   the virt_addr fields and calls the SetVirtualAddressMap() [SVAM] runtime
+ *   the virt_addr fields and calls the SetVirtualAddressMap() [SVAM] runसमय
  *   service to communicate the new mapping to the firmware (Note that the new
- *   mapping is not live at this time)
- * - During an early initcall(), the EFI system table is permanently remapped
- *   and the virtual remapping of the UEFI Runtime Services regions is loaded
- *   into a private set of page tables. If this all succeeds, the Runtime
+ *   mapping is not live at this समय)
+ * - During an early initcall(), the EFI प्रणाली table is permanently remapped
+ *   and the भव remapping of the UEFI Runसमय Services regions is loaded
+ *   पूर्णांकo a निजी set of page tables. If this all succeeds, the Runसमय
  *   Services are enabled and the EFI_RUNTIME_SERVICES bit set.
  */
 
-static inline void efi_set_pgd(struct mm_struct *mm)
-{
-	__switch_mm(mm);
+अटल अंतरभूत व्योम efi_set_pgd(काष्ठा mm_काष्ठा *mm)
+अणु
+	__चयन_mm(mm);
 
-	if (system_uses_ttbr0_pan()) {
-		if (mm != current->active_mm) {
+	अगर (प्रणाली_uses_ttbr0_pan()) अणु
+		अगर (mm != current->active_mm) अणु
 			/*
-			 * Update the current thread's saved ttbr0 since it is
-			 * restored as part of a return from exception. Enable
+			 * Update the current thपढ़ो's saved ttbr0 since it is
+			 * restored as part of a वापस from exception. Enable
 			 * access to the valid TTBR0_EL1 and invoke the errata
-			 * workaround directly since there is no return from
-			 * exception when invoking the EFI run-time services.
+			 * workaround directly since there is no वापस from
+			 * exception when invoking the EFI run-समय services.
 			 */
 			update_saved_ttbr0(current, mm);
 			uaccess_ttbr0_enable();
 			post_ttbr_update_workaround();
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * Defer the switch to the current thread's TTBR0_EL1
+			 * Defer the चयन to the current thपढ़ो's TTBR0_EL1
 			 * until uaccess_enable(). Restore the current
-			 * thread's saved ttbr0 corresponding to its active_mm
+			 * thपढ़ो's saved ttbr0 corresponding to its active_mm
 			 */
 			uaccess_ttbr0_disable();
 			update_saved_ttbr0(current, current->active_mm);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void efi_virtmap_load(void);
-void efi_virtmap_unload(void);
+व्योम efi_virपंचांगap_load(व्योम);
+व्योम efi_virपंचांगap_unload(व्योम);
 
-static inline void efi_capsule_flush_cache_range(void *addr, int size)
-{
+अटल अंतरभूत व्योम efi_capsule_flush_cache_range(व्योम *addr, पूर्णांक size)
+अणु
 	__flush_dcache_area(addr, size);
-}
+पूर्ण
 
-#endif /* _ASM_EFI_H */
+#पूर्ण_अगर /* _ASM_EFI_H */

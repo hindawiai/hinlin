@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * This file is part of wl1271
  *
@@ -7,323 +8,323 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/platform_device.h>
-#include <linux/mmc/sdio.h>
-#include <linux/mmc/sdio_func.h>
-#include <linux/mmc/sdio_ids.h>
-#include <linux/mmc/card.h>
-#include <linux/mmc/host.h>
-#include <linux/gpio.h>
-#include <linux/pm_runtime.h>
-#include <linux/printk.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mmc/sdपन.स>
+#समावेश <linux/mmc/sdio_func.h>
+#समावेश <linux/mmc/sdio_ids.h>
+#समावेश <linux/mmc/card.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
 
-#include "wlcore.h"
-#include "wl12xx_80211.h"
-#include "io.h"
+#समावेश "wlcore.h"
+#समावेश "wl12xx_80211.h"
+#समावेश "io.h"
 
-static bool dump = false;
+अटल bool dump = false;
 
-struct wl12xx_sdio_glue {
-	struct device *dev;
-	struct platform_device *core;
-};
+काष्ठा wl12xx_sdio_glue अणु
+	काष्ठा device *dev;
+	काष्ठा platक्रमm_device *core;
+पूर्ण;
 
-static const struct sdio_device_id wl1271_devices[] = {
-	{ SDIO_DEVICE(SDIO_VENDOR_ID_TI, SDIO_DEVICE_ID_TI_WL1271) },
-	{}
-};
+अटल स्थिर काष्ठा sdio_device_id wl1271_devices[] = अणु
+	अणु SDIO_DEVICE(SDIO_VENDOR_ID_TI, SDIO_DEVICE_ID_TI_WL1271) पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(sdio, wl1271_devices);
 
-static void wl1271_sdio_set_block_size(struct device *child,
-				       unsigned int blksz)
-{
-	struct wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
-	struct sdio_func *func = dev_to_sdio_func(glue->dev);
+अटल व्योम wl1271_sdio_set_block_size(काष्ठा device *child,
+				       अचिन्हित पूर्णांक blksz)
+अणु
+	काष्ठा wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
+	काष्ठा sdio_func *func = dev_to_sdio_func(glue->dev);
 
 	sdio_claim_host(func);
 	sdio_set_block_size(func, blksz);
 	sdio_release_host(func);
-}
+पूर्ण
 
-static int __must_check wl12xx_sdio_raw_read(struct device *child, int addr,
-					     void *buf, size_t len, bool fixed)
-{
-	int ret;
-	struct wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
-	struct sdio_func *func = dev_to_sdio_func(glue->dev);
+अटल पूर्णांक __must_check wl12xx_sdio_raw_पढ़ो(काष्ठा device *child, पूर्णांक addr,
+					     व्योम *buf, माप_प्रकार len, bool fixed)
+अणु
+	पूर्णांक ret;
+	काष्ठा wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
+	काष्ठा sdio_func *func = dev_to_sdio_func(glue->dev);
 
 	sdio_claim_host(func);
 
-	if (unlikely(addr == HW_ACCESS_ELP_CTRL_REG)) {
-		((u8 *)buf)[0] = sdio_f0_readb(func, addr, &ret);
+	अगर (unlikely(addr == HW_ACCESS_ELP_CTRL_REG)) अणु
+		((u8 *)buf)[0] = sdio_f0_पढ़ोb(func, addr, &ret);
 		dev_dbg(child->parent, "sdio read 52 addr 0x%x, byte 0x%02x\n",
 			addr, ((u8 *)buf)[0]);
-	} else {
-		if (fixed)
-			ret = sdio_readsb(func, buf, addr, len);
-		else
-			ret = sdio_memcpy_fromio(func, buf, addr, len);
+	पूर्ण अन्यथा अणु
+		अगर (fixed)
+			ret = sdio_पढ़ोsb(func, buf, addr, len);
+		अन्यथा
+			ret = sdio_स_नकल_fromio(func, buf, addr, len);
 
 		dev_dbg(child->parent, "sdio read 53 addr 0x%x, %zu bytes\n",
 			addr, len);
-	}
+	पूर्ण
 
 	sdio_release_host(func);
 
-	if (WARN_ON(ret))
+	अगर (WARN_ON(ret))
 		dev_err(child->parent, "sdio read failed (%d)\n", ret);
 
-	if (unlikely(dump)) {
-		printk(KERN_DEBUG "wlcore_sdio: READ from 0x%04x\n", addr);
-		print_hex_dump(KERN_DEBUG, "wlcore_sdio: READ ",
+	अगर (unlikely(dump)) अणु
+		prपूर्णांकk(KERN_DEBUG "wlcore_sdio: READ from 0x%04x\n", addr);
+		prपूर्णांक_hex_dump(KERN_DEBUG, "wlcore_sdio: READ ",
 			       DUMP_PREFIX_OFFSET, 16, 1,
 			       buf, len, false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __must_check wl12xx_sdio_raw_write(struct device *child, int addr,
-					      void *buf, size_t len, bool fixed)
-{
-	int ret;
-	struct wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
-	struct sdio_func *func = dev_to_sdio_func(glue->dev);
+अटल पूर्णांक __must_check wl12xx_sdio_raw_ग_लिखो(काष्ठा device *child, पूर्णांक addr,
+					      व्योम *buf, माप_प्रकार len, bool fixed)
+अणु
+	पूर्णांक ret;
+	काष्ठा wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
+	काष्ठा sdio_func *func = dev_to_sdio_func(glue->dev);
 
 	sdio_claim_host(func);
 
-	if (unlikely(dump)) {
-		printk(KERN_DEBUG "wlcore_sdio: WRITE to 0x%04x\n", addr);
-		print_hex_dump(KERN_DEBUG, "wlcore_sdio: WRITE ",
+	अगर (unlikely(dump)) अणु
+		prपूर्णांकk(KERN_DEBUG "wlcore_sdio: WRITE to 0x%04x\n", addr);
+		prपूर्णांक_hex_dump(KERN_DEBUG, "wlcore_sdio: WRITE ",
 				DUMP_PREFIX_OFFSET, 16, 1,
 				buf, len, false);
-	}
+	पूर्ण
 
-	if (unlikely(addr == HW_ACCESS_ELP_CTRL_REG)) {
-		sdio_f0_writeb(func, ((u8 *)buf)[0], addr, &ret);
+	अगर (unlikely(addr == HW_ACCESS_ELP_CTRL_REG)) अणु
+		sdio_f0_ग_लिखोb(func, ((u8 *)buf)[0], addr, &ret);
 		dev_dbg(child->parent, "sdio write 52 addr 0x%x, byte 0x%02x\n",
 			addr, ((u8 *)buf)[0]);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(child->parent, "sdio write 53 addr 0x%x, %zu bytes\n",
 			addr, len);
 
-		if (fixed)
-			ret = sdio_writesb(func, addr, buf, len);
-		else
-			ret = sdio_memcpy_toio(func, addr, buf, len);
-	}
+		अगर (fixed)
+			ret = sdio_ग_लिखोsb(func, addr, buf, len);
+		अन्यथा
+			ret = sdio_स_नकल_toio(func, addr, buf, len);
+	पूर्ण
 
 	sdio_release_host(func);
 
-	if (WARN_ON(ret))
+	अगर (WARN_ON(ret))
 		dev_err(child->parent, "sdio write failed (%d)\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl12xx_sdio_power_on(struct wl12xx_sdio_glue *glue)
-{
-	int ret;
-	struct sdio_func *func = dev_to_sdio_func(glue->dev);
-	struct mmc_card *card = func->card;
+अटल पूर्णांक wl12xx_sdio_घातer_on(काष्ठा wl12xx_sdio_glue *glue)
+अणु
+	पूर्णांक ret;
+	काष्ठा sdio_func *func = dev_to_sdio_func(glue->dev);
+	काष्ठा mmc_card *card = func->card;
 
-	ret = pm_runtime_get_sync(&card->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&card->dev);
+	ret = pm_runसमय_get_sync(&card->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(&card->dev);
 		dev_err(glue->dev, "%s: failed to get_sync(%d)\n",
 			__func__, ret);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	sdio_claim_host(func);
 	/*
-	 * To guarantee that the SDIO card is power cycled, as required to make
-	 * the FW programming to succeed, let's do a brute force HW reset.
+	 * To guarantee that the SDIO card is घातer cycled, as required to make
+	 * the FW programming to succeed, let's करो a brute क्रमce HW reset.
 	 */
 	mmc_hw_reset(card->host);
 
 	sdio_enable_func(func);
 	sdio_release_host(func);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl12xx_sdio_power_off(struct wl12xx_sdio_glue *glue)
-{
-	struct sdio_func *func = dev_to_sdio_func(glue->dev);
-	struct mmc_card *card = func->card;
+अटल पूर्णांक wl12xx_sdio_घातer_off(काष्ठा wl12xx_sdio_glue *glue)
+अणु
+	काष्ठा sdio_func *func = dev_to_sdio_func(glue->dev);
+	काष्ठा mmc_card *card = func->card;
 
 	sdio_claim_host(func);
 	sdio_disable_func(func);
 	sdio_release_host(func);
 
-	/* Let runtime PM know the card is powered off */
-	pm_runtime_put(&card->dev);
-	return 0;
-}
+	/* Let runसमय PM know the card is घातered off */
+	pm_runसमय_put(&card->dev);
+	वापस 0;
+पूर्ण
 
-static int wl12xx_sdio_set_power(struct device *child, bool enable)
-{
-	struct wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
+अटल पूर्णांक wl12xx_sdio_set_घातer(काष्ठा device *child, bool enable)
+अणु
+	काष्ठा wl12xx_sdio_glue *glue = dev_get_drvdata(child->parent);
 
-	if (enable)
-		return wl12xx_sdio_power_on(glue);
-	else
-		return wl12xx_sdio_power_off(glue);
-}
+	अगर (enable)
+		वापस wl12xx_sdio_घातer_on(glue);
+	अन्यथा
+		वापस wl12xx_sdio_घातer_off(glue);
+पूर्ण
 
-static struct wl1271_if_operations sdio_ops = {
-	.read		= wl12xx_sdio_raw_read,
-	.write		= wl12xx_sdio_raw_write,
-	.power		= wl12xx_sdio_set_power,
+अटल काष्ठा wl1271_अगर_operations sdio_ops = अणु
+	.पढ़ो		= wl12xx_sdio_raw_पढ़ो,
+	.ग_लिखो		= wl12xx_sdio_raw_ग_लिखो,
+	.घातer		= wl12xx_sdio_set_घातer,
 	.set_block_size = wl1271_sdio_set_block_size,
-};
+पूर्ण;
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 
-static const struct wilink_family_data wl127x_data = {
+अटल स्थिर काष्ठा wilink_family_data wl127x_data = अणु
 	.name = "wl127x",
 	.nvs_name = "ti-connectivity/wl127x-nvs.bin",
-};
+पूर्ण;
 
-static const struct wilink_family_data wl128x_data = {
+अटल स्थिर काष्ठा wilink_family_data wl128x_data = अणु
 	.name = "wl128x",
 	.nvs_name = "ti-connectivity/wl128x-nvs.bin",
-};
+पूर्ण;
 
-static const struct wilink_family_data wl18xx_data = {
+अटल स्थिर काष्ठा wilink_family_data wl18xx_data = अणु
 	.name = "wl18xx",
 	.cfg_name = "ti-connectivity/wl18xx-conf.bin",
 	.nvs_name = "ti-connectivity/wl1271-nvs.bin",
-};
+पूर्ण;
 
-static const struct of_device_id wlcore_sdio_of_match_table[] = {
-	{ .compatible = "ti,wl1271", .data = &wl127x_data },
-	{ .compatible = "ti,wl1273", .data = &wl127x_data },
-	{ .compatible = "ti,wl1281", .data = &wl128x_data },
-	{ .compatible = "ti,wl1283", .data = &wl128x_data },
-	{ .compatible = "ti,wl1285", .data = &wl128x_data },
-	{ .compatible = "ti,wl1801", .data = &wl18xx_data },
-	{ .compatible = "ti,wl1805", .data = &wl18xx_data },
-	{ .compatible = "ti,wl1807", .data = &wl18xx_data },
-	{ .compatible = "ti,wl1831", .data = &wl18xx_data },
-	{ .compatible = "ti,wl1835", .data = &wl18xx_data },
-	{ .compatible = "ti,wl1837", .data = &wl18xx_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id wlcore_sdio_of_match_table[] = अणु
+	अणु .compatible = "ti,wl1271", .data = &wl127x_data पूर्ण,
+	अणु .compatible = "ti,wl1273", .data = &wl127x_data पूर्ण,
+	अणु .compatible = "ti,wl1281", .data = &wl128x_data पूर्ण,
+	अणु .compatible = "ti,wl1283", .data = &wl128x_data पूर्ण,
+	अणु .compatible = "ti,wl1285", .data = &wl128x_data पूर्ण,
+	अणु .compatible = "ti,wl1801", .data = &wl18xx_data पूर्ण,
+	अणु .compatible = "ti,wl1805", .data = &wl18xx_data पूर्ण,
+	अणु .compatible = "ti,wl1807", .data = &wl18xx_data पूर्ण,
+	अणु .compatible = "ti,wl1831", .data = &wl18xx_data पूर्ण,
+	अणु .compatible = "ti,wl1835", .data = &wl18xx_data पूर्ण,
+	अणु .compatible = "ti,wl1837", .data = &wl18xx_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int wlcore_probe_of(struct device *dev, int *irq, int *wakeirq,
-			   struct wlcore_platdev_data *pdev_data)
-{
-	struct device_node *np = dev->of_node;
-	const struct of_device_id *of_id;
+अटल पूर्णांक wlcore_probe_of(काष्ठा device *dev, पूर्णांक *irq, पूर्णांक *wakeirq,
+			   काष्ठा wlcore_platdev_data *pdev_data)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	स्थिर काष्ठा of_device_id *of_id;
 
 	of_id = of_match_node(wlcore_sdio_of_match_table, np);
-	if (!of_id)
-		return -ENODEV;
+	अगर (!of_id)
+		वापस -ENODEV;
 
 	pdev_data->family = of_id->data;
 
 	*irq = irq_of_parse_and_map(np, 0);
-	if (!*irq) {
+	अगर (!*irq) अणु
 		dev_err(dev, "No irq in platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*wakeirq = irq_of_parse_and_map(np, 1);
 
-	/* optional clock frequency params */
-	of_property_read_u32(np, "ref-clock-frequency",
-			     &pdev_data->ref_clock_freq);
-	of_property_read_u32(np, "tcxo-clock-frequency",
-			     &pdev_data->tcxo_clock_freq);
+	/* optional घड़ी frequency params */
+	of_property_पढ़ो_u32(np, "ref-clock-frequency",
+			     &pdev_data->ref_घड़ी_freq);
+	of_property_पढ़ो_u32(np, "tcxo-clock-frequency",
+			     &pdev_data->tcxo_घड़ी_freq);
 
-	return 0;
-}
-#else
-static int wlcore_probe_of(struct device *dev, int *irq, int *wakeirq,
-			   struct wlcore_platdev_data *pdev_data)
-{
-	return -ENODATA;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक wlcore_probe_of(काष्ठा device *dev, पूर्णांक *irq, पूर्णांक *wakeirq,
+			   काष्ठा wlcore_platdev_data *pdev_data)
+अणु
+	वापस -ENODATA;
+पूर्ण
+#पूर्ण_अगर
 
-static int wl1271_probe(struct sdio_func *func,
-				  const struct sdio_device_id *id)
-{
-	struct wlcore_platdev_data *pdev_data;
-	struct wl12xx_sdio_glue *glue;
-	struct resource res[2];
+अटल पूर्णांक wl1271_probe(काष्ठा sdio_func *func,
+				  स्थिर काष्ठा sdio_device_id *id)
+अणु
+	काष्ठा wlcore_platdev_data *pdev_data;
+	काष्ठा wl12xx_sdio_glue *glue;
+	काष्ठा resource res[2];
 	mmc_pm_flag_t mmcflags;
-	int ret = -ENOMEM;
-	int irq, wakeirq, num_irqs;
-	const char *chip_family;
+	पूर्णांक ret = -ENOMEM;
+	पूर्णांक irq, wakeirq, num_irqs;
+	स्थिर अक्षर *chip_family;
 
 	/* We are only able to handle the wlan function */
-	if (func->num != 0x02)
-		return -ENODEV;
+	अगर (func->num != 0x02)
+		वापस -ENODEV;
 
-	pdev_data = devm_kzalloc(&func->dev, sizeof(*pdev_data), GFP_KERNEL);
-	if (!pdev_data)
-		return -ENOMEM;
+	pdev_data = devm_kzalloc(&func->dev, माप(*pdev_data), GFP_KERNEL);
+	अगर (!pdev_data)
+		वापस -ENOMEM;
 
-	pdev_data->if_ops = &sdio_ops;
+	pdev_data->अगर_ops = &sdio_ops;
 
-	glue = devm_kzalloc(&func->dev, sizeof(*glue), GFP_KERNEL);
-	if (!glue)
-		return -ENOMEM;
+	glue = devm_kzalloc(&func->dev, माप(*glue), GFP_KERNEL);
+	अगर (!glue)
+		वापस -ENOMEM;
 
 	glue->dev = &func->dev;
 
-	/* Grab access to FN0 for ELP reg. */
+	/* Grab access to FN0 क्रम ELP reg. */
 	func->card->quirks |= MMC_QUIRK_LENIENT_FN0;
 
-	/* Use block mode for transferring over one block size of data */
+	/* Use block mode क्रम transferring over one block size of data */
 	func->card->quirks |= MMC_QUIRK_BLKSZ_FOR_BYTE_MODE;
 
 	ret = wlcore_probe_of(&func->dev, &irq, &wakeirq, pdev_data);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	/* if sdio can keep power while host is suspended, enable wow */
+	/* अगर sdio can keep घातer जबतक host is suspended, enable wow */
 	mmcflags = sdio_get_host_pm_caps(func);
 	dev_dbg(glue->dev, "sdio PM caps = 0x%x\n", mmcflags);
 
-	if (mmcflags & MMC_PM_KEEP_POWER)
+	अगर (mmcflags & MMC_PM_KEEP_POWER)
 		pdev_data->pwr_in_suspend = true;
 
 	sdio_set_drvdata(func, glue);
 
-	/* Tell PM core that we don't need the card to be powered now */
-	pm_runtime_put_noidle(&func->dev);
+	/* Tell PM core that we करोn't need the card to be घातered now */
+	pm_runसमय_put_noidle(&func->dev);
 
 	/*
-	 * Due to a hardware bug, we can't differentiate wl18xx from
+	 * Due to a hardware bug, we can't dअगरferentiate wl18xx from
 	 * wl12xx, because both report the same device ID.  The only
-	 * way to differentiate is by checking the SDIO revision,
+	 * way to dअगरferentiate is by checking the SDIO revision,
 	 * which is 3.00 on the wl18xx chips.
 	 */
-	if (func->card->cccr.sdio_vsn == SDIO_SDIO_REV_3_00)
+	अगर (func->card->cccr.sdio_vsn == SDIO_SDIO_REV_3_00)
 		chip_family = "wl18xx";
-	else
+	अन्यथा
 		chip_family = "wl12xx";
 
-	glue->core = platform_device_alloc(chip_family, PLATFORM_DEVID_AUTO);
-	if (!glue->core) {
+	glue->core = platक्रमm_device_alloc(chip_family, PLATFORM_DEVID_AUTO);
+	अगर (!glue->core) अणु
 		dev_err(glue->dev, "can't allocate platform_device");
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	glue->core->dev.parent = &func->dev;
 
-	memset(res, 0x00, sizeof(res));
+	स_रखो(res, 0x00, माप(res));
 
 	res[0].start = irq;
 	res[0].flags = IORESOURCE_IRQ |
@@ -331,130 +332,130 @@ static int wl1271_probe(struct sdio_func *func,
 	res[0].name = "irq";
 
 
-	if (wakeirq > 0) {
+	अगर (wakeirq > 0) अणु
 		res[1].start = wakeirq;
 		res[1].flags = IORESOURCE_IRQ |
 			       irqd_get_trigger_type(irq_get_irq_data(wakeirq));
 		res[1].name = "wakeirq";
 		num_irqs = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		num_irqs = 1;
-	}
-	ret = platform_device_add_resources(glue->core, res, num_irqs);
-	if (ret) {
+	पूर्ण
+	ret = platक्रमm_device_add_resources(glue->core, res, num_irqs);
+	अगर (ret) अणु
 		dev_err(glue->dev, "can't add resources\n");
-		goto out_dev_put;
-	}
+		जाओ out_dev_put;
+	पूर्ण
 
-	ret = platform_device_add_data(glue->core, pdev_data,
-				       sizeof(*pdev_data));
-	if (ret) {
+	ret = platक्रमm_device_add_data(glue->core, pdev_data,
+				       माप(*pdev_data));
+	अगर (ret) अणु
 		dev_err(glue->dev, "can't add platform data\n");
-		goto out_dev_put;
-	}
+		जाओ out_dev_put;
+	पूर्ण
 
-	ret = platform_device_add(glue->core);
-	if (ret) {
+	ret = platक्रमm_device_add(glue->core);
+	अगर (ret) अणु
 		dev_err(glue->dev, "can't add platform device\n");
-		goto out_dev_put;
-	}
-	return 0;
+		जाओ out_dev_put;
+	पूर्ण
+	वापस 0;
 
 out_dev_put:
-	platform_device_put(glue->core);
+	platक्रमm_device_put(glue->core);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void wl1271_remove(struct sdio_func *func)
-{
-	struct wl12xx_sdio_glue *glue = sdio_get_drvdata(func);
+अटल व्योम wl1271_हटाओ(काष्ठा sdio_func *func)
+अणु
+	काष्ठा wl12xx_sdio_glue *glue = sdio_get_drvdata(func);
 
-	/* Undo decrement done above in wl1271_probe */
-	pm_runtime_get_noresume(&func->dev);
+	/* Unकरो decrement करोne above in wl1271_probe */
+	pm_runसमय_get_noresume(&func->dev);
 
-	platform_device_unregister(glue->core);
-}
+	platक्रमm_device_unरेजिस्टर(glue->core);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int wl1271_suspend(struct device *dev)
-{
-	/* Tell MMC/SDIO core it's OK to power down the card
-	 * (if it isn't already), but not to remove it completely */
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct wl12xx_sdio_glue *glue = sdio_get_drvdata(func);
-	struct wl1271 *wl = platform_get_drvdata(glue->core);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक wl1271_suspend(काष्ठा device *dev)
+अणु
+	/* Tell MMC/SDIO core it's OK to घातer करोwn the card
+	 * (अगर it isn't alपढ़ोy), but not to हटाओ it completely */
+	काष्ठा sdio_func *func = dev_to_sdio_func(dev);
+	काष्ठा wl12xx_sdio_glue *glue = sdio_get_drvdata(func);
+	काष्ठा wl1271 *wl = platक्रमm_get_drvdata(glue->core);
 	mmc_pm_flag_t sdio_flags;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!wl) {
+	अगर (!wl) अणु
 		dev_err(dev, "no wilink module was probed\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(dev, "wl1271 suspend. wow_enabled: %d\n",
 		wl->wow_enabled);
 
-	/* check whether sdio should keep power */
-	if (wl->wow_enabled) {
+	/* check whether sdio should keep घातer */
+	अगर (wl->wow_enabled) अणु
 		sdio_flags = sdio_get_host_pm_caps(func);
 
-		if (!(sdio_flags & MMC_PM_KEEP_POWER)) {
+		अगर (!(sdio_flags & MMC_PM_KEEP_POWER)) अणु
 			dev_err(dev, "can't keep power while host "
 				     "is suspended\n");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		/* keep power while host suspended */
+		/* keep घातer जबतक host suspended */
 		ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "error while trying to keep power\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wl1271_resume(struct device *dev)
-{
+अटल पूर्णांक wl1271_resume(काष्ठा device *dev)
+अणु
 	dev_dbg(dev, "wl1271 resume\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops wl1271_sdio_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops wl1271_sdio_pm_ops = अणु
 	.suspend	= wl1271_suspend,
 	.resume		= wl1271_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct sdio_driver wl1271_sdio_driver = {
+अटल काष्ठा sdio_driver wl1271_sdio_driver = अणु
 	.name		= "wl1271_sdio",
 	.id_table	= wl1271_devices,
 	.probe		= wl1271_probe,
-	.remove		= wl1271_remove,
-#ifdef CONFIG_PM
-	.drv = {
+	.हटाओ		= wl1271_हटाओ,
+#अगर_घोषित CONFIG_PM
+	.drv = अणु
 		.pm = &wl1271_sdio_pm_ops,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init wl1271_init(void)
-{
-	return sdio_register_driver(&wl1271_sdio_driver);
-}
+अटल पूर्णांक __init wl1271_init(व्योम)
+अणु
+	वापस sdio_रेजिस्टर_driver(&wl1271_sdio_driver);
+पूर्ण
 
-static void __exit wl1271_exit(void)
-{
-	sdio_unregister_driver(&wl1271_sdio_driver);
-}
+अटल व्योम __निकास wl1271_निकास(व्योम)
+अणु
+	sdio_unरेजिस्टर_driver(&wl1271_sdio_driver);
+पूर्ण
 
 module_init(wl1271_init);
-module_exit(wl1271_exit);
+module_निकास(wl1271_निकास);
 
 module_param(dump, bool, 0600);
 MODULE_PARM_DESC(dump, "Enable sdio read/write dumps.");

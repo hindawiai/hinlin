@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_FUTEX_H
-#define __ASM_SH_FUTEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_FUTEX_H
+#घोषणा __ASM_SH_FUTEX_H
 
-#include <linux/futex.h>
-#include <linux/uaccess.h>
-#include <asm/errno.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/त्रुटिसं.स>
 
-#if !defined(CONFIG_SMP)
-#include <asm/futex-irq.h>
-#elif defined(CONFIG_CPU_J2)
-#include <asm/futex-cas.h>
-#elif defined(CONFIG_CPU_SH4A)
-#include <asm/futex-llsc.h>
-#else
-#error SMP not supported on this configuration.
-#endif
+#अगर !defined(CONFIG_SMP)
+#समावेश <यंत्र/futex-irq.h>
+#या_अगर defined(CONFIG_CPU_J2)
+#समावेश <यंत्र/futex-cas.h>
+#या_अगर defined(CONFIG_CPU_SH4A)
+#समावेश <यंत्र/futex-llsc.h>
+#अन्यथा
+#त्रुटि SMP not supported on this configuration.
+#पूर्ण_अगर
 
-static inline int
+अटल अंतरभूत पूर्णांक
 futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
 			      u32 oldval, u32 newval)
-{
-	if (!access_ok(uaddr, sizeof(u32)))
-		return -EFAULT;
+अणु
+	अगर (!access_ok(uaddr, माप(u32)))
+		वापस -EFAULT;
 
-	return atomic_futex_op_cmpxchg_inatomic(uval, uaddr, oldval, newval);
-}
+	वापस atomic_futex_op_cmpxchg_inatomic(uval, uaddr, oldval, newval);
+पूर्ण
 
-static inline int arch_futex_atomic_op_inuser(int op, u32 oparg, int *oval,
+अटल अंतरभूत पूर्णांक arch_futex_atomic_op_inuser(पूर्णांक op, u32 oparg, पूर्णांक *oval,
 		u32 __user *uaddr)
-{
+अणु
 	u32 oldval, newval, prev;
-	int ret;
+	पूर्णांक ret;
 
-	do {
+	करो अणु
 		ret = get_user(oldval, uaddr);
 
-		if (ret) break;
+		अगर (ret) अवरोध;
 
-		switch (op) {
-		case FUTEX_OP_SET:
+		चयन (op) अणु
+		हाल FUTEX_OP_SET:
 			newval = oparg;
-			break;
-		case FUTEX_OP_ADD:
+			अवरोध;
+		हाल FUTEX_OP_ADD:
 			newval = oldval + oparg;
-			break;
-		case FUTEX_OP_OR:
+			अवरोध;
+		हाल FUTEX_OP_OR:
 			newval = oldval | oparg;
-			break;
-		case FUTEX_OP_ANDN:
+			अवरोध;
+		हाल FUTEX_OP_ANDN:
 			newval = oldval & ~oparg;
-			break;
-		case FUTEX_OP_XOR:
+			अवरोध;
+		हाल FUTEX_OP_XOR:
 			newval = oldval ^ oparg;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -ENOSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret) break;
+		अगर (ret) अवरोध;
 
 		ret = futex_atomic_cmpxchg_inatomic(&prev, uaddr, oldval, newval);
-	} while (!ret && prev != oldval);
+	पूर्ण जबतक (!ret && prev != oldval);
 
-	if (!ret)
+	अगर (!ret)
 		*oval = oldval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* __ASM_SH_FUTEX_H */
+#पूर्ण_अगर /* __ASM_SH_FUTEX_H */

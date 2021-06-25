@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2020 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  *
  * Based on panfrost_devfreq.c:
  *   Copyright 2019 Collabora ltd.
  */
-#include <linux/clk.h>
-#include <linux/devfreq.h>
-#include <linux/devfreq_cooling.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_opp.h>
-#include <linux/property.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/devfreq.h>
+#समावेश <linux/devfreq_cooling.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/property.h>
 
-#include "lima_device.h"
-#include "lima_devfreq.h"
+#समावेश "lima_device.h"
+#समावेश "lima_devfreq.h"
 
-static void lima_devfreq_update_utilization(struct lima_devfreq *devfreq)
-{
-	ktime_t now, last;
+अटल व्योम lima_devfreq_update_utilization(काष्ठा lima_devfreq *devfreq)
+अणु
+	kसमय_प्रकार now, last;
 
-	now = ktime_get();
-	last = devfreq->time_last_update;
+	now = kसमय_get();
+	last = devfreq->समय_last_update;
 
-	if (devfreq->busy_count > 0)
-		devfreq->busy_time += ktime_sub(now, last);
-	else
-		devfreq->idle_time += ktime_sub(now, last);
+	अगर (devfreq->busy_count > 0)
+		devfreq->busy_समय += kसमय_sub(now, last);
+	अन्यथा
+		devfreq->idle_समय += kसमय_sub(now, last);
 
-	devfreq->time_last_update = now;
-}
+	devfreq->समय_last_update = now;
+पूर्ण
 
-static int lima_devfreq_target(struct device *dev, unsigned long *freq,
+अटल पूर्णांक lima_devfreq_target(काष्ठा device *dev, अचिन्हित दीर्घ *freq,
 			       u32 flags)
-{
-	struct dev_pm_opp *opp;
+अणु
+	काष्ठा dev_pm_opp *opp;
 
 	opp = devfreq_recommended_opp(dev, freq, flags);
-	if (IS_ERR(opp))
-		return PTR_ERR(opp);
+	अगर (IS_ERR(opp))
+		वापस PTR_ERR(opp);
 	dev_pm_opp_put(opp);
 
-	return dev_pm_opp_set_rate(dev, *freq);
-}
+	वापस dev_pm_opp_set_rate(dev, *freq);
+पूर्ण
 
-static void lima_devfreq_reset(struct lima_devfreq *devfreq)
-{
-	devfreq->busy_time = 0;
-	devfreq->idle_time = 0;
-	devfreq->time_last_update = ktime_get();
-}
+अटल व्योम lima_devfreq_reset(काष्ठा lima_devfreq *devfreq)
+अणु
+	devfreq->busy_समय = 0;
+	devfreq->idle_समय = 0;
+	devfreq->समय_last_update = kसमय_get();
+पूर्ण
 
-static int lima_devfreq_get_dev_status(struct device *dev,
-				       struct devfreq_dev_status *status)
-{
-	struct lima_device *ldev = dev_get_drvdata(dev);
-	struct lima_devfreq *devfreq = &ldev->devfreq;
-	unsigned long irqflags;
+अटल पूर्णांक lima_devfreq_get_dev_status(काष्ठा device *dev,
+				       काष्ठा devfreq_dev_status *status)
+अणु
+	काष्ठा lima_device *ldev = dev_get_drvdata(dev);
+	काष्ठा lima_devfreq *devfreq = &ldev->devfreq;
+	अचिन्हित दीर्घ irqflags;
 
 	status->current_frequency = clk_get_rate(ldev->clk_gpu);
 
@@ -64,118 +65,118 @@ static int lima_devfreq_get_dev_status(struct device *dev,
 
 	lima_devfreq_update_utilization(devfreq);
 
-	status->total_time = ktime_to_ns(ktime_add(devfreq->busy_time,
-						   devfreq->idle_time));
-	status->busy_time = ktime_to_ns(devfreq->busy_time);
+	status->total_समय = kसमय_प्रकारo_ns(kसमय_add(devfreq->busy_समय,
+						   devfreq->idle_समय));
+	status->busy_समय = kसमय_प्रकारo_ns(devfreq->busy_समय);
 
 	lima_devfreq_reset(devfreq);
 
 	spin_unlock_irqrestore(&devfreq->lock, irqflags);
 
 	dev_dbg(ldev->dev, "busy %lu total %lu %lu %% freq %lu MHz\n",
-		status->busy_time, status->total_time,
-		status->busy_time / (status->total_time / 100),
+		status->busy_समय, status->total_समय,
+		status->busy_समय / (status->total_समय / 100),
 		status->current_frequency / 1000 / 1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct devfreq_dev_profile lima_devfreq_profile = {
-	.timer = DEVFREQ_TIMER_DELAYED,
+अटल काष्ठा devfreq_dev_profile lima_devfreq_profile = अणु
+	.समयr = DEVFREQ_TIMER_DELAYED,
 	.polling_ms = 50, /* ~3 frames */
 	.target = lima_devfreq_target,
 	.get_dev_status = lima_devfreq_get_dev_status,
-};
+पूर्ण;
 
-void lima_devfreq_fini(struct lima_device *ldev)
-{
-	struct lima_devfreq *devfreq = &ldev->devfreq;
+व्योम lima_devfreq_fini(काष्ठा lima_device *ldev)
+अणु
+	काष्ठा lima_devfreq *devfreq = &ldev->devfreq;
 
-	if (devfreq->cooling) {
-		devfreq_cooling_unregister(devfreq->cooling);
-		devfreq->cooling = NULL;
-	}
+	अगर (devfreq->cooling) अणु
+		devfreq_cooling_unरेजिस्टर(devfreq->cooling);
+		devfreq->cooling = शून्य;
+	पूर्ण
 
-	if (devfreq->devfreq) {
-		devm_devfreq_remove_device(ldev->dev, devfreq->devfreq);
-		devfreq->devfreq = NULL;
-	}
-}
+	अगर (devfreq->devfreq) अणु
+		devm_devfreq_हटाओ_device(ldev->dev, devfreq->devfreq);
+		devfreq->devfreq = शून्य;
+	पूर्ण
+पूर्ण
 
-int lima_devfreq_init(struct lima_device *ldev)
-{
-	struct thermal_cooling_device *cooling;
-	struct device *dev = ldev->dev;
-	struct devfreq *devfreq;
-	struct lima_devfreq *ldevfreq = &ldev->devfreq;
-	struct dev_pm_opp *opp;
-	unsigned long cur_freq;
-	int ret;
+पूर्णांक lima_devfreq_init(काष्ठा lima_device *ldev)
+अणु
+	काष्ठा thermal_cooling_device *cooling;
+	काष्ठा device *dev = ldev->dev;
+	काष्ठा devfreq *devfreq;
+	काष्ठा lima_devfreq *ldevfreq = &ldev->devfreq;
+	काष्ठा dev_pm_opp *opp;
+	अचिन्हित दीर्घ cur_freq;
+	पूर्णांक ret;
 
-	if (!device_property_present(dev, "operating-points-v2"))
-		/* Optional, continue without devfreq */
-		return 0;
+	अगर (!device_property_present(dev, "operating-points-v2"))
+		/* Optional, जारी without devfreq */
+		वापस 0;
 
 	spin_lock_init(&ldevfreq->lock);
 
 	ret = devm_pm_opp_set_clkname(dev, "core");
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = devm_pm_opp_set_regulators(dev, (const char *[]){ "mali" }, 1);
-	if (ret) {
-		/* Continue if the optional regulator is missing */
-		if (ret != -ENODEV)
-			return ret;
-	}
+	ret = devm_pm_opp_set_regulators(dev, (स्थिर अक्षर *[])अणु "mali" पूर्ण, 1);
+	अगर (ret) अणु
+		/* Continue अगर the optional regulator is missing */
+		अगर (ret != -ENODEV)
+			वापस ret;
+	पूर्ण
 
 	ret = devm_pm_opp_of_add_table(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	lima_devfreq_reset(ldevfreq);
 
 	cur_freq = clk_get_rate(ldev->clk_gpu);
 
 	opp = devfreq_recommended_opp(dev, &cur_freq, 0);
-	if (IS_ERR(opp))
-		return PTR_ERR(opp);
+	अगर (IS_ERR(opp))
+		वापस PTR_ERR(opp);
 
 	lima_devfreq_profile.initial_freq = cur_freq;
 	dev_pm_opp_put(opp);
 
 	/*
-	 * Setup default thresholds for the simple_ondemand governor.
+	 * Setup शेष thresholds क्रम the simple_ondemand governor.
 	 * The values are chosen based on experiments.
 	 */
 	ldevfreq->gov_data.upthreshold = 30;
-	ldevfreq->gov_data.downdifferential = 5;
+	ldevfreq->gov_data.करोwndअगरferential = 5;
 
 	devfreq = devm_devfreq_add_device(dev, &lima_devfreq_profile,
 					  DEVFREQ_GOV_SIMPLE_ONDEMAND,
 					  &ldevfreq->gov_data);
-	if (IS_ERR(devfreq)) {
+	अगर (IS_ERR(devfreq)) अणु
 		dev_err(dev, "Couldn't initialize GPU devfreq\n");
-		return PTR_ERR(devfreq);
-	}
+		वापस PTR_ERR(devfreq);
+	पूर्ण
 
 	ldevfreq->devfreq = devfreq;
 
-	cooling = of_devfreq_cooling_register(dev->of_node, devfreq);
-	if (IS_ERR(cooling))
+	cooling = of_devfreq_cooling_रेजिस्टर(dev->of_node, devfreq);
+	अगर (IS_ERR(cooling))
 		dev_info(dev, "Failed to register cooling device\n");
-	else
+	अन्यथा
 		ldevfreq->cooling = cooling;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void lima_devfreq_record_busy(struct lima_devfreq *devfreq)
-{
-	unsigned long irqflags;
+व्योम lima_devfreq_record_busy(काष्ठा lima_devfreq *devfreq)
+अणु
+	अचिन्हित दीर्घ irqflags;
 
-	if (!devfreq->devfreq)
-		return;
+	अगर (!devfreq->devfreq)
+		वापस;
 
 	spin_lock_irqsave(&devfreq->lock, irqflags);
 
@@ -184,14 +185,14 @@ void lima_devfreq_record_busy(struct lima_devfreq *devfreq)
 	devfreq->busy_count++;
 
 	spin_unlock_irqrestore(&devfreq->lock, irqflags);
-}
+पूर्ण
 
-void lima_devfreq_record_idle(struct lima_devfreq *devfreq)
-{
-	unsigned long irqflags;
+व्योम lima_devfreq_record_idle(काष्ठा lima_devfreq *devfreq)
+अणु
+	अचिन्हित दीर्घ irqflags;
 
-	if (!devfreq->devfreq)
-		return;
+	अगर (!devfreq->devfreq)
+		वापस;
 
 	spin_lock_irqsave(&devfreq->lock, irqflags);
 
@@ -200,14 +201,14 @@ void lima_devfreq_record_idle(struct lima_devfreq *devfreq)
 	WARN_ON(--devfreq->busy_count < 0);
 
 	spin_unlock_irqrestore(&devfreq->lock, irqflags);
-}
+पूर्ण
 
-int lima_devfreq_resume(struct lima_devfreq *devfreq)
-{
-	unsigned long irqflags;
+पूर्णांक lima_devfreq_resume(काष्ठा lima_devfreq *devfreq)
+अणु
+	अचिन्हित दीर्घ irqflags;
 
-	if (!devfreq->devfreq)
-		return 0;
+	अगर (!devfreq->devfreq)
+		वापस 0;
 
 	spin_lock_irqsave(&devfreq->lock, irqflags);
 
@@ -215,13 +216,13 @@ int lima_devfreq_resume(struct lima_devfreq *devfreq)
 
 	spin_unlock_irqrestore(&devfreq->lock, irqflags);
 
-	return devfreq_resume_device(devfreq->devfreq);
-}
+	वापस devfreq_resume_device(devfreq->devfreq);
+पूर्ण
 
-int lima_devfreq_suspend(struct lima_devfreq *devfreq)
-{
-	if (!devfreq->devfreq)
-		return 0;
+पूर्णांक lima_devfreq_suspend(काष्ठा lima_devfreq *devfreq)
+अणु
+	अगर (!devfreq->devfreq)
+		वापस 0;
 
-	return devfreq_suspend_device(devfreq->devfreq);
-}
+	वापस devfreq_suspend_device(devfreq->devfreq);
+पूर्ण

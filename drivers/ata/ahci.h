@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  ahci.h - Common AHCI SATA definitions and declarations
  *
- *  Maintained by:  Tejun Heo <tj@kernel.org>
+ *  Maपूर्णांकained by:  Tejun Heo <tj@kernel.org>
  *    		    Please ALWAYS copy linux-ide@vger.kernel.org
  *		    on emails.
  *
  *  Copyright 2004-2005 Red Hat, Inc.
  *
- * libata documentation is available via 'make {ps|pdf}docs',
+ * libata करोcumentation is available via 'make {ps|pdf}docs',
  * as Documentation/driver-api/libata.rst
  *
- * AHCI hardware documentation:
- * http://www.intel.com/technology/serialata/pdf/rev1_0.pdf
- * http://www.intel.com/technology/serialata/pdf/rev1_1.pdf
+ * AHCI hardware करोcumentation:
+ * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_0.pdf
+ * http://www.पूर्णांकel.com/technology/serialata/pdf/rev1_1.pdf
  */
 
-#ifndef _AHCI_H
-#define _AHCI_H
+#अगर_अघोषित _AHCI_H
+#घोषणा _AHCI_H
 
-#include <linux/pci.h>
-#include <linux/clk.h>
-#include <linux/libata.h>
-#include <linux/phy/phy.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/regulator/consumer.h>
 
 /* Enclosure Management Control */
-#define EM_CTRL_MSG_TYPE              0x000f0000
+#घोषणा EM_CTRL_MSG_TYPE              0x000f0000
 
 /* Enclosure Management LED Message Type */
-#define EM_MSG_LED_HBA_PORT           0x0000000f
-#define EM_MSG_LED_PMP_SLOT           0x0000ff00
-#define EM_MSG_LED_VALUE              0xffff0000
-#define EM_MSG_LED_VALUE_ACTIVITY     0x00070000
-#define EM_MSG_LED_VALUE_OFF          0xfff80000
-#define EM_MSG_LED_VALUE_ON           0x00010000
+#घोषणा EM_MSG_LED_HBA_PORT           0x0000000f
+#घोषणा EM_MSG_LED_PMP_SLOT           0x0000ff00
+#घोषणा EM_MSG_LED_VALUE              0xffff0000
+#घोषणा EM_MSG_LED_VALUE_ACTIVITY     0x00070000
+#घोषणा EM_MSG_LED_VALUE_OFF          0xfff80000
+#घोषणा EM_MSG_LED_VALUE_ON           0x00010000
 
-enum {
+क्रमागत अणु
 	AHCI_MAX_PORTS		= 32,
 	AHCI_MAX_CLKS		= 5,
 	AHCI_MAX_SG		= 168, /* hardware max is 64K */
@@ -66,11 +67,11 @@ enum {
 	RX_FIS_SDB		= 0x58, /* offset of SDB FIS data */
 	RX_FIS_UNK		= 0x60, /* offset of Unknown FIS data */
 
-	/* global controller registers */
+	/* global controller रेजिस्टरs */
 	HOST_CAP		= 0x00, /* host capabilities */
 	HOST_CTL		= 0x04, /* global host control */
-	HOST_IRQ_STAT		= 0x08, /* interrupt status */
-	HOST_PORTS_IMPL		= 0x0c, /* bitmap of implemented ports */
+	HOST_IRQ_STAT		= 0x08, /* पूर्णांकerrupt status */
+	HOST_PORTS_IMPL		= 0x0c, /* biपंचांगap of implemented ports */
 	HOST_VERSION		= 0x10, /* AHCI spec. version compliancy */
 	HOST_EM_LOC		= 0x1c, /* Enclosure Management location */
 	HOST_EM_CTL		= 0x20, /* Enclosure Management Control */
@@ -89,57 +90,57 @@ enum {
 	HOST_CAP_PART		= (1 << 13), /* Partial state capable */
 	HOST_CAP_SSC		= (1 << 14), /* Slumber state capable */
 	HOST_CAP_PIO_MULTI	= (1 << 15), /* PIO multiple DRQ support */
-	HOST_CAP_FBS		= (1 << 16), /* FIS-based switching support */
+	HOST_CAP_FBS		= (1 << 16), /* FIS-based चयनing support */
 	HOST_CAP_PMP		= (1 << 17), /* Port Multiplier support */
 	HOST_CAP_ONLY		= (1 << 18), /* Supports AHCI mode only */
 	HOST_CAP_CLO		= (1 << 24), /* Command List Override support */
 	HOST_CAP_LED		= (1 << 25), /* Supports activity LED */
 	HOST_CAP_ALPM		= (1 << 26), /* Aggressive Link PM support */
 	HOST_CAP_SSS		= (1 << 27), /* Staggered Spin-up */
-	HOST_CAP_MPS		= (1 << 28), /* Mechanical presence switch */
-	HOST_CAP_SNTF		= (1 << 29), /* SNotification register */
+	HOST_CAP_MPS		= (1 << 28), /* Mechanical presence चयन */
+	HOST_CAP_SNTF		= (1 << 29), /* SNotअगरication रेजिस्टर */
 	HOST_CAP_NCQ		= (1 << 30), /* Native Command Queueing */
 	HOST_CAP_64		= (1 << 31), /* PCI DAC (64-bit DMA) support */
 
 	/* HOST_CAP2 bits */
-	HOST_CAP2_BOH		= (1 << 0),  /* BIOS/OS handoff supported */
+	HOST_CAP2_BOH		= (1 << 0),  /* BIOS/OS hanकरोff supported */
 	HOST_CAP2_NVMHCI	= (1 << 1),  /* NVMHCI supported */
 	HOST_CAP2_APST		= (1 << 2),  /* Automatic partial to slumber */
 	HOST_CAP2_SDS		= (1 << 3),  /* Support device sleep */
 	HOST_CAP2_SADM		= (1 << 4),  /* Support aggressive DevSlp */
 	HOST_CAP2_DESO		= (1 << 5),  /* DevSlp from slumber only */
 
-	/* registers for each SATA port */
+	/* रेजिस्टरs क्रम each SATA port */
 	PORT_LST_ADDR		= 0x00, /* command list DMA addr */
 	PORT_LST_ADDR_HI	= 0x04, /* command list DMA addr hi */
 	PORT_FIS_ADDR		= 0x08, /* FIS rx buf addr */
 	PORT_FIS_ADDR_HI	= 0x0c, /* FIS rx buf addr hi */
-	PORT_IRQ_STAT		= 0x10, /* interrupt status */
-	PORT_IRQ_MASK		= 0x14, /* interrupt enable/disable mask */
+	PORT_IRQ_STAT		= 0x10, /* पूर्णांकerrupt status */
+	PORT_IRQ_MASK		= 0x14, /* पूर्णांकerrupt enable/disable mask */
 	PORT_CMD		= 0x18, /* port command */
 	PORT_TFDATA		= 0x20,	/* taskfile data */
 	PORT_SIG		= 0x24,	/* device TF signature */
 	PORT_CMD_ISSUE		= 0x38, /* command issue */
-	PORT_SCR_STAT		= 0x28, /* SATA phy register: SStatus */
-	PORT_SCR_CTL		= 0x2c, /* SATA phy register: SControl */
-	PORT_SCR_ERR		= 0x30, /* SATA phy register: SError */
-	PORT_SCR_ACT		= 0x34, /* SATA phy register: SActive */
-	PORT_SCR_NTF		= 0x3c, /* SATA phy register: SNotification */
+	PORT_SCR_STAT		= 0x28, /* SATA phy रेजिस्टर: SStatus */
+	PORT_SCR_CTL		= 0x2c, /* SATA phy रेजिस्टर: SControl */
+	PORT_SCR_ERR		= 0x30, /* SATA phy रेजिस्टर: SError */
+	PORT_SCR_ACT		= 0x34, /* SATA phy रेजिस्टर: SActive */
+	PORT_SCR_NTF		= 0x3c, /* SATA phy रेजिस्टर: SNotअगरication */
 	PORT_FBS		= 0x40, /* FIS-based Switching */
 	PORT_DEVSLP		= 0x44, /* device sleep */
 
-	/* PORT_IRQ_{STAT,MASK} bits */
+	/* PORT_IRQ_अणुSTAT,MASKपूर्ण bits */
 	PORT_IRQ_COLD_PRES	= (1 << 31), /* cold presence detect */
 	PORT_IRQ_TF_ERR		= (1 << 30), /* task file error */
 	PORT_IRQ_HBUS_ERR	= (1 << 29), /* host bus fatal error */
 	PORT_IRQ_HBUS_DATA_ERR	= (1 << 28), /* host bus data error */
-	PORT_IRQ_IF_ERR		= (1 << 27), /* interface fatal error */
-	PORT_IRQ_IF_NONFATAL	= (1 << 26), /* interface non-fatal error */
+	PORT_IRQ_IF_ERR		= (1 << 27), /* पूर्णांकerface fatal error */
+	PORT_IRQ_IF_NONFATAL	= (1 << 26), /* पूर्णांकerface non-fatal error */
 	PORT_IRQ_OVERFLOW	= (1 << 24), /* xfer exhausted available S/G */
 	PORT_IRQ_BAD_PMP	= (1 << 23), /* incorrect port multiplier */
 
 	PORT_IRQ_PHYRDY		= (1 << 22), /* PhyRdy changed */
-	PORT_IRQ_DEV_ILCK	= (1 << 7), /* device interlock */
+	PORT_IRQ_DEV_ILCK	= (1 << 7), /* device पूर्णांकerlock */
 	PORT_IRQ_CONNECT	= (1 << 6), /* port connect change status */
 	PORT_IRQ_SG_DONE	= (1 << 5), /* descriptor processed */
 	PORT_IRQ_UNK_FIS	= (1 << 4), /* unknown FIS rx'd */
@@ -195,53 +196,53 @@ enum {
 	PORT_DEVSLP_DM_OFFSET	= 25,             /* DITO multiplier offset */
 	PORT_DEVSLP_DM_MASK	= (0xf << 25),    /* DITO multiplier mask */
 	PORT_DEVSLP_DITO_OFFSET	= 15,             /* DITO offset */
-	PORT_DEVSLP_MDAT_OFFSET	= 10,             /* Minimum assertion time */
-	PORT_DEVSLP_DETO_OFFSET	= 2,              /* DevSlp exit timeout */
+	PORT_DEVSLP_MDAT_OFFSET	= 10,             /* Minimum निश्चितion समय */
+	PORT_DEVSLP_DETO_OFFSET	= 2,              /* DevSlp निकास समयout */
 	PORT_DEVSLP_DSP		= (1 << 1),       /* DevSlp present */
 	PORT_DEVSLP_ADSE	= (1 << 0),       /* Aggressive DevSlp enable */
 
 	/* hpriv->flags bits */
 
-#define AHCI_HFLAGS(flags)		.private_data	= (void *)(flags)
+#घोषणा AHCI_HFLAGS(flags)		.निजी_data	= (व्योम *)(flags)
 
 	AHCI_HFLAG_NO_NCQ		= (1 << 0),
 	AHCI_HFLAG_IGN_IRQ_IF_ERR	= (1 << 1), /* ignore IRQ_IF_ERR */
 	AHCI_HFLAG_IGN_SERR_INTERNAL	= (1 << 2), /* ignore SERR_INTERNAL */
-	AHCI_HFLAG_32BIT_ONLY		= (1 << 3), /* force 32bit */
+	AHCI_HFLAG_32BIT_ONLY		= (1 << 3), /* क्रमce 32bit */
 	AHCI_HFLAG_MV_PATA		= (1 << 4), /* PATA port */
 	AHCI_HFLAG_NO_MSI		= (1 << 5), /* no PCI MSI */
 	AHCI_HFLAG_NO_PMP		= (1 << 6), /* no PMP */
 	AHCI_HFLAG_SECT255		= (1 << 8), /* max 255 sectors */
-	AHCI_HFLAG_YES_NCQ		= (1 << 9), /* force NCQ cap on */
-	AHCI_HFLAG_NO_SUSPEND		= (1 << 10), /* don't suspend */
-	AHCI_HFLAG_SRST_TOUT_IS_OFFLINE	= (1 << 11), /* treat SRST timeout as
+	AHCI_HFLAG_YES_NCQ		= (1 << 9), /* क्रमce NCQ cap on */
+	AHCI_HFLAG_NO_SUSPEND		= (1 << 10), /* करोn't suspend */
+	AHCI_HFLAG_SRST_TOUT_IS_OFFLINE	= (1 << 11), /* treat SRST समयout as
 							link offline */
 	AHCI_HFLAG_NO_SNTF		= (1 << 12), /* no sntf */
 	AHCI_HFLAG_NO_FPDMA_AA		= (1 << 13), /* no FPDMA AA */
-	AHCI_HFLAG_YES_FBS		= (1 << 14), /* force FBS cap on */
-	AHCI_HFLAG_DELAY_ENGINE		= (1 << 15), /* do not start engine on
-						        port start (wait until
+	AHCI_HFLAG_YES_FBS		= (1 << 14), /* क्रमce FBS cap on */
+	AHCI_HFLAG_DELAY_ENGINE		= (1 << 15), /* करो not start engine on
+						        port start (रुको until
 						        error-handling stage) */
 	AHCI_HFLAG_NO_DEVSLP		= (1 << 17), /* no device sleep */
 	AHCI_HFLAG_NO_FBS		= (1 << 18), /* no FBS */
 
-#ifdef CONFIG_PCI_MSI
+#अगर_घोषित CONFIG_PCI_MSI
 	AHCI_HFLAG_MULTI_MSI		= (1 << 20), /* per-port MSI(-X) */
-#else
-	/* compile out MSI infrastructure */
+#अन्यथा
+	/* compile out MSI infraकाष्ठाure */
 	AHCI_HFLAG_MULTI_MSI		= 0,
-#endif
-	AHCI_HFLAG_WAKE_BEFORE_STOP	= (1 << 22), /* wake before DMA stop */
-	AHCI_HFLAG_YES_ALPM		= (1 << 23), /* force ALPM cap on */
-	AHCI_HFLAG_NO_WRITE_TO_RO	= (1 << 24), /* don't write to read
-							only registers */
+#पूर्ण_अगर
+	AHCI_HFLAG_WAKE_BEFORE_STOP	= (1 << 22), /* wake beक्रमe DMA stop */
+	AHCI_HFLAG_YES_ALPM		= (1 << 23), /* क्रमce ALPM cap on */
+	AHCI_HFLAG_NO_WRITE_TO_RO	= (1 << 24), /* करोn't ग_लिखो to पढ़ो
+							only रेजिस्टरs */
 	AHCI_HFLAG_IS_MOBILE		= (1 << 25), /* mobile chipset, use
 							SATA_MOBILE_LPM_POLICY
-							as default lpm_policy */
+							as शेष lpm_policy */
 	AHCI_HFLAG_SUSPEND_PHYS		= (1 << 26), /* handle PHYs during
 							suspend/resume */
 	AHCI_HFLAG_IGN_NOTSUPP_POWER_ON	= (1 << 27), /* ignore -EOPNOTSUPP
-							from phy_power_on() */
+							from phy_घातer_on() */
 	AHCI_HFLAG_NO_SXS		= (1 << 28), /* SXS not supported */
 
 	/* ap->flags bits */
@@ -249,11 +250,11 @@ enum {
 	AHCI_FLAG_COMMON		= ATA_FLAG_SATA | ATA_FLAG_PIO_DMA |
 					  ATA_FLAG_ACPI_SATA | ATA_FLAG_AN,
 
-	ICH_MAP				= 0x90, /* ICH MAP register */
+	ICH_MAP				= 0x90, /* ICH MAP रेजिस्टर */
 	PCS_6				= 0x92, /* 6 port PCS */
 	PCS_7				= 0x94, /* 7+ port PCS (Denverton) */
 
-	/* em constants */
+	/* em स्थिरants */
 	EM_MAX_SLOTS			= 8,
 	EM_MAX_RETRY			= 5,
 
@@ -274,61 +275,61 @@ enum {
 	EM_MSG_TYPE_SAFTE	= (1 << 1), /* SAF-TE */
 	EM_MSG_TYPE_SES2	= (1 << 2), /* SES-2 */
 	EM_MSG_TYPE_SGPIO	= (1 << 3), /* SGPIO */
-};
+पूर्ण;
 
-struct ahci_cmd_hdr {
+काष्ठा ahci_cmd_hdr अणु
 	__le32			opts;
 	__le32			status;
 	__le32			tbl_addr;
 	__le32			tbl_addr_hi;
 	__le32			reserved[4];
-};
+पूर्ण;
 
-struct ahci_sg {
+काष्ठा ahci_sg अणु
 	__le32			addr;
 	__le32			addr_hi;
 	__le32			reserved;
 	__le32			flags_size;
-};
+पूर्ण;
 
-struct ahci_em_priv {
-	enum sw_activity blink_policy;
-	struct timer_list timer;
-	unsigned long saved_activity;
-	unsigned long activity;
-	unsigned long led_state;
-	struct ata_link *link;
-};
+काष्ठा ahci_em_priv अणु
+	क्रमागत sw_activity blink_policy;
+	काष्ठा समयr_list समयr;
+	अचिन्हित दीर्घ saved_activity;
+	अचिन्हित दीर्घ activity;
+	अचिन्हित दीर्घ led_state;
+	काष्ठा ata_link *link;
+पूर्ण;
 
-struct ahci_port_priv {
-	struct ata_link		*active_link;
-	struct ahci_cmd_hdr	*cmd_slot;
+काष्ठा ahci_port_priv अणु
+	काष्ठा ata_link		*active_link;
+	काष्ठा ahci_cmd_hdr	*cmd_slot;
 	dma_addr_t		cmd_slot_dma;
-	void			*cmd_tbl;
+	व्योम			*cmd_tbl;
 	dma_addr_t		cmd_tbl_dma;
-	void			*rx_fis;
+	व्योम			*rx_fis;
 	dma_addr_t		rx_fis_dma;
-	/* for NCQ spurious interrupt analysis */
-	unsigned int		ncq_saw_d2h:1;
-	unsigned int		ncq_saw_dmas:1;
-	unsigned int		ncq_saw_sdb:1;
+	/* क्रम NCQ spurious पूर्णांकerrupt analysis */
+	अचिन्हित पूर्णांक		ncq_saw_d2h:1;
+	अचिन्हित पूर्णांक		ncq_saw_dmas:1;
+	अचिन्हित पूर्णांक		ncq_saw_sdb:1;
 	spinlock_t		lock;		/* protects parent ata_port */
-	u32 			intr_mask;	/* interrupts to enable */
-	bool			fbs_supported;	/* set iff FBS is supported */
-	bool			fbs_enabled;	/* set iff FBS is enabled */
-	int			fbs_last_dev;	/* save FBS.DEV of last FIS */
+	u32 			पूर्णांकr_mask;	/* पूर्णांकerrupts to enable */
+	bool			fbs_supported;	/* set अगरf FBS is supported */
+	bool			fbs_enabled;	/* set अगरf FBS is enabled */
+	पूर्णांक			fbs_last_dev;	/* save FBS.DEV of last FIS */
 	/* enclosure management info per PM slot */
-	struct ahci_em_priv	em_priv[EM_MAX_SLOTS];
-	char			*irq_desc;	/* desc in /proc/interrupts */
-};
+	काष्ठा ahci_em_priv	em_priv[EM_MAX_SLOTS];
+	अक्षर			*irq_desc;	/* desc in /proc/पूर्णांकerrupts */
+पूर्ण;
 
-struct ahci_host_priv {
+काष्ठा ahci_host_priv अणु
 	/* Input fields */
-	unsigned int		flags;		/* AHCI_HFLAG_* */
-	u32			force_port_map;	/* force port map */
+	अचिन्हित पूर्णांक		flags;		/* AHCI_HFLAG_* */
+	u32			क्रमce_port_map;	/* क्रमce port map */
 	u32			mask_port_map;	/* mask out particular bits */
 
-	void __iomem *		mmio;		/* bus-independent mem map */
+	व्योम __iomem *		mmio;		/* bus-independent mem map */
 	u32			cap;		/* cap to use */
 	u32			cap2;		/* cap2 to use */
 	u32			version;	/* cached version */
@@ -340,50 +341,50 @@ struct ahci_host_priv {
 	u32			em_buf_sz;	/* EM buffer size in byte */
 	u32			em_msg_type;	/* EM message type */
 	u32			remapped_nvme;	/* NVMe remapped device count */
-	bool			got_runtime_pm; /* Did we do pm_runtime_get? */
-	struct clk		*clks[AHCI_MAX_CLKS]; /* Optional */
-	struct reset_control	*rsts;		/* Optional */
-	struct regulator	**target_pwrs;	/* Optional */
-	struct regulator	*ahci_regulator;/* Optional */
-	struct regulator	*phy_regulator;/* Optional */
+	bool			got_runसमय_pm; /* Did we करो pm_runसमय_get? */
+	काष्ठा clk		*clks[AHCI_MAX_CLKS]; /* Optional */
+	काष्ठा reset_control	*rsts;		/* Optional */
+	काष्ठा regulator	**target_pwrs;	/* Optional */
+	काष्ठा regulator	*ahci_regulator;/* Optional */
+	काष्ठा regulator	*phy_regulator;/* Optional */
 	/*
-	 * If platform uses PHYs. There is a 1:1 relation between the port number and
+	 * If platक्रमm uses PHYs. There is a 1:1 relation between the port number and
 	 * the PHY position in this array.
 	 */
-	struct phy		**phys;
-	unsigned		nports;		/* Number of ports */
-	void			*plat_data;	/* Other platform data */
-	unsigned int		irq;		/* interrupt line */
+	काष्ठा phy		**phys;
+	अचिन्हित		nports;		/* Number of ports */
+	व्योम			*plat_data;	/* Other platक्रमm data */
+	अचिन्हित पूर्णांक		irq;		/* पूर्णांकerrupt line */
 	/*
-	 * Optional ahci_start_engine override, if not set this gets set to the
-	 * default ahci_start_engine during ahci_save_initial_config, this can
-	 * be overridden anytime before the host is activated.
+	 * Optional ahci_start_engine override, अगर not set this माला_लो set to the
+	 * शेष ahci_start_engine during ahci_save_initial_config, this can
+	 * be overridden anyसमय beक्रमe the host is activated.
 	 */
-	void			(*start_engine)(struct ata_port *ap);
+	व्योम			(*start_engine)(काष्ठा ata_port *ap);
 	/*
-	 * Optional ahci_stop_engine override, if not set this gets set to the
-	 * default ahci_stop_engine during ahci_save_initial_config, this can
-	 * be overridden anytime before the host is activated.
+	 * Optional ahci_stop_engine override, अगर not set this माला_लो set to the
+	 * शेष ahci_stop_engine during ahci_save_initial_config, this can
+	 * be overridden anyसमय beक्रमe the host is activated.
 	 */
-	int			(*stop_engine)(struct ata_port *ap);
+	पूर्णांक			(*stop_engine)(काष्ठा ata_port *ap);
 
-	irqreturn_t 		(*irq_handler)(int irq, void *dev_instance);
+	irqवापस_t 		(*irq_handler)(पूर्णांक irq, व्योम *dev_instance);
 
-	/* only required for per-port MSI(-X) support */
-	int			(*get_irq_vector)(struct ata_host *host,
-						  int port);
-};
+	/* only required क्रम per-port MSI(-X) support */
+	पूर्णांक			(*get_irq_vector)(काष्ठा ata_host *host,
+						  पूर्णांक port);
+पूर्ण;
 
-extern int ahci_ignore_sss;
+बाह्य पूर्णांक ahci_ignore_sss;
 
-extern struct device_attribute *ahci_shost_attrs[];
-extern struct device_attribute *ahci_sdev_attrs[];
+बाह्य काष्ठा device_attribute *ahci_shost_attrs[];
+बाह्य काष्ठा device_attribute *ahci_sdev_attrs[];
 
 /*
  * This must be instantiated by the edge drivers.  Read the comments
- * for ATA_BASE_SHT
+ * क्रम ATA_BASE_SHT
  */
-#define AHCI_SHT(drv_name)						\
+#घोषणा AHCI_SHT(drv_name)						\
 	ATA_NCQ_SHT(drv_name),						\
 	.can_queue		= AHCI_MAX_CMDS,			\
 	.sg_tablesize		= AHCI_MAX_SG,				\
@@ -391,57 +392,57 @@ extern struct device_attribute *ahci_sdev_attrs[];
 	.shost_attrs		= ahci_shost_attrs,			\
 	.sdev_attrs		= ahci_sdev_attrs
 
-extern struct ata_port_operations ahci_ops;
-extern struct ata_port_operations ahci_platform_ops;
-extern struct ata_port_operations ahci_pmp_retry_srst_ops;
+बाह्य काष्ठा ata_port_operations ahci_ops;
+बाह्य काष्ठा ata_port_operations ahci_platक्रमm_ops;
+बाह्य काष्ठा ata_port_operations ahci_pmp_retry_srst_ops;
 
-unsigned int ahci_dev_classify(struct ata_port *ap);
-void ahci_fill_cmd_slot(struct ahci_port_priv *pp, unsigned int tag,
+अचिन्हित पूर्णांक ahci_dev_classअगरy(काष्ठा ata_port *ap);
+व्योम ahci_fill_cmd_slot(काष्ठा ahci_port_priv *pp, अचिन्हित पूर्णांक tag,
 			u32 opts);
-void ahci_save_initial_config(struct device *dev,
-			      struct ahci_host_priv *hpriv);
-void ahci_init_controller(struct ata_host *host);
-int ahci_reset_controller(struct ata_host *host);
+व्योम ahci_save_initial_config(काष्ठा device *dev,
+			      काष्ठा ahci_host_priv *hpriv);
+व्योम ahci_init_controller(काष्ठा ata_host *host);
+पूर्णांक ahci_reset_controller(काष्ठा ata_host *host);
 
-int ahci_do_softreset(struct ata_link *link, unsigned int *class,
-		      int pmp, unsigned long deadline,
-		      int (*check_ready)(struct ata_link *link));
+पूर्णांक ahci_करो_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+		      पूर्णांक pmp, अचिन्हित दीर्घ deadline,
+		      पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *link));
 
-int ahci_do_hardreset(struct ata_link *link, unsigned int *class,
-		      unsigned long deadline, bool *online);
+पूर्णांक ahci_करो_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+		      अचिन्हित दीर्घ deadline, bool *online);
 
-unsigned int ahci_qc_issue(struct ata_queued_cmd *qc);
-int ahci_stop_engine(struct ata_port *ap);
-void ahci_start_fis_rx(struct ata_port *ap);
-void ahci_start_engine(struct ata_port *ap);
-int ahci_check_ready(struct ata_link *link);
-int ahci_kick_engine(struct ata_port *ap);
-int ahci_port_resume(struct ata_port *ap);
-void ahci_set_em_messages(struct ahci_host_priv *hpriv,
-			  struct ata_port_info *pi);
-int ahci_reset_em(struct ata_host *host);
-void ahci_print_info(struct ata_host *host, const char *scc_s);
-int ahci_host_activate(struct ata_host *host, struct scsi_host_template *sht);
-void ahci_error_handler(struct ata_port *ap);
-u32 ahci_handle_port_intr(struct ata_host *host, u32 irq_masked);
+अचिन्हित पूर्णांक ahci_qc_issue(काष्ठा ata_queued_cmd *qc);
+पूर्णांक ahci_stop_engine(काष्ठा ata_port *ap);
+व्योम ahci_start_fis_rx(काष्ठा ata_port *ap);
+व्योम ahci_start_engine(काष्ठा ata_port *ap);
+पूर्णांक ahci_check_पढ़ोy(काष्ठा ata_link *link);
+पूर्णांक ahci_kick_engine(काष्ठा ata_port *ap);
+पूर्णांक ahci_port_resume(काष्ठा ata_port *ap);
+व्योम ahci_set_em_messages(काष्ठा ahci_host_priv *hpriv,
+			  काष्ठा ata_port_info *pi);
+पूर्णांक ahci_reset_em(काष्ठा ata_host *host);
+व्योम ahci_prपूर्णांक_info(काष्ठा ata_host *host, स्थिर अक्षर *scc_s);
+पूर्णांक ahci_host_activate(काष्ठा ata_host *host, काष्ठा scsi_host_ढाँचा *sht);
+व्योम ahci_error_handler(काष्ठा ata_port *ap);
+u32 ahci_handle_port_पूर्णांकr(काष्ठा ata_host *host, u32 irq_masked);
 
-static inline void __iomem *__ahci_port_base(struct ata_host *host,
-					     unsigned int port_no)
-{
-	struct ahci_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->mmio;
+अटल अंतरभूत व्योम __iomem *__ahci_port_base(काष्ठा ata_host *host,
+					     अचिन्हित पूर्णांक port_no)
+अणु
+	काष्ठा ahci_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->mmio;
 
-	return mmio + 0x100 + (port_no * 0x80);
-}
+	वापस mmio + 0x100 + (port_no * 0x80);
+पूर्ण
 
-static inline void __iomem *ahci_port_base(struct ata_port *ap)
-{
-	return __ahci_port_base(ap->host, ap->port_no);
-}
+अटल अंतरभूत व्योम __iomem *ahci_port_base(काष्ठा ata_port *ap)
+अणु
+	वापस __ahci_port_base(ap->host, ap->port_no);
+पूर्ण
 
-static inline int ahci_nr_ports(u32 cap)
-{
-	return (cap & 0x1f) + 1;
-}
+अटल अंतरभूत पूर्णांक ahci_nr_ports(u32 cap)
+अणु
+	वापस (cap & 0x1f) + 1;
+पूर्ण
 
-#endif /* _AHCI_H */
+#पूर्ण_अगर /* _AHCI_H */

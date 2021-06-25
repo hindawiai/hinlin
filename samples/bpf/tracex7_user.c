@@ -1,51 +1,52 @@
-#define _GNU_SOURCE
+<शैली गुरु>
+#घोषणा _GNU_SOURCE
 
-#include <stdio.h>
-#include <unistd.h>
-#include <bpf/libbpf.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <bpf/libbpf.h>
 
-int main(int argc, char **argv)
-{
-	struct bpf_link *link = NULL;
-	struct bpf_program *prog;
-	struct bpf_object *obj;
-	char filename[256];
-	char command[256];
-	int ret = 0;
-	FILE *f;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_link *link = शून्य;
+	काष्ठा bpf_program *prog;
+	काष्ठा bpf_object *obj;
+	अक्षर filename[256];
+	अक्षर command[256];
+	पूर्णांक ret = 0;
+	खाता *f;
 
-	snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
-	obj = bpf_object__open_file(filename, NULL);
-	if (libbpf_get_error(obj)) {
-		fprintf(stderr, "ERROR: opening BPF object file failed\n");
-		return 0;
-	}
+	snम_लिखो(filename, माप(filename), "%s_kern.o", argv[0]);
+	obj = bpf_object__खोलो_file(filename, शून्य);
+	अगर (libbpf_get_error(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: opening BPF object file failed\n");
+		वापस 0;
+	पूर्ण
 
 	prog = bpf_object__find_program_by_name(obj, "bpf_prog1");
-	if (!prog) {
-		fprintf(stderr, "ERROR: finding a prog in obj file failed\n");
-		goto cleanup;
-	}
+	अगर (!prog) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: finding a prog in obj file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
 	/* load BPF program */
-	if (bpf_object__load(obj)) {
-		fprintf(stderr, "ERROR: loading BPF object file failed\n");
-		goto cleanup;
-	}
+	अगर (bpf_object__load(obj)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: loading BPF object file failed\n");
+		जाओ cleanup;
+	पूर्ण
 
 	link = bpf_program__attach(prog);
-	if (libbpf_get_error(link)) {
-		fprintf(stderr, "ERROR: bpf_program__attach failed\n");
-		link = NULL;
-		goto cleanup;
-	}
+	अगर (libbpf_get_error(link)) अणु
+		ख_लिखो(मानक_त्रुटि, "ERROR: bpf_program__attach failed\n");
+		link = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	snprintf(command, 256, "mount %s tmpmnt/", argv[1]);
-	f = popen(command, "r");
-	ret = pclose(f);
+	snम_लिखो(command, 256, "mount %s tmpmnt/", argv[1]);
+	f = pखोलो(command, "r");
+	ret = pबंद(f);
 
 cleanup:
 	bpf_link__destroy(link);
-	bpf_object__close(obj);
-	return ret ? 0 : 1;
-}
+	bpf_object__बंद(obj);
+	वापस ret ? 0 : 1;
+पूर्ण

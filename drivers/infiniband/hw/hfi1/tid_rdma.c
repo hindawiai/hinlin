@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 /*
  * Copyright(c) 2018 - 2020 Intel Corporation.
  *
  */
 
-#include "hfi.h"
-#include "qp.h"
-#include "rc.h"
-#include "verbs.h"
-#include "tid_rdma.h"
-#include "exp_rcv.h"
-#include "trace.h"
+#समावेश "hfi.h"
+#समावेश "qp.h"
+#समावेश "rc.h"
+#समावेश "verbs.h"
+#समावेश "tid_rdma.h"
+#समावेश "exp_rcv.h"
+#समावेश "trace.h"
 
 /**
  * DOC: TID RDMA READ protocol
  *
  * This is an end-to-end protocol at the hfi1 level between two nodes that
- * improves performance by avoiding data copy on the requester side. It
- * converts a qualified RDMA READ request into a TID RDMA READ request on
+ * improves perक्रमmance by aव्योमing data copy on the requester side. It
+ * converts a qualअगरied RDMA READ request पूर्णांकo a TID RDMA READ request on
  * the requester side and thereafter handles the request and response
- * differently. To be qualified, the RDMA READ request should meet the
+ * dअगरferently. To be qualअगरied, the RDMA READ request should meet the
  * following:
  * -- The total data length should be greater than 256K;
  * -- The total data length should be a multiple of 4K page size;
@@ -27,66 +28,66 @@
  * -- Each local scatter-gather entry should be a multiple of 4K page size;
  */
 
-#define RCV_TID_FLOW_TABLE_CTRL_FLOW_VALID_SMASK BIT_ULL(32)
-#define RCV_TID_FLOW_TABLE_CTRL_HDR_SUPP_EN_SMASK BIT_ULL(33)
-#define RCV_TID_FLOW_TABLE_CTRL_KEEP_AFTER_SEQ_ERR_SMASK BIT_ULL(34)
-#define RCV_TID_FLOW_TABLE_CTRL_KEEP_ON_GEN_ERR_SMASK BIT_ULL(35)
-#define RCV_TID_FLOW_TABLE_STATUS_SEQ_MISMATCH_SMASK BIT_ULL(37)
-#define RCV_TID_FLOW_TABLE_STATUS_GEN_MISMATCH_SMASK BIT_ULL(38)
+#घोषणा RCV_TID_FLOW_TABLE_CTRL_FLOW_VALID_SMASK BIT_ULL(32)
+#घोषणा RCV_TID_FLOW_TABLE_CTRL_HDR_SUPP_EN_SMASK BIT_ULL(33)
+#घोषणा RCV_TID_FLOW_TABLE_CTRL_KEEP_AFTER_SEQ_ERR_SMASK BIT_ULL(34)
+#घोषणा RCV_TID_FLOW_TABLE_CTRL_KEEP_ON_GEN_ERR_SMASK BIT_ULL(35)
+#घोषणा RCV_TID_FLOW_TABLE_STATUS_SEQ_MISMATCH_SMASK BIT_ULL(37)
+#घोषणा RCV_TID_FLOW_TABLE_STATUS_GEN_MISMATCH_SMASK BIT_ULL(38)
 
 /* Maximum number of packets within a flow generation. */
-#define MAX_TID_FLOW_PSN BIT(HFI1_KDETH_BTH_SEQ_SHIFT)
+#घोषणा MAX_TID_FLOW_PSN BIT(HFI1_KDETH_BTH_SEQ_SHIFT)
 
-#define GENERATION_MASK 0xFFFFF
+#घोषणा GENERATION_MASK 0xFFFFF
 
-static u32 mask_generation(u32 a)
-{
-	return a & GENERATION_MASK;
-}
+अटल u32 mask_generation(u32 a)
+अणु
+	वापस a & GENERATION_MASK;
+पूर्ण
 
-/* Reserved generation value to set to unused flows for kernel contexts */
-#define KERN_GENERATION_RESERVED mask_generation(U32_MAX)
+/* Reserved generation value to set to unused flows क्रम kernel contexts */
+#घोषणा KERN_GENERATION_RESERVED mask_generation(U32_MAX)
 
 /*
- * J_KEY for kernel contexts when TID RDMA is used.
- * See generate_jkey() in hfi.h for more information.
+ * J_KEY क्रम kernel contexts when TID RDMA is used.
+ * See generate_jkey() in hfi.h क्रम more inक्रमmation.
  */
-#define TID_RDMA_JKEY                   32
-#define HFI1_KERNEL_MIN_JKEY HFI1_ADMIN_JKEY_RANGE
-#define HFI1_KERNEL_MAX_JKEY (2 * HFI1_ADMIN_JKEY_RANGE - 1)
+#घोषणा TID_RDMA_JKEY                   32
+#घोषणा HFI1_KERNEL_MIN_JKEY HFI1_ADMIN_JKEY_RANGE
+#घोषणा HFI1_KERNEL_MAX_JKEY (2 * HFI1_ADMIN_JKEY_RANGE - 1)
 
 /* Maximum number of segments in flight per QP request. */
-#define TID_RDMA_MAX_READ_SEGS_PER_REQ  6
-#define TID_RDMA_MAX_WRITE_SEGS_PER_REQ 4
-#define MAX_REQ max_t(u16, TID_RDMA_MAX_READ_SEGS_PER_REQ, \
+#घोषणा TID_RDMA_MAX_READ_SEGS_PER_REQ  6
+#घोषणा TID_RDMA_MAX_WRITE_SEGS_PER_REQ 4
+#घोषणा MAX_REQ max_t(u16, TID_RDMA_MAX_READ_SEGS_PER_REQ, \
 			TID_RDMA_MAX_WRITE_SEGS_PER_REQ)
-#define MAX_FLOWS roundup_pow_of_two(MAX_REQ + 1)
+#घोषणा MAX_FLOWS roundup_घात_of_two(MAX_REQ + 1)
 
-#define MAX_EXPECTED_PAGES     (MAX_EXPECTED_BUFFER / PAGE_SIZE)
+#घोषणा MAX_EXPECTED_PAGES     (MAX_EXPECTED_BUFFER / PAGE_SIZE)
 
-#define TID_RDMA_DESTQP_FLOW_SHIFT      11
-#define TID_RDMA_DESTQP_FLOW_MASK       0x1f
+#घोषणा TID_RDMA_DESTQP_FLOW_SHIFT      11
+#घोषणा TID_RDMA_DESTQP_FLOW_MASK       0x1f
 
-#define TID_OPFN_QP_CTXT_MASK 0xff
-#define TID_OPFN_QP_CTXT_SHIFT 56
-#define TID_OPFN_QP_KDETH_MASK 0xff
-#define TID_OPFN_QP_KDETH_SHIFT 48
-#define TID_OPFN_MAX_LEN_MASK 0x7ff
-#define TID_OPFN_MAX_LEN_SHIFT 37
-#define TID_OPFN_TIMEOUT_MASK 0x1f
-#define TID_OPFN_TIMEOUT_SHIFT 32
-#define TID_OPFN_RESERVED_MASK 0x3f
-#define TID_OPFN_RESERVED_SHIFT 26
-#define TID_OPFN_URG_MASK 0x1
-#define TID_OPFN_URG_SHIFT 25
-#define TID_OPFN_VER_MASK 0x7
-#define TID_OPFN_VER_SHIFT 22
-#define TID_OPFN_JKEY_MASK 0x3f
-#define TID_OPFN_JKEY_SHIFT 16
-#define TID_OPFN_MAX_READ_MASK 0x3f
-#define TID_OPFN_MAX_READ_SHIFT 10
-#define TID_OPFN_MAX_WRITE_MASK 0x3f
-#define TID_OPFN_MAX_WRITE_SHIFT 4
+#घोषणा TID_OPFN_QP_CTXT_MASK 0xff
+#घोषणा TID_OPFN_QP_CTXT_SHIFT 56
+#घोषणा TID_OPFN_QP_KDETH_MASK 0xff
+#घोषणा TID_OPFN_QP_KDETH_SHIFT 48
+#घोषणा TID_OPFN_MAX_LEN_MASK 0x7ff
+#घोषणा TID_OPFN_MAX_LEN_SHIFT 37
+#घोषणा TID_OPFN_TIMEOUT_MASK 0x1f
+#घोषणा TID_OPFN_TIMEOUT_SHIFT 32
+#घोषणा TID_OPFN_RESERVED_MASK 0x3f
+#घोषणा TID_OPFN_RESERVED_SHIFT 26
+#घोषणा TID_OPFN_URG_MASK 0x1
+#घोषणा TID_OPFN_URG_SHIFT 25
+#घोषणा TID_OPFN_VER_MASK 0x7
+#घोषणा TID_OPFN_VER_SHIFT 22
+#घोषणा TID_OPFN_JKEY_MASK 0x3f
+#घोषणा TID_OPFN_JKEY_SHIFT 16
+#घोषणा TID_OPFN_MAX_READ_MASK 0x3f
+#घोषणा TID_OPFN_MAX_READ_SHIFT 10
+#घोषणा TID_OPFN_MAX_WRITE_MASK 0x3f
+#घोषणा TID_OPFN_MAX_WRITE_SHIFT 4
 
 /*
  * OPFN TID layout
@@ -107,239 +108,239 @@ static u32 mask_generation(u32 a)
  * C - Capcode
  */
 
-static void tid_rdma_trigger_resume(struct work_struct *work);
-static void hfi1_kern_exp_rcv_free_flows(struct tid_rdma_request *req);
-static int hfi1_kern_exp_rcv_alloc_flows(struct tid_rdma_request *req,
+अटल व्योम tid_rdma_trigger_resume(काष्ठा work_काष्ठा *work);
+अटल व्योम hfi1_kern_exp_rcv_मुक्त_flows(काष्ठा tid_rdma_request *req);
+अटल पूर्णांक hfi1_kern_exp_rcv_alloc_flows(काष्ठा tid_rdma_request *req,
 					 gfp_t gfp);
-static void hfi1_init_trdma_req(struct rvt_qp *qp,
-				struct tid_rdma_request *req);
-static void hfi1_tid_write_alloc_resources(struct rvt_qp *qp, bool intr_ctx);
-static void hfi1_tid_timeout(struct timer_list *t);
-static void hfi1_add_tid_reap_timer(struct rvt_qp *qp);
-static void hfi1_mod_tid_reap_timer(struct rvt_qp *qp);
-static void hfi1_mod_tid_retry_timer(struct rvt_qp *qp);
-static int hfi1_stop_tid_retry_timer(struct rvt_qp *qp);
-static void hfi1_tid_retry_timeout(struct timer_list *t);
-static int make_tid_rdma_ack(struct rvt_qp *qp,
-			     struct ib_other_headers *ohdr,
-			     struct hfi1_pkt_state *ps);
-static void hfi1_do_tid_send(struct rvt_qp *qp);
-static u32 read_r_next_psn(struct hfi1_devdata *dd, u8 ctxt, u8 fidx);
-static void tid_rdma_rcv_err(struct hfi1_packet *packet,
-			     struct ib_other_headers *ohdr,
-			     struct rvt_qp *qp, u32 psn, int diff, bool fecn);
-static void update_r_next_psn_fecn(struct hfi1_packet *packet,
-				   struct hfi1_qp_priv *priv,
-				   struct hfi1_ctxtdata *rcd,
-				   struct tid_rdma_flow *flow,
+अटल व्योम hfi1_init_trdma_req(काष्ठा rvt_qp *qp,
+				काष्ठा tid_rdma_request *req);
+अटल व्योम hfi1_tid_ग_लिखो_alloc_resources(काष्ठा rvt_qp *qp, bool पूर्णांकr_ctx);
+अटल व्योम hfi1_tid_समयout(काष्ठा समयr_list *t);
+अटल व्योम hfi1_add_tid_reap_समयr(काष्ठा rvt_qp *qp);
+अटल व्योम hfi1_mod_tid_reap_समयr(काष्ठा rvt_qp *qp);
+अटल व्योम hfi1_mod_tid_retry_समयr(काष्ठा rvt_qp *qp);
+अटल पूर्णांक hfi1_stop_tid_retry_समयr(काष्ठा rvt_qp *qp);
+अटल व्योम hfi1_tid_retry_समयout(काष्ठा समयr_list *t);
+अटल पूर्णांक make_tid_rdma_ack(काष्ठा rvt_qp *qp,
+			     काष्ठा ib_other_headers *ohdr,
+			     काष्ठा hfi1_pkt_state *ps);
+अटल व्योम hfi1_करो_tid_send(काष्ठा rvt_qp *qp);
+अटल u32 पढ़ो_r_next_psn(काष्ठा hfi1_devdata *dd, u8 ctxt, u8 fidx);
+अटल व्योम tid_rdma_rcv_err(काष्ठा hfi1_packet *packet,
+			     काष्ठा ib_other_headers *ohdr,
+			     काष्ठा rvt_qp *qp, u32 psn, पूर्णांक dअगरf, bool fecn);
+अटल व्योम update_r_next_psn_fecn(काष्ठा hfi1_packet *packet,
+				   काष्ठा hfi1_qp_priv *priv,
+				   काष्ठा hfi1_ctxtdata *rcd,
+				   काष्ठा tid_rdma_flow *flow,
 				   bool fecn);
 
-static void validate_r_tid_ack(struct hfi1_qp_priv *priv)
-{
-	if (priv->r_tid_ack == HFI1_QP_WQE_INVALID)
+अटल व्योम validate_r_tid_ack(काष्ठा hfi1_qp_priv *priv)
+अणु
+	अगर (priv->r_tid_ack == HFI1_QP_WQE_INVALID)
 		priv->r_tid_ack = priv->r_tid_tail;
-}
+पूर्ण
 
-static void tid_rdma_schedule_ack(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अटल व्योम tid_rdma_schedule_ack(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
 	priv->s_flags |= RVT_S_ACK_PENDING;
 	hfi1_schedule_tid_send(qp);
-}
+पूर्ण
 
-static void tid_rdma_trigger_ack(struct rvt_qp *qp)
-{
+अटल व्योम tid_rdma_trigger_ack(काष्ठा rvt_qp *qp)
+अणु
 	validate_r_tid_ack(qp->priv);
 	tid_rdma_schedule_ack(qp);
-}
+पूर्ण
 
-static u64 tid_rdma_opfn_encode(struct tid_rdma_params *p)
-{
-	return
+अटल u64 tid_rdma_opfn_encode(काष्ठा tid_rdma_params *p)
+अणु
+	वापस
 		(((u64)p->qp & TID_OPFN_QP_CTXT_MASK) <<
 			TID_OPFN_QP_CTXT_SHIFT) |
 		((((u64)p->qp >> 16) & TID_OPFN_QP_KDETH_MASK) <<
 			TID_OPFN_QP_KDETH_SHIFT) |
 		(((u64)((p->max_len >> PAGE_SHIFT) - 1) &
 			TID_OPFN_MAX_LEN_MASK) << TID_OPFN_MAX_LEN_SHIFT) |
-		(((u64)p->timeout & TID_OPFN_TIMEOUT_MASK) <<
+		(((u64)p->समयout & TID_OPFN_TIMEOUT_MASK) <<
 			TID_OPFN_TIMEOUT_SHIFT) |
 		(((u64)p->urg & TID_OPFN_URG_MASK) << TID_OPFN_URG_SHIFT) |
 		(((u64)p->jkey & TID_OPFN_JKEY_MASK) << TID_OPFN_JKEY_SHIFT) |
-		(((u64)p->max_read & TID_OPFN_MAX_READ_MASK) <<
+		(((u64)p->max_पढ़ो & TID_OPFN_MAX_READ_MASK) <<
 			TID_OPFN_MAX_READ_SHIFT) |
-		(((u64)p->max_write & TID_OPFN_MAX_WRITE_MASK) <<
+		(((u64)p->max_ग_लिखो & TID_OPFN_MAX_WRITE_MASK) <<
 			TID_OPFN_MAX_WRITE_SHIFT);
-}
+पूर्ण
 
-static void tid_rdma_opfn_decode(struct tid_rdma_params *p, u64 data)
-{
+अटल व्योम tid_rdma_opfn_decode(काष्ठा tid_rdma_params *p, u64 data)
+अणु
 	p->max_len = (((data >> TID_OPFN_MAX_LEN_SHIFT) &
 		TID_OPFN_MAX_LEN_MASK) + 1) << PAGE_SHIFT;
 	p->jkey = (data >> TID_OPFN_JKEY_SHIFT) & TID_OPFN_JKEY_MASK;
-	p->max_write = (data >> TID_OPFN_MAX_WRITE_SHIFT) &
+	p->max_ग_लिखो = (data >> TID_OPFN_MAX_WRITE_SHIFT) &
 		TID_OPFN_MAX_WRITE_MASK;
-	p->max_read = (data >> TID_OPFN_MAX_READ_SHIFT) &
+	p->max_पढ़ो = (data >> TID_OPFN_MAX_READ_SHIFT) &
 		TID_OPFN_MAX_READ_MASK;
 	p->qp =
 		((((data >> TID_OPFN_QP_KDETH_SHIFT) & TID_OPFN_QP_KDETH_MASK)
 			<< 16) |
 		((data >> TID_OPFN_QP_CTXT_SHIFT) & TID_OPFN_QP_CTXT_MASK));
 	p->urg = (data >> TID_OPFN_URG_SHIFT) & TID_OPFN_URG_MASK;
-	p->timeout = (data >> TID_OPFN_TIMEOUT_SHIFT) & TID_OPFN_TIMEOUT_MASK;
-}
+	p->समयout = (data >> TID_OPFN_TIMEOUT_SHIFT) & TID_OPFN_TIMEOUT_MASK;
+पूर्ण
 
-void tid_rdma_opfn_init(struct rvt_qp *qp, struct tid_rdma_params *p)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+व्योम tid_rdma_opfn_init(काष्ठा rvt_qp *qp, काष्ठा tid_rdma_params *p)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
 	p->qp = (RVT_KDETH_QP_PREFIX << 16) | priv->rcd->ctxt;
 	p->max_len = TID_RDMA_MAX_SEGMENT_SIZE;
 	p->jkey = priv->rcd->jkey;
-	p->max_read = TID_RDMA_MAX_READ_SEGS_PER_REQ;
-	p->max_write = TID_RDMA_MAX_WRITE_SEGS_PER_REQ;
-	p->timeout = qp->timeout;
+	p->max_पढ़ो = TID_RDMA_MAX_READ_SEGS_PER_REQ;
+	p->max_ग_लिखो = TID_RDMA_MAX_WRITE_SEGS_PER_REQ;
+	p->समयout = qp->समयout;
 	p->urg = is_urg_masked(priv->rcd);
-}
+पूर्ण
 
-bool tid_rdma_conn_req(struct rvt_qp *qp, u64 *data)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+bool tid_rdma_conn_req(काष्ठा rvt_qp *qp, u64 *data)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
 	*data = tid_rdma_opfn_encode(&priv->tid_rdma.local);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-bool tid_rdma_conn_reply(struct rvt_qp *qp, u64 data)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct tid_rdma_params *remote, *old;
+bool tid_rdma_conn_reply(काष्ठा rvt_qp *qp, u64 data)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा tid_rdma_params *remote, *old;
 	bool ret = true;
 
-	old = rcu_dereference_protected(priv->tid_rdma.remote,
+	old = rcu_dereference_रक्षित(priv->tid_rdma.remote,
 					lockdep_is_held(&priv->opfn.lock));
 	data &= ~0xfULL;
 	/*
-	 * If data passed in is zero, return true so as not to continue the
+	 * If data passed in is zero, वापस true so as not to जारी the
 	 * negotiation process
 	 */
-	if (!data || !HFI1_CAP_IS_KSET(TID_RDMA))
-		goto null;
+	अगर (!data || !HFI1_CAP_IS_KSET(TID_RDMA))
+		जाओ null;
 	/*
-	 * If kzalloc fails, return false. This will result in:
+	 * If kzalloc fails, वापस false. This will result in:
 	 * * at the requester a new OPFN request being generated to retry
 	 *   the negotiation
-	 * * at the responder, 0 being returned to the requester so as to
+	 * * at the responder, 0 being वापसed to the requester so as to
 	 *   disable TID RDMA at both the requester and the responder
 	 */
-	remote = kzalloc(sizeof(*remote), GFP_ATOMIC);
-	if (!remote) {
+	remote = kzalloc(माप(*remote), GFP_ATOMIC);
+	अगर (!remote) अणु
 		ret = false;
-		goto null;
-	}
+		जाओ null;
+	पूर्ण
 
 	tid_rdma_opfn_decode(remote, data);
-	priv->tid_timer_timeout_jiffies =
-		usecs_to_jiffies((((4096UL * (1UL << remote->timeout)) /
+	priv->tid_समयr_समयout_jअगरfies =
+		usecs_to_jअगरfies((((4096UL * (1UL << remote->समयout)) /
 				   1000UL) << 3) * 7);
 	trace_hfi1_opfn_param(qp, 0, &priv->tid_rdma.local);
 	trace_hfi1_opfn_param(qp, 1, remote);
-	rcu_assign_pointer(priv->tid_rdma.remote, remote);
+	rcu_assign_poपूर्णांकer(priv->tid_rdma.remote, remote);
 	/*
 	 * A TID RDMA READ request's segment size is not equal to
 	 * remote->max_len only when the request's data length is smaller
-	 * than remote->max_len. In that case, there will be only one segment.
-	 * Therefore, when priv->pkts_ps is used to calculate req->cur_seg
+	 * than remote->max_len. In that हाल, there will be only one segment.
+	 * Thereक्रमe, when priv->pkts_ps is used to calculate req->cur_seg
 	 * during retry, it will lead to req->cur_seg = 0, which is exactly
 	 * what is expected.
 	 */
-	priv->pkts_ps = (u16)rvt_div_mtu(qp, remote->max_len);
-	priv->timeout_shift = ilog2(priv->pkts_ps - 1) + 1;
-	goto free;
+	priv->pkts_ps = (u16)rvt_भाग_mtu(qp, remote->max_len);
+	priv->समयout_shअगरt = ilog2(priv->pkts_ps - 1) + 1;
+	जाओ मुक्त;
 null:
-	RCU_INIT_POINTER(priv->tid_rdma.remote, NULL);
-	priv->timeout_shift = 0;
-free:
-	if (old)
-		kfree_rcu(old, rcu_head);
-	return ret;
-}
+	RCU_INIT_POINTER(priv->tid_rdma.remote, शून्य);
+	priv->समयout_shअगरt = 0;
+मुक्त:
+	अगर (old)
+		kमुक्त_rcu(old, rcu_head);
+	वापस ret;
+पूर्ण
 
-bool tid_rdma_conn_resp(struct rvt_qp *qp, u64 *data)
-{
+bool tid_rdma_conn_resp(काष्ठा rvt_qp *qp, u64 *data)
+अणु
 	bool ret;
 
 	ret = tid_rdma_conn_reply(qp, *data);
 	*data = 0;
 	/*
-	 * If tid_rdma_conn_reply() returns error, set *data as 0 to indicate
+	 * If tid_rdma_conn_reply() वापसs error, set *data as 0 to indicate
 	 * TID RDMA could not be enabled. This will result in TID RDMA being
 	 * disabled at the requester too.
 	 */
-	if (ret)
-		(void)tid_rdma_conn_req(qp, data);
-	return ret;
-}
+	अगर (ret)
+		(व्योम)tid_rdma_conn_req(qp, data);
+	वापस ret;
+पूर्ण
 
-void tid_rdma_conn_error(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct tid_rdma_params *old;
+व्योम tid_rdma_conn_error(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा tid_rdma_params *old;
 
-	old = rcu_dereference_protected(priv->tid_rdma.remote,
+	old = rcu_dereference_रक्षित(priv->tid_rdma.remote,
 					lockdep_is_held(&priv->opfn.lock));
-	RCU_INIT_POINTER(priv->tid_rdma.remote, NULL);
-	if (old)
-		kfree_rcu(old, rcu_head);
-}
+	RCU_INIT_POINTER(priv->tid_rdma.remote, शून्य);
+	अगर (old)
+		kमुक्त_rcu(old, rcu_head);
+पूर्ण
 
-/* This is called at context initialization time */
-int hfi1_kern_exp_rcv_init(struct hfi1_ctxtdata *rcd, int reinit)
-{
-	if (reinit)
-		return 0;
+/* This is called at context initialization समय */
+पूर्णांक hfi1_kern_exp_rcv_init(काष्ठा hfi1_ctxtdata *rcd, पूर्णांक reinit)
+अणु
+	अगर (reinit)
+		वापस 0;
 
 	BUILD_BUG_ON(TID_RDMA_JKEY < HFI1_KERNEL_MIN_JKEY);
 	BUILD_BUG_ON(TID_RDMA_JKEY > HFI1_KERNEL_MAX_JKEY);
 	rcd->jkey = TID_RDMA_JKEY;
 	hfi1_set_ctxt_jkey(rcd->dd, rcd, rcd->jkey);
-	return hfi1_alloc_ctxt_rcv_groups(rcd);
-}
+	वापस hfi1_alloc_ctxt_rcv_groups(rcd);
+पूर्ण
 
 /**
  * qp_to_rcd - determine the receive context used by a qp
- * @rdi: rvt dev struct
+ * @rdi: rvt dev काष्ठा
  * @qp: the qp
  *
- * This routine returns the receive context associated
+ * This routine वापसs the receive context associated
  * with a a qp's qpn.
  *
  * Returns the context.
  */
-static struct hfi1_ctxtdata *qp_to_rcd(struct rvt_dev_info *rdi,
-				       struct rvt_qp *qp)
-{
-	struct hfi1_ibdev *verbs_dev = container_of(rdi,
-						    struct hfi1_ibdev,
+अटल काष्ठा hfi1_ctxtdata *qp_to_rcd(काष्ठा rvt_dev_info *rdi,
+				       काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_ibdev *verbs_dev = container_of(rdi,
+						    काष्ठा hfi1_ibdev,
 						    rdi);
-	struct hfi1_devdata *dd = container_of(verbs_dev,
-					       struct hfi1_devdata,
+	काष्ठा hfi1_devdata *dd = container_of(verbs_dev,
+					       काष्ठा hfi1_devdata,
 					       verbs_dev);
-	unsigned int ctxt;
+	अचिन्हित पूर्णांक ctxt;
 
-	if (qp->ibqp.qp_num == 0)
+	अगर (qp->ibqp.qp_num == 0)
 		ctxt = 0;
-	else
-		ctxt = hfi1_get_qp_map(dd, qp->ibqp.qp_num >> dd->qos_shift);
-	return dd->rcd[ctxt];
-}
+	अन्यथा
+		ctxt = hfi1_get_qp_map(dd, qp->ibqp.qp_num >> dd->qos_shअगरt);
+	वापस dd->rcd[ctxt];
+पूर्ण
 
-int hfi1_qp_priv_init(struct rvt_dev_info *rdi, struct rvt_qp *qp,
-		      struct ib_qp_init_attr *init_attr)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	int i, ret;
+पूर्णांक hfi1_qp_priv_init(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp,
+		      काष्ठा ib_qp_init_attr *init_attr)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	पूर्णांक i, ret;
 
 	qpriv->rcd = qp_to_rcd(rdi, qp);
 
@@ -361,82 +362,82 @@ int hfi1_qp_priv_init(struct rvt_dev_info *rdi, struct rvt_qp *qp,
 	qpriv->r_tid_alloc = HFI1_QP_WQE_INVALID;
 	atomic_set(&qpriv->n_requests, 0);
 	atomic_set(&qpriv->n_tid_requests, 0);
-	timer_setup(&qpriv->s_tid_timer, hfi1_tid_timeout, 0);
-	timer_setup(&qpriv->s_tid_retry_timer, hfi1_tid_retry_timeout, 0);
-	INIT_LIST_HEAD(&qpriv->tid_wait);
+	समयr_setup(&qpriv->s_tid_समयr, hfi1_tid_समयout, 0);
+	समयr_setup(&qpriv->s_tid_retry_समयr, hfi1_tid_retry_समयout, 0);
+	INIT_LIST_HEAD(&qpriv->tid_रुको);
 
-	if (init_attr->qp_type == IB_QPT_RC && HFI1_CAP_IS_KSET(TID_RDMA)) {
-		struct hfi1_devdata *dd = qpriv->rcd->dd;
+	अगर (init_attr->qp_type == IB_QPT_RC && HFI1_CAP_IS_KSET(TID_RDMA)) अणु
+		काष्ठा hfi1_devdata *dd = qpriv->rcd->dd;
 
 		qpriv->pages = kzalloc_node(TID_RDMA_MAX_PAGES *
-						sizeof(*qpriv->pages),
+						माप(*qpriv->pages),
 					    GFP_KERNEL, dd->node);
-		if (!qpriv->pages)
-			return -ENOMEM;
-		for (i = 0; i < qp->s_size; i++) {
-			struct hfi1_swqe_priv *priv;
-			struct rvt_swqe *wqe = rvt_get_swqe_ptr(qp, i);
+		अगर (!qpriv->pages)
+			वापस -ENOMEM;
+		क्रम (i = 0; i < qp->s_size; i++) अणु
+			काष्ठा hfi1_swqe_priv *priv;
+			काष्ठा rvt_swqe *wqe = rvt_get_swqe_ptr(qp, i);
 
-			priv = kzalloc_node(sizeof(*priv), GFP_KERNEL,
+			priv = kzalloc_node(माप(*priv), GFP_KERNEL,
 					    dd->node);
-			if (!priv)
-				return -ENOMEM;
+			अगर (!priv)
+				वापस -ENOMEM;
 
 			hfi1_init_trdma_req(qp, &priv->tid_req);
 			priv->tid_req.e.swqe = wqe;
 			wqe->priv = priv;
-		}
-		for (i = 0; i < rvt_max_atomic(rdi); i++) {
-			struct hfi1_ack_priv *priv;
+		पूर्ण
+		क्रम (i = 0; i < rvt_max_atomic(rdi); i++) अणु
+			काष्ठा hfi1_ack_priv *priv;
 
-			priv = kzalloc_node(sizeof(*priv), GFP_KERNEL,
+			priv = kzalloc_node(माप(*priv), GFP_KERNEL,
 					    dd->node);
-			if (!priv)
-				return -ENOMEM;
+			अगर (!priv)
+				वापस -ENOMEM;
 
 			hfi1_init_trdma_req(qp, &priv->tid_req);
 			priv->tid_req.e.ack = &qp->s_ack_queue[i];
 
 			ret = hfi1_kern_exp_rcv_alloc_flows(&priv->tid_req,
 							    GFP_KERNEL);
-			if (ret) {
-				kfree(priv);
-				return ret;
-			}
+			अगर (ret) अणु
+				kमुक्त(priv);
+				वापस ret;
+			पूर्ण
 			qp->s_ack_queue[i].priv = priv;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hfi1_qp_priv_tid_free(struct rvt_dev_info *rdi, struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct rvt_swqe *wqe;
+व्योम hfi1_qp_priv_tid_मुक्त(काष्ठा rvt_dev_info *rdi, काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा rvt_swqe *wqe;
 	u32 i;
 
-	if (qp->ibqp.qp_type == IB_QPT_RC && HFI1_CAP_IS_KSET(TID_RDMA)) {
-		for (i = 0; i < qp->s_size; i++) {
+	अगर (qp->ibqp.qp_type == IB_QPT_RC && HFI1_CAP_IS_KSET(TID_RDMA)) अणु
+		क्रम (i = 0; i < qp->s_size; i++) अणु
 			wqe = rvt_get_swqe_ptr(qp, i);
-			kfree(wqe->priv);
-			wqe->priv = NULL;
-		}
-		for (i = 0; i < rvt_max_atomic(rdi); i++) {
-			struct hfi1_ack_priv *priv = qp->s_ack_queue[i].priv;
+			kमुक्त(wqe->priv);
+			wqe->priv = शून्य;
+		पूर्ण
+		क्रम (i = 0; i < rvt_max_atomic(rdi); i++) अणु
+			काष्ठा hfi1_ack_priv *priv = qp->s_ack_queue[i].priv;
 
-			if (priv)
-				hfi1_kern_exp_rcv_free_flows(&priv->tid_req);
-			kfree(priv);
-			qp->s_ack_queue[i].priv = NULL;
-		}
+			अगर (priv)
+				hfi1_kern_exp_rcv_मुक्त_flows(&priv->tid_req);
+			kमुक्त(priv);
+			qp->s_ack_queue[i].priv = शून्य;
+		पूर्ण
 		cancel_work_sync(&qpriv->opfn.opfn_work);
-		kfree(qpriv->pages);
-		qpriv->pages = NULL;
-	}
-}
+		kमुक्त(qpriv->pages);
+		qpriv->pages = शून्य;
+	पूर्ण
+पूर्ण
 
-/* Flow and tid waiter functions */
+/* Flow and tid रुकोer functions */
 /**
  * DOC: lock ordering
  *
@@ -444,89 +445,89 @@ void hfi1_qp_priv_tid_free(struct rvt_dev_info *rdi, struct rvt_qp *qp)
  * routines: the qp s_lock and the exp_lock.
  *
  * Since the tid space allocation is called from
- * the send engine, the qp s_lock is already held.
+ * the send engine, the qp s_lock is alपढ़ोy held.
  *
  * The allocation routines will get the exp_lock.
  *
  * The first_qp() call is provided to allow the head of
- * the rcd wait queue to be fetched under the exp_lock and
+ * the rcd रुको queue to be fetched under the exp_lock and
  * followed by a drop of the exp_lock.
  *
- * Any qp in the wait list will have the qp reference count held
+ * Any qp in the रुको list will have the qp reference count held
  * to hold the qp in memory.
  */
 
 /*
- * return head of rcd wait list
+ * वापस head of rcd रुको list
  *
  * Must hold the exp_lock.
  *
  * Get a reference to the QP to hold the QP in memory.
  *
  * The caller must release the reference when the local
- * is no longer being used.
+ * is no दीर्घer being used.
  */
-static struct rvt_qp *first_qp(struct hfi1_ctxtdata *rcd,
-			       struct tid_queue *queue)
+अटल काष्ठा rvt_qp *first_qp(काष्ठा hfi1_ctxtdata *rcd,
+			       काष्ठा tid_queue *queue)
 	__must_hold(&rcd->exp_lock)
-{
-	struct hfi1_qp_priv *priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv;
 
-	lockdep_assert_held(&rcd->exp_lock);
+	lockdep_निश्चित_held(&rcd->exp_lock);
 	priv = list_first_entry_or_null(&queue->queue_head,
-					struct hfi1_qp_priv,
-					tid_wait);
-	if (!priv)
-		return NULL;
+					काष्ठा hfi1_qp_priv,
+					tid_रुको);
+	अगर (!priv)
+		वापस शून्य;
 	rvt_get_qp(priv->owner);
-	return priv->owner;
-}
+	वापस priv->owner;
+पूर्ण
 
 /**
- * kernel_tid_waiters - determine rcd wait
+ * kernel_tid_रुकोers - determine rcd रुको
  * @rcd: the receive context
  * @queue: the queue to operate on
  * @qp: the head of the qp being processed
  *
- * This routine will return false IFF
- * the list is NULL or the head of the
+ * This routine will वापस false IFF
+ * the list is शून्य or the head of the
  * list is the indicated qp.
  *
  * Must hold the qp s_lock and the exp_lock.
  *
  * Return:
- * false if either of the conditions below are satisfied:
+ * false अगर either of the conditions below are satisfied:
  * 1. The list is empty or
  * 2. The indicated qp is at the head of the list and the
  *    HFI1_S_WAIT_TID_SPACE bit is set in qp->s_flags.
- * true is returned otherwise.
+ * true is वापसed otherwise.
  */
-static bool kernel_tid_waiters(struct hfi1_ctxtdata *rcd,
-			       struct tid_queue *queue, struct rvt_qp *qp)
+अटल bool kernel_tid_रुकोers(काष्ठा hfi1_ctxtdata *rcd,
+			       काष्ठा tid_queue *queue, काष्ठा rvt_qp *qp)
 	__must_hold(&rcd->exp_lock) __must_hold(&qp->s_lock)
-{
-	struct rvt_qp *fqp;
+अणु
+	काष्ठा rvt_qp *fqp;
 	bool ret = true;
 
-	lockdep_assert_held(&qp->s_lock);
-	lockdep_assert_held(&rcd->exp_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
+	lockdep_निश्चित_held(&rcd->exp_lock);
 	fqp = first_qp(rcd, queue);
-	if (!fqp || (fqp == qp && (qp->s_flags & HFI1_S_WAIT_TID_SPACE)))
+	अगर (!fqp || (fqp == qp && (qp->s_flags & HFI1_S_WAIT_TID_SPACE)))
 		ret = false;
 	rvt_put_qp(fqp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * dequeue_tid_waiter - dequeue the qp from the list
+ * dequeue_tid_रुकोer - dequeue the qp from the list
  * @rcd: the receive context
  * @queue: the queue to operate on
- * @qp: the qp to remove the wait list
+ * @qp: the qp to हटाओ the रुको list
  *
- * This routine removes the indicated qp from the
- * wait list if it is there.
+ * This routine हटाओs the indicated qp from the
+ * रुको list अगर it is there.
  *
- * This should be done after the hardware flow and
+ * This should be करोne after the hardware flow and
  * tid array resources have been allocated.
  *
  * Must hold the qp s_lock and the rcd exp_lock.
@@ -534,90 +535,90 @@ static bool kernel_tid_waiters(struct hfi1_ctxtdata *rcd,
  * It assumes the s_lock to protect the s_flags
  * field and to reliably test the HFI1_S_WAIT_TID_SPACE flag.
  */
-static void dequeue_tid_waiter(struct hfi1_ctxtdata *rcd,
-			       struct tid_queue *queue, struct rvt_qp *qp)
+अटल व्योम dequeue_tid_रुकोer(काष्ठा hfi1_ctxtdata *rcd,
+			       काष्ठा tid_queue *queue, काष्ठा rvt_qp *qp)
 	__must_hold(&rcd->exp_lock) __must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	lockdep_assert_held(&qp->s_lock);
-	lockdep_assert_held(&rcd->exp_lock);
-	if (list_empty(&priv->tid_wait))
-		return;
-	list_del_init(&priv->tid_wait);
+	lockdep_निश्चित_held(&qp->s_lock);
+	lockdep_निश्चित_held(&rcd->exp_lock);
+	अगर (list_empty(&priv->tid_रुको))
+		वापस;
+	list_del_init(&priv->tid_रुको);
 	qp->s_flags &= ~HFI1_S_WAIT_TID_SPACE;
 	queue->dequeue++;
 	rvt_put_qp(qp);
-}
+पूर्ण
 
 /**
- * queue_qp_for_tid_wait - suspend QP on tid space
+ * queue_qp_क्रम_tid_रुको - suspend QP on tid space
  * @rcd: the receive context
  * @queue: the queue to operate on
  * @qp: the qp
  *
  * The qp is inserted at the tail of the rcd
- * wait queue and the HFI1_S_WAIT_TID_SPACE s_flag is set.
+ * रुको queue and the HFI1_S_WAIT_TID_SPACE s_flag is set.
  *
  * Must hold the qp s_lock and the exp_lock.
  */
-static void queue_qp_for_tid_wait(struct hfi1_ctxtdata *rcd,
-				  struct tid_queue *queue, struct rvt_qp *qp)
+अटल व्योम queue_qp_क्रम_tid_रुको(काष्ठा hfi1_ctxtdata *rcd,
+				  काष्ठा tid_queue *queue, काष्ठा rvt_qp *qp)
 	__must_hold(&rcd->exp_lock) __must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	lockdep_assert_held(&qp->s_lock);
-	lockdep_assert_held(&rcd->exp_lock);
-	if (list_empty(&priv->tid_wait)) {
+	lockdep_निश्चित_held(&qp->s_lock);
+	lockdep_निश्चित_held(&rcd->exp_lock);
+	अगर (list_empty(&priv->tid_रुको)) अणु
 		qp->s_flags |= HFI1_S_WAIT_TID_SPACE;
-		list_add_tail(&priv->tid_wait, &queue->queue_head);
+		list_add_tail(&priv->tid_रुको, &queue->queue_head);
 		priv->tid_enqueue = ++queue->enqueue;
-		rcd->dd->verbs_dev.n_tidwait++;
+		rcd->dd->verbs_dev.n_tidरुको++;
 		trace_hfi1_qpsleep(qp, HFI1_S_WAIT_TID_SPACE);
 		rvt_get_qp(qp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * __trigger_tid_waiter - trigger tid waiter
+ * __trigger_tid_रुकोer - trigger tid रुकोer
  * @qp: the qp
  *
- * This is a private entrance to schedule the qp
+ * This is a निजी entrance to schedule the qp
  * assuming the caller is holding the qp->s_lock.
  */
-static void __trigger_tid_waiter(struct rvt_qp *qp)
+अटल व्योम __trigger_tid_रुकोer(काष्ठा rvt_qp *qp)
 	__must_hold(&qp->s_lock)
-{
-	lockdep_assert_held(&qp->s_lock);
-	if (!(qp->s_flags & HFI1_S_WAIT_TID_SPACE))
-		return;
+अणु
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (!(qp->s_flags & HFI1_S_WAIT_TID_SPACE))
+		वापस;
 	trace_hfi1_qpwakeup(qp, HFI1_S_WAIT_TID_SPACE);
 	hfi1_schedule_send(qp);
-}
+पूर्ण
 
 /**
- * tid_rdma_schedule_tid_wakeup - schedule wakeup for a qp
+ * tid_rdma_schedule_tid_wakeup - schedule wakeup क्रम a qp
  * @qp: the qp
  *
- * trigger a schedule or a waiting qp in a deadlock
+ * trigger a schedule or a रुकोing qp in a deadlock
  * safe manner.  The qp reference is held prior
  * to this call via first_qp().
  *
- * If the qp trigger was already scheduled (!rval)
+ * If the qp trigger was alपढ़ोy scheduled (!rval)
  * the the reference is dropped, otherwise the resume
  * or the destroy cancel will dispatch the reference.
  */
-static void tid_rdma_schedule_tid_wakeup(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv;
-	struct hfi1_ibport *ibp;
-	struct hfi1_pportdata *ppd;
-	struct hfi1_devdata *dd;
+अटल व्योम tid_rdma_schedule_tid_wakeup(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv;
+	काष्ठा hfi1_ibport *ibp;
+	काष्ठा hfi1_pportdata *ppd;
+	काष्ठा hfi1_devdata *dd;
 	bool rval;
 
-	if (!qp)
-		return;
+	अगर (!qp)
+		वापस;
 
 	priv = qp->priv;
 	ibp = to_iport(qp->ibqp.device, qp->port_num);
@@ -629,9 +630,9 @@ static void tid_rdma_schedule_tid_wakeup(struct rvt_qp *qp)
 			     cpumask_first(cpumask_of_node(dd->node)),
 			     ppd->hfi1_wq,
 			     &priv->tid_rdma.trigger_work);
-	if (!rval)
+	अगर (!rval)
 		rvt_put_qp(qp);
-}
+पूर्ण
 
 /**
  * tid_rdma_trigger_resume - field a trigger work request
@@ -640,71 +641,71 @@ static void tid_rdma_schedule_tid_wakeup(struct rvt_qp *qp)
  * Complete the off qp trigger processing by directly
  * calling the progress routine.
  */
-static void tid_rdma_trigger_resume(struct work_struct *work)
-{
-	struct tid_rdma_qp_params *tr;
-	struct hfi1_qp_priv *priv;
-	struct rvt_qp *qp;
+अटल व्योम tid_rdma_trigger_resume(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा tid_rdma_qp_params *tr;
+	काष्ठा hfi1_qp_priv *priv;
+	काष्ठा rvt_qp *qp;
 
-	tr = container_of(work, struct tid_rdma_qp_params, trigger_work);
-	priv = container_of(tr, struct hfi1_qp_priv, tid_rdma);
+	tr = container_of(work, काष्ठा tid_rdma_qp_params, trigger_work);
+	priv = container_of(tr, काष्ठा hfi1_qp_priv, tid_rdma);
 	qp = priv->owner;
 	spin_lock_irq(&qp->s_lock);
-	if (qp->s_flags & HFI1_S_WAIT_TID_SPACE) {
+	अगर (qp->s_flags & HFI1_S_WAIT_TID_SPACE) अणु
 		spin_unlock_irq(&qp->s_lock);
-		hfi1_do_send(priv->owner, true);
-	} else {
+		hfi1_करो_send(priv->owner, true);
+	पूर्ण अन्यथा अणु
 		spin_unlock_irq(&qp->s_lock);
-	}
+	पूर्ण
 	rvt_put_qp(qp);
-}
+पूर्ण
 
 /*
- * tid_rdma_flush_wait - unwind any tid space wait
+ * tid_rdma_flush_रुको - unwind any tid space रुको
  *
  * This is called when resetting a qp to
  * allow a destroy or reset to get rid
  * of any tid space linkage and reference counts.
  */
-static void _tid_rdma_flush_wait(struct rvt_qp *qp, struct tid_queue *queue)
+अटल व्योम _tid_rdma_flush_रुको(काष्ठा rvt_qp *qp, काष्ठा tid_queue *queue)
 	__must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv;
 
-	if (!qp)
-		return;
-	lockdep_assert_held(&qp->s_lock);
+	अगर (!qp)
+		वापस;
+	lockdep_निश्चित_held(&qp->s_lock);
 	priv = qp->priv;
 	qp->s_flags &= ~HFI1_S_WAIT_TID_SPACE;
 	spin_lock(&priv->rcd->exp_lock);
-	if (!list_empty(&priv->tid_wait)) {
-		list_del_init(&priv->tid_wait);
+	अगर (!list_empty(&priv->tid_रुको)) अणु
+		list_del_init(&priv->tid_रुको);
 		qp->s_flags &= ~HFI1_S_WAIT_TID_SPACE;
 		queue->dequeue++;
 		rvt_put_qp(qp);
-	}
+	पूर्ण
 	spin_unlock(&priv->rcd->exp_lock);
-}
+पूर्ण
 
-void hfi1_tid_rdma_flush_wait(struct rvt_qp *qp)
+व्योम hfi1_tid_rdma_flush_रुको(काष्ठा rvt_qp *qp)
 	__must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	_tid_rdma_flush_wait(qp, &priv->rcd->flow_queue);
-	_tid_rdma_flush_wait(qp, &priv->rcd->rarr_queue);
-}
+	_tid_rdma_flush_रुको(qp, &priv->rcd->flow_queue);
+	_tid_rdma_flush_रुको(qp, &priv->rcd->rarr_queue);
+पूर्ण
 
 /* Flow functions */
 /**
  * kern_reserve_flow - allocate a hardware flow
- * @rcd: the context to use for allocation
+ * @rcd: the context to use क्रम allocation
  * @last: the index of the preferred flow. Use RXE_NUM_TID_FLOWS to
- *         signify "don't care".
+ *         signअगरy "don't care".
  *
  * Use a bit mask based allocation to reserve a hardware
- * flow for use in receiving KDETH data packets. If a preferred flow is
- * specified the function will attempt to reserve that flow again, if
+ * flow क्रम use in receiving KDETH data packets. If a preferred flow is
+ * specअगरied the function will attempt to reserve that flow again, अगर
  * available.
  *
  * The exp_lock must be held.
@@ -713,28 +714,28 @@ void hfi1_tid_rdma_flush_wait(struct rvt_qp *qp)
  * On success: a value postive value between 0 and RXE_NUM_TID_FLOWS - 1
  * On failure: -EAGAIN
  */
-static int kern_reserve_flow(struct hfi1_ctxtdata *rcd, int last)
+अटल पूर्णांक kern_reserve_flow(काष्ठा hfi1_ctxtdata *rcd, पूर्णांक last)
 	__must_hold(&rcd->exp_lock)
-{
-	int nr;
+अणु
+	पूर्णांक nr;
 
 	/* Attempt to reserve the preferred flow index */
-	if (last >= 0 && last < RXE_NUM_TID_FLOWS &&
+	अगर (last >= 0 && last < RXE_NUM_TID_FLOWS &&
 	    !test_and_set_bit(last, &rcd->flow_mask))
-		return last;
+		वापस last;
 
 	nr = ffz(rcd->flow_mask);
 	BUILD_BUG_ON(RXE_NUM_TID_FLOWS >=
-		     (sizeof(rcd->flow_mask) * BITS_PER_BYTE));
-	if (nr > (RXE_NUM_TID_FLOWS - 1))
-		return -EAGAIN;
+		     (माप(rcd->flow_mask) * BITS_PER_BYTE));
+	अगर (nr > (RXE_NUM_TID_FLOWS - 1))
+		वापस -EAGAIN;
 	set_bit(nr, &rcd->flow_mask);
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-static void kern_set_hw_flow(struct hfi1_ctxtdata *rcd, u32 generation,
+अटल व्योम kern_set_hw_flow(काष्ठा hfi1_ctxtdata *rcd, u32 generation,
 			     u32 flow_idx)
-{
+अणु
 	u64 reg;
 
 	reg = ((u64)generation << HFI1_KDETH_BTH_SEQ_SHIFT) |
@@ -744,88 +745,88 @@ static void kern_set_hw_flow(struct hfi1_ctxtdata *rcd, u32 generation,
 		RCV_TID_FLOW_TABLE_STATUS_SEQ_MISMATCH_SMASK |
 		RCV_TID_FLOW_TABLE_STATUS_GEN_MISMATCH_SMASK;
 
-	if (generation != KERN_GENERATION_RESERVED)
+	अगर (generation != KERN_GENERATION_RESERVED)
 		reg |= RCV_TID_FLOW_TABLE_CTRL_HDR_SUPP_EN_SMASK;
 
-	write_uctxt_csr(rcd->dd, rcd->ctxt,
+	ग_लिखो_uctxt_csr(rcd->dd, rcd->ctxt,
 			RCV_TID_FLOW_TABLE + 8 * flow_idx, reg);
-}
+पूर्ण
 
-static u32 kern_setup_hw_flow(struct hfi1_ctxtdata *rcd, u32 flow_idx)
+अटल u32 kern_setup_hw_flow(काष्ठा hfi1_ctxtdata *rcd, u32 flow_idx)
 	__must_hold(&rcd->exp_lock)
-{
+अणु
 	u32 generation = rcd->flows[flow_idx].generation;
 
 	kern_set_hw_flow(rcd, generation, flow_idx);
-	return generation;
-}
+	वापस generation;
+पूर्ण
 
-static u32 kern_flow_generation_next(u32 gen)
-{
+अटल u32 kern_flow_generation_next(u32 gen)
+अणु
 	u32 generation = mask_generation(gen + 1);
 
-	if (generation == KERN_GENERATION_RESERVED)
+	अगर (generation == KERN_GENERATION_RESERVED)
 		generation = mask_generation(generation + 1);
-	return generation;
-}
+	वापस generation;
+पूर्ण
 
-static void kern_clear_hw_flow(struct hfi1_ctxtdata *rcd, u32 flow_idx)
+अटल व्योम kern_clear_hw_flow(काष्ठा hfi1_ctxtdata *rcd, u32 flow_idx)
 	__must_hold(&rcd->exp_lock)
-{
+अणु
 	rcd->flows[flow_idx].generation =
 		kern_flow_generation_next(rcd->flows[flow_idx].generation);
 	kern_set_hw_flow(rcd, KERN_GENERATION_RESERVED, flow_idx);
-}
+पूर्ण
 
-int hfi1_kern_setup_hw_flow(struct hfi1_ctxtdata *rcd, struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = (struct hfi1_qp_priv *)qp->priv;
-	struct tid_flow_state *fs = &qpriv->flow_state;
-	struct rvt_qp *fqp;
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक hfi1_kern_setup_hw_flow(काष्ठा hfi1_ctxtdata *rcd, काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = (काष्ठा hfi1_qp_priv *)qp->priv;
+	काष्ठा tid_flow_state *fs = &qpriv->flow_state;
+	काष्ठा rvt_qp *fqp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	/* The QP already has an allocated flow */
-	if (fs->index != RXE_NUM_TID_FLOWS)
-		return ret;
+	/* The QP alपढ़ोy has an allocated flow */
+	अगर (fs->index != RXE_NUM_TID_FLOWS)
+		वापस ret;
 
 	spin_lock_irqsave(&rcd->exp_lock, flags);
-	if (kernel_tid_waiters(rcd, &rcd->flow_queue, qp))
-		goto queue;
+	अगर (kernel_tid_रुकोers(rcd, &rcd->flow_queue, qp))
+		जाओ queue;
 
 	ret = kern_reserve_flow(rcd, fs->last_index);
-	if (ret < 0)
-		goto queue;
+	अगर (ret < 0)
+		जाओ queue;
 	fs->index = ret;
 	fs->last_index = fs->index;
 
-	/* Generation received in a RESYNC overrides default flow generation */
-	if (fs->generation != KERN_GENERATION_RESERVED)
+	/* Generation received in a RESYNC overrides शेष flow generation */
+	अगर (fs->generation != KERN_GENERATION_RESERVED)
 		rcd->flows[fs->index].generation = fs->generation;
 	fs->generation = kern_setup_hw_flow(rcd, fs->index);
 	fs->psn = 0;
-	dequeue_tid_waiter(rcd, &rcd->flow_queue, qp);
-	/* get head before dropping lock */
+	dequeue_tid_रुकोer(rcd, &rcd->flow_queue, qp);
+	/* get head beक्रमe dropping lock */
 	fqp = first_qp(rcd, &rcd->flow_queue);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
 
 	tid_rdma_schedule_tid_wakeup(fqp);
-	return 0;
+	वापस 0;
 queue:
-	queue_qp_for_tid_wait(rcd, &rcd->flow_queue, qp);
+	queue_qp_क्रम_tid_रुको(rcd, &rcd->flow_queue, qp);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-void hfi1_kern_clear_hw_flow(struct hfi1_ctxtdata *rcd, struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = (struct hfi1_qp_priv *)qp->priv;
-	struct tid_flow_state *fs = &qpriv->flow_state;
-	struct rvt_qp *fqp;
-	unsigned long flags;
+व्योम hfi1_kern_clear_hw_flow(काष्ठा hfi1_ctxtdata *rcd, काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = (काष्ठा hfi1_qp_priv *)qp->priv;
+	काष्ठा tid_flow_state *fs = &qpriv->flow_state;
+	काष्ठा rvt_qp *fqp;
+	अचिन्हित दीर्घ flags;
 
-	if (fs->index >= RXE_NUM_TID_FLOWS)
-		return;
+	अगर (fs->index >= RXE_NUM_TID_FLOWS)
+		वापस;
 	spin_lock_irqsave(&rcd->exp_lock, flags);
 	kern_clear_hw_flow(rcd, fs->index);
 	clear_bit(fs->index, &rcd->flow_mask);
@@ -833,101 +834,101 @@ void hfi1_kern_clear_hw_flow(struct hfi1_ctxtdata *rcd, struct rvt_qp *qp)
 	fs->psn = 0;
 	fs->generation = KERN_GENERATION_RESERVED;
 
-	/* get head before dropping lock */
+	/* get head beक्रमe dropping lock */
 	fqp = first_qp(rcd, &rcd->flow_queue);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
 
-	if (fqp == qp) {
-		__trigger_tid_waiter(fqp);
+	अगर (fqp == qp) अणु
+		__trigger_tid_रुकोer(fqp);
 		rvt_put_qp(fqp);
-	} else {
+	पूर्ण अन्यथा अणु
 		tid_rdma_schedule_tid_wakeup(fqp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hfi1_kern_init_ctxt_generations(struct hfi1_ctxtdata *rcd)
-{
-	int i;
+व्योम hfi1_kern_init_ctxt_generations(काष्ठा hfi1_ctxtdata *rcd)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < RXE_NUM_TID_FLOWS; i++) {
-		rcd->flows[i].generation = mask_generation(prandom_u32());
+	क्रम (i = 0; i < RXE_NUM_TID_FLOWS; i++) अणु
+		rcd->flows[i].generation = mask_generation(pअक्रमom_u32());
 		kern_set_hw_flow(rcd, KERN_GENERATION_RESERVED, i);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* TID allocation functions */
-static u8 trdma_pset_order(struct tid_rdma_pageset *s)
-{
+अटल u8 trdma_pset_order(काष्ठा tid_rdma_pageset *s)
+अणु
 	u8 count = s->count;
 
-	return ilog2(count) + 1;
-}
+	वापस ilog2(count) + 1;
+पूर्ण
 
 /**
  * tid_rdma_find_phys_blocks_4k - get groups base on mr info
- * @flow: overall info for a TID RDMA segment
- * @pages: pointer to an array of page structs
+ * @flow: overall info क्रम a TID RDMA segment
+ * @pages: poपूर्णांकer to an array of page काष्ठाs
  * @npages: number of pages
- * @list: page set array to return
+ * @list: page set array to वापस
  *
- * This routine returns the number of groups associated with
- * the current sge information.  This implementation is based
+ * This routine वापसs the number of groups associated with
+ * the current sge inक्रमmation.  This implementation is based
  * on the expected receive find_phys_blocks() adjusted to
- * use the MR information vs. the pfn.
+ * use the MR inक्रमmation vs. the pfn.
  *
  * Return:
  * the number of RcvArray entries
  */
-static u32 tid_rdma_find_phys_blocks_4k(struct tid_rdma_flow *flow,
-					struct page **pages,
+अटल u32 tid_rdma_find_phys_blocks_4k(काष्ठा tid_rdma_flow *flow,
+					काष्ठा page **pages,
 					u32 npages,
-					struct tid_rdma_pageset *list)
-{
+					काष्ठा tid_rdma_pageset *list)
+अणु
 	u32 pagecount, pageidx, setcount = 0, i;
-	void *vaddr, *this_vaddr;
+	व्योम *vaddr, *this_vaddr;
 
-	if (!npages)
-		return 0;
+	अगर (!npages)
+		वापस 0;
 
 	/*
-	 * Look for sets of physically contiguous pages in the user buffer.
+	 * Look क्रम sets of physically contiguous pages in the user buffer.
 	 * This will allow us to optimize Expected RcvArray entry usage by
 	 * using the bigger supported sizes.
 	 */
 	vaddr = page_address(pages[0]);
 	trace_hfi1_tid_flow_page(flow->req->qp, flow, 0, 0, 0, vaddr);
-	for (pageidx = 0, pagecount = 1, i = 1; i <= npages; i++) {
-		this_vaddr = i < npages ? page_address(pages[i]) : NULL;
+	क्रम (pageidx = 0, pagecount = 1, i = 1; i <= npages; i++) अणु
+		this_vaddr = i < npages ? page_address(pages[i]) : शून्य;
 		trace_hfi1_tid_flow_page(flow->req->qp, flow, i, 0, 0,
 					 this_vaddr);
 		/*
 		 * If the vaddr's are not sequential, pages are not physically
 		 * contiguous.
 		 */
-		if (this_vaddr != (vaddr + PAGE_SIZE)) {
+		अगर (this_vaddr != (vaddr + PAGE_SIZE)) अणु
 			/*
-			 * At this point we have to loop over the set of
-			 * physically contiguous pages and break them down it
+			 * At this poपूर्णांक we have to loop over the set of
+			 * physically contiguous pages and अवरोध them करोwn it
 			 * sizes supported by the HW.
-			 * There are two main constraints:
+			 * There are two मुख्य स्थिरraपूर्णांकs:
 			 *     1. The max buffer size is MAX_EXPECTED_BUFFER.
 			 *        If the total set size is bigger than that
 			 *        program only a MAX_EXPECTED_BUFFER chunk.
-			 *     2. The buffer size has to be a power of two. If
-			 *        it is not, round down to the closes power of
+			 *     2. The buffer size has to be a घातer of two. If
+			 *        it is not, round करोwn to the बंदs घातer of
 			 *        2 and program that size.
 			 */
-			while (pagecount) {
-				int maxpages = pagecount;
+			जबतक (pagecount) अणु
+				पूर्णांक maxpages = pagecount;
 				u32 bufsize = pagecount * PAGE_SIZE;
 
-				if (bufsize > MAX_EXPECTED_BUFFER)
+				अगर (bufsize > MAX_EXPECTED_BUFFER)
 					maxpages =
 						MAX_EXPECTED_BUFFER >>
 						PAGE_SHIFT;
-				else if (!is_power_of_2(bufsize))
+				अन्यथा अगर (!is_घातer_of_2(bufsize))
 					maxpages =
-						rounddown_pow_of_two(bufsize) >>
+						roundकरोwn_घात_of_two(bufsize) >>
 						PAGE_SHIFT;
 
 				list[setcount].idx = pageidx;
@@ -938,25 +939,25 @@ static u32 tid_rdma_find_phys_blocks_4k(struct tid_rdma_flow *flow,
 				pagecount -= maxpages;
 				pageidx += maxpages;
 				setcount++;
-			}
+			पूर्ण
 			pageidx = i;
 			pagecount = 1;
 			vaddr = this_vaddr;
-		} else {
+		पूर्ण अन्यथा अणु
 			vaddr += PAGE_SIZE;
 			pagecount++;
-		}
-	}
-	/* insure we always return an even number of sets */
-	if (setcount & 1)
+		पूर्ण
+	पूर्ण
+	/* insure we always वापस an even number of sets */
+	अगर (setcount & 1)
 		list[setcount++].count = 0;
-	return setcount;
-}
+	वापस setcount;
+पूर्ण
 
 /**
- * tid_flush_pages - dump out pages into pagesets
+ * tid_flush_pages - dump out pages पूर्णांकo pagesets
  * @list: list of pagesets
- * @idx: pointer to current page index
+ * @idx: poपूर्णांकer to current page index
  * @pages: number of pages to dump
  * @sets: current number of pagesset
  *
@@ -966,250 +967,250 @@ static u32 tid_rdma_find_phys_blocks_4k(struct tid_rdma_flow *flow,
  * code may add a filler.
  *
  * This can happen with when pages is not
- * a power of 2 or pages is a power of 2
+ * a घातer of 2 or pages is a घातer of 2
  * less than the maximum pages.
  *
  * Return:
  * The new number of sets
  */
 
-static u32 tid_flush_pages(struct tid_rdma_pageset *list,
+अटल u32 tid_flush_pages(काष्ठा tid_rdma_pageset *list,
 			   u32 *idx, u32 pages, u32 sets)
-{
-	while (pages) {
+अणु
+	जबतक (pages) अणु
 		u32 maxpages = pages;
 
-		if (maxpages > MAX_EXPECTED_PAGES)
+		अगर (maxpages > MAX_EXPECTED_PAGES)
 			maxpages = MAX_EXPECTED_PAGES;
-		else if (!is_power_of_2(maxpages))
-			maxpages = rounddown_pow_of_two(maxpages);
+		अन्यथा अगर (!is_घातer_of_2(maxpages))
+			maxpages = roundकरोwn_घात_of_two(maxpages);
 		list[sets].idx = *idx;
 		list[sets++].count = maxpages;
 		*idx += maxpages;
 		pages -= maxpages;
-	}
+	पूर्ण
 	/* might need a filler */
-	if (sets & 1)
+	अगर (sets & 1)
 		list[sets++].count = 0;
-	return sets;
-}
+	वापस sets;
+पूर्ण
 
 /**
  * tid_rdma_find_phys_blocks_8k - get groups base on mr info
- * @flow: overall info for a TID RDMA segment
- * @pages: pointer to an array of page structs
+ * @flow: overall info क्रम a TID RDMA segment
+ * @pages: poपूर्णांकer to an array of page काष्ठाs
  * @npages: number of pages
- * @list: page set array to return
+ * @list: page set array to वापस
  *
  * This routine parses an array of pages to compute pagesets
  * in an 8k compatible way.
  *
- * pages are tested two at a time, i, i + 1 for contiguous
+ * pages are tested two at a समय, i, i + 1 क्रम contiguous
  * pages and i - 1 and i contiguous pages.
  *
  * If any condition is false, any accumlated pages are flushed and
  * v0,v1 are emitted as separate PAGE_SIZE pagesets
  *
- * Otherwise, the current 8k is totaled for a future flush.
+ * Otherwise, the current 8k is totaled क्रम a future flush.
  *
  * Return:
  * The number of pagesets
- * list set with the returned number of pagesets
+ * list set with the वापसed number of pagesets
  *
  */
-static u32 tid_rdma_find_phys_blocks_8k(struct tid_rdma_flow *flow,
-					struct page **pages,
+अटल u32 tid_rdma_find_phys_blocks_8k(काष्ठा tid_rdma_flow *flow,
+					काष्ठा page **pages,
 					u32 npages,
-					struct tid_rdma_pageset *list)
-{
+					काष्ठा tid_rdma_pageset *list)
+अणु
 	u32 idx, sets = 0, i;
 	u32 pagecnt = 0;
-	void *v0, *v1, *vm1;
+	व्योम *v0, *v1, *vm1;
 
-	if (!npages)
-		return 0;
-	for (idx = 0, i = 0, vm1 = NULL; i < npages; i += 2) {
+	अगर (!npages)
+		वापस 0;
+	क्रम (idx = 0, i = 0, vm1 = शून्य; i < npages; i += 2) अणु
 		/* get a new v0 */
 		v0 = page_address(pages[i]);
 		trace_hfi1_tid_flow_page(flow->req->qp, flow, i, 1, 0, v0);
 		v1 = i + 1 < npages ?
-				page_address(pages[i + 1]) : NULL;
+				page_address(pages[i + 1]) : शून्य;
 		trace_hfi1_tid_flow_page(flow->req->qp, flow, i, 1, 1, v1);
 		/* compare i, i + 1 vaddr */
-		if (v1 != (v0 + PAGE_SIZE)) {
+		अगर (v1 != (v0 + PAGE_SIZE)) अणु
 			/* flush out pages */
 			sets = tid_flush_pages(list, &idx, pagecnt, sets);
 			/* output v0,v1 as two pagesets */
 			list[sets].idx = idx++;
 			list[sets++].count = 1;
-			if (v1) {
+			अगर (v1) अणु
 				list[sets].count = 1;
 				list[sets++].idx = idx++;
-			} else {
+			पूर्ण अन्यथा अणु
 				list[sets++].count = 0;
-			}
-			vm1 = NULL;
+			पूर्ण
+			vm1 = शून्य;
 			pagecnt = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/* i,i+1 consecutive, look at i-1,i */
-		if (vm1 && v0 != (vm1 + PAGE_SIZE)) {
+		अगर (vm1 && v0 != (vm1 + PAGE_SIZE)) अणु
 			/* flush out pages */
 			sets = tid_flush_pages(list, &idx, pagecnt, sets);
 			pagecnt = 0;
-		}
+		पूर्ण
 		/* pages will always be a multiple of 8k */
 		pagecnt += 2;
 		/* save i-1 */
 		vm1 = v1;
 		/* move to next pair */
-	}
+	पूर्ण
 	/* dump residual pages at end */
 	sets = tid_flush_pages(list, &idx, npages - idx, sets);
 	/* by design cannot be odd sets */
 	WARN_ON(sets & 1);
-	return sets;
-}
+	वापस sets;
+पूर्ण
 
 /*
- * Find pages for one segment of a sge array represented by @ss. The function
- * does not check the sge, the sge must have been checked for alignment with a
- * prior call to hfi1_kern_trdma_ok. Other sge checking is done as part of
- * rvt_lkey_ok and rvt_rkey_ok. Also, the function only modifies the local sge
- * copy maintained in @ss->sge, the original sge is not modified.
+ * Find pages क्रम one segment of a sge array represented by @ss. The function
+ * करोes not check the sge, the sge must have been checked क्रम alignment with a
+ * prior call to hfi1_kern_trdma_ok. Other sge checking is करोne as part of
+ * rvt_lkey_ok and rvt_rkey_ok. Also, the function only modअगरies the local sge
+ * copy मुख्यtained in @ss->sge, the original sge is not modअगरied.
  *
  * Unlike IB RDMA WRITE, we can't decrement ss->num_sge here because we are not
- * releasing the MR reference count at the same time. Otherwise, we'll "leak"
- * references to the MR. This difference requires that we keep track of progress
- * into the sg_list. This is done by the cur_seg cursor in the tid_rdma_request
- * structure.
+ * releasing the MR reference count at the same समय. Otherwise, we'll "leak"
+ * references to the MR. This dअगरference requires that we keep track of progress
+ * पूर्णांकo the sg_list. This is करोne by the cur_seg cursor in the tid_rdma_request
+ * काष्ठाure.
  */
-static u32 kern_find_pages(struct tid_rdma_flow *flow,
-			   struct page **pages,
-			   struct rvt_sge_state *ss, bool *last)
-{
-	struct tid_rdma_request *req = flow->req;
-	struct rvt_sge *sge = &ss->sge;
+अटल u32 kern_find_pages(काष्ठा tid_rdma_flow *flow,
+			   काष्ठा page **pages,
+			   काष्ठा rvt_sge_state *ss, bool *last)
+अणु
+	काष्ठा tid_rdma_request *req = flow->req;
+	काष्ठा rvt_sge *sge = &ss->sge;
 	u32 length = flow->req->seg_len;
 	u32 len = PAGE_SIZE;
 	u32 i = 0;
 
-	while (length && req->isge < ss->num_sge) {
+	जबतक (length && req->isge < ss->num_sge) अणु
 		pages[i++] = virt_to_page(sge->vaddr);
 
 		sge->vaddr += len;
 		sge->length -= len;
 		sge->sge_length -= len;
-		if (!sge->sge_length) {
-			if (++req->isge < ss->num_sge)
+		अगर (!sge->sge_length) अणु
+			अगर (++req->isge < ss->num_sge)
 				*sge = ss->sg_list[req->isge - 1];
-		} else if (sge->length == 0 && sge->mr->lkey) {
-			if (++sge->n >= RVT_SEGSZ) {
+		पूर्ण अन्यथा अगर (sge->length == 0 && sge->mr->lkey) अणु
+			अगर (++sge->n >= RVT_SEGSZ) अणु
 				++sge->m;
 				sge->n = 0;
-			}
+			पूर्ण
 			sge->vaddr = sge->mr->map[sge->m]->segs[sge->n].vaddr;
 			sge->length = sge->mr->map[sge->m]->segs[sge->n].length;
-		}
+		पूर्ण
 		length -= len;
-	}
+	पूर्ण
 
 	flow->length = flow->req->seg_len - length;
 	*last = req->isge == ss->num_sge ? false : true;
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static void dma_unmap_flow(struct tid_rdma_flow *flow)
-{
-	struct hfi1_devdata *dd;
-	int i;
-	struct tid_rdma_pageset *pset;
+अटल व्योम dma_unmap_flow(काष्ठा tid_rdma_flow *flow)
+अणु
+	काष्ठा hfi1_devdata *dd;
+	पूर्णांक i;
+	काष्ठा tid_rdma_pageset *pset;
 
 	dd = flow->req->rcd->dd;
-	for (i = 0, pset = &flow->pagesets[0]; i < flow->npagesets;
-			i++, pset++) {
-		if (pset->count && pset->addr) {
+	क्रम (i = 0, pset = &flow->pagesets[0]; i < flow->npagesets;
+			i++, pset++) अणु
+		अगर (pset->count && pset->addr) अणु
 			dma_unmap_page(&dd->pcidev->dev,
 				       pset->addr,
 				       PAGE_SIZE * pset->count,
 				       DMA_FROM_DEVICE);
 			pset->mapped = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int dma_map_flow(struct tid_rdma_flow *flow, struct page **pages)
-{
-	int i;
-	struct hfi1_devdata *dd = flow->req->rcd->dd;
-	struct tid_rdma_pageset *pset;
+अटल पूर्णांक dma_map_flow(काष्ठा tid_rdma_flow *flow, काष्ठा page **pages)
+अणु
+	पूर्णांक i;
+	काष्ठा hfi1_devdata *dd = flow->req->rcd->dd;
+	काष्ठा tid_rdma_pageset *pset;
 
-	for (i = 0, pset = &flow->pagesets[0]; i < flow->npagesets;
-			i++, pset++) {
-		if (pset->count) {
+	क्रम (i = 0, pset = &flow->pagesets[0]; i < flow->npagesets;
+			i++, pset++) अणु
+		अगर (pset->count) अणु
 			pset->addr = dma_map_page(&dd->pcidev->dev,
 						  pages[pset->idx],
 						  0,
 						  PAGE_SIZE * pset->count,
 						  DMA_FROM_DEVICE);
 
-			if (dma_mapping_error(&dd->pcidev->dev, pset->addr)) {
+			अगर (dma_mapping_error(&dd->pcidev->dev, pset->addr)) अणु
 				dma_unmap_flow(flow);
-				return -ENOMEM;
-			}
+				वापस -ENOMEM;
+			पूर्ण
 			pset->mapped = 1;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline bool dma_mapped(struct tid_rdma_flow *flow)
-{
-	return !!flow->pagesets[0].mapped;
-}
+अटल अंतरभूत bool dma_mapped(काष्ठा tid_rdma_flow *flow)
+अणु
+	वापस !!flow->pagesets[0].mapped;
+पूर्ण
 
 /*
- * Get pages pointers and identify contiguous physical memory chunks for a
+ * Get pages poपूर्णांकers and identअगरy contiguous physical memory chunks क्रम a
  * segment. All segments are of length flow->req->seg_len.
  */
-static int kern_get_phys_blocks(struct tid_rdma_flow *flow,
-				struct page **pages,
-				struct rvt_sge_state *ss, bool *last)
-{
+अटल पूर्णांक kern_get_phys_blocks(काष्ठा tid_rdma_flow *flow,
+				काष्ठा page **pages,
+				काष्ठा rvt_sge_state *ss, bool *last)
+अणु
 	u8 npages;
 
-	/* Reuse previously computed pagesets, if any */
-	if (flow->npagesets) {
+	/* Reuse previously computed pagesets, अगर any */
+	अगर (flow->npagesets) अणु
 		trace_hfi1_tid_flow_alloc(flow->req->qp, flow->req->setup_head,
 					  flow);
-		if (!dma_mapped(flow))
-			return dma_map_flow(flow, pages);
-		return 0;
-	}
+		अगर (!dma_mapped(flow))
+			वापस dma_map_flow(flow, pages);
+		वापस 0;
+	पूर्ण
 
 	npages = kern_find_pages(flow, pages, ss, last);
 
-	if (flow->req->qp->pmtu == enum_to_mtu(OPA_MTU_4096))
+	अगर (flow->req->qp->pmtu == क्रमागत_to_mtu(OPA_MTU_4096))
 		flow->npagesets =
 			tid_rdma_find_phys_blocks_4k(flow, pages, npages,
 						     flow->pagesets);
-	else
+	अन्यथा
 		flow->npagesets =
 			tid_rdma_find_phys_blocks_8k(flow, pages, npages,
 						     flow->pagesets);
 
-	return dma_map_flow(flow, pages);
-}
+	वापस dma_map_flow(flow, pages);
+पूर्ण
 
-static inline void kern_add_tid_node(struct tid_rdma_flow *flow,
-				     struct hfi1_ctxtdata *rcd, char *s,
-				     struct tid_group *grp, u8 cnt)
-{
-	struct kern_tid_node *node = &flow->tnode[flow->tnode_cnt++];
+अटल अंतरभूत व्योम kern_add_tid_node(काष्ठा tid_rdma_flow *flow,
+				     काष्ठा hfi1_ctxtdata *rcd, अक्षर *s,
+				     काष्ठा tid_group *grp, u8 cnt)
+अणु
+	काष्ठा kern_tid_node *node = &flow->tnode[flow->tnode_cnt++];
 
 	WARN_ON_ONCE(flow->tnode_cnt >=
 		     (TID_RDMA_MAX_SEGMENT_SIZE >> PAGE_SHIFT));
-	if (WARN_ON_ONCE(cnt & 1))
+	अगर (WARN_ON_ONCE(cnt & 1))
 		dd_dev_err(rcd->dd,
 			   "unexpected odd allocation cnt %u map 0x%x used %u",
 			   cnt, grp->map, grp->used);
@@ -1219,125 +1220,125 @@ static inline void kern_add_tid_node(struct tid_rdma_flow *flow,
 	node->cnt = cnt;
 	trace_hfi1_tid_node_add(flow->req->qp, s, flow->tnode_cnt - 1,
 				grp->base, grp->map, grp->used, cnt);
-}
+पूर्ण
 
 /*
- * Try to allocate pageset_count TID's from TID groups for a context
+ * Try to allocate pageset_count TID's from TID groups क्रम a context
  *
  * This function allocates TID's without moving groups between lists or
- * modifying grp->map. This is done as follows, being cogizant of the lists
+ * modअगरying grp->map. This is करोne as follows, being cogizant of the lists
  * between which the TID groups will move:
  * 1. First allocate complete groups of 8 TID's since this is more efficient,
  *    these groups will move from group->full without affecting used
  * 2. If more TID's are needed allocate from used (will move from used->full or
  *    stay in used)
- * 3. If we still don't have the required number of TID's go back and look again
+ * 3. If we still करोn't have the required number of TID's go back and look again
  *    at a complete group (will move from group->used)
  */
-static int kern_alloc_tids(struct tid_rdma_flow *flow)
-{
-	struct hfi1_ctxtdata *rcd = flow->req->rcd;
-	struct hfi1_devdata *dd = rcd->dd;
+अटल पूर्णांक kern_alloc_tids(काष्ठा tid_rdma_flow *flow)
+अणु
+	काष्ठा hfi1_ctxtdata *rcd = flow->req->rcd;
+	काष्ठा hfi1_devdata *dd = rcd->dd;
 	u32 ngroups, pageidx = 0;
-	struct tid_group *group = NULL, *used;
+	काष्ठा tid_group *group = शून्य, *used;
 	u8 use;
 
 	flow->tnode_cnt = 0;
 	ngroups = flow->npagesets / dd->rcv_entries.group_size;
-	if (!ngroups)
-		goto used_list;
+	अगर (!ngroups)
+		जाओ used_list;
 
 	/* First look at complete groups */
-	list_for_each_entry(group,  &rcd->tid_group_list.list, list) {
+	list_क्रम_each_entry(group,  &rcd->tid_group_list.list, list) अणु
 		kern_add_tid_node(flow, rcd, "complete groups", group,
 				  group->size);
 
 		pageidx += group->size;
-		if (!--ngroups)
-			break;
-	}
+		अगर (!--ngroups)
+			अवरोध;
+	पूर्ण
 
-	if (pageidx >= flow->npagesets)
-		goto ok;
+	अगर (pageidx >= flow->npagesets)
+		जाओ ok;
 
 used_list:
 	/* Now look at partially used groups */
-	list_for_each_entry(used, &rcd->tid_used_list.list, list) {
+	list_क्रम_each_entry(used, &rcd->tid_used_list.list, list) अणु
 		use = min_t(u32, flow->npagesets - pageidx,
 			    used->size - used->used);
 		kern_add_tid_node(flow, rcd, "used groups", used, use);
 
 		pageidx += use;
-		if (pageidx >= flow->npagesets)
-			goto ok;
-	}
+		अगर (pageidx >= flow->npagesets)
+			जाओ ok;
+	पूर्ण
 
 	/*
 	 * Look again at a complete group, continuing from where we left.
-	 * However, if we are at the head, we have reached the end of the
+	 * However, अगर we are at the head, we have reached the end of the
 	 * complete groups list from the first loop above
 	 */
-	if (group && &group->list == &rcd->tid_group_list.list)
-		goto bail_eagain;
+	अगर (group && &group->list == &rcd->tid_group_list.list)
+		जाओ bail_eagain;
 	group = list_prepare_entry(group, &rcd->tid_group_list.list,
 				   list);
-	if (list_is_last(&group->list, &rcd->tid_group_list.list))
-		goto bail_eagain;
+	अगर (list_is_last(&group->list, &rcd->tid_group_list.list))
+		जाओ bail_eagain;
 	group = list_next_entry(group, list);
 	use = min_t(u32, flow->npagesets - pageidx, group->size);
 	kern_add_tid_node(flow, rcd, "complete continue", group, use);
 	pageidx += use;
-	if (pageidx >= flow->npagesets)
-		goto ok;
+	अगर (pageidx >= flow->npagesets)
+		जाओ ok;
 bail_eagain:
 	trace_hfi1_msg_alloc_tids(flow->req->qp, " insufficient tids: needed ",
 				  (u64)flow->npagesets);
-	return -EAGAIN;
+	वापस -EAGAIN;
 ok:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kern_program_rcv_group(struct tid_rdma_flow *flow, int grp_num,
+अटल व्योम kern_program_rcv_group(काष्ठा tid_rdma_flow *flow, पूर्णांक grp_num,
 				   u32 *pset_idx)
-{
-	struct hfi1_ctxtdata *rcd = flow->req->rcd;
-	struct hfi1_devdata *dd = rcd->dd;
-	struct kern_tid_node *node = &flow->tnode[grp_num];
-	struct tid_group *grp = node->grp;
-	struct tid_rdma_pageset *pset;
+अणु
+	काष्ठा hfi1_ctxtdata *rcd = flow->req->rcd;
+	काष्ठा hfi1_devdata *dd = rcd->dd;
+	काष्ठा kern_tid_node *node = &flow->tnode[grp_num];
+	काष्ठा tid_group *grp = node->grp;
+	काष्ठा tid_rdma_pageset *pset;
 	u32 pmtu_pg = flow->req->qp->pmtu >> PAGE_SHIFT;
 	u32 rcventry, npages = 0, pair = 0, tidctrl;
 	u8 i, cnt = 0;
 
-	for (i = 0; i < grp->size; i++) {
+	क्रम (i = 0; i < grp->size; i++) अणु
 		rcventry = grp->base + i;
 
-		if (node->map & BIT(i) || cnt >= node->cnt) {
+		अगर (node->map & BIT(i) || cnt >= node->cnt) अणु
 			rcv_array_wc_fill(dd, rcventry);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pset = &flow->pagesets[(*pset_idx)++];
-		if (pset->count) {
+		अगर (pset->count) अणु
 			hfi1_put_tid(dd, rcventry, PT_EXPECTED,
 				     pset->addr, trdma_pset_order(pset));
-		} else {
+		पूर्ण अन्यथा अणु
 			hfi1_put_tid(dd, rcventry, PT_INVALID, 0, 0);
-		}
+		पूर्ण
 		npages += pset->count;
 
 		rcventry -= rcd->expected_base;
 		tidctrl = pair ? 0x3 : rcventry & 0x1 ? 0x2 : 0x1;
 		/*
 		 * A single TID entry will be used to use a rcvarr pair (with
-		 * tidctrl 0x3), if ALL these are true (a) the bit pos is even
-		 * (b) the group map shows current and the next bits as free
+		 * tidctrl 0x3), अगर ALL these are true (a) the bit pos is even
+		 * (b) the group map shows current and the next bits as मुक्त
 		 * indicating two consecutive rcvarry entries are available (c)
 		 * we actually need 2 more entries
 		 */
 		pair = !(i & 0x1) && !((node->map >> i) & 0x3) &&
 			node->cnt >= cnt + 2;
-		if (!pair) {
-			if (!pset->count)
+		अगर (!pair) अणु
+			अगर (!pset->count)
 				tidctrl = 0x1;
 			flow->tid_entry[flow->tidcnt++] =
 				EXP_TID_SET(IDX, rcventry >> 1) |
@@ -1350,37 +1351,37 @@ static void kern_program_rcv_group(struct tid_rdma_flow *flow, int grp_num,
 			/* Efficient DIV_ROUND_UP(npages, pmtu_pg) */
 			flow->npkts += (npages + pmtu_pg - 1) >> ilog2(pmtu_pg);
 			npages = 0;
-		}
+		पूर्ण
 
-		if (grp->used == grp->size - 1)
+		अगर (grp->used == grp->size - 1)
 			tid_group_move(grp, &rcd->tid_used_list,
 				       &rcd->tid_full_list);
-		else if (!grp->used)
+		अन्यथा अगर (!grp->used)
 			tid_group_move(grp, &rcd->tid_group_list,
 				       &rcd->tid_used_list);
 
 		grp->used++;
 		grp->map |= BIT(i);
 		cnt++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void kern_unprogram_rcv_group(struct tid_rdma_flow *flow, int grp_num)
-{
-	struct hfi1_ctxtdata *rcd = flow->req->rcd;
-	struct hfi1_devdata *dd = rcd->dd;
-	struct kern_tid_node *node = &flow->tnode[grp_num];
-	struct tid_group *grp = node->grp;
+अटल व्योम kern_unprogram_rcv_group(काष्ठा tid_rdma_flow *flow, पूर्णांक grp_num)
+अणु
+	काष्ठा hfi1_ctxtdata *rcd = flow->req->rcd;
+	काष्ठा hfi1_devdata *dd = rcd->dd;
+	काष्ठा kern_tid_node *node = &flow->tnode[grp_num];
+	काष्ठा tid_group *grp = node->grp;
 	u32 rcventry;
 	u8 i, cnt = 0;
 
-	for (i = 0; i < grp->size; i++) {
+	क्रम (i = 0; i < grp->size; i++) अणु
 		rcventry = grp->base + i;
 
-		if (node->map & BIT(i) || cnt >= node->cnt) {
+		अगर (node->map & BIT(i) || cnt >= node->cnt) अणु
 			rcv_array_wc_fill(dd, rcventry);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		hfi1_put_tid(dd, rcventry, PT_INVALID, 0, 0);
 
@@ -1388,120 +1389,120 @@ static void kern_unprogram_rcv_group(struct tid_rdma_flow *flow, int grp_num)
 		grp->map &= ~BIT(i);
 		cnt++;
 
-		if (grp->used == grp->size - 1)
+		अगर (grp->used == grp->size - 1)
 			tid_group_move(grp, &rcd->tid_full_list,
 				       &rcd->tid_used_list);
-		else if (!grp->used)
+		अन्यथा अगर (!grp->used)
 			tid_group_move(grp, &rcd->tid_used_list,
 				       &rcd->tid_group_list);
-	}
-	if (WARN_ON_ONCE(cnt & 1)) {
-		struct hfi1_ctxtdata *rcd = flow->req->rcd;
-		struct hfi1_devdata *dd = rcd->dd;
+	पूर्ण
+	अगर (WARN_ON_ONCE(cnt & 1)) अणु
+		काष्ठा hfi1_ctxtdata *rcd = flow->req->rcd;
+		काष्ठा hfi1_devdata *dd = rcd->dd;
 
 		dd_dev_err(dd, "unexpected odd free cnt %u map 0x%x used %u",
 			   cnt, grp->map, grp->used);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void kern_program_rcvarray(struct tid_rdma_flow *flow)
-{
+अटल व्योम kern_program_rcvarray(काष्ठा tid_rdma_flow *flow)
+अणु
 	u32 pset_idx = 0;
-	int i;
+	पूर्णांक i;
 
 	flow->npkts = 0;
 	flow->tidcnt = 0;
-	for (i = 0; i < flow->tnode_cnt; i++)
+	क्रम (i = 0; i < flow->tnode_cnt; i++)
 		kern_program_rcv_group(flow, i, &pset_idx);
 	trace_hfi1_tid_flow_alloc(flow->req->qp, flow->req->setup_head, flow);
-}
+पूर्ण
 
 /**
- * hfi1_kern_exp_rcv_setup() - setup TID's and flow for one segment of a
+ * hfi1_kern_exp_rcv_setup() - setup TID's and flow क्रम one segment of a
  * TID RDMA request
  *
- * @req: TID RDMA request for which the segment/flow is being set up
- * @ss: sge state, maintains state across successive segments of a sge
+ * @req: TID RDMA request क्रम which the segment/flow is being set up
+ * @ss: sge state, मुख्यtains state across successive segments of a sge
  * @last: set to true after the last sge segment has been processed
  *
  * This function
- * (1) finds a free flow entry in the flow circular buffer
- * (2) finds pages and continuous physical chunks constituing one segment
+ * (1) finds a मुक्त flow entry in the flow circular buffer
+ * (2) finds pages and continuous physical chunks स्थिरituing one segment
  *     of an sge
- * (3) allocates TID group entries for those chunks
+ * (3) allocates TID group entries क्रम those chunks
  * (4) programs rcvarray entries in the hardware corresponding to those
  *     TID's
- * (5) computes a tidarray with formatted TID entries which can be sent
+ * (5) computes a tidarray with क्रमmatted TID entries which can be sent
  *     to the sender
  * (6) Reserves and programs HW flows.
  * (7) It also manages queing the QP when TID/flow resources are not
  *     available.
  *
- * @req points to struct tid_rdma_request of which the segments are a part. The
- * function uses qp, rcd and seg_len members of @req. In the absence of errors,
+ * @req poपूर्णांकs to काष्ठा tid_rdma_request of which the segments are a part. The
+ * function uses qp, rcd and seg_len members of @req. In the असलence of errors,
  * req->flow_idx is the index of the flow which has been prepared in this
  * invocation of function call. With flow = &req->flows[req->flow_idx],
- * flow->tid_entry contains the TID array which the sender can use for TID RDMA
+ * flow->tid_entry contains the TID array which the sender can use क्रम TID RDMA
  * sends and flow->npkts contains number of packets required to send the
  * segment.
  *
- * hfi1_check_sge_align should be called prior to calling this function and if
- * it signals error TID RDMA cannot be used for this sge and this function
+ * hfi1_check_sge_align should be called prior to calling this function and अगर
+ * it संकेतs error TID RDMA cannot be used क्रम this sge and this function
  * should not be called.
  *
  * For the queuing, caller must hold the flow->req->qp s_lock from the send
  * engine and the function will procure the exp_lock.
  *
  * Return:
- * The function returns -EAGAIN if sufficient number of TID/flow resources to
- * map the segment could not be allocated. In this case the function should be
+ * The function वापसs -EAGAIN अगर sufficient number of TID/flow resources to
+ * map the segment could not be allocated. In this हाल the function should be
  * called again with previous arguments to retry the TID allocation. There are
- * no other error returns. The function returns 0 on success.
+ * no other error वापसs. The function वापसs 0 on success.
  */
-int hfi1_kern_exp_rcv_setup(struct tid_rdma_request *req,
-			    struct rvt_sge_state *ss, bool *last)
+पूर्णांक hfi1_kern_exp_rcv_setup(काष्ठा tid_rdma_request *req,
+			    काष्ठा rvt_sge_state *ss, bool *last)
 	__must_hold(&req->qp->s_lock)
-{
-	struct tid_rdma_flow *flow = &req->flows[req->setup_head];
-	struct hfi1_ctxtdata *rcd = req->rcd;
-	struct hfi1_qp_priv *qpriv = req->qp->priv;
-	unsigned long flags;
-	struct rvt_qp *fqp;
+अणु
+	काष्ठा tid_rdma_flow *flow = &req->flows[req->setup_head];
+	काष्ठा hfi1_ctxtdata *rcd = req->rcd;
+	काष्ठा hfi1_qp_priv *qpriv = req->qp->priv;
+	अचिन्हित दीर्घ flags;
+	काष्ठा rvt_qp *fqp;
 	u16 clear_tail = req->clear_tail;
 
-	lockdep_assert_held(&req->qp->s_lock);
+	lockdep_निश्चित_held(&req->qp->s_lock);
 	/*
-	 * We return error if either (a) we don't have space in the flow
-	 * circular buffer, or (b) we already have max entries in the buffer.
+	 * We वापस error अगर either (a) we करोn't have space in the flow
+	 * circular buffer, or (b) we alपढ़ोy have max entries in the buffer.
 	 * Max entries depend on the type of request we are processing and the
 	 * negotiated TID RDMA parameters.
 	 */
-	if (!CIRC_SPACE(req->setup_head, clear_tail, MAX_FLOWS) ||
+	अगर (!CIRC_SPACE(req->setup_head, clear_tail, MAX_FLOWS) ||
 	    CIRC_CNT(req->setup_head, clear_tail, MAX_FLOWS) >=
 	    req->n_flows)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/*
-	 * Get pages, identify contiguous physical memory chunks for the segment
+	 * Get pages, identअगरy contiguous physical memory chunks क्रम the segment
 	 * If we can not determine a DMA address mapping we will treat it just
-	 * like if we ran out of space above.
+	 * like अगर we ran out of space above.
 	 */
-	if (kern_get_phys_blocks(flow, qpriv->pages, ss, last)) {
-		hfi1_wait_kmem(flow->req->qp);
-		return -ENOMEM;
-	}
+	अगर (kern_get_phys_blocks(flow, qpriv->pages, ss, last)) अणु
+		hfi1_रुको_kmem(flow->req->qp);
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irqsave(&rcd->exp_lock, flags);
-	if (kernel_tid_waiters(rcd, &rcd->rarr_queue, flow->req->qp))
-		goto queue;
+	अगर (kernel_tid_रुकोers(rcd, &rcd->rarr_queue, flow->req->qp))
+		जाओ queue;
 
 	/*
-	 * At this point we know the number of pagesets and hence the number of
+	 * At this poपूर्णांक we know the number of pagesets and hence the number of
 	 * TID's to map the segment. Allocate the TID's from the TID groups. If
-	 * we cannot allocate the required number we exit and try again later
+	 * we cannot allocate the required number we निकास and try again later
 	 */
-	if (kern_alloc_tids(flow))
-		goto queue;
+	अगर (kern_alloc_tids(flow))
+		जाओ queue;
 	/*
 	 * Finally program the TID entries with the pagesets, compute the
 	 * tidarray and enable the HW flow
@@ -1509,14 +1510,14 @@ int hfi1_kern_exp_rcv_setup(struct tid_rdma_request *req,
 	kern_program_rcvarray(flow);
 
 	/*
-	 * Setup the flow state with relevant information.
-	 * This information is used for tracking the sequence of data packets
-	 * for the segment.
-	 * The flow is setup here as this is the most accurate time and place
-	 * to do so. Doing at a later time runs the risk of the flow data in
+	 * Setup the flow state with relevant inक्रमmation.
+	 * This inक्रमmation is used क्रम tracking the sequence of data packets
+	 * क्रम the segment.
+	 * The flow is setup here as this is the most accurate समय and place
+	 * to करो so. Doing at a later समय runs the risk of the flow data in
 	 * qpriv getting out of sync.
 	 */
-	memset(&flow->flow_state, 0x0, sizeof(flow->flow_state));
+	स_रखो(&flow->flow_state, 0x0, माप(flow->flow_state));
 	flow->idx = qpriv->flow_state.index;
 	flow->flow_state.generation = qpriv->flow_state.generation;
 	flow->flow_state.spsn = qpriv->flow_state.psn;
@@ -1525,52 +1526,52 @@ int hfi1_kern_exp_rcv_setup(struct tid_rdma_request *req,
 		full_flow_psn(flow, flow->flow_state.spsn);
 	qpriv->flow_state.psn += flow->npkts;
 
-	dequeue_tid_waiter(rcd, &rcd->rarr_queue, flow->req->qp);
-	/* get head before dropping lock */
+	dequeue_tid_रुकोer(rcd, &rcd->rarr_queue, flow->req->qp);
+	/* get head beक्रमe dropping lock */
 	fqp = first_qp(rcd, &rcd->rarr_queue);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
 	tid_rdma_schedule_tid_wakeup(fqp);
 
 	req->setup_head = (req->setup_head + 1) & (MAX_FLOWS - 1);
-	return 0;
+	वापस 0;
 queue:
-	queue_qp_for_tid_wait(rcd, &rcd->rarr_queue, flow->req->qp);
+	queue_qp_क्रम_tid_रुको(rcd, &rcd->rarr_queue, flow->req->qp);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static void hfi1_tid_rdma_reset_flow(struct tid_rdma_flow *flow)
-{
+अटल व्योम hfi1_tid_rdma_reset_flow(काष्ठा tid_rdma_flow *flow)
+अणु
 	flow->npagesets = 0;
-}
+पूर्ण
 
 /*
  * This function is called after one segment has been successfully sent to
- * release the flow and TID HW/SW resources for that segment. The segments for a
+ * release the flow and TID HW/SW resources क्रम that segment. The segments क्रम a
  * TID RDMA request are setup and cleared in FIFO order which is managed using a
  * circular buffer.
  */
-int hfi1_kern_exp_rcv_clear(struct tid_rdma_request *req)
+पूर्णांक hfi1_kern_exp_rcv_clear(काष्ठा tid_rdma_request *req)
 	__must_hold(&req->qp->s_lock)
-{
-	struct tid_rdma_flow *flow = &req->flows[req->clear_tail];
-	struct hfi1_ctxtdata *rcd = req->rcd;
-	unsigned long flags;
-	int i;
-	struct rvt_qp *fqp;
+अणु
+	काष्ठा tid_rdma_flow *flow = &req->flows[req->clear_tail];
+	काष्ठा hfi1_ctxtdata *rcd = req->rcd;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
+	काष्ठा rvt_qp *fqp;
 
-	lockdep_assert_held(&req->qp->s_lock);
-	/* Exit if we have nothing in the flow circular buffer */
-	if (!CIRC_CNT(req->setup_head, req->clear_tail, MAX_FLOWS))
-		return -EINVAL;
+	lockdep_निश्चित_held(&req->qp->s_lock);
+	/* Exit अगर we have nothing in the flow circular buffer */
+	अगर (!CIRC_CNT(req->setup_head, req->clear_tail, MAX_FLOWS))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&rcd->exp_lock, flags);
 
-	for (i = 0; i < flow->tnode_cnt; i++)
+	क्रम (i = 0; i < flow->tnode_cnt; i++)
 		kern_unprogram_rcv_group(flow, i);
-	/* To prevent double unprogramming */
+	/* To prevent द्विगुन unprogramming */
 	flow->tnode_cnt = 0;
-	/* get head before dropping lock */
+	/* get head beक्रमe dropping lock */
 	fqp = first_qp(rcd, &rcd->rarr_queue);
 	spin_unlock_irqrestore(&rcd->exp_lock, flags);
 
@@ -1579,168 +1580,168 @@ int hfi1_kern_exp_rcv_clear(struct tid_rdma_request *req)
 	hfi1_tid_rdma_reset_flow(flow);
 	req->clear_tail = (req->clear_tail + 1) & (MAX_FLOWS - 1);
 
-	if (fqp == req->qp) {
-		__trigger_tid_waiter(fqp);
+	अगर (fqp == req->qp) अणु
+		__trigger_tid_रुकोer(fqp);
 		rvt_put_qp(fqp);
-	} else {
+	पूर्ण अन्यथा अणु
 		tid_rdma_schedule_tid_wakeup(fqp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function is called to release all the tid entries for
+ * This function is called to release all the tid entries क्रम
  * a request.
  */
-void hfi1_kern_exp_rcv_clear_all(struct tid_rdma_request *req)
+व्योम hfi1_kern_exp_rcv_clear_all(काष्ठा tid_rdma_request *req)
 	__must_hold(&req->qp->s_lock)
-{
-	/* Use memory barrier for proper ordering */
-	while (CIRC_CNT(req->setup_head, req->clear_tail, MAX_FLOWS)) {
-		if (hfi1_kern_exp_rcv_clear(req))
-			break;
-	}
-}
+अणु
+	/* Use memory barrier क्रम proper ordering */
+	जबतक (CIRC_CNT(req->setup_head, req->clear_tail, MAX_FLOWS)) अणु
+		अगर (hfi1_kern_exp_rcv_clear(req))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
- * hfi1_kern_exp_rcv_free_flows - free priviously allocated flow information
+ * hfi1_kern_exp_rcv_मुक्त_flows - मुक्त priviously allocated flow inक्रमmation
  * @req: the tid rdma request to be cleaned
  */
-static void hfi1_kern_exp_rcv_free_flows(struct tid_rdma_request *req)
-{
-	kfree(req->flows);
-	req->flows = NULL;
-}
+अटल व्योम hfi1_kern_exp_rcv_मुक्त_flows(काष्ठा tid_rdma_request *req)
+अणु
+	kमुक्त(req->flows);
+	req->flows = शून्य;
+पूर्ण
 
 /**
- * __trdma_clean_swqe - clean up for large sized QPs
+ * __trdma_clean_swqe - clean up क्रम large sized QPs
  * @qp: the queue patch
  * @wqe: the send wqe
  */
-void __trdma_clean_swqe(struct rvt_qp *qp, struct rvt_swqe *wqe)
-{
-	struct hfi1_swqe_priv *p = wqe->priv;
+व्योम __trdma_clean_swqe(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe)
+अणु
+	काष्ठा hfi1_swqe_priv *p = wqe->priv;
 
-	hfi1_kern_exp_rcv_free_flows(&p->tid_req);
-}
+	hfi1_kern_exp_rcv_मुक्त_flows(&p->tid_req);
+पूर्ण
 
 /*
- * This can be called at QP create time or in the data path.
+ * This can be called at QP create समय or in the data path.
  */
-static int hfi1_kern_exp_rcv_alloc_flows(struct tid_rdma_request *req,
+अटल पूर्णांक hfi1_kern_exp_rcv_alloc_flows(काष्ठा tid_rdma_request *req,
 					 gfp_t gfp)
-{
-	struct tid_rdma_flow *flows;
-	int i;
+अणु
+	काष्ठा tid_rdma_flow *flows;
+	पूर्णांक i;
 
-	if (likely(req->flows))
-		return 0;
-	flows = kmalloc_node(MAX_FLOWS * sizeof(*flows), gfp,
+	अगर (likely(req->flows))
+		वापस 0;
+	flows = kदो_स्मृति_node(MAX_FLOWS * माप(*flows), gfp,
 			     req->rcd->numa_id);
-	if (!flows)
-		return -ENOMEM;
+	अगर (!flows)
+		वापस -ENOMEM;
 	/* mini init */
-	for (i = 0; i < MAX_FLOWS; i++) {
+	क्रम (i = 0; i < MAX_FLOWS; i++) अणु
 		flows[i].req = req;
 		flows[i].npagesets = 0;
 		flows[i].pagesets[0].mapped =  0;
 		flows[i].resync_npkts = 0;
-	}
+	पूर्ण
 	req->flows = flows;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hfi1_init_trdma_req(struct rvt_qp *qp,
-				struct tid_rdma_request *req)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
+अटल व्योम hfi1_init_trdma_req(काष्ठा rvt_qp *qp,
+				काष्ठा tid_rdma_request *req)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 
 	/*
 	 * Initialize various TID RDMA request variables.
 	 * These variables are "static", which is why they
-	 * can be pre-initialized here before the WRs has
+	 * can be pre-initialized here beक्रमe the WRs has
 	 * even been submitted.
-	 * However, non-NULL values for these variables do not
-	 * imply that this WQE has been enabled for TID RDMA.
+	 * However, non-शून्य values क्रम these variables करो not
+	 * imply that this WQE has been enabled क्रम TID RDMA.
 	 * Drivers should check the WQE's opcode to determine
-	 * if a request is a TID RDMA one or not.
+	 * अगर a request is a TID RDMA one or not.
 	 */
 	req->qp = qp;
 	req->rcd = qpriv->rcd;
-}
+पूर्ण
 
-u64 hfi1_access_sw_tid_wait(const struct cntr_entry *entry,
-			    void *context, int vl, int mode, u64 data)
-{
-	struct hfi1_devdata *dd = context;
+u64 hfi1_access_sw_tid_रुको(स्थिर काष्ठा cntr_entry *entry,
+			    व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
+अणु
+	काष्ठा hfi1_devdata *dd = context;
 
-	return dd->verbs_dev.n_tidwait;
-}
+	वापस dd->verbs_dev.n_tidरुको;
+पूर्ण
 
-static struct tid_rdma_flow *find_flow_ib(struct tid_rdma_request *req,
+अटल काष्ठा tid_rdma_flow *find_flow_ib(काष्ठा tid_rdma_request *req,
 					  u32 psn, u16 *fidx)
-{
+अणु
 	u16 head, tail;
-	struct tid_rdma_flow *flow;
+	काष्ठा tid_rdma_flow *flow;
 
 	head = req->setup_head;
 	tail = req->clear_tail;
-	for ( ; CIRC_CNT(head, tail, MAX_FLOWS);
-	     tail = CIRC_NEXT(tail, MAX_FLOWS)) {
+	क्रम ( ; CIRC_CNT(head, tail, MAX_FLOWS);
+	     tail = CIRC_NEXT(tail, MAX_FLOWS)) अणु
 		flow = &req->flows[tail];
-		if (cmp_psn(psn, flow->flow_state.ib_spsn) >= 0 &&
-		    cmp_psn(psn, flow->flow_state.ib_lpsn) <= 0) {
-			if (fidx)
+		अगर (cmp_psn(psn, flow->flow_state.ib_spsn) >= 0 &&
+		    cmp_psn(psn, flow->flow_state.ib_lpsn) <= 0) अणु
+			अगर (fidx)
 				*fidx = tail;
-			return flow;
-		}
-	}
-	return NULL;
-}
+			वापस flow;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /* TID RDMA READ functions */
-u32 hfi1_build_tid_rdma_read_packet(struct rvt_swqe *wqe,
-				    struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_पढ़ो_packet(काष्ठा rvt_swqe *wqe,
+				    काष्ठा ib_other_headers *ohdr, u32 *bth1,
 				    u32 *bth2, u32 *len)
-{
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_flow *flow = &req->flows[req->flow_idx];
-	struct rvt_qp *qp = req->qp;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct hfi1_swqe_priv *wpriv = wqe->priv;
-	struct tid_rdma_read_req *rreq = &ohdr->u.tid_rdma.r_req;
-	struct tid_rdma_params *remote;
+अणु
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_flow *flow = &req->flows[req->flow_idx];
+	काष्ठा rvt_qp *qp = req->qp;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_swqe_priv *wpriv = wqe->priv;
+	काष्ठा tid_rdma_पढ़ो_req *rreq = &ohdr->u.tid_rdma.r_req;
+	काष्ठा tid_rdma_params *remote;
 	u32 req_len = 0;
-	void *req_addr = NULL;
+	व्योम *req_addr = शून्य;
 
 	/* This is the IB psn used to send the request */
 	*bth2 = mask_psn(flow->flow_state.ib_spsn + flow->pkt);
-	trace_hfi1_tid_flow_build_read_pkt(qp, req->flow_idx, flow);
+	trace_hfi1_tid_flow_build_पढ़ो_pkt(qp, req->flow_idx, flow);
 
-	/* TID Entries for TID RDMA READ payload */
+	/* TID Entries क्रम TID RDMA READ payload */
 	req_addr = &flow->tid_entry[flow->tid_idx];
-	req_len = sizeof(*flow->tid_entry) *
+	req_len = माप(*flow->tid_entry) *
 			(flow->tidcnt - flow->tid_idx);
 
-	memset(&ohdr->u.tid_rdma.r_req, 0, sizeof(ohdr->u.tid_rdma.r_req));
+	स_रखो(&ohdr->u.tid_rdma.r_req, 0, माप(ohdr->u.tid_rdma.r_req));
 	wpriv->ss.sge.vaddr = req_addr;
 	wpriv->ss.sge.sge_length = req_len;
 	wpriv->ss.sge.length = wpriv->ss.sge.sge_length;
 	/*
 	 * We can safely zero these out. Since the first SGE covers the
-	 * entire packet, nothing else should even look at the MR.
+	 * entire packet, nothing अन्यथा should even look at the MR.
 	 */
-	wpriv->ss.sge.mr = NULL;
+	wpriv->ss.sge.mr = शून्य;
 	wpriv->ss.sge.m = 0;
 	wpriv->ss.sge.n = 0;
 
-	wpriv->ss.sg_list = NULL;
+	wpriv->ss.sg_list = शून्य;
 	wpriv->ss.total_len = wpriv->ss.sge.sge_length;
 	wpriv->ss.num_sge = 1;
 
-	/* Construct the TID RDMA READ REQ packet header */
-	rcu_read_lock();
+	/* Conकाष्ठा the TID RDMA READ REQ packet header */
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 
 	KDETH_RESET(rreq->kdeth0, KVER, 0x1);
@@ -1763,9 +1764,9 @@ u32 hfi1_build_tid_rdma_read_packet(struct rvt_swqe *wqe,
 	*bth1 &= ~RVT_QPN_MASK;
 	*bth1 |= remote->qp;
 	*bth2 |= IB_BTH_REQ_ACK;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	/* We are done with this segment */
+	/* We are करोne with this segment */
 	flow->sent += *len;
 	req->cur_seg++;
 	qp->s_state = TID_OP(READ_REQ);
@@ -1777,124 +1778,124 @@ u32 hfi1_build_tid_rdma_read_packet(struct rvt_swqe *wqe,
 	/* Set the TID RDMA READ request payload size */
 	*len = req_len;
 
-	return sizeof(ohdr->u.tid_rdma.r_req) / sizeof(u32);
-}
+	वापस माप(ohdr->u.tid_rdma.r_req) / माप(u32);
+पूर्ण
 
 /*
- * @len: contains the data length to read upon entry and the read request
- *       payload length upon exit.
+ * @len: contains the data length to पढ़ो upon entry and the पढ़ो request
+ *       payload length upon निकास.
  */
-u32 hfi1_build_tid_rdma_read_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
-				 struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_पढ़ो_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+				 काष्ठा ib_other_headers *ohdr, u32 *bth1,
 				 u32 *bth2, u32 *len)
 	__must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_flow *flow = NULL;
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_flow *flow = शून्य;
 	u32 hdwords = 0;
 	bool last;
 	bool retry = true;
-	u32 npkts = rvt_div_round_up_mtu(qp, *len);
+	u32 npkts = rvt_भाग_round_up_mtu(qp, *len);
 
-	trace_hfi1_tid_req_build_read_req(qp, 0, wqe->wr.opcode, wqe->psn,
+	trace_hfi1_tid_req_build_पढ़ो_req(qp, 0, wqe->wr.opcode, wqe->psn,
 					  wqe->lpsn, req);
 	/*
 	 * Check sync conditions. Make sure that there are no pending
-	 * segments before freeing the flow.
+	 * segments beक्रमe मुक्तing the flow.
 	 */
 sync_check:
-	if (req->state == TID_REQUEST_SYNC) {
-		if (qpriv->pending_tid_r_segs)
-			goto done;
+	अगर (req->state == TID_REQUEST_SYNC) अणु
+		अगर (qpriv->pending_tid_r_segs)
+			जाओ करोne;
 
 		hfi1_kern_clear_hw_flow(req->rcd, qp);
 		qpriv->s_flags &= ~HFI1_R_TID_SW_PSN;
 		req->state = TID_REQUEST_ACTIVE;
-	}
+	पूर्ण
 
 	/*
-	 * If the request for this segment is resent, the tid resources should
-	 * have been allocated before. In this case, req->flow_idx should
+	 * If the request क्रम this segment is resent, the tid resources should
+	 * have been allocated beक्रमe. In this हाल, req->flow_idx should
 	 * fall behind req->setup_head.
 	 */
-	if (req->flow_idx == req->setup_head) {
+	अगर (req->flow_idx == req->setup_head) अणु
 		retry = false;
-		if (req->state == TID_REQUEST_RESEND) {
+		अगर (req->state == TID_REQUEST_RESEND) अणु
 			/*
-			 * This is the first new segment for a request whose
+			 * This is the first new segment क्रम a request whose
 			 * earlier segments have been re-sent. We need to
-			 * set up the sge pointer correctly.
+			 * set up the sge poपूर्णांकer correctly.
 			 */
 			restart_sge(&qp->s_sge, wqe, req->s_next_psn,
 				    qp->pmtu);
 			req->isge = 0;
 			req->state = TID_REQUEST_ACTIVE;
-		}
+		पूर्ण
 
 		/*
-		 * Check sync. The last PSN of each generation is reserved for
+		 * Check sync. The last PSN of each generation is reserved क्रम
 		 * RESYNC.
 		 */
-		if ((qpriv->flow_state.psn + npkts) > MAX_TID_FLOW_PSN - 1) {
+		अगर ((qpriv->flow_state.psn + npkts) > MAX_TID_FLOW_PSN - 1) अणु
 			req->state = TID_REQUEST_SYNC;
-			goto sync_check;
-		}
+			जाओ sync_check;
+		पूर्ण
 
-		/* Allocate the flow if not yet */
-		if (hfi1_kern_setup_hw_flow(qpriv->rcd, qp))
-			goto done;
+		/* Allocate the flow अगर not yet */
+		अगर (hfi1_kern_setup_hw_flow(qpriv->rcd, qp))
+			जाओ करोne;
 
 		/*
 		 * The following call will advance req->setup_head after
 		 * allocating the tid entries.
 		 */
-		if (hfi1_kern_exp_rcv_setup(req, &qp->s_sge, &last)) {
+		अगर (hfi1_kern_exp_rcv_setup(req, &qp->s_sge, &last)) अणु
 			req->state = TID_REQUEST_QUEUED;
 
 			/*
-			 * We don't have resources for this segment. The QP has
-			 * already been queued.
+			 * We करोn't have resources क्रम this segment. The QP has
+			 * alपढ़ोy been queued.
 			 */
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
 	/* req->flow_idx should only be one slot behind req->setup_head */
 	flow = &req->flows[req->flow_idx];
 	flow->pkt = 0;
 	flow->tid_idx = 0;
 	flow->sent = 0;
-	if (!retry) {
-		/* Set the first and last IB PSN for the flow in use.*/
+	अगर (!retry) अणु
+		/* Set the first and last IB PSN क्रम the flow in use.*/
 		flow->flow_state.ib_spsn = req->s_next_psn;
 		flow->flow_state.ib_lpsn =
 			flow->flow_state.ib_spsn + flow->npkts - 1;
-	}
+	पूर्ण
 
 	/* Calculate the next segment start psn.*/
 	req->s_next_psn += flow->npkts;
 
 	/* Build the packet header */
-	hdwords = hfi1_build_tid_rdma_read_packet(wqe, ohdr, bth1, bth2, len);
-done:
-	return hdwords;
-}
+	hdwords = hfi1_build_tid_rdma_पढ़ो_packet(wqe, ohdr, bth1, bth2, len);
+करोne:
+	वापस hdwords;
+पूर्ण
 
 /*
  * Validate and accept the TID RDMA READ request parameters.
- * Return 0 if the request is accepted successfully;
+ * Return 0 अगर the request is accepted successfully;
  * Return 1 otherwise.
  */
-static int tid_rdma_rcv_read_request(struct rvt_qp *qp,
-				     struct rvt_ack_entry *e,
-				     struct hfi1_packet *packet,
-				     struct ib_other_headers *ohdr,
+अटल पूर्णांक tid_rdma_rcv_पढ़ो_request(काष्ठा rvt_qp *qp,
+				     काष्ठा rvt_ack_entry *e,
+				     काष्ठा hfi1_packet *packet,
+				     काष्ठा ib_other_headers *ohdr,
 				     u32 bth0, u32 psn, u64 vaddr, u32 len)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
 	u32 flow_psn, i, tidlen = 0, pktlen, tlen;
 
 	req = ack_to_tid_req(e);
@@ -1904,33 +1905,33 @@ static int tid_rdma_rcv_read_request(struct rvt_qp *qp,
 
 	/* payload length = packet length - (header length + ICRC length) */
 	pktlen = packet->tlen - (packet->hlen + 4);
-	if (pktlen > sizeof(flow->tid_entry))
-		return 1;
-	memcpy(flow->tid_entry, packet->ebuf, pktlen);
-	flow->tidcnt = pktlen / sizeof(*flow->tid_entry);
+	अगर (pktlen > माप(flow->tid_entry))
+		वापस 1;
+	स_नकल(flow->tid_entry, packet->ebuf, pktlen);
+	flow->tidcnt = pktlen / माप(*flow->tid_entry);
 
 	/*
-	 * Walk the TID_ENTRY list to make sure we have enough space for a
+	 * Walk the TID_ENTRY list to make sure we have enough space क्रम a
 	 * complete segment. Also calculate the number of required packets.
 	 */
-	flow->npkts = rvt_div_round_up_mtu(qp, len);
-	for (i = 0; i < flow->tidcnt; i++) {
-		trace_hfi1_tid_entry_rcv_read_req(qp, i,
+	flow->npkts = rvt_भाग_round_up_mtu(qp, len);
+	क्रम (i = 0; i < flow->tidcnt; i++) अणु
+		trace_hfi1_tid_entry_rcv_पढ़ो_req(qp, i,
 						  flow->tid_entry[i]);
 		tlen = EXP_TID_GET(flow->tid_entry[i], LEN);
-		if (!tlen)
-			return 1;
+		अगर (!tlen)
+			वापस 1;
 
 		/*
 		 * For tid pair (tidctr == 3), the buffer size of the pair
 		 * should be the sum of the buffer size described by each
 		 * tid entry. However, only the first entry needs to be
-		 * specified in the request (see WFR HAS Section 8.5.7.1).
+		 * specअगरied in the request (see WFR HAS Section 8.5.7.1).
 		 */
 		tidlen += tlen;
-	}
-	if (tidlen * PAGE_SIZE < len)
-		return 1;
+	पूर्ण
+	अगर (tidlen * PAGE_SIZE < len)
+		वापस 1;
 
 	/* Empty the flow array */
 	req->clear_tail = req->setup_head;
@@ -1951,7 +1952,7 @@ static int tid_rdma_rcv_read_request(struct rvt_qp *qp,
 	flow->flow_state.ib_spsn = psn;
 	flow->flow_state.ib_lpsn = flow->flow_state.ib_spsn + flow->npkts - 1;
 
-	trace_hfi1_tid_flow_rcv_read_req(qp, req->setup_head, flow);
+	trace_hfi1_tid_flow_rcv_पढ़ो_req(qp, req->setup_head, flow);
 	/* Set the initial flow index to the current flow. */
 	req->flow_idx = req->setup_head;
 
@@ -1959,14 +1960,14 @@ static int tid_rdma_rcv_read_request(struct rvt_qp *qp,
 	req->setup_head = (req->setup_head + 1) & (MAX_FLOWS - 1);
 
 	/*
-	 * Compute last PSN for request.
+	 * Compute last PSN क्रम request.
 	 */
 	e->opcode = (bth0 >> 24) & 0xff;
 	e->psn = psn;
 	e->lpsn = psn + flow->npkts - 1;
 	e->sent = 0;
 
-	req->n_flows = qpriv->tid_rdma.local.max_read;
+	req->n_flows = qpriv->tid_rdma.local.max_पढ़ो;
 	req->state = TID_REQUEST_ACTIVE;
 	req->cur_seg = 0;
 	req->comp_seg = 0;
@@ -1977,55 +1978,55 @@ static int tid_rdma_rcv_read_request(struct rvt_qp *qp,
 	req->total_segs = 1;
 	req->r_flow_psn = e->psn;
 
-	trace_hfi1_tid_req_rcv_read_req(qp, 0, e->opcode, e->psn, e->lpsn,
+	trace_hfi1_tid_req_rcv_पढ़ो_req(qp, 0, e->opcode, e->psn, e->lpsn,
 					req);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tid_rdma_rcv_error(struct hfi1_packet *packet,
-			      struct ib_other_headers *ohdr,
-			      struct rvt_qp *qp, u32 psn, int diff)
-{
-	struct hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
-	struct hfi1_ctxtdata *rcd = ((struct hfi1_qp_priv *)qp->priv)->rcd;
-	struct hfi1_ibdev *dev = to_idev(qp->ibqp.device);
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct rvt_ack_entry *e;
-	struct tid_rdma_request *req;
-	unsigned long flags;
+अटल पूर्णांक tid_rdma_rcv_error(काष्ठा hfi1_packet *packet,
+			      काष्ठा ib_other_headers *ohdr,
+			      काष्ठा rvt_qp *qp, u32 psn, पूर्णांक dअगरf)
+अणु
+	काष्ठा hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
+	काष्ठा hfi1_ctxtdata *rcd = ((काष्ठा hfi1_qp_priv *)qp->priv)->rcd;
+	काष्ठा hfi1_ibdev *dev = to_idev(qp->ibqp.device);
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा rvt_ack_entry *e;
+	काष्ठा tid_rdma_request *req;
+	अचिन्हित दीर्घ flags;
 	u8 prev;
 	bool old_req;
 
 	trace_hfi1_rsp_tid_rcv_error(qp, psn);
-	trace_hfi1_tid_rdma_rcv_err(qp, 0, psn, diff);
-	if (diff > 0) {
+	trace_hfi1_tid_rdma_rcv_err(qp, 0, psn, dअगरf);
+	अगर (dअगरf > 0) अणु
 		/* sequence error */
-		if (!qp->r_nak_state) {
+		अगर (!qp->r_nak_state) अणु
 			ibp->rvp.n_rc_seqnak++;
 			qp->r_nak_state = IB_NAK_PSN_ERROR;
 			qp->r_ack_psn = qp->r_psn;
 			rc_defered_ack(rcd, qp);
-		}
-		goto done;
-	}
+		पूर्ण
+		जाओ करोne;
+	पूर्ण
 
 	ibp->rvp.n_rc_dupreq++;
 
 	spin_lock_irqsave(&qp->s_lock, flags);
-	e = find_prev_entry(qp, psn, &prev, NULL, &old_req);
-	if (!e || (e->opcode != TID_OP(READ_REQ) &&
+	e = find_prev_entry(qp, psn, &prev, शून्य, &old_req);
+	अगर (!e || (e->opcode != TID_OP(READ_REQ) &&
 		   e->opcode != TID_OP(WRITE_REQ)))
-		goto unlock;
+		जाओ unlock;
 
 	req = ack_to_tid_req(e);
 	req->r_flow_psn = psn;
 	trace_hfi1_tid_req_rcv_err(qp, 0, e->opcode, e->psn, e->lpsn, req);
-	if (e->opcode == TID_OP(READ_REQ)) {
-		struct ib_reth *reth;
+	अगर (e->opcode == TID_OP(READ_REQ)) अणु
+		काष्ठा ib_reth *reth;
 		u32 len;
 		u32 rkey;
 		u64 vaddr;
-		int ok;
+		पूर्णांक ok;
 		u32 bth0;
 
 		reth = &ohdr->u.tid_rdma.r_req.reth;
@@ -2034,8 +2035,8 @@ static int tid_rdma_rcv_error(struct hfi1_packet *packet,
 		 * request.
 		 */
 		len = be32_to_cpu(reth->length);
-		if (psn != e->psn || len != req->total_len)
-			goto unlock;
+		अगर (psn != e->psn || len != req->total_len)
+			जाओ unlock;
 
 		release_rdma_sge_mr(e);
 
@@ -2045,130 +2046,130 @@ static int tid_rdma_rcv_error(struct hfi1_packet *packet,
 		qp->r_len = len;
 		ok = rvt_rkey_ok(qp, &e->rdma_sge, len, vaddr, rkey,
 				 IB_ACCESS_REMOTE_READ);
-		if (unlikely(!ok))
-			goto unlock;
+		अगर (unlikely(!ok))
+			जाओ unlock;
 
 		/*
-		 * If all the response packets for the current request have
+		 * If all the response packets क्रम the current request have
 		 * been sent out and this request is complete (old_request
 		 * == false) and the TID flow may be unusable (the
 		 * req->clear_tail is advanced). However, when an earlier
 		 * request is received, this request will not be complete any
 		 * more (qp->s_tail_ack_queue is moved back, see below).
-		 * Consequently, we need to update the TID flow info everytime
+		 * Consequently, we need to update the TID flow info everyसमय
 		 * a duplicate request is received.
 		 */
 		bth0 = be32_to_cpu(ohdr->bth[0]);
-		if (tid_rdma_rcv_read_request(qp, e, packet, ohdr, bth0, psn,
+		अगर (tid_rdma_rcv_पढ़ो_request(qp, e, packet, ohdr, bth0, psn,
 					      vaddr, len))
-			goto unlock;
+			जाओ unlock;
 
 		/*
-		 * True if the request is already scheduled (between
+		 * True अगर the request is alपढ़ोy scheduled (between
 		 * qp->s_tail_ack_queue and qp->r_head_ack_queue);
 		 */
-		if (old_req)
-			goto unlock;
-	} else {
-		struct flow_state *fstate;
+		अगर (old_req)
+			जाओ unlock;
+	पूर्ण अन्यथा अणु
+		काष्ठा flow_state *ख_स्थितिe;
 		bool schedule = false;
 		u8 i;
 
-		if (req->state == TID_REQUEST_RESEND) {
+		अगर (req->state == TID_REQUEST_RESEND) अणु
 			req->state = TID_REQUEST_RESEND_ACTIVE;
-		} else if (req->state == TID_REQUEST_INIT_RESEND) {
+		पूर्ण अन्यथा अगर (req->state == TID_REQUEST_INIT_RESEND) अणु
 			req->state = TID_REQUEST_INIT;
 			schedule = true;
-		}
+		पूर्ण
 
 		/*
-		 * True if the request is already scheduled (between
+		 * True अगर the request is alपढ़ोy scheduled (between
 		 * qp->s_tail_ack_queue and qp->r_head_ack_queue).
-		 * Also, don't change requests, which are at the SYNC
-		 * point and haven't generated any responses yet.
-		 * There is nothing to retransmit for them yet.
+		 * Also, करोn't change requests, which are at the SYNC
+		 * poपूर्णांक and haven't generated any responses yet.
+		 * There is nothing to retransmit क्रम them yet.
 		 */
-		if (old_req || req->state == TID_REQUEST_INIT ||
-		    (req->state == TID_REQUEST_SYNC && !req->cur_seg)) {
-			for (i = prev + 1; ; i++) {
-				if (i > rvt_size_atomic(&dev->rdi))
+		अगर (old_req || req->state == TID_REQUEST_INIT ||
+		    (req->state == TID_REQUEST_SYNC && !req->cur_seg)) अणु
+			क्रम (i = prev + 1; ; i++) अणु
+				अगर (i > rvt_size_atomic(&dev->rdi))
 					i = 0;
-				if (i == qp->r_head_ack_queue)
-					break;
+				अगर (i == qp->r_head_ack_queue)
+					अवरोध;
 				e = &qp->s_ack_queue[i];
 				req = ack_to_tid_req(e);
-				if (e->opcode == TID_OP(WRITE_REQ) &&
+				अगर (e->opcode == TID_OP(WRITE_REQ) &&
 				    req->state == TID_REQUEST_INIT)
 					req->state = TID_REQUEST_INIT_RESEND;
-			}
+			पूर्ण
 			/*
 			 * If the state of the request has been changed,
 			 * the first leg needs to get scheduled in order to
 			 * pick up the change. Otherwise, normal response
 			 * processing should take care of it.
 			 */
-			if (!schedule)
-				goto unlock;
-		}
+			अगर (!schedule)
+				जाओ unlock;
+		पूर्ण
 
 		/*
 		 * If there is no more allocated segment, just schedule the qp
 		 * without changing any state.
 		 */
-		if (req->clear_tail == req->setup_head)
-			goto schedule;
+		अगर (req->clear_tail == req->setup_head)
+			जाओ schedule;
 		/*
-		 * If this request has sent responses for segments, which have
+		 * If this request has sent responses क्रम segments, which have
 		 * not received data yet (flow_idx != clear_tail), the flow_idx
-		 * pointer needs to be adjusted so the same responses can be
+		 * poपूर्णांकer needs to be adjusted so the same responses can be
 		 * re-sent.
 		 */
-		if (CIRC_CNT(req->flow_idx, req->clear_tail, MAX_FLOWS)) {
-			fstate = &req->flows[req->clear_tail].flow_state;
+		अगर (CIRC_CNT(req->flow_idx, req->clear_tail, MAX_FLOWS)) अणु
+			ख_स्थितिe = &req->flows[req->clear_tail].flow_state;
 			qpriv->pending_tid_w_segs -=
 				CIRC_CNT(req->flow_idx, req->clear_tail,
 					 MAX_FLOWS);
 			req->flow_idx =
 				CIRC_ADD(req->clear_tail,
-					 delta_psn(psn, fstate->resp_ib_psn),
+					 delta_psn(psn, ख_स्थितिe->resp_ib_psn),
 					 MAX_FLOWS);
 			qpriv->pending_tid_w_segs +=
-				delta_psn(psn, fstate->resp_ib_psn);
+				delta_psn(psn, ख_स्थितिe->resp_ib_psn);
 			/*
 			 * When flow_idx == setup_head, we've gotten a duplicate
-			 * request for a segment, which has not been allocated
-			 * yet. In that case, don't adjust this request.
+			 * request क्रम a segment, which has not been allocated
+			 * yet. In that हाल, करोn't adjust this request.
 			 * However, we still want to go through the loop below
 			 * to adjust all subsequent requests.
 			 */
-			if (CIRC_CNT(req->setup_head, req->flow_idx,
-				     MAX_FLOWS)) {
+			अगर (CIRC_CNT(req->setup_head, req->flow_idx,
+				     MAX_FLOWS)) अणु
 				req->cur_seg = delta_psn(psn, e->psn);
 				req->state = TID_REQUEST_RESEND_ACTIVE;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		for (i = prev + 1; ; i++) {
+		क्रम (i = prev + 1; ; i++) अणु
 			/*
 			 * Look at everything up to and including
 			 * s_tail_ack_queue
 			 */
-			if (i > rvt_size_atomic(&dev->rdi))
+			अगर (i > rvt_size_atomic(&dev->rdi))
 				i = 0;
-			if (i == qp->r_head_ack_queue)
-				break;
+			अगर (i == qp->r_head_ack_queue)
+				अवरोध;
 			e = &qp->s_ack_queue[i];
 			req = ack_to_tid_req(e);
 			trace_hfi1_tid_req_rcv_err(qp, 0, e->opcode, e->psn,
 						   e->lpsn, req);
-			if (e->opcode != TID_OP(WRITE_REQ) ||
+			अगर (e->opcode != TID_OP(WRITE_REQ) ||
 			    req->cur_seg == req->comp_seg ||
 			    req->state == TID_REQUEST_INIT ||
-			    req->state == TID_REQUEST_INIT_RESEND) {
-				if (req->state == TID_REQUEST_INIT)
+			    req->state == TID_REQUEST_INIT_RESEND) अणु
+				अगर (req->state == TID_REQUEST_INIT)
 					req->state = TID_REQUEST_INIT_RESEND;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			qpriv->pending_tid_w_segs -=
 				CIRC_CNT(req->flow_idx,
 					 req->clear_tail,
@@ -2176,15 +2177,15 @@ static int tid_rdma_rcv_error(struct hfi1_packet *packet,
 			req->flow_idx = req->clear_tail;
 			req->state = TID_REQUEST_RESEND;
 			req->cur_seg = req->comp_seg;
-		}
+		पूर्ण
 		qpriv->s_flags &= ~HFI1_R_TID_WAIT_INTERLCK;
-	}
+	पूर्ण
 	/* Re-process old requests.*/
-	if (qp->s_acked_ack_queue == qp->s_tail_ack_queue)
+	अगर (qp->s_acked_ack_queue == qp->s_tail_ack_queue)
 		qp->s_acked_ack_queue = prev;
 	qp->s_tail_ack_queue = prev;
 	/*
-	 * Since the qp->s_tail_ack_queue is modified, the
+	 * Since the qp->s_tail_ack_queue is modअगरied, the
 	 * qp->s_ack_state must be changed to re-initialize
 	 * qp->s_ack_rdma_sge; Otherwise, we will end up in
 	 * wrong memory region.
@@ -2193,14 +2194,14 @@ static int tid_rdma_rcv_error(struct hfi1_packet *packet,
 schedule:
 	/*
 	 * It's possible to receive a retry psn that is earlier than an RNRNAK
-	 * psn. In this case, the rnrnak state should be cleared.
+	 * psn. In this हाल, the rnrnak state should be cleared.
 	 */
-	if (qpriv->rnr_nak_state) {
+	अगर (qpriv->rnr_nak_state) अणु
 		qp->s_nak_state = 0;
 		qpriv->rnr_nak_state = TID_RNR_NAK_INIT;
 		qp->r_psn = e->lpsn + 1;
-		hfi1_tid_write_alloc_resources(qp, true);
-	}
+		hfi1_tid_ग_लिखो_alloc_resources(qp, true);
+	पूर्ण
 
 	qp->r_state = e->opcode;
 	qp->r_nak_state = 0;
@@ -2208,93 +2209,93 @@ schedule:
 	hfi1_schedule_send(qp);
 unlock:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-done:
-	return 1;
-}
+करोne:
+	वापस 1;
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_read_req(struct hfi1_packet *packet)
-{
+व्योम hfi1_rc_rcv_tid_rdma_पढ़ो_req(काष्ठा hfi1_packet *packet)
+अणु
 	/* HANDLER FOR TID RDMA READ REQUEST packet (Responder side)*/
 
 	/*
-	 * 1. Verify TID RDMA READ REQ as per IB_OPCODE_RC_RDMA_READ
+	 * 1. Verअगरy TID RDMA READ REQ as per IB_OPCODE_RC_RDMA_READ
 	 *    (see hfi1_rc_rcv())
-	 * 2. Put TID RDMA READ REQ into the response queueu (s_ack_queue)
-	 *     - Setup struct tid_rdma_req with request info
-	 *     - Initialize struct tid_rdma_flow info;
+	 * 2. Put TID RDMA READ REQ पूर्णांकo the response queueu (s_ack_queue)
+	 *     - Setup काष्ठा tid_rdma_req with request info
+	 *     - Initialize काष्ठा tid_rdma_flow info;
 	 *     - Copy TID entries;
 	 * 3. Set the qp->s_ack_state.
 	 * 4. Set RVT_S_RESP_PENDING in s_flags.
 	 * 5. Kick the send engine (hfi1_schedule_send())
 	 */
-	struct hfi1_ctxtdata *rcd = packet->rcd;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_ack_entry *e;
-	unsigned long flags;
-	struct ib_reth *reth;
-	struct hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = packet->rcd;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_ack_entry *e;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ib_reth *reth;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 	u32 bth0, psn, len, rkey;
 	bool fecn;
 	u8 next;
 	u64 vaddr;
-	int diff;
+	पूर्णांक dअगरf;
 	u8 nack_state = IB_NAK_INVALID_REQUEST;
 
 	bth0 = be32_to_cpu(ohdr->bth[0]);
-	if (hfi1_ruc_check_hdr(ibp, packet))
-		return;
+	अगर (hfi1_ruc_check_hdr(ibp, packet))
+		वापस;
 
 	fecn = process_ecn(qp, packet);
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
-	trace_hfi1_rsp_rcv_tid_read_req(qp, psn);
+	trace_hfi1_rsp_rcv_tid_पढ़ो_req(qp, psn);
 
-	if (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
+	अगर (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
 		rvt_comm_est(qp);
 
-	if (unlikely(!(qp->qp_access_flags & IB_ACCESS_REMOTE_READ)))
-		goto nack_inv;
+	अगर (unlikely(!(qp->qp_access_flags & IB_ACCESS_REMOTE_READ)))
+		जाओ nack_inv;
 
 	reth = &ohdr->u.tid_rdma.r_req.reth;
 	vaddr = be64_to_cpu(reth->vaddr);
 	len = be32_to_cpu(reth->length);
 	/* The length needs to be in multiples of PAGE_SIZE */
-	if (!len || len & ~PAGE_MASK || len > qpriv->tid_rdma.local.max_len)
-		goto nack_inv;
+	अगर (!len || len & ~PAGE_MASK || len > qpriv->tid_rdma.local.max_len)
+		जाओ nack_inv;
 
-	diff = delta_psn(psn, qp->r_psn);
-	if (unlikely(diff)) {
-		tid_rdma_rcv_err(packet, ohdr, qp, psn, diff, fecn);
-		return;
-	}
+	dअगरf = delta_psn(psn, qp->r_psn);
+	अगर (unlikely(dअगरf)) अणु
+		tid_rdma_rcv_err(packet, ohdr, qp, psn, dअगरf, fecn);
+		वापस;
+	पूर्ण
 
-	/* We've verified the request, insert it into the ack queue. */
+	/* We've verअगरied the request, insert it पूर्णांकo the ack queue. */
 	next = qp->r_head_ack_queue + 1;
-	if (next > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
+	अगर (next > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
 		next = 0;
 	spin_lock_irqsave(&qp->s_lock, flags);
-	if (unlikely(next == qp->s_tail_ack_queue)) {
-		if (!qp->s_ack_queue[next].sent) {
+	अगर (unlikely(next == qp->s_tail_ack_queue)) अणु
+		अगर (!qp->s_ack_queue[next].sent) अणु
 			nack_state = IB_NAK_REMOTE_OPERATIONAL_ERROR;
-			goto nack_inv_unlock;
-		}
+			जाओ nack_inv_unlock;
+		पूर्ण
 		update_ack_queue(qp, next);
-	}
+	पूर्ण
 	e = &qp->s_ack_queue[qp->r_head_ack_queue];
 	release_rdma_sge_mr(e);
 
 	rkey = be32_to_cpu(reth->rkey);
 	qp->r_len = len;
 
-	if (unlikely(!rvt_rkey_ok(qp, &e->rdma_sge, qp->r_len, vaddr,
+	अगर (unlikely(!rvt_rkey_ok(qp, &e->rdma_sge, qp->r_len, vaddr,
 				  rkey, IB_ACCESS_REMOTE_READ)))
-		goto nack_acc;
+		जाओ nack_acc;
 
 	/* Accept the request parameters */
-	if (tid_rdma_rcv_read_request(qp, e, packet, ohdr, bth0, psn, vaddr,
+	अगर (tid_rdma_rcv_पढ़ो_request(qp, e, packet, ohdr, bth0, psn, vaddr,
 				      len))
-		goto nack_inv_unlock;
+		जाओ nack_inv_unlock;
 
 	qp->r_state = e->opcode;
 	qp->r_nak_state = 0;
@@ -2311,19 +2312,19 @@ void hfi1_rc_rcv_tid_rdma_read_req(struct hfi1_packet *packet)
 	/*
 	 * For all requests other than TID WRITE which are added to the ack
 	 * queue, qpriv->r_tid_alloc follows qp->r_head_ack_queue. It is ok to
-	 * do this because of interlocks between these and TID WRITE
+	 * करो this because of पूर्णांकerlocks between these and TID WRITE
 	 * requests. The same change has also been made in hfi1_rc_rcv().
 	 */
 	qpriv->r_tid_alloc = qp->r_head_ack_queue;
 
 	/* Schedule the send tasklet. */
 	qp->s_flags |= RVT_S_RESP_PENDING;
-	if (fecn)
+	अगर (fecn)
 		qp->s_flags |= RVT_S_ECN;
 	hfi1_schedule_send(qp);
 
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-	return;
+	वापस;
 
 nack_inv_unlock:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
@@ -2331,46 +2332,46 @@ nack_inv:
 	rvt_rc_error(qp, IB_WC_LOC_QP_OP_ERR);
 	qp->r_nak_state = nack_state;
 	qp->r_ack_psn = qp->r_psn;
-	/* Queue NAK for later */
+	/* Queue NAK क्रम later */
 	rc_defered_ack(rcd, qp);
-	return;
+	वापस;
 nack_acc:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
 	rvt_rc_error(qp, IB_WC_LOC_PROT_ERR);
 	qp->r_nak_state = IB_NAK_REMOTE_ACCESS_ERROR;
 	qp->r_ack_psn = qp->r_psn;
-}
+पूर्ण
 
-u32 hfi1_build_tid_rdma_read_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				  struct ib_other_headers *ohdr, u32 *bth0,
+u32 hfi1_build_tid_rdma_पढ़ो_resp(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				  काष्ठा ib_other_headers *ohdr, u32 *bth0,
 				  u32 *bth1, u32 *bth2, u32 *len, bool *last)
-{
-	struct hfi1_ack_priv *epriv = e->priv;
-	struct tid_rdma_request *req = &epriv->tid_req;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_flow *flow = &req->flows[req->clear_tail];
+अणु
+	काष्ठा hfi1_ack_priv *epriv = e->priv;
+	काष्ठा tid_rdma_request *req = &epriv->tid_req;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_flow *flow = &req->flows[req->clear_tail];
 	u32 tidentry = flow->tid_entry[flow->tid_idx];
 	u32 tidlen = EXP_TID_GET(tidentry, LEN) << PAGE_SHIFT;
-	struct tid_rdma_read_resp *resp = &ohdr->u.tid_rdma.r_rsp;
+	काष्ठा tid_rdma_पढ़ो_resp *resp = &ohdr->u.tid_rdma.r_rsp;
 	u32 next_offset, om = KDETH_OM_LARGE;
 	bool last_pkt;
 	u32 hdwords = 0;
-	struct tid_rdma_params *remote;
+	काष्ठा tid_rdma_params *remote;
 
 	*len = min_t(u32, qp->pmtu, tidlen - flow->tid_offset);
 	flow->sent += *len;
 	next_offset = flow->tid_offset + *len;
 	last_pkt = (flow->sent >= flow->length);
 
-	trace_hfi1_tid_entry_build_read_resp(qp, flow->tid_idx, tidentry);
-	trace_hfi1_tid_flow_build_read_resp(qp, req->clear_tail, flow);
+	trace_hfi1_tid_entry_build_पढ़ो_resp(qp, flow->tid_idx, tidentry);
+	trace_hfi1_tid_flow_build_पढ़ो_resp(qp, req->clear_tail, flow);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
-	if (!remote) {
-		rcu_read_unlock();
-		goto done;
-	}
+	अगर (!remote) अणु
+		rcu_पढ़ो_unlock();
+		जाओ करोne;
+	पूर्ण
 	KDETH_RESET(resp->kdeth0, KVER, 0x1);
 	KDETH_SET(resp->kdeth0, SH, !last_pkt);
 	KDETH_SET(resp->kdeth0, INTR, !!(!last_pkt && remote->urg));
@@ -2380,7 +2381,7 @@ u32 hfi1_build_tid_rdma_read_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
 	KDETH_SET(resp->kdeth0, OFFSET, flow->tid_offset / om);
 	KDETH_RESET(resp->kdeth1, JKEY, remote->jkey);
 	resp->verbs_qp = cpu_to_be32(qp->remote_qpn);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	resp->aeth = rvt_compute_aeth(qp);
 	resp->verbs_psn = cpu_to_be32(mask_psn(flow->flow_state.ib_spsn +
@@ -2393,73 +2394,73 @@ u32 hfi1_build_tid_rdma_read_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
 			 (flow->flow_state.generation <<
 			  HFI1_KDETH_BTH_SEQ_SHIFT));
 	*last = last_pkt;
-	if (last_pkt)
+	अगर (last_pkt)
 		/* Advance to next flow */
 		req->clear_tail = (req->clear_tail + 1) &
 				  (MAX_FLOWS - 1);
 
-	if (next_offset >= tidlen) {
+	अगर (next_offset >= tidlen) अणु
 		flow->tid_offset = 0;
 		flow->tid_idx++;
-	} else {
+	पूर्ण अन्यथा अणु
 		flow->tid_offset = next_offset;
-	}
+	पूर्ण
 
-	hdwords = sizeof(ohdr->u.tid_rdma.r_rsp) / sizeof(u32);
+	hdwords = माप(ohdr->u.tid_rdma.r_rsp) / माप(u32);
 
-done:
-	return hdwords;
-}
+करोne:
+	वापस hdwords;
+पूर्ण
 
-static inline struct tid_rdma_request *
-find_tid_request(struct rvt_qp *qp, u32 psn, enum ib_wr_opcode opcode)
+अटल अंतरभूत काष्ठा tid_rdma_request *
+find_tid_request(काष्ठा rvt_qp *qp, u32 psn, क्रमागत ib_wr_opcode opcode)
 	__must_hold(&qp->s_lock)
-{
-	struct rvt_swqe *wqe;
-	struct tid_rdma_request *req = NULL;
+अणु
+	काष्ठा rvt_swqe *wqe;
+	काष्ठा tid_rdma_request *req = शून्य;
 	u32 i, end;
 
 	end = qp->s_cur + 1;
-	if (end == qp->s_size)
+	अगर (end == qp->s_size)
 		end = 0;
-	for (i = qp->s_acked; i != end;) {
+	क्रम (i = qp->s_acked; i != end;) अणु
 		wqe = rvt_get_swqe_ptr(qp, i);
-		if (cmp_psn(psn, wqe->psn) >= 0 &&
-		    cmp_psn(psn, wqe->lpsn) <= 0) {
-			if (wqe->wr.opcode == opcode)
+		अगर (cmp_psn(psn, wqe->psn) >= 0 &&
+		    cmp_psn(psn, wqe->lpsn) <= 0) अणु
+			अगर (wqe->wr.opcode == opcode)
 				req = wqe_to_tid_req(wqe);
-			break;
-		}
-		if (++i == qp->s_size)
+			अवरोध;
+		पूर्ण
+		अगर (++i == qp->s_size)
 			i = 0;
-	}
+	पूर्ण
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_read_resp(struct hfi1_packet *packet)
-{
+व्योम hfi1_rc_rcv_tid_rdma_पढ़ो_resp(काष्ठा hfi1_packet *packet)
+अणु
 	/* HANDLER FOR TID RDMA READ RESPONSE packet (Requestor side */
 
 	/*
 	 * 1. Find matching SWQE
-	 * 2. Check that the entire segment has been read.
+	 * 2. Check that the entire segment has been पढ़ो.
 	 * 3. Remove HFI1_S_WAIT_TID_RESP from s_flags.
 	 * 4. Free the TID flow resources.
 	 * 5. Kick the send engine (hfi1_schedule_send())
 	 */
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct hfi1_ctxtdata *rcd = packet->rcd;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = packet->rcd;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
 	u32 opcode, aeth;
 	bool fecn;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u32 kpsn, ipsn;
 
-	trace_hfi1_sender_rcv_tid_read_resp(qp);
+	trace_hfi1_sender_rcv_tid_पढ़ो_resp(qp);
 	fecn = process_ecn(qp, packet);
 	kpsn = mask_psn(be32_to_cpu(ohdr->bth[2]));
 	aeth = be32_to_cpu(ohdr->u.tid_rdma.r_rsp.aeth);
@@ -2468,26 +2469,26 @@ void hfi1_rc_rcv_tid_rdma_read_resp(struct hfi1_packet *packet)
 	spin_lock_irqsave(&qp->s_lock, flags);
 	ipsn = mask_psn(be32_to_cpu(ohdr->u.tid_rdma.r_rsp.verbs_psn));
 	req = find_tid_request(qp, ipsn, IB_WR_TID_RDMA_READ);
-	if (unlikely(!req))
-		goto ack_op_err;
+	अगर (unlikely(!req))
+		जाओ ack_op_err;
 
 	flow = &req->flows[req->clear_tail];
 	/* When header suppression is disabled */
-	if (cmp_psn(ipsn, flow->flow_state.ib_lpsn)) {
+	अगर (cmp_psn(ipsn, flow->flow_state.ib_lpsn)) अणु
 		update_r_next_psn_fecn(packet, priv, rcd, flow, fecn);
 
-		if (cmp_psn(kpsn, flow->flow_state.r_next_psn))
-			goto ack_done;
+		अगर (cmp_psn(kpsn, flow->flow_state.r_next_psn))
+			जाओ ack_करोne;
 		flow->flow_state.r_next_psn = mask_psn(kpsn + 1);
 		/*
-		 * Copy the payload to destination buffer if this packet is
+		 * Copy the payload to destination buffer अगर this packet is
 		 * delivered as an eager packet due to RSM rule and FECN.
 		 * The RSM rule selects FECN bit in BTH and SH bit in
-		 * KDETH header and therefore will not match the last
+		 * KDETH header and thereक्रमe will not match the last
 		 * packet of each segment that has SH bit cleared.
 		 */
-		if (fecn && packet->etype == RHF_RCV_TYPE_EAGER) {
-			struct rvt_sge_state ss;
+		अगर (fecn && packet->etype == RHF_RCV_TYPE_EAGER) अणु
+			काष्ठा rvt_sge_state ss;
 			u32 len;
 			u32 tlen = packet->tlen;
 			u16 hdrsize = packet->hlen;
@@ -2496,115 +2497,115 @@ void hfi1_rc_rcv_tid_rdma_read_resp(struct hfi1_packet *packet)
 				(SIZE_OF_CRC << 2);
 			u32 pmtu = qp->pmtu;
 
-			if (unlikely(tlen != (hdrsize + pmtu + extra_bytes)))
-				goto ack_op_err;
+			अगर (unlikely(tlen != (hdrsize + pmtu + extra_bytes)))
+				जाओ ack_op_err;
 			len = restart_sge(&ss, req->e.swqe, ipsn, pmtu);
-			if (unlikely(len < pmtu))
-				goto ack_op_err;
+			अगर (unlikely(len < pmtu))
+				जाओ ack_op_err;
 			rvt_copy_sge(qp, &ss, packet->payload, pmtu, false,
 				     false);
-			/* Raise the sw sequence check flag for next packet */
+			/* Raise the sw sequence check flag क्रम next packet */
 			priv->s_flags |= HFI1_R_TID_SW_PSN;
-		}
+		पूर्ण
 
-		goto ack_done;
-	}
+		जाओ ack_करोne;
+	पूर्ण
 	flow->flow_state.r_next_psn = mask_psn(kpsn + 1);
 	req->ack_pending--;
 	priv->pending_tid_r_segs--;
 	qp->s_num_rd_atomic--;
-	if ((qp->s_flags & RVT_S_WAIT_FENCE) &&
-	    !qp->s_num_rd_atomic) {
+	अगर ((qp->s_flags & RVT_S_WAIT_FENCE) &&
+	    !qp->s_num_rd_atomic) अणु
 		qp->s_flags &= ~(RVT_S_WAIT_FENCE |
 				 RVT_S_WAIT_ACK);
 		hfi1_schedule_send(qp);
-	}
-	if (qp->s_flags & RVT_S_WAIT_RDMAR) {
+	पूर्ण
+	अगर (qp->s_flags & RVT_S_WAIT_RDMAR) अणु
 		qp->s_flags &= ~(RVT_S_WAIT_RDMAR | RVT_S_WAIT_ACK);
 		hfi1_schedule_send(qp);
-	}
+	पूर्ण
 
 	trace_hfi1_ack(qp, ipsn);
-	trace_hfi1_tid_req_rcv_read_resp(qp, 0, req->e.swqe->wr.opcode,
+	trace_hfi1_tid_req_rcv_पढ़ो_resp(qp, 0, req->e.swqe->wr.opcode,
 					 req->e.swqe->psn, req->e.swqe->lpsn,
 					 req);
-	trace_hfi1_tid_flow_rcv_read_resp(qp, req->clear_tail, flow);
+	trace_hfi1_tid_flow_rcv_पढ़ो_resp(qp, req->clear_tail, flow);
 
 	/* Release the tid resources */
 	hfi1_kern_exp_rcv_clear(req);
 
-	if (!do_rc_ack(qp, aeth, ipsn, opcode, 0, rcd))
-		goto ack_done;
+	अगर (!करो_rc_ack(qp, aeth, ipsn, opcode, 0, rcd))
+		जाओ ack_करोne;
 
-	/* If not done yet, build next read request */
-	if (++req->comp_seg >= req->total_segs) {
+	/* If not करोne yet, build next पढ़ो request */
+	अगर (++req->comp_seg >= req->total_segs) अणु
 		priv->tid_r_comp++;
 		req->state = TID_REQUEST_COMPLETE;
-	}
+	पूर्ण
 
 	/*
 	 * Clear the hw flow under two conditions:
-	 * 1. This request is a sync point and it is complete;
+	 * 1. This request is a sync poपूर्णांक and it is complete;
 	 * 2. Current request is completed and there are no more requests.
 	 */
-	if ((req->state == TID_REQUEST_SYNC &&
+	अगर ((req->state == TID_REQUEST_SYNC &&
 	     req->comp_seg == req->cur_seg) ||
-	    priv->tid_r_comp == priv->tid_r_reqs) {
+	    priv->tid_r_comp == priv->tid_r_reqs) अणु
 		hfi1_kern_clear_hw_flow(priv->rcd, qp);
 		priv->s_flags &= ~HFI1_R_TID_SW_PSN;
-		if (req->state == TID_REQUEST_SYNC)
+		अगर (req->state == TID_REQUEST_SYNC)
 			req->state = TID_REQUEST_ACTIVE;
-	}
+	पूर्ण
 
 	hfi1_schedule_send(qp);
-	goto ack_done;
+	जाओ ack_करोne;
 
 ack_op_err:
 	/*
 	 * The test indicates that the send engine has finished its cleanup
-	 * after sending the request and it's now safe to put the QP into error
-	 * state. However, if the wqe queue is empty (qp->s_acked == qp->s_tail
-	 * == qp->s_head), it would be unsafe to complete the wqe pointed by
-	 * qp->s_acked here. Putting the qp into error state will safely flush
-	 * all remaining requests.
+	 * after sending the request and it's now safe to put the QP पूर्णांकo error
+	 * state. However, अगर the wqe queue is empty (qp->s_acked == qp->s_tail
+	 * == qp->s_head), it would be unsafe to complete the wqe poपूर्णांकed by
+	 * qp->s_acked here. Putting the qp पूर्णांकo error state will safely flush
+	 * all reमुख्यing requests.
 	 */
-	if (qp->s_last == qp->s_acked)
+	अगर (qp->s_last == qp->s_acked)
 		rvt_error_qp(qp, IB_WC_WR_FLUSH_ERR);
 
-ack_done:
+ack_करोne:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-}
+पूर्ण
 
-void hfi1_kern_read_tid_flow_free(struct rvt_qp *qp)
+व्योम hfi1_kern_पढ़ो_tid_flow_मुक्त(काष्ठा rvt_qp *qp)
 	__must_hold(&qp->s_lock)
-{
+अणु
 	u32 n = qp->s_acked;
-	struct rvt_swqe *wqe;
-	struct tid_rdma_request *req;
-	struct hfi1_qp_priv *priv = qp->priv;
+	काष्ठा rvt_swqe *wqe;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	lockdep_assert_held(&qp->s_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
 	/* Free any TID entries */
-	while (n != qp->s_tail) {
+	जबतक (n != qp->s_tail) अणु
 		wqe = rvt_get_swqe_ptr(qp, n);
-		if (wqe->wr.opcode == IB_WR_TID_RDMA_READ) {
+		अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ) अणु
 			req = wqe_to_tid_req(wqe);
 			hfi1_kern_exp_rcv_clear_all(req);
-		}
+		पूर्ण
 
-		if (++n == qp->s_size)
+		अगर (++n == qp->s_size)
 			n = 0;
-	}
+	पूर्ण
 	/* Free flow */
 	hfi1_kern_clear_hw_flow(priv->rcd, qp);
-}
+पूर्ण
 
-static bool tid_rdma_tid_err(struct hfi1_packet *packet, u8 rcv_type)
-{
-	struct rvt_qp *qp = packet->qp;
+अटल bool tid_rdma_tid_err(काष्ठा hfi1_packet *packet, u8 rcv_type)
+अणु
+	काष्ठा rvt_qp *qp = packet->qp;
 
-	if (rcv_type >= RHF_RCV_TYPE_IB)
-		goto done;
+	अगर (rcv_type >= RHF_RCV_TYPE_IB)
+		जाओ करोne;
 
 	spin_lock(&qp->s_lock);
 
@@ -2612,190 +2613,190 @@ static bool tid_rdma_tid_err(struct hfi1_packet *packet, u8 rcv_type)
 	 * We've ran out of space in the eager buffer.
 	 * Eagerly received KDETH packets which require space in the
 	 * Eager buffer (packet that have payload) are TID RDMA WRITE
-	 * response packets. In this case, we have to re-transmit the
+	 * response packets. In this हाल, we have to re-transmit the
 	 * TID RDMA WRITE request.
 	 */
-	if (rcv_type == RHF_RCV_TYPE_EAGER) {
+	अगर (rcv_type == RHF_RCV_TYPE_EAGER) अणु
 		hfi1_restart_rc(qp, qp->s_last_psn + 1, 1);
 		hfi1_schedule_send(qp);
-	}
+	पूर्ण
 
 	/* Since no payload is delivered, just drop the packet */
 	spin_unlock(&qp->s_lock);
-done:
-	return true;
-}
+करोne:
+	वापस true;
+पूर्ण
 
-static void restart_tid_rdma_read_req(struct hfi1_ctxtdata *rcd,
-				      struct rvt_qp *qp, struct rvt_swqe *wqe)
-{
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
+अटल व्योम restart_tid_rdma_पढ़ो_req(काष्ठा hfi1_ctxtdata *rcd,
+				      काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe)
+अणु
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
 
 	/* Start from the right segment */
 	qp->r_flags |= RVT_R_RDMAR_SEQ;
 	req = wqe_to_tid_req(wqe);
 	flow = &req->flows[req->clear_tail];
 	hfi1_restart_rc(qp, flow->flow_state.ib_spsn, 0);
-	if (list_empty(&qp->rspwait)) {
+	अगर (list_empty(&qp->rspरुको)) अणु
 		qp->r_flags |= RVT_R_RSP_SEND;
 		rvt_get_qp(qp);
-		list_add_tail(&qp->rspwait, &rcd->qp_wait_list);
-	}
-}
+		list_add_tail(&qp->rspरुको, &rcd->qp_रुको_list);
+	पूर्ण
+पूर्ण
 
 /*
- * Handle the KDETH eflags for TID RDMA READ response.
+ * Handle the KDETH eflags क्रम TID RDMA READ response.
  *
- * Return true if the last packet for a segment has been received and it is
- * time to process the response normally; otherwise, return true.
+ * Return true अगर the last packet क्रम a segment has been received and it is
+ * समय to process the response normally; otherwise, वापस true.
  *
- * The caller must hold the packet->qp->r_lock and the rcu_read_lock.
+ * The caller must hold the packet->qp->r_lock and the rcu_पढ़ो_lock.
  */
-static bool handle_read_kdeth_eflags(struct hfi1_ctxtdata *rcd,
-				     struct hfi1_packet *packet, u8 rcv_type,
+अटल bool handle_पढ़ो_kdeth_eflags(काष्ठा hfi1_ctxtdata *rcd,
+				     काष्ठा hfi1_packet *packet, u8 rcv_type,
 				     u8 rte, u32 psn, u32 ibpsn)
 	__must_hold(&packet->qp->r_lock) __must_hold(RCU)
-{
-	struct hfi1_pportdata *ppd = rcd->ppd;
-	struct hfi1_devdata *dd = ppd->dd;
-	struct hfi1_ibport *ibp;
-	struct rvt_swqe *wqe;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
+अणु
+	काष्ठा hfi1_pportdata *ppd = rcd->ppd;
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	काष्ठा hfi1_ibport *ibp;
+	काष्ठा rvt_swqe *wqe;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
 	u32 ack_psn;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *priv = qp->priv;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 	bool ret = true;
-	int diff = 0;
+	पूर्णांक dअगरf = 0;
 	u32 fpsn;
 
-	lockdep_assert_held(&qp->r_lock);
-	trace_hfi1_rsp_read_kdeth_eflags(qp, ibpsn);
-	trace_hfi1_sender_read_kdeth_eflags(qp);
-	trace_hfi1_tid_read_sender_kdeth_eflags(qp, 0);
+	lockdep_निश्चित_held(&qp->r_lock);
+	trace_hfi1_rsp_पढ़ो_kdeth_eflags(qp, ibpsn);
+	trace_hfi1_sender_पढ़ो_kdeth_eflags(qp);
+	trace_hfi1_tid_पढ़ो_sender_kdeth_eflags(qp, 0);
 	spin_lock(&qp->s_lock);
 	/* If the psn is out of valid range, drop the packet */
-	if (cmp_psn(ibpsn, qp->s_last_psn) < 0 ||
+	अगर (cmp_psn(ibpsn, qp->s_last_psn) < 0 ||
 	    cmp_psn(ibpsn, qp->s_psn) > 0)
-		goto s_unlock;
+		जाओ s_unlock;
 
 	/*
-	 * Note that NAKs implicitly ACK outstanding SEND and RDMA write
-	 * requests and implicitly NAK RDMA read and atomic requests issued
-	 * before the NAK'ed request.
+	 * Note that NAKs implicitly ACK outstanding SEND and RDMA ग_लिखो
+	 * requests and implicitly NAK RDMA पढ़ो and atomic requests issued
+	 * beक्रमe the NAK'ed request.
 	 */
 	ack_psn = ibpsn - 1;
 	wqe = rvt_get_swqe_ptr(qp, qp->s_acked);
 	ibp = to_iport(qp->ibqp.device, qp->port_num);
 
 	/* Complete WQEs that the PSN finishes. */
-	while ((int)delta_psn(ack_psn, wqe->lpsn) >= 0) {
+	जबतक ((पूर्णांक)delta_psn(ack_psn, wqe->lpsn) >= 0) अणु
 		/*
-		 * If this request is a RDMA read or atomic, and the NACK is
-		 * for a later operation, this NACK NAKs the RDMA read or
+		 * If this request is a RDMA पढ़ो or atomic, and the NACK is
+		 * क्रम a later operation, this NACK NAKs the RDMA पढ़ो or
 		 * atomic.
 		 */
-		if (wqe->wr.opcode == IB_WR_RDMA_READ ||
+		अगर (wqe->wr.opcode == IB_WR_RDMA_READ ||
 		    wqe->wr.opcode == IB_WR_TID_RDMA_READ ||
 		    wqe->wr.opcode == IB_WR_ATOMIC_CMP_AND_SWP ||
-		    wqe->wr.opcode == IB_WR_ATOMIC_FETCH_AND_ADD) {
+		    wqe->wr.opcode == IB_WR_ATOMIC_FETCH_AND_ADD) अणु
 			/* Retry this request. */
-			if (!(qp->r_flags & RVT_R_RDMAR_SEQ)) {
+			अगर (!(qp->r_flags & RVT_R_RDMAR_SEQ)) अणु
 				qp->r_flags |= RVT_R_RDMAR_SEQ;
-				if (wqe->wr.opcode == IB_WR_TID_RDMA_READ) {
-					restart_tid_rdma_read_req(rcd, qp,
+				अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ) अणु
+					restart_tid_rdma_पढ़ो_req(rcd, qp,
 								  wqe);
-				} else {
+				पूर्ण अन्यथा अणु
 					hfi1_restart_rc(qp, qp->s_last_psn + 1,
 							0);
-					if (list_empty(&qp->rspwait)) {
+					अगर (list_empty(&qp->rspरुको)) अणु
 						qp->r_flags |= RVT_R_RSP_SEND;
 						rvt_get_qp(qp);
-						list_add_tail(/* wait */
-						   &qp->rspwait,
-						   &rcd->qp_wait_list);
-					}
-				}
-			}
+						list_add_tail(/* रुको */
+						   &qp->rspरुको,
+						   &rcd->qp_रुको_list);
+					पूर्ण
+				पूर्ण
+			पूर्ण
 			/*
 			 * No need to process the NAK since we are
 			 * restarting an earlier request.
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		wqe = do_rc_completion(qp, wqe, ibp);
-		if (qp->s_acked == qp->s_tail)
-			goto s_unlock;
-	}
+		wqe = करो_rc_completion(qp, wqe, ibp);
+		अगर (qp->s_acked == qp->s_tail)
+			जाओ s_unlock;
+	पूर्ण
 
-	if (qp->s_acked == qp->s_tail)
-		goto s_unlock;
+	अगर (qp->s_acked == qp->s_tail)
+		जाओ s_unlock;
 
-	/* Handle the eflags for the request */
-	if (wqe->wr.opcode != IB_WR_TID_RDMA_READ)
-		goto s_unlock;
+	/* Handle the eflags क्रम the request */
+	अगर (wqe->wr.opcode != IB_WR_TID_RDMA_READ)
+		जाओ s_unlock;
 
 	req = wqe_to_tid_req(wqe);
-	trace_hfi1_tid_req_read_kdeth_eflags(qp, 0, wqe->wr.opcode, wqe->psn,
+	trace_hfi1_tid_req_पढ़ो_kdeth_eflags(qp, 0, wqe->wr.opcode, wqe->psn,
 					     wqe->lpsn, req);
-	switch (rcv_type) {
-	case RHF_RCV_TYPE_EXPECTED:
-		switch (rte) {
-		case RHF_RTE_EXPECTED_FLOW_SEQ_ERR:
+	चयन (rcv_type) अणु
+	हाल RHF_RCV_TYPE_EXPECTED:
+		चयन (rte) अणु
+		हाल RHF_RTE_EXPECTED_FLOW_SEQ_ERR:
 			/*
 			 * On the first occurrence of a Flow Sequence error,
 			 * the flag TID_FLOW_SW_PSN is set.
 			 *
 			 * After that, the flow is *not* reprogrammed and the
-			 * protocol falls back to SW PSN checking. This is done
-			 * to prevent continuous Flow Sequence errors for any
+			 * protocol falls back to SW PSN checking. This is करोne
+			 * to prevent continuous Flow Sequence errors क्रम any
 			 * packets that could be still in the fabric.
 			 */
 			flow = &req->flows[req->clear_tail];
-			trace_hfi1_tid_flow_read_kdeth_eflags(qp,
+			trace_hfi1_tid_flow_पढ़ो_kdeth_eflags(qp,
 							      req->clear_tail,
 							      flow);
-			if (priv->s_flags & HFI1_R_TID_SW_PSN) {
-				diff = cmp_psn(psn,
+			अगर (priv->s_flags & HFI1_R_TID_SW_PSN) अणु
+				dअगरf = cmp_psn(psn,
 					       flow->flow_state.r_next_psn);
-				if (diff > 0) {
+				अगर (dअगरf > 0) अणु
 					/* Drop the packet.*/
-					goto s_unlock;
-				} else if (diff < 0) {
+					जाओ s_unlock;
+				पूर्ण अन्यथा अगर (dअगरf < 0) अणु
 					/*
-					 * If a response packet for a restarted
+					 * If a response packet क्रम a restarted
 					 * request has come back, reset the
 					 * restart flag.
 					 */
-					if (qp->r_flags & RVT_R_RDMAR_SEQ)
+					अगर (qp->r_flags & RVT_R_RDMAR_SEQ)
 						qp->r_flags &=
 							~RVT_R_RDMAR_SEQ;
 
 					/* Drop the packet.*/
-					goto s_unlock;
-				}
+					जाओ s_unlock;
+				पूर्ण
 
 				/*
-				 * If SW PSN verification is successful and
+				 * If SW PSN verअगरication is successful and
 				 * this is the last packet in the segment, tell
 				 * the caller to process it as a normal packet.
 				 */
 				fpsn = full_flow_psn(flow,
 						     flow->flow_state.lpsn);
-				if (cmp_psn(fpsn, psn) == 0) {
+				अगर (cmp_psn(fpsn, psn) == 0) अणु
 					ret = false;
-					if (qp->r_flags & RVT_R_RDMAR_SEQ)
+					अगर (qp->r_flags & RVT_R_RDMAR_SEQ)
 						qp->r_flags &=
 							~RVT_R_RDMAR_SEQ;
-				}
+				पूर्ण
 				flow->flow_state.r_next_psn =
 					mask_psn(psn + 1);
-			} else {
+			पूर्ण अन्यथा अणु
 				u32 last_psn;
 
-				last_psn = read_r_next_psn(dd, rcd->ctxt,
+				last_psn = पढ़ो_r_next_psn(dd, rcd->ctxt,
 							   flow->idx);
 				flow->flow_state.r_next_psn = last_psn;
 				priv->s_flags |= HFI1_R_TID_SW_PSN;
@@ -2803,73 +2804,73 @@ static bool handle_read_kdeth_eflags(struct hfi1_ctxtdata *rcd,
 				 * If no request has been restarted yet,
 				 * restart the current one.
 				 */
-				if (!(qp->r_flags & RVT_R_RDMAR_SEQ))
-					restart_tid_rdma_read_req(rcd, qp,
+				अगर (!(qp->r_flags & RVT_R_RDMAR_SEQ))
+					restart_tid_rdma_पढ़ो_req(rcd, qp,
 								  wqe);
-			}
+			पूर्ण
 
-			break;
+			अवरोध;
 
-		case RHF_RTE_EXPECTED_FLOW_GEN_ERR:
+		हाल RHF_RTE_EXPECTED_FLOW_GEN_ERR:
 			/*
 			 * Since the TID flow is able to ride through
 			 * generation mismatch, drop this stale packet.
 			 */
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-		break;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case RHF_RCV_TYPE_ERROR:
-		switch (rte) {
-		case RHF_RTE_ERROR_OP_CODE_ERR:
-		case RHF_RTE_ERROR_KHDR_MIN_LEN_ERR:
-		case RHF_RTE_ERROR_KHDR_HCRC_ERR:
-		case RHF_RTE_ERROR_KHDR_KVER_ERR:
-		case RHF_RTE_ERROR_CONTEXT_ERR:
-		case RHF_RTE_ERROR_KHDR_TID_ERR:
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+	हाल RHF_RCV_TYPE_ERROR:
+		चयन (rte) अणु
+		हाल RHF_RTE_ERROR_OP_CODE_ERR:
+		हाल RHF_RTE_ERROR_KHDR_MIN_LEN_ERR:
+		हाल RHF_RTE_ERROR_KHDR_HCRC_ERR:
+		हाल RHF_RTE_ERROR_KHDR_KVER_ERR:
+		हाल RHF_RTE_ERROR_CONTEXT_ERR:
+		हाल RHF_RTE_ERROR_KHDR_TID_ERR:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 s_unlock:
 	spin_unlock(&qp->s_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool hfi1_handle_kdeth_eflags(struct hfi1_ctxtdata *rcd,
-			      struct hfi1_pportdata *ppd,
-			      struct hfi1_packet *packet)
-{
-	struct hfi1_ibport *ibp = &ppd->ibport_data;
-	struct hfi1_devdata *dd = ppd->dd;
-	struct rvt_dev_info *rdi = &dd->verbs_dev.rdi;
+bool hfi1_handle_kdeth_eflags(काष्ठा hfi1_ctxtdata *rcd,
+			      काष्ठा hfi1_pportdata *ppd,
+			      काष्ठा hfi1_packet *packet)
+अणु
+	काष्ठा hfi1_ibport *ibp = &ppd->ibport_data;
+	काष्ठा hfi1_devdata *dd = ppd->dd;
+	काष्ठा rvt_dev_info *rdi = &dd->verbs_dev.rdi;
 	u8 rcv_type = rhf_rcv_type(packet->rhf);
 	u8 rte = rhf_rcv_type_err(packet->rhf);
-	struct ib_header *hdr = packet->hdr;
-	struct ib_other_headers *ohdr = NULL;
-	int lnh = be16_to_cpu(hdr->lrh[0]) & 3;
+	काष्ठा ib_header *hdr = packet->hdr;
+	काष्ठा ib_other_headers *ohdr = शून्य;
+	पूर्णांक lnh = be16_to_cpu(hdr->lrh[0]) & 3;
 	u16 lid  = be16_to_cpu(hdr->lrh[1]);
 	u8 opcode;
 	u32 qp_num, psn, ibpsn;
-	struct rvt_qp *qp;
-	struct hfi1_qp_priv *qpriv;
-	unsigned long flags;
+	काष्ठा rvt_qp *qp;
+	काष्ठा hfi1_qp_priv *qpriv;
+	अचिन्हित दीर्घ flags;
 	bool ret = true;
-	struct rvt_ack_entry *e;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
-	int diff = 0;
+	काष्ठा rvt_ack_entry *e;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
+	पूर्णांक dअगरf = 0;
 
-	trace_hfi1_msg_handle_kdeth_eflags(NULL, "Kdeth error: rhf ",
+	trace_hfi1_msg_handle_kdeth_eflags(शून्य, "Kdeth error: rhf ",
 					   packet->rhf);
-	if (packet->rhf & RHF_ICRC_ERR)
-		return ret;
+	अगर (packet->rhf & RHF_ICRC_ERR)
+		वापस ret;
 
 	packet->ohdr = &hdr->u.oth;
 	ohdr = packet->ohdr;
@@ -2878,232 +2879,232 @@ bool hfi1_handle_kdeth_eflags(struct hfi1_ctxtdata *rcd,
 	/* Get the destination QP number. */
 	qp_num = be32_to_cpu(ohdr->u.tid_rdma.r_rsp.verbs_qp) &
 		RVT_QPN_MASK;
-	if (lid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
-		goto drop;
+	अगर (lid >= be16_to_cpu(IB_MULTICAST_LID_BASE))
+		जाओ drop;
 
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
 	opcode = (be32_to_cpu(ohdr->bth[0]) >> 24) & 0xff;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	qp = rvt_lookup_qpn(rdi, &ibp->rvp, qp_num);
-	if (!qp)
-		goto rcu_unlock;
+	अगर (!qp)
+		जाओ rcu_unlock;
 
 	packet->qp = qp;
 
-	/* Check for valid receive state. */
+	/* Check क्रम valid receive state. */
 	spin_lock_irqsave(&qp->r_lock, flags);
-	if (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_RECV_OK)) {
+	अगर (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_RECV_OK)) अणु
 		ibp->rvp.n_pkt_drops++;
-		goto r_unlock;
-	}
+		जाओ r_unlock;
+	पूर्ण
 
-	if (packet->rhf & RHF_TID_ERR) {
+	अगर (packet->rhf & RHF_TID_ERR) अणु
 		/* For TIDERR and RC QPs preemptively schedule a NAK */
 		u32 tlen = rhf_pkt_len(packet->rhf); /* in bytes */
 
 		/* Sanity check packet */
-		if (tlen < 24)
-			goto r_unlock;
+		अगर (tlen < 24)
+			जाओ r_unlock;
 
 		/*
-		 * Check for GRH. We should never get packets with GRH in this
+		 * Check क्रम GRH. We should never get packets with GRH in this
 		 * path.
 		 */
-		if (lnh == HFI1_LRH_GRH)
-			goto r_unlock;
+		अगर (lnh == HFI1_LRH_GRH)
+			जाओ r_unlock;
 
-		if (tid_rdma_tid_err(packet, rcv_type))
-			goto r_unlock;
-	}
+		अगर (tid_rdma_tid_err(packet, rcv_type))
+			जाओ r_unlock;
+	पूर्ण
 
 	/* handle TID RDMA READ */
-	if (opcode == TID_OP(READ_RESP)) {
+	अगर (opcode == TID_OP(READ_RESP)) अणु
 		ibpsn = be32_to_cpu(ohdr->u.tid_rdma.r_rsp.verbs_psn);
 		ibpsn = mask_psn(ibpsn);
-		ret = handle_read_kdeth_eflags(rcd, packet, rcv_type, rte, psn,
+		ret = handle_पढ़ो_kdeth_eflags(rcd, packet, rcv_type, rte, psn,
 					       ibpsn);
-		goto r_unlock;
-	}
+		जाओ r_unlock;
+	पूर्ण
 
 	/*
-	 * qp->s_tail_ack_queue points to the rvt_ack_entry currently being
+	 * qp->s_tail_ack_queue poपूर्णांकs to the rvt_ack_entry currently being
 	 * processed. These a completed sequentially so we can be sure that
-	 * the pointer will not change until the entire request has completed.
+	 * the poपूर्णांकer will not change until the entire request has completed.
 	 */
 	spin_lock(&qp->s_lock);
 	qpriv = qp->priv;
-	if (qpriv->r_tid_tail == HFI1_QP_WQE_INVALID ||
+	अगर (qpriv->r_tid_tail == HFI1_QP_WQE_INVALID ||
 	    qpriv->r_tid_tail == qpriv->r_tid_head)
-		goto unlock;
+		जाओ unlock;
 	e = &qp->s_ack_queue[qpriv->r_tid_tail];
-	if (e->opcode != TID_OP(WRITE_REQ))
-		goto unlock;
+	अगर (e->opcode != TID_OP(WRITE_REQ))
+		जाओ unlock;
 	req = ack_to_tid_req(e);
-	if (req->comp_seg == req->cur_seg)
-		goto unlock;
+	अगर (req->comp_seg == req->cur_seg)
+		जाओ unlock;
 	flow = &req->flows[req->clear_tail];
-	trace_hfi1_eflags_err_write(qp, rcv_type, rte, psn);
+	trace_hfi1_eflags_err_ग_लिखो(qp, rcv_type, rte, psn);
 	trace_hfi1_rsp_handle_kdeth_eflags(qp, psn);
-	trace_hfi1_tid_write_rsp_handle_kdeth_eflags(qp);
+	trace_hfi1_tid_ग_लिखो_rsp_handle_kdeth_eflags(qp);
 	trace_hfi1_tid_req_handle_kdeth_eflags(qp, 0, e->opcode, e->psn,
 					       e->lpsn, req);
 	trace_hfi1_tid_flow_handle_kdeth_eflags(qp, req->clear_tail, flow);
 
-	switch (rcv_type) {
-	case RHF_RCV_TYPE_EXPECTED:
-		switch (rte) {
-		case RHF_RTE_EXPECTED_FLOW_SEQ_ERR:
-			if (!(qpriv->s_flags & HFI1_R_TID_SW_PSN)) {
+	चयन (rcv_type) अणु
+	हाल RHF_RCV_TYPE_EXPECTED:
+		चयन (rte) अणु
+		हाल RHF_RTE_EXPECTED_FLOW_SEQ_ERR:
+			अगर (!(qpriv->s_flags & HFI1_R_TID_SW_PSN)) अणु
 				qpriv->s_flags |= HFI1_R_TID_SW_PSN;
 				flow->flow_state.r_next_psn =
-					read_r_next_psn(dd, rcd->ctxt,
+					पढ़ो_r_next_psn(dd, rcd->ctxt,
 							flow->idx);
 				qpriv->r_next_psn_kdeth =
 					flow->flow_state.r_next_psn;
-				goto nak_psn;
-			} else {
+				जाओ nak_psn;
+			पूर्ण अन्यथा अणु
 				/*
-				 * If the received PSN does not match the next
+				 * If the received PSN करोes not match the next
 				 * expected PSN, NAK the packet.
-				 * However, only do that if we know that the a
-				 * NAK has already been sent. Otherwise, this
+				 * However, only करो that अगर we know that the a
+				 * NAK has alपढ़ोy been sent. Otherwise, this
 				 * mismatch could be due to packets that were
-				 * already in flight.
+				 * alपढ़ोy in flight.
 				 */
-				diff = cmp_psn(psn,
+				dअगरf = cmp_psn(psn,
 					       flow->flow_state.r_next_psn);
-				if (diff > 0)
-					goto nak_psn;
-				else if (diff < 0)
-					break;
+				अगर (dअगरf > 0)
+					जाओ nak_psn;
+				अन्यथा अगर (dअगरf < 0)
+					अवरोध;
 
 				qpriv->s_nak_state = 0;
 				/*
-				 * If SW PSN verification is successful and this
+				 * If SW PSN verअगरication is successful and this
 				 * is the last packet in the segment, tell the
 				 * caller to process it as a normal packet.
 				 */
-				if (psn == full_flow_psn(flow,
+				अगर (psn == full_flow_psn(flow,
 							 flow->flow_state.lpsn))
 					ret = false;
 				flow->flow_state.r_next_psn =
 					mask_psn(psn + 1);
 				qpriv->r_next_psn_kdeth =
 					flow->flow_state.r_next_psn;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case RHF_RTE_EXPECTED_FLOW_GEN_ERR:
-			goto nak_psn;
+		हाल RHF_RTE_EXPECTED_FLOW_GEN_ERR:
+			जाओ nak_psn;
 
-		default:
-			break;
-		}
-		break;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case RHF_RCV_TYPE_ERROR:
-		switch (rte) {
-		case RHF_RTE_ERROR_OP_CODE_ERR:
-		case RHF_RTE_ERROR_KHDR_MIN_LEN_ERR:
-		case RHF_RTE_ERROR_KHDR_HCRC_ERR:
-		case RHF_RTE_ERROR_KHDR_KVER_ERR:
-		case RHF_RTE_ERROR_CONTEXT_ERR:
-		case RHF_RTE_ERROR_KHDR_TID_ERR:
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+	हाल RHF_RCV_TYPE_ERROR:
+		चयन (rte) अणु
+		हाल RHF_RTE_ERROR_OP_CODE_ERR:
+		हाल RHF_RTE_ERROR_KHDR_MIN_LEN_ERR:
+		हाल RHF_RTE_ERROR_KHDR_HCRC_ERR:
+		हाल RHF_RTE_ERROR_KHDR_KVER_ERR:
+		हाल RHF_RTE_ERROR_CONTEXT_ERR:
+		हाल RHF_RTE_ERROR_KHDR_TID_ERR:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 unlock:
 	spin_unlock(&qp->s_lock);
 r_unlock:
 	spin_unlock_irqrestore(&qp->r_lock, flags);
 rcu_unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 drop:
-	return ret;
+	वापस ret;
 nak_psn:
 	ibp->rvp.n_rc_seqnak++;
-	if (!qpriv->s_nak_state) {
+	अगर (!qpriv->s_nak_state) अणु
 		qpriv->s_nak_state = IB_NAK_PSN_ERROR;
 		/* We are NAK'ing the next expected PSN */
 		qpriv->s_nak_psn = mask_psn(flow->flow_state.r_next_psn);
 		tid_rdma_trigger_ack(qp);
-	}
-	goto unlock;
-}
+	पूर्ण
+	जाओ unlock;
+पूर्ण
 
 /*
- * "Rewind" the TID request information.
+ * "Rewind" the TID request inक्रमmation.
  * This means that we reset the state back to ACTIVE,
  * find the proper flow, set the flow index to that flow,
- * and reset the flow information.
+ * and reset the flow inक्रमmation.
  */
-void hfi1_tid_rdma_restart_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
+व्योम hfi1_tid_rdma_restart_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
 			       u32 *bth2)
-{
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_flow *flow;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	int diff, delta_pkts;
+अणु
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_flow *flow;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	पूर्णांक dअगरf, delta_pkts;
 	u32 tididx = 0, i;
 	u16 fidx;
 
-	if (wqe->wr.opcode == IB_WR_TID_RDMA_READ) {
+	अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ) अणु
 		*bth2 = mask_psn(qp->s_psn);
 		flow = find_flow_ib(req, *bth2, &fidx);
-		if (!flow) {
+		अगर (!flow) अणु
 			trace_hfi1_msg_tid_restart_req(/* msg */
 			   qp, "!!!!!! Could not find flow to restart: bth2 ",
 			   (u64)*bth2);
 			trace_hfi1_tid_req_restart_req(qp, 0, wqe->wr.opcode,
 						       wqe->psn, wqe->lpsn,
 						       req);
-			return;
-		}
-	} else {
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		fidx = req->acked_tail;
 		flow = &req->flows[fidx];
 		*bth2 = mask_psn(req->r_ack_psn);
-	}
+	पूर्ण
 
-	if (wqe->wr.opcode == IB_WR_TID_RDMA_READ)
+	अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ)
 		delta_pkts = delta_psn(*bth2, flow->flow_state.ib_spsn);
-	else
+	अन्यथा
 		delta_pkts = delta_psn(*bth2,
 				       full_flow_psn(flow,
 						     flow->flow_state.spsn));
 
 	trace_hfi1_tid_flow_restart_req(qp, fidx, flow);
-	diff = delta_pkts + flow->resync_npkts;
+	dअगरf = delta_pkts + flow->resync_npkts;
 
 	flow->sent = 0;
 	flow->pkt = 0;
 	flow->tid_idx = 0;
 	flow->tid_offset = 0;
-	if (diff) {
-		for (tididx = 0; tididx < flow->tidcnt; tididx++) {
+	अगर (dअगरf) अणु
+		क्रम (tididx = 0; tididx < flow->tidcnt; tididx++) अणु
 			u32 tidentry = flow->tid_entry[tididx], tidlen,
 				tidnpkts, npkts;
 
 			flow->tid_offset = 0;
 			tidlen = EXP_TID_GET(tidentry, LEN) * PAGE_SIZE;
-			tidnpkts = rvt_div_round_up_mtu(qp, tidlen);
-			npkts = min_t(u32, diff, tidnpkts);
+			tidnpkts = rvt_भाग_round_up_mtu(qp, tidlen);
+			npkts = min_t(u32, dअगरf, tidnpkts);
 			flow->pkt += npkts;
 			flow->sent += (npkts == tidnpkts ? tidlen :
 				       npkts * qp->pmtu);
 			flow->tid_offset += npkts * qp->pmtu;
-			diff -= npkts;
-			if (!diff)
-				break;
-		}
-	}
-	if (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE) {
+			dअगरf -= npkts;
+			अगर (!dअगरf)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE) अणु
 		rvt_skip_sge(&qpriv->tid_ss, (req->cur_seg * req->seg_len) +
 			     flow->sent, 0);
 		/*
@@ -3114,218 +3115,218 @@ void hfi1_tid_rdma_restart_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
 		 * adjust flow->pkt in order to calculate the correct PSN.
 		 */
 		flow->pkt -= flow->resync_npkts;
-	}
+	पूर्ण
 
-	if (flow->tid_offset ==
-	    EXP_TID_GET(flow->tid_entry[tididx], LEN) * PAGE_SIZE) {
+	अगर (flow->tid_offset ==
+	    EXP_TID_GET(flow->tid_entry[tididx], LEN) * PAGE_SIZE) अणु
 		tididx++;
 		flow->tid_offset = 0;
-	}
+	पूर्ण
 	flow->tid_idx = tididx;
-	if (wqe->wr.opcode == IB_WR_TID_RDMA_READ)
+	अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ)
 		/* Move flow_idx to correct index */
 		req->flow_idx = fidx;
-	else
+	अन्यथा
 		req->clear_tail = fidx;
 
 	trace_hfi1_tid_flow_restart_req(qp, fidx, flow);
 	trace_hfi1_tid_req_restart_req(qp, 0, wqe->wr.opcode, wqe->psn,
 				       wqe->lpsn, req);
 	req->state = TID_REQUEST_ACTIVE;
-	if (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE) {
+	अगर (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE) अणु
 		/* Reset all the flows that we are going to resend */
 		fidx = CIRC_NEXT(fidx, MAX_FLOWS);
 		i = qpriv->s_tid_tail;
-		do {
-			for (; CIRC_CNT(req->setup_head, fidx, MAX_FLOWS);
-			      fidx = CIRC_NEXT(fidx, MAX_FLOWS)) {
+		करो अणु
+			क्रम (; CIRC_CNT(req->setup_head, fidx, MAX_FLOWS);
+			      fidx = CIRC_NEXT(fidx, MAX_FLOWS)) अणु
 				req->flows[fidx].sent = 0;
 				req->flows[fidx].pkt = 0;
 				req->flows[fidx].tid_idx = 0;
 				req->flows[fidx].tid_offset = 0;
 				req->flows[fidx].resync_npkts = 0;
-			}
-			if (i == qpriv->s_tid_cur)
-				break;
-			do {
+			पूर्ण
+			अगर (i == qpriv->s_tid_cur)
+				अवरोध;
+			करो अणु
 				i = (++i == qp->s_size ? 0 : i);
 				wqe = rvt_get_swqe_ptr(qp, i);
-			} while (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE);
+			पूर्ण जबतक (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE);
 			req = wqe_to_tid_req(wqe);
 			req->cur_seg = req->ack_seg;
 			fidx = req->acked_tail;
 			/* Pull req->clear_tail back */
 			req->clear_tail = fidx;
-		} while (1);
-	}
-}
+		पूर्ण जबतक (1);
+	पूर्ण
+पूर्ण
 
-void hfi1_qp_kern_exp_rcv_clear_all(struct rvt_qp *qp)
-{
-	int i, ret;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_flow_state *fs;
+व्योम hfi1_qp_kern_exp_rcv_clear_all(काष्ठा rvt_qp *qp)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_flow_state *fs;
 
-	if (qp->ibqp.qp_type != IB_QPT_RC || !HFI1_CAP_IS_KSET(TID_RDMA))
-		return;
+	अगर (qp->ibqp.qp_type != IB_QPT_RC || !HFI1_CAP_IS_KSET(TID_RDMA))
+		वापस;
 
 	/*
 	 * First, clear the flow to help prevent any delayed packets from
 	 * being delivered.
 	 */
 	fs = &qpriv->flow_state;
-	if (fs->index != RXE_NUM_TID_FLOWS)
+	अगर (fs->index != RXE_NUM_TID_FLOWS)
 		hfi1_kern_clear_hw_flow(qpriv->rcd, qp);
 
-	for (i = qp->s_acked; i != qp->s_head;) {
-		struct rvt_swqe *wqe = rvt_get_swqe_ptr(qp, i);
+	क्रम (i = qp->s_acked; i != qp->s_head;) अणु
+		काष्ठा rvt_swqe *wqe = rvt_get_swqe_ptr(qp, i);
 
-		if (++i == qp->s_size)
+		अगर (++i == qp->s_size)
 			i = 0;
 		/* Free only locally allocated TID entries */
-		if (wqe->wr.opcode != IB_WR_TID_RDMA_READ)
-			continue;
-		do {
-			struct hfi1_swqe_priv *priv = wqe->priv;
+		अगर (wqe->wr.opcode != IB_WR_TID_RDMA_READ)
+			जारी;
+		करो अणु
+			काष्ठा hfi1_swqe_priv *priv = wqe->priv;
 
 			ret = hfi1_kern_exp_rcv_clear(&priv->tid_req);
-		} while (!ret);
-	}
-	for (i = qp->s_acked_ack_queue; i != qp->r_head_ack_queue;) {
-		struct rvt_ack_entry *e = &qp->s_ack_queue[i];
+		पूर्ण जबतक (!ret);
+	पूर्ण
+	क्रम (i = qp->s_acked_ack_queue; i != qp->r_head_ack_queue;) अणु
+		काष्ठा rvt_ack_entry *e = &qp->s_ack_queue[i];
 
-		if (++i == rvt_max_atomic(ib_to_rvt(qp->ibqp.device)))
+		अगर (++i == rvt_max_atomic(ib_to_rvt(qp->ibqp.device)))
 			i = 0;
 		/* Free only locally allocated TID entries */
-		if (e->opcode != TID_OP(WRITE_REQ))
-			continue;
-		do {
-			struct hfi1_ack_priv *priv = e->priv;
+		अगर (e->opcode != TID_OP(WRITE_REQ))
+			जारी;
+		करो अणु
+			काष्ठा hfi1_ack_priv *priv = e->priv;
 
 			ret = hfi1_kern_exp_rcv_clear(&priv->tid_req);
-		} while (!ret);
-	}
-}
+		पूर्ण जबतक (!ret);
+	पूर्ण
+पूर्ण
 
-bool hfi1_tid_rdma_wqe_interlock(struct rvt_qp *qp, struct rvt_swqe *wqe)
-{
-	struct rvt_swqe *prev;
-	struct hfi1_qp_priv *priv = qp->priv;
+bool hfi1_tid_rdma_wqe_पूर्णांकerlock(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe)
+अणु
+	काष्ठा rvt_swqe *prev;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 	u32 s_prev;
-	struct tid_rdma_request *req;
+	काष्ठा tid_rdma_request *req;
 
 	s_prev = (qp->s_cur == 0 ? qp->s_size : qp->s_cur) - 1;
 	prev = rvt_get_swqe_ptr(qp, s_prev);
 
-	switch (wqe->wr.opcode) {
-	case IB_WR_SEND:
-	case IB_WR_SEND_WITH_IMM:
-	case IB_WR_SEND_WITH_INV:
-	case IB_WR_ATOMIC_CMP_AND_SWP:
-	case IB_WR_ATOMIC_FETCH_AND_ADD:
-	case IB_WR_RDMA_WRITE:
-	case IB_WR_RDMA_WRITE_WITH_IMM:
-		switch (prev->wr.opcode) {
-		case IB_WR_TID_RDMA_WRITE:
+	चयन (wqe->wr.opcode) अणु
+	हाल IB_WR_SEND:
+	हाल IB_WR_SEND_WITH_IMM:
+	हाल IB_WR_SEND_WITH_INV:
+	हाल IB_WR_ATOMIC_CMP_AND_SWP:
+	हाल IB_WR_ATOMIC_FETCH_AND_ADD:
+	हाल IB_WR_RDMA_WRITE:
+	हाल IB_WR_RDMA_WRITE_WITH_IMM:
+		चयन (prev->wr.opcode) अणु
+		हाल IB_WR_TID_RDMA_WRITE:
 			req = wqe_to_tid_req(prev);
-			if (req->ack_seg != req->total_segs)
-				goto interlock;
-			break;
-		default:
-			break;
-		}
-		break;
-	case IB_WR_RDMA_READ:
-		if (prev->wr.opcode != IB_WR_TID_RDMA_WRITE)
-			break;
+			अगर (req->ack_seg != req->total_segs)
+				जाओ पूर्णांकerlock;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IB_WR_RDMA_READ:
+		अगर (prev->wr.opcode != IB_WR_TID_RDMA_WRITE)
+			अवरोध;
 		fallthrough;
-	case IB_WR_TID_RDMA_READ:
-		switch (prev->wr.opcode) {
-		case IB_WR_RDMA_READ:
-			if (qp->s_acked != qp->s_cur)
-				goto interlock;
-			break;
-		case IB_WR_TID_RDMA_WRITE:
+	हाल IB_WR_TID_RDMA_READ:
+		चयन (prev->wr.opcode) अणु
+		हाल IB_WR_RDMA_READ:
+			अगर (qp->s_acked != qp->s_cur)
+				जाओ पूर्णांकerlock;
+			अवरोध;
+		हाल IB_WR_TID_RDMA_WRITE:
 			req = wqe_to_tid_req(prev);
-			if (req->ack_seg != req->total_segs)
-				goto interlock;
-			break;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
-	return false;
+			अगर (req->ack_seg != req->total_segs)
+				जाओ पूर्णांकerlock;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस false;
 
-interlock:
+पूर्णांकerlock:
 	priv->s_flags |= HFI1_S_TID_WAIT_INTERLCK;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Does @sge meet the alignment requirements for tid rdma? */
-static inline bool hfi1_check_sge_align(struct rvt_qp *qp,
-					struct rvt_sge *sge, int num_sge)
-{
-	int i;
+/* Does @sge meet the alignment requirements क्रम tid rdma? */
+अटल अंतरभूत bool hfi1_check_sge_align(काष्ठा rvt_qp *qp,
+					काष्ठा rvt_sge *sge, पूर्णांक num_sge)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_sge; i++, sge++) {
+	क्रम (i = 0; i < num_sge; i++, sge++) अणु
 		trace_hfi1_sge_check_align(qp, i, sge);
-		if ((u64)sge->vaddr & ~PAGE_MASK ||
+		अगर ((u64)sge->vaddr & ~PAGE_MASK ||
 		    sge->sge_length & ~PAGE_MASK)
-			return false;
-	}
-	return true;
-}
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-void setup_tid_rdma_wqe(struct rvt_qp *qp, struct rvt_swqe *wqe)
-{
-	struct hfi1_qp_priv *qpriv = (struct hfi1_qp_priv *)qp->priv;
-	struct hfi1_swqe_priv *priv = wqe->priv;
-	struct tid_rdma_params *remote;
-	enum ib_wr_opcode new_opcode;
-	bool do_tid_rdma = false;
-	struct hfi1_pportdata *ppd = qpriv->rcd->ppd;
+व्योम setup_tid_rdma_wqe(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = (काष्ठा hfi1_qp_priv *)qp->priv;
+	काष्ठा hfi1_swqe_priv *priv = wqe->priv;
+	काष्ठा tid_rdma_params *remote;
+	क्रमागत ib_wr_opcode new_opcode;
+	bool करो_tid_rdma = false;
+	काष्ठा hfi1_pportdata *ppd = qpriv->rcd->ppd;
 
-	if ((rdma_ah_get_dlid(&qp->remote_ah_attr) & ~((1 << ppd->lmc) - 1)) ==
+	अगर ((rdma_ah_get_dlid(&qp->remote_ah_attr) & ~((1 << ppd->lmc) - 1)) ==
 				ppd->lid)
-		return;
-	if (qpriv->hdr_type != HFI1_PKT_TYPE_9B)
-		return;
+		वापस;
+	अगर (qpriv->hdr_type != HFI1_PKT_TYPE_9B)
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 	/*
-	 * If TID RDMA is disabled by the negotiation, don't
+	 * If TID RDMA is disabled by the negotiation, करोn't
 	 * use it.
 	 */
-	if (!remote)
-		goto exit;
+	अगर (!remote)
+		जाओ निकास;
 
-	if (wqe->wr.opcode == IB_WR_RDMA_READ) {
-		if (hfi1_check_sge_align(qp, &wqe->sg_list[0],
-					 wqe->wr.num_sge)) {
+	अगर (wqe->wr.opcode == IB_WR_RDMA_READ) अणु
+		अगर (hfi1_check_sge_align(qp, &wqe->sg_list[0],
+					 wqe->wr.num_sge)) अणु
 			new_opcode = IB_WR_TID_RDMA_READ;
-			do_tid_rdma = true;
-		}
-	} else if (wqe->wr.opcode == IB_WR_RDMA_WRITE) {
+			करो_tid_rdma = true;
+		पूर्ण
+	पूर्ण अन्यथा अगर (wqe->wr.opcode == IB_WR_RDMA_WRITE) अणु
 		/*
-		 * TID RDMA is enabled for this RDMA WRITE request iff:
+		 * TID RDMA is enabled क्रम this RDMA WRITE request अगरf:
 		 *   1. The remote address is page-aligned,
 		 *   2. The length is larger than the minimum segment size,
 		 *   3. The length is page-multiple.
 		 */
-		if (!(wqe->rdma_wr.remote_addr & ~PAGE_MASK) &&
-		    !(wqe->length & ~PAGE_MASK)) {
+		अगर (!(wqe->rdma_wr.remote_addr & ~PAGE_MASK) &&
+		    !(wqe->length & ~PAGE_MASK)) अणु
 			new_opcode = IB_WR_TID_RDMA_WRITE;
-			do_tid_rdma = true;
-		}
-	}
+			करो_tid_rdma = true;
+		पूर्ण
+	पूर्ण
 
-	if (do_tid_rdma) {
-		if (hfi1_kern_exp_rcv_alloc_flows(&priv->tid_req, GFP_ATOMIC))
-			goto exit;
+	अगर (करो_tid_rdma) अणु
+		अगर (hfi1_kern_exp_rcv_alloc_flows(&priv->tid_req, GFP_ATOMIC))
+			जाओ निकास;
 		wqe->wr.opcode = new_opcode;
 		priv->tid_req.seg_len =
 			min_t(u32, remote->max_len, wqe->length);
@@ -3333,14 +3334,14 @@ void setup_tid_rdma_wqe(struct rvt_qp *qp, struct rvt_swqe *wqe)
 			DIV_ROUND_UP(wqe->length, priv->tid_req.seg_len);
 		/* Compute the last PSN of the request */
 		wqe->lpsn = wqe->psn;
-		if (wqe->wr.opcode == IB_WR_TID_RDMA_READ) {
-			priv->tid_req.n_flows = remote->max_read;
+		अगर (wqe->wr.opcode == IB_WR_TID_RDMA_READ) अणु
+			priv->tid_req.n_flows = remote->max_पढ़ो;
 			qpriv->tid_r_reqs++;
-			wqe->lpsn += rvt_div_round_up_mtu(qp, wqe->length) - 1;
-		} else {
+			wqe->lpsn += rvt_भाग_round_up_mtu(qp, wqe->length) - 1;
+		पूर्ण अन्यथा अणु
 			wqe->lpsn += priv->tid_req.total_segs - 1;
 			atomic_inc(&qpriv->n_requests);
-		}
+		पूर्ण
 
 		priv->tid_req.cur_seg = 0;
 		priv->tid_req.comp_seg = 0;
@@ -3348,36 +3349,36 @@ void setup_tid_rdma_wqe(struct rvt_qp *qp, struct rvt_swqe *wqe)
 		priv->tid_req.state = TID_REQUEST_INACTIVE;
 		/*
 		 * Reset acked_tail.
-		 * TID RDMA READ does not have ACKs so it does not
-		 * update the pointer. We have to reset it so TID RDMA
-		 * WRITE does not get confused.
+		 * TID RDMA READ करोes not have ACKs so it करोes not
+		 * update the poपूर्णांकer. We have to reset it so TID RDMA
+		 * WRITE करोes not get confused.
 		 */
 		priv->tid_req.acked_tail = priv->tid_req.setup_head;
 		trace_hfi1_tid_req_setup_tid_wqe(qp, 1, wqe->wr.opcode,
 						 wqe->psn, wqe->lpsn,
 						 &priv->tid_req);
-	}
-exit:
-	rcu_read_unlock();
-}
+	पूर्ण
+निकास:
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /* TID RDMA WRITE functions */
 
-u32 hfi1_build_tid_rdma_write_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
-				  struct ib_other_headers *ohdr,
+u32 hfi1_build_tid_rdma_ग_लिखो_req(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+				  काष्ठा ib_other_headers *ohdr,
 				  u32 *bth1, u32 *bth2, u32 *len)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_params *remote;
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_params *remote;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 	/*
 	 * Set the number of flow to be used based on negotiated
 	 * parameters.
 	 */
-	req->n_flows = remote->max_write;
+	req->n_flows = remote->max_ग_लिखो;
 	req->state = TID_REQUEST_ACTIVE;
 
 	KDETH_RESET(ohdr->u.tid_rdma.w_req.kdeth0, KVER, 0x1);
@@ -3395,208 +3396,208 @@ u32 hfi1_build_tid_rdma_write_req(struct rvt_qp *qp, struct rvt_swqe *wqe,
 	*bth2 |= IB_BTH_REQ_ACK;
 	*len = 0;
 
-	rcu_read_unlock();
-	return sizeof(ohdr->u.tid_rdma.w_req) / sizeof(u32);
-}
+	rcu_पढ़ो_unlock();
+	वापस माप(ohdr->u.tid_rdma.w_req) / माप(u32);
+पूर्ण
 
-static u32 hfi1_compute_tid_rdma_flow_wt(struct rvt_qp *qp)
-{
+अटल u32 hfi1_compute_tid_rdma_flow_wt(काष्ठा rvt_qp *qp)
+अणु
 	/*
-	 * Heuristic for computing the RNR timeout when waiting on the flow
+	 * Heuristic क्रम computing the RNR समयout when रुकोing on the flow
 	 * queue. Rather than a computationaly expensive exact estimate of when
-	 * a flow will be available, we assume that if a QP is at position N in
-	 * the flow queue it has to wait approximately (N + 1) * (number of
-	 * segments between two sync points). The rationale for this is that
-	 * flows are released and recycled at each sync point.
+	 * a flow will be available, we assume that अगर a QP is at position N in
+	 * the flow queue it has to रुको approximately (N + 1) * (number of
+	 * segments between two sync poपूर्णांकs). The rationale क्रम this is that
+	 * flows are released and recycled at each sync poपूर्णांक.
 	 */
-	return (MAX_TID_FLOW_PSN * qp->pmtu) >> TID_RDMA_SEGMENT_SHIFT;
-}
+	वापस (MAX_TID_FLOW_PSN * qp->pmtu) >> TID_RDMA_SEGMENT_SHIFT;
+पूर्ण
 
-static u32 position_in_queue(struct hfi1_qp_priv *qpriv,
-			     struct tid_queue *queue)
-{
-	return qpriv->tid_enqueue - queue->dequeue;
-}
+अटल u32 position_in_queue(काष्ठा hfi1_qp_priv *qpriv,
+			     काष्ठा tid_queue *queue)
+अणु
+	वापस qpriv->tid_enqueue - queue->dequeue;
+पूर्ण
 
 /*
- * @qp: points to rvt_qp context.
- * @to_seg: desired RNR timeout in segments.
- * Return: index of the next highest timeout in the ib_hfi1_rnr_table[]
+ * @qp: poपूर्णांकs to rvt_qp context.
+ * @to_seg: desired RNR समयout in segments.
+ * Return: index of the next highest समयout in the ib_hfi1_rnr_table[]
  */
-static u32 hfi1_compute_tid_rnr_timeout(struct rvt_qp *qp, u32 to_seg)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	u64 timeout;
+अटल u32 hfi1_compute_tid_rnr_समयout(काष्ठा rvt_qp *qp, u32 to_seg)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	u64 समयout;
 	u32 bytes_per_us;
 	u8 i;
 
 	bytes_per_us = active_egress_rate(qpriv->rcd->ppd) / 8;
-	timeout = (to_seg * TID_RDMA_MAX_SEGMENT_SIZE) / bytes_per_us;
+	समयout = (to_seg * TID_RDMA_MAX_SEGMENT_SIZE) / bytes_per_us;
 	/*
 	 * Find the next highest value in the RNR table to the required
-	 * timeout. This gives the responder some padding.
+	 * समयout. This gives the responder some padding.
 	 */
-	for (i = 1; i <= IB_AETH_CREDIT_MASK; i++)
-		if (rvt_rnr_tbl_to_usec(i) >= timeout)
-			return i;
-	return 0;
-}
+	क्रम (i = 1; i <= IB_AETH_CREDIT_MASK; i++)
+		अगर (rvt_rnr_tbl_to_usec(i) >= समयout)
+			वापस i;
+	वापस 0;
+पूर्ण
 
 /*
- * Central place for resource allocation at TID write responder,
- * is called from write_req and write_data interrupt handlers as
- * well as the send thread when a queued QP is scheduled for
+ * Central place क्रम resource allocation at TID ग_लिखो responder,
+ * is called from ग_लिखो_req and ग_लिखो_data पूर्णांकerrupt handlers as
+ * well as the send thपढ़ो when a queued QP is scheduled क्रम
  * resource allocation.
  *
  * Iterates over (a) segments of a request and then (b) queued requests
- * themselves to allocate resources for up to local->max_write
+ * themselves to allocate resources क्रम up to local->max_ग_लिखो
  * segments across multiple requests. Stop allocating when we
- * hit a sync point, resume allocating after data packets at
- * sync point have been received.
+ * hit a sync poपूर्णांक, resume allocating after data packets at
+ * sync poपूर्णांक have been received.
  *
  * Resource allocation and sending of responses is decoupled. The
  * request/segment which are being allocated and sent are as follows.
- * Resources are allocated for:
+ * Resources are allocated क्रम:
  *     [request: qpriv->r_tid_alloc, segment: req->alloc_seg]
- * The send thread sends:
+ * The send thपढ़ो sends:
  *     [request: qp->s_tail_ack_queue, segment:req->cur_seg]
  */
-static void hfi1_tid_write_alloc_resources(struct rvt_qp *qp, bool intr_ctx)
-{
-	struct tid_rdma_request *req;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct hfi1_ctxtdata *rcd = qpriv->rcd;
-	struct tid_rdma_params *local = &qpriv->tid_rdma.local;
-	struct rvt_ack_entry *e;
+अटल व्योम hfi1_tid_ग_लिखो_alloc_resources(काष्ठा rvt_qp *qp, bool पूर्णांकr_ctx)
+अणु
+	काष्ठा tid_rdma_request *req;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = qpriv->rcd;
+	काष्ठा tid_rdma_params *local = &qpriv->tid_rdma.local;
+	काष्ठा rvt_ack_entry *e;
 	u32 npkts, to_seg;
 	bool last;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	lockdep_assert_held(&qp->s_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
 
-	while (1) {
-		trace_hfi1_rsp_tid_write_alloc_res(qp, 0);
-		trace_hfi1_tid_write_rsp_alloc_res(qp);
+	जबतक (1) अणु
+		trace_hfi1_rsp_tid_ग_लिखो_alloc_res(qp, 0);
+		trace_hfi1_tid_ग_लिखो_rsp_alloc_res(qp);
 		/*
-		 * Don't allocate more segments if a RNR NAK has already been
-		 * scheduled to avoid messing up qp->r_psn: the RNR NAK will
+		 * Don't allocate more segments अगर a RNR NAK has alपढ़ोy been
+		 * scheduled to aव्योम messing up qp->r_psn: the RNR NAK will
 		 * be sent only when all allocated segments have been sent.
-		 * However, if more segments are allocated before that, TID RDMA
-		 * WRITE RESP packets will be sent out for these new segments
-		 * before the RNR NAK packet. When the requester receives the
+		 * However, अगर more segments are allocated beक्रमe that, TID RDMA
+		 * WRITE RESP packets will be sent out क्रम these new segments
+		 * beक्रमe the RNR NAK packet. When the requester receives the
 		 * RNR NAK packet, it will restart with qp->s_last_psn + 1,
-		 * which does not match qp->r_psn and will be dropped.
+		 * which करोes not match qp->r_psn and will be dropped.
 		 * Consequently, the requester will exhaust its retries and
-		 * put the qp into error state.
+		 * put the qp पूर्णांकo error state.
 		 */
-		if (qpriv->rnr_nak_state == TID_RNR_NAK_SEND)
-			break;
+		अगर (qpriv->rnr_nak_state == TID_RNR_NAK_SEND)
+			अवरोध;
 
 		/* No requests left to process */
-		if (qpriv->r_tid_alloc == qpriv->r_tid_head) {
+		अगर (qpriv->r_tid_alloc == qpriv->r_tid_head) अणु
 			/* If all data has been received, clear the flow */
-			if (qpriv->flow_state.index < RXE_NUM_TID_FLOWS &&
-			    !qpriv->alloc_w_segs) {
+			अगर (qpriv->flow_state.index < RXE_NUM_TID_FLOWS &&
+			    !qpriv->alloc_w_segs) अणु
 				hfi1_kern_clear_hw_flow(rcd, qp);
 				qpriv->s_flags &= ~HFI1_R_TID_SW_PSN;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		e = &qp->s_ack_queue[qpriv->r_tid_alloc];
-		if (e->opcode != TID_OP(WRITE_REQ))
-			goto next_req;
+		अगर (e->opcode != TID_OP(WRITE_REQ))
+			जाओ next_req;
 		req = ack_to_tid_req(e);
-		trace_hfi1_tid_req_write_alloc_res(qp, 0, e->opcode, e->psn,
+		trace_hfi1_tid_req_ग_लिखो_alloc_res(qp, 0, e->opcode, e->psn,
 						   e->lpsn, req);
-		/* Finished allocating for all segments of this request */
-		if (req->alloc_seg >= req->total_segs)
-			goto next_req;
+		/* Finished allocating क्रम all segments of this request */
+		अगर (req->alloc_seg >= req->total_segs)
+			जाओ next_req;
 
-		/* Can allocate only a maximum of local->max_write for a QP */
-		if (qpriv->alloc_w_segs >= local->max_write)
-			break;
+		/* Can allocate only a maximum of local->max_ग_लिखो क्रम a QP */
+		अगर (qpriv->alloc_w_segs >= local->max_ग_लिखो)
+			अवरोध;
 
-		/* Don't allocate at a sync point with data packets pending */
-		if (qpriv->sync_pt && qpriv->alloc_w_segs)
-			break;
+		/* Don't allocate at a sync poपूर्णांक with data packets pending */
+		अगर (qpriv->sync_pt && qpriv->alloc_w_segs)
+			अवरोध;
 
-		/* All data received at the sync point, continue */
-		if (qpriv->sync_pt && !qpriv->alloc_w_segs) {
+		/* All data received at the sync poपूर्णांक, जारी */
+		अगर (qpriv->sync_pt && !qpriv->alloc_w_segs) अणु
 			hfi1_kern_clear_hw_flow(rcd, qp);
 			qpriv->sync_pt = false;
 			qpriv->s_flags &= ~HFI1_R_TID_SW_PSN;
-		}
+		पूर्ण
 
-		/* Allocate flow if we don't have one */
-		if (qpriv->flow_state.index >= RXE_NUM_TID_FLOWS) {
+		/* Allocate flow अगर we करोn't have one */
+		अगर (qpriv->flow_state.index >= RXE_NUM_TID_FLOWS) अणु
 			ret = hfi1_kern_setup_hw_flow(qpriv->rcd, qp);
-			if (ret) {
+			अगर (ret) अणु
 				to_seg = hfi1_compute_tid_rdma_flow_wt(qp) *
 					position_in_queue(qpriv,
 							  &rcd->flow_queue);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		npkts = rvt_div_round_up_mtu(qp, req->seg_len);
+		npkts = rvt_भाग_round_up_mtu(qp, req->seg_len);
 
 		/*
-		 * We are at a sync point if we run out of KDETH PSN space.
-		 * Last PSN of every generation is reserved for RESYNC.
+		 * We are at a sync poपूर्णांक अगर we run out of KDETH PSN space.
+		 * Last PSN of every generation is reserved क्रम RESYNC.
 		 */
-		if (qpriv->flow_state.psn + npkts > MAX_TID_FLOW_PSN - 1) {
+		अगर (qpriv->flow_state.psn + npkts > MAX_TID_FLOW_PSN - 1) अणु
 			qpriv->sync_pt = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * If overtaking req->acked_tail, send an RNR NAK. Because the
-		 * QP is not queued in this case, and the issue can only be
+		 * QP is not queued in this हाल, and the issue can only be
 		 * caused by a delay in scheduling the second leg which we
-		 * cannot estimate, we use a rather arbitrary RNR timeout of
+		 * cannot estimate, we use a rather arbitrary RNR समयout of
 		 * (MAX_FLOWS / 2) segments
 		 */
-		if (!CIRC_SPACE(req->setup_head, req->acked_tail,
-				MAX_FLOWS)) {
+		अगर (!CIRC_SPACE(req->setup_head, req->acked_tail,
+				MAX_FLOWS)) अणु
 			ret = -EAGAIN;
 			to_seg = MAX_FLOWS >> 1;
 			tid_rdma_trigger_ack(qp);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Try to allocate rcv array / TID entries */
 		ret = hfi1_kern_exp_rcv_setup(req, &req->ss, &last);
-		if (ret == -EAGAIN)
+		अगर (ret == -EAGAIN)
 			to_seg = position_in_queue(qpriv, &rcd->rarr_queue);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		qpriv->alloc_w_segs++;
 		req->alloc_seg++;
-		continue;
+		जारी;
 next_req:
 		/* Begin processing the next request */
-		if (++qpriv->r_tid_alloc >
+		अगर (++qpriv->r_tid_alloc >
 		    rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
 			qpriv->r_tid_alloc = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Schedule an RNR NAK to be sent if (a) flow or rcv array allocation
-	 * has failed (b) we are called from the rcv handler interrupt context
-	 * (c) an RNR NAK has not already been scheduled
+	 * Schedule an RNR NAK to be sent अगर (a) flow or rcv array allocation
+	 * has failed (b) we are called from the rcv handler पूर्णांकerrupt context
+	 * (c) an RNR NAK has not alपढ़ोy been scheduled
 	 */
-	if (ret == -EAGAIN && intr_ctx && !qp->r_nak_state)
-		goto send_rnr_nak;
+	अगर (ret == -EAGAIN && पूर्णांकr_ctx && !qp->r_nak_state)
+		जाओ send_rnr_nak;
 
-	return;
+	वापस;
 
 send_rnr_nak:
-	lockdep_assert_held(&qp->r_lock);
+	lockdep_निश्चित_held(&qp->r_lock);
 
 	/* Set r_nak_state to prevent unrelated events from generating NAK's */
-	qp->r_nak_state = hfi1_compute_tid_rnr_timeout(qp, to_seg) | IB_RNR_NAK;
+	qp->r_nak_state = hfi1_compute_tid_rnr_समयout(qp, to_seg) | IB_RNR_NAK;
 
 	/* Pull back r_psn to the segment being RNR NAK'd */
 	qp->r_psn = e->psn + req->alloc_seg;
@@ -3604,148 +3605,148 @@ send_rnr_nak:
 	/*
 	 * Pull back r_head_ack_queue to the ack entry following the request
 	 * being RNR NAK'd. This allows resources to be allocated to the request
-	 * if the queued QP is scheduled.
+	 * अगर the queued QP is scheduled.
 	 */
 	qp->r_head_ack_queue = qpriv->r_tid_alloc + 1;
-	if (qp->r_head_ack_queue > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
+	अगर (qp->r_head_ack_queue > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
 		qp->r_head_ack_queue = 0;
 	qpriv->r_tid_head = qp->r_head_ack_queue;
 	/*
 	 * These send side fields are used in make_rc_ack(). They are set in
-	 * hfi1_send_rc_ack() but must be set here before dropping qp->s_lock
-	 * for consistency
+	 * hfi1_send_rc_ack() but must be set here beक्रमe dropping qp->s_lock
+	 * क्रम consistency
 	 */
 	qp->s_nak_state = qp->r_nak_state;
 	qp->s_ack_psn = qp->r_ack_psn;
 	/*
 	 * Clear the ACK PENDING flag to prevent unwanted ACK because we
-	 * have modified qp->s_ack_psn here.
+	 * have modअगरied qp->s_ack_psn here.
 	 */
 	qp->s_flags &= ~(RVT_S_ACK_PENDING);
 
-	trace_hfi1_rsp_tid_write_alloc_res(qp, qp->r_psn);
+	trace_hfi1_rsp_tid_ग_लिखो_alloc_res(qp, qp->r_psn);
 	/*
 	 * qpriv->rnr_nak_state is used to determine when the scheduled RNR NAK
 	 * has actually been sent. qp->s_flags RVT_S_ACK_PENDING bit cannot be
-	 * used for this because qp->s_lock is dropped before calling
+	 * used क्रम this because qp->s_lock is dropped beक्रमe calling
 	 * hfi1_send_rc_ack() leading to inconsistency between the receive
-	 * interrupt handlers and the send thread in make_rc_ack()
+	 * पूर्णांकerrupt handlers and the send thपढ़ो in make_rc_ack()
 	 */
 	qpriv->rnr_nak_state = TID_RNR_NAK_SEND;
 
 	/*
 	 * Schedule RNR NAK to be sent. RNR NAK's are scheduled from the receive
-	 * interrupt handlers but will be sent from the send engine behind any
+	 * पूर्णांकerrupt handlers but will be sent from the send engine behind any
 	 * previous responses that may have been scheduled
 	 */
 	rc_defered_ack(rcd, qp);
-}
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_write_req(struct hfi1_packet *packet)
-{
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_req(काष्ठा hfi1_packet *packet)
+अणु
 	/* HANDLER FOR TID RDMA WRITE REQUEST packet (Responder side)*/
 
 	/*
-	 * 1. Verify TID RDMA WRITE REQ as per IB_OPCODE_RC_RDMA_WRITE_FIRST
+	 * 1. Verअगरy TID RDMA WRITE REQ as per IB_OPCODE_RC_RDMA_WRITE_FIRST
 	 *    (see hfi1_rc_rcv())
 	 *     - Don't allow 0-length requests.
-	 * 2. Put TID RDMA WRITE REQ into the response queueu (s_ack_queue)
-	 *     - Setup struct tid_rdma_req with request info
-	 *     - Prepare struct tid_rdma_flow array?
-	 * 3. Set the qp->s_ack_state as state diagram in design doc.
+	 * 2. Put TID RDMA WRITE REQ पूर्णांकo the response queueu (s_ack_queue)
+	 *     - Setup काष्ठा tid_rdma_req with request info
+	 *     - Prepare काष्ठा tid_rdma_flow array?
+	 * 3. Set the qp->s_ack_state as state diagram in design करोc.
 	 * 4. Set RVT_S_RESP_PENDING in s_flags.
 	 * 5. Kick the send engine (hfi1_schedule_send())
 	 */
-	struct hfi1_ctxtdata *rcd = packet->rcd;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_ack_entry *e;
-	unsigned long flags;
-	struct ib_reth *reth;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_request *req;
+	काष्ठा hfi1_ctxtdata *rcd = packet->rcd;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_ibport *ibp = to_iport(qp->ibqp.device, qp->port_num);
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_ack_entry *e;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ib_reth *reth;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_request *req;
 	u32 bth0, psn, len, rkey, num_segs;
 	bool fecn;
 	u8 next;
 	u64 vaddr;
-	int diff;
+	पूर्णांक dअगरf;
 
 	bth0 = be32_to_cpu(ohdr->bth[0]);
-	if (hfi1_ruc_check_hdr(ibp, packet))
-		return;
+	अगर (hfi1_ruc_check_hdr(ibp, packet))
+		वापस;
 
 	fecn = process_ecn(qp, packet);
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
-	trace_hfi1_rsp_rcv_tid_write_req(qp, psn);
+	trace_hfi1_rsp_rcv_tid_ग_लिखो_req(qp, psn);
 
-	if (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
+	अगर (qp->state == IB_QPS_RTR && !(qp->r_flags & RVT_R_COMM_EST))
 		rvt_comm_est(qp);
 
-	if (unlikely(!(qp->qp_access_flags & IB_ACCESS_REMOTE_WRITE)))
-		goto nack_inv;
+	अगर (unlikely(!(qp->qp_access_flags & IB_ACCESS_REMOTE_WRITE)))
+		जाओ nack_inv;
 
 	reth = &ohdr->u.tid_rdma.w_req.reth;
 	vaddr = be64_to_cpu(reth->vaddr);
 	len = be32_to_cpu(reth->length);
 
 	num_segs = DIV_ROUND_UP(len, qpriv->tid_rdma.local.max_len);
-	diff = delta_psn(psn, qp->r_psn);
-	if (unlikely(diff)) {
-		tid_rdma_rcv_err(packet, ohdr, qp, psn, diff, fecn);
-		return;
-	}
+	dअगरf = delta_psn(psn, qp->r_psn);
+	अगर (unlikely(dअगरf)) अणु
+		tid_rdma_rcv_err(packet, ohdr, qp, psn, dअगरf, fecn);
+		वापस;
+	पूर्ण
 
 	/*
 	 * The resent request which was previously RNR NAK'd is inserted at the
 	 * location of the original request, which is one entry behind
 	 * r_head_ack_queue
 	 */
-	if (qpriv->rnr_nak_state)
+	अगर (qpriv->rnr_nak_state)
 		qp->r_head_ack_queue = qp->r_head_ack_queue ?
 			qp->r_head_ack_queue - 1 :
 			rvt_size_atomic(ib_to_rvt(qp->ibqp.device));
 
-	/* We've verified the request, insert it into the ack queue. */
+	/* We've verअगरied the request, insert it पूर्णांकo the ack queue. */
 	next = qp->r_head_ack_queue + 1;
-	if (next > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
+	अगर (next > rvt_size_atomic(ib_to_rvt(qp->ibqp.device)))
 		next = 0;
 	spin_lock_irqsave(&qp->s_lock, flags);
-	if (unlikely(next == qp->s_acked_ack_queue)) {
-		if (!qp->s_ack_queue[next].sent)
-			goto nack_inv_unlock;
+	अगर (unlikely(next == qp->s_acked_ack_queue)) अणु
+		अगर (!qp->s_ack_queue[next].sent)
+			जाओ nack_inv_unlock;
 		update_ack_queue(qp, next);
-	}
+	पूर्ण
 	e = &qp->s_ack_queue[qp->r_head_ack_queue];
 	req = ack_to_tid_req(e);
 
-	/* Bring previously RNR NAK'd request back to life */
-	if (qpriv->rnr_nak_state) {
+	/* Bring previously RNR NAK'd request back to lअगरe */
+	अगर (qpriv->rnr_nak_state) अणु
 		qp->r_nak_state = 0;
 		qp->s_nak_state = 0;
 		qpriv->rnr_nak_state = TID_RNR_NAK_INIT;
 		qp->r_psn = e->lpsn + 1;
 		req->state = TID_REQUEST_INIT;
-		goto update_head;
-	}
+		जाओ update_head;
+	पूर्ण
 
 	release_rdma_sge_mr(e);
 
 	/* The length needs to be in multiples of PAGE_SIZE */
-	if (!len || len & ~PAGE_MASK)
-		goto nack_inv_unlock;
+	अगर (!len || len & ~PAGE_MASK)
+		जाओ nack_inv_unlock;
 
 	rkey = be32_to_cpu(reth->rkey);
 	qp->r_len = len;
 
-	if (e->opcode == TID_OP(WRITE_REQ) &&
+	अगर (e->opcode == TID_OP(WRITE_REQ) &&
 	    (req->setup_head != req->clear_tail ||
 	     req->clear_tail != req->acked_tail))
-		goto nack_inv_unlock;
+		जाओ nack_inv_unlock;
 
-	if (unlikely(!rvt_rkey_ok(qp, &e->rdma_sge, qp->r_len, vaddr,
+	अगर (unlikely(!rvt_rkey_ok(qp, &e->rdma_sge, qp->r_len, vaddr,
 				  rkey, IB_ACCESS_REMOTE_WRITE)))
-		goto nack_acc;
+		जाओ nack_acc;
 
 	qp->r_psn += num_segs - 1;
 
@@ -3754,7 +3755,7 @@ void hfi1_rc_rcv_tid_rdma_write_req(struct hfi1_packet *packet)
 	e->lpsn = qp->r_psn;
 	e->sent = 0;
 
-	req->n_flows = min_t(u16, num_segs, qpriv->tid_rdma.local.max_write);
+	req->n_flows = min_t(u16, num_segs, qpriv->tid_rdma.local.max_ग_लिखो);
 	req->state = TID_REQUEST_INIT;
 	req->cur_seg = 0;
 	req->comp_seg = 0;
@@ -3782,39 +3783,39 @@ void hfi1_rc_rcv_tid_rdma_write_req(struct hfi1_packet *packet)
 	qp->r_msn++;
 	qp->r_psn++;
 
-	trace_hfi1_tid_req_rcv_write_req(qp, 0, e->opcode, e->psn, e->lpsn,
+	trace_hfi1_tid_req_rcv_ग_लिखो_req(qp, 0, e->opcode, e->psn, e->lpsn,
 					 req);
 
-	if (qpriv->r_tid_tail == HFI1_QP_WQE_INVALID) {
+	अगर (qpriv->r_tid_tail == HFI1_QP_WQE_INVALID) अणु
 		qpriv->r_tid_tail = qp->r_head_ack_queue;
-	} else if (qpriv->r_tid_tail == qpriv->r_tid_head) {
-		struct tid_rdma_request *ptr;
+	पूर्ण अन्यथा अगर (qpriv->r_tid_tail == qpriv->r_tid_head) अणु
+		काष्ठा tid_rdma_request *ptr;
 
 		e = &qp->s_ack_queue[qpriv->r_tid_tail];
 		ptr = ack_to_tid_req(e);
 
-		if (e->opcode != TID_OP(WRITE_REQ) ||
-		    ptr->comp_seg == ptr->total_segs) {
-			if (qpriv->r_tid_tail == qpriv->r_tid_ack)
+		अगर (e->opcode != TID_OP(WRITE_REQ) ||
+		    ptr->comp_seg == ptr->total_segs) अणु
+			अगर (qpriv->r_tid_tail == qpriv->r_tid_ack)
 				qpriv->r_tid_ack = qp->r_head_ack_queue;
 			qpriv->r_tid_tail = qp->r_head_ack_queue;
-		}
-	}
+		पूर्ण
+	पूर्ण
 update_head:
 	qp->r_head_ack_queue = next;
 	qpriv->r_tid_head = qp->r_head_ack_queue;
 
-	hfi1_tid_write_alloc_resources(qp, true);
-	trace_hfi1_tid_write_rsp_rcv_req(qp);
+	hfi1_tid_ग_लिखो_alloc_resources(qp, true);
+	trace_hfi1_tid_ग_लिखो_rsp_rcv_req(qp);
 
 	/* Schedule the send tasklet. */
 	qp->s_flags |= RVT_S_RESP_PENDING;
-	if (fecn)
+	अगर (fecn)
 		qp->s_flags |= RVT_S_ECN;
 	hfi1_schedule_send(qp);
 
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-	return;
+	वापस;
 
 nack_inv_unlock:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
@@ -3822,95 +3823,95 @@ nack_inv:
 	rvt_rc_error(qp, IB_WC_LOC_QP_OP_ERR);
 	qp->r_nak_state = IB_NAK_INVALID_REQUEST;
 	qp->r_ack_psn = qp->r_psn;
-	/* Queue NAK for later */
+	/* Queue NAK क्रम later */
 	rc_defered_ack(rcd, qp);
-	return;
+	वापस;
 nack_acc:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
 	rvt_rc_error(qp, IB_WC_LOC_PROT_ERR);
 	qp->r_nak_state = IB_NAK_REMOTE_ACCESS_ERROR;
 	qp->r_ack_psn = qp->r_psn;
-}
+पूर्ण
 
-u32 hfi1_build_tid_rdma_write_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				   struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_ग_लिखो_resp(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				   काष्ठा ib_other_headers *ohdr, u32 *bth1,
 				   u32 bth2, u32 *len,
-				   struct rvt_sge_state **ss)
-{
-	struct hfi1_ack_priv *epriv = e->priv;
-	struct tid_rdma_request *req = &epriv->tid_req;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_flow *flow = NULL;
+				   काष्ठा rvt_sge_state **ss)
+अणु
+	काष्ठा hfi1_ack_priv *epriv = e->priv;
+	काष्ठा tid_rdma_request *req = &epriv->tid_req;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_flow *flow = शून्य;
 	u32 resp_len = 0, hdwords = 0;
-	void *resp_addr = NULL;
-	struct tid_rdma_params *remote;
+	व्योम *resp_addr = शून्य;
+	काष्ठा tid_rdma_params *remote;
 
-	trace_hfi1_tid_req_build_write_resp(qp, 0, e->opcode, e->psn, e->lpsn,
+	trace_hfi1_tid_req_build_ग_लिखो_resp(qp, 0, e->opcode, e->psn, e->lpsn,
 					    req);
-	trace_hfi1_tid_write_rsp_build_resp(qp);
-	trace_hfi1_rsp_build_tid_write_resp(qp, bth2);
+	trace_hfi1_tid_ग_लिखो_rsp_build_resp(qp);
+	trace_hfi1_rsp_build_tid_ग_लिखो_resp(qp, bth2);
 	flow = &req->flows[req->flow_idx];
-	switch (req->state) {
-	default:
+	चयन (req->state) अणु
+	शेष:
 		/*
-		 * Try to allocate resources here in case QP was queued and was
+		 * Try to allocate resources here in हाल QP was queued and was
 		 * later scheduled when resources became available
 		 */
-		hfi1_tid_write_alloc_resources(qp, false);
+		hfi1_tid_ग_लिखो_alloc_resources(qp, false);
 
-		/* We've already sent everything which is ready */
-		if (req->cur_seg >= req->alloc_seg)
-			goto done;
+		/* We've alपढ़ोy sent everything which is पढ़ोy */
+		अगर (req->cur_seg >= req->alloc_seg)
+			जाओ करोne;
 
 		/*
-		 * Resources can be assigned but responses cannot be sent in
+		 * Resources can be asचिन्हित but responses cannot be sent in
 		 * rnr_nak state, till the resent request is received
 		 */
-		if (qpriv->rnr_nak_state == TID_RNR_NAK_SENT)
-			goto done;
+		अगर (qpriv->rnr_nak_state == TID_RNR_NAK_SENT)
+			जाओ करोne;
 
 		req->state = TID_REQUEST_ACTIVE;
-		trace_hfi1_tid_flow_build_write_resp(qp, req->flow_idx, flow);
+		trace_hfi1_tid_flow_build_ग_लिखो_resp(qp, req->flow_idx, flow);
 		req->flow_idx = CIRC_NEXT(req->flow_idx, MAX_FLOWS);
-		hfi1_add_tid_reap_timer(qp);
-		break;
+		hfi1_add_tid_reap_समयr(qp);
+		अवरोध;
 
-	case TID_REQUEST_RESEND_ACTIVE:
-	case TID_REQUEST_RESEND:
-		trace_hfi1_tid_flow_build_write_resp(qp, req->flow_idx, flow);
+	हाल TID_REQUEST_RESEND_ACTIVE:
+	हाल TID_REQUEST_RESEND:
+		trace_hfi1_tid_flow_build_ग_लिखो_resp(qp, req->flow_idx, flow);
 		req->flow_idx = CIRC_NEXT(req->flow_idx, MAX_FLOWS);
-		if (!CIRC_CNT(req->setup_head, req->flow_idx, MAX_FLOWS))
+		अगर (!CIRC_CNT(req->setup_head, req->flow_idx, MAX_FLOWS))
 			req->state = TID_REQUEST_ACTIVE;
 
-		hfi1_mod_tid_reap_timer(qp);
-		break;
-	}
+		hfi1_mod_tid_reap_समयr(qp);
+		अवरोध;
+	पूर्ण
 	flow->flow_state.resp_ib_psn = bth2;
-	resp_addr = (void *)flow->tid_entry;
-	resp_len = sizeof(*flow->tid_entry) * flow->tidcnt;
+	resp_addr = (व्योम *)flow->tid_entry;
+	resp_len = माप(*flow->tid_entry) * flow->tidcnt;
 	req->cur_seg++;
 
-	memset(&ohdr->u.tid_rdma.w_rsp, 0, sizeof(ohdr->u.tid_rdma.w_rsp));
+	स_रखो(&ohdr->u.tid_rdma.w_rsp, 0, माप(ohdr->u.tid_rdma.w_rsp));
 	epriv->ss.sge.vaddr = resp_addr;
 	epriv->ss.sge.sge_length = resp_len;
 	epriv->ss.sge.length = epriv->ss.sge.sge_length;
 	/*
 	 * We can safely zero these out. Since the first SGE covers the
-	 * entire packet, nothing else should even look at the MR.
+	 * entire packet, nothing अन्यथा should even look at the MR.
 	 */
-	epriv->ss.sge.mr = NULL;
+	epriv->ss.sge.mr = शून्य;
 	epriv->ss.sge.m = 0;
 	epriv->ss.sge.n = 0;
 
-	epriv->ss.sg_list = NULL;
+	epriv->ss.sg_list = शून्य;
 	epriv->ss.total_len = epriv->ss.sge.sge_length;
 	epriv->ss.num_sge = 1;
 
 	*ss = &epriv->ss;
 	*len = epriv->ss.total_len;
 
-	/* Construct the TID RDMA WRITE RESP packet header */
-	rcu_read_lock();
+	/* Conकाष्ठा the TID RDMA WRITE RESP packet header */
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 
 	KDETH_RESET(ohdr->u.tid_rdma.w_rsp.kdeth0, KVER, 0x1);
@@ -3928,126 +3929,126 @@ u32 hfi1_build_tid_rdma_write_resp(struct rvt_qp *qp, struct rvt_ack_entry *e,
 			    qpriv->rcd->ctxt);
 	ohdr->u.tid_rdma.w_rsp.verbs_qp = cpu_to_be32(qp->remote_qpn);
 	*bth1 = remote->qp;
-	rcu_read_unlock();
-	hdwords = sizeof(ohdr->u.tid_rdma.w_rsp) / sizeof(u32);
+	rcu_पढ़ो_unlock();
+	hdwords = माप(ohdr->u.tid_rdma.w_rsp) / माप(u32);
 	qpriv->pending_tid_w_segs++;
-done:
-	return hdwords;
-}
+करोne:
+	वापस hdwords;
+पूर्ण
 
-static void hfi1_add_tid_reap_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
+अटल व्योम hfi1_add_tid_reap_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 
-	lockdep_assert_held(&qp->s_lock);
-	if (!(qpriv->s_flags & HFI1_R_TID_RSC_TIMER)) {
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (!(qpriv->s_flags & HFI1_R_TID_RSC_TIMER)) अणु
 		qpriv->s_flags |= HFI1_R_TID_RSC_TIMER;
-		qpriv->s_tid_timer.expires = jiffies +
-			qpriv->tid_timer_timeout_jiffies;
-		add_timer(&qpriv->s_tid_timer);
-	}
-}
+		qpriv->s_tid_समयr.expires = jअगरfies +
+			qpriv->tid_समयr_समयout_jअगरfies;
+		add_समयr(&qpriv->s_tid_समयr);
+	पूर्ण
+पूर्ण
 
-static void hfi1_mod_tid_reap_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
+अटल व्योम hfi1_mod_tid_reap_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 
-	lockdep_assert_held(&qp->s_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
 	qpriv->s_flags |= HFI1_R_TID_RSC_TIMER;
-	mod_timer(&qpriv->s_tid_timer, jiffies +
-		  qpriv->tid_timer_timeout_jiffies);
-}
+	mod_समयr(&qpriv->s_tid_समयr, jअगरfies +
+		  qpriv->tid_समयr_समयout_jअगरfies);
+पूर्ण
 
-static int hfi1_stop_tid_reap_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	int rval = 0;
+अटल पूर्णांक hfi1_stop_tid_reap_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	पूर्णांक rval = 0;
 
-	lockdep_assert_held(&qp->s_lock);
-	if (qpriv->s_flags & HFI1_R_TID_RSC_TIMER) {
-		rval = del_timer(&qpriv->s_tid_timer);
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (qpriv->s_flags & HFI1_R_TID_RSC_TIMER) अणु
+		rval = del_समयr(&qpriv->s_tid_समयr);
 		qpriv->s_flags &= ~HFI1_R_TID_RSC_TIMER;
-	}
-	return rval;
-}
+	पूर्ण
+	वापस rval;
+पूर्ण
 
-void hfi1_del_tid_reap_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
+व्योम hfi1_del_tid_reap_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 
-	del_timer_sync(&qpriv->s_tid_timer);
+	del_समयr_sync(&qpriv->s_tid_समयr);
 	qpriv->s_flags &= ~HFI1_R_TID_RSC_TIMER;
-}
+पूर्ण
 
-static void hfi1_tid_timeout(struct timer_list *t)
-{
-	struct hfi1_qp_priv *qpriv = from_timer(qpriv, t, s_tid_timer);
-	struct rvt_qp *qp = qpriv->owner;
-	struct rvt_dev_info *rdi = ib_to_rvt(qp->ibqp.device);
-	unsigned long flags;
+अटल व्योम hfi1_tid_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = from_समयr(qpriv, t, s_tid_समयr);
+	काष्ठा rvt_qp *qp = qpriv->owner;
+	काष्ठा rvt_dev_info *rdi = ib_to_rvt(qp->ibqp.device);
+	अचिन्हित दीर्घ flags;
 	u32 i;
 
 	spin_lock_irqsave(&qp->r_lock, flags);
 	spin_lock(&qp->s_lock);
-	if (qpriv->s_flags & HFI1_R_TID_RSC_TIMER) {
+	अगर (qpriv->s_flags & HFI1_R_TID_RSC_TIMER) अणु
 		dd_dev_warn(dd_from_ibdev(qp->ibqp.device), "[QP%u] %s %d\n",
 			    qp->ibqp.qp_num, __func__, __LINE__);
-		trace_hfi1_msg_tid_timeout(/* msg */
+		trace_hfi1_msg_tid_समयout(/* msg */
 			qp, "resource timeout = ",
-			(u64)qpriv->tid_timer_timeout_jiffies);
-		hfi1_stop_tid_reap_timer(qp);
+			(u64)qpriv->tid_समयr_समयout_jअगरfies);
+		hfi1_stop_tid_reap_समयr(qp);
 		/*
 		 * Go though the entire ack queue and clear any outstanding
 		 * HW flow and RcvArray resources.
 		 */
 		hfi1_kern_clear_hw_flow(qpriv->rcd, qp);
-		for (i = 0; i < rvt_max_atomic(rdi); i++) {
-			struct tid_rdma_request *req =
+		क्रम (i = 0; i < rvt_max_atomic(rdi); i++) अणु
+			काष्ठा tid_rdma_request *req =
 				ack_to_tid_req(&qp->s_ack_queue[i]);
 
 			hfi1_kern_exp_rcv_clear_all(req);
-		}
+		पूर्ण
 		spin_unlock(&qp->s_lock);
-		if (qp->ibqp.event_handler) {
-			struct ib_event ev;
+		अगर (qp->ibqp.event_handler) अणु
+			काष्ठा ib_event ev;
 
 			ev.device = qp->ibqp.device;
 			ev.element.qp = &qp->ibqp;
 			ev.event = IB_EVENT_QP_FATAL;
 			qp->ibqp.event_handler(&ev, qp->ibqp.qp_context);
-		}
+		पूर्ण
 		rvt_rc_error(qp, IB_WC_RESP_TIMEOUT_ERR);
-		goto unlock_r_lock;
-	}
+		जाओ unlock_r_lock;
+	पूर्ण
 	spin_unlock(&qp->s_lock);
 unlock_r_lock:
 	spin_unlock_irqrestore(&qp->r_lock, flags);
-}
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_write_resp(struct hfi1_packet *packet)
-{
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_resp(काष्ठा hfi1_packet *packet)
+अणु
 	/* HANDLER FOR TID RDMA WRITE RESPONSE packet (Requestor side */
 
 	/*
 	 * 1. Find matching SWQE
-	 * 2. Check that TIDENTRY array has enough space for a complete
+	 * 2. Check that TIDENTRY array has enough space क्रम a complete
 	 *    segment. If not, put QP in error state.
-	 * 3. Save response data in struct tid_rdma_req and struct tid_rdma_flow
+	 * 3. Save response data in काष्ठा tid_rdma_req and काष्ठा tid_rdma_flow
 	 * 4. Remove HFI1_S_WAIT_TID_RESP from s_flags.
 	 * 5. Set qp->s_state
 	 * 6. Kick the send engine (hfi1_schedule_send())
 	 */
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct hfi1_ctxtdata *rcd = packet->rcd;
-	struct rvt_swqe *wqe;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
-	enum ib_wc_status status;
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = packet->rcd;
+	काष्ठा rvt_swqe *wqe;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
+	क्रमागत ib_wc_status status;
 	u32 opcode, aeth, psn, flow_psn, i, tidlen = 0, pktlen;
 	bool fecn;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	fecn = process_ecn(qp, packet);
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
@@ -4057,49 +4058,49 @@ void hfi1_rc_rcv_tid_rdma_write_resp(struct hfi1_packet *packet)
 	spin_lock_irqsave(&qp->s_lock, flags);
 
 	/* Ignore invalid responses */
-	if (cmp_psn(psn, qp->s_next_psn) >= 0)
-		goto ack_done;
+	अगर (cmp_psn(psn, qp->s_next_psn) >= 0)
+		जाओ ack_करोne;
 
 	/* Ignore duplicate responses. */
-	if (unlikely(cmp_psn(psn, qp->s_last_psn) <= 0))
-		goto ack_done;
+	अगर (unlikely(cmp_psn(psn, qp->s_last_psn) <= 0))
+		जाओ ack_करोne;
 
-	if (unlikely(qp->s_acked == qp->s_tail))
-		goto ack_done;
+	अगर (unlikely(qp->s_acked == qp->s_tail))
+		जाओ ack_करोne;
 
 	/*
-	 * If we are waiting for a particular packet sequence number
-	 * due to a request being resent, check for it. Otherwise,
+	 * If we are रुकोing क्रम a particular packet sequence number
+	 * due to a request being resent, check क्रम it. Otherwise,
 	 * ensure that we haven't missed anything.
 	 */
-	if (qp->r_flags & RVT_R_RDMAR_SEQ) {
-		if (cmp_psn(psn, qp->s_last_psn + 1) != 0)
-			goto ack_done;
+	अगर (qp->r_flags & RVT_R_RDMAR_SEQ) अणु
+		अगर (cmp_psn(psn, qp->s_last_psn + 1) != 0)
+			जाओ ack_करोne;
 		qp->r_flags &= ~RVT_R_RDMAR_SEQ;
-	}
+	पूर्ण
 
 	wqe = rvt_get_swqe_ptr(qp, qpriv->s_tid_cur);
-	if (unlikely(wqe->wr.opcode != IB_WR_TID_RDMA_WRITE))
-		goto ack_op_err;
+	अगर (unlikely(wqe->wr.opcode != IB_WR_TID_RDMA_WRITE))
+		जाओ ack_op_err;
 
 	req = wqe_to_tid_req(wqe);
 	/*
-	 * If we've lost ACKs and our acked_tail pointer is too far
-	 * behind, don't overwrite segments. Just drop the packet and
+	 * If we've lost ACKs and our acked_tail poपूर्णांकer is too far
+	 * behind, करोn't overग_लिखो segments. Just drop the packet and
 	 * let the reliability protocol take care of it.
 	 */
-	if (!CIRC_SPACE(req->setup_head, req->acked_tail, MAX_FLOWS))
-		goto ack_done;
+	अगर (!CIRC_SPACE(req->setup_head, req->acked_tail, MAX_FLOWS))
+		जाओ ack_करोne;
 
 	/*
-	 * The call to do_rc_ack() should be last in the chain of
+	 * The call to करो_rc_ack() should be last in the chain of
 	 * packet checks because it will end up updating the QP state.
-	 * Therefore, anything that would prevent the packet from
+	 * Thereक्रमe, anything that would prevent the packet from
 	 * being accepted as a successful response should be prior
 	 * to it.
 	 */
-	if (!do_rc_ack(qp, aeth, psn, opcode, 0, rcd))
-		goto ack_done;
+	अगर (!करो_rc_ack(qp, aeth, psn, opcode, 0, rcd))
+		जाओ ack_करोne;
 
 	trace_hfi1_ack(qp, psn);
 
@@ -4119,118 +4120,118 @@ void hfi1_rc_rcv_tid_rdma_write_resp(struct hfi1_packet *packet)
 	flow->length = min_t(u32, req->seg_len,
 			     (wqe->length - (req->comp_seg * req->seg_len)));
 
-	flow->npkts = rvt_div_round_up_mtu(qp, flow->length);
+	flow->npkts = rvt_भाग_round_up_mtu(qp, flow->length);
 	flow->flow_state.lpsn = flow->flow_state.spsn +
 		flow->npkts - 1;
 	/* payload length = packet length - (header length + ICRC length) */
 	pktlen = packet->tlen - (packet->hlen + 4);
-	if (pktlen > sizeof(flow->tid_entry)) {
+	अगर (pktlen > माप(flow->tid_entry)) अणु
 		status = IB_WC_LOC_LEN_ERR;
-		goto ack_err;
-	}
-	memcpy(flow->tid_entry, packet->ebuf, pktlen);
-	flow->tidcnt = pktlen / sizeof(*flow->tid_entry);
-	trace_hfi1_tid_flow_rcv_write_resp(qp, req->setup_head, flow);
+		जाओ ack_err;
+	पूर्ण
+	स_नकल(flow->tid_entry, packet->ebuf, pktlen);
+	flow->tidcnt = pktlen / माप(*flow->tid_entry);
+	trace_hfi1_tid_flow_rcv_ग_लिखो_resp(qp, req->setup_head, flow);
 
 	req->comp_seg++;
-	trace_hfi1_tid_write_sender_rcv_resp(qp, 0);
+	trace_hfi1_tid_ग_लिखो_sender_rcv_resp(qp, 0);
 	/*
-	 * Walk the TID_ENTRY list to make sure we have enough space for a
+	 * Walk the TID_ENTRY list to make sure we have enough space क्रम a
 	 * complete segment.
 	 */
-	for (i = 0; i < flow->tidcnt; i++) {
-		trace_hfi1_tid_entry_rcv_write_resp(/* entry */
+	क्रम (i = 0; i < flow->tidcnt; i++) अणु
+		trace_hfi1_tid_entry_rcv_ग_लिखो_resp(/* entry */
 			qp, i, flow->tid_entry[i]);
-		if (!EXP_TID_GET(flow->tid_entry[i], LEN)) {
+		अगर (!EXP_TID_GET(flow->tid_entry[i], LEN)) अणु
 			status = IB_WC_LOC_LEN_ERR;
-			goto ack_err;
-		}
+			जाओ ack_err;
+		पूर्ण
 		tidlen += EXP_TID_GET(flow->tid_entry[i], LEN);
-	}
-	if (tidlen * PAGE_SIZE < flow->length) {
+	पूर्ण
+	अगर (tidlen * PAGE_SIZE < flow->length) अणु
 		status = IB_WC_LOC_LEN_ERR;
-		goto ack_err;
-	}
+		जाओ ack_err;
+	पूर्ण
 
-	trace_hfi1_tid_req_rcv_write_resp(qp, 0, wqe->wr.opcode, wqe->psn,
+	trace_hfi1_tid_req_rcv_ग_लिखो_resp(qp, 0, wqe->wr.opcode, wqe->psn,
 					  wqe->lpsn, req);
 	/*
-	 * If this is the first response for this request, set the initial
+	 * If this is the first response क्रम this request, set the initial
 	 * flow index to the current flow.
 	 */
-	if (!cmp_psn(psn, wqe->psn)) {
+	अगर (!cmp_psn(psn, wqe->psn)) अणु
 		req->r_last_acked = mask_psn(wqe->psn - 1);
 		/* Set acked flow index to head index */
 		req->acked_tail = req->setup_head;
-	}
+	पूर्ण
 
 	/* advance circular buffer head */
 	req->setup_head = CIRC_NEXT(req->setup_head, MAX_FLOWS);
 	req->state = TID_REQUEST_ACTIVE;
 
 	/*
-	 * If all responses for this TID RDMA WRITE request have been received
-	 * advance the pointer to the next one.
+	 * If all responses क्रम this TID RDMA WRITE request have been received
+	 * advance the poपूर्णांकer to the next one.
 	 * Since TID RDMA requests could be mixed in with regular IB requests,
-	 * they might not appear sequentially in the queue. Therefore, the
+	 * they might not appear sequentially in the queue. Thereक्रमe, the
 	 * next request needs to be "found".
 	 */
-	if (qpriv->s_tid_cur != qpriv->s_tid_head &&
-	    req->comp_seg == req->total_segs) {
-		for (i = qpriv->s_tid_cur + 1; ; i++) {
-			if (i == qp->s_size)
+	अगर (qpriv->s_tid_cur != qpriv->s_tid_head &&
+	    req->comp_seg == req->total_segs) अणु
+		क्रम (i = qpriv->s_tid_cur + 1; ; i++) अणु
+			अगर (i == qp->s_size)
 				i = 0;
 			wqe = rvt_get_swqe_ptr(qp, i);
-			if (i == qpriv->s_tid_head)
-				break;
-			if (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE)
-				break;
-		}
+			अगर (i == qpriv->s_tid_head)
+				अवरोध;
+			अगर (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE)
+				अवरोध;
+		पूर्ण
 		qpriv->s_tid_cur = i;
-	}
+	पूर्ण
 	qp->s_flags &= ~HFI1_S_WAIT_TID_RESP;
 	hfi1_schedule_tid_send(qp);
-	goto ack_done;
+	जाओ ack_करोne;
 
 ack_op_err:
 	status = IB_WC_LOC_QP_OP_ERR;
 ack_err:
 	rvt_error_qp(qp, status);
-ack_done:
-	if (fecn)
+ack_करोne:
+	अगर (fecn)
 		qp->s_flags |= RVT_S_ECN;
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-}
+पूर्ण
 
-bool hfi1_build_tid_rdma_packet(struct rvt_swqe *wqe,
-				struct ib_other_headers *ohdr,
+bool hfi1_build_tid_rdma_packet(काष्ठा rvt_swqe *wqe,
+				काष्ठा ib_other_headers *ohdr,
 				u32 *bth1, u32 *bth2, u32 *len)
-{
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_flow *flow = &req->flows[req->clear_tail];
-	struct tid_rdma_params *remote;
-	struct rvt_qp *qp = req->qp;
-	struct hfi1_qp_priv *qpriv = qp->priv;
+अणु
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_flow *flow = &req->flows[req->clear_tail];
+	काष्ठा tid_rdma_params *remote;
+	काष्ठा rvt_qp *qp = req->qp;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
 	u32 tidentry = flow->tid_entry[flow->tid_idx];
 	u32 tidlen = EXP_TID_GET(tidentry, LEN) << PAGE_SHIFT;
-	struct tid_rdma_write_data *wd = &ohdr->u.tid_rdma.w_data;
+	काष्ठा tid_rdma_ग_लिखो_data *wd = &ohdr->u.tid_rdma.w_data;
 	u32 next_offset, om = KDETH_OM_LARGE;
 	bool last_pkt;
 
-	if (!tidlen) {
+	अगर (!tidlen) अणु
 		hfi1_trdma_send_complete(qp, wqe, IB_WC_REM_INV_RD_REQ_ERR);
 		rvt_error_qp(qp, IB_WC_REM_INV_RD_REQ_ERR);
-	}
+	पूर्ण
 
 	*len = min_t(u32, qp->pmtu, tidlen - flow->tid_offset);
 	flow->sent += *len;
 	next_offset = flow->tid_offset + *len;
 	last_pkt = (flow->tid_idx == (flow->tidcnt - 1) &&
 		    next_offset >= tidlen) || (flow->sent >= flow->length);
-	trace_hfi1_tid_entry_build_write_data(qp, flow->tid_idx, tidentry);
-	trace_hfi1_tid_flow_build_write_data(qp, req->clear_tail, flow);
+	trace_hfi1_tid_entry_build_ग_लिखो_data(qp, flow->tid_idx, tidentry);
+	trace_hfi1_tid_flow_build_ग_लिखो_data(qp, req->clear_tail, flow);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 	KDETH_RESET(wd->kdeth0, KVER, 0x1);
 	KDETH_SET(wd->kdeth0, SH, !last_pkt);
@@ -4241,42 +4242,42 @@ bool hfi1_build_tid_rdma_packet(struct rvt_swqe *wqe,
 	KDETH_SET(wd->kdeth0, OFFSET, flow->tid_offset / om);
 	KDETH_RESET(wd->kdeth1, JKEY, remote->jkey);
 	wd->verbs_qp = cpu_to_be32(qp->remote_qpn);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	*bth1 = flow->tid_qpn;
 	*bth2 = mask_psn(((flow->flow_state.spsn + flow->pkt++) &
 			 HFI1_KDETH_BTH_SEQ_MASK) |
 			 (flow->flow_state.generation <<
 			  HFI1_KDETH_BTH_SEQ_SHIFT));
-	if (last_pkt) {
+	अगर (last_pkt) अणु
 		/* PSNs are zero-based, so +1 to count number of packets */
-		if (flow->flow_state.lpsn + 1 +
-		    rvt_div_round_up_mtu(qp, req->seg_len) >
+		अगर (flow->flow_state.lpsn + 1 +
+		    rvt_भाग_round_up_mtu(qp, req->seg_len) >
 		    MAX_TID_FLOW_PSN)
 			req->state = TID_REQUEST_SYNC;
 		*bth2 |= IB_BTH_REQ_ACK;
-	}
+	पूर्ण
 
-	if (next_offset >= tidlen) {
+	अगर (next_offset >= tidlen) अणु
 		flow->tid_offset = 0;
 		flow->tid_idx++;
-	} else {
+	पूर्ण अन्यथा अणु
 		flow->tid_offset = next_offset;
-	}
-	return last_pkt;
-}
+	पूर्ण
+	वापस last_pkt;
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_write_data(struct hfi1_packet *packet)
-{
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct hfi1_ctxtdata *rcd = priv->rcd;
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_ack_entry *e;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
-	struct hfi1_ibdev *dev = to_idev(qp->ibqp.device);
-	unsigned long flags;
+व्योम hfi1_rc_rcv_tid_rdma_ग_लिखो_data(काष्ठा hfi1_packet *packet)
+अणु
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = priv->rcd;
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_ack_entry *e;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
+	काष्ठा hfi1_ibdev *dev = to_idev(qp->ibqp.device);
+	अचिन्हित दीर्घ flags;
 	u32 psn, next;
 	u8 opcode;
 	bool fecn;
@@ -4286,29 +4287,29 @@ void hfi1_rc_rcv_tid_rdma_write_data(struct hfi1_packet *packet)
 	opcode = (be32_to_cpu(ohdr->bth[0]) >> 24) & 0xff;
 
 	/*
-	 * All error handling should be done by now. If we are here, the packet
+	 * All error handling should be करोne by now. If we are here, the packet
 	 * is either good or been accepted by the error handler.
 	 */
 	spin_lock_irqsave(&qp->s_lock, flags);
 	e = &qp->s_ack_queue[priv->r_tid_tail];
 	req = ack_to_tid_req(e);
 	flow = &req->flows[req->clear_tail];
-	if (cmp_psn(psn, full_flow_psn(flow, flow->flow_state.lpsn))) {
+	अगर (cmp_psn(psn, full_flow_psn(flow, flow->flow_state.lpsn))) अणु
 		update_r_next_psn_fecn(packet, priv, rcd, flow, fecn);
 
-		if (cmp_psn(psn, flow->flow_state.r_next_psn))
-			goto send_nak;
+		अगर (cmp_psn(psn, flow->flow_state.r_next_psn))
+			जाओ send_nak;
 
 		flow->flow_state.r_next_psn = mask_psn(psn + 1);
 		/*
-		 * Copy the payload to destination buffer if this packet is
+		 * Copy the payload to destination buffer अगर this packet is
 		 * delivered as an eager packet due to RSM rule and FECN.
 		 * The RSM rule selects FECN bit in BTH and SH bit in
-		 * KDETH header and therefore will not match the last
+		 * KDETH header and thereक्रमe will not match the last
 		 * packet of each segment that has SH bit cleared.
 		 */
-		if (fecn && packet->etype == RHF_RCV_TYPE_EAGER) {
-			struct rvt_sge_state ss;
+		अगर (fecn && packet->etype == RHF_RCV_TYPE_EAGER) अणु
+			काष्ठा rvt_sge_state ss;
 			u32 len;
 			u32 tlen = packet->tlen;
 			u16 hdrsize = packet->hlen;
@@ -4317,32 +4318,32 @@ void hfi1_rc_rcv_tid_rdma_write_data(struct hfi1_packet *packet)
 				(SIZE_OF_CRC << 2);
 			u32 pmtu = qp->pmtu;
 
-			if (unlikely(tlen != (hdrsize + pmtu + extra_bytes)))
-				goto send_nak;
+			अगर (unlikely(tlen != (hdrsize + pmtu + extra_bytes)))
+				जाओ send_nak;
 			len = req->comp_seg * req->seg_len;
 			len += delta_psn(psn,
 				full_flow_psn(flow, flow->flow_state.spsn)) *
 				pmtu;
-			if (unlikely(req->total_len - len < pmtu))
-				goto send_nak;
+			अगर (unlikely(req->total_len - len < pmtu))
+				जाओ send_nak;
 
 			/*
 			 * The e->rdma_sge field is set when TID RDMA WRITE REQ
-			 * is first received and is never modified thereafter.
+			 * is first received and is never modअगरied thereafter.
 			 */
 			ss.sge = e->rdma_sge;
-			ss.sg_list = NULL;
+			ss.sg_list = शून्य;
 			ss.num_sge = 1;
 			ss.total_len = req->total_len;
 			rvt_skip_sge(&ss, len, false);
 			rvt_copy_sge(qp, &ss, packet->payload, pmtu, false,
 				     false);
-			/* Raise the sw sequence check flag for next packet */
+			/* Raise the sw sequence check flag क्रम next packet */
 			priv->r_next_psn_kdeth = mask_psn(psn + 1);
 			priv->s_flags |= HFI1_R_TID_SW_PSN;
-		}
-		goto exit;
-	}
+		पूर्ण
+		जाओ निकास;
+	पूर्ण
 	flow->flow_state.r_next_psn = mask_psn(psn + 1);
 	hfi1_kern_exp_rcv_clear(req);
 	priv->alloc_w_segs--;
@@ -4351,109 +4352,109 @@ void hfi1_rc_rcv_tid_rdma_write_data(struct hfi1_packet *packet)
 	priv->s_nak_state = 0;
 
 	/*
-	 * Release the flow if one of the following conditions has been met:
-	 *  - The request has reached a sync point AND all outstanding
+	 * Release the flow अगर one of the following conditions has been met:
+	 *  - The request has reached a sync poपूर्णांक AND all outstanding
 	 *    segments have been completed, or
 	 *  - The entire request is complete and there are no more requests
 	 *    (of any kind) in the queue.
 	 */
-	trace_hfi1_rsp_rcv_tid_write_data(qp, psn);
-	trace_hfi1_tid_req_rcv_write_data(qp, 0, e->opcode, e->psn, e->lpsn,
+	trace_hfi1_rsp_rcv_tid_ग_लिखो_data(qp, psn);
+	trace_hfi1_tid_req_rcv_ग_लिखो_data(qp, 0, e->opcode, e->psn, e->lpsn,
 					  req);
-	trace_hfi1_tid_write_rsp_rcv_data(qp);
+	trace_hfi1_tid_ग_लिखो_rsp_rcv_data(qp);
 	validate_r_tid_ack(priv);
 
-	if (opcode == TID_OP(WRITE_DATA_LAST)) {
+	अगर (opcode == TID_OP(WRITE_DATA_LAST)) अणु
 		release_rdma_sge_mr(e);
-		for (next = priv->r_tid_tail + 1; ; next++) {
-			if (next > rvt_size_atomic(&dev->rdi))
+		क्रम (next = priv->r_tid_tail + 1; ; next++) अणु
+			अगर (next > rvt_size_atomic(&dev->rdi))
 				next = 0;
-			if (next == priv->r_tid_head)
-				break;
+			अगर (next == priv->r_tid_head)
+				अवरोध;
 			e = &qp->s_ack_queue[next];
-			if (e->opcode == TID_OP(WRITE_REQ))
-				break;
-		}
+			अगर (e->opcode == TID_OP(WRITE_REQ))
+				अवरोध;
+		पूर्ण
 		priv->r_tid_tail = next;
-		if (++qp->s_acked_ack_queue > rvt_size_atomic(&dev->rdi))
+		अगर (++qp->s_acked_ack_queue > rvt_size_atomic(&dev->rdi))
 			qp->s_acked_ack_queue = 0;
-	}
+	पूर्ण
 
-	hfi1_tid_write_alloc_resources(qp, true);
+	hfi1_tid_ग_लिखो_alloc_resources(qp, true);
 
 	/*
 	 * If we need to generate more responses, schedule the
 	 * send engine.
 	 */
-	if (req->cur_seg < req->total_segs ||
-	    qp->s_tail_ack_queue != qp->r_head_ack_queue) {
+	अगर (req->cur_seg < req->total_segs ||
+	    qp->s_tail_ack_queue != qp->r_head_ack_queue) अणु
 		qp->s_flags |= RVT_S_RESP_PENDING;
 		hfi1_schedule_send(qp);
-	}
+	पूर्ण
 
 	priv->pending_tid_w_segs--;
-	if (priv->s_flags & HFI1_R_TID_RSC_TIMER) {
-		if (priv->pending_tid_w_segs)
-			hfi1_mod_tid_reap_timer(req->qp);
-		else
-			hfi1_stop_tid_reap_timer(req->qp);
-	}
+	अगर (priv->s_flags & HFI1_R_TID_RSC_TIMER) अणु
+		अगर (priv->pending_tid_w_segs)
+			hfi1_mod_tid_reap_समयr(req->qp);
+		अन्यथा
+			hfi1_stop_tid_reap_समयr(req->qp);
+	पूर्ण
 
-done:
+करोne:
 	tid_rdma_schedule_ack(qp);
-exit:
+निकास:
 	priv->r_next_psn_kdeth = flow->flow_state.r_next_psn;
-	if (fecn)
+	अगर (fecn)
 		qp->s_flags |= RVT_S_ECN;
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-	return;
+	वापस;
 
 send_nak:
-	if (!priv->s_nak_state) {
+	अगर (!priv->s_nak_state) अणु
 		priv->s_nak_state = IB_NAK_PSN_ERROR;
 		priv->s_nak_psn = flow->flow_state.r_next_psn;
 		tid_rdma_trigger_ack(qp);
-	}
-	goto done;
-}
+	पूर्ण
+	जाओ करोne;
+पूर्ण
 
-static bool hfi1_tid_rdma_is_resync_psn(u32 psn)
-{
-	return (bool)((psn & HFI1_KDETH_BTH_SEQ_MASK) ==
+अटल bool hfi1_tid_rdma_is_resync_psn(u32 psn)
+अणु
+	वापस (bool)((psn & HFI1_KDETH_BTH_SEQ_MASK) ==
 		      HFI1_KDETH_BTH_SEQ_MASK);
-}
+पूर्ण
 
-u32 hfi1_build_tid_rdma_write_ack(struct rvt_qp *qp, struct rvt_ack_entry *e,
-				  struct ib_other_headers *ohdr, u16 iflow,
+u32 hfi1_build_tid_rdma_ग_लिखो_ack(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e,
+				  काष्ठा ib_other_headers *ohdr, u16 अगरlow,
 				  u32 *bth1, u32 *bth2)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_flow_state *fs = &qpriv->flow_state;
-	struct tid_rdma_request *req = ack_to_tid_req(e);
-	struct tid_rdma_flow *flow = &req->flows[iflow];
-	struct tid_rdma_params *remote;
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_flow_state *fs = &qpriv->flow_state;
+	काष्ठा tid_rdma_request *req = ack_to_tid_req(e);
+	काष्ठा tid_rdma_flow *flow = &req->flows[अगरlow];
+	काष्ठा tid_rdma_params *remote;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 	KDETH_RESET(ohdr->u.tid_rdma.ack.kdeth1, JKEY, remote->jkey);
 	ohdr->u.tid_rdma.ack.verbs_qp = cpu_to_be32(qp->remote_qpn);
 	*bth1 = remote->qp;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (qpriv->resync) {
+	अगर (qpriv->resync) अणु
 		*bth2 = mask_psn((fs->generation <<
 				  HFI1_KDETH_BTH_SEQ_SHIFT) - 1);
 		ohdr->u.tid_rdma.ack.aeth = rvt_compute_aeth(qp);
-	} else if (qpriv->s_nak_state) {
+	पूर्ण अन्यथा अगर (qpriv->s_nak_state) अणु
 		*bth2 = mask_psn(qpriv->s_nak_psn);
 		ohdr->u.tid_rdma.ack.aeth =
 			cpu_to_be32((qp->r_msn & IB_MSN_MASK) |
 				    (qpriv->s_nak_state <<
 				     IB_AETH_CREDIT_SHIFT));
-	} else {
+	पूर्ण अन्यथा अणु
 		*bth2 = full_flow_psn(flow, flow->flow_state.lpsn);
 		ohdr->u.tid_rdma.ack.aeth = rvt_compute_aeth(qp);
-	}
+	पूर्ण
 	KDETH_RESET(ohdr->u.tid_rdma.ack.kdeth0, KVER, 0x1);
 	ohdr->u.tid_rdma.ack.tid_flow_qp =
 		cpu_to_be32(qpriv->tid_rdma.local.qp |
@@ -4465,48 +4466,48 @@ u32 hfi1_build_tid_rdma_write_ack(struct rvt_qp *qp, struct rvt_ack_entry *e,
 	ohdr->u.tid_rdma.ack.verbs_psn =
 		cpu_to_be32(flow->flow_state.resp_ib_psn);
 
-	if (qpriv->resync) {
+	अगर (qpriv->resync) अणु
 		/*
-		 * If the PSN before the current expect KDETH PSN is the
+		 * If the PSN beक्रमe the current expect KDETH PSN is the
 		 * RESYNC PSN, then we never received a good TID RDMA WRITE
 		 * DATA packet after a previous RESYNC.
-		 * In this case, the next expected KDETH PSN stays the same.
+		 * In this हाल, the next expected KDETH PSN stays the same.
 		 */
-		if (hfi1_tid_rdma_is_resync_psn(qpriv->r_next_psn_kdeth - 1)) {
+		अगर (hfi1_tid_rdma_is_resync_psn(qpriv->r_next_psn_kdeth - 1)) अणु
 			ohdr->u.tid_rdma.ack.tid_flow_psn =
 				cpu_to_be32(qpriv->r_next_psn_kdeth_save);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Because the KDETH PSNs jump during a RESYNC, it's
 			 * not possible to infer (or compute) the previous value
-			 * of r_next_psn_kdeth in the case of back-to-back
-			 * RESYNC packets. Therefore, we save it.
+			 * of r_next_psn_kdeth in the हाल of back-to-back
+			 * RESYNC packets. Thereक्रमe, we save it.
 			 */
 			qpriv->r_next_psn_kdeth_save =
 				qpriv->r_next_psn_kdeth - 1;
 			ohdr->u.tid_rdma.ack.tid_flow_psn =
 				cpu_to_be32(qpriv->r_next_psn_kdeth_save);
 			qpriv->r_next_psn_kdeth = mask_psn(*bth2 + 1);
-		}
+		पूर्ण
 		qpriv->resync = false;
-	}
+	पूर्ण
 
-	return sizeof(ohdr->u.tid_rdma.ack) / sizeof(u32);
-}
+	वापस माप(ohdr->u.tid_rdma.ack) / माप(u32);
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet)
-{
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct rvt_swqe *wqe;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
+व्योम hfi1_rc_rcv_tid_rdma_ack(काष्ठा hfi1_packet *packet)
+अणु
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा rvt_swqe *wqe;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
 	u32 aeth, psn, req_psn, ack_psn, flpsn, resync_psn, ack_kpsn;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u16 fidx;
 
-	trace_hfi1_tid_write_sender_rcv_tid_ack(qp, 0);
+	trace_hfi1_tid_ग_लिखो_sender_rcv_tid_ack(qp, 0);
 	process_ecn(qp, packet);
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
 	aeth = be32_to_cpu(ohdr->u.tid_rdma.ack.aeth);
@@ -4516,28 +4517,28 @@ void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet)
 	spin_lock_irqsave(&qp->s_lock, flags);
 	trace_hfi1_rcv_tid_ack(qp, aeth, psn, req_psn, resync_psn);
 
-	/* If we are waiting for an ACK to RESYNC, drop any other packets */
-	if ((qp->s_flags & HFI1_S_WAIT_HALT) &&
+	/* If we are रुकोing क्रम an ACK to RESYNC, drop any other packets */
+	अगर ((qp->s_flags & HFI1_S_WAIT_HALT) &&
 	    cmp_psn(psn, qpriv->s_resync_psn))
-		goto ack_op_err;
+		जाओ ack_op_err;
 
 	ack_psn = req_psn;
-	if (hfi1_tid_rdma_is_resync_psn(psn))
+	अगर (hfi1_tid_rdma_is_resync_psn(psn))
 		ack_kpsn = resync_psn;
-	else
+	अन्यथा
 		ack_kpsn = psn;
-	if (aeth >> 29) {
+	अगर (aeth >> 29) अणु
 		ack_psn--;
 		ack_kpsn--;
-	}
+	पूर्ण
 
-	if (unlikely(qp->s_acked == qp->s_tail))
-		goto ack_op_err;
+	अगर (unlikely(qp->s_acked == qp->s_tail))
+		जाओ ack_op_err;
 
 	wqe = rvt_get_swqe_ptr(qp, qp->s_acked);
 
-	if (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE)
-		goto ack_op_err;
+	अगर (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE)
+		जाओ ack_op_err;
 
 	req = wqe_to_tid_req(wqe);
 	trace_hfi1_tid_req_rcv_tid_ack(qp, 0, wqe->wr.opcode, wqe->psn,
@@ -4546,78 +4547,78 @@ void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet)
 	trace_hfi1_tid_flow_rcv_tid_ack(qp, req->acked_tail, flow);
 
 	/* Drop stale ACK/NAK */
-	if (cmp_psn(psn, full_flow_psn(flow, flow->flow_state.spsn)) < 0 ||
+	अगर (cmp_psn(psn, full_flow_psn(flow, flow->flow_state.spsn)) < 0 ||
 	    cmp_psn(req_psn, flow->flow_state.resp_ib_psn) < 0)
-		goto ack_op_err;
+		जाओ ack_op_err;
 
-	while (cmp_psn(ack_kpsn,
+	जबतक (cmp_psn(ack_kpsn,
 		       full_flow_psn(flow, flow->flow_state.lpsn)) >= 0 &&
-	       req->ack_seg < req->cur_seg) {
+	       req->ack_seg < req->cur_seg) अणु
 		req->ack_seg++;
-		/* advance acked segment pointer */
+		/* advance acked segment poपूर्णांकer */
 		req->acked_tail = CIRC_NEXT(req->acked_tail, MAX_FLOWS);
 		req->r_last_acked = flow->flow_state.resp_ib_psn;
 		trace_hfi1_tid_req_rcv_tid_ack(qp, 0, wqe->wr.opcode, wqe->psn,
 					       wqe->lpsn, req);
-		if (req->ack_seg == req->total_segs) {
+		अगर (req->ack_seg == req->total_segs) अणु
 			req->state = TID_REQUEST_COMPLETE;
-			wqe = do_rc_completion(qp, wqe,
+			wqe = करो_rc_completion(qp, wqe,
 					       to_iport(qp->ibqp.device,
 							qp->port_num));
 			trace_hfi1_sender_rcv_tid_ack(qp);
 			atomic_dec(&qpriv->n_tid_requests);
-			if (qp->s_acked == qp->s_tail)
-				break;
-			if (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE)
-				break;
+			अगर (qp->s_acked == qp->s_tail)
+				अवरोध;
+			अगर (wqe->wr.opcode != IB_WR_TID_RDMA_WRITE)
+				अवरोध;
 			req = wqe_to_tid_req(wqe);
-		}
+		पूर्ण
 		flow = &req->flows[req->acked_tail];
 		trace_hfi1_tid_flow_rcv_tid_ack(qp, req->acked_tail, flow);
-	}
+	पूर्ण
 
 	trace_hfi1_tid_req_rcv_tid_ack(qp, 0, wqe->wr.opcode, wqe->psn,
 				       wqe->lpsn, req);
-	switch (aeth >> 29) {
-	case 0:         /* ACK */
-		if (qpriv->s_flags & RVT_S_WAIT_ACK)
+	चयन (aeth >> 29) अणु
+	हाल 0:         /* ACK */
+		अगर (qpriv->s_flags & RVT_S_WAIT_ACK)
 			qpriv->s_flags &= ~RVT_S_WAIT_ACK;
-		if (!hfi1_tid_rdma_is_resync_psn(psn)) {
-			/* Check if there is any pending TID ACK */
-			if (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE &&
+		अगर (!hfi1_tid_rdma_is_resync_psn(psn)) अणु
+			/* Check अगर there is any pending TID ACK */
+			अगर (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE &&
 			    req->ack_seg < req->cur_seg)
-				hfi1_mod_tid_retry_timer(qp);
-			else
-				hfi1_stop_tid_retry_timer(qp);
+				hfi1_mod_tid_retry_समयr(qp);
+			अन्यथा
+				hfi1_stop_tid_retry_समयr(qp);
 			hfi1_schedule_send(qp);
-		} else {
+		पूर्ण अन्यथा अणु
 			u32 spsn, fpsn, last_acked, generation;
-			struct tid_rdma_request *rptr;
+			काष्ठा tid_rdma_request *rptr;
 
 			/* ACK(RESYNC) */
-			hfi1_stop_tid_retry_timer(qp);
+			hfi1_stop_tid_retry_समयr(qp);
 			/* Allow new requests (see hfi1_make_tid_rdma_pkt) */
 			qp->s_flags &= ~HFI1_S_WAIT_HALT;
 			/*
-			 * Clear RVT_S_SEND_ONE flag in case that the TID RDMA
-			 * ACK is received after the TID retry timer is fired
-			 * again. In this case, do not send any more TID
-			 * RESYNC request or wait for any more TID ACK packet.
+			 * Clear RVT_S_SEND_ONE flag in हाल that the TID RDMA
+			 * ACK is received after the TID retry समयr is fired
+			 * again. In this हाल, करो not send any more TID
+			 * RESYNC request or रुको क्रम any more TID ACK packet.
 			 */
 			qpriv->s_flags &= ~RVT_S_SEND_ONE;
 			hfi1_schedule_send(qp);
 
-			if ((qp->s_acked == qpriv->s_tid_tail &&
+			अगर ((qp->s_acked == qpriv->s_tid_tail &&
 			     req->ack_seg == req->total_segs) ||
-			    qp->s_acked == qp->s_tail) {
+			    qp->s_acked == qp->s_tail) अणु
 				qpriv->s_state = TID_OP(WRITE_DATA_LAST);
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
-			if (req->ack_seg == req->comp_seg) {
+			अगर (req->ack_seg == req->comp_seg) अणु
 				qpriv->s_state = TID_OP(WRITE_DATA);
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 
 			/*
 			 * The PSN to start with is the next PSN after the
@@ -4631,53 +4632,53 @@ void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet)
 			 * Update to the correct WQE when we get an ACK(RESYNC)
 			 * in the middle of a request.
 			 */
-			if (delta_psn(ack_psn, wqe->lpsn))
+			अगर (delta_psn(ack_psn, wqe->lpsn))
 				wqe = rvt_get_swqe_ptr(qp, qp->s_acked);
 			req = wqe_to_tid_req(wqe);
 			flow = &req->flows[req->acked_tail];
 			/*
-			 * RESYNC re-numbers the PSN ranges of all remaining
+			 * RESYNC re-numbers the PSN ranges of all reमुख्यing
 			 * segments. Also, PSN's start from 0 in the middle of a
 			 * segment and the first segment size is less than the
-			 * default number of packets. flow->resync_npkts is used
+			 * शेष number of packets. flow->resync_npkts is used
 			 * to track the number of packets from the start of the
-			 * real segment to the point of 0 PSN after the RESYNC
-			 * in order to later correctly rewind the SGE.
+			 * real segment to the poपूर्णांक of 0 PSN after the RESYNC
+			 * in order to later correctly शुरुआत the SGE.
 			 */
 			fpsn = full_flow_psn(flow, flow->flow_state.spsn);
 			req->r_ack_psn = psn;
 			/*
-			 * If resync_psn points to the last flow PSN for a
+			 * If resync_psn poपूर्णांकs to the last flow PSN क्रम a
 			 * segment and the new segment (likely from a new
 			 * request) starts with a new generation number, we
 			 * need to adjust resync_psn accordingly.
 			 */
-			if (flow->flow_state.generation !=
+			अगर (flow->flow_state.generation !=
 			    (resync_psn >> HFI1_KDETH_BTH_SEQ_SHIFT))
 				resync_psn = mask_psn(fpsn - 1);
 			flow->resync_npkts +=
 				delta_psn(mask_psn(resync_psn + 1), fpsn);
 			/*
-			 * Renumber all packet sequence number ranges
+			 * Rक्रमागतber all packet sequence number ranges
 			 * based on the new generation.
 			 */
 			last_acked = qp->s_acked;
 			rptr = req;
-			while (1) {
+			जबतक (1) अणु
 				/* start from last acked segment */
-				for (fidx = rptr->acked_tail;
+				क्रम (fidx = rptr->acked_tail;
 				     CIRC_CNT(rptr->setup_head, fidx,
 					      MAX_FLOWS);
-				     fidx = CIRC_NEXT(fidx, MAX_FLOWS)) {
+				     fidx = CIRC_NEXT(fidx, MAX_FLOWS)) अणु
 					u32 lpsn;
 					u32 gen;
 
 					flow = &rptr->flows[fidx];
 					gen = flow->flow_state.generation;
-					if (WARN_ON(gen == generation &&
+					अगर (WARN_ON(gen == generation &&
 						    flow->flow_state.spsn !=
 						     spsn))
-						continue;
+						जारी;
 					lpsn = flow->flow_state.lpsn;
 					lpsn = full_flow_psn(flow, lpsn);
 					flow->npkts =
@@ -4696,34 +4697,34 @@ void hfi1_rc_rcv_tid_rdma_ack(struct hfi1_packet *packet)
 					trace_hfi1_tid_flow_rcv_tid_ack(qp,
 									fidx,
 									flow);
-				}
-				if (++last_acked == qpriv->s_tid_cur + 1)
-					break;
-				if (last_acked == qp->s_size)
+				पूर्ण
+				अगर (++last_acked == qpriv->s_tid_cur + 1)
+					अवरोध;
+				अगर (last_acked == qp->s_size)
 					last_acked = 0;
 				wqe = rvt_get_swqe_ptr(qp, last_acked);
 				rptr = wqe_to_tid_req(wqe);
-			}
+			पूर्ण
 			req->cur_seg = req->ack_seg;
 			qpriv->s_tid_tail = qp->s_acked;
 			qpriv->s_state = TID_OP(WRITE_REQ);
 			hfi1_schedule_tid_send(qp);
-		}
-done:
+		पूर्ण
+करोne:
 		qpriv->s_retry = qp->s_retry_cnt;
-		break;
+		अवरोध;
 
-	case 3:         /* NAK */
-		hfi1_stop_tid_retry_timer(qp);
-		switch ((aeth >> IB_AETH_CREDIT_SHIFT) &
-			IB_AETH_CREDIT_MASK) {
-		case 0: /* PSN sequence error */
-			if (!req->flows)
-				break;
+	हाल 3:         /* NAK */
+		hfi1_stop_tid_retry_समयr(qp);
+		चयन ((aeth >> IB_AETH_CREDIT_SHIFT) &
+			IB_AETH_CREDIT_MASK) अणु
+		हाल 0: /* PSN sequence error */
+			अगर (!req->flows)
+				अवरोध;
 			flow = &req->flows[req->acked_tail];
 			flpsn = full_flow_psn(flow, flow->flow_state.lpsn);
-			if (cmp_psn(psn, flpsn) > 0)
-				break;
+			अगर (cmp_psn(psn, flpsn) > 0)
+				अवरोध;
 			trace_hfi1_tid_flow_rcv_tid_ack(qp, req->acked_tail,
 							flow);
 			req->r_ack_psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
@@ -4732,95 +4733,95 @@ done:
 			qpriv->s_state = TID_OP(WRITE_REQ);
 			qpriv->s_retry = qp->s_retry_cnt;
 			hfi1_schedule_tid_send(qp);
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-		break;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 ack_op_err:
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-}
+पूर्ण
 
-void hfi1_add_tid_retry_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct ib_qp *ibqp = &qp->ibqp;
-	struct rvt_dev_info *rdi = ib_to_rvt(ibqp->device);
+व्योम hfi1_add_tid_retry_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा ib_qp *ibqp = &qp->ibqp;
+	काष्ठा rvt_dev_info *rdi = ib_to_rvt(ibqp->device);
 
-	lockdep_assert_held(&qp->s_lock);
-	if (!(priv->s_flags & HFI1_S_TID_RETRY_TIMER)) {
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (!(priv->s_flags & HFI1_S_TID_RETRY_TIMER)) अणु
 		priv->s_flags |= HFI1_S_TID_RETRY_TIMER;
-		priv->s_tid_retry_timer.expires = jiffies +
-			priv->tid_retry_timeout_jiffies + rdi->busy_jiffies;
-		add_timer(&priv->s_tid_retry_timer);
-	}
-}
+		priv->s_tid_retry_समयr.expires = jअगरfies +
+			priv->tid_retry_समयout_jअगरfies + rdi->busy_jअगरfies;
+		add_समयr(&priv->s_tid_retry_समयr);
+	पूर्ण
+पूर्ण
 
-static void hfi1_mod_tid_retry_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct ib_qp *ibqp = &qp->ibqp;
-	struct rvt_dev_info *rdi = ib_to_rvt(ibqp->device);
+अटल व्योम hfi1_mod_tid_retry_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा ib_qp *ibqp = &qp->ibqp;
+	काष्ठा rvt_dev_info *rdi = ib_to_rvt(ibqp->device);
 
-	lockdep_assert_held(&qp->s_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
 	priv->s_flags |= HFI1_S_TID_RETRY_TIMER;
-	mod_timer(&priv->s_tid_retry_timer, jiffies +
-		  priv->tid_retry_timeout_jiffies + rdi->busy_jiffies);
-}
+	mod_समयr(&priv->s_tid_retry_समयr, jअगरfies +
+		  priv->tid_retry_समयout_jअगरfies + rdi->busy_jअगरfies);
+पूर्ण
 
-static int hfi1_stop_tid_retry_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	int rval = 0;
+अटल पूर्णांक hfi1_stop_tid_retry_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	पूर्णांक rval = 0;
 
-	lockdep_assert_held(&qp->s_lock);
-	if (priv->s_flags & HFI1_S_TID_RETRY_TIMER) {
-		rval = del_timer(&priv->s_tid_retry_timer);
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (priv->s_flags & HFI1_S_TID_RETRY_TIMER) अणु
+		rval = del_समयr(&priv->s_tid_retry_समयr);
 		priv->s_flags &= ~HFI1_S_TID_RETRY_TIMER;
-	}
-	return rval;
-}
+	पूर्ण
+	वापस rval;
+पूर्ण
 
-void hfi1_del_tid_retry_timer(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+व्योम hfi1_del_tid_retry_समयr(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	del_timer_sync(&priv->s_tid_retry_timer);
+	del_समयr_sync(&priv->s_tid_retry_समयr);
 	priv->s_flags &= ~HFI1_S_TID_RETRY_TIMER;
-}
+पूर्ण
 
-static void hfi1_tid_retry_timeout(struct timer_list *t)
-{
-	struct hfi1_qp_priv *priv = from_timer(priv, t, s_tid_retry_timer);
-	struct rvt_qp *qp = priv->owner;
-	struct rvt_swqe *wqe;
-	unsigned long flags;
-	struct tid_rdma_request *req;
+अटल व्योम hfi1_tid_retry_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा hfi1_qp_priv *priv = from_समयr(priv, t, s_tid_retry_समयr);
+	काष्ठा rvt_qp *qp = priv->owner;
+	काष्ठा rvt_swqe *wqe;
+	अचिन्हित दीर्घ flags;
+	काष्ठा tid_rdma_request *req;
 
 	spin_lock_irqsave(&qp->r_lock, flags);
 	spin_lock(&qp->s_lock);
-	trace_hfi1_tid_write_sender_retry_timeout(qp, 0);
-	if (priv->s_flags & HFI1_S_TID_RETRY_TIMER) {
-		hfi1_stop_tid_retry_timer(qp);
-		if (!priv->s_retry) {
-			trace_hfi1_msg_tid_retry_timeout(/* msg */
+	trace_hfi1_tid_ग_लिखो_sender_retry_समयout(qp, 0);
+	अगर (priv->s_flags & HFI1_S_TID_RETRY_TIMER) अणु
+		hfi1_stop_tid_retry_समयr(qp);
+		अगर (!priv->s_retry) अणु
+			trace_hfi1_msg_tid_retry_समयout(/* msg */
 				qp,
 				"Exhausted retries. Tid retry timeout = ",
-				(u64)priv->tid_retry_timeout_jiffies);
+				(u64)priv->tid_retry_समयout_jअगरfies);
 
 			wqe = rvt_get_swqe_ptr(qp, qp->s_acked);
 			hfi1_trdma_send_complete(qp, wqe, IB_WC_RETRY_EXC_ERR);
 			rvt_error_qp(qp, IB_WC_WR_FLUSH_ERR);
-		} else {
+		पूर्ण अन्यथा अणु
 			wqe = rvt_get_swqe_ptr(qp, qp->s_acked);
 			req = wqe_to_tid_req(wqe);
-			trace_hfi1_tid_req_tid_retry_timeout(/* req */
+			trace_hfi1_tid_req_tid_retry_समयout(/* req */
 			   qp, 0, wqe->wr.opcode, wqe->psn, wqe->lpsn, req);
 
 			priv->s_flags &= ~RVT_S_WAIT_ACK;
@@ -4834,28 +4835,28 @@ static void hfi1_tid_retry_timeout(struct timer_list *t)
 			priv->s_state = TID_OP(RESYNC);
 			priv->s_retry--;
 			hfi1_schedule_tid_send(qp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&qp->s_lock);
 	spin_unlock_irqrestore(&qp->r_lock, flags);
-}
+पूर्ण
 
-u32 hfi1_build_tid_rdma_resync(struct rvt_qp *qp, struct rvt_swqe *wqe,
-			       struct ib_other_headers *ohdr, u32 *bth1,
+u32 hfi1_build_tid_rdma_resync(काष्ठा rvt_qp *qp, काष्ठा rvt_swqe *wqe,
+			       काष्ठा ib_other_headers *ohdr, u32 *bth1,
 			       u32 *bth2, u16 fidx)
-{
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct tid_rdma_params *remote;
-	struct tid_rdma_request *req = wqe_to_tid_req(wqe);
-	struct tid_rdma_flow *flow = &req->flows[fidx];
+अणु
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा tid_rdma_params *remote;
+	काष्ठा tid_rdma_request *req = wqe_to_tid_req(wqe);
+	काष्ठा tid_rdma_flow *flow = &req->flows[fidx];
 	u32 generation;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	remote = rcu_dereference(qpriv->tid_rdma.remote);
 	KDETH_RESET(ohdr->u.tid_rdma.ack.kdeth1, JKEY, remote->jkey);
 	ohdr->u.tid_rdma.ack.verbs_qp = cpu_to_be32(qp->remote_qpn);
 	*bth1 = remote->qp;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	generation = kern_flow_generation_next(flow->flow_state.generation);
 	*bth2 = mask_psn((generation << HFI1_KDETH_BTH_SEQ_SHIFT) - 1);
@@ -4863,23 +4864,23 @@ u32 hfi1_build_tid_rdma_resync(struct rvt_qp *qp, struct rvt_swqe *wqe,
 	*bth2 |= IB_BTH_REQ_ACK;
 	KDETH_RESET(ohdr->u.tid_rdma.ack.kdeth0, KVER, 0x1);
 
-	return sizeof(ohdr->u.tid_rdma.resync) / sizeof(u32);
-}
+	वापस माप(ohdr->u.tid_rdma.resync) / माप(u32);
+पूर्ण
 
-void hfi1_rc_rcv_tid_rdma_resync(struct hfi1_packet *packet)
-{
-	struct ib_other_headers *ohdr = packet->ohdr;
-	struct rvt_qp *qp = packet->qp;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct hfi1_ctxtdata *rcd = qpriv->rcd;
-	struct hfi1_ibdev *dev = to_idev(qp->ibqp.device);
-	struct rvt_ack_entry *e;
-	struct tid_rdma_request *req;
-	struct tid_rdma_flow *flow;
-	struct tid_flow_state *fs = &qpriv->flow_state;
+व्योम hfi1_rc_rcv_tid_rdma_resync(काष्ठा hfi1_packet *packet)
+अणु
+	काष्ठा ib_other_headers *ohdr = packet->ohdr;
+	काष्ठा rvt_qp *qp = packet->qp;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_ctxtdata *rcd = qpriv->rcd;
+	काष्ठा hfi1_ibdev *dev = to_idev(qp->ibqp.device);
+	काष्ठा rvt_ack_entry *e;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा tid_rdma_flow *flow;
+	काष्ठा tid_flow_state *fs = &qpriv->flow_state;
 	u32 psn, generation, idx, gen_next;
 	bool fecn;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	fecn = process_ecn(qp, packet);
 	psn = mask_psn(be32_to_cpu(ohdr->bth[2]));
@@ -4893,54 +4894,54 @@ void hfi1_rc_rcv_tid_rdma_resync(struct hfi1_packet *packet)
 	 * RESYNC packet contains the "next" generation and can only be
 	 * from the current or previous generations
 	 */
-	if (generation != mask_generation(gen_next - 1) &&
+	अगर (generation != mask_generation(gen_next - 1) &&
 	    generation != gen_next)
-		goto bail;
-	/* Already processing a resync */
-	if (qpriv->resync)
-		goto bail;
+		जाओ bail;
+	/* Alपढ़ोy processing a resync */
+	अगर (qpriv->resync)
+		जाओ bail;
 
 	spin_lock(&rcd->exp_lock);
-	if (fs->index >= RXE_NUM_TID_FLOWS) {
+	अगर (fs->index >= RXE_NUM_TID_FLOWS) अणु
 		/*
-		 * If we don't have a flow, save the generation so it can be
+		 * If we करोn't have a flow, save the generation so it can be
 		 * applied when a new flow is allocated
 		 */
 		fs->generation = generation;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Reprogram the QP flow with new generation */
 		rcd->flows[fs->index].generation = generation;
 		fs->generation = kern_setup_hw_flow(rcd, fs->index);
-	}
+	पूर्ण
 	fs->psn = 0;
 	/*
 	 * Disable SW PSN checking since a RESYNC is equivalent to a
-	 * sync point and the flow has/will be reprogrammed
+	 * sync poपूर्णांक and the flow has/will be reprogrammed
 	 */
 	qpriv->s_flags &= ~HFI1_R_TID_SW_PSN;
-	trace_hfi1_tid_write_rsp_rcv_resync(qp);
+	trace_hfi1_tid_ग_लिखो_rsp_rcv_resync(qp);
 
 	/*
-	 * Reset all TID flow information with the new generation.
-	 * This is done for all requests and segments after the
+	 * Reset all TID flow inक्रमmation with the new generation.
+	 * This is करोne क्रम all requests and segments after the
 	 * last received segment
 	 */
-	for (idx = qpriv->r_tid_tail; ; idx++) {
+	क्रम (idx = qpriv->r_tid_tail; ; idx++) अणु
 		u16 flow_idx;
 
-		if (idx > rvt_size_atomic(&dev->rdi))
+		अगर (idx > rvt_size_atomic(&dev->rdi))
 			idx = 0;
 		e = &qp->s_ack_queue[idx];
-		if (e->opcode == TID_OP(WRITE_REQ)) {
+		अगर (e->opcode == TID_OP(WRITE_REQ)) अणु
 			req = ack_to_tid_req(e);
 			trace_hfi1_tid_req_rcv_resync(qp, 0, e->opcode, e->psn,
 						      e->lpsn, req);
 
 			/* start from last unacked segment */
-			for (flow_idx = req->clear_tail;
+			क्रम (flow_idx = req->clear_tail;
 			     CIRC_CNT(req->setup_head, flow_idx,
 				      MAX_FLOWS);
-			     flow_idx = CIRC_NEXT(flow_idx, MAX_FLOWS)) {
+			     flow_idx = CIRC_NEXT(flow_idx, MAX_FLOWS)) अणु
 				u32 lpsn;
 				u32 next;
 
@@ -4959,130 +4960,130 @@ void hfi1_rc_rcv_tid_rdma_resync(struct hfi1_packet *packet)
 				fs->psn += flow->npkts;
 				trace_hfi1_tid_flow_rcv_resync(qp, flow_idx,
 							       flow);
-			}
-		}
-		if (idx == qp->s_tail_ack_queue)
-			break;
-	}
+			पूर्ण
+		पूर्ण
+		अगर (idx == qp->s_tail_ack_queue)
+			अवरोध;
+	पूर्ण
 
 	spin_unlock(&rcd->exp_lock);
 	qpriv->resync = true;
-	/* RESYNC request always gets a TID RDMA ACK. */
+	/* RESYNC request always माला_लो a TID RDMA ACK. */
 	qpriv->s_nak_state = 0;
 	tid_rdma_trigger_ack(qp);
 bail:
-	if (fecn)
+	अगर (fecn)
 		qp->s_flags |= RVT_S_ECN;
 	spin_unlock_irqrestore(&qp->s_lock, flags);
-}
+पूर्ण
 
 /*
- * Call this function when the last TID RDMA WRITE DATA packet for a request
+ * Call this function when the last TID RDMA WRITE DATA packet क्रम a request
  * is built.
  */
-static void update_tid_tail(struct rvt_qp *qp)
+अटल व्योम update_tid_tail(काष्ठा rvt_qp *qp)
 	__must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 	u32 i;
-	struct rvt_swqe *wqe;
+	काष्ठा rvt_swqe *wqe;
 
-	lockdep_assert_held(&qp->s_lock);
+	lockdep_निश्चित_held(&qp->s_lock);
 	/* Can't move beyond s_tid_cur */
-	if (priv->s_tid_tail == priv->s_tid_cur)
-		return;
-	for (i = priv->s_tid_tail + 1; ; i++) {
-		if (i == qp->s_size)
+	अगर (priv->s_tid_tail == priv->s_tid_cur)
+		वापस;
+	क्रम (i = priv->s_tid_tail + 1; ; i++) अणु
+		अगर (i == qp->s_size)
 			i = 0;
 
-		if (i == priv->s_tid_cur)
-			break;
+		अगर (i == priv->s_tid_cur)
+			अवरोध;
 		wqe = rvt_get_swqe_ptr(qp, i);
-		if (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE)
-			break;
-	}
+		अगर (wqe->wr.opcode == IB_WR_TID_RDMA_WRITE)
+			अवरोध;
+	पूर्ण
 	priv->s_tid_tail = i;
 	priv->s_state = TID_OP(WRITE_RESP);
-}
+पूर्ण
 
-int hfi1_make_tid_rdma_pkt(struct rvt_qp *qp, struct hfi1_pkt_state *ps)
+पूर्णांक hfi1_make_tid_rdma_pkt(काष्ठा rvt_qp *qp, काष्ठा hfi1_pkt_state *ps)
 	__must_hold(&qp->s_lock)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct rvt_swqe *wqe;
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा rvt_swqe *wqe;
 	u32 bth1 = 0, bth2 = 0, hwords = 5, len, middle = 0;
-	struct ib_other_headers *ohdr;
-	struct rvt_sge_state *ss = &qp->s_sge;
-	struct rvt_ack_entry *e = &qp->s_ack_queue[qp->s_tail_ack_queue];
-	struct tid_rdma_request *req = ack_to_tid_req(e);
+	काष्ठा ib_other_headers *ohdr;
+	काष्ठा rvt_sge_state *ss = &qp->s_sge;
+	काष्ठा rvt_ack_entry *e = &qp->s_ack_queue[qp->s_tail_ack_queue];
+	काष्ठा tid_rdma_request *req = ack_to_tid_req(e);
 	bool last = false;
 	u8 opcode = TID_OP(WRITE_DATA);
 
-	lockdep_assert_held(&qp->s_lock);
-	trace_hfi1_tid_write_sender_make_tid_pkt(qp, 0);
+	lockdep_निश्चित_held(&qp->s_lock);
+	trace_hfi1_tid_ग_लिखो_sender_make_tid_pkt(qp, 0);
 	/*
 	 * Prioritize the sending of the requests and responses over the
 	 * sending of the TID RDMA data packets.
 	 */
-	if (((atomic_read(&priv->n_tid_requests) < HFI1_TID_RDMA_WRITE_CNT) &&
-	     atomic_read(&priv->n_requests) &&
+	अगर (((atomic_पढ़ो(&priv->n_tid_requests) < HFI1_TID_RDMA_WRITE_CNT) &&
+	     atomic_पढ़ो(&priv->n_requests) &&
 	     !(qp->s_flags & (RVT_S_BUSY | RVT_S_WAIT_ACK |
 			     HFI1_S_ANY_WAIT_IO))) ||
 	    (e->opcode == TID_OP(WRITE_REQ) && req->cur_seg < req->alloc_seg &&
-	     !(qp->s_flags & (RVT_S_BUSY | HFI1_S_ANY_WAIT_IO)))) {
-		struct iowait_work *iowork;
+	     !(qp->s_flags & (RVT_S_BUSY | HFI1_S_ANY_WAIT_IO)))) अणु
+		काष्ठा ioरुको_work *iowork;
 
-		iowork = iowait_get_ib_work(&priv->s_iowait);
-		ps->s_txreq = get_waiting_verbs_txreq(iowork);
-		if (ps->s_txreq || hfi1_make_rc_req(qp, ps)) {
+		iowork = ioरुको_get_ib_work(&priv->s_ioरुको);
+		ps->s_txreq = get_रुकोing_verbs_txreq(iowork);
+		अगर (ps->s_txreq || hfi1_make_rc_req(qp, ps)) अणु
 			priv->s_flags |= HFI1_S_TID_BUSY_SET;
-			return 1;
-		}
-	}
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
 	ps->s_txreq = get_txreq(ps->dev, qp);
-	if (!ps->s_txreq)
-		goto bail_no_tx;
+	अगर (!ps->s_txreq)
+		जाओ bail_no_tx;
 
 	ohdr = &ps->s_txreq->phdr.hdr.ibh.u.oth;
 
-	if ((priv->s_flags & RVT_S_ACK_PENDING) &&
+	अगर ((priv->s_flags & RVT_S_ACK_PENDING) &&
 	    make_tid_rdma_ack(qp, ohdr, ps))
-		return 1;
+		वापस 1;
 
 	/*
-	 * Bail out if we can't send data.
-	 * Be reminded that this check must been done after the call to
+	 * Bail out अगर we can't send data.
+	 * Be reminded that this check must been करोne after the call to
 	 * make_tid_rdma_ack() because the responding QP could be in
 	 * RTR state where it can send TID RDMA ACK, not TID RDMA WRITE DATA.
 	 */
-	if (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_SEND_OK))
-		goto bail;
+	अगर (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_SEND_OK))
+		जाओ bail;
 
-	if (priv->s_flags & RVT_S_WAIT_ACK)
-		goto bail;
+	अगर (priv->s_flags & RVT_S_WAIT_ACK)
+		जाओ bail;
 
-	/* Check whether there is anything to do. */
-	if (priv->s_tid_tail == HFI1_QP_WQE_INVALID)
-		goto bail;
+	/* Check whether there is anything to करो. */
+	अगर (priv->s_tid_tail == HFI1_QP_WQE_INVALID)
+		जाओ bail;
 	wqe = rvt_get_swqe_ptr(qp, priv->s_tid_tail);
 	req = wqe_to_tid_req(wqe);
 	trace_hfi1_tid_req_make_tid_pkt(qp, 0, wqe->wr.opcode, wqe->psn,
 					wqe->lpsn, req);
-	switch (priv->s_state) {
-	case TID_OP(WRITE_REQ):
-	case TID_OP(WRITE_RESP):
+	चयन (priv->s_state) अणु
+	हाल TID_OP(WRITE_REQ):
+	हाल TID_OP(WRITE_RESP):
 		priv->tid_ss.sge = wqe->sg_list[0];
 		priv->tid_ss.sg_list = wqe->sg_list + 1;
 		priv->tid_ss.num_sge = wqe->wr.num_sge;
 		priv->tid_ss.total_len = wqe->length;
 
-		if (priv->s_state == TID_OP(WRITE_REQ))
+		अगर (priv->s_state == TID_OP(WRITE_REQ))
 			hfi1_tid_rdma_restart_req(qp, wqe, &bth2);
 		priv->s_state = TID_OP(WRITE_DATA);
 		fallthrough;
 
-	case TID_OP(WRITE_DATA):
+	हाल TID_OP(WRITE_DATA):
 		/*
 		 * 1. Check whether TID RDMA WRITE RESP available.
 		 * 2. If no:
@@ -5093,72 +5094,72 @@ int hfi1_make_tid_rdma_pkt(struct rvt_qp *qp, struct hfi1_pkt_state *ps)
 		 *    3.1 Build TID RDMA WRITE DATA packet.
 		 *    3.2 If last packet in segment:
 		 *        3.2.1 Change KDETH header bits
-		 *        3.2.2 Advance RESP pointers.
+		 *        3.2.2 Advance RESP poपूर्णांकers.
 		 *    3.3 Return indicating progress made.
 		 */
 		trace_hfi1_sender_make_tid_pkt(qp);
-		trace_hfi1_tid_write_sender_make_tid_pkt(qp, 0);
+		trace_hfi1_tid_ग_लिखो_sender_make_tid_pkt(qp, 0);
 		wqe = rvt_get_swqe_ptr(qp, priv->s_tid_tail);
 		req = wqe_to_tid_req(wqe);
 		len = wqe->length;
 
-		if (!req->comp_seg || req->cur_seg == req->comp_seg)
-			goto bail;
+		अगर (!req->comp_seg || req->cur_seg == req->comp_seg)
+			जाओ bail;
 
 		trace_hfi1_tid_req_make_tid_pkt(qp, 0, wqe->wr.opcode,
 						wqe->psn, wqe->lpsn, req);
 		last = hfi1_build_tid_rdma_packet(wqe, ohdr, &bth1, &bth2,
 						  &len);
 
-		if (last) {
-			/* move pointer to next flow */
+		अगर (last) अणु
+			/* move poपूर्णांकer to next flow */
 			req->clear_tail = CIRC_NEXT(req->clear_tail,
 						    MAX_FLOWS);
-			if (++req->cur_seg < req->total_segs) {
-				if (!CIRC_CNT(req->setup_head, req->clear_tail,
+			अगर (++req->cur_seg < req->total_segs) अणु
+				अगर (!CIRC_CNT(req->setup_head, req->clear_tail,
 					      MAX_FLOWS))
 					qp->s_flags |= HFI1_S_WAIT_TID_RESP;
-			} else {
+			पूर्ण अन्यथा अणु
 				priv->s_state = TID_OP(WRITE_DATA_LAST);
 				opcode = TID_OP(WRITE_DATA_LAST);
 
 				/* Advance the s_tid_tail now */
 				update_tid_tail(qp);
-			}
-		}
-		hwords += sizeof(ohdr->u.tid_rdma.w_data) / sizeof(u32);
+			पूर्ण
+		पूर्ण
+		hwords += माप(ohdr->u.tid_rdma.w_data) / माप(u32);
 		ss = &priv->tid_ss;
-		break;
+		अवरोध;
 
-	case TID_OP(RESYNC):
+	हाल TID_OP(RESYNC):
 		trace_hfi1_sender_make_tid_pkt(qp);
 		/* Use generation from the most recently received response */
 		wqe = rvt_get_swqe_ptr(qp, priv->s_tid_cur);
 		req = wqe_to_tid_req(wqe);
-		/* If no responses for this WQE look at the previous one */
-		if (!req->comp_seg) {
+		/* If no responses क्रम this WQE look at the previous one */
+		अगर (!req->comp_seg) अणु
 			wqe = rvt_get_swqe_ptr(qp,
 					       (!priv->s_tid_cur ? qp->s_size :
 						priv->s_tid_cur) - 1);
 			req = wqe_to_tid_req(wqe);
-		}
+		पूर्ण
 		hwords += hfi1_build_tid_rdma_resync(qp, wqe, ohdr, &bth1,
 						     &bth2,
 						     CIRC_PREV(req->setup_head,
 							       MAX_FLOWS));
-		ss = NULL;
+		ss = शून्य;
 		len = 0;
 		opcode = TID_OP(RESYNC);
-		break;
+		अवरोध;
 
-	default:
-		goto bail;
-	}
-	if (priv->s_flags & RVT_S_SEND_ONE) {
+	शेष:
+		जाओ bail;
+	पूर्ण
+	अगर (priv->s_flags & RVT_S_SEND_ONE) अणु
 		priv->s_flags &= ~RVT_S_SEND_ONE;
 		priv->s_flags |= RVT_S_WAIT_ACK;
 		bth2 |= IB_BTH_REQ_ACK;
-	}
+	पूर्ण
 	qp->s_len -= len;
 	ps->s_txreq->hdr_dwords = hwords;
 	ps->s_txreq->sde = priv->s_sde;
@@ -5166,41 +5167,41 @@ int hfi1_make_tid_rdma_pkt(struct rvt_qp *qp, struct hfi1_pkt_state *ps)
 	ps->s_txreq->s_cur_size = len;
 	hfi1_make_ruc_header(qp, ohdr, (opcode << 24), bth1, bth2,
 			     middle, ps);
-	return 1;
+	वापस 1;
 bail:
 	hfi1_put_txreq(ps->s_txreq);
 bail_no_tx:
-	ps->s_txreq = NULL;
+	ps->s_txreq = शून्य;
 	priv->s_flags &= ~RVT_S_BUSY;
 	/*
 	 * If we didn't get a txreq, the QP will be woken up later to try
 	 * again, set the flags to the the wake up which work item to wake
 	 * up.
-	 * (A better algorithm should be found to do this and generalize the
+	 * (A better algorithm should be found to करो this and generalize the
 	 * sleep/wakeup flags.)
 	 */
-	iowait_set_flag(&priv->s_iowait, IOWAIT_PENDING_TID);
-	return 0;
-}
+	ioरुको_set_flag(&priv->s_ioरुको, IOWAIT_PENDING_TID);
+	वापस 0;
+पूर्ण
 
-static int make_tid_rdma_ack(struct rvt_qp *qp,
-			     struct ib_other_headers *ohdr,
-			     struct hfi1_pkt_state *ps)
-{
-	struct rvt_ack_entry *e;
-	struct hfi1_qp_priv *qpriv = qp->priv;
-	struct hfi1_ibdev *dev = to_idev(qp->ibqp.device);
+अटल पूर्णांक make_tid_rdma_ack(काष्ठा rvt_qp *qp,
+			     काष्ठा ib_other_headers *ohdr,
+			     काष्ठा hfi1_pkt_state *ps)
+अणु
+	काष्ठा rvt_ack_entry *e;
+	काष्ठा hfi1_qp_priv *qpriv = qp->priv;
+	काष्ठा hfi1_ibdev *dev = to_idev(qp->ibqp.device);
 	u32 hwords, next;
 	u32 len = 0;
 	u32 bth1 = 0, bth2 = 0;
-	int middle = 0;
+	पूर्णांक middle = 0;
 	u16 flow;
-	struct tid_rdma_request *req, *nreq;
+	काष्ठा tid_rdma_request *req, *nreq;
 
-	trace_hfi1_tid_write_rsp_make_tid_ack(qp);
+	trace_hfi1_tid_ग_लिखो_rsp_make_tid_ack(qp);
 	/* Don't send an ACK if we aren't supposed to. */
-	if (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_RECV_OK))
-		goto bail;
+	अगर (!(ib_rvt_state_ops[qp->state] & RVT_PROCESS_RECV_OK))
+		जाओ bail;
 
 	/* header size in 32-bit words LRH+BTH = (8+12)/4. */
 	hwords = 5;
@@ -5208,41 +5209,41 @@ static int make_tid_rdma_ack(struct rvt_qp *qp,
 	e = &qp->s_ack_queue[qpriv->r_tid_ack];
 	req = ack_to_tid_req(e);
 	/*
-	 * In the RESYNC case, we are exactly one segment past the
+	 * In the RESYNC हाल, we are exactly one segment past the
 	 * previously sent ack or at the previously sent NAK. So to send
 	 * the resync ack, we go back one segment (which might be part of
-	 * the previous request) and let the do-while loop execute again.
-	 * The advantage of executing the do-while loop is that any data
-	 * received after the previous ack is automatically acked in the
-	 * RESYNC ack. It turns out that for the do-while loop we only need
+	 * the previous request) and let the करो-जबतक loop execute again.
+	 * The advantage of executing the करो-जबतक loop is that any data
+	 * received after the previous ack is स्वतःmatically acked in the
+	 * RESYNC ack. It turns out that क्रम the करो-जबतक loop we only need
 	 * to pull back qpriv->r_tid_ack, not the segment
-	 * indices/counters. The scheme works even if the previous request
+	 * indices/counters. The scheme works even अगर the previous request
 	 * was not a TID WRITE request.
 	 */
-	if (qpriv->resync) {
-		if (!req->ack_seg || req->ack_seg == req->total_segs)
+	अगर (qpriv->resync) अणु
+		अगर (!req->ack_seg || req->ack_seg == req->total_segs)
 			qpriv->r_tid_ack = !qpriv->r_tid_ack ?
 				rvt_size_atomic(&dev->rdi) :
 				qpriv->r_tid_ack - 1;
 		e = &qp->s_ack_queue[qpriv->r_tid_ack];
 		req = ack_to_tid_req(e);
-	}
+	पूर्ण
 
 	trace_hfi1_rsp_make_tid_ack(qp, e->psn);
 	trace_hfi1_tid_req_make_tid_ack(qp, 0, e->opcode, e->psn, e->lpsn,
 					req);
 	/*
-	 * If we've sent all the ACKs that we can, we are done
+	 * If we've sent all the ACKs that we can, we are करोne
 	 * until we get more segments...
 	 */
-	if (!qpriv->s_nak_state && !qpriv->resync &&
+	अगर (!qpriv->s_nak_state && !qpriv->resync &&
 	    req->ack_seg == req->comp_seg)
-		goto bail;
+		जाओ bail;
 
-	do {
+	करो अणु
 		/*
-		 * To deal with coalesced ACKs, the acked_tail pointer
-		 * into the flow array is used. The distance between it
+		 * To deal with coalesced ACKs, the acked_tail poपूर्णांकer
+		 * पूर्णांकo the flow array is used. The distance between it
 		 * and the clear_tail is the number of flows that are
 		 * being ACK'ed.
 		 */
@@ -5254,69 +5255,69 @@ static int make_tid_rdma_ack(struct rvt_qp *qp,
 		req->acked_tail = req->clear_tail;
 
 		/*
-		 * req->clear_tail points to the segment currently being
+		 * req->clear_tail poपूर्णांकs to the segment currently being
 		 * received. So, when sending an ACK, the previous
 		 * segment is being ACK'ed.
 		 */
 		flow = CIRC_PREV(req->acked_tail, MAX_FLOWS);
-		if (req->ack_seg != req->total_segs)
-			break;
+		अगर (req->ack_seg != req->total_segs)
+			अवरोध;
 		req->state = TID_REQUEST_COMPLETE;
 
 		next = qpriv->r_tid_ack + 1;
-		if (next > rvt_size_atomic(&dev->rdi))
+		अगर (next > rvt_size_atomic(&dev->rdi))
 			next = 0;
 		qpriv->r_tid_ack = next;
-		if (qp->s_ack_queue[next].opcode != TID_OP(WRITE_REQ))
-			break;
+		अगर (qp->s_ack_queue[next].opcode != TID_OP(WRITE_REQ))
+			अवरोध;
 		nreq = ack_to_tid_req(&qp->s_ack_queue[next]);
-		if (!nreq->comp_seg || nreq->ack_seg == nreq->comp_seg)
-			break;
+		अगर (!nreq->comp_seg || nreq->ack_seg == nreq->comp_seg)
+			अवरोध;
 
 		/* Move to the next ack entry now */
 		e = &qp->s_ack_queue[qpriv->r_tid_ack];
 		req = ack_to_tid_req(e);
-	} while (1);
+	पूर्ण जबतक (1);
 
 	/*
-	 * At this point qpriv->r_tid_ack == qpriv->r_tid_tail but e and
-	 * req could be pointing at the previous ack queue entry
+	 * At this poपूर्णांक qpriv->r_tid_ack == qpriv->r_tid_tail but e and
+	 * req could be poपूर्णांकing at the previous ack queue entry
 	 */
-	if (qpriv->s_nak_state ||
+	अगर (qpriv->s_nak_state ||
 	    (qpriv->resync &&
 	     !hfi1_tid_rdma_is_resync_psn(qpriv->r_next_psn_kdeth - 1) &&
 	     (cmp_psn(qpriv->r_next_psn_kdeth - 1,
 		      full_flow_psn(&req->flows[flow],
-				    req->flows[flow].flow_state.lpsn)) > 0))) {
+				    req->flows[flow].flow_state.lpsn)) > 0))) अणु
 		/*
 		 * A NAK will implicitly acknowledge all previous TID RDMA
-		 * requests. Therefore, we NAK with the req->acked_tail
-		 * segment for the request at qpriv->r_tid_ack (same at
-		 * this point as the req->clear_tail segment for the
+		 * requests. Thereक्रमe, we NAK with the req->acked_tail
+		 * segment क्रम the request at qpriv->r_tid_ack (same at
+		 * this poपूर्णांक as the req->clear_tail segment क्रम the
 		 * qpriv->r_tid_tail request)
 		 */
 		e = &qp->s_ack_queue[qpriv->r_tid_ack];
 		req = ack_to_tid_req(e);
 		flow = req->acked_tail;
-	} else if (req->ack_seg == req->total_segs &&
+	पूर्ण अन्यथा अगर (req->ack_seg == req->total_segs &&
 		   qpriv->s_flags & HFI1_R_TID_WAIT_INTERLCK)
 		qpriv->s_flags &= ~HFI1_R_TID_WAIT_INTERLCK;
 
-	trace_hfi1_tid_write_rsp_make_tid_ack(qp);
+	trace_hfi1_tid_ग_लिखो_rsp_make_tid_ack(qp);
 	trace_hfi1_tid_req_make_tid_ack(qp, 0, e->opcode, e->psn, e->lpsn,
 					req);
-	hwords += hfi1_build_tid_rdma_write_ack(qp, e, ohdr, flow, &bth1,
+	hwords += hfi1_build_tid_rdma_ग_लिखो_ack(qp, e, ohdr, flow, &bth1,
 						&bth2);
 	len = 0;
 	qpriv->s_flags &= ~RVT_S_ACK_PENDING;
 	ps->s_txreq->hdr_dwords = hwords;
 	ps->s_txreq->sde = qpriv->s_sde;
 	ps->s_txreq->s_cur_size = len;
-	ps->s_txreq->ss = NULL;
+	ps->s_txreq->ss = शून्य;
 	hfi1_make_ruc_header(qp, ohdr, (TID_OP(ACK) << 24), bth1, bth2, middle,
 			     ps);
 	ps->s_txreq->txreq.flags |= SDMA_TXREQ_F_VIP;
-	return 1;
+	वापस 1;
 bail:
 	/*
 	 * Ensure s_rdma_ack_cnt changes are committed prior to resetting
@@ -5324,111 +5325,111 @@ bail:
 	 */
 	smp_wmb();
 	qpriv->s_flags &= ~RVT_S_ACK_PENDING;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hfi1_send_tid_ok(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
+अटल पूर्णांक hfi1_send_tid_ok(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
-	return !(priv->s_flags & RVT_S_BUSY ||
+	वापस !(priv->s_flags & RVT_S_BUSY ||
 		 qp->s_flags & HFI1_S_ANY_WAIT_IO) &&
-		(verbs_txreq_queued(iowait_get_tid_work(&priv->s_iowait)) ||
+		(verbs_txreq_queued(ioरुको_get_tid_work(&priv->s_ioरुको)) ||
 		 (priv->s_flags & RVT_S_RESP_PENDING) ||
 		 !(qp->s_flags & HFI1_S_ANY_TID_WAIT_SEND));
-}
+पूर्ण
 
-void _hfi1_do_tid_send(struct work_struct *work)
-{
-	struct iowait_work *w = container_of(work, struct iowait_work, iowork);
-	struct rvt_qp *qp = iowait_to_qp(w->iow);
+व्योम _hfi1_करो_tid_send(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ioरुको_work *w = container_of(work, काष्ठा ioरुको_work, iowork);
+	काष्ठा rvt_qp *qp = ioरुको_to_qp(w->iow);
 
-	hfi1_do_tid_send(qp);
-}
+	hfi1_करो_tid_send(qp);
+पूर्ण
 
-static void hfi1_do_tid_send(struct rvt_qp *qp)
-{
-	struct hfi1_pkt_state ps;
-	struct hfi1_qp_priv *priv = qp->priv;
+अटल व्योम hfi1_करो_tid_send(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_pkt_state ps;
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 
 	ps.dev = to_idev(qp->ibqp.device);
 	ps.ibp = to_iport(qp->ibqp.device, qp->port_num);
 	ps.ppd = ppd_from_ibp(ps.ibp);
-	ps.wait = iowait_get_tid_work(&priv->s_iowait);
-	ps.in_thread = false;
-	ps.timeout_int = qp->timeout_jiffies / 8;
+	ps.रुको = ioरुको_get_tid_work(&priv->s_ioरुको);
+	ps.in_thपढ़ो = false;
+	ps.समयout_पूर्णांक = qp->समयout_jअगरfies / 8;
 
-	trace_hfi1_rc_do_tid_send(qp, false);
+	trace_hfi1_rc_करो_tid_send(qp, false);
 	spin_lock_irqsave(&qp->s_lock, ps.flags);
 
-	/* Return if we are already busy processing a work request. */
-	if (!hfi1_send_tid_ok(qp)) {
-		if (qp->s_flags & HFI1_S_ANY_WAIT_IO)
-			iowait_set_flag(&priv->s_iowait, IOWAIT_PENDING_TID);
+	/* Return अगर we are alपढ़ोy busy processing a work request. */
+	अगर (!hfi1_send_tid_ok(qp)) अणु
+		अगर (qp->s_flags & HFI1_S_ANY_WAIT_IO)
+			ioरुको_set_flag(&priv->s_ioरुको, IOWAIT_PENDING_TID);
 		spin_unlock_irqrestore(&qp->s_lock, ps.flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	priv->s_flags |= RVT_S_BUSY;
 
-	ps.timeout = jiffies + ps.timeout_int;
+	ps.समयout = jअगरfies + ps.समयout_पूर्णांक;
 	ps.cpu = priv->s_sde ? priv->s_sde->cpu :
 		cpumask_first(cpumask_of_node(ps.ppd->dd->node));
 	ps.pkts_sent = false;
 
 	/* insure a pre-built packet is handled  */
-	ps.s_txreq = get_waiting_verbs_txreq(ps.wait);
-	do {
-		/* Check for a constructed packet to be sent. */
-		if (ps.s_txreq) {
-			if (priv->s_flags & HFI1_S_TID_BUSY_SET) {
+	ps.s_txreq = get_रुकोing_verbs_txreq(ps.रुको);
+	करो अणु
+		/* Check क्रम a स्थिरructed packet to be sent. */
+		अगर (ps.s_txreq) अणु
+			अगर (priv->s_flags & HFI1_S_TID_BUSY_SET) अणु
 				qp->s_flags |= RVT_S_BUSY;
-				ps.wait = iowait_get_ib_work(&priv->s_iowait);
-			}
+				ps.रुको = ioरुको_get_ib_work(&priv->s_ioरुको);
+			पूर्ण
 			spin_unlock_irqrestore(&qp->s_lock, ps.flags);
 
 			/*
-			 * If the packet cannot be sent now, return and
+			 * If the packet cannot be sent now, वापस and
 			 * the send tasklet will be woken up later.
 			 */
-			if (hfi1_verbs_send(qp, &ps))
-				return;
+			अगर (hfi1_verbs_send(qp, &ps))
+				वापस;
 
 			/* allow other tasks to run */
-			if (hfi1_schedule_send_yield(qp, &ps, true))
-				return;
+			अगर (hfi1_schedule_send_yield(qp, &ps, true))
+				वापस;
 
 			spin_lock_irqsave(&qp->s_lock, ps.flags);
-			if (priv->s_flags & HFI1_S_TID_BUSY_SET) {
+			अगर (priv->s_flags & HFI1_S_TID_BUSY_SET) अणु
 				qp->s_flags &= ~RVT_S_BUSY;
 				priv->s_flags &= ~HFI1_S_TID_BUSY_SET;
-				ps.wait = iowait_get_tid_work(&priv->s_iowait);
-				if (iowait_flag_set(&priv->s_iowait,
+				ps.रुको = ioरुको_get_tid_work(&priv->s_ioरुको);
+				अगर (ioरुको_flag_set(&priv->s_ioरुको,
 						    IOWAIT_PENDING_IB))
 					hfi1_schedule_send(qp);
-			}
-		}
-	} while (hfi1_make_tid_rdma_pkt(qp, &ps));
-	iowait_starve_clear(ps.pkts_sent, &priv->s_iowait);
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (hfi1_make_tid_rdma_pkt(qp, &ps));
+	ioरुको_starve_clear(ps.pkts_sent, &priv->s_ioरुको);
 	spin_unlock_irqrestore(&qp->s_lock, ps.flags);
-}
+पूर्ण
 
-static bool _hfi1_schedule_tid_send(struct rvt_qp *qp)
-{
-	struct hfi1_qp_priv *priv = qp->priv;
-	struct hfi1_ibport *ibp =
+अटल bool _hfi1_schedule_tid_send(काष्ठा rvt_qp *qp)
+अणु
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
+	काष्ठा hfi1_ibport *ibp =
 		to_iport(qp->ibqp.device, qp->port_num);
-	struct hfi1_pportdata *ppd = ppd_from_ibp(ibp);
-	struct hfi1_devdata *dd = ppd->dd;
+	काष्ठा hfi1_pportdata *ppd = ppd_from_ibp(ibp);
+	काष्ठा hfi1_devdata *dd = ppd->dd;
 
-	if ((dd->flags & HFI1_SHUTDOWN))
-		return true;
+	अगर ((dd->flags & HFI1_SHUTDOWN))
+		वापस true;
 
-	return iowait_tid_schedule(&priv->s_iowait, ppd->hfi1_wq,
+	वापस ioरुको_tid_schedule(&priv->s_ioरुको, ppd->hfi1_wq,
 				   priv->s_sde ?
 				   priv->s_sde->cpu :
 				   cpumask_first(cpumask_of_node(dd->node)));
-}
+पूर्ण
 
 /**
  * hfi1_schedule_tid_send - schedule progress on TID RDMA state machine
@@ -5439,94 +5440,94 @@ static bool _hfi1_schedule_tid_send(struct rvt_qp *qp)
  * Unlike hfi1_schedule_send(), this cannot use hfi1_send_ok() because
  * the two state machines can step on each other with respect to the
  * RVT_S_BUSY flag.
- * Therefore, a modified test is used.
- * @return true if the second leg is scheduled;
- *  false if the second leg is not scheduled.
+ * Thereक्रमe, a modअगरied test is used.
+ * @वापस true अगर the second leg is scheduled;
+ *  false अगर the second leg is not scheduled.
  */
-bool hfi1_schedule_tid_send(struct rvt_qp *qp)
-{
-	lockdep_assert_held(&qp->s_lock);
-	if (hfi1_send_tid_ok(qp)) {
+bool hfi1_schedule_tid_send(काष्ठा rvt_qp *qp)
+अणु
+	lockdep_निश्चित_held(&qp->s_lock);
+	अगर (hfi1_send_tid_ok(qp)) अणु
 		/*
-		 * The following call returns true if the qp is not on the
-		 * queue and false if the qp is already on the queue before
+		 * The following call वापसs true अगर the qp is not on the
+		 * queue and false अगर the qp is alपढ़ोy on the queue beक्रमe
 		 * this call. Either way, the qp will be on the queue when the
-		 * call returns.
+		 * call वापसs.
 		 */
 		_hfi1_schedule_tid_send(qp);
-		return true;
-	}
-	if (qp->s_flags & HFI1_S_ANY_WAIT_IO)
-		iowait_set_flag(&((struct hfi1_qp_priv *)qp->priv)->s_iowait,
+		वापस true;
+	पूर्ण
+	अगर (qp->s_flags & HFI1_S_ANY_WAIT_IO)
+		ioरुको_set_flag(&((काष्ठा hfi1_qp_priv *)qp->priv)->s_ioरुको,
 				IOWAIT_PENDING_TID);
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool hfi1_tid_rdma_ack_interlock(struct rvt_qp *qp, struct rvt_ack_entry *e)
-{
-	struct rvt_ack_entry *prev;
-	struct tid_rdma_request *req;
-	struct hfi1_ibdev *dev = to_idev(qp->ibqp.device);
-	struct hfi1_qp_priv *priv = qp->priv;
+bool hfi1_tid_rdma_ack_पूर्णांकerlock(काष्ठा rvt_qp *qp, काष्ठा rvt_ack_entry *e)
+अणु
+	काष्ठा rvt_ack_entry *prev;
+	काष्ठा tid_rdma_request *req;
+	काष्ठा hfi1_ibdev *dev = to_idev(qp->ibqp.device);
+	काष्ठा hfi1_qp_priv *priv = qp->priv;
 	u32 s_prev;
 
 	s_prev = qp->s_tail_ack_queue == 0 ? rvt_size_atomic(&dev->rdi) :
 		(qp->s_tail_ack_queue - 1);
 	prev = &qp->s_ack_queue[s_prev];
 
-	if ((e->opcode == TID_OP(READ_REQ) ||
+	अगर ((e->opcode == TID_OP(READ_REQ) ||
 	     e->opcode == OP(RDMA_READ_REQUEST)) &&
-	    prev->opcode == TID_OP(WRITE_REQ)) {
+	    prev->opcode == TID_OP(WRITE_REQ)) अणु
 		req = ack_to_tid_req(prev);
-		if (req->ack_seg != req->total_segs) {
+		अगर (req->ack_seg != req->total_segs) अणु
 			priv->s_flags |= HFI1_R_TID_WAIT_INTERLCK;
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static u32 read_r_next_psn(struct hfi1_devdata *dd, u8 ctxt, u8 fidx)
-{
+अटल u32 पढ़ो_r_next_psn(काष्ठा hfi1_devdata *dd, u8 ctxt, u8 fidx)
+अणु
 	u64 reg;
 
 	/*
 	 * The only sane way to get the amount of
-	 * progress is to read the HW flow state.
+	 * progress is to पढ़ो the HW flow state.
 	 */
-	reg = read_uctxt_csr(dd, ctxt, RCV_TID_FLOW_TABLE + (8 * fidx));
-	return mask_psn(reg);
-}
+	reg = पढ़ो_uctxt_csr(dd, ctxt, RCV_TID_FLOW_TABLE + (8 * fidx));
+	वापस mask_psn(reg);
+पूर्ण
 
-static void tid_rdma_rcv_err(struct hfi1_packet *packet,
-			     struct ib_other_headers *ohdr,
-			     struct rvt_qp *qp, u32 psn, int diff, bool fecn)
-{
-	unsigned long flags;
+अटल व्योम tid_rdma_rcv_err(काष्ठा hfi1_packet *packet,
+			     काष्ठा ib_other_headers *ohdr,
+			     काष्ठा rvt_qp *qp, u32 psn, पूर्णांक dअगरf, bool fecn)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	tid_rdma_rcv_error(packet, ohdr, qp, psn, diff);
-	if (fecn) {
+	tid_rdma_rcv_error(packet, ohdr, qp, psn, dअगरf);
+	अगर (fecn) अणु
 		spin_lock_irqsave(&qp->s_lock, flags);
 		qp->s_flags |= RVT_S_ECN;
 		spin_unlock_irqrestore(&qp->s_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void update_r_next_psn_fecn(struct hfi1_packet *packet,
-				   struct hfi1_qp_priv *priv,
-				   struct hfi1_ctxtdata *rcd,
-				   struct tid_rdma_flow *flow,
+अटल व्योम update_r_next_psn_fecn(काष्ठा hfi1_packet *packet,
+				   काष्ठा hfi1_qp_priv *priv,
+				   काष्ठा hfi1_ctxtdata *rcd,
+				   काष्ठा tid_rdma_flow *flow,
 				   bool fecn)
-{
+अणु
 	/*
 	 * If a start/middle packet is delivered here due to
 	 * RSM rule and FECN, we need to update the r_next_psn.
 	 */
-	if (fecn && packet->etype == RHF_RCV_TYPE_EAGER &&
-	    !(priv->s_flags & HFI1_R_TID_SW_PSN)) {
-		struct hfi1_devdata *dd = rcd->dd;
+	अगर (fecn && packet->etype == RHF_RCV_TYPE_EAGER &&
+	    !(priv->s_flags & HFI1_R_TID_SW_PSN)) अणु
+		काष्ठा hfi1_devdata *dd = rcd->dd;
 
 		flow->flow_state.r_next_psn =
-			read_r_next_psn(dd, rcd->ctxt, flow->idx);
-	}
-}
+			पढ़ो_r_next_psn(dd, rcd->ctxt, flow->idx);
+	पूर्ण
+पूर्ण

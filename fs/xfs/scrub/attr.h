@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2019 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_SCRUB_ATTR_H__
-#define __XFS_SCRUB_ATTR_H__
+#अगर_अघोषित __XFS_SCRUB_ATTR_H__
+#घोषणा __XFS_SCRUB_ATTR_H__
 
 /*
- * Temporary storage for online scrub and repair of extended attributes.
+ * Temporary storage क्रम online scrub and repair of extended attributes.
  */
-struct xchk_xattr_buf {
+काष्ठा xchk_xattr_buf अणु
 	/* Size of @buf, in bytes. */
-	size_t			sz;
+	माप_प्रकार			sz;
 
 	/*
-	 * Memory buffer -- either used for extracting attr values while
-	 * walking the attributes; or for computing attr block bitmaps when
+	 * Memory buffer -- either used क्रम extracting attr values जबतक
+	 * walking the attributes; or क्रम computing attr block biपंचांगaps when
 	 * checking the attribute tree.
 	 *
-	 * Each bitmap contains enough bits to track every byte in an attr
-	 * block (rounded up to the size of an unsigned long).  The attr block
-	 * used space bitmap starts at the beginning of the buffer; the free
-	 * space bitmap follows immediately after; and we have a third buffer
-	 * for storing intermediate bitmap results.
+	 * Each biपंचांगap contains enough bits to track every byte in an attr
+	 * block (rounded up to the size of an अचिन्हित दीर्घ).  The attr block
+	 * used space biपंचांगap starts at the beginning of the buffer; the मुक्त
+	 * space biपंचांगap follows immediately after; and we have a third buffer
+	 * क्रम storing पूर्णांकermediate biपंचांगap results.
 	 */
-	uint8_t			buf[0];
-};
+	uपूर्णांक8_t			buf[0];
+पूर्ण;
 
 /* A place to store attribute values. */
-static inline uint8_t *
+अटल अंतरभूत uपूर्णांक8_t *
 xchk_xattr_valuebuf(
-	struct xfs_scrub	*sc)
-{
-	struct xchk_xattr_buf	*ab = sc->buf;
+	काष्ठा xfs_scrub	*sc)
+अणु
+	काष्ठा xchk_xattr_buf	*ab = sc->buf;
 
-	return ab->buf;
-}
+	वापस ab->buf;
+पूर्ण
 
-/* A bitmap of space usage computed by walking an attr leaf block. */
-static inline unsigned long *
+/* A biपंचांगap of space usage computed by walking an attr leaf block. */
+अटल अंतरभूत अचिन्हित दीर्घ *
 xchk_xattr_usedmap(
-	struct xfs_scrub	*sc)
-{
-	struct xchk_xattr_buf	*ab = sc->buf;
+	काष्ठा xfs_scrub	*sc)
+अणु
+	काष्ठा xchk_xattr_buf	*ab = sc->buf;
 
-	return (unsigned long *)ab->buf;
-}
+	वापस (अचिन्हित दीर्घ *)ab->buf;
+पूर्ण
 
-/* A bitmap of free space computed by walking attr leaf block free info. */
-static inline unsigned long *
-xchk_xattr_freemap(
-	struct xfs_scrub	*sc)
-{
-	return xchk_xattr_usedmap(sc) +
+/* A biपंचांगap of मुक्त space computed by walking attr leaf block मुक्त info. */
+अटल अंतरभूत अचिन्हित दीर्घ *
+xchk_xattr_मुक्तmap(
+	काष्ठा xfs_scrub	*sc)
+अणु
+	वापस xchk_xattr_usedmap(sc) +
 			BITS_TO_LONGS(sc->mp->m_attr_geo->blksize);
-}
+पूर्ण
 
-/* A bitmap used to hold temporary results. */
-static inline unsigned long *
-xchk_xattr_dstmap(
-	struct xfs_scrub	*sc)
-{
-	return xchk_xattr_freemap(sc) +
+/* A biपंचांगap used to hold temporary results. */
+अटल अंतरभूत अचिन्हित दीर्घ *
+xchk_xattr_dsपंचांगap(
+	काष्ठा xfs_scrub	*sc)
+अणु
+	वापस xchk_xattr_मुक्तmap(sc) +
 			BITS_TO_LONGS(sc->mp->m_attr_geo->blksize);
-}
+पूर्ण
 
-int xchk_setup_xattr_buf(struct xfs_scrub *sc, size_t value_size,
+पूर्णांक xchk_setup_xattr_buf(काष्ठा xfs_scrub *sc, माप_प्रकार value_size,
 		xfs_km_flags_t flags);
 
-#endif	/* __XFS_SCRUB_ATTR_H__ */
+#पूर्ण_अगर	/* __XFS_SCRUB_ATTR_H__ */

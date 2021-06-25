@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    Hypervisor filesystem for Linux on s390.
- *    Set Partition-Resource Parameter interface.
+ *    Hypervisor fileप्रणाली क्रम Linux on s390.
+ *    Set Partition-Resource Parameter पूर्णांकerface.
  *
  *    Copyright IBM Corp. 2013
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>
  */
 
-#include <linux/compat.h>
-#include <linux/errno.h>
-#include <linux/gfp.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
-#include <asm/diag.h>
-#include <asm/sclp.h>
-#include "hypfs.h"
+#समावेश <linux/compat.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gfp.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/sclp.h>
+#समावेश "hypfs.h"
 
-#define DIAG304_SET_WEIGHTS	0
-#define DIAG304_QUERY_PRP	1
-#define DIAG304_SET_CAPPING	2
+#घोषणा DIAG304_SET_WEIGHTS	0
+#घोषणा DIAG304_QUERY_PRP	1
+#घोषणा DIAG304_SET_CAPPING	2
 
-#define DIAG304_CMD_MAX		2
+#घोषणा DIAG304_CMD_MAX		2
 
-static inline unsigned long __hypfs_sprp_diag304(void *data, unsigned long cmd)
-{
-	register unsigned long _data asm("2") = (unsigned long) data;
-	register unsigned long _rc asm("3");
-	register unsigned long _cmd asm("4") = cmd;
+अटल अंतरभूत अचिन्हित दीर्घ __hypfs_sprp_diag304(व्योम *data, अचिन्हित दीर्घ cmd)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ _data यंत्र("2") = (अचिन्हित दीर्घ) data;
+	रेजिस्टर अचिन्हित दीर्घ _rc यंत्र("3");
+	रेजिस्टर अचिन्हित दीर्घ _cmd यंत्र("4") = cmd;
 
-	asm volatile("diag %1,%2,0x304\n"
+	यंत्र अस्थिर("diag %1,%2,0x304\n"
 		     : "=d" (_rc) : "d" (_data), "d" (_cmd) : "memory");
 
-	return _rc;
-}
+	वापस _rc;
+पूर्ण
 
-static unsigned long hypfs_sprp_diag304(void *data, unsigned long cmd)
-{
+अटल अचिन्हित दीर्घ hypfs_sprp_diag304(व्योम *data, अचिन्हित दीर्घ cmd)
+अणु
 	diag_stat_inc(DIAG_STAT_X304);
-	return __hypfs_sprp_diag304(data, cmd);
-}
+	वापस __hypfs_sprp_diag304(data, cmd);
+पूर्ण
 
-static void hypfs_sprp_free(const void *data)
-{
-	free_page((unsigned long) data);
-}
+अटल व्योम hypfs_sprp_मुक्त(स्थिर व्योम *data)
+अणु
+	मुक्त_page((अचिन्हित दीर्घ) data);
+पूर्ण
 
-static int hypfs_sprp_create(void **data_ptr, void **free_ptr, size_t *size)
-{
-	unsigned long rc;
-	void *data;
+अटल पूर्णांक hypfs_sprp_create(व्योम **data_ptr, व्योम **मुक्त_ptr, माप_प्रकार *size)
+अणु
+	अचिन्हित दीर्घ rc;
+	व्योम *data;
 
-	data = (void *) get_zeroed_page(GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = (व्योम *) get_zeroed_page(GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 	rc = hypfs_sprp_diag304(data, DIAG304_QUERY_PRP);
-	if (rc != 1) {
-		*data_ptr = *free_ptr = NULL;
+	अगर (rc != 1) अणु
+		*data_ptr = *मुक्त_ptr = शून्य;
 		*size = 0;
-		free_page((unsigned long) data);
-		return -EIO;
-	}
-	*data_ptr = *free_ptr = data;
+		मुक्त_page((अचिन्हित दीर्घ) data);
+		वापस -EIO;
+	पूर्ण
+	*data_ptr = *मुक्त_ptr = data;
 	*size = PAGE_SIZE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __hypfs_sprp_ioctl(void __user *user_area)
-{
-	struct hypfs_diag304 *diag304;
-	unsigned long cmd;
-	void __user *udata;
-	void *data;
-	int rc;
+अटल पूर्णांक __hypfs_sprp_ioctl(व्योम __user *user_area)
+अणु
+	काष्ठा hypfs_diag304 *diag304;
+	अचिन्हित दीर्घ cmd;
+	व्योम __user *udata;
+	व्योम *data;
+	पूर्णांक rc;
 
 	rc = -ENOMEM;
-	data = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	diag304 = kzalloc(sizeof(*diag304), GFP_KERNEL);
-	if (!data || !diag304)
-		goto out;
+	data = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	diag304 = kzalloc(माप(*diag304), GFP_KERNEL);
+	अगर (!data || !diag304)
+		जाओ out;
 
 	rc = -EFAULT;
-	if (copy_from_user(diag304, user_area, sizeof(*diag304)))
-		goto out;
+	अगर (copy_from_user(diag304, user_area, माप(*diag304)))
+		जाओ out;
 	rc = -EINVAL;
-	if ((diag304->args[0] >> 8) != 0 || diag304->args[1] > DIAG304_CMD_MAX)
-		goto out;
+	अगर ((diag304->args[0] >> 8) != 0 || diag304->args[1] > DIAG304_CMD_MAX)
+		जाओ out;
 
 	rc = -EFAULT;
-	udata = (void __user *)(unsigned long) diag304->data;
-	if (diag304->args[1] == DIAG304_SET_WEIGHTS ||
+	udata = (व्योम __user *)(अचिन्हित दीर्घ) diag304->data;
+	अगर (diag304->args[1] == DIAG304_SET_WEIGHTS ||
 	    diag304->args[1] == DIAG304_SET_CAPPING)
-		if (copy_from_user(data, udata, PAGE_SIZE))
-			goto out;
+		अगर (copy_from_user(data, udata, PAGE_SIZE))
+			जाओ out;
 
-	cmd = *(unsigned long *) &diag304->args[0];
+	cmd = *(अचिन्हित दीर्घ *) &diag304->args[0];
 	diag304->rc = hypfs_sprp_diag304(data, cmd);
 
-	if (diag304->args[1] == DIAG304_QUERY_PRP)
-		if (copy_to_user(udata, data, PAGE_SIZE)) {
+	अगर (diag304->args[1] == DIAG304_QUERY_PRP)
+		अगर (copy_to_user(udata, data, PAGE_SIZE)) अणु
 			rc = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-	rc = copy_to_user(user_area, diag304, sizeof(*diag304)) ? -EFAULT : 0;
+	rc = copy_to_user(user_area, diag304, माप(*diag304)) ? -EFAULT : 0;
 out:
-	kfree(diag304);
-	free_page((unsigned long) data);
-	return rc;
-}
+	kमुक्त(diag304);
+	मुक्त_page((अचिन्हित दीर्घ) data);
+	वापस rc;
+पूर्ण
 
-static long hypfs_sprp_ioctl(struct file *file, unsigned int cmd,
-			       unsigned long arg)
-{
-	void __user *argp;
+अटल दीर्घ hypfs_sprp_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+			       अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
-	if (is_compat_task())
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
+	अगर (is_compat_task())
 		argp = compat_ptr(arg);
-	else
-		argp = (void __user *) arg;
-	switch (cmd) {
-	case HYPFS_DIAG304:
-		return __hypfs_sprp_ioctl(argp);
-	default: /* unknown ioctl number */
-		return -ENOTTY;
-	}
-	return 0;
-}
+	अन्यथा
+		argp = (व्योम __user *) arg;
+	चयन (cmd) अणु
+	हाल HYPFS_DIAG304:
+		वापस __hypfs_sprp_ioctl(argp);
+	शेष: /* unknown ioctl number */
+		वापस -ENOTTY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct hypfs_dbfs_file hypfs_sprp_file = {
+अटल काष्ठा hypfs_dbfs_file hypfs_sprp_file = अणु
 	.name		= "diag_304",
 	.data_create	= hypfs_sprp_create,
-	.data_free	= hypfs_sprp_free,
+	.data_मुक्त	= hypfs_sprp_मुक्त,
 	.unlocked_ioctl = hypfs_sprp_ioctl,
-};
+पूर्ण;
 
-void hypfs_sprp_init(void)
-{
-	if (!sclp.has_sprp)
-		return;
+व्योम hypfs_sprp_init(व्योम)
+अणु
+	अगर (!sclp.has_sprp)
+		वापस;
 	hypfs_dbfs_create_file(&hypfs_sprp_file);
-}
+पूर्ण
 
-void hypfs_sprp_exit(void)
-{
-	if (!sclp.has_sprp)
-		return;
-	hypfs_dbfs_remove_file(&hypfs_sprp_file);
-}
+व्योम hypfs_sprp_निकास(व्योम)
+अणु
+	अगर (!sclp.has_sprp)
+		वापस;
+	hypfs_dbfs_हटाओ_file(&hypfs_sprp_file);
+पूर्ण

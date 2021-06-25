@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Xilinx ZynqMP DPDMA Engine driver
  *
@@ -7,144 +8,144 @@
  * Author: Hyun Woo Kwon <hyun.kwon@xilinx.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/debugfs.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dmapool.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_dma.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
 
-#include <dt-bindings/dma/xlnx-zynqmp-dpdma.h>
+#समावेश <dt-bindings/dma/xlnx-zynqmp-dpdma.h>
 
-#include "../dmaengine.h"
-#include "../virt-dma.h"
+#समावेश "../dmaengine.h"
+#समावेश "../virt-dma.h"
 
-/* DPDMA registers */
-#define XILINX_DPDMA_ERR_CTRL				0x000
-#define XILINX_DPDMA_ISR				0x004
-#define XILINX_DPDMA_IMR				0x008
-#define XILINX_DPDMA_IEN				0x00c
-#define XILINX_DPDMA_IDS				0x010
-#define XILINX_DPDMA_INTR_DESC_DONE(n)			BIT((n) + 0)
-#define XILINX_DPDMA_INTR_DESC_DONE_MASK		GENMASK(5, 0)
-#define XILINX_DPDMA_INTR_NO_OSTAND(n)			BIT((n) + 6)
-#define XILINX_DPDMA_INTR_NO_OSTAND_MASK		GENMASK(11, 6)
-#define XILINX_DPDMA_INTR_AXI_ERR(n)			BIT((n) + 12)
-#define XILINX_DPDMA_INTR_AXI_ERR_MASK			GENMASK(17, 12)
-#define XILINX_DPDMA_INTR_DESC_ERR(n)			BIT((n) + 16)
-#define XILINX_DPDMA_INTR_DESC_ERR_MASK			GENMASK(23, 18)
-#define XILINX_DPDMA_INTR_WR_CMD_FIFO_FULL		BIT(24)
-#define XILINX_DPDMA_INTR_WR_DATA_FIFO_FULL		BIT(25)
-#define XILINX_DPDMA_INTR_AXI_4K_CROSS			BIT(26)
-#define XILINX_DPDMA_INTR_VSYNC				BIT(27)
-#define XILINX_DPDMA_INTR_CHAN_ERR_MASK			0x00041000
-#define XILINX_DPDMA_INTR_CHAN_ERR			0x00fff000
-#define XILINX_DPDMA_INTR_GLOBAL_ERR			0x07000000
-#define XILINX_DPDMA_INTR_ERR_ALL			0x07fff000
-#define XILINX_DPDMA_INTR_CHAN_MASK			0x00041041
-#define XILINX_DPDMA_INTR_GLOBAL_MASK			0x0f000000
-#define XILINX_DPDMA_INTR_ALL				0x0fffffff
-#define XILINX_DPDMA_EISR				0x014
-#define XILINX_DPDMA_EIMR				0x018
-#define XILINX_DPDMA_EIEN				0x01c
-#define XILINX_DPDMA_EIDS				0x020
-#define XILINX_DPDMA_EINTR_INV_APB			BIT(0)
-#define XILINX_DPDMA_EINTR_RD_AXI_ERR(n)		BIT((n) + 1)
-#define XILINX_DPDMA_EINTR_RD_AXI_ERR_MASK		GENMASK(6, 1)
-#define XILINX_DPDMA_EINTR_PRE_ERR(n)			BIT((n) + 7)
-#define XILINX_DPDMA_EINTR_PRE_ERR_MASK			GENMASK(12, 7)
-#define XILINX_DPDMA_EINTR_CRC_ERR(n)			BIT((n) + 13)
-#define XILINX_DPDMA_EINTR_CRC_ERR_MASK			GENMASK(18, 13)
-#define XILINX_DPDMA_EINTR_WR_AXI_ERR(n)		BIT((n) + 19)
-#define XILINX_DPDMA_EINTR_WR_AXI_ERR_MASK		GENMASK(24, 19)
-#define XILINX_DPDMA_EINTR_DESC_DONE_ERR(n)		BIT((n) + 25)
-#define XILINX_DPDMA_EINTR_DESC_DONE_ERR_MASK		GENMASK(30, 25)
-#define XILINX_DPDMA_EINTR_RD_CMD_FIFO_FULL		BIT(32)
-#define XILINX_DPDMA_EINTR_CHAN_ERR_MASK		0x02082082
-#define XILINX_DPDMA_EINTR_CHAN_ERR			0x7ffffffe
-#define XILINX_DPDMA_EINTR_GLOBAL_ERR			0x80000001
-#define XILINX_DPDMA_EINTR_ALL				0xffffffff
-#define XILINX_DPDMA_CNTL				0x100
-#define XILINX_DPDMA_GBL				0x104
-#define XILINX_DPDMA_GBL_TRIG_MASK(n)			((n) << 0)
-#define XILINX_DPDMA_GBL_RETRIG_MASK(n)			((n) << 6)
-#define XILINX_DPDMA_ALC0_CNTL				0x108
-#define XILINX_DPDMA_ALC0_STATUS			0x10c
-#define XILINX_DPDMA_ALC0_MAX				0x110
-#define XILINX_DPDMA_ALC0_MIN				0x114
-#define XILINX_DPDMA_ALC0_ACC				0x118
-#define XILINX_DPDMA_ALC0_ACC_TRAN			0x11c
-#define XILINX_DPDMA_ALC1_CNTL				0x120
-#define XILINX_DPDMA_ALC1_STATUS			0x124
-#define XILINX_DPDMA_ALC1_MAX				0x128
-#define XILINX_DPDMA_ALC1_MIN				0x12c
-#define XILINX_DPDMA_ALC1_ACC				0x130
-#define XILINX_DPDMA_ALC1_ACC_TRAN			0x134
+/* DPDMA रेजिस्टरs */
+#घोषणा XILINX_DPDMA_ERR_CTRL				0x000
+#घोषणा XILINX_DPDMA_ISR				0x004
+#घोषणा XILINX_DPDMA_IMR				0x008
+#घोषणा XILINX_DPDMA_IEN				0x00c
+#घोषणा XILINX_DPDMA_IDS				0x010
+#घोषणा XILINX_DPDMA_INTR_DESC_DONE(n)			BIT((n) + 0)
+#घोषणा XILINX_DPDMA_INTR_DESC_DONE_MASK		GENMASK(5, 0)
+#घोषणा XILINX_DPDMA_INTR_NO_OSTAND(n)			BIT((n) + 6)
+#घोषणा XILINX_DPDMA_INTR_NO_OSTAND_MASK		GENMASK(11, 6)
+#घोषणा XILINX_DPDMA_INTR_AXI_ERR(n)			BIT((n) + 12)
+#घोषणा XILINX_DPDMA_INTR_AXI_ERR_MASK			GENMASK(17, 12)
+#घोषणा XILINX_DPDMA_INTR_DESC_ERR(n)			BIT((n) + 16)
+#घोषणा XILINX_DPDMA_INTR_DESC_ERR_MASK			GENMASK(23, 18)
+#घोषणा XILINX_DPDMA_INTR_WR_CMD_FIFO_FULL		BIT(24)
+#घोषणा XILINX_DPDMA_INTR_WR_DATA_FIFO_FULL		BIT(25)
+#घोषणा XILINX_DPDMA_INTR_AXI_4K_CROSS			BIT(26)
+#घोषणा XILINX_DPDMA_INTR_VSYNC				BIT(27)
+#घोषणा XILINX_DPDMA_INTR_CHAN_ERR_MASK			0x00041000
+#घोषणा XILINX_DPDMA_INTR_CHAN_ERR			0x00fff000
+#घोषणा XILINX_DPDMA_INTR_GLOBAL_ERR			0x07000000
+#घोषणा XILINX_DPDMA_INTR_ERR_ALL			0x07fff000
+#घोषणा XILINX_DPDMA_INTR_CHAN_MASK			0x00041041
+#घोषणा XILINX_DPDMA_INTR_GLOBAL_MASK			0x0f000000
+#घोषणा XILINX_DPDMA_INTR_ALL				0x0fffffff
+#घोषणा XILINX_DPDMA_EISR				0x014
+#घोषणा XILINX_DPDMA_EIMR				0x018
+#घोषणा XILINX_DPDMA_EIEN				0x01c
+#घोषणा XILINX_DPDMA_EIDS				0x020
+#घोषणा XILINX_DPDMA_EINTR_INV_APB			BIT(0)
+#घोषणा XILINX_DPDMA_EINTR_RD_AXI_ERR(n)		BIT((n) + 1)
+#घोषणा XILINX_DPDMA_EINTR_RD_AXI_ERR_MASK		GENMASK(6, 1)
+#घोषणा XILINX_DPDMA_EINTR_PRE_ERR(n)			BIT((n) + 7)
+#घोषणा XILINX_DPDMA_EINTR_PRE_ERR_MASK			GENMASK(12, 7)
+#घोषणा XILINX_DPDMA_EINTR_CRC_ERR(n)			BIT((n) + 13)
+#घोषणा XILINX_DPDMA_EINTR_CRC_ERR_MASK			GENMASK(18, 13)
+#घोषणा XILINX_DPDMA_EINTR_WR_AXI_ERR(n)		BIT((n) + 19)
+#घोषणा XILINX_DPDMA_EINTR_WR_AXI_ERR_MASK		GENMASK(24, 19)
+#घोषणा XILINX_DPDMA_EINTR_DESC_DONE_ERR(n)		BIT((n) + 25)
+#घोषणा XILINX_DPDMA_EINTR_DESC_DONE_ERR_MASK		GENMASK(30, 25)
+#घोषणा XILINX_DPDMA_EINTR_RD_CMD_FIFO_FULL		BIT(32)
+#घोषणा XILINX_DPDMA_EINTR_CHAN_ERR_MASK		0x02082082
+#घोषणा XILINX_DPDMA_EINTR_CHAN_ERR			0x7ffffffe
+#घोषणा XILINX_DPDMA_EINTR_GLOBAL_ERR			0x80000001
+#घोषणा XILINX_DPDMA_EINTR_ALL				0xffffffff
+#घोषणा XILINX_DPDMA_CNTL				0x100
+#घोषणा XILINX_DPDMA_GBL				0x104
+#घोषणा XILINX_DPDMA_GBL_TRIG_MASK(n)			((n) << 0)
+#घोषणा XILINX_DPDMA_GBL_RETRIG_MASK(n)			((n) << 6)
+#घोषणा XILINX_DPDMA_ALC0_CNTL				0x108
+#घोषणा XILINX_DPDMA_ALC0_STATUS			0x10c
+#घोषणा XILINX_DPDMA_ALC0_MAX				0x110
+#घोषणा XILINX_DPDMA_ALC0_MIN				0x114
+#घोषणा XILINX_DPDMA_ALC0_ACC				0x118
+#घोषणा XILINX_DPDMA_ALC0_ACC_TRAN			0x11c
+#घोषणा XILINX_DPDMA_ALC1_CNTL				0x120
+#घोषणा XILINX_DPDMA_ALC1_STATUS			0x124
+#घोषणा XILINX_DPDMA_ALC1_MAX				0x128
+#घोषणा XILINX_DPDMA_ALC1_MIN				0x12c
+#घोषणा XILINX_DPDMA_ALC1_ACC				0x130
+#घोषणा XILINX_DPDMA_ALC1_ACC_TRAN			0x134
 
-/* Channel register */
-#define XILINX_DPDMA_CH_BASE				0x200
-#define XILINX_DPDMA_CH_OFFSET				0x100
-#define XILINX_DPDMA_CH_DESC_START_ADDRE		0x000
-#define XILINX_DPDMA_CH_DESC_START_ADDRE_MASK		GENMASK(15, 0)
-#define XILINX_DPDMA_CH_DESC_START_ADDR			0x004
-#define XILINX_DPDMA_CH_DESC_NEXT_ADDRE			0x008
-#define XILINX_DPDMA_CH_DESC_NEXT_ADDR			0x00c
-#define XILINX_DPDMA_CH_PYLD_CUR_ADDRE			0x010
-#define XILINX_DPDMA_CH_PYLD_CUR_ADDR			0x014
-#define XILINX_DPDMA_CH_CNTL				0x018
-#define XILINX_DPDMA_CH_CNTL_ENABLE			BIT(0)
-#define XILINX_DPDMA_CH_CNTL_PAUSE			BIT(1)
-#define XILINX_DPDMA_CH_CNTL_QOS_DSCR_WR_MASK		GENMASK(5, 2)
-#define XILINX_DPDMA_CH_CNTL_QOS_DSCR_RD_MASK		GENMASK(9, 6)
-#define XILINX_DPDMA_CH_CNTL_QOS_DATA_RD_MASK		GENMASK(13, 10)
-#define XILINX_DPDMA_CH_CNTL_QOS_VID_CLASS		11
-#define XILINX_DPDMA_CH_STATUS				0x01c
-#define XILINX_DPDMA_CH_STATUS_OTRAN_CNT_MASK		GENMASK(24, 21)
-#define XILINX_DPDMA_CH_VDO				0x020
-#define XILINX_DPDMA_CH_PYLD_SZ				0x024
-#define XILINX_DPDMA_CH_DESC_ID				0x028
-#define XILINX_DPDMA_CH_DESC_ID_MASK			GENMASK(15, 0)
+/* Channel रेजिस्टर */
+#घोषणा XILINX_DPDMA_CH_BASE				0x200
+#घोषणा XILINX_DPDMA_CH_OFFSET				0x100
+#घोषणा XILINX_DPDMA_CH_DESC_START_ADDRE		0x000
+#घोषणा XILINX_DPDMA_CH_DESC_START_ADDRE_MASK		GENMASK(15, 0)
+#घोषणा XILINX_DPDMA_CH_DESC_START_ADDR			0x004
+#घोषणा XILINX_DPDMA_CH_DESC_NEXT_ADDRE			0x008
+#घोषणा XILINX_DPDMA_CH_DESC_NEXT_ADDR			0x00c
+#घोषणा XILINX_DPDMA_CH_PYLD_CUR_ADDRE			0x010
+#घोषणा XILINX_DPDMA_CH_PYLD_CUR_ADDR			0x014
+#घोषणा XILINX_DPDMA_CH_CNTL				0x018
+#घोषणा XILINX_DPDMA_CH_CNTL_ENABLE			BIT(0)
+#घोषणा XILINX_DPDMA_CH_CNTL_PAUSE			BIT(1)
+#घोषणा XILINX_DPDMA_CH_CNTL_QOS_DSCR_WR_MASK		GENMASK(5, 2)
+#घोषणा XILINX_DPDMA_CH_CNTL_QOS_DSCR_RD_MASK		GENMASK(9, 6)
+#घोषणा XILINX_DPDMA_CH_CNTL_QOS_DATA_RD_MASK		GENMASK(13, 10)
+#घोषणा XILINX_DPDMA_CH_CNTL_QOS_VID_CLASS		11
+#घोषणा XILINX_DPDMA_CH_STATUS				0x01c
+#घोषणा XILINX_DPDMA_CH_STATUS_OTRAN_CNT_MASK		GENMASK(24, 21)
+#घोषणा XILINX_DPDMA_CH_VDO				0x020
+#घोषणा XILINX_DPDMA_CH_PYLD_SZ				0x024
+#घोषणा XILINX_DPDMA_CH_DESC_ID				0x028
+#घोषणा XILINX_DPDMA_CH_DESC_ID_MASK			GENMASK(15, 0)
 
 /* DPDMA descriptor fields */
-#define XILINX_DPDMA_DESC_CONTROL_PREEMBLE		0xa5
-#define XILINX_DPDMA_DESC_CONTROL_COMPLETE_INTR		BIT(8)
-#define XILINX_DPDMA_DESC_CONTROL_DESC_UPDATE		BIT(9)
-#define XILINX_DPDMA_DESC_CONTROL_IGNORE_DONE		BIT(10)
-#define XILINX_DPDMA_DESC_CONTROL_FRAG_MODE		BIT(18)
-#define XILINX_DPDMA_DESC_CONTROL_LAST			BIT(19)
-#define XILINX_DPDMA_DESC_CONTROL_ENABLE_CRC		BIT(20)
-#define XILINX_DPDMA_DESC_CONTROL_LAST_OF_FRAME		BIT(21)
-#define XILINX_DPDMA_DESC_ID_MASK			GENMASK(15, 0)
-#define XILINX_DPDMA_DESC_HSIZE_STRIDE_HSIZE_MASK	GENMASK(17, 0)
-#define XILINX_DPDMA_DESC_HSIZE_STRIDE_STRIDE_MASK	GENMASK(31, 18)
-#define XILINX_DPDMA_DESC_ADDR_EXT_NEXT_ADDR_MASK	GENMASK(15, 0)
-#define XILINX_DPDMA_DESC_ADDR_EXT_SRC_ADDR_MASK	GENMASK(31, 16)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_PREEMBLE		0xa5
+#घोषणा XILINX_DPDMA_DESC_CONTROL_COMPLETE_INTR		BIT(8)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_DESC_UPDATE		BIT(9)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_IGNORE_DONE		BIT(10)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_FRAG_MODE		BIT(18)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_LAST			BIT(19)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_ENABLE_CRC		BIT(20)
+#घोषणा XILINX_DPDMA_DESC_CONTROL_LAST_OF_FRAME		BIT(21)
+#घोषणा XILINX_DPDMA_DESC_ID_MASK			GENMASK(15, 0)
+#घोषणा XILINX_DPDMA_DESC_HSIZE_STRIDE_HSIZE_MASK	GENMASK(17, 0)
+#घोषणा XILINX_DPDMA_DESC_HSIZE_STRIDE_STRIDE_MASK	GENMASK(31, 18)
+#घोषणा XILINX_DPDMA_DESC_ADDR_EXT_NEXT_ADDR_MASK	GENMASK(15, 0)
+#घोषणा XILINX_DPDMA_DESC_ADDR_EXT_SRC_ADDR_MASK	GENMASK(31, 16)
 
-#define XILINX_DPDMA_ALIGN_BYTES			256
-#define XILINX_DPDMA_LINESIZE_ALIGN_BITS		128
+#घोषणा XILINX_DPDMA_ALIGN_BYTES			256
+#घोषणा XILINX_DPDMA_LINESIZE_ALIGN_BITS		128
 
-#define XILINX_DPDMA_NUM_CHAN				6
+#घोषणा XILINX_DPDMA_NUM_CHAN				6
 
-struct xilinx_dpdma_chan;
+काष्ठा xilinx_dpdma_chan;
 
 /**
- * struct xilinx_dpdma_hw_desc - DPDMA hardware descriptor
+ * काष्ठा xilinx_dpdma_hw_desc - DPDMA hardware descriptor
  * @control: control configuration field
  * @desc_id: descriptor ID
  * @xfer_size: transfer size
  * @hsize_stride: horizontal size and stride
- * @timestamp_lsb: LSB of time stamp
- * @timestamp_msb: MSB of time stamp
+ * @बारtamp_lsb: LSB of समय stamp
+ * @बारtamp_msb: MSB of समय stamp
  * @addr_ext: upper 16 bit of 48 bit address (next_desc and src_addr)
  * @next_desc: next descriptor 32 bit address
  * @src_addr: payload source address (1st page, 32 LSB)
@@ -156,13 +157,13 @@ struct xilinx_dpdma_chan;
  * @src_addr5: payload source address (5th page, 32 LSB)
  * @crc: descriptor CRC
  */
-struct xilinx_dpdma_hw_desc {
+काष्ठा xilinx_dpdma_hw_desc अणु
 	u32 control;
 	u32 desc_id;
 	u32 xfer_size;
 	u32 hsize_stride;
-	u32 timestamp_lsb;
-	u32 timestamp_msb;
+	u32 बारtamp_lsb;
+	u32 बारtamp_msb;
 	u32 addr_ext;
 	u32 next_desc;
 	u32 src_addr;
@@ -173,47 +174,47 @@ struct xilinx_dpdma_hw_desc {
 	u32 src_addr4;
 	u32 src_addr5;
 	u32 crc;
-} __aligned(XILINX_DPDMA_ALIGN_BYTES);
+पूर्ण __aligned(XILINX_DPDMA_ALIGN_BYTES);
 
 /**
- * struct xilinx_dpdma_sw_desc - DPDMA software descriptor
+ * काष्ठा xilinx_dpdma_sw_desc - DPDMA software descriptor
  * @hw: DPDMA hardware descriptor
- * @node: list node for software descriptors
+ * @node: list node क्रम software descriptors
  * @dma_addr: DMA address of the software descriptor
  */
-struct xilinx_dpdma_sw_desc {
-	struct xilinx_dpdma_hw_desc hw;
-	struct list_head node;
+काष्ठा xilinx_dpdma_sw_desc अणु
+	काष्ठा xilinx_dpdma_hw_desc hw;
+	काष्ठा list_head node;
 	dma_addr_t dma_addr;
-};
+पूर्ण;
 
 /**
- * struct xilinx_dpdma_tx_desc - DPDMA transaction descriptor
- * @vdesc: virtual DMA descriptor
+ * काष्ठा xilinx_dpdma_tx_desc - DPDMA transaction descriptor
+ * @vdesc: भव DMA descriptor
  * @chan: DMA channel
  * @descriptors: list of software descriptors
  * @error: an error has been detected with this descriptor
  */
-struct xilinx_dpdma_tx_desc {
-	struct virt_dma_desc vdesc;
-	struct xilinx_dpdma_chan *chan;
-	struct list_head descriptors;
+काष्ठा xilinx_dpdma_tx_desc अणु
+	काष्ठा virt_dma_desc vdesc;
+	काष्ठा xilinx_dpdma_chan *chan;
+	काष्ठा list_head descriptors;
 	bool error;
-};
+पूर्ण;
 
-#define to_dpdma_tx_desc(_desc) \
-	container_of(_desc, struct xilinx_dpdma_tx_desc, vdesc)
+#घोषणा to_dpdma_tx_desc(_desc) \
+	container_of(_desc, काष्ठा xilinx_dpdma_tx_desc, vdesc)
 
 /**
- * struct xilinx_dpdma_chan - DPDMA channel
- * @vchan: virtual DMA channel
- * @reg: register base address
+ * काष्ठा xilinx_dpdma_chan - DPDMA channel
+ * @vchan: भव DMA channel
+ * @reg: रेजिस्टर base address
  * @id: channel ID
- * @wait_to_stop: queue to wait for outstanding transacitons before stopping
- * @running: true if the channel is running
- * @first_frame: flag for the first frame of stream
- * @video_group: flag if multi-channel operation is needed for video channels
- * @lock: lock to access struct xilinx_dpdma_chan
+ * @रुको_to_stop: queue to रुको क्रम outstanding transacitons beक्रमe stopping
+ * @running: true अगर the channel is running
+ * @first_frame: flag क्रम the first frame of stream
+ * @video_group: flag अगर multi-channel operation is needed क्रम video channels
+ * @lock: lock to access काष्ठा xilinx_dpdma_chan
  * @desc_pool: descriptor allocation pool
  * @err_task: error IRQ bottom half handler
  * @desc: References to descriptors being processed
@@ -221,280 +222,280 @@ struct xilinx_dpdma_tx_desc {
  * @desc.active: Descriptor being executed by the hardware
  * @xdev: DPDMA device
  */
-struct xilinx_dpdma_chan {
-	struct virt_dma_chan vchan;
-	void __iomem *reg;
-	unsigned int id;
+काष्ठा xilinx_dpdma_chan अणु
+	काष्ठा virt_dma_chan vchan;
+	व्योम __iomem *reg;
+	अचिन्हित पूर्णांक id;
 
-	wait_queue_head_t wait_to_stop;
+	रुको_queue_head_t रुको_to_stop;
 	bool running;
 	bool first_frame;
 	bool video_group;
 
-	spinlock_t lock; /* lock to access struct xilinx_dpdma_chan */
-	struct dma_pool *desc_pool;
-	struct tasklet_struct err_task;
+	spinlock_t lock; /* lock to access काष्ठा xilinx_dpdma_chan */
+	काष्ठा dma_pool *desc_pool;
+	काष्ठा tasklet_काष्ठा err_task;
 
-	struct {
-		struct xilinx_dpdma_tx_desc *pending;
-		struct xilinx_dpdma_tx_desc *active;
-	} desc;
+	काष्ठा अणु
+		काष्ठा xilinx_dpdma_tx_desc *pending;
+		काष्ठा xilinx_dpdma_tx_desc *active;
+	पूर्ण desc;
 
-	struct xilinx_dpdma_device *xdev;
-};
+	काष्ठा xilinx_dpdma_device *xdev;
+पूर्ण;
 
-#define to_xilinx_chan(_chan) \
-	container_of(_chan, struct xilinx_dpdma_chan, vchan.chan)
+#घोषणा to_xilinx_chan(_chan) \
+	container_of(_chan, काष्ठा xilinx_dpdma_chan, vchan.chan)
 
 /**
- * struct xilinx_dpdma_device - DPDMA device
- * @common: generic dma device structure
- * @reg: register base address
- * @dev: generic device structure
- * @irq: the interrupt number
- * @axi_clk: axi clock
+ * काष्ठा xilinx_dpdma_device - DPDMA device
+ * @common: generic dma device काष्ठाure
+ * @reg: रेजिस्टर base address
+ * @dev: generic device काष्ठाure
+ * @irq: the पूर्णांकerrupt number
+ * @axi_clk: axi घड़ी
  * @chan: DPDMA channels
- * @ext_addr: flag for 64 bit system (48 bit addressing)
+ * @ext_addr: flag क्रम 64 bit प्रणाली (48 bit addressing)
  */
-struct xilinx_dpdma_device {
-	struct dma_device common;
-	void __iomem *reg;
-	struct device *dev;
-	int irq;
+काष्ठा xilinx_dpdma_device अणु
+	काष्ठा dma_device common;
+	व्योम __iomem *reg;
+	काष्ठा device *dev;
+	पूर्णांक irq;
 
-	struct clk *axi_clk;
-	struct xilinx_dpdma_chan *chan[XILINX_DPDMA_NUM_CHAN];
+	काष्ठा clk *axi_clk;
+	काष्ठा xilinx_dpdma_chan *chan[XILINX_DPDMA_NUM_CHAN];
 
 	bool ext_addr;
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * DebugFS
  */
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-#define XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE	32
-#define XILINX_DPDMA_DEBUGFS_UINT16_MAX_STR	"65535"
+#घोषणा XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE	32
+#घोषणा XILINX_DPDMA_DEBUGFS_UINT16_MAX_STR	"65535"
 
-/* Match xilinx_dpdma_testcases vs dpdma_debugfs_reqs[] entry */
-enum xilinx_dpdma_testcases {
+/* Match xilinx_dpdma_testहालs vs dpdma_debugfs_reqs[] entry */
+क्रमागत xilinx_dpdma_testहालs अणु
 	DPDMA_TC_INTR_DONE,
 	DPDMA_TC_NONE
-};
+पूर्ण;
 
-struct xilinx_dpdma_debugfs {
-	enum xilinx_dpdma_testcases testcase;
-	u16 xilinx_dpdma_irq_done_count;
-	unsigned int chan_id;
-};
+काष्ठा xilinx_dpdma_debugfs अणु
+	क्रमागत xilinx_dpdma_testहालs testहाल;
+	u16 xilinx_dpdma_irq_करोne_count;
+	अचिन्हित पूर्णांक chan_id;
+पूर्ण;
 
-static struct xilinx_dpdma_debugfs dpdma_debugfs;
-struct xilinx_dpdma_debugfs_request {
-	const char *name;
-	enum xilinx_dpdma_testcases tc;
-	ssize_t (*read)(char *buf);
-	int (*write)(char *args);
-};
+अटल काष्ठा xilinx_dpdma_debugfs dpdma_debugfs;
+काष्ठा xilinx_dpdma_debugfs_request अणु
+	स्थिर अक्षर *name;
+	क्रमागत xilinx_dpdma_testहालs tc;
+	sमाप_प्रकार (*पढ़ो)(अक्षर *buf);
+	पूर्णांक (*ग_लिखो)(अक्षर *args);
+पूर्ण;
 
-static void xilinx_dpdma_debugfs_desc_done_irq(struct xilinx_dpdma_chan *chan)
-{
-	if (chan->id == dpdma_debugfs.chan_id)
-		dpdma_debugfs.xilinx_dpdma_irq_done_count++;
-}
+अटल व्योम xilinx_dpdma_debugfs_desc_करोne_irq(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	अगर (chan->id == dpdma_debugfs.chan_id)
+		dpdma_debugfs.xilinx_dpdma_irq_करोne_count++;
+पूर्ण
 
-static ssize_t xilinx_dpdma_debugfs_desc_done_irq_read(char *buf)
-{
-	size_t out_str_len;
+अटल sमाप_प्रकार xilinx_dpdma_debugfs_desc_करोne_irq_पढ़ो(अक्षर *buf)
+अणु
+	माप_प्रकार out_str_len;
 
-	dpdma_debugfs.testcase = DPDMA_TC_NONE;
+	dpdma_debugfs.testहाल = DPDMA_TC_NONE;
 
-	out_str_len = strlen(XILINX_DPDMA_DEBUGFS_UINT16_MAX_STR);
-	out_str_len = min_t(size_t, XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE,
+	out_str_len = म_माप(XILINX_DPDMA_DEBUGFS_UINT16_MAX_STR);
+	out_str_len = min_t(माप_प्रकार, XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE,
 			    out_str_len);
-	snprintf(buf, out_str_len, "%d",
-		 dpdma_debugfs.xilinx_dpdma_irq_done_count);
+	snम_लिखो(buf, out_str_len, "%d",
+		 dpdma_debugfs.xilinx_dpdma_irq_करोne_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xilinx_dpdma_debugfs_desc_done_irq_write(char *args)
-{
-	char *arg;
-	int ret;
+अटल पूर्णांक xilinx_dpdma_debugfs_desc_करोne_irq_ग_लिखो(अक्षर *args)
+अणु
+	अक्षर *arg;
+	पूर्णांक ret;
 	u32 id;
 
 	arg = strsep(&args, " ");
-	if (!arg || strncasecmp(arg, "start", 5))
-		return -EINVAL;
+	अगर (!arg || strnहालcmp(arg, "start", 5))
+		वापस -EINVAL;
 
 	arg = strsep(&args, " ");
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
 	ret = kstrtou32(arg, 0, &id);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (id < ZYNQMP_DPDMA_VIDEO0 || id > ZYNQMP_DPDMA_AUDIO1)
-		return -EINVAL;
+	अगर (id < ZYNQMP_DPDMA_VIDEO0 || id > ZYNQMP_DPDMA_AUDIO1)
+		वापस -EINVAL;
 
-	dpdma_debugfs.testcase = DPDMA_TC_INTR_DONE;
-	dpdma_debugfs.xilinx_dpdma_irq_done_count = 0;
+	dpdma_debugfs.testहाल = DPDMA_TC_INTR_DONE;
+	dpdma_debugfs.xilinx_dpdma_irq_करोne_count = 0;
 	dpdma_debugfs.chan_id = id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Match xilinx_dpdma_testcases vs dpdma_debugfs_reqs[] entry */
-static struct xilinx_dpdma_debugfs_request dpdma_debugfs_reqs[] = {
-	{
+/* Match xilinx_dpdma_testहालs vs dpdma_debugfs_reqs[] entry */
+अटल काष्ठा xilinx_dpdma_debugfs_request dpdma_debugfs_reqs[] = अणु
+	अणु
 		.name = "DESCRIPTOR_DONE_INTR",
 		.tc = DPDMA_TC_INTR_DONE,
-		.read = xilinx_dpdma_debugfs_desc_done_irq_read,
-		.write = xilinx_dpdma_debugfs_desc_done_irq_write,
-	},
-};
+		.पढ़ो = xilinx_dpdma_debugfs_desc_करोne_irq_पढ़ो,
+		.ग_लिखो = xilinx_dpdma_debugfs_desc_करोne_irq_ग_लिखो,
+	पूर्ण,
+पूर्ण;
 
-static ssize_t xilinx_dpdma_debugfs_read(struct file *f, char __user *buf,
-					 size_t size, loff_t *pos)
-{
-	enum xilinx_dpdma_testcases testcase;
-	char *kern_buff;
-	int ret = 0;
+अटल sमाप_प्रकार xilinx_dpdma_debugfs_पढ़ो(काष्ठा file *f, अक्षर __user *buf,
+					 माप_प्रकार size, loff_t *pos)
+अणु
+	क्रमागत xilinx_dpdma_testहालs testहाल;
+	अक्षर *kern_buff;
+	पूर्णांक ret = 0;
 
-	if (*pos != 0 || size <= 0)
-		return -EINVAL;
+	अगर (*pos != 0 || size <= 0)
+		वापस -EINVAL;
 
 	kern_buff = kzalloc(XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE, GFP_KERNEL);
-	if (!kern_buff) {
-		dpdma_debugfs.testcase = DPDMA_TC_NONE;
-		return -ENOMEM;
-	}
+	अगर (!kern_buff) अणु
+		dpdma_debugfs.testहाल = DPDMA_TC_NONE;
+		वापस -ENOMEM;
+	पूर्ण
 
-	testcase = READ_ONCE(dpdma_debugfs.testcase);
-	if (testcase != DPDMA_TC_NONE) {
-		ret = dpdma_debugfs_reqs[testcase].read(kern_buff);
-		if (ret < 0)
-			goto done;
-	} else {
+	testहाल = READ_ONCE(dpdma_debugfs.testहाल);
+	अगर (testहाल != DPDMA_TC_NONE) अणु
+		ret = dpdma_debugfs_reqs[testहाल].पढ़ो(kern_buff);
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण अन्यथा अणु
 		strlcpy(kern_buff, "No testcase executed",
 			XILINX_DPDMA_DEBUGFS_READ_MAX_SIZE);
-	}
+	पूर्ण
 
-	size = min(size, strlen(kern_buff));
-	if (copy_to_user(buf, kern_buff, size))
+	size = min(size, म_माप(kern_buff));
+	अगर (copy_to_user(buf, kern_buff, size))
 		ret = -EFAULT;
 
-done:
-	kfree(kern_buff);
-	if (ret)
-		return ret;
+करोne:
+	kमुक्त(kern_buff);
+	अगर (ret)
+		वापस ret;
 
 	*pos = size + 1;
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t xilinx_dpdma_debugfs_write(struct file *f,
-					  const char __user *buf, size_t size,
+अटल sमाप_प्रकार xilinx_dpdma_debugfs_ग_लिखो(काष्ठा file *f,
+					  स्थिर अक्षर __user *buf, माप_प्रकार size,
 					  loff_t *pos)
-{
-	char *kern_buff, *kern_buff_start;
-	char *testcase;
-	unsigned int i;
-	int ret;
+अणु
+	अक्षर *kern_buff, *kern_buff_start;
+	अक्षर *testहाल;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (*pos != 0 || size <= 0)
-		return -EINVAL;
+	अगर (*pos != 0 || size <= 0)
+		वापस -EINVAL;
 
 	/* Supporting single instance of test as of now. */
-	if (dpdma_debugfs.testcase != DPDMA_TC_NONE)
-		return -EBUSY;
+	अगर (dpdma_debugfs.testहाल != DPDMA_TC_NONE)
+		वापस -EBUSY;
 
 	kern_buff = kzalloc(size, GFP_KERNEL);
-	if (!kern_buff)
-		return -ENOMEM;
+	अगर (!kern_buff)
+		वापस -ENOMEM;
 	kern_buff_start = kern_buff;
 
-	ret = strncpy_from_user(kern_buff, buf, size);
-	if (ret < 0)
-		goto done;
+	ret = म_नकलन_from_user(kern_buff, buf, size);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	/* Read the testcase name from a user request. */
-	testcase = strsep(&kern_buff, " ");
+	/* Read the testहाल name from a user request. */
+	testहाल = strsep(&kern_buff, " ");
 
-	for (i = 0; i < ARRAY_SIZE(dpdma_debugfs_reqs); i++) {
-		if (!strcasecmp(testcase, dpdma_debugfs_reqs[i].name))
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(dpdma_debugfs_reqs); i++) अणु
+		अगर (!strहालcmp(testहाल, dpdma_debugfs_reqs[i].name))
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(dpdma_debugfs_reqs)) {
+	अगर (i == ARRAY_SIZE(dpdma_debugfs_reqs)) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	ret = dpdma_debugfs_reqs[i].write(kern_buff);
-	if (ret < 0)
-		goto done;
+	ret = dpdma_debugfs_reqs[i].ग_लिखो(kern_buff);
+	अगर (ret < 0)
+		जाओ करोne;
 
 	ret = size;
 
-done:
-	kfree(kern_buff_start);
-	return ret;
-}
+करोne:
+	kमुक्त(kern_buff_start);
+	वापस ret;
+पूर्ण
 
-static const struct file_operations fops_xilinx_dpdma_dbgfs = {
+अटल स्थिर काष्ठा file_operations fops_xilinx_dpdma_dbgfs = अणु
 	.owner = THIS_MODULE,
-	.read = xilinx_dpdma_debugfs_read,
-	.write = xilinx_dpdma_debugfs_write,
-};
+	.पढ़ो = xilinx_dpdma_debugfs_पढ़ो,
+	.ग_लिखो = xilinx_dpdma_debugfs_ग_लिखो,
+पूर्ण;
 
-static void xilinx_dpdma_debugfs_init(struct xilinx_dpdma_device *xdev)
-{
-	struct dentry *dent;
+अटल व्योम xilinx_dpdma_debugfs_init(काष्ठा xilinx_dpdma_device *xdev)
+अणु
+	काष्ठा dentry *dent;
 
-	dpdma_debugfs.testcase = DPDMA_TC_NONE;
+	dpdma_debugfs.testहाल = DPDMA_TC_NONE;
 
 	dent = debugfs_create_file("testcase", 0444, xdev->common.dbg_dev_root,
-				   NULL, &fops_xilinx_dpdma_dbgfs);
-	if (IS_ERR(dent))
+				   शून्य, &fops_xilinx_dpdma_dbgfs);
+	अगर (IS_ERR(dent))
 		dev_err(xdev->dev, "Failed to create debugfs testcase file\n");
-}
+पूर्ण
 
-#else
-static void xilinx_dpdma_debugfs_init(struct xilinx_dpdma_device *xdev)
-{
-}
+#अन्यथा
+अटल व्योम xilinx_dpdma_debugfs_init(काष्ठा xilinx_dpdma_device *xdev)
+अणु
+पूर्ण
 
-static void xilinx_dpdma_debugfs_desc_done_irq(struct xilinx_dpdma_chan *chan)
-{
-}
-#endif /* CONFIG_DEBUG_FS */
+अटल व्योम xilinx_dpdma_debugfs_desc_करोne_irq(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
 /* -----------------------------------------------------------------------------
  * I/O Accessors
  */
 
-static inline u32 dpdma_read(void __iomem *base, u32 offset)
-{
-	return ioread32(base + offset);
-}
+अटल अंतरभूत u32 dpdma_पढ़ो(व्योम __iomem *base, u32 offset)
+अणु
+	वापस ioपढ़ो32(base + offset);
+पूर्ण
 
-static inline void dpdma_write(void __iomem *base, u32 offset, u32 val)
-{
-	iowrite32(val, base + offset);
-}
+अटल अंतरभूत व्योम dpdma_ग_लिखो(व्योम __iomem *base, u32 offset, u32 val)
+अणु
+	ioग_लिखो32(val, base + offset);
+पूर्ण
 
-static inline void dpdma_clr(void __iomem *base, u32 offset, u32 clr)
-{
-	dpdma_write(base, offset, dpdma_read(base, offset) & ~clr);
-}
+अटल अंतरभूत व्योम dpdma_clr(व्योम __iomem *base, u32 offset, u32 clr)
+अणु
+	dpdma_ग_लिखो(base, offset, dpdma_पढ़ो(base, offset) & ~clr);
+पूर्ण
 
-static inline void dpdma_set(void __iomem *base, u32 offset, u32 set)
-{
-	dpdma_write(base, offset, dpdma_read(base, offset) | set);
-}
+अटल अंतरभूत व्योम dpdma_set(व्योम __iomem *base, u32 offset, u32 set)
+अणु
+	dpdma_ग_लिखो(base, offset, dpdma_पढ़ो(base, offset) | set);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Descriptor Operations
@@ -509,49 +510,49 @@ static inline void dpdma_set(void __iomem *base, u32 offset, u32 set)
  * @num_src_addr: number of addresses in @dma_addr
  *
  * Set all the DMA addresses in the hardware descriptor corresponding to @dev
- * from @dma_addr. If a previous descriptor is specified in @prev, its next
+ * from @dma_addr. If a previous descriptor is specअगरied in @prev, its next
  * descriptor DMA address is set to the DMA address of @sw_desc. @prev may be
- * identical to @sw_desc for cyclic transfers.
+ * identical to @sw_desc क्रम cyclic transfers.
  */
-static void xilinx_dpdma_sw_desc_set_dma_addrs(struct xilinx_dpdma_device *xdev,
-					       struct xilinx_dpdma_sw_desc *sw_desc,
-					       struct xilinx_dpdma_sw_desc *prev,
+अटल व्योम xilinx_dpdma_sw_desc_set_dma_addrs(काष्ठा xilinx_dpdma_device *xdev,
+					       काष्ठा xilinx_dpdma_sw_desc *sw_desc,
+					       काष्ठा xilinx_dpdma_sw_desc *prev,
 					       dma_addr_t dma_addr[],
-					       unsigned int num_src_addr)
-{
-	struct xilinx_dpdma_hw_desc *hw_desc = &sw_desc->hw;
-	unsigned int i;
+					       अचिन्हित पूर्णांक num_src_addr)
+अणु
+	काष्ठा xilinx_dpdma_hw_desc *hw_desc = &sw_desc->hw;
+	अचिन्हित पूर्णांक i;
 
 	hw_desc->src_addr = lower_32_bits(dma_addr[0]);
-	if (xdev->ext_addr)
+	अगर (xdev->ext_addr)
 		hw_desc->addr_ext |=
 			FIELD_PREP(XILINX_DPDMA_DESC_ADDR_EXT_SRC_ADDR_MASK,
 				   upper_32_bits(dma_addr[0]));
 
-	for (i = 1; i < num_src_addr; i++) {
+	क्रम (i = 1; i < num_src_addr; i++) अणु
 		u32 *addr = &hw_desc->src_addr2;
 
 		addr[i-1] = lower_32_bits(dma_addr[i]);
 
-		if (xdev->ext_addr) {
+		अगर (xdev->ext_addr) अणु
 			u32 *addr_ext = &hw_desc->addr_ext_23;
 			u32 addr_msb;
 
 			addr_msb = upper_32_bits(dma_addr[i]) & GENMASK(15, 0);
 			addr_msb <<= 16 * ((i - 1) % 2);
 			addr_ext[(i - 1) / 2] |= addr_msb;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!prev)
-		return;
+	अगर (!prev)
+		वापस;
 
 	prev->hw.next_desc = lower_32_bits(sw_desc->dma_addr);
-	if (xdev->ext_addr)
+	अगर (xdev->ext_addr)
 		prev->hw.addr_ext |=
 			FIELD_PREP(XILINX_DPDMA_DESC_ADDR_EXT_NEXT_ADDR_MASK,
 				   upper_32_bits(sw_desc->dma_addr));
-}
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_alloc_sw_desc - Allocate a software descriptor
@@ -559,36 +560,36 @@ static void xilinx_dpdma_sw_desc_set_dma_addrs(struct xilinx_dpdma_device *xdev,
  *
  * Allocate a software descriptor from the channel's descriptor pool.
  *
- * Return: a software descriptor or NULL.
+ * Return: a software descriptor or शून्य.
  */
-static struct xilinx_dpdma_sw_desc *
-xilinx_dpdma_chan_alloc_sw_desc(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_sw_desc *sw_desc;
+अटल काष्ठा xilinx_dpdma_sw_desc *
+xilinx_dpdma_chan_alloc_sw_desc(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc;
 	dma_addr_t dma_addr;
 
 	sw_desc = dma_pool_zalloc(chan->desc_pool, GFP_ATOMIC, &dma_addr);
-	if (!sw_desc)
-		return NULL;
+	अगर (!sw_desc)
+		वापस शून्य;
 
 	sw_desc->dma_addr = dma_addr;
 
-	return sw_desc;
-}
+	वापस sw_desc;
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_free_sw_desc - Free a software descriptor
+ * xilinx_dpdma_chan_मुक्त_sw_desc - Free a software descriptor
  * @chan: DPDMA channel
- * @sw_desc: software descriptor to free
+ * @sw_desc: software descriptor to मुक्त
  *
  * Free a software descriptor from the channel's descriptor pool.
  */
-static void
-xilinx_dpdma_chan_free_sw_desc(struct xilinx_dpdma_chan *chan,
-			       struct xilinx_dpdma_sw_desc *sw_desc)
-{
-	dma_pool_free(chan->desc_pool, sw_desc, sw_desc->dma_addr);
-}
+अटल व्योम
+xilinx_dpdma_chan_मुक्त_sw_desc(काष्ठा xilinx_dpdma_chan *chan,
+			       काष्ठा xilinx_dpdma_sw_desc *sw_desc)
+अणु
+	dma_pool_मुक्त(chan->desc_pool, sw_desc, sw_desc->dma_addr);
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_dump_tx_desc - Dump a tx descriptor
@@ -597,18 +598,18 @@ xilinx_dpdma_chan_free_sw_desc(struct xilinx_dpdma_chan *chan,
  *
  * Dump contents of a tx descriptor
  */
-static void xilinx_dpdma_chan_dump_tx_desc(struct xilinx_dpdma_chan *chan,
-					   struct xilinx_dpdma_tx_desc *tx_desc)
-{
-	struct xilinx_dpdma_sw_desc *sw_desc;
-	struct device *dev = chan->xdev->dev;
-	unsigned int i = 0;
+अटल व्योम xilinx_dpdma_chan_dump_tx_desc(काष्ठा xilinx_dpdma_chan *chan,
+					   काष्ठा xilinx_dpdma_tx_desc *tx_desc)
+अणु
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc;
+	काष्ठा device *dev = chan->xdev->dev;
+	अचिन्हित पूर्णांक i = 0;
 
 	dev_dbg(dev, "------- TX descriptor dump start -------\n");
 	dev_dbg(dev, "------- channel ID = %d -------\n", chan->id);
 
-	list_for_each_entry(sw_desc, &tx_desc->descriptors, node) {
-		struct xilinx_dpdma_hw_desc *hw_desc = &sw_desc->hw;
+	list_क्रम_each_entry(sw_desc, &tx_desc->descriptors, node) अणु
+		काष्ठा xilinx_dpdma_hw_desc *hw_desc = &sw_desc->hw;
 
 		dev_dbg(dev, "------- HW descriptor %d -------\n", i++);
 		dev_dbg(dev, "descriptor DMA addr: %pad\n", &sw_desc->dma_addr);
@@ -616,8 +617,8 @@ static void xilinx_dpdma_chan_dump_tx_desc(struct xilinx_dpdma_chan *chan,
 		dev_dbg(dev, "desc_id: 0x%08x\n", hw_desc->desc_id);
 		dev_dbg(dev, "xfer_size: 0x%08x\n", hw_desc->xfer_size);
 		dev_dbg(dev, "hsize_stride: 0x%08x\n", hw_desc->hsize_stride);
-		dev_dbg(dev, "timestamp_lsb: 0x%08x\n", hw_desc->timestamp_lsb);
-		dev_dbg(dev, "timestamp_msb: 0x%08x\n", hw_desc->timestamp_msb);
+		dev_dbg(dev, "timestamp_lsb: 0x%08x\n", hw_desc->बारtamp_lsb);
+		dev_dbg(dev, "timestamp_msb: 0x%08x\n", hw_desc->बारtamp_msb);
 		dev_dbg(dev, "addr_ext: 0x%08x\n", hw_desc->addr_ext);
 		dev_dbg(dev, "next_desc: 0x%08x\n", hw_desc->next_desc);
 		dev_dbg(dev, "src_addr: 0x%08x\n", hw_desc->src_addr);
@@ -628,10 +629,10 @@ static void xilinx_dpdma_chan_dump_tx_desc(struct xilinx_dpdma_chan *chan,
 		dev_dbg(dev, "src_addr4: 0x%08x\n", hw_desc->src_addr4);
 		dev_dbg(dev, "src_addr5: 0x%08x\n", hw_desc->src_addr5);
 		dev_dbg(dev, "crc: 0x%08x\n", hw_desc->crc);
-	}
+	पूर्ण
 
 	dev_dbg(dev, "------- TX descriptor dump end -------\n");
-}
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_alloc_tx_desc - Allocate a transaction descriptor
@@ -639,84 +640,84 @@ static void xilinx_dpdma_chan_dump_tx_desc(struct xilinx_dpdma_chan *chan,
  *
  * Allocate a tx descriptor.
  *
- * Return: a tx descriptor or NULL.
+ * Return: a tx descriptor or शून्य.
  */
-static struct xilinx_dpdma_tx_desc *
-xilinx_dpdma_chan_alloc_tx_desc(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_tx_desc *tx_desc;
+अटल काष्ठा xilinx_dpdma_tx_desc *
+xilinx_dpdma_chan_alloc_tx_desc(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_tx_desc *tx_desc;
 
-	tx_desc = kzalloc(sizeof(*tx_desc), GFP_NOWAIT);
-	if (!tx_desc)
-		return NULL;
+	tx_desc = kzalloc(माप(*tx_desc), GFP_NOWAIT);
+	अगर (!tx_desc)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&tx_desc->descriptors);
 	tx_desc->chan = chan;
 	tx_desc->error = false;
 
-	return tx_desc;
-}
+	वापस tx_desc;
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_free_tx_desc - Free a virtual DMA descriptor
- * @vdesc: virtual DMA descriptor
+ * xilinx_dpdma_chan_मुक्त_tx_desc - Free a भव DMA descriptor
+ * @vdesc: भव DMA descriptor
  *
- * Free the virtual DMA descriptor @vdesc including its software descriptors.
+ * Free the भव DMA descriptor @vdesc including its software descriptors.
  */
-static void xilinx_dpdma_chan_free_tx_desc(struct virt_dma_desc *vdesc)
-{
-	struct xilinx_dpdma_sw_desc *sw_desc, *next;
-	struct xilinx_dpdma_tx_desc *desc;
+अटल व्योम xilinx_dpdma_chan_मुक्त_tx_desc(काष्ठा virt_dma_desc *vdesc)
+अणु
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc, *next;
+	काष्ठा xilinx_dpdma_tx_desc *desc;
 
-	if (!vdesc)
-		return;
+	अगर (!vdesc)
+		वापस;
 
 	desc = to_dpdma_tx_desc(vdesc);
 
-	list_for_each_entry_safe(sw_desc, next, &desc->descriptors, node) {
+	list_क्रम_each_entry_safe(sw_desc, next, &desc->descriptors, node) अणु
 		list_del(&sw_desc->node);
-		xilinx_dpdma_chan_free_sw_desc(desc->chan, sw_desc);
-	}
+		xilinx_dpdma_chan_मुक्त_sw_desc(desc->chan, sw_desc);
+	पूर्ण
 
-	kfree(desc);
-}
+	kमुक्त(desc);
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_prep_interleaved_dma - Prepare an interleaved dma
+ * xilinx_dpdma_chan_prep_पूर्णांकerleaved_dma - Prepare an पूर्णांकerleaved dma
  *					    descriptor
  * @chan: DPDMA channel
- * @xt: dma interleaved template
+ * @xt: dma पूर्णांकerleaved ढाँचा
  *
- * Prepare a tx descriptor including internal software/hardware descriptors
+ * Prepare a tx descriptor including पूर्णांकernal software/hardware descriptors
  * based on @xt.
  *
- * Return: A DPDMA TX descriptor on success, or NULL.
+ * Return: A DPDMA TX descriptor on success, or शून्य.
  */
-static struct xilinx_dpdma_tx_desc *
-xilinx_dpdma_chan_prep_interleaved_dma(struct xilinx_dpdma_chan *chan,
-				       struct dma_interleaved_template *xt)
-{
-	struct xilinx_dpdma_tx_desc *tx_desc;
-	struct xilinx_dpdma_sw_desc *sw_desc;
-	struct xilinx_dpdma_hw_desc *hw_desc;
-	size_t hsize = xt->sgl[0].size;
-	size_t stride = hsize + xt->sgl[0].icg;
+अटल काष्ठा xilinx_dpdma_tx_desc *
+xilinx_dpdma_chan_prep_पूर्णांकerleaved_dma(काष्ठा xilinx_dpdma_chan *chan,
+				       काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt)
+अणु
+	काष्ठा xilinx_dpdma_tx_desc *tx_desc;
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc;
+	काष्ठा xilinx_dpdma_hw_desc *hw_desc;
+	माप_प्रकार hsize = xt->sgl[0].size;
+	माप_प्रकार stride = hsize + xt->sgl[0].icg;
 
-	if (!IS_ALIGNED(xt->src_start, XILINX_DPDMA_ALIGN_BYTES)) {
+	अगर (!IS_ALIGNED(xt->src_start, XILINX_DPDMA_ALIGN_BYTES)) अणु
 		dev_err(chan->xdev->dev, "buffer should be aligned at %d B\n",
 			XILINX_DPDMA_ALIGN_BYTES);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	tx_desc = xilinx_dpdma_chan_alloc_tx_desc(chan);
-	if (!tx_desc)
-		return NULL;
+	अगर (!tx_desc)
+		वापस शून्य;
 
 	sw_desc = xilinx_dpdma_chan_alloc_sw_desc(chan);
-	if (!sw_desc) {
-		xilinx_dpdma_chan_free_tx_desc(&tx_desc->vdesc);
-		return NULL;
-	}
+	अगर (!sw_desc) अणु
+		xilinx_dpdma_chan_मुक्त_tx_desc(&tx_desc->vdesc);
+		वापस शून्य;
+	पूर्ण
 
 	xilinx_dpdma_sw_desc_set_dma_addrs(chan->xdev, sw_desc, sw_desc,
 					   &xt->src_start, 1);
@@ -735,8 +736,8 @@ xilinx_dpdma_chan_prep_interleaved_dma(struct xilinx_dpdma_chan *chan,
 
 	list_add_tail(&sw_desc->node, &tx_desc->descriptors);
 
-	return tx_desc;
-}
+	वापस tx_desc;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * DPDMA Channel Operations
@@ -746,18 +747,18 @@ xilinx_dpdma_chan_prep_interleaved_dma(struct xilinx_dpdma_chan *chan,
  * xilinx_dpdma_chan_enable - Enable the channel
  * @chan: DPDMA channel
  *
- * Enable the channel and its interrupts. Set the QoS values for video class.
+ * Enable the channel and its पूर्णांकerrupts. Set the QoS values क्रम video class.
  */
-static void xilinx_dpdma_chan_enable(struct xilinx_dpdma_chan *chan)
-{
+अटल व्योम xilinx_dpdma_chan_enable(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	u32 reg;
 
 	reg = (XILINX_DPDMA_INTR_CHAN_MASK << chan->id)
 	    | XILINX_DPDMA_INTR_GLOBAL_MASK;
-	dpdma_write(chan->xdev->reg, XILINX_DPDMA_IEN, reg);
+	dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_IEN, reg);
 	reg = (XILINX_DPDMA_EINTR_CHAN_ERR_MASK << chan->id)
 	    | XILINX_DPDMA_INTR_GLOBAL_ERR;
-	dpdma_write(chan->xdev->reg, XILINX_DPDMA_EIEN, reg);
+	dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_EIEN, reg);
 
 	reg = XILINX_DPDMA_CH_CNTL_ENABLE
 	    | FIELD_PREP(XILINX_DPDMA_CH_CNTL_QOS_DSCR_WR_MASK,
@@ -767,96 +768,96 @@ static void xilinx_dpdma_chan_enable(struct xilinx_dpdma_chan *chan)
 	    | FIELD_PREP(XILINX_DPDMA_CH_CNTL_QOS_DATA_RD_MASK,
 			 XILINX_DPDMA_CH_CNTL_QOS_VID_CLASS);
 	dpdma_set(chan->reg, XILINX_DPDMA_CH_CNTL, reg);
-}
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_disable - Disable the channel
  * @chan: DPDMA channel
  *
- * Disable the channel and its interrupts.
+ * Disable the channel and its पूर्णांकerrupts.
  */
-static void xilinx_dpdma_chan_disable(struct xilinx_dpdma_chan *chan)
-{
+अटल व्योम xilinx_dpdma_chan_disable(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	u32 reg;
 
 	reg = XILINX_DPDMA_INTR_CHAN_MASK << chan->id;
-	dpdma_write(chan->xdev->reg, XILINX_DPDMA_IEN, reg);
+	dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_IEN, reg);
 	reg = XILINX_DPDMA_EINTR_CHAN_ERR_MASK << chan->id;
-	dpdma_write(chan->xdev->reg, XILINX_DPDMA_EIEN, reg);
+	dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_EIEN, reg);
 
 	dpdma_clr(chan->reg, XILINX_DPDMA_CH_CNTL, XILINX_DPDMA_CH_CNTL_ENABLE);
-}
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_pause - Pause the channel
+ * xilinx_dpdma_chan_छोड़ो - Pause the channel
  * @chan: DPDMA channel
  *
  * Pause the channel.
  */
-static void xilinx_dpdma_chan_pause(struct xilinx_dpdma_chan *chan)
-{
+अटल व्योम xilinx_dpdma_chan_छोड़ो(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	dpdma_set(chan->reg, XILINX_DPDMA_CH_CNTL, XILINX_DPDMA_CH_CNTL_PAUSE);
-}
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_unpause - Unpause the channel
+ * xilinx_dpdma_chan_unछोड़ो - Unछोड़ो the channel
  * @chan: DPDMA channel
  *
- * Unpause the channel.
+ * Unछोड़ो the channel.
  */
-static void xilinx_dpdma_chan_unpause(struct xilinx_dpdma_chan *chan)
-{
+अटल व्योम xilinx_dpdma_chan_unछोड़ो(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	dpdma_clr(chan->reg, XILINX_DPDMA_CH_CNTL, XILINX_DPDMA_CH_CNTL_PAUSE);
-}
+पूर्ण
 
-static u32 xilinx_dpdma_chan_video_group_ready(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_device *xdev = chan->xdev;
+अटल u32 xilinx_dpdma_chan_video_group_पढ़ोy(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = chan->xdev;
 	u32 channels = 0;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = ZYNQMP_DPDMA_VIDEO0; i <= ZYNQMP_DPDMA_VIDEO2; i++) {
-		if (xdev->chan[i]->video_group && !xdev->chan[i]->running)
-			return 0;
+	क्रम (i = ZYNQMP_DPDMA_VIDEO0; i <= ZYNQMP_DPDMA_VIDEO2; i++) अणु
+		अगर (xdev->chan[i]->video_group && !xdev->chan[i]->running)
+			वापस 0;
 
-		if (xdev->chan[i]->video_group)
+		अगर (xdev->chan[i]->video_group)
 			channels |= BIT(i);
-	}
+	पूर्ण
 
-	return channels;
-}
+	वापस channels;
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_queue_transfer - Queue the next transfer
  * @chan: DPDMA channel
  *
- * Queue the next descriptor, if any, to the hardware. If the channel is
+ * Queue the next descriptor, अगर any, to the hardware. If the channel is
  * stopped, start it first. Otherwise retrigger it with the next descriptor.
  */
-static void xilinx_dpdma_chan_queue_transfer(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_device *xdev = chan->xdev;
-	struct xilinx_dpdma_sw_desc *sw_desc;
-	struct xilinx_dpdma_tx_desc *desc;
-	struct virt_dma_desc *vdesc;
+अटल व्योम xilinx_dpdma_chan_queue_transfer(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = chan->xdev;
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc;
+	काष्ठा xilinx_dpdma_tx_desc *desc;
+	काष्ठा virt_dma_desc *vdesc;
 	u32 reg, channels;
 	bool first_frame;
 
-	lockdep_assert_held(&chan->lock);
+	lockdep_निश्चित_held(&chan->lock);
 
-	if (chan->desc.pending)
-		return;
+	अगर (chan->desc.pending)
+		वापस;
 
-	if (!chan->running) {
-		xilinx_dpdma_chan_unpause(chan);
+	अगर (!chan->running) अणु
+		xilinx_dpdma_chan_unछोड़ो(chan);
 		xilinx_dpdma_chan_enable(chan);
 		chan->first_frame = true;
 		chan->running = true;
-	}
+	पूर्ण
 
 	vdesc = vchan_next_desc(&chan->vchan);
-	if (!vdesc)
-		return;
+	अगर (!vdesc)
+		वापस;
 
 	desc = to_dpdma_tx_desc(vdesc);
 	chan->desc.pending = desc;
@@ -866,251 +867,251 @@ static void xilinx_dpdma_chan_queue_transfer(struct xilinx_dpdma_chan *chan)
 	 * Assign the cookie to descriptors in this transaction. Only 16 bit
 	 * will be used, but it should be enough.
 	 */
-	list_for_each_entry(sw_desc, &desc->descriptors, node)
+	list_क्रम_each_entry(sw_desc, &desc->descriptors, node)
 		sw_desc->hw.desc_id = desc->vdesc.tx.cookie
 				    & XILINX_DPDMA_CH_DESC_ID_MASK;
 
 	sw_desc = list_first_entry(&desc->descriptors,
-				   struct xilinx_dpdma_sw_desc, node);
-	dpdma_write(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDR,
+				   काष्ठा xilinx_dpdma_sw_desc, node);
+	dpdma_ग_लिखो(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDR,
 		    lower_32_bits(sw_desc->dma_addr));
-	if (xdev->ext_addr)
-		dpdma_write(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDRE,
+	अगर (xdev->ext_addr)
+		dpdma_ग_लिखो(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDRE,
 			    FIELD_PREP(XILINX_DPDMA_CH_DESC_START_ADDRE_MASK,
 				       upper_32_bits(sw_desc->dma_addr)));
 
 	first_frame = chan->first_frame;
 	chan->first_frame = false;
 
-	if (chan->video_group) {
-		channels = xilinx_dpdma_chan_video_group_ready(chan);
+	अगर (chan->video_group) अणु
+		channels = xilinx_dpdma_chan_video_group_पढ़ोy(chan);
 		/*
 		 * Trigger the transfer only when all channels in the group are
-		 * ready.
+		 * पढ़ोy.
 		 */
-		if (!channels)
-			return;
-	} else {
+		अगर (!channels)
+			वापस;
+	पूर्ण अन्यथा अणु
 		channels = BIT(chan->id);
-	}
+	पूर्ण
 
-	if (first_frame)
+	अगर (first_frame)
 		reg = XILINX_DPDMA_GBL_TRIG_MASK(channels);
-	else
+	अन्यथा
 		reg = XILINX_DPDMA_GBL_RETRIG_MASK(channels);
 
-	dpdma_write(xdev->reg, XILINX_DPDMA_GBL, reg);
-}
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_GBL, reg);
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_ostand - Number of outstanding transactions
  * @chan: DPDMA channel
  *
- * Read and return the number of outstanding transactions from register.
+ * Read and वापस the number of outstanding transactions from रेजिस्टर.
  *
- * Return: Number of outstanding transactions from the status register.
+ * Return: Number of outstanding transactions from the status रेजिस्टर.
  */
-static u32 xilinx_dpdma_chan_ostand(struct xilinx_dpdma_chan *chan)
-{
-	return FIELD_GET(XILINX_DPDMA_CH_STATUS_OTRAN_CNT_MASK,
-			 dpdma_read(chan->reg, XILINX_DPDMA_CH_STATUS));
-}
+अटल u32 xilinx_dpdma_chan_ostand(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	वापस FIELD_GET(XILINX_DPDMA_CH_STATUS_OTRAN_CNT_MASK,
+			 dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_STATUS));
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_no_ostand - Notify no outstanding transaction event
+ * xilinx_dpdma_chan_no_ostand - Notअगरy no outstanding transaction event
  * @chan: DPDMA channel
  *
- * Notify waiters for no outstanding event, so waiters can stop the channel
+ * Notअगरy रुकोers क्रम no outstanding event, so रुकोers can stop the channel
  * safely. This function is supposed to be called when 'no outstanding'
- * interrupt is generated. The 'no outstanding' interrupt is disabled and
+ * पूर्णांकerrupt is generated. The 'no outstanding' पूर्णांकerrupt is disabled and
  * should be re-enabled when this event is handled. If the channel status
- * register still shows some number of outstanding transactions, the interrupt
- * remains enabled.
+ * रेजिस्टर still shows some number of outstanding transactions, the पूर्णांकerrupt
+ * reमुख्यs enabled.
  *
- * Return: 0 on success. On failure, -EWOULDBLOCK if there's still outstanding
+ * Return: 0 on success. On failure, -EWOULDBLOCK अगर there's still outstanding
  * transaction(s).
  */
-static int xilinx_dpdma_chan_notify_no_ostand(struct xilinx_dpdma_chan *chan)
-{
+अटल पूर्णांक xilinx_dpdma_chan_notअगरy_no_ostand(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	u32 cnt;
 
 	cnt = xilinx_dpdma_chan_ostand(chan);
-	if (cnt) {
+	अगर (cnt) अणु
 		dev_dbg(chan->xdev->dev, "%d outstanding transactions\n", cnt);
-		return -EWOULDBLOCK;
-	}
+		वापस -EWOULDBLOCK;
+	पूर्ण
 
-	/* Disable 'no outstanding' interrupt */
-	dpdma_write(chan->xdev->reg, XILINX_DPDMA_IDS,
+	/* Disable 'no outstanding' पूर्णांकerrupt */
+	dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_IDS,
 		    XILINX_DPDMA_INTR_NO_OSTAND(chan->id));
-	wake_up(&chan->wait_to_stop);
+	wake_up(&chan->रुको_to_stop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_wait_no_ostand - Wait for the no outstanding irq
+ * xilinx_dpdma_chan_रुको_no_ostand - Wait क्रम the no outstanding irq
  * @chan: DPDMA channel
  *
- * Wait for the no outstanding transaction interrupt. This functions can sleep
- * for 50ms.
+ * Wait क्रम the no outstanding transaction पूर्णांकerrupt. This functions can sleep
+ * क्रम 50ms.
  *
- * Return: 0 on success. On failure, -ETIMEOUT for time out, or the error code
- * from wait_event_interruptible_timeout().
+ * Return: 0 on success. On failure, -ETIMEOUT क्रम समय out, or the error code
+ * from रुको_event_पूर्णांकerruptible_समयout().
  */
-static int xilinx_dpdma_chan_wait_no_ostand(struct xilinx_dpdma_chan *chan)
-{
-	int ret;
+अटल पूर्णांक xilinx_dpdma_chan_रुको_no_ostand(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	पूर्णांक ret;
 
-	/* Wait for a no outstanding transaction interrupt upto 50msec */
-	ret = wait_event_interruptible_timeout(chan->wait_to_stop,
+	/* Wait क्रम a no outstanding transaction पूर्णांकerrupt upto 50msec */
+	ret = रुको_event_पूर्णांकerruptible_समयout(chan->रुको_to_stop,
 					       !xilinx_dpdma_chan_ostand(chan),
-					       msecs_to_jiffies(50));
-	if (ret > 0) {
-		dpdma_write(chan->xdev->reg, XILINX_DPDMA_IEN,
+					       msecs_to_jअगरfies(50));
+	अगर (ret > 0) अणु
+		dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_IEN,
 			    XILINX_DPDMA_INTR_NO_OSTAND(chan->id));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(chan->xdev->dev, "not ready to stop: %d trans\n",
 		xilinx_dpdma_chan_ostand(chan));
 
-	if (ret == 0)
-		return -ETIMEDOUT;
+	अगर (ret == 0)
+		वापस -ETIMEDOUT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_poll_no_ostand - Poll the outstanding transaction status
  * @chan: DPDMA channel
  *
- * Poll the outstanding transaction status, and return when there's no
- * outstanding transaction. This functions can be used in the interrupt context
- * or where the atomicity is required. Calling thread may wait more than 50ms.
+ * Poll the outstanding transaction status, and वापस when there's no
+ * outstanding transaction. This functions can be used in the पूर्णांकerrupt context
+ * or where the atomicity is required. Calling thपढ़ो may रुको more than 50ms.
  *
  * Return: 0 on success, or -ETIMEDOUT.
  */
-static int xilinx_dpdma_chan_poll_no_ostand(struct xilinx_dpdma_chan *chan)
-{
+अटल पूर्णांक xilinx_dpdma_chan_poll_no_ostand(काष्ठा xilinx_dpdma_chan *chan)
+अणु
 	u32 cnt, loop = 50000;
 
-	/* Poll at least for 50ms (20 fps). */
-	do {
+	/* Poll at least क्रम 50ms (20 fps). */
+	करो अणु
 		cnt = xilinx_dpdma_chan_ostand(chan);
 		udelay(1);
-	} while (loop-- > 0 && cnt);
+	पूर्ण जबतक (loop-- > 0 && cnt);
 
-	if (loop) {
-		dpdma_write(chan->xdev->reg, XILINX_DPDMA_IEN,
+	अगर (loop) अणु
+		dpdma_ग_लिखो(chan->xdev->reg, XILINX_DPDMA_IEN,
 			    XILINX_DPDMA_INTR_NO_OSTAND(chan->id));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_err(chan->xdev->dev, "not ready to stop: %d trans\n",
 		xilinx_dpdma_chan_ostand(chan));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_stop - Stop the channel
  * @chan: DPDMA channel
  *
- * Stop a previously paused channel by first waiting for completion of all
+ * Stop a previously छोड़ोd channel by first रुकोing क्रम completion of all
  * outstanding transaction and then disabling the channel.
  *
- * Return: 0 on success, or -ETIMEDOUT if the channel failed to stop.
+ * Return: 0 on success, or -ETIMEDOUT अगर the channel failed to stop.
  */
-static int xilinx_dpdma_chan_stop(struct xilinx_dpdma_chan *chan)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक xilinx_dpdma_chan_stop(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	ret = xilinx_dpdma_chan_wait_no_ostand(chan);
-	if (ret)
-		return ret;
+	ret = xilinx_dpdma_chan_रुको_no_ostand(chan);
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_irqsave(&chan->lock, flags);
 	xilinx_dpdma_chan_disable(chan);
 	chan->running = false;
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_done_irq - Handle hardware descriptor completion
+ * xilinx_dpdma_chan_करोne_irq - Handle hardware descriptor completion
  * @chan: DPDMA channel
  *
  * Handle completion of the currently active descriptor (@chan->desc.active). As
  * we currently support cyclic transfers only, this just invokes the cyclic
- * callback. The descriptor will be completed at the VSYNC interrupt when a new
+ * callback. The descriptor will be completed at the VSYNC पूर्णांकerrupt when a new
  * descriptor replaces it.
  */
-static void xilinx_dpdma_chan_done_irq(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_tx_desc *active;
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_chan_करोne_irq(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_tx_desc *active;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
-	xilinx_dpdma_debugfs_desc_done_irq(chan);
+	xilinx_dpdma_debugfs_desc_करोne_irq(chan);
 
 	active = chan->desc.active;
-	if (active)
+	अगर (active)
 		vchan_cyclic_callback(&active->vdesc);
-	else
+	अन्यथा
 		dev_warn(chan->xdev->dev,
 			 "DONE IRQ with no active descriptor!\n");
 
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_vsync_irq - Handle hardware descriptor scheduling
  * @chan: DPDMA channel
  *
  * At VSYNC the active descriptor may have been replaced by the pending
- * descriptor. Detect this through the DESC_ID and perform appropriate
+ * descriptor. Detect this through the DESC_ID and perक्रमm appropriate
  * bookkeeping.
  */
-static void xilinx_dpdma_chan_vsync_irq(struct  xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_tx_desc *pending;
-	struct xilinx_dpdma_sw_desc *sw_desc;
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_chan_vsync_irq(काष्ठा  xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_tx_desc *pending;
+	काष्ठा xilinx_dpdma_sw_desc *sw_desc;
+	अचिन्हित दीर्घ flags;
 	u32 desc_id;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
 	pending = chan->desc.pending;
-	if (!chan->running || !pending)
-		goto out;
+	अगर (!chan->running || !pending)
+		जाओ out;
 
-	desc_id = dpdma_read(chan->reg, XILINX_DPDMA_CH_DESC_ID)
+	desc_id = dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_DESC_ID)
 		& XILINX_DPDMA_CH_DESC_ID_MASK;
 
 	/* If the retrigger raced with vsync, retry at the next frame. */
 	sw_desc = list_first_entry(&pending->descriptors,
-				   struct xilinx_dpdma_sw_desc, node);
-	if (sw_desc->hw.desc_id != desc_id)
-		goto out;
+				   काष्ठा xilinx_dpdma_sw_desc, node);
+	अगर (sw_desc->hw.desc_id != desc_id)
+		जाओ out;
 
 	/*
-	 * Complete the active descriptor, if any, promote the pending
-	 * descriptor to active, and queue the next transfer, if any.
+	 * Complete the active descriptor, अगर any, promote the pending
+	 * descriptor to active, and queue the next transfer, अगर any.
 	 */
-	if (chan->desc.active)
+	अगर (chan->desc.active)
 		vchan_cookie_complete(&chan->desc.active->vdesc);
 	chan->desc.active = pending;
-	chan->desc.pending = NULL;
+	chan->desc.pending = शून्य;
 
 	xilinx_dpdma_chan_queue_transfer(chan);
 
 out:
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_err - Detect any channel error
@@ -1118,168 +1119,168 @@ out:
  * @isr: masked Interrupt Status Register
  * @eisr: Error Interrupt Status Register
  *
- * Return: true if any channel error occurs, or false otherwise.
+ * Return: true अगर any channel error occurs, or false otherwise.
  */
-static bool
-xilinx_dpdma_chan_err(struct xilinx_dpdma_chan *chan, u32 isr, u32 eisr)
-{
-	if (!chan)
-		return false;
+अटल bool
+xilinx_dpdma_chan_err(काष्ठा xilinx_dpdma_chan *chan, u32 isr, u32 eisr)
+अणु
+	अगर (!chan)
+		वापस false;
 
-	if (chan->running &&
+	अगर (chan->running &&
 	    ((isr & (XILINX_DPDMA_INTR_CHAN_ERR_MASK << chan->id)) ||
 	    (eisr & (XILINX_DPDMA_EINTR_CHAN_ERR_MASK << chan->id))))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * xilinx_dpdma_chan_handle_err - DPDMA channel error handling
  * @chan: DPDMA channel
  *
  * This function is called when any channel error or any global error occurs.
- * The function disables the paused channel by errors and determines
- * if the current active descriptor can be rescheduled depending on
+ * The function disables the छोड़ोd channel by errors and determines
+ * अगर the current active descriptor can be rescheduled depending on
  * the descriptor status.
  */
-static void xilinx_dpdma_chan_handle_err(struct xilinx_dpdma_chan *chan)
-{
-	struct xilinx_dpdma_device *xdev = chan->xdev;
-	struct xilinx_dpdma_tx_desc *active;
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_chan_handle_err(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = chan->xdev;
+	काष्ठा xilinx_dpdma_tx_desc *active;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->lock, flags);
 
 	dev_dbg(xdev->dev, "cur desc addr = 0x%04x%08x\n",
-		dpdma_read(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDRE),
-		dpdma_read(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDR));
+		dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDRE),
+		dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_DESC_START_ADDR));
 	dev_dbg(xdev->dev, "cur payload addr = 0x%04x%08x\n",
-		dpdma_read(chan->reg, XILINX_DPDMA_CH_PYLD_CUR_ADDRE),
-		dpdma_read(chan->reg, XILINX_DPDMA_CH_PYLD_CUR_ADDR));
+		dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_PYLD_CUR_ADDRE),
+		dpdma_पढ़ो(chan->reg, XILINX_DPDMA_CH_PYLD_CUR_ADDR));
 
 	xilinx_dpdma_chan_disable(chan);
 	chan->running = false;
 
-	if (!chan->desc.active)
-		goto out_unlock;
+	अगर (!chan->desc.active)
+		जाओ out_unlock;
 
 	active = chan->desc.active;
-	chan->desc.active = NULL;
+	chan->desc.active = शून्य;
 
 	xilinx_dpdma_chan_dump_tx_desc(chan, active);
 
-	if (active->error)
+	अगर (active->error)
 		dev_dbg(xdev->dev, "repeated error on desc\n");
 
-	/* Reschedule if there's no new descriptor */
-	if (!chan->desc.pending &&
-	    list_empty(&chan->vchan.desc_issued)) {
+	/* Reschedule अगर there's no new descriptor */
+	अगर (!chan->desc.pending &&
+	    list_empty(&chan->vchan.desc_issued)) अणु
 		active->error = true;
 		list_add_tail(&active->vdesc.node,
 			      &chan->vchan.desc_issued);
-	} else {
-		xilinx_dpdma_chan_free_tx_desc(&active->vdesc);
-	}
+	पूर्ण अन्यथा अणु
+		xilinx_dpdma_chan_मुक्त_tx_desc(&active->vdesc);
+	पूर्ण
 
 out_unlock:
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * DMA Engine Operations
  */
 
-static struct dma_async_tx_descriptor *
-xilinx_dpdma_prep_interleaved_dma(struct dma_chan *dchan,
-				  struct dma_interleaved_template *xt,
-				  unsigned long flags)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	struct xilinx_dpdma_tx_desc *desc;
+अटल काष्ठा dma_async_tx_descriptor *
+xilinx_dpdma_prep_पूर्णांकerleaved_dma(काष्ठा dma_chan *dchan,
+				  काष्ठा dma_पूर्णांकerleaved_ढाँचा *xt,
+				  अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	काष्ठा xilinx_dpdma_tx_desc *desc;
 
-	if (xt->dir != DMA_MEM_TO_DEV)
-		return NULL;
+	अगर (xt->dir != DMA_MEM_TO_DEV)
+		वापस शून्य;
 
-	if (!xt->numf || !xt->sgl[0].size)
-		return NULL;
+	अगर (!xt->numf || !xt->sgl[0].size)
+		वापस शून्य;
 
-	if (!(flags & DMA_PREP_REPEAT) || !(flags & DMA_PREP_LOAD_EOT))
-		return NULL;
+	अगर (!(flags & DMA_PREP_REPEAT) || !(flags & DMA_PREP_LOAD_EOT))
+		वापस शून्य;
 
-	desc = xilinx_dpdma_chan_prep_interleaved_dma(chan, xt);
-	if (!desc)
-		return NULL;
+	desc = xilinx_dpdma_chan_prep_पूर्णांकerleaved_dma(chan, xt);
+	अगर (!desc)
+		वापस शून्य;
 
 	vchan_tx_prep(&chan->vchan, &desc->vdesc, flags | DMA_CTRL_ACK);
 
-	return &desc->vdesc.tx;
-}
+	वापस &desc->vdesc.tx;
+पूर्ण
 
 /**
- * xilinx_dpdma_alloc_chan_resources - Allocate resources for the channel
+ * xilinx_dpdma_alloc_chan_resources - Allocate resources क्रम the channel
  * @dchan: DMA channel
  *
- * Allocate a descriptor pool for the channel.
+ * Allocate a descriptor pool क्रम the channel.
  *
- * Return: 0 on success, or -ENOMEM if failed to allocate a pool.
+ * Return: 0 on success, or -ENOMEM अगर failed to allocate a pool.
  */
-static int xilinx_dpdma_alloc_chan_resources(struct dma_chan *dchan)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	size_t align = __alignof__(struct xilinx_dpdma_sw_desc);
+अटल पूर्णांक xilinx_dpdma_alloc_chan_resources(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	माप_प्रकार align = __alignof__(काष्ठा xilinx_dpdma_sw_desc);
 
 	chan->desc_pool = dma_pool_create(dev_name(chan->xdev->dev),
 					  chan->xdev->dev,
-					  sizeof(struct xilinx_dpdma_sw_desc),
+					  माप(काष्ठा xilinx_dpdma_sw_desc),
 					  align, 0);
-	if (!chan->desc_pool) {
+	अगर (!chan->desc_pool) अणु
 		dev_err(chan->xdev->dev,
 			"failed to allocate a descriptor pool\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * xilinx_dpdma_free_chan_resources - Free all resources for the channel
+ * xilinx_dpdma_मुक्त_chan_resources - Free all resources क्रम the channel
  * @dchan: DMA channel
  *
- * Free resources associated with the virtual DMA channel, and destroy the
+ * Free resources associated with the भव DMA channel, and destroy the
  * descriptor pool.
  */
-static void xilinx_dpdma_free_chan_resources(struct dma_chan *dchan)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+अटल व्योम xilinx_dpdma_मुक्त_chan_resources(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
 
-	vchan_free_chan_resources(&chan->vchan);
+	vchan_मुक्त_chan_resources(&chan->vchan);
 
 	dma_pool_destroy(chan->desc_pool);
-	chan->desc_pool = NULL;
-}
+	chan->desc_pool = शून्य;
+पूर्ण
 
-static void xilinx_dpdma_issue_pending(struct dma_chan *dchan)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_issue_pending(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	if (vchan_issue_pending(&chan->vchan))
+	अगर (vchan_issue_pending(&chan->vchan))
 		xilinx_dpdma_chan_queue_transfer(chan);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
-}
+पूर्ण
 
-static int xilinx_dpdma_config(struct dma_chan *dchan,
-			       struct dma_slave_config *config)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	unsigned long flags;
+अटल पूर्णांक xilinx_dpdma_config(काष्ठा dma_chan *dchan,
+			       काष्ठा dma_slave_config *config)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * The destination address doesn't need to be specified as the DPDMA is
+	 * The destination address करोesn't need to be specअगरied as the DPDMA is
 	 * hardwired to the destination (the DP controller). The transfer
-	 * width, burst size and port window size are thus meaningless, they're
+	 * width, burst size and port winकरोw size are thus meaningless, they're
 	 * fixed both on the DPDMA side and on the DP controller side.
 	 */
 
@@ -1289,73 +1290,73 @@ static int xilinx_dpdma_config(struct dma_chan *dchan,
 	 * Abuse the slave_id to indicate that the channel is part of a video
 	 * group.
 	 */
-	if (chan->id <= ZYNQMP_DPDMA_VIDEO2)
+	अगर (chan->id <= ZYNQMP_DPDMA_VIDEO2)
 		chan->video_group = config->slave_id != 0;
 
 	spin_unlock_irqrestore(&chan->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xilinx_dpdma_pause(struct dma_chan *dchan)
-{
-	xilinx_dpdma_chan_pause(to_xilinx_chan(dchan));
+अटल पूर्णांक xilinx_dpdma_छोड़ो(काष्ठा dma_chan *dchan)
+अणु
+	xilinx_dpdma_chan_छोड़ो(to_xilinx_chan(dchan));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xilinx_dpdma_resume(struct dma_chan *dchan)
-{
-	xilinx_dpdma_chan_unpause(to_xilinx_chan(dchan));
+अटल पूर्णांक xilinx_dpdma_resume(काष्ठा dma_chan *dchan)
+अणु
+	xilinx_dpdma_chan_unछोड़ो(to_xilinx_chan(dchan));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xilinx_dpdma_terminate_all - Terminate the channel and descriptors
  * @dchan: DMA channel
  *
- * Pause the channel without waiting for ongoing transfers to complete. Waiting
- * for completion is performed by xilinx_dpdma_synchronize() that will disable
+ * Pause the channel without रुकोing क्रम ongoing transfers to complete. Waiting
+ * क्रम completion is perक्रमmed by xilinx_dpdma_synchronize() that will disable
  * the channel to complete the stop.
  *
  * All the descriptors associated with the channel that are guaranteed not to
  * be touched by the hardware. The pending and active descriptor are not
- * touched, and will be freed either upon completion, or by
+ * touched, and will be मुक्तd either upon completion, or by
  * xilinx_dpdma_synchronize().
  *
- * Return: 0 on success, or -ETIMEDOUT if the channel failed to stop.
+ * Return: 0 on success, or -ETIMEDOUT अगर the channel failed to stop.
  */
-static int xilinx_dpdma_terminate_all(struct dma_chan *dchan)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	struct xilinx_dpdma_device *xdev = chan->xdev;
+अटल पूर्णांक xilinx_dpdma_terminate_all(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	काष्ठा xilinx_dpdma_device *xdev = chan->xdev;
 	LIST_HEAD(descriptors);
-	unsigned long flags;
-	unsigned int i;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक i;
 
-	/* Pause the channel (including the whole video group if applicable). */
-	if (chan->video_group) {
-		for (i = ZYNQMP_DPDMA_VIDEO0; i <= ZYNQMP_DPDMA_VIDEO2; i++) {
-			if (xdev->chan[i]->video_group &&
-			    xdev->chan[i]->running) {
-				xilinx_dpdma_chan_pause(xdev->chan[i]);
+	/* Pause the channel (including the whole video group अगर applicable). */
+	अगर (chan->video_group) अणु
+		क्रम (i = ZYNQMP_DPDMA_VIDEO0; i <= ZYNQMP_DPDMA_VIDEO2; i++) अणु
+			अगर (xdev->chan[i]->video_group &&
+			    xdev->chan[i]->running) अणु
+				xilinx_dpdma_chan_छोड़ो(xdev->chan[i]);
 				xdev->chan[i]->video_group = false;
-			}
-		}
-	} else {
-		xilinx_dpdma_chan_pause(chan);
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		xilinx_dpdma_chan_छोड़ो(chan);
+	पूर्ण
 
-	/* Gather all the descriptors we can free and free them. */
+	/* Gather all the descriptors we can मुक्त and मुक्त them. */
 	spin_lock_irqsave(&chan->vchan.lock, flags);
 	vchan_get_all_descriptors(&chan->vchan, &descriptors);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
 
-	vchan_dma_desc_free_list(&chan->vchan, &descriptors);
+	vchan_dma_desc_मुक्त_list(&chan->vchan, &descriptors);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xilinx_dpdma_synchronize - Synchronize callback execution
@@ -1363,33 +1364,33 @@ static int xilinx_dpdma_terminate_all(struct dma_chan *dchan)
  *
  * Synchronizing callback execution ensures that all previously issued
  * transfers have completed and all associated callbacks have been called and
- * have returned.
+ * have वापसed.
  *
- * This function waits for the DMA channel to stop. It assumes it has been
- * paused by a previous call to dmaengine_terminate_async(), and that no new
+ * This function रुकोs क्रम the DMA channel to stop. It assumes it has been
+ * छोड़ोd by a previous call to dmaengine_terminate_async(), and that no new
  * pending descriptors have been issued with dma_async_issue_pending(). The
  * behaviour is undefined otherwise.
  */
-static void xilinx_dpdma_synchronize(struct dma_chan *dchan)
-{
-	struct xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_synchronize(काष्ठा dma_chan *dchan)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = to_xilinx_chan(dchan);
+	अचिन्हित दीर्घ flags;
 
 	xilinx_dpdma_chan_stop(chan);
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	if (chan->desc.pending) {
+	अगर (chan->desc.pending) अणु
 		vchan_terminate_vdesc(&chan->desc.pending->vdesc);
-		chan->desc.pending = NULL;
-	}
-	if (chan->desc.active) {
+		chan->desc.pending = शून्य;
+	पूर्ण
+	अगर (chan->desc.active) अणु
 		vchan_terminate_vdesc(&chan->desc.active->vdesc);
-		chan->desc.active = NULL;
-	}
+		chan->desc.active = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
 
 	vchan_synchronize(&chan->vchan);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Interrupt and Tasklet Handling
@@ -1400,161 +1401,161 @@ static void xilinx_dpdma_synchronize(struct dma_chan *dchan)
  * @isr: Interrupt Status Register
  * @eisr: Error Interrupt Status Register
  *
- * Return: True if any global error occurs, or false otherwise.
+ * Return: True अगर any global error occurs, or false otherwise.
  */
-static bool xilinx_dpdma_err(u32 isr, u32 eisr)
-{
-	if (isr & XILINX_DPDMA_INTR_GLOBAL_ERR ||
+अटल bool xilinx_dpdma_err(u32 isr, u32 eisr)
+अणु
+	अगर (isr & XILINX_DPDMA_INTR_GLOBAL_ERR ||
 	    eisr & XILINX_DPDMA_EINTR_GLOBAL_ERR)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * xilinx_dpdma_handle_err_irq - Handle DPDMA error interrupt
+ * xilinx_dpdma_handle_err_irq - Handle DPDMA error पूर्णांकerrupt
  * @xdev: DPDMA device
  * @isr: masked Interrupt Status Register
  * @eisr: Error Interrupt Status Register
  *
- * Handle if any error occurs based on @isr and @eisr. This function disables
- * corresponding error interrupts, and those should be re-enabled once handling
- * is done.
+ * Handle अगर any error occurs based on @isr and @eisr. This function disables
+ * corresponding error पूर्णांकerrupts, and those should be re-enabled once handling
+ * is करोne.
  */
-static void xilinx_dpdma_handle_err_irq(struct xilinx_dpdma_device *xdev,
+अटल व्योम xilinx_dpdma_handle_err_irq(काष्ठा xilinx_dpdma_device *xdev,
 					u32 isr, u32 eisr)
-{
+अणु
 	bool err = xilinx_dpdma_err(isr, eisr);
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	dev_dbg_ratelimited(xdev->dev,
 			    "error irq: isr = 0x%08x, eisr = 0x%08x\n",
 			    isr, eisr);
 
-	/* Disable channel error interrupts until errors are handled. */
-	dpdma_write(xdev->reg, XILINX_DPDMA_IDS,
+	/* Disable channel error पूर्णांकerrupts until errors are handled. */
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_IDS,
 		    isr & ~XILINX_DPDMA_INTR_GLOBAL_ERR);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EIDS,
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EIDS,
 		    eisr & ~XILINX_DPDMA_EINTR_GLOBAL_ERR);
 
-	for (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
-		if (err || xilinx_dpdma_chan_err(xdev->chan[i], isr, eisr))
+	क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
+		अगर (err || xilinx_dpdma_chan_err(xdev->chan[i], isr, eisr))
 			tasklet_schedule(&xdev->chan[i]->err_task);
-}
+पूर्ण
 
 /**
- * xilinx_dpdma_enable_irq - Enable interrupts
+ * xilinx_dpdma_enable_irq - Enable पूर्णांकerrupts
  * @xdev: DPDMA device
  *
- * Enable interrupts.
+ * Enable पूर्णांकerrupts.
  */
-static void xilinx_dpdma_enable_irq(struct xilinx_dpdma_device *xdev)
-{
-	dpdma_write(xdev->reg, XILINX_DPDMA_IEN, XILINX_DPDMA_INTR_ALL);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EIEN, XILINX_DPDMA_EINTR_ALL);
-}
+अटल व्योम xilinx_dpdma_enable_irq(काष्ठा xilinx_dpdma_device *xdev)
+अणु
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_IEN, XILINX_DPDMA_INTR_ALL);
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EIEN, XILINX_DPDMA_EINTR_ALL);
+पूर्ण
 
 /**
- * xilinx_dpdma_disable_irq - Disable interrupts
+ * xilinx_dpdma_disable_irq - Disable पूर्णांकerrupts
  * @xdev: DPDMA device
  *
- * Disable interrupts.
+ * Disable पूर्णांकerrupts.
  */
-static void xilinx_dpdma_disable_irq(struct xilinx_dpdma_device *xdev)
-{
-	dpdma_write(xdev->reg, XILINX_DPDMA_IDS, XILINX_DPDMA_INTR_ALL);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EIDS, XILINX_DPDMA_EINTR_ALL);
-}
+अटल व्योम xilinx_dpdma_disable_irq(काष्ठा xilinx_dpdma_device *xdev)
+अणु
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_IDS, XILINX_DPDMA_INTR_ALL);
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EIDS, XILINX_DPDMA_EINTR_ALL);
+पूर्ण
 
 /**
- * xilinx_dpdma_chan_err_task - Per channel tasklet for error handling
- * @t: pointer to the tasklet associated with this handler
+ * xilinx_dpdma_chan_err_task - Per channel tasklet क्रम error handling
+ * @t: poपूर्णांकer to the tasklet associated with this handler
  *
- * Per channel error handling tasklet. This function waits for the outstanding
+ * Per channel error handling tasklet. This function रुकोs क्रम the outstanding
  * transaction to complete and triggers error handling. After error handling,
- * re-enable channel error interrupts, and restart the channel if needed.
+ * re-enable channel error पूर्णांकerrupts, and restart the channel अगर needed.
  */
-static void xilinx_dpdma_chan_err_task(struct tasklet_struct *t)
-{
-	struct xilinx_dpdma_chan *chan = from_tasklet(chan, t, err_task);
-	struct xilinx_dpdma_device *xdev = chan->xdev;
-	unsigned long flags;
+अटल व्योम xilinx_dpdma_chan_err_task(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan = from_tasklet(chan, t, err_task);
+	काष्ठा xilinx_dpdma_device *xdev = chan->xdev;
+	अचिन्हित दीर्घ flags;
 
 	/* Proceed error handling even when polling fails. */
 	xilinx_dpdma_chan_poll_no_ostand(chan);
 
 	xilinx_dpdma_chan_handle_err(chan);
 
-	dpdma_write(xdev->reg, XILINX_DPDMA_IEN,
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_IEN,
 		    XILINX_DPDMA_INTR_CHAN_ERR_MASK << chan->id);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EIEN,
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EIEN,
 		    XILINX_DPDMA_EINTR_CHAN_ERR_MASK << chan->id);
 
 	spin_lock_irqsave(&chan->lock, flags);
 	xilinx_dpdma_chan_queue_transfer(chan);
 	spin_unlock_irqrestore(&chan->lock, flags);
-}
+पूर्ण
 
-static irqreturn_t xilinx_dpdma_irq_handler(int irq, void *data)
-{
-	struct xilinx_dpdma_device *xdev = data;
-	unsigned long mask;
-	unsigned int i;
+अटल irqवापस_t xilinx_dpdma_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = data;
+	अचिन्हित दीर्घ mask;
+	अचिन्हित पूर्णांक i;
 	u32 status;
 	u32 error;
 
-	status = dpdma_read(xdev->reg, XILINX_DPDMA_ISR);
-	error = dpdma_read(xdev->reg, XILINX_DPDMA_EISR);
-	if (!status && !error)
-		return IRQ_NONE;
+	status = dpdma_पढ़ो(xdev->reg, XILINX_DPDMA_ISR);
+	error = dpdma_पढ़ो(xdev->reg, XILINX_DPDMA_EISR);
+	अगर (!status && !error)
+		वापस IRQ_NONE;
 
-	dpdma_write(xdev->reg, XILINX_DPDMA_ISR, status);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EISR, error);
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_ISR, status);
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EISR, error);
 
-	if (status & XILINX_DPDMA_INTR_VSYNC) {
+	अगर (status & XILINX_DPDMA_INTR_VSYNC) अणु
 		/*
-		 * There's a single VSYNC interrupt that needs to be processed
+		 * There's a single VSYNC पूर्णांकerrupt that needs to be processed
 		 * by each running channel to update the active descriptor.
 		 */
-		for (i = 0; i < ARRAY_SIZE(xdev->chan); i++) {
-			struct xilinx_dpdma_chan *chan = xdev->chan[i];
+		क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); i++) अणु
+			काष्ठा xilinx_dpdma_chan *chan = xdev->chan[i];
 
-			if (chan)
+			अगर (chan)
 				xilinx_dpdma_chan_vsync_irq(chan);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mask = FIELD_GET(XILINX_DPDMA_INTR_DESC_DONE_MASK, status);
-	if (mask) {
-		for_each_set_bit(i, &mask, ARRAY_SIZE(xdev->chan))
-			xilinx_dpdma_chan_done_irq(xdev->chan[i]);
-	}
+	अगर (mask) अणु
+		क्रम_each_set_bit(i, &mask, ARRAY_SIZE(xdev->chan))
+			xilinx_dpdma_chan_करोne_irq(xdev->chan[i]);
+	पूर्ण
 
 	mask = FIELD_GET(XILINX_DPDMA_INTR_NO_OSTAND_MASK, status);
-	if (mask) {
-		for_each_set_bit(i, &mask, ARRAY_SIZE(xdev->chan))
-			xilinx_dpdma_chan_notify_no_ostand(xdev->chan[i]);
-	}
+	अगर (mask) अणु
+		क्रम_each_set_bit(i, &mask, ARRAY_SIZE(xdev->chan))
+			xilinx_dpdma_chan_notअगरy_no_ostand(xdev->chan[i]);
+	पूर्ण
 
 	mask = status & XILINX_DPDMA_INTR_ERR_ALL;
-	if (mask || error)
+	अगर (mask || error)
 		xilinx_dpdma_handle_err_irq(xdev, mask, error);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Initialization & Cleanup
  */
 
-static int xilinx_dpdma_chan_init(struct xilinx_dpdma_device *xdev,
-				  unsigned int chan_id)
-{
-	struct xilinx_dpdma_chan *chan;
+अटल पूर्णांक xilinx_dpdma_chan_init(काष्ठा xilinx_dpdma_device *xdev,
+				  अचिन्हित पूर्णांक chan_id)
+अणु
+	काष्ठा xilinx_dpdma_chan *chan;
 
-	chan = devm_kzalloc(xdev->dev, sizeof(*chan), GFP_KERNEL);
-	if (!chan)
-		return -ENOMEM;
+	chan = devm_kzalloc(xdev->dev, माप(*chan), GFP_KERNEL);
+	अगर (!chan)
+		वापस -ENOMEM;
 
 	chan->id = chan_id;
 	chan->reg = xdev->reg + XILINX_DPDMA_CH_BASE
@@ -1563,102 +1564,102 @@ static int xilinx_dpdma_chan_init(struct xilinx_dpdma_device *xdev,
 	chan->xdev = xdev;
 
 	spin_lock_init(&chan->lock);
-	init_waitqueue_head(&chan->wait_to_stop);
+	init_रुकोqueue_head(&chan->रुको_to_stop);
 
 	tasklet_setup(&chan->err_task, xilinx_dpdma_chan_err_task);
 
-	chan->vchan.desc_free = xilinx_dpdma_chan_free_tx_desc;
+	chan->vchan.desc_मुक्त = xilinx_dpdma_chan_मुक्त_tx_desc;
 	vchan_init(&chan->vchan, &xdev->common);
 
 	xdev->chan[chan->id] = chan;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xilinx_dpdma_chan_remove(struct xilinx_dpdma_chan *chan)
-{
-	if (!chan)
-		return;
+अटल व्योम xilinx_dpdma_chan_हटाओ(काष्ठा xilinx_dpdma_chan *chan)
+अणु
+	अगर (!chan)
+		वापस;
 
-	tasklet_kill(&chan->err_task);
+	tasklet_समाप्त(&chan->err_task);
 	list_del(&chan->vchan.chan.device_node);
-}
+पूर्ण
 
-static struct dma_chan *of_dma_xilinx_xlate(struct of_phandle_args *dma_spec,
-					    struct of_dma *ofdma)
-{
-	struct xilinx_dpdma_device *xdev = ofdma->of_dma_data;
-	uint32_t chan_id = dma_spec->args[0];
+अटल काष्ठा dma_chan *of_dma_xilinx_xlate(काष्ठा of_phandle_args *dma_spec,
+					    काष्ठा of_dma *ofdma)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = ofdma->of_dma_data;
+	uपूर्णांक32_t chan_id = dma_spec->args[0];
 
-	if (chan_id >= ARRAY_SIZE(xdev->chan))
-		return NULL;
+	अगर (chan_id >= ARRAY_SIZE(xdev->chan))
+		वापस शून्य;
 
-	if (!xdev->chan[chan_id])
-		return NULL;
+	अगर (!xdev->chan[chan_id])
+		वापस शून्य;
 
-	return dma_get_slave_channel(&xdev->chan[chan_id]->vchan.chan);
-}
+	वापस dma_get_slave_channel(&xdev->chan[chan_id]->vchan.chan);
+पूर्ण
 
-static void dpdma_hw_init(struct xilinx_dpdma_device *xdev)
-{
-	unsigned int i;
-	void __iomem *reg;
+अटल व्योम dpdma_hw_init(काष्ठा xilinx_dpdma_device *xdev)
+अणु
+	अचिन्हित पूर्णांक i;
+	व्योम __iomem *reg;
 
-	/* Disable all interrupts */
+	/* Disable all पूर्णांकerrupts */
 	xilinx_dpdma_disable_irq(xdev);
 
 	/* Stop all channels */
-	for (i = 0; i < ARRAY_SIZE(xdev->chan); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); i++) अणु
 		reg = xdev->reg + XILINX_DPDMA_CH_BASE
 				+ XILINX_DPDMA_CH_OFFSET * i;
 		dpdma_clr(reg, XILINX_DPDMA_CH_CNTL, XILINX_DPDMA_CH_CNTL_ENABLE);
-	}
+	पूर्ण
 
-	/* Clear the interrupt status registers */
-	dpdma_write(xdev->reg, XILINX_DPDMA_ISR, XILINX_DPDMA_INTR_ALL);
-	dpdma_write(xdev->reg, XILINX_DPDMA_EISR, XILINX_DPDMA_EINTR_ALL);
-}
+	/* Clear the पूर्णांकerrupt status रेजिस्टरs */
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_ISR, XILINX_DPDMA_INTR_ALL);
+	dpdma_ग_लिखो(xdev->reg, XILINX_DPDMA_EISR, XILINX_DPDMA_EINTR_ALL);
+पूर्ण
 
-static int xilinx_dpdma_probe(struct platform_device *pdev)
-{
-	struct xilinx_dpdma_device *xdev;
-	struct dma_device *ddev;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक xilinx_dpdma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev;
+	काष्ठा dma_device *ddev;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	xdev = devm_kzalloc(&pdev->dev, sizeof(*xdev), GFP_KERNEL);
-	if (!xdev)
-		return -ENOMEM;
+	xdev = devm_kzalloc(&pdev->dev, माप(*xdev), GFP_KERNEL);
+	अगर (!xdev)
+		वापस -ENOMEM;
 
 	xdev->dev = &pdev->dev;
-	xdev->ext_addr = sizeof(dma_addr_t) > 4;
+	xdev->ext_addr = माप(dma_addr_t) > 4;
 
 	INIT_LIST_HEAD(&xdev->common.channels);
 
-	platform_set_drvdata(pdev, xdev);
+	platक्रमm_set_drvdata(pdev, xdev);
 
 	xdev->axi_clk = devm_clk_get(xdev->dev, "axi_clk");
-	if (IS_ERR(xdev->axi_clk))
-		return PTR_ERR(xdev->axi_clk);
+	अगर (IS_ERR(xdev->axi_clk))
+		वापस PTR_ERR(xdev->axi_clk);
 
-	xdev->reg = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(xdev->reg))
-		return PTR_ERR(xdev->reg);
+	xdev->reg = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(xdev->reg))
+		वापस PTR_ERR(xdev->reg);
 
 	dpdma_hw_init(xdev);
 
-	xdev->irq = platform_get_irq(pdev, 0);
-	if (xdev->irq < 0) {
+	xdev->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (xdev->irq < 0) अणु
 		dev_err(xdev->dev, "failed to get platform irq\n");
-		return xdev->irq;
-	}
+		वापस xdev->irq;
+	पूर्ण
 
 	ret = request_irq(xdev->irq, xilinx_dpdma_irq_handler, IRQF_SHARED,
 			  dev_name(xdev->dev), xdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(xdev->dev, "failed to request IRQ\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ddev = &xdev->common;
 	ddev->dev = &pdev->dev;
@@ -1671,13 +1672,13 @@ static int xilinx_dpdma_probe(struct platform_device *pdev)
 	ddev->copy_align = fls(XILINX_DPDMA_ALIGN_BYTES - 1);
 
 	ddev->device_alloc_chan_resources = xilinx_dpdma_alloc_chan_resources;
-	ddev->device_free_chan_resources = xilinx_dpdma_free_chan_resources;
-	ddev->device_prep_interleaved_dma = xilinx_dpdma_prep_interleaved_dma;
+	ddev->device_मुक्त_chan_resources = xilinx_dpdma_मुक्त_chan_resources;
+	ddev->device_prep_पूर्णांकerleaved_dma = xilinx_dpdma_prep_पूर्णांकerleaved_dma;
 	/* TODO: Can we achieve better granularity ? */
 	ddev->device_tx_status = dma_cookie_status;
 	ddev->device_issue_pending = xilinx_dpdma_issue_pending;
 	ddev->device_config = xilinx_dpdma_config;
-	ddev->device_pause = xilinx_dpdma_pause;
+	ddev->device_छोड़ो = xilinx_dpdma_छोड़ो;
 	ddev->device_resume = xilinx_dpdma_resume;
 	ddev->device_terminate_all = xilinx_dpdma_terminate_all;
 	ddev->device_synchronize = xilinx_dpdma_synchronize;
@@ -1685,33 +1686,33 @@ static int xilinx_dpdma_probe(struct platform_device *pdev)
 	ddev->directions = BIT(DMA_MEM_TO_DEV);
 	ddev->residue_granularity = DMA_RESIDUE_GRANULARITY_DESCRIPTOR;
 
-	for (i = 0; i < ARRAY_SIZE(xdev->chan); ++i) {
+	क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); ++i) अणु
 		ret = xilinx_dpdma_chan_init(xdev, i);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(xdev->dev, "failed to initialize channel %u\n",
 				i);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	ret = clk_prepare_enable(xdev->axi_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(xdev->dev, "failed to enable the axi clock\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	ret = dma_async_device_register(ddev);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(ddev);
+	अगर (ret) अणु
 		dev_err(xdev->dev, "failed to register the dma device\n");
-		goto error_dma_async;
-	}
+		जाओ error_dma_async;
+	पूर्ण
 
-	ret = of_dma_controller_register(xdev->dev->of_node,
+	ret = of_dma_controller_रेजिस्टर(xdev->dev->of_node,
 					 of_dma_xilinx_xlate, ddev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(xdev->dev, "failed to register DMA to DT DMA helper\n");
-		goto error_of_dma;
-	}
+		जाओ error_of_dma;
+	पूर्ण
 
 	xilinx_dpdma_enable_irq(xdev);
 
@@ -1719,56 +1720,56 @@ static int xilinx_dpdma_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "Xilinx DPDMA engine is probed\n");
 
-	return 0;
+	वापस 0;
 
 error_of_dma:
-	dma_async_device_unregister(ddev);
+	dma_async_device_unरेजिस्टर(ddev);
 error_dma_async:
 	clk_disable_unprepare(xdev->axi_clk);
 error:
-	for (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
-		xilinx_dpdma_chan_remove(xdev->chan[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
+		xilinx_dpdma_chan_हटाओ(xdev->chan[i]);
 
-	free_irq(xdev->irq, xdev);
+	मुक्त_irq(xdev->irq, xdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xilinx_dpdma_remove(struct platform_device *pdev)
-{
-	struct xilinx_dpdma_device *xdev = platform_get_drvdata(pdev);
-	unsigned int i;
+अटल पूर्णांक xilinx_dpdma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xilinx_dpdma_device *xdev = platक्रमm_get_drvdata(pdev);
+	अचिन्हित पूर्णांक i;
 
-	/* Start by disabling the IRQ to avoid races during cleanup. */
-	free_irq(xdev->irq, xdev);
+	/* Start by disabling the IRQ to aव्योम races during cleanup. */
+	मुक्त_irq(xdev->irq, xdev);
 
 	xilinx_dpdma_disable_irq(xdev);
-	of_dma_controller_free(pdev->dev.of_node);
-	dma_async_device_unregister(&xdev->common);
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+	dma_async_device_unरेजिस्टर(&xdev->common);
 	clk_disable_unprepare(xdev->axi_clk);
 
-	for (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
-		xilinx_dpdma_chan_remove(xdev->chan[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(xdev->chan); i++)
+		xilinx_dpdma_chan_हटाओ(xdev->chan[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id xilinx_dpdma_of_match[] = {
-	{ .compatible = "xlnx,zynqmp-dpdma",},
-	{ /* end of table */ },
-};
+अटल स्थिर काष्ठा of_device_id xilinx_dpdma_of_match[] = अणु
+	अणु .compatible = "xlnx,zynqmp-dpdma",पूर्ण,
+	अणु /* end of table */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xilinx_dpdma_of_match);
 
-static struct platform_driver xilinx_dpdma_driver = {
+अटल काष्ठा platक्रमm_driver xilinx_dpdma_driver = अणु
 	.probe			= xilinx_dpdma_probe,
-	.remove			= xilinx_dpdma_remove,
-	.driver			= {
+	.हटाओ			= xilinx_dpdma_हटाओ,
+	.driver			= अणु
 		.name		= "xilinx-zynqmp-dpdma",
 		.of_match_table	= xilinx_dpdma_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(xilinx_dpdma_driver);
+module_platक्रमm_driver(xilinx_dpdma_driver);
 
 MODULE_AUTHOR("Xilinx, Inc.");
 MODULE_DESCRIPTION("Xilinx ZynqMP DPDMA driver");

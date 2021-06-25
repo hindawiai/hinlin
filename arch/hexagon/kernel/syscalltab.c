@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * System call table for Hexagon
+ * System call table क्रम Hexagon
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/syscalls.h>
-#include <linux/signal.h>
-#include <linux/unistd.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/unistd.h>
 
-#include <asm/syscall.h>
+#समावेश <यंत्र/syscall.h>
 
-#undef __SYSCALL
-#define __SYSCALL(nr, call) [nr] = (call),
+#अघोषित __SYSCALL
+#घोषणा __SYSCALL(nr, call) [nr] = (call),
 
-void *sys_call_table[__NR_syscalls] = {
-#include <asm/unistd.h>
-};
+व्योम *sys_call_table[__NR_syscalls] = अणु
+#समावेश <यंत्र/unistd.h>
+पूर्ण;

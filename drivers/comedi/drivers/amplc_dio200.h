@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * comedi/drivers/amplc_dio.h
+ * comedi/drivers/amplc_dपन.स
  *
- * Header for amplc_dio200.c, amplc_dio200_common.c and
+ * Header क्रम amplc_dio200.c, amplc_dio200_common.c and
  * amplc_dio200_pci.c.
  *
  * Copyright (C) 2005-2013 MEV Ltd. <https://www.mev.co.uk/>
@@ -11,36 +12,36 @@
  * Copyright (C) 1998,2000 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef AMPLC_DIO200_H_INCLUDED
-#define AMPLC_DIO200_H_INCLUDED
+#अगर_अघोषित AMPLC_DIO200_H_INCLUDED
+#घोषणा AMPLC_DIO200_H_INCLUDED
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct comedi_device;
+काष्ठा comedi_device;
 
 /*
  * Subdevice types.
  */
-enum dio200_sdtype { sd_none, sd_intr, sd_8255, sd_8254, sd_timer };
+क्रमागत dio200_sdtype अणु sd_none, sd_पूर्णांकr, sd_8255, sd_8254, sd_समयr पूर्ण;
 
-#define DIO200_MAX_SUBDEVS	8
-#define DIO200_MAX_ISNS		6
+#घोषणा DIO200_MAX_SUBDEVS	8
+#घोषणा DIO200_MAX_ISNS		6
 
-struct dio200_board {
-	const char *name;
-	unsigned char mainbar;
-	unsigned short n_subdevs;	/* number of subdevices */
-	unsigned char sdtype[DIO200_MAX_SUBDEVS];	/* enum dio200_sdtype */
-	unsigned char sdinfo[DIO200_MAX_SUBDEVS];	/* depends on sdtype */
-	unsigned int has_int_sce:1;	/* has interrupt enable/status reg */
-	unsigned int has_clk_gat_sce:1;	/* has clock/gate selection registers */
-	unsigned int is_pcie:1;			/* has enhanced features */
-};
+काष्ठा dio200_board अणु
+	स्थिर अक्षर *name;
+	अचिन्हित अक्षर मुख्यbar;
+	अचिन्हित लघु n_subdevs;	/* number of subdevices */
+	अचिन्हित अक्षर sdtype[DIO200_MAX_SUBDEVS];	/* क्रमागत dio200_sdtype */
+	अचिन्हित अक्षर sdinfo[DIO200_MAX_SUBDEVS];	/* depends on sdtype */
+	अचिन्हित पूर्णांक has_पूर्णांक_sce:1;	/* has पूर्णांकerrupt enable/status reg */
+	अचिन्हित पूर्णांक has_clk_gat_sce:1;	/* has घड़ी/gate selection रेजिस्टरs */
+	अचिन्हित पूर्णांक is_pcie:1;			/* has enhanced features */
+पूर्ण;
 
-int amplc_dio200_common_attach(struct comedi_device *dev, unsigned int irq,
-			       unsigned long req_irq_flags);
+पूर्णांक amplc_dio200_common_attach(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक irq,
+			       अचिन्हित दीर्घ req_irq_flags);
 
 /* Used by initialization of PCIe boards. */
-void amplc_dio200_set_enhance(struct comedi_device *dev, unsigned char val);
+व्योम amplc_dio200_set_enhance(काष्ठा comedi_device *dev, अचिन्हित अक्षर val);
 
-#endif
+#पूर्ण_अगर

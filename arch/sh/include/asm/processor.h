@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_PROCESSOR_H
-#define __ASM_SH_PROCESSOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_PROCESSOR_H
+#घोषणा __ASM_SH_PROCESSOR_H
 
-#include <asm/cpu-features.h>
-#include <asm/segment.h>
-#include <asm/cache.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/cache.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 /*
- *  CPU type and hardware bug flags. Kept separately for each CPU.
+ *  CPU type and hardware bug flags. Kept separately क्रम each CPU.
  *
  *  Each one of these also needs a CONFIG_CPU_SUBTYPE_xxx entry
  *  in arch/sh/mm/Kconfig, as well as an entry in arch/sh/kernel/setup.c
- *  for parsing the subtype in get_cpu_subtype().
+ *  क्रम parsing the subtype in get_cpu_subtype().
  */
-enum cpu_type {
+क्रमागत cpu_type अणु
 	/* SH-2 types */
 	CPU_SH7619, CPU_J2,
 
@@ -41,9 +42,9 @@ enum cpu_type {
 
 	/* Unknown subtype */
 	CPU_SH_NONE
-};
+पूर्ण;
 
-enum cpu_family {
+क्रमागत cpu_family अणु
 	CPU_FAMILY_SH2,
 	CPU_FAMILY_SH2A,
 	CPU_FAMILY_SH3,
@@ -51,124 +52,124 @@ enum cpu_family {
 	CPU_FAMILY_SH4A,
 	CPU_FAMILY_SH4AL_DSP,
 	CPU_FAMILY_UNKNOWN,
-};
+पूर्ण;
 
 /*
- * TLB information structure
+ * TLB inक्रमmation काष्ठाure
  *
- * Defined for both I and D tlb, per-processor.
+ * Defined क्रम both I and D tlb, per-processor.
  */
-struct tlb_info {
-	unsigned long long next;
-	unsigned long long first;
-	unsigned long long last;
+काष्ठा tlb_info अणु
+	अचिन्हित दीर्घ दीर्घ next;
+	अचिन्हित दीर्घ दीर्घ first;
+	अचिन्हित दीर्घ दीर्घ last;
 
-	unsigned int entries;
-	unsigned int step;
+	अचिन्हित पूर्णांक entries;
+	अचिन्हित पूर्णांक step;
 
-	unsigned long flags;
-};
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
-struct sh_cpuinfo {
-	unsigned int type, family;
-	int cut_major, cut_minor;
-	unsigned long loops_per_jiffy;
-	unsigned long asid_cache;
+काष्ठा sh_cpuinfo अणु
+	अचिन्हित पूर्णांक type, family;
+	पूर्णांक cut_major, cut_minor;
+	अचिन्हित दीर्घ loops_per_jअगरfy;
+	अचिन्हित दीर्घ asid_cache;
 
-	struct cache_info icache;	/* Primary I-cache */
-	struct cache_info dcache;	/* Primary D-cache */
-	struct cache_info scache;	/* Secondary cache */
+	काष्ठा cache_info icache;	/* Primary I-cache */
+	काष्ठा cache_info dcache;	/* Primary D-cache */
+	काष्ठा cache_info scache;	/* Secondary cache */
 
 	/* TLB info */
-	struct tlb_info itlb;
-	struct tlb_info dtlb;
+	काष्ठा tlb_info itlb;
+	काष्ठा tlb_info dtlb;
 
-	unsigned int phys_bits;
-	unsigned long flags;
-} __attribute__ ((aligned(L1_CACHE_BYTES)));
+	अचिन्हित पूर्णांक phys_bits;
+	अचिन्हित दीर्घ flags;
+पूर्ण __attribute__ ((aligned(L1_CACHE_BYTES)));
 
-extern struct sh_cpuinfo cpu_data[];
-#define boot_cpu_data cpu_data[0]
-#define current_cpu_data cpu_data[smp_processor_id()]
-#define raw_current_cpu_data cpu_data[raw_smp_processor_id()]
+बाह्य काष्ठा sh_cpuinfo cpu_data[];
+#घोषणा boot_cpu_data cpu_data[0]
+#घोषणा current_cpu_data cpu_data[smp_processor_id()]
+#घोषणा raw_current_cpu_data cpu_data[raw_smp_processor_id()]
 
-#define cpu_sleep()	__asm__ __volatile__ ("sleep" : : : "memory")
-#define cpu_relax()	barrier()
+#घोषणा cpu_sleep()	__यंत्र__ __अस्थिर__ ("sleep" : : : "memory")
+#घोषणा cpu_relax()	barrier()
 
-void default_idle(void);
-void stop_this_cpu(void *);
+व्योम शेष_idle(व्योम);
+व्योम stop_this_cpu(व्योम *);
 
 /* Forward decl */
-struct seq_operations;
-struct task_struct;
+काष्ठा seq_operations;
+काष्ठा task_काष्ठा;
 
-extern struct pt_regs fake_swapper_regs;
+बाह्य काष्ठा pt_regs fake_swapper_regs;
 
-extern void cpu_init(void);
-extern void cpu_probe(void);
+बाह्य व्योम cpu_init(व्योम);
+बाह्य व्योम cpu_probe(व्योम);
 
 /* arch/sh/kernel/process.c */
-extern unsigned int xstate_size;
-extern void free_thread_xstate(struct task_struct *);
-extern struct kmem_cache *task_xstate_cachep;
+बाह्य अचिन्हित पूर्णांक xstate_size;
+बाह्य व्योम मुक्त_thपढ़ो_xstate(काष्ठा task_काष्ठा *);
+बाह्य काष्ठा kmem_cache *task_xstate_cachep;
 
 /* arch/sh/mm/alignment.c */
-extern int get_unalign_ctl(struct task_struct *, unsigned long addr);
-extern int set_unalign_ctl(struct task_struct *, unsigned int val);
+बाह्य पूर्णांक get_unalign_ctl(काष्ठा task_काष्ठा *, अचिन्हित दीर्घ addr);
+बाह्य पूर्णांक set_unalign_ctl(काष्ठा task_काष्ठा *, अचिन्हित पूर्णांक val);
 
-#define GET_UNALIGN_CTL(tsk, addr)	get_unalign_ctl((tsk), (addr))
-#define SET_UNALIGN_CTL(tsk, val)	set_unalign_ctl((tsk), (val))
+#घोषणा GET_UNALIGN_CTL(tsk, addr)	get_unalign_ctl((tsk), (addr))
+#घोषणा SET_UNALIGN_CTL(tsk, val)	set_unalign_ctl((tsk), (val))
 
 /* arch/sh/mm/init.c */
-extern unsigned int mem_init_done;
+बाह्य अचिन्हित पूर्णांक mem_init_करोne;
 
 /* arch/sh/kernel/setup.c */
-const char *get_cpu_subtype(struct sh_cpuinfo *c);
-extern const struct seq_operations cpuinfo_op;
+स्थिर अक्षर *get_cpu_subtype(काष्ठा sh_cpuinfo *c);
+बाह्य स्थिर काष्ठा seq_operations cpuinfo_op;
 
-/* thread_struct flags */
-#define SH_THREAD_UAC_NOPRINT	(1 << 0)
-#define SH_THREAD_UAC_SIGBUS	(1 << 1)
-#define SH_THREAD_UAC_MASK	(SH_THREAD_UAC_NOPRINT | SH_THREAD_UAC_SIGBUS)
+/* thपढ़ो_काष्ठा flags */
+#घोषणा SH_THREAD_UAC_NOPRINT	(1 << 0)
+#घोषणा SH_THREAD_UAC_SIGBUS	(1 << 1)
+#घोषणा SH_THREAD_UAC_MASK	(SH_THREAD_UAC_NOPRINT | SH_THREAD_UAC_SIGBUS)
 
 /* processor boot mode configuration */
-#define MODE_PIN0 (1 << 0)
-#define MODE_PIN1 (1 << 1)
-#define MODE_PIN2 (1 << 2)
-#define MODE_PIN3 (1 << 3)
-#define MODE_PIN4 (1 << 4)
-#define MODE_PIN5 (1 << 5)
-#define MODE_PIN6 (1 << 6)
-#define MODE_PIN7 (1 << 7)
-#define MODE_PIN8 (1 << 8)
-#define MODE_PIN9 (1 << 9)
-#define MODE_PIN10 (1 << 10)
-#define MODE_PIN11 (1 << 11)
-#define MODE_PIN12 (1 << 12)
-#define MODE_PIN13 (1 << 13)
-#define MODE_PIN14 (1 << 14)
-#define MODE_PIN15 (1 << 15)
+#घोषणा MODE_PIN0 (1 << 0)
+#घोषणा MODE_PIN1 (1 << 1)
+#घोषणा MODE_PIN2 (1 << 2)
+#घोषणा MODE_PIN3 (1 << 3)
+#घोषणा MODE_PIN4 (1 << 4)
+#घोषणा MODE_PIN5 (1 << 5)
+#घोषणा MODE_PIN6 (1 << 6)
+#घोषणा MODE_PIN7 (1 << 7)
+#घोषणा MODE_PIN8 (1 << 8)
+#घोषणा MODE_PIN9 (1 << 9)
+#घोषणा MODE_PIN10 (1 << 10)
+#घोषणा MODE_PIN11 (1 << 11)
+#घोषणा MODE_PIN12 (1 << 12)
+#घोषणा MODE_PIN13 (1 << 13)
+#घोषणा MODE_PIN14 (1 << 14)
+#घोषणा MODE_PIN15 (1 << 15)
 
-int generic_mode_pins(void);
-int test_mode_pin(int pin);
+पूर्णांक generic_mode_pins(व्योम);
+पूर्णांक test_mode_pin(पूर्णांक pin);
 
-#ifdef CONFIG_VSYSCALL
-int vsyscall_init(void);
-#else
-#define vsyscall_init() do { } while (0)
-#endif
+#अगर_घोषित CONFIG_VSYSCALL
+पूर्णांक vsyscall_init(व्योम);
+#अन्यथा
+#घोषणा vsyscall_init() करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
- * SH-2A has both 16 and 32-bit opcodes, do lame encoding checks.
+ * SH-2A has both 16 and 32-bit opcodes, करो lame encoding checks.
  */
-#ifdef CONFIG_CPU_SH2A
-extern unsigned int instruction_size(unsigned int insn);
-#else
-#define instruction_size(insn)	(2)
-#endif
+#अगर_घोषित CONFIG_CPU_SH2A
+बाह्य अचिन्हित पूर्णांक inकाष्ठाion_size(अचिन्हित पूर्णांक insn);
+#अन्यथा
+#घोषणा inकाष्ठाion_size(insn)	(2)
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#include <asm/processor_32.h>
+#समावेश <यंत्र/processor_32.h>
 
-#endif /* __ASM_SH_PROCESSOR_H */
+#पूर्ण_अगर /* __ASM_SH_PROCESSOR_H */

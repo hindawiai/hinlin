@@ -1,138 +1,139 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef CAIAQ_DEVICE_H
-#define CAIAQ_DEVICE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित CAIAQ_DEVICE_H
+#घोषणा CAIAQ_DEVICE_H
 
-#include "../usbaudio.h"
+#समावेश "../usbaudio.h"
 
-#define USB_VID_NATIVEINSTRUMENTS 0x17cc
+#घोषणा USB_VID_NATIVEINSTRUMENTS 0x17cc
 
-#define USB_PID_RIGKONTROL2		0x1969
-#define USB_PID_RIGKONTROL3		0x1940
-#define USB_PID_KORECONTROLLER		0x4711
-#define USB_PID_KORECONTROLLER2		0x4712
-#define USB_PID_AK1			0x0815
-#define USB_PID_AUDIO2DJ		0x041c
-#define USB_PID_AUDIO4DJ		0x0839
-#define USB_PID_AUDIO8DJ		0x1978
-#define USB_PID_SESSIONIO		0x1915
-#define USB_PID_GUITARRIGMOBILE		0x0d8d
-#define USB_PID_TRAKTORKONTROLX1	0x2305
-#define USB_PID_TRAKTORKONTROLS4	0xbaff
-#define USB_PID_TRAKTORAUDIO2		0x041d
-#define USB_PID_MASCHINECONTROLLER  0x0808
+#घोषणा USB_PID_RIGKONTROL2		0x1969
+#घोषणा USB_PID_RIGKONTROL3		0x1940
+#घोषणा USB_PID_KORECONTROLLER		0x4711
+#घोषणा USB_PID_KORECONTROLLER2		0x4712
+#घोषणा USB_PID_AK1			0x0815
+#घोषणा USB_PID_AUDIO2DJ		0x041c
+#घोषणा USB_PID_AUDIO4DJ		0x0839
+#घोषणा USB_PID_AUDIO8DJ		0x1978
+#घोषणा USB_PID_SESSIONIO		0x1915
+#घोषणा USB_PID_GUITARRIGMOBILE		0x0d8d
+#घोषणा USB_PID_TRAKTORKONTROLX1	0x2305
+#घोषणा USB_PID_TRAKTORKONTROLS4	0xbaff
+#घोषणा USB_PID_TRAKTORAUDIO2		0x041d
+#घोषणा USB_PID_MASCHINECONTROLLER  0x0808
 
-#define EP1_BUFSIZE 64
-#define EP4_BUFSIZE 512
-#define CAIAQ_USB_STR_LEN 0xff
-#define MAX_STREAMS 32
+#घोषणा EP1_बफ_मानE 64
+#घोषणा EP4_बफ_मानE 512
+#घोषणा CAIAQ_USB_STR_LEN 0xff
+#घोषणा MAX_STREAMS 32
 
-#define MODNAME "snd-usb-caiaq"
+#घोषणा MODNAME "snd-usb-caiaq"
 
-#define EP1_CMD_GET_DEVICE_INFO	0x1
-#define EP1_CMD_READ_ERP	0x2
-#define EP1_CMD_READ_ANALOG	0x3
-#define EP1_CMD_READ_IO		0x4
-#define EP1_CMD_WRITE_IO	0x5
-#define EP1_CMD_MIDI_READ	0x6
-#define EP1_CMD_MIDI_WRITE	0x7
-#define EP1_CMD_AUDIO_PARAMS	0x9
-#define EP1_CMD_AUTO_MSG	0xb
-#define EP1_CMD_DIMM_LEDS       0xc
+#घोषणा EP1_CMD_GET_DEVICE_INFO	0x1
+#घोषणा EP1_CMD_READ_ERP	0x2
+#घोषणा EP1_CMD_READ_ANALOG	0x3
+#घोषणा EP1_CMD_READ_IO		0x4
+#घोषणा EP1_CMD_WRITE_IO	0x5
+#घोषणा EP1_CMD_MIDI_READ	0x6
+#घोषणा EP1_CMD_MIDI_WRITE	0x7
+#घोषणा EP1_CMD_AUDIO_PARAMS	0x9
+#घोषणा EP1_CMD_AUTO_MSG	0xb
+#घोषणा EP1_CMD_DIMM_LEDS       0xc
 
-struct caiaq_device_spec {
-	unsigned short fw_version;
-	unsigned char hw_subtype;
-	unsigned char num_erp;
-	unsigned char num_analog_in;
-	unsigned char num_digital_in;
-	unsigned char num_digital_out;
-	unsigned char num_analog_audio_out;
-	unsigned char num_analog_audio_in;
-	unsigned char num_digital_audio_out;
-	unsigned char num_digital_audio_in;
-	unsigned char num_midi_out;
-	unsigned char num_midi_in;
-	unsigned char data_alignment;
-} __attribute__ ((packed));
+काष्ठा caiaq_device_spec अणु
+	अचिन्हित लघु fw_version;
+	अचिन्हित अक्षर hw_subtype;
+	अचिन्हित अक्षर num_erp;
+	अचिन्हित अक्षर num_analog_in;
+	अचिन्हित अक्षर num_digital_in;
+	अचिन्हित अक्षर num_digital_out;
+	अचिन्हित अक्षर num_analog_audio_out;
+	अचिन्हित अक्षर num_analog_audio_in;
+	अचिन्हित अक्षर num_digital_audio_out;
+	अचिन्हित अक्षर num_digital_audio_in;
+	अचिन्हित अक्षर num_midi_out;
+	अचिन्हित अक्षर num_midi_in;
+	अचिन्हित अक्षर data_alignment;
+पूर्ण __attribute__ ((packed));
 
-struct snd_usb_caiaq_cb_info;
+काष्ठा snd_usb_caiaq_cb_info;
 
-struct snd_usb_caiaqdev {
-	struct snd_usb_audio chip;
+काष्ठा snd_usb_caiaqdev अणु
+	काष्ठा snd_usb_audio chip;
 
-	struct urb ep1_in_urb;
-	struct urb midi_out_urb;
-	struct urb **data_urbs_in;
-	struct urb **data_urbs_out;
-	struct snd_usb_caiaq_cb_info *data_cb_info;
+	काष्ठा urb ep1_in_urb;
+	काष्ठा urb midi_out_urb;
+	काष्ठा urb **data_urbs_in;
+	काष्ठा urb **data_urbs_out;
+	काष्ठा snd_usb_caiaq_cb_info *data_cb_info;
 
-	unsigned char ep1_in_buf[EP1_BUFSIZE];
-	unsigned char ep1_out_buf[EP1_BUFSIZE];
-	unsigned char midi_out_buf[EP1_BUFSIZE];
+	अचिन्हित अक्षर ep1_in_buf[EP1_बफ_मानE];
+	अचिन्हित अक्षर ep1_out_buf[EP1_बफ_मानE];
+	अचिन्हित अक्षर midi_out_buf[EP1_बफ_मानE];
 
-	struct caiaq_device_spec spec;
+	काष्ठा caiaq_device_spec spec;
 	spinlock_t spinlock;
-	wait_queue_head_t ep1_wait_queue;
-	wait_queue_head_t prepare_wait_queue;
-	int spec_received, audio_parm_answer;
-	int midi_out_active;
+	रुको_queue_head_t ep1_रुको_queue;
+	रुको_queue_head_t prepare_रुको_queue;
+	पूर्णांक spec_received, audio_parm_answer;
+	पूर्णांक midi_out_active;
 
-	char vendor_name[CAIAQ_USB_STR_LEN];
-	char product_name[CAIAQ_USB_STR_LEN];
+	अक्षर venकरोr_name[CAIAQ_USB_STR_LEN];
+	अक्षर product_name[CAIAQ_USB_STR_LEN];
 
-	int n_streams, n_audio_in, n_audio_out;
-	int streaming, first_packet, output_running;
-	int audio_in_buf_pos[MAX_STREAMS];
-	int audio_out_buf_pos[MAX_STREAMS];
-	int period_in_count[MAX_STREAMS];
-	int period_out_count[MAX_STREAMS];
-	int input_panic, output_panic, warned;
-	char *audio_in_buf, *audio_out_buf;
-	unsigned int samplerates, bpp;
-	unsigned long outurb_active_mask;
+	पूर्णांक n_streams, n_audio_in, n_audio_out;
+	पूर्णांक streaming, first_packet, output_running;
+	पूर्णांक audio_in_buf_pos[MAX_STREAMS];
+	पूर्णांक audio_out_buf_pos[MAX_STREAMS];
+	पूर्णांक period_in_count[MAX_STREAMS];
+	पूर्णांक period_out_count[MAX_STREAMS];
+	पूर्णांक input_panic, output_panic, warned;
+	अक्षर *audio_in_buf, *audio_out_buf;
+	अचिन्हित पूर्णांक samplerates, bpp;
+	अचिन्हित दीर्घ outurb_active_mask;
 
-	struct snd_pcm_substream *sub_playback[MAX_STREAMS];
-	struct snd_pcm_substream *sub_capture[MAX_STREAMS];
+	काष्ठा snd_pcm_substream *sub_playback[MAX_STREAMS];
+	काष्ठा snd_pcm_substream *sub_capture[MAX_STREAMS];
 
 	/* Controls */
-	unsigned char control_state[256];
-	unsigned char ep8_out_buf[2];
+	अचिन्हित अक्षर control_state[256];
+	अचिन्हित अक्षर ep8_out_buf[2];
 
 	/* Linux input */
-#ifdef CONFIG_SND_USB_CAIAQ_INPUT
-	struct input_dev *input_dev;
-	char phys[64];			/* physical device path */
-	unsigned short keycode[128];
-	struct urb *ep4_in_urb;
-	unsigned char ep4_in_buf[EP4_BUFSIZE];
-#endif
+#अगर_घोषित CONFIG_SND_USB_CAIAQ_INPUT
+	काष्ठा input_dev *input_dev;
+	अक्षर phys[64];			/* physical device path */
+	अचिन्हित लघु keycode[128];
+	काष्ठा urb *ep4_in_urb;
+	अचिन्हित अक्षर ep4_in_buf[EP4_बफ_मानE];
+#पूर्ण_अगर
 
 	/* ALSA */
-	struct snd_pcm *pcm;
-	struct snd_pcm_hardware pcm_info;
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *midi_receive_substream;
-	struct snd_rawmidi_substream *midi_out_substream;
-};
+	काष्ठा snd_pcm *pcm;
+	काष्ठा snd_pcm_hardware pcm_info;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *midi_receive_substream;
+	काष्ठा snd_rawmidi_substream *midi_out_substream;
+पूर्ण;
 
-struct snd_usb_caiaq_cb_info {
-	struct snd_usb_caiaqdev *cdev;
-	int index;
-};
+काष्ठा snd_usb_caiaq_cb_info अणु
+	काष्ठा snd_usb_caiaqdev *cdev;
+	पूर्णांक index;
+पूर्ण;
 
-#define caiaqdev(c) ((struct snd_usb_caiaqdev*)(c)->private_data)
-#define caiaqdev_to_dev(d)	(d->chip.card->dev)
+#घोषणा caiaqdev(c) ((काष्ठा snd_usb_caiaqdev*)(c)->निजी_data)
+#घोषणा caiaqdev_to_dev(d)	(d->chip.card->dev)
 
-int snd_usb_caiaq_set_audio_params (struct snd_usb_caiaqdev *cdev, int rate, int depth, int bbp);
-int snd_usb_caiaq_set_auto_msg (struct snd_usb_caiaqdev *cdev, int digital, int analog, int erp);
-int snd_usb_caiaq_send_command(struct snd_usb_caiaqdev *cdev,
-			       unsigned char command,
-			       const unsigned char *buffer,
-			       int len);
-int snd_usb_caiaq_send_command_bank(struct snd_usb_caiaqdev *cdev,
-			       unsigned char command,
-			       unsigned char bank,
-			       const unsigned char *buffer,
-			       int len);
+पूर्णांक snd_usb_caiaq_set_audio_params (काष्ठा snd_usb_caiaqdev *cdev, पूर्णांक rate, पूर्णांक depth, पूर्णांक bbp);
+पूर्णांक snd_usb_caiaq_set_स्वतः_msg (काष्ठा snd_usb_caiaqdev *cdev, पूर्णांक digital, पूर्णांक analog, पूर्णांक erp);
+पूर्णांक snd_usb_caiaq_send_command(काष्ठा snd_usb_caiaqdev *cdev,
+			       अचिन्हित अक्षर command,
+			       स्थिर अचिन्हित अक्षर *buffer,
+			       पूर्णांक len);
+पूर्णांक snd_usb_caiaq_send_command_bank(काष्ठा snd_usb_caiaqdev *cdev,
+			       अचिन्हित अक्षर command,
+			       अचिन्हित अक्षर bank,
+			       स्थिर अचिन्हित अक्षर *buffer,
+			       पूर्णांक len);
 
-#endif /* CAIAQ_DEVICE_H */
+#पूर्ण_अगर /* CAIAQ_DEVICE_H */

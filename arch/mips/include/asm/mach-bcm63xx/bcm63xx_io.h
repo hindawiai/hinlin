@@ -1,104 +1,105 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BCM63XX_IO_H_
-#define BCM63XX_IO_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BCM63XX_IO_H_
+#घोषणा BCM63XX_IO_H_
 
-#include <asm/mach-bcm63xx/bcm63xx_cpu.h>
+#समावेश <यंत्र/mach-bcm63xx/bcm63xx_cpu.h>
 
 /*
  * Physical memory map, RAM is mapped at 0x0.
  *
- * Note that size MUST be a power of two.
+ * Note that size MUST be a घातer of two.
  */
-#define BCM_PCMCIA_COMMON_BASE_PA	(0x20000000)
-#define BCM_PCMCIA_COMMON_SIZE		(16 * 1024 * 1024)
-#define BCM_PCMCIA_COMMON_END_PA	(BCM_PCMCIA_COMMON_BASE_PA +	\
+#घोषणा BCM_PCMCIA_COMMON_BASE_PA	(0x20000000)
+#घोषणा BCM_PCMCIA_COMMON_SIZE		(16 * 1024 * 1024)
+#घोषणा BCM_PCMCIA_COMMON_END_PA	(BCM_PCMCIA_COMMON_BASE_PA +	\
 					 BCM_PCMCIA_COMMON_SIZE - 1)
 
-#define BCM_PCMCIA_ATTR_BASE_PA		(0x21000000)
-#define BCM_PCMCIA_ATTR_SIZE		(16 * 1024 * 1024)
-#define BCM_PCMCIA_ATTR_END_PA		(BCM_PCMCIA_ATTR_BASE_PA +	\
+#घोषणा BCM_PCMCIA_ATTR_BASE_PA		(0x21000000)
+#घोषणा BCM_PCMCIA_ATTR_SIZE		(16 * 1024 * 1024)
+#घोषणा BCM_PCMCIA_ATTR_END_PA		(BCM_PCMCIA_ATTR_BASE_PA +	\
 					 BCM_PCMCIA_ATTR_SIZE - 1)
 
-#define BCM_PCMCIA_IO_BASE_PA		(0x22000000)
-#define BCM_PCMCIA_IO_SIZE		(64 * 1024)
-#define BCM_PCMCIA_IO_END_PA		(BCM_PCMCIA_IO_BASE_PA +	\
+#घोषणा BCM_PCMCIA_IO_BASE_PA		(0x22000000)
+#घोषणा BCM_PCMCIA_IO_SIZE		(64 * 1024)
+#घोषणा BCM_PCMCIA_IO_END_PA		(BCM_PCMCIA_IO_BASE_PA +	\
 					BCM_PCMCIA_IO_SIZE - 1)
 
-#define BCM_PCI_MEM_BASE_PA		(0x30000000)
-#define BCM_PCI_MEM_SIZE		(128 * 1024 * 1024)
-#define BCM_PCI_MEM_END_PA		(BCM_PCI_MEM_BASE_PA +		\
+#घोषणा BCM_PCI_MEM_BASE_PA		(0x30000000)
+#घोषणा BCM_PCI_MEM_SIZE		(128 * 1024 * 1024)
+#घोषणा BCM_PCI_MEM_END_PA		(BCM_PCI_MEM_BASE_PA +		\
 					BCM_PCI_MEM_SIZE - 1)
 
-#define BCM_PCI_IO_BASE_PA		(0x08000000)
-#define BCM_PCI_IO_SIZE			(64 * 1024)
-#define BCM_PCI_IO_END_PA		(BCM_PCI_IO_BASE_PA +		\
+#घोषणा BCM_PCI_IO_BASE_PA		(0x08000000)
+#घोषणा BCM_PCI_IO_SIZE			(64 * 1024)
+#घोषणा BCM_PCI_IO_END_PA		(BCM_PCI_IO_BASE_PA +		\
 					BCM_PCI_IO_SIZE - 1)
-#define BCM_PCI_IO_HALF_PA		(BCM_PCI_IO_BASE_PA +		\
+#घोषणा BCM_PCI_IO_HALF_PA		(BCM_PCI_IO_BASE_PA +		\
 					(BCM_PCI_IO_SIZE / 2) - 1)
 
-#define BCM_CB_MEM_BASE_PA		(0x38000000)
-#define BCM_CB_MEM_SIZE			(128 * 1024 * 1024)
-#define BCM_CB_MEM_END_PA		(BCM_CB_MEM_BASE_PA +		\
+#घोषणा BCM_CB_MEM_BASE_PA		(0x38000000)
+#घोषणा BCM_CB_MEM_SIZE			(128 * 1024 * 1024)
+#घोषणा BCM_CB_MEM_END_PA		(BCM_CB_MEM_BASE_PA +		\
 					BCM_CB_MEM_SIZE - 1)
 
-#define BCM_PCIE_MEM_BASE_PA		0x10f00000
-#define BCM_PCIE_MEM_SIZE		(16 * 1024 * 1024)
-#define BCM_PCIE_MEM_END_PA		(BCM_PCIE_MEM_BASE_PA +		\
+#घोषणा BCM_PCIE_MEM_BASE_PA		0x10f00000
+#घोषणा BCM_PCIE_MEM_SIZE		(16 * 1024 * 1024)
+#घोषणा BCM_PCIE_MEM_END_PA		(BCM_PCIE_MEM_BASE_PA +		\
 					BCM_PCIE_MEM_SIZE - 1)
 
 /*
- * Internal registers are accessed through KSEG3
+ * Internal रेजिस्टरs are accessed through KSEG3
  */
-#define BCM_REGS_VA(x)	((void __iomem *)(x))
+#घोषणा BCM_REGS_VA(x)	((व्योम __iomem *)(x))
 
-#define bcm_readb(a)	(*(volatile unsigned char *)	BCM_REGS_VA(a))
-#define bcm_readw(a)	(*(volatile unsigned short *)	BCM_REGS_VA(a))
-#define bcm_readl(a)	(*(volatile unsigned int *)	BCM_REGS_VA(a))
-#define bcm_readq(a)	(*(volatile u64 *)		BCM_REGS_VA(a))
-#define bcm_writeb(v, a) (*(volatile unsigned char *) BCM_REGS_VA((a)) = (v))
-#define bcm_writew(v, a) (*(volatile unsigned short *) BCM_REGS_VA((a)) = (v))
-#define bcm_writel(v, a) (*(volatile unsigned int *) BCM_REGS_VA((a)) = (v))
-#define bcm_writeq(v, a) (*(volatile u64 *) BCM_REGS_VA((a)) = (v))
+#घोषणा bcm_पढ़ोb(a)	(*(अस्थिर अचिन्हित अक्षर *)	BCM_REGS_VA(a))
+#घोषणा bcm_पढ़ोw(a)	(*(अस्थिर अचिन्हित लघु *)	BCM_REGS_VA(a))
+#घोषणा bcm_पढ़ोl(a)	(*(अस्थिर अचिन्हित पूर्णांक *)	BCM_REGS_VA(a))
+#घोषणा bcm_पढ़ोq(a)	(*(अस्थिर u64 *)		BCM_REGS_VA(a))
+#घोषणा bcm_ग_लिखोb(v, a) (*(अस्थिर अचिन्हित अक्षर *) BCM_REGS_VA((a)) = (v))
+#घोषणा bcm_ग_लिखोw(v, a) (*(अस्थिर अचिन्हित लघु *) BCM_REGS_VA((a)) = (v))
+#घोषणा bcm_ग_लिखोl(v, a) (*(अस्थिर अचिन्हित पूर्णांक *) BCM_REGS_VA((a)) = (v))
+#घोषणा bcm_ग_लिखोq(v, a) (*(अस्थिर u64 *) BCM_REGS_VA((a)) = (v))
 
 /*
- * IO helpers to access register set for current CPU
+ * IO helpers to access रेजिस्टर set क्रम current CPU
  */
-#define bcm_rset_readb(s, o)	bcm_readb(bcm63xx_regset_address(s) + (o))
-#define bcm_rset_readw(s, o)	bcm_readw(bcm63xx_regset_address(s) + (o))
-#define bcm_rset_readl(s, o)	bcm_readl(bcm63xx_regset_address(s) + (o))
-#define bcm_rset_writeb(s, v, o)	bcm_writeb((v), \
+#घोषणा bcm_rset_पढ़ोb(s, o)	bcm_पढ़ोb(bcm63xx_regset_address(s) + (o))
+#घोषणा bcm_rset_पढ़ोw(s, o)	bcm_पढ़ोw(bcm63xx_regset_address(s) + (o))
+#घोषणा bcm_rset_पढ़ोl(s, o)	bcm_पढ़ोl(bcm63xx_regset_address(s) + (o))
+#घोषणा bcm_rset_ग_लिखोb(s, v, o)	bcm_ग_लिखोb((v), \
 					bcm63xx_regset_address(s) + (o))
-#define bcm_rset_writew(s, v, o)	bcm_writew((v), \
+#घोषणा bcm_rset_ग_लिखोw(s, v, o)	bcm_ग_लिखोw((v), \
 					bcm63xx_regset_address(s) + (o))
-#define bcm_rset_writel(s, v, o)	bcm_writel((v), \
+#घोषणा bcm_rset_ग_लिखोl(s, v, o)	bcm_ग_लिखोl((v), \
 					bcm63xx_regset_address(s) + (o))
 
 /*
- * helpers for frequently used register sets
+ * helpers क्रम frequently used रेजिस्टर sets
  */
-#define bcm_perf_readl(o)	bcm_rset_readl(RSET_PERF, (o))
-#define bcm_perf_writel(v, o)	bcm_rset_writel(RSET_PERF, (v), (o))
-#define bcm_timer_readl(o)	bcm_rset_readl(RSET_TIMER, (o))
-#define bcm_timer_writel(v, o)	bcm_rset_writel(RSET_TIMER, (v), (o))
-#define bcm_wdt_readl(o)	bcm_rset_readl(RSET_WDT, (o))
-#define bcm_wdt_writel(v, o)	bcm_rset_writel(RSET_WDT, (v), (o))
-#define bcm_gpio_readl(o)	bcm_rset_readl(RSET_GPIO, (o))
-#define bcm_gpio_writel(v, o)	bcm_rset_writel(RSET_GPIO, (v), (o))
-#define bcm_uart0_readl(o)	bcm_rset_readl(RSET_UART0, (o))
-#define bcm_uart0_writel(v, o)	bcm_rset_writel(RSET_UART0, (v), (o))
-#define bcm_mpi_readl(o)	bcm_rset_readl(RSET_MPI, (o))
-#define bcm_mpi_writel(v, o)	bcm_rset_writel(RSET_MPI, (v), (o))
-#define bcm_pcmcia_readl(o)	bcm_rset_readl(RSET_PCMCIA, (o))
-#define bcm_pcmcia_writel(v, o) bcm_rset_writel(RSET_PCMCIA, (v), (o))
-#define bcm_pcie_readl(o)	bcm_rset_readl(RSET_PCIE, (o))
-#define bcm_pcie_writel(v, o)	bcm_rset_writel(RSET_PCIE, (v), (o))
-#define bcm_sdram_readl(o)	bcm_rset_readl(RSET_SDRAM, (o))
-#define bcm_sdram_writel(v, o)	bcm_rset_writel(RSET_SDRAM, (v), (o))
-#define bcm_memc_readl(o)	bcm_rset_readl(RSET_MEMC, (o))
-#define bcm_memc_writel(v, o)	bcm_rset_writel(RSET_MEMC, (v), (o))
-#define bcm_ddr_readl(o)	bcm_rset_readl(RSET_DDR, (o))
-#define bcm_ddr_writel(v, o)	bcm_rset_writel(RSET_DDR, (v), (o))
-#define bcm_misc_readl(o)	bcm_rset_readl(RSET_MISC, (o))
-#define bcm_misc_writel(v, o)	bcm_rset_writel(RSET_MISC, (v), (o))
+#घोषणा bcm_perf_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_PERF, (o))
+#घोषणा bcm_perf_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_PERF, (v), (o))
+#घोषणा bcm_समयr_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_TIMER, (o))
+#घोषणा bcm_समयr_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_TIMER, (v), (o))
+#घोषणा bcm_wdt_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_WDT, (o))
+#घोषणा bcm_wdt_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_WDT, (v), (o))
+#घोषणा bcm_gpio_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_GPIO, (o))
+#घोषणा bcm_gpio_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_GPIO, (v), (o))
+#घोषणा bcm_uart0_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_UART0, (o))
+#घोषणा bcm_uart0_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_UART0, (v), (o))
+#घोषणा bcm_mpi_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_MPI, (o))
+#घोषणा bcm_mpi_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_MPI, (v), (o))
+#घोषणा bcm_pcmcia_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_PCMCIA, (o))
+#घोषणा bcm_pcmcia_ग_लिखोl(v, o) bcm_rset_ग_लिखोl(RSET_PCMCIA, (v), (o))
+#घोषणा bcm_pcie_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_PCIE, (o))
+#घोषणा bcm_pcie_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_PCIE, (v), (o))
+#घोषणा bcm_sdram_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_SDRAM, (o))
+#घोषणा bcm_sdram_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_SDRAM, (v), (o))
+#घोषणा bcm_memc_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_MEMC, (o))
+#घोषणा bcm_memc_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_MEMC, (v), (o))
+#घोषणा bcm_ddr_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_DDR, (o))
+#घोषणा bcm_ddr_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_DDR, (v), (o))
+#घोषणा bcm_misc_पढ़ोl(o)	bcm_rset_पढ़ोl(RSET_MISC, (o))
+#घोषणा bcm_misc_ग_लिखोl(v, o)	bcm_rset_ग_लिखोl(RSET_MISC, (v), (o))
 
-#endif /* ! BCM63XX_IO_H_ */
+#पूर्ण_अगर /* ! BCM63XX_IO_H_ */

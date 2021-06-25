@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
- * Copyright © 2012 Red Hat
+ * Copyright तऊ 2012 Red Hat
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * Copyright (c) 2009-2010, Code Aurora Forum.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -29,85 +30,85 @@
  *
  */
 
-#ifndef __DRM_PRIME_H__
-#define __DRM_PRIME_H__
+#अगर_अघोषित __DRM_PRIME_H__
+#घोषणा __DRM_PRIME_H__
 
-#include <linux/mutex.h>
-#include <linux/rbtree.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/scatterlist.h>
 
 /**
- * struct drm_prime_file_private - per-file tracking for PRIME
+ * काष्ठा drm_prime_file_निजी - per-file tracking क्रम PRIME
  *
- * This just contains the internal &struct dma_buf and handle caches for each
- * &struct drm_file used by the PRIME core code.
+ * This just contains the पूर्णांकernal &काष्ठा dma_buf and handle caches क्रम each
+ * &काष्ठा drm_file used by the PRIME core code.
  */
-struct drm_prime_file_private {
-/* private: */
-	struct mutex lock;
-	struct rb_root dmabufs;
-	struct rb_root handles;
-};
+काष्ठा drm_prime_file_निजी अणु
+/* निजी: */
+	काष्ठा mutex lock;
+	काष्ठा rb_root dmabufs;
+	काष्ठा rb_root handles;
+पूर्ण;
 
-struct device;
+काष्ठा device;
 
-struct dma_buf_export_info;
-struct dma_buf;
-struct dma_buf_attachment;
-struct dma_buf_map;
+काष्ठा dma_buf_export_info;
+काष्ठा dma_buf;
+काष्ठा dma_buf_attachment;
+काष्ठा dma_buf_map;
 
-enum dma_data_direction;
+क्रमागत dma_data_direction;
 
-struct drm_device;
-struct drm_gem_object;
-struct drm_file;
+काष्ठा drm_device;
+काष्ठा drm_gem_object;
+काष्ठा drm_file;
 
 /* core prime functions */
-struct dma_buf *drm_gem_dmabuf_export(struct drm_device *dev,
-				      struct dma_buf_export_info *exp_info);
-void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
+काष्ठा dma_buf *drm_gem_dmabuf_export(काष्ठा drm_device *dev,
+				      काष्ठा dma_buf_export_info *exp_info);
+व्योम drm_gem_dmabuf_release(काष्ठा dma_buf *dma_buf);
 
-int drm_gem_prime_fd_to_handle(struct drm_device *dev,
-			       struct drm_file *file_priv, int prime_fd, uint32_t *handle);
-int drm_gem_prime_handle_to_fd(struct drm_device *dev,
-			       struct drm_file *file_priv, uint32_t handle, uint32_t flags,
-			       int *prime_fd);
+पूर्णांक drm_gem_prime_fd_to_handle(काष्ठा drm_device *dev,
+			       काष्ठा drm_file *file_priv, पूर्णांक prime_fd, uपूर्णांक32_t *handle);
+पूर्णांक drm_gem_prime_handle_to_fd(काष्ठा drm_device *dev,
+			       काष्ठा drm_file *file_priv, uपूर्णांक32_t handle, uपूर्णांक32_t flags,
+			       पूर्णांक *prime_fd);
 
-/* helper functions for exporting */
-int drm_gem_map_attach(struct dma_buf *dma_buf,
-		       struct dma_buf_attachment *attach);
-void drm_gem_map_detach(struct dma_buf *dma_buf,
-			struct dma_buf_attachment *attach);
-struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
-				     enum dma_data_direction dir);
-void drm_gem_unmap_dma_buf(struct dma_buf_attachment *attach,
-			   struct sg_table *sgt,
-			   enum dma_data_direction dir);
-int drm_gem_dmabuf_vmap(struct dma_buf *dma_buf, struct dma_buf_map *map);
-void drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, struct dma_buf_map *map);
+/* helper functions क्रम exporting */
+पूर्णांक drm_gem_map_attach(काष्ठा dma_buf *dma_buf,
+		       काष्ठा dma_buf_attachment *attach);
+व्योम drm_gem_map_detach(काष्ठा dma_buf *dma_buf,
+			काष्ठा dma_buf_attachment *attach);
+काष्ठा sg_table *drm_gem_map_dma_buf(काष्ठा dma_buf_attachment *attach,
+				     क्रमागत dma_data_direction dir);
+व्योम drm_gem_unmap_dma_buf(काष्ठा dma_buf_attachment *attach,
+			   काष्ठा sg_table *sgt,
+			   क्रमागत dma_data_direction dir);
+पूर्णांक drm_gem_dmabuf_vmap(काष्ठा dma_buf *dma_buf, काष्ठा dma_buf_map *map);
+व्योम drm_gem_dmabuf_vunmap(काष्ठा dma_buf *dma_buf, काष्ठा dma_buf_map *map);
 
-int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
-int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma);
+पूर्णांक drm_gem_prime_mmap(काष्ठा drm_gem_object *obj, काष्ठा vm_area_काष्ठा *vma);
+पूर्णांक drm_gem_dmabuf_mmap(काष्ठा dma_buf *dma_buf, काष्ठा vm_area_काष्ठा *vma);
 
-struct sg_table *drm_prime_pages_to_sg(struct drm_device *dev,
-				       struct page **pages, unsigned int nr_pages);
-struct dma_buf *drm_gem_prime_export(struct drm_gem_object *obj,
-				     int flags);
+काष्ठा sg_table *drm_prime_pages_to_sg(काष्ठा drm_device *dev,
+				       काष्ठा page **pages, अचिन्हित पूर्णांक nr_pages);
+काष्ठा dma_buf *drm_gem_prime_export(काष्ठा drm_gem_object *obj,
+				     पूर्णांक flags);
 
-unsigned long drm_prime_get_contiguous_size(struct sg_table *sgt);
+अचिन्हित दीर्घ drm_prime_get_contiguous_size(काष्ठा sg_table *sgt);
 
-/* helper functions for importing */
-struct drm_gem_object *drm_gem_prime_import_dev(struct drm_device *dev,
-						struct dma_buf *dma_buf,
-						struct device *attach_dev);
-struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
-					    struct dma_buf *dma_buf);
+/* helper functions क्रम importing */
+काष्ठा drm_gem_object *drm_gem_prime_import_dev(काष्ठा drm_device *dev,
+						काष्ठा dma_buf *dma_buf,
+						काष्ठा device *attach_dev);
+काष्ठा drm_gem_object *drm_gem_prime_import(काष्ठा drm_device *dev,
+					    काष्ठा dma_buf *dma_buf);
 
-void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
+व्योम drm_prime_gem_destroy(काष्ठा drm_gem_object *obj, काष्ठा sg_table *sg);
 
-int drm_prime_sg_to_page_array(struct sg_table *sgt, struct page **pages,
-			       int max_pages);
-int drm_prime_sg_to_dma_addr_array(struct sg_table *sgt, dma_addr_t *addrs,
-				   int max_pages);
+पूर्णांक drm_prime_sg_to_page_array(काष्ठा sg_table *sgt, काष्ठा page **pages,
+			       पूर्णांक max_pages);
+पूर्णांक drm_prime_sg_to_dma_addr_array(काष्ठा sg_table *sgt, dma_addr_t *addrs,
+				   पूर्णांक max_pages);
 
-#endif /* __DRM_PRIME_H__ */
+#पूर्ण_अगर /* __DRM_PRIME_H__ */

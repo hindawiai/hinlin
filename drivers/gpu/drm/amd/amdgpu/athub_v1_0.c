@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,85 +21,85 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "amdgpu.h"
-#include "athub_v1_0.h"
+#समावेश "amdgpu.h"
+#समावेश "athub_v1_0.h"
 
-#include "athub/athub_1_0_offset.h"
-#include "athub/athub_1_0_sh_mask.h"
-#include "vega10_enum.h"
+#समावेश "athub/athub_1_0_offset.h"
+#समावेश "athub/athub_1_0_sh_mask.h"
+#समावेश "vega10_enum.h"
 
-#include "soc15_common.h"
+#समावेश "soc15_common.h"
 
-static void athub_update_medium_grain_clock_gating(struct amdgpu_device *adev,
+अटल व्योम athub_update_medium_grain_घड़ी_gating(काष्ठा amdgpu_device *adev,
 						   bool enable)
-{
-	uint32_t def, data;
+अणु
+	uपूर्णांक32_t def, data;
 
 	def = data = RREG32_SOC15(ATHUB, 0, mmATHUB_MISC_CNTL);
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_MC_MGCG))
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_MC_MGCG))
 		data |= ATHUB_MISC_CNTL__CG_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~ATHUB_MISC_CNTL__CG_ENABLE_MASK;
 
-	if (def != data)
+	अगर (def != data)
 		WREG32_SOC15(ATHUB, 0, mmATHUB_MISC_CNTL, data);
-}
+पूर्ण
 
-static void athub_update_medium_grain_light_sleep(struct amdgpu_device *adev,
+अटल व्योम athub_update_medium_grain_light_sleep(काष्ठा amdgpu_device *adev,
 						  bool enable)
-{
-	uint32_t def, data;
+अणु
+	uपूर्णांक32_t def, data;
 
 	def = data = RREG32_SOC15(ATHUB, 0, mmATHUB_MISC_CNTL);
 
-	if (enable && (adev->cg_flags & AMD_CG_SUPPORT_MC_LS) &&
+	अगर (enable && (adev->cg_flags & AMD_CG_SUPPORT_MC_LS) &&
 	    (adev->cg_flags & AMD_CG_SUPPORT_HDP_LS))
 		data |= ATHUB_MISC_CNTL__CG_MEM_LS_ENABLE_MASK;
-	else
+	अन्यथा
 		data &= ~ATHUB_MISC_CNTL__CG_MEM_LS_ENABLE_MASK;
 
-	if(def != data)
+	अगर(def != data)
 		WREG32_SOC15(ATHUB, 0, mmATHUB_MISC_CNTL, data);
-}
+पूर्ण
 
-int athub_v1_0_set_clockgating(struct amdgpu_device *adev,
-			       enum amd_clockgating_state state)
-{
-	if (amdgpu_sriov_vf(adev))
-		return 0;
+पूर्णांक athub_v1_0_set_घड़ीgating(काष्ठा amdgpu_device *adev,
+			       क्रमागत amd_घड़ीgating_state state)
+अणु
+	अगर (amdgpu_sriov_vf(adev))
+		वापस 0;
 
-	switch (adev->asic_type) {
-	case CHIP_VEGA10:
-	case CHIP_VEGA12:
-	case CHIP_VEGA20:
-	case CHIP_RAVEN:
-	case CHIP_RENOIR:
-		athub_update_medium_grain_clock_gating(adev,
+	चयन (adev->asic_type) अणु
+	हाल CHIP_VEGA10:
+	हाल CHIP_VEGA12:
+	हाल CHIP_VEGA20:
+	हाल CHIP_RAVEN:
+	हाल CHIP_RENOIR:
+		athub_update_medium_grain_घड़ी_gating(adev,
 				state == AMD_CG_STATE_GATE);
 		athub_update_medium_grain_light_sleep(adev,
 				state == AMD_CG_STATE_GATE);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void athub_v1_0_get_clockgating(struct amdgpu_device *adev, u32 *flags)
-{
-	int data;
+व्योम athub_v1_0_get_घड़ीgating(काष्ठा amdgpu_device *adev, u32 *flags)
+अणु
+	पूर्णांक data;
 
-	if (amdgpu_sriov_vf(adev))
+	अगर (amdgpu_sriov_vf(adev))
 		*flags = 0;
 
 	/* AMD_CG_SUPPORT_ATHUB_MGCG */
 	data = RREG32_SOC15(ATHUB, 0, mmATHUB_MISC_CNTL);
-	if (data & ATHUB_MISC_CNTL__CG_ENABLE_MASK)
+	अगर (data & ATHUB_MISC_CNTL__CG_ENABLE_MASK)
 		*flags |= AMD_CG_SUPPORT_ATHUB_MGCG;
 
 	/* AMD_CG_SUPPORT_ATHUB_LS */
-	if (data & ATHUB_MISC_CNTL__CG_MEM_LS_ENABLE_MASK)
+	अगर (data & ATHUB_MISC_CNTL__CG_MEM_LS_ENABLE_MASK)
 		*flags |= AMD_CG_SUPPORT_ATHUB_LS;
-}
+पूर्ण

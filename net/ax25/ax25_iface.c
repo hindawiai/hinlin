@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright (C) Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-static struct ax25_protocol *protocol_list;
-static DEFINE_RWLOCK(protocol_list_lock);
+अटल काष्ठा ax25_protocol *protocol_list;
+अटल DEFINE_RWLOCK(protocol_list_lock);
 
-static HLIST_HEAD(ax25_linkfail_list);
-static DEFINE_SPINLOCK(linkfail_lock);
+अटल HLIST_HEAD(ax25_linkfail_list);
+अटल DEFINE_SPINLOCK(linkfail_lock);
 
-static struct listen_struct {
-	struct listen_struct *next;
+अटल काष्ठा listen_काष्ठा अणु
+	काष्ठा listen_काष्ठा *next;
 	ax25_address  callsign;
-	struct net_device *dev;
-} *listen_list = NULL;
-static DEFINE_SPINLOCK(listen_lock);
+	काष्ठा net_device *dev;
+पूर्ण *listen_list = शून्य;
+अटल DEFINE_SPINLOCK(listen_lock);
 
 /*
- * Do not register the internal protocols AX25_P_TEXT, AX25_P_SEGMENT,
+ * Do not रेजिस्टर the पूर्णांकernal protocols AX25_P_TEXT, AX25_P_SEGMENT,
  * AX25_P_IP or AX25_P_ARP ...
  */
-void ax25_register_pid(struct ax25_protocol *ap)
-{
-	write_lock_bh(&protocol_list_lock);
+व्योम ax25_रेजिस्टर_pid(काष्ठा ax25_protocol *ap)
+अणु
+	ग_लिखो_lock_bh(&protocol_list_lock);
 	ap->next = protocol_list;
 	protocol_list = ap;
-	write_unlock_bh(&protocol_list_lock);
-}
+	ग_लिखो_unlock_bh(&protocol_list_lock);
+पूर्ण
 
-EXPORT_SYMBOL_GPL(ax25_register_pid);
+EXPORT_SYMBOL_GPL(ax25_रेजिस्टर_pid);
 
-void ax25_protocol_release(unsigned int pid)
-{
-	struct ax25_protocol *protocol;
+व्योम ax25_protocol_release(अचिन्हित पूर्णांक pid)
+अणु
+	काष्ठा ax25_protocol *protocol;
 
-	write_lock_bh(&protocol_list_lock);
+	ग_लिखो_lock_bh(&protocol_list_lock);
 	protocol = protocol_list;
-	if (protocol == NULL)
-		goto out;
+	अगर (protocol == शून्य)
+		जाओ out;
 
-	if (protocol->pid == pid) {
+	अगर (protocol->pid == pid) अणु
 		protocol_list = protocol->next;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	while (protocol != NULL && protocol->next != NULL) {
-		if (protocol->next->pid == pid) {
+	जबतक (protocol != शून्य && protocol->next != शून्य) अणु
+		अगर (protocol->next->pid == pid) अणु
 			protocol->next = protocol->next->next;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		protocol = protocol->next;
-	}
+	पूर्ण
 out:
-	write_unlock_bh(&protocol_list_lock);
-}
+	ग_लिखो_unlock_bh(&protocol_list_lock);
+पूर्ण
 
 EXPORT_SYMBOL(ax25_protocol_release);
 
-void ax25_linkfail_register(struct ax25_linkfail *lf)
-{
+व्योम ax25_linkfail_रेजिस्टर(काष्ठा ax25_linkfail *lf)
+अणु
 	spin_lock_bh(&linkfail_lock);
 	hlist_add_head(&lf->lf_node, &ax25_linkfail_list);
 	spin_unlock_bh(&linkfail_lock);
-}
+पूर्ण
 
-EXPORT_SYMBOL(ax25_linkfail_register);
+EXPORT_SYMBOL(ax25_linkfail_रेजिस्टर);
 
-void ax25_linkfail_release(struct ax25_linkfail *lf)
-{
+व्योम ax25_linkfail_release(काष्ठा ax25_linkfail *lf)
+अणु
 	spin_lock_bh(&linkfail_lock);
 	hlist_del_init(&lf->lf_node);
 	spin_unlock_bh(&linkfail_lock);
-}
+पूर्ण
 
 EXPORT_SYMBOL(ax25_linkfail_release);
 
-int ax25_listen_register(ax25_address *callsign, struct net_device *dev)
-{
-	struct listen_struct *listen;
+पूर्णांक ax25_listen_रेजिस्टर(ax25_address *callsign, काष्ठा net_device *dev)
+अणु
+	काष्ठा listen_काष्ठा *listen;
 
-	if (ax25_listen_mine(callsign, dev))
-		return 0;
+	अगर (ax25_listen_mine(callsign, dev))
+		वापस 0;
 
-	if ((listen = kmalloc(sizeof(*listen), GFP_ATOMIC)) == NULL)
-		return -ENOMEM;
+	अगर ((listen = kदो_स्मृति(माप(*listen), GFP_ATOMIC)) == शून्य)
+		वापस -ENOMEM;
 
 	listen->callsign = *callsign;
 	listen->dev      = dev;
@@ -116,99 +117,99 @@ int ax25_listen_register(ax25_address *callsign, struct net_device *dev)
 	listen_list  = listen;
 	spin_unlock_bh(&listen_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(ax25_listen_register);
+EXPORT_SYMBOL(ax25_listen_रेजिस्टर);
 
-void ax25_listen_release(ax25_address *callsign, struct net_device *dev)
-{
-	struct listen_struct *s, *listen;
+व्योम ax25_listen_release(ax25_address *callsign, काष्ठा net_device *dev)
+अणु
+	काष्ठा listen_काष्ठा *s, *listen;
 
 	spin_lock_bh(&listen_lock);
 	listen = listen_list;
-	if (listen == NULL) {
+	अगर (listen == शून्य) अणु
 		spin_unlock_bh(&listen_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ax25cmp(&listen->callsign, callsign) == 0 && listen->dev == dev) {
+	अगर (ax25cmp(&listen->callsign, callsign) == 0 && listen->dev == dev) अणु
 		listen_list = listen->next;
 		spin_unlock_bh(&listen_lock);
-		kfree(listen);
-		return;
-	}
+		kमुक्त(listen);
+		वापस;
+	पूर्ण
 
-	while (listen != NULL && listen->next != NULL) {
-		if (ax25cmp(&listen->next->callsign, callsign) == 0 && listen->next->dev == dev) {
+	जबतक (listen != शून्य && listen->next != शून्य) अणु
+		अगर (ax25cmp(&listen->next->callsign, callsign) == 0 && listen->next->dev == dev) अणु
 			s = listen->next;
 			listen->next = listen->next->next;
 			spin_unlock_bh(&listen_lock);
-			kfree(s);
-			return;
-		}
+			kमुक्त(s);
+			वापस;
+		पूर्ण
 
 		listen = listen->next;
-	}
+	पूर्ण
 	spin_unlock_bh(&listen_lock);
-}
+पूर्ण
 
 EXPORT_SYMBOL(ax25_listen_release);
 
-int (*ax25_protocol_function(unsigned int pid))(struct sk_buff *, ax25_cb *)
-{
-	int (*res)(struct sk_buff *, ax25_cb *) = NULL;
-	struct ax25_protocol *protocol;
+पूर्णांक (*ax25_protocol_function(अचिन्हित पूर्णांक pid))(काष्ठा sk_buff *, ax25_cb *)
+अणु
+	पूर्णांक (*res)(काष्ठा sk_buff *, ax25_cb *) = शून्य;
+	काष्ठा ax25_protocol *protocol;
 
-	read_lock(&protocol_list_lock);
-	for (protocol = protocol_list; protocol != NULL; protocol = protocol->next)
-		if (protocol->pid == pid) {
+	पढ़ो_lock(&protocol_list_lock);
+	क्रम (protocol = protocol_list; protocol != शून्य; protocol = protocol->next)
+		अगर (protocol->pid == pid) अणु
 			res = protocol->func;
-			break;
-		}
-	read_unlock(&protocol_list_lock);
+			अवरोध;
+		पूर्ण
+	पढ़ो_unlock(&protocol_list_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ax25_listen_mine(ax25_address *callsign, struct net_device *dev)
-{
-	struct listen_struct *listen;
+पूर्णांक ax25_listen_mine(ax25_address *callsign, काष्ठा net_device *dev)
+अणु
+	काष्ठा listen_काष्ठा *listen;
 
 	spin_lock_bh(&listen_lock);
-	for (listen = listen_list; listen != NULL; listen = listen->next)
-		if (ax25cmp(&listen->callsign, callsign) == 0 &&
-		    (listen->dev == dev || listen->dev == NULL)) {
+	क्रम (listen = listen_list; listen != शून्य; listen = listen->next)
+		अगर (ax25cmp(&listen->callsign, callsign) == 0 &&
+		    (listen->dev == dev || listen->dev == शून्य)) अणु
 			spin_unlock_bh(&listen_lock);
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 	spin_unlock_bh(&listen_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ax25_link_failed(ax25_cb *ax25, int reason)
-{
-	struct ax25_linkfail *lf;
+व्योम ax25_link_failed(ax25_cb *ax25, पूर्णांक reason)
+अणु
+	काष्ठा ax25_linkfail *lf;
 
 	spin_lock_bh(&linkfail_lock);
-	hlist_for_each_entry(lf, &ax25_linkfail_list, lf_node)
+	hlist_क्रम_each_entry(lf, &ax25_linkfail_list, lf_node)
 		lf->func(ax25, reason);
 	spin_unlock_bh(&linkfail_lock);
-}
+पूर्ण
 
-int ax25_protocol_is_registered(unsigned int pid)
-{
-	struct ax25_protocol *protocol;
-	int res = 0;
+पूर्णांक ax25_protocol_is_रेजिस्टरed(अचिन्हित पूर्णांक pid)
+अणु
+	काष्ठा ax25_protocol *protocol;
+	पूर्णांक res = 0;
 
-	read_lock_bh(&protocol_list_lock);
-	for (protocol = protocol_list; protocol != NULL; protocol = protocol->next)
-		if (protocol->pid == pid) {
+	पढ़ो_lock_bh(&protocol_list_lock);
+	क्रम (protocol = protocol_list; protocol != शून्य; protocol = protocol->next)
+		अगर (protocol->pid == pid) अणु
 			res = 1;
-			break;
-		}
-	read_unlock_bh(&protocol_list_lock);
+			अवरोध;
+		पूर्ण
+	पढ़ो_unlock_bh(&protocol_list_lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण

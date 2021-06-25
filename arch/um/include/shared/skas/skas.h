@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#ifndef __SKAS_H
-#define __SKAS_H
+#अगर_अघोषित __SKAS_H
+#घोषणा __SKAS_H
 
-#include <sysdep/ptrace.h>
+#समावेश <sysdep/ptrace.h>
 
-extern int userspace_pid[];
+बाह्य पूर्णांक userspace_pid[];
 
-extern int user_thread(unsigned long stack, int flags);
-extern void new_thread_handler(void);
-extern void handle_syscall(struct uml_pt_regs *regs);
-extern long execute_syscall_skas(void *r);
-extern unsigned long current_stub_stack(void);
+बाह्य पूर्णांक user_thपढ़ो(अचिन्हित दीर्घ stack, पूर्णांक flags);
+बाह्य व्योम new_thपढ़ो_handler(व्योम);
+बाह्य व्योम handle_syscall(काष्ठा uml_pt_regs *regs);
+बाह्य दीर्घ execute_syscall_skas(व्योम *r);
+बाह्य अचिन्हित दीर्घ current_stub_stack(व्योम);
 
-#endif
+#पूर्ण_अगर

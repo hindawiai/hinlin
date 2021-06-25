@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Renesas R-Car Gen1 SRU/SSI support
 //
@@ -6,187 +7,187 @@
 // Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
 
 /*
- * #define DEBUG
+ * #घोषणा DEBUG
  *
  * you can also add below in
- * ${LINUX}/drivers/base/regmap/regmap.c
- * for regmap debug
+ * $अणुLINUXपूर्ण/drivers/base/regmap/regmap.c
+ * क्रम regmap debug
  *
- * #define LOG_DEVICE "xxxx.rcar_sound"
+ * #घोषणा LOG_DEVICE "xxxx.rcar_sound"
  */
 
-#include "rsnd.h"
+#समावेश "rsnd.h"
 
-struct rsnd_gen {
-	struct rsnd_gen_ops *ops;
+काष्ठा rsnd_gen अणु
+	काष्ठा rsnd_gen_ops *ops;
 
 	/* RSND_BASE_MAX base */
-	void __iomem *base[RSND_BASE_MAX];
+	व्योम __iomem *base[RSND_BASE_MAX];
 	phys_addr_t res[RSND_BASE_MAX];
-	struct regmap *regmap[RSND_BASE_MAX];
+	काष्ठा regmap *regmap[RSND_BASE_MAX];
 
 	/* RSND_REG_MAX base */
-	struct regmap_field *regs[REG_MAX];
-	const char *reg_name[REG_MAX];
-};
+	काष्ठा regmap_field *regs[REG_MAX];
+	स्थिर अक्षर *reg_name[REG_MAX];
+पूर्ण;
 
-#define rsnd_priv_to_gen(p)	((struct rsnd_gen *)(p)->gen)
-#define rsnd_reg_name(gen, id)	((gen)->reg_name[id])
+#घोषणा rsnd_priv_to_gen(p)	((काष्ठा rsnd_gen *)(p)->gen)
+#घोषणा rsnd_reg_name(gen, id)	((gen)->reg_name[id])
 
-struct rsnd_regmap_field_conf {
-	int idx;
-	unsigned int reg_offset;
-	unsigned int id_offset;
-	const char *reg_name;
-};
+काष्ठा rsnd_regmap_field_conf अणु
+	पूर्णांक idx;
+	अचिन्हित पूर्णांक reg_offset;
+	अचिन्हित पूर्णांक id_offset;
+	स्थिर अक्षर *reg_name;
+पूर्ण;
 
-#define RSND_REG_SET(id, offset, _id_offset, n)	\
-{						\
+#घोषणा RSND_REG_SET(id, offset, _id_offset, n)	\
+अणु						\
 	.idx = id,				\
 	.reg_offset = offset,			\
 	.id_offset = _id_offset,		\
 	.reg_name = n,				\
-}
+पूर्ण
 /* single address mapping */
-#define RSND_GEN_S_REG(id, offset)	\
+#घोषणा RSND_GEN_S_REG(id, offset)	\
 	RSND_REG_SET(id, offset, 0, #id)
 
 /* multi address mapping */
-#define RSND_GEN_M_REG(id, offset, _id_offset)	\
+#घोषणा RSND_GEN_M_REG(id, offset, _id_offset)	\
 	RSND_REG_SET(id, offset, _id_offset, #id)
 
 /*
  *		basic function
  */
-static int rsnd_is_accessible_reg(struct rsnd_priv *priv,
-				  struct rsnd_gen *gen, enum rsnd_reg reg)
-{
-	if (!gen->regs[reg]) {
-		struct device *dev = rsnd_priv_to_dev(priv);
+अटल पूर्णांक rsnd_is_accessible_reg(काष्ठा rsnd_priv *priv,
+				  काष्ठा rsnd_gen *gen, क्रमागत rsnd_reg reg)
+अणु
+	अगर (!gen->regs[reg]) अणु
+		काष्ठा device *dev = rsnd_priv_to_dev(priv);
 
 		dev_err(dev, "unsupported register access %x\n", reg);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int rsnd_mod_id_cmd(struct rsnd_mod *mod)
-{
-	if (mod->ops->id_cmd)
-		return mod->ops->id_cmd(mod);
+अटल पूर्णांक rsnd_mod_id_cmd(काष्ठा rsnd_mod *mod)
+अणु
+	अगर (mod->ops->id_cmd)
+		वापस mod->ops->id_cmd(mod);
 
-	return rsnd_mod_id(mod);
-}
+	वापस rsnd_mod_id(mod);
+पूर्ण
 
-u32 rsnd_mod_read(struct rsnd_mod *mod, enum rsnd_reg reg)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_gen *gen = rsnd_priv_to_gen(priv);
+u32 rsnd_mod_पढ़ो(काष्ठा rsnd_mod *mod, क्रमागत rsnd_reg reg)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_gen *gen = rsnd_priv_to_gen(priv);
 	u32 val;
 
-	if (!rsnd_is_accessible_reg(priv, gen, reg))
-		return 0;
+	अगर (!rsnd_is_accessible_reg(priv, gen, reg))
+		वापस 0;
 
-	regmap_fields_read(gen->regs[reg], rsnd_mod_id_cmd(mod), &val);
+	regmap_fields_पढ़ो(gen->regs[reg], rsnd_mod_id_cmd(mod), &val);
 
 	dev_dbg(dev, "r %s - %-18s (%4d) : %08x\n",
 		rsnd_mod_name(mod),
 		rsnd_reg_name(gen, reg), reg, val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void rsnd_mod_write(struct rsnd_mod *mod,
-		    enum rsnd_reg reg, u32 data)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_gen *gen = rsnd_priv_to_gen(priv);
+व्योम rsnd_mod_ग_लिखो(काष्ठा rsnd_mod *mod,
+		    क्रमागत rsnd_reg reg, u32 data)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_gen *gen = rsnd_priv_to_gen(priv);
 
-	if (!rsnd_is_accessible_reg(priv, gen, reg))
-		return;
+	अगर (!rsnd_is_accessible_reg(priv, gen, reg))
+		वापस;
 
-	regmap_fields_force_write(gen->regs[reg], rsnd_mod_id_cmd(mod), data);
+	regmap_fields_क्रमce_ग_लिखो(gen->regs[reg], rsnd_mod_id_cmd(mod), data);
 
 	dev_dbg(dev, "w %s - %-18s (%4d) : %08x\n",
 		rsnd_mod_name(mod),
 		rsnd_reg_name(gen, reg), reg, data);
-}
+पूर्ण
 
-void rsnd_mod_bset(struct rsnd_mod *mod,
-		   enum rsnd_reg reg, u32 mask, u32 data)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_gen *gen = rsnd_priv_to_gen(priv);
+व्योम rsnd_mod_bset(काष्ठा rsnd_mod *mod,
+		   क्रमागत rsnd_reg reg, u32 mask, u32 data)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_gen *gen = rsnd_priv_to_gen(priv);
 
-	if (!rsnd_is_accessible_reg(priv, gen, reg))
-		return;
+	अगर (!rsnd_is_accessible_reg(priv, gen, reg))
+		वापस;
 
-	regmap_fields_force_update_bits(gen->regs[reg],
+	regmap_fields_क्रमce_update_bits(gen->regs[reg],
 					rsnd_mod_id_cmd(mod), mask, data);
 
 	dev_dbg(dev, "b %s - %-18s (%4d) : %08x/%08x\n",
 		rsnd_mod_name(mod),
 		rsnd_reg_name(gen, reg), reg, data, mask);
 
-}
+पूर्ण
 
-phys_addr_t rsnd_gen_get_phy_addr(struct rsnd_priv *priv, int reg_id)
-{
-	struct rsnd_gen *gen = rsnd_priv_to_gen(priv);
+phys_addr_t rsnd_gen_get_phy_addr(काष्ठा rsnd_priv *priv, पूर्णांक reg_id)
+अणु
+	काष्ठा rsnd_gen *gen = rsnd_priv_to_gen(priv);
 
-	return	gen->res[reg_id];
-}
+	वापस	gen->res[reg_id];
+पूर्ण
 
-#define rsnd_gen_regmap_init(priv, id_size, reg_id, name, conf)		\
+#घोषणा rsnd_gen_regmap_init(priv, id_size, reg_id, name, conf)		\
 	_rsnd_gen_regmap_init(priv, id_size, reg_id, name, conf, ARRAY_SIZE(conf))
-static int _rsnd_gen_regmap_init(struct rsnd_priv *priv,
-				 int id_size,
-				 int reg_id,
-				 const char *name,
-				 const struct rsnd_regmap_field_conf *conf,
-				 int conf_size)
-{
-	struct platform_device *pdev = rsnd_priv_to_pdev(priv);
-	struct rsnd_gen *gen = rsnd_priv_to_gen(priv);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct resource *res;
-	struct regmap_config regc;
-	struct regmap_field *regs;
-	struct regmap *regmap;
-	struct reg_field regf;
-	void __iomem *base;
-	int i;
+अटल पूर्णांक _rsnd_gen_regmap_init(काष्ठा rsnd_priv *priv,
+				 पूर्णांक id_size,
+				 पूर्णांक reg_id,
+				 स्थिर अक्षर *name,
+				 स्थिर काष्ठा rsnd_regmap_field_conf *conf,
+				 पूर्णांक conf_size)
+अणु
+	काष्ठा platक्रमm_device *pdev = rsnd_priv_to_pdev(priv);
+	काष्ठा rsnd_gen *gen = rsnd_priv_to_gen(priv);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा resource *res;
+	काष्ठा regmap_config regc;
+	काष्ठा regmap_field *regs;
+	काष्ठा regmap *regmap;
+	काष्ठा reg_field regf;
+	व्योम __iomem *base;
+	पूर्णांक i;
 
-	memset(&regc, 0, sizeof(regc));
+	स_रखो(&regc, 0, माप(regc));
 	regc.reg_bits = 32;
 	regc.val_bits = 32;
 	regc.reg_stride = 4;
 	regc.name = name;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, name);
-	if (!res)
-		res = platform_get_resource(pdev, IORESOURCE_MEM, reg_id);
-	if (!res)
-		return -ENODEV;
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, name);
+	अगर (!res)
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, reg_id);
+	अगर (!res)
+		वापस -ENODEV;
 
 	base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	regmap = devm_regmap_init_mmio(dev, base, &regc);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
 	/* RSND_BASE_MAX base */
 	gen->base[reg_id] = base;
 	gen->regmap[reg_id] = regmap;
 	gen->res[reg_id] = res->start;
 
-	for (i = 0; i < conf_size; i++) {
+	क्रम (i = 0; i < conf_size; i++) अणु
 
 		regf.reg	= conf[i].reg_offset;
 		regf.id_offset	= conf[i].id_offset;
@@ -195,23 +196,23 @@ static int _rsnd_gen_regmap_init(struct rsnd_priv *priv,
 		regf.id_size	= id_size;
 
 		regs = devm_regmap_field_alloc(dev, regmap, regf);
-		if (IS_ERR(regs))
-			return PTR_ERR(regs);
+		अगर (IS_ERR(regs))
+			वापस PTR_ERR(regs);
 
 		/* RSND_REG_MAX base */
 		gen->regs[conf[i].idx] = regs;
 		gen->reg_name[conf[i].idx] = conf[i].reg_name;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *		Gen2
  */
-static int rsnd_gen2_probe(struct rsnd_priv *priv)
-{
-	static const struct rsnd_regmap_field_conf conf_ssiu[] = {
+अटल पूर्णांक rsnd_gen2_probe(काष्ठा rsnd_priv *priv)
+अणु
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_ssiu[] = अणु
 		RSND_GEN_S_REG(SSI_MODE0,	0x800),
 		RSND_GEN_S_REG(SSI_MODE1,	0x804),
 		RSND_GEN_S_REG(SSI_MODE2,	0x808),
@@ -287,9 +288,9 @@ static int rsnd_gen2_probe(struct rsnd_priv *priv)
 		RSND_GEN_S_REG(SSI9_BUSIF7_MODE,	0xde0),
 		RSND_GEN_S_REG(SSI9_BUSIF7_ADINR,	0xde4),
 		RSND_GEN_S_REG(SSI9_BUSIF7_DALIGN,	0xde8),
-	};
+	पूर्ण;
 
-	static const struct rsnd_regmap_field_conf conf_scu[] = {
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_scu[] = अणु
 		RSND_GEN_M_REG(SRC_I_BUSIF_MODE,0x0,	0x20),
 		RSND_GEN_M_REG(SRC_O_BUSIF_MODE,0x4,	0x20),
 		RSND_GEN_M_REG(SRC_BUSIF_DALIGN,0x8,	0x20),
@@ -376,8 +377,8 @@ static int rsnd_gen2_probe(struct rsnd_priv *priv)
 		RSND_GEN_M_REG(DVC_VOL6R,	0xe40,	0x100),
 		RSND_GEN_M_REG(DVC_VOL7R,	0xe44,	0x100),
 		RSND_GEN_M_REG(DVC_DVUER,	0xe48,	0x100),
-	};
-	static const struct rsnd_regmap_field_conf conf_adg[] = {
+	पूर्ण;
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_adg[] = अणु
 		RSND_GEN_S_REG(BRRA,		0x00),
 		RSND_GEN_S_REG(BRRB,		0x04),
 		RSND_GEN_S_REG(BRGCKR,		0x08),
@@ -396,88 +397,88 @@ static int rsnd_gen2_probe(struct rsnd_priv *priv)
 		RSND_GEN_S_REG(SRCOUT_TIMSEL3,	0x54),
 		RSND_GEN_S_REG(SRCOUT_TIMSEL4,	0x58),
 		RSND_GEN_S_REG(CMDOUT_TIMSEL,	0x5c),
-	};
-	static const struct rsnd_regmap_field_conf conf_ssi[] = {
+	पूर्ण;
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_ssi[] = अणु
 		RSND_GEN_M_REG(SSICR,		0x00,	0x40),
 		RSND_GEN_M_REG(SSISR,		0x04,	0x40),
 		RSND_GEN_M_REG(SSITDR,		0x08,	0x40),
 		RSND_GEN_M_REG(SSIRDR,		0x0c,	0x40),
 		RSND_GEN_M_REG(SSIWSR,		0x20,	0x40),
-	};
-	int ret_ssiu;
-	int ret_scu;
-	int ret_adg;
-	int ret_ssi;
+	पूर्ण;
+	पूर्णांक ret_ssiu;
+	पूर्णांक ret_scu;
+	पूर्णांक ret_adg;
+	पूर्णांक ret_ssi;
 
 	ret_ssiu = rsnd_gen_regmap_init(priv, 10, RSND_GEN2_SSIU, "ssiu", conf_ssiu);
 	ret_scu  = rsnd_gen_regmap_init(priv, 10, RSND_GEN2_SCU,  "scu",  conf_scu);
 	ret_adg  = rsnd_gen_regmap_init(priv, 10, RSND_GEN2_ADG,  "adg",  conf_adg);
 	ret_ssi  = rsnd_gen_regmap_init(priv, 10, RSND_GEN2_SSI,  "ssi",  conf_ssi);
-	if (ret_ssiu < 0 ||
+	अगर (ret_ssiu < 0 ||
 	    ret_scu  < 0 ||
 	    ret_adg  < 0 ||
 	    ret_ssi  < 0)
-		return ret_ssiu | ret_scu | ret_adg | ret_ssi;
+		वापस ret_ssiu | ret_scu | ret_adg | ret_ssi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *		Gen1
  */
 
-static int rsnd_gen1_probe(struct rsnd_priv *priv)
-{
-	static const struct rsnd_regmap_field_conf conf_adg[] = {
+अटल पूर्णांक rsnd_gen1_probe(काष्ठा rsnd_priv *priv)
+अणु
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_adg[] = अणु
 		RSND_GEN_S_REG(BRRA,		0x00),
 		RSND_GEN_S_REG(BRRB,		0x04),
 		RSND_GEN_S_REG(BRGCKR,		0x08),
 		RSND_GEN_S_REG(AUDIO_CLK_SEL0,	0x0c),
 		RSND_GEN_S_REG(AUDIO_CLK_SEL1,	0x10),
-	};
-	static const struct rsnd_regmap_field_conf conf_ssi[] = {
+	पूर्ण;
+	अटल स्थिर काष्ठा rsnd_regmap_field_conf conf_ssi[] = अणु
 		RSND_GEN_M_REG(SSICR,		0x00,	0x40),
 		RSND_GEN_M_REG(SSISR,		0x04,	0x40),
 		RSND_GEN_M_REG(SSITDR,		0x08,	0x40),
 		RSND_GEN_M_REG(SSIRDR,		0x0c,	0x40),
 		RSND_GEN_M_REG(SSIWSR,		0x20,	0x40),
-	};
-	int ret_adg;
-	int ret_ssi;
+	पूर्ण;
+	पूर्णांक ret_adg;
+	पूर्णांक ret_ssi;
 
 	ret_adg  = rsnd_gen_regmap_init(priv, 9, RSND_GEN1_ADG, "adg", conf_adg);
 	ret_ssi  = rsnd_gen_regmap_init(priv, 9, RSND_GEN1_SSI, "ssi", conf_ssi);
-	if (ret_adg  < 0 ||
+	अगर (ret_adg  < 0 ||
 	    ret_ssi  < 0)
-		return ret_adg | ret_ssi;
+		वापस ret_adg | ret_ssi;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *		Gen
  */
-int rsnd_gen_probe(struct rsnd_priv *priv)
-{
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_gen *gen;
-	int ret;
+पूर्णांक rsnd_gen_probe(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_gen *gen;
+	पूर्णांक ret;
 
-	gen = devm_kzalloc(dev, sizeof(*gen), GFP_KERNEL);
-	if (!gen)
-		return -ENOMEM;
+	gen = devm_kzalloc(dev, माप(*gen), GFP_KERNEL);
+	अगर (!gen)
+		वापस -ENOMEM;
 
 	priv->gen = gen;
 
 	ret = -ENODEV;
-	if (rsnd_is_gen1(priv))
+	अगर (rsnd_is_gen1(priv))
 		ret = rsnd_gen1_probe(priv);
-	else if (rsnd_is_gen2(priv) ||
+	अन्यथा अगर (rsnd_is_gen2(priv) ||
 		 rsnd_is_gen3(priv))
 		ret = rsnd_gen2_probe(priv);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "unknown generation R-Car sound device\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

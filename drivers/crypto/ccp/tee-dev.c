@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * AMD Trusted Execution Environment (TEE) interface
+ * AMD Trusted Execution Environment (TEE) पूर्णांकerface
  *
  * Author: Rijo Thomas <Rijo-john.Thomas@amd.com>
  * Author: Devaraj Rangasamy <Devaraj.Rangasamy@amd.com>
@@ -8,87 +9,87 @@
  * Copyright (C) 2019,2021 Advanced Micro Devices, Inc.
  */
 
-#include <linux/types.h>
-#include <linux/mutex.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/gfp.h>
-#include <linux/psp-sev.h>
-#include <linux/psp-tee.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/psp-sev.h>
+#समावेश <linux/psp-tee.h>
 
-#include "psp-dev.h"
-#include "tee-dev.h"
+#समावेश "psp-dev.h"
+#समावेश "tee-dev.h"
 
-static bool psp_dead;
+अटल bool psp_dead;
 
-static int tee_alloc_ring(struct psp_tee_device *tee, int ring_size)
-{
-	struct ring_buf_manager *rb_mgr = &tee->rb_mgr;
-	void *start_addr;
+अटल पूर्णांक tee_alloc_ring(काष्ठा psp_tee_device *tee, पूर्णांक ring_size)
+अणु
+	काष्ठा ring_buf_manager *rb_mgr = &tee->rb_mgr;
+	व्योम *start_addr;
 
-	if (!ring_size)
-		return -EINVAL;
+	अगर (!ring_size)
+		वापस -EINVAL;
 
 	/* We need actual physical address instead of DMA address, since
 	 * Trusted OS running on AMD Secure Processor will map this region
 	 */
-	start_addr = (void *)__get_free_pages(GFP_KERNEL, get_order(ring_size));
-	if (!start_addr)
-		return -ENOMEM;
+	start_addr = (व्योम *)__get_मुक्त_pages(GFP_KERNEL, get_order(ring_size));
+	अगर (!start_addr)
+		वापस -ENOMEM;
 
-	memset(start_addr, 0x0, ring_size);
+	स_रखो(start_addr, 0x0, ring_size);
 	rb_mgr->ring_start = start_addr;
 	rb_mgr->ring_size = ring_size;
 	rb_mgr->ring_pa = __psp_pa(start_addr);
 	mutex_init(&rb_mgr->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tee_free_ring(struct psp_tee_device *tee)
-{
-	struct ring_buf_manager *rb_mgr = &tee->rb_mgr;
+अटल व्योम tee_मुक्त_ring(काष्ठा psp_tee_device *tee)
+अणु
+	काष्ठा ring_buf_manager *rb_mgr = &tee->rb_mgr;
 
-	if (!rb_mgr->ring_start)
-		return;
+	अगर (!rb_mgr->ring_start)
+		वापस;
 
-	free_pages((unsigned long)rb_mgr->ring_start,
+	मुक्त_pages((अचिन्हित दीर्घ)rb_mgr->ring_start,
 		   get_order(rb_mgr->ring_size));
 
-	rb_mgr->ring_start = NULL;
+	rb_mgr->ring_start = शून्य;
 	rb_mgr->ring_size = 0;
 	rb_mgr->ring_pa = 0;
 	mutex_destroy(&rb_mgr->mutex);
-}
+पूर्ण
 
-static int tee_wait_cmd_poll(struct psp_tee_device *tee, unsigned int timeout,
-			     unsigned int *reg)
-{
-	/* ~10ms sleep per loop => nloop = timeout * 100 */
-	int nloop = timeout * 100;
+अटल पूर्णांक tee_रुको_cmd_poll(काष्ठा psp_tee_device *tee, अचिन्हित पूर्णांक समयout,
+			     अचिन्हित पूर्णांक *reg)
+अणु
+	/* ~10ms sleep per loop => nloop = समयout * 100 */
+	पूर्णांक nloop = समयout * 100;
 
-	while (--nloop) {
-		*reg = ioread32(tee->io_regs + tee->vdata->cmdresp_reg);
-		if (*reg & PSP_CMDRESP_RESP)
-			return 0;
+	जबतक (--nloop) अणु
+		*reg = ioपढ़ो32(tee->io_regs + tee->vdata->cmdresp_reg);
+		अगर (*reg & PSP_CMDRESP_RESP)
+			वापस 0;
 
 		usleep_range(10000, 10100);
-	}
+	पूर्ण
 
 	dev_err(tee->dev, "tee: command timed out, disabling PSP\n");
 	psp_dead = true;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static
-struct tee_init_ring_cmd *tee_alloc_cmd_buffer(struct psp_tee_device *tee)
-{
-	struct tee_init_ring_cmd *cmd;
+अटल
+काष्ठा tee_init_ring_cmd *tee_alloc_cmd_buffer(काष्ठा psp_tee_device *tee)
+अणु
+	काष्ठा tee_init_ring_cmd *cmd;
 
-	cmd = kzalloc(sizeof(*cmd), GFP_KERNEL);
-	if (!cmd)
-		return NULL;
+	cmd = kzalloc(माप(*cmd), GFP_KERNEL);
+	अगर (!cmd)
+		वापस शून्य;
 
 	cmd->hi_addr = upper_32_bits(tee->rb_mgr.ring_pa);
 	cmd->low_addr = lower_32_bits(tee->rb_mgr.ring_pa);
@@ -97,107 +98,107 @@ struct tee_init_ring_cmd *tee_alloc_cmd_buffer(struct psp_tee_device *tee)
 	dev_dbg(tee->dev, "tee: ring address: high = 0x%x low = 0x%x size = %u\n",
 		cmd->hi_addr, cmd->low_addr, cmd->size);
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static inline void tee_free_cmd_buffer(struct tee_init_ring_cmd *cmd)
-{
-	kfree(cmd);
-}
+अटल अंतरभूत व्योम tee_मुक्त_cmd_buffer(काष्ठा tee_init_ring_cmd *cmd)
+अणु
+	kमुक्त(cmd);
+पूर्ण
 
-static int tee_init_ring(struct psp_tee_device *tee)
-{
-	int ring_size = MAX_RING_BUFFER_ENTRIES * sizeof(struct tee_ring_cmd);
-	struct tee_init_ring_cmd *cmd;
+अटल पूर्णांक tee_init_ring(काष्ठा psp_tee_device *tee)
+अणु
+	पूर्णांक ring_size = MAX_RING_BUFFER_ENTRIES * माप(काष्ठा tee_ring_cmd);
+	काष्ठा tee_init_ring_cmd *cmd;
 	phys_addr_t cmd_buffer;
-	unsigned int reg;
-	int ret;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	BUILD_BUG_ON(sizeof(struct tee_ring_cmd) != 1024);
+	BUILD_BUG_ON(माप(काष्ठा tee_ring_cmd) != 1024);
 
 	ret = tee_alloc_ring(tee, ring_size);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(tee->dev, "tee: ring allocation failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	tee->rb_mgr.wptr = 0;
 
 	cmd = tee_alloc_cmd_buffer(tee);
-	if (!cmd) {
-		tee_free_ring(tee);
-		return -ENOMEM;
-	}
+	अगर (!cmd) अणु
+		tee_मुक्त_ring(tee);
+		वापस -ENOMEM;
+	पूर्ण
 
-	cmd_buffer = __psp_pa((void *)cmd);
+	cmd_buffer = __psp_pa((व्योम *)cmd);
 
 	/* Send command buffer details to Trusted OS by writing to
-	 * CPU-PSP message registers
+	 * CPU-PSP message रेजिस्टरs
 	 */
 
-	iowrite32(lower_32_bits(cmd_buffer),
+	ioग_लिखो32(lower_32_bits(cmd_buffer),
 		  tee->io_regs + tee->vdata->cmdbuff_addr_lo_reg);
-	iowrite32(upper_32_bits(cmd_buffer),
+	ioग_लिखो32(upper_32_bits(cmd_buffer),
 		  tee->io_regs + tee->vdata->cmdbuff_addr_hi_reg);
-	iowrite32(TEE_RING_INIT_CMD,
+	ioग_लिखो32(TEE_RING_INIT_CMD,
 		  tee->io_regs + tee->vdata->cmdresp_reg);
 
-	ret = tee_wait_cmd_poll(tee, TEE_DEFAULT_TIMEOUT, &reg);
-	if (ret) {
+	ret = tee_रुको_cmd_poll(tee, TEE_DEFAULT_TIMEOUT, &reg);
+	अगर (ret) अणु
 		dev_err(tee->dev, "tee: ring init command timed out\n");
-		tee_free_ring(tee);
-		goto free_buf;
-	}
+		tee_मुक्त_ring(tee);
+		जाओ मुक्त_buf;
+	पूर्ण
 
-	if (reg & PSP_CMDRESP_ERR_MASK) {
+	अगर (reg & PSP_CMDRESP_ERR_MASK) अणु
 		dev_err(tee->dev, "tee: ring init command failed (%#010x)\n",
 			reg & PSP_CMDRESP_ERR_MASK);
-		tee_free_ring(tee);
+		tee_मुक्त_ring(tee);
 		ret = -EIO;
-	}
+	पूर्ण
 
-free_buf:
-	tee_free_cmd_buffer(cmd);
+मुक्त_buf:
+	tee_मुक्त_cmd_buffer(cmd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void tee_destroy_ring(struct psp_tee_device *tee)
-{
-	unsigned int reg;
-	int ret;
+अटल व्योम tee_destroy_ring(काष्ठा psp_tee_device *tee)
+अणु
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	if (!tee->rb_mgr.ring_start)
-		return;
+	अगर (!tee->rb_mgr.ring_start)
+		वापस;
 
-	if (psp_dead)
-		goto free_ring;
+	अगर (psp_dead)
+		जाओ मुक्त_ring;
 
-	iowrite32(TEE_RING_DESTROY_CMD,
+	ioग_लिखो32(TEE_RING_DESTROY_CMD,
 		  tee->io_regs + tee->vdata->cmdresp_reg);
 
-	ret = tee_wait_cmd_poll(tee, TEE_DEFAULT_TIMEOUT, &reg);
-	if (ret) {
+	ret = tee_रुको_cmd_poll(tee, TEE_DEFAULT_TIMEOUT, &reg);
+	अगर (ret) अणु
 		dev_err(tee->dev, "tee: ring destroy command timed out\n");
-	} else if (reg & PSP_CMDRESP_ERR_MASK) {
+	पूर्ण अन्यथा अगर (reg & PSP_CMDRESP_ERR_MASK) अणु
 		dev_err(tee->dev, "tee: ring destroy command failed (%#010x)\n",
 			reg & PSP_CMDRESP_ERR_MASK);
-	}
+	पूर्ण
 
-free_ring:
-	tee_free_ring(tee);
-}
+मुक्त_ring:
+	tee_मुक्त_ring(tee);
+पूर्ण
 
-int tee_dev_init(struct psp_device *psp)
-{
-	struct device *dev = psp->dev;
-	struct psp_tee_device *tee;
-	int ret;
+पूर्णांक tee_dev_init(काष्ठा psp_device *psp)
+अणु
+	काष्ठा device *dev = psp->dev;
+	काष्ठा psp_tee_device *tee;
+	पूर्णांक ret;
 
 	ret = -ENOMEM;
-	tee = devm_kzalloc(dev, sizeof(*tee), GFP_KERNEL);
-	if (!tee)
-		goto e_err;
+	tee = devm_kzalloc(dev, माप(*tee), GFP_KERNEL);
+	अगर (!tee)
+		जाओ e_err;
 
 	psp->tee_data = tee;
 
@@ -206,110 +207,110 @@ int tee_dev_init(struct psp_device *psp)
 
 	tee->io_regs = psp->io_regs;
 
-	tee->vdata = (struct tee_vdata *)psp->vdata->tee;
-	if (!tee->vdata) {
+	tee->vdata = (काष्ठा tee_vdata *)psp->vdata->tee;
+	अगर (!tee->vdata) अणु
 		ret = -ENODEV;
 		dev_err(dev, "tee: missing driver data\n");
-		goto e_err;
-	}
+		जाओ e_err;
+	पूर्ण
 
 	ret = tee_init_ring(tee);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "tee: failed to init ring buffer\n");
-		goto e_err;
-	}
+		जाओ e_err;
+	पूर्ण
 
 	dev_notice(dev, "tee enabled\n");
 
-	return 0;
+	वापस 0;
 
 e_err:
-	psp->tee_data = NULL;
+	psp->tee_data = शून्य;
 
 	dev_notice(dev, "tee initialization failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void tee_dev_destroy(struct psp_device *psp)
-{
-	struct psp_tee_device *tee = psp->tee_data;
+व्योम tee_dev_destroy(काष्ठा psp_device *psp)
+अणु
+	काष्ठा psp_tee_device *tee = psp->tee_data;
 
-	if (!tee)
-		return;
+	अगर (!tee)
+		वापस;
 
 	tee_destroy_ring(tee);
-}
+पूर्ण
 
-static int tee_submit_cmd(struct psp_tee_device *tee, enum tee_cmd_id cmd_id,
-			  void *buf, size_t len, struct tee_ring_cmd **resp)
-{
-	struct tee_ring_cmd *cmd;
-	int nloop = 1000, ret = 0;
+अटल पूर्णांक tee_submit_cmd(काष्ठा psp_tee_device *tee, क्रमागत tee_cmd_id cmd_id,
+			  व्योम *buf, माप_प्रकार len, काष्ठा tee_ring_cmd **resp)
+अणु
+	काष्ठा tee_ring_cmd *cmd;
+	पूर्णांक nloop = 1000, ret = 0;
 	u32 rptr;
 
-	*resp = NULL;
+	*resp = शून्य;
 
 	mutex_lock(&tee->rb_mgr.mutex);
 
 	/* Loop until empty entry found in ring buffer */
-	do {
-		/* Get pointer to ring buffer command entry */
-		cmd = (struct tee_ring_cmd *)
+	करो अणु
+		/* Get poपूर्णांकer to ring buffer command entry */
+		cmd = (काष्ठा tee_ring_cmd *)
 			(tee->rb_mgr.ring_start + tee->rb_mgr.wptr);
 
-		rptr = ioread32(tee->io_regs + tee->vdata->ring_rptr_reg);
+		rptr = ioपढ़ो32(tee->io_regs + tee->vdata->ring_rptr_reg);
 
-		/* Check if ring buffer is full or command entry is waiting
-		 * for response from TEE
+		/* Check अगर ring buffer is full or command entry is रुकोing
+		 * क्रम response from TEE
 		 */
-		if (!(tee->rb_mgr.wptr + sizeof(struct tee_ring_cmd) == rptr ||
+		अगर (!(tee->rb_mgr.wptr + माप(काष्ठा tee_ring_cmd) == rptr ||
 		      cmd->flag == CMD_WAITING_FOR_RESPONSE))
-			break;
+			अवरोध;
 
 		dev_dbg(tee->dev, "tee: ring buffer full. rptr = %u wptr = %u\n",
 			rptr, tee->rb_mgr.wptr);
 
-		/* Wait if ring buffer is full or TEE is processing data */
+		/* Wait अगर ring buffer is full or TEE is processing data */
 		mutex_unlock(&tee->rb_mgr.mutex);
-		schedule_timeout_interruptible(msecs_to_jiffies(10));
+		schedule_समयout_पूर्णांकerruptible(msecs_to_jअगरfies(10));
 		mutex_lock(&tee->rb_mgr.mutex);
 
-	} while (--nloop);
+	पूर्ण जबतक (--nloop);
 
-	if (!nloop &&
-	    (tee->rb_mgr.wptr + sizeof(struct tee_ring_cmd) == rptr ||
-	     cmd->flag == CMD_WAITING_FOR_RESPONSE)) {
+	अगर (!nloop &&
+	    (tee->rb_mgr.wptr + माप(काष्ठा tee_ring_cmd) == rptr ||
+	     cmd->flag == CMD_WAITING_FOR_RESPONSE)) अणु
 		dev_err(tee->dev, "tee: ring buffer full. rptr = %u wptr = %u response flag %u\n",
 			rptr, tee->rb_mgr.wptr, cmd->flag);
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	/* Do not submit command if PSP got disabled while processing any
-	 * command in another thread
+	/* Do not submit command अगर PSP got disabled जबतक processing any
+	 * command in another thपढ़ो
 	 */
-	if (psp_dead) {
+	अगर (psp_dead) अणु
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	/* Write command data into ring buffer */
+	/* Write command data पूर्णांकo ring buffer */
 	cmd->cmd_id = cmd_id;
 	cmd->cmd_state = TEE_CMD_STATE_INIT;
-	memset(&cmd->buf[0], 0, sizeof(cmd->buf));
-	memcpy(&cmd->buf[0], buf, len);
+	स_रखो(&cmd->buf[0], 0, माप(cmd->buf));
+	स_नकल(&cmd->buf[0], buf, len);
 
-	/* Indicate driver is waiting for response */
+	/* Indicate driver is रुकोing क्रम response */
 	cmd->flag = CMD_WAITING_FOR_RESPONSE;
 
-	/* Update local copy of write pointer */
-	tee->rb_mgr.wptr += sizeof(struct tee_ring_cmd);
-	if (tee->rb_mgr.wptr >= tee->rb_mgr.ring_size)
+	/* Update local copy of ग_लिखो poपूर्णांकer */
+	tee->rb_mgr.wptr += माप(काष्ठा tee_ring_cmd);
+	अगर (tee->rb_mgr.wptr >= tee->rb_mgr.ring_size)
 		tee->rb_mgr.wptr = 0;
 
-	/* Trigger interrupt to Trusted OS */
-	iowrite32(tee->rb_mgr.wptr, tee->io_regs + tee->vdata->ring_wptr_reg);
+	/* Trigger पूर्णांकerrupt to Trusted OS */
+	ioग_लिखो32(tee->rb_mgr.wptr, tee->io_regs + tee->vdata->ring_wptr_reg);
 
 	/* The response is provided by Trusted OS in same
 	 * location as submitted data entry within ring buffer.
@@ -319,78 +320,78 @@ static int tee_submit_cmd(struct psp_tee_device *tee, enum tee_cmd_id cmd_id,
 unlock:
 	mutex_unlock(&tee->rb_mgr.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tee_wait_cmd_completion(struct psp_tee_device *tee,
-				   struct tee_ring_cmd *resp,
-				   unsigned int timeout)
-{
-	/* ~1ms sleep per loop => nloop = timeout * 1000 */
-	int nloop = timeout * 1000;
+अटल पूर्णांक tee_रुको_cmd_completion(काष्ठा psp_tee_device *tee,
+				   काष्ठा tee_ring_cmd *resp,
+				   अचिन्हित पूर्णांक समयout)
+अणु
+	/* ~1ms sleep per loop => nloop = समयout * 1000 */
+	पूर्णांक nloop = समयout * 1000;
 
-	while (--nloop) {
-		if (resp->cmd_state == TEE_CMD_STATE_COMPLETED)
-			return 0;
+	जबतक (--nloop) अणु
+		अगर (resp->cmd_state == TEE_CMD_STATE_COMPLETED)
+			वापस 0;
 
 		usleep_range(1000, 1100);
-	}
+	पूर्ण
 
 	dev_err(tee->dev, "tee: command 0x%x timed out, disabling PSP\n",
 		resp->cmd_id);
 
 	psp_dead = true;
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-int psp_tee_process_cmd(enum tee_cmd_id cmd_id, void *buf, size_t len,
+पूर्णांक psp_tee_process_cmd(क्रमागत tee_cmd_id cmd_id, व्योम *buf, माप_प्रकार len,
 			u32 *status)
-{
-	struct psp_device *psp = psp_get_master_device();
-	struct psp_tee_device *tee;
-	struct tee_ring_cmd *resp;
-	int ret;
+अणु
+	काष्ठा psp_device *psp = psp_get_master_device();
+	काष्ठा psp_tee_device *tee;
+	काष्ठा tee_ring_cmd *resp;
+	पूर्णांक ret;
 
-	if (!buf || !status || !len || len > sizeof(resp->buf))
-		return -EINVAL;
+	अगर (!buf || !status || !len || len > माप(resp->buf))
+		वापस -EINVAL;
 
 	*status = 0;
 
-	if (!psp || !psp->tee_data)
-		return -ENODEV;
+	अगर (!psp || !psp->tee_data)
+		वापस -ENODEV;
 
-	if (psp_dead)
-		return -EBUSY;
+	अगर (psp_dead)
+		वापस -EBUSY;
 
 	tee = psp->tee_data;
 
 	ret = tee_submit_cmd(tee, cmd_id, buf, len, &resp);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tee_wait_cmd_completion(tee, resp, TEE_DEFAULT_TIMEOUT);
-	if (ret) {
+	ret = tee_रुको_cmd_completion(tee, resp, TEE_DEFAULT_TIMEOUT);
+	अगर (ret) अणु
 		resp->flag = CMD_RESPONSE_TIMEDOUT;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	memcpy(buf, &resp->buf[0], len);
+	स_नकल(buf, &resp->buf[0], len);
 	*status = resp->status;
 
 	resp->flag = CMD_RESPONSE_COPIED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(psp_tee_process_cmd);
 
-int psp_check_tee_status(void)
-{
-	struct psp_device *psp = psp_get_master_device();
+पूर्णांक psp_check_tee_status(व्योम)
+अणु
+	काष्ठा psp_device *psp = psp_get_master_device();
 
-	if (!psp || !psp->tee_data)
-		return -ENODEV;
+	अगर (!psp || !psp->tee_data)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(psp_check_tee_status);

@@ -1,134 +1,135 @@
+<शैली गुरु>
 /*
  * ARAnyM console driver
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/console.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/uaccess.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/console.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/पन.स>
 
-#include <asm/natfeat.h>
+#समावेश <यंत्र/natfeat.h>
 
-static int stderr_id;
-static struct tty_port nfcon_tty_port;
-static struct tty_driver *nfcon_tty_driver;
+अटल पूर्णांक मानक_त्रुटि_id;
+अटल काष्ठा tty_port nfcon_tty_port;
+अटल काष्ठा tty_driver *nfcon_tty_driver;
 
-static void nfputs(const char *str, unsigned int count)
-{
-	char buf[68];
-	unsigned long phys = virt_to_phys(buf);
+अटल व्योम nख_माला_दो(स्थिर अक्षर *str, अचिन्हित पूर्णांक count)
+अणु
+	अक्षर buf[68];
+	अचिन्हित दीर्घ phys = virt_to_phys(buf);
 
 	buf[64] = 0;
-	while (count > 64) {
-		memcpy(buf, str, 64);
-		nf_call(stderr_id, phys);
+	जबतक (count > 64) अणु
+		स_नकल(buf, str, 64);
+		nf_call(मानक_त्रुटि_id, phys);
 		str += 64;
 		count -= 64;
-	}
-	memcpy(buf, str, count);
+	पूर्ण
+	स_नकल(buf, str, count);
 	buf[count] = 0;
-	nf_call(stderr_id, phys);
-}
+	nf_call(मानक_त्रुटि_id, phys);
+पूर्ण
 
-static void nfcon_write(struct console *con, const char *str,
-			unsigned int count)
-{
-	nfputs(str, count);
-}
+अटल व्योम nfcon_ग_लिखो(काष्ठा console *con, स्थिर अक्षर *str,
+			अचिन्हित पूर्णांक count)
+अणु
+	nख_माला_दो(str, count);
+पूर्ण
 
-static struct tty_driver *nfcon_device(struct console *con, int *index)
-{
+अटल काष्ठा tty_driver *nfcon_device(काष्ठा console *con, पूर्णांक *index)
+अणु
 	*index = 0;
-	return (con->flags & CON_ENABLED) ? nfcon_tty_driver : NULL;
-}
+	वापस (con->flags & CON_ENABLED) ? nfcon_tty_driver : शून्य;
+पूर्ण
 
-static struct console nf_console = {
+अटल काष्ठा console nf_console = अणु
 	.name	= "nfcon",
-	.write	= nfcon_write,
+	.ग_लिखो	= nfcon_ग_लिखो,
 	.device	= nfcon_device,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
-};
+पूर्ण;
 
 
-static int nfcon_tty_open(struct tty_struct *tty, struct file *filp)
-{
-	return 0;
-}
+अटल पूर्णांक nfcon_tty_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+	वापस 0;
+पूर्ण
 
-static void nfcon_tty_close(struct tty_struct *tty, struct file *filp)
-{
-}
+अटल व्योम nfcon_tty_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file *filp)
+अणु
+पूर्ण
 
-static int nfcon_tty_write(struct tty_struct *tty, const unsigned char *buf,
-			   int count)
-{
-	nfputs(buf, count);
-	return count;
-}
+अटल पूर्णांक nfcon_tty_ग_लिखो(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *buf,
+			   पूर्णांक count)
+अणु
+	nख_माला_दो(buf, count);
+	वापस count;
+पूर्ण
 
-static int nfcon_tty_put_char(struct tty_struct *tty, unsigned char ch)
-{
-	char temp[2] = { ch, 0 };
+अटल पूर्णांक nfcon_tty_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
+अणु
+	अक्षर temp[2] = अणु ch, 0 पूर्ण;
 
-	nf_call(stderr_id, virt_to_phys(temp));
-	return 1;
-}
+	nf_call(मानक_त्रुटि_id, virt_to_phys(temp));
+	वापस 1;
+पूर्ण
 
-static int nfcon_tty_write_room(struct tty_struct *tty)
-{
-	return 64;
-}
+अटल पूर्णांक nfcon_tty_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	वापस 64;
+पूर्ण
 
-static const struct tty_operations nfcon_tty_ops = {
-	.open		= nfcon_tty_open,
-	.close		= nfcon_tty_close,
-	.write		= nfcon_tty_write,
-	.put_char	= nfcon_tty_put_char,
-	.write_room	= nfcon_tty_write_room,
-};
+अटल स्थिर काष्ठा tty_operations nfcon_tty_ops = अणु
+	.खोलो		= nfcon_tty_खोलो,
+	.बंद		= nfcon_tty_बंद,
+	.ग_लिखो		= nfcon_tty_ग_लिखो,
+	.put_अक्षर	= nfcon_tty_put_अक्षर,
+	.ग_लिखो_room	= nfcon_tty_ग_लिखो_room,
+पूर्ण;
 
-#ifndef MODULE
+#अगर_अघोषित MODULE
 
-static int __init nf_debug_setup(char *arg)
-{
-	if (strcmp(arg, "nfcon"))
-		return 0;
+अटल पूर्णांक __init nf_debug_setup(अक्षर *arg)
+अणु
+	अगर (म_भेद(arg, "nfcon"))
+		वापस 0;
 
-	stderr_id = nf_get_id("NF_STDERR");
-	if (stderr_id) {
+	मानक_त्रुटि_id = nf_get_id("NF_STDERR");
+	अगर (मानक_त्रुटि_id) अणु
 		nf_console.flags |= CON_ENABLED;
-		register_console(&nf_console);
-	}
+		रेजिस्टर_console(&nf_console);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_param("debug", nf_debug_setup);
 
-#endif /* !MODULE */
+#पूर्ण_अगर /* !MODULE */
 
-static int __init nfcon_init(void)
-{
-	int res;
+अटल पूर्णांक __init nfcon_init(व्योम)
+अणु
+	पूर्णांक res;
 
-	stderr_id = nf_get_id("NF_STDERR");
-	if (!stderr_id)
-		return -ENODEV;
+	मानक_त्रुटि_id = nf_get_id("NF_STDERR");
+	अगर (!मानक_त्रुटि_id)
+		वापस -ENODEV;
 
 	nfcon_tty_driver = alloc_tty_driver(1);
-	if (!nfcon_tty_driver)
-		return -ENOMEM;
+	अगर (!nfcon_tty_driver)
+		वापस -ENOMEM;
 
 	tty_port_init(&nfcon_tty_port);
 
@@ -141,29 +142,29 @@ static int __init nfcon_init(void)
 
 	tty_set_operations(nfcon_tty_driver, &nfcon_tty_ops);
 	tty_port_link_device(&nfcon_tty_port, nfcon_tty_driver, 0);
-	res = tty_register_driver(nfcon_tty_driver);
-	if (res) {
+	res = tty_रेजिस्टर_driver(nfcon_tty_driver);
+	अगर (res) अणु
 		pr_err("failed to register nfcon tty driver\n");
 		put_tty_driver(nfcon_tty_driver);
 		tty_port_destroy(&nfcon_tty_port);
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	if (!(nf_console.flags & CON_ENABLED))
-		register_console(&nf_console);
+	अगर (!(nf_console.flags & CON_ENABLED))
+		रेजिस्टर_console(&nf_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nfcon_exit(void)
-{
-	unregister_console(&nf_console);
-	tty_unregister_driver(nfcon_tty_driver);
+अटल व्योम __निकास nfcon_निकास(व्योम)
+अणु
+	unरेजिस्टर_console(&nf_console);
+	tty_unरेजिस्टर_driver(nfcon_tty_driver);
 	put_tty_driver(nfcon_tty_driver);
 	tty_port_destroy(&nfcon_tty_port);
-}
+पूर्ण
 
 module_init(nfcon_init);
-module_exit(nfcon_exit);
+module_निकास(nfcon_निकास);
 
 MODULE_LICENSE("GPL");

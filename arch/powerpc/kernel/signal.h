@@ -1,207 +1,208 @@
+<शैली गुरु>
 /*
  *    Copyright (c) 2007 Benjamin Herrenschmidt, IBM Corporation
- *    Extracted from signal_32.c and signal_64.c
+ *    Extracted from संकेत_32.c and संकेत_64.c
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file README.legal in the main directory of
- * this archive for more details.
+ * Public License.  See the file README.legal in the मुख्य directory of
+ * this archive क्रम more details.
  */
 
-#ifndef _POWERPC_ARCH_SIGNAL_H
-#define _POWERPC_ARCH_SIGNAL_H
+#अगर_अघोषित _POWERPC_ARCH_SIGNAL_H
+#घोषणा _POWERPC_ARCH_SIGNAL_H
 
-void __user *get_sigframe(struct ksignal *ksig, struct task_struct *tsk,
-			  size_t frame_size, int is_32);
+व्योम __user *get_sigframe(काष्ठा kसंकेत *ksig, काष्ठा task_काष्ठा *tsk,
+			  माप_प्रकार frame_size, पूर्णांक is_32);
 
-extern int handle_signal32(struct ksignal *ksig, sigset_t *oldset,
-			   struct task_struct *tsk);
+बाह्य पूर्णांक handle_संकेत32(काष्ठा kसंकेत *ksig, sigset_t *oldset,
+			   काष्ठा task_काष्ठा *tsk);
 
-extern int handle_rt_signal32(struct ksignal *ksig, sigset_t *oldset,
-			      struct task_struct *tsk);
+बाह्य पूर्णांक handle_rt_संकेत32(काष्ठा kसंकेत *ksig, sigset_t *oldset,
+			      काष्ठा task_काष्ठा *tsk);
 
-static inline int __get_user_sigset(sigset_t *dst, const sigset_t __user *src)
-{
-	BUILD_BUG_ON(sizeof(sigset_t) != sizeof(u64));
+अटल अंतरभूत पूर्णांक __get_user_sigset(sigset_t *dst, स्थिर sigset_t __user *src)
+अणु
+	BUILD_BUG_ON(माप(sigset_t) != माप(u64));
 
-	return __get_user(dst->sig[0], (u64 __user *)&src->sig[0]);
-}
-#define unsafe_get_user_sigset(dst, src, label) \
+	वापस __get_user(dst->sig[0], (u64 __user *)&src->sig[0]);
+पूर्ण
+#घोषणा unsafe_get_user_sigset(dst, src, label) \
 	unsafe_get_user((dst)->sig[0], (u64 __user *)&(src)->sig[0], label)
 
-#ifdef CONFIG_VSX
-extern unsigned long copy_vsx_to_user(void __user *to,
-				      struct task_struct *task);
-extern unsigned long copy_ckvsx_to_user(void __user *to,
-					       struct task_struct *task);
-extern unsigned long copy_vsx_from_user(struct task_struct *task,
-					void __user *from);
-extern unsigned long copy_ckvsx_from_user(struct task_struct *task,
-						 void __user *from);
-unsigned long copy_fpr_to_user(void __user *to, struct task_struct *task);
-unsigned long copy_ckfpr_to_user(void __user *to, struct task_struct *task);
-unsigned long copy_fpr_from_user(struct task_struct *task, void __user *from);
-unsigned long copy_ckfpr_from_user(struct task_struct *task, void __user *from);
+#अगर_घोषित CONFIG_VSX
+बाह्य अचिन्हित दीर्घ copy_vsx_to_user(व्योम __user *to,
+				      काष्ठा task_काष्ठा *task);
+बाह्य अचिन्हित दीर्घ copy_ckvsx_to_user(व्योम __user *to,
+					       काष्ठा task_काष्ठा *task);
+बाह्य अचिन्हित दीर्घ copy_vsx_from_user(काष्ठा task_काष्ठा *task,
+					व्योम __user *from);
+बाह्य अचिन्हित दीर्घ copy_ckvsx_from_user(काष्ठा task_काष्ठा *task,
+						 व्योम __user *from);
+अचिन्हित दीर्घ copy_fpr_to_user(व्योम __user *to, काष्ठा task_काष्ठा *task);
+अचिन्हित दीर्घ copy_ckfpr_to_user(व्योम __user *to, काष्ठा task_काष्ठा *task);
+अचिन्हित दीर्घ copy_fpr_from_user(काष्ठा task_काष्ठा *task, व्योम __user *from);
+अचिन्हित दीर्घ copy_ckfpr_from_user(काष्ठा task_काष्ठा *task, व्योम __user *from);
 
-#define unsafe_copy_fpr_to_user(to, task, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_fpr_to_user(to, task, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)to;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NFPREG - 1 ; i++)				\
-		unsafe_put_user(__t->thread.TS_FPR(i), &buf[i], label); \
-	unsafe_put_user(__t->thread.fp_state.fpscr, &buf[i], label);	\
-} while (0)
+	क्रम (i = 0; i < ELF_NFPREG - 1 ; i++)				\
+		unsafe_put_user(__t->thपढ़ो.TS_FPR(i), &buf[i], label); \
+	unsafe_put_user(__t->thपढ़ो.fp_state.fpscr, &buf[i], label);	\
+पूर्ण जबतक (0)
 
-#define unsafe_copy_vsx_to_user(to, task, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_vsx_to_user(to, task, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)to;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)				\
-		unsafe_put_user(__t->thread.fp_state.fpr[i][TS_VSRLOWOFFSET], \
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)				\
+		unsafe_put_user(__t->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET], \
 				&buf[i], label);\
-} while (0)
+पूर्ण जबतक (0)
 
-#define unsafe_copy_fpr_from_user(task, from, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_fpr_from_user(task, from, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)from;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NFPREG - 1; i++)				\
-		unsafe_get_user(__t->thread.TS_FPR(i), &buf[i], label); \
-	unsafe_get_user(__t->thread.fp_state.fpscr, &buf[i], label);	\
-} while (0)
+	क्रम (i = 0; i < ELF_NFPREG - 1; i++)				\
+		unsafe_get_user(__t->thपढ़ो.TS_FPR(i), &buf[i], label); \
+	unsafe_get_user(__t->thपढ़ो.fp_state.fpscr, &buf[i], label);	\
+पूर्ण जबतक (0)
 
-#define unsafe_copy_vsx_from_user(task, from, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_vsx_from_user(task, from, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)from;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)				\
-		unsafe_get_user(__t->thread.fp_state.fpr[i][TS_VSRLOWOFFSET], \
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)				\
+		unsafe_get_user(__t->thपढ़ो.fp_state.fpr[i][TS_VSRLOWOFFSET], \
 				&buf[i], label);			\
-} while (0)
+पूर्ण जबतक (0)
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-#define unsafe_copy_ckfpr_to_user(to, task, label)	do {		\
-	struct task_struct *__t = task;					\
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+#घोषणा unsafe_copy_ckfpr_to_user(to, task, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)to;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NFPREG - 1 ; i++)				\
-		unsafe_put_user(__t->thread.TS_CKFPR(i), &buf[i], label);\
-	unsafe_put_user(__t->thread.ckfp_state.fpscr, &buf[i], label);	\
-} while (0)
+	क्रम (i = 0; i < ELF_NFPREG - 1 ; i++)				\
+		unsafe_put_user(__t->thपढ़ो.TS_CKFPR(i), &buf[i], label);\
+	unsafe_put_user(__t->thपढ़ो.ckfp_state.fpscr, &buf[i], label);	\
+पूर्ण जबतक (0)
 
-#define unsafe_copy_ckvsx_to_user(to, task, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_ckvsx_to_user(to, task, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)to;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)				\
-		unsafe_put_user(__t->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET], \
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)				\
+		unsafe_put_user(__t->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET], \
 				&buf[i], label);\
-} while (0)
+पूर्ण जबतक (0)
 
-#define unsafe_copy_ckfpr_from_user(task, from, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_ckfpr_from_user(task, from, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)from;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NFPREG - 1 ; i++)				\
-		unsafe_get_user(__t->thread.TS_CKFPR(i), &buf[i], label);\
-	unsafe_get_user(__t->thread.ckfp_state.fpscr, &buf[i], failed);	\
-} while (0)
+	क्रम (i = 0; i < ELF_NFPREG - 1 ; i++)				\
+		unsafe_get_user(__t->thपढ़ो.TS_CKFPR(i), &buf[i], label);\
+	unsafe_get_user(__t->thपढ़ो.ckfp_state.fpscr, &buf[i], failed);	\
+पूर्ण जबतक (0)
 
-#define unsafe_copy_ckvsx_from_user(task, from, label)	do {		\
-	struct task_struct *__t = task;					\
+#घोषणा unsafe_copy_ckvsx_from_user(task, from, label)	करो अणु		\
+	काष्ठा task_काष्ठा *__t = task;					\
 	u64 __user *buf = (u64 __user *)from;				\
-	int i;								\
+	पूर्णांक i;								\
 									\
-	for (i = 0; i < ELF_NVSRHALFREG ; i++)				\
-		unsafe_get_user(__t->thread.ckfp_state.fpr[i][TS_VSRLOWOFFSET], \
+	क्रम (i = 0; i < ELF_NVSRHALFREG ; i++)				\
+		unsafe_get_user(__t->thपढ़ो.ckfp_state.fpr[i][TS_VSRLOWOFFSET], \
 				&buf[i], label);			\
-} while (0)
-#endif
-#elif defined(CONFIG_PPC_FPU_REGS)
+पूर्ण जबतक (0)
+#पूर्ण_अगर
+#या_अगर defined(CONFIG_PPC_FPU_REGS)
 
-#define unsafe_copy_fpr_to_user(to, task, label)		\
-	unsafe_copy_to_user(to, (task)->thread.fp_state.fpr,	\
-			    ELF_NFPREG * sizeof(double), label)
+#घोषणा unsafe_copy_fpr_to_user(to, task, label)		\
+	unsafe_copy_to_user(to, (task)->thपढ़ो.fp_state.fpr,	\
+			    ELF_NFPREG * माप(द्विगुन), label)
 
-#define unsafe_copy_fpr_from_user(task, from, label)			\
-	unsafe_copy_from_user((task)->thread.fp_state.fpr, from,	\
-			    ELF_NFPREG * sizeof(double), label)
+#घोषणा unsafe_copy_fpr_from_user(task, from, label)			\
+	unsafe_copy_from_user((task)->thपढ़ो.fp_state.fpr, from,	\
+			    ELF_NFPREG * माप(द्विगुन), label)
 
-static inline unsigned long
-copy_fpr_to_user(void __user *to, struct task_struct *task)
-{
-	return __copy_to_user(to, task->thread.fp_state.fpr,
-			      ELF_NFPREG * sizeof(double));
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+copy_fpr_to_user(व्योम __user *to, काष्ठा task_काष्ठा *task)
+अणु
+	वापस __copy_to_user(to, task->thपढ़ो.fp_state.fpr,
+			      ELF_NFPREG * माप(द्विगुन));
+पूर्ण
 
-static inline unsigned long
-copy_fpr_from_user(struct task_struct *task, void __user *from)
-{
-	return __copy_from_user(task->thread.fp_state.fpr, from,
-			      ELF_NFPREG * sizeof(double));
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+copy_fpr_from_user(काष्ठा task_काष्ठा *task, व्योम __user *from)
+अणु
+	वापस __copy_from_user(task->thपढ़ो.fp_state.fpr, from,
+			      ELF_NFPREG * माप(द्विगुन));
+पूर्ण
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-#define unsafe_copy_ckfpr_to_user(to, task, label)		\
-	unsafe_copy_to_user(to, (task)->thread.ckfp_state.fpr,	\
-			    ELF_NFPREG * sizeof(double), label)
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+#घोषणा unsafe_copy_ckfpr_to_user(to, task, label)		\
+	unsafe_copy_to_user(to, (task)->thपढ़ो.ckfp_state.fpr,	\
+			    ELF_NFPREG * माप(द्विगुन), label)
 
-inline unsigned long copy_ckfpr_to_user(void __user *to, struct task_struct *task)
-{
-	return __copy_to_user(to, task->thread.ckfp_state.fpr,
-			      ELF_NFPREG * sizeof(double));
-}
+अंतरभूत अचिन्हित दीर्घ copy_ckfpr_to_user(व्योम __user *to, काष्ठा task_काष्ठा *task)
+अणु
+	वापस __copy_to_user(to, task->thपढ़ो.ckfp_state.fpr,
+			      ELF_NFPREG * माप(द्विगुन));
+पूर्ण
 
-static inline unsigned long
-copy_ckfpr_from_user(struct task_struct *task, void __user *from)
-{
-	return __copy_from_user(task->thread.ckfp_state.fpr, from,
-				ELF_NFPREG * sizeof(double));
-}
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
-#else
-#define unsafe_copy_fpr_to_user(to, task, label) do { if (0) goto label;} while (0)
+अटल अंतरभूत अचिन्हित दीर्घ
+copy_ckfpr_from_user(काष्ठा task_काष्ठा *task, व्योम __user *from)
+अणु
+	वापस __copy_from_user(task->thपढ़ो.ckfp_state.fpr, from,
+				ELF_NFPREG * माप(द्विगुन));
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
+#अन्यथा
+#घोषणा unsafe_copy_fpr_to_user(to, task, label) करो अणु अगर (0) जाओ label;पूर्ण जबतक (0)
 
-#define unsafe_copy_fpr_from_user(task, from, label) do { if (0) goto label;} while (0)
+#घोषणा unsafe_copy_fpr_from_user(task, from, label) करो अणु अगर (0) जाओ label;पूर्ण जबतक (0)
 
-static inline unsigned long
-copy_fpr_to_user(void __user *to, struct task_struct *task)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+copy_fpr_to_user(व्योम __user *to, काष्ठा task_काष्ठा *task)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline unsigned long
-copy_fpr_from_user(struct task_struct *task, void __user *from)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत अचिन्हित दीर्घ
+copy_fpr_from_user(काष्ठा task_काष्ठा *task, व्योम __user *from)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 
-extern int handle_rt_signal64(struct ksignal *ksig, sigset_t *set,
-			      struct task_struct *tsk);
+बाह्य पूर्णांक handle_rt_संकेत64(काष्ठा kसंकेत *ksig, sigset_t *set,
+			      काष्ठा task_काष्ठा *tsk);
 
-#else /* CONFIG_PPC64 */
+#अन्यथा /* CONFIG_PPC64 */
 
-extern long sys_rt_sigreturn(void);
-extern long sys_sigreturn(void);
+बाह्य दीर्घ sys_rt_sigवापस(व्योम);
+बाह्य दीर्घ sys_sigवापस(व्योम);
 
-static inline int handle_rt_signal64(struct ksignal *ksig, sigset_t *set,
-				     struct task_struct *tsk)
-{
-	return -EFAULT;
-}
+अटल अंतरभूत पूर्णांक handle_rt_संकेत64(काष्ठा kसंकेत *ksig, sigset_t *set,
+				     काष्ठा task_काष्ठा *tsk)
+अणु
+	वापस -EFAULT;
+पूर्ण
 
-#endif /* !defined(CONFIG_PPC64) */
+#पूर्ण_अगर /* !defined(CONFIG_PPC64) */
 
-void signal_fault(struct task_struct *tsk, struct pt_regs *regs,
-		  const char *where, void __user *ptr);
+व्योम संकेत_fault(काष्ठा task_काष्ठा *tsk, काष्ठा pt_regs *regs,
+		  स्थिर अक्षर *where, व्योम __user *ptr);
 
-#endif  /* _POWERPC_ARCH_SIGNAL_H */
+#पूर्ण_अगर  /* _POWERPC_ARCH_SIGNAL_H */

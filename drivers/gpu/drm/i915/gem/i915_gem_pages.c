@@ -1,36 +1,37 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2014-2016 Intel Corporation
+ * Copyright तऊ 2014-2016 Intel Corporation
  */
 
-#include "i915_drv.h"
-#include "i915_gem_object.h"
-#include "i915_scatterlist.h"
-#include "i915_gem_lmem.h"
-#include "i915_gem_mman.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_gem_object.h"
+#समावेश "i915_scatterlist.h"
+#समावेश "i915_gem_lmem.h"
+#समावेश "i915_gem_mman.h"
 
-void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
-				 struct sg_table *pages,
-				 unsigned int sg_page_sizes)
-{
-	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	unsigned long supported = INTEL_INFO(i915)->page_sizes;
+व्योम __i915_gem_object_set_pages(काष्ठा drm_i915_gem_object *obj,
+				 काष्ठा sg_table *pages,
+				 अचिन्हित पूर्णांक sg_page_sizes)
+अणु
+	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
+	अचिन्हित दीर्घ supported = INTEL_INFO(i915)->page_sizes;
 	bool shrinkable;
-	int i;
+	पूर्णांक i;
 
-	assert_object_held_shared(obj);
+	निश्चित_object_held_shared(obj);
 
-	if (i915_gem_object_is_volatile(obj))
+	अगर (i915_gem_object_is_अस्थिर(obj))
 		obj->mm.madv = I915_MADV_DONTNEED;
 
 	/* Make the pages coherent with the GPU (flushing any swapin). */
-	if (obj->cache_dirty) {
-		obj->write_domain = 0;
-		if (i915_gem_object_has_struct_page(obj))
+	अगर (obj->cache_dirty) अणु
+		obj->ग_लिखो_करोमुख्य = 0;
+		अगर (i915_gem_object_has_काष्ठा_page(obj))
 			drm_clflush_sg(pages);
 		obj->cache_dirty = false;
-	}
+	पूर्ण
 
 	obj->mm.get_page.sg_pos = pages->sgl;
 	obj->mm.get_page.sg_idx = 0;
@@ -43,454 +44,454 @@ void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 	obj->mm.page_sizes.phys = sg_page_sizes;
 
 	/*
-	 * Calculate the supported page-sizes which fit into the given
+	 * Calculate the supported page-sizes which fit पूर्णांकo the given
 	 * sg_page_sizes. This will give us the page-sizes which we may be able
-	 * to use opportunistically when later inserting into the GTT. For
-	 * example if phys=2G, then in theory we should be able to use 1G, 2M,
+	 * to use opportunistically when later inserting पूर्णांकo the GTT. For
+	 * example अगर phys=2G, then in theory we should be able to use 1G, 2M,
 	 * 64K or 4K pages, although in practice this will depend on a number of
 	 * other factors.
 	 */
 	obj->mm.page_sizes.sg = 0;
-	for_each_set_bit(i, &supported, ilog2(I915_GTT_MAX_PAGE_SIZE) + 1) {
-		if (obj->mm.page_sizes.phys & ~0u << i)
+	क्रम_each_set_bit(i, &supported, ilog2(I915_GTT_MAX_PAGE_SIZE) + 1) अणु
+		अगर (obj->mm.page_sizes.phys & ~0u << i)
 			obj->mm.page_sizes.sg |= BIT(i);
-	}
+	पूर्ण
 	GEM_BUG_ON(!HAS_PAGE_SIZES(i915, obj->mm.page_sizes.sg));
 
 	shrinkable = i915_gem_object_is_shrinkable(obj);
 
-	if (i915_gem_object_is_tiled(obj) &&
-	    i915->quirks & QUIRK_PIN_SWIZZLED_PAGES) {
+	अगर (i915_gem_object_is_tiled(obj) &&
+	    i915->quirks & QUIRK_PIN_SWIZZLED_PAGES) अणु
 		GEM_BUG_ON(i915_gem_object_has_tiling_quirk(obj));
 		i915_gem_object_set_tiling_quirk(obj);
 		GEM_BUG_ON(!list_empty(&obj->mm.link));
 		atomic_inc(&obj->mm.shrink_pin);
 		shrinkable = false;
-	}
+	पूर्ण
 
-	if (shrinkable) {
-		struct list_head *list;
-		unsigned long flags;
+	अगर (shrinkable) अणु
+		काष्ठा list_head *list;
+		अचिन्हित दीर्घ flags;
 
-		assert_object_held(obj);
+		निश्चित_object_held(obj);
 		spin_lock_irqsave(&i915->mm.obj_lock, flags);
 
 		i915->mm.shrink_count++;
 		i915->mm.shrink_memory += obj->base.size;
 
-		if (obj->mm.madv != I915_MADV_WILLNEED)
+		अगर (obj->mm.madv != I915_MADV_WILLNEED)
 			list = &i915->mm.purge_list;
-		else
+		अन्यथा
 			list = &i915->mm.shrink_list;
 		list_add_tail(&obj->mm.link, list);
 
 		atomic_set(&obj->mm.shrink_pin, 0);
 		spin_unlock_irqrestore(&i915->mm.obj_lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ____i915_gem_object_get_pages(struct drm_i915_gem_object *obj)
-{
-	struct drm_i915_private *i915 = to_i915(obj->base.dev);
-	int err;
+पूर्णांक ____i915_gem_object_get_pages(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
+	पूर्णांक err;
 
-	assert_object_held_shared(obj);
+	निश्चित_object_held_shared(obj);
 
-	if (unlikely(obj->mm.madv != I915_MADV_WILLNEED)) {
+	अगर (unlikely(obj->mm.madv != I915_MADV_WILLNEED)) अणु
 		drm_dbg(&i915->drm,
 			"Attempting to obtain a purgeable object\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	err = obj->ops->get_pages(obj);
 	GEM_BUG_ON(!err && !i915_gem_object_has_pages(obj));
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Ensure that the associated pages are gathered from the backing storage
- * and pinned into our object. i915_gem_object_pin_pages() may be called
- * multiple times before they are released by a single call to
- * i915_gem_object_unpin_pages() - once the pages are no longer referenced
+ * and pinned पूर्णांकo our object. i915_gem_object_pin_pages() may be called
+ * multiple बार beक्रमe they are released by a single call to
+ * i915_gem_object_unpin_pages() - once the pages are no दीर्घer referenced
  * either as a result of memory pressure (reaping pages under the shrinker)
  * or as the object is itself released.
  */
-int __i915_gem_object_get_pages(struct drm_i915_gem_object *obj)
-{
-	int err;
+पूर्णांक __i915_gem_object_get_pages(काष्ठा drm_i915_gem_object *obj)
+अणु
+	पूर्णांक err;
 
-	assert_object_held(obj);
+	निश्चित_object_held(obj);
 
-	assert_object_held_shared(obj);
+	निश्चित_object_held_shared(obj);
 
-	if (unlikely(!i915_gem_object_has_pages(obj))) {
+	अगर (unlikely(!i915_gem_object_has_pages(obj))) अणु
 		GEM_BUG_ON(i915_gem_object_has_pinned_pages(obj));
 
 		err = ____i915_gem_object_get_pages(obj);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		smp_mb__before_atomic();
-	}
+		smp_mb__beक्रमe_atomic();
+	पूर्ण
 	atomic_inc(&obj->mm.pages_pin_count);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int i915_gem_object_pin_pages_unlocked(struct drm_i915_gem_object *obj)
-{
-	struct i915_gem_ww_ctx ww;
-	int err;
+पूर्णांक i915_gem_object_pin_pages_unlocked(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा i915_gem_ww_ctx ww;
+	पूर्णांक err;
 
 	i915_gem_ww_ctx_init(&ww, true);
 retry:
 	err = i915_gem_object_lock(obj, &ww);
-	if (!err)
+	अगर (!err)
 		err = i915_gem_object_pin_pages(obj);
 
-	if (err == -EDEADLK) {
+	अगर (err == -EDEADLK) अणु
 		err = i915_gem_ww_ctx_backoff(&ww);
-		if (!err)
-			goto retry;
-	}
+		अगर (!err)
+			जाओ retry;
+	पूर्ण
 	i915_gem_ww_ctx_fini(&ww);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Immediately discard the backing storage */
-void i915_gem_object_truncate(struct drm_i915_gem_object *obj)
-{
-	drm_gem_free_mmap_offset(&obj->base);
-	if (obj->ops->truncate)
+व्योम i915_gem_object_truncate(काष्ठा drm_i915_gem_object *obj)
+अणु
+	drm_gem_मुक्त_mmap_offset(&obj->base);
+	अगर (obj->ops->truncate)
 		obj->ops->truncate(obj);
-}
+पूर्ण
 
 /* Try to discard unwanted pages */
-void i915_gem_object_writeback(struct drm_i915_gem_object *obj)
-{
-	assert_object_held_shared(obj);
+व्योम i915_gem_object_ग_लिखोback(काष्ठा drm_i915_gem_object *obj)
+अणु
+	निश्चित_object_held_shared(obj);
 	GEM_BUG_ON(i915_gem_object_has_pages(obj));
 
-	if (obj->ops->writeback)
-		obj->ops->writeback(obj);
-}
+	अगर (obj->ops->ग_लिखोback)
+		obj->ops->ग_लिखोback(obj);
+पूर्ण
 
-static void __i915_gem_object_reset_page_iter(struct drm_i915_gem_object *obj)
-{
-	struct radix_tree_iter iter;
-	void __rcu **slot;
+अटल व्योम __i915_gem_object_reset_page_iter(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा radix_tree_iter iter;
+	व्योम __rcu **slot;
 
-	rcu_read_lock();
-	radix_tree_for_each_slot(slot, &obj->mm.get_page.radix, &iter, 0)
+	rcu_पढ़ो_lock();
+	radix_tree_क्रम_each_slot(slot, &obj->mm.get_page.radix, &iter, 0)
 		radix_tree_delete(&obj->mm.get_page.radix, iter.index);
-	radix_tree_for_each_slot(slot, &obj->mm.get_dma_page.radix, &iter, 0)
+	radix_tree_क्रम_each_slot(slot, &obj->mm.get_dma_page.radix, &iter, 0)
 		radix_tree_delete(&obj->mm.get_dma_page.radix, iter.index);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void unmap_object(struct drm_i915_gem_object *obj, void *ptr)
-{
-	if (is_vmalloc_addr(ptr))
+अटल व्योम unmap_object(काष्ठा drm_i915_gem_object *obj, व्योम *ptr)
+अणु
+	अगर (is_vदो_स्मृति_addr(ptr))
 		vunmap(ptr);
-}
+पूर्ण
 
-struct sg_table *
-__i915_gem_object_unset_pages(struct drm_i915_gem_object *obj)
-{
-	struct sg_table *pages;
+काष्ठा sg_table *
+__i915_gem_object_unset_pages(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा sg_table *pages;
 
-	assert_object_held_shared(obj);
+	निश्चित_object_held_shared(obj);
 
 	pages = fetch_and_zero(&obj->mm.pages);
-	if (IS_ERR_OR_NULL(pages))
-		return pages;
+	अगर (IS_ERR_OR_शून्य(pages))
+		वापस pages;
 
-	if (i915_gem_object_is_volatile(obj))
+	अगर (i915_gem_object_is_अस्थिर(obj))
 		obj->mm.madv = I915_MADV_WILLNEED;
 
 	i915_gem_object_make_unshrinkable(obj);
 
-	if (obj->mm.mapping) {
+	अगर (obj->mm.mapping) अणु
 		unmap_object(obj, page_mask_bits(obj->mm.mapping));
-		obj->mm.mapping = NULL;
-	}
+		obj->mm.mapping = शून्य;
+	पूर्ण
 
 	__i915_gem_object_reset_page_iter(obj);
 	obj->mm.page_sizes.phys = obj->mm.page_sizes.sg = 0;
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-int __i915_gem_object_put_pages(struct drm_i915_gem_object *obj)
-{
-	struct sg_table *pages;
+पूर्णांक __i915_gem_object_put_pages(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा sg_table *pages;
 
-	if (i915_gem_object_has_pinned_pages(obj))
-		return -EBUSY;
+	अगर (i915_gem_object_has_pinned_pages(obj))
+		वापस -EBUSY;
 
 	/* May be called by shrinker from within get_pages() (on another bo) */
-	assert_object_held_shared(obj);
+	निश्चित_object_held_shared(obj);
 
 	i915_gem_object_release_mmap_offset(obj);
 
 	/*
-	 * ->put_pages might need to allocate memory for the bit17 swizzle
+	 * ->put_pages might need to allocate memory क्रम the bit17 swizzle
 	 * array, hence protect them from being reaped by removing them from gtt
 	 * lists early.
 	 */
 	pages = __i915_gem_object_unset_pages(obj);
 
 	/*
-	 * XXX Temporary hijinx to avoid updating all backends to handle
-	 * NULL pages. In the future, when we have more asynchronous
+	 * XXX Temporary hijinx to aव्योम updating all backends to handle
+	 * शून्य pages. In the future, when we have more asynchronous
 	 * get_pages backends we should be better able to handle the
-	 * cancellation of the async task in a more uniform manner.
+	 * cancellation of the async task in a more unअगरorm manner.
 	 */
-	if (!IS_ERR_OR_NULL(pages))
+	अगर (!IS_ERR_OR_शून्य(pages))
 		obj->ops->put_pages(obj, pages);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* The 'mapping' part of i915_gem_object_pin_map() below */
-static void *i915_gem_object_map_page(struct drm_i915_gem_object *obj,
-				      enum i915_map_type type)
-{
-	unsigned long n_pages = obj->base.size >> PAGE_SHIFT, i;
-	struct page *stack[32], **pages = stack, *page;
-	struct sgt_iter iter;
+अटल व्योम *i915_gem_object_map_page(काष्ठा drm_i915_gem_object *obj,
+				      क्रमागत i915_map_type type)
+अणु
+	अचिन्हित दीर्घ n_pages = obj->base.size >> PAGE_SHIFT, i;
+	काष्ठा page *stack[32], **pages = stack, *page;
+	काष्ठा sgt_iter iter;
 	pgprot_t pgprot;
-	void *vaddr;
+	व्योम *vaddr;
 
-	switch (type) {
-	default:
+	चयन (type) अणु
+	शेष:
 		MISSING_CASE(type);
 		fallthrough;	/* to use PAGE_KERNEL anyway */
-	case I915_MAP_WB:
+	हाल I915_MAP_WB:
 		/*
 		 * On 32b, highmem using a finite set of indirect PTE (i.e.
-		 * vmap) to provide virtual mappings of the high pages.
-		 * As these are finite, map_new_virtual() must wait for some
+		 * vmap) to provide भव mappings of the high pages.
+		 * As these are finite, map_new_भव() must रुको क्रम some
 		 * other kmap() to finish when it runs out. If we map a large
-		 * number of objects, there is no method for it to tell us
+		 * number of objects, there is no method क्रम it to tell us
 		 * to release the mappings, and we deadlock.
 		 *
-		 * However, if we make an explicit vmap of the page, that
-		 * uses a larger vmalloc arena, and also has the ability
+		 * However, अगर we make an explicit vmap of the page, that
+		 * uses a larger vदो_स्मृति arena, and also has the ability
 		 * to tell us to release unwanted mappings. Most importantly,
-		 * it will fail and propagate an error instead of waiting
-		 * forever.
+		 * it will fail and propagate an error instead of रुकोing
+		 * क्रमever.
 		 *
-		 * So if the page is beyond the 32b boundary, make an explicit
+		 * So अगर the page is beyond the 32b boundary, make an explicit
 		 * vmap.
 		 */
-		if (n_pages == 1 && !PageHighMem(sg_page(obj->mm.pages->sgl)))
-			return page_address(sg_page(obj->mm.pages->sgl));
+		अगर (n_pages == 1 && !PageHighMem(sg_page(obj->mm.pages->sgl)))
+			वापस page_address(sg_page(obj->mm.pages->sgl));
 		pgprot = PAGE_KERNEL;
-		break;
-	case I915_MAP_WC:
-		pgprot = pgprot_writecombine(PAGE_KERNEL_IO);
-		break;
-	}
+		अवरोध;
+	हाल I915_MAP_WC:
+		pgprot = pgprot_ग_लिखोcombine(PAGE_KERNEL_IO);
+		अवरोध;
+	पूर्ण
 
-	if (n_pages > ARRAY_SIZE(stack)) {
-		/* Too big for stack -- allocate temporary array instead */
-		pages = kvmalloc_array(n_pages, sizeof(*pages), GFP_KERNEL);
-		if (!pages)
-			return ERR_PTR(-ENOMEM);
-	}
+	अगर (n_pages > ARRAY_SIZE(stack)) अणु
+		/* Too big क्रम stack -- allocate temporary array instead */
+		pages = kvदो_स्मृति_array(n_pages, माप(*pages), GFP_KERNEL);
+		अगर (!pages)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	i = 0;
-	for_each_sgt_page(page, iter, obj->mm.pages)
+	क्रम_each_sgt_page(page, iter, obj->mm.pages)
 		pages[i++] = page;
 	vaddr = vmap(pages, n_pages, 0, pgprot);
-	if (pages != stack)
-		kvfree(pages);
+	अगर (pages != stack)
+		kvमुक्त(pages);
 
-	return vaddr ?: ERR_PTR(-ENOMEM);
-}
+	वापस vaddr ?: ERR_PTR(-ENOMEM);
+पूर्ण
 
-static void *i915_gem_object_map_pfn(struct drm_i915_gem_object *obj,
-				     enum i915_map_type type)
-{
-	resource_size_t iomap = obj->mm.region->iomap.base -
+अटल व्योम *i915_gem_object_map_pfn(काष्ठा drm_i915_gem_object *obj,
+				     क्रमागत i915_map_type type)
+अणु
+	resource_माप_प्रकार iomap = obj->mm.region->iomap.base -
 		obj->mm.region->region.start;
-	unsigned long n_pfn = obj->base.size >> PAGE_SHIFT;
-	unsigned long stack[32], *pfns = stack, i;
-	struct sgt_iter iter;
+	अचिन्हित दीर्घ n_pfn = obj->base.size >> PAGE_SHIFT;
+	अचिन्हित दीर्घ stack[32], *pfns = stack, i;
+	काष्ठा sgt_iter iter;
 	dma_addr_t addr;
-	void *vaddr;
+	व्योम *vaddr;
 
-	if (type != I915_MAP_WC)
-		return ERR_PTR(-ENODEV);
+	अगर (type != I915_MAP_WC)
+		वापस ERR_PTR(-ENODEV);
 
-	if (n_pfn > ARRAY_SIZE(stack)) {
-		/* Too big for stack -- allocate temporary array instead */
-		pfns = kvmalloc_array(n_pfn, sizeof(*pfns), GFP_KERNEL);
-		if (!pfns)
-			return ERR_PTR(-ENOMEM);
-	}
+	अगर (n_pfn > ARRAY_SIZE(stack)) अणु
+		/* Too big क्रम stack -- allocate temporary array instead */
+		pfns = kvदो_स्मृति_array(n_pfn, माप(*pfns), GFP_KERNEL);
+		अगर (!pfns)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	i = 0;
-	for_each_sgt_daddr(addr, iter, obj->mm.pages)
+	क्रम_each_sgt_daddr(addr, iter, obj->mm.pages)
 		pfns[i++] = (iomap + addr) >> PAGE_SHIFT;
-	vaddr = vmap_pfn(pfns, n_pfn, pgprot_writecombine(PAGE_KERNEL_IO));
-	if (pfns != stack)
-		kvfree(pfns);
+	vaddr = vmap_pfn(pfns, n_pfn, pgprot_ग_लिखोcombine(PAGE_KERNEL_IO));
+	अगर (pfns != stack)
+		kvमुक्त(pfns);
 
-	return vaddr ?: ERR_PTR(-ENOMEM);
-}
+	वापस vaddr ?: ERR_PTR(-ENOMEM);
+पूर्ण
 
-/* get, pin, and map the pages of the object into kernel space */
-void *i915_gem_object_pin_map(struct drm_i915_gem_object *obj,
-			      enum i915_map_type type)
-{
-	enum i915_map_type has_type;
+/* get, pin, and map the pages of the object पूर्णांकo kernel space */
+व्योम *i915_gem_object_pin_map(काष्ठा drm_i915_gem_object *obj,
+			      क्रमागत i915_map_type type)
+अणु
+	क्रमागत i915_map_type has_type;
 	bool pinned;
-	void *ptr;
-	int err;
+	व्योम *ptr;
+	पूर्णांक err;
 
-	if (!i915_gem_object_has_struct_page(obj) &&
+	अगर (!i915_gem_object_has_काष्ठा_page(obj) &&
 	    !i915_gem_object_type_has(obj, I915_GEM_OBJECT_HAS_IOMEM))
-		return ERR_PTR(-ENXIO);
+		वापस ERR_PTR(-ENXIO);
 
-	assert_object_held(obj);
+	निश्चित_object_held(obj);
 
 	pinned = !(type & I915_MAP_OVERRIDE);
 	type &= ~I915_MAP_OVERRIDE;
 
-	if (!atomic_inc_not_zero(&obj->mm.pages_pin_count)) {
-		if (unlikely(!i915_gem_object_has_pages(obj))) {
+	अगर (!atomic_inc_not_zero(&obj->mm.pages_pin_count)) अणु
+		अगर (unlikely(!i915_gem_object_has_pages(obj))) अणु
 			GEM_BUG_ON(i915_gem_object_has_pinned_pages(obj));
 
 			err = ____i915_gem_object_get_pages(obj);
-			if (err)
-				return ERR_PTR(err);
+			अगर (err)
+				वापस ERR_PTR(err);
 
-			smp_mb__before_atomic();
-		}
+			smp_mb__beक्रमe_atomic();
+		पूर्ण
 		atomic_inc(&obj->mm.pages_pin_count);
 		pinned = false;
-	}
+	पूर्ण
 	GEM_BUG_ON(!i915_gem_object_has_pages(obj));
 
 	ptr = page_unpack_bits(obj->mm.mapping, &has_type);
-	if (ptr && has_type != type) {
-		if (pinned) {
+	अगर (ptr && has_type != type) अणु
+		अगर (pinned) अणु
 			ptr = ERR_PTR(-EBUSY);
-			goto err_unpin;
-		}
+			जाओ err_unpin;
+		पूर्ण
 
 		unmap_object(obj, ptr);
 
-		ptr = obj->mm.mapping = NULL;
-	}
+		ptr = obj->mm.mapping = शून्य;
+	पूर्ण
 
-	if (!ptr) {
-		if (GEM_WARN_ON(type == I915_MAP_WC &&
-				!static_cpu_has(X86_FEATURE_PAT)))
+	अगर (!ptr) अणु
+		अगर (GEM_WARN_ON(type == I915_MAP_WC &&
+				!अटल_cpu_has(X86_FEATURE_PAT)))
 			ptr = ERR_PTR(-ENODEV);
-		else if (i915_gem_object_has_struct_page(obj))
+		अन्यथा अगर (i915_gem_object_has_काष्ठा_page(obj))
 			ptr = i915_gem_object_map_page(obj, type);
-		else
+		अन्यथा
 			ptr = i915_gem_object_map_pfn(obj, type);
-		if (IS_ERR(ptr))
-			goto err_unpin;
+		अगर (IS_ERR(ptr))
+			जाओ err_unpin;
 
 		obj->mm.mapping = page_pack_bits(ptr, type);
-	}
+	पूर्ण
 
-	return ptr;
+	वापस ptr;
 
 err_unpin:
 	atomic_dec(&obj->mm.pages_pin_count);
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-void *i915_gem_object_pin_map_unlocked(struct drm_i915_gem_object *obj,
-				       enum i915_map_type type)
-{
-	void *ret;
+व्योम *i915_gem_object_pin_map_unlocked(काष्ठा drm_i915_gem_object *obj,
+				       क्रमागत i915_map_type type)
+अणु
+	व्योम *ret;
 
-	i915_gem_object_lock(obj, NULL);
+	i915_gem_object_lock(obj, शून्य);
 	ret = i915_gem_object_pin_map(obj, type);
 	i915_gem_object_unlock(obj);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __i915_gem_object_flush_map(struct drm_i915_gem_object *obj,
-				 unsigned long offset,
-				 unsigned long size)
-{
-	enum i915_map_type has_type;
-	void *ptr;
+व्योम __i915_gem_object_flush_map(काष्ठा drm_i915_gem_object *obj,
+				 अचिन्हित दीर्घ offset,
+				 अचिन्हित दीर्घ size)
+अणु
+	क्रमागत i915_map_type has_type;
+	व्योम *ptr;
 
 	GEM_BUG_ON(!i915_gem_object_has_pinned_pages(obj));
 	GEM_BUG_ON(range_overflows_t(typeof(obj->base.size),
 				     offset, size, obj->base.size));
 
-	wmb(); /* let all previous writes be visible to coherent partners */
+	wmb(); /* let all previous ग_लिखोs be visible to coherent partners */
 	obj->mm.dirty = true;
 
-	if (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_WRITE)
-		return;
+	अगर (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_WRITE)
+		वापस;
 
 	ptr = page_unpack_bits(obj->mm.mapping, &has_type);
-	if (has_type == I915_MAP_WC)
-		return;
+	अगर (has_type == I915_MAP_WC)
+		वापस;
 
 	drm_clflush_virt_range(ptr + offset, size);
-	if (size == obj->base.size) {
-		obj->write_domain &= ~I915_GEM_DOMAIN_CPU;
+	अगर (size == obj->base.size) अणु
+		obj->ग_लिखो_करोमुख्य &= ~I915_GEM_DOMAIN_CPU;
 		obj->cache_dirty = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __i915_gem_object_release_map(struct drm_i915_gem_object *obj)
-{
+व्योम __i915_gem_object_release_map(काष्ठा drm_i915_gem_object *obj)
+अणु
 	GEM_BUG_ON(!obj->mm.mapping);
 
 	/*
 	 * We allow removing the mapping from underneath pinned pages!
 	 *
 	 * Furthermore, since this is an unsafe operation reserved only
-	 * for construction time manipulation, we ignore locking prudence.
+	 * क्रम स्थिरruction समय manipulation, we ignore locking prudence.
 	 */
 	unmap_object(obj, page_mask_bits(fetch_and_zero(&obj->mm.mapping)));
 
 	i915_gem_object_unpin_map(obj);
-}
+पूर्ण
 
-struct scatterlist *
-__i915_gem_object_get_sg(struct drm_i915_gem_object *obj,
-			 struct i915_gem_object_page_iter *iter,
-			 unsigned int n,
-			 unsigned int *offset,
+काष्ठा scatterlist *
+__i915_gem_object_get_sg(काष्ठा drm_i915_gem_object *obj,
+			 काष्ठा i915_gem_object_page_iter *iter,
+			 अचिन्हित पूर्णांक n,
+			 अचिन्हित पूर्णांक *offset,
 			 bool allow_alloc)
-{
-	const bool dma = iter == &obj->mm.get_dma_page;
-	struct scatterlist *sg;
-	unsigned int idx, count;
+अणु
+	स्थिर bool dma = iter == &obj->mm.get_dma_page;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक idx, count;
 
 	might_sleep();
 	GEM_BUG_ON(n >= obj->base.size >> PAGE_SHIFT);
 	GEM_BUG_ON(!i915_gem_object_has_pinned_pages(obj));
 
-	/* As we iterate forward through the sg, we record each entry in a
-	 * radixtree for quick repeated (backwards) lookups. If we have seen
-	 * this index previously, we will have an entry for it.
+	/* As we iterate क्रमward through the sg, we record each entry in a
+	 * radixtree क्रम quick repeated (backwards) lookups. If we have seen
+	 * this index previously, we will have an entry क्रम it.
 	 *
-	 * Initial lookup is O(N), but this is amortized to O(1) for
+	 * Initial lookup is O(N), but this is amortized to O(1) क्रम
 	 * sequential page access (where each new request is consecutive
 	 * to the previous one). Repeated lookups are O(lg(obj->base.size)),
-	 * i.e. O(1) with a large constant!
+	 * i.e. O(1) with a large स्थिरant!
 	 */
-	if (n < READ_ONCE(iter->sg_idx))
-		goto lookup;
+	अगर (n < READ_ONCE(iter->sg_idx))
+		जाओ lookup;
 
-	if (!allow_alloc)
-		goto manual_lookup;
+	अगर (!allow_alloc)
+		जाओ manual_lookup;
 
 	mutex_lock(&iter->lock);
 
@@ -503,34 +504,34 @@ __i915_gem_object_get_sg(struct drm_i915_gem_object *obj,
 	idx = iter->sg_idx;
 	count = dma ? __sg_dma_page_count(sg) : __sg_page_count(sg);
 
-	while (idx + count <= n) {
-		void *entry;
-		unsigned long i;
-		int ret;
+	जबतक (idx + count <= n) अणु
+		व्योम *entry;
+		अचिन्हित दीर्घ i;
+		पूर्णांक ret;
 
 		/* If we cannot allocate and insert this entry, or the
-		 * individual pages from this range, cancel updating the
-		 * sg_idx so that on this lookup we are forced to linearly
+		 * inभागidual pages from this range, cancel updating the
+		 * sg_idx so that on this lookup we are क्रमced to linearly
 		 * scan onwards, but on future lookups we will try the
-		 * insertion again (in which case we need to be careful of
-		 * the error return reporting that we have already inserted
+		 * insertion again (in which हाल we need to be careful of
+		 * the error वापस reporting that we have alपढ़ोy inserted
 		 * this index).
 		 */
 		ret = radix_tree_insert(&iter->radix, idx, sg);
-		if (ret && ret != -EEXIST)
-			goto scan;
+		अगर (ret && ret != -EEXIST)
+			जाओ scan;
 
 		entry = xa_mk_value(idx);
-		for (i = 1; i < count; i++) {
+		क्रम (i = 1; i < count; i++) अणु
 			ret = radix_tree_insert(&iter->radix, idx + i, entry);
-			if (ret && ret != -EEXIST)
-				goto scan;
-		}
+			अगर (ret && ret != -EEXIST)
+				जाओ scan;
+		पूर्ण
 
 		idx += count;
 		sg = ____sg_next(sg);
 		count = dma ? __sg_dma_page_count(sg) : __sg_page_count(sg);
-	}
+	पूर्ण
 
 scan:
 	iter->sg_pos = sg;
@@ -538,10 +539,10 @@ scan:
 
 	mutex_unlock(&iter->lock);
 
-	if (unlikely(n < idx)) /* insertion completed by another thread */
-		goto lookup;
+	अगर (unlikely(n < idx)) /* insertion completed by another thपढ़ो */
+		जाओ lookup;
 
-	goto manual_walk;
+	जाओ manual_walk;
 
 manual_lookup:
 	idx = 0;
@@ -550,90 +551,90 @@ manual_lookup:
 
 manual_walk:
 	/*
-	 * In case we failed to insert the entry into the radixtree, we need
+	 * In हाल we failed to insert the entry पूर्णांकo the radixtree, we need
 	 * to look beyond the current sg.
 	 */
-	while (idx + count <= n) {
+	जबतक (idx + count <= n) अणु
 		idx += count;
 		sg = ____sg_next(sg);
 		count = dma ? __sg_dma_page_count(sg) : __sg_page_count(sg);
-	}
+	पूर्ण
 
 	*offset = n - idx;
-	return sg;
+	वापस sg;
 
 lookup:
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	sg = radix_tree_lookup(&iter->radix, n);
 	GEM_BUG_ON(!sg);
 
 	/* If this index is in the middle of multi-page sg entry,
-	 * the radix tree will contain a value entry that points
-	 * to the start of that range. We will return the pointer to
+	 * the radix tree will contain a value entry that poपूर्णांकs
+	 * to the start of that range. We will वापस the poपूर्णांकer to
 	 * the base page and the offset of this page within the
 	 * sg entry's range.
 	 */
 	*offset = 0;
-	if (unlikely(xa_is_value(sg))) {
-		unsigned long base = xa_to_value(sg);
+	अगर (unlikely(xa_is_value(sg))) अणु
+		अचिन्हित दीर्घ base = xa_to_value(sg);
 
 		sg = radix_tree_lookup(&iter->radix, base);
 		GEM_BUG_ON(!sg);
 
 		*offset = n - base;
-	}
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return sg;
-}
+	वापस sg;
+पूर्ण
 
-struct page *
-i915_gem_object_get_page(struct drm_i915_gem_object *obj, unsigned int n)
-{
-	struct scatterlist *sg;
-	unsigned int offset;
+काष्ठा page *
+i915_gem_object_get_page(काष्ठा drm_i915_gem_object *obj, अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक offset;
 
-	GEM_BUG_ON(!i915_gem_object_has_struct_page(obj));
+	GEM_BUG_ON(!i915_gem_object_has_काष्ठा_page(obj));
 
 	sg = i915_gem_object_get_sg(obj, n, &offset, true);
-	return nth_page(sg_page(sg), offset);
-}
+	वापस nth_page(sg_page(sg), offset);
+पूर्ण
 
-/* Like i915_gem_object_get_page(), but mark the returned page dirty */
-struct page *
-i915_gem_object_get_dirty_page(struct drm_i915_gem_object *obj,
-			       unsigned int n)
-{
-	struct page *page;
+/* Like i915_gem_object_get_page(), but mark the वापसed page dirty */
+काष्ठा page *
+i915_gem_object_get_dirty_page(काष्ठा drm_i915_gem_object *obj,
+			       अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा page *page;
 
 	page = i915_gem_object_get_page(obj, n);
-	if (!obj->mm.dirty)
+	अगर (!obj->mm.dirty)
 		set_page_dirty(page);
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
 dma_addr_t
-i915_gem_object_get_dma_address_len(struct drm_i915_gem_object *obj,
-				    unsigned long n,
-				    unsigned int *len)
-{
-	struct scatterlist *sg;
-	unsigned int offset;
+i915_gem_object_get_dma_address_len(काष्ठा drm_i915_gem_object *obj,
+				    अचिन्हित दीर्घ n,
+				    अचिन्हित पूर्णांक *len)
+अणु
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक offset;
 
 	sg = i915_gem_object_get_sg_dma(obj, n, &offset, true);
 
-	if (len)
+	अगर (len)
 		*len = sg_dma_len(sg) - (offset << PAGE_SHIFT);
 
-	return sg_dma_address(sg) + (offset << PAGE_SHIFT);
-}
+	वापस sg_dma_address(sg) + (offset << PAGE_SHIFT);
+पूर्ण
 
 dma_addr_t
-i915_gem_object_get_dma_address(struct drm_i915_gem_object *obj,
-				unsigned long n)
-{
-	return i915_gem_object_get_dma_address_len(obj, n, NULL);
-}
+i915_gem_object_get_dma_address(काष्ठा drm_i915_gem_object *obj,
+				अचिन्हित दीर्घ n)
+अणु
+	वापस i915_gem_object_get_dma_address_len(obj, n, शून्य);
+पूर्ण

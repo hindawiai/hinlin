@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LIBLOCKDEP_TEST_COMMON_H
-#define _LIBLOCKDEP_TEST_COMMON_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LIBLOCKDEP_TEST_COMMON_H
+#घोषणा _LIBLOCKDEP_TEST_COMMON_H
 
-#define LOCK_UNLOCK_2(a, b)			\
-	do {					\
-		pthread_mutex_lock(&(a));	\
-		pthread_mutex_lock(&(b));	\
-		pthread_mutex_unlock(&(b));	\
-		pthread_mutex_unlock(&(a));	\
-	} while(0)
+#घोषणा LOCK_UNLOCK_2(a, b)			\
+	करो अणु					\
+		pthपढ़ो_mutex_lock(&(a));	\
+		pthपढ़ो_mutex_lock(&(b));	\
+		pthपढ़ो_mutex_unlock(&(b));	\
+		pthपढ़ो_mutex_unlock(&(a));	\
+	पूर्ण जबतक(0)
 
-#endif
+#पूर्ण_अगर

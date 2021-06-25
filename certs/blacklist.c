@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* System hash blacklist.
  *
  * Copyright (C) 2016 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) "blacklist: "fmt
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/key.h>
-#include <linux/key-type.h>
-#include <linux/sched.h>
-#include <linux/ctype.h>
-#include <linux/err.h>
-#include <linux/seq_file.h>
-#include <linux/uidgid.h>
-#include <keys/system_keyring.h>
-#include "blacklist.h"
-#include "common.h"
+#घोषणा pr_fmt(fmt) "blacklist: "fmt
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/key.h>
+#समावेश <linux/key-type.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/err.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uidgid.h>
+#समावेश <keys/प्रणाली_keyring.h>
+#समावेश "blacklist.h"
+#समावेश "common.h"
 
-static struct key *blacklist_keyring;
+अटल काष्ठा key *blacklist_keyring;
 
-#ifdef CONFIG_SYSTEM_REVOCATION_LIST
-extern __initconst const u8 revocation_certificate_list[];
-extern __initconst const unsigned long revocation_certificate_list_size;
-#endif
+#अगर_घोषित CONFIG_SYSTEM_REVOCATION_LIST
+बाह्य __initस्थिर स्थिर u8 revocation_certअगरicate_list[];
+बाह्य __initस्थिर स्थिर अचिन्हित दीर्घ revocation_certअगरicate_list_size;
+#पूर्ण_अगर
 
 /*
  * The description must be a type prefix, a colon and then an even number of
  * hex digits.  The hash is kept in the description.
  */
-static int blacklist_vet_description(const char *desc)
-{
-	int n = 0;
+अटल पूर्णांक blacklist_vet_description(स्थिर अक्षर *desc)
+अणु
+	पूर्णांक n = 0;
 
-	if (*desc == ':')
-		return -EINVAL;
-	for (; *desc; desc++)
-		if (*desc == ':')
-			goto found_colon;
-	return -EINVAL;
+	अगर (*desc == ':')
+		वापस -EINVAL;
+	क्रम (; *desc; desc++)
+		अगर (*desc == ':')
+			जाओ found_colon;
+	वापस -EINVAL;
 
 found_colon:
 	desc++;
-	for (; *desc; desc++) {
-		if (!isxdigit(*desc) || isupper(*desc))
-			return -EINVAL;
+	क्रम (; *desc; desc++) अणु
+		अगर (!है_षष्ठादशक(*desc) || है_बड़ा(*desc))
+			वापस -EINVAL;
 		n++;
-	}
+	पूर्ण
 
-	if (n == 0 || n & 1)
-		return -EINVAL;
-	return 0;
-}
+	अगर (n == 0 || n & 1)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
  * The hash to be blacklisted is expected to be in the description.  There will
  * be no payload.
  */
-static int blacklist_preparse(struct key_preparsed_payload *prep)
-{
-	if (prep->datalen > 0)
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक blacklist_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	अगर (prep->datalen > 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static void blacklist_free_preparse(struct key_preparsed_payload *prep)
-{
-}
+अटल व्योम blacklist_मुक्त_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+पूर्ण
 
-static void blacklist_describe(const struct key *key, struct seq_file *m)
-{
-	seq_puts(m, key->description);
-}
+अटल व्योम blacklist_describe(स्थिर काष्ठा key *key, काष्ठा seq_file *m)
+अणु
+	seq_माला_दो(m, key->description);
+पूर्ण
 
-static struct key_type key_type_blacklist = {
+अटल काष्ठा key_type key_type_blacklist = अणु
 	.name			= "blacklist",
 	.vet_description	= blacklist_vet_description,
 	.preparse		= blacklist_preparse,
-	.free_preparse		= blacklist_free_preparse,
+	.मुक्त_preparse		= blacklist_मुक्त_preparse,
 	.instantiate		= generic_key_instantiate,
 	.describe		= blacklist_describe,
-};
+पूर्ण;
 
 /**
- * mark_hash_blacklisted - Add a hash to the system blacklist
+ * mark_hash_blacklisted - Add a hash to the प्रणाली blacklist
  * @hash: The hash as a hex string with a type prefix (eg. "tbs:23aa429783")
  */
-int mark_hash_blacklisted(const char *hash)
-{
+पूर्णांक mark_hash_blacklisted(स्थिर अक्षर *hash)
+अणु
 	key_ref_t key;
 
 	key = key_create_or_update(make_key_ref(blacklist_keyring, true),
 				   "blacklist",
 				   hash,
-				   NULL,
+				   शून्य,
 				   0,
 				   ((KEY_POS_ALL & ~KEY_POS_SETATTR) |
 				    KEY_USR_VIEW),
 				   KEY_ALLOC_NOT_IN_QUOTA |
 				   KEY_ALLOC_BUILT_IN);
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		pr_err("Problem blacklisting hash (%ld)\n", PTR_ERR(key));
-		return PTR_ERR(key);
-	}
-	return 0;
-}
+		वापस PTR_ERR(key);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * is_hash_blacklisted - Determine if a hash is blacklisted
+ * is_hash_blacklisted - Determine अगर a hash is blacklisted
  * @hash: The hash to be checked as a binary blob
  * @hash_len: The length of the binary hash
  * @type: Type of hash
  */
-int is_hash_blacklisted(const u8 *hash, size_t hash_len, const char *type)
-{
+पूर्णांक is_hash_blacklisted(स्थिर u8 *hash, माप_प्रकार hash_len, स्थिर अक्षर *type)
+अणु
 	key_ref_t kref;
-	size_t type_len = strlen(type);
-	char *buffer, *p;
-	int ret = 0;
+	माप_प्रकार type_len = म_माप(type);
+	अक्षर *buffer, *p;
+	पूर्णांक ret = 0;
 
-	buffer = kmalloc(type_len + 1 + hash_len * 2 + 1, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
-	p = memcpy(buffer, type, type_len);
+	buffer = kदो_स्मृति(type_len + 1 + hash_len * 2 + 1, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
+	p = स_नकल(buffer, type, type_len);
 	p += type_len;
 	*p++ = ':';
 	bin2hex(p, hash, hash_len);
@@ -132,76 +133,76 @@ int is_hash_blacklisted(const u8 *hash, size_t hash_len, const char *type)
 
 	kref = keyring_search(make_key_ref(blacklist_keyring, true),
 			      &key_type_blacklist, buffer, false);
-	if (!IS_ERR(kref)) {
+	अगर (!IS_ERR(kref)) अणु
 		key_ref_put(kref);
 		ret = -EKEYREJECTED;
-	}
+	पूर्ण
 
-	kfree(buffer);
-	return ret;
-}
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(is_hash_blacklisted);
 
-int is_binary_blacklisted(const u8 *hash, size_t hash_len)
-{
-	if (is_hash_blacklisted(hash, hash_len, "bin") == -EKEYREJECTED)
-		return -EPERM;
+पूर्णांक is_binary_blacklisted(स्थिर u8 *hash, माप_प्रकार hash_len)
+अणु
+	अगर (is_hash_blacklisted(hash, hash_len, "bin") == -EKEYREJECTED)
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(is_binary_blacklisted);
 
-#ifdef CONFIG_SYSTEM_REVOCATION_LIST
+#अगर_घोषित CONFIG_SYSTEM_REVOCATION_LIST
 /**
- * add_key_to_revocation_list - Add a revocation certificate to the blacklist
- * @data: The data blob containing the certificate
+ * add_key_to_revocation_list - Add a revocation certअगरicate to the blacklist
+ * @data: The data blob containing the certअगरicate
  * @size: The size of data blob
  */
-int add_key_to_revocation_list(const char *data, size_t size)
-{
+पूर्णांक add_key_to_revocation_list(स्थिर अक्षर *data, माप_प्रकार size)
+अणु
 	key_ref_t key;
 
 	key = key_create_or_update(make_key_ref(blacklist_keyring, true),
 				   "asymmetric",
-				   NULL,
+				   शून्य,
 				   data,
 				   size,
 				   ((KEY_POS_ALL & ~KEY_POS_SETATTR) | KEY_USR_VIEW),
 				   KEY_ALLOC_NOT_IN_QUOTA | KEY_ALLOC_BUILT_IN);
 
-	if (IS_ERR(key)) {
+	अगर (IS_ERR(key)) अणु
 		pr_err("Problem with revocation key (%ld)\n", PTR_ERR(key));
-		return PTR_ERR(key);
-	}
+		वापस PTR_ERR(key);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * is_key_on_revocation_list - Determine if the key for a PKCS#7 message is revoked
+ * is_key_on_revocation_list - Determine अगर the key क्रम a PKCS#7 message is revoked
  * @pkcs7: The PKCS#7 message to check
  */
-int is_key_on_revocation_list(struct pkcs7_message *pkcs7)
-{
-	int ret;
+पूर्णांक is_key_on_revocation_list(काष्ठा pkcs7_message *pkcs7)
+अणु
+	पूर्णांक ret;
 
 	ret = pkcs7_validate_trust(pkcs7, blacklist_keyring);
 
-	if (ret == 0)
-		return -EKEYREJECTED;
+	अगर (ret == 0)
+		वापस -EKEYREJECTED;
 
-	return -ENOKEY;
-}
-#endif
+	वापस -ENOKEY;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Initialise the blacklist
  */
-static int __init blacklist_init(void)
-{
-	const char *const *bl;
+अटल पूर्णांक __init blacklist_init(व्योम)
+अणु
+	स्थिर अक्षर *स्थिर *bl;
 
-	if (register_key_type(&key_type_blacklist) < 0)
+	अगर (रेजिस्टर_key_type(&key_type_blacklist) < 0)
 		panic("Can't allocate system blacklist key type\n");
 
 	blacklist_keyring =
@@ -212,32 +213,32 @@ static int __init blacklist_init(void)
 			      KEY_USR_SEARCH,
 			      KEY_ALLOC_NOT_IN_QUOTA |
 			      KEY_ALLOC_SET_KEEP,
-			      NULL, NULL);
-	if (IS_ERR(blacklist_keyring))
+			      शून्य, शून्य);
+	अगर (IS_ERR(blacklist_keyring))
 		panic("Can't allocate system blacklist keyring\n");
 
-	for (bl = blacklist_hashes; *bl; bl++)
-		if (mark_hash_blacklisted(*bl) < 0)
+	क्रम (bl = blacklist_hashes; *bl; bl++)
+		अगर (mark_hash_blacklisted(*bl) < 0)
 			pr_err("- blacklisting failed\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Must be initialised before we try and load the keys into the keyring.
+ * Must be initialised beक्रमe we try and load the keys पूर्णांकo the keyring.
  */
 device_initcall(blacklist_init);
 
-#ifdef CONFIG_SYSTEM_REVOCATION_LIST
+#अगर_घोषित CONFIG_SYSTEM_REVOCATION_LIST
 /*
- * Load the compiled-in list of revocation X.509 certificates.
+ * Load the compiled-in list of revocation X.509 certअगरicates.
  */
-static __init int load_revocation_certificate_list(void)
-{
-	if (revocation_certificate_list_size)
+अटल __init पूर्णांक load_revocation_certअगरicate_list(व्योम)
+अणु
+	अगर (revocation_certअगरicate_list_size)
 		pr_notice("Loading compiled-in revocation X.509 certificates\n");
 
-	return load_certificate_list(revocation_certificate_list, revocation_certificate_list_size,
+	वापस load_certअगरicate_list(revocation_certअगरicate_list, revocation_certअगरicate_list_size,
 				     blacklist_keyring);
-}
-late_initcall(load_revocation_certificate_list);
-#endif
+पूर्ण
+late_initcall(load_revocation_certअगरicate_list);
+#पूर्ण_अगर

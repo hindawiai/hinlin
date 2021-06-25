@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Trivial program to check that we have a valid 32-bit build environment.
  * Copyright (c) 2015 Andy Lutomirski
  */
 
-#ifndef __i386__
+#अगर_अघोषित __i386__
 # error wrong architecture
-#endif
+#पूर्ण_अगर
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-int main()
-{
-	printf("\n");
+पूर्णांक मुख्य()
+अणु
+	म_लिखो("\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

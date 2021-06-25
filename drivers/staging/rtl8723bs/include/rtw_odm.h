@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2013 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __RTW_ODM_H__
-#define __RTW_ODM_H__
+#अगर_अघोषित __RTW_ODM_H__
+#घोषणा __RTW_ODM_H__
 
-#include <drv_types.h>
+#समावेश <drv_types.h>
 
 /*
-* This file provides utilities/wrappers for rtw driver to use ODM
+* This file provides utilities/wrappers क्रम rtw driver to use ODM
 */
 
-void rtw_odm_dbg_comp_msg(struct adapter *adapter);
-void rtw_odm_dbg_comp_set(struct adapter *adapter, u64 comps);
-void rtw_odm_dbg_level_msg(void *sel, struct adapter *adapter);
-void rtw_odm_dbg_level_set(struct adapter *adapter, u32 level);
+व्योम rtw_odm_dbg_comp_msg(काष्ठा adapter *adapter);
+व्योम rtw_odm_dbg_comp_set(काष्ठा adapter *adapter, u64 comps);
+व्योम rtw_odm_dbg_level_msg(व्योम *sel, काष्ठा adapter *adapter);
+व्योम rtw_odm_dbg_level_set(काष्ठा adapter *adapter, u32 level);
 
-void rtw_odm_ability_msg(void *sel, struct adapter *adapter);
-void rtw_odm_ability_set(struct adapter *adapter, u32 ability);
+व्योम rtw_odm_ability_msg(व्योम *sel, काष्ठा adapter *adapter);
+व्योम rtw_odm_ability_set(काष्ठा adapter *adapter, u32 ability);
 
-void rtw_odm_adaptivity_parm_msg(void *sel, struct adapter *adapter);
-void rtw_odm_adaptivity_parm_set(struct adapter *adapter, s8 TH_L2H_ini, s8 TH_EDCCA_HL_diff,
+व्योम rtw_odm_adaptivity_parm_msg(व्योम *sel, काष्ठा adapter *adapter);
+व्योम rtw_odm_adaptivity_parm_set(काष्ठा adapter *adapter, s8 TH_L2H_ini, s8 TH_EDCCA_HL_dअगरf,
 	s8 IGI_Base, bool ForceEDCCA, u8 AdapEn_RSSI, u8 IGI_LowerBound);
-void rtw_odm_get_perpkt_rssi(void *sel, struct adapter *adapter);
-#endif /*  __RTW_ODM_H__ */
+व्योम rtw_odm_get_perpkt_rssi(व्योम *sel, काष्ठा adapter *adapter);
+#पूर्ण_अगर /*  __RTW_ODM_H__ */

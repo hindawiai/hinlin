@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /* Copyright(c) 2018-2019  Realtek Corporation
  */
 
-#ifndef __RTW_REGD_H_
-#define __RTW_REGD_H_
+#अगर_अघोषित __RTW_REGD_H_
+#घोषणा __RTW_REGD_H_
 
-#define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
-#define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
-enum rtw_chplan_id {
-	RTW_CHPLAN_ETSI1_NULL = 0x21,
+#घोषणा IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
+#घोषणा IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
+क्रमागत rtw_chplan_id अणु
+	RTW_CHPLAN_ETSI1_शून्य = 0x21,
 	RTW_CHPLAN_WORLD_ETSI1 = 0x26,
 	RTW_CHPLAN_MKK1_MKK1 = 0x27,
 	RTW_CHPLAN_IC1_IC2 = 0x2B,
@@ -37,14 +38,14 @@ enum rtw_chplan_id {
 	RTW_CHPLAN_WORLD_ETSI20 = 0x75,
 	RTW_CHPLAN_FCC2_FCC11 = 0x76,
 	RTW_CHPLAN_REALTEK_DEFINE = 0x7f,
-};
+पूर्ण;
 
-struct country_code_to_enum_rd {
+काष्ठा country_code_to_क्रमागत_rd अणु
 	u16 countrycode;
-	const char *iso_name;
-};
+	स्थिर अक्षर *iso_name;
+पूर्ण;
 
-enum country_code_type {
+क्रमागत country_code_type अणु
 	COUNTRY_CODE_FCC = 0,
 	COUNTRY_CODE_IC = 1,
 	COUNTRY_CODE_ETSI = 2,
@@ -62,10 +63,10 @@ enum country_code_type {
 
 	/* new channel plan above this */
 	COUNTRY_CODE_MAX
-};
+पूर्ण;
 
-int rtw_regd_init(struct rtw_dev *rtwdev,
-		  void (*reg_notifier)(struct wiphy *wiphy,
-				       struct regulatory_request *request));
-void rtw_regd_notifier(struct wiphy *wiphy, struct regulatory_request *request);
-#endif
+पूर्णांक rtw_regd_init(काष्ठा rtw_dev *rtwdev,
+		  व्योम (*reg_notअगरier)(काष्ठा wiphy *wiphy,
+				       काष्ठा regulatory_request *request));
+व्योम rtw_regd_notअगरier(काष्ठा wiphy *wiphy, काष्ठा regulatory_request *request);
+#पूर्ण_अगर

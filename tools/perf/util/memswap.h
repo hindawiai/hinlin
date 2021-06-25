@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef PERF_MEMSWAP_H_
-#define PERF_MEMSWAP_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित PERF_MEMSWAP_H_
+#घोषणा PERF_MEMSWAP_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-union u64_swap {
+जोड़ u64_swap अणु
 	u64 val64;
 	u32 val32[2];
-};
+पूर्ण;
 
-void mem_bswap_64(void *src, int byte_size);
-void mem_bswap_32(void *src, int byte_size);
+व्योम mem_bswap_64(व्योम *src, पूर्णांक byte_size);
+व्योम mem_bswap_32(व्योम *src, पूर्णांक byte_size);
 
-#endif /* PERF_MEMSWAP_H_ */
+#पूर्ण_अगर /* PERF_MEMSWAP_H_ */

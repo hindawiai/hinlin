@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FTRACE_IRQ_H
-#define _LINUX_FTRACE_IRQ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FTRACE_IRQ_H
+#घोषणा _LINUX_FTRACE_IRQ_H
 
-#ifdef CONFIG_HWLAT_TRACER
-extern bool trace_hwlat_callback_enabled;
-extern void trace_hwlat_callback(bool enter);
-#endif
+#अगर_घोषित CONFIG_HWLAT_TRACER
+बाह्य bool trace_hwlat_callback_enabled;
+बाह्य व्योम trace_hwlat_callback(bool enter);
+#पूर्ण_अगर
 
-static inline void ftrace_nmi_enter(void)
-{
-#ifdef CONFIG_HWLAT_TRACER
-	if (trace_hwlat_callback_enabled)
+अटल अंतरभूत व्योम ftrace_nmi_enter(व्योम)
+अणु
+#अगर_घोषित CONFIG_HWLAT_TRACER
+	अगर (trace_hwlat_callback_enabled)
 		trace_hwlat_callback(true);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline void ftrace_nmi_exit(void)
-{
-#ifdef CONFIG_HWLAT_TRACER
-	if (trace_hwlat_callback_enabled)
+अटल अंतरभूत व्योम ftrace_nmi_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_HWLAT_TRACER
+	अगर (trace_hwlat_callback_enabled)
 		trace_hwlat_callback(false);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#endif /* _LINUX_FTRACE_IRQ_H */
+#पूर्ण_अगर /* _LINUX_FTRACE_IRQ_H */

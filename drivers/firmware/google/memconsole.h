@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * memconsole.h
  *
@@ -7,30 +8,30 @@
  * Copyright 2017 Google Inc.
  */
 
-#ifndef __FIRMWARE_GOOGLE_MEMCONSOLE_H
-#define __FIRMWARE_GOOGLE_MEMCONSOLE_H
+#अगर_अघोषित __FIRMWARE_GOOGLE_MEMCONSOLE_H
+#घोषणा __FIRMWARE_GOOGLE_MEMCONSOLE_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * memconsole_setup
  *
- * Initialize the memory console, passing the function to handle read accesses.
+ * Initialize the memory console, passing the function to handle पढ़ो accesses.
  */
-void memconsole_setup(ssize_t (*read_func)(char *, loff_t, size_t));
+व्योम memconsole_setup(sमाप_प्रकार (*पढ़ो_func)(अक्षर *, loff_t, माप_प्रकार));
 
 /*
  * memconsole_sysfs_init
  *
  * Update memory console length and create binary file
- * for firmware object.
+ * क्रम firmware object.
  */
-int memconsole_sysfs_init(void);
+पूर्णांक memconsole_sysfs_init(व्योम);
 
-/* memconsole_exit
+/* memconsole_निकास
  *
  * Unmap the console buffer.
  */
-void memconsole_exit(void);
+व्योम memconsole_निकास(व्योम);
 
-#endif /* __FIRMWARE_GOOGLE_MEMCONSOLE_H */
+#पूर्ण_अगर /* __FIRMWARE_GOOGLE_MEMCONSOLE_H */

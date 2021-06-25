@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define PATH_TO_CPU "/sys/devices/system/cpu/"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#घोषणा PATH_TO_CPU "/sys/devices/system/cpu/"
 
-#ifndef MAX_LINE_LEN
-#define MAX_LINE_LEN 4096
-#endif
+#अगर_अघोषित MAX_LINE_LEN
+#घोषणा MAX_LINE_LEN 4096
+#पूर्ण_अगर
 
-#define SYSFS_PATH_MAX 255
+#घोषणा SYSFS_PATH_MAX 255
 
-unsigned int cpupower_read_sysfs(const char *path, char *buf, size_t buflen);
-unsigned int cpupower_write_sysfs(const char *path, char *buf, size_t buflen);
+अचिन्हित पूर्णांक cpuघातer_पढ़ो_sysfs(स्थिर अक्षर *path, अक्षर *buf, माप_प्रकार buflen);
+अचिन्हित पूर्णांक cpuघातer_ग_लिखो_sysfs(स्थिर अक्षर *path, अक्षर *buf, माप_प्रकार buflen);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HDMI Connector driver
  *
@@ -6,20 +7,20 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
 
-#include <drm/drm_edid.h>
+#समावेश <drm/drm_edid.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-static const struct omap_video_timings hdmic_default_timings = {
+अटल स्थिर काष्ठा omap_video_timings hdmic_शेष_timings = अणु
 	.x_res		= 640,
 	.y_res		= 480,
-	.pixelclock	= 25175000,
+	.pixelघड़ी	= 25175000,
 	.hsw		= 96,
 	.hfp		= 16,
 	.hbp		= 48,
@@ -30,155 +31,155 @@ static const struct omap_video_timings hdmic_default_timings = {
 	.vsync_level	= OMAPDSS_SIG_ACTIVE_LOW,
 	.hsync_level	= OMAPDSS_SIG_ACTIVE_LOW,
 
-	.interlace	= false,
-};
+	.पूर्णांकerlace	= false,
+पूर्ण;
 
-struct panel_drv_data {
-	struct omap_dss_device dssdev;
-	struct omap_dss_device *in;
+काष्ठा panel_drv_data अणु
+	काष्ठा omap_dss_device dssdev;
+	काष्ठा omap_dss_device *in;
 
-	struct device *dev;
+	काष्ठा device *dev;
 
-	struct omap_video_timings timings;
+	काष्ठा omap_video_timings timings;
 
-	int hpd_gpio;
-};
+	पूर्णांक hpd_gpio;
+पूर्ण;
 
-#define to_panel_data(x) container_of(x, struct panel_drv_data, dssdev)
+#घोषणा to_panel_data(x) container_of(x, काष्ठा panel_drv_data, dssdev)
 
-static int hdmic_connect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक hdmic_connect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	dev_dbg(ddata->dev, "connect\n");
 
-	if (omapdss_device_is_connected(dssdev))
-		return 0;
+	अगर (omapdss_device_is_connected(dssdev))
+		वापस 0;
 
-	return in->ops.hdmi->connect(in, dssdev);
-}
+	वापस in->ops.hdmi->connect(in, dssdev);
+पूर्ण
 
-static void hdmic_disconnect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम hdmic_disconnect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	dev_dbg(ddata->dev, "disconnect\n");
 
-	if (!omapdss_device_is_connected(dssdev))
-		return;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस;
 
 	in->ops.hdmi->disconnect(in, dssdev);
-}
+पूर्ण
 
-static int hdmic_enable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
-	int r;
+अटल पूर्णांक hdmic_enable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
+	पूर्णांक r;
 
 	dev_dbg(ddata->dev, "enable\n");
 
-	if (!omapdss_device_is_connected(dssdev))
-		return -ENODEV;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस -ENODEV;
 
-	if (omapdss_device_is_enabled(dssdev))
-		return 0;
+	अगर (omapdss_device_is_enabled(dssdev))
+		वापस 0;
 
 	in->ops.hdmi->set_timings(in, &ddata->timings);
 
 	r = in->ops.hdmi->enable(in);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void hdmic_disable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम hdmic_disable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	dev_dbg(ddata->dev, "disable\n");
 
-	if (!omapdss_device_is_enabled(dssdev))
-		return;
+	अगर (!omapdss_device_is_enabled(dssdev))
+		वापस;
 
 	in->ops.hdmi->disable(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-}
+पूर्ण
 
-static void hdmic_set_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम hdmic_set_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	ddata->timings = *timings;
 	dssdev->panel.timings = *timings;
 
 	in->ops.hdmi->set_timings(in, timings);
-}
+पूर्ण
 
-static void hdmic_get_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
+अटल व्योम hdmic_get_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->timings;
-}
+पूर्ण
 
-static int hdmic_check_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक hdmic_check_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	return in->ops.hdmi->check_timings(in, timings);
-}
+	वापस in->ops.hdmi->check_timings(in, timings);
+पूर्ण
 
-static int hdmic_read_edid(struct omap_dss_device *dssdev,
-		u8 *edid, int len)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक hdmic_पढ़ो_edid(काष्ठा omap_dss_device *dssdev,
+		u8 *edid, पूर्णांक len)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	return in->ops.hdmi->read_edid(in, edid, len);
-}
+	वापस in->ops.hdmi->पढ़ो_edid(in, edid, len);
+पूर्ण
 
-static bool hdmic_detect(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल bool hdmic_detect(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	if (gpio_is_valid(ddata->hpd_gpio))
-		return gpio_get_value_cansleep(ddata->hpd_gpio);
-	else
-		return in->ops.hdmi->detect(in);
-}
+	अगर (gpio_is_valid(ddata->hpd_gpio))
+		वापस gpio_get_value_cansleep(ddata->hpd_gpio);
+	अन्यथा
+		वापस in->ops.hdmi->detect(in);
+पूर्ण
 
-static int hdmic_set_hdmi_mode(struct omap_dss_device *dssdev, bool hdmi_mode)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक hdmic_set_hdmi_mode(काष्ठा omap_dss_device *dssdev, bool hdmi_mode)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	return in->ops.hdmi->set_hdmi_mode(in, hdmi_mode);
-}
+	वापस in->ops.hdmi->set_hdmi_mode(in, hdmi_mode);
+पूर्ण
 
-static int hdmic_set_infoframe(struct omap_dss_device *dssdev,
-		const struct hdmi_avi_infoframe *avi)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक hdmic_set_infoframe(काष्ठा omap_dss_device *dssdev,
+		स्थिर काष्ठा hdmi_avi_infoframe *avi)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	return in->ops.hdmi->set_infoframe(in, avi);
-}
+	वापस in->ops.hdmi->set_infoframe(in, avi);
+पूर्ण
 
-static struct omap_dss_driver hdmic_driver = {
+अटल काष्ठा omap_dss_driver hdmic_driver = अणु
 	.connect		= hdmic_connect,
 	.disconnect		= hdmic_disconnect,
 
@@ -189,121 +190,121 @@ static struct omap_dss_driver hdmic_driver = {
 	.get_timings		= hdmic_get_timings,
 	.check_timings		= hdmic_check_timings,
 
-	.get_resolution		= omapdss_default_get_resolution,
+	.get_resolution		= omapdss_शेष_get_resolution,
 
-	.read_edid		= hdmic_read_edid,
+	.पढ़ो_edid		= hdmic_पढ़ो_edid,
 	.detect			= hdmic_detect,
 	.set_hdmi_mode		= hdmic_set_hdmi_mode,
 	.set_hdmi_infoframe	= hdmic_set_infoframe,
-};
+पूर्ण;
 
-static int hdmic_probe_of(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct device_node *node = pdev->dev.of_node;
-	struct omap_dss_device *in;
-	int gpio;
+अटल पूर्णांक hdmic_probe_of(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा omap_dss_device *in;
+	पूर्णांक gpio;
 
 	/* HPD GPIO */
 	gpio = of_get_named_gpio(node, "hpd-gpios", 0);
-	if (gpio_is_valid(gpio))
+	अगर (gpio_is_valid(gpio))
 		ddata->hpd_gpio = gpio;
-	else
+	अन्यथा
 		ddata->hpd_gpio = -ENODEV;
 
-	in = omapdss_of_find_source_for_first_ep(node);
-	if (IS_ERR(in)) {
+	in = omapdss_of_find_source_क्रम_first_ep(node);
+	अगर (IS_ERR(in)) अणु
 		dev_err(&pdev->dev, "failed to find video source\n");
-		return PTR_ERR(in);
-	}
+		वापस PTR_ERR(in);
+	पूर्ण
 
 	ddata->in = in;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hdmic_probe(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata;
-	struct omap_dss_device *dssdev;
-	int r;
+अटल पूर्णांक hdmic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata;
+	काष्ठा omap_dss_device *dssdev;
+	पूर्णांक r;
 
-	if (!pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev->dev.of_node)
+		वापस -ENODEV;
 
-	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ddata);
+	platक्रमm_set_drvdata(pdev, ddata);
 	ddata->dev = &pdev->dev;
 
 	r = hdmic_probe_of(pdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (gpio_is_valid(ddata->hpd_gpio)) {
+	अगर (gpio_is_valid(ddata->hpd_gpio)) अणु
 		r = devm_gpio_request_one(&pdev->dev, ddata->hpd_gpio,
-				GPIOF_DIR_IN, "hdmi_hpd");
-		if (r)
-			goto err_reg;
-	}
+				GPIOF_सूची_IN, "hdmi_hpd");
+		अगर (r)
+			जाओ err_reg;
+	पूर्ण
 
-	ddata->timings = hdmic_default_timings;
+	ddata->timings = hdmic_शेष_timings;
 
 	dssdev = &ddata->dssdev;
 	dssdev->driver = &hdmic_driver;
 	dssdev->dev = &pdev->dev;
 	dssdev->type = OMAP_DISPLAY_TYPE_HDMI;
 	dssdev->owner = THIS_MODULE;
-	dssdev->panel.timings = hdmic_default_timings;
+	dssdev->panel.timings = hdmic_शेष_timings;
 
-	r = omapdss_register_display(dssdev);
-	if (r) {
+	r = omapdss_रेजिस्टर_display(dssdev);
+	अगर (r) अणु
 		dev_err(&pdev->dev, "Failed to register panel\n");
-		goto err_reg;
-	}
+		जाओ err_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_reg:
 	omap_dss_put_device(ddata->in);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int __exit hdmic_remove(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct omap_dss_device *dssdev = &ddata->dssdev;
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक __निकास hdmic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	omapdss_unregister_display(&ddata->dssdev);
+	omapdss_unरेजिस्टर_display(&ddata->dssdev);
 
 	hdmic_disable(dssdev);
 	hdmic_disconnect(dssdev);
 
 	omap_dss_put_device(in);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id hdmic_of_match[] = {
-	{ .compatible = "omapdss,hdmi-connector", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hdmic_of_match[] = अणु
+	अणु .compatible = "omapdss,hdmi-connector", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, hdmic_of_match);
 
-static struct platform_driver hdmi_connector_driver = {
+अटल काष्ठा platक्रमm_driver hdmi_connector_driver = अणु
 	.probe	= hdmic_probe,
-	.remove	= __exit_p(hdmic_remove),
-	.driver	= {
+	.हटाओ	= __निकास_p(hdmic_हटाओ),
+	.driver	= अणु
 		.name	= "connector-hdmi",
 		.of_match_table = hdmic_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(hdmi_connector_driver);
+module_platक्रमm_driver(hdmi_connector_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("HDMI Connector driver");

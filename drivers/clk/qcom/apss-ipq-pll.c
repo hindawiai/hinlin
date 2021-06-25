@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018, The Linux Foundation. All rights reserved.
-#include <linux/clk-provider.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include "clk-alpha-pll.h"
+#समावेश "clk-alpha-pll.h"
 
-static const u8 ipq_pll_offsets[] = {
+अटल स्थिर u8 ipq_pll_offsets[] = अणु
 	[PLL_OFF_L_VAL] = 0x08,
 	[PLL_OFF_ALPHA_VAL] = 0x10,
 	[PLL_OFF_USER_CTL] = 0x18,
@@ -16,81 +17,81 @@ static const u8 ipq_pll_offsets[] = {
 	[PLL_OFF_STATUS] = 0x28,
 	[PLL_OFF_TEST_CTL] = 0x30,
 	[PLL_OFF_TEST_CTL_U] = 0x34,
-};
+पूर्ण;
 
-static struct clk_alpha_pll ipq_pll = {
+अटल काष्ठा clk_alpha_pll ipq_pll = अणु
 	.offset = 0x0,
 	.regs = ipq_pll_offsets,
 	.flags = SUPPORTS_DYNAMIC_UPDATE,
-	.clkr = {
+	.clkr = अणु
 		.enable_reg = 0x0,
 		.enable_mask = BIT(0),
-		.hw.init = &(struct clk_init_data){
+		.hw.init = &(काष्ठा clk_init_data)अणु
 			.name = "a53pll",
-			.parent_data = &(const struct clk_parent_data) {
+			.parent_data = &(स्थिर काष्ठा clk_parent_data) अणु
 				.fw_name = "xo",
-			},
+			पूर्ण,
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_huayra_ops,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct alpha_pll_config ipq_pll_config = {
+अटल स्थिर काष्ठा alpha_pll_config ipq_pll_config = अणु
 	.l = 0x37,
 	.config_ctl_val = 0x04141200,
 	.config_ctl_hi_val = 0x0,
 	.early_output_mask = BIT(3),
-	.main_output_mask = BIT(0),
-};
+	.मुख्य_output_mask = BIT(0),
+पूर्ण;
 
-static const struct regmap_config ipq_pll_regmap_config = {
+अटल स्थिर काष्ठा regmap_config ipq_pll_regmap_config = अणु
 	.reg_bits		= 32,
 	.reg_stride		= 4,
 	.val_bits		= 32,
-	.max_register		= 0x40,
+	.max_रेजिस्टर		= 0x40,
 	.fast_io		= true,
-};
+पूर्ण;
 
-static int apss_ipq_pll_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct regmap *regmap;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक apss_ipq_pll_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा regmap *regmap;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	regmap = devm_regmap_init_mmio(dev, base, &ipq_pll_regmap_config);
-	if (IS_ERR(regmap))
-		return PTR_ERR(regmap);
+	अगर (IS_ERR(regmap))
+		वापस PTR_ERR(regmap);
 
 	clk_alpha_pll_configure(&ipq_pll, regmap, &ipq_pll_config);
 
-	ret = devm_clk_register_regmap(dev, &ipq_pll.clkr);
-	if (ret)
-		return ret;
+	ret = devm_clk_रेजिस्टर_regmap(dev, &ipq_pll.clkr);
+	अगर (ret)
+		वापस ret;
 
-	return devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get,
+	वापस devm_of_clk_add_hw_provider(dev, of_clk_hw_simple_get,
 					   &ipq_pll.clkr.hw);
-}
+पूर्ण
 
-static const struct of_device_id apss_ipq_pll_match_table[] = {
-	{ .compatible = "qcom,ipq6018-a53pll" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id apss_ipq_pll_match_table[] = अणु
+	अणु .compatible = "qcom,ipq6018-a53pll" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, apss_ipq_pll_match_table);
 
-static struct platform_driver apss_ipq_pll_driver = {
+अटल काष्ठा platक्रमm_driver apss_ipq_pll_driver = अणु
 	.probe = apss_ipq_pll_probe,
-	.driver = {
+	.driver = अणु
 		.name = "qcom-ipq-apss-pll",
 		.of_match_table = apss_ipq_pll_match_table,
-	},
-};
-module_platform_driver(apss_ipq_pll_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(apss_ipq_pll_driver);
 
 MODULE_DESCRIPTION("Qualcomm technology Inc APSS ALPHA PLL Driver");
 MODULE_LICENSE("GPL v2");

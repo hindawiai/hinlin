@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SRAM_H
-#define __ASM_SRAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SRAM_H
+#घोषणा __ASM_SRAM_H
 
-#ifdef CONFIG_HAVE_SRAM_POOL
+#अगर_घोषित CONFIG_HAVE_SRAM_POOL
 
-#include <linux/spinlock.h>
-#include <linux/genalloc.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/genभाग.स>
 
 /* arch/sh/mm/sram.c */
-extern struct gen_pool *sram_pool;
+बाह्य काष्ठा gen_pool *sram_pool;
 
-static inline unsigned long sram_alloc(size_t len)
-{
-	if (!sram_pool)
-		return 0UL;
+अटल अंतरभूत अचिन्हित दीर्घ sram_alloc(माप_प्रकार len)
+अणु
+	अगर (!sram_pool)
+		वापस 0UL;
 
-	return gen_pool_alloc(sram_pool, len);
-}
+	वापस gen_pool_alloc(sram_pool, len);
+पूर्ण
 
-static inline void sram_free(unsigned long addr, size_t len)
-{
-	return gen_pool_free(sram_pool, addr, len);
-}
+अटल अंतरभूत व्योम sram_मुक्त(अचिन्हित दीर्घ addr, माप_प्रकार len)
+अणु
+	वापस gen_pool_मुक्त(sram_pool, addr, len);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline unsigned long sram_alloc(size_t len)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ sram_alloc(माप_प्रकार len)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void sram_free(unsigned long addr, size_t len)
-{
-}
+अटल अंतरभूत व्योम sram_मुक्त(अचिन्हित दीर्घ addr, माप_प्रकार len)
+अणु
+पूर्ण
 
-#endif /* CONFIG_HAVE_SRAM_POOL */
+#पूर्ण_अगर /* CONFIG_HAVE_SRAM_POOL */
 
-#endif /* __ASM_SRAM_H */
+#पूर्ण_अगर /* __ASM_SRAM_H */

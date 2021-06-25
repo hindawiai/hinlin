@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* iptables module for using new netfilter netlink queue
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* iptables module क्रम using new netfilter netlink queue
  *
- * (C) 2005 by Harald Welte <laforge@netfilter.org>
+ * (C) 2005 by Harald Welte <laक्रमge@netfilter.org>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_arp.h>
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter/xt_NFQUEUE.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_arp.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_NFQUEUE.h>
 
-#include <net/netfilter/nf_queue.h>
+#समावेश <net/netfilter/nf_queue.h>
 
 MODULE_AUTHOR("Harald Welte <laforge@netfilter.org>");
 MODULE_DESCRIPTION("Xtables: packet forwarding to netlink");
@@ -23,136 +24,136 @@ MODULE_ALIAS("ipt_NFQUEUE");
 MODULE_ALIAS("ip6t_NFQUEUE");
 MODULE_ALIAS("arpt_NFQUEUE");
 
-static u32 jhash_initval __read_mostly;
+अटल u32 jhash_initval __पढ़ो_mostly;
 
-static unsigned int
-nfqueue_tg(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_NFQ_info *tinfo = par->targinfo;
+अटल अचिन्हित पूर्णांक
+nfqueue_tg(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_NFQ_info *tinfo = par->targinfo;
 
-	return NF_QUEUE_NR(tinfo->queuenum);
-}
+	वापस NF_QUEUE_NR(tinfo->queuक्रमागत);
+पूर्ण
 
-static unsigned int
-nfqueue_tg_v1(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_NFQ_info_v1 *info = par->targinfo;
-	u32 queue = info->queuenum;
+अटल अचिन्हित पूर्णांक
+nfqueue_tg_v1(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_NFQ_info_v1 *info = par->targinfo;
+	u32 queue = info->queuक्रमागत;
 
-	if (info->queues_total > 1) {
+	अगर (info->queues_total > 1) अणु
 		queue = nfqueue_hash(skb, queue, info->queues_total,
 				     xt_family(par), jhash_initval);
-	}
-	return NF_QUEUE_NR(queue);
-}
+	पूर्ण
+	वापस NF_QUEUE_NR(queue);
+पूर्ण
 
-static unsigned int
-nfqueue_tg_v2(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_NFQ_info_v2 *info = par->targinfo;
-	unsigned int ret = nfqueue_tg_v1(skb, par);
+अटल अचिन्हित पूर्णांक
+nfqueue_tg_v2(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_NFQ_info_v2 *info = par->targinfo;
+	अचिन्हित पूर्णांक ret = nfqueue_tg_v1(skb, par);
 
-	if (info->bypass)
+	अगर (info->bypass)
 		ret |= NF_VERDICT_FLAG_QUEUE_BYPASS;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int nfqueue_tg_check(const struct xt_tgchk_param *par)
-{
-	const struct xt_NFQ_info_v3 *info = par->targinfo;
+अटल पूर्णांक nfqueue_tg_check(स्थिर काष्ठा xt_tgchk_param *par)
+अणु
+	स्थिर काष्ठा xt_NFQ_info_v3 *info = par->targinfo;
 	u32 maxid;
 
-	init_hashrandom(&jhash_initval);
+	init_hashअक्रमom(&jhash_initval);
 
-	if (info->queues_total == 0) {
+	अगर (info->queues_total == 0) अणु
 		pr_info_ratelimited("number of total queues is 0\n");
-		return -EINVAL;
-	}
-	maxid = info->queues_total - 1 + info->queuenum;
-	if (maxid > 0xffff) {
+		वापस -EINVAL;
+	पूर्ण
+	maxid = info->queues_total - 1 + info->queuक्रमागत;
+	अगर (maxid > 0xffff) अणु
 		pr_info_ratelimited("number of queues (%u) out of range (got %u)\n",
 				    info->queues_total, maxid);
-		return -ERANGE;
-	}
-	if (par->target->revision == 2 && info->flags > 1)
-		return -EINVAL;
-	if (par->target->revision == 3 && info->flags & ~NFQ_FLAG_MASK)
-		return -EINVAL;
+		वापस -दुस्फल;
+	पूर्ण
+	अगर (par->target->revision == 2 && info->flags > 1)
+		वापस -EINVAL;
+	अगर (par->target->revision == 3 && info->flags & ~NFQ_FLAG_MASK)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int
-nfqueue_tg_v3(struct sk_buff *skb, const struct xt_action_param *par)
-{
-	const struct xt_NFQ_info_v3 *info = par->targinfo;
-	u32 queue = info->queuenum;
-	int ret;
+अटल अचिन्हित पूर्णांक
+nfqueue_tg_v3(काष्ठा sk_buff *skb, स्थिर काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_NFQ_info_v3 *info = par->targinfo;
+	u32 queue = info->queuक्रमागत;
+	पूर्णांक ret;
 
-	if (info->queues_total > 1) {
-		if (info->flags & NFQ_FLAG_CPU_FANOUT) {
-			int cpu = smp_processor_id();
+	अगर (info->queues_total > 1) अणु
+		अगर (info->flags & NFQ_FLAG_CPU_FANOUT) अणु
+			पूर्णांक cpu = smp_processor_id();
 
-			queue = info->queuenum + cpu % info->queues_total;
-		} else {
+			queue = info->queuक्रमागत + cpu % info->queues_total;
+		पूर्ण अन्यथा अणु
 			queue = nfqueue_hash(skb, queue, info->queues_total,
 					     xt_family(par), jhash_initval);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = NF_QUEUE_NR(queue);
-	if (info->flags & NFQ_FLAG_BYPASS)
+	अगर (info->flags & NFQ_FLAG_BYPASS)
 		ret |= NF_VERDICT_FLAG_QUEUE_BYPASS;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct xt_target nfqueue_tg_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_target nfqueue_tg_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name		= "NFQUEUE",
 		.family		= NFPROTO_UNSPEC,
 		.target		= nfqueue_tg,
-		.targetsize	= sizeof(struct xt_NFQ_info),
+		.tarमाला_लोize	= माप(काष्ठा xt_NFQ_info),
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "NFQUEUE",
 		.revision	= 1,
 		.family		= NFPROTO_UNSPEC,
 		.checkentry	= nfqueue_tg_check,
 		.target		= nfqueue_tg_v1,
-		.targetsize	= sizeof(struct xt_NFQ_info_v1),
+		.tarमाला_लोize	= माप(काष्ठा xt_NFQ_info_v1),
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "NFQUEUE",
 		.revision	= 2,
 		.family		= NFPROTO_UNSPEC,
 		.checkentry	= nfqueue_tg_check,
 		.target		= nfqueue_tg_v2,
-		.targetsize	= sizeof(struct xt_NFQ_info_v2),
+		.tarमाला_लोize	= माप(काष्ठा xt_NFQ_info_v2),
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "NFQUEUE",
 		.revision	= 3,
 		.family		= NFPROTO_UNSPEC,
 		.checkentry	= nfqueue_tg_check,
 		.target		= nfqueue_tg_v3,
-		.targetsize	= sizeof(struct xt_NFQ_info_v3),
+		.tarमाला_लोize	= माप(काष्ठा xt_NFQ_info_v3),
 		.me		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init nfqueue_tg_init(void)
-{
-	return xt_register_targets(nfqueue_tg_reg, ARRAY_SIZE(nfqueue_tg_reg));
-}
+अटल पूर्णांक __init nfqueue_tg_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_tarमाला_लो(nfqueue_tg_reg, ARRAY_SIZE(nfqueue_tg_reg));
+पूर्ण
 
-static void __exit nfqueue_tg_exit(void)
-{
-	xt_unregister_targets(nfqueue_tg_reg, ARRAY_SIZE(nfqueue_tg_reg));
-}
+अटल व्योम __निकास nfqueue_tg_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_tarमाला_लो(nfqueue_tg_reg, ARRAY_SIZE(nfqueue_tg_reg));
+पूर्ण
 
 module_init(nfqueue_tg_init);
-module_exit(nfqueue_tg_exit);
+module_निकास(nfqueue_tg_निकास);

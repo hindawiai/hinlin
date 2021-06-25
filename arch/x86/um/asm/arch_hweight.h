@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_UM_HWEIGHT_H
-#define _ASM_UM_HWEIGHT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_UM_HWEIGHT_H
+#घोषणा _ASM_UM_HWEIGHT_H
 
-#include <asm-generic/bitops/arch_hweight.h>
+#समावेश <यंत्र-generic/bitops/arch_hweight.h>
 
-#endif
+#पूर्ण_अगर

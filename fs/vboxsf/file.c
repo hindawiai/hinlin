@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * VirtualBox Guest Shared Folders support: Regular file inode and file ops.
  *
  * Copyright (C) 2006-2018 Oracle Corporation
  */
 
-#include <linux/mm.h>
-#include <linux/page-flags.h>
-#include <linux/pagemap.h>
-#include <linux/highmem.h>
-#include <linux/sizes.h>
-#include "vfsmod.h"
+#समावेश <linux/mm.h>
+#समावेश <linux/page-flags.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/sizes.h>
+#समावेश "vfsmod.h"
 
-struct vboxsf_handle {
+काष्ठा vboxsf_handle अणु
 	u64 handle;
 	u32 root;
 	u32 access_flags;
-	struct kref refcount;
-	struct list_head head;
-};
+	काष्ठा kref refcount;
+	काष्ठा list_head head;
+पूर्ण;
 
-static int vboxsf_file_open(struct inode *inode, struct file *file)
-{
-	struct vboxsf_inode *sf_i = VBOXSF_I(inode);
-	struct shfl_createparms params = {};
-	struct vboxsf_handle *sf_handle;
+अटल पूर्णांक vboxsf_file_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vboxsf_inode *sf_i = VBOXSF_I(inode);
+	काष्ठा shfl_createparms params = अणुपूर्ण;
+	काष्ठा vboxsf_handle *sf_handle;
 	u32 access_flags = 0;
-	int err;
+	पूर्णांक err;
 
-	sf_handle = kmalloc(sizeof(*sf_handle), GFP_KERNEL);
-	if (!sf_handle)
-		return -ENOMEM;
+	sf_handle = kदो_स्मृति(माप(*sf_handle), GFP_KERNEL);
+	अगर (!sf_handle)
+		वापस -ENOMEM;
 
 	/*
-	 * We check the value of params.handle afterwards to find out if
-	 * the call succeeded or failed, as the API does not seem to cleanly
-	 * distinguish error and informational messages.
+	 * We check the value of params.handle afterwards to find out अगर
+	 * the call succeeded or failed, as the API करोes not seem to cleanly
+	 * distinguish error and inक्रमmational messages.
 	 *
 	 * Furthermore, we must set params.handle to SHFL_HANDLE_NIL to
 	 * make the shared folders host service use our mode parameter.
 	 */
 	params.handle = SHFL_HANDLE_NIL;
-	if (file->f_flags & O_CREAT) {
+	अगर (file->f_flags & O_CREAT) अणु
 		params.create_flags |= SHFL_CF_ACT_CREATE_IF_NEW;
 		/*
 		 * We ignore O_EXCL, as the Linux kernel seems to call create
-		 * beforehand itself, so O_EXCL should always fail.
+		 * beक्रमehand itself, so O_EXCL should always fail.
 		 */
-		if (file->f_flags & O_TRUNC)
+		अगर (file->f_flags & O_TRUNC)
 			params.create_flags |= SHFL_CF_ACT_OVERWRITE_IF_EXISTS;
-		else
+		अन्यथा
 			params.create_flags |= SHFL_CF_ACT_OPEN_IF_EXISTS;
-	} else {
+	पूर्ण अन्यथा अणु
 		params.create_flags |= SHFL_CF_ACT_FAIL_IF_NEW;
-		if (file->f_flags & O_TRUNC)
+		अगर (file->f_flags & O_TRUNC)
 			params.create_flags |= SHFL_CF_ACT_OVERWRITE_IF_EXISTS;
-	}
+	पूर्ण
 
-	switch (file->f_flags & O_ACCMODE) {
-	case O_RDONLY:
+	चयन (file->f_flags & O_ACCMODE) अणु
+	हाल O_RDONLY:
 		access_flags |= SHFL_CF_ACCESS_READ;
-		break;
+		अवरोध;
 
-	case O_WRONLY:
+	हाल O_WRONLY:
 		access_flags |= SHFL_CF_ACCESS_WRITE;
-		break;
+		अवरोध;
 
-	case O_RDWR:
+	हाल O_RDWR:
 		access_flags |= SHFL_CF_ACCESS_READWRITE;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	if (file->f_flags & O_APPEND)
+	अगर (file->f_flags & O_APPEND)
 		access_flags |= SHFL_CF_ACCESS_APPEND;
 
 	params.create_flags |= access_flags;
 	params.info.attr.mode = inode->i_mode;
 
 	err = vboxsf_create_at_dentry(file_dentry(file), &params);
-	if (err == 0 && params.handle == SHFL_HANDLE_NIL)
-		err = (params.result == SHFL_FILE_EXISTS) ? -EEXIST : -ENOENT;
-	if (err) {
-		kfree(sf_handle);
-		return err;
-	}
+	अगर (err == 0 && params.handle == SHFL_HANDLE_NIL)
+		err = (params.result == SHFL_खाता_EXISTS) ? -EEXIST : -ENOENT;
+	अगर (err) अणु
+		kमुक्त(sf_handle);
+		वापस err;
+	पूर्ण
 
-	/* the host may have given us different attr then requested */
-	sf_i->force_restat = 1;
+	/* the host may have given us dअगरferent attr then requested */
+	sf_i->क्रमce_restat = 1;
 
-	/* init our handle struct and add it to the inode's handles list */
+	/* init our handle काष्ठा and add it to the inode's handles list */
 	sf_handle->handle = params.handle;
 	sf_handle->root = VBOXSF_SBI(inode->i_sb)->root;
 	sf_handle->access_flags = access_flags;
@@ -101,279 +102,279 @@ static int vboxsf_file_open(struct inode *inode, struct file *file)
 	list_add(&sf_handle->head, &sf_i->handle_list);
 	mutex_unlock(&sf_i->handle_list_mutex);
 
-	file->private_data = sf_handle;
-	return 0;
-}
+	file->निजी_data = sf_handle;
+	वापस 0;
+पूर्ण
 
-static void vboxsf_handle_release(struct kref *refcount)
-{
-	struct vboxsf_handle *sf_handle =
-		container_of(refcount, struct vboxsf_handle, refcount);
+अटल व्योम vboxsf_handle_release(काष्ठा kref *refcount)
+अणु
+	काष्ठा vboxsf_handle *sf_handle =
+		container_of(refcount, काष्ठा vboxsf_handle, refcount);
 
-	vboxsf_close(sf_handle->root, sf_handle->handle);
-	kfree(sf_handle);
-}
+	vboxsf_बंद(sf_handle->root, sf_handle->handle);
+	kमुक्त(sf_handle);
+पूर्ण
 
-static int vboxsf_file_release(struct inode *inode, struct file *file)
-{
-	struct vboxsf_inode *sf_i = VBOXSF_I(inode);
-	struct vboxsf_handle *sf_handle = file->private_data;
+अटल पूर्णांक vboxsf_file_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा vboxsf_inode *sf_i = VBOXSF_I(inode);
+	काष्ठा vboxsf_handle *sf_handle = file->निजी_data;
 
 	/*
-	 * When a file is closed on our (the guest) side, we want any subsequent
-	 * accesses done on the host side to see all changes done from our side.
+	 * When a file is बंदd on our (the guest) side, we want any subsequent
+	 * accesses करोne on the host side to see all changes करोne from our side.
 	 */
-	filemap_write_and_wait(inode->i_mapping);
+	filemap_ग_लिखो_and_रुको(inode->i_mapping);
 
 	mutex_lock(&sf_i->handle_list_mutex);
 	list_del(&sf_handle->head);
 	mutex_unlock(&sf_i->handle_list_mutex);
 
 	kref_put(&sf_handle->refcount, vboxsf_handle_release);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Write back dirty pages now, because there may not be any suitable
- * open files later
+ * खोलो files later
  */
-static void vboxsf_vma_close(struct vm_area_struct *vma)
-{
-	filemap_write_and_wait(vma->vm_file->f_mapping);
-}
+अटल व्योम vboxsf_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	filemap_ग_लिखो_and_रुको(vma->vm_file->f_mapping);
+पूर्ण
 
-static const struct vm_operations_struct vboxsf_file_vm_ops = {
-	.close		= vboxsf_vma_close,
+अटल स्थिर काष्ठा vm_operations_काष्ठा vboxsf_file_vm_ops = अणु
+	.बंद		= vboxsf_vma_बंद,
 	.fault		= filemap_fault,
 	.map_pages	= filemap_map_pages,
-};
+पूर्ण;
 
-static int vboxsf_file_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	int err;
+अटल पूर्णांक vboxsf_file_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	पूर्णांक err;
 
 	err = generic_file_mmap(file, vma);
-	if (!err)
+	अगर (!err)
 		vma->vm_ops = &vboxsf_file_vm_ops;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Note that since we are accessing files on the host's filesystem, files
+ * Note that since we are accessing files on the host's fileप्रणाली, files
  * may always be changed underneath us by the host!
  *
- * The vboxsf API between the guest and the host does not offer any functions
- * to deal with this. There is no inode-generation to check for changes, no
+ * The vboxsf API between the guest and the host करोes not offer any functions
+ * to deal with this. There is no inode-generation to check क्रम changes, no
  * events / callback on changes and no way to lock files.
  *
- * To avoid returning stale data when a file gets *opened* on our (the guest)
- * side, we do a "stat" on the host side, then compare the mtime with the
- * last known mtime and invalidate the page-cache if they differ.
- * This is done from vboxsf_inode_revalidate().
+ * To aव्योम वापसing stale data when a file माला_लो *खोलोed* on our (the guest)
+ * side, we करो a "stat" on the host side, then compare the mसमय with the
+ * last known mसमय and invalidate the page-cache अगर they dअगरfer.
+ * This is करोne from vboxsf_inode_revalidate().
  *
- * When reads are done through the read_iter fop, it is possible to do
+ * When पढ़ोs are करोne through the पढ़ो_iter fop, it is possible to करो
  * further cache revalidation then, there are 3 options to deal with this:
  *
- * 1)  Rely solely on the revalidation done at open time
- * 2)  Do another "stat" and compare mtime again. Unfortunately the vboxsf
- *     host API does not allow stat on handles, so we would need to use
- *     file->f_path.dentry and the stat will then fail if the file was unlinked
- *     or renamed (and there is no thing like NFS' silly-rename). So we get:
- * 2a) "stat" and compare mtime, on stat failure invalidate the cache
- * 2b) "stat" and compare mtime, on stat failure do nothing
- * 3)  Simply always call invalidate_inode_pages2_range on the range of the read
+ * 1)  Rely solely on the revalidation करोne at खोलो समय
+ * 2)  Do another "stat" and compare mसमय again. Unक्रमtunately the vboxsf
+ *     host API करोes not allow stat on handles, so we would need to use
+ *     file->f_path.dentry and the stat will then fail अगर the file was unlinked
+ *     or नामd (and there is no thing like NFS' silly-नाम). So we get:
+ * 2a) "stat" and compare mसमय, on stat failure invalidate the cache
+ * 2b) "stat" and compare mसमय, on stat failure करो nothing
+ * 3)  Simply always call invalidate_inode_pages2_range on the range of the पढ़ो
  *
  * Currently we are keeping things KISS and using option 1. this allows
- * directly using generic_file_read_iter without wrapping it.
+ * directly using generic_file_पढ़ो_iter without wrapping it.
  *
- * This means that only data written on the host side before open() on
+ * This means that only data written on the host side beक्रमe खोलो() on
  * the guest side is guaranteed to be seen by the guest. If necessary
- * we may provide other read-cache strategies in the future and make this
+ * we may provide other पढ़ो-cache strategies in the future and make this
  * configurable through a mount option.
  */
-const struct file_operations vboxsf_reg_fops = {
+स्थिर काष्ठा file_operations vboxsf_reg_fops = अणु
 	.llseek = generic_file_llseek,
-	.read_iter = generic_file_read_iter,
-	.write_iter = generic_file_write_iter,
+	.पढ़ो_iter = generic_file_पढ़ो_iter,
+	.ग_लिखो_iter = generic_file_ग_लिखो_iter,
 	.mmap = vboxsf_file_mmap,
-	.open = vboxsf_file_open,
+	.खोलो = vboxsf_file_खोलो,
 	.release = vboxsf_file_release,
 	.fsync = noop_fsync,
-	.splice_read = generic_file_splice_read,
-};
+	.splice_पढ़ो = generic_file_splice_पढ़ो,
+पूर्ण;
 
-const struct inode_operations vboxsf_reg_iops = {
+स्थिर काष्ठा inode_operations vboxsf_reg_iops = अणु
 	.getattr = vboxsf_getattr,
 	.setattr = vboxsf_setattr
-};
+पूर्ण;
 
-static int vboxsf_readpage(struct file *file, struct page *page)
-{
-	struct vboxsf_handle *sf_handle = file->private_data;
+अटल पूर्णांक vboxsf_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	काष्ठा vboxsf_handle *sf_handle = file->निजी_data;
 	loff_t off = page_offset(page);
-	u32 nread = PAGE_SIZE;
+	u32 nपढ़ो = PAGE_SIZE;
 	u8 *buf;
-	int err;
+	पूर्णांक err;
 
 	buf = kmap(page);
 
-	err = vboxsf_read(sf_handle->root, sf_handle->handle, off, &nread, buf);
-	if (err == 0) {
-		memset(&buf[nread], 0, PAGE_SIZE - nread);
+	err = vboxsf_पढ़ो(sf_handle->root, sf_handle->handle, off, &nपढ़ो, buf);
+	अगर (err == 0) अणु
+		स_रखो(&buf[nपढ़ो], 0, PAGE_SIZE - nपढ़ो);
 		flush_dcache_page(page);
 		SetPageUptodate(page);
-	} else {
+	पूर्ण अन्यथा अणु
 		SetPageError(page);
-	}
+	पूर्ण
 
 	kunmap(page);
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct vboxsf_handle *vboxsf_get_write_handle(struct vboxsf_inode *sf_i)
-{
-	struct vboxsf_handle *h, *sf_handle = NULL;
+अटल काष्ठा vboxsf_handle *vboxsf_get_ग_लिखो_handle(काष्ठा vboxsf_inode *sf_i)
+अणु
+	काष्ठा vboxsf_handle *h, *sf_handle = शून्य;
 
 	mutex_lock(&sf_i->handle_list_mutex);
-	list_for_each_entry(h, &sf_i->handle_list, head) {
-		if (h->access_flags == SHFL_CF_ACCESS_WRITE ||
-		    h->access_flags == SHFL_CF_ACCESS_READWRITE) {
+	list_क्रम_each_entry(h, &sf_i->handle_list, head) अणु
+		अगर (h->access_flags == SHFL_CF_ACCESS_WRITE ||
+		    h->access_flags == SHFL_CF_ACCESS_READWRITE) अणु
 			kref_get(&h->refcount);
 			sf_handle = h;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&sf_i->handle_list_mutex);
 
-	return sf_handle;
-}
+	वापस sf_handle;
+पूर्ण
 
-static int vboxsf_writepage(struct page *page, struct writeback_control *wbc)
-{
-	struct inode *inode = page->mapping->host;
-	struct vboxsf_inode *sf_i = VBOXSF_I(inode);
-	struct vboxsf_handle *sf_handle;
+अटल पूर्णांक vboxsf_ग_लिखोpage(काष्ठा page *page, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	काष्ठा vboxsf_inode *sf_i = VBOXSF_I(inode);
+	काष्ठा vboxsf_handle *sf_handle;
 	loff_t off = page_offset(page);
-	loff_t size = i_size_read(inode);
-	u32 nwrite = PAGE_SIZE;
+	loff_t size = i_size_पढ़ो(inode);
+	u32 nग_लिखो = PAGE_SIZE;
 	u8 *buf;
-	int err;
+	पूर्णांक err;
 
-	if (off + PAGE_SIZE > size)
-		nwrite = size & ~PAGE_MASK;
+	अगर (off + PAGE_SIZE > size)
+		nग_लिखो = size & ~PAGE_MASK;
 
-	sf_handle = vboxsf_get_write_handle(sf_i);
-	if (!sf_handle)
-		return -EBADF;
+	sf_handle = vboxsf_get_ग_लिखो_handle(sf_i);
+	अगर (!sf_handle)
+		वापस -EBADF;
 
 	buf = kmap(page);
-	err = vboxsf_write(sf_handle->root, sf_handle->handle,
-			   off, &nwrite, buf);
+	err = vboxsf_ग_लिखो(sf_handle->root, sf_handle->handle,
+			   off, &nग_लिखो, buf);
 	kunmap(page);
 
 	kref_put(&sf_handle->refcount, vboxsf_handle_release);
 
-	if (err == 0) {
+	अगर (err == 0) अणु
 		ClearPageError(page);
-		/* mtime changed */
-		sf_i->force_restat = 1;
-	} else {
+		/* mसमय changed */
+		sf_i->क्रमce_restat = 1;
+	पूर्ण अन्यथा अणु
 		ClearPageUptodate(page);
-	}
+	पूर्ण
 
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vboxsf_write_end(struct file *file, struct address_space *mapping,
-			    loff_t pos, unsigned int len, unsigned int copied,
-			    struct page *page, void *fsdata)
-{
-	struct inode *inode = mapping->host;
-	struct vboxsf_handle *sf_handle = file->private_data;
-	unsigned int from = pos & ~PAGE_MASK;
+अटल पूर्णांक vboxsf_ग_लिखो_end(काष्ठा file *file, काष्ठा address_space *mapping,
+			    loff_t pos, अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक copied,
+			    काष्ठा page *page, व्योम *fsdata)
+अणु
+	काष्ठा inode *inode = mapping->host;
+	काष्ठा vboxsf_handle *sf_handle = file->निजी_data;
+	अचिन्हित पूर्णांक from = pos & ~PAGE_MASK;
 	u32 nwritten = len;
 	u8 *buf;
-	int err;
+	पूर्णांक err;
 
-	/* zero the stale part of the page if we did a short copy */
-	if (!PageUptodate(page) && copied < len)
+	/* zero the stale part of the page अगर we did a लघु copy */
+	अगर (!PageUptodate(page) && copied < len)
 		zero_user(page, from + copied, len - copied);
 
 	buf = kmap(page);
-	err = vboxsf_write(sf_handle->root, sf_handle->handle,
+	err = vboxsf_ग_लिखो(sf_handle->root, sf_handle->handle,
 			   pos, &nwritten, buf + from);
 	kunmap(page);
 
-	if (err) {
+	अगर (err) अणु
 		nwritten = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* mtime changed */
-	VBOXSF_I(inode)->force_restat = 1;
+	/* mसमय changed */
+	VBOXSF_I(inode)->क्रमce_restat = 1;
 
-	if (!PageUptodate(page) && nwritten == PAGE_SIZE)
+	अगर (!PageUptodate(page) && nwritten == PAGE_SIZE)
 		SetPageUptodate(page);
 
 	pos += nwritten;
-	if (pos > inode->i_size)
-		i_size_write(inode, pos);
+	अगर (pos > inode->i_size)
+		i_size_ग_लिखो(inode, pos);
 
 out:
 	unlock_page(page);
 	put_page(page);
 
-	return nwritten;
-}
+	वापस nwritten;
+पूर्ण
 
 /*
- * Note simple_write_begin does not read the page from disk on partial writes
- * this is ok since vboxsf_write_end only writes the written parts of the
- * page and it does not call SetPageUptodate for partial writes.
+ * Note simple_ग_लिखो_begin करोes not पढ़ो the page from disk on partial ग_लिखोs
+ * this is ok since vboxsf_ग_लिखो_end only ग_लिखोs the written parts of the
+ * page and it करोes not call SetPageUptodate क्रम partial ग_लिखोs.
  */
-const struct address_space_operations vboxsf_reg_aops = {
-	.readpage = vboxsf_readpage,
-	.writepage = vboxsf_writepage,
+स्थिर काष्ठा address_space_operations vboxsf_reg_aops = अणु
+	.पढ़ोpage = vboxsf_पढ़ोpage,
+	.ग_लिखोpage = vboxsf_ग_लिखोpage,
 	.set_page_dirty = __set_page_dirty_nobuffers,
-	.write_begin = simple_write_begin,
-	.write_end = vboxsf_write_end,
-};
+	.ग_लिखो_begin = simple_ग_लिखो_begin,
+	.ग_लिखो_end = vboxsf_ग_लिखो_end,
+पूर्ण;
 
-static const char *vboxsf_get_link(struct dentry *dentry, struct inode *inode,
-				   struct delayed_call *done)
-{
-	struct vboxsf_sbi *sbi = VBOXSF_SBI(inode->i_sb);
-	struct shfl_string *path;
-	char *link;
-	int err;
+अटल स्थिर अक्षर *vboxsf_get_link(काष्ठा dentry *dentry, काष्ठा inode *inode,
+				   काष्ठा delayed_call *करोne)
+अणु
+	काष्ठा vboxsf_sbi *sbi = VBOXSF_SBI(inode->i_sb);
+	काष्ठा shfl_string *path;
+	अक्षर *link;
+	पूर्णांक err;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	path = vboxsf_path_from_dentry(sbi, dentry);
-	if (IS_ERR(path))
-		return ERR_CAST(path);
+	अगर (IS_ERR(path))
+		वापस ERR_CAST(path);
 
 	link = kzalloc(PATH_MAX, GFP_KERNEL);
-	if (!link) {
+	अगर (!link) अणु
 		__putname(path);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	err = vboxsf_readlink(sbi->root, path, PATH_MAX, link);
+	err = vboxsf_पढ़ोlink(sbi->root, path, PATH_MAX, link);
 	__putname(path);
-	if (err) {
-		kfree(link);
-		return ERR_PTR(err);
-	}
+	अगर (err) अणु
+		kमुक्त(link);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	set_delayed_call(done, kfree_link, link);
-	return link;
-}
+	set_delayed_call(करोne, kमुक्त_link, link);
+	वापस link;
+पूर्ण
 
-const struct inode_operations vboxsf_lnk_iops = {
+स्थिर काष्ठा inode_operations vboxsf_lnk_iops = अणु
 	.get_link = vboxsf_get_link
-};
+पूर्ण;

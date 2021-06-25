@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
 /*
  * Copyright (C) 2004 Amit S. Kale <amitkale@linsyssoft.com>
  * Copyright (C) 2000-2001 VERITAS Software Corporation.
- * Copyright (C) 2002 Andi Kleen, SuSE Labs
+ * Copyright (C) 2002 Andi Kleen, SuSE Lअसल
  * Copyright (C) 2004 LinSysSoft Technologies Pvt. Ltd.
  * Copyright (C) 2007 MontaVista Software, Inc.
  * Copyright (C) 2007-2008 Jason Wessel, Wind River Systems, Inc.
@@ -16,142 +17,142 @@
  *  Updated by:	     Amit Kale<akale@veritas.com>
  *  Updated by:	     Tom Rini <trini@kernel.crashing.org>
  *  Updated by:	     Jason Wessel <jason.wessel@windriver.com>
- *  Modified for 386 by Jim Kingdon, Cygnus Support.
+ *  Modअगरied क्रम 386 by Jim Kingकरोn, Cygnus Support.
  *  Original kgdb, compatibility with 2.1.xx kernel by
  *  David Grothe <dave@gcom.com>
- *  Integrated into 2.2.5 kernel by Tigran Aivazian <tigran@sco.com>
+ *  Integrated पूर्णांकo 2.2.5 kernel by Tigran Aivazian <tigran@sco.com>
  *  X86_64 changes from Andi Kleen's patch merged by Jim Houston
  */
-#include <linux/spinlock.h>
-#include <linux/kdebug.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/kgdb.h>
-#include <linux/smp.h>
-#include <linux/nmi.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/uaccess.h>
-#include <linux/memory.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/memory.h>
 
-#include <asm/text-patching.h>
-#include <asm/debugreg.h>
-#include <asm/apicdef.h>
-#include <asm/apic.h>
-#include <asm/nmi.h>
-#include <asm/switch_to.h>
+#समावेश <यंत्र/text-patching.h>
+#समावेश <यंत्र/debugreg.h>
+#समावेश <यंत्र/apicdef.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/nmi.h>
+#समावेश <यंत्र/चयन_to.h>
 
-struct dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
-{
-#ifdef CONFIG_X86_32
-	{ "ax", 4, offsetof(struct pt_regs, ax) },
-	{ "cx", 4, offsetof(struct pt_regs, cx) },
-	{ "dx", 4, offsetof(struct pt_regs, dx) },
-	{ "bx", 4, offsetof(struct pt_regs, bx) },
-	{ "sp", 4, offsetof(struct pt_regs, sp) },
-	{ "bp", 4, offsetof(struct pt_regs, bp) },
-	{ "si", 4, offsetof(struct pt_regs, si) },
-	{ "di", 4, offsetof(struct pt_regs, di) },
-	{ "ip", 4, offsetof(struct pt_regs, ip) },
-	{ "flags", 4, offsetof(struct pt_regs, flags) },
-	{ "cs", 4, offsetof(struct pt_regs, cs) },
-	{ "ss", 4, offsetof(struct pt_regs, ss) },
-	{ "ds", 4, offsetof(struct pt_regs, ds) },
-	{ "es", 4, offsetof(struct pt_regs, es) },
-#else
-	{ "ax", 8, offsetof(struct pt_regs, ax) },
-	{ "bx", 8, offsetof(struct pt_regs, bx) },
-	{ "cx", 8, offsetof(struct pt_regs, cx) },
-	{ "dx", 8, offsetof(struct pt_regs, dx) },
-	{ "si", 8, offsetof(struct pt_regs, si) },
-	{ "di", 8, offsetof(struct pt_regs, di) },
-	{ "bp", 8, offsetof(struct pt_regs, bp) },
-	{ "sp", 8, offsetof(struct pt_regs, sp) },
-	{ "r8", 8, offsetof(struct pt_regs, r8) },
-	{ "r9", 8, offsetof(struct pt_regs, r9) },
-	{ "r10", 8, offsetof(struct pt_regs, r10) },
-	{ "r11", 8, offsetof(struct pt_regs, r11) },
-	{ "r12", 8, offsetof(struct pt_regs, r12) },
-	{ "r13", 8, offsetof(struct pt_regs, r13) },
-	{ "r14", 8, offsetof(struct pt_regs, r14) },
-	{ "r15", 8, offsetof(struct pt_regs, r15) },
-	{ "ip", 8, offsetof(struct pt_regs, ip) },
-	{ "flags", 4, offsetof(struct pt_regs, flags) },
-	{ "cs", 4, offsetof(struct pt_regs, cs) },
-	{ "ss", 4, offsetof(struct pt_regs, ss) },
-	{ "ds", 4, -1 },
-	{ "es", 4, -1 },
-#endif
-	{ "fs", 4, -1 },
-	{ "gs", 4, -1 },
-};
+काष्ठा dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
+अणु
+#अगर_घोषित CONFIG_X86_32
+	अणु "ax", 4, दुरत्व(काष्ठा pt_regs, ax) पूर्ण,
+	अणु "cx", 4, दुरत्व(काष्ठा pt_regs, cx) पूर्ण,
+	अणु "dx", 4, दुरत्व(काष्ठा pt_regs, dx) पूर्ण,
+	अणु "bx", 4, दुरत्व(काष्ठा pt_regs, bx) पूर्ण,
+	अणु "sp", 4, दुरत्व(काष्ठा pt_regs, sp) पूर्ण,
+	अणु "bp", 4, दुरत्व(काष्ठा pt_regs, bp) पूर्ण,
+	अणु "si", 4, दुरत्व(काष्ठा pt_regs, si) पूर्ण,
+	अणु "di", 4, दुरत्व(काष्ठा pt_regs, di) पूर्ण,
+	अणु "ip", 4, दुरत्व(काष्ठा pt_regs, ip) पूर्ण,
+	अणु "flags", 4, दुरत्व(काष्ठा pt_regs, flags) पूर्ण,
+	अणु "cs", 4, दुरत्व(काष्ठा pt_regs, cs) पूर्ण,
+	अणु "ss", 4, दुरत्व(काष्ठा pt_regs, ss) पूर्ण,
+	अणु "ds", 4, दुरत्व(काष्ठा pt_regs, ds) पूर्ण,
+	अणु "es", 4, दुरत्व(काष्ठा pt_regs, es) पूर्ण,
+#अन्यथा
+	अणु "ax", 8, दुरत्व(काष्ठा pt_regs, ax) पूर्ण,
+	अणु "bx", 8, दुरत्व(काष्ठा pt_regs, bx) पूर्ण,
+	अणु "cx", 8, दुरत्व(काष्ठा pt_regs, cx) पूर्ण,
+	अणु "dx", 8, दुरत्व(काष्ठा pt_regs, dx) पूर्ण,
+	अणु "si", 8, दुरत्व(काष्ठा pt_regs, si) पूर्ण,
+	अणु "di", 8, दुरत्व(काष्ठा pt_regs, di) पूर्ण,
+	अणु "bp", 8, दुरत्व(काष्ठा pt_regs, bp) पूर्ण,
+	अणु "sp", 8, दुरत्व(काष्ठा pt_regs, sp) पूर्ण,
+	अणु "r8", 8, दुरत्व(काष्ठा pt_regs, r8) पूर्ण,
+	अणु "r9", 8, दुरत्व(काष्ठा pt_regs, r9) पूर्ण,
+	अणु "r10", 8, दुरत्व(काष्ठा pt_regs, r10) पूर्ण,
+	अणु "r11", 8, दुरत्व(काष्ठा pt_regs, r11) पूर्ण,
+	अणु "r12", 8, दुरत्व(काष्ठा pt_regs, r12) पूर्ण,
+	अणु "r13", 8, दुरत्व(काष्ठा pt_regs, r13) पूर्ण,
+	अणु "r14", 8, दुरत्व(काष्ठा pt_regs, r14) पूर्ण,
+	अणु "r15", 8, दुरत्व(काष्ठा pt_regs, r15) पूर्ण,
+	अणु "ip", 8, दुरत्व(काष्ठा pt_regs, ip) पूर्ण,
+	अणु "flags", 4, दुरत्व(काष्ठा pt_regs, flags) पूर्ण,
+	अणु "cs", 4, दुरत्व(काष्ठा pt_regs, cs) पूर्ण,
+	अणु "ss", 4, दुरत्व(काष्ठा pt_regs, ss) पूर्ण,
+	अणु "ds", 4, -1 पूर्ण,
+	अणु "es", 4, -1 पूर्ण,
+#पूर्ण_अगर
+	अणु "fs", 4, -1 पूर्ण,
+	अणु "gs", 4, -1 पूर्ण,
+पूर्ण;
 
-int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (
-#ifdef CONFIG_X86_32
+पूर्णांक dbg_set_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (
+#अगर_घोषित CONFIG_X86_32
 	    regno == GDB_SS || regno == GDB_FS || regno == GDB_GS ||
-#endif
+#पूर्ण_अगर
 	    regno == GDB_SP || regno == GDB_ORIG_AX)
-		return 0;
+		वापस 0;
 
-	if (dbg_reg_def[regno].offset != -1)
-		memcpy((void *)regs + dbg_reg_def[regno].offset, mem,
+	अगर (dbg_reg_def[regno].offset != -1)
+		स_नकल((व्योम *)regs + dbg_reg_def[regno].offset, mem,
 		       dbg_reg_def[regno].size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (regno == GDB_ORIG_AX) {
-		memcpy(mem, &regs->orig_ax, sizeof(regs->orig_ax));
-		return "orig_ax";
-	}
-	if (regno >= DBG_MAX_REG_NUM || regno < 0)
-		return NULL;
+अक्षर *dbg_get_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (regno == GDB_ORIG_AX) अणु
+		स_नकल(mem, &regs->orig_ax, माप(regs->orig_ax));
+		वापस "orig_ax";
+	पूर्ण
+	अगर (regno >= DBG_MAX_REG_NUM || regno < 0)
+		वापस शून्य;
 
-	if (dbg_reg_def[regno].offset != -1)
-		memcpy(mem, (void *)regs + dbg_reg_def[regno].offset,
+	अगर (dbg_reg_def[regno].offset != -1)
+		स_नकल(mem, (व्योम *)regs + dbg_reg_def[regno].offset,
 		       dbg_reg_def[regno].size);
 
-#ifdef CONFIG_X86_32
-	switch (regno) {
-	case GDB_GS:
-	case GDB_FS:
-		*(unsigned long *)mem = 0xFFFF;
-		break;
-	}
-#endif
-	return dbg_reg_def[regno].name;
-}
+#अगर_घोषित CONFIG_X86_32
+	चयन (regno) अणु
+	हाल GDB_GS:
+	हाल GDB_FS:
+		*(अचिन्हित दीर्घ *)mem = 0xFFFF;
+		अवरोध;
+	पूर्ण
+#पूर्ण_अगर
+	वापस dbg_reg_def[regno].name;
+पूर्ण
 
 /**
- *	sleeping_thread_to_gdb_regs - Convert ptrace regs to GDB regs
- *	@gdb_regs: A pointer to hold the registers in the order GDB wants.
- *	@p: The &struct task_struct of the desired process.
+ *	sleeping_thपढ़ो_to_gdb_regs - Convert ptrace regs to GDB regs
+ *	@gdb_regs: A poपूर्णांकer to hold the रेजिस्टरs in the order GDB wants.
+ *	@p: The &काष्ठा task_काष्ठा of the desired process.
  *
- *	Convert the register values of the sleeping process in @p to
- *	the format that GDB expects.
- *	This function is called when kgdb does not have access to the
- *	&struct pt_regs and therefore it should fill the gdb registers
- *	@gdb_regs with what has	been saved in &struct thread_struct
- *	thread field during switch_to.
+ *	Convert the रेजिस्टर values of the sleeping process in @p to
+ *	the क्रमmat that GDB expects.
+ *	This function is called when kgdb करोes not have access to the
+ *	&काष्ठा pt_regs and thereक्रमe it should fill the gdb रेजिस्टरs
+ *	@gdb_regs with what has	been saved in &काष्ठा thपढ़ो_काष्ठा
+ *	thपढ़ो field during चयन_to.
  */
-void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
-{
-#ifndef CONFIG_X86_32
+व्योम sleeping_thपढ़ो_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा task_काष्ठा *p)
+अणु
+#अगर_अघोषित CONFIG_X86_32
 	u32 *gdb_regs32 = (u32 *)gdb_regs;
-#endif
+#पूर्ण_अगर
 	gdb_regs[GDB_AX]	= 0;
 	gdb_regs[GDB_BX]	= 0;
 	gdb_regs[GDB_CX]	= 0;
 	gdb_regs[GDB_DX]	= 0;
 	gdb_regs[GDB_SI]	= 0;
 	gdb_regs[GDB_DI]	= 0;
-	gdb_regs[GDB_BP]	= ((struct inactive_task_frame *)p->thread.sp)->bp;
-#ifdef CONFIG_X86_32
+	gdb_regs[GDB_BP]	= ((काष्ठा inactive_task_frame *)p->thपढ़ो.sp)->bp;
+#अगर_घोषित CONFIG_X86_32
 	gdb_regs[GDB_DS]	= __KERNEL_DS;
 	gdb_regs[GDB_ES]	= __KERNEL_DS;
 	gdb_regs[GDB_PS]	= 0;
@@ -159,7 +160,7 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	gdb_regs[GDB_SS]	= __KERNEL_DS;
 	gdb_regs[GDB_FS]	= 0xFFFF;
 	gdb_regs[GDB_GS]	= 0xFFFF;
-#else
+#अन्यथा
 	gdb_regs32[GDB_PS]	= 0;
 	gdb_regs32[GDB_CS]	= __KERNEL_CS;
 	gdb_regs32[GDB_SS]	= __KERNEL_DS;
@@ -171,615 +172,615 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	gdb_regs[GDB_R13]	= 0;
 	gdb_regs[GDB_R14]	= 0;
 	gdb_regs[GDB_R15]	= 0;
-#endif
+#पूर्ण_अगर
 	gdb_regs[GDB_PC]	= 0;
-	gdb_regs[GDB_SP]	= p->thread.sp;
-}
+	gdb_regs[GDB_SP]	= p->thपढ़ो.sp;
+पूर्ण
 
-static struct hw_breakpoint {
-	unsigned		enabled;
-	unsigned long		addr;
-	int			len;
-	int			type;
-	struct perf_event	* __percpu *pev;
-} breakinfo[HBP_NUM];
+अटल काष्ठा hw_अवरोधpoपूर्णांक अणु
+	अचिन्हित		enabled;
+	अचिन्हित दीर्घ		addr;
+	पूर्णांक			len;
+	पूर्णांक			type;
+	काष्ठा perf_event	* __percpu *pev;
+पूर्ण अवरोधinfo[HBP_NUM];
 
-static unsigned long early_dr7;
+अटल अचिन्हित दीर्घ early_dr7;
 
-static void kgdb_correct_hw_break(void)
-{
-	int breakno;
+अटल व्योम kgdb_correct_hw_अवरोध(व्योम)
+अणु
+	पूर्णांक अवरोधno;
 
-	for (breakno = 0; breakno < HBP_NUM; breakno++) {
-		struct perf_event *bp;
-		struct arch_hw_breakpoint *info;
-		int val;
-		int cpu = raw_smp_processor_id();
-		if (!breakinfo[breakno].enabled)
-			continue;
-		if (dbg_is_early) {
-			set_debugreg(breakinfo[breakno].addr, breakno);
-			early_dr7 |= encode_dr7(breakno,
-						breakinfo[breakno].len,
-						breakinfo[breakno].type);
+	क्रम (अवरोधno = 0; अवरोधno < HBP_NUM; अवरोधno++) अणु
+		काष्ठा perf_event *bp;
+		काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
+		पूर्णांक val;
+		पूर्णांक cpu = raw_smp_processor_id();
+		अगर (!अवरोधinfo[अवरोधno].enabled)
+			जारी;
+		अगर (dbg_is_early) अणु
+			set_debugreg(अवरोधinfo[अवरोधno].addr, अवरोधno);
+			early_dr7 |= encode_dr7(अवरोधno,
+						अवरोधinfo[अवरोधno].len,
+						अवरोधinfo[अवरोधno].type);
 			set_debugreg(early_dr7, 7);
-			continue;
-		}
-		bp = *per_cpu_ptr(breakinfo[breakno].pev, cpu);
+			जारी;
+		पूर्ण
+		bp = *per_cpu_ptr(अवरोधinfo[अवरोधno].pev, cpu);
 		info = counter_arch_bp(bp);
-		if (bp->attr.disabled != 1)
-			continue;
-		bp->attr.bp_addr = breakinfo[breakno].addr;
-		bp->attr.bp_len = breakinfo[breakno].len;
-		bp->attr.bp_type = breakinfo[breakno].type;
-		info->address = breakinfo[breakno].addr;
-		info->len = breakinfo[breakno].len;
-		info->type = breakinfo[breakno].type;
-		val = arch_install_hw_breakpoint(bp);
-		if (!val)
+		अगर (bp->attr.disabled != 1)
+			जारी;
+		bp->attr.bp_addr = अवरोधinfo[अवरोधno].addr;
+		bp->attr.bp_len = अवरोधinfo[अवरोधno].len;
+		bp->attr.bp_type = अवरोधinfo[अवरोधno].type;
+		info->address = अवरोधinfo[अवरोधno].addr;
+		info->len = अवरोधinfo[अवरोधno].len;
+		info->type = अवरोधinfo[अवरोधno].type;
+		val = arch_install_hw_अवरोधpoपूर्णांक(bp);
+		अगर (!val)
 			bp->attr.disabled = 0;
-	}
-	if (!dbg_is_early)
-		hw_breakpoint_restore();
-}
+	पूर्ण
+	अगर (!dbg_is_early)
+		hw_अवरोधpoपूर्णांक_restore();
+पूर्ण
 
-static int hw_break_reserve_slot(int breakno)
-{
-	int cpu;
-	int cnt = 0;
-	struct perf_event **pevent;
+अटल पूर्णांक hw_अवरोध_reserve_slot(पूर्णांक अवरोधno)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक cnt = 0;
+	काष्ठा perf_event **pevent;
 
-	if (dbg_is_early)
-		return 0;
+	अगर (dbg_is_early)
+		वापस 0;
 
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		cnt++;
-		pevent = per_cpu_ptr(breakinfo[breakno].pev, cpu);
-		if (dbg_reserve_bp_slot(*pevent))
-			goto fail;
-	}
+		pevent = per_cpu_ptr(अवरोधinfo[अवरोधno].pev, cpu);
+		अगर (dbg_reserve_bp_slot(*pevent))
+			जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
-	for_each_online_cpu(cpu) {
+	क्रम_each_online_cpu(cpu) अणु
 		cnt--;
-		if (!cnt)
-			break;
-		pevent = per_cpu_ptr(breakinfo[breakno].pev, cpu);
+		अगर (!cnt)
+			अवरोध;
+		pevent = per_cpu_ptr(अवरोधinfo[अवरोधno].pev, cpu);
 		dbg_release_bp_slot(*pevent);
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int hw_break_release_slot(int breakno)
-{
-	struct perf_event **pevent;
-	int cpu;
+अटल पूर्णांक hw_अवरोध_release_slot(पूर्णांक अवरोधno)
+अणु
+	काष्ठा perf_event **pevent;
+	पूर्णांक cpu;
 
-	if (dbg_is_early)
-		return 0;
+	अगर (dbg_is_early)
+		वापस 0;
 
-	for_each_online_cpu(cpu) {
-		pevent = per_cpu_ptr(breakinfo[breakno].pev, cpu);
-		if (dbg_release_bp_slot(*pevent))
+	क्रम_each_online_cpu(cpu) अणु
+		pevent = per_cpu_ptr(अवरोधinfo[अवरोधno].pev, cpu);
+		अगर (dbg_release_bp_slot(*pevent))
 			/*
-			 * The debugger is responsible for handing the retry on
-			 * remove failure.
+			 * The debugger is responsible क्रम handing the retry on
+			 * हटाओ failure.
 			 */
-			return -1;
-	}
-	return 0;
-}
+			वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-kgdb_remove_hw_break(unsigned long addr, int len, enum kgdb_bptype bptype)
-{
-	int i;
+अटल पूर्णांक
+kgdb_हटाओ_hw_अवरोध(अचिन्हित दीर्घ addr, पूर्णांक len, क्रमागत kgdb_bptype bptype)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < HBP_NUM; i++)
-		if (breakinfo[i].addr == addr && breakinfo[i].enabled)
-			break;
-	if (i == HBP_NUM)
-		return -1;
+	क्रम (i = 0; i < HBP_NUM; i++)
+		अगर (अवरोधinfo[i].addr == addr && अवरोधinfo[i].enabled)
+			अवरोध;
+	अगर (i == HBP_NUM)
+		वापस -1;
 
-	if (hw_break_release_slot(i)) {
-		printk(KERN_ERR "Cannot remove hw breakpoint at %lx\n", addr);
-		return -1;
-	}
-	breakinfo[i].enabled = 0;
+	अगर (hw_अवरोध_release_slot(i)) अणु
+		prपूर्णांकk(KERN_ERR "Cannot remove hw breakpoint at %lx\n", addr);
+		वापस -1;
+	पूर्ण
+	अवरोधinfo[i].enabled = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void kgdb_remove_all_hw_break(void)
-{
-	int i;
-	int cpu = raw_smp_processor_id();
-	struct perf_event *bp;
+अटल व्योम kgdb_हटाओ_all_hw_अवरोध(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक cpu = raw_smp_processor_id();
+	काष्ठा perf_event *bp;
 
-	for (i = 0; i < HBP_NUM; i++) {
-		if (!breakinfo[i].enabled)
-			continue;
-		bp = *per_cpu_ptr(breakinfo[i].pev, cpu);
-		if (!bp->attr.disabled) {
-			arch_uninstall_hw_breakpoint(bp);
+	क्रम (i = 0; i < HBP_NUM; i++) अणु
+		अगर (!अवरोधinfo[i].enabled)
+			जारी;
+		bp = *per_cpu_ptr(अवरोधinfo[i].pev, cpu);
+		अगर (!bp->attr.disabled) अणु
+			arch_uninstall_hw_अवरोधpoपूर्णांक(bp);
 			bp->attr.disabled = 1;
-			continue;
-		}
-		if (dbg_is_early)
-			early_dr7 &= ~encode_dr7(i, breakinfo[i].len,
-						 breakinfo[i].type);
-		else if (hw_break_release_slot(i))
-			printk(KERN_ERR "KGDB: hw bpt remove failed %lx\n",
-			       breakinfo[i].addr);
-		breakinfo[i].enabled = 0;
-	}
-}
+			जारी;
+		पूर्ण
+		अगर (dbg_is_early)
+			early_dr7 &= ~encode_dr7(i, अवरोधinfo[i].len,
+						 अवरोधinfo[i].type);
+		अन्यथा अगर (hw_अवरोध_release_slot(i))
+			prपूर्णांकk(KERN_ERR "KGDB: hw bpt remove failed %lx\n",
+			       अवरोधinfo[i].addr);
+		अवरोधinfo[i].enabled = 0;
+	पूर्ण
+पूर्ण
 
-static int
-kgdb_set_hw_break(unsigned long addr, int len, enum kgdb_bptype bptype)
-{
-	int i;
+अटल पूर्णांक
+kgdb_set_hw_अवरोध(अचिन्हित दीर्घ addr, पूर्णांक len, क्रमागत kgdb_bptype bptype)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < HBP_NUM; i++)
-		if (!breakinfo[i].enabled)
-			break;
-	if (i == HBP_NUM)
-		return -1;
+	क्रम (i = 0; i < HBP_NUM; i++)
+		अगर (!अवरोधinfo[i].enabled)
+			अवरोध;
+	अगर (i == HBP_NUM)
+		वापस -1;
 
-	switch (bptype) {
-	case BP_HARDWARE_BREAKPOINT:
+	चयन (bptype) अणु
+	हाल BP_HARDWARE_BREAKPOINT:
 		len = 1;
-		breakinfo[i].type = X86_BREAKPOINT_EXECUTE;
-		break;
-	case BP_WRITE_WATCHPOINT:
-		breakinfo[i].type = X86_BREAKPOINT_WRITE;
-		break;
-	case BP_ACCESS_WATCHPOINT:
-		breakinfo[i].type = X86_BREAKPOINT_RW;
-		break;
-	default:
-		return -1;
-	}
-	switch (len) {
-	case 1:
-		breakinfo[i].len = X86_BREAKPOINT_LEN_1;
-		break;
-	case 2:
-		breakinfo[i].len = X86_BREAKPOINT_LEN_2;
-		break;
-	case 4:
-		breakinfo[i].len = X86_BREAKPOINT_LEN_4;
-		break;
-#ifdef CONFIG_X86_64
-	case 8:
-		breakinfo[i].len = X86_BREAKPOINT_LEN_8;
-		break;
-#endif
-	default:
-		return -1;
-	}
-	breakinfo[i].addr = addr;
-	if (hw_break_reserve_slot(i)) {
-		breakinfo[i].addr = 0;
-		return -1;
-	}
-	breakinfo[i].enabled = 1;
+		अवरोधinfo[i].type = X86_BREAKPOINT_EXECUTE;
+		अवरोध;
+	हाल BP_WRITE_WATCHPOINT:
+		अवरोधinfo[i].type = X86_BREAKPOINT_WRITE;
+		अवरोध;
+	हाल BP_ACCESS_WATCHPOINT:
+		अवरोधinfo[i].type = X86_BREAKPOINT_RW;
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+	चयन (len) अणु
+	हाल 1:
+		अवरोधinfo[i].len = X86_BREAKPOINT_LEN_1;
+		अवरोध;
+	हाल 2:
+		अवरोधinfo[i].len = X86_BREAKPOINT_LEN_2;
+		अवरोध;
+	हाल 4:
+		अवरोधinfo[i].len = X86_BREAKPOINT_LEN_4;
+		अवरोध;
+#अगर_घोषित CONFIG_X86_64
+	हाल 8:
+		अवरोधinfo[i].len = X86_BREAKPOINT_LEN_8;
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		वापस -1;
+	पूर्ण
+	अवरोधinfo[i].addr = addr;
+	अगर (hw_अवरोध_reserve_slot(i)) अणु
+		अवरोधinfo[i].addr = 0;
+		वापस -1;
+	पूर्ण
+	अवरोधinfo[i].enabled = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	kgdb_disable_hw_debug - Disable hardware debugging while we in kgdb.
- *	@regs: Current &struct pt_regs.
+ *	kgdb_disable_hw_debug - Disable hardware debugging जबतक we in kgdb.
+ *	@regs: Current &काष्ठा pt_regs.
  *
- *	This function will be called if the particular architecture must
- *	disable hardware debugging while it is processing gdb packets or
+ *	This function will be called अगर the particular architecture must
+ *	disable hardware debugging जबतक it is processing gdb packets or
  *	handling exception.
  */
-static void kgdb_disable_hw_debug(struct pt_regs *regs)
-{
-	int i;
-	int cpu = raw_smp_processor_id();
-	struct perf_event *bp;
+अटल व्योम kgdb_disable_hw_debug(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक i;
+	पूर्णांक cpu = raw_smp_processor_id();
+	काष्ठा perf_event *bp;
 
-	/* Disable hardware debugging while we are in kgdb: */
+	/* Disable hardware debugging जबतक we are in kgdb: */
 	set_debugreg(0UL, 7);
-	for (i = 0; i < HBP_NUM; i++) {
-		if (!breakinfo[i].enabled)
-			continue;
-		if (dbg_is_early) {
-			early_dr7 &= ~encode_dr7(i, breakinfo[i].len,
-						 breakinfo[i].type);
-			continue;
-		}
-		bp = *per_cpu_ptr(breakinfo[i].pev, cpu);
-		if (bp->attr.disabled == 1)
-			continue;
-		arch_uninstall_hw_breakpoint(bp);
+	क्रम (i = 0; i < HBP_NUM; i++) अणु
+		अगर (!अवरोधinfo[i].enabled)
+			जारी;
+		अगर (dbg_is_early) अणु
+			early_dr7 &= ~encode_dr7(i, अवरोधinfo[i].len,
+						 अवरोधinfo[i].type);
+			जारी;
+		पूर्ण
+		bp = *per_cpu_ptr(अवरोधinfo[i].pev, cpu);
+		अगर (bp->attr.disabled == 1)
+			जारी;
+		arch_uninstall_hw_अवरोधpoपूर्णांक(bp);
 		bp->attr.disabled = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 /**
- *	kgdb_roundup_cpus - Get other CPUs into a holding pattern
+ *	kgdb_roundup_cpus - Get other CPUs पूर्णांकo a holding pattern
  *
- *	On SMP systems, we need to get the attention of the other CPUs
- *	and get them be in a known state.  This should do what is needed
- *	to get the other CPUs to call kgdb_wait(). Note that on some arches,
- *	the NMI approach is not used for rounding up all the CPUs. For example,
- *	in case of MIPS, smp_call_function() is used to roundup CPUs.
+ *	On SMP प्रणालीs, we need to get the attention of the other CPUs
+ *	and get them be in a known state.  This should करो what is needed
+ *	to get the other CPUs to call kgdb_रुको(). Note that on some arches,
+ *	the NMI approach is not used क्रम rounding up all the CPUs. For example,
+ *	in हाल of MIPS, smp_call_function() is used to roundup CPUs.
  *
- *	On non-SMP systems, this is not called.
+ *	On non-SMP प्रणालीs, this is not called.
  */
-void kgdb_roundup_cpus(void)
-{
+व्योम kgdb_roundup_cpus(व्योम)
+अणु
 	apic_send_IPI_allbutself(NMI_VECTOR);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- *	kgdb_arch_handle_exception - Handle architecture specific GDB packets.
+ *	kgdb_arch_handle_exception - Handle architecture specअगरic GDB packets.
  *	@e_vector: The error vector of the exception that happened.
- *	@signo: The signal number of the exception that happened.
+ *	@signo: The संकेत number of the exception that happened.
  *	@err_code: The error code of the exception that happened.
- *	@remcomInBuffer: The buffer of the packet we have read.
- *	@remcomOutBuffer: The buffer of %BUFMAX bytes to write a packet into.
- *	@linux_regs: The &struct pt_regs of the current process.
+ *	@remcomInBuffer: The buffer of the packet we have पढ़ो.
+ *	@remcomOutBuffer: The buffer of %BUFMAX bytes to ग_लिखो a packet पूर्णांकo.
+ *	@linux_regs: The &काष्ठा pt_regs of the current process.
  *
  *	This function MUST handle the 'c' and 's' command packets,
- *	as well packets to set / remove a hardware breakpoint, if used.
+ *	as well packets to set / हटाओ a hardware अवरोधpoपूर्णांक, अगर used.
  *	If there are additional packets which the hardware needs to handle,
- *	they are handled here.  The code should return -1 if it wants to
- *	process more packets, and a %0 or %1 if it wants to exit from the
+ *	they are handled here.  The code should वापस -1 अगर it wants to
+ *	process more packets, and a %0 or %1 अगर it wants to निकास from the
  *	kgdb callback.
  */
-int kgdb_arch_handle_exception(int e_vector, int signo, int err_code,
-			       char *remcomInBuffer, char *remcomOutBuffer,
-			       struct pt_regs *linux_regs)
-{
-	unsigned long addr;
-	char *ptr;
+पूर्णांक kgdb_arch_handle_exception(पूर्णांक e_vector, पूर्णांक signo, पूर्णांक err_code,
+			       अक्षर *remcomInBuffer, अक्षर *remcomOutBuffer,
+			       काष्ठा pt_regs *linux_regs)
+अणु
+	अचिन्हित दीर्घ addr;
+	अक्षर *ptr;
 
-	switch (remcomInBuffer[0]) {
-	case 'c':
-	case 's':
-		/* try to read optional parameter, pc unchanged if no parm */
+	चयन (remcomInBuffer[0]) अणु
+	हाल 'c':
+	हाल 's':
+		/* try to पढ़ो optional parameter, pc unchanged अगर no parm */
 		ptr = &remcomInBuffer[1];
-		if (kgdb_hex2long(&ptr, &addr))
+		अगर (kgdb_hex2दीर्घ(&ptr, &addr))
 			linux_regs->ip = addr;
 		fallthrough;
-	case 'D':
-	case 'k':
+	हाल 'D':
+	हाल 'k':
 		/* clear the trace bit */
 		linux_regs->flags &= ~X86_EFLAGS_TF;
-		atomic_set(&kgdb_cpu_doing_single_step, -1);
+		atomic_set(&kgdb_cpu_करोing_single_step, -1);
 
-		/* set the trace bit if we're stepping */
-		if (remcomInBuffer[0] == 's') {
+		/* set the trace bit अगर we're stepping */
+		अगर (remcomInBuffer[0] == 's') अणु
 			linux_regs->flags |= X86_EFLAGS_TF;
-			atomic_set(&kgdb_cpu_doing_single_step,
+			atomic_set(&kgdb_cpu_करोing_single_step,
 				   raw_smp_processor_id());
-		}
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* this means that we do not want to exit from the handler: */
-	return -1;
-}
+	/* this means that we करो not want to निकास from the handler: */
+	वापस -1;
+पूर्ण
 
-static inline int
-single_step_cont(struct pt_regs *regs, struct die_args *args)
-{
+अटल अंतरभूत पूर्णांक
+single_step_cont(काष्ठा pt_regs *regs, काष्ठा die_args *args)
+अणु
 	/*
 	 * Single step exception from kernel space to user space so
-	 * eat the exception and continue the process:
+	 * eat the exception and जारी the process:
 	 */
-	printk(KERN_ERR "KGDB: trap/step from kernel to user space, "
+	prपूर्णांकk(KERN_ERR "KGDB: trap/step from kernel to user space, "
 			"resuming...\n");
 	kgdb_arch_handle_exception(args->trapnr, args->signr,
 				   args->err, "c", "", regs);
 	/*
-	 * Reset the BS bit in dr6 (pointed by args->err) to
+	 * Reset the BS bit in dr6 (poपूर्णांकed by args->err) to
 	 * denote completion of processing
 	 */
-	(*(unsigned long *)ERR_PTR(args->err)) &= ~DR_STEP;
+	(*(अचिन्हित दीर्घ *)ERR_PTR(args->err)) &= ~DR_STEP;
 
-	return NOTIFY_STOP;
-}
+	वापस NOTIFY_STOP;
+पूर्ण
 
-static DECLARE_BITMAP(was_in_debug_nmi, NR_CPUS);
+अटल DECLARE_BITMAP(was_in_debug_nmi, NR_CPUS);
 
-static int kgdb_nmi_handler(unsigned int cmd, struct pt_regs *regs)
-{
-	int cpu;
+अटल पूर्णांक kgdb_nmi_handler(अचिन्हित पूर्णांक cmd, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक cpu;
 
-	switch (cmd) {
-	case NMI_LOCAL:
-		if (atomic_read(&kgdb_active) != -1) {
+	चयन (cmd) अणु
+	हाल NMI_LOCAL:
+		अगर (atomic_पढ़ो(&kgdb_active) != -1) अणु
 			/* KGDB CPU roundup */
 			cpu = raw_smp_processor_id();
 			kgdb_nmicallback(cpu, regs);
 			set_bit(cpu, was_in_debug_nmi);
-			touch_nmi_watchdog();
+			touch_nmi_watchकरोg();
 
-			return NMI_HANDLED;
-		}
-		break;
+			वापस NMI_HANDLED;
+		पूर्ण
+		अवरोध;
 
-	case NMI_UNKNOWN:
+	हाल NMI_UNKNOWN:
 		cpu = raw_smp_processor_id();
 
-		if (__test_and_clear_bit(cpu, was_in_debug_nmi))
-			return NMI_HANDLED;
+		अगर (__test_and_clear_bit(cpu, was_in_debug_nmi))
+			वापस NMI_HANDLED;
 
-		break;
-	default:
-		/* do nothing */
-		break;
-	}
-	return NMI_DONE;
-}
+		अवरोध;
+	शेष:
+		/* करो nothing */
+		अवरोध;
+	पूर्ण
+	वापस NMI_DONE;
+पूर्ण
 
-static int __kgdb_notify(struct die_args *args, unsigned long cmd)
-{
-	struct pt_regs *regs = args->regs;
+अटल पूर्णांक __kgdb_notअगरy(काष्ठा die_args *args, अचिन्हित दीर्घ cmd)
+अणु
+	काष्ठा pt_regs *regs = args->regs;
 
-	switch (cmd) {
-	case DIE_DEBUG:
-		if (atomic_read(&kgdb_cpu_doing_single_step) != -1) {
-			if (user_mode(regs))
-				return single_step_cont(regs, args);
-			break;
-		} else if (test_thread_flag(TIF_SINGLESTEP))
-			/* This means a user thread is single stepping
-			 * a system call which should be ignored
+	चयन (cmd) अणु
+	हाल DIE_DEBUG:
+		अगर (atomic_पढ़ो(&kgdb_cpu_करोing_single_step) != -1) अणु
+			अगर (user_mode(regs))
+				वापस single_step_cont(regs, args);
+			अवरोध;
+		पूर्ण अन्यथा अगर (test_thपढ़ो_flag(TIF_SINGLESTEP))
+			/* This means a user thपढ़ो is single stepping
+			 * a प्रणाली call which should be ignored
 			 */
-			return NOTIFY_DONE;
+			वापस NOTIFY_DONE;
 		fallthrough;
-	default:
-		if (user_mode(regs))
-			return NOTIFY_DONE;
-	}
+	शेष:
+		अगर (user_mode(regs))
+			वापस NOTIFY_DONE;
+	पूर्ण
 
-	if (kgdb_handle_exception(args->trapnr, args->signr, cmd, regs))
-		return NOTIFY_DONE;
+	अगर (kgdb_handle_exception(args->trapnr, args->signr, cmd, regs))
+		वापस NOTIFY_DONE;
 
-	/* Must touch watchdog before return to normal operation */
-	touch_nmi_watchdog();
-	return NOTIFY_STOP;
-}
+	/* Must touch watchकरोg beक्रमe वापस to normal operation */
+	touch_nmi_watchकरोg();
+	वापस NOTIFY_STOP;
+पूर्ण
 
-int kgdb_ll_trap(int cmd, const char *str,
-		 struct pt_regs *regs, long err, int trap, int sig)
-{
-	struct die_args args = {
+पूर्णांक kgdb_ll_trap(पूर्णांक cmd, स्थिर अक्षर *str,
+		 काष्ठा pt_regs *regs, दीर्घ err, पूर्णांक trap, पूर्णांक sig)
+अणु
+	काष्ठा die_args args = अणु
 		.regs	= regs,
 		.str	= str,
 		.err	= err,
 		.trapnr	= trap,
 		.signr	= sig,
 
-	};
+	पूर्ण;
 
-	if (!kgdb_io_module_registered)
-		return NOTIFY_DONE;
+	अगर (!kgdb_io_module_रेजिस्टरed)
+		वापस NOTIFY_DONE;
 
-	return __kgdb_notify(&args, cmd);
-}
+	वापस __kgdb_notअगरy(&args, cmd);
+पूर्ण
 
-static int
-kgdb_notify(struct notifier_block *self, unsigned long cmd, void *ptr)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक
+kgdb_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd, व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	local_irq_save(flags);
-	ret = __kgdb_notify(ptr, cmd);
+	ret = __kgdb_notअगरy(ptr, cmd);
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct notifier_block kgdb_notifier = {
-	.notifier_call	= kgdb_notify,
-};
+अटल काष्ठा notअगरier_block kgdb_notअगरier = अणु
+	.notअगरier_call	= kgdb_notअगरy,
+पूर्ण;
 
 /**
- *	kgdb_arch_init - Perform any architecture specific initialization.
+ *	kgdb_arch_init - Perक्रमm any architecture specअगरic initialization.
  *
  *	This function will handle the initialization of any architecture
- *	specific callbacks.
+ *	specअगरic callbacks.
  */
-int kgdb_arch_init(void)
-{
-	int retval;
+पूर्णांक kgdb_arch_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	retval = register_die_notifier(&kgdb_notifier);
-	if (retval)
-		goto out;
+	retval = रेजिस्टर_die_notअगरier(&kgdb_notअगरier);
+	अगर (retval)
+		जाओ out;
 
-	retval = register_nmi_handler(NMI_LOCAL, kgdb_nmi_handler,
+	retval = रेजिस्टर_nmi_handler(NMI_LOCAL, kgdb_nmi_handler,
 					0, "kgdb");
-	if (retval)
-		goto out1;
+	अगर (retval)
+		जाओ out1;
 
-	retval = register_nmi_handler(NMI_UNKNOWN, kgdb_nmi_handler,
+	retval = रेजिस्टर_nmi_handler(NMI_UNKNOWN, kgdb_nmi_handler,
 					0, "kgdb");
 
-	if (retval)
-		goto out2;
+	अगर (retval)
+		जाओ out2;
 
-	return retval;
+	वापस retval;
 
 out2:
-	unregister_nmi_handler(NMI_LOCAL, "kgdb");
+	unरेजिस्टर_nmi_handler(NMI_LOCAL, "kgdb");
 out1:
-	unregister_die_notifier(&kgdb_notifier);
+	unरेजिस्टर_die_notअगरier(&kgdb_notअगरier);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void kgdb_hw_overflow_handler(struct perf_event *event,
-		struct perf_sample_data *data, struct pt_regs *regs)
-{
-	struct task_struct *tsk = current;
-	int i;
+अटल व्योम kgdb_hw_overflow_handler(काष्ठा perf_event *event,
+		काष्ठा perf_sample_data *data, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		if (breakinfo[i].enabled)
-			tsk->thread.virtual_dr6 |= (DR_TRAP0 << i);
-	}
-}
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (अवरोधinfo[i].enabled)
+			tsk->thपढ़ो.भव_dr6 |= (DR_TRAP0 << i);
+	पूर्ण
+पूर्ण
 
-void kgdb_arch_late(void)
-{
-	int i, cpu;
-	struct perf_event_attr attr;
-	struct perf_event **pevent;
+व्योम kgdb_arch_late(व्योम)
+अणु
+	पूर्णांक i, cpu;
+	काष्ठा perf_event_attr attr;
+	काष्ठा perf_event **pevent;
 
 	/*
-	 * Pre-allocate the hw breakpoint instructions in the non-atomic
+	 * Pre-allocate the hw अवरोधpoपूर्णांक inकाष्ठाions in the non-atomic
 	 * portion of kgdb because this operation requires mutexs to
 	 * complete.
 	 */
-	hw_breakpoint_init(&attr);
-	attr.bp_addr = (unsigned long)kgdb_arch_init;
+	hw_अवरोधpoपूर्णांक_init(&attr);
+	attr.bp_addr = (अचिन्हित दीर्घ)kgdb_arch_init;
 	attr.bp_len = HW_BREAKPOINT_LEN_1;
 	attr.bp_type = HW_BREAKPOINT_W;
 	attr.disabled = 1;
-	for (i = 0; i < HBP_NUM; i++) {
-		if (breakinfo[i].pev)
-			continue;
-		breakinfo[i].pev = register_wide_hw_breakpoint(&attr, NULL, NULL);
-		if (IS_ERR((void * __force)breakinfo[i].pev)) {
-			printk(KERN_ERR "kgdb: Could not allocate hw"
+	क्रम (i = 0; i < HBP_NUM; i++) अणु
+		अगर (अवरोधinfo[i].pev)
+			जारी;
+		अवरोधinfo[i].pev = रेजिस्टर_wide_hw_अवरोधpoपूर्णांक(&attr, शून्य, शून्य);
+		अगर (IS_ERR((व्योम * __क्रमce)अवरोधinfo[i].pev)) अणु
+			prपूर्णांकk(KERN_ERR "kgdb: Could not allocate hw"
 			       "breakpoints\nDisabling the kernel debugger\n");
-			breakinfo[i].pev = NULL;
-			kgdb_arch_exit();
-			return;
-		}
-		for_each_online_cpu(cpu) {
-			pevent = per_cpu_ptr(breakinfo[i].pev, cpu);
+			अवरोधinfo[i].pev = शून्य;
+			kgdb_arch_निकास();
+			वापस;
+		पूर्ण
+		क्रम_each_online_cpu(cpu) अणु
+			pevent = per_cpu_ptr(अवरोधinfo[i].pev, cpu);
 			pevent[0]->hw.sample_period = 1;
 			pevent[0]->overflow_handler = kgdb_hw_overflow_handler;
-			if (pevent[0]->destroy != NULL) {
-				pevent[0]->destroy = NULL;
+			अगर (pevent[0]->destroy != शून्य) अणु
+				pevent[0]->destroy = शून्य;
 				release_bp_slot(*pevent);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- *	kgdb_arch_exit - Perform any architecture specific uninitalization.
+ *	kgdb_arch_निकास - Perक्रमm any architecture specअगरic uninitalization.
  *
  *	This function will handle the uninitalization of any architecture
- *	specific callbacks, for dynamic registration and unregistration.
+ *	specअगरic callbacks, क्रम dynamic registration and unregistration.
  */
-void kgdb_arch_exit(void)
-{
-	int i;
-	for (i = 0; i < 4; i++) {
-		if (breakinfo[i].pev) {
-			unregister_wide_hw_breakpoint(breakinfo[i].pev);
-			breakinfo[i].pev = NULL;
-		}
-	}
-	unregister_nmi_handler(NMI_UNKNOWN, "kgdb");
-	unregister_nmi_handler(NMI_LOCAL, "kgdb");
-	unregister_die_notifier(&kgdb_notifier);
-}
+व्योम kgdb_arch_निकास(व्योम)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (अवरोधinfo[i].pev) अणु
+			unरेजिस्टर_wide_hw_अवरोधpoपूर्णांक(अवरोधinfo[i].pev);
+			अवरोधinfo[i].pev = शून्य;
+		पूर्ण
+	पूर्ण
+	unरेजिस्टर_nmi_handler(NMI_UNKNOWN, "kgdb");
+	unरेजिस्टर_nmi_handler(NMI_LOCAL, "kgdb");
+	unरेजिस्टर_die_notअगरier(&kgdb_notअगरier);
+पूर्ण
 
 /**
  *
  *	kgdb_skipexception - Bail out of KGDB when we've been triggered.
  *	@exception: Exception vector number
- *	@regs: Current &struct pt_regs.
+ *	@regs: Current &काष्ठा pt_regs.
  *
- *	On some architectures we need to skip a breakpoint exception when
- *	it occurs after a breakpoint has been removed.
+ *	On some architectures we need to skip a अवरोधpoपूर्णांक exception when
+ *	it occurs after a अवरोधpoपूर्णांक has been हटाओd.
  *
- * Skip an int3 exception when it occurs after a breakpoint has been
- * removed. Backtrack eip by 1 since the int3 would have caused it to
+ * Skip an पूर्णांक3 exception when it occurs after a अवरोधpoपूर्णांक has been
+ * हटाओd. Backtrack eip by 1 since the पूर्णांक3 would have caused it to
  * increment by 1.
  */
-int kgdb_skipexception(int exception, struct pt_regs *regs)
-{
-	if (exception == 3 && kgdb_isremovedbreak(regs->ip - 1)) {
+पूर्णांक kgdb_skipexception(पूर्णांक exception, काष्ठा pt_regs *regs)
+अणु
+	अगर (exception == 3 && kgdb_isहटाओdअवरोध(regs->ip - 1)) अणु
 		regs->ip -= 1;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-unsigned long kgdb_arch_pc(int exception, struct pt_regs *regs)
-{
-	if (exception == 3)
-		return instruction_pointer(regs) - 1;
-	return instruction_pointer(regs);
-}
+अचिन्हित दीर्घ kgdb_arch_pc(पूर्णांक exception, काष्ठा pt_regs *regs)
+अणु
+	अगर (exception == 3)
+		वापस inकाष्ठाion_poपूर्णांकer(regs) - 1;
+	वापस inकाष्ठाion_poपूर्णांकer(regs);
+पूर्ण
 
-void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long ip)
-{
+व्योम kgdb_arch_set_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ip)
+अणु
 	regs->ip = ip;
-}
+पूर्ण
 
-int kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt)
-{
-	int err;
+पूर्णांक kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	पूर्णांक err;
 
 	bpt->type = BP_BREAKPOINT;
-	err = copy_from_kernel_nofault(bpt->saved_instr, (char *)bpt->bpt_addr,
+	err = copy_from_kernel_nofault(bpt->saved_instr, (अक्षर *)bpt->bpt_addr,
 				BREAK_INSTR_SIZE);
-	if (err)
-		return err;
-	err = copy_to_kernel_nofault((char *)bpt->bpt_addr,
+	अगर (err)
+		वापस err;
+	err = copy_to_kernel_nofault((अक्षर *)bpt->bpt_addr,
 				 arch_kgdb_ops.gdb_bpt_instr, BREAK_INSTR_SIZE);
-	if (!err)
-		return err;
+	अगर (!err)
+		वापस err;
 	/*
 	 * It is safe to call text_poke_kgdb() because normal kernel execution
-	 * is stopped on all cores, so long as the text_mutex is not locked.
+	 * is stopped on all cores, so दीर्घ as the text_mutex is not locked.
 	 */
-	if (mutex_is_locked(&text_mutex))
-		return -EBUSY;
-	text_poke_kgdb((void *)bpt->bpt_addr, arch_kgdb_ops.gdb_bpt_instr,
+	अगर (mutex_is_locked(&text_mutex))
+		वापस -EBUSY;
+	text_poke_kgdb((व्योम *)bpt->bpt_addr, arch_kgdb_ops.gdb_bpt_instr,
 		       BREAK_INSTR_SIZE);
 	bpt->type = BP_POKE_BREAKPOINT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt)
-{
-	if (bpt->type != BP_POKE_BREAKPOINT)
-		goto knl_write;
+पूर्णांक kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	अगर (bpt->type != BP_POKE_BREAKPOINT)
+		जाओ knl_ग_लिखो;
 	/*
 	 * It is safe to call text_poke_kgdb() because normal kernel execution
-	 * is stopped on all cores, so long as the text_mutex is not locked.
+	 * is stopped on all cores, so दीर्घ as the text_mutex is not locked.
 	 */
-	if (mutex_is_locked(&text_mutex))
-		goto knl_write;
-	text_poke_kgdb((void *)bpt->bpt_addr, bpt->saved_instr,
+	अगर (mutex_is_locked(&text_mutex))
+		जाओ knl_ग_लिखो;
+	text_poke_kgdb((व्योम *)bpt->bpt_addr, bpt->saved_instr,
 		       BREAK_INSTR_SIZE);
-	return 0;
+	वापस 0;
 
-knl_write:
-	return copy_to_kernel_nofault((char *)bpt->bpt_addr,
-				  (char *)bpt->saved_instr, BREAK_INSTR_SIZE);
-}
+knl_ग_लिखो:
+	वापस copy_to_kernel_nofault((अक्षर *)bpt->bpt_addr,
+				  (अक्षर *)bpt->saved_instr, BREAK_INSTR_SIZE);
+पूर्ण
 
-const struct kgdb_arch arch_kgdb_ops = {
-	/* Breakpoint instruction: */
-	.gdb_bpt_instr		= { 0xcc },
+स्थिर काष्ठा kgdb_arch arch_kgdb_ops = अणु
+	/* Breakpoपूर्णांक inकाष्ठाion: */
+	.gdb_bpt_instr		= अणु 0xcc पूर्ण,
 	.flags			= KGDB_HW_BREAKPOINT,
-	.set_hw_breakpoint	= kgdb_set_hw_break,
-	.remove_hw_breakpoint	= kgdb_remove_hw_break,
-	.disable_hw_break	= kgdb_disable_hw_debug,
-	.remove_all_hw_break	= kgdb_remove_all_hw_break,
-	.correct_hw_break	= kgdb_correct_hw_break,
-};
+	.set_hw_अवरोधpoपूर्णांक	= kgdb_set_hw_अवरोध,
+	.हटाओ_hw_अवरोधpoपूर्णांक	= kgdb_हटाओ_hw_अवरोध,
+	.disable_hw_अवरोध	= kgdb_disable_hw_debug,
+	.हटाओ_all_hw_अवरोध	= kgdb_हटाओ_all_hw_अवरोध,
+	.correct_hw_अवरोध	= kgdb_correct_hw_अवरोध,
+पूर्ण;

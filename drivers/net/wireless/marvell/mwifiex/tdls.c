@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * NXP Wireless LAN device driver: TDLS handling
  *
@@ -5,240 +6,240 @@
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available on the worldwide web at
  * http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include "main.h"
-#include "wmm.h"
-#include "11n.h"
-#include "11n_rxreorder.h"
-#include "11ac.h"
+#समावेश "main.h"
+#समावेश "wmm.h"
+#समावेश "11n.h"
+#समावेश "11n_rxreorder.h"
+#समावेश "11ac.h"
 
-#define TDLS_REQ_FIX_LEN      6
-#define TDLS_RESP_FIX_LEN     8
-#define TDLS_CONFIRM_FIX_LEN  6
-#define MWIFIEX_TDLS_WMM_INFO_SIZE 7
+#घोषणा TDLS_REQ_FIX_LEN      6
+#घोषणा TDLS_RESP_FIX_LEN     8
+#घोषणा TDLS_CONFIRM_FIX_LEN  6
+#घोषणा MWIFIEX_TDLS_WMM_INFO_SIZE 7
 
-static void mwifiex_restore_tdls_packets(struct mwifiex_private *priv,
-					 const u8 *mac, u8 status)
-{
-	struct mwifiex_ra_list_tbl *ra_list;
-	struct list_head *tid_list;
-	struct sk_buff *skb, *tmp;
-	struct mwifiex_txinfo *tx_info;
+अटल व्योम mwअगरiex_restore_tdls_packets(काष्ठा mwअगरiex_निजी *priv,
+					 स्थिर u8 *mac, u8 status)
+अणु
+	काष्ठा mwअगरiex_ra_list_tbl *ra_list;
+	काष्ठा list_head *tid_list;
+	काष्ठा sk_buff *skb, *पंचांगp;
+	काष्ठा mwअगरiex_txinfo *tx_info;
 	u32 tid;
-	u8 tid_down;
+	u8 tid_करोwn;
 
-	mwifiex_dbg(priv->adapter, DATA, "%s: %pM\n", __func__, mac);
+	mwअगरiex_dbg(priv->adapter, DATA, "%s: %pM\n", __func__, mac);
 	spin_lock_bh(&priv->wmm.ra_list_spinlock);
 
-	skb_queue_walk_safe(&priv->tdls_txq, skb, tmp) {
-		if (!ether_addr_equal(mac, skb->data))
-			continue;
+	skb_queue_walk_safe(&priv->tdls_txq, skb, पंचांगp) अणु
+		अगर (!ether_addr_equal(mac, skb->data))
+			जारी;
 
 		__skb_unlink(skb, &priv->tdls_txq);
 		tx_info = MWIFIEX_SKB_TXCB(skb);
 		tid = skb->priority;
-		tid_down = mwifiex_wmm_downgrade_tid(priv, tid);
+		tid_करोwn = mwअगरiex_wmm_करोwngrade_tid(priv, tid);
 
-		if (mwifiex_is_tdls_link_setup(status)) {
-			ra_list = mwifiex_wmm_get_queue_raptr(priv, tid, mac);
+		अगर (mwअगरiex_is_tdls_link_setup(status)) अणु
+			ra_list = mwअगरiex_wmm_get_queue_raptr(priv, tid, mac);
 			ra_list->tdls_link = true;
 			tx_info->flags |= MWIFIEX_BUF_FLAG_TDLS_PKT;
-		} else {
-			tid_list = &priv->wmm.tid_tbl_ptr[tid_down].ra_list;
+		पूर्ण अन्यथा अणु
+			tid_list = &priv->wmm.tid_tbl_ptr[tid_करोwn].ra_list;
 			ra_list = list_first_entry_or_null(tid_list,
-					struct mwifiex_ra_list_tbl, list);
+					काष्ठा mwअगरiex_ra_list_tbl, list);
 			tx_info->flags &= ~MWIFIEX_BUF_FLAG_TDLS_PKT;
-		}
+		पूर्ण
 
-		if (!ra_list) {
-			mwifiex_write_data_complete(priv->adapter, skb, 0, -1);
-			continue;
-		}
+		अगर (!ra_list) अणु
+			mwअगरiex_ग_लिखो_data_complete(priv->adapter, skb, 0, -1);
+			जारी;
+		पूर्ण
 
 		skb_queue_tail(&ra_list->skb_head, skb);
 
 		ra_list->ba_pkt_count++;
 		ra_list->total_pkt_count++;
 
-		if (atomic_read(&priv->wmm.highest_queued_prio) <
-						       tos_to_tid_inv[tid_down])
+		अगर (atomic_पढ़ो(&priv->wmm.highest_queued_prio) <
+						       tos_to_tid_inv[tid_करोwn])
 			atomic_set(&priv->wmm.highest_queued_prio,
-				   tos_to_tid_inv[tid_down]);
+				   tos_to_tid_inv[tid_करोwn]);
 
 		atomic_inc(&priv->wmm.tx_pkts_queued);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&priv->wmm.ra_list_spinlock);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void mwifiex_hold_tdls_packets(struct mwifiex_private *priv,
-				      const u8 *mac)
-{
-	struct mwifiex_ra_list_tbl *ra_list;
-	struct list_head *ra_list_head;
-	struct sk_buff *skb, *tmp;
-	int i;
+अटल व्योम mwअगरiex_hold_tdls_packets(काष्ठा mwअगरiex_निजी *priv,
+				      स्थिर u8 *mac)
+अणु
+	काष्ठा mwअगरiex_ra_list_tbl *ra_list;
+	काष्ठा list_head *ra_list_head;
+	काष्ठा sk_buff *skb, *पंचांगp;
+	पूर्णांक i;
 
-	mwifiex_dbg(priv->adapter, DATA, "%s: %pM\n", __func__, mac);
+	mwअगरiex_dbg(priv->adapter, DATA, "%s: %pM\n", __func__, mac);
 	spin_lock_bh(&priv->wmm.ra_list_spinlock);
 
-	for (i = 0; i < MAX_NUM_TID; i++) {
-		if (!list_empty(&priv->wmm.tid_tbl_ptr[i].ra_list)) {
+	क्रम (i = 0; i < MAX_NUM_TID; i++) अणु
+		अगर (!list_empty(&priv->wmm.tid_tbl_ptr[i].ra_list)) अणु
 			ra_list_head = &priv->wmm.tid_tbl_ptr[i].ra_list;
-			list_for_each_entry(ra_list, ra_list_head, list) {
+			list_क्रम_each_entry(ra_list, ra_list_head, list) अणु
 				skb_queue_walk_safe(&ra_list->skb_head, skb,
-						    tmp) {
-					if (!ether_addr_equal(mac, skb->data))
-						continue;
+						    पंचांगp) अणु
+					अगर (!ether_addr_equal(mac, skb->data))
+						जारी;
 					__skb_unlink(skb, &ra_list->skb_head);
 					atomic_dec(&priv->wmm.tx_pkts_queued);
 					ra_list->total_pkt_count--;
 					skb_queue_tail(&priv->tdls_txq, skb);
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&priv->wmm.ra_list_spinlock);
-	return;
-}
+	वापस;
+पूर्ण
 
 /* This function appends rate TLV to scan config command. */
-static int
-mwifiex_tdls_append_rates_ie(struct mwifiex_private *priv,
-			     struct sk_buff *skb)
-{
+अटल पूर्णांक
+mwअगरiex_tdls_append_rates_ie(काष्ठा mwअगरiex_निजी *priv,
+			     काष्ठा sk_buff *skb)
+अणु
 	u8 rates[MWIFIEX_SUPPORTED_RATES], *pos;
 	u16 rates_size, supp_rates_size, ext_rates_size;
 
-	memset(rates, 0, sizeof(rates));
-	rates_size = mwifiex_get_supported_rates(priv, rates);
+	स_रखो(rates, 0, माप(rates));
+	rates_size = mwअगरiex_get_supported_rates(priv, rates);
 
 	supp_rates_size = min_t(u16, rates_size, MWIFIEX_TDLS_SUPPORTED_RATES);
 
-	if (skb_tailroom(skb) < rates_size + 4) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (skb_tailroom(skb) < rates_size + 4) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Insufficient space while adding rates\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pos = skb_put(skb, supp_rates_size + 2);
 	*pos++ = WLAN_EID_SUPP_RATES;
 	*pos++ = supp_rates_size;
-	memcpy(pos, rates, supp_rates_size);
+	स_नकल(pos, rates, supp_rates_size);
 
-	if (rates_size > MWIFIEX_TDLS_SUPPORTED_RATES) {
+	अगर (rates_size > MWIFIEX_TDLS_SUPPORTED_RATES) अणु
 		ext_rates_size = rates_size - MWIFIEX_TDLS_SUPPORTED_RATES;
 		pos = skb_put(skb, ext_rates_size + 2);
 		*pos++ = WLAN_EID_EXT_SUPP_RATES;
 		*pos++ = ext_rates_size;
-		memcpy(pos, rates + MWIFIEX_TDLS_SUPPORTED_RATES,
+		स_नकल(pos, rates + MWIFIEX_TDLS_SUPPORTED_RATES,
 		       ext_rates_size);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mwifiex_tdls_add_aid(struct mwifiex_private *priv,
-				struct sk_buff *skb)
-{
-	struct ieee_types_assoc_rsp *assoc_rsp;
+अटल व्योम mwअगरiex_tdls_add_aid(काष्ठा mwअगरiex_निजी *priv,
+				काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee_types_assoc_rsp *assoc_rsp;
 	u8 *pos;
 
-	assoc_rsp = (struct ieee_types_assoc_rsp *)&priv->assoc_rsp_buf;
+	assoc_rsp = (काष्ठा ieee_types_assoc_rsp *)&priv->assoc_rsp_buf;
 	pos = skb_put(skb, 4);
 	*pos++ = WLAN_EID_AID;
 	*pos++ = 2;
-	memcpy(pos, &assoc_rsp->a_id, sizeof(assoc_rsp->a_id));
+	स_नकल(pos, &assoc_rsp->a_id, माप(assoc_rsp->a_id));
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int mwifiex_tdls_add_vht_capab(struct mwifiex_private *priv,
-				      struct sk_buff *skb)
-{
-	struct ieee80211_vht_cap vht_cap;
+अटल पूर्णांक mwअगरiex_tdls_add_vht_capab(काष्ठा mwअगरiex_निजी *priv,
+				      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_vht_cap vht_cap;
 	u8 *pos;
 
-	pos = skb_put(skb, sizeof(struct ieee80211_vht_cap) + 2);
+	pos = skb_put(skb, माप(काष्ठा ieee80211_vht_cap) + 2);
 	*pos++ = WLAN_EID_VHT_CAPABILITY;
-	*pos++ = sizeof(struct ieee80211_vht_cap);
+	*pos++ = माप(काष्ठा ieee80211_vht_cap);
 
-	memset(&vht_cap, 0, sizeof(struct ieee80211_vht_cap));
+	स_रखो(&vht_cap, 0, माप(काष्ठा ieee80211_vht_cap));
 
-	mwifiex_fill_vht_cap_tlv(priv, &vht_cap, priv->curr_bss_params.band);
-	memcpy(pos, &vht_cap, sizeof(vht_cap));
+	mwअगरiex_fill_vht_cap_tlv(priv, &vht_cap, priv->curr_bss_params.band);
+	स_नकल(pos, &vht_cap, माप(vht_cap));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mwifiex_tdls_add_ht_oper(struct mwifiex_private *priv, const u8 *mac,
-			 u8 vht_enabled, struct sk_buff *skb)
-{
-	struct ieee80211_ht_operation *ht_oper;
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_bssdescriptor *bss_desc =
+अटल पूर्णांक
+mwअगरiex_tdls_add_ht_oper(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *mac,
+			 u8 vht_enabled, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_ht_operation *ht_oper;
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_bssdescriptor *bss_desc =
 					&priv->curr_bss_params.bss_descriptor;
 	u8 *pos;
 
-	sta_ptr = mwifiex_get_sta_entry(priv, mac);
-	if (unlikely(!sta_ptr)) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	sta_ptr = mwअगरiex_get_sta_entry(priv, mac);
+	अगर (unlikely(!sta_ptr)) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "TDLS peer station not found in list\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!(le16_to_cpu(sta_ptr->tdls_cap.ht_capb.cap_info))) {
-		mwifiex_dbg(priv->adapter, WARN,
+	अगर (!(le16_to_cpu(sta_ptr->tdls_cap.ht_capb.cap_info))) अणु
+		mwअगरiex_dbg(priv->adapter, WARN,
 			    "TDLS peer doesn't support ht capabilities\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pos = skb_put(skb, sizeof(struct ieee80211_ht_operation) + 2);
+	pos = skb_put(skb, माप(काष्ठा ieee80211_ht_operation) + 2);
 	*pos++ = WLAN_EID_HT_OPERATION;
-	*pos++ = sizeof(struct ieee80211_ht_operation);
-	ht_oper = (void *)pos;
+	*pos++ = माप(काष्ठा ieee80211_ht_operation);
+	ht_oper = (व्योम *)pos;
 
 	ht_oper->primary_chan = bss_desc->channel;
 
 	/* follow AP's channel bandwidth */
-	if (ISSUPP_CHANWIDTH40(priv->adapter->hw_dot_11n_dev_cap) &&
+	अगर (ISSUPP_CHANWIDTH40(priv->adapter->hw_करोt_11n_dev_cap) &&
 	    bss_desc->bcn_ht_cap &&
 	    ISALLOWED_CHANWIDTH40(bss_desc->bcn_ht_oper->ht_param))
 		ht_oper->ht_param = bss_desc->bcn_ht_oper->ht_param;
 
-	if (vht_enabled) {
+	अगर (vht_enabled) अणु
 		ht_oper->ht_param =
-			  mwifiex_get_sec_chan_offset(bss_desc->channel);
+			  mwअगरiex_get_sec_chan_offset(bss_desc->channel);
 		ht_oper->ht_param |= BIT(2);
-	}
+	पूर्ण
 
-	memcpy(&sta_ptr->tdls_cap.ht_oper, ht_oper,
-	       sizeof(struct ieee80211_ht_operation));
+	स_नकल(&sta_ptr->tdls_cap.ht_oper, ht_oper,
+	       माप(काष्ठा ieee80211_ht_operation));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mwifiex_tdls_add_vht_oper(struct mwifiex_private *priv,
-				     const u8 *mac, struct sk_buff *skb)
-{
-	struct mwifiex_bssdescriptor *bss_desc;
-	struct ieee80211_vht_operation *vht_oper;
-	struct ieee80211_vht_cap *vht_cap, *ap_vht_cap = NULL;
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_adapter *adapter = priv->adapter;
+अटल पूर्णांक mwअगरiex_tdls_add_vht_oper(काष्ठा mwअगरiex_निजी *priv,
+				     स्थिर u8 *mac, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mwअगरiex_bssdescriptor *bss_desc;
+	काष्ठा ieee80211_vht_operation *vht_oper;
+	काष्ठा ieee80211_vht_cap *vht_cap, *ap_vht_cap = शून्य;
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 	u8 supp_chwd_set, peer_supp_chwd_set;
 	u8 *pos, ap_supp_chwd_set, chan_bw;
 	u16 mcs_map_user, mcs_map_resp, mcs_map_result;
@@ -247,39 +248,39 @@ static int mwifiex_tdls_add_vht_oper(struct mwifiex_private *priv,
 
 	bss_desc = &priv->curr_bss_params.bss_descriptor;
 
-	sta_ptr = mwifiex_get_sta_entry(priv, mac);
-	if (unlikely(!sta_ptr)) {
-		mwifiex_dbg(adapter, ERROR,
+	sta_ptr = mwअगरiex_get_sta_entry(priv, mac);
+	अगर (unlikely(!sta_ptr)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "TDLS peer station not found in list\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!(le32_to_cpu(sta_ptr->tdls_cap.vhtcap.vht_cap_info))) {
-		mwifiex_dbg(adapter, WARN,
+	अगर (!(le32_to_cpu(sta_ptr->tdls_cap.vhtcap.vht_cap_info))) अणु
+		mwअगरiex_dbg(adapter, WARN,
 			    "TDLS peer doesn't support vht capabilities\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!mwifiex_is_bss_in_11ac_mode(priv)) {
-		if (sta_ptr->tdls_cap.extcap.ext_capab[7] &
-		   WLAN_EXT_CAPA8_TDLS_WIDE_BW_ENABLED) {
-			mwifiex_dbg(adapter, WARN,
+	अगर (!mwअगरiex_is_bss_in_11ac_mode(priv)) अणु
+		अगर (sta_ptr->tdls_cap.extcap.ext_capab[7] &
+		   WLAN_EXT_CAPA8_TDLS_WIDE_BW_ENABLED) अणु
+			mwअगरiex_dbg(adapter, WARN,
 				    "TDLS peer doesn't support wider bandwidth\n");
-			return 0;
-		}
-	} else {
+			वापस 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ap_vht_cap = bss_desc->bcn_vht_cap;
-	}
+	पूर्ण
 
-	pos = skb_put(skb, sizeof(struct ieee80211_vht_operation) + 2);
+	pos = skb_put(skb, माप(काष्ठा ieee80211_vht_operation) + 2);
 	*pos++ = WLAN_EID_VHT_OPERATION;
-	*pos++ = sizeof(struct ieee80211_vht_operation);
-	vht_oper = (struct ieee80211_vht_operation *)pos;
+	*pos++ = माप(काष्ठा ieee80211_vht_operation);
+	vht_oper = (काष्ठा ieee80211_vht_operation *)pos;
 
-	if (bss_desc->bss_band & BAND_A)
-		usr_vht_cap_info = adapter->usr_dot_11ac_dev_cap_a;
-	else
-		usr_vht_cap_info = adapter->usr_dot_11ac_dev_cap_bg;
+	अगर (bss_desc->bss_band & BAND_A)
+		usr_vht_cap_info = adapter->usr_करोt_11ac_dev_cap_a;
+	अन्यथा
+		usr_vht_cap_info = adapter->usr_करोt_11ac_dev_cap_bg;
 
 	/* find the minimum bandwidth between AP/TDLS peers */
 	vht_cap = &sta_ptr->tdls_cap.vhtcap;
@@ -290,107 +291,107 @@ static int mwifiex_tdls_add_vht_oper(struct mwifiex_private *priv,
 
 	/* We need check AP's bandwidth when TDLS_WIDER_BANDWIDTH is off */
 
-	if (ap_vht_cap && sta_ptr->tdls_cap.extcap.ext_capab[7] &
-	    WLAN_EXT_CAPA8_TDLS_WIDE_BW_ENABLED) {
+	अगर (ap_vht_cap && sta_ptr->tdls_cap.extcap.ext_capab[7] &
+	    WLAN_EXT_CAPA8_TDLS_WIDE_BW_ENABLED) अणु
 		ap_supp_chwd_set =
 		      GET_VHTCAP_CHWDSET(le32_to_cpu(ap_vht_cap->vht_cap_info));
 		supp_chwd_set = min_t(u8, supp_chwd_set, ap_supp_chwd_set);
-	}
+	पूर्ण
 
-	switch (supp_chwd_set) {
-	case IEEE80211_VHT_CHANWIDTH_80MHZ:
+	चयन (supp_chwd_set) अणु
+	हाल IEEE80211_VHT_CHANWIDTH_80MHZ:
 		vht_oper->chan_width = IEEE80211_VHT_CHANWIDTH_80MHZ;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_160MHZ:
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_160MHZ:
 		vht_oper->chan_width = IEEE80211_VHT_CHANWIDTH_160MHZ;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_80P80MHZ:
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_80P80MHZ:
 		vht_oper->chan_width = IEEE80211_VHT_CHANWIDTH_80P80MHZ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		vht_oper->chan_width = IEEE80211_VHT_CHANWIDTH_USE_HT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	mcs_map_user = GET_DEVRXMCSMAP(adapter->usr_dot_11ac_mcs_support);
+	mcs_map_user = GET_DEVRXMCSMAP(adapter->usr_करोt_11ac_mcs_support);
 	mcs_map_resp = le16_to_cpu(vht_cap->supp_mcs.rx_mcs_map);
 	mcs_map_result = 0;
 
-	for (nss = 1; nss <= 8; nss++) {
+	क्रम (nss = 1; nss <= 8; nss++) अणु
 		mcs_user = GET_VHTNSSMCS(mcs_map_user, nss);
 		mcs_resp = GET_VHTNSSMCS(mcs_map_resp, nss);
 
-		if ((mcs_user == IEEE80211_VHT_MCS_NOT_SUPPORTED) ||
+		अगर ((mcs_user == IEEE80211_VHT_MCS_NOT_SUPPORTED) ||
 		    (mcs_resp == IEEE80211_VHT_MCS_NOT_SUPPORTED))
 			SET_VHTNSSMCS(mcs_map_result, nss,
 				      IEEE80211_VHT_MCS_NOT_SUPPORTED);
-		else
+		अन्यथा
 			SET_VHTNSSMCS(mcs_map_result, nss,
 				      min_t(u16, mcs_user, mcs_resp));
-	}
+	पूर्ण
 
 	vht_oper->basic_mcs_set = cpu_to_le16(mcs_map_result);
 
-	switch (vht_oper->chan_width) {
-	case IEEE80211_VHT_CHANWIDTH_80MHZ:
+	चयन (vht_oper->chan_width) अणु
+	हाल IEEE80211_VHT_CHANWIDTH_80MHZ:
 		chan_bw = IEEE80211_VHT_CHANWIDTH_80MHZ;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_160MHZ:
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_160MHZ:
 		chan_bw = IEEE80211_VHT_CHANWIDTH_160MHZ;
-		break;
-	case IEEE80211_VHT_CHANWIDTH_80P80MHZ:
+		अवरोध;
+	हाल IEEE80211_VHT_CHANWIDTH_80P80MHZ:
 		chan_bw = IEEE80211_VHT_CHANWIDTH_80MHZ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		chan_bw = IEEE80211_VHT_CHANWIDTH_USE_HT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	vht_oper->center_freq_seg0_idx =
-			mwifiex_get_center_freq_index(priv, BAND_AAC,
+			mwअगरiex_get_center_freq_index(priv, BAND_AAC,
 						      bss_desc->channel,
 						      chan_bw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mwifiex_tdls_add_ext_capab(struct mwifiex_private *priv,
-				       struct sk_buff *skb)
-{
-	struct ieee_types_extcap *extcap;
+अटल व्योम mwअगरiex_tdls_add_ext_capab(काष्ठा mwअगरiex_निजी *priv,
+				       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee_types_extcap *extcap;
 
-	extcap = skb_put(skb, sizeof(struct ieee_types_extcap));
+	extcap = skb_put(skb, माप(काष्ठा ieee_types_extcap));
 	extcap->ieee_hdr.element_id = WLAN_EID_EXT_CAPABILITY;
 	extcap->ieee_hdr.len = 8;
-	memset(extcap->ext_capab, 0, 8);
+	स_रखो(extcap->ext_capab, 0, 8);
 	extcap->ext_capab[4] |= WLAN_EXT_CAPA5_TDLS_ENABLED;
 	extcap->ext_capab[3] |= WLAN_EXT_CAPA4_TDLS_CHAN_SWITCH;
 
-	if (priv->adapter->is_hw_11ac_capable)
+	अगर (priv->adapter->is_hw_11ac_capable)
 		extcap->ext_capab[7] |= WLAN_EXT_CAPA8_TDLS_WIDE_BW_ENABLED;
-}
+पूर्ण
 
-static void mwifiex_tdls_add_qos_capab(struct sk_buff *skb)
-{
+अटल व्योम mwअगरiex_tdls_add_qos_capab(काष्ठा sk_buff *skb)
+अणु
 	u8 *pos = skb_put(skb, 3);
 
 	*pos++ = WLAN_EID_QOS_CAPA;
 	*pos++ = 1;
 	*pos++ = MWIFIEX_TDLS_DEF_QOS_CAPAB;
-}
+पूर्ण
 
-static void
-mwifiex_tdls_add_wmm_param_ie(struct mwifiex_private *priv, struct sk_buff *skb)
-{
-	struct ieee80211_wmm_param_ie *wmm;
-	u8 ac_vi[] = {0x42, 0x43, 0x5e, 0x00};
-	u8 ac_vo[] = {0x62, 0x32, 0x2f, 0x00};
-	u8 ac_be[] = {0x03, 0xa4, 0x00, 0x00};
-	u8 ac_bk[] = {0x27, 0xa4, 0x00, 0x00};
+अटल व्योम
+mwअगरiex_tdls_add_wmm_param_ie(काष्ठा mwअगरiex_निजी *priv, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_wmm_param_ie *wmm;
+	u8 ac_vi[] = अणु0x42, 0x43, 0x5e, 0x00पूर्ण;
+	u8 ac_vo[] = अणु0x62, 0x32, 0x2f, 0x00पूर्ण;
+	u8 ac_be[] = अणु0x03, 0xa4, 0x00, 0x00पूर्ण;
+	u8 ac_bk[] = अणु0x27, 0xa4, 0x00, 0x00पूर्ण;
 
-	wmm = skb_put_zero(skb, sizeof(*wmm));
+	wmm = skb_put_zero(skb, माप(*wmm));
 
 	wmm->element_id = WLAN_EID_VENDOR_SPECIFIC;
-	wmm->len = sizeof(*wmm) - 2;
+	wmm->len = माप(*wmm) - 2;
 	wmm->oui[0] = 0x00; /* Microsoft OUI 00:50:F2 */
 	wmm->oui[1] = 0x50;
 	wmm->oui[2] = 0xf2;
@@ -399,21 +400,21 @@ mwifiex_tdls_add_wmm_param_ie(struct mwifiex_private *priv, struct sk_buff *skb)
 	wmm->version = 1; /* WME ver */
 	wmm->qos_info = 0; /* U-APSD not in use */
 
-	/* use default WMM AC parameters for TDLS link*/
-	memcpy(&wmm->ac[0], ac_be, sizeof(ac_be));
-	memcpy(&wmm->ac[1], ac_bk, sizeof(ac_bk));
-	memcpy(&wmm->ac[2], ac_vi, sizeof(ac_vi));
-	memcpy(&wmm->ac[3], ac_vo, sizeof(ac_vo));
-}
+	/* use शेष WMM AC parameters क्रम TDLS link*/
+	स_नकल(&wmm->ac[0], ac_be, माप(ac_be));
+	स_नकल(&wmm->ac[1], ac_bk, माप(ac_bk));
+	स_नकल(&wmm->ac[2], ac_vi, माप(ac_vi));
+	स_नकल(&wmm->ac[3], ac_vo, माप(ac_vo));
+पूर्ण
 
-static void
-mwifiex_add_wmm_info_ie(struct mwifiex_private *priv, struct sk_buff *skb,
+अटल व्योम
+mwअगरiex_add_wmm_info_ie(काष्ठा mwअगरiex_निजी *priv, काष्ठा sk_buff *skb,
 			u8 qosinfo)
-{
+अणु
 	u8 *buf;
 
 	buf = skb_put(skb,
-		      MWIFIEX_TDLS_WMM_INFO_SIZE + sizeof(struct ieee_types_header));
+		      MWIFIEX_TDLS_WMM_INFO_SIZE + माप(काष्ठा ieee_types_header));
 
 	*buf++ = WLAN_EID_VENDOR_SPECIFIC;
 	*buf++ = 7; /* len */
@@ -424,336 +425,336 @@ mwifiex_add_wmm_info_ie(struct mwifiex_private *priv, struct sk_buff *skb,
 	*buf++ = 0; /* WME info */
 	*buf++ = 1; /* WME ver */
 	*buf++ = qosinfo; /* U-APSD no in use */
-}
+पूर्ण
 
-static void mwifiex_tdls_add_bss_co_2040(struct sk_buff *skb)
-{
-	struct ieee_types_bss_co_2040 *bssco;
+अटल व्योम mwअगरiex_tdls_add_bss_co_2040(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee_types_bss_co_2040 *bssco;
 
-	bssco = skb_put(skb, sizeof(struct ieee_types_bss_co_2040));
+	bssco = skb_put(skb, माप(काष्ठा ieee_types_bss_co_2040));
 	bssco->ieee_hdr.element_id = WLAN_EID_BSS_COEX_2040;
-	bssco->ieee_hdr.len = sizeof(struct ieee_types_bss_co_2040) -
-			      sizeof(struct ieee_types_header);
+	bssco->ieee_hdr.len = माप(काष्ठा ieee_types_bss_co_2040) -
+			      माप(काष्ठा ieee_types_header);
 	bssco->bss_2040co = 0x01;
-}
+पूर्ण
 
-static void mwifiex_tdls_add_supported_chan(struct sk_buff *skb)
-{
-	struct ieee_types_generic *supp_chan;
-	u8 chan_supp[] = {1, 11};
+अटल व्योम mwअगरiex_tdls_add_supported_chan(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee_types_generic *supp_chan;
+	u8 chan_supp[] = अणु1, 11पूर्ण;
 
 	supp_chan = skb_put(skb,
-			    (sizeof(struct ieee_types_header) + sizeof(chan_supp)));
+			    (माप(काष्ठा ieee_types_header) + माप(chan_supp)));
 	supp_chan->ieee_hdr.element_id = WLAN_EID_SUPPORTED_CHANNELS;
-	supp_chan->ieee_hdr.len = sizeof(chan_supp);
-	memcpy(supp_chan->data, chan_supp, sizeof(chan_supp));
-}
+	supp_chan->ieee_hdr.len = माप(chan_supp);
+	स_नकल(supp_chan->data, chan_supp, माप(chan_supp));
+पूर्ण
 
-static void mwifiex_tdls_add_oper_class(struct sk_buff *skb)
-{
-	struct ieee_types_generic *reg_class;
-	u8 rc_list[] = {1,
-		1, 2, 3, 4, 12, 22, 23, 24, 25, 27, 28, 29, 30, 32, 33};
+अटल व्योम mwअगरiex_tdls_add_oper_class(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee_types_generic *reg_class;
+	u8 rc_list[] = अणु1,
+		1, 2, 3, 4, 12, 22, 23, 24, 25, 27, 28, 29, 30, 32, 33पूर्ण;
 	reg_class = skb_put(skb,
-			    (sizeof(struct ieee_types_header) + sizeof(rc_list)));
+			    (माप(काष्ठा ieee_types_header) + माप(rc_list)));
 	reg_class->ieee_hdr.element_id = WLAN_EID_SUPPORTED_REGULATORY_CLASSES;
-	reg_class->ieee_hdr.len = sizeof(rc_list);
-	memcpy(reg_class->data, rc_list, sizeof(rc_list));
-}
+	reg_class->ieee_hdr.len = माप(rc_list);
+	स_नकल(reg_class->data, rc_list, माप(rc_list));
+पूर्ण
 
-static int mwifiex_prep_tdls_encap_data(struct mwifiex_private *priv,
-					const u8 *peer, u8 action_code,
+अटल पूर्णांक mwअगरiex_prep_tdls_encap_data(काष्ठा mwअगरiex_निजी *priv,
+					स्थिर u8 *peer, u8 action_code,
 					u8 dialog_token,
-					u16 status_code, struct sk_buff *skb)
-{
-	struct ieee80211_tdls_data *tf;
-	int ret;
+					u16 status_code, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tdls_data *tf;
+	पूर्णांक ret;
 	u16 capab;
-	struct ieee80211_ht_cap *ht_cap;
+	काष्ठा ieee80211_ht_cap *ht_cap;
 	u8 radio, *pos;
 
-	capab = priv->curr_bss_params.bss_descriptor.cap_info_bitmap;
+	capab = priv->curr_bss_params.bss_descriptor.cap_info_biपंचांगap;
 
-	tf = skb_put(skb, offsetof(struct ieee80211_tdls_data, u));
-	memcpy(tf->da, peer, ETH_ALEN);
-	memcpy(tf->sa, priv->curr_addr, ETH_ALEN);
+	tf = skb_put(skb, दुरत्व(काष्ठा ieee80211_tdls_data, u));
+	स_नकल(tf->da, peer, ETH_ALEN);
+	स_नकल(tf->sa, priv->curr_addr, ETH_ALEN);
 	tf->ether_type = cpu_to_be16(ETH_P_TDLS);
 	tf->payload_type = WLAN_TDLS_SNAP_RFTYPE;
 
-	switch (action_code) {
-	case WLAN_TDLS_SETUP_REQUEST:
+	चयन (action_code) अणु
+	हाल WLAN_TDLS_SETUP_REQUEST:
 		tf->category = WLAN_CATEGORY_TDLS;
 		tf->action_code = WLAN_TDLS_SETUP_REQUEST;
-		skb_put(skb, sizeof(tf->u.setup_req));
+		skb_put(skb, माप(tf->u.setup_req));
 		tf->u.setup_req.dialog_token = dialog_token;
 		tf->u.setup_req.capability = cpu_to_le16(capab);
-		ret = mwifiex_tdls_append_rates_ie(priv, skb);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		ret = mwअगरiex_tdls_append_rates_ie(priv, skb);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		pos = skb_put(skb, sizeof(struct ieee80211_ht_cap) + 2);
+		pos = skb_put(skb, माप(काष्ठा ieee80211_ht_cap) + 2);
 		*pos++ = WLAN_EID_HT_CAPABILITY;
-		*pos++ = sizeof(struct ieee80211_ht_cap);
-		ht_cap = (void *)pos;
-		radio = mwifiex_band_to_radio_type(priv->curr_bss_params.band);
-		ret = mwifiex_fill_cap_info(priv, radio, ht_cap);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		*pos++ = माप(काष्ठा ieee80211_ht_cap);
+		ht_cap = (व्योम *)pos;
+		radio = mwअगरiex_band_to_radio_type(priv->curr_bss_params.band);
+		ret = mwअगरiex_fill_cap_info(priv, radio, ht_cap);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		if (priv->adapter->is_hw_11ac_capable) {
-			ret = mwifiex_tdls_add_vht_capab(priv, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-			mwifiex_tdls_add_aid(priv, skb);
-		}
+		अगर (priv->adapter->is_hw_11ac_capable) अणु
+			ret = mwअगरiex_tdls_add_vht_capab(priv, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+			mwअगरiex_tdls_add_aid(priv, skb);
+		पूर्ण
 
-		mwifiex_tdls_add_ext_capab(priv, skb);
-		mwifiex_tdls_add_bss_co_2040(skb);
-		mwifiex_tdls_add_supported_chan(skb);
-		mwifiex_tdls_add_oper_class(skb);
-		mwifiex_add_wmm_info_ie(priv, skb, 0);
-		break;
+		mwअगरiex_tdls_add_ext_capab(priv, skb);
+		mwअगरiex_tdls_add_bss_co_2040(skb);
+		mwअगरiex_tdls_add_supported_chan(skb);
+		mwअगरiex_tdls_add_oper_class(skb);
+		mwअगरiex_add_wmm_info_ie(priv, skb, 0);
+		अवरोध;
 
-	case WLAN_TDLS_SETUP_RESPONSE:
+	हाल WLAN_TDLS_SETUP_RESPONSE:
 		tf->category = WLAN_CATEGORY_TDLS;
 		tf->action_code = WLAN_TDLS_SETUP_RESPONSE;
-		skb_put(skb, sizeof(tf->u.setup_resp));
+		skb_put(skb, माप(tf->u.setup_resp));
 		tf->u.setup_resp.status_code = cpu_to_le16(status_code);
 		tf->u.setup_resp.dialog_token = dialog_token;
 		tf->u.setup_resp.capability = cpu_to_le16(capab);
-		ret = mwifiex_tdls_append_rates_ie(priv, skb);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		ret = mwअगरiex_tdls_append_rates_ie(priv, skb);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		pos = skb_put(skb, sizeof(struct ieee80211_ht_cap) + 2);
+		pos = skb_put(skb, माप(काष्ठा ieee80211_ht_cap) + 2);
 		*pos++ = WLAN_EID_HT_CAPABILITY;
-		*pos++ = sizeof(struct ieee80211_ht_cap);
-		ht_cap = (void *)pos;
-		radio = mwifiex_band_to_radio_type(priv->curr_bss_params.band);
-		ret = mwifiex_fill_cap_info(priv, radio, ht_cap);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		*pos++ = माप(काष्ठा ieee80211_ht_cap);
+		ht_cap = (व्योम *)pos;
+		radio = mwअगरiex_band_to_radio_type(priv->curr_bss_params.band);
+		ret = mwअगरiex_fill_cap_info(priv, radio, ht_cap);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		if (priv->adapter->is_hw_11ac_capable) {
-			ret = mwifiex_tdls_add_vht_capab(priv, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-			mwifiex_tdls_add_aid(priv, skb);
-		}
+		अगर (priv->adapter->is_hw_11ac_capable) अणु
+			ret = mwअगरiex_tdls_add_vht_capab(priv, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+			mwअगरiex_tdls_add_aid(priv, skb);
+		पूर्ण
 
-		mwifiex_tdls_add_ext_capab(priv, skb);
-		mwifiex_tdls_add_bss_co_2040(skb);
-		mwifiex_tdls_add_supported_chan(skb);
-		mwifiex_tdls_add_oper_class(skb);
-		mwifiex_add_wmm_info_ie(priv, skb, 0);
-		break;
+		mwअगरiex_tdls_add_ext_capab(priv, skb);
+		mwअगरiex_tdls_add_bss_co_2040(skb);
+		mwअगरiex_tdls_add_supported_chan(skb);
+		mwअगरiex_tdls_add_oper_class(skb);
+		mwअगरiex_add_wmm_info_ie(priv, skb, 0);
+		अवरोध;
 
-	case WLAN_TDLS_SETUP_CONFIRM:
+	हाल WLAN_TDLS_SETUP_CONFIRM:
 		tf->category = WLAN_CATEGORY_TDLS;
 		tf->action_code = WLAN_TDLS_SETUP_CONFIRM;
-		skb_put(skb, sizeof(tf->u.setup_cfm));
+		skb_put(skb, माप(tf->u.setup_cfm));
 		tf->u.setup_cfm.status_code = cpu_to_le16(status_code);
 		tf->u.setup_cfm.dialog_token = dialog_token;
 
-		mwifiex_tdls_add_wmm_param_ie(priv, skb);
-		if (priv->adapter->is_hw_11ac_capable) {
-			ret = mwifiex_tdls_add_vht_oper(priv, peer, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-			ret = mwifiex_tdls_add_ht_oper(priv, peer, 1, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-		} else {
-			ret = mwifiex_tdls_add_ht_oper(priv, peer, 0, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-		}
-		break;
+		mwअगरiex_tdls_add_wmm_param_ie(priv, skb);
+		अगर (priv->adapter->is_hw_11ac_capable) अणु
+			ret = mwअगरiex_tdls_add_vht_oper(priv, peer, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+			ret = mwअगरiex_tdls_add_ht_oper(priv, peer, 1, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ret = mwअगरiex_tdls_add_ht_oper(priv, peer, 0, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case WLAN_TDLS_TEARDOWN:
+	हाल WLAN_TDLS_TEARDOWN:
 		tf->category = WLAN_CATEGORY_TDLS;
 		tf->action_code = WLAN_TDLS_TEARDOWN;
-		skb_put(skb, sizeof(tf->u.teardown));
-		tf->u.teardown.reason_code = cpu_to_le16(status_code);
-		break;
+		skb_put(skb, माप(tf->u.tearकरोwn));
+		tf->u.tearकरोwn.reason_code = cpu_to_le16(status_code);
+		अवरोध;
 
-	case WLAN_TDLS_DISCOVERY_REQUEST:
+	हाल WLAN_TDLS_DISCOVERY_REQUEST:
 		tf->category = WLAN_CATEGORY_TDLS;
 		tf->action_code = WLAN_TDLS_DISCOVERY_REQUEST;
-		skb_put(skb, sizeof(tf->u.discover_req));
+		skb_put(skb, माप(tf->u.discover_req));
 		tf->u.discover_req.dialog_token = dialog_token;
-		break;
-	default:
-		mwifiex_dbg(priv->adapter, ERROR, "Unknown TDLS frame type.\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(priv->adapter, ERROR, "Unknown TDLS frame type.\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mwifiex_tdls_add_link_ie(struct sk_buff *skb, const u8 *src_addr,
-			 const u8 *peer, const u8 *bssid)
-{
-	struct ieee80211_tdls_lnkie *lnkid;
+अटल व्योम
+mwअगरiex_tdls_add_link_ie(काष्ठा sk_buff *skb, स्थिर u8 *src_addr,
+			 स्थिर u8 *peer, स्थिर u8 *bssid)
+अणु
+	काष्ठा ieee80211_tdls_lnkie *lnkid;
 
-	lnkid = skb_put(skb, sizeof(struct ieee80211_tdls_lnkie));
+	lnkid = skb_put(skb, माप(काष्ठा ieee80211_tdls_lnkie));
 	lnkid->ie_type = WLAN_EID_LINK_ID;
-	lnkid->ie_len = sizeof(struct ieee80211_tdls_lnkie) -
-			sizeof(struct ieee_types_header);
+	lnkid->ie_len = माप(काष्ठा ieee80211_tdls_lnkie) -
+			माप(काष्ठा ieee_types_header);
 
-	memcpy(lnkid->bssid, bssid, ETH_ALEN);
-	memcpy(lnkid->init_sta, src_addr, ETH_ALEN);
-	memcpy(lnkid->resp_sta, peer, ETH_ALEN);
-}
+	स_नकल(lnkid->bssid, bssid, ETH_ALEN);
+	स_नकल(lnkid->init_sta, src_addr, ETH_ALEN);
+	स_नकल(lnkid->resp_sta, peer, ETH_ALEN);
+पूर्ण
 
-int mwifiex_send_tdls_data_frame(struct mwifiex_private *priv, const u8 *peer,
+पूर्णांक mwअगरiex_send_tdls_data_frame(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer,
 				 u8 action_code, u8 dialog_token,
-				 u16 status_code, const u8 *extra_ies,
-				 size_t extra_ies_len)
-{
-	struct sk_buff *skb;
-	struct mwifiex_txinfo *tx_info;
-	int ret;
+				 u16 status_code, स्थिर u8 *extra_ies,
+				 माप_प्रकार extra_ies_len)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा mwअगरiex_txinfo *tx_info;
+	पूर्णांक ret;
 	u16 skb_len;
 
 	skb_len = MWIFIEX_MIN_DATA_HEADER_LEN +
-		  max(sizeof(struct ieee80211_mgmt),
-		      sizeof(struct ieee80211_tdls_data)) +
+		  max(माप(काष्ठा ieee80211_mgmt),
+		      माप(काष्ठा ieee80211_tdls_data)) +
 		  MWIFIEX_MGMT_FRAME_HEADER_SIZE +
 		  MWIFIEX_SUPPORTED_RATES +
 		  3 + /* Qos Info */
-		  sizeof(struct ieee_types_extcap) +
-		  sizeof(struct ieee80211_ht_cap) +
-		  sizeof(struct ieee_types_bss_co_2040) +
-		  sizeof(struct ieee80211_ht_operation) +
-		  sizeof(struct ieee80211_tdls_lnkie) +
-		  (2 * (sizeof(struct ieee_types_header))) +
+		  माप(काष्ठा ieee_types_extcap) +
+		  माप(काष्ठा ieee80211_ht_cap) +
+		  माप(काष्ठा ieee_types_bss_co_2040) +
+		  माप(काष्ठा ieee80211_ht_operation) +
+		  माप(काष्ठा ieee80211_tdls_lnkie) +
+		  (2 * (माप(काष्ठा ieee_types_header))) +
 		   MWIFIEX_SUPPORTED_CHANNELS +
 		   MWIFIEX_OPERATING_CLASSES +
-		  sizeof(struct ieee80211_wmm_param_ie) +
+		  माप(काष्ठा ieee80211_wmm_param_ie) +
 		  extra_ies_len;
 
-	if (priv->adapter->is_hw_11ac_capable)
-		skb_len += sizeof(struct ieee_types_vht_cap) +
-			   sizeof(struct ieee_types_vht_oper) +
-			   sizeof(struct ieee_types_aid);
+	अगर (priv->adapter->is_hw_11ac_capable)
+		skb_len += माप(काष्ठा ieee_types_vht_cap) +
+			   माप(काष्ठा ieee_types_vht_oper) +
+			   माप(काष्ठा ieee_types_aid);
 
 	skb = dev_alloc_skb(skb_len);
-	if (!skb) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!skb) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "allocate skb failed for management frame\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	skb_reserve(skb, MWIFIEX_MIN_DATA_HEADER_LEN);
 
-	switch (action_code) {
-	case WLAN_TDLS_SETUP_REQUEST:
-	case WLAN_TDLS_SETUP_CONFIRM:
-	case WLAN_TDLS_TEARDOWN:
-	case WLAN_TDLS_DISCOVERY_REQUEST:
-		ret = mwifiex_prep_tdls_encap_data(priv, peer, action_code,
+	चयन (action_code) अणु
+	हाल WLAN_TDLS_SETUP_REQUEST:
+	हाल WLAN_TDLS_SETUP_CONFIRM:
+	हाल WLAN_TDLS_TEARDOWN:
+	हाल WLAN_TDLS_DISCOVERY_REQUEST:
+		ret = mwअगरiex_prep_tdls_encap_data(priv, peer, action_code,
 						   dialog_token, status_code,
 						   skb);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
-		if (extra_ies_len)
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
+		अगर (extra_ies_len)
 			skb_put_data(skb, extra_ies, extra_ies_len);
-		mwifiex_tdls_add_link_ie(skb, priv->curr_addr, peer,
+		mwअगरiex_tdls_add_link_ie(skb, priv->curr_addr, peer,
 					 priv->cfg_bssid);
-		break;
-	case WLAN_TDLS_SETUP_RESPONSE:
-		ret = mwifiex_prep_tdls_encap_data(priv, peer, action_code,
+		अवरोध;
+	हाल WLAN_TDLS_SETUP_RESPONSE:
+		ret = mwअगरiex_prep_tdls_encap_data(priv, peer, action_code,
 						   dialog_token, status_code,
 						   skb);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
-		if (extra_ies_len)
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
+		अगर (extra_ies_len)
 			skb_put_data(skb, extra_ies, extra_ies_len);
-		mwifiex_tdls_add_link_ie(skb, peer, priv->curr_addr,
+		mwअगरiex_tdls_add_link_ie(skb, peer, priv->curr_addr,
 					 priv->cfg_bssid);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (action_code) {
-	case WLAN_TDLS_SETUP_REQUEST:
-	case WLAN_TDLS_SETUP_RESPONSE:
+	चयन (action_code) अणु
+	हाल WLAN_TDLS_SETUP_REQUEST:
+	हाल WLAN_TDLS_SETUP_RESPONSE:
 		skb->priority = MWIFIEX_PRIO_BK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		skb->priority = MWIFIEX_PRIO_VI;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	tx_info = MWIFIEX_SKB_TXCB(skb);
-	memset(tx_info, 0, sizeof(*tx_info));
+	स_रखो(tx_info, 0, माप(*tx_info));
 	tx_info->bss_num = priv->bss_num;
 	tx_info->bss_type = priv->bss_type;
 
-	__net_timestamp(skb);
-	mwifiex_queue_tx_pkt(priv, skb);
+	__net_बारtamp(skb);
+	mwअगरiex_queue_tx_pkt(priv, skb);
 
-	/* Delay 10ms to make sure tdls setup confirm/teardown frame
+	/* Delay 10ms to make sure tdls setup confirm/tearकरोwn frame
 	 * is received by peer
 	*/
-	if (action_code == WLAN_TDLS_SETUP_CONFIRM ||
+	अगर (action_code == WLAN_TDLS_SETUP_CONFIRM ||
 	    action_code == WLAN_TDLS_TEARDOWN)
-		msleep_interruptible(10);
+		msleep_पूर्णांकerruptible(10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mwifiex_construct_tdls_action_frame(struct mwifiex_private *priv,
-				    const u8 *peer,
+अटल पूर्णांक
+mwअगरiex_स्थिरruct_tdls_action_frame(काष्ठा mwअगरiex_निजी *priv,
+				    स्थिर u8 *peer,
 				    u8 action_code, u8 dialog_token,
-				    u16 status_code, struct sk_buff *skb)
-{
-	struct ieee80211_mgmt *mgmt;
-	int ret;
+				    u16 status_code, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_mgmt *mgmt;
+	पूर्णांक ret;
 	u16 capab;
-	struct ieee80211_ht_cap *ht_cap;
+	काष्ठा ieee80211_ht_cap *ht_cap;
 	u8 radio, *pos;
 
-	capab = priv->curr_bss_params.bss_descriptor.cap_info_bitmap;
+	capab = priv->curr_bss_params.bss_descriptor.cap_info_biपंचांगap;
 
-	mgmt = skb_put(skb, offsetof(struct ieee80211_mgmt, u));
+	mgmt = skb_put(skb, दुरत्व(काष्ठा ieee80211_mgmt, u));
 
-	memset(mgmt, 0, 24);
-	memcpy(mgmt->da, peer, ETH_ALEN);
-	memcpy(mgmt->sa, priv->curr_addr, ETH_ALEN);
-	memcpy(mgmt->bssid, priv->cfg_bssid, ETH_ALEN);
+	स_रखो(mgmt, 0, 24);
+	स_नकल(mgmt->da, peer, ETH_ALEN);
+	स_नकल(mgmt->sa, priv->curr_addr, ETH_ALEN);
+	स_नकल(mgmt->bssid, priv->cfg_bssid, ETH_ALEN);
 	mgmt->frame_control = cpu_to_le16(IEEE80211_FTYPE_MGMT |
 					  IEEE80211_STYPE_ACTION);
 
 	/* add address 4 */
 	pos = skb_put(skb, ETH_ALEN);
 
-	switch (action_code) {
-	case WLAN_PUB_ACTION_TDLS_DISCOVER_RES:
-		skb_put(skb, sizeof(mgmt->u.action.u.tdls_discover_resp) + 1);
+	चयन (action_code) अणु
+	हाल WLAN_PUB_ACTION_TDLS_DISCOVER_RES:
+		skb_put(skb, माप(mgmt->u.action.u.tdls_discover_resp) + 1);
 		mgmt->u.action.category = WLAN_CATEGORY_PUBLIC;
 		mgmt->u.action.u.tdls_discover_resp.action_code =
 					      WLAN_PUB_ACTION_TDLS_DISCOVER_RES;
@@ -761,541 +762,541 @@ mwifiex_construct_tdls_action_frame(struct mwifiex_private *priv,
 								   dialog_token;
 		mgmt->u.action.u.tdls_discover_resp.capability =
 							     cpu_to_le16(capab);
-		/* move back for addr4 */
-		memmove(pos + ETH_ALEN, &mgmt->u.action.category,
-			sizeof(mgmt->u.action.u.tdls_discover_resp));
+		/* move back क्रम addr4 */
+		स_हटाओ(pos + ETH_ALEN, &mgmt->u.action.category,
+			माप(mgmt->u.action.u.tdls_discover_resp));
 		/* init address 4 */
 		eth_broadcast_addr(pos);
 
-		ret = mwifiex_tdls_append_rates_ie(priv, skb);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		ret = mwअगरiex_tdls_append_rates_ie(priv, skb);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		pos = skb_put(skb, sizeof(struct ieee80211_ht_cap) + 2);
+		pos = skb_put(skb, माप(काष्ठा ieee80211_ht_cap) + 2);
 		*pos++ = WLAN_EID_HT_CAPABILITY;
-		*pos++ = sizeof(struct ieee80211_ht_cap);
-		ht_cap = (void *)pos;
-		radio = mwifiex_band_to_radio_type(priv->curr_bss_params.band);
-		ret = mwifiex_fill_cap_info(priv, radio, ht_cap);
-		if (ret) {
-			dev_kfree_skb_any(skb);
-			return ret;
-		}
+		*pos++ = माप(काष्ठा ieee80211_ht_cap);
+		ht_cap = (व्योम *)pos;
+		radio = mwअगरiex_band_to_radio_type(priv->curr_bss_params.band);
+		ret = mwअगरiex_fill_cap_info(priv, radio, ht_cap);
+		अगर (ret) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस ret;
+		पूर्ण
 
-		if (priv->adapter->is_hw_11ac_capable) {
-			ret = mwifiex_tdls_add_vht_capab(priv, skb);
-			if (ret) {
-				dev_kfree_skb_any(skb);
-				return ret;
-			}
-			mwifiex_tdls_add_aid(priv, skb);
-		}
+		अगर (priv->adapter->is_hw_11ac_capable) अणु
+			ret = mwअगरiex_tdls_add_vht_capab(priv, skb);
+			अगर (ret) अणु
+				dev_kमुक्त_skb_any(skb);
+				वापस ret;
+			पूर्ण
+			mwअगरiex_tdls_add_aid(priv, skb);
+		पूर्ण
 
-		mwifiex_tdls_add_ext_capab(priv, skb);
-		mwifiex_tdls_add_bss_co_2040(skb);
-		mwifiex_tdls_add_supported_chan(skb);
-		mwifiex_tdls_add_qos_capab(skb);
-		mwifiex_tdls_add_oper_class(skb);
-		break;
-	default:
-		mwifiex_dbg(priv->adapter, ERROR, "Unknown TDLS action frame type\n");
-		return -EINVAL;
-	}
+		mwअगरiex_tdls_add_ext_capab(priv, skb);
+		mwअगरiex_tdls_add_bss_co_2040(skb);
+		mwअगरiex_tdls_add_supported_chan(skb);
+		mwअगरiex_tdls_add_qos_capab(skb);
+		mwअगरiex_tdls_add_oper_class(skb);
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(priv->adapter, ERROR, "Unknown TDLS action frame type\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mwifiex_send_tdls_action_frame(struct mwifiex_private *priv, const u8 *peer,
+पूर्णांक mwअगरiex_send_tdls_action_frame(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer,
 				   u8 action_code, u8 dialog_token,
-				   u16 status_code, const u8 *extra_ies,
-				   size_t extra_ies_len)
-{
-	struct sk_buff *skb;
-	struct mwifiex_txinfo *tx_info;
+				   u16 status_code, स्थिर u8 *extra_ies,
+				   माप_प्रकार extra_ies_len)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा mwअगरiex_txinfo *tx_info;
 	u8 *pos;
 	u32 pkt_type, tx_control;
 	u16 pkt_len, skb_len;
 
 	skb_len = MWIFIEX_MIN_DATA_HEADER_LEN +
-		  max(sizeof(struct ieee80211_mgmt),
-		      sizeof(struct ieee80211_tdls_data)) +
+		  max(माप(काष्ठा ieee80211_mgmt),
+		      माप(काष्ठा ieee80211_tdls_data)) +
 		  MWIFIEX_MGMT_FRAME_HEADER_SIZE +
 		  MWIFIEX_SUPPORTED_RATES +
-		  sizeof(struct ieee_types_extcap) +
-		  sizeof(struct ieee80211_ht_cap) +
-		  sizeof(struct ieee_types_bss_co_2040) +
-		  sizeof(struct ieee80211_ht_operation) +
-		  sizeof(struct ieee80211_tdls_lnkie) +
+		  माप(काष्ठा ieee_types_extcap) +
+		  माप(काष्ठा ieee80211_ht_cap) +
+		  माप(काष्ठा ieee_types_bss_co_2040) +
+		  माप(काष्ठा ieee80211_ht_operation) +
+		  माप(काष्ठा ieee80211_tdls_lnkie) +
 		  extra_ies_len +
 		  3 + /* Qos Info */
 		  ETH_ALEN; /* Address4 */
 
-	if (priv->adapter->is_hw_11ac_capable)
-		skb_len += sizeof(struct ieee_types_vht_cap) +
-			   sizeof(struct ieee_types_vht_oper) +
-			   sizeof(struct ieee_types_aid);
+	अगर (priv->adapter->is_hw_11ac_capable)
+		skb_len += माप(काष्ठा ieee_types_vht_cap) +
+			   माप(काष्ठा ieee_types_vht_oper) +
+			   माप(काष्ठा ieee_types_aid);
 
 	skb = dev_alloc_skb(skb_len);
-	if (!skb) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!skb) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "allocate skb failed for management frame\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	skb_reserve(skb, MWIFIEX_MIN_DATA_HEADER_LEN);
 
 	pkt_type = PKT_TYPE_MGMT;
 	tx_control = 0;
 	pos = skb_put_zero(skb,
-			   MWIFIEX_MGMT_FRAME_HEADER_SIZE + sizeof(pkt_len));
-	memcpy(pos, &pkt_type, sizeof(pkt_type));
-	memcpy(pos + sizeof(pkt_type), &tx_control, sizeof(tx_control));
+			   MWIFIEX_MGMT_FRAME_HEADER_SIZE + माप(pkt_len));
+	स_नकल(pos, &pkt_type, माप(pkt_type));
+	स_नकल(pos + माप(pkt_type), &tx_control, माप(tx_control));
 
-	if (mwifiex_construct_tdls_action_frame(priv, peer, action_code,
+	अगर (mwअगरiex_स्थिरruct_tdls_action_frame(priv, peer, action_code,
 						dialog_token, status_code,
-						skb)) {
-		dev_kfree_skb_any(skb);
-		return -EINVAL;
-	}
+						skb)) अणु
+		dev_kमुक्त_skb_any(skb);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (extra_ies_len)
+	अगर (extra_ies_len)
 		skb_put_data(skb, extra_ies, extra_ies_len);
 
 	/* the TDLS link IE is always added last we are the responder */
 
-	mwifiex_tdls_add_link_ie(skb, peer, priv->curr_addr,
+	mwअगरiex_tdls_add_link_ie(skb, peer, priv->curr_addr,
 				 priv->cfg_bssid);
 
 	skb->priority = MWIFIEX_PRIO_VI;
 
 	tx_info = MWIFIEX_SKB_TXCB(skb);
-	memset(tx_info, 0, sizeof(*tx_info));
+	स_रखो(tx_info, 0, माप(*tx_info));
 	tx_info->bss_num = priv->bss_num;
 	tx_info->bss_type = priv->bss_type;
 	tx_info->flags |= MWIFIEX_BUF_FLAG_TDLS_PKT;
 
-	pkt_len = skb->len - MWIFIEX_MGMT_FRAME_HEADER_SIZE - sizeof(pkt_len);
-	memcpy(skb->data + MWIFIEX_MGMT_FRAME_HEADER_SIZE, &pkt_len,
-	       sizeof(pkt_len));
-	__net_timestamp(skb);
-	mwifiex_queue_tx_pkt(priv, skb);
+	pkt_len = skb->len - MWIFIEX_MGMT_FRAME_HEADER_SIZE - माप(pkt_len);
+	स_नकल(skb->data + MWIFIEX_MGMT_FRAME_HEADER_SIZE, &pkt_len,
+	       माप(pkt_len));
+	__net_बारtamp(skb);
+	mwअगरiex_queue_tx_pkt(priv, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This function process tdls action frame from peer.
- * Peer capabilities are stored into station node structure.
+ * Peer capabilities are stored पूर्णांकo station node काष्ठाure.
  */
-void mwifiex_process_tdls_action_frame(struct mwifiex_private *priv,
-				       u8 *buf, int len)
-{
-	struct mwifiex_sta_node *sta_ptr;
+व्योम mwअगरiex_process_tdls_action_frame(काष्ठा mwअगरiex_निजी *priv,
+				       u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
 	u8 *peer, *pos, *end;
 	u8 i, action, basic;
 	u16 cap = 0;
-	int ies_len = 0;
+	पूर्णांक ies_len = 0;
 
-	if (len < (sizeof(struct ethhdr) + 3))
-		return;
-	if (*(buf + sizeof(struct ethhdr)) != WLAN_TDLS_SNAP_RFTYPE)
-		return;
-	if (*(buf + sizeof(struct ethhdr) + 1) != WLAN_CATEGORY_TDLS)
-		return;
+	अगर (len < (माप(काष्ठा ethhdr) + 3))
+		वापस;
+	अगर (*(buf + माप(काष्ठा ethhdr)) != WLAN_TDLS_SNAP_RFTYPE)
+		वापस;
+	अगर (*(buf + माप(काष्ठा ethhdr) + 1) != WLAN_CATEGORY_TDLS)
+		वापस;
 
 	peer = buf + ETH_ALEN;
-	action = *(buf + sizeof(struct ethhdr) + 2);
-	mwifiex_dbg(priv->adapter, DATA,
+	action = *(buf + माप(काष्ठा ethhdr) + 2);
+	mwअगरiex_dbg(priv->adapter, DATA,
 		    "rx:tdls action: peer=%pM, action=%d\n", peer, action);
 
-	switch (action) {
-	case WLAN_TDLS_SETUP_REQUEST:
-		if (len < (sizeof(struct ethhdr) + TDLS_REQ_FIX_LEN))
-			return;
+	चयन (action) अणु
+	हाल WLAN_TDLS_SETUP_REQUEST:
+		अगर (len < (माप(काष्ठा ethhdr) + TDLS_REQ_FIX_LEN))
+			वापस;
 
-		pos = buf + sizeof(struct ethhdr) + 4;
+		pos = buf + माप(काष्ठा ethhdr) + 4;
 		/* payload 1+ category 1 + action 1 + dialog 1 */
 		cap = get_unaligned_le16(pos);
-		ies_len = len - sizeof(struct ethhdr) - TDLS_REQ_FIX_LEN;
+		ies_len = len - माप(काष्ठा ethhdr) - TDLS_REQ_FIX_LEN;
 		pos += 2;
-		break;
+		अवरोध;
 
-	case WLAN_TDLS_SETUP_RESPONSE:
-		if (len < (sizeof(struct ethhdr) + TDLS_RESP_FIX_LEN))
-			return;
+	हाल WLAN_TDLS_SETUP_RESPONSE:
+		अगर (len < (माप(काष्ठा ethhdr) + TDLS_RESP_FIX_LEN))
+			वापस;
 		/* payload 1+ category 1 + action 1 + dialog 1 + status code 2*/
-		pos = buf + sizeof(struct ethhdr) + 6;
+		pos = buf + माप(काष्ठा ethhdr) + 6;
 		cap = get_unaligned_le16(pos);
-		ies_len = len - sizeof(struct ethhdr) - TDLS_RESP_FIX_LEN;
+		ies_len = len - माप(काष्ठा ethhdr) - TDLS_RESP_FIX_LEN;
 		pos += 2;
-		break;
+		अवरोध;
 
-	case WLAN_TDLS_SETUP_CONFIRM:
-		if (len < (sizeof(struct ethhdr) + TDLS_CONFIRM_FIX_LEN))
-			return;
-		pos = buf + sizeof(struct ethhdr) + TDLS_CONFIRM_FIX_LEN;
-		ies_len = len - sizeof(struct ethhdr) - TDLS_CONFIRM_FIX_LEN;
-		break;
-	default:
-		mwifiex_dbg(priv->adapter, ERROR, "Unknown TDLS frame type.\n");
-		return;
-	}
+	हाल WLAN_TDLS_SETUP_CONFIRM:
+		अगर (len < (माप(काष्ठा ethhdr) + TDLS_CONFIRM_FIX_LEN))
+			वापस;
+		pos = buf + माप(काष्ठा ethhdr) + TDLS_CONFIRM_FIX_LEN;
+		ies_len = len - माप(काष्ठा ethhdr) - TDLS_CONFIRM_FIX_LEN;
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(priv->adapter, ERROR, "Unknown TDLS frame type.\n");
+		वापस;
+	पूर्ण
 
-	sta_ptr = mwifiex_add_sta_entry(priv, peer);
-	if (!sta_ptr)
-		return;
+	sta_ptr = mwअगरiex_add_sta_entry(priv, peer);
+	अगर (!sta_ptr)
+		वापस;
 
 	sta_ptr->tdls_cap.capab = cpu_to_le16(cap);
 
-	for (end = pos + ies_len; pos + 1 < end; pos += 2 + pos[1]) {
+	क्रम (end = pos + ies_len; pos + 1 < end; pos += 2 + pos[1]) अणु
 		u8 ie_len = pos[1];
 
-		if (pos + 2 + ie_len > end)
-			break;
+		अगर (pos + 2 + ie_len > end)
+			अवरोध;
 
-		switch (*pos) {
-		case WLAN_EID_SUPP_RATES:
-			if (ie_len > sizeof(sta_ptr->tdls_cap.rates))
-				return;
+		चयन (*pos) अणु
+		हाल WLAN_EID_SUPP_RATES:
+			अगर (ie_len > माप(sta_ptr->tdls_cap.rates))
+				वापस;
 			sta_ptr->tdls_cap.rates_len = ie_len;
-			for (i = 0; i < ie_len; i++)
+			क्रम (i = 0; i < ie_len; i++)
 				sta_ptr->tdls_cap.rates[i] = pos[i + 2];
-			break;
+			अवरोध;
 
-		case WLAN_EID_EXT_SUPP_RATES:
-			if (ie_len > sizeof(sta_ptr->tdls_cap.rates))
-				return;
+		हाल WLAN_EID_EXT_SUPP_RATES:
+			अगर (ie_len > माप(sta_ptr->tdls_cap.rates))
+				वापस;
 			basic = sta_ptr->tdls_cap.rates_len;
-			if (ie_len > sizeof(sta_ptr->tdls_cap.rates) - basic)
-				return;
-			for (i = 0; i < ie_len; i++)
+			अगर (ie_len > माप(sta_ptr->tdls_cap.rates) - basic)
+				वापस;
+			क्रम (i = 0; i < ie_len; i++)
 				sta_ptr->tdls_cap.rates[basic + i] = pos[i + 2];
 			sta_ptr->tdls_cap.rates_len += ie_len;
-			break;
-		case WLAN_EID_HT_CAPABILITY:
-			if (ie_len != sizeof(struct ieee80211_ht_cap))
-				return;
-			/* copy the ie's value into ht_capb*/
-			memcpy((u8 *)&sta_ptr->tdls_cap.ht_capb, pos + 2,
-			       sizeof(struct ieee80211_ht_cap));
+			अवरोध;
+		हाल WLAN_EID_HT_CAPABILITY:
+			अगर (ie_len != माप(काष्ठा ieee80211_ht_cap))
+				वापस;
+			/* copy the ie's value पूर्णांकo ht_capb*/
+			स_नकल((u8 *)&sta_ptr->tdls_cap.ht_capb, pos + 2,
+			       माप(काष्ठा ieee80211_ht_cap));
 			sta_ptr->is_11n_enabled = 1;
-			break;
-		case WLAN_EID_HT_OPERATION:
-			if (ie_len != sizeof(struct ieee80211_ht_operation))
-				return;
-			/* copy the ie's value into ht_oper*/
-			memcpy(&sta_ptr->tdls_cap.ht_oper, pos + 2,
-			       sizeof(struct ieee80211_ht_operation));
-			break;
-		case WLAN_EID_BSS_COEX_2040:
-			if (ie_len != sizeof(pos[2]))
-				return;
+			अवरोध;
+		हाल WLAN_EID_HT_OPERATION:
+			अगर (ie_len != माप(काष्ठा ieee80211_ht_operation))
+				वापस;
+			/* copy the ie's value पूर्णांकo ht_oper*/
+			स_नकल(&sta_ptr->tdls_cap.ht_oper, pos + 2,
+			       माप(काष्ठा ieee80211_ht_operation));
+			अवरोध;
+		हाल WLAN_EID_BSS_COEX_2040:
+			अगर (ie_len != माप(pos[2]))
+				वापस;
 			sta_ptr->tdls_cap.coex_2040 = pos[2];
-			break;
-		case WLAN_EID_EXT_CAPABILITY:
-			if (ie_len < sizeof(struct ieee_types_header))
-				return;
-			if (ie_len > 8)
-				return;
-			memcpy((u8 *)&sta_ptr->tdls_cap.extcap, pos,
-			       sizeof(struct ieee_types_header) +
+			अवरोध;
+		हाल WLAN_EID_EXT_CAPABILITY:
+			अगर (ie_len < माप(काष्ठा ieee_types_header))
+				वापस;
+			अगर (ie_len > 8)
+				वापस;
+			स_नकल((u8 *)&sta_ptr->tdls_cap.extcap, pos,
+			       माप(काष्ठा ieee_types_header) +
 			       min_t(u8, ie_len, 8));
-			break;
-		case WLAN_EID_RSN:
-			if (ie_len < sizeof(struct ieee_types_header))
-				return;
-			if (ie_len > IEEE_MAX_IE_SIZE -
-			    sizeof(struct ieee_types_header))
-				return;
-			memcpy((u8 *)&sta_ptr->tdls_cap.rsn_ie, pos,
-			       sizeof(struct ieee_types_header) +
+			अवरोध;
+		हाल WLAN_EID_RSN:
+			अगर (ie_len < माप(काष्ठा ieee_types_header))
+				वापस;
+			अगर (ie_len > IEEE_MAX_IE_SIZE -
+			    माप(काष्ठा ieee_types_header))
+				वापस;
+			स_नकल((u8 *)&sta_ptr->tdls_cap.rsn_ie, pos,
+			       माप(काष्ठा ieee_types_header) +
 			       min_t(u8, ie_len, IEEE_MAX_IE_SIZE -
-				     sizeof(struct ieee_types_header)));
-			break;
-		case WLAN_EID_QOS_CAPA:
-			if (ie_len != sizeof(pos[2]))
-				return;
+				     माप(काष्ठा ieee_types_header)));
+			अवरोध;
+		हाल WLAN_EID_QOS_CAPA:
+			अगर (ie_len != माप(pos[2]))
+				वापस;
 			sta_ptr->tdls_cap.qos_info = pos[2];
-			break;
-		case WLAN_EID_VHT_OPERATION:
-			if (priv->adapter->is_hw_11ac_capable) {
-				if (ie_len !=
-				    sizeof(struct ieee80211_vht_operation))
-					return;
-				/* copy the ie's value into vhtoper*/
-				memcpy(&sta_ptr->tdls_cap.vhtoper, pos + 2,
-				       sizeof(struct ieee80211_vht_operation));
-			}
-			break;
-		case WLAN_EID_VHT_CAPABILITY:
-			if (priv->adapter->is_hw_11ac_capable) {
-				if (ie_len != sizeof(struct ieee80211_vht_cap))
-					return;
-				/* copy the ie's value into vhtcap*/
-				memcpy((u8 *)&sta_ptr->tdls_cap.vhtcap, pos + 2,
-				       sizeof(struct ieee80211_vht_cap));
+			अवरोध;
+		हाल WLAN_EID_VHT_OPERATION:
+			अगर (priv->adapter->is_hw_11ac_capable) अणु
+				अगर (ie_len !=
+				    माप(काष्ठा ieee80211_vht_operation))
+					वापस;
+				/* copy the ie's value पूर्णांकo vhtoper*/
+				स_नकल(&sta_ptr->tdls_cap.vhtoper, pos + 2,
+				       माप(काष्ठा ieee80211_vht_operation));
+			पूर्ण
+			अवरोध;
+		हाल WLAN_EID_VHT_CAPABILITY:
+			अगर (priv->adapter->is_hw_11ac_capable) अणु
+				अगर (ie_len != माप(काष्ठा ieee80211_vht_cap))
+					वापस;
+				/* copy the ie's value पूर्णांकo vhtcap*/
+				स_नकल((u8 *)&sta_ptr->tdls_cap.vhtcap, pos + 2,
+				       माप(काष्ठा ieee80211_vht_cap));
 				sta_ptr->is_11ac_enabled = 1;
-			}
-			break;
-		case WLAN_EID_AID:
-			if (priv->adapter->is_hw_11ac_capable) {
-				if (ie_len != sizeof(u16))
-					return;
+			पूर्ण
+			अवरोध;
+		हाल WLAN_EID_AID:
+			अगर (priv->adapter->is_hw_11ac_capable) अणु
+				अगर (ie_len != माप(u16))
+					वापस;
 				sta_ptr->tdls_cap.aid =
 					get_unaligned_le16((pos + 2));
-			}
-			break;
-		default:
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int
-mwifiex_tdls_process_config_link(struct mwifiex_private *priv, const u8 *peer)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_ds_tdls_oper tdls_oper;
+अटल पूर्णांक
+mwअगरiex_tdls_process_config_link(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_ds_tdls_oper tdls_oper;
 
-	memset(&tdls_oper, 0, sizeof(struct mwifiex_ds_tdls_oper));
-	sta_ptr = mwifiex_get_sta_entry(priv, peer);
+	स_रखो(&tdls_oper, 0, माप(काष्ठा mwअगरiex_ds_tdls_oper));
+	sta_ptr = mwअगरiex_get_sta_entry(priv, peer);
 
-	if (!sta_ptr || sta_ptr->tdls_status == TDLS_SETUP_FAILURE) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!sta_ptr || sta_ptr->tdls_status == TDLS_SETUP_FAILURE) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "link absent for peer %pM; cannot config\n", peer);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(&tdls_oper.peer_mac, peer, ETH_ALEN);
+	स_नकल(&tdls_oper.peer_mac, peer, ETH_ALEN);
 	tdls_oper.tdls_action = MWIFIEX_TDLS_CONFIG_LINK;
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
 				HostCmd_ACT_GEN_SET, 0, &tdls_oper, true);
-}
+पूर्ण
 
-static int
-mwifiex_tdls_process_create_link(struct mwifiex_private *priv, const u8 *peer)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_ds_tdls_oper tdls_oper;
+अटल पूर्णांक
+mwअगरiex_tdls_process_create_link(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_ds_tdls_oper tdls_oper;
 
-	memset(&tdls_oper, 0, sizeof(struct mwifiex_ds_tdls_oper));
-	sta_ptr = mwifiex_get_sta_entry(priv, peer);
+	स_रखो(&tdls_oper, 0, माप(काष्ठा mwअगरiex_ds_tdls_oper));
+	sta_ptr = mwअगरiex_get_sta_entry(priv, peer);
 
-	if (sta_ptr && sta_ptr->tdls_status == TDLS_SETUP_INPROGRESS) {
-		mwifiex_dbg(priv->adapter, WARN,
+	अगर (sta_ptr && sta_ptr->tdls_status == TDLS_SETUP_INPROGRESS) अणु
+		mwअगरiex_dbg(priv->adapter, WARN,
 			    "Setup already in progress for peer %pM\n", peer);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	sta_ptr = mwifiex_add_sta_entry(priv, peer);
-	if (!sta_ptr)
-		return -ENOMEM;
+	sta_ptr = mwअगरiex_add_sta_entry(priv, peer);
+	अगर (!sta_ptr)
+		वापस -ENOMEM;
 
 	sta_ptr->tdls_status = TDLS_SETUP_INPROGRESS;
-	mwifiex_hold_tdls_packets(priv, peer);
-	memcpy(&tdls_oper.peer_mac, peer, ETH_ALEN);
+	mwअगरiex_hold_tdls_packets(priv, peer);
+	स_नकल(&tdls_oper.peer_mac, peer, ETH_ALEN);
 	tdls_oper.tdls_action = MWIFIEX_TDLS_CREATE_LINK;
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
 				HostCmd_ACT_GEN_SET, 0, &tdls_oper, true);
-}
+पूर्ण
 
-static int
-mwifiex_tdls_process_disable_link(struct mwifiex_private *priv, const u8 *peer)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_ds_tdls_oper tdls_oper;
+अटल पूर्णांक
+mwअगरiex_tdls_process_disable_link(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_ds_tdls_oper tdls_oper;
 
-	memset(&tdls_oper, 0, sizeof(struct mwifiex_ds_tdls_oper));
-	sta_ptr = mwifiex_get_sta_entry(priv, peer);
+	स_रखो(&tdls_oper, 0, माप(काष्ठा mwअगरiex_ds_tdls_oper));
+	sta_ptr = mwअगरiex_get_sta_entry(priv, peer);
 
-	if (sta_ptr) {
-		if (sta_ptr->is_11n_enabled) {
-			mwifiex_11n_cleanup_reorder_tbl(priv);
+	अगर (sta_ptr) अणु
+		अगर (sta_ptr->is_11n_enabled) अणु
+			mwअगरiex_11n_cleanup_reorder_tbl(priv);
 			spin_lock_bh(&priv->wmm.ra_list_spinlock);
-			mwifiex_11n_delete_all_tx_ba_stream_tbl(priv);
+			mwअगरiex_11n_delete_all_tx_ba_stream_tbl(priv);
 			spin_unlock_bh(&priv->wmm.ra_list_spinlock);
-		}
-		mwifiex_del_sta_entry(priv, peer);
-	}
+		पूर्ण
+		mwअगरiex_del_sta_entry(priv, peer);
+	पूर्ण
 
-	mwifiex_restore_tdls_packets(priv, peer, TDLS_LINK_TEARDOWN);
-	mwifiex_auto_tdls_update_peer_status(priv, peer, TDLS_NOT_SETUP);
-	memcpy(&tdls_oper.peer_mac, peer, ETH_ALEN);
+	mwअगरiex_restore_tdls_packets(priv, peer, TDLS_LINK_TEARDOWN);
+	mwअगरiex_स्वतः_tdls_update_peer_status(priv, peer, TDLS_NOT_SETUP);
+	स_नकल(&tdls_oper.peer_mac, peer, ETH_ALEN);
 	tdls_oper.tdls_action = MWIFIEX_TDLS_DISABLE_LINK;
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
 				HostCmd_ACT_GEN_SET, 0, &tdls_oper, true);
-}
+पूर्ण
 
-static int
-mwifiex_tdls_process_enable_link(struct mwifiex_private *priv, const u8 *peer)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct ieee80211_mcs_info mcs;
-	int i;
+अटल पूर्णांक
+mwअगरiex_tdls_process_enable_link(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा ieee80211_mcs_info mcs;
+	पूर्णांक i;
 
-	sta_ptr = mwifiex_get_sta_entry(priv, peer);
+	sta_ptr = mwअगरiex_get_sta_entry(priv, peer);
 
-	if (sta_ptr && (sta_ptr->tdls_status != TDLS_SETUP_FAILURE)) {
-		mwifiex_dbg(priv->adapter, MSG,
+	अगर (sta_ptr && (sta_ptr->tdls_status != TDLS_SETUP_FAILURE)) अणु
+		mwअगरiex_dbg(priv->adapter, MSG,
 			    "tdls: enable link %pM success\n", peer);
 
 		sta_ptr->tdls_status = TDLS_SETUP_COMPLETE;
 
 		mcs = sta_ptr->tdls_cap.ht_capb.mcs;
-		if (mcs.rx_mask[0] != 0xff)
+		अगर (mcs.rx_mask[0] != 0xff)
 			sta_ptr->is_11n_enabled = true;
-		if (sta_ptr->is_11n_enabled) {
-			if (le16_to_cpu(sta_ptr->tdls_cap.ht_capb.cap_info) &
+		अगर (sta_ptr->is_11n_enabled) अणु
+			अगर (le16_to_cpu(sta_ptr->tdls_cap.ht_capb.cap_info) &
 			    IEEE80211_HT_CAP_MAX_AMSDU)
 				sta_ptr->max_amsdu =
 					MWIFIEX_TX_DATA_BUF_SIZE_8K;
-			else
+			अन्यथा
 				sta_ptr->max_amsdu =
 					MWIFIEX_TX_DATA_BUF_SIZE_4K;
 
-			for (i = 0; i < MAX_NUM_TID; i++)
+			क्रम (i = 0; i < MAX_NUM_TID; i++)
 				sta_ptr->ampdu_sta[i] =
 					      priv->aggr_prio_tbl[i].ampdu_user;
-		} else {
-			for (i = 0; i < MAX_NUM_TID; i++)
+		पूर्ण अन्यथा अणु
+			क्रम (i = 0; i < MAX_NUM_TID; i++)
 				sta_ptr->ampdu_sta[i] = BA_STREAM_NOT_ALLOWED;
-		}
-		if (sta_ptr->tdls_cap.extcap.ext_capab[3] &
-		    WLAN_EXT_CAPA4_TDLS_CHAN_SWITCH) {
-			mwifiex_config_tdls_enable(priv);
-			mwifiex_config_tdls_cs_params(priv);
-		}
+		पूर्ण
+		अगर (sta_ptr->tdls_cap.extcap.ext_capab[3] &
+		    WLAN_EXT_CAPA4_TDLS_CHAN_SWITCH) अणु
+			mwअगरiex_config_tdls_enable(priv);
+			mwअगरiex_config_tdls_cs_params(priv);
+		पूर्ण
 
-		memset(sta_ptr->rx_seq, 0xff, sizeof(sta_ptr->rx_seq));
-		mwifiex_restore_tdls_packets(priv, peer, TDLS_SETUP_COMPLETE);
-		mwifiex_auto_tdls_update_peer_status(priv, peer,
+		स_रखो(sta_ptr->rx_seq, 0xff, माप(sta_ptr->rx_seq));
+		mwअगरiex_restore_tdls_packets(priv, peer, TDLS_SETUP_COMPLETE);
+		mwअगरiex_स्वतः_tdls_update_peer_status(priv, peer,
 						     TDLS_SETUP_COMPLETE);
-	} else {
-		mwifiex_dbg(priv->adapter, ERROR,
+	पूर्ण अन्यथा अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "tdls: enable link %pM failed\n", peer);
-		if (sta_ptr) {
-			mwifiex_11n_cleanup_reorder_tbl(priv);
+		अगर (sta_ptr) अणु
+			mwअगरiex_11n_cleanup_reorder_tbl(priv);
 			spin_lock_bh(&priv->wmm.ra_list_spinlock);
-			mwifiex_11n_delete_all_tx_ba_stream_tbl(priv);
+			mwअगरiex_11n_delete_all_tx_ba_stream_tbl(priv);
 			spin_unlock_bh(&priv->wmm.ra_list_spinlock);
-			mwifiex_del_sta_entry(priv, peer);
-		}
-		mwifiex_restore_tdls_packets(priv, peer, TDLS_LINK_TEARDOWN);
-		mwifiex_auto_tdls_update_peer_status(priv, peer,
+			mwअगरiex_del_sta_entry(priv, peer);
+		पूर्ण
+		mwअगरiex_restore_tdls_packets(priv, peer, TDLS_LINK_TEARDOWN);
+		mwअगरiex_स्वतः_tdls_update_peer_status(priv, peer,
 						     TDLS_NOT_SETUP);
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mwifiex_tdls_oper(struct mwifiex_private *priv, const u8 *peer, u8 action)
-{
-	switch (action) {
-	case MWIFIEX_TDLS_ENABLE_LINK:
-		return mwifiex_tdls_process_enable_link(priv, peer);
-	case MWIFIEX_TDLS_DISABLE_LINK:
-		return mwifiex_tdls_process_disable_link(priv, peer);
-	case MWIFIEX_TDLS_CREATE_LINK:
-		return mwifiex_tdls_process_create_link(priv, peer);
-	case MWIFIEX_TDLS_CONFIG_LINK:
-		return mwifiex_tdls_process_config_link(priv, peer);
-	}
-	return 0;
-}
+पूर्णांक mwअगरiex_tdls_oper(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer, u8 action)
+अणु
+	चयन (action) अणु
+	हाल MWIFIEX_TDLS_ENABLE_LINK:
+		वापस mwअगरiex_tdls_process_enable_link(priv, peer);
+	हाल MWIFIEX_TDLS_DISABLE_LINK:
+		वापस mwअगरiex_tdls_process_disable_link(priv, peer);
+	हाल MWIFIEX_TDLS_CREATE_LINK:
+		वापस mwअगरiex_tdls_process_create_link(priv, peer);
+	हाल MWIFIEX_TDLS_CONFIG_LINK:
+		वापस mwअगरiex_tdls_process_config_link(priv, peer);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int mwifiex_get_tdls_link_status(struct mwifiex_private *priv, const u8 *mac)
-{
-	struct mwifiex_sta_node *sta_ptr;
+पूर्णांक mwअगरiex_get_tdls_link_status(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *mac)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
 
-	sta_ptr = mwifiex_get_sta_entry(priv, mac);
-	if (sta_ptr)
-		return sta_ptr->tdls_status;
+	sta_ptr = mwअगरiex_get_sta_entry(priv, mac);
+	अगर (sta_ptr)
+		वापस sta_ptr->tdls_status;
 
-	return TDLS_NOT_SETUP;
-}
+	वापस TDLS_NOT_SETUP;
+पूर्ण
 
-int mwifiex_get_tdls_list(struct mwifiex_private *priv,
-			  struct tdls_peer_info *buf)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct tdls_peer_info *peer = buf;
-	int count = 0;
+पूर्णांक mwअगरiex_get_tdls_list(काष्ठा mwअगरiex_निजी *priv,
+			  काष्ठा tdls_peer_info *buf)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा tdls_peer_info *peer = buf;
+	पूर्णांक count = 0;
 
-	if (!ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info))
-		return 0;
+	अगर (!ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info))
+		वापस 0;
 
 	/* make sure we are in station mode and connected */
-	if (!(priv->bss_type == MWIFIEX_BSS_TYPE_STA && priv->media_connected))
-		return 0;
+	अगर (!(priv->bss_type == MWIFIEX_BSS_TYPE_STA && priv->media_connected))
+		वापस 0;
 
 	spin_lock_bh(&priv->sta_list_spinlock);
-	list_for_each_entry(sta_ptr, &priv->sta_list, list) {
-		if (mwifiex_is_tdls_link_setup(sta_ptr->tdls_status)) {
+	list_क्रम_each_entry(sta_ptr, &priv->sta_list, list) अणु
+		अगर (mwअगरiex_is_tdls_link_setup(sta_ptr->tdls_status)) अणु
 			ether_addr_copy(peer->peer_addr, sta_ptr->mac_addr);
 			peer++;
 			count++;
-			if (count >= MWIFIEX_MAX_TDLS_PEER_SUPPORTED)
-				break;
-		}
-	}
+			अगर (count >= MWIFIEX_MAX_TDLS_PEER_SUPPORTED)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&priv->sta_list_spinlock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-void mwifiex_disable_all_tdls_links(struct mwifiex_private *priv)
-{
-	struct mwifiex_sta_node *sta_ptr;
-	struct mwifiex_ds_tdls_oper tdls_oper;
+व्योम mwअगरiex_disable_all_tdls_links(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	काष्ठा mwअगरiex_sta_node *sta_ptr;
+	काष्ठा mwअगरiex_ds_tdls_oper tdls_oper;
 
-	if (list_empty(&priv->sta_list))
-		return;
+	अगर (list_empty(&priv->sta_list))
+		वापस;
 
-	list_for_each_entry(sta_ptr, &priv->sta_list, list) {
-		memset(&tdls_oper, 0, sizeof(struct mwifiex_ds_tdls_oper));
+	list_क्रम_each_entry(sta_ptr, &priv->sta_list, list) अणु
+		स_रखो(&tdls_oper, 0, माप(काष्ठा mwअगरiex_ds_tdls_oper));
 
-		if (sta_ptr->is_11n_enabled) {
-			mwifiex_11n_cleanup_reorder_tbl(priv);
+		अगर (sta_ptr->is_11n_enabled) अणु
+			mwअगरiex_11n_cleanup_reorder_tbl(priv);
 			spin_lock_bh(&priv->wmm.ra_list_spinlock);
-			mwifiex_11n_delete_all_tx_ba_stream_tbl(priv);
+			mwअगरiex_11n_delete_all_tx_ba_stream_tbl(priv);
 			spin_unlock_bh(&priv->wmm.ra_list_spinlock);
-		}
+		पूर्ण
 
-		mwifiex_restore_tdls_packets(priv, sta_ptr->mac_addr,
+		mwअगरiex_restore_tdls_packets(priv, sta_ptr->mac_addr,
 					     TDLS_LINK_TEARDOWN);
-		memcpy(&tdls_oper.peer_mac, sta_ptr->mac_addr, ETH_ALEN);
+		स_नकल(&tdls_oper.peer_mac, sta_ptr->mac_addr, ETH_ALEN);
 		tdls_oper.tdls_action = MWIFIEX_TDLS_DISABLE_LINK;
-		if (mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
+		अगर (mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_OPER,
 				     HostCmd_ACT_GEN_SET, 0, &tdls_oper, false))
-			mwifiex_dbg(priv->adapter, ERROR,
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "Disable link failed for TDLS peer %pM",
 				    sta_ptr->mac_addr);
-	}
+	पूर्ण
 
-	mwifiex_del_all_sta_list(priv);
-}
+	mwअगरiex_del_all_sta_list(priv);
+पूर्ण
 
-int mwifiex_tdls_check_tx(struct mwifiex_private *priv, struct sk_buff *skb)
-{
-	struct mwifiex_auto_tdls_peer *peer;
+पूर्णांक mwअगरiex_tdls_check_tx(काष्ठा mwअगरiex_निजी *priv, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *peer;
 	u8 mac[ETH_ALEN];
 
 	ether_addr_copy(mac, skb->data);
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry(peer, &priv->auto_tdls_list, list) {
-		if (!memcmp(mac, peer->mac_addr, ETH_ALEN)) {
-			if (peer->rssi <= MWIFIEX_TDLS_RSSI_HIGH &&
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry(peer, &priv->स्वतः_tdls_list, list) अणु
+		अगर (!स_भेद(mac, peer->mac_addr, ETH_ALEN)) अणु
+			अगर (peer->rssi <= MWIFIEX_TDLS_RSSI_HIGH &&
 			    peer->tdls_status == TDLS_NOT_SETUP &&
 			    (peer->failure_count <
-			     MWIFIEX_TDLS_MAX_FAIL_COUNT)) {
+			     MWIFIEX_TDLS_MAX_FAIL_COUNT)) अणु
 				peer->tdls_status = TDLS_SETUP_INPROGRESS;
-				mwifiex_dbg(priv->adapter, INFO,
+				mwअगरiex_dbg(priv->adapter, INFO,
 					    "setup TDLS link, peer=%pM rssi=%d\n",
 					    peer->mac_addr, peer->rssi);
 
@@ -1303,257 +1304,257 @@ int mwifiex_tdls_check_tx(struct mwifiex_private *priv, struct sk_buff *skb)
 							   peer->mac_addr,
 							   NL80211_TDLS_SETUP,
 							   0, GFP_ATOMIC);
-				peer->do_setup = false;
+				peer->करो_setup = false;
 				priv->check_tdls_tx = false;
-			} else if (peer->failure_count <
+			पूर्ण अन्यथा अगर (peer->failure_count <
 				   MWIFIEX_TDLS_MAX_FAIL_COUNT &&
-				   peer->do_discover) {
-				mwifiex_send_tdls_data_frame(priv,
+				   peer->करो_discover) अणु
+				mwअगरiex_send_tdls_data_frame(priv,
 							     peer->mac_addr,
 						    WLAN_TDLS_DISCOVERY_REQUEST,
-							     1, 0, NULL, 0);
-				peer->do_discover = false;
-			}
-		}
-	}
-	spin_unlock_bh(&priv->auto_tdls_lock);
+							     1, 0, शून्य, 0);
+				peer->करो_discover = false;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mwifiex_flush_auto_tdls_list(struct mwifiex_private *priv)
-{
-	struct mwifiex_auto_tdls_peer *peer, *tmp_node;
+व्योम mwअगरiex_flush_स्वतः_tdls_list(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *peer, *पंचांगp_node;
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry_safe(peer, tmp_node, &priv->auto_tdls_list, list) {
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry_safe(peer, पंचांगp_node, &priv->स्वतः_tdls_list, list) अणु
 		list_del(&peer->list);
-		kfree(peer);
-	}
+		kमुक्त(peer);
+	पूर्ण
 
-	INIT_LIST_HEAD(&priv->auto_tdls_list);
-	spin_unlock_bh(&priv->auto_tdls_lock);
+	INIT_LIST_HEAD(&priv->स्वतः_tdls_list);
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
 	priv->check_tdls_tx = false;
-}
+पूर्ण
 
-void mwifiex_add_auto_tdls_peer(struct mwifiex_private *priv, const u8 *mac)
-{
-	struct mwifiex_auto_tdls_peer *tdls_peer;
+व्योम mwअगरiex_add_स्वतः_tdls_peer(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *mac)
+अणु
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *tdls_peer;
 
-	if (!priv->adapter->auto_tdls)
-		return;
+	अगर (!priv->adapter->स्वतः_tdls)
+		वापस;
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry(tdls_peer, &priv->auto_tdls_list, list) {
-		if (!memcmp(tdls_peer->mac_addr, mac, ETH_ALEN)) {
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry(tdls_peer, &priv->स्वतः_tdls_list, list) अणु
+		अगर (!स_भेद(tdls_peer->mac_addr, mac, ETH_ALEN)) अणु
 			tdls_peer->tdls_status = TDLS_SETUP_INPROGRESS;
-			tdls_peer->rssi_jiffies = jiffies;
-			spin_unlock_bh(&priv->auto_tdls_lock);
-			return;
-		}
-	}
+			tdls_peer->rssi_jअगरfies = jअगरfies;
+			spin_unlock_bh(&priv->स्वतः_tdls_lock);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/* create new TDLS peer */
-	tdls_peer = kzalloc(sizeof(*tdls_peer), GFP_ATOMIC);
-	if (tdls_peer) {
+	tdls_peer = kzalloc(माप(*tdls_peer), GFP_ATOMIC);
+	अगर (tdls_peer) अणु
 		ether_addr_copy(tdls_peer->mac_addr, mac);
 		tdls_peer->tdls_status = TDLS_SETUP_INPROGRESS;
-		tdls_peer->rssi_jiffies = jiffies;
+		tdls_peer->rssi_jअगरfies = jअगरfies;
 		INIT_LIST_HEAD(&tdls_peer->list);
-		list_add_tail(&tdls_peer->list, &priv->auto_tdls_list);
-		mwifiex_dbg(priv->adapter, INFO,
+		list_add_tail(&tdls_peer->list, &priv->स्वतः_tdls_list);
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "Add auto TDLS peer= %pM to list\n", mac);
-	}
+	पूर्ण
 
-	spin_unlock_bh(&priv->auto_tdls_lock);
-}
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
+पूर्ण
 
-void mwifiex_auto_tdls_update_peer_status(struct mwifiex_private *priv,
-					  const u8 *mac, u8 link_status)
-{
-	struct mwifiex_auto_tdls_peer *peer;
+व्योम mwअगरiex_स्वतः_tdls_update_peer_status(काष्ठा mwअगरiex_निजी *priv,
+					  स्थिर u8 *mac, u8 link_status)
+अणु
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *peer;
 
-	if (!priv->adapter->auto_tdls)
-		return;
+	अगर (!priv->adapter->स्वतः_tdls)
+		वापस;
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry(peer, &priv->auto_tdls_list, list) {
-		if (!memcmp(peer->mac_addr, mac, ETH_ALEN)) {
-			if ((link_status == TDLS_NOT_SETUP) &&
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry(peer, &priv->स्वतः_tdls_list, list) अणु
+		अगर (!स_भेद(peer->mac_addr, mac, ETH_ALEN)) अणु
+			अगर ((link_status == TDLS_NOT_SETUP) &&
 			    (peer->tdls_status == TDLS_SETUP_INPROGRESS))
 				peer->failure_count++;
-			else if (mwifiex_is_tdls_link_setup(link_status))
+			अन्यथा अगर (mwअगरiex_is_tdls_link_setup(link_status))
 				peer->failure_count = 0;
 
 			peer->tdls_status = link_status;
-			break;
-		}
-	}
-	spin_unlock_bh(&priv->auto_tdls_lock);
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
+पूर्ण
 
-void mwifiex_auto_tdls_update_peer_signal(struct mwifiex_private *priv,
+व्योम mwअगरiex_स्वतः_tdls_update_peer_संकेत(काष्ठा mwअगरiex_निजी *priv,
 					  u8 *mac, s8 snr, s8 nflr)
-{
-	struct mwifiex_auto_tdls_peer *peer;
+अणु
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *peer;
 
-	if (!priv->adapter->auto_tdls)
-		return;
+	अगर (!priv->adapter->स्वतः_tdls)
+		वापस;
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry(peer, &priv->auto_tdls_list, list) {
-		if (!memcmp(peer->mac_addr, mac, ETH_ALEN)) {
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry(peer, &priv->स्वतः_tdls_list, list) अणु
+		अगर (!स_भेद(peer->mac_addr, mac, ETH_ALEN)) अणु
 			peer->rssi = nflr - snr;
-			peer->rssi_jiffies = jiffies;
-			break;
-		}
-	}
-	spin_unlock_bh(&priv->auto_tdls_lock);
-}
+			peer->rssi_jअगरfies = jअगरfies;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
+पूर्ण
 
-void mwifiex_check_auto_tdls(struct timer_list *t)
-{
-	struct mwifiex_private *priv = from_timer(priv, t, auto_tdls_timer);
-	struct mwifiex_auto_tdls_peer *tdls_peer;
+व्योम mwअगरiex_check_स्वतः_tdls(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = from_समयr(priv, t, स्वतः_tdls_समयr);
+	काष्ठा mwअगरiex_स्वतः_tdls_peer *tdls_peer;
 	u16 reason = WLAN_REASON_TDLS_TEARDOWN_UNSPECIFIED;
 
-	if (WARN_ON_ONCE(!priv || !priv->adapter)) {
+	अगर (WARN_ON_ONCE(!priv || !priv->adapter)) अणु
 		pr_err("mwifiex: %s: adapter or private structure is NULL\n",
 		       __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (unlikely(!priv->adapter->auto_tdls))
-		return;
+	अगर (unlikely(!priv->adapter->स्वतः_tdls))
+		वापस;
 
-	if (!priv->auto_tdls_timer_active) {
-		mwifiex_dbg(priv->adapter, INFO,
+	अगर (!priv->स्वतः_tdls_समयr_active) अणु
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "auto TDLS timer inactive; return");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	priv->check_tdls_tx = false;
 
-	spin_lock_bh(&priv->auto_tdls_lock);
-	list_for_each_entry(tdls_peer, &priv->auto_tdls_list, list) {
-		if ((jiffies - tdls_peer->rssi_jiffies) >
-		    (MWIFIEX_AUTO_TDLS_IDLE_TIME * HZ)) {
+	spin_lock_bh(&priv->स्वतः_tdls_lock);
+	list_क्रम_each_entry(tdls_peer, &priv->स्वतः_tdls_list, list) अणु
+		अगर ((jअगरfies - tdls_peer->rssi_jअगरfies) >
+		    (MWIFIEX_AUTO_TDLS_IDLE_TIME * HZ)) अणु
 			tdls_peer->rssi = 0;
-			tdls_peer->do_discover = true;
+			tdls_peer->करो_discover = true;
 			priv->check_tdls_tx = true;
-		}
+		पूर्ण
 
-		if (((tdls_peer->rssi >= MWIFIEX_TDLS_RSSI_LOW) ||
+		अगर (((tdls_peer->rssi >= MWIFIEX_TDLS_RSSI_LOW) ||
 		     !tdls_peer->rssi) &&
-		    mwifiex_is_tdls_link_setup(tdls_peer->tdls_status)) {
+		    mwअगरiex_is_tdls_link_setup(tdls_peer->tdls_status)) अणु
 			tdls_peer->tdls_status = TDLS_LINK_TEARDOWN;
-			mwifiex_dbg(priv->adapter, MSG,
+			mwअगरiex_dbg(priv->adapter, MSG,
 				    "teardown TDLS link,peer=%pM rssi=%d\n",
 				    tdls_peer->mac_addr, -tdls_peer->rssi);
-			tdls_peer->do_discover = true;
+			tdls_peer->करो_discover = true;
 			priv->check_tdls_tx = true;
 			cfg80211_tdls_oper_request(priv->netdev,
 						   tdls_peer->mac_addr,
 						   NL80211_TDLS_TEARDOWN,
 						   reason, GFP_ATOMIC);
-		} else if (tdls_peer->rssi &&
+		पूर्ण अन्यथा अगर (tdls_peer->rssi &&
 			   tdls_peer->rssi <= MWIFIEX_TDLS_RSSI_HIGH &&
 			   tdls_peer->tdls_status == TDLS_NOT_SETUP &&
 			   tdls_peer->failure_count <
-			   MWIFIEX_TDLS_MAX_FAIL_COUNT) {
+			   MWIFIEX_TDLS_MAX_FAIL_COUNT) अणु
 				priv->check_tdls_tx = true;
-				tdls_peer->do_setup = true;
-				mwifiex_dbg(priv->adapter, INFO,
+				tdls_peer->करो_setup = true;
+				mwअगरiex_dbg(priv->adapter, INFO,
 					    "check TDLS with peer=%pM\t"
 					    "rssi=%d\n", tdls_peer->mac_addr,
 					    tdls_peer->rssi);
-		}
-	}
-	spin_unlock_bh(&priv->auto_tdls_lock);
+		पूर्ण
+	पूर्ण
+	spin_unlock_bh(&priv->स्वतः_tdls_lock);
 
-	mod_timer(&priv->auto_tdls_timer,
-		  jiffies + msecs_to_jiffies(MWIFIEX_TIMER_10S));
-}
+	mod_समयr(&priv->स्वतः_tdls_समयr,
+		  jअगरfies + msecs_to_jअगरfies(MWIFIEX_TIMER_10S));
+पूर्ण
 
-void mwifiex_setup_auto_tdls_timer(struct mwifiex_private *priv)
-{
-	timer_setup(&priv->auto_tdls_timer, mwifiex_check_auto_tdls, 0);
-	priv->auto_tdls_timer_active = true;
-	mod_timer(&priv->auto_tdls_timer,
-		  jiffies + msecs_to_jiffies(MWIFIEX_TIMER_10S));
-}
+व्योम mwअगरiex_setup_स्वतः_tdls_समयr(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	समयr_setup(&priv->स्वतः_tdls_समयr, mwअगरiex_check_स्वतः_tdls, 0);
+	priv->स्वतः_tdls_समयr_active = true;
+	mod_समयr(&priv->स्वतः_tdls_समयr,
+		  jअगरfies + msecs_to_jअगरfies(MWIFIEX_TIMER_10S));
+पूर्ण
 
-void mwifiex_clean_auto_tdls(struct mwifiex_private *priv)
-{
-	if (ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info) &&
-	    priv->adapter->auto_tdls &&
-	    priv->bss_type == MWIFIEX_BSS_TYPE_STA) {
-		priv->auto_tdls_timer_active = false;
-		del_timer(&priv->auto_tdls_timer);
-		mwifiex_flush_auto_tdls_list(priv);
-	}
-}
+व्योम mwअगरiex_clean_स्वतः_tdls(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	अगर (ISSUPP_TDLS_ENABLED(priv->adapter->fw_cap_info) &&
+	    priv->adapter->स्वतः_tdls &&
+	    priv->bss_type == MWIFIEX_BSS_TYPE_STA) अणु
+		priv->स्वतः_tdls_समयr_active = false;
+		del_समयr(&priv->स्वतः_tdls_समयr);
+		mwअगरiex_flush_स्वतः_tdls_list(priv);
+	पूर्ण
+पूर्ण
 
-static int mwifiex_config_tdls(struct mwifiex_private *priv, u8 enable)
-{
-	struct mwifiex_tdls_config config;
+अटल पूर्णांक mwअगरiex_config_tdls(काष्ठा mwअगरiex_निजी *priv, u8 enable)
+अणु
+	काष्ठा mwअगरiex_tdls_config config;
 
 	config.enable = cpu_to_le16(enable);
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
 				ACT_TDLS_CS_ENABLE_CONFIG, 0, &config, true);
-}
+पूर्ण
 
-int mwifiex_config_tdls_enable(struct mwifiex_private *priv)
-{
-	return mwifiex_config_tdls(priv, true);
-}
+पूर्णांक mwअगरiex_config_tdls_enable(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	वापस mwअगरiex_config_tdls(priv, true);
+पूर्ण
 
-int mwifiex_config_tdls_disable(struct mwifiex_private *priv)
-{
-	return mwifiex_config_tdls(priv, false);
-}
+पूर्णांक mwअगरiex_config_tdls_disable(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	वापस mwअगरiex_config_tdls(priv, false);
+पूर्ण
 
-int mwifiex_config_tdls_cs_params(struct mwifiex_private *priv)
-{
-	struct mwifiex_tdls_config_cs_params config_tdls_cs_params;
+पूर्णांक mwअगरiex_config_tdls_cs_params(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	काष्ठा mwअगरiex_tdls_config_cs_params config_tdls_cs_params;
 
-	config_tdls_cs_params.unit_time = MWIFIEX_DEF_CS_UNIT_TIME;
+	config_tdls_cs_params.unit_समय = MWIFIEX_DEF_CS_UNIT_TIME;
 	config_tdls_cs_params.thr_otherlink = MWIFIEX_DEF_CS_THR_OTHERLINK;
-	config_tdls_cs_params.thr_directlink = MWIFIEX_DEF_THR_DIRECTLINK;
+	config_tdls_cs_params.thr_directlink = MWIFIEX_DEF_THR_सूचीECTLINK;
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
 				ACT_TDLS_CS_PARAMS, 0,
 				&config_tdls_cs_params, true);
-}
+पूर्ण
 
-int mwifiex_stop_tdls_cs(struct mwifiex_private *priv, const u8 *peer_mac)
-{
-	struct mwifiex_tdls_stop_cs_params stop_tdls_cs_params;
+पूर्णांक mwअगरiex_stop_tdls_cs(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer_mac)
+अणु
+	काष्ठा mwअगरiex_tdls_stop_cs_params stop_tdls_cs_params;
 
 	ether_addr_copy(stop_tdls_cs_params.peer_mac, peer_mac);
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
 				ACT_TDLS_CS_STOP, 0,
 				&stop_tdls_cs_params, true);
-}
+पूर्ण
 
-int mwifiex_start_tdls_cs(struct mwifiex_private *priv, const u8 *peer_mac,
+पूर्णांक mwअगरiex_start_tdls_cs(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *peer_mac,
 			  u8 primary_chan, u8 second_chan_offset, u8 band)
-{
-	struct mwifiex_tdls_init_cs_params start_tdls_cs_params;
+अणु
+	काष्ठा mwअगरiex_tdls_init_cs_params start_tdls_cs_params;
 
 	ether_addr_copy(start_tdls_cs_params.peer_mac, peer_mac);
 	start_tdls_cs_params.primary_chan = primary_chan;
 	start_tdls_cs_params.second_chan_offset = second_chan_offset;
 	start_tdls_cs_params.band = band;
 
-	start_tdls_cs_params.switch_time = cpu_to_le16(MWIFIEX_DEF_CS_TIME);
-	start_tdls_cs_params.switch_timeout =
+	start_tdls_cs_params.चयन_समय = cpu_to_le16(MWIFIEX_DEF_CS_TIME);
+	start_tdls_cs_params.चयन_समयout =
 					cpu_to_le16(MWIFIEX_DEF_CS_TIMEOUT);
 	start_tdls_cs_params.reg_class = MWIFIEX_DEF_CS_REG_CLASS;
 	start_tdls_cs_params.periodicity = MWIFIEX_DEF_CS_PERIODICITY;
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_TDLS_CONFIG,
 				ACT_TDLS_CS_INIT, 0,
 				&start_tdls_cs_params, true);
-}
+पूर्ण

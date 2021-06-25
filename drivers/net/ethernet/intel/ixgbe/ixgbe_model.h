@@ -1,98 +1,99 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 1999 - 2018 Intel Corporation. */
 
-#ifndef _IXGBE_MODEL_H_
-#define _IXGBE_MODEL_H_
+#अगर_अघोषित _IXGBE_MODEL_H_
+#घोषणा _IXGBE_MODEL_H_
 
-#include "ixgbe.h"
-#include "ixgbe_type.h"
+#समावेश "ixgbe.h"
+#समावेश "ixgbe_type.h"
 
-struct ixgbe_mat_field {
-	unsigned int off;
-	int (*val)(struct ixgbe_fdir_filter *input,
-		   union ixgbe_atr_input *mask,
+काष्ठा ixgbe_mat_field अणु
+	अचिन्हित पूर्णांक off;
+	पूर्णांक (*val)(काष्ठा ixgbe_fdir_filter *input,
+		   जोड़ ixgbe_atr_input *mask,
 		   u32 val, u32 m);
-	unsigned int type;
-};
+	अचिन्हित पूर्णांक type;
+पूर्ण;
 
-struct ixgbe_jump_table {
-	struct ixgbe_mat_field *mat;
-	struct ixgbe_fdir_filter *input;
-	union ixgbe_atr_input *mask;
+काष्ठा ixgbe_jump_table अणु
+	काष्ठा ixgbe_mat_field *mat;
+	काष्ठा ixgbe_fdir_filter *input;
+	जोड़ ixgbe_atr_input *mask;
 	u32 link_hdl;
-	unsigned long child_loc_map[32];
-};
+	अचिन्हित दीर्घ child_loc_map[32];
+पूर्ण;
 
-#define IXGBE_MAX_HW_ENTRIES 2045
+#घोषणा IXGBE_MAX_HW_ENTRIES 2045
 
-static inline int ixgbe_mat_prgm_sip(struct ixgbe_fdir_filter *input,
-				     union ixgbe_atr_input *mask,
+अटल अंतरभूत पूर्णांक ixgbe_mat_prgm_sip(काष्ठा ixgbe_fdir_filter *input,
+				     जोड़ ixgbe_atr_input *mask,
 				     u32 val, u32 m)
-{
-	input->filter.formatted.src_ip[0] = (__force __be32)val;
-	mask->formatted.src_ip[0] = (__force __be32)m;
-	return 0;
-}
+अणु
+	input->filter.क्रमmatted.src_ip[0] = (__क्रमce __be32)val;
+	mask->क्रमmatted.src_ip[0] = (__क्रमce __be32)m;
+	वापस 0;
+पूर्ण
 
-static inline int ixgbe_mat_prgm_dip(struct ixgbe_fdir_filter *input,
-				     union ixgbe_atr_input *mask,
+अटल अंतरभूत पूर्णांक ixgbe_mat_prgm_dip(काष्ठा ixgbe_fdir_filter *input,
+				     जोड़ ixgbe_atr_input *mask,
 				     u32 val, u32 m)
-{
-	input->filter.formatted.dst_ip[0] = (__force __be32)val;
-	mask->formatted.dst_ip[0] = (__force __be32)m;
-	return 0;
-}
+अणु
+	input->filter.क्रमmatted.dst_ip[0] = (__क्रमce __be32)val;
+	mask->क्रमmatted.dst_ip[0] = (__क्रमce __be32)m;
+	वापस 0;
+पूर्ण
 
-static struct ixgbe_mat_field ixgbe_ipv4_fields[] = {
-	{ .off = 12, .val = ixgbe_mat_prgm_sip,
-	  .type = IXGBE_ATR_FLOW_TYPE_IPV4},
-	{ .off = 16, .val = ixgbe_mat_prgm_dip,
-	  .type = IXGBE_ATR_FLOW_TYPE_IPV4},
-	{ .val = NULL } /* terminal node */
-};
+अटल काष्ठा ixgbe_mat_field ixgbe_ipv4_fields[] = अणु
+	अणु .off = 12, .val = ixgbe_mat_prgm_sip,
+	  .type = IXGBE_ATR_FLOW_TYPE_IPV4पूर्ण,
+	अणु .off = 16, .val = ixgbe_mat_prgm_dip,
+	  .type = IXGBE_ATR_FLOW_TYPE_IPV4पूर्ण,
+	अणु .val = शून्य पूर्ण /* terminal node */
+पूर्ण;
 
-static inline int ixgbe_mat_prgm_ports(struct ixgbe_fdir_filter *input,
-				       union ixgbe_atr_input *mask,
+अटल अंतरभूत पूर्णांक ixgbe_mat_prgm_ports(काष्ठा ixgbe_fdir_filter *input,
+				       जोड़ ixgbe_atr_input *mask,
 				       u32 val, u32 m)
-{
-	input->filter.formatted.src_port = (__force __be16)(val & 0xffff);
-	mask->formatted.src_port = (__force __be16)(m & 0xffff);
-	input->filter.formatted.dst_port = (__force __be16)(val >> 16);
-	mask->formatted.dst_port = (__force __be16)(m >> 16);
+अणु
+	input->filter.क्रमmatted.src_port = (__क्रमce __be16)(val & 0xffff);
+	mask->क्रमmatted.src_port = (__क्रमce __be16)(m & 0xffff);
+	input->filter.क्रमmatted.dst_port = (__क्रमce __be16)(val >> 16);
+	mask->क्रमmatted.dst_port = (__क्रमce __be16)(m >> 16);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static struct ixgbe_mat_field ixgbe_tcp_fields[] = {
-	{.off = 0, .val = ixgbe_mat_prgm_ports,
-	 .type = IXGBE_ATR_FLOW_TYPE_TCPV4},
-	{ .val = NULL } /* terminal node */
-};
+अटल काष्ठा ixgbe_mat_field ixgbe_tcp_fields[] = अणु
+	अणु.off = 0, .val = ixgbe_mat_prgm_ports,
+	 .type = IXGBE_ATR_FLOW_TYPE_TCPV4पूर्ण,
+	अणु .val = शून्य पूर्ण /* terminal node */
+पूर्ण;
 
-static struct ixgbe_mat_field ixgbe_udp_fields[] = {
-	{.off = 0, .val = ixgbe_mat_prgm_ports,
-	 .type = IXGBE_ATR_FLOW_TYPE_UDPV4},
-	{ .val = NULL } /* terminal node */
-};
+अटल काष्ठा ixgbe_mat_field ixgbe_udp_fields[] = अणु
+	अणु.off = 0, .val = ixgbe_mat_prgm_ports,
+	 .type = IXGBE_ATR_FLOW_TYPE_UDPV4पूर्ण,
+	अणु .val = शून्य पूर्ण /* terminal node */
+पूर्ण;
 
-struct ixgbe_nexthdr {
-	/* offset, shift, and mask of position to next header */
-	unsigned int o;
+काष्ठा ixgbe_nexthdr अणु
+	/* offset, shअगरt, and mask of position to next header */
+	अचिन्हित पूर्णांक o;
 	u32 s;
 	u32 m;
 	/* match criteria to make this jump*/
-	unsigned int off;
+	अचिन्हित पूर्णांक off;
 	u32 val;
 	u32 mask;
 	/* location of jump to make */
-	struct ixgbe_mat_field *jump;
-};
+	काष्ठा ixgbe_mat_field *jump;
+पूर्ण;
 
-static struct ixgbe_nexthdr ixgbe_ipv4_jumps[] = {
-	{ .o = 0, .s = 6, .m = 0xf,
-	  .off = 8, .val = 0x600, .mask = 0xff00, .jump = ixgbe_tcp_fields},
-	{ .o = 0, .s = 6, .m = 0xf,
-	  .off = 8, .val = 0x1100, .mask = 0xff00, .jump = ixgbe_udp_fields},
-	{ .jump = NULL } /* terminal node */
-};
-#endif /* _IXGBE_MODEL_H_ */
+अटल काष्ठा ixgbe_nexthdr ixgbe_ipv4_jumps[] = अणु
+	अणु .o = 0, .s = 6, .m = 0xf,
+	  .off = 8, .val = 0x600, .mask = 0xff00, .jump = ixgbe_tcp_fieldsपूर्ण,
+	अणु .o = 0, .s = 6, .m = 0xf,
+	  .off = 8, .val = 0x1100, .mask = 0xff00, .jump = ixgbe_udp_fieldsपूर्ण,
+	अणु .jump = शून्य पूर्ण /* terminal node */
+पूर्ण;
+#पूर्ण_अगर /* _IXGBE_MODEL_H_ */

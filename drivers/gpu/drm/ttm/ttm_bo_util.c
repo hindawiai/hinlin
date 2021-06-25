@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2007-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,277 +27,277 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
 
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
-#include <drm/drm_vma_manager.h>
-#include <linux/dma-buf-map.h>
-#include <linux/io.h>
-#include <linux/highmem.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
-#include <linux/dma-resv.h>
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#समावेश <drm/drm_vma_manager.h>
+#समावेश <linux/dma-buf-map.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dma-resv.h>
 
-struct ttm_transfer_obj {
-	struct ttm_buffer_object base;
-	struct ttm_buffer_object *bo;
-};
+काष्ठा tपंचांग_transfer_obj अणु
+	काष्ठा tपंचांग_buffer_object base;
+	काष्ठा tपंचांग_buffer_object *bo;
+पूर्ण;
 
-int ttm_mem_io_reserve(struct ttm_device *bdev,
-		       struct ttm_resource *mem)
-{
-	if (mem->bus.offset || mem->bus.addr)
-		return 0;
+पूर्णांक tपंचांग_mem_io_reserve(काष्ठा tपंचांग_device *bdev,
+		       काष्ठा tपंचांग_resource *mem)
+अणु
+	अगर (mem->bus.offset || mem->bus.addr)
+		वापस 0;
 
 	mem->bus.is_iomem = false;
-	if (!bdev->funcs->io_mem_reserve)
-		return 0;
+	अगर (!bdev->funcs->io_mem_reserve)
+		वापस 0;
 
-	return bdev->funcs->io_mem_reserve(bdev, mem);
-}
+	वापस bdev->funcs->io_mem_reserve(bdev, mem);
+पूर्ण
 
-void ttm_mem_io_free(struct ttm_device *bdev,
-		     struct ttm_resource *mem)
-{
-	if (!mem->bus.offset && !mem->bus.addr)
-		return;
+व्योम tपंचांग_mem_io_मुक्त(काष्ठा tपंचांग_device *bdev,
+		     काष्ठा tपंचांग_resource *mem)
+अणु
+	अगर (!mem->bus.offset && !mem->bus.addr)
+		वापस;
 
-	if (bdev->funcs->io_mem_free)
-		bdev->funcs->io_mem_free(bdev, mem);
+	अगर (bdev->funcs->io_mem_मुक्त)
+		bdev->funcs->io_mem_मुक्त(bdev, mem);
 
 	mem->bus.offset = 0;
-	mem->bus.addr = NULL;
-}
+	mem->bus.addr = शून्य;
+पूर्ण
 
-static int ttm_resource_ioremap(struct ttm_device *bdev,
-			       struct ttm_resource *mem,
-			       void **virtual)
-{
-	int ret;
-	void *addr;
+अटल पूर्णांक tपंचांग_resource_ioremap(काष्ठा tपंचांग_device *bdev,
+			       काष्ठा tपंचांग_resource *mem,
+			       व्योम **भव)
+अणु
+	पूर्णांक ret;
+	व्योम *addr;
 
-	*virtual = NULL;
-	ret = ttm_mem_io_reserve(bdev, mem);
-	if (ret || !mem->bus.is_iomem)
-		return ret;
+	*भव = शून्य;
+	ret = tपंचांग_mem_io_reserve(bdev, mem);
+	अगर (ret || !mem->bus.is_iomem)
+		वापस ret;
 
-	if (mem->bus.addr) {
+	अगर (mem->bus.addr) अणु
 		addr = mem->bus.addr;
-	} else {
-		size_t bus_size = (size_t)mem->num_pages << PAGE_SHIFT;
+	पूर्ण अन्यथा अणु
+		माप_प्रकार bus_size = (माप_प्रकार)mem->num_pages << PAGE_SHIFT;
 
-		if (mem->bus.caching == ttm_write_combined)
+		अगर (mem->bus.caching == tपंचांग_ग_लिखो_combined)
 			addr = ioremap_wc(mem->bus.offset, bus_size);
-#ifdef CONFIG_X86
-		else if (mem->bus.caching == ttm_cached)
+#अगर_घोषित CONFIG_X86
+		अन्यथा अगर (mem->bus.caching == tपंचांग_cached)
 			addr = ioremap_cache(mem->bus.offset, bus_size);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			addr = ioremap(mem->bus.offset, bus_size);
-		if (!addr) {
-			ttm_mem_io_free(bdev, mem);
-			return -ENOMEM;
-		}
-	}
-	*virtual = addr;
-	return 0;
-}
+		अगर (!addr) अणु
+			tपंचांग_mem_io_मुक्त(bdev, mem);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	*भव = addr;
+	वापस 0;
+पूर्ण
 
-static void ttm_resource_iounmap(struct ttm_device *bdev,
-				struct ttm_resource *mem,
-				void *virtual)
-{
-	if (virtual && mem->bus.addr == NULL)
-		iounmap(virtual);
-	ttm_mem_io_free(bdev, mem);
-}
+अटल व्योम tपंचांग_resource_iounmap(काष्ठा tपंचांग_device *bdev,
+				काष्ठा tपंचांग_resource *mem,
+				व्योम *भव)
+अणु
+	अगर (भव && mem->bus.addr == शून्य)
+		iounmap(भव);
+	tपंचांग_mem_io_मुक्त(bdev, mem);
+पूर्ण
 
-static int ttm_copy_io_page(void *dst, void *src, unsigned long page)
-{
-	uint32_t *dstP =
-	    (uint32_t *) ((unsigned long)dst + (page << PAGE_SHIFT));
-	uint32_t *srcP =
-	    (uint32_t *) ((unsigned long)src + (page << PAGE_SHIFT));
+अटल पूर्णांक tपंचांग_copy_io_page(व्योम *dst, व्योम *src, अचिन्हित दीर्घ page)
+अणु
+	uपूर्णांक32_t *dstP =
+	    (uपूर्णांक32_t *) ((अचिन्हित दीर्घ)dst + (page << PAGE_SHIFT));
+	uपूर्णांक32_t *srcP =
+	    (uपूर्णांक32_t *) ((अचिन्हित दीर्घ)src + (page << PAGE_SHIFT));
 
-	int i;
-	for (i = 0; i < PAGE_SIZE / sizeof(uint32_t); ++i)
-		iowrite32(ioread32(srcP++), dstP++);
-	return 0;
-}
+	पूर्णांक i;
+	क्रम (i = 0; i < PAGE_SIZE / माप(uपूर्णांक32_t); ++i)
+		ioग_लिखो32(ioपढ़ो32(srcP++), dstP++);
+	वापस 0;
+पूर्ण
 
-static int ttm_copy_io_ttm_page(struct ttm_tt *ttm, void *src,
-				unsigned long page,
+अटल पूर्णांक tपंचांग_copy_io_tपंचांग_page(काष्ठा tपंचांग_tt *tपंचांग, व्योम *src,
+				अचिन्हित दीर्घ page,
 				pgprot_t prot)
-{
-	struct page *d = ttm->pages[page];
-	void *dst;
+अणु
+	काष्ठा page *d = tपंचांग->pages[page];
+	व्योम *dst;
 
-	if (!d)
-		return -ENOMEM;
+	अगर (!d)
+		वापस -ENOMEM;
 
-	src = (void *)((unsigned long)src + (page << PAGE_SHIFT));
+	src = (व्योम *)((अचिन्हित दीर्घ)src + (page << PAGE_SHIFT));
 	dst = kmap_atomic_prot(d, prot);
-	if (!dst)
-		return -ENOMEM;
+	अगर (!dst)
+		वापस -ENOMEM;
 
-	memcpy_fromio(dst, src, PAGE_SIZE);
+	स_नकल_fromio(dst, src, PAGE_SIZE);
 
 	kunmap_atomic(dst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ttm_copy_ttm_io_page(struct ttm_tt *ttm, void *dst,
-				unsigned long page,
+अटल पूर्णांक tपंचांग_copy_tपंचांग_io_page(काष्ठा tपंचांग_tt *tपंचांग, व्योम *dst,
+				अचिन्हित दीर्घ page,
 				pgprot_t prot)
-{
-	struct page *s = ttm->pages[page];
-	void *src;
+अणु
+	काष्ठा page *s = tपंचांग->pages[page];
+	व्योम *src;
 
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
-	dst = (void *)((unsigned long)dst + (page << PAGE_SHIFT));
+	dst = (व्योम *)((अचिन्हित दीर्घ)dst + (page << PAGE_SHIFT));
 	src = kmap_atomic_prot(s, prot);
-	if (!src)
-		return -ENOMEM;
+	अगर (!src)
+		वापस -ENOMEM;
 
-	memcpy_toio(dst, src, PAGE_SIZE);
+	स_नकल_toio(dst, src, PAGE_SIZE);
 
 	kunmap_atomic(src);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
-		       struct ttm_operation_ctx *ctx,
-		       struct ttm_resource *new_mem)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *man = ttm_manager_type(bdev, new_mem->mem_type);
-	struct ttm_tt *ttm = bo->ttm;
-	struct ttm_resource *old_mem = &bo->mem;
-	struct ttm_resource old_copy = *old_mem;
-	void *old_iomap;
-	void *new_iomap;
-	int ret;
-	unsigned long i;
+पूर्णांक tपंचांग_bo_move_स_नकल(काष्ठा tपंचांग_buffer_object *bo,
+		       काष्ठा tपंचांग_operation_ctx *ctx,
+		       काष्ठा tपंचांग_resource *new_mem)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(bdev, new_mem->mem_type);
+	काष्ठा tपंचांग_tt *tपंचांग = bo->tपंचांग;
+	काष्ठा tपंचांग_resource *old_mem = &bo->mem;
+	काष्ठा tपंचांग_resource old_copy = *old_mem;
+	व्योम *old_iomap;
+	व्योम *new_iomap;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ i;
 
-	ret = ttm_bo_wait_ctx(bo, ctx);
-	if (ret)
-		return ret;
+	ret = tपंचांग_bo_रुको_ctx(bo, ctx);
+	अगर (ret)
+		वापस ret;
 
-	ret = ttm_resource_ioremap(bdev, old_mem, &old_iomap);
-	if (ret)
-		return ret;
-	ret = ttm_resource_ioremap(bdev, new_mem, &new_iomap);
-	if (ret)
-		goto out;
+	ret = tपंचांग_resource_ioremap(bdev, old_mem, &old_iomap);
+	अगर (ret)
+		वापस ret;
+	ret = tपंचांग_resource_ioremap(bdev, new_mem, &new_iomap);
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * Single TTM move. NOP.
 	 */
-	if (old_iomap == NULL && new_iomap == NULL)
-		goto out2;
+	अगर (old_iomap == शून्य && new_iomap == शून्य)
+		जाओ out2;
 
 	/*
 	 * Don't move nonexistent data. Clear destination instead.
 	 */
-	if (old_iomap == NULL &&
-	    (ttm == NULL || (!ttm_tt_is_populated(ttm) &&
-			     !(ttm->page_flags & TTM_PAGE_FLAG_SWAPPED)))) {
-		memset_io(new_iomap, 0, new_mem->num_pages*PAGE_SIZE);
-		goto out2;
-	}
+	अगर (old_iomap == शून्य &&
+	    (tपंचांग == शून्य || (!tपंचांग_tt_is_populated(tपंचांग) &&
+			     !(tपंचांग->page_flags & TTM_PAGE_FLAG_SWAPPED)))) अणु
+		स_रखो_io(new_iomap, 0, new_mem->num_pages*PAGE_SIZE);
+		जाओ out2;
+	पूर्ण
 
 	/*
-	 * TTM might be null for moves within the same region.
+	 * TTM might be null क्रम moves within the same region.
 	 */
-	if (ttm) {
-		ret = ttm_tt_populate(bdev, ttm, ctx);
-		if (ret)
-			goto out1;
-	}
+	अगर (tपंचांग) अणु
+		ret = tपंचांग_tt_populate(bdev, tपंचांग, ctx);
+		अगर (ret)
+			जाओ out1;
+	पूर्ण
 
-	for (i = 0; i < new_mem->num_pages; ++i) {
-		if (old_iomap == NULL) {
-			pgprot_t prot = ttm_io_prot(bo, old_mem, PAGE_KERNEL);
-			ret = ttm_copy_ttm_io_page(ttm, new_iomap, i,
+	क्रम (i = 0; i < new_mem->num_pages; ++i) अणु
+		अगर (old_iomap == शून्य) अणु
+			pgprot_t prot = tपंचांग_io_prot(bo, old_mem, PAGE_KERNEL);
+			ret = tपंचांग_copy_tपंचांग_io_page(tपंचांग, new_iomap, i,
 						   prot);
-		} else if (new_iomap == NULL) {
-			pgprot_t prot = ttm_io_prot(bo, new_mem, PAGE_KERNEL);
-			ret = ttm_copy_io_ttm_page(ttm, old_iomap, i,
+		पूर्ण अन्यथा अगर (new_iomap == शून्य) अणु
+			pgprot_t prot = tपंचांग_io_prot(bo, new_mem, PAGE_KERNEL);
+			ret = tपंचांग_copy_io_tपंचांग_page(tपंचांग, old_iomap, i,
 						   prot);
-		} else {
-			ret = ttm_copy_io_page(new_iomap, old_iomap, i);
-		}
-		if (ret)
-			goto out1;
-	}
+		पूर्ण अन्यथा अणु
+			ret = tपंचांग_copy_io_page(new_iomap, old_iomap, i);
+		पूर्ण
+		अगर (ret)
+			जाओ out1;
+	पूर्ण
 	mb();
 out2:
 	old_copy = *old_mem;
 
-	ttm_bo_assign_mem(bo, new_mem);
+	tपंचांग_bo_assign_mem(bo, new_mem);
 
-	if (!man->use_tt)
-		ttm_bo_tt_destroy(bo);
+	अगर (!man->use_tt)
+		tपंचांग_bo_tt_destroy(bo);
 
 out1:
-	ttm_resource_iounmap(bdev, old_mem, new_iomap);
+	tपंचांग_resource_iounmap(bdev, old_mem, new_iomap);
 out:
-	ttm_resource_iounmap(bdev, &old_copy, old_iomap);
+	tपंचांग_resource_iounmap(bdev, &old_copy, old_iomap);
 
 	/*
 	 * On error, keep the mm node!
 	 */
-	if (!ret)
-		ttm_resource_free(bo, &old_copy);
-	return ret;
-}
-EXPORT_SYMBOL(ttm_bo_move_memcpy);
+	अगर (!ret)
+		tपंचांग_resource_मुक्त(bo, &old_copy);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_move_स_नकल);
 
-static void ttm_transfered_destroy(struct ttm_buffer_object *bo)
-{
-	struct ttm_transfer_obj *fbo;
+अटल व्योम tपंचांग_transfered_destroy(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	काष्ठा tपंचांग_transfer_obj *fbo;
 
-	fbo = container_of(bo, struct ttm_transfer_obj, base);
-	ttm_bo_put(fbo->bo);
-	kfree(fbo);
-}
+	fbo = container_of(bo, काष्ठा tपंचांग_transfer_obj, base);
+	tपंचांग_bo_put(fbo->bo);
+	kमुक्त(fbo);
+पूर्ण
 
 /**
- * ttm_buffer_object_transfer
+ * tपंचांग_buffer_object_transfer
  *
- * @bo: A pointer to a struct ttm_buffer_object.
- * @new_obj: A pointer to a pointer to a newly created ttm_buffer_object,
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
+ * @new_obj: A poपूर्णांकer to a poपूर्णांकer to a newly created tपंचांग_buffer_object,
  * holding the data of @bo with the old placement.
  *
  * This is a utility function that may be called after an accelerated move
- * has been scheduled. A new buffer object is created as a placeholder for
- * the old data while it's being copied. When that buffer object is idle,
+ * has been scheduled. A new buffer object is created as a placeholder क्रम
+ * the old data जबतक it's being copied. When that buffer object is idle,
  * it can be destroyed, releasing the space of the old placement.
  * Returns:
  * !0: Failure.
  */
 
-static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
-				      struct ttm_buffer_object **new_obj)
-{
-	struct ttm_transfer_obj *fbo;
-	int ret;
+अटल पूर्णांक tपंचांग_buffer_object_transfer(काष्ठा tपंचांग_buffer_object *bo,
+				      काष्ठा tपंचांग_buffer_object **new_obj)
+अणु
+	काष्ठा tपंचांग_transfer_obj *fbo;
+	पूर्णांक ret;
 
-	fbo = kmalloc(sizeof(*fbo), GFP_KERNEL);
-	if (!fbo)
-		return -ENOMEM;
+	fbo = kदो_स्मृति(माप(*fbo), GFP_KERNEL);
+	अगर (!fbo)
+		वापस -ENOMEM;
 
 	fbo->base = *bo;
 
-	ttm_bo_get(bo);
+	tपंचांग_bo_get(bo);
 	fbo->bo = bo;
 
 	/**
@@ -304,279 +305,279 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	 * TODO: Explicit member copy would probably be better here.
 	 */
 
-	atomic_inc(&ttm_glob.bo_count);
+	atomic_inc(&tपंचांग_glob.bo_count);
 	INIT_LIST_HEAD(&fbo->base.ddestroy);
 	INIT_LIST_HEAD(&fbo->base.lru);
-	fbo->base.moving = NULL;
+	fbo->base.moving = शून्य;
 	drm_vma_node_reset(&fbo->base.base.vma_node);
 
 	kref_init(&fbo->base.kref);
-	fbo->base.destroy = &ttm_transfered_destroy;
+	fbo->base.destroy = &tपंचांग_transfered_destroy;
 	fbo->base.pin_count = 0;
-	if (bo->type != ttm_bo_type_sg)
+	अगर (bo->type != tपंचांग_bo_type_sg)
 		fbo->base.base.resv = &fbo->base.base._resv;
 
 	dma_resv_init(&fbo->base.base._resv);
-	fbo->base.base.dev = NULL;
+	fbo->base.base.dev = शून्य;
 	ret = dma_resv_trylock(&fbo->base.base._resv);
 	WARN_ON(!ret);
 
-	ttm_bo_move_to_lru_tail_unlocked(&fbo->base);
+	tपंचांग_bo_move_to_lru_tail_unlocked(&fbo->base);
 
 	*new_obj = &fbo->base;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-pgprot_t ttm_io_prot(struct ttm_buffer_object *bo, struct ttm_resource *res,
-		     pgprot_t tmp)
-{
-	struct ttm_resource_manager *man;
-	enum ttm_caching caching;
+pgprot_t tपंचांग_io_prot(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_resource *res,
+		     pgprot_t पंचांगp)
+अणु
+	काष्ठा tपंचांग_resource_manager *man;
+	क्रमागत tपंचांग_caching caching;
 
-	man = ttm_manager_type(bo->bdev, res->mem_type);
-	caching = man->use_tt ? bo->ttm->caching : res->bus.caching;
+	man = tपंचांग_manager_type(bo->bdev, res->mem_type);
+	caching = man->use_tt ? bo->tपंचांग->caching : res->bus.caching;
 
-	/* Cached mappings need no adjustment */
-	if (caching == ttm_cached)
-		return tmp;
+	/* Cached mappings need no adjusपंचांगent */
+	अगर (caching == tपंचांग_cached)
+		वापस पंचांगp;
 
-#if defined(__i386__) || defined(__x86_64__)
-	if (caching == ttm_write_combined)
-		tmp = pgprot_writecombine(tmp);
-	else if (boot_cpu_data.x86 > 3)
-		tmp = pgprot_noncached(tmp);
-#endif
-#if defined(__ia64__) || defined(__arm__) || defined(__aarch64__) || \
-    defined(__powerpc__) || defined(__mips__)
-	if (caching == ttm_write_combined)
-		tmp = pgprot_writecombine(tmp);
-	else
-		tmp = pgprot_noncached(tmp);
-#endif
-#if defined(__sparc__)
-	tmp = pgprot_noncached(tmp);
-#endif
-	return tmp;
-}
-EXPORT_SYMBOL(ttm_io_prot);
+#अगर defined(__i386__) || defined(__x86_64__)
+	अगर (caching == tपंचांग_ग_लिखो_combined)
+		पंचांगp = pgprot_ग_लिखोcombine(पंचांगp);
+	अन्यथा अगर (boot_cpu_data.x86 > 3)
+		पंचांगp = pgprot_noncached(पंचांगp);
+#पूर्ण_अगर
+#अगर defined(__ia64__) || defined(__arm__) || defined(__aarch64__) || \
+    defined(__घातerpc__) || defined(__mips__)
+	अगर (caching == tपंचांग_ग_लिखो_combined)
+		पंचांगp = pgprot_ग_लिखोcombine(पंचांगp);
+	अन्यथा
+		पंचांगp = pgprot_noncached(पंचांगp);
+#पूर्ण_अगर
+#अगर defined(__sparc__)
+	पंचांगp = pgprot_noncached(पंचांगp);
+#पूर्ण_अगर
+	वापस पंचांगp;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_io_prot);
 
-static int ttm_bo_ioremap(struct ttm_buffer_object *bo,
-			  unsigned long offset,
-			  unsigned long size,
-			  struct ttm_bo_kmap_obj *map)
-{
-	struct ttm_resource *mem = &bo->mem;
+अटल पूर्णांक tपंचांग_bo_ioremap(काष्ठा tपंचांग_buffer_object *bo,
+			  अचिन्हित दीर्घ offset,
+			  अचिन्हित दीर्घ size,
+			  काष्ठा tपंचांग_bo_kmap_obj *map)
+अणु
+	काष्ठा tपंचांग_resource *mem = &bo->mem;
 
-	if (bo->mem.bus.addr) {
-		map->bo_kmap_type = ttm_bo_map_premapped;
-		map->virtual = (void *)(((u8 *)bo->mem.bus.addr) + offset);
-	} else {
-		map->bo_kmap_type = ttm_bo_map_iomap;
-		if (mem->bus.caching == ttm_write_combined)
-			map->virtual = ioremap_wc(bo->mem.bus.offset + offset,
+	अगर (bo->mem.bus.addr) अणु
+		map->bo_kmap_type = tपंचांग_bo_map_premapped;
+		map->भव = (व्योम *)(((u8 *)bo->mem.bus.addr) + offset);
+	पूर्ण अन्यथा अणु
+		map->bo_kmap_type = tपंचांग_bo_map_iomap;
+		अगर (mem->bus.caching == tपंचांग_ग_लिखो_combined)
+			map->भव = ioremap_wc(bo->mem.bus.offset + offset,
 						  size);
-#ifdef CONFIG_X86
-		else if (mem->bus.caching == ttm_cached)
-			map->virtual = ioremap_cache(bo->mem.bus.offset + offset,
+#अगर_घोषित CONFIG_X86
+		अन्यथा अगर (mem->bus.caching == tपंचांग_cached)
+			map->भव = ioremap_cache(bo->mem.bus.offset + offset,
 						  size);
-#endif
-		else
-			map->virtual = ioremap(bo->mem.bus.offset + offset,
+#पूर्ण_अगर
+		अन्यथा
+			map->भव = ioremap(bo->mem.bus.offset + offset,
 					       size);
-	}
-	return (!map->virtual) ? -ENOMEM : 0;
-}
+	पूर्ण
+	वापस (!map->भव) ? -ENOMEM : 0;
+पूर्ण
 
-static int ttm_bo_kmap_ttm(struct ttm_buffer_object *bo,
-			   unsigned long start_page,
-			   unsigned long num_pages,
-			   struct ttm_bo_kmap_obj *map)
-{
-	struct ttm_resource *mem = &bo->mem;
-	struct ttm_operation_ctx ctx = {
-		.interruptible = false,
-		.no_wait_gpu = false
-	};
-	struct ttm_tt *ttm = bo->ttm;
+अटल पूर्णांक tपंचांग_bo_kmap_tपंचांग(काष्ठा tपंचांग_buffer_object *bo,
+			   अचिन्हित दीर्घ start_page,
+			   अचिन्हित दीर्घ num_pages,
+			   काष्ठा tपंचांग_bo_kmap_obj *map)
+अणु
+	काष्ठा tपंचांग_resource *mem = &bo->mem;
+	काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = false,
+		.no_रुको_gpu = false
+	पूर्ण;
+	काष्ठा tपंचांग_tt *tपंचांग = bo->tपंचांग;
 	pgprot_t prot;
-	int ret;
+	पूर्णांक ret;
 
-	BUG_ON(!ttm);
+	BUG_ON(!tपंचांग);
 
-	ret = ttm_tt_populate(bo->bdev, ttm, &ctx);
-	if (ret)
-		return ret;
+	ret = tपंचांग_tt_populate(bo->bdev, tपंचांग, &ctx);
+	अगर (ret)
+		वापस ret;
 
-	if (num_pages == 1 && ttm->caching == ttm_cached) {
+	अगर (num_pages == 1 && tपंचांग->caching == tपंचांग_cached) अणु
 		/*
 		 * We're mapping a single page, and the desired
 		 * page protection is consistent with the bo.
 		 */
 
-		map->bo_kmap_type = ttm_bo_map_kmap;
-		map->page = ttm->pages[start_page];
-		map->virtual = kmap(map->page);
-	} else {
+		map->bo_kmap_type = tपंचांग_bo_map_kmap;
+		map->page = tपंचांग->pages[start_page];
+		map->भव = kmap(map->page);
+	पूर्ण अन्यथा अणु
 		/*
 		 * We need to use vmap to get the desired page protection
 		 * or to make the buffer object look contiguous.
 		 */
-		prot = ttm_io_prot(bo, mem, PAGE_KERNEL);
-		map->bo_kmap_type = ttm_bo_map_vmap;
-		map->virtual = vmap(ttm->pages + start_page, num_pages,
+		prot = tपंचांग_io_prot(bo, mem, PAGE_KERNEL);
+		map->bo_kmap_type = tपंचांग_bo_map_vmap;
+		map->भव = vmap(tपंचांग->pages + start_page, num_pages,
 				    0, prot);
-	}
-	return (!map->virtual) ? -ENOMEM : 0;
-}
+	पूर्ण
+	वापस (!map->भव) ? -ENOMEM : 0;
+पूर्ण
 
-int ttm_bo_kmap(struct ttm_buffer_object *bo,
-		unsigned long start_page, unsigned long num_pages,
-		struct ttm_bo_kmap_obj *map)
-{
-	unsigned long offset, size;
-	int ret;
+पूर्णांक tपंचांग_bo_kmap(काष्ठा tपंचांग_buffer_object *bo,
+		अचिन्हित दीर्घ start_page, अचिन्हित दीर्घ num_pages,
+		काष्ठा tपंचांग_bo_kmap_obj *map)
+अणु
+	अचिन्हित दीर्घ offset, size;
+	पूर्णांक ret;
 
-	map->virtual = NULL;
+	map->भव = शून्य;
 	map->bo = bo;
-	if (num_pages > bo->mem.num_pages)
-		return -EINVAL;
-	if ((start_page + num_pages) > bo->mem.num_pages)
-		return -EINVAL;
+	अगर (num_pages > bo->mem.num_pages)
+		वापस -EINVAL;
+	अगर ((start_page + num_pages) > bo->mem.num_pages)
+		वापस -EINVAL;
 
-	ret = ttm_mem_io_reserve(bo->bdev, &bo->mem);
-	if (ret)
-		return ret;
-	if (!bo->mem.bus.is_iomem) {
-		return ttm_bo_kmap_ttm(bo, start_page, num_pages, map);
-	} else {
+	ret = tपंचांग_mem_io_reserve(bo->bdev, &bo->mem);
+	अगर (ret)
+		वापस ret;
+	अगर (!bo->mem.bus.is_iomem) अणु
+		वापस tपंचांग_bo_kmap_tपंचांग(bo, start_page, num_pages, map);
+	पूर्ण अन्यथा अणु
 		offset = start_page << PAGE_SHIFT;
 		size = num_pages << PAGE_SHIFT;
-		return ttm_bo_ioremap(bo, offset, size, map);
-	}
-}
-EXPORT_SYMBOL(ttm_bo_kmap);
+		वापस tपंचांग_bo_ioremap(bo, offset, size, map);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_kmap);
 
-void ttm_bo_kunmap(struct ttm_bo_kmap_obj *map)
-{
-	if (!map->virtual)
-		return;
-	switch (map->bo_kmap_type) {
-	case ttm_bo_map_iomap:
-		iounmap(map->virtual);
-		break;
-	case ttm_bo_map_vmap:
-		vunmap(map->virtual);
-		break;
-	case ttm_bo_map_kmap:
+व्योम tपंचांग_bo_kunmap(काष्ठा tपंचांग_bo_kmap_obj *map)
+अणु
+	अगर (!map->भव)
+		वापस;
+	चयन (map->bo_kmap_type) अणु
+	हाल tपंचांग_bo_map_iomap:
+		iounmap(map->भव);
+		अवरोध;
+	हाल tपंचांग_bo_map_vmap:
+		vunmap(map->भव);
+		अवरोध;
+	हाल tपंचांग_bo_map_kmap:
 		kunmap(map->page);
-		break;
-	case ttm_bo_map_premapped:
-		break;
-	default:
+		अवरोध;
+	हाल tपंचांग_bo_map_premapped:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	ttm_mem_io_free(map->bo->bdev, &map->bo->mem);
-	map->virtual = NULL;
-	map->page = NULL;
-}
-EXPORT_SYMBOL(ttm_bo_kunmap);
+	पूर्ण
+	tपंचांग_mem_io_मुक्त(map->bo->bdev, &map->bo->mem);
+	map->भव = शून्य;
+	map->page = शून्य;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_kunmap);
 
-int ttm_bo_vmap(struct ttm_buffer_object *bo, struct dma_buf_map *map)
-{
-	struct ttm_resource *mem = &bo->mem;
-	int ret;
+पूर्णांक tपंचांग_bo_vmap(काष्ठा tपंचांग_buffer_object *bo, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा tपंचांग_resource *mem = &bo->mem;
+	पूर्णांक ret;
 
-	ret = ttm_mem_io_reserve(bo->bdev, mem);
-	if (ret)
-		return ret;
+	ret = tपंचांग_mem_io_reserve(bo->bdev, mem);
+	अगर (ret)
+		वापस ret;
 
-	if (mem->bus.is_iomem) {
-		void __iomem *vaddr_iomem;
+	अगर (mem->bus.is_iomem) अणु
+		व्योम __iomem *vaddr_iomem;
 
-		if (mem->bus.addr)
-			vaddr_iomem = (void __iomem *)mem->bus.addr;
-		else if (mem->bus.caching == ttm_write_combined)
+		अगर (mem->bus.addr)
+			vaddr_iomem = (व्योम __iomem *)mem->bus.addr;
+		अन्यथा अगर (mem->bus.caching == tपंचांग_ग_लिखो_combined)
 			vaddr_iomem = ioremap_wc(mem->bus.offset,
 						 bo->base.size);
-#ifdef CONFIG_X86
-		else if (mem->bus.caching == ttm_cached)
+#अगर_घोषित CONFIG_X86
+		अन्यथा अगर (mem->bus.caching == tपंचांग_cached)
 			vaddr_iomem = ioremap_cache(mem->bus.offset,
 						  bo->base.size);
-#endif
-		else
+#पूर्ण_अगर
+		अन्यथा
 			vaddr_iomem = ioremap(mem->bus.offset, bo->base.size);
 
-		if (!vaddr_iomem)
-			return -ENOMEM;
+		अगर (!vaddr_iomem)
+			वापस -ENOMEM;
 
 		dma_buf_map_set_vaddr_iomem(map, vaddr_iomem);
 
-	} else {
-		struct ttm_operation_ctx ctx = {
-			.interruptible = false,
-			.no_wait_gpu = false
-		};
-		struct ttm_tt *ttm = bo->ttm;
+	पूर्ण अन्यथा अणु
+		काष्ठा tपंचांग_operation_ctx ctx = अणु
+			.पूर्णांकerruptible = false,
+			.no_रुको_gpu = false
+		पूर्ण;
+		काष्ठा tपंचांग_tt *tपंचांग = bo->tपंचांग;
 		pgprot_t prot;
-		void *vaddr;
+		व्योम *vaddr;
 
-		ret = ttm_tt_populate(bo->bdev, ttm, &ctx);
-		if (ret)
-			return ret;
+		ret = tपंचांग_tt_populate(bo->bdev, tपंचांग, &ctx);
+		अगर (ret)
+			वापस ret;
 
 		/*
 		 * We need to use vmap to get the desired page protection
 		 * or to make the buffer object look contiguous.
 		 */
-		prot = ttm_io_prot(bo, mem, PAGE_KERNEL);
-		vaddr = vmap(ttm->pages, ttm->num_pages, 0, prot);
-		if (!vaddr)
-			return -ENOMEM;
+		prot = tपंचांग_io_prot(bo, mem, PAGE_KERNEL);
+		vaddr = vmap(tपंचांग->pages, tपंचांग->num_pages, 0, prot);
+		अगर (!vaddr)
+			वापस -ENOMEM;
 
 		dma_buf_map_set_vaddr(map, vaddr);
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(ttm_bo_vmap);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_vmap);
 
-void ttm_bo_vunmap(struct ttm_buffer_object *bo, struct dma_buf_map *map)
-{
-	struct ttm_resource *mem = &bo->mem;
+व्योम tपंचांग_bo_vunmap(काष्ठा tपंचांग_buffer_object *bo, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा tपंचांग_resource *mem = &bo->mem;
 
-	if (dma_buf_map_is_null(map))
-		return;
+	अगर (dma_buf_map_is_null(map))
+		वापस;
 
-	if (!map->is_iomem)
+	अगर (!map->is_iomem)
 		vunmap(map->vaddr);
-	else if (!mem->bus.addr)
+	अन्यथा अगर (!mem->bus.addr)
 		iounmap(map->vaddr_iomem);
 	dma_buf_map_clear(map);
 
-	ttm_mem_io_free(bo->bdev, &bo->mem);
-}
-EXPORT_SYMBOL(ttm_bo_vunmap);
+	tपंचांग_mem_io_मुक्त(bo->bdev, &bo->mem);
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_vunmap);
 
-static int ttm_bo_wait_free_node(struct ttm_buffer_object *bo,
+अटल पूर्णांक tपंचांग_bo_रुको_मुक्त_node(काष्ठा tपंचांग_buffer_object *bo,
 				 bool dst_use_tt)
-{
-	int ret;
-	ret = ttm_bo_wait(bo, false, false);
-	if (ret)
-		return ret;
+अणु
+	पूर्णांक ret;
+	ret = tपंचांग_bo_रुको(bo, false, false);
+	अगर (ret)
+		वापस ret;
 
-	if (!dst_use_tt)
-		ttm_bo_tt_destroy(bo);
-	ttm_resource_free(bo, &bo->mem);
-	return 0;
-}
+	अगर (!dst_use_tt)
+		tपंचांग_bo_tt_destroy(bo);
+	tपंचांग_resource_मुक्त(bo, &bo->mem);
+	वापस 0;
+पूर्ण
 
-static int ttm_bo_move_to_ghost(struct ttm_buffer_object *bo,
-				struct dma_fence *fence,
+अटल पूर्णांक tपंचांग_bo_move_to_ghost(काष्ठा tपंचांग_buffer_object *bo,
+				काष्ठा dma_fence *fence,
 				bool dst_use_tt)
-{
-	struct ttm_buffer_object *ghost_obj;
-	int ret;
+अणु
+	काष्ठा tपंचांग_buffer_object *ghost_obj;
+	पूर्णांक ret;
 
 	/**
 	 * This should help pipeline ordinary buffer moves.
@@ -589,9 +590,9 @@ static int ttm_bo_move_to_ghost(struct ttm_buffer_object *bo,
 	dma_fence_put(bo->moving);
 	bo->moving = dma_fence_get(fence);
 
-	ret = ttm_buffer_object_transfer(bo, &ghost_obj);
-	if (ret)
-		return ret;
+	ret = tपंचांग_buffer_object_transfer(bo, &ghost_obj);
+	अगर (ret)
+		वापस ret;
 
 	dma_resv_add_excl_fence(&ghost_obj->base._resv, fence);
 
@@ -601,87 +602,87 @@ static int ttm_bo_move_to_ghost(struct ttm_buffer_object *bo,
 	 * bo to be unbound and destroyed.
 	 */
 
-	if (dst_use_tt)
-		ghost_obj->ttm = NULL;
-	else
-		bo->ttm = NULL;
+	अगर (dst_use_tt)
+		ghost_obj->tपंचांग = शून्य;
+	अन्यथा
+		bo->tपंचांग = शून्य;
 
 	dma_resv_unlock(&ghost_obj->base._resv);
-	ttm_bo_put(ghost_obj);
-	return 0;
-}
+	tपंचांग_bo_put(ghost_obj);
+	वापस 0;
+पूर्ण
 
-static void ttm_bo_move_pipeline_evict(struct ttm_buffer_object *bo,
-				       struct dma_fence *fence)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *from = ttm_manager_type(bdev, bo->mem.mem_type);
+अटल व्योम tपंचांग_bo_move_pipeline_evict(काष्ठा tपंचांग_buffer_object *bo,
+				       काष्ठा dma_fence *fence)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *from = tपंचांग_manager_type(bdev, bo->mem.mem_type);
 
 	/**
-	 * BO doesn't have a TTM we need to bind/unbind. Just remember
-	 * this eviction and free up the allocation
+	 * BO करोesn't have a TTM we need to bind/unbind. Just remember
+	 * this eviction and मुक्त up the allocation
 	 */
 	spin_lock(&from->move_lock);
-	if (!from->move || dma_fence_is_later(fence, from->move)) {
+	अगर (!from->move || dma_fence_is_later(fence, from->move)) अणु
 		dma_fence_put(from->move);
 		from->move = dma_fence_get(fence);
-	}
+	पूर्ण
 	spin_unlock(&from->move_lock);
 
-	ttm_resource_free(bo, &bo->mem);
+	tपंचांग_resource_मुक्त(bo, &bo->mem);
 
 	dma_fence_put(bo->moving);
 	bo->moving = dma_fence_get(fence);
-}
+पूर्ण
 
-int ttm_bo_move_accel_cleanup(struct ttm_buffer_object *bo,
-			      struct dma_fence *fence,
+पूर्णांक tपंचांग_bo_move_accel_cleanup(काष्ठा tपंचांग_buffer_object *bo,
+			      काष्ठा dma_fence *fence,
 			      bool evict,
 			      bool pipeline,
-			      struct ttm_resource *new_mem)
-{
-	struct ttm_device *bdev = bo->bdev;
-	struct ttm_resource_manager *from = ttm_manager_type(bdev, bo->mem.mem_type);
-	struct ttm_resource_manager *man = ttm_manager_type(bdev, new_mem->mem_type);
-	int ret = 0;
+			      काष्ठा tपंचांग_resource *new_mem)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	काष्ठा tपंचांग_resource_manager *from = tपंचांग_manager_type(bdev, bo->mem.mem_type);
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(bdev, new_mem->mem_type);
+	पूर्णांक ret = 0;
 
 	dma_resv_add_excl_fence(bo->base.resv, fence);
-	if (!evict)
-		ret = ttm_bo_move_to_ghost(bo, fence, man->use_tt);
-	else if (!from->use_tt && pipeline)
-		ttm_bo_move_pipeline_evict(bo, fence);
-	else
-		ret = ttm_bo_wait_free_node(bo, man->use_tt);
+	अगर (!evict)
+		ret = tपंचांग_bo_move_to_ghost(bo, fence, man->use_tt);
+	अन्यथा अगर (!from->use_tt && pipeline)
+		tपंचांग_bo_move_pipeline_evict(bo, fence);
+	अन्यथा
+		ret = tपंचांग_bo_रुको_मुक्त_node(bo, man->use_tt);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ttm_bo_assign_mem(bo, new_mem);
+	tपंचांग_bo_assign_mem(bo, new_mem);
 
-	return 0;
-}
-EXPORT_SYMBOL(ttm_bo_move_accel_cleanup);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_bo_move_accel_cleanup);
 
-int ttm_bo_pipeline_gutting(struct ttm_buffer_object *bo)
-{
-	struct ttm_buffer_object *ghost;
-	int ret;
+पूर्णांक tपंचांग_bo_pipeline_gutting(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	काष्ठा tपंचांग_buffer_object *ghost;
+	पूर्णांक ret;
 
-	ret = ttm_buffer_object_transfer(bo, &ghost);
-	if (ret)
-		return ret;
+	ret = tपंचांग_buffer_object_transfer(bo, &ghost);
+	अगर (ret)
+		वापस ret;
 
 	ret = dma_resv_copy_fences(&ghost->base._resv, bo->base.resv);
-	/* Last resort, wait for the BO to be idle when we are OOM */
-	if (ret)
-		ttm_bo_wait(bo, false, false);
+	/* Last resort, रुको क्रम the BO to be idle when we are OOM */
+	अगर (ret)
+		tपंचांग_bo_रुको(bo, false, false);
 
-	memset(&bo->mem, 0, sizeof(bo->mem));
+	स_रखो(&bo->mem, 0, माप(bo->mem));
 	bo->mem.mem_type = TTM_PL_SYSTEM;
-	bo->ttm = NULL;
+	bo->tपंचांग = शून्य;
 
 	dma_resv_unlock(&ghost->base._resv);
-	ttm_bo_put(ghost);
+	tपंचांग_bo_put(ghost);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

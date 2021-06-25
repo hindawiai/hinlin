@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *      Low-level parallel-support for PC-style hardware integrated in the 
- *	LASI-Controller (on GSC-Bus) for HP-PARISC Workstations
+ *      Low-level parallel-support क्रम PC-style hardware पूर्णांकegrated in the 
+ *	LASI-Controller (on GSC-Bus) क्रम HP-PARISC Workstations
  *
  *	(C) 1999-2001 by Helge Deller <deller@gmx.de>
  * 
@@ -14,29 +15,29 @@
  *          Andrea Arcangeli
  */
 
-#undef DEBUG	/* undef for production */
+#अघोषित DEBUG	/* undef क्रम production */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/sysctl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/sysctl.h>
 
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <linux/uaccess.h>
-#include <asm/superio.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/superपन.स>
 
-#include <linux/parport.h>
-#include <asm/pdc.h>
-#include <asm/parisc-device.h>
-#include <asm/hardware.h>
-#include "parport_gsc.h"
+#समावेश <linux/parport.h>
+#समावेश <यंत्र/pdc.h>
+#समावेश <यंत्र/parisc-device.h>
+#समावेश <यंत्र/hardware.h>
+#समावेश "parport_gsc.h"
 
 
 MODULE_AUTHOR("Helge Deller <deller@gmx.de>");
@@ -49,208 +50,208 @@ MODULE_LICENSE("GPL");
  *
  * This is also used in SPP detection.
  */
-static int clear_epp_timeout(struct parport *pb)
-{
-	unsigned char r;
+अटल पूर्णांक clear_epp_समयout(काष्ठा parport *pb)
+अणु
+	अचिन्हित अक्षर r;
 
-	if (!(parport_gsc_read_status(pb) & 0x01))
-		return 1;
+	अगर (!(parport_gsc_पढ़ो_status(pb) & 0x01))
+		वापस 1;
 
-	/* To clear timeout some chips require double read */
-	parport_gsc_read_status(pb);
-	r = parport_gsc_read_status(pb);
-	parport_writeb (r | 0x01, STATUS (pb)); /* Some reset by writing 1 */
-	parport_writeb (r & 0xfe, STATUS (pb)); /* Others by writing 0 */
-	r = parport_gsc_read_status(pb);
+	/* To clear समयout some chips require द्विगुन पढ़ो */
+	parport_gsc_पढ़ो_status(pb);
+	r = parport_gsc_पढ़ो_status(pb);
+	parport_ग_लिखोb (r | 0x01, STATUS (pb)); /* Some reset by writing 1 */
+	parport_ग_लिखोb (r & 0xfe, STATUS (pb)); /* Others by writing 0 */
+	r = parport_gsc_पढ़ो_status(pb);
 
-	return !(r & 0x01);
-}
+	वापस !(r & 0x01);
+पूर्ण
 
 /*
  * Access functions.
  *
- * Most of these aren't static because they may be used by the
- * parport_xxx_yyy macros.  extern __inline__ versions of several
+ * Most of these aren't अटल because they may be used by the
+ * parport_xxx_yyy macros.  बाह्य __अंतरभूत__ versions of several
  * of these are in parport_gsc.h.
  */
 
-void parport_gsc_init_state(struct pardevice *dev, struct parport_state *s)
-{
+व्योम parport_gsc_init_state(काष्ठा pardevice *dev, काष्ठा parport_state *s)
+अणु
 	s->u.pc.ctr = 0xc | (dev->irq_func ? 0x10 : 0x0);
-}
+पूर्ण
 
-void parport_gsc_save_state(struct parport *p, struct parport_state *s)
-{
-	s->u.pc.ctr = parport_readb (CONTROL (p));
-}
+व्योम parport_gsc_save_state(काष्ठा parport *p, काष्ठा parport_state *s)
+अणु
+	s->u.pc.ctr = parport_पढ़ोb (CONTROL (p));
+पूर्ण
 
-void parport_gsc_restore_state(struct parport *p, struct parport_state *s)
-{
-	parport_writeb (s->u.pc.ctr, CONTROL (p));
-}
+व्योम parport_gsc_restore_state(काष्ठा parport *p, काष्ठा parport_state *s)
+अणु
+	parport_ग_लिखोb (s->u.pc.ctr, CONTROL (p));
+पूर्ण
 
-struct parport_operations parport_gsc_ops = 
-{
-	.write_data	= parport_gsc_write_data,
-	.read_data	= parport_gsc_read_data,
+काष्ठा parport_operations parport_gsc_ops = 
+अणु
+	.ग_लिखो_data	= parport_gsc_ग_लिखो_data,
+	.पढ़ो_data	= parport_gsc_पढ़ो_data,
 
-	.write_control	= parport_gsc_write_control,
-	.read_control	= parport_gsc_read_control,
+	.ग_लिखो_control	= parport_gsc_ग_लिखो_control,
+	.पढ़ो_control	= parport_gsc_पढ़ो_control,
 	.frob_control	= parport_gsc_frob_control,
 
-	.read_status	= parport_gsc_read_status,
+	.पढ़ो_status	= parport_gsc_पढ़ो_status,
 
 	.enable_irq	= parport_gsc_enable_irq,
 	.disable_irq	= parport_gsc_disable_irq,
 
-	.data_forward	= parport_gsc_data_forward,
+	.data_क्रमward	= parport_gsc_data_क्रमward,
 	.data_reverse	= parport_gsc_data_reverse,
 
 	.init_state	= parport_gsc_init_state,
 	.save_state	= parport_gsc_save_state,
 	.restore_state	= parport_gsc_restore_state,
 
-	.epp_write_data	= parport_ieee1284_epp_write_data,
-	.epp_read_data	= parport_ieee1284_epp_read_data,
-	.epp_write_addr	= parport_ieee1284_epp_write_addr,
-	.epp_read_addr	= parport_ieee1284_epp_read_addr,
+	.epp_ग_लिखो_data	= parport_ieee1284_epp_ग_लिखो_data,
+	.epp_पढ़ो_data	= parport_ieee1284_epp_पढ़ो_data,
+	.epp_ग_लिखो_addr	= parport_ieee1284_epp_ग_लिखो_addr,
+	.epp_पढ़ो_addr	= parport_ieee1284_epp_पढ़ो_addr,
 
-	.ecp_write_data	= parport_ieee1284_ecp_write_data,
-	.ecp_read_data	= parport_ieee1284_ecp_read_data,
-	.ecp_write_addr	= parport_ieee1284_ecp_write_addr,
+	.ecp_ग_लिखो_data	= parport_ieee1284_ecp_ग_लिखो_data,
+	.ecp_पढ़ो_data	= parport_ieee1284_ecp_पढ़ो_data,
+	.ecp_ग_लिखो_addr	= parport_ieee1284_ecp_ग_लिखो_addr,
 
-	.compat_write_data 	= parport_ieee1284_write_compat,
-	.nibble_read_data	= parport_ieee1284_read_nibble,
-	.byte_read_data		= parport_ieee1284_read_byte,
+	.compat_ग_लिखो_data 	= parport_ieee1284_ग_लिखो_compat,
+	.nibble_पढ़ो_data	= parport_ieee1284_पढ़ो_nibble,
+	.byte_पढ़ो_data		= parport_ieee1284_पढ़ो_byte,
 
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
 /* --- Mode detection ------------------------------------- */
 
 /*
- * Checks for port existence, all ports support SPP MODE
+ * Checks क्रम port existence, all ports support SPP MODE
  */
-static int parport_SPP_supported(struct parport *pb)
-{
-	unsigned char r, w;
+अटल पूर्णांक parport_SPP_supported(काष्ठा parport *pb)
+अणु
+	अचिन्हित अक्षर r, w;
 
 	/*
-	 * first clear an eventually pending EPP timeout 
-	 * I (sailer@ife.ee.ethz.ch) have an SMSC chipset
-	 * that does not even respond to SPP cycles if an EPP
-	 * timeout is pending
+	 * first clear an eventually pending EPP समयout 
+	 * I (sailer@अगरe.ee.ethz.ch) have an SMSC chipset
+	 * that करोes not even respond to SPP cycles अगर an EPP
+	 * समयout is pending
 	 */
-	clear_epp_timeout(pb);
+	clear_epp_समयout(pb);
 
-	/* Do a simple read-write test to make sure the port exists. */
+	/* Do a simple पढ़ो-ग_लिखो test to make sure the port exists. */
 	w = 0xc;
-	parport_writeb (w, CONTROL (pb));
+	parport_ग_लिखोb (w, CONTROL (pb));
 
-	/* Is there a control register that we can read from?  Some
-	 * ports don't allow reads, so read_control just returns a
-	 * software copy. Some ports _do_ allow reads, so bypass the
+	/* Is there a control रेजिस्टर that we can पढ़ो from?  Some
+	 * ports करोn't allow पढ़ोs, so पढ़ो_control just वापसs a
+	 * software copy. Some ports _करो_ allow पढ़ोs, so bypass the
 	 * software copy here.  In addition, some bits aren't
 	 * writable. */
-	r = parport_readb (CONTROL (pb));
-	if ((r & 0xf) == w) {
+	r = parport_पढ़ोb (CONTROL (pb));
+	अगर ((r & 0xf) == w) अणु
 		w = 0xe;
-		parport_writeb (w, CONTROL (pb));
-		r = parport_readb (CONTROL (pb));
-		parport_writeb (0xc, CONTROL (pb));
-		if ((r & 0xf) == w)
-			return PARPORT_MODE_PCSPP;
-	}
+		parport_ग_लिखोb (w, CONTROL (pb));
+		r = parport_पढ़ोb (CONTROL (pb));
+		parport_ग_लिखोb (0xc, CONTROL (pb));
+		अगर ((r & 0xf) == w)
+			वापस PARPORT_MODE_PCSPP;
+	पूर्ण
 
-	/* Try the data register.  The data lines aren't tri-stated at
+	/* Try the data रेजिस्टर.  The data lines aren't tri-stated at
 	 * this stage, so we expect back what we wrote. */
 	w = 0xaa;
-	parport_gsc_write_data (pb, w);
-	r = parport_gsc_read_data (pb);
-	if (r == w) {
+	parport_gsc_ग_लिखो_data (pb, w);
+	r = parport_gsc_पढ़ो_data (pb);
+	अगर (r == w) अणु
 		w = 0x55;
-		parport_gsc_write_data (pb, w);
-		r = parport_gsc_read_data (pb);
-		if (r == w)
-			return PARPORT_MODE_PCSPP;
-	}
+		parport_gsc_ग_लिखो_data (pb, w);
+		r = parport_gsc_पढ़ो_data (pb);
+		अगर (r == w)
+			वापस PARPORT_MODE_PCSPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Detect PS/2 support.
  *
  * Bit 5 (0x20) sets the PS/2 data direction; setting this high
- * allows us to read data from the data lines.  In theory we would get back
+ * allows us to पढ़ो data from the data lines.  In theory we would get back
  * 0xff but any peripheral attached to the port may drag some or all of the
- * lines down to zero.  So if we get back anything that isn't the contents
- * of the data register we deem PS/2 support to be present. 
+ * lines करोwn to zero.  So अगर we get back anything that isn't the contents
+ * of the data रेजिस्टर we deem PS/2 support to be present. 
  *
  * Some SPP ports have "half PS/2" ability - you can't turn off the line
- * drivers, but an external peripheral with sufficiently beefy drivers of
- * its own can overpower them and assert its own levels onto the bus, from
- * where they can then be read back as normal.  Ports with this property
+ * drivers, but an बाह्यal peripheral with sufficiently beefy drivers of
+ * its own can overघातer them and निश्चित its own levels onto the bus, from
+ * where they can then be पढ़ो back as normal.  Ports with this property
  * and the right type of device attached are likely to fail the SPP test,
  * (as they will appear to have stuck bits) and so the fact that they might
  * be misdetected here is rather academic. 
  */
 
-static int parport_PS2_supported(struct parport *pb)
-{
-	int ok = 0;
+अटल पूर्णांक parport_PS2_supported(काष्ठा parport *pb)
+अणु
+	पूर्णांक ok = 0;
   
-	clear_epp_timeout(pb);
+	clear_epp_समयout(pb);
 
 	/* try to tri-state the buffer */
 	parport_gsc_data_reverse (pb);
 	
-	parport_gsc_write_data(pb, 0x55);
-	if (parport_gsc_read_data(pb) != 0x55) ok++;
+	parport_gsc_ग_लिखो_data(pb, 0x55);
+	अगर (parport_gsc_पढ़ो_data(pb) != 0x55) ok++;
 
-	parport_gsc_write_data(pb, 0xaa);
-	if (parport_gsc_read_data(pb) != 0xaa) ok++;
+	parport_gsc_ग_लिखो_data(pb, 0xaa);
+	अगर (parport_gsc_पढ़ो_data(pb) != 0xaa) ok++;
 
 	/* cancel input mode */
-	parport_gsc_data_forward (pb);
+	parport_gsc_data_क्रमward (pb);
 
-	if (ok) {
+	अगर (ok) अणु
 		pb->modes |= PARPORT_MODE_TRISTATE;
-	} else {
-		struct parport_gsc_private *priv = pb->private_data;
+	पूर्ण अन्यथा अणु
+		काष्ठा parport_gsc_निजी *priv = pb->निजी_data;
 		priv->ctr_writable &= ~0x20;
-	}
+	पूर्ण
 
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
 
 /* --- Initialisation code -------------------------------- */
 
-struct parport *parport_gsc_probe_port(unsigned long base,
-				       unsigned long base_hi, int irq,
-				       int dma, struct parisc_device *padev)
-{
-	struct parport_gsc_private *priv;
-	struct parport_operations *ops;
-	struct parport tmp;
-	struct parport *p = &tmp;
+काष्ठा parport *parport_gsc_probe_port(अचिन्हित दीर्घ base,
+				       अचिन्हित दीर्घ base_hi, पूर्णांक irq,
+				       पूर्णांक dma, काष्ठा parisc_device *padev)
+अणु
+	काष्ठा parport_gsc_निजी *priv;
+	काष्ठा parport_operations *ops;
+	काष्ठा parport पंचांगp;
+	काष्ठा parport *p = &पंचांगp;
 
-	priv = kzalloc (sizeof (struct parport_gsc_private), GFP_KERNEL);
-	if (!priv) {
-		printk(KERN_DEBUG "parport (0x%lx): no memory!\n", base);
-		return NULL;
-	}
-	ops = kmemdup(&parport_gsc_ops, sizeof(struct parport_operations),
+	priv = kzalloc (माप (काष्ठा parport_gsc_निजी), GFP_KERNEL);
+	अगर (!priv) अणु
+		prपूर्णांकk(KERN_DEBUG "parport (0x%lx): no memory!\n", base);
+		वापस शून्य;
+	पूर्ण
+	ops = kmemdup(&parport_gsc_ops, माप(काष्ठा parport_operations),
 		      GFP_KERNEL);
-	if (!ops) {
-		printk(KERN_DEBUG "parport (0x%lx): no memory for ops!\n",
+	अगर (!ops) अणु
+		prपूर्णांकk(KERN_DEBUG "parport (0x%lx): no memory for ops!\n",
 		       base);
-		kfree (priv);
-		return NULL;
-	}
+		kमुक्त (priv);
+		वापस शून्य;
+	पूर्ण
 	priv->ctr = 0xc;
 	priv->ctr_writable = 0xff;
-	priv->dma_buf = NULL;
+	priv->dma_buf = शून्य;
 	priv->dma_handle = 0;
 	p->base = base;
 	p->base_hi = base_hi;
@@ -258,171 +259,171 @@ struct parport *parport_gsc_probe_port(unsigned long base,
 	p->dma = dma;
 	p->modes = PARPORT_MODE_PCSPP | PARPORT_MODE_SAFEININT;
 	p->ops = ops;
-	p->private_data = priv;
+	p->निजी_data = priv;
 	p->physport = p;
-	if (!parport_SPP_supported (p)) {
+	अगर (!parport_SPP_supported (p)) अणु
 		/* No port. */
-		kfree (priv);
-		kfree(ops);
-		return NULL;
-	}
+		kमुक्त (priv);
+		kमुक्त(ops);
+		वापस शून्य;
+	पूर्ण
 	parport_PS2_supported (p);
 
-	if (!(p = parport_register_port(base, PARPORT_IRQ_NONE,
-					PARPORT_DMA_NONE, ops))) {
-		kfree (priv);
-		kfree (ops);
-		return NULL;
-	}
+	अगर (!(p = parport_रेजिस्टर_port(base, PARPORT_IRQ_NONE,
+					PARPORT_DMA_NONE, ops))) अणु
+		kमुक्त (priv);
+		kमुक्त (ops);
+		वापस शून्य;
+	पूर्ण
 
 	p->dev = &padev->dev;
 	p->base_hi = base_hi;
-	p->modes = tmp.modes;
+	p->modes = पंचांगp.modes;
 	p->size = (p->modes & PARPORT_MODE_EPP)?8:3;
-	p->private_data = priv;
+	p->निजी_data = priv;
 
 	pr_info("%s: PC-style at 0x%lx", p->name, p->base);
 	p->irq = irq;
-	if (p->irq == PARPORT_IRQ_AUTO) {
+	अगर (p->irq == PARPORT_IRQ_AUTO) अणु
 		p->irq = PARPORT_IRQ_NONE;
-	}
-	if (p->irq != PARPORT_IRQ_NONE) {
+	पूर्ण
+	अगर (p->irq != PARPORT_IRQ_NONE) अणु
 		pr_cont(", irq %d", p->irq);
 
-		if (p->dma == PARPORT_DMA_AUTO) {
+		अगर (p->dma == PARPORT_DMA_AUTO) अणु
 			p->dma = PARPORT_DMA_NONE;
-		}
-	}
-	if (p->dma == PARPORT_DMA_AUTO) /* To use DMA, giving the irq
+		पूर्ण
+	पूर्ण
+	अगर (p->dma == PARPORT_DMA_AUTO) /* To use DMA, giving the irq
                                            is mandatory (see above) */
 		p->dma = PARPORT_DMA_NONE;
 
 	pr_cont(" [");
-#define printmode(x)							\
-do {									\
-	if (p->modes & PARPORT_MODE_##x)				\
+#घोषणा prपूर्णांकmode(x)							\
+करो अणु									\
+	अगर (p->modes & PARPORT_MODE_##x)				\
 		pr_cont("%s%s", f++ ? "," : "", #x);			\
-} while (0)
-	{
-		int f = 0;
-		printmode(PCSPP);
-		printmode(TRISTATE);
-		printmode(COMPAT);
-		printmode(EPP);
-//		printmode(ECP);
-//		printmode(DMA);
-	}
-#undef printmode
+पूर्ण जबतक (0)
+	अणु
+		पूर्णांक f = 0;
+		prपूर्णांकmode(PCSPP);
+		prपूर्णांकmode(TRISTATE);
+		prपूर्णांकmode(COMPAT);
+		prपूर्णांकmode(EPP);
+//		prपूर्णांकmode(ECP);
+//		prपूर्णांकmode(DMA);
+	पूर्ण
+#अघोषित prपूर्णांकmode
 	pr_cont("]\n");
 
-	if (p->irq != PARPORT_IRQ_NONE) {
-		if (request_irq (p->irq, parport_irq_handler,
-				 0, p->name, p)) {
+	अगर (p->irq != PARPORT_IRQ_NONE) अणु
+		अगर (request_irq (p->irq, parport_irq_handler,
+				 0, p->name, p)) अणु
 			pr_warn("%s: irq %d in use, resorting to polled operation\n",
 				p->name, p->irq);
 			p->irq = PARPORT_IRQ_NONE;
 			p->dma = PARPORT_DMA_NONE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Done probing.  Now put the port into a sensible start-up state. */
+	/* Done probing.  Now put the port पूर्णांकo a sensible start-up state. */
 
-	parport_gsc_write_data(p, 0);
-	parport_gsc_data_forward (p);
+	parport_gsc_ग_लिखो_data(p, 0);
+	parport_gsc_data_क्रमward (p);
 
 	/* Now that we've told the sharing engine about the port, and
-	   found out its characteristics, let the high-level drivers
+	   found out its अक्षरacteristics, let the high-level drivers
 	   know about it. */
 	parport_announce_port (p);
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 
-#define PARPORT_GSC_OFFSET 0x800
+#घोषणा PARPORT_GSC_OFFSET 0x800
 
-static int parport_count;
+अटल पूर्णांक parport_count;
 
-static int __init parport_init_chip(struct parisc_device *dev)
-{
-	struct parport *p;
-	unsigned long port;
+अटल पूर्णांक __init parport_init_chip(काष्ठा parisc_device *dev)
+अणु
+	काष्ठा parport *p;
+	अचिन्हित दीर्घ port;
 
-	if (!dev->irq) {
+	अगर (!dev->irq) अणु
 		pr_warn("IRQ not found for parallel device at 0x%llx\n",
-			(unsigned long long)dev->hpa.start);
-		return -ENODEV;
-	}
+			(अचिन्हित दीर्घ दीर्घ)dev->hpa.start);
+		वापस -ENODEV;
+	पूर्ण
 
 	port = dev->hpa.start + PARPORT_GSC_OFFSET;
 	
-	/* some older machines with ASP-chip don't support
+	/* some older machines with ASP-chip करोn't support
 	 * the enhanced parport modes.
 	 */
-	if (boot_cpu_data.cpu_type > pcxt && !pdc_add_valid(port+4)) {
+	अगर (boot_cpu_data.cpu_type > pcxt && !pdc_add_valid(port+4)) अणु
 
 		/* Initialize bidirectional-mode (0x10) & data-tranfer-mode #1 (0x20) */
 		pr_info("%s: initialize bidirectional-mode\n", __func__);
-		parport_writeb ( (0x10 + 0x20), port + 4);
+		parport_ग_लिखोb ( (0x10 + 0x20), port + 4);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("%s: enhanced parport-modes not supported\n", __func__);
-	}
+	पूर्ण
 	
 	p = parport_gsc_probe_port(port, 0, dev->irq,
 			/* PARPORT_IRQ_NONE */ PARPORT_DMA_NONE, dev);
-	if (p)
+	अगर (p)
 		parport_count++;
 	dev_set_drvdata(&dev->dev, p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __exit parport_remove_chip(struct parisc_device *dev)
-{
-	struct parport *p = dev_get_drvdata(&dev->dev);
-	if (p) {
-		struct parport_gsc_private *priv = p->private_data;
-		struct parport_operations *ops = p->ops;
-		parport_remove_port(p);
-		if (p->dma != PARPORT_DMA_NONE)
-			free_dma(p->dma);
-		if (p->irq != PARPORT_IRQ_NONE)
-			free_irq(p->irq, p);
-		if (priv->dma_buf)
-			pci_free_consistent(priv->dev, PAGE_SIZE,
+अटल पूर्णांक __निकास parport_हटाओ_chip(काष्ठा parisc_device *dev)
+अणु
+	काष्ठा parport *p = dev_get_drvdata(&dev->dev);
+	अगर (p) अणु
+		काष्ठा parport_gsc_निजी *priv = p->निजी_data;
+		काष्ठा parport_operations *ops = p->ops;
+		parport_हटाओ_port(p);
+		अगर (p->dma != PARPORT_DMA_NONE)
+			मुक्त_dma(p->dma);
+		अगर (p->irq != PARPORT_IRQ_NONE)
+			मुक्त_irq(p->irq, p);
+		अगर (priv->dma_buf)
+			pci_मुक्त_consistent(priv->dev, PAGE_SIZE,
 					    priv->dma_buf,
 					    priv->dma_handle);
-		kfree (p->private_data);
+		kमुक्त (p->निजी_data);
 		parport_put_port(p);
-		kfree (ops); /* hope no-one cached it */
-	}
-	return 0;
-}
+		kमुक्त (ops); /* hope no-one cached it */
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct parisc_device_id parport_tbl[] __initconst = {
-	{ HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x74 },
-	{ 0, }
-};
+अटल स्थिर काष्ठा parisc_device_id parport_tbl[] __initस्थिर = अणु
+	अणु HPHW_FIO, HVERSION_REV_ANY_ID, HVERSION_ANY_ID, 0x74 पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(parisc, parport_tbl);
 
-static struct parisc_driver parport_driver __refdata = {
+अटल काष्ठा parisc_driver parport_driver __refdata = अणु
 	.name		= "Parallel",
 	.id_table	= parport_tbl,
 	.probe		= parport_init_chip,
-	.remove		= __exit_p(parport_remove_chip),
-};
+	.हटाओ		= __निकास_p(parport_हटाओ_chip),
+पूर्ण;
 
-int parport_gsc_init(void)
-{
-	return register_parisc_driver(&parport_driver);
-}
+पूर्णांक parport_gsc_init(व्योम)
+अणु
+	वापस रेजिस्टर_parisc_driver(&parport_driver);
+पूर्ण
 
-static void parport_gsc_exit(void)
-{
-	unregister_parisc_driver(&parport_driver);
-}
+अटल व्योम parport_gsc_निकास(व्योम)
+अणु
+	unरेजिस्टर_parisc_driver(&parport_driver);
+पूर्ण
 
 module_init(parport_gsc_init);
-module_exit(parport_gsc_exit);
+module_निकास(parport_gsc_निकास);

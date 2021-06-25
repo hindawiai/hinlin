@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * DVB USB framework
  *
@@ -6,17 +7,17 @@
  * Copyright (C) 2012 Antti Palosaari <crope@iki.fi>
  */
 
-#ifndef DVB_USB_COMMON_H
-#define DVB_USB_COMMON_H
+#अगर_अघोषित DVB_USB_COMMON_H
+#घोषणा DVB_USB_COMMON_H
 
-#include "dvb_usb.h"
+#समावेश "dvb_usb.h"
 
 /* commonly used  methods */
-extern int usb_urb_initv2(struct usb_data_stream *stream,
-		const struct usb_data_stream_properties *props);
-extern int usb_urb_exitv2(struct usb_data_stream *stream);
-extern int usb_urb_submitv2(struct usb_data_stream *stream,
-		struct usb_data_stream_properties *props);
-extern int usb_urb_killv2(struct usb_data_stream *stream);
+बाह्य पूर्णांक usb_urb_initv2(काष्ठा usb_data_stream *stream,
+		स्थिर काष्ठा usb_data_stream_properties *props);
+बाह्य पूर्णांक usb_urb_निकासv2(काष्ठा usb_data_stream *stream);
+बाह्य पूर्णांक usb_urb_submitv2(काष्ठा usb_data_stream *stream,
+		काष्ठा usb_data_stream_properties *props);
+बाह्य पूर्णांक usb_urb_समाप्तv2(काष्ठा usb_data_stream *stream);
 
-#endif
+#पूर्ण_अगर

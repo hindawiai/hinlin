@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * net/sched/sch_red.c	Random Early Detection queue.
+ * net/sched/sch_red.c	Ranकरोm Early Detection queue.
  *
  * Authors:	Alexey Kuznetsov, <kuznet@ms2.inr.ac.ru>
  *
@@ -10,14 +11,14 @@
  * J Hadi Salim 980816:  ECN support
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <net/pkt_sched.h>
-#include <net/pkt_cls.h>
-#include <net/inet_ecn.h>
-#include <net/red.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/pkt_cls.h>
+#समावेश <net/inet_ecn.h>
+#समावेश <net/red.h>
 
 
 /*	Parameters, settable by user:
@@ -26,174 +27,174 @@
 	limit		- bytes (must be > qth_max + burst)
 
 	Hard limit on queue length, should be chosen >qth_max
-	to allow packet bursts. This parameter does not
+	to allow packet bursts. This parameter करोes not
 	affect the algorithms behaviour and can be chosen
 	arbitrarily high (well, less than ram size)
 	Really, this limit will never be reached
-	if RED works correctly.
+	अगर RED works correctly.
  */
 
-struct red_sched_data {
+काष्ठा red_sched_data अणु
 	u32			limit;		/* HARD maximal queue length */
 
-	unsigned char		flags;
+	अचिन्हित अक्षर		flags;
 	/* Non-flags in tc_red_qopt.flags. */
-	unsigned char		userbits;
+	अचिन्हित अक्षर		userbits;
 
-	struct timer_list	adapt_timer;
-	struct Qdisc		*sch;
-	struct red_parms	parms;
-	struct red_vars		vars;
-	struct red_stats	stats;
-	struct Qdisc		*qdisc;
-	struct tcf_qevent	qe_early_drop;
-	struct tcf_qevent	qe_mark;
-};
+	काष्ठा समयr_list	adapt_समयr;
+	काष्ठा Qdisc		*sch;
+	काष्ठा red_parms	parms;
+	काष्ठा red_vars		vars;
+	काष्ठा red_stats	stats;
+	काष्ठा Qdisc		*qdisc;
+	काष्ठा tcf_qevent	qe_early_drop;
+	काष्ठा tcf_qevent	qe_mark;
+पूर्ण;
 
-#define TC_RED_SUPPORTED_FLAGS (TC_RED_HISTORIC_FLAGS | TC_RED_NODROP)
+#घोषणा TC_RED_SUPPORTED_FLAGS (TC_RED_HISTORIC_FLAGS | TC_RED_NODROP)
 
-static inline int red_use_ecn(struct red_sched_data *q)
-{
-	return q->flags & TC_RED_ECN;
-}
+अटल अंतरभूत पूर्णांक red_use_ecn(काष्ठा red_sched_data *q)
+अणु
+	वापस q->flags & TC_RED_ECN;
+पूर्ण
 
-static inline int red_use_harddrop(struct red_sched_data *q)
-{
-	return q->flags & TC_RED_HARDDROP;
-}
+अटल अंतरभूत पूर्णांक red_use_harddrop(काष्ठा red_sched_data *q)
+अणु
+	वापस q->flags & TC_RED_HARDDROP;
+पूर्ण
 
-static int red_use_nodrop(struct red_sched_data *q)
-{
-	return q->flags & TC_RED_NODROP;
-}
+अटल पूर्णांक red_use_nodrop(काष्ठा red_sched_data *q)
+अणु
+	वापस q->flags & TC_RED_NODROP;
+पूर्ण
 
-static int red_enqueue(struct sk_buff *skb, struct Qdisc *sch,
-		       struct sk_buff **to_free)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *child = q->qdisc;
-	int ret;
+अटल पूर्णांक red_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
+		       काष्ठा sk_buff **to_मुक्त)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *child = q->qdisc;
+	पूर्णांक ret;
 
 	q->vars.qavg = red_calc_qavg(&q->parms,
 				     &q->vars,
 				     child->qstats.backlog);
 
-	if (red_is_idling(&q->vars))
+	अगर (red_is_idling(&q->vars))
 		red_end_of_idle_period(&q->vars);
 
-	switch (red_action(&q->parms, &q->vars, q->vars.qavg)) {
-	case RED_DONT_MARK:
-		break;
+	चयन (red_action(&q->parms, &q->vars, q->vars.qavg)) अणु
+	हाल RED_DONT_MARK:
+		अवरोध;
 
-	case RED_PROB_MARK:
+	हाल RED_PROB_MARK:
 		qdisc_qstats_overlimit(sch);
-		if (!red_use_ecn(q)) {
+		अगर (!red_use_ecn(q)) अणु
 			q->stats.prob_drop++;
-			goto congestion_drop;
-		}
+			जाओ congestion_drop;
+		पूर्ण
 
-		if (INET_ECN_set_ce(skb)) {
+		अगर (INET_ECN_set_ce(skb)) अणु
 			q->stats.prob_mark++;
-			skb = tcf_qevent_handle(&q->qe_mark, sch, skb, to_free, &ret);
-			if (!skb)
-				return NET_XMIT_CN | ret;
-		} else if (!red_use_nodrop(q)) {
+			skb = tcf_qevent_handle(&q->qe_mark, sch, skb, to_मुक्त, &ret);
+			अगर (!skb)
+				वापस NET_XMIT_CN | ret;
+		पूर्ण अन्यथा अगर (!red_use_nodrop(q)) अणु
 			q->stats.prob_drop++;
-			goto congestion_drop;
-		}
+			जाओ congestion_drop;
+		पूर्ण
 
 		/* Non-ECT packet in ECN nodrop mode: queue it. */
-		break;
+		अवरोध;
 
-	case RED_HARD_MARK:
+	हाल RED_HARD_MARK:
 		qdisc_qstats_overlimit(sch);
-		if (red_use_harddrop(q) || !red_use_ecn(q)) {
-			q->stats.forced_drop++;
-			goto congestion_drop;
-		}
+		अगर (red_use_harddrop(q) || !red_use_ecn(q)) अणु
+			q->stats.क्रमced_drop++;
+			जाओ congestion_drop;
+		पूर्ण
 
-		if (INET_ECN_set_ce(skb)) {
-			q->stats.forced_mark++;
-			skb = tcf_qevent_handle(&q->qe_mark, sch, skb, to_free, &ret);
-			if (!skb)
-				return NET_XMIT_CN | ret;
-		} else if (!red_use_nodrop(q)) {
-			q->stats.forced_drop++;
-			goto congestion_drop;
-		}
+		अगर (INET_ECN_set_ce(skb)) अणु
+			q->stats.क्रमced_mark++;
+			skb = tcf_qevent_handle(&q->qe_mark, sch, skb, to_मुक्त, &ret);
+			अगर (!skb)
+				वापस NET_XMIT_CN | ret;
+		पूर्ण अन्यथा अगर (!red_use_nodrop(q)) अणु
+			q->stats.क्रमced_drop++;
+			जाओ congestion_drop;
+		पूर्ण
 
 		/* Non-ECT packet in ECN nodrop mode: queue it. */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	ret = qdisc_enqueue(skb, child, to_free);
-	if (likely(ret == NET_XMIT_SUCCESS)) {
+	ret = qdisc_enqueue(skb, child, to_मुक्त);
+	अगर (likely(ret == NET_XMIT_SUCCESS)) अणु
 		qdisc_qstats_backlog_inc(sch, skb);
 		sch->q.qlen++;
-	} else if (net_xmit_drop_count(ret)) {
+	पूर्ण अन्यथा अगर (net_xmit_drop_count(ret)) अणु
 		q->stats.pdrop++;
 		qdisc_qstats_drop(sch);
-	}
-	return ret;
+	पूर्ण
+	वापस ret;
 
 congestion_drop:
-	skb = tcf_qevent_handle(&q->qe_early_drop, sch, skb, to_free, &ret);
-	if (!skb)
-		return NET_XMIT_CN | ret;
+	skb = tcf_qevent_handle(&q->qe_early_drop, sch, skb, to_मुक्त, &ret);
+	अगर (!skb)
+		वापस NET_XMIT_CN | ret;
 
-	qdisc_drop(skb, sch, to_free);
-	return NET_XMIT_CN;
-}
+	qdisc_drop(skb, sch, to_मुक्त);
+	वापस NET_XMIT_CN;
+पूर्ण
 
-static struct sk_buff *red_dequeue(struct Qdisc *sch)
-{
-	struct sk_buff *skb;
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *child = q->qdisc;
+अटल काष्ठा sk_buff *red_dequeue(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *child = q->qdisc;
 
 	skb = child->dequeue(child);
-	if (skb) {
+	अगर (skb) अणु
 		qdisc_bstats_update(sch, skb);
 		qdisc_qstats_backlog_dec(sch, skb);
 		sch->q.qlen--;
-	} else {
-		if (!red_is_idling(&q->vars))
+	पूर्ण अन्यथा अणु
+		अगर (!red_is_idling(&q->vars))
 			red_start_of_idle_period(&q->vars);
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *red_peek(struct Qdisc *sch)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct Qdisc *child = q->qdisc;
+अटल काष्ठा sk_buff *red_peek(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा Qdisc *child = q->qdisc;
 
-	return child->ops->peek(child);
-}
+	वापस child->ops->peek(child);
+पूर्ण
 
-static void red_reset(struct Qdisc *sch)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
+अटल व्योम red_reset(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
 
 	qdisc_reset(q->qdisc);
 	sch->qstats.backlog = 0;
 	sch->q.qlen = 0;
 	red_restart(&q->vars);
-}
+पूर्ण
 
-static int red_offload(struct Qdisc *sch, bool enable)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
-	struct tc_red_qopt_offload opt = {
+अटल पूर्णांक red_offload(काष्ठा Qdisc *sch, bool enable)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा tc_red_qopt_offload opt = अणु
 		.handle = sch->handle,
 		.parent = sch->parent,
-	};
+	पूर्ण;
 
-	if (!tc_can_offload(dev) || !dev->netdev_ops->ndo_setup_tc)
-		return -EOPNOTSUPP;
+	अगर (!tc_can_offload(dev) || !dev->netdev_ops->nकरो_setup_tc)
+		वापस -EOPNOTSUPP;
 
-	if (enable) {
+	अगर (enable) अणु
 		opt.command = TC_RED_REPLACE;
 		opt.set.min = q->parms.qth_min >> q->parms.Wlog;
 		opt.set.max = q->parms.qth_max >> q->parms.Wlog;
@@ -203,90 +204,90 @@ static int red_offload(struct Qdisc *sch, bool enable)
 		opt.set.is_harddrop = red_use_harddrop(q);
 		opt.set.is_nodrop = red_use_nodrop(q);
 		opt.set.qstats = &sch->qstats;
-	} else {
+	पूर्ण अन्यथा अणु
 		opt.command = TC_RED_DESTROY;
-	}
+	पूर्ण
 
-	return dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_RED, &opt);
-}
+	वापस dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_RED, &opt);
+पूर्ण
 
-static void red_destroy(struct Qdisc *sch)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
+अटल व्योम red_destroy(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
 
 	tcf_qevent_destroy(&q->qe_mark, sch);
 	tcf_qevent_destroy(&q->qe_early_drop, sch);
-	del_timer_sync(&q->adapt_timer);
+	del_समयr_sync(&q->adapt_समयr);
 	red_offload(sch, false);
 	qdisc_put(q->qdisc);
-}
+पूर्ण
 
-static const struct nla_policy red_policy[TCA_RED_MAX + 1] = {
-	[TCA_RED_UNSPEC] = { .strict_start_type = TCA_RED_FLAGS },
-	[TCA_RED_PARMS]	= { .len = sizeof(struct tc_red_qopt) },
-	[TCA_RED_STAB]	= { .len = RED_STAB_SIZE },
-	[TCA_RED_MAX_P] = { .type = NLA_U32 },
+अटल स्थिर काष्ठा nla_policy red_policy[TCA_RED_MAX + 1] = अणु
+	[TCA_RED_UNSPEC] = अणु .strict_start_type = TCA_RED_FLAGS पूर्ण,
+	[TCA_RED_PARMS]	= अणु .len = माप(काष्ठा tc_red_qopt) पूर्ण,
+	[TCA_RED_STAB]	= अणु .len = RED_STAB_SIZE पूर्ण,
+	[TCA_RED_MAX_P] = अणु .type = NLA_U32 पूर्ण,
 	[TCA_RED_FLAGS] = NLA_POLICY_BITFIELD32(TC_RED_SUPPORTED_FLAGS),
-	[TCA_RED_EARLY_DROP_BLOCK] = { .type = NLA_U32 },
-	[TCA_RED_MARK_BLOCK] = { .type = NLA_U32 },
-};
+	[TCA_RED_EARLY_DROP_BLOCK] = अणु .type = NLA_U32 पूर्ण,
+	[TCA_RED_MARK_BLOCK] = अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
 
-static int __red_change(struct Qdisc *sch, struct nlattr **tb,
-			struct netlink_ext_ack *extack)
-{
-	struct Qdisc *old_child = NULL, *child = NULL;
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct nla_bitfield32 flags_bf;
-	struct tc_red_qopt *ctl;
-	unsigned char userbits;
-	unsigned char flags;
-	int err;
+अटल पूर्णांक __red_change(काष्ठा Qdisc *sch, काष्ठा nlattr **tb,
+			काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा Qdisc *old_child = शून्य, *child = शून्य;
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा nla_bitfield32 flags_bf;
+	काष्ठा tc_red_qopt *ctl;
+	अचिन्हित अक्षर userbits;
+	अचिन्हित अक्षर flags;
+	पूर्णांक err;
 	u32 max_P;
 	u8 *stab;
 
-	if (tb[TCA_RED_PARMS] == NULL ||
-	    tb[TCA_RED_STAB] == NULL)
-		return -EINVAL;
+	अगर (tb[TCA_RED_PARMS] == शून्य ||
+	    tb[TCA_RED_STAB] == शून्य)
+		वापस -EINVAL;
 
 	max_P = tb[TCA_RED_MAX_P] ? nla_get_u32(tb[TCA_RED_MAX_P]) : 0;
 
 	ctl = nla_data(tb[TCA_RED_PARMS]);
 	stab = nla_data(tb[TCA_RED_STAB]);
-	if (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog,
+	अगर (!red_check_params(ctl->qth_min, ctl->qth_max, ctl->Wlog,
 			      ctl->Scell_log, stab))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	err = red_get_flags(ctl->flags, TC_RED_HISTORIC_FLAGS,
 			    tb[TCA_RED_FLAGS], TC_RED_SUPPORTED_FLAGS,
 			    &flags_bf, &userbits, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (ctl->limit > 0) {
-		child = fifo_create_dflt(sch, &bfifo_qdisc_ops, ctl->limit,
+	अगर (ctl->limit > 0) अणु
+		child = fअगरo_create_dflt(sch, &bfअगरo_qdisc_ops, ctl->limit,
 					 extack);
-		if (IS_ERR(child))
-			return PTR_ERR(child);
+		अगर (IS_ERR(child))
+			वापस PTR_ERR(child);
 
-		/* child is fifo, no need to check for noop_qdisc */
+		/* child is fअगरo, no need to check क्रम noop_qdisc */
 		qdisc_hash_add(child, true);
-	}
+	पूर्ण
 
 	sch_tree_lock(sch);
 
 	flags = (q->flags & ~flags_bf.selector) | flags_bf.value;
 	err = red_validate_flags(flags, extack);
-	if (err)
-		goto unlock_out;
+	अगर (err)
+		जाओ unlock_out;
 
 	q->flags = flags;
 	q->userbits = userbits;
 	q->limit = ctl->limit;
-	if (child) {
+	अगर (child) अणु
 		qdisc_tree_flush_backlog(q->qdisc);
 		old_child = q->qdisc;
 		q->qdisc = child;
-	}
+	पूर्ण
 
 	red_set_parms(&q->parms,
 		      ctl->qth_min, ctl->qth_max, ctl->Wlog,
@@ -295,122 +296,122 @@ static int __red_change(struct Qdisc *sch, struct nlattr **tb,
 		      max_P);
 	red_set_vars(&q->vars);
 
-	del_timer(&q->adapt_timer);
-	if (ctl->flags & TC_RED_ADAPTATIVE)
-		mod_timer(&q->adapt_timer, jiffies + HZ/2);
+	del_समयr(&q->adapt_समयr);
+	अगर (ctl->flags & TC_RED_ADAPTATIVE)
+		mod_समयr(&q->adapt_समयr, jअगरfies + HZ/2);
 
-	if (!q->qdisc->q.qlen)
+	अगर (!q->qdisc->q.qlen)
 		red_start_of_idle_period(&q->vars);
 
 	sch_tree_unlock(sch);
 
 	red_offload(sch, true);
 
-	if (old_child)
+	अगर (old_child)
 		qdisc_put(old_child);
-	return 0;
+	वापस 0;
 
 unlock_out:
 	sch_tree_unlock(sch);
-	if (child)
+	अगर (child)
 		qdisc_put(child);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline void red_adaptative_timer(struct timer_list *t)
-{
-	struct red_sched_data *q = from_timer(q, t, adapt_timer);
-	struct Qdisc *sch = q->sch;
+अटल अंतरभूत व्योम red_adaptative_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा red_sched_data *q = from_समयr(q, t, adapt_समयr);
+	काष्ठा Qdisc *sch = q->sch;
 	spinlock_t *root_lock = qdisc_lock(qdisc_root_sleeping(sch));
 
 	spin_lock(root_lock);
 	red_adaptative_algo(&q->parms, &q->vars);
-	mod_timer(&q->adapt_timer, jiffies + HZ/2);
+	mod_समयr(&q->adapt_समयr, jअगरfies + HZ/2);
 	spin_unlock(root_lock);
-}
+पूर्ण
 
-static int red_init(struct Qdisc *sch, struct nlattr *opt,
-		    struct netlink_ext_ack *extack)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_RED_MAX + 1];
-	int err;
+अटल पूर्णांक red_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा nlattr *tb[TCA_RED_MAX + 1];
+	पूर्णांक err;
 
 	q->qdisc = &noop_qdisc;
 	q->sch = sch;
-	timer_setup(&q->adapt_timer, red_adaptative_timer, 0);
+	समयr_setup(&q->adapt_समयr, red_adaptative_समयr, 0);
 
-	if (!opt)
-		return -EINVAL;
+	अगर (!opt)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_RED_MAX, opt, red_policy,
 					  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = __red_change(sch, tb, extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = tcf_qevent_init(&q->qe_early_drop, sch,
 			      FLOW_BLOCK_BINDER_TYPE_RED_EARLY_DROP,
 			      tb[TCA_RED_EARLY_DROP_BLOCK], extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return tcf_qevent_init(&q->qe_mark, sch,
+	वापस tcf_qevent_init(&q->qe_mark, sch,
 			       FLOW_BLOCK_BINDER_TYPE_RED_MARK,
 			       tb[TCA_RED_MARK_BLOCK], extack);
-}
+पूर्ण
 
-static int red_change(struct Qdisc *sch, struct nlattr *opt,
-		      struct netlink_ext_ack *extack)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct nlattr *tb[TCA_RED_MAX + 1];
-	int err;
+अटल पूर्णांक red_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा nlattr *tb[TCA_RED_MAX + 1];
+	पूर्णांक err;
 
-	if (!opt)
-		return -EINVAL;
+	अगर (!opt)
+		वापस -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_RED_MAX, opt, red_policy,
 					  extack);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = tcf_qevent_validate_change(&q->qe_early_drop,
 					 tb[TCA_RED_EARLY_DROP_BLOCK], extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = tcf_qevent_validate_change(&q->qe_mark,
 					 tb[TCA_RED_MARK_BLOCK], extack);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return __red_change(sch, tb, extack);
-}
+	वापस __red_change(sch, tb, extack);
+पूर्ण
 
-static int red_dump_offload_stats(struct Qdisc *sch)
-{
-	struct tc_red_qopt_offload hw_stats = {
+अटल पूर्णांक red_dump_offload_stats(काष्ठा Qdisc *sch)
+अणु
+	काष्ठा tc_red_qopt_offload hw_stats = अणु
 		.command = TC_RED_STATS,
 		.handle = sch->handle,
 		.parent = sch->parent,
-		{
+		अणु
 			.stats.bstats = &sch->bstats,
 			.stats.qstats = &sch->qstats,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	return qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_RED, &hw_stats);
-}
+	वापस qdisc_offload_dump_helper(sch, TC_SETUP_QDISC_RED, &hw_stats);
+पूर्ण
 
-static int red_dump(struct Qdisc *sch, struct sk_buff *skb)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct nlattr *opts = NULL;
-	struct tc_red_qopt opt = {
+अटल पूर्णांक red_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा nlattr *opts = शून्य;
+	काष्ठा tc_red_qopt opt = अणु
 		.limit		= q->limit,
 		.flags		= (q->flags & TC_RED_HISTORIC_FLAGS) |
 				  q->userbits,
@@ -419,129 +420,129 @@ static int red_dump(struct Qdisc *sch, struct sk_buff *skb)
 		.Wlog		= q->parms.Wlog,
 		.Plog		= q->parms.Plog,
 		.Scell_log	= q->parms.Scell_log,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	err = red_dump_offload_stats(sch);
-	if (err)
-		goto nla_put_failure;
+	अगर (err)
+		जाओ nla_put_failure;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	if (opts == NULL)
-		goto nla_put_failure;
-	if (nla_put(skb, TCA_RED_PARMS, sizeof(opt), &opt) ||
+	अगर (opts == शून्य)
+		जाओ nla_put_failure;
+	अगर (nla_put(skb, TCA_RED_PARMS, माप(opt), &opt) ||
 	    nla_put_u32(skb, TCA_RED_MAX_P, q->parms.max_P) ||
 	    nla_put_bitfield32(skb, TCA_RED_FLAGS,
 			       q->flags, TC_RED_SUPPORTED_FLAGS) ||
 	    tcf_qevent_dump(skb, TCA_RED_MARK_BLOCK, &q->qe_mark) ||
 	    tcf_qevent_dump(skb, TCA_RED_EARLY_DROP_BLOCK, &q->qe_early_drop))
-		goto nla_put_failure;
-	return nla_nest_end(skb, opts);
+		जाओ nla_put_failure;
+	वापस nla_nest_end(skb, opts);
 
 nla_put_failure:
 	nla_nest_cancel(skb, opts);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int red_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	struct net_device *dev = qdisc_dev(sch);
-	struct tc_red_xstats st = {0};
+अटल पूर्णांक red_dump_stats(काष्ठा Qdisc *sch, काष्ठा gnet_dump *d)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	काष्ठा net_device *dev = qdisc_dev(sch);
+	काष्ठा tc_red_xstats st = अणु0पूर्ण;
 
-	if (sch->flags & TCQ_F_OFFLOADED) {
-		struct tc_red_qopt_offload hw_stats_request = {
+	अगर (sch->flags & TCQ_F_OFFLOADED) अणु
+		काष्ठा tc_red_qopt_offload hw_stats_request = अणु
 			.command = TC_RED_XSTATS,
 			.handle = sch->handle,
 			.parent = sch->parent,
-			{
+			अणु
 				.xstats = &q->stats,
-			},
-		};
-		dev->netdev_ops->ndo_setup_tc(dev, TC_SETUP_QDISC_RED,
+			पूर्ण,
+		पूर्ण;
+		dev->netdev_ops->nकरो_setup_tc(dev, TC_SETUP_QDISC_RED,
 					      &hw_stats_request);
-	}
-	st.early = q->stats.prob_drop + q->stats.forced_drop;
+	पूर्ण
+	st.early = q->stats.prob_drop + q->stats.क्रमced_drop;
 	st.pdrop = q->stats.pdrop;
 	st.other = q->stats.other;
-	st.marked = q->stats.prob_mark + q->stats.forced_mark;
+	st.marked = q->stats.prob_mark + q->stats.क्रमced_mark;
 
-	return gnet_stats_copy_app(d, &st, sizeof(st));
-}
+	वापस gnet_stats_copy_app(d, &st, माप(st));
+पूर्ण
 
-static int red_dump_class(struct Qdisc *sch, unsigned long cl,
-			  struct sk_buff *skb, struct tcmsg *tcm)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक red_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
+			  काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
 
 	tcm->tcm_handle |= TC_H_MIN(1);
 	tcm->tcm_info = q->qdisc->handle;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void red_graft_offload(struct Qdisc *sch,
-			      struct Qdisc *new, struct Qdisc *old,
-			      struct netlink_ext_ack *extack)
-{
-	struct tc_red_qopt_offload graft_offload = {
+अटल व्योम red_graft_offload(काष्ठा Qdisc *sch,
+			      काष्ठा Qdisc *new, काष्ठा Qdisc *old,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा tc_red_qopt_offload graft_offload = अणु
 		.handle		= sch->handle,
 		.parent		= sch->parent,
 		.child_handle	= new->handle,
 		.command	= TC_RED_GRAFT,
-	};
+	पूर्ण;
 
 	qdisc_offload_graft_helper(qdisc_dev(sch), sch, new, old,
 				   TC_SETUP_QDISC_RED, &graft_offload, extack);
-}
+पूर्ण
 
-static int red_graft(struct Qdisc *sch, unsigned long arg, struct Qdisc *new,
-		     struct Qdisc **old, struct netlink_ext_ack *extack)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
+अटल पूर्णांक red_graft(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg, काष्ठा Qdisc *new,
+		     काष्ठा Qdisc **old, काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
 
-	if (new == NULL)
+	अगर (new == शून्य)
 		new = &noop_qdisc;
 
 	*old = qdisc_replace(sch, new, &q->qdisc);
 
 	red_graft_offload(sch, new, *old, extack);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct Qdisc *red_leaf(struct Qdisc *sch, unsigned long arg)
-{
-	struct red_sched_data *q = qdisc_priv(sch);
-	return q->qdisc;
-}
+अटल काष्ठा Qdisc *red_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा red_sched_data *q = qdisc_priv(sch);
+	वापस q->qdisc;
+पूर्ण
 
-static unsigned long red_find(struct Qdisc *sch, u32 classid)
-{
-	return 1;
-}
+अटल अचिन्हित दीर्घ red_find(काष्ठा Qdisc *sch, u32 classid)
+अणु
+	वापस 1;
+पूर्ण
 
-static void red_walk(struct Qdisc *sch, struct qdisc_walker *walker)
-{
-	if (!walker->stop) {
-		if (walker->count >= walker->skip)
-			if (walker->fn(sch, 1, walker) < 0) {
+अटल व्योम red_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *walker)
+अणु
+	अगर (!walker->stop) अणु
+		अगर (walker->count >= walker->skip)
+			अगर (walker->fn(sch, 1, walker) < 0) अणु
 				walker->stop = 1;
-				return;
-			}
+				वापस;
+			पूर्ण
 		walker->count++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct Qdisc_class_ops red_class_ops = {
+अटल स्थिर काष्ठा Qdisc_class_ops red_class_ops = अणु
 	.graft		=	red_graft,
 	.leaf		=	red_leaf,
 	.find		=	red_find,
 	.walk		=	red_walk,
 	.dump		=	red_dump_class,
-};
+पूर्ण;
 
-static struct Qdisc_ops red_qdisc_ops __read_mostly = {
+अटल काष्ठा Qdisc_ops red_qdisc_ops __पढ़ो_mostly = अणु
 	.id		=	"red",
-	.priv_size	=	sizeof(struct red_sched_data),
+	.priv_size	=	माप(काष्ठा red_sched_data),
 	.cl_ops		=	&red_class_ops,
 	.enqueue	=	red_enqueue,
 	.dequeue	=	red_dequeue,
@@ -553,19 +554,19 @@ static struct Qdisc_ops red_qdisc_ops __read_mostly = {
 	.dump		=	red_dump,
 	.dump_stats	=	red_dump_stats,
 	.owner		=	THIS_MODULE,
-};
+पूर्ण;
 
-static int __init red_module_init(void)
-{
-	return register_qdisc(&red_qdisc_ops);
-}
+अटल पूर्णांक __init red_module_init(व्योम)
+अणु
+	वापस रेजिस्टर_qdisc(&red_qdisc_ops);
+पूर्ण
 
-static void __exit red_module_exit(void)
-{
-	unregister_qdisc(&red_qdisc_ops);
-}
+अटल व्योम __निकास red_module_निकास(व्योम)
+अणु
+	unरेजिस्टर_qdisc(&red_qdisc_ops);
+पूर्ण
 
 module_init(red_module_init)
-module_exit(red_module_exit)
+module_निकास(red_module_निकास)
 
 MODULE_LICENSE("GPL");

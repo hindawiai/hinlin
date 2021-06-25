@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2015-2017 Netronome Systems, Inc. */
 
 /*
@@ -6,11 +7,11 @@
  * Author: Jason McMullan <jason.mcmullan@netronome.com>
  */
 
-#ifndef NFP6000_PCIE_H
-#define NFP6000_PCIE_H
+#अगर_अघोषित NFP6000_PCIE_H
+#घोषणा NFP6000_PCIE_H
 
-#include "nfp_cpp.h"
+#समावेश "nfp_cpp.h"
 
-struct nfp_cpp *nfp_cpp_from_nfp6000_pcie(struct pci_dev *pdev);
+काष्ठा nfp_cpp *nfp_cpp_from_nfp6000_pcie(काष्ठा pci_dev *pdev);
 
-#endif /* NFP6000_PCIE_H */
+#पूर्ण_अगर /* NFP6000_PCIE_H */

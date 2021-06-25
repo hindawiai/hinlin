@@ -1,3 +1,4 @@
-#include <linux/screen_info.h>
+<शैली गुरु>
+#समावेश <linux/screen_info.h>
 
-struct screen_info screen_info;
+काष्ठा screen_info screen_info;

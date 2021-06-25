@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <sched.h>
-#include <signal.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <asm/unistd.h>
-#include <init.h>
-#include <os.h>
-#include <mem_user.h>
-#include <ptrace_user.h>
-#include <registers.h>
-#include <skas.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <मानकतर्क.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/रुको.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <init.h>
+#समावेश <os.h>
+#समावेश <mem_user.h>
+#समावेश <ptrace_user.h>
+#समावेश <रेजिस्टरs.h>
+#समावेश <skas.h>
 
-static void ptrace_child(void)
-{
-	int ret;
+अटल व्योम ptrace_child(व्योम)
+अणु
+	पूर्णांक ret;
 	/* Calling os_getpid because some libcs cached getpid incorrectly */
-	int pid = os_getpid(), ppid = getppid();
-	int sc_result;
+	पूर्णांक pid = os_getpid(), ppid = getppid();
+	पूर्णांक sc_result;
 
-	if (change_sig(SIGWINCH, 0) < 0 ||
-	    ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) {
-		perror("ptrace");
-		kill(pid, SIGKILL);
-	}
-	kill(pid, SIGSTOP);
+	अगर (change_sig(SIGWINCH, 0) < 0 ||
+	    ptrace(PTRACE_TRACEME, 0, 0, 0) < 0) अणु
+		लिखो_त्रुटि("ptrace");
+		समाप्त(pid, SIGKILL);
+	पूर्ण
+	समाप्त(pid, SIGSTOP);
 
 	/*
-	 * This syscall will be intercepted by the parent. Don't call more than
+	 * This syscall will be पूर्णांकercepted by the parent. Don't call more than
 	 * once, please.
 	 */
 	sc_result = os_getpid();
 
-	if (sc_result == pid)
-		/* Nothing modified by the parent, we are running normally. */
+	अगर (sc_result == pid)
+		/* Nothing modअगरied by the parent, we are running normally. */
 		ret = 1;
-	else if (sc_result == ppid)
+	अन्यथा अगर (sc_result == ppid)
 		/*
 		 * Expected in check_ptrace and check_sysemu when they succeed
-		 * in modifying the stack frame
+		 * in modअगरying the stack frame
 		 */
 		ret = 0;
-	else
+	अन्यथा
 		/* Serious trouble! This could be caused by a bug in host 2.6
-		 * SKAS3/2.6 patch before release -V6, together with a bug in
+		 * SKAS3/2.6 patch beक्रमe release -V6, together with a bug in
 		 * the UML code itself.
 		 */
 		ret = 2;
 
-	exit(ret);
-}
+	निकास(ret);
+पूर्ण
 
-static void fatal_perror(const char *str)
-{
-	perror(str);
-	exit(1);
-}
+अटल व्योम fatal_लिखो_त्रुटि(स्थिर अक्षर *str)
+अणु
+	लिखो_त्रुटि(str);
+	निकास(1);
+पूर्ण
 
-static void fatal(char *fmt, ...)
-{
-	va_list list;
+अटल व्योम fatal(अक्षर *fmt, ...)
+अणु
+	बहु_सूची list;
 
-	va_start(list, fmt);
-	vfprintf(stderr, fmt, list);
-	va_end(list);
+	बहु_शुरू(list, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, list);
+	बहु_पूर्ण(list);
 
-	exit(1);
-}
+	निकास(1);
+पूर्ण
 
-static void non_fatal(char *fmt, ...)
-{
-	va_list list;
+अटल व्योम non_fatal(अक्षर *fmt, ...)
+अणु
+	बहु_सूची list;
 
-	va_start(list, fmt);
-	vfprintf(stderr, fmt, list);
-	va_end(list);
-}
+	बहु_शुरू(list, fmt);
+	भख_लिखो(मानक_त्रुटि, fmt, list);
+	बहु_पूर्ण(list);
+पूर्ण
 
-static int start_ptraced_child(void)
-{
-	int pid, n, status;
+अटल पूर्णांक start_ptraced_child(व्योम)
+अणु
+	पूर्णांक pid, n, status;
 
-	fflush(stdout);
+	ख_साफ(मानक_निकास);
 
-	pid = fork();
-	if (pid == 0)
+	pid = विभाजन();
+	अगर (pid == 0)
 		ptrace_child();
-	else if (pid < 0)
-		fatal_perror("start_ptraced_child : fork failed");
+	अन्यथा अगर (pid < 0)
+		fatal_लिखो_त्रुटि("start_ptraced_child : fork failed");
 
-	CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
-	if (n < 0)
-		fatal_perror("check_ptrace : waitpid failed");
-	if (!WIFSTOPPED(status) || (WSTOPSIG(status) != SIGSTOP))
+	CATCH_EINTR(n = रुकोpid(pid, &status, WUNTRACED));
+	अगर (n < 0)
+		fatal_लिखो_त्रुटि("check_ptrace : waitpid failed");
+	अगर (!WIFSTOPPED(status) || (WSTOPSIG(status) != SIGSTOP))
 		fatal("check_ptrace : expected SIGSTOP, got status = %d",
 		      status);
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-/* When testing for SYSEMU support, if it is one of the broken versions, we
- * must just avoid using sysemu, not panic, but only if SYSEMU features are
+/* When testing क्रम SYSEMU support, अगर it is one of the broken versions, we
+ * must just aव्योम using sysemu, not panic, but only अगर SYSEMU features are
  * broken.
- * So only for SYSEMU features we test mustpanic, while normal host features
+ * So only क्रम SYSEMU features we test mustpanic, जबतक normal host features
  * must work anyway!
  */
-static int stop_ptraced_child(int pid, int exitcode, int mustexit)
-{
-	int status, n, ret = 0;
+अटल पूर्णांक stop_ptraced_child(पूर्णांक pid, पूर्णांक निकासcode, पूर्णांक mustनिकास)
+अणु
+	पूर्णांक status, n, ret = 0;
 
-	if (ptrace(PTRACE_CONT, pid, 0, 0) < 0) {
-		perror("stop_ptraced_child : ptrace failed");
-		return -1;
-	}
-	CATCH_EINTR(n = waitpid(pid, &status, 0));
-	if (!WIFEXITED(status) || (WEXITSTATUS(status) != exitcode)) {
-		int exit_with = WEXITSTATUS(status);
-		if (exit_with == 2)
+	अगर (ptrace(PTRACE_CONT, pid, 0, 0) < 0) अणु
+		लिखो_त्रुटि("stop_ptraced_child : ptrace failed");
+		वापस -1;
+	पूर्ण
+	CATCH_EINTR(n = रुकोpid(pid, &status, 0));
+	अगर (!WIFEXITED(status) || (WEXITSTATUS(status) != निकासcode)) अणु
+		पूर्णांक निकास_with = WEXITSTATUS(status);
+		अगर (निकास_with == 2)
 			non_fatal("check_ptrace : child exited with status 2. "
 				  "\nDisabling SYSEMU support.\n");
 		non_fatal("check_ptrace : child exited with exitcode %d, while "
-			  "expecting %d; status 0x%x\n", exit_with,
-			  exitcode, status);
-		if (mustexit)
-			exit(1);
+			  "expecting %d; status 0x%x\n", निकास_with,
+			  निकासcode, status);
+		अगर (mustनिकास)
+			निकास(1);
 		ret = -1;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Changed only during early boot */
-static int force_sysemu_disabled = 0;
+अटल पूर्णांक क्रमce_sysemu_disabled = 0;
 
-static int __init nosysemu_cmd_param(char *str, int* add)
-{
-	force_sysemu_disabled = 1;
-	return 0;
-}
+अटल पूर्णांक __init nosysemu_cmd_param(अक्षर *str, पूर्णांक* add)
+अणु
+	क्रमce_sysemu_disabled = 1;
+	वापस 0;
+पूर्ण
 
 __uml_setup("nosysemu", nosysemu_cmd_param,
 "nosysemu\n"
@@ -161,232 +162,232 @@ __uml_setup("nosysemu", nosysemu_cmd_param,
 "    See http://perso.wanadoo.fr/laurent.vivier/UML/ for further \n"
 "    information.\n\n");
 
-static void __init check_sysemu(void)
-{
-	unsigned long regs[MAX_REG_NR];
-	int pid, n, status, count=0;
+अटल व्योम __init check_sysemu(व्योम)
+अणु
+	अचिन्हित दीर्घ regs[MAX_REG_NR];
+	पूर्णांक pid, n, status, count=0;
 
 	os_info("Checking syscall emulation patch for ptrace...");
 	sysemu_supported = 0;
 	pid = start_ptraced_child();
 
-	if (ptrace(PTRACE_SYSEMU, pid, 0, 0) < 0)
-		goto fail;
+	अगर (ptrace(PTRACE_SYSEMU, pid, 0, 0) < 0)
+		जाओ fail;
 
-	CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
-	if (n < 0)
-		fatal_perror("check_sysemu : wait failed");
-	if (!WIFSTOPPED(status) || (WSTOPSIG(status) != SIGTRAP))
+	CATCH_EINTR(n = रुकोpid(pid, &status, WUNTRACED));
+	अगर (n < 0)
+		fatal_लिखो_त्रुटि("check_sysemu : wait failed");
+	अगर (!WIFSTOPPED(status) || (WSTOPSIG(status) != SIGTRAP))
 		fatal("check_sysemu : expected SIGTRAP, got status = %d\n",
 		      status);
 
-	if (ptrace(PTRACE_GETREGS, pid, 0, regs) < 0)
-		fatal_perror("check_sysemu : PTRACE_GETREGS failed");
-	if (PT_SYSCALL_NR(regs) != __NR_getpid) {
+	अगर (ptrace(PTRACE_GETREGS, pid, 0, regs) < 0)
+		fatal_लिखो_त्रुटि("check_sysemu : PTRACE_GETREGS failed");
+	अगर (PT_SYSCALL_NR(regs) != __NR_getpid) अणु
 		non_fatal("check_sysemu got system call number %d, "
 			  "expected %d...", PT_SYSCALL_NR(regs), __NR_getpid);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	n = ptrace(PTRACE_POKEUSER, pid, PT_SYSCALL_RET_OFFSET, os_getpid());
-	if (n < 0) {
+	अगर (n < 0) अणु
 		non_fatal("check_sysemu : failed to modify system call "
 			  "return");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (stop_ptraced_child(pid, 0, 0) < 0)
-		goto fail_stopped;
+	अगर (stop_ptraced_child(pid, 0, 0) < 0)
+		जाओ fail_stopped;
 
 	sysemu_supported = 1;
 	os_info("OK\n");
-	set_using_sysemu(!force_sysemu_disabled);
+	set_using_sysemu(!क्रमce_sysemu_disabled);
 
 	os_info("Checking advanced syscall emulation patch for ptrace...");
 	pid = start_ptraced_child();
 
-	if ((ptrace(PTRACE_OLDSETOPTIONS, pid, 0,
-		   (void *) PTRACE_O_TRACESYSGOOD) < 0))
-		fatal_perror("check_sysemu: PTRACE_OLDSETOPTIONS failed");
+	अगर ((ptrace(PTRACE_OLDSETOPTIONS, pid, 0,
+		   (व्योम *) PTRACE_O_TRACESYSGOOD) < 0))
+		fatal_लिखो_त्रुटि("check_sysemu: PTRACE_OLDSETOPTIONS failed");
 
-	while (1) {
+	जबतक (1) अणु
 		count++;
-		if (ptrace(PTRACE_SYSEMU_SINGLESTEP, pid, 0, 0) < 0)
-			goto fail;
-		CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
-		if (n < 0)
-			fatal_perror("check_sysemu: wait failed");
+		अगर (ptrace(PTRACE_SYSEMU_SINGLESTEP, pid, 0, 0) < 0)
+			जाओ fail;
+		CATCH_EINTR(n = रुकोpid(pid, &status, WUNTRACED));
+		अगर (n < 0)
+			fatal_लिखो_त्रुटि("check_sysemu: wait failed");
 
-		if (WIFSTOPPED(status) &&
-		    (WSTOPSIG(status) == (SIGTRAP|0x80))) {
-			if (!count) {
+		अगर (WIFSTOPPED(status) &&
+		    (WSTOPSIG(status) == (SIGTRAP|0x80))) अणु
+			अगर (!count) अणु
 				non_fatal("check_sysemu: SYSEMU_SINGLESTEP "
 					  "doesn't singlestep");
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 			n = ptrace(PTRACE_POKEUSER, pid, PT_SYSCALL_RET_OFFSET,
 				   os_getpid());
-			if (n < 0)
-				fatal_perror("check_sysemu : failed to modify "
+			अगर (n < 0)
+				fatal_लिखो_त्रुटि("check_sysemu : failed to modify "
 					     "system call return");
-			break;
-		}
-		else if (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGTRAP))
+			अवरोध;
+		पूर्ण
+		अन्यथा अगर (WIFSTOPPED(status) && (WSTOPSIG(status) == SIGTRAP))
 			count++;
-		else {
+		अन्यथा अणु
 			non_fatal("check_sysemu: expected SIGTRAP or "
 				  "(SIGTRAP | 0x80), got status = %d\n",
 				  status);
-			goto fail;
-		}
-	}
-	if (stop_ptraced_child(pid, 0, 0) < 0)
-		goto fail_stopped;
+			जाओ fail;
+		पूर्ण
+	पूर्ण
+	अगर (stop_ptraced_child(pid, 0, 0) < 0)
+		जाओ fail_stopped;
 
 	sysemu_supported = 2;
 	os_info("OK\n");
 
-	if (!force_sysemu_disabled)
+	अगर (!क्रमce_sysemu_disabled)
 		set_using_sysemu(sysemu_supported);
-	return;
+	वापस;
 
 fail:
 	stop_ptraced_child(pid, 1, 0);
 fail_stopped:
 	non_fatal("missing\n");
-}
+पूर्ण
 
-static void __init check_ptrace(void)
-{
-	int pid, syscall, n, status;
+अटल व्योम __init check_ptrace(व्योम)
+अणु
+	पूर्णांक pid, syscall, n, status;
 
 	os_info("Checking that ptrace can change system call numbers...");
 	pid = start_ptraced_child();
 
-	if ((ptrace(PTRACE_OLDSETOPTIONS, pid, 0,
-		   (void *) PTRACE_O_TRACESYSGOOD) < 0))
-		fatal_perror("check_ptrace: PTRACE_OLDSETOPTIONS failed");
+	अगर ((ptrace(PTRACE_OLDSETOPTIONS, pid, 0,
+		   (व्योम *) PTRACE_O_TRACESYSGOOD) < 0))
+		fatal_लिखो_त्रुटि("check_ptrace: PTRACE_OLDSETOPTIONS failed");
 
-	while (1) {
-		if (ptrace(PTRACE_SYSCALL, pid, 0, 0) < 0)
-			fatal_perror("check_ptrace : ptrace failed");
+	जबतक (1) अणु
+		अगर (ptrace(PTRACE_SYSCALL, pid, 0, 0) < 0)
+			fatal_लिखो_त्रुटि("check_ptrace : ptrace failed");
 
-		CATCH_EINTR(n = waitpid(pid, &status, WUNTRACED));
-		if (n < 0)
-			fatal_perror("check_ptrace : wait failed");
+		CATCH_EINTR(n = रुकोpid(pid, &status, WUNTRACED));
+		अगर (n < 0)
+			fatal_लिखो_त्रुटि("check_ptrace : wait failed");
 
-		if (!WIFSTOPPED(status) ||
+		अगर (!WIFSTOPPED(status) ||
 		   (WSTOPSIG(status) != (SIGTRAP | 0x80)))
 			fatal("check_ptrace : expected (SIGTRAP|0x80), "
 			       "got status = %d", status);
 
 		syscall = ptrace(PTRACE_PEEKUSER, pid, PT_SYSCALL_NR_OFFSET,
 				 0);
-		if (syscall == __NR_getpid) {
+		अगर (syscall == __NR_getpid) अणु
 			n = ptrace(PTRACE_POKEUSER, pid, PT_SYSCALL_NR_OFFSET,
 				   __NR_getppid);
-			if (n < 0)
-				fatal_perror("check_ptrace : failed to modify "
+			अगर (n < 0)
+				fatal_लिखो_त्रुटि("check_ptrace : failed to modify "
 					     "system call");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	stop_ptraced_child(pid, 0, 1);
 	os_info("OK\n");
 	check_sysemu();
-}
+पूर्ण
 
-extern void check_tmpexec(void);
+बाह्य व्योम check_पंचांगpexec(व्योम);
 
-static void __init check_coredump_limit(void)
-{
-	struct rlimit lim;
-	int err = getrlimit(RLIMIT_CORE, &lim);
+अटल व्योम __init check_coredump_limit(व्योम)
+अणु
+	काष्ठा rlimit lim;
+	पूर्णांक err = getrlimit(RLIMIT_CORE, &lim);
 
-	if (err) {
-		perror("Getting core dump limit");
-		return;
-	}
+	अगर (err) अणु
+		लिखो_त्रुटि("Getting core dump limit");
+		वापस;
+	पूर्ण
 
 	os_info("Core dump limits :\n\tsoft - ");
-	if (lim.rlim_cur == RLIM_INFINITY)
+	अगर (lim.rlim_cur == RLIM_अनन्त)
 		os_info("NONE\n");
-	else
-		os_info("%llu\n", (unsigned long long)lim.rlim_cur);
+	अन्यथा
+		os_info("%llu\n", (अचिन्हित दीर्घ दीर्घ)lim.rlim_cur);
 
 	os_info("\thard - ");
-	if (lim.rlim_max == RLIM_INFINITY)
+	अगर (lim.rlim_max == RLIM_अनन्त)
 		os_info("NONE\n");
-	else
-		os_info("%llu\n", (unsigned long long)lim.rlim_max);
-}
+	अन्यथा
+		os_info("%llu\n", (अचिन्हित दीर्घ दीर्घ)lim.rlim_max);
+पूर्ण
 
-void __init os_early_checks(void)
-{
-	int pid;
+व्योम __init os_early_checks(व्योम)
+अणु
+	पूर्णांक pid;
 
-	/* Print out the core dump limits early */
+	/* Prपूर्णांक out the core dump limits early */
 	check_coredump_limit();
 
 	check_ptrace();
 
-	/* Need to check this early because mmapping happens before the
+	/* Need to check this early because mmapping happens beक्रमe the
 	 * kernel is running.
 	 */
-	check_tmpexec();
+	check_पंचांगpexec();
 
 	pid = start_ptraced_child();
-	if (init_registers(pid))
+	अगर (init_रेजिस्टरs(pid))
 		fatal("Failed to initialize default registers");
 	stop_ptraced_child(pid, 1, 1);
-}
+पूर्ण
 
-int __init parse_iomem(char *str, int *add)
-{
-	struct iomem_region *new;
-	struct stat64 buf;
-	char *file, *driver;
-	int fd, size;
+पूर्णांक __init parse_iomem(अक्षर *str, पूर्णांक *add)
+अणु
+	काष्ठा iomem_region *new;
+	काष्ठा stat64 buf;
+	अक्षर *file, *driver;
+	पूर्णांक fd, size;
 
 	driver = str;
-	file = strchr(str,',');
-	if (file == NULL) {
+	file = म_अक्षर(str,',');
+	अगर (file == शून्य) अणु
 		os_warn("parse_iomem : failed to parse iomem\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	*file = '\0';
 	file++;
-	fd = open(file, O_RDWR, 0);
-	if (fd < 0) {
-		perror("parse_iomem - Couldn't open io file");
-		goto out;
-	}
+	fd = खोलो(file, O_RDWR, 0);
+	अगर (fd < 0) अणु
+		लिखो_त्रुटि("parse_iomem - Couldn't open io file");
+		जाओ out;
+	पूर्ण
 
-	if (fstat64(fd, &buf) < 0) {
-		perror("parse_iomem - cannot stat_fd file");
-		goto out_close;
-	}
+	अगर (ख_स्थिति64(fd, &buf) < 0) अणु
+		लिखो_त्रुटि("parse_iomem - cannot stat_fd file");
+		जाओ out_बंद;
+	पूर्ण
 
-	new = malloc(sizeof(*new));
-	if (new == NULL) {
-		perror("Couldn't allocate iomem_region struct");
-		goto out_close;
-	}
+	new = दो_स्मृति(माप(*new));
+	अगर (new == शून्य) अणु
+		लिखो_त्रुटि("Couldn't allocate iomem_region struct");
+		जाओ out_बंद;
+	पूर्ण
 
 	size = (buf.st_size + UM_KERN_PAGE_SIZE) & ~(UM_KERN_PAGE_SIZE - 1);
 
-	*new = ((struct iomem_region) { .next		= iomem_regions,
+	*new = ((काष्ठा iomem_region) अणु .next		= iomem_regions,
 					.driver		= driver,
 					.fd		= fd,
 					.size		= size,
 					.phys		= 0,
-					.virt		= 0 });
+					.virt		= 0 पूर्ण);
 	iomem_regions = new;
 	iomem_size += new->size + UM_KERN_PAGE_SIZE;
 
-	return 0;
- out_close:
-	close(fd);
+	वापस 0;
+ out_बंद:
+	बंद(fd);
  out:
-	return 1;
-}
+	वापस 1;
+पूर्ण

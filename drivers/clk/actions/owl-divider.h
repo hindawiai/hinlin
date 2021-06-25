@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 //
-// OWL divider clock driver
+// OWL भागider घड़ी driver
 //
 // Copyright (c) 2014 Actions Semi Inc.
 // Author: David Liu <liuwei@actions-semi.com>
@@ -8,68 +9,68 @@
 // Copyright (c) 2018 Linaro Ltd.
 // Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
 
-#ifndef _OWL_DIVIDER_H_
-#define _OWL_DIVIDER_H_
+#अगर_अघोषित _OWL_DIVIDER_H_
+#घोषणा _OWL_DIVIDER_H_
 
-#include "owl-common.h"
+#समावेश "owl-common.h"
 
-struct owl_divider_hw {
+काष्ठा owl_भागider_hw अणु
 	u32			reg;
-	u8			shift;
+	u8			shअगरt;
 	u8			width;
-	u8			div_flags;
-	struct clk_div_table	*table;
-};
+	u8			भाग_flags;
+	काष्ठा clk_भाग_प्रकारable	*table;
+पूर्ण;
 
-struct owl_divider {
-	struct owl_divider_hw	div_hw;
-	struct owl_clk_common	common;
-};
+काष्ठा owl_भागider अणु
+	काष्ठा owl_भागider_hw	भाग_hw;
+	काष्ठा owl_clk_common	common;
+पूर्ण;
 
-#define OWL_DIVIDER_HW(_reg, _shift, _width, _div_flags, _table)	\
-	{								\
+#घोषणा OWL_DIVIDER_HW(_reg, _shअगरt, _width, _भाग_flags, _table)	\
+	अणु								\
 		.reg		= _reg,					\
-		.shift		= _shift,				\
+		.shअगरt		= _shअगरt,				\
 		.width		= _width,				\
-		.div_flags	= _div_flags,				\
+		.भाग_flags	= _भाग_flags,				\
 		.table		= _table,				\
-	}
+	पूर्ण
 
-#define OWL_DIVIDER(_struct, _name, _parent, _reg,			\
-		    _shift, _width, _table, _div_flags, _flags)		\
-	struct owl_divider _struct = {					\
-		.div_hw	= OWL_DIVIDER_HW(_reg, _shift, _width,		\
-					 _div_flags, _table),		\
-		.common = {						\
-			.regmap		= NULL,				\
+#घोषणा OWL_DIVIDER(_काष्ठा, _name, _parent, _reg,			\
+		    _shअगरt, _width, _table, _भाग_flags, _flags)		\
+	काष्ठा owl_भागider _काष्ठा = अणु					\
+		.भाग_hw	= OWL_DIVIDER_HW(_reg, _shअगरt, _width,		\
+					 _भाग_flags, _table),		\
+		.common = अणु						\
+			.regmap		= शून्य,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
-						      &owl_divider_ops,	\
+						      &owl_भागider_ops,	\
 						      _flags),		\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static inline struct owl_divider *hw_to_owl_divider(const struct clk_hw *hw)
-{
-	struct owl_clk_common *common = hw_to_owl_clk_common(hw);
+अटल अंतरभूत काष्ठा owl_भागider *hw_to_owl_भागider(स्थिर काष्ठा clk_hw *hw)
+अणु
+	काष्ठा owl_clk_common *common = hw_to_owl_clk_common(hw);
 
-	return container_of(common, struct owl_divider, common);
-}
+	वापस container_of(common, काष्ठा owl_भागider, common);
+पूर्ण
 
-long owl_divider_helper_round_rate(struct owl_clk_common *common,
-				const struct owl_divider_hw *div_hw,
-				unsigned long rate,
-				unsigned long *parent_rate);
+दीर्घ owl_भागider_helper_round_rate(काष्ठा owl_clk_common *common,
+				स्थिर काष्ठा owl_भागider_hw *भाग_hw,
+				अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate);
 
-unsigned long owl_divider_helper_recalc_rate(struct owl_clk_common *common,
-					 const struct owl_divider_hw *div_hw,
-					 unsigned long parent_rate);
+अचिन्हित दीर्घ owl_भागider_helper_recalc_rate(काष्ठा owl_clk_common *common,
+					 स्थिर काष्ठा owl_भागider_hw *भाग_hw,
+					 अचिन्हित दीर्घ parent_rate);
 
-int owl_divider_helper_set_rate(const struct owl_clk_common *common,
-				const struct owl_divider_hw *div_hw,
-				unsigned long rate,
-				unsigned long parent_rate);
+पूर्णांक owl_भागider_helper_set_rate(स्थिर काष्ठा owl_clk_common *common,
+				स्थिर काष्ठा owl_भागider_hw *भाग_hw,
+				अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ parent_rate);
 
-extern const struct clk_ops owl_divider_ops;
+बाह्य स्थिर काष्ठा clk_ops owl_भागider_ops;
 
-#endif /* _OWL_DIVIDER_H_ */
+#पूर्ण_अगर /* _OWL_DIVIDER_H_ */

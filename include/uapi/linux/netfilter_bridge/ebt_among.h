@@ -1,65 +1,66 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __LINUX_BRIDGE_EBT_AMONG_H
-#define __LINUX_BRIDGE_EBT_AMONG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __LINUX_BRIDGE_EBT_AMONG_H
+#घोषणा __LINUX_BRIDGE_EBT_AMONG_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define EBT_AMONG_DST 0x01
-#define EBT_AMONG_SRC 0x02
+#घोषणा EBT_AMONG_DST 0x01
+#घोषणा EBT_AMONG_SRC 0x02
 
 /* Grzegorz Borowiak <grzes@gnu.univ.gda.pl> 2003
  * 
- * Write-once-read-many hash table, used for checking if a given
- * MAC address belongs to a set or not and possibly for checking
- * if it is related with a given IPv4 address.
+ * Write-once-पढ़ो-many hash table, used क्रम checking अगर a given
+ * MAC address beदीर्घs to a set or not and possibly क्रम checking
+ * अगर it is related with a given IPv4 address.
  *
  * The hash value of an address is its last byte.
  * 
  * In real-world ethernet addresses, values of the last byte are
  * evenly distributed and there is no need to consider other bytes.
- * It would only slow the routines down.
+ * It would only slow the routines करोwn.
  *
- * For MAC address comparison speedup reasons, we introduce a trick.
- * MAC address is mapped onto an array of two 32-bit integers.
- * This pair of integers is compared with MAC addresses in the
- * hash table, which are stored also in form of pairs of integers
+ * For MAC address comparison speedup reasons, we पूर्णांकroduce a trick.
+ * MAC address is mapped onto an array of two 32-bit पूर्णांकegers.
+ * This pair of पूर्णांकegers is compared with MAC addresses in the
+ * hash table, which are stored also in क्रमm of pairs of पूर्णांकegers
  * (in `cmp' array). This is quick as it requires only two elementary
- * number comparisons in worst case. Further, we take advantage of
+ * number comparisons in worst हाल. Further, we take advantage of
  * fact that entropy of 3 last bytes of address is larger than entropy
  * of 3 first bytes. So first we compare 4 last bytes of addresses and
- * if they are the same we compare 2 first.
+ * अगर they are the same we compare 2 first.
  *
  * Yes, it is a memory overhead, but in 2003 AD, who cares?
  */
 
-struct ebt_mac_wormhash_tuple {
+काष्ठा ebt_mac_wormhash_tuple अणु
 	__u32 cmp[2];
 	__be32 ip;
-};
+पूर्ण;
 
-struct ebt_mac_wormhash {
-	int table[257];
-	int poolsize;
-	struct ebt_mac_wormhash_tuple pool[0];
-};
+काष्ठा ebt_mac_wormhash अणु
+	पूर्णांक table[257];
+	पूर्णांक poolsize;
+	काष्ठा ebt_mac_wormhash_tuple pool[0];
+पूर्ण;
 
-#define ebt_mac_wormhash_size(x) ((x) ? sizeof(struct ebt_mac_wormhash) \
-		+ (x)->poolsize * sizeof(struct ebt_mac_wormhash_tuple) : 0)
+#घोषणा ebt_mac_wormhash_size(x) ((x) ? माप(काष्ठा ebt_mac_wormhash) \
+		+ (x)->poolsize * माप(काष्ठा ebt_mac_wormhash_tuple) : 0)
 
-struct ebt_among_info {
-	int wh_dst_ofs;
-	int wh_src_ofs;
-	int bitmask;
-};
+काष्ठा ebt_among_info अणु
+	पूर्णांक wh_dst_ofs;
+	पूर्णांक wh_src_ofs;
+	पूर्णांक biपंचांगask;
+पूर्ण;
 
-#define EBT_AMONG_DST_NEG 0x1
-#define EBT_AMONG_SRC_NEG 0x2
+#घोषणा EBT_AMONG_DST_NEG 0x1
+#घोषणा EBT_AMONG_SRC_NEG 0x2
 
-#define ebt_among_wh_dst(x) ((x)->wh_dst_ofs ? \
-	(struct ebt_mac_wormhash*)((char*)(x) + (x)->wh_dst_ofs) : NULL)
-#define ebt_among_wh_src(x) ((x)->wh_src_ofs ? \
-	(struct ebt_mac_wormhash*)((char*)(x) + (x)->wh_src_ofs) : NULL)
+#घोषणा ebt_among_wh_dst(x) ((x)->wh_dst_ofs ? \
+	(काष्ठा ebt_mac_wormhash*)((अक्षर*)(x) + (x)->wh_dst_ofs) : शून्य)
+#घोषणा ebt_among_wh_src(x) ((x)->wh_src_ofs ? \
+	(काष्ठा ebt_mac_wormhash*)((अक्षर*)(x) + (x)->wh_src_ofs) : शून्य)
 
-#define EBT_AMONG_MATCH "among"
+#घोषणा EBT_AMONG_MATCH "among"
 
-#endif
+#पूर्ण_अगर

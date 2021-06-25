@@ -1,23 +1,24 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018-2020 Linaro Ltd
  * Author: Georgi Djakov <georgi.djakov@linaro.org>
  */
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/interconnect-provider.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_device.h>
 
-#include <dt-bindings/interconnect/qcom,msm8916.h>
+#समावेश <dt-bindings/पूर्णांकerconnect/qcom,msm8916.h>
 
-#include "smd-rpm.h"
-#include "icc-rpm.h"
+#समावेश "smd-rpm.h"
+#समावेश "icc-rpm.h"
 
-enum {
+क्रमागत अणु
 	MSM8916_BIMC_SNOC_MAS = 1,
 	MSM8916_BIMC_SNOC_SLV,
 	MSM8916_MASTER_AMPSS_M0,
@@ -103,12 +104,12 @@ enum {
 	MSM8916_SNOC_INT_BIMC,
 	MSM8916_SNOC_PNOC_MAS,
 	MSM8916_SNOC_PNOC_SLV,
-};
+पूर्ण;
 
-static const struct clk_bulk_data msm8916_bus_clocks[] = {
-	{ .id = "bus" },
-	{ .id = "bus_a" },
-};
+अटल स्थिर काष्ठा clk_bulk_data msm8916_bus_घड़ीs[] = अणु
+	अणु .id = "bus" पूर्ण,
+	अणु .id = "bus_a" पूर्ण,
+पूर्ण;
 
 DEFINE_QNODE(bimc_snoc_mas, MSM8916_BIMC_SNOC_MAS, 8, -1, -1, MSM8916_BIMC_SNOC_SLV);
 DEFINE_QNODE(bimc_snoc_slv, MSM8916_BIMC_SNOC_SLV, 8, -1, -1, MSM8916_SNOC_INT_0, MSM8916_SNOC_INT_1);
@@ -131,12 +132,12 @@ DEFINE_QNODE(mas_tcu1, MSM8916_MASTER_TCU1, 8, -1, -1, MSM8916_SLAVE_EBI_CH0, MS
 DEFINE_QNODE(mas_usb_hs, MSM8916_MASTER_USB_HS, 4, -1, -1, MSM8916_PNOC_MAS_1);
 DEFINE_QNODE(mas_vfe, MSM8916_MASTER_VFE, 16, -1, -1, MSM8916_SNOC_MM_INT_1, MSM8916_SNOC_MM_INT_2);
 DEFINE_QNODE(mas_video, MSM8916_MASTER_VIDEO_P0, 16, -1, -1, MSM8916_SNOC_MM_INT_0, MSM8916_SNOC_MM_INT_2);
-DEFINE_QNODE(mm_int_0, MSM8916_SNOC_MM_INT_0, 16, -1, -1, MSM8916_SNOC_MM_INT_BIMC);
-DEFINE_QNODE(mm_int_1, MSM8916_SNOC_MM_INT_1, 16, -1, -1, MSM8916_SNOC_MM_INT_BIMC);
-DEFINE_QNODE(mm_int_2, MSM8916_SNOC_MM_INT_2, 16, -1, -1, MSM8916_SNOC_INT_0);
-DEFINE_QNODE(mm_int_bimc, MSM8916_SNOC_MM_INT_BIMC, 16, -1, -1, MSM8916_SNOC_BIMC_1_MAS);
-DEFINE_QNODE(pcnoc_int_0, MSM8916_PNOC_INT_0, 8, -1, -1, MSM8916_PNOC_SNOC_MAS, MSM8916_PNOC_SLV_0, MSM8916_PNOC_SLV_1, MSM8916_PNOC_SLV_2, MSM8916_PNOC_SLV_3, MSM8916_PNOC_SLV_4, MSM8916_PNOC_SLV_8, MSM8916_PNOC_SLV_9);
-DEFINE_QNODE(pcnoc_int_1, MSM8916_PNOC_INT_1, 8, -1, -1, MSM8916_PNOC_SNOC_MAS);
+DEFINE_QNODE(mm_पूर्णांक_0, MSM8916_SNOC_MM_INT_0, 16, -1, -1, MSM8916_SNOC_MM_INT_BIMC);
+DEFINE_QNODE(mm_पूर्णांक_1, MSM8916_SNOC_MM_INT_1, 16, -1, -1, MSM8916_SNOC_MM_INT_BIMC);
+DEFINE_QNODE(mm_पूर्णांक_2, MSM8916_SNOC_MM_INT_2, 16, -1, -1, MSM8916_SNOC_INT_0);
+DEFINE_QNODE(mm_पूर्णांक_bimc, MSM8916_SNOC_MM_INT_BIMC, 16, -1, -1, MSM8916_SNOC_BIMC_1_MAS);
+DEFINE_QNODE(pcnoc_पूर्णांक_0, MSM8916_PNOC_INT_0, 8, -1, -1, MSM8916_PNOC_SNOC_MAS, MSM8916_PNOC_SLV_0, MSM8916_PNOC_SLV_1, MSM8916_PNOC_SLV_2, MSM8916_PNOC_SLV_3, MSM8916_PNOC_SLV_4, MSM8916_PNOC_SLV_8, MSM8916_PNOC_SLV_9);
+DEFINE_QNODE(pcnoc_पूर्णांक_1, MSM8916_PNOC_INT_1, 8, -1, -1, MSM8916_PNOC_SNOC_MAS);
 DEFINE_QNODE(pcnoc_m_0, MSM8916_PNOC_MAS_0, 8, -1, -1, MSM8916_PNOC_INT_0);
 DEFINE_QNODE(pcnoc_m_1, MSM8916_PNOC_MAS_1, 8, -1, -1, MSM8916_PNOC_SNOC_MAS);
 DEFINE_QNODE(pcnoc_s_0, MSM8916_PNOC_SLV_0, 4, -1, -1, MSM8916_SLAVE_CLK_CTL, MSM8916_SLAVE_TLMM, MSM8916_SLAVE_TCSR, MSM8916_SLAVE_SECURITY, MSM8916_SLAVE_MSS);
@@ -148,7 +149,7 @@ DEFINE_QNODE(pcnoc_s_8, MSM8916_PNOC_SLV_8, 4, -1, -1, MSM8916_SLAVE_USB_HS, MSM
 DEFINE_QNODE(pcnoc_s_9, MSM8916_PNOC_SLV_9, 4, -1, -1, MSM8916_SLAVE_SDCC_2, MSM8916_SLAVE_LPASS, MSM8916_SLAVE_GRAPHICS_3D_CFG);
 DEFINE_QNODE(pcnoc_snoc_mas, MSM8916_PNOC_SNOC_MAS, 8, 29, -1, MSM8916_PNOC_SNOC_SLV);
 DEFINE_QNODE(pcnoc_snoc_slv, MSM8916_PNOC_SNOC_SLV, 8, -1, 45, MSM8916_SNOC_INT_0, MSM8916_SNOC_INT_BIMC, MSM8916_SNOC_INT_1);
-DEFINE_QNODE(qdss_int, MSM8916_SNOC_QDSS_INT, 8, -1, -1, MSM8916_SNOC_INT_0, MSM8916_SNOC_INT_BIMC);
+DEFINE_QNODE(qdss_पूर्णांक, MSM8916_SNOC_QDSS_INT, 8, -1, -1, MSM8916_SNOC_INT_0, MSM8916_SNOC_INT_BIMC);
 DEFINE_QNODE(slv_apps_l2, MSM8916_SLAVE_AMPSS_L2, 8, -1, -1, 0);
 DEFINE_QNODE(slv_apss, MSM8916_SLAVE_APSS, 4, -1, -1, 0);
 DEFINE_QNODE(slv_audio, MSM8916_SLAVE_LPASS, 4, -1, -1, 0);
@@ -174,7 +175,7 @@ DEFINE_QNODE(slv_pmic_arb, MSM8916_SLAVE_PMIC_ARB, 4, -1, -1, 0);
 DEFINE_QNODE(slv_pcnoc_cfg, MSM8916_SLAVE_PNOC_CFG, 4, -1, -1, 0);
 DEFINE_QNODE(slv_prng, MSM8916_SLAVE_PRNG, 4, -1, -1, 0);
 DEFINE_QNODE(slv_qdss_cfg, MSM8916_SLAVE_QDSS_CFG, 4, -1, -1, 0);
-DEFINE_QNODE(slv_qdss_stm, MSM8916_SLAVE_QDSS_STM, 4, -1, 30, 0);
+DEFINE_QNODE(slv_qdss_sपंचांग, MSM8916_SLAVE_QDSS_STM, 4, -1, 30, 0);
 DEFINE_QNODE(slv_rbcpr_cfg, MSM8916_SLAVE_RBCPR_CFG, 4, -1, -1, 0);
 DEFINE_QNODE(slv_sdcc_1, MSM8916_SLAVE_SDCC_1, 4, -1, -1, 0);
 DEFINE_QNODE(slv_sdcc_2, MSM8916_SLAVE_SDCC_2, 4, -1, -1, 0);
@@ -190,13 +191,13 @@ DEFINE_QNODE(snoc_bimc_0_mas, MSM8916_SNOC_BIMC_0_MAS, 8, 3, -1, MSM8916_SNOC_BI
 DEFINE_QNODE(snoc_bimc_0_slv, MSM8916_SNOC_BIMC_0_SLV, 8, -1, 24, MSM8916_SLAVE_EBI_CH0);
 DEFINE_QNODE(snoc_bimc_1_mas, MSM8916_SNOC_BIMC_1_MAS, 16, -1, -1, MSM8916_SNOC_BIMC_1_SLV);
 DEFINE_QNODE(snoc_bimc_1_slv, MSM8916_SNOC_BIMC_1_SLV, 8, -1, -1, MSM8916_SLAVE_EBI_CH0);
-DEFINE_QNODE(snoc_int_0, MSM8916_SNOC_INT_0, 8, 99, 130, MSM8916_SLAVE_QDSS_STM, MSM8916_SLAVE_IMEM, MSM8916_SNOC_PNOC_MAS);
-DEFINE_QNODE(snoc_int_1, MSM8916_SNOC_INT_1, 8, -1, -1, MSM8916_SLAVE_APSS, MSM8916_SLAVE_CATS_128, MSM8916_SLAVE_OCMEM_64);
-DEFINE_QNODE(snoc_int_bimc, MSM8916_SNOC_INT_BIMC, 8, 101, 132, MSM8916_SNOC_BIMC_0_MAS);
+DEFINE_QNODE(snoc_पूर्णांक_0, MSM8916_SNOC_INT_0, 8, 99, 130, MSM8916_SLAVE_QDSS_STM, MSM8916_SLAVE_IMEM, MSM8916_SNOC_PNOC_MAS);
+DEFINE_QNODE(snoc_पूर्णांक_1, MSM8916_SNOC_INT_1, 8, -1, -1, MSM8916_SLAVE_APSS, MSM8916_SLAVE_CATS_128, MSM8916_SLAVE_OCMEM_64);
+DEFINE_QNODE(snoc_पूर्णांक_bimc, MSM8916_SNOC_INT_BIMC, 8, 101, 132, MSM8916_SNOC_BIMC_0_MAS);
 DEFINE_QNODE(snoc_pcnoc_mas, MSM8916_SNOC_PNOC_MAS, 8, -1, -1, MSM8916_SNOC_PNOC_SLV);
 DEFINE_QNODE(snoc_pcnoc_slv, MSM8916_SNOC_PNOC_SLV, 8, -1, -1, MSM8916_PNOC_INT_0);
 
-static struct qcom_icc_node *msm8916_snoc_nodes[] = {
+अटल काष्ठा qcom_icc_node *msm8916_snoc_nodes[] = अणु
 	[BIMC_SNOC_SLV] = &bimc_snoc_slv,
 	[MASTER_JPEG] = &mas_jpeg,
 	[MASTER_MDP_PORT0] = &mas_mdp,
@@ -205,32 +206,32 @@ static struct qcom_icc_node *msm8916_snoc_nodes[] = {
 	[MASTER_SNOC_CFG] = &mas_snoc_cfg,
 	[MASTER_VFE] = &mas_vfe,
 	[MASTER_VIDEO_P0] = &mas_video,
-	[SNOC_MM_INT_0] = &mm_int_0,
-	[SNOC_MM_INT_1] = &mm_int_1,
-	[SNOC_MM_INT_2] = &mm_int_2,
-	[SNOC_MM_INT_BIMC] = &mm_int_bimc,
+	[SNOC_MM_INT_0] = &mm_पूर्णांक_0,
+	[SNOC_MM_INT_1] = &mm_पूर्णांक_1,
+	[SNOC_MM_INT_2] = &mm_पूर्णांक_2,
+	[SNOC_MM_INT_BIMC] = &mm_पूर्णांक_bimc,
 	[PCNOC_SNOC_SLV] = &pcnoc_snoc_slv,
 	[SLAVE_APSS] = &slv_apss,
 	[SLAVE_CATS_128] = &slv_cats_0,
 	[SLAVE_OCMEM_64] = &slv_cats_1,
 	[SLAVE_IMEM] = &slv_imem,
-	[SLAVE_QDSS_STM] = &slv_qdss_stm,
+	[SLAVE_QDSS_STM] = &slv_qdss_sपंचांग,
 	[SLAVE_SRVC_SNOC] = &slv_srvc_snoc,
 	[SNOC_BIMC_0_MAS] = &snoc_bimc_0_mas,
 	[SNOC_BIMC_1_MAS] = &snoc_bimc_1_mas,
-	[SNOC_INT_0] = &snoc_int_0,
-	[SNOC_INT_1] = &snoc_int_1,
-	[SNOC_INT_BIMC] = &snoc_int_bimc,
+	[SNOC_INT_0] = &snoc_पूर्णांक_0,
+	[SNOC_INT_1] = &snoc_पूर्णांक_1,
+	[SNOC_INT_BIMC] = &snoc_पूर्णांक_bimc,
 	[SNOC_PCNOC_MAS] = &snoc_pcnoc_mas,
-	[SNOC_QDSS_INT] = &qdss_int,
-};
+	[SNOC_QDSS_INT] = &qdss_पूर्णांक,
+पूर्ण;
 
-static struct qcom_icc_desc msm8916_snoc = {
+अटल काष्ठा qcom_icc_desc msm8916_snoc = अणु
 	.nodes = msm8916_snoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8916_snoc_nodes),
-};
+पूर्ण;
 
-static struct qcom_icc_node *msm8916_bimc_nodes[] = {
+अटल काष्ठा qcom_icc_node *msm8916_bimc_nodes[] = अणु
 	[BIMC_SNOC_MAS] = &bimc_snoc_mas,
 	[MASTER_AMPSS_M0] = &mas_apss,
 	[MASTER_GRAPHICS_3D] = &mas_gfx,
@@ -240,14 +241,14 @@ static struct qcom_icc_node *msm8916_bimc_nodes[] = {
 	[SLAVE_EBI_CH0] = &slv_ebi_ch0,
 	[SNOC_BIMC_0_SLV] = &snoc_bimc_0_slv,
 	[SNOC_BIMC_1_SLV] = &snoc_bimc_1_slv,
-};
+पूर्ण;
 
-static struct qcom_icc_desc msm8916_bimc = {
+अटल काष्ठा qcom_icc_desc msm8916_bimc = अणु
 	.nodes = msm8916_bimc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8916_bimc_nodes),
-};
+पूर्ण;
 
-static struct qcom_icc_node *msm8916_pcnoc_nodes[] = {
+अटल काष्ठा qcom_icc_node *msm8916_pcnoc_nodes[] = अणु
 	[MASTER_BLSP_1] = &mas_blsp_1,
 	[MASTER_DEHR] = &mas_dehr,
 	[MASTER_LPASS] = &mas_audio,
@@ -256,8 +257,8 @@ static struct qcom_icc_node *msm8916_pcnoc_nodes[] = {
 	[MASTER_SDCC_2] = &mas_pcnoc_sdcc_2,
 	[MASTER_SPDM] = &mas_spdm,
 	[MASTER_USB_HS] = &mas_usb_hs,
-	[PCNOC_INT_0] = &pcnoc_int_0,
-	[PCNOC_INT_1] = &pcnoc_int_1,
+	[PCNOC_INT_0] = &pcnoc_पूर्णांक_0,
+	[PCNOC_INT_1] = &pcnoc_पूर्णांक_1,
 	[PCNOC_MAS_0] = &pcnoc_m_0,
 	[PCNOC_MAS_1] = &pcnoc_m_1,
 	[PCNOC_SLV_0] = &pcnoc_s_0,
@@ -298,36 +299,36 @@ static struct qcom_icc_node *msm8916_pcnoc_nodes[] = {
 	[SLAVE_USB_HS] = &slv_usb_hs,
 	[SLAVE_VENUS_CFG] = &slv_venus_cfg,
 	[SNOC_PCNOC_SLV] = &snoc_pcnoc_slv,
-};
+पूर्ण;
 
-static struct qcom_icc_desc msm8916_pcnoc = {
+अटल काष्ठा qcom_icc_desc msm8916_pcnoc = अणु
 	.nodes = msm8916_pcnoc_nodes,
 	.num_nodes = ARRAY_SIZE(msm8916_pcnoc_nodes),
-};
+पूर्ण;
 
-static int msm8916_qnoc_probe(struct platform_device *pdev)
-{
-	return qnoc_probe(pdev, sizeof(msm8916_bus_clocks),
-			  ARRAY_SIZE(msm8916_bus_clocks), msm8916_bus_clocks);
-}
+अटल पूर्णांक msm8916_qnoc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस qnoc_probe(pdev, माप(msm8916_bus_घड़ीs),
+			  ARRAY_SIZE(msm8916_bus_घड़ीs), msm8916_bus_घड़ीs);
+पूर्ण
 
-static const struct of_device_id msm8916_noc_of_match[] = {
-	{ .compatible = "qcom,msm8916-bimc", .data = &msm8916_bimc },
-	{ .compatible = "qcom,msm8916-pcnoc", .data = &msm8916_pcnoc },
-	{ .compatible = "qcom,msm8916-snoc", .data = &msm8916_snoc },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id msm8916_noc_of_match[] = अणु
+	अणु .compatible = "qcom,msm8916-bimc", .data = &msm8916_bimc पूर्ण,
+	अणु .compatible = "qcom,msm8916-pcnoc", .data = &msm8916_pcnoc पूर्ण,
+	अणु .compatible = "qcom,msm8916-snoc", .data = &msm8916_snoc पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, msm8916_noc_of_match);
 
-static struct platform_driver msm8916_noc_driver = {
+अटल काष्ठा platक्रमm_driver msm8916_noc_driver = अणु
 	.probe = msm8916_qnoc_probe,
-	.remove = qnoc_remove,
-	.driver = {
+	.हटाओ = qnoc_हटाओ,
+	.driver = अणु
 		.name = "qnoc-msm8916",
 		.of_match_table = msm8916_noc_of_match,
-	},
-};
-module_platform_driver(msm8916_noc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(msm8916_noc_driver);
 MODULE_AUTHOR("Georgi Djakov <georgi.djakov@linaro.org>");
 MODULE_DESCRIPTION("Qualcomm MSM8916 NoC driver");
 MODULE_LICENSE("GPL v2");

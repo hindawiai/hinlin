@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for Xin-Mo devices, currently only the Dual Arcade controller.
+ *  HID driver क्रम Xin-Mo devices, currently only the Dual Arcade controller.
  *  Fixes the negative axis event values (the devices sends -2) to match the
  *  logical axis minimum of the HID report descriptor (the report announces
  *  -1). It is needed because hid-input discards out of bounds values.
@@ -12,48 +13,48 @@
 /*
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
 /*
  * Fix negative events that are out of bounds.
  */
-static int xinmo_event(struct hid_device *hdev, struct hid_field *field,
-		struct hid_usage *usage, __s32 value)
-{
-	switch (usage->code) {
-	case ABS_X:
-	case ABS_Y:
-	case ABS_Z:
-	case ABS_RX:
-		if (value < -1) {
+अटल पूर्णांक xinmo_event(काष्ठा hid_device *hdev, काष्ठा hid_field *field,
+		काष्ठा hid_usage *usage, __s32 value)
+अणु
+	चयन (usage->code) अणु
+	हाल ABS_X:
+	हाल ABS_Y:
+	हाल ABS_Z:
+	हाल ABS_RX:
+		अगर (value < -1) अणु
 			input_event(field->hidinput->input, usage->type,
 				usage->code, -1);
-			return 1;
-		}
-		break;
-	}
+			वापस 1;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hid_device_id xinmo_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_XIN_MO, USB_DEVICE_ID_XIN_MO_DUAL_ARCADE) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_XIN_MO, USB_DEVICE_ID_THT_2P_ARCADE) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id xinmo_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_XIN_MO, USB_DEVICE_ID_XIN_MO_DUAL_ARCADE) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_XIN_MO, USB_DEVICE_ID_THT_2P_ARCADE) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(hid, xinmo_devices);
 
-static struct hid_driver xinmo_driver = {
+अटल काष्ठा hid_driver xinmo_driver = अणु
 	.name = "xinmo",
 	.id_table = xinmo_devices,
 	.event = xinmo_event
-};
+पूर्ण;
 
 module_hid_driver(xinmo_driver);
 MODULE_LICENSE("GPL");

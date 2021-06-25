@@ -1,312 +1,313 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "string2.h"
-#include "strfilter.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "string2.h"
+#समावेश "strfilter.h"
 
-#include <errno.h>
-#include <stdlib.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
 
 /* Operators */
-static const char *OP_and	= "&";	/* Logical AND */
-static const char *OP_or	= "|";	/* Logical OR */
-static const char *OP_not	= "!";	/* Logical NOT */
+अटल स्थिर अक्षर *OP_and	= "&";	/* Logical AND */
+अटल स्थिर अक्षर *OP_or	= "|";	/* Logical OR */
+अटल स्थिर अक्षर *OP_not	= "!";	/* Logical NOT */
 
-#define is_operator(c)	((c) == '|' || (c) == '&' || (c) == '!')
-#define is_separator(c)	(is_operator(c) || (c) == '(' || (c) == ')')
+#घोषणा is_चालक(c)	((c) == '|' || (c) == '&' || (c) == '!')
+#घोषणा is_separator(c)	(is_चालक(c) || (c) == '(' || (c) == ')')
 
-static void strfilter_node__delete(struct strfilter_node *node)
-{
-	if (node) {
-		if (node->p && !is_operator(*node->p))
-			zfree((char **)&node->p);
+अटल व्योम strfilter_node__delete(काष्ठा strfilter_node *node)
+अणु
+	अगर (node) अणु
+		अगर (node->p && !is_चालक(*node->p))
+			zमुक्त((अक्षर **)&node->p);
 		strfilter_node__delete(node->l);
 		strfilter_node__delete(node->r);
-		free(node);
-	}
-}
+		मुक्त(node);
+	पूर्ण
+पूर्ण
 
-void strfilter__delete(struct strfilter *filter)
-{
-	if (filter) {
+व्योम strfilter__delete(काष्ठा strfilter *filter)
+अणु
+	अगर (filter) अणु
 		strfilter_node__delete(filter->root);
-		free(filter);
-	}
-}
+		मुक्त(filter);
+	पूर्ण
+पूर्ण
 
-static const char *get_token(const char *s, const char **e)
-{
-	const char *p;
+अटल स्थिर अक्षर *get_token(स्थिर अक्षर *s, स्थिर अक्षर **e)
+अणु
+	स्थिर अक्षर *p;
 
 	s = skip_spaces(s);
 
-	if (*s == '\0') {
+	अगर (*s == '\0') अणु
 		p = s;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	p = s + 1;
-	if (!is_separator(*s)) {
+	अगर (!is_separator(*s)) अणु
 		/* End search */
 retry:
-		while (*p && !is_separator(*p) && !isspace(*p))
+		जबतक (*p && !is_separator(*p) && !है_खाली(*p))
 			p++;
-		/* Escape and special case: '!' is also used in glob pattern */
-		if (*(p - 1) == '\\' || (*p == '!' && *(p - 1) == '[')) {
+		/* Escape and special हाल: '!' is also used in glob pattern */
+		अगर (*(p - 1) == '\\' || (*p == '!' && *(p - 1) == '[')) अणु
 			p++;
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 end:
 	*e = p;
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static struct strfilter_node *strfilter_node__alloc(const char *op,
-						    struct strfilter_node *l,
-						    struct strfilter_node *r)
-{
-	struct strfilter_node *node = zalloc(sizeof(*node));
+अटल काष्ठा strfilter_node *strfilter_node__alloc(स्थिर अक्षर *op,
+						    काष्ठा strfilter_node *l,
+						    काष्ठा strfilter_node *r)
+अणु
+	काष्ठा strfilter_node *node = zalloc(माप(*node));
 
-	if (node) {
+	अगर (node) अणु
 		node->p = op;
 		node->l = l;
 		node->r = r;
-	}
+	पूर्ण
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static struct strfilter_node *strfilter_node__new(const char *s,
-						  const char **ep)
-{
-	struct strfilter_node root, *cur, *last_op;
-	const char *e;
+अटल काष्ठा strfilter_node *strfilter_node__new(स्थिर अक्षर *s,
+						  स्थिर अक्षर **ep)
+अणु
+	काष्ठा strfilter_node root, *cur, *last_op;
+	स्थिर अक्षर *e;
 
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
-	memset(&root, 0, sizeof(root));
+	स_रखो(&root, 0, माप(root));
 	last_op = cur = &root;
 
 	s = get_token(s, &e);
-	while (*s != '\0' && *s != ')') {
-		switch (*s) {
-		case '&':	/* Exchg last OP->r with AND */
-			if (!cur->r || !last_op->r)
-				goto error;
-			cur = strfilter_node__alloc(OP_and, last_op->r, NULL);
-			if (!cur)
-				goto nomem;
+	जबतक (*s != '\0' && *s != ')') अणु
+		चयन (*s) अणु
+		हाल '&':	/* Exchg last OP->r with AND */
+			अगर (!cur->r || !last_op->r)
+				जाओ error;
+			cur = strfilter_node__alloc(OP_and, last_op->r, शून्य);
+			अगर (!cur)
+				जाओ nomem;
 			last_op->r = cur;
 			last_op = cur;
-			break;
-		case '|':	/* Exchg the root with OR */
-			if (!cur->r || !root.r)
-				goto error;
-			cur = strfilter_node__alloc(OP_or, root.r, NULL);
-			if (!cur)
-				goto nomem;
+			अवरोध;
+		हाल '|':	/* Exchg the root with OR */
+			अगर (!cur->r || !root.r)
+				जाओ error;
+			cur = strfilter_node__alloc(OP_or, root.r, शून्य);
+			अगर (!cur)
+				जाओ nomem;
 			root.r = cur;
 			last_op = cur;
-			break;
-		case '!':	/* Add NOT as a leaf node */
-			if (cur->r)
-				goto error;
-			cur->r = strfilter_node__alloc(OP_not, NULL, NULL);
-			if (!cur->r)
-				goto nomem;
+			अवरोध;
+		हाल '!':	/* Add NOT as a leaf node */
+			अगर (cur->r)
+				जाओ error;
+			cur->r = strfilter_node__alloc(OP_not, शून्य, शून्य);
+			अगर (!cur->r)
+				जाओ nomem;
 			cur = cur->r;
-			break;
-		case '(':	/* Recursively parses inside the parenthesis */
-			if (cur->r)
-				goto error;
+			अवरोध;
+		हाल '(':	/* Recursively parses inside the parenthesis */
+			अगर (cur->r)
+				जाओ error;
 			cur->r = strfilter_node__new(s + 1, &s);
-			if (!s)
-				goto nomem;
-			if (!cur->r || *s != ')')
-				goto error;
+			अगर (!s)
+				जाओ nomem;
+			अगर (!cur->r || *s != ')')
+				जाओ error;
 			e = s + 1;
-			break;
-		default:
-			if (cur->r)
-				goto error;
-			cur->r = strfilter_node__alloc(NULL, NULL, NULL);
-			if (!cur->r)
-				goto nomem;
+			अवरोध;
+		शेष:
+			अगर (cur->r)
+				जाओ error;
+			cur->r = strfilter_node__alloc(शून्य, शून्य, शून्य);
+			अगर (!cur->r)
+				जाओ nomem;
 			cur->r->p = strndup(s, e - s);
-			if (!cur->r->p)
-				goto nomem;
-		}
+			अगर (!cur->r->p)
+				जाओ nomem;
+		पूर्ण
 		s = get_token(e, &e);
-	}
-	if (!cur->r)
-		goto error;
+	पूर्ण
+	अगर (!cur->r)
+		जाओ error;
 	*ep = s;
-	return root.r;
+	वापस root.r;
 nomem:
-	s = NULL;
+	s = शून्य;
 error:
 	*ep = s;
 	strfilter_node__delete(root.r);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Parse filter rule and return new strfilter.
- * Return NULL if fail, and *ep == NULL if memory allocation failed.
+ * Parse filter rule and वापस new strfilter.
+ * Return शून्य अगर fail, and *ep == शून्य अगर memory allocation failed.
  */
-struct strfilter *strfilter__new(const char *rules, const char **err)
-{
-	struct strfilter *filter = zalloc(sizeof(*filter));
-	const char *ep = NULL;
+काष्ठा strfilter *strfilter__new(स्थिर अक्षर *rules, स्थिर अक्षर **err)
+अणु
+	काष्ठा strfilter *filter = zalloc(माप(*filter));
+	स्थिर अक्षर *ep = शून्य;
 
-	if (filter)
+	अगर (filter)
 		filter->root = strfilter_node__new(rules, &ep);
 
-	if (!filter || !filter->root || *ep != '\0') {
-		if (err)
+	अगर (!filter || !filter->root || *ep != '\0') अणु
+		अगर (err)
 			*err = ep;
 		strfilter__delete(filter);
-		filter = NULL;
-	}
+		filter = शून्य;
+	पूर्ण
 
-	return filter;
-}
+	वापस filter;
+पूर्ण
 
-static int strfilter__append(struct strfilter *filter, bool _or,
-			     const char *rules, const char **err)
-{
-	struct strfilter_node *right, *root;
-	const char *ep = NULL;
+अटल पूर्णांक strfilter__append(काष्ठा strfilter *filter, bool _or,
+			     स्थिर अक्षर *rules, स्थिर अक्षर **err)
+अणु
+	काष्ठा strfilter_node *right, *root;
+	स्थिर अक्षर *ep = शून्य;
 
-	if (!filter || !rules)
-		return -EINVAL;
+	अगर (!filter || !rules)
+		वापस -EINVAL;
 
 	right = strfilter_node__new(rules, &ep);
-	if (!right || *ep != '\0') {
-		if (err)
+	अगर (!right || *ep != '\0') अणु
+		अगर (err)
 			*err = ep;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	root = strfilter_node__alloc(_or ? OP_or : OP_and, filter->root, right);
-	if (!root) {
-		ep = NULL;
-		goto error;
-	}
+	अगर (!root) अणु
+		ep = शून्य;
+		जाओ error;
+	पूर्ण
 
 	filter->root = root;
-	return 0;
+	वापस 0;
 
 error:
 	strfilter_node__delete(right);
-	return ep ? -EINVAL : -ENOMEM;
-}
+	वापस ep ? -EINVAL : -ENOMEM;
+पूर्ण
 
-int strfilter__or(struct strfilter *filter, const char *rules, const char **err)
-{
-	return strfilter__append(filter, true, rules, err);
-}
+पूर्णांक strfilter__or(काष्ठा strfilter *filter, स्थिर अक्षर *rules, स्थिर अक्षर **err)
+अणु
+	वापस strfilter__append(filter, true, rules, err);
+पूर्ण
 
-int strfilter__and(struct strfilter *filter, const char *rules,
-		   const char **err)
-{
-	return strfilter__append(filter, false, rules, err);
-}
+पूर्णांक strfilter__and(काष्ठा strfilter *filter, स्थिर अक्षर *rules,
+		   स्थिर अक्षर **err)
+अणु
+	वापस strfilter__append(filter, false, rules, err);
+पूर्ण
 
-static bool strfilter_node__compare(struct strfilter_node *node,
-				    const char *str)
-{
-	if (!node || !node->p)
-		return false;
+अटल bool strfilter_node__compare(काष्ठा strfilter_node *node,
+				    स्थिर अक्षर *str)
+अणु
+	अगर (!node || !node->p)
+		वापस false;
 
-	switch (*node->p) {
-	case '|':	/* OR */
-		return strfilter_node__compare(node->l, str) ||
+	चयन (*node->p) अणु
+	हाल '|':	/* OR */
+		वापस strfilter_node__compare(node->l, str) ||
 			strfilter_node__compare(node->r, str);
-	case '&':	/* AND */
-		return strfilter_node__compare(node->l, str) &&
+	हाल '&':	/* AND */
+		वापस strfilter_node__compare(node->l, str) &&
 			strfilter_node__compare(node->r, str);
-	case '!':	/* NOT */
-		return !strfilter_node__compare(node->r, str);
-	default:
-		return strglobmatch(str, node->p);
-	}
-}
+	हाल '!':	/* NOT */
+		वापस !strfilter_node__compare(node->r, str);
+	शेष:
+		वापस strglobmatch(str, node->p);
+	पूर्ण
+पूर्ण
 
-/* Return true if STR matches the filter rules */
-bool strfilter__compare(struct strfilter *filter, const char *str)
-{
-	if (!filter)
-		return false;
-	return strfilter_node__compare(filter->root, str);
-}
+/* Return true अगर STR matches the filter rules */
+bool strfilter__compare(काष्ठा strfilter *filter, स्थिर अक्षर *str)
+अणु
+	अगर (!filter)
+		वापस false;
+	वापस strfilter_node__compare(filter->root, str);
+पूर्ण
 
-static int strfilter_node__sprint(struct strfilter_node *node, char *buf);
+अटल पूर्णांक strfilter_node__sprपूर्णांक(काष्ठा strfilter_node *node, अक्षर *buf);
 
-/* sprint node in parenthesis if needed */
-static int strfilter_node__sprint_pt(struct strfilter_node *node, char *buf)
-{
-	int len;
-	int pt = node->r ? 2 : 0;	/* don't need to check node->l */
+/* sprपूर्णांक node in parenthesis अगर needed */
+अटल पूर्णांक strfilter_node__sprपूर्णांक_pt(काष्ठा strfilter_node *node, अक्षर *buf)
+अणु
+	पूर्णांक len;
+	पूर्णांक pt = node->r ? 2 : 0;	/* करोn't need to check node->l */
 
-	if (buf && pt)
+	अगर (buf && pt)
 		*buf++ = '(';
-	len = strfilter_node__sprint(node, buf);
-	if (len < 0)
-		return len;
-	if (buf && pt)
+	len = strfilter_node__sprपूर्णांक(node, buf);
+	अगर (len < 0)
+		वापस len;
+	अगर (buf && pt)
 		*(buf + len) = ')';
-	return len + pt;
-}
+	वापस len + pt;
+पूर्ण
 
-static int strfilter_node__sprint(struct strfilter_node *node, char *buf)
-{
-	int len = 0, rlen;
+अटल पूर्णांक strfilter_node__sprपूर्णांक(काष्ठा strfilter_node *node, अक्षर *buf)
+अणु
+	पूर्णांक len = 0, rlen;
 
-	if (!node || !node->p)
-		return -EINVAL;
+	अगर (!node || !node->p)
+		वापस -EINVAL;
 
-	switch (*node->p) {
-	case '|':
-	case '&':
-		len = strfilter_node__sprint_pt(node->l, buf);
-		if (len < 0)
-			return len;
+	चयन (*node->p) अणु
+	हाल '|':
+	हाल '&':
+		len = strfilter_node__sprपूर्णांक_pt(node->l, buf);
+		अगर (len < 0)
+			वापस len;
 		__fallthrough;
-	case '!':
-		if (buf) {
+	हाल '!':
+		अगर (buf) अणु
 			*(buf + len++) = *node->p;
 			buf += len;
-		} else
+		पूर्ण अन्यथा
 			len++;
-		rlen = strfilter_node__sprint_pt(node->r, buf);
-		if (rlen < 0)
-			return rlen;
+		rlen = strfilter_node__sprपूर्णांक_pt(node->r, buf);
+		अगर (rlen < 0)
+			वापस rlen;
 		len += rlen;
-		break;
-	default:
-		len = strlen(node->p);
-		if (buf)
-			strcpy(buf, node->p);
-	}
+		अवरोध;
+	शेष:
+		len = म_माप(node->p);
+		अगर (buf)
+			म_नकल(buf, node->p);
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-char *strfilter__string(struct strfilter *filter)
-{
-	int len;
-	char *ret = NULL;
+अक्षर *strfilter__string(काष्ठा strfilter *filter)
+अणु
+	पूर्णांक len;
+	अक्षर *ret = शून्य;
 
-	len = strfilter_node__sprint(filter->root, NULL);
-	if (len < 0)
-		return NULL;
+	len = strfilter_node__sprपूर्णांक(filter->root, शून्य);
+	अगर (len < 0)
+		वापस शून्य;
 
-	ret = malloc(len + 1);
-	if (ret)
-		strfilter_node__sprint(filter->root, ret);
+	ret = दो_स्मृति(len + 1);
+	अगर (ret)
+		strfilter_node__sprपूर्णांक(filter->root, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

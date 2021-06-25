@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
- * net/tipc/bearer.h: Include file for TIPC bearer code
+ * net/tipc/bearer.h: Include file क्रम TIPC bearer code
  *
  * Copyright (c) 1996-2006, 2013-2016, Ericsson AB
  * Copyright (c) 2005, 2010-2011, Wind River Systems
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived from
+ *    this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -25,7 +26,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -34,90 +35,90 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _TIPC_BEARER_H
-#define _TIPC_BEARER_H
+#अगर_अघोषित _TIPC_BEARER_H
+#घोषणा _TIPC_BEARER_H
 
-#include "netlink.h"
-#include "core.h"
-#include "msg.h"
-#include <net/genetlink.h>
+#समावेश "netlink.h"
+#समावेश "core.h"
+#समावेश "msg.h"
+#समावेश <net/genetlink.h>
 
-#define MAX_MEDIA	3
+#घोषणा MAX_MEDIA	3
 
-/* Identifiers associated with TIPC message header media address info
- * - address info field is 32 bytes long
+/* Identअगरiers associated with TIPC message header media address info
+ * - address info field is 32 bytes दीर्घ
  * - the field's actual content and length is defined per media
- * - remaining unused bytes in the field are set to zero
+ * - reमुख्यing unused bytes in the field are set to zero
  */
-#define TIPC_MEDIA_INFO_SIZE	32
-#define TIPC_MEDIA_TYPE_OFFSET	3
-#define TIPC_MEDIA_ADDR_OFFSET	4
+#घोषणा TIPC_MEDIA_INFO_SIZE	32
+#घोषणा TIPC_MEDIA_TYPE_OFFSET	3
+#घोषणा TIPC_MEDIA_ADDR_OFFSET	4
 
 /*
- * Identifiers of supported TIPC media types
+ * Identअगरiers of supported TIPC media types
  */
-#define TIPC_MEDIA_TYPE_ETH	1
-#define TIPC_MEDIA_TYPE_IB	2
-#define TIPC_MEDIA_TYPE_UDP	3
+#घोषणा TIPC_MEDIA_TYPE_ETH	1
+#घोषणा TIPC_MEDIA_TYPE_IB	2
+#घोषणा TIPC_MEDIA_TYPE_UDP	3
 
 /* Minimum bearer MTU */
-#define TIPC_MIN_BEARER_MTU	(MAX_H_SIZE + INT_H_SIZE)
+#घोषणा TIPC_MIN_BEARER_MTU	(MAX_H_SIZE + INT_H_SIZE)
 
-/* Identifiers for distinguishing between broadcast/multicast and replicast
+/* Identअगरiers क्रम distinguishing between broadcast/multicast and replicast
  */
-#define TIPC_BROADCAST_SUPPORT  1
-#define TIPC_REPLICAST_SUPPORT  2
+#घोषणा TIPC_BROADCAST_SUPPORT  1
+#घोषणा TIPC_REPLICAST_SUPPORT  2
 
 /**
- * struct tipc_media_addr - destination address used by TIPC bearers
- * @value: address info (format defined by media)
- * @media_id: TIPC media type identifier
- * @broadcast: non-zero if address is a broadcast address
+ * काष्ठा tipc_media_addr - destination address used by TIPC bearers
+ * @value: address info (क्रमmat defined by media)
+ * @media_id: TIPC media type identअगरier
+ * @broadcast: non-zero अगर address is a broadcast address
  */
-struct tipc_media_addr {
+काष्ठा tipc_media_addr अणु
 	u8 value[TIPC_MEDIA_INFO_SIZE];
 	u8 media_id;
 	u8 broadcast;
-};
+पूर्ण;
 
-struct tipc_bearer;
+काष्ठा tipc_bearer;
 
 /**
- * struct tipc_media - Media specific info exposed to generic bearer layer
+ * काष्ठा tipc_media - Media specअगरic info exposed to generic bearer layer
  * @send_msg: routine which handles buffer transmission
  * @enable_media: routine which enables a media
  * @disable_media: routine which disables a media
- * @addr2str: convert media address format to string
- * @addr2msg: convert from media addr format to discovery msg addr format
- * @msg2addr: convert from discovery msg addr format to media addr format
- * @raw2addr: convert from raw addr format to media addr format
- * @priority: default link (and bearer) priority
- * @tolerance: default time (in ms) before declaring link failure
- * @min_win: minimum window (in packets) before declaring link congestion
- * @max_win: maximum window (in packets) before declaring link congestion
- * @mtu: max packet size bearer can support for media type not dependent on
+ * @addr2str: convert media address क्रमmat to string
+ * @addr2msg: convert from media addr क्रमmat to discovery msg addr क्रमmat
+ * @msg2addr: convert from discovery msg addr क्रमmat to media addr क्रमmat
+ * @raw2addr: convert from raw addr क्रमmat to media addr क्रमmat
+ * @priority: शेष link (and bearer) priority
+ * @tolerance: शेष समय (in ms) beक्रमe declaring link failure
+ * @min_win: minimum winकरोw (in packets) beक्रमe declaring link congestion
+ * @max_win: maximum winकरोw (in packets) beक्रमe declaring link congestion
+ * @mtu: max packet size bearer can support क्रम media type not dependent on
  * underlying device MTU
- * @type_id: TIPC media identifier
+ * @type_id: TIPC media identअगरier
  * @hwaddr_len: TIPC media address len
  * @name: media name
  */
-struct tipc_media {
-	int (*send_msg)(struct net *net, struct sk_buff *buf,
-			struct tipc_bearer *b,
-			struct tipc_media_addr *dest);
-	int (*enable_media)(struct net *net, struct tipc_bearer *b,
-			    struct nlattr *attr[]);
-	void (*disable_media)(struct tipc_bearer *b);
-	int (*addr2str)(struct tipc_media_addr *addr,
-			char *strbuf,
-			int bufsz);
-	int (*addr2msg)(char *msg, struct tipc_media_addr *addr);
-	int (*msg2addr)(struct tipc_bearer *b,
-			struct tipc_media_addr *addr,
-			char *msg);
-	int (*raw2addr)(struct tipc_bearer *b,
-			struct tipc_media_addr *addr,
-			char *raw);
+काष्ठा tipc_media अणु
+	पूर्णांक (*send_msg)(काष्ठा net *net, काष्ठा sk_buff *buf,
+			काष्ठा tipc_bearer *b,
+			काष्ठा tipc_media_addr *dest);
+	पूर्णांक (*enable_media)(काष्ठा net *net, काष्ठा tipc_bearer *b,
+			    काष्ठा nlattr *attr[]);
+	व्योम (*disable_media)(काष्ठा tipc_bearer *b);
+	पूर्णांक (*addr2str)(काष्ठा tipc_media_addr *addr,
+			अक्षर *strbuf,
+			पूर्णांक bufsz);
+	पूर्णांक (*addr2msg)(अक्षर *msg, काष्ठा tipc_media_addr *addr);
+	पूर्णांक (*msg2addr)(काष्ठा tipc_bearer *b,
+			काष्ठा tipc_media_addr *addr,
+			अक्षर *msg);
+	पूर्णांक (*raw2addr)(काष्ठा tipc_bearer *b,
+			काष्ठा tipc_media_addr *addr,
+			अक्षर *raw);
 	u32 priority;
 	u32 tolerance;
 	u32 min_win;
@@ -125,141 +126,141 @@ struct tipc_media {
 	u32 mtu;
 	u32 type_id;
 	u32 hwaddr_len;
-	char name[TIPC_MAX_MEDIA_NAME];
-};
+	अक्षर name[TIPC_MAX_MEDIA_NAME];
+पूर्ण;
 
 /**
- * struct tipc_bearer - Generic TIPC bearer structure
- * @media_ptr: pointer to additional media-specific information about bearer
+ * काष्ठा tipc_bearer - Generic TIPC bearer काष्ठाure
+ * @media_ptr: poपूर्णांकer to additional media-specअगरic inक्रमmation about bearer
  * @mtu: max packet size bearer can support
- * @addr: media-specific address associated with bearer
- * @name: bearer name (format = media:interface)
- * @media: ptr to media structure associated with bearer
+ * @addr: media-specअगरic address associated with bearer
+ * @name: bearer name (क्रमmat = media:पूर्णांकerface)
+ * @media: ptr to media काष्ठाure associated with bearer
  * @bcast_addr: media address used in broadcasting
- * @pt: packet type for bearer
- * @rcu: rcu struct for tipc_bearer
- * @priority: default link priority for bearer
- * @min_win: minimum window (in packets) before declaring link congestion
- * @max_win: maximum window (in packets) before declaring link congestion
- * @tolerance: default link tolerance for bearer
- * @domain: network domain to which links can be established
+ * @pt: packet type क्रम bearer
+ * @rcu: rcu काष्ठा क्रम tipc_bearer
+ * @priority: शेष link priority क्रम bearer
+ * @min_win: minimum winकरोw (in packets) beक्रमe declaring link congestion
+ * @max_win: maximum winकरोw (in packets) beक्रमe declaring link congestion
+ * @tolerance: शेष link tolerance क्रम bearer
+ * @करोमुख्य: network करोमुख्य to which links can be established
  * @identity: array index of this bearer within TIPC bearer array
  * @disc: ptr to link setup request
  * @net_plane: network plane ('A' through 'H') currently associated with bearer
  * @up: bearer up flag (bit 0)
  * @refcnt: tipc_bearer reference counter
  *
- * Note: media-specific code is responsible for initialization of the fields
+ * Note: media-specअगरic code is responsible क्रम initialization of the fields
  * indicated below when a bearer is enabled; TIPC's generic bearer code takes
  * care of initializing all other fields.
  */
-struct tipc_bearer {
-	void __rcu *media_ptr;			/* initialized by media */
+काष्ठा tipc_bearer अणु
+	व्योम __rcu *media_ptr;			/* initialized by media */
 	u32 mtu;				/* initialized by media */
-	struct tipc_media_addr addr;		/* initialized by media */
-	char name[TIPC_MAX_BEARER_NAME];
-	struct tipc_media *media;
-	struct tipc_media_addr bcast_addr;
-	struct packet_type pt;
-	struct rcu_head rcu;
+	काष्ठा tipc_media_addr addr;		/* initialized by media */
+	अक्षर name[TIPC_MAX_BEARER_NAME];
+	काष्ठा tipc_media *media;
+	काष्ठा tipc_media_addr bcast_addr;
+	काष्ठा packet_type pt;
+	काष्ठा rcu_head rcu;
 	u32 priority;
 	u32 min_win;
 	u32 max_win;
 	u32 tolerance;
-	u32 domain;
+	u32 करोमुख्य;
 	u32 identity;
-	struct tipc_discoverer *disc;
-	char net_plane;
-	unsigned long up;
+	काष्ठा tipc_discoverer *disc;
+	अक्षर net_plane;
+	अचिन्हित दीर्घ up;
 	refcount_t refcnt;
-};
+पूर्ण;
 
-struct tipc_bearer_names {
-	char media_name[TIPC_MAX_MEDIA_NAME];
-	char if_name[TIPC_MAX_IF_NAME];
-};
+काष्ठा tipc_bearer_names अणु
+	अक्षर media_name[TIPC_MAX_MEDIA_NAME];
+	अक्षर अगर_name[TIPC_MAX_IF_NAME];
+पूर्ण;
 
 /*
  * TIPC routines available to supported media types
  */
 
-void tipc_rcv(struct net *net, struct sk_buff *skb, struct tipc_bearer *b);
+व्योम tipc_rcv(काष्ठा net *net, काष्ठा sk_buff *skb, काष्ठा tipc_bearer *b);
 
 /*
  * Routines made available to TIPC by supported media types
  */
-extern struct tipc_media eth_media_info;
+बाह्य काष्ठा tipc_media eth_media_info;
 
-#ifdef CONFIG_TIPC_MEDIA_IB
-extern struct tipc_media ib_media_info;
-#endif
-#ifdef CONFIG_TIPC_MEDIA_UDP
-extern struct tipc_media udp_media_info;
-#endif
+#अगर_घोषित CONFIG_TIPC_MEDIA_IB
+बाह्य काष्ठा tipc_media ib_media_info;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TIPC_MEDIA_UDP
+बाह्य काष्ठा tipc_media udp_media_info;
+#पूर्ण_अगर
 
-int tipc_nl_bearer_disable(struct sk_buff *skb, struct genl_info *info);
-int __tipc_nl_bearer_disable(struct sk_buff *skb, struct genl_info *info);
-int tipc_nl_bearer_enable(struct sk_buff *skb, struct genl_info *info);
-int __tipc_nl_bearer_enable(struct sk_buff *skb, struct genl_info *info);
-int tipc_nl_bearer_dump(struct sk_buff *skb, struct netlink_callback *cb);
-int tipc_nl_bearer_get(struct sk_buff *skb, struct genl_info *info);
-int tipc_nl_bearer_set(struct sk_buff *skb, struct genl_info *info);
-int __tipc_nl_bearer_set(struct sk_buff *skb, struct genl_info *info);
-int tipc_nl_bearer_add(struct sk_buff *skb, struct genl_info *info);
+पूर्णांक tipc_nl_bearer_disable(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक __tipc_nl_bearer_disable(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक tipc_nl_bearer_enable(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक __tipc_nl_bearer_enable(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक tipc_nl_bearer_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक tipc_nl_bearer_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक tipc_nl_bearer_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक __tipc_nl_bearer_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक tipc_nl_bearer_add(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-int tipc_nl_media_dump(struct sk_buff *skb, struct netlink_callback *cb);
-int tipc_nl_media_get(struct sk_buff *skb, struct genl_info *info);
-int tipc_nl_media_set(struct sk_buff *skb, struct genl_info *info);
-int __tipc_nl_media_set(struct sk_buff *skb, struct genl_info *info);
+पूर्णांक tipc_nl_media_dump(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb);
+पूर्णांक tipc_nl_media_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक tipc_nl_media_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
+पूर्णांक __tipc_nl_media_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info);
 
-int tipc_media_set_priority(const char *name, u32 new_value);
-int tipc_media_set_window(const char *name, u32 new_value);
-int tipc_media_addr_printf(char *buf, int len, struct tipc_media_addr *a);
-int tipc_enable_l2_media(struct net *net, struct tipc_bearer *b,
-			 struct nlattr *attrs[]);
-bool tipc_bearer_hold(struct tipc_bearer *b);
-void tipc_bearer_put(struct tipc_bearer *b);
-void tipc_disable_l2_media(struct tipc_bearer *b);
-int tipc_l2_send_msg(struct net *net, struct sk_buff *buf,
-		     struct tipc_bearer *b, struct tipc_media_addr *dest);
+पूर्णांक tipc_media_set_priority(स्थिर अक्षर *name, u32 new_value);
+पूर्णांक tipc_media_set_winकरोw(स्थिर अक्षर *name, u32 new_value);
+पूर्णांक tipc_media_addr_म_लिखो(अक्षर *buf, पूर्णांक len, काष्ठा tipc_media_addr *a);
+पूर्णांक tipc_enable_l2_media(काष्ठा net *net, काष्ठा tipc_bearer *b,
+			 काष्ठा nlattr *attrs[]);
+bool tipc_bearer_hold(काष्ठा tipc_bearer *b);
+व्योम tipc_bearer_put(काष्ठा tipc_bearer *b);
+व्योम tipc_disable_l2_media(काष्ठा tipc_bearer *b);
+पूर्णांक tipc_l2_send_msg(काष्ठा net *net, काष्ठा sk_buff *buf,
+		     काष्ठा tipc_bearer *b, काष्ठा tipc_media_addr *dest);
 
-void tipc_bearer_add_dest(struct net *net, u32 bearer_id, u32 dest);
-void tipc_bearer_remove_dest(struct net *net, u32 bearer_id, u32 dest);
-struct tipc_bearer *tipc_bearer_find(struct net *net, const char *name);
-int tipc_bearer_get_name(struct net *net, char *name, u32 bearer_id);
-struct tipc_media *tipc_media_find(const char *name);
-int tipc_bearer_setup(void);
-void tipc_bearer_cleanup(void);
-void tipc_bearer_stop(struct net *net);
-int tipc_bearer_mtu(struct net *net, u32 bearer_id);
-bool tipc_bearer_bcast_support(struct net *net, u32 bearer_id);
-void tipc_bearer_xmit_skb(struct net *net, u32 bearer_id,
-			  struct sk_buff *skb,
-			  struct tipc_media_addr *dest);
-void tipc_bearer_xmit(struct net *net, u32 bearer_id,
-		      struct sk_buff_head *xmitq,
-		      struct tipc_media_addr *dst,
-		      struct tipc_node *__dnode);
-void tipc_bearer_bc_xmit(struct net *net, u32 bearer_id,
-			 struct sk_buff_head *xmitq);
-void tipc_clone_to_loopback(struct net *net, struct sk_buff_head *pkts);
-int tipc_attach_loopback(struct net *net);
-void tipc_detach_loopback(struct net *net);
+व्योम tipc_bearer_add_dest(काष्ठा net *net, u32 bearer_id, u32 dest);
+व्योम tipc_bearer_हटाओ_dest(काष्ठा net *net, u32 bearer_id, u32 dest);
+काष्ठा tipc_bearer *tipc_bearer_find(काष्ठा net *net, स्थिर अक्षर *name);
+पूर्णांक tipc_bearer_get_name(काष्ठा net *net, अक्षर *name, u32 bearer_id);
+काष्ठा tipc_media *tipc_media_find(स्थिर अक्षर *name);
+पूर्णांक tipc_bearer_setup(व्योम);
+व्योम tipc_bearer_cleanup(व्योम);
+व्योम tipc_bearer_stop(काष्ठा net *net);
+पूर्णांक tipc_bearer_mtu(काष्ठा net *net, u32 bearer_id);
+bool tipc_bearer_bcast_support(काष्ठा net *net, u32 bearer_id);
+व्योम tipc_bearer_xmit_skb(काष्ठा net *net, u32 bearer_id,
+			  काष्ठा sk_buff *skb,
+			  काष्ठा tipc_media_addr *dest);
+व्योम tipc_bearer_xmit(काष्ठा net *net, u32 bearer_id,
+		      काष्ठा sk_buff_head *xmitq,
+		      काष्ठा tipc_media_addr *dst,
+		      काष्ठा tipc_node *__dnode);
+व्योम tipc_bearer_bc_xmit(काष्ठा net *net, u32 bearer_id,
+			 काष्ठा sk_buff_head *xmitq);
+व्योम tipc_clone_to_loopback(काष्ठा net *net, काष्ठा sk_buff_head *pkts);
+पूर्णांक tipc_attach_loopback(काष्ठा net *net);
+व्योम tipc_detach_loopback(काष्ठा net *net);
 
-static inline void tipc_loopback_trace(struct net *net,
-				       struct sk_buff_head *pkts)
-{
-	if (unlikely(dev_nit_active(net->loopback_dev)))
+अटल अंतरभूत व्योम tipc_loopback_trace(काष्ठा net *net,
+				       काष्ठा sk_buff_head *pkts)
+अणु
+	अगर (unlikely(dev_nit_active(net->loopback_dev)))
 		tipc_clone_to_loopback(net, pkts);
-}
+पूर्ण
 
-/* check if device MTU is too low for tipc headers */
-static inline bool tipc_mtu_bad(struct net_device *dev, unsigned int reserve)
-{
-	if (dev->mtu >= TIPC_MIN_BEARER_MTU + reserve)
-		return false;
+/* check अगर device MTU is too low क्रम tipc headers */
+अटल अंतरभूत bool tipc_mtu_bad(काष्ठा net_device *dev, अचिन्हित पूर्णांक reserve)
+अणु
+	अगर (dev->mtu >= TIPC_MIN_BEARER_MTU + reserve)
+		वापस false;
 	netdev_warn(dev, "MTU too low for tipc bearer\n");
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#endif	/* _TIPC_BEARER_H */
+#पूर्ण_अगर	/* _TIPC_BEARER_H */

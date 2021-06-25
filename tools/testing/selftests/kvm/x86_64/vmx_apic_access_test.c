@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * vmx_apic_access_test
  *
@@ -12,130 +13,130 @@
  *
  * The second subtest sets the APIC-access address to a (valid) L1
  * physical address that is not backed by memory. KVM can't handle
- * this situation, so resuming L2 should result in a KVM exit for
- * internal error (emulation). This is not an architectural
- * requirement. It is just a shortcoming of KVM. The internal error
- * is unfortunate, but it's better than what used to happen!
+ * this situation, so resuming L2 should result in a KVM निकास क्रम
+ * पूर्णांकernal error (emulation). This is not an architectural
+ * requirement. It is just a लघुcoming of KVM. The पूर्णांकernal error
+ * is unक्रमtunate, but it's better than what used to happen!
  */
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "processor.h"
-#include "vmx.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "processor.h"
+#समावेश "vmx.h"
 
-#include <string.h>
-#include <sys/ioctl.h>
+#समावेश <माला.स>
+#समावेश <sys/ioctl.h>
 
-#include "kselftest.h"
+#समावेश "kselftest.h"
 
-#define VCPU_ID		0
+#घोषणा VCPU_ID		0
 
-/* The virtual machine object. */
-static struct kvm_vm *vm;
+/* The भव machine object. */
+अटल काष्ठा kvm_vm *vm;
 
-static void l2_guest_code(void)
-{
+अटल व्योम l2_guest_code(व्योम)
+अणु
 	/* Exit to L1 */
-	__asm__ __volatile__("vmcall");
-}
+	__यंत्र__ __अस्थिर__("vmcall");
+पूर्ण
 
-static void l1_guest_code(struct vmx_pages *vmx_pages, unsigned long high_gpa)
-{
-#define L2_GUEST_STACK_SIZE 64
-	unsigned long l2_guest_stack[L2_GUEST_STACK_SIZE];
-	uint32_t control;
+अटल व्योम l1_guest_code(काष्ठा vmx_pages *vmx_pages, अचिन्हित दीर्घ high_gpa)
+अणु
+#घोषणा L2_GUEST_STACK_SIZE 64
+	अचिन्हित दीर्घ l2_guest_stack[L2_GUEST_STACK_SIZE];
+	uपूर्णांक32_t control;
 
-	GUEST_ASSERT(prepare_for_vmx_operation(vmx_pages));
+	GUEST_ASSERT(prepare_क्रम_vmx_operation(vmx_pages));
 	GUEST_ASSERT(load_vmcs(vmx_pages));
 
-	/* Prepare the VMCS for L2 execution. */
+	/* Prepare the VMCS क्रम L2 execution. */
 	prepare_vmcs(vmx_pages, l2_guest_code,
 		     &l2_guest_stack[L2_GUEST_STACK_SIZE]);
-	control = vmreadz(CPU_BASED_VM_EXEC_CONTROL);
+	control = vmपढ़ोz(CPU_BASED_VM_EXEC_CONTROL);
 	control |= CPU_BASED_ACTIVATE_SECONDARY_CONTROLS;
-	vmwrite(CPU_BASED_VM_EXEC_CONTROL, control);
-	control = vmreadz(SECONDARY_VM_EXEC_CONTROL);
+	vmग_लिखो(CPU_BASED_VM_EXEC_CONTROL, control);
+	control = vmपढ़ोz(SECONDARY_VM_EXEC_CONTROL);
 	control |= SECONDARY_EXEC_VIRTUALIZE_APIC_ACCESSES;
-	vmwrite(SECONDARY_VM_EXEC_CONTROL, control);
-	vmwrite(APIC_ACCESS_ADDR, vmx_pages->apic_access_gpa);
+	vmग_लिखो(SECONDARY_VM_EXEC_CONTROL, control);
+	vmग_लिखो(APIC_ACCESS_ADDR, vmx_pages->apic_access_gpa);
 
 	/* Try to launch L2 with the memory-backed APIC-access address. */
-	GUEST_SYNC(vmreadz(APIC_ACCESS_ADDR));
+	GUEST_SYNC(vmपढ़ोz(APIC_ACCESS_ADDR));
 	GUEST_ASSERT(!vmlaunch());
-	GUEST_ASSERT(vmreadz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
+	GUEST_ASSERT(vmपढ़ोz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
 
-	vmwrite(APIC_ACCESS_ADDR, high_gpa);
+	vmग_लिखो(APIC_ACCESS_ADDR, high_gpa);
 
 	/* Try to resume L2 with the unbacked APIC-access address. */
-	GUEST_SYNC(vmreadz(APIC_ACCESS_ADDR));
+	GUEST_SYNC(vmपढ़ोz(APIC_ACCESS_ADDR));
 	GUEST_ASSERT(!vmresume());
-	GUEST_ASSERT(vmreadz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
+	GUEST_ASSERT(vmपढ़ोz(VM_EXIT_REASON) == EXIT_REASON_VMCALL);
 
 	GUEST_DONE();
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	unsigned long apic_access_addr = ~0ul;
-	unsigned int paddr_width;
-	unsigned int vaddr_width;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अचिन्हित दीर्घ apic_access_addr = ~0ul;
+	अचिन्हित पूर्णांक paddr_width;
+	अचिन्हित पूर्णांक vaddr_width;
 	vm_vaddr_t vmx_pages_gva;
-	unsigned long high_gpa;
-	struct vmx_pages *vmx;
-	bool done = false;
+	अचिन्हित दीर्घ high_gpa;
+	काष्ठा vmx_pages *vmx;
+	bool करोne = false;
 
 	nested_vmx_check_supported();
 
-	vm = vm_create_default(VCPU_ID, 0, (void *) l1_guest_code);
+	vm = vm_create_शेष(VCPU_ID, 0, (व्योम *) l1_guest_code);
 
 	kvm_get_cpu_address_width(&paddr_width, &vaddr_width);
 	high_gpa = (1ul << paddr_width) - getpagesize();
-	if ((unsigned long)DEFAULT_GUEST_PHY_PAGES * getpagesize() > high_gpa) {
-		print_skip("No unbacked physical page available");
-		exit(KSFT_SKIP);
-	}
+	अगर ((अचिन्हित दीर्घ)DEFAULT_GUEST_PHY_PAGES * getpagesize() > high_gpa) अणु
+		prपूर्णांक_skip("No unbacked physical page available");
+		निकास(KSFT_SKIP);
+	पूर्ण
 
 	vmx = vcpu_alloc_vmx(vm, &vmx_pages_gva);
-	prepare_virtualize_apic_accesses(vmx, vm, 0);
+	prepare_भवize_apic_accesses(vmx, vm, 0);
 	vcpu_args_set(vm, VCPU_ID, 2, vmx_pages_gva, high_gpa);
 
-	while (!done) {
-		volatile struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-		struct ucall uc;
+	जबतक (!करोne) अणु
+		अस्थिर काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+		काष्ठा ucall uc;
 
 		vcpu_run(vm, VCPU_ID);
-		if (apic_access_addr == high_gpa) {
-			TEST_ASSERT(run->exit_reason ==
+		अगर (apic_access_addr == high_gpa) अणु
+			TEST_ASSERT(run->निकास_reason ==
 				    KVM_EXIT_INTERNAL_ERROR,
 				    "Got exit reason other than KVM_EXIT_INTERNAL_ERROR: %u (%s)\n",
-				    run->exit_reason,
-				    exit_reason_str(run->exit_reason));
-			TEST_ASSERT(run->internal.suberror ==
+				    run->निकास_reason,
+				    निकास_reason_str(run->निकास_reason));
+			TEST_ASSERT(run->पूर्णांकernal.suberror ==
 				    KVM_INTERNAL_ERROR_EMULATION,
 				    "Got internal suberror other than KVM_INTERNAL_ERROR_EMULATION: %u\n",
-				    run->internal.suberror);
-			break;
-		}
-		TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
+				    run->पूर्णांकernal.suberror);
+			अवरोध;
+		पूर्ण
+		TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
 			    "Got exit_reason other than KVM_EXIT_IO: %u (%s)\n",
-			    run->exit_reason,
-			    exit_reason_str(run->exit_reason));
+			    run->निकास_reason,
+			    निकास_reason_str(run->निकास_reason));
 
-		switch (get_ucall(vm, VCPU_ID, &uc)) {
-		case UCALL_ABORT:
-			TEST_FAIL("%s at %s:%ld", (const char *)uc.args[0],
-				  __FILE__, uc.args[1]);
+		चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
+		हाल UCALL_ABORT:
+			TEST_FAIL("%s at %s:%ld", (स्थिर अक्षर *)uc.args[0],
+				  __खाता__, uc.args[1]);
 			/* NOT REACHED */
-		case UCALL_SYNC:
+		हाल UCALL_SYNC:
 			apic_access_addr = uc.args[1];
-			break;
-		case UCALL_DONE:
-			done = true;
-			break;
-		default:
+			अवरोध;
+		हाल UCALL_DONE:
+			करोne = true;
+			अवरोध;
+		शेष:
 			TEST_ASSERT(false, "Unknown ucall %lu", uc.cmd);
-		}
-	}
-	kvm_vm_free(vm);
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	kvm_vm_मुक्त(vm);
+	वापस 0;
+पूर्ण

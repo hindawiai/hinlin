@@ -1,47 +1,48 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Intel Low Power Subsystem clocks.
+ * Intel Low Power Subप्रणाली घड़ीs.
  *
  * Copyright (C) 2013, Intel Corporation
- * Authors: Mika Westerberg <mika.westerberg@linux.intel.com>
- *	    Heikki Krogerus <heikki.krogerus@linux.intel.com>
+ * Authors: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ *	    Heikki Krogerus <heikki.krogerus@linux.पूर्णांकel.com>
  */
 
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/platform_data/x86/clk-lpss.h>
-#include <linux/platform_device.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/x86/clk-lpss.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static int lpt_clk_probe(struct platform_device *pdev)
-{
-	struct lpss_clk_data *drvdata;
-	struct clk *clk;
+अटल पूर्णांक lpt_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpss_clk_data *drvdata;
+	काष्ठा clk *clk;
 
-	drvdata = devm_kzalloc(&pdev->dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(&pdev->dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
-	/* LPSS free running clock */
+	/* LPSS मुक्त running घड़ी */
 	drvdata->name = "lpss_clk";
-	clk = clk_register_fixed_rate(&pdev->dev, drvdata->name, NULL,
+	clk = clk_रेजिस्टर_fixed_rate(&pdev->dev, drvdata->name, शून्य,
 				      0, 100000000);
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	drvdata->clk = clk;
-	platform_set_drvdata(pdev, drvdata);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, drvdata);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver lpt_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver lpt_clk_driver = अणु
+	.driver = अणु
 		.name = "clk-lpt",
-	},
+	पूर्ण,
 	.probe = lpt_clk_probe,
-};
+पूर्ण;
 
-int __init lpt_clk_init(void)
-{
-	return platform_driver_register(&lpt_clk_driver);
-}
+पूर्णांक __init lpt_clk_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&lpt_clk_driver);
+पूर्ण

@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,28 +22,28 @@
  * Authors: AMD
  *
  */
-#ifndef __DC_DWBC_DCN30_H__
-#define __DC_DWBC_DCN30_H__
+#अगर_अघोषित __DC_DWBC_DCN30_H__
+#घोषणा __DC_DWBC_DCN30_H__
 
-#define TO_DCN30_DWBC(dwbc_base) \
-	container_of(dwbc_base, struct dcn30_dwbc, base)
+#घोषणा TO_DCN30_DWBC(dwbc_base) \
+	container_of(dwbc_base, काष्ठा dcn30_dwbc, base)
 
 /* DCN */
-#define BASE_INNER(seg) \
+#घोषणा BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-#define BASE(seg) \
+#घोषणा BASE(seg) \
 	BASE_INNER(seg)
 
-#define SF_DWB(reg_name, block, id, field_name, post_fix)\
+#घोषणा SF_DWB(reg_name, block, id, field_name, post_fix)\
 	.field_name = block ## id ## _ ## reg_name ## __ ## field_name ## post_fix
 
  /* set field name */
-#define SF_DWB2(reg_name, block, id, field_name, post_fix)\
+#घोषणा SF_DWB2(reg_name, block, id, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
 
-#define DWBC_COMMON_REG_LIST_DCN30(inst) \
+#घोषणा DWBC_COMMON_REG_LIST_DCN30(inst) \
 	SR(DWB_ENABLE_CLK_CTRL),\
 	SR(DWB_MEM_PWR_CTRL),\
 	SR(FC_MODE_CTRL),\
@@ -152,7 +153,7 @@
 	SR(DWB_OGAM_RAMB_REGION_32_33)
 
 
-#define DWBC_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
+#घोषणा DWBC_COMMON_MASK_SH_LIST_DCN30(mask_sh) \
 	SF_DWB2(DWB_ENABLE_CLK_CTRL, DWB_TOP, 0, DWB_ENABLE, mask_sh),\
 	SF_DWB2(DWB_ENABLE_CLK_CTRL, DWB_TOP, 0, DISPCLK_R_DWB_GATE_DIS, mask_sh),\
 	SF_DWB2(DWB_ENABLE_CLK_CTRL, DWB_TOP, 0, DISPCLK_G_DWB_GATE_DIS, mask_sh),\
@@ -421,7 +422,7 @@
 	SF_DWB2(DWB_OGAM_RAMB_REGION_32_33, DWBCP, 0, DWB_OGAM_RAMB_EXP_REGION33_NUM_SEGMENTS, mask_sh)
 
 
-#define DWBC_REG_FIELD_LIST_DCN3_0(type) \
+#घोषणा DWBC_REG_FIELD_LIST_DCN3_0(type) \
 	type DWB_ENABLE;\
 	type DISPCLK_R_DWB_GATE_DIS;\
 	type DISPCLK_G_DWB_GATE_DIS;\
@@ -729,195 +730,195 @@
 	type DWB_OGAM_RAMB_EXP_REGION33_LUT_OFFSET;\
 	type DWB_OGAM_RAMB_EXP_REGION33_NUM_SEGMENTS;
 
-struct dcn30_dwbc_registers {
+काष्ठा dcn30_dwbc_रेजिस्टरs अणु
 	/* DCN3AG */
 	/* DWB_TOP */
-	uint32_t DWB_ENABLE_CLK_CTRL;
-	uint32_t DWB_MEM_PWR_CTRL;
-	uint32_t FC_MODE_CTRL;
-	uint32_t FC_FLOW_CTRL;
-	uint32_t FC_WINDOW_START;
-	uint32_t FC_WINDOW_SIZE;
-	uint32_t FC_SOURCE_SIZE;
-	uint32_t DWB_UPDATE_CTRL;
-	uint32_t DWB_CRC_CTRL;
-	uint32_t DWB_CRC_MASK_R_G;
-	uint32_t DWB_CRC_MASK_B_A;
-	uint32_t DWB_CRC_VAL_R_G;
-	uint32_t DWB_CRC_VAL_B_A;
-	uint32_t DWB_OUT_CTRL;
-	uint32_t DWB_MMHUBBUB_BACKPRESSURE_CNT_EN;
-	uint32_t DWB_MMHUBBUB_BACKPRESSURE_CNT;
-	uint32_t DWB_HOST_READ_CONTROL;
-	uint32_t DWB_SOFT_RESET;
+	uपूर्णांक32_t DWB_ENABLE_CLK_CTRL;
+	uपूर्णांक32_t DWB_MEM_PWR_CTRL;
+	uपूर्णांक32_t FC_MODE_CTRL;
+	uपूर्णांक32_t FC_FLOW_CTRL;
+	uपूर्णांक32_t FC_WINDOW_START;
+	uपूर्णांक32_t FC_WINDOW_SIZE;
+	uपूर्णांक32_t FC_SOURCE_SIZE;
+	uपूर्णांक32_t DWB_UPDATE_CTRL;
+	uपूर्णांक32_t DWB_CRC_CTRL;
+	uपूर्णांक32_t DWB_CRC_MASK_R_G;
+	uपूर्णांक32_t DWB_CRC_MASK_B_A;
+	uपूर्णांक32_t DWB_CRC_VAL_R_G;
+	uपूर्णांक32_t DWB_CRC_VAL_B_A;
+	uपूर्णांक32_t DWB_OUT_CTRL;
+	uपूर्णांक32_t DWB_MMHUBBUB_BACKPRESSURE_CNT_EN;
+	uपूर्णांक32_t DWB_MMHUBBUB_BACKPRESSURE_CNT;
+	uपूर्णांक32_t DWB_HOST_READ_CONTROL;
+	uपूर्णांक32_t DWB_SOFT_RESET;
 
 	/* DWBSCL */
-	uint32_t DWBSCL_COEF_RAM_TAP_SELECT;
-	uint32_t DWBSCL_COEF_RAM_TAP_DATA;
-	uint32_t DWBSCL_MODE;
-	uint32_t DWBSCL_TAP_CONTROL;
-	uint32_t DWBSCL_HORZ_FILTER_SCALE_RATIO;
-	uint32_t DWBSCL_HORZ_FILTER_INIT;
-	uint32_t DWBSCL_VERT_FILTER_SCALE_RATIO;
-	uint32_t DWBSCL_VERT_FILTER_INIT;
-	uint32_t DWBSCL_BOUNDARY_CTRL;
-	uint32_t DWBSCL_DEST_SIZE;
-	uint32_t DWBSCL_OVERFLOW_STATUS;
-	uint32_t DWBSCL_OVERFLOW_COUNTER;
+	uपूर्णांक32_t DWBSCL_COEF_RAM_TAP_SELECT;
+	uपूर्णांक32_t DWBSCL_COEF_RAM_TAP_DATA;
+	uपूर्णांक32_t DWBSCL_MODE;
+	uपूर्णांक32_t DWBSCL_TAP_CONTROL;
+	uपूर्णांक32_t DWBSCL_HORZ_FILTER_SCALE_RATIO;
+	uपूर्णांक32_t DWBSCL_HORZ_FILTER_INIT;
+	uपूर्णांक32_t DWBSCL_VERT_FILTER_SCALE_RATIO;
+	uपूर्णांक32_t DWBSCL_VERT_FILTER_INIT;
+	uपूर्णांक32_t DWBSCL_BOUNDARY_CTRL;
+	uपूर्णांक32_t DWBSCL_DEST_SIZE;
+	uपूर्णांक32_t DWBSCL_OVERFLOW_STATUS;
+	uपूर्णांक32_t DWBSCL_OVERFLOW_COUNTER;
 
 	/* DWBCP */
-	uint32_t DWB_HDR_MULT_COEF;
-	uint32_t DWB_GAMUT_REMAP_MODE;
-	uint32_t DWB_GAMUT_REMAP_COEF_FORMAT;
-	uint32_t DWB_GAMUT_REMAPA_C11_C12;
-	uint32_t DWB_GAMUT_REMAPA_C13_C14;
-	uint32_t DWB_GAMUT_REMAPA_C21_C22;
-	uint32_t DWB_GAMUT_REMAPA_C23_C24;
-	uint32_t DWB_GAMUT_REMAPA_C31_C32;
-	uint32_t DWB_GAMUT_REMAPA_C33_C34;
-	uint32_t DWB_GAMUT_REMAPB_C11_C12;
-	uint32_t DWB_GAMUT_REMAPB_C13_C14;
-	uint32_t DWB_GAMUT_REMAPB_C21_C22;
-	uint32_t DWB_GAMUT_REMAPB_C23_C24;
-	uint32_t DWB_GAMUT_REMAPB_C31_C32;
-	uint32_t DWB_GAMUT_REMAPB_C33_C34;
-	uint32_t DWB_OGAM_CONTROL;
-	uint32_t DWB_OGAM_LUT_INDEX;
-	uint32_t DWB_OGAM_LUT_DATA;
-	uint32_t DWB_OGAM_LUT_CONTROL;
-	uint32_t DWB_OGAM_RAMA_START_CNTL_B;
-	uint32_t DWB_OGAM_RAMA_START_CNTL_G;
-	uint32_t DWB_OGAM_RAMA_START_CNTL_R;
-	uint32_t DWB_OGAM_RAMA_START_BASE_CNTL_B;
-	uint32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_B;
-	uint32_t DWB_OGAM_RAMA_START_BASE_CNTL_G;
-	uint32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_G;
-	uint32_t DWB_OGAM_RAMA_START_BASE_CNTL_R;
-	uint32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_R;
-	uint32_t DWB_OGAM_RAMA_END_CNTL1_B;
-	uint32_t DWB_OGAM_RAMA_END_CNTL2_B;
-	uint32_t DWB_OGAM_RAMA_END_CNTL1_G;
-	uint32_t DWB_OGAM_RAMA_END_CNTL2_G;
-	uint32_t DWB_OGAM_RAMA_END_CNTL1_R;
-	uint32_t DWB_OGAM_RAMA_END_CNTL2_R;
-	uint32_t DWB_OGAM_RAMA_OFFSET_B;
-	uint32_t DWB_OGAM_RAMA_OFFSET_G;
-	uint32_t DWB_OGAM_RAMA_OFFSET_R;
-	uint32_t DWB_OGAM_RAMA_REGION_0_1;
-	uint32_t DWB_OGAM_RAMA_REGION_2_3;
-	uint32_t DWB_OGAM_RAMA_REGION_4_5;
-	uint32_t DWB_OGAM_RAMA_REGION_6_7;
-	uint32_t DWB_OGAM_RAMA_REGION_8_9;
-	uint32_t DWB_OGAM_RAMA_REGION_10_11;
-	uint32_t DWB_OGAM_RAMA_REGION_12_13;
-	uint32_t DWB_OGAM_RAMA_REGION_14_15;
-	uint32_t DWB_OGAM_RAMA_REGION_16_17;
-	uint32_t DWB_OGAM_RAMA_REGION_18_19;
-	uint32_t DWB_OGAM_RAMA_REGION_20_21;
-	uint32_t DWB_OGAM_RAMA_REGION_22_23;
-	uint32_t DWB_OGAM_RAMA_REGION_24_25;
-	uint32_t DWB_OGAM_RAMA_REGION_26_27;
-	uint32_t DWB_OGAM_RAMA_REGION_28_29;
-	uint32_t DWB_OGAM_RAMA_REGION_30_31;
-	uint32_t DWB_OGAM_RAMA_REGION_32_33;
-	uint32_t DWB_OGAM_RAMB_START_CNTL_B;
-	uint32_t DWB_OGAM_RAMB_START_CNTL_G;
-	uint32_t DWB_OGAM_RAMB_START_CNTL_R;
-	uint32_t DWB_OGAM_RAMB_START_BASE_CNTL_B;
-	uint32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_B;
-	uint32_t DWB_OGAM_RAMB_START_BASE_CNTL_G;
-	uint32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_G;
-	uint32_t DWB_OGAM_RAMB_START_BASE_CNTL_R;
-	uint32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_R;
-	uint32_t DWB_OGAM_RAMB_END_CNTL1_B;
-	uint32_t DWB_OGAM_RAMB_END_CNTL2_B;
-	uint32_t DWB_OGAM_RAMB_END_CNTL1_G;
-	uint32_t DWB_OGAM_RAMB_END_CNTL2_G;
-	uint32_t DWB_OGAM_RAMB_END_CNTL1_R;
-	uint32_t DWB_OGAM_RAMB_END_CNTL2_R;
-	uint32_t DWB_OGAM_RAMB_OFFSET_B;
-	uint32_t DWB_OGAM_RAMB_OFFSET_G;
-	uint32_t DWB_OGAM_RAMB_OFFSET_R;
-	uint32_t DWB_OGAM_RAMB_REGION_0_1;
-	uint32_t DWB_OGAM_RAMB_REGION_2_3;
-	uint32_t DWB_OGAM_RAMB_REGION_4_5;
-	uint32_t DWB_OGAM_RAMB_REGION_6_7;
-	uint32_t DWB_OGAM_RAMB_REGION_8_9;
-	uint32_t DWB_OGAM_RAMB_REGION_10_11;
-	uint32_t DWB_OGAM_RAMB_REGION_12_13;
-	uint32_t DWB_OGAM_RAMB_REGION_14_15;
-	uint32_t DWB_OGAM_RAMB_REGION_16_17;
-	uint32_t DWB_OGAM_RAMB_REGION_18_19;
-	uint32_t DWB_OGAM_RAMB_REGION_20_21;
-	uint32_t DWB_OGAM_RAMB_REGION_22_23;
-	uint32_t DWB_OGAM_RAMB_REGION_24_25;
-	uint32_t DWB_OGAM_RAMB_REGION_26_27;
-	uint32_t DWB_OGAM_RAMB_REGION_28_29;
-	uint32_t DWB_OGAM_RAMB_REGION_30_31;
-	uint32_t DWB_OGAM_RAMB_REGION_32_33;
-};
+	uपूर्णांक32_t DWB_HDR_MULT_COEF;
+	uपूर्णांक32_t DWB_GAMUT_REMAP_MODE;
+	uपूर्णांक32_t DWB_GAMUT_REMAP_COEF_FORMAT;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C11_C12;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C13_C14;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C21_C22;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C23_C24;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C31_C32;
+	uपूर्णांक32_t DWB_GAMUT_REMAPA_C33_C34;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C11_C12;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C13_C14;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C21_C22;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C23_C24;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C31_C32;
+	uपूर्णांक32_t DWB_GAMUT_REMAPB_C33_C34;
+	uपूर्णांक32_t DWB_OGAM_CONTROL;
+	uपूर्णांक32_t DWB_OGAM_LUT_INDEX;
+	uपूर्णांक32_t DWB_OGAM_LUT_DATA;
+	uपूर्णांक32_t DWB_OGAM_LUT_CONTROL;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_BASE_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_BASE_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_BASE_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_START_SLOPE_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL1_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL2_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL1_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL2_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL1_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_END_CNTL2_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_OFFSET_B;
+	uपूर्णांक32_t DWB_OGAM_RAMA_OFFSET_G;
+	uपूर्णांक32_t DWB_OGAM_RAMA_OFFSET_R;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_0_1;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_2_3;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_4_5;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_6_7;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_8_9;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_10_11;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_12_13;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_14_15;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_16_17;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_18_19;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_20_21;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_22_23;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_24_25;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_26_27;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_28_29;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_30_31;
+	uपूर्णांक32_t DWB_OGAM_RAMA_REGION_32_33;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_BASE_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_BASE_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_BASE_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_START_SLOPE_CNTL_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL1_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL2_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL1_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL2_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL1_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_END_CNTL2_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_OFFSET_B;
+	uपूर्णांक32_t DWB_OGAM_RAMB_OFFSET_G;
+	uपूर्णांक32_t DWB_OGAM_RAMB_OFFSET_R;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_0_1;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_2_3;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_4_5;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_6_7;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_8_9;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_10_11;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_12_13;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_14_15;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_16_17;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_18_19;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_20_21;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_22_23;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_24_25;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_26_27;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_28_29;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_30_31;
+	uपूर्णांक32_t DWB_OGAM_RAMB_REGION_32_33;
+पूर्ण;
 
-/* Internal enums / structs */
-enum dwbscl_coef_filter_type_sel {
+/* Internal क्रमागतs / काष्ठाs */
+क्रमागत dwbscl_coef_filter_type_sel अणु
 	DWBSCL_COEF_RAM_FILTER_TYPE_VERT_RGB = 0,
 	DWBSCL_COEF_RAM_FILTER_TYPE_HORZ_RGB = 1
-};
+पूर्ण;
 
 
-struct dcn30_dwbc_mask {
-	DWBC_REG_FIELD_LIST_DCN3_0(uint32_t);
-};
+काष्ठा dcn30_dwbc_mask अणु
+	DWBC_REG_FIELD_LIST_DCN3_0(uपूर्णांक32_t);
+पूर्ण;
 
-struct dcn30_dwbc_shift {
-	DWBC_REG_FIELD_LIST_DCN3_0(uint8_t);
-};
+काष्ठा dcn30_dwbc_shअगरt अणु
+	DWBC_REG_FIELD_LIST_DCN3_0(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn30_dwbc {
-	struct dwbc base;
-	const struct dcn30_dwbc_registers *dwbc_regs;
-	const struct dcn30_dwbc_shift *dwbc_shift;
-	const struct dcn30_dwbc_mask *dwbc_mask;
-};
+काष्ठा dcn30_dwbc अणु
+	काष्ठा dwbc base;
+	स्थिर काष्ठा dcn30_dwbc_रेजिस्टरs *dwbc_regs;
+	स्थिर काष्ठा dcn30_dwbc_shअगरt *dwbc_shअगरt;
+	स्थिर काष्ठा dcn30_dwbc_mask *dwbc_mask;
+पूर्ण;
 
-void dcn30_dwbc_construct(struct dcn30_dwbc *dwbc30,
-	struct dc_context *ctx,
-	const struct dcn30_dwbc_registers *dwbc_regs,
-	const struct dcn30_dwbc_shift *dwbc_shift,
-	const struct dcn30_dwbc_mask *dwbc_mask,
-	int inst);
+व्योम dcn30_dwbc_स्थिरruct(काष्ठा dcn30_dwbc *dwbc30,
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dcn30_dwbc_रेजिस्टरs *dwbc_regs,
+	स्थिर काष्ठा dcn30_dwbc_shअगरt *dwbc_shअगरt,
+	स्थिर काष्ठा dcn30_dwbc_mask *dwbc_mask,
+	पूर्णांक inst);
 
-bool dwb3_enable(struct dwbc *dwbc, struct dc_dwb_params *params);
+bool dwb3_enable(काष्ठा dwbc *dwbc, काष्ठा dc_dwb_params *params);
 
-bool dwb3_disable(struct dwbc *dwbc);
+bool dwb3_disable(काष्ठा dwbc *dwbc);
 
-bool dwb3_update(struct dwbc *dwbc, struct dc_dwb_params *params);
+bool dwb3_update(काष्ठा dwbc *dwbc, काष्ठा dc_dwb_params *params);
 
-bool dwb3_is_enabled(struct dwbc *dwbc);
+bool dwb3_is_enabled(काष्ठा dwbc *dwbc);
 
-void dwb3_set_stereo(struct dwbc *dwbc,
-	struct dwb_stereo_params *stereo_params);
+व्योम dwb3_set_stereo(काष्ठा dwbc *dwbc,
+	काष्ठा dwb_stereo_params *stereo_params);
 
-void dwb3_set_new_content(struct dwbc *dwbc,
+व्योम dwb3_set_new_content(काष्ठा dwbc *dwbc,
 	bool is_new_content);
 
-void dwb3_config_fc(struct dwbc *dwbc,
-	struct dc_dwb_params *params);
+व्योम dwb3_config_fc(काष्ठा dwbc *dwbc,
+	काष्ठा dc_dwb_params *params);
 
-void dwb3_set_denorm(struct dwbc *dwbc, struct dc_dwb_params *params);
+व्योम dwb3_set_denorm(काष्ठा dwbc *dwbc, काष्ठा dc_dwb_params *params);
 
-void dwb3_program_hdr_mult(
-	struct dwbc *dwbc,
-	const struct dc_dwb_params *params);
+व्योम dwb3_program_hdr_mult(
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_dwb_params *params);
 
-void dwb3_set_gamut_remap(
-	struct dwbc *dwbc,
-	const struct dc_dwb_params *params);
+व्योम dwb3_set_gamut_remap(
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_dwb_params *params);
 
 bool dwb3_ogam_set_input_transfer_func(
-	struct dwbc *dwbc,
-	const struct dc_transfer_func *in_transfer_func_dwb_ogam);
+	काष्ठा dwbc *dwbc,
+	स्थिर काष्ठा dc_transfer_func *in_transfer_func_dwb_ogam);
 
-void dwb3_set_host_read_rate_control(struct dwbc *dwbc, bool host_read_delay);
-#endif
+व्योम dwb3_set_host_पढ़ो_rate_control(काष्ठा dwbc *dwbc, bool host_पढ़ो_delay);
+#पूर्ण_अगर
 
 

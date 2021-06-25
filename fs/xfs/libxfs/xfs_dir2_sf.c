@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2003,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_trans.h"
-#include "xfs_dir2.h"
-#include "xfs_dir2_priv.h"
-#include "xfs_trace.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_dir2.h"
+#समावेश "xfs_dir2_priv.h"
+#समावेश "xfs_trace.h"
 
 /*
- * Prototypes for internal functions.
+ * Prototypes क्रम पूर्णांकernal functions.
  */
-static void xfs_dir2_sf_addname_easy(xfs_da_args_t *args,
+अटल व्योम xfs_dir2_sf_addname_easy(xfs_da_args_t *args,
 				     xfs_dir2_sf_entry_t *sfep,
 				     xfs_dir2_data_aoff_t offset,
-				     int new_isize);
-static void xfs_dir2_sf_addname_hard(xfs_da_args_t *args, int objchange,
-				     int new_isize);
-static int xfs_dir2_sf_addname_pick(xfs_da_args_t *args, int objchange,
+				     पूर्णांक new_isize);
+अटल व्योम xfs_dir2_sf_addname_hard(xfs_da_args_t *args, पूर्णांक objchange,
+				     पूर्णांक new_isize);
+अटल पूर्णांक xfs_dir2_sf_addname_pick(xfs_da_args_t *args, पूर्णांक objchange,
 				    xfs_dir2_sf_entry_t **sfepp,
 				    xfs_dir2_data_aoff_t *offsetp);
-#ifdef DEBUG
-static void xfs_dir2_sf_check(xfs_da_args_t *args);
-#else
-#define	xfs_dir2_sf_check(args)
-#endif /* DEBUG */
+#अगर_घोषित DEBUG
+अटल व्योम xfs_dir2_sf_check(xfs_da_args_t *args);
+#अन्यथा
+#घोषणा	xfs_dir2_sf_check(args)
+#पूर्ण_अगर /* DEBUG */
 
-static void xfs_dir2_sf_toino4(xfs_da_args_t *args);
-static void xfs_dir2_sf_toino8(xfs_da_args_t *args);
+अटल व्योम xfs_dir2_sf_toino4(xfs_da_args_t *args);
+अटल व्योम xfs_dir2_sf_toino8(xfs_da_args_t *args);
 
-int
+पूर्णांक
 xfs_dir2_sf_entsize(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	int			len)
-{
-	int			count = len;
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dir2_sf_hdr	*hdr,
+	पूर्णांक			len)
+अणु
+	पूर्णांक			count = len;
 
-	count += sizeof(struct xfs_dir2_sf_entry);	/* namelen + offset */
+	count += माप(काष्ठा xfs_dir2_sf_entry);	/* namelen + offset */
 	count += hdr->i8count ? XFS_INO64_SIZE : XFS_INO32_SIZE; /* ino # */
 
-	if (xfs_sb_version_hasftype(&mp->m_sb))
-		count += sizeof(uint8_t);
-	return count;
-}
+	अगर (xfs_sb_version_hasftype(&mp->m_sb))
+		count += माप(uपूर्णांक8_t);
+	वापस count;
+पूर्ण
 
-struct xfs_dir2_sf_entry *
+काष्ठा xfs_dir2_sf_entry *
 xfs_dir2_sf_nextentry(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_hdr	*hdr,
-	struct xfs_dir2_sf_entry *sfep)
-{
-	return (void *)sfep + xfs_dir2_sf_entsize(mp, hdr, sfep->namelen);
-}
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dir2_sf_hdr	*hdr,
+	काष्ठा xfs_dir2_sf_entry *sfep)
+अणु
+	वापस (व्योम *)sfep + xfs_dir2_sf_entsize(mp, hdr, sfep->namelen);
+पूर्ण
 
 /*
- * In short-form directory entries the inode numbers are stored at variable
+ * In लघु-क्रमm directory entries the inode numbers are stored at variable
  * offset behind the entry name. If the entry stores a filetype value, then it
  * sits between the name and the inode number.  The actual inode numbers can
- * come in two formats as well, either 4 bytes or 8 bytes wide.
+ * come in two क्रमmats as well, either 4 bytes or 8 bytes wide.
  */
 xfs_ino_t
 xfs_dir2_sf_get_ino(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_sf_hdr		*hdr,
-	struct xfs_dir2_sf_entry	*sfep)
-{
-	uint8_t				*from = sfep->name + sfep->namelen;
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_sf_hdr		*hdr,
+	काष्ठा xfs_dir2_sf_entry	*sfep)
+अणु
+	uपूर्णांक8_t				*from = sfep->name + sfep->namelen;
 
-	if (xfs_sb_version_hasftype(&mp->m_sb))
+	अगर (xfs_sb_version_hasftype(&mp->m_sb))
 		from++;
 
-	if (!hdr->i8count)
-		return get_unaligned_be32(from);
-	return get_unaligned_be64(from) & XFS_MAXINUMBER;
-}
+	अगर (!hdr->i8count)
+		वापस get_unaligned_be32(from);
+	वापस get_unaligned_be64(from) & XFS_MAXINUMBER;
+पूर्ण
 
-void
+व्योम
 xfs_dir2_sf_put_ino(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_sf_hdr		*hdr,
-	struct xfs_dir2_sf_entry	*sfep,
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_sf_hdr		*hdr,
+	काष्ठा xfs_dir2_sf_entry	*sfep,
 	xfs_ino_t			ino)
-{
-	uint8_t				*to = sfep->name + sfep->namelen;
+अणु
+	uपूर्णांक8_t				*to = sfep->name + sfep->namelen;
 
 	ASSERT(ino <= XFS_MAXINUMBER);
 
-	if (xfs_sb_version_hasftype(&mp->m_sb))
+	अगर (xfs_sb_version_hasftype(&mp->m_sb))
 		to++;
 
-	if (hdr->i8count)
+	अगर (hdr->i8count)
 		put_unaligned_be64(ino, to);
-	else
+	अन्यथा
 		put_unaligned_be32(ino, to);
-}
+पूर्ण
 
 xfs_ino_t
 xfs_dir2_sf_get_parent_ino(
-	struct xfs_dir2_sf_hdr	*hdr)
-{
-	if (!hdr->i8count)
-		return get_unaligned_be32(hdr->parent);
-	return get_unaligned_be64(hdr->parent) & XFS_MAXINUMBER;
-}
+	काष्ठा xfs_dir2_sf_hdr	*hdr)
+अणु
+	अगर (!hdr->i8count)
+		वापस get_unaligned_be32(hdr->parent);
+	वापस get_unaligned_be64(hdr->parent) & XFS_MAXINUMBER;
+पूर्ण
 
-void
+व्योम
 xfs_dir2_sf_put_parent_ino(
-	struct xfs_dir2_sf_hdr		*hdr,
+	काष्ठा xfs_dir2_sf_hdr		*hdr,
 	xfs_ino_t			ino)
-{
+अणु
 	ASSERT(ino <= XFS_MAXINUMBER);
 
-	if (hdr->i8count)
+	अगर (hdr->i8count)
 		put_unaligned_be64(ino, hdr->parent);
-	else
+	अन्यथा
 		put_unaligned_be32(ino, hdr->parent);
-}
+पूर्ण
 
 /*
- * The file type field is stored at the end of the name for filetype enabled
- * shortform directories, or not at all otherwise.
+ * The file type field is stored at the end of the name क्रम filetype enabled
+ * लघुक्रमm directories, or not at all otherwise.
  */
-uint8_t
+uपूर्णांक8_t
 xfs_dir2_sf_get_ftype(
-	struct xfs_mount		*mp,
-	struct xfs_dir2_sf_entry	*sfep)
-{
-	if (xfs_sb_version_hasftype(&mp->m_sb)) {
-		uint8_t			ftype = sfep->name[sfep->namelen];
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_dir2_sf_entry	*sfep)
+अणु
+	अगर (xfs_sb_version_hasftype(&mp->m_sb)) अणु
+		uपूर्णांक8_t			ftype = sfep->name[sfep->namelen];
 
-		if (ftype < XFS_DIR3_FT_MAX)
-			return ftype;
-	}
+		अगर (ftype < XFS_सूची3_FT_MAX)
+			वापस ftype;
+	पूर्ण
 
-	return XFS_DIR3_FT_UNKNOWN;
-}
+	वापस XFS_सूची3_FT_UNKNOWN;
+पूर्ण
 
-void
+व्योम
 xfs_dir2_sf_put_ftype(
-	struct xfs_mount	*mp,
-	struct xfs_dir2_sf_entry *sfep,
-	uint8_t			ftype)
-{
-	ASSERT(ftype < XFS_DIR3_FT_MAX);
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_dir2_sf_entry *sfep,
+	uपूर्णांक8_t			ftype)
+अणु
+	ASSERT(ftype < XFS_सूची3_FT_MAX);
 
-	if (xfs_sb_version_hasftype(&mp->m_sb))
+	अगर (xfs_sb_version_hasftype(&mp->m_sb))
 		sfep->name[sfep->namelen] = ftype;
-}
+पूर्ण
 
 /*
- * Given a block directory (dp/block), calculate its size as a shortform (sf)
- * directory and a header for the sf directory, if it will fit it the
+ * Given a block directory (dp/block), calculate its size as a लघुक्रमm (sf)
+ * directory and a header क्रम the sf directory, अगर it will fit it the
  * space currently present in the inode.  If it won't fit, the output
  * size is too big (but not accurate).
  */
-int						/* size for sf form */
+पूर्णांक						/* size क्रम sf क्रमm */
 xfs_dir2_block_sfsize(
-	xfs_inode_t		*dp,		/* incore inode pointer */
+	xfs_inode_t		*dp,		/* incore inode poपूर्णांकer */
 	xfs_dir2_data_hdr_t	*hdr,		/* block directory data */
-	xfs_dir2_sf_hdr_t	*sfhp)		/* output: header for sf form */
-{
+	xfs_dir2_sf_hdr_t	*sfhp)		/* output: header क्रम sf क्रमm */
+अणु
 	xfs_dir2_dataptr_t	addr;		/* data entry address */
 	xfs_dir2_leaf_entry_t	*blp;		/* leaf area of the block */
 	xfs_dir2_block_tail_t	*btp;		/* tail area of the block */
-	int			count;		/* shortform entry count */
+	पूर्णांक			count;		/* लघुक्रमm entry count */
 	xfs_dir2_data_entry_t	*dep;		/* data entry in the block */
-	int			i;		/* block entry index */
-	int			i8count;	/* count of big-inode entries */
-	int			isdot;		/* entry is "." */
-	int			isdotdot;	/* entry is ".." */
-	xfs_mount_t		*mp;		/* mount structure pointer */
-	int			namelen;	/* total name bytes */
+	पूर्णांक			i;		/* block entry index */
+	पूर्णांक			i8count;	/* count of big-inode entries */
+	पूर्णांक			isकरोt;		/* entry is "." */
+	पूर्णांक			isकरोtकरोt;	/* entry is ".." */
+	xfs_mount_t		*mp;		/* mount काष्ठाure poपूर्णांकer */
+	पूर्णांक			namelen;	/* total name bytes */
 	xfs_ino_t		parent = 0;	/* parent inode number */
-	int			size=0;		/* total computed size */
-	int			has_ftype;
-	struct xfs_da_geometry	*geo;
+	पूर्णांक			size=0;		/* total computed size */
+	पूर्णांक			has_ftype;
+	काष्ठा xfs_da_geometry	*geo;
 
 	mp = dp->i_mount;
 	geo = mp->m_dir_geo;
 
 	/*
-	 * if there is a filetype field, add the extra byte to the namelen
-	 * for each entry that we see.
+	 * अगर there is a filetype field, add the extra byte to the namelen
+	 * क्रम each entry that we see.
 	 */
 	has_ftype = xfs_sb_version_hasftype(&mp->m_sb) ? 1 : 0;
 
@@ -199,85 +200,85 @@ xfs_dir2_block_sfsize(
 	blp = xfs_dir2_block_leaf_p(btp);
 
 	/*
-	 * Iterate over the block's data entries by using the leaf pointers.
+	 * Iterate over the block's data entries by using the leaf poपूर्णांकers.
 	 */
-	for (i = 0; i < be32_to_cpu(btp->count); i++) {
-		if ((addr = be32_to_cpu(blp[i].address)) == XFS_DIR2_NULL_DATAPTR)
-			continue;
+	क्रम (i = 0; i < be32_to_cpu(btp->count); i++) अणु
+		अगर ((addr = be32_to_cpu(blp[i].address)) == XFS_सूची2_शून्य_DATAPTR)
+			जारी;
 		/*
-		 * Calculate the pointer to the entry at hand.
+		 * Calculate the poपूर्णांकer to the entry at hand.
 		 */
-		dep = (xfs_dir2_data_entry_t *)((char *)hdr +
+		dep = (xfs_dir2_data_entry_t *)((अक्षर *)hdr +
 				xfs_dir2_dataptr_to_off(geo, addr));
 		/*
-		 * Detect . and .., so we can special-case them.
+		 * Detect . and .., so we can special-हाल them.
 		 * . is not included in sf directories.
 		 * .. is included by just the parent inode number.
 		 */
-		isdot = dep->namelen == 1 && dep->name[0] == '.';
-		isdotdot =
+		isकरोt = dep->namelen == 1 && dep->name[0] == '.';
+		isकरोtकरोt =
 			dep->namelen == 2 &&
 			dep->name[0] == '.' && dep->name[1] == '.';
 
-		if (!isdot)
-			i8count += be64_to_cpu(dep->inumber) > XFS_DIR2_MAX_SHORT_INUM;
+		अगर (!isकरोt)
+			i8count += be64_to_cpu(dep->inumber) > XFS_सूची2_MAX_SHORT_INUM;
 
-		/* take into account the file type field */
-		if (!isdot && !isdotdot) {
+		/* take पूर्णांकo account the file type field */
+		अगर (!isकरोt && !isकरोtकरोt) अणु
 			count++;
 			namelen += dep->namelen + has_ftype;
-		} else if (isdotdot)
+		पूर्ण अन्यथा अगर (isकरोtकरोt)
 			parent = be64_to_cpu(dep->inumber);
 		/*
-		 * Calculate the new size, see if we should give up yet.
+		 * Calculate the new size, see अगर we should give up yet.
 		 */
 		size = xfs_dir2_sf_hdr_size(i8count) +	/* header */
-		       count * 3 * sizeof(u8) +		/* namelen + offset */
+		       count * 3 * माप(u8) +		/* namelen + offset */
 		       namelen +			/* name */
 		       (i8count ?			/* inumber */
 				count * XFS_INO64_SIZE :
 				count * XFS_INO32_SIZE);
-		if (size > XFS_IFORK_DSIZE(dp))
-			return size;		/* size value is a failure */
-	}
+		अगर (size > XFS_IFORK_DSIZE(dp))
+			वापस size;		/* size value is a failure */
+	पूर्ण
 	/*
-	 * Create the output header, if it worked.
+	 * Create the output header, अगर it worked.
 	 */
 	sfhp->count = count;
 	sfhp->i8count = i8count;
 	xfs_dir2_sf_put_parent_ino(sfhp, parent);
-	return size;
-}
+	वापस size;
+पूर्ण
 
 /*
- * Convert a block format directory to shortform.
- * Caller has already checked that it will fit, and built us a header.
+ * Convert a block क्रमmat directory to लघुक्रमm.
+ * Caller has alपढ़ोy checked that it will fit, and built us a header.
  */
-int						/* error */
+पूर्णांक						/* error */
 xfs_dir2_block_to_sf(
-	struct xfs_da_args	*args,		/* operation arguments */
-	struct xfs_buf		*bp,
-	int			size,		/* shortform directory size */
-	struct xfs_dir2_sf_hdr	*sfhp)		/* shortform directory hdr */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			error;		/* error return value */
-	int			logflags;	/* inode logging flags */
-	struct xfs_dir2_sf_entry *sfep;		/* shortform entry */
-	struct xfs_dir2_sf_hdr	*sfp;		/* shortform directory header */
-	unsigned int		offset = args->geo->data_entry_offset;
-	unsigned int		end;
+	काष्ठा xfs_da_args	*args,		/* operation arguments */
+	काष्ठा xfs_buf		*bp,
+	पूर्णांक			size,		/* लघुक्रमm directory size */
+	काष्ठा xfs_dir2_sf_hdr	*sfhp)		/* लघुक्रमm directory hdr */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			error;		/* error वापस value */
+	पूर्णांक			logflags;	/* inode logging flags */
+	काष्ठा xfs_dir2_sf_entry *sfep;		/* लघुक्रमm entry */
+	काष्ठा xfs_dir2_sf_hdr	*sfp;		/* लघुक्रमm directory header */
+	अचिन्हित पूर्णांक		offset = args->geo->data_entry_offset;
+	अचिन्हित पूर्णांक		end;
 
 	trace_xfs_dir2_block_to_sf(args);
 
 	/*
 	 * Allocate a temporary destination buffer the size of the inode to
-	 * format the data into.  Once we have formatted the data, we can free
-	 * the block and copy the formatted data into the inode literal area.
+	 * क्रमmat the data पूर्णांकo.  Once we have क्रमmatted the data, we can मुक्त
+	 * the block and copy the क्रमmatted data पूर्णांकo the inode literal area.
 	 */
 	sfp = kmem_alloc(mp->m_sb.sb_inodesize, 0);
-	memcpy(sfp, sfhp, xfs_dir2_sf_hdr_size(sfhp->i8count));
+	स_नकल(sfp, sfhp, xfs_dir2_sf_hdr_size(sfhp->i8count));
 
 	/*
 	 * Loop over the active and unused entries.  Stop when we reach the
@@ -285,104 +286,104 @@ xfs_dir2_block_to_sf(
 	 */
 	end = xfs_dir3_data_end_offset(args->geo, bp->b_addr);
 	sfep = xfs_dir2_sf_firstentry(sfp);
-	while (offset < end) {
-		struct xfs_dir2_data_unused	*dup = bp->b_addr + offset;
-		struct xfs_dir2_data_entry	*dep = bp->b_addr + offset;
+	जबतक (offset < end) अणु
+		काष्ठा xfs_dir2_data_unused	*dup = bp->b_addr + offset;
+		काष्ठा xfs_dir2_data_entry	*dep = bp->b_addr + offset;
 
 		/*
 		 * If it's unused, just skip over it.
 		 */
-		if (be16_to_cpu(dup->freetag) == XFS_DIR2_DATA_FREE_TAG) {
+		अगर (be16_to_cpu(dup->मुक्तtag) == XFS_सूची2_DATA_FREE_TAG) अणु
 			offset += be16_to_cpu(dup->length);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * Skip .
 		 */
-		if (dep->namelen == 1 && dep->name[0] == '.')
+		अगर (dep->namelen == 1 && dep->name[0] == '.')
 			ASSERT(be64_to_cpu(dep->inumber) == dp->i_ino);
 		/*
 		 * Skip .., but make sure the inode number is right.
 		 */
-		else if (dep->namelen == 2 &&
+		अन्यथा अगर (dep->namelen == 2 &&
 			 dep->name[0] == '.' && dep->name[1] == '.')
 			ASSERT(be64_to_cpu(dep->inumber) ==
 			       xfs_dir2_sf_get_parent_ino(sfp));
 		/*
-		 * Normal entry, copy it into shortform.
+		 * Normal entry, copy it पूर्णांकo लघुक्रमm.
 		 */
-		else {
+		अन्यथा अणु
 			sfep->namelen = dep->namelen;
 			xfs_dir2_sf_put_offset(sfep, offset);
-			memcpy(sfep->name, dep->name, dep->namelen);
+			स_नकल(sfep->name, dep->name, dep->namelen);
 			xfs_dir2_sf_put_ino(mp, sfp, sfep,
 					      be64_to_cpu(dep->inumber));
 			xfs_dir2_sf_put_ftype(mp, sfep,
 					xfs_dir2_data_get_ftype(mp, dep));
 
 			sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep);
-		}
+		पूर्ण
 		offset += xfs_dir2_data_entsize(mp, dep->namelen);
-	}
-	ASSERT((char *)sfep - (char *)sfp == size);
+	पूर्ण
+	ASSERT((अक्षर *)sfep - (अक्षर *)sfp == size);
 
-	/* now we are done with the block, we can shrink the inode */
+	/* now we are करोne with the block, we can shrink the inode */
 	logflags = XFS_ILOG_CORE;
 	error = xfs_dir2_shrink_inode(args, args->geo->datablk, bp);
-	if (error) {
+	अगर (error) अणु
 		ASSERT(error != -ENOSPC);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * The buffer is now unconditionally gone, whether
 	 * xfs_dir2_shrink_inode worked or not.
 	 *
-	 * Convert the inode to local format and copy the data in.
+	 * Convert the inode to local क्रमmat and copy the data in.
 	 */
-	ASSERT(dp->i_df.if_bytes == 0);
-	xfs_init_local_fork(dp, XFS_DATA_FORK, sfp, size);
-	dp->i_df.if_format = XFS_DINODE_FMT_LOCAL;
+	ASSERT(dp->i_df.अगर_bytes == 0);
+	xfs_init_local_विभाजन(dp, XFS_DATA_FORK, sfp, size);
+	dp->i_df.अगर_क्रमmat = XFS_DINODE_FMT_LOCAL;
 	dp->i_disk_size = size;
 
 	logflags |= XFS_ILOG_DDATA;
 	xfs_dir2_sf_check(args);
 out:
 	xfs_trans_log_inode(args->trans, dp, logflags);
-	kmem_free(sfp);
-	return error;
-}
+	kmem_मुक्त(sfp);
+	वापस error;
+पूर्ण
 
 /*
- * Add a name to a shortform directory.
+ * Add a name to a लघुक्रमm directory.
  * There are two algorithms, "easy" and "hard" which we decide on
- * before changing anything.
- * Convert to block form if necessary, if the new entry won't fit.
+ * beक्रमe changing anything.
+ * Convert to block क्रमm अगर necessary, अगर the new entry won't fit.
  */
-int						/* error */
+पूर्णांक						/* error */
 xfs_dir2_sf_addname(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
+अणु
 	xfs_inode_t		*dp;		/* incore directory inode */
-	int			error;		/* error return value */
-	int			incr_isize;	/* total change in size */
-	int			new_isize;	/* size after adding name */
-	int			objchange;	/* changing to 8-byte inodes */
-	xfs_dir2_data_aoff_t	offset = 0;	/* offset for new entry */
-	int			pick;		/* which algorithm to use */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
-	xfs_dir2_sf_entry_t	*sfep = NULL;	/* shortform entry */
+	पूर्णांक			error;		/* error वापस value */
+	पूर्णांक			incr_isize;	/* total change in size */
+	पूर्णांक			new_isize;	/* size after adding name */
+	पूर्णांक			objchange;	/* changing to 8-byte inodes */
+	xfs_dir2_data_aoff_t	offset = 0;	/* offset क्रम new entry */
+	पूर्णांक			pick;		/* which algorithm to use */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
+	xfs_dir2_sf_entry_t	*sfep = शून्य;	/* लघुक्रमm entry */
 
 	trace_xfs_dir2_sf_addname(args);
 
 	ASSERT(xfs_dir2_sf_lookup(args) == -ENOENT);
 	dp = args->dp;
-	ASSERT(dp->i_df.if_format == XFS_DINODE_FMT_LOCAL);
-	ASSERT(dp->i_disk_size >= offsetof(struct xfs_dir2_sf_hdr, parent));
-	ASSERT(dp->i_df.if_bytes == dp->i_disk_size);
-	ASSERT(dp->i_df.if_u1.if_data != NULL);
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	ASSERT(dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
+	ASSERT(dp->i_disk_size >= दुरत्व(काष्ठा xfs_dir2_sf_hdr, parent));
+	ASSERT(dp->i_df.अगर_bytes == dp->i_disk_size);
+	ASSERT(dp->i_df.अगर_u1.अगर_data != शून्य);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(dp->i_disk_size >= xfs_dir2_sf_hdr_size(sfp->i8count));
 	/*
 	 * Compute entry (and change in) size.
@@ -393,96 +394,96 @@ xfs_dir2_sf_addname(
 	/*
 	 * Do we have to change to 8 byte inodes?
 	 */
-	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM && sfp->i8count == 0) {
+	अगर (args->inumber > XFS_सूची2_MAX_SHORT_INUM && sfp->i8count == 0) अणु
 		/*
 		 * Yes, adjust the inode size.  old count + (parent + new)
 		 */
 		incr_isize += (sfp->count + 2) * XFS_INO64_DIFF;
 		objchange = 1;
-	}
+	पूर्ण
 
-	new_isize = (int)dp->i_disk_size + incr_isize;
+	new_isize = (पूर्णांक)dp->i_disk_size + incr_isize;
 	/*
-	 * Won't fit as shortform any more (due to size),
+	 * Won't fit as लघुक्रमm any more (due to size),
 	 * or the pick routine says it won't (due to offset values).
 	 */
-	if (new_isize > XFS_IFORK_DSIZE(dp) ||
+	अगर (new_isize > XFS_IFORK_DSIZE(dp) ||
 	    (pick =
-	     xfs_dir2_sf_addname_pick(args, objchange, &sfep, &offset)) == 0) {
+	     xfs_dir2_sf_addname_pick(args, objchange, &sfep, &offset)) == 0) अणु
 		/*
-		 * Just checking or no space reservation, it doesn't fit.
+		 * Just checking or no space reservation, it करोesn't fit.
 		 */
-		if ((args->op_flags & XFS_DA_OP_JUSTCHECK) || args->total == 0)
-			return -ENOSPC;
+		अगर ((args->op_flags & XFS_DA_OP_JUSTCHECK) || args->total == 0)
+			वापस -ENOSPC;
 		/*
-		 * Convert to block form then add the name.
+		 * Convert to block क्रमm then add the name.
 		 */
 		error = xfs_dir2_sf_to_block(args);
-		if (error)
-			return error;
-		return xfs_dir2_block_addname(args);
-	}
+		अगर (error)
+			वापस error;
+		वापस xfs_dir2_block_addname(args);
+	पूर्ण
 	/*
 	 * Just checking, it fits.
 	 */
-	if (args->op_flags & XFS_DA_OP_JUSTCHECK)
-		return 0;
+	अगर (args->op_flags & XFS_DA_OP_JUSTCHECK)
+		वापस 0;
 	/*
 	 * Do it the easy way - just add it at the end.
 	 */
-	if (pick == 1)
+	अगर (pick == 1)
 		xfs_dir2_sf_addname_easy(args, sfep, offset, new_isize);
 	/*
-	 * Do it the hard way - look for a place to insert the new entry.
-	 * Convert to 8 byte inode numbers first if necessary.
+	 * Do it the hard way - look क्रम a place to insert the new entry.
+	 * Convert to 8 byte inode numbers first अगर necessary.
 	 */
-	else {
+	अन्यथा अणु
 		ASSERT(pick == 2);
-		if (objchange)
+		अगर (objchange)
 			xfs_dir2_sf_toino8(args);
 		xfs_dir2_sf_addname_hard(args, objchange, new_isize);
-	}
+	पूर्ण
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Add the new entry the "easy" way.
  * This is copying the old directory and adding the new entry at the end.
  * Since it's sorted by "offset" we need room after the last offset
- * that's already there, and then room to convert to a block directory.
- * This is already checked by the pick routine.
+ * that's alपढ़ोy there, and then room to convert to a block directory.
+ * This is alपढ़ोy checked by the pick routine.
  */
-static void
+अटल व्योम
 xfs_dir2_sf_addname_easy(
 	xfs_da_args_t		*args,		/* operation arguments */
-	xfs_dir2_sf_entry_t	*sfep,		/* pointer to new entry */
-	xfs_dir2_data_aoff_t	offset,		/* offset to use for new ent */
-	int			new_isize)	/* new directory size */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			byteoff;	/* byte offset in sf dir */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
+	xfs_dir2_sf_entry_t	*sfep,		/* poपूर्णांकer to new entry */
+	xfs_dir2_data_aoff_t	offset,		/* offset to use क्रम new ent */
+	पूर्णांक			new_isize)	/* new directory size */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			byteoff;	/* byte offset in sf dir */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
 
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
-	byteoff = (int)((char *)sfep - (char *)sfp);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
+	byteoff = (पूर्णांक)((अक्षर *)sfep - (अक्षर *)sfp);
 	/*
 	 * Grow the in-inode space.
 	 */
-	xfs_idata_realloc(dp, xfs_dir2_sf_entsize(mp, sfp, args->namelen),
+	xfs_idata_पुनः_स्मृति(dp, xfs_dir2_sf_entsize(mp, sfp, args->namelen),
 			  XFS_DATA_FORK);
 	/*
-	 * Need to set up again due to realloc of the inode data.
+	 * Need to set up again due to पुनः_स्मृति of the inode data.
 	 */
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
-	sfep = (xfs_dir2_sf_entry_t *)((char *)sfp + byteoff);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
+	sfep = (xfs_dir2_sf_entry_t *)((अक्षर *)sfp + byteoff);
 	/*
 	 * Fill in the new entry.
 	 */
 	sfep->namelen = args->namelen;
 	xfs_dir2_sf_put_offset(sfep, offset);
-	memcpy(sfep->name, args->name, sfep->namelen);
+	स_नकल(sfep->name, args->name, sfep->namelen);
 	xfs_dir2_sf_put_ino(mp, sfp, sfep, args->inumber);
 	xfs_dir2_sf_put_ftype(mp, sfep, args->filetype);
 
@@ -490,131 +491,131 @@ xfs_dir2_sf_addname_easy(
 	 * Update the header and inode.
 	 */
 	sfp->count++;
-	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM)
+	अगर (args->inumber > XFS_सूची2_MAX_SHORT_INUM)
 		sfp->i8count++;
 	dp->i_disk_size = new_isize;
 	xfs_dir2_sf_check(args);
-}
+पूर्ण
 
 /*
  * Add the new entry the "hard" way.
- * The caller has already converted to 8 byte inode numbers if necessary,
- * in which case we need to leave the i8count at 1.
- * Find a hole that the new entry will fit into, and copy
+ * The caller has alपढ़ोy converted to 8 byte inode numbers अगर necessary,
+ * in which हाल we need to leave the i8count at 1.
+ * Find a hole that the new entry will fit पूर्णांकo, and copy
  * the first part of the entries, the new entry, and the last part of
  * the entries.
  */
 /* ARGSUSED */
-static void
+अटल व्योम
 xfs_dir2_sf_addname_hard(
 	xfs_da_args_t		*args,		/* operation arguments */
-	int			objchange,	/* changing inode number size */
-	int			new_isize)	/* new directory size */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			add_datasize;	/* data size need for new ent */
-	char			*buf;		/* buffer for old */
-	int			eof;		/* reached end of old dir */
-	int			nbytes;		/* temp for byte copies */
+	पूर्णांक			objchange,	/* changing inode number size */
+	पूर्णांक			new_isize)	/* new directory size */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			add_datasize;	/* data size need क्रम new ent */
+	अक्षर			*buf;		/* buffer क्रम old */
+	पूर्णांक			eof;		/* reached end of old dir */
+	पूर्णांक			nbytes;		/* temp क्रम byte copies */
 	xfs_dir2_data_aoff_t	new_offset;	/* next offset value */
 	xfs_dir2_data_aoff_t	offset;		/* current offset value */
-	int			old_isize;	/* previous size */
+	पूर्णांक			old_isize;	/* previous size */
 	xfs_dir2_sf_entry_t	*oldsfep;	/* entry in original dir */
-	xfs_dir2_sf_hdr_t	*oldsfp;	/* original shortform dir */
+	xfs_dir2_sf_hdr_t	*oldsfp;	/* original लघुक्रमm dir */
 	xfs_dir2_sf_entry_t	*sfep;		/* entry in new dir */
-	xfs_dir2_sf_hdr_t	*sfp;		/* new shortform dir */
+	xfs_dir2_sf_hdr_t	*sfp;		/* new लघुक्रमm dir */
 
 	/*
 	 * Copy the old directory to the stack buffer.
 	 */
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
-	old_isize = (int)dp->i_disk_size;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
+	old_isize = (पूर्णांक)dp->i_disk_size;
 	buf = kmem_alloc(old_isize, 0);
 	oldsfp = (xfs_dir2_sf_hdr_t *)buf;
-	memcpy(oldsfp, sfp, old_isize);
+	स_नकल(oldsfp, sfp, old_isize);
 	/*
 	 * Loop over the old directory finding the place we're going
 	 * to insert the new entry.
-	 * If it's going to end up at the end then oldsfep will point there.
+	 * If it's going to end up at the end then oldsfep will poपूर्णांक there.
 	 */
-	for (offset = args->geo->data_first_offset,
+	क्रम (offset = args->geo->data_first_offset,
 	      oldsfep = xfs_dir2_sf_firstentry(oldsfp),
 	      add_datasize = xfs_dir2_data_entsize(mp, args->namelen),
-	      eof = (char *)oldsfep == &buf[old_isize];
+	      eof = (अक्षर *)oldsfep == &buf[old_isize];
 	     !eof;
 	     offset = new_offset + xfs_dir2_data_entsize(mp, oldsfep->namelen),
 	      oldsfep = xfs_dir2_sf_nextentry(mp, oldsfp, oldsfep),
-	      eof = (char *)oldsfep == &buf[old_isize]) {
+	      eof = (अक्षर *)oldsfep == &buf[old_isize]) अणु
 		new_offset = xfs_dir2_sf_get_offset(oldsfep);
-		if (offset + add_datasize <= new_offset)
-			break;
-	}
+		अगर (offset + add_datasize <= new_offset)
+			अवरोध;
+	पूर्ण
 	/*
-	 * Get rid of the old directory, then allocate space for
-	 * the new one.  We do this so xfs_idata_realloc won't copy
+	 * Get rid of the old directory, then allocate space क्रम
+	 * the new one.  We करो this so xfs_idata_पुनः_स्मृति won't copy
 	 * the data.
 	 */
-	xfs_idata_realloc(dp, -old_isize, XFS_DATA_FORK);
-	xfs_idata_realloc(dp, new_isize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, -old_isize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, new_isize, XFS_DATA_FORK);
 	/*
-	 * Reset the pointer since the buffer was reallocated.
+	 * Reset the poपूर्णांकer since the buffer was पुनः_स्मृतिated.
 	 */
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	/*
 	 * Copy the first part of the directory, including the header.
 	 */
-	nbytes = (int)((char *)oldsfep - (char *)oldsfp);
-	memcpy(sfp, oldsfp, nbytes);
-	sfep = (xfs_dir2_sf_entry_t *)((char *)sfp + nbytes);
+	nbytes = (पूर्णांक)((अक्षर *)oldsfep - (अक्षर *)oldsfp);
+	स_नकल(sfp, oldsfp, nbytes);
+	sfep = (xfs_dir2_sf_entry_t *)((अक्षर *)sfp + nbytes);
 	/*
 	 * Fill in the new entry, and update the header counts.
 	 */
 	sfep->namelen = args->namelen;
 	xfs_dir2_sf_put_offset(sfep, offset);
-	memcpy(sfep->name, args->name, sfep->namelen);
+	स_नकल(sfep->name, args->name, sfep->namelen);
 	xfs_dir2_sf_put_ino(mp, sfp, sfep, args->inumber);
 	xfs_dir2_sf_put_ftype(mp, sfep, args->filetype);
 	sfp->count++;
-	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM && !objchange)
+	अगर (args->inumber > XFS_सूची2_MAX_SHORT_INUM && !objchange)
 		sfp->i8count++;
 	/*
-	 * If there's more left to copy, do that.
+	 * If there's more left to copy, करो that.
 	 */
-	if (!eof) {
+	अगर (!eof) अणु
 		sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep);
-		memcpy(sfep, oldsfep, old_isize - nbytes);
-	}
-	kmem_free(buf);
+		स_नकल(sfep, oldsfep, old_isize - nbytes);
+	पूर्ण
+	kmem_मुक्त(buf);
 	dp->i_disk_size = new_isize;
 	xfs_dir2_sf_check(args);
-}
+पूर्ण
 
 /*
- * Decide if the new entry will fit at all.
+ * Decide अगर the new entry will fit at all.
  * If it will fit, pick between adding the new entry to the end (easy)
- * or somewhere else (hard).
+ * or somewhere अन्यथा (hard).
  * Return 0 (won't fit), 1 (easy), 2 (hard).
  */
 /*ARGSUSED*/
-static int					/* pick result */
+अटल पूर्णांक					/* pick result */
 xfs_dir2_sf_addname_pick(
 	xfs_da_args_t		*args,		/* operation arguments */
-	int			objchange,	/* inode # size changes */
+	पूर्णांक			objchange,	/* inode # size changes */
 	xfs_dir2_sf_entry_t	**sfepp,	/* out(1): new entry ptr */
 	xfs_dir2_data_aoff_t	*offsetp)	/* out(1): new offset */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			holefit;	/* found hole it will fit in */
-	int			i;		/* entry number */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			holefit;	/* found hole it will fit in */
+	पूर्णांक			i;		/* entry number */
 	xfs_dir2_data_aoff_t	offset;		/* data block offset */
-	xfs_dir2_sf_entry_t	*sfep;		/* shortform entry */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
-	int			size;		/* entry's data size */
-	int			used;		/* data bytes used */
+	xfs_dir2_sf_entry_t	*sfep;		/* लघुक्रमm entry */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
+	पूर्णांक			size;		/* entry's data size */
+	पूर्णांक			used;		/* data bytes used */
 
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	size = xfs_dir2_data_entsize(mp, args->namelen);
 	offset = args->geo->data_first_offset;
 	sfep = xfs_dir2_sf_firstentry(sfp);
@@ -624,224 +625,224 @@ xfs_dir2_sf_addname_pick(
 	 * Keep track of data offset and whether we've seen a place
 	 * to insert the new entry.
 	 */
-	for (i = 0; i < sfp->count; i++) {
-		if (!holefit)
+	क्रम (i = 0; i < sfp->count; i++) अणु
+		अगर (!holefit)
 			holefit = offset + size <= xfs_dir2_sf_get_offset(sfep);
 		offset = xfs_dir2_sf_get_offset(sfep) +
 			 xfs_dir2_data_entsize(mp, sfep->namelen);
 		sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep);
-	}
+	पूर्ण
 	/*
-	 * Calculate data bytes used excluding the new entry, if this
-	 * was a data block (block form directory).
+	 * Calculate data bytes used excluding the new entry, अगर this
+	 * was a data block (block क्रमm directory).
 	 */
 	used = offset +
-	       (sfp->count + 3) * (uint)sizeof(xfs_dir2_leaf_entry_t) +
-	       (uint)sizeof(xfs_dir2_block_tail_t);
+	       (sfp->count + 3) * (uपूर्णांक)माप(xfs_dir2_leaf_entry_t) +
+	       (uपूर्णांक)माप(xfs_dir2_block_tail_t);
 	/*
 	 * If it won't fit in a block form then we can't insert it,
 	 * we'll go back, convert to block, then try the insert and convert
 	 * to leaf.
 	 */
-	if (used + (holefit ? 0 : size) > args->geo->blksize)
-		return 0;
+	अगर (used + (holefit ? 0 : size) > args->geo->blksize)
+		वापस 0;
 	/*
-	 * If changing the inode number size, do it the hard way.
+	 * If changing the inode number size, करो it the hard way.
 	 */
-	if (objchange)
-		return 2;
+	अगर (objchange)
+		वापस 2;
 	/*
-	 * If it won't fit at the end then do it the hard way (use the hole).
+	 * If it won't fit at the end then करो it the hard way (use the hole).
 	 */
-	if (used + size > args->geo->blksize)
-		return 2;
+	अगर (used + size > args->geo->blksize)
+		वापस 2;
 	/*
 	 * Do it the easy way.
 	 */
 	*sfepp = sfep;
 	*offsetp = offset;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 /*
- * Check consistency of shortform directory, assert if bad.
+ * Check consistency of लघुक्रमm directory, निश्चित अगर bad.
  */
-static void
+अटल व्योम
 xfs_dir2_sf_check(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			i;		/* entry number */
-	int			i8count;	/* number of big inode#s */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			i;		/* entry number */
+	पूर्णांक			i8count;	/* number of big inode#s */
 	xfs_ino_t		ino;		/* entry inode number */
-	int			offset;		/* data offset */
-	xfs_dir2_sf_entry_t	*sfep;		/* shortform dir entry */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
+	पूर्णांक			offset;		/* data offset */
+	xfs_dir2_sf_entry_t	*sfep;		/* लघुक्रमm dir entry */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
 
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	offset = args->geo->data_first_offset;
 	ino = xfs_dir2_sf_get_parent_ino(sfp);
-	i8count = ino > XFS_DIR2_MAX_SHORT_INUM;
+	i8count = ino > XFS_सूची2_MAX_SHORT_INUM;
 
-	for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp);
+	क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp);
 	     i < sfp->count;
-	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) {
+	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) अणु
 		ASSERT(xfs_dir2_sf_get_offset(sfep) >= offset);
 		ino = xfs_dir2_sf_get_ino(mp, sfp, sfep);
-		i8count += ino > XFS_DIR2_MAX_SHORT_INUM;
+		i8count += ino > XFS_सूची2_MAX_SHORT_INUM;
 		offset =
 			xfs_dir2_sf_get_offset(sfep) +
 			xfs_dir2_data_entsize(mp, sfep->namelen);
-		ASSERT(xfs_dir2_sf_get_ftype(mp, sfep) < XFS_DIR3_FT_MAX);
-	}
+		ASSERT(xfs_dir2_sf_get_ftype(mp, sfep) < XFS_सूची3_FT_MAX);
+	पूर्ण
 	ASSERT(i8count == sfp->i8count);
-	ASSERT((char *)sfep - (char *)sfp == dp->i_disk_size);
+	ASSERT((अक्षर *)sfep - (अक्षर *)sfp == dp->i_disk_size);
 	ASSERT(offset +
-	       (sfp->count + 2) * (uint)sizeof(xfs_dir2_leaf_entry_t) +
-	       (uint)sizeof(xfs_dir2_block_tail_t) <= args->geo->blksize);
-}
-#endif	/* DEBUG */
+	       (sfp->count + 2) * (uपूर्णांक)माप(xfs_dir2_leaf_entry_t) +
+	       (uपूर्णांक)माप(xfs_dir2_block_tail_t) <= args->geo->blksize);
+पूर्ण
+#पूर्ण_अगर	/* DEBUG */
 
-/* Verify the consistency of an inline directory. */
+/* Verअगरy the consistency of an अंतरभूत directory. */
 xfs_failaddr_t
-xfs_dir2_sf_verify(
-	struct xfs_inode		*ip)
-{
-	struct xfs_mount		*mp = ip->i_mount;
-	struct xfs_ifork		*ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
-	struct xfs_dir2_sf_hdr		*sfp;
-	struct xfs_dir2_sf_entry	*sfep;
-	struct xfs_dir2_sf_entry	*next_sfep;
-	char				*endp;
+xfs_dir2_sf_verअगरy(
+	काष्ठा xfs_inode		*ip)
+अणु
+	काष्ठा xfs_mount		*mp = ip->i_mount;
+	काष्ठा xfs_अगरork		*अगरp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	काष्ठा xfs_dir2_sf_hdr		*sfp;
+	काष्ठा xfs_dir2_sf_entry	*sfep;
+	काष्ठा xfs_dir2_sf_entry	*next_sfep;
+	अक्षर				*endp;
 	xfs_ino_t			ino;
-	int				i;
-	int				i8count;
-	int				offset;
-	int64_t				size;
-	int				error;
-	uint8_t				filetype;
+	पूर्णांक				i;
+	पूर्णांक				i8count;
+	पूर्णांक				offset;
+	पूर्णांक64_t				size;
+	पूर्णांक				error;
+	uपूर्णांक8_t				filetype;
 
-	ASSERT(ifp->if_format == XFS_DINODE_FMT_LOCAL);
+	ASSERT(अगरp->अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
 
-	sfp = (struct xfs_dir2_sf_hdr *)ifp->if_u1.if_data;
-	size = ifp->if_bytes;
+	sfp = (काष्ठा xfs_dir2_sf_hdr *)अगरp->अगर_u1.अगर_data;
+	size = अगरp->अगर_bytes;
 
 	/*
-	 * Give up if the directory is way too short.
+	 * Give up अगर the directory is way too लघु.
 	 */
-	if (size <= offsetof(struct xfs_dir2_sf_hdr, parent) ||
+	अगर (size <= दुरत्व(काष्ठा xfs_dir2_sf_hdr, parent) ||
 	    size < xfs_dir2_sf_hdr_size(sfp->i8count))
-		return __this_address;
+		वापस __this_address;
 
-	endp = (char *)sfp + size;
+	endp = (अक्षर *)sfp + size;
 
 	/* Check .. entry */
 	ino = xfs_dir2_sf_get_parent_ino(sfp);
-	i8count = ino > XFS_DIR2_MAX_SHORT_INUM;
+	i8count = ino > XFS_सूची2_MAX_SHORT_INUM;
 	error = xfs_dir_ino_validate(mp, ino);
-	if (error)
-		return __this_address;
+	अगर (error)
+		वापस __this_address;
 	offset = mp->m_dir_geo->data_first_offset;
 
 	/* Check all reported entries */
 	sfep = xfs_dir2_sf_firstentry(sfp);
-	for (i = 0; i < sfp->count; i++) {
+	क्रम (i = 0; i < sfp->count; i++) अणु
 		/*
-		 * struct xfs_dir2_sf_entry has a variable length.
-		 * Check the fixed-offset parts of the structure are
+		 * काष्ठा xfs_dir2_sf_entry has a variable length.
+		 * Check the fixed-offset parts of the काष्ठाure are
 		 * within the data buffer.
 		 */
-		if (((char *)sfep + sizeof(*sfep)) >= endp)
-			return __this_address;
+		अगर (((अक्षर *)sfep + माप(*sfep)) >= endp)
+			वापस __this_address;
 
 		/* Don't allow names with known bad length. */
-		if (sfep->namelen == 0)
-			return __this_address;
+		अगर (sfep->namelen == 0)
+			वापस __this_address;
 
 		/*
-		 * Check that the variable-length part of the structure is
+		 * Check that the variable-length part of the काष्ठाure is
 		 * within the data buffer.  The next entry starts after the
 		 * name component, so nextentry is an acceptable test.
 		 */
 		next_sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep);
-		if (endp < (char *)next_sfep)
-			return __this_address;
+		अगर (endp < (अक्षर *)next_sfep)
+			वापस __this_address;
 
 		/* Check that the offsets always increase. */
-		if (xfs_dir2_sf_get_offset(sfep) < offset)
-			return __this_address;
+		अगर (xfs_dir2_sf_get_offset(sfep) < offset)
+			वापस __this_address;
 
 		/* Check the inode number. */
 		ino = xfs_dir2_sf_get_ino(mp, sfp, sfep);
-		i8count += ino > XFS_DIR2_MAX_SHORT_INUM;
+		i8count += ino > XFS_सूची2_MAX_SHORT_INUM;
 		error = xfs_dir_ino_validate(mp, ino);
-		if (error)
-			return __this_address;
+		अगर (error)
+			वापस __this_address;
 
 		/* Check the file type. */
 		filetype = xfs_dir2_sf_get_ftype(mp, sfep);
-		if (filetype >= XFS_DIR3_FT_MAX)
-			return __this_address;
+		अगर (filetype >= XFS_सूची3_FT_MAX)
+			वापस __this_address;
 
 		offset = xfs_dir2_sf_get_offset(sfep) +
 				xfs_dir2_data_entsize(mp, sfep->namelen);
 
 		sfep = next_sfep;
-	}
-	if (i8count != sfp->i8count)
-		return __this_address;
-	if ((void *)sfep != (void *)endp)
-		return __this_address;
+	पूर्ण
+	अगर (i8count != sfp->i8count)
+		वापस __this_address;
+	अगर ((व्योम *)sfep != (व्योम *)endp)
+		वापस __this_address;
 
-	/* Make sure this whole thing ought to be in local format. */
-	if (offset + (sfp->count + 2) * (uint)sizeof(xfs_dir2_leaf_entry_t) +
-	    (uint)sizeof(xfs_dir2_block_tail_t) > mp->m_dir_geo->blksize)
-		return __this_address;
+	/* Make sure this whole thing ought to be in local क्रमmat. */
+	अगर (offset + (sfp->count + 2) * (uपूर्णांक)माप(xfs_dir2_leaf_entry_t) +
+	    (uपूर्णांक)माप(xfs_dir2_block_tail_t) > mp->m_dir_geo->blksize)
+		वापस __this_address;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Create a new (shortform) directory.
+ * Create a new (लघुक्रमm) directory.
  */
-int					/* error, always 0 */
+पूर्णांक					/* error, always 0 */
 xfs_dir2_sf_create(
 	xfs_da_args_t	*args,		/* operation arguments */
 	xfs_ino_t	pino)		/* parent inode number */
-{
+अणु
 	xfs_inode_t	*dp;		/* incore directory inode */
-	int		i8count;	/* parent inode is an 8-byte number */
-	xfs_dir2_sf_hdr_t *sfp;		/* shortform structure */
-	int		size;		/* directory size */
+	पूर्णांक		i8count;	/* parent inode is an 8-byte number */
+	xfs_dir2_sf_hdr_t *sfp;		/* लघुक्रमm काष्ठाure */
+	पूर्णांक		size;		/* directory size */
 
 	trace_xfs_dir2_sf_create(args);
 
 	dp = args->dp;
 
-	ASSERT(dp != NULL);
+	ASSERT(dp != शून्य);
 	ASSERT(dp->i_disk_size == 0);
 	/*
 	 * If it's currently a zero-length extent file,
-	 * convert it to local format.
+	 * convert it to local क्रमmat.
 	 */
-	if (dp->i_df.if_format == XFS_DINODE_FMT_EXTENTS) {
-		dp->i_df.if_format = XFS_DINODE_FMT_LOCAL;
+	अगर (dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_EXTENTS) अणु
+		dp->i_df.अगर_क्रमmat = XFS_DINODE_FMT_LOCAL;
 		xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE);
-	}
-	ASSERT(dp->i_df.if_format == XFS_DINODE_FMT_LOCAL);
-	ASSERT(dp->i_df.if_bytes == 0);
-	i8count = pino > XFS_DIR2_MAX_SHORT_INUM;
+	पूर्ण
+	ASSERT(dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
+	ASSERT(dp->i_df.अगर_bytes == 0);
+	i8count = pino > XFS_सूची2_MAX_SHORT_INUM;
 	size = xfs_dir2_sf_hdr_size(i8count);
 	/*
-	 * Make a buffer for the data.
+	 * Make a buffer क्रम the data.
 	 */
-	xfs_idata_realloc(dp, size, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, size, XFS_DATA_FORK);
 	/*
 	 * Fill in the header,
 	 */
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	sfp->i8count = i8count;
 	/*
 	 * Now can put in the inode number, since i8count is set.
@@ -851,143 +852,143 @@ xfs_dir2_sf_create(
 	dp->i_disk_size = size;
 	xfs_dir2_sf_check(args);
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Lookup an entry in a shortform directory.
- * Returns EEXIST if found, ENOENT if not found.
+ * Lookup an entry in a लघुक्रमm directory.
+ * Returns EEXIST अगर found, ENOENT अगर not found.
  */
-int						/* error */
+पूर्णांक						/* error */
 xfs_dir2_sf_lookup(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			i;		/* entry index */
-	int			error;
-	xfs_dir2_sf_entry_t	*sfep;		/* shortform directory entry */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
-	enum xfs_dacmp		cmp;		/* comparison result */
-	xfs_dir2_sf_entry_t	*ci_sfep;	/* case-insens. entry */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			i;		/* entry index */
+	पूर्णांक			error;
+	xfs_dir2_sf_entry_t	*sfep;		/* लघुक्रमm directory entry */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
+	क्रमागत xfs_dacmp		cmp;		/* comparison result */
+	xfs_dir2_sf_entry_t	*ci_sfep;	/* हाल-insens. entry */
 
 	trace_xfs_dir2_sf_lookup(args);
 
 	xfs_dir2_sf_check(args);
 
-	ASSERT(dp->i_df.if_format == XFS_DINODE_FMT_LOCAL);
-	ASSERT(dp->i_disk_size >= offsetof(struct xfs_dir2_sf_hdr, parent));
-	ASSERT(dp->i_df.if_bytes == dp->i_disk_size);
-	ASSERT(dp->i_df.if_u1.if_data != NULL);
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	ASSERT(dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
+	ASSERT(dp->i_disk_size >= दुरत्व(काष्ठा xfs_dir2_sf_hdr, parent));
+	ASSERT(dp->i_df.अगर_bytes == dp->i_disk_size);
+	ASSERT(dp->i_df.अगर_u1.अगर_data != शून्य);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(dp->i_disk_size >= xfs_dir2_sf_hdr_size(sfp->i8count));
 	/*
-	 * Special case for .
+	 * Special हाल क्रम .
 	 */
-	if (args->namelen == 1 && args->name[0] == '.') {
+	अगर (args->namelen == 1 && args->name[0] == '.') अणु
 		args->inumber = dp->i_ino;
 		args->cmpresult = XFS_CMP_EXACT;
-		args->filetype = XFS_DIR3_FT_DIR;
-		return -EEXIST;
-	}
+		args->filetype = XFS_सूची3_FT_सूची;
+		वापस -EEXIST;
+	पूर्ण
 	/*
-	 * Special case for ..
+	 * Special हाल क्रम ..
 	 */
-	if (args->namelen == 2 &&
-	    args->name[0] == '.' && args->name[1] == '.') {
+	अगर (args->namelen == 2 &&
+	    args->name[0] == '.' && args->name[1] == '.') अणु
 		args->inumber = xfs_dir2_sf_get_parent_ino(sfp);
 		args->cmpresult = XFS_CMP_EXACT;
-		args->filetype = XFS_DIR3_FT_DIR;
-		return -EEXIST;
-	}
+		args->filetype = XFS_सूची3_FT_सूची;
+		वापस -EEXIST;
+	पूर्ण
 	/*
 	 * Loop over all the entries trying to match ours.
 	 */
-	ci_sfep = NULL;
-	for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
-	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) {
+	ci_sfep = शून्य;
+	क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
+	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) अणु
 		/*
-		 * Compare name and if it's an exact match, return the inode
-		 * number. If it's the first case-insensitive match, store the
-		 * inode number and continue looking for an exact match.
+		 * Compare name and अगर it's an exact match, वापस the inode
+		 * number. If it's the first हाल-insensitive match, store the
+		 * inode number and जारी looking क्रम an exact match.
 		 */
 		cmp = xfs_dir2_compname(args, sfep->name, sfep->namelen);
-		if (cmp != XFS_CMP_DIFFERENT && cmp != args->cmpresult) {
+		अगर (cmp != XFS_CMP_DIFFERENT && cmp != args->cmpresult) अणु
 			args->cmpresult = cmp;
 			args->inumber = xfs_dir2_sf_get_ino(mp, sfp, sfep);
 			args->filetype = xfs_dir2_sf_get_ftype(mp, sfep);
-			if (cmp == XFS_CMP_EXACT)
-				return -EEXIST;
+			अगर (cmp == XFS_CMP_EXACT)
+				वापस -EEXIST;
 			ci_sfep = sfep;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
 	/*
-	 * Here, we can only be doing a lookup (not a rename or replace).
-	 * If a case-insensitive match was not found, return -ENOENT.
+	 * Here, we can only be करोing a lookup (not a नाम or replace).
+	 * If a हाल-insensitive match was not found, वापस -ENOENT.
 	 */
-	if (!ci_sfep)
-		return -ENOENT;
+	अगर (!ci_sfep)
+		वापस -ENOENT;
 	/* otherwise process the CI match as required by the caller */
 	error = xfs_dir_cilookup_result(args, ci_sfep->name, ci_sfep->namelen);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * Remove an entry from a shortform directory.
+ * Remove an entry from a लघुक्रमm directory.
  */
-int						/* error */
-xfs_dir2_sf_removename(
+पूर्णांक						/* error */
+xfs_dir2_sf_हटाओname(
 	xfs_da_args_t		*args)
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			byteoff;	/* offset of removed entry */
-	int			entsize;	/* this entry's size */
-	int			i;		/* shortform entry index */
-	int			newsize;	/* new inode size */
-	int			oldsize;	/* old inode size */
-	xfs_dir2_sf_entry_t	*sfep;		/* shortform directory entry */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			byteoff;	/* offset of हटाओd entry */
+	पूर्णांक			entsize;	/* this entry's size */
+	पूर्णांक			i;		/* लघुक्रमm entry index */
+	पूर्णांक			newsize;	/* new inode size */
+	पूर्णांक			oldsize;	/* old inode size */
+	xfs_dir2_sf_entry_t	*sfep;		/* लघुक्रमm directory entry */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
 
-	trace_xfs_dir2_sf_removename(args);
+	trace_xfs_dir2_sf_हटाओname(args);
 
-	ASSERT(dp->i_df.if_format == XFS_DINODE_FMT_LOCAL);
-	oldsize = (int)dp->i_disk_size;
-	ASSERT(oldsize >= offsetof(struct xfs_dir2_sf_hdr, parent));
-	ASSERT(dp->i_df.if_bytes == oldsize);
-	ASSERT(dp->i_df.if_u1.if_data != NULL);
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	ASSERT(dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
+	oldsize = (पूर्णांक)dp->i_disk_size;
+	ASSERT(oldsize >= दुरत्व(काष्ठा xfs_dir2_sf_hdr, parent));
+	ASSERT(dp->i_df.अगर_bytes == oldsize);
+	ASSERT(dp->i_df.अगर_u1.अगर_data != शून्य);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(oldsize >= xfs_dir2_sf_hdr_size(sfp->i8count));
 	/*
 	 * Loop over the old directory entries.
 	 * Find the one we're deleting.
 	 */
-	for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
-	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) {
-		if (xfs_da_compname(args, sfep->name, sfep->namelen) ==
-								XFS_CMP_EXACT) {
+	क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
+	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) अणु
+		अगर (xfs_da_compname(args, sfep->name, sfep->namelen) ==
+								XFS_CMP_EXACT) अणु
 			ASSERT(xfs_dir2_sf_get_ino(mp, sfp, sfep) ==
 			       args->inumber);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/*
 	 * Didn't find it.
 	 */
-	if (i == sfp->count)
-		return -ENOENT;
+	अगर (i == sfp->count)
+		वापस -ENOENT;
 	/*
 	 * Calculate sizes.
 	 */
-	byteoff = (int)((char *)sfep - (char *)sfp);
+	byteoff = (पूर्णांक)((अक्षर *)sfep - (अक्षर *)sfp);
 	entsize = xfs_dir2_sf_entsize(mp, sfp, args->namelen);
 	newsize = oldsize - entsize;
 	/*
-	 * Copy the part if any after the removed entry, sliding it down.
+	 * Copy the part अगर any after the हटाओd entry, sliding it करोwn.
 	 */
-	if (byteoff + entsize < oldsize)
-		memmove((char *)sfp + byteoff, (char *)sfp + byteoff + entsize,
+	अगर (byteoff + entsize < oldsize)
+		स_हटाओ((अक्षर *)sfp + byteoff, (अक्षर *)sfp + byteoff + entsize,
 			oldsize - (byteoff + entsize));
 	/*
 	 * Fix up the header and file size.
@@ -997,174 +998,174 @@ xfs_dir2_sf_removename(
 	/*
 	 * Reallocate, making it smaller.
 	 */
-	xfs_idata_realloc(dp, newsize - oldsize, XFS_DATA_FORK);
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	xfs_idata_पुनः_स्मृति(dp, newsize - oldsize, XFS_DATA_FORK);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	/*
 	 * Are we changing inode number size?
 	 */
-	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM) {
-		if (sfp->i8count == 1)
+	अगर (args->inumber > XFS_सूची2_MAX_SHORT_INUM) अणु
+		अगर (sfp->i8count == 1)
 			xfs_dir2_sf_toino4(args);
-		else
+		अन्यथा
 			sfp->i8count--;
-	}
+	पूर्ण
 	xfs_dir2_sf_check(args);
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Check whether the sf dir replace operation need more blocks.
  */
-static bool
+अटल bool
 xfs_dir2_sf_replace_needblock(
-	struct xfs_inode	*dp,
+	काष्ठा xfs_inode	*dp,
 	xfs_ino_t		inum)
-{
-	int			newsize;
-	struct xfs_dir2_sf_hdr	*sfp;
+अणु
+	पूर्णांक			newsize;
+	काष्ठा xfs_dir2_sf_hdr	*sfp;
 
-	if (dp->i_df.if_format != XFS_DINODE_FMT_LOCAL)
-		return false;
+	अगर (dp->i_df.अगर_क्रमmat != XFS_DINODE_FMT_LOCAL)
+		वापस false;
 
-	sfp = (struct xfs_dir2_sf_hdr *)dp->i_df.if_u1.if_data;
-	newsize = dp->i_df.if_bytes + (sfp->count + 1) * XFS_INO64_DIFF;
+	sfp = (काष्ठा xfs_dir2_sf_hdr *)dp->i_df.अगर_u1.अगर_data;
+	newsize = dp->i_df.अगर_bytes + (sfp->count + 1) * XFS_INO64_DIFF;
 
-	return inum > XFS_DIR2_MAX_SHORT_INUM &&
+	वापस inum > XFS_सूची2_MAX_SHORT_INUM &&
 	       sfp->i8count == 0 && newsize > XFS_IFORK_DSIZE(dp);
-}
+पूर्ण
 
 /*
- * Replace the inode number of an entry in a shortform directory.
+ * Replace the inode number of an entry in a लघुक्रमm directory.
  */
-int						/* error */
+पूर्णांक						/* error */
 xfs_dir2_sf_replace(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	int			i;		/* entry index */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	पूर्णांक			i;		/* entry index */
 	xfs_ino_t		ino=0;		/* entry old inode number */
-	int			i8elevated;	/* sf_toino8 set i8count=1 */
-	xfs_dir2_sf_entry_t	*sfep;		/* shortform directory entry */
-	xfs_dir2_sf_hdr_t	*sfp;		/* shortform structure */
+	पूर्णांक			i8elevated;	/* sf_toino8 set i8count=1 */
+	xfs_dir2_sf_entry_t	*sfep;		/* लघुक्रमm directory entry */
+	xfs_dir2_sf_hdr_t	*sfp;		/* लघुक्रमm काष्ठाure */
 
 	trace_xfs_dir2_sf_replace(args);
 
-	ASSERT(dp->i_df.if_format == XFS_DINODE_FMT_LOCAL);
-	ASSERT(dp->i_disk_size >= offsetof(struct xfs_dir2_sf_hdr, parent));
-	ASSERT(dp->i_df.if_bytes == dp->i_disk_size);
-	ASSERT(dp->i_df.if_u1.if_data != NULL);
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	ASSERT(dp->i_df.अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
+	ASSERT(dp->i_disk_size >= दुरत्व(काष्ठा xfs_dir2_sf_hdr, parent));
+	ASSERT(dp->i_df.अगर_bytes == dp->i_disk_size);
+	ASSERT(dp->i_df.अगर_u1.अगर_data != शून्य);
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(dp->i_disk_size >= xfs_dir2_sf_hdr_size(sfp->i8count));
 
 	/*
 	 * New inode number is large, and need to convert to 8-byte inodes.
 	 */
-	if (args->inumber > XFS_DIR2_MAX_SHORT_INUM && sfp->i8count == 0) {
-		int	error;			/* error return value */
+	अगर (args->inumber > XFS_सूची2_MAX_SHORT_INUM && sfp->i8count == 0) अणु
+		पूर्णांक	error;			/* error वापस value */
 
 		/*
-		 * Won't fit as shortform, convert to block then do replace.
+		 * Won't fit as लघुक्रमm, convert to block then करो replace.
 		 */
-		if (xfs_dir2_sf_replace_needblock(dp, args->inumber)) {
+		अगर (xfs_dir2_sf_replace_needblock(dp, args->inumber)) अणु
 			error = xfs_dir2_sf_to_block(args);
-			if (error)
-				return error;
-			return xfs_dir2_block_replace(args);
-		}
+			अगर (error)
+				वापस error;
+			वापस xfs_dir2_block_replace(args);
+		पूर्ण
 		/*
 		 * Still fits, convert to 8-byte now.
 		 */
 		xfs_dir2_sf_toino8(args);
 		i8elevated = 1;
-		sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
-	} else
+		sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
+	पूर्ण अन्यथा
 		i8elevated = 0;
 
 	ASSERT(args->namelen != 1 || args->name[0] != '.');
 	/*
 	 * Replace ..'s entry.
 	 */
-	if (args->namelen == 2 &&
-	    args->name[0] == '.' && args->name[1] == '.') {
+	अगर (args->namelen == 2 &&
+	    args->name[0] == '.' && args->name[1] == '.') अणु
 		ino = xfs_dir2_sf_get_parent_ino(sfp);
 		ASSERT(args->inumber != ino);
 		xfs_dir2_sf_put_parent_ino(sfp, args->inumber);
-	}
+	पूर्ण
 	/*
-	 * Normal entry, look for the name.
+	 * Normal entry, look क्रम the name.
 	 */
-	else {
-		for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
-		     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) {
-			if (xfs_da_compname(args, sfep->name, sfep->namelen) ==
-								XFS_CMP_EXACT) {
+	अन्यथा अणु
+		क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp); i < sfp->count;
+		     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep)) अणु
+			अगर (xfs_da_compname(args, sfep->name, sfep->namelen) ==
+								XFS_CMP_EXACT) अणु
 				ino = xfs_dir2_sf_get_ino(mp, sfp, sfep);
 				ASSERT(args->inumber != ino);
 				xfs_dir2_sf_put_ino(mp, sfp, sfep,
 						args->inumber);
 				xfs_dir2_sf_put_ftype(mp, sfep, args->filetype);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		/*
 		 * Didn't find it.
 		 */
-		if (i == sfp->count) {
+		अगर (i == sfp->count) अणु
 			ASSERT(args->op_flags & XFS_DA_OP_OKNOENT);
-			if (i8elevated)
+			अगर (i8elevated)
 				xfs_dir2_sf_toino4(args);
-			return -ENOENT;
-		}
-	}
+			वापस -ENOENT;
+		पूर्ण
+	पूर्ण
 	/*
-	 * See if the old number was large, the new number is small.
+	 * See अगर the old number was large, the new number is small.
 	 */
-	if (ino > XFS_DIR2_MAX_SHORT_INUM &&
-	    args->inumber <= XFS_DIR2_MAX_SHORT_INUM) {
+	अगर (ino > XFS_सूची2_MAX_SHORT_INUM &&
+	    args->inumber <= XFS_सूची2_MAX_SHORT_INUM) अणु
 		/*
 		 * And the old count was one, so need to convert to small.
 		 */
-		if (sfp->i8count == 1)
+		अगर (sfp->i8count == 1)
 			xfs_dir2_sf_toino4(args);
-		else
+		अन्यथा
 			sfp->i8count--;
-	}
+	पूर्ण
 	/*
-	 * See if the old number was small, the new number is large.
+	 * See अगर the old number was small, the new number is large.
 	 */
-	if (ino <= XFS_DIR2_MAX_SHORT_INUM &&
-	    args->inumber > XFS_DIR2_MAX_SHORT_INUM) {
+	अगर (ino <= XFS_सूची2_MAX_SHORT_INUM &&
+	    args->inumber > XFS_सूची2_MAX_SHORT_INUM) अणु
 		/*
 		 * add to the i8count unless we just converted to 8-byte
-		 * inodes (which does an implied i8count = 1)
+		 * inodes (which करोes an implied i8count = 1)
 		 */
 		ASSERT(sfp->i8count != 0);
-		if (!i8elevated)
+		अगर (!i8elevated)
 			sfp->i8count++;
-	}
+	पूर्ण
 	xfs_dir2_sf_check(args);
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_DDATA);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Convert from 8-byte inode numbers to 4-byte inode numbers.
  * The last 8-byte inode number is gone, but the count is still 1.
  */
-static void
+अटल व्योम
 xfs_dir2_sf_toino4(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	char			*buf;		/* old dir's buffer */
-	int			i;		/* entry index */
-	int			newsize;	/* new inode size */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	अक्षर			*buf;		/* old dir's buffer */
+	पूर्णांक			i;		/* entry index */
+	पूर्णांक			newsize;	/* new inode size */
 	xfs_dir2_sf_entry_t	*oldsfep;	/* old sf entry */
 	xfs_dir2_sf_hdr_t	*oldsfp;	/* old sf directory */
-	int			oldsize;	/* old inode size */
+	पूर्णांक			oldsize;	/* old inode size */
 	xfs_dir2_sf_entry_t	*sfep;		/* new sf entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* new sf directory */
 
@@ -1173,24 +1174,24 @@ xfs_dir2_sf_toino4(
 	/*
 	 * Copy the old directory to the buffer.
 	 * Then nuke it from the inode, and add the new buffer to the inode.
-	 * Don't want xfs_idata_realloc copying the data here.
+	 * Don't want xfs_idata_पुनः_स्मृति copying the data here.
 	 */
-	oldsize = dp->i_df.if_bytes;
+	oldsize = dp->i_df.अगर_bytes;
 	buf = kmem_alloc(oldsize, 0);
-	oldsfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	oldsfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(oldsfp->i8count == 1);
-	memcpy(buf, oldsfp, oldsize);
+	स_नकल(buf, oldsfp, oldsize);
 	/*
 	 * Compute the new inode size.
 	 */
 	newsize = oldsize - (oldsfp->count + 1) * XFS_INO64_DIFF;
-	xfs_idata_realloc(dp, -oldsize, XFS_DATA_FORK);
-	xfs_idata_realloc(dp, newsize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, -oldsize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, newsize, XFS_DATA_FORK);
 	/*
-	 * Reset our pointers, the data has moved.
+	 * Reset our poपूर्णांकers, the data has moved.
 	 */
 	oldsfp = (xfs_dir2_sf_hdr_t *)buf;
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	/*
 	 * Fill in the new header.
 	 */
@@ -1200,44 +1201,44 @@ xfs_dir2_sf_toino4(
 	/*
 	 * Copy the entries field by field.
 	 */
-	for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp),
+	क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp),
 		    oldsfep = xfs_dir2_sf_firstentry(oldsfp);
 	     i < sfp->count;
 	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep),
-		  oldsfep = xfs_dir2_sf_nextentry(mp, oldsfp, oldsfep)) {
+		  oldsfep = xfs_dir2_sf_nextentry(mp, oldsfp, oldsfep)) अणु
 		sfep->namelen = oldsfep->namelen;
-		memcpy(sfep->offset, oldsfep->offset, sizeof(sfep->offset));
-		memcpy(sfep->name, oldsfep->name, sfep->namelen);
+		स_नकल(sfep->offset, oldsfep->offset, माप(sfep->offset));
+		स_नकल(sfep->name, oldsfep->name, sfep->namelen);
 		xfs_dir2_sf_put_ino(mp, sfp, sfep,
 				xfs_dir2_sf_get_ino(mp, oldsfp, oldsfep));
 		xfs_dir2_sf_put_ftype(mp, sfep,
 				xfs_dir2_sf_get_ftype(mp, oldsfep));
-	}
+	पूर्ण
 	/*
 	 * Clean up the inode.
 	 */
-	kmem_free(buf);
+	kmem_मुक्त(buf);
 	dp->i_disk_size = newsize;
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
-}
+पूर्ण
 
 /*
  * Convert existing entries from 4-byte inode numbers to 8-byte inode numbers.
  * The new entry w/ an 8-byte inode number is not there yet; we leave with
  * i8count set to 1, but no corresponding 8-byte entry.
  */
-static void
+अटल व्योम
 xfs_dir2_sf_toino8(
 	xfs_da_args_t		*args)		/* operation arguments */
-{
-	struct xfs_inode	*dp = args->dp;
-	struct xfs_mount	*mp = dp->i_mount;
-	char			*buf;		/* old dir's buffer */
-	int			i;		/* entry index */
-	int			newsize;	/* new inode size */
+अणु
+	काष्ठा xfs_inode	*dp = args->dp;
+	काष्ठा xfs_mount	*mp = dp->i_mount;
+	अक्षर			*buf;		/* old dir's buffer */
+	पूर्णांक			i;		/* entry index */
+	पूर्णांक			newsize;	/* new inode size */
 	xfs_dir2_sf_entry_t	*oldsfep;	/* old sf entry */
 	xfs_dir2_sf_hdr_t	*oldsfp;	/* old sf directory */
-	int			oldsize;	/* old inode size */
+	पूर्णांक			oldsize;	/* old inode size */
 	xfs_dir2_sf_entry_t	*sfep;		/* new sf entry */
 	xfs_dir2_sf_hdr_t	*sfp;		/* new sf directory */
 
@@ -1246,24 +1247,24 @@ xfs_dir2_sf_toino8(
 	/*
 	 * Copy the old directory to the buffer.
 	 * Then nuke it from the inode, and add the new buffer to the inode.
-	 * Don't want xfs_idata_realloc copying the data here.
+	 * Don't want xfs_idata_पुनः_स्मृति copying the data here.
 	 */
-	oldsize = dp->i_df.if_bytes;
+	oldsize = dp->i_df.अगर_bytes;
 	buf = kmem_alloc(oldsize, 0);
-	oldsfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	oldsfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	ASSERT(oldsfp->i8count == 0);
-	memcpy(buf, oldsfp, oldsize);
+	स_नकल(buf, oldsfp, oldsize);
 	/*
-	 * Compute the new inode size (nb: entry count + 1 for parent)
+	 * Compute the new inode size (nb: entry count + 1 क्रम parent)
 	 */
 	newsize = oldsize + (oldsfp->count + 1) * XFS_INO64_DIFF;
-	xfs_idata_realloc(dp, -oldsize, XFS_DATA_FORK);
-	xfs_idata_realloc(dp, newsize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, -oldsize, XFS_DATA_FORK);
+	xfs_idata_पुनः_स्मृति(dp, newsize, XFS_DATA_FORK);
 	/*
-	 * Reset our pointers, the data has moved.
+	 * Reset our poपूर्णांकers, the data has moved.
 	 */
 	oldsfp = (xfs_dir2_sf_hdr_t *)buf;
-	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.if_u1.if_data;
+	sfp = (xfs_dir2_sf_hdr_t *)dp->i_df.अगर_u1.अगर_data;
 	/*
 	 * Fill in the new header.
 	 */
@@ -1273,23 +1274,23 @@ xfs_dir2_sf_toino8(
 	/*
 	 * Copy the entries field by field.
 	 */
-	for (i = 0, sfep = xfs_dir2_sf_firstentry(sfp),
+	क्रम (i = 0, sfep = xfs_dir2_sf_firstentry(sfp),
 		    oldsfep = xfs_dir2_sf_firstentry(oldsfp);
 	     i < sfp->count;
 	     i++, sfep = xfs_dir2_sf_nextentry(mp, sfp, sfep),
-		  oldsfep = xfs_dir2_sf_nextentry(mp, oldsfp, oldsfep)) {
+		  oldsfep = xfs_dir2_sf_nextentry(mp, oldsfp, oldsfep)) अणु
 		sfep->namelen = oldsfep->namelen;
-		memcpy(sfep->offset, oldsfep->offset, sizeof(sfep->offset));
-		memcpy(sfep->name, oldsfep->name, sfep->namelen);
+		स_नकल(sfep->offset, oldsfep->offset, माप(sfep->offset));
+		स_नकल(sfep->name, oldsfep->name, sfep->namelen);
 		xfs_dir2_sf_put_ino(mp, sfp, sfep,
 				xfs_dir2_sf_get_ino(mp, oldsfp, oldsfep));
 		xfs_dir2_sf_put_ftype(mp, sfep,
 				xfs_dir2_sf_get_ftype(mp, oldsfep));
-	}
+	पूर्ण
 	/*
 	 * Clean up the inode.
 	 */
-	kmem_free(buf);
+	kmem_मुक्त(buf);
 	dp->i_disk_size = newsize;
 	xfs_trans_log_inode(args->trans, dp, XFS_ILOG_CORE | XFS_ILOG_DDATA);
-}
+पूर्ण

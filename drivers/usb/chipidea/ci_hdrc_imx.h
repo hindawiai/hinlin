@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright 2012 Freescale Semiconductor, Inc.
  */
 
-#ifndef __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H
-#define __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H
+#अगर_अघोषित __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H
+#घोषणा __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H
 
-struct imx_usbmisc_data {
-	struct device *dev;
-	int index;
+काष्ठा imx_usbmisc_data अणु
+	काष्ठा device *dev;
+	पूर्णांक index;
 
-	unsigned int disable_oc:1; /* over current detect disabled */
+	अचिन्हित पूर्णांक disable_oc:1; /* over current detect disabled */
 
-	/* true if over-current polarity is active low */
-	unsigned int oc_pol_active_low:1;
+	/* true अगर over-current polarity is active low */
+	अचिन्हित पूर्णांक oc_pol_active_low:1;
 
-	/* true if dt specifies polarity */
-	unsigned int oc_pol_configured:1;
+	/* true अगर dt specअगरies polarity */
+	अचिन्हित पूर्णांक oc_pol_configured:1;
 
-	unsigned int pwr_pol:1; /* power polarity */
-	unsigned int evdo:1; /* set external vbus divider option */
-	unsigned int ulpi:1; /* connected to an ULPI phy */
-	unsigned int hsic:1; /* HSIC controlller */
-	unsigned int ext_id:1; /* ID from exteranl event */
-	unsigned int ext_vbus:1; /* Vbus from exteranl event */
-	struct usb_phy *usb_phy;
-	enum usb_dr_mode available_role; /* runtime usb dr mode */
-	int emp_curr_control;
-	int dc_vol_level_adjust;
-};
+	अचिन्हित पूर्णांक pwr_pol:1; /* घातer polarity */
+	अचिन्हित पूर्णांक evकरो:1; /* set बाह्यal vbus भागider option */
+	अचिन्हित पूर्णांक ulpi:1; /* connected to an ULPI phy */
+	अचिन्हित पूर्णांक hsic:1; /* HSIC controlller */
+	अचिन्हित पूर्णांक ext_id:1; /* ID from exteranl event */
+	अचिन्हित पूर्णांक ext_vbus:1; /* Vbus from exteranl event */
+	काष्ठा usb_phy *usb_phy;
+	क्रमागत usb_dr_mode available_role; /* runसमय usb dr mode */
+	पूर्णांक emp_curr_control;
+	पूर्णांक dc_vol_level_adjust;
+पूर्ण;
 
-int imx_usbmisc_init(struct imx_usbmisc_data *data);
-int imx_usbmisc_init_post(struct imx_usbmisc_data *data);
-int imx_usbmisc_set_wakeup(struct imx_usbmisc_data *data, bool enabled);
-int imx_usbmisc_hsic_set_connect(struct imx_usbmisc_data *data);
-int imx_usbmisc_hsic_set_clk(struct imx_usbmisc_data *data, bool on);
-int imx_usbmisc_charger_detection(struct imx_usbmisc_data *data, bool connect);
+पूर्णांक imx_usbmisc_init(काष्ठा imx_usbmisc_data *data);
+पूर्णांक imx_usbmisc_init_post(काष्ठा imx_usbmisc_data *data);
+पूर्णांक imx_usbmisc_set_wakeup(काष्ठा imx_usbmisc_data *data, bool enabled);
+पूर्णांक imx_usbmisc_hsic_set_connect(काष्ठा imx_usbmisc_data *data);
+पूर्णांक imx_usbmisc_hsic_set_clk(काष्ठा imx_usbmisc_data *data, bool on);
+पूर्णांक imx_usbmisc_अक्षरger_detection(काष्ठा imx_usbmisc_data *data, bool connect);
 
-#endif /* __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H */
+#पूर्ण_अगर /* __DRIVER_USB_CHIPIDEA_CI_HDRC_IMX_H */

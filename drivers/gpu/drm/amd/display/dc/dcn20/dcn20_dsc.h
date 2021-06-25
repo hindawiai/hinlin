@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,17 +22,17 @@
  * Authors: AMD
  *
  */
-#ifndef __DCN20_DSC_H__
-#define __DCN20_DSC_H__
+#अगर_अघोषित __DCN20_DSC_H__
+#घोषणा __DCN20_DSC_H__
 
-#include "dsc.h"
-#include "dsc/dscc_types.h"
-#include <drm/drm_dsc.h>
+#समावेश "dsc.h"
+#समावेश "dsc/dscc_types.h"
+#समावेश <drm/drm_dsc.h>
 
-#define TO_DCN20_DSC(dsc)\
-	container_of(dsc, struct dcn20_dsc, base)
+#घोषणा TO_DCN20_DSC(dsc)\
+	container_of(dsc, काष्ठा dcn20_dsc, base)
 
-#define DSC_REG_LIST_DCN20(id) \
+#घोषणा DSC_REG_LIST_DCN20(id) \
 	SRI(DSC_TOP_CONTROL, DSC_TOP, id),\
 	SRI(DSC_DEBUG_CONTROL, DSC_TOP, id),\
 	SRI(DSCC_CONFIG0, DSCC, id),\
@@ -83,14 +84,14 @@
 	SRI(DSCRM_DSC_FORWARD_CONFIG, DSCRM, id)
 
 
-#define DSC_SF(reg_name, field_name, post_fix)\
+#घोषणा DSC_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-//Used in resolving the corner case with duplicate field name
-#define DSC2_SF(reg_name, field_name, post_fix)\
+//Used in resolving the corner हाल with duplicate field name
+#घोषणा DSC2_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## _ ## field_name ## post_fix
 
-#define DSC_REG_LIST_SH_MASK_DCN20(mask_sh)\
+#घोषणा DSC_REG_LIST_SH_MASK_DCN20(mask_sh)\
 	DSC_SF(DSC_TOP0_DSC_TOP_CONTROL, DSC_CLOCK_EN, mask_sh), \
 	DSC_SF(DSC_TOP0_DSC_TOP_CONTROL, DSC_DISPCLK_R_GATE_DIS, mask_sh), \
 	DSC_SF(DSC_TOP0_DSC_TOP_CONTROL, DSC_DSCCLK_R_GATE_DIS, mask_sh), \
@@ -98,7 +99,7 @@
 	DSC_SF(DSCC0_DSCC_CONFIG0, ICH_RESET_AT_END_OF_LINE, mask_sh), \
 	DSC_SF(DSCC0_DSCC_CONFIG0, NUMBER_OF_SLICES_PER_LINE, mask_sh), \
 	DSC_SF(DSCC0_DSCC_CONFIG0, ALTERNATE_ICH_ENCODING_EN, mask_sh), \
-	DSC_SF(DSCC0_DSCC_CONFIG0, NUMBER_OF_SLICES_IN_VERTICAL_DIRECTION, mask_sh), \
+	DSC_SF(DSCC0_DSCC_CONFIG0, NUMBER_OF_SLICES_IN_VERTICAL_सूचीECTION, mask_sh), \
 	DSC_SF(DSCC0_DSCC_CONFIG1, DSCC_RATE_CONTROL_BUFFER_MODEL_SIZE, mask_sh), \
 	/*DSC_SF(DSCC0_DSCC_CONFIG1, DSCC_DISABLE_ICH, mask_sh),*/ \
 	DSC_SF(DSCC0_DSCC_STATUS, DSCC_DOUBLE_BUFFER_REG_UPDATE_PENDING, mask_sh), \
@@ -260,7 +261,7 @@
 
 
 
-#define DSC_FIELD_LIST_DCN20(type)\
+#घोषणा DSC_FIELD_LIST_DCN20(type)\
 	type DSC_CLOCK_EN; \
 	type DSC_DISPCLK_R_GATE_DIS; \
 	type DSC_DSCCLK_R_GATE_DIS; \
@@ -269,7 +270,7 @@
 	type ICH_RESET_AT_END_OF_LINE; \
 	type NUMBER_OF_SLICES_PER_LINE; \
 	type ALTERNATE_ICH_ENCODING_EN; \
-	type NUMBER_OF_SLICES_IN_VERTICAL_DIRECTION; \
+	type NUMBER_OF_SLICES_IN_VERTICAL_सूचीECTION; \
 	type DSCC_RATE_CONTROL_BUFFER_MODEL_SIZE; \
 	/*type DSCC_DISABLE_ICH;*/ \
 	type DSCC_DOUBLE_BUFFER_REG_UPDATE_PENDING; \
@@ -446,117 +447,117 @@
 	type DSCRM_DSC_OPP_PIPE_SOURCE
 
 
-struct dcn20_dsc_registers {
-	uint32_t DSC_TOP_CONTROL;
-	uint32_t DSC_DEBUG_CONTROL;
-	uint32_t DSCC_CONFIG0;
-	uint32_t DSCC_CONFIG1;
-	uint32_t DSCC_STATUS;
-	uint32_t DSCC_INTERRUPT_CONTROL_STATUS;
-	uint32_t DSCC_PPS_CONFIG0;
-	uint32_t DSCC_PPS_CONFIG1;
-	uint32_t DSCC_PPS_CONFIG2;
-	uint32_t DSCC_PPS_CONFIG3;
-	uint32_t DSCC_PPS_CONFIG4;
-	uint32_t DSCC_PPS_CONFIG5;
-	uint32_t DSCC_PPS_CONFIG6;
-	uint32_t DSCC_PPS_CONFIG7;
-	uint32_t DSCC_PPS_CONFIG8;
-	uint32_t DSCC_PPS_CONFIG9;
-	uint32_t DSCC_PPS_CONFIG10;
-	uint32_t DSCC_PPS_CONFIG11;
-	uint32_t DSCC_PPS_CONFIG12;
-	uint32_t DSCC_PPS_CONFIG13;
-	uint32_t DSCC_PPS_CONFIG14;
-	uint32_t DSCC_PPS_CONFIG15;
-	uint32_t DSCC_PPS_CONFIG16;
-	uint32_t DSCC_PPS_CONFIG17;
-	uint32_t DSCC_PPS_CONFIG18;
-	uint32_t DSCC_PPS_CONFIG19;
-	uint32_t DSCC_PPS_CONFIG20;
-	uint32_t DSCC_PPS_CONFIG21;
-	uint32_t DSCC_PPS_CONFIG22;
-	uint32_t DSCC_MEM_POWER_CONTROL;
-	uint32_t DSCC_R_Y_SQUARED_ERROR_LOWER;
-	uint32_t DSCC_R_Y_SQUARED_ERROR_UPPER;
-	uint32_t DSCC_G_CB_SQUARED_ERROR_LOWER;
-	uint32_t DSCC_G_CB_SQUARED_ERROR_UPPER;
-	uint32_t DSCC_B_CR_SQUARED_ERROR_LOWER;
-	uint32_t DSCC_B_CR_SQUARED_ERROR_UPPER;
-	uint32_t DSCC_MAX_ABS_ERROR0;
-	uint32_t DSCC_MAX_ABS_ERROR1;
-	uint32_t DSCC_RATE_BUFFER0_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_BUFFER1_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_BUFFER2_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_BUFFER3_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_CONTROL_BUFFER0_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_CONTROL_BUFFER1_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_CONTROL_BUFFER2_MAX_FULLNESS_LEVEL;
-	uint32_t DSCC_RATE_CONTROL_BUFFER3_MAX_FULLNESS_LEVEL;
-	uint32_t DSCCIF_CONFIG0;
-	uint32_t DSCCIF_CONFIG1;
-	uint32_t DSCRM_DSC_FORWARD_CONFIG;
-};
+काष्ठा dcn20_dsc_रेजिस्टरs अणु
+	uपूर्णांक32_t DSC_TOP_CONTROL;
+	uपूर्णांक32_t DSC_DEBUG_CONTROL;
+	uपूर्णांक32_t DSCC_CONFIG0;
+	uपूर्णांक32_t DSCC_CONFIG1;
+	uपूर्णांक32_t DSCC_STATUS;
+	uपूर्णांक32_t DSCC_INTERRUPT_CONTROL_STATUS;
+	uपूर्णांक32_t DSCC_PPS_CONFIG0;
+	uपूर्णांक32_t DSCC_PPS_CONFIG1;
+	uपूर्णांक32_t DSCC_PPS_CONFIG2;
+	uपूर्णांक32_t DSCC_PPS_CONFIG3;
+	uपूर्णांक32_t DSCC_PPS_CONFIG4;
+	uपूर्णांक32_t DSCC_PPS_CONFIG5;
+	uपूर्णांक32_t DSCC_PPS_CONFIG6;
+	uपूर्णांक32_t DSCC_PPS_CONFIG7;
+	uपूर्णांक32_t DSCC_PPS_CONFIG8;
+	uपूर्णांक32_t DSCC_PPS_CONFIG9;
+	uपूर्णांक32_t DSCC_PPS_CONFIG10;
+	uपूर्णांक32_t DSCC_PPS_CONFIG11;
+	uपूर्णांक32_t DSCC_PPS_CONFIG12;
+	uपूर्णांक32_t DSCC_PPS_CONFIG13;
+	uपूर्णांक32_t DSCC_PPS_CONFIG14;
+	uपूर्णांक32_t DSCC_PPS_CONFIG15;
+	uपूर्णांक32_t DSCC_PPS_CONFIG16;
+	uपूर्णांक32_t DSCC_PPS_CONFIG17;
+	uपूर्णांक32_t DSCC_PPS_CONFIG18;
+	uपूर्णांक32_t DSCC_PPS_CONFIG19;
+	uपूर्णांक32_t DSCC_PPS_CONFIG20;
+	uपूर्णांक32_t DSCC_PPS_CONFIG21;
+	uपूर्णांक32_t DSCC_PPS_CONFIG22;
+	uपूर्णांक32_t DSCC_MEM_POWER_CONTROL;
+	uपूर्णांक32_t DSCC_R_Y_SQUARED_ERROR_LOWER;
+	uपूर्णांक32_t DSCC_R_Y_SQUARED_ERROR_UPPER;
+	uपूर्णांक32_t DSCC_G_CB_SQUARED_ERROR_LOWER;
+	uपूर्णांक32_t DSCC_G_CB_SQUARED_ERROR_UPPER;
+	uपूर्णांक32_t DSCC_B_CR_SQUARED_ERROR_LOWER;
+	uपूर्णांक32_t DSCC_B_CR_SQUARED_ERROR_UPPER;
+	uपूर्णांक32_t DSCC_MAX_ABS_ERROR0;
+	uपूर्णांक32_t DSCC_MAX_ABS_ERROR1;
+	uपूर्णांक32_t DSCC_RATE_BUFFER0_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_BUFFER1_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_BUFFER2_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_BUFFER3_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_CONTROL_BUFFER0_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_CONTROL_BUFFER1_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_CONTROL_BUFFER2_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCC_RATE_CONTROL_BUFFER3_MAX_FULLNESS_LEVEL;
+	uपूर्णांक32_t DSCCIF_CONFIG0;
+	uपूर्णांक32_t DSCCIF_CONFIG1;
+	uपूर्णांक32_t DSCRM_DSC_FORWARD_CONFIG;
+पूर्ण;
 
 
-struct dcn20_dsc_shift {
-	DSC_FIELD_LIST_DCN20(uint8_t);
-};
+काष्ठा dcn20_dsc_shअगरt अणु
+	DSC_FIELD_LIST_DCN20(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn20_dsc_mask {
-	DSC_FIELD_LIST_DCN20(uint32_t);
-};
+काष्ठा dcn20_dsc_mask अणु
+	DSC_FIELD_LIST_DCN20(uपूर्णांक32_t);
+पूर्ण;
 
 /* DSCCIF_CONFIG.INPUT_PIXEL_FORMAT values */
-enum dsc_pixel_format {
+क्रमागत dsc_pixel_क्रमmat अणु
 	DSC_PIXFMT_RGB,
 	DSC_PIXFMT_YCBCR444,
 	DSC_PIXFMT_SIMPLE_YCBCR422,
 	DSC_PIXFMT_NATIVE_YCBCR422,
 	DSC_PIXFMT_NATIVE_YCBCR420,
 	DSC_PIXFMT_UNKNOWN
-};
+पूर्ण;
 
-struct dsc_reg_values {
-	/* PPS registers */
-	struct drm_dsc_config pps;
+काष्ठा dsc_reg_values अणु
+	/* PPS रेजिस्टरs */
+	काष्ठा drm_dsc_config pps;
 
-	/* Additional registers */
-	uint32_t dsc_clock_enable;
-	uint32_t dsc_clock_gating_disable;
-	uint32_t underflow_recovery_en;
-	uint32_t underflow_occurred_int_en;
-	uint32_t underflow_occurred_status;
-	enum dsc_pixel_format pixel_format;
-	uint32_t ich_reset_at_eol;
-	uint32_t alternate_ich_encoding_en;
-	uint32_t num_slices_h;
-	uint32_t num_slices_v;
-	uint32_t rc_buffer_model_size;
-	uint32_t disable_ich;
-	uint32_t bpp_x32;
-	uint32_t dsc_dbg_en;
-	uint32_t rc_buffer_model_overflow_int_en[4];
-};
+	/* Additional रेजिस्टरs */
+	uपूर्णांक32_t dsc_घड़ी_enable;
+	uपूर्णांक32_t dsc_घड़ी_gating_disable;
+	uपूर्णांक32_t underflow_recovery_en;
+	uपूर्णांक32_t underflow_occurred_पूर्णांक_en;
+	uपूर्णांक32_t underflow_occurred_status;
+	क्रमागत dsc_pixel_क्रमmat pixel_क्रमmat;
+	uपूर्णांक32_t ich_reset_at_eol;
+	uपूर्णांक32_t alternate_ich_encoding_en;
+	uपूर्णांक32_t num_slices_h;
+	uपूर्णांक32_t num_slices_v;
+	uपूर्णांक32_t rc_buffer_model_size;
+	uपूर्णांक32_t disable_ich;
+	uपूर्णांक32_t bpp_x32;
+	uपूर्णांक32_t dsc_dbg_en;
+	uपूर्णांक32_t rc_buffer_model_overflow_पूर्णांक_en[4];
+पूर्ण;
 
-struct dcn20_dsc {
-	struct display_stream_compressor base;
-	const struct dcn20_dsc_registers *dsc_regs;
-	const struct dcn20_dsc_shift *dsc_shift;
-	const struct dcn20_dsc_mask *dsc_mask;
+काष्ठा dcn20_dsc अणु
+	काष्ठा display_stream_compressor base;
+	स्थिर काष्ठा dcn20_dsc_रेजिस्टरs *dsc_regs;
+	स्थिर काष्ठा dcn20_dsc_shअगरt *dsc_shअगरt;
+	स्थिर काष्ठा dcn20_dsc_mask *dsc_mask;
 
-	struct dsc_reg_values reg_vals;
+	काष्ठा dsc_reg_values reg_vals;
 
-	int max_image_width;
-};
+	पूर्णांक max_image_width;
+पूर्ण;
 
 
-void dsc2_construct(struct dcn20_dsc *dsc,
-		struct dc_context *ctx,
-		int inst,
-		const struct dcn20_dsc_registers *dsc_regs,
-		const struct dcn20_dsc_shift *dsc_shift,
-		const struct dcn20_dsc_mask *dsc_mask);
+व्योम dsc2_स्थिरruct(काष्ठा dcn20_dsc *dsc,
+		काष्ठा dc_context *ctx,
+		पूर्णांक inst,
+		स्थिर काष्ठा dcn20_dsc_रेजिस्टरs *dsc_regs,
+		स्थिर काष्ठा dcn20_dsc_shअगरt *dsc_shअगरt,
+		स्थिर काष्ठा dcn20_dsc_mask *dsc_mask);
 
-#endif
+#पूर्ण_अगर
 

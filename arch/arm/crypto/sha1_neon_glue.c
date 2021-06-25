@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Glue code for the SHA1 Secure Hash Algorithm assembler implementation using
- * ARM NEON instructions.
+ * Glue code क्रम the SHA1 Secure Hash Algorithm assembler implementation using
+ * ARM NEON inकाष्ठाions.
  *
- * Copyright © 2014 Jussi Kivilinna <jussi.kivilinna@iki.fi>
+ * Copyright तऊ 2014 Jussi Kivilinna <jussi.kivilinna@iki.fi>
  *
  * This file is based on sha1_generic.c and sha1_ssse3_glue.c:
  *  Copyright (c) Alan Smithee.
- *  Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
+ *  Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
  *  Copyright (c) Jean-Francois Dive <jef@linuxbe.org>
  *  Copyright (c) Mathias Krause <minipli@googlemail.com>
- *  Copyright (c) Chandramouli Narayanan <mouli@linux.intel.com>
+ *  Copyright (c) Chandramouli Narayanan <mouli@linux.पूर्णांकel.com>
  */
 
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <crypto/sha1.h>
-#include <crypto/sha1_base.h>
-#include <asm/neon.h>
-#include <asm/simd.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha1_base.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/simd.h>
 
-#include "sha1.h"
+#समावेश "sha1.h"
 
-asmlinkage void sha1_transform_neon(void *state_h, const char *data,
-				    unsigned int rounds);
+यंत्रlinkage व्योम sha1_transक्रमm_neon(व्योम *state_h, स्थिर अक्षर *data,
+				    अचिन्हित पूर्णांक rounds);
 
-static int sha1_neon_update(struct shash_desc *desc, const u8 *data,
-			  unsigned int len)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha1_neon_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			  अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
 
-	if (!crypto_simd_usable() ||
+	अगर (!crypto_simd_usable() ||
 	    (sctx->count % SHA1_BLOCK_SIZE) + len < SHA1_BLOCK_SIZE)
-		return sha1_update_arm(desc, data, len);
+		वापस sha1_update_arm(desc, data, len);
 
 	kernel_neon_begin();
-	sha1_base_do_update(desc, data, len,
-			    (sha1_block_fn *)sha1_transform_neon);
+	sha1_base_करो_update(desc, data, len,
+			    (sha1_block_fn *)sha1_transक्रमm_neon);
 	kernel_neon_end();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha1_neon_finup(struct shash_desc *desc, const u8 *data,
-			   unsigned int len, u8 *out)
-{
-	if (!crypto_simd_usable())
-		return sha1_finup_arm(desc, data, len, out);
+अटल पूर्णांक sha1_neon_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			   अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	अगर (!crypto_simd_usable())
+		वापस sha1_finup_arm(desc, data, len, out);
 
 	kernel_neon_begin();
-	if (len)
-		sha1_base_do_update(desc, data, len,
-				    (sha1_block_fn *)sha1_transform_neon);
-	sha1_base_do_finalize(desc, (sha1_block_fn *)sha1_transform_neon);
+	अगर (len)
+		sha1_base_करो_update(desc, data, len,
+				    (sha1_block_fn *)sha1_transक्रमm_neon);
+	sha1_base_करो_finalize(desc, (sha1_block_fn *)sha1_transक्रमm_neon);
 	kernel_neon_end();
 
-	return sha1_base_finish(desc, out);
-}
+	वापस sha1_base_finish(desc, out);
+पूर्ण
 
-static int sha1_neon_final(struct shash_desc *desc, u8 *out)
-{
-	return sha1_neon_finup(desc, NULL, 0, out);
-}
+अटल पूर्णांक sha1_neon_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	वापस sha1_neon_finup(desc, शून्य, 0, out);
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init		=	sha1_base_init,
 	.update		=	sha1_neon_update,
 	.final		=	sha1_neon_final,
 	.finup		=	sha1_neon_finup,
-	.descsize	=	sizeof(struct sha1_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha1_state),
+	.base		=	अणु
 		.cra_name		= "sha1",
 		.cra_driver_name	= "sha1-neon",
 		.cra_priority		= 250,
 		.cra_blocksize		= SHA1_BLOCK_SIZE,
 		.cra_module		= THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init sha1_neon_mod_init(void)
-{
-	if (!cpu_has_neon())
-		return -ENODEV;
+अटल पूर्णांक __init sha1_neon_mod_init(व्योम)
+अणु
+	अगर (!cpu_has_neon())
+		वापस -ENODEV;
 
-	return crypto_register_shash(&alg);
-}
+	वापस crypto_रेजिस्टर_shash(&alg);
+पूर्ण
 
-static void __exit sha1_neon_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास sha1_neon_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 module_init(sha1_neon_mod_init);
-module_exit(sha1_neon_mod_fini);
+module_निकास(sha1_neon_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA1 Secure Hash Algorithm, NEON accelerated");

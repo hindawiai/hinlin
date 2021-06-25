@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/mm.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mm.h>
 
-#include <asm/processor-cyrix.h>
-#include <asm/processor-flags.h>
-#include <asm/mtrr.h>
-#include <asm/msr.h>
+#समावेश <यंत्र/processor-cyrix.h>
+#समावेश <यंत्र/processor-flags.h>
+#समावेश <यंत्र/mtrr.h>
+#समावेश <यंत्र/msr.h>
 
-#include "mtrr.h"
+#समावेश "mtrr.h"
 
-static void
-cyrix_get_arr(unsigned int reg, unsigned long *base,
-	      unsigned long *size, mtrr_type * type)
-{
-	unsigned char arr, ccr3, rcr, shift;
-	unsigned long flags;
+अटल व्योम
+cyrix_get_arr(अचिन्हित पूर्णांक reg, अचिन्हित दीर्घ *base,
+	      अचिन्हित दीर्घ *size, mtrr_type * type)
+अणु
+	अचिन्हित अक्षर arr, ccr3, rcr, shअगरt;
+	अचिन्हित दीर्घ flags;
 
-	arr = CX86_ARR_BASE + (reg << 1) + reg;	/* avoid multiplication by 3 */
+	arr = CX86_ARR_BASE + (reg << 1) + reg;	/* aव्योम multiplication by 3 */
 
 	local_irq_save(flags);
 
 	ccr3 = getCx86(CX86_CCR3);
 	setCx86(CX86_CCR3, (ccr3 & 0x0f) | 0x10);	/* enable MAPEN */
-	((unsigned char *)base)[3] = getCx86(arr);
-	((unsigned char *)base)[2] = getCx86(arr + 1);
-	((unsigned char *)base)[1] = getCx86(arr + 2);
+	((अचिन्हित अक्षर *)base)[3] = getCx86(arr);
+	((अचिन्हित अक्षर *)base)[2] = getCx86(arr + 1);
+	((अचिन्हित अक्षर *)base)[1] = getCx86(arr + 2);
 	rcr = getCx86(CX86_RCR_BASE + reg);
 	setCx86(CX86_CCR3, ccr3);			/* disable MAPEN */
 
 	local_irq_restore(flags);
 
-	shift = ((unsigned char *) base)[1] & 0x0f;
+	shअगरt = ((अचिन्हित अक्षर *) base)[1] & 0x0f;
 	*base >>= PAGE_SHIFT;
 
 	/*
 	 * Power of two, at least 4K on ARR0-ARR6, 256K on ARR7
-	 * Note: shift==0xf means 4G, this is unsupported.
+	 * Note: shअगरt==0xf means 4G, this is unsupported.
 	 */
-	if (shift)
-		*size = (reg < 7 ? 0x1UL : 0x40UL) << (shift - 1);
-	else
+	अगर (shअगरt)
+		*size = (reg < 7 ? 0x1UL : 0x40UL) << (shअगरt - 1);
+	अन्यथा
 		*size = 0;
 
 	/* Bit 0 is Cache Enable on ARR7, Cache Disable on ARR0-ARR6 */
-	if (reg < 7) {
-		switch (rcr) {
-		case 1:
+	अगर (reg < 7) अणु
+		चयन (rcr) अणु
+		हाल 1:
 			*type = MTRR_TYPE_UNCACHABLE;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			*type = MTRR_TYPE_WRBACK;
-			break;
-		case 9:
+			अवरोध;
+		हाल 9:
 			*type = MTRR_TYPE_WRCOMB;
-			break;
-		case 24:
-		default:
+			अवरोध;
+		हाल 24:
+		शेष:
 			*type = MTRR_TYPE_WRTHROUGH;
-			break;
-		}
-	} else {
-		switch (rcr) {
-		case 0:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (rcr) अणु
+		हाल 0:
 			*type = MTRR_TYPE_UNCACHABLE;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			*type = MTRR_TYPE_WRCOMB;
-			break;
-		case 9:
+			अवरोध;
+		हाल 9:
 			*type = MTRR_TYPE_WRBACK;
-			break;
-		case 25:
-		default:
+			अवरोध;
+		हाल 25:
+		शेष:
 			*type = MTRR_TYPE_WRTHROUGH;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * cyrix_get_free_region - get a free ARR.
+ * cyrix_get_मुक्त_region - get a मुक्त ARR.
  *
  * @base: the starting (base) address of the region.
  * @size: the size (in bytes) of the region.
  *
- * Returns: the index of the region on success, else -1 on error.
+ * Returns: the index of the region on success, अन्यथा -1 on error.
 */
-static int
-cyrix_get_free_region(unsigned long base, unsigned long size, int replace_reg)
-{
-	unsigned long lbase, lsize;
+अटल पूर्णांक
+cyrix_get_मुक्त_region(अचिन्हित दीर्घ base, अचिन्हित दीर्घ size, पूर्णांक replace_reg)
+अणु
+	अचिन्हित दीर्घ lbase, lsize;
 	mtrr_type ltype;
-	int i;
+	पूर्णांक i;
 
-	switch (replace_reg) {
-	case 7:
-		if (size < 0x40)
-			break;
+	चयन (replace_reg) अणु
+	हाल 7:
+		अगर (size < 0x40)
+			अवरोध;
 		fallthrough;
-	case 6:
-	case 5:
-	case 4:
-		return replace_reg;
-	case 3:
-	case 2:
-	case 1:
-	case 0:
-		return replace_reg;
-	}
+	हाल 6:
+	हाल 5:
+	हाल 4:
+		वापस replace_reg;
+	हाल 3:
+	हाल 2:
+	हाल 1:
+	हाल 0:
+		वापस replace_reg;
+	पूर्ण
 	/* If we are to set up a region >32M then look at ARR7 immediately */
-	if (size > 0x2000) {
+	अगर (size > 0x2000) अणु
 		cyrix_get_arr(7, &lbase, &lsize, &ltype);
-		if (lsize == 0)
-			return 7;
+		अगर (lsize == 0)
+			वापस 7;
 		/* Else try ARR0-ARR6 first  */
-	} else {
-		for (i = 0; i < 7; i++) {
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < 7; i++) अणु
 			cyrix_get_arr(i, &lbase, &lsize, &ltype);
-			if (lsize == 0)
-				return i;
-		}
+			अगर (lsize == 0)
+				वापस i;
+		पूर्ण
 		/*
-		 * ARR0-ARR6 isn't free
+		 * ARR0-ARR6 isn't मुक्त
 		 * try ARR7 but its size must be at least 256K
 		 */
 		cyrix_get_arr(i, &lbase, &lsize, &ltype);
-		if ((lsize == 0) && (size >= 0x40))
-			return i;
-	}
-	return -ENOSPC;
-}
+		अगर ((lsize == 0) && (size >= 0x40))
+			वापस i;
+	पूर्ण
+	वापस -ENOSPC;
+पूर्ण
 
-static u32 cr4, ccr3;
+अटल u32 cr4, ccr3;
 
-static void prepare_set(void)
-{
+अटल व्योम prepare_set(व्योम)
+अणु
 	u32 cr0;
 
 	/*  Save value of CR4 and clear Page Global Enable (bit 7)  */
-	if (boot_cpu_has(X86_FEATURE_PGE)) {
-		cr4 = __read_cr4();
-		__write_cr4(cr4 & ~X86_CR4_PGE);
-	}
+	अगर (boot_cpu_has(X86_FEATURE_PGE)) अणु
+		cr4 = __पढ़ो_cr4();
+		__ग_लिखो_cr4(cr4 & ~X86_CR4_PGE);
+	पूर्ण
 
 	/*
 	 * Disable and flush caches.
 	 * Note that wbinvd flushes the TLBs as a side-effect
 	 */
-	cr0 = read_cr0() | X86_CR0_CD;
+	cr0 = पढ़ो_cr0() | X86_CR0_CD;
 	wbinvd();
-	write_cr0(cr0);
+	ग_लिखो_cr0(cr0);
 	wbinvd();
 
-	/* Cyrix ARRs - everything else was excluded at the top */
+	/* Cyrix ARRs - everything अन्यथा was excluded at the top */
 	ccr3 = getCx86(CX86_CCR3);
 
-	/* Cyrix ARRs - everything else was excluded at the top */
+	/* Cyrix ARRs - everything अन्यथा was excluded at the top */
 	setCx86(CX86_CCR3, (ccr3 & 0x0f) | 0x10);
-}
+पूर्ण
 
-static void post_set(void)
-{
+अटल व्योम post_set(व्योम)
+अणु
 	/* Flush caches and TLBs */
 	wbinvd();
 
-	/* Cyrix ARRs - everything else was excluded at the top */
+	/* Cyrix ARRs - everything अन्यथा was excluded at the top */
 	setCx86(CX86_CCR3, ccr3);
 
 	/* Enable caches */
-	write_cr0(read_cr0() & ~X86_CR0_CD);
+	ग_लिखो_cr0(पढ़ो_cr0() & ~X86_CR0_CD);
 
 	/* Restore value of CR4 */
-	if (boot_cpu_has(X86_FEATURE_PGE))
-		__write_cr4(cr4);
-}
+	अगर (boot_cpu_has(X86_FEATURE_PGE))
+		__ग_लिखो_cr4(cr4);
+पूर्ण
 
-static void cyrix_set_arr(unsigned int reg, unsigned long base,
-			  unsigned long size, mtrr_type type)
-{
-	unsigned char arr, arr_type, arr_size;
+अटल व्योम cyrix_set_arr(अचिन्हित पूर्णांक reg, अचिन्हित दीर्घ base,
+			  अचिन्हित दीर्घ size, mtrr_type type)
+अणु
+	अचिन्हित अक्षर arr, arr_type, arr_size;
 
-	arr = CX86_ARR_BASE + (reg << 1) + reg;	/* avoid multiplication by 3 */
+	arr = CX86_ARR_BASE + (reg << 1) + reg;	/* aव्योम multiplication by 3 */
 
-	/* count down from 32M (ARR0-ARR6) or from 2G (ARR7) */
-	if (reg >= 7)
+	/* count करोwn from 32M (ARR0-ARR6) or from 2G (ARR7) */
+	अगर (reg >= 7)
 		size >>= 6;
 
 	size &= 0x7fff;		/* make sure arr_size <= 14 */
-	for (arr_size = 0; size; arr_size++, size >>= 1)
+	क्रम (arr_size = 0; size; arr_size++, size >>= 1)
 		;
 
-	if (reg < 7) {
-		switch (type) {
-		case MTRR_TYPE_UNCACHABLE:
+	अगर (reg < 7) अणु
+		चयन (type) अणु
+		हाल MTRR_TYPE_UNCACHABLE:
 			arr_type = 1;
-			break;
-		case MTRR_TYPE_WRCOMB:
+			अवरोध;
+		हाल MTRR_TYPE_WRCOMB:
 			arr_type = 9;
-			break;
-		case MTRR_TYPE_WRTHROUGH:
+			अवरोध;
+		हाल MTRR_TYPE_WRTHROUGH:
 			arr_type = 24;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			arr_type = 8;
-			break;
-		}
-	} else {
-		switch (type) {
-		case MTRR_TYPE_UNCACHABLE:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (type) अणु
+		हाल MTRR_TYPE_UNCACHABLE:
 			arr_type = 0;
-			break;
-		case MTRR_TYPE_WRCOMB:
+			अवरोध;
+		हाल MTRR_TYPE_WRCOMB:
 			arr_type = 8;
-			break;
-		case MTRR_TYPE_WRTHROUGH:
+			अवरोध;
+		हाल MTRR_TYPE_WRTHROUGH:
 			arr_type = 25;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			arr_type = 9;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	prepare_set();
 
 	base <<= PAGE_SHIFT;
-	setCx86(arr + 0,  ((unsigned char *)&base)[3]);
-	setCx86(arr + 1,  ((unsigned char *)&base)[2]);
-	setCx86(arr + 2, (((unsigned char *)&base)[1]) | arr_size);
+	setCx86(arr + 0,  ((अचिन्हित अक्षर *)&base)[3]);
+	setCx86(arr + 1,  ((अचिन्हित अक्षर *)&base)[2]);
+	setCx86(arr + 2, (((अचिन्हित अक्षर *)&base)[1]) | arr_size);
 	setCx86(CX86_RCR_BASE + reg, arr_type);
 
 	post_set();
-}
+पूर्ण
 
-typedef struct {
-	unsigned long	base;
-	unsigned long	size;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ	base;
+	अचिन्हित दीर्घ	size;
 	mtrr_type	type;
-} arr_state_t;
+पूर्ण arr_state_t;
 
-static arr_state_t arr_state[8] = {
-	{0UL, 0UL, 0UL}, {0UL, 0UL, 0UL}, {0UL, 0UL, 0UL}, {0UL, 0UL, 0UL},
-	{0UL, 0UL, 0UL}, {0UL, 0UL, 0UL}, {0UL, 0UL, 0UL}, {0UL, 0UL, 0UL}
-};
+अटल arr_state_t arr_state[8] = अणु
+	अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण,
+	अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण, अणु0UL, 0UL, 0ULपूर्ण
+पूर्ण;
 
-static unsigned char ccr_state[7] = { 0, 0, 0, 0, 0, 0, 0 };
+अटल अचिन्हित अक्षर ccr_state[7] = अणु 0, 0, 0, 0, 0, 0, 0 पूर्ण;
 
-static void cyrix_set_all(void)
-{
-	int i;
+अटल व्योम cyrix_set_all(व्योम)
+अणु
+	पूर्णांक i;
 
 	prepare_set();
 
 	/* the CCRs are not contiguous */
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		setCx86(CX86_CCR0 + i, ccr_state[i]);
-	for (; i < 7; i++)
+	क्रम (; i < 7; i++)
 		setCx86(CX86_CCR4 + i, ccr_state[i]);
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		cyrix_set_arr(i, arr_state[i].base,
 			      arr_state[i].size, arr_state[i].type);
-	}
+	पूर्ण
 
 	post_set();
-}
+पूर्ण
 
-static const struct mtrr_ops cyrix_mtrr_ops = {
-	.vendor            = X86_VENDOR_CYRIX,
+अटल स्थिर काष्ठा mtrr_ops cyrix_mtrr_ops = अणु
+	.venकरोr            = X86_VENDOR_CYRIX,
 	.set_all	   = cyrix_set_all,
 	.set               = cyrix_set_arr,
 	.get               = cyrix_get_arr,
-	.get_free_region   = cyrix_get_free_region,
+	.get_मुक्त_region   = cyrix_get_मुक्त_region,
 	.validate_add_page = generic_validate_add_page,
 	.have_wrcomb       = positive_have_wrcomb,
-};
+पूर्ण;
 
-int __init cyrix_init_mtrr(void)
-{
+पूर्णांक __init cyrix_init_mtrr(व्योम)
+अणु
 	set_mtrr_ops(&cyrix_mtrr_ops);
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 1996 David S. Miller
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003 Ralf Baechle
@@ -9,21 +10,21 @@
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/compat.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/kbuild.h>
-#include <asm/ptrace.h>
-#include <asm/processor.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kbuild.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/processor.h>
 
-/*  This file is used to produce asm/linkerscript constants from header
-    files typically used in c.  Specifically, it generates asm-offsets.h  */
+/*  This file is used to produce यंत्र/linkerscript स्थिरants from header
+    files typically used in c.  Specअगरically, it generates यंत्र-offsets.h  */
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	COMMENT("This is a comment.");
-	/*  might get these from somewhere else.  */
+	/*  might get these from somewhere अन्यथा.  */
 	DEFINE(_PAGE_SIZE, PAGE_SIZE);
 	DEFINE(_PAGE_SHIFT, PAGE_SHIFT);
 	BLANK();
@@ -57,35 +58,35 @@ int main(void)
 	OFFSET(_PT_ER_VMEST, pt_regs, hvmer.vmest);
 	OFFSET(_PT_ER_VMPSP, pt_regs, hvmer.vmpsp);
 	OFFSET(_PT_ER_VMBADVA, pt_regs, hvmer.vmbadva);
-	DEFINE(_PT_REGS_SIZE, sizeof(struct pt_regs));
+	DEFINE(_PT_REGS_SIZE, माप(काष्ठा pt_regs));
 	BLANK();
 
 	COMMENT("Hexagon thread_info definitions");
-	OFFSET(_THREAD_INFO_FLAGS, thread_info, flags);
-	OFFSET(_THREAD_INFO_PT_REGS, thread_info, regs);
-	OFFSET(_THREAD_INFO_SP, thread_info, sp);
+	OFFSET(_THREAD_INFO_FLAGS, thपढ़ो_info, flags);
+	OFFSET(_THREAD_INFO_PT_REGS, thपढ़ो_info, regs);
+	OFFSET(_THREAD_INFO_SP, thपढ़ो_info, sp);
 	DEFINE(_THREAD_SIZE, THREAD_SIZE);
 	BLANK();
 
 	COMMENT("Hexagon hexagon_switch_stack definitions");
-	OFFSET(_SWITCH_R1716, hexagon_switch_stack, r1716);
-	OFFSET(_SWITCH_R1918, hexagon_switch_stack, r1918);
-	OFFSET(_SWITCH_R2120, hexagon_switch_stack, r2120);
-	OFFSET(_SWITCH_R2322, hexagon_switch_stack, r2322);
+	OFFSET(_SWITCH_R1716, hexagon_चयन_stack, r1716);
+	OFFSET(_SWITCH_R1918, hexagon_चयन_stack, r1918);
+	OFFSET(_SWITCH_R2120, hexagon_चयन_stack, r2120);
+	OFFSET(_SWITCH_R2322, hexagon_चयन_stack, r2322);
 
-	OFFSET(_SWITCH_R2524, hexagon_switch_stack, r2524);
-	OFFSET(_SWITCH_R2726, hexagon_switch_stack, r2726);
-	OFFSET(_SWITCH_FP, hexagon_switch_stack, fp);
-	OFFSET(_SWITCH_LR, hexagon_switch_stack, lr);
-	DEFINE(_SWITCH_STACK_SIZE, sizeof(struct hexagon_switch_stack));
+	OFFSET(_SWITCH_R2524, hexagon_चयन_stack, r2524);
+	OFFSET(_SWITCH_R2726, hexagon_चयन_stack, r2726);
+	OFFSET(_SWITCH_FP, hexagon_चयन_stack, fp);
+	OFFSET(_SWITCH_LR, hexagon_चयन_stack, lr);
+	DEFINE(_SWITCH_STACK_SIZE, माप(काष्ठा hexagon_चयन_stack));
 	BLANK();
 
 	COMMENT("Hexagon task_struct definitions");
-	OFFSET(_TASK_THREAD_INFO, task_struct, stack);
-	OFFSET(_TASK_STRUCT_THREAD, task_struct, thread);
+	OFFSET(_TASK_THREAD_INFO, task_काष्ठा, stack);
+	OFFSET(_TASK_STRUCT_THREAD, task_काष्ठा, thपढ़ो);
 
 	COMMENT("Hexagon thread_struct definitions");
-	OFFSET(_THREAD_STRUCT_SWITCH_SP, thread_struct, switch_sp);
+	OFFSET(_THREAD_STRUCT_SWITCH_SP, thपढ़ो_काष्ठा, चयन_sp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

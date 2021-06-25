@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
@@ -8,23 +9,23 @@
  *****************************************************************************/
 
 /*
- * Parse the AML and build an operation tree as most interpreters,
- * like Perl, do. Parsing is done by hand rather than with a YACC
- * generated parser to tightly constrain stack and dynamic memory
- * usage. At the same time, parsing is kept flexible and the code
+ * Parse the AML and build an operation tree as most पूर्णांकerpreters,
+ * like Perl, करो. Parsing is करोne by hand rather than with a YACC
+ * generated parser to tightly स्थिरrain stack and dynamic memory
+ * usage. At the same समय, parsing is kept flexible and the code
  * fairly compact by parsing based on a list of AML opcode
- * templates in aml_op_info[]
+ * ढाँचाs in aml_op_info[]
  */
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acparser.h"
-#include "acdispat.h"
-#include "amlcode.h"
-#include "acinterp.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acparser.h"
+#समावेश "acdispat.h"
+#समावेश "amlcode.h"
+#समावेश "acinterp.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_PARSER
+#घोषणा _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psparse")
 
 /*******************************************************************************
@@ -39,18 +40,18 @@ ACPI_MODULE_NAME("psparse")
  *
  ******************************************************************************/
 u32 acpi_ps_get_opcode_size(u32 opcode)
-{
+अणु
 
-	/* Extended (2-byte) opcode if > 255 */
+	/* Extended (2-byte) opcode अगर > 255 */
 
-	if (opcode > 0x00FF) {
-		return (2);
-	}
+	अगर (opcode > 0x00FF) अणु
+		वापस (2);
+	पूर्ण
 
 	/* Otherwise, just a single byte opcode */
 
-	return (1);
-}
+	वापस (1);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -60,28 +61,28 @@ u32 acpi_ps_get_opcode_size(u32 opcode)
  *
  * RETURN:      Next AML opcode
  *
- * DESCRIPTION: Get next AML opcode (without incrementing AML pointer)
+ * DESCRIPTION: Get next AML opcode (without incrementing AML poपूर्णांकer)
  *
  ******************************************************************************/
 
-u16 acpi_ps_peek_opcode(struct acpi_parse_state * parser_state)
-{
+u16 acpi_ps_peek_opcode(काष्ठा acpi_parse_state * parser_state)
+अणु
 	u8 *aml;
 	u16 opcode;
 
 	aml = parser_state->aml;
 	opcode = (u16) ACPI_GET8(aml);
 
-	if (opcode == AML_EXTENDED_PREFIX) {
+	अगर (opcode == AML_EXTENDED_PREFIX) अणु
 
 		/* Extended opcode, get the second opcode byte */
 
 		aml++;
 		opcode = (u16) ((opcode << 8) | ACPI_GET8(aml));
-	}
+	पूर्ण
 
-	return (opcode);
-}
+	वापस (opcode);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -92,81 +93,81 @@ u16 acpi_ps_peek_opcode(struct acpi_parse_state * parser_state)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Perform any cleanup at the completion of an Op.
+ * DESCRIPTION: Perक्रमm any cleanup at the completion of an Op.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ps_complete_this_op(struct acpi_walk_state *walk_state,
-			 union acpi_parse_object *op)
-{
-	union acpi_parse_object *prev;
-	union acpi_parse_object *next;
-	const struct acpi_opcode_info *parent_info;
-	union acpi_parse_object *replacement_op = NULL;
+acpi_ps_complete_this_op(काष्ठा acpi_walk_state *walk_state,
+			 जोड़ acpi_parse_object *op)
+अणु
+	जोड़ acpi_parse_object *prev;
+	जोड़ acpi_parse_object *next;
+	स्थिर काष्ठा acpi_opcode_info *parent_info;
+	जोड़ acpi_parse_object *replacement_op = शून्य;
 	acpi_status status = AE_OK;
 
 	ACPI_FUNCTION_TRACE_PTR(ps_complete_this_op, op);
 
-	/* Check for null Op, can happen if AML code is corrupt */
+	/* Check क्रम null Op, can happen अगर AML code is corrupt */
 
-	if (!op) {
-		return_ACPI_STATUS(AE_OK);	/* OK for now */
-	}
+	अगर (!op) अणु
+		वापस_ACPI_STATUS(AE_OK);	/* OK क्रम now */
+	पूर्ण
 
 	acpi_ex_stop_trace_opcode(op, walk_state);
 
-	/* Delete this op and the subtree below it if asked to */
+	/* Delete this op and the subtree below it अगर asked to */
 
-	if (((walk_state->parse_flags & ACPI_PARSE_TREE_MASK) !=
+	अगर (((walk_state->parse_flags & ACPI_PARSE_TREE_MASK) !=
 	     ACPI_PARSE_DELETE_TREE)
-	    || (walk_state->op_info->class == AML_CLASS_ARGUMENT)) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	    || (walk_state->op_info->class == AML_CLASS_ARGUMENT)) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/* Make sure that we only delete this subtree */
 
-	if (op->common.parent) {
+	अगर (op->common.parent) अणु
 		prev = op->common.parent->common.value.arg;
-		if (!prev) {
+		अगर (!prev) अणु
 
-			/* Nothing more to do */
+			/* Nothing more to करो */
 
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		/*
-		 * Check if we need to replace the operator and its subtree
-		 * with a return value op (placeholder op)
+		 * Check अगर we need to replace the चालक and its subtree
+		 * with a वापस value op (placeholder op)
 		 */
 		parent_info =
 		    acpi_ps_get_opcode_info(op->common.parent->common.
 					    aml_opcode);
 
-		switch (parent_info->class) {
-		case AML_CLASS_CONTROL:
+		चयन (parent_info->class) अणु
+		हाल AML_CLASS_CONTROL:
 
-			break;
+			अवरोध;
 
-		case AML_CLASS_CREATE:
+		हाल AML_CLASS_CREATE:
 			/*
-			 * These opcodes contain term_arg operands. The current
-			 * op must be replaced by a placeholder return op
+			 * These opcodes contain term_arg opeअक्रमs. The current
+			 * op must be replaced by a placeholder वापस op
 			 */
 			replacement_op =
 			    acpi_ps_alloc_op(AML_INT_RETURN_VALUE_OP,
 					     op->common.aml);
-			if (!replacement_op) {
+			अगर (!replacement_op) अणु
 				status = AE_NO_MEMORY;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case AML_CLASS_NAMED_OBJECT:
+		हाल AML_CLASS_NAMED_OBJECT:
 			/*
-			 * These opcodes contain term_arg operands. The current
-			 * op must be replaced by a placeholder return op
+			 * These opcodes contain term_arg opeअक्रमs. The current
+			 * op must be replaced by a placeholder वापस op
 			 */
-			if ((op->common.parent->common.aml_opcode ==
+			अगर ((op->common.parent->common.aml_opcode ==
 			     AML_REGION_OP)
 			    || (op->common.parent->common.aml_opcode ==
 				AML_DATA_REGION_OP)
@@ -177,106 +178,106 @@ acpi_ps_complete_this_op(struct acpi_walk_state *walk_state,
 			    || (op->common.parent->common.aml_opcode ==
 				AML_BANK_FIELD_OP)
 			    || (op->common.parent->common.aml_opcode ==
-				AML_VARIABLE_PACKAGE_OP)) {
+				AML_VARIABLE_PACKAGE_OP)) अणु
 				replacement_op =
 				    acpi_ps_alloc_op(AML_INT_RETURN_VALUE_OP,
 						     op->common.aml);
-				if (!replacement_op) {
+				अगर (!replacement_op) अणु
 					status = AE_NO_MEMORY;
-				}
-			} else
-			    if ((op->common.parent->common.aml_opcode ==
+				पूर्ण
+			पूर्ण अन्यथा
+			    अगर ((op->common.parent->common.aml_opcode ==
 				 AML_NAME_OP)
 				&& (walk_state->pass_number <=
-				    ACPI_IMODE_LOAD_PASS2)) {
-				if ((op->common.aml_opcode == AML_BUFFER_OP)
+				    ACPI_IMODE_LOAD_PASS2)) अणु
+				अगर ((op->common.aml_opcode == AML_BUFFER_OP)
 				    || (op->common.aml_opcode == AML_PACKAGE_OP)
 				    || (op->common.aml_opcode ==
-					AML_VARIABLE_PACKAGE_OP)) {
+					AML_VARIABLE_PACKAGE_OP)) अणु
 					replacement_op =
 					    acpi_ps_alloc_op(op->common.
 							     aml_opcode,
 							     op->common.aml);
-					if (!replacement_op) {
+					अगर (!replacement_op) अणु
 						status = AE_NO_MEMORY;
-					} else {
+					पूर्ण अन्यथा अणु
 						replacement_op->named.data =
 						    op->named.data;
 						replacement_op->named.length =
 						    op->named.length;
-					}
-				}
-			}
-			break;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 
 			replacement_op =
 			    acpi_ps_alloc_op(AML_INT_RETURN_VALUE_OP,
 					     op->common.aml);
-			if (!replacement_op) {
+			अगर (!replacement_op) अणु
 				status = AE_NO_MEMORY;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* We must unlink this op from the parent tree */
 
-		if (prev == op) {
+		अगर (prev == op) अणु
 
 			/* This op is the first in the list */
 
-			if (replacement_op) {
+			अगर (replacement_op) अणु
 				replacement_op->common.parent =
 				    op->common.parent;
-				replacement_op->common.value.arg = NULL;
+				replacement_op->common.value.arg = शून्य;
 				replacement_op->common.node = op->common.node;
 				op->common.parent->common.value.arg =
 				    replacement_op;
 				replacement_op->common.next = op->common.next;
-			} else {
+			पूर्ण अन्यथा अणु
 				op->common.parent->common.value.arg =
 				    op->common.next;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/* Search the parent list */
 
-		else
-			while (prev) {
+		अन्यथा
+			जबतक (prev) अणु
 
 				/* Traverse all siblings in the parent's argument list */
 
 				next = prev->common.next;
-				if (next == op) {
-					if (replacement_op) {
+				अगर (next == op) अणु
+					अगर (replacement_op) अणु
 						replacement_op->common.parent =
 						    op->common.parent;
 						replacement_op->common.value.
-						    arg = NULL;
+						    arg = शून्य;
 						replacement_op->common.node =
 						    op->common.node;
 						prev->common.next =
 						    replacement_op;
 						replacement_op->common.next =
 						    op->common.next;
-						next = NULL;
-					} else {
+						next = शून्य;
+					पूर्ण अन्यथा अणु
 						prev->common.next =
 						    op->common.next;
-						next = NULL;
-					}
-				}
+						next = शून्य;
+					पूर्ण
+				पूर्ण
 				prev = next;
-			}
-	}
+			पूर्ण
+	पूर्ण
 
 cleanup:
 
 	/* Now we can actually delete the subtree rooted at Op */
 
 	acpi_ps_delete_parse_tree(op);
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -288,83 +289,83 @@ cleanup:
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Update the parser state based upon the return exception from
+ * DESCRIPTION: Update the parser state based upon the वापस exception from
  *              the parser callback.
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ps_next_parse_state(struct acpi_walk_state *walk_state,
-			 union acpi_parse_object *op,
+acpi_ps_next_parse_state(काष्ठा acpi_walk_state *walk_state,
+			 जोड़ acpi_parse_object *op,
 			 acpi_status callback_status)
-{
-	struct acpi_parse_state *parser_state = &walk_state->parser_state;
+अणु
+	काष्ठा acpi_parse_state *parser_state = &walk_state->parser_state;
 	acpi_status status = AE_CTRL_PENDING;
 
 	ACPI_FUNCTION_TRACE_PTR(ps_next_parse_state, op);
 
-	switch (callback_status) {
-	case AE_CTRL_TERMINATE:
+	चयन (callback_status) अणु
+	हाल AE_CTRL_TERMINATE:
 		/*
 		 * A control method was terminated via a RETURN statement.
 		 * The walk of this method is complete.
 		 */
 		parser_state->aml = parser_state->aml_end;
 		status = AE_CTRL_TERMINATE;
-		break;
+		अवरोध;
 
-	case AE_CTRL_BREAK:
+	हाल AE_CTRL_BREAK:
 
-		parser_state->aml = walk_state->aml_last_while;
+		parser_state->aml = walk_state->aml_last_जबतक;
 		walk_state->control_state->common.value = FALSE;
 		status = AE_CTRL_BREAK;
-		break;
+		अवरोध;
 
-	case AE_CTRL_CONTINUE:
+	हाल AE_CTRL_CONTINUE:
 
-		parser_state->aml = walk_state->aml_last_while;
+		parser_state->aml = walk_state->aml_last_जबतक;
 		status = AE_CTRL_CONTINUE;
-		break;
+		अवरोध;
 
-	case AE_CTRL_PENDING:
+	हाल AE_CTRL_PENDING:
 
-		parser_state->aml = walk_state->aml_last_while;
-		break;
+		parser_state->aml = walk_state->aml_last_जबतक;
+		अवरोध;
 
-#if 0
-	case AE_CTRL_SKIP:
+#अगर 0
+	हाल AE_CTRL_SKIP:
 
 		parser_state->aml = parser_state->scope->parse_scope.pkg_end;
 		status = AE_OK;
-		break;
-#endif
+		अवरोध;
+#पूर्ण_अगर
 
-	case AE_CTRL_TRUE:
+	हाल AE_CTRL_TRUE:
 		/*
 		 * Predicate of an IF was true, and we are at the matching ELSE.
-		 * Just close out this package
+		 * Just बंद out this package
 		 */
 		parser_state->aml = acpi_ps_get_next_package_end(parser_state);
 		status = AE_CTRL_PENDING;
-		break;
+		अवरोध;
 
-	case AE_CTRL_FALSE:
+	हाल AE_CTRL_FALSE:
 		/*
 		 * Either an IF/WHILE Predicate was false or we encountered a BREAK
-		 * opcode. In both cases, we do not execute the rest of the
-		 * package;  We simply close out the parent (finishing the walk of
-		 * this branch of the tree) and continue execution at the parent
+		 * opcode. In both हालs, we करो not execute the rest of the
+		 * package;  We simply बंद out the parent (finishing the walk of
+		 * this branch of the tree) and जारी execution at the parent
 		 * level.
 		 */
 		parser_state->aml = parser_state->scope->parse_scope.pkg_end;
 
-		/* In the case of a BREAK, just force a predicate (if any) to FALSE */
+		/* In the हाल of a BREAK, just क्रमce a predicate (अगर any) to FALSE */
 
 		walk_state->control_state->common.value = FALSE;
 		status = AE_CTRL_END;
-		break;
+		अवरोध;
 
-	case AE_CTRL_TRANSFER:
+	हाल AE_CTRL_TRANSFER:
 
 		/* A method call (invocation) -- transfer control */
 
@@ -374,23 +375,23 @@ acpi_ps_next_parse_state(struct acpi_walk_state *walk_state,
 		walk_state->method_call_node =
 		    (op->common.value.arg)->common.node;
 
-		/* Will return value (if any) be used by the caller? */
+		/* Will वापस value (अगर any) be used by the caller? */
 
-		walk_state->return_used =
+		walk_state->वापस_used =
 		    acpi_ds_is_result_used(op, walk_state);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
 		status = callback_status;
-		if (ACPI_CNTL_EXCEPTION(callback_status)) {
+		अगर (ACPI_CNTL_EXCEPTION(callback_status)) अणु
 			status = AE_OK;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -401,16 +402,16 @@ acpi_ps_next_parse_state(struct acpi_walk_state *walk_state,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Parse raw AML and return a tree of ops
+ * DESCRIPTION: Parse raw AML and वापस a tree of ops
  *
  ******************************************************************************/
 
-acpi_status acpi_ps_parse_aml(struct acpi_walk_state *walk_state)
-{
+acpi_status acpi_ps_parse_aml(काष्ठा acpi_walk_state *walk_state)
+अणु
 	acpi_status status;
-	struct acpi_thread_state *thread;
-	struct acpi_thread_state *prev_walk_list = acpi_gbl_current_walk_list;
-	struct acpi_walk_state *previous_walk_state;
+	काष्ठा acpi_thपढ़ो_state *thपढ़ो;
+	काष्ठा acpi_thपढ़ो_state *prev_walk_list = acpi_gbl_current_walk_list;
+	काष्ठा acpi_walk_state *previous_walk_state;
 
 	ACPI_FUNCTION_TRACE(ps_parse_aml);
 
@@ -419,67 +420,67 @@ acpi_status acpi_ps_parse_aml(struct acpi_walk_state *walk_state)
 			  walk_state, walk_state->parser_state.aml,
 			  walk_state->parser_state.aml_size));
 
-	if (!walk_state->parser_state.aml) {
-		return_ACPI_STATUS(AE_BAD_ADDRESS);
-	}
+	अगर (!walk_state->parser_state.aml) अणु
+		वापस_ACPI_STATUS(AE_BAD_ADDRESS);
+	पूर्ण
 
-	/* Create and initialize a new thread state */
+	/* Create and initialize a new thपढ़ो state */
 
-	thread = acpi_ut_create_thread_state();
-	if (!thread) {
-		if (walk_state->method_desc) {
+	thपढ़ो = acpi_ut_create_thपढ़ो_state();
+	अगर (!thपढ़ो) अणु
+		अगर (walk_state->method_desc) अणु
 
 			/* Executing a control method - additional cleanup */
 
 			acpi_ds_terminate_control_method(walk_state->
 							 method_desc,
 							 walk_state);
-		}
+		पूर्ण
 
 		acpi_ds_delete_walk_state(walk_state);
-		return_ACPI_STATUS(AE_NO_MEMORY);
-	}
+		वापस_ACPI_STATUS(AE_NO_MEMORY);
+	पूर्ण
 
-	walk_state->thread = thread;
+	walk_state->thपढ़ो = thपढ़ो;
 
 	/*
 	 * If executing a method, the starting sync_level is this method's
 	 * sync_level
 	 */
-	if (walk_state->method_desc) {
-		walk_state->thread->current_sync_level =
+	अगर (walk_state->method_desc) अणु
+		walk_state->thपढ़ो->current_sync_level =
 		    walk_state->method_desc->method.sync_level;
-	}
+	पूर्ण
 
-	acpi_ds_push_walk_state(walk_state, thread);
+	acpi_ds_push_walk_state(walk_state, thपढ़ो);
 
 	/*
 	 * This global allows the AML debugger to get a handle to the currently
 	 * executing control method.
 	 */
-	acpi_gbl_current_walk_list = thread;
+	acpi_gbl_current_walk_list = thपढ़ो;
 
 	/*
-	 * Execute the walk loop as long as there is a valid Walk State. This
+	 * Execute the walk loop as दीर्घ as there is a valid Walk State. This
 	 * handles nested control method invocations without recursion.
 	 */
 	ACPI_DEBUG_PRINT((ACPI_DB_PARSE, "State=%p\n", walk_state));
 
 	status = AE_OK;
-	while (walk_state) {
-		if (ACPI_SUCCESS(status)) {
+	जबतक (walk_state) अणु
+		अगर (ACPI_SUCCESS(status)) अणु
 			/*
 			 * The parse_loop executes AML until the method terminates
 			 * or calls another method.
 			 */
 			status = acpi_ps_parse_loop(walk_state);
-		}
+		पूर्ण
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "Completed one call to walk loop, %s State=%p\n",
-				  acpi_format_exception(status), walk_state));
+				  acpi_क्रमmat_exception(status), walk_state));
 
-		if (walk_state->method_pathname && walk_state->method_is_nested) {
+		अगर (walk_state->method_pathname && walk_state->method_is_nested) अणु
 
 			/* Optional object evaluation log */
 
@@ -493,82 +494,82 @@ acpi_status acpi_ps_parse_aml(struct acpi_walk_state *walk_state)
 
 			ACPI_FREE(walk_state->method_pathname);
 			walk_state->method_is_nested = FALSE;
-		}
-		if (status == AE_CTRL_TRANSFER) {
+		पूर्ण
+		अगर (status == AE_CTRL_TRANSFER) अणु
 			/*
 			 * A method call was detected.
 			 * Transfer control to the called control method
 			 */
 			status =
-			    acpi_ds_call_control_method(thread, walk_state,
-							NULL);
-			if (ACPI_FAILURE(status)) {
+			    acpi_ds_call_control_method(thपढ़ो, walk_state,
+							शून्य);
+			अगर (ACPI_FAILURE(status)) अणु
 				status =
 				    acpi_ds_method_error(status, walk_state);
-			}
+			पूर्ण
 
 			/*
 			 * If the transfer to the new method method call worked,
 			 * a new walk state was created -- get it
 			 */
-			walk_state = acpi_ds_get_current_walk_state(thread);
-			continue;
-		} else if (status == AE_CTRL_TERMINATE) {
+			walk_state = acpi_ds_get_current_walk_state(thपढ़ो);
+			जारी;
+		पूर्ण अन्यथा अगर (status == AE_CTRL_TERMINATE) अणु
 			status = AE_OK;
-		} else if ((status != AE_OK) && (walk_state->method_desc)) {
+		पूर्ण अन्यथा अगर ((status != AE_OK) && (walk_state->method_desc)) अणु
 
 			/* Either the method parse or actual execution failed */
 
-			acpi_ex_exit_interpreter();
-			if (status == AE_ABORT_METHOD) {
-				acpi_ns_print_node_pathname(walk_state->
+			acpi_ex_निकास_पूर्णांकerpreter();
+			अगर (status == AE_ABORT_METHOD) अणु
+				acpi_ns_prपूर्णांक_node_pathname(walk_state->
 							    method_node,
 							    "Aborting method");
-				acpi_os_printf("\n");
-			} else {
+				acpi_os_म_लिखो("\n");
+			पूर्ण अन्यथा अणु
 				ACPI_ERROR_METHOD("Aborting method",
-						  walk_state->method_node, NULL,
+						  walk_state->method_node, शून्य,
 						  status);
-			}
-			acpi_ex_enter_interpreter();
+			पूर्ण
+			acpi_ex_enter_पूर्णांकerpreter();
 
-			/* Check for possible multi-thread reentrancy problem */
+			/* Check क्रम possible multi-thपढ़ो reentrancy problem */
 
-			if ((status == AE_ALREADY_EXISTS) &&
+			अगर ((status == AE_ALREADY_EXISTS) &&
 			    (!(walk_state->method_desc->method.info_flags &
-			       ACPI_METHOD_SERIALIZED))) {
+			       ACPI_METHOD_SERIALIZED))) अणु
 				/*
 				 * Method is not serialized and tried to create an object
 				 * twice. The probable cause is that the method cannot
 				 * handle reentrancy. Mark as "pending serialized" now, and
-				 * then mark "serialized" when the last thread exits.
+				 * then mark "serialized" when the last thपढ़ो निकासs.
 				 */
 				walk_state->method_desc->method.info_flags |=
 				    ACPI_METHOD_SERIALIZED_PENDING;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* We are done with this walk, move on to the parent if any */
+		/* We are करोne with this walk, move on to the parent अगर any */
 
-		walk_state = acpi_ds_pop_walk_state(thread);
+		walk_state = acpi_ds_pop_walk_state(thपढ़ो);
 
 		/* Reset the current scope to the beginning of scope stack */
 
 		acpi_ds_scope_stack_clear(walk_state);
 
 		/*
-		 * If we just returned from the execution of a control method or if we
+		 * If we just वापसed from the execution of a control method or अगर we
 		 * encountered an error during the method parse phase, there's lots of
-		 * cleanup to do
+		 * cleanup to करो
 		 */
-		if (((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) ==
+		अगर (((walk_state->parse_flags & ACPI_PARSE_MODE_MASK) ==
 		     ACPI_PARSE_EXECUTE &&
 		     !(walk_state->parse_flags & ACPI_PARSE_MODULE_LEVEL)) ||
-		    (ACPI_FAILURE(status))) {
+		    (ACPI_FAILURE(status))) अणु
 			acpi_ds_terminate_control_method(walk_state->
 							 method_desc,
 							 walk_state);
-		}
+		पूर्ण
 
 		/* Delete this walk state and all linked control states */
 
@@ -577,37 +578,37 @@ acpi_status acpi_ps_parse_aml(struct acpi_walk_state *walk_state)
 
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 				  "ReturnValue=%p, ImplicitValue=%p State=%p\n",
-				  walk_state->return_desc,
-				  walk_state->implicit_return_obj, walk_state));
+				  walk_state->वापस_desc,
+				  walk_state->implicit_वापस_obj, walk_state));
 
-		/* Check if we have restarted a preempted walk */
+		/* Check अगर we have restarted a preempted walk */
 
-		walk_state = acpi_ds_get_current_walk_state(thread);
-		if (walk_state) {
-			if (ACPI_SUCCESS(status)) {
+		walk_state = acpi_ds_get_current_walk_state(thपढ़ो);
+		अगर (walk_state) अणु
+			अगर (ACPI_SUCCESS(status)) अणु
 				/*
 				 * There is another walk state, restart it.
-				 * If the method return value is not used by the parent,
+				 * If the method वापस value is not used by the parent,
 				 * The object is deleted
 				 */
-				if (!previous_walk_state->return_desc) {
+				अगर (!previous_walk_state->वापस_desc) अणु
 					/*
-					 * In slack mode execution, if there is no return value
-					 * we should implicitly return zero (0) as a default value.
+					 * In slack mode execution, अगर there is no वापस value
+					 * we should implicitly वापस zero (0) as a शेष value.
 					 */
-					if (acpi_gbl_enable_interpreter_slack &&
+					अगर (acpi_gbl_enable_पूर्णांकerpreter_slack &&
 					    !previous_walk_state->
-					    implicit_return_obj) {
+					    implicit_वापस_obj) अणु
 						previous_walk_state->
-						    implicit_return_obj =
-						    acpi_ut_create_integer_object
+						    implicit_वापस_obj =
+						    acpi_ut_create_पूर्णांकeger_object
 						    ((u64) 0);
-						if (!previous_walk_state->
-						    implicit_return_obj) {
-							return_ACPI_STATUS
+						अगर (!previous_walk_state->
+						    implicit_वापस_obj) अणु
+							वापस_ACPI_STATUS
 							    (AE_NO_MEMORY);
-						}
-					}
+						पूर्ण
+					पूर्ण
 
 					/* Restart the calling control method */
 
@@ -615,73 +616,73 @@ acpi_status acpi_ps_parse_aml(struct acpi_walk_state *walk_state)
 					    acpi_ds_restart_control_method
 					    (walk_state,
 					     previous_walk_state->
-					     implicit_return_obj);
-				} else {
+					     implicit_वापस_obj);
+				पूर्ण अन्यथा अणु
 					/*
-					 * We have a valid return value, delete any implicit
-					 * return value.
+					 * We have a valid वापस value, delete any implicit
+					 * वापस value.
 					 */
-					acpi_ds_clear_implicit_return
+					acpi_ds_clear_implicit_वापस
 					    (previous_walk_state);
 
 					status =
 					    acpi_ds_restart_control_method
 					    (walk_state,
-					     previous_walk_state->return_desc);
-				}
-				if (ACPI_SUCCESS(status)) {
+					     previous_walk_state->वापस_desc);
+				पूर्ण
+				अगर (ACPI_SUCCESS(status)) अणु
 					walk_state->walk_type |=
 					    ACPI_WALK_METHOD_RESTART;
-				}
-			} else {
-				/* On error, delete any return object or implicit return */
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* On error, delete any वापस object or implicit वापस */
 
-				acpi_ut_remove_reference(previous_walk_state->
-							 return_desc);
-				acpi_ds_clear_implicit_return
+				acpi_ut_हटाओ_reference(previous_walk_state->
+							 वापस_desc);
+				acpi_ds_clear_implicit_वापस
 				    (previous_walk_state);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Just completed a 1st-level method, save the final internal return
-		 * value (if any)
+		 * Just completed a 1st-level method, save the final पूर्णांकernal वापस
+		 * value (अगर any)
 		 */
-		else if (previous_walk_state->caller_return_desc) {
-			if (previous_walk_state->implicit_return_obj) {
-				*(previous_walk_state->caller_return_desc) =
-				    previous_walk_state->implicit_return_obj;
-			} else {
-				/* NULL if no return value */
+		अन्यथा अगर (previous_walk_state->caller_वापस_desc) अणु
+			अगर (previous_walk_state->implicit_वापस_obj) अणु
+				*(previous_walk_state->caller_वापस_desc) =
+				    previous_walk_state->implicit_वापस_obj;
+			पूर्ण अन्यथा अणु
+				/* शून्य अगर no वापस value */
 
-				*(previous_walk_state->caller_return_desc) =
-				    previous_walk_state->return_desc;
-			}
-		} else {
-			if (previous_walk_state->return_desc) {
+				*(previous_walk_state->caller_वापस_desc) =
+				    previous_walk_state->वापस_desc;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (previous_walk_state->वापस_desc) अणु
 
-				/* Caller doesn't want it, must delete it */
+				/* Caller करोesn't want it, must delete it */
 
-				acpi_ut_remove_reference(previous_walk_state->
-							 return_desc);
-			}
-			if (previous_walk_state->implicit_return_obj) {
+				acpi_ut_हटाओ_reference(previous_walk_state->
+							 वापस_desc);
+			पूर्ण
+			अगर (previous_walk_state->implicit_वापस_obj) अणु
 
-				/* Caller doesn't want it, must delete it */
+				/* Caller करोesn't want it, must delete it */
 
-				acpi_ut_remove_reference(previous_walk_state->
-							 implicit_return_obj);
-			}
-		}
+				acpi_ut_हटाओ_reference(previous_walk_state->
+							 implicit_वापस_obj);
+			पूर्ण
+		पूर्ण
 
 		acpi_ds_delete_walk_state(previous_walk_state);
-	}
+	पूर्ण
 
-	/* Normal exit */
+	/* Normal निकास */
 
-	acpi_ex_release_all_mutexes(thread);
+	acpi_ex_release_all_mutexes(thपढ़ो);
 	acpi_ut_delete_generic_state(ACPI_CAST_PTR
-				     (union acpi_generic_state, thread));
+				     (जोड़ acpi_generic_state, thपढ़ो));
 	acpi_gbl_current_walk_list = prev_walk_list;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

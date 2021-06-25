@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/boards/renesas/r7780rp/psw.c
  *
- * push switch support for RDBRP-1/RDBREVRP-1 debug boards.
+ * push चयन support क्रम RDBRP-1/RDBREVRP-1 debug boards.
  *
  * Copyright (C) 2006  Paul Mundt
  */
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <mach/highlander.h>
-#include <asm/push-switch.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <mach/highlander.h>
+#समावेश <यंत्र/push-चयन.h>
 
-static irqreturn_t psw_irq_handler(int irq, void *arg)
-{
-	struct platform_device *pdev = arg;
-	struct push_switch *psw = platform_get_drvdata(pdev);
-	struct push_switch_platform_info *psw_info = pdev->dev.platform_data;
-	unsigned int l, mask;
-	int ret = 0;
+अटल irqवापस_t psw_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा platक्रमm_device *pdev = arg;
+	काष्ठा push_चयन *psw = platक्रमm_get_drvdata(pdev);
+	काष्ठा push_चयन_platक्रमm_info *psw_info = pdev->dev.platक्रमm_data;
+	अचिन्हित पूर्णांक l, mask;
+	पूर्णांक ret = 0;
 
-	l = __raw_readw(PA_DBSW);
+	l = __raw_पढ़ोw(PA_DBSW);
 
-	/* Nothing to do if there's no state change */
-	if (psw->state) {
+	/* Nothing to करो अगर there's no state change */
+	अगर (psw->state) अणु
 		ret = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mask = l & 0x70;
-	/* Figure out who raised it */
-	if (mask & (1 << psw_info->bit)) {
+	/* Figure out who उठाओd it */
+	अगर (mask & (1 << psw_info->bit)) अणु
 		psw->state = !!(mask & (1 << psw_info->bit));
-		if (psw->state)	/* debounce */
-			mod_timer(&psw->debounce, jiffies + 50);
+		अगर (psw->state)	/* debounce */
+			mod_समयr(&psw->debounce, jअगरfies + 50);
 
 		ret = 1;
-	}
+	पूर्ण
 
 out:
-	/* Clear the switch IRQs */
+	/* Clear the चयन IRQs */
 	l |= (0x7 << 12);
-	__raw_writew(l, PA_DBSW);
+	__raw_ग_लिखोw(l, PA_DBSW);
 
-	return IRQ_RETVAL(ret);
-}
+	वापस IRQ_RETVAL(ret);
+पूर्ण
 
-static struct resource psw_resources[] = {
-	[0] = {
+अटल काष्ठा resource psw_resources[] = अणु
+	[0] = अणु
 		.start	= IRQ_PSW,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct push_switch_platform_info s2_platform_data = {
+अटल काष्ठा push_चयन_platक्रमm_info s2_platक्रमm_data = अणु
 	.name		= "s2",
 	.bit		= 6,
 	.irq_flags	= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 			  IRQF_SHARED,
 	.irq_handler	= psw_irq_handler,
-};
+पूर्ण;
 
-static struct platform_device s2_switch_device = {
+अटल काष्ठा platक्रमm_device s2_चयन_device = अणु
 	.name		= "push-switch",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(psw_resources),
 	.resource	= psw_resources,
-	.dev		= {
-		.platform_data = &s2_platform_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &s2_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct push_switch_platform_info s3_platform_data = {
+अटल काष्ठा push_चयन_platक्रमm_info s3_platक्रमm_data = अणु
 	.name		= "s3",
 	.bit		= 5,
 	.irq_flags	= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 			  IRQF_SHARED,
 	.irq_handler	= psw_irq_handler,
-};
+पूर्ण;
 
-static struct platform_device s3_switch_device = {
+अटल काष्ठा platक्रमm_device s3_चयन_device = अणु
 	.name		= "push-switch",
 	.id		= 1,
 	.num_resources	= ARRAY_SIZE(psw_resources),
 	.resource	= psw_resources,
-	.dev		= {
-		.platform_data = &s3_platform_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &s3_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct push_switch_platform_info s4_platform_data = {
+अटल काष्ठा push_चयन_platक्रमm_info s4_platक्रमm_data = अणु
 	.name		= "s4",
 	.bit		= 4,
 	.irq_flags	= IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING |
 			  IRQF_SHARED,
 	.irq_handler	= psw_irq_handler,
-};
+पूर्ण;
 
-static struct platform_device s4_switch_device = {
+अटल काष्ठा platक्रमm_device s4_चयन_device = अणु
 	.name		= "push-switch",
 	.id		= 2,
 	.num_resources	= ARRAY_SIZE(psw_resources),
 	.resource	= psw_resources,
-	.dev		= {
-		.platform_data = &s4_platform_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data = &s4_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *psw_devices[] = {
-	&s2_switch_device, &s3_switch_device, &s4_switch_device,
-};
+अटल काष्ठा platक्रमm_device *psw_devices[] = अणु
+	&s2_चयन_device, &s3_चयन_device, &s4_चयन_device,
+पूर्ण;
 
-static int __init psw_init(void)
-{
-	return platform_add_devices(psw_devices, ARRAY_SIZE(psw_devices));
-}
+अटल पूर्णांक __init psw_init(व्योम)
+अणु
+	वापस platक्रमm_add_devices(psw_devices, ARRAY_SIZE(psw_devices));
+पूर्ण
 module_init(psw_init);

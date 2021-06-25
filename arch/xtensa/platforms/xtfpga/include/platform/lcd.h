@@ -1,35 +1,36 @@
+<शैली गुरु>
 /*
- * arch/xtensa/platform/xtavnet/include/platform/lcd.h
+ * arch/xtensa/platक्रमm/xtavnet/include/platक्रमm/lcd.h
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001, 2006 Tensilica Inc.
  */
 
-#ifndef __XTENSA_XTAVNET_LCD_H
-#define __XTENSA_XTAVNET_LCD_H
+#अगर_अघोषित __XTENSA_XTAVNET_LCD_H
+#घोषणा __XTENSA_XTAVNET_LCD_H
 
-#ifdef CONFIG_XTFPGA_LCD
+#अगर_घोषित CONFIG_XTFPGA_LCD
 /* Display string STR at position POS on the LCD. */
-void lcd_disp_at_pos(char *str, unsigned char pos);
+व्योम lcd_disp_at_pos(अक्षर *str, अचिन्हित अक्षर pos);
 
-/* Shift the contents of the LCD display left or right. */
-void lcd_shiftleft(void);
-void lcd_shiftright(void);
-#else
-static inline void lcd_disp_at_pos(char *str, unsigned char pos)
-{
-}
+/* Shअगरt the contents of the LCD display left or right. */
+व्योम lcd_shअगरtleft(व्योम);
+व्योम lcd_shअगरtright(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम lcd_disp_at_pos(अक्षर *str, अचिन्हित अक्षर pos)
+अणु
+पूर्ण
 
-static inline void lcd_shiftleft(void)
-{
-}
+अटल अंतरभूत व्योम lcd_shअगरtleft(व्योम)
+अणु
+पूर्ण
 
-static inline void lcd_shiftright(void)
-{
-}
-#endif
+अटल अंतरभूत व्योम lcd_shअगरtright(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

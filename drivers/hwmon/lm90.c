@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * lm90.c - Part of lm_sensors, Linux kernel modules for hardware
+ * lm90.c - Part of lm_sensors, Linux kernel modules क्रम hardware
  *          monitoring
  * Copyright (C) 2003-2010  Jean Delvare <jdelvare@suse.de>
  *
  * Based on the lm83 driver. The LM90 is a sensor chip made by National
  * Semiconductor. It reports up to two temperatures (its own plus up to
- * one external one) with a 0.125 deg resolution (1 deg for local
+ * one बाह्यal one) with a 0.125 deg resolution (1 deg क्रम local
  * temperature) and a 3-4 deg accuracy.
  *
  * This driver also supports the LM89 and LM99, two other sensor chips
  * made by National Semiconductor. Both have an increased remote
  * temperature measurement accuracy (1 degree), and the LM99
- * additionally shifts remote temperatures (measured and limits) by 16
- * degrees, which allows for higher temperatures measurement.
- * Note that there is no way to differentiate between both chips.
- * When device is auto-detected, the driver will assume an LM99.
+ * additionally shअगरts remote temperatures (measured and limits) by 16
+ * degrees, which allows क्रम higher temperatures measurement.
+ * Note that there is no way to dअगरferentiate between both chips.
+ * When device is स्वतः-detected, the driver will assume an LM99.
  *
  * This driver also supports the LM86, another sensor chip made by
  * National Semiconductor. It is exactly similar to the LM90 except it
  * has a higher accuracy.
  *
  * This driver also supports the ADM1032, a sensor chip made by Analog
- * Devices. That chip is similar to the LM90, with a few differences
+ * Devices. That chip is similar to the LM90, with a few dअगरferences
  * that are not handled by this driver. Among others, it has a higher
- * accuracy than the LM90, much like the LM86 does.
+ * accuracy than the LM90, much like the LM86 करोes.
  *
  * This driver also supports the MAX6657, MAX6658 and MAX6659 sensor
  * chips made by Maxim. These chips are similar to the LM86.
- * Note that there is no easy way to differentiate between the three
+ * Note that there is no easy way to dअगरferentiate between the three
  * variants. We use the device address to detect MAX6659, which will result
- * in a detection as max6657 if it is on address 0x4c. The extra address
- * and features of the MAX6659 are only supported if the chip is configured
- * explicitly as max6659, or if its address is not 0x4c.
+ * in a detection as max6657 अगर it is on address 0x4c. The extra address
+ * and features of the MAX6659 are only supported अगर the chip is configured
+ * explicitly as max6659, or अगर its address is not 0x4c.
  * These chips lack the remote temperature offset feature.
  *
  * This driver also supports the MAX6654 chip made by Maxim. This chip can
- * be at 9 different addresses, similar to MAX6680/MAX6681. The MAX6654 is
+ * be at 9 dअगरferent addresses, similar to MAX6680/MAX6681. The MAX6654 is
  * otherwise similar to MAX6657/MAX6658/MAX6659. Extended range is available
- * by setting the configuration register accordingly, and is done during
+ * by setting the configuration रेजिस्टर accordingly, and is करोne during
  * initialization. Extended precision is only available at conversion rates
  * of 1 Hz and slower. Note that extended precision is not enabled by
- * default, as this driver initializes all chips to 2 Hz by design.
+ * शेष, as this driver initializes all chips to 2 Hz by design.
  *
  * This driver also supports the MAX6646, MAX6647, MAX6648, MAX6649 and
  * MAX6692 chips made by Maxim.  These are again similar to the LM86,
- * but they use unsigned temperature values and can report temperatures
+ * but they use अचिन्हित temperature values and can report temperatures
  * from 0 to 145 degrees.
  *
  * This driver also supports the MAX6680 and MAX6681, two other sensor
  * chips made by Maxim. These are quite similar to the other Maxim
- * chips. The MAX6680 and MAX6681 only differ in the pinout so they can
+ * chips. The MAX6680 and MAX6681 only dअगरfer in the pinout so they can
  * be treated identically.
  *
  * This driver also supports the MAX6695 and MAX6696, two other sensor
  * chips made by Maxim. These are also quite similar to other Maxim
  * chips, but support three temperature sensors instead of two. MAX6695
- * and MAX6696 only differ in the pinout so they can be treated identically.
+ * and MAX6696 only dअगरfer in the pinout so they can be treated identically.
  *
  * This driver also supports ADT7461 and ADT7461A from Analog Devices as well as
  * NCT1008 from ON Semiconductor. The chips are supported in both compatibility
- * and extended mode. They are mostly compatible with LM90 except for a data
- * format difference for the temperature value registers.
+ * and extended mode. They are mostly compatible with LM90 except क्रम a data
+ * क्रमmat dअगरference क्रम the temperature value रेजिस्टरs.
  *
  * This driver also supports the SA56004 from Philips. This device is
  * pin-compatible with the LM86, the ED/EDP parts are also address-compatible.
@@ -71,7 +72,7 @@
  *
  * This driver also supports TMP451 from Texas Instruments. This device is
  * supported in both compatibility and extended mode. It's mostly compatible
- * with ADT7461 except for local temperature low byte register and max
+ * with ADT7461 except क्रम local temperature low byte रेजिस्टर and max
  * conversion rate.
  *
  * Since the LM90 was the first chipset supported by this driver, most
@@ -79,22 +80,22 @@
  * concern all supported chipsets, unless mentioned otherwise.
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/sysfs.h>
-#include <linux/interrupt.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regulator/consumer.h>
 
 /*
  * Addresses to scan
- * Address is fully defined internally and cannot be changed except for
+ * Address is fully defined पूर्णांकernally and cannot be changed except क्रम
  * MAX6659, MAX6680 and MAX6681.
  * LM86, LM89, LM90, LM99, ADM1032, ADM1032-1, ADT7461, ADT7461A, MAX6649,
  * MAX6657, MAX6658, NCT1008 and W83L771 have address 0x4c.
@@ -107,332 +108,332 @@
  * SA56004 can have address 0x48 through 0x4F.
  */
 
-static const unsigned short normal_i2c[] = {
+अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु
 	0x18, 0x19, 0x1a, 0x29, 0x2a, 0x2b, 0x48, 0x49, 0x4a, 0x4b, 0x4c,
-	0x4d, 0x4e, 0x4f, I2C_CLIENT_END };
+	0x4d, 0x4e, 0x4f, I2C_CLIENT_END पूर्ण;
 
-enum chips { lm90, adm1032, lm99, lm86, max6657, max6659, adt7461, max6680,
-	max6646, w83l771, max6696, sa56004, g781, tmp451, max6654 };
+क्रमागत chips अणु lm90, adm1032, lm99, lm86, max6657, max6659, adt7461, max6680,
+	max6646, w83l771, max6696, sa56004, g781, पंचांगp451, max6654 पूर्ण;
 
 /*
- * The LM90 registers
+ * The LM90 रेजिस्टरs
  */
 
-#define LM90_REG_R_MAN_ID		0xFE
-#define LM90_REG_R_CHIP_ID		0xFF
-#define LM90_REG_R_CONFIG1		0x03
-#define LM90_REG_W_CONFIG1		0x09
-#define LM90_REG_R_CONFIG2		0xBF
-#define LM90_REG_W_CONFIG2		0xBF
-#define LM90_REG_R_CONVRATE		0x04
-#define LM90_REG_W_CONVRATE		0x0A
-#define LM90_REG_R_STATUS		0x02
-#define LM90_REG_R_LOCAL_TEMP		0x00
-#define LM90_REG_R_LOCAL_HIGH		0x05
-#define LM90_REG_W_LOCAL_HIGH		0x0B
-#define LM90_REG_R_LOCAL_LOW		0x06
-#define LM90_REG_W_LOCAL_LOW		0x0C
-#define LM90_REG_R_LOCAL_CRIT		0x20
-#define LM90_REG_W_LOCAL_CRIT		0x20
-#define LM90_REG_R_REMOTE_TEMPH		0x01
-#define LM90_REG_R_REMOTE_TEMPL		0x10
-#define LM90_REG_R_REMOTE_OFFSH		0x11
-#define LM90_REG_W_REMOTE_OFFSH		0x11
-#define LM90_REG_R_REMOTE_OFFSL		0x12
-#define LM90_REG_W_REMOTE_OFFSL		0x12
-#define LM90_REG_R_REMOTE_HIGHH		0x07
-#define LM90_REG_W_REMOTE_HIGHH		0x0D
-#define LM90_REG_R_REMOTE_HIGHL		0x13
-#define LM90_REG_W_REMOTE_HIGHL		0x13
-#define LM90_REG_R_REMOTE_LOWH		0x08
-#define LM90_REG_W_REMOTE_LOWH		0x0E
-#define LM90_REG_R_REMOTE_LOWL		0x14
-#define LM90_REG_W_REMOTE_LOWL		0x14
-#define LM90_REG_R_REMOTE_CRIT		0x19
-#define LM90_REG_W_REMOTE_CRIT		0x19
-#define LM90_REG_R_TCRIT_HYST		0x21
-#define LM90_REG_W_TCRIT_HYST		0x21
+#घोषणा LM90_REG_R_MAN_ID		0xFE
+#घोषणा LM90_REG_R_CHIP_ID		0xFF
+#घोषणा LM90_REG_R_CONFIG1		0x03
+#घोषणा LM90_REG_W_CONFIG1		0x09
+#घोषणा LM90_REG_R_CONFIG2		0xBF
+#घोषणा LM90_REG_W_CONFIG2		0xBF
+#घोषणा LM90_REG_R_CONVRATE		0x04
+#घोषणा LM90_REG_W_CONVRATE		0x0A
+#घोषणा LM90_REG_R_STATUS		0x02
+#घोषणा LM90_REG_R_LOCAL_TEMP		0x00
+#घोषणा LM90_REG_R_LOCAL_HIGH		0x05
+#घोषणा LM90_REG_W_LOCAL_HIGH		0x0B
+#घोषणा LM90_REG_R_LOCAL_LOW		0x06
+#घोषणा LM90_REG_W_LOCAL_LOW		0x0C
+#घोषणा LM90_REG_R_LOCAL_CRIT		0x20
+#घोषणा LM90_REG_W_LOCAL_CRIT		0x20
+#घोषणा LM90_REG_R_REMOTE_TEMPH		0x01
+#घोषणा LM90_REG_R_REMOTE_TEMPL		0x10
+#घोषणा LM90_REG_R_REMOTE_OFFSH		0x11
+#घोषणा LM90_REG_W_REMOTE_OFFSH		0x11
+#घोषणा LM90_REG_R_REMOTE_OFFSL		0x12
+#घोषणा LM90_REG_W_REMOTE_OFFSL		0x12
+#घोषणा LM90_REG_R_REMOTE_HIGHH		0x07
+#घोषणा LM90_REG_W_REMOTE_HIGHH		0x0D
+#घोषणा LM90_REG_R_REMOTE_HIGHL		0x13
+#घोषणा LM90_REG_W_REMOTE_HIGHL		0x13
+#घोषणा LM90_REG_R_REMOTE_LOWH		0x08
+#घोषणा LM90_REG_W_REMOTE_LOWH		0x0E
+#घोषणा LM90_REG_R_REMOTE_LOWL		0x14
+#घोषणा LM90_REG_W_REMOTE_LOWL		0x14
+#घोषणा LM90_REG_R_REMOTE_CRIT		0x19
+#घोषणा LM90_REG_W_REMOTE_CRIT		0x19
+#घोषणा LM90_REG_R_TCRIT_HYST		0x21
+#घोषणा LM90_REG_W_TCRIT_HYST		0x21
 
-/* MAX6646/6647/6649/6654/6657/6658/6659/6695/6696 registers */
+/* MAX6646/6647/6649/6654/6657/6658/6659/6695/6696 रेजिस्टरs */
 
-#define MAX6657_REG_R_LOCAL_TEMPL	0x11
-#define MAX6696_REG_R_STATUS2		0x12
-#define MAX6659_REG_R_REMOTE_EMERG	0x16
-#define MAX6659_REG_W_REMOTE_EMERG	0x16
-#define MAX6659_REG_R_LOCAL_EMERG	0x17
-#define MAX6659_REG_W_LOCAL_EMERG	0x17
+#घोषणा MAX6657_REG_R_LOCAL_TEMPL	0x11
+#घोषणा MAX6696_REG_R_STATUS2		0x12
+#घोषणा MAX6659_REG_R_REMOTE_EMERG	0x16
+#घोषणा MAX6659_REG_W_REMOTE_EMERG	0x16
+#घोषणा MAX6659_REG_R_LOCAL_EMERG	0x17
+#घोषणा MAX6659_REG_W_LOCAL_EMERG	0x17
 
-/*  SA56004 registers */
+/*  SA56004 रेजिस्टरs */
 
-#define SA56004_REG_R_LOCAL_TEMPL 0x22
+#घोषणा SA56004_REG_R_LOCAL_TEMPL 0x22
 
-#define LM90_MAX_CONVRATE_MS	16000	/* Maximum conversion rate in ms */
+#घोषणा LM90_MAX_CONVRATE_MS	16000	/* Maximum conversion rate in ms */
 
-/* TMP451 registers */
-#define TMP451_REG_R_LOCAL_TEMPL	0x15
+/* TMP451 रेजिस्टरs */
+#घोषणा TMP451_REG_R_LOCAL_TEMPL	0x15
 
 /*
  * Device flags
  */
-#define LM90_FLAG_ADT7461_EXT	(1 << 0) /* ADT7461 extended mode	*/
+#घोषणा LM90_FLAG_ADT7461_EXT	(1 << 0) /* ADT7461 extended mode	*/
 /* Device features */
-#define LM90_HAVE_OFFSET	(1 << 1) /* temperature offset register	*/
-#define LM90_HAVE_REM_LIMIT_EXT	(1 << 3) /* extended remote limit	*/
-#define LM90_HAVE_EMERGENCY	(1 << 4) /* 3rd upper (emergency) limit	*/
-#define LM90_HAVE_EMERGENCY_ALARM (1 << 5)/* emergency alarm		*/
-#define LM90_HAVE_TEMP3		(1 << 6) /* 3rd temperature sensor	*/
-#define LM90_HAVE_BROKEN_ALERT	(1 << 7) /* Broken alert		*/
-#define LM90_PAUSE_FOR_CONFIG	(1 << 8) /* Pause conversion for config	*/
+#घोषणा LM90_HAVE_OFFSET	(1 << 1) /* temperature offset रेजिस्टर	*/
+#घोषणा LM90_HAVE_REM_LIMIT_EXT	(1 << 3) /* extended remote limit	*/
+#घोषणा LM90_HAVE_EMERGENCY	(1 << 4) /* 3rd upper (emergency) limit	*/
+#घोषणा LM90_HAVE_EMERGENCY_ALARM (1 << 5)/* emergency alarm		*/
+#घोषणा LM90_HAVE_TEMP3		(1 << 6) /* 3rd temperature sensor	*/
+#घोषणा LM90_HAVE_BROKEN_ALERT	(1 << 7) /* Broken alert		*/
+#घोषणा LM90_PAUSE_FOR_CONFIG	(1 << 8) /* Pause conversion क्रम config	*/
 
 /* LM90 status */
-#define LM90_STATUS_LTHRM	(1 << 0) /* local THERM limit tripped */
-#define LM90_STATUS_RTHRM	(1 << 1) /* remote THERM limit tripped */
-#define LM90_STATUS_ROPEN	(1 << 2) /* remote is an open circuit */
-#define LM90_STATUS_RLOW	(1 << 3) /* remote low temp limit tripped */
-#define LM90_STATUS_RHIGH	(1 << 4) /* remote high temp limit tripped */
-#define LM90_STATUS_LLOW	(1 << 5) /* local low temp limit tripped */
-#define LM90_STATUS_LHIGH	(1 << 6) /* local high temp limit tripped */
+#घोषणा LM90_STATUS_LTHRM	(1 << 0) /* local THERM limit tripped */
+#घोषणा LM90_STATUS_RTHRM	(1 << 1) /* remote THERM limit tripped */
+#घोषणा LM90_STATUS_ROPEN	(1 << 2) /* remote is an खोलो circuit */
+#घोषणा LM90_STATUS_RLOW	(1 << 3) /* remote low temp limit tripped */
+#घोषणा LM90_STATUS_RHIGH	(1 << 4) /* remote high temp limit tripped */
+#घोषणा LM90_STATUS_LLOW	(1 << 5) /* local low temp limit tripped */
+#घोषणा LM90_STATUS_LHIGH	(1 << 6) /* local high temp limit tripped */
 
-#define MAX6696_STATUS2_R2THRM	(1 << 1) /* remote2 THERM limit tripped */
-#define MAX6696_STATUS2_R2OPEN	(1 << 2) /* remote2 is an open circuit */
-#define MAX6696_STATUS2_R2LOW	(1 << 3) /* remote2 low temp limit tripped */
-#define MAX6696_STATUS2_R2HIGH	(1 << 4) /* remote2 high temp limit tripped */
-#define MAX6696_STATUS2_ROT2	(1 << 5) /* remote emergency limit tripped */
-#define MAX6696_STATUS2_R2OT2	(1 << 6) /* remote2 emergency limit tripped */
-#define MAX6696_STATUS2_LOT2	(1 << 7) /* local emergency limit tripped */
+#घोषणा MAX6696_STATUS2_R2THRM	(1 << 1) /* remote2 THERM limit tripped */
+#घोषणा MAX6696_STATUS2_R2OPEN	(1 << 2) /* remote2 is an खोलो circuit */
+#घोषणा MAX6696_STATUS2_R2LOW	(1 << 3) /* remote2 low temp limit tripped */
+#घोषणा MAX6696_STATUS2_R2HIGH	(1 << 4) /* remote2 high temp limit tripped */
+#घोषणा MAX6696_STATUS2_ROT2	(1 << 5) /* remote emergency limit tripped */
+#घोषणा MAX6696_STATUS2_R2OT2	(1 << 6) /* remote2 emergency limit tripped */
+#घोषणा MAX6696_STATUS2_LOT2	(1 << 7) /* local emergency limit tripped */
 
 /*
  * Driver data (common to all clients)
  */
 
-static const struct i2c_device_id lm90_id[] = {
-	{ "adm1032", adm1032 },
-	{ "adt7461", adt7461 },
-	{ "adt7461a", adt7461 },
-	{ "g781", g781 },
-	{ "lm90", lm90 },
-	{ "lm86", lm86 },
-	{ "lm89", lm86 },
-	{ "lm99", lm99 },
-	{ "max6646", max6646 },
-	{ "max6647", max6646 },
-	{ "max6649", max6646 },
-	{ "max6654", max6654 },
-	{ "max6657", max6657 },
-	{ "max6658", max6657 },
-	{ "max6659", max6659 },
-	{ "max6680", max6680 },
-	{ "max6681", max6680 },
-	{ "max6695", max6696 },
-	{ "max6696", max6696 },
-	{ "nct1008", adt7461 },
-	{ "w83l771", w83l771 },
-	{ "sa56004", sa56004 },
-	{ "tmp451", tmp451 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id lm90_id[] = अणु
+	अणु "adm1032", adm1032 पूर्ण,
+	अणु "adt7461", adt7461 पूर्ण,
+	अणु "adt7461a", adt7461 पूर्ण,
+	अणु "g781", g781 पूर्ण,
+	अणु "lm90", lm90 पूर्ण,
+	अणु "lm86", lm86 पूर्ण,
+	अणु "lm89", lm86 पूर्ण,
+	अणु "lm99", lm99 पूर्ण,
+	अणु "max6646", max6646 पूर्ण,
+	अणु "max6647", max6646 पूर्ण,
+	अणु "max6649", max6646 पूर्ण,
+	अणु "max6654", max6654 पूर्ण,
+	अणु "max6657", max6657 पूर्ण,
+	अणु "max6658", max6657 पूर्ण,
+	अणु "max6659", max6659 पूर्ण,
+	अणु "max6680", max6680 पूर्ण,
+	अणु "max6681", max6680 पूर्ण,
+	अणु "max6695", max6696 पूर्ण,
+	अणु "max6696", max6696 पूर्ण,
+	अणु "nct1008", adt7461 पूर्ण,
+	अणु "w83l771", w83l771 पूर्ण,
+	अणु "sa56004", sa56004 पूर्ण,
+	अणु "tmp451", पंचांगp451 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, lm90_id);
 
-static const struct of_device_id __maybe_unused lm90_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id __maybe_unused lm90_of_match[] = अणु
+	अणु
 		.compatible = "adi,adm1032",
-		.data = (void *)adm1032
-	},
-	{
+		.data = (व्योम *)adm1032
+	पूर्ण,
+	अणु
 		.compatible = "adi,adt7461",
-		.data = (void *)adt7461
-	},
-	{
+		.data = (व्योम *)adt7461
+	पूर्ण,
+	अणु
 		.compatible = "adi,adt7461a",
-		.data = (void *)adt7461
-	},
-	{
+		.data = (व्योम *)adt7461
+	पूर्ण,
+	अणु
 		.compatible = "gmt,g781",
-		.data = (void *)g781
-	},
-	{
+		.data = (व्योम *)g781
+	पूर्ण,
+	अणु
 		.compatible = "national,lm90",
-		.data = (void *)lm90
-	},
-	{
+		.data = (व्योम *)lm90
+	पूर्ण,
+	अणु
 		.compatible = "national,lm86",
-		.data = (void *)lm86
-	},
-	{
+		.data = (व्योम *)lm86
+	पूर्ण,
+	अणु
 		.compatible = "national,lm89",
-		.data = (void *)lm86
-	},
-	{
+		.data = (व्योम *)lm86
+	पूर्ण,
+	अणु
 		.compatible = "national,lm99",
-		.data = (void *)lm99
-	},
-	{
+		.data = (व्योम *)lm99
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6646",
-		.data = (void *)max6646
-	},
-	{
+		.data = (व्योम *)max6646
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6647",
-		.data = (void *)max6646
-	},
-	{
+		.data = (व्योम *)max6646
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6649",
-		.data = (void *)max6646
-	},
-	{
+		.data = (व्योम *)max6646
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6654",
-		.data = (void *)max6654
-	},
-	{
+		.data = (व्योम *)max6654
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6657",
-		.data = (void *)max6657
-	},
-	{
+		.data = (व्योम *)max6657
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6658",
-		.data = (void *)max6657
-	},
-	{
+		.data = (व्योम *)max6657
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6659",
-		.data = (void *)max6659
-	},
-	{
+		.data = (व्योम *)max6659
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6680",
-		.data = (void *)max6680
-	},
-	{
+		.data = (व्योम *)max6680
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6681",
-		.data = (void *)max6680
-	},
-	{
+		.data = (व्योम *)max6680
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6695",
-		.data = (void *)max6696
-	},
-	{
+		.data = (व्योम *)max6696
+	पूर्ण,
+	अणु
 		.compatible = "dallas,max6696",
-		.data = (void *)max6696
-	},
-	{
+		.data = (व्योम *)max6696
+	पूर्ण,
+	अणु
 		.compatible = "onnn,nct1008",
-		.data = (void *)adt7461
-	},
-	{
+		.data = (व्योम *)adt7461
+	पूर्ण,
+	अणु
 		.compatible = "winbond,w83l771",
-		.data = (void *)w83l771
-	},
-	{
+		.data = (व्योम *)w83l771
+	पूर्ण,
+	अणु
 		.compatible = "nxp,sa56004",
-		.data = (void *)sa56004
-	},
-	{
+		.data = (व्योम *)sa56004
+	पूर्ण,
+	अणु
 		.compatible = "ti,tmp451",
-		.data = (void *)tmp451
-	},
-	{ },
-};
+		.data = (व्योम *)पंचांगp451
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lm90_of_match);
 
 /*
- * chip type specific parameters
+ * chip type specअगरic parameters
  */
-struct lm90_params {
+काष्ठा lm90_params अणु
 	u32 flags;		/* Capabilities */
 	u16 alert_alarms;	/* Which alarm bits trigger ALERT# */
-				/* Upper 8 bits for max6695/96 */
-	u8 max_convrate;	/* Maximum conversion rate register value */
-	u8 reg_local_ext;	/* Extended local temp register (optional) */
-};
+				/* Upper 8 bits क्रम max6695/96 */
+	u8 max_convrate;	/* Maximum conversion rate रेजिस्टर value */
+	u8 reg_local_ext;	/* Extended local temp रेजिस्टर (optional) */
+पूर्ण;
 
-static const struct lm90_params lm90_params[] = {
-	[adm1032] = {
+अटल स्थिर काष्ठा lm90_params lm90_params[] = अणु
+	[adm1032] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT
 		  | LM90_HAVE_BROKEN_ALERT,
 		.alert_alarms = 0x7c,
 		.max_convrate = 10,
-	},
-	[adt7461] = {
+	पूर्ण,
+	[adt7461] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT
 		  | LM90_HAVE_BROKEN_ALERT,
 		.alert_alarms = 0x7c,
 		.max_convrate = 10,
-	},
-	[g781] = {
+	पूर्ण,
+	[g781] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT
 		  | LM90_HAVE_BROKEN_ALERT,
 		.alert_alarms = 0x7c,
 		.max_convrate = 8,
-	},
-	[lm86] = {
+	पूर्ण,
+	[lm86] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT,
 		.alert_alarms = 0x7b,
 		.max_convrate = 9,
-	},
-	[lm90] = {
+	पूर्ण,
+	[lm90] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT,
 		.alert_alarms = 0x7b,
 		.max_convrate = 9,
-	},
-	[lm99] = {
+	पूर्ण,
+	[lm99] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT,
 		.alert_alarms = 0x7b,
 		.max_convrate = 9,
-	},
-	[max6646] = {
+	पूर्ण,
+	[max6646] = अणु
 		.alert_alarms = 0x7c,
 		.max_convrate = 6,
 		.reg_local_ext = MAX6657_REG_R_LOCAL_TEMPL,
-	},
-	[max6654] = {
+	पूर्ण,
+	[max6654] = अणु
 		.alert_alarms = 0x7c,
 		.max_convrate = 7,
 		.reg_local_ext = MAX6657_REG_R_LOCAL_TEMPL,
-	},
-	[max6657] = {
+	पूर्ण,
+	[max6657] = अणु
 		.flags = LM90_PAUSE_FOR_CONFIG,
 		.alert_alarms = 0x7c,
 		.max_convrate = 8,
 		.reg_local_ext = MAX6657_REG_R_LOCAL_TEMPL,
-	},
-	[max6659] = {
+	पूर्ण,
+	[max6659] = अणु
 		.flags = LM90_HAVE_EMERGENCY,
 		.alert_alarms = 0x7c,
 		.max_convrate = 8,
 		.reg_local_ext = MAX6657_REG_R_LOCAL_TEMPL,
-	},
-	[max6680] = {
+	पूर्ण,
+	[max6680] = अणु
 		.flags = LM90_HAVE_OFFSET,
 		.alert_alarms = 0x7c,
 		.max_convrate = 7,
-	},
-	[max6696] = {
+	पूर्ण,
+	[max6696] = अणु
 		.flags = LM90_HAVE_EMERGENCY
 		  | LM90_HAVE_EMERGENCY_ALARM | LM90_HAVE_TEMP3,
 		.alert_alarms = 0x1c7c,
 		.max_convrate = 6,
 		.reg_local_ext = MAX6657_REG_R_LOCAL_TEMPL,
-	},
-	[w83l771] = {
+	पूर्ण,
+	[w83l771] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT,
 		.alert_alarms = 0x7c,
 		.max_convrate = 8,
-	},
-	[sa56004] = {
+	पूर्ण,
+	[sa56004] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT,
 		.alert_alarms = 0x7b,
 		.max_convrate = 9,
 		.reg_local_ext = SA56004_REG_R_LOCAL_TEMPL,
-	},
-	[tmp451] = {
+	पूर्ण,
+	[पंचांगp451] = अणु
 		.flags = LM90_HAVE_OFFSET | LM90_HAVE_REM_LIMIT_EXT
 		  | LM90_HAVE_BROKEN_ALERT,
 		.alert_alarms = 0x7c,
 		.max_convrate = 9,
 		.reg_local_ext = TMP451_REG_R_LOCAL_TEMPL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * TEMP8 register index
+ * TEMP8 रेजिस्टर index
  */
-enum lm90_temp8_reg_index {
+क्रमागत lm90_temp8_reg_index अणु
 	LOCAL_LOW = 0,
 	LOCAL_HIGH,
 	LOCAL_CRIT,
@@ -442,12 +443,12 @@ enum lm90_temp8_reg_index {
 	REMOTE2_CRIT,	/* max6695/96 only */
 	REMOTE2_EMERG,	/* max6695/96 only */
 	TEMP8_REG_NUM
-};
+पूर्ण;
 
 /*
- * TEMP11 register index
+ * TEMP11 रेजिस्टर index
  */
-enum lm90_temp11_reg_index {
+क्रमागत lm90_temp11_reg_index अणु
 	REMOTE_TEMP = 0,
 	REMOTE_LOW,
 	REMOTE_HIGH,
@@ -457,624 +458,624 @@ enum lm90_temp11_reg_index {
 	REMOTE2_LOW,	/* max6695/96 only */
 	REMOTE2_HIGH,	/* max6695/96 only */
 	TEMP11_REG_NUM
-};
+पूर्ण;
 
 /*
- * Client data (each client gets its own)
+ * Client data (each client माला_लो its own)
  */
 
-struct lm90_data {
-	struct i2c_client *client;
+काष्ठा lm90_data अणु
+	काष्ठा i2c_client *client;
 	u32 channel_config[4];
-	struct hwmon_channel_info temp_info;
-	const struct hwmon_channel_info *info[3];
-	struct hwmon_chip_info chip;
-	struct mutex update_lock;
-	bool valid;		/* true if register values are valid */
-	unsigned long last_updated; /* in jiffies */
-	int kind;
+	काष्ठा hwmon_channel_info temp_info;
+	स्थिर काष्ठा hwmon_channel_info *info[3];
+	काष्ठा hwmon_chip_info chip;
+	काष्ठा mutex update_lock;
+	bool valid;		/* true अगर रेजिस्टर values are valid */
+	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
+	पूर्णांक kind;
 	u32 flags;
 
-	unsigned int update_interval; /* in milliseconds */
+	अचिन्हित पूर्णांक update_पूर्णांकerval; /* in milliseconds */
 
-	u8 config;		/* Current configuration register value */
-	u8 config_orig;		/* Original configuration register value */
-	u8 convrate_orig;	/* Original conversion rate register value */
+	u8 config;		/* Current configuration रेजिस्टर value */
+	u8 config_orig;		/* Original configuration रेजिस्टर value */
+	u8 convrate_orig;	/* Original conversion rate रेजिस्टर value */
 	u16 alert_alarms;	/* Which alarm bits trigger ALERT# */
-				/* Upper 8 bits for max6695/96 */
+				/* Upper 8 bits क्रम max6695/96 */
 	u8 max_convrate;	/* Maximum conversion rate */
-	u8 reg_local_ext;	/* local extension register offset */
+	u8 reg_local_ext;	/* local extension रेजिस्टर offset */
 
-	/* registers values */
+	/* रेजिस्टरs values */
 	s8 temp8[TEMP8_REG_NUM];
 	s16 temp11[TEMP11_REG_NUM];
 	u8 temp_hyst;
-	u16 alarms; /* bitvector (upper 8 bits for max6695/96) */
-};
+	u16 alarms; /* bitvector (upper 8 bits क्रम max6695/96) */
+पूर्ण;
 
 /*
  * Support functions
  */
 
 /*
- * The ADM1032 supports PEC but not on write byte transactions, so we need
- * to explicitly ask for a transaction without PEC.
+ * The ADM1032 supports PEC but not on ग_लिखो byte transactions, so we need
+ * to explicitly ask क्रम a transaction without PEC.
  */
-static inline s32 adm1032_write_byte(struct i2c_client *client, u8 value)
-{
-	return i2c_smbus_xfer(client->adapter, client->addr,
+अटल अंतरभूत s32 adm1032_ग_लिखो_byte(काष्ठा i2c_client *client, u8 value)
+अणु
+	वापस i2c_smbus_xfer(client->adapter, client->addr,
 			      client->flags & ~I2C_CLIENT_PEC,
-			      I2C_SMBUS_WRITE, value, I2C_SMBUS_BYTE, NULL);
-}
+			      I2C_SMBUS_WRITE, value, I2C_SMBUS_BYTE, शून्य);
+पूर्ण
 
 /*
  * It is assumed that client->update_lock is held (unless we are in
  * detection or initialization steps). This matters when PEC is enabled,
- * because we don't want the address pointer to change between the write
- * byte and the read byte transactions.
+ * because we करोn't want the address poपूर्णांकer to change between the ग_लिखो
+ * byte and the पढ़ो byte transactions.
  */
-static int lm90_read_reg(struct i2c_client *client, u8 reg)
-{
-	int err;
+अटल पूर्णांक lm90_पढ़ो_reg(काष्ठा i2c_client *client, u8 reg)
+अणु
+	पूर्णांक err;
 
-	if (client->flags & I2C_CLIENT_PEC) {
-		err = adm1032_write_byte(client, reg);
-		if (err >= 0)
-			err = i2c_smbus_read_byte(client);
-	} else
-		err = i2c_smbus_read_byte_data(client, reg);
+	अगर (client->flags & I2C_CLIENT_PEC) अणु
+		err = adm1032_ग_लिखो_byte(client, reg);
+		अगर (err >= 0)
+			err = i2c_smbus_पढ़ो_byte(client);
+	पूर्ण अन्यथा
+		err = i2c_smbus_पढ़ो_byte_data(client, reg);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lm90_read16(struct i2c_client *client, u8 regh, u8 regl)
-{
-	int oldh, newh, l;
+अटल पूर्णांक lm90_पढ़ो16(काष्ठा i2c_client *client, u8 regh, u8 regl)
+अणु
+	पूर्णांक oldh, newh, l;
 
 	/*
-	 * There is a trick here. We have to read two registers to have the
+	 * There is a trick here. We have to पढ़ो two रेजिस्टरs to have the
 	 * sensor temperature, but we have to beware a conversion could occur
-	 * between the readings. The datasheet says we should either use
-	 * the one-shot conversion register, which we don't want to do
+	 * between the पढ़ोings. The datasheet says we should either use
+	 * the one-shot conversion रेजिस्टर, which we करोn't want to करो
 	 * (disables hardware monitoring) or monitor the busy bit, which is
-	 * impossible (we can't read the values and monitor that bit at the
-	 * exact same time). So the solution used here is to read the high
+	 * impossible (we can't पढ़ो the values and monitor that bit at the
+	 * exact same समय). So the solution used here is to पढ़ो the high
 	 * byte once, then the low byte, then the high byte again. If the new
-	 * high byte matches the old one, then we have a valid reading. Else
-	 * we have to read the low byte again, and now we believe we have a
-	 * correct reading.
+	 * high byte matches the old one, then we have a valid पढ़ोing. Else
+	 * we have to पढ़ो the low byte again, and now we believe we have a
+	 * correct पढ़ोing.
 	 */
-	oldh = lm90_read_reg(client, regh);
-	if (oldh < 0)
-		return oldh;
-	l = lm90_read_reg(client, regl);
-	if (l < 0)
-		return l;
-	newh = lm90_read_reg(client, regh);
-	if (newh < 0)
-		return newh;
-	if (oldh != newh) {
-		l = lm90_read_reg(client, regl);
-		if (l < 0)
-			return l;
-	}
-	return (newh << 8) | l;
-}
+	oldh = lm90_पढ़ो_reg(client, regh);
+	अगर (oldh < 0)
+		वापस oldh;
+	l = lm90_पढ़ो_reg(client, regl);
+	अगर (l < 0)
+		वापस l;
+	newh = lm90_पढ़ो_reg(client, regh);
+	अगर (newh < 0)
+		वापस newh;
+	अगर (oldh != newh) अणु
+		l = lm90_पढ़ो_reg(client, regl);
+		अगर (l < 0)
+			वापस l;
+	पूर्ण
+	वापस (newh << 8) | l;
+पूर्ण
 
-static int lm90_update_confreg(struct lm90_data *data, u8 config)
-{
-	if (data->config != config) {
-		int err;
+अटल पूर्णांक lm90_update_confreg(काष्ठा lm90_data *data, u8 config)
+अणु
+	अगर (data->config != config) अणु
+		पूर्णांक err;
 
-		err = i2c_smbus_write_byte_data(data->client,
+		err = i2c_smbus_ग_लिखो_byte_data(data->client,
 						LM90_REG_W_CONFIG1,
 						config);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		data->config = config;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * client->update_lock must be held when calling this function (unless we are
- * in detection or initialization steps), and while a remote channel other
+ * in detection or initialization steps), and जबतक a remote channel other
  * than channel 0 is selected. Also, calling code must make sure to re-select
- * external channel 0 before releasing the lock. This is necessary because
- * various registers have different meanings as a result of selecting a
- * non-default remote channel.
+ * बाह्यal channel 0 beक्रमe releasing the lock. This is necessary because
+ * various रेजिस्टरs have dअगरferent meanings as a result of selecting a
+ * non-शेष remote channel.
  */
-static int lm90_select_remote_channel(struct lm90_data *data, int channel)
-{
-	int err = 0;
+अटल पूर्णांक lm90_select_remote_channel(काष्ठा lm90_data *data, पूर्णांक channel)
+अणु
+	पूर्णांक err = 0;
 
-	if (data->kind == max6696) {
+	अगर (data->kind == max6696) अणु
 		u8 config = data->config & ~0x08;
 
-		if (channel)
+		अगर (channel)
 			config |= 0x08;
 		err = lm90_update_confreg(data, config);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int lm90_write_convrate(struct lm90_data *data, int val)
-{
+अटल पूर्णांक lm90_ग_लिखो_convrate(काष्ठा lm90_data *data, पूर्णांक val)
+अणु
 	u8 config = data->config;
-	int err;
+	पूर्णांक err;
 
-	/* Save config and pause conversion */
-	if (data->flags & LM90_PAUSE_FOR_CONFIG) {
+	/* Save config and छोड़ो conversion */
+	अगर (data->flags & LM90_PAUSE_FOR_CONFIG) अणु
 		err = lm90_update_confreg(data, config | 0x40);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* Set conv rate */
-	err = i2c_smbus_write_byte_data(data->client, LM90_REG_W_CONVRATE, val);
+	err = i2c_smbus_ग_लिखो_byte_data(data->client, LM90_REG_W_CONVRATE, val);
 
 	/* Revert change to config */
 	lm90_update_confreg(data, config);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Set conversion rate.
  * client->update_lock must be held when calling this function (unless we are
  * in detection or initialization steps).
  */
-static int lm90_set_convrate(struct i2c_client *client, struct lm90_data *data,
-			     unsigned int interval)
-{
-	unsigned int update_interval;
-	int i, err;
+अटल पूर्णांक lm90_set_convrate(काष्ठा i2c_client *client, काष्ठा lm90_data *data,
+			     अचिन्हित पूर्णांक पूर्णांकerval)
+अणु
+	अचिन्हित पूर्णांक update_पूर्णांकerval;
+	पूर्णांक i, err;
 
-	/* Shift calculations to avoid rounding errors */
-	interval <<= 6;
+	/* Shअगरt calculations to aव्योम rounding errors */
+	पूर्णांकerval <<= 6;
 
 	/* find the nearest update rate */
-	for (i = 0, update_interval = LM90_MAX_CONVRATE_MS << 6;
-	     i < data->max_convrate; i++, update_interval >>= 1)
-		if (interval >= update_interval * 3 / 4)
-			break;
+	क्रम (i = 0, update_पूर्णांकerval = LM90_MAX_CONVRATE_MS << 6;
+	     i < data->max_convrate; i++, update_पूर्णांकerval >>= 1)
+		अगर (पूर्णांकerval >= update_पूर्णांकerval * 3 / 4)
+			अवरोध;
 
-	err = lm90_write_convrate(data, i);
-	data->update_interval = DIV_ROUND_CLOSEST(update_interval, 64);
-	return err;
-}
+	err = lm90_ग_लिखो_convrate(data, i);
+	data->update_पूर्णांकerval = DIV_ROUND_CLOSEST(update_पूर्णांकerval, 64);
+	वापस err;
+पूर्ण
 
-static int lm90_update_limits(struct device *dev)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int val;
+अटल पूर्णांक lm90_update_limits(काष्ठा device *dev)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक val;
 
-	val = lm90_read_reg(client, LM90_REG_R_LOCAL_CRIT);
-	if (val < 0)
-		return val;
+	val = lm90_पढ़ो_reg(client, LM90_REG_R_LOCAL_CRIT);
+	अगर (val < 0)
+		वापस val;
 	data->temp8[LOCAL_CRIT] = val;
 
-	val = lm90_read_reg(client, LM90_REG_R_REMOTE_CRIT);
-	if (val < 0)
-		return val;
+	val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_CRIT);
+	अगर (val < 0)
+		वापस val;
 	data->temp8[REMOTE_CRIT] = val;
 
-	val = lm90_read_reg(client, LM90_REG_R_TCRIT_HYST);
-	if (val < 0)
-		return val;
+	val = lm90_पढ़ो_reg(client, LM90_REG_R_TCRIT_HYST);
+	अगर (val < 0)
+		वापस val;
 	data->temp_hyst = val;
 
-	val = lm90_read_reg(client, LM90_REG_R_REMOTE_LOWH);
-	if (val < 0)
-		return val;
+	val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_LOWH);
+	अगर (val < 0)
+		वापस val;
 	data->temp11[REMOTE_LOW] = val << 8;
 
-	if (data->flags & LM90_HAVE_REM_LIMIT_EXT) {
-		val = lm90_read_reg(client, LM90_REG_R_REMOTE_LOWL);
-		if (val < 0)
-			return val;
+	अगर (data->flags & LM90_HAVE_REM_LIMIT_EXT) अणु
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_LOWL);
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE_LOW] |= val;
-	}
+	पूर्ण
 
-	val = lm90_read_reg(client, LM90_REG_R_REMOTE_HIGHH);
-	if (val < 0)
-		return val;
+	val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_HIGHH);
+	अगर (val < 0)
+		वापस val;
 	data->temp11[REMOTE_HIGH] = val << 8;
 
-	if (data->flags & LM90_HAVE_REM_LIMIT_EXT) {
-		val = lm90_read_reg(client, LM90_REG_R_REMOTE_HIGHL);
-		if (val < 0)
-			return val;
+	अगर (data->flags & LM90_HAVE_REM_LIMIT_EXT) अणु
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_HIGHL);
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE_HIGH] |= val;
-	}
+	पूर्ण
 
-	if (data->flags & LM90_HAVE_OFFSET) {
-		val = lm90_read16(client, LM90_REG_R_REMOTE_OFFSH,
+	अगर (data->flags & LM90_HAVE_OFFSET) अणु
+		val = lm90_पढ़ो16(client, LM90_REG_R_REMOTE_OFFSH,
 				  LM90_REG_R_REMOTE_OFFSL);
-		if (val < 0)
-			return val;
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE_OFFSET] = val;
-	}
+	पूर्ण
 
-	if (data->flags & LM90_HAVE_EMERGENCY) {
-		val = lm90_read_reg(client, MAX6659_REG_R_LOCAL_EMERG);
-		if (val < 0)
-			return val;
+	अगर (data->flags & LM90_HAVE_EMERGENCY) अणु
+		val = lm90_पढ़ो_reg(client, MAX6659_REG_R_LOCAL_EMERG);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[LOCAL_EMERG] = val;
 
-		val = lm90_read_reg(client, MAX6659_REG_R_REMOTE_EMERG);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, MAX6659_REG_R_REMOTE_EMERG);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[REMOTE_EMERG] = val;
-	}
+	पूर्ण
 
-	if (data->kind == max6696) {
+	अगर (data->kind == max6696) अणु
 		val = lm90_select_remote_channel(data, 1);
-		if (val < 0)
-			return val;
+		अगर (val < 0)
+			वापस val;
 
-		val = lm90_read_reg(client, LM90_REG_R_REMOTE_CRIT);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_CRIT);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[REMOTE2_CRIT] = val;
 
-		val = lm90_read_reg(client, MAX6659_REG_R_REMOTE_EMERG);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, MAX6659_REG_R_REMOTE_EMERG);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[REMOTE2_EMERG] = val;
 
-		val = lm90_read_reg(client, LM90_REG_R_REMOTE_LOWH);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_LOWH);
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE2_LOW] = val << 8;
 
-		val = lm90_read_reg(client, LM90_REG_R_REMOTE_HIGHH);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_REMOTE_HIGHH);
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE2_HIGH] = val << 8;
 
 		lm90_select_remote_channel(data, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm90_update_device(struct device *dev)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	unsigned long next_update;
-	int val;
+अटल पूर्णांक lm90_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	अचिन्हित दीर्घ next_update;
+	पूर्णांक val;
 
-	if (!data->valid) {
+	अगर (!data->valid) अणु
 		val = lm90_update_limits(dev);
-		if (val < 0)
-			return val;
-	}
+		अगर (val < 0)
+			वापस val;
+	पूर्ण
 
 	next_update = data->last_updated +
-		      msecs_to_jiffies(data->update_interval);
-	if (time_after(jiffies, next_update) || !data->valid) {
+		      msecs_to_jअगरfies(data->update_पूर्णांकerval);
+	अगर (समय_after(jअगरfies, next_update) || !data->valid) अणु
 		dev_dbg(&client->dev, "Updating lm90 data.\n");
 
 		data->valid = false;
 
-		val = lm90_read_reg(client, LM90_REG_R_LOCAL_LOW);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_LOCAL_LOW);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[LOCAL_LOW] = val;
 
-		val = lm90_read_reg(client, LM90_REG_R_LOCAL_HIGH);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_LOCAL_HIGH);
+		अगर (val < 0)
+			वापस val;
 		data->temp8[LOCAL_HIGH] = val;
 
-		if (data->reg_local_ext) {
-			val = lm90_read16(client, LM90_REG_R_LOCAL_TEMP,
+		अगर (data->reg_local_ext) अणु
+			val = lm90_पढ़ो16(client, LM90_REG_R_LOCAL_TEMP,
 					  data->reg_local_ext);
-			if (val < 0)
-				return val;
+			अगर (val < 0)
+				वापस val;
 			data->temp11[LOCAL_TEMP] = val;
-		} else {
-			val = lm90_read_reg(client, LM90_REG_R_LOCAL_TEMP);
-			if (val < 0)
-				return val;
+		पूर्ण अन्यथा अणु
+			val = lm90_पढ़ो_reg(client, LM90_REG_R_LOCAL_TEMP);
+			अगर (val < 0)
+				वापस val;
 			data->temp11[LOCAL_TEMP] = val << 8;
-		}
-		val = lm90_read16(client, LM90_REG_R_REMOTE_TEMPH,
+		पूर्ण
+		val = lm90_पढ़ो16(client, LM90_REG_R_REMOTE_TEMPH,
 				  LM90_REG_R_REMOTE_TEMPL);
-		if (val < 0)
-			return val;
+		अगर (val < 0)
+			वापस val;
 		data->temp11[REMOTE_TEMP] = val;
 
-		val = lm90_read_reg(client, LM90_REG_R_STATUS);
-		if (val < 0)
-			return val;
+		val = lm90_पढ़ो_reg(client, LM90_REG_R_STATUS);
+		अगर (val < 0)
+			वापस val;
 		data->alarms = val;	/* lower 8 bit of alarms */
 
-		if (data->kind == max6696) {
+		अगर (data->kind == max6696) अणु
 			val = lm90_select_remote_channel(data, 1);
-			if (val < 0)
-				return val;
+			अगर (val < 0)
+				वापस val;
 
-			val = lm90_read16(client, LM90_REG_R_REMOTE_TEMPH,
+			val = lm90_पढ़ो16(client, LM90_REG_R_REMOTE_TEMPH,
 					  LM90_REG_R_REMOTE_TEMPL);
-			if (val < 0) {
+			अगर (val < 0) अणु
 				lm90_select_remote_channel(data, 0);
-				return val;
-			}
+				वापस val;
+			पूर्ण
 			data->temp11[REMOTE2_TEMP] = val;
 
 			lm90_select_remote_channel(data, 0);
 
-			val = lm90_read_reg(client, MAX6696_REG_R_STATUS2);
-			if (val < 0)
-				return val;
+			val = lm90_पढ़ो_reg(client, MAX6696_REG_R_STATUS2);
+			अगर (val < 0)
+				वापस val;
 			data->alarms |= val << 8;
-		}
+		पूर्ण
 
 		/*
-		 * Re-enable ALERT# output if it was originally enabled and
+		 * Re-enable ALERT# output अगर it was originally enabled and
 		 * relevant alarms are all clear
 		 */
-		if (!(data->config_orig & 0x80) &&
-		    !(data->alarms & data->alert_alarms)) {
-			if (data->config & 0x80) {
+		अगर (!(data->config_orig & 0x80) &&
+		    !(data->alarms & data->alert_alarms)) अणु
+			अगर (data->config & 0x80) अणु
 				dev_dbg(&client->dev, "Re-enabling ALERT#\n");
 				lm90_update_confreg(data, data->config & ~0x80);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		data->last_updated = jiffies;
+		data->last_updated = jअगरfies;
 		data->valid = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Conversions
  * For local temperatures and limits, critical limits and the hysteresis
- * value, the LM90 uses signed 8-bit values with LSB = 1 degree Celsius.
- * For remote temperatures and limits, it uses signed 11-bit values with
- * LSB = 0.125 degree Celsius, left-justified in 16-bit registers.  Some
- * Maxim chips use unsigned values.
+ * value, the LM90 uses चिन्हित 8-bit values with LSB = 1 degree Celsius.
+ * For remote temperatures and limits, it uses चिन्हित 11-bit values with
+ * LSB = 0.125 degree Celsius, left-justअगरied in 16-bit रेजिस्टरs.  Some
+ * Maxim chips use अचिन्हित values.
  */
 
-static inline int temp_from_s8(s8 val)
-{
-	return val * 1000;
-}
+अटल अंतरभूत पूर्णांक temp_from_s8(s8 val)
+अणु
+	वापस val * 1000;
+पूर्ण
 
-static inline int temp_from_u8(u8 val)
-{
-	return val * 1000;
-}
+अटल अंतरभूत पूर्णांक temp_from_u8(u8 val)
+अणु
+	वापस val * 1000;
+पूर्ण
 
-static inline int temp_from_s16(s16 val)
-{
-	return val / 32 * 125;
-}
+अटल अंतरभूत पूर्णांक temp_from_s16(s16 val)
+अणु
+	वापस val / 32 * 125;
+पूर्ण
 
-static inline int temp_from_u16(u16 val)
-{
-	return val / 32 * 125;
-}
+अटल अंतरभूत पूर्णांक temp_from_u16(u16 val)
+अणु
+	वापस val / 32 * 125;
+पूर्ण
 
-static s8 temp_to_s8(long val)
-{
-	if (val <= -128000)
-		return -128;
-	if (val >= 127000)
-		return 127;
-	if (val < 0)
-		return (val - 500) / 1000;
-	return (val + 500) / 1000;
-}
+अटल s8 temp_to_s8(दीर्घ val)
+अणु
+	अगर (val <= -128000)
+		वापस -128;
+	अगर (val >= 127000)
+		वापस 127;
+	अगर (val < 0)
+		वापस (val - 500) / 1000;
+	वापस (val + 500) / 1000;
+पूर्ण
 
-static u8 temp_to_u8(long val)
-{
-	if (val <= 0)
-		return 0;
-	if (val >= 255000)
-		return 255;
-	return (val + 500) / 1000;
-}
+अटल u8 temp_to_u8(दीर्घ val)
+अणु
+	अगर (val <= 0)
+		वापस 0;
+	अगर (val >= 255000)
+		वापस 255;
+	वापस (val + 500) / 1000;
+पूर्ण
 
-static s16 temp_to_s16(long val)
-{
-	if (val <= -128000)
-		return 0x8000;
-	if (val >= 127875)
-		return 0x7FE0;
-	if (val < 0)
-		return (val - 62) / 125 * 32;
-	return (val + 62) / 125 * 32;
-}
+अटल s16 temp_to_s16(दीर्घ val)
+अणु
+	अगर (val <= -128000)
+		वापस 0x8000;
+	अगर (val >= 127875)
+		वापस 0x7FE0;
+	अगर (val < 0)
+		वापस (val - 62) / 125 * 32;
+	वापस (val + 62) / 125 * 32;
+पूर्ण
 
-static u8 hyst_to_reg(long val)
-{
-	if (val <= 0)
-		return 0;
-	if (val >= 30500)
-		return 31;
-	return (val + 500) / 1000;
-}
+अटल u8 hyst_to_reg(दीर्घ val)
+अणु
+	अगर (val <= 0)
+		वापस 0;
+	अगर (val >= 30500)
+		वापस 31;
+	वापस (val + 500) / 1000;
+पूर्ण
 
 /*
  * ADT7461 in compatibility mode is almost identical to LM90 except that
- * attempts to write values that are outside the range 0 < temp < 127 are
+ * attempts to ग_लिखो values that are outside the range 0 < temp < 127 are
  * treated as the boundary value.
  *
- * ADT7461 in "extended mode" operation uses unsigned integers offset by
+ * ADT7461 in "extended mode" operation uses अचिन्हित पूर्णांकegers offset by
  * 64 (e.g., 0 -> -64 degC).  The range is restricted to -64..191 degC.
  */
-static inline int temp_from_u8_adt7461(struct lm90_data *data, u8 val)
-{
-	if (data->flags & LM90_FLAG_ADT7461_EXT)
-		return (val - 64) * 1000;
-	return temp_from_s8(val);
-}
+अटल अंतरभूत पूर्णांक temp_from_u8_adt7461(काष्ठा lm90_data *data, u8 val)
+अणु
+	अगर (data->flags & LM90_FLAG_ADT7461_EXT)
+		वापस (val - 64) * 1000;
+	वापस temp_from_s8(val);
+पूर्ण
 
-static inline int temp_from_u16_adt7461(struct lm90_data *data, u16 val)
-{
-	if (data->flags & LM90_FLAG_ADT7461_EXT)
-		return (val - 0x4000) / 64 * 250;
-	return temp_from_s16(val);
-}
+अटल अंतरभूत पूर्णांक temp_from_u16_adt7461(काष्ठा lm90_data *data, u16 val)
+अणु
+	अगर (data->flags & LM90_FLAG_ADT7461_EXT)
+		वापस (val - 0x4000) / 64 * 250;
+	वापस temp_from_s16(val);
+पूर्ण
 
-static u8 temp_to_u8_adt7461(struct lm90_data *data, long val)
-{
-	if (data->flags & LM90_FLAG_ADT7461_EXT) {
-		if (val <= -64000)
-			return 0;
-		if (val >= 191000)
-			return 0xFF;
-		return (val + 500 + 64000) / 1000;
-	}
-	if (val <= 0)
-		return 0;
-	if (val >= 127000)
-		return 127;
-	return (val + 500) / 1000;
-}
+अटल u8 temp_to_u8_adt7461(काष्ठा lm90_data *data, दीर्घ val)
+अणु
+	अगर (data->flags & LM90_FLAG_ADT7461_EXT) अणु
+		अगर (val <= -64000)
+			वापस 0;
+		अगर (val >= 191000)
+			वापस 0xFF;
+		वापस (val + 500 + 64000) / 1000;
+	पूर्ण
+	अगर (val <= 0)
+		वापस 0;
+	अगर (val >= 127000)
+		वापस 127;
+	वापस (val + 500) / 1000;
+पूर्ण
 
-static u16 temp_to_u16_adt7461(struct lm90_data *data, long val)
-{
-	if (data->flags & LM90_FLAG_ADT7461_EXT) {
-		if (val <= -64000)
-			return 0;
-		if (val >= 191750)
-			return 0xFFC0;
-		return (val + 64000 + 125) / 250 * 64;
-	}
-	if (val <= 0)
-		return 0;
-	if (val >= 127750)
-		return 0x7FC0;
-	return (val + 125) / 250 * 64;
-}
+अटल u16 temp_to_u16_adt7461(काष्ठा lm90_data *data, दीर्घ val)
+अणु
+	अगर (data->flags & LM90_FLAG_ADT7461_EXT) अणु
+		अगर (val <= -64000)
+			वापस 0;
+		अगर (val >= 191750)
+			वापस 0xFFC0;
+		वापस (val + 64000 + 125) / 250 * 64;
+	पूर्ण
+	अगर (val <= 0)
+		वापस 0;
+	अगर (val >= 127750)
+		वापस 0x7FC0;
+	वापस (val + 125) / 250 * 64;
+पूर्ण
 
-/* pec used for ADM1032 only */
-static ssize_t pec_show(struct device *dev, struct device_attribute *dummy,
-			char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
+/* pec used क्रम ADM1032 only */
+अटल sमाप_प्रकार pec_show(काष्ठा device *dev, काष्ठा device_attribute *dummy,
+			अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
 
-	return sprintf(buf, "%d\n", !!(client->flags & I2C_CLIENT_PEC));
-}
+	वापस प्र_लिखो(buf, "%d\n", !!(client->flags & I2C_CLIENT_PEC));
+पूर्ण
 
-static ssize_t pec_store(struct device *dev, struct device_attribute *dummy,
-			 const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	long val;
-	int err;
+अटल sमाप_प्रकार pec_store(काष्ठा device *dev, काष्ठा device_attribute *dummy,
+			 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtol(buf, 10, &val);
-	if (err < 0)
-		return err;
+	err = kम_से_दीर्घ(buf, 10, &val);
+	अगर (err < 0)
+		वापस err;
 
-	switch (val) {
-	case 0:
+	चयन (val) अणु
+	हाल 0:
 		client->flags &= ~I2C_CLIENT_PEC;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		client->flags |= I2C_CLIENT_PEC;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(pec);
+अटल DEVICE_ATTR_RW(pec);
 
-static int lm90_get_temp11(struct lm90_data *data, int index)
-{
+अटल पूर्णांक lm90_get_temp11(काष्ठा lm90_data *data, पूर्णांक index)
+अणु
 	s16 temp11 = data->temp11[index];
-	int temp;
+	पूर्णांक temp;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		temp = temp_from_u16_adt7461(data, temp11);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		temp = temp_from_u16(temp11);
-	else
+	अन्यथा
 		temp = temp_from_s16(temp11);
 
-	/* +16 degrees offset for temp2 for the LM99 */
-	if (data->kind == lm99 && index <= 2)
+	/* +16 degrees offset क्रम temp2 क्रम the LM99 */
+	अगर (data->kind == lm99 && index <= 2)
 		temp += 16000;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static int lm90_set_temp11(struct lm90_data *data, int index, long val)
-{
-	static struct reg {
+अटल पूर्णांक lm90_set_temp11(काष्ठा lm90_data *data, पूर्णांक index, दीर्घ val)
+अणु
+	अटल काष्ठा reg अणु
 		u8 high;
 		u8 low;
-	} reg[] = {
-	[REMOTE_LOW] = { LM90_REG_W_REMOTE_LOWH, LM90_REG_W_REMOTE_LOWL },
-	[REMOTE_HIGH] = { LM90_REG_W_REMOTE_HIGHH, LM90_REG_W_REMOTE_HIGHL },
-	[REMOTE_OFFSET] = { LM90_REG_W_REMOTE_OFFSH, LM90_REG_W_REMOTE_OFFSL },
-	[REMOTE2_LOW] = { LM90_REG_W_REMOTE_LOWH, LM90_REG_W_REMOTE_LOWL },
-	[REMOTE2_HIGH] = { LM90_REG_W_REMOTE_HIGHH, LM90_REG_W_REMOTE_HIGHL }
-	};
-	struct i2c_client *client = data->client;
-	struct reg *regp = &reg[index];
-	int err;
+	पूर्ण reg[] = अणु
+	[REMOTE_LOW] = अणु LM90_REG_W_REMOTE_LOWH, LM90_REG_W_REMOTE_LOWL पूर्ण,
+	[REMOTE_HIGH] = अणु LM90_REG_W_REMOTE_HIGHH, LM90_REG_W_REMOTE_HIGHL पूर्ण,
+	[REMOTE_OFFSET] = अणु LM90_REG_W_REMOTE_OFFSH, LM90_REG_W_REMOTE_OFFSL पूर्ण,
+	[REMOTE2_LOW] = अणु LM90_REG_W_REMOTE_LOWH, LM90_REG_W_REMOTE_LOWL पूर्ण,
+	[REMOTE2_HIGH] = अणु LM90_REG_W_REMOTE_HIGHH, LM90_REG_W_REMOTE_HIGHL पूर्ण
+	पूर्ण;
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा reg *regp = &reg[index];
+	पूर्णांक err;
 
-	/* +16 degrees offset for temp2 for the LM99 */
-	if (data->kind == lm99 && index <= 2)
+	/* +16 degrees offset क्रम temp2 क्रम the LM99 */
+	अगर (data->kind == lm99 && index <= 2)
 		val -= 16000;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		data->temp11[index] = temp_to_u16_adt7461(data, val);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		data->temp11[index] = temp_to_u8(val) << 8;
-	else if (data->flags & LM90_HAVE_REM_LIMIT_EXT)
+	अन्यथा अगर (data->flags & LM90_HAVE_REM_LIMIT_EXT)
 		data->temp11[index] = temp_to_s16(val);
-	else
+	अन्यथा
 		data->temp11[index] = temp_to_s8(val) << 8;
 
 	lm90_select_remote_channel(data, index >= 3);
-	err = i2c_smbus_write_byte_data(client, regp->high,
+	err = i2c_smbus_ग_लिखो_byte_data(client, regp->high,
 				  data->temp11[index] >> 8);
-	if (err < 0)
-		return err;
-	if (data->flags & LM90_HAVE_REM_LIMIT_EXT)
-		err = i2c_smbus_write_byte_data(client, regp->low,
+	अगर (err < 0)
+		वापस err;
+	अगर (data->flags & LM90_HAVE_REM_LIMIT_EXT)
+		err = i2c_smbus_ग_लिखो_byte_data(client, regp->low,
 						data->temp11[index] & 0xff);
 
 	lm90_select_remote_channel(data, 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lm90_get_temp8(struct lm90_data *data, int index)
-{
+अटल पूर्णांक lm90_get_temp8(काष्ठा lm90_data *data, पूर्णांक index)
+अणु
 	s8 temp8 = data->temp8[index];
-	int temp;
+	पूर्णांक temp;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		temp = temp_from_u8_adt7461(data, temp8);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		temp = temp_from_u8(temp8);
-	else
+	अन्यथा
 		temp = temp_from_s8(temp8);
 
-	/* +16 degrees offset for temp2 for the LM99 */
-	if (data->kind == lm99 && index == 3)
+	/* +16 degrees offset क्रम temp2 क्रम the LM99 */
+	अगर (data->kind == lm99 && index == 3)
 		temp += 16000;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
-static int lm90_set_temp8(struct lm90_data *data, int index, long val)
-{
-	static const u8 reg[TEMP8_REG_NUM] = {
+अटल पूर्णांक lm90_set_temp8(काष्ठा lm90_data *data, पूर्णांक index, दीर्घ val)
+अणु
+	अटल स्थिर u8 reg[TEMP8_REG_NUM] = अणु
 		LM90_REG_W_LOCAL_LOW,
 		LM90_REG_W_LOCAL_HIGH,
 		LM90_REG_W_LOCAL_CRIT,
@@ -1083,378 +1084,378 @@ static int lm90_set_temp8(struct lm90_data *data, int index, long val)
 		MAX6659_REG_W_REMOTE_EMERG,
 		LM90_REG_W_REMOTE_CRIT,
 		MAX6659_REG_W_REMOTE_EMERG,
-	};
-	struct i2c_client *client = data->client;
-	int err;
+	पूर्ण;
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक err;
 
-	/* +16 degrees offset for temp2 for the LM99 */
-	if (data->kind == lm99 && index == 3)
+	/* +16 degrees offset क्रम temp2 क्रम the LM99 */
+	अगर (data->kind == lm99 && index == 3)
 		val -= 16000;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		data->temp8[index] = temp_to_u8_adt7461(data, val);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		data->temp8[index] = temp_to_u8(val);
-	else
+	अन्यथा
 		data->temp8[index] = temp_to_s8(val);
 
 	lm90_select_remote_channel(data, index >= 6);
-	err = i2c_smbus_write_byte_data(client, reg[index], data->temp8[index]);
+	err = i2c_smbus_ग_लिखो_byte_data(client, reg[index], data->temp8[index]);
 	lm90_select_remote_channel(data, 0);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int lm90_get_temphyst(struct lm90_data *data, int index)
-{
-	int temp;
+अटल पूर्णांक lm90_get_temphyst(काष्ठा lm90_data *data, पूर्णांक index)
+अणु
+	पूर्णांक temp;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		temp = temp_from_u8_adt7461(data, data->temp8[index]);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		temp = temp_from_u8(data->temp8[index]);
-	else
+	अन्यथा
 		temp = temp_from_s8(data->temp8[index]);
 
-	/* +16 degrees offset for temp2 for the LM99 */
-	if (data->kind == lm99 && index == 3)
+	/* +16 degrees offset क्रम temp2 क्रम the LM99 */
+	अगर (data->kind == lm99 && index == 3)
 		temp += 16000;
 
-	return temp - temp_from_s8(data->temp_hyst);
-}
+	वापस temp - temp_from_s8(data->temp_hyst);
+पूर्ण
 
-static int lm90_set_temphyst(struct lm90_data *data, long val)
-{
-	struct i2c_client *client = data->client;
-	int temp;
-	int err;
+अटल पूर्णांक lm90_set_temphyst(काष्ठा lm90_data *data, दीर्घ val)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक temp;
+	पूर्णांक err;
 
-	if (data->kind == adt7461 || data->kind == tmp451)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451)
 		temp = temp_from_u8_adt7461(data, data->temp8[LOCAL_CRIT]);
-	else if (data->kind == max6646)
+	अन्यथा अगर (data->kind == max6646)
 		temp = temp_from_u8(data->temp8[LOCAL_CRIT]);
-	else
+	अन्यथा
 		temp = temp_from_s8(data->temp8[LOCAL_CRIT]);
 
 	data->temp_hyst = hyst_to_reg(temp - val);
-	err = i2c_smbus_write_byte_data(client, LM90_REG_W_TCRIT_HYST,
+	err = i2c_smbus_ग_लिखो_byte_data(client, LM90_REG_W_TCRIT_HYST,
 					data->temp_hyst);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const u8 lm90_temp_index[3] = {
+अटल स्थिर u8 lm90_temp_index[3] = अणु
 	LOCAL_TEMP, REMOTE_TEMP, REMOTE2_TEMP
-};
+पूर्ण;
 
-static const u8 lm90_temp_min_index[3] = {
+अटल स्थिर u8 lm90_temp_min_index[3] = अणु
 	LOCAL_LOW, REMOTE_LOW, REMOTE2_LOW
-};
+पूर्ण;
 
-static const u8 lm90_temp_max_index[3] = {
+अटल स्थिर u8 lm90_temp_max_index[3] = अणु
 	LOCAL_HIGH, REMOTE_HIGH, REMOTE2_HIGH
-};
+पूर्ण;
 
-static const u8 lm90_temp_crit_index[3] = {
+अटल स्थिर u8 lm90_temp_crit_index[3] = अणु
 	LOCAL_CRIT, REMOTE_CRIT, REMOTE2_CRIT
-};
+पूर्ण;
 
-static const u8 lm90_temp_emerg_index[3] = {
+अटल स्थिर u8 lm90_temp_emerg_index[3] = अणु
 	LOCAL_EMERG, REMOTE_EMERG, REMOTE2_EMERG
-};
+पूर्ण;
 
-static const u8 lm90_min_alarm_bits[3] = { 5, 3, 11 };
-static const u8 lm90_max_alarm_bits[3] = { 6, 4, 12 };
-static const u8 lm90_crit_alarm_bits[3] = { 0, 1, 9 };
-static const u8 lm90_emergency_alarm_bits[3] = { 15, 13, 14 };
-static const u8 lm90_fault_bits[3] = { 0, 2, 10 };
+अटल स्थिर u8 lm90_min_alarm_bits[3] = अणु 5, 3, 11 पूर्ण;
+अटल स्थिर u8 lm90_max_alarm_bits[3] = अणु 6, 4, 12 पूर्ण;
+अटल स्थिर u8 lm90_crit_alarm_bits[3] = अणु 0, 1, 9 पूर्ण;
+अटल स्थिर u8 lm90_emergency_alarm_bits[3] = अणु 15, 13, 14 पूर्ण;
+अटल स्थिर u8 lm90_fault_bits[3] = अणु 0, 2, 10 पूर्ण;
 
-static int lm90_temp_read(struct device *dev, u32 attr, int channel, long *val)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक lm90_temp_पढ़ो(काष्ठा device *dev, u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	mutex_lock(&data->update_lock);
 	err = lm90_update_device(dev);
 	mutex_unlock(&data->update_lock);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (attr) {
-	case hwmon_temp_input:
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
 		*val = lm90_get_temp11(data, lm90_temp_index[channel]);
-		break;
-	case hwmon_temp_min_alarm:
+		अवरोध;
+	हाल hwmon_temp_min_alarm:
 		*val = (data->alarms >> lm90_min_alarm_bits[channel]) & 1;
-		break;
-	case hwmon_temp_max_alarm:
+		अवरोध;
+	हाल hwmon_temp_max_alarm:
 		*val = (data->alarms >> lm90_max_alarm_bits[channel]) & 1;
-		break;
-	case hwmon_temp_crit_alarm:
+		अवरोध;
+	हाल hwmon_temp_crit_alarm:
 		*val = (data->alarms >> lm90_crit_alarm_bits[channel]) & 1;
-		break;
-	case hwmon_temp_emergency_alarm:
+		अवरोध;
+	हाल hwmon_temp_emergency_alarm:
 		*val = (data->alarms >> lm90_emergency_alarm_bits[channel]) & 1;
-		break;
-	case hwmon_temp_fault:
+		अवरोध;
+	हाल hwmon_temp_fault:
 		*val = (data->alarms >> lm90_fault_bits[channel]) & 1;
-		break;
-	case hwmon_temp_min:
-		if (channel == 0)
+		अवरोध;
+	हाल hwmon_temp_min:
+		अगर (channel == 0)
 			*val = lm90_get_temp8(data,
 					      lm90_temp_min_index[channel]);
-		else
+		अन्यथा
 			*val = lm90_get_temp11(data,
 					       lm90_temp_min_index[channel]);
-		break;
-	case hwmon_temp_max:
-		if (channel == 0)
+		अवरोध;
+	हाल hwmon_temp_max:
+		अगर (channel == 0)
 			*val = lm90_get_temp8(data,
 					      lm90_temp_max_index[channel]);
-		else
+		अन्यथा
 			*val = lm90_get_temp11(data,
 					       lm90_temp_max_index[channel]);
-		break;
-	case hwmon_temp_crit:
+		अवरोध;
+	हाल hwmon_temp_crit:
 		*val = lm90_get_temp8(data, lm90_temp_crit_index[channel]);
-		break;
-	case hwmon_temp_crit_hyst:
+		अवरोध;
+	हाल hwmon_temp_crit_hyst:
 		*val = lm90_get_temphyst(data, lm90_temp_crit_index[channel]);
-		break;
-	case hwmon_temp_emergency:
+		अवरोध;
+	हाल hwmon_temp_emergency:
 		*val = lm90_get_temp8(data, lm90_temp_emerg_index[channel]);
-		break;
-	case hwmon_temp_emergency_hyst:
+		अवरोध;
+	हाल hwmon_temp_emergency_hyst:
 		*val = lm90_get_temphyst(data, lm90_temp_emerg_index[channel]);
-		break;
-	case hwmon_temp_offset:
+		अवरोध;
+	हाल hwmon_temp_offset:
 		*val = lm90_get_temp11(data, REMOTE_OFFSET);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int lm90_temp_write(struct device *dev, u32 attr, int channel, long val)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक lm90_temp_ग_लिखो(काष्ठा device *dev, u32 attr, पूर्णांक channel, दीर्घ val)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	mutex_lock(&data->update_lock);
 
 	err = lm90_update_device(dev);
-	if (err)
-		goto error;
+	अगर (err)
+		जाओ error;
 
-	switch (attr) {
-	case hwmon_temp_min:
-		if (channel == 0)
+	चयन (attr) अणु
+	हाल hwmon_temp_min:
+		अगर (channel == 0)
 			err = lm90_set_temp8(data,
 					      lm90_temp_min_index[channel],
 					      val);
-		else
+		अन्यथा
 			err = lm90_set_temp11(data,
 					      lm90_temp_min_index[channel],
 					      val);
-		break;
-	case hwmon_temp_max:
-		if (channel == 0)
+		अवरोध;
+	हाल hwmon_temp_max:
+		अगर (channel == 0)
 			err = lm90_set_temp8(data,
 					     lm90_temp_max_index[channel],
 					     val);
-		else
+		अन्यथा
 			err = lm90_set_temp11(data,
 					      lm90_temp_max_index[channel],
 					      val);
-		break;
-	case hwmon_temp_crit:
+		अवरोध;
+	हाल hwmon_temp_crit:
 		err = lm90_set_temp8(data, lm90_temp_crit_index[channel], val);
-		break;
-	case hwmon_temp_crit_hyst:
+		अवरोध;
+	हाल hwmon_temp_crit_hyst:
 		err = lm90_set_temphyst(data, val);
-		break;
-	case hwmon_temp_emergency:
+		अवरोध;
+	हाल hwmon_temp_emergency:
 		err = lm90_set_temp8(data, lm90_temp_emerg_index[channel], val);
-		break;
-	case hwmon_temp_offset:
+		अवरोध;
+	हाल hwmon_temp_offset:
 		err = lm90_set_temp11(data, REMOTE_OFFSET, val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 error:
 	mutex_unlock(&data->update_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static umode_t lm90_temp_is_visible(const void *data, u32 attr, int channel)
-{
-	switch (attr) {
-	case hwmon_temp_input:
-	case hwmon_temp_min_alarm:
-	case hwmon_temp_max_alarm:
-	case hwmon_temp_crit_alarm:
-	case hwmon_temp_emergency_alarm:
-	case hwmon_temp_emergency_hyst:
-	case hwmon_temp_fault:
-		return 0444;
-	case hwmon_temp_min:
-	case hwmon_temp_max:
-	case hwmon_temp_crit:
-	case hwmon_temp_emergency:
-	case hwmon_temp_offset:
-		return 0644;
-	case hwmon_temp_crit_hyst:
-		if (channel == 0)
-			return 0644;
-		return 0444;
-	default:
-		return 0;
-	}
-}
+अटल umode_t lm90_temp_is_visible(स्थिर व्योम *data, u32 attr, पूर्णांक channel)
+अणु
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+	हाल hwmon_temp_min_alarm:
+	हाल hwmon_temp_max_alarm:
+	हाल hwmon_temp_crit_alarm:
+	हाल hwmon_temp_emergency_alarm:
+	हाल hwmon_temp_emergency_hyst:
+	हाल hwmon_temp_fault:
+		वापस 0444;
+	हाल hwmon_temp_min:
+	हाल hwmon_temp_max:
+	हाल hwmon_temp_crit:
+	हाल hwmon_temp_emergency:
+	हाल hwmon_temp_offset:
+		वापस 0644;
+	हाल hwmon_temp_crit_hyst:
+		अगर (channel == 0)
+			वापस 0644;
+		वापस 0444;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int lm90_chip_read(struct device *dev, u32 attr, int channel, long *val)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक lm90_chip_पढ़ो(काष्ठा device *dev, u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	mutex_lock(&data->update_lock);
 	err = lm90_update_device(dev);
 	mutex_unlock(&data->update_lock);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (attr) {
-	case hwmon_chip_update_interval:
-		*val = data->update_interval;
-		break;
-	case hwmon_chip_alarms:
+	चयन (attr) अणु
+	हाल hwmon_chip_update_पूर्णांकerval:
+		*val = data->update_पूर्णांकerval;
+		अवरोध;
+	हाल hwmon_chip_alarms:
 		*val = data->alarms;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lm90_chip_write(struct device *dev, u32 attr, int channel, long val)
-{
-	struct lm90_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int err;
+अटल पूर्णांक lm90_chip_ग_लिखो(काष्ठा device *dev, u32 attr, पूर्णांक channel, दीर्घ val)
+अणु
+	काष्ठा lm90_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक err;
 
 	mutex_lock(&data->update_lock);
 
 	err = lm90_update_device(dev);
-	if (err)
-		goto error;
+	अगर (err)
+		जाओ error;
 
-	switch (attr) {
-	case hwmon_chip_update_interval:
+	चयन (attr) अणु
+	हाल hwmon_chip_update_पूर्णांकerval:
 		err = lm90_set_convrate(client, data,
 					clamp_val(val, 0, 100000));
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 error:
 	mutex_unlock(&data->update_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static umode_t lm90_chip_is_visible(const void *data, u32 attr, int channel)
-{
-	switch (attr) {
-	case hwmon_chip_update_interval:
-		return 0644;
-	case hwmon_chip_alarms:
-		return 0444;
-	default:
-		return 0;
-	}
-}
+अटल umode_t lm90_chip_is_visible(स्थिर व्योम *data, u32 attr, पूर्णांक channel)
+अणु
+	चयन (attr) अणु
+	हाल hwmon_chip_update_पूर्णांकerval:
+		वापस 0644;
+	हाल hwmon_chip_alarms:
+		वापस 0444;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int lm90_read(struct device *dev, enum hwmon_sensor_types type,
-		     u32 attr, int channel, long *val)
-{
-	switch (type) {
-	case hwmon_chip:
-		return lm90_chip_read(dev, attr, channel, val);
-	case hwmon_temp:
-		return lm90_temp_read(dev, attr, channel, val);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक lm90_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+		     u32 attr, पूर्णांक channel, दीर्घ *val)
+अणु
+	चयन (type) अणु
+	हाल hwmon_chip:
+		वापस lm90_chip_पढ़ो(dev, attr, channel, val);
+	हाल hwmon_temp:
+		वापस lm90_temp_पढ़ो(dev, attr, channel, val);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int lm90_write(struct device *dev, enum hwmon_sensor_types type,
-		      u32 attr, int channel, long val)
-{
-	switch (type) {
-	case hwmon_chip:
-		return lm90_chip_write(dev, attr, channel, val);
-	case hwmon_temp:
-		return lm90_temp_write(dev, attr, channel, val);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक lm90_ग_लिखो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+		      u32 attr, पूर्णांक channel, दीर्घ val)
+अणु
+	चयन (type) अणु
+	हाल hwmon_chip:
+		वापस lm90_chip_ग_लिखो(dev, attr, channel, val);
+	हाल hwmon_temp:
+		वापस lm90_temp_ग_लिखो(dev, attr, channel, val);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static umode_t lm90_is_visible(const void *data, enum hwmon_sensor_types type,
-			       u32 attr, int channel)
-{
-	switch (type) {
-	case hwmon_chip:
-		return lm90_chip_is_visible(data, attr, channel);
-	case hwmon_temp:
-		return lm90_temp_is_visible(data, attr, channel);
-	default:
-		return 0;
-	}
-}
+अटल umode_t lm90_is_visible(स्थिर व्योम *data, क्रमागत hwmon_sensor_types type,
+			       u32 attr, पूर्णांक channel)
+अणु
+	चयन (type) अणु
+	हाल hwmon_chip:
+		वापस lm90_chip_is_visible(data, attr, channel);
+	हाल hwmon_temp:
+		वापस lm90_temp_is_visible(data, attr, channel);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-/* Return 0 if detection is successful, -ENODEV otherwise */
-static int lm90_detect(struct i2c_client *client,
-		       struct i2c_board_info *info)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	int address = client->addr;
-	const char *name = NULL;
-	int man_id, chip_id, config1, config2, convrate;
+/* Return 0 अगर detection is successful, -ENODEV otherwise */
+अटल पूर्णांक lm90_detect(काष्ठा i2c_client *client,
+		       काष्ठा i2c_board_info *info)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	पूर्णांक address = client->addr;
+	स्थिर अक्षर *name = शून्य;
+	पूर्णांक man_id, chip_id, config1, config2, convrate;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
-	/* detection and identification */
-	man_id = i2c_smbus_read_byte_data(client, LM90_REG_R_MAN_ID);
-	chip_id = i2c_smbus_read_byte_data(client, LM90_REG_R_CHIP_ID);
-	config1 = i2c_smbus_read_byte_data(client, LM90_REG_R_CONFIG1);
-	convrate = i2c_smbus_read_byte_data(client, LM90_REG_R_CONVRATE);
-	if (man_id < 0 || chip_id < 0 || config1 < 0 || convrate < 0)
-		return -ENODEV;
+	/* detection and identअगरication */
+	man_id = i2c_smbus_पढ़ो_byte_data(client, LM90_REG_R_MAN_ID);
+	chip_id = i2c_smbus_पढ़ो_byte_data(client, LM90_REG_R_CHIP_ID);
+	config1 = i2c_smbus_पढ़ो_byte_data(client, LM90_REG_R_CONFIG1);
+	convrate = i2c_smbus_पढ़ो_byte_data(client, LM90_REG_R_CONVRATE);
+	अगर (man_id < 0 || chip_id < 0 || config1 < 0 || convrate < 0)
+		वापस -ENODEV;
 
-	if (man_id == 0x01 || man_id == 0x5C || man_id == 0x41) {
-		config2 = i2c_smbus_read_byte_data(client, LM90_REG_R_CONFIG2);
-		if (config2 < 0)
-			return -ENODEV;
-	} else
+	अगर (man_id == 0x01 || man_id == 0x5C || man_id == 0x41) अणु
+		config2 = i2c_smbus_पढ़ो_byte_data(client, LM90_REG_R_CONFIG2);
+		अगर (config2 < 0)
+			वापस -ENODEV;
+	पूर्ण अन्यथा
 		config2 = 0;		/* Make compiler happy */
 
-	if ((address == 0x4C || address == 0x4D)
-	 && man_id == 0x01) { /* National Semiconductor */
-		if ((config1 & 0x2A) == 0x00
+	अगर ((address == 0x4C || address == 0x4D)
+	 && man_id == 0x01) अणु /* National Semiconductor */
+		अगर ((config1 & 0x2A) == 0x00
 		 && (config2 & 0xF8) == 0x00
-		 && convrate <= 0x09) {
-			if (address == 0x4C
-			 && (chip_id & 0xF0) == 0x20) { /* LM90 */
+		 && convrate <= 0x09) अणु
+			अगर (address == 0x4C
+			 && (chip_id & 0xF0) == 0x20) अणु /* LM90 */
 				name = "lm90";
-			} else
-			if ((chip_id & 0xF0) == 0x30) { /* LM89/LM99 */
+			पूर्ण अन्यथा
+			अगर ((chip_id & 0xF0) == 0x30) अणु /* LM89/LM99 */
 				name = "lm99";
 				dev_info(&adapter->dev,
 					 "Assuming LM99 chip at 0x%02x\n",
@@ -1463,366 +1464,366 @@ static int lm90_detect(struct i2c_client *client,
 					 "If it is an LM89, instantiate it "
 					 "with the new_device sysfs "
 					 "interface\n");
-			} else
-			if (address == 0x4C
-			 && (chip_id & 0xF0) == 0x10) { /* LM86 */
+			पूर्ण अन्यथा
+			अगर (address == 0x4C
+			 && (chip_id & 0xF0) == 0x10) अणु /* LM86 */
 				name = "lm86";
-			}
-		}
-	} else
-	if ((address == 0x4C || address == 0x4D)
-	 && man_id == 0x41) { /* Analog Devices */
-		if ((chip_id & 0xF0) == 0x40 /* ADM1032 */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर ((address == 0x4C || address == 0x4D)
+	 && man_id == 0x41) अणु /* Analog Devices */
+		अगर ((chip_id & 0xF0) == 0x40 /* ADM1032 */
 		 && (config1 & 0x3F) == 0x00
-		 && convrate <= 0x0A) {
+		 && convrate <= 0x0A) अणु
 			name = "adm1032";
 			/*
-			 * The ADM1032 supports PEC, but only if combined
+			 * The ADM1032 supports PEC, but only अगर combined
 			 * transactions are not used.
 			 */
-			if (i2c_check_functionality(adapter,
+			अगर (i2c_check_functionality(adapter,
 						    I2C_FUNC_SMBUS_BYTE))
 				info->flags |= I2C_CLIENT_PEC;
-		} else
-		if (chip_id == 0x51 /* ADT7461 */
+		पूर्ण अन्यथा
+		अगर (chip_id == 0x51 /* ADT7461 */
 		 && (config1 & 0x1B) == 0x00
-		 && convrate <= 0x0A) {
+		 && convrate <= 0x0A) अणु
 			name = "adt7461";
-		} else
-		if (chip_id == 0x57 /* ADT7461A, NCT1008 */
+		पूर्ण अन्यथा
+		अगर (chip_id == 0x57 /* ADT7461A, NCT1008 */
 		 && (config1 & 0x1B) == 0x00
-		 && convrate <= 0x0A) {
+		 && convrate <= 0x0A) अणु
 			name = "adt7461a";
-		}
-	} else
-	if (man_id == 0x4D) { /* Maxim */
-		int emerg, emerg2, status2;
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (man_id == 0x4D) अणु /* Maxim */
+		पूर्णांक emerg, emerg2, status2;
 
 		/*
-		 * We read MAX6659_REG_R_REMOTE_EMERG twice, and re-read
+		 * We पढ़ो MAX6659_REG_R_REMOTE_EMERG twice, and re-पढ़ो
 		 * LM90_REG_R_MAN_ID in between. If MAX6659_REG_R_REMOTE_EMERG
-		 * exists, both readings will reflect the same value. Otherwise,
-		 * the readings will be different.
+		 * exists, both पढ़ोings will reflect the same value. Otherwise,
+		 * the पढ़ोings will be dअगरferent.
 		 */
-		emerg = i2c_smbus_read_byte_data(client,
+		emerg = i2c_smbus_पढ़ो_byte_data(client,
 						 MAX6659_REG_R_REMOTE_EMERG);
-		man_id = i2c_smbus_read_byte_data(client,
+		man_id = i2c_smbus_पढ़ो_byte_data(client,
 						  LM90_REG_R_MAN_ID);
-		emerg2 = i2c_smbus_read_byte_data(client,
+		emerg2 = i2c_smbus_पढ़ो_byte_data(client,
 						  MAX6659_REG_R_REMOTE_EMERG);
-		status2 = i2c_smbus_read_byte_data(client,
+		status2 = i2c_smbus_पढ़ो_byte_data(client,
 						   MAX6696_REG_R_STATUS2);
-		if (emerg < 0 || man_id < 0 || emerg2 < 0 || status2 < 0)
-			return -ENODEV;
+		अगर (emerg < 0 || man_id < 0 || emerg2 < 0 || status2 < 0)
+			वापस -ENODEV;
 
 		/*
-		 * The MAX6657, MAX6658 and MAX6659 do NOT have a chip_id
-		 * register. Reading from that address will return the last
-		 * read value, which in our case is those of the man_id
-		 * register. Likewise, the config1 register seems to lack a
+		 * The MAX6657, MAX6658 and MAX6659 करो NOT have a chip_id
+		 * रेजिस्टर. Reading from that address will वापस the last
+		 * पढ़ो value, which in our हाल is those of the man_id
+		 * रेजिस्टर. Likewise, the config1 रेजिस्टर seems to lack a
 		 * low nibble, so the value will be those of the previous
-		 * read, so in our case those of the man_id register.
-		 * MAX6659 has a third set of upper temperature limit registers.
-		 * Those registers also return values on MAX6657 and MAX6658,
+		 * पढ़ो, so in our हाल those of the man_id रेजिस्टर.
+		 * MAX6659 has a third set of upper temperature limit रेजिस्टरs.
+		 * Those रेजिस्टरs also वापस values on MAX6657 and MAX6658,
 		 * thus the only way to detect MAX6659 is by its address.
-		 * For this reason it will be mis-detected as MAX6657 if its
+		 * For this reason it will be mis-detected as MAX6657 अगर its
 		 * address is 0x4C.
 		 */
-		if (chip_id == man_id
+		अगर (chip_id == man_id
 		 && (address == 0x4C || address == 0x4D || address == 0x4E)
 		 && (config1 & 0x1F) == (man_id & 0x0F)
-		 && convrate <= 0x09) {
-			if (address == 0x4C)
+		 && convrate <= 0x09) अणु
+			अगर (address == 0x4C)
 				name = "max6657";
-			else
+			अन्यथा
 				name = "max6659";
-		} else
+		पूर्ण अन्यथा
 		/*
-		 * Even though MAX6695 and MAX6696 do not have a chip ID
-		 * register, reading it returns 0x01. Bit 4 of the config1
-		 * register is unused and should return zero when read. Bit 0 of
-		 * the status2 register is unused and should return zero when
-		 * read.
+		 * Even though MAX6695 and MAX6696 करो not have a chip ID
+		 * रेजिस्टर, पढ़ोing it वापसs 0x01. Bit 4 of the config1
+		 * रेजिस्टर is unused and should वापस zero when पढ़ो. Bit 0 of
+		 * the status2 रेजिस्टर is unused and should वापस zero when
+		 * पढ़ो.
 		 *
 		 * MAX6695 and MAX6696 have an additional set of temperature
-		 * limit registers. We can detect those chips by checking if
-		 * one of those registers exists.
+		 * limit रेजिस्टरs. We can detect those chips by checking अगर
+		 * one of those रेजिस्टरs exists.
 		 */
-		if (chip_id == 0x01
+		अगर (chip_id == 0x01
 		 && (config1 & 0x10) == 0x00
 		 && (status2 & 0x01) == 0x00
 		 && emerg == emerg2
-		 && convrate <= 0x07) {
+		 && convrate <= 0x07) अणु
 			name = "max6696";
-		} else
+		पूर्ण अन्यथा
 		/*
-		 * The chip_id register of the MAX6680 and MAX6681 holds the
-		 * revision of the chip. The lowest bit of the config1 register
-		 * is unused and should return zero when read, so should the
+		 * The chip_id रेजिस्टर of the MAX6680 and MAX6681 holds the
+		 * revision of the chip. The lowest bit of the config1 रेजिस्टर
+		 * is unused and should वापस zero when पढ़ो, so should the
 		 * second to last bit of config1 (software reset).
 		 */
-		if (chip_id == 0x01
+		अगर (chip_id == 0x01
 		 && (config1 & 0x03) == 0x00
-		 && convrate <= 0x07) {
+		 && convrate <= 0x07) अणु
 			name = "max6680";
-		} else
+		पूर्ण अन्यथा
 		/*
-		 * The chip_id register of the MAX6646/6647/6649 holds the
+		 * The chip_id रेजिस्टर of the MAX6646/6647/6649 holds the
 		 * revision of the chip. The lowest 6 bits of the config1
-		 * register are unused and should return zero when read.
+		 * रेजिस्टर are unused and should वापस zero when पढ़ो.
 		 */
-		if (chip_id == 0x59
+		अगर (chip_id == 0x59
 		 && (config1 & 0x3f) == 0x00
-		 && convrate <= 0x07) {
+		 && convrate <= 0x07) अणु
 			name = "max6646";
-		} else
+		पूर्ण अन्यथा
 		/*
 		 * The chip_id of the MAX6654 holds the revision of the chip.
-		 * The lowest 3 bits of the config1 register are unused and
-		 * should return zero when read.
+		 * The lowest 3 bits of the config1 रेजिस्टर are unused and
+		 * should वापस zero when पढ़ो.
 		 */
-		if (chip_id == 0x08
+		अगर (chip_id == 0x08
 		 && (config1 & 0x07) == 0x00
-		 && convrate <= 0x07) {
+		 && convrate <= 0x07) अणु
 			name = "max6654";
-		}
-	} else
-	if (address == 0x4C
-	 && man_id == 0x5C) { /* Winbond/Nuvoton */
-		if ((config1 & 0x2A) == 0x00
-		 && (config2 & 0xF8) == 0x00) {
-			if (chip_id == 0x01 /* W83L771W/G */
-			 && convrate <= 0x09) {
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (address == 0x4C
+	 && man_id == 0x5C) अणु /* Winbond/Nuvoton */
+		अगर ((config1 & 0x2A) == 0x00
+		 && (config2 & 0xF8) == 0x00) अणु
+			अगर (chip_id == 0x01 /* W83L771W/G */
+			 && convrate <= 0x09) अणु
 				name = "w83l771";
-			} else
-			if ((chip_id & 0xFE) == 0x10 /* W83L771AWG/ASG */
-			 && convrate <= 0x08) {
+			पूर्ण अन्यथा
+			अगर ((chip_id & 0xFE) == 0x10 /* W83L771AWG/ASG */
+			 && convrate <= 0x08) अणु
 				name = "w83l771";
-			}
-		}
-	} else
-	if (address >= 0x48 && address <= 0x4F
-	 && man_id == 0xA1) { /*  NXP Semiconductor/Philips */
-		if (chip_id == 0x00
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर (address >= 0x48 && address <= 0x4F
+	 && man_id == 0xA1) अणु /*  NXP Semiconductor/Philips */
+		अगर (chip_id == 0x00
 		 && (config1 & 0x2A) == 0x00
 		 && (config2 & 0xFE) == 0x00
-		 && convrate <= 0x09) {
+		 && convrate <= 0x09) अणु
 			name = "sa56004";
-		}
-	} else
-	if ((address == 0x4C || address == 0x4D)
-	 && man_id == 0x47) { /* GMT */
-		if (chip_id == 0x01 /* G781 */
+		पूर्ण
+	पूर्ण अन्यथा
+	अगर ((address == 0x4C || address == 0x4D)
+	 && man_id == 0x47) अणु /* GMT */
+		अगर (chip_id == 0x01 /* G781 */
 		 && (config1 & 0x3F) == 0x00
 		 && convrate <= 0x08)
 			name = "g781";
-	} else
-	if (address == 0x4C
-	 && man_id == 0x55) { /* Texas Instruments */
-		int local_ext;
+	पूर्ण अन्यथा
+	अगर (address == 0x4C
+	 && man_id == 0x55) अणु /* Texas Instruments */
+		पूर्णांक local_ext;
 
-		local_ext = i2c_smbus_read_byte_data(client,
+		local_ext = i2c_smbus_पढ़ो_byte_data(client,
 						     TMP451_REG_R_LOCAL_TEMPL);
 
-		if (chip_id == 0x00 /* TMP451 */
+		अगर (chip_id == 0x00 /* TMP451 */
 		 && (config1 & 0x1B) == 0x00
 		 && convrate <= 0x09
 		 && (local_ext & 0x0F) == 0x00)
 			name = "tmp451";
-	}
+	पूर्ण
 
-	if (!name) { /* identification failed */
+	अगर (!name) अणु /* identअगरication failed */
 		dev_dbg(&adapter->dev,
 			"Unsupported chip at 0x%02x (man_id=0x%02X, "
 			"chip_id=0x%02X)\n", address, man_id, chip_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	strlcpy(info->type, name, I2C_NAME_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lm90_restore_conf(void *_data)
-{
-	struct lm90_data *data = _data;
-	struct i2c_client *client = data->client;
+अटल व्योम lm90_restore_conf(व्योम *_data)
+अणु
+	काष्ठा lm90_data *data = _data;
+	काष्ठा i2c_client *client = data->client;
 
 	/* Restore initial configuration */
-	lm90_write_convrate(data, data->convrate_orig);
-	i2c_smbus_write_byte_data(client, LM90_REG_W_CONFIG1,
+	lm90_ग_लिखो_convrate(data, data->convrate_orig);
+	i2c_smbus_ग_लिखो_byte_data(client, LM90_REG_W_CONFIG1,
 				  data->config_orig);
-}
+पूर्ण
 
-static int lm90_init_client(struct i2c_client *client, struct lm90_data *data)
-{
-	int config, convrate;
+अटल पूर्णांक lm90_init_client(काष्ठा i2c_client *client, काष्ठा lm90_data *data)
+अणु
+	पूर्णांक config, convrate;
 
-	convrate = lm90_read_reg(client, LM90_REG_R_CONVRATE);
-	if (convrate < 0)
-		return convrate;
+	convrate = lm90_पढ़ो_reg(client, LM90_REG_R_CONVRATE);
+	अगर (convrate < 0)
+		वापस convrate;
 	data->convrate_orig = convrate;
 
 	/*
 	 * Start the conversions.
 	 */
-	config = lm90_read_reg(client, LM90_REG_R_CONFIG1);
-	if (config < 0)
-		return config;
+	config = lm90_पढ़ो_reg(client, LM90_REG_R_CONFIG1);
+	अगर (config < 0)
+		वापस config;
 	data->config_orig = config;
 	data->config = config;
 
 	lm90_set_convrate(client, data, 500); /* 500ms; 2Hz conversion rate */
 
 	/* Check Temperature Range Select */
-	if (data->kind == adt7461 || data->kind == tmp451) {
-		if (config & 0x04)
+	अगर (data->kind == adt7461 || data->kind == पंचांगp451) अणु
+		अगर (config & 0x04)
 			data->flags |= LM90_FLAG_ADT7461_EXT;
-	}
+	पूर्ण
 
 	/*
-	 * Put MAX6680/MAX8881 into extended resolution (bit 0x10,
+	 * Put MAX6680/MAX8881 पूर्णांकo extended resolution (bit 0x10,
 	 * 0.125 degree resolution) and range (0x08, extend range
-	 * to -64 degree) mode for the remote temperature sensor.
+	 * to -64 degree) mode क्रम the remote temperature sensor.
 	 */
-	if (data->kind == max6680)
+	अगर (data->kind == max6680)
 		config |= 0x18;
 
 	/*
-	 * Put MAX6654 into extended range (0x20, extend minimum range from
+	 * Put MAX6654 पूर्णांकo extended range (0x20, extend minimum range from
 	 * 0 degrees to -64 degrees). Note that extended resolution is not
 	 * possible on the MAX6654 unless conversion rate is set to 1 Hz or
-	 * slower, which is intentionally not done by default.
+	 * slower, which is पूर्णांकentionally not करोne by शेष.
 	 */
-	if (data->kind == max6654)
+	अगर (data->kind == max6654)
 		config |= 0x20;
 
 	/*
-	 * Select external channel 0 for max6695/96
+	 * Select बाह्यal channel 0 क्रम max6695/96
 	 */
-	if (data->kind == max6696)
+	अगर (data->kind == max6696)
 		config &= ~0x08;
 
 	config &= 0xBF;	/* run */
 	lm90_update_confreg(data, config);
 
-	return devm_add_action_or_reset(&client->dev, lm90_restore_conf, data);
-}
+	वापस devm_add_action_or_reset(&client->dev, lm90_restore_conf, data);
+पूर्ण
 
-static bool lm90_is_tripped(struct i2c_client *client, u16 *status)
-{
-	struct lm90_data *data = i2c_get_clientdata(client);
-	int st, st2 = 0;
+अटल bool lm90_is_tripped(काष्ठा i2c_client *client, u16 *status)
+अणु
+	काष्ठा lm90_data *data = i2c_get_clientdata(client);
+	पूर्णांक st, st2 = 0;
 
-	st = lm90_read_reg(client, LM90_REG_R_STATUS);
-	if (st < 0)
-		return false;
+	st = lm90_पढ़ो_reg(client, LM90_REG_R_STATUS);
+	अगर (st < 0)
+		वापस false;
 
-	if (data->kind == max6696) {
-		st2 = lm90_read_reg(client, MAX6696_REG_R_STATUS2);
-		if (st2 < 0)
-			return false;
-	}
+	अगर (data->kind == max6696) अणु
+		st2 = lm90_पढ़ो_reg(client, MAX6696_REG_R_STATUS2);
+		अगर (st2 < 0)
+			वापस false;
+	पूर्ण
 
 	*status = st | (st2 << 8);
 
-	if ((st & 0x7f) == 0 && (st2 & 0xfe) == 0)
-		return false;
+	अगर ((st & 0x7f) == 0 && (st2 & 0xfe) == 0)
+		वापस false;
 
-	if ((st & (LM90_STATUS_LLOW | LM90_STATUS_LHIGH | LM90_STATUS_LTHRM)) ||
+	अगर ((st & (LM90_STATUS_LLOW | LM90_STATUS_LHIGH | LM90_STATUS_LTHRM)) ||
 	    (st2 & MAX6696_STATUS2_LOT2))
 		dev_warn(&client->dev,
 			 "temp%d out of range, please check!\n", 1);
-	if ((st & (LM90_STATUS_RLOW | LM90_STATUS_RHIGH | LM90_STATUS_RTHRM)) ||
+	अगर ((st & (LM90_STATUS_RLOW | LM90_STATUS_RHIGH | LM90_STATUS_RTHRM)) ||
 	    (st2 & MAX6696_STATUS2_ROT2))
 		dev_warn(&client->dev,
 			 "temp%d out of range, please check!\n", 2);
-	if (st & LM90_STATUS_ROPEN)
+	अगर (st & LM90_STATUS_ROPEN)
 		dev_warn(&client->dev,
 			 "temp%d diode open, please check!\n", 2);
-	if (st2 & (MAX6696_STATUS2_R2LOW | MAX6696_STATUS2_R2HIGH |
+	अगर (st2 & (MAX6696_STATUS2_R2LOW | MAX6696_STATUS2_R2HIGH |
 		   MAX6696_STATUS2_R2THRM | MAX6696_STATUS2_R2OT2))
 		dev_warn(&client->dev,
 			 "temp%d out of range, please check!\n", 3);
-	if (st2 & MAX6696_STATUS2_R2OPEN)
+	अगर (st2 & MAX6696_STATUS2_R2OPEN)
 		dev_warn(&client->dev,
 			 "temp%d diode open, please check!\n", 3);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static irqreturn_t lm90_irq_thread(int irq, void *dev_id)
-{
-	struct i2c_client *client = dev_id;
+अटल irqवापस_t lm90_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा i2c_client *client = dev_id;
 	u16 status;
 
-	if (lm90_is_tripped(client, &status))
-		return IRQ_HANDLED;
-	else
-		return IRQ_NONE;
-}
+	अगर (lm90_is_tripped(client, &status))
+		वापस IRQ_HANDLED;
+	अन्यथा
+		वापस IRQ_NONE;
+पूर्ण
 
-static void lm90_remove_pec(void *dev)
-{
-	device_remove_file(dev, &dev_attr_pec);
-}
+अटल व्योम lm90_हटाओ_pec(व्योम *dev)
+अणु
+	device_हटाओ_file(dev, &dev_attr_pec);
+पूर्ण
 
-static void lm90_regulator_disable(void *regulator)
-{
+अटल व्योम lm90_regulator_disable(व्योम *regulator)
+अणु
 	regulator_disable(regulator);
-}
+पूर्ण
 
 
-static const struct hwmon_ops lm90_ops = {
+अटल स्थिर काष्ठा hwmon_ops lm90_ops = अणु
 	.is_visible = lm90_is_visible,
-	.read = lm90_read,
-	.write = lm90_write,
-};
+	.पढ़ो = lm90_पढ़ो,
+	.ग_लिखो = lm90_ग_लिखो,
+पूर्ण;
 
-static int lm90_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct i2c_adapter *adapter = client->adapter;
-	struct hwmon_channel_info *info;
-	struct regulator *regulator;
-	struct device *hwmon_dev;
-	struct lm90_data *data;
-	int err;
+अटल पूर्णांक lm90_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा hwmon_channel_info *info;
+	काष्ठा regulator *regulator;
+	काष्ठा device *hwmon_dev;
+	काष्ठा lm90_data *data;
+	पूर्णांक err;
 
 	regulator = devm_regulator_get(dev, "vcc");
-	if (IS_ERR(regulator))
-		return PTR_ERR(regulator);
+	अगर (IS_ERR(regulator))
+		वापस PTR_ERR(regulator);
 
 	err = regulator_enable(regulator);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Failed to enable regulator: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = devm_add_action_or_reset(dev, lm90_regulator_disable, regulator);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	data = devm_kzalloc(dev, sizeof(struct lm90_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा lm90_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = client;
 	i2c_set_clientdata(client, data);
 	mutex_init(&data->update_lock);
 
 	/* Set the device type */
-	if (client->dev.of_node)
-		data->kind = (enum chips)of_device_get_match_data(&client->dev);
-	else
+	अगर (client->dev.of_node)
+		data->kind = (क्रमागत chips)of_device_get_match_data(&client->dev);
+	अन्यथा
 		data->kind = i2c_match_id(lm90_id, client)->driver_data;
-	if (data->kind == adm1032) {
-		if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
+	अगर (data->kind == adm1032) अणु
+		अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE))
 			client->flags &= ~I2C_CLIENT_PEC;
-	}
+	पूर्ण
 
 	/*
-	 * Different devices have different alarm bits triggering the
+	 * Dअगरferent devices have dअगरferent alarm bits triggering the
 	 * ALERT# output
 	 */
 	data->alert_alarms = lm90_params[data->kind].alert_alarms;
@@ -1848,22 +1849,22 @@ static int lm90_probe(struct i2c_client *client)
 		HWMON_T_CRIT | HWMON_T_CRIT_HYST | HWMON_T_MIN_ALARM |
 		HWMON_T_MAX_ALARM | HWMON_T_CRIT_ALARM | HWMON_T_FAULT;
 
-	if (data->flags & LM90_HAVE_OFFSET)
+	अगर (data->flags & LM90_HAVE_OFFSET)
 		data->channel_config[1] |= HWMON_T_OFFSET;
 
-	if (data->flags & LM90_HAVE_EMERGENCY) {
+	अगर (data->flags & LM90_HAVE_EMERGENCY) अणु
 		data->channel_config[0] |= HWMON_T_EMERGENCY |
 			HWMON_T_EMERGENCY_HYST;
 		data->channel_config[1] |= HWMON_T_EMERGENCY |
 			HWMON_T_EMERGENCY_HYST;
-	}
+	पूर्ण
 
-	if (data->flags & LM90_HAVE_EMERGENCY_ALARM) {
+	अगर (data->flags & LM90_HAVE_EMERGENCY_ALARM) अणु
 		data->channel_config[0] |= HWMON_T_EMERGENCY_ALARM;
 		data->channel_config[1] |= HWMON_T_EMERGENCY_ALARM;
-	}
+	पूर्ण
 
-	if (data->flags & LM90_HAVE_TEMP3) {
+	अगर (data->flags & LM90_HAVE_TEMP3) अणु
 		data->channel_config[2] = HWMON_T_INPUT |
 			HWMON_T_MIN | HWMON_T_MAX |
 			HWMON_T_CRIT | HWMON_T_CRIT_HYST |
@@ -1871,7 +1872,7 @@ static int lm90_probe(struct i2c_client *client)
 			HWMON_T_MIN_ALARM | HWMON_T_MAX_ALARM |
 			HWMON_T_CRIT_ALARM | HWMON_T_EMERGENCY_ALARM |
 			HWMON_T_FAULT;
-	}
+	पूर्ण
 
 	data->reg_local_ext = lm90_params[data->kind].reg_local_ext;
 
@@ -1880,83 +1881,83 @@ static int lm90_probe(struct i2c_client *client)
 
 	/* Initialize the LM90 chip */
 	err = lm90_init_client(client, data);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(dev, "Failed to initialize device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/*
 	 * The 'pec' attribute is attached to the i2c device and thus created
 	 * separately.
 	 */
-	if (client->flags & I2C_CLIENT_PEC) {
+	अगर (client->flags & I2C_CLIENT_PEC) अणु
 		err = device_create_file(dev, &dev_attr_pec);
-		if (err)
-			return err;
-		err = devm_add_action_or_reset(dev, lm90_remove_pec, dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+		err = devm_add_action_or_reset(dev, lm90_हटाओ_pec, dev);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	hwmon_dev = devm_hwmon_device_register_with_info(dev, client->name,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(dev, client->name,
 							 data, &data->chip,
-							 NULL);
-	if (IS_ERR(hwmon_dev))
-		return PTR_ERR(hwmon_dev);
+							 शून्य);
+	अगर (IS_ERR(hwmon_dev))
+		वापस PTR_ERR(hwmon_dev);
 
-	if (client->irq) {
+	अगर (client->irq) अणु
 		dev_dbg(dev, "IRQ: %d\n", client->irq);
-		err = devm_request_threaded_irq(dev, client->irq,
-						NULL, lm90_irq_thread,
+		err = devm_request_thपढ़ोed_irq(dev, client->irq,
+						शून्य, lm90_irq_thपढ़ो,
 						IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 						"lm90", client);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(dev, "cannot request IRQ %d\n", client->irq);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lm90_alert(struct i2c_client *client, enum i2c_alert_protocol type,
-		       unsigned int flag)
-{
+अटल व्योम lm90_alert(काष्ठा i2c_client *client, क्रमागत i2c_alert_protocol type,
+		       अचिन्हित पूर्णांक flag)
+अणु
 	u16 alarms;
 
-	if (type != I2C_PROTOCOL_SMBUS_ALERT)
-		return;
+	अगर (type != I2C_PROTOCOL_SMBUS_ALERT)
+		वापस;
 
-	if (lm90_is_tripped(client, &alarms)) {
+	अगर (lm90_is_tripped(client, &alarms)) अणु
 		/*
-		 * Disable ALERT# output, because these chips don't implement
+		 * Disable ALERT# output, because these chips करोn't implement
 		 * SMBus alert correctly; they should only hold the alert line
 		 * low briefly.
 		 */
-		struct lm90_data *data = i2c_get_clientdata(client);
+		काष्ठा lm90_data *data = i2c_get_clientdata(client);
 
-		if ((data->flags & LM90_HAVE_BROKEN_ALERT) &&
-		    (alarms & data->alert_alarms)) {
+		अगर ((data->flags & LM90_HAVE_BROKEN_ALERT) &&
+		    (alarms & data->alert_alarms)) अणु
 			dev_dbg(&client->dev, "Disabling ALERT#\n");
 			lm90_update_confreg(data, data->config | 0x80);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_info(&client->dev, "Everything OK\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct i2c_driver lm90_driver = {
+अटल काष्ठा i2c_driver lm90_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name	= "lm90",
 		.of_match_table = of_match_ptr(lm90_of_match),
-	},
+	पूर्ण,
 	.probe_new	= lm90_probe,
 	.alert		= lm90_alert,
 	.id_table	= lm90_id,
 	.detect		= lm90_detect,
 	.address_list	= normal_i2c,
-};
+पूर्ण;
 
 module_i2c_driver(lm90_driver);
 

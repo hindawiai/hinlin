@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-#include <linux/compat.h>
-#include <linux/dma-mapping.h>
-#include <linux/iommu.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/uacce.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+#समावेश <linux/compat.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uacce.h>
 
-static struct class *uacce_class;
-static dev_t uacce_devt;
-static DEFINE_MUTEX(uacce_mutex);
-static DEFINE_XARRAY_ALLOC(uacce_xa);
+अटल काष्ठा class *uacce_class;
+अटल dev_t uacce_devt;
+अटल DEFINE_MUTEX(uacce_mutex);
+अटल DEFINE_XARRAY_ALLOC(uacce_xa);
 
-static int uacce_start_queue(struct uacce_queue *q)
-{
-	int ret = 0;
+अटल पूर्णांक uacce_start_queue(काष्ठा uacce_queue *q)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&uacce_mutex);
 
-	if (q->state != UACCE_Q_INIT) {
+	अगर (q->state != UACCE_Q_INIT) अणु
 		ret = -EINVAL;
-		goto out_with_lock;
-	}
+		जाओ out_with_lock;
+	पूर्ण
 
-	if (q->uacce->ops->start_queue) {
+	अगर (q->uacce->ops->start_queue) अणु
 		ret = q->uacce->ops->start_queue(q);
-		if (ret < 0)
-			goto out_with_lock;
-	}
+		अगर (ret < 0)
+			जाओ out_with_lock;
+	पूर्ण
 
 	q->state = UACCE_Q_STARTED;
 
 out_with_lock:
 	mutex_unlock(&uacce_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int uacce_put_queue(struct uacce_queue *q)
-{
-	struct uacce_device *uacce = q->uacce;
+अटल पूर्णांक uacce_put_queue(काष्ठा uacce_queue *q)
+अणु
+	काष्ठा uacce_device *uacce = q->uacce;
 
 	mutex_lock(&uacce_mutex);
 
-	if (q->state == UACCE_Q_ZOMBIE)
-		goto out;
+	अगर (q->state == UACCE_Q_ZOMBIE)
+		जाओ out;
 
-	if ((q->state == UACCE_Q_STARTED) && uacce->ops->stop_queue)
+	अगर ((q->state == UACCE_Q_STARTED) && uacce->ops->stop_queue)
 		uacce->ops->stop_queue(q);
 
-	if ((q->state == UACCE_Q_INIT || q->state == UACCE_Q_STARTED) &&
+	अगर ((q->state == UACCE_Q_INIT || q->state == UACCE_Q_STARTED) &&
 	     uacce->ops->put_queue)
 		uacce->ops->put_queue(q);
 
@@ -57,99 +58,99 @@ static int uacce_put_queue(struct uacce_queue *q)
 out:
 	mutex_unlock(&uacce_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long uacce_fops_unl_ioctl(struct file *filep,
-				 unsigned int cmd, unsigned long arg)
-{
-	struct uacce_queue *q = filep->private_data;
-	struct uacce_device *uacce = q->uacce;
+अटल दीर्घ uacce_fops_unl_ioctl(काष्ठा file *filep,
+				 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा uacce_queue *q = filep->निजी_data;
+	काष्ठा uacce_device *uacce = q->uacce;
 
-	switch (cmd) {
-	case UACCE_CMD_START_Q:
-		return uacce_start_queue(q);
+	चयन (cmd) अणु
+	हाल UACCE_CMD_START_Q:
+		वापस uacce_start_queue(q);
 
-	case UACCE_CMD_PUT_Q:
-		return uacce_put_queue(q);
+	हाल UACCE_CMD_PUT_Q:
+		वापस uacce_put_queue(q);
 
-	default:
-		if (!uacce->ops->ioctl)
-			return -EINVAL;
+	शेष:
+		अगर (!uacce->ops->ioctl)
+			वापस -EINVAL;
 
-		return uacce->ops->ioctl(q, cmd, arg);
-	}
-}
+		वापस uacce->ops->ioctl(q, cmd, arg);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long uacce_fops_compat_ioctl(struct file *filep,
-				   unsigned int cmd, unsigned long arg)
-{
-	arg = (unsigned long)compat_ptr(arg);
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ uacce_fops_compat_ioctl(काष्ठा file *filep,
+				   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	arg = (अचिन्हित दीर्घ)compat_ptr(arg);
 
-	return uacce_fops_unl_ioctl(filep, cmd, arg);
-}
-#endif
+	वापस uacce_fops_unl_ioctl(filep, cmd, arg);
+पूर्ण
+#पूर्ण_अगर
 
-static int uacce_bind_queue(struct uacce_device *uacce, struct uacce_queue *q)
-{
+अटल पूर्णांक uacce_bind_queue(काष्ठा uacce_device *uacce, काष्ठा uacce_queue *q)
+अणु
 	u32 pasid;
-	struct iommu_sva *handle;
+	काष्ठा iommu_sva *handle;
 
-	if (!(uacce->flags & UACCE_DEV_SVA))
-		return 0;
+	अगर (!(uacce->flags & UACCE_DEV_SVA))
+		वापस 0;
 
-	handle = iommu_sva_bind_device(uacce->parent, current->mm, NULL);
-	if (IS_ERR(handle))
-		return PTR_ERR(handle);
+	handle = iommu_sva_bind_device(uacce->parent, current->mm, शून्य);
+	अगर (IS_ERR(handle))
+		वापस PTR_ERR(handle);
 
 	pasid = iommu_sva_get_pasid(handle);
-	if (pasid == IOMMU_PASID_INVALID) {
+	अगर (pasid == IOMMU_PASID_INVALID) अणु
 		iommu_sva_unbind_device(handle);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	q->handle = handle;
 	q->pasid = pasid;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uacce_unbind_queue(struct uacce_queue *q)
-{
-	if (!q->handle)
-		return;
+अटल व्योम uacce_unbind_queue(काष्ठा uacce_queue *q)
+अणु
+	अगर (!q->handle)
+		वापस;
 	iommu_sva_unbind_device(q->handle);
-	q->handle = NULL;
-}
+	q->handle = शून्य;
+पूर्ण
 
-static int uacce_fops_open(struct inode *inode, struct file *filep)
-{
-	struct uacce_device *uacce;
-	struct uacce_queue *q;
-	int ret;
+अटल पूर्णांक uacce_fops_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा uacce_device *uacce;
+	काष्ठा uacce_queue *q;
+	पूर्णांक ret;
 
 	uacce = xa_load(&uacce_xa, iminor(inode));
-	if (!uacce)
-		return -ENODEV;
+	अगर (!uacce)
+		वापस -ENODEV;
 
-	q = kzalloc(sizeof(struct uacce_queue), GFP_KERNEL);
-	if (!q)
-		return -ENOMEM;
+	q = kzalloc(माप(काष्ठा uacce_queue), GFP_KERNEL);
+	अगर (!q)
+		वापस -ENOMEM;
 
 	ret = uacce_bind_queue(uacce, q);
-	if (ret)
-		goto out_with_mem;
+	अगर (ret)
+		जाओ out_with_mem;
 
 	q->uacce = uacce;
 
-	if (uacce->ops->get_queue) {
+	अगर (uacce->ops->get_queue) अणु
 		ret = uacce->ops->get_queue(uacce, q->pasid, q);
-		if (ret < 0)
-			goto out_with_bond;
-	}
+		अगर (ret < 0)
+			जाओ out_with_bond;
+	पूर्ण
 
-	init_waitqueue_head(&q->wait);
-	filep->private_data = q;
+	init_रुकोqueue_head(&q->रुको);
+	filep->निजी_data = q;
 	uacce->inode = inode;
 	q->state = UACCE_Q_INIT;
 
@@ -157,290 +158,290 @@ static int uacce_fops_open(struct inode *inode, struct file *filep)
 	list_add(&q->list, &uacce->queues);
 	mutex_unlock(&uacce->queues_lock);
 
-	return 0;
+	वापस 0;
 
 out_with_bond:
 	uacce_unbind_queue(q);
 out_with_mem:
-	kfree(q);
-	return ret;
-}
+	kमुक्त(q);
+	वापस ret;
+पूर्ण
 
-static int uacce_fops_release(struct inode *inode, struct file *filep)
-{
-	struct uacce_queue *q = filep->private_data;
+अटल पूर्णांक uacce_fops_release(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा uacce_queue *q = filep->निजी_data;
 
 	mutex_lock(&q->uacce->queues_lock);
 	list_del(&q->list);
 	mutex_unlock(&q->uacce->queues_lock);
 	uacce_put_queue(q);
 	uacce_unbind_queue(q);
-	kfree(q);
+	kमुक्त(q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uacce_vma_close(struct vm_area_struct *vma)
-{
-	struct uacce_queue *q = vma->vm_private_data;
-	struct uacce_qfile_region *qfr = NULL;
+अटल व्योम uacce_vma_बंद(काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा uacce_queue *q = vma->vm_निजी_data;
+	काष्ठा uacce_qfile_region *qfr = शून्य;
 
-	if (vma->vm_pgoff < UACCE_MAX_REGION)
+	अगर (vma->vm_pgoff < UACCE_MAX_REGION)
 		qfr = q->qfrs[vma->vm_pgoff];
 
-	kfree(qfr);
-}
+	kमुक्त(qfr);
+पूर्ण
 
-static const struct vm_operations_struct uacce_vm_ops = {
-	.close = uacce_vma_close,
-};
+अटल स्थिर काष्ठा vm_operations_काष्ठा uacce_vm_ops = अणु
+	.बंद = uacce_vma_बंद,
+पूर्ण;
 
-static int uacce_fops_mmap(struct file *filep, struct vm_area_struct *vma)
-{
-	struct uacce_queue *q = filep->private_data;
-	struct uacce_device *uacce = q->uacce;
-	struct uacce_qfile_region *qfr;
-	enum uacce_qfrt type = UACCE_MAX_REGION;
-	int ret = 0;
+अटल पूर्णांक uacce_fops_mmap(काष्ठा file *filep, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा uacce_queue *q = filep->निजी_data;
+	काष्ठा uacce_device *uacce = q->uacce;
+	काष्ठा uacce_qfile_region *qfr;
+	क्रमागत uacce_qfrt type = UACCE_MAX_REGION;
+	पूर्णांक ret = 0;
 
-	if (vma->vm_pgoff < UACCE_MAX_REGION)
+	अगर (vma->vm_pgoff < UACCE_MAX_REGION)
 		type = vma->vm_pgoff;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	qfr = kzalloc(sizeof(*qfr), GFP_KERNEL);
-	if (!qfr)
-		return -ENOMEM;
+	qfr = kzalloc(माप(*qfr), GFP_KERNEL);
+	अगर (!qfr)
+		वापस -ENOMEM;
 
 	vma->vm_flags |= VM_DONTCOPY | VM_DONTEXPAND | VM_WIPEONFORK;
 	vma->vm_ops = &uacce_vm_ops;
-	vma->vm_private_data = q;
+	vma->vm_निजी_data = q;
 	qfr->type = type;
 
 	mutex_lock(&uacce_mutex);
 
-	if (q->state != UACCE_Q_INIT && q->state != UACCE_Q_STARTED) {
+	अगर (q->state != UACCE_Q_INIT && q->state != UACCE_Q_STARTED) अणु
 		ret = -EINVAL;
-		goto out_with_lock;
-	}
+		जाओ out_with_lock;
+	पूर्ण
 
-	if (q->qfrs[type]) {
+	अगर (q->qfrs[type]) अणु
 		ret = -EEXIST;
-		goto out_with_lock;
-	}
+		जाओ out_with_lock;
+	पूर्ण
 
-	switch (type) {
-	case UACCE_QFRT_MMIO:
-	case UACCE_QFRT_DUS:
-		if (!uacce->ops->mmap) {
+	चयन (type) अणु
+	हाल UACCE_QFRT_MMIO:
+	हाल UACCE_QFRT_DUS:
+		अगर (!uacce->ops->mmap) अणु
 			ret = -EINVAL;
-			goto out_with_lock;
-		}
+			जाओ out_with_lock;
+		पूर्ण
 
 		ret = uacce->ops->mmap(q, vma, qfr);
-		if (ret)
-			goto out_with_lock;
-		break;
+		अगर (ret)
+			जाओ out_with_lock;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-		goto out_with_lock;
-	}
+		जाओ out_with_lock;
+	पूर्ण
 
 	q->qfrs[type] = qfr;
 	mutex_unlock(&uacce_mutex);
 
-	return ret;
+	वापस ret;
 
 out_with_lock:
 	mutex_unlock(&uacce_mutex);
-	kfree(qfr);
-	return ret;
-}
+	kमुक्त(qfr);
+	वापस ret;
+पूर्ण
 
-static __poll_t uacce_fops_poll(struct file *file, poll_table *wait)
-{
-	struct uacce_queue *q = file->private_data;
-	struct uacce_device *uacce = q->uacce;
+अटल __poll_t uacce_fops_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा uacce_queue *q = file->निजी_data;
+	काष्ठा uacce_device *uacce = q->uacce;
 
-	poll_wait(file, &q->wait, wait);
-	if (uacce->ops->is_q_updated && uacce->ops->is_q_updated(q))
-		return EPOLLIN | EPOLLRDNORM;
+	poll_रुको(file, &q->रुको, रुको);
+	अगर (uacce->ops->is_q_updated && uacce->ops->is_q_updated(q))
+		वापस EPOLLIN | EPOLLRDNORM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations uacce_fops = {
+अटल स्थिर काष्ठा file_operations uacce_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= uacce_fops_open,
+	.खोलो		= uacce_fops_खोलो,
 	.release	= uacce_fops_release,
 	.unlocked_ioctl	= uacce_fops_unl_ioctl,
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= uacce_fops_compat_ioctl,
-#endif
+#पूर्ण_अगर
 	.mmap		= uacce_fops_mmap,
 	.poll		= uacce_fops_poll,
-};
+पूर्ण;
 
-#define to_uacce_device(dev) container_of(dev, struct uacce_device, dev)
+#घोषणा to_uacce_device(dev) container_of(dev, काष्ठा uacce_device, dev)
 
-static ssize_t api_show(struct device *dev,
-			struct device_attribute *attr, char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार api_show(काष्ठा device *dev,
+			काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	return sprintf(buf, "%s\n", uacce->api_ver);
-}
+	वापस प्र_लिखो(buf, "%s\n", uacce->api_ver);
+पूर्ण
 
-static ssize_t flags_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार flags_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	return sprintf(buf, "%u\n", uacce->flags);
-}
+	वापस प्र_लिखो(buf, "%u\n", uacce->flags);
+पूर्ण
 
-static ssize_t available_instances_show(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार available_instances_show(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	if (!uacce->ops->get_available_instances)
-		return -ENODEV;
+	अगर (!uacce->ops->get_available_instances)
+		वापस -ENODEV;
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		       uacce->ops->get_available_instances(uacce));
-}
+पूर्ण
 
-static ssize_t algorithms_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार algorithms_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	return sprintf(buf, "%s\n", uacce->algs);
-}
+	वापस प्र_लिखो(buf, "%s\n", uacce->algs);
+पूर्ण
 
-static ssize_t region_mmio_size_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार region_mmio_size_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	return sprintf(buf, "%lu\n",
+	वापस प्र_लिखो(buf, "%lu\n",
 		       uacce->qf_pg_num[UACCE_QFRT_MMIO] << PAGE_SHIFT);
-}
+पूर्ण
 
-static ssize_t region_dus_size_show(struct device *dev,
-				    struct device_attribute *attr, char *buf)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल sमाप_प्रकार region_dus_size_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	return sprintf(buf, "%lu\n",
+	वापस प्र_लिखो(buf, "%lu\n",
 		       uacce->qf_pg_num[UACCE_QFRT_DUS] << PAGE_SHIFT);
-}
+पूर्ण
 
-static DEVICE_ATTR_RO(api);
-static DEVICE_ATTR_RO(flags);
-static DEVICE_ATTR_RO(available_instances);
-static DEVICE_ATTR_RO(algorithms);
-static DEVICE_ATTR_RO(region_mmio_size);
-static DEVICE_ATTR_RO(region_dus_size);
+अटल DEVICE_ATTR_RO(api);
+अटल DEVICE_ATTR_RO(flags);
+अटल DEVICE_ATTR_RO(available_instances);
+अटल DEVICE_ATTR_RO(algorithms);
+अटल DEVICE_ATTR_RO(region_mmio_size);
+अटल DEVICE_ATTR_RO(region_dus_size);
 
-static struct attribute *uacce_dev_attrs[] = {
+अटल काष्ठा attribute *uacce_dev_attrs[] = अणु
 	&dev_attr_api.attr,
 	&dev_attr_flags.attr,
 	&dev_attr_available_instances.attr,
 	&dev_attr_algorithms.attr,
 	&dev_attr_region_mmio_size.attr,
 	&dev_attr_region_dus_size.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static umode_t uacce_dev_is_visible(struct kobject *kobj,
-				    struct attribute *attr, int n)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल umode_t uacce_dev_is_visible(काष्ठा kobject *kobj,
+				    काष्ठा attribute *attr, पूर्णांक n)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	if (((attr == &dev_attr_region_mmio_size.attr) &&
+	अगर (((attr == &dev_attr_region_mmio_size.attr) &&
 	    (!uacce->qf_pg_num[UACCE_QFRT_MMIO])) ||
 	    ((attr == &dev_attr_region_dus_size.attr) &&
 	    (!uacce->qf_pg_num[UACCE_QFRT_DUS])))
-		return 0;
+		वापस 0;
 
-	return attr->mode;
-}
+	वापस attr->mode;
+पूर्ण
 
-static struct attribute_group uacce_dev_group = {
+अटल काष्ठा attribute_group uacce_dev_group = अणु
 	.is_visible	= uacce_dev_is_visible,
 	.attrs		= uacce_dev_attrs,
-};
+पूर्ण;
 
 __ATTRIBUTE_GROUPS(uacce_dev);
 
-static void uacce_release(struct device *dev)
-{
-	struct uacce_device *uacce = to_uacce_device(dev);
+अटल व्योम uacce_release(काष्ठा device *dev)
+अणु
+	काष्ठा uacce_device *uacce = to_uacce_device(dev);
 
-	kfree(uacce);
-}
+	kमुक्त(uacce);
+पूर्ण
 
-static unsigned int uacce_enable_sva(struct device *parent, unsigned int flags)
-{
-	if (!(flags & UACCE_DEV_SVA))
-		return flags;
+अटल अचिन्हित पूर्णांक uacce_enable_sva(काष्ठा device *parent, अचिन्हित पूर्णांक flags)
+अणु
+	अगर (!(flags & UACCE_DEV_SVA))
+		वापस flags;
 
 	flags &= ~UACCE_DEV_SVA;
 
-	if (iommu_dev_enable_feature(parent, IOMMU_DEV_FEAT_IOPF))
-		return flags;
+	अगर (iommu_dev_enable_feature(parent, IOMMU_DEV_FEAT_IOPF))
+		वापस flags;
 
-	if (iommu_dev_enable_feature(parent, IOMMU_DEV_FEAT_SVA)) {
+	अगर (iommu_dev_enable_feature(parent, IOMMU_DEV_FEAT_SVA)) अणु
 		iommu_dev_disable_feature(parent, IOMMU_DEV_FEAT_IOPF);
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 
-	return flags | UACCE_DEV_SVA;
-}
+	वापस flags | UACCE_DEV_SVA;
+पूर्ण
 
-static void uacce_disable_sva(struct uacce_device *uacce)
-{
-	if (!(uacce->flags & UACCE_DEV_SVA))
-		return;
+अटल व्योम uacce_disable_sva(काष्ठा uacce_device *uacce)
+अणु
+	अगर (!(uacce->flags & UACCE_DEV_SVA))
+		वापस;
 
 	iommu_dev_disable_feature(uacce->parent, IOMMU_DEV_FEAT_SVA);
 	iommu_dev_disable_feature(uacce->parent, IOMMU_DEV_FEAT_IOPF);
-}
+पूर्ण
 
 /**
  * uacce_alloc() - alloc an accelerator
- * @parent: pointer of uacce parent device
- * @interface: pointer of uacce_interface for register
+ * @parent: poपूर्णांकer of uacce parent device
+ * @पूर्णांकerface: poपूर्णांकer of uacce_पूर्णांकerface क्रम रेजिस्टर
  *
- * Returns uacce pointer if success and ERR_PTR if not
- * Need check returned negotiated uacce->flags
+ * Returns uacce poपूर्णांकer अगर success and ERR_PTR अगर not
+ * Need check वापसed negotiated uacce->flags
  */
-struct uacce_device *uacce_alloc(struct device *parent,
-				 struct uacce_interface *interface)
-{
-	unsigned int flags = interface->flags;
-	struct uacce_device *uacce;
-	int ret;
+काष्ठा uacce_device *uacce_alloc(काष्ठा device *parent,
+				 काष्ठा uacce_पूर्णांकerface *पूर्णांकerface)
+अणु
+	अचिन्हित पूर्णांक flags = पूर्णांकerface->flags;
+	काष्ठा uacce_device *uacce;
+	पूर्णांक ret;
 
-	uacce = kzalloc(sizeof(struct uacce_device), GFP_KERNEL);
-	if (!uacce)
-		return ERR_PTR(-ENOMEM);
+	uacce = kzalloc(माप(काष्ठा uacce_device), GFP_KERNEL);
+	अगर (!uacce)
+		वापस ERR_PTR(-ENOMEM);
 
 	flags = uacce_enable_sva(parent, flags);
 
 	uacce->parent = parent;
 	uacce->flags = flags;
-	uacce->ops = interface->ops;
+	uacce->ops = पूर्णांकerface->ops;
 
 	ret = xa_alloc(&uacce_xa, &uacce->dev_id, uacce, xa_limit_32b,
 		       GFP_KERNEL);
-	if (ret < 0)
-		goto err_with_uacce;
+	अगर (ret < 0)
+		जाओ err_with_uacce;
 
 	INIT_LIST_HEAD(&uacce->queues);
 	mutex_init(&uacce->queues_lock);
@@ -450,97 +451,97 @@ struct uacce_device *uacce_alloc(struct device *parent,
 	uacce->dev.groups = uacce_dev_groups;
 	uacce->dev.parent = uacce->parent;
 	uacce->dev.release = uacce_release;
-	dev_set_name(&uacce->dev, "%s-%d", interface->name, uacce->dev_id);
+	dev_set_name(&uacce->dev, "%s-%d", पूर्णांकerface->name, uacce->dev_id);
 
-	return uacce;
+	वापस uacce;
 
 err_with_uacce:
 	uacce_disable_sva(uacce);
-	kfree(uacce);
-	return ERR_PTR(ret);
-}
+	kमुक्त(uacce);
+	वापस ERR_PTR(ret);
+पूर्ण
 EXPORT_SYMBOL_GPL(uacce_alloc);
 
 /**
- * uacce_register() - add the accelerator to cdev and export to user space
+ * uacce_रेजिस्टर() - add the accelerator to cdev and export to user space
  * @uacce: The initialized uacce device
  *
- * Return 0 if register succeeded, or an error.
+ * Return 0 अगर रेजिस्टर succeeded, or an error.
  */
-int uacce_register(struct uacce_device *uacce)
-{
-	if (!uacce)
-		return -ENODEV;
+पूर्णांक uacce_रेजिस्टर(काष्ठा uacce_device *uacce)
+अणु
+	अगर (!uacce)
+		वापस -ENODEV;
 
 	uacce->cdev = cdev_alloc();
-	if (!uacce->cdev)
-		return -ENOMEM;
+	अगर (!uacce->cdev)
+		वापस -ENOMEM;
 
 	uacce->cdev->ops = &uacce_fops;
 	uacce->cdev->owner = THIS_MODULE;
 
-	return cdev_device_add(uacce->cdev, &uacce->dev);
-}
-EXPORT_SYMBOL_GPL(uacce_register);
+	वापस cdev_device_add(uacce->cdev, &uacce->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(uacce_रेजिस्टर);
 
 /**
- * uacce_remove() - remove the accelerator
- * @uacce: the accelerator to remove
+ * uacce_हटाओ() - हटाओ the accelerator
+ * @uacce: the accelerator to हटाओ
  */
-void uacce_remove(struct uacce_device *uacce)
-{
-	struct uacce_queue *q, *next_q;
+व्योम uacce_हटाओ(काष्ठा uacce_device *uacce)
+अणु
+	काष्ठा uacce_queue *q, *next_q;
 
-	if (!uacce)
-		return;
+	अगर (!uacce)
+		वापस;
 	/*
-	 * unmap remaining mapping from user space, preventing user still
-	 * access the mmaped area while parent device is already removed
+	 * unmap reमुख्यing mapping from user space, preventing user still
+	 * access the mmaped area जबतक parent device is alपढ़ोy हटाओd
 	 */
-	if (uacce->inode)
+	अगर (uacce->inode)
 		unmap_mapping_range(uacce->inode->i_mapping, 0, 0, 1);
 
-	/* ensure no open queue remains */
+	/* ensure no खोलो queue reमुख्यs */
 	mutex_lock(&uacce->queues_lock);
-	list_for_each_entry_safe(q, next_q, &uacce->queues, list) {
+	list_क्रम_each_entry_safe(q, next_q, &uacce->queues, list) अणु
 		uacce_put_queue(q);
 		uacce_unbind_queue(q);
-	}
+	पूर्ण
 	mutex_unlock(&uacce->queues_lock);
 
-	/* disable sva now since no opened queues */
+	/* disable sva now since no खोलोed queues */
 	uacce_disable_sva(uacce);
 
-	if (uacce->cdev)
+	अगर (uacce->cdev)
 		cdev_device_del(uacce->cdev, &uacce->dev);
 	xa_erase(&uacce_xa, uacce->dev_id);
 	put_device(&uacce->dev);
-}
-EXPORT_SYMBOL_GPL(uacce_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(uacce_हटाओ);
 
-static int __init uacce_init(void)
-{
-	int ret;
+अटल पूर्णांक __init uacce_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	uacce_class = class_create(THIS_MODULE, UACCE_NAME);
-	if (IS_ERR(uacce_class))
-		return PTR_ERR(uacce_class);
+	अगर (IS_ERR(uacce_class))
+		वापस PTR_ERR(uacce_class);
 
 	ret = alloc_chrdev_region(&uacce_devt, 0, MINORMASK, UACCE_NAME);
-	if (ret)
+	अगर (ret)
 		class_destroy(uacce_class);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __exit void uacce_exit(void)
-{
-	unregister_chrdev_region(uacce_devt, MINORMASK);
+अटल __निकास व्योम uacce_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(uacce_devt, MINORMASK);
 	class_destroy(uacce_class);
-}
+पूर्ण
 
 subsys_initcall(uacce_init);
-module_exit(uacce_exit);
+module_निकास(uacce_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("HiSilicon Tech. Co., Ltd.");

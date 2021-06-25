@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/lockd/mon.c
  *
@@ -7,154 +8,154 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/ktime.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/slab.h>
 
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/sunrpc/xprtsock.h>
-#include <linux/sunrpc/svc.h>
-#include <linux/lockd/lockd.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/sunrpc/xprtsock.h>
+#समावेश <linux/sunrpc/svc.h>
+#समावेश <linux/lockd/lockd.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "netns.h"
+#समावेश "netns.h"
 
-#define NLMDBG_FACILITY		NLMDBG_MONITOR
-#define NSM_PROGRAM		100024
-#define NSM_VERSION		1
+#घोषणा NLMDBG_FACILITY		NLMDBG_MONITOR
+#घोषणा NSM_PROGRAM		100024
+#घोषणा NSM_VERSION		1
 
-enum {
-	NSMPROC_NULL,
+क्रमागत अणु
+	NSMPROC_शून्य,
 	NSMPROC_STAT,
 	NSMPROC_MON,
 	NSMPROC_UNMON,
 	NSMPROC_UNMON_ALL,
 	NSMPROC_SIMU_CRASH,
 	NSMPROC_NOTIFY,
-};
+पूर्ण;
 
-struct nsm_args {
-	struct nsm_private	*priv;
+काष्ठा nsm_args अणु
+	काष्ठा nsm_निजी	*priv;
 	u32			prog;		/* RPC callback info */
 	u32			vers;
 	u32			proc;
 
-	char			*mon_name;
-	const char		*nodename;
-};
+	अक्षर			*mon_name;
+	स्थिर अक्षर		*nodename;
+पूर्ण;
 
-struct nsm_res {
+काष्ठा nsm_res अणु
 	u32			status;
 	u32			state;
-};
+पूर्ण;
 
-static const struct rpc_program	nsm_program;
-static				DEFINE_SPINLOCK(nsm_lock);
+अटल स्थिर काष्ठा rpc_program	nsm_program;
+अटल				DEFINE_SPINLOCK(nsm_lock);
 
 /*
  * Local NSM state
  */
-u32	__read_mostly		nsm_local_state;
-bool	__read_mostly		nsm_use_hostnames;
+u32	__पढ़ो_mostly		nsm_local_state;
+bool	__पढ़ो_mostly		nsm_use_hostnames;
 
-static inline struct sockaddr *nsm_addr(const struct nsm_handle *nsm)
-{
-	return (struct sockaddr *)&nsm->sm_addr;
-}
+अटल अंतरभूत काष्ठा sockaddr *nsm_addr(स्थिर काष्ठा nsm_handle *nsm)
+अणु
+	वापस (काष्ठा sockaddr *)&nsm->sm_addr;
+पूर्ण
 
-static struct rpc_clnt *nsm_create(struct net *net, const char *nodename)
-{
-	struct sockaddr_in sin = {
+अटल काष्ठा rpc_clnt *nsm_create(काष्ठा net *net, स्थिर अक्षर *nodename)
+अणु
+	काष्ठा sockaddr_in sin = अणु
 		.sin_family		= AF_INET,
 		.sin_addr.s_addr	= htonl(INADDR_LOOPBACK),
-	};
-	struct rpc_create_args args = {
+	पूर्ण;
+	काष्ठा rpc_create_args args = अणु
 		.net			= net,
 		.protocol		= XPRT_TRANSPORT_TCP,
-		.address		= (struct sockaddr *)&sin,
-		.addrsize		= sizeof(sin),
+		.address		= (काष्ठा sockaddr *)&sin,
+		.addrsize		= माप(sin),
 		.servername		= "rpc.statd",
 		.nodename		= nodename,
 		.program		= &nsm_program,
 		.version		= NSM_VERSION,
-		.authflavor		= RPC_AUTH_NULL,
+		.authflavor		= RPC_AUTH_शून्य,
 		.flags			= RPC_CLNT_CREATE_NOPING,
 		.cred			= current_cred(),
-	};
+	पूर्ण;
 
-	return rpc_create(&args);
-}
+	वापस rpc_create(&args);
+पूर्ण
 
-static int nsm_mon_unmon(struct nsm_handle *nsm, u32 proc, struct nsm_res *res,
-			 const struct nlm_host *host)
-{
-	int		status;
-	struct rpc_clnt *clnt;
-	struct nsm_args args = {
+अटल पूर्णांक nsm_mon_unmon(काष्ठा nsm_handle *nsm, u32 proc, काष्ठा nsm_res *res,
+			 स्थिर काष्ठा nlm_host *host)
+अणु
+	पूर्णांक		status;
+	काष्ठा rpc_clnt *clnt;
+	काष्ठा nsm_args args = अणु
 		.priv		= &nsm->sm_priv,
 		.prog		= NLM_PROGRAM,
 		.vers		= 3,
 		.proc		= NLMPROC_NSM_NOTIFY,
 		.mon_name	= nsm->sm_mon_name,
 		.nodename	= host->nodename,
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_argp	= &args,
 		.rpc_resp	= res,
-	};
+	पूर्ण;
 
-	memset(res, 0, sizeof(*res));
+	स_रखो(res, 0, माप(*res));
 
 	clnt = nsm_create(host->net, host->nodename);
-	if (IS_ERR(clnt)) {
-		dprintk("lockd: failed to create NSM upcall transport, "
+	अगर (IS_ERR(clnt)) अणु
+		dprपूर्णांकk("lockd: failed to create NSM upcall transport, "
 			"status=%ld, net=%x\n", PTR_ERR(clnt),
 			host->net->ns.inum);
-		return PTR_ERR(clnt);
-	}
+		वापस PTR_ERR(clnt);
+	पूर्ण
 
 	msg.rpc_proc = &clnt->cl_procinfo[proc];
 	status = rpc_call_sync(clnt, &msg, RPC_TASK_SOFTCONN);
-	if (status == -ECONNREFUSED) {
-		dprintk("lockd:	NSM upcall RPC failed, status=%d, forcing rebind\n",
+	अगर (status == -ECONNREFUSED) अणु
+		dprपूर्णांकk("lockd:	NSM upcall RPC failed, status=%d, forcing rebind\n",
 				status);
-		rpc_force_rebind(clnt);
+		rpc_क्रमce_rebind(clnt);
 		status = rpc_call_sync(clnt, &msg, RPC_TASK_SOFTCONN);
-	}
-	if (status < 0)
-		dprintk("lockd: NSM upcall RPC failed, status=%d\n",
+	पूर्ण
+	अगर (status < 0)
+		dprपूर्णांकk("lockd: NSM upcall RPC failed, status=%d\n",
 				status);
-	else
+	अन्यथा
 		status = 0;
 
-	rpc_shutdown_client(clnt);
-	return status;
-}
+	rpc_shutकरोwn_client(clnt);
+	वापस status;
+पूर्ण
 
 /**
- * nsm_monitor - Notify a peer in case we reboot
- * @host: pointer to nlm_host of peer to notify
+ * nsm_monitor - Notअगरy a peer in हाल we reboot
+ * @host: poपूर्णांकer to nlm_host of peer to notअगरy
  *
- * If this peer is not already monitored, this function sends an
+ * If this peer is not alपढ़ोy monitored, this function sends an
  * upcall to the local rpc.statd to record the name/address of
- * the peer to notify in case we reboot.
+ * the peer to notअगरy in हाल we reboot.
  *
- * Returns zero if the peer is monitored by the local rpc.statd;
- * otherwise a negative errno value is returned.
+ * Returns zero अगर the peer is monitored by the local rpc.statd;
+ * otherwise a negative त्रुटि_सं value is वापसed.
  */
-int nsm_monitor(const struct nlm_host *host)
-{
-	struct nsm_handle *nsm = host->h_nsmhandle;
-	struct nsm_res	res;
-	int		status;
+पूर्णांक nsm_monitor(स्थिर काष्ठा nlm_host *host)
+अणु
+	काष्ठा nsm_handle *nsm = host->h_nsmhandle;
+	काष्ठा nsm_res	res;
+	पूर्णांक		status;
 
-	dprintk("lockd: nsm_monitor(%s)\n", nsm->sm_name);
+	dprपूर्णांकk("lockd: nsm_monitor(%s)\n", nsm->sm_name);
 
-	if (nsm->sm_monitored)
-		return 0;
+	अगर (nsm->sm_monitored)
+		वापस 0;
 
 	/*
 	 * Choose whether to record the caller_name or IP address of
@@ -163,289 +164,289 @@ int nsm_monitor(const struct nlm_host *host)
 	nsm->sm_mon_name = nsm_use_hostnames ? nsm->sm_name : nsm->sm_addrbuf;
 
 	status = nsm_mon_unmon(nsm, NSMPROC_MON, &res, host);
-	if (unlikely(res.status != 0))
+	अगर (unlikely(res.status != 0))
 		status = -EIO;
-	if (unlikely(status < 0)) {
+	अगर (unlikely(status < 0)) अणु
 		pr_notice_ratelimited("lockd: cannot monitor %s\n", nsm->sm_name);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
 	nsm->sm_monitored = 1;
-	if (unlikely(nsm_local_state != res.state)) {
+	अगर (unlikely(nsm_local_state != res.state)) अणु
 		nsm_local_state = res.state;
-		dprintk("lockd: NSM state changed to %d\n", nsm_local_state);
-	}
-	return 0;
-}
+		dprपूर्णांकk("lockd: NSM state changed to %d\n", nsm_local_state);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * nsm_unmonitor - Unregister peer notification
- * @host: pointer to nlm_host of peer to stop monitoring
+ * nsm_unmonitor - Unरेजिस्टर peer notअगरication
+ * @host: poपूर्णांकer to nlm_host of peer to stop monitoring
  *
  * If this peer is monitored, this function sends an upcall to
- * tell the local rpc.statd not to send this peer a notification
+ * tell the local rpc.statd not to send this peer a notअगरication
  * when we reboot.
  */
-void nsm_unmonitor(const struct nlm_host *host)
-{
-	struct nsm_handle *nsm = host->h_nsmhandle;
-	struct nsm_res	res;
-	int status;
+व्योम nsm_unmonitor(स्थिर काष्ठा nlm_host *host)
+अणु
+	काष्ठा nsm_handle *nsm = host->h_nsmhandle;
+	काष्ठा nsm_res	res;
+	पूर्णांक status;
 
-	if (refcount_read(&nsm->sm_count) == 1
-	 && nsm->sm_monitored && !nsm->sm_sticky) {
-		dprintk("lockd: nsm_unmonitor(%s)\n", nsm->sm_name);
+	अगर (refcount_पढ़ो(&nsm->sm_count) == 1
+	 && nsm->sm_monitored && !nsm->sm_sticky) अणु
+		dprपूर्णांकk("lockd: nsm_unmonitor(%s)\n", nsm->sm_name);
 
 		status = nsm_mon_unmon(nsm, NSMPROC_UNMON, &res, host);
-		if (res.status != 0)
+		अगर (res.status != 0)
 			status = -EIO;
-		if (status < 0)
-			printk(KERN_NOTICE "lockd: cannot unmonitor %s\n",
+		अगर (status < 0)
+			prपूर्णांकk(KERN_NOTICE "lockd: cannot unmonitor %s\n",
 					nsm->sm_name);
-		else
+		अन्यथा
 			nsm->sm_monitored = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct nsm_handle *nsm_lookup_hostname(const struct list_head *nsm_handles,
-					const char *hostname, const size_t len)
-{
-	struct nsm_handle *nsm;
+अटल काष्ठा nsm_handle *nsm_lookup_hostname(स्थिर काष्ठा list_head *nsm_handles,
+					स्थिर अक्षर *hostname, स्थिर माप_प्रकार len)
+अणु
+	काष्ठा nsm_handle *nsm;
 
-	list_for_each_entry(nsm, nsm_handles, sm_link)
-		if (strlen(nsm->sm_name) == len &&
-		    memcmp(nsm->sm_name, hostname, len) == 0)
-			return nsm;
-	return NULL;
-}
+	list_क्रम_each_entry(nsm, nsm_handles, sm_link)
+		अगर (म_माप(nsm->sm_name) == len &&
+		    स_भेद(nsm->sm_name, hostname, len) == 0)
+			वापस nsm;
+	वापस शून्य;
+पूर्ण
 
-static struct nsm_handle *nsm_lookup_addr(const struct list_head *nsm_handles,
-					const struct sockaddr *sap)
-{
-	struct nsm_handle *nsm;
+अटल काष्ठा nsm_handle *nsm_lookup_addr(स्थिर काष्ठा list_head *nsm_handles,
+					स्थिर काष्ठा sockaddr *sap)
+अणु
+	काष्ठा nsm_handle *nsm;
 
-	list_for_each_entry(nsm, nsm_handles, sm_link)
-		if (rpc_cmp_addr(nsm_addr(nsm), sap))
-			return nsm;
-	return NULL;
-}
+	list_क्रम_each_entry(nsm, nsm_handles, sm_link)
+		अगर (rpc_cmp_addr(nsm_addr(nsm), sap))
+			वापस nsm;
+	वापस शून्य;
+पूर्ण
 
-static struct nsm_handle *nsm_lookup_priv(const struct list_head *nsm_handles,
-					const struct nsm_private *priv)
-{
-	struct nsm_handle *nsm;
+अटल काष्ठा nsm_handle *nsm_lookup_priv(स्थिर काष्ठा list_head *nsm_handles,
+					स्थिर काष्ठा nsm_निजी *priv)
+अणु
+	काष्ठा nsm_handle *nsm;
 
-	list_for_each_entry(nsm, nsm_handles, sm_link)
-		if (memcmp(nsm->sm_priv.data, priv->data,
-					sizeof(priv->data)) == 0)
-			return nsm;
-	return NULL;
-}
+	list_क्रम_each_entry(nsm, nsm_handles, sm_link)
+		अगर (स_भेद(nsm->sm_priv.data, priv->data,
+					माप(priv->data)) == 0)
+			वापस nsm;
+	वापस शून्य;
+पूर्ण
 
 /*
- * Construct a unique cookie to match this nsm_handle to this monitored
+ * Conकाष्ठा a unique cookie to match this nsm_handle to this monitored
  * host.  It is passed to the local rpc.statd via NSMPROC_MON, and
- * returned via NLMPROC_SM_NOTIFY, in the "priv" field of these
+ * वापसed via NLMPROC_SM_NOTIFY, in the "priv" field of these
  * requests.
  *
- * The NSM protocol requires that these cookies be unique while the
- * system is running.  We prefer a stronger requirement of making them
+ * The NSM protocol requires that these cookies be unique जबतक the
+ * प्रणाली is running.  We prefer a stronger requirement of making them
  * unique across reboots.  If user space bugs cause a stale cookie to
  * be sent to the kernel, it could cause the wrong host to lose its
- * lock state if cookies were not unique across reboots.
+ * lock state अगर cookies were not unique across reboots.
  *
  * The cookies are exposed only to local user space via loopback.  They
- * do not appear on the physical network.  If we want greater security
- * for some reason, nsm_init_private() could perform a one-way hash to
+ * करो not appear on the physical network.  If we want greater security
+ * क्रम some reason, nsm_init_निजी() could perक्रमm a one-way hash to
  * obscure the contents of the cookie.
  */
-static void nsm_init_private(struct nsm_handle *nsm)
-{
+अटल व्योम nsm_init_निजी(काष्ठा nsm_handle *nsm)
+अणु
 	u64 *p = (u64 *)&nsm->sm_priv.data;
 	s64 ns;
 
-	ns = ktime_get_ns();
+	ns = kसमय_get_ns();
 	put_unaligned(ns, p);
-	put_unaligned((unsigned long)nsm, p + 1);
-}
+	put_unaligned((अचिन्हित दीर्घ)nsm, p + 1);
+पूर्ण
 
-static struct nsm_handle *nsm_create_handle(const struct sockaddr *sap,
-					    const size_t salen,
-					    const char *hostname,
-					    const size_t hostname_len)
-{
-	struct nsm_handle *new;
+अटल काष्ठा nsm_handle *nsm_create_handle(स्थिर काष्ठा sockaddr *sap,
+					    स्थिर माप_प्रकार salen,
+					    स्थिर अक्षर *hostname,
+					    स्थिर माप_प्रकार hostname_len)
+अणु
+	काष्ठा nsm_handle *new;
 
-	new = kzalloc(sizeof(*new) + hostname_len + 1, GFP_KERNEL);
-	if (unlikely(new == NULL))
-		return NULL;
+	new = kzalloc(माप(*new) + hostname_len + 1, GFP_KERNEL);
+	अगर (unlikely(new == शून्य))
+		वापस शून्य;
 
 	refcount_set(&new->sm_count, 1);
-	new->sm_name = (char *)(new + 1);
-	memcpy(nsm_addr(new), sap, salen);
+	new->sm_name = (अक्षर *)(new + 1);
+	स_नकल(nsm_addr(new), sap, salen);
 	new->sm_addrlen = salen;
-	nsm_init_private(new);
+	nsm_init_निजी(new);
 
-	if (rpc_ntop(nsm_addr(new), new->sm_addrbuf,
-					sizeof(new->sm_addrbuf)) == 0)
-		(void)snprintf(new->sm_addrbuf, sizeof(new->sm_addrbuf),
+	अगर (rpc_ntop(nsm_addr(new), new->sm_addrbuf,
+					माप(new->sm_addrbuf)) == 0)
+		(व्योम)snम_लिखो(new->sm_addrbuf, माप(new->sm_addrbuf),
 				"unsupported address family");
-	memcpy(new->sm_name, hostname, hostname_len);
+	स_नकल(new->sm_name, hostname, hostname_len);
 	new->sm_name[hostname_len] = '\0';
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
 /**
  * nsm_get_handle - Find or create a cached nsm_handle
  * @net: network namespace
- * @sap: pointer to socket address of handle to find
+ * @sap: poपूर्णांकer to socket address of handle to find
  * @salen: length of socket address
- * @hostname: pointer to C string containing hostname to find
+ * @hostname: poपूर्णांकer to C string containing hostname to find
  * @hostname_len: length of C string
  *
  * Behavior is modulated by the global nsm_use_hostnames variable.
  *
  * Returns a cached nsm_handle after bumping its ref count, or
- * returns a fresh nsm_handle if a handle that matches @sap and/or
- * @hostname cannot be found in the handle cache.  Returns NULL if
+ * वापसs a fresh nsm_handle अगर a handle that matches @sap and/or
+ * @hostname cannot be found in the handle cache.  Returns शून्य अगर
  * an error occurs.
  */
-struct nsm_handle *nsm_get_handle(const struct net *net,
-				  const struct sockaddr *sap,
-				  const size_t salen, const char *hostname,
-				  const size_t hostname_len)
-{
-	struct nsm_handle *cached, *new = NULL;
-	struct lockd_net *ln = net_generic(net, lockd_net_id);
+काष्ठा nsm_handle *nsm_get_handle(स्थिर काष्ठा net *net,
+				  स्थिर काष्ठा sockaddr *sap,
+				  स्थिर माप_प्रकार salen, स्थिर अक्षर *hostname,
+				  स्थिर माप_प्रकार hostname_len)
+अणु
+	काष्ठा nsm_handle *cached, *new = शून्य;
+	काष्ठा lockd_net *ln = net_generic(net, lockd_net_id);
 
-	if (hostname && memchr(hostname, '/', hostname_len) != NULL) {
-		if (printk_ratelimit()) {
-			printk(KERN_WARNING "Invalid hostname \"%.*s\" "
+	अगर (hostname && स_प्रथम(hostname, '/', hostname_len) != शून्य) अणु
+		अगर (prपूर्णांकk_ratelimit()) अणु
+			prपूर्णांकk(KERN_WARNING "Invalid hostname \"%.*s\" "
 					    "in NFS lock request\n",
-				(int)hostname_len, hostname);
-		}
-		return NULL;
-	}
+				(पूर्णांक)hostname_len, hostname);
+		पूर्ण
+		वापस शून्य;
+	पूर्ण
 
 retry:
 	spin_lock(&nsm_lock);
 
-	if (nsm_use_hostnames && hostname != NULL)
+	अगर (nsm_use_hostnames && hostname != शून्य)
 		cached = nsm_lookup_hostname(&ln->nsm_handles,
 					hostname, hostname_len);
-	else
+	अन्यथा
 		cached = nsm_lookup_addr(&ln->nsm_handles, sap);
 
-	if (cached != NULL) {
+	अगर (cached != शून्य) अणु
 		refcount_inc(&cached->sm_count);
 		spin_unlock(&nsm_lock);
-		kfree(new);
-		dprintk("lockd: found nsm_handle for %s (%s), "
+		kमुक्त(new);
+		dprपूर्णांकk("lockd: found nsm_handle for %s (%s), "
 				"cnt %d\n", cached->sm_name,
 				cached->sm_addrbuf,
-				refcount_read(&cached->sm_count));
-		return cached;
-	}
+				refcount_पढ़ो(&cached->sm_count));
+		वापस cached;
+	पूर्ण
 
-	if (new != NULL) {
+	अगर (new != शून्य) अणु
 		list_add(&new->sm_link, &ln->nsm_handles);
 		spin_unlock(&nsm_lock);
-		dprintk("lockd: created nsm_handle for %s (%s)\n",
+		dprपूर्णांकk("lockd: created nsm_handle for %s (%s)\n",
 				new->sm_name, new->sm_addrbuf);
-		return new;
-	}
+		वापस new;
+	पूर्ण
 
 	spin_unlock(&nsm_lock);
 
 	new = nsm_create_handle(sap, salen, hostname, hostname_len);
-	if (unlikely(new == NULL))
-		return NULL;
-	goto retry;
-}
+	अगर (unlikely(new == शून्य))
+		वापस शून्य;
+	जाओ retry;
+पूर्ण
 
 /**
  * nsm_reboot_lookup - match NLMPROC_SM_NOTIFY arguments to an nsm_handle
  * @net:  network namespace
- * @info: pointer to NLMPROC_SM_NOTIFY arguments
+ * @info: poपूर्णांकer to NLMPROC_SM_NOTIFY arguments
  *
- * Returns a matching nsm_handle if found in the nsm cache. The returned
- * nsm_handle's reference count is bumped. Otherwise returns NULL if some
+ * Returns a matching nsm_handle अगर found in the nsm cache. The वापसed
+ * nsm_handle's reference count is bumped. Otherwise वापसs शून्य अगर some
  * error occurred.
  */
-struct nsm_handle *nsm_reboot_lookup(const struct net *net,
-				const struct nlm_reboot *info)
-{
-	struct nsm_handle *cached;
-	struct lockd_net *ln = net_generic(net, lockd_net_id);
+काष्ठा nsm_handle *nsm_reboot_lookup(स्थिर काष्ठा net *net,
+				स्थिर काष्ठा nlm_reboot *info)
+अणु
+	काष्ठा nsm_handle *cached;
+	काष्ठा lockd_net *ln = net_generic(net, lockd_net_id);
 
 	spin_lock(&nsm_lock);
 
 	cached = nsm_lookup_priv(&ln->nsm_handles, &info->priv);
-	if (unlikely(cached == NULL)) {
+	अगर (unlikely(cached == शून्य)) अणु
 		spin_unlock(&nsm_lock);
-		dprintk("lockd: never saw rebooted peer '%.*s' before\n",
+		dprपूर्णांकk("lockd: never saw rebooted peer '%.*s' before\n",
 				info->len, info->mon);
-		return cached;
-	}
+		वापस cached;
+	पूर्ण
 
 	refcount_inc(&cached->sm_count);
 	spin_unlock(&nsm_lock);
 
-	dprintk("lockd: host %s (%s) rebooted, cnt %d\n",
+	dprपूर्णांकk("lockd: host %s (%s) rebooted, cnt %d\n",
 			cached->sm_name, cached->sm_addrbuf,
-			refcount_read(&cached->sm_count));
-	return cached;
-}
+			refcount_पढ़ो(&cached->sm_count));
+	वापस cached;
+पूर्ण
 
 /**
  * nsm_release - Release an NSM handle
- * @nsm: pointer to handle to be released
+ * @nsm: poपूर्णांकer to handle to be released
  *
  */
-void nsm_release(struct nsm_handle *nsm)
-{
-	if (refcount_dec_and_lock(&nsm->sm_count, &nsm_lock)) {
+व्योम nsm_release(काष्ठा nsm_handle *nsm)
+अणु
+	अगर (refcount_dec_and_lock(&nsm->sm_count, &nsm_lock)) अणु
 		list_del(&nsm->sm_link);
 		spin_unlock(&nsm_lock);
-		dprintk("lockd: destroyed nsm_handle for %s (%s)\n",
+		dprपूर्णांकk("lockd: destroyed nsm_handle for %s (%s)\n",
 				nsm->sm_name, nsm->sm_addrbuf);
-		kfree(nsm);
-	}
-}
+		kमुक्त(nsm);
+	पूर्ण
+पूर्ण
 
 /*
- * XDR functions for NSM.
+ * XDR functions क्रम NSM.
  *
- * See https://www.opengroup.org/ for details on the Network
+ * See https://www.खोलोgroup.org/ क्रम details on the Network
  * Status Monitor wire protocol.
  */
 
-static void encode_nsm_string(struct xdr_stream *xdr, const char *string)
-{
-	const u32 len = strlen(string);
+अटल व्योम encode_nsm_string(काष्ठा xdr_stream *xdr, स्थिर अक्षर *string)
+अणु
+	स्थिर u32 len = म_माप(string);
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4 + len);
 	xdr_encode_opaque(p, string, len);
-}
+पूर्ण
 
 /*
- * "mon_name" specifies the host to be monitored.
+ * "mon_name" specअगरies the host to be monitored.
  */
-static void encode_mon_name(struct xdr_stream *xdr, const struct nsm_args *argp)
-{
+अटल व्योम encode_mon_name(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nsm_args *argp)
+अणु
 	encode_nsm_string(xdr, argp->mon_name);
-}
+पूर्ण
 
 /*
- * The "my_id" argument specifies the hostname and RPC procedure
- * to be called when the status manager receives notification
+ * The "my_id" argument specअगरies the hostname and RPC procedure
+ * to be called when the status manager receives notअगरication
  * (via the NLMPROC_SM_NOTIFY call) that the state of host "mon_name"
  * has changed.
  */
-static void encode_my_id(struct xdr_stream *xdr, const struct nsm_args *argp)
-{
+अटल व्योम encode_my_id(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nsm_args *argp)
+अणु
 	__be32 *p;
 
 	encode_nsm_string(xdr, argp->nodename);
@@ -453,89 +454,89 @@ static void encode_my_id(struct xdr_stream *xdr, const struct nsm_args *argp)
 	*p++ = cpu_to_be32(argp->prog);
 	*p++ = cpu_to_be32(argp->vers);
 	*p = cpu_to_be32(argp->proc);
-}
+पूर्ण
 
 /*
- * The "mon_id" argument specifies the non-private arguments
+ * The "mon_id" argument specअगरies the non-निजी arguments
  * of an NSMPROC_MON or NSMPROC_UNMON call.
  */
-static void encode_mon_id(struct xdr_stream *xdr, const struct nsm_args *argp)
-{
+अटल व्योम encode_mon_id(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nsm_args *argp)
+अणु
 	encode_mon_name(xdr, argp);
 	encode_my_id(xdr, argp);
-}
+पूर्ण
 
 /*
- * The "priv" argument may contain private information required
- * by the NSMPROC_MON call. This information will be supplied in the
+ * The "priv" argument may contain निजी inक्रमmation required
+ * by the NSMPROC_MON call. This inक्रमmation will be supplied in the
  * NLMPROC_SM_NOTIFY call.
  */
-static void encode_priv(struct xdr_stream *xdr, const struct nsm_args *argp)
-{
+अटल व्योम encode_priv(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nsm_args *argp)
+अणु
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, SM_PRIV_SIZE);
 	xdr_encode_opaque_fixed(p, argp->priv->data, SM_PRIV_SIZE);
-}
+पूर्ण
 
-static void nsm_xdr_enc_mon(struct rpc_rqst *req, struct xdr_stream *xdr,
-			    const void *argp)
-{
+अटल व्योम nsm_xdr_enc_mon(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
+			    स्थिर व्योम *argp)
+अणु
 	encode_mon_id(xdr, argp);
 	encode_priv(xdr, argp);
-}
+पूर्ण
 
-static void nsm_xdr_enc_unmon(struct rpc_rqst *req, struct xdr_stream *xdr,
-			      const void *argp)
-{
+अटल व्योम nsm_xdr_enc_unmon(काष्ठा rpc_rqst *req, काष्ठा xdr_stream *xdr,
+			      स्थिर व्योम *argp)
+अणु
 	encode_mon_id(xdr, argp);
-}
+पूर्ण
 
-static int nsm_xdr_dec_stat_res(struct rpc_rqst *rqstp,
-				struct xdr_stream *xdr,
-				void *data)
-{
-	struct nsm_res *resp = data;
+अटल पूर्णांक nsm_xdr_dec_stat_res(काष्ठा rpc_rqst *rqstp,
+				काष्ठा xdr_stream *xdr,
+				व्योम *data)
+अणु
+	काष्ठा nsm_res *resp = data;
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, 4 + 4);
-	if (unlikely(p == NULL))
-		return -EIO;
+	p = xdr_अंतरभूत_decode(xdr, 4 + 4);
+	अगर (unlikely(p == शून्य))
+		वापस -EIO;
 	resp->status = be32_to_cpup(p++);
 	resp->state = be32_to_cpup(p);
 
-	dprintk("lockd: %s status %d state %d\n",
+	dprपूर्णांकk("lockd: %s status %d state %d\n",
 		__func__, resp->status, resp->state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nsm_xdr_dec_stat(struct rpc_rqst *rqstp,
-			    struct xdr_stream *xdr,
-			    void *data)
-{
-	struct nsm_res *resp = data;
+अटल पूर्णांक nsm_xdr_dec_stat(काष्ठा rpc_rqst *rqstp,
+			    काष्ठा xdr_stream *xdr,
+			    व्योम *data)
+अणु
+	काष्ठा nsm_res *resp = data;
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, 4);
-	if (unlikely(p == NULL))
-		return -EIO;
+	p = xdr_अंतरभूत_decode(xdr, 4);
+	अगर (unlikely(p == शून्य))
+		वापस -EIO;
 	resp->state = be32_to_cpup(p);
 
-	dprintk("lockd: %s state %d\n", __func__, resp->state);
-	return 0;
-}
+	dprपूर्णांकk("lockd: %s state %d\n", __func__, resp->state);
+	वापस 0;
+पूर्ण
 
-#define SM_my_name_sz	(1+XDR_QUADLEN(SM_MAXSTRLEN))
-#define SM_my_id_sz	(SM_my_name_sz+3)
-#define SM_mon_name_sz	(1+XDR_QUADLEN(SM_MAXSTRLEN))
-#define SM_mon_id_sz	(SM_mon_name_sz+SM_my_id_sz)
-#define SM_priv_sz	(XDR_QUADLEN(SM_PRIV_SIZE))
-#define SM_mon_sz	(SM_mon_id_sz+SM_priv_sz)
-#define SM_monres_sz	2
-#define SM_unmonres_sz	1
+#घोषणा SM_my_name_sz	(1+XDR_QUADLEN(SM_MAXSTRLEN))
+#घोषणा SM_my_id_sz	(SM_my_name_sz+3)
+#घोषणा SM_mon_name_sz	(1+XDR_QUADLEN(SM_MAXSTRLEN))
+#घोषणा SM_mon_id_sz	(SM_mon_name_sz+SM_my_id_sz)
+#घोषणा SM_priv_sz	(XDR_QUADLEN(SM_PRIV_SIZE))
+#घोषणा SM_mon_sz	(SM_mon_id_sz+SM_priv_sz)
+#घोषणा SM_monres_sz	2
+#घोषणा SM_unmonres_sz	1
 
-static const struct rpc_procinfo nsm_procedures[] = {
-[NSMPROC_MON] = {
+अटल स्थिर काष्ठा rpc_procinfo nsm_procedures[] = अणु
+[NSMPROC_MON] = अणु
 		.p_proc		= NSMPROC_MON,
 		.p_encode	= nsm_xdr_enc_mon,
 		.p_decode	= nsm_xdr_dec_stat_res,
@@ -543,8 +544,8 @@ static const struct rpc_procinfo nsm_procedures[] = {
 		.p_replen	= SM_monres_sz,
 		.p_statidx	= NSMPROC_MON,
 		.p_name		= "MONITOR",
-	},
-[NSMPROC_UNMON] = {
+	पूर्ण,
+[NSMPROC_UNMON] = अणु
 		.p_proc		= NSMPROC_UNMON,
 		.p_encode	= nsm_xdr_enc_unmon,
 		.p_decode	= nsm_xdr_dec_stat,
@@ -552,27 +553,27 @@ static const struct rpc_procinfo nsm_procedures[] = {
 		.p_replen	= SM_unmonres_sz,
 		.p_statidx	= NSMPROC_UNMON,
 		.p_name		= "UNMONITOR",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static unsigned int nsm_version1_counts[ARRAY_SIZE(nsm_procedures)];
-static const struct rpc_version nsm_version1 = {
+अटल अचिन्हित पूर्णांक nsm_version1_counts[ARRAY_SIZE(nsm_procedures)];
+अटल स्थिर काष्ठा rpc_version nsm_version1 = अणु
 	.number		= 1,
 	.nrprocs	= ARRAY_SIZE(nsm_procedures),
 	.procs		= nsm_procedures,
 	.counts		= nsm_version1_counts,
-};
+पूर्ण;
 
-static const struct rpc_version *nsm_version[] = {
+अटल स्थिर काष्ठा rpc_version *nsm_version[] = अणु
 	[1] = &nsm_version1,
-};
+पूर्ण;
 
-static struct rpc_stat		nsm_stats;
+अटल काष्ठा rpc_stat		nsm_stats;
 
-static const struct rpc_program nsm_program = {
+अटल स्थिर काष्ठा rpc_program nsm_program = अणु
 	.name		= "statd",
 	.number		= NSM_PROGRAM,
 	.nrvers		= ARRAY_SIZE(nsm_version),
 	.version	= nsm_version,
 	.stats		= &nsm_stats
-};
+पूर्ण;

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * bdc_cmd.h - header for the BDC debug functions
+ * bdc_cmd.h - header क्रम the BDC debug functions
  *
  * Copyright (C) 2014 Broadcom Corporation
  *
  * Author: Ashwini Pahuja
  */
-#ifndef __LINUX_BDC_CMD_H__
-#define __LINUX_BDC_CMD_H__
+#अगर_अघोषित __LINUX_BDC_CMD_H__
+#घोषणा __LINUX_BDC_CMD_H__
 
 /* Command operations */
-int bdc_address_device(struct bdc *bdc, u32 add);
-int bdc_config_ep(struct bdc *bdc, struct bdc_ep *ep);
-int bdc_dconfig_ep(struct bdc *bdc, struct bdc_ep *ep);
-int bdc_stop_ep(struct bdc *bdc, int epnum);
-int bdc_ep_set_stall(struct bdc *bdc, int epnum);
-int bdc_ep_clear_stall(struct bdc *bdc, int epnum);
-int bdc_ep_bla(struct bdc *bdc, struct bdc_ep *ep, dma_addr_t dma_addr);
-int bdc_function_wake(struct bdc *bdc, u8 intf);
-int bdc_function_wake_fh(struct bdc *bdc, u8 intf);
+पूर्णांक bdc_address_device(काष्ठा bdc *bdc, u32 add);
+पूर्णांक bdc_config_ep(काष्ठा bdc *bdc, काष्ठा bdc_ep *ep);
+पूर्णांक bdc_dconfig_ep(काष्ठा bdc *bdc, काष्ठा bdc_ep *ep);
+पूर्णांक bdc_stop_ep(काष्ठा bdc *bdc, पूर्णांक epnum);
+पूर्णांक bdc_ep_set_stall(काष्ठा bdc *bdc, पूर्णांक epnum);
+पूर्णांक bdc_ep_clear_stall(काष्ठा bdc *bdc, पूर्णांक epnum);
+पूर्णांक bdc_ep_bla(काष्ठा bdc *bdc, काष्ठा bdc_ep *ep, dma_addr_t dma_addr);
+पूर्णांक bdc_function_wake(काष्ठा bdc *bdc, u8 पूर्णांकf);
+पूर्णांक bdc_function_wake_fh(काष्ठा bdc *bdc, u8 पूर्णांकf);
 
-#endif /* __LINUX_BDC_CMD_H__ */
+#पूर्ण_अगर /* __LINUX_BDC_CMD_H__ */

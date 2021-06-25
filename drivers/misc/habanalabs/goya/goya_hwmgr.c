@@ -1,381 +1,382 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "goyaP.h"
+#समावेश "goyaP.h"
 
-void goya_set_pll_profile(struct hl_device *hdev, enum hl_pll_frequency freq)
-{
-	struct goya_device *goya = hdev->asic_specific;
+व्योम goya_set_pll_profile(काष्ठा hl_device *hdev, क्रमागत hl_pll_frequency freq)
+अणु
+	काष्ठा goya_device *goya = hdev->asic_specअगरic;
 
-	switch (freq) {
-	case PLL_HIGH:
+	चयन (freq) अणु
+	हाल PLL_HIGH:
 		hl_set_frequency(hdev, HL_GOYA_MME_PLL, hdev->high_pll);
 		hl_set_frequency(hdev, HL_GOYA_TPC_PLL, hdev->high_pll);
 		hl_set_frequency(hdev, HL_GOYA_IC_PLL, hdev->high_pll);
-		break;
-	case PLL_LOW:
+		अवरोध;
+	हाल PLL_LOW:
 		hl_set_frequency(hdev, HL_GOYA_MME_PLL, GOYA_PLL_FREQ_LOW);
 		hl_set_frequency(hdev, HL_GOYA_TPC_PLL, GOYA_PLL_FREQ_LOW);
 		hl_set_frequency(hdev, HL_GOYA_IC_PLL, GOYA_PLL_FREQ_LOW);
-		break;
-	case PLL_LAST:
+		अवरोध;
+	हाल PLL_LAST:
 		hl_set_frequency(hdev, HL_GOYA_MME_PLL, goya->mme_clk);
 		hl_set_frequency(hdev, HL_GOYA_TPC_PLL, goya->tpc_clk);
 		hl_set_frequency(hdev, HL_GOYA_IC_PLL, goya->ic_clk);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(hdev->dev, "unknown frequency setting\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-int goya_get_clk_rate(struct hl_device *hdev, u32 *cur_clk, u32 *max_clk)
-{
-	long value;
+पूर्णांक goya_get_clk_rate(काष्ठा hl_device *hdev, u32 *cur_clk, u32 *max_clk)
+अणु
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_MME_PLL, false);
 
-	if (value < 0) {
+	अगर (value < 0) अणु
 		dev_err(hdev->dev, "Failed to retrieve device max clock %ld\n",
 			value);
-		return value;
-	}
+		वापस value;
+	पूर्ण
 
 	*max_clk = (value / 1000 / 1000);
 
 	value = hl_get_frequency(hdev, HL_GOYA_MME_PLL, true);
 
-	if (value < 0) {
+	अगर (value < 0) अणु
 		dev_err(hdev->dev,
 			"Failed to retrieve device current clock %ld\n",
 			value);
-		return value;
-	}
+		वापस value;
+	पूर्ण
 
 	*cur_clk = (value / 1000 / 1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t mme_clk_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार mme_clk_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_MME_PLL, false);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t mme_clk_store(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	struct goya_device *goya = hdev->asic_specific;
-	int rc;
-	long value;
+अटल sमाप_प्रकार mme_clk_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	काष्ठा goya_device *goya = hdev->asic_specअगरic;
+	पूर्णांक rc;
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (hdev->pm_mng_profile == PM_AUTO) {
+	अगर (hdev->pm_mng_profile == PM_AUTO) अणु
 		count = -EPERM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	hl_set_frequency(hdev, HL_GOYA_MME_PLL, value);
 	goya->mme_clk = value;
 
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t tpc_clk_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार tpc_clk_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_TPC_PLL, false);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t tpc_clk_store(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	struct goya_device *goya = hdev->asic_specific;
-	int rc;
-	long value;
+अटल sमाप_प्रकार tpc_clk_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	काष्ठा goya_device *goya = hdev->asic_specअगरic;
+	पूर्णांक rc;
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (hdev->pm_mng_profile == PM_AUTO) {
+	अगर (hdev->pm_mng_profile == PM_AUTO) अणु
 		count = -EPERM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	hl_set_frequency(hdev, HL_GOYA_TPC_PLL, value);
 	goya->tpc_clk = value;
 
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ic_clk_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार ic_clk_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_IC_PLL, false);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t ic_clk_store(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	struct goya_device *goya = hdev->asic_specific;
-	int rc;
-	long value;
+अटल sमाप_प्रकार ic_clk_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	काष्ठा goya_device *goya = hdev->asic_specअगरic;
+	पूर्णांक rc;
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	if (hdev->pm_mng_profile == PM_AUTO) {
+	अगर (hdev->pm_mng_profile == PM_AUTO) अणु
 		count = -EPERM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	hl_set_frequency(hdev, HL_GOYA_IC_PLL, value);
 	goya->ic_clk = value;
 
 fail:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t mme_clk_curr_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार mme_clk_curr_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_MME_PLL, true);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t tpc_clk_curr_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार tpc_clk_curr_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_TPC_PLL, true);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t ic_clk_curr_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
+अटल sमाप_प्रकार ic_clk_curr_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
 	value = hl_get_frequency(hdev, HL_GOYA_IC_PLL, true);
 
-	if (value < 0)
-		return value;
+	अगर (value < 0)
+		वापस value;
 
-	return sprintf(buf, "%lu\n", value);
-}
+	वापस प्र_लिखो(buf, "%lu\n", value);
+पूर्ण
 
-static ssize_t pm_mng_profile_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार pm_mng_profile_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
-	return sprintf(buf, "%s\n",
+	वापस प्र_लिखो(buf, "%s\n",
 			(hdev->pm_mng_profile == PM_AUTO) ? "auto" :
 			(hdev->pm_mng_profile == PM_MANUAL) ? "manual" :
 			"unknown");
-}
+पूर्ण
 
-static ssize_t pm_mng_profile_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार pm_mng_profile_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mutex_lock(&hdev->fpriv_list_lock);
 
-	if (hdev->compute_ctx) {
+	अगर (hdev->compute_ctx) अणु
 		dev_err(hdev->dev,
 			"Can't change PM profile while compute context is opened on the device\n");
 		count = -EPERM;
-		goto unlock_mutex;
-	}
+		जाओ unlock_mutex;
+	पूर्ण
 
-	if (strncmp("auto", buf, strlen("auto")) == 0) {
+	अगर (म_भेदन("auto", buf, म_माप("auto")) == 0) अणु
 		/* Make sure we are in LOW PLL when changing modes */
-		if (hdev->pm_mng_profile == PM_MANUAL) {
+		अगर (hdev->pm_mng_profile == PM_MANUAL) अणु
 			hdev->curr_pll_profile = PLL_HIGH;
 			hdev->pm_mng_profile = PM_AUTO;
 			hl_device_set_frequency(hdev, PLL_LOW);
-		}
-	} else if (strncmp("manual", buf, strlen("manual")) == 0) {
-		if (hdev->pm_mng_profile == PM_AUTO) {
-			/* Must release the lock because the work thread also
-			 * takes this lock. But before we release it, set
-			 * the mode to manual so nothing will change if a user
-			 * suddenly opens the device
+		पूर्ण
+	पूर्ण अन्यथा अगर (म_भेदन("manual", buf, म_माप("manual")) == 0) अणु
+		अगर (hdev->pm_mng_profile == PM_AUTO) अणु
+			/* Must release the lock because the work thपढ़ो also
+			 * takes this lock. But beक्रमe we release it, set
+			 * the mode to manual so nothing will change अगर a user
+			 * suddenly खोलोs the device
 			 */
 			hdev->pm_mng_profile = PM_MANUAL;
 
 			mutex_unlock(&hdev->fpriv_list_lock);
 
-			/* Flush the current work so we can return to the user
+			/* Flush the current work so we can वापस to the user
 			 * knowing that he is the only one changing frequencies
 			 */
 			flush_delayed_work(&hdev->work_freq);
 
-			return count;
-		}
-	} else {
+			वापस count;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(hdev->dev, "value should be auto or manual\n");
 		count = -EINVAL;
-	}
+	पूर्ण
 
 unlock_mutex:
 	mutex_unlock(&hdev->fpriv_list_lock);
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t high_pll_show(struct device *dev, struct device_attribute *attr,
-				char *buf)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
+अटल sमाप_प्रकार high_pll_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
 
-	if (!hl_device_operational(hdev, NULL))
-		return -ENODEV;
+	अगर (!hl_device_operational(hdev, शून्य))
+		वापस -ENODEV;
 
-	return sprintf(buf, "%u\n", hdev->high_pll);
-}
+	वापस प्र_लिखो(buf, "%u\n", hdev->high_pll);
+पूर्ण
 
-static ssize_t high_pll_store(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct hl_device *hdev = dev_get_drvdata(dev);
-	long value;
-	int rc;
+अटल sमाप_प्रकार high_pll_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा hl_device *hdev = dev_get_drvdata(dev);
+	दीर्घ value;
+	पूर्णांक rc;
 
-	if (!hl_device_operational(hdev, NULL)) {
+	अगर (!hl_device_operational(hdev, शून्य)) अणु
 		count = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = kstrtoul(buf, 0, &value);
+	rc = kम_से_अदीर्घ(buf, 0, &value);
 
-	if (rc) {
+	अगर (rc) अणु
 		count = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hdev->high_pll = value;
 
 out:
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(high_pll);
-static DEVICE_ATTR_RW(ic_clk);
-static DEVICE_ATTR_RO(ic_clk_curr);
-static DEVICE_ATTR_RW(mme_clk);
-static DEVICE_ATTR_RO(mme_clk_curr);
-static DEVICE_ATTR_RW(pm_mng_profile);
-static DEVICE_ATTR_RW(tpc_clk);
-static DEVICE_ATTR_RO(tpc_clk_curr);
+अटल DEVICE_ATTR_RW(high_pll);
+अटल DEVICE_ATTR_RW(ic_clk);
+अटल DEVICE_ATTR_RO(ic_clk_curr);
+अटल DEVICE_ATTR_RW(mme_clk);
+अटल DEVICE_ATTR_RO(mme_clk_curr);
+अटल DEVICE_ATTR_RW(pm_mng_profile);
+अटल DEVICE_ATTR_RW(tpc_clk);
+अटल DEVICE_ATTR_RO(tpc_clk_curr);
 
-static struct attribute *goya_dev_attrs[] = {
+अटल काष्ठा attribute *goya_dev_attrs[] = अणु
 	&dev_attr_high_pll.attr,
 	&dev_attr_ic_clk.attr,
 	&dev_attr_ic_clk_curr.attr,
@@ -384,11 +385,11 @@ static struct attribute *goya_dev_attrs[] = {
 	&dev_attr_pm_mng_profile.attr,
 	&dev_attr_tpc_clk.attr,
 	&dev_attr_tpc_clk_curr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-void goya_add_device_attr(struct hl_device *hdev,
-			struct attribute_group *dev_attr_grp)
-{
+व्योम goya_add_device_attr(काष्ठा hl_device *hdev,
+			काष्ठा attribute_group *dev_attr_grp)
+अणु
 	dev_attr_grp->attrs = goya_dev_attrs;
-}
+पूर्ण

@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * pm.c - Common OMAP2+ power management-related code
+ * pm.c - Common OMAP2+ घातer management-related code
  *
  * Copyright (C) 2010 Texas Instruments, Inc.
  * Copyright (C) 2010 Nokia Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/pm_opp.h>
-#include <linux/export.h>
-#include <linux/suspend.h>
-#include <linux/clk.h>
-#include <linux/cpu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/pm_opp.h>
+#समावेश <linux/export.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpu.h>
 
-#include <asm/system_misc.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "omap_device.h"
-#include "common.h"
+#समावेश "omap_device.h"
+#समावेश "common.h"
 
-#include "soc.h"
-#include "prcm-common.h"
-#include "voltage.h"
-#include "powerdomain.h"
-#include "clockdomain.h"
-#include "pm.h"
+#समावेश "soc.h"
+#समावेश "prcm-common.h"
+#समावेश "voltage.h"
+#समावेश "powerdomain.h"
+#समावेश "clockdomain.h"
+#समावेश "pm.h"
 
 u32 enable_off_mode;
 
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 /*
- * omap_pm_suspend: points to a function that does the SoC-specific
+ * omap_pm_suspend: poपूर्णांकs to a function that करोes the SoC-specअगरic
  * suspend work
  */
-static int (*omap_pm_suspend)(void);
-#endif
+अटल पूर्णांक (*omap_pm_suspend)(व्योम);
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
- * struct omap2_oscillator - Describe the board main oscillator latencies
- * @startup_time: oscillator startup latency
- * @shutdown_time: oscillator shutdown latency
+ * काष्ठा omap2_oscillator - Describe the board मुख्य oscillator latencies
+ * @startup_समय: oscillator startup latency
+ * @shutकरोwn_समय: oscillator shutकरोwn latency
  */
-struct omap2_oscillator {
-	u32 startup_time;
-	u32 shutdown_time;
-};
+काष्ठा omap2_oscillator अणु
+	u32 startup_समय;
+	u32 shutकरोwn_समय;
+पूर्ण;
 
-static struct omap2_oscillator oscillator = {
-	.startup_time = ULONG_MAX,
-	.shutdown_time = ULONG_MAX,
-};
+अटल काष्ठा omap2_oscillator oscillator = अणु
+	.startup_समय = अच_दीर्घ_उच्च,
+	.shutकरोwn_समय = अच_दीर्घ_उच्च,
+पूर्ण;
 
-void omap_pm_setup_oscillator(u32 tstart, u32 tshut)
-{
-	oscillator.startup_time = tstart;
-	oscillator.shutdown_time = tshut;
-}
+व्योम omap_pm_setup_oscillator(u32 tstart, u32 tshut)
+अणु
+	oscillator.startup_समय = tstart;
+	oscillator.shutकरोwn_समय = tshut;
+पूर्ण
 
-void omap_pm_get_oscillator(u32 *tstart, u32 *tshut)
-{
-	if (!tstart || !tshut)
-		return;
+व्योम omap_pm_get_oscillator(u32 *tstart, u32 *tshut)
+अणु
+	अगर (!tstart || !tshut)
+		वापस;
 
-	*tstart = oscillator.startup_time;
-	*tshut = oscillator.shutdown_time;
-}
-#endif
+	*tstart = oscillator.startup_समय;
+	*tshut = oscillator.shutकरोwn_समय;
+पूर्ण
+#पूर्ण_अगर
 
-int omap_pm_clkdms_setup(struct clockdomain *clkdm, void *unused)
-{
+पूर्णांक omap_pm_clkdms_setup(काष्ठा घड़ीकरोमुख्य *clkdm, व्योम *unused)
+अणु
 	clkdm_allow_idle(clkdm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SUSPEND
-static int omap_pm_enter(suspend_state_t suspend_state)
-{
-	int ret = 0;
+#अगर_घोषित CONFIG_SUSPEND
+अटल पूर्णांक omap_pm_enter(suspend_state_t suspend_state)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!omap_pm_suspend)
-		return -ENOENT; /* XXX doublecheck */
+	अगर (!omap_pm_suspend)
+		वापस -ENOENT; /* XXX द्विगुनcheck */
 
-	switch (suspend_state) {
-	case PM_SUSPEND_MEM:
+	चयन (suspend_state) अणु
+	हाल PM_SUSPEND_MEM:
 		ret = omap_pm_suspend();
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_pm_begin(suspend_state_t state)
-{
+अटल पूर्णांक omap_pm_begin(suspend_state_t state)
+अणु
 	cpu_idle_poll_ctrl(true);
-	if (soc_is_omap34xx())
+	अगर (soc_is_omap34xx())
 		omap_prcm_irq_prepare();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_pm_end(void)
-{
+अटल व्योम omap_pm_end(व्योम)
+अणु
 	cpu_idle_poll_ctrl(false);
-}
+पूर्ण
 
-static void omap_pm_wake(void)
-{
-	if (soc_is_omap34xx())
+अटल व्योम omap_pm_wake(व्योम)
+अणु
+	अगर (soc_is_omap34xx())
 		omap_prcm_irq_complete();
-}
+पूर्ण
 
-static const struct platform_suspend_ops omap_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops omap_pm_ops = अणु
 	.begin		= omap_pm_begin,
 	.end		= omap_pm_end,
 	.enter		= omap_pm_enter,
 	.wake		= omap_pm_wake,
 	.valid		= suspend_valid_only_mem,
-};
+पूर्ण;
 
 /**
- * omap_common_suspend_init - Set common suspend routines for OMAP SoCs
- * @pm_suspend: function pointer to SoC specific suspend function
+ * omap_common_suspend_init - Set common suspend routines क्रम OMAP SoCs
+ * @pm_suspend: function poपूर्णांकer to SoC specअगरic suspend function
  */
-void omap_common_suspend_init(void *pm_suspend)
-{
+व्योम omap_common_suspend_init(व्योम *pm_suspend)
+अणु
 	omap_pm_suspend = pm_suspend;
 	suspend_set_ops(&omap_pm_ops);
-}
-#endif /* CONFIG_SUSPEND */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SUSPEND */
 
-int __maybe_unused omap_pm_nop_init(void)
-{
-	return 0;
-}
+पूर्णांक __maybe_unused omap_pm_nop_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-int (*omap_pm_soc_init)(void);
+पूर्णांक (*omap_pm_soc_init)(व्योम);
 
-int __init omap2_common_pm_late_init(void)
-{
-	int error;
+पूर्णांक __init omap2_common_pm_late_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!omap_pm_soc_init)
-		return 0;
+	अगर (!omap_pm_soc_init)
+		वापस 0;
 
 	/* Init the voltage layer */
 	omap3_twl_init();
@@ -157,11 +158,11 @@ int __init omap2_common_pm_late_init(void)
 	omap_devinit_smartreflex();
 
 	error = omap_pm_soc_init();
-	if (error)
+	अगर (error)
 		pr_warn("%s: pm soc init failed: %i\n", __func__, error);
 
-	omap2_clk_enable_autoidle_all();
+	omap2_clk_enable_स्वतःidle_all();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 omap_late_initcall(omap2_common_pm_late_init);

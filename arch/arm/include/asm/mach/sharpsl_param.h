@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Hardware parameter area specific to Sharp SL series devices
+ * Hardware parameter area specअगरic to Sharp SL series devices
  *
- * Copyright (c) 2005 Richard Purdie
+ * Copyright (c) 2005 Riअक्षरd Purdie
  *
  * Based on Sharp's 2.4 kernel patches
  */
 
-struct sharpsl_param_info {
-  unsigned int comadj_keyword;
-  unsigned int comadj;
+काष्ठा sharpsl_param_info अणु
+  अचिन्हित पूर्णांक comadj_keyword;
+  अचिन्हित पूर्णांक comadj;
 
-  unsigned int uuid_keyword;
-  unsigned char uuid[16];
+  अचिन्हित पूर्णांक uuid_keyword;
+  अचिन्हित अक्षर uuid[16];
 
-  unsigned int touch_keyword;
-  unsigned int touch_xp;
-  unsigned int touch_yp;
-  unsigned int touch_xd;
-  unsigned int touch_yd;
+  अचिन्हित पूर्णांक touch_keyword;
+  अचिन्हित पूर्णांक touch_xp;
+  अचिन्हित पूर्णांक touch_yp;
+  अचिन्हित पूर्णांक touch_xd;
+  अचिन्हित पूर्णांक touch_yd;
 
-  unsigned int adadj_keyword;
-  unsigned int adadj;
+  अचिन्हित पूर्णांक adadj_keyword;
+  अचिन्हित पूर्णांक adadj;
 
-  unsigned int phad_keyword;
-  unsigned int phadadj;
-} __attribute__((packed));
+  अचिन्हित पूर्णांक phad_keyword;
+  अचिन्हित पूर्णांक phadadj;
+पूर्ण __attribute__((packed));
 
 
-extern struct sharpsl_param_info sharpsl_param;
-extern void sharpsl_save_param(void);
+बाह्य काष्ठा sharpsl_param_info sharpsl_param;
+बाह्य व्योम sharpsl_save_param(व्योम);
 

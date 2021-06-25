@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  textbox.c -- implements the text box
  *
@@ -6,94 +7,94 @@
  *  MODIFIED FOR LINUX KERNEL CONFIG BY: William Roadcap (roadcap@cfw.com)
  */
 
-#include "dialog.h"
+#समावेश "dialog.h"
 
-static void back_lines(int n);
-static void print_page(WINDOW *win, int height, int width, update_text_fn
-		       update_text, void *data);
-static void print_line(WINDOW *win, int row, int width);
-static char *get_line(void);
-static void print_position(WINDOW * win);
+अटल व्योम back_lines(पूर्णांक n);
+अटल व्योम prपूर्णांक_page(WINDOW *win, पूर्णांक height, पूर्णांक width, update_text_fn
+		       update_text, व्योम *data);
+अटल व्योम prपूर्णांक_line(WINDOW *win, पूर्णांक row, पूर्णांक width);
+अटल अक्षर *get_line(व्योम);
+अटल व्योम prपूर्णांक_position(WINDOW * win);
 
-static int hscroll;
-static int begin_reached, end_reached, page_length;
-static char *buf;
-static char *page;
+अटल पूर्णांक hscroll;
+अटल पूर्णांक begin_reached, end_reached, page_length;
+अटल अक्षर *buf;
+अटल अक्षर *page;
 
 /*
- * refresh window content
+ * refresh winकरोw content
  */
-static void refresh_text_box(WINDOW *dialog, WINDOW *box, int boxh, int boxw,
-			     int cur_y, int cur_x, update_text_fn update_text,
-			     void *data)
-{
-	print_page(box, boxh, boxw, update_text, data);
-	print_position(dialog);
+अटल व्योम refresh_text_box(WINDOW *dialog, WINDOW *box, पूर्णांक boxh, पूर्णांक boxw,
+			     पूर्णांक cur_y, पूर्णांक cur_x, update_text_fn update_text,
+			     व्योम *data)
+अणु
+	prपूर्णांक_page(box, boxh, boxw, update_text, data);
+	prपूर्णांक_position(dialog);
 	wmove(dialog, cur_y, cur_x);	/* Restore cursor position */
 	wrefresh(dialog);
-}
+पूर्ण
 
 
 /*
  * Display text from a file in a dialog box.
  *
  * keys is a null-terminated array
- * update_text() may not add or remove any '\n' or '\0' in tbuf
+ * update_text() may not add or हटाओ any '\n' or '\0' in tbuf
  */
-int dialog_textbox(const char *title, char *tbuf, int initial_height,
-		   int initial_width, int *keys, int *_vscroll, int *_hscroll,
-		   update_text_fn update_text, void *data)
-{
-	int i, x, y, cur_x, cur_y, key = 0;
-	int height, width, boxh, boxw;
+पूर्णांक dialog_textbox(स्थिर अक्षर *title, अक्षर *tbuf, पूर्णांक initial_height,
+		   पूर्णांक initial_width, पूर्णांक *keys, पूर्णांक *_vscroll, पूर्णांक *_hscroll,
+		   update_text_fn update_text, व्योम *data)
+अणु
+	पूर्णांक i, x, y, cur_x, cur_y, key = 0;
+	पूर्णांक height, width, boxh, boxw;
 	WINDOW *dialog, *box;
-	bool done = false;
+	bool करोne = false;
 
 	begin_reached = 1;
 	end_reached = 0;
 	page_length = 0;
 	hscroll = 0;
 	buf = tbuf;
-	page = buf;	/* page is pointer to start of page to be displayed */
+	page = buf;	/* page is poपूर्णांकer to start of page to be displayed */
 
-	if (_vscroll && *_vscroll) {
+	अगर (_vscroll && *_vscroll) अणु
 		begin_reached = 0;
 
-		for (i = 0; i < *_vscroll; i++)
+		क्रम (i = 0; i < *_vscroll; i++)
 			get_line();
-	}
-	if (_hscroll)
+	पूर्ण
+	अगर (_hscroll)
 		hscroll = *_hscroll;
 
-do_resize:
-	getmaxyx(stdscr, height, width);
-	if (height < TEXTBOX_HEIGTH_MIN || width < TEXTBOX_WIDTH_MIN)
-		return -ERRDISPLAYTOOSMALL;
-	if (initial_height != 0)
+करो_resize:
+	geपंचांगaxyx(stdscr, height, width);
+	अगर (height < TEXTBOX_HEIGTH_MIN || width < TEXTBOX_WIDTH_MIN)
+		वापस -ERRDISPLAYTOOSMALL;
+	अगर (initial_height != 0)
 		height = initial_height;
-	else
-		if (height > 4)
+	अन्यथा
+		अगर (height > 4)
 			height -= 4;
-		else
+		अन्यथा
 			height = 0;
-	if (initial_width != 0)
+	अगर (initial_width != 0)
 		width = initial_width;
-	else
-		if (width > 5)
+	अन्यथा
+		अगर (width > 5)
 			width -= 5;
-		else
+		अन्यथा
 			width = 0;
 
 	/* center dialog box on screen */
-	x = (getmaxx(stdscr) - width) / 2;
-	y = (getmaxy(stdscr) - height) / 2;
+	x = (geपंचांगaxx(stdscr) - width) / 2;
+	y = (geपंचांगaxy(stdscr) - height) / 2;
 
-	draw_shadow(stdscr, y, x, height, width);
+	draw_shaकरोw(stdscr, y, x, height, width);
 
 	dialog = newwin(height, width, y, x);
 	keypad(dialog, TRUE);
 
-	/* Create window for box region, used for scrolling text */
+	/* Create winकरोw क्रम box region, used क्रम scrolling text */
 	boxh = height - 4;
 	boxw = width - 2;
 	box = subwin(dialog, boxh, boxw, y + 1, x + 1);
@@ -102,294 +103,294 @@ do_resize:
 
 	keypad(box, TRUE);
 
-	/* register the new window, along with its borders */
+	/* रेजिस्टर the new winकरोw, aदीर्घ with its borders */
 	draw_box(dialog, 0, 0, height, width,
 		 dlg.dialog.atr, dlg.border.atr);
 
 	wattrset(dialog, dlg.border.atr);
 	mvwaddch(dialog, height - 3, 0, ACS_LTEE);
-	for (i = 0; i < width - 2; i++)
+	क्रम (i = 0; i < width - 2; i++)
 		waddch(dialog, ACS_HLINE);
 	wattrset(dialog, dlg.dialog.atr);
 	wbkgdset(dialog, dlg.dialog.atr & A_COLOR);
 	waddch(dialog, ACS_RTEE);
 
-	print_title(dialog, title, width);
+	prपूर्णांक_title(dialog, title, width);
 
-	print_button(dialog, " Exit ", height - 2, width / 2 - 4, TRUE);
+	prपूर्णांक_button(dialog, " Exit ", height - 2, width / 2 - 4, TRUE);
 	wnoutrefresh(dialog);
 	getyx(dialog, cur_y, cur_x);	/* Save cursor position */
 
-	/* Print first page of text */
+	/* Prपूर्णांक first page of text */
 	attr_clear(box, boxh, boxw, dlg.dialog.atr);
 	refresh_text_box(dialog, box, boxh, boxw, cur_y, cur_x, update_text,
 			 data);
 
-	while (!done) {
-		key = wgetch(dialog);
-		switch (key) {
-		case 'E':	/* Exit */
-		case 'e':
-		case 'X':
-		case 'x':
-		case 'q':
-		case '\n':
-			done = true;
-			break;
-		case 'g':	/* First page */
-		case KEY_HOME:
-			if (!begin_reached) {
+	जबतक (!करोne) अणु
+		key = wअ_लोh(dialog);
+		चयन (key) अणु
+		हाल 'E':	/* Exit */
+		हाल 'e':
+		हाल 'X':
+		हाल 'x':
+		हाल 'q':
+		हाल '\n':
+			करोne = true;
+			अवरोध;
+		हाल 'g':	/* First page */
+		हाल KEY_HOME:
+			अगर (!begin_reached) अणु
 				begin_reached = 1;
 				page = buf;
 				refresh_text_box(dialog, box, boxh, boxw,
 						 cur_y, cur_x, update_text,
 						 data);
-			}
-			break;
-		case 'G':	/* Last page */
-		case KEY_END:
+			पूर्ण
+			अवरोध;
+		हाल 'G':	/* Last page */
+		हाल KEY_END:
 
 			end_reached = 1;
-			/* point to last char in buf */
-			page = buf + strlen(buf);
+			/* poपूर्णांक to last अक्षर in buf */
+			page = buf + म_माप(buf);
 			back_lines(boxh);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case 'K':	/* Previous line */
-		case 'k':
-		case KEY_UP:
-			if (begin_reached)
-				break;
+			अवरोध;
+		हाल 'K':	/* Previous line */
+		हाल 'k':
+		हाल KEY_UP:
+			अगर (begin_reached)
+				अवरोध;
 
 			back_lines(page_length + 1);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case 'B':	/* Previous page */
-		case 'b':
-		case 'u':
-		case KEY_PPAGE:
-			if (begin_reached)
-				break;
+			अवरोध;
+		हाल 'B':	/* Previous page */
+		हाल 'b':
+		हाल 'u':
+		हाल KEY_PPAGE:
+			अगर (begin_reached)
+				अवरोध;
 			back_lines(page_length + boxh);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case 'J':	/* Next line */
-		case 'j':
-		case KEY_DOWN:
-			if (end_reached)
-				break;
+			अवरोध;
+		हाल 'J':	/* Next line */
+		हाल 'j':
+		हाल KEY_DOWN:
+			अगर (end_reached)
+				अवरोध;
 
 			back_lines(page_length - 1);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case KEY_NPAGE:	/* Next page */
-		case ' ':
-		case 'd':
-			if (end_reached)
-				break;
+			अवरोध;
+		हाल KEY_NPAGE:	/* Next page */
+		हाल ' ':
+		हाल 'd':
+			अगर (end_reached)
+				अवरोध;
 
 			begin_reached = 0;
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case '0':	/* Beginning of line */
-		case 'H':	/* Scroll left */
-		case 'h':
-		case KEY_LEFT:
-			if (hscroll <= 0)
-				break;
+			अवरोध;
+		हाल '0':	/* Beginning of line */
+		हाल 'H':	/* Scroll left */
+		हाल 'h':
+		हाल KEY_LEFT:
+			अगर (hscroll <= 0)
+				अवरोध;
 
-			if (key == '0')
+			अगर (key == '0')
 				hscroll = 0;
-			else
+			अन्यथा
 				hscroll--;
-			/* Reprint current page to scroll horizontally */
+			/* Reprपूर्णांक current page to scroll horizontally */
 			back_lines(page_length);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case 'L':	/* Scroll right */
-		case 'l':
-		case KEY_RIGHT:
-			if (hscroll >= MAX_LEN)
-				break;
+			अवरोध;
+		हाल 'L':	/* Scroll right */
+		हाल 'l':
+		हाल KEY_RIGHT:
+			अगर (hscroll >= MAX_LEN)
+				अवरोध;
 			hscroll++;
-			/* Reprint current page to scroll horizontally */
+			/* Reprपूर्णांक current page to scroll horizontally */
 			back_lines(page_length);
 			refresh_text_box(dialog, box, boxh, boxw, cur_y,
 					 cur_x, update_text, data);
-			break;
-		case KEY_ESC:
-			if (on_key_esc(dialog) == KEY_ESC)
-				done = true;
-			break;
-		case KEY_RESIZE:
+			अवरोध;
+		हाल KEY_ESC:
+			अगर (on_key_esc(dialog) == KEY_ESC)
+				करोne = true;
+			अवरोध;
+		हाल KEY_RESIZE:
 			back_lines(height);
 			delwin(box);
 			delwin(dialog);
 			on_key_resize();
-			goto do_resize;
-		default:
-			for (i = 0; keys[i]; i++) {
-				if (key == keys[i]) {
-					done = true;
-					break;
-				}
-			}
-		}
-	}
+			जाओ करो_resize;
+		शेष:
+			क्रम (i = 0; keys[i]; i++) अणु
+				अगर (key == keys[i]) अणु
+					करोne = true;
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	delwin(box);
 	delwin(dialog);
-	if (_vscroll) {
-		const char *s;
+	अगर (_vscroll) अणु
+		स्थिर अक्षर *s;
 
 		s = buf;
 		*_vscroll = 0;
 		back_lines(page_length);
-		while (s < page && (s = strchr(s, '\n'))) {
+		जबतक (s < page && (s = म_अक्षर(s, '\n'))) अणु
 			(*_vscroll)++;
 			s++;
-		}
-	}
-	if (_hscroll)
+		पूर्ण
+	पूर्ण
+	अगर (_hscroll)
 		*_hscroll = hscroll;
-	return key;
-}
+	वापस key;
+पूर्ण
 
 /*
  * Go back 'n' lines in text. Called by dialog_textbox().
  * 'page' will be updated to point to the desired line in 'buf'.
  */
-static void back_lines(int n)
-{
-	int i;
+अटल व्योम back_lines(पूर्णांक n)
+अणु
+	पूर्णांक i;
 
 	begin_reached = 0;
 	/* Go back 'n' lines */
-	for (i = 0; i < n; i++) {
-		if (*page == '\0') {
-			if (end_reached) {
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (*page == '\0') अणु
+			अगर (end_reached) अणु
 				end_reached = 0;
-				continue;
-			}
-		}
-		if (page == buf) {
+				जारी;
+			पूर्ण
+		पूर्ण
+		अगर (page == buf) अणु
 			begin_reached = 1;
-			return;
-		}
+			वापस;
+		पूर्ण
 		page--;
-		do {
-			if (page == buf) {
+		करो अणु
+			अगर (page == buf) अणु
 				begin_reached = 1;
-				return;
-			}
+				वापस;
+			पूर्ण
 			page--;
-		} while (*page != '\n');
+		पूर्ण जबतक (*page != '\n');
 		page++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Print a new page of text.
+ * Prपूर्णांक a new page of text.
  */
-static void print_page(WINDOW *win, int height, int width, update_text_fn
-		       update_text, void *data)
-{
-	int i, passed_end = 0;
+अटल व्योम prपूर्णांक_page(WINDOW *win, पूर्णांक height, पूर्णांक width, update_text_fn
+		       update_text, व्योम *data)
+अणु
+	पूर्णांक i, passed_end = 0;
 
-	if (update_text) {
-		char *end;
+	अगर (update_text) अणु
+		अक्षर *end;
 
-		for (i = 0; i < height; i++)
+		क्रम (i = 0; i < height; i++)
 			get_line();
 		end = page;
 		back_lines(height);
 		update_text(buf, page - buf, end - buf, data);
-	}
+	पूर्ण
 
 	page_length = 0;
-	for (i = 0; i < height; i++) {
-		print_line(win, i, width);
-		if (!passed_end)
+	क्रम (i = 0; i < height; i++) अणु
+		prपूर्णांक_line(win, i, width);
+		अगर (!passed_end)
 			page_length++;
-		if (end_reached && !passed_end)
+		अगर (end_reached && !passed_end)
 			passed_end = 1;
-	}
+	पूर्ण
 	wnoutrefresh(win);
-}
+पूर्ण
 
 /*
- * Print a new line of text.
+ * Prपूर्णांक a new line of text.
  */
-static void print_line(WINDOW * win, int row, int width)
-{
-	char *line;
+अटल व्योम prपूर्णांक_line(WINDOW * win, पूर्णांक row, पूर्णांक width)
+अणु
+	अक्षर *line;
 
 	line = get_line();
-	line += MIN(strlen(line), hscroll);	/* Scroll horizontally */
+	line += MIN(म_माप(line), hscroll);	/* Scroll horizontally */
 	wmove(win, row, 0);	/* move cursor to correct line */
 	waddch(win, ' ');
-	waddnstr(win, line, MIN(strlen(line), width - 2));
+	waddnstr(win, line, MIN(म_माप(line), width - 2));
 
 	/* Clear 'residue' of previous line */
-#if OLD_NCURSES
-	{
-		int x = getcurx(win);
-		int i;
-		for (i = 0; i < width - x; i++)
+#अगर OLD_NCURSES
+	अणु
+		पूर्णांक x = अ_लोurx(win);
+		पूर्णांक i;
+		क्रम (i = 0; i < width - x; i++)
 			waddch(win, ' ');
-	}
-#else
+	पूर्ण
+#अन्यथा
 	wclrtoeol(win);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Return current line of text. Called by dialog_textbox() and print_line().
- * 'page' should point to start of current line before calling, and will be
- * updated to point to start of next line.
+ * Return current line of text. Called by dialog_textbox() and prपूर्णांक_line().
+ * 'page' should poपूर्णांक to start of current line beक्रमe calling, and will be
+ * updated to poपूर्णांक to start of next line.
  */
-static char *get_line(void)
-{
-	int i = 0;
-	static char line[MAX_LEN + 1];
+अटल अक्षर *get_line(व्योम)
+अणु
+	पूर्णांक i = 0;
+	अटल अक्षर line[MAX_LEN + 1];
 
 	end_reached = 0;
-	while (*page != '\n') {
-		if (*page == '\0') {
+	जबतक (*page != '\n') अणु
+		अगर (*page == '\0') अणु
 			end_reached = 1;
-			break;
-		} else if (i < MAX_LEN)
+			अवरोध;
+		पूर्ण अन्यथा अगर (i < MAX_LEN)
 			line[i++] = *(page++);
-		else {
-			/* Truncate lines longer than MAX_LEN characters */
-			if (i == MAX_LEN)
+		अन्यथा अणु
+			/* Truncate lines दीर्घer than MAX_LEN अक्षरacters */
+			अगर (i == MAX_LEN)
 				line[i++] = '\0';
 			page++;
-		}
-	}
-	if (i <= MAX_LEN)
+		पूर्ण
+	पूर्ण
+	अगर (i <= MAX_LEN)
 		line[i] = '\0';
-	if (!end_reached)
+	अगर (!end_reached)
 		page++;		/* move past '\n' */
 
-	return line;
-}
+	वापस line;
+पूर्ण
 
 /*
- * Print current position
+ * Prपूर्णांक current position
  */
-static void print_position(WINDOW * win)
-{
-	int percent;
+अटल व्योम prपूर्णांक_position(WINDOW * win)
+अणु
+	पूर्णांक percent;
 
 	wattrset(win, dlg.position_indicator.atr);
 	wbkgdset(win, dlg.position_indicator.atr & A_COLOR);
-	percent = (page - buf) * 100 / strlen(buf);
-	wmove(win, getmaxy(win) - 3, getmaxx(win) - 9);
-	wprintw(win, "(%3d%%)", percent);
-}
+	percent = (page - buf) * 100 / म_माप(buf);
+	wmove(win, geपंचांगaxy(win) - 3, geपंचांगaxx(win) - 9);
+	wprपूर्णांकw(win, "(%3d%%)", percent);
+पूर्ण

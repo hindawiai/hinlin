@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,375 +22,375 @@
  *
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include "smumgr.h"
-#include "vega10_inc.h"
-#include "soc15_common.h"
-#include "vega10_smumgr.h"
-#include "vega10_hwmgr.h"
-#include "vega10_ppsmc.h"
-#include "smu9_driver_if.h"
-#include "smu9_smumgr.h"
-#include "ppatomctrl.h"
-#include "pp_debug.h"
+#समावेश "smumgr.h"
+#समावेश "vega10_inc.h"
+#समावेश "soc15_common.h"
+#समावेश "vega10_smumgr.h"
+#समावेश "vega10_hwmgr.h"
+#समावेश "vega10_ppsmc.h"
+#समावेश "smu9_driver_if.h"
+#समावेश "smu9_smumgr.h"
+#समावेश "ppatomctrl.h"
+#समावेश "pp_debug.h"
 
 
-static int vega10_copy_table_from_smc(struct pp_hwmgr *hwmgr,
-		uint8_t *table, int16_t table_id)
-{
-	struct vega10_smumgr *priv = hwmgr->smu_backend;
-	struct amdgpu_device *adev = hwmgr->adev;
+अटल पूर्णांक vega10_copy_table_from_smc(काष्ठा pp_hwmgr *hwmgr,
+		uपूर्णांक8_t *table, पूर्णांक16_t table_id)
+अणु
+	काष्ठा vega10_smumgr *priv = hwmgr->smu_backend;
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
 	PP_ASSERT_WITH_CODE(table_id < MAX_SMU_TABLE,
-			"Invalid SMU Table ID!", return -EINVAL);
+			"Invalid SMU Table ID!", वापस -EINVAL);
 	PP_ASSERT_WITH_CODE(priv->smu_tables.entry[table_id].version != 0,
-			"Invalid SMU Table version!", return -EINVAL);
+			"Invalid SMU Table version!", वापस -EINVAL);
 	PP_ASSERT_WITH_CODE(priv->smu_tables.entry[table_id].size != 0,
-			"Invalid SMU Table Length!", return -EINVAL);
+			"Invalid SMU Table Length!", वापस -EINVAL);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetDriverDramAddrHigh,
 			upper_32_bits(priv->smu_tables.entry[table_id].mc_addr),
-			NULL);
+			शून्य);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetDriverDramAddrLow,
 			lower_32_bits(priv->smu_tables.entry[table_id].mc_addr),
-			NULL);
+			शून्य);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_TransferTableSmu2Dram,
 			priv->smu_tables.entry[table_id].table_id,
-			NULL);
+			शून्य);
 
-	amdgpu_asic_invalidate_hdp(adev, NULL);
+	amdgpu_asic_invalidate_hdp(adev, शून्य);
 
-	memcpy(table, priv->smu_tables.entry[table_id].table,
+	स_नकल(table, priv->smu_tables.entry[table_id].table,
 			priv->smu_tables.entry[table_id].size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_copy_table_to_smc(struct pp_hwmgr *hwmgr,
-		uint8_t *table, int16_t table_id)
-{
-	struct vega10_smumgr *priv = hwmgr->smu_backend;
-	struct amdgpu_device *adev = hwmgr->adev;
+अटल पूर्णांक vega10_copy_table_to_smc(काष्ठा pp_hwmgr *hwmgr,
+		uपूर्णांक8_t *table, पूर्णांक16_t table_id)
+अणु
+	काष्ठा vega10_smumgr *priv = hwmgr->smu_backend;
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
 	/* under sriov, vbios or hypervisor driver
-	 * has already copy table to smc so here only skip it
+	 * has alपढ़ोy copy table to smc so here only skip it
 	 */
-	if (!hwmgr->not_vf)
-		return 0;
+	अगर (!hwmgr->not_vf)
+		वापस 0;
 
 	PP_ASSERT_WITH_CODE(table_id < MAX_SMU_TABLE,
-			"Invalid SMU Table ID!", return -EINVAL);
+			"Invalid SMU Table ID!", वापस -EINVAL);
 	PP_ASSERT_WITH_CODE(priv->smu_tables.entry[table_id].version != 0,
-			"Invalid SMU Table version!", return -EINVAL);
+			"Invalid SMU Table version!", वापस -EINVAL);
 	PP_ASSERT_WITH_CODE(priv->smu_tables.entry[table_id].size != 0,
-			"Invalid SMU Table Length!", return -EINVAL);
+			"Invalid SMU Table Length!", वापस -EINVAL);
 
-	memcpy(priv->smu_tables.entry[table_id].table, table,
+	स_नकल(priv->smu_tables.entry[table_id].table, table,
 			priv->smu_tables.entry[table_id].size);
 
-	amdgpu_asic_flush_hdp(adev, NULL);
+	amdgpu_asic_flush_hdp(adev, शून्य);
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetDriverDramAddrHigh,
 			upper_32_bits(priv->smu_tables.entry[table_id].mc_addr),
-			NULL);
+			शून्य);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_SetDriverDramAddrLow,
 			lower_32_bits(priv->smu_tables.entry[table_id].mc_addr),
-			NULL);
+			शून्य);
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 			PPSMC_MSG_TransferTableDram2Smu,
 			priv->smu_tables.entry[table_id].table_id,
-			NULL);
+			शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vega10_enable_smc_features(struct pp_hwmgr *hwmgr,
-			       bool enable, uint32_t feature_mask)
-{
-	int msg = enable ? PPSMC_MSG_EnableSmuFeatures :
+पूर्णांक vega10_enable_smc_features(काष्ठा pp_hwmgr *hwmgr,
+			       bool enable, uपूर्णांक32_t feature_mask)
+अणु
+	पूर्णांक msg = enable ? PPSMC_MSG_EnableSmuFeatures :
 			PPSMC_MSG_DisableSmuFeatures;
 
 	/* VF has no permission to change smu feature due
 	 * to security concern even under pp one vf mode
-	 * it still can't do it. For vega10, the smu in
+	 * it still can't करो it. For vega10, the smu in
 	 * vbios will enable the appropriate features.
 	 * */
-	if (!hwmgr->not_vf)
-		return 0;
+	अगर (!hwmgr->not_vf)
+		वापस 0;
 
-	return smum_send_msg_to_smc_with_parameter(hwmgr,
-			msg, feature_mask, NULL);
-}
+	वापस smum_send_msg_to_smc_with_parameter(hwmgr,
+			msg, feature_mask, शून्य);
+पूर्ण
 
-int vega10_get_enabled_smc_features(struct pp_hwmgr *hwmgr,
-			    uint64_t *features_enabled)
-{
-	uint32_t enabled_features;
+पूर्णांक vega10_get_enabled_smc_features(काष्ठा pp_hwmgr *hwmgr,
+			    uपूर्णांक64_t *features_enabled)
+अणु
+	uपूर्णांक32_t enabled_features;
 
-	if (features_enabled == NULL)
-		return -EINVAL;
+	अगर (features_enabled == शून्य)
+		वापस -EINVAL;
 
 	smum_send_msg_to_smc(hwmgr,
 			PPSMC_MSG_GetEnabledSmuFeatures,
 			&enabled_features);
 	*features_enabled = enabled_features;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool vega10_is_dpm_running(struct pp_hwmgr *hwmgr)
-{
-	uint64_t features_enabled = 0;
+अटल bool vega10_is_dpm_running(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	uपूर्णांक64_t features_enabled = 0;
 
 	vega10_get_enabled_smc_features(hwmgr, &features_enabled);
 
-	if (features_enabled & SMC_DPM_FEATURES)
-		return true;
-	else
-		return false;
-}
+	अगर (features_enabled & SMC_DPM_FEATURES)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-static int vega10_set_tools_address(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_smumgr *priv = hwmgr->smu_backend;
+अटल पूर्णांक vega10_set_tools_address(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_smumgr *priv = hwmgr->smu_backend;
 
-	if (priv->smu_tables.entry[TOOLSTABLE].mc_addr) {
+	अगर (priv->smu_tables.entry[TOOLSTABLE].mc_addr) अणु
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetToolsDramAddrHigh,
 				upper_32_bits(priv->smu_tables.entry[TOOLSTABLE].mc_addr),
-				NULL);
+				शून्य);
 		smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetToolsDramAddrLow,
 				lower_32_bits(priv->smu_tables.entry[TOOLSTABLE].mc_addr),
-				NULL);
-	}
-	return 0;
-}
+				शून्य);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vega10_verify_smc_interface(struct pp_hwmgr *hwmgr)
-{
-	uint32_t smc_driver_if_version;
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t dev_id;
-	uint32_t rev_id;
+अटल पूर्णांक vega10_verअगरy_smc_पूर्णांकerface(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	uपूर्णांक32_t smc_driver_अगर_version;
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t dev_id;
+	uपूर्णांक32_t rev_id;
 
 	PP_ASSERT_WITH_CODE(!smum_send_msg_to_smc(hwmgr,
 			PPSMC_MSG_GetDriverIfVersion,
-			&smc_driver_if_version),
+			&smc_driver_अगर_version),
 			"Attempt to get SMC IF Version Number Failed!",
-			return -EINVAL);
+			वापस -EINVAL);
 
 	dev_id = adev->pdev->device;
 	rev_id = adev->pdev->revision;
 
-	if (!((dev_id == 0x687f) &&
+	अगर (!((dev_id == 0x687f) &&
 		((rev_id == 0xc0) ||
 		(rev_id == 0xc1) ||
-		(rev_id == 0xc3)))) {
-		if (smc_driver_if_version != SMU9_DRIVER_IF_VERSION) {
+		(rev_id == 0xc3)))) अणु
+		अगर (smc_driver_अगर_version != SMU9_DRIVER_IF_VERSION) अणु
 			pr_err("Your firmware(0x%x) doesn't match SMU9_DRIVER_IF_VERSION(0x%x). Please update your firmware!\n",
-			       smc_driver_if_version, SMU9_DRIVER_IF_VERSION);
-			return -EINVAL;
-		}
-	}
+			       smc_driver_अगर_version, SMU9_DRIVER_IF_VERSION);
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_smu_init(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_smumgr *priv;
-	unsigned long tools_size;
-	int ret;
-	struct cgs_firmware_info info = {0};
+अटल पूर्णांक vega10_smu_init(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_smumgr *priv;
+	अचिन्हित दीर्घ tools_size;
+	पूर्णांक ret;
+	काष्ठा cgs_firmware_info info = अणु0पूर्ण;
 
 	ret = cgs_get_firmware_info(hwmgr->device,
 					CGS_UCODE_ID_SMU,
 					&info);
-	if (ret || !info.kptr)
-		return -EINVAL;
+	अगर (ret || !info.kptr)
+		वापस -EINVAL;
 
-	priv = kzalloc(sizeof(struct vega10_smumgr), GFP_KERNEL);
+	priv = kzalloc(माप(काष्ठा vega10_smumgr), GFP_KERNEL);
 
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	hwmgr->smu_backend = priv;
 
-	/* allocate space for pptable */
-	ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
-			sizeof(PPTable_t),
+	/* allocate space क्रम pptable */
+	ret = amdgpu_bo_create_kernel((काष्ठा amdgpu_device *)hwmgr->adev,
+			माप(PPTable_t),
 			PAGE_SIZE,
 			AMDGPU_GEM_DOMAIN_VRAM,
 			&priv->smu_tables.entry[PPTABLE].handle,
 			&priv->smu_tables.entry[PPTABLE].mc_addr,
 			&priv->smu_tables.entry[PPTABLE].table);
-	if (ret)
-		goto free_backend;
+	अगर (ret)
+		जाओ मुक्त_backend;
 
 	priv->smu_tables.entry[PPTABLE].version = 0x01;
-	priv->smu_tables.entry[PPTABLE].size = sizeof(PPTable_t);
+	priv->smu_tables.entry[PPTABLE].size = माप(PPTable_t);
 	priv->smu_tables.entry[PPTABLE].table_id = TABLE_PPTABLE;
 
-	/* allocate space for watermarks table */
-	ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
-			sizeof(Watermarks_t),
+	/* allocate space क्रम watermarks table */
+	ret = amdgpu_bo_create_kernel((काष्ठा amdgpu_device *)hwmgr->adev,
+			माप(Watermarks_t),
 			PAGE_SIZE,
 			AMDGPU_GEM_DOMAIN_VRAM,
 			&priv->smu_tables.entry[WMTABLE].handle,
 			&priv->smu_tables.entry[WMTABLE].mc_addr,
 			&priv->smu_tables.entry[WMTABLE].table);
 
-	if (ret)
-		goto err0;
+	अगर (ret)
+		जाओ err0;
 
 	priv->smu_tables.entry[WMTABLE].version = 0x01;
-	priv->smu_tables.entry[WMTABLE].size = sizeof(Watermarks_t);
+	priv->smu_tables.entry[WMTABLE].size = माप(Watermarks_t);
 	priv->smu_tables.entry[WMTABLE].table_id = TABLE_WATERMARKS;
 
-	/* allocate space for AVFS table */
-	ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
-			sizeof(AvfsTable_t),
+	/* allocate space क्रम AVFS table */
+	ret = amdgpu_bo_create_kernel((काष्ठा amdgpu_device *)hwmgr->adev,
+			माप(AvfsTable_t),
 			PAGE_SIZE,
 			AMDGPU_GEM_DOMAIN_VRAM,
 			&priv->smu_tables.entry[AVFSTABLE].handle,
 			&priv->smu_tables.entry[AVFSTABLE].mc_addr,
 			&priv->smu_tables.entry[AVFSTABLE].table);
 
-	if (ret)
-		goto err1;
+	अगर (ret)
+		जाओ err1;
 
 	priv->smu_tables.entry[AVFSTABLE].version = 0x01;
-	priv->smu_tables.entry[AVFSTABLE].size = sizeof(AvfsTable_t);
+	priv->smu_tables.entry[AVFSTABLE].size = माप(AvfsTable_t);
 	priv->smu_tables.entry[AVFSTABLE].table_id = TABLE_AVFS;
 
 	tools_size = 0x19000;
-	if (tools_size) {
-		ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
+	अगर (tools_size) अणु
+		ret = amdgpu_bo_create_kernel((काष्ठा amdgpu_device *)hwmgr->adev,
 				tools_size,
 				PAGE_SIZE,
 				AMDGPU_GEM_DOMAIN_VRAM,
 				&priv->smu_tables.entry[TOOLSTABLE].handle,
 				&priv->smu_tables.entry[TOOLSTABLE].mc_addr,
 				&priv->smu_tables.entry[TOOLSTABLE].table);
-		if (ret)
-			goto err2;
+		अगर (ret)
+			जाओ err2;
 		priv->smu_tables.entry[TOOLSTABLE].version = 0x01;
 		priv->smu_tables.entry[TOOLSTABLE].size = tools_size;
 		priv->smu_tables.entry[TOOLSTABLE].table_id = TABLE_PMSTATUSLOG;
-	}
+	पूर्ण
 
-	/* allocate space for AVFS Fuse table */
-	ret = amdgpu_bo_create_kernel((struct amdgpu_device *)hwmgr->adev,
-			sizeof(AvfsFuseOverride_t),
+	/* allocate space क्रम AVFS Fuse table */
+	ret = amdgpu_bo_create_kernel((काष्ठा amdgpu_device *)hwmgr->adev,
+			माप(AvfsFuseOverride_t),
 			PAGE_SIZE,
 			AMDGPU_GEM_DOMAIN_VRAM,
 			&priv->smu_tables.entry[AVFSFUSETABLE].handle,
 			&priv->smu_tables.entry[AVFSFUSETABLE].mc_addr,
 			&priv->smu_tables.entry[AVFSFUSETABLE].table);
-	if (ret)
-		goto err3;
+	अगर (ret)
+		जाओ err3;
 
 	priv->smu_tables.entry[AVFSFUSETABLE].version = 0x01;
-	priv->smu_tables.entry[AVFSFUSETABLE].size = sizeof(AvfsFuseOverride_t);
+	priv->smu_tables.entry[AVFSFUSETABLE].size = माप(AvfsFuseOverride_t);
 	priv->smu_tables.entry[AVFSFUSETABLE].table_id = TABLE_AVFS_FUSE_OVERRIDE;
 
 
-	return 0;
+	वापस 0;
 
 err3:
-	if (priv->smu_tables.entry[TOOLSTABLE].table)
-		amdgpu_bo_free_kernel(&priv->smu_tables.entry[TOOLSTABLE].handle,
+	अगर (priv->smu_tables.entry[TOOLSTABLE].table)
+		amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[TOOLSTABLE].handle,
 				&priv->smu_tables.entry[TOOLSTABLE].mc_addr,
 				&priv->smu_tables.entry[TOOLSTABLE].table);
 err2:
-	amdgpu_bo_free_kernel(&priv->smu_tables.entry[AVFSTABLE].handle,
+	amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[AVFSTABLE].handle,
 				&priv->smu_tables.entry[AVFSTABLE].mc_addr,
 				&priv->smu_tables.entry[AVFSTABLE].table);
 err1:
-	amdgpu_bo_free_kernel(&priv->smu_tables.entry[WMTABLE].handle,
+	amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[WMTABLE].handle,
 				&priv->smu_tables.entry[WMTABLE].mc_addr,
 				&priv->smu_tables.entry[WMTABLE].table);
 err0:
-	amdgpu_bo_free_kernel(&priv->smu_tables.entry[PPTABLE].handle,
+	amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[PPTABLE].handle,
 			&priv->smu_tables.entry[PPTABLE].mc_addr,
 			&priv->smu_tables.entry[PPTABLE].table);
-free_backend:
-	kfree(hwmgr->smu_backend);
+मुक्त_backend:
+	kमुक्त(hwmgr->smu_backend);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vega10_smu_fini(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_smumgr *priv = hwmgr->smu_backend;
+अटल पूर्णांक vega10_smu_fini(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_smumgr *priv = hwmgr->smu_backend;
 
-	if (priv) {
-		amdgpu_bo_free_kernel(&priv->smu_tables.entry[PPTABLE].handle,
+	अगर (priv) अणु
+		amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[PPTABLE].handle,
 				&priv->smu_tables.entry[PPTABLE].mc_addr,
 				&priv->smu_tables.entry[PPTABLE].table);
-		amdgpu_bo_free_kernel(&priv->smu_tables.entry[WMTABLE].handle,
+		amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[WMTABLE].handle,
 					&priv->smu_tables.entry[WMTABLE].mc_addr,
 					&priv->smu_tables.entry[WMTABLE].table);
-		amdgpu_bo_free_kernel(&priv->smu_tables.entry[AVFSTABLE].handle,
+		amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[AVFSTABLE].handle,
 					&priv->smu_tables.entry[AVFSTABLE].mc_addr,
 					&priv->smu_tables.entry[AVFSTABLE].table);
-		if (priv->smu_tables.entry[TOOLSTABLE].table)
-			amdgpu_bo_free_kernel(&priv->smu_tables.entry[TOOLSTABLE].handle,
+		अगर (priv->smu_tables.entry[TOOLSTABLE].table)
+			amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[TOOLSTABLE].handle,
 					&priv->smu_tables.entry[TOOLSTABLE].mc_addr,
 					&priv->smu_tables.entry[TOOLSTABLE].table);
-		amdgpu_bo_free_kernel(&priv->smu_tables.entry[AVFSFUSETABLE].handle,
+		amdgpu_bo_मुक्त_kernel(&priv->smu_tables.entry[AVFSFUSETABLE].handle,
 					&priv->smu_tables.entry[AVFSFUSETABLE].mc_addr,
 					&priv->smu_tables.entry[AVFSFUSETABLE].table);
-		kfree(hwmgr->smu_backend);
-		hwmgr->smu_backend = NULL;
-	}
-	return 0;
-}
+		kमुक्त(hwmgr->smu_backend);
+		hwmgr->smu_backend = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vega10_start_smu(struct pp_hwmgr *hwmgr)
-{
-	if (!smu9_is_smc_ram_running(hwmgr))
-		return -EINVAL;
+अटल पूर्णांक vega10_start_smu(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (!smu9_is_smc_ram_running(hwmgr))
+		वापस -EINVAL;
 
-	PP_ASSERT_WITH_CODE(!vega10_verify_smc_interface(hwmgr),
+	PP_ASSERT_WITH_CODE(!vega10_verअगरy_smc_पूर्णांकerface(hwmgr),
 			"Failed to verify SMC interface!",
-			return -EINVAL);
+			वापस -EINVAL);
 
 	vega10_set_tools_address(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_smc_table_manager(struct pp_hwmgr *hwmgr, uint8_t *table,
-				    uint16_t table_id, bool rw)
-{
-	int ret;
+अटल पूर्णांक vega10_smc_table_manager(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक8_t *table,
+				    uपूर्णांक16_t table_id, bool rw)
+अणु
+	पूर्णांक ret;
 
-	if (rw)
+	अगर (rw)
 		ret = vega10_copy_table_from_smc(hwmgr, table, table_id);
-	else
+	अन्यथा
 		ret = vega10_copy_table_to_smc(hwmgr, table, table_id);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct pp_smumgr_func vega10_smu_funcs = {
+स्थिर काष्ठा pp_smumgr_func vega10_smu_funcs = अणु
 	.name = "vega10_smu",
 	.smu_init = &vega10_smu_init,
 	.smu_fini = &vega10_smu_fini,
 	.start_smu = &vega10_start_smu,
-	.request_smu_load_specific_fw = NULL,
+	.request_smu_load_specअगरic_fw = शून्य,
 	.send_msg_to_smc = &smu9_send_msg_to_smc,
 	.send_msg_to_smc_with_parameter = &smu9_send_msg_to_smc_with_parameter,
-	.download_pptable_settings = NULL,
-	.upload_pptable_settings = NULL,
+	.करोwnload_pptable_settings = शून्य,
+	.upload_pptable_settings = शून्य,
 	.is_dpm_running = vega10_is_dpm_running,
 	.get_argument = smu9_get_argument,
 	.smc_table_manager = vega10_smc_table_manager,
-};
+पूर्ण;

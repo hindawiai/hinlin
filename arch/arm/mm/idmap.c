@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/mm_types.h>
-#include <linux/pgtable.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm_types.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/cputype.h>
-#include <asm/idmap.h>
-#include <asm/hwcap.h>
-#include <asm/pgalloc.h>
-#include <asm/sections.h>
-#include <asm/system_info.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/idmap.h>
+#समावेश <यंत्र/hwcap.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/प्रणाली_info.h>
 
 /*
  * Note: accesses outside of the kernel image and the identity map area
@@ -18,43 +19,43 @@
  * page tables.
  */
 pgd_t *idmap_pgd __ro_after_init;
-long long arch_phys_to_idmap_offset __ro_after_init;
+दीर्घ दीर्घ arch_phys_to_idmap_offset __ro_after_init;
 
-#ifdef CONFIG_ARM_LPAE
-static void idmap_add_pmd(pud_t *pud, unsigned long addr, unsigned long end,
-	unsigned long prot)
-{
+#अगर_घोषित CONFIG_ARM_LPAE
+अटल व्योम idmap_add_pmd(pud_t *pud, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+	अचिन्हित दीर्घ prot)
+अणु
 	pmd_t *pmd;
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	if (pud_none_or_clear_bad(pud) || (pud_val(*pud) & L_PGD_SWAPPER)) {
+	अगर (pud_none_or_clear_bad(pud) || (pud_val(*pud) & L_PGD_SWAPPER)) अणु
 		pmd = pmd_alloc_one(&init_mm, addr);
-		if (!pmd) {
+		अगर (!pmd) अणु
 			pr_warn("Failed to allocate identity pmd.\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		/*
-		 * Copy the original PMD to ensure that the PMD entries for
+		 * Copy the original PMD to ensure that the PMD entries क्रम
 		 * the kernel image are preserved.
 		 */
-		if (!pud_none(*pud))
-			memcpy(pmd, pmd_offset(pud, 0),
-			       PTRS_PER_PMD * sizeof(pmd_t));
+		अगर (!pud_none(*pud))
+			स_नकल(pmd, pmd_offset(pud, 0),
+			       PTRS_PER_PMD * माप(pmd_t));
 		pud_populate(&init_mm, pud, pmd);
 		pmd += pmd_index(addr);
-	} else
+	पूर्ण अन्यथा
 		pmd = pmd_offset(pud, addr);
 
-	do {
+	करो अणु
 		next = pmd_addr_end(addr, end);
 		*pmd = __pmd((addr & PMD_MASK) | prot);
 		flush_pmd_entry(pmd);
-	} while (pmd++, addr = next, addr != end);
-}
-#else	/* !CONFIG_ARM_LPAE */
-static void idmap_add_pmd(pud_t *pud, unsigned long addr, unsigned long end,
-	unsigned long prot)
-{
+	पूर्ण जबतक (pmd++, addr = next, addr != end);
+पूर्ण
+#अन्यथा	/* !CONFIG_ARM_LPAE */
+अटल व्योम idmap_add_pmd(pud_t *pud, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+	अचिन्हित दीर्घ prot)
+अणु
 	pmd_t *pmd = pmd_offset(pud, addr);
 
 	addr = (addr & PMD_MASK) | prot;
@@ -62,27 +63,27 @@ static void idmap_add_pmd(pud_t *pud, unsigned long addr, unsigned long end,
 	addr += SECTION_SIZE;
 	pmd[1] = __pmd(addr);
 	flush_pmd_entry(pmd);
-}
-#endif	/* CONFIG_ARM_LPAE */
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_ARM_LPAE */
 
-static void idmap_add_pud(pgd_t *pgd, unsigned long addr, unsigned long end,
-	unsigned long prot)
-{
+अटल व्योम idmap_add_pud(pgd_t *pgd, अचिन्हित दीर्घ addr, अचिन्हित दीर्घ end,
+	अचिन्हित दीर्घ prot)
+अणु
 	p4d_t *p4d = p4d_offset(pgd, addr);
 	pud_t *pud = pud_offset(p4d, addr);
-	unsigned long next;
+	अचिन्हित दीर्घ next;
 
-	do {
+	करो अणु
 		next = pud_addr_end(addr, end);
 		idmap_add_pmd(pud, addr, next, prot);
-	} while (pud++, addr = next, addr != end);
-}
+	पूर्ण जबतक (pud++, addr = next, addr != end);
+पूर्ण
 
-static void identity_mapping_add(pgd_t *pgd, const char *text_start,
-				 const char *text_end, unsigned long prot)
-{
-	unsigned long addr, end;
-	unsigned long next;
+अटल व्योम identity_mapping_add(pgd_t *pgd, स्थिर अक्षर *text_start,
+				 स्थिर अक्षर *text_end, अचिन्हित दीर्घ prot)
+अणु
+	अचिन्हित दीर्घ addr, end;
+	अचिन्हित दीर्घ next;
 
 	addr = virt_to_idmap(text_start);
 	end = virt_to_idmap(text_end);
@@ -90,52 +91,52 @@ static void identity_mapping_add(pgd_t *pgd, const char *text_start,
 
 	prot |= PMD_TYPE_SECT | PMD_SECT_AP_WRITE | PMD_SECT_AF;
 
-	if (cpu_architecture() <= CPU_ARCH_ARMv5TEJ && !cpu_is_xscale_family())
+	अगर (cpu_architecture() <= CPU_ARCH_ARMv5TEJ && !cpu_is_xscale_family())
 		prot |= PMD_BIT4;
 
 	pgd += pgd_index(addr);
-	do {
+	करो अणु
 		next = pgd_addr_end(addr, end);
 		idmap_add_pud(pgd, addr, next, prot);
-	} while (pgd++, addr = next, addr != end);
-}
+	पूर्ण जबतक (pgd++, addr = next, addr != end);
+पूर्ण
 
-extern char  __idmap_text_start[], __idmap_text_end[];
+बाह्य अक्षर  __idmap_text_start[], __idmap_text_end[];
 
-static int __init init_static_idmap(void)
-{
+अटल पूर्णांक __init init_अटल_idmap(व्योम)
+अणु
 	idmap_pgd = pgd_alloc(&init_mm);
-	if (!idmap_pgd)
-		return -ENOMEM;
+	अगर (!idmap_pgd)
+		वापस -ENOMEM;
 
 	identity_mapping_add(idmap_pgd, __idmap_text_start,
 			     __idmap_text_end, 0);
 
-	/* Flush L1 for the hardware to see this page table content */
-	if (!(elf_hwcap & HWCAP_LPAE))
+	/* Flush L1 क्रम the hardware to see this page table content */
+	अगर (!(elf_hwcap & HWCAP_LPAE))
 		flush_cache_louis();
 
-	return 0;
-}
-early_initcall(init_static_idmap);
+	वापस 0;
+पूर्ण
+early_initcall(init_अटल_idmap);
 
 /*
- * In order to soft-boot, we need to switch to a 1:1 mapping for the
+ * In order to soft-boot, we need to चयन to a 1:1 mapping क्रम the
  * cpu_reset functions. This will then ensure that we have predictable
  * results when turning off the mmu.
  */
-void setup_mm_for_reboot(void)
-{
+व्योम setup_mm_क्रम_reboot(व्योम)
+अणु
 	/* Switch to the identity mapping. */
-	cpu_switch_mm(idmap_pgd, &init_mm);
+	cpu_चयन_mm(idmap_pgd, &init_mm);
 	local_flush_bp_all();
 
-#ifdef CONFIG_CPU_HAS_ASID
+#अगर_घोषित CONFIG_CPU_HAS_ASID
 	/*
-	 * We don't have a clean ASID for the identity mapping, which
-	 * may clash with virtual addresses of the previous page tables
-	 * and therefore potentially in the TLB.
+	 * We करोn't have a clean ASID क्रम the identity mapping, which
+	 * may clash with भव addresses of the previous page tables
+	 * and thereक्रमe potentially in the TLB.
 	 */
 	local_flush_tlb_all();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

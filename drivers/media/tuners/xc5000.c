@@ -1,627 +1,628 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Xceive XC5000 "QAM/8VSB single chip tuner"
+ *  Driver क्रम Xceive XC5000 "QAM/8VSB single chip tuner"
  *
  *  Copyright (c) 2007 Xceive Corporation
  *  Copyright (c) 2007 Steven Toth <stoth@linuxtv.org>
- *  Copyright (c) 2009 Devin Heitmueller <dheitmueller@kernellabs.com>
+ *  Copyright (c) 2009 Devin Heiपंचांगueller <dheiपंचांगueller@kernelद_असल.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/videodev2.h>
-#include <linux/delay.h>
-#include <linux/workqueue.h>
-#include <linux/dvb/frontend.h>
-#include <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/i2c.h>
 
-#include <media/dvb_frontend.h>
+#समावेश <media/dvb_frontend.h>
 
-#include "xc5000.h"
-#include "tuner-i2c.h"
+#समावेश "xc5000.h"
+#समावेश "tuner-i2c.h"
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Turn on/off debugging (default:off).");
 
-static int no_poweroff;
-module_param(no_poweroff, int, 0644);
-MODULE_PARM_DESC(no_poweroff, "0 (default) powers device off when not used.\n"
+अटल पूर्णांक no_घातeroff;
+module_param(no_घातeroff, पूर्णांक, 0644);
+MODULE_PARM_DESC(no_घातeroff, "0 (default) powers device off when not used.\n"
 	"\t\t1 keep device energized and with tuner ready all the times.\n"
 	"\t\tFaster, but consumes more power and keeps the device hotter");
 
-static DEFINE_MUTEX(xc5000_list_mutex);
-static LIST_HEAD(hybrid_tuner_instance_list);
+अटल DEFINE_MUTEX(xc5000_list_mutex);
+अटल LIST_HEAD(hybrid_tuner_instance_list);
 
-#define dprintk(level, fmt, arg...) if (debug >= level) \
-	printk(KERN_INFO "%s: " fmt, "xc5000", ## arg)
+#घोषणा dprपूर्णांकk(level, fmt, arg...) अगर (debug >= level) \
+	prपूर्णांकk(KERN_INFO "%s: " fmt, "xc5000", ## arg)
 
-struct xc5000_priv {
-	struct tuner_i2c_props i2c_props;
-	struct list_head hybrid_tuner_instance_list;
+काष्ठा xc5000_priv अणु
+	काष्ठा tuner_i2c_props i2c_props;
+	काष्ठा list_head hybrid_tuner_instance_list;
 
-	u32 if_khz;
+	u32 अगर_khz;
 	u16 xtal_khz;
 	u32 freq_hz, freq_offset;
 	u32 bandwidth;
 	u8  video_standard;
-	unsigned int mode;
+	अचिन्हित पूर्णांक mode;
 	u8  rf_mode;
 	u8  radio_input;
 	u16  output_amp;
 
-	int chip_id;
-	u16 pll_register_no;
+	पूर्णांक chip_id;
+	u16 pll_रेजिस्टर_no;
 	u8 init_status_supported;
 	u8 fw_checksum_supported;
 
-	struct dvb_frontend *fe;
-	struct delayed_work timer_sleep;
+	काष्ठा dvb_frontend *fe;
+	काष्ठा delayed_work समयr_sleep;
 
-	const struct firmware   *firmware;
-};
+	स्थिर काष्ठा firmware   *firmware;
+पूर्ण;
 
 /* Misc Defines */
-#define MAX_TV_STANDARD			24
-#define XC_MAX_I2C_WRITE_LENGTH		64
+#घोषणा MAX_TV_STANDARD			24
+#घोषणा XC_MAX_I2C_WRITE_LENGTH		64
 
 /* Time to suspend after the .sleep callback is called */
-#define XC5000_SLEEP_TIME		5000 /* ms */
+#घोषणा XC5000_SLEEP_TIME		5000 /* ms */
 
 /* Signal Types */
-#define XC_RF_MODE_AIR			0
-#define XC_RF_MODE_CABLE		1
+#घोषणा XC_RF_MODE_AIR			0
+#घोषणा XC_RF_MODE_CABLE		1
 
 /* Product id */
-#define XC_PRODUCT_ID_FW_NOT_LOADED	0x2000
-#define XC_PRODUCT_ID_FW_LOADED	0x1388
+#घोषणा XC_PRODUCT_ID_FW_NOT_LOADED	0x2000
+#घोषणा XC_PRODUCT_ID_FW_LOADED	0x1388
 
 /* Registers */
-#define XREG_INIT         0x00
-#define XREG_VIDEO_MODE   0x01
-#define XREG_AUDIO_MODE   0x02
-#define XREG_RF_FREQ      0x03
-#define XREG_D_CODE       0x04
-#define XREG_IF_OUT       0x05
-#define XREG_SEEK_MODE    0x07
-#define XREG_POWER_DOWN   0x0A /* Obsolete */
-/* Set the output amplitude - SIF for analog, DTVP/DTVN for digital */
-#define XREG_OUTPUT_AMP   0x0B
-#define XREG_SIGNALSOURCE 0x0D /* 0=Air, 1=Cable */
-#define XREG_SMOOTHEDCVBS 0x0E
-#define XREG_XTALFREQ     0x0F
-#define XREG_FINERFREQ    0x10
-#define XREG_DDIMODE      0x11
+#घोषणा XREG_INIT         0x00
+#घोषणा XREG_VIDEO_MODE   0x01
+#घोषणा XREG_AUDIO_MODE   0x02
+#घोषणा XREG_RF_FREQ      0x03
+#घोषणा XREG_D_CODE       0x04
+#घोषणा XREG_IF_OUT       0x05
+#घोषणा XREG_SEEK_MODE    0x07
+#घोषणा XREG_POWER_DOWN   0x0A /* Obsolete */
+/* Set the output amplitude - SIF क्रम analog, DTVP/DTVN क्रम digital */
+#घोषणा XREG_OUTPUT_AMP   0x0B
+#घोषणा XREG_SIGNALSOURCE 0x0D /* 0=Air, 1=Cable */
+#घोषणा XREG_SMOOTHEDCVBS 0x0E
+#घोषणा XREG_XTALFREQ     0x0F
+#घोषणा XREG_FINERFREQ    0x10
+#घोषणा XREG_DDIMODE      0x11
 
-#define XREG_ADC_ENV      0x00
-#define XREG_QUALITY      0x01
-#define XREG_FRAME_LINES  0x02
-#define XREG_HSYNC_FREQ   0x03
-#define XREG_LOCK         0x04
-#define XREG_FREQ_ERROR   0x05
-#define XREG_SNR          0x06
-#define XREG_VERSION      0x07
-#define XREG_PRODUCT_ID   0x08
-#define XREG_BUSY         0x09
-#define XREG_BUILD        0x0D
-#define XREG_TOTALGAIN    0x0F
-#define XREG_FW_CHECKSUM  0x12
-#define XREG_INIT_STATUS  0x13
+#घोषणा XREG_ADC_ENV      0x00
+#घोषणा XREG_QUALITY      0x01
+#घोषणा XREG_FRAME_LINES  0x02
+#घोषणा XREG_HSYNC_FREQ   0x03
+#घोषणा XREG_LOCK         0x04
+#घोषणा XREG_FREQ_ERROR   0x05
+#घोषणा XREG_SNR          0x06
+#घोषणा XREG_VERSION      0x07
+#घोषणा XREG_PRODUCT_ID   0x08
+#घोषणा XREG_BUSY         0x09
+#घोषणा XREG_BUILD        0x0D
+#घोषणा XREG_TOTALGAIN    0x0F
+#घोषणा XREG_FW_CHECKSUM  0x12
+#घोषणा XREG_INIT_STATUS  0x13
 
 /*
-   Basic firmware description. This will remain with
-   the driver for documentation purposes.
+   Basic firmware description. This will reमुख्य with
+   the driver क्रम करोcumentation purposes.
 
    This represents an I2C firmware file encoded as a
-   string of unsigned char. Format is as follows:
+   string of अचिन्हित अक्षर. Format is as follows:
 
-   char[0  ]=len0_MSB  -> len = len_MSB * 256 + len_LSB
-   char[1  ]=len0_LSB  -> length of first write transaction
-   char[2  ]=data0 -> first byte to be sent
-   char[3  ]=data1
-   char[4  ]=data2
-   char[   ]=...
-   char[M  ]=dataN  -> last byte to be sent
-   char[M+1]=len1_MSB  -> len = len_MSB * 256 + len_LSB
-   char[M+2]=len1_LSB  -> length of second write transaction
-   char[M+3]=data0
-   char[M+4]=data1
+   अक्षर[0  ]=len0_MSB  -> len = len_MSB * 256 + len_LSB
+   अक्षर[1  ]=len0_LSB  -> length of first ग_लिखो transaction
+   अक्षर[2  ]=data0 -> first byte to be sent
+   अक्षर[3  ]=data1
+   अक्षर[4  ]=data2
+   अक्षर[   ]=...
+   अक्षर[M  ]=dataN  -> last byte to be sent
+   अक्षर[M+1]=len1_MSB  -> len = len_MSB * 256 + len_LSB
+   अक्षर[M+2]=len1_LSB  -> length of second ग_लिखो transaction
+   अक्षर[M+3]=data0
+   अक्षर[M+4]=data1
    ...
    etc.
 
-   The [len] value should be interpreted as follows:
+   The [len] value should be पूर्णांकerpreted as follows:
 
    len= len_MSB _ len_LSB
    len=1111_1111_1111_1111   : End of I2C_SEQUENCE
    len=0000_0000_0000_0000   : Reset command: Do hardware reset
-   len=0NNN_NNNN_NNNN_NNNN   : Normal transaction: number of bytes = {1:32767)
-   len=1WWW_WWWW_WWWW_WWWW   : Wait command: wait for {1:32767} ms
+   len=0NNN_NNNN_NNNN_NNNN   : Normal transaction: number of bytes = अणु1:32767)
+   len=1WWW_WWWW_WWWW_WWWW   : Wait command: रुको क्रम अणु1:32767पूर्ण ms
 
    For the RESET and WAIT commands, the two following bytes will contain
    immediately the length of the following transaction.
 
 */
-struct XC_TV_STANDARD {
-	char *name;
+काष्ठा XC_TV_STANDARD अणु
+	अक्षर *name;
 	u16 audio_mode;
 	u16 video_mode;
-};
+पूर्ण;
 
 /* Tuner standards */
-#define MN_NTSC_PAL_BTSC	0
-#define MN_NTSC_PAL_A2		1
-#define MN_NTSC_PAL_EIAJ	2
-#define MN_NTSC_PAL_MONO	3
-#define BG_PAL_A2		4
-#define BG_PAL_NICAM		5
-#define BG_PAL_MONO		6
-#define I_PAL_NICAM		7
-#define I_PAL_NICAM_MONO	8
-#define DK_PAL_A2		9
-#define DK_PAL_NICAM		10
-#define DK_PAL_MONO		11
-#define DK_SECAM_A2DK1		12
-#define DK_SECAM_A2LDK3		13
-#define DK_SECAM_A2MONO		14
-#define L_SECAM_NICAM		15
-#define LC_SECAM_NICAM		16
-#define DTV6			17
-#define DTV8			18
-#define DTV7_8			19
-#define DTV7			20
-#define FM_RADIO_INPUT2		21
-#define FM_RADIO_INPUT1		22
-#define FM_RADIO_INPUT1_MONO	23
+#घोषणा MN_NTSC_PAL_BTSC	0
+#घोषणा MN_NTSC_PAL_A2		1
+#घोषणा MN_NTSC_PAL_EIAJ	2
+#घोषणा MN_NTSC_PAL_MONO	3
+#घोषणा BG_PAL_A2		4
+#घोषणा BG_PAL_NICAM		5
+#घोषणा BG_PAL_MONO		6
+#घोषणा I_PAL_NICAM		7
+#घोषणा I_PAL_NICAM_MONO	8
+#घोषणा DK_PAL_A2		9
+#घोषणा DK_PAL_NICAM		10
+#घोषणा DK_PAL_MONO		11
+#घोषणा DK_SECAM_A2DK1		12
+#घोषणा DK_SECAM_A2LDK3		13
+#घोषणा DK_SECAM_A2MONO		14
+#घोषणा L_SECAM_NICAM		15
+#घोषणा LC_SECAM_NICAM		16
+#घोषणा DTV6			17
+#घोषणा DTV8			18
+#घोषणा DTV7_8			19
+#घोषणा DTV7			20
+#घोषणा FM_RADIO_INPUT2		21
+#घोषणा FM_RADIO_INPUT1		22
+#घोषणा FM_RADIO_INPUT1_MONO	23
 
-static struct XC_TV_STANDARD xc5000_standard[MAX_TV_STANDARD] = {
-	{"M/N-NTSC/PAL-BTSC", 0x0400, 0x8020},
-	{"M/N-NTSC/PAL-A2",   0x0600, 0x8020},
-	{"M/N-NTSC/PAL-EIAJ", 0x0440, 0x8020},
-	{"M/N-NTSC/PAL-Mono", 0x0478, 0x8020},
-	{"B/G-PAL-A2",        0x0A00, 0x8049},
-	{"B/G-PAL-NICAM",     0x0C04, 0x8049},
-	{"B/G-PAL-MONO",      0x0878, 0x8059},
-	{"I-PAL-NICAM",       0x1080, 0x8009},
-	{"I-PAL-NICAM-MONO",  0x0E78, 0x8009},
-	{"D/K-PAL-A2",        0x1600, 0x8009},
-	{"D/K-PAL-NICAM",     0x0E80, 0x8009},
-	{"D/K-PAL-MONO",      0x1478, 0x8009},
-	{"D/K-SECAM-A2 DK1",  0x1200, 0x8009},
-	{"D/K-SECAM-A2 L/DK3", 0x0E00, 0x8009},
-	{"D/K-SECAM-A2 MONO", 0x1478, 0x8009},
-	{"L-SECAM-NICAM",     0x8E82, 0x0009},
-	{"L'-SECAM-NICAM",    0x8E82, 0x4009},
-	{"DTV6",              0x00C0, 0x8002},
-	{"DTV8",              0x00C0, 0x800B},
-	{"DTV7/8",            0x00C0, 0x801B},
-	{"DTV7",              0x00C0, 0x8007},
-	{"FM Radio-INPUT2",   0x9802, 0x9002},
-	{"FM Radio-INPUT1",   0x0208, 0x9002},
-	{"FM Radio-INPUT1_MONO", 0x0278, 0x9002}
-};
+अटल काष्ठा XC_TV_STANDARD xc5000_standard[MAX_TV_STANDARD] = अणु
+	अणु"M/N-NTSC/PAL-BTSC", 0x0400, 0x8020पूर्ण,
+	अणु"M/N-NTSC/PAL-A2",   0x0600, 0x8020पूर्ण,
+	अणु"M/N-NTSC/PAL-EIAJ", 0x0440, 0x8020पूर्ण,
+	अणु"M/N-NTSC/PAL-Mono", 0x0478, 0x8020पूर्ण,
+	अणु"B/G-PAL-A2",        0x0A00, 0x8049पूर्ण,
+	अणु"B/G-PAL-NICAM",     0x0C04, 0x8049पूर्ण,
+	अणु"B/G-PAL-MONO",      0x0878, 0x8059पूर्ण,
+	अणु"I-PAL-NICAM",       0x1080, 0x8009पूर्ण,
+	अणु"I-PAL-NICAM-MONO",  0x0E78, 0x8009पूर्ण,
+	अणु"D/K-PAL-A2",        0x1600, 0x8009पूर्ण,
+	अणु"D/K-PAL-NICAM",     0x0E80, 0x8009पूर्ण,
+	अणु"D/K-PAL-MONO",      0x1478, 0x8009पूर्ण,
+	अणु"D/K-SECAM-A2 DK1",  0x1200, 0x8009पूर्ण,
+	अणु"D/K-SECAM-A2 L/DK3", 0x0E00, 0x8009पूर्ण,
+	अणु"D/K-SECAM-A2 MONO", 0x1478, 0x8009पूर्ण,
+	अणु"L-SECAM-NICAM",     0x8E82, 0x0009पूर्ण,
+	अणु"L'-SECAM-NICAM",    0x8E82, 0x4009पूर्ण,
+	अणु"DTV6",              0x00C0, 0x8002पूर्ण,
+	अणु"DTV8",              0x00C0, 0x800Bपूर्ण,
+	अणु"DTV7/8",            0x00C0, 0x801Bपूर्ण,
+	अणु"DTV7",              0x00C0, 0x8007पूर्ण,
+	अणु"FM Radio-INPUT2",   0x9802, 0x9002पूर्ण,
+	अणु"FM Radio-INPUT1",   0x0208, 0x9002पूर्ण,
+	अणु"FM Radio-INPUT1_MONO", 0x0278, 0x9002पूर्ण
+पूर्ण;
 
 
-struct xc5000_fw_cfg {
-	char *name;
+काष्ठा xc5000_fw_cfg अणु
+	अक्षर *name;
 	u16 size;
 	u16 pll_reg;
 	u8 init_status_supported;
 	u8 fw_checksum_supported;
-};
+पूर्ण;
 
-#define XC5000A_FIRMWARE "dvb-fe-xc5000-1.6.114.fw"
-static const struct xc5000_fw_cfg xc5000a_1_6_114 = {
+#घोषणा XC5000A_FIRMWARE "dvb-fe-xc5000-1.6.114.fw"
+अटल स्थिर काष्ठा xc5000_fw_cfg xc5000a_1_6_114 = अणु
 	.name = XC5000A_FIRMWARE,
 	.size = 12401,
 	.pll_reg = 0x806c,
-};
+पूर्ण;
 
-#define XC5000C_FIRMWARE "dvb-fe-xc5000c-4.1.30.7.fw"
-static const struct xc5000_fw_cfg xc5000c_41_024_5 = {
+#घोषणा XC5000C_FIRMWARE "dvb-fe-xc5000c-4.1.30.7.fw"
+अटल स्थिर काष्ठा xc5000_fw_cfg xc5000c_41_024_5 = अणु
 	.name = XC5000C_FIRMWARE,
 	.size = 16497,
 	.pll_reg = 0x13,
 	.init_status_supported = 1,
 	.fw_checksum_supported = 1,
-};
+पूर्ण;
 
-static inline const struct xc5000_fw_cfg *xc5000_assign_firmware(int chip_id)
-{
-	switch (chip_id) {
-	default:
-	case XC5000A:
-		return &xc5000a_1_6_114;
-	case XC5000C:
-		return &xc5000c_41_024_5;
-	}
-}
+अटल अंतरभूत स्थिर काष्ठा xc5000_fw_cfg *xc5000_assign_firmware(पूर्णांक chip_id)
+अणु
+	चयन (chip_id) अणु
+	शेष:
+	हाल XC5000A:
+		वापस &xc5000a_1_6_114;
+	हाल XC5000C:
+		वापस &xc5000c_41_024_5;
+	पूर्ण
+पूर्ण
 
-static int xc_load_fw_and_init_tuner(struct dvb_frontend *fe, int force);
-static int xc5000_is_firmware_loaded(struct dvb_frontend *fe);
-static int xc5000_readreg(struct xc5000_priv *priv, u16 reg, u16 *val);
-static int xc5000_tuner_reset(struct dvb_frontend *fe);
+अटल पूर्णांक xc_load_fw_and_init_tuner(काष्ठा dvb_frontend *fe, पूर्णांक क्रमce);
+अटल पूर्णांक xc5000_is_firmware_loaded(काष्ठा dvb_frontend *fe);
+अटल पूर्णांक xc5000_पढ़ोreg(काष्ठा xc5000_priv *priv, u16 reg, u16 *val);
+अटल पूर्णांक xc5000_tuner_reset(काष्ठा dvb_frontend *fe);
 
-static int xc_send_i2c_data(struct xc5000_priv *priv, u8 *buf, int len)
-{
-	struct i2c_msg msg = { .addr = priv->i2c_props.addr,
-			       .flags = 0, .buf = buf, .len = len };
+अटल पूर्णांक xc_send_i2c_data(काष्ठा xc5000_priv *priv, u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_props.addr,
+			       .flags = 0, .buf = buf, .len = len पूर्ण;
 
-	if (i2c_transfer(priv->i2c_props.adap, &msg, 1) != 1) {
-		printk(KERN_ERR "xc5000: I2C write failed (len=%i)\n", len);
-		return -EREMOTEIO;
-	}
-	return 0;
-}
+	अगर (i2c_transfer(priv->i2c_props.adap, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: I2C write failed (len=%i)\n", len);
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#if 0
-/* This routine is never used because the only time we read data from the
-   i2c bus is when we read registers, and we want that to be an atomic i2c
-   transaction in case we are on a multi-master bus */
-static int xc_read_i2c_data(struct xc5000_priv *priv, u8 *buf, int len)
-{
-	struct i2c_msg msg = { .addr = priv->i2c_props.addr,
-		.flags = I2C_M_RD, .buf = buf, .len = len };
+#अगर 0
+/* This routine is never used because the only समय we पढ़ो data from the
+   i2c bus is when we पढ़ो रेजिस्टरs, and we want that to be an atomic i2c
+   transaction in हाल we are on a multi-master bus */
+अटल पूर्णांक xc_पढ़ो_i2c_data(काष्ठा xc5000_priv *priv, u8 *buf, पूर्णांक len)
+अणु
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_props.addr,
+		.flags = I2C_M_RD, .buf = buf, .len = len पूर्ण;
 
-	if (i2c_transfer(priv->i2c_props.adap, &msg, 1) != 1) {
-		printk(KERN_ERR "xc5000 I2C read failed (len=%i)\n", len);
-		return -EREMOTEIO;
-	}
-	return 0;
-}
-#endif
+	अगर (i2c_transfer(priv->i2c_props.adap, &msg, 1) != 1) अणु
+		prपूर्णांकk(KERN_ERR "xc5000 I2C read failed (len=%i)\n", len);
+		वापस -EREMOTEIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int xc5000_readreg(struct xc5000_priv *priv, u16 reg, u16 *val)
-{
-	u8 buf[2] = { reg >> 8, reg & 0xff };
-	u8 bval[2] = { 0, 0 };
-	struct i2c_msg msg[2] = {
-		{ .addr = priv->i2c_props.addr,
-			.flags = 0, .buf = &buf[0], .len = 2 },
-		{ .addr = priv->i2c_props.addr,
-			.flags = I2C_M_RD, .buf = &bval[0], .len = 2 },
-	};
+अटल पूर्णांक xc5000_पढ़ोreg(काष्ठा xc5000_priv *priv, u16 reg, u16 *val)
+अणु
+	u8 buf[2] = अणु reg >> 8, reg & 0xff पूर्ण;
+	u8 bval[2] = अणु 0, 0 पूर्ण;
+	काष्ठा i2c_msg msg[2] = अणु
+		अणु .addr = priv->i2c_props.addr,
+			.flags = 0, .buf = &buf[0], .len = 2 पूर्ण,
+		अणु .addr = priv->i2c_props.addr,
+			.flags = I2C_M_RD, .buf = &bval[0], .len = 2 पूर्ण,
+	पूर्ण;
 
-	if (i2c_transfer(priv->i2c_props.adap, msg, 2) != 2) {
-		printk(KERN_WARNING "xc5000: I2C read failed\n");
-		return -EREMOTEIO;
-	}
+	अगर (i2c_transfer(priv->i2c_props.adap, msg, 2) != 2) अणु
+		prपूर्णांकk(KERN_WARNING "xc5000: I2C read failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	*val = (bval[0] << 8) | bval[1];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_tuner_reset(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_tuner_reset(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	if (fe->callback) {
+	अगर (fe->callback) अणु
 		ret = fe->callback(((fe->dvb) && (fe->dvb->priv)) ?
 					   fe->dvb->priv :
 					   priv->i2c_props.adap->algo_data,
 					   DVB_FRONTEND_COMPONENT_TUNER,
 					   XC5000_TUNER_RESET, 0);
-		if (ret) {
-			printk(KERN_ERR "xc5000: reset failed\n");
-			return ret;
-		}
-	} else {
-		printk(KERN_ERR "xc5000: no tuner reset callback function, fatal\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "xc5000: reset failed\n");
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_ERR "xc5000: no tuner reset callback function, fatal\n");
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int xc_write_reg(struct xc5000_priv *priv, u16 reg_addr, u16 i2c_data)
-{
+अटल पूर्णांक xc_ग_लिखो_reg(काष्ठा xc5000_priv *priv, u16 reg_addr, u16 i2c_data)
+अणु
 	u8 buf[4];
-	int watch_dog_timer = 100;
-	int result;
+	पूर्णांक watch_करोg_समयr = 100;
+	पूर्णांक result;
 
 	buf[0] = (reg_addr >> 8) & 0xFF;
 	buf[1] = reg_addr & 0xFF;
 	buf[2] = (i2c_data >> 8) & 0xFF;
 	buf[3] = i2c_data & 0xFF;
 	result = xc_send_i2c_data(priv, buf, 4);
-	if (result == 0) {
-		/* wait for busy flag to clear */
-		while ((watch_dog_timer > 0) && (result == 0)) {
-			result = xc5000_readreg(priv, XREG_BUSY, (u16 *)buf);
-			if (result == 0) {
-				if ((buf[0] == 0) && (buf[1] == 0)) {
+	अगर (result == 0) अणु
+		/* रुको क्रम busy flag to clear */
+		जबतक ((watch_करोg_समयr > 0) && (result == 0)) अणु
+			result = xc5000_पढ़ोreg(priv, XREG_BUSY, (u16 *)buf);
+			अगर (result == 0) अणु
+				अगर ((buf[0] == 0) && (buf[1] == 0)) अणु
 					/* busy flag cleared */
-					break;
-				} else {
-					msleep(5); /* wait 5 ms */
-					watch_dog_timer--;
-				}
-			}
-		}
-	}
-	if (watch_dog_timer <= 0)
+					अवरोध;
+				पूर्ण अन्यथा अणु
+					msleep(5); /* रुको 5 ms */
+					watch_करोg_समयr--;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (watch_करोg_समयr <= 0)
 		result = -EREMOTEIO;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int xc_load_i2c_sequence(struct dvb_frontend *fe, const u8 *i2c_sequence)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc_load_i2c_sequence(काष्ठा dvb_frontend *fe, स्थिर u8 *i2c_sequence)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	int i, nbytes_to_send, result;
-	unsigned int len, pos, index;
+	पूर्णांक i, nbytes_to_send, result;
+	अचिन्हित पूर्णांक len, pos, index;
 	u8 buf[XC_MAX_I2C_WRITE_LENGTH];
 
 	index = 0;
-	while ((i2c_sequence[index] != 0xFF) ||
-		(i2c_sequence[index + 1] != 0xFF)) {
+	जबतक ((i2c_sequence[index] != 0xFF) ||
+		(i2c_sequence[index + 1] != 0xFF)) अणु
 		len = i2c_sequence[index] * 256 + i2c_sequence[index+1];
-		if (len == 0x0000) {
+		अगर (len == 0x0000) अणु
 			/* RESET command */
 			result = xc5000_tuner_reset(fe);
 			index += 2;
-			if (result != 0)
-				return result;
-		} else if (len & 0x8000) {
+			अगर (result != 0)
+				वापस result;
+		पूर्ण अन्यथा अगर (len & 0x8000) अणु
 			/* WAIT command */
 			msleep(len & 0x7FFF);
 			index += 2;
-		} else {
-			/* Send i2c data whilst ensuring individual transactions
-			 * do not exceed XC_MAX_I2C_WRITE_LENGTH bytes.
+		पूर्ण अन्यथा अणु
+			/* Send i2c data whilst ensuring inभागidual transactions
+			 * करो not exceed XC_MAX_I2C_WRITE_LENGTH bytes.
 			 */
 			index += 2;
 			buf[0] = i2c_sequence[index];
 			buf[1] = i2c_sequence[index + 1];
 			pos = 2;
-			while (pos < len) {
-				if ((len - pos) > XC_MAX_I2C_WRITE_LENGTH - 2)
+			जबतक (pos < len) अणु
+				अगर ((len - pos) > XC_MAX_I2C_WRITE_LENGTH - 2)
 					nbytes_to_send =
 						XC_MAX_I2C_WRITE_LENGTH;
-				else
+				अन्यथा
 					nbytes_to_send = (len - pos + 2);
-				for (i = 2; i < nbytes_to_send; i++) {
+				क्रम (i = 2; i < nbytes_to_send; i++) अणु
 					buf[i] = i2c_sequence[index + pos +
 						i - 2];
-				}
+				पूर्ण
 				result = xc_send_i2c_data(priv, buf,
 					nbytes_to_send);
 
-				if (result != 0)
-					return result;
+				अगर (result != 0)
+					वापस result;
 
 				pos += nbytes_to_send - 2;
-			}
+			पूर्ण
 			index += len;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int xc_initialize(struct xc5000_priv *priv)
-{
-	dprintk(1, "%s()\n", __func__);
-	return xc_write_reg(priv, XREG_INIT, 0);
-}
+अटल पूर्णांक xc_initialize(काष्ठा xc5000_priv *priv)
+अणु
+	dprपूर्णांकk(1, "%s()\n", __func__);
+	वापस xc_ग_लिखो_reg(priv, XREG_INIT, 0);
+पूर्ण
 
-static int xc_set_tv_standard(struct xc5000_priv *priv,
+अटल पूर्णांक xc_set_tv_standard(काष्ठा xc5000_priv *priv,
 	u16 video_mode, u16 audio_mode, u8 radio_mode)
-{
-	int ret;
-	dprintk(1, "%s(0x%04x,0x%04x)\n", __func__, video_mode, audio_mode);
-	if (radio_mode) {
-		dprintk(1, "%s() Standard = %s\n",
+अणु
+	पूर्णांक ret;
+	dprपूर्णांकk(1, "%s(0x%04x,0x%04x)\n", __func__, video_mode, audio_mode);
+	अगर (radio_mode) अणु
+		dprपूर्णांकk(1, "%s() Standard = %s\n",
 			__func__,
 			xc5000_standard[radio_mode].name);
-	} else {
-		dprintk(1, "%s() Standard = %s\n",
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(1, "%s() Standard = %s\n",
 			__func__,
 			xc5000_standard[priv->video_standard].name);
-	}
+	पूर्ण
 
-	ret = xc_write_reg(priv, XREG_VIDEO_MODE, video_mode);
-	if (ret == 0)
-		ret = xc_write_reg(priv, XREG_AUDIO_MODE, audio_mode);
+	ret = xc_ग_लिखो_reg(priv, XREG_VIDEO_MODE, video_mode);
+	अगर (ret == 0)
+		ret = xc_ग_लिखो_reg(priv, XREG_AUDIO_MODE, audio_mode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xc_set_signal_source(struct xc5000_priv *priv, u16 rf_mode)
-{
-	dprintk(1, "%s(%d) Source = %s\n", __func__, rf_mode,
+अटल पूर्णांक xc_set_संकेत_source(काष्ठा xc5000_priv *priv, u16 rf_mode)
+अणु
+	dprपूर्णांकk(1, "%s(%d) Source = %s\n", __func__, rf_mode,
 		rf_mode == XC_RF_MODE_AIR ? "ANTENNA" : "CABLE");
 
-	if ((rf_mode != XC_RF_MODE_AIR) && (rf_mode != XC_RF_MODE_CABLE)) {
+	अगर ((rf_mode != XC_RF_MODE_AIR) && (rf_mode != XC_RF_MODE_CABLE)) अणु
 		rf_mode = XC_RF_MODE_CABLE;
-		printk(KERN_ERR
+		prपूर्णांकk(KERN_ERR
 			"%s(), Invalid mode, defaulting to CABLE",
 			__func__);
-	}
-	return xc_write_reg(priv, XREG_SIGNALSOURCE, rf_mode);
-}
+	पूर्ण
+	वापस xc_ग_लिखो_reg(priv, XREG_SIGNALSOURCE, rf_mode);
+पूर्ण
 
-static const struct dvb_tuner_ops xc5000_tuner_ops;
+अटल स्थिर काष्ठा dvb_tuner_ops xc5000_tuner_ops;
 
-static int xc_set_rf_frequency(struct xc5000_priv *priv, u32 freq_hz)
-{
+अटल पूर्णांक xc_set_rf_frequency(काष्ठा xc5000_priv *priv, u32 freq_hz)
+अणु
 	u16 freq_code;
 
-	dprintk(1, "%s(%u)\n", __func__, freq_hz);
+	dprपूर्णांकk(1, "%s(%u)\n", __func__, freq_hz);
 
-	if ((freq_hz > xc5000_tuner_ops.info.frequency_max_hz) ||
+	अगर ((freq_hz > xc5000_tuner_ops.info.frequency_max_hz) ||
 		(freq_hz < xc5000_tuner_ops.info.frequency_min_hz))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	freq_code = (u16)(freq_hz / 15625);
 
 	/* Starting in firmware version 1.1.44, Xceive recommends using the
-	   FINERFREQ for all normal tuning (the doc indicates reg 0x03 should
-	   only be used for fast scanning for channel lock) */
-	return xc_write_reg(priv, XREG_FINERFREQ, freq_code);
-}
+	   FINERFREQ क्रम all normal tuning (the करोc indicates reg 0x03 should
+	   only be used क्रम fast scanning क्रम channel lock) */
+	वापस xc_ग_लिखो_reg(priv, XREG_FINERFREQ, freq_code);
+पूर्ण
 
 
-static int xc_set_IF_frequency(struct xc5000_priv *priv, u32 freq_khz)
-{
+अटल पूर्णांक xc_set_IF_frequency(काष्ठा xc5000_priv *priv, u32 freq_khz)
+अणु
 	u32 freq_code = (freq_khz * 1024)/1000;
-	dprintk(1, "%s(freq_khz = %d) freq_code = 0x%x\n",
+	dprपूर्णांकk(1, "%s(freq_khz = %d) freq_code = 0x%x\n",
 		__func__, freq_khz, freq_code);
 
-	return xc_write_reg(priv, XREG_IF_OUT, freq_code);
-}
+	वापस xc_ग_लिखो_reg(priv, XREG_IF_OUT, freq_code);
+पूर्ण
 
 
-static int xc_get_adc_envelope(struct xc5000_priv *priv, u16 *adc_envelope)
-{
-	return xc5000_readreg(priv, XREG_ADC_ENV, adc_envelope);
-}
+अटल पूर्णांक xc_get_adc_envelope(काष्ठा xc5000_priv *priv, u16 *adc_envelope)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_ADC_ENV, adc_envelope);
+पूर्ण
 
-static int xc_get_frequency_error(struct xc5000_priv *priv, u32 *freq_error_hz)
-{
-	int result;
+अटल पूर्णांक xc_get_frequency_error(काष्ठा xc5000_priv *priv, u32 *freq_error_hz)
+अणु
+	पूर्णांक result;
 	u16 reg_data;
-	u32 tmp;
+	u32 पंचांगp;
 
-	result = xc5000_readreg(priv, XREG_FREQ_ERROR, &reg_data);
-	if (result != 0)
-		return result;
+	result = xc5000_पढ़ोreg(priv, XREG_FREQ_ERROR, &reg_data);
+	अगर (result != 0)
+		वापस result;
 
-	tmp = (u32)reg_data;
-	(*freq_error_hz) = (tmp * 15625) / 1000;
-	return result;
-}
+	पंचांगp = (u32)reg_data;
+	(*freq_error_hz) = (पंचांगp * 15625) / 1000;
+	वापस result;
+पूर्ण
 
-static int xc_get_lock_status(struct xc5000_priv *priv, u16 *lock_status)
-{
-	return xc5000_readreg(priv, XREG_LOCK, lock_status);
-}
+अटल पूर्णांक xc_get_lock_status(काष्ठा xc5000_priv *priv, u16 *lock_status)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_LOCK, lock_status);
+पूर्ण
 
-static int xc_get_version(struct xc5000_priv *priv,
+अटल पूर्णांक xc_get_version(काष्ठा xc5000_priv *priv,
 	u8 *hw_majorversion, u8 *hw_minorversion,
 	u8 *fw_majorversion, u8 *fw_minorversion)
-{
+अणु
 	u16 data;
-	int result;
+	पूर्णांक result;
 
-	result = xc5000_readreg(priv, XREG_VERSION, &data);
-	if (result != 0)
-		return result;
+	result = xc5000_पढ़ोreg(priv, XREG_VERSION, &data);
+	अगर (result != 0)
+		वापस result;
 
 	(*hw_majorversion) = (data >> 12) & 0x0F;
 	(*hw_minorversion) = (data >>  8) & 0x0F;
 	(*fw_majorversion) = (data >>  4) & 0x0F;
 	(*fw_minorversion) = data & 0x0F;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc_get_buildversion(struct xc5000_priv *priv, u16 *buildrev)
-{
-	return xc5000_readreg(priv, XREG_BUILD, buildrev);
-}
+अटल पूर्णांक xc_get_buildversion(काष्ठा xc5000_priv *priv, u16 *buildrev)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_BUILD, buildrev);
+पूर्ण
 
-static int xc_get_hsync_freq(struct xc5000_priv *priv, u32 *hsync_freq_hz)
-{
+अटल पूर्णांक xc_get_hsync_freq(काष्ठा xc5000_priv *priv, u32 *hsync_freq_hz)
+अणु
 	u16 reg_data;
-	int result;
+	पूर्णांक result;
 
-	result = xc5000_readreg(priv, XREG_HSYNC_FREQ, &reg_data);
-	if (result != 0)
-		return result;
+	result = xc5000_पढ़ोreg(priv, XREG_HSYNC_FREQ, &reg_data);
+	अगर (result != 0)
+		वापस result;
 
 	(*hsync_freq_hz) = ((reg_data & 0x0fff) * 763)/100;
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int xc_get_frame_lines(struct xc5000_priv *priv, u16 *frame_lines)
-{
-	return xc5000_readreg(priv, XREG_FRAME_LINES, frame_lines);
-}
+अटल पूर्णांक xc_get_frame_lines(काष्ठा xc5000_priv *priv, u16 *frame_lines)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_FRAME_LINES, frame_lines);
+पूर्ण
 
-static int xc_get_quality(struct xc5000_priv *priv, u16 *quality)
-{
-	return xc5000_readreg(priv, XREG_QUALITY, quality);
-}
+अटल पूर्णांक xc_get_quality(काष्ठा xc5000_priv *priv, u16 *quality)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_QUALITY, quality);
+पूर्ण
 
-static int xc_get_analogsnr(struct xc5000_priv *priv, u16 *snr)
-{
-	return xc5000_readreg(priv, XREG_SNR, snr);
-}
+अटल पूर्णांक xc_get_analogsnr(काष्ठा xc5000_priv *priv, u16 *snr)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_SNR, snr);
+पूर्ण
 
-static int xc_get_totalgain(struct xc5000_priv *priv, u16 *totalgain)
-{
-	return xc5000_readreg(priv, XREG_TOTALGAIN, totalgain);
-}
+अटल पूर्णांक xc_get_totalgain(काष्ठा xc5000_priv *priv, u16 *totalgain)
+अणु
+	वापस xc5000_पढ़ोreg(priv, XREG_TOTALGAIN, totalgain);
+पूर्ण
 
-#define XC_TUNE_ANALOG  0
-#define XC_TUNE_DIGITAL 1
-static int xc_tune_channel(struct xc5000_priv *priv, u32 freq_hz, int mode)
-{
-	dprintk(1, "%s(%u)\n", __func__, freq_hz);
+#घोषणा XC_TUNE_ANALOG  0
+#घोषणा XC_TUNE_DIGITAL 1
+अटल पूर्णांक xc_tune_channel(काष्ठा xc5000_priv *priv, u32 freq_hz, पूर्णांक mode)
+अणु
+	dprपूर्णांकk(1, "%s(%u)\n", __func__, freq_hz);
 
-	if (xc_set_rf_frequency(priv, freq_hz) != 0)
-		return -EREMOTEIO;
+	अगर (xc_set_rf_frequency(priv, freq_hz) != 0)
+		वापस -EREMOTEIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc_set_xtal(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret = 0;
+अटल पूर्णांक xc_set_xtal(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret = 0;
 
-	switch (priv->chip_id) {
-	default:
-	case XC5000A:
-		/* 32.000 MHz xtal is default */
-		break;
-	case XC5000C:
-		switch (priv->xtal_khz) {
-		default:
-		case 32000:
-			/* 32.000 MHz xtal is default */
-			break;
-		case 31875:
+	चयन (priv->chip_id) अणु
+	शेष:
+	हाल XC5000A:
+		/* 32.000 MHz xtal is शेष */
+		अवरोध;
+	हाल XC5000C:
+		चयन (priv->xtal_khz) अणु
+		शेष:
+		हाल 32000:
+			/* 32.000 MHz xtal is शेष */
+			अवरोध;
+		हाल 31875:
 			/* 31.875 MHz xtal configuration */
-			ret = xc_write_reg(priv, 0x000f, 0x8081);
-			break;
-		}
-		break;
-	}
-	return ret;
-}
+			ret = xc_ग_लिखो_reg(priv, 0x000f, 0x8081);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int xc5000_fwupload(struct dvb_frontend *fe,
-			   const struct xc5000_fw_cfg *desired_fw,
-			   const struct firmware *fw)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_fwupload(काष्ठा dvb_frontend *fe,
+			   स्थिर काष्ठा xc5000_fw_cfg *desired_fw,
+			   स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 
-	/* request the firmware, this will block and timeout */
-	dprintk(1, "waiting for firmware upload (%s)...\n",
+	/* request the firmware, this will block and समयout */
+	dprपूर्णांकk(1, "waiting for firmware upload (%s)...\n",
 		desired_fw->name);
 
-	priv->pll_register_no = desired_fw->pll_reg;
+	priv->pll_रेजिस्टर_no = desired_fw->pll_reg;
 	priv->init_status_supported = desired_fw->init_status_supported;
 	priv->fw_checksum_supported = desired_fw->fw_checksum_supported;
 
 
-	dprintk(1, "firmware uploading...\n");
+	dprपूर्णांकk(1, "firmware uploading...\n");
 	ret = xc_load_i2c_sequence(fe,  fw->data);
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = xc_set_xtal(fe);
-		dprintk(1, "Firmware upload complete...\n");
-	} else
-		printk(KERN_ERR "xc5000: firmware upload failed...\n");
+		dprपूर्णांकk(1, "Firmware upload complete...\n");
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_ERR "xc5000: firmware upload failed...\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xc_debug_dump(struct xc5000_priv *priv)
-{
+अटल व्योम xc_debug_dump(काष्ठा xc5000_priv *priv)
+अणु
 	u16 adc_envelope;
 	u32 freq_error_hz = 0;
 	u16 lock_status;
@@ -635,716 +636,716 @@ static void xc_debug_dump(struct xc5000_priv *priv)
 	u16 fw_buildversion = 0;
 	u16 regval;
 
-	/* Wait for stats to stabilize.
-	 * Frame Lines needs two frame times after initial lock
-	 * before it is valid.
+	/* Wait क्रम stats to stabilize.
+	 * Frame Lines needs two frame बार after initial lock
+	 * beक्रमe it is valid.
 	 */
 	msleep(100);
 
 	xc_get_adc_envelope(priv,  &adc_envelope);
-	dprintk(1, "*** ADC envelope (0-1023) = %d\n", adc_envelope);
+	dprपूर्णांकk(1, "*** ADC envelope (0-1023) = %d\n", adc_envelope);
 
 	xc_get_frequency_error(priv, &freq_error_hz);
-	dprintk(1, "*** Frequency error = %d Hz\n", freq_error_hz);
+	dprपूर्णांकk(1, "*** Frequency error = %d Hz\n", freq_error_hz);
 
 	xc_get_lock_status(priv,  &lock_status);
-	dprintk(1, "*** Lock status (0-Wait, 1-Locked, 2-No-signal) = %d\n",
+	dprपूर्णांकk(1, "*** Lock status (0-Wait, 1-Locked, 2-No-signal) = %d\n",
 		lock_status);
 
 	xc_get_version(priv,  &hw_majorversion, &hw_minorversion,
 		&fw_majorversion, &fw_minorversion);
 	xc_get_buildversion(priv,  &fw_buildversion);
-	dprintk(1, "*** HW: V%d.%d, FW: V %d.%d.%d\n",
+	dprपूर्णांकk(1, "*** HW: V%d.%d, FW: V %d.%d.%d\n",
 		hw_majorversion, hw_minorversion,
 		fw_majorversion, fw_minorversion, fw_buildversion);
 
 	xc_get_hsync_freq(priv,  &hsync_freq_hz);
-	dprintk(1, "*** Horizontal sync frequency = %d Hz\n", hsync_freq_hz);
+	dprपूर्णांकk(1, "*** Horizontal sync frequency = %d Hz\n", hsync_freq_hz);
 
 	xc_get_frame_lines(priv,  &frame_lines);
-	dprintk(1, "*** Frame lines = %d\n", frame_lines);
+	dprपूर्णांकk(1, "*** Frame lines = %d\n", frame_lines);
 
 	xc_get_quality(priv,  &quality);
-	dprintk(1, "*** Quality (0:<8dB, 7:>56dB) = %d\n", quality & 0x07);
+	dprपूर्णांकk(1, "*** Quality (0:<8dB, 7:>56dB) = %d\n", quality & 0x07);
 
 	xc_get_analogsnr(priv,  &snr);
-	dprintk(1, "*** Unweighted analog SNR = %d dB\n", snr & 0x3f);
+	dprपूर्णांकk(1, "*** Unweighted analog SNR = %d dB\n", snr & 0x3f);
 
 	xc_get_totalgain(priv,  &totalgain);
-	dprintk(1, "*** Total gain = %d.%d dB\n", totalgain / 256,
+	dprपूर्णांकk(1, "*** Total gain = %d.%d dB\n", totalgain / 256,
 		(totalgain % 256) * 100 / 256);
 
-	if (priv->pll_register_no) {
-		if (!xc5000_readreg(priv, priv->pll_register_no, &regval))
-			dprintk(1, "*** PLL lock status = 0x%04x\n", regval);
-	}
-}
+	अगर (priv->pll_रेजिस्टर_no) अणु
+		अगर (!xc5000_पढ़ोreg(priv, priv->pll_रेजिस्टर_no, &regval))
+			dprपूर्णांकk(1, "*** PLL lock status = 0x%04x\n", regval);
+	पूर्ण
+पूर्ण
 
-static int xc5000_tune_digital(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_tune_digital(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
 
-	ret = xc_set_signal_source(priv, priv->rf_mode);
-	if (ret != 0) {
-		printk(KERN_ERR
+	ret = xc_set_संकेत_source(priv, priv->rf_mode);
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR
 			"xc5000: xc_set_signal_source(%d) failed\n",
 			priv->rf_mode);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	ret = xc_set_tv_standard(priv,
 		xc5000_standard[priv->video_standard].video_mode,
 		xc5000_standard[priv->video_standard].audio_mode, 0);
-	if (ret != 0) {
-		printk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
-		return -EREMOTEIO;
-	}
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	ret = xc_set_IF_frequency(priv, priv->if_khz);
-	if (ret != 0) {
-		printk(KERN_ERR "xc5000: xc_Set_IF_frequency(%d) failed\n",
-		       priv->if_khz);
-		return -EIO;
-	}
+	ret = xc_set_IF_frequency(priv, priv->अगर_khz);
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: xc_Set_IF_frequency(%d) failed\n",
+		       priv->अगर_khz);
+		वापस -EIO;
+	पूर्ण
 
-	dprintk(1, "%s() setting OUTPUT_AMP to 0x%x\n",
+	dprपूर्णांकk(1, "%s() setting OUTPUT_AMP to 0x%x\n",
 		__func__, priv->output_amp);
-	xc_write_reg(priv, XREG_OUTPUT_AMP, priv->output_amp);
+	xc_ग_लिखो_reg(priv, XREG_OUTPUT_AMP, priv->output_amp);
 
 	xc_tune_channel(priv, priv->freq_hz, XC_TUNE_DIGITAL);
 
-	if (debug)
+	अगर (debug)
 		xc_debug_dump(priv);
 
 	priv->bandwidth = bw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_set_digital_params(struct dvb_frontend *fe)
-{
-	int b;
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_set_digital_params(काष्ठा dvb_frontend *fe)
+अणु
+	पूर्णांक b;
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 	u32 bw = fe->dtv_property_cache.bandwidth_hz;
 	u32 freq = fe->dtv_property_cache.frequency;
-	u32 delsys  = fe->dtv_property_cache.delivery_system;
+	u32 delsys  = fe->dtv_property_cache.delivery_प्रणाली;
 
-	if (xc_load_fw_and_init_tuner(fe, 0) != 0) {
-		dprintk(1, "Unable to load firmware and init tuner\n");
-		return -EINVAL;
-	}
+	अगर (xc_load_fw_and_init_tuner(fe, 0) != 0) अणु
+		dprपूर्णांकk(1, "Unable to load firmware and init tuner\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	dprintk(1, "%s() frequency=%d (Hz)\n", __func__, freq);
+	dprपूर्णांकk(1, "%s() frequency=%d (Hz)\n", __func__, freq);
 
-	switch (delsys) {
-	case SYS_ATSC:
-		dprintk(1, "%s() VSB modulation\n", __func__);
+	चयन (delsys) अणु
+	हाल SYS_ATSC:
+		dprपूर्णांकk(1, "%s() VSB modulation\n", __func__);
 		priv->rf_mode = XC_RF_MODE_AIR;
 		priv->freq_offset = 1750000;
 		priv->video_standard = DTV6;
-		break;
-	case SYS_DVBC_ANNEX_B:
-		dprintk(1, "%s() QAM modulation\n", __func__);
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_B:
+		dprपूर्णांकk(1, "%s() QAM modulation\n", __func__);
 		priv->rf_mode = XC_RF_MODE_CABLE;
 		priv->freq_offset = 1750000;
 		priv->video_standard = DTV6;
-		break;
-	case SYS_ISDBT:
-		/* All ISDB-T are currently for 6 MHz bw */
-		if (!bw)
+		अवरोध;
+	हाल SYS_ISDBT:
+		/* All ISDB-T are currently क्रम 6 MHz bw */
+		अगर (!bw)
 			bw = 6000000;
 		/* fall to OFDM handling */
 		fallthrough;
-	case SYS_DMBTH:
-	case SYS_DVBT:
-	case SYS_DVBT2:
-		dprintk(1, "%s() OFDM\n", __func__);
-		switch (bw) {
-		case 6000000:
+	हाल SYS_DMBTH:
+	हाल SYS_DVBT:
+	हाल SYS_DVBT2:
+		dprपूर्णांकk(1, "%s() OFDM\n", __func__);
+		चयन (bw) अणु
+		हाल 6000000:
 			priv->video_standard = DTV6;
 			priv->freq_offset = 1750000;
-			break;
-		case 7000000:
+			अवरोध;
+		हाल 7000000:
 			priv->video_standard = DTV7;
 			priv->freq_offset = 2250000;
-			break;
-		case 8000000:
+			अवरोध;
+		हाल 8000000:
 			priv->video_standard = DTV8;
 			priv->freq_offset = 2750000;
-			break;
-		default:
-			printk(KERN_ERR "xc5000 bandwidth not set!\n");
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			prपूर्णांकk(KERN_ERR "xc5000 bandwidth not set!\n");
+			वापस -EINVAL;
+		पूर्ण
 		priv->rf_mode = XC_RF_MODE_AIR;
-		break;
-	case SYS_DVBC_ANNEX_A:
-	case SYS_DVBC_ANNEX_C:
-		dprintk(1, "%s() QAM modulation\n", __func__);
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
+	हाल SYS_DVBC_ANNEX_C:
+		dprपूर्णांकk(1, "%s() QAM modulation\n", __func__);
 		priv->rf_mode = XC_RF_MODE_CABLE;
-		if (bw <= 6000000) {
+		अगर (bw <= 6000000) अणु
 			priv->video_standard = DTV6;
 			priv->freq_offset = 1750000;
 			b = 6;
-		} else if (bw <= 7000000) {
+		पूर्ण अन्यथा अगर (bw <= 7000000) अणु
 			priv->video_standard = DTV7;
 			priv->freq_offset = 2250000;
 			b = 7;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->video_standard = DTV7_8;
 			priv->freq_offset = 2750000;
 			b = 8;
-		}
-		dprintk(1, "%s() Bandwidth %dMHz (%d)\n", __func__,
+		पूर्ण
+		dprपूर्णांकk(1, "%s() Bandwidth %dMHz (%d)\n", __func__,
 			b, bw);
-		break;
-	default:
-		printk(KERN_ERR "xc5000: delivery system is not supported!\n");
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "xc5000: delivery system is not supported!\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->freq_hz = freq - priv->freq_offset;
 	priv->mode = V4L2_TUNER_DIGITAL_TV;
 
-	dprintk(1, "%s() frequency=%d (compensated to %d)\n",
+	dprपूर्णांकk(1, "%s() frequency=%d (compensated to %d)\n",
 		__func__, freq, priv->freq_hz);
 
-	return xc5000_tune_digital(fe);
-}
+	वापस xc5000_tune_digital(fe);
+पूर्ण
 
-static int xc5000_is_firmware_loaded(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_is_firmware_loaded(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 	u16 id;
 
-	ret = xc5000_readreg(priv, XREG_PRODUCT_ID, &id);
-	if (!ret) {
-		if (id == XC_PRODUCT_ID_FW_NOT_LOADED)
+	ret = xc5000_पढ़ोreg(priv, XREG_PRODUCT_ID, &id);
+	अगर (!ret) अणु
+		अगर (id == XC_PRODUCT_ID_FW_NOT_LOADED)
 			ret = -ENOENT;
-		else
+		अन्यथा
 			ret = 0;
-		dprintk(1, "%s() returns id = 0x%x\n", __func__, id);
-	} else {
-		dprintk(1, "%s() returns error %d\n", __func__, ret);
-	}
+		dprपूर्णांकk(1, "%s() returns id = 0x%x\n", __func__, id);
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(1, "%s() returns error %d\n", __func__, ret);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xc5000_config_tv(struct dvb_frontend *fe,
-			     struct analog_parameters *params)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल व्योम xc5000_config_tv(काष्ठा dvb_frontend *fe,
+			     काष्ठा analog_parameters *params)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	dprintk(1, "%s() frequency=%d (in units of 62.5khz)\n",
+	dprपूर्णांकk(1, "%s() frequency=%d (in units of 62.5khz)\n",
 		__func__, params->frequency);
 
 	/* Fix me: it could be air. */
 	priv->rf_mode = params->mode;
-	if (params->mode > XC_RF_MODE_CABLE)
+	अगर (params->mode > XC_RF_MODE_CABLE)
 		priv->rf_mode = XC_RF_MODE_CABLE;
 
 	/* params->frequency is in units of 62.5khz */
 	priv->freq_hz = params->frequency * 62500;
 
 	/* FIX ME: Some video standards may have several possible audio
-		   standards. We simply default to one of them here.
+		   standards. We simply शेष to one of them here.
 	 */
-	if (params->std & V4L2_STD_MN) {
-		/* default to BTSC audio standard */
+	अगर (params->std & V4L2_STD_MN) अणु
+		/* शेष to BTSC audio standard */
 		priv->video_standard = MN_NTSC_PAL_BTSC;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_PAL_BG) {
-		/* default to NICAM audio standard */
+	अगर (params->std & V4L2_STD_PAL_BG) अणु
+		/* शेष to NICAM audio standard */
 		priv->video_standard = BG_PAL_NICAM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_PAL_I) {
-		/* default to NICAM audio standard */
+	अगर (params->std & V4L2_STD_PAL_I) अणु
+		/* शेष to NICAM audio standard */
 		priv->video_standard = I_PAL_NICAM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_PAL_DK) {
-		/* default to NICAM audio standard */
+	अगर (params->std & V4L2_STD_PAL_DK) अणु
+		/* शेष to NICAM audio standard */
 		priv->video_standard = DK_PAL_NICAM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_SECAM_DK) {
-		/* default to A2 DK1 audio standard */
+	अगर (params->std & V4L2_STD_SECAM_DK) अणु
+		/* शेष to A2 DK1 audio standard */
 		priv->video_standard = DK_SECAM_A2DK1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_SECAM_L) {
+	अगर (params->std & V4L2_STD_SECAM_L) अणु
 		priv->video_standard = L_SECAM_NICAM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (params->std & V4L2_STD_SECAM_LC) {
+	अगर (params->std & V4L2_STD_SECAM_LC) अणु
 		priv->video_standard = LC_SECAM_NICAM;
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int xc5000_set_tv_freq(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_set_tv_freq(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 	u16 pll_lock_status;
-	int ret;
+	पूर्णांक ret;
 
 tune_channel:
-	ret = xc_set_signal_source(priv, priv->rf_mode);
-	if (ret != 0) {
-		printk(KERN_ERR
+	ret = xc_set_संकेत_source(priv, priv->rf_mode);
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR
 			"xc5000: xc_set_signal_source(%d) failed\n",
 			priv->rf_mode);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	ret = xc_set_tv_standard(priv,
 		xc5000_standard[priv->video_standard].video_mode,
 		xc5000_standard[priv->video_standard].audio_mode, 0);
-	if (ret != 0) {
-		printk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
-		return -EREMOTEIO;
-	}
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	xc_write_reg(priv, XREG_OUTPUT_AMP, 0x09);
+	xc_ग_लिखो_reg(priv, XREG_OUTPUT_AMP, 0x09);
 
 	xc_tune_channel(priv, priv->freq_hz, XC_TUNE_ANALOG);
 
-	if (debug)
+	अगर (debug)
 		xc_debug_dump(priv);
 
-	if (priv->pll_register_no != 0) {
+	अगर (priv->pll_रेजिस्टर_no != 0) अणु
 		msleep(20);
-		ret = xc5000_readreg(priv, priv->pll_register_no,
+		ret = xc5000_पढ़ोreg(priv, priv->pll_रेजिस्टर_no,
 				     &pll_lock_status);
-		if (ret)
-			return ret;
-		if (pll_lock_status > 63) {
-			/* PLL is unlocked, force reload of the firmware */
-			dprintk(1, "xc5000: PLL not locked (0x%x).  Reloading...\n",
+		अगर (ret)
+			वापस ret;
+		अगर (pll_lock_status > 63) अणु
+			/* PLL is unlocked, क्रमce reload of the firmware */
+			dprपूर्णांकk(1, "xc5000: PLL not locked (0x%x).  Reloading...\n",
 				pll_lock_status);
-			if (xc_load_fw_and_init_tuner(fe, 1) != 0) {
-				printk(KERN_ERR "xc5000: Unable to reload fw\n");
-				return -EREMOTEIO;
-			}
-			goto tune_channel;
-		}
-	}
+			अगर (xc_load_fw_and_init_tuner(fe, 1) != 0) अणु
+				prपूर्णांकk(KERN_ERR "xc5000: Unable to reload fw\n");
+				वापस -EREMOTEIO;
+			पूर्ण
+			जाओ tune_channel;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_config_radio(struct dvb_frontend *fe,
-			       struct analog_parameters *params)
+अटल पूर्णांक xc5000_config_radio(काष्ठा dvb_frontend *fe,
+			       काष्ठा analog_parameters *params)
 
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	dprintk(1, "%s() frequency=%d (in units of khz)\n",
+	dprपूर्णांकk(1, "%s() frequency=%d (in units of khz)\n",
 		__func__, params->frequency);
 
-	if (priv->radio_input == XC5000_RADIO_NOT_CONFIGURED) {
-		dprintk(1, "%s() radio input not configured\n", __func__);
-		return -EINVAL;
-	}
+	अगर (priv->radio_input == XC5000_RADIO_NOT_CONFIGURED) अणु
+		dprपूर्णांकk(1, "%s() radio input not configured\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->freq_hz = params->frequency * 125 / 2;
 	priv->rf_mode = XC_RF_MODE_AIR;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_set_radio_freq(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_set_radio_freq(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 	u8 radio_input;
 
-	if (priv->radio_input == XC5000_RADIO_FM1)
+	अगर (priv->radio_input == XC5000_RADIO_FM1)
 		radio_input = FM_RADIO_INPUT1;
-	else if  (priv->radio_input == XC5000_RADIO_FM2)
+	अन्यथा अगर  (priv->radio_input == XC5000_RADIO_FM2)
 		radio_input = FM_RADIO_INPUT2;
-	else if  (priv->radio_input == XC5000_RADIO_FM1_MONO)
+	अन्यथा अगर  (priv->radio_input == XC5000_RADIO_FM1_MONO)
 		radio_input = FM_RADIO_INPUT1_MONO;
-	else {
-		dprintk(1, "%s() unknown radio input %d\n", __func__,
+	अन्यथा अणु
+		dprपूर्णांकk(1, "%s() unknown radio input %d\n", __func__,
 			priv->radio_input);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = xc_set_tv_standard(priv, xc5000_standard[radio_input].video_mode,
 			       xc5000_standard[radio_input].audio_mode, radio_input);
 
-	if (ret != 0) {
-		printk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
-		return -EREMOTEIO;
-	}
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: xc_set_tv_standard failed\n");
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	ret = xc_set_signal_source(priv, priv->rf_mode);
-	if (ret != 0) {
-		printk(KERN_ERR
+	ret = xc_set_संकेत_source(priv, priv->rf_mode);
+	अगर (ret != 0) अणु
+		prपूर्णांकk(KERN_ERR
 			"xc5000: xc_set_signal_source(%d) failed\n",
 			priv->rf_mode);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	if ((priv->radio_input == XC5000_RADIO_FM1) ||
+	अगर ((priv->radio_input == XC5000_RADIO_FM1) ||
 				(priv->radio_input == XC5000_RADIO_FM2))
-		xc_write_reg(priv, XREG_OUTPUT_AMP, 0x09);
-	else if  (priv->radio_input == XC5000_RADIO_FM1_MONO)
-		xc_write_reg(priv, XREG_OUTPUT_AMP, 0x06);
+		xc_ग_लिखो_reg(priv, XREG_OUTPUT_AMP, 0x09);
+	अन्यथा अगर  (priv->radio_input == XC5000_RADIO_FM1_MONO)
+		xc_ग_लिखो_reg(priv, XREG_OUTPUT_AMP, 0x06);
 
 	xc_tune_channel(priv, priv->freq_hz, XC_TUNE_ANALOG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_set_params(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_set_params(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	if (xc_load_fw_and_init_tuner(fe, 0) != 0) {
-		dprintk(1, "Unable to load firmware and init tuner\n");
-		return -EINVAL;
-	}
+	अगर (xc_load_fw_and_init_tuner(fe, 0) != 0) अणु
+		dprपूर्णांकk(1, "Unable to load firmware and init tuner\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (priv->mode) {
-	case V4L2_TUNER_RADIO:
-		return xc5000_set_radio_freq(fe);
-	case V4L2_TUNER_ANALOG_TV:
-		return xc5000_set_tv_freq(fe);
-	case V4L2_TUNER_DIGITAL_TV:
-		return xc5000_tune_digital(fe);
-	}
+	चयन (priv->mode) अणु
+	हाल V4L2_TUNER_RADIO:
+		वापस xc5000_set_radio_freq(fe);
+	हाल V4L2_TUNER_ANALOG_TV:
+		वापस xc5000_set_tv_freq(fe);
+	हाल V4L2_TUNER_DIGITAL_TV:
+		वापस xc5000_tune_digital(fe);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_set_analog_params(struct dvb_frontend *fe,
-			     struct analog_parameters *params)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_set_analog_params(काष्ठा dvb_frontend *fe,
+			     काष्ठा analog_parameters *params)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 
-	if (priv->i2c_props.adap == NULL)
-		return -EINVAL;
+	अगर (priv->i2c_props.adap == शून्य)
+		वापस -EINVAL;
 
-	switch (params->mode) {
-	case V4L2_TUNER_RADIO:
+	चयन (params->mode) अणु
+	हाल V4L2_TUNER_RADIO:
 		ret = xc5000_config_radio(fe, params);
-		if (ret)
-			return ret;
-		break;
-	case V4L2_TUNER_ANALOG_TV:
+		अगर (ret)
+			वापस ret;
+		अवरोध;
+	हाल V4L2_TUNER_ANALOG_TV:
 		xc5000_config_tv(fe, params);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 	priv->mode = params->mode;
 
-	return xc5000_set_params(fe);
-}
+	वापस xc5000_set_params(fe);
+पूर्ण
 
-static int xc5000_get_frequency(struct dvb_frontend *fe, u32 *freq)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक xc5000_get_frequency(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 	*freq = priv->freq_hz + priv->freq_offset;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_get_if_frequency(struct dvb_frontend *fe, u32 *freq)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
-	*freq = priv->if_khz * 1000;
-	return 0;
-}
+अटल पूर्णांक xc5000_get_अगर_frequency(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
+	*freq = priv->अगर_khz * 1000;
+	वापस 0;
+पूर्ण
 
-static int xc5000_get_bandwidth(struct dvb_frontend *fe, u32 *bw)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक xc5000_get_bandwidth(काष्ठा dvb_frontend *fe, u32 *bw)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	*bw = priv->bandwidth;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_get_status(struct dvb_frontend *fe, u32 *status)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_get_status(काष्ठा dvb_frontend *fe, u32 *status)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 	u16 lock_status = 0;
 
 	xc_get_lock_status(priv, &lock_status);
 
-	dprintk(1, "%s() lock_status = 0x%08x\n", __func__, lock_status);
+	dprपूर्णांकk(1, "%s() lock_status = 0x%08x\n", __func__, lock_status);
 
 	*status = lock_status;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc_load_fw_and_init_tuner(struct dvb_frontend *fe, int force)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	const struct xc5000_fw_cfg *desired_fw = xc5000_assign_firmware(priv->chip_id);
-	const struct firmware *fw;
-	int ret, i;
+अटल पूर्णांक xc_load_fw_and_init_tuner(काष्ठा dvb_frontend *fe, पूर्णांक क्रमce)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	स्थिर काष्ठा xc5000_fw_cfg *desired_fw = xc5000_assign_firmware(priv->chip_id);
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक ret, i;
 	u16 pll_lock_status;
 	u16 fw_ck;
 
-	cancel_delayed_work(&priv->timer_sleep);
+	cancel_delayed_work(&priv->समयr_sleep);
 
-	if (!force && xc5000_is_firmware_loaded(fe) == 0)
-		return 0;
+	अगर (!क्रमce && xc5000_is_firmware_loaded(fe) == 0)
+		वापस 0;
 
-	if (!priv->firmware) {
+	अगर (!priv->firmware) अणु
 		ret = request_firmware(&fw, desired_fw->name,
 					priv->i2c_props.adap->dev.parent);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("xc5000: Upload failed. rc %d\n", ret);
-			return ret;
-		}
-		dprintk(1, "firmware read %zu bytes.\n", fw->size);
+			वापस ret;
+		पूर्ण
+		dprपूर्णांकk(1, "firmware read %zu bytes.\n", fw->size);
 
-		if (fw->size != desired_fw->size) {
+		अगर (fw->size != desired_fw->size) अणु
 			pr_err("xc5000: Firmware file with incorrect size\n");
 			release_firmware(fw);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		priv->firmware = fw;
-	} else
+	पूर्ण अन्यथा
 		fw = priv->firmware;
 
-	/* Try up to 5 times to load firmware */
-	for (i = 0; i < 5; i++) {
-		if (i)
-			printk(KERN_CONT " - retrying to upload firmware.\n");
+	/* Try up to 5 बार to load firmware */
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर (i)
+			prपूर्णांकk(KERN_CONT " - retrying to upload firmware.\n");
 
 		ret = xc5000_fwupload(fe, desired_fw, fw);
-		if (ret != 0)
-			goto err;
+		अगर (ret != 0)
+			जाओ err;
 
 		msleep(20);
 
-		if (priv->fw_checksum_supported) {
-			if (xc5000_readreg(priv, XREG_FW_CHECKSUM, &fw_ck)) {
-				printk(KERN_ERR
+		अगर (priv->fw_checksum_supported) अणु
+			अगर (xc5000_पढ़ोreg(priv, XREG_FW_CHECKSUM, &fw_ck)) अणु
+				prपूर्णांकk(KERN_ERR
 				       "xc5000: FW checksum reading failed.");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!fw_ck) {
-				printk(KERN_ERR
+			अगर (!fw_ck) अणु
+				prपूर्णांकk(KERN_ERR
 				       "xc5000: FW checksum failed = 0x%04x.",
 				       fw_ck);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/* Start the tuner self-calibration process */
 		ret = xc_initialize(priv);
-		if (ret) {
-			printk(KERN_ERR "xc5000: Can't request self-calibration.");
-			continue;
-		}
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "xc5000: Can't request self-calibration.");
+			जारी;
+		पूर्ण
 
-		/* Wait for calibration to complete.
-		 * We could continue but XC5000 will clock stretch subsequent
+		/* Wait क्रम calibration to complete.
+		 * We could जारी but XC5000 will घड़ी stretch subsequent
 		 * I2C transactions until calibration is complete.  This way we
-		 * don't have to rely on clock stretching working.
+		 * करोn't have to rely on घड़ी stretching working.
 		 */
 		msleep(100);
 
-		if (priv->init_status_supported) {
-			if (xc5000_readreg(priv, XREG_INIT_STATUS, &fw_ck)) {
-				printk(KERN_ERR
+		अगर (priv->init_status_supported) अणु
+			अगर (xc5000_पढ़ोreg(priv, XREG_INIT_STATUS, &fw_ck)) अणु
+				prपूर्णांकk(KERN_ERR
 				       "xc5000: FW failed reading init status.");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (!fw_ck) {
-				printk(KERN_ERR
+			अगर (!fw_ck) अणु
+				prपूर्णांकk(KERN_ERR
 				       "xc5000: FW init status failed = 0x%04x.",
 				       fw_ck);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		if (priv->pll_register_no) {
-			ret = xc5000_readreg(priv, priv->pll_register_no,
+		अगर (priv->pll_रेजिस्टर_no) अणु
+			ret = xc5000_पढ़ोreg(priv, priv->pll_रेजिस्टर_no,
 					     &pll_lock_status);
-			if (ret)
-				continue;
-			if (pll_lock_status > 63) {
-				/* PLL is unlocked, force reload of the firmware */
-				printk(KERN_ERR
+			अगर (ret)
+				जारी;
+			अगर (pll_lock_status > 63) अणु
+				/* PLL is unlocked, क्रमce reload of the firmware */
+				prपूर्णांकk(KERN_ERR
 				       "xc5000: PLL not running after fwload.");
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/* Default to "CABLE" mode */
-		ret = xc_write_reg(priv, XREG_SIGNALSOURCE, XC_RF_MODE_CABLE);
-		if (!ret)
-			break;
-		printk(KERN_ERR "xc5000: can't set to cable mode.");
-	}
+		ret = xc_ग_लिखो_reg(priv, XREG_SIGNALSOURCE, XC_RF_MODE_CABLE);
+		अगर (!ret)
+			अवरोध;
+		prपूर्णांकk(KERN_ERR "xc5000: can't set to cable mode.");
+	पूर्ण
 
 err:
-	if (!ret)
-		printk(KERN_INFO "xc5000: Firmware %s loaded and running.\n",
+	अगर (!ret)
+		prपूर्णांकk(KERN_INFO "xc5000: Firmware %s loaded and running.\n",
 		       desired_fw->name);
-	else
-		printk(KERN_CONT " - too many retries. Giving up\n");
+	अन्यथा
+		prपूर्णांकk(KERN_CONT " - too many retries. Giving up\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void xc5000_do_timer_sleep(struct work_struct *timer_sleep)
-{
-	struct xc5000_priv *priv =container_of(timer_sleep, struct xc5000_priv,
-					       timer_sleep.work);
-	struct dvb_frontend *fe = priv->fe;
-	int ret;
+अटल व्योम xc5000_करो_समयr_sleep(काष्ठा work_काष्ठा *समयr_sleep)
+अणु
+	काष्ठा xc5000_priv *priv =container_of(समयr_sleep, काष्ठा xc5000_priv,
+					       समयr_sleep.work);
+	काष्ठा dvb_frontend *fe = priv->fe;
+	पूर्णांक ret;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	/* According to Xceive technical support, the "powerdown" register
-	   was removed in newer versions of the firmware.  The "supported"
-	   way to sleep the tuner is to pull the reset pin low for 10ms */
+	/* According to Xceive technical support, the "powerdown" रेजिस्टर
+	   was हटाओd in newer versions of the firmware.  The "supported"
+	   way to sleep the tuner is to pull the reset pin low क्रम 10ms */
 	ret = xc5000_tuner_reset(fe);
-	if (ret != 0)
-		printk(KERN_ERR
+	अगर (ret != 0)
+		prपूर्णांकk(KERN_ERR
 			"xc5000: %s() unable to shutdown tuner\n",
 			__func__);
-}
+पूर्ण
 
-static int xc5000_sleep(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	/* Avoid firmware reload on slow devices */
-	if (no_poweroff)
-		return 0;
+	/* Aव्योम firmware reload on slow devices */
+	अगर (no_घातeroff)
+		वापस 0;
 
-	schedule_delayed_work(&priv->timer_sleep,
-			      msecs_to_jiffies(XC5000_SLEEP_TIME));
+	schedule_delayed_work(&priv->समयr_sleep,
+			      msecs_to_jअगरfies(XC5000_SLEEP_TIME));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_suspend(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	int ret;
+अटल पूर्णांक xc5000_suspend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	पूर्णांक ret;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	cancel_delayed_work(&priv->timer_sleep);
+	cancel_delayed_work(&priv->समयr_sleep);
 
 	ret = xc5000_tuner_reset(fe);
-	if (ret != 0)
-		printk(KERN_ERR
+	अगर (ret != 0)
+		prपूर्णांकk(KERN_ERR
 			"xc5000: %s() unable to shutdown tuner\n",
 			__func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xc5000_resume(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल पूर्णांक xc5000_resume(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	/* suspended before firmware is loaded.
-	   Avoid firmware load in resume path. */
-	if (!priv->firmware)
-		return 0;
+	/* suspended beक्रमe firmware is loaded.
+	   Aव्योम firmware load in resume path. */
+	अगर (!priv->firmware)
+		वापस 0;
 
-	return xc5000_set_params(fe);
-}
+	वापस xc5000_set_params(fe);
+पूर्ण
 
-static int xc5000_init(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	dprintk(1, "%s()\n", __func__);
+अटल पूर्णांक xc5000_init(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	if (xc_load_fw_and_init_tuner(fe, 0) != 0) {
-		printk(KERN_ERR "xc5000: Unable to initialise tuner\n");
-		return -EREMOTEIO;
-	}
+	अगर (xc_load_fw_and_init_tuner(fe, 0) != 0) अणु
+		prपूर्णांकk(KERN_ERR "xc5000: Unable to initialise tuner\n");
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	if (debug)
+	अगर (debug)
 		xc_debug_dump(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xc5000_release(struct dvb_frontend *fe)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
+अटल व्योम xc5000_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
 	mutex_lock(&xc5000_list_mutex);
 
-	if (priv) {
-		cancel_delayed_work(&priv->timer_sleep);
-		if (priv->firmware) {
+	अगर (priv) अणु
+		cancel_delayed_work(&priv->समयr_sleep);
+		अगर (priv->firmware) अणु
 			release_firmware(priv->firmware);
-			priv->firmware = NULL;
-		}
+			priv->firmware = शून्य;
+		पूर्ण
 		hybrid_tuner_release_state(priv);
-	}
+	पूर्ण
 
 	mutex_unlock(&xc5000_list_mutex);
 
-	fe->tuner_priv = NULL;
-}
+	fe->tuner_priv = शून्य;
+पूर्ण
 
-static int xc5000_set_config(struct dvb_frontend *fe, void *priv_cfg)
-{
-	struct xc5000_priv *priv = fe->tuner_priv;
-	struct xc5000_config *p = priv_cfg;
+अटल पूर्णांक xc5000_set_config(काष्ठा dvb_frontend *fe, व्योम *priv_cfg)
+अणु
+	काष्ठा xc5000_priv *priv = fe->tuner_priv;
+	काष्ठा xc5000_config *p = priv_cfg;
 
-	dprintk(1, "%s()\n", __func__);
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	if (p->if_khz)
-		priv->if_khz = p->if_khz;
+	अगर (p->अगर_khz)
+		priv->अगर_khz = p->अगर_khz;
 
-	if (p->radio_input)
+	अगर (p->radio_input)
 		priv->radio_input = p->radio_input;
 
-	if (p->output_amp)
+	अगर (p->output_amp)
 		priv->output_amp = p->output_amp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct dvb_tuner_ops xc5000_tuner_ops = {
-	.info = {
+अटल स्थिर काष्ठा dvb_tuner_ops xc5000_tuner_ops = अणु
+	.info = अणु
 		.name              = "Xceive XC5000",
 		.frequency_min_hz  =    1 * MHz,
 		.frequency_max_hz  = 1023 * MHz,
 		.frequency_step_hz =   50 * kHz,
-	},
+	पूर्ण,
 
 	.release	   = xc5000_release,
 	.init		   = xc5000_init,
@@ -1356,110 +1357,110 @@ static const struct dvb_tuner_ops xc5000_tuner_ops = {
 	.set_params	   = xc5000_set_digital_params,
 	.set_analog_params = xc5000_set_analog_params,
 	.get_frequency	   = xc5000_get_frequency,
-	.get_if_frequency  = xc5000_get_if_frequency,
+	.get_अगर_frequency  = xc5000_get_अगर_frequency,
 	.get_bandwidth	   = xc5000_get_bandwidth,
 	.get_status	   = xc5000_get_status
-};
+पूर्ण;
 
-struct dvb_frontend *xc5000_attach(struct dvb_frontend *fe,
-				   struct i2c_adapter *i2c,
-				   const struct xc5000_config *cfg)
-{
-	struct xc5000_priv *priv = NULL;
-	int instance;
+काष्ठा dvb_frontend *xc5000_attach(काष्ठा dvb_frontend *fe,
+				   काष्ठा i2c_adapter *i2c,
+				   स्थिर काष्ठा xc5000_config *cfg)
+अणु
+	काष्ठा xc5000_priv *priv = शून्य;
+	पूर्णांक instance;
 	u16 id = 0;
 
-	dprintk(1, "%s(%d-%04x)\n", __func__,
+	dprपूर्णांकk(1, "%s(%d-%04x)\n", __func__,
 		i2c ? i2c_adapter_id(i2c) : -1,
 		cfg ? cfg->i2c_address : -1);
 
 	mutex_lock(&xc5000_list_mutex);
 
-	instance = hybrid_tuner_request_state(struct xc5000_priv, priv,
+	instance = hybrid_tuner_request_state(काष्ठा xc5000_priv, priv,
 					      hybrid_tuner_instance_list,
 					      i2c, cfg->i2c_address, "xc5000");
-	switch (instance) {
-	case 0:
-		goto fail;
-	case 1:
+	चयन (instance) अणु
+	हाल 0:
+		जाओ fail;
+	हाल 1:
 		/* new tuner instance */
 		priv->bandwidth = 6000000;
 		fe->tuner_priv = priv;
 		priv->fe = fe;
-		INIT_DELAYED_WORK(&priv->timer_sleep, xc5000_do_timer_sleep);
-		break;
-	default:
+		INIT_DELAYED_WORK(&priv->समयr_sleep, xc5000_करो_समयr_sleep);
+		अवरोध;
+	शेष:
 		/* existing tuner instance */
 		fe->tuner_priv = priv;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (priv->if_khz == 0) {
+	अगर (priv->अगर_khz == 0) अणु
 		/* If the IF hasn't been set yet, use the value provided by
 		   the caller (occurs in hybrid devices where the analog
-		   call to xc5000_attach occurs before the digital side) */
-		priv->if_khz = cfg->if_khz;
-	}
+		   call to xc5000_attach occurs beक्रमe the digital side) */
+		priv->अगर_khz = cfg->अगर_khz;
+	पूर्ण
 
-	if (priv->xtal_khz == 0)
+	अगर (priv->xtal_khz == 0)
 		priv->xtal_khz = cfg->xtal_khz;
 
-	if (priv->radio_input == 0)
+	अगर (priv->radio_input == 0)
 		priv->radio_input = cfg->radio_input;
 
-	/* don't override chip id if it's already been set
-	   unless explicitly specified */
-	if ((priv->chip_id == 0) || (cfg->chip_id))
-		/* use default chip id if none specified, set to 0 so
-		   it can be overridden if this is a hybrid driver */
+	/* करोn't override chip id if it's alपढ़ोy been set
+	   unless explicitly specअगरied */
+	अगर ((priv->chip_id == 0) || (cfg->chip_id))
+		/* use शेष chip id अगर none specअगरied, set to 0 so
+		   it can be overridden अगर this is a hybrid driver */
 		priv->chip_id = (cfg->chip_id) ? cfg->chip_id : 0;
 
-	/* don't override output_amp if it's already been set
-	   unless explicitly specified */
-	if ((priv->output_amp == 0) || (cfg->output_amp))
-		/* use default output_amp value if none specified */
+	/* करोn't override output_amp if it's alपढ़ोy been set
+	   unless explicitly specअगरied */
+	अगर ((priv->output_amp == 0) || (cfg->output_amp))
+		/* use शेष output_amp value अगर none specअगरied */
 		priv->output_amp = (cfg->output_amp) ? cfg->output_amp : 0x8a;
 
-	/* Check if firmware has been loaded. It is possible that another
+	/* Check अगर firmware has been loaded. It is possible that another
 	   instance of the driver has loaded the firmware.
 	 */
-	if (xc5000_readreg(priv, XREG_PRODUCT_ID, &id) != 0)
-		goto fail;
+	अगर (xc5000_पढ़ोreg(priv, XREG_PRODUCT_ID, &id) != 0)
+		जाओ fail;
 
-	switch (id) {
-	case XC_PRODUCT_ID_FW_LOADED:
-		printk(KERN_INFO
+	चयन (id) अणु
+	हाल XC_PRODUCT_ID_FW_LOADED:
+		prपूर्णांकk(KERN_INFO
 			"xc5000: Successfully identified at address 0x%02x\n",
 			cfg->i2c_address);
-		printk(KERN_INFO
+		prपूर्णांकk(KERN_INFO
 			"xc5000: Firmware has been loaded previously\n");
-		break;
-	case XC_PRODUCT_ID_FW_NOT_LOADED:
-		printk(KERN_INFO
+		अवरोध;
+	हाल XC_PRODUCT_ID_FW_NOT_LOADED:
+		prपूर्णांकk(KERN_INFO
 			"xc5000: Successfully identified at address 0x%02x\n",
 			cfg->i2c_address);
-		printk(KERN_INFO
+		prपूर्णांकk(KERN_INFO
 			"xc5000: Firmware has not been loaded previously\n");
-		break;
-	default:
-		printk(KERN_ERR
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR
 			"xc5000: Device not found at addr 0x%02x (0x%x)\n",
 			cfg->i2c_address, id);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	mutex_unlock(&xc5000_list_mutex);
 
-	memcpy(&fe->ops.tuner_ops, &xc5000_tuner_ops,
-		sizeof(struct dvb_tuner_ops));
+	स_नकल(&fe->ops.tuner_ops, &xc5000_tuner_ops,
+		माप(काष्ठा dvb_tuner_ops));
 
-	return fe;
+	वापस fe;
 fail:
 	mutex_unlock(&xc5000_list_mutex);
 
 	xc5000_release(fe);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(xc5000_attach);
 
 MODULE_AUTHOR("Steven Toth");

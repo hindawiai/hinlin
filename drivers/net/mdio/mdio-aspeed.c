@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Copyright (C) 2019 IBM Corp. */
 
-#include <linux/bitfield.h>
-#include <linux/delay.h>
-#include <linux/iopoll.h>
-#include <linux/mdio.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define DRV_NAME "mdio-aspeed"
+#घोषणा DRV_NAME "mdio-aspeed"
 
-#define ASPEED_MDIO_CTRL		0x0
-#define   ASPEED_MDIO_CTRL_FIRE		BIT(31)
-#define   ASPEED_MDIO_CTRL_ST		BIT(28)
-#define     ASPEED_MDIO_CTRL_ST_C45	0
-#define     ASPEED_MDIO_CTRL_ST_C22	1
-#define   ASPEED_MDIO_CTRL_OP		GENMASK(27, 26)
-#define     MDIO_C22_OP_WRITE		0b01
-#define     MDIO_C22_OP_READ		0b10
-#define   ASPEED_MDIO_CTRL_PHYAD	GENMASK(25, 21)
-#define   ASPEED_MDIO_CTRL_REGAD	GENMASK(20, 16)
-#define   ASPEED_MDIO_CTRL_MIIWDATA	GENMASK(15, 0)
+#घोषणा ASPEED_MDIO_CTRL		0x0
+#घोषणा   ASPEED_MDIO_CTRL_FIRE		BIT(31)
+#घोषणा   ASPEED_MDIO_CTRL_ST		BIT(28)
+#घोषणा     ASPEED_MDIO_CTRL_ST_C45	0
+#घोषणा     ASPEED_MDIO_CTRL_ST_C22	1
+#घोषणा   ASPEED_MDIO_CTRL_OP		GENMASK(27, 26)
+#घोषणा     MDIO_C22_OP_WRITE		0b01
+#घोषणा     MDIO_C22_OP_READ		0b10
+#घोषणा   ASPEED_MDIO_CTRL_PHYAD	GENMASK(25, 21)
+#घोषणा   ASPEED_MDIO_CTRL_REGAD	GENMASK(20, 16)
+#घोषणा   ASPEED_MDIO_CTRL_MIIWDATA	GENMASK(15, 0)
 
-#define ASPEED_MDIO_DATA		0x4
-#define   ASPEED_MDIO_DATA_MDC_THRES	GENMASK(31, 24)
-#define   ASPEED_MDIO_DATA_MDIO_EDGE	BIT(23)
-#define   ASPEED_MDIO_DATA_MDIO_LATCH	GENMASK(22, 20)
-#define   ASPEED_MDIO_DATA_IDLE		BIT(16)
-#define   ASPEED_MDIO_DATA_MIIRDATA	GENMASK(15, 0)
+#घोषणा ASPEED_MDIO_DATA		0x4
+#घोषणा   ASPEED_MDIO_DATA_MDC_THRES	GENMASK(31, 24)
+#घोषणा   ASPEED_MDIO_DATA_MDIO_EDGE	BIT(23)
+#घोषणा   ASPEED_MDIO_DATA_MDIO_LATCH	GENMASK(22, 20)
+#घोषणा   ASPEED_MDIO_DATA_IDLE		BIT(16)
+#घोषणा   ASPEED_MDIO_DATA_MIIRDATA	GENMASK(15, 0)
 
-#define ASPEED_MDIO_INTERVAL_US		100
-#define ASPEED_MDIO_TIMEOUT_US		(ASPEED_MDIO_INTERVAL_US * 10)
+#घोषणा ASPEED_MDIO_INTERVAL_US		100
+#घोषणा ASPEED_MDIO_TIMEOUT_US		(ASPEED_MDIO_INTERVAL_US * 10)
 
-struct aspeed_mdio {
-	void __iomem *base;
-};
+काष्ठा aspeed_mdio अणु
+	व्योम __iomem *base;
+पूर्ण;
 
-static int aspeed_mdio_read(struct mii_bus *bus, int addr, int regnum)
-{
-	struct aspeed_mdio *ctx = bus->priv;
+अटल पूर्णांक aspeed_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum)
+अणु
+	काष्ठा aspeed_mdio *ctx = bus->priv;
 	u32 ctrl;
 	u32 data;
-	int rc;
+	पूर्णांक rc;
 
 	dev_dbg(&bus->dev, "%s: addr: %d, regnum: %d\n", __func__, addr,
 		regnum);
 
-	/* Just clause 22 for the moment */
-	if (regnum & MII_ADDR_C45)
-		return -EOPNOTSUPP;
+	/* Just clause 22 क्रम the moment */
+	अगर (regnum & MII_ADDR_C45)
+		वापस -EOPNOTSUPP;
 
 	ctrl = ASPEED_MDIO_CTRL_FIRE
 		| FIELD_PREP(ASPEED_MDIO_CTRL_ST, ASPEED_MDIO_CTRL_ST_C22)
@@ -59,29 +60,29 @@ static int aspeed_mdio_read(struct mii_bus *bus, int addr, int regnum)
 		| FIELD_PREP(ASPEED_MDIO_CTRL_PHYAD, addr)
 		| FIELD_PREP(ASPEED_MDIO_CTRL_REGAD, regnum);
 
-	iowrite32(ctrl, ctx->base + ASPEED_MDIO_CTRL);
+	ioग_लिखो32(ctrl, ctx->base + ASPEED_MDIO_CTRL);
 
-	rc = readl_poll_timeout(ctx->base + ASPEED_MDIO_DATA, data,
+	rc = पढ़ोl_poll_समयout(ctx->base + ASPEED_MDIO_DATA, data,
 				data & ASPEED_MDIO_DATA_IDLE,
 				ASPEED_MDIO_INTERVAL_US,
 				ASPEED_MDIO_TIMEOUT_US);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return FIELD_GET(ASPEED_MDIO_DATA_MIIRDATA, data);
-}
+	वापस FIELD_GET(ASPEED_MDIO_DATA_MIIRDATA, data);
+पूर्ण
 
-static int aspeed_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
-{
-	struct aspeed_mdio *ctx = bus->priv;
+अटल पूर्णांक aspeed_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum, u16 val)
+अणु
+	काष्ठा aspeed_mdio *ctx = bus->priv;
 	u32 ctrl;
 
 	dev_dbg(&bus->dev, "%s: addr: %d, regnum: %d, val: 0x%x\n",
 		__func__, addr, regnum, val);
 
-	/* Just clause 22 for the moment */
-	if (regnum & MII_ADDR_C45)
-		return -EOPNOTSUPP;
+	/* Just clause 22 क्रम the moment */
+	अगर (regnum & MII_ADDR_C45)
+		वापस -EOPNOTSUPP;
 
 	ctrl = ASPEED_MDIO_CTRL_FIRE
 		| FIELD_PREP(ASPEED_MDIO_CTRL_ST, ASPEED_MDIO_CTRL_ST_C22)
@@ -90,68 +91,68 @@ static int aspeed_mdio_write(struct mii_bus *bus, int addr, int regnum, u16 val)
 		| FIELD_PREP(ASPEED_MDIO_CTRL_REGAD, regnum)
 		| FIELD_PREP(ASPEED_MDIO_CTRL_MIIWDATA, val);
 
-	iowrite32(ctrl, ctx->base + ASPEED_MDIO_CTRL);
+	ioग_लिखो32(ctrl, ctx->base + ASPEED_MDIO_CTRL);
 
-	return readl_poll_timeout(ctx->base + ASPEED_MDIO_CTRL, ctrl,
+	वापस पढ़ोl_poll_समयout(ctx->base + ASPEED_MDIO_CTRL, ctrl,
 				  !(ctrl & ASPEED_MDIO_CTRL_FIRE),
 				  ASPEED_MDIO_INTERVAL_US,
 				  ASPEED_MDIO_TIMEOUT_US);
-}
+पूर्ण
 
-static int aspeed_mdio_probe(struct platform_device *pdev)
-{
-	struct aspeed_mdio *ctx;
-	struct mii_bus *bus;
-	int rc;
+अटल पूर्णांक aspeed_mdio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aspeed_mdio *ctx;
+	काष्ठा mii_bus *bus;
+	पूर्णांक rc;
 
-	bus = devm_mdiobus_alloc_size(&pdev->dev, sizeof(*ctx));
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_mdiobus_alloc_size(&pdev->dev, माप(*ctx));
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	ctx = bus->priv;
-	ctx->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ctx->base))
-		return PTR_ERR(ctx->base);
+	ctx->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ctx->base))
+		वापस PTR_ERR(ctx->base);
 
 	bus->name = DRV_NAME;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s%d", pdev->name, pdev->id);
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s%d", pdev->name, pdev->id);
 	bus->parent = &pdev->dev;
-	bus->read = aspeed_mdio_read;
-	bus->write = aspeed_mdio_write;
+	bus->पढ़ो = aspeed_mdio_पढ़ो;
+	bus->ग_लिखो = aspeed_mdio_ग_लिखो;
 
-	rc = of_mdiobus_register(bus, pdev->dev.of_node);
-	if (rc) {
+	rc = of_mdiobus_रेजिस्टर(bus, pdev->dev.of_node);
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "Cannot register MDIO bus!\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aspeed_mdio_remove(struct platform_device *pdev)
-{
-	mdiobus_unregister(platform_get_drvdata(pdev));
+अटल पूर्णांक aspeed_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	mdiobus_unरेजिस्टर(platक्रमm_get_drvdata(pdev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id aspeed_mdio_of_match[] = {
-	{ .compatible = "aspeed,ast2600-mdio", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id aspeed_mdio_of_match[] = अणु
+	अणु .compatible = "aspeed,ast2600-mdio", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver aspeed_mdio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver aspeed_mdio_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = aspeed_mdio_of_match,
-	},
+	पूर्ण,
 	.probe = aspeed_mdio_probe,
-	.remove = aspeed_mdio_remove,
-};
+	.हटाओ = aspeed_mdio_हटाओ,
+पूर्ण;
 
-module_platform_driver(aspeed_mdio_driver);
+module_platक्रमm_driver(aspeed_mdio_driver);
 
 MODULE_AUTHOR("Andrew Jeffery <andrew@aj.id.au>");
 MODULE_LICENSE("GPL");

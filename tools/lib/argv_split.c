@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Helper function for splitting a string into an argv-like array.
+ * Helper function क्रम splitting a string पूर्णांकo an argv-like array.
  */
 
-#include <stdlib.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
+#समावेश <मानककोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
 
-static const char *skip_arg(const char *cp)
-{
-	while (*cp && !isspace(*cp))
+अटल स्थिर अक्षर *skip_arg(स्थिर अक्षर *cp)
+अणु
+	जबतक (*cp && !है_खाली(*cp))
 		cp++;
 
-	return cp;
-}
+	वापस cp;
+पूर्ण
 
-static int count_argc(const char *str)
-{
-	int count = 0;
+अटल पूर्णांक count_argc(स्थिर अक्षर *str)
+अणु
+	पूर्णांक count = 0;
 
-	while (*str) {
+	जबतक (*str) अणु
 		str = skip_spaces(str);
-		if (*str) {
+		अगर (*str) अणु
 			count++;
 			str = skip_arg(str);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * argv_free - free an argv
- * @argv - the argument vector to be freed
+ * argv_मुक्त - मुक्त an argv
+ * @argv - the argument vector to be मुक्तd
  *
- * Frees an argv and the strings it points to.
+ * Frees an argv and the strings it poपूर्णांकs to.
  */
-void argv_free(char **argv)
-{
-	char **p;
-	for (p = argv; *p; p++) {
-		free(*p);
-		*p = NULL;
-	}
+व्योम argv_मुक्त(अक्षर **argv)
+अणु
+	अक्षर **p;
+	क्रम (p = argv; *p; p++) अणु
+		मुक्त(*p);
+		*p = शून्य;
+	पूर्ण
 
-	free(argv);
-}
+	मुक्त(argv);
+पूर्ण
 
 /**
- * argv_split - split a string at whitespace, returning an argv
+ * argv_split - split a string at whitespace, वापसing an argv
  * @str: the string to be split
- * @argcp: returned argument count
+ * @argcp: वापसed argument count
  *
- * Returns an array of pointers to strings which are split out from
- * @str.  This is performed by strictly splitting on white-space; no
- * quote processing is performed.  Multiple whitespace characters are
- * considered to be a single argument separator.  The returned array
- * is always NULL-terminated.  Returns NULL on memory allocation
+ * Returns an array of poपूर्णांकers to strings which are split out from
+ * @str.  This is perक्रमmed by strictly splitting on white-space; no
+ * quote processing is perक्रमmed.  Multiple whitespace अक्षरacters are
+ * considered to be a single argument separator.  The वापसed array
+ * is always शून्य-terminated.  Returns शून्य on memory allocation
  * failure.
  */
-char **argv_split(const char *str, int *argcp)
-{
-	int argc = count_argc(str);
-	char **argv = calloc(argc + 1, sizeof(*argv));
-	char **argvp;
+अक्षर **argv_split(स्थिर अक्षर *str, पूर्णांक *argcp)
+अणु
+	पूर्णांक argc = count_argc(str);
+	अक्षर **argv = सुस्मृति(argc + 1, माप(*argv));
+	अक्षर **argvp;
 
-	if (argv == NULL)
-		goto out;
+	अगर (argv == शून्य)
+		जाओ out;
 
-	if (argcp)
+	अगर (argcp)
 		*argcp = argc;
 
 	argvp = argv;
 
-	while (*str) {
+	जबतक (*str) अणु
 		str = skip_spaces(str);
 
-		if (*str) {
-			const char *p = str;
-			char *t;
+		अगर (*str) अणु
+			स्थिर अक्षर *p = str;
+			अक्षर *t;
 
 			str = skip_arg(str);
 
 			t = strndup(p, str-p);
-			if (t == NULL)
-				goto fail;
+			अगर (t == शून्य)
+				जाओ fail;
 			*argvp++ = t;
-		}
-	}
-	*argvp = NULL;
+		पूर्ण
+	पूर्ण
+	*argvp = शून्य;
 
 out:
-	return argv;
+	वापस argv;
 
 fail:
-	argv_free(argv);
-	return NULL;
-}
+	argv_मुक्त(argv);
+	वापस शून्य;
+पूर्ण

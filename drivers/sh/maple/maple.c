@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Core maple bus functionality
  *
@@ -7,246 +8,246 @@
  *  Copyright (C) 2001 M. R. Brown
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/maple.h>
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <asm/cacheflush.h>
-#include <asm/dma.h>
-#include <asm/io.h>
-#include <mach/dma.h>
-#include <mach/sysasic.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/maple.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <mach/dma.h>
+#समावेश <mach/sysasic.h>
 
 MODULE_AUTHOR("Adrian McMenamin <adrian@mcmen.demon.co.uk>");
 MODULE_DESCRIPTION("Maple bus driver for Dreamcast");
 MODULE_LICENSE("GPL v2");
 
-static void maple_dma_handler(struct work_struct *work);
-static void maple_vblank_handler(struct work_struct *work);
+अटल व्योम maple_dma_handler(काष्ठा work_काष्ठा *work);
+अटल व्योम maple_vblank_handler(काष्ठा work_काष्ठा *work);
 
-static DECLARE_WORK(maple_dma_process, maple_dma_handler);
-static DECLARE_WORK(maple_vblank_process, maple_vblank_handler);
+अटल DECLARE_WORK(maple_dma_process, maple_dma_handler);
+अटल DECLARE_WORK(maple_vblank_process, maple_vblank_handler);
 
-static LIST_HEAD(maple_waitq);
-static LIST_HEAD(maple_sentq);
+अटल LIST_HEAD(maple_रुकोq);
+अटल LIST_HEAD(maple_sentq);
 
-/* mutex to protect queue of waiting packets */
-static DEFINE_MUTEX(maple_wlist_lock);
+/* mutex to protect queue of रुकोing packets */
+अटल DEFINE_MUTEX(maple_wlist_lock);
 
-static struct maple_driver maple_unsupported_device;
-static struct device maple_bus;
-static int subdevice_map[MAPLE_PORTS];
-static unsigned long *maple_sendbuf, *maple_sendptr, *maple_lastptr;
-static unsigned long maple_pnp_time;
-static int started, scanning, fullscan;
-static struct kmem_cache *maple_queue_cache;
+अटल काष्ठा maple_driver maple_unsupported_device;
+अटल काष्ठा device maple_bus;
+अटल पूर्णांक subdevice_map[MAPLE_PORTS];
+अटल अचिन्हित दीर्घ *maple_sendbuf, *maple_sendptr, *maple_lastptr;
+अटल अचिन्हित दीर्घ maple_pnp_समय;
+अटल पूर्णांक started, scanning, fullscan;
+अटल काष्ठा kmem_cache *maple_queue_cache;
 
-struct maple_device_specify {
-	int port;
-	int unit;
-};
+काष्ठा maple_device_specअगरy अणु
+	पूर्णांक port;
+	पूर्णांक unit;
+पूर्ण;
 
-static bool checked[MAPLE_PORTS];
-static bool empty[MAPLE_PORTS];
-static struct maple_device *baseunits[MAPLE_PORTS];
+अटल bool checked[MAPLE_PORTS];
+अटल bool empty[MAPLE_PORTS];
+अटल काष्ठा maple_device *baseunits[MAPLE_PORTS];
 
 /**
- * maple_driver_register - register a maple driver
- * @drv: maple driver to be registered.
+ * maple_driver_रेजिस्टर - रेजिस्टर a maple driver
+ * @drv: maple driver to be रेजिस्टरed.
  *
- * Registers the passed in @drv, while updating the bus type.
- * Devices with matching function IDs will be automatically probed.
+ * Registers the passed in @drv, जबतक updating the bus type.
+ * Devices with matching function IDs will be स्वतःmatically probed.
  */
-int maple_driver_register(struct maple_driver *drv)
-{
-	if (!drv)
-		return -EINVAL;
+पूर्णांक maple_driver_रेजिस्टर(काष्ठा maple_driver *drv)
+अणु
+	अगर (!drv)
+		वापस -EINVAL;
 
 	drv->drv.bus = &maple_bus_type;
 
-	return driver_register(&drv->drv);
-}
-EXPORT_SYMBOL_GPL(maple_driver_register);
+	वापस driver_रेजिस्टर(&drv->drv);
+पूर्ण
+EXPORT_SYMBOL_GPL(maple_driver_रेजिस्टर);
 
 /**
- * maple_driver_unregister - unregister a maple driver.
- * @drv: maple driver to unregister.
+ * maple_driver_unरेजिस्टर - unरेजिस्टर a maple driver.
+ * @drv: maple driver to unरेजिस्टर.
  *
- * Cleans up after maple_driver_register(). To be invoked in the exit
+ * Cleans up after maple_driver_रेजिस्टर(). To be invoked in the निकास
  * path of any module drivers.
  */
-void maple_driver_unregister(struct maple_driver *drv)
-{
-	driver_unregister(&drv->drv);
-}
-EXPORT_SYMBOL_GPL(maple_driver_unregister);
+व्योम maple_driver_unरेजिस्टर(काष्ठा maple_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->drv);
+पूर्ण
+EXPORT_SYMBOL_GPL(maple_driver_unरेजिस्टर);
 
-/* set hardware registers to enable next round of dma */
-static void maple_dma_reset(void)
-{
-	__raw_writel(MAPLE_MAGIC, MAPLE_RESET);
-	/* set trig type to 0 for software trigger, 1 for hardware (VBLANK) */
-	__raw_writel(1, MAPLE_TRIGTYPE);
+/* set hardware रेजिस्टरs to enable next round of dma */
+अटल व्योम maple_dma_reset(व्योम)
+अणु
+	__raw_ग_लिखोl(MAPLE_MAGIC, MAPLE_RESET);
+	/* set trig type to 0 क्रम software trigger, 1 क्रम hardware (VBLANK) */
+	__raw_ग_लिखोl(1, MAPLE_TRIGTYPE);
 	/*
-	* Maple system register
-	* bits 31 - 16	timeout in units of 20nsec
+	* Maple प्रणाली रेजिस्टर
+	* bits 31 - 16	समयout in units of 20nsec
 	* bit 12	hard trigger - set 0 to keep responding to VBLANK
-	* bits 9 - 8	set 00 for 2 Mbps, 01 for 1 Mbps
+	* bits 9 - 8	set 00 क्रम 2 Mbps, 01 क्रम 1 Mbps
 	* bits 3 - 0	delay (in 1.3ms) between VBLANK and start of DMA
 	* max delay is 11
 	*/
-	__raw_writel(MAPLE_2MBPS | MAPLE_TIMEOUT(0xFFFF), MAPLE_SPEED);
-	__raw_writel(virt_to_phys(maple_sendbuf), MAPLE_DMAADDR);
-	__raw_writel(1, MAPLE_ENABLE);
-}
+	__raw_ग_लिखोl(MAPLE_2MBPS | MAPLE_TIMEOUT(0xFFFF), MAPLE_SPEED);
+	__raw_ग_लिखोl(virt_to_phys(maple_sendbuf), MAPLE_DMAADDR);
+	__raw_ग_लिखोl(1, MAPLE_ENABLE);
+पूर्ण
 
 /**
- * maple_getcond_callback - setup handling MAPLE_COMMAND_GETCOND
+ * maple_अ_लोond_callback - setup handling MAPLE_COMMAND_GETCOND
  * @dev: device responding
  * @callback: handler callback
- * @interval: interval in jiffies between callbacks
- * @function: the function code for the device
+ * @पूर्णांकerval: पूर्णांकerval in jअगरfies between callbacks
+ * @function: the function code क्रम the device
  */
-void maple_getcond_callback(struct maple_device *dev,
-			void (*callback) (struct mapleq *mq),
-			unsigned long interval, unsigned long function)
-{
+व्योम maple_अ_लोond_callback(काष्ठा maple_device *dev,
+			व्योम (*callback) (काष्ठा mapleq *mq),
+			अचिन्हित दीर्घ पूर्णांकerval, अचिन्हित दीर्घ function)
+अणु
 	dev->callback = callback;
-	dev->interval = interval;
+	dev->पूर्णांकerval = पूर्णांकerval;
 	dev->function = cpu_to_be32(function);
-	dev->when = jiffies;
-}
-EXPORT_SYMBOL_GPL(maple_getcond_callback);
+	dev->when = jअगरfies;
+पूर्ण
+EXPORT_SYMBOL_GPL(maple_अ_लोond_callback);
 
-static int maple_dma_done(void)
-{
-	return (__raw_readl(MAPLE_STATE) & 1) == 0;
-}
+अटल पूर्णांक maple_dma_करोne(व्योम)
+अणु
+	वापस (__raw_पढ़ोl(MAPLE_STATE) & 1) == 0;
+पूर्ण
 
-static void maple_release_device(struct device *dev)
-{
-	struct maple_device *mdev;
-	struct mapleq *mq;
+अटल व्योम maple_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा maple_device *mdev;
+	काष्ठा mapleq *mq;
 
 	mdev = to_maple_dev(dev);
 	mq = mdev->mq;
-	kmem_cache_free(maple_queue_cache, mq->recvbuf);
-	kfree(mq);
-	kfree(mdev);
-}
+	kmem_cache_मुक्त(maple_queue_cache, mq->recvbuf);
+	kमुक्त(mq);
+	kमुक्त(mdev);
+पूर्ण
 
 /**
- * maple_add_packet - add a single instruction to the maple bus queue
+ * maple_add_packet - add a single inकाष्ठाion to the maple bus queue
  * @mdev: maple device
  * @function: function on device being queried
  * @command: maple command to add
  * @length: length of command string (in 32 bit words)
- * @data: remainder of command string
+ * @data: reमुख्यder of command string
  */
-int maple_add_packet(struct maple_device *mdev, u32 function, u32 command,
-	size_t length, void *data)
-{
-	int ret = 0;
-	void *sendbuf = NULL;
+पूर्णांक maple_add_packet(काष्ठा maple_device *mdev, u32 function, u32 command,
+	माप_प्रकार length, व्योम *data)
+अणु
+	पूर्णांक ret = 0;
+	व्योम *sendbuf = शून्य;
 
-	if (length) {
-		sendbuf = kcalloc(length, 4, GFP_KERNEL);
-		if (!sendbuf) {
+	अगर (length) अणु
+		sendbuf = kसुस्मृति(length, 4, GFP_KERNEL);
+		अगर (!sendbuf) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		((__be32 *)sendbuf)[0] = cpu_to_be32(function);
-	}
+	पूर्ण
 
 	mdev->mq->command = command;
 	mdev->mq->length = length;
-	if (length > 1)
-		memcpy(sendbuf + 4, data, (length - 1) * 4);
+	अगर (length > 1)
+		स_नकल(sendbuf + 4, data, (length - 1) * 4);
 	mdev->mq->sendbuf = sendbuf;
 
 	mutex_lock(&maple_wlist_lock);
-	list_add_tail(&mdev->mq->list, &maple_waitq);
+	list_add_tail(&mdev->mq->list, &maple_रुकोq);
 	mutex_unlock(&maple_wlist_lock);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(maple_add_packet);
 
-static struct mapleq *maple_allocq(struct maple_device *mdev)
-{
-	struct mapleq *mq;
+अटल काष्ठा mapleq *maple_allocq(काष्ठा maple_device *mdev)
+अणु
+	काष्ठा mapleq *mq;
 
-	mq = kzalloc(sizeof(*mq), GFP_KERNEL);
-	if (!mq)
-		goto failed_nomem;
+	mq = kzalloc(माप(*mq), GFP_KERNEL);
+	अगर (!mq)
+		जाओ failed_nomem;
 
 	INIT_LIST_HEAD(&mq->list);
 	mq->dev = mdev;
 	mq->recvbuf = kmem_cache_zalloc(maple_queue_cache, GFP_KERNEL);
-	if (!mq->recvbuf)
-		goto failed_p2;
+	अगर (!mq->recvbuf)
+		जाओ failed_p2;
 	mq->recvbuf->buf = &((mq->recvbuf->bufx)[0]);
 
-	return mq;
+	वापस mq;
 
 failed_p2:
-	kfree(mq);
+	kमुक्त(mq);
 failed_nomem:
 	dev_err(&mdev->dev, "could not allocate memory for device (%d, %d)\n",
 		mdev->port, mdev->unit);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct maple_device *maple_alloc_dev(int port, int unit)
-{
-	struct maple_device *mdev;
+अटल काष्ठा maple_device *maple_alloc_dev(पूर्णांक port, पूर्णांक unit)
+अणु
+	काष्ठा maple_device *mdev;
 
-	/* zero this out to avoid kobj subsystem
-	* thinking it has already been registered */
+	/* zero this out to aव्योम kobj subप्रणाली
+	* thinking it has alपढ़ोy been रेजिस्टरed */
 
-	mdev = kzalloc(sizeof(*mdev), GFP_KERNEL);
-	if (!mdev)
-		return NULL;
+	mdev = kzalloc(माप(*mdev), GFP_KERNEL);
+	अगर (!mdev)
+		वापस शून्य;
 
 	mdev->port = port;
 	mdev->unit = unit;
 
 	mdev->mq = maple_allocq(mdev);
 
-	if (!mdev->mq) {
-		kfree(mdev);
-		return NULL;
-	}
+	अगर (!mdev->mq) अणु
+		kमुक्त(mdev);
+		वापस शून्य;
+	पूर्ण
 	mdev->dev.bus = &maple_bus_type;
 	mdev->dev.parent = &maple_bus;
-	init_waitqueue_head(&mdev->maple_wait);
-	return mdev;
-}
+	init_रुकोqueue_head(&mdev->maple_रुको);
+	वापस mdev;
+पूर्ण
 
-static void maple_free_dev(struct maple_device *mdev)
-{
-	kmem_cache_free(maple_queue_cache, mdev->mq->recvbuf);
-	kfree(mdev->mq);
-	kfree(mdev);
-}
+अटल व्योम maple_मुक्त_dev(काष्ठा maple_device *mdev)
+अणु
+	kmem_cache_मुक्त(maple_queue_cache, mdev->mq->recvbuf);
+	kमुक्त(mdev->mq);
+	kमुक्त(mdev);
+पूर्ण
 
-/* process the command queue into a maple command block
- * terminating command has bit 32 of first long set to 0
+/* process the command queue पूर्णांकo a maple command block
+ * terminating command has bit 32 of first दीर्घ set to 0
  */
-static void maple_build_block(struct mapleq *mq)
-{
-	int port, unit, from, to, len;
-	unsigned long *lsendbuf = mq->sendbuf;
+अटल व्योम maple_build_block(काष्ठा mapleq *mq)
+अणु
+	पूर्णांक port, unit, from, to, len;
+	अचिन्हित दीर्घ *lsendbuf = mq->sendbuf;
 
 	port = mq->dev->port & 3;
 	unit = mq->dev->unit;
@@ -261,632 +262,632 @@ static void maple_build_block(struct mapleq *mq)
 	*maple_sendptr++ = virt_to_phys(mq->recvbuf->buf);
 	*maple_sendptr++ =
 	    mq->command | (to << 8) | (from << 16) | (len << 24);
-	while (len-- > 0)
+	जबतक (len-- > 0)
 		*maple_sendptr++ = *lsendbuf++;
-}
+पूर्ण
 
 /* build up command queue */
-static void maple_send(void)
-{
-	int i, maple_packets = 0;
-	struct mapleq *mq, *nmq;
+अटल व्योम maple_send(व्योम)
+अणु
+	पूर्णांक i, maple_packets = 0;
+	काष्ठा mapleq *mq, *nmq;
 
-	if (!maple_dma_done())
-		return;
+	अगर (!maple_dma_करोne())
+		वापस;
 
 	/* disable DMA */
-	__raw_writel(0, MAPLE_ENABLE);
+	__raw_ग_लिखोl(0, MAPLE_ENABLE);
 
-	if (!list_empty(&maple_sentq))
-		goto finish;
+	अगर (!list_empty(&maple_sentq))
+		जाओ finish;
 
 	mutex_lock(&maple_wlist_lock);
-	if (list_empty(&maple_waitq)) {
+	अगर (list_empty(&maple_रुकोq)) अणु
 		mutex_unlock(&maple_wlist_lock);
-		goto finish;
-	}
+		जाओ finish;
+	पूर्ण
 
 	maple_lastptr = maple_sendbuf;
 	maple_sendptr = maple_sendbuf;
 
-	list_for_each_entry_safe(mq, nmq, &maple_waitq, list) {
+	list_क्रम_each_entry_safe(mq, nmq, &maple_रुकोq, list) अणु
 		maple_build_block(mq);
 		list_del_init(&mq->list);
 		list_add_tail(&mq->list, &maple_sentq);
-		if (maple_packets++ > MAPLE_MAXPACKETS)
-			break;
-	}
+		अगर (maple_packets++ > MAPLE_MAXPACKETS)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&maple_wlist_lock);
-	if (maple_packets > 0) {
-		for (i = 0; i < (1 << MAPLE_DMA_PAGES); i++)
+	अगर (maple_packets > 0) अणु
+		क्रम (i = 0; i < (1 << MAPLE_DMA_PAGES); i++)
 			__flush_purge_region(maple_sendbuf + i * PAGE_SIZE,
 					PAGE_SIZE);
-	}
+	पूर्ण
 
 finish:
 	maple_dma_reset();
-}
+पूर्ण
 
-/* check if there is a driver registered likely to match this device */
-static int maple_check_matching_driver(struct device_driver *driver,
-					void *devptr)
-{
-	struct maple_driver *maple_drv;
-	struct maple_device *mdev;
+/* check अगर there is a driver रेजिस्टरed likely to match this device */
+अटल पूर्णांक maple_check_matching_driver(काष्ठा device_driver *driver,
+					व्योम *devptr)
+अणु
+	काष्ठा maple_driver *maple_drv;
+	काष्ठा maple_device *mdev;
 
 	mdev = devptr;
 	maple_drv = to_maple_driver(driver);
-	if (mdev->devinfo.function & cpu_to_be32(maple_drv->function))
-		return 1;
-	return 0;
-}
+	अगर (mdev->devinfo.function & cpu_to_be32(maple_drv->function))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static void maple_detach_driver(struct maple_device *mdev)
-{
-	device_unregister(&mdev->dev);
-}
+अटल व्योम maple_detach_driver(काष्ठा maple_device *mdev)
+अणु
+	device_unरेजिस्टर(&mdev->dev);
+पूर्ण
 
-/* process initial MAPLE_COMMAND_DEVINFO for each device or port */
-static void maple_attach_driver(struct maple_device *mdev)
-{
-	char *p, *recvbuf;
-	unsigned long function;
-	int matched, error;
+/* process initial MAPLE_COMMAND_DEVINFO क्रम each device or port */
+अटल व्योम maple_attach_driver(काष्ठा maple_device *mdev)
+अणु
+	अक्षर *p, *recvbuf;
+	अचिन्हित दीर्घ function;
+	पूर्णांक matched, error;
 
 	recvbuf = mdev->mq->recvbuf->buf;
-	/* copy the data as individual elements in
-	* case of memory optimisation */
-	memcpy(&mdev->devinfo.function, recvbuf + 4, 4);
-	memcpy(&mdev->devinfo.function_data[0], recvbuf + 8, 12);
-	memcpy(&mdev->devinfo.area_code, recvbuf + 20, 1);
-	memcpy(&mdev->devinfo.connector_direction, recvbuf + 21, 1);
-	memcpy(&mdev->devinfo.product_name[0], recvbuf + 22, 30);
-	memcpy(&mdev->devinfo.standby_power, recvbuf + 112, 2);
-	memcpy(&mdev->devinfo.max_power, recvbuf + 114, 2);
-	memcpy(mdev->product_name, mdev->devinfo.product_name, 30);
+	/* copy the data as inभागidual elements in
+	* हाल of memory optimisation */
+	स_नकल(&mdev->devinfo.function, recvbuf + 4, 4);
+	स_नकल(&mdev->devinfo.function_data[0], recvbuf + 8, 12);
+	स_नकल(&mdev->devinfo.area_code, recvbuf + 20, 1);
+	स_नकल(&mdev->devinfo.connector_direction, recvbuf + 21, 1);
+	स_नकल(&mdev->devinfo.product_name[0], recvbuf + 22, 30);
+	स_नकल(&mdev->devinfo.standby_घातer, recvbuf + 112, 2);
+	स_नकल(&mdev->devinfo.max_घातer, recvbuf + 114, 2);
+	स_नकल(mdev->product_name, mdev->devinfo.product_name, 30);
 	mdev->product_name[30] = '\0';
-	memcpy(mdev->product_licence, mdev->devinfo.product_licence, 60);
+	स_नकल(mdev->product_licence, mdev->devinfo.product_licence, 60);
 	mdev->product_licence[60] = '\0';
 
-	for (p = mdev->product_name + 29; mdev->product_name <= p; p--)
-		if (*p == ' ')
+	क्रम (p = mdev->product_name + 29; mdev->product_name <= p; p--)
+		अगर (*p == ' ')
 			*p = '\0';
-		else
-			break;
-	for (p = mdev->product_licence + 59; mdev->product_licence <= p; p--)
-		if (*p == ' ')
+		अन्यथा
+			अवरोध;
+	क्रम (p = mdev->product_licence + 59; mdev->product_licence <= p; p--)
+		अगर (*p == ' ')
 			*p = '\0';
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
 	function = be32_to_cpu(mdev->devinfo.function);
 
 	dev_info(&mdev->dev, "detected %s: function 0x%lX: at (%d, %d)\n",
 		mdev->product_name, function, mdev->port, mdev->unit);
 
-	if (function > 0x200) {
+	अगर (function > 0x200) अणु
 		/* Do this silently - as not a real device */
 		function = 0;
 		mdev->driver = &maple_unsupported_device;
 		dev_set_name(&mdev->dev, "%d:0.port", mdev->port);
-	} else {
+	पूर्ण अन्यथा अणु
 		matched =
-			bus_for_each_drv(&maple_bus_type, NULL, mdev,
+			bus_क्रम_each_drv(&maple_bus_type, शून्य, mdev,
 				maple_check_matching_driver);
 
-		if (matched == 0) {
-			/* Driver does not exist yet */
+		अगर (matched == 0) अणु
+			/* Driver करोes not exist yet */
 			dev_info(&mdev->dev, "no driver found\n");
 			mdev->driver = &maple_unsupported_device;
-		}
+		पूर्ण
 		dev_set_name(&mdev->dev, "%d:0%d.%lX", mdev->port,
 			     mdev->unit, function);
-	}
+	पूर्ण
 
 	mdev->function = function;
 	mdev->dev.release = &maple_release_device;
 
 	atomic_set(&mdev->busy, 0);
-	error = device_register(&mdev->dev);
-	if (error) {
+	error = device_रेजिस्टर(&mdev->dev);
+	अगर (error) अणु
 		dev_warn(&mdev->dev, "could not register device at"
 			" (%d, %d), with error 0x%X\n", mdev->unit,
 			mdev->port, error);
-		maple_free_dev(mdev);
-		mdev = NULL;
-		return;
-	}
-}
+		maple_मुक्त_dev(mdev);
+		mdev = शून्य;
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
- * if device has been registered for the given
- * port and unit then return 1 - allows identification
+ * अगर device has been रेजिस्टरed क्रम the given
+ * port and unit then वापस 1 - allows identअगरication
  * of which devices need to be attached or detached
  */
-static int check_maple_device(struct device *device, void *portptr)
-{
-	struct maple_device_specify *ds;
-	struct maple_device *mdev;
+अटल पूर्णांक check_maple_device(काष्ठा device *device, व्योम *portptr)
+अणु
+	काष्ठा maple_device_specअगरy *ds;
+	काष्ठा maple_device *mdev;
 
 	ds = portptr;
 	mdev = to_maple_dev(device);
-	if (mdev->port == ds->port && mdev->unit == ds->unit)
-		return 1;
-	return 0;
-}
+	अगर (mdev->port == ds->port && mdev->unit == ds->unit)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int setup_maple_commands(struct device *device, void *ignored)
-{
-	int add;
-	struct maple_device *mdev = to_maple_dev(device);
-	if (mdev->interval > 0 && atomic_read(&mdev->busy) == 0 &&
-		time_after(jiffies, mdev->when)) {
-		/* bounce if we cannot add */
+अटल पूर्णांक setup_maple_commands(काष्ठा device *device, व्योम *ignored)
+अणु
+	पूर्णांक add;
+	काष्ठा maple_device *mdev = to_maple_dev(device);
+	अगर (mdev->पूर्णांकerval > 0 && atomic_पढ़ो(&mdev->busy) == 0 &&
+		समय_after(jअगरfies, mdev->when)) अणु
+		/* bounce अगर we cannot add */
 		add = maple_add_packet(mdev,
 			be32_to_cpu(mdev->devinfo.function),
-			MAPLE_COMMAND_GETCOND, 1, NULL);
-		if (!add)
-			mdev->when = jiffies + mdev->interval;
-	} else {
-		if (time_after(jiffies, maple_pnp_time))
-			/* Ensure we don't have block reads and devinfo
-			* calls interfering with one another - so flag the
+			MAPLE_COMMAND_GETCOND, 1, शून्य);
+		अगर (!add)
+			mdev->when = jअगरfies + mdev->पूर्णांकerval;
+	पूर्ण अन्यथा अणु
+		अगर (समय_after(jअगरfies, maple_pnp_समय))
+			/* Ensure we करोn't have block पढ़ोs and devinfo
+			* calls पूर्णांकerfering with one another - so flag the
 			* device as busy */
-			if (atomic_read(&mdev->busy) == 0) {
+			अगर (atomic_पढ़ो(&mdev->busy) == 0) अणु
 				atomic_set(&mdev->busy, 1);
 				maple_add_packet(mdev, 0,
-					MAPLE_COMMAND_DEVINFO, 0, NULL);
-			}
-	}
-	return 0;
-}
+					MAPLE_COMMAND_DEVINFO, 0, शून्य);
+			पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* VBLANK bottom half - implemented via workqueue */
-static void maple_vblank_handler(struct work_struct *work)
-{
-	int x, locking;
-	struct maple_device *mdev;
+अटल व्योम maple_vblank_handler(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक x, locking;
+	काष्ठा maple_device *mdev;
 
-	if (!maple_dma_done())
-		return;
+	अगर (!maple_dma_करोne())
+		वापस;
 
-	__raw_writel(0, MAPLE_ENABLE);
+	__raw_ग_लिखोl(0, MAPLE_ENABLE);
 
-	if (!list_empty(&maple_sentq))
-		goto finish;
+	अगर (!list_empty(&maple_sentq))
+		जाओ finish;
 
 	/*
 	* Set up essential commands - to fetch data and
 	* check devices are still present
 	*/
-	bus_for_each_dev(&maple_bus_type, NULL, NULL,
+	bus_क्रम_each_dev(&maple_bus_type, शून्य, शून्य,
 		setup_maple_commands);
 
-	if (time_after(jiffies, maple_pnp_time)) {
+	अगर (समय_after(jअगरfies, maple_pnp_समय)) अणु
 		/*
 		* Scan the empty ports - bus is flakey and may have
 		* mis-reported emptyness
 		*/
-		for (x = 0; x < MAPLE_PORTS; x++) {
-			if (checked[x] && empty[x]) {
+		क्रम (x = 0; x < MAPLE_PORTS; x++) अणु
+			अगर (checked[x] && empty[x]) अणु
 				mdev = baseunits[x];
-				if (!mdev)
-					break;
+				अगर (!mdev)
+					अवरोध;
 				atomic_set(&mdev->busy, 1);
 				locking = maple_add_packet(mdev, 0,
-					MAPLE_COMMAND_DEVINFO, 0, NULL);
-				if (!locking)
-					break;
-				}
-			}
+					MAPLE_COMMAND_DEVINFO, 0, शून्य);
+				अगर (!locking)
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
-		maple_pnp_time = jiffies + MAPLE_PNP_INTERVAL;
-	}
+		maple_pnp_समय = jअगरfies + MAPLE_PNP_INTERVAL;
+	पूर्ण
 
 finish:
 	maple_send();
-}
+पूर्ण
 
-/* handle devices added via hotplugs - placing them on queue for DEVINFO */
-static void maple_map_subunits(struct maple_device *mdev, int submask)
-{
-	int retval, k, devcheck;
-	struct maple_device *mdev_add;
-	struct maple_device_specify ds;
+/* handle devices added via hotplugs - placing them on queue क्रम DEVINFO */
+अटल व्योम maple_map_subunits(काष्ठा maple_device *mdev, पूर्णांक submask)
+अणु
+	पूर्णांक retval, k, devcheck;
+	काष्ठा maple_device *mdev_add;
+	काष्ठा maple_device_specअगरy ds;
 
 	ds.port = mdev->port;
-	for (k = 0; k < 5; k++) {
+	क्रम (k = 0; k < 5; k++) अणु
 		ds.unit = k + 1;
 		retval =
-		    bus_for_each_dev(&maple_bus_type, NULL, &ds,
+		    bus_क्रम_each_dev(&maple_bus_type, शून्य, &ds,
 				     check_maple_device);
-		if (retval) {
+		अगर (retval) अणु
 			submask = submask >> 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		devcheck = submask & 0x01;
-		if (devcheck) {
+		अगर (devcheck) अणु
 			mdev_add = maple_alloc_dev(mdev->port, k + 1);
-			if (!mdev_add)
-				return;
+			अगर (!mdev_add)
+				वापस;
 			atomic_set(&mdev_add->busy, 1);
 			maple_add_packet(mdev_add, 0, MAPLE_COMMAND_DEVINFO,
-				0, NULL);
+				0, शून्य);
 			/* mark that we are checking sub devices */
 			scanning = 1;
-		}
+		पूर्ण
 		submask = submask >> 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* mark a device as removed */
-static void maple_clean_submap(struct maple_device *mdev)
-{
-	int killbit;
+/* mark a device as हटाओd */
+अटल व्योम maple_clean_submap(काष्ठा maple_device *mdev)
+अणु
+	पूर्णांक समाप्तbit;
 
-	killbit = (mdev->unit > 0 ? (1 << (mdev->unit - 1)) & 0x1f : 0x20);
-	killbit = ~killbit;
-	killbit &= 0xFF;
-	subdevice_map[mdev->port] = subdevice_map[mdev->port] & killbit;
-}
+	समाप्तbit = (mdev->unit > 0 ? (1 << (mdev->unit - 1)) & 0x1f : 0x20);
+	समाप्तbit = ~समाप्तbit;
+	समाप्तbit &= 0xFF;
+	subdevice_map[mdev->port] = subdevice_map[mdev->port] & समाप्तbit;
+पूर्ण
 
 /* handle empty port or hotplug removal */
-static void maple_response_none(struct maple_device *mdev)
-{
+अटल व्योम maple_response_none(काष्ठा maple_device *mdev)
+अणु
 	maple_clean_submap(mdev);
 
-	if (likely(mdev->unit != 0)) {
+	अगर (likely(mdev->unit != 0)) अणु
 		/*
 		* Block devices play up
 		* and give the impression they have
-		* been removed even when still in place or
+		* been हटाओd even when still in place or
 		* trip the mtd layer when they have
 		* really gone - this code traps that eventuality
 		* and ensures we aren't overloaded with useless
 		* error messages
 		*/
-		if (mdev->can_unload) {
-			if (!mdev->can_unload(mdev)) {
+		अगर (mdev->can_unload) अणु
+			अगर (!mdev->can_unload(mdev)) अणु
 				atomic_set(&mdev->busy, 2);
-				wake_up(&mdev->maple_wait);
-				return;
-			}
-		}
+				wake_up(&mdev->maple_रुको);
+				वापस;
+			पूर्ण
+		पूर्ण
 
 		dev_info(&mdev->dev, "detaching device at (%d, %d)\n",
 			mdev->port, mdev->unit);
 		maple_detach_driver(mdev);
-		return;
-	} else {
-		if (!started || !fullscan) {
-			if (checked[mdev->port] == false) {
+		वापस;
+	पूर्ण अन्यथा अणु
+		अगर (!started || !fullscan) अणु
+			अगर (checked[mdev->port] == false) अणु
 				checked[mdev->port] = true;
 				empty[mdev->port] = true;
 				dev_info(&mdev->dev, "no devices"
 					" to port %d\n", mdev->port);
-			}
-			return;
-		}
-	}
+			पूर्ण
+			वापस;
+		पूर्ण
+	पूर्ण
 	/* Some hardware devices generate false detach messages on unit 0 */
 	atomic_set(&mdev->busy, 0);
-}
+पूर्ण
 
 /* preprocess hotplugs or scans */
-static void maple_response_devinfo(struct maple_device *mdev,
-				   char *recvbuf)
-{
-	char submask;
-	if (!started || (scanning == 2) || !fullscan) {
-		if ((mdev->unit == 0) && (checked[mdev->port] == false)) {
+अटल व्योम maple_response_devinfo(काष्ठा maple_device *mdev,
+				   अक्षर *recvbuf)
+अणु
+	अक्षर submask;
+	अगर (!started || (scanning == 2) || !fullscan) अणु
+		अगर ((mdev->unit == 0) && (checked[mdev->port] == false)) अणु
 			checked[mdev->port] = true;
 			maple_attach_driver(mdev);
-		} else {
-			if (mdev->unit != 0)
+		पूर्ण अन्यथा अणु
+			अगर (mdev->unit != 0)
 				maple_attach_driver(mdev);
-			if (mdev->unit == 0) {
+			अगर (mdev->unit == 0) अणु
 				empty[mdev->port] = false;
 				maple_attach_driver(mdev);
-			}
-		}
-	}
-	if (mdev->unit == 0) {
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (mdev->unit == 0) अणु
 		submask = recvbuf[2] & 0x1F;
-		if (submask ^ subdevice_map[mdev->port]) {
+		अगर (submask ^ subdevice_map[mdev->port]) अणु
 			maple_map_subunits(mdev, submask);
 			subdevice_map[mdev->port] = submask;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void maple_response_fileerr(struct maple_device *mdev, void *recvbuf)
-{
-	if (mdev->fileerr_handler) {
+अटल व्योम maple_response_fileerr(काष्ठा maple_device *mdev, व्योम *recvbuf)
+अणु
+	अगर (mdev->fileerr_handler) अणु
 		mdev->fileerr_handler(mdev, recvbuf);
-		return;
-	} else
+		वापस;
+	पूर्ण अन्यथा
 		dev_warn(&mdev->dev, "device at (%d, %d) reports"
 			"file error 0x%X\n", mdev->port, mdev->unit,
-			((int *)recvbuf)[1]);
-}
+			((पूर्णांक *)recvbuf)[1]);
+पूर्ण
 
-static void maple_port_rescan(void)
-{
-	int i;
-	struct maple_device *mdev;
+अटल व्योम maple_port_rescan(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा maple_device *mdev;
 
 	fullscan = 1;
-	for (i = 0; i < MAPLE_PORTS; i++) {
-		if (checked[i] == false) {
+	क्रम (i = 0; i < MAPLE_PORTS; i++) अणु
+		अगर (checked[i] == false) अणु
 			fullscan = 0;
 			mdev = baseunits[i];
 			maple_add_packet(mdev, 0, MAPLE_COMMAND_DEVINFO,
-				0, NULL);
-		}
-	}
-}
+				0, शून्य);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* maple dma end bottom half - implemented via workqueue */
-static void maple_dma_handler(struct work_struct *work)
-{
-	struct mapleq *mq, *nmq;
-	struct maple_device *mdev;
-	char *recvbuf;
-	enum maple_code code;
+अटल व्योम maple_dma_handler(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mapleq *mq, *nmq;
+	काष्ठा maple_device *mdev;
+	अक्षर *recvbuf;
+	क्रमागत maple_code code;
 
-	if (!maple_dma_done())
-		return;
-	__raw_writel(0, MAPLE_ENABLE);
-	if (!list_empty(&maple_sentq)) {
-		list_for_each_entry_safe(mq, nmq, &maple_sentq, list) {
+	अगर (!maple_dma_करोne())
+		वापस;
+	__raw_ग_लिखोl(0, MAPLE_ENABLE);
+	अगर (!list_empty(&maple_sentq)) अणु
+		list_क्रम_each_entry_safe(mq, nmq, &maple_sentq, list) अणु
 			mdev = mq->dev;
 			recvbuf = mq->recvbuf->buf;
 			__flush_invalidate_region(sh_cacheop_vaddr(recvbuf),
 					0x400);
 			code = recvbuf[0];
-			kfree(mq->sendbuf);
+			kमुक्त(mq->sendbuf);
 			list_del_init(&mq->list);
-			switch (code) {
-			case MAPLE_RESPONSE_NONE:
+			चयन (code) अणु
+			हाल MAPLE_RESPONSE_NONE:
 				maple_response_none(mdev);
-				break;
+				अवरोध;
 
-			case MAPLE_RESPONSE_DEVINFO:
+			हाल MAPLE_RESPONSE_DEVINFO:
 				maple_response_devinfo(mdev, recvbuf);
 				atomic_set(&mdev->busy, 0);
-				break;
+				अवरोध;
 
-			case MAPLE_RESPONSE_DATATRF:
-				if (mdev->callback)
+			हाल MAPLE_RESPONSE_DATATRF:
+				अगर (mdev->callback)
 					mdev->callback(mq);
 				atomic_set(&mdev->busy, 0);
-				wake_up(&mdev->maple_wait);
-				break;
+				wake_up(&mdev->maple_रुको);
+				अवरोध;
 
-			case MAPLE_RESPONSE_FILEERR:
+			हाल MAPLE_RESPONSE_खाताERR:
 				maple_response_fileerr(mdev, recvbuf);
 				atomic_set(&mdev->busy, 0);
-				wake_up(&mdev->maple_wait);
-				break;
+				wake_up(&mdev->maple_रुको);
+				अवरोध;
 
-			case MAPLE_RESPONSE_AGAIN:
-			case MAPLE_RESPONSE_BADCMD:
-			case MAPLE_RESPONSE_BADFUNC:
+			हाल MAPLE_RESPONSE_AGAIN:
+			हाल MAPLE_RESPONSE_BADCMD:
+			हाल MAPLE_RESPONSE_BADFUNC:
 				dev_warn(&mdev->dev, "non-fatal error"
 					" 0x%X at (%d, %d)\n", code,
 					mdev->port, mdev->unit);
 				atomic_set(&mdev->busy, 0);
-				break;
+				अवरोध;
 
-			case MAPLE_RESPONSE_ALLINFO:
+			हाल MAPLE_RESPONSE_ALLINFO:
 				dev_notice(&mdev->dev, "extended"
 				" device information request for (%d, %d)"
 				" but call is not supported\n", mdev->port,
 				mdev->unit);
 				atomic_set(&mdev->busy, 0);
-				break;
+				अवरोध;
 
-			case MAPLE_RESPONSE_OK:
+			हाल MAPLE_RESPONSE_OK:
 				atomic_set(&mdev->busy, 0);
-				wake_up(&mdev->maple_wait);
-				break;
+				wake_up(&mdev->maple_रुको);
+				अवरोध;
 
-			default:
-				break;
-			}
-		}
-		/* if scanning is 1 then we have subdevices to check */
-		if (scanning == 1) {
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		/* अगर scanning is 1 then we have subdevices to check */
+		अगर (scanning == 1) अणु
 			maple_send();
 			scanning = 2;
-		} else
+		पूर्ण अन्यथा
 			scanning = 0;
-		/*check if we have actually tested all ports yet */
-		if (!fullscan)
+		/*check अगर we have actually tested all ports yet */
+		अगर (!fullscan)
 			maple_port_rescan();
 		/* mark that we have been through the first scan */
 		started = 1;
-	}
+	पूर्ण
 	maple_send();
-}
+पूर्ण
 
-static irqreturn_t maple_dma_interrupt(int irq, void *dev_id)
-{
-	/* Load everything into the bottom half */
+अटल irqवापस_t maple_dma_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	/* Load everything पूर्णांकo the bottom half */
 	schedule_work(&maple_dma_process);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t maple_vblank_interrupt(int irq, void *dev_id)
-{
+अटल irqवापस_t maple_vblank_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
 	schedule_work(&maple_vblank_process);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int maple_set_dma_interrupt_handler(void)
-{
-	return request_irq(HW_EVENT_MAPLE_DMA, maple_dma_interrupt,
+अटल पूर्णांक maple_set_dma_पूर्णांकerrupt_handler(व्योम)
+अणु
+	वापस request_irq(HW_EVENT_MAPLE_DMA, maple_dma_पूर्णांकerrupt,
 		IRQF_SHARED, "maple bus DMA", &maple_unsupported_device);
-}
+पूर्ण
 
-static int maple_set_vblank_interrupt_handler(void)
-{
-	return request_irq(HW_EVENT_VSYNC, maple_vblank_interrupt,
+अटल पूर्णांक maple_set_vblank_पूर्णांकerrupt_handler(व्योम)
+अणु
+	वापस request_irq(HW_EVENT_VSYNC, maple_vblank_पूर्णांकerrupt,
 		IRQF_SHARED, "maple bus VBLANK", &maple_unsupported_device);
-}
+पूर्ण
 
-static int maple_get_dma_buffer(void)
-{
+अटल पूर्णांक maple_get_dma_buffer(व्योम)
+अणु
 	maple_sendbuf =
-	    (void *) __get_free_pages(GFP_KERNEL | __GFP_ZERO,
+	    (व्योम *) __get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO,
 				      MAPLE_DMA_PAGES);
-	if (!maple_sendbuf)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!maple_sendbuf)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int maple_match_bus_driver(struct device *devptr,
-				  struct device_driver *drvptr)
-{
-	struct maple_driver *maple_drv = to_maple_driver(drvptr);
-	struct maple_device *maple_dev = to_maple_dev(devptr);
+अटल पूर्णांक maple_match_bus_driver(काष्ठा device *devptr,
+				  काष्ठा device_driver *drvptr)
+अणु
+	काष्ठा maple_driver *maple_drv = to_maple_driver(drvptr);
+	काष्ठा maple_device *maple_dev = to_maple_dev(devptr);
 
-	/* Trap empty port case */
-	if (maple_dev->devinfo.function == 0xFFFFFFFF)
-		return 0;
-	else if (maple_dev->devinfo.function &
+	/* Trap empty port हाल */
+	अगर (maple_dev->devinfo.function == 0xFFFFFFFF)
+		वापस 0;
+	अन्यथा अगर (maple_dev->devinfo.function &
 		 cpu_to_be32(maple_drv->function))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int maple_bus_uevent(struct device *dev,
-			    struct kobj_uevent_env *env)
-{
-	return 0;
-}
+अटल पूर्णांक maple_bus_uevent(काष्ठा device *dev,
+			    काष्ठा kobj_uevent_env *env)
+अणु
+	वापस 0;
+पूर्ण
 
-static void maple_bus_release(struct device *dev)
-{
-}
+अटल व्योम maple_bus_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static struct maple_driver maple_unsupported_device = {
-	.drv = {
+अटल काष्ठा maple_driver maple_unsupported_device = अणु
+	.drv = अणु
 		.name = "maple_unsupported_device",
 		.bus = &maple_bus_type,
-	},
-};
+	पूर्ण,
+पूर्ण;
 /*
- * maple_bus_type - core maple bus structure
+ * maple_bus_type - core maple bus काष्ठाure
  */
-struct bus_type maple_bus_type = {
+काष्ठा bus_type maple_bus_type = अणु
 	.name = "maple",
 	.match = maple_match_bus_driver,
 	.uevent = maple_bus_uevent,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(maple_bus_type);
 
-static struct device maple_bus = {
+अटल काष्ठा device maple_bus = अणु
 	.init_name = "maple",
 	.release = maple_bus_release,
-};
+पूर्ण;
 
-static int __init maple_bus_init(void)
-{
-	int retval, i;
-	struct maple_device *mdev[MAPLE_PORTS];
+अटल पूर्णांक __init maple_bus_init(व्योम)
+अणु
+	पूर्णांक retval, i;
+	काष्ठा maple_device *mdev[MAPLE_PORTS];
 
-	__raw_writel(0, MAPLE_ENABLE);
+	__raw_ग_लिखोl(0, MAPLE_ENABLE);
 
-	retval = device_register(&maple_bus);
-	if (retval)
-		goto cleanup;
+	retval = device_रेजिस्टर(&maple_bus);
+	अगर (retval)
+		जाओ cleanup;
 
-	retval = bus_register(&maple_bus_type);
-	if (retval)
-		goto cleanup_device;
+	retval = bus_रेजिस्टर(&maple_bus_type);
+	अगर (retval)
+		जाओ cleanup_device;
 
-	retval = driver_register(&maple_unsupported_device.drv);
-	if (retval)
-		goto cleanup_bus;
+	retval = driver_रेजिस्टर(&maple_unsupported_device.drv);
+	अगर (retval)
+		जाओ cleanup_bus;
 
-	/* allocate memory for maple bus dma */
+	/* allocate memory क्रम maple bus dma */
 	retval = maple_get_dma_buffer();
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(&maple_bus, "failed to allocate DMA buffers\n");
-		goto cleanup_basic;
-	}
+		जाओ cleanup_basic;
+	पूर्ण
 
-	/* set up DMA interrupt handler */
-	retval = maple_set_dma_interrupt_handler();
-	if (retval) {
+	/* set up DMA पूर्णांकerrupt handler */
+	retval = maple_set_dma_पूर्णांकerrupt_handler();
+	अगर (retval) अणु
 		dev_err(&maple_bus, "bus failed to grab maple "
 			"DMA IRQ\n");
-		goto cleanup_dma;
-	}
+		जाओ cleanup_dma;
+	पूर्ण
 
-	/* set up VBLANK interrupt handler */
-	retval = maple_set_vblank_interrupt_handler();
-	if (retval) {
+	/* set up VBLANK पूर्णांकerrupt handler */
+	retval = maple_set_vblank_पूर्णांकerrupt_handler();
+	अगर (retval) अणु
 		dev_err(&maple_bus, "bus failed to grab VBLANK IRQ\n");
-		goto cleanup_irq;
-	}
+		जाओ cleanup_irq;
+	पूर्ण
 
 	maple_queue_cache = KMEM_CACHE(maple_buffer, SLAB_HWCACHE_ALIGN);
 
-	if (!maple_queue_cache)
-		goto cleanup_bothirqs;
+	अगर (!maple_queue_cache)
+		जाओ cleanup_bothirqs;
 
-	INIT_LIST_HEAD(&maple_waitq);
+	INIT_LIST_HEAD(&maple_रुकोq);
 	INIT_LIST_HEAD(&maple_sentq);
 
 	/* setup maple ports */
-	for (i = 0; i < MAPLE_PORTS; i++) {
+	क्रम (i = 0; i < MAPLE_PORTS; i++) अणु
 		checked[i] = false;
 		empty[i] = false;
 		mdev[i] = maple_alloc_dev(i, 0);
-		if (!mdev[i]) {
-			while (i-- > 0)
-				maple_free_dev(mdev[i]);
-			goto cleanup_cache;
-		}
+		अगर (!mdev[i]) अणु
+			जबतक (i-- > 0)
+				maple_मुक्त_dev(mdev[i]);
+			जाओ cleanup_cache;
+		पूर्ण
 		baseunits[i] = mdev[i];
 		atomic_set(&mdev[i]->busy, 1);
-		maple_add_packet(mdev[i], 0, MAPLE_COMMAND_DEVINFO, 0, NULL);
+		maple_add_packet(mdev[i], 0, MAPLE_COMMAND_DEVINFO, 0, शून्य);
 		subdevice_map[i] = 0;
-	}
+	पूर्ण
 
-	maple_pnp_time = jiffies + HZ;
+	maple_pnp_समय = jअगरfies + HZ;
 	/* prepare initial queue */
 	maple_send();
 	dev_info(&maple_bus, "bus core now registered\n");
 
-	return 0;
+	वापस 0;
 
 cleanup_cache:
 	kmem_cache_destroy(maple_queue_cache);
 
 cleanup_bothirqs:
-	free_irq(HW_EVENT_VSYNC, 0);
+	मुक्त_irq(HW_EVENT_VSYNC, 0);
 
 cleanup_irq:
-	free_irq(HW_EVENT_MAPLE_DMA, 0);
+	मुक्त_irq(HW_EVENT_MAPLE_DMA, 0);
 
 cleanup_dma:
-	free_pages((unsigned long) maple_sendbuf, MAPLE_DMA_PAGES);
+	मुक्त_pages((अचिन्हित दीर्घ) maple_sendbuf, MAPLE_DMA_PAGES);
 
 cleanup_basic:
-	driver_unregister(&maple_unsupported_device.drv);
+	driver_unरेजिस्टर(&maple_unsupported_device.drv);
 
 cleanup_bus:
-	bus_unregister(&maple_bus_type);
+	bus_unरेजिस्टर(&maple_bus_type);
 
 cleanup_device:
-	device_unregister(&maple_bus);
+	device_unरेजिस्टर(&maple_bus);
 
 cleanup:
-	printk(KERN_ERR "Maple bus registration failed\n");
-	return retval;
-}
-/* Push init to later to ensure hardware gets detected */
+	prपूर्णांकk(KERN_ERR "Maple bus registration failed\n");
+	वापस retval;
+पूर्ण
+/* Push init to later to ensure hardware माला_लो detected */
 fs_initcall(maple_bus_init);

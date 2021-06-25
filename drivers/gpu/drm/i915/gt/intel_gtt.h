@@ -1,454 +1,455 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  *
- * Please try to maintain the following order within this file unless it makes
- * sense to do otherwise. From top to bottom:
- * 1. typedefs
- * 2. #defines, and macros
- * 3. structure definitions
+ * Please try to मुख्यtain the following order within this file unless it makes
+ * sense to करो otherwise. From top to bottom:
+ * 1. प्रकारs
+ * 2. #घोषणाs, and macros
+ * 3. काष्ठाure definitions
  * 4. function prototypes
  *
  * Within each section, please try to order by generation in ascending order,
  * from top to bottom (ie. gen6 on the top, gen8 on the bottom).
  */
 
-#ifndef __INTEL_GTT_H__
-#define __INTEL_GTT_H__
+#अगर_अघोषित __INTEL_GTT_H__
+#घोषणा __INTEL_GTT_H__
 
-#include <linux/io-mapping.h>
-#include <linux/kref.h>
-#include <linux/mm.h>
-#include <linux/pagevec.h>
-#include <linux/scatterlist.h>
-#include <linux/workqueue.h>
+#समावेश <linux/io-mapping.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/workqueue.h>
 
-#include <drm/drm_mm.h>
+#समावेश <drm/drm_mm.h>
 
-#include "gt/intel_reset.h"
-#include "i915_selftest.h"
-#include "i915_vma_types.h"
+#समावेश "gt/intel_reset.h"
+#समावेश "i915_selftest.h"
+#समावेश "i915_vma_types.h"
 
-#define I915_GFP_ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
+#घोषणा I915_GFP_ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
 
-#if IS_ENABLED(CONFIG_DRM_I915_TRACE_GTT)
-#define DBG(...) trace_printk(__VA_ARGS__)
-#else
-#define DBG(...)
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_I915_TRACE_GTT)
+#घोषणा DBG(...) trace_prपूर्णांकk(__VA_ARGS__)
+#अन्यथा
+#घोषणा DBG(...)
+#पूर्ण_अगर
 
-#define NALLOC 3 /* 1 normal, 1 for concurrent threads, 1 for preallocation */
+#घोषणा NALLOC 3 /* 1 normal, 1 क्रम concurrent thपढ़ोs, 1 क्रम pपुनः_स्मृतिation */
 
-#define I915_GTT_PAGE_SIZE_4K	BIT_ULL(12)
-#define I915_GTT_PAGE_SIZE_64K	BIT_ULL(16)
-#define I915_GTT_PAGE_SIZE_2M	BIT_ULL(21)
+#घोषणा I915_GTT_PAGE_SIZE_4K	BIT_ULL(12)
+#घोषणा I915_GTT_PAGE_SIZE_64K	BIT_ULL(16)
+#घोषणा I915_GTT_PAGE_SIZE_2M	BIT_ULL(21)
 
-#define I915_GTT_PAGE_SIZE I915_GTT_PAGE_SIZE_4K
-#define I915_GTT_MAX_PAGE_SIZE I915_GTT_PAGE_SIZE_2M
+#घोषणा I915_GTT_PAGE_SIZE I915_GTT_PAGE_SIZE_4K
+#घोषणा I915_GTT_MAX_PAGE_SIZE I915_GTT_PAGE_SIZE_2M
 
-#define I915_GTT_PAGE_MASK -I915_GTT_PAGE_SIZE
+#घोषणा I915_GTT_PAGE_MASK -I915_GTT_PAGE_SIZE
 
-#define I915_GTT_MIN_ALIGNMENT I915_GTT_PAGE_SIZE
+#घोषणा I915_GTT_MIN_ALIGNMENT I915_GTT_PAGE_SIZE
 
-#define I915_FENCE_REG_NONE -1
-#define I915_MAX_NUM_FENCES 32
-/* 32 fences + sign bit for FENCE_REG_NONE */
-#define I915_MAX_NUM_FENCE_BITS 6
+#घोषणा I915_FENCE_REG_NONE -1
+#घोषणा I915_MAX_NUM_FENCES 32
+/* 32 fences + sign bit क्रम FENCE_REG_NONE */
+#घोषणा I915_MAX_NUM_FENCE_BITS 6
 
-typedef u32 gen6_pte_t;
-typedef u64 gen8_pte_t;
+प्रकार u32 gen6_pte_t;
+प्रकार u64 gen8_pte_t;
 
-#define ggtt_total_entries(ggtt) ((ggtt)->vm.total >> PAGE_SHIFT)
+#घोषणा ggtt_total_entries(ggtt) ((ggtt)->vm.total >> PAGE_SHIFT)
 
-#define I915_PTES(pte_len)		((unsigned int)(PAGE_SIZE / (pte_len)))
-#define I915_PTE_MASK(pte_len)		(I915_PTES(pte_len) - 1)
-#define I915_PDES			512
-#define I915_PDE_MASK			(I915_PDES - 1)
+#घोषणा I915_PTES(pte_len)		((अचिन्हित पूर्णांक)(PAGE_SIZE / (pte_len)))
+#घोषणा I915_PTE_MASK(pte_len)		(I915_PTES(pte_len) - 1)
+#घोषणा I915_PDES			512
+#घोषणा I915_PDE_MASK			(I915_PDES - 1)
 
-/* gen6-hsw has bit 11-4 for physical addr bit 39-32 */
-#define GEN6_GTT_ADDR_ENCODE(addr)	((addr) | (((addr) >> 28) & 0xff0))
-#define GEN6_PTE_ADDR_ENCODE(addr)	GEN6_GTT_ADDR_ENCODE(addr)
-#define GEN6_PDE_ADDR_ENCODE(addr)	GEN6_GTT_ADDR_ENCODE(addr)
-#define GEN6_PTE_CACHE_LLC		(2 << 1)
-#define GEN6_PTE_UNCACHED		(1 << 1)
-#define GEN6_PTE_VALID			REG_BIT(0)
+/* gen6-hsw has bit 11-4 क्रम physical addr bit 39-32 */
+#घोषणा GEN6_GTT_ADDR_ENCODE(addr)	((addr) | (((addr) >> 28) & 0xff0))
+#घोषणा GEN6_PTE_ADDR_ENCODE(addr)	GEN6_GTT_ADDR_ENCODE(addr)
+#घोषणा GEN6_PDE_ADDR_ENCODE(addr)	GEN6_GTT_ADDR_ENCODE(addr)
+#घोषणा GEN6_PTE_CACHE_LLC		(2 << 1)
+#घोषणा GEN6_PTE_UNCACHED		(1 << 1)
+#घोषणा GEN6_PTE_VALID			REG_BIT(0)
 
-#define GEN6_PTES			I915_PTES(sizeof(gen6_pte_t))
-#define GEN6_PD_SIZE		        (I915_PDES * PAGE_SIZE)
-#define GEN6_PD_ALIGN			(PAGE_SIZE * 16)
-#define GEN6_PDE_SHIFT			22
-#define GEN6_PDE_VALID			REG_BIT(0)
-#define NUM_PTE(pde_shift)     (1 << (pde_shift - PAGE_SHIFT))
+#घोषणा GEN6_PTES			I915_PTES(माप(gen6_pte_t))
+#घोषणा GEN6_PD_SIZE		        (I915_PDES * PAGE_SIZE)
+#घोषणा GEN6_PD_ALIGN			(PAGE_SIZE * 16)
+#घोषणा GEN6_PDE_SHIFT			22
+#घोषणा GEN6_PDE_VALID			REG_BIT(0)
+#घोषणा NUM_PTE(pde_shअगरt)     (1 << (pde_shअगरt - PAGE_SHIFT))
 
-#define GEN7_PTE_CACHE_L3_LLC		(3 << 1)
+#घोषणा GEN7_PTE_CACHE_L3_LLC		(3 << 1)
 
-#define BYT_PTE_SNOOPED_BY_CPU_CACHES	REG_BIT(2)
-#define BYT_PTE_WRITEABLE		REG_BIT(1)
+#घोषणा BYT_PTE_SNOOPED_BY_CPU_CACHES	REG_BIT(2)
+#घोषणा BYT_PTE_WRITEABLE		REG_BIT(1)
 
-#define GEN12_PPGTT_PTE_LM	BIT_ULL(11)
+#घोषणा GEN12_PPGTT_PTE_LM	BIT_ULL(11)
 
-#define GEN12_GGTT_PTE_LM	BIT_ULL(1)
+#घोषणा GEN12_GGTT_PTE_LM	BIT_ULL(1)
 
 /*
  * Cacheability Control is a 4-bit value. The low three bits are stored in bits
- * 3:1 of the PTE, while the fourth bit is stored in bit 11 of the PTE.
+ * 3:1 of the PTE, जबतक the fourth bit is stored in bit 11 of the PTE.
  */
-#define HSW_CACHEABILITY_CONTROL(bits)	((((bits) & 0x7) << 1) | \
+#घोषणा HSW_CACHEABILITY_CONTROL(bits)	((((bits) & 0x7) << 1) | \
 					 (((bits) & 0x8) << (11 - 3)))
-#define HSW_WB_LLC_AGE3			HSW_CACHEABILITY_CONTROL(0x2)
-#define HSW_WB_LLC_AGE0			HSW_CACHEABILITY_CONTROL(0x3)
-#define HSW_WB_ELLC_LLC_AGE3		HSW_CACHEABILITY_CONTROL(0x8)
-#define HSW_WB_ELLC_LLC_AGE0		HSW_CACHEABILITY_CONTROL(0xb)
-#define HSW_WT_ELLC_LLC_AGE3		HSW_CACHEABILITY_CONTROL(0x7)
-#define HSW_WT_ELLC_LLC_AGE0		HSW_CACHEABILITY_CONTROL(0x6)
-#define HSW_PTE_UNCACHED		(0)
-#define HSW_GTT_ADDR_ENCODE(addr)	((addr) | (((addr) >> 28) & 0x7f0))
-#define HSW_PTE_ADDR_ENCODE(addr)	HSW_GTT_ADDR_ENCODE(addr)
+#घोषणा HSW_WB_LLC_AGE3			HSW_CACHEABILITY_CONTROL(0x2)
+#घोषणा HSW_WB_LLC_AGE0			HSW_CACHEABILITY_CONTROL(0x3)
+#घोषणा HSW_WB_ELLC_LLC_AGE3		HSW_CACHEABILITY_CONTROL(0x8)
+#घोषणा HSW_WB_ELLC_LLC_AGE0		HSW_CACHEABILITY_CONTROL(0xb)
+#घोषणा HSW_WT_ELLC_LLC_AGE3		HSW_CACHEABILITY_CONTROL(0x7)
+#घोषणा HSW_WT_ELLC_LLC_AGE0		HSW_CACHEABILITY_CONTROL(0x6)
+#घोषणा HSW_PTE_UNCACHED		(0)
+#घोषणा HSW_GTT_ADDR_ENCODE(addr)	((addr) | (((addr) >> 28) & 0x7f0))
+#घोषणा HSW_PTE_ADDR_ENCODE(addr)	HSW_GTT_ADDR_ENCODE(addr)
 
 /*
  * GEN8 32b style address is defined as a 3 level page table:
  * 31:30 | 29:21 | 20:12 |  11:0
  * PDPE  |  PDE  |  PTE  | offset
- * The difference as compared to normal x86 3 level page table is the PDPEs are
- * programmed via register.
+ * The dअगरference as compared to normal x86 3 level page table is the PDPEs are
+ * programmed via रेजिस्टर.
  *
  * GEN8 48b style address is defined as a 4 level page table:
  * 47:39 | 38:30 | 29:21 | 20:12 |  11:0
  * PML4E | PDPE  |  PDE  |  PTE  | offset
  */
-#define GEN8_3LVL_PDPES			4
+#घोषणा GEN8_3LVL_PDPES			4
 
-#define PPAT_UNCACHED			(_PAGE_PWT | _PAGE_PCD)
-#define PPAT_CACHED_PDE			0 /* WB LLC */
-#define PPAT_CACHED			_PAGE_PAT /* WB LLCeLLC */
-#define PPAT_DISPLAY_ELLC		_PAGE_PCD /* WT eLLC */
+#घोषणा PPAT_UNCACHED			(_PAGE_PWT | _PAGE_PCD)
+#घोषणा PPAT_CACHED_PDE			0 /* WB LLC */
+#घोषणा PPAT_CACHED			_PAGE_PAT /* WB LLCeLLC */
+#घोषणा PPAT_DISPLAY_ELLC		_PAGE_PCD /* WT eLLC */
 
-#define CHV_PPAT_SNOOP			REG_BIT(6)
-#define GEN8_PPAT_AGE(x)		((x)<<4)
-#define GEN8_PPAT_LLCeLLC		(3<<2)
-#define GEN8_PPAT_LLCELLC		(2<<2)
-#define GEN8_PPAT_LLC			(1<<2)
-#define GEN8_PPAT_WB			(3<<0)
-#define GEN8_PPAT_WT			(2<<0)
-#define GEN8_PPAT_WC			(1<<0)
-#define GEN8_PPAT_UC			(0<<0)
-#define GEN8_PPAT_ELLC_OVERRIDE		(0<<2)
-#define GEN8_PPAT(i, x)			((u64)(x) << ((i) * 8))
+#घोषणा CHV_PPAT_SNOOP			REG_BIT(6)
+#घोषणा GEN8_PPAT_AGE(x)		((x)<<4)
+#घोषणा GEN8_PPAT_LLCeLLC		(3<<2)
+#घोषणा GEN8_PPAT_LLCELLC		(2<<2)
+#घोषणा GEN8_PPAT_LLC			(1<<2)
+#घोषणा GEN8_PPAT_WB			(3<<0)
+#घोषणा GEN8_PPAT_WT			(2<<0)
+#घोषणा GEN8_PPAT_WC			(1<<0)
+#घोषणा GEN8_PPAT_UC			(0<<0)
+#घोषणा GEN8_PPAT_ELLC_OVERRIDE		(0<<2)
+#घोषणा GEN8_PPAT(i, x)			((u64)(x) << ((i) * 8))
 
-#define GEN8_PDE_IPS_64K BIT(11)
-#define GEN8_PDE_PS_2M   BIT(7)
+#घोषणा GEN8_PDE_IPS_64K BIT(11)
+#घोषणा GEN8_PDE_PS_2M   BIT(7)
 
-enum i915_cache_level;
+क्रमागत i915_cache_level;
 
-struct drm_i915_file_private;
-struct drm_i915_gem_object;
-struct i915_fence_reg;
-struct i915_vma;
-struct intel_gt;
+काष्ठा drm_i915_file_निजी;
+काष्ठा drm_i915_gem_object;
+काष्ठा i915_fence_reg;
+काष्ठा i915_vma;
+काष्ठा पूर्णांकel_gt;
 
-#define for_each_sgt_daddr(__dp, __iter, __sgt) \
-	__for_each_sgt_daddr(__dp, __iter, __sgt, I915_GTT_PAGE_SIZE)
+#घोषणा क्रम_each_sgt_daddr(__dp, __iter, __sgt) \
+	__क्रम_each_sgt_daddr(__dp, __iter, __sgt, I915_GTT_PAGE_SIZE)
 
-struct i915_page_table {
-	struct drm_i915_gem_object *base;
-	union {
+काष्ठा i915_page_table अणु
+	काष्ठा drm_i915_gem_object *base;
+	जोड़ अणु
 		atomic_t used;
-		struct i915_page_table *stash;
-	};
-};
+		काष्ठा i915_page_table *stash;
+	पूर्ण;
+पूर्ण;
 
-struct i915_page_directory {
-	struct i915_page_table pt;
+काष्ठा i915_page_directory अणु
+	काष्ठा i915_page_table pt;
 	spinlock_t lock;
-	void **entry;
-};
+	व्योम **entry;
+पूर्ण;
 
-#define __px_choose_expr(x, type, expr, other) \
+#घोषणा __px_choose_expr(x, type, expr, other) \
 	__builtin_choose_expr( \
 	__builtin_types_compatible_p(typeof(x), type) || \
-	__builtin_types_compatible_p(typeof(x), const type), \
-	({ type __x = (type)(x); expr; }), \
+	__builtin_types_compatible_p(typeof(x), स्थिर type), \
+	(अणु type __x = (type)(x); expr; पूर्ण), \
 	other)
 
-#define px_base(px) \
-	__px_choose_expr(px, struct drm_i915_gem_object *, __x, \
-	__px_choose_expr(px, struct i915_page_table *, __x->base, \
-	__px_choose_expr(px, struct i915_page_directory *, __x->pt.base, \
-	(void)0)))
+#घोषणा px_base(px) \
+	__px_choose_expr(px, काष्ठा drm_i915_gem_object *, __x, \
+	__px_choose_expr(px, काष्ठा i915_page_table *, __x->base, \
+	__px_choose_expr(px, काष्ठा i915_page_directory *, __x->pt.base, \
+	(व्योम)0)))
 
-struct page *__px_page(struct drm_i915_gem_object *p);
-dma_addr_t __px_dma(struct drm_i915_gem_object *p);
-#define px_dma(px) (__px_dma(px_base(px)))
+काष्ठा page *__px_page(काष्ठा drm_i915_gem_object *p);
+dma_addr_t __px_dma(काष्ठा drm_i915_gem_object *p);
+#घोषणा px_dma(px) (__px_dma(px_base(px)))
 
-#define px_pt(px) \
-	__px_choose_expr(px, struct i915_page_table *, __x, \
-	__px_choose_expr(px, struct i915_page_directory *, &__x->pt, \
-	(void)0))
-#define px_used(px) (&px_pt(px)->used)
+#घोषणा px_pt(px) \
+	__px_choose_expr(px, काष्ठा i915_page_table *, __x, \
+	__px_choose_expr(px, काष्ठा i915_page_directory *, &__x->pt, \
+	(व्योम)0))
+#घोषणा px_used(px) (&px_pt(px)->used)
 
-struct i915_vm_pt_stash {
-	/* preallocated chains of page tables/directories */
-	struct i915_page_table *pt[2];
-};
+काष्ठा i915_vm_pt_stash अणु
+	/* pपुनः_स्मृतिated chains of page tables/directories */
+	काष्ठा i915_page_table *pt[2];
+पूर्ण;
 
-struct i915_vma_ops {
-	/* Map an object into an address space with the given cache flags. */
-	void (*bind_vma)(struct i915_address_space *vm,
-			 struct i915_vm_pt_stash *stash,
-			 struct i915_vma *vma,
-			 enum i915_cache_level cache_level,
+काष्ठा i915_vma_ops अणु
+	/* Map an object पूर्णांकo an address space with the given cache flags. */
+	व्योम (*bind_vma)(काष्ठा i915_address_space *vm,
+			 काष्ठा i915_vm_pt_stash *stash,
+			 काष्ठा i915_vma *vma,
+			 क्रमागत i915_cache_level cache_level,
 			 u32 flags);
 	/*
 	 * Unmap an object from an address space. This usually consists of
 	 * setting the valid PTE entries to a reserved scratch page.
 	 */
-	void (*unbind_vma)(struct i915_address_space *vm,
-			   struct i915_vma *vma);
+	व्योम (*unbind_vma)(काष्ठा i915_address_space *vm,
+			   काष्ठा i915_vma *vma);
 
-	int (*set_pages)(struct i915_vma *vma);
-	void (*clear_pages)(struct i915_vma *vma);
-};
+	पूर्णांक (*set_pages)(काष्ठा i915_vma *vma);
+	व्योम (*clear_pages)(काष्ठा i915_vma *vma);
+पूर्ण;
 
-struct i915_address_space {
-	struct kref ref;
-	struct rcu_work rcu;
+काष्ठा i915_address_space अणु
+	काष्ठा kref ref;
+	काष्ठा rcu_work rcu;
 
-	struct drm_mm mm;
-	struct intel_gt *gt;
-	struct drm_i915_private *i915;
-	struct device *dma;
+	काष्ठा drm_mm mm;
+	काष्ठा पूर्णांकel_gt *gt;
+	काष्ठा drm_i915_निजी *i915;
+	काष्ठा device *dma;
 	/*
-	 * Every address space belongs to a struct file - except for the global
-	 * GTT that is owned by the driver (and so @file is set to NULL). In
-	 * principle, no information should leak from one context to another
+	 * Every address space beदीर्घs to a काष्ठा file - except क्रम the global
+	 * GTT that is owned by the driver (and so @file is set to शून्य). In
+	 * principle, no inक्रमmation should leak from one context to another
 	 * (or between files/processes etc) unless explicitly shared by the
-	 * owner. Tracking the owner is important in order to free up per-file
-	 * objects along with the file, to aide resource tracking, and to
+	 * owner. Tracking the owner is important in order to मुक्त up per-file
+	 * objects aदीर्घ with the file, to aide resource tracking, and to
 	 * assign blame.
 	 */
-	struct drm_i915_file_private *file;
-	u64 total;		/* size addr space maps (ex. 2GB for ggtt) */
+	काष्ठा drm_i915_file_निजी *file;
+	u64 total;		/* size addr space maps (ex. 2GB क्रम ggtt) */
 	u64 reserved;		/* size addr space reserved */
 
-	unsigned int bind_async_flags;
+	अचिन्हित पूर्णांक bind_async_flags;
 
 	/*
 	 * Each active user context has its own address space (in full-ppgtt).
 	 * Since the vm may be shared between multiple contexts, we count how
-	 * many contexts keep us "open". Once open hits zero, we are closed
-	 * and do not allow any new attachments, and proceed to shutdown our
+	 * many contexts keep us "open". Once खोलो hits zero, we are बंदd
+	 * and करो not allow any new attachments, and proceed to shutकरोwn our
 	 * vma and page directories.
 	 */
-	atomic_t open;
+	atomic_t खोलो;
 
-	struct mutex mutex; /* protects vma and our lists */
-	struct dma_resv resv; /* reservation lock for all pd objects, and buffer pool */
-#define VM_CLASS_GGTT 0
-#define VM_CLASS_PPGTT 1
+	काष्ठा mutex mutex; /* protects vma and our lists */
+	काष्ठा dma_resv resv; /* reservation lock क्रम all pd objects, and buffer pool */
+#घोषणा VM_CLASS_GGTT 0
+#घोषणा VM_CLASS_PPGTT 1
 
-	struct drm_i915_gem_object *scratch[4];
+	काष्ठा drm_i915_gem_object *scratch[4];
 	/**
 	 * List of vma currently bound.
 	 */
-	struct list_head bound_list;
+	काष्ठा list_head bound_list;
 
 	/* Global GTT */
 	bool is_ggtt:1;
 
-	/* Some systems support read-only mappings for GGTT and/or PPGTT */
-	bool has_read_only:1;
+	/* Some प्रणालीs support पढ़ो-only mappings क्रम GGTT and/or PPGTT */
+	bool has_पढ़ो_only:1;
 
 	u8 top;
-	u8 pd_shift;
+	u8 pd_shअगरt;
 	u8 scratch_order;
 
-	struct drm_i915_gem_object *
-		(*alloc_pt_dma)(struct i915_address_space *vm, int sz);
+	काष्ठा drm_i915_gem_object *
+		(*alloc_pt_dma)(काष्ठा i915_address_space *vm, पूर्णांक sz);
 
 	u64 (*pte_encode)(dma_addr_t addr,
-			  enum i915_cache_level level,
+			  क्रमागत i915_cache_level level,
 			  u32 flags); /* Create a valid PTE */
-#define PTE_READ_ONLY	BIT(0)
-#define PTE_LM		BIT(1)
+#घोषणा PTE_READ_ONLY	BIT(0)
+#घोषणा PTE_LM		BIT(1)
 
-	void (*allocate_va_range)(struct i915_address_space *vm,
-				  struct i915_vm_pt_stash *stash,
+	व्योम (*allocate_va_range)(काष्ठा i915_address_space *vm,
+				  काष्ठा i915_vm_pt_stash *stash,
 				  u64 start, u64 length);
-	void (*clear_range)(struct i915_address_space *vm,
+	व्योम (*clear_range)(काष्ठा i915_address_space *vm,
 			    u64 start, u64 length);
-	void (*insert_page)(struct i915_address_space *vm,
+	व्योम (*insert_page)(काष्ठा i915_address_space *vm,
 			    dma_addr_t addr,
 			    u64 offset,
-			    enum i915_cache_level cache_level,
+			    क्रमागत i915_cache_level cache_level,
 			    u32 flags);
-	void (*insert_entries)(struct i915_address_space *vm,
-			       struct i915_vma *vma,
-			       enum i915_cache_level cache_level,
+	व्योम (*insert_entries)(काष्ठा i915_address_space *vm,
+			       काष्ठा i915_vma *vma,
+			       क्रमागत i915_cache_level cache_level,
 			       u32 flags);
-	void (*cleanup)(struct i915_address_space *vm);
+	व्योम (*cleanup)(काष्ठा i915_address_space *vm);
 
-	struct i915_vma_ops vma_ops;
+	काष्ठा i915_vma_ops vma_ops;
 
-	I915_SELFTEST_DECLARE(struct fault_attr fault_attr);
+	I915_SELFTEST_DECLARE(काष्ठा fault_attr fault_attr);
 	I915_SELFTEST_DECLARE(bool scrub_64K);
-};
+पूर्ण;
 
 /*
  * The Graphics Translation Table is the way in which GEN hardware translates a
- * Graphics Virtual Address into a Physical Address. In addition to the normal
+ * Graphics Virtual Address पूर्णांकo a Physical Address. In addition to the normal
  * collateral associated with any va->pa translations GEN hardware also has a
- * portion of the GTT which can be mapped by the CPU and remain both coherent
- * and correct (in cases like swizzling). That region is referred to as GMADR in
+ * portion of the GTT which can be mapped by the CPU and reमुख्य both coherent
+ * and correct (in हालs like swizzling). That region is referred to as GMADR in
  * the spec.
  */
-struct i915_ggtt {
-	struct i915_address_space vm;
+काष्ठा i915_ggtt अणु
+	काष्ठा i915_address_space vm;
 
-	struct io_mapping iomap;	/* Mapping to our CPU mappable region */
-	struct resource gmadr;          /* GMADR resource */
-	resource_size_t mappable_end;	/* End offset that we can CPU map */
+	काष्ठा io_mapping iomap;	/* Mapping to our CPU mappable region */
+	काष्ठा resource gmadr;          /* GMADR resource */
+	resource_माप_प्रकार mappable_end;	/* End offset that we can CPU map */
 
 	/** "Graphics Stolen Memory" holds the global PTEs */
-	void __iomem *gsm;
-	void (*invalidate)(struct i915_ggtt *ggtt);
+	व्योम __iomem *gsm;
+	व्योम (*invalidate)(काष्ठा i915_ggtt *ggtt);
 
-	/** PPGTT used for aliasing the PPGTT with the GTT */
-	struct i915_ppgtt *alias;
+	/** PPGTT used क्रम aliasing the PPGTT with the GTT */
+	काष्ठा i915_ppgtt *alias;
 
-	bool do_idle_maps;
+	bool करो_idle_maps;
 
-	int mtrr;
+	पूर्णांक mtrr;
 
-	/** Bit 6 swizzling required for X tiling */
+	/** Bit 6 swizzling required क्रम X tiling */
 	u32 bit_6_swizzle_x;
-	/** Bit 6 swizzling required for Y tiling */
+	/** Bit 6 swizzling required क्रम Y tiling */
 	u32 bit_6_swizzle_y;
 
 	u32 pin_bias;
 
-	unsigned int num_fences;
-	struct i915_fence_reg *fence_regs;
-	struct list_head fence_list;
+	अचिन्हित पूर्णांक num_fences;
+	काष्ठा i915_fence_reg *fence_regs;
+	काष्ठा list_head fence_list;
 
 	/**
 	 * List of all objects in gtt_space, currently mmaped by userspace.
 	 * All objects within this list must also be on bound_list.
 	 */
-	struct list_head userfault_list;
+	काष्ठा list_head userfault_list;
 
-	/* Manual runtime pm autosuspend delay for user GGTT mmaps */
-	struct intel_wakeref_auto userfault_wakeref;
+	/* Manual runसमय pm स्वतःsuspend delay क्रम user GGTT mmaps */
+	काष्ठा पूर्णांकel_wakeref_स्वतः userfault_wakeref;
 
-	struct mutex error_mutex;
-	struct drm_mm_node error_capture;
-	struct drm_mm_node uc_fw;
-};
+	काष्ठा mutex error_mutex;
+	काष्ठा drm_mm_node error_capture;
+	काष्ठा drm_mm_node uc_fw;
+पूर्ण;
 
-struct i915_ppgtt {
-	struct i915_address_space vm;
+काष्ठा i915_ppgtt अणु
+	काष्ठा i915_address_space vm;
 
-	struct i915_page_directory *pd;
-};
+	काष्ठा i915_page_directory *pd;
+पूर्ण;
 
-#define i915_is_ggtt(vm) ((vm)->is_ggtt)
+#घोषणा i915_is_ggtt(vm) ((vm)->is_ggtt)
 
-int __must_check
-i915_vm_lock_objects(struct i915_address_space *vm, struct i915_gem_ww_ctx *ww);
+पूर्णांक __must_check
+i915_vm_lock_objects(काष्ठा i915_address_space *vm, काष्ठा i915_gem_ww_ctx *ww);
 
-static inline bool
-i915_vm_is_4lvl(const struct i915_address_space *vm)
-{
-	return (vm->total - 1) >> 32;
-}
+अटल अंतरभूत bool
+i915_vm_is_4lvl(स्थिर काष्ठा i915_address_space *vm)
+अणु
+	वापस (vm->total - 1) >> 32;
+पूर्ण
 
-static inline bool
-i915_vm_has_scratch_64K(struct i915_address_space *vm)
-{
-	return vm->scratch_order == get_order(I915_GTT_PAGE_SIZE_64K);
-}
+अटल अंतरभूत bool
+i915_vm_has_scratch_64K(काष्ठा i915_address_space *vm)
+अणु
+	वापस vm->scratch_order == get_order(I915_GTT_PAGE_SIZE_64K);
+पूर्ण
 
-static inline bool
-i915_vm_has_cache_coloring(struct i915_address_space *vm)
-{
-	return i915_is_ggtt(vm) && vm->mm.color_adjust;
-}
+अटल अंतरभूत bool
+i915_vm_has_cache_coloring(काष्ठा i915_address_space *vm)
+अणु
+	वापस i915_is_ggtt(vm) && vm->mm.color_adjust;
+पूर्ण
 
-static inline struct i915_ggtt *
-i915_vm_to_ggtt(struct i915_address_space *vm)
-{
-	BUILD_BUG_ON(offsetof(struct i915_ggtt, vm));
+अटल अंतरभूत काष्ठा i915_ggtt *
+i915_vm_to_ggtt(काष्ठा i915_address_space *vm)
+अणु
+	BUILD_BUG_ON(दुरत्व(काष्ठा i915_ggtt, vm));
 	GEM_BUG_ON(!i915_is_ggtt(vm));
-	return container_of(vm, struct i915_ggtt, vm);
-}
+	वापस container_of(vm, काष्ठा i915_ggtt, vm);
+पूर्ण
 
-static inline struct i915_ppgtt *
-i915_vm_to_ppgtt(struct i915_address_space *vm)
-{
-	BUILD_BUG_ON(offsetof(struct i915_ppgtt, vm));
+अटल अंतरभूत काष्ठा i915_ppgtt *
+i915_vm_to_ppgtt(काष्ठा i915_address_space *vm)
+अणु
+	BUILD_BUG_ON(दुरत्व(काष्ठा i915_ppgtt, vm));
 	GEM_BUG_ON(i915_is_ggtt(vm));
-	return container_of(vm, struct i915_ppgtt, vm);
-}
+	वापस container_of(vm, काष्ठा i915_ppgtt, vm);
+पूर्ण
 
-static inline struct i915_address_space *
-i915_vm_get(struct i915_address_space *vm)
-{
+अटल अंतरभूत काष्ठा i915_address_space *
+i915_vm_get(काष्ठा i915_address_space *vm)
+अणु
 	kref_get(&vm->ref);
-	return vm;
-}
+	वापस vm;
+पूर्ण
 
-void i915_vm_release(struct kref *kref);
+व्योम i915_vm_release(काष्ठा kref *kref);
 
-static inline void i915_vm_put(struct i915_address_space *vm)
-{
+अटल अंतरभूत व्योम i915_vm_put(काष्ठा i915_address_space *vm)
+अणु
 	kref_put(&vm->ref, i915_vm_release);
-}
+पूर्ण
 
-static inline struct i915_address_space *
-i915_vm_open(struct i915_address_space *vm)
-{
-	GEM_BUG_ON(!atomic_read(&vm->open));
-	atomic_inc(&vm->open);
-	return i915_vm_get(vm);
-}
+अटल अंतरभूत काष्ठा i915_address_space *
+i915_vm_खोलो(काष्ठा i915_address_space *vm)
+अणु
+	GEM_BUG_ON(!atomic_पढ़ो(&vm->खोलो));
+	atomic_inc(&vm->खोलो);
+	वापस i915_vm_get(vm);
+पूर्ण
 
-static inline bool
-i915_vm_tryopen(struct i915_address_space *vm)
-{
-	if (atomic_add_unless(&vm->open, 1, 0))
-		return i915_vm_get(vm);
+अटल अंतरभूत bool
+i915_vm_tryखोलो(काष्ठा i915_address_space *vm)
+अणु
+	अगर (atomic_add_unless(&vm->खोलो, 1, 0))
+		वापस i915_vm_get(vm);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void __i915_vm_close(struct i915_address_space *vm);
+व्योम __i915_vm_बंद(काष्ठा i915_address_space *vm);
 
-static inline void
-i915_vm_close(struct i915_address_space *vm)
-{
-	GEM_BUG_ON(!atomic_read(&vm->open));
-	__i915_vm_close(vm);
+अटल अंतरभूत व्योम
+i915_vm_बंद(काष्ठा i915_address_space *vm)
+अणु
+	GEM_BUG_ON(!atomic_पढ़ो(&vm->खोलो));
+	__i915_vm_बंद(vm);
 
 	i915_vm_put(vm);
-}
+पूर्ण
 
-void i915_address_space_init(struct i915_address_space *vm, int subclass);
-void i915_address_space_fini(struct i915_address_space *vm);
+व्योम i915_address_space_init(काष्ठा i915_address_space *vm, पूर्णांक subclass);
+व्योम i915_address_space_fini(काष्ठा i915_address_space *vm);
 
-static inline u32 i915_pte_index(u64 address, unsigned int pde_shift)
-{
-	const u32 mask = NUM_PTE(pde_shift) - 1;
+अटल अंतरभूत u32 i915_pte_index(u64 address, अचिन्हित पूर्णांक pde_shअगरt)
+अणु
+	स्थिर u32 mask = NUM_PTE(pde_shअगरt) - 1;
 
-	return (address >> PAGE_SHIFT) & mask;
-}
+	वापस (address >> PAGE_SHIFT) & mask;
+पूर्ण
 
 /*
  * Helper to counts the number of PTEs within the given length. This count
- * does not cross a page table boundary, so the max value would be
- * GEN6_PTES for GEN6, and GEN8_PTES for GEN8.
+ * करोes not cross a page table boundary, so the max value would be
+ * GEN6_PTES क्रम GEN6, and GEN8_PTES क्रम GEN8.
  */
-static inline u32 i915_pte_count(u64 addr, u64 length, unsigned int pde_shift)
-{
-	const u64 mask = ~((1ULL << pde_shift) - 1);
+अटल अंतरभूत u32 i915_pte_count(u64 addr, u64 length, अचिन्हित पूर्णांक pde_shअगरt)
+अणु
+	स्थिर u64 mask = ~((1ULL << pde_shअगरt) - 1);
 	u64 end;
 
 	GEM_BUG_ON(length == 0);
@@ -456,147 +457,147 @@ static inline u32 i915_pte_count(u64 addr, u64 length, unsigned int pde_shift)
 
 	end = addr + length;
 
-	if ((addr & mask) != (end & mask))
-		return NUM_PTE(pde_shift) - i915_pte_index(addr, pde_shift);
+	अगर ((addr & mask) != (end & mask))
+		वापस NUM_PTE(pde_shअगरt) - i915_pte_index(addr, pde_shअगरt);
 
-	return i915_pte_index(end, pde_shift) - i915_pte_index(addr, pde_shift);
-}
+	वापस i915_pte_index(end, pde_shअगरt) - i915_pte_index(addr, pde_shअगरt);
+पूर्ण
 
-static inline u32 i915_pde_index(u64 addr, u32 shift)
-{
-	return (addr >> shift) & I915_PDE_MASK;
-}
+अटल अंतरभूत u32 i915_pde_index(u64 addr, u32 shअगरt)
+अणु
+	वापस (addr >> shअगरt) & I915_PDE_MASK;
+पूर्ण
 
-static inline struct i915_page_table *
-i915_pt_entry(const struct i915_page_directory * const pd,
-	      const unsigned short n)
-{
-	return pd->entry[n];
-}
+अटल अंतरभूत काष्ठा i915_page_table *
+i915_pt_entry(स्थिर काष्ठा i915_page_directory * स्थिर pd,
+	      स्थिर अचिन्हित लघु n)
+अणु
+	वापस pd->entry[n];
+पूर्ण
 
-static inline struct i915_page_directory *
-i915_pd_entry(const struct i915_page_directory * const pdp,
-	      const unsigned short n)
-{
-	return pdp->entry[n];
-}
+अटल अंतरभूत काष्ठा i915_page_directory *
+i915_pd_entry(स्थिर काष्ठा i915_page_directory * स्थिर pdp,
+	      स्थिर अचिन्हित लघु n)
+अणु
+	वापस pdp->entry[n];
+पूर्ण
 
-static inline dma_addr_t
-i915_page_dir_dma_addr(const struct i915_ppgtt *ppgtt, const unsigned int n)
-{
-	struct i915_page_table *pt = ppgtt->pd->entry[n];
+अटल अंतरभूत dma_addr_t
+i915_page_dir_dma_addr(स्थिर काष्ठा i915_ppgtt *ppgtt, स्थिर अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा i915_page_table *pt = ppgtt->pd->entry[n];
 
-	return __px_dma(pt ? px_base(pt) : ppgtt->vm.scratch[ppgtt->vm.top]);
-}
+	वापस __px_dma(pt ? px_base(pt) : ppgtt->vm.scratch[ppgtt->vm.top]);
+पूर्ण
 
-void ppgtt_init(struct i915_ppgtt *ppgtt, struct intel_gt *gt);
+व्योम ppgtt_init(काष्ठा i915_ppgtt *ppgtt, काष्ठा पूर्णांकel_gt *gt);
 
-int i915_ggtt_probe_hw(struct drm_i915_private *i915);
-int i915_ggtt_init_hw(struct drm_i915_private *i915);
-int i915_ggtt_enable_hw(struct drm_i915_private *i915);
-void i915_ggtt_enable_guc(struct i915_ggtt *ggtt);
-void i915_ggtt_disable_guc(struct i915_ggtt *ggtt);
-int i915_init_ggtt(struct drm_i915_private *i915);
-void i915_ggtt_driver_release(struct drm_i915_private *i915);
+पूर्णांक i915_ggtt_probe_hw(काष्ठा drm_i915_निजी *i915);
+पूर्णांक i915_ggtt_init_hw(काष्ठा drm_i915_निजी *i915);
+पूर्णांक i915_ggtt_enable_hw(काष्ठा drm_i915_निजी *i915);
+व्योम i915_ggtt_enable_guc(काष्ठा i915_ggtt *ggtt);
+व्योम i915_ggtt_disable_guc(काष्ठा i915_ggtt *ggtt);
+पूर्णांक i915_init_ggtt(काष्ठा drm_i915_निजी *i915);
+व्योम i915_ggtt_driver_release(काष्ठा drm_i915_निजी *i915);
 
-static inline bool i915_ggtt_has_aperture(const struct i915_ggtt *ggtt)
-{
-	return ggtt->mappable_end > 0;
-}
+अटल अंतरभूत bool i915_ggtt_has_aperture(स्थिर काष्ठा i915_ggtt *ggtt)
+अणु
+	वापस ggtt->mappable_end > 0;
+पूर्ण
 
-int i915_ppgtt_init_hw(struct intel_gt *gt);
+पूर्णांक i915_ppgtt_init_hw(काष्ठा पूर्णांकel_gt *gt);
 
-struct i915_ppgtt *i915_ppgtt_create(struct intel_gt *gt);
+काष्ठा i915_ppgtt *i915_ppgtt_create(काष्ठा पूर्णांकel_gt *gt);
 
-void i915_ggtt_suspend(struct i915_ggtt *gtt);
-void i915_ggtt_resume(struct i915_ggtt *ggtt);
+व्योम i915_ggtt_suspend(काष्ठा i915_ggtt *gtt);
+व्योम i915_ggtt_resume(काष्ठा i915_ggtt *ggtt);
 
-#define kmap_atomic_px(px) kmap_atomic(__px_page(px_base(px)))
+#घोषणा kmap_atomic_px(px) kmap_atomic(__px_page(px_base(px)))
 
-void
-fill_page_dma(struct drm_i915_gem_object *p, const u64 val, unsigned int count);
+व्योम
+fill_page_dma(काष्ठा drm_i915_gem_object *p, स्थिर u64 val, अचिन्हित पूर्णांक count);
 
-#define fill_px(px, v) fill_page_dma(px_base(px), (v), PAGE_SIZE / sizeof(u64))
-#define fill32_px(px, v) do {						\
+#घोषणा fill_px(px, v) fill_page_dma(px_base(px), (v), PAGE_SIZE / माप(u64))
+#घोषणा fill32_px(px, v) करो अणु						\
 	u64 v__ = lower_32_bits(v);					\
 	fill_px((px), v__ << 32 | v__);					\
-} while (0)
+पूर्ण जबतक (0)
 
-int setup_scratch_page(struct i915_address_space *vm);
-void free_scratch(struct i915_address_space *vm);
+पूर्णांक setup_scratch_page(काष्ठा i915_address_space *vm);
+व्योम मुक्त_scratch(काष्ठा i915_address_space *vm);
 
-struct drm_i915_gem_object *alloc_pt_dma(struct i915_address_space *vm, int sz);
-struct i915_page_table *alloc_pt(struct i915_address_space *vm);
-struct i915_page_directory *alloc_pd(struct i915_address_space *vm);
-struct i915_page_directory *__alloc_pd(int npde);
+काष्ठा drm_i915_gem_object *alloc_pt_dma(काष्ठा i915_address_space *vm, पूर्णांक sz);
+काष्ठा i915_page_table *alloc_pt(काष्ठा i915_address_space *vm);
+काष्ठा i915_page_directory *alloc_pd(काष्ठा i915_address_space *vm);
+काष्ठा i915_page_directory *__alloc_pd(पूर्णांक npde);
 
-int pin_pt_dma(struct i915_address_space *vm, struct drm_i915_gem_object *obj);
-int pin_pt_dma_locked(struct i915_address_space *vm, struct drm_i915_gem_object *obj);
+पूर्णांक pin_pt_dma(काष्ठा i915_address_space *vm, काष्ठा drm_i915_gem_object *obj);
+पूर्णांक pin_pt_dma_locked(काष्ठा i915_address_space *vm, काष्ठा drm_i915_gem_object *obj);
 
-void free_px(struct i915_address_space *vm,
-	     struct i915_page_table *pt, int lvl);
-#define free_pt(vm, px) free_px(vm, px, 0)
-#define free_pd(vm, px) free_px(vm, px_pt(px), 1)
+व्योम मुक्त_px(काष्ठा i915_address_space *vm,
+	     काष्ठा i915_page_table *pt, पूर्णांक lvl);
+#घोषणा मुक्त_pt(vm, px) मुक्त_px(vm, px, 0)
+#घोषणा मुक्त_pd(vm, px) मुक्त_px(vm, px_pt(px), 1)
 
-void
-__set_pd_entry(struct i915_page_directory * const pd,
-	       const unsigned short idx,
-	       struct i915_page_table *pt,
-	       u64 (*encode)(const dma_addr_t, const enum i915_cache_level));
+व्योम
+__set_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
+	       स्थिर अचिन्हित लघु idx,
+	       काष्ठा i915_page_table *pt,
+	       u64 (*encode)(स्थिर dma_addr_t, स्थिर क्रमागत i915_cache_level));
 
-#define set_pd_entry(pd, idx, to) \
+#घोषणा set_pd_entry(pd, idx, to) \
 	__set_pd_entry((pd), (idx), px_pt(to), gen8_pde_encode)
 
-void
-clear_pd_entry(struct i915_page_directory * const pd,
-	       const unsigned short idx,
-	       const struct drm_i915_gem_object * const scratch);
+व्योम
+clear_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
+	       स्थिर अचिन्हित लघु idx,
+	       स्थिर काष्ठा drm_i915_gem_object * स्थिर scratch);
 
 bool
-release_pd_entry(struct i915_page_directory * const pd,
-		 const unsigned short idx,
-		 struct i915_page_table * const pt,
-		 const struct drm_i915_gem_object * const scratch);
-void gen6_ggtt_invalidate(struct i915_ggtt *ggtt);
+release_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
+		 स्थिर अचिन्हित लघु idx,
+		 काष्ठा i915_page_table * स्थिर pt,
+		 स्थिर काष्ठा drm_i915_gem_object * स्थिर scratch);
+व्योम gen6_ggtt_invalidate(काष्ठा i915_ggtt *ggtt);
 
-int ggtt_set_pages(struct i915_vma *vma);
-int ppgtt_set_pages(struct i915_vma *vma);
-void clear_pages(struct i915_vma *vma);
+पूर्णांक ggtt_set_pages(काष्ठा i915_vma *vma);
+पूर्णांक ppgtt_set_pages(काष्ठा i915_vma *vma);
+व्योम clear_pages(काष्ठा i915_vma *vma);
 
-void ppgtt_bind_vma(struct i915_address_space *vm,
-		    struct i915_vm_pt_stash *stash,
-		    struct i915_vma *vma,
-		    enum i915_cache_level cache_level,
+व्योम ppgtt_bind_vma(काष्ठा i915_address_space *vm,
+		    काष्ठा i915_vm_pt_stash *stash,
+		    काष्ठा i915_vma *vma,
+		    क्रमागत i915_cache_level cache_level,
 		    u32 flags);
-void ppgtt_unbind_vma(struct i915_address_space *vm,
-		      struct i915_vma *vma);
+व्योम ppgtt_unbind_vma(काष्ठा i915_address_space *vm,
+		      काष्ठा i915_vma *vma);
 
-void gtt_write_workarounds(struct intel_gt *gt);
+व्योम gtt_ग_लिखो_workarounds(काष्ठा पूर्णांकel_gt *gt);
 
-void setup_private_pat(struct intel_uncore *uncore);
+व्योम setup_निजी_pat(काष्ठा पूर्णांकel_uncore *uncore);
 
-int i915_vm_alloc_pt_stash(struct i915_address_space *vm,
-			   struct i915_vm_pt_stash *stash,
+पूर्णांक i915_vm_alloc_pt_stash(काष्ठा i915_address_space *vm,
+			   काष्ठा i915_vm_pt_stash *stash,
 			   u64 size);
-int i915_vm_pin_pt_stash(struct i915_address_space *vm,
-			 struct i915_vm_pt_stash *stash);
-void i915_vm_free_pt_stash(struct i915_address_space *vm,
-			   struct i915_vm_pt_stash *stash);
+पूर्णांक i915_vm_pin_pt_stash(काष्ठा i915_address_space *vm,
+			 काष्ठा i915_vm_pt_stash *stash);
+व्योम i915_vm_मुक्त_pt_stash(काष्ठा i915_address_space *vm,
+			   काष्ठा i915_vm_pt_stash *stash);
 
-struct i915_vma *
-__vm_create_scratch_for_read(struct i915_address_space *vm, unsigned long size);
+काष्ठा i915_vma *
+__vm_create_scratch_क्रम_पढ़ो(काष्ठा i915_address_space *vm, अचिन्हित दीर्घ size);
 
-struct i915_vma *
-__vm_create_scratch_for_read_pinned(struct i915_address_space *vm, unsigned long size);
+काष्ठा i915_vma *
+__vm_create_scratch_क्रम_पढ़ो_pinned(काष्ठा i915_address_space *vm, अचिन्हित दीर्घ size);
 
-static inline struct sgt_dma {
-	struct scatterlist *sg;
+अटल अंतरभूत काष्ठा sgt_dma अणु
+	काष्ठा scatterlist *sg;
 	dma_addr_t dma, max;
-} sgt_dma(struct i915_vma *vma) {
-	struct scatterlist *sg = vma->pages->sgl;
+पूर्ण sgt_dma(काष्ठा i915_vma *vma) अणु
+	काष्ठा scatterlist *sg = vma->pages->sgl;
 	dma_addr_t addr = sg_dma_address(sg);
 
-	return (struct sgt_dma){ sg, addr, addr + sg_dma_len(sg) };
-}
+	वापस (काष्ठा sgt_dma)अणु sg, addr, addr + sg_dma_len(sg) पूर्ण;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

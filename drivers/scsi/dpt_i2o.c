@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /***************************************************************************
                           dpti.c  -  description
                              -------------------
@@ -6,9 +7,9 @@
     copyright            : (C) 2000 by Adaptec
 
 			   July 30, 2001 First version being submitted
-			   for inclusion in the kernel.  V2.4
+			   क्रम inclusion in the kernel.  V2.4
 
-    See Documentation/scsi/dpti.rst for history, notes, license info
+    See Documentation/scsi/dpti.rst क्रम history, notes, license info
     and credits
  ***************************************************************************/
 
@@ -19,77 +20,77 @@
 /***************************************************************************
  * Sat Dec 20 2003 Go Taniguchi <go@turbolinux.co.jp>
  - Support 2.6 kernel and DMA-mapping
- - ioctl fix for raid tools
- - use schedule_timeout in long long loop
+ - ioctl fix क्रम raid tools
+ - use schedule_समयout in दीर्घ दीर्घ loop
  **************************************************************************/
 
-/*#define DEBUG 1 */
-/*#define UARTDELAY 1 */
+/*#घोषणा DEBUG 1 */
+/*#घोषणा UARTDELAY 1 */
 
-#include <linux/module.h>
-#include <linux/pgtable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pgtable.h>
 
 MODULE_AUTHOR("Deanna Bonds, with _lots_ of help from Mark Salyzyn");
 MODULE_DESCRIPTION("Adaptec I2O RAID Driver");
 
 ////////////////////////////////////////////////////////////////
 
-#include <linux/ioctl.h>	/* For SCSI-Passthrough */
-#include <linux/uaccess.h>
+#समावेश <linux/ioctl.h>	/* For SCSI-Passthrough */
+#समावेश <linux/uaccess.h>
 
-#include <linux/stat.h>
-#include <linux/slab.h>		/* for kmalloc() */
-#include <linux/pci.h>		/* for PCI support */
-#include <linux/proc_fs.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>	/* for udelay */
-#include <linux/interrupt.h>
-#include <linux/kernel.h>	/* for printk */
-#include <linux/sched.h>
-#include <linux/reboot.h>
-#include <linux/spinlock.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/slab.h>		/* क्रम kदो_स्मृति() */
+#समावेश <linux/pci.h>		/* क्रम PCI support */
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>	/* क्रम udelay */
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>	/* क्रम prपूर्णांकk */
+#समावेश <linux/sched.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/ioport.h>
-#include <linux/mutex.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/mutex.h>
 
-#include <asm/processor.h>	/* for boot_cpu_data */
-#include <asm/io.h>		/* for virt_to_bus, etc. */
+#समावेश <यंत्र/processor.h>	/* क्रम boot_cpu_data */
+#समावेश <यंत्र/पन.स>		/* क्रम virt_to_bus, etc. */
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
 
-#include "dpt/dptsig.h"
-#include "dpti.h"
+#समावेश "dpt/dptsig.h"
+#समावेश "dpti.h"
 
 /*============================================================================
- * Create a binary signature - this is read by dptsig
- * Needed for our management apps
+ * Create a binary signature - this is पढ़ो by dptsig
+ * Needed क्रम our management apps
  *============================================================================
  */
-static DEFINE_MUTEX(adpt_mutex);
-static dpt_sig_S DPTI_sig = {
-	{'d', 'P', 't', 'S', 'i', 'G'}, SIG_VERSION,
-#ifdef __i386__
+अटल DEFINE_MUTEX(adpt_mutex);
+अटल dpt_sig_S DPTI_sig = अणु
+	अणु'd', 'P', 't', 'S', 'i', 'G'पूर्ण, SIG_VERSION,
+#अगर_घोषित __i386__
 	PROC_INTEL, PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
-#elif defined(__ia64__)
+#या_अगर defined(__ia64__)
 	PROC_INTEL, PROC_IA64,
-#elif defined(__sparc__)
+#या_अगर defined(__sparc__)
 	PROC_ULTRASPARC, PROC_ULTRASPARC,
-#elif defined(__alpha__)
+#या_अगर defined(__alpha__)
 	PROC_ALPHA, PROC_ALPHA,
-#else
+#अन्यथा
 	(-1),(-1),
-#endif
+#पूर्ण_अगर
 	 FT_HBADRVR, 0, OEM_DPT, OS_LINUX, CAP_OVERLAP, DEV_ALL,
 	ADF_ALL_SC5, 0, 0, DPT_VERSION, DPT_REVISION, DPT_SUBREVISION,
 	DPT_MONTH, DPT_DAY, DPT_YEAR, "Adaptec Linux I2O RAID Driver"
-};
+पूर्ण;
 
 
 
@@ -99,47 +100,47 @@ static dpt_sig_S DPTI_sig = {
  *============================================================================
  */
 
-static DEFINE_MUTEX(adpt_configuration_lock);
+अटल DEFINE_MUTEX(adpt_configuration_lock);
 
-static struct i2o_sys_tbl *sys_tbl;
-static dma_addr_t sys_tbl_pa;
-static int sys_tbl_ind;
-static int sys_tbl_len;
+अटल काष्ठा i2o_sys_tbl *sys_tbl;
+अटल dma_addr_t sys_tbl_pa;
+अटल पूर्णांक sys_tbl_ind;
+अटल पूर्णांक sys_tbl_len;
 
-static adpt_hba* hba_chain = NULL;
-static int hba_count = 0;
+अटल adpt_hba* hba_chain = शून्य;
+अटल पूर्णांक hba_count = 0;
 
-static struct class *adpt_sysfs_class;
+अटल काष्ठा class *adpt_sysfs_class;
 
-static long adpt_unlocked_ioctl(struct file *, unsigned int, unsigned long);
-#ifdef CONFIG_COMPAT
-static long compat_adpt_ioctl(struct file *, unsigned int, unsigned long);
-#endif
+अटल दीर्घ adpt_unlocked_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ compat_adpt_ioctl(काष्ठा file *, अचिन्हित पूर्णांक, अचिन्हित दीर्घ);
+#पूर्ण_अगर
 
-static const struct file_operations adpt_fops = {
+अटल स्थिर काष्ठा file_operations adpt_fops = अणु
 	.unlocked_ioctl	= adpt_unlocked_ioctl,
-	.open		= adpt_open,
-	.release	= adpt_close,
-#ifdef CONFIG_COMPAT
+	.खोलो		= adpt_खोलो,
+	.release	= adpt_बंद,
+#अगर_घोषित CONFIG_COMPAT
 	.compat_ioctl	= compat_adpt_ioctl,
-#endif
+#पूर्ण_अगर
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-/* Structures and definitions for synchronous message posting.
- * See adpt_i2o_post_wait() for description
+/* Structures and definitions क्रम synchronous message posting.
+ * See adpt_i2o_post_रुको() क्रम description
  * */
-struct adpt_i2o_post_wait_data
-{
-	int status;
+काष्ठा adpt_i2o_post_रुको_data
+अणु
+	पूर्णांक status;
 	u32 id;
-	adpt_wait_queue_head_t *wq;
-	struct adpt_i2o_post_wait_data *next;
-};
+	adpt_रुको_queue_head_t *wq;
+	काष्ठा adpt_i2o_post_रुको_data *next;
+पूर्ण;
 
-static struct adpt_i2o_post_wait_data *adpt_post_wait_queue = NULL;
-static u32 adpt_post_wait_id = 0;
-static DEFINE_SPINLOCK(adpt_post_wait_lock);
+अटल काष्ठा adpt_i2o_post_रुको_data *adpt_post_रुको_queue = शून्य;
+अटल u32 adpt_post_रुको_id = 0;
+अटल DEFINE_SPINLOCK(adpt_post_रुको_lock);
 
 
 /*============================================================================
@@ -147,176 +148,176 @@ static DEFINE_SPINLOCK(adpt_post_wait_lock);
  *============================================================================
  */
 
-static inline int dpt_dma64(adpt_hba *pHba)
-{
-	return (sizeof(dma_addr_t) > 4 && (pHba)->dma64);
-}
+अटल अंतरभूत पूर्णांक dpt_dma64(adpt_hba *pHba)
+अणु
+	वापस (माप(dma_addr_t) > 4 && (pHba)->dma64);
+पूर्ण
 
-static inline u32 dma_high(dma_addr_t addr)
-{
-	return upper_32_bits(addr);
-}
+अटल अंतरभूत u32 dma_high(dma_addr_t addr)
+अणु
+	वापस upper_32_bits(addr);
+पूर्ण
 
-static inline u32 dma_low(dma_addr_t addr)
-{
-	return (u32)addr;
-}
+अटल अंतरभूत u32 dma_low(dma_addr_t addr)
+अणु
+	वापस (u32)addr;
+पूर्ण
 
-static u8 adpt_read_blink_led(adpt_hba* host)
-{
-	if (host->FwDebugBLEDflag_P) {
-		if( readb(host->FwDebugBLEDflag_P) == 0xbc ){
-			return readb(host->FwDebugBLEDvalue_P);
-		}
-	}
-	return 0;
-}
+अटल u8 adpt_पढ़ो_blink_led(adpt_hba* host)
+अणु
+	अगर (host->FwDebugBLEDflag_P) अणु
+		अगर( पढ़ोb(host->FwDebugBLEDflag_P) == 0xbc )अणु
+			वापस पढ़ोb(host->FwDebugBLEDvalue_P);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*============================================================================
- * Scsi host template interface functions
+ * Scsi host ढाँचा पूर्णांकerface functions
  *============================================================================
  */
 
-#ifdef MODULE
-static struct pci_device_id dptids[] = {
-	{ PCI_DPT_VENDOR_ID, PCI_DPT_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,},
-	{ PCI_DPT_VENDOR_ID, PCI_DPT_RAPTOR_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,},
-	{ 0, }
-};
-#endif
+#अगर_घोषित MODULE
+अटल काष्ठा pci_device_id dptids[] = अणु
+	अणु PCI_DPT_VENDOR_ID, PCI_DPT_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
+	अणु PCI_DPT_VENDOR_ID, PCI_DPT_RAPTOR_DEVICE_ID, PCI_ANY_ID, PCI_ANY_ID,पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
+#पूर्ण_अगर
 
 MODULE_DEVICE_TABLE(pci,dptids);
 
-static int adpt_detect(struct scsi_host_template* sht)
-{
-	struct pci_dev *pDev = NULL;
+अटल पूर्णांक adpt_detect(काष्ठा scsi_host_ढाँचा* sht)
+अणु
+	काष्ठा pci_dev *pDev = शून्य;
 	adpt_hba *pHba;
 	adpt_hba *next;
 
 	PINFO("Detecting Adaptec I2O RAID controllers...\n");
 
-        /* search for all Adatpec I2O RAID cards */
-	while ((pDev = pci_get_device( PCI_DPT_VENDOR_ID, PCI_ANY_ID, pDev))) {
-		if(pDev->device == PCI_DPT_DEVICE_ID ||
-		   pDev->device == PCI_DPT_RAPTOR_DEVICE_ID){
-			if(adpt_install_hba(sht, pDev) ){
+        /* search क्रम all Adatpec I2O RAID cards */
+	जबतक ((pDev = pci_get_device( PCI_DPT_VENDOR_ID, PCI_ANY_ID, pDev))) अणु
+		अगर(pDev->device == PCI_DPT_DEVICE_ID ||
+		   pDev->device == PCI_DPT_RAPTOR_DEVICE_ID)अणु
+			अगर(adpt_install_hba(sht, pDev) )अणु
 				PERROR("Could not Init an I2O RAID device\n");
 				PERROR("Will not try to detect others.\n");
-				return hba_count-1;
-			}
+				वापस hba_count-1;
+			पूर्ण
 			pci_dev_get(pDev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* In INIT state, Activate IOPs */
-	for (pHba = hba_chain; pHba; pHba = next) {
+	क्रम (pHba = hba_chain; pHba; pHba = next) अणु
 		next = pHba->next;
-		// Activate does get status , init outbound, and get hrt
-		if (adpt_i2o_activate_hba(pHba) < 0) {
+		// Activate करोes get status , init outbound, and get hrt
+		अगर (adpt_i2o_activate_hba(pHba) < 0) अणु
 			adpt_i2o_delete_hba(pHba);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 
 	/* Active IOPs in HOLD state */
 
 rebuild_sys_tab:
-	if (hba_chain == NULL) 
-		return 0;
+	अगर (hba_chain == शून्य) 
+		वापस 0;
 
 	/*
-	 * If build_sys_table fails, we kill everything and bail
-	 * as we can't init the IOPs w/o a system table
+	 * If build_sys_table fails, we समाप्त everything and bail
+	 * as we can't init the IOPs w/o a प्रणाली table
 	 */	
-	if (adpt_i2o_build_sys_table() < 0) {
-		adpt_i2o_sys_shutdown();
-		return 0;
-	}
+	अगर (adpt_i2o_build_sys_table() < 0) अणु
+		adpt_i2o_sys_shutकरोwn();
+		वापस 0;
+	पूर्ण
 
 	PDEBUG("HBA's in HOLD state\n");
 
-	/* If IOP don't get online, we need to rebuild the System table */
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
-		if (adpt_i2o_online_hba(pHba) < 0) {
+	/* If IOP करोn't get online, we need to rebuild the System table */
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
+		अगर (adpt_i2o_online_hba(pHba) < 0) अणु
 			adpt_i2o_delete_hba(pHba);	
-			goto rebuild_sys_tab;
-		}
-	}
+			जाओ rebuild_sys_tab;
+		पूर्ण
+	पूर्ण
 
 	/* Active IOPs now in OPERATIONAL state */
 	PDEBUG("HBA's in OPERATIONAL state\n");
 
-	printk("dpti: If you have a lot of devices this could take a few minutes.\n");
-	for (pHba = hba_chain; pHba; pHba = next) {
+	prपूर्णांकk("dpti: If you have a lot of devices this could take a few minutes.\n");
+	क्रम (pHba = hba_chain; pHba; pHba = next) अणु
 		next = pHba->next;
-		printk(KERN_INFO"%s: Reading the hardware resource table.\n", pHba->name);
-		if (adpt_i2o_lct_get(pHba) < 0){
+		prपूर्णांकk(KERN_INFO"%s: Reading the hardware resource table.\n", pHba->name);
+		अगर (adpt_i2o_lct_get(pHba) < 0)अणु
 			adpt_i2o_delete_hba(pHba);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (adpt_i2o_parse_lct(pHba) < 0){
+		अगर (adpt_i2o_parse_lct(pHba) < 0)अणु
 			adpt_i2o_delete_hba(pHba);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		adpt_inquiry(pHba);
-	}
+	पूर्ण
 
 	adpt_sysfs_class = class_create(THIS_MODULE, "dpt_i2o");
-	if (IS_ERR(adpt_sysfs_class)) {
-		printk(KERN_WARNING"dpti: unable to create dpt_i2o class\n");
-		adpt_sysfs_class = NULL;
-	}
+	अगर (IS_ERR(adpt_sysfs_class)) अणु
+		prपूर्णांकk(KERN_WARNING"dpti: unable to create dpt_i2o class\n");
+		adpt_sysfs_class = शून्य;
+	पूर्ण
 
-	for (pHba = hba_chain; pHba; pHba = next) {
+	क्रम (pHba = hba_chain; pHba; pHba = next) अणु
 		next = pHba->next;
-		if (adpt_scsi_host_alloc(pHba, sht) < 0){
+		अगर (adpt_scsi_host_alloc(pHba, sht) < 0)अणु
 			adpt_i2o_delete_hba(pHba);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pHba->initialized = TRUE;
 		pHba->state &= ~DPTI_STATE_RESET;
-		if (adpt_sysfs_class) {
-			struct device *dev = device_create(adpt_sysfs_class,
-				NULL, MKDEV(DPTI_I2O_MAJOR, pHba->unit), NULL,
+		अगर (adpt_sysfs_class) अणु
+			काष्ठा device *dev = device_create(adpt_sysfs_class,
+				शून्य, MKDEV(DPTI_I2O_MAJOR, pHba->unit), शून्य,
 				"dpti%d", pHba->unit);
-			if (IS_ERR(dev)) {
-				printk(KERN_WARNING"dpti%d: unable to "
+			अगर (IS_ERR(dev)) अणु
+				prपूर्णांकk(KERN_WARNING"dpti%d: unable to "
 					"create device in dpt_i2o class\n",
 					pHba->unit);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	// Register our control device node
 	// nodes will need to be created in /dev to access this
 	// the nodes can not be created from within the driver
-	if (hba_count && register_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER, &adpt_fops)) {
-		adpt_i2o_sys_shutdown();
-		return 0;
-	}
-	return hba_count;
-}
+	अगर (hba_count && रेजिस्टर_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER, &adpt_fops)) अणु
+		adpt_i2o_sys_shutकरोwn();
+		वापस 0;
+	पूर्ण
+	वापस hba_count;
+पूर्ण
 
 
-static void adpt_release(adpt_hba *pHba)
-{
-	struct Scsi_Host *shost = pHba->host;
+अटल व्योम adpt_release(adpt_hba *pHba)
+अणु
+	काष्ठा Scsi_Host *shost = pHba->host;
 
-	scsi_remove_host(shost);
+	scsi_हटाओ_host(shost);
 //	adpt_i2o_quiesce_hba(pHba);
 	adpt_i2o_delete_hba(pHba);
 	scsi_host_put(shost);
-}
+पूर्ण
 
 
-static void adpt_inquiry(adpt_hba* pHba)
-{
+अटल व्योम adpt_inquiry(adpt_hba* pHba)
+अणु
 	u32 msg[17]; 
 	u32 *mptr;
 	u32 *lenptr;
-	int direction;
-	int scsidir;
+	पूर्णांक direction;
+	पूर्णांक scsidir;
 	u32 len;
 	u32 reqlen;
 	u8* buf;
@@ -324,21 +325,21 @@ static void adpt_inquiry(adpt_hba* pHba)
 	u8  scb[16];
 	s32 rcode;
 
-	memset(msg, 0, sizeof(msg));
+	स_रखो(msg, 0, माप(msg));
 	buf = dma_alloc_coherent(&pHba->pDev->dev, 80, &addr, GFP_KERNEL);
-	if(!buf){
-		printk(KERN_ERR"%s: Could not allocate buffer\n",pHba->name);
-		return;
-	}
-	memset((void*)buf, 0, 36);
+	अगर(!buf)अणु
+		prपूर्णांकk(KERN_ERR"%s: Could not allocate buffer\n",pHba->name);
+		वापस;
+	पूर्ण
+	स_रखो((व्योम*)buf, 0, 36);
 	
 	len = 36;
 	direction = 0x00000000;	
 	scsidir  =0x40000000;	// DATA IN  (iop<--dev)
 
-	if (dpt_dma64(pHba))
+	अगर (dpt_dma64(pHba))
 		reqlen = 17;		// SINGLE SGE, 64 bit
-	else
+	अन्यथा
 		reqlen = 14;		// SINGLE SGE, 32 bit
 	/* Stick the headers on */
 	msg[0] = reqlen<<16 | SGL_OFFSET_12;
@@ -356,8 +357,8 @@ static void adpt_inquiry(adpt_hba* pHba)
 
 	mptr=msg+7;
 
-	memset(scb, 0, sizeof(scb));
-	// Write SCSI command into the message - always 16 byte block 
+	स_रखो(scb, 0, माप(scb));
+	// Write SCSI command पूर्णांकo the message - always 16 byte block 
 	scb[0] = INQUIRY;
 	scb[1] = 0;
 	scb[2] = 0;
@@ -366,457 +367,457 @@ static void adpt_inquiry(adpt_hba* pHba)
 	scb[5] = 0;
 	// Don't care about the rest of scb
 
-	memcpy(mptr, scb, sizeof(scb));
+	स_नकल(mptr, scb, माप(scb));
 	mptr+=4;
 	lenptr=mptr++;		/* Remember me - fill in when we know */
 
 	/* Now fill in the SGList and command */
 	*lenptr = len;
-	if (dpt_dma64(pHba)) {
+	अगर (dpt_dma64(pHba)) अणु
 		*mptr++ = (0x7C<<24)+(2<<16)+0x02; /* Enable 64 bit */
 		*mptr++ = 1 << PAGE_SHIFT;
 		*mptr++ = 0xD0000000|direction|len;
 		*mptr++ = dma_low(addr);
 		*mptr++ = dma_high(addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		*mptr++ = 0xD0000000|direction|len;
 		*mptr++ = addr;
-	}
+	पूर्ण
 
 	// Send it on it's way
-	rcode = adpt_i2o_post_wait(pHba, msg, reqlen<<2, 120);
-	if (rcode != 0) {
-		sprintf(pHba->detail, "Adaptec I2O RAID");
-		printk(KERN_INFO "%s: Inquiry Error (%d)\n",pHba->name,rcode);
-		if (rcode != -ETIME && rcode != -EINTR)
-			dma_free_coherent(&pHba->pDev->dev, 80, buf, addr);
-	} else {
-		memset(pHba->detail, 0, sizeof(pHba->detail));
-		memcpy(&(pHba->detail), "Vendor: Adaptec ", 16);
-		memcpy(&(pHba->detail[16]), " Model: ", 8);
-		memcpy(&(pHba->detail[24]), (u8*) &buf[16], 16);
-		memcpy(&(pHba->detail[40]), " FW: ", 4);
-		memcpy(&(pHba->detail[44]), (u8*) &buf[32], 4);
+	rcode = adpt_i2o_post_रुको(pHba, msg, reqlen<<2, 120);
+	अगर (rcode != 0) अणु
+		प्र_लिखो(pHba->detail, "Adaptec I2O RAID");
+		prपूर्णांकk(KERN_INFO "%s: Inquiry Error (%d)\n",pHba->name,rcode);
+		अगर (rcode != -ETIME && rcode != -EINTR)
+			dma_मुक्त_coherent(&pHba->pDev->dev, 80, buf, addr);
+	पूर्ण अन्यथा अणु
+		स_रखो(pHba->detail, 0, माप(pHba->detail));
+		स_नकल(&(pHba->detail), "Vendor: Adaptec ", 16);
+		स_नकल(&(pHba->detail[16]), " Model: ", 8);
+		स_नकल(&(pHba->detail[24]), (u8*) &buf[16], 16);
+		स_नकल(&(pHba->detail[40]), " FW: ", 4);
+		स_नकल(&(pHba->detail[44]), (u8*) &buf[32], 4);
 		pHba->detail[48] = '\0';	/* precautionary */
-		dma_free_coherent(&pHba->pDev->dev, 80, buf, addr);
-	}
+		dma_मुक्त_coherent(&pHba->pDev->dev, 80, buf, addr);
+	पूर्ण
 	adpt_i2o_status_get(pHba);
-	return ;
-}
+	वापस ;
+पूर्ण
 
 
-static int adpt_slave_configure(struct scsi_device * device)
-{
-	struct Scsi_Host *host = device->host;
+अटल पूर्णांक adpt_slave_configure(काष्ठा scsi_device * device)
+अणु
+	काष्ठा Scsi_Host *host = device->host;
 
-	if (host->can_queue && device->tagged_supported) {
+	अगर (host->can_queue && device->tagged_supported) अणु
 		scsi_change_queue_depth(device,
 				host->can_queue - 1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int adpt_queue_lck(struct scsi_cmnd * cmd, void (*done) (struct scsi_cmnd *))
-{
-	adpt_hba* pHba = NULL;
-	struct adpt_device* pDev = NULL;	/* dpt per device information */
+अटल पूर्णांक adpt_queue_lck(काष्ठा scsi_cmnd * cmd, व्योम (*करोne) (काष्ठा scsi_cmnd *))
+अणु
+	adpt_hba* pHba = शून्य;
+	काष्ठा adpt_device* pDev = शून्य;	/* dpt per device inक्रमmation */
 
-	cmd->scsi_done = done;
+	cmd->scsi_करोne = करोne;
 	/*
-	 * SCSI REQUEST_SENSE commands will be executed automatically by the 
-	 * Host Adapter for any errors, so they should not be executed 
+	 * SCSI REQUEST_SENSE commands will be executed स्वतःmatically by the 
+	 * Host Adapter क्रम any errors, so they should not be executed 
 	 * explicitly unless the Sense Data is zero indicating that no error 
 	 * occurred.
 	 */
 
-	if ((cmd->cmnd[0] == REQUEST_SENSE) && (cmd->sense_buffer[0] != 0)) {
+	अगर ((cmd->cmnd[0] == REQUEST_SENSE) && (cmd->sense_buffer[0] != 0)) अणु
 		cmd->result = (DID_OK << 16);
-		cmd->scsi_done(cmd);
-		return 0;
-	}
+		cmd->scsi_करोne(cmd);
+		वापस 0;
+	पूर्ण
 
 	pHba = (adpt_hba*)cmd->device->host->hostdata[0];
-	if (!pHba) {
-		return FAILED;
-	}
+	अगर (!pHba) अणु
+		वापस FAILED;
+	पूर्ण
 
 	rmb();
-	if ((pHba->state) & DPTI_STATE_RESET)
-		return SCSI_MLQUEUE_HOST_BUSY;
+	अगर ((pHba->state) & DPTI_STATE_RESET)
+		वापस SCSI_MLQUEUE_HOST_BUSY;
 
-	// TODO if the cmd->device if offline then I may need to issue a bus rescan
-	// followed by a get_lct to see if the device is there anymore
-	if((pDev = (struct adpt_device*) (cmd->device->hostdata)) == NULL) {
+	// TODO अगर the cmd->device अगर offline then I may need to issue a bus rescan
+	// followed by a get_lct to see अगर the device is there anymore
+	अगर((pDev = (काष्ठा adpt_device*) (cmd->device->hostdata)) == शून्य) अणु
 		/*
-		 * First command request for this device.  Set up a pointer
-		 * to the device structure.  This should be a TEST_UNIT_READY
+		 * First command request क्रम this device.  Set up a poपूर्णांकer
+		 * to the device काष्ठाure.  This should be a TEST_UNIT_READY
 		 * command from scan_scsis_single.
 		 */
-		if ((pDev = adpt_find_device(pHba, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun)) == NULL) {
-			// TODO: if any luns are at this bus, scsi id then fake a TEST_UNIT_READY and INQUIRY response 
-			// with type 7F (for all luns less than the max for this bus,id) so the lun scan will continue.
+		अगर ((pDev = adpt_find_device(pHba, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun)) == शून्य) अणु
+			// TODO: अगर any luns are at this bus, scsi id then fake a TEST_UNIT_READY and INQUIRY response 
+			// with type 7F (क्रम all luns less than the max क्रम this bus,id) so the lun scan will जारी.
 			cmd->result = (DID_NO_CONNECT << 16);
-			cmd->scsi_done(cmd);
-			return 0;
-		}
+			cmd->scsi_करोne(cmd);
+			वापस 0;
+		पूर्ण
 		cmd->device->hostdata = pDev;
-	}
+	पूर्ण
 	pDev->pScsi_dev = cmd->device;
 
 	/*
 	 * If we are being called from when the device is being reset, 
 	 * delay processing of the command until later.
 	 */
-	if (pDev->state & DPTI_DEV_RESET ) {
-		return FAILED;
-	}
-	return adpt_scsi_to_i2o(pHba, cmd, pDev);
-}
+	अगर (pDev->state & DPTI_DEV_RESET ) अणु
+		वापस FAILED;
+	पूर्ण
+	वापस adpt_scsi_to_i2o(pHba, cmd, pDev);
+पूर्ण
 
-static DEF_SCSI_QCMD(adpt_queue)
+अटल DEF_SCSI_QCMD(adpt_queue)
 
-static int adpt_bios_param(struct scsi_device *sdev, struct block_device *dev,
-		sector_t capacity, int geom[])
-{
-	int heads=-1;
-	int sectors=-1;
-	int cylinders=-1;
+अटल पूर्णांक adpt_bios_param(काष्ठा scsi_device *sdev, काष्ठा block_device *dev,
+		sector_t capacity, पूर्णांक geom[])
+अणु
+	पूर्णांक heads=-1;
+	पूर्णांक sectors=-1;
+	पूर्णांक cylinders=-1;
 
-	// *** First lets set the default geometry ****
+	// *** First lets set the शेष geometry ****
 	
 	// If the capacity is less than ox2000
-	if (capacity < 0x2000 ) {	// floppy
+	अगर (capacity < 0x2000 ) अणु	// floppy
 		heads = 18;
 		sectors = 2;
-	} 
-	// else if between 0x2000 and 0x20000
-	else if (capacity < 0x20000) {
+	पूर्ण 
+	// अन्यथा अगर between 0x2000 and 0x20000
+	अन्यथा अगर (capacity < 0x20000) अणु
 		heads = 64;
 		sectors = 32;
-	}
-	// else if between 0x20000 and 0x40000
-	else if (capacity < 0x40000) {
+	पूर्ण
+	// अन्यथा अगर between 0x20000 and 0x40000
+	अन्यथा अगर (capacity < 0x40000) अणु
 		heads = 65;
 		sectors = 63;
-	}
-	// else if between 0x4000 and 0x80000
-	else if (capacity < 0x80000) {
+	पूर्ण
+	// अन्यथा अगर between 0x4000 and 0x80000
+	अन्यथा अगर (capacity < 0x80000) अणु
 		heads = 128;
 		sectors = 63;
-	}
-	// else if greater than 0x80000
-	else {
+	पूर्ण
+	// अन्यथा अगर greater than 0x80000
+	अन्यथा अणु
 		heads = 255;
 		sectors = 63;
-	}
-	cylinders = sector_div(capacity, heads * sectors);
+	पूर्ण
+	cylinders = sector_भाग(capacity, heads * sectors);
 
-	// Special case if CDROM
-	if(sdev->type == 5) {  // CDROM
+	// Special हाल अगर CDROM
+	अगर(sdev->type == 5) अणु  // CDROM
 		heads = 252;
 		sectors = 63;
 		cylinders = 1111;
-	}
+	पूर्ण
 
 	geom[0] = heads;
 	geom[1] = sectors;
 	geom[2] = cylinders;
 	
 	PDEBUG("adpt_bios_param: exit\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const char *adpt_info(struct Scsi_Host *host)
-{
+अटल स्थिर अक्षर *adpt_info(काष्ठा Scsi_Host *host)
+अणु
 	adpt_hba* pHba;
 
 	pHba = (adpt_hba *) host->hostdata[0];
-	return (char *) (pHba->detail);
-}
+	वापस (अक्षर *) (pHba->detail);
+पूर्ण
 
-static int adpt_show_info(struct seq_file *m, struct Scsi_Host *host)
-{
-	struct adpt_device* d;
-	int id;
-	int chan;
+अटल पूर्णांक adpt_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा adpt_device* d;
+	पूर्णांक id;
+	पूर्णांक chan;
 	adpt_hba* pHba;
-	int unit;
+	पूर्णांक unit;
 
-	// Find HBA (host bus adapter) we are looking for
+	// Find HBA (host bus adapter) we are looking क्रम
 	mutex_lock(&adpt_configuration_lock);
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
-		if (pHba->host == host) {
-			break;	/* found adapter */
-		}
-	}
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
+		अगर (pHba->host == host) अणु
+			अवरोध;	/* found adapter */
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adpt_configuration_lock);
-	if (pHba == NULL) {
-		return 0;
-	}
+	अगर (pHba == शून्य) अणु
+		वापस 0;
+	पूर्ण
 	host = pHba->host;
 
-	seq_printf(m, "Adaptec I2O RAID Driver Version: %s\n\n", DPT_I2O_VERSION);
-	seq_printf(m, "%s\n", pHba->detail);
-	seq_printf(m, "SCSI Host=scsi%d  Control Node=/dev/%s  irq=%d\n", 
+	seq_म_लिखो(m, "Adaptec I2O RAID Driver Version: %s\n\n", DPT_I2O_VERSION);
+	seq_म_लिखो(m, "%s\n", pHba->detail);
+	seq_म_लिखो(m, "SCSI Host=scsi%d  Control Node=/dev/%s  irq=%d\n", 
 			pHba->host->host_no, pHba->name, host->irq);
-	seq_printf(m, "\tpost fifo size  = %d\n\treply fifo size = %d\n\tsg table size   = %d\n\n",
-			host->can_queue, (int) pHba->reply_fifo_size , host->sg_tablesize);
+	seq_म_लिखो(m, "\tpost fifo size  = %d\n\treply fifo size = %d\n\tsg table size   = %d\n\n",
+			host->can_queue, (पूर्णांक) pHba->reply_fअगरo_size , host->sg_tablesize);
 
-	seq_puts(m, "Devices:\n");
-	for(chan = 0; chan < MAX_CHANNEL; chan++) {
-		for(id = 0; id < MAX_ID; id++) {
+	seq_माला_दो(m, "Devices:\n");
+	क्रम(chan = 0; chan < MAX_CHANNEL; chan++) अणु
+		क्रम(id = 0; id < MAX_ID; id++) अणु
 			d = pHba->channel[chan].device[id];
-			while(d) {
-				seq_printf(m,"\t%-24.24s", d->pScsi_dev->vendor);
-				seq_printf(m," Rev: %-8.8s\n", d->pScsi_dev->rev);
+			जबतक(d) अणु
+				seq_म_लिखो(m,"\t%-24.24s", d->pScsi_dev->venकरोr);
+				seq_म_लिखो(m," Rev: %-8.8s\n", d->pScsi_dev->rev);
 
 				unit = d->pI2o_dev->lct_data.tid;
-				seq_printf(m, "\tTID=%d, (Channel=%d, Target=%d, Lun=%llu)  (%s)\n\n",
-					       unit, (int)d->scsi_channel, (int)d->scsi_id, d->scsi_lun,
+				seq_म_लिखो(m, "\tTID=%d, (Channel=%d, Target=%d, Lun=%llu)  (%s)\n\n",
+					       unit, (पूर्णांक)d->scsi_channel, (पूर्णांक)d->scsi_id, d->scsi_lun,
 					       scsi_device_online(d->pScsi_dev)? "online":"offline"); 
 				d = d->next_lun;
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- *	Turn a pointer to ioctl reply data into an u32 'context'
+ *	Turn a poपूर्णांकer to ioctl reply data पूर्णांकo an u32 'context'
  */
-static u32 adpt_ioctl_to_context(adpt_hba * pHba, void *reply)
-{
-#if BITS_PER_LONG == 32
-	return (u32)(unsigned long)reply;
-#else
-	ulong flags = 0;
+अटल u32 adpt_ioctl_to_context(adpt_hba * pHba, व्योम *reply)
+अणु
+#अगर BITS_PER_LONG == 32
+	वापस (u32)(अचिन्हित दीर्घ)reply;
+#अन्यथा
+	uदीर्घ flags = 0;
 	u32 nr, i;
 
 	spin_lock_irqsave(pHba->host->host_lock, flags);
 	nr = ARRAY_SIZE(pHba->ioctl_reply_context);
-	for (i = 0; i < nr; i++) {
-		if (pHba->ioctl_reply_context[i] == NULL) {
+	क्रम (i = 0; i < nr; i++) अणु
+		अगर (pHba->ioctl_reply_context[i] == शून्य) अणु
 			pHba->ioctl_reply_context[i] = reply;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(pHba->host->host_lock, flags);
-	if (i >= nr) {
-		printk(KERN_WARNING"%s: Too many outstanding "
+	अगर (i >= nr) अणु
+		prपूर्णांकk(KERN_WARNING"%s: Too many outstanding "
 				"ioctl commands\n", pHba->name);
-		return (u32)-1;
-	}
+		वापस (u32)-1;
+	पूर्ण
 
-	return i;
-#endif
-}
+	वापस i;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- *	Go from an u32 'context' to a pointer to ioctl reply data.
+ *	Go from an u32 'context' to a poपूर्णांकer to ioctl reply data.
  */
-static void *adpt_ioctl_from_context(adpt_hba *pHba, u32 context)
-{
-#if BITS_PER_LONG == 32
-	return (void *)(unsigned long)context;
-#else
-	void *p = pHba->ioctl_reply_context[context];
-	pHba->ioctl_reply_context[context] = NULL;
+अटल व्योम *adpt_ioctl_from_context(adpt_hba *pHba, u32 context)
+अणु
+#अगर BITS_PER_LONG == 32
+	वापस (व्योम *)(अचिन्हित दीर्घ)context;
+#अन्यथा
+	व्योम *p = pHba->ioctl_reply_context[context];
+	pHba->ioctl_reply_context[context] = शून्य;
 
-	return p;
-#endif
-}
+	वापस p;
+#पूर्ण_अगर
+पूर्ण
 
 /*===========================================================================
  * Error Handling routines
  *===========================================================================
  */
 
-static int adpt_abort(struct scsi_cmnd * cmd)
-{
-	adpt_hba* pHba = NULL;	/* host bus adapter structure */
-	struct adpt_device* dptdevice;	/* dpt per device information */
+अटल पूर्णांक adpt_पात(काष्ठा scsi_cmnd * cmd)
+अणु
+	adpt_hba* pHba = शून्य;	/* host bus adapter काष्ठाure */
+	काष्ठा adpt_device* dptdevice;	/* dpt per device inक्रमmation */
 	u32 msg[5];
-	int rcode;
+	पूर्णांक rcode;
 
 	pHba = (adpt_hba*) cmd->device->host->hostdata[0];
-	printk(KERN_INFO"%s: Trying to Abort\n",pHba->name);
-	if ((dptdevice = (void*) (cmd->device->hostdata)) == NULL) {
-		printk(KERN_ERR "%s: Unable to abort: No device in cmnd\n",pHba->name);
-		return FAILED;
-	}
+	prपूर्णांकk(KERN_INFO"%s: Trying to Abort\n",pHba->name);
+	अगर ((dptdevice = (व्योम*) (cmd->device->hostdata)) == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s: Unable to abort: No device in cmnd\n",pHba->name);
+		वापस FAILED;
+	पूर्ण
 
-	memset(msg, 0, sizeof(msg));
+	स_रखो(msg, 0, माप(msg));
 	msg[0] = FIVE_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1] = I2O_CMD_SCSI_ABORT<<24|HOST_TID<<12|dptdevice->tid;
 	msg[2] = 0;
 	msg[3]= 0;
-	/* Add 1 to avoid firmware treating it as invalid command */
+	/* Add 1 to aव्योम firmware treating it as invalid command */
 	msg[4] = cmd->request->tag + 1;
-	if (pHba->host)
+	अगर (pHba->host)
 		spin_lock_irq(pHba->host->host_lock);
-	rcode = adpt_i2o_post_wait(pHba, msg, sizeof(msg), FOREVER);
-	if (pHba->host)
+	rcode = adpt_i2o_post_रुको(pHba, msg, माप(msg), FOREVER);
+	अगर (pHba->host)
 		spin_unlock_irq(pHba->host->host_lock);
-	if (rcode != 0) {
-		if(rcode == -EOPNOTSUPP ){
-			printk(KERN_INFO"%s: Abort cmd not supported\n",pHba->name);
-			return FAILED;
-		}
-		printk(KERN_INFO"%s: Abort failed.\n",pHba->name);
-		return FAILED;
-	} 
-	printk(KERN_INFO"%s: Abort complete.\n",pHba->name);
-	return SUCCESS;
-}
+	अगर (rcode != 0) अणु
+		अगर(rcode == -EOPNOTSUPP )अणु
+			prपूर्णांकk(KERN_INFO"%s: Abort cmd not supported\n",pHba->name);
+			वापस FAILED;
+		पूर्ण
+		prपूर्णांकk(KERN_INFO"%s: Abort failed.\n",pHba->name);
+		वापस FAILED;
+	पूर्ण 
+	prपूर्णांकk(KERN_INFO"%s: Abort complete.\n",pHba->name);
+	वापस SUCCESS;
+पूर्ण
 
 
-#define I2O_DEVICE_RESET 0x27
-// This is the same for BLK and SCSI devices
+#घोषणा I2O_DEVICE_RESET 0x27
+// This is the same क्रम BLK and SCSI devices
 // NOTE this is wrong in the i2o.h definitions
 // This is not currently supported by our adapter but we issue it anyway
-static int adpt_device_reset(struct scsi_cmnd* cmd)
-{
+अटल पूर्णांक adpt_device_reset(काष्ठा scsi_cmnd* cmd)
+अणु
 	adpt_hba* pHba;
 	u32 msg[4];
 	u32 rcode;
-	int old_state;
-	struct adpt_device* d = cmd->device->hostdata;
+	पूर्णांक old_state;
+	काष्ठा adpt_device* d = cmd->device->hostdata;
 
-	pHba = (void*) cmd->device->host->hostdata[0];
-	printk(KERN_INFO"%s: Trying to reset device\n",pHba->name);
-	if (!d) {
-		printk(KERN_INFO"%s: Reset Device: Device Not found\n",pHba->name);
-		return FAILED;
-	}
-	memset(msg, 0, sizeof(msg));
+	pHba = (व्योम*) cmd->device->host->hostdata[0];
+	prपूर्णांकk(KERN_INFO"%s: Trying to reset device\n",pHba->name);
+	अगर (!d) अणु
+		prपूर्णांकk(KERN_INFO"%s: Reset Device: Device Not found\n",pHba->name);
+		वापस FAILED;
+	पूर्ण
+	स_रखो(msg, 0, माप(msg));
 	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1] = (I2O_DEVICE_RESET<<24|HOST_TID<<12|d->tid);
 	msg[2] = 0;
 	msg[3] = 0;
 
-	if (pHba->host)
+	अगर (pHba->host)
 		spin_lock_irq(pHba->host->host_lock);
 	old_state = d->state;
 	d->state |= DPTI_DEV_RESET;
-	rcode = adpt_i2o_post_wait(pHba, msg,sizeof(msg), FOREVER);
+	rcode = adpt_i2o_post_रुको(pHba, msg,माप(msg), FOREVER);
 	d->state = old_state;
-	if (pHba->host)
+	अगर (pHba->host)
 		spin_unlock_irq(pHba->host->host_lock);
-	if (rcode != 0) {
-		if(rcode == -EOPNOTSUPP ){
-			printk(KERN_INFO"%s: Device reset not supported\n",pHba->name);
-			return FAILED;
-		}
-		printk(KERN_INFO"%s: Device reset failed\n",pHba->name);
-		return FAILED;
-	} else {
-		printk(KERN_INFO"%s: Device reset successful\n",pHba->name);
-		return SUCCESS;
-	}
-}
+	अगर (rcode != 0) अणु
+		अगर(rcode == -EOPNOTSUPP )अणु
+			prपूर्णांकk(KERN_INFO"%s: Device reset not supported\n",pHba->name);
+			वापस FAILED;
+		पूर्ण
+		prपूर्णांकk(KERN_INFO"%s: Device reset failed\n",pHba->name);
+		वापस FAILED;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO"%s: Device reset successful\n",pHba->name);
+		वापस SUCCESS;
+	पूर्ण
+पूर्ण
 
 
-#define I2O_HBA_BUS_RESET 0x87
+#घोषणा I2O_HBA_BUS_RESET 0x87
 // This version of bus reset is called by the eh_error handler
-static int adpt_bus_reset(struct scsi_cmnd* cmd)
-{
+अटल पूर्णांक adpt_bus_reset(काष्ठा scsi_cmnd* cmd)
+अणु
 	adpt_hba* pHba;
 	u32 msg[4];
 	u32 rcode;
 
 	pHba = (adpt_hba*)cmd->device->host->hostdata[0];
-	memset(msg, 0, sizeof(msg));
-	printk(KERN_WARNING"%s: Bus reset: SCSI Bus %d: tid: %d\n",pHba->name, cmd->device->channel,pHba->channel[cmd->device->channel].tid );
+	स_रखो(msg, 0, माप(msg));
+	prपूर्णांकk(KERN_WARNING"%s: Bus reset: SCSI Bus %d: tid: %d\n",pHba->name, cmd->device->channel,pHba->channel[cmd->device->channel].tid );
 	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1] = (I2O_HBA_BUS_RESET<<24|HOST_TID<<12|pHba->channel[cmd->device->channel].tid);
 	msg[2] = 0;
 	msg[3] = 0;
-	if (pHba->host)
+	अगर (pHba->host)
 		spin_lock_irq(pHba->host->host_lock);
-	rcode = adpt_i2o_post_wait(pHba, msg,sizeof(msg), FOREVER);
-	if (pHba->host)
+	rcode = adpt_i2o_post_रुको(pHba, msg,माप(msg), FOREVER);
+	अगर (pHba->host)
 		spin_unlock_irq(pHba->host->host_lock);
-	if (rcode != 0) {
-		printk(KERN_WARNING"%s: Bus reset failed.\n",pHba->name);
-		return FAILED;
-	} else {
-		printk(KERN_WARNING"%s: Bus reset success.\n",pHba->name);
-		return SUCCESS;
-	}
-}
+	अगर (rcode != 0) अणु
+		prपूर्णांकk(KERN_WARNING"%s: Bus reset failed.\n",pHba->name);
+		वापस FAILED;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_WARNING"%s: Bus reset success.\n",pHba->name);
+		वापस SUCCESS;
+	पूर्ण
+पूर्ण
 
 // This version of reset is called by the eh_error_handler
-static int __adpt_reset(struct scsi_cmnd* cmd)
-{
+अटल पूर्णांक __adpt_reset(काष्ठा scsi_cmnd* cmd)
+अणु
 	adpt_hba* pHba;
-	int rcode;
-	char name[32];
+	पूर्णांक rcode;
+	अक्षर name[32];
 
 	pHba = (adpt_hba*)cmd->device->host->hostdata[0];
-	strncpy(name, pHba->name, sizeof(name));
-	printk(KERN_WARNING"%s: Hba Reset: scsi id %d: tid: %d\n", name, cmd->device->channel, pHba->channel[cmd->device->channel].tid);
+	म_नकलन(name, pHba->name, माप(name));
+	prपूर्णांकk(KERN_WARNING"%s: Hba Reset: scsi id %d: tid: %d\n", name, cmd->device->channel, pHba->channel[cmd->device->channel].tid);
 	rcode =  adpt_hba_reset(pHba);
-	if(rcode == 0){
-		printk(KERN_WARNING"%s: HBA reset complete\n", name);
-		return SUCCESS;
-	} else {
-		printk(KERN_WARNING"%s: HBA reset failed (%x)\n", name, rcode);
-		return FAILED;
-	}
-}
+	अगर(rcode == 0)अणु
+		prपूर्णांकk(KERN_WARNING"%s: HBA reset complete\n", name);
+		वापस SUCCESS;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_WARNING"%s: HBA reset failed (%x)\n", name, rcode);
+		वापस FAILED;
+	पूर्ण
+पूर्ण
 
-static int adpt_reset(struct scsi_cmnd* cmd)
-{
-	int rc;
+अटल पूर्णांक adpt_reset(काष्ठा scsi_cmnd* cmd)
+अणु
+	पूर्णांक rc;
 
 	spin_lock_irq(cmd->device->host->host_lock);
 	rc = __adpt_reset(cmd);
 	spin_unlock_irq(cmd->device->host->host_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 // This version of reset is called by the ioctls and indirectly from eh_error_handler via adpt_reset
-static int adpt_hba_reset(adpt_hba* pHba)
-{
-	int rcode;
+अटल पूर्णांक adpt_hba_reset(adpt_hba* pHba)
+अणु
+	पूर्णांक rcode;
 
 	pHba->state |= DPTI_STATE_RESET;
 
-	// Activate does get status , init outbound, and get hrt
-	if ((rcode=adpt_i2o_activate_hba(pHba)) < 0) {
-		printk(KERN_ERR "%s: Could not activate\n", pHba->name);
+	// Activate करोes get status , init outbound, and get hrt
+	अगर ((rcode=adpt_i2o_activate_hba(pHba)) < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s: Could not activate\n", pHba->name);
 		adpt_i2o_delete_hba(pHba);
-		return rcode;
-	}
+		वापस rcode;
+	पूर्ण
 
-	if ((rcode=adpt_i2o_build_sys_table()) < 0) {
+	अगर ((rcode=adpt_i2o_build_sys_table()) < 0) अणु
 		adpt_i2o_delete_hba(pHba);
-		return rcode;
-	}
+		वापस rcode;
+	पूर्ण
 	PDEBUG("%s: in HOLD state\n",pHba->name);
 
-	if ((rcode=adpt_i2o_online_hba(pHba)) < 0) {
+	अगर ((rcode=adpt_i2o_online_hba(pHba)) < 0) अणु
 		adpt_i2o_delete_hba(pHba);	
-		return rcode;
-	}
+		वापस rcode;
+	पूर्ण
 	PDEBUG("%s: in OPERATIONAL state\n",pHba->name);
 
-	if ((rcode=adpt_i2o_lct_get(pHba)) < 0){
+	अगर ((rcode=adpt_i2o_lct_get(pHba)) < 0)अणु
 		adpt_i2o_delete_hba(pHba);
-		return rcode;
-	}
+		वापस rcode;
+	पूर्ण
 
-	if ((rcode=adpt_i2o_reparse_lct(pHba)) < 0){
+	अगर ((rcode=adpt_i2o_reparse_lct(pHba)) < 0)अणु
 		adpt_i2o_delete_hba(pHba);
-		return rcode;
-	}
+		वापस rcode;
+	पूर्ण
 	pHba->state &= ~DPTI_STATE_RESET;
 
 	scsi_host_complete_all_commands(pHba->host, DID_RESET);
-	return 0;	/* return success */
-}
+	वापस 0;	/* वापस success */
+पूर्ण
 
 /*===========================================================================
  * 
@@ -824,74 +825,74 @@ static int adpt_hba_reset(adpt_hba* pHba)
  */
 
 
-static void adpt_i2o_sys_shutdown(void)
-{
+अटल व्योम adpt_i2o_sys_shutकरोwn(व्योम)
+अणु
 	adpt_hba *pHba, *pNext;
-	struct adpt_i2o_post_wait_data *p1, *old;
+	काष्ठा adpt_i2o_post_रुको_data *p1, *old;
 
-	printk(KERN_INFO "Shutting down Adaptec I2O controllers.\n");
-	printk(KERN_INFO "   This could take a few minutes if there are many devices attached\n");
+	prपूर्णांकk(KERN_INFO "Shutting down Adaptec I2O controllers.\n");
+	prपूर्णांकk(KERN_INFO "   This could take a few minutes if there are many devices attached\n");
 	/* Delete all IOPs from the controller chain */
-	/* They should have already been released by the
+	/* They should have alपढ़ोy been released by the
 	 * scsi-core
 	 */
-	for (pHba = hba_chain; pHba; pHba = pNext) {
+	क्रम (pHba = hba_chain; pHba; pHba = pNext) अणु
 		pNext = pHba->next;
 		adpt_i2o_delete_hba(pHba);
-	}
+	पूर्ण
 
-	/* Remove any timedout entries from the wait queue.  */
-//	spin_lock_irqsave(&adpt_post_wait_lock, flags);
-	/* Nothing should be outstanding at this point so just
-	 * free them 
+	/* Remove any समयकरोut entries from the रुको queue.  */
+//	spin_lock_irqsave(&adpt_post_रुको_lock, flags);
+	/* Nothing should be outstanding at this poपूर्णांक so just
+	 * मुक्त them 
 	 */
-	for(p1 = adpt_post_wait_queue; p1;) {
+	क्रम(p1 = adpt_post_रुको_queue; p1;) अणु
 		old = p1;
 		p1 = p1->next;
-		kfree(old);
-	}
-//	spin_unlock_irqrestore(&adpt_post_wait_lock, flags);
-	adpt_post_wait_queue = NULL;
+		kमुक्त(old);
+	पूर्ण
+//	spin_unlock_irqrestore(&adpt_post_रुको_lock, flags);
+	adpt_post_रुको_queue = शून्य;
 
-	printk(KERN_INFO "Adaptec I2O controllers down.\n");
-}
+	prपूर्णांकk(KERN_INFO "Adaptec I2O controllers down.\n");
+पूर्ण
 
-static int adpt_install_hba(struct scsi_host_template* sht, struct pci_dev* pDev)
-{
+अटल पूर्णांक adpt_install_hba(काष्ठा scsi_host_ढाँचा* sht, काष्ठा pci_dev* pDev)
+अणु
 
-	adpt_hba* pHba = NULL;
-	adpt_hba* p = NULL;
-	ulong base_addr0_phys = 0;
-	ulong base_addr1_phys = 0;
+	adpt_hba* pHba = शून्य;
+	adpt_hba* p = शून्य;
+	uदीर्घ base_addr0_phys = 0;
+	uदीर्घ base_addr1_phys = 0;
 	u32 hba_map0_area_size = 0;
 	u32 hba_map1_area_size = 0;
-	void __iomem *base_addr_virt = NULL;
-	void __iomem *msg_addr_virt = NULL;
-	int dma64 = 0;
+	व्योम __iomem *base_addr_virt = शून्य;
+	व्योम __iomem *msg_addr_virt = शून्य;
+	पूर्णांक dma64 = 0;
 
-	int raptorFlag = FALSE;
+	पूर्णांक raptorFlag = FALSE;
 
-	if(pci_enable_device(pDev)) {
-		return -EINVAL;
-	}
+	अगर(pci_enable_device(pDev)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pci_request_regions(pDev, "dpt_i2o")) {
+	अगर (pci_request_regions(pDev, "dpt_i2o")) अणु
 		PERROR("dpti: adpt_config_hba: pci request region failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pci_set_master(pDev);
 
 	/*
-	 *	See if we should enable dma64 mode.
+	 *	See अगर we should enable dma64 mode.
 	 */
-	if (sizeof(dma_addr_t) > 4 &&
+	अगर (माप(dma_addr_t) > 4 &&
 	    dma_get_required_mask(&pDev->dev) > DMA_BIT_MASK(32) &&
 	    dma_set_mask(&pDev->dev, DMA_BIT_MASK(64)) == 0)
 		dma64 = 1;
 
-	if (!dma64 && dma_set_mask(&pDev->dev, DMA_BIT_MASK(32)) != 0)
-		return -EINVAL;
+	अगर (!dma64 && dma_set_mask(&pDev->dev, DMA_BIT_MASK(32)) != 0)
+		वापस -EINVAL;
 
 	/* adapter only supports message blocks below 4GB */
 	dma_set_coherent_mask(&pDev->dev, DMA_BIT_MASK(32));
@@ -899,82 +900,82 @@ static int adpt_install_hba(struct scsi_host_template* sht, struct pci_dev* pDev
 	base_addr0_phys = pci_resource_start(pDev,0);
 	hba_map0_area_size = pci_resource_len(pDev,0);
 
-	// Check if standard PCI card or single BAR Raptor
-	if(pDev->device == PCI_DPT_DEVICE_ID){
-		if(pDev->subsystem_device >=0xc032 && pDev->subsystem_device <= 0xc03b){
+	// Check अगर standard PCI card or single BAR Raptor
+	अगर(pDev->device == PCI_DPT_DEVICE_ID)अणु
+		अगर(pDev->subप्रणाली_device >=0xc032 && pDev->subप्रणाली_device <= 0xc03b)अणु
 			// Raptor card with this device id needs 4M
 			hba_map0_area_size = 0x400000;
-		} else { // Not Raptor - it is a PCI card
-			if(hba_map0_area_size > 0x100000 ){ 
+		पूर्ण अन्यथा अणु // Not Raptor - it is a PCI card
+			अगर(hba_map0_area_size > 0x100000 )अणु 
 				hba_map0_area_size = 0x100000;
-			}
-		}
-	} else {// Raptor split BAR config
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु// Raptor split BAR config
 		// Use BAR1 in this configuration
 		base_addr1_phys = pci_resource_start(pDev,1);
 		hba_map1_area_size = pci_resource_len(pDev,1);
 		raptorFlag = TRUE;
-	}
+	पूर्ण
 
-#if BITS_PER_LONG == 64
+#अगर BITS_PER_LONG == 64
 	/*
 	 *	The original Adaptec 64 bit driver has this comment here:
 	 *	"x86_64 machines need more optimal mappings"
 	 *
 	 *	I assume some HBAs report ridiculously large mappings
-	 *	and we need to limit them on platforms with IOMMUs.
+	 *	and we need to limit them on platक्रमms with IOMMUs.
 	 */
-	if (raptorFlag == TRUE) {
-		if (hba_map0_area_size > 128)
+	अगर (raptorFlag == TRUE) अणु
+		अगर (hba_map0_area_size > 128)
 			hba_map0_area_size = 128;
-		if (hba_map1_area_size > 524288)
+		अगर (hba_map1_area_size > 524288)
 			hba_map1_area_size = 524288;
-	} else {
-		if (hba_map0_area_size > 524288)
+	पूर्ण अन्यथा अणु
+		अगर (hba_map0_area_size > 524288)
 			hba_map0_area_size = 524288;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	base_addr_virt = ioremap(base_addr0_phys,hba_map0_area_size);
-	if (!base_addr_virt) {
+	अगर (!base_addr_virt) अणु
 		pci_release_regions(pDev);
 		PERROR("dpti: adpt_config_hba: io remap failed\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-        if(raptorFlag == TRUE) {
+        अगर(raptorFlag == TRUE) अणु
 		msg_addr_virt = ioremap(base_addr1_phys, hba_map1_area_size );
-		if (!msg_addr_virt) {
+		अगर (!msg_addr_virt) अणु
 			PERROR("dpti: adpt_config_hba: io remap failed on BAR1\n");
 			iounmap(base_addr_virt);
 			pci_release_regions(pDev);
-			return -EINVAL;
-		}
-	} else {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		msg_addr_virt = base_addr_virt;
-	}
+	पूर्ण
 	
-	// Allocate and zero the data structure
-	pHba = kzalloc(sizeof(adpt_hba), GFP_KERNEL);
-	if (!pHba) {
-		if (msg_addr_virt != base_addr_virt)
+	// Allocate and zero the data काष्ठाure
+	pHba = kzalloc(माप(adpt_hba), GFP_KERNEL);
+	अगर (!pHba) अणु
+		अगर (msg_addr_virt != base_addr_virt)
 			iounmap(msg_addr_virt);
 		iounmap(base_addr_virt);
 		pci_release_regions(pDev);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_lock(&adpt_configuration_lock);
 
-	if(hba_chain != NULL){
-		for(p = hba_chain; p->next; p = p->next);
+	अगर(hba_chain != शून्य)अणु
+		क्रम(p = hba_chain; p->next; p = p->next);
 		p->next = pHba;
-	} else {
+	पूर्ण अन्यथा अणु
 		hba_chain = pHba;
-	}
-	pHba->next = NULL;
+	पूर्ण
+	pHba->next = शून्य;
 	pHba->unit = hba_count;
-	sprintf(pHba->name, "dpti%d", hba_count);
+	प्र_लिखो(pHba->name, "dpti%d", hba_count);
 	hba_count++;
 	
 	mutex_unlock(&adpt_configuration_lock);
@@ -989,345 +990,345 @@ static int adpt_install_hba(struct scsi_host_template* sht, struct pci_dev* pDev
 	pHba->post_port = base_addr_virt+0x40;
 	pHba->reply_port = base_addr_virt+0x44;
 
-	pHba->hrt = NULL;
-	pHba->lct = NULL;
+	pHba->hrt = शून्य;
+	pHba->lct = शून्य;
 	pHba->lct_size = 0;
-	pHba->status_block = NULL;
+	pHba->status_block = शून्य;
 	pHba->post_count = 0;
 	pHba->state = DPTI_STATE_RESET;
 	pHba->pDev = pDev;
-	pHba->devices = NULL;
+	pHba->devices = शून्य;
 	pHba->dma64 = dma64;
 
 	// Initializing the spinlocks
 	spin_lock_init(&pHba->state_lock);
-	spin_lock_init(&adpt_post_wait_lock);
+	spin_lock_init(&adpt_post_रुको_lock);
 
-	if(raptorFlag == 0){
-		printk(KERN_INFO "Adaptec I2O RAID controller"
+	अगर(raptorFlag == 0)अणु
+		prपूर्णांकk(KERN_INFO "Adaptec I2O RAID controller"
 				 " %d at %p size=%x irq=%d%s\n", 
 			hba_count-1, base_addr_virt,
 			hba_map0_area_size, pDev->irq,
 			dma64 ? " (64-bit DMA)" : "");
-	} else {
-		printk(KERN_INFO"Adaptec I2O RAID controller %d irq=%d%s\n",
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO"Adaptec I2O RAID controller %d irq=%d%s\n",
 			hba_count-1, pDev->irq,
 			dma64 ? " (64-bit DMA)" : "");
-		printk(KERN_INFO"     BAR0 %p - size= %x\n",base_addr_virt,hba_map0_area_size);
-		printk(KERN_INFO"     BAR1 %p - size= %x\n",msg_addr_virt,hba_map1_area_size);
-	}
+		prपूर्णांकk(KERN_INFO"     BAR0 %p - size= %x\n",base_addr_virt,hba_map0_area_size);
+		prपूर्णांकk(KERN_INFO"     BAR1 %p - size= %x\n",msg_addr_virt,hba_map1_area_size);
+	पूर्ण
 
-	if (request_irq (pDev->irq, adpt_isr, IRQF_SHARED, pHba->name, pHba)) {
-		printk(KERN_ERR"%s: Couldn't register IRQ %d\n", pHba->name, pDev->irq);
+	अगर (request_irq (pDev->irq, adpt_isr, IRQF_SHARED, pHba->name, pHba)) अणु
+		prपूर्णांकk(KERN_ERR"%s: Couldn't register IRQ %d\n", pHba->name, pDev->irq);
 		adpt_i2o_delete_hba(pHba);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void adpt_i2o_delete_hba(adpt_hba* pHba)
-{
+अटल व्योम adpt_i2o_delete_hba(adpt_hba* pHba)
+अणु
 	adpt_hba* p1;
 	adpt_hba* p2;
-	struct i2o_device* d;
-	struct i2o_device* next;
-	int i;
-	int j;
-	struct adpt_device* pDev;
-	struct adpt_device* pNext;
+	काष्ठा i2o_device* d;
+	काष्ठा i2o_device* next;
+	पूर्णांक i;
+	पूर्णांक j;
+	काष्ठा adpt_device* pDev;
+	काष्ठा adpt_device* pNext;
 
 
 	mutex_lock(&adpt_configuration_lock);
-	if(pHba->host){
-		free_irq(pHba->host->irq, pHba);
-	}
-	p2 = NULL;
-	for( p1 = hba_chain; p1; p2 = p1,p1=p1->next){
-		if(p1 == pHba) {
-			if(p2) {
+	अगर(pHba->host)अणु
+		मुक्त_irq(pHba->host->irq, pHba);
+	पूर्ण
+	p2 = शून्य;
+	क्रम( p1 = hba_chain; p1; p2 = p1,p1=p1->next)अणु
+		अगर(p1 == pHba) अणु
+			अगर(p2) अणु
 				p2->next = p1->next;
-			} else {
+			पूर्ण अन्यथा अणु
 				hba_chain = p1->next;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	hba_count--;
 	mutex_unlock(&adpt_configuration_lock);
 
 	iounmap(pHba->base_addr_virt);
 	pci_release_regions(pHba->pDev);
-	if(pHba->msg_addr_virt != pHba->base_addr_virt){
+	अगर(pHba->msg_addr_virt != pHba->base_addr_virt)अणु
 		iounmap(pHba->msg_addr_virt);
-	}
-	if(pHba->FwDebugBuffer_P)
+	पूर्ण
+	अगर(pHba->FwDebugBuffer_P)
 	   	iounmap(pHba->FwDebugBuffer_P);
-	if(pHba->hrt) {
-		dma_free_coherent(&pHba->pDev->dev,
+	अगर(pHba->hrt) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev,
 			pHba->hrt->num_entries * pHba->hrt->entry_len << 2,
 			pHba->hrt, pHba->hrt_pa);
-	}
-	if(pHba->lct) {
-		dma_free_coherent(&pHba->pDev->dev, pHba->lct_size,
+	पूर्ण
+	अगर(pHba->lct) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, pHba->lct_size,
 			pHba->lct, pHba->lct_pa);
-	}
-	if(pHba->status_block) {
-		dma_free_coherent(&pHba->pDev->dev, sizeof(i2o_status_block),
+	पूर्ण
+	अगर(pHba->status_block) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, माप(i2o_status_block),
 			pHba->status_block, pHba->status_block_pa);
-	}
-	if(pHba->reply_pool) {
-		dma_free_coherent(&pHba->pDev->dev,
-			pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4,
+	पूर्ण
+	अगर(pHba->reply_pool) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev,
+			pHba->reply_fअगरo_size * REPLY_FRAME_SIZE * 4,
 			pHba->reply_pool, pHba->reply_pool_pa);
-	}
+	पूर्ण
 
-	for(d = pHba->devices; d ; d = next){
+	क्रम(d = pHba->devices; d ; d = next)अणु
 		next = d->next;
-		kfree(d);
-	}
-	for(i = 0 ; i < pHba->top_scsi_channel ; i++){
-		for(j = 0; j < MAX_ID; j++){
-			if(pHba->channel[i].device[j] != NULL){
-				for(pDev = pHba->channel[i].device[j]; pDev; pDev = pNext){
+		kमुक्त(d);
+	पूर्ण
+	क्रम(i = 0 ; i < pHba->top_scsi_channel ; i++)अणु
+		क्रम(j = 0; j < MAX_ID; j++)अणु
+			अगर(pHba->channel[i].device[j] != शून्य)अणु
+				क्रम(pDev = pHba->channel[i].device[j]; pDev; pDev = pNext)अणु
 					pNext = pDev->next_lun;
-					kfree(pDev);
-				}
-			}
-		}
-	}
+					kमुक्त(pDev);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	pci_dev_put(pHba->pDev);
-	if (adpt_sysfs_class)
+	अगर (adpt_sysfs_class)
 		device_destroy(adpt_sysfs_class,
 				MKDEV(DPTI_I2O_MAJOR, pHba->unit));
-	kfree(pHba);
+	kमुक्त(pHba);
 
-	if(hba_count <= 0){
-		unregister_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER);   
-		if (adpt_sysfs_class) {
+	अगर(hba_count <= 0)अणु
+		unरेजिस्टर_chrdev(DPTI_I2O_MAJOR, DPT_DRIVER);   
+		अगर (adpt_sysfs_class) अणु
 			class_destroy(adpt_sysfs_class);
-			adpt_sysfs_class = NULL;
-		}
-	}
-}
+			adpt_sysfs_class = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static struct adpt_device* adpt_find_device(adpt_hba* pHba, u32 chan, u32 id, u64 lun)
-{
-	struct adpt_device* d;
+अटल काष्ठा adpt_device* adpt_find_device(adpt_hba* pHba, u32 chan, u32 id, u64 lun)
+अणु
+	काष्ठा adpt_device* d;
 
-	if (chan >= MAX_CHANNEL)
-		return NULL;
+	अगर (chan >= MAX_CHANNEL)
+		वापस शून्य;
 	
 	d = pHba->channel[chan].device[id];
-	if(!d || d->tid == 0) {
-		return NULL;
-	}
+	अगर(!d || d->tid == 0) अणु
+		वापस शून्य;
+	पूर्ण
 
 	/* If it is the only lun at that address then this should match*/
-	if(d->scsi_lun == lun){
-		return d;
-	}
+	अगर(d->scsi_lun == lun)अणु
+		वापस d;
+	पूर्ण
 
-	/* else we need to look through all the luns */
-	for(d=d->next_lun ; d ; d = d->next_lun){
-		if(d->scsi_lun == lun){
-			return d;
-		}
-	}
-	return NULL;
-}
+	/* अन्यथा we need to look through all the luns */
+	क्रम(d=d->next_lun ; d ; d = d->next_lun)अणु
+		अगर(d->scsi_lun == lun)अणु
+			वापस d;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
-static int adpt_i2o_post_wait(adpt_hba* pHba, u32* msg, int len, int timeout)
-{
+अटल पूर्णांक adpt_i2o_post_रुको(adpt_hba* pHba, u32* msg, पूर्णांक len, पूर्णांक समयout)
+अणु
 	// I used my own version of the WAIT_QUEUE_HEAD
-	// to handle some version differences
+	// to handle some version dअगरferences
 	// When embedded in the kernel this could go back to the vanilla one
 	ADPT_DECLARE_WAIT_QUEUE_HEAD(adpt_wq_i2o_post);
-	int status = 0;
-	ulong flags = 0;
-	struct adpt_i2o_post_wait_data *p1, *p2;
-	struct adpt_i2o_post_wait_data *wait_data =
-		kmalloc(sizeof(struct adpt_i2o_post_wait_data), GFP_ATOMIC);
-	DECLARE_WAITQUEUE(wait, current);
+	पूर्णांक status = 0;
+	uदीर्घ flags = 0;
+	काष्ठा adpt_i2o_post_रुको_data *p1, *p2;
+	काष्ठा adpt_i2o_post_रुको_data *रुको_data =
+		kदो_स्मृति(माप(काष्ठा adpt_i2o_post_रुको_data), GFP_ATOMIC);
+	DECLARE_WAITQUEUE(रुको, current);
 
-	if (!wait_data)
-		return -ENOMEM;
+	अगर (!रुको_data)
+		वापस -ENOMEM;
 
 	/*
 	 * The spin locking is needed to keep anyone from playing
-	 * with the queue pointers and id while we do the same
+	 * with the queue poपूर्णांकers and id जबतक we करो the same
 	 */
-	spin_lock_irqsave(&adpt_post_wait_lock, flags);
+	spin_lock_irqsave(&adpt_post_रुको_lock, flags);
        // TODO we need a MORE unique way of getting ids
        // to support async LCT get
-	wait_data->next = adpt_post_wait_queue;
-	adpt_post_wait_queue = wait_data;
-	adpt_post_wait_id++;
-	adpt_post_wait_id &= 0x7fff;
-	wait_data->id =  adpt_post_wait_id;
-	spin_unlock_irqrestore(&adpt_post_wait_lock, flags);
+	रुको_data->next = adpt_post_रुको_queue;
+	adpt_post_रुको_queue = रुको_data;
+	adpt_post_रुको_id++;
+	adpt_post_रुको_id &= 0x7fff;
+	रुको_data->id =  adpt_post_रुको_id;
+	spin_unlock_irqrestore(&adpt_post_रुको_lock, flags);
 
-	wait_data->wq = &adpt_wq_i2o_post;
-	wait_data->status = -ETIMEDOUT;
+	रुको_data->wq = &adpt_wq_i2o_post;
+	रुको_data->status = -ETIMEDOUT;
 
-	add_wait_queue(&adpt_wq_i2o_post, &wait);
+	add_रुको_queue(&adpt_wq_i2o_post, &रुको);
 
-	msg[2] |= 0x80000000 | ((u32)wait_data->id);
-	timeout *= HZ;
-	if((status = adpt_i2o_post_this(pHba, msg, len)) == 0){
+	msg[2] |= 0x80000000 | ((u32)रुको_data->id);
+	समयout *= HZ;
+	अगर((status = adpt_i2o_post_this(pHba, msg, len)) == 0)अणु
 		set_current_state(TASK_INTERRUPTIBLE);
-		if(pHba->host)
+		अगर(pHba->host)
 			spin_unlock_irq(pHba->host->host_lock);
-		if (!timeout)
+		अगर (!समयout)
 			schedule();
-		else{
-			timeout = schedule_timeout(timeout);
-			if (timeout == 0) {
+		अन्यथाअणु
+			समयout = schedule_समयout(समयout);
+			अगर (समयout == 0) अणु
 				// I/O issued, but cannot get result in
-				// specified time. Freeing resorces is
+				// specअगरied समय. Freeing resorces is
 				// dangerous.
 				status = -ETIME;
-			}
-		}
-		if(pHba->host)
+			पूर्ण
+		पूर्ण
+		अगर(pHba->host)
 			spin_lock_irq(pHba->host->host_lock);
-	}
-	remove_wait_queue(&adpt_wq_i2o_post, &wait);
+	पूर्ण
+	हटाओ_रुको_queue(&adpt_wq_i2o_post, &रुको);
 
-	if(status == -ETIMEDOUT){
-		printk(KERN_INFO"dpti%d: POST WAIT TIMEOUT\n",pHba->unit);
-		// We will have to free the wait_data memory during shutdown
-		return status;
-	}
+	अगर(status == -ETIMEDOUT)अणु
+		prपूर्णांकk(KERN_INFO"dpti%d: POST WAIT TIMEOUT\n",pHba->unit);
+		// We will have to मुक्त the रुको_data memory during shutकरोwn
+		वापस status;
+	पूर्ण
 
 	/* Remove the entry from the queue.  */
-	p2 = NULL;
-	spin_lock_irqsave(&adpt_post_wait_lock, flags);
-	for(p1 = adpt_post_wait_queue; p1; p2 = p1, p1 = p1->next) {
-		if(p1 == wait_data) {
-			if(p1->status == I2O_DETAIL_STATUS_UNSUPPORTED_FUNCTION ) {
+	p2 = शून्य;
+	spin_lock_irqsave(&adpt_post_रुको_lock, flags);
+	क्रम(p1 = adpt_post_रुको_queue; p1; p2 = p1, p1 = p1->next) अणु
+		अगर(p1 == रुको_data) अणु
+			अगर(p1->status == I2O_DETAIL_STATUS_UNSUPPORTED_FUNCTION ) अणु
 				status = -EOPNOTSUPP;
-			}
-			if(p2) {
+			पूर्ण
+			अगर(p2) अणु
 				p2->next = p1->next;
-			} else {
-				adpt_post_wait_queue = p1->next;
-			}
-			break;
-		}
-	}
-	spin_unlock_irqrestore(&adpt_post_wait_lock, flags);
+			पूर्ण अन्यथा अणु
+				adpt_post_रुको_queue = p1->next;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	spin_unlock_irqrestore(&adpt_post_रुको_lock, flags);
 
-	kfree(wait_data);
+	kमुक्त(रुको_data);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
-static s32 adpt_i2o_post_this(adpt_hba* pHba, u32* data, int len)
-{
+अटल s32 adpt_i2o_post_this(adpt_hba* pHba, u32* data, पूर्णांक len)
+अणु
 
 	u32 m = EMPTY_QUEUE;
 	u32 __iomem *msg;
-	ulong timeout = jiffies + 30*HZ;
-	do {
+	uदीर्घ समयout = jअगरfies + 30*HZ;
+	करो अणु
 		rmb();
-		m = readl(pHba->post_port);
-		if (m != EMPTY_QUEUE) {
-			break;
-		}
-		if(time_after(jiffies,timeout)){
-			printk(KERN_WARNING"dpti%d: Timeout waiting for message frame!\n", pHba->unit);
-			return -ETIMEDOUT;
-		}
-		schedule_timeout_uninterruptible(1);
-	} while(m == EMPTY_QUEUE);
+		m = पढ़ोl(pHba->post_port);
+		अगर (m != EMPTY_QUEUE) अणु
+			अवरोध;
+		पूर्ण
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_WARNING"dpti%d: Timeout waiting for message frame!\n", pHba->unit);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण जबतक(m == EMPTY_QUEUE);
 		
 	msg = pHba->msg_addr_virt + m;
-	memcpy_toio(msg, data, len);
+	स_नकल_toio(msg, data, len);
 	wmb();
 
 	//post message
-	writel(m, pHba->post_port);
+	ग_लिखोl(m, pHba->post_port);
 	wmb();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void adpt_i2o_post_wait_complete(u32 context, int status)
-{
-	struct adpt_i2o_post_wait_data *p1 = NULL;
+अटल व्योम adpt_i2o_post_रुको_complete(u32 context, पूर्णांक status)
+अणु
+	काष्ठा adpt_i2o_post_रुको_data *p1 = शून्य;
 	/*
-	 * We need to search through the adpt_post_wait
-	 * queue to see if the given message is still
+	 * We need to search through the adpt_post_रुको
+	 * queue to see अगर the given message is still
 	 * outstanding.  If not, it means that the IOP
-	 * took longer to respond to the message than we
-	 * had allowed and timer has already expired.
-	 * Not much we can do about that except log
-	 * it for debug purposes, increase timeout, and recompile
+	 * took दीर्घer to respond to the message than we
+	 * had allowed and समयr has alपढ़ोy expired.
+	 * Not much we can करो about that except log
+	 * it क्रम debug purposes, increase समयout, and recompile
 	 *
-	 * Lock needed to keep anyone from moving queue pointers
-	 * around while we're looking through them.
+	 * Lock needed to keep anyone from moving queue poपूर्णांकers
+	 * around जबतक we're looking through them.
 	 */
 
 	context &= 0x7fff;
 
-	spin_lock(&adpt_post_wait_lock);
-	for(p1 = adpt_post_wait_queue; p1; p1 = p1->next) {
-		if(p1->id == context) {
+	spin_lock(&adpt_post_रुको_lock);
+	क्रम(p1 = adpt_post_रुको_queue; p1; p1 = p1->next) अणु
+		अगर(p1->id == context) अणु
 			p1->status = status;
-			spin_unlock(&adpt_post_wait_lock);
-			wake_up_interruptible(p1->wq);
-			return;
-		}
-	}
-	spin_unlock(&adpt_post_wait_lock);
+			spin_unlock(&adpt_post_रुको_lock);
+			wake_up_पूर्णांकerruptible(p1->wq);
+			वापस;
+		पूर्ण
+	पूर्ण
+	spin_unlock(&adpt_post_रुको_lock);
         // If this happens we lose commands that probably really completed
-	printk(KERN_DEBUG"dpti: Could Not find task %d in wait queue\n",context);
-	printk(KERN_DEBUG"      Tasks in wait queue:\n");
-	for(p1 = adpt_post_wait_queue; p1; p1 = p1->next) {
-		printk(KERN_DEBUG"           %d\n",p1->id);
-	}
-	return;
-}
+	prपूर्णांकk(KERN_DEBUG"dpti: Could Not find task %d in wait queue\n",context);
+	prपूर्णांकk(KERN_DEBUG"      Tasks in wait queue:\n");
+	क्रम(p1 = adpt_post_रुको_queue; p1; p1 = p1->next) अणु
+		prपूर्णांकk(KERN_DEBUG"           %d\n",p1->id);
+	पूर्ण
+	वापस;
+पूर्ण
 
-static s32 adpt_i2o_reset_hba(adpt_hba* pHba)			
-{
+अटल s32 adpt_i2o_reset_hba(adpt_hba* pHba)			
+अणु
 	u32 msg[8];
 	u8* status;
 	dma_addr_t addr;
 	u32 m = EMPTY_QUEUE ;
-	ulong timeout = jiffies + (TMOUT_IOPRESET*HZ);
+	uदीर्घ समयout = jअगरfies + (TMOUT_IOPRESET*HZ);
 
-	if(pHba->initialized  == FALSE) {	// First time reset should be quick
-		timeout = jiffies + (25*HZ);
-	} else {
+	अगर(pHba->initialized  == FALSE) अणु	// First समय reset should be quick
+		समयout = jअगरfies + (25*HZ);
+	पूर्ण अन्यथा अणु
 		adpt_i2o_quiesce_hba(pHba);
-	}
+	पूर्ण
 
-	do {
+	करो अणु
 		rmb();
-		m = readl(pHba->post_port);
-		if (m != EMPTY_QUEUE) {
-			break;
-		}
-		if(time_after(jiffies,timeout)){
-			printk(KERN_WARNING"Timeout waiting for message!\n");
-			return -ETIMEDOUT;
-		}
-		schedule_timeout_uninterruptible(1);
-	} while (m == EMPTY_QUEUE);
+		m = पढ़ोl(pHba->post_port);
+		अगर (m != EMPTY_QUEUE) अणु
+			अवरोध;
+		पूर्ण
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_WARNING"Timeout waiting for message!\n");
+			वापस -ETIMEDOUT;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण जबतक (m == EMPTY_QUEUE);
 
 	status = dma_alloc_coherent(&pHba->pDev->dev, 4, &addr, GFP_KERNEL);
-	if(status == NULL) {
+	अगर(status == शून्य) अणु
 		adpt_send_nop(pHba, m);
-		printk(KERN_ERR"IOP reset failed - no free memory.\n");
-		return -ENOMEM;
-	}
+		prपूर्णांकk(KERN_ERR"IOP reset failed - no free memory.\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	msg[0]=EIGHT_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1]=I2O_CMD_ADAPTER_RESET<<24|HOST_TID<<12|ADAPTER_TID;
@@ -1338,207 +1339,207 @@ static s32 adpt_i2o_reset_hba(adpt_hba* pHba)
 	msg[6]=dma_low(addr);
 	msg[7]=dma_high(addr);
 
-	memcpy_toio(pHba->msg_addr_virt+m, msg, sizeof(msg));
+	स_नकल_toio(pHba->msg_addr_virt+m, msg, माप(msg));
 	wmb();
-	writel(m, pHba->post_port);
+	ग_लिखोl(m, pHba->post_port);
 	wmb();
 
-	while(*status == 0){
-		if(time_after(jiffies,timeout)){
-			printk(KERN_WARNING"%s: IOP Reset Timeout\n",pHba->name);
+	जबतक(*status == 0)अणु
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_WARNING"%s: IOP Reset Timeout\n",pHba->name);
 			/* We lose 4 bytes of "status" here, but we cannot
-			   free these because controller may awake and corrupt
-			   those bytes at any time */
-			/* dma_free_coherent(&pHba->pDev->dev, 4, buf, addr); */
-			return -ETIMEDOUT;
-		}
+			   मुक्त these because controller may awake and corrupt
+			   those bytes at any समय */
+			/* dma_मुक्त_coherent(&pHba->pDev->dev, 4, buf, addr); */
+			वापस -ETIMEDOUT;
+		पूर्ण
 		rmb();
-		schedule_timeout_uninterruptible(1);
-	}
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण
 
-	if(*status == 0x01 /*I2O_EXEC_IOP_RESET_IN_PROGRESS*/) {
+	अगर(*status == 0x01 /*I2O_EXEC_IOP_RESET_IN_PROGRESS*/) अणु
 		PDEBUG("%s: Reset in progress...\n", pHba->name);
-		// Here we wait for message frame to become available
+		// Here we रुको क्रम message frame to become available
 		// indicated that reset has finished
-		do {
+		करो अणु
 			rmb();
-			m = readl(pHba->post_port);
-			if (m != EMPTY_QUEUE) {
-				break;
-			}
-			if(time_after(jiffies,timeout)){
-				printk(KERN_ERR "%s:Timeout waiting for IOP Reset.\n",pHba->name);
+			m = पढ़ोl(pHba->post_port);
+			अगर (m != EMPTY_QUEUE) अणु
+				अवरोध;
+			पूर्ण
+			अगर(समय_after(jअगरfies,समयout))अणु
+				prपूर्णांकk(KERN_ERR "%s:Timeout waiting for IOP Reset.\n",pHba->name);
 				/* We lose 4 bytes of "status" here, but we
-				   cannot free these because controller may
-				   awake and corrupt those bytes at any time */
-				/* dma_free_coherent(&pHba->pDev->dev, 4, buf, addr); */
-				return -ETIMEDOUT;
-			}
-			schedule_timeout_uninterruptible(1);
-		} while (m == EMPTY_QUEUE);
+				   cannot मुक्त these because controller may
+				   awake and corrupt those bytes at any समय */
+				/* dma_मुक्त_coherent(&pHba->pDev->dev, 4, buf, addr); */
+				वापस -ETIMEDOUT;
+			पूर्ण
+			schedule_समयout_unपूर्णांकerruptible(1);
+		पूर्ण जबतक (m == EMPTY_QUEUE);
 		// Flush the offset
 		adpt_send_nop(pHba, m);
-	}
+	पूर्ण
 	adpt_i2o_status_get(pHba);
-	if(*status == 0x02 ||
-			pHba->status_block->iop_state != ADAPTER_STATE_RESET) {
-		printk(KERN_WARNING"%s: Reset reject, trying to clear\n",
+	अगर(*status == 0x02 ||
+			pHba->status_block->iop_state != ADAPTER_STATE_RESET) अणु
+		prपूर्णांकk(KERN_WARNING"%s: Reset reject, trying to clear\n",
 				pHba->name);
-	} else {
+	पूर्ण अन्यथा अणु
 		PDEBUG("%s: Reset completed.\n", pHba->name);
-	}
+	पूर्ण
 
-	dma_free_coherent(&pHba->pDev->dev, 4, status, addr);
-#ifdef UARTDELAY
+	dma_मुक्त_coherent(&pHba->pDev->dev, 4, status, addr);
+#अगर_घोषित UARTDELAY
 	// This delay is to allow someone attached to the card through the debug UART to 
-	// set up the dump levels that they want before the rest of the initialization sequence
+	// set up the dump levels that they want beक्रमe the rest of the initialization sequence
 	adpt_delay(20000);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 
-static int adpt_i2o_parse_lct(adpt_hba* pHba)
-{
-	int i;
-	int max;
-	int tid;
-	struct i2o_device *d;
+अटल पूर्णांक adpt_i2o_parse_lct(adpt_hba* pHba)
+अणु
+	पूर्णांक i;
+	पूर्णांक max;
+	पूर्णांक tid;
+	काष्ठा i2o_device *d;
 	i2o_lct *lct = pHba->lct;
 	u8 bus_no = 0;
 	s16 scsi_id;
 	u64 scsi_lun;
 	u32 buf[10]; // larger than 7, or 8 ...
-	struct adpt_device* pDev; 
+	काष्ठा adpt_device* pDev; 
 	
-	if (lct == NULL) {
-		printk(KERN_ERR "%s: LCT is empty???\n",pHba->name);
-		return -1;
-	}
+	अगर (lct == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s: LCT is empty???\n",pHba->name);
+		वापस -1;
+	पूर्ण
 	
 	max = lct->table_size;	
 	max -= 3;
 	max /= 9;
 
-	for(i=0;i<max;i++) {
-		if( lct->lct_entry[i].user_tid != 0xfff){
+	क्रम(i=0;i<max;i++) अणु
+		अगर( lct->lct_entry[i].user_tid != 0xfff)अणु
 			/*
-			 * If we have hidden devices, we need to inform the upper layers about
+			 * If we have hidden devices, we need to inक्रमm the upper layers about
 			 * the possible maximum id reference to handle device access when
 			 * an array is disassembled. This code has no other purpose but to
 			 * allow us future access to devices that are currently hidden
 			 * behind arrays, hotspares or have not been configured (JBOD mode).
 			 */
-			if( lct->lct_entry[i].class_id != I2O_CLASS_RANDOM_BLOCK_STORAGE &&
+			अगर( lct->lct_entry[i].class_id != I2O_CLASS_RANDOM_BLOCK_STORAGE &&
 			    lct->lct_entry[i].class_id != I2O_CLASS_SCSI_PERIPHERAL &&
-			    lct->lct_entry[i].class_id != I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
-			    	continue;
-			}
+			    lct->lct_entry[i].class_id != I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL )अणु
+			    	जारी;
+			पूर्ण
 			tid = lct->lct_entry[i].tid;
 			// I2O_DPT_DEVICE_INFO_GROUP_NO;
-			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) {
-				continue;
-			}
+			अगर(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) अणु
+				जारी;
+			पूर्ण
 			bus_no = buf[0]>>16;
 			scsi_id = buf[1];
-			scsi_lun = scsilun_to_int((struct scsi_lun *)&buf[2]);
-			if(bus_no >= MAX_CHANNEL) {	// Something wrong skip it
-				printk(KERN_WARNING"%s: Channel number %d out of range \n", pHba->name, bus_no);
-				continue;
-			}
-			if (scsi_id >= MAX_ID){
-				printk(KERN_WARNING"%s: SCSI ID %d out of range \n", pHba->name, bus_no);
-				continue;
-			}
-			if(bus_no > pHba->top_scsi_channel){
+			scsi_lun = scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&buf[2]);
+			अगर(bus_no >= MAX_CHANNEL) अणु	// Something wrong skip it
+				prपूर्णांकk(KERN_WARNING"%s: Channel number %d out of range \n", pHba->name, bus_no);
+				जारी;
+			पूर्ण
+			अगर (scsi_id >= MAX_ID)अणु
+				prपूर्णांकk(KERN_WARNING"%s: SCSI ID %d out of range \n", pHba->name, bus_no);
+				जारी;
+			पूर्ण
+			अगर(bus_no > pHba->top_scsi_channel)अणु
 				pHba->top_scsi_channel = bus_no;
-			}
-			if(scsi_id > pHba->top_scsi_id){
+			पूर्ण
+			अगर(scsi_id > pHba->top_scsi_id)अणु
 				pHba->top_scsi_id = scsi_id;
-			}
-			if(scsi_lun > pHba->top_scsi_lun){
+			पूर्ण
+			अगर(scsi_lun > pHba->top_scsi_lun)अणु
 				pHba->top_scsi_lun = scsi_lun;
-			}
-			continue;
-		}
-		d = kmalloc(sizeof(struct i2o_device), GFP_KERNEL);
-		if(d==NULL)
-		{
-			printk(KERN_CRIT"%s: Out of memory for I2O device data.\n",pHba->name);
-			return -ENOMEM;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
+		d = kदो_स्मृति(माप(काष्ठा i2o_device), GFP_KERNEL);
+		अगर(d==शून्य)
+		अणु
+			prपूर्णांकk(KERN_CRIT"%s: Out of memory for I2O device data.\n",pHba->name);
+			वापस -ENOMEM;
+		पूर्ण
 		
 		d->controller = pHba;
-		d->next = NULL;
+		d->next = शून्य;
 
-		memcpy(&d->lct_data, &lct->lct_entry[i], sizeof(i2o_lct_entry));
+		स_नकल(&d->lct_data, &lct->lct_entry[i], माप(i2o_lct_entry));
 
 		d->flags = 0;
 		tid = d->lct_data.tid;
 		adpt_i2o_report_hba_unit(pHba, d);
 		adpt_i2o_install_device(pHba, d);
-	}
+	पूर्ण
 	bus_no = 0;
-	for(d = pHba->devices; d ; d = d->next) {
-		if(d->lct_data.class_id  == I2O_CLASS_BUS_ADAPTER_PORT ||
-		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PORT){
+	क्रम(d = pHba->devices; d ; d = d->next) अणु
+		अगर(d->lct_data.class_id  == I2O_CLASS_BUS_ADAPTER_PORT ||
+		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PORT)अणु
 			tid = d->lct_data.tid;
-			// TODO get the bus_no from hrt-but for now they are in order
+			// TODO get the bus_no from hrt-but क्रम now they are in order
 			//bus_no = 
-			if(bus_no > pHba->top_scsi_channel){
+			अगर(bus_no > pHba->top_scsi_channel)अणु
 				pHba->top_scsi_channel = bus_no;
-			}
+			पूर्ण
 			pHba->channel[bus_no].type = d->lct_data.class_id;
 			pHba->channel[bus_no].tid = tid;
-			if(adpt_i2o_query_scalar(pHba, tid, 0x0200, -1, buf, 28)>=0)
-			{
+			अगर(adpt_i2o_query_scalar(pHba, tid, 0x0200, -1, buf, 28)>=0)
+			अणु
 				pHba->channel[bus_no].scsi_id = buf[1];
 				PDEBUG("Bus %d - SCSI ID %d.\n", bus_no, buf[1]);
-			}
-			// TODO remove - this is just until we get from hrt
+			पूर्ण
+			// TODO हटाओ - this is just until we get from hrt
 			bus_no++;
-			if(bus_no >= MAX_CHANNEL) {	// Something wrong skip it
-				printk(KERN_WARNING"%s: Channel number %d out of range - LCT\n", pHba->name, bus_no);
-				break;
-			}
-		}
-	}
+			अगर(bus_no >= MAX_CHANNEL) अणु	// Something wrong skip it
+				prपूर्णांकk(KERN_WARNING"%s: Channel number %d out of range - LCT\n", pHba->name, bus_no);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	// Setup adpt_device table
-	for(d = pHba->devices; d ; d = d->next) {
-		if(d->lct_data.class_id  == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
+	क्रम(d = pHba->devices; d ; d = d->next) अणु
+		अगर(d->lct_data.class_id  == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
 		   d->lct_data.class_id  == I2O_CLASS_SCSI_PERIPHERAL ||
-		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
+		   d->lct_data.class_id  == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL )अणु
 
 			tid = d->lct_data.tid;
 			scsi_id = -1;
 			// I2O_DPT_DEVICE_INFO_GROUP_NO;
-			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)>=0) {
+			अगर(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)>=0) अणु
 				bus_no = buf[0]>>16;
 				scsi_id = buf[1];
-				scsi_lun = scsilun_to_int((struct scsi_lun *)&buf[2]);
-				if(bus_no >= MAX_CHANNEL) {	// Something wrong skip it
-					continue;
-				}
-				if (scsi_id >= MAX_ID) {
-					continue;
-				}
-				if( pHba->channel[bus_no].device[scsi_id] == NULL){
-					pDev =  kzalloc(sizeof(struct adpt_device),GFP_KERNEL);
-					if(pDev == NULL) {
-						return -ENOMEM;
-					}
+				scsi_lun = scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&buf[2]);
+				अगर(bus_no >= MAX_CHANNEL) अणु	// Something wrong skip it
+					जारी;
+				पूर्ण
+				अगर (scsi_id >= MAX_ID) अणु
+					जारी;
+				पूर्ण
+				अगर( pHba->channel[bus_no].device[scsi_id] == शून्य)अणु
+					pDev =  kzalloc(माप(काष्ठा adpt_device),GFP_KERNEL);
+					अगर(pDev == शून्य) अणु
+						वापस -ENOMEM;
+					पूर्ण
 					pHba->channel[bus_no].device[scsi_id] = pDev;
-				} else {
-					for( pDev = pHba->channel[bus_no].device[scsi_id];	
-							pDev->next_lun; pDev = pDev->next_lun){
-					}
-					pDev->next_lun = kzalloc(sizeof(struct adpt_device),GFP_KERNEL);
-					if(pDev->next_lun == NULL) {
-						return -ENOMEM;
-					}
+				पूर्ण अन्यथा अणु
+					क्रम( pDev = pHba->channel[bus_no].device[scsi_id];	
+							pDev->next_lun; pDev = pDev->next_lun)अणु
+					पूर्ण
+					pDev->next_lun = kzalloc(माप(काष्ठा adpt_device),GFP_KERNEL);
+					अगर(pDev->next_lun == शून्य) अणु
+						वापस -ENOMEM;
+					पूर्ण
 					pDev = pDev->next_lun;
-				}
+				पूर्ण
 				pDev->tid = tid;
 				pDev->scsi_channel = bus_no;
 				pDev->scsi_id = scsi_id;
@@ -1547,21 +1548,21 @@ static int adpt_i2o_parse_lct(adpt_hba* pHba)
 				d->owner = pDev;
 				pDev->type = (buf[0])&0xff;
 				pDev->flags = (buf[0]>>8)&0xff;
-				if(scsi_id > pHba->top_scsi_id){
+				अगर(scsi_id > pHba->top_scsi_id)अणु
 					pHba->top_scsi_id = scsi_id;
-				}
-				if(scsi_lun > pHba->top_scsi_lun){
+				पूर्ण
+				अगर(scsi_lun > pHba->top_scsi_lun)अणु
 					pHba->top_scsi_lun = scsi_lun;
-				}
-			}
-			if(scsi_id == -1){
-				printk(KERN_WARNING"Could not find SCSI ID for %s\n",
+				पूर्ण
+			पूर्ण
+			अगर(scsi_id == -1)अणु
+				prपूर्णांकk(KERN_WARNING"Could not find SCSI ID for %s\n",
 						d->lct_data.identity_tag);
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -1569,353 +1570,353 @@ static int adpt_i2o_parse_lct(adpt_hba* pHba)
  *	the useful parts of the LCT of the board.
  */
  
-static int adpt_i2o_install_device(adpt_hba* pHba, struct i2o_device *d)
-{
+अटल पूर्णांक adpt_i2o_install_device(adpt_hba* pHba, काष्ठा i2o_device *d)
+अणु
 	mutex_lock(&adpt_configuration_lock);
 	d->controller=pHba;
-	d->owner=NULL;
+	d->owner=शून्य;
 	d->next=pHba->devices;
-	d->prev=NULL;
-	if (pHba->devices != NULL){
+	d->prev=शून्य;
+	अगर (pHba->devices != शून्य)अणु
 		pHba->devices->prev=d;
-	}
+	पूर्ण
 	pHba->devices=d;
 	*d->dev_name = 0;
 
 	mutex_unlock(&adpt_configuration_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adpt_open(struct inode *inode, struct file *file)
-{
-	int minor;
+अटल पूर्णांक adpt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक minor;
 	adpt_hba* pHba;
 
 	mutex_lock(&adpt_mutex);
-	//TODO check for root access
+	//TODO check क्रम root access
 	//
 	minor = iminor(inode);
-	if (minor >= hba_count) {
+	अगर (minor >= hba_count) अणु
 		mutex_unlock(&adpt_mutex);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	mutex_lock(&adpt_configuration_lock);
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
-		if (pHba->unit == minor) {
-			break;	/* found adapter */
-		}
-	}
-	if (pHba == NULL) {
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
+		अगर (pHba->unit == minor) अणु
+			अवरोध;	/* found adapter */
+		पूर्ण
+	पूर्ण
+	अगर (pHba == शून्य) अणु
 		mutex_unlock(&adpt_configuration_lock);
 		mutex_unlock(&adpt_mutex);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-//	if(pHba->in_use){
+//	अगर(pHba->in_use)अणु
 	//	mutex_unlock(&adpt_configuration_lock);
-//		return -EBUSY;
-//	}
+//		वापस -EBUSY;
+//	पूर्ण
 
 	pHba->in_use = 1;
 	mutex_unlock(&adpt_configuration_lock);
 	mutex_unlock(&adpt_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adpt_close(struct inode *inode, struct file *file)
-{
-	int minor;
+अटल पूर्णांक adpt_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक minor;
 	adpt_hba* pHba;
 
 	minor = iminor(inode);
-	if (minor >= hba_count) {
-		return -ENXIO;
-	}
+	अगर (minor >= hba_count) अणु
+		वापस -ENXIO;
+	पूर्ण
 	mutex_lock(&adpt_configuration_lock);
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
-		if (pHba->unit == minor) {
-			break;	/* found adapter */
-		}
-	}
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
+		अगर (pHba->unit == minor) अणु
+			अवरोध;	/* found adapter */
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adpt_configuration_lock);
-	if (pHba == NULL) {
-		return -ENXIO;
-	}
+	अगर (pHba == शून्य) अणु
+		वापस -ENXIO;
+	पूर्ण
 
 	pHba->in_use = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int adpt_i2o_passthru(adpt_hba* pHba, u32 __user *arg)
-{
+अटल पूर्णांक adpt_i2o_passthru(adpt_hba* pHba, u32 __user *arg)
+अणु
 	u32 msg[MAX_MESSAGE_SIZE];
-	u32* reply = NULL;
+	u32* reply = शून्य;
 	u32 size = 0;
 	u32 reply_size = 0;
 	u32 __user *user_msg = arg;
-	u32 __user * user_reply = NULL;
-	void **sg_list = NULL;
+	u32 __user * user_reply = शून्य;
+	व्योम **sg_list = शून्य;
 	u32 sg_offset = 0;
 	u32 sg_count = 0;
-	int sg_index = 0;
+	पूर्णांक sg_index = 0;
 	u32 i = 0;
 	u32 rcode = 0;
-	void *p = NULL;
+	व्योम *p = शून्य;
 	dma_addr_t addr;
-	ulong flags = 0;
+	uदीर्घ flags = 0;
 
-	memset(&msg, 0, MAX_MESSAGE_SIZE*4);
+	स_रखो(&msg, 0, MAX_MESSAGE_SIZE*4);
 	// get user msg size in u32s 
-	if(get_user(size, &user_msg[0])){
-		return -EFAULT;
-	}
+	अगर(get_user(size, &user_msg[0]))अणु
+		वापस -EFAULT;
+	पूर्ण
 	size = size>>16;
 
 	user_reply = &user_msg[size];
-	if(size > MAX_MESSAGE_SIZE){
-		return -EFAULT;
-	}
+	अगर(size > MAX_MESSAGE_SIZE)अणु
+		वापस -EFAULT;
+	पूर्ण
 	size *= 4; // Convert to bytes
 
 	/* Copy in the user's I2O command */
-	if(copy_from_user(msg, user_msg, size)) {
-		return -EFAULT;
-	}
+	अगर(copy_from_user(msg, user_msg, size)) अणु
+		वापस -EFAULT;
+	पूर्ण
 	get_user(reply_size, &user_reply[0]);
 	reply_size = reply_size>>16;
-	if(reply_size > REPLY_FRAME_SIZE){
+	अगर(reply_size > REPLY_FRAME_SIZE)अणु
 		reply_size = REPLY_FRAME_SIZE;
-	}
+	पूर्ण
 	reply_size *= 4;
 	reply = kzalloc(REPLY_FRAME_SIZE*4, GFP_KERNEL);
-	if(reply == NULL) {
-		printk(KERN_WARNING"%s: Could not allocate reply buffer\n",pHba->name);
-		return -ENOMEM;
-	}
+	अगर(reply == शून्य) अणु
+		prपूर्णांकk(KERN_WARNING"%s: Could not allocate reply buffer\n",pHba->name);
+		वापस -ENOMEM;
+	पूर्ण
 	sg_offset = (msg[0]>>4)&0xf;
 	msg[2] = 0x40000000; // IOCTL context
 	msg[3] = adpt_ioctl_to_context(pHba, reply);
-	if (msg[3] == (u32)-1) {
+	अगर (msg[3] == (u32)-1) अणु
 		rcode = -EBUSY;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	sg_list = kcalloc(pHba->sg_tablesize, sizeof(*sg_list), GFP_KERNEL);
-	if (!sg_list) {
+	sg_list = kसुस्मृति(pHba->sg_tablesize, माप(*sg_list), GFP_KERNEL);
+	अगर (!sg_list) अणु
 		rcode = -ENOMEM;
-		goto free;
-	}
-	if(sg_offset) {
+		जाओ मुक्त;
+	पूर्ण
+	अगर(sg_offset) अणु
 		// TODO add 64 bit API
-		struct sg_simple_element *sg =  (struct sg_simple_element*) (msg+sg_offset);
-		sg_count = (size - sg_offset*4) / sizeof(struct sg_simple_element);
-		if (sg_count > pHba->sg_tablesize){
-			printk(KERN_DEBUG"%s:IOCTL SG List too large (%u)\n", pHba->name,sg_count);
+		काष्ठा sg_simple_element *sg =  (काष्ठा sg_simple_element*) (msg+sg_offset);
+		sg_count = (size - sg_offset*4) / माप(काष्ठा sg_simple_element);
+		अगर (sg_count > pHba->sg_tablesize)अणु
+			prपूर्णांकk(KERN_DEBUG"%s:IOCTL SG List too large (%u)\n", pHba->name,sg_count);
 			rcode = -EINVAL;
-			goto free;
-		}
+			जाओ मुक्त;
+		पूर्ण
 
-		for(i = 0; i < sg_count; i++) {
-			int sg_size;
+		क्रम(i = 0; i < sg_count; i++) अणु
+			पूर्णांक sg_size;
 
-			if (!(sg[i].flag_count & 0x10000000 /*I2O_SGL_FLAGS_SIMPLE_ADDRESS_ELEMENT*/)) {
-				printk(KERN_DEBUG"%s:Bad SG element %d - not simple (%x)\n",pHba->name,i,  sg[i].flag_count);
+			अगर (!(sg[i].flag_count & 0x10000000 /*I2O_SGL_FLAGS_SIMPLE_ADDRESS_ELEMENT*/)) अणु
+				prपूर्णांकk(KERN_DEBUG"%s:Bad SG element %d - not simple (%x)\n",pHba->name,i,  sg[i].flag_count);
 				rcode = -EINVAL;
-				goto cleanup;
-			}
+				जाओ cleanup;
+			पूर्ण
 			sg_size = sg[i].flag_count & 0xffffff;      
-			/* Allocate memory for the transfer */
+			/* Allocate memory क्रम the transfer */
 			p = dma_alloc_coherent(&pHba->pDev->dev, sg_size, &addr, GFP_KERNEL);
-			if(!p) {
-				printk(KERN_DEBUG"%s: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
+			अगर(!p) अणु
+				prपूर्णांकk(KERN_DEBUG"%s: Could not allocate SG buffer - size = %d buffer number %d of %d\n",
 						pHba->name,sg_size,i,sg_count);
 				rcode = -ENOMEM;
-				goto cleanup;
-			}
-			sg_list[sg_index++] = p; // sglist indexed with input frame, not our internal frame.
-			/* Copy in the user's SG buffer if necessary */
-			if(sg[i].flag_count & 0x04000000 /*I2O_SGL_FLAGS_DIR*/) {
+				जाओ cleanup;
+			पूर्ण
+			sg_list[sg_index++] = p; // sglist indexed with input frame, not our पूर्णांकernal frame.
+			/* Copy in the user's SG buffer अगर necessary */
+			अगर(sg[i].flag_count & 0x04000000 /*I2O_SGL_FLAGS_सूची*/) अणु
 				// sg_simple_element API is 32 bit
-				if (copy_from_user(p,(void __user *)(ulong)sg[i].addr_bus, sg_size)) {
-					printk(KERN_DEBUG"%s: Could not copy SG buf %d FROM user\n",pHba->name,i);
+				अगर (copy_from_user(p,(व्योम __user *)(uदीर्घ)sg[i].addr_bus, sg_size)) अणु
+					prपूर्णांकk(KERN_DEBUG"%s: Could not copy SG buf %d FROM user\n",pHba->name,i);
 					rcode = -EFAULT;
-					goto cleanup;
-				}
-			}
+					जाओ cleanup;
+				पूर्ण
+			पूर्ण
 			/* sg_simple_element API is 32 bit, but addr < 4GB */
 			sg[i].addr_bus = addr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	do {
+	करो अणु
 		/*
 		 * Stop any new commands from enterring the
-		 * controller while processing the ioctl
+		 * controller जबतक processing the ioctl
 		 */
-		if (pHba->host) {
+		अगर (pHba->host) अणु
 			scsi_block_requests(pHba->host);
 			spin_lock_irqsave(pHba->host->host_lock, flags);
-		}
-		rcode = adpt_i2o_post_wait(pHba, msg, size, FOREVER);
-		if (rcode != 0)
-			printk("adpt_i2o_passthru: post wait failed %d %p\n",
+		पूर्ण
+		rcode = adpt_i2o_post_रुको(pHba, msg, size, FOREVER);
+		अगर (rcode != 0)
+			prपूर्णांकk("adpt_i2o_passthru: post wait failed %d %p\n",
 					rcode, reply);
-		if (pHba->host) {
+		अगर (pHba->host) अणु
 			spin_unlock_irqrestore(pHba->host->host_lock, flags);
 			scsi_unblock_requests(pHba->host);
-		}
-	} while (rcode == -ETIMEDOUT);
+		पूर्ण
+	पूर्ण जबतक (rcode == -ETIMEDOUT);
 
-	if(rcode){
-		goto cleanup;
-	}
+	अगर(rcode)अणु
+		जाओ cleanup;
+	पूर्ण
 
-	if(sg_offset) {
+	अगर(sg_offset) अणु
 	/* Copy back the Scatter Gather buffers back to user space */
 		u32 j;
 		// TODO add 64 bit API
-		struct sg_simple_element* sg;
-		int sg_size;
+		काष्ठा sg_simple_element* sg;
+		पूर्णांक sg_size;
 
 		// re-acquire the original message to handle correctly the sg copy operation
-		memset(&msg, 0, MAX_MESSAGE_SIZE*4); 
+		स_रखो(&msg, 0, MAX_MESSAGE_SIZE*4); 
 		// get user msg size in u32s 
-		if(get_user(size, &user_msg[0])){
+		अगर(get_user(size, &user_msg[0]))अणु
 			rcode = -EFAULT; 
-			goto cleanup; 
-		}
+			जाओ cleanup; 
+		पूर्ण
 		size = size>>16;
 		size *= 4;
-		if (size > MAX_MESSAGE_SIZE) {
+		अगर (size > MAX_MESSAGE_SIZE) अणु
 			rcode = -EINVAL;
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 		/* Copy in the user's I2O command */
-		if (copy_from_user (msg, user_msg, size)) {
+		अगर (copy_from_user (msg, user_msg, size)) अणु
 			rcode = -EFAULT;
-			goto cleanup;
-		}
-		sg_count = (size - sg_offset*4) / sizeof(struct sg_simple_element);
+			जाओ cleanup;
+		पूर्ण
+		sg_count = (size - sg_offset*4) / माप(काष्ठा sg_simple_element);
 
 		// TODO add 64 bit API
-		sg 	 = (struct sg_simple_element*)(msg + sg_offset);
-		for (j = 0; j < sg_count; j++) {
-			/* Copy out the SG list to user's buffer if necessary */
-			if(! (sg[j].flag_count & 0x4000000 /*I2O_SGL_FLAGS_DIR*/)) {
+		sg 	 = (काष्ठा sg_simple_element*)(msg + sg_offset);
+		क्रम (j = 0; j < sg_count; j++) अणु
+			/* Copy out the SG list to user's buffer अगर necessary */
+			अगर(! (sg[j].flag_count & 0x4000000 /*I2O_SGL_FLAGS_सूची*/)) अणु
 				sg_size = sg[j].flag_count & 0xffffff; 
 				// sg_simple_element API is 32 bit
-				if (copy_to_user((void __user *)(ulong)sg[j].addr_bus,sg_list[j], sg_size)) {
-					printk(KERN_WARNING"%s: Could not copy %p TO user %x\n",pHba->name, sg_list[j], sg[j].addr_bus);
+				अगर (copy_to_user((व्योम __user *)(uदीर्घ)sg[j].addr_bus,sg_list[j], sg_size)) अणु
+					prपूर्णांकk(KERN_WARNING"%s: Could not copy %p TO user %x\n",pHba->name, sg_list[j], sg[j].addr_bus);
 					rcode = -EFAULT;
-					goto cleanup;
-				}
-			}
-		}
-	} 
+					जाओ cleanup;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण 
 
 	/* Copy back the reply to user space */
-	if (reply_size) {
-		// we wrote our own values for context - now restore the user supplied ones
-		if(copy_from_user(reply+2, user_msg+2, sizeof(u32)*2)) {
-			printk(KERN_WARNING"%s: Could not copy message context FROM user\n",pHba->name);
+	अगर (reply_size) अणु
+		// we wrote our own values क्रम context - now restore the user supplied ones
+		अगर(copy_from_user(reply+2, user_msg+2, माप(u32)*2)) अणु
+			prपूर्णांकk(KERN_WARNING"%s: Could not copy message context FROM user\n",pHba->name);
 			rcode = -EFAULT;
-		}
-		if(copy_to_user(user_reply, reply, reply_size)) {
-			printk(KERN_WARNING"%s: Could not copy reply TO user\n",pHba->name);
+		पूर्ण
+		अगर(copy_to_user(user_reply, reply, reply_size)) अणु
+			prपूर्णांकk(KERN_WARNING"%s: Could not copy reply TO user\n",pHba->name);
 			rcode = -EFAULT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 
 cleanup:
-	if (rcode != -ETIME && rcode != -EINTR) {
-		struct sg_simple_element *sg =
-				(struct sg_simple_element*) (msg +sg_offset);
-		while(sg_index) {
-			if(sg_list[--sg_index]) {
-				dma_free_coherent(&pHba->pDev->dev,
+	अगर (rcode != -ETIME && rcode != -EINTR) अणु
+		काष्ठा sg_simple_element *sg =
+				(काष्ठा sg_simple_element*) (msg +sg_offset);
+		जबतक(sg_index) अणु
+			अगर(sg_list[--sg_index]) अणु
+				dma_मुक्त_coherent(&pHba->pDev->dev,
 					sg[sg_index].flag_count & 0xffffff,
 					sg_list[sg_index],
 					sg[sg_index].addr_bus);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-free:
-	kfree(sg_list);
-	kfree(reply);
-	return rcode;
-}
+मुक्त:
+	kमुक्त(sg_list);
+	kमुक्त(reply);
+	वापस rcode;
+पूर्ण
 
-#if defined __ia64__ 
-static void adpt_ia64_info(sysInfo_S* si)
-{
-	// This is all the info we need for now
+#अगर defined __ia64__ 
+अटल व्योम adpt_ia64_info(sysInfo_S* si)
+अणु
+	// This is all the info we need क्रम now
 	// We will add more info as our new
 	// managmenent utility requires it
 	si->processorType = PROC_IA64;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#if defined __sparc__ 
-static void adpt_sparc_info(sysInfo_S* si)
-{
-	// This is all the info we need for now
+#अगर defined __sparc__ 
+अटल व्योम adpt_sparc_info(sysInfo_S* si)
+अणु
+	// This is all the info we need क्रम now
 	// We will add more info as our new
 	// managmenent utility requires it
 	si->processorType = PROC_ULTRASPARC;
-}
-#endif
-#if defined __alpha__ 
-static void adpt_alpha_info(sysInfo_S* si)
-{
-	// This is all the info we need for now
+पूर्ण
+#पूर्ण_अगर
+#अगर defined __alpha__ 
+अटल व्योम adpt_alpha_info(sysInfo_S* si)
+अणु
+	// This is all the info we need क्रम now
 	// We will add more info as our new
 	// managmenent utility requires it
 	si->processorType = PROC_ALPHA;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#if defined __i386__
+#अगर defined __i386__
 
-#include <uapi/asm/vm86.h>
+#समावेश <uapi/यंत्र/vm86.h>
 
-static void adpt_i386_info(sysInfo_S* si)
-{
-	// This is all the info we need for now
+अटल व्योम adpt_i386_info(sysInfo_S* si)
+अणु
+	// This is all the info we need क्रम now
 	// We will add more info as our new
 	// managmenent utility requires it
-	switch (boot_cpu_data.x86) {
-	case CPU_386:
+	चयन (boot_cpu_data.x86) अणु
+	हाल CPU_386:
 		si->processorType = PROC_386;
-		break;
-	case CPU_486:
+		अवरोध;
+	हाल CPU_486:
 		si->processorType = PROC_486;
-		break;
-	case CPU_586:
+		अवरोध;
+	हाल CPU_586:
 		si->processorType = PROC_PENTIUM;
-		break;
-	default:  // Just in case 
+		अवरोध;
+	शेष:  // Just in हाल 
 		si->processorType = PROC_PENTIUM;
-		break;
-	}
-}
-#endif
+		अवरोध;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * This routine returns information about the system.  This does not effect
- * any logic and if the info is wrong - it doesn't matter.
+ * This routine वापसs inक्रमmation about the प्रणाली.  This करोes not effect
+ * any logic and अगर the info is wrong - it करोesn't matter.
  */
 
 /* Get all the info we can not get from kernel services */
-static int adpt_system_info(void __user *buffer)
-{
+अटल पूर्णांक adpt_प्रणाली_info(व्योम __user *buffer)
+अणु
 	sysInfo_S si;
 
-	memset(&si, 0, sizeof(si));
+	स_रखो(&si, 0, माप(si));
 
 	si.osType = OS_LINUX;
 	si.osMajorVersion = 0;
@@ -1924,115 +1925,115 @@ static int adpt_system_info(void __user *buffer)
 	si.busType = SI_PCI_BUS;
 	si.processorFamily = DPTI_sig.dsProcessorFamily;
 
-#if defined __i386__
+#अगर defined __i386__
 	adpt_i386_info(&si);
-#elif defined (__ia64__)
+#या_अगर defined (__ia64__)
 	adpt_ia64_info(&si);
-#elif defined(__sparc__)
+#या_अगर defined(__sparc__)
 	adpt_sparc_info(&si);
-#elif defined (__alpha__)
+#या_अगर defined (__alpha__)
 	adpt_alpha_info(&si);
-#else
+#अन्यथा
 	si.processorType = 0xff ;
-#endif
-	if (copy_to_user(buffer, &si, sizeof(si))){
-		printk(KERN_WARNING"dpti: Could not copy buffer TO user\n");
-		return -EFAULT;
-	}
+#पूर्ण_अगर
+	अगर (copy_to_user(buffer, &si, माप(si)))अणु
+		prपूर्णांकk(KERN_WARNING"dpti: Could not copy buffer TO user\n");
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adpt_ioctl(struct inode *inode, struct file *file, uint cmd, ulong arg)
-{
-	int minor;
-	int error = 0;
+अटल पूर्णांक adpt_ioctl(काष्ठा inode *inode, काष्ठा file *file, uपूर्णांक cmd, uदीर्घ arg)
+अणु
+	पूर्णांक minor;
+	पूर्णांक error = 0;
 	adpt_hba* pHba;
-	ulong flags = 0;
-	void __user *argp = (void __user *)arg;
+	uदीर्घ flags = 0;
+	व्योम __user *argp = (व्योम __user *)arg;
 
 	minor = iminor(inode);
-	if (minor >= DPTI_MAX_HBA){
-		return -ENXIO;
-	}
+	अगर (minor >= DPTI_MAX_HBA)अणु
+		वापस -ENXIO;
+	पूर्ण
 	mutex_lock(&adpt_configuration_lock);
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
-		if (pHba->unit == minor) {
-			break;	/* found adapter */
-		}
-	}
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
+		अगर (pHba->unit == minor) अणु
+			अवरोध;	/* found adapter */
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adpt_configuration_lock);
-	if(pHba == NULL){
-		return -ENXIO;
-	}
+	अगर(pHba == शून्य)अणु
+		वापस -ENXIO;
+	पूर्ण
 
-	while((volatile u32) pHba->state & DPTI_STATE_RESET )
-		schedule_timeout_uninterruptible(2);
+	जबतक((अस्थिर u32) pHba->state & DPTI_STATE_RESET )
+		schedule_समयout_unपूर्णांकerruptible(2);
 
-	switch (cmd) {
-	// TODO: handle 3 cases
-	case DPT_SIGNATURE:
-		if (copy_to_user(argp, &DPTI_sig, sizeof(DPTI_sig))) {
-			return -EFAULT;
-		}
-		break;
-	case I2OUSRCMD:
-		return adpt_i2o_passthru(pHba, argp);
+	चयन (cmd) अणु
+	// TODO: handle 3 हालs
+	हाल DPT_SIGNATURE:
+		अगर (copy_to_user(argp, &DPTI_sig, माप(DPTI_sig))) अणु
+			वापस -EFAULT;
+		पूर्ण
+		अवरोध;
+	हाल I2OUSRCMD:
+		वापस adpt_i2o_passthru(pHba, argp);
 
-	case DPT_CTRLINFO:{
+	हाल DPT_CTRLINFO:अणु
 		drvrHBAinfo_S HbaInfo;
 
-#define FLG_OSD_PCI_VALID 0x0001
-#define FLG_OSD_DMA	  0x0002
-#define FLG_OSD_I2O	  0x0004
-		memset(&HbaInfo, 0, sizeof(HbaInfo));
+#घोषणा FLG_OSD_PCI_VALID 0x0001
+#घोषणा FLG_OSD_DMA	  0x0002
+#घोषणा FLG_OSD_I2O	  0x0004
+		स_रखो(&HbaInfo, 0, माप(HbaInfo));
 		HbaInfo.drvrHBAnum = pHba->unit;
-		HbaInfo.baseAddr = (ulong) pHba->base_addr_phys;
-		HbaInfo.blinkState = adpt_read_blink_led(pHba);
+		HbaInfo.baseAddr = (uदीर्घ) pHba->base_addr_phys;
+		HbaInfo.blinkState = adpt_पढ़ो_blink_led(pHba);
 		HbaInfo.pciBusNum =  pHba->pDev->bus->number;
 		HbaInfo.pciDeviceNum=PCI_SLOT(pHba->pDev->devfn); 
 		HbaInfo.Interrupt = pHba->pDev->irq; 
 		HbaInfo.hbaFlags = FLG_OSD_PCI_VALID | FLG_OSD_DMA | FLG_OSD_I2O;
-		if(copy_to_user(argp, &HbaInfo, sizeof(HbaInfo))){
-			printk(KERN_WARNING"%s: Could not copy HbaInfo TO user\n",pHba->name);
-			return -EFAULT;
-		}
-		break;
-		}
-	case DPT_SYSINFO:
-		return adpt_system_info(argp);
-	case DPT_BLINKLED:{
+		अगर(copy_to_user(argp, &HbaInfo, माप(HbaInfo)))अणु
+			prपूर्णांकk(KERN_WARNING"%s: Could not copy HbaInfo TO user\n",pHba->name);
+			वापस -EFAULT;
+		पूर्ण
+		अवरोध;
+		पूर्ण
+	हाल DPT_SYSINFO:
+		वापस adpt_प्रणाली_info(argp);
+	हाल DPT_BLINKLED:अणु
 		u32 value;
-		value = (u32)adpt_read_blink_led(pHba);
-		if (copy_to_user(argp, &value, sizeof(value))) {
-			return -EFAULT;
-		}
-		break;
-		}
-	case I2ORESETCMD: {
-		struct Scsi_Host *shost = pHba->host;
+		value = (u32)adpt_पढ़ो_blink_led(pHba);
+		अगर (copy_to_user(argp, &value, माप(value))) अणु
+			वापस -EFAULT;
+		पूर्ण
+		अवरोध;
+		पूर्ण
+	हाल I2ORESETCMD: अणु
+		काष्ठा Scsi_Host *shost = pHba->host;
 
-		if (shost)
+		अगर (shost)
 			spin_lock_irqsave(shost->host_lock, flags);
 		adpt_hba_reset(pHba);
-		if (shost)
+		अगर (shost)
 			spin_unlock_irqrestore(shost->host_lock, flags);
-		break;
-	}
-	case I2ORESCANCMD:
+		अवरोध;
+	पूर्ण
+	हाल I2ORESCANCMD:
 		adpt_rescan(pHba);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static long adpt_unlocked_ioctl(struct file *file, uint cmd, ulong arg)
-{
-	struct inode *inode;
-	long ret;
+अटल दीर्घ adpt_unlocked_ioctl(काष्ठा file *file, uपूर्णांक cmd, uदीर्घ arg)
+अणु
+	काष्ठा inode *inode;
+	दीर्घ ret;
  
 	inode = file_inode(file);
  
@@ -2040,204 +2041,204 @@ static long adpt_unlocked_ioctl(struct file *file, uint cmd, ulong arg)
 	ret = adpt_ioctl(inode, file, cmd, arg);
 	mutex_unlock(&adpt_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long compat_adpt_ioctl(struct file *file,
-				unsigned int cmd, unsigned long arg)
-{
-	struct inode *inode;
-	long ret;
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ compat_adpt_ioctl(काष्ठा file *file,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode;
+	दीर्घ ret;
  
 	inode = file_inode(file);
  
 	mutex_lock(&adpt_mutex);
  
-	switch(cmd) {
-		case DPT_SIGNATURE:
-		case I2OUSRCMD:
-		case DPT_CTRLINFO:
-		case DPT_SYSINFO:
-		case DPT_BLINKLED:
-		case I2ORESETCMD:
-		case I2ORESCANCMD:
-		case (DPT_TARGET_BUSY & 0xFFFF):
-		case DPT_TARGET_BUSY:
+	चयन(cmd) अणु
+		हाल DPT_SIGNATURE:
+		हाल I2OUSRCMD:
+		हाल DPT_CTRLINFO:
+		हाल DPT_SYSINFO:
+		हाल DPT_BLINKLED:
+		हाल I2ORESETCMD:
+		हाल I2ORESCANCMD:
+		हाल (DPT_TARGET_BUSY & 0xFFFF):
+		हाल DPT_TARGET_BUSY:
 			ret = adpt_ioctl(inode, file, cmd, arg);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret =  -ENOIOCTLCMD;
-	}
+	पूर्ण
  
 	mutex_unlock(&adpt_mutex);
  
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static irqreturn_t adpt_isr(int irq, void *dev_id)
-{
-	struct scsi_cmnd* cmd;
+अटल irqवापस_t adpt_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा scsi_cmnd* cmd;
 	adpt_hba* pHba = dev_id;
 	u32 m;
-	void __iomem *reply;
+	व्योम __iomem *reply;
 	u32 status=0;
 	u32 context;
-	ulong flags = 0;
-	int handled = 0;
+	uदीर्घ flags = 0;
+	पूर्णांक handled = 0;
 
-	if (pHba == NULL){
-		printk(KERN_WARNING"adpt_isr: NULL dev_id\n");
-		return IRQ_NONE;
-	}
-	if(pHba->host)
+	अगर (pHba == शून्य)अणु
+		prपूर्णांकk(KERN_WARNING"adpt_isr: NULL dev_id\n");
+		वापस IRQ_NONE;
+	पूर्ण
+	अगर(pHba->host)
 		spin_lock_irqsave(pHba->host->host_lock, flags);
 
-	while( readl(pHba->irq_mask) & I2O_INTERRUPT_PENDING_B) {
-		m = readl(pHba->reply_port);
-		if(m == EMPTY_QUEUE){
+	जबतक( पढ़ोl(pHba->irq_mask) & I2O_INTERRUPT_PENDING_B) अणु
+		m = पढ़ोl(pHba->reply_port);
+		अगर(m == EMPTY_QUEUE)अणु
 			// Try twice then give up
 			rmb();
-			m = readl(pHba->reply_port);
-			if(m == EMPTY_QUEUE){ 
+			m = पढ़ोl(pHba->reply_port);
+			अगर(m == EMPTY_QUEUE)अणु 
 				// This really should not happen
-				printk(KERN_ERR"dpti: Could not get reply frame\n");
-				goto out;
-			}
-		}
-		if (pHba->reply_pool_pa <= m &&
+				prपूर्णांकk(KERN_ERR"dpti: Could not get reply frame\n");
+				जाओ out;
+			पूर्ण
+		पूर्ण
+		अगर (pHba->reply_pool_pa <= m &&
 		    m < pHba->reply_pool_pa +
-			(pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4)) {
+			(pHba->reply_fअगरo_size * REPLY_FRAME_SIZE * 4)) अणु
 			reply = (u8 *)pHba->reply_pool +
 						(m - pHba->reply_pool_pa);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Ick, we should *never* be here */
-			printk(KERN_ERR "dpti: reply frame not from pool\n");
+			prपूर्णांकk(KERN_ERR "dpti: reply frame not from pool\n");
 			reply = (u8 *)bus_to_virt(m);
-		}
+		पूर्ण
 
-		if (readl(reply) & MSG_FAIL) {
-			u32 old_m = readl(reply+28); 
-			void __iomem *msg;
+		अगर (पढ़ोl(reply) & MSG_FAIL) अणु
+			u32 old_m = पढ़ोl(reply+28); 
+			व्योम __iomem *msg;
 			u32 old_context;
 			PDEBUG("%s: Failed message\n",pHba->name);
-			if(old_m >= 0x100000){
-				printk(KERN_ERR"%s: Bad preserved MFA (%x)- dropping frame\n",pHba->name,old_m);
-				writel(m,pHba->reply_port);
-				continue;
-			}
+			अगर(old_m >= 0x100000)अणु
+				prपूर्णांकk(KERN_ERR"%s: Bad preserved MFA (%x)- dropping frame\n",pHba->name,old_m);
+				ग_लिखोl(m,pHba->reply_port);
+				जारी;
+			पूर्ण
 			// Transaction context is 0 in failed reply frame
 			msg = pHba->msg_addr_virt + old_m;
-			old_context = readl(msg+12);
-			writel(old_context, reply+12);
+			old_context = पढ़ोl(msg+12);
+			ग_लिखोl(old_context, reply+12);
 			adpt_send_nop(pHba, old_m);
-		} 
-		context = readl(reply+8);
-		if(context & 0x40000000){ // IOCTL
-			void *p = adpt_ioctl_from_context(pHba, readl(reply+12));
-			if( p != NULL) {
-				memcpy_fromio(p, reply, REPLY_FRAME_SIZE * 4);
-			}
-			// All IOCTLs will also be post wait
-		}
-		if(context & 0x80000000){ // Post wait message
-			status = readl(reply+16);
-			if(status  >> 24){
+		पूर्ण 
+		context = पढ़ोl(reply+8);
+		अगर(context & 0x40000000)अणु // IOCTL
+			व्योम *p = adpt_ioctl_from_context(pHba, पढ़ोl(reply+12));
+			अगर( p != शून्य) अणु
+				स_नकल_fromio(p, reply, REPLY_FRAME_SIZE * 4);
+			पूर्ण
+			// All IOCTLs will also be post रुको
+		पूर्ण
+		अगर(context & 0x80000000)अणु // Post रुको message
+			status = पढ़ोl(reply+16);
+			अगर(status  >> 24)अणु
 				status &=  0xffff; /* Get detail status */
-			} else {
+			पूर्ण अन्यथा अणु
 				status = I2O_POST_WAIT_OK;
-			}
-			if(!(context & 0x40000000)) {
+			पूर्ण
+			अगर(!(context & 0x40000000)) अणु
 				/*
 				 * The request tag is one less than the command tag
 				 * as the firmware might treat a 0 tag as invalid
 				 */
 				cmd = scsi_host_find_tag(pHba->host,
-							 readl(reply + 12) - 1);
-				if(cmd != NULL) {
-					printk(KERN_WARNING"%s: Apparent SCSI cmd in Post Wait Context - cmd=%p context=%x\n", pHba->name, cmd, context);
-				}
-			}
-			adpt_i2o_post_wait_complete(context, status);
-		} else { // SCSI message
+							 पढ़ोl(reply + 12) - 1);
+				अगर(cmd != शून्य) अणु
+					prपूर्णांकk(KERN_WARNING"%s: Apparent SCSI cmd in Post Wait Context - cmd=%p context=%x\n", pHba->name, cmd, context);
+				पूर्ण
+			पूर्ण
+			adpt_i2o_post_रुको_complete(context, status);
+		पूर्ण अन्यथा अणु // SCSI message
 			/*
 			 * The request tag is one less than the command tag
 			 * as the firmware might treat a 0 tag as invalid
 			 */
 			cmd = scsi_host_find_tag(pHba->host,
-						 readl(reply + 12) - 1);
-			if(cmd != NULL){
+						 पढ़ोl(reply + 12) - 1);
+			अगर(cmd != शून्य)अणु
 				scsi_dma_unmap(cmd);
 				adpt_i2o_scsi_complete(reply, cmd);
-			}
-		}
-		writel(m, pHba->reply_port);
+			पूर्ण
+		पूर्ण
+		ग_लिखोl(m, pHba->reply_port);
 		wmb();
 		rmb();
-	}
+	पूर्ण
 	handled = 1;
-out:	if(pHba->host)
+out:	अगर(pHba->host)
 		spin_unlock_irqrestore(pHba->host->host_lock, flags);
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static s32 adpt_scsi_to_i2o(adpt_hba* pHba, struct scsi_cmnd* cmd, struct adpt_device* d)
-{
-	int i;
+अटल s32 adpt_scsi_to_i2o(adpt_hba* pHba, काष्ठा scsi_cmnd* cmd, काष्ठा adpt_device* d)
+अणु
+	पूर्णांक i;
 	u32 msg[MAX_MESSAGE_SIZE];
 	u32* mptr;
 	u32* lptr;
 	u32 *lenptr;
-	int direction;
-	int scsidir;
-	int nseg;
+	पूर्णांक direction;
+	पूर्णांक scsidir;
+	पूर्णांक nseg;
 	u32 len;
 	u32 reqlen;
 	s32 rcode;
 	dma_addr_t addr;
 
-	memset(msg, 0 , sizeof(msg));
+	स_रखो(msg, 0 , माप(msg));
 	len = scsi_bufflen(cmd);
 	direction = 0x00000000;	
 	
 	scsidir = 0x00000000;			// DATA NO XFER
-	if(len) {
+	अगर(len) अणु
 		/*
-		 * Set SCBFlags to indicate if data is being transferred
+		 * Set SCBFlags to indicate अगर data is being transferred
 		 * in or out, or no data transfer
-		 * Note:  Do not have to verify index is less than 0 since
-		 * cmd->cmnd[0] is an unsigned char
+		 * Note:  Do not have to verअगरy index is less than 0 since
+		 * cmd->cmnd[0] is an अचिन्हित अक्षर
 		 */
-		switch(cmd->sc_data_direction){
-		case DMA_FROM_DEVICE:
+		चयन(cmd->sc_data_direction)अणु
+		हाल DMA_FROM_DEVICE:
 			scsidir  =0x40000000;	// DATA IN  (iop<--dev)
-			break;
-		case DMA_TO_DEVICE:
+			अवरोध;
+		हाल DMA_TO_DEVICE:
 			direction=0x04000000;	// SGL OUT
 			scsidir  =0x80000000;	// DATA OUT (iop-->dev)
-			break;
-		case DMA_NONE:
-			break;
-		case DMA_BIDIRECTIONAL:
+			अवरोध;
+		हाल DMA_NONE:
+			अवरोध;
+		हाल DMA_BIसूचीECTIONAL:
 			scsidir  =0x40000000;	// DATA IN  (iop<--dev)
-			// Assume In - and continue;
-			break;
-		default:
-			printk(KERN_WARNING"%s: scsi opcode 0x%x not supported.\n",
+			// Assume In - and जारी;
+			अवरोध;
+		शेष:
+			prपूर्णांकk(KERN_WARNING"%s: scsi opcode 0x%x not supported.\n",
 			     pHba->name, cmd->cmnd[0]);
 			cmd->result = (DID_ERROR <<16);
-			cmd->scsi_done(cmd);
-			return 	0;
-		}
-	}
+			cmd->scsi_करोne(cmd);
+			वापस 	0;
+		पूर्ण
+	पूर्ण
 	// msg[0] is set later
 	// I2O_CMD_SCSI_EXEC
 	msg[1] = ((0xff<<24)|(HOST_TID<<12)|d->tid);
 	msg[2] = 0;
-	/* Add 1 to avoid firmware treating it as invalid command */
+	/* Add 1 to aव्योम firmware treating it as invalid command */
 	msg[3] = cmd->request->tag + 1;
-	// Our cards use the transaction context as the tag for queueing
+	// Our cards use the transaction context as the tag क्रम queueing
 	// Adaptec/DPT Private stuff 
 	msg[4] = I2O_CMD_SCSI_EXEC|(DPT_ORGANIZATION_ID<<16);
 	msg[5] = d->tid;
@@ -2249,76 +2250,76 @@ static s32 adpt_scsi_to_i2o(adpt_hba* pHba, struct scsi_cmnd* cmd, struct adpt_d
 
 	mptr=msg+7;
 
-	// Write SCSI command into the message - always 16 byte block 
-	memset(mptr, 0,  16);
-	memcpy(mptr, cmd->cmnd, cmd->cmd_len);
+	// Write SCSI command पूर्णांकo the message - always 16 byte block 
+	स_रखो(mptr, 0,  16);
+	स_नकल(mptr, cmd->cmnd, cmd->cmd_len);
 	mptr+=4;
 	lenptr=mptr++;		/* Remember me - fill in when we know */
-	if (dpt_dma64(pHba)) {
+	अगर (dpt_dma64(pHba)) अणु
 		reqlen = 16;		// SINGLE SGE
 		*mptr++ = (0x7C<<24)+(2<<16)+0x02; /* Enable 64 bit */
 		*mptr++ = 1 << PAGE_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		reqlen = 14;		// SINGLE SGE
-	}
+	पूर्ण
 	/* Now fill in the SGList and command */
 
 	nseg = scsi_dma_map(cmd);
 	BUG_ON(nseg < 0);
-	if (nseg) {
-		struct scatterlist *sg;
+	अगर (nseg) अणु
+		काष्ठा scatterlist *sg;
 
 		len = 0;
-		scsi_for_each_sg(cmd, sg, nseg, i) {
+		scsi_क्रम_each_sg(cmd, sg, nseg, i) अणु
 			lptr = mptr;
 			*mptr++ = direction|0x10000000|sg_dma_len(sg);
 			len+=sg_dma_len(sg);
 			addr = sg_dma_address(sg);
 			*mptr++ = dma_low(addr);
-			if (dpt_dma64(pHba))
+			अगर (dpt_dma64(pHba))
 				*mptr++ = dma_high(addr);
 			/* Make this an end of list */
-			if (i == nseg - 1)
+			अगर (i == nseg - 1)
 				*lptr = direction|0xD0000000|sg_dma_len(sg);
-		}
+		पूर्ण
 		reqlen = mptr - msg;
 		*lenptr = len;
 		
-		if(cmd->underflow && len != cmd->underflow){
-			printk(KERN_WARNING"Cmd len %08X Cmd underflow %08X\n",
+		अगर(cmd->underflow && len != cmd->underflow)अणु
+			prपूर्णांकk(KERN_WARNING"Cmd len %08X Cmd underflow %08X\n",
 				len, cmd->underflow);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		*lenptr = len = 0;
 		reqlen = 12;
-	}
+	पूर्ण
 	
 	/* Stick the headers on */
 	msg[0] = reqlen<<16 | ((reqlen > 12) ? SGL_OFFSET_12 : SGL_OFFSET_0);
 	
 	// Send it on it's way
 	rcode = adpt_i2o_post_this(pHba, msg, reqlen<<2);
-	if (rcode == 0) {
-		return 0;
-	}
-	return rcode;
-}
+	अगर (rcode == 0) अणु
+		वापस 0;
+	पूर्ण
+	वापस rcode;
+पूर्ण
 
 
-static s32 adpt_scsi_host_alloc(adpt_hba* pHba, struct scsi_host_template *sht)
-{
-	struct Scsi_Host *host;
+अटल s32 adpt_scsi_host_alloc(adpt_hba* pHba, काष्ठा scsi_host_ढाँचा *sht)
+अणु
+	काष्ठा Scsi_Host *host;
 
-	host = scsi_host_alloc(sht, sizeof(adpt_hba*));
-	if (host == NULL) {
-		printk("%s: scsi_host_alloc returned NULL\n", pHba->name);
-		return -1;
-	}
-	host->hostdata[0] = (unsigned long)pHba;
+	host = scsi_host_alloc(sht, माप(adpt_hba*));
+	अगर (host == शून्य) अणु
+		prपूर्णांकk("%s: scsi_host_alloc returned NULL\n", pHba->name);
+		वापस -1;
+	पूर्ण
+	host->hostdata[0] = (अचिन्हित दीर्घ)pHba;
 	pHba->host = host;
 
 	host->irq = pHba->pDev->irq;
-	/* no IO ports, so don't have to set host->io_port and
+	/* no IO ports, so करोn't have to set host->io_port and
 	 * host->n_io_port
 	 */
 	host->io_port = 0;
@@ -2330,254 +2331,254 @@ static s32 adpt_scsi_host_alloc(adpt_hba* pHba, struct scsi_host_template *sht)
 	host->cmd_per_lun = 1;
 	host->unique_id = (u32)sys_tbl_pa + pHba->unit;
 	host->sg_tablesize = pHba->sg_tablesize;
-	host->can_queue = pHba->post_fifo_size;
+	host->can_queue = pHba->post_fअगरo_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void adpt_i2o_scsi_complete(void __iomem *reply, struct scsi_cmnd *cmd)
-{
+अटल व्योम adpt_i2o_scsi_complete(व्योम __iomem *reply, काष्ठा scsi_cmnd *cmd)
+अणु
 	adpt_hba* pHba;
 	u32 hba_status;
 	u32 dev_status;
-	u32 reply_flags = readl(reply) & 0xff00; // Leave it shifted up 8 bits 
-	// I know this would look cleaner if I just read bytes
-	// but the model I have been using for all the rest of the
+	u32 reply_flags = पढ़ोl(reply) & 0xff00; // Leave it shअगरted up 8 bits 
+	// I know this would look cleaner अगर I just पढ़ो bytes
+	// but the model I have been using क्रम all the rest of the
 	// io is in 4 byte words - so I keep that model
-	u16 detailed_status = readl(reply+16) &0xffff;
+	u16 detailed_status = पढ़ोl(reply+16) &0xffff;
 	dev_status = (detailed_status & 0xff);
 	hba_status = detailed_status >> 8;
 
-	// calculate resid for sg 
-	scsi_set_resid(cmd, scsi_bufflen(cmd) - readl(reply+20));
+	// calculate resid क्रम sg 
+	scsi_set_resid(cmd, scsi_bufflen(cmd) - पढ़ोl(reply+20));
 
 	pHba = (adpt_hba*) cmd->device->host->hostdata[0];
 
 	cmd->sense_buffer[0] = '\0';  // initialize sense valid flag to false
 
-	if(!(reply_flags & MSG_FAIL)) {
-		switch(detailed_status & I2O_SCSI_DSC_MASK) {
-		case I2O_SCSI_DSC_SUCCESS:
+	अगर(!(reply_flags & MSG_FAIL)) अणु
+		चयन(detailed_status & I2O_SCSI_DSC_MASK) अणु
+		हाल I2O_SCSI_DSC_SUCCESS:
 			cmd->result = (DID_OK << 16);
 			// handle underflow
-			if (readl(reply+20) < cmd->underflow) {
+			अगर (पढ़ोl(reply+20) < cmd->underflow) अणु
 				cmd->result = (DID_ERROR <<16);
-				printk(KERN_WARNING"%s: SCSI CMD underflow\n",pHba->name);
-			}
-			break;
-		case I2O_SCSI_DSC_REQUEST_ABORTED:
+				prपूर्णांकk(KERN_WARNING"%s: SCSI CMD underflow\n",pHba->name);
+			पूर्ण
+			अवरोध;
+		हाल I2O_SCSI_DSC_REQUEST_ABORTED:
 			cmd->result = (DID_ABORT << 16);
-			break;
-		case I2O_SCSI_DSC_PATH_INVALID:
-		case I2O_SCSI_DSC_DEVICE_NOT_PRESENT:
-		case I2O_SCSI_DSC_SELECTION_TIMEOUT:
-		case I2O_SCSI_DSC_COMMAND_TIMEOUT:
-		case I2O_SCSI_DSC_NO_ADAPTER:
-		case I2O_SCSI_DSC_RESOURCE_UNAVAILABLE:
-			printk(KERN_WARNING"%s: SCSI Timeout-Device (%d,%d,%llu) hba status=0x%x, dev status=0x%x, cmd=0x%x\n",
+			अवरोध;
+		हाल I2O_SCSI_DSC_PATH_INVALID:
+		हाल I2O_SCSI_DSC_DEVICE_NOT_PRESENT:
+		हाल I2O_SCSI_DSC_SELECTION_TIMEOUT:
+		हाल I2O_SCSI_DSC_COMMAND_TIMEOUT:
+		हाल I2O_SCSI_DSC_NO_ADAPTER:
+		हाल I2O_SCSI_DSC_RESOURCE_UNAVAILABLE:
+			prपूर्णांकk(KERN_WARNING"%s: SCSI Timeout-Device (%d,%d,%llu) hba status=0x%x, dev status=0x%x, cmd=0x%x\n",
 				pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun, hba_status, dev_status, cmd->cmnd[0]);
 			cmd->result = (DID_TIME_OUT << 16);
-			break;
-		case I2O_SCSI_DSC_ADAPTER_BUSY:
-		case I2O_SCSI_DSC_BUS_BUSY:
+			अवरोध;
+		हाल I2O_SCSI_DSC_ADAPTER_BUSY:
+		हाल I2O_SCSI_DSC_BUS_BUSY:
 			cmd->result = (DID_BUS_BUSY << 16);
-			break;
-		case I2O_SCSI_DSC_SCSI_BUS_RESET:
-		case I2O_SCSI_DSC_BDR_MESSAGE_SENT:
+			अवरोध;
+		हाल I2O_SCSI_DSC_SCSI_BUS_RESET:
+		हाल I2O_SCSI_DSC_BDR_MESSAGE_SENT:
 			cmd->result = (DID_RESET << 16);
-			break;
-		case I2O_SCSI_DSC_PARITY_ERROR_FAILURE:
-			printk(KERN_WARNING"%s: SCSI CMD parity error\n",pHba->name);
+			अवरोध;
+		हाल I2O_SCSI_DSC_PARITY_ERROR_FAILURE:
+			prपूर्णांकk(KERN_WARNING"%s: SCSI CMD parity error\n",pHba->name);
 			cmd->result = (DID_PARITY << 16);
-			break;
-		case I2O_SCSI_DSC_UNABLE_TO_ABORT:
-		case I2O_SCSI_DSC_COMPLETE_WITH_ERROR:
-		case I2O_SCSI_DSC_UNABLE_TO_TERMINATE:
-		case I2O_SCSI_DSC_MR_MESSAGE_RECEIVED:
-		case I2O_SCSI_DSC_AUTOSENSE_FAILED:
-		case I2O_SCSI_DSC_DATA_OVERRUN:
-		case I2O_SCSI_DSC_UNEXPECTED_BUS_FREE:
-		case I2O_SCSI_DSC_SEQUENCE_FAILURE:
-		case I2O_SCSI_DSC_REQUEST_LENGTH_ERROR:
-		case I2O_SCSI_DSC_PROVIDE_FAILURE:
-		case I2O_SCSI_DSC_REQUEST_TERMINATED:
-		case I2O_SCSI_DSC_IDE_MESSAGE_SENT:
-		case I2O_SCSI_DSC_UNACKNOWLEDGED_EVENT:
-		case I2O_SCSI_DSC_MESSAGE_RECEIVED:
-		case I2O_SCSI_DSC_INVALID_CDB:
-		case I2O_SCSI_DSC_LUN_INVALID:
-		case I2O_SCSI_DSC_SCSI_TID_INVALID:
-		case I2O_SCSI_DSC_FUNCTION_UNAVAILABLE:
-		case I2O_SCSI_DSC_NO_NEXUS:
-		case I2O_SCSI_DSC_CDB_RECEIVED:
-		case I2O_SCSI_DSC_LUN_ALREADY_ENABLED:
-		case I2O_SCSI_DSC_QUEUE_FROZEN:
-		case I2O_SCSI_DSC_REQUEST_INVALID:
-		default:
-			printk(KERN_WARNING"%s: SCSI error %0x-Device(%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
+			अवरोध;
+		हाल I2O_SCSI_DSC_UNABLE_TO_ABORT:
+		हाल I2O_SCSI_DSC_COMPLETE_WITH_ERROR:
+		हाल I2O_SCSI_DSC_UNABLE_TO_TERMINATE:
+		हाल I2O_SCSI_DSC_MR_MESSAGE_RECEIVED:
+		हाल I2O_SCSI_DSC_AUTOSENSE_FAILED:
+		हाल I2O_SCSI_DSC_DATA_OVERRUN:
+		हाल I2O_SCSI_DSC_UNEXPECTED_BUS_FREE:
+		हाल I2O_SCSI_DSC_SEQUENCE_FAILURE:
+		हाल I2O_SCSI_DSC_REQUEST_LENGTH_ERROR:
+		हाल I2O_SCSI_DSC_PROVIDE_FAILURE:
+		हाल I2O_SCSI_DSC_REQUEST_TERMINATED:
+		हाल I2O_SCSI_DSC_IDE_MESSAGE_SENT:
+		हाल I2O_SCSI_DSC_UNACKNOWLEDGED_EVENT:
+		हाल I2O_SCSI_DSC_MESSAGE_RECEIVED:
+		हाल I2O_SCSI_DSC_INVALID_CDB:
+		हाल I2O_SCSI_DSC_LUN_INVALID:
+		हाल I2O_SCSI_DSC_SCSI_TID_INVALID:
+		हाल I2O_SCSI_DSC_FUNCTION_UNAVAILABLE:
+		हाल I2O_SCSI_DSC_NO_NEXUS:
+		हाल I2O_SCSI_DSC_CDB_RECEIVED:
+		हाल I2O_SCSI_DSC_LUN_ALREADY_ENABLED:
+		हाल I2O_SCSI_DSC_QUEUE_FROZEN:
+		हाल I2O_SCSI_DSC_REQUEST_INVALID:
+		शेष:
+			prपूर्णांकk(KERN_WARNING"%s: SCSI error %0x-Device(%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
 				pHba->name, detailed_status & I2O_SCSI_DSC_MASK, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,
 			       hba_status, dev_status, cmd->cmnd[0]);
 			cmd->result = (DID_ERROR << 16);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		// copy over the request sense data if it was a check
+		// copy over the request sense data अगर it was a check
 		// condition status
-		if (dev_status == SAM_STAT_CHECK_CONDITION) {
+		अगर (dev_status == SAM_STAT_CHECK_CONDITION) अणु
 			u32 len = min(SCSI_SENSE_BUFFERSIZE, 40);
 			// Copy over the sense data
-			memcpy_fromio(cmd->sense_buffer, (reply+28) , len);
-			if(cmd->sense_buffer[0] == 0x70 /* class 7 */ && 
-			   cmd->sense_buffer[2] == DATA_PROTECT ){
+			स_नकल_fromio(cmd->sense_buffer, (reply+28) , len);
+			अगर(cmd->sense_buffer[0] == 0x70 /* class 7 */ && 
+			   cmd->sense_buffer[2] == DATA_PROTECT )अणु
 				/* This is to handle an array failed */
 				cmd->result = (DID_TIME_OUT << 16);
-				printk(KERN_WARNING"%s: SCSI Data Protect-Device (%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
+				prपूर्णांकk(KERN_WARNING"%s: SCSI Data Protect-Device (%d,%d,%llu) hba_status=0x%x, dev_status=0x%x, cmd=0x%x\n",
 					pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,
 					hba_status, dev_status, cmd->cmnd[0]);
 
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* In this condtion we could not talk to the tid
-		 * the card rejected it.  We should signal a retry
-		 * for a limitted number of retries.
+		 * the card rejected it.  We should संकेत a retry
+		 * क्रम a limitted number of retries.
 		 */
 		cmd->result = (DID_TIME_OUT << 16);
-		printk(KERN_WARNING"%s: I2O MSG_FAIL - Device (%d,%d,%llu) tid=%d, cmd=0x%x\n",
+		prपूर्णांकk(KERN_WARNING"%s: I2O MSG_FAIL - Device (%d,%d,%llu) tid=%d, cmd=0x%x\n",
 			pHba->name, (u32)cmd->device->channel, (u32)cmd->device->id, cmd->device->lun,
-			((struct adpt_device*)(cmd->device->hostdata))->tid, cmd->cmnd[0]);
-	}
+			((काष्ठा adpt_device*)(cmd->device->hostdata))->tid, cmd->cmnd[0]);
+	पूर्ण
 
 	cmd->result |= (dev_status);
 
-	if(cmd->scsi_done != NULL){
-		cmd->scsi_done(cmd);
-	} 
-}
+	अगर(cmd->scsi_करोne != शून्य)अणु
+		cmd->scsi_करोne(cmd);
+	पूर्ण 
+पूर्ण
 
 
-static s32 adpt_rescan(adpt_hba* pHba)
-{
+अटल s32 adpt_rescan(adpt_hba* pHba)
+अणु
 	s32 rcode;
-	ulong flags = 0;
+	uदीर्घ flags = 0;
 
-	if(pHba->host)
+	अगर(pHba->host)
 		spin_lock_irqsave(pHba->host->host_lock, flags);
-	if ((rcode=adpt_i2o_lct_get(pHba)) < 0)
-		goto out;
-	if ((rcode=adpt_i2o_reparse_lct(pHba)) < 0)
-		goto out;
+	अगर ((rcode=adpt_i2o_lct_get(pHba)) < 0)
+		जाओ out;
+	अगर ((rcode=adpt_i2o_reparse_lct(pHba)) < 0)
+		जाओ out;
 	rcode = 0;
-out:	if(pHba->host)
+out:	अगर(pHba->host)
 		spin_unlock_irqrestore(pHba->host->host_lock, flags);
-	return rcode;
-}
+	वापस rcode;
+पूर्ण
 
 
-static s32 adpt_i2o_reparse_lct(adpt_hba* pHba)
-{
-	int i;
-	int max;
-	int tid;
-	struct i2o_device *d;
+अटल s32 adpt_i2o_reparse_lct(adpt_hba* pHba)
+अणु
+	पूर्णांक i;
+	पूर्णांक max;
+	पूर्णांक tid;
+	काष्ठा i2o_device *d;
 	i2o_lct *lct = pHba->lct;
 	u8 bus_no = 0;
 	s16 scsi_id;
 	u64 scsi_lun;
 	u32 buf[10]; // at least 8 u32's
-	struct adpt_device* pDev = NULL;
-	struct i2o_device* pI2o_dev = NULL;
+	काष्ठा adpt_device* pDev = शून्य;
+	काष्ठा i2o_device* pI2o_dev = शून्य;
 	
-	if (lct == NULL) {
-		printk(KERN_ERR "%s: LCT is empty???\n",pHba->name);
-		return -1;
-	}
+	अगर (lct == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s: LCT is empty???\n",pHba->name);
+		वापस -1;
+	पूर्ण
 	
 	max = lct->table_size;	
 	max -= 3;
 	max /= 9;
 
 	// Mark each drive as unscanned
-	for (d = pHba->devices; d; d = d->next) {
-		pDev =(struct adpt_device*) d->owner;
-		if(!pDev){
-			continue;
-		}
+	क्रम (d = pHba->devices; d; d = d->next) अणु
+		pDev =(काष्ठा adpt_device*) d->owner;
+		अगर(!pDev)अणु
+			जारी;
+		पूर्ण
 		pDev->state |= DPTI_DEV_UNSCANNED;
-	}
+	पूर्ण
 
-	printk(KERN_INFO "%s: LCT has %d entries.\n", pHba->name,max);
+	prपूर्णांकk(KERN_INFO "%s: LCT has %d entries.\n", pHba->name,max);
 	
-	for(i=0;i<max;i++) {
-		if( lct->lct_entry[i].user_tid != 0xfff){
-			continue;
-		}
+	क्रम(i=0;i<max;i++) अणु
+		अगर( lct->lct_entry[i].user_tid != 0xfff)अणु
+			जारी;
+		पूर्ण
 
-		if( lct->lct_entry[i].class_id == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
+		अगर( lct->lct_entry[i].class_id == I2O_CLASS_RANDOM_BLOCK_STORAGE ||
 		    lct->lct_entry[i].class_id == I2O_CLASS_SCSI_PERIPHERAL ||
-		    lct->lct_entry[i].class_id == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL ){
+		    lct->lct_entry[i].class_id == I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL )अणु
 			tid = lct->lct_entry[i].tid;
-			if(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) {
-				printk(KERN_ERR"%s: Could not query device\n",pHba->name);
-				continue;
-			}
+			अगर(adpt_i2o_query_scalar(pHba, tid, 0x8000, -1, buf, 32)<0) अणु
+				prपूर्णांकk(KERN_ERR"%s: Could not query device\n",pHba->name);
+				जारी;
+			पूर्ण
 			bus_no = buf[0]>>16;
-			if (bus_no >= MAX_CHANNEL) {	/* Something wrong skip it */
-				printk(KERN_WARNING
+			अगर (bus_no >= MAX_CHANNEL) अणु	/* Something wrong skip it */
+				prपूर्णांकk(KERN_WARNING
 					"%s: Channel number %d out of range\n",
 					pHba->name, bus_no);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			scsi_id = buf[1];
-			scsi_lun = scsilun_to_int((struct scsi_lun *)&buf[2]);
+			scsi_lun = scsilun_to_पूर्णांक((काष्ठा scsi_lun *)&buf[2]);
 			pDev = pHba->channel[bus_no].device[scsi_id];
 			/* da lun */
-			while(pDev) {
-				if(pDev->scsi_lun == scsi_lun) {
-					break;
-				}
+			जबतक(pDev) अणु
+				अगर(pDev->scsi_lun == scsi_lun) अणु
+					अवरोध;
+				पूर्ण
 				pDev = pDev->next_lun;
-			}
-			if(!pDev ) { // Something new add it
-				d = kmalloc(sizeof(struct i2o_device),
+			पूर्ण
+			अगर(!pDev ) अणु // Something new add it
+				d = kदो_स्मृति(माप(काष्ठा i2o_device),
 					    GFP_ATOMIC);
-				if(d==NULL)
-				{
-					printk(KERN_CRIT "Out of memory for I2O device data.\n");
-					return -ENOMEM;
-				}
+				अगर(d==शून्य)
+				अणु
+					prपूर्णांकk(KERN_CRIT "Out of memory for I2O device data.\n");
+					वापस -ENOMEM;
+				पूर्ण
 				
 				d->controller = pHba;
-				d->next = NULL;
+				d->next = शून्य;
 
-				memcpy(&d->lct_data, &lct->lct_entry[i], sizeof(i2o_lct_entry));
+				स_नकल(&d->lct_data, &lct->lct_entry[i], माप(i2o_lct_entry));
 
 				d->flags = 0;
 				adpt_i2o_report_hba_unit(pHba, d);
 				adpt_i2o_install_device(pHba, d);
 	
 				pDev = pHba->channel[bus_no].device[scsi_id];	
-				if( pDev == NULL){
+				अगर( pDev == शून्य)अणु
 					pDev =
-					  kzalloc(sizeof(struct adpt_device),
+					  kzalloc(माप(काष्ठा adpt_device),
 						  GFP_ATOMIC);
-					if(pDev == NULL) {
-						return -ENOMEM;
-					}
+					अगर(pDev == शून्य) अणु
+						वापस -ENOMEM;
+					पूर्ण
 					pHba->channel[bus_no].device[scsi_id] = pDev;
-				} else {
-					while (pDev->next_lun) {
+				पूर्ण अन्यथा अणु
+					जबतक (pDev->next_lun) अणु
 						pDev = pDev->next_lun;
-					}
+					पूर्ण
 					pDev = pDev->next_lun =
-					  kzalloc(sizeof(struct adpt_device),
+					  kzalloc(माप(काष्ठा adpt_device),
 						  GFP_ATOMIC);
-					if(pDev == NULL) {
-						return -ENOMEM;
-					}
-				}
+					अगर(pDev == शून्य) अणु
+						वापस -ENOMEM;
+					पूर्ण
+				पूर्ण
 				pDev->tid = d->lct_data.tid;
 				pDev->scsi_channel = bus_no;
 				pDev->scsi_id = scsi_id;
@@ -2586,267 +2587,267 @@ static s32 adpt_i2o_reparse_lct(adpt_hba* pHba)
 				d->owner = pDev;
 				pDev->type = (buf[0])&0xff;
 				pDev->flags = (buf[0]>>8)&0xff;
-				// Too late, SCSI system has made up it's mind, but what the hey ...
-				if(scsi_id > pHba->top_scsi_id){
+				// Too late, SCSI प्रणाली has made up it's mind, but what the hey ...
+				अगर(scsi_id > pHba->top_scsi_id)अणु
 					pHba->top_scsi_id = scsi_id;
-				}
-				if(scsi_lun > pHba->top_scsi_lun){
+				पूर्ण
+				अगर(scsi_lun > pHba->top_scsi_lun)अणु
 					pHba->top_scsi_lun = scsi_lun;
-				}
-				continue;
-			} // end of new i2o device
+				पूर्ण
+				जारी;
+			पूर्ण // end of new i2o device
 
 			// We found an old device - check it
-			while(pDev) {
-				if(pDev->scsi_lun == scsi_lun) {
-					if(!scsi_device_online(pDev->pScsi_dev)) {
-						printk(KERN_WARNING"%s: Setting device (%d,%d,%llu) back online\n",
+			जबतक(pDev) अणु
+				अगर(pDev->scsi_lun == scsi_lun) अणु
+					अगर(!scsi_device_online(pDev->pScsi_dev)) अणु
+						prपूर्णांकk(KERN_WARNING"%s: Setting device (%d,%d,%llu) back online\n",
 								pHba->name,bus_no,scsi_id,scsi_lun);
-						if (pDev->pScsi_dev) {
+						अगर (pDev->pScsi_dev) अणु
 							scsi_device_set_state(pDev->pScsi_dev, SDEV_RUNNING);
-						}
-					}
+						पूर्ण
+					पूर्ण
 					d = pDev->pI2o_dev;
-					if(d->lct_data.tid != tid) { // something changed
+					अगर(d->lct_data.tid != tid) अणु // something changed
 						pDev->tid = tid;
-						memcpy(&d->lct_data, &lct->lct_entry[i], sizeof(i2o_lct_entry));
-						if (pDev->pScsi_dev) {
+						स_नकल(&d->lct_data, &lct->lct_entry[i], माप(i2o_lct_entry));
+						अगर (pDev->pScsi_dev) अणु
 							pDev->pScsi_dev->changed = TRUE;
 							pDev->pScsi_dev->removable = TRUE;
-						}
-					}
+						पूर्ण
+					पूर्ण
 					// Found it - mark it scanned
 					pDev->state = DPTI_DEV_ONLINE;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				pDev = pDev->next_lun;
-			}
-		}
-	}
-	for (pI2o_dev = pHba->devices; pI2o_dev; pI2o_dev = pI2o_dev->next) {
-		pDev =(struct adpt_device*) pI2o_dev->owner;
-		if(!pDev){
-			continue;
-		}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	क्रम (pI2o_dev = pHba->devices; pI2o_dev; pI2o_dev = pI2o_dev->next) अणु
+		pDev =(काष्ठा adpt_device*) pI2o_dev->owner;
+		अगर(!pDev)अणु
+			जारी;
+		पूर्ण
 		// Drive offline drives that previously existed but could not be found
 		// in the LCT table
-		if (pDev->state & DPTI_DEV_UNSCANNED){
+		अगर (pDev->state & DPTI_DEV_UNSCANNED)अणु
 			pDev->state = DPTI_DEV_OFFLINE;
-			printk(KERN_WARNING"%s: Device (%d,%d,%llu) offline\n",pHba->name,pDev->scsi_channel,pDev->scsi_id,pDev->scsi_lun);
-			if (pDev->pScsi_dev) {
+			prपूर्णांकk(KERN_WARNING"%s: Device (%d,%d,%llu) offline\n",pHba->name,pDev->scsi_channel,pDev->scsi_id,pDev->scsi_lun);
+			अगर (pDev->pScsi_dev) अणु
 				scsi_device_set_state(pDev->pScsi_dev, SDEV_OFFLINE);
-			}
-		}
-	}
-	return 0;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*============================================================================
- *  Routines from i2o subsystem
+ *  Routines from i2o subप्रणाली
  *============================================================================
  */
 
 
 
 /*
- *	Bring an I2O controller into HOLD state. See the spec.
+ *	Bring an I2O controller पूर्णांकo HOLD state. See the spec.
  */
-static int adpt_i2o_activate_hba(adpt_hba* pHba)
-{
-	int rcode;
+अटल पूर्णांक adpt_i2o_activate_hba(adpt_hba* pHba)
+अणु
+	पूर्णांक rcode;
 
-	if(pHba->initialized ) {
-		if (adpt_i2o_status_get(pHba) < 0) {
-			if((rcode = adpt_i2o_reset_hba(pHba)) != 0){
-				printk(KERN_WARNING"%s: Could NOT reset.\n", pHba->name);
-				return rcode;
-			}
-			if (adpt_i2o_status_get(pHba) < 0) {
-				printk(KERN_INFO "HBA not responding.\n");
-				return -1;
-			}
-		}
+	अगर(pHba->initialized ) अणु
+		अगर (adpt_i2o_status_get(pHba) < 0) अणु
+			अगर((rcode = adpt_i2o_reset_hba(pHba)) != 0)अणु
+				prपूर्णांकk(KERN_WARNING"%s: Could NOT reset.\n", pHba->name);
+				वापस rcode;
+			पूर्ण
+			अगर (adpt_i2o_status_get(pHba) < 0) अणु
+				prपूर्णांकk(KERN_INFO "HBA not responding.\n");
+				वापस -1;
+			पूर्ण
+		पूर्ण
 
-		if(pHba->status_block->iop_state == ADAPTER_STATE_FAULTED) {
-			printk(KERN_CRIT "%s: hardware fault\n", pHba->name);
-			return -1;
-		}
+		अगर(pHba->status_block->iop_state == ADAPTER_STATE_FAULTED) अणु
+			prपूर्णांकk(KERN_CRIT "%s: hardware fault\n", pHba->name);
+			वापस -1;
+		पूर्ण
 
-		if (pHba->status_block->iop_state == ADAPTER_STATE_READY ||
+		अगर (pHba->status_block->iop_state == ADAPTER_STATE_READY ||
 		    pHba->status_block->iop_state == ADAPTER_STATE_OPERATIONAL ||
 		    pHba->status_block->iop_state == ADAPTER_STATE_HOLD ||
-		    pHba->status_block->iop_state == ADAPTER_STATE_FAILED) {
+		    pHba->status_block->iop_state == ADAPTER_STATE_FAILED) अणु
 			adpt_i2o_reset_hba(pHba);			
-			if (adpt_i2o_status_get(pHba) < 0 || pHba->status_block->iop_state != ADAPTER_STATE_RESET) {
-				printk(KERN_ERR "%s: Failed to initialize.\n", pHba->name);
-				return -1;
-			}
-		}
-	} else {
-		if((rcode = adpt_i2o_reset_hba(pHba)) != 0){
-			printk(KERN_WARNING"%s: Could NOT reset.\n", pHba->name);
-			return rcode;
-		}
+			अगर (adpt_i2o_status_get(pHba) < 0 || pHba->status_block->iop_state != ADAPTER_STATE_RESET) अणु
+				prपूर्णांकk(KERN_ERR "%s: Failed to initialize.\n", pHba->name);
+				वापस -1;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर((rcode = adpt_i2o_reset_hba(pHba)) != 0)अणु
+			prपूर्णांकk(KERN_WARNING"%s: Could NOT reset.\n", pHba->name);
+			वापस rcode;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (adpt_i2o_init_outbound_q(pHba) < 0) {
-		return -1;
-	}
+	अगर (adpt_i2o_init_outbound_q(pHba) < 0) अणु
+		वापस -1;
+	पूर्ण
 
 	/* In HOLD state */
 	
-	if (adpt_i2o_hrt_get(pHba) < 0) {
-		return -1;
-	}
+	अगर (adpt_i2o_hrt_get(pHba) < 0) अणु
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	Bring a controller online into OPERATIONAL state. 
+ *	Bring a controller online पूर्णांकo OPERATIONAL state. 
  */
  
-static int adpt_i2o_online_hba(adpt_hba* pHba)
-{
-	if (adpt_i2o_systab_send(pHba) < 0)
-		return -1;
+अटल पूर्णांक adpt_i2o_online_hba(adpt_hba* pHba)
+अणु
+	अगर (adpt_i2o_systab_send(pHba) < 0)
+		वापस -1;
 	/* In READY state */
 
-	if (adpt_i2o_enable_hba(pHba) < 0)
-		return -1;
+	अगर (adpt_i2o_enable_hba(pHba) < 0)
+		वापस -1;
 
 	/* In OPERATIONAL state  */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static s32 adpt_send_nop(adpt_hba*pHba,u32 m)
-{
+अटल s32 adpt_send_nop(adpt_hba*pHba,u32 m)
+अणु
 	u32 __iomem *msg;
-	ulong timeout = jiffies + 5*HZ;
+	uदीर्घ समयout = jअगरfies + 5*HZ;
 
-	while(m == EMPTY_QUEUE){
+	जबतक(m == EMPTY_QUEUE)अणु
 		rmb();
-		m = readl(pHba->post_port);
-		if(m != EMPTY_QUEUE){
-			break;
-		}
-		if(time_after(jiffies,timeout)){
-			printk(KERN_ERR "%s: Timeout waiting for message frame!\n",pHba->name);
-			return 2;
-		}
-		schedule_timeout_uninterruptible(1);
-	}
+		m = पढ़ोl(pHba->post_port);
+		अगर(m != EMPTY_QUEUE)अणु
+			अवरोध;
+		पूर्ण
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_ERR "%s: Timeout waiting for message frame!\n",pHba->name);
+			वापस 2;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण
 	msg = (u32 __iomem *)(pHba->msg_addr_virt + m);
-	writel( THREE_WORD_MSG_SIZE | SGL_OFFSET_0,&msg[0]);
-	writel( I2O_CMD_UTIL_NOP << 24 | HOST_TID << 12 | 0,&msg[1]);
-	writel( 0,&msg[2]);
+	ग_लिखोl( THREE_WORD_MSG_SIZE | SGL_OFFSET_0,&msg[0]);
+	ग_लिखोl( I2O_CMD_UTIL_NOP << 24 | HOST_TID << 12 | 0,&msg[1]);
+	ग_लिखोl( 0,&msg[2]);
 	wmb();
 
-	writel(m, pHba->post_port);
+	ग_लिखोl(m, pHba->post_port);
 	wmb();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static s32 adpt_i2o_init_outbound_q(adpt_hba* pHba)
-{
+अटल s32 adpt_i2o_init_outbound_q(adpt_hba* pHba)
+अणु
 	u8 *status;
 	dma_addr_t addr;
-	u32 __iomem *msg = NULL;
-	int i;
-	ulong timeout = jiffies + TMOUT_INITOUTBOUND*HZ;
+	u32 __iomem *msg = शून्य;
+	पूर्णांक i;
+	uदीर्घ समयout = jअगरfies + TMOUT_INITOUTBOUND*HZ;
 	u32 m;
 
-	do {
+	करो अणु
 		rmb();
-		m = readl(pHba->post_port);
-		if (m != EMPTY_QUEUE) {
-			break;
-		}
+		m = पढ़ोl(pHba->post_port);
+		अगर (m != EMPTY_QUEUE) अणु
+			अवरोध;
+		पूर्ण
 
-		if(time_after(jiffies,timeout)){
-			printk(KERN_WARNING"%s: Timeout waiting for message frame\n",pHba->name);
-			return -ETIMEDOUT;
-		}
-		schedule_timeout_uninterruptible(1);
-	} while(m == EMPTY_QUEUE);
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_WARNING"%s: Timeout waiting for message frame\n",pHba->name);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण जबतक(m == EMPTY_QUEUE);
 
 	msg=(u32 __iomem *)(pHba->msg_addr_virt+m);
 
 	status = dma_alloc_coherent(&pHba->pDev->dev, 4, &addr, GFP_KERNEL);
-	if (!status) {
+	अगर (!status) अणु
 		adpt_send_nop(pHba, m);
-		printk(KERN_WARNING"%s: IOP reset failed - no free memory.\n",
+		prपूर्णांकk(KERN_WARNING"%s: IOP reset failed - no free memory.\n",
 			pHba->name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	writel(EIGHT_WORD_MSG_SIZE| SGL_OFFSET_6, &msg[0]);
-	writel(I2O_CMD_OUTBOUND_INIT<<24 | HOST_TID<<12 | ADAPTER_TID, &msg[1]);
-	writel(0, &msg[2]);
-	writel(0x0106, &msg[3]);	/* Transaction context */
-	writel(4096, &msg[4]);		/* Host page frame size */
-	writel((REPLY_FRAME_SIZE)<<16|0x80, &msg[5]);	/* Outbound msg frame size and Initcode */
-	writel(0xD0000004, &msg[6]);		/* Simple SG LE, EOB */
-	writel((u32)addr, &msg[7]);
+	ग_लिखोl(EIGHT_WORD_MSG_SIZE| SGL_OFFSET_6, &msg[0]);
+	ग_लिखोl(I2O_CMD_OUTBOUND_INIT<<24 | HOST_TID<<12 | ADAPTER_TID, &msg[1]);
+	ग_लिखोl(0, &msg[2]);
+	ग_लिखोl(0x0106, &msg[3]);	/* Transaction context */
+	ग_लिखोl(4096, &msg[4]);		/* Host page frame size */
+	ग_लिखोl((REPLY_FRAME_SIZE)<<16|0x80, &msg[5]);	/* Outbound msg frame size and Initcode */
+	ग_लिखोl(0xD0000004, &msg[6]);		/* Simple SG LE, EOB */
+	ग_लिखोl((u32)addr, &msg[7]);
 
-	writel(m, pHba->post_port);
+	ग_लिखोl(m, pHba->post_port);
 	wmb();
 
-	// Wait for the reply status to come back
-	do {
-		if (*status) {
-			if (*status != 0x01 /*I2O_EXEC_OUTBOUND_INIT_IN_PROGRESS*/) {
-				break;
-			}
-		}
+	// Wait क्रम the reply status to come back
+	करो अणु
+		अगर (*status) अणु
+			अगर (*status != 0x01 /*I2O_EXEC_OUTBOUND_INIT_IN_PROGRESS*/) अणु
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		rmb();
-		if(time_after(jiffies,timeout)){
-			printk(KERN_WARNING"%s: Timeout Initializing\n",pHba->name);
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_WARNING"%s: Timeout Initializing\n",pHba->name);
 			/* We lose 4 bytes of "status" here, but we
-			   cannot free these because controller may
-			   awake and corrupt those bytes at any time */
-			/* dma_free_coherent(&pHba->pDev->dev, 4, status, addr); */
-			return -ETIMEDOUT;
-		}
-		schedule_timeout_uninterruptible(1);
-	} while (1);
+			   cannot मुक्त these because controller may
+			   awake and corrupt those bytes at any समय */
+			/* dma_मुक्त_coherent(&pHba->pDev->dev, 4, status, addr); */
+			वापस -ETIMEDOUT;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण जबतक (1);
 
-	// If the command was successful, fill the fifo with our reply
+	// If the command was successful, fill the fअगरo with our reply
 	// message packets
-	if(*status != 0x04 /*I2O_EXEC_OUTBOUND_INIT_COMPLETE*/) {
-		dma_free_coherent(&pHba->pDev->dev, 4, status, addr);
-		return -2;
-	}
-	dma_free_coherent(&pHba->pDev->dev, 4, status, addr);
+	अगर(*status != 0x04 /*I2O_EXEC_OUTBOUND_INIT_COMPLETE*/) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, 4, status, addr);
+		वापस -2;
+	पूर्ण
+	dma_मुक्त_coherent(&pHba->pDev->dev, 4, status, addr);
 
-	if(pHba->reply_pool != NULL) {
-		dma_free_coherent(&pHba->pDev->dev,
-			pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4,
+	अगर(pHba->reply_pool != शून्य) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev,
+			pHba->reply_fअगरo_size * REPLY_FRAME_SIZE * 4,
 			pHba->reply_pool, pHba->reply_pool_pa);
-	}
+	पूर्ण
 
 	pHba->reply_pool = dma_alloc_coherent(&pHba->pDev->dev,
-				pHba->reply_fifo_size * REPLY_FRAME_SIZE * 4,
+				pHba->reply_fअगरo_size * REPLY_FRAME_SIZE * 4,
 				&pHba->reply_pool_pa, GFP_KERNEL);
-	if (!pHba->reply_pool) {
-		printk(KERN_ERR "%s: Could not allocate reply pool\n", pHba->name);
-		return -ENOMEM;
-	}
+	अगर (!pHba->reply_pool) अणु
+		prपूर्णांकk(KERN_ERR "%s: Could not allocate reply pool\n", pHba->name);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for(i = 0; i < pHba->reply_fifo_size; i++) {
-		writel(pHba->reply_pool_pa + (i * REPLY_FRAME_SIZE * 4),
+	क्रम(i = 0; i < pHba->reply_fअगरo_size; i++) अणु
+		ग_लिखोl(pHba->reply_pool_pa + (i * REPLY_FRAME_SIZE * 4),
 			pHba->reply_port);
 		wmb();
-	}
+	पूर्ण
 	adpt_i2o_status_get(pHba);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- * I2O System Table.  Contains information about
- * all the IOPs in the system.  Used to inform IOPs
+ * I2O System Table.  Contains inक्रमmation about
+ * all the IOPs in the प्रणाली.  Used to inक्रमm IOPs
  * about each other's existence.
  *
  * sys_tbl_ver is the CurrentChangeIndicator that is
@@ -2855,151 +2856,151 @@ static s32 adpt_i2o_init_outbound_q(adpt_hba* pHba)
 
 
 
-static s32 adpt_i2o_status_get(adpt_hba* pHba)
-{
-	ulong timeout;
+अटल s32 adpt_i2o_status_get(adpt_hba* pHba)
+अणु
+	uदीर्घ समयout;
 	u32 m;
 	u32 __iomem *msg;
-	u8 *status_block=NULL;
+	u8 *status_block=शून्य;
 
-	if(pHba->status_block == NULL) {
+	अगर(pHba->status_block == शून्य) अणु
 		pHba->status_block = dma_alloc_coherent(&pHba->pDev->dev,
-					sizeof(i2o_status_block),
+					माप(i2o_status_block),
 					&pHba->status_block_pa, GFP_KERNEL);
-		if(pHba->status_block == NULL) {
-			printk(KERN_ERR
+		अगर(pHba->status_block == शून्य) अणु
+			prपूर्णांकk(KERN_ERR
 			"dpti%d: Get Status Block failed; Out of memory. \n", 
 			pHba->unit);
-			return -ENOMEM;
-		}
-	}
-	memset(pHba->status_block, 0, sizeof(i2o_status_block));
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
+	स_रखो(pHba->status_block, 0, माप(i2o_status_block));
 	status_block = (u8*)(pHba->status_block);
-	timeout = jiffies+TMOUT_GETSTATUS*HZ;
-	do {
+	समयout = jअगरfies+TMOUT_GETSTATUS*HZ;
+	करो अणु
 		rmb();
-		m = readl(pHba->post_port);
-		if (m != EMPTY_QUEUE) {
-			break;
-		}
-		if(time_after(jiffies,timeout)){
-			printk(KERN_ERR "%s: Timeout waiting for message !\n",
+		m = पढ़ोl(pHba->post_port);
+		अगर (m != EMPTY_QUEUE) अणु
+			अवरोध;
+		पूर्ण
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_ERR "%s: Timeout waiting for message !\n",
 					pHba->name);
-			return -ETIMEDOUT;
-		}
-		schedule_timeout_uninterruptible(1);
-	} while(m==EMPTY_QUEUE);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण जबतक(m==EMPTY_QUEUE);
 
 	
 	msg=(u32 __iomem *)(pHba->msg_addr_virt+m);
 
-	writel(NINE_WORD_MSG_SIZE|SGL_OFFSET_0, &msg[0]);
-	writel(I2O_CMD_STATUS_GET<<24|HOST_TID<<12|ADAPTER_TID, &msg[1]);
-	writel(1, &msg[2]);
-	writel(0, &msg[3]);
-	writel(0, &msg[4]);
-	writel(0, &msg[5]);
-	writel( dma_low(pHba->status_block_pa), &msg[6]);
-	writel( dma_high(pHba->status_block_pa), &msg[7]);
-	writel(sizeof(i2o_status_block), &msg[8]); // 88 bytes
+	ग_लिखोl(NINE_WORD_MSG_SIZE|SGL_OFFSET_0, &msg[0]);
+	ग_लिखोl(I2O_CMD_STATUS_GET<<24|HOST_TID<<12|ADAPTER_TID, &msg[1]);
+	ग_लिखोl(1, &msg[2]);
+	ग_लिखोl(0, &msg[3]);
+	ग_लिखोl(0, &msg[4]);
+	ग_लिखोl(0, &msg[5]);
+	ग_लिखोl( dma_low(pHba->status_block_pa), &msg[6]);
+	ग_लिखोl( dma_high(pHba->status_block_pa), &msg[7]);
+	ग_लिखोl(माप(i2o_status_block), &msg[8]); // 88 bytes
 
 	//post message
-	writel(m, pHba->post_port);
+	ग_लिखोl(m, pHba->post_port);
 	wmb();
 
-	while(status_block[87]!=0xff){
-		if(time_after(jiffies,timeout)){
-			printk(KERN_ERR"dpti%d: Get status timeout.\n",
+	जबतक(status_block[87]!=0xff)अणु
+		अगर(समय_after(jअगरfies,समयout))अणु
+			prपूर्णांकk(KERN_ERR"dpti%d: Get status timeout.\n",
 				pHba->unit);
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		rmb();
-		schedule_timeout_uninterruptible(1);
-	}
+		schedule_समयout_unपूर्णांकerruptible(1);
+	पूर्ण
 
 	// Set up our number of outbound and inbound messages
-	pHba->post_fifo_size = pHba->status_block->max_inbound_frames;
-	if (pHba->post_fifo_size > MAX_TO_IOP_MESSAGES) {
-		pHba->post_fifo_size = MAX_TO_IOP_MESSAGES;
-	}
+	pHba->post_fअगरo_size = pHba->status_block->max_inbound_frames;
+	अगर (pHba->post_fअगरo_size > MAX_TO_IOP_MESSAGES) अणु
+		pHba->post_fअगरo_size = MAX_TO_IOP_MESSAGES;
+	पूर्ण
 
-	pHba->reply_fifo_size = pHba->status_block->max_outbound_frames;
-	if (pHba->reply_fifo_size > MAX_FROM_IOP_MESSAGES) {
-		pHba->reply_fifo_size = MAX_FROM_IOP_MESSAGES;
-	}
+	pHba->reply_fअगरo_size = pHba->status_block->max_outbound_frames;
+	अगर (pHba->reply_fअगरo_size > MAX_FROM_IOP_MESSAGES) अणु
+		pHba->reply_fअगरo_size = MAX_FROM_IOP_MESSAGES;
+	पूर्ण
 
 	// Calculate the Scatter Gather list size
-	if (dpt_dma64(pHba)) {
+	अगर (dpt_dma64(pHba)) अणु
 		pHba->sg_tablesize
 		  = ((pHba->status_block->inbound_frame_size * 4
-		  - 14 * sizeof(u32))
-		  / (sizeof(struct sg_simple_element) + sizeof(u32)));
-	} else {
+		  - 14 * माप(u32))
+		  / (माप(काष्ठा sg_simple_element) + माप(u32)));
+	पूर्ण अन्यथा अणु
 		pHba->sg_tablesize
 		  = ((pHba->status_block->inbound_frame_size * 4
-		  - 12 * sizeof(u32))
-		  / sizeof(struct sg_simple_element));
-	}
-	if (pHba->sg_tablesize > SG_LIST_ELEMENTS) {
+		  - 12 * माप(u32))
+		  / माप(काष्ठा sg_simple_element));
+	पूर्ण
+	अगर (pHba->sg_tablesize > SG_LIST_ELEMENTS) अणु
 		pHba->sg_tablesize = SG_LIST_ELEMENTS;
-	}
+	पूर्ण
 
 
-#ifdef DEBUG
-	printk("dpti%d: State = ",pHba->unit);
-	switch(pHba->status_block->iop_state) {
-		case 0x01:
-			printk("INIT\n");
-			break;
-		case 0x02:
-			printk("RESET\n");
-			break;
-		case 0x04:
-			printk("HOLD\n");
-			break;
-		case 0x05:
-			printk("READY\n");
-			break;
-		case 0x08:
-			printk("OPERATIONAL\n");
-			break;
-		case 0x10:
-			printk("FAILED\n");
-			break;
-		case 0x11:
-			printk("FAULTED\n");
-			break;
-		default:
-			printk("%x (unknown!!)\n",pHba->status_block->iop_state);
-	}
-#endif
-	return 0;
-}
+#अगर_घोषित DEBUG
+	prपूर्णांकk("dpti%d: State = ",pHba->unit);
+	चयन(pHba->status_block->iop_state) अणु
+		हाल 0x01:
+			prपूर्णांकk("INIT\n");
+			अवरोध;
+		हाल 0x02:
+			prपूर्णांकk("RESET\n");
+			अवरोध;
+		हाल 0x04:
+			prपूर्णांकk("HOLD\n");
+			अवरोध;
+		हाल 0x05:
+			prपूर्णांकk("READY\n");
+			अवरोध;
+		हाल 0x08:
+			prपूर्णांकk("OPERATIONAL\n");
+			अवरोध;
+		हाल 0x10:
+			prपूर्णांकk("FAILED\n");
+			अवरोध;
+		हाल 0x11:
+			prपूर्णांकk("FAULTED\n");
+			अवरोध;
+		शेष:
+			prपूर्णांकk("%x (unknown!!)\n",pHba->status_block->iop_state);
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
 /*
  * Get the IOP's Logical Configuration Table
  */
-static int adpt_i2o_lct_get(adpt_hba* pHba)
-{
+अटल पूर्णांक adpt_i2o_lct_get(adpt_hba* pHba)
+अणु
 	u32 msg[8];
-	int ret;
+	पूर्णांक ret;
 	u32 buf[16];
 
-	if ((pHba->lct_size == 0) || (pHba->lct == NULL)){
+	अगर ((pHba->lct_size == 0) || (pHba->lct == शून्य))अणु
 		pHba->lct_size = pHba->status_block->expected_lct_size;
-	}
-	do {
-		if (pHba->lct == NULL) {
+	पूर्ण
+	करो अणु
+		अगर (pHba->lct == शून्य) अणु
 			pHba->lct = dma_alloc_coherent(&pHba->pDev->dev,
 					pHba->lct_size, &pHba->lct_pa,
 					GFP_ATOMIC);
-			if(pHba->lct == NULL) {
-				printk(KERN_CRIT "%s: Lct Get failed. Out of memory.\n",
+			अगर(pHba->lct == शून्य) अणु
+				prपूर्णांकk(KERN_CRIT "%s: Lct Get failed. Out of memory.\n",
 					pHba->name);
-				return -ENOMEM;
-			}
-		}
-		memset(pHba->lct, 0, pHba->lct_size);
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
+		स_रखो(pHba->lct, 0, pHba->lct_size);
 
 		msg[0] = EIGHT_WORD_MSG_SIZE|SGL_OFFSET_6;
 		msg[1] = I2O_CMD_LCT_NOTIFY<<24 | HOST_TID<<12 | ADAPTER_TID;
@@ -3010,30 +3011,30 @@ static int adpt_i2o_lct_get(adpt_hba* pHba)
 		msg[6] = 0xD0000000|pHba->lct_size;
 		msg[7] = (u32)pHba->lct_pa;
 
-		if ((ret=adpt_i2o_post_wait(pHba, msg, sizeof(msg), 360))) {
-			printk(KERN_ERR "%s: LCT Get failed (status=%#10x.\n", 
+		अगर ((ret=adpt_i2o_post_रुको(pHba, msg, माप(msg), 360))) अणु
+			prपूर्णांकk(KERN_ERR "%s: LCT Get failed (status=%#10x.\n", 
 				pHba->name, ret);	
-			printk(KERN_ERR"Adaptec: Error Reading Hardware.\n");
-			return ret;
-		}
+			prपूर्णांकk(KERN_ERR"Adaptec: Error Reading Hardware.\n");
+			वापस ret;
+		पूर्ण
 
-		if ((pHba->lct->table_size << 2) > pHba->lct_size) {
+		अगर ((pHba->lct->table_size << 2) > pHba->lct_size) अणु
 			pHba->lct_size = pHba->lct->table_size << 2;
-			dma_free_coherent(&pHba->pDev->dev, pHba->lct_size,
+			dma_मुक्त_coherent(&pHba->pDev->dev, pHba->lct_size,
 					pHba->lct, pHba->lct_pa);
-			pHba->lct = NULL;
-		}
-	} while (pHba->lct == NULL);
+			pHba->lct = शून्य;
+		पूर्ण
+	पूर्ण जबतक (pHba->lct == शून्य);
 
 	PDEBUG("%s: Hardware resource table read.\n", pHba->name);
 
 
 	// I2O_DPT_EXEC_IOP_BUFFERS_GROUP_NO;
-	if(adpt_i2o_query_scalar(pHba, 0 , 0x8000, -1, buf, sizeof(buf))>=0) {
+	अगर(adpt_i2o_query_scalar(pHba, 0 , 0x8000, -1, buf, माप(buf))>=0) अणु
 		pHba->FwDebugBufferSize = buf[1];
 		pHba->FwDebugBuffer_P = ioremap(pHba->base_addr_phys + buf[0],
 						pHba->FwDebugBufferSize);
-		if (pHba->FwDebugBuffer_P) {
+		अगर (pHba->FwDebugBuffer_P) अणु
 			pHba->FwDebugFlags_P     = pHba->FwDebugBuffer_P +
 							FW_DEBUG_FLAGS_OFFSET;
 			pHba->FwDebugBLEDvalue_P = pHba->FwDebugBuffer_P +
@@ -3043,42 +3044,42 @@ static int adpt_i2o_lct_get(adpt_hba* pHba)
 						FW_DEBUG_STR_LENGTH_OFFSET;
 			pHba->FwDebugBuffer_P += buf[2]; 
 			pHba->FwDebugFlags = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adpt_i2o_build_sys_table(void)
-{
+अटल पूर्णांक adpt_i2o_build_sys_table(व्योम)
+अणु
 	adpt_hba* pHba = hba_chain;
-	int count = 0;
+	पूर्णांक count = 0;
 
-	if (sys_tbl)
-		dma_free_coherent(&pHba->pDev->dev, sys_tbl_len,
+	अगर (sys_tbl)
+		dma_मुक्त_coherent(&pHba->pDev->dev, sys_tbl_len,
 					sys_tbl, sys_tbl_pa);
 
-	sys_tbl_len = sizeof(struct i2o_sys_tbl) +	// Header + IOPs
-				(hba_count) * sizeof(struct i2o_sys_tbl_entry);
+	sys_tbl_len = माप(काष्ठा i2o_sys_tbl) +	// Header + IOPs
+				(hba_count) * माप(काष्ठा i2o_sys_tbl_entry);
 
 	sys_tbl = dma_alloc_coherent(&pHba->pDev->dev,
 				sys_tbl_len, &sys_tbl_pa, GFP_KERNEL);
-	if (!sys_tbl) {
-		printk(KERN_WARNING "SysTab Set failed. Out of memory.\n");	
-		return -ENOMEM;
-	}
+	अगर (!sys_tbl) अणु
+		prपूर्णांकk(KERN_WARNING "SysTab Set failed. Out of memory.\n");	
+		वापस -ENOMEM;
+	पूर्ण
 
 	sys_tbl->num_entries = hba_count;
 	sys_tbl->version = I2OVERSION;
 	sys_tbl->change_ind = sys_tbl_ind++;
 
-	for(pHba = hba_chain; pHba; pHba = pHba->next) {
+	क्रम(pHba = hba_chain; pHba; pHba = pHba->next) अणु
 		u64 addr;
-		// Get updated Status Block so we have the latest information
-		if (adpt_i2o_status_get(pHba)) {
+		// Get updated Status Block so we have the latest inक्रमmation
+		अगर (adpt_i2o_status_get(pHba)) अणु
 			sys_tbl->num_entries--;
-			continue; // try next one	
-		}
+			जारी; // try next one	
+		पूर्ण
 
 		sys_tbl->iops[count].org_id = pHba->status_block->org_id;
 		sys_tbl->iops[count].iop_id = pHba->unit + 2;
@@ -3094,74 +3095,74 @@ static int adpt_i2o_build_sys_table(void)
 		sys_tbl->iops[count].inbound_high = dma_high(addr);
 
 		count++;
-	}
+	पूर्ण
 
-#ifdef DEBUG
-{
+#अगर_घोषित DEBUG
+अणु
 	u32 *table = (u32*)sys_tbl;
-	printk(KERN_DEBUG"sys_tbl_len=%d in 32bit words\n",(sys_tbl_len >>2));
-	for(count = 0; count < (sys_tbl_len >>2); count++) {
-		printk(KERN_INFO "sys_tbl[%d] = %0#10x\n", 
+	prपूर्णांकk(KERN_DEBUG"sys_tbl_len=%d in 32bit words\n",(sys_tbl_len >>2));
+	क्रम(count = 0; count < (sys_tbl_len >>2); count++) अणु
+		prपूर्णांकk(KERN_INFO "sys_tbl[%d] = %0#10x\n", 
 			count, table[count]);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
- *	 Dump the information block associated with a given unit (TID)
+ *	 Dump the inक्रमmation block associated with a given unit (TID)
  */
  
-static void adpt_i2o_report_hba_unit(adpt_hba* pHba, struct i2o_device *d)
-{
-	char buf[64];
-	int unit = d->lct_data.tid;
+अटल व्योम adpt_i2o_report_hba_unit(adpt_hba* pHba, काष्ठा i2o_device *d)
+अणु
+	अक्षर buf[64];
+	पूर्णांक unit = d->lct_data.tid;
 
-	printk(KERN_INFO "TID %3.3d ", unit);
+	prपूर्णांकk(KERN_INFO "TID %3.3d ", unit);
 
-	if(adpt_i2o_query_scalar(pHba, unit, 0xF100, 3, buf, 16)>=0)
-	{
+	अगर(adpt_i2o_query_scalar(pHba, unit, 0xF100, 3, buf, 16)>=0)
+	अणु
 		buf[16]=0;
-		printk(" Vendor: %-12.12s", buf);
-	}
-	if(adpt_i2o_query_scalar(pHba, unit, 0xF100, 4, buf, 16)>=0)
-	{
+		prपूर्णांकk(" Vendor: %-12.12s", buf);
+	पूर्ण
+	अगर(adpt_i2o_query_scalar(pHba, unit, 0xF100, 4, buf, 16)>=0)
+	अणु
 		buf[16]=0;
-		printk(" Device: %-12.12s", buf);
-	}
-	if(adpt_i2o_query_scalar(pHba, unit, 0xF100, 6, buf, 8)>=0)
-	{
+		prपूर्णांकk(" Device: %-12.12s", buf);
+	पूर्ण
+	अगर(adpt_i2o_query_scalar(pHba, unit, 0xF100, 6, buf, 8)>=0)
+	अणु
 		buf[8]=0;
-		printk(" Rev: %-12.12s\n", buf);
-	}
-#ifdef DEBUG
-	 printk(KERN_INFO "\tClass: %.21s\n", adpt_i2o_get_class_name(d->lct_data.class_id));
-	 printk(KERN_INFO "\tSubclass: 0x%04X\n", d->lct_data.sub_class);
-	 printk(KERN_INFO "\tFlags: ");
+		prपूर्णांकk(" Rev: %-12.12s\n", buf);
+	पूर्ण
+#अगर_घोषित DEBUG
+	 prपूर्णांकk(KERN_INFO "\tClass: %.21s\n", adpt_i2o_get_class_name(d->lct_data.class_id));
+	 prपूर्णांकk(KERN_INFO "\tSubclass: 0x%04X\n", d->lct_data.sub_class);
+	 prपूर्णांकk(KERN_INFO "\tFlags: ");
 
-	 if(d->lct_data.device_flags&(1<<0))
-		  printk("C");	     // ConfigDialog requested
-	 if(d->lct_data.device_flags&(1<<1))
-		  printk("U");	     // Multi-user capable
-	 if(!(d->lct_data.device_flags&(1<<4)))
-		  printk("P");	     // Peer service enabled!
-	 if(!(d->lct_data.device_flags&(1<<5)))
-		  printk("M");	     // Mgmt service enabled!
-	 printk("\n");
-#endif
-}
+	 अगर(d->lct_data.device_flags&(1<<0))
+		  prपूर्णांकk("C");	     // ConfigDialog requested
+	 अगर(d->lct_data.device_flags&(1<<1))
+		  prपूर्णांकk("U");	     // Multi-user capable
+	 अगर(!(d->lct_data.device_flags&(1<<4)))
+		  prपूर्णांकk("P");	     // Peer service enabled!
+	 अगर(!(d->lct_data.device_flags&(1<<5)))
+		  prपूर्णांकk("M");	     // Mgmt service enabled!
+	 prपूर्णांकk("\n");
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 /*
  *	Do i2o class name lookup
  */
-static const char *adpt_i2o_get_class_name(int class)
-{
-	int idx = 16;
-	static char *i2o_class_name[] = {
+अटल स्थिर अक्षर *adpt_i2o_get_class_name(पूर्णांक class)
+अणु
+	पूर्णांक idx = 16;
+	अटल अक्षर *i2o_class_name[] = अणु
 		"Executive",
 		"Device Driver Module",
 		"Block Device",
@@ -3179,61 +3180,61 @@ static const char *adpt_i2o_get_class_name(int class)
 		"Peer Transport Agent",
 		"Peer Transport",
 		"Unknown"
-	};
+	पूर्ण;
 	
-	switch(class&0xFFF) {
-	case I2O_CLASS_EXECUTIVE:
-		idx = 0; break;
-	case I2O_CLASS_DDM:
-		idx = 1; break;
-	case I2O_CLASS_RANDOM_BLOCK_STORAGE:
-		idx = 2; break;
-	case I2O_CLASS_SEQUENTIAL_STORAGE:
-		idx = 3; break;
-	case I2O_CLASS_LAN:
-		idx = 4; break;
-	case I2O_CLASS_WAN:
-		idx = 5; break;
-	case I2O_CLASS_FIBRE_CHANNEL_PORT:
-		idx = 6; break;
-	case I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL:
-		idx = 7; break;
-	case I2O_CLASS_SCSI_PERIPHERAL:
-		idx = 8; break;
-	case I2O_CLASS_ATE_PORT:
-		idx = 9; break;
-	case I2O_CLASS_ATE_PERIPHERAL:
-		idx = 10; break;
-	case I2O_CLASS_FLOPPY_CONTROLLER:
-		idx = 11; break;
-	case I2O_CLASS_FLOPPY_DEVICE:
-		idx = 12; break;
-	case I2O_CLASS_BUS_ADAPTER_PORT:
-		idx = 13; break;
-	case I2O_CLASS_PEER_TRANSPORT_AGENT:
-		idx = 14; break;
-	case I2O_CLASS_PEER_TRANSPORT:
-		idx = 15; break;
-	}
-	return i2o_class_name[idx];
-}
-#endif
+	चयन(class&0xFFF) अणु
+	हाल I2O_CLASS_EXECUTIVE:
+		idx = 0; अवरोध;
+	हाल I2O_CLASS_DDM:
+		idx = 1; अवरोध;
+	हाल I2O_CLASS_RANDOM_BLOCK_STORAGE:
+		idx = 2; अवरोध;
+	हाल I2O_CLASS_SEQUENTIAL_STORAGE:
+		idx = 3; अवरोध;
+	हाल I2O_CLASS_LAN:
+		idx = 4; अवरोध;
+	हाल I2O_CLASS_WAN:
+		idx = 5; अवरोध;
+	हाल I2O_CLASS_FIBRE_CHANNEL_PORT:
+		idx = 6; अवरोध;
+	हाल I2O_CLASS_FIBRE_CHANNEL_PERIPHERAL:
+		idx = 7; अवरोध;
+	हाल I2O_CLASS_SCSI_PERIPHERAL:
+		idx = 8; अवरोध;
+	हाल I2O_CLASS_ATE_PORT:
+		idx = 9; अवरोध;
+	हाल I2O_CLASS_ATE_PERIPHERAL:
+		idx = 10; अवरोध;
+	हाल I2O_CLASS_FLOPPY_CONTROLLER:
+		idx = 11; अवरोध;
+	हाल I2O_CLASS_FLOPPY_DEVICE:
+		idx = 12; अवरोध;
+	हाल I2O_CLASS_BUS_ADAPTER_PORT:
+		idx = 13; अवरोध;
+	हाल I2O_CLASS_PEER_TRANSPORT_AGENT:
+		idx = 14; अवरोध;
+	हाल I2O_CLASS_PEER_TRANSPORT:
+		idx = 15; अवरोध;
+	पूर्ण
+	वापस i2o_class_name[idx];
+पूर्ण
+#पूर्ण_अगर
 
 
-static s32 adpt_i2o_hrt_get(adpt_hba* pHba)
-{
+अटल s32 adpt_i2o_hrt_get(adpt_hba* pHba)
+अणु
 	u32 msg[6];
-	int ret, size = sizeof(i2o_hrt);
+	पूर्णांक ret, size = माप(i2o_hrt);
 
-	do {
-		if (pHba->hrt == NULL) {
+	करो अणु
+		अगर (pHba->hrt == शून्य) अणु
 			pHba->hrt = dma_alloc_coherent(&pHba->pDev->dev,
 					size, &pHba->hrt_pa, GFP_KERNEL);
-			if (pHba->hrt == NULL) {
-				printk(KERN_CRIT "%s: Hrt Get failed; Out of memory.\n", pHba->name);
-				return -ENOMEM;
-			}
-		}
+			अगर (pHba->hrt == शून्य) अणु
+				prपूर्णांकk(KERN_CRIT "%s: Hrt Get failed; Out of memory.\n", pHba->name);
+				वापस -ENOMEM;
+			पूर्ण
+		पूर्ण
 
 		msg[0]= SIX_WORD_MSG_SIZE| SGL_OFFSET_4;
 		msg[1]= I2O_CMD_HRT_GET<<24 | HOST_TID<<12 | ADAPTER_TID;
@@ -3242,99 +3243,99 @@ static s32 adpt_i2o_hrt_get(adpt_hba* pHba)
 		msg[4]= (0xD0000000 | size);    /* Simple transaction */
 		msg[5]= (u32)pHba->hrt_pa;	/* Dump it here */
 
-		if ((ret = adpt_i2o_post_wait(pHba, msg, sizeof(msg),20))) {
-			printk(KERN_ERR "%s: Unable to get HRT (status=%#10x)\n", pHba->name, ret);
-			return ret;
-		}
+		अगर ((ret = adpt_i2o_post_रुको(pHba, msg, माप(msg),20))) अणु
+			prपूर्णांकk(KERN_ERR "%s: Unable to get HRT (status=%#10x)\n", pHba->name, ret);
+			वापस ret;
+		पूर्ण
 
-		if (pHba->hrt->num_entries * pHba->hrt->entry_len << 2 > size) {
-			int newsize = pHba->hrt->num_entries * pHba->hrt->entry_len << 2;
-			dma_free_coherent(&pHba->pDev->dev, size,
+		अगर (pHba->hrt->num_entries * pHba->hrt->entry_len << 2 > size) अणु
+			पूर्णांक newsize = pHba->hrt->num_entries * pHba->hrt->entry_len << 2;
+			dma_मुक्त_coherent(&pHba->pDev->dev, size,
 				pHba->hrt, pHba->hrt_pa);
 			size = newsize;
-			pHba->hrt = NULL;
-		}
-	} while(pHba->hrt == NULL);
-	return 0;
-}                                                                                                                                       
+			pHba->hrt = शून्य;
+		पूर्ण
+	पूर्ण जबतक(pHba->hrt == शून्य);
+	वापस 0;
+पूर्ण                                                                                                                                       
 
 /*
  *	 Query one scalar group value or a whole scalar group.
  */		    	
-static int adpt_i2o_query_scalar(adpt_hba* pHba, int tid, 
-			int group, int field, void *buf, int buflen)
-{
-	u16 opblk[] = { 1, 0, I2O_PARAMS_FIELD_GET, group, 1, field };
+अटल पूर्णांक adpt_i2o_query_scalar(adpt_hba* pHba, पूर्णांक tid, 
+			पूर्णांक group, पूर्णांक field, व्योम *buf, पूर्णांक buflen)
+अणु
+	u16 opblk[] = अणु 1, 0, I2O_PARAMS_FIELD_GET, group, 1, field पूर्ण;
 	u8 *opblk_va;
 	dma_addr_t opblk_pa;
 	u8 *resblk_va;
 	dma_addr_t resblk_pa;
 
-	int size;
+	पूर्णांक size;
 
-	/* 8 bytes for header */
+	/* 8 bytes क्रम header */
 	resblk_va = dma_alloc_coherent(&pHba->pDev->dev,
-			sizeof(u8) * (8 + buflen), &resblk_pa, GFP_KERNEL);
-	if (resblk_va == NULL) {
-		printk(KERN_CRIT "%s: query scalar failed; Out of memory.\n", pHba->name);
-		return -ENOMEM;
-	}
+			माप(u8) * (8 + buflen), &resblk_pa, GFP_KERNEL);
+	अगर (resblk_va == शून्य) अणु
+		prपूर्णांकk(KERN_CRIT "%s: query scalar failed; Out of memory.\n", pHba->name);
+		वापस -ENOMEM;
+	पूर्ण
 
 	opblk_va = dma_alloc_coherent(&pHba->pDev->dev,
-			sizeof(opblk), &opblk_pa, GFP_KERNEL);
-	if (opblk_va == NULL) {
-		dma_free_coherent(&pHba->pDev->dev, sizeof(u8) * (8+buflen),
+			माप(opblk), &opblk_pa, GFP_KERNEL);
+	अगर (opblk_va == शून्य) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, माप(u8) * (8+buflen),
 			resblk_va, resblk_pa);
-		printk(KERN_CRIT "%s: query operation failed; Out of memory.\n",
+		prपूर्णांकk(KERN_CRIT "%s: query operation failed; Out of memory.\n",
 			pHba->name);
-		return -ENOMEM;
-	}
-	if (field == -1)  		/* whole group */
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (field == -1)  		/* whole group */
 			opblk[4] = -1;
 
-	memcpy(opblk_va, opblk, sizeof(opblk));
+	स_नकल(opblk_va, opblk, माप(opblk));
 	size = adpt_i2o_issue_params(I2O_CMD_UTIL_PARAMS_GET, pHba, tid, 
-		opblk_va, opblk_pa, sizeof(opblk),
-		resblk_va, resblk_pa, sizeof(u8)*(8+buflen));
-	dma_free_coherent(&pHba->pDev->dev, sizeof(opblk), opblk_va, opblk_pa);
-	if (size == -ETIME) {
-		dma_free_coherent(&pHba->pDev->dev, sizeof(u8) * (8+buflen),
+		opblk_va, opblk_pa, माप(opblk),
+		resblk_va, resblk_pa, माप(u8)*(8+buflen));
+	dma_मुक्त_coherent(&pHba->pDev->dev, माप(opblk), opblk_va, opblk_pa);
+	अगर (size == -ETIME) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, माप(u8) * (8+buflen),
 							resblk_va, resblk_pa);
-		printk(KERN_WARNING "%s: issue params failed; Timed out.\n", pHba->name);
-		return -ETIME;
-	} else if (size == -EINTR) {
-		dma_free_coherent(&pHba->pDev->dev, sizeof(u8) * (8+buflen),
+		prपूर्णांकk(KERN_WARNING "%s: issue params failed; Timed out.\n", pHba->name);
+		वापस -ETIME;
+	पूर्ण अन्यथा अगर (size == -EINTR) अणु
+		dma_मुक्त_coherent(&pHba->pDev->dev, माप(u8) * (8+buflen),
 							resblk_va, resblk_pa);
-		printk(KERN_WARNING "%s: issue params failed; Interrupted.\n", pHba->name);
-		return -EINTR;
-	}
+		prपूर्णांकk(KERN_WARNING "%s: issue params failed; Interrupted.\n", pHba->name);
+		वापस -EINTR;
+	पूर्ण
 			
-	memcpy(buf, resblk_va+8, buflen);  /* cut off header */
+	स_नकल(buf, resblk_va+8, buflen);  /* cut off header */
 
-	dma_free_coherent(&pHba->pDev->dev, sizeof(u8) * (8+buflen),
+	dma_मुक्त_coherent(&pHba->pDev->dev, माप(u8) * (8+buflen),
 						resblk_va, resblk_pa);
-	if (size < 0)
-		return size;	
+	अगर (size < 0)
+		वापस size;	
 
-	return buflen;
-}
+	वापस buflen;
+पूर्ण
 
 
 /*	Issue UTIL_PARAMS_GET or UTIL_PARAMS_SET
  *
- *	This function can be used for all UtilParamsGet/Set operations.
+ *	This function can be used क्रम all UtilParamsGet/Set operations.
  *	The OperationBlock is given in opblk-buffer, 
- *	and results are returned in resblk-buffer.
+ *	and results are वापसed in resblk-buffer.
  *	Note that the minimum sized resblk is 8 bytes and contains
  *	ResultCount, ErrorInfoSize, BlockStatus and BlockSize.
  */
-static int adpt_i2o_issue_params(int cmd, adpt_hba* pHba, int tid, 
-		  void *opblk_va,  dma_addr_t opblk_pa, int oplen,
-		void *resblk_va, dma_addr_t resblk_pa, int reslen)
-{
+अटल पूर्णांक adpt_i2o_issue_params(पूर्णांक cmd, adpt_hba* pHba, पूर्णांक tid, 
+		  व्योम *opblk_va,  dma_addr_t opblk_pa, पूर्णांक oplen,
+		व्योम *resblk_va, dma_addr_t resblk_pa, पूर्णांक reslen)
+अणु
 	u32 msg[9]; 
 	u32 *res = (u32 *)resblk_va;
-	int wait_status;
+	पूर्णांक रुको_status;
 
 	msg[0] = NINE_WORD_MSG_SIZE | SGL_OFFSET_5;
 	msg[1] = cmd << 24 | HOST_TID << 12 | tid; 
@@ -3346,96 +3347,96 @@ static int adpt_i2o_issue_params(int cmd, adpt_hba* pHba, int tid,
 	msg[7] = 0xD0000000 | reslen;	/* ResultBlock */
 	msg[8] = (u32)resblk_pa;
 
-	if ((wait_status = adpt_i2o_post_wait(pHba, msg, sizeof(msg), 20))) {
-		printk("adpt_i2o_issue_params: post_wait failed (%p)\n", resblk_va);
-   		return wait_status; 	/* -DetailedStatus */
-	}
+	अगर ((रुको_status = adpt_i2o_post_रुको(pHba, msg, माप(msg), 20))) अणु
+		prपूर्णांकk("adpt_i2o_issue_params: post_wait failed (%p)\n", resblk_va);
+   		वापस रुको_status; 	/* -DetailedStatus */
+	पूर्ण
 
-	if (res[1]&0x00FF0000) { 	/* BlockStatus != SUCCESS */
-		printk(KERN_WARNING "%s: %s - Error:\n  ErrorInfoSize = 0x%02x, "
+	अगर (res[1]&0x00FF0000) अणु 	/* BlockStatus != SUCCESS */
+		prपूर्णांकk(KERN_WARNING "%s: %s - Error:\n  ErrorInfoSize = 0x%02x, "
 			"BlockStatus = 0x%02x, BlockSize = 0x%04x\n",
 			pHba->name,
 			(cmd == I2O_CMD_UTIL_PARAMS_SET) ? "PARAMS_SET"
 							 : "PARAMS_GET",   
 			res[1]>>24, (res[1]>>16)&0xFF, res[1]&0xFFFF);
-		return -((res[1] >> 16) & 0xFF); /* -BlockStatus */
-	}
+		वापस -((res[1] >> 16) & 0xFF); /* -BlockStatus */
+	पूर्ण
 
-	return 4 + ((res[1] & 0x0000FFFF) << 2); /* bytes used in resblk */
-}
+	वापस 4 + ((res[1] & 0x0000FFFF) << 2); /* bytes used in resblk */
+पूर्ण
 
 
-static s32 adpt_i2o_quiesce_hba(adpt_hba* pHba)
-{
+अटल s32 adpt_i2o_quiesce_hba(adpt_hba* pHba)
+अणु
 	u32 msg[4];
-	int ret;
+	पूर्णांक ret;
 
 	adpt_i2o_status_get(pHba);
 
-	/* SysQuiesce discarded if IOP not in READY or OPERATIONAL state */
+	/* SysQuiesce discarded अगर IOP not in READY or OPERATIONAL state */
 
-	if((pHba->status_block->iop_state != ADAPTER_STATE_READY) &&
-   	   (pHba->status_block->iop_state != ADAPTER_STATE_OPERATIONAL)){
-		return 0;
-	}
+	अगर((pHba->status_block->iop_state != ADAPTER_STATE_READY) &&
+   	   (pHba->status_block->iop_state != ADAPTER_STATE_OPERATIONAL))अणु
+		वापस 0;
+	पूर्ण
 
 	msg[0] = FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1] = I2O_CMD_SYS_QUIESCE<<24|HOST_TID<<12|ADAPTER_TID;
 	msg[2] = 0;
 	msg[3] = 0;
 
-	if((ret = adpt_i2o_post_wait(pHba, msg, sizeof(msg), 240))) {
-		printk(KERN_INFO"dpti%d: Unable to quiesce (status=%#x).\n",
+	अगर((ret = adpt_i2o_post_रुको(pHba, msg, माप(msg), 240))) अणु
+		prपूर्णांकk(KERN_INFO"dpti%d: Unable to quiesce (status=%#x).\n",
 				pHba->unit, -ret);
-	} else {
-		printk(KERN_INFO"dpti%d: Quiesced.\n",pHba->unit);
-	}
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_INFO"dpti%d: Quiesced.\n",pHba->unit);
+	पूर्ण
 
 	adpt_i2o_status_get(pHba);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /* 
- * Enable IOP. Allows the IOP to resume external operations.
+ * Enable IOP. Allows the IOP to resume बाह्यal operations.
  */
-static int adpt_i2o_enable_hba(adpt_hba* pHba)
-{
+अटल पूर्णांक adpt_i2o_enable_hba(adpt_hba* pHba)
+अणु
 	u32 msg[4];
-	int ret;
+	पूर्णांक ret;
 	
 	adpt_i2o_status_get(pHba);
-	if(!pHba->status_block){
-		return -ENOMEM;
-	}
+	अगर(!pHba->status_block)अणु
+		वापस -ENOMEM;
+	पूर्ण
 	/* Enable only allowed on READY state */
-	if(pHba->status_block->iop_state == ADAPTER_STATE_OPERATIONAL)
-		return 0;
+	अगर(pHba->status_block->iop_state == ADAPTER_STATE_OPERATIONAL)
+		वापस 0;
 
-	if(pHba->status_block->iop_state != ADAPTER_STATE_READY)
-		return -EINVAL;
+	अगर(pHba->status_block->iop_state != ADAPTER_STATE_READY)
+		वापस -EINVAL;
 
 	msg[0]=FOUR_WORD_MSG_SIZE|SGL_OFFSET_0;
 	msg[1]=I2O_CMD_SYS_ENABLE<<24|HOST_TID<<12|ADAPTER_TID;
 	msg[2]= 0;
 	msg[3]= 0;
 
-	if ((ret = adpt_i2o_post_wait(pHba, msg, sizeof(msg), 240))) {
-		printk(KERN_WARNING"%s: Could not enable (status=%#10x).\n", 
+	अगर ((ret = adpt_i2o_post_रुको(pHba, msg, माप(msg), 240))) अणु
+		prपूर्णांकk(KERN_WARNING"%s: Could not enable (status=%#10x).\n", 
 			pHba->name, ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		PDEBUG("%s: Enabled.\n", pHba->name);
-	}
+	पूर्ण
 
 	adpt_i2o_status_get(pHba);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int adpt_i2o_systab_send(adpt_hba* pHba)
-{
+अटल पूर्णांक adpt_i2o_systab_send(adpt_hba* pHba)
+अणु
 	u32 msg[12];
-	int ret;
+	पूर्णांक ret;
 
 	msg[0] = I2O_MESSAGE_SIZE(12) | SGL_OFFSET_6;
 	msg[1] = I2O_CMD_SYS_TAB_SET<<24 | HOST_TID<<12 | ADAPTER_TID;
@@ -3456,18 +3457,18 @@ static int adpt_i2o_systab_send(adpt_hba* pHba)
 	msg[10] = 0xD4000000 | 0;
 	msg[11] = 0;
 
-	if ((ret=adpt_i2o_post_wait(pHba, msg, sizeof(msg), 120))) {
-		printk(KERN_INFO "%s: Unable to set SysTab (status=%#10x).\n", 
+	अगर ((ret=adpt_i2o_post_रुको(pHba, msg, माप(msg), 120))) अणु
+		prपूर्णांकk(KERN_INFO "%s: Unable to set SysTab (status=%#10x).\n", 
 			pHba->name, ret);
-	}
-#ifdef DEBUG
-	else {
+	पूर्ण
+#अगर_घोषित DEBUG
+	अन्यथा अणु
 		PINFO("%s: SysTab set.\n", pHba->name);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	return ret;	
-}
+	वापस ret;	
+पूर्ण
 
 
 /*============================================================================
@@ -3476,26 +3477,26 @@ static int adpt_i2o_systab_send(adpt_hba* pHba)
  */
 
 
-#ifdef UARTDELAY 
+#अगर_घोषित UARTDELAY 
 
-static static void adpt_delay(int millisec)
-{
-	int i;
-	for (i = 0; i < millisec; i++) {
-		udelay(1000);	/* delay for one millisecond */
-	}
-}
+अटल अटल व्योम adpt_delay(पूर्णांक millisec)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < millisec; i++) अणु
+		udelay(1000);	/* delay क्रम one millisecond */
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static struct scsi_host_template driver_template = {
+अटल काष्ठा scsi_host_ढाँचा driver_ढाँचा = अणु
 	.module			= THIS_MODULE,
 	.name			= "dpt_i2o",
 	.proc_name		= "dpt_i2o",
 	.show_info		= adpt_show_info,
 	.info			= adpt_info,
 	.queuecommand		= adpt_queue,
-	.eh_abort_handler	= adpt_abort,
+	.eh_पात_handler	= adpt_पात,
 	.eh_device_reset_handler = adpt_device_reset,
 	.eh_bus_reset_handler	= adpt_bus_reset,
 	.eh_host_reset_handler	= adpt_reset,
@@ -3503,47 +3504,47 @@ static struct scsi_host_template driver_template = {
 	.slave_configure	= adpt_slave_configure,
 	.can_queue		= MAX_TO_IOP_MESSAGES,
 	.this_id		= 7,
-};
+पूर्ण;
 
-static int __init adpt_init(void)
-{
-	int		error;
+अटल पूर्णांक __init adpt_init(व्योम)
+अणु
+	पूर्णांक		error;
 	adpt_hba	*pHba, *next;
 
-	printk("Loading Adaptec I2O RAID: Version " DPT_I2O_VERSION "\n");
+	prपूर्णांकk("Loading Adaptec I2O RAID: Version " DPT_I2O_VERSION "\n");
 
-	error = adpt_detect(&driver_template);
-	if (error < 0)
-		return error;
-	if (hba_chain == NULL)
-		return -ENODEV;
+	error = adpt_detect(&driver_ढाँचा);
+	अगर (error < 0)
+		वापस error;
+	अगर (hba_chain == शून्य)
+		वापस -ENODEV;
 
-	for (pHba = hba_chain; pHba; pHba = pHba->next) {
+	क्रम (pHba = hba_chain; pHba; pHba = pHba->next) अणु
 		error = scsi_add_host(pHba->host, &pHba->pDev->dev);
-		if (error)
-			goto fail;
+		अगर (error)
+			जाओ fail;
 		scsi_scan_host(pHba->host);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 fail:
-	for (pHba = hba_chain; pHba; pHba = next) {
+	क्रम (pHba = hba_chain; pHba; pHba = next) अणु
 		next = pHba->next;
-		scsi_remove_host(pHba->host);
-	}
-	return error;
-}
+		scsi_हटाओ_host(pHba->host);
+	पूर्ण
+	वापस error;
+पूर्ण
 
-static void __exit adpt_exit(void)
-{
+अटल व्योम __निकास adpt_निकास(व्योम)
+अणु
 	adpt_hba	*pHba, *next;
 
-	for (pHba = hba_chain; pHba; pHba = next) {
+	क्रम (pHba = hba_chain; pHba; pHba = next) अणु
 		next = pHba->next;
 		adpt_release(pHba);
-	}
-}
+	पूर्ण
+पूर्ण
 
 module_init(adpt_init);
-module_exit(adpt_exit);
+module_निकास(adpt_निकास);
 
 MODULE_LICENSE("GPL");

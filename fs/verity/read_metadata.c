@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Ioctl to read verity metadata
+ * Ioctl to पढ़ो verity metadata
  *
  * Copyright 2021 Google LLC
  */
 
-#include "fsverity_private.h"
+#समावेश "fsverity_private.h"
 
-#include <linux/backing-dev.h>
-#include <linux/highmem.h>
-#include <linux/sched/signal.h>
-#include <linux/uaccess.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/uaccess.h>
 
-static int fsverity_read_merkle_tree(struct inode *inode,
-				     const struct fsverity_info *vi,
-				     void __user *buf, u64 offset, int length)
-{
-	const struct fsverity_operations *vops = inode->i_sb->s_vop;
+अटल पूर्णांक fsverity_पढ़ो_merkle_tree(काष्ठा inode *inode,
+				     स्थिर काष्ठा fsverity_info *vi,
+				     व्योम __user *buf, u64 offset, पूर्णांक length)
+अणु
+	स्थिर काष्ठा fsverity_operations *vops = inode->i_sb->s_vop;
 	u64 end_offset;
-	unsigned int offs_in_page;
+	अचिन्हित पूर्णांक offs_in_page;
 	pgoff_t index, last_index;
-	int retval = 0;
-	int err = 0;
+	पूर्णांक retval = 0;
+	पूर्णांक err = 0;
 
 	end_offset = min(offset + length, vi->tree_params.tree_size);
-	if (offset >= end_offset)
-		return 0;
+	अगर (offset >= end_offset)
+		वापस 0;
 	offs_in_page = offset_in_page(offset);
 	last_index = (end_offset - 1) >> PAGE_SHIFT;
 
 	/*
 	 * Iterate through each Merkle tree page in the requested range and copy
 	 * the requested portion to userspace.  Note that the Merkle tree block
-	 * size isn't important here, as we are returning a byte stream; i.e.,
-	 * we can just work with pages even if the tree block size != PAGE_SIZE.
+	 * size isn't important here, as we are वापसing a byte stream; i.e.,
+	 * we can just work with pages even अगर the tree block size != PAGE_SIZE.
 	 */
-	for (index = offset >> PAGE_SHIFT; index <= last_index; index++) {
-		unsigned long num_ra_pages =
-			min_t(unsigned long, last_index - index + 1,
+	क्रम (index = offset >> PAGE_SHIFT; index <= last_index; index++) अणु
+		अचिन्हित दीर्घ num_ra_pages =
+			min_t(अचिन्हित दीर्घ, last_index - index + 1,
 			      inode->i_sb->s_bdi->io_pages);
-		unsigned int bytes_to_copy = min_t(u64, end_offset - offset,
+		अचिन्हित पूर्णांक bytes_to_copy = min_t(u64, end_offset - offset,
 						   PAGE_SIZE - offs_in_page);
-		struct page *page;
-		const void *virt;
+		काष्ठा page *page;
+		स्थिर व्योम *virt;
 
-		page = vops->read_merkle_tree_page(inode, index, num_ra_pages);
-		if (IS_ERR(page)) {
+		page = vops->पढ़ो_merkle_tree_page(inode, index, num_ra_pages);
+		अगर (IS_ERR(page)) अणु
 			err = PTR_ERR(page);
 			fsverity_err(inode,
 				     "Error %d reading Merkle tree page %lu",
 				     err, index);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		virt = kmap(page);
-		if (copy_to_user(buf, virt + offs_in_page, bytes_to_copy)) {
+		अगर (copy_to_user(buf, virt + offs_in_page, bytes_to_copy)) अणु
 			kunmap(page);
 			put_page(page);
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		kunmap(page);
 		put_page(page);
 
@@ -67,129 +68,129 @@ static int fsverity_read_merkle_tree(struct inode *inode,
 		buf += bytes_to_copy;
 		offset += bytes_to_copy;
 
-		if (fatal_signal_pending(current))  {
+		अगर (fatal_संकेत_pending(current))  अणु
 			err = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cond_resched();
 		offs_in_page = 0;
-	}
-	return retval ? retval : err;
-}
+	पूर्ण
+	वापस retval ? retval : err;
+पूर्ण
 
 /* Copy the requested portion of the buffer to userspace. */
-static int fsverity_read_buffer(void __user *dst, u64 offset, int length,
-				const void *src, size_t src_length)
-{
-	if (offset >= src_length)
-		return 0;
+अटल पूर्णांक fsverity_पढ़ो_buffer(व्योम __user *dst, u64 offset, पूर्णांक length,
+				स्थिर व्योम *src, माप_प्रकार src_length)
+अणु
+	अगर (offset >= src_length)
+		वापस 0;
 	src += offset;
 	src_length -= offset;
 
-	length = min_t(size_t, length, src_length);
+	length = min_t(माप_प्रकार, length, src_length);
 
-	if (copy_to_user(dst, src, length))
-		return -EFAULT;
+	अगर (copy_to_user(dst, src, length))
+		वापस -EFAULT;
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static int fsverity_read_descriptor(struct inode *inode,
-				    void __user *buf, u64 offset, int length)
-{
-	struct fsverity_descriptor *desc;
-	size_t desc_size;
-	int res;
+अटल पूर्णांक fsverity_पढ़ो_descriptor(काष्ठा inode *inode,
+				    व्योम __user *buf, u64 offset, पूर्णांक length)
+अणु
+	काष्ठा fsverity_descriptor *desc;
+	माप_प्रकार desc_size;
+	पूर्णांक res;
 
 	res = fsverity_get_descriptor(inode, &desc, &desc_size);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	/* don't include the signature */
-	desc_size = offsetof(struct fsverity_descriptor, signature);
+	/* करोn't include the signature */
+	desc_size = दुरत्व(काष्ठा fsverity_descriptor, signature);
 	desc->sig_size = 0;
 
-	res = fsverity_read_buffer(buf, offset, length, desc, desc_size);
+	res = fsverity_पढ़ो_buffer(buf, offset, length, desc, desc_size);
 
-	kfree(desc);
-	return res;
-}
+	kमुक्त(desc);
+	वापस res;
+पूर्ण
 
-static int fsverity_read_signature(struct inode *inode,
-				   void __user *buf, u64 offset, int length)
-{
-	struct fsverity_descriptor *desc;
-	size_t desc_size;
-	int res;
+अटल पूर्णांक fsverity_पढ़ो_signature(काष्ठा inode *inode,
+				   व्योम __user *buf, u64 offset, पूर्णांक length)
+अणु
+	काष्ठा fsverity_descriptor *desc;
+	माप_प्रकार desc_size;
+	पूर्णांक res;
 
 	res = fsverity_get_descriptor(inode, &desc, &desc_size);
-	if (res)
-		return res;
+	अगर (res)
+		वापस res;
 
-	if (desc->sig_size == 0) {
+	अगर (desc->sig_size == 0) अणु
 		res = -ENODATA;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Include only the signature.  Note that fsverity_get_descriptor()
-	 * already verified that sig_size is in-bounds.
+	 * alपढ़ोy verअगरied that sig_size is in-bounds.
 	 */
-	res = fsverity_read_buffer(buf, offset, length, desc->signature,
+	res = fsverity_पढ़ो_buffer(buf, offset, length, desc->signature,
 				   le32_to_cpu(desc->sig_size));
 out:
-	kfree(desc);
-	return res;
-}
+	kमुक्त(desc);
+	वापस res;
+पूर्ण
 
 /**
- * fsverity_ioctl_read_metadata() - read verity metadata from a file
- * @filp: file to read the metadata from
- * @uarg: user pointer to fsverity_read_metadata_arg
+ * fsverity_ioctl_पढ़ो_metadata() - पढ़ो verity metadata from a file
+ * @filp: file to पढ़ो the metadata from
+ * @uarg: user poपूर्णांकer to fsverity_पढ़ो_metadata_arg
  *
- * Return: length read on success, 0 on EOF, -errno on failure
+ * Return: length पढ़ो on success, 0 on खातापूर्ण, -त्रुटि_सं on failure
  */
-int fsverity_ioctl_read_metadata(struct file *filp, const void __user *uarg)
-{
-	struct inode *inode = file_inode(filp);
-	const struct fsverity_info *vi;
-	struct fsverity_read_metadata_arg arg;
-	int length;
-	void __user *buf;
+पूर्णांक fsverity_ioctl_पढ़ो_metadata(काष्ठा file *filp, स्थिर व्योम __user *uarg)
+अणु
+	काष्ठा inode *inode = file_inode(filp);
+	स्थिर काष्ठा fsverity_info *vi;
+	काष्ठा fsverity_पढ़ो_metadata_arg arg;
+	पूर्णांक length;
+	व्योम __user *buf;
 
 	vi = fsverity_get_info(inode);
-	if (!vi)
-		return -ENODATA; /* not a verity file */
+	अगर (!vi)
+		वापस -ENODATA; /* not a verity file */
 	/*
-	 * Note that we don't have to explicitly check that the file is open for
-	 * reading, since verity files can only be opened for reading.
+	 * Note that we करोn't have to explicitly check that the file is खोलो क्रम
+	 * पढ़ोing, since verity files can only be खोलोed क्रम पढ़ोing.
 	 */
 
-	if (copy_from_user(&arg, uarg, sizeof(arg)))
-		return -EFAULT;
+	अगर (copy_from_user(&arg, uarg, माप(arg)))
+		वापस -EFAULT;
 
-	if (arg.__reserved)
-		return -EINVAL;
+	अगर (arg.__reserved)
+		वापस -EINVAL;
 
 	/* offset + length must not overflow. */
-	if (arg.offset + arg.length < arg.offset)
-		return -EINVAL;
+	अगर (arg.offset + arg.length < arg.offset)
+		वापस -EINVAL;
 
-	/* Ensure that the return value will fit in INT_MAX. */
-	length = min_t(u64, arg.length, INT_MAX);
+	/* Ensure that the वापस value will fit in पूर्णांक_उच्च. */
+	length = min_t(u64, arg.length, पूर्णांक_उच्च);
 
 	buf = u64_to_user_ptr(arg.buf_ptr);
 
-	switch (arg.metadata_type) {
-	case FS_VERITY_METADATA_TYPE_MERKLE_TREE:
-		return fsverity_read_merkle_tree(inode, vi, buf, arg.offset,
+	चयन (arg.metadata_type) अणु
+	हाल FS_VERITY_METADATA_TYPE_MERKLE_TREE:
+		वापस fsverity_पढ़ो_merkle_tree(inode, vi, buf, arg.offset,
 						 length);
-	case FS_VERITY_METADATA_TYPE_DESCRIPTOR:
-		return fsverity_read_descriptor(inode, buf, arg.offset, length);
-	case FS_VERITY_METADATA_TYPE_SIGNATURE:
-		return fsverity_read_signature(inode, buf, arg.offset, length);
-	default:
-		return -EINVAL;
-	}
-}
-EXPORT_SYMBOL_GPL(fsverity_ioctl_read_metadata);
+	हाल FS_VERITY_METADATA_TYPE_DESCRIPTOR:
+		वापस fsverity_पढ़ो_descriptor(inode, buf, arg.offset, length);
+	हाल FS_VERITY_METADATA_TYPE_SIGNATURE:
+		वापस fsverity_पढ़ो_signature(inode, buf, arg.offset, length);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(fsverity_ioctl_पढ़ो_metadata);

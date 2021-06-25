@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Intel SST generic IPC Support
  *
  * Copyright (C) 2015, Intel Corporation. All rights reserved.
  */
 
-#ifndef __SST_GENERIC_IPC_H
-#define __SST_GENERIC_IPC_H
+#अगर_अघोषित __SST_GENERIC_IPC_H
+#घोषणा __SST_GENERIC_IPC_H
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/wait.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/sched.h>
 
-struct sst_ipc_message {
+काष्ठा sst_ipc_message अणु
 	u64 header;
-	void *data;
-	size_t size;
-};
+	व्योम *data;
+	माप_प्रकार size;
+पूर्ण;
 
-struct ipc_message {
-	struct list_head list;
-	struct sst_ipc_message tx;
-	struct sst_ipc_message rx;
+काष्ठा ipc_message अणु
+	काष्ठा list_head list;
+	काष्ठा sst_ipc_message tx;
+	काष्ठा sst_ipc_message rx;
 
-	wait_queue_head_t waitq;
+	रुको_queue_head_t रुकोq;
 	bool pending;
 	bool complete;
-	bool wait;
-	int errno;
-};
+	bool रुको;
+	पूर्णांक त्रुटि_सं;
+पूर्ण;
 
-struct sst_generic_ipc;
-struct sst_dsp;
+काष्ठा sst_generic_ipc;
+काष्ठा sst_dsp;
 
-struct sst_plat_ipc_ops {
-	void (*tx_msg)(struct sst_generic_ipc *, struct ipc_message *);
-	void (*shim_dbg)(struct sst_generic_ipc *, const char *);
-	void (*tx_data_copy)(struct ipc_message *, char *, size_t);
+काष्ठा sst_plat_ipc_ops अणु
+	व्योम (*tx_msg)(काष्ठा sst_generic_ipc *, काष्ठा ipc_message *);
+	व्योम (*shim_dbg)(काष्ठा sst_generic_ipc *, स्थिर अक्षर *);
+	व्योम (*tx_data_copy)(काष्ठा ipc_message *, अक्षर *, माप_प्रकार);
 	u64  (*reply_msg_match)(u64 header, u64 *mask);
-	bool (*is_dsp_busy)(struct sst_dsp *dsp);
-	int (*check_dsp_lp_on)(struct sst_dsp *dsp, bool state);
-};
+	bool (*is_dsp_busy)(काष्ठा sst_dsp *dsp);
+	पूर्णांक (*check_dsp_lp_on)(काष्ठा sst_dsp *dsp, bool state);
+पूर्ण;
 
 /* SST generic IPC data */
-struct sst_generic_ipc {
-	struct device *dev;
-	struct sst_dsp *dsp;
+काष्ठा sst_generic_ipc अणु
+	काष्ठा device *dev;
+	काष्ठा sst_dsp *dsp;
 
 	/* IPC messaging */
-	struct list_head tx_list;
-	struct list_head rx_list;
-	struct list_head empty_list;
-	wait_queue_head_t wait_txq;
-	struct task_struct *tx_thread;
-	struct work_struct kwork;
+	काष्ठा list_head tx_list;
+	काष्ठा list_head rx_list;
+	काष्ठा list_head empty_list;
+	रुको_queue_head_t रुको_txq;
+	काष्ठा task_काष्ठा *tx_thपढ़ो;
+	काष्ठा work_काष्ठा kwork;
 	bool pending;
-	struct ipc_message *msg;
-	int tx_data_max_size;
-	int rx_data_max_size;
+	काष्ठा ipc_message *msg;
+	पूर्णांक tx_data_max_size;
+	पूर्णांक rx_data_max_size;
 
-	struct sst_plat_ipc_ops ops;
-};
+	काष्ठा sst_plat_ipc_ops ops;
+पूर्ण;
 
-int sst_ipc_tx_message_wait(struct sst_generic_ipc *ipc,
-	struct sst_ipc_message request, struct sst_ipc_message *reply);
+पूर्णांक sst_ipc_tx_message_रुको(काष्ठा sst_generic_ipc *ipc,
+	काष्ठा sst_ipc_message request, काष्ठा sst_ipc_message *reply);
 
-int sst_ipc_tx_message_nowait(struct sst_generic_ipc *ipc,
-	struct sst_ipc_message request);
+पूर्णांक sst_ipc_tx_message_noरुको(काष्ठा sst_generic_ipc *ipc,
+	काष्ठा sst_ipc_message request);
 
-int sst_ipc_tx_message_nopm(struct sst_generic_ipc *ipc,
-	struct sst_ipc_message request, struct sst_ipc_message *reply);
+पूर्णांक sst_ipc_tx_message_nopm(काष्ठा sst_generic_ipc *ipc,
+	काष्ठा sst_ipc_message request, काष्ठा sst_ipc_message *reply);
 
-struct ipc_message *sst_ipc_reply_find_msg(struct sst_generic_ipc *ipc,
+काष्ठा ipc_message *sst_ipc_reply_find_msg(काष्ठा sst_generic_ipc *ipc,
 	u64 header);
 
-void sst_ipc_tx_msg_reply_complete(struct sst_generic_ipc *ipc,
-	struct ipc_message *msg);
+व्योम sst_ipc_tx_msg_reply_complete(काष्ठा sst_generic_ipc *ipc,
+	काष्ठा ipc_message *msg);
 
-int sst_ipc_init(struct sst_generic_ipc *ipc);
-void sst_ipc_fini(struct sst_generic_ipc *ipc);
+पूर्णांक sst_ipc_init(काष्ठा sst_generic_ipc *ipc);
+व्योम sst_ipc_fini(काष्ठा sst_generic_ipc *ipc);
 
-#endif
+#पूर्ण_अगर

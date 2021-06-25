@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*******************************************************************************
 
   Copyright(c) 2004-2005 Intel Corporation. All rights reserved.
@@ -10,161 +11,161 @@
   Copyright (c) 2002-2003, Jouni Malinen <j@w1.fi>
 
 
-  Contact Information:
-  Intel Linux Wireless <ilw@linux.intel.com>
+  Contact Inक्रमmation:
+  Intel Linux Wireless <ilw@linux.पूर्णांकel.com>
   Intel Corporation, 5200 N.E. Elam Young Parkway, Hillsboro, OR 97124-6497
 
 *******************************************************************************/
 
-#include <linux/compiler.h>
-#include <linux/errno.h>
-#include <linux/if_arp.h>
-#include <linux/in6.h>
-#include <linux/in.h>
-#include <linux/ip.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/proc_fs.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/tcp.h>
-#include <linux/types.h>
-#include <linux/wireless.h>
-#include <linux/etherdevice.h>
-#include <linux/uaccess.h>
-#include <net/net_namespace.h>
-#include <net/arp.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/in.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/types.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/uaccess.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/arp.h>
 
-#include "libipw.h"
+#समावेश "libipw.h"
 
-#define DRV_DESCRIPTION "802.11 data/management/control stack"
-#define DRV_NAME        "libipw"
-#define DRV_PROCNAME	"ieee80211"
-#define DRV_VERSION	LIBIPW_VERSION
-#define DRV_COPYRIGHT   "Copyright (C) 2004-2005 Intel Corporation <jketreno@linux.intel.com>"
+#घोषणा DRV_DESCRIPTION "802.11 data/management/control stack"
+#घोषणा DRV_NAME        "libipw"
+#घोषणा DRV_PROCNAME	"ieee80211"
+#घोषणा DRV_VERSION	LIBIPW_VERSION
+#घोषणा DRV_COPYRIGHT   "Copyright (C) 2004-2005 Intel Corporation <jketreno@linux.intel.com>"
 
 MODULE_VERSION(DRV_VERSION);
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR(DRV_COPYRIGHT);
 MODULE_LICENSE("GPL");
 
-static struct cfg80211_ops libipw_config_ops = { };
-static void *libipw_wiphy_privid = &libipw_wiphy_privid;
+अटल काष्ठा cfg80211_ops libipw_config_ops = अणु पूर्ण;
+अटल व्योम *libipw_wiphy_privid = &libipw_wiphy_privid;
 
-static int libipw_networks_allocate(struct libipw_device *ieee)
-{
-	int i, j;
+अटल पूर्णांक libipw_networks_allocate(काष्ठा libipw_device *ieee)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < MAX_NETWORK_COUNT; i++) {
-		ieee->networks[i] = kzalloc(sizeof(struct libipw_network),
+	क्रम (i = 0; i < MAX_NETWORK_COUNT; i++) अणु
+		ieee->networks[i] = kzalloc(माप(काष्ठा libipw_network),
 					    GFP_KERNEL);
-		if (!ieee->networks[i]) {
+		अगर (!ieee->networks[i]) अणु
 			LIBIPW_ERROR("Out of memory allocating beacons\n");
-			for (j = 0; j < i; j++)
-				kfree(ieee->networks[j]);
-			return -ENOMEM;
-		}
-	}
+			क्रम (j = 0; j < i; j++)
+				kमुक्त(ieee->networks[j]);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void libipw_networks_free(struct libipw_device *ieee)
-{
-	int i;
+अटल अंतरभूत व्योम libipw_networks_मुक्त(काष्ठा libipw_device *ieee)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_NETWORK_COUNT; i++)
-		kfree(ieee->networks[i]);
-}
+	क्रम (i = 0; i < MAX_NETWORK_COUNT; i++)
+		kमुक्त(ieee->networks[i]);
+पूर्ण
 
-void libipw_networks_age(struct libipw_device *ieee,
-                            unsigned long age_secs)
-{
-	struct libipw_network *network = NULL;
-	unsigned long flags;
-	unsigned long age_jiffies = msecs_to_jiffies(age_secs * MSEC_PER_SEC);
+व्योम libipw_networks_age(काष्ठा libipw_device *ieee,
+                            अचिन्हित दीर्घ age_secs)
+अणु
+	काष्ठा libipw_network *network = शून्य;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ age_jअगरfies = msecs_to_jअगरfies(age_secs * MSEC_PER_SEC);
 
 	spin_lock_irqsave(&ieee->lock, flags);
-	list_for_each_entry(network, &ieee->network_list, list) {
-		network->last_scanned -= age_jiffies;
-	}
+	list_क्रम_each_entry(network, &ieee->network_list, list) अणु
+		network->last_scanned -= age_jअगरfies;
+	पूर्ण
 	spin_unlock_irqrestore(&ieee->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(libipw_networks_age);
 
-static void libipw_networks_initialize(struct libipw_device *ieee)
-{
-	int i;
+अटल व्योम libipw_networks_initialize(काष्ठा libipw_device *ieee)
+अणु
+	पूर्णांक i;
 
-	INIT_LIST_HEAD(&ieee->network_free_list);
+	INIT_LIST_HEAD(&ieee->network_मुक्त_list);
 	INIT_LIST_HEAD(&ieee->network_list);
-	for (i = 0; i < MAX_NETWORK_COUNT; i++)
+	क्रम (i = 0; i < MAX_NETWORK_COUNT; i++)
 		list_add_tail(&ieee->networks[i]->list,
-			      &ieee->network_free_list);
-}
+			      &ieee->network_मुक्त_list);
+पूर्ण
 
-struct net_device *alloc_libipw(int sizeof_priv, int monitor)
-{
-	struct libipw_device *ieee;
-	struct net_device *dev;
-	int err;
+काष्ठा net_device *alloc_libipw(पूर्णांक माप_priv, पूर्णांक monitor)
+अणु
+	काष्ठा libipw_device *ieee;
+	काष्ठा net_device *dev;
+	पूर्णांक err;
 
 	LIBIPW_DEBUG_INFO("Initializing...\n");
 
-	dev = alloc_etherdev(sizeof(struct libipw_device) + sizeof_priv);
-	if (!dev)
-		goto failed;
+	dev = alloc_etherdev(माप(काष्ठा libipw_device) + माप_priv);
+	अगर (!dev)
+		जाओ failed;
 
 	ieee = netdev_priv(dev);
 
 	ieee->dev = dev;
 
-	if (!monitor) {
+	अगर (!monitor) अणु
 		ieee->wdev.wiphy = wiphy_new(&libipw_config_ops, 0);
-		if (!ieee->wdev.wiphy) {
+		अगर (!ieee->wdev.wiphy) अणु
 			LIBIPW_ERROR("Unable to allocate wiphy.\n");
-			goto failed_free_netdev;
-		}
+			जाओ failed_मुक्त_netdev;
+		पूर्ण
 
 		ieee->dev->ieee80211_ptr = &ieee->wdev;
-		ieee->wdev.iftype = NL80211_IFTYPE_STATION;
+		ieee->wdev.अगरtype = NL80211_IFTYPE_STATION;
 
-		/* Fill-out wiphy structure bits we know...  Not enough info
+		/* Fill-out wiphy काष्ठाure bits we know...  Not enough info
 		   here to call set_wiphy_dev or set MAC address or channel info
-		   -- have to do that in ->ndo_init... */
+		   -- have to करो that in ->nकरो_init... */
 		ieee->wdev.wiphy->privid = libipw_wiphy_privid;
 
 		ieee->wdev.wiphy->max_scan_ssids = 1;
 		ieee->wdev.wiphy->max_scan_ie_len = 0;
-		ieee->wdev.wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION)
+		ieee->wdev.wiphy->पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION)
 						| BIT(NL80211_IFTYPE_ADHOC);
-	}
+	पूर्ण
 
 	err = libipw_networks_allocate(ieee);
-	if (err) {
+	अगर (err) अणु
 		LIBIPW_ERROR("Unable to allocate beacon storage: %d\n", err);
-		goto failed_free_wiphy;
-	}
+		जाओ failed_मुक्त_wiphy;
+	पूर्ण
 	libipw_networks_initialize(ieee);
 
 	/* Default fragmentation threshold is maximum payload size */
 	ieee->fts = DEFAULT_FTS;
 	ieee->rts = DEFAULT_FTS;
 	ieee->scan_age = DEFAULT_MAX_SCAN_AGE;
-	ieee->open_wep = 1;
+	ieee->खोलो_wep = 1;
 
-	/* Default to enabling full open WEP with host based encrypt/decrypt */
+	/* Default to enabling full खोलो WEP with host based encrypt/decrypt */
 	ieee->host_encrypt = 1;
 	ieee->host_decrypt = 1;
 	ieee->host_mc_decrypt = 1;
 
 	/* Host fragmentation in Open mode. Default is enabled.
-	 * Note: host fragmentation is always enabled if host encryption
-	 * is enabled. For cards can do hardware encryption, they must do
-	 * hardware fragmentation as well. So we don't need a variable
+	 * Note: host fragmentation is always enabled अगर host encryption
+	 * is enabled. For cards can करो hardware encryption, they must करो
+	 * hardware fragmentation as well. So we करोn't need a variable
 	 * like host_enc_frag. */
-	ieee->host_open_frag = 1;
+	ieee->host_खोलो_frag = 1;
 	ieee->ieee802_1x = 1;	/* Default to supporting 802.1x */
 
 	spin_lock_init(&ieee->lock);
@@ -175,123 +176,123 @@ struct net_device *alloc_libipw(int sizeof_priv, int monitor)
 	ieee->drop_unencrypted = 0;
 	ieee->privacy_invoked = 0;
 
-	return dev;
+	वापस dev;
 
-failed_free_wiphy:
-	if (!monitor)
-		wiphy_free(ieee->wdev.wiphy);
-failed_free_netdev:
-	free_netdev(dev);
+failed_मुक्त_wiphy:
+	अगर (!monitor)
+		wiphy_मुक्त(ieee->wdev.wiphy);
+failed_मुक्त_netdev:
+	मुक्त_netdev(dev);
 failed:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(alloc_libipw);
 
-void free_libipw(struct net_device *dev, int monitor)
-{
-	struct libipw_device *ieee = netdev_priv(dev);
+व्योम मुक्त_libipw(काष्ठा net_device *dev, पूर्णांक monitor)
+अणु
+	काष्ठा libipw_device *ieee = netdev_priv(dev);
 
-	lib80211_crypt_info_free(&ieee->crypt_info);
+	lib80211_crypt_info_मुक्त(&ieee->crypt_info);
 
-	libipw_networks_free(ieee);
+	libipw_networks_मुक्त(ieee);
 
-	/* free cfg80211 resources */
-	if (!monitor)
-		wiphy_free(ieee->wdev.wiphy);
+	/* मुक्त cfg80211 resources */
+	अगर (!monitor)
+		wiphy_मुक्त(ieee->wdev.wiphy);
 
-	free_netdev(dev);
-}
-EXPORT_SYMBOL(free_libipw);
+	मुक्त_netdev(dev);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_libipw);
 
-#ifdef CONFIG_LIBIPW_DEBUG
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
 
-static int debug = 0;
+अटल पूर्णांक debug = 0;
 u32 libipw_debug_level = 0;
 EXPORT_SYMBOL_GPL(libipw_debug_level);
-static struct proc_dir_entry *libipw_proc = NULL;
+अटल काष्ठा proc_dir_entry *libipw_proc = शून्य;
 
-static int debug_level_proc_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "0x%08X\n", libipw_debug_level);
-	return 0;
-}
+अटल पूर्णांक debug_level_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m, "0x%08X\n", libipw_debug_level);
+	वापस 0;
+पूर्ण
 
-static int debug_level_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, debug_level_proc_show, NULL);
-}
+अटल पूर्णांक debug_level_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, debug_level_proc_show, शून्य);
+पूर्ण
 
-static ssize_t debug_level_proc_write(struct file *file,
-		const char __user *buffer, size_t count, loff_t *pos)
-{
-	char buf[] = "0x00000000\n";
-	size_t len = min(sizeof(buf) - 1, count);
-	unsigned long val;
+अटल sमाप_प्रकार debug_level_proc_ग_लिखो(काष्ठा file *file,
+		स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *pos)
+अणु
+	अक्षर buf[] = "0x00000000\n";
+	माप_प्रकार len = min(माप(buf) - 1, count);
+	अचिन्हित दीर्घ val;
 
-	if (copy_from_user(buf, buffer, len))
-		return count;
+	अगर (copy_from_user(buf, buffer, len))
+		वापस count;
 	buf[len] = 0;
-	if (sscanf(buf, "%li", &val) != 1)
-		printk(KERN_INFO DRV_NAME
+	अगर (माला_पूछो(buf, "%li", &val) != 1)
+		prपूर्णांकk(KERN_INFO DRV_NAME
 		       ": %s is not in hex or decimal form.\n", buf);
-	else
+	अन्यथा
 		libipw_debug_level = val;
 
-	return strnlen(buf, len);
-}
+	वापस strnlen(buf, len);
+पूर्ण
 
-static const struct proc_ops debug_level_proc_ops = {
-	.proc_open	= debug_level_proc_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops debug_level_proc_ops = अणु
+	.proc_खोलो	= debug_level_proc_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_write	= debug_level_proc_write,
-};
-#endif				/* CONFIG_LIBIPW_DEBUG */
+	.proc_ग_लिखो	= debug_level_proc_ग_लिखो,
+पूर्ण;
+#पूर्ण_अगर				/* CONFIG_LIBIPW_DEBUG */
 
-static int __init libipw_init(void)
-{
-#ifdef CONFIG_LIBIPW_DEBUG
-	struct proc_dir_entry *e;
+अटल पूर्णांक __init libipw_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+	काष्ठा proc_dir_entry *e;
 
 	libipw_debug_level = debug;
-	libipw_proc = proc_mkdir(DRV_PROCNAME, init_net.proc_net);
-	if (libipw_proc == NULL) {
+	libipw_proc = proc_सूची_गढ़ो(DRV_PROCNAME, init_net.proc_net);
+	अगर (libipw_proc == शून्य) अणु
 		LIBIPW_ERROR("Unable to create " DRV_PROCNAME
 				" proc directory\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	e = proc_create("debug_level", 0644, libipw_proc,
 			&debug_level_proc_ops);
-	if (!e) {
-		remove_proc_entry(DRV_PROCNAME, init_net.proc_net);
-		libipw_proc = NULL;
-		return -EIO;
-	}
-#endif				/* CONFIG_LIBIPW_DEBUG */
+	अगर (!e) अणु
+		हटाओ_proc_entry(DRV_PROCNAME, init_net.proc_net);
+		libipw_proc = शून्य;
+		वापस -EIO;
+	पूर्ण
+#पूर्ण_अगर				/* CONFIG_LIBIPW_DEBUG */
 
-	printk(KERN_INFO DRV_NAME ": " DRV_DESCRIPTION ", " DRV_VERSION "\n");
-	printk(KERN_INFO DRV_NAME ": " DRV_COPYRIGHT "\n");
+	prपूर्णांकk(KERN_INFO DRV_NAME ": " DRV_DESCRIPTION ", " DRV_VERSION "\n");
+	prपूर्णांकk(KERN_INFO DRV_NAME ": " DRV_COPYRIGHT "\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit libipw_exit(void)
-{
-#ifdef CONFIG_LIBIPW_DEBUG
-	if (libipw_proc) {
-		remove_proc_entry("debug_level", libipw_proc);
-		remove_proc_entry(DRV_PROCNAME, init_net.proc_net);
-		libipw_proc = NULL;
-	}
-#endif				/* CONFIG_LIBIPW_DEBUG */
-}
+अटल व्योम __निकास libipw_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+	अगर (libipw_proc) अणु
+		हटाओ_proc_entry("debug_level", libipw_proc);
+		हटाओ_proc_entry(DRV_PROCNAME, init_net.proc_net);
+		libipw_proc = शून्य;
+	पूर्ण
+#पूर्ण_अगर				/* CONFIG_LIBIPW_DEBUG */
+पूर्ण
 
-#ifdef CONFIG_LIBIPW_DEBUG
-#include <linux/moduleparam.h>
-module_param(debug, int, 0444);
+#अगर_घोषित CONFIG_LIBIPW_DEBUG
+#समावेश <linux/moduleparam.h>
+module_param(debug, पूर्णांक, 0444);
 MODULE_PARM_DESC(debug, "debug output mask");
-#endif				/* CONFIG_LIBIPW_DEBUG */
+#पूर्ण_अगर				/* CONFIG_LIBIPW_DEBUG */
 
-module_exit(libipw_exit);
+module_निकास(libipw_निकास);
 module_init(libipw_init);

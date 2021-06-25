@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,16 +24,16 @@
  *
  */
 
-#ifndef DAL_DC_DCN21_DCN21_HUBP_H_
-#define DAL_DC_DCN21_DCN21_HUBP_H_
+#अगर_अघोषित DAL_DC_DCN21_DCN21_HUBP_H_
+#घोषणा DAL_DC_DCN21_DCN21_HUBP_H_
 
-#include "../dcn20/dcn20_hubp.h"
-#include "../dcn10/dcn10_hubp.h"
+#समावेश "../dcn20/dcn20_hubp.h"
+#समावेश "../dcn10/dcn10_hubp.h"
 
-#define TO_DCN21_HUBP(hubp)\
-	container_of(hubp, struct dcn21_hubp, base)
+#घोषणा TO_DCN21_HUBP(hubp)\
+	container_of(hubp, काष्ठा dcn21_hubp, base)
 
-#define HUBP_REG_LIST_DCN21(id)\
+#घोषणा HUBP_REG_LIST_DCN21(id)\
 	HUBP_REG_LIST_DCN2_COMMON(id),\
 	SRI(FLIP_PARAMETERS_3, HUBPREQ, id),\
 	SRI(FLIP_PARAMETERS_4, HUBPREQ, id),\
@@ -41,7 +42,7 @@
 	SRI(VBLANK_PARAMETERS_5, HUBPREQ, id),\
 	SRI(VBLANK_PARAMETERS_6, HUBPREQ, id)
 
-#define HUBP_MASK_SH_LIST_DCN21_COMMON(mask_sh)\
+#घोषणा HUBP_MASK_SH_LIST_DCN21_COMMON(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN_SHARE_COMMON(mask_sh),\
 	HUBP_MASK_SH_LIST_DCN_VM(mask_sh),\
 	HUBP_SF(HUBP0_DCSURF_SURFACE_CONFIG, ROTATION_ANGLE, mask_sh),\
@@ -97,38 +98,38 @@
 	HUBP_SF(HUBPREQ0_VBLANK_PARAMETERS_6, REFCYC_PER_VM_REQ_VBLANK, mask_sh),\
 	HUBP_SF(HUBP0_DCHUBP_REQ_SIZE_CONFIG, VM_GROUP_SIZE, mask_sh)
 
-#define HUBP_MASK_SH_LIST_DCN21(mask_sh)\
+#घोषणा HUBP_MASK_SH_LIST_DCN21(mask_sh)\
 	HUBP_MASK_SH_LIST_DCN21_COMMON(mask_sh),\
 	HUBP_SF(HUBP0_DCSURF_TILING_CONFIG, RB_ALIGNED, mask_sh)
 
 
-struct dcn21_hubp {
-	struct hubp base;
-	struct dcn_hubp_state state;
-	const struct dcn_hubp2_registers *hubp_regs;
-	const struct dcn_hubp2_shift *hubp_shift;
-	const struct dcn_hubp2_mask *hubp_mask;
-	int PLAT_54186_wa_chroma_addr_offset;
-};
+काष्ठा dcn21_hubp अणु
+	काष्ठा hubp base;
+	काष्ठा dcn_hubp_state state;
+	स्थिर काष्ठा dcn_hubp2_रेजिस्टरs *hubp_regs;
+	स्थिर काष्ठा dcn_hubp2_shअगरt *hubp_shअगरt;
+	स्थिर काष्ठा dcn_hubp2_mask *hubp_mask;
+	पूर्णांक PLAT_54186_wa_chroma_addr_offset;
+पूर्ण;
 
-bool hubp21_construct(
-	struct dcn21_hubp *hubp21,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dcn_hubp2_registers *hubp_regs,
-	const struct dcn_hubp2_shift *hubp_shift,
-	const struct dcn_hubp2_mask *hubp_mask);
+bool hubp21_स्थिरruct(
+	काष्ठा dcn21_hubp *hubp21,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dcn_hubp2_रेजिस्टरs *hubp_regs,
+	स्थिर काष्ठा dcn_hubp2_shअगरt *hubp_shअगरt,
+	स्थिर काष्ठा dcn_hubp2_mask *hubp_mask);
 
-void apply_DEDCN21_142_wa_for_hostvm_deadline(
-		struct hubp *hubp,
-		struct _vcs_dpi_display_dlg_regs_st *dlg_attr);
+व्योम apply_DEDCN21_142_wa_क्रम_hostvm_deadline(
+		काष्ठा hubp *hubp,
+		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_attr);
 
-void hubp21_program_deadline(
-		struct hubp *hubp,
-		struct _vcs_dpi_display_dlg_regs_st *dlg_attr,
-		struct _vcs_dpi_display_ttu_regs_st *ttu_attr);
+व्योम hubp21_program_deadline(
+		काष्ठा hubp *hubp,
+		काष्ठा _vcs_dpi_display_dlg_regs_st *dlg_attr,
+		काष्ठा _vcs_dpi_display_ttu_regs_st *ttu_attr);
 
-void hubp21_program_requestor(
-		struct hubp *hubp,
-		struct _vcs_dpi_display_rq_regs_st *rq_regs);
-#endif /* DAL_DC_DCN21_DCN21_HUBP_H_ */
+व्योम hubp21_program_requestor(
+		काष्ठा hubp *hubp,
+		काष्ठा _vcs_dpi_display_rq_regs_st *rq_regs);
+#पूर्ण_अगर /* DAL_DC_DCN21_DCN21_HUBP_H_ */

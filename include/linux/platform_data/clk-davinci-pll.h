@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PLL clock driver for TI Davinci SoCs
+ * PLL घड़ी driver क्रम TI Davinci SoCs
  *
  * Copyright (C) 2018 David Lechner <david@lechnology.com>
  */
 
-#ifndef __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__
-#define __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__
+#अगर_अघोषित __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__
+#घोषणा __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
 /**
- * davinci_pll_platform_data
+ * davinci_pll_platक्रमm_data
  * @cfgchip: CFGCHIP syscon regmap
  */
-struct davinci_pll_platform_data {
-	struct regmap *cfgchip;
-};
+काष्ठा davinci_pll_platक्रमm_data अणु
+	काष्ठा regmap *cfgchip;
+पूर्ण;
 
-#endif /* __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__ */
+#पूर्ण_अगर /* __LINUX_PLATFORM_DATA_CLK_DAVINCI_PLL_H__ */

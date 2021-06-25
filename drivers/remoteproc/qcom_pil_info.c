@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2019-2020 Linaro Ltd.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_address.h>
-#include "qcom_pil_info.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_address.h>
+#समावेश "qcom_pil_info.h"
 
 /*
- * The PIL relocation information region is used to communicate memory regions
- * occupied by co-processor firmware for post mortem crash analysis.
+ * The PIL relocation inक्रमmation region is used to communicate memory regions
+ * occupied by co-processor firmware क्रम post mortem crash analysis.
  *
- * It consists of an array of entries with an 8 byte textual identifier of the
+ * It consists of an array of entries with an 8 byte textual identअगरier of the
  * region followed by a 64 bit base address and 32 bit size, both little
  * endian.
  */
-#define PIL_RELOC_NAME_LEN	8
-#define PIL_RELOC_ENTRY_SIZE	(PIL_RELOC_NAME_LEN + sizeof(__le64) + sizeof(__le32))
+#घोषणा PIL_RELOC_NAME_LEN	8
+#घोषणा PIL_RELOC_ENTRY_SIZE	(PIL_RELOC_NAME_LEN + माप(__le64) + माप(__le32))
 
-struct pil_reloc {
-	void __iomem *base;
-	size_t num_entries;
-};
+काष्ठा pil_reloc अणु
+	व्योम __iomem *base;
+	माप_प्रकार num_entries;
+पूर्ण;
 
-static struct pil_reloc _reloc __read_mostly;
-static DEFINE_MUTEX(pil_reloc_lock);
+अटल काष्ठा pil_reloc _reloc __पढ़ो_mostly;
+अटल DEFINE_MUTEX(pil_reloc_lock);
 
-static int qcom_pil_info_init(void)
-{
-	struct device_node *np;
-	struct resource imem;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक qcom_pil_info_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource imem;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
-	/* Already initialized? */
-	if (_reloc.base)
-		return 0;
+	/* Alपढ़ोy initialized? */
+	अगर (_reloc.base)
+		वापस 0;
 
-	np = of_find_compatible_node(NULL, NULL, "qcom,pil-reloc-info");
-	if (!np)
-		return -ENOENT;
+	np = of_find_compatible_node(शून्य, शून्य, "qcom,pil-reloc-info");
+	अगर (!np)
+		वापस -ENOENT;
 
 	ret = of_address_to_resource(np, 0, &imem);
 	of_node_put(np);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	base = ioremap(imem.start, resource_size(&imem));
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("failed to map PIL relocation info region\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memset_io(base, 0, resource_size(&imem));
+	स_रखो_io(base, 0, resource_size(&imem));
 
 	_reloc.base = base;
 	_reloc.num_entries = (u32)resource_size(&imem) / PIL_RELOC_ENTRY_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * qcom_pil_info_store() - store PIL information of image in IMEM
+ * qcom_pil_info_store() - store PIL inक्रमmation of image in IMEM
  * @image:	name of the image
  * @base:	base address of the loaded image
  * @size:	size of the loaded image
  *
- * Return: 0 on success, negative errno on failure
+ * Return: 0 on success, negative त्रुटि_सं on failure
  */
-int qcom_pil_info_store(const char *image, phys_addr_t base, size_t size)
-{
-	char buf[PIL_RELOC_NAME_LEN];
-	void __iomem *entry;
-	int ret;
-	int i;
+पूर्णांक qcom_pil_info_store(स्थिर अक्षर *image, phys_addr_t base, माप_प्रकार size)
+अणु
+	अक्षर buf[PIL_RELOC_NAME_LEN];
+	व्योम __iomem *entry;
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	mutex_lock(&pil_reloc_lock);
 	ret = qcom_pil_info_init();
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		mutex_unlock(&pil_reloc_lock);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < _reloc.num_entries; i++) {
+	क्रम (i = 0; i < _reloc.num_entries; i++) अणु
 		entry = _reloc.base + i * PIL_RELOC_ENTRY_SIZE;
 
-		memcpy_fromio(buf, entry, PIL_RELOC_NAME_LEN);
+		स_नकल_fromio(buf, entry, PIL_RELOC_NAME_LEN);
 
 		/*
 		 * An empty record means we didn't find it, given that the
 		 * records are packed.
 		 */
-		if (!buf[0])
-			goto found_unused;
+		अगर (!buf[0])
+			जाओ found_unused;
 
-		if (!strncmp(buf, image, PIL_RELOC_NAME_LEN))
-			goto found_existing;
-	}
+		अगर (!म_भेदन(buf, image, PIL_RELOC_NAME_LEN))
+			जाओ found_existing;
+	पूर्ण
 
 	pr_warn("insufficient PIL info slots\n");
 	mutex_unlock(&pil_reloc_lock);
-	return -ENOMEM;
+	वापस -ENOMEM;
 
 found_unused:
-	memcpy_toio(entry, image, PIL_RELOC_NAME_LEN);
+	स_नकल_toio(entry, image, PIL_RELOC_NAME_LEN);
 found_existing:
-	/* Use two writel() as base is only aligned to 4 bytes on odd entries */
-	writel(base, entry + PIL_RELOC_NAME_LEN);
-	writel((u64)base >> 32, entry + PIL_RELOC_NAME_LEN + 4);
-	writel(size, entry + PIL_RELOC_NAME_LEN + sizeof(__le64));
+	/* Use two ग_लिखोl() as base is only aligned to 4 bytes on odd entries */
+	ग_लिखोl(base, entry + PIL_RELOC_NAME_LEN);
+	ग_लिखोl((u64)base >> 32, entry + PIL_RELOC_NAME_LEN + 4);
+	ग_लिखोl(size, entry + PIL_RELOC_NAME_LEN + माप(__le64));
 	mutex_unlock(&pil_reloc_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(qcom_pil_info_store);
 
-static void __exit pil_reloc_exit(void)
-{
+अटल व्योम __निकास pil_reloc_निकास(व्योम)
+अणु
 	mutex_lock(&pil_reloc_lock);
 	iounmap(_reloc.base);
-	_reloc.base = NULL;
+	_reloc.base = शून्य;
 	mutex_unlock(&pil_reloc_lock);
-}
-module_exit(pil_reloc_exit);
+पूर्ण
+module_निकास(pil_reloc_निकास);
 
 MODULE_DESCRIPTION("Qualcomm PIL relocation info");
 MODULE_LICENSE("GPL v2");

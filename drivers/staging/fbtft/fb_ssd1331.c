@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/gpio/consumer.h>
-#include <linux/spi/spi.h>
-#include <linux/delay.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/delay.h>
 
-#include "fbtft.h"
+#समावेश "fbtft.h"
 
-#define DRVNAME		"fb_ssd1331"
-#define WIDTH		96
-#define HEIGHT		64
-#define GAMMA_NUM	1
-#define GAMMA_LEN	63
-#define DEFAULT_GAMMA	"0 2 2 2 2 2 2 2 " \
+#घोषणा DRVNAME		"fb_ssd1331"
+#घोषणा WIDTH		96
+#घोषणा HEIGHT		64
+#घोषणा GAMMA_NUM	1
+#घोषणा GAMMA_LEN	63
+#घोषणा DEFAULT_GAMMA	"0 2 2 2 2 2 2 2 " \
 			"2 2 2 2 2 2 2 2 " \
 			"2 2 2 2 2 2 2 2 " \
 			"2 2 2 2 2 2 2 2 " \
@@ -22,92 +23,92 @@
 			"2 2 2 2 2 2 2 2 " \
 			"2 2 2 2 2 2 2" \
 
-static int init_display(struct fbtft_par *par)
-{
+अटल पूर्णांक init_display(काष्ठा fbtft_par *par)
+अणु
 	par->fbtftops.reset(par);
 
-	write_reg(par, 0xae); /* Display Off */
+	ग_लिखो_reg(par, 0xae); /* Display Off */
 
 	/* Set Column Address Mapping, COM Scan Direction and Colour Depth */
-	if (par->info->var.rotate == 180)
-		write_reg(par, 0xa0, 0x60 | (par->bgr << 2));
-	else
-		write_reg(par, 0xa0, 0x72 | (par->bgr << 2));
+	अगर (par->info->var.rotate == 180)
+		ग_लिखो_reg(par, 0xa0, 0x60 | (par->bgr << 2));
+	अन्यथा
+		ग_लिखो_reg(par, 0xa0, 0x72 | (par->bgr << 2));
 
-	write_reg(par, 0x72); /* RGB colour */
-	write_reg(par, 0xa1, 0x00); /* Set Display Start Line */
-	write_reg(par, 0xa2, 0x00); /* Set Display Offset */
-	write_reg(par, 0xa4); /* NORMALDISPLAY */
-	write_reg(par, 0xa8, 0x3f); /* Set multiplex */
-	write_reg(par, 0xad, 0x8e); /* Set master */
-	/* write_reg(par, 0xb0, 0x0b);  Set power mode */
-	write_reg(par, 0xb1, 0x31); /* Precharge */
-	write_reg(par, 0xb3, 0xf0); /* Clock div */
-	write_reg(par, 0x8a, 0x64); /* Precharge A */
-	write_reg(par, 0x8b, 0x78); /* Precharge B */
-	write_reg(par, 0x8c, 0x64); /* Precharge C */
-	write_reg(par, 0xbb, 0x3a); /* Precharge level */
-	write_reg(par, 0xbe, 0x3e); /* vcomh */
-	write_reg(par, 0x87, 0x06); /* Master current */
-	write_reg(par, 0x81, 0x91); /* Contrast A */
-	write_reg(par, 0x82, 0x50); /* Contrast B */
-	write_reg(par, 0x83, 0x7d); /* Contrast C */
-	write_reg(par, 0xaf); /* Set Sleep Mode Display On */
+	ग_लिखो_reg(par, 0x72); /* RGB colour */
+	ग_लिखो_reg(par, 0xa1, 0x00); /* Set Display Start Line */
+	ग_लिखो_reg(par, 0xa2, 0x00); /* Set Display Offset */
+	ग_लिखो_reg(par, 0xa4); /* NORMALDISPLAY */
+	ग_लिखो_reg(par, 0xa8, 0x3f); /* Set multiplex */
+	ग_लिखो_reg(par, 0xad, 0x8e); /* Set master */
+	/* ग_लिखो_reg(par, 0xb0, 0x0b);  Set घातer mode */
+	ग_लिखो_reg(par, 0xb1, 0x31); /* Preअक्षरge */
+	ग_लिखो_reg(par, 0xb3, 0xf0); /* Clock भाग */
+	ग_लिखो_reg(par, 0x8a, 0x64); /* Preअक्षरge A */
+	ग_लिखो_reg(par, 0x8b, 0x78); /* Preअक्षरge B */
+	ग_लिखो_reg(par, 0x8c, 0x64); /* Preअक्षरge C */
+	ग_लिखो_reg(par, 0xbb, 0x3a); /* Preअक्षरge level */
+	ग_लिखो_reg(par, 0xbe, 0x3e); /* vcomh */
+	ग_लिखो_reg(par, 0x87, 0x06); /* Master current */
+	ग_लिखो_reg(par, 0x81, 0x91); /* Contrast A */
+	ग_लिखो_reg(par, 0x82, 0x50); /* Contrast B */
+	ग_लिखो_reg(par, 0x83, 0x7d); /* Contrast C */
+	ग_लिखो_reg(par, 0xaf); /* Set Sleep Mode Display On */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_addr_win(struct fbtft_par *par, int xs, int ys, int xe, int ye)
-{
-	write_reg(par, 0x15, xs, xe);
-	write_reg(par, 0x75, ys, ye);
-}
+अटल व्योम set_addr_win(काष्ठा fbtft_par *par, पूर्णांक xs, पूर्णांक ys, पूर्णांक xe, पूर्णांक ye)
+अणु
+	ग_लिखो_reg(par, 0x15, xs, xe);
+	ग_लिखो_reg(par, 0x75, ys, ye);
+पूर्ण
 
-static void write_reg8_bus8(struct fbtft_par *par, int len, ...)
-{
-	va_list args;
-	int i, ret;
+अटल व्योम ग_लिखो_reg8_bus8(काष्ठा fbtft_par *par, पूर्णांक len, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक i, ret;
 	u8 *buf = par->buf;
 
-	if (unlikely(par->debug & DEBUG_WRITE_REGISTER)) {
-		va_start(args, len);
-		for (i = 0; i < len; i++)
-			buf[i] = (u8)va_arg(args, unsigned int);
-		va_end(args);
+	अगर (unlikely(par->debug & DEBUG_WRITE_REGISTER)) अणु
+		बहु_शुरू(args, len);
+		क्रम (i = 0; i < len; i++)
+			buf[i] = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+		बहु_पूर्ण(args);
 		fbtft_par_dbg_hex(DEBUG_WRITE_REGISTER, par, par->info->device,
 				  u8, buf, len, "%s: ", __func__);
-	}
+	पूर्ण
 
-	va_start(args, len);
+	बहु_शुरू(args, len);
 
-	*buf = (u8)va_arg(args, unsigned int);
-	if (par->gpio.dc)
+	*buf = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+	अगर (par->gpio.dc)
 		gpiod_set_value(par->gpio.dc, 0);
-	ret = par->fbtftops.write(par, par->buf, sizeof(u8));
-	if (ret < 0) {
-		va_end(args);
+	ret = par->fbtftops.ग_लिखो(par, par->buf, माप(u8));
+	अगर (ret < 0) अणु
+		बहु_पूर्ण(args);
 		dev_err(par->info->device,
 			"write() failed and returned %d\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 	len--;
 
-	if (len) {
+	अगर (len) अणु
 		i = len;
-		while (i--)
-			*buf++ = (u8)va_arg(args, unsigned int);
-		ret = par->fbtftops.write(par, par->buf, len * (sizeof(u8)));
-		if (ret < 0) {
-			va_end(args);
+		जबतक (i--)
+			*buf++ = (u8)बहु_तर्क(args, अचिन्हित पूर्णांक);
+		ret = par->fbtftops.ग_लिखो(par, par->buf, len * (माप(u8)));
+		अगर (ret < 0) अणु
+			बहु_पूर्ण(args);
 			dev_err(par->info->device,
 				"write() failed and returned %d\n", ret);
-			return;
-		}
-	}
-	if (par->gpio.dc)
+			वापस;
+		पूर्ण
+	पूर्ण
+	अगर (par->gpio.dc)
 		gpiod_set_value(par->gpio.dc, 1);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण
 
 /*
  * Grayscale Lookup Table
@@ -119,7 +120,7 @@ static void write_reg8_bus8(struct fbtft_par *par, int len, ...)
  * 8.8 Gray Scale Decoder
  *
  * there are total 180 Gamma Settings (Setting 0 to Setting 180)
- * available for the Gray Scale table.
+ * available क्रम the Gray Scale table.
  *
  * The gray scale is defined in incremental way, with reference
  * to the length of previous table entry:
@@ -130,69 +131,69 @@ static void write_reg8_bus8(struct fbtft_par *par, int len, ...)
  * Setting of GS63 has to be > Setting of GS62 +1
  *
  */
-static int set_gamma(struct fbtft_par *par, u32 *curves)
-{
-	unsigned long tmp[GAMMA_NUM * GAMMA_LEN];
-	int i, acc = 0;
+अटल पूर्णांक set_gamma(काष्ठा fbtft_par *par, u32 *curves)
+अणु
+	अचिन्हित दीर्घ पंचांगp[GAMMA_NUM * GAMMA_LEN];
+	पूर्णांक i, acc = 0;
 
-	for (i = 0; i < 63; i++) {
-		if (i > 0 && curves[i] < 2) {
+	क्रम (i = 0; i < 63; i++) अणु
+		अगर (i > 0 && curves[i] < 2) अणु
 			dev_err(par->info->device,
 				"Illegal value in Grayscale Lookup Table at index %d. Must be greater than 1\n",
 				i);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		acc += curves[i];
-		tmp[i] = acc;
-		if (acc > 180) {
+		पंचांगp[i] = acc;
+		अगर (acc > 180) अणु
 			dev_err(par->info->device,
 				"Illegal value(s) in Grayscale Lookup Table. At index=%d, the accumulated value has exceeded 180\n",
 				i);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	write_reg(par, 0xB8,
-		  tmp[0], tmp[1], tmp[2], tmp[3], tmp[4], tmp[5], tmp[6],
-		  tmp[7], tmp[8], tmp[9], tmp[10], tmp[11], tmp[12], tmp[13],
-		  tmp[14], tmp[15], tmp[16], tmp[17], tmp[18], tmp[19], tmp[20],
-		  tmp[21], tmp[22], tmp[23], tmp[24], tmp[25], tmp[26],	tmp[27],
-		  tmp[28], tmp[29], tmp[30], tmp[31], tmp[32], tmp[33], tmp[34],
-		  tmp[35], tmp[36], tmp[37], tmp[38], tmp[39], tmp[40], tmp[41],
-		  tmp[42], tmp[43], tmp[44], tmp[45], tmp[46], tmp[47], tmp[48],
-		  tmp[49], tmp[50], tmp[51], tmp[52], tmp[53], tmp[54], tmp[55],
-		  tmp[56], tmp[57], tmp[58], tmp[59], tmp[60], tmp[61],
-		  tmp[62]);
+	ग_लिखो_reg(par, 0xB8,
+		  पंचांगp[0], पंचांगp[1], पंचांगp[2], पंचांगp[3], पंचांगp[4], पंचांगp[5], पंचांगp[6],
+		  पंचांगp[7], पंचांगp[8], पंचांगp[9], पंचांगp[10], पंचांगp[11], पंचांगp[12], पंचांगp[13],
+		  पंचांगp[14], पंचांगp[15], पंचांगp[16], पंचांगp[17], पंचांगp[18], पंचांगp[19], पंचांगp[20],
+		  पंचांगp[21], पंचांगp[22], पंचांगp[23], पंचांगp[24], पंचांगp[25], पंचांगp[26],	पंचांगp[27],
+		  पंचांगp[28], पंचांगp[29], पंचांगp[30], पंचांगp[31], पंचांगp[32], पंचांगp[33], पंचांगp[34],
+		  पंचांगp[35], पंचांगp[36], पंचांगp[37], पंचांगp[38], पंचांगp[39], पंचांगp[40], पंचांगp[41],
+		  पंचांगp[42], पंचांगp[43], पंचांगp[44], पंचांगp[45], पंचांगp[46], पंचांगp[47], पंचांगp[48],
+		  पंचांगp[49], पंचांगp[50], पंचांगp[51], पंचांगp[52], पंचांगp[53], पंचांगp[54], पंचांगp[55],
+		  पंचांगp[56], पंचांगp[57], पंचांगp[58], पंचांगp[59], पंचांगp[60], पंचांगp[61],
+		  पंचांगp[62]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int blank(struct fbtft_par *par, bool on)
-{
+अटल पूर्णांक blank(काष्ठा fbtft_par *par, bool on)
+अणु
 	fbtft_par_dbg(DEBUG_BLANK, par, "(%s=%s)\n",
 		      __func__, on ? "true" : "false");
-	if (on)
-		write_reg(par, 0xAE);
-	else
-		write_reg(par, 0xAF);
-	return 0;
-}
+	अगर (on)
+		ग_लिखो_reg(par, 0xAE);
+	अन्यथा
+		ग_लिखो_reg(par, 0xAF);
+	वापस 0;
+पूर्ण
 
-static struct fbtft_display display = {
+अटल काष्ठा fbtft_display display = अणु
 	.regwidth = 8,
 	.width = WIDTH,
 	.height = HEIGHT,
 	.gamma_num = GAMMA_NUM,
 	.gamma_len = GAMMA_LEN,
 	.gamma = DEFAULT_GAMMA,
-	.fbtftops = {
-		.write_register = write_reg8_bus8,
+	.fbtftops = अणु
+		.ग_लिखो_रेजिस्टर = ग_लिखो_reg8_bus8,
 		.init_display = init_display,
 		.set_addr_win = set_addr_win,
 		.set_gamma = set_gamma,
 		.blank = blank,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 FBTFT_REGISTER_DRIVER(DRVNAME, "solomon,ssd1331", &display);
 

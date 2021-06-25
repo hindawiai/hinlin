@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include <linux/string.h> /* for memcpy() */
+#समावेश <linux/माला.स> /* क्रम स_नकल() */
 
-#include <type_support.h>
-#include "system_global.h"
-#include "vamem.h"
-#include "ia_css_types.h"
-#include "ia_css_xnr_table.host.h"
+#समावेश <type_support.h>
+#समावेश "system_global.h"
+#समावेश "vamem.h"
+#समावेश "ia_css_types.h"
+#समावेश "ia_css_xnr_table.host.h"
 
-struct ia_css_xnr_table default_xnr_table;
+काष्ठा ia_css_xnr_table शेष_xnr_table;
 
 
-static const uint16_t
-default_xnr_table_data[IA_CSS_VAMEM_2_XNR_TABLE_SIZE] = {
+अटल स्थिर uपूर्णांक16_t
+शेष_xnr_table_data[IA_CSS_VAMEM_2_XNR_TABLE_SIZE] = अणु
 	/* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 */
 	8191 >> 1, 4096 >> 1, 2730 >> 1, 2048 >> 1, 1638 >> 1, 1365 >> 1, 1170 >> 1, 1024 >> 1, 910 >> 1, 819 >> 1, 744 >> 1, 682 >> 1, 630 >> 1, 585 >> 1,
 	     546 >> 1, 512 >> 1,
@@ -40,13 +41,13 @@ default_xnr_table_data[IA_CSS_VAMEM_2_XNR_TABLE_SIZE] = {
 
 	     /* 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 */
 	     167 >> 1, 163 >> 1, 160 >> 1, 157 >> 1, 154 >> 1, 151 >> 1, 148 >> 1, 146 >> 1, 143 >> 1, 141 >> 1, 138 >> 1, 136 >> 1, 134 >> 1, 132 >> 1, 130 >> 1, 128 >> 1
-};
+पूर्ण;
 
 
-void
-ia_css_config_xnr_table(void)
-{
-	memcpy(default_xnr_table.data.vamem_2, default_xnr_table_data,
-	       sizeof(default_xnr_table_data));
-	default_xnr_table.vamem_type     = IA_CSS_VAMEM_TYPE_2;
-}
+व्योम
+ia_css_config_xnr_table(व्योम)
+अणु
+	स_नकल(शेष_xnr_table.data.vamem_2, शेष_xnr_table_data,
+	       माप(शेष_xnr_table_data));
+	शेष_xnr_table.vamem_type     = IA_CSS_VAMEM_TYPE_2;
+पूर्ण

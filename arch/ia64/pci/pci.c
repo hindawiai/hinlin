@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * pci.c - Low-Level PCI Access in IA-64
  *
@@ -12,179 +13,179 @@
  * Note: Above list of copyright holders is incomplete...
  */
 
-#include <linux/acpi.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/pci-acpi.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/memblock.h>
-#include <linux/export.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/export.h>
 
-#include <asm/page.h>
-#include <asm/io.h>
-#include <asm/sal.h>
-#include <asm/smp.h>
-#include <asm/irq.h>
-#include <asm/hw_irq.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/sal.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/hw_irq.h>
 
 /*
  * Low-level SAL-based PCI configuration access functions. Note that SAL
- * calls are already serialized (via sal_lock), so we don't need another
+ * calls are alपढ़ोy serialized (via sal_lock), so we करोn't need another
  * synchronization mechanism here.
  */
 
-#define PCI_SAL_ADDRESS(seg, bus, devfn, reg)		\
+#घोषणा PCI_SAL_ADDRESS(seg, bus, devfn, reg)		\
 	(((u64) seg << 24) | (bus << 16) | (devfn << 8) | (reg))
 
-/* SAL 3.2 adds support for extended config space. */
+/* SAL 3.2 adds support क्रम extended config space. */
 
-#define PCI_SAL_EXT_ADDRESS(seg, bus, devfn, reg)	\
+#घोषणा PCI_SAL_EXT_ADDRESS(seg, bus, devfn, reg)	\
 	(((u64) seg << 28) | (bus << 20) | (devfn << 12) | (reg))
 
-int raw_pci_read(unsigned int seg, unsigned int bus, unsigned int devfn,
-	      int reg, int len, u32 *value)
-{
+पूर्णांक raw_pci_पढ़ो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn,
+	      पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
 	u64 addr, data = 0;
-	int mode, result;
+	पूर्णांक mode, result;
 
-	if (!value || (seg > 65535) || (bus > 255) || (devfn > 255) || (reg > 4095))
-		return -EINVAL;
+	अगर (!value || (seg > 65535) || (bus > 255) || (devfn > 255) || (reg > 4095))
+		वापस -EINVAL;
 
-	if ((seg | reg) <= 255) {
+	अगर ((seg | reg) <= 255) अणु
 		addr = PCI_SAL_ADDRESS(seg, bus, devfn, reg);
 		mode = 0;
-	} else if (sal_revision >= SAL_VERSION_CODE(3,2)) {
+	पूर्ण अन्यथा अगर (sal_revision >= SAL_VERSION_CODE(3,2)) अणु
 		addr = PCI_SAL_EXT_ADDRESS(seg, bus, devfn, reg);
 		mode = 1;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
-	result = ia64_sal_pci_config_read(addr, mode, len, &data);
-	if (result != 0)
-		return -EINVAL;
+	result = ia64_sal_pci_config_पढ़ो(addr, mode, len, &data);
+	अगर (result != 0)
+		वापस -EINVAL;
 
 	*value = (u32) data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int raw_pci_write(unsigned int seg, unsigned int bus, unsigned int devfn,
-	       int reg, int len, u32 value)
-{
+पूर्णांक raw_pci_ग_लिखो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus, अचिन्हित पूर्णांक devfn,
+	       पूर्णांक reg, पूर्णांक len, u32 value)
+अणु
 	u64 addr;
-	int mode, result;
+	पूर्णांक mode, result;
 
-	if ((seg > 65535) || (bus > 255) || (devfn > 255) || (reg > 4095))
-		return -EINVAL;
+	अगर ((seg > 65535) || (bus > 255) || (devfn > 255) || (reg > 4095))
+		वापस -EINVAL;
 
-	if ((seg | reg) <= 255) {
+	अगर ((seg | reg) <= 255) अणु
 		addr = PCI_SAL_ADDRESS(seg, bus, devfn, reg);
 		mode = 0;
-	} else if (sal_revision >= SAL_VERSION_CODE(3,2)) {
+	पूर्ण अन्यथा अगर (sal_revision >= SAL_VERSION_CODE(3,2)) अणु
 		addr = PCI_SAL_EXT_ADDRESS(seg, bus, devfn, reg);
 		mode = 1;
-	} else {
-		return -EINVAL;
-	}
-	result = ia64_sal_pci_config_write(addr, mode, len, value);
-	if (result != 0)
-		return -EINVAL;
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+	result = ia64_sal_pci_config_ग_लिखो(addr, mode, len, value);
+	अगर (result != 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int pci_read(struct pci_bus *bus, unsigned int devfn, int where,
-							int size, u32 *value)
-{
-	return raw_pci_read(pci_domain_nr(bus), bus->number,
+अटल पूर्णांक pci_पढ़ो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
+							पूर्णांक size, u32 *value)
+अणु
+	वापस raw_pci_पढ़ो(pci_करोमुख्य_nr(bus), bus->number,
 				 devfn, where, size, value);
-}
+पूर्ण
 
-static int pci_write(struct pci_bus *bus, unsigned int devfn, int where,
-							int size, u32 value)
-{
-	return raw_pci_write(pci_domain_nr(bus), bus->number,
+अटल पूर्णांक pci_ग_लिखो(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where,
+							पूर्णांक size, u32 value)
+अणु
+	वापस raw_pci_ग_लिखो(pci_करोमुख्य_nr(bus), bus->number,
 				  devfn, where, size, value);
-}
+पूर्ण
 
-struct pci_ops pci_root_ops = {
-	.read = pci_read,
-	.write = pci_write,
-};
+काष्ठा pci_ops pci_root_ops = अणु
+	.पढ़ो = pci_पढ़ो,
+	.ग_लिखो = pci_ग_लिखो,
+पूर्ण;
 
-struct pci_root_info {
-	struct acpi_pci_root_info common;
-	struct pci_controller controller;
-	struct list_head io_resources;
-};
+काष्ठा pci_root_info अणु
+	काष्ठा acpi_pci_root_info common;
+	काष्ठा pci_controller controller;
+	काष्ठा list_head io_resources;
+पूर्ण;
 
-static unsigned int new_space(u64 phys_base, int sparse)
-{
+अटल अचिन्हित पूर्णांक new_space(u64 phys_base, पूर्णांक sparse)
+अणु
 	u64 mmio_base;
-	int i;
+	पूर्णांक i;
 
-	if (phys_base == 0)
-		return 0;	/* legacy I/O port space */
+	अगर (phys_base == 0)
+		वापस 0;	/* legacy I/O port space */
 
 	mmio_base = (u64) ioremap(phys_base, 0);
-	for (i = 0; i < num_io_spaces; i++)
-		if (io_space[i].mmio_base == mmio_base &&
+	क्रम (i = 0; i < num_io_spaces; i++)
+		अगर (io_space[i].mmio_base == mmio_base &&
 		    io_space[i].sparse == sparse)
-			return i;
+			वापस i;
 
-	if (num_io_spaces == MAX_IO_SPACES) {
+	अगर (num_io_spaces == MAX_IO_SPACES) अणु
 		pr_err("PCI: Too many IO port spaces "
 			"(MAX_IO_SPACES=%lu)\n", MAX_IO_SPACES);
-		return ~0;
-	}
+		वापस ~0;
+	पूर्ण
 
 	i = num_io_spaces++;
 	io_space[i].mmio_base = mmio_base;
 	io_space[i].sparse = sparse;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int add_io_space(struct device *dev, struct pci_root_info *info,
-			struct resource_entry *entry)
-{
-	struct resource_entry *iospace;
-	struct resource *resource, *res = entry->res;
-	char *name;
-	unsigned long base, min, max, base_port;
-	unsigned int sparse = 0, space_nr, len;
+अटल पूर्णांक add_io_space(काष्ठा device *dev, काष्ठा pci_root_info *info,
+			काष्ठा resource_entry *entry)
+अणु
+	काष्ठा resource_entry *iospace;
+	काष्ठा resource *resource, *res = entry->res;
+	अक्षर *name;
+	अचिन्हित दीर्घ base, min, max, base_port;
+	अचिन्हित पूर्णांक sparse = 0, space_nr, len;
 
-	len = strlen(info->common.name) + 32;
-	iospace = resource_list_create_entry(NULL, len);
-	if (!iospace) {
+	len = म_माप(info->common.name) + 32;
+	iospace = resource_list_create_entry(शून्य, len);
+	अगर (!iospace) अणु
 		dev_err(dev, "PCI: No memory for %s I/O port space\n",
 			info->common.name);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (res->flags & IORESOURCE_IO_SPARSE)
+	अगर (res->flags & IORESOURCE_IO_SPARSE)
 		sparse = 1;
 	space_nr = new_space(entry->offset, sparse);
-	if (space_nr == ~0)
-		goto free_resource;
+	अगर (space_nr == ~0)
+		जाओ मुक्त_resource;
 
-	name = (char *)(iospace + 1);
+	name = (अक्षर *)(iospace + 1);
 	min = res->start - entry->offset;
 	max = res->end - entry->offset;
 	base = __pa(io_space[space_nr].mmio_base);
 	base_port = IO_SPACE_BASE(space_nr);
-	snprintf(name, len, "%s I/O Ports %08lx-%08lx", info->common.name,
+	snम_लिखो(name, len, "%s I/O Ports %08lx-%08lx", info->common.name,
 		 base_port + min, base_port + max);
 
 	/*
-	 * The SDM guarantees the legacy 0-64K space is sparse, but if the
-	 * mapping is done by the processor (not the bridge), ACPI may not
+	 * The SDM guarantees the legacy 0-64K space is sparse, but अगर the
+	 * mapping is करोne by the processor (not the bridge), ACPI may not
 	 * mark it as sparse.
 	 */
-	if (space_nr == 0)
+	अगर (space_nr == 0)
 		sparse = 1;
 
 	resource = iospace->res;
@@ -192,385 +193,385 @@ static int add_io_space(struct device *dev, struct pci_root_info *info,
 	resource->flags = IORESOURCE_MEM;
 	resource->start = base + (sparse ? IO_SPACE_SPARSE_ENCODING(min) : min);
 	resource->end   = base + (sparse ? IO_SPACE_SPARSE_ENCODING(max) : max);
-	if (insert_resource(&iomem_resource, resource)) {
+	अगर (insert_resource(&iomem_resource, resource)) अणु
 		dev_err(dev,
 			"can't allocate host bridge io space resource  %pR\n",
 			resource);
-		goto free_resource;
-	}
+		जाओ मुक्त_resource;
+	पूर्ण
 
 	entry->offset = base_port;
 	res->start = min + base_port;
 	res->end = max + base_port;
 	resource_list_add_tail(iospace, &info->io_resources);
 
-	return 0;
+	वापस 0;
 
-free_resource:
-	resource_list_free_entry(iospace);
-	return -ENOSPC;
-}
+मुक्त_resource:
+	resource_list_मुक्त_entry(iospace);
+	वापस -ENOSPC;
+पूर्ण
 
 /*
- * An IO port or MMIO resource assigned to a PCI host bridge may be
+ * An IO port or MMIO resource asचिन्हित to a PCI host bridge may be
  * consumed by the host bridge itself or available to its child
- * bus/devices. The ACPI specification defines a bit (Producer/Consumer)
+ * bus/devices. The ACPI specअगरication defines a bit (Producer/Consumer)
  * to tell whether the resource is consumed by the host bridge itself,
  * but firmware hasn't used that bit consistently, so we can't rely on it.
  *
- * On x86 and IA64 platforms, all IO port and MMIO resources are assumed
- * to be available to child bus/devices except one special case:
+ * On x86 and IA64 platक्रमms, all IO port and MMIO resources are assumed
+ * to be available to child bus/devices except one special हाल:
  *     IO port [0xCF8-0xCFF] is consumed by the host bridge itself
  *     to access PCI configuration space.
  *
  * So explicitly filter out PCI CFG IO ports[0xCF8-0xCFF].
  */
-static bool resource_is_pcicfg_ioport(struct resource *res)
-{
-	return (res->flags & IORESOURCE_IO) &&
+अटल bool resource_is_pcicfg_ioport(काष्ठा resource *res)
+अणु
+	वापस (res->flags & IORESOURCE_IO) &&
 		res->start == 0xCF8 && res->end == 0xCFF;
-}
+पूर्ण
 
-static int pci_acpi_root_prepare_resources(struct acpi_pci_root_info *ci)
-{
-	struct device *dev = &ci->bridge->dev;
-	struct pci_root_info *info;
-	struct resource *res;
-	struct resource_entry *entry, *tmp;
-	int status;
+अटल पूर्णांक pci_acpi_root_prepare_resources(काष्ठा acpi_pci_root_info *ci)
+अणु
+	काष्ठा device *dev = &ci->bridge->dev;
+	काष्ठा pci_root_info *info;
+	काष्ठा resource *res;
+	काष्ठा resource_entry *entry, *पंचांगp;
+	पूर्णांक status;
 
 	status = acpi_pci_probe_root_resources(ci);
-	if (status > 0) {
-		info = container_of(ci, struct pci_root_info, common);
-		resource_list_for_each_entry_safe(entry, tmp, &ci->resources) {
+	अगर (status > 0) अणु
+		info = container_of(ci, काष्ठा pci_root_info, common);
+		resource_list_क्रम_each_entry_safe(entry, पंचांगp, &ci->resources) अणु
 			res = entry->res;
-			if (res->flags & IORESOURCE_MEM) {
+			अगर (res->flags & IORESOURCE_MEM) अणु
 				/*
 				 * HP's firmware has a hack to work around a
-				 * Windows bug. Ignore these tiny memory ranges.
+				 * Winकरोws bug. Ignore these tiny memory ranges.
 				 */
-				if (resource_size(res) <= 16) {
+				अगर (resource_size(res) <= 16) अणु
 					resource_list_del(entry);
 					insert_resource(&iomem_resource,
 							entry->res);
 					resource_list_add_tail(entry,
 							&info->io_resources);
-				}
-			} else if (res->flags & IORESOURCE_IO) {
-				if (resource_is_pcicfg_ioport(entry->res))
+				पूर्ण
+			पूर्ण अन्यथा अगर (res->flags & IORESOURCE_IO) अणु
+				अगर (resource_is_pcicfg_ioport(entry->res))
 					resource_list_destroy_entry(entry);
-				else if (add_io_space(dev, info, entry))
+				अन्यथा अगर (add_io_space(dev, info, entry))
 					resource_list_destroy_entry(entry);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void pci_acpi_root_release_info(struct acpi_pci_root_info *ci)
-{
-	struct pci_root_info *info;
-	struct resource_entry *entry, *tmp;
+अटल व्योम pci_acpi_root_release_info(काष्ठा acpi_pci_root_info *ci)
+अणु
+	काष्ठा pci_root_info *info;
+	काष्ठा resource_entry *entry, *पंचांगp;
 
-	info = container_of(ci, struct pci_root_info, common);
-	resource_list_for_each_entry_safe(entry, tmp, &info->io_resources) {
+	info = container_of(ci, काष्ठा pci_root_info, common);
+	resource_list_क्रम_each_entry_safe(entry, पंचांगp, &info->io_resources) अणु
 		release_resource(entry->res);
 		resource_list_destroy_entry(entry);
-	}
-	kfree(info);
-}
+	पूर्ण
+	kमुक्त(info);
+पूर्ण
 
-static struct acpi_pci_root_ops pci_acpi_root_ops = {
+अटल काष्ठा acpi_pci_root_ops pci_acpi_root_ops = अणु
 	.pci_ops = &pci_root_ops,
 	.release_info = pci_acpi_root_release_info,
 	.prepare_resources = pci_acpi_root_prepare_resources,
-};
+पूर्ण;
 
-struct pci_bus *pci_acpi_scan_root(struct acpi_pci_root *root)
-{
-	struct acpi_device *device = root->device;
-	struct pci_root_info *info;
+काष्ठा pci_bus *pci_acpi_scan_root(काष्ठा acpi_pci_root *root)
+अणु
+	काष्ठा acpi_device *device = root->device;
+	काष्ठा pci_root_info *info;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info) {
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info) अणु
 		dev_err(&device->dev,
 			"pci_bus %04x:%02x: ignored (out of memory)\n",
-			root->segment, (int)root->secondary.start);
-		return NULL;
-	}
+			root->segment, (पूर्णांक)root->secondary.start);
+		वापस शून्य;
+	पूर्ण
 
 	info->controller.segment = root->segment;
 	info->controller.companion = device;
 	info->controller.node = acpi_get_node(device->handle);
 	INIT_LIST_HEAD(&info->io_resources);
-	return acpi_pci_root_create(root, &pci_acpi_root_ops,
+	वापस acpi_pci_root_create(root, &pci_acpi_root_ops,
 				    &info->common, &info->controller);
-}
+पूर्ण
 
-int pcibios_root_bridge_prepare(struct pci_host_bridge *bridge)
-{
+पूर्णांक pcibios_root_bridge_prepare(काष्ठा pci_host_bridge *bridge)
+अणु
 	/*
-	 * We pass NULL as parent to pci_create_root_bus(), so if it is not NULL
-	 * here, pci_create_root_bus() has been called by someone else and
-	 * sysdata is likely to be different from what we expect.  Let it go in
-	 * that case.
+	 * We pass शून्य as parent to pci_create_root_bus(), so अगर it is not शून्य
+	 * here, pci_create_root_bus() has been called by someone अन्यथा and
+	 * sysdata is likely to be dअगरferent from what we expect.  Let it go in
+	 * that हाल.
 	 */
-	if (!bridge->dev.parent) {
-		struct pci_controller *controller = bridge->bus->sysdata;
+	अगर (!bridge->dev.parent) अणु
+		काष्ठा pci_controller *controller = bridge->bus->sysdata;
 		ACPI_COMPANION_SET(&bridge->dev, controller->companion);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void pcibios_fixup_device_resources(struct pci_dev *dev)
-{
-	int idx;
+व्योम pcibios_fixup_device_resources(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक idx;
 
-	if (!dev->bus)
-		return;
+	अगर (!dev->bus)
+		वापस;
 
-	for (idx = 0; idx < PCI_BRIDGE_RESOURCES; idx++) {
-		struct resource *r = &dev->resource[idx];
+	क्रम (idx = 0; idx < PCI_BRIDGE_RESOURCES; idx++) अणु
+		काष्ठा resource *r = &dev->resource[idx];
 
-		if (!r->flags || r->parent || !r->start)
-			continue;
+		अगर (!r->flags || r->parent || !r->start)
+			जारी;
 
 		pci_claim_resource(dev, idx);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(pcibios_fixup_device_resources);
 
-static void pcibios_fixup_bridge_resources(struct pci_dev *dev)
-{
-	int idx;
+अटल व्योम pcibios_fixup_bridge_resources(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक idx;
 
-	if (!dev->bus)
-		return;
+	अगर (!dev->bus)
+		वापस;
 
-	for (idx = PCI_BRIDGE_RESOURCES; idx < PCI_NUM_RESOURCES; idx++) {
-		struct resource *r = &dev->resource[idx];
+	क्रम (idx = PCI_BRIDGE_RESOURCES; idx < PCI_NUM_RESOURCES; idx++) अणु
+		काष्ठा resource *r = &dev->resource[idx];
 
-		if (!r->flags || r->parent || !r->start)
-			continue;
+		अगर (!r->flags || r->parent || !r->start)
+			जारी;
 
 		pci_claim_bridge_resource(dev, idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- *  Called after each bus is probed, but before its children are examined.
+ *  Called after each bus is probed, but beक्रमe its children are examined.
  */
-void pcibios_fixup_bus(struct pci_bus *b)
-{
-	struct pci_dev *dev;
+व्योम pcibios_fixup_bus(काष्ठा pci_bus *b)
+अणु
+	काष्ठा pci_dev *dev;
 
-	if (b->self) {
-		pci_read_bridge_bases(b);
+	अगर (b->self) अणु
+		pci_पढ़ो_bridge_bases(b);
 		pcibios_fixup_bridge_resources(b->self);
-	}
-	list_for_each_entry(dev, &b->devices, bus_list)
+	पूर्ण
+	list_क्रम_each_entry(dev, &b->devices, bus_list)
 		pcibios_fixup_device_resources(dev);
-}
+पूर्ण
 
-void pcibios_add_bus(struct pci_bus *bus)
-{
+व्योम pcibios_add_bus(काष्ठा pci_bus *bus)
+अणु
 	acpi_pci_add_bus(bus);
-}
+पूर्ण
 
-void pcibios_remove_bus(struct pci_bus *bus)
-{
-	acpi_pci_remove_bus(bus);
-}
+व्योम pcibios_हटाओ_bus(काष्ठा pci_bus *bus)
+अणु
+	acpi_pci_हटाओ_bus(bus);
+पूर्ण
 
-void pcibios_set_master (struct pci_dev *dev)
-{
+व्योम pcibios_set_master (काष्ठा pci_dev *dev)
+अणु
 	/* No special bus mastering setup handling */
-}
+पूर्ण
 
-int
-pcibios_enable_device (struct pci_dev *dev, int mask)
-{
-	int ret;
+पूर्णांक
+pcibios_enable_device (काष्ठा pci_dev *dev, पूर्णांक mask)
+अणु
+	पूर्णांक ret;
 
 	ret = pci_enable_resources(dev, mask);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!pci_dev_msi_enabled(dev))
-		return acpi_pci_irq_enable(dev);
-	return 0;
-}
+	अगर (!pci_dev_msi_enabled(dev))
+		वापस acpi_pci_irq_enable(dev);
+	वापस 0;
+पूर्ण
 
-void
-pcibios_disable_device (struct pci_dev *dev)
-{
-	BUG_ON(atomic_read(&dev->enable_cnt));
-	if (!pci_dev_msi_enabled(dev))
+व्योम
+pcibios_disable_device (काष्ठा pci_dev *dev)
+अणु
+	BUG_ON(atomic_पढ़ो(&dev->enable_cnt));
+	अगर (!pci_dev_msi_enabled(dev))
 		acpi_pci_irq_disable(dev);
-}
+पूर्ण
 
 /**
  * pci_get_legacy_mem - generic legacy mem routine
- * @bus: bus to get legacy memory base address for
+ * @bus: bus to get legacy memory base address क्रम
  *
- * Find the base of legacy memory for @bus.  This is typically the first
- * megabyte of bus address space for @bus or is simply 0 on platforms whose
+ * Find the base of legacy memory क्रम @bus.  This is typically the first
+ * megabyte of bus address space क्रम @bus or is simply 0 on platक्रमms whose
  * chipsets support legacy I/O and memory routing.  Returns the base address
- * or an error pointer if an error occurred.
+ * or an error poपूर्णांकer अगर an error occurred.
  *
- * This is the ia64 generic version of this routine.  Other platforms
- * are free to override it with a machine vector.
+ * This is the ia64 generic version of this routine.  Other platक्रमms
+ * are मुक्त to override it with a machine vector.
  */
-char *pci_get_legacy_mem(struct pci_bus *bus)
-{
-	return (char *)__IA64_UNCACHED_OFFSET;
-}
+अक्षर *pci_get_legacy_mem(काष्ठा pci_bus *bus)
+अणु
+	वापस (अक्षर *)__IA64_UNCACHED_OFFSET;
+पूर्ण
 
 /**
  * pci_mmap_legacy_page_range - map legacy memory space to userland
  * @bus: bus whose legacy space we're mapping
  * @vma: vma passed in by mmap
  *
- * Map legacy memory space for this device back to userspace using a machine
+ * Map legacy memory space क्रम this device back to userspace using a machine
  * vector to get the base address.
  */
-int
-pci_mmap_legacy_page_range(struct pci_bus *bus, struct vm_area_struct *vma,
-			   enum pci_mmap_state mmap_state)
-{
-	unsigned long size = vma->vm_end - vma->vm_start;
+पूर्णांक
+pci_mmap_legacy_page_range(काष्ठा pci_bus *bus, काष्ठा vm_area_काष्ठा *vma,
+			   क्रमागत pci_mmap_state mmap_state)
+अणु
+	अचिन्हित दीर्घ size = vma->vm_end - vma->vm_start;
 	pgprot_t prot;
-	char *addr;
+	अक्षर *addr;
 
 	/* We only support mmap'ing of legacy memory space */
-	if (mmap_state != pci_mmap_mem)
-		return -ENOSYS;
+	अगर (mmap_state != pci_mmap_mem)
+		वापस -ENOSYS;
 
 	/*
-	 * Avoid attribute aliasing.  See Documentation/ia64/aliasing.rst
-	 * for more details.
+	 * Aव्योम attribute aliasing.  See Documentation/ia64/aliasing.rst
+	 * क्रम more details.
 	 */
-	if (!valid_mmap_phys_addr_range(vma->vm_pgoff, size))
-		return -EINVAL;
-	prot = phys_mem_access_prot(NULL, vma->vm_pgoff, size,
+	अगर (!valid_mmap_phys_addr_range(vma->vm_pgoff, size))
+		वापस -EINVAL;
+	prot = phys_mem_access_prot(शून्य, vma->vm_pgoff, size,
 				    vma->vm_page_prot);
 
 	addr = pci_get_legacy_mem(bus);
-	if (IS_ERR(addr))
-		return PTR_ERR(addr);
+	अगर (IS_ERR(addr))
+		वापस PTR_ERR(addr);
 
-	vma->vm_pgoff += (unsigned long)addr >> PAGE_SHIFT;
+	vma->vm_pgoff += (अचिन्हित दीर्घ)addr >> PAGE_SHIFT;
 	vma->vm_page_prot = prot;
 
-	if (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
+	अगर (remap_pfn_range(vma, vma->vm_start, vma->vm_pgoff,
 			    size, vma->vm_page_prot))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pci_legacy_read - read from legacy I/O space
- * @bus: bus to read
+ * pci_legacy_पढ़ो - पढ़ो from legacy I/O space
+ * @bus: bus to पढ़ो
  * @port: legacy port value
- * @val: caller allocated storage for returned value
- * @size: number of bytes to read
+ * @val: caller allocated storage क्रम वापसed value
+ * @size: number of bytes to पढ़ो
  *
- * Simply reads @size bytes from @port and puts the result in @val.
+ * Simply पढ़ोs @size bytes from @port and माला_दो the result in @val.
  *
- * Again, this (and the write routine) are generic versions that can be
- * overridden by the platform.  This is necessary on platforms that don't
- * support legacy I/O routing or that hard fail on legacy I/O timeouts.
+ * Again, this (and the ग_लिखो routine) are generic versions that can be
+ * overridden by the platक्रमm.  This is necessary on platक्रमms that करोn't
+ * support legacy I/O routing or that hard fail on legacy I/O समयouts.
  */
-int pci_legacy_read(struct pci_bus *bus, u16 port, u32 *val, u8 size)
-{
-	int ret = size;
+पूर्णांक pci_legacy_पढ़ो(काष्ठा pci_bus *bus, u16 port, u32 *val, u8 size)
+अणु
+	पूर्णांक ret = size;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		*val = inb(port);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*val = inw(port);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*val = inl(port);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * pci_legacy_write - perform a legacy I/O write
- * @bus: bus pointer
- * @port: port to write
- * @val: value to write
- * @size: number of bytes to write from @val
+ * pci_legacy_ग_लिखो - perक्रमm a legacy I/O ग_लिखो
+ * @bus: bus poपूर्णांकer
+ * @port: port to ग_लिखो
+ * @val: value to ग_लिखो
+ * @size: number of bytes to ग_लिखो from @val
  *
- * Simply writes @size bytes of @val to @port.
+ * Simply ग_लिखोs @size bytes of @val to @port.
  */
-int pci_legacy_write(struct pci_bus *bus, u16 port, u32 val, u8 size)
-{
-	int ret = size;
+पूर्णांक pci_legacy_ग_लिखो(काष्ठा pci_bus *bus, u16 port, u32 val, u8 size)
+अणु
+	पूर्णांक ret = size;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		outb(val, port);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		outw(val, port);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		outl(val, port);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * set_pci_cacheline_size - determine cacheline size for PCI devices
+ * set_pci_cacheline_size - determine cacheline size क्रम PCI devices
  *
  * We want to use the line-size of the outer-most cache.  We assume
- * that this line-size is the same for all CPUs.
+ * that this line-size is the same क्रम all CPUs.
  *
  * Code mostly taken from arch/ia64/kernel/palinfo.c:cache_info().
  */
-static void __init set_pci_dfl_cacheline_size(void)
-{
-	unsigned long levels, unique_caches;
-	long status;
+अटल व्योम __init set_pci_dfl_cacheline_size(व्योम)
+अणु
+	अचिन्हित दीर्घ levels, unique_caches;
+	दीर्घ status;
 	pal_cache_config_info_t cci;
 
 	status = ia64_pal_cache_summary(&levels, &unique_caches);
-	if (status != 0) {
+	अगर (status != 0) अणु
 		pr_err("%s: ia64_pal_cache_summary() failed "
 			"(status=%ld)\n", __func__, status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	status = ia64_pal_cache_config_info(levels - 1,
-				/* cache_type (data_or_unified)= */ 2, &cci);
-	if (status != 0) {
+				/* cache_type (data_or_unअगरied)= */ 2, &cci);
+	अगर (status != 0) अणु
 		pr_err("%s: ia64_pal_cache_config_info() failed "
 			"(status=%ld)\n", __func__, status);
-		return;
-	}
+		वापस;
+	पूर्ण
 	pci_dfl_cache_line_size = (1 << cci.pcci_line_size) / 4;
-}
+पूर्ण
 
-static int __init pcibios_init(void)
-{
+अटल पूर्णांक __init pcibios_init(व्योम)
+अणु
 	set_pci_dfl_cacheline_size();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(pcibios_init);

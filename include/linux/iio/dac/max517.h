@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * MAX517 DAC driver
  *
  * Copyright 2011 Roland Stigge <stigge@antcom.de>
  */
-#ifndef IIO_DAC_MAX517_H_
-#define IIO_DAC_MAX517_H_
+#अगर_अघोषित IIO_DAC_MAX517_H_
+#घोषणा IIO_DAC_MAX517_H_
 
-struct max517_platform_data {
+काष्ठा max517_platक्रमm_data अणु
 	u16				vref_mv[8];
-};
+पूर्ण;
 
-#endif /* IIO_DAC_MAX517_H_ */
+#पूर्ण_अगर /* IIO_DAC_MAX517_H_ */

@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2005-2008 Red Hat, Inc.  All rights reserved.
  *
  * This copyrighted material is made available to anyone wishing to use,
- * modify, copy, or redistribute it subject to the terms and conditions
+ * modअगरy, copy, or redistribute it subject to the terms and conditions
  * of the GNU General Public License v.2.
  */
 
-#ifndef _UAPI__DLM_PLOCK_DOT_H__
-#define _UAPI__DLM_PLOCK_DOT_H__
+#अगर_अघोषित _UAPI__DLM_PLOCK_DOT_H__
+#घोषणा _UAPI__DLM_PLOCK_DOT_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define DLM_PLOCK_MISC_NAME		"dlm_plock"
+#घोषणा DLM_PLOCK_MISC_NAME		"dlm_plock"
 
-#define DLM_PLOCK_VERSION_MAJOR	1
-#define DLM_PLOCK_VERSION_MINOR	2
-#define DLM_PLOCK_VERSION_PATCH	0
+#घोषणा DLM_PLOCK_VERSION_MAJOR	1
+#घोषणा DLM_PLOCK_VERSION_MINOR	2
+#घोषणा DLM_PLOCK_VERSION_PATCH	0
 
-enum {
+क्रमागत अणु
 	DLM_PLOCK_OP_LOCK = 1,
 	DLM_PLOCK_OP_UNLOCK,
 	DLM_PLOCK_OP_GET,
-};
+पूर्ण;
 
-#define DLM_PLOCK_FL_CLOSE 1
+#घोषणा DLM_PLOCK_FL_CLOSE 1
 
-struct dlm_plock_info {
+काष्ठा dlm_plock_info अणु
 	__u32 version[3];
 	__u8 optype;
 	__u8 ex;
-	__u8 wait;
+	__u8 रुको;
 	__u8 flags;
 	__u32 pid;
 	__s32 nodeid;
@@ -40,7 +41,7 @@ struct dlm_plock_info {
 	__u64 start;
 	__u64 end;
 	__u64 owner;
-};
+पूर्ण;
 
 
-#endif /* _UAPI__DLM_PLOCK_DOT_H__ */
+#पूर्ण_अगर /* _UAPI__DLM_PLOCK_DOT_H__ */

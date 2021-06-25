@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef UACCESS_H
-#define UACCESS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित UACCESS_H
+#घोषणा UACCESS_H
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-extern void *__user_addr_min, *__user_addr_max;
+बाह्य व्योम *__user_addr_min, *__user_addr_max;
 
-static inline void __chk_user_ptr(const volatile void *p, size_t size)
-{
-	assert(p >= __user_addr_min && p + size <= __user_addr_max);
-}
+अटल अंतरभूत व्योम __chk_user_ptr(स्थिर अस्थिर व्योम *p, माप_प्रकार size)
+अणु
+	निश्चित(p >= __user_addr_min && p + size <= __user_addr_max);
+पूर्ण
 
-#define put_user(x, ptr)					\
-({								\
+#घोषणा put_user(x, ptr)					\
+(अणु								\
 	typeof(ptr) __pu_ptr = (ptr);				\
-	__chk_user_ptr(__pu_ptr, sizeof(*__pu_ptr));		\
+	__chk_user_ptr(__pu_ptr, माप(*__pu_ptr));		\
 	WRITE_ONCE(*(__pu_ptr), x);				\
 	0;							\
-})
+पूर्ण)
 
-#define get_user(x, ptr)					\
-({								\
+#घोषणा get_user(x, ptr)					\
+(अणु								\
 	typeof(ptr) __pu_ptr = (ptr);				\
-	__chk_user_ptr(__pu_ptr, sizeof(*__pu_ptr));		\
+	__chk_user_ptr(__pu_ptr, माप(*__pu_ptr));		\
 	x = READ_ONCE(*(__pu_ptr));				\
 	0;							\
-})
+पूर्ण)
 
-static void volatile_memcpy(volatile char *to, const volatile char *from, 
-			    unsigned long n)
-{
-	while (n--)
+अटल व्योम अस्थिर_स_नकल(अस्थिर अक्षर *to, स्थिर अस्थिर अक्षर *from, 
+			    अचिन्हित दीर्घ n)
+अणु
+	जबतक (n--)
 		*(to++) = *(from++);
-}
+पूर्ण
 
-static inline int copy_from_user(void *to, const void __user volatile *from,
-				 unsigned long n)
-{
+अटल अंतरभूत पूर्णांक copy_from_user(व्योम *to, स्थिर व्योम __user अस्थिर *from,
+				 अचिन्हित दीर्घ n)
+अणु
 	__chk_user_ptr(from, n);
-	volatile_memcpy(to, from, n);
-	return 0;
-}
+	अस्थिर_स_नकल(to, from, n);
+	वापस 0;
+पूर्ण
 
-static inline int copy_to_user(void __user volatile *to, const void *from,
-			       unsigned long n)
-{
+अटल अंतरभूत पूर्णांक copy_to_user(व्योम __user अस्थिर *to, स्थिर व्योम *from,
+			       अचिन्हित दीर्घ n)
+अणु
 	__chk_user_ptr(to, n);
-	volatile_memcpy(to, from, n);
-	return 0;
-}
-#endif /* UACCESS_H */
+	अस्थिर_स_नकल(to, from, n);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* UACCESS_H */

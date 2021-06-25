@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Common ACPI functions for hot plug platforms
+ * Common ACPI functions क्रम hot plug platक्रमms
  *
  * Copyright (C) 2006 Intel Corporation
  *
  * All rights reserved.
  *
- * Send feedback to <kristen.c.accardi@intel.com>
+ * Send feedback to <kristen.c.accardi@पूर्णांकel.com>
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/pci_hotplug.h>
-#include <linux/acpi.h>
-#include <linux/pci-acpi.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_hotplug.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pci-acpi.h>
+#समावेश <linux/slab.h>
 
-#define MY_NAME	"acpi_pcihp"
+#घोषणा MY_NAME	"acpi_pcihp"
 
-#define dbg(fmt, arg...) do { if (debug_acpi) printk(KERN_DEBUG "%s: %s: " fmt, MY_NAME, __func__, ## arg); } while (0)
-#define err(format, arg...) printk(KERN_ERR "%s: " format, MY_NAME, ## arg)
-#define info(format, arg...) printk(KERN_INFO "%s: " format, MY_NAME, ## arg)
-#define warn(format, arg...) printk(KERN_WARNING "%s: " format, MY_NAME, ## arg)
+#घोषणा dbg(fmt, arg...) करो अणु अगर (debug_acpi) prपूर्णांकk(KERN_DEBUG "%s: %s: " fmt, MY_NAME, __func__, ## arg); पूर्ण जबतक (0)
+#घोषणा err(क्रमmat, arg...) prपूर्णांकk(KERN_ERR "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा info(क्रमmat, arg...) prपूर्णांकk(KERN_INFO "%s: " क्रमmat, MY_NAME, ## arg)
+#घोषणा warn(क्रमmat, arg...) prपूर्णांकk(KERN_WARNING "%s: " क्रमmat, MY_NAME, ## arg)
 
-#define	METHOD_NAME__SUN	"_SUN"
-#define	METHOD_NAME_OSHP	"OSHP"
+#घोषणा	METHOD_NAME__SUN	"_SUN"
+#घोषणा	METHOD_NAME_OSHP	"OSHP"
 
-static bool debug_acpi;
+अटल bool debug_acpi;
 
 /* acpi_run_oshp - get control of hotplug from the firmware
  *
  * @handle - the handle of the hotplug controller.
  */
-static acpi_status acpi_run_oshp(acpi_handle handle)
-{
+अटल acpi_status acpi_run_oshp(acpi_handle handle)
+अणु
 	acpi_status		status;
-	struct acpi_buffer	string = { ACPI_ALLOCATE_BUFFER, NULL };
+	काष्ठा acpi_buffer	string = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
 	acpi_get_name(handle, ACPI_FULL_PATHNAME, &string);
 
 	/* run OSHP */
-	status = acpi_evaluate_object(handle, METHOD_NAME_OSHP, NULL, NULL);
-	if (ACPI_FAILURE(status))
-		if (status != AE_NOT_FOUND)
-			printk(KERN_ERR "%s:%s OSHP fails=0x%x\n",
-			       __func__, (char *)string.pointer, status);
-		else
+	status = acpi_evaluate_object(handle, METHOD_NAME_OSHP, शून्य, शून्य);
+	अगर (ACPI_FAILURE(status))
+		अगर (status != AE_NOT_FOUND)
+			prपूर्णांकk(KERN_ERR "%s:%s OSHP fails=0x%x\n",
+			       __func__, (अक्षर *)string.poपूर्णांकer, status);
+		अन्यथा
 			dbg("%s:%s OSHP not found\n",
-			    __func__, (char *)string.pointer);
-	else
+			    __func__, (अक्षर *)string.poपूर्णांकer);
+	अन्यथा
 		pr_debug("%s:%s OSHP passes\n", __func__,
-			(char *)string.pointer);
+			(अक्षर *)string.poपूर्णांकer);
 
-	kfree(string.pointer);
-	return status;
-}
+	kमुक्त(string.poपूर्णांकer);
+	वापस status;
+पूर्ण
 
 /**
  * acpi_get_hp_hw_control_from_firmware
@@ -65,147 +66,147 @@ static acpi_status acpi_run_oshp(acpi_handle handle)
  *
  * Attempt to take hotplug control from firmware.
  */
-int acpi_get_hp_hw_control_from_firmware(struct pci_dev *pdev)
-{
-	const struct pci_host_bridge *host;
-	const struct acpi_pci_root *root;
+पूर्णांक acpi_get_hp_hw_control_from_firmware(काष्ठा pci_dev *pdev)
+अणु
+	स्थिर काष्ठा pci_host_bridge *host;
+	स्थिर काष्ठा acpi_pci_root *root;
 	acpi_status status;
 	acpi_handle chandle, handle;
-	struct acpi_buffer string = { ACPI_ALLOCATE_BUFFER, NULL };
+	काष्ठा acpi_buffer string = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
 	/*
 	 * If there's no ACPI host bridge (i.e., ACPI support is compiled
-	 * into the kernel but the hardware platform doesn't support ACPI),
-	 * there's nothing to do here.
+	 * पूर्णांकo the kernel but the hardware platक्रमm करोesn't support ACPI),
+	 * there's nothing to करो here.
 	 */
 	host = pci_find_host_bridge(pdev->bus);
 	root = acpi_pci_find_root(ACPI_HANDLE(&host->dev));
-	if (!root)
-		return 0;
+	अगर (!root)
+		वापस 0;
 
 	/*
 	 * If _OSC exists, it determines whether we're allowed to manage
-	 * the SHPC.  We executed it while enumerating the host bridge.
+	 * the SHPC.  We executed it जबतक क्रमागतerating the host bridge.
 	 */
-	if (root->osc_support_set) {
-		if (host->native_shpc_hotplug)
-			return 0;
-		return -ENODEV;
-	}
+	अगर (root->osc_support_set) अणु
+		अगर (host->native_shpc_hotplug)
+			वापस 0;
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * In the absence of _OSC, we're always allowed to manage the SHPC.
-	 * However, if an OSHP method is present, we must execute it so the
-	 * firmware can transfer control to the OS, e.g., direct interrupts
+	 * In the असलence of _OSC, we're always allowed to manage the SHPC.
+	 * However, अगर an OSHP method is present, we must execute it so the
+	 * firmware can transfer control to the OS, e.g., direct पूर्णांकerrupts
 	 * to the OS instead of to the firmware.
 	 *
-	 * N.B. The PCI Firmware Spec (r3.2, sec 4.8) does not endorse
+	 * N.B. The PCI Firmware Spec (r3.2, sec 4.8) करोes not enकरोrse
 	 * searching up the ACPI hierarchy, so the loops below are suspect.
 	 */
 	handle = ACPI_HANDLE(&pdev->dev);
-	if (!handle) {
+	अगर (!handle) अणु
 		/*
 		 * This hotplug controller was not listed in the ACPI name
 		 * space at all. Try to get ACPI handle of parent PCI bus.
 		 */
-		struct pci_bus *pbus;
-		for (pbus = pdev->bus; pbus; pbus = pbus->parent) {
+		काष्ठा pci_bus *pbus;
+		क्रम (pbus = pdev->bus; pbus; pbus = pbus->parent) अणु
 			handle = acpi_pci_get_bridge_handle(pbus);
-			if (handle)
-				break;
-		}
-	}
+			अगर (handle)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	while (handle) {
+	जबतक (handle) अणु
 		acpi_get_name(handle, ACPI_FULL_PATHNAME, &string);
 		pci_info(pdev, "Requesting control of SHPC hotplug via OSHP (%s)\n",
-			 (char *)string.pointer);
+			 (अक्षर *)string.poपूर्णांकer);
 		status = acpi_run_oshp(handle);
-		if (ACPI_SUCCESS(status))
-			goto got_one;
-		if (acpi_is_root_bridge(handle))
-			break;
+		अगर (ACPI_SUCCESS(status))
+			जाओ got_one;
+		अगर (acpi_is_root_bridge(handle))
+			अवरोध;
 		chandle = handle;
 		status = acpi_get_parent(chandle, &handle);
-		if (ACPI_FAILURE(status))
-			break;
-	}
+		अगर (ACPI_FAILURE(status))
+			अवरोध;
+	पूर्ण
 
 	pci_info(pdev, "Cannot get control of SHPC hotplug\n");
-	kfree(string.pointer);
-	return -ENODEV;
+	kमुक्त(string.poपूर्णांकer);
+	वापस -ENODEV;
 got_one:
 	pci_info(pdev, "Gained control of SHPC hotplug (%s)\n",
-		 (char *)string.pointer);
-	kfree(string.pointer);
-	return 0;
-}
+		 (अक्षर *)string.poपूर्णांकer);
+	kमुक्त(string.poपूर्णांकer);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(acpi_get_hp_hw_control_from_firmware);
 
-static int pcihp_is_ejectable(acpi_handle handle)
-{
+अटल पूर्णांक pcihp_is_ejectable(acpi_handle handle)
+अणु
 	acpi_status status;
-	unsigned long long removable;
-	if (!acpi_has_method(handle, "_ADR"))
-		return 0;
-	if (acpi_has_method(handle, "_EJ0"))
-		return 1;
-	status = acpi_evaluate_integer(handle, "_RMV", NULL, &removable);
-	if (ACPI_SUCCESS(status) && removable)
-		return 1;
-	return 0;
-}
+	अचिन्हित दीर्घ दीर्घ removable;
+	अगर (!acpi_has_method(handle, "_ADR"))
+		वापस 0;
+	अगर (acpi_has_method(handle, "_EJ0"))
+		वापस 1;
+	status = acpi_evaluate_पूर्णांकeger(handle, "_RMV", शून्य, &removable);
+	अगर (ACPI_SUCCESS(status) && removable)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /**
- * acpi_pci_check_ejectable - check if handle is ejectable ACPI PCI slot
+ * acpi_pci_check_ejectable - check अगर handle is ejectable ACPI PCI slot
  * @pbus: the PCI bus of the PCI slot corresponding to 'handle'
  * @handle: ACPI handle to check
  *
- * Return 1 if handle is ejectable PCI slot, 0 otherwise.
+ * Return 1 अगर handle is ejectable PCI slot, 0 otherwise.
  */
-int acpi_pci_check_ejectable(struct pci_bus *pbus, acpi_handle handle)
-{
+पूर्णांक acpi_pci_check_ejectable(काष्ठा pci_bus *pbus, acpi_handle handle)
+अणु
 	acpi_handle bridge_handle, parent_handle;
 
 	bridge_handle = acpi_pci_get_bridge_handle(pbus);
-	if (!bridge_handle)
-		return 0;
-	if ((ACPI_FAILURE(acpi_get_parent(handle, &parent_handle))))
-		return 0;
-	if (bridge_handle != parent_handle)
-		return 0;
-	return pcihp_is_ejectable(handle);
-}
+	अगर (!bridge_handle)
+		वापस 0;
+	अगर ((ACPI_FAILURE(acpi_get_parent(handle, &parent_handle))))
+		वापस 0;
+	अगर (bridge_handle != parent_handle)
+		वापस 0;
+	वापस pcihp_is_ejectable(handle);
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_pci_check_ejectable);
 
-static acpi_status
-check_hotplug(acpi_handle handle, u32 lvl, void *context, void **rv)
-{
-	int *found = (int *)context;
-	if (pcihp_is_ejectable(handle)) {
+अटल acpi_status
+check_hotplug(acpi_handle handle, u32 lvl, व्योम *context, व्योम **rv)
+अणु
+	पूर्णांक *found = (पूर्णांक *)context;
+	अगर (pcihp_is_ejectable(handle)) अणु
 		*found = 1;
-		return AE_CTRL_TERMINATE;
-	}
-	return AE_OK;
-}
+		वापस AE_CTRL_TERMINATE;
+	पूर्ण
+	वापस AE_OK;
+पूर्ण
 
 /**
- * acpi_pci_detect_ejectable - check if the PCI bus has ejectable slots
+ * acpi_pci_detect_ejectable - check अगर the PCI bus has ejectable slots
  * @handle: handle of the PCI bus to scan
  *
- * Returns 1 if the PCI bus has ACPI based ejectable slots, 0 otherwise.
+ * Returns 1 अगर the PCI bus has ACPI based ejectable slots, 0 otherwise.
  */
-int acpi_pci_detect_ejectable(acpi_handle handle)
-{
-	int found = 0;
+पूर्णांक acpi_pci_detect_ejectable(acpi_handle handle)
+अणु
+	पूर्णांक found = 0;
 
-	if (!handle)
-		return found;
+	अगर (!handle)
+		वापस found;
 
 	acpi_walk_namespace(ACPI_TYPE_DEVICE, handle, 1,
-			    check_hotplug, NULL, (void *)&found, NULL);
-	return found;
-}
+			    check_hotplug, शून्य, (व्योम *)&found, शून्य);
+	वापस found;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_pci_detect_ejectable);
 
 module_param(debug_acpi, bool, 0644);

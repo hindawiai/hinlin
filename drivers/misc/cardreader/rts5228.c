@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Driver for Realtek PCI-Express card reader
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Driver क्रम Realtek PCI-Express card पढ़ोer
  *
  * Copyright(c) 2018-2019 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -9,558 +10,558 @@
  *   Wei WANG <wei_wang@realsil.com.cn>
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/rtsx_pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/rtsx_pci.h>
 
-#include "rts5228.h"
-#include "rtsx_pcr.h"
+#समावेश "rts5228.h"
+#समावेश "rtsx_pcr.h"
 
-static u8 rts5228_get_ic_version(struct rtsx_pcr *pcr)
-{
+अटल u8 rts5228_get_ic_version(काष्ठा rtsx_pcr *pcr)
+अणु
 	u8 val;
 
-	rtsx_pci_read_register(pcr, DUMMY_REG_RESET_0, &val);
-	return val & IC_VERSION_MASK;
-}
+	rtsx_pci_पढ़ो_रेजिस्टर(pcr, DUMMY_REG_RESET_0, &val);
+	वापस val & IC_VERSION_MASK;
+पूर्ण
 
-static void rts5228_fill_driving(struct rtsx_pcr *pcr, u8 voltage)
-{
-	u8 driving_3v3[4][3] = {
-		{0x13, 0x13, 0x13},
-		{0x96, 0x96, 0x96},
-		{0x7F, 0x7F, 0x7F},
-		{0x96, 0x96, 0x96},
-	};
-	u8 driving_1v8[4][3] = {
-		{0x99, 0x99, 0x99},
-		{0xB5, 0xB5, 0xB5},
-		{0xE6, 0x7E, 0xFE},
-		{0x6B, 0x6B, 0x6B},
-	};
+अटल व्योम rts5228_fill_driving(काष्ठा rtsx_pcr *pcr, u8 voltage)
+अणु
+	u8 driving_3v3[4][3] = अणु
+		अणु0x13, 0x13, 0x13पूर्ण,
+		अणु0x96, 0x96, 0x96पूर्ण,
+		अणु0x7F, 0x7F, 0x7Fपूर्ण,
+		अणु0x96, 0x96, 0x96पूर्ण,
+	पूर्ण;
+	u8 driving_1v8[4][3] = अणु
+		अणु0x99, 0x99, 0x99पूर्ण,
+		अणु0xB5, 0xB5, 0xB5पूर्ण,
+		अणु0xE6, 0x7E, 0xFEपूर्ण,
+		अणु0x6B, 0x6B, 0x6Bपूर्ण,
+	पूर्ण;
 	u8 (*driving)[3], drive_sel;
 
-	if (voltage == OUTPUT_3V3) {
+	अगर (voltage == OUTPUT_3V3) अणु
 		driving = driving_3v3;
 		drive_sel = pcr->sd30_drive_sel_3v3;
-	} else {
+	पूर्ण अन्यथा अणु
 		driving = driving_1v8;
 		drive_sel = pcr->sd30_drive_sel_1v8;
-	}
+	पूर्ण
 
-	rtsx_pci_write_register(pcr, SD30_CLK_DRIVE_SEL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD30_CLK_DRIVE_SEL,
 			 0xFF, driving[drive_sel][0]);
 
-	rtsx_pci_write_register(pcr, SD30_CMD_DRIVE_SEL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD30_CMD_DRIVE_SEL,
 			 0xFF, driving[drive_sel][1]);
 
-	rtsx_pci_write_register(pcr, SD30_DAT_DRIVE_SEL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD30_DAT_DRIVE_SEL,
 			 0xFF, driving[drive_sel][2]);
-}
+पूर्ण
 
-static void rtsx5228_fetch_vendor_settings(struct rtsx_pcr *pcr)
-{
-	struct pci_dev *pdev = pcr->pci;
+अटल व्योम rtsx5228_fetch_venकरोr_settings(काष्ठा rtsx_pcr *pcr)
+अणु
+	काष्ठा pci_dev *pdev = pcr->pci;
 	u32 reg;
 
 	/* 0x724~0x727 */
-	pci_read_config_dword(pdev, PCR_SETTING_REG1, &reg);
+	pci_पढ़ो_config_dword(pdev, PCR_SETTING_REG1, &reg);
 	pcr_dbg(pcr, "Cfg 0x%x: 0x%x\n", PCR_SETTING_REG1, reg);
 
-	if (!rtsx_vendor_setting_valid(reg)) {
+	अगर (!rtsx_venकरोr_setting_valid(reg)) अणु
 		pcr_dbg(pcr, "skip fetch vendor setting\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	pcr->sd30_drive_sel_1v8 = rtsx_reg_to_sd30_drive_sel_1v8(reg);
 	pcr->aspm_en = rtsx_reg_to_aspm(reg);
 
 	/* 0x814~0x817 */
-	pci_read_config_dword(pdev, PCR_SETTING_REG2, &reg);
+	pci_पढ़ो_config_dword(pdev, PCR_SETTING_REG2, &reg);
 	pcr_dbg(pcr, "Cfg 0x%x: 0x%x\n", PCR_SETTING_REG2, reg);
 
 	pcr->rtd3_en = rtsx_reg_to_rtd3(reg);
-	if (rtsx_check_mmc_support(reg))
+	अगर (rtsx_check_mmc_support(reg))
 		pcr->extra_caps |= EXTRA_CAPS_NO_MMC;
 	pcr->sd30_drive_sel_3v3 = rtsx_reg_to_sd30_drive_sel_3v3(reg);
-	if (rtsx_reg_check_reverse_socket(reg))
+	अगर (rtsx_reg_check_reverse_socket(reg))
 		pcr->flags |= PCR_REVERSE_SOCKET;
-}
+पूर्ण
 
-static int rts5228_optimize_phy(struct rtsx_pcr *pcr)
-{
-	return rtsx_pci_write_phy_register(pcr, 0x07, 0x8F40);
-}
+अटल पूर्णांक rts5228_optimize_phy(काष्ठा rtsx_pcr *pcr)
+अणु
+	वापस rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, 0x07, 0x8F40);
+पूर्ण
 
-static void rts5228_force_power_down(struct rtsx_pcr *pcr, u8 pm_state)
-{
-	/* Set relink_time to 0 */
-	rtsx_pci_write_register(pcr, AUTOLOAD_CFG_BASE + 1, MASK_8_BIT_DEF, 0);
-	rtsx_pci_write_register(pcr, AUTOLOAD_CFG_BASE + 2, MASK_8_BIT_DEF, 0);
-	rtsx_pci_write_register(pcr, AUTOLOAD_CFG_BASE + 3,
+अटल व्योम rts5228_क्रमce_घातer_करोwn(काष्ठा rtsx_pcr *pcr, u8 pm_state)
+अणु
+	/* Set relink_समय to 0 */
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, AUTOLOAD_CFG_BASE + 1, MASK_8_BIT_DEF, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, AUTOLOAD_CFG_BASE + 2, MASK_8_BIT_DEF, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, AUTOLOAD_CFG_BASE + 3,
 				RELINK_TIME_MASK, 0);
 
-	rtsx_pci_write_register(pcr, pcr->reg_pm_ctrl3,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, pcr->reg_pm_ctrl3,
 			D3_DELINK_MODE_EN, D3_DELINK_MODE_EN);
 
-	rtsx_pci_write_register(pcr, FPDCTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, FPDCTL,
 		SSC_POWER_DOWN, SSC_POWER_DOWN);
-}
+पूर्ण
 
-static int rts5228_enable_auto_blink(struct rtsx_pcr *pcr)
-{
-	return rtsx_pci_write_register(pcr, OLT_LED_CTL,
+अटल पूर्णांक rts5228_enable_स्वतः_blink(काष्ठा rtsx_pcr *pcr)
+अणु
+	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, OLT_LED_CTL,
 		LED_SHINE_MASK, LED_SHINE_EN);
-}
+पूर्ण
 
-static int rts5228_disable_auto_blink(struct rtsx_pcr *pcr)
-{
-	return rtsx_pci_write_register(pcr, OLT_LED_CTL,
+अटल पूर्णांक rts5228_disable_स्वतः_blink(काष्ठा rtsx_pcr *pcr)
+अणु
+	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, OLT_LED_CTL,
 		LED_SHINE_MASK, LED_SHINE_DISABLE);
-}
+पूर्ण
 
-static int rts5228_turn_on_led(struct rtsx_pcr *pcr)
-{
-	return rtsx_pci_write_register(pcr, GPIO_CTL,
+अटल पूर्णांक rts5228_turn_on_led(काष्ठा rtsx_pcr *pcr)
+अणु
+	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, GPIO_CTL,
 		0x02, 0x02);
-}
+पूर्ण
 
-static int rts5228_turn_off_led(struct rtsx_pcr *pcr)
-{
-	return rtsx_pci_write_register(pcr, GPIO_CTL,
+अटल पूर्णांक rts5228_turn_off_led(काष्ठा rtsx_pcr *pcr)
+अणु
+	वापस rtsx_pci_ग_लिखो_रेजिस्टर(pcr, GPIO_CTL,
 		0x02, 0x00);
-}
+पूर्ण
 
 /* SD Pull Control Enable:
  *     SD_DAT[3:0] ==> pull up
  *     SD_CD       ==> pull up
  *     SD_WP       ==> pull up
  *     SD_CMD      ==> pull up
- *     SD_CLK      ==> pull down
+ *     SD_CLK      ==> pull करोwn
  */
-static const u32 rts5228_sd_pull_ctl_enable_tbl[] = {
+अटल स्थिर u32 rts5228_sd_pull_ctl_enable_tbl[] = अणु
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0xAA),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xE9),
 	0,
-};
+पूर्ण;
 
 /* SD Pull Control Disable:
- *     SD_DAT[3:0] ==> pull down
+ *     SD_DAT[3:0] ==> pull करोwn
  *     SD_CD       ==> pull up
- *     SD_WP       ==> pull down
- *     SD_CMD      ==> pull down
- *     SD_CLK      ==> pull down
+ *     SD_WP       ==> pull करोwn
+ *     SD_CMD      ==> pull करोwn
+ *     SD_CLK      ==> pull करोwn
  */
-static const u32 rts5228_sd_pull_ctl_disable_tbl[] = {
+अटल स्थिर u32 rts5228_sd_pull_ctl_disable_tbl[] = अणु
 	RTSX_REG_PAIR(CARD_PULL_CTL2, 0x55),
 	RTSX_REG_PAIR(CARD_PULL_CTL3, 0xD5),
 	0,
-};
+पूर्ण;
 
-static int rts5228_sd_set_sample_push_timing_sd30(struct rtsx_pcr *pcr)
-{
-	rtsx_pci_write_register(pcr, SD_CFG1, SD_MODE_SELECT_MASK
+अटल पूर्णांक rts5228_sd_set_sample_push_timing_sd30(काष्ठा rtsx_pcr *pcr)
+अणु
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_CFG1, SD_MODE_SELECT_MASK
 		| SD_ASYNC_FIFO_NOT_RST, SD_30_MODE | SD_ASYNC_FIFO_NOT_RST);
-	rtsx_pci_write_register(pcr, CLK_CTL, CLK_LOW_FREQ, CLK_LOW_FREQ);
-	rtsx_pci_write_register(pcr, CARD_CLK_SOURCE, 0xFF,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CLK_CTL, CLK_LOW_FREQ, CLK_LOW_FREQ);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_CLK_SOURCE, 0xFF,
 			CRC_VAR_CLK0 | SD30_FIX_CLK | SAMPLE_VAR_CLK1);
-	rtsx_pci_write_register(pcr, CLK_CTL, CLK_LOW_FREQ, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CLK_CTL, CLK_LOW_FREQ, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rts5228_card_power_on(struct rtsx_pcr *pcr, int card)
-{
-	struct rtsx_cr_option *option = &pcr->option;
+अटल पूर्णांक rts5228_card_घातer_on(काष्ठा rtsx_pcr *pcr, पूर्णांक card)
+अणु
+	काष्ठा rtsx_cr_option *option = &pcr->option;
 
-	if (option->ocp_en)
+	अगर (option->ocp_en)
 		rtsx_pci_enable_ocp(pcr);
 
-	rtsx_pci_write_register(pcr, REG_CRC_DUMMY_0,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_CRC_DUMMY_0,
 			CFG_SD_POW_AUTO_PD, CFG_SD_POW_AUTO_PD);
 
-	rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG1,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG1,
 			RTS5228_LDO1_TUNE_MASK, RTS5228_LDO1_33);
 
-	rtsx_pci_write_register(pcr, RTS5228_LDO1233318_POW_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1233318_POW_CTL,
 			RTS5228_LDO1_POWERON_MASK, RTS5228_LDO1_SOFTSTART);
 	mdelay(2);
-	rtsx_pci_write_register(pcr, RTS5228_LDO1233318_POW_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1233318_POW_CTL,
 			RTS5228_LDO1_POWERON_MASK, RTS5228_LDO1_FULLON);
 
 
-	rtsx_pci_write_register(pcr, RTS5228_LDO1233318_POW_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1233318_POW_CTL,
 			RTS5228_LDO3318_POWERON, RTS5228_LDO3318_POWERON);
 
 	msleep(20);
 
-	rtsx_pci_write_register(pcr, CARD_OE, SD_OUTPUT_EN, SD_OUTPUT_EN);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_OE, SD_OUTPUT_EN, SD_OUTPUT_EN);
 
-	/* Initialize SD_CFG1 register */
-	rtsx_pci_write_register(pcr, SD_CFG1, 0xFF,
+	/* Initialize SD_CFG1 रेजिस्टर */
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_CFG1, 0xFF,
 			SD_CLK_DIVIDE_128 | SD_20_MODE | SD_BUS_WIDTH_1BIT);
 
-	rtsx_pci_write_register(pcr, SD_SAMPLE_POINT_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_SAMPLE_POINT_CTL,
 			0xFF, SD20_RX_POS_EDGE);
-	rtsx_pci_write_register(pcr, SD_PUSH_POINT_CTL, 0xFF, 0);
-	rtsx_pci_write_register(pcr, CARD_STOP, SD_STOP | SD_CLR_ERR,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_PUSH_POINT_CTL, 0xFF, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_STOP, SD_STOP | SD_CLR_ERR,
 			SD_STOP | SD_CLR_ERR);
 
-	/* Reset SD_CFG3 register */
-	rtsx_pci_write_register(pcr, SD_CFG3, SD30_CLK_END_EN, 0);
-	rtsx_pci_write_register(pcr, REG_SD_STOP_SDCLK_CFG,
+	/* Reset SD_CFG3 रेजिस्टर */
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_CFG3, SD30_CLK_END_EN, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_SD_STOP_SDCLK_CFG,
 			SD30_CLK_STOP_CFG_EN | SD30_CLK_STOP_CFG1 |
 			SD30_CLK_STOP_CFG0, 0);
 
-	if (pcr->extra_caps & EXTRA_CAPS_SD_SDR50 ||
+	अगर (pcr->extra_caps & EXTRA_CAPS_SD_SDR50 ||
 	    pcr->extra_caps & EXTRA_CAPS_SD_SDR104)
 		rts5228_sd_set_sample_push_timing_sd30(pcr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rts5228_switch_output_voltage(struct rtsx_pcr *pcr, u8 voltage)
-{
-	int err;
+अटल पूर्णांक rts5228_चयन_output_voltage(काष्ठा rtsx_pcr *pcr, u8 voltage)
+अणु
+	पूर्णांक err;
 	u16 val = 0;
 
-	rtsx_pci_write_register(pcr, RTS5228_CARD_PWR_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_CARD_PWR_CTL,
 			RTS5228_PUPDC, RTS5228_PUPDC);
 
-	switch (voltage) {
-	case OUTPUT_3V3:
-		rtsx_pci_read_phy_register(pcr, PHY_TUNE, &val);
+	चयन (voltage) अणु
+	हाल OUTPUT_3V3:
+		rtsx_pci_पढ़ो_phy_रेजिस्टर(pcr, PHY_TUNE, &val);
 		val |= PHY_TUNE_SDBUS_33;
-		err = rtsx_pci_write_phy_register(pcr, PHY_TUNE, val);
-		if (err < 0)
-			return err;
+		err = rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, PHY_TUNE, val);
+		अगर (err < 0)
+			वापस err;
 
-		rtsx_pci_write_register(pcr, RTS5228_DV3318_CFG,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_DV3318_CFG,
 				RTS5228_DV3318_TUNE_MASK, RTS5228_DV3318_33);
-		rtsx_pci_write_register(pcr, SD_PAD_CTL,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_PAD_CTL,
 				SD_IO_USING_1V8, 0);
-		break;
-	case OUTPUT_1V8:
-		rtsx_pci_read_phy_register(pcr, PHY_TUNE, &val);
+		अवरोध;
+	हाल OUTPUT_1V8:
+		rtsx_pci_पढ़ो_phy_रेजिस्टर(pcr, PHY_TUNE, &val);
 		val &= ~PHY_TUNE_SDBUS_33;
-		err = rtsx_pci_write_phy_register(pcr, PHY_TUNE, val);
-		if (err < 0)
-			return err;
+		err = rtsx_pci_ग_लिखो_phy_रेजिस्टर(pcr, PHY_TUNE, val);
+		अगर (err < 0)
+			वापस err;
 
-		rtsx_pci_write_register(pcr, RTS5228_DV3318_CFG,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_DV3318_CFG,
 				RTS5228_DV3318_TUNE_MASK, RTS5228_DV3318_18);
-		rtsx_pci_write_register(pcr, SD_PAD_CTL,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_PAD_CTL,
 				SD_IO_USING_1V8, SD_IO_USING_1V8);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* set pad drive */
 	rts5228_fill_driving(pcr, voltage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rts5228_stop_cmd(struct rtsx_pcr *pcr)
-{
-	rtsx_pci_writel(pcr, RTSX_HCBCTLR, STOP_CMD);
-	rtsx_pci_writel(pcr, RTSX_HDBCTLR, STOP_DMA);
-	rtsx_pci_write_register(pcr, RTS5260_DMA_RST_CTL_0,
+अटल व्योम rts5228_stop_cmd(काष्ठा rtsx_pcr *pcr)
+अणु
+	rtsx_pci_ग_लिखोl(pcr, RTSX_HCBCTLR, STOP_CMD);
+	rtsx_pci_ग_लिखोl(pcr, RTSX_HDBCTLR, STOP_DMA);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5260_DMA_RST_CTL_0,
 				RTS5260_DMA_RST | RTS5260_ADMA3_RST,
 				RTS5260_DMA_RST | RTS5260_ADMA3_RST);
-	rtsx_pci_write_register(pcr, RBCTL, RB_FLUSH, RB_FLUSH);
-}
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RBCTL, RB_FLUSH, RB_FLUSH);
+पूर्ण
 
-static void rts5228_card_before_power_off(struct rtsx_pcr *pcr)
-{
+अटल व्योम rts5228_card_beक्रमe_घातer_off(काष्ठा rtsx_pcr *pcr)
+अणु
 	rts5228_stop_cmd(pcr);
-	rts5228_switch_output_voltage(pcr, OUTPUT_3V3);
-}
+	rts5228_चयन_output_voltage(pcr, OUTPUT_3V3);
+पूर्ण
 
-static void rts5228_enable_ocp(struct rtsx_pcr *pcr)
-{
+अटल व्योम rts5228_enable_ocp(काष्ठा rtsx_pcr *pcr)
+अणु
 	u8 val = 0;
 
 	val = SD_OCP_INT_EN | SD_DETECT_EN;
-	rtsx_pci_write_register(pcr, REG_OCPCTL, 0xFF, val);
-	rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_OCPCTL, 0xFF, val);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN);
-}
+पूर्ण
 
-static void rts5228_disable_ocp(struct rtsx_pcr *pcr)
-{
+अटल व्योम rts5228_disable_ocp(काष्ठा rtsx_pcr *pcr)
+अणु
 	u8 mask = 0;
 
 	mask = SD_OCP_INT_EN | SD_DETECT_EN;
-	rtsx_pci_write_register(pcr, REG_OCPCTL, mask, 0);
-	rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_OCPCTL, mask, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN, 0);
-}
+पूर्ण
 
-static int rts5228_card_power_off(struct rtsx_pcr *pcr, int card)
-{
-	int err = 0;
+अटल पूर्णांक rts5228_card_घातer_off(काष्ठा rtsx_pcr *pcr, पूर्णांक card)
+अणु
+	पूर्णांक err = 0;
 
-	rts5228_card_before_power_off(pcr);
-	err = rtsx_pci_write_register(pcr, RTS5228_LDO1233318_POW_CTL,
+	rts5228_card_beक्रमe_घातer_off(pcr);
+	err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1233318_POW_CTL,
 				RTS5228_LDO_POWERON_MASK, 0);
-	rtsx_pci_write_register(pcr, REG_CRC_DUMMY_0, CFG_SD_POW_AUTO_PD, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_CRC_DUMMY_0, CFG_SD_POW_AUTO_PD, 0);
 
-	if (pcr->option.ocp_en)
+	अगर (pcr->option.ocp_en)
 		rtsx_pci_disable_ocp(pcr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rts5228_init_ocp(struct rtsx_pcr *pcr)
-{
-	struct rtsx_cr_option *option = &pcr->option;
+अटल व्योम rts5228_init_ocp(काष्ठा rtsx_pcr *pcr)
+अणु
+	काष्ठा rtsx_cr_option *option = &pcr->option;
 
-	if (option->ocp_en) {
+	अगर (option->ocp_en) अणु
 		u8 mask, val;
 
-		rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN);
 
-		rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_THD_MASK, option->sd_800mA_ocp_thd);
 
-		rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_LMT_THD_MASK,
 			RTS5228_LDO1_LMT_THD_1500);
 
-		rtsx_pci_read_register(pcr, RTS5228_LDO1_CFG0, &val);
+		rtsx_pci_पढ़ो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0, &val);
 
 		mask = SD_OCP_GLITCH_MASK;
 		val = pcr->hw_param.ocp_glitch;
-		rtsx_pci_write_register(pcr, REG_OCPGLITCH, mask, val);
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_OCPGLITCH, mask, val);
 
 		rts5228_enable_ocp(pcr);
 
-	} else {
-		rtsx_pci_write_register(pcr, RTS5228_LDO1_CFG0,
+	पूर्ण अन्यथा अणु
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_LDO1_CFG0,
 			RTS5228_LDO1_OCP_EN | RTS5228_LDO1_OCP_LMT_EN, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rts5228_clear_ocpstat(struct rtsx_pcr *pcr)
-{
+अटल व्योम rts5228_clear_ocpstat(काष्ठा rtsx_pcr *pcr)
+अणु
 	u8 mask = 0;
 	u8 val = 0;
 
 	mask = SD_OCP_INT_CLR | SD_OC_CLR;
 	val = SD_OCP_INT_CLR | SD_OC_CLR;
 
-	rtsx_pci_write_register(pcr, REG_OCPCTL, mask, val);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_OCPCTL, mask, val);
 
 	udelay(1000);
-	rtsx_pci_write_register(pcr, REG_OCPCTL, mask, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, REG_OCPCTL, mask, 0);
 
-}
+पूर्ण
 
-static void rts5228_process_ocp(struct rtsx_pcr *pcr)
-{
-	if (!pcr->option.ocp_en)
-		return;
+अटल व्योम rts5228_process_ocp(काष्ठा rtsx_pcr *pcr)
+अणु
+	अगर (!pcr->option.ocp_en)
+		वापस;
 
 	rtsx_pci_get_ocpstat(pcr, &pcr->ocp_stat);
 
-	if (pcr->ocp_stat & (SD_OC_NOW | SD_OC_EVER)) {
+	अगर (pcr->ocp_stat & (SD_OC_NOW | SD_OC_EVER)) अणु
 		rts5228_clear_ocpstat(pcr);
-		rts5228_card_power_off(pcr, RTSX_SD_CARD);
-		rtsx_pci_write_register(pcr, CARD_OE, SD_OUTPUT_EN, 0);
+		rts5228_card_घातer_off(pcr, RTSX_SD_CARD);
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CARD_OE, SD_OUTPUT_EN, 0);
 		pcr->ocp_stat = 0;
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-static void rts5228_init_from_cfg(struct rtsx_pcr *pcr)
-{
-	struct pci_dev *pdev = pcr->pci;
-	int l1ss;
+अटल व्योम rts5228_init_from_cfg(काष्ठा rtsx_pcr *pcr)
+अणु
+	काष्ठा pci_dev *pdev = pcr->pci;
+	पूर्णांक l1ss;
 	u32 lval;
-	struct rtsx_cr_option *option = &pcr->option;
+	काष्ठा rtsx_cr_option *option = &pcr->option;
 
 	l1ss = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_L1SS);
-	if (!l1ss)
-		return;
+	अगर (!l1ss)
+		वापस;
 
-	pci_read_config_dword(pdev, l1ss + PCI_L1SS_CTL1, &lval);
+	pci_पढ़ो_config_dword(pdev, l1ss + PCI_L1SS_CTL1, &lval);
 
-	if (0 == (lval & 0x0F))
+	अगर (0 == (lval & 0x0F))
 		rtsx_pci_enable_oobs_polling(pcr);
-	else
+	अन्यथा
 		rtsx_pci_disable_oobs_polling(pcr);
 
-	if (lval & PCI_L1SS_CTL1_ASPM_L1_1)
+	अगर (lval & PCI_L1SS_CTL1_ASPM_L1_1)
 		rtsx_set_dev_flag(pcr, ASPM_L1_1_EN);
-	else
+	अन्यथा
 		rtsx_clear_dev_flag(pcr, ASPM_L1_1_EN);
 
-	if (lval & PCI_L1SS_CTL1_ASPM_L1_2)
+	अगर (lval & PCI_L1SS_CTL1_ASPM_L1_2)
 		rtsx_set_dev_flag(pcr, ASPM_L1_2_EN);
-	else
+	अन्यथा
 		rtsx_clear_dev_flag(pcr, ASPM_L1_2_EN);
 
-	if (lval & PCI_L1SS_CTL1_PCIPM_L1_1)
+	अगर (lval & PCI_L1SS_CTL1_PCIPM_L1_1)
 		rtsx_set_dev_flag(pcr, PM_L1_1_EN);
-	else
+	अन्यथा
 		rtsx_clear_dev_flag(pcr, PM_L1_1_EN);
 
-	if (lval & PCI_L1SS_CTL1_PCIPM_L1_2)
+	अगर (lval & PCI_L1SS_CTL1_PCIPM_L1_2)
 		rtsx_set_dev_flag(pcr, PM_L1_2_EN);
-	else
+	अन्यथा
 		rtsx_clear_dev_flag(pcr, PM_L1_2_EN);
 
-	rtsx_pci_write_register(pcr, ASPM_FORCE_CTL, 0xFF, 0);
-	if (option->ltr_en) {
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, ASPM_FORCE_CTL, 0xFF, 0);
+	अगर (option->ltr_en) अणु
 		u16 val;
 
-		pcie_capability_read_word(pcr->pci, PCI_EXP_DEVCTL2, &val);
-		if (val & PCI_EXP_DEVCTL2_LTR_EN) {
+		pcie_capability_पढ़ो_word(pcr->pci, PCI_EXP_DEVCTL2, &val);
+		अगर (val & PCI_EXP_DEVCTL2_LTR_EN) अणु
 			option->ltr_enabled = true;
 			option->ltr_active = true;
 			rtsx_set_ltr_latency(pcr, option->ltr_active_latency);
-		} else {
+		पूर्ण अन्यथा अणु
 			option->ltr_enabled = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (rtsx_check_dev_flag(pcr, ASPM_L1_1_EN | ASPM_L1_2_EN
+	अगर (rtsx_check_dev_flag(pcr, ASPM_L1_1_EN | ASPM_L1_2_EN
 				| PM_L1_1_EN | PM_L1_2_EN))
-		option->force_clkreq_0 = false;
-	else
-		option->force_clkreq_0 = true;
-}
+		option->क्रमce_clkreq_0 = false;
+	अन्यथा
+		option->क्रमce_clkreq_0 = true;
+पूर्ण
 
-static int rts5228_extra_init_hw(struct rtsx_pcr *pcr)
-{
-	struct rtsx_cr_option *option = &pcr->option;
+अटल पूर्णांक rts5228_extra_init_hw(काष्ठा rtsx_pcr *pcr)
+अणु
+	काष्ठा rtsx_cr_option *option = &pcr->option;
 
-	rtsx_pci_write_register(pcr, RTS5228_AUTOLOAD_CFG1,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_AUTOLOAD_CFG1,
 			CD_RESUME_EN_MASK, CD_RESUME_EN_MASK);
 
 	rts5228_init_from_cfg(pcr);
 
-	rtsx_pci_write_register(pcr, L1SUB_CONFIG1,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, L1SUB_CONFIG1,
 			AUX_CLK_ACTIVE_SEL_MASK, MAC_CKSW_DONE);
-	rtsx_pci_write_register(pcr, L1SUB_CONFIG3, 0xFF, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, L1SUB_CONFIG3, 0xFF, 0);
 
-	rtsx_pci_write_register(pcr, FUNC_FORCE_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, FUNC_FORCE_CTL,
 			FUNC_FORCE_UPME_XMT_DBG, FUNC_FORCE_UPME_XMT_DBG);
 
-	rtsx_pci_write_register(pcr, PCLK_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PCLK_CTL,
 			PCLK_MODE_SEL, PCLK_MODE_SEL);
 
-	rtsx_pci_write_register(pcr, PM_EVENT_DEBUG, PME_DEBUG_0, PME_DEBUG_0);
-	rtsx_pci_write_register(pcr, PM_CLK_FORCE_CTL, CLK_PM_EN, CLK_PM_EN);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PM_EVENT_DEBUG, PME_DEBUG_0, PME_DEBUG_0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PM_CLK_FORCE_CTL, CLK_PM_EN, CLK_PM_EN);
 
 	/* LED shine disabled, set initial shine cycle period */
-	rtsx_pci_write_register(pcr, OLT_LED_CTL, 0x0F, 0x02);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, OLT_LED_CTL, 0x0F, 0x02);
 
 	/* Configure driving */
 	rts5228_fill_driving(pcr, OUTPUT_3V3);
 
-	if (pcr->flags & PCR_REVERSE_SOCKET)
-		rtsx_pci_write_register(pcr, PETXCFG, 0x30, 0x30);
-	else
-		rtsx_pci_write_register(pcr, PETXCFG, 0x30, 0x00);
+	अगर (pcr->flags & PCR_REVERSE_SOCKET)
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PETXCFG, 0x30, 0x30);
+	अन्यथा
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PETXCFG, 0x30, 0x00);
 
 	/*
-	 * If u_force_clkreq_0 is enabled, CLKREQ# PIN will be forced
-	 * to drive low, and we forcibly request clock.
+	 * If u_क्रमce_clkreq_0 is enabled, CLKREQ# PIN will be क्रमced
+	 * to drive low, and we क्रमcibly request घड़ी.
 	 */
-	if (option->force_clkreq_0)
-		rtsx_pci_write_register(pcr, PETXCFG,
+	अगर (option->क्रमce_clkreq_0)
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PETXCFG,
 				 FORCE_CLKREQ_DELINK_MASK, FORCE_CLKREQ_LOW);
-	else
-		rtsx_pci_write_register(pcr, PETXCFG,
+	अन्यथा
+		rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PETXCFG,
 				 FORCE_CLKREQ_DELINK_MASK, FORCE_CLKREQ_HIGH);
 
-	rtsx_pci_write_register(pcr, PWD_SUSPEND_EN, 0xFF, 0xFB);
-	rtsx_pci_write_register(pcr, pcr->reg_pm_ctrl3, 0x10, 0x00);
-	rtsx_pci_write_register(pcr, RTS5228_REG_PME_FORCE_CTL,
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, PWD_SUSPEND_EN, 0xFF, 0xFB);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, pcr->reg_pm_ctrl3, 0x10, 0x00);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, RTS5228_REG_PME_FORCE_CTL,
 			FORCE_PM_CONTROL | FORCE_PM_VALUE, FORCE_PM_CONTROL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rts5228_enable_aspm(struct rtsx_pcr *pcr, bool enable)
-{
+अटल व्योम rts5228_enable_aspm(काष्ठा rtsx_pcr *pcr, bool enable)
+अणु
 	u8 mask, val;
 
-	if (pcr->aspm_enabled == enable)
-		return;
+	अगर (pcr->aspm_enabled == enable)
+		वापस;
 
 	mask = FORCE_ASPM_VAL_MASK | FORCE_ASPM_CTL0 | FORCE_ASPM_CTL1;
 	val = FORCE_ASPM_CTL0 | FORCE_ASPM_CTL1;
 	val |= (pcr->aspm_en & 0x02);
-	rtsx_pci_write_register(pcr, ASPM_FORCE_CTL, mask, val);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, ASPM_FORCE_CTL, mask, val);
 	pcie_capability_clear_and_set_word(pcr->pci, PCI_EXP_LNKCTL,
 					   PCI_EXP_LNKCTL_ASPMC, pcr->aspm_en);
 	pcr->aspm_enabled = enable;
-}
+पूर्ण
 
-static void rts5228_disable_aspm(struct rtsx_pcr *pcr, bool enable)
-{
+अटल व्योम rts5228_disable_aspm(काष्ठा rtsx_pcr *pcr, bool enable)
+अणु
 	u8 mask, val;
 
-	if (pcr->aspm_enabled == enable)
-		return;
+	अगर (pcr->aspm_enabled == enable)
+		वापस;
 
 	pcie_capability_clear_and_set_word(pcr->pci, PCI_EXP_LNKCTL,
 					   PCI_EXP_LNKCTL_ASPMC, 0);
 	mask = FORCE_ASPM_VAL_MASK | FORCE_ASPM_CTL0 | FORCE_ASPM_CTL1;
 	val = FORCE_ASPM_CTL0 | FORCE_ASPM_CTL1;
-	rtsx_pci_write_register(pcr, ASPM_FORCE_CTL, mask, val);
-	rtsx_pci_write_register(pcr, SD_CFG1, SD_ASYNC_FIFO_NOT_RST, 0);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, ASPM_FORCE_CTL, mask, val);
+	rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_CFG1, SD_ASYNC_FIFO_NOT_RST, 0);
 	mdelay(10);
 	pcr->aspm_enabled = enable;
-}
+पूर्ण
 
-static void rts5228_set_aspm(struct rtsx_pcr *pcr, bool enable)
-{
-	if (enable)
+अटल व्योम rts5228_set_aspm(काष्ठा rtsx_pcr *pcr, bool enable)
+अणु
+	अगर (enable)
 		rts5228_enable_aspm(pcr, true);
-	else
+	अन्यथा
 		rts5228_disable_aspm(pcr, false);
-}
+पूर्ण
 
-static void rts5228_set_l1off_cfg_sub_d0(struct rtsx_pcr *pcr, int active)
-{
-	struct rtsx_cr_option *option = &pcr->option;
-	int aspm_L1_1, aspm_L1_2;
+अटल व्योम rts5228_set_l1off_cfg_sub_d0(काष्ठा rtsx_pcr *pcr, पूर्णांक active)
+अणु
+	काष्ठा rtsx_cr_option *option = &pcr->option;
+	पूर्णांक aspm_L1_1, aspm_L1_2;
 	u8 val = 0;
 
 	aspm_L1_1 = rtsx_check_dev_flag(pcr, ASPM_L1_1_EN);
 	aspm_L1_2 = rtsx_check_dev_flag(pcr, ASPM_L1_2_EN);
 
-	if (active) {
+	अगर (active) अणु
 		/* run, latency: 60us */
-		if (aspm_L1_1)
+		अगर (aspm_L1_1)
 			val = option->ltr_l1off_snooze_sspwrgate;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* l1off, latency: 300us */
-		if (aspm_L1_2)
+		अगर (aspm_L1_2)
 			val = option->ltr_l1off_sspwrgate;
-	}
+	पूर्ण
 
 	rtsx_set_l1off_sub(pcr, val);
-}
+पूर्ण
 
-static const struct pcr_ops rts5228_pcr_ops = {
-	.fetch_vendor_settings = rtsx5228_fetch_vendor_settings,
+अटल स्थिर काष्ठा pcr_ops rts5228_pcr_ops = अणु
+	.fetch_venकरोr_settings = rtsx5228_fetch_venकरोr_settings,
 	.turn_on_led = rts5228_turn_on_led,
 	.turn_off_led = rts5228_turn_off_led,
 	.extra_init_hw = rts5228_extra_init_hw,
-	.enable_auto_blink = rts5228_enable_auto_blink,
-	.disable_auto_blink = rts5228_disable_auto_blink,
-	.card_power_on = rts5228_card_power_on,
-	.card_power_off = rts5228_card_power_off,
-	.switch_output_voltage = rts5228_switch_output_voltage,
-	.force_power_down = rts5228_force_power_down,
+	.enable_स्वतः_blink = rts5228_enable_स्वतः_blink,
+	.disable_स्वतः_blink = rts5228_disable_स्वतः_blink,
+	.card_घातer_on = rts5228_card_घातer_on,
+	.card_घातer_off = rts5228_card_घातer_off,
+	.चयन_output_voltage = rts5228_चयन_output_voltage,
+	.क्रमce_घातer_करोwn = rts5228_क्रमce_घातer_करोwn,
 	.stop_cmd = rts5228_stop_cmd,
 	.set_aspm = rts5228_set_aspm,
 	.set_l1off_cfg_sub_d0 = rts5228_set_l1off_cfg_sub_d0,
@@ -570,115 +571,115 @@ static const struct pcr_ops rts5228_pcr_ops = {
 	.process_ocp = rts5228_process_ocp,
 	.clear_ocpstat = rts5228_clear_ocpstat,
 	.optimize_phy = rts5228_optimize_phy,
-};
+पूर्ण;
 
 
-static inline u8 double_ssc_depth(u8 depth)
-{
-	return ((depth > 1) ? (depth - 1) : depth);
-}
+अटल अंतरभूत u8 द्विगुन_ssc_depth(u8 depth)
+अणु
+	वापस ((depth > 1) ? (depth - 1) : depth);
+पूर्ण
 
-int rts5228_pci_switch_clock(struct rtsx_pcr *pcr, unsigned int card_clock,
-		u8 ssc_depth, bool initial_mode, bool double_clk, bool vpclk)
-{
-	int err, clk;
+पूर्णांक rts5228_pci_चयन_घड़ी(काष्ठा rtsx_pcr *pcr, अचिन्हित पूर्णांक card_घड़ी,
+		u8 ssc_depth, bool initial_mode, bool द्विगुन_clk, bool vpclk)
+अणु
+	पूर्णांक err, clk;
 	u16 n;
-	u8 clk_divider, mcu_cnt, div;
-	static const u8 depth[] = {
+	u8 clk_भागider, mcu_cnt, भाग;
+	अटल स्थिर u8 depth[] = अणु
 		[RTSX_SSC_DEPTH_4M] = RTS5228_SSC_DEPTH_4M,
 		[RTSX_SSC_DEPTH_2M] = RTS5228_SSC_DEPTH_2M,
 		[RTSX_SSC_DEPTH_1M] = RTS5228_SSC_DEPTH_1M,
 		[RTSX_SSC_DEPTH_500K] = RTS5228_SSC_DEPTH_512K,
-	};
+	पूर्ण;
 
-	if (initial_mode) {
+	अगर (initial_mode) अणु
 		/* We use 250k(around) here, in initial stage */
-		clk_divider = SD_CLK_DIVIDE_128;
-		card_clock = 30000000;
-	} else {
-		clk_divider = SD_CLK_DIVIDE_0;
-	}
-	err = rtsx_pci_write_register(pcr, SD_CFG1,
-			SD_CLK_DIVIDE_MASK, clk_divider);
-	if (err < 0)
-		return err;
+		clk_भागider = SD_CLK_DIVIDE_128;
+		card_घड़ी = 30000000;
+	पूर्ण अन्यथा अणु
+		clk_भागider = SD_CLK_DIVIDE_0;
+	पूर्ण
+	err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, SD_CFG1,
+			SD_CLK_DIVIDE_MASK, clk_भागider);
+	अगर (err < 0)
+		वापस err;
 
-	card_clock /= 1000000;
-	pcr_dbg(pcr, "Switch card clock to %dMHz\n", card_clock);
+	card_घड़ी /= 1000000;
+	pcr_dbg(pcr, "Switch card clock to %dMHz\n", card_घड़ी);
 
-	clk = card_clock;
-	if (!initial_mode && double_clk)
-		clk = card_clock * 2;
+	clk = card_घड़ी;
+	अगर (!initial_mode && द्विगुन_clk)
+		clk = card_घड़ी * 2;
 	pcr_dbg(pcr, "Internal SSC clock: %dMHz (cur_clock = %d)\n",
-		clk, pcr->cur_clock);
+		clk, pcr->cur_घड़ी);
 
-	if (clk == pcr->cur_clock)
-		return 0;
+	अगर (clk == pcr->cur_घड़ी)
+		वापस 0;
 
-	if (pcr->ops->conv_clk_and_div_n)
-		n = pcr->ops->conv_clk_and_div_n(clk, CLK_TO_DIV_N);
-	else
+	अगर (pcr->ops->conv_clk_and_भाग_n)
+		n = pcr->ops->conv_clk_and_भाग_n(clk, CLK_TO_DIV_N);
+	अन्यथा
 		n = clk - 4;
-	if ((clk <= 4) || (n > 396))
-		return -EINVAL;
+	अगर ((clk <= 4) || (n > 396))
+		वापस -EINVAL;
 
 	mcu_cnt = 125/clk + 3;
-	if (mcu_cnt > 15)
+	अगर (mcu_cnt > 15)
 		mcu_cnt = 15;
 
-	div = CLK_DIV_1;
-	while ((n < MIN_DIV_N_PCR - 4) && (div < CLK_DIV_8)) {
-		if (pcr->ops->conv_clk_and_div_n) {
-			int dbl_clk = pcr->ops->conv_clk_and_div_n(n,
+	भाग = CLK_DIV_1;
+	जबतक ((n < MIN_DIV_N_PCR - 4) && (भाग < CLK_DIV_8)) अणु
+		अगर (pcr->ops->conv_clk_and_भाग_n) अणु
+			पूर्णांक dbl_clk = pcr->ops->conv_clk_and_भाग_n(n,
 					DIV_N_TO_CLK) * 2;
-			n = pcr->ops->conv_clk_and_div_n(dbl_clk,
+			n = pcr->ops->conv_clk_and_भाग_n(dbl_clk,
 					CLK_TO_DIV_N);
-		} else {
+		पूर्ण अन्यथा अणु
 			n = (n + 4) * 2 - 4;
-		}
-		div++;
-	}
+		पूर्ण
+		भाग++;
+	पूर्ण
 
 	n = (n / 2) - 1;
-	pcr_dbg(pcr, "n = %d, div = %d\n", n, div);
+	pcr_dbg(pcr, "n = %d, div = %d\n", n, भाग);
 
 	ssc_depth = depth[ssc_depth];
-	if (double_clk)
-		ssc_depth = double_ssc_depth(ssc_depth);
+	अगर (द्विगुन_clk)
+		ssc_depth = द्विगुन_ssc_depth(ssc_depth);
 
-	if (ssc_depth) {
-		if (div == CLK_DIV_2) {
-			if (ssc_depth > 1)
+	अगर (ssc_depth) अणु
+		अगर (भाग == CLK_DIV_2) अणु
+			अगर (ssc_depth > 1)
 				ssc_depth -= 1;
-			else
+			अन्यथा
 				ssc_depth = RTS5228_SSC_DEPTH_8M;
-		} else if (div == CLK_DIV_4) {
-			if (ssc_depth > 2)
+		पूर्ण अन्यथा अगर (भाग == CLK_DIV_4) अणु
+			अगर (ssc_depth > 2)
 				ssc_depth -= 2;
-			else
+			अन्यथा
 				ssc_depth = RTS5228_SSC_DEPTH_8M;
-		} else if (div == CLK_DIV_8) {
-			if (ssc_depth > 3)
+		पूर्ण अन्यथा अगर (भाग == CLK_DIV_8) अणु
+			अगर (ssc_depth > 3)
 				ssc_depth -= 3;
-			else
+			अन्यथा
 				ssc_depth = RTS5228_SSC_DEPTH_8M;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ssc_depth = 0;
-	}
+	पूर्ण
 	pcr_dbg(pcr, "ssc_depth = %d\n", ssc_depth);
 
 	rtsx_pci_init_cmd(pcr);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CLK_CTL,
 				CLK_LOW_FREQ, CLK_LOW_FREQ);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, CLK_DIV,
-			0xFF, (div << 4) | mcu_cnt);
+			0xFF, (भाग << 4) | mcu_cnt);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SSC_CTL1, SSC_RSTB, 0);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SSC_CTL2,
 			SSC_DEPTH_MASK, ssc_depth);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SSC_DIV_N_0, 0xFF, n);
 	rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SSC_CTL1, SSC_RSTB, SSC_RSTB);
-	if (vpclk) {
+	अगर (vpclk) अणु
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SD_VPCLK0_CTL,
 				PHASE_NOT_RESET, 0);
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SD_VPCLK1_CTL,
@@ -687,27 +688,27 @@ int rts5228_pci_switch_clock(struct rtsx_pcr *pcr, unsigned int card_clock,
 				PHASE_NOT_RESET, PHASE_NOT_RESET);
 		rtsx_pci_add_cmd(pcr, WRITE_REG_CMD, SD_VPCLK1_CTL,
 				PHASE_NOT_RESET, PHASE_NOT_RESET);
-	}
+	पूर्ण
 
 	err = rtsx_pci_send_cmd(pcr, 2000);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* Wait SSC clock stable */
+	/* Wait SSC घड़ी stable */
 	udelay(SSC_CLOCK_STABLE_WAIT);
-	err = rtsx_pci_write_register(pcr, CLK_CTL, CLK_LOW_FREQ, 0);
-	if (err < 0)
-		return err;
+	err = rtsx_pci_ग_लिखो_रेजिस्टर(pcr, CLK_CTL, CLK_LOW_FREQ, 0);
+	अगर (err < 0)
+		वापस err;
 
-	pcr->cur_clock = clk;
-	return 0;
+	pcr->cur_घड़ी = clk;
+	वापस 0;
 
-}
+पूर्ण
 
-void rts5228_init_params(struct rtsx_pcr *pcr)
-{
-	struct rtsx_cr_option *option = &pcr->option;
-	struct rtsx_hw_param *hw_param = &pcr->hw_param;
+व्योम rts5228_init_params(काष्ठा rtsx_pcr *pcr)
+अणु
+	काष्ठा rtsx_cr_option *option = &pcr->option;
+	काष्ठा rtsx_hw_param *hw_param = &pcr->hw_param;
 
 	pcr->extra_caps = EXTRA_CAPS_SD_SDR50 | EXTRA_CAPS_SD_SDR104;
 	pcr->num_slots = 1;
@@ -741,7 +742,7 @@ void rts5228_init_params(struct rtsx_pcr *pcr)
 	option->ltr_l1off_snooze_sspwrgate = 0x78;
 
 	option->ocp_en = 1;
-	hw_param->interrupt_en |= SD_OC_INT_EN;
+	hw_param->पूर्णांकerrupt_en |= SD_OC_INT_EN;
 	hw_param->ocp_glitch =  SD_OCP_GLITCH_800U;
 	option->sd_800mA_ocp_thd =  RTS5228_LDO1_OCP_THD_930;
-}
+पूर्ण

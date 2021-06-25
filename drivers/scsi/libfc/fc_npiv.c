@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright(c) 2009 Intel Corporation. All rights reserved.
  *
- * Maintained at www.Open-FCoE.org
+ * Maपूर्णांकained at www.Open-FCoE.org
  */
 
 /*
- * NPIV VN_Port helper functions for libfc
+ * NPIV VN_Port helper functions क्रम libfc
  */
 
-#include <scsi/libfc.h>
-#include <linux/export.h>
+#समावेश <scsi/libfc.h>
+#समावेश <linux/export.h>
 
 /**
  * libfc_vport_create() - Create a new NPIV vport instance
- * @vport: fc_vport structure from scsi_transport_fc
- * @privsize: driver private data size to allocate along with the Scsi_Host
+ * @vport: fc_vport काष्ठाure from scsi_transport_fc
+ * @privsize: driver निजी data size to allocate aदीर्घ with the Scsi_Host
  */
 
-struct fc_lport *libfc_vport_create(struct fc_vport *vport, int privsize)
-{
-	struct Scsi_Host *shost = vport_to_shost(vport);
-	struct fc_lport *n_port = shost_priv(shost);
-	struct fc_lport *vn_port;
+काष्ठा fc_lport *libfc_vport_create(काष्ठा fc_vport *vport, पूर्णांक privsize)
+अणु
+	काष्ठा Scsi_Host *shost = vport_to_shost(vport);
+	काष्ठा fc_lport *n_port = shost_priv(shost);
+	काष्ठा fc_lport *vn_port;
 
 	vn_port = libfc_host_alloc(shost->hostt, privsize);
-	if (!vn_port)
-		return vn_port;
+	अगर (!vn_port)
+		वापस vn_port;
 
 	vn_port->vport = vport;
 	vport->dd_data = vn_port;
@@ -35,51 +36,51 @@ struct fc_lport *libfc_vport_create(struct fc_vport *vport, int privsize)
 	list_add_tail(&vn_port->list, &n_port->vports);
 	mutex_unlock(&n_port->lp_mutex);
 
-	return vn_port;
-}
+	वापस vn_port;
+पूर्ण
 EXPORT_SYMBOL(libfc_vport_create);
 
 /**
  * fc_vport_id_lookup() - find NPIV lport that matches a given fabric ID
  * @n_port: Top level N_Port which may have multiple NPIV VN_Ports
- * @port_id: Fabric ID to find a match for
+ * @port_id: Fabric ID to find a match क्रम
  *
- * Returns: matching lport pointer or NULL if there is no match
+ * Returns: matching lport poपूर्णांकer or शून्य अगर there is no match
  */
-struct fc_lport *fc_vport_id_lookup(struct fc_lport *n_port, u32 port_id)
-{
-	struct fc_lport *lport = NULL;
-	struct fc_lport *vn_port;
+काष्ठा fc_lport *fc_vport_id_lookup(काष्ठा fc_lport *n_port, u32 port_id)
+अणु
+	काष्ठा fc_lport *lport = शून्य;
+	काष्ठा fc_lport *vn_port;
 
-	if (n_port->port_id == port_id)
-		return n_port;
+	अगर (n_port->port_id == port_id)
+		वापस n_port;
 
-	if (port_id == FC_FID_FLOGI)
-		return n_port;		/* for point-to-point */
+	अगर (port_id == FC_FID_FLOGI)
+		वापस n_port;		/* क्रम poपूर्णांक-to-poपूर्णांक */
 
 	mutex_lock(&n_port->lp_mutex);
-	list_for_each_entry(vn_port, &n_port->vports, list) {
-		if (vn_port->port_id == port_id) {
+	list_क्रम_each_entry(vn_port, &n_port->vports, list) अणु
+		अगर (vn_port->port_id == port_id) अणु
 			lport = vn_port;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&n_port->lp_mutex);
 
-	return lport;
-}
+	वापस lport;
+पूर्ण
 EXPORT_SYMBOL(fc_vport_id_lookup);
 
 /*
  * When setting the link state of vports during an lport state change, it's
  * necessary to hold the lp_mutex of both the N_Port and the VN_Port.
  * This tells the lockdep engine to treat the nested locking of the VN_Port
- * as a different lock class.
+ * as a dअगरferent lock class.
  */
-enum libfc_lport_mutex_class {
+क्रमागत libfc_lport_mutex_class अणु
 	LPORT_MUTEX_NORMAL = 0,
 	LPORT_MUTEX_VN_PORT = 1,
-};
+पूर्ण;
 
 /**
  * __fc_vport_setlink() - update link and status on a VN_Port
@@ -88,44 +89,44 @@ enum libfc_lport_mutex_class {
  *
  * Locking: must be called with both the N_Port and VN_Port lp_mutex held
  */
-static void __fc_vport_setlink(struct fc_lport *n_port,
-			       struct fc_lport *vn_port)
-{
-	struct fc_vport *vport = vn_port->vport;
+अटल व्योम __fc_vport_setlink(काष्ठा fc_lport *n_port,
+			       काष्ठा fc_lport *vn_port)
+अणु
+	काष्ठा fc_vport *vport = vn_port->vport;
 
-	if (vn_port->state == LPORT_ST_DISABLED)
-		return;
+	अगर (vn_port->state == LPORT_ST_DISABLED)
+		वापस;
 
-	if (n_port->state == LPORT_ST_READY) {
-		if (n_port->npiv_enabled) {
+	अगर (n_port->state == LPORT_ST_READY) अणु
+		अगर (n_port->npiv_enabled) अणु
 			fc_vport_set_state(vport, FC_VPORT_INITIALIZING);
 			__fc_linkup(vn_port);
-		} else {
+		पूर्ण अन्यथा अणु
 			fc_vport_set_state(vport, FC_VPORT_NO_FABRIC_SUPP);
-			__fc_linkdown(vn_port);
-		}
-	} else {
+			__fc_linkकरोwn(vn_port);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		fc_vport_set_state(vport, FC_VPORT_LINKDOWN);
-		__fc_linkdown(vn_port);
-	}
-}
+		__fc_linkकरोwn(vn_port);
+	पूर्ण
+पूर्ण
 
 /**
  * fc_vport_setlink() - update link and status on a VN_Port
- * @vn_port: virtual port to update
+ * @vn_port: भव port to update
  */
-void fc_vport_setlink(struct fc_lport *vn_port)
-{
-	struct fc_vport *vport = vn_port->vport;
-	struct Scsi_Host *shost = vport_to_shost(vport);
-	struct fc_lport *n_port = shost_priv(shost);
+व्योम fc_vport_setlink(काष्ठा fc_lport *vn_port)
+अणु
+	काष्ठा fc_vport *vport = vn_port->vport;
+	काष्ठा Scsi_Host *shost = vport_to_shost(vport);
+	काष्ठा fc_lport *n_port = shost_priv(shost);
 
 	mutex_lock(&n_port->lp_mutex);
 	mutex_lock_nested(&vn_port->lp_mutex, LPORT_MUTEX_VN_PORT);
 	__fc_vport_setlink(n_port, vn_port);
 	mutex_unlock(&vn_port->lp_mutex);
 	mutex_unlock(&n_port->lp_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL(fc_vport_setlink);
 
 /**
@@ -134,14 +135,14 @@ EXPORT_SYMBOL(fc_vport_setlink);
  *
  * Locking: called with the n_port lp_mutex held
  */
-void fc_vports_linkchange(struct fc_lport *n_port)
-{
-	struct fc_lport *vn_port;
+व्योम fc_vports_linkchange(काष्ठा fc_lport *n_port)
+अणु
+	काष्ठा fc_lport *vn_port;
 
-	list_for_each_entry(vn_port, &n_port->vports, list) {
+	list_क्रम_each_entry(vn_port, &n_port->vports, list) अणु
 		mutex_lock_nested(&vn_port->lp_mutex, LPORT_MUTEX_VN_PORT);
 		__fc_vport_setlink(n_port, vn_port);
 		mutex_unlock(&vn_port->lp_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 

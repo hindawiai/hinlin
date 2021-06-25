@@ -1,48 +1,49 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
  * nfp_cppcore.c
- * Provides low-level access to the NFP's internal CPP bus
+ * Provides low-level access to the NFP's पूर्णांकernal CPP bus
  * Authors: Jakub Kicinski <jakub.kicinski@netronome.com>
  *          Jason McMullan <jason.mcmullan@netronome.com>
  *          Rolf Neugebauer <rolf.neugebauer@netronome.com>
  */
 
-#include <asm/unaligned.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/wait.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/रुको.h>
 
-#include "nfp_arm.h"
-#include "nfp_cpp.h"
-#include "nfp6000/nfp6000.h"
+#समावेश "nfp_arm.h"
+#समावेश "nfp_cpp.h"
+#समावेश "nfp6000/nfp6000.h"
 
-#define NFP_ARM_GCSR_SOFTMODEL2                              0x0000014c
-#define NFP_ARM_GCSR_SOFTMODEL3                              0x00000150
+#घोषणा NFP_ARM_GCSR_SOFTMODEL2                              0x0000014c
+#घोषणा NFP_ARM_GCSR_SOFTMODEL3                              0x00000150
 
-struct nfp_cpp_resource {
-	struct list_head list;
-	const char *name;
+काष्ठा nfp_cpp_resource अणु
+	काष्ठा list_head list;
+	स्थिर अक्षर *name;
 	u32 cpp_id;
 	u64 start;
 	u64 end;
-};
+पूर्ण;
 
 /**
- * struct nfp_cpp - main nfpcore device structure
- * Following fields are read-only after probe() exits or netdevs are spawned.
- * @dev:		embedded device structure
+ * काष्ठा nfp_cpp - मुख्य nfpcore device काष्ठाure
+ * Following fields are पढ़ो-only after probe() निकासs or netdevs are spawned.
+ * @dev:		embedded device काष्ठाure
  * @op:			low-level implementation ops
- * @priv:		private data of the low-level implementation
+ * @priv:		निजी data of the low-level implementation
  * @model:		chip model
- * @interface:		chip interface id we are using to reach it
+ * @पूर्णांकerface:		chip पूर्णांकerface id we are using to reach it
  * @serial:		chip serial number
  * @imb_cat_table:	CPP Mapping Table
  * @mu_locality_lsb:	MU access type bit offset
@@ -51,134 +52,134 @@ struct nfp_cpp_resource {
  * @resource_list:	NFP CPP resource list
  * @resource_lock:	protects @resource_list
  *
- * @area_cache_list:	cached areas for cpp/xpb read/write speed up
+ * @area_cache_list:	cached areas क्रम cpp/xpb पढ़ो/ग_लिखो speed up
  * @area_cache_mutex:	protects @area_cache_list
  *
- * @waitq:		area wait queue
+ * @रुकोq:		area रुको queue
  */
-struct nfp_cpp {
-	struct device dev;
+काष्ठा nfp_cpp अणु
+	काष्ठा device dev;
 
-	void *priv;
+	व्योम *priv;
 
 	u32 model;
-	u16 interface;
+	u16 पूर्णांकerface;
 	u8 serial[NFP_SERIAL_LEN];
 
-	const struct nfp_cpp_operations *op;
-	struct list_head resource_list;
+	स्थिर काष्ठा nfp_cpp_operations *op;
+	काष्ठा list_head resource_list;
 	rwlock_t resource_lock;
-	wait_queue_head_t waitq;
+	रुको_queue_head_t रुकोq;
 
 	u32 imb_cat_table[16];
-	unsigned int mu_locality_lsb;
+	अचिन्हित पूर्णांक mu_locality_lsb;
 
-	struct mutex area_cache_mutex;
-	struct list_head area_cache_list;
-};
+	काष्ठा mutex area_cache_mutex;
+	काष्ठा list_head area_cache_list;
+पूर्ण;
 
 /* Element of the area_cache_list */
-struct nfp_cpp_area_cache {
-	struct list_head entry;
+काष्ठा nfp_cpp_area_cache अणु
+	काष्ठा list_head entry;
 	u32 id;
 	u64 addr;
 	u32 size;
-	struct nfp_cpp_area *area;
-};
+	काष्ठा nfp_cpp_area *area;
+पूर्ण;
 
-struct nfp_cpp_area {
-	struct nfp_cpp *cpp;
-	struct kref kref;
+काष्ठा nfp_cpp_area अणु
+	काष्ठा nfp_cpp *cpp;
+	काष्ठा kref kref;
 	atomic_t refcount;
-	struct mutex mutex;	/* Lock for the area's refcount */
-	unsigned long long offset;
-	unsigned long size;
-	struct nfp_cpp_resource resource;
-	void __iomem *iomem;
+	काष्ठा mutex mutex;	/* Lock क्रम the area's refcount */
+	अचिन्हित दीर्घ दीर्घ offset;
+	अचिन्हित दीर्घ size;
+	काष्ठा nfp_cpp_resource resource;
+	व्योम __iomem *iomem;
 	/* Here follows the 'priv' part of nfp_cpp_area. */
-};
+पूर्ण;
 
-struct nfp_cpp_explicit {
-	struct nfp_cpp *cpp;
-	struct nfp_cpp_explicit_command cmd;
+काष्ठा nfp_cpp_explicit अणु
+	काष्ठा nfp_cpp *cpp;
+	काष्ठा nfp_cpp_explicit_command cmd;
 	/* Here follows the 'priv' part of nfp_cpp_area. */
-};
+पूर्ण;
 
-static void __resource_add(struct list_head *head, struct nfp_cpp_resource *res)
-{
-	struct nfp_cpp_resource *tmp;
-	struct list_head *pos;
+अटल व्योम __resource_add(काष्ठा list_head *head, काष्ठा nfp_cpp_resource *res)
+अणु
+	काष्ठा nfp_cpp_resource *पंचांगp;
+	काष्ठा list_head *pos;
 
-	list_for_each(pos, head) {
-		tmp = container_of(pos, struct nfp_cpp_resource, list);
+	list_क्रम_each(pos, head) अणु
+		पंचांगp = container_of(pos, काष्ठा nfp_cpp_resource, list);
 
-		if (tmp->cpp_id > res->cpp_id)
-			break;
+		अगर (पंचांगp->cpp_id > res->cpp_id)
+			अवरोध;
 
-		if (tmp->cpp_id == res->cpp_id && tmp->start > res->start)
-			break;
-	}
+		अगर (पंचांगp->cpp_id == res->cpp_id && पंचांगp->start > res->start)
+			अवरोध;
+	पूर्ण
 
 	list_add_tail(&res->list, pos);
-}
+पूर्ण
 
-static void __resource_del(struct nfp_cpp_resource *res)
-{
+अटल व्योम __resource_del(काष्ठा nfp_cpp_resource *res)
+अणु
 	list_del_init(&res->list);
-}
+पूर्ण
 
-static void __release_cpp_area(struct kref *kref)
-{
-	struct nfp_cpp_area *area =
-		container_of(kref, struct nfp_cpp_area, kref);
-	struct nfp_cpp *cpp = nfp_cpp_area_cpp(area);
+अटल व्योम __release_cpp_area(काष्ठा kref *kref)
+अणु
+	काष्ठा nfp_cpp_area *area =
+		container_of(kref, काष्ठा nfp_cpp_area, kref);
+	काष्ठा nfp_cpp *cpp = nfp_cpp_area_cpp(area);
 
-	if (area->cpp->op->area_cleanup)
+	अगर (area->cpp->op->area_cleanup)
 		area->cpp->op->area_cleanup(area);
 
-	write_lock(&cpp->resource_lock);
+	ग_लिखो_lock(&cpp->resource_lock);
 	__resource_del(&area->resource);
-	write_unlock(&cpp->resource_lock);
-	kfree(area);
-}
+	ग_लिखो_unlock(&cpp->resource_lock);
+	kमुक्त(area);
+पूर्ण
 
-static void nfp_cpp_area_put(struct nfp_cpp_area *area)
-{
+अटल व्योम nfp_cpp_area_put(काष्ठा nfp_cpp_area *area)
+अणु
 	kref_put(&area->kref, __release_cpp_area);
-}
+पूर्ण
 
-static struct nfp_cpp_area *nfp_cpp_area_get(struct nfp_cpp_area *area)
-{
+अटल काष्ठा nfp_cpp_area *nfp_cpp_area_get(काष्ठा nfp_cpp_area *area)
+अणु
 	kref_get(&area->kref);
 
-	return area;
-}
+	वापस area;
+पूर्ण
 
 /**
- * nfp_cpp_free() - free the CPP handle
+ * nfp_cpp_मुक्त() - मुक्त the CPP handle
  * @cpp:	CPP handle
  */
-void nfp_cpp_free(struct nfp_cpp *cpp)
-{
-	struct nfp_cpp_area_cache *cache, *ctmp;
-	struct nfp_cpp_resource *res, *rtmp;
+व्योम nfp_cpp_मुक्त(काष्ठा nfp_cpp *cpp)
+अणु
+	काष्ठा nfp_cpp_area_cache *cache, *cपंचांगp;
+	काष्ठा nfp_cpp_resource *res, *rपंचांगp;
 
 	/* Remove all caches */
-	list_for_each_entry_safe(cache, ctmp, &cpp->area_cache_list, entry) {
+	list_क्रम_each_entry_safe(cache, cपंचांगp, &cpp->area_cache_list, entry) अणु
 		list_del(&cache->entry);
-		if (cache->id)
+		अगर (cache->id)
 			nfp_cpp_area_release(cache->area);
-		nfp_cpp_area_free(cache->area);
-		kfree(cache);
-	}
+		nfp_cpp_area_मुक्त(cache->area);
+		kमुक्त(cache);
+	पूर्ण
 
-	/* There should be no dangling areas at this point */
+	/* There should be no dangling areas at this poपूर्णांक */
 	WARN_ON(!list_empty(&cpp->resource_list));
 
-	/* .. but if they weren't, try to clean up. */
-	list_for_each_entry_safe(res, rtmp, &cpp->resource_list, list) {
-		struct nfp_cpp_area *area = container_of(res,
-							 struct nfp_cpp_area,
+	/* .. but अगर they weren't, try to clean up. */
+	list_क्रम_each_entry_safe(res, rपंचांगp, &cpp->resource_list, list) अणु
+		काष्ठा nfp_cpp_area *area = container_of(res,
+							 काष्ठा nfp_cpp_area,
 							 resource);
 
 		dev_err(cpp->dev.parent, "Dangling area: %d:%d:%d:0x%0llx-0x%0llx%s%s\n",
@@ -189,19 +190,19 @@ void nfp_cpp_free(struct nfp_cpp *cpp)
 			res->name ? " " : "",
 			res->name ? res->name : "");
 
-		if (area->cpp->op->area_release)
+		अगर (area->cpp->op->area_release)
 			area->cpp->op->area_release(area);
 
 		__release_cpp_area(&area->kref);
-	}
+	पूर्ण
 
-	if (cpp->op->free)
-		cpp->op->free(cpp);
+	अगर (cpp->op->मुक्त)
+		cpp->op->मुक्त(cpp);
 
-	device_unregister(&cpp->dev);
+	device_unरेजिस्टर(&cpp->dev);
 
-	kfree(cpp);
-}
+	kमुक्त(cpp);
+पूर्ण
 
 /**
  * nfp_cpp_model() - Retrieve the Model ID of the NFP
@@ -209,62 +210,62 @@ void nfp_cpp_free(struct nfp_cpp *cpp)
  *
  * Return: NFP CPP Model ID
  */
-u32 nfp_cpp_model(struct nfp_cpp *cpp)
-{
-	return cpp->model;
-}
+u32 nfp_cpp_model(काष्ठा nfp_cpp *cpp)
+अणु
+	वापस cpp->model;
+पूर्ण
 
 /**
- * nfp_cpp_interface() - Retrieve the Interface ID of the NFP
+ * nfp_cpp_पूर्णांकerface() - Retrieve the Interface ID of the NFP
  * @cpp:	NFP CPP handle
  *
  * Return: NFP CPP Interface ID
  */
-u16 nfp_cpp_interface(struct nfp_cpp *cpp)
-{
-	return cpp->interface;
-}
+u16 nfp_cpp_पूर्णांकerface(काष्ठा nfp_cpp *cpp)
+अणु
+	वापस cpp->पूर्णांकerface;
+पूर्ण
 
 /**
  * nfp_cpp_serial() - Retrieve the Serial ID of the NFP
  * @cpp:	NFP CPP handle
- * @serial:	Pointer to NFP serial number
+ * @serial:	Poपूर्णांकer to NFP serial number
  *
  * Return:  Length of NFP serial number
  */
-int nfp_cpp_serial(struct nfp_cpp *cpp, const u8 **serial)
-{
+पूर्णांक nfp_cpp_serial(काष्ठा nfp_cpp *cpp, स्थिर u8 **serial)
+अणु
 	*serial = &cpp->serial[0];
-	return sizeof(cpp->serial);
-}
+	वापस माप(cpp->serial);
+पूर्ण
 
-#define NFP_IMB_TGTADDRESSMODECFG_MODE_of(_x)		(((_x) >> 13) & 0x7)
-#define NFP_IMB_TGTADDRESSMODECFG_ADDRMODE		BIT(12)
-#define   NFP_IMB_TGTADDRESSMODECFG_ADDRMODE_32_BIT	0
-#define   NFP_IMB_TGTADDRESSMODECFG_ADDRMODE_40_BIT	BIT(12)
+#घोषणा NFP_IMB_TGTADDRESSMODECFG_MODE_of(_x)		(((_x) >> 13) & 0x7)
+#घोषणा NFP_IMB_TGTADDRESSMODECFG_ADDRMODE		BIT(12)
+#घोषणा   NFP_IMB_TGTADDRESSMODECFG_ADDRMODE_32_BIT	0
+#घोषणा   NFP_IMB_TGTADDRESSMODECFG_ADDRMODE_40_BIT	BIT(12)
 
-static int nfp_cpp_set_mu_locality_lsb(struct nfp_cpp *cpp)
-{
-	unsigned int mode, addr40;
+अटल पूर्णांक nfp_cpp_set_mu_locality_lsb(काष्ठा nfp_cpp *cpp)
+अणु
+	अचिन्हित पूर्णांक mode, addr40;
 	u32 imbcppat;
-	int res;
+	पूर्णांक res;
 
 	imbcppat = cpp->imb_cat_table[NFP_CPP_TARGET_MU];
 	mode = NFP_IMB_TGTADDRESSMODECFG_MODE_of(imbcppat);
 	addr40 = !!(imbcppat & NFP_IMB_TGTADDRESSMODECFG_ADDRMODE);
 
 	res = nfp_cppat_mu_locality_lsb(mode, addr40);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 	cpp->mu_locality_lsb = res;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int nfp_cpp_mu_locality_lsb(struct nfp_cpp *cpp)
-{
-	return cpp->mu_locality_lsb;
-}
+अचिन्हित पूर्णांक nfp_cpp_mu_locality_lsb(काष्ठा nfp_cpp *cpp)
+अणु
+	वापस cpp->mu_locality_lsb;
+पूर्ण
 
 /**
  * nfp_cpp_area_alloc_with_name() - allocate a new CPP area
@@ -274,41 +275,41 @@ unsigned int nfp_cpp_mu_locality_lsb(struct nfp_cpp *cpp)
  * @address:	Address of region
  * @size:	Size of region
  *
- * Allocate and initialize a CPP area structure.  The area must later
- * be locked down with an 'acquire' before it can be safely accessed.
+ * Allocate and initialize a CPP area काष्ठाure.  The area must later
+ * be locked करोwn with an 'acquire' beक्रमe it can be safely accessed.
  *
  * NOTE: @address and @size must be 32-bit aligned values.
  *
- * Return: NFP CPP area handle, or NULL
+ * Return: NFP CPP area handle, or शून्य
  */
-struct nfp_cpp_area *
-nfp_cpp_area_alloc_with_name(struct nfp_cpp *cpp, u32 dest, const char *name,
-			     unsigned long long address, unsigned long size)
-{
-	struct nfp_cpp_area *area;
-	u64 tmp64 = address;
-	int err, name_len;
+काष्ठा nfp_cpp_area *
+nfp_cpp_area_alloc_with_name(काष्ठा nfp_cpp *cpp, u32 dest, स्थिर अक्षर *name,
+			     अचिन्हित दीर्घ दीर्घ address, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा nfp_cpp_area *area;
+	u64 पंचांगp64 = address;
+	पूर्णांक err, name_len;
 
 	/* Remap from cpp_island to cpp_target */
-	err = nfp_target_cpp(dest, tmp64, &dest, &tmp64, cpp->imb_cat_table);
-	if (err < 0)
-		return NULL;
+	err = nfp_target_cpp(dest, पंचांगp64, &dest, &पंचांगp64, cpp->imb_cat_table);
+	अगर (err < 0)
+		वापस शून्य;
 
-	address = tmp64;
+	address = पंचांगp64;
 
-	if (!name)
+	अगर (!name)
 		name = "(reserved)";
 
-	name_len = strlen(name) + 1;
-	area = kzalloc(sizeof(*area) + cpp->op->area_priv_size + name_len,
+	name_len = म_माप(name) + 1;
+	area = kzalloc(माप(*area) + cpp->op->area_priv_size + name_len,
 		       GFP_KERNEL);
-	if (!area)
-		return NULL;
+	अगर (!area)
+		वापस शून्य;
 
 	area->cpp = cpp;
-	area->resource.name = (void *)area + sizeof(*area) +
+	area->resource.name = (व्योम *)area + माप(*area) +
 		cpp->op->area_priv_size;
-	memcpy((char *)area->resource.name, name, name_len);
+	स_नकल((अक्षर *)area->resource.name, name, name_len);
 
 	area->resource.cpp_id = dest;
 	area->resource.start = address;
@@ -319,25 +320,25 @@ nfp_cpp_area_alloc_with_name(struct nfp_cpp *cpp, u32 dest, const char *name,
 	kref_init(&area->kref);
 	mutex_init(&area->mutex);
 
-	if (cpp->op->area_init) {
-		int err;
+	अगर (cpp->op->area_init) अणु
+		पूर्णांक err;
 
 		err = cpp->op->area_init(area, dest, address, size);
-		if (err < 0) {
-			kfree(area);
-			return NULL;
-		}
-	}
+		अगर (err < 0) अणु
+			kमुक्त(area);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	write_lock(&cpp->resource_lock);
+	ग_लिखो_lock(&cpp->resource_lock);
 	__resource_add(&cpp->resource_list, &area->resource);
-	write_unlock(&cpp->resource_lock);
+	ग_लिखो_unlock(&cpp->resource_lock);
 
 	area->offset = address;
 	area->size = size;
 
-	return area;
-}
+	वापस area;
+पूर्ण
 
 /**
  * nfp_cpp_area_alloc() - allocate a new CPP area
@@ -346,416 +347,416 @@ nfp_cpp_area_alloc_with_name(struct nfp_cpp *cpp, u32 dest, const char *name,
  * @address:	Start address on CPP target
  * @size:	Size of area in bytes
  *
- * Allocate and initialize a CPP area structure.  The area must later
- * be locked down with an 'acquire' before it can be safely accessed.
+ * Allocate and initialize a CPP area काष्ठाure.  The area must later
+ * be locked करोwn with an 'acquire' beक्रमe it can be safely accessed.
  *
  * NOTE: @address and @size must be 32-bit aligned values.
  *
- * Return: NFP CPP Area handle, or NULL
+ * Return: NFP CPP Area handle, or शून्य
  */
-struct nfp_cpp_area *
-nfp_cpp_area_alloc(struct nfp_cpp *cpp, u32 dest,
-		   unsigned long long address, unsigned long size)
-{
-	return nfp_cpp_area_alloc_with_name(cpp, dest, NULL, address, size);
-}
+काष्ठा nfp_cpp_area *
+nfp_cpp_area_alloc(काष्ठा nfp_cpp *cpp, u32 dest,
+		   अचिन्हित दीर्घ दीर्घ address, अचिन्हित दीर्घ size)
+अणु
+	वापस nfp_cpp_area_alloc_with_name(cpp, dest, शून्य, address, size);
+पूर्ण
 
 /**
- * nfp_cpp_area_alloc_acquire() - allocate a new CPP area and lock it down
+ * nfp_cpp_area_alloc_acquire() - allocate a new CPP area and lock it करोwn
  * @cpp:	CPP handle
  * @name:	Name of region
  * @dest:	CPP id
  * @address:	Start address on CPP target
  * @size:	Size of area
  *
- * Allocate and initialize a CPP area structure, and lock it down so
+ * Allocate and initialize a CPP area काष्ठाure, and lock it करोwn so
  * that it can be accessed directly.
  *
  * NOTE: @address and @size must be 32-bit aligned values.
- * The area must also be 'released' when the structure is freed.
+ * The area must also be 'released' when the काष्ठाure is मुक्तd.
  *
- * Return: NFP CPP Area handle, or NULL
+ * Return: NFP CPP Area handle, or शून्य
  */
-struct nfp_cpp_area *
-nfp_cpp_area_alloc_acquire(struct nfp_cpp *cpp, const char *name, u32 dest,
-			   unsigned long long address, unsigned long size)
-{
-	struct nfp_cpp_area *area;
+काष्ठा nfp_cpp_area *
+nfp_cpp_area_alloc_acquire(काष्ठा nfp_cpp *cpp, स्थिर अक्षर *name, u32 dest,
+			   अचिन्हित दीर्घ दीर्घ address, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा nfp_cpp_area *area;
 
 	area = nfp_cpp_area_alloc_with_name(cpp, dest, name, address, size);
-	if (!area)
-		return NULL;
+	अगर (!area)
+		वापस शून्य;
 
-	if (nfp_cpp_area_acquire(area)) {
-		nfp_cpp_area_free(area);
-		return NULL;
-	}
+	अगर (nfp_cpp_area_acquire(area)) अणु
+		nfp_cpp_area_मुक्त(area);
+		वापस शून्य;
+	पूर्ण
 
-	return area;
-}
+	वापस area;
+पूर्ण
 
 /**
- * nfp_cpp_area_free() - free up the CPP area
+ * nfp_cpp_area_मुक्त() - मुक्त up the CPP area
  * @area:	CPP area handle
  *
  * Frees up memory resources held by the CPP area.
  */
-void nfp_cpp_area_free(struct nfp_cpp_area *area)
-{
-	if (atomic_read(&area->refcount))
+व्योम nfp_cpp_area_मुक्त(काष्ठा nfp_cpp_area *area)
+अणु
+	अगर (atomic_पढ़ो(&area->refcount))
 		nfp_warn(area->cpp, "Warning: freeing busy area\n");
 	nfp_cpp_area_put(area);
-}
+पूर्ण
 
-static bool nfp_cpp_area_acquire_try(struct nfp_cpp_area *area, int *status)
-{
+अटल bool nfp_cpp_area_acquire_try(काष्ठा nfp_cpp_area *area, पूर्णांक *status)
+अणु
 	*status = area->cpp->op->area_acquire(area);
 
-	return *status != -EAGAIN;
-}
+	वापस *status != -EAGAIN;
+पूर्ण
 
-static int __nfp_cpp_area_acquire(struct nfp_cpp_area *area)
-{
-	int err, status;
+अटल पूर्णांक __nfp_cpp_area_acquire(काष्ठा nfp_cpp_area *area)
+अणु
+	पूर्णांक err, status;
 
-	if (atomic_inc_return(&area->refcount) > 1)
-		return 0;
+	अगर (atomic_inc_वापस(&area->refcount) > 1)
+		वापस 0;
 
-	if (!area->cpp->op->area_acquire)
-		return 0;
+	अगर (!area->cpp->op->area_acquire)
+		वापस 0;
 
-	err = wait_event_interruptible(area->cpp->waitq,
+	err = रुको_event_पूर्णांकerruptible(area->cpp->रुकोq,
 				       nfp_cpp_area_acquire_try(area, &status));
-	if (!err)
+	अगर (!err)
 		err = status;
-	if (err) {
+	अगर (err) अणु
 		nfp_warn(area->cpp, "Warning: area wait failed: %d\n", err);
 		atomic_dec(&area->refcount);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	nfp_cpp_area_get(area);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_area_acquire() - lock down a CPP area for access
+ * nfp_cpp_area_acquire() - lock करोwn a CPP area क्रम access
  * @area:	CPP area handle
  *
- * Locks down the CPP area for a potential long term activity.  Area
- * must always be locked down before being accessed.
+ * Locks करोwn the CPP area क्रम a potential दीर्घ term activity.  Area
+ * must always be locked करोwn beक्रमe being accessed.
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_area_acquire(struct nfp_cpp_area *area)
-{
-	int ret;
+पूर्णांक nfp_cpp_area_acquire(काष्ठा nfp_cpp_area *area)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&area->mutex);
 	ret = __nfp_cpp_area_acquire(area);
 	mutex_unlock(&area->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nfp_cpp_area_acquire_nonblocking() - lock down a CPP area for access
+ * nfp_cpp_area_acquire_nonblocking() - lock करोwn a CPP area क्रम access
  * @area:	CPP area handle
  *
- * Locks down the CPP area for a potential long term activity.  Area
- * must always be locked down before being accessed.
+ * Locks करोwn the CPP area क्रम a potential दीर्घ term activity.  Area
+ * must always be locked करोwn beक्रमe being accessed.
  *
  * NOTE: Returns -EAGAIN is no area is available
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_area_acquire_nonblocking(struct nfp_cpp_area *area)
-{
+पूर्णांक nfp_cpp_area_acquire_nonblocking(काष्ठा nfp_cpp_area *area)
+अणु
 	mutex_lock(&area->mutex);
-	if (atomic_inc_return(&area->refcount) == 1) {
-		if (area->cpp->op->area_acquire) {
-			int err;
+	अगर (atomic_inc_वापस(&area->refcount) == 1) अणु
+		अगर (area->cpp->op->area_acquire) अणु
+			पूर्णांक err;
 
 			err = area->cpp->op->area_acquire(area);
-			if (err < 0) {
+			अगर (err < 0) अणु
 				atomic_dec(&area->refcount);
 				mutex_unlock(&area->mutex);
-				return err;
-			}
-		}
-	}
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&area->mutex);
 
 	nfp_cpp_area_get(area);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_area_release() - release a locked down CPP area
+ * nfp_cpp_area_release() - release a locked करोwn CPP area
  * @area:	CPP area handle
  *
- * Releases a previously locked down CPP area.
+ * Releases a previously locked करोwn CPP area.
  */
-void nfp_cpp_area_release(struct nfp_cpp_area *area)
-{
+व्योम nfp_cpp_area_release(काष्ठा nfp_cpp_area *area)
+अणु
 	mutex_lock(&area->mutex);
 	/* Only call the release on refcount == 0 */
-	if (atomic_dec_and_test(&area->refcount)) {
-		if (area->cpp->op->area_release) {
+	अगर (atomic_dec_and_test(&area->refcount)) अणु
+		अगर (area->cpp->op->area_release) अणु
 			area->cpp->op->area_release(area);
-			/* Let anyone waiting for a BAR try to get one.. */
-			wake_up_interruptible_all(&area->cpp->waitq);
-		}
-	}
+			/* Let anyone रुकोing क्रम a BAR try to get one.. */
+			wake_up_पूर्णांकerruptible_all(&area->cpp->रुकोq);
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&area->mutex);
 
 	nfp_cpp_area_put(area);
-}
+पूर्ण
 
 /**
- * nfp_cpp_area_release_free() - release CPP area and free it
+ * nfp_cpp_area_release_मुक्त() - release CPP area and मुक्त it
  * @area:	CPP area handle
  *
- * Releases CPP area and frees up memory resources held by the it.
+ * Releases CPP area and मुक्तs up memory resources held by the it.
  */
-void nfp_cpp_area_release_free(struct nfp_cpp_area *area)
-{
+व्योम nfp_cpp_area_release_मुक्त(काष्ठा nfp_cpp_area *area)
+अणु
 	nfp_cpp_area_release(area);
-	nfp_cpp_area_free(area);
-}
+	nfp_cpp_area_मुक्त(area);
+पूर्ण
 
 /**
- * nfp_cpp_area_read() - read data from CPP area
+ * nfp_cpp_area_पढ़ो() - पढ़ो data from CPP area
  * @area:	  CPP area handle
- * @offset:	  offset into CPP area
- * @kernel_vaddr: kernel address to put data into
- * @length:	  number of bytes to read
+ * @offset:	  offset पूर्णांकo CPP area
+ * @kernel_vaddr: kernel address to put data पूर्णांकo
+ * @length:	  number of bytes to पढ़ो
  *
  * Read data from indicated CPP region.
  *
  * NOTE: @offset and @length must be 32-bit aligned values.
- * Area must have been locked down with an 'acquire'.
+ * Area must have been locked करोwn with an 'acquire'.
  *
  * Return: length of io, or -ERRNO
  */
-int nfp_cpp_area_read(struct nfp_cpp_area *area,
-		      unsigned long offset, void *kernel_vaddr,
-		      size_t length)
-{
-	return area->cpp->op->area_read(area, kernel_vaddr, offset, length);
-}
+पूर्णांक nfp_cpp_area_पढ़ो(काष्ठा nfp_cpp_area *area,
+		      अचिन्हित दीर्घ offset, व्योम *kernel_vaddr,
+		      माप_प्रकार length)
+अणु
+	वापस area->cpp->op->area_पढ़ो(area, kernel_vaddr, offset, length);
+पूर्ण
 
 /**
- * nfp_cpp_area_write() - write data to CPP area
+ * nfp_cpp_area_ग_लिखो() - ग_लिखो data to CPP area
  * @area:	CPP area handle
- * @offset:	offset into CPP area
- * @kernel_vaddr: kernel address to read data from
- * @length:	number of bytes to write
+ * @offset:	offset पूर्णांकo CPP area
+ * @kernel_vaddr: kernel address to पढ़ो data from
+ * @length:	number of bytes to ग_लिखो
  *
  * Write data to indicated CPP region.
  *
  * NOTE: @offset and @length must be 32-bit aligned values.
- * Area must have been locked down with an 'acquire'.
+ * Area must have been locked करोwn with an 'acquire'.
  *
  * Return: length of io, or -ERRNO
  */
-int nfp_cpp_area_write(struct nfp_cpp_area *area,
-		       unsigned long offset, const void *kernel_vaddr,
-		       size_t length)
-{
-	return area->cpp->op->area_write(area, kernel_vaddr, offset, length);
-}
+पूर्णांक nfp_cpp_area_ग_लिखो(काष्ठा nfp_cpp_area *area,
+		       अचिन्हित दीर्घ offset, स्थिर व्योम *kernel_vaddr,
+		       माप_प्रकार length)
+अणु
+	वापस area->cpp->op->area_ग_लिखो(area, kernel_vaddr, offset, length);
+पूर्ण
 
 /**
- * nfp_cpp_area_size() - return size of a CPP area
+ * nfp_cpp_area_size() - वापस size of a CPP area
  * @cpp_area:	CPP area handle
  *
  * Return: Size of the area
  */
-size_t nfp_cpp_area_size(struct nfp_cpp_area *cpp_area)
-{
-	return cpp_area->size;
-}
+माप_प्रकार nfp_cpp_area_size(काष्ठा nfp_cpp_area *cpp_area)
+अणु
+	वापस cpp_area->size;
+पूर्ण
 
 /**
- * nfp_cpp_area_name() - return name of a CPP area
+ * nfp_cpp_area_name() - वापस name of a CPP area
  * @cpp_area:	CPP area handle
  *
- * Return: Name of the area, or NULL
+ * Return: Name of the area, or शून्य
  */
-const char *nfp_cpp_area_name(struct nfp_cpp_area *cpp_area)
-{
-	return cpp_area->resource.name;
-}
+स्थिर अक्षर *nfp_cpp_area_name(काष्ठा nfp_cpp_area *cpp_area)
+अणु
+	वापस cpp_area->resource.name;
+पूर्ण
 
 /**
- * nfp_cpp_area_priv() - return private struct for CPP area
+ * nfp_cpp_area_priv() - वापस निजी काष्ठा क्रम CPP area
  * @cpp_area:	CPP area handle
  *
- * Return: Private data for the CPP area
+ * Return: Private data क्रम the CPP area
  */
-void *nfp_cpp_area_priv(struct nfp_cpp_area *cpp_area)
-{
-	return &cpp_area[1];
-}
+व्योम *nfp_cpp_area_priv(काष्ठा nfp_cpp_area *cpp_area)
+अणु
+	वापस &cpp_area[1];
+पूर्ण
 
 /**
- * nfp_cpp_area_cpp() - return CPP handle for CPP area
+ * nfp_cpp_area_cpp() - वापस CPP handle क्रम CPP area
  * @cpp_area:	CPP area handle
  *
  * Return: NFP CPP handle
  */
-struct nfp_cpp *nfp_cpp_area_cpp(struct nfp_cpp_area *cpp_area)
-{
-	return cpp_area->cpp;
-}
+काष्ठा nfp_cpp *nfp_cpp_area_cpp(काष्ठा nfp_cpp_area *cpp_area)
+अणु
+	वापस cpp_area->cpp;
+पूर्ण
 
 /**
  * nfp_cpp_area_resource() - get resource
  * @area:	CPP area handle
  *
- * NOTE: Area must have been locked down with an 'acquire'.
+ * NOTE: Area must have been locked करोwn with an 'acquire'.
  *
- * Return: struct resource pointer, or NULL
+ * Return: काष्ठा resource poपूर्णांकer, or शून्य
  */
-struct resource *nfp_cpp_area_resource(struct nfp_cpp_area *area)
-{
-	struct resource *res = NULL;
+काष्ठा resource *nfp_cpp_area_resource(काष्ठा nfp_cpp_area *area)
+अणु
+	काष्ठा resource *res = शून्य;
 
-	if (area->cpp->op->area_resource)
+	अगर (area->cpp->op->area_resource)
 		res = area->cpp->op->area_resource(area);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * nfp_cpp_area_phys() - get physical address of CPP area
  * @area:	CPP area handle
  *
- * NOTE: Area must have been locked down with an 'acquire'.
+ * NOTE: Area must have been locked करोwn with an 'acquire'.
  *
- * Return: phy_addr_t of the area, or NULL
+ * Return: phy_addr_t of the area, or शून्य
  */
-phys_addr_t nfp_cpp_area_phys(struct nfp_cpp_area *area)
-{
+phys_addr_t nfp_cpp_area_phys(काष्ठा nfp_cpp_area *area)
+अणु
 	phys_addr_t addr = ~0;
 
-	if (area->cpp->op->area_phys)
+	अगर (area->cpp->op->area_phys)
 		addr = area->cpp->op->area_phys(area);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
 /**
- * nfp_cpp_area_iomem() - get IOMEM region for CPP area
+ * nfp_cpp_area_iomem() - get IOMEM region क्रम CPP area
  * @area:	CPP area handle
  *
- * Returns an iomem pointer for use with readl()/writel() style
+ * Returns an iomem poपूर्णांकer क्रम use with पढ़ोl()/ग_लिखोl() style
  * operations.
  *
- * NOTE: Area must have been locked down with an 'acquire'.
+ * NOTE: Area must have been locked करोwn with an 'acquire'.
  *
- * Return: __iomem pointer to the area, or NULL
+ * Return: __iomem poपूर्णांकer to the area, or शून्य
  */
-void __iomem *nfp_cpp_area_iomem(struct nfp_cpp_area *area)
-{
-	void __iomem *iomem = NULL;
+व्योम __iomem *nfp_cpp_area_iomem(काष्ठा nfp_cpp_area *area)
+अणु
+	व्योम __iomem *iomem = शून्य;
 
-	if (area->cpp->op->area_iomem)
+	अगर (area->cpp->op->area_iomem)
 		iomem = area->cpp->op->area_iomem(area);
 
-	return iomem;
-}
+	वापस iomem;
+पूर्ण
 
 /**
- * nfp_cpp_area_readl() - Read a u32 word from an area
+ * nfp_cpp_area_पढ़ोl() - Read a u32 word from an area
  * @area:	CPP Area handle
- * @offset:	Offset into area
- * @value:	Pointer to read buffer
+ * @offset:	Offset पूर्णांकo area
+ * @value:	Poपूर्णांकer to पढ़ो buffer
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_cpp_area_readl(struct nfp_cpp_area *area,
-		       unsigned long offset, u32 *value)
-{
-	u8 tmp[4];
-	int n;
+पूर्णांक nfp_cpp_area_पढ़ोl(काष्ठा nfp_cpp_area *area,
+		       अचिन्हित दीर्घ offset, u32 *value)
+अणु
+	u8 पंचांगp[4];
+	पूर्णांक n;
 
-	n = nfp_cpp_area_read(area, offset, &tmp, sizeof(tmp));
-	if (n != sizeof(tmp))
-		return n < 0 ? n : -EIO;
+	n = nfp_cpp_area_पढ़ो(area, offset, &पंचांगp, माप(पंचांगp));
+	अगर (n != माप(पंचांगp))
+		वापस n < 0 ? n : -EIO;
 
-	*value = get_unaligned_le32(tmp);
-	return 0;
-}
+	*value = get_unaligned_le32(पंचांगp);
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_area_writel() - Write a u32 word to an area
+ * nfp_cpp_area_ग_लिखोl() - Write a u32 word to an area
  * @area:	CPP Area handle
- * @offset:	Offset into area
- * @value:	Value to write
+ * @offset:	Offset पूर्णांकo area
+ * @value:	Value to ग_लिखो
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_cpp_area_writel(struct nfp_cpp_area *area,
-			unsigned long offset, u32 value)
-{
-	u8 tmp[4];
-	int n;
+पूर्णांक nfp_cpp_area_ग_लिखोl(काष्ठा nfp_cpp_area *area,
+			अचिन्हित दीर्घ offset, u32 value)
+अणु
+	u8 पंचांगp[4];
+	पूर्णांक n;
 
-	put_unaligned_le32(value, tmp);
-	n = nfp_cpp_area_write(area, offset, &tmp, sizeof(tmp));
+	put_unaligned_le32(value, पंचांगp);
+	n = nfp_cpp_area_ग_लिखो(area, offset, &पंचांगp, माप(पंचांगp));
 
-	return n == sizeof(tmp) ? 0 : n < 0 ? n : -EIO;
-}
+	वापस n == माप(पंचांगp) ? 0 : n < 0 ? n : -EIO;
+पूर्ण
 
 /**
- * nfp_cpp_area_readq() - Read a u64 word from an area
+ * nfp_cpp_area_पढ़ोq() - Read a u64 word from an area
  * @area:	CPP Area handle
- * @offset:	Offset into area
- * @value:	Pointer to read buffer
+ * @offset:	Offset पूर्णांकo area
+ * @value:	Poपूर्णांकer to पढ़ो buffer
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_cpp_area_readq(struct nfp_cpp_area *area,
-		       unsigned long offset, u64 *value)
-{
-	u8 tmp[8];
-	int n;
+पूर्णांक nfp_cpp_area_पढ़ोq(काष्ठा nfp_cpp_area *area,
+		       अचिन्हित दीर्घ offset, u64 *value)
+अणु
+	u8 पंचांगp[8];
+	पूर्णांक n;
 
-	n = nfp_cpp_area_read(area, offset, &tmp, sizeof(tmp));
-	if (n != sizeof(tmp))
-		return n < 0 ? n : -EIO;
+	n = nfp_cpp_area_पढ़ो(area, offset, &पंचांगp, माप(पंचांगp));
+	अगर (n != माप(पंचांगp))
+		वापस n < 0 ? n : -EIO;
 
-	*value = get_unaligned_le64(tmp);
-	return 0;
-}
+	*value = get_unaligned_le64(पंचांगp);
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_area_writeq() - Write a u64 word to an area
+ * nfp_cpp_area_ग_लिखोq() - Write a u64 word to an area
  * @area:	CPP Area handle
- * @offset:	Offset into area
- * @value:	Value to write
+ * @offset:	Offset पूर्णांकo area
+ * @value:	Value to ग_लिखो
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_cpp_area_writeq(struct nfp_cpp_area *area,
-			unsigned long offset, u64 value)
-{
-	u8 tmp[8];
-	int n;
+पूर्णांक nfp_cpp_area_ग_लिखोq(काष्ठा nfp_cpp_area *area,
+			अचिन्हित दीर्घ offset, u64 value)
+अणु
+	u8 पंचांगp[8];
+	पूर्णांक n;
 
-	put_unaligned_le64(value, tmp);
-	n = nfp_cpp_area_write(area, offset, &tmp, sizeof(tmp));
+	put_unaligned_le64(value, पंचांगp);
+	n = nfp_cpp_area_ग_लिखो(area, offset, &पंचांगp, माप(पंचांगp));
 
-	return n == sizeof(tmp) ? 0 : n < 0 ? n : -EIO;
-}
+	वापस n == माप(पंचांगp) ? 0 : n < 0 ? n : -EIO;
+पूर्ण
 
 /**
  * nfp_cpp_area_fill() - fill a CPP area with a value
  * @area:	CPP area
- * @offset:	offset into CPP area
+ * @offset:	offset पूर्णांकo CPP area
  * @value:	value to fill with
  * @length:	length of area to fill
  *
@@ -763,48 +764,48 @@ int nfp_cpp_area_writeq(struct nfp_cpp_area *area,
  *
  * Return: length of io, or -ERRNO
  */
-int nfp_cpp_area_fill(struct nfp_cpp_area *area,
-		      unsigned long offset, u32 value, size_t length)
-{
-	u8 tmp[4];
-	size_t i;
-	int k;
+पूर्णांक nfp_cpp_area_fill(काष्ठा nfp_cpp_area *area,
+		      अचिन्हित दीर्घ offset, u32 value, माप_प्रकार length)
+अणु
+	u8 पंचांगp[4];
+	माप_प्रकार i;
+	पूर्णांक k;
 
-	put_unaligned_le32(value, tmp);
+	put_unaligned_le32(value, पंचांगp);
 
-	if (offset % sizeof(tmp) || length % sizeof(tmp))
-		return -EINVAL;
+	अगर (offset % माप(पंचांगp) || length % माप(पंचांगp))
+		वापस -EINVAL;
 
-	for (i = 0; i < length; i += sizeof(tmp)) {
-		k = nfp_cpp_area_write(area, offset + i, &tmp, sizeof(tmp));
-		if (k < 0)
-			return k;
-	}
+	क्रम (i = 0; i < length; i += माप(पंचांगp)) अणु
+		k = nfp_cpp_area_ग_लिखो(area, offset + i, &पंचांगp, माप(पंचांगp));
+		अगर (k < 0)
+			वापस k;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /**
- * nfp_cpp_area_cache_add() - Permanently reserve and area for the hot cache
+ * nfp_cpp_area_cache_add() - Permanently reserve and area क्रम the hot cache
  * @cpp:	NFP CPP handle
  * @size:	Size of the area - MUST BE A POWER OF 2.
  */
-int nfp_cpp_area_cache_add(struct nfp_cpp *cpp, size_t size)
-{
-	struct nfp_cpp_area_cache *cache;
-	struct nfp_cpp_area *area;
+पूर्णांक nfp_cpp_area_cache_add(काष्ठा nfp_cpp *cpp, माप_प्रकार size)
+अणु
+	काष्ठा nfp_cpp_area_cache *cache;
+	काष्ठा nfp_cpp_area *area;
 
 	/* Allocate an area - we use the MU target's base as a placeholder,
 	 * as all supported chips have a MU.
 	 */
 	area = nfp_cpp_area_alloc(cpp, NFP_CPP_ID(7, NFP_CPP_ACTION_RW, 0),
 				  0, size);
-	if (!area)
-		return -ENOMEM;
+	अगर (!area)
+		वापस -ENOMEM;
 
-	cache = kzalloc(sizeof(*cache), GFP_KERNEL);
-	if (!cache)
-		return -ENOMEM;
+	cache = kzalloc(माप(*cache), GFP_KERNEL);
+	अगर (!cache)
+		वापस -ENOMEM;
 
 	cache->id = 0;
 	cache->addr = 0;
@@ -814,245 +815,245 @@ int nfp_cpp_area_cache_add(struct nfp_cpp *cpp, size_t size)
 	list_add_tail(&cache->entry, &cpp->area_cache_list);
 	mutex_unlock(&cpp->area_cache_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nfp_cpp_area_cache *
-area_cache_get(struct nfp_cpp *cpp, u32 id,
-	       u64 addr, unsigned long *offset, size_t length)
-{
-	struct nfp_cpp_area_cache *cache;
-	int err;
+अटल काष्ठा nfp_cpp_area_cache *
+area_cache_get(काष्ठा nfp_cpp *cpp, u32 id,
+	       u64 addr, अचिन्हित दीर्घ *offset, माप_प्रकार length)
+अणु
+	काष्ठा nfp_cpp_area_cache *cache;
+	पूर्णांक err;
 
-	/* Early exit when length == 0, which prevents
-	 * the need for special case code below when
+	/* Early निकास when length == 0, which prevents
+	 * the need क्रम special हाल code below when
 	 * checking against available cache size.
 	 */
-	if (length == 0 || id == 0)
-		return NULL;
+	अगर (length == 0 || id == 0)
+		वापस शून्य;
 
 	/* Remap from cpp_island to cpp_target */
 	err = nfp_target_cpp(id, addr, &id, &addr, cpp->imb_cat_table);
-	if (err < 0)
-		return NULL;
+	अगर (err < 0)
+		वापस शून्य;
 
 	mutex_lock(&cpp->area_cache_mutex);
 
-	if (list_empty(&cpp->area_cache_list)) {
+	अगर (list_empty(&cpp->area_cache_list)) अणु
 		mutex_unlock(&cpp->area_cache_mutex);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	addr += *offset;
 
-	/* See if we have a match */
-	list_for_each_entry(cache, &cpp->area_cache_list, entry) {
-		if (id == cache->id &&
+	/* See अगर we have a match */
+	list_क्रम_each_entry(cache, &cpp->area_cache_list, entry) अणु
+		अगर (id == cache->id &&
 		    addr >= cache->addr &&
 		    addr + length <= cache->addr + cache->size)
-			goto exit;
-	}
+			जाओ निकास;
+	पूर्ण
 
 	/* No matches - inspect the tail of the LRU */
 	cache = list_entry(cpp->area_cache_list.prev,
-			   struct nfp_cpp_area_cache, entry);
+			   काष्ठा nfp_cpp_area_cache, entry);
 
 	/* Can we fit in the cache entry? */
-	if (round_down(addr + length - 1, cache->size) !=
-	    round_down(addr, cache->size)) {
+	अगर (round_करोwn(addr + length - 1, cache->size) !=
+	    round_करोwn(addr, cache->size)) अणु
 		mutex_unlock(&cpp->area_cache_mutex);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* If id != 0, we will need to release it */
-	if (cache->id) {
+	अगर (cache->id) अणु
 		nfp_cpp_area_release(cache->area);
 		cache->id = 0;
 		cache->addr = 0;
-	}
+	पूर्ण
 
 	/* Adjust the start address to be cache size aligned */
 	cache->id = id;
 	cache->addr = addr & ~(u64)(cache->size - 1);
 
 	/* Re-init to the new ID and address */
-	if (cpp->op->area_init) {
+	अगर (cpp->op->area_init) अणु
 		err = cpp->op->area_init(cache->area,
 					 id, cache->addr, cache->size);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			mutex_unlock(&cpp->area_cache_mutex);
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	/* Attempt to acquire */
 	err = nfp_cpp_area_acquire(cache->area);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		mutex_unlock(&cpp->area_cache_mutex);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-exit:
+निकास:
 	/* Adjust offset */
 	*offset = addr - cache->addr;
-	return cache;
-}
+	वापस cache;
+पूर्ण
 
-static void
-area_cache_put(struct nfp_cpp *cpp, struct nfp_cpp_area_cache *cache)
-{
-	if (!cache)
-		return;
+अटल व्योम
+area_cache_put(काष्ठा nfp_cpp *cpp, काष्ठा nfp_cpp_area_cache *cache)
+अणु
+	अगर (!cache)
+		वापस;
 
 	/* Move to front of LRU */
 	list_del(&cache->entry);
 	list_add(&cache->entry, &cpp->area_cache_list);
 
 	mutex_unlock(&cpp->area_cache_mutex);
-}
+पूर्ण
 
-static int __nfp_cpp_read(struct nfp_cpp *cpp, u32 destination,
-			  unsigned long long address, void *kernel_vaddr,
-			  size_t length)
-{
-	struct nfp_cpp_area_cache *cache;
-	struct nfp_cpp_area *area;
-	unsigned long offset = 0;
-	int err;
+अटल पूर्णांक __nfp_cpp_पढ़ो(काष्ठा nfp_cpp *cpp, u32 destination,
+			  अचिन्हित दीर्घ दीर्घ address, व्योम *kernel_vaddr,
+			  माप_प्रकार length)
+अणु
+	काष्ठा nfp_cpp_area_cache *cache;
+	काष्ठा nfp_cpp_area *area;
+	अचिन्हित दीर्घ offset = 0;
+	पूर्णांक err;
 
 	cache = area_cache_get(cpp, destination, address, &offset, length);
-	if (cache) {
+	अगर (cache) अणु
 		area = cache->area;
-	} else {
+	पूर्ण अन्यथा अणु
 		area = nfp_cpp_area_alloc(cpp, destination, address, length);
-		if (!area)
-			return -ENOMEM;
+		अगर (!area)
+			वापस -ENOMEM;
 
 		err = nfp_cpp_area_acquire(area);
-		if (err) {
-			nfp_cpp_area_free(area);
-			return err;
-		}
-	}
+		अगर (err) अणु
+			nfp_cpp_area_मुक्त(area);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	err = nfp_cpp_area_read(area, offset, kernel_vaddr, length);
+	err = nfp_cpp_area_पढ़ो(area, offset, kernel_vaddr, length);
 
-	if (cache)
+	अगर (cache)
 		area_cache_put(cpp, cache);
-	else
-		nfp_cpp_area_release_free(area);
+	अन्यथा
+		nfp_cpp_area_release_मुक्त(area);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * nfp_cpp_read() - read from CPP target
+ * nfp_cpp_पढ़ो() - पढ़ो from CPP target
  * @cpp:		CPP handle
  * @destination:	CPP id
- * @address:		offset into CPP target
- * @kernel_vaddr:	kernel buffer for result
- * @length:		number of bytes to read
+ * @address:		offset पूर्णांकo CPP target
+ * @kernel_vaddr:	kernel buffer क्रम result
+ * @length:		number of bytes to पढ़ो
  *
  * Return: length of io, or -ERRNO
  */
-int nfp_cpp_read(struct nfp_cpp *cpp, u32 destination,
-		 unsigned long long address, void *kernel_vaddr,
-		 size_t length)
-{
-	size_t n, offset;
-	int ret;
+पूर्णांक nfp_cpp_पढ़ो(काष्ठा nfp_cpp *cpp, u32 destination,
+		 अचिन्हित दीर्घ दीर्घ address, व्योम *kernel_vaddr,
+		 माप_प्रकार length)
+अणु
+	माप_प्रकार n, offset;
+	पूर्णांक ret;
 
-	for (offset = 0; offset < length; offset += n) {
-		unsigned long long r_addr = address + offset;
+	क्रम (offset = 0; offset < length; offset += n) अणु
+		अचिन्हित दीर्घ दीर्घ r_addr = address + offset;
 
-		/* make first read smaller to align to safe window */
-		n = min_t(size_t, length - offset,
+		/* make first पढ़ो smaller to align to safe winकरोw */
+		n = min_t(माप_प्रकार, length - offset,
 			  ALIGN(r_addr + 1, NFP_CPP_SAFE_AREA_SIZE) - r_addr);
 
-		ret = __nfp_cpp_read(cpp, destination, address + offset,
+		ret = __nfp_cpp_पढ़ो(cpp, destination, address + offset,
 				     kernel_vaddr + offset, n);
-		if (ret < 0)
-			return ret;
-		if (ret != n)
-			return offset + n;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret != n)
+			वापस offset + n;
+	पूर्ण
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
-static int __nfp_cpp_write(struct nfp_cpp *cpp, u32 destination,
-			   unsigned long long address,
-			   const void *kernel_vaddr, size_t length)
-{
-	struct nfp_cpp_area_cache *cache;
-	struct nfp_cpp_area *area;
-	unsigned long offset = 0;
-	int err;
+अटल पूर्णांक __nfp_cpp_ग_लिखो(काष्ठा nfp_cpp *cpp, u32 destination,
+			   अचिन्हित दीर्घ दीर्घ address,
+			   स्थिर व्योम *kernel_vaddr, माप_प्रकार length)
+अणु
+	काष्ठा nfp_cpp_area_cache *cache;
+	काष्ठा nfp_cpp_area *area;
+	अचिन्हित दीर्घ offset = 0;
+	पूर्णांक err;
 
 	cache = area_cache_get(cpp, destination, address, &offset, length);
-	if (cache) {
+	अगर (cache) अणु
 		area = cache->area;
-	} else {
+	पूर्ण अन्यथा अणु
 		area = nfp_cpp_area_alloc(cpp, destination, address, length);
-		if (!area)
-			return -ENOMEM;
+		अगर (!area)
+			वापस -ENOMEM;
 
 		err = nfp_cpp_area_acquire(area);
-		if (err) {
-			nfp_cpp_area_free(area);
-			return err;
-		}
-	}
+		अगर (err) अणु
+			nfp_cpp_area_मुक्त(area);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	err = nfp_cpp_area_write(area, offset, kernel_vaddr, length);
+	err = nfp_cpp_area_ग_लिखो(area, offset, kernel_vaddr, length);
 
-	if (cache)
+	अगर (cache)
 		area_cache_put(cpp, cache);
-	else
-		nfp_cpp_area_release_free(area);
+	अन्यथा
+		nfp_cpp_area_release_मुक्त(area);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * nfp_cpp_write() - write to CPP target
+ * nfp_cpp_ग_लिखो() - ग_लिखो to CPP target
  * @cpp:		CPP handle
  * @destination:	CPP id
- * @address:		offset into CPP target
- * @kernel_vaddr:	kernel buffer to read from
- * @length:		number of bytes to write
+ * @address:		offset पूर्णांकo CPP target
+ * @kernel_vaddr:	kernel buffer to पढ़ो from
+ * @length:		number of bytes to ग_लिखो
  *
  * Return: length of io, or -ERRNO
  */
-int nfp_cpp_write(struct nfp_cpp *cpp, u32 destination,
-		  unsigned long long address,
-		  const void *kernel_vaddr, size_t length)
-{
-	size_t n, offset;
-	int ret;
+पूर्णांक nfp_cpp_ग_लिखो(काष्ठा nfp_cpp *cpp, u32 destination,
+		  अचिन्हित दीर्घ दीर्घ address,
+		  स्थिर व्योम *kernel_vaddr, माप_प्रकार length)
+अणु
+	माप_प्रकार n, offset;
+	पूर्णांक ret;
 
-	for (offset = 0; offset < length; offset += n) {
-		unsigned long long w_addr = address + offset;
+	क्रम (offset = 0; offset < length; offset += n) अणु
+		अचिन्हित दीर्घ दीर्घ w_addr = address + offset;
 
-		/* make first write smaller to align to safe window */
-		n = min_t(size_t, length - offset,
+		/* make first ग_लिखो smaller to align to safe winकरोw */
+		n = min_t(माप_प्रकार, length - offset,
 			  ALIGN(w_addr + 1, NFP_CPP_SAFE_AREA_SIZE) - w_addr);
 
-		ret = __nfp_cpp_write(cpp, destination, address + offset,
+		ret = __nfp_cpp_ग_लिखो(cpp, destination, address + offset,
 				      kernel_vaddr + offset, n);
-		if (ret < 0)
-			return ret;
-		if (ret != n)
-			return offset + n;
-	}
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret != n)
+			वापस offset + n;
+	पूर्ण
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
 /* Return the correct CPP address, and fixup xpb_addr as needed. */
-static u32 nfp_xpb_to_cpp(struct nfp_cpp *cpp, u32 *xpb_addr)
-{
-	int island;
+अटल u32 nfp_xpb_to_cpp(काष्ठा nfp_cpp *cpp, u32 *xpb_addr)
+अणु
+	पूर्णांक island;
 	u32 xpb;
 
 	xpb = NFP_CPP_ID(14, NFP_CPP_ACTION_RW, 0);
@@ -1060,137 +1061,137 @@ static u32 nfp_xpb_to_cpp(struct nfp_cpp *cpp, u32 *xpb_addr)
 	 * out through the global XPBM bus.
 	 */
 	island = (*xpb_addr >> 24) & 0x3f;
-	if (!island)
-		return xpb;
+	अगर (!island)
+		वापस xpb;
 
-	if (island != 1) {
+	अगर (island != 1) अणु
 		*xpb_addr |= 1 << 30;
-		return xpb;
-	}
+		वापस xpb;
+	पूर्ण
 
 	/* Accesses to the ARM Island overlay uses Island 0 / Global Bit */
 	*xpb_addr &= ~0x7f000000;
-	if (*xpb_addr < 0x60000) {
+	अगर (*xpb_addr < 0x60000) अणु
 		*xpb_addr |= 1 << 30;
-	} else {
-		/* And only non-ARM interfaces use the island id = 1 */
-		if (NFP_CPP_INTERFACE_TYPE_of(nfp_cpp_interface(cpp))
+	पूर्ण अन्यथा अणु
+		/* And only non-ARM पूर्णांकerfaces use the island id = 1 */
+		अगर (NFP_CPP_INTERFACE_TYPE_of(nfp_cpp_पूर्णांकerface(cpp))
 		    != NFP_CPP_INTERFACE_TYPE_ARM)
 			*xpb_addr |= 1 << 24;
-	}
+	पूर्ण
 
-	return xpb;
-}
+	वापस xpb;
+पूर्ण
 
 /**
- * nfp_xpb_readl() - Read a u32 word from a XPB location
+ * nfp_xpb_पढ़ोl() - Read a u32 word from a XPB location
  * @cpp:	CPP device handle
- * @xpb_addr:	Address for operation
- * @value:	Pointer to read buffer
+ * @xpb_addr:	Address क्रम operation
+ * @value:	Poपूर्णांकer to पढ़ो buffer
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_xpb_readl(struct nfp_cpp *cpp, u32 xpb_addr, u32 *value)
-{
+पूर्णांक nfp_xpb_पढ़ोl(काष्ठा nfp_cpp *cpp, u32 xpb_addr, u32 *value)
+अणु
 	u32 cpp_dest = nfp_xpb_to_cpp(cpp, &xpb_addr);
 
-	return nfp_cpp_readl(cpp, cpp_dest, xpb_addr, value);
-}
+	वापस nfp_cpp_पढ़ोl(cpp, cpp_dest, xpb_addr, value);
+पूर्ण
 
 /**
- * nfp_xpb_writel() - Write a u32 word to a XPB location
+ * nfp_xpb_ग_लिखोl() - Write a u32 word to a XPB location
  * @cpp:	CPP device handle
- * @xpb_addr:	Address for operation
- * @value:	Value to write
+ * @xpb_addr:	Address क्रम operation
+ * @value:	Value to ग_लिखो
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_xpb_writel(struct nfp_cpp *cpp, u32 xpb_addr, u32 value)
-{
+पूर्णांक nfp_xpb_ग_लिखोl(काष्ठा nfp_cpp *cpp, u32 xpb_addr, u32 value)
+अणु
 	u32 cpp_dest = nfp_xpb_to_cpp(cpp, &xpb_addr);
 
-	return nfp_cpp_writel(cpp, cpp_dest, xpb_addr, value);
-}
+	वापस nfp_cpp_ग_लिखोl(cpp, cpp_dest, xpb_addr, value);
+पूर्ण
 
 /**
- * nfp_xpb_writelm() - Modify bits of a 32-bit value from the XPB bus
+ * nfp_xpb_ग_लिखोlm() - Modअगरy bits of a 32-bit value from the XPB bus
  * @cpp:	NFP CPP device handle
  * @xpb_tgt:	XPB target and address
  * @mask:	mask of bits to alter
- * @value:	value to modify
+ * @value:	value to modअगरy
  *
- * KERNEL: This operation is safe to call in interrupt or softirq context.
+ * KERNEL: This operation is safe to call in पूर्णांकerrupt or softirq context.
  *
  * Return: 0 on success, or -ERRNO
  */
-int nfp_xpb_writelm(struct nfp_cpp *cpp, u32 xpb_tgt,
+पूर्णांक nfp_xpb_ग_लिखोlm(काष्ठा nfp_cpp *cpp, u32 xpb_tgt,
 		    u32 mask, u32 value)
-{
-	int err;
-	u32 tmp;
+अणु
+	पूर्णांक err;
+	u32 पंचांगp;
 
-	err = nfp_xpb_readl(cpp, xpb_tgt, &tmp);
-	if (err < 0)
-		return err;
+	err = nfp_xpb_पढ़ोl(cpp, xpb_tgt, &पंचांगp);
+	अगर (err < 0)
+		वापस err;
 
-	tmp &= ~mask;
-	tmp |= mask & value;
-	return nfp_xpb_writel(cpp, xpb_tgt, tmp);
-}
+	पंचांगp &= ~mask;
+	पंचांगp |= mask & value;
+	वापस nfp_xpb_ग_लिखोl(cpp, xpb_tgt, पंचांगp);
+पूर्ण
 
 /* Lockdep markers */
-static struct lock_class_key nfp_cpp_resource_lock_key;
+अटल काष्ठा lock_class_key nfp_cpp_resource_lock_key;
 
-static void nfp_cpp_dev_release(struct device *dev)
-{
-	/* Nothing to do here - it just makes the kernel happy */
-}
+अटल व्योम nfp_cpp_dev_release(काष्ठा device *dev)
+अणु
+	/* Nothing to करो here - it just makes the kernel happy */
+पूर्ण
 
 /**
  * nfp_cpp_from_operations() - Create a NFP CPP handle
- *                             from an operations structure
- * @ops:	NFP CPP operations structure
+ *                             from an operations काष्ठाure
+ * @ops:	NFP CPP operations काष्ठाure
  * @parent:	Parent device
  * @priv:	Private data of low-level implementation
  *
- * NOTE: On failure, cpp_ops->free will be called!
+ * NOTE: On failure, cpp_ops->मुक्त will be called!
  *
  * Return: NFP CPP handle on success, ERR_PTR on failure
  */
-struct nfp_cpp *
-nfp_cpp_from_operations(const struct nfp_cpp_operations *ops,
-			struct device *parent, void *priv)
-{
-	const u32 arm = NFP_CPP_ID(NFP_CPP_TARGET_ARM, NFP_CPP_ACTION_RW, 0);
-	struct nfp_cpp *cpp;
-	int ifc, err;
+काष्ठा nfp_cpp *
+nfp_cpp_from_operations(स्थिर काष्ठा nfp_cpp_operations *ops,
+			काष्ठा device *parent, व्योम *priv)
+अणु
+	स्थिर u32 arm = NFP_CPP_ID(NFP_CPP_TARGET_ARM, NFP_CPP_ACTION_RW, 0);
+	काष्ठा nfp_cpp *cpp;
+	पूर्णांक अगरc, err;
 	u32 mask[2];
 	u32 xpbaddr;
-	size_t tgt;
+	माप_प्रकार tgt;
 
-	cpp = kzalloc(sizeof(*cpp), GFP_KERNEL);
-	if (!cpp) {
+	cpp = kzalloc(माप(*cpp), GFP_KERNEL);
+	अगर (!cpp) अणु
 		err = -ENOMEM;
-		goto err_malloc;
-	}
+		जाओ err_दो_स्मृति;
+	पूर्ण
 
 	cpp->op = ops;
 	cpp->priv = priv;
 
-	ifc = ops->get_interface(parent);
-	if (ifc < 0) {
-		err = ifc;
-		goto err_free_cpp;
-	}
-	cpp->interface = ifc;
-	if (ops->read_serial) {
-		err = ops->read_serial(parent, cpp->serial);
-		if (err)
-			goto err_free_cpp;
-	}
+	अगरc = ops->get_पूर्णांकerface(parent);
+	अगर (अगरc < 0) अणु
+		err = अगरc;
+		जाओ err_मुक्त_cpp;
+	पूर्ण
+	cpp->पूर्णांकerface = अगरc;
+	अगर (ops->पढ़ो_serial) अणु
+		err = ops->पढ़ो_serial(parent, cpp->serial);
+		अगर (err)
+			जाओ err_मुक्त_cpp;
+	पूर्ण
 
 	rwlock_init(&cpp->resource_lock);
-	init_waitqueue_head(&cpp->waitq);
+	init_रुकोqueue_head(&cpp->रुकोq);
 	lockdep_set_class(&cpp->resource_lock, &nfp_cpp_resource_lock_key);
 	INIT_LIST_HEAD(&cpp->resource_list);
 	INIT_LIST_HEAD(&cpp->area_cache_list);
@@ -1198,139 +1199,139 @@ nfp_cpp_from_operations(const struct nfp_cpp_operations *ops,
 	cpp->dev.init_name = "cpp";
 	cpp->dev.parent = parent;
 	cpp->dev.release = nfp_cpp_dev_release;
-	err = device_register(&cpp->dev);
-	if (err < 0) {
+	err = device_रेजिस्टर(&cpp->dev);
+	अगर (err < 0) अणु
 		put_device(&cpp->dev);
-		goto err_free_cpp;
-	}
+		जाओ err_मुक्त_cpp;
+	पूर्ण
 
 	dev_set_drvdata(&cpp->dev, cpp);
 
-	/* NOTE: cpp_lock is NOT locked for op->init,
+	/* NOTE: cpp_lock is NOT locked क्रम op->init,
 	 * since it may call NFP CPP API operations
 	 */
-	if (cpp->op->init) {
+	अगर (cpp->op->init) अणु
 		err = cpp->op->init(cpp);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(parent,
 				"NFP interface initialization failed\n");
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	err = nfp_cpp_model_autodetect(cpp, &cpp->model);
-	if (err < 0) {
+	err = nfp_cpp_model_स्वतःdetect(cpp, &cpp->model);
+	अगर (err < 0) अणु
 		dev_err(parent, "NFP model detection failed\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	for (tgt = 0; tgt < ARRAY_SIZE(cpp->imb_cat_table); tgt++) {
+	क्रम (tgt = 0; tgt < ARRAY_SIZE(cpp->imb_cat_table); tgt++) अणु
 			/* Hardcoded XPB IMB Base, island 0 */
 		xpbaddr = 0x000a0000 + (tgt * 4);
-		err = nfp_xpb_readl(cpp, xpbaddr,
+		err = nfp_xpb_पढ़ोl(cpp, xpbaddr,
 				    &cpp->imb_cat_table[tgt]);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(parent,
 				"Can't read CPP mapping from device\n");
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	nfp_cpp_readl(cpp, arm, NFP_ARM_GCSR + NFP_ARM_GCSR_SOFTMODEL2,
+	nfp_cpp_पढ़ोl(cpp, arm, NFP_ARM_GCSR + NFP_ARM_GCSR_SOFTMODEL2,
 		      &mask[0]);
-	nfp_cpp_readl(cpp, arm, NFP_ARM_GCSR + NFP_ARM_GCSR_SOFTMODEL3,
+	nfp_cpp_पढ़ोl(cpp, arm, NFP_ARM_GCSR + NFP_ARM_GCSR_SOFTMODEL3,
 		      &mask[1]);
 
 	err = nfp_cpp_set_mu_locality_lsb(cpp);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(parent,	"Can't calculate MU locality bit offset\n");
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	dev_info(cpp->dev.parent, "Model: 0x%08x, SN: %pM, Ifc: 0x%04x\n",
-		 nfp_cpp_model(cpp), cpp->serial, nfp_cpp_interface(cpp));
+		 nfp_cpp_model(cpp), cpp->serial, nfp_cpp_पूर्णांकerface(cpp));
 
-	return cpp;
+	वापस cpp;
 
 err_out:
-	device_unregister(&cpp->dev);
-err_free_cpp:
-	kfree(cpp);
-err_malloc:
-	return ERR_PTR(err);
-}
+	device_unरेजिस्टर(&cpp->dev);
+err_मुक्त_cpp:
+	kमुक्त(cpp);
+err_दो_स्मृति:
+	वापस ERR_PTR(err);
+पूर्ण
 
 /**
- * nfp_cpp_priv() - Get the operations private data of a CPP handle
+ * nfp_cpp_priv() - Get the operations निजी data of a CPP handle
  * @cpp:	CPP handle
  *
- * Return: Private data for the NFP CPP handle
+ * Return: Private data क्रम the NFP CPP handle
  */
-void *nfp_cpp_priv(struct nfp_cpp *cpp)
-{
-	return cpp->priv;
-}
+व्योम *nfp_cpp_priv(काष्ठा nfp_cpp *cpp)
+अणु
+	वापस cpp->priv;
+पूर्ण
 
 /**
  * nfp_cpp_device() - Get the Linux device handle of a CPP handle
  * @cpp:	CPP handle
  *
- * Return: Device for the NFP CPP bus
+ * Return: Device क्रम the NFP CPP bus
  */
-struct device *nfp_cpp_device(struct nfp_cpp *cpp)
-{
-	return &cpp->dev;
-}
+काष्ठा device *nfp_cpp_device(काष्ठा nfp_cpp *cpp)
+अणु
+	वापस &cpp->dev;
+पूर्ण
 
-#define NFP_EXPL_OP(func, expl, args...)			  \
-	({							  \
-		struct nfp_cpp *cpp = nfp_cpp_explicit_cpp(expl); \
-		int err = -ENODEV;				  \
+#घोषणा NFP_EXPL_OP(func, expl, args...)			  \
+	(अणु							  \
+		काष्ठा nfp_cpp *cpp = nfp_cpp_explicit_cpp(expl); \
+		पूर्णांक err = -ENODEV;				  \
 								  \
-		if (cpp->op->func)				  \
+		अगर (cpp->op->func)				  \
 			err = cpp->op->func(expl, ##args);	  \
 		err;						  \
-	})
+	पूर्ण)
 
-#define NFP_EXPL_OP_NR(func, expl, args...)			  \
-	({							  \
-		struct nfp_cpp *cpp = nfp_cpp_explicit_cpp(expl); \
+#घोषणा NFP_EXPL_OP_NR(func, expl, args...)			  \
+	(अणु							  \
+		काष्ठा nfp_cpp *cpp = nfp_cpp_explicit_cpp(expl); \
 								  \
-		if (cpp->op->func)				  \
+		अगर (cpp->op->func)				  \
 			cpp->op->func(expl, ##args);		  \
 								  \
-	})
+	पूर्ण)
 
 /**
  * nfp_cpp_explicit_acquire() - Acquire explicit access handle
  * @cpp:	NFP CPP handle
  *
  * The 'data_ref' and 'signal_ref' values are useful when
- * constructing the NFP_EXPL_CSR1 and NFP_EXPL_POST values.
+ * स्थिरructing the NFP_EXPL_CSR1 and NFP_EXPL_POST values.
  *
  * Return: NFP CPP explicit handle
  */
-struct nfp_cpp_explicit *nfp_cpp_explicit_acquire(struct nfp_cpp *cpp)
-{
-	struct nfp_cpp_explicit *expl;
-	int err;
+काष्ठा nfp_cpp_explicit *nfp_cpp_explicit_acquire(काष्ठा nfp_cpp *cpp)
+अणु
+	काष्ठा nfp_cpp_explicit *expl;
+	पूर्णांक err;
 
-	expl = kzalloc(sizeof(*expl) + cpp->op->explicit_priv_size, GFP_KERNEL);
-	if (!expl)
-		return NULL;
+	expl = kzalloc(माप(*expl) + cpp->op->explicit_priv_size, GFP_KERNEL);
+	अगर (!expl)
+		वापस शून्य;
 
 	expl->cpp = cpp;
 	err = NFP_EXPL_OP(explicit_acquire, expl);
-	if (err < 0) {
-		kfree(expl);
-		return NULL;
-	}
+	अगर (err < 0) अणु
+		kमुक्त(expl);
+		वापस शून्य;
+	पूर्ण
 
-	return expl;
-}
+	वापस expl;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_set_target() - Set target fields for explicit
+ * nfp_cpp_explicit_set_target() - Set target fields क्रम explicit
  * @expl:	Explicit handle
  * @cpp_id:	CPP ID field
  * @len:	CPP Length field
@@ -1338,54 +1339,54 @@ struct nfp_cpp_explicit *nfp_cpp_explicit_acquire(struct nfp_cpp *cpp)
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_set_target(struct nfp_cpp_explicit *expl,
+पूर्णांक nfp_cpp_explicit_set_target(काष्ठा nfp_cpp_explicit *expl,
 				u32 cpp_id, u8 len, u8 mask)
-{
+अणु
 	expl->cmd.cpp_id = cpp_id;
 	expl->cmd.len = len;
 	expl->cmd.byte_mask = mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_set_data() - Set data fields for explicit
+ * nfp_cpp_explicit_set_data() - Set data fields क्रम explicit
  * @expl:	Explicit handle
  * @data_master: CPP Data Master field
  * @data_ref:	CPP Data Ref field
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_set_data(struct nfp_cpp_explicit *expl,
+पूर्णांक nfp_cpp_explicit_set_data(काष्ठा nfp_cpp_explicit *expl,
 			      u8 data_master, u16 data_ref)
-{
+अणु
 	expl->cmd.data_master = data_master;
 	expl->cmd.data_ref = data_ref;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_set_signal() - Set signal fields for explicit
+ * nfp_cpp_explicit_set_संकेत() - Set संकेत fields क्रम explicit
  * @expl:	Explicit handle
- * @signal_master: CPP Signal Master field
- * @signal_ref:	CPP Signal Ref field
+ * @संकेत_master: CPP Signal Master field
+ * @संकेत_ref:	CPP Signal Ref field
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_set_signal(struct nfp_cpp_explicit *expl,
-				u8 signal_master, u8 signal_ref)
-{
-	expl->cmd.signal_master = signal_master;
-	expl->cmd.signal_ref = signal_ref;
+पूर्णांक nfp_cpp_explicit_set_संकेत(काष्ठा nfp_cpp_explicit *expl,
+				u8 संकेत_master, u8 संकेत_ref)
+अणु
+	expl->cmd.संकेत_master = संकेत_master;
+	expl->cmd.संकेत_ref = संकेत_ref;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_set_posted() - Set completion fields for explicit
+ * nfp_cpp_explicit_set_posted() - Set completion fields क्रम explicit
  * @expl:	Explicit handle
- * @posted:	True for signaled completion, false otherwise
+ * @posted:	True क्रम संकेतed completion, false otherwise
  * @siga:	CPP Signal A field
  * @siga_mode:	CPP Signal A Mode field
  * @sigb:	CPP Signal B field
@@ -1393,105 +1394,105 @@ int nfp_cpp_explicit_set_signal(struct nfp_cpp_explicit *expl,
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_set_posted(struct nfp_cpp_explicit *expl, int posted,
+पूर्णांक nfp_cpp_explicit_set_posted(काष्ठा nfp_cpp_explicit *expl, पूर्णांक posted,
 				u8 siga,
-				enum nfp_cpp_explicit_signal_mode siga_mode,
+				क्रमागत nfp_cpp_explicit_संकेत_mode siga_mode,
 				u8 sigb,
-				enum nfp_cpp_explicit_signal_mode sigb_mode)
-{
+				क्रमागत nfp_cpp_explicit_संकेत_mode sigb_mode)
+अणु
 	expl->cmd.posted = posted;
 	expl->cmd.siga = siga;
 	expl->cmd.sigb = sigb;
 	expl->cmd.siga_mode = siga_mode;
 	expl->cmd.sigb_mode = sigb_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_put() - Set up the write (pull) data for a explicit access
+ * nfp_cpp_explicit_put() - Set up the ग_लिखो (pull) data क्रम a explicit access
  * @expl:	NFP CPP Explicit handle
  * @buff:	Data to have the target pull in the transaction
  * @len:	Length of data, in bytes
  *
  * The 'len' parameter must be less than or equal to 128 bytes.
  *
- * If this function is called before the configuration
- * registers are set, it will return -EINVAL.
+ * If this function is called beक्रमe the configuration
+ * रेजिस्टरs are set, it will वापस -EINVAL.
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_put(struct nfp_cpp_explicit *expl,
-			 const void *buff, size_t len)
-{
-	return NFP_EXPL_OP(explicit_put, expl, buff, len);
-}
+पूर्णांक nfp_cpp_explicit_put(काष्ठा nfp_cpp_explicit *expl,
+			 स्थिर व्योम *buff, माप_प्रकार len)
+अणु
+	वापस NFP_EXPL_OP(explicit_put, expl, buff, len);
+पूर्ण
 
 /**
- * nfp_cpp_explicit_do() - Execute a transaction, and wait for it to complete
+ * nfp_cpp_explicit_करो() - Execute a transaction, and रुको क्रम it to complete
  * @expl:	NFP CPP Explicit handle
  * @address:	Address to send in the explicit transaction
  *
- * If this function is called before the configuration
- * registers are set, it will return -1, with an errno of EINVAL.
+ * If this function is called beक्रमe the configuration
+ * रेजिस्टरs are set, it will वापस -1, with an त्रुटि_सं of EINVAL.
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_do(struct nfp_cpp_explicit *expl, u64 address)
-{
-	return NFP_EXPL_OP(explicit_do, expl, &expl->cmd, address);
-}
+पूर्णांक nfp_cpp_explicit_करो(काष्ठा nfp_cpp_explicit *expl, u64 address)
+अणु
+	वापस NFP_EXPL_OP(explicit_करो, expl, &expl->cmd, address);
+पूर्ण
 
 /**
- * nfp_cpp_explicit_get() - Get the 'push' (read) data from a explicit access
+ * nfp_cpp_explicit_get() - Get the 'push' (पढ़ो) data from a explicit access
  * @expl:	NFP CPP Explicit handle
  * @buff:	Data that the target pushed in the transaction
  * @len:	Length of data, in bytes
  *
  * The 'len' parameter must be less than or equal to 128 bytes.
  *
- * If this function is called before all three configuration
- * registers are set, it will return -1, with an errno of EINVAL.
+ * If this function is called beक्रमe all three configuration
+ * रेजिस्टरs are set, it will वापस -1, with an त्रुटि_सं of EINVAL.
  *
- * If this function is called before nfp_cpp_explicit_do()
- * has completed, it will return -1, with an errno of EBUSY.
+ * If this function is called beक्रमe nfp_cpp_explicit_करो()
+ * has completed, it will वापस -1, with an त्रुटि_सं of EBUSY.
  *
  * Return: 0, or -ERRNO
  */
-int nfp_cpp_explicit_get(struct nfp_cpp_explicit *expl, void *buff, size_t len)
-{
-	return NFP_EXPL_OP(explicit_get, expl, buff, len);
-}
+पूर्णांक nfp_cpp_explicit_get(काष्ठा nfp_cpp_explicit *expl, व्योम *buff, माप_प्रकार len)
+अणु
+	वापस NFP_EXPL_OP(explicit_get, expl, buff, len);
+पूर्ण
 
 /**
  * nfp_cpp_explicit_release() - Release explicit access handle
  * @expl:	NFP CPP Explicit handle
  *
  */
-void nfp_cpp_explicit_release(struct nfp_cpp_explicit *expl)
-{
+व्योम nfp_cpp_explicit_release(काष्ठा nfp_cpp_explicit *expl)
+अणु
 	NFP_EXPL_OP_NR(explicit_release, expl);
-	kfree(expl);
-}
+	kमुक्त(expl);
+पूर्ण
 
 /**
- * nfp_cpp_explicit_cpp() - return CPP handle for CPP explicit
+ * nfp_cpp_explicit_cpp() - वापस CPP handle क्रम CPP explicit
  * @cpp_explicit:	CPP explicit handle
  *
  * Return: NFP CPP handle of the explicit
  */
-struct nfp_cpp *nfp_cpp_explicit_cpp(struct nfp_cpp_explicit *cpp_explicit)
-{
-	return cpp_explicit->cpp;
-}
+काष्ठा nfp_cpp *nfp_cpp_explicit_cpp(काष्ठा nfp_cpp_explicit *cpp_explicit)
+अणु
+	वापस cpp_explicit->cpp;
+पूर्ण
 
 /**
- * nfp_cpp_explicit_priv() - return private struct for CPP explicit
+ * nfp_cpp_explicit_priv() - वापस निजी काष्ठा क्रम CPP explicit
  * @cpp_explicit:	CPP explicit handle
  *
- * Return: private data of the explicit, or NULL
+ * Return: निजी data of the explicit, or शून्य
  */
-void *nfp_cpp_explicit_priv(struct nfp_cpp_explicit *cpp_explicit)
-{
-	return &cpp_explicit[1];
-}
+व्योम *nfp_cpp_explicit_priv(काष्ठा nfp_cpp_explicit *cpp_explicit)
+अणु
+	वापस &cpp_explicit[1];
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software Limited.
  * Copyright (C) 2005-2008 Red Hat, Inc. All rights reserved.
@@ -5,386 +6,386 @@
  * This file is released under the GPL.
  */
 
-#include "dm-bio-record.h"
+#समावेश "dm-bio-record.h"
 
-#include <linux/init.h>
-#include <linux/mempool.h>
-#include <linux/module.h>
-#include <linux/pagemap.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/device-mapper.h>
-#include <linux/dm-io.h>
-#include <linux/dm-dirty-log.h>
-#include <linux/dm-kcopyd.h>
-#include <linux/dm-region-hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/device-mapper.h>
+#समावेश <linux/dm-पन.स>
+#समावेश <linux/dm-dirty-log.h>
+#समावेश <linux/dm-kcopyd.h>
+#समावेश <linux/dm-region-hash.h>
 
-#define DM_MSG_PREFIX "raid1"
+#घोषणा DM_MSG_PREFIX "raid1"
 
-#define MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel. */
+#घोषणा MAX_RECOVERY 1	/* Maximum number of regions recovered in parallel. */
 
-#define MAX_NR_MIRRORS	(DM_KCOPYD_MAX_REGIONS + 1)
+#घोषणा MAX_NR_MIRRORS	(DM_KCOPYD_MAX_REGIONS + 1)
 
-#define DM_RAID1_HANDLE_ERRORS	0x01
-#define DM_RAID1_KEEP_LOG	0x02
-#define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
-#define keep_log(p)		((p)->features & DM_RAID1_KEEP_LOG)
+#घोषणा DM_RAID1_HANDLE_ERRORS	0x01
+#घोषणा DM_RAID1_KEEP_LOG	0x02
+#घोषणा errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
+#घोषणा keep_log(p)		((p)->features & DM_RAID1_KEEP_LOG)
 
-static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
+अटल DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
 
 /*-----------------------------------------------------------------
- * Mirror set structures.
+ * Mirror set काष्ठाures.
  *---------------------------------------------------------------*/
-enum dm_raid1_error {
+क्रमागत dm_raid1_error अणु
 	DM_RAID1_WRITE_ERROR,
 	DM_RAID1_FLUSH_ERROR,
 	DM_RAID1_SYNC_ERROR,
 	DM_RAID1_READ_ERROR
-};
+पूर्ण;
 
-struct mirror {
-	struct mirror_set *ms;
+काष्ठा mirror अणु
+	काष्ठा mirror_set *ms;
 	atomic_t error_count;
-	unsigned long error_type;
-	struct dm_dev *dev;
+	अचिन्हित दीर्घ error_type;
+	काष्ठा dm_dev *dev;
 	sector_t offset;
-};
+पूर्ण;
 
-struct mirror_set {
-	struct dm_target *ti;
-	struct list_head list;
+काष्ठा mirror_set अणु
+	काष्ठा dm_target *ti;
+	काष्ठा list_head list;
 
-	uint64_t features;
+	uपूर्णांक64_t features;
 
 	spinlock_t lock;	/* protects the lists */
-	struct bio_list reads;
-	struct bio_list writes;
-	struct bio_list failures;
-	struct bio_list holds;	/* bios are waiting until suspend */
+	काष्ठा bio_list पढ़ोs;
+	काष्ठा bio_list ग_लिखोs;
+	काष्ठा bio_list failures;
+	काष्ठा bio_list holds;	/* bios are रुकोing until suspend */
 
-	struct dm_region_hash *rh;
-	struct dm_kcopyd_client *kcopyd_client;
-	struct dm_io_client *io_client;
+	काष्ठा dm_region_hash *rh;
+	काष्ठा dm_kcopyd_client *kcopyd_client;
+	काष्ठा dm_io_client *io_client;
 
 	/* recovery */
 	region_t nr_regions;
-	int in_sync;
-	int log_failure;
-	int leg_failure;
+	पूर्णांक in_sync;
+	पूर्णांक log_failure;
+	पूर्णांक leg_failure;
 	atomic_t suspend;
 
-	atomic_t default_mirror;	/* Default mirror */
+	atomic_t शेष_mirror;	/* Default mirror */
 
-	struct workqueue_struct *kmirrord_wq;
-	struct work_struct kmirrord_work;
-	struct timer_list timer;
-	unsigned long timer_pending;
+	काष्ठा workqueue_काष्ठा *kmirrord_wq;
+	काष्ठा work_काष्ठा kmirrord_work;
+	काष्ठा समयr_list समयr;
+	अचिन्हित दीर्घ समयr_pending;
 
-	struct work_struct trigger_event;
+	काष्ठा work_काष्ठा trigger_event;
 
-	unsigned nr_mirrors;
-	struct mirror mirror[];
-};
+	अचिन्हित nr_mirrors;
+	काष्ठा mirror mirror[];
+पूर्ण;
 
 DECLARE_DM_KCOPYD_THROTTLE_WITH_MODULE_PARM(raid1_resync_throttle,
 		"A percentage of time allocated for raid resynchronization");
 
-static void wakeup_mirrord(void *context)
-{
-	struct mirror_set *ms = context;
+अटल व्योम wakeup_mirrord(व्योम *context)
+अणु
+	काष्ठा mirror_set *ms = context;
 
 	queue_work(ms->kmirrord_wq, &ms->kmirrord_work);
-}
+पूर्ण
 
-static void delayed_wake_fn(struct timer_list *t)
-{
-	struct mirror_set *ms = from_timer(ms, t, timer);
+अटल व्योम delayed_wake_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mirror_set *ms = from_समयr(ms, t, समयr);
 
-	clear_bit(0, &ms->timer_pending);
+	clear_bit(0, &ms->समयr_pending);
 	wakeup_mirrord(ms);
-}
+पूर्ण
 
-static void delayed_wake(struct mirror_set *ms)
-{
-	if (test_and_set_bit(0, &ms->timer_pending))
-		return;
+अटल व्योम delayed_wake(काष्ठा mirror_set *ms)
+अणु
+	अगर (test_and_set_bit(0, &ms->समयr_pending))
+		वापस;
 
-	ms->timer.expires = jiffies + HZ / 5;
-	add_timer(&ms->timer);
-}
+	ms->समयr.expires = jअगरfies + HZ / 5;
+	add_समयr(&ms->समयr);
+पूर्ण
 
-static void wakeup_all_recovery_waiters(void *context)
-{
+अटल व्योम wakeup_all_recovery_रुकोers(व्योम *context)
+अणु
 	wake_up_all(&_kmirrord_recovery_stopped);
-}
+पूर्ण
 
-static void queue_bio(struct mirror_set *ms, struct bio *bio, int rw)
-{
-	unsigned long flags;
-	int should_wake = 0;
-	struct bio_list *bl;
+अटल व्योम queue_bio(काष्ठा mirror_set *ms, काष्ठा bio *bio, पूर्णांक rw)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक should_wake = 0;
+	काष्ठा bio_list *bl;
 
-	bl = (rw == WRITE) ? &ms->writes : &ms->reads;
+	bl = (rw == WRITE) ? &ms->ग_लिखोs : &ms->पढ़ोs;
 	spin_lock_irqsave(&ms->lock, flags);
 	should_wake = !(bl->head);
 	bio_list_add(bl, bio);
 	spin_unlock_irqrestore(&ms->lock, flags);
 
-	if (should_wake)
+	अगर (should_wake)
 		wakeup_mirrord(ms);
-}
+पूर्ण
 
-static void dispatch_bios(void *context, struct bio_list *bio_list)
-{
-	struct mirror_set *ms = context;
-	struct bio *bio;
+अटल व्योम dispatch_bios(व्योम *context, काष्ठा bio_list *bio_list)
+अणु
+	काष्ठा mirror_set *ms = context;
+	काष्ठा bio *bio;
 
-	while ((bio = bio_list_pop(bio_list)))
+	जबतक ((bio = bio_list_pop(bio_list)))
 		queue_bio(ms, bio, WRITE);
-}
+पूर्ण
 
-struct dm_raid1_bio_record {
-	struct mirror *m;
-	/* if details->bi_bdev == NULL, details were not saved */
-	struct dm_bio_details details;
-	region_t write_region;
-};
+काष्ठा dm_raid1_bio_record अणु
+	काष्ठा mirror *m;
+	/* अगर details->bi_bdev == शून्य, details were not saved */
+	काष्ठा dm_bio_details details;
+	region_t ग_लिखो_region;
+पूर्ण;
 
 /*
  * Every mirror should look like this one.
  */
-#define DEFAULT_MIRROR 0
+#घोषणा DEFAULT_MIRROR 0
 
 /*
- * This is yucky.  We squirrel the mirror struct away inside
- * bi_next for read/write buffers.  This is safe since the bh
- * doesn't get submitted to the lower levels of block layer.
+ * This is yucky.  We squirrel the mirror काष्ठा away inside
+ * bi_next क्रम पढ़ो/ग_लिखो buffers.  This is safe since the bh
+ * करोesn't get submitted to the lower levels of block layer.
  */
-static struct mirror *bio_get_m(struct bio *bio)
-{
-	return (struct mirror *) bio->bi_next;
-}
+अटल काष्ठा mirror *bio_get_m(काष्ठा bio *bio)
+अणु
+	वापस (काष्ठा mirror *) bio->bi_next;
+पूर्ण
 
-static void bio_set_m(struct bio *bio, struct mirror *m)
-{
-	bio->bi_next = (struct bio *) m;
-}
+अटल व्योम bio_set_m(काष्ठा bio *bio, काष्ठा mirror *m)
+अणु
+	bio->bi_next = (काष्ठा bio *) m;
+पूर्ण
 
-static struct mirror *get_default_mirror(struct mirror_set *ms)
-{
-	return &ms->mirror[atomic_read(&ms->default_mirror)];
-}
+अटल काष्ठा mirror *get_शेष_mirror(काष्ठा mirror_set *ms)
+अणु
+	वापस &ms->mirror[atomic_पढ़ो(&ms->शेष_mirror)];
+पूर्ण
 
-static void set_default_mirror(struct mirror *m)
-{
-	struct mirror_set *ms = m->ms;
-	struct mirror *m0 = &(ms->mirror[0]);
+अटल व्योम set_शेष_mirror(काष्ठा mirror *m)
+अणु
+	काष्ठा mirror_set *ms = m->ms;
+	काष्ठा mirror *m0 = &(ms->mirror[0]);
 
-	atomic_set(&ms->default_mirror, m - m0);
-}
+	atomic_set(&ms->शेष_mirror, m - m0);
+पूर्ण
 
-static struct mirror *get_valid_mirror(struct mirror_set *ms)
-{
-	struct mirror *m;
+अटल काष्ठा mirror *get_valid_mirror(काष्ठा mirror_set *ms)
+अणु
+	काष्ठा mirror *m;
 
-	for (m = ms->mirror; m < ms->mirror + ms->nr_mirrors; m++)
-		if (!atomic_read(&m->error_count))
-			return m;
+	क्रम (m = ms->mirror; m < ms->mirror + ms->nr_mirrors; m++)
+		अगर (!atomic_पढ़ो(&m->error_count))
+			वापस m;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* fail_mirror
  * @m: mirror device to fail
- * @error_type: one of the enum's, DM_RAID1_*_ERROR
+ * @error_type: one of the क्रमागत's, DM_RAID1_*_ERROR
  *
  * If errors are being handled, record the type of
- * error encountered for this device.  If this type
- * of error has already been recorded, we can return;
- * otherwise, we must signal userspace by triggering
- * an event.  Additionally, if the device is the
+ * error encountered क्रम this device.  If this type
+ * of error has alपढ़ोy been recorded, we can वापस;
+ * otherwise, we must संकेत userspace by triggering
+ * an event.  Additionally, अगर the device is the
  * primary device, we must choose a new primary, but
- * only if the mirror is in-sync.
+ * only अगर the mirror is in-sync.
  *
  * This function must not block.
  */
-static void fail_mirror(struct mirror *m, enum dm_raid1_error error_type)
-{
-	struct mirror_set *ms = m->ms;
-	struct mirror *new;
+अटल व्योम fail_mirror(काष्ठा mirror *m, क्रमागत dm_raid1_error error_type)
+अणु
+	काष्ठा mirror_set *ms = m->ms;
+	काष्ठा mirror *new;
 
 	ms->leg_failure = 1;
 
 	/*
-	 * error_count is used for nothing more than a
-	 * simple way to tell if a device has encountered
+	 * error_count is used क्रम nothing more than a
+	 * simple way to tell अगर a device has encountered
 	 * errors.
 	 */
 	atomic_inc(&m->error_count);
 
-	if (test_and_set_bit(error_type, &m->error_type))
-		return;
+	अगर (test_and_set_bit(error_type, &m->error_type))
+		वापस;
 
-	if (!errors_handled(ms))
-		return;
+	अगर (!errors_handled(ms))
+		वापस;
 
-	if (m != get_default_mirror(ms))
-		goto out;
+	अगर (m != get_शेष_mirror(ms))
+		जाओ out;
 
-	if (!ms->in_sync && !keep_log(ms)) {
+	अगर (!ms->in_sync && !keep_log(ms)) अणु
 		/*
 		 * Better to issue requests to same failing device
-		 * than to risk returning corrupt data.
+		 * than to risk वापसing corrupt data.
 		 */
 		DMERR("Primary mirror (%s) failed while out-of-sync: "
 		      "Reads may fail.", m->dev->name);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	new = get_valid_mirror(ms);
-	if (new)
-		set_default_mirror(new);
-	else
+	अगर (new)
+		set_शेष_mirror(new);
+	अन्यथा
 		DMWARN("All sides of mirror have failed.");
 
 out:
 	schedule_work(&ms->trigger_event);
-}
+पूर्ण
 
-static int mirror_flush(struct dm_target *ti)
-{
-	struct mirror_set *ms = ti->private;
-	unsigned long error_bits;
+अटल पूर्णांक mirror_flush(काष्ठा dm_target *ti)
+अणु
+	काष्ठा mirror_set *ms = ti->निजी;
+	अचिन्हित दीर्घ error_bits;
 
-	unsigned int i;
-	struct dm_io_region io[MAX_NR_MIRRORS];
-	struct mirror *m;
-	struct dm_io_request io_req = {
+	अचिन्हित पूर्णांक i;
+	काष्ठा dm_io_region io[MAX_NR_MIRRORS];
+	काष्ठा mirror *m;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = REQ_OP_WRITE,
 		.bi_op_flags = REQ_PREFLUSH | REQ_SYNC,
 		.mem.type = DM_IO_KMEM,
-		.mem.ptr.addr = NULL,
+		.mem.ptr.addr = शून्य,
 		.client = ms->io_client,
-	};
+	पूर्ण;
 
-	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) {
+	क्रम (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) अणु
 		io[i].bdev = m->dev->bdev;
 		io[i].sector = 0;
 		io[i].count = 0;
-	}
+	पूर्ण
 
 	error_bits = -1;
 	dm_io(&io_req, ms->nr_mirrors, io, &error_bits);
-	if (unlikely(error_bits != 0)) {
-		for (i = 0; i < ms->nr_mirrors; i++)
-			if (test_bit(i, &error_bits))
+	अगर (unlikely(error_bits != 0)) अणु
+		क्रम (i = 0; i < ms->nr_mirrors; i++)
+			अगर (test_bit(i, &error_bits))
 				fail_mirror(ms->mirror + i,
 					    DM_RAID1_FLUSH_ERROR);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Recovery.
  *
  * When a mirror is first activated we may find that some regions
  * are in the no-sync state.  We have to recover these by
- * recopying from the default mirror to all the others.
+ * recopying from the शेष mirror to all the others.
  *---------------------------------------------------------------*/
-static void recovery_complete(int read_err, unsigned long write_err,
-			      void *context)
-{
-	struct dm_region *reg = context;
-	struct mirror_set *ms = dm_rh_region_context(reg);
-	int m, bit = 0;
+अटल व्योम recovery_complete(पूर्णांक पढ़ो_err, अचिन्हित दीर्घ ग_लिखो_err,
+			      व्योम *context)
+अणु
+	काष्ठा dm_region *reg = context;
+	काष्ठा mirror_set *ms = dm_rh_region_context(reg);
+	पूर्णांक m, bit = 0;
 
-	if (read_err) {
-		/* Read error means the failure of default mirror. */
+	अगर (पढ़ो_err) अणु
+		/* Read error means the failure of शेष mirror. */
 		DMERR_LIMIT("Unable to read primary mirror during recovery");
-		fail_mirror(get_default_mirror(ms), DM_RAID1_SYNC_ERROR);
-	}
+		fail_mirror(get_शेष_mirror(ms), DM_RAID1_SYNC_ERROR);
+	पूर्ण
 
-	if (write_err) {
+	अगर (ग_लिखो_err) अणु
 		DMERR_LIMIT("Write error during recovery (error = 0x%lx)",
-			    write_err);
+			    ग_लिखो_err);
 		/*
-		 * Bits correspond to devices (excluding default mirror).
-		 * The default mirror cannot change during recovery.
+		 * Bits correspond to devices (excluding शेष mirror).
+		 * The शेष mirror cannot change during recovery.
 		 */
-		for (m = 0; m < ms->nr_mirrors; m++) {
-			if (&ms->mirror[m] == get_default_mirror(ms))
-				continue;
-			if (test_bit(bit, &write_err))
+		क्रम (m = 0; m < ms->nr_mirrors; m++) अणु
+			अगर (&ms->mirror[m] == get_शेष_mirror(ms))
+				जारी;
+			अगर (test_bit(bit, &ग_लिखो_err))
 				fail_mirror(ms->mirror + m,
 					    DM_RAID1_SYNC_ERROR);
 			bit++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	dm_rh_recovery_end(reg, !(read_err || write_err));
-}
+	dm_rh_recovery_end(reg, !(पढ़ो_err || ग_लिखो_err));
+पूर्ण
 
-static void recover(struct mirror_set *ms, struct dm_region *reg)
-{
-	unsigned i;
-	struct dm_io_region from, to[DM_KCOPYD_MAX_REGIONS], *dest;
-	struct mirror *m;
-	unsigned long flags = 0;
+अटल व्योम recover(काष्ठा mirror_set *ms, काष्ठा dm_region *reg)
+अणु
+	अचिन्हित i;
+	काष्ठा dm_io_region from, to[DM_KCOPYD_MAX_REGIONS], *dest;
+	काष्ठा mirror *m;
+	अचिन्हित दीर्घ flags = 0;
 	region_t key = dm_rh_get_region_key(reg);
 	sector_t region_size = dm_rh_get_region_size(ms->rh);
 
 	/* fill in the source */
-	m = get_default_mirror(ms);
+	m = get_शेष_mirror(ms);
 	from.bdev = m->dev->bdev;
 	from.sector = m->offset + dm_rh_region_to_sector(ms->rh, key);
-	if (key == (ms->nr_regions - 1)) {
+	अगर (key == (ms->nr_regions - 1)) अणु
 		/*
 		 * The final region may be smaller than
 		 * region_size.
 		 */
 		from.count = ms->ti->len & (region_size - 1);
-		if (!from.count)
+		अगर (!from.count)
 			from.count = region_size;
-	} else
+	पूर्ण अन्यथा
 		from.count = region_size;
 
 	/* fill in the destinations */
-	for (i = 0, dest = to; i < ms->nr_mirrors; i++) {
-		if (&ms->mirror[i] == get_default_mirror(ms))
-			continue;
+	क्रम (i = 0, dest = to; i < ms->nr_mirrors; i++) अणु
+		अगर (&ms->mirror[i] == get_शेष_mirror(ms))
+			जारी;
 
 		m = ms->mirror + i;
 		dest->bdev = m->dev->bdev;
 		dest->sector = m->offset + dm_rh_region_to_sector(ms->rh, key);
 		dest->count = from.count;
 		dest++;
-	}
+	पूर्ण
 
 	/* hand to kcopyd */
-	if (!errors_handled(ms))
+	अगर (!errors_handled(ms))
 		set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
 
 	dm_kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to,
 		       flags, recovery_complete, reg);
-}
+पूर्ण
 
-static void reset_ms_flags(struct mirror_set *ms)
-{
-	unsigned int m;
+अटल व्योम reset_ms_flags(काष्ठा mirror_set *ms)
+अणु
+	अचिन्हित पूर्णांक m;
 
 	ms->leg_failure = 0;
-	for (m = 0; m < ms->nr_mirrors; m++) {
+	क्रम (m = 0; m < ms->nr_mirrors; m++) अणु
 		atomic_set(&(ms->mirror[m].error_count), 0);
 		ms->mirror[m].error_type = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_recovery(struct mirror_set *ms)
-{
-	struct dm_region *reg;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल व्योम करो_recovery(काष्ठा mirror_set *ms)
+अणु
+	काष्ठा dm_region *reg;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 
 	/*
 	 * Start quiescing some regions.
@@ -392,358 +393,358 @@ static void do_recovery(struct mirror_set *ms)
 	dm_rh_recovery_prepare(ms->rh);
 
 	/*
-	 * Copy any already quiesced regions.
+	 * Copy any alपढ़ोy quiesced regions.
 	 */
-	while ((reg = dm_rh_recovery_start(ms->rh)))
+	जबतक ((reg = dm_rh_recovery_start(ms->rh)))
 		recover(ms, reg);
 
 	/*
 	 * Update the in sync flag.
 	 */
-	if (!ms->in_sync &&
-	    (log->type->get_sync_count(log) == ms->nr_regions)) {
+	अगर (!ms->in_sync &&
+	    (log->type->get_sync_count(log) == ms->nr_regions)) अणु
 		/* the sync is complete */
 		dm_table_event(ms->ti->table);
 		ms->in_sync = 1;
 		reset_ms_flags(ms);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Reads
  *---------------------------------------------------------------*/
-static struct mirror *choose_mirror(struct mirror_set *ms, sector_t sector)
-{
-	struct mirror *m = get_default_mirror(ms);
+अटल काष्ठा mirror *choose_mirror(काष्ठा mirror_set *ms, sector_t sector)
+अणु
+	काष्ठा mirror *m = get_शेष_mirror(ms);
 
-	do {
-		if (likely(!atomic_read(&m->error_count)))
-			return m;
+	करो अणु
+		अगर (likely(!atomic_पढ़ो(&m->error_count)))
+			वापस m;
 
-		if (m-- == ms->mirror)
+		अगर (m-- == ms->mirror)
 			m += ms->nr_mirrors;
-	} while (m != get_default_mirror(ms));
+	पूर्ण जबतक (m != get_शेष_mirror(ms));
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int default_ok(struct mirror *m)
-{
-	struct mirror *default_mirror = get_default_mirror(m->ms);
+अटल पूर्णांक शेष_ok(काष्ठा mirror *m)
+अणु
+	काष्ठा mirror *शेष_mirror = get_शेष_mirror(m->ms);
 
-	return !atomic_read(&default_mirror->error_count);
-}
+	वापस !atomic_पढ़ो(&शेष_mirror->error_count);
+पूर्ण
 
-static int mirror_available(struct mirror_set *ms, struct bio *bio)
-{
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल पूर्णांक mirror_available(काष्ठा mirror_set *ms, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 	region_t region = dm_rh_bio_to_region(ms->rh, bio);
 
-	if (log->type->in_sync(log, region, 0))
-		return choose_mirror(ms,  bio->bi_iter.bi_sector) ? 1 : 0;
+	अगर (log->type->in_sync(log, region, 0))
+		वापस choose_mirror(ms,  bio->bi_iter.bi_sector) ? 1 : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * remap a buffer to a particular mirror.
  */
-static sector_t map_sector(struct mirror *m, struct bio *bio)
-{
-	if (unlikely(!bio->bi_iter.bi_size))
-		return 0;
-	return m->offset + dm_target_offset(m->ms->ti, bio->bi_iter.bi_sector);
-}
+अटल sector_t map_sector(काष्ठा mirror *m, काष्ठा bio *bio)
+अणु
+	अगर (unlikely(!bio->bi_iter.bi_size))
+		वापस 0;
+	वापस m->offset + dm_target_offset(m->ms->ti, bio->bi_iter.bi_sector);
+पूर्ण
 
-static void map_bio(struct mirror *m, struct bio *bio)
-{
+अटल व्योम map_bio(काष्ठा mirror *m, काष्ठा bio *bio)
+अणु
 	bio_set_dev(bio, m->dev->bdev);
 	bio->bi_iter.bi_sector = map_sector(m, bio);
-}
+पूर्ण
 
-static void map_region(struct dm_io_region *io, struct mirror *m,
-		       struct bio *bio)
-{
+अटल व्योम map_region(काष्ठा dm_io_region *io, काष्ठा mirror *m,
+		       काष्ठा bio *bio)
+अणु
 	io->bdev = m->dev->bdev;
 	io->sector = map_sector(m, bio);
 	io->count = bio_sectors(bio);
-}
+पूर्ण
 
-static void hold_bio(struct mirror_set *ms, struct bio *bio)
-{
+अटल व्योम hold_bio(काष्ठा mirror_set *ms, काष्ठा bio *bio)
+अणु
 	/*
-	 * Lock is required to avoid race condition during suspend
+	 * Lock is required to aव्योम race condition during suspend
 	 * process.
 	 */
 	spin_lock_irq(&ms->lock);
 
-	if (atomic_read(&ms->suspend)) {
+	अगर (atomic_पढ़ो(&ms->suspend)) अणु
 		spin_unlock_irq(&ms->lock);
 
 		/*
 		 * If device is suspended, complete the bio.
 		 */
-		if (dm_noflush_suspending(ms->ti))
+		अगर (dm_noflush_suspending(ms->ti))
 			bio->bi_status = BLK_STS_DM_REQUEUE;
-		else
+		अन्यथा
 			bio->bi_status = BLK_STS_IOERR;
 
 		bio_endio(bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Hold bio until the suspend is complete.
 	 */
 	bio_list_add(&ms->holds, bio);
 	spin_unlock_irq(&ms->lock);
-}
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Reads
  *---------------------------------------------------------------*/
-static void read_callback(unsigned long error, void *context)
-{
-	struct bio *bio = context;
-	struct mirror *m;
+अटल व्योम पढ़ो_callback(अचिन्हित दीर्घ error, व्योम *context)
+अणु
+	काष्ठा bio *bio = context;
+	काष्ठा mirror *m;
 
 	m = bio_get_m(bio);
-	bio_set_m(bio, NULL);
+	bio_set_m(bio, शून्य);
 
-	if (likely(!error)) {
+	अगर (likely(!error)) अणु
 		bio_endio(bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	fail_mirror(m, DM_RAID1_READ_ERROR);
 
-	if (likely(default_ok(m)) || mirror_available(m->ms, bio)) {
+	अगर (likely(शेष_ok(m)) || mirror_available(m->ms, bio)) अणु
 		DMWARN_LIMIT("Read failure on mirror device %s.  "
 			     "Trying alternative device.",
 			     m->dev->name);
 		queue_bio(m->ms, bio, bio_data_dir(bio));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	DMERR_LIMIT("Read failure on mirror device %s.  Failing I/O.",
 		    m->dev->name);
 	bio_io_error(bio);
-}
+पूर्ण
 
-/* Asynchronous read. */
-static void read_async_bio(struct mirror *m, struct bio *bio)
-{
-	struct dm_io_region io;
-	struct dm_io_request io_req = {
+/* Asynchronous पढ़ो. */
+अटल व्योम पढ़ो_async_bio(काष्ठा mirror *m, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_io_region io;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = REQ_OP_READ,
 		.bi_op_flags = 0,
 		.mem.type = DM_IO_BIO,
 		.mem.ptr.bio = bio,
-		.notify.fn = read_callback,
-		.notify.context = bio,
+		.notअगरy.fn = पढ़ो_callback,
+		.notअगरy.context = bio,
 		.client = m->ms->io_client,
-	};
+	पूर्ण;
 
 	map_region(&io, m, bio);
 	bio_set_m(bio, m);
-	BUG_ON(dm_io(&io_req, 1, &io, NULL));
-}
+	BUG_ON(dm_io(&io_req, 1, &io, शून्य));
+पूर्ण
 
-static inline int region_in_sync(struct mirror_set *ms, region_t region,
-				 int may_block)
-{
-	int state = dm_rh_get_state(ms->rh, region, may_block);
-	return state == DM_RH_CLEAN || state == DM_RH_DIRTY;
-}
+अटल अंतरभूत पूर्णांक region_in_sync(काष्ठा mirror_set *ms, region_t region,
+				 पूर्णांक may_block)
+अणु
+	पूर्णांक state = dm_rh_get_state(ms->rh, region, may_block);
+	वापस state == DM_RH_CLEAN || state == DM_RH_सूचीTY;
+पूर्ण
 
-static void do_reads(struct mirror_set *ms, struct bio_list *reads)
-{
+अटल व्योम करो_पढ़ोs(काष्ठा mirror_set *ms, काष्ठा bio_list *पढ़ोs)
+अणु
 	region_t region;
-	struct bio *bio;
-	struct mirror *m;
+	काष्ठा bio *bio;
+	काष्ठा mirror *m;
 
-	while ((bio = bio_list_pop(reads))) {
+	जबतक ((bio = bio_list_pop(पढ़ोs))) अणु
 		region = dm_rh_bio_to_region(ms->rh, bio);
-		m = get_default_mirror(ms);
+		m = get_शेष_mirror(ms);
 
 		/*
-		 * We can only read balance if the region is in sync.
+		 * We can only पढ़ो balance अगर the region is in sync.
 		 */
-		if (likely(region_in_sync(ms, region, 1)))
+		अगर (likely(region_in_sync(ms, region, 1)))
 			m = choose_mirror(ms, bio->bi_iter.bi_sector);
-		else if (m && atomic_read(&m->error_count))
-			m = NULL;
+		अन्यथा अगर (m && atomic_पढ़ो(&m->error_count))
+			m = शून्य;
 
-		if (likely(m))
-			read_async_bio(m, bio);
-		else
+		अगर (likely(m))
+			पढ़ो_async_bio(m, bio);
+		अन्यथा
 			bio_io_error(bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Writes.
  *
- * We do different things with the write io depending on the
+ * We करो dअगरferent things with the ग_लिखो io depending on the
  * state of the region that it's in:
  *
- * SYNC: 	increment pending, use kcopyd to write to *all* mirrors
+ * SYNC: 	increment pending, use kcopyd to ग_लिखो to *all* mirrors
  * RECOVERING:	delay the io until recovery completes
- * NOSYNC:	increment pending, just write to the default mirror
+ * NOSYNC:	increment pending, just ग_लिखो to the शेष mirror
  *---------------------------------------------------------------*/
 
 
-static void write_callback(unsigned long error, void *context)
-{
-	unsigned i;
-	struct bio *bio = (struct bio *) context;
-	struct mirror_set *ms;
-	int should_wake = 0;
-	unsigned long flags;
+अटल व्योम ग_लिखो_callback(अचिन्हित दीर्घ error, व्योम *context)
+अणु
+	अचिन्हित i;
+	काष्ठा bio *bio = (काष्ठा bio *) context;
+	काष्ठा mirror_set *ms;
+	पूर्णांक should_wake = 0;
+	अचिन्हित दीर्घ flags;
 
 	ms = bio_get_m(bio)->ms;
-	bio_set_m(bio, NULL);
+	bio_set_m(bio, शून्य);
 
 	/*
-	 * NOTE: We don't decrement the pending count here,
-	 * instead it is done by the targets endio function.
-	 * This way we handle both writes to SYNC and NOSYNC
+	 * NOTE: We करोn't decrement the pending count here,
+	 * instead it is करोne by the tarमाला_लो endio function.
+	 * This way we handle both ग_लिखोs to SYNC and NOSYNC
 	 * regions with the same code.
 	 */
-	if (likely(!error)) {
+	अगर (likely(!error)) अणु
 		bio_endio(bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If the bio is discard, return an error, but do not
+	 * If the bio is discard, वापस an error, but करो not
 	 * degrade the array.
 	 */
-	if (bio_op(bio) == REQ_OP_DISCARD) {
+	अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
 		bio->bi_status = BLK_STS_NOTSUPP;
 		bio_endio(bio);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ms->nr_mirrors; i++)
-		if (test_bit(i, &error))
+	क्रम (i = 0; i < ms->nr_mirrors; i++)
+		अगर (test_bit(i, &error))
 			fail_mirror(ms->mirror + i, DM_RAID1_WRITE_ERROR);
 
 	/*
-	 * Need to raise event.  Since raising
-	 * events can block, we need to do it in
-	 * the main thread.
+	 * Need to उठाओ event.  Since raising
+	 * events can block, we need to करो it in
+	 * the मुख्य thपढ़ो.
 	 */
 	spin_lock_irqsave(&ms->lock, flags);
-	if (!ms->failures.head)
+	अगर (!ms->failures.head)
 		should_wake = 1;
 	bio_list_add(&ms->failures, bio);
 	spin_unlock_irqrestore(&ms->lock, flags);
-	if (should_wake)
+	अगर (should_wake)
 		wakeup_mirrord(ms);
-}
+पूर्ण
 
-static void do_write(struct mirror_set *ms, struct bio *bio)
-{
-	unsigned int i;
-	struct dm_io_region io[MAX_NR_MIRRORS], *dest = io;
-	struct mirror *m;
-	struct dm_io_request io_req = {
+अटल व्योम करो_ग_लिखो(काष्ठा mirror_set *ms, काष्ठा bio *bio)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा dm_io_region io[MAX_NR_MIRRORS], *dest = io;
+	काष्ठा mirror *m;
+	काष्ठा dm_io_request io_req = अणु
 		.bi_op = REQ_OP_WRITE,
 		.bi_op_flags = bio->bi_opf & (REQ_FUA | REQ_PREFLUSH),
 		.mem.type = DM_IO_BIO,
 		.mem.ptr.bio = bio,
-		.notify.fn = write_callback,
-		.notify.context = bio,
+		.notअगरy.fn = ग_लिखो_callback,
+		.notअगरy.context = bio,
 		.client = ms->io_client,
-	};
+	पूर्ण;
 
-	if (bio_op(bio) == REQ_OP_DISCARD) {
+	अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
 		io_req.bi_op = REQ_OP_DISCARD;
 		io_req.mem.type = DM_IO_KMEM;
-		io_req.mem.ptr.addr = NULL;
-	}
+		io_req.mem.ptr.addr = शून्य;
+	पूर्ण
 
-	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++)
+	क्रम (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++)
 		map_region(dest++, m, bio);
 
 	/*
-	 * Use default mirror because we only need it to retrieve the reference
-	 * to the mirror set in write_callback().
+	 * Use शेष mirror because we only need it to retrieve the reference
+	 * to the mirror set in ग_लिखो_callback().
 	 */
-	bio_set_m(bio, get_default_mirror(ms));
+	bio_set_m(bio, get_शेष_mirror(ms));
 
-	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, NULL));
-}
+	BUG_ON(dm_io(&io_req, ms->nr_mirrors, io, शून्य));
+पूर्ण
 
-static void do_writes(struct mirror_set *ms, struct bio_list *writes)
-{
-	int state;
-	struct bio *bio;
-	struct bio_list sync, nosync, recover, *this_list = NULL;
-	struct bio_list requeue;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल व्योम करो_ग_लिखोs(काष्ठा mirror_set *ms, काष्ठा bio_list *ग_लिखोs)
+अणु
+	पूर्णांक state;
+	काष्ठा bio *bio;
+	काष्ठा bio_list sync, nosync, recover, *this_list = शून्य;
+	काष्ठा bio_list requeue;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 	region_t region;
 
-	if (!writes->head)
-		return;
+	अगर (!ग_लिखोs->head)
+		वापस;
 
 	/*
-	 * Classify each write.
+	 * Classअगरy each ग_लिखो.
 	 */
 	bio_list_init(&sync);
 	bio_list_init(&nosync);
 	bio_list_init(&recover);
 	bio_list_init(&requeue);
 
-	while ((bio = bio_list_pop(writes))) {
-		if ((bio->bi_opf & REQ_PREFLUSH) ||
-		    (bio_op(bio) == REQ_OP_DISCARD)) {
+	जबतक ((bio = bio_list_pop(ग_लिखोs))) अणु
+		अगर ((bio->bi_opf & REQ_PREFLUSH) ||
+		    (bio_op(bio) == REQ_OP_DISCARD)) अणु
 			bio_list_add(&sync, bio);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		region = dm_rh_bio_to_region(ms->rh, bio);
 
-		if (log->type->is_remote_recovering &&
-		    log->type->is_remote_recovering(log, region)) {
+		अगर (log->type->is_remote_recovering &&
+		    log->type->is_remote_recovering(log, region)) अणु
 			bio_list_add(&requeue, bio);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		state = dm_rh_get_state(ms->rh, region, 1);
-		switch (state) {
-		case DM_RH_CLEAN:
-		case DM_RH_DIRTY:
+		चयन (state) अणु
+		हाल DM_RH_CLEAN:
+		हाल DM_RH_सूचीTY:
 			this_list = &sync;
-			break;
+			अवरोध;
 
-		case DM_RH_NOSYNC:
+		हाल DM_RH_NOSYNC:
 			this_list = &nosync;
-			break;
+			अवरोध;
 
-		case DM_RH_RECOVERING:
+		हाल DM_RH_RECOVERING:
 			this_list = &recover;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bio_list_add(this_list, bio);
-	}
+	पूर्ण
 
 	/*
 	 * Add bios that are delayed due to remote recovery
-	 * back on to the write queue
+	 * back on to the ग_लिखो queue
 	 */
-	if (unlikely(requeue.head)) {
+	अगर (unlikely(requeue.head)) अणु
 		spin_lock_irq(&ms->lock);
-		bio_list_merge(&ms->writes, &requeue);
+		bio_list_merge(&ms->ग_लिखोs, &requeue);
 		spin_unlock_irq(&ms->lock);
 		delayed_wake(ms);
-	}
+	पूर्ण
 
 	/*
-	 * Increment the pending counts for any regions that will
-	 * be written to (writes to recover regions are going to
+	 * Increment the pending counts क्रम any regions that will
+	 * be written to (ग_लिखोs to recover regions are going to
 	 * be delayed).
 	 */
 	dm_rh_inc_pending(ms->rh, &sync);
@@ -752,67 +753,67 @@ static void do_writes(struct mirror_set *ms, struct bio_list *writes)
 	/*
 	 * If the flush fails on a previous call and succeeds here,
 	 * we must not reset the log_failure variable.  We need
-	 * userspace interaction to do that.
+	 * userspace पूर्णांकeraction to करो that.
 	 */
 	ms->log_failure = dm_rh_flush(ms->rh) ? 1 : ms->log_failure;
 
 	/*
 	 * Dispatch io.
 	 */
-	if (unlikely(ms->log_failure) && errors_handled(ms)) {
+	अगर (unlikely(ms->log_failure) && errors_handled(ms)) अणु
 		spin_lock_irq(&ms->lock);
 		bio_list_merge(&ms->failures, &sync);
 		spin_unlock_irq(&ms->lock);
 		wakeup_mirrord(ms);
-	} else
-		while ((bio = bio_list_pop(&sync)))
-			do_write(ms, bio);
+	पूर्ण अन्यथा
+		जबतक ((bio = bio_list_pop(&sync)))
+			करो_ग_लिखो(ms, bio);
 
-	while ((bio = bio_list_pop(&recover)))
+	जबतक ((bio = bio_list_pop(&recover)))
 		dm_rh_delay(ms->rh, bio);
 
-	while ((bio = bio_list_pop(&nosync))) {
-		if (unlikely(ms->leg_failure) && errors_handled(ms) && !keep_log(ms)) {
+	जबतक ((bio = bio_list_pop(&nosync))) अणु
+		अगर (unlikely(ms->leg_failure) && errors_handled(ms) && !keep_log(ms)) अणु
 			spin_lock_irq(&ms->lock);
 			bio_list_add(&ms->failures, bio);
 			spin_unlock_irq(&ms->lock);
 			wakeup_mirrord(ms);
-		} else {
-			map_bio(get_default_mirror(ms), bio);
+		पूर्ण अन्यथा अणु
+			map_bio(get_शेष_mirror(ms), bio);
 			submit_bio_noacct(bio);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void do_failures(struct mirror_set *ms, struct bio_list *failures)
-{
-	struct bio *bio;
+अटल व्योम करो_failures(काष्ठा mirror_set *ms, काष्ठा bio_list *failures)
+अणु
+	काष्ठा bio *bio;
 
-	if (likely(!failures->head))
-		return;
+	अगर (likely(!failures->head))
+		वापस;
 
 	/*
-	 * If the log has failed, unattempted writes are being
-	 * put on the holds list.  We can't issue those writes
+	 * If the log has failed, unattempted ग_लिखोs are being
+	 * put on the holds list.  We can't issue those ग_लिखोs
 	 * until a log has been marked, so we must store them.
 	 *
 	 * If a 'noflush' suspend is in progress, we can requeue
 	 * the I/O's to the core.  This give userspace a chance
-	 * to reconfigure the mirror, at which point the core
-	 * will reissue the writes.  If the 'noflush' flag is
-	 * not set, we have no choice but to return errors.
+	 * to reconfigure the mirror, at which poपूर्णांक the core
+	 * will reissue the ग_लिखोs.  If the 'noflush' flag is
+	 * not set, we have no choice but to वापस errors.
 	 *
-	 * Some writes on the failures list may have been
-	 * submitted before the log failure and represent a
-	 * failure to write to one of the devices.  It is ok
-	 * for us to treat them the same and requeue them
+	 * Some ग_लिखोs on the failures list may have been
+	 * submitted beक्रमe the log failure and represent a
+	 * failure to ग_लिखो to one of the devices.  It is ok
+	 * क्रम us to treat them the same and requeue them
 	 * as well.
 	 */
-	while ((bio = bio_list_pop(failures))) {
-		if (!ms->log_failure) {
+	जबतक ((bio = bio_list_pop(failures))) अणु
+		अगर (!ms->log_failure) अणु
 			ms->in_sync = 0;
 			dm_rh_mark_nosync(ms->rh, bio);
-		}
+		पूर्ण
 
 		/*
 		 * If all the legs are dead, fail the I/O.
@@ -820,239 +821,239 @@ static void do_failures(struct mirror_set *ms, struct bio_list *failures)
 		 * fail the I/O.
 		 *
 		 * If we have been told to handle errors, and keep_log
-		 * isn't enabled, hold the bio and wait for userspace to
+		 * isn't enabled, hold the bio and रुको क्रम userspace to
 		 * deal with the problem.
 		 *
 		 * Otherwise pretend that the I/O succeeded. (This would
-		 * be wrong if the failed leg returned after reboot and
+		 * be wrong अगर the failed leg वापसed after reboot and
 		 * got replicated back to the good legs.)
 		 */
-		if (unlikely(!get_valid_mirror(ms) || (keep_log(ms) && ms->log_failure)))
+		अगर (unlikely(!get_valid_mirror(ms) || (keep_log(ms) && ms->log_failure)))
 			bio_io_error(bio);
-		else if (errors_handled(ms) && !keep_log(ms))
+		अन्यथा अगर (errors_handled(ms) && !keep_log(ms))
 			hold_bio(ms, bio);
-		else
+		अन्यथा
 			bio_endio(bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void trigger_event(struct work_struct *work)
-{
-	struct mirror_set *ms =
-		container_of(work, struct mirror_set, trigger_event);
+अटल व्योम trigger_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mirror_set *ms =
+		container_of(work, काष्ठा mirror_set, trigger_event);
 
 	dm_table_event(ms->ti->table);
-}
+पूर्ण
 
 /*-----------------------------------------------------------------
  * kmirrord
  *---------------------------------------------------------------*/
-static void do_mirror(struct work_struct *work)
-{
-	struct mirror_set *ms = container_of(work, struct mirror_set,
+अटल व्योम करो_mirror(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mirror_set *ms = container_of(work, काष्ठा mirror_set,
 					     kmirrord_work);
-	struct bio_list reads, writes, failures;
-	unsigned long flags;
+	काष्ठा bio_list पढ़ोs, ग_लिखोs, failures;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ms->lock, flags);
-	reads = ms->reads;
-	writes = ms->writes;
+	पढ़ोs = ms->पढ़ोs;
+	ग_लिखोs = ms->ग_लिखोs;
 	failures = ms->failures;
-	bio_list_init(&ms->reads);
-	bio_list_init(&ms->writes);
+	bio_list_init(&ms->पढ़ोs);
+	bio_list_init(&ms->ग_लिखोs);
 	bio_list_init(&ms->failures);
 	spin_unlock_irqrestore(&ms->lock, flags);
 
 	dm_rh_update_states(ms->rh, errors_handled(ms));
-	do_recovery(ms);
-	do_reads(ms, &reads);
-	do_writes(ms, &writes);
-	do_failures(ms, &failures);
-}
+	करो_recovery(ms);
+	करो_पढ़ोs(ms, &पढ़ोs);
+	करो_ग_लिखोs(ms, &ग_लिखोs);
+	करो_failures(ms, &failures);
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Target functions
  *---------------------------------------------------------------*/
-static struct mirror_set *alloc_context(unsigned int nr_mirrors,
-					uint32_t region_size,
-					struct dm_target *ti,
-					struct dm_dirty_log *dl)
-{
-	struct mirror_set *ms =
-		kzalloc(struct_size(ms, mirror, nr_mirrors), GFP_KERNEL);
+अटल काष्ठा mirror_set *alloc_context(अचिन्हित पूर्णांक nr_mirrors,
+					uपूर्णांक32_t region_size,
+					काष्ठा dm_target *ti,
+					काष्ठा dm_dirty_log *dl)
+अणु
+	काष्ठा mirror_set *ms =
+		kzalloc(काष्ठा_size(ms, mirror, nr_mirrors), GFP_KERNEL);
 
-	if (!ms) {
+	अगर (!ms) अणु
 		ti->error = "Cannot allocate mirror context";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	spin_lock_init(&ms->lock);
-	bio_list_init(&ms->reads);
-	bio_list_init(&ms->writes);
+	bio_list_init(&ms->पढ़ोs);
+	bio_list_init(&ms->ग_लिखोs);
 	bio_list_init(&ms->failures);
 	bio_list_init(&ms->holds);
 
 	ms->ti = ti;
 	ms->nr_mirrors = nr_mirrors;
-	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
+	ms->nr_regions = dm_sector_भाग_up(ti->len, region_size);
 	ms->in_sync = 0;
 	ms->log_failure = 0;
 	ms->leg_failure = 0;
 	atomic_set(&ms->suspend, 0);
-	atomic_set(&ms->default_mirror, DEFAULT_MIRROR);
+	atomic_set(&ms->शेष_mirror, DEFAULT_MIRROR);
 
 	ms->io_client = dm_io_client_create();
-	if (IS_ERR(ms->io_client)) {
+	अगर (IS_ERR(ms->io_client)) अणु
 		ti->error = "Error creating dm_io client";
-		kfree(ms);
- 		return NULL;
-	}
+		kमुक्त(ms);
+ 		वापस शून्य;
+	पूर्ण
 
 	ms->rh = dm_region_hash_create(ms, dispatch_bios, wakeup_mirrord,
-				       wakeup_all_recovery_waiters,
+				       wakeup_all_recovery_रुकोers,
 				       ms->ti->begin, MAX_RECOVERY,
 				       dl, region_size, ms->nr_regions);
-	if (IS_ERR(ms->rh)) {
+	अगर (IS_ERR(ms->rh)) अणु
 		ti->error = "Error creating dirty region hash";
 		dm_io_client_destroy(ms->io_client);
-		kfree(ms);
-		return NULL;
-	}
+		kमुक्त(ms);
+		वापस शून्य;
+	पूर्ण
 
-	return ms;
-}
+	वापस ms;
+पूर्ण
 
-static void free_context(struct mirror_set *ms, struct dm_target *ti,
-			 unsigned int m)
-{
-	while (m--)
+अटल व्योम मुक्त_context(काष्ठा mirror_set *ms, काष्ठा dm_target *ti,
+			 अचिन्हित पूर्णांक m)
+अणु
+	जबतक (m--)
 		dm_put_device(ti, ms->mirror[m].dev);
 
 	dm_io_client_destroy(ms->io_client);
 	dm_region_hash_destroy(ms->rh);
-	kfree(ms);
-}
+	kमुक्त(ms);
+पूर्ण
 
-static int get_mirror(struct mirror_set *ms, struct dm_target *ti,
-		      unsigned int mirror, char **argv)
-{
-	unsigned long long offset;
-	char dummy;
-	int ret;
+अटल पूर्णांक get_mirror(काष्ठा mirror_set *ms, काष्ठा dm_target *ti,
+		      अचिन्हित पूर्णांक mirror, अक्षर **argv)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset;
+	अक्षर dummy;
+	पूर्णांक ret;
 
-	if (sscanf(argv[1], "%llu%c", &offset, &dummy) != 1 ||
-	    offset != (sector_t)offset) {
+	अगर (माला_पूछो(argv[1], "%llu%c", &offset, &dummy) != 1 ||
+	    offset != (sector_t)offset) अणु
 		ti->error = "Invalid offset";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table),
 			    &ms->mirror[mirror].dev);
-	if (ret) {
+	अगर (ret) अणु
 		ti->error = "Device lookup failure";
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ms->mirror[mirror].ms = ms;
 	atomic_set(&(ms->mirror[mirror].error_count), 0);
 	ms->mirror[mirror].error_type = 0;
 	ms->mirror[mirror].offset = offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Create dirty log: log_type #log_params <log_params>
  */
-static struct dm_dirty_log *create_dirty_log(struct dm_target *ti,
-					     unsigned argc, char **argv,
-					     unsigned *args_used)
-{
-	unsigned param_count;
-	struct dm_dirty_log *dl;
-	char dummy;
+अटल काष्ठा dm_dirty_log *create_dirty_log(काष्ठा dm_target *ti,
+					     अचिन्हित argc, अक्षर **argv,
+					     अचिन्हित *args_used)
+अणु
+	अचिन्हित param_count;
+	काष्ठा dm_dirty_log *dl;
+	अक्षर dummy;
 
-	if (argc < 2) {
+	अगर (argc < 2) अणु
 		ti->error = "Insufficient mirror log arguments";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (sscanf(argv[1], "%u%c", &param_count, &dummy) != 1) {
+	अगर (माला_पूछो(argv[1], "%u%c", &param_count, &dummy) != 1) अणु
 		ti->error = "Invalid mirror log argument count";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	*args_used = 2 + param_count;
 
-	if (argc < *args_used) {
+	अगर (argc < *args_used) अणु
 		ti->error = "Insufficient mirror log arguments";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	dl = dm_dirty_log_create(argv[0], ti, mirror_flush, param_count,
 				 argv + 2);
-	if (!dl) {
+	अगर (!dl) अणु
 		ti->error = "Error creating mirror dirty log";
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return dl;
-}
+	वापस dl;
+पूर्ण
 
-static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
-			  unsigned *args_used)
-{
-	unsigned num_features;
-	struct dm_target *ti = ms->ti;
-	char dummy;
-	int i;
+अटल पूर्णांक parse_features(काष्ठा mirror_set *ms, अचिन्हित argc, अक्षर **argv,
+			  अचिन्हित *args_used)
+अणु
+	अचिन्हित num_features;
+	काष्ठा dm_target *ti = ms->ti;
+	अक्षर dummy;
+	पूर्णांक i;
 
 	*args_used = 0;
 
-	if (!argc)
-		return 0;
+	अगर (!argc)
+		वापस 0;
 
-	if (sscanf(argv[0], "%u%c", &num_features, &dummy) != 1) {
+	अगर (माला_पूछो(argv[0], "%u%c", &num_features, &dummy) != 1) अणु
 		ti->error = "Invalid number of features";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	argc--;
 	argv++;
 	(*args_used)++;
 
-	if (num_features > argc) {
+	अगर (num_features > argc) अणु
 		ti->error = "Not enough arguments to support feature count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < num_features; i++) {
-		if (!strcmp("handle_errors", argv[0]))
+	क्रम (i = 0; i < num_features; i++) अणु
+		अगर (!म_भेद("handle_errors", argv[0]))
 			ms->features |= DM_RAID1_HANDLE_ERRORS;
-		else if (!strcmp("keep_log", argv[0]))
+		अन्यथा अगर (!म_भेद("keep_log", argv[0]))
 			ms->features |= DM_RAID1_KEEP_LOG;
-		else {
+		अन्यथा अणु
 			ti->error = "Unrecognised feature requested";
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		argc--;
 		argv++;
 		(*args_used)++;
-	}
-	if (!errors_handled(ms) && keep_log(ms)) {
+	पूर्ण
+	अगर (!errors_handled(ms) && keep_log(ms)) अणु
 		ti->error = "keep_log feature requires the handle_errors feature";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Construct a mirror mapping:
+ * Conकाष्ठा a mirror mapping:
  *
  * log_type #log_params <log_params>
- * #mirrors [mirror_path offset]{2,}
+ * #mirrors [mirror_path offset]अणु2,पूर्ण
  * [#features <features>]
  *
  * log_type is "core" or "disk"
@@ -1060,83 +1061,83 @@ static int parse_features(struct mirror_set *ms, unsigned argc, char **argv,
  *
  * If present, supported features are "handle_errors" and "keep_log".
  */
-static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	int r;
-	unsigned int nr_mirrors, m, args_used;
-	struct mirror_set *ms;
-	struct dm_dirty_log *dl;
-	char dummy;
+अटल पूर्णांक mirror_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक nr_mirrors, m, args_used;
+	काष्ठा mirror_set *ms;
+	काष्ठा dm_dirty_log *dl;
+	अक्षर dummy;
 
 	dl = create_dirty_log(ti, argc, argv, &args_used);
-	if (!dl)
-		return -EINVAL;
+	अगर (!dl)
+		वापस -EINVAL;
 
 	argv += args_used;
 	argc -= args_used;
 
-	if (!argc || sscanf(argv[0], "%u%c", &nr_mirrors, &dummy) != 1 ||
-	    nr_mirrors < 2 || nr_mirrors > MAX_NR_MIRRORS) {
+	अगर (!argc || माला_पूछो(argv[0], "%u%c", &nr_mirrors, &dummy) != 1 ||
+	    nr_mirrors < 2 || nr_mirrors > MAX_NR_MIRRORS) अणु
 		ti->error = "Invalid number of mirrors";
 		dm_dirty_log_destroy(dl);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	argv++, argc--;
 
-	if (argc < nr_mirrors * 2) {
+	अगर (argc < nr_mirrors * 2) अणु
 		ti->error = "Too few mirror arguments";
 		dm_dirty_log_destroy(dl);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ms = alloc_context(nr_mirrors, dl->type->get_region_size(dl), ti, dl);
-	if (!ms) {
+	अगर (!ms) अणु
 		dm_dirty_log_destroy(dl);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Get the mirror parameter sets */
-	for (m = 0; m < nr_mirrors; m++) {
+	क्रम (m = 0; m < nr_mirrors; m++) अणु
 		r = get_mirror(ms, ti, m, argv);
-		if (r) {
-			free_context(ms, ti, m);
-			return r;
-		}
+		अगर (r) अणु
+			मुक्त_context(ms, ti, m);
+			वापस r;
+		पूर्ण
 		argv += 2;
 		argc -= 2;
-	}
+	पूर्ण
 
-	ti->private = ms;
+	ti->निजी = ms;
 
 	r = dm_set_target_max_io_len(ti, dm_rh_get_region_size(ms->rh));
-	if (r)
-		goto err_free_context;
+	अगर (r)
+		जाओ err_मुक्त_context;
 
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
-	ti->per_io_data_size = sizeof(struct dm_raid1_bio_record);
+	ti->per_io_data_size = माप(काष्ठा dm_raid1_bio_record);
 
 	ms->kmirrord_wq = alloc_workqueue("kmirrord", WQ_MEM_RECLAIM, 0);
-	if (!ms->kmirrord_wq) {
+	अगर (!ms->kmirrord_wq) अणु
 		DMERR("couldn't start kmirrord");
 		r = -ENOMEM;
-		goto err_free_context;
-	}
-	INIT_WORK(&ms->kmirrord_work, do_mirror);
-	timer_setup(&ms->timer, delayed_wake_fn, 0);
-	ms->timer_pending = 0;
+		जाओ err_मुक्त_context;
+	पूर्ण
+	INIT_WORK(&ms->kmirrord_work, करो_mirror);
+	समयr_setup(&ms->समयr, delayed_wake_fn, 0);
+	ms->समयr_pending = 0;
 	INIT_WORK(&ms->trigger_event, trigger_event);
 
 	r = parse_features(ms, argc, argv, &args_used);
-	if (r)
-		goto err_destroy_wq;
+	अगर (r)
+		जाओ err_destroy_wq;
 
 	argv += args_used;
 	argc -= args_used;
 
 	/*
-	 * Any read-balancing addition depends on the
+	 * Any पढ़ो-balancing addition depends on the
 	 * DM_RAID1_HANDLE_ERRORS flag being present.
 	 * This is because the decision to balance depends
 	 * on the sync state of a region.  If the above
@@ -1144,128 +1145,128 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	 * the sync state may be inaccurate.
 	 */
 
-	if (argc) {
+	अगर (argc) अणु
 		ti->error = "Too many mirror arguments";
 		r = -EINVAL;
-		goto err_destroy_wq;
-	}
+		जाओ err_destroy_wq;
+	पूर्ण
 
 	ms->kcopyd_client = dm_kcopyd_client_create(&dm_kcopyd_throttle);
-	if (IS_ERR(ms->kcopyd_client)) {
+	अगर (IS_ERR(ms->kcopyd_client)) अणु
 		r = PTR_ERR(ms->kcopyd_client);
-		goto err_destroy_wq;
-	}
+		जाओ err_destroy_wq;
+	पूर्ण
 
 	wakeup_mirrord(ms);
-	return 0;
+	वापस 0;
 
 err_destroy_wq:
 	destroy_workqueue(ms->kmirrord_wq);
-err_free_context:
-	free_context(ms, ti, ms->nr_mirrors);
-	return r;
-}
+err_मुक्त_context:
+	मुक्त_context(ms, ti, ms->nr_mirrors);
+	वापस r;
+पूर्ण
 
-static void mirror_dtr(struct dm_target *ti)
-{
-	struct mirror_set *ms = (struct mirror_set *) ti->private;
+अटल व्योम mirror_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा mirror_set *ms = (काष्ठा mirror_set *) ti->निजी;
 
-	del_timer_sync(&ms->timer);
+	del_समयr_sync(&ms->समयr);
 	flush_workqueue(ms->kmirrord_wq);
 	flush_work(&ms->trigger_event);
 	dm_kcopyd_client_destroy(ms->kcopyd_client);
 	destroy_workqueue(ms->kmirrord_wq);
-	free_context(ms, ti, ms->nr_mirrors);
-}
+	मुक्त_context(ms, ti, ms->nr_mirrors);
+पूर्ण
 
 /*
  * Mirror mapping function
  */
-static int mirror_map(struct dm_target *ti, struct bio *bio)
-{
-	int r, rw = bio_data_dir(bio);
-	struct mirror *m;
-	struct mirror_set *ms = ti->private;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
-	struct dm_raid1_bio_record *bio_record =
-	  dm_per_bio_data(bio, sizeof(struct dm_raid1_bio_record));
+अटल पूर्णांक mirror_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	पूर्णांक r, rw = bio_data_dir(bio);
+	काष्ठा mirror *m;
+	काष्ठा mirror_set *ms = ti->निजी;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+	काष्ठा dm_raid1_bio_record *bio_record =
+	  dm_per_bio_data(bio, माप(काष्ठा dm_raid1_bio_record));
 
-	bio_record->details.bi_bdev = NULL;
+	bio_record->details.bi_bdev = शून्य;
 
-	if (rw == WRITE) {
-		/* Save region for mirror_end_io() handler */
-		bio_record->write_region = dm_rh_bio_to_region(ms->rh, bio);
+	अगर (rw == WRITE) अणु
+		/* Save region क्रम mirror_end_io() handler */
+		bio_record->ग_लिखो_region = dm_rh_bio_to_region(ms->rh, bio);
 		queue_bio(ms, bio, rw);
-		return DM_MAPIO_SUBMITTED;
-	}
+		वापस DM_MAPIO_SUBMITTED;
+	पूर्ण
 
 	r = log->type->in_sync(log, dm_rh_bio_to_region(ms->rh, bio), 0);
-	if (r < 0 && r != -EWOULDBLOCK)
-		return DM_MAPIO_KILL;
+	अगर (r < 0 && r != -EWOULDBLOCK)
+		वापस DM_MAPIO_KILL;
 
 	/*
 	 * If region is not in-sync queue the bio.
 	 */
-	if (!r || (r == -EWOULDBLOCK)) {
-		if (bio->bi_opf & REQ_RAHEAD)
-			return DM_MAPIO_KILL;
+	अगर (!r || (r == -EWOULDBLOCK)) अणु
+		अगर (bio->bi_opf & REQ_RAHEAD)
+			वापस DM_MAPIO_KILL;
 
 		queue_bio(ms, bio, rw);
-		return DM_MAPIO_SUBMITTED;
-	}
+		वापस DM_MAPIO_SUBMITTED;
+	पूर्ण
 
 	/*
-	 * The region is in-sync and we can perform reads directly.
-	 * Store enough information so we can retry if it fails.
+	 * The region is in-sync and we can perक्रमm पढ़ोs directly.
+	 * Store enough inक्रमmation so we can retry अगर it fails.
 	 */
 	m = choose_mirror(ms, bio->bi_iter.bi_sector);
-	if (unlikely(!m))
-		return DM_MAPIO_KILL;
+	अगर (unlikely(!m))
+		वापस DM_MAPIO_KILL;
 
 	dm_bio_record(&bio_record->details, bio);
 	bio_record->m = m;
 
 	map_bio(m, bio);
 
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static int mirror_end_io(struct dm_target *ti, struct bio *bio,
+अटल पूर्णांक mirror_end_io(काष्ठा dm_target *ti, काष्ठा bio *bio,
 		blk_status_t *error)
-{
-	int rw = bio_data_dir(bio);
-	struct mirror_set *ms = (struct mirror_set *) ti->private;
-	struct mirror *m = NULL;
-	struct dm_bio_details *bd = NULL;
-	struct dm_raid1_bio_record *bio_record =
-	  dm_per_bio_data(bio, sizeof(struct dm_raid1_bio_record));
+अणु
+	पूर्णांक rw = bio_data_dir(bio);
+	काष्ठा mirror_set *ms = (काष्ठा mirror_set *) ti->निजी;
+	काष्ठा mirror *m = शून्य;
+	काष्ठा dm_bio_details *bd = शून्य;
+	काष्ठा dm_raid1_bio_record *bio_record =
+	  dm_per_bio_data(bio, माप(काष्ठा dm_raid1_bio_record));
 
 	/*
-	 * We need to dec pending if this was a write.
+	 * We need to dec pending अगर this was a ग_लिखो.
 	 */
-	if (rw == WRITE) {
-		if (!(bio->bi_opf & REQ_PREFLUSH) &&
+	अगर (rw == WRITE) अणु
+		अगर (!(bio->bi_opf & REQ_PREFLUSH) &&
 		    bio_op(bio) != REQ_OP_DISCARD)
-			dm_rh_dec(ms->rh, bio_record->write_region);
-		return DM_ENDIO_DONE;
-	}
+			dm_rh_dec(ms->rh, bio_record->ग_लिखो_region);
+		वापस DM_ENDIO_DONE;
+	पूर्ण
 
-	if (*error == BLK_STS_NOTSUPP)
-		goto out;
+	अगर (*error == BLK_STS_NOTSUPP)
+		जाओ out;
 
-	if (bio->bi_opf & REQ_RAHEAD)
-		goto out;
+	अगर (bio->bi_opf & REQ_RAHEAD)
+		जाओ out;
 
-	if (unlikely(*error)) {
-		if (!bio_record->details.bi_bdev) {
+	अगर (unlikely(*error)) अणु
+		अगर (!bio_record->details.bi_bdev) अणु
 			/*
 			 * There wasn't enough memory to record necessary
-			 * information for a retry or there was no other
+			 * inक्रमmation क्रम a retry or there was no other
 			 * mirror in-sync.
 			 */
 			DMERR_LIMIT("Mirror read failed.");
-			return DM_ENDIO_DONE;
-		}
+			वापस DM_ENDIO_DONE;
+		पूर्ण
 
 		m = bio_record->m;
 
@@ -1275,41 +1276,41 @@ static int mirror_end_io(struct dm_target *ti, struct bio *bio,
 		fail_mirror(m, DM_RAID1_READ_ERROR);
 
 		/*
-		 * A failed read is requeued for another attempt using an intact
+		 * A failed पढ़ो is requeued क्रम another attempt using an पूर्णांकact
 		 * mirror.
 		 */
-		if (default_ok(m) || mirror_available(ms, bio)) {
+		अगर (शेष_ok(m) || mirror_available(ms, bio)) अणु
 			bd = &bio_record->details;
 
 			dm_bio_restore(bd, bio);
-			bio_record->details.bi_bdev = NULL;
+			bio_record->details.bi_bdev = शून्य;
 			bio->bi_status = 0;
 
 			queue_bio(ms, bio, rw);
-			return DM_ENDIO_INCOMPLETE;
-		}
+			वापस DM_ENDIO_INCOMPLETE;
+		पूर्ण
 		DMERR("All replicated volumes dead, failing I/O");
-	}
+	पूर्ण
 
 out:
-	bio_record->details.bi_bdev = NULL;
+	bio_record->details.bi_bdev = शून्य;
 
-	return DM_ENDIO_DONE;
-}
+	वापस DM_ENDIO_DONE;
+पूर्ण
 
-static void mirror_presuspend(struct dm_target *ti)
-{
-	struct mirror_set *ms = (struct mirror_set *) ti->private;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल व्योम mirror_presuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा mirror_set *ms = (काष्ठा mirror_set *) ti->निजी;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 
-	struct bio_list holds;
-	struct bio *bio;
+	काष्ठा bio_list holds;
+	काष्ठा bio *bio;
 
 	atomic_set(&ms->suspend, 1);
 
 	/*
-	 * Process bios in the hold list to start recovery waiting
-	 * for bios in the hold list. After the process, no bio has
+	 * Process bios in the hold list to start recovery रुकोing
+	 * क्रम bios in the hold list. After the process, no bio has
 	 * a chance to be added in the hold list because ms->suspend
 	 * is set.
 	 */
@@ -1318,7 +1319,7 @@ static void mirror_presuspend(struct dm_target *ti)
 	bio_list_init(&ms->holds);
 	spin_unlock_irq(&ms->lock);
 
-	while ((bio = bio_list_pop(&holds)))
+	जबतक ((bio = bio_list_pop(&holds)))
 		hold_bio(ms, bio);
 
 	/*
@@ -1327,134 +1328,134 @@ static void mirror_presuspend(struct dm_target *ti)
 	 */
 	dm_rh_stop_recovery(ms->rh);
 
-	wait_event(_kmirrord_recovery_stopped,
+	रुको_event(_kmirrord_recovery_stopped,
 		   !dm_rh_recovery_in_flight(ms->rh));
 
-	if (log->type->presuspend && log->type->presuspend(log))
+	अगर (log->type->presuspend && log->type->presuspend(log))
 		/* FIXME: need better error handling */
 		DMWARN("log presuspend failed");
 
 	/*
 	 * Now that recovery is complete/stopped and the
-	 * delayed bios are queued, we need to wait for
-	 * the worker thread to complete.  This way,
+	 * delayed bios are queued, we need to रुको क्रम
+	 * the worker thपढ़ो to complete.  This way,
 	 * we know that all of our I/O has been pushed.
 	 */
 	flush_workqueue(ms->kmirrord_wq);
-}
+पूर्ण
 
-static void mirror_postsuspend(struct dm_target *ti)
-{
-	struct mirror_set *ms = ti->private;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल व्योम mirror_postsuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा mirror_set *ms = ti->निजी;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 
-	if (log->type->postsuspend && log->type->postsuspend(log))
+	अगर (log->type->postsuspend && log->type->postsuspend(log))
 		/* FIXME: need better error handling */
 		DMWARN("log postsuspend failed");
-}
+पूर्ण
 
-static void mirror_resume(struct dm_target *ti)
-{
-	struct mirror_set *ms = ti->private;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+अटल व्योम mirror_resume(काष्ठा dm_target *ti)
+अणु
+	काष्ठा mirror_set *ms = ti->निजी;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
 
 	atomic_set(&ms->suspend, 0);
-	if (log->type->resume && log->type->resume(log))
+	अगर (log->type->resume && log->type->resume(log))
 		/* FIXME: need better error handling */
 		DMWARN("log resume failed");
 	dm_rh_start_recovery(ms->rh);
-}
+पूर्ण
 
 /*
- * device_status_char
+ * device_status_अक्षर
  * @m: mirror device/leg we want the status of
  *
- * We return one character representing the most severe error
+ * We वापस one अक्षरacter representing the most severe error
  * we have encountered.
  *    A => Alive - No failures
- *    D => Dead - A write failure occurred leaving mirror out-of-sync
+ *    D => Dead - A ग_लिखो failure occurred leaving mirror out-of-sync
  *    S => Sync - A sychronization failure occurred, mirror out-of-sync
- *    R => Read - A read failure occurred, mirror data unaffected
+ *    R => Read - A पढ़ो failure occurred, mirror data unaffected
  *
- * Returns: <char>
+ * Returns: <अक्षर>
  */
-static char device_status_char(struct mirror *m)
-{
-	if (!atomic_read(&(m->error_count)))
-		return 'A';
+अटल अक्षर device_status_अक्षर(काष्ठा mirror *m)
+अणु
+	अगर (!atomic_पढ़ो(&(m->error_count)))
+		वापस 'A';
 
-	return (test_bit(DM_RAID1_FLUSH_ERROR, &(m->error_type))) ? 'F' :
+	वापस (test_bit(DM_RAID1_FLUSH_ERROR, &(m->error_type))) ? 'F' :
 		(test_bit(DM_RAID1_WRITE_ERROR, &(m->error_type))) ? 'D' :
 		(test_bit(DM_RAID1_SYNC_ERROR, &(m->error_type))) ? 'S' :
 		(test_bit(DM_RAID1_READ_ERROR, &(m->error_type))) ? 'R' : 'U';
-}
+पूर्ण
 
 
-static void mirror_status(struct dm_target *ti, status_type_t type,
-			  unsigned status_flags, char *result, unsigned maxlen)
-{
-	unsigned int m, sz = 0;
-	int num_feature_args = 0;
-	struct mirror_set *ms = (struct mirror_set *) ti->private;
-	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
-	char buffer[MAX_NR_MIRRORS + 1];
+अटल व्योम mirror_status(काष्ठा dm_target *ti, status_type_t type,
+			  अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	अचिन्हित पूर्णांक m, sz = 0;
+	पूर्णांक num_feature_args = 0;
+	काष्ठा mirror_set *ms = (काष्ठा mirror_set *) ti->निजी;
+	काष्ठा dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
+	अक्षर buffer[MAX_NR_MIRRORS + 1];
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		DMEMIT("%d ", ms->nr_mirrors);
-		for (m = 0; m < ms->nr_mirrors; m++) {
+		क्रम (m = 0; m < ms->nr_mirrors; m++) अणु
 			DMEMIT("%s ", ms->mirror[m].dev->name);
-			buffer[m] = device_status_char(&(ms->mirror[m]));
-		}
+			buffer[m] = device_status_अक्षर(&(ms->mirror[m]));
+		पूर्ण
 		buffer[m] = '\0';
 
 		DMEMIT("%llu/%llu 1 %s ",
-		      (unsigned long long)log->type->get_sync_count(log),
-		      (unsigned long long)ms->nr_regions, buffer);
+		      (अचिन्हित दीर्घ दीर्घ)log->type->get_sync_count(log),
+		      (अचिन्हित दीर्घ दीर्घ)ms->nr_regions, buffer);
 
 		sz += log->type->status(log, type, result+sz, maxlen-sz);
 
-		break;
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
+	हाल STATUSTYPE_TABLE:
 		sz = log->type->status(log, type, result, maxlen);
 
 		DMEMIT("%d", ms->nr_mirrors);
-		for (m = 0; m < ms->nr_mirrors; m++)
+		क्रम (m = 0; m < ms->nr_mirrors; m++)
 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
-			       (unsigned long long)ms->mirror[m].offset);
+			       (अचिन्हित दीर्घ दीर्घ)ms->mirror[m].offset);
 
 		num_feature_args += !!errors_handled(ms);
 		num_feature_args += !!keep_log(ms);
-		if (num_feature_args) {
+		अगर (num_feature_args) अणु
 			DMEMIT(" %d", num_feature_args);
-			if (errors_handled(ms))
+			अगर (errors_handled(ms))
 				DMEMIT(" handle_errors");
-			if (keep_log(ms))
+			अगर (keep_log(ms))
 				DMEMIT(" keep_log");
-		}
+		पूर्ण
 
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int mirror_iterate_devices(struct dm_target *ti,
-				  iterate_devices_callout_fn fn, void *data)
-{
-	struct mirror_set *ms = ti->private;
-	int ret = 0;
-	unsigned i;
+अटल पूर्णांक mirror_iterate_devices(काष्ठा dm_target *ti,
+				  iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा mirror_set *ms = ti->निजी;
+	पूर्णांक ret = 0;
+	अचिन्हित i;
 
-	for (i = 0; !ret && i < ms->nr_mirrors; i++)
+	क्रम (i = 0; !ret && i < ms->nr_mirrors; i++)
 		ret = fn(ti, ms->mirror[i].dev,
 			 ms->mirror[i].offset, ti->len, data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct target_type mirror_target = {
+अटल काष्ठा target_type mirror_target = अणु
 	.name	 = "mirror",
-	.version = {1, 14, 0},
+	.version = अणु1, 14, 0पूर्ण,
 	.module	 = THIS_MODULE,
 	.ctr	 = mirror_ctr,
 	.dtr	 = mirror_dtr,
@@ -1465,32 +1466,32 @@ static struct target_type mirror_target = {
 	.resume	 = mirror_resume,
 	.status	 = mirror_status,
 	.iterate_devices = mirror_iterate_devices,
-};
+पूर्ण;
 
-static int __init dm_mirror_init(void)
-{
-	int r;
+अटल पूर्णांक __init dm_mirror_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = dm_register_target(&mirror_target);
-	if (r < 0) {
+	r = dm_रेजिस्टर_target(&mirror_target);
+	अगर (r < 0) अणु
 		DMERR("Failed to register mirror target");
-		goto bad_target;
-	}
+		जाओ bad_target;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bad_target:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_mirror_exit(void)
-{
-	dm_unregister_target(&mirror_target);
-}
+अटल व्योम __निकास dm_mirror_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&mirror_target);
+पूर्ण
 
 /* Module hooks */
 module_init(dm_mirror_init);
-module_exit(dm_mirror_exit);
+module_निकास(dm_mirror_निकास);
 
 MODULE_DESCRIPTION(DM_NAME " mirror target");
 MODULE_AUTHOR("Joe Thornber");

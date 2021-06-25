@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XOR_H
-#define _XOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XOR_H
+#घोषणा _XOR_H
 
-#define MAX_XOR_BLOCKS 4
+#घोषणा MAX_XOR_BLOCKS 4
 
-extern void xor_blocks(unsigned int count, unsigned int bytes,
-	void *dest, void **srcs);
+बाह्य व्योम xor_blocks(अचिन्हित पूर्णांक count, अचिन्हित पूर्णांक bytes,
+	व्योम *dest, व्योम **srcs);
 
-struct xor_block_template {
-        struct xor_block_template *next;
-        const char *name;
-        int speed;
-	void (*do_2)(unsigned long, unsigned long *, unsigned long *);
-	void (*do_3)(unsigned long, unsigned long *, unsigned long *,
-		     unsigned long *);
-	void (*do_4)(unsigned long, unsigned long *, unsigned long *,
-		     unsigned long *, unsigned long *);
-	void (*do_5)(unsigned long, unsigned long *, unsigned long *,
-		     unsigned long *, unsigned long *, unsigned long *);
-};
+काष्ठा xor_block_ढाँचा अणु
+        काष्ठा xor_block_ढाँचा *next;
+        स्थिर अक्षर *name;
+        पूर्णांक speed;
+	व्योम (*करो_2)(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
+	व्योम (*करो_3)(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
+		     अचिन्हित दीर्घ *);
+	व्योम (*करो_4)(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
+		     अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
+	व्योम (*करो_5)(अचिन्हित दीर्घ, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *,
+		     अचिन्हित दीर्घ *, अचिन्हित दीर्घ *, अचिन्हित दीर्घ *);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Regulator driver for RICOH RC5T583 power management chip.
+ * Regulator driver क्रम RICOH RC5T583 घातer management chip.
  *
  * Copyright (c) 2011-2012, NVIDIA CORPORATION.  All rights reserved.
  * Author: Laxman dewangan <ldewangan@nvidia.com>
@@ -9,61 +10,61 @@
  *      Copyright (C) 2011 RICOH COMPANY,LTD
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/gpio.h>
-#include <linux/mfd/rc5t583.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/mfd/rc5t583.h>
 
-struct rc5t583_regulator_info {
-	int			deepsleep_id;
+काष्ठा rc5t583_regulator_info अणु
+	पूर्णांक			deepsleep_id;
 
-	/* Regulator register address.*/
-	uint8_t			reg_disc_reg;
-	uint8_t			disc_bit;
-	uint8_t			deepsleep_reg;
+	/* Regulator रेजिस्टर address.*/
+	uपूर्णांक8_t			reg_disc_reg;
+	uपूर्णांक8_t			disc_bit;
+	uपूर्णांक8_t			deepsleep_reg;
 
-	/* Regulator specific turn-on delay  and voltage settling time*/
-	int			enable_uv_per_us;
+	/* Regulator specअगरic turn-on delay  and voltage settling समय*/
+	पूर्णांक			enable_uv_per_us;
 
 	/* Used by regulator core */
-	struct regulator_desc	desc;
-};
+	काष्ठा regulator_desc	desc;
+पूर्ण;
 
-static int rc5t583_regulator_enable_time(struct regulator_dev *rdev)
-{
-	struct rc5t583_regulator_info *reg_info = rdev_get_drvdata(rdev);
-	int vsel = regulator_get_voltage_sel_regmap(rdev);
-	int curr_uV = regulator_list_voltage_linear(rdev, vsel);
+अटल पूर्णांक rc5t583_regulator_enable_समय(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा rc5t583_regulator_info *reg_info = rdev_get_drvdata(rdev);
+	पूर्णांक vsel = regulator_get_voltage_sel_regmap(rdev);
+	पूर्णांक curr_uV = regulator_list_voltage_linear(rdev, vsel);
 
-	return DIV_ROUND_UP(curr_uV, reg_info->enable_uv_per_us);
-}
+	वापस DIV_ROUND_UP(curr_uV, reg_info->enable_uv_per_us);
+पूर्ण
 
-static const struct regulator_ops rc5t583_ops = {
+अटल स्थिर काष्ठा regulator_ops rc5t583_ops = अणु
 	.is_enabled		= regulator_is_enabled_regmap,
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
-	.enable_time		= rc5t583_regulator_enable_time,
+	.enable_समय		= rc5t583_regulator_enable_समय,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.list_voltage		= regulator_list_voltage_linear,
 	.map_voltage		= regulator_map_voltage_linear,
-	.set_voltage_time_sel	= regulator_set_voltage_time_sel,
-};
+	.set_voltage_समय_sel	= regulator_set_voltage_समय_sel,
+पूर्ण;
 
-#define RC5T583_REG(_id, _en_reg, _en_bit, _disc_reg, _disc_bit, \
+#घोषणा RC5T583_REG(_id, _en_reg, _en_bit, _disc_reg, _disc_bit, \
 		_vout_mask, _min_mv, _max_mv, _step_uV, _enable_mv) \
-{								\
+अणु								\
 	.reg_disc_reg	= RC5T583_REG_##_disc_reg,		\
 	.disc_bit	= _disc_bit,				\
 	.deepsleep_reg	= RC5T583_REG_##_id##DAC_DS,		\
 	.enable_uv_per_us = _enable_mv * 1000,			\
 	.deepsleep_id	= RC5T583_DS_##_id,			\
-	.desc = {						\
+	.desc = अणु						\
 		.name = "rc5t583-regulator-"#_id,		\
 		.id = RC5T583_REGULATOR_##_id,			\
 		.n_voltages = (_max_mv - _min_mv) * 1000 / _step_uV + 1, \
@@ -77,10 +78,10 @@ static const struct regulator_ops rc5t583_ops = {
 		.min_uV	= _min_mv * 1000,			\
 		.uV_step = _step_uV,				\
 		.ramp_delay = 40 * 1000,			\
-	},							\
-}
+	पूर्ण,							\
+पूर्ण
 
-static struct rc5t583_regulator_info rc5t583_reg_info[RC5T583_REGULATOR_MAX] = {
+अटल काष्ठा rc5t583_regulator_info rc5t583_reg_info[RC5T583_REGULATOR_MAX] = अणु
 	RC5T583_REG(DC0, DC0CTL, 0, DC0CTL, 1, 0x7F, 700, 1500, 12500, 4),
 	RC5T583_REG(DC1, DC1CTL, 0, DC1CTL, 1, 0x7F, 700, 1500, 12500, 14),
 	RC5T583_REG(DC2, DC2CTL, 0, DC2CTL, 1, 0x7F, 900, 2400, 12500, 14),
@@ -95,38 +96,38 @@ static struct rc5t583_regulator_info rc5t583_reg_info[RC5T583_REGULATOR_MAX] = {
 	RC5T583_REG(LDO7, LDOEN2, 7, LDODIS2, 7, 0x7F, 900, 3400, 25000, 233),
 	RC5T583_REG(LDO8, LDOEN1, 0, LDODIS1, 0, 0x7F, 900, 3400, 25000, 233),
 	RC5T583_REG(LDO9, LDOEN1, 1, LDODIS1, 1, 0x7F, 900, 3400, 25000, 133),
-};
+पूर्ण;
 
-static int rc5t583_regulator_probe(struct platform_device *pdev)
-{
-	struct rc5t583 *rc5t583 = dev_get_drvdata(pdev->dev.parent);
-	struct rc5t583_platform_data *pdata = dev_get_platdata(rc5t583->dev);
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	struct rc5t583_regulator_info *ri;
-	int ret;
-	int id;
+अटल पूर्णांक rc5t583_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rc5t583 *rc5t583 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा rc5t583_platक्रमm_data *pdata = dev_get_platdata(rc5t583->dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	काष्ठा rc5t583_regulator_info *ri;
+	पूर्णांक ret;
+	पूर्णांक id;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "No platform data, exiting...\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (id = 0; id < RC5T583_REGULATOR_MAX; ++id) {
+	क्रम (id = 0; id < RC5T583_REGULATOR_MAX; ++id) अणु
 		ri = &rc5t583_reg_info[id];
 
-		if (ri->deepsleep_id == RC5T583_DS_NONE)
-			goto skip_ext_pwr_config;
+		अगर (ri->deepsleep_id == RC5T583_DS_NONE)
+			जाओ skip_ext_pwr_config;
 
-		ret = rc5t583_ext_power_req_config(rc5t583->dev,
+		ret = rc5t583_ext_घातer_req_config(rc5t583->dev,
 				ri->deepsleep_id,
 				pdata->regulator_ext_pwr_control[id],
 				pdata->regulator_deepsleep_slot[id]);
 		/*
-		 * Configuring external control is not a major issue,
+		 * Configuring बाह्यal control is not a major issue,
 		 * just give warning.
 		 */
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_warn(&pdev->dev,
 				"Failed to configure ext control %d\n", id);
 
@@ -136,34 +137,34 @@ skip_ext_pwr_config:
 		config.driver_data = ri;
 		config.regmap = rc5t583->regmap;
 
-		rdev = devm_regulator_register(&pdev->dev, &ri->desc, &config);
-		if (IS_ERR(rdev)) {
+		rdev = devm_regulator_रेजिस्टर(&pdev->dev, &ri->desc, &config);
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(&pdev->dev, "Failed to register regulator %s\n",
 						ri->desc.name);
-			return PTR_ERR(rdev);
-		}
-	}
-	return 0;
-}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rc5t583_regulator_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver rc5t583_regulator_driver = अणु
+	.driver	= अणु
 		.name	= "rc5t583-regulator",
-	},
+	पूर्ण,
 	.probe		= rc5t583_regulator_probe,
-};
+पूर्ण;
 
-static int __init rc5t583_regulator_init(void)
-{
-	return platform_driver_register(&rc5t583_regulator_driver);
-}
+अटल पूर्णांक __init rc5t583_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&rc5t583_regulator_driver);
+पूर्ण
 subsys_initcall(rc5t583_regulator_init);
 
-static void __exit rc5t583_regulator_exit(void)
-{
-	platform_driver_unregister(&rc5t583_regulator_driver);
-}
-module_exit(rc5t583_regulator_exit);
+अटल व्योम __निकास rc5t583_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&rc5t583_regulator_driver);
+पूर्ण
+module_निकास(rc5t583_regulator_निकास);
 
 MODULE_AUTHOR("Laxman Dewangan <ldewangan@nvidia.com>");
 MODULE_DESCRIPTION("RC5T583 regulator driver");

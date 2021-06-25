@@ -1,1421 +1,1422 @@
-// SPDX-License-Identifier: LGPL-2.1
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
 /*
  * Copyright (C) 2010 Red Hat Inc, Steven Rostedt <srostedt@redhat.com>
  *
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <errno.h>
-#include <sys/types.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <मानकतर्क.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/types.h>
 
-#include "event-parse.h"
-#include "event-parse-local.h"
-#include "event-utils.h"
+#समावेश "event-parse.h"
+#समावेश "event-parse-local.h"
+#समावेश "event-utils.h"
 
-#define COMM "COMM"
-#define CPU "CPU"
+#घोषणा COMM "COMM"
+#घोषणा CPU "CPU"
 
-static struct tep_format_field comm = {
+अटल काष्ठा tep_क्रमmat_field comm = अणु
 	.name = "COMM",
-};
+पूर्ण;
 
-static struct tep_format_field cpu = {
+अटल काष्ठा tep_क्रमmat_field cpu = अणु
 	.name = "CPU",
-};
+पूर्ण;
 
-struct event_list {
-	struct event_list	*next;
-	struct tep_event	*event;
-};
+काष्ठा event_list अणु
+	काष्ठा event_list	*next;
+	काष्ठा tep_event	*event;
+पूर्ण;
 
-static void show_error(char *error_buf, const char *fmt, ...)
-{
-	unsigned long long index;
-	const char *input;
-	va_list ap;
-	int len;
-	int i;
+अटल व्योम show_error(अक्षर *error_buf, स्थिर अक्षर *fmt, ...)
+अणु
+	अचिन्हित दीर्घ दीर्घ index;
+	स्थिर अक्षर *input;
+	बहु_सूची ap;
+	पूर्णांक len;
+	पूर्णांक i;
 
 	input = get_input_buf();
 	index = get_input_buf_ptr();
-	len = input ? strlen(input) : 0;
+	len = input ? म_माप(input) : 0;
 
-	if (len) {
-		strcpy(error_buf, input);
+	अगर (len) अणु
+		म_नकल(error_buf, input);
 		error_buf[len] = '\n';
-		for (i = 1; i < len && i < index; i++)
+		क्रम (i = 1; i < len && i < index; i++)
 			error_buf[len+i] = ' ';
 		error_buf[len + i] = '^';
 		error_buf[len + i + 1] = '\n';
 		len += i+2;
-	}
+	पूर्ण
 
-	va_start(ap, fmt);
-	vsnprintf(error_buf + len, TEP_FILTER_ERROR_BUFSZ - len, fmt, ap);
-	va_end(ap);
-}
+	बहु_शुरू(ap, fmt);
+	vsnम_लिखो(error_buf + len, TEP_FILTER_ERROR_BUFSZ - len, fmt, ap);
+	बहु_पूर्ण(ap);
+पूर्ण
 
-static enum tep_event_type filter_read_token(char **tok)
-{
-	enum tep_event_type type;
-	char *token = NULL;
+अटल क्रमागत tep_event_type filter_पढ़ो_token(अक्षर **tok)
+अणु
+	क्रमागत tep_event_type type;
+	अक्षर *token = शून्य;
 
-	do {
-		free_token(token);
-		type = read_token(&token);
-	} while (type == TEP_EVENT_NEWLINE || type == TEP_EVENT_SPACE);
+	करो अणु
+		मुक्त_token(token);
+		type = पढ़ो_token(&token);
+	पूर्ण जबतक (type == TEP_EVENT_NEWLINE || type == TEP_EVENT_SPACE);
 
-	/* If token is = or ! check to see if the next char is ~ */
-	if (token &&
-	    (strcmp(token, "=") == 0 || strcmp(token, "!") == 0) &&
-	    peek_char() == '~') {
+	/* If token is = or ! check to see अगर the next अक्षर is ~ */
+	अगर (token &&
+	    (म_भेद(token, "=") == 0 || म_भेद(token, "!") == 0) &&
+	    peek_अक्षर() == '~') अणु
 		/* append it */
-		*tok = malloc(3);
-		if (*tok == NULL) {
-			free_token(token);
-			return TEP_EVENT_ERROR;
-		}
-		sprintf(*tok, "%c%c", *token, '~');
-		free_token(token);
-		/* Now remove the '~' from the buffer */
-		read_token(&token);
-		free_token(token);
-	} else
+		*tok = दो_स्मृति(3);
+		अगर (*tok == शून्य) अणु
+			मुक्त_token(token);
+			वापस TEP_EVENT_ERROR;
+		पूर्ण
+		प्र_लिखो(*tok, "%c%c", *token, '~');
+		मुक्त_token(token);
+		/* Now हटाओ the '~' from the buffer */
+		पढ़ो_token(&token);
+		मुक्त_token(token);
+	पूर्ण अन्यथा
 		*tok = token;
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-static int filter_cmp(const void *a, const void *b)
-{
-	const struct tep_filter_type *ea = a;
-	const struct tep_filter_type *eb = b;
+अटल पूर्णांक filter_cmp(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा tep_filter_type *ea = a;
+	स्थिर काष्ठा tep_filter_type *eb = b;
 
-	if (ea->event_id < eb->event_id)
-		return -1;
+	अगर (ea->event_id < eb->event_id)
+		वापस -1;
 
-	if (ea->event_id > eb->event_id)
-		return 1;
+	अगर (ea->event_id > eb->event_id)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct tep_filter_type *
-find_filter_type(struct tep_event_filter *filter, int id)
-{
-	struct tep_filter_type *filter_type;
-	struct tep_filter_type key;
+अटल काष्ठा tep_filter_type *
+find_filter_type(काष्ठा tep_event_filter *filter, पूर्णांक id)
+अणु
+	काष्ठा tep_filter_type *filter_type;
+	काष्ठा tep_filter_type key;
 
 	key.event_id = id;
 
-	filter_type = bsearch(&key, filter->event_filters,
+	filter_type = द्वा_खोज(&key, filter->event_filters,
 			      filter->filters,
-			      sizeof(*filter->event_filters),
+			      माप(*filter->event_filters),
 			      filter_cmp);
 
-	return filter_type;
-}
+	वापस filter_type;
+पूर्ण
 
-static struct tep_filter_type *
-add_filter_type(struct tep_event_filter *filter, int id)
-{
-	struct tep_filter_type *filter_type;
-	int i;
+अटल काष्ठा tep_filter_type *
+add_filter_type(काष्ठा tep_event_filter *filter, पूर्णांक id)
+अणु
+	काष्ठा tep_filter_type *filter_type;
+	पूर्णांक i;
 
 	filter_type = find_filter_type(filter, id);
-	if (filter_type)
-		return filter_type;
+	अगर (filter_type)
+		वापस filter_type;
 
-	filter_type = realloc(filter->event_filters,
-			      sizeof(*filter->event_filters) *
+	filter_type = पुनः_स्मृति(filter->event_filters,
+			      माप(*filter->event_filters) *
 			      (filter->filters + 1));
-	if (!filter_type)
-		return NULL;
+	अगर (!filter_type)
+		वापस शून्य;
 
 	filter->event_filters = filter_type;
 
-	for (i = 0; i < filter->filters; i++) {
-		if (filter->event_filters[i].event_id > id)
-			break;
-	}
+	क्रम (i = 0; i < filter->filters; i++) अणु
+		अगर (filter->event_filters[i].event_id > id)
+			अवरोध;
+	पूर्ण
 
-	if (i < filter->filters)
-		memmove(&filter->event_filters[i+1],
+	अगर (i < filter->filters)
+		स_हटाओ(&filter->event_filters[i+1],
 			&filter->event_filters[i],
-			sizeof(*filter->event_filters) *
+			माप(*filter->event_filters) *
 			(filter->filters - i));
 
 	filter_type = &filter->event_filters[i];
 	filter_type->event_id = id;
 	filter_type->event = tep_find_event(filter->tep, id);
-	filter_type->filter = NULL;
+	filter_type->filter = शून्य;
 
 	filter->filters++;
 
-	return filter_type;
-}
+	वापस filter_type;
+पूर्ण
 
 /**
  * tep_filter_alloc - create a new event filter
  * @tep: The tep that this filter is associated with
  */
-struct tep_event_filter *tep_filter_alloc(struct tep_handle *tep)
-{
-	struct tep_event_filter *filter;
+काष्ठा tep_event_filter *tep_filter_alloc(काष्ठा tep_handle *tep)
+अणु
+	काष्ठा tep_event_filter *filter;
 
-	filter = malloc(sizeof(*filter));
-	if (filter == NULL)
-		return NULL;
+	filter = दो_स्मृति(माप(*filter));
+	अगर (filter == शून्य)
+		वापस शून्य;
 
-	memset(filter, 0, sizeof(*filter));
+	स_रखो(filter, 0, माप(*filter));
 	filter->tep = tep;
 	tep_ref(tep);
 
-	return filter;
-}
+	वापस filter;
+पूर्ण
 
-static struct tep_filter_arg *allocate_arg(void)
-{
-	return calloc(1, sizeof(struct tep_filter_arg));
-}
+अटल काष्ठा tep_filter_arg *allocate_arg(व्योम)
+अणु
+	वापस सुस्मृति(1, माप(काष्ठा tep_filter_arg));
+पूर्ण
 
-static void free_arg(struct tep_filter_arg *arg)
-{
-	if (!arg)
-		return;
+अटल व्योम मुक्त_arg(काष्ठा tep_filter_arg *arg)
+अणु
+	अगर (!arg)
+		वापस;
 
-	switch (arg->type) {
-	case TEP_FILTER_ARG_NONE:
-	case TEP_FILTER_ARG_BOOLEAN:
-		break;
+	चयन (arg->type) अणु
+	हाल TEP_FILTER_ARG_NONE:
+	हाल TEP_FILTER_ARG_BOOLEAN:
+		अवरोध;
 
-	case TEP_FILTER_ARG_NUM:
-		free_arg(arg->num.left);
-		free_arg(arg->num.right);
-		break;
+	हाल TEP_FILTER_ARG_NUM:
+		मुक्त_arg(arg->num.left);
+		मुक्त_arg(arg->num.right);
+		अवरोध;
 
-	case TEP_FILTER_ARG_EXP:
-		free_arg(arg->exp.left);
-		free_arg(arg->exp.right);
-		break;
+	हाल TEP_FILTER_ARG_EXP:
+		मुक्त_arg(arg->exp.left);
+		मुक्त_arg(arg->exp.right);
+		अवरोध;
 
-	case TEP_FILTER_ARG_STR:
-		free(arg->str.val);
-		regfree(&arg->str.reg);
-		free(arg->str.buffer);
-		break;
+	हाल TEP_FILTER_ARG_STR:
+		मुक्त(arg->str.val);
+		regमुक्त(&arg->str.reg);
+		मुक्त(arg->str.buffer);
+		अवरोध;
 
-	case TEP_FILTER_ARG_VALUE:
-		if (arg->value.type == TEP_FILTER_STRING ||
+	हाल TEP_FILTER_ARG_VALUE:
+		अगर (arg->value.type == TEP_FILTER_STRING ||
 		    arg->value.type == TEP_FILTER_CHAR)
-			free(arg->value.str);
-		break;
+			मुक्त(arg->value.str);
+		अवरोध;
 
-	case TEP_FILTER_ARG_OP:
-		free_arg(arg->op.left);
-		free_arg(arg->op.right);
-	default:
-		break;
-	}
+	हाल TEP_FILTER_ARG_OP:
+		मुक्त_arg(arg->op.left);
+		मुक्त_arg(arg->op.right);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	free(arg);
-}
+	मुक्त(arg);
+पूर्ण
 
-static int add_event(struct event_list **events,
-		     struct tep_event *event)
-{
-	struct event_list *list;
+अटल पूर्णांक add_event(काष्ठा event_list **events,
+		     काष्ठा tep_event *event)
+अणु
+	काष्ठा event_list *list;
 
-	list = malloc(sizeof(*list));
-	if (list == NULL)
-		return -1;
+	list = दो_स्मृति(माप(*list));
+	अगर (list == शून्य)
+		वापस -1;
 
 	list->next = *events;
 	*events = list;
 	list->event = event;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int event_match(struct tep_event *event,
+अटल पूर्णांक event_match(काष्ठा tep_event *event,
 		       regex_t *sreg, regex_t *ereg)
-{
-	if (sreg) {
-		return !regexec(sreg, event->system, 0, NULL, 0) &&
-			!regexec(ereg, event->name, 0, NULL, 0);
-	}
+अणु
+	अगर (sreg) अणु
+		वापस !regexec(sreg, event->प्रणाली, 0, शून्य, 0) &&
+			!regexec(ereg, event->name, 0, शून्य, 0);
+	पूर्ण
 
-	return !regexec(ereg, event->system, 0, NULL, 0) ||
-		!regexec(ereg, event->name, 0, NULL, 0);
-}
+	वापस !regexec(ereg, event->प्रणाली, 0, शून्य, 0) ||
+		!regexec(ereg, event->name, 0, शून्य, 0);
+पूर्ण
 
-static enum tep_errno
-find_event(struct tep_handle *tep, struct event_list **events,
-	   char *sys_name, char *event_name)
-{
-	struct tep_event *event;
+अटल क्रमागत tep_त्रुटि_सं
+find_event(काष्ठा tep_handle *tep, काष्ठा event_list **events,
+	   अक्षर *sys_name, अक्षर *event_name)
+अणु
+	काष्ठा tep_event *event;
 	regex_t ereg;
 	regex_t sreg;
-	int match = 0;
-	int fail = 0;
-	char *reg;
-	int ret;
-	int i;
+	पूर्णांक match = 0;
+	पूर्णांक fail = 0;
+	अक्षर *reg;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!event_name) {
-		/* if no name is given, then swap sys and name */
+	अगर (!event_name) अणु
+		/* अगर no name is given, then swap sys and name */
 		event_name = sys_name;
-		sys_name = NULL;
-	}
+		sys_name = शून्य;
+	पूर्ण
 
-	ret = asprintf(&reg, "^%s$", event_name);
-	if (ret < 0)
-		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	ret = aप्र_लिखो(&reg, "^%s$", event_name);
+	अगर (ret < 0)
+		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
 
 	ret = regcomp(&ereg, reg, REG_ICASE|REG_NOSUB);
-	free(reg);
+	मुक्त(reg);
 
-	if (ret)
-		return TEP_ERRNO__INVALID_EVENT_NAME;
+	अगर (ret)
+		वापस TEP_ERRNO__INVALID_EVENT_NAME;
 
-	if (sys_name) {
-		ret = asprintf(&reg, "^%s$", sys_name);
-		if (ret < 0) {
-			regfree(&ereg);
-			return TEP_ERRNO__MEM_ALLOC_FAILED;
-		}
+	अगर (sys_name) अणु
+		ret = aप्र_लिखो(&reg, "^%s$", sys_name);
+		अगर (ret < 0) अणु
+			regमुक्त(&ereg);
+			वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+		पूर्ण
 
 		ret = regcomp(&sreg, reg, REG_ICASE|REG_NOSUB);
-		free(reg);
-		if (ret) {
-			regfree(&ereg);
-			return TEP_ERRNO__INVALID_EVENT_NAME;
-		}
-	}
+		मुक्त(reg);
+		अगर (ret) अणु
+			regमुक्त(&ereg);
+			वापस TEP_ERRNO__INVALID_EVENT_NAME;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < tep->nr_events; i++) {
+	क्रम (i = 0; i < tep->nr_events; i++) अणु
 		event = tep->events[i];
-		if (event_match(event, sys_name ? &sreg : NULL, &ereg)) {
+		अगर (event_match(event, sys_name ? &sreg : शून्य, &ereg)) अणु
 			match = 1;
-			if (add_event(events, event) < 0) {
+			अगर (add_event(events, event) < 0) अणु
 				fail = 1;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	regfree(&ereg);
-	if (sys_name)
-		regfree(&sreg);
+	regमुक्त(&ereg);
+	अगर (sys_name)
+		regमुक्त(&sreg);
 
-	if (!match)
-		return TEP_ERRNO__EVENT_NOT_FOUND;
-	if (fail)
-		return TEP_ERRNO__MEM_ALLOC_FAILED;
+	अगर (!match)
+		वापस TEP_ERRNO__EVENT_NOT_FOUND;
+	अगर (fail)
+		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_events(struct event_list *events)
-{
-	struct event_list *event;
+अटल व्योम मुक्त_events(काष्ठा event_list *events)
+अणु
+	काष्ठा event_list *event;
 
-	while (events) {
+	जबतक (events) अणु
 		event = events;
 		events = events->next;
-		free(event);
-	}
-}
+		मुक्त(event);
+	पूर्ण
+पूर्ण
 
-static enum tep_errno
-create_arg_item(struct tep_event *event, const char *token,
-		enum tep_event_type type, struct tep_filter_arg **parg, char *error_str)
-{
-	struct tep_format_field *field;
-	struct tep_filter_arg *arg;
+अटल क्रमागत tep_त्रुटि_सं
+create_arg_item(काष्ठा tep_event *event, स्थिर अक्षर *token,
+		क्रमागत tep_event_type type, काष्ठा tep_filter_arg **parg, अक्षर *error_str)
+अणु
+	काष्ठा tep_क्रमmat_field *field;
+	काष्ठा tep_filter_arg *arg;
 
 	arg = allocate_arg();
-	if (arg == NULL) {
+	अगर (arg == शून्य) अणु
 		show_error(error_str, "failed to allocate filter arg");
-		return TEP_ERRNO__MEM_ALLOC_FAILED;
-	}
+		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+	पूर्ण
 
-	switch (type) {
+	चयन (type) अणु
 
-	case TEP_EVENT_SQUOTE:
-	case TEP_EVENT_DQUOTE:
+	हाल TEP_EVENT_SQUOTE:
+	हाल TEP_EVENT_DQUOTE:
 		arg->type = TEP_FILTER_ARG_VALUE;
 		arg->value.type =
 			type == TEP_EVENT_DQUOTE ? TEP_FILTER_STRING : TEP_FILTER_CHAR;
 		arg->value.str = strdup(token);
-		if (!arg->value.str) {
-			free_arg(arg);
+		अगर (!arg->value.str) अणु
+			मुक्त_arg(arg);
 			show_error(error_str, "failed to allocate string filter arg");
-			return TEP_ERRNO__MEM_ALLOC_FAILED;
-		}
-		break;
-	case TEP_EVENT_ITEM:
-		/* if it is a number, then convert it */
-		if (isdigit(token[0])) {
+			वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+		पूर्ण
+		अवरोध;
+	हाल TEP_EVENT_ITEM:
+		/* अगर it is a number, then convert it */
+		अगर (है_अंक(token[0])) अणु
 			arg->type = TEP_FILTER_ARG_VALUE;
 			arg->value.type = TEP_FILTER_NUMBER;
-			arg->value.val = strtoull(token, NULL, 0);
-			break;
-		}
+			arg->value.val = म_से_अदीर्घl(token, शून्य, 0);
+			अवरोध;
+		पूर्ण
 		/* Consider this a field */
 		field = tep_find_any_field(event, token);
-		if (!field) {
+		अगर (!field) अणु
 			/* If token is 'COMM' or 'CPU' then it is special */
-			if (strcmp(token, COMM) == 0) {
+			अगर (म_भेद(token, COMM) == 0) अणु
 				field = &comm;
-			} else if (strcmp(token, CPU) == 0) {
+			पूर्ण अन्यथा अगर (म_भेद(token, CPU) == 0) अणु
 				field = &cpu;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* not a field, Make it false */
 				arg->type = TEP_FILTER_ARG_BOOLEAN;
 				arg->boolean.value = TEP_FILTER_FALSE;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		arg->type = TEP_FILTER_ARG_FIELD;
 		arg->field.field = field;
-		break;
-	default:
-		free_arg(arg);
+		अवरोध;
+	शेष:
+		मुक्त_arg(arg);
 		show_error(error_str, "expected a value but found %s", token);
-		return TEP_ERRNO__UNEXPECTED_TYPE;
-	}
+		वापस TEP_ERRNO__UNEXPECTED_TYPE;
+	पूर्ण
 	*parg = arg;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct tep_filter_arg *
-create_arg_op(enum tep_filter_op_type btype)
-{
-	struct tep_filter_arg *arg;
+अटल काष्ठा tep_filter_arg *
+create_arg_op(क्रमागत tep_filter_op_type btype)
+अणु
+	काष्ठा tep_filter_arg *arg;
 
 	arg = allocate_arg();
-	if (!arg)
-		return NULL;
+	अगर (!arg)
+		वापस शून्य;
 
 	arg->type = TEP_FILTER_ARG_OP;
 	arg->op.type = btype;
 
-	return arg;
-}
+	वापस arg;
+पूर्ण
 
-static struct tep_filter_arg *
-create_arg_exp(enum tep_filter_exp_type etype)
-{
-	struct tep_filter_arg *arg;
+अटल काष्ठा tep_filter_arg *
+create_arg_exp(क्रमागत tep_filter_exp_type etype)
+अणु
+	काष्ठा tep_filter_arg *arg;
 
 	arg = allocate_arg();
-	if (!arg)
-		return NULL;
+	अगर (!arg)
+		वापस शून्य;
 
 	arg->type = TEP_FILTER_ARG_EXP;
 	arg->exp.type = etype;
 
-	return arg;
-}
+	वापस arg;
+पूर्ण
 
-static struct tep_filter_arg *
-create_arg_cmp(enum tep_filter_cmp_type ctype)
-{
-	struct tep_filter_arg *arg;
+अटल काष्ठा tep_filter_arg *
+create_arg_cmp(क्रमागत tep_filter_cmp_type ctype)
+अणु
+	काष्ठा tep_filter_arg *arg;
 
 	arg = allocate_arg();
-	if (!arg)
-		return NULL;
+	अगर (!arg)
+		वापस शून्य;
 
-	/* Use NUM and change if necessary */
+	/* Use NUM and change अगर necessary */
 	arg->type = TEP_FILTER_ARG_NUM;
 	arg->num.type = ctype;
 
-	return arg;
-}
+	वापस arg;
+पूर्ण
 
-static enum tep_errno
-add_right(struct tep_filter_arg *op, struct tep_filter_arg *arg, char *error_str)
-{
-	struct tep_filter_arg *left;
-	char *str;
-	int op_type;
-	int ret;
+अटल क्रमागत tep_त्रुटि_सं
+add_right(काष्ठा tep_filter_arg *op, काष्ठा tep_filter_arg *arg, अक्षर *error_str)
+अणु
+	काष्ठा tep_filter_arg *left;
+	अक्षर *str;
+	पूर्णांक op_type;
+	पूर्णांक ret;
 
-	switch (op->type) {
-	case TEP_FILTER_ARG_EXP:
-		if (op->exp.right)
-			goto out_fail;
+	चयन (op->type) अणु
+	हाल TEP_FILTER_ARG_EXP:
+		अगर (op->exp.right)
+			जाओ out_fail;
 		op->exp.right = arg;
-		break;
+		अवरोध;
 
-	case TEP_FILTER_ARG_OP:
-		if (op->op.right)
-			goto out_fail;
+	हाल TEP_FILTER_ARG_OP:
+		अगर (op->op.right)
+			जाओ out_fail;
 		op->op.right = arg;
-		break;
+		अवरोध;
 
-	case TEP_FILTER_ARG_NUM:
-		if (op->op.right)
-			goto out_fail;
+	हाल TEP_FILTER_ARG_NUM:
+		अगर (op->op.right)
+			जाओ out_fail;
 		/*
 		 * The arg must be num, str, or field
 		 */
-		switch (arg->type) {
-		case TEP_FILTER_ARG_VALUE:
-		case TEP_FILTER_ARG_FIELD:
-			break;
-		default:
+		चयन (arg->type) अणु
+		हाल TEP_FILTER_ARG_VALUE:
+		हाल TEP_FILTER_ARG_FIELD:
+			अवरोध;
+		शेष:
 			show_error(error_str, "Illegal rvalue");
-			return TEP_ERRNO__ILLEGAL_RVALUE;
-		}
+			वापस TEP_ERRNO__ILLEGAL_RVALUE;
+		पूर्ण
 
 		/*
 		 * Depending on the type, we may need to
 		 * convert this to a string or regex.
 		 */
-		switch (arg->value.type) {
-		case TEP_FILTER_CHAR:
+		चयन (arg->value.type) अणु
+		हाल TEP_FILTER_CHAR:
 			/*
-			 * A char should be converted to number if
+			 * A अक्षर should be converted to number अगर
 			 * the string is 1 byte, and the compare
 			 * is not a REGEX.
 			 */
-			if (strlen(arg->value.str) == 1 &&
+			अगर (म_माप(arg->value.str) == 1 &&
 			    op->num.type != TEP_FILTER_CMP_REGEX &&
-			    op->num.type != TEP_FILTER_CMP_NOT_REGEX) {
+			    op->num.type != TEP_FILTER_CMP_NOT_REGEX) अणु
 				arg->value.type = TEP_FILTER_NUMBER;
-				goto do_int;
-			}
+				जाओ करो_पूर्णांक;
+			पूर्ण
 			/* fall through */
-		case TEP_FILTER_STRING:
+		हाल TEP_FILTER_STRING:
 
 			/* convert op to a string arg */
 			op_type = op->num.type;
 			left = op->num.left;
 			str = arg->value.str;
 
-			/* reset the op for the new field */
-			memset(op, 0, sizeof(*op));
+			/* reset the op क्रम the new field */
+			स_रखो(op, 0, माप(*op));
 
 			/*
 			 * If left arg was a field not found then
-			 * NULL the entire op.
+			 * शून्य the entire op.
 			 */
-			if (left->type == TEP_FILTER_ARG_BOOLEAN) {
-				free_arg(left);
-				free_arg(arg);
+			अगर (left->type == TEP_FILTER_ARG_BOOLEAN) अणु
+				मुक्त_arg(left);
+				मुक्त_arg(arg);
 				op->type = TEP_FILTER_ARG_BOOLEAN;
 				op->boolean.value = TEP_FILTER_FALSE;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Left arg must be a field */
-			if (left->type != TEP_FILTER_ARG_FIELD) {
+			अगर (left->type != TEP_FILTER_ARG_FIELD) अणु
 				show_error(error_str,
 					   "Illegal lvalue for string comparison");
-				return TEP_ERRNO__ILLEGAL_LVALUE;
-			}
+				वापस TEP_ERRNO__ILLEGAL_LVALUE;
+			पूर्ण
 
 			/* Make sure this is a valid string compare */
-			switch (op_type) {
-			case TEP_FILTER_CMP_EQ:
+			चयन (op_type) अणु
+			हाल TEP_FILTER_CMP_EQ:
 				op_type = TEP_FILTER_CMP_MATCH;
-				break;
-			case TEP_FILTER_CMP_NE:
+				अवरोध;
+			हाल TEP_FILTER_CMP_NE:
 				op_type = TEP_FILTER_CMP_NOT_MATCH;
-				break;
+				अवरोध;
 
-			case TEP_FILTER_CMP_REGEX:
-			case TEP_FILTER_CMP_NOT_REGEX:
+			हाल TEP_FILTER_CMP_REGEX:
+			हाल TEP_FILTER_CMP_NOT_REGEX:
 				ret = regcomp(&op->str.reg, str, REG_ICASE|REG_NOSUB);
-				if (ret) {
+				अगर (ret) अणु
 					show_error(error_str,
 						   "RegEx '%s' did not compute",
 						   str);
-					return TEP_ERRNO__INVALID_REGEX;
-				}
-				break;
-			default:
+					वापस TEP_ERRNO__INVALID_REGEX;
+				पूर्ण
+				अवरोध;
+			शेष:
 				show_error(error_str,
 					   "Illegal comparison for string");
-				return TEP_ERRNO__ILLEGAL_STRING_CMP;
-			}
+				वापस TEP_ERRNO__ILLEGAL_STRING_CMP;
+			पूर्ण
 
 			op->type = TEP_FILTER_ARG_STR;
 			op->str.type = op_type;
 			op->str.field = left->field.field;
 			op->str.val = strdup(str);
-			if (!op->str.val) {
+			अगर (!op->str.val) अणु
 				show_error(error_str, "Failed to allocate string filter");
-				return TEP_ERRNO__MEM_ALLOC_FAILED;
-			}
+				वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+			पूर्ण
 			/*
-			 * Need a buffer to copy data for tests
+			 * Need a buffer to copy data क्रम tests
 			 */
-			op->str.buffer = malloc(op->str.field->size + 1);
-			if (!op->str.buffer) {
+			op->str.buffer = दो_स्मृति(op->str.field->size + 1);
+			अगर (!op->str.buffer) अणु
 				show_error(error_str, "Failed to allocate string filter");
-				return TEP_ERRNO__MEM_ALLOC_FAILED;
-			}
+				वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+			पूर्ण
 			/* Null terminate this buffer */
 			op->str.buffer[op->str.field->size] = 0;
 
-			/* We no longer have left or right args */
-			free_arg(arg);
-			free_arg(left);
+			/* We no दीर्घer have left or right args */
+			मुक्त_arg(arg);
+			मुक्त_arg(left);
 
-			break;
+			अवरोध;
 
-		case TEP_FILTER_NUMBER:
+		हाल TEP_FILTER_NUMBER:
 
- do_int:
-			switch (op->num.type) {
-			case TEP_FILTER_CMP_REGEX:
-			case TEP_FILTER_CMP_NOT_REGEX:
+ करो_पूर्णांक:
+			चयन (op->num.type) अणु
+			हाल TEP_FILTER_CMP_REGEX:
+			हाल TEP_FILTER_CMP_NOT_REGEX:
 				show_error(error_str,
 					   "Op not allowed with integers");
-				return TEP_ERRNO__ILLEGAL_INTEGER_CMP;
+				वापस TEP_ERRNO__ILLEGAL_INTEGER_CMP;
 
-			default:
-				break;
-			}
+			शेष:
+				अवरोध;
+			पूर्ण
 
 			/* numeric compare */
 			op->num.right = arg;
-			break;
-		default:
-			goto out_fail;
-		}
-		break;
-	default:
-		goto out_fail;
-	}
+			अवरोध;
+		शेष:
+			जाओ out_fail;
+		पूर्ण
+		अवरोध;
+	शेष:
+		जाओ out_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  out_fail:
 	show_error(error_str, "Syntax error");
-	return TEP_ERRNO__SYNTAX_ERROR;
-}
+	वापस TEP_ERRNO__SYNTAX_ERROR;
+पूर्ण
 
-static struct tep_filter_arg *
-rotate_op_right(struct tep_filter_arg *a, struct tep_filter_arg *b)
-{
-	struct tep_filter_arg *arg;
+अटल काष्ठा tep_filter_arg *
+rotate_op_right(काष्ठा tep_filter_arg *a, काष्ठा tep_filter_arg *b)
+अणु
+	काष्ठा tep_filter_arg *arg;
 
 	arg = a->op.right;
 	a->op.right = b;
-	return arg;
-}
+	वापस arg;
+पूर्ण
 
-static enum tep_errno add_left(struct tep_filter_arg *op, struct tep_filter_arg *arg)
-{
-	switch (op->type) {
-	case TEP_FILTER_ARG_EXP:
-		if (arg->type == TEP_FILTER_ARG_OP)
+अटल क्रमागत tep_त्रुटि_सं add_left(काष्ठा tep_filter_arg *op, काष्ठा tep_filter_arg *arg)
+अणु
+	चयन (op->type) अणु
+	हाल TEP_FILTER_ARG_EXP:
+		अगर (arg->type == TEP_FILTER_ARG_OP)
 			arg = rotate_op_right(arg, op);
 		op->exp.left = arg;
-		break;
+		अवरोध;
 
-	case TEP_FILTER_ARG_OP:
+	हाल TEP_FILTER_ARG_OP:
 		op->op.left = arg;
-		break;
-	case TEP_FILTER_ARG_NUM:
-		if (arg->type == TEP_FILTER_ARG_OP)
+		अवरोध;
+	हाल TEP_FILTER_ARG_NUM:
+		अगर (arg->type == TEP_FILTER_ARG_OP)
 			arg = rotate_op_right(arg, op);
 
 		/* left arg of compares must be a field */
-		if (arg->type != TEP_FILTER_ARG_FIELD &&
+		अगर (arg->type != TEP_FILTER_ARG_FIELD &&
 		    arg->type != TEP_FILTER_ARG_BOOLEAN)
-			return TEP_ERRNO__INVALID_ARG_TYPE;
+			वापस TEP_ERRNO__INVALID_ARG_TYPE;
 		op->num.left = arg;
-		break;
-	default:
-		return TEP_ERRNO__INVALID_ARG_TYPE;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस TEP_ERRNO__INVALID_ARG_TYPE;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-enum op_type {
+क्रमागत op_type अणु
 	OP_NONE,
 	OP_BOOL,
 	OP_NOT,
 	OP_EXP,
 	OP_CMP,
-};
+पूर्ण;
 
-static enum op_type process_op(const char *token,
-			       enum tep_filter_op_type *btype,
-			       enum tep_filter_cmp_type *ctype,
-			       enum tep_filter_exp_type *etype)
-{
+अटल क्रमागत op_type process_op(स्थिर अक्षर *token,
+			       क्रमागत tep_filter_op_type *btype,
+			       क्रमागत tep_filter_cmp_type *ctype,
+			       क्रमागत tep_filter_exp_type *etype)
+अणु
 	*btype = TEP_FILTER_OP_NOT;
 	*etype = TEP_FILTER_EXP_NONE;
 	*ctype = TEP_FILTER_CMP_NONE;
 
-	if (strcmp(token, "&&") == 0)
+	अगर (म_भेद(token, "&&") == 0)
 		*btype = TEP_FILTER_OP_AND;
-	else if (strcmp(token, "||") == 0)
+	अन्यथा अगर (म_भेद(token, "||") == 0)
 		*btype = TEP_FILTER_OP_OR;
-	else if (strcmp(token, "!") == 0)
-		return OP_NOT;
+	अन्यथा अगर (म_भेद(token, "!") == 0)
+		वापस OP_NOT;
 
-	if (*btype != TEP_FILTER_OP_NOT)
-		return OP_BOOL;
+	अगर (*btype != TEP_FILTER_OP_NOT)
+		वापस OP_BOOL;
 
-	/* Check for value expressions */
-	if (strcmp(token, "+") == 0) {
+	/* Check क्रम value expressions */
+	अगर (म_भेद(token, "+") == 0) अणु
 		*etype = TEP_FILTER_EXP_ADD;
-	} else if (strcmp(token, "-") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "-") == 0) अणु
 		*etype = TEP_FILTER_EXP_SUB;
-	} else if (strcmp(token, "*") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "*") == 0) अणु
 		*etype = TEP_FILTER_EXP_MUL;
-	} else if (strcmp(token, "/") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "/") == 0) अणु
 		*etype = TEP_FILTER_EXP_DIV;
-	} else if (strcmp(token, "%") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "%") == 0) अणु
 		*etype = TEP_FILTER_EXP_MOD;
-	} else if (strcmp(token, ">>") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, ">>") == 0) अणु
 		*etype = TEP_FILTER_EXP_RSHIFT;
-	} else if (strcmp(token, "<<") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "<<") == 0) अणु
 		*etype = TEP_FILTER_EXP_LSHIFT;
-	} else if (strcmp(token, "&") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "&") == 0) अणु
 		*etype = TEP_FILTER_EXP_AND;
-	} else if (strcmp(token, "|") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "|") == 0) अणु
 		*etype = TEP_FILTER_EXP_OR;
-	} else if (strcmp(token, "^") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(token, "^") == 0) अणु
 		*etype = TEP_FILTER_EXP_XOR;
-	} else if (strcmp(token, "~") == 0)
+	पूर्ण अन्यथा अगर (म_भेद(token, "~") == 0)
 		*etype = TEP_FILTER_EXP_NOT;
 
-	if (*etype != TEP_FILTER_EXP_NONE)
-		return OP_EXP;
+	अगर (*etype != TEP_FILTER_EXP_NONE)
+		वापस OP_EXP;
 
-	/* Check for compares */
-	if (strcmp(token, "==") == 0)
+	/* Check क्रम compares */
+	अगर (म_भेद(token, "==") == 0)
 		*ctype = TEP_FILTER_CMP_EQ;
-	else if (strcmp(token, "!=") == 0)
+	अन्यथा अगर (म_भेद(token, "!=") == 0)
 		*ctype = TEP_FILTER_CMP_NE;
-	else if (strcmp(token, "<") == 0)
+	अन्यथा अगर (म_भेद(token, "<") == 0)
 		*ctype = TEP_FILTER_CMP_LT;
-	else if (strcmp(token, ">") == 0)
+	अन्यथा अगर (म_भेद(token, ">") == 0)
 		*ctype = TEP_FILTER_CMP_GT;
-	else if (strcmp(token, "<=") == 0)
+	अन्यथा अगर (म_भेद(token, "<=") == 0)
 		*ctype = TEP_FILTER_CMP_LE;
-	else if (strcmp(token, ">=") == 0)
+	अन्यथा अगर (म_भेद(token, ">=") == 0)
 		*ctype = TEP_FILTER_CMP_GE;
-	else if (strcmp(token, "=~") == 0)
+	अन्यथा अगर (म_भेद(token, "=~") == 0)
 		*ctype = TEP_FILTER_CMP_REGEX;
-	else if (strcmp(token, "!~") == 0)
+	अन्यथा अगर (म_भेद(token, "!~") == 0)
 		*ctype = TEP_FILTER_CMP_NOT_REGEX;
-	else
-		return OP_NONE;
+	अन्यथा
+		वापस OP_NONE;
 
-	return OP_CMP;
-}
+	वापस OP_CMP;
+पूर्ण
 
-static int check_op_done(struct tep_filter_arg *arg)
-{
-	switch (arg->type) {
-	case TEP_FILTER_ARG_EXP:
-		return arg->exp.right != NULL;
+अटल पूर्णांक check_op_करोne(काष्ठा tep_filter_arg *arg)
+अणु
+	चयन (arg->type) अणु
+	हाल TEP_FILTER_ARG_EXP:
+		वापस arg->exp.right != शून्य;
 
-	case TEP_FILTER_ARG_OP:
-		return arg->op.right != NULL;
+	हाल TEP_FILTER_ARG_OP:
+		वापस arg->op.right != शून्य;
 
-	case TEP_FILTER_ARG_NUM:
-		return arg->num.right != NULL;
+	हाल TEP_FILTER_ARG_NUM:
+		वापस arg->num.right != शून्य;
 
-	case TEP_FILTER_ARG_STR:
-		/* A string conversion is always done */
-		return 1;
+	हाल TEP_FILTER_ARG_STR:
+		/* A string conversion is always करोne */
+		वापस 1;
 
-	case TEP_FILTER_ARG_BOOLEAN:
+	हाल TEP_FILTER_ARG_BOOLEAN:
 		/* field not found, is ok */
-		return 1;
+		वापस 1;
 
-	default:
-		return 0;
-	}
-}
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-enum filter_vals {
+क्रमागत filter_vals अणु
 	FILTER_VAL_NORM,
 	FILTER_VAL_FALSE,
 	FILTER_VAL_TRUE,
-};
+पूर्ण;
 
-static enum tep_errno
-reparent_op_arg(struct tep_filter_arg *parent, struct tep_filter_arg *old_child,
-		struct tep_filter_arg *arg, char *error_str)
-{
-	struct tep_filter_arg *other_child;
-	struct tep_filter_arg **ptr;
+अटल क्रमागत tep_त्रुटि_सं
+reparent_op_arg(काष्ठा tep_filter_arg *parent, काष्ठा tep_filter_arg *old_child,
+		काष्ठा tep_filter_arg *arg, अक्षर *error_str)
+अणु
+	काष्ठा tep_filter_arg *other_child;
+	काष्ठा tep_filter_arg **ptr;
 
-	if (parent->type != TEP_FILTER_ARG_OP &&
-	    arg->type != TEP_FILTER_ARG_OP) {
+	अगर (parent->type != TEP_FILTER_ARG_OP &&
+	    arg->type != TEP_FILTER_ARG_OP) अणु
 		show_error(error_str, "can not reparent other than OP");
-		return TEP_ERRNO__REPARENT_NOT_OP;
-	}
+		वापस TEP_ERRNO__REPARENT_NOT_OP;
+	पूर्ण
 
 	/* Get the sibling */
-	if (old_child->op.right == arg) {
+	अगर (old_child->op.right == arg) अणु
 		ptr = &old_child->op.right;
 		other_child = old_child->op.left;
-	} else if (old_child->op.left == arg) {
+	पूर्ण अन्यथा अगर (old_child->op.left == arg) अणु
 		ptr = &old_child->op.left;
 		other_child = old_child->op.right;
-	} else {
+	पूर्ण अन्यथा अणु
 		show_error(error_str, "Error in reparent op, find other child");
-		return TEP_ERRNO__REPARENT_FAILED;
-	}
+		वापस TEP_ERRNO__REPARENT_FAILED;
+	पूर्ण
 
 	/* Detach arg from old_child */
-	*ptr = NULL;
+	*ptr = शून्य;
 
-	/* Check for root */
-	if (parent == old_child) {
-		free_arg(other_child);
+	/* Check क्रम root */
+	अगर (parent == old_child) अणु
+		मुक्त_arg(other_child);
 		*parent = *arg;
 		/* Free arg without recussion */
-		free(arg);
-		return 0;
-	}
+		मुक्त(arg);
+		वापस 0;
+	पूर्ण
 
-	if (parent->op.right == old_child)
+	अगर (parent->op.right == old_child)
 		ptr = &parent->op.right;
-	else if (parent->op.left == old_child)
+	अन्यथा अगर (parent->op.left == old_child)
 		ptr = &parent->op.left;
-	else {
+	अन्यथा अणु
 		show_error(error_str, "Error in reparent op");
-		return TEP_ERRNO__REPARENT_FAILED;
-	}
+		वापस TEP_ERRNO__REPARENT_FAILED;
+	पूर्ण
 
 	*ptr = arg;
 
-	free_arg(old_child);
-	return 0;
-}
+	मुक्त_arg(old_child);
+	वापस 0;
+पूर्ण
 
-/* Returns either filter_vals (success) or tep_errno (failfure) */
-static int test_arg(struct tep_filter_arg *parent, struct tep_filter_arg *arg,
-		    char *error_str)
-{
-	int lval, rval;
+/* Returns either filter_vals (success) or tep_त्रुटि_सं (failfure) */
+अटल पूर्णांक test_arg(काष्ठा tep_filter_arg *parent, काष्ठा tep_filter_arg *arg,
+		    अक्षर *error_str)
+अणु
+	पूर्णांक lval, rval;
 
-	switch (arg->type) {
+	चयन (arg->type) अणु
 
-		/* bad case */
-	case TEP_FILTER_ARG_BOOLEAN:
-		return FILTER_VAL_FALSE + arg->boolean.value;
+		/* bad हाल */
+	हाल TEP_FILTER_ARG_BOOLEAN:
+		वापस FILTER_VAL_FALSE + arg->boolean.value;
 
-		/* good cases: */
-	case TEP_FILTER_ARG_STR:
-	case TEP_FILTER_ARG_VALUE:
-	case TEP_FILTER_ARG_FIELD:
-		return FILTER_VAL_NORM;
+		/* good हालs: */
+	हाल TEP_FILTER_ARG_STR:
+	हाल TEP_FILTER_ARG_VALUE:
+	हाल TEP_FILTER_ARG_FIELD:
+		वापस FILTER_VAL_NORM;
 
-	case TEP_FILTER_ARG_EXP:
+	हाल TEP_FILTER_ARG_EXP:
 		lval = test_arg(arg, arg->exp.left, error_str);
-		if (lval != FILTER_VAL_NORM)
-			return lval;
+		अगर (lval != FILTER_VAL_NORM)
+			वापस lval;
 		rval = test_arg(arg, arg->exp.right, error_str);
-		if (rval != FILTER_VAL_NORM)
-			return rval;
-		return FILTER_VAL_NORM;
+		अगर (rval != FILTER_VAL_NORM)
+			वापस rval;
+		वापस FILTER_VAL_NORM;
 
-	case TEP_FILTER_ARG_NUM:
+	हाल TEP_FILTER_ARG_NUM:
 		lval = test_arg(arg, arg->num.left, error_str);
-		if (lval != FILTER_VAL_NORM)
-			return lval;
+		अगर (lval != FILTER_VAL_NORM)
+			वापस lval;
 		rval = test_arg(arg, arg->num.right, error_str);
-		if (rval != FILTER_VAL_NORM)
-			return rval;
-		return FILTER_VAL_NORM;
+		अगर (rval != FILTER_VAL_NORM)
+			वापस rval;
+		वापस FILTER_VAL_NORM;
 
-	case TEP_FILTER_ARG_OP:
-		if (arg->op.type != TEP_FILTER_OP_NOT) {
+	हाल TEP_FILTER_ARG_OP:
+		अगर (arg->op.type != TEP_FILTER_OP_NOT) अणु
 			lval = test_arg(arg, arg->op.left, error_str);
-			switch (lval) {
-			case FILTER_VAL_NORM:
-				break;
-			case FILTER_VAL_TRUE:
-				if (arg->op.type == TEP_FILTER_OP_OR)
-					return FILTER_VAL_TRUE;
+			चयन (lval) अणु
+			हाल FILTER_VAL_NORM:
+				अवरोध;
+			हाल FILTER_VAL_TRUE:
+				अगर (arg->op.type == TEP_FILTER_OP_OR)
+					वापस FILTER_VAL_TRUE;
 				rval = test_arg(arg, arg->op.right, error_str);
-				if (rval != FILTER_VAL_NORM)
-					return rval;
+				अगर (rval != FILTER_VAL_NORM)
+					वापस rval;
 
-				return reparent_op_arg(parent, arg, arg->op.right,
+				वापस reparent_op_arg(parent, arg, arg->op.right,
 						       error_str);
 
-			case FILTER_VAL_FALSE:
-				if (arg->op.type == TEP_FILTER_OP_AND)
-					return FILTER_VAL_FALSE;
+			हाल FILTER_VAL_FALSE:
+				अगर (arg->op.type == TEP_FILTER_OP_AND)
+					वापस FILTER_VAL_FALSE;
 				rval = test_arg(arg, arg->op.right, error_str);
-				if (rval != FILTER_VAL_NORM)
-					return rval;
+				अगर (rval != FILTER_VAL_NORM)
+					वापस rval;
 
-				return reparent_op_arg(parent, arg, arg->op.right,
+				वापस reparent_op_arg(parent, arg, arg->op.right,
 						       error_str);
 
-			default:
-				return lval;
-			}
-		}
+			शेष:
+				वापस lval;
+			पूर्ण
+		पूर्ण
 
 		rval = test_arg(arg, arg->op.right, error_str);
-		switch (rval) {
-		case FILTER_VAL_NORM:
-		default:
-			break;
+		चयन (rval) अणु
+		हाल FILTER_VAL_NORM:
+		शेष:
+			अवरोध;
 
-		case FILTER_VAL_TRUE:
-			if (arg->op.type == TEP_FILTER_OP_OR)
-				return FILTER_VAL_TRUE;
-			if (arg->op.type == TEP_FILTER_OP_NOT)
-				return FILTER_VAL_FALSE;
+		हाल FILTER_VAL_TRUE:
+			अगर (arg->op.type == TEP_FILTER_OP_OR)
+				वापस FILTER_VAL_TRUE;
+			अगर (arg->op.type == TEP_FILTER_OP_NOT)
+				वापस FILTER_VAL_FALSE;
 
-			return reparent_op_arg(parent, arg, arg->op.left,
+			वापस reparent_op_arg(parent, arg, arg->op.left,
 					       error_str);
 
-		case FILTER_VAL_FALSE:
-			if (arg->op.type == TEP_FILTER_OP_AND)
-				return FILTER_VAL_FALSE;
-			if (arg->op.type == TEP_FILTER_OP_NOT)
-				return FILTER_VAL_TRUE;
+		हाल FILTER_VAL_FALSE:
+			अगर (arg->op.type == TEP_FILTER_OP_AND)
+				वापस FILTER_VAL_FALSE;
+			अगर (arg->op.type == TEP_FILTER_OP_NOT)
+				वापस FILTER_VAL_TRUE;
 
-			return reparent_op_arg(parent, arg, arg->op.left,
+			वापस reparent_op_arg(parent, arg, arg->op.left,
 					       error_str);
-		}
+		पूर्ण
 
-		return rval;
-	default:
+		वापस rval;
+	शेष:
 		show_error(error_str, "bad arg in filter tree");
-		return TEP_ERRNO__BAD_FILTER_ARG;
-	}
-	return FILTER_VAL_NORM;
-}
+		वापस TEP_ERRNO__BAD_FILTER_ARG;
+	पूर्ण
+	वापस FILTER_VAL_NORM;
+पूर्ण
 
 /* Remove any unknown event fields */
-static int collapse_tree(struct tep_filter_arg *arg,
-			 struct tep_filter_arg **arg_collapsed, char *error_str)
-{
-	int ret;
+अटल पूर्णांक collapse_tree(काष्ठा tep_filter_arg *arg,
+			 काष्ठा tep_filter_arg **arg_collapsed, अक्षर *error_str)
+अणु
+	पूर्णांक ret;
 
 	ret = test_arg(arg, arg, error_str);
-	switch (ret) {
-	case FILTER_VAL_NORM:
-		break;
+	चयन (ret) अणु
+	हाल FILTER_VAL_NORM:
+		अवरोध;
 
-	case FILTER_VAL_TRUE:
-	case FILTER_VAL_FALSE:
-		free_arg(arg);
+	हाल FILTER_VAL_TRUE:
+	हाल FILTER_VAL_FALSE:
+		मुक्त_arg(arg);
 		arg = allocate_arg();
-		if (arg) {
+		अगर (arg) अणु
 			arg->type = TEP_FILTER_ARG_BOOLEAN;
 			arg->boolean.value = ret == FILTER_VAL_TRUE;
-		} else {
+		पूर्ण अन्यथा अणु
 			show_error(error_str, "Failed to allocate filter arg");
 			ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		/* test_arg() already set the error_str */
-		free_arg(arg);
-		arg = NULL;
-		break;
-	}
+	शेष:
+		/* test_arg() alपढ़ोy set the error_str */
+		मुक्त_arg(arg);
+		arg = शून्य;
+		अवरोध;
+	पूर्ण
 
 	*arg_collapsed = arg;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum tep_errno
-process_filter(struct tep_event *event, struct tep_filter_arg **parg,
-	       char *error_str, int not)
-{
-	enum tep_event_type type;
-	char *token = NULL;
-	struct tep_filter_arg *current_op = NULL;
-	struct tep_filter_arg *current_exp = NULL;
-	struct tep_filter_arg *left_item = NULL;
-	struct tep_filter_arg *arg = NULL;
-	enum op_type op_type;
-	enum tep_filter_op_type btype;
-	enum tep_filter_exp_type etype;
-	enum tep_filter_cmp_type ctype;
-	enum tep_errno ret;
+अटल क्रमागत tep_त्रुटि_सं
+process_filter(काष्ठा tep_event *event, काष्ठा tep_filter_arg **parg,
+	       अक्षर *error_str, पूर्णांक not)
+अणु
+	क्रमागत tep_event_type type;
+	अक्षर *token = शून्य;
+	काष्ठा tep_filter_arg *current_op = शून्य;
+	काष्ठा tep_filter_arg *current_exp = शून्य;
+	काष्ठा tep_filter_arg *left_item = शून्य;
+	काष्ठा tep_filter_arg *arg = शून्य;
+	क्रमागत op_type op_type;
+	क्रमागत tep_filter_op_type btype;
+	क्रमागत tep_filter_exp_type etype;
+	क्रमागत tep_filter_cmp_type ctype;
+	क्रमागत tep_त्रुटि_सं ret;
 
-	*parg = NULL;
+	*parg = शून्य;
 
-	do {
-		free(token);
-		type = filter_read_token(&token);
-		switch (type) {
-		case TEP_EVENT_SQUOTE:
-		case TEP_EVENT_DQUOTE:
-		case TEP_EVENT_ITEM:
+	करो अणु
+		मुक्त(token);
+		type = filter_पढ़ो_token(&token);
+		चयन (type) अणु
+		हाल TEP_EVENT_SQUOTE:
+		हाल TEP_EVENT_DQUOTE:
+		हाल TEP_EVENT_ITEM:
 			ret = create_arg_item(event, token, type, &arg, error_str);
-			if (ret < 0)
-				goto fail;
-			if (!left_item)
+			अगर (ret < 0)
+				जाओ fail;
+			अगर (!left_item)
 				left_item = arg;
-			else if (current_exp) {
+			अन्यथा अगर (current_exp) अणु
 				ret = add_right(current_exp, arg, error_str);
-				if (ret < 0)
-					goto fail;
-				left_item = NULL;
+				अगर (ret < 0)
+					जाओ fail;
+				left_item = शून्य;
 				/* Not's only one one expression */
-				if (not) {
-					arg = NULL;
-					if (current_op)
-						goto fail_syntax;
-					free(token);
+				अगर (not) अणु
+					arg = शून्य;
+					अगर (current_op)
+						जाओ fail_syntax;
+					मुक्त(token);
 					*parg = current_exp;
-					return 0;
-				}
-			} else
-				goto fail_syntax;
-			arg = NULL;
-			break;
+					वापस 0;
+				पूर्ण
+			पूर्ण अन्यथा
+				जाओ fail_syntax;
+			arg = शून्य;
+			अवरोध;
 
-		case TEP_EVENT_DELIM:
-			if (*token == ',') {
+		हाल TEP_EVENT_DELIM:
+			अगर (*token == ',') अणु
 				show_error(error_str, "Illegal token ','");
 				ret = TEP_ERRNO__ILLEGAL_TOKEN;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
-			if (*token == '(') {
-				if (left_item) {
+			अगर (*token == '(') अणु
+				अगर (left_item) अणु
 					show_error(error_str,
 						   "Open paren can not come after item");
 					ret = TEP_ERRNO__INVALID_PAREN;
-					goto fail;
-				}
-				if (current_exp) {
+					जाओ fail;
+				पूर्ण
+				अगर (current_exp) अणु
 					show_error(error_str,
 						   "Open paren can not come after expression");
 					ret = TEP_ERRNO__INVALID_PAREN;
-					goto fail;
-				}
+					जाओ fail;
+				पूर्ण
 
 				ret = process_filter(event, &arg, error_str, 0);
-				if (ret != TEP_ERRNO__UNBALANCED_PAREN) {
-					if (ret == 0) {
+				अगर (ret != TEP_ERRNO__UNBALANCED_PAREN) अणु
+					अगर (ret == 0) अणु
 						show_error(error_str,
 							   "Unbalanced number of '('");
 						ret = TEP_ERRNO__UNBALANCED_PAREN;
-					}
-					goto fail;
-				}
+					पूर्ण
+					जाओ fail;
+				पूर्ण
 				ret = 0;
 
 				/* A not wants just one expression */
-				if (not) {
-					if (current_op)
-						goto fail_syntax;
+				अगर (not) अणु
+					अगर (current_op)
+						जाओ fail_syntax;
 					*parg = arg;
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 
-				if (current_op)
+				अगर (current_op)
 					ret = add_right(current_op, arg, error_str);
-				else
+				अन्यथा
 					current_exp = arg;
 
-				if (ret < 0)
-					goto fail;
+				अगर (ret < 0)
+					जाओ fail;
 
-			} else { /* ')' */
-				if (!current_op && !current_exp)
-					goto fail_syntax;
+			पूर्ण अन्यथा अणु /* ')' */
+				अगर (!current_op && !current_exp)
+					जाओ fail_syntax;
 
 				/* Make sure everything is finished at this level */
-				if (current_exp && !check_op_done(current_exp))
-					goto fail_syntax;
-				if (current_op && !check_op_done(current_op))
-					goto fail_syntax;
+				अगर (current_exp && !check_op_करोne(current_exp))
+					जाओ fail_syntax;
+				अगर (current_op && !check_op_करोne(current_op))
+					जाओ fail_syntax;
 
-				if (current_op)
+				अगर (current_op)
 					*parg = current_op;
-				else
+				अन्यथा
 					*parg = current_exp;
-				free(token);
-				return TEP_ERRNO__UNBALANCED_PAREN;
-			}
-			break;
+				मुक्त(token);
+				वापस TEP_ERRNO__UNBALANCED_PAREN;
+			पूर्ण
+			अवरोध;
 
-		case TEP_EVENT_OP:
+		हाल TEP_EVENT_OP:
 			op_type = process_op(token, &btype, &ctype, &etype);
 
-			/* All expect a left arg except for NOT */
-			switch (op_type) {
-			case OP_BOOL:
+			/* All expect a left arg except क्रम NOT */
+			चयन (op_type) अणु
+			हाल OP_BOOL:
 				/* Logic ops need a left expression */
-				if (!current_exp && !current_op)
-					goto fail_syntax;
+				अगर (!current_exp && !current_op)
+					जाओ fail_syntax;
 				/* fall through */
-			case OP_NOT:
+			हाल OP_NOT:
 				/* logic only processes ops and exp */
-				if (left_item)
-					goto fail_syntax;
-				break;
-			case OP_EXP:
-			case OP_CMP:
-				if (!left_item)
-					goto fail_syntax;
-				break;
-			case OP_NONE:
+				अगर (left_item)
+					जाओ fail_syntax;
+				अवरोध;
+			हाल OP_EXP:
+			हाल OP_CMP:
+				अगर (!left_item)
+					जाओ fail_syntax;
+				अवरोध;
+			हाल OP_NONE:
 				show_error(error_str,
 					   "Unknown op token %s", token);
 				ret = TEP_ERRNO__UNKNOWN_TOKEN;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 
 			ret = 0;
-			switch (op_type) {
-			case OP_BOOL:
+			चयन (op_type) अणु
+			हाल OP_BOOL:
 				arg = create_arg_op(btype);
-				if (arg == NULL)
-					goto fail_alloc;
-				if (current_op)
+				अगर (arg == शून्य)
+					जाओ fail_alloc;
+				अगर (current_op)
 					ret = add_left(arg, current_op);
-				else
+				अन्यथा
 					ret = add_left(arg, current_exp);
 				current_op = arg;
-				current_exp = NULL;
-				break;
+				current_exp = शून्य;
+				अवरोध;
 
-			case OP_NOT:
+			हाल OP_NOT:
 				arg = create_arg_op(btype);
-				if (arg == NULL)
-					goto fail_alloc;
-				if (current_op)
+				अगर (arg == शून्य)
+					जाओ fail_alloc;
+				अगर (current_op)
 					ret = add_right(current_op, arg, error_str);
-				if (ret < 0)
-					goto fail;
+				अगर (ret < 0)
+					जाओ fail;
 				current_exp = arg;
 				ret = process_filter(event, &arg, error_str, 1);
-				if (ret < 0)
-					goto fail;
+				अगर (ret < 0)
+					जाओ fail;
 				ret = add_right(current_exp, arg, error_str);
-				if (ret < 0)
-					goto fail;
-				break;
+				अगर (ret < 0)
+					जाओ fail;
+				अवरोध;
 
-			case OP_EXP:
-			case OP_CMP:
-				if (op_type == OP_EXP)
+			हाल OP_EXP:
+			हाल OP_CMP:
+				अगर (op_type == OP_EXP)
 					arg = create_arg_exp(etype);
-				else
+				अन्यथा
 					arg = create_arg_cmp(ctype);
-				if (arg == NULL)
-					goto fail_alloc;
+				अगर (arg == शून्य)
+					जाओ fail_alloc;
 
-				if (current_op)
+				अगर (current_op)
 					ret = add_right(current_op, arg, error_str);
-				if (ret < 0)
-					goto fail;
+				अगर (ret < 0)
+					जाओ fail;
 				ret = add_left(arg, left_item);
-				if (ret < 0) {
-					arg = NULL;
-					goto fail_syntax;
-				}
+				अगर (ret < 0) अणु
+					arg = शून्य;
+					जाओ fail_syntax;
+				पूर्ण
 				current_exp = arg;
-				break;
-			default:
-				break;
-			}
-			arg = NULL;
-			if (ret < 0)
-				goto fail_syntax;
-			break;
-		case TEP_EVENT_NONE:
-			break;
-		case TEP_EVENT_ERROR:
-			goto fail_alloc;
-		default:
-			goto fail_syntax;
-		}
-	} while (type != TEP_EVENT_NONE);
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			arg = शून्य;
+			अगर (ret < 0)
+				जाओ fail_syntax;
+			अवरोध;
+		हाल TEP_EVENT_NONE:
+			अवरोध;
+		हाल TEP_EVENT_ERROR:
+			जाओ fail_alloc;
+		शेष:
+			जाओ fail_syntax;
+		पूर्ण
+	पूर्ण जबतक (type != TEP_EVENT_NONE);
 
-	if (!current_op && !current_exp)
-		goto fail_syntax;
+	अगर (!current_op && !current_exp)
+		जाओ fail_syntax;
 
-	if (!current_op)
+	अगर (!current_op)
 		current_op = current_exp;
 
 	ret = collapse_tree(current_op, parg, error_str);
-	/* collapse_tree() may free current_op, and updates parg accordingly */
-	current_op = NULL;
-	if (ret < 0)
-		goto fail;
+	/* collapse_tree() may मुक्त current_op, and updates parg accordingly */
+	current_op = शून्य;
+	अगर (ret < 0)
+		जाओ fail;
 
-	free(token);
-	return 0;
+	मुक्त(token);
+	वापस 0;
 
  fail_alloc:
 	show_error(error_str, "failed to allocate filter arg");
 	ret = TEP_ERRNO__MEM_ALLOC_FAILED;
-	goto fail;
+	जाओ fail;
  fail_syntax:
 	show_error(error_str, "Syntax error");
 	ret = TEP_ERRNO__SYNTAX_ERROR;
  fail:
-	free_arg(current_op);
-	free_arg(current_exp);
-	free_arg(arg);
-	free(token);
-	return ret;
-}
+	मुक्त_arg(current_op);
+	मुक्त_arg(current_exp);
+	मुक्त_arg(arg);
+	मुक्त(token);
+	वापस ret;
+पूर्ण
 
-static enum tep_errno
-process_event(struct tep_event *event, const char *filter_str,
-	      struct tep_filter_arg **parg, char *error_str)
-{
-	int ret;
+अटल क्रमागत tep_त्रुटि_सं
+process_event(काष्ठा tep_event *event, स्थिर अक्षर *filter_str,
+	      काष्ठा tep_filter_arg **parg, अक्षर *error_str)
+अणु
+	पूर्णांक ret;
 
-	init_input_buf(filter_str, strlen(filter_str));
+	init_input_buf(filter_str, म_माप(filter_str));
 
 	ret = process_filter(event, parg, error_str, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* If parg is NULL, then make it into FALSE */
-	if (!*parg) {
+	/* If parg is शून्य, then make it पूर्णांकo FALSE */
+	अगर (!*parg) अणु
 		*parg = allocate_arg();
-		if (*parg == NULL)
-			return TEP_ERRNO__MEM_ALLOC_FAILED;
+		अगर (*parg == शून्य)
+			वापस TEP_ERRNO__MEM_ALLOC_FAILED;
 
 		(*parg)->type = TEP_FILTER_ARG_BOOLEAN;
 		(*parg)->boolean.value = TEP_FILTER_FALSE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum tep_errno
-filter_event(struct tep_event_filter *filter, struct tep_event *event,
-	     const char *filter_str, char *error_str)
-{
-	struct tep_filter_type *filter_type;
-	struct tep_filter_arg *arg;
-	enum tep_errno ret;
+अटल क्रमागत tep_त्रुटि_सं
+filter_event(काष्ठा tep_event_filter *filter, काष्ठा tep_event *event,
+	     स्थिर अक्षर *filter_str, अक्षर *error_str)
+अणु
+	काष्ठा tep_filter_type *filter_type;
+	काष्ठा tep_filter_arg *arg;
+	क्रमागत tep_त्रुटि_सं ret;
 
-	if (filter_str) {
+	अगर (filter_str) अणु
 		ret = process_event(event, filter_str, &arg, error_str);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* just add a TRUE arg */
 		arg = allocate_arg();
-		if (arg == NULL)
-			return TEP_ERRNO__MEM_ALLOC_FAILED;
+		अगर (arg == शून्य)
+			वापस TEP_ERRNO__MEM_ALLOC_FAILED;
 
 		arg->type = TEP_FILTER_ARG_BOOLEAN;
 		arg->boolean.value = TEP_FILTER_TRUE;
-	}
+	पूर्ण
 
 	filter_type = add_filter_type(filter, event->id);
-	if (filter_type == NULL) {
-		free_arg(arg);
-		return TEP_ERRNO__MEM_ALLOC_FAILED;
-	}
+	अगर (filter_type == शून्य) अणु
+		मुक्त_arg(arg);
+		वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+	पूर्ण
 
-	if (filter_type->filter)
-		free_arg(filter_type->filter);
+	अगर (filter_type->filter)
+		मुक्त_arg(filter_type->filter);
 	filter_type->filter = arg;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void filter_init_error_buf(struct tep_event_filter *filter)
-{
+अटल व्योम filter_init_error_buf(काष्ठा tep_event_filter *filter)
+अणु
 	/* clear buffer to reset show error */
 	init_input_buf("", 0);
 	filter->error_buffer[0] = '\0';
-}
+पूर्ण
 
 /**
  * tep_filter_add_filter_str - add a new filter
  * @filter: the event filter to add to
  * @filter_str: the filter string that contains the filter
  *
- * Returns 0 if the filter was successfully added or a
- * negative error code.  Use tep_filter_strerror() to see
- * actual error message in case of error.
+ * Returns 0 अगर the filter was successfully added or a
+ * negative error code.  Use tep_filter_म_त्रुटि() to see
+ * actual error message in हाल of error.
  */
-enum tep_errno tep_filter_add_filter_str(struct tep_event_filter *filter,
-					 const char *filter_str)
-{
-	struct tep_handle *tep = filter->tep;
-	struct event_list *event;
-	struct event_list *events = NULL;
-	const char *filter_start;
-	const char *next_event;
-	char *this_event;
-	char *event_name = NULL;
-	char *sys_name = NULL;
-	char *sp;
-	enum tep_errno rtn = 0; /* TEP_ERRNO__SUCCESS */
-	int len;
-	int ret;
+क्रमागत tep_त्रुटि_सं tep_filter_add_filter_str(काष्ठा tep_event_filter *filter,
+					 स्थिर अक्षर *filter_str)
+अणु
+	काष्ठा tep_handle *tep = filter->tep;
+	काष्ठा event_list *event;
+	काष्ठा event_list *events = शून्य;
+	स्थिर अक्षर *filter_start;
+	स्थिर अक्षर *next_event;
+	अक्षर *this_event;
+	अक्षर *event_name = शून्य;
+	अक्षर *sys_name = शून्य;
+	अक्षर *sp;
+	क्रमागत tep_त्रुटि_सं rtn = 0; /* TEP_ERRNO__SUCCESS */
+	पूर्णांक len;
+	पूर्णांक ret;
 
 	filter_init_error_buf(filter);
 
-	filter_start = strchr(filter_str, ':');
-	if (filter_start)
+	filter_start = म_अक्षर(filter_str, ':');
+	अगर (filter_start)
 		len = filter_start - filter_str;
-	else
-		len = strlen(filter_str);
+	अन्यथा
+		len = म_माप(filter_str);
 
-	do {
-		next_event = strchr(filter_str, ',');
-		if (next_event &&
+	करो अणु
+		next_event = म_अक्षर(filter_str, ',');
+		अगर (next_event &&
 		    (!filter_start || next_event < filter_start))
 			len = next_event - filter_str;
-		else if (filter_start)
+		अन्यथा अगर (filter_start)
 			len = filter_start - filter_str;
-		else
-			len = strlen(filter_str);
+		अन्यथा
+			len = म_माप(filter_str);
 
-		this_event = malloc(len + 1);
-		if (this_event == NULL) {
-			/* This can only happen when events is NULL, but still */
-			free_events(events);
-			return TEP_ERRNO__MEM_ALLOC_FAILED;
-		}
-		memcpy(this_event, filter_str, len);
+		this_event = दो_स्मृति(len + 1);
+		अगर (this_event == शून्य) अणु
+			/* This can only happen when events is शून्य, but still */
+			मुक्त_events(events);
+			वापस TEP_ERRNO__MEM_ALLOC_FAILED;
+		पूर्ण
+		स_नकल(this_event, filter_str, len);
 		this_event[len] = 0;
 
-		if (next_event)
+		अगर (next_event)
 			next_event++;
 
 		filter_str = next_event;
 
-		sys_name = strtok_r(this_event, "/", &sp);
-		event_name = strtok_r(NULL, "/", &sp);
+		sys_name = म_मोहर_r(this_event, "/", &sp);
+		event_name = म_मोहर_r(शून्य, "/", &sp);
 
-		if (!sys_name) {
-			/* This can only happen when events is NULL, but still */
-			free_events(events);
-			free(this_event);
-			return TEP_ERRNO__FILTER_NOT_FOUND;
-		}
+		अगर (!sys_name) अणु
+			/* This can only happen when events is शून्य, but still */
+			मुक्त_events(events);
+			मुक्त(this_event);
+			वापस TEP_ERRNO__FILTER_NOT_FOUND;
+		पूर्ण
 
 		/* Find this event */
 		ret = find_event(tep, &events, strim(sys_name), strim(event_name));
-		if (ret < 0) {
-			free_events(events);
-			free(this_event);
-			return ret;
-		}
-		free(this_event);
-	} while (filter_str);
+		अगर (ret < 0) अणु
+			मुक्त_events(events);
+			मुक्त(this_event);
+			वापस ret;
+		पूर्ण
+		मुक्त(this_event);
+	पूर्ण जबतक (filter_str);
 
 	/* Skip the ':' */
-	if (filter_start)
+	अगर (filter_start)
 		filter_start++;
 
 	/* filter starts here */
-	for (event = events; event; event = event->next) {
+	क्रम (event = events; event; event = event->next) अणु
 		ret = filter_event(filter, event->event, filter_start,
 				   filter->error_buffer);
-		/* Failures are returned if a parse error happened */
-		if (ret < 0)
+		/* Failures are वापसed अगर a parse error happened */
+		अगर (ret < 0)
 			rtn = ret;
 
-		if (ret >= 0 && tep->test_filters) {
-			char *test;
+		अगर (ret >= 0 && tep->test_filters) अणु
+			अक्षर *test;
 			test = tep_filter_make_string(filter, event->event->id);
-			if (test) {
-				printf(" '%s: %s'\n", event->event->name, test);
-				free(test);
-			}
-		}
-	}
+			अगर (test) अणु
+				म_लिखो(" '%s: %s'\n", event->event->name, test);
+				मुक्त(test);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	free_events(events);
+	मुक्त_events(events);
 
-	return rtn;
-}
+	वापस rtn;
+पूर्ण
 
-static void free_filter_type(struct tep_filter_type *filter_type)
-{
-	free_arg(filter_type->filter);
-}
+अटल व्योम मुक्त_filter_type(काष्ठा tep_filter_type *filter_type)
+अणु
+	मुक्त_arg(filter_type->filter);
+पूर्ण
 
 /**
- * tep_filter_strerror - fill error message in a buffer
+ * tep_filter_म_त्रुटि - fill error message in a buffer
  * @filter: the event filter contains error
  * @err: the error code
  * @buf: the buffer to be filled in
  * @buflen: the size of the buffer
  *
- * Returns 0 if message was filled successfully, -1 if error
+ * Returns 0 अगर message was filled successfully, -1 अगर error
  */
-int tep_filter_strerror(struct tep_event_filter *filter, enum tep_errno err,
-			char *buf, size_t buflen)
-{
-	if (err <= __TEP_ERRNO__START || err >= __TEP_ERRNO__END)
-		return -1;
+पूर्णांक tep_filter_म_त्रुटि(काष्ठा tep_event_filter *filter, क्रमागत tep_त्रुटि_सं err,
+			अक्षर *buf, माप_प्रकार buflen)
+अणु
+	अगर (err <= __TEP_ERRNO__START || err >= __TEP_ERRNO__END)
+		वापस -1;
 
-	if (strlen(filter->error_buffer) > 0) {
-		size_t len = snprintf(buf, buflen, "%s", filter->error_buffer);
+	अगर (म_माप(filter->error_buffer) > 0) अणु
+		माप_प्रकार len = snम_लिखो(buf, buflen, "%s", filter->error_buffer);
 
-		if (len > buflen)
-			return -1;
-		return 0;
-	}
+		अगर (len > buflen)
+			वापस -1;
+		वापस 0;
+	पूर्ण
 
-	return tep_strerror(filter->tep, err, buf, buflen);
-}
+	वापस tep_म_त्रुटि(filter->tep, err, buf, buflen);
+पूर्ण
 
 /**
- * tep_filter_remove_event - remove a filter for an event
- * @filter: the event filter to remove from
- * @event_id: the event to remove a filter for
+ * tep_filter_हटाओ_event - हटाओ a filter क्रम an event
+ * @filter: the event filter to हटाओ from
+ * @event_id: the event to हटाओ a filter क्रम
  *
- * Removes the filter saved for an event defined by @event_id
+ * Removes the filter saved क्रम an event defined by @event_id
  * from the @filter.
  *
- * Returns 1: if an event was removed
- *   0: if the event was not found
+ * Returns 1: अगर an event was हटाओd
+ *   0: अगर the event was not found
  */
-int tep_filter_remove_event(struct tep_event_filter *filter,
-			    int event_id)
-{
-	struct tep_filter_type *filter_type;
-	unsigned long len;
+पूर्णांक tep_filter_हटाओ_event(काष्ठा tep_event_filter *filter,
+			    पूर्णांक event_id)
+अणु
+	काष्ठा tep_filter_type *filter_type;
+	अचिन्हित दीर्घ len;
 
-	if (!filter->filters)
-		return 0;
+	अगर (!filter->filters)
+		वापस 0;
 
 	filter_type = find_filter_type(filter, event_id);
 
-	if (!filter_type)
-		return 0;
+	अगर (!filter_type)
+		वापस 0;
 
-	free_filter_type(filter_type);
+	मुक्त_filter_type(filter_type);
 
-	/* The filter_type points into the event_filters array */
-	len = (unsigned long)(filter->event_filters + filter->filters) -
-		(unsigned long)(filter_type + 1);
+	/* The filter_type poपूर्णांकs पूर्णांकo the event_filters array */
+	len = (अचिन्हित दीर्घ)(filter->event_filters + filter->filters) -
+		(अचिन्हित दीर्घ)(filter_type + 1);
 
-	memmove(filter_type, filter_type + 1, len);
+	स_हटाओ(filter_type, filter_type + 1, len);
 	filter->filters--;
 
-	memset(&filter->event_filters[filter->filters], 0,
-	       sizeof(*filter_type));
+	स_रखो(&filter->event_filters[filter->filters], 0,
+	       माप(*filter_type));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
  * tep_filter_reset - clear all filters in a filter
@@ -1423,856 +1424,856 @@ int tep_filter_remove_event(struct tep_event_filter *filter,
  *
  * Removes all filters from a filter and resets it.
  */
-void tep_filter_reset(struct tep_event_filter *filter)
-{
-	int i;
+व्योम tep_filter_reset(काष्ठा tep_event_filter *filter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < filter->filters; i++)
-		free_filter_type(&filter->event_filters[i]);
+	क्रम (i = 0; i < filter->filters; i++)
+		मुक्त_filter_type(&filter->event_filters[i]);
 
-	free(filter->event_filters);
+	मुक्त(filter->event_filters);
 	filter->filters = 0;
-	filter->event_filters = NULL;
-}
+	filter->event_filters = शून्य;
+पूर्ण
 
-void tep_filter_free(struct tep_event_filter *filter)
-{
+व्योम tep_filter_मुक्त(काष्ठा tep_event_filter *filter)
+अणु
 	tep_unref(filter->tep);
 
 	tep_filter_reset(filter);
 
-	free(filter);
-}
+	मुक्त(filter);
+पूर्ण
 
-static char *arg_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg);
+अटल अक्षर *arg_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg);
 
-static int copy_filter_type(struct tep_event_filter *filter,
-			    struct tep_event_filter *source,
-			    struct tep_filter_type *filter_type)
-{
-	struct tep_filter_arg *arg;
-	struct tep_event *event;
-	const char *sys;
-	const char *name;
-	char *str;
+अटल पूर्णांक copy_filter_type(काष्ठा tep_event_filter *filter,
+			    काष्ठा tep_event_filter *source,
+			    काष्ठा tep_filter_type *filter_type)
+अणु
+	काष्ठा tep_filter_arg *arg;
+	काष्ठा tep_event *event;
+	स्थिर अक्षर *sys;
+	स्थिर अक्षर *name;
+	अक्षर *str;
 
 	/* Can't assume that the tep's are the same */
-	sys = filter_type->event->system;
+	sys = filter_type->event->प्रणाली;
 	name = filter_type->event->name;
 	event = tep_find_event_by_name(filter->tep, sys, name);
-	if (!event)
-		return -1;
+	अगर (!event)
+		वापस -1;
 
 	str = arg_to_str(source, filter_type->filter);
-	if (!str)
-		return -1;
+	अगर (!str)
+		वापस -1;
 
-	if (strcmp(str, "TRUE") == 0 || strcmp(str, "FALSE") == 0) {
+	अगर (म_भेद(str, "TRUE") == 0 || म_भेद(str, "FALSE") == 0) अणु
 		/* Add trivial event */
 		arg = allocate_arg();
-		if (arg == NULL) {
-			free(str);
-			return -1;
-		}
+		अगर (arg == शून्य) अणु
+			मुक्त(str);
+			वापस -1;
+		पूर्ण
 
 		arg->type = TEP_FILTER_ARG_BOOLEAN;
-		if (strcmp(str, "TRUE") == 0)
+		अगर (म_भेद(str, "TRUE") == 0)
 			arg->boolean.value = 1;
-		else
+		अन्यथा
 			arg->boolean.value = 0;
 
 		filter_type = add_filter_type(filter, event->id);
-		if (filter_type == NULL) {
-			free(str);
-			free_arg(arg);
-			return -1;
-		}
+		अगर (filter_type == शून्य) अणु
+			मुक्त(str);
+			मुक्त_arg(arg);
+			वापस -1;
+		पूर्ण
 
 		filter_type->filter = arg;
 
-		free(str);
-		return 0;
-	}
+		मुक्त(str);
+		वापस 0;
+	पूर्ण
 
-	filter_event(filter, event, str, NULL);
-	free(str);
+	filter_event(filter, event, str, शून्य);
+	मुक्त(str);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tep_filter_copy - copy a filter using another filter
  * @dest - the filter to copy to
  * @source - the filter to copy from
  *
- * Returns 0 on success and -1 if not all filters were copied
+ * Returns 0 on success and -1 अगर not all filters were copied
  */
-int tep_filter_copy(struct tep_event_filter *dest, struct tep_event_filter *source)
-{
-	int ret = 0;
-	int i;
+पूर्णांक tep_filter_copy(काष्ठा tep_event_filter *dest, काष्ठा tep_event_filter *source)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	tep_filter_reset(dest);
 
-	for (i = 0; i < source->filters; i++) {
-		if (copy_filter_type(dest, source, &source->event_filters[i]))
+	क्रम (i = 0; i < source->filters; i++) अणु
+		अगर (copy_filter_type(dest, source, &source->event_filters[i]))
 			ret = -1;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int test_filter(struct tep_event *event, struct tep_filter_arg *arg,
-		       struct tep_record *record, enum tep_errno *err);
+अटल पूर्णांक test_filter(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+		       काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err);
 
-static const char *
-get_comm(struct tep_event *event, struct tep_record *record)
-{
-	const char *comm;
-	int pid;
+अटल स्थिर अक्षर *
+get_comm(काष्ठा tep_event *event, काष्ठा tep_record *record)
+अणु
+	स्थिर अक्षर *comm;
+	पूर्णांक pid;
 
 	pid = tep_data_pid(event->tep, record);
 	comm = tep_data_comm_from_pid(event->tep, pid);
-	return comm;
-}
+	वापस comm;
+पूर्ण
 
-static unsigned long long
-get_value(struct tep_event *event,
-	  struct tep_format_field *field, struct tep_record *record)
-{
-	unsigned long long val;
+अटल अचिन्हित दीर्घ दीर्घ
+get_value(काष्ठा tep_event *event,
+	  काष्ठा tep_क्रमmat_field *field, काष्ठा tep_record *record)
+अणु
+	अचिन्हित दीर्घ दीर्घ val;
 
 	/* Handle our dummy "comm" field */
-	if (field == &comm) {
-		const char *name;
+	अगर (field == &comm) अणु
+		स्थिर अक्षर *name;
 
 		name = get_comm(event, record);
-		return (unsigned long)name;
-	}
+		वापस (अचिन्हित दीर्घ)name;
+	पूर्ण
 
 	/* Handle our dummy "cpu" field */
-	if (field == &cpu)
-		return record->cpu;
+	अगर (field == &cpu)
+		वापस record->cpu;
 
-	tep_read_number_field(field, record->data, &val);
+	tep_पढ़ो_number_field(field, record->data, &val);
 
-	if (!(field->flags & TEP_FIELD_IS_SIGNED))
-		return val;
+	अगर (!(field->flags & TEP_FIELD_IS_SIGNED))
+		वापस val;
 
-	switch (field->size) {
-	case 1:
-		return (char)val;
-	case 2:
-		return (short)val;
-	case 4:
-		return (int)val;
-	case 8:
-		return (long long)val;
-	}
-	return val;
-}
+	चयन (field->size) अणु
+	हाल 1:
+		वापस (अक्षर)val;
+	हाल 2:
+		वापस (लघु)val;
+	हाल 4:
+		वापस (पूर्णांक)val;
+	हाल 8:
+		वापस (दीर्घ दीर्घ)val;
+	पूर्ण
+	वापस val;
+पूर्ण
 
-static unsigned long long
-get_arg_value(struct tep_event *event, struct tep_filter_arg *arg,
-	      struct tep_record *record, enum tep_errno *err);
+अटल अचिन्हित दीर्घ दीर्घ
+get_arg_value(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+	      काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err);
 
-static unsigned long long
-get_exp_value(struct tep_event *event, struct tep_filter_arg *arg,
-	      struct tep_record *record, enum tep_errno *err)
-{
-	unsigned long long lval, rval;
+अटल अचिन्हित दीर्घ दीर्घ
+get_exp_value(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+	      काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	अचिन्हित दीर्घ दीर्घ lval, rval;
 
 	lval = get_arg_value(event, arg->exp.left, record, err);
 	rval = get_arg_value(event, arg->exp.right, record, err);
 
-	if (*err) {
+	अगर (*err) अणु
 		/*
 		 * There was an error, no need to process anymore.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (arg->exp.type) {
-	case TEP_FILTER_EXP_ADD:
-		return lval + rval;
+	चयन (arg->exp.type) अणु
+	हाल TEP_FILTER_EXP_ADD:
+		वापस lval + rval;
 
-	case TEP_FILTER_EXP_SUB:
-		return lval - rval;
+	हाल TEP_FILTER_EXP_SUB:
+		वापस lval - rval;
 
-	case TEP_FILTER_EXP_MUL:
-		return lval * rval;
+	हाल TEP_FILTER_EXP_MUL:
+		वापस lval * rval;
 
-	case TEP_FILTER_EXP_DIV:
-		return lval / rval;
+	हाल TEP_FILTER_EXP_DIV:
+		वापस lval / rval;
 
-	case TEP_FILTER_EXP_MOD:
-		return lval % rval;
+	हाल TEP_FILTER_EXP_MOD:
+		वापस lval % rval;
 
-	case TEP_FILTER_EXP_RSHIFT:
-		return lval >> rval;
+	हाल TEP_FILTER_EXP_RSHIFT:
+		वापस lval >> rval;
 
-	case TEP_FILTER_EXP_LSHIFT:
-		return lval << rval;
+	हाल TEP_FILTER_EXP_LSHIFT:
+		वापस lval << rval;
 
-	case TEP_FILTER_EXP_AND:
-		return lval & rval;
+	हाल TEP_FILTER_EXP_AND:
+		वापस lval & rval;
 
-	case TEP_FILTER_EXP_OR:
-		return lval | rval;
+	हाल TEP_FILTER_EXP_OR:
+		वापस lval | rval;
 
-	case TEP_FILTER_EXP_XOR:
-		return lval ^ rval;
+	हाल TEP_FILTER_EXP_XOR:
+		वापस lval ^ rval;
 
-	case TEP_FILTER_EXP_NOT:
-	default:
-		if (!*err)
+	हाल TEP_FILTER_EXP_NOT:
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__INVALID_EXP_TYPE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static unsigned long long
-get_arg_value(struct tep_event *event, struct tep_filter_arg *arg,
-	      struct tep_record *record, enum tep_errno *err)
-{
-	switch (arg->type) {
-	case TEP_FILTER_ARG_FIELD:
-		return get_value(event, arg->field.field, record);
+अटल अचिन्हित दीर्घ दीर्घ
+get_arg_value(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+	      काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	चयन (arg->type) अणु
+	हाल TEP_FILTER_ARG_FIELD:
+		वापस get_value(event, arg->field.field, record);
 
-	case TEP_FILTER_ARG_VALUE:
-		if (arg->value.type != TEP_FILTER_NUMBER) {
-			if (!*err)
+	हाल TEP_FILTER_ARG_VALUE:
+		अगर (arg->value.type != TEP_FILTER_NUMBER) अणु
+			अगर (!*err)
 				*err = TEP_ERRNO__NOT_A_NUMBER;
-		}
-		return arg->value.val;
+		पूर्ण
+		वापस arg->value.val;
 
-	case TEP_FILTER_ARG_EXP:
-		return get_exp_value(event, arg, record, err);
+	हाल TEP_FILTER_ARG_EXP:
+		वापस get_exp_value(event, arg, record, err);
 
-	default:
-		if (!*err)
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__INVALID_ARG_TYPE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int test_num(struct tep_event *event, struct tep_filter_arg *arg,
-		    struct tep_record *record, enum tep_errno *err)
-{
-	unsigned long long lval, rval;
+अटल पूर्णांक test_num(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+		    काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	अचिन्हित दीर्घ दीर्घ lval, rval;
 
 	lval = get_arg_value(event, arg->num.left, record, err);
 	rval = get_arg_value(event, arg->num.right, record, err);
 
-	if (*err) {
+	अगर (*err) अणु
 		/*
 		 * There was an error, no need to process anymore.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (arg->num.type) {
-	case TEP_FILTER_CMP_EQ:
-		return lval == rval;
+	चयन (arg->num.type) अणु
+	हाल TEP_FILTER_CMP_EQ:
+		वापस lval == rval;
 
-	case TEP_FILTER_CMP_NE:
-		return lval != rval;
+	हाल TEP_FILTER_CMP_NE:
+		वापस lval != rval;
 
-	case TEP_FILTER_CMP_GT:
-		return lval > rval;
+	हाल TEP_FILTER_CMP_GT:
+		वापस lval > rval;
 
-	case TEP_FILTER_CMP_LT:
-		return lval < rval;
+	हाल TEP_FILTER_CMP_LT:
+		वापस lval < rval;
 
-	case TEP_FILTER_CMP_GE:
-		return lval >= rval;
+	हाल TEP_FILTER_CMP_GE:
+		वापस lval >= rval;
 
-	case TEP_FILTER_CMP_LE:
-		return lval <= rval;
+	हाल TEP_FILTER_CMP_LE:
+		वापस lval <= rval;
 
-	default:
-		if (!*err)
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__ILLEGAL_INTEGER_CMP;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const char *get_field_str(struct tep_filter_arg *arg, struct tep_record *record)
-{
-	struct tep_event *event;
-	struct tep_handle *tep;
-	unsigned long long addr;
-	const char *val = NULL;
-	unsigned int size;
-	char hex[64];
+अटल स्थिर अक्षर *get_field_str(काष्ठा tep_filter_arg *arg, काष्ठा tep_record *record)
+अणु
+	काष्ठा tep_event *event;
+	काष्ठा tep_handle *tep;
+	अचिन्हित दीर्घ दीर्घ addr;
+	स्थिर अक्षर *val = शून्य;
+	अचिन्हित पूर्णांक size;
+	अक्षर hex[64];
 
 	/* If the field is not a string convert it */
-	if (arg->str.field->flags & TEP_FIELD_IS_STRING) {
+	अगर (arg->str.field->flags & TEP_FIELD_IS_STRING) अणु
 		val = record->data + arg->str.field->offset;
 		size = arg->str.field->size;
 
-		if (arg->str.field->flags & TEP_FIELD_IS_DYNAMIC) {
-			addr = *(unsigned int *)val;
+		अगर (arg->str.field->flags & TEP_FIELD_IS_DYNAMIC) अणु
+			addr = *(अचिन्हित पूर्णांक *)val;
 			val = record->data + (addr & 0xffff);
 			size = addr >> 16;
-		}
+		पूर्ण
 
 		/*
 		 * We need to copy the data since we can't be sure the field
 		 * is null terminated.
 		 */
-		if (*(val + size - 1)) {
+		अगर (*(val + size - 1)) अणु
 			/* copy it */
-			memcpy(arg->str.buffer, val, arg->str.field->size);
-			/* the buffer is already NULL terminated */
+			स_नकल(arg->str.buffer, val, arg->str.field->size);
+			/* the buffer is alपढ़ोy शून्य terminated */
 			val = arg->str.buffer;
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		event = arg->str.field->event;
 		tep = event->tep;
 		addr = get_value(event, arg->str.field, record);
 
-		if (arg->str.field->flags & (TEP_FIELD_IS_POINTER | TEP_FIELD_IS_LONG))
+		अगर (arg->str.field->flags & (TEP_FIELD_IS_POINTER | TEP_FIELD_IS_LONG))
 			/* convert to a kernel symbol */
 			val = tep_find_function(tep, addr);
 
-		if (val == NULL) {
+		अगर (val == शून्य) अणु
 			/* just use the hex of the string name */
-			snprintf(hex, 64, "0x%llx", addr);
+			snम_लिखो(hex, 64, "0x%llx", addr);
 			val = hex;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int test_str(struct tep_event *event, struct tep_filter_arg *arg,
-		    struct tep_record *record, enum tep_errno *err)
-{
-	const char *val;
+अटल पूर्णांक test_str(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+		    काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	स्थिर अक्षर *val;
 
-	if (arg->str.field == &comm)
+	अगर (arg->str.field == &comm)
 		val = get_comm(event, record);
-	else
+	अन्यथा
 		val = get_field_str(arg, record);
 
-	switch (arg->str.type) {
-	case TEP_FILTER_CMP_MATCH:
-		return strcmp(val, arg->str.val) == 0;
+	चयन (arg->str.type) अणु
+	हाल TEP_FILTER_CMP_MATCH:
+		वापस म_भेद(val, arg->str.val) == 0;
 
-	case TEP_FILTER_CMP_NOT_MATCH:
-		return strcmp(val, arg->str.val) != 0;
+	हाल TEP_FILTER_CMP_NOT_MATCH:
+		वापस म_भेद(val, arg->str.val) != 0;
 
-	case TEP_FILTER_CMP_REGEX:
+	हाल TEP_FILTER_CMP_REGEX:
 		/* Returns zero on match */
-		return !regexec(&arg->str.reg, val, 0, NULL, 0);
+		वापस !regexec(&arg->str.reg, val, 0, शून्य, 0);
 
-	case TEP_FILTER_CMP_NOT_REGEX:
-		return regexec(&arg->str.reg, val, 0, NULL, 0);
+	हाल TEP_FILTER_CMP_NOT_REGEX:
+		वापस regexec(&arg->str.reg, val, 0, शून्य, 0);
 
-	default:
-		if (!*err)
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__ILLEGAL_STRING_CMP;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int test_op(struct tep_event *event, struct tep_filter_arg *arg,
-		   struct tep_record *record, enum tep_errno *err)
-{
-	switch (arg->op.type) {
-	case TEP_FILTER_OP_AND:
-		return test_filter(event, arg->op.left, record, err) &&
+अटल पूर्णांक test_op(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+		   काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	चयन (arg->op.type) अणु
+	हाल TEP_FILTER_OP_AND:
+		वापस test_filter(event, arg->op.left, record, err) &&
 			test_filter(event, arg->op.right, record, err);
 
-	case TEP_FILTER_OP_OR:
-		return test_filter(event, arg->op.left, record, err) ||
+	हाल TEP_FILTER_OP_OR:
+		वापस test_filter(event, arg->op.left, record, err) ||
 			test_filter(event, arg->op.right, record, err);
 
-	case TEP_FILTER_OP_NOT:
-		return !test_filter(event, arg->op.right, record, err);
+	हाल TEP_FILTER_OP_NOT:
+		वापस !test_filter(event, arg->op.right, record, err);
 
-	default:
-		if (!*err)
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__INVALID_OP_TYPE;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int test_filter(struct tep_event *event, struct tep_filter_arg *arg,
-		       struct tep_record *record, enum tep_errno *err)
-{
-	if (*err) {
+अटल पूर्णांक test_filter(काष्ठा tep_event *event, काष्ठा tep_filter_arg *arg,
+		       काष्ठा tep_record *record, क्रमागत tep_त्रुटि_सं *err)
+अणु
+	अगर (*err) अणु
 		/*
 		 * There was an error, no need to process anymore.
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (arg->type) {
-	case TEP_FILTER_ARG_BOOLEAN:
-		/* easy case */
-		return arg->boolean.value;
+	चयन (arg->type) अणु
+	हाल TEP_FILTER_ARG_BOOLEAN:
+		/* easy हाल */
+		वापस arg->boolean.value;
 
-	case TEP_FILTER_ARG_OP:
-		return test_op(event, arg, record, err);
+	हाल TEP_FILTER_ARG_OP:
+		वापस test_op(event, arg, record, err);
 
-	case TEP_FILTER_ARG_NUM:
-		return test_num(event, arg, record, err);
+	हाल TEP_FILTER_ARG_NUM:
+		वापस test_num(event, arg, record, err);
 
-	case TEP_FILTER_ARG_STR:
-		return test_str(event, arg, record, err);
+	हाल TEP_FILTER_ARG_STR:
+		वापस test_str(event, arg, record, err);
 
-	case TEP_FILTER_ARG_EXP:
-	case TEP_FILTER_ARG_VALUE:
-	case TEP_FILTER_ARG_FIELD:
+	हाल TEP_FILTER_ARG_EXP:
+	हाल TEP_FILTER_ARG_VALUE:
+	हाल TEP_FILTER_ARG_FIELD:
 		/*
 		 * Expressions, fields and values evaluate
-		 * to true if they return non zero
+		 * to true अगर they वापस non zero
 		 */
-		return !!get_arg_value(event, arg, record, err);
+		वापस !!get_arg_value(event, arg, record, err);
 
-	default:
-		if (!*err)
+	शेष:
+		अगर (!*err)
 			*err = TEP_ERRNO__INVALID_ARG_TYPE;
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /**
- * tep_event_filtered - return true if event has filter
- * @filter: filter struct with filter information
- * @event_id: event id to test if filter exists
+ * tep_event_filtered - वापस true अगर event has filter
+ * @filter: filter काष्ठा with filter inक्रमmation
+ * @event_id: event id to test अगर filter exists
  *
- * Returns 1 if filter found for @event_id
+ * Returns 1 अगर filter found क्रम @event_id
  *   otherwise 0;
  */
-int tep_event_filtered(struct tep_event_filter *filter, int event_id)
-{
-	struct tep_filter_type *filter_type;
+पूर्णांक tep_event_filtered(काष्ठा tep_event_filter *filter, पूर्णांक event_id)
+अणु
+	काष्ठा tep_filter_type *filter_type;
 
-	if (!filter->filters)
-		return 0;
+	अगर (!filter->filters)
+		वापस 0;
 
 	filter_type = find_filter_type(filter, event_id);
 
-	return filter_type ? 1 : 0;
-}
+	वापस filter_type ? 1 : 0;
+पूर्ण
 
 /**
- * tep_filter_match - test if a record matches a filter
- * @filter: filter struct with filter information
+ * tep_filter_match - test अगर a record matches a filter
+ * @filter: filter काष्ठा with filter inक्रमmation
  * @record: the record to test against the filter
  *
  * Returns: match result or error code (prefixed with TEP_ERRNO__)
- * FILTER_MATCH - filter found for event and @record matches
- * FILTER_MISS  - filter found for event and @record does not match
- * FILTER_NOT_FOUND - no filter found for @record's event
- * NO_FILTER - if no filters exist
+ * FILTER_MATCH - filter found क्रम event and @record matches
+ * FILTER_MISS  - filter found क्रम event and @record करोes not match
+ * FILTER_NOT_FOUND - no filter found क्रम @record's event
+ * NO_FILTER - अगर no filters exist
  * otherwise - error occurred during test
  */
-enum tep_errno tep_filter_match(struct tep_event_filter *filter,
-				struct tep_record *record)
-{
-	struct tep_handle *tep = filter->tep;
-	struct tep_filter_type *filter_type;
-	int event_id;
-	int ret;
-	enum tep_errno err = 0;
+क्रमागत tep_त्रुटि_सं tep_filter_match(काष्ठा tep_event_filter *filter,
+				काष्ठा tep_record *record)
+अणु
+	काष्ठा tep_handle *tep = filter->tep;
+	काष्ठा tep_filter_type *filter_type;
+	पूर्णांक event_id;
+	पूर्णांक ret;
+	क्रमागत tep_त्रुटि_सं err = 0;
 
 	filter_init_error_buf(filter);
 
-	if (!filter->filters)
-		return TEP_ERRNO__NO_FILTER;
+	अगर (!filter->filters)
+		वापस TEP_ERRNO__NO_FILTER;
 
 	event_id = tep_data_type(tep, record);
 
 	filter_type = find_filter_type(filter, event_id);
-	if (!filter_type)
-		return TEP_ERRNO__FILTER_NOT_FOUND;
+	अगर (!filter_type)
+		वापस TEP_ERRNO__FILTER_NOT_FOUND;
 
 	ret = test_filter(filter_type->event, filter_type->filter, record, &err);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return ret ? TEP_ERRNO__FILTER_MATCH : TEP_ERRNO__FILTER_MISS;
-}
+	वापस ret ? TEP_ERRNO__FILTER_MATCH : TEP_ERRNO__FILTER_MISS;
+पूर्ण
 
-static char *op_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *str = NULL;
-	char *left = NULL;
-	char *right = NULL;
-	char *op = NULL;
-	int left_val = -1;
-	int right_val = -1;
-	int val;
+अटल अक्षर *op_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *str = शून्य;
+	अक्षर *left = शून्य;
+	अक्षर *right = शून्य;
+	अक्षर *op = शून्य;
+	पूर्णांक left_val = -1;
+	पूर्णांक right_val = -1;
+	पूर्णांक val;
 
-	switch (arg->op.type) {
-	case TEP_FILTER_OP_AND:
+	चयन (arg->op.type) अणु
+	हाल TEP_FILTER_OP_AND:
 		op = "&&";
 		/* fall through */
-	case TEP_FILTER_OP_OR:
-		if (!op)
+	हाल TEP_FILTER_OP_OR:
+		अगर (!op)
 			op = "||";
 
 		left = arg_to_str(filter, arg->op.left);
 		right = arg_to_str(filter, arg->op.right);
-		if (!left || !right)
-			break;
+		अगर (!left || !right)
+			अवरोध;
 
 		/* Try to consolidate boolean values */
-		if (strcmp(left, "TRUE") == 0)
+		अगर (म_भेद(left, "TRUE") == 0)
 			left_val = 1;
-		else if (strcmp(left, "FALSE") == 0)
+		अन्यथा अगर (म_भेद(left, "FALSE") == 0)
 			left_val = 0;
 
-		if (strcmp(right, "TRUE") == 0)
+		अगर (म_भेद(right, "TRUE") == 0)
 			right_val = 1;
-		else if (strcmp(right, "FALSE") == 0)
+		अन्यथा अगर (म_भेद(right, "FALSE") == 0)
 			right_val = 0;
 
-		if (left_val >= 0) {
-			if ((arg->op.type == TEP_FILTER_OP_AND && !left_val) ||
-			    (arg->op.type == TEP_FILTER_OP_OR && left_val)) {
-				/* Just return left value */
+		अगर (left_val >= 0) अणु
+			अगर ((arg->op.type == TEP_FILTER_OP_AND && !left_val) ||
+			    (arg->op.type == TEP_FILTER_OP_OR && left_val)) अणु
+				/* Just वापस left value */
 				str = left;
-				left = NULL;
-				break;
-			}
-			if (right_val >= 0) {
+				left = शून्य;
+				अवरोध;
+			पूर्ण
+			अगर (right_val >= 0) अणु
 				/* just evaluate this. */
 				val = 0;
-				switch (arg->op.type) {
-				case TEP_FILTER_OP_AND:
+				चयन (arg->op.type) अणु
+				हाल TEP_FILTER_OP_AND:
 					val = left_val && right_val;
-					break;
-				case TEP_FILTER_OP_OR:
+					अवरोध;
+				हाल TEP_FILTER_OP_OR:
 					val = left_val || right_val;
-					break;
-				default:
-					break;
-				}
-				if (asprintf(&str, val ? "TRUE" : "FALSE") < 0)
-					str = NULL;
-				break;
-			}
-		}
-		if (right_val >= 0) {
-			if ((arg->op.type == TEP_FILTER_OP_AND && !right_val) ||
-			    (arg->op.type == TEP_FILTER_OP_OR && right_val)) {
-				/* Just return right value */
+					अवरोध;
+				शेष:
+					अवरोध;
+				पूर्ण
+				अगर (aप्र_लिखो(&str, val ? "TRUE" : "FALSE") < 0)
+					str = शून्य;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (right_val >= 0) अणु
+			अगर ((arg->op.type == TEP_FILTER_OP_AND && !right_val) ||
+			    (arg->op.type == TEP_FILTER_OP_OR && right_val)) अणु
+				/* Just वापस right value */
 				str = right;
-				right = NULL;
-				break;
-			}
+				right = शून्य;
+				अवरोध;
+			पूर्ण
 			/* The right value is meaningless */
 			str = left;
-			left = NULL;
-			break;
-		}
+			left = शून्य;
+			अवरोध;
+		पूर्ण
 
-		if (asprintf(&str, "(%s) %s (%s)", left, op, right) < 0)
-			str = NULL;
-		break;
+		अगर (aप्र_लिखो(&str, "(%s) %s (%s)", left, op, right) < 0)
+			str = शून्य;
+		अवरोध;
 
-	case TEP_FILTER_OP_NOT:
+	हाल TEP_FILTER_OP_NOT:
 		op = "!";
 		right = arg_to_str(filter, arg->op.right);
-		if (!right)
-			break;
+		अगर (!right)
+			अवरोध;
 
-		/* See if we can consolidate */
-		if (strcmp(right, "TRUE") == 0)
+		/* See अगर we can consolidate */
+		अगर (म_भेद(right, "TRUE") == 0)
 			right_val = 1;
-		else if (strcmp(right, "FALSE") == 0)
+		अन्यथा अगर (म_भेद(right, "FALSE") == 0)
 			right_val = 0;
-		if (right_val >= 0) {
-			/* just return the opposite */
-			if (asprintf(&str, right_val ? "FALSE" : "TRUE") < 0)
-				str = NULL;
-			break;
-		}
-		if (asprintf(&str, "%s(%s)", op, right) < 0)
-			str = NULL;
-		break;
+		अगर (right_val >= 0) अणु
+			/* just वापस the opposite */
+			अगर (aप्र_लिखो(&str, right_val ? "FALSE" : "TRUE") < 0)
+				str = शून्य;
+			अवरोध;
+		पूर्ण
+		अगर (aप्र_लिखो(&str, "%s(%s)", op, right) < 0)
+			str = शून्य;
+		अवरोध;
 
-	default:
+	शेष:
 		/* ?? */
-		break;
-	}
-	free(left);
-	free(right);
-	return str;
-}
+		अवरोध;
+	पूर्ण
+	मुक्त(left);
+	मुक्त(right);
+	वापस str;
+पूर्ण
 
-static char *val_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *str = NULL;
+अटल अक्षर *val_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *str = शून्य;
 
-	if (asprintf(&str, "%lld", arg->value.val) < 0)
-		str = NULL;
+	अगर (aप्र_लिखो(&str, "%lld", arg->value.val) < 0)
+		str = शून्य;
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static char *field_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	return strdup(arg->field.field->name);
-}
+अटल अक्षर *field_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	वापस strdup(arg->field.field->name);
+पूर्ण
 
-static char *exp_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *lstr;
-	char *rstr;
-	char *op;
-	char *str = NULL;
+अटल अक्षर *exp_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *lstr;
+	अक्षर *rstr;
+	अक्षर *op;
+	अक्षर *str = शून्य;
 
 	lstr = arg_to_str(filter, arg->exp.left);
 	rstr = arg_to_str(filter, arg->exp.right);
-	if (!lstr || !rstr)
-		goto out;
+	अगर (!lstr || !rstr)
+		जाओ out;
 
-	switch (arg->exp.type) {
-	case TEP_FILTER_EXP_ADD:
+	चयन (arg->exp.type) अणु
+	हाल TEP_FILTER_EXP_ADD:
 		op = "+";
-		break;
-	case TEP_FILTER_EXP_SUB:
+		अवरोध;
+	हाल TEP_FILTER_EXP_SUB:
 		op = "-";
-		break;
-	case TEP_FILTER_EXP_MUL:
+		अवरोध;
+	हाल TEP_FILTER_EXP_MUL:
 		op = "*";
-		break;
-	case TEP_FILTER_EXP_DIV:
+		अवरोध;
+	हाल TEP_FILTER_EXP_DIV:
 		op = "/";
-		break;
-	case TEP_FILTER_EXP_MOD:
+		अवरोध;
+	हाल TEP_FILTER_EXP_MOD:
 		op = "%";
-		break;
-	case TEP_FILTER_EXP_RSHIFT:
+		अवरोध;
+	हाल TEP_FILTER_EXP_RSHIFT:
 		op = ">>";
-		break;
-	case TEP_FILTER_EXP_LSHIFT:
+		अवरोध;
+	हाल TEP_FILTER_EXP_LSHIFT:
 		op = "<<";
-		break;
-	case TEP_FILTER_EXP_AND:
+		अवरोध;
+	हाल TEP_FILTER_EXP_AND:
 		op = "&";
-		break;
-	case TEP_FILTER_EXP_OR:
+		अवरोध;
+	हाल TEP_FILTER_EXP_OR:
 		op = "|";
-		break;
-	case TEP_FILTER_EXP_XOR:
+		अवरोध;
+	हाल TEP_FILTER_EXP_XOR:
 		op = "^";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		op = "[ERROR IN EXPRESSION TYPE]";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (asprintf(&str, "%s %s %s", lstr, op, rstr) < 0)
-		str = NULL;
+	अगर (aप्र_लिखो(&str, "%s %s %s", lstr, op, rstr) < 0)
+		str = शून्य;
 out:
-	free(lstr);
-	free(rstr);
+	मुक्त(lstr);
+	मुक्त(rstr);
 
-	return str;
-}
+	वापस str;
+पूर्ण
 
-static char *num_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *lstr;
-	char *rstr;
-	char *str = NULL;
-	char *op = NULL;
+अटल अक्षर *num_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *lstr;
+	अक्षर *rstr;
+	अक्षर *str = शून्य;
+	अक्षर *op = शून्य;
 
 	lstr = arg_to_str(filter, arg->num.left);
 	rstr = arg_to_str(filter, arg->num.right);
-	if (!lstr || !rstr)
-		goto out;
+	अगर (!lstr || !rstr)
+		जाओ out;
 
-	switch (arg->num.type) {
-	case TEP_FILTER_CMP_EQ:
+	चयन (arg->num.type) अणु
+	हाल TEP_FILTER_CMP_EQ:
 		op = "==";
 		/* fall through */
-	case TEP_FILTER_CMP_NE:
-		if (!op)
+	हाल TEP_FILTER_CMP_NE:
+		अगर (!op)
 			op = "!=";
 		/* fall through */
-	case TEP_FILTER_CMP_GT:
-		if (!op)
+	हाल TEP_FILTER_CMP_GT:
+		अगर (!op)
 			op = ">";
 		/* fall through */
-	case TEP_FILTER_CMP_LT:
-		if (!op)
+	हाल TEP_FILTER_CMP_LT:
+		अगर (!op)
 			op = "<";
 		/* fall through */
-	case TEP_FILTER_CMP_GE:
-		if (!op)
+	हाल TEP_FILTER_CMP_GE:
+		अगर (!op)
 			op = ">=";
 		/* fall through */
-	case TEP_FILTER_CMP_LE:
-		if (!op)
+	हाल TEP_FILTER_CMP_LE:
+		अगर (!op)
 			op = "<=";
 
-		if (asprintf(&str, "%s %s %s", lstr, op, rstr) < 0)
-			str = NULL;
-		break;
+		अगर (aप्र_लिखो(&str, "%s %s %s", lstr, op, rstr) < 0)
+			str = शून्य;
+		अवरोध;
 
-	default:
+	शेष:
 		/* ?? */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	free(lstr);
-	free(rstr);
-	return str;
-}
+	मुक्त(lstr);
+	मुक्त(rstr);
+	वापस str;
+पूर्ण
 
-static char *str_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *str = NULL;
-	char *op = NULL;
+अटल अक्षर *str_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *str = शून्य;
+	अक्षर *op = शून्य;
 
-	switch (arg->str.type) {
-	case TEP_FILTER_CMP_MATCH:
+	चयन (arg->str.type) अणु
+	हाल TEP_FILTER_CMP_MATCH:
 		op = "==";
 		/* fall through */
-	case TEP_FILTER_CMP_NOT_MATCH:
-		if (!op)
+	हाल TEP_FILTER_CMP_NOT_MATCH:
+		अगर (!op)
 			op = "!=";
 		/* fall through */
-	case TEP_FILTER_CMP_REGEX:
-		if (!op)
+	हाल TEP_FILTER_CMP_REGEX:
+		अगर (!op)
 			op = "=~";
 		/* fall through */
-	case TEP_FILTER_CMP_NOT_REGEX:
-		if (!op)
+	हाल TEP_FILTER_CMP_NOT_REGEX:
+		अगर (!op)
 			op = "!~";
 
-		if (asprintf(&str, "%s %s \"%s\"",
+		अगर (aप्र_लिखो(&str, "%s %s \"%s\"",
 			 arg->str.field->name, op, arg->str.val) < 0)
-			str = NULL;
-		break;
+			str = शून्य;
+		अवरोध;
 
-	default:
+	शेष:
 		/* ?? */
-		break;
-	}
-	return str;
-}
+		अवरोध;
+	पूर्ण
+	वापस str;
+पूर्ण
 
-static char *arg_to_str(struct tep_event_filter *filter, struct tep_filter_arg *arg)
-{
-	char *str = NULL;
+अटल अक्षर *arg_to_str(काष्ठा tep_event_filter *filter, काष्ठा tep_filter_arg *arg)
+अणु
+	अक्षर *str = शून्य;
 
-	switch (arg->type) {
-	case TEP_FILTER_ARG_BOOLEAN:
-		if (asprintf(&str, arg->boolean.value ? "TRUE" : "FALSE") < 0)
-			str = NULL;
-		return str;
+	चयन (arg->type) अणु
+	हाल TEP_FILTER_ARG_BOOLEAN:
+		अगर (aप्र_लिखो(&str, arg->boolean.value ? "TRUE" : "FALSE") < 0)
+			str = शून्य;
+		वापस str;
 
-	case TEP_FILTER_ARG_OP:
-		return op_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_OP:
+		वापस op_to_str(filter, arg);
 
-	case TEP_FILTER_ARG_NUM:
-		return num_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_NUM:
+		वापस num_to_str(filter, arg);
 
-	case TEP_FILTER_ARG_STR:
-		return str_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_STR:
+		वापस str_to_str(filter, arg);
 
-	case TEP_FILTER_ARG_VALUE:
-		return val_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_VALUE:
+		वापस val_to_str(filter, arg);
 
-	case TEP_FILTER_ARG_FIELD:
-		return field_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_FIELD:
+		वापस field_to_str(filter, arg);
 
-	case TEP_FILTER_ARG_EXP:
-		return exp_to_str(filter, arg);
+	हाल TEP_FILTER_ARG_EXP:
+		वापस exp_to_str(filter, arg);
 
-	default:
+	शेष:
 		/* ?? */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-}
+पूर्ण
 
 /**
- * tep_filter_make_string - return a string showing the filter
- * @filter: filter struct with filter information
- * @event_id: the event id to return the filter string with
+ * tep_filter_make_string - वापस a string showing the filter
+ * @filter: filter काष्ठा with filter inक्रमmation
+ * @event_id: the event id to वापस the filter string with
  *
  * Returns a string that displays the filter contents.
- *  This string must be freed with free(str).
- *  NULL is returned if no filter is found or allocation failed.
+ *  This string must be मुक्तd with मुक्त(str).
+ *  शून्य is वापसed अगर no filter is found or allocation failed.
  */
-char *
-tep_filter_make_string(struct tep_event_filter *filter, int event_id)
-{
-	struct tep_filter_type *filter_type;
+अक्षर *
+tep_filter_make_string(काष्ठा tep_event_filter *filter, पूर्णांक event_id)
+अणु
+	काष्ठा tep_filter_type *filter_type;
 
-	if (!filter->filters)
-		return NULL;
+	अगर (!filter->filters)
+		वापस शून्य;
 
 	filter_type = find_filter_type(filter, event_id);
 
-	if (!filter_type)
-		return NULL;
+	अगर (!filter_type)
+		वापस शून्य;
 
-	return arg_to_str(filter, filter_type->filter);
-}
+	वापस arg_to_str(filter, filter_type->filter);
+पूर्ण
 
 /**
- * tep_filter_compare - compare two filters and return if they are the same
+ * tep_filter_compare - compare two filters and वापस अगर they are the same
  * @filter1: Filter to compare with @filter2
  * @filter2: Filter to compare with @filter1
  *
  * Returns:
- *  1 if the two filters hold the same content.
- *  0 if they do not.
+ *  1 अगर the two filters hold the same content.
+ *  0 अगर they करो not.
  */
-int tep_filter_compare(struct tep_event_filter *filter1, struct tep_event_filter *filter2)
-{
-	struct tep_filter_type *filter_type1;
-	struct tep_filter_type *filter_type2;
-	char *str1, *str2;
-	int result;
-	int i;
+पूर्णांक tep_filter_compare(काष्ठा tep_event_filter *filter1, काष्ठा tep_event_filter *filter2)
+अणु
+	काष्ठा tep_filter_type *filter_type1;
+	काष्ठा tep_filter_type *filter_type2;
+	अक्षर *str1, *str2;
+	पूर्णांक result;
+	पूर्णांक i;
 
 	/* Do the easy checks first */
-	if (filter1->filters != filter2->filters)
-		return 0;
-	if (!filter1->filters && !filter2->filters)
-		return 1;
+	अगर (filter1->filters != filter2->filters)
+		वापस 0;
+	अगर (!filter1->filters && !filter2->filters)
+		वापस 1;
 
 	/*
-	 * Now take a look at each of the events to see if they have the same
+	 * Now take a look at each of the events to see अगर they have the same
 	 * filters to them.
 	 */
-	for (i = 0; i < filter1->filters; i++) {
+	क्रम (i = 0; i < filter1->filters; i++) अणु
 		filter_type1 = &filter1->event_filters[i];
 		filter_type2 = find_filter_type(filter2, filter_type1->event_id);
-		if (!filter_type2)
-			break;
-		if (filter_type1->filter->type != filter_type2->filter->type)
-			break;
+		अगर (!filter_type2)
+			अवरोध;
+		अगर (filter_type1->filter->type != filter_type2->filter->type)
+			अवरोध;
 		/* The best way to compare complex filters is with strings */
 		str1 = arg_to_str(filter1, filter_type1->filter);
 		str2 = arg_to_str(filter2, filter_type2->filter);
-		if (str1 && str2)
-			result = strcmp(str1, str2) != 0;
-		else
-			/* bail out if allocation fails */
+		अगर (str1 && str2)
+			result = म_भेद(str1, str2) != 0;
+		अन्यथा
+			/* bail out अगर allocation fails */
 			result = 1;
 
-		free(str1);
-		free(str2);
-		if (result)
-			break;
-	}
+		मुक्त(str1);
+		मुक्त(str2);
+		अगर (result)
+			अवरोध;
+	पूर्ण
 
-	if (i < filter1->filters)
-		return 0;
-	return 1;
-}
+	अगर (i < filter1->filters)
+		वापस 0;
+	वापस 1;
+पूर्ण
 

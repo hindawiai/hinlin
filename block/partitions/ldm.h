@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /**
  * ldm - Part of the Linux-NTFS project.
  *
- * Copyright (C) 2001,2002 Richard Russon <ldm@flatcap.org>
+ * Copyright (C) 2001,2002 Riअक्षरd Russon <ldm@flatcap.org>
  * Copyright (c) 2001-2007 Anton Altaparmakov
  * Copyright (C) 2001,2002 Jakob Kemi <jakob.kemi@telia.com>
  *
- * Documentation is available at http://www.linux-ntfs.org/doku.php?id=downloads 
+ * Documentation is available at http://www.linux-ntfs.org/करोku.php?id=करोwnloads 
  */
 
-#ifndef _FS_PT_LDM_H_
-#define _FS_PT_LDM_H_
+#अगर_अघोषित _FS_PT_LDM_H_
+#घोषणा _FS_PT_LDM_H_
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/genhd.h>
-#include <linux/fs.h>
-#include <asm/unaligned.h>
-#include <asm/byteorder.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/fs.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <यंत्र/byteorder.h>
 
-struct parsed_partitions;
+काष्ठा parsed_partitions;
 
-/* Magic numbers in CPU format. */
-#define MAGIC_VMDB	0x564D4442		/* VMDB */
-#define MAGIC_VBLK	0x56424C4B		/* VBLK */
-#define MAGIC_PRIVHEAD	0x5052495648454144ULL	/* PRIVHEAD */
-#define MAGIC_TOCBLOCK	0x544F43424C4F434BULL	/* TOCBLOCK */
+/* Magic numbers in CPU क्रमmat. */
+#घोषणा MAGIC_VMDB	0x564D4442		/* VMDB */
+#घोषणा MAGIC_VBLK	0x56424C4B		/* VBLK */
+#घोषणा MAGIC_PRIVHEAD	0x5052495648454144ULL	/* PRIVHEAD */
+#घोषणा MAGIC_TOCBLOCK	0x544F43424C4F434BULL	/* TOCBLOCK */
 
 /* The defined vblk types. */
-#define VBLK_VOL5		0x51		/* Volume,     version 5 */
-#define VBLK_CMP3		0x32		/* Component,  version 3 */
-#define VBLK_PRT3		0x33		/* Partition,  version 3 */
-#define VBLK_DSK3		0x34		/* Disk,       version 3 */
-#define VBLK_DSK4		0x44		/* Disk,       version 4 */
-#define VBLK_DGR3		0x35		/* Disk Group, version 3 */
-#define VBLK_DGR4		0x45		/* Disk Group, version 4 */
+#घोषणा VBLK_VOL5		0x51		/* Volume,     version 5 */
+#घोषणा VBLK_CMP3		0x32		/* Component,  version 3 */
+#घोषणा VBLK_PRT3		0x33		/* Partition,  version 3 */
+#घोषणा VBLK_DSK3		0x34		/* Disk,       version 3 */
+#घोषणा VBLK_DSK4		0x44		/* Disk,       version 4 */
+#घोषणा VBLK_DGR3		0x35		/* Disk Group, version 3 */
+#घोषणा VBLK_DGR4		0x45		/* Disk Group, version 4 */
 
-/* vblk flags indicating extra information will be present */
-#define	VBLK_FLAG_COMP_STRIPE	0x10
-#define	VBLK_FLAG_PART_INDEX	0x08
-#define	VBLK_FLAG_DGR3_IDS	0x08
-#define	VBLK_FLAG_DGR4_IDS	0x08
-#define	VBLK_FLAG_VOLU_ID1	0x08
-#define	VBLK_FLAG_VOLU_ID2	0x20
-#define	VBLK_FLAG_VOLU_SIZE	0x80
-#define	VBLK_FLAG_VOLU_DRIVE	0x02
+/* vblk flags indicating extra inक्रमmation will be present */
+#घोषणा	VBLK_FLAG_COMP_STRIPE	0x10
+#घोषणा	VBLK_FLAG_PART_INDEX	0x08
+#घोषणा	VBLK_FLAG_DGR3_IDS	0x08
+#घोषणा	VBLK_FLAG_DGR4_IDS	0x08
+#घोषणा	VBLK_FLAG_VOLU_ID1	0x08
+#घोषणा	VBLK_FLAG_VOLU_ID2	0x20
+#घोषणा	VBLK_FLAG_VOLU_SIZE	0x80
+#घोषणा	VBLK_FLAG_VOLU_DRIVE	0x02
 
-/* size of a vblk's static parts */
-#define VBLK_SIZE_HEAD		16
-#define VBLK_SIZE_CMP3		22		/* Name and version */
-#define VBLK_SIZE_DGR3		12
-#define VBLK_SIZE_DGR4		44
-#define VBLK_SIZE_DSK3		12
-#define VBLK_SIZE_DSK4		45
-#define VBLK_SIZE_PRT3		28
-#define VBLK_SIZE_VOL5		58
+/* size of a vblk's अटल parts */
+#घोषणा VBLK_SIZE_HEAD		16
+#घोषणा VBLK_SIZE_CMP3		22		/* Name and version */
+#घोषणा VBLK_SIZE_DGR3		12
+#घोषणा VBLK_SIZE_DGR4		44
+#घोषणा VBLK_SIZE_DSK3		12
+#घोषणा VBLK_SIZE_DSK4		45
+#घोषणा VBLK_SIZE_PRT3		28
+#घोषणा VBLK_SIZE_VOL5		58
 
 /* component types */
-#define COMP_STRIPE		0x01		/* Stripe-set */
-#define COMP_BASIC		0x02		/* Basic disk */
-#define COMP_RAID		0x03		/* Raid-set */
+#घोषणा COMP_STRIPE		0x01		/* Stripe-set */
+#घोषणा COMP_BASIC		0x02		/* Basic disk */
+#घोषणा COMP_RAID		0x03		/* Raid-set */
 
-/* Other constants. */
-#define LDM_DB_SIZE		2048		/* Size in sectors (= 1MiB). */
+/* Other स्थिरants. */
+#घोषणा LDM_DB_SIZE		2048		/* Size in sectors (= 1MiB). */
 
-#define OFF_PRIV1		6		/* Offset of the first privhead
+#घोषणा OFF_PRIV1		6		/* Offset of the first privhead
 						   relative to the start of the
 						   device in sectors */
 
-/* Offsets to structures within the LDM Database in sectors. */
-#define OFF_PRIV2		1856		/* Backup private headers. */
-#define OFF_PRIV3		2047
+/* Offsets to काष्ठाures within the LDM Database in sectors. */
+#घोषणा OFF_PRIV2		1856		/* Backup निजी headers. */
+#घोषणा OFF_PRIV3		2047
 
-#define OFF_TOCB1		1		/* Tables of contents. */
-#define OFF_TOCB2		2
-#define OFF_TOCB3		2045
-#define OFF_TOCB4		2046
+#घोषणा OFF_TOCB1		1		/* Tables of contents. */
+#घोषणा OFF_TOCB2		2
+#घोषणा OFF_TOCB3		2045
+#घोषणा OFF_TOCB4		2046
 
-#define OFF_VMDB		17		/* List of partitions. */
+#घोषणा OFF_VMDB		17		/* List of partitions. */
 
-#define LDM_PARTITION		0x42		/* Formerly SFS (Landis). */
+#घोषणा LDM_PARTITION		0x42		/* Formerly SFS (Landis). */
 
-#define TOC_BITMAP1		"config"	/* Names of the two defined */
-#define TOC_BITMAP2		"log"		/* bitmaps in the TOCBLOCK. */
+#घोषणा TOC_BITMAP1		"config"	/* Names of the two defined */
+#घोषणा TOC_BITMAP2		"log"		/* biपंचांगaps in the TOCBLOCK. */
 
-/* Borrowed from msdos.c */
-#define SYS_IND(p)		(get_unaligned(&(p)->sys_ind))
+/* Borrowed from msकरोs.c */
+#घोषणा SYS_IND(p)		(get_unaligned(&(p)->sys_ind))
 
-struct frag {				/* VBLK Fragment handling */
-	struct list_head list;
+काष्ठा frag अणु				/* VBLK Fragment handling */
+	काष्ठा list_head list;
 	u32		group;
 	u8		num;		/* Total number of records */
 	u8		rec;		/* This is record number n */
 	u8		map;		/* Which portions are in use */
 	u8		data[];
-};
+पूर्ण;
 
-/* In memory LDM database structures. */
+/* In memory LDM database काष्ठाures. */
 
-struct privhead {			/* Offsets and sizes are in sectors. */
+काष्ठा privhead अणु			/* Offsets and sizes are in sectors. */
 	u16	ver_major;
 	u16	ver_minor;
 	u64	logical_disk_start;
@@ -106,92 +107,92 @@ struct privhead {			/* Offsets and sizes are in sectors. */
 	u64	config_start;
 	u64	config_size;
 	uuid_t	disk_id;
-};
+पूर्ण;
 
-struct tocblock {			/* We have exactly two bitmaps. */
-	u8	bitmap1_name[16];
-	u64	bitmap1_start;
-	u64	bitmap1_size;
-	u8	bitmap2_name[16];
-	u64	bitmap2_start;
-	u64	bitmap2_size;
-};
+काष्ठा tocblock अणु			/* We have exactly two biपंचांगaps. */
+	u8	biपंचांगap1_name[16];
+	u64	biपंचांगap1_start;
+	u64	biपंचांगap1_size;
+	u8	biपंचांगap2_name[16];
+	u64	biपंचांगap2_start;
+	u64	biपंचांगap2_size;
+पूर्ण;
 
-struct vmdb {				/* VMDB: The database header */
+काष्ठा vmdb अणु				/* VMDB: The database header */
 	u16	ver_major;
 	u16	ver_minor;
 	u32	vblk_size;
 	u32	vblk_offset;
 	u32	last_vblk_seq;
-};
+पूर्ण;
 
-struct vblk_comp {			/* VBLK Component */
+काष्ठा vblk_comp अणु			/* VBLK Component */
 	u8	state[16];
 	u64	parent_id;
 	u8	type;
 	u8	children;
 	u16	chunksize;
-};
+पूर्ण;
 
-struct vblk_dgrp {			/* VBLK Disk Group */
+काष्ठा vblk_dgrp अणु			/* VBLK Disk Group */
 	u8	disk_id[64];
-};
+पूर्ण;
 
-struct vblk_disk {			/* VBLK Disk */
+काष्ठा vblk_disk अणु			/* VBLK Disk */
 	uuid_t	disk_id;
 	u8	alt_name[128];
-};
+पूर्ण;
 
-struct vblk_part {			/* VBLK Partition */
+काष्ठा vblk_part अणु			/* VBLK Partition */
 	u64	start;
 	u64	size;			/* start, size and vol_off in sectors */
 	u64	volume_offset;
 	u64	parent_id;
 	u64	disk_id;
 	u8	partnum;
-};
+पूर्ण;
 
-struct vblk_volu {			/* VBLK Volume */
+काष्ठा vblk_volu अणु			/* VBLK Volume */
 	u8	volume_type[16];
 	u8	volume_state[16];
 	u8	guid[16];
-	u8	drive_hint[4];
+	u8	drive_hपूर्णांक[4];
 	u64	size;
 	u8	partition_type;
-};
+पूर्ण;
 
-struct vblk_head {			/* VBLK standard header */
+काष्ठा vblk_head अणु			/* VBLK standard header */
 	u32 group;
 	u16 rec;
 	u16 nrec;
-};
+पूर्ण;
 
-struct vblk {				/* Generalised VBLK */
+काष्ठा vblk अणु				/* Generalised VBLK */
 	u8	name[64];
 	u64	obj_id;
 	u32	sequence;
 	u8	flags;
 	u8	type;
-	union {
-		struct vblk_comp comp;
-		struct vblk_dgrp dgrp;
-		struct vblk_disk disk;
-		struct vblk_part part;
-		struct vblk_volu volu;
-	} vblk;
-	struct list_head list;
-};
+	जोड़ अणु
+		काष्ठा vblk_comp comp;
+		काष्ठा vblk_dgrp dgrp;
+		काष्ठा vblk_disk disk;
+		काष्ठा vblk_part part;
+		काष्ठा vblk_volu volu;
+	पूर्ण vblk;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct ldmdb {				/* Cache of the database */
-	struct privhead ph;
-	struct tocblock toc;
-	struct vmdb     vm;
-	struct list_head v_dgrp;
-	struct list_head v_disk;
-	struct list_head v_volu;
-	struct list_head v_comp;
-	struct list_head v_part;
-};
+काष्ठा ldmdb अणु				/* Cache of the database */
+	काष्ठा privhead ph;
+	काष्ठा tocblock toc;
+	काष्ठा vmdb     vm;
+	काष्ठा list_head v_dgrp;
+	काष्ठा list_head v_disk;
+	काष्ठा list_head v_volu;
+	काष्ठा list_head v_comp;
+	काष्ठा list_head v_part;
+पूर्ण;
 
-#endif /* _FS_PT_LDM_H_ */
+#पूर्ण_अगर /* _FS_PT_LDM_H_ */
 

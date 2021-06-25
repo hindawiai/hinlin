@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
 * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,10 +24,10 @@
  *
  */
 
-#ifndef __DC_HWSS_DCN301_H__
-#define __DC_HWSS_DCN301_H__
+#अगर_अघोषित __DC_HWSS_DCN301_H__
+#घोषणा __DC_HWSS_DCN301_H__
 
-#include "hw_sequencer_private.h"
+#समावेश "hw_sequencer_private.h"
 
 
-#endif /* __DC_HWSS_DCN301_H__ */
+#पूर्ण_अगर /* __DC_HWSS_DCN301_H__ */

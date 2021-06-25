@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /**************************************************************************
  * Copyright (c) 2007, Intel Corporation.
  *
  **************************************************************************/
 
-#include <linux/highmem.h>
+#समावेश <linux/highस्मृति.स>
 
-#include "mmu.h"
-#include "psb_drv.h"
-#include "psb_reg.h"
+#समावेश "mmu.h"
+#समावेश "psb_drv.h"
+#समावेश "psb_reg.h"
 
 /*
- * Code for the SGX MMU:
+ * Code क्रम the SGX MMU:
  */
 
 /*
  * clflush on one processor only:
  * clflush should apparently flush the cache line on all processors in an
- * SMP system.
+ * SMP प्रणाली.
  */
 
 /*
  * kmap atomic:
  * The usage of the slots must be completely encapsulated within a spinlock, and
- * no other functions that may be using the locks for other purposed may be
+ * no other functions that may be using the locks क्रम other purposed may be
  * called from within the locked region.
  * Since the slots are per processor, this will guarantee that we are the only
  * user.
  */
 
 /*
- * TODO: Inserting ptes from an interrupt handler:
- * This may be desirable for some SGX functionality where the GPU can fault in
+ * TODO: Inserting ptes from an पूर्णांकerrupt handler:
+ * This may be desirable क्रम some SGX functionality where the GPU can fault in
  * needed pages. For that, we need to make an atomic insert_pages function, that
  * may fail.
  * If it fails, the caller need to insert the page using a workqueue function,
  * but on average it should be fast.
  */
 
-static inline uint32_t psb_mmu_pt_index(uint32_t offset)
-{
-	return (offset >> PSB_PTE_SHIFT) & 0x3FF;
-}
+अटल अंतरभूत uपूर्णांक32_t psb_mmu_pt_index(uपूर्णांक32_t offset)
+अणु
+	वापस (offset >> PSB_PTE_SHIFT) & 0x3FF;
+पूर्ण
 
-static inline uint32_t psb_mmu_pd_index(uint32_t offset)
-{
-	return offset >> PSB_PDE_SHIFT;
-}
+अटल अंतरभूत uपूर्णांक32_t psb_mmu_pd_index(uपूर्णांक32_t offset)
+अणु
+	वापस offset >> PSB_PDE_SHIFT;
+पूर्ण
 
-static inline void psb_clflush(void *addr)
-{
-	__asm__ __volatile__("clflush (%0)\n" : : "r"(addr) : "memory");
-}
+अटल अंतरभूत व्योम psb_clflush(व्योम *addr)
+अणु
+	__यंत्र__ __अस्थिर__("clflush (%0)\n" : : "r"(addr) : "memory");
+पूर्ण
 
-static inline void psb_mmu_clflush(struct psb_mmu_driver *driver, void *addr)
-{
-	if (!driver->has_clflush)
-		return;
+अटल अंतरभूत व्योम psb_mmu_clflush(काष्ठा psb_mmu_driver *driver, व्योम *addr)
+अणु
+	अगर (!driver->has_clflush)
+		वापस;
 
 	mb();
 	psb_clflush(addr);
 	mb();
-}
+पूर्ण
 
-static void psb_mmu_flush_pd_locked(struct psb_mmu_driver *driver, int force)
-{
-	struct drm_device *dev = driver->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अटल व्योम psb_mmu_flush_pd_locked(काष्ठा psb_mmu_driver *driver, पूर्णांक क्रमce)
+अणु
+	काष्ठा drm_device *dev = driver->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 
-	if (atomic_read(&driver->needs_tlbflush) || force) {
-		uint32_t val = PSB_RSGX32(PSB_CR_BIF_CTRL);
+	अगर (atomic_पढ़ो(&driver->needs_tlbflush) || क्रमce) अणु
+		uपूर्णांक32_t val = PSB_RSGX32(PSB_CR_BIF_CTRL);
 		PSB_WSGX32(val | _PSB_CB_CTRL_INVALDC, PSB_CR_BIF_CTRL);
 
-		/* Make sure data cache is turned off before enabling it */
+		/* Make sure data cache is turned off beक्रमe enabling it */
 		wmb();
 		PSB_WSGX32(val & ~_PSB_CB_CTRL_INVALDC, PSB_CR_BIF_CTRL);
-		(void)PSB_RSGX32(PSB_CR_BIF_CTRL);
-		if (driver->msvdx_mmu_invaldc)
+		(व्योम)PSB_RSGX32(PSB_CR_BIF_CTRL);
+		अगर (driver->msvdx_mmu_invaldc)
 			atomic_set(driver->msvdx_mmu_invaldc, 1);
-	}
+	पूर्ण
 	atomic_set(&driver->needs_tlbflush, 0);
-}
+पूर्ण
 
-#if 0
-static void psb_mmu_flush_pd(struct psb_mmu_driver *driver, int force)
-{
-	down_write(&driver->sem);
-	psb_mmu_flush_pd_locked(driver, force);
-	up_write(&driver->sem);
-}
-#endif
+#अगर 0
+अटल व्योम psb_mmu_flush_pd(काष्ठा psb_mmu_driver *driver, पूर्णांक क्रमce)
+अणु
+	करोwn_ग_लिखो(&driver->sem);
+	psb_mmu_flush_pd_locked(driver, क्रमce);
+	up_ग_लिखो(&driver->sem);
+पूर्ण
+#पूर्ण_अगर
 
-void psb_mmu_flush(struct psb_mmu_driver *driver)
-{
-	struct drm_device *dev = driver->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	uint32_t val;
+व्योम psb_mmu_flush(काष्ठा psb_mmu_driver *driver)
+अणु
+	काष्ठा drm_device *dev = driver->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	uपूर्णांक32_t val;
 
-	down_write(&driver->sem);
+	करोwn_ग_लिखो(&driver->sem);
 	val = PSB_RSGX32(PSB_CR_BIF_CTRL);
-	if (atomic_read(&driver->needs_tlbflush))
+	अगर (atomic_पढ़ो(&driver->needs_tlbflush))
 		PSB_WSGX32(val | _PSB_CB_CTRL_INVALDC, PSB_CR_BIF_CTRL);
-	else
+	अन्यथा
 		PSB_WSGX32(val | _PSB_CB_CTRL_FLUSH, PSB_CR_BIF_CTRL);
 
-	/* Make sure data cache is turned off and MMU is flushed before
-	   restoring bank interface control register */
+	/* Make sure data cache is turned off and MMU is flushed beक्रमe
+	   restoring bank पूर्णांकerface control रेजिस्टर */
 	wmb();
 	PSB_WSGX32(val & ~(_PSB_CB_CTRL_FLUSH | _PSB_CB_CTRL_INVALDC),
 		   PSB_CR_BIF_CTRL);
-	(void)PSB_RSGX32(PSB_CR_BIF_CTRL);
+	(व्योम)PSB_RSGX32(PSB_CR_BIF_CTRL);
 
 	atomic_set(&driver->needs_tlbflush, 0);
-	if (driver->msvdx_mmu_invaldc)
+	अगर (driver->msvdx_mmu_invaldc)
 		atomic_set(driver->msvdx_mmu_invaldc, 1);
-	up_write(&driver->sem);
-}
+	up_ग_लिखो(&driver->sem);
+पूर्ण
 
-void psb_mmu_set_pd_context(struct psb_mmu_pd *pd, int hw_context)
-{
-	struct drm_device *dev = pd->driver->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	uint32_t offset = (hw_context == 0) ? PSB_CR_BIF_DIR_LIST_BASE0 :
-			  PSB_CR_BIF_DIR_LIST_BASE1 + hw_context * 4;
+व्योम psb_mmu_set_pd_context(काष्ठा psb_mmu_pd *pd, पूर्णांक hw_context)
+अणु
+	काष्ठा drm_device *dev = pd->driver->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	uपूर्णांक32_t offset = (hw_context == 0) ? PSB_CR_BIF_सूची_LIST_BASE0 :
+			  PSB_CR_BIF_सूची_LIST_BASE1 + hw_context * 4;
 
-	down_write(&pd->driver->sem);
+	करोwn_ग_लिखो(&pd->driver->sem);
 	PSB_WSGX32(page_to_pfn(pd->p) << PAGE_SHIFT, offset);
 	wmb();
 	psb_mmu_flush_pd_locked(pd->driver, 1);
 	pd->hw_context = hw_context;
-	up_write(&pd->driver->sem);
+	up_ग_लिखो(&pd->driver->sem);
 
-}
+पूर्ण
 
-static inline unsigned long psb_pd_addr_end(unsigned long addr,
-					    unsigned long end)
-{
+अटल अंतरभूत अचिन्हित दीर्घ psb_pd_addr_end(अचिन्हित दीर्घ addr,
+					    अचिन्हित दीर्घ end)
+अणु
 	addr = (addr + PSB_PDE_MASK + 1) & ~PSB_PDE_MASK;
-	return (addr < end) ? addr : end;
-}
+	वापस (addr < end) ? addr : end;
+पूर्ण
 
-static inline uint32_t psb_mmu_mask_pte(uint32_t pfn, int type)
-{
-	uint32_t mask = PSB_PTE_VALID;
+अटल अंतरभूत uपूर्णांक32_t psb_mmu_mask_pte(uपूर्णांक32_t pfn, पूर्णांक type)
+अणु
+	uपूर्णांक32_t mask = PSB_PTE_VALID;
 
-	if (type & PSB_MMU_CACHED_MEMORY)
+	अगर (type & PSB_MMU_CACHED_MEMORY)
 		mask |= PSB_PTE_CACHED;
-	if (type & PSB_MMU_RO_MEMORY)
+	अगर (type & PSB_MMU_RO_MEMORY)
 		mask |= PSB_PTE_RO;
-	if (type & PSB_MMU_WO_MEMORY)
+	अगर (type & PSB_MMU_WO_MEMORY)
 		mask |= PSB_PTE_WO;
 
-	return (pfn << PAGE_SHIFT) | mask;
-}
+	वापस (pfn << PAGE_SHIFT) | mask;
+पूर्ण
 
-struct psb_mmu_pd *psb_mmu_alloc_pd(struct psb_mmu_driver *driver,
-				    int trap_pagefaults, int invalid_type)
-{
-	struct psb_mmu_pd *pd = kmalloc(sizeof(*pd), GFP_KERNEL);
-	uint32_t *v;
-	int i;
+काष्ठा psb_mmu_pd *psb_mmu_alloc_pd(काष्ठा psb_mmu_driver *driver,
+				    पूर्णांक trap_pagefaults, पूर्णांक invalid_type)
+अणु
+	काष्ठा psb_mmu_pd *pd = kदो_स्मृति(माप(*pd), GFP_KERNEL);
+	uपूर्णांक32_t *v;
+	पूर्णांक i;
 
-	if (!pd)
-		return NULL;
+	अगर (!pd)
+		वापस शून्य;
 
 	pd->p = alloc_page(GFP_DMA32);
-	if (!pd->p)
-		goto out_err1;
+	अगर (!pd->p)
+		जाओ out_err1;
 	pd->dummy_pt = alloc_page(GFP_DMA32);
-	if (!pd->dummy_pt)
-		goto out_err2;
+	अगर (!pd->dummy_pt)
+		जाओ out_err2;
 	pd->dummy_page = alloc_page(GFP_DMA32);
-	if (!pd->dummy_page)
-		goto out_err3;
+	अगर (!pd->dummy_page)
+		जाओ out_err3;
 
-	if (!trap_pagefaults) {
+	अगर (!trap_pagefaults) अणु
 		pd->invalid_pde = psb_mmu_mask_pte(page_to_pfn(pd->dummy_pt),
 						   invalid_type);
 		pd->invalid_pte = psb_mmu_mask_pte(page_to_pfn(pd->dummy_page),
 						   invalid_type);
-	} else {
+	पूर्ण अन्यथा अणु
 		pd->invalid_pde = 0;
 		pd->invalid_pte = 0;
-	}
+	पूर्ण
 
 	v = kmap(pd->dummy_pt);
-	for (i = 0; i < (PAGE_SIZE / sizeof(uint32_t)); ++i)
+	क्रम (i = 0; i < (PAGE_SIZE / माप(uपूर्णांक32_t)); ++i)
 		v[i] = pd->invalid_pte;
 
 	kunmap(pd->dummy_pt);
 
 	v = kmap(pd->p);
-	for (i = 0; i < (PAGE_SIZE / sizeof(uint32_t)); ++i)
+	क्रम (i = 0; i < (PAGE_SIZE / माप(uपूर्णांक32_t)); ++i)
 		v[i] = pd->invalid_pde;
 
 	kunmap(pd->p);
@@ -199,100 +200,100 @@ struct psb_mmu_pd *psb_mmu_alloc_pd(struct psb_mmu_driver *driver,
 	clear_page(kmap(pd->dummy_page));
 	kunmap(pd->dummy_page);
 
-	pd->tables = vmalloc_user(sizeof(struct psb_mmu_pt *) * 1024);
-	if (!pd->tables)
-		goto out_err4;
+	pd->tables = vदो_स्मृति_user(माप(काष्ठा psb_mmu_pt *) * 1024);
+	अगर (!pd->tables)
+		जाओ out_err4;
 
 	pd->hw_context = -1;
 	pd->pd_mask = PSB_PTE_VALID;
 	pd->driver = driver;
 
-	return pd;
+	वापस pd;
 
 out_err4:
-	__free_page(pd->dummy_page);
+	__मुक्त_page(pd->dummy_page);
 out_err3:
-	__free_page(pd->dummy_pt);
+	__मुक्त_page(pd->dummy_pt);
 out_err2:
-	__free_page(pd->p);
+	__मुक्त_page(pd->p);
 out_err1:
-	kfree(pd);
-	return NULL;
-}
+	kमुक्त(pd);
+	वापस शून्य;
+पूर्ण
 
-static void psb_mmu_free_pt(struct psb_mmu_pt *pt)
-{
-	__free_page(pt->p);
-	kfree(pt);
-}
+अटल व्योम psb_mmu_मुक्त_pt(काष्ठा psb_mmu_pt *pt)
+अणु
+	__मुक्त_page(pt->p);
+	kमुक्त(pt);
+पूर्ण
 
-void psb_mmu_free_pagedir(struct psb_mmu_pd *pd)
-{
-	struct psb_mmu_driver *driver = pd->driver;
-	struct drm_device *dev = driver->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
-	struct psb_mmu_pt *pt;
-	int i;
+व्योम psb_mmu_मुक्त_pagedir(काष्ठा psb_mmu_pd *pd)
+अणु
+	काष्ठा psb_mmu_driver *driver = pd->driver;
+	काष्ठा drm_device *dev = driver->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+	काष्ठा psb_mmu_pt *pt;
+	पूर्णांक i;
 
-	down_write(&driver->sem);
-	if (pd->hw_context != -1) {
-		PSB_WSGX32(0, PSB_CR_BIF_DIR_LIST_BASE0 + pd->hw_context * 4);
+	करोwn_ग_लिखो(&driver->sem);
+	अगर (pd->hw_context != -1) अणु
+		PSB_WSGX32(0, PSB_CR_BIF_सूची_LIST_BASE0 + pd->hw_context * 4);
 		psb_mmu_flush_pd_locked(driver, 1);
-	}
+	पूर्ण
 
-	/* Should take the spinlock here, but we don't need to do that
-	   since we have the semaphore in write mode. */
+	/* Should take the spinlock here, but we करोn't need to करो that
+	   since we have the semaphore in ग_लिखो mode. */
 
-	for (i = 0; i < 1024; ++i) {
+	क्रम (i = 0; i < 1024; ++i) अणु
 		pt = pd->tables[i];
-		if (pt)
-			psb_mmu_free_pt(pt);
-	}
+		अगर (pt)
+			psb_mmu_मुक्त_pt(pt);
+	पूर्ण
 
-	vfree(pd->tables);
-	__free_page(pd->dummy_page);
-	__free_page(pd->dummy_pt);
-	__free_page(pd->p);
-	kfree(pd);
-	up_write(&driver->sem);
-}
+	vमुक्त(pd->tables);
+	__मुक्त_page(pd->dummy_page);
+	__मुक्त_page(pd->dummy_pt);
+	__मुक्त_page(pd->p);
+	kमुक्त(pd);
+	up_ग_लिखो(&driver->sem);
+पूर्ण
 
-static struct psb_mmu_pt *psb_mmu_alloc_pt(struct psb_mmu_pd *pd)
-{
-	struct psb_mmu_pt *pt = kmalloc(sizeof(*pt), GFP_KERNEL);
-	void *v;
-	uint32_t clflush_add = pd->driver->clflush_add >> PAGE_SHIFT;
-	uint32_t clflush_count = PAGE_SIZE / clflush_add;
+अटल काष्ठा psb_mmu_pt *psb_mmu_alloc_pt(काष्ठा psb_mmu_pd *pd)
+अणु
+	काष्ठा psb_mmu_pt *pt = kदो_स्मृति(माप(*pt), GFP_KERNEL);
+	व्योम *v;
+	uपूर्णांक32_t clflush_add = pd->driver->clflush_add >> PAGE_SHIFT;
+	uपूर्णांक32_t clflush_count = PAGE_SIZE / clflush_add;
 	spinlock_t *lock = &pd->driver->lock;
-	uint8_t *clf;
-	uint32_t *ptes;
-	int i;
+	uपूर्णांक8_t *clf;
+	uपूर्णांक32_t *ptes;
+	पूर्णांक i;
 
-	if (!pt)
-		return NULL;
+	अगर (!pt)
+		वापस शून्य;
 
 	pt->p = alloc_page(GFP_DMA32);
-	if (!pt->p) {
-		kfree(pt);
-		return NULL;
-	}
+	अगर (!pt->p) अणु
+		kमुक्त(pt);
+		वापस शून्य;
+	पूर्ण
 
 	spin_lock(lock);
 
 	v = kmap_atomic(pt->p);
-	clf = (uint8_t *) v;
-	ptes = (uint32_t *) v;
-	for (i = 0; i < (PAGE_SIZE / sizeof(uint32_t)); ++i)
+	clf = (uपूर्णांक8_t *) v;
+	ptes = (uपूर्णांक32_t *) v;
+	क्रम (i = 0; i < (PAGE_SIZE / माप(uपूर्णांक32_t)); ++i)
 		*ptes++ = pd->invalid_pte;
 
-	if (pd->driver->has_clflush && pd->hw_context != -1) {
+	अगर (pd->driver->has_clflush && pd->hw_context != -1) अणु
 		mb();
-		for (i = 0; i < clflush_count; ++i) {
+		क्रम (i = 0; i < clflush_count; ++i) अणु
 			psb_clflush(clf);
 			clf += clflush_add;
-		}
+		पूर्ण
 		mb();
-	}
+	पूर्ण
 	kunmap_atomic(v);
 	spin_unlock(lock);
 
@@ -300,473 +301,473 @@ static struct psb_mmu_pt *psb_mmu_alloc_pt(struct psb_mmu_pd *pd)
 	pt->pd = pd;
 	pt->index = 0;
 
-	return pt;
-}
+	वापस pt;
+पूर्ण
 
-static struct psb_mmu_pt *psb_mmu_pt_alloc_map_lock(struct psb_mmu_pd *pd,
-						    unsigned long addr)
-{
-	uint32_t index = psb_mmu_pd_index(addr);
-	struct psb_mmu_pt *pt;
-	uint32_t *v;
+अटल काष्ठा psb_mmu_pt *psb_mmu_pt_alloc_map_lock(काष्ठा psb_mmu_pd *pd,
+						    अचिन्हित दीर्घ addr)
+अणु
+	uपूर्णांक32_t index = psb_mmu_pd_index(addr);
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t *v;
 	spinlock_t *lock = &pd->driver->lock;
 
 	spin_lock(lock);
 	pt = pd->tables[index];
-	while (!pt) {
+	जबतक (!pt) अणु
 		spin_unlock(lock);
 		pt = psb_mmu_alloc_pt(pd);
-		if (!pt)
-			return NULL;
+		अगर (!pt)
+			वापस शून्य;
 		spin_lock(lock);
 
-		if (pd->tables[index]) {
+		अगर (pd->tables[index]) अणु
 			spin_unlock(lock);
-			psb_mmu_free_pt(pt);
+			psb_mmu_मुक्त_pt(pt);
 			spin_lock(lock);
 			pt = pd->tables[index];
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		v = kmap_atomic(pd->p);
 		pd->tables[index] = pt;
 		v[index] = (page_to_pfn(pt->p) << 12) | pd->pd_mask;
 		pt->index = index;
-		kunmap_atomic((void *) v);
+		kunmap_atomic((व्योम *) v);
 
-		if (pd->hw_context != -1) {
-			psb_mmu_clflush(pd->driver, (void *)&v[index]);
+		अगर (pd->hw_context != -1) अणु
+			psb_mmu_clflush(pd->driver, (व्योम *)&v[index]);
 			atomic_set(&pd->driver->needs_tlbflush, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pt->v = kmap_atomic(pt->p);
-	return pt;
-}
+	वापस pt;
+पूर्ण
 
-static struct psb_mmu_pt *psb_mmu_pt_map_lock(struct psb_mmu_pd *pd,
-					      unsigned long addr)
-{
-	uint32_t index = psb_mmu_pd_index(addr);
-	struct psb_mmu_pt *pt;
+अटल काष्ठा psb_mmu_pt *psb_mmu_pt_map_lock(काष्ठा psb_mmu_pd *pd,
+					      अचिन्हित दीर्घ addr)
+अणु
+	uपूर्णांक32_t index = psb_mmu_pd_index(addr);
+	काष्ठा psb_mmu_pt *pt;
 	spinlock_t *lock = &pd->driver->lock;
 
 	spin_lock(lock);
 	pt = pd->tables[index];
-	if (!pt) {
+	अगर (!pt) अणु
 		spin_unlock(lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	pt->v = kmap_atomic(pt->p);
-	return pt;
-}
+	वापस pt;
+पूर्ण
 
-static void psb_mmu_pt_unmap_unlock(struct psb_mmu_pt *pt)
-{
-	struct psb_mmu_pd *pd = pt->pd;
-	uint32_t *v;
+अटल व्योम psb_mmu_pt_unmap_unlock(काष्ठा psb_mmu_pt *pt)
+अणु
+	काष्ठा psb_mmu_pd *pd = pt->pd;
+	uपूर्णांक32_t *v;
 
 	kunmap_atomic(pt->v);
-	if (pt->count == 0) {
+	अगर (pt->count == 0) अणु
 		v = kmap_atomic(pd->p);
 		v[pt->index] = pd->invalid_pde;
-		pd->tables[pt->index] = NULL;
+		pd->tables[pt->index] = शून्य;
 
-		if (pd->hw_context != -1) {
-			psb_mmu_clflush(pd->driver, (void *)&v[pt->index]);
+		अगर (pd->hw_context != -1) अणु
+			psb_mmu_clflush(pd->driver, (व्योम *)&v[pt->index]);
 			atomic_set(&pd->driver->needs_tlbflush, 1);
-		}
+		पूर्ण
 		kunmap_atomic(v);
 		spin_unlock(&pd->driver->lock);
-		psb_mmu_free_pt(pt);
-		return;
-	}
+		psb_mmu_मुक्त_pt(pt);
+		वापस;
+	पूर्ण
 	spin_unlock(&pd->driver->lock);
-}
+पूर्ण
 
-static inline void psb_mmu_set_pte(struct psb_mmu_pt *pt, unsigned long addr,
-				   uint32_t pte)
-{
+अटल अंतरभूत व्योम psb_mmu_set_pte(काष्ठा psb_mmu_pt *pt, अचिन्हित दीर्घ addr,
+				   uपूर्णांक32_t pte)
+अणु
 	pt->v[psb_mmu_pt_index(addr)] = pte;
-}
+पूर्ण
 
-static inline void psb_mmu_invalidate_pte(struct psb_mmu_pt *pt,
-					  unsigned long addr)
-{
+अटल अंतरभूत व्योम psb_mmu_invalidate_pte(काष्ठा psb_mmu_pt *pt,
+					  अचिन्हित दीर्घ addr)
+अणु
 	pt->v[psb_mmu_pt_index(addr)] = pt->pd->invalid_pte;
-}
+पूर्ण
 
-struct psb_mmu_pd *psb_mmu_get_default_pd(struct psb_mmu_driver *driver)
-{
-	struct psb_mmu_pd *pd;
+काष्ठा psb_mmu_pd *psb_mmu_get_शेष_pd(काष्ठा psb_mmu_driver *driver)
+अणु
+	काष्ठा psb_mmu_pd *pd;
 
-	down_read(&driver->sem);
-	pd = driver->default_pd;
-	up_read(&driver->sem);
+	करोwn_पढ़ो(&driver->sem);
+	pd = driver->शेष_pd;
+	up_पढ़ो(&driver->sem);
 
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
-void psb_mmu_driver_takedown(struct psb_mmu_driver *driver)
-{
-	struct drm_device *dev = driver->dev;
-	struct drm_psb_private *dev_priv = dev->dev_private;
+व्योम psb_mmu_driver_takeकरोwn(काष्ठा psb_mmu_driver *driver)
+अणु
+	काष्ठा drm_device *dev = driver->dev;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 
-	PSB_WSGX32(driver->bif_ctrl, PSB_CR_BIF_CTRL);
-	psb_mmu_free_pagedir(driver->default_pd);
-	kfree(driver);
-}
+	PSB_WSGX32(driver->bअगर_ctrl, PSB_CR_BIF_CTRL);
+	psb_mmu_मुक्त_pagedir(driver->शेष_pd);
+	kमुक्त(driver);
+पूर्ण
 
-struct psb_mmu_driver *psb_mmu_driver_init(struct drm_device *dev,
-					   int trap_pagefaults,
-					   int invalid_type,
+काष्ठा psb_mmu_driver *psb_mmu_driver_init(काष्ठा drm_device *dev,
+					   पूर्णांक trap_pagefaults,
+					   पूर्णांक invalid_type,
 					   atomic_t *msvdx_mmu_invaldc)
-{
-	struct psb_mmu_driver *driver;
-	struct drm_psb_private *dev_priv = dev->dev_private;
+अणु
+	काष्ठा psb_mmu_driver *driver;
+	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
 
-	driver = kmalloc(sizeof(*driver), GFP_KERNEL);
+	driver = kदो_स्मृति(माप(*driver), GFP_KERNEL);
 
-	if (!driver)
-		return NULL;
+	अगर (!driver)
+		वापस शून्य;
 
 	driver->dev = dev;
-	driver->default_pd = psb_mmu_alloc_pd(driver, trap_pagefaults,
+	driver->शेष_pd = psb_mmu_alloc_pd(driver, trap_pagefaults,
 					      invalid_type);
-	if (!driver->default_pd)
-		goto out_err1;
+	अगर (!driver->शेष_pd)
+		जाओ out_err1;
 
 	spin_lock_init(&driver->lock);
 	init_rwsem(&driver->sem);
-	down_write(&driver->sem);
+	करोwn_ग_लिखो(&driver->sem);
 	atomic_set(&driver->needs_tlbflush, 1);
 	driver->msvdx_mmu_invaldc = msvdx_mmu_invaldc;
 
-	driver->bif_ctrl = PSB_RSGX32(PSB_CR_BIF_CTRL);
-	PSB_WSGX32(driver->bif_ctrl | _PSB_CB_CTRL_CLEAR_FAULT,
+	driver->bअगर_ctrl = PSB_RSGX32(PSB_CR_BIF_CTRL);
+	PSB_WSGX32(driver->bअगर_ctrl | _PSB_CB_CTRL_CLEAR_FAULT,
 		   PSB_CR_BIF_CTRL);
-	PSB_WSGX32(driver->bif_ctrl & ~_PSB_CB_CTRL_CLEAR_FAULT,
+	PSB_WSGX32(driver->bअगर_ctrl & ~_PSB_CB_CTRL_CLEAR_FAULT,
 		   PSB_CR_BIF_CTRL);
 
 	driver->has_clflush = 0;
 
-	if (boot_cpu_has(X86_FEATURE_CLFLUSH)) {
-		uint32_t tfms, misc, cap0, cap4, clflush_size;
+	अगर (boot_cpu_has(X86_FEATURE_CLFLUSH)) अणु
+		uपूर्णांक32_t tfms, misc, cap0, cap4, clflush_size;
 
 		/*
-		 * clflush size is determined at kernel setup for x86_64 but not
-		 * for i386. We have to do it here.
+		 * clflush size is determined at kernel setup क्रम x86_64 but not
+		 * क्रम i386. We have to करो it here.
 		 */
 
 		cpuid(0x00000001, &tfms, &misc, &cap0, &cap4);
 		clflush_size = ((misc >> 8) & 0xff) * 8;
 		driver->has_clflush = 1;
 		driver->clflush_add =
-		    PAGE_SIZE * clflush_size / sizeof(uint32_t);
+		    PAGE_SIZE * clflush_size / माप(uपूर्णांक32_t);
 		driver->clflush_mask = driver->clflush_add - 1;
 		driver->clflush_mask = ~driver->clflush_mask;
-	}
+	पूर्ण
 
-	up_write(&driver->sem);
-	return driver;
+	up_ग_लिखो(&driver->sem);
+	वापस driver;
 
 out_err1:
-	kfree(driver);
-	return NULL;
-}
+	kमुक्त(driver);
+	वापस शून्य;
+पूर्ण
 
-static void psb_mmu_flush_ptes(struct psb_mmu_pd *pd, unsigned long address,
-			       uint32_t num_pages, uint32_t desired_tile_stride,
-			       uint32_t hw_tile_stride)
-{
-	struct psb_mmu_pt *pt;
-	uint32_t rows = 1;
-	uint32_t i;
-	unsigned long addr;
-	unsigned long end;
-	unsigned long next;
-	unsigned long add;
-	unsigned long row_add;
-	unsigned long clflush_add = pd->driver->clflush_add;
-	unsigned long clflush_mask = pd->driver->clflush_mask;
+अटल व्योम psb_mmu_flush_ptes(काष्ठा psb_mmu_pd *pd, अचिन्हित दीर्घ address,
+			       uपूर्णांक32_t num_pages, uपूर्णांक32_t desired_tile_stride,
+			       uपूर्णांक32_t hw_tile_stride)
+अणु
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t rows = 1;
+	uपूर्णांक32_t i;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ end;
+	अचिन्हित दीर्घ next;
+	अचिन्हित दीर्घ add;
+	अचिन्हित दीर्घ row_add;
+	अचिन्हित दीर्घ clflush_add = pd->driver->clflush_add;
+	अचिन्हित दीर्घ clflush_mask = pd->driver->clflush_mask;
 
-	if (!pd->driver->has_clflush)
-		return;
+	अगर (!pd->driver->has_clflush)
+		वापस;
 
-	if (hw_tile_stride)
+	अगर (hw_tile_stride)
 		rows = num_pages / desired_tile_stride;
-	else
+	अन्यथा
 		desired_tile_stride = num_pages;
 
 	add = desired_tile_stride << PAGE_SHIFT;
 	row_add = hw_tile_stride << PAGE_SHIFT;
 	mb();
-	for (i = 0; i < rows; ++i) {
+	क्रम (i = 0; i < rows; ++i) अणु
 
 		addr = address;
 		end = addr + add;
 
-		do {
+		करो अणु
 			next = psb_pd_addr_end(addr, end);
 			pt = psb_mmu_pt_map_lock(pd, addr);
-			if (!pt)
-				continue;
-			do {
+			अगर (!pt)
+				जारी;
+			करो अणु
 				psb_clflush(&pt->v[psb_mmu_pt_index(addr)]);
-			} while (addr += clflush_add,
+			पूर्ण जबतक (addr += clflush_add,
 				 (addr & clflush_mask) < next);
 
 			psb_mmu_pt_unmap_unlock(pt);
-		} while (addr = next, next != end);
+		पूर्ण जबतक (addr = next, next != end);
 		address += row_add;
-	}
+	पूर्ण
 	mb();
-}
+पूर्ण
 
-void psb_mmu_remove_pfn_sequence(struct psb_mmu_pd *pd,
-				 unsigned long address, uint32_t num_pages)
-{
-	struct psb_mmu_pt *pt;
-	unsigned long addr;
-	unsigned long end;
-	unsigned long next;
-	unsigned long f_address = address;
+व्योम psb_mmu_हटाओ_pfn_sequence(काष्ठा psb_mmu_pd *pd,
+				 अचिन्हित दीर्घ address, uपूर्णांक32_t num_pages)
+अणु
+	काष्ठा psb_mmu_pt *pt;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ end;
+	अचिन्हित दीर्घ next;
+	अचिन्हित दीर्घ f_address = address;
 
-	down_read(&pd->driver->sem);
+	करोwn_पढ़ो(&pd->driver->sem);
 
 	addr = address;
 	end = addr + (num_pages << PAGE_SHIFT);
 
-	do {
+	करो अणु
 		next = psb_pd_addr_end(addr, end);
 		pt = psb_mmu_pt_alloc_map_lock(pd, addr);
-		if (!pt)
-			goto out;
-		do {
+		अगर (!pt)
+			जाओ out;
+		करो अणु
 			psb_mmu_invalidate_pte(pt, addr);
 			--pt->count;
-		} while (addr += PAGE_SIZE, addr < next);
+		पूर्ण जबतक (addr += PAGE_SIZE, addr < next);
 		psb_mmu_pt_unmap_unlock(pt);
 
-	} while (addr = next, next != end);
+	पूर्ण जबतक (addr = next, next != end);
 
 out:
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush_ptes(pd, f_address, num_pages, 1, 1);
 
-	up_read(&pd->driver->sem);
+	up_पढ़ो(&pd->driver->sem);
 
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush(pd->driver);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void psb_mmu_remove_pages(struct psb_mmu_pd *pd, unsigned long address,
-			  uint32_t num_pages, uint32_t desired_tile_stride,
-			  uint32_t hw_tile_stride)
-{
-	struct psb_mmu_pt *pt;
-	uint32_t rows = 1;
-	uint32_t i;
-	unsigned long addr;
-	unsigned long end;
-	unsigned long next;
-	unsigned long add;
-	unsigned long row_add;
-	unsigned long f_address = address;
+व्योम psb_mmu_हटाओ_pages(काष्ठा psb_mmu_pd *pd, अचिन्हित दीर्घ address,
+			  uपूर्णांक32_t num_pages, uपूर्णांक32_t desired_tile_stride,
+			  uपूर्णांक32_t hw_tile_stride)
+अणु
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t rows = 1;
+	uपूर्णांक32_t i;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ end;
+	अचिन्हित दीर्घ next;
+	अचिन्हित दीर्घ add;
+	अचिन्हित दीर्घ row_add;
+	अचिन्हित दीर्घ f_address = address;
 
-	if (hw_tile_stride)
+	अगर (hw_tile_stride)
 		rows = num_pages / desired_tile_stride;
-	else
+	अन्यथा
 		desired_tile_stride = num_pages;
 
 	add = desired_tile_stride << PAGE_SHIFT;
 	row_add = hw_tile_stride << PAGE_SHIFT;
 
-	down_read(&pd->driver->sem);
+	करोwn_पढ़ो(&pd->driver->sem);
 
 	/* Make sure we only need to flush this processor's cache */
 
-	for (i = 0; i < rows; ++i) {
+	क्रम (i = 0; i < rows; ++i) अणु
 
 		addr = address;
 		end = addr + add;
 
-		do {
+		करो अणु
 			next = psb_pd_addr_end(addr, end);
 			pt = psb_mmu_pt_map_lock(pd, addr);
-			if (!pt)
-				continue;
-			do {
+			अगर (!pt)
+				जारी;
+			करो अणु
 				psb_mmu_invalidate_pte(pt, addr);
 				--pt->count;
 
-			} while (addr += PAGE_SIZE, addr < next);
+			पूर्ण जबतक (addr += PAGE_SIZE, addr < next);
 			psb_mmu_pt_unmap_unlock(pt);
 
-		} while (addr = next, next != end);
+		पूर्ण जबतक (addr = next, next != end);
 		address += row_add;
-	}
-	if (pd->hw_context != -1)
+	पूर्ण
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush_ptes(pd, f_address, num_pages,
 				   desired_tile_stride, hw_tile_stride);
 
-	up_read(&pd->driver->sem);
+	up_पढ़ो(&pd->driver->sem);
 
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush(pd->driver);
-}
+पूर्ण
 
-int psb_mmu_insert_pfn_sequence(struct psb_mmu_pd *pd, uint32_t start_pfn,
-				unsigned long address, uint32_t num_pages,
-				int type)
-{
-	struct psb_mmu_pt *pt;
-	uint32_t pte;
-	unsigned long addr;
-	unsigned long end;
-	unsigned long next;
-	unsigned long f_address = address;
-	int ret = -ENOMEM;
+पूर्णांक psb_mmu_insert_pfn_sequence(काष्ठा psb_mmu_pd *pd, uपूर्णांक32_t start_pfn,
+				अचिन्हित दीर्घ address, uपूर्णांक32_t num_pages,
+				पूर्णांक type)
+अणु
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t pte;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ end;
+	अचिन्हित दीर्घ next;
+	अचिन्हित दीर्घ f_address = address;
+	पूर्णांक ret = -ENOMEM;
 
-	down_read(&pd->driver->sem);
+	करोwn_पढ़ो(&pd->driver->sem);
 
 	addr = address;
 	end = addr + (num_pages << PAGE_SHIFT);
 
-	do {
+	करो अणु
 		next = psb_pd_addr_end(addr, end);
 		pt = psb_mmu_pt_alloc_map_lock(pd, addr);
-		if (!pt) {
+		अगर (!pt) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
-		do {
+			जाओ out;
+		पूर्ण
+		करो अणु
 			pte = psb_mmu_mask_pte(start_pfn++, type);
 			psb_mmu_set_pte(pt, addr, pte);
 			pt->count++;
-		} while (addr += PAGE_SIZE, addr < next);
+		पूर्ण जबतक (addr += PAGE_SIZE, addr < next);
 		psb_mmu_pt_unmap_unlock(pt);
 
-	} while (addr = next, next != end);
+	पूर्ण जबतक (addr = next, next != end);
 	ret = 0;
 
 out:
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush_ptes(pd, f_address, num_pages, 1, 1);
 
-	up_read(&pd->driver->sem);
+	up_पढ़ो(&pd->driver->sem);
 
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush(pd->driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int psb_mmu_insert_pages(struct psb_mmu_pd *pd, struct page **pages,
-			 unsigned long address, uint32_t num_pages,
-			 uint32_t desired_tile_stride, uint32_t hw_tile_stride,
-			 int type)
-{
-	struct psb_mmu_pt *pt;
-	uint32_t rows = 1;
-	uint32_t i;
-	uint32_t pte;
-	unsigned long addr;
-	unsigned long end;
-	unsigned long next;
-	unsigned long add;
-	unsigned long row_add;
-	unsigned long f_address = address;
-	int ret = -ENOMEM;
+पूर्णांक psb_mmu_insert_pages(काष्ठा psb_mmu_pd *pd, काष्ठा page **pages,
+			 अचिन्हित दीर्घ address, uपूर्णांक32_t num_pages,
+			 uपूर्णांक32_t desired_tile_stride, uपूर्णांक32_t hw_tile_stride,
+			 पूर्णांक type)
+अणु
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t rows = 1;
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t pte;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ end;
+	अचिन्हित दीर्घ next;
+	अचिन्हित दीर्घ add;
+	अचिन्हित दीर्घ row_add;
+	अचिन्हित दीर्घ f_address = address;
+	पूर्णांक ret = -ENOMEM;
 
-	if (hw_tile_stride) {
-		if (num_pages % desired_tile_stride != 0)
-			return -EINVAL;
+	अगर (hw_tile_stride) अणु
+		अगर (num_pages % desired_tile_stride != 0)
+			वापस -EINVAL;
 		rows = num_pages / desired_tile_stride;
-	} else {
+	पूर्ण अन्यथा अणु
 		desired_tile_stride = num_pages;
-	}
+	पूर्ण
 
 	add = desired_tile_stride << PAGE_SHIFT;
 	row_add = hw_tile_stride << PAGE_SHIFT;
 
-	down_read(&pd->driver->sem);
+	करोwn_पढ़ो(&pd->driver->sem);
 
-	for (i = 0; i < rows; ++i) {
+	क्रम (i = 0; i < rows; ++i) अणु
 
 		addr = address;
 		end = addr + add;
 
-		do {
+		करो अणु
 			next = psb_pd_addr_end(addr, end);
 			pt = psb_mmu_pt_alloc_map_lock(pd, addr);
-			if (!pt)
-				goto out;
-			do {
+			अगर (!pt)
+				जाओ out;
+			करो अणु
 				pte = psb_mmu_mask_pte(page_to_pfn(*pages++),
 						       type);
 				psb_mmu_set_pte(pt, addr, pte);
 				pt->count++;
-			} while (addr += PAGE_SIZE, addr < next);
+			पूर्ण जबतक (addr += PAGE_SIZE, addr < next);
 			psb_mmu_pt_unmap_unlock(pt);
 
-		} while (addr = next, next != end);
+		पूर्ण जबतक (addr = next, next != end);
 
 		address += row_add;
-	}
+	पूर्ण
 
 	ret = 0;
 out:
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush_ptes(pd, f_address, num_pages,
 				   desired_tile_stride, hw_tile_stride);
 
-	up_read(&pd->driver->sem);
+	up_पढ़ो(&pd->driver->sem);
 
-	if (pd->hw_context != -1)
+	अगर (pd->hw_context != -1)
 		psb_mmu_flush(pd->driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int psb_mmu_virtual_to_pfn(struct psb_mmu_pd *pd, uint32_t virtual,
-			   unsigned long *pfn)
-{
-	int ret;
-	struct psb_mmu_pt *pt;
-	uint32_t tmp;
+पूर्णांक psb_mmu_भव_to_pfn(काष्ठा psb_mmu_pd *pd, uपूर्णांक32_t भव,
+			   अचिन्हित दीर्घ *pfn)
+अणु
+	पूर्णांक ret;
+	काष्ठा psb_mmu_pt *pt;
+	uपूर्णांक32_t पंचांगp;
 	spinlock_t *lock = &pd->driver->lock;
 
-	down_read(&pd->driver->sem);
-	pt = psb_mmu_pt_map_lock(pd, virtual);
-	if (!pt) {
-		uint32_t *v;
+	करोwn_पढ़ो(&pd->driver->sem);
+	pt = psb_mmu_pt_map_lock(pd, भव);
+	अगर (!pt) अणु
+		uपूर्णांक32_t *v;
 
 		spin_lock(lock);
 		v = kmap_atomic(pd->p);
-		tmp = v[psb_mmu_pd_index(virtual)];
+		पंचांगp = v[psb_mmu_pd_index(भव)];
 		kunmap_atomic(v);
 		spin_unlock(lock);
 
-		if (tmp != pd->invalid_pde || !(tmp & PSB_PTE_VALID) ||
-		    !(pd->invalid_pte & PSB_PTE_VALID)) {
+		अगर (पंचांगp != pd->invalid_pde || !(पंचांगp & PSB_PTE_VALID) ||
+		    !(pd->invalid_pte & PSB_PTE_VALID)) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ret = 0;
 		*pfn = pd->invalid_pte >> PAGE_SHIFT;
-		goto out;
-	}
-	tmp = pt->v[psb_mmu_pt_index(virtual)];
-	if (!(tmp & PSB_PTE_VALID)) {
+		जाओ out;
+	पूर्ण
+	पंचांगp = pt->v[psb_mmu_pt_index(भव)];
+	अगर (!(पंचांगp & PSB_PTE_VALID)) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-		*pfn = tmp >> PAGE_SHIFT;
-	}
+		*pfn = पंचांगp >> PAGE_SHIFT;
+	पूर्ण
 	psb_mmu_pt_unmap_unlock(pt);
 out:
-	up_read(&pd->driver->sem);
-	return ret;
-}
+	up_पढ़ो(&pd->driver->sem);
+	वापस ret;
+पूर्ण

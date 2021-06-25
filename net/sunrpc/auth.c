@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/net/sunrpc/auth.c
  *
@@ -7,707 +8,707 @@
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/hash.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/gss_api.h>
-#include <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/hash.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/sunrpc/gss_api.h>
+#समावेश <linux/spinlock.h>
 
-#include <trace/events/sunrpc.h>
+#समावेश <trace/events/sunrpc.h>
 
-#define RPC_CREDCACHE_DEFAULT_HASHBITS	(4)
-struct rpc_cred_cache {
-	struct hlist_head	*hashtable;
-	unsigned int		hashbits;
+#घोषणा RPC_CREDCACHE_DEFAULT_HASHBITS	(4)
+काष्ठा rpc_cred_cache अणु
+	काष्ठा hlist_head	*hashtable;
+	अचिन्हित पूर्णांक		hashbits;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-static unsigned int auth_hashbits = RPC_CREDCACHE_DEFAULT_HASHBITS;
+अटल अचिन्हित पूर्णांक auth_hashbits = RPC_CREDCACHE_DEFAULT_HASHBITS;
 
-static const struct rpc_authops __rcu *auth_flavors[RPC_AUTH_MAXFLAVOR] = {
-	[RPC_AUTH_NULL] = (const struct rpc_authops __force __rcu *)&authnull_ops,
-	[RPC_AUTH_UNIX] = (const struct rpc_authops __force __rcu *)&authunix_ops,
-	NULL,			/* others can be loadable modules */
-};
+अटल स्थिर काष्ठा rpc_authops __rcu *auth_flavors[RPC_AUTH_MAXFLAVOR] = अणु
+	[RPC_AUTH_शून्य] = (स्थिर काष्ठा rpc_authops __क्रमce __rcu *)&authnull_ops,
+	[RPC_AUTH_UNIX] = (स्थिर काष्ठा rpc_authops __क्रमce __rcu *)&authunix_ops,
+	शून्य,			/* others can be loadable modules */
+पूर्ण;
 
-static LIST_HEAD(cred_unused);
-static unsigned long number_cred_unused;
+अटल LIST_HEAD(cred_unused);
+अटल अचिन्हित दीर्घ number_cred_unused;
 
-static struct cred machine_cred = {
+अटल काष्ठा cred machine_cred = अणु
 	.usage = ATOMIC_INIT(1),
-#ifdef CONFIG_DEBUG_CREDENTIALS
+#अगर_घोषित CONFIG_DEBUG_CREDENTIALS
 	.magic = CRED_MAGIC,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * Return the machine_cred pointer to be used whenever
+ * Return the machine_cred poपूर्णांकer to be used whenever
  * the a generic machine credential is needed.
  */
-const struct cred *rpc_machine_cred(void)
-{
-	return &machine_cred;
-}
+स्थिर काष्ठा cred *rpc_machine_cred(व्योम)
+अणु
+	वापस &machine_cred;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpc_machine_cred);
 
-#define MAX_HASHTABLE_BITS (14)
-static int param_set_hashtbl_sz(const char *val, const struct kernel_param *kp)
-{
-	unsigned long num;
-	unsigned int nbits;
-	int ret;
+#घोषणा MAX_HASHTABLE_BITS (14)
+अटल पूर्णांक param_set_hashtbl_sz(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित दीर्घ num;
+	अचिन्हित पूर्णांक nbits;
+	पूर्णांक ret;
 
-	if (!val)
-		goto out_inval;
-	ret = kstrtoul(val, 0, &num);
-	if (ret)
-		goto out_inval;
+	अगर (!val)
+		जाओ out_inval;
+	ret = kम_से_अदीर्घ(val, 0, &num);
+	अगर (ret)
+		जाओ out_inval;
 	nbits = fls(num - 1);
-	if (nbits > MAX_HASHTABLE_BITS || nbits < 2)
-		goto out_inval;
-	*(unsigned int *)kp->arg = nbits;
-	return 0;
+	अगर (nbits > MAX_HASHTABLE_BITS || nbits < 2)
+		जाओ out_inval;
+	*(अचिन्हित पूर्णांक *)kp->arg = nbits;
+	वापस 0;
 out_inval:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int param_get_hashtbl_sz(char *buffer, const struct kernel_param *kp)
-{
-	unsigned int nbits;
+अटल पूर्णांक param_get_hashtbl_sz(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित पूर्णांक nbits;
 
-	nbits = *(unsigned int *)kp->arg;
-	return sprintf(buffer, "%u\n", 1U << nbits);
-}
+	nbits = *(अचिन्हित पूर्णांक *)kp->arg;
+	वापस प्र_लिखो(buffer, "%u\n", 1U << nbits);
+पूर्ण
 
-#define param_check_hashtbl_sz(name, p) __param_check(name, p, unsigned int);
+#घोषणा param_check_hashtbl_sz(name, p) __param_check(name, p, अचिन्हित पूर्णांक);
 
-static const struct kernel_param_ops param_ops_hashtbl_sz = {
+अटल स्थिर काष्ठा kernel_param_ops param_ops_hashtbl_sz = अणु
 	.set = param_set_hashtbl_sz,
 	.get = param_get_hashtbl_sz,
-};
+पूर्ण;
 
 module_param_named(auth_hashtable_size, auth_hashbits, hashtbl_sz, 0644);
 MODULE_PARM_DESC(auth_hashtable_size, "RPC credential cache hashtable size");
 
-static unsigned long auth_max_cred_cachesize = ULONG_MAX;
-module_param(auth_max_cred_cachesize, ulong, 0644);
+अटल अचिन्हित दीर्घ auth_max_cred_cachesize = अच_दीर्घ_उच्च;
+module_param(auth_max_cred_cachesize, uदीर्घ, 0644);
 MODULE_PARM_DESC(auth_max_cred_cachesize, "RPC credential maximum total cache size");
 
-static u32
-pseudoflavor_to_flavor(u32 flavor) {
-	if (flavor > RPC_AUTH_MAXFLAVOR)
-		return RPC_AUTH_GSS;
-	return flavor;
-}
+अटल u32
+pseuकरोflavor_to_flavor(u32 flavor) अणु
+	अगर (flavor > RPC_AUTH_MAXFLAVOR)
+		वापस RPC_AUTH_GSS;
+	वापस flavor;
+पूर्ण
 
-int
-rpcauth_register(const struct rpc_authops *ops)
-{
-	const struct rpc_authops *old;
+पूर्णांक
+rpcauth_रेजिस्टर(स्थिर काष्ठा rpc_authops *ops)
+अणु
+	स्थिर काष्ठा rpc_authops *old;
 	rpc_authflavor_t flavor;
 
-	if ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
-		return -EINVAL;
-	old = cmpxchg((const struct rpc_authops ** __force)&auth_flavors[flavor], NULL, ops);
-	if (old == NULL || old == ops)
-		return 0;
-	return -EPERM;
-}
-EXPORT_SYMBOL_GPL(rpcauth_register);
+	अगर ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
+		वापस -EINVAL;
+	old = cmpxchg((स्थिर काष्ठा rpc_authops ** __क्रमce)&auth_flavors[flavor], शून्य, ops);
+	अगर (old == शून्य || old == ops)
+		वापस 0;
+	वापस -EPERM;
+पूर्ण
+EXPORT_SYMBOL_GPL(rpcauth_रेजिस्टर);
 
-int
-rpcauth_unregister(const struct rpc_authops *ops)
-{
-	const struct rpc_authops *old;
+पूर्णांक
+rpcauth_unरेजिस्टर(स्थिर काष्ठा rpc_authops *ops)
+अणु
+	स्थिर काष्ठा rpc_authops *old;
 	rpc_authflavor_t flavor;
 
-	if ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
-		return -EINVAL;
+	अगर ((flavor = ops->au_flavor) >= RPC_AUTH_MAXFLAVOR)
+		वापस -EINVAL;
 
-	old = cmpxchg((const struct rpc_authops ** __force)&auth_flavors[flavor], ops, NULL);
-	if (old == ops || old == NULL)
-		return 0;
-	return -EPERM;
-}
-EXPORT_SYMBOL_GPL(rpcauth_unregister);
+	old = cmpxchg((स्थिर काष्ठा rpc_authops ** __क्रमce)&auth_flavors[flavor], ops, शून्य);
+	अगर (old == ops || old == शून्य)
+		वापस 0;
+	वापस -EPERM;
+पूर्ण
+EXPORT_SYMBOL_GPL(rpcauth_unरेजिस्टर);
 
-static const struct rpc_authops *
+अटल स्थिर काष्ठा rpc_authops *
 rpcauth_get_authops(rpc_authflavor_t flavor)
-{
-	const struct rpc_authops *ops;
+अणु
+	स्थिर काष्ठा rpc_authops *ops;
 
-	if (flavor >= RPC_AUTH_MAXFLAVOR)
-		return NULL;
+	अगर (flavor >= RPC_AUTH_MAXFLAVOR)
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ops = rcu_dereference(auth_flavors[flavor]);
-	if (ops == NULL) {
-		rcu_read_unlock();
+	अगर (ops == शून्य) अणु
+		rcu_पढ़ो_unlock();
 		request_module("rpc-auth-%u", flavor);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		ops = rcu_dereference(auth_flavors[flavor]);
-		if (ops == NULL)
-			goto out;
-	}
-	if (!try_module_get(ops->owner))
-		ops = NULL;
+		अगर (ops == शून्य)
+			जाओ out;
+	पूर्ण
+	अगर (!try_module_get(ops->owner))
+		ops = शून्य;
 out:
-	rcu_read_unlock();
-	return ops;
-}
+	rcu_पढ़ो_unlock();
+	वापस ops;
+पूर्ण
 
-static void
-rpcauth_put_authops(const struct rpc_authops *ops)
-{
+अटल व्योम
+rpcauth_put_authops(स्थिर काष्ठा rpc_authops *ops)
+अणु
 	module_put(ops->owner);
-}
+पूर्ण
 
 /**
- * rpcauth_get_pseudoflavor - check if security flavor is supported
+ * rpcauth_get_pseuकरोflavor - check अगर security flavor is supported
  * @flavor: a security flavor
  * @info: a GSS mech OID, quality of protection, and service value
  *
- * Verifies that an appropriate kernel module is available or already loaded.
- * Returns an equivalent pseudoflavor, or RPC_AUTH_MAXFLAVOR if "flavor" is
+ * Verअगरies that an appropriate kernel module is available or alपढ़ोy loaded.
+ * Returns an equivalent pseuकरोflavor, or RPC_AUTH_MAXFLAVOR अगर "flavor" is
  * not supported locally.
  */
 rpc_authflavor_t
-rpcauth_get_pseudoflavor(rpc_authflavor_t flavor, struct rpcsec_gss_info *info)
-{
-	const struct rpc_authops *ops = rpcauth_get_authops(flavor);
-	rpc_authflavor_t pseudoflavor;
+rpcauth_get_pseuकरोflavor(rpc_authflavor_t flavor, काष्ठा rpcsec_gss_info *info)
+अणु
+	स्थिर काष्ठा rpc_authops *ops = rpcauth_get_authops(flavor);
+	rpc_authflavor_t pseuकरोflavor;
 
-	if (!ops)
-		return RPC_AUTH_MAXFLAVOR;
-	pseudoflavor = flavor;
-	if (ops->info2flavor != NULL)
-		pseudoflavor = ops->info2flavor(info);
+	अगर (!ops)
+		वापस RPC_AUTH_MAXFLAVOR;
+	pseuकरोflavor = flavor;
+	अगर (ops->info2flavor != शून्य)
+		pseuकरोflavor = ops->info2flavor(info);
 
 	rpcauth_put_authops(ops);
-	return pseudoflavor;
-}
-EXPORT_SYMBOL_GPL(rpcauth_get_pseudoflavor);
+	वापस pseuकरोflavor;
+पूर्ण
+EXPORT_SYMBOL_GPL(rpcauth_get_pseuकरोflavor);
 
 /**
- * rpcauth_get_gssinfo - find GSS tuple matching a GSS pseudoflavor
- * @pseudoflavor: GSS pseudoflavor to match
- * @info: rpcsec_gss_info structure to fill in
+ * rpcauth_get_gssinfo - find GSS tuple matching a GSS pseuकरोflavor
+ * @pseuकरोflavor: GSS pseuकरोflavor to match
+ * @info: rpcsec_gss_info काष्ठाure to fill in
  *
- * Returns zero and fills in "info" if pseudoflavor matches a
+ * Returns zero and fills in "info" अगर pseuकरोflavor matches a
  * supported mechanism.
  */
-int
-rpcauth_get_gssinfo(rpc_authflavor_t pseudoflavor, struct rpcsec_gss_info *info)
-{
-	rpc_authflavor_t flavor = pseudoflavor_to_flavor(pseudoflavor);
-	const struct rpc_authops *ops;
-	int result;
+पूर्णांक
+rpcauth_get_gssinfo(rpc_authflavor_t pseuकरोflavor, काष्ठा rpcsec_gss_info *info)
+अणु
+	rpc_authflavor_t flavor = pseuकरोflavor_to_flavor(pseuकरोflavor);
+	स्थिर काष्ठा rpc_authops *ops;
+	पूर्णांक result;
 
 	ops = rpcauth_get_authops(flavor);
-	if (ops == NULL)
-		return -ENOENT;
+	अगर (ops == शून्य)
+		वापस -ENOENT;
 
 	result = -ENOENT;
-	if (ops->flavor2info != NULL)
-		result = ops->flavor2info(pseudoflavor, info);
+	अगर (ops->flavor2info != शून्य)
+		result = ops->flavor2info(pseuकरोflavor, info);
 
 	rpcauth_put_authops(ops);
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_get_gssinfo);
 
-struct rpc_auth *
-rpcauth_create(const struct rpc_auth_create_args *args, struct rpc_clnt *clnt)
-{
-	struct rpc_auth	*auth = ERR_PTR(-EINVAL);
-	const struct rpc_authops *ops;
-	u32 flavor = pseudoflavor_to_flavor(args->pseudoflavor);
+काष्ठा rpc_auth *
+rpcauth_create(स्थिर काष्ठा rpc_auth_create_args *args, काष्ठा rpc_clnt *clnt)
+अणु
+	काष्ठा rpc_auth	*auth = ERR_PTR(-EINVAL);
+	स्थिर काष्ठा rpc_authops *ops;
+	u32 flavor = pseuकरोflavor_to_flavor(args->pseuकरोflavor);
 
 	ops = rpcauth_get_authops(flavor);
-	if (ops == NULL)
-		goto out;
+	अगर (ops == शून्य)
+		जाओ out;
 
 	auth = ops->create(args, clnt);
 
 	rpcauth_put_authops(ops);
-	if (IS_ERR(auth))
-		return auth;
-	if (clnt->cl_auth)
+	अगर (IS_ERR(auth))
+		वापस auth;
+	अगर (clnt->cl_auth)
 		rpcauth_release(clnt->cl_auth);
 	clnt->cl_auth = auth;
 
 out:
-	return auth;
-}
+	वापस auth;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_create);
 
-void
-rpcauth_release(struct rpc_auth *auth)
-{
-	if (!refcount_dec_and_test(&auth->au_count))
-		return;
+व्योम
+rpcauth_release(काष्ठा rpc_auth *auth)
+अणु
+	अगर (!refcount_dec_and_test(&auth->au_count))
+		वापस;
 	auth->au_ops->destroy(auth);
-}
+पूर्ण
 
-static DEFINE_SPINLOCK(rpc_credcache_lock);
+अटल DEFINE_SPINLOCK(rpc_credcache_lock);
 
 /*
- * On success, the caller is responsible for freeing the reference
+ * On success, the caller is responsible क्रम मुक्तing the reference
  * held by the hashtable
  */
-static bool
-rpcauth_unhash_cred_locked(struct rpc_cred *cred)
-{
-	if (!test_and_clear_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags))
-		return false;
+अटल bool
+rpcauth_unhash_cred_locked(काष्ठा rpc_cred *cred)
+अणु
+	अगर (!test_and_clear_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags))
+		वापस false;
 	hlist_del_rcu(&cred->cr_hash);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool
-rpcauth_unhash_cred(struct rpc_cred *cred)
-{
+अटल bool
+rpcauth_unhash_cred(काष्ठा rpc_cred *cred)
+अणु
 	spinlock_t *cache_lock;
 	bool ret;
 
-	if (!test_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags))
-		return false;
+	अगर (!test_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags))
+		वापस false;
 	cache_lock = &cred->cr_auth->au_credcache->lock;
 	spin_lock(cache_lock);
 	ret = rpcauth_unhash_cred_locked(cred);
 	spin_unlock(cache_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Initialize RPC credential cache
  */
-int
-rpcauth_init_credcache(struct rpc_auth *auth)
-{
-	struct rpc_cred_cache *new;
-	unsigned int hashsize;
+पूर्णांक
+rpcauth_init_credcache(काष्ठा rpc_auth *auth)
+अणु
+	काष्ठा rpc_cred_cache *new;
+	अचिन्हित पूर्णांक hashsize;
 
-	new = kmalloc(sizeof(*new), GFP_KERNEL);
-	if (!new)
-		goto out_nocache;
+	new = kदो_स्मृति(माप(*new), GFP_KERNEL);
+	अगर (!new)
+		जाओ out_nocache;
 	new->hashbits = auth_hashbits;
 	hashsize = 1U << new->hashbits;
-	new->hashtable = kcalloc(hashsize, sizeof(new->hashtable[0]), GFP_KERNEL);
-	if (!new->hashtable)
-		goto out_nohashtbl;
+	new->hashtable = kसुस्मृति(hashsize, माप(new->hashtable[0]), GFP_KERNEL);
+	अगर (!new->hashtable)
+		जाओ out_nohashtbl;
 	spin_lock_init(&new->lock);
 	auth->au_credcache = new;
-	return 0;
+	वापस 0;
 out_nohashtbl:
-	kfree(new);
+	kमुक्त(new);
 out_nocache:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_init_credcache);
 
-char *
-rpcauth_stringify_acceptor(struct rpc_cred *cred)
-{
-	if (!cred->cr_ops->crstringify_acceptor)
-		return NULL;
-	return cred->cr_ops->crstringify_acceptor(cred);
-}
-EXPORT_SYMBOL_GPL(rpcauth_stringify_acceptor);
+अक्षर *
+rpcauth_stringअगरy_acceptor(काष्ठा rpc_cred *cred)
+अणु
+	अगर (!cred->cr_ops->crstringअगरy_acceptor)
+		वापस शून्य;
+	वापस cred->cr_ops->crstringअगरy_acceptor(cred);
+पूर्ण
+EXPORT_SYMBOL_GPL(rpcauth_stringअगरy_acceptor);
 
 /*
  * Destroy a list of credentials
  */
-static inline
-void rpcauth_destroy_credlist(struct list_head *head)
-{
-	struct rpc_cred *cred;
+अटल अंतरभूत
+व्योम rpcauth_destroy_credlist(काष्ठा list_head *head)
+अणु
+	काष्ठा rpc_cred *cred;
 
-	while (!list_empty(head)) {
-		cred = list_entry(head->next, struct rpc_cred, cr_lru);
+	जबतक (!list_empty(head)) अणु
+		cred = list_entry(head->next, काष्ठा rpc_cred, cr_lru);
 		list_del_init(&cred->cr_lru);
 		put_rpccred(cred);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-rpcauth_lru_add_locked(struct rpc_cred *cred)
-{
-	if (!list_empty(&cred->cr_lru))
-		return;
+अटल व्योम
+rpcauth_lru_add_locked(काष्ठा rpc_cred *cred)
+अणु
+	अगर (!list_empty(&cred->cr_lru))
+		वापस;
 	number_cred_unused++;
 	list_add_tail(&cred->cr_lru, &cred_unused);
-}
+पूर्ण
 
-static void
-rpcauth_lru_add(struct rpc_cred *cred)
-{
-	if (!list_empty(&cred->cr_lru))
-		return;
+अटल व्योम
+rpcauth_lru_add(काष्ठा rpc_cred *cred)
+अणु
+	अगर (!list_empty(&cred->cr_lru))
+		वापस;
 	spin_lock(&rpc_credcache_lock);
 	rpcauth_lru_add_locked(cred);
 	spin_unlock(&rpc_credcache_lock);
-}
+पूर्ण
 
-static void
-rpcauth_lru_remove_locked(struct rpc_cred *cred)
-{
-	if (list_empty(&cred->cr_lru))
-		return;
+अटल व्योम
+rpcauth_lru_हटाओ_locked(काष्ठा rpc_cred *cred)
+अणु
+	अगर (list_empty(&cred->cr_lru))
+		वापस;
 	number_cred_unused--;
 	list_del_init(&cred->cr_lru);
-}
+पूर्ण
 
-static void
-rpcauth_lru_remove(struct rpc_cred *cred)
-{
-	if (list_empty(&cred->cr_lru))
-		return;
+अटल व्योम
+rpcauth_lru_हटाओ(काष्ठा rpc_cred *cred)
+अणु
+	अगर (list_empty(&cred->cr_lru))
+		वापस;
 	spin_lock(&rpc_credcache_lock);
-	rpcauth_lru_remove_locked(cred);
+	rpcauth_lru_हटाओ_locked(cred);
 	spin_unlock(&rpc_credcache_lock);
-}
+पूर्ण
 
 /*
  * Clear the RPC credential cache, and delete those credentials
  * that are not referenced.
  */
-void
-rpcauth_clear_credcache(struct rpc_cred_cache *cache)
-{
-	LIST_HEAD(free);
-	struct hlist_head *head;
-	struct rpc_cred	*cred;
-	unsigned int hashsize = 1U << cache->hashbits;
-	int		i;
+व्योम
+rpcauth_clear_credcache(काष्ठा rpc_cred_cache *cache)
+अणु
+	LIST_HEAD(मुक्त);
+	काष्ठा hlist_head *head;
+	काष्ठा rpc_cred	*cred;
+	अचिन्हित पूर्णांक hashsize = 1U << cache->hashbits;
+	पूर्णांक		i;
 
 	spin_lock(&rpc_credcache_lock);
 	spin_lock(&cache->lock);
-	for (i = 0; i < hashsize; i++) {
+	क्रम (i = 0; i < hashsize; i++) अणु
 		head = &cache->hashtable[i];
-		while (!hlist_empty(head)) {
-			cred = hlist_entry(head->first, struct rpc_cred, cr_hash);
+		जबतक (!hlist_empty(head)) अणु
+			cred = hlist_entry(head->first, काष्ठा rpc_cred, cr_hash);
 			rpcauth_unhash_cred_locked(cred);
 			/* Note: We now hold a reference to cred */
-			rpcauth_lru_remove_locked(cred);
-			list_add_tail(&cred->cr_lru, &free);
-		}
-	}
+			rpcauth_lru_हटाओ_locked(cred);
+			list_add_tail(&cred->cr_lru, &मुक्त);
+		पूर्ण
+	पूर्ण
 	spin_unlock(&cache->lock);
 	spin_unlock(&rpc_credcache_lock);
-	rpcauth_destroy_credlist(&free);
-}
+	rpcauth_destroy_credlist(&मुक्त);
+पूर्ण
 
 /*
  * Destroy the RPC credential cache
  */
-void
-rpcauth_destroy_credcache(struct rpc_auth *auth)
-{
-	struct rpc_cred_cache *cache = auth->au_credcache;
+व्योम
+rpcauth_destroy_credcache(काष्ठा rpc_auth *auth)
+अणु
+	काष्ठा rpc_cred_cache *cache = auth->au_credcache;
 
-	if (cache) {
-		auth->au_credcache = NULL;
+	अगर (cache) अणु
+		auth->au_credcache = शून्य;
 		rpcauth_clear_credcache(cache);
-		kfree(cache->hashtable);
-		kfree(cache);
-	}
-}
+		kमुक्त(cache->hashtable);
+		kमुक्त(cache);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_destroy_credcache);
 
 
-#define RPC_AUTH_EXPIRY_MORATORIUM (60 * HZ)
+#घोषणा RPC_AUTH_EXPIRY_MORATORIUM (60 * HZ)
 
 /*
- * Remove stale credentials. Avoid sleeping inside the loop.
+ * Remove stale credentials. Aव्योम sleeping inside the loop.
  */
-static long
-rpcauth_prune_expired(struct list_head *free, int nr_to_scan)
-{
-	struct rpc_cred *cred, *next;
-	unsigned long expired = jiffies - RPC_AUTH_EXPIRY_MORATORIUM;
-	long freed = 0;
+अटल दीर्घ
+rpcauth_prune_expired(काष्ठा list_head *मुक्त, पूर्णांक nr_to_scan)
+अणु
+	काष्ठा rpc_cred *cred, *next;
+	अचिन्हित दीर्घ expired = jअगरfies - RPC_AUTH_EXPIRY_MORATORIUM;
+	दीर्घ मुक्तd = 0;
 
-	list_for_each_entry_safe(cred, next, &cred_unused, cr_lru) {
+	list_क्रम_each_entry_safe(cred, next, &cred_unused, cr_lru) अणु
 
-		if (nr_to_scan-- == 0)
-			break;
-		if (refcount_read(&cred->cr_count) > 1) {
-			rpcauth_lru_remove_locked(cred);
-			continue;
-		}
+		अगर (nr_to_scan-- == 0)
+			अवरोध;
+		अगर (refcount_पढ़ो(&cred->cr_count) > 1) अणु
+			rpcauth_lru_हटाओ_locked(cred);
+			जारी;
+		पूर्ण
 		/*
-		 * Enforce a 60 second garbage collection moratorium
-		 * Note that the cred_unused list must be time-ordered.
+		 * Enक्रमce a 60 second garbage collection moratorium
+		 * Note that the cred_unused list must be समय-ordered.
 		 */
-		if (!time_in_range(cred->cr_expire, expired, jiffies))
-			continue;
-		if (!rpcauth_unhash_cred(cred))
-			continue;
+		अगर (!समय_in_range(cred->cr_expire, expired, jअगरfies))
+			जारी;
+		अगर (!rpcauth_unhash_cred(cred))
+			जारी;
 
-		rpcauth_lru_remove_locked(cred);
-		freed++;
-		list_add_tail(&cred->cr_lru, free);
-	}
-	return freed ? freed : SHRINK_STOP;
-}
+		rpcauth_lru_हटाओ_locked(cred);
+		मुक्तd++;
+		list_add_tail(&cred->cr_lru, मुक्त);
+	पूर्ण
+	वापस मुक्तd ? मुक्तd : SHRINK_STOP;
+पूर्ण
 
-static unsigned long
-rpcauth_cache_do_shrink(int nr_to_scan)
-{
-	LIST_HEAD(free);
-	unsigned long freed;
+अटल अचिन्हित दीर्घ
+rpcauth_cache_करो_shrink(पूर्णांक nr_to_scan)
+अणु
+	LIST_HEAD(मुक्त);
+	अचिन्हित दीर्घ मुक्तd;
 
 	spin_lock(&rpc_credcache_lock);
-	freed = rpcauth_prune_expired(&free, nr_to_scan);
+	मुक्तd = rpcauth_prune_expired(&मुक्त, nr_to_scan);
 	spin_unlock(&rpc_credcache_lock);
-	rpcauth_destroy_credlist(&free);
+	rpcauth_destroy_credlist(&मुक्त);
 
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
 /*
  * Run memory cache shrinker.
  */
-static unsigned long
-rpcauth_cache_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+अटल अचिन्हित दीर्घ
+rpcauth_cache_shrink_scan(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
 
-{
-	if ((sc->gfp_mask & GFP_KERNEL) != GFP_KERNEL)
-		return SHRINK_STOP;
+अणु
+	अगर ((sc->gfp_mask & GFP_KERNEL) != GFP_KERNEL)
+		वापस SHRINK_STOP;
 
-	/* nothing left, don't come back */
-	if (list_empty(&cred_unused))
-		return SHRINK_STOP;
+	/* nothing left, करोn't come back */
+	अगर (list_empty(&cred_unused))
+		वापस SHRINK_STOP;
 
-	return rpcauth_cache_do_shrink(sc->nr_to_scan);
-}
+	वापस rpcauth_cache_करो_shrink(sc->nr_to_scan);
+पूर्ण
 
-static unsigned long
-rpcauth_cache_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
+अटल अचिन्हित दीर्घ
+rpcauth_cache_shrink_count(काष्ठा shrinker *shrink, काष्ठा shrink_control *sc)
 
-{
-	return number_cred_unused * sysctl_vfs_cache_pressure / 100;
-}
+अणु
+	वापस number_cred_unused * sysctl_vfs_cache_pressure / 100;
+पूर्ण
 
-static void
-rpcauth_cache_enforce_limit(void)
-{
-	unsigned long diff;
-	unsigned int nr_to_scan;
+अटल व्योम
+rpcauth_cache_enक्रमce_limit(व्योम)
+अणु
+	अचिन्हित दीर्घ dअगरf;
+	अचिन्हित पूर्णांक nr_to_scan;
 
-	if (number_cred_unused <= auth_max_cred_cachesize)
-		return;
-	diff = number_cred_unused - auth_max_cred_cachesize;
+	अगर (number_cred_unused <= auth_max_cred_cachesize)
+		वापस;
+	dअगरf = number_cred_unused - auth_max_cred_cachesize;
 	nr_to_scan = 100;
-	if (diff < nr_to_scan)
-		nr_to_scan = diff;
-	rpcauth_cache_do_shrink(nr_to_scan);
-}
+	अगर (dअगरf < nr_to_scan)
+		nr_to_scan = dअगरf;
+	rpcauth_cache_करो_shrink(nr_to_scan);
+पूर्ण
 
 /*
  * Look up a process' credentials in the authentication cache
  */
-struct rpc_cred *
-rpcauth_lookup_credcache(struct rpc_auth *auth, struct auth_cred * acred,
-		int flags, gfp_t gfp)
-{
-	LIST_HEAD(free);
-	struct rpc_cred_cache *cache = auth->au_credcache;
-	struct rpc_cred	*cred = NULL,
+काष्ठा rpc_cred *
+rpcauth_lookup_credcache(काष्ठा rpc_auth *auth, काष्ठा auth_cred * acred,
+		पूर्णांक flags, gfp_t gfp)
+अणु
+	LIST_HEAD(मुक्त);
+	काष्ठा rpc_cred_cache *cache = auth->au_credcache;
+	काष्ठा rpc_cred	*cred = शून्य,
 			*entry, *new;
-	unsigned int nr;
+	अचिन्हित पूर्णांक nr;
 
 	nr = auth->au_ops->hash_cred(acred, cache->hashbits);
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(entry, &cache->hashtable[nr], cr_hash) {
-		if (!entry->cr_ops->crmatch(acred, entry, flags))
-			continue;
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(entry, &cache->hashtable[nr], cr_hash) अणु
+		अगर (!entry->cr_ops->crmatch(acred, entry, flags))
+			जारी;
 		cred = get_rpccred(entry);
-		if (cred)
-			break;
-	}
-	rcu_read_unlock();
+		अगर (cred)
+			अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (cred != NULL)
-		goto found;
+	अगर (cred != शून्य)
+		जाओ found;
 
 	new = auth->au_ops->crcreate(auth, acred, flags, gfp);
-	if (IS_ERR(new)) {
+	अगर (IS_ERR(new)) अणु
 		cred = new;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock(&cache->lock);
-	hlist_for_each_entry(entry, &cache->hashtable[nr], cr_hash) {
-		if (!entry->cr_ops->crmatch(acred, entry, flags))
-			continue;
+	hlist_क्रम_each_entry(entry, &cache->hashtable[nr], cr_hash) अणु
+		अगर (!entry->cr_ops->crmatch(acred, entry, flags))
+			जारी;
 		cred = get_rpccred(entry);
-		if (cred)
-			break;
-	}
-	if (cred == NULL) {
+		अगर (cred)
+			अवरोध;
+	पूर्ण
+	अगर (cred == शून्य) अणु
 		cred = new;
 		set_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags);
 		refcount_inc(&cred->cr_count);
 		hlist_add_head_rcu(&cred->cr_hash, &cache->hashtable[nr]);
-	} else
-		list_add_tail(&new->cr_lru, &free);
+	पूर्ण अन्यथा
+		list_add_tail(&new->cr_lru, &मुक्त);
 	spin_unlock(&cache->lock);
-	rpcauth_cache_enforce_limit();
+	rpcauth_cache_enक्रमce_limit();
 found:
-	if (test_bit(RPCAUTH_CRED_NEW, &cred->cr_flags) &&
-	    cred->cr_ops->cr_init != NULL &&
-	    !(flags & RPCAUTH_LOOKUP_NEW)) {
-		int res = cred->cr_ops->cr_init(auth, cred);
-		if (res < 0) {
+	अगर (test_bit(RPCAUTH_CRED_NEW, &cred->cr_flags) &&
+	    cred->cr_ops->cr_init != शून्य &&
+	    !(flags & RPCAUTH_LOOKUP_NEW)) अणु
+		पूर्णांक res = cred->cr_ops->cr_init(auth, cred);
+		अगर (res < 0) अणु
 			put_rpccred(cred);
 			cred = ERR_PTR(res);
-		}
-	}
-	rpcauth_destroy_credlist(&free);
+		पूर्ण
+	पूर्ण
+	rpcauth_destroy_credlist(&मुक्त);
 out:
-	return cred;
-}
+	वापस cred;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_lookup_credcache);
 
-struct rpc_cred *
-rpcauth_lookupcred(struct rpc_auth *auth, int flags)
-{
-	struct auth_cred acred;
-	struct rpc_cred *ret;
-	const struct cred *cred = current_cred();
+काष्ठा rpc_cred *
+rpcauth_lookupcred(काष्ठा rpc_auth *auth, पूर्णांक flags)
+अणु
+	काष्ठा auth_cred acred;
+	काष्ठा rpc_cred *ret;
+	स्थिर काष्ठा cred *cred = current_cred();
 
-	memset(&acred, 0, sizeof(acred));
+	स_रखो(&acred, 0, माप(acred));
 	acred.cred = cred;
 	ret = auth->au_ops->lookup_cred(auth, &acred, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_lookupcred);
 
-void
-rpcauth_init_cred(struct rpc_cred *cred, const struct auth_cred *acred,
-		  struct rpc_auth *auth, const struct rpc_credops *ops)
-{
+व्योम
+rpcauth_init_cred(काष्ठा rpc_cred *cred, स्थिर काष्ठा auth_cred *acred,
+		  काष्ठा rpc_auth *auth, स्थिर काष्ठा rpc_creकरोps *ops)
+अणु
 	INIT_HLIST_NODE(&cred->cr_hash);
 	INIT_LIST_HEAD(&cred->cr_lru);
 	refcount_set(&cred->cr_count, 1);
 	cred->cr_auth = auth;
 	cred->cr_flags = 0;
 	cred->cr_ops = ops;
-	cred->cr_expire = jiffies;
+	cred->cr_expire = jअगरfies;
 	cred->cr_cred = get_cred(acred->cred);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_init_cred);
 
-static struct rpc_cred *
-rpcauth_bind_root_cred(struct rpc_task *task, int lookupflags)
-{
-	struct rpc_auth *auth = task->tk_client->cl_auth;
-	struct auth_cred acred = {
+अटल काष्ठा rpc_cred *
+rpcauth_bind_root_cred(काष्ठा rpc_task *task, पूर्णांक lookupflags)
+अणु
+	काष्ठा rpc_auth *auth = task->tk_client->cl_auth;
+	काष्ठा auth_cred acred = अणु
 		.cred = get_task_cred(&init_task),
-	};
-	struct rpc_cred *ret;
+	पूर्ण;
+	काष्ठा rpc_cred *ret;
 
 	ret = auth->au_ops->lookup_cred(auth, &acred, lookupflags);
 	put_cred(acred.cred);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct rpc_cred *
-rpcauth_bind_machine_cred(struct rpc_task *task, int lookupflags)
-{
-	struct rpc_auth *auth = task->tk_client->cl_auth;
-	struct auth_cred acred = {
+अटल काष्ठा rpc_cred *
+rpcauth_bind_machine_cred(काष्ठा rpc_task *task, पूर्णांक lookupflags)
+अणु
+	काष्ठा rpc_auth *auth = task->tk_client->cl_auth;
+	काष्ठा auth_cred acred = अणु
 		.principal = task->tk_client->cl_principal,
 		.cred = init_task.cred,
-	};
+	पूर्ण;
 
-	if (!acred.principal)
-		return NULL;
-	return auth->au_ops->lookup_cred(auth, &acred, lookupflags);
-}
+	अगर (!acred.principal)
+		वापस शून्य;
+	वापस auth->au_ops->lookup_cred(auth, &acred, lookupflags);
+पूर्ण
 
-static struct rpc_cred *
-rpcauth_bind_new_cred(struct rpc_task *task, int lookupflags)
-{
-	struct rpc_auth *auth = task->tk_client->cl_auth;
+अटल काष्ठा rpc_cred *
+rpcauth_bind_new_cred(काष्ठा rpc_task *task, पूर्णांक lookupflags)
+अणु
+	काष्ठा rpc_auth *auth = task->tk_client->cl_auth;
 
-	return rpcauth_lookupcred(auth, lookupflags);
-}
+	वापस rpcauth_lookupcred(auth, lookupflags);
+पूर्ण
 
-static int
-rpcauth_bindcred(struct rpc_task *task, const struct cred *cred, int flags)
-{
-	struct rpc_rqst *req = task->tk_rqstp;
-	struct rpc_cred *new = NULL;
-	int lookupflags = 0;
-	struct rpc_auth *auth = task->tk_client->cl_auth;
-	struct auth_cred acred = {
+अटल पूर्णांक
+rpcauth_bindcred(काष्ठा rpc_task *task, स्थिर काष्ठा cred *cred, पूर्णांक flags)
+अणु
+	काष्ठा rpc_rqst *req = task->tk_rqstp;
+	काष्ठा rpc_cred *new = शून्य;
+	पूर्णांक lookupflags = 0;
+	काष्ठा rpc_auth *auth = task->tk_client->cl_auth;
+	काष्ठा auth_cred acred = अणु
 		.cred = cred,
-	};
+	पूर्ण;
 
-	if (flags & RPC_TASK_ASYNC)
+	अगर (flags & RPC_TASK_ASYNC)
 		lookupflags |= RPCAUTH_LOOKUP_NEW;
-	if (task->tk_op_cred)
+	अगर (task->tk_op_cred)
 		/* Task must use exactly this rpc_cred */
 		new = get_rpccred(task->tk_op_cred);
-	else if (cred != NULL && cred != &machine_cred)
+	अन्यथा अगर (cred != शून्य && cred != &machine_cred)
 		new = auth->au_ops->lookup_cred(auth, &acred, lookupflags);
-	else if (cred == &machine_cred)
+	अन्यथा अगर (cred == &machine_cred)
 		new = rpcauth_bind_machine_cred(task, lookupflags);
 
 	/* If machine cred couldn't be bound, try a root cred */
-	if (new)
+	अगर (new)
 		;
-	else if (cred == &machine_cred || (flags & RPC_TASK_ROOTCREDS))
+	अन्यथा अगर (cred == &machine_cred || (flags & RPC_TASK_ROOTCREDS))
 		new = rpcauth_bind_root_cred(task, lookupflags);
-	else if (flags & RPC_TASK_NULLCREDS)
-		new = authnull_ops.lookup_cred(NULL, NULL, 0);
-	else
+	अन्यथा अगर (flags & RPC_TASK_शून्यCREDS)
+		new = authnull_ops.lookup_cred(शून्य, शून्य, 0);
+	अन्यथा
 		new = rpcauth_bind_new_cred(task, lookupflags);
-	if (IS_ERR(new))
-		return PTR_ERR(new);
+	अगर (IS_ERR(new))
+		वापस PTR_ERR(new);
 	put_rpccred(req->rq_cred);
 	req->rq_cred = new;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-put_rpccred(struct rpc_cred *cred)
-{
-	if (cred == NULL)
-		return;
-	rcu_read_lock();
-	if (refcount_dec_and_test(&cred->cr_count))
-		goto destroy;
-	if (refcount_read(&cred->cr_count) != 1 ||
+व्योम
+put_rpccred(काष्ठा rpc_cred *cred)
+अणु
+	अगर (cred == शून्य)
+		वापस;
+	rcu_पढ़ो_lock();
+	अगर (refcount_dec_and_test(&cred->cr_count))
+		जाओ destroy;
+	अगर (refcount_पढ़ो(&cred->cr_count) != 1 ||
 	    !test_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags))
-		goto out;
-	if (test_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags) != 0) {
-		cred->cr_expire = jiffies;
+		जाओ out;
+	अगर (test_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags) != 0) अणु
+		cred->cr_expire = jअगरfies;
 		rpcauth_lru_add(cred);
-		/* Race breaker */
-		if (unlikely(!test_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags)))
-			rpcauth_lru_remove(cred);
-	} else if (rpcauth_unhash_cred(cred)) {
-		rpcauth_lru_remove(cred);
-		if (refcount_dec_and_test(&cred->cr_count))
-			goto destroy;
-	}
+		/* Race अवरोधer */
+		अगर (unlikely(!test_bit(RPCAUTH_CRED_HASHED, &cred->cr_flags)))
+			rpcauth_lru_हटाओ(cred);
+	पूर्ण अन्यथा अगर (rpcauth_unhash_cred(cred)) अणु
+		rpcauth_lru_हटाओ(cred);
+		अगर (refcount_dec_and_test(&cred->cr_count))
+			जाओ destroy;
+	पूर्ण
 out:
-	rcu_read_unlock();
-	return;
+	rcu_पढ़ो_unlock();
+	वापस;
 destroy:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	cred->cr_ops->crdestroy(cred);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(put_rpccred);
 
 /**
@@ -715,17 +716,17 @@ EXPORT_SYMBOL_GPL(put_rpccred);
  * @task: controlling RPC task
  * @xdr: xdr_stream containing initial portion of RPC Call header
  *
- * On success, an appropriate verifier is added to @xdr, @xdr is
- * updated to point past the verifier, and zero is returned.
- * Otherwise, @xdr is in an undefined state and a negative errno
- * is returned.
+ * On success, an appropriate verअगरier is added to @xdr, @xdr is
+ * updated to poपूर्णांक past the verअगरier, and zero is वापसed.
+ * Otherwise, @xdr is in an undefined state and a negative त्रुटि_सं
+ * is वापसed.
  */
-int rpcauth_marshcred(struct rpc_task *task, struct xdr_stream *xdr)
-{
-	const struct rpc_credops *ops = task->tk_rqstp->rq_cred->cr_ops;
+पूर्णांक rpcauth_marshcred(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
+	स्थिर काष्ठा rpc_creकरोps *ops = task->tk_rqstp->rq_cred->cr_ops;
 
-	return ops->crmarshal(task, xdr);
-}
+	वापस ops->crmarshal(task, xdr);
+पूर्ण
 
 /**
  * rpcauth_wrap_req_encode - XDR encode the RPC procedure
@@ -735,13 +736,13 @@ int rpcauth_marshcred(struct rpc_task *task, struct xdr_stream *xdr)
  * On success, @xdr contains the encoded and wrapped message.
  * Otherwise, @xdr is in an undefined state.
  */
-int rpcauth_wrap_req_encode(struct rpc_task *task, struct xdr_stream *xdr)
-{
+पूर्णांक rpcauth_wrap_req_encode(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
 	kxdreproc_t encode = task->tk_msg.rpc_proc->p_encode;
 
 	encode(task->tk_rqstp, xdr, task->tk_msg.rpc_argp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_wrap_req_encode);
 
 /**
@@ -750,138 +751,138 @@ EXPORT_SYMBOL_GPL(rpcauth_wrap_req_encode);
  * @xdr: stream where on-the-wire bytes are to be marshalled
  *
  * On success, @xdr contains the encoded and wrapped message,
- * and zero is returned. Otherwise, @xdr is in an undefined
- * state and a negative errno is returned.
+ * and zero is वापसed. Otherwise, @xdr is in an undefined
+ * state and a negative त्रुटि_सं is वापसed.
  */
-int rpcauth_wrap_req(struct rpc_task *task, struct xdr_stream *xdr)
-{
-	const struct rpc_credops *ops = task->tk_rqstp->rq_cred->cr_ops;
+पूर्णांक rpcauth_wrap_req(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
+	स्थिर काष्ठा rpc_creकरोps *ops = task->tk_rqstp->rq_cred->cr_ops;
 
-	return ops->crwrap_req(task, xdr);
-}
+	वापस ops->crwrap_req(task, xdr);
+पूर्ण
 
 /**
- * rpcauth_checkverf - Validate verifier in RPC Reply header
+ * rpcauth_checkverf - Validate verअगरier in RPC Reply header
  * @task: controlling RPC task
  * @xdr: xdr_stream containing RPC Reply header
  *
- * On success, @xdr is updated to point past the verifier and
- * zero is returned. Otherwise, @xdr is in an undefined state
- * and a negative errno is returned.
+ * On success, @xdr is updated to poपूर्णांक past the verअगरier and
+ * zero is वापसed. Otherwise, @xdr is in an undefined state
+ * and a negative त्रुटि_सं is वापसed.
  */
-int
-rpcauth_checkverf(struct rpc_task *task, struct xdr_stream *xdr)
-{
-	const struct rpc_credops *ops = task->tk_rqstp->rq_cred->cr_ops;
+पूर्णांक
+rpcauth_checkverf(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
+	स्थिर काष्ठा rpc_creकरोps *ops = task->tk_rqstp->rq_cred->cr_ops;
 
-	return ops->crvalidate(task, xdr);
-}
+	वापस ops->crvalidate(task, xdr);
+पूर्ण
 
 /**
  * rpcauth_unwrap_resp_decode - Invoke XDR decode function
  * @task: controlling RPC task
  * @xdr: stream where the Reply message resides
  *
- * Returns zero on success; otherwise a negative errno is returned.
+ * Returns zero on success; otherwise a negative त्रुटि_सं is वापसed.
  */
-int
-rpcauth_unwrap_resp_decode(struct rpc_task *task, struct xdr_stream *xdr)
-{
+पूर्णांक
+rpcauth_unwrap_resp_decode(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
 	kxdrdproc_t decode = task->tk_msg.rpc_proc->p_decode;
 
-	return decode(task->tk_rqstp, xdr, task->tk_msg.rpc_resp);
-}
+	वापस decode(task->tk_rqstp, xdr, task->tk_msg.rpc_resp);
+पूर्ण
 EXPORT_SYMBOL_GPL(rpcauth_unwrap_resp_decode);
 
 /**
- * rpcauth_unwrap_resp - Invoke unwrap and decode function for the cred
+ * rpcauth_unwrap_resp - Invoke unwrap and decode function क्रम the cred
  * @task: controlling RPC task
  * @xdr: stream where the Reply message resides
  *
- * Returns zero on success; otherwise a negative errno is returned.
+ * Returns zero on success; otherwise a negative त्रुटि_सं is वापसed.
  */
-int
-rpcauth_unwrap_resp(struct rpc_task *task, struct xdr_stream *xdr)
-{
-	const struct rpc_credops *ops = task->tk_rqstp->rq_cred->cr_ops;
+पूर्णांक
+rpcauth_unwrap_resp(काष्ठा rpc_task *task, काष्ठा xdr_stream *xdr)
+अणु
+	स्थिर काष्ठा rpc_creकरोps *ops = task->tk_rqstp->rq_cred->cr_ops;
 
-	return ops->crunwrap_resp(task, xdr);
-}
+	वापस ops->crunwrap_resp(task, xdr);
+पूर्ण
 
 bool
-rpcauth_xmit_need_reencode(struct rpc_task *task)
-{
-	struct rpc_cred *cred = task->tk_rqstp->rq_cred;
+rpcauth_xmit_need_reencode(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_cred *cred = task->tk_rqstp->rq_cred;
 
-	if (!cred || !cred->cr_ops->crneed_reencode)
-		return false;
-	return cred->cr_ops->crneed_reencode(task);
-}
+	अगर (!cred || !cred->cr_ops->crneed_reencode)
+		वापस false;
+	वापस cred->cr_ops->crneed_reencode(task);
+पूर्ण
 
-int
-rpcauth_refreshcred(struct rpc_task *task)
-{
-	struct rpc_cred	*cred;
-	int err;
+पूर्णांक
+rpcauth_refreshcred(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_cred	*cred;
+	पूर्णांक err;
 
 	cred = task->tk_rqstp->rq_cred;
-	if (cred == NULL) {
+	अगर (cred == शून्य) अणु
 		err = rpcauth_bindcred(task, task->tk_msg.rpc_cred, task->tk_flags);
-		if (err < 0)
-			goto out;
+		अगर (err < 0)
+			जाओ out;
 		cred = task->tk_rqstp->rq_cred;
-	}
+	पूर्ण
 
 	err = cred->cr_ops->crrefresh(task);
 out:
-	if (err < 0)
+	अगर (err < 0)
 		task->tk_status = err;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void
-rpcauth_invalcred(struct rpc_task *task)
-{
-	struct rpc_cred *cred = task->tk_rqstp->rq_cred;
+व्योम
+rpcauth_invalcred(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_cred *cred = task->tk_rqstp->rq_cred;
 
-	if (cred)
+	अगर (cred)
 		clear_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags);
-}
+पूर्ण
 
-int
-rpcauth_uptodatecred(struct rpc_task *task)
-{
-	struct rpc_cred *cred = task->tk_rqstp->rq_cred;
+पूर्णांक
+rpcauth_uptodatecred(काष्ठा rpc_task *task)
+अणु
+	काष्ठा rpc_cred *cred = task->tk_rqstp->rq_cred;
 
-	return cred == NULL ||
+	वापस cred == शून्य ||
 		test_bit(RPCAUTH_CRED_UPTODATE, &cred->cr_flags) != 0;
-}
+पूर्ण
 
-static struct shrinker rpc_cred_shrinker = {
+अटल काष्ठा shrinker rpc_cred_shrinker = अणु
 	.count_objects = rpcauth_cache_shrink_count,
 	.scan_objects = rpcauth_cache_shrink_scan,
 	.seeks = DEFAULT_SEEKS,
-};
+पूर्ण;
 
-int __init rpcauth_init_module(void)
-{
-	int err;
+पूर्णांक __init rpcauth_init_module(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = rpc_init_authunix();
-	if (err < 0)
-		goto out1;
-	err = register_shrinker(&rpc_cred_shrinker);
-	if (err < 0)
-		goto out2;
-	return 0;
+	अगर (err < 0)
+		जाओ out1;
+	err = रेजिस्टर_shrinker(&rpc_cred_shrinker);
+	अगर (err < 0)
+		जाओ out2;
+	वापस 0;
 out2:
 	rpc_destroy_authunix();
 out1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void rpcauth_remove_module(void)
-{
+व्योम rpcauth_हटाओ_module(व्योम)
+अणु
 	rpc_destroy_authunix();
-	unregister_shrinker(&rpc_cred_shrinker);
-}
+	unरेजिस्टर_shrinker(&rpc_cred_shrinker);
+पूर्ण

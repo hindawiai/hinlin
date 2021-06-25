@@ -1,81 +1,82 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
- *   Author: Dong Aisheng <aisheng.dong@nxp.com>
+ *   Author: Dong Aisheng <aisheng.करोng@nxp.com>
  */
 
-#include <linux/irqchip.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
-#include <asm/mach/arch.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "common.h"
-#include "cpuidle.h"
-#include "hardware.h"
+#समावेश "common.h"
+#समावेश "cpuidle.h"
+#समावेश "hardware.h"
 
-#define SIM_JTAG_ID_REG		0x8c
+#घोषणा SIM_JTAG_ID_REG		0x8c
 
-static void __init imx7ulp_set_revision(void)
-{
-	struct regmap *sim;
+अटल व्योम __init imx7ulp_set_revision(व्योम)
+अणु
+	काष्ठा regmap *sim;
 	u32 revision;
 
 	sim = syscon_regmap_lookup_by_compatible("fsl,imx7ulp-sim");
-	if (IS_ERR(sim)) {
+	अगर (IS_ERR(sim)) अणु
 		pr_warn("failed to find fsl,imx7ulp-sim regmap!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (regmap_read(sim, SIM_JTAG_ID_REG, &revision)) {
+	अगर (regmap_पढ़ो(sim, SIM_JTAG_ID_REG, &revision)) अणु
 		pr_warn("failed to read sim regmap!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * bit[31:28] of JTAG_ID register defines revision as below from B0:
+	 * bit[31:28] of JTAG_ID रेजिस्टर defines revision as below from B0:
 	 * 0001        B0
 	 * 0010        B1
 	 * 0011        B2
 	 */
-	switch (revision >> 28) {
-	case 1:
+	चयन (revision >> 28) अणु
+	हाल 1:
 		imx_set_soc_revision(IMX_CHIP_REVISION_2_0);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		imx_set_soc_revision(IMX_CHIP_REVISION_2_1);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		imx_set_soc_revision(IMX_CHIP_REVISION_2_2);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		imx_set_soc_revision(IMX_CHIP_REVISION_1_0);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void __init imx7ulp_init_machine(void)
-{
+अटल व्योम __init imx7ulp_init_machine(व्योम)
+अणु
 	imx7ulp_pm_init();
 
 	mxc_set_cpu_type(MXC_CPU_IMX7ULP);
 	imx7ulp_set_revision();
-	of_platform_default_populate(NULL, NULL, NULL);
-}
+	of_platक्रमm_शेष_populate(शून्य, शून्य, शून्य);
+पूर्ण
 
-static const char *const imx7ulp_dt_compat[] __initconst = {
+अटल स्थिर अक्षर *स्थिर imx7ulp_dt_compat[] __initस्थिर = अणु
 	"fsl,imx7ulp",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static void __init imx7ulp_init_late(void)
-{
-	if (IS_ENABLED(CONFIG_ARM_IMX_CPUFREQ_DT))
-		platform_device_register_simple("imx-cpufreq-dt", -1, NULL, 0);
+अटल व्योम __init imx7ulp_init_late(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_ARM_IMX_CPUFREQ_DT))
+		platक्रमm_device_रेजिस्टर_simple("imx-cpufreq-dt", -1, शून्य, 0);
 
 	imx7ulp_cpuidle_init();
-}
+पूर्ण
 
 DT_MACHINE_START(IMX7ulp, "Freescale i.MX7ULP (Device Tree)")
 	.init_machine	= imx7ulp_init_machine,

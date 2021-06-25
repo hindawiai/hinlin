@@ -1,103 +1,104 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * mtu3_dr.h - dual role switch and host glue layer header
+ * mtu3_dr.h - dual role चयन and host glue layer header
  *
  * Copyright (C) 2016 MediaTek Inc.
  *
  * Author: Chunfeng Yun <chunfeng.yun@mediatek.com>
  */
 
-#ifndef _MTU3_DR_H_
-#define _MTU3_DR_H_
+#अगर_अघोषित _MTU3_DR_H_
+#घोषणा _MTU3_DR_H_
 
-#if IS_ENABLED(CONFIG_USB_MTU3_HOST) || IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
+#अगर IS_ENABLED(CONFIG_USB_MTU3_HOST) || IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
 
-int ssusb_host_init(struct ssusb_mtk *ssusb, struct device_node *parent_dn);
-void ssusb_host_exit(struct ssusb_mtk *ssusb);
-int ssusb_wakeup_of_property_parse(struct ssusb_mtk *ssusb,
-				struct device_node *dn);
-int ssusb_host_enable(struct ssusb_mtk *ssusb);
-int ssusb_host_disable(struct ssusb_mtk *ssusb, bool suspend);
-void ssusb_wakeup_set(struct ssusb_mtk *ssusb, bool enable);
+पूर्णांक ssusb_host_init(काष्ठा ssusb_mtk *ssusb, काष्ठा device_node *parent_dn);
+व्योम ssusb_host_निकास(काष्ठा ssusb_mtk *ssusb);
+पूर्णांक ssusb_wakeup_of_property_parse(काष्ठा ssusb_mtk *ssusb,
+				काष्ठा device_node *dn);
+पूर्णांक ssusb_host_enable(काष्ठा ssusb_mtk *ssusb);
+पूर्णांक ssusb_host_disable(काष्ठा ssusb_mtk *ssusb, bool suspend);
+व्योम ssusb_wakeup_set(काष्ठा ssusb_mtk *ssusb, bool enable);
 
-#else
+#अन्यथा
 
-static inline int ssusb_host_init(struct ssusb_mtk *ssusb,
+अटल अंतरभूत पूर्णांक ssusb_host_init(काष्ठा ssusb_mtk *ssusb,
 
-	struct device_node *parent_dn)
-{
-	return 0;
-}
+	काष्ठा device_node *parent_dn)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ssusb_host_exit(struct ssusb_mtk *ssusb)
-{}
+अटल अंतरभूत व्योम ssusb_host_निकास(काष्ठा ssusb_mtk *ssusb)
+अणुपूर्ण
 
-static inline int ssusb_wakeup_of_property_parse(
-	struct ssusb_mtk *ssusb, struct device_node *dn)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ssusb_wakeup_of_property_parse(
+	काष्ठा ssusb_mtk *ssusb, काष्ठा device_node *dn)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ssusb_host_enable(struct ssusb_mtk *ssusb)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ssusb_host_enable(काष्ठा ssusb_mtk *ssusb)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int ssusb_host_disable(struct ssusb_mtk *ssusb, bool suspend)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ssusb_host_disable(काष्ठा ssusb_mtk *ssusb, bool suspend)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void ssusb_wakeup_set(struct ssusb_mtk *ssusb, bool enable)
-{}
+अटल अंतरभूत व्योम ssusb_wakeup_set(काष्ठा ssusb_mtk *ssusb, bool enable)
+अणुपूर्ण
 
-#endif
-
-
-#if IS_ENABLED(CONFIG_USB_MTU3_GADGET) || IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
-int ssusb_gadget_init(struct ssusb_mtk *ssusb);
-void ssusb_gadget_exit(struct ssusb_mtk *ssusb);
-#else
-static inline int ssusb_gadget_init(struct ssusb_mtk *ssusb)
-{
-	return 0;
-}
-
-static inline void ssusb_gadget_exit(struct ssusb_mtk *ssusb)
-{}
-#endif
+#पूर्ण_अगर
 
 
-#if IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
-int ssusb_otg_switch_init(struct ssusb_mtk *ssusb);
-void ssusb_otg_switch_exit(struct ssusb_mtk *ssusb);
-void ssusb_mode_switch(struct ssusb_mtk *ssusb, int to_host);
-int ssusb_set_vbus(struct otg_switch_mtk *otg_sx, int is_on);
-void ssusb_set_force_mode(struct ssusb_mtk *ssusb,
-			  enum mtu3_dr_force_mode mode);
+#अगर IS_ENABLED(CONFIG_USB_MTU3_GADGET) || IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
+पूर्णांक ssusb_gadget_init(काष्ठा ssusb_mtk *ssusb);
+व्योम ssusb_gadget_निकास(काष्ठा ssusb_mtk *ssusb);
+#अन्यथा
+अटल अंतरभूत पूर्णांक ssusb_gadget_init(काष्ठा ssusb_mtk *ssusb)
+अणु
+	वापस 0;
+पूर्ण
 
-#else
+अटल अंतरभूत व्योम ssusb_gadget_निकास(काष्ठा ssusb_mtk *ssusb)
+अणुपूर्ण
+#पूर्ण_अगर
 
-static inline int ssusb_otg_switch_init(struct ssusb_mtk *ssusb)
-{
-	return 0;
-}
 
-static inline void ssusb_otg_switch_exit(struct ssusb_mtk *ssusb)
-{}
+#अगर IS_ENABLED(CONFIG_USB_MTU3_DUAL_ROLE)
+पूर्णांक ssusb_otg_चयन_init(काष्ठा ssusb_mtk *ssusb);
+व्योम ssusb_otg_चयन_निकास(काष्ठा ssusb_mtk *ssusb);
+व्योम ssusb_mode_चयन(काष्ठा ssusb_mtk *ssusb, पूर्णांक to_host);
+पूर्णांक ssusb_set_vbus(काष्ठा otg_चयन_mtk *otg_sx, पूर्णांक is_on);
+व्योम ssusb_set_क्रमce_mode(काष्ठा ssusb_mtk *ssusb,
+			  क्रमागत mtu3_dr_क्रमce_mode mode);
 
-static inline void ssusb_mode_switch(struct ssusb_mtk *ssusb, int to_host)
-{}
+#अन्यथा
 
-static inline int ssusb_set_vbus(struct otg_switch_mtk *otg_sx, int is_on)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक ssusb_otg_चयन_init(काष्ठा ssusb_mtk *ssusb)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void
-ssusb_set_force_mode(struct ssusb_mtk *ssusb, enum mtu3_dr_force_mode mode)
-{}
+अटल अंतरभूत व्योम ssusb_otg_चयन_निकास(काष्ठा ssusb_mtk *ssusb)
+अणुपूर्ण
 
-#endif
+अटल अंतरभूत व्योम ssusb_mode_चयन(काष्ठा ssusb_mtk *ssusb, पूर्णांक to_host)
+अणुपूर्ण
 
-#endif		/* _MTU3_DR_H_ */
+अटल अंतरभूत पूर्णांक ssusb_set_vbus(काष्ठा otg_चयन_mtk *otg_sx, पूर्णांक is_on)
+अणु
+	वापस 0;
+पूर्ण
+
+अटल अंतरभूत व्योम
+ssusb_set_क्रमce_mode(काष्ठा ssusb_mtk *ssusb, क्रमागत mtu3_dr_क्रमce_mode mode)
+अणुपूर्ण
+
+#पूर्ण_अगर
+
+#पूर्ण_अगर		/* _MTU3_DR_H_ */

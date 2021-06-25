@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2005-2014, 2018-2021 Intel Corporation
  * Copyright (C) 2013-2015 Intel Mobile Communications GmbH
  * Copyright (C) 2016-2017 Intel Deutschland GmbH
  */
-#ifndef __iwl_trans_h__
-#define __iwl_trans_h__
+#अगर_अघोषित __iwl_trans_h__
+#घोषणा __iwl_trans_h__
 
-#include <linux/ieee80211.h>
-#include <linux/mm.h> /* for page_address */
-#include <linux/lockdep.h>
-#include <linux/kernel.h>
+#समावेश <linux/ieee80211.h>
+#समावेश <linux/mm.h> /* क्रम page_address */
+#समावेश <linux/lockdep.h>
+#समावेश <linux/kernel.h>
 
-#include "iwl-debug.h"
-#include "iwl-config.h"
-#include "fw/img.h"
-#include "iwl-op-mode.h"
-#include <linux/firmware.h>
-#include "fw/api/cmdhdr.h"
-#include "fw/api/txq.h"
-#include "fw/api/dbg-tlv.h"
-#include "iwl-dbg-tlv.h"
+#समावेश "iwl-debug.h"
+#समावेश "iwl-config.h"
+#समावेश "fw/img.h"
+#समावेश "iwl-op-mode.h"
+#समावेश <linux/firmware.h>
+#समावेश "fw/api/cmdhdr.h"
+#समावेश "fw/api/txq.h"
+#समावेश "fw/api/dbg-tlv.h"
+#समावेश "iwl-dbg-tlv.h"
 
 /**
  * DOC: Transport layer - what is it ?
  *
  * The transport layer is the layer that deals with the HW directly. It provides
- * an abstraction of the underlying HW to the upper layer. The transport layer
- * doesn't provide any policy, algorithm or anything of this kind, but only
- * mechanisms to make the HW do something. It is not completely stateless but
- * close to it.
- * We will have an implementation for each different supported bus.
+ * an असलtraction of the underlying HW to the upper layer. The transport layer
+ * करोesn't provide any policy, algorithm or anything of this kind, but only
+ * mechanisms to make the HW करो something. It is not completely stateless but
+ * बंद to it.
+ * We will have an implementation क्रम each dअगरferent supported bus.
  */
 
 /**
- * DOC: Life cycle of the transport layer
+ * DOC: Lअगरe cycle of the transport layer
  *
- * The transport layer has a very precise life cycle.
+ * The transport layer has a very precise lअगरe cycle.
  *
  *	1) A helper function is called during the module initialization and
- *	   registers the bus driver's ops with the transport's alloc function.
+ *	   रेजिस्टरs the bus driver's ops with the transport's alloc function.
  *	2) Bus's probe calls to the transport layer's allocation functions.
- *	   Of course this function is bus specific.
+ *	   Of course this function is bus specअगरic.
  *	3) This allocation functions will spawn the upper layer which will
- *	   register mac80211.
+ *	   रेजिस्टर mac80211.
  *
- *	4) At some point (i.e. mac80211's start call), the op_mode will call
+ *	4) At some poपूर्णांक (i.e. mac80211's start call), the op_mode will call
  *	   the following sequence:
  *	   start_hw
  *	   start_fw
@@ -53,20 +54,20 @@
  *	5) Then when finished (or reset):
  *	   stop_device
  *
- *	6) Eventually, the free function will be called.
+ *	6) Eventually, the मुक्त function will be called.
  */
 
-#define IWL_TRANS_FW_DBG_DOMAIN(trans)	IWL_FW_INI_DOMAIN_ALWAYS_ON
+#घोषणा IWL_TRANS_FW_DBG_DOMAIN(trans)	IWL_FW_INI_DOMAIN_ALWAYS_ON
 
-#define FH_RSCSR_FRAME_SIZE_MSK		0x00003FFF	/* bits 0-13 */
-#define FH_RSCSR_FRAME_INVALID		0x55550000
-#define FH_RSCSR_FRAME_ALIGN		0x40
-#define FH_RSCSR_RPA_EN			BIT(25)
-#define FH_RSCSR_RADA_EN		BIT(26)
-#define FH_RSCSR_RXQ_POS		16
-#define FH_RSCSR_RXQ_MASK		0x3F0000
+#घोषणा FH_RSCSR_FRAME_SIZE_MSK		0x00003FFF	/* bits 0-13 */
+#घोषणा FH_RSCSR_FRAME_INVALID		0x55550000
+#घोषणा FH_RSCSR_FRAME_ALIGN		0x40
+#घोषणा FH_RSCSR_RPA_EN			BIT(25)
+#घोषणा FH_RSCSR_RADA_EN		BIT(26)
+#घोषणा FH_RSCSR_RXQ_POS		16
+#घोषणा FH_RSCSR_RXQ_MASK		0x3F0000
 
-struct iwl_rx_packet {
+काष्ठा iwl_rx_packet अणु
 	/*
 	 * The first 4 bytes of the RX frame header contain both the RX frame
 	 * size and some flags.
@@ -85,218 +86,218 @@ struct iwl_rx_packet {
 	 * 13-00: RX frame size
 	 */
 	__le32 len_n_flags;
-	struct iwl_cmd_header hdr;
+	काष्ठा iwl_cmd_header hdr;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-static inline u32 iwl_rx_packet_len(const struct iwl_rx_packet *pkt)
-{
-	return le32_to_cpu(pkt->len_n_flags) & FH_RSCSR_FRAME_SIZE_MSK;
-}
+अटल अंतरभूत u32 iwl_rx_packet_len(स्थिर काष्ठा iwl_rx_packet *pkt)
+अणु
+	वापस le32_to_cpu(pkt->len_n_flags) & FH_RSCSR_FRAME_SIZE_MSK;
+पूर्ण
 
-static inline u32 iwl_rx_packet_payload_len(const struct iwl_rx_packet *pkt)
-{
-	return iwl_rx_packet_len(pkt) - sizeof(pkt->hdr);
-}
+अटल अंतरभूत u32 iwl_rx_packet_payload_len(स्थिर काष्ठा iwl_rx_packet *pkt)
+अणु
+	वापस iwl_rx_packet_len(pkt) - माप(pkt->hdr);
+पूर्ण
 
 /**
- * enum CMD_MODE - how to send the host commands ?
+ * क्रमागत CMD_MODE - how to send the host commands ?
  *
- * @CMD_ASYNC: Return right away and don't wait for the response
+ * @CMD_ASYNC: Return right away and करोn't रुको क्रम the response
  * @CMD_WANT_SKB: Not valid with CMD_ASYNC. The caller needs the buffer of
- *	the response. The caller needs to call iwl_free_resp when done.
+ *	the response. The caller needs to call iwl_मुक्त_resp when करोne.
  * @CMD_WANT_ASYNC_CALLBACK: the op_mode's async callback function must be
  *	called after this command completes. Valid only with CMD_ASYNC.
  * @CMD_SEND_IN_D3: Allow the command to be sent in D3 mode, relevant to
  *	SUSPEND and RESUME commands. We are in D3 mode when we set
- *	trans->system_pm_mode to IWL_PLAT_PM_MODE_D3.
+ *	trans->प्रणाली_pm_mode to IWL_PLAT_PM_MODE_D3.
  */
-enum CMD_MODE {
+क्रमागत CMD_MODE अणु
 	CMD_ASYNC		= BIT(0),
 	CMD_WANT_SKB		= BIT(1),
 	CMD_SEND_IN_RFKILL	= BIT(2),
 	CMD_WANT_ASYNC_CALLBACK	= BIT(3),
 	CMD_SEND_IN_D3          = BIT(4),
-};
+पूर्ण;
 
-#define DEF_CMD_PAYLOAD_SIZE 320
+#घोषणा DEF_CMD_PAYLOAD_SIZE 320
 
 /**
- * struct iwl_device_cmd
+ * काष्ठा iwl_device_cmd
  *
  * For allocation of the command and tx queues, this establishes the overall
- * size of the largest command we send to uCode, except for commands that
+ * size of the largest command we send to uCode, except क्रम commands that
  * aren't fully copied and use other TFD space.
  */
-struct iwl_device_cmd {
-	union {
-		struct {
-			struct iwl_cmd_header hdr;	/* uCode API */
+काष्ठा iwl_device_cmd अणु
+	जोड़ अणु
+		काष्ठा अणु
+			काष्ठा iwl_cmd_header hdr;	/* uCode API */
 			u8 payload[DEF_CMD_PAYLOAD_SIZE];
-		};
-		struct {
-			struct iwl_cmd_header_wide hdr_wide;
+		पूर्ण;
+		काष्ठा अणु
+			काष्ठा iwl_cmd_header_wide hdr_wide;
 			u8 payload_wide[DEF_CMD_PAYLOAD_SIZE -
-					sizeof(struct iwl_cmd_header_wide) +
-					sizeof(struct iwl_cmd_header)];
-		};
-	};
-} __packed;
+					माप(काष्ठा iwl_cmd_header_wide) +
+					माप(काष्ठा iwl_cmd_header)];
+		पूर्ण;
+	पूर्ण;
+पूर्ण __packed;
 
 /**
- * struct iwl_device_tx_cmd - buffer for TX command
+ * काष्ठा iwl_device_tx_cmd - buffer क्रम TX command
  * @hdr: the header
  * @payload: the payload placeholder
  *
- * The actual structure is sized dynamically according to need.
+ * The actual काष्ठाure is sized dynamically according to need.
  */
-struct iwl_device_tx_cmd {
-	struct iwl_cmd_header hdr;
+काष्ठा iwl_device_tx_cmd अणु
+	काष्ठा iwl_cmd_header hdr;
 	u8 payload[];
-} __packed;
+पूर्ण __packed;
 
-#define TFD_MAX_PAYLOAD_SIZE (sizeof(struct iwl_device_cmd))
+#घोषणा TFD_MAX_PAYLOAD_SIZE (माप(काष्ठा iwl_device_cmd))
 
 /*
  * number of transfer buffers (fragments) per transmit frame descriptor;
  * this is just the driver's idea, the hardware supports 20
  */
-#define IWL_MAX_CMD_TBS_PER_TFD	2
+#घोषणा IWL_MAX_CMD_TBS_PER_TFD	2
 
-/* We need 2 entries for the TX command and header, and another one might
- * be needed for potential data in the SKB's head. The remaining ones can
- * be used for frags.
+/* We need 2 entries क्रम the TX command and header, and another one might
+ * be needed क्रम potential data in the SKB's head. The reमुख्यing ones can
+ * be used क्रम frags.
  */
-#define IWL_TRANS_MAX_FRAGS(trans) ((trans)->txqs.tfd.max_tbs - 3)
+#घोषणा IWL_TRANS_MAX_FRAGS(trans) ((trans)->txqs.tfd.max_tbs - 3)
 
 /**
- * enum iwl_hcmd_dataflag - flag for each one of the chunks of the command
+ * क्रमागत iwl_hcmd_dataflag - flag क्रम each one of the chunks of the command
  *
- * @IWL_HCMD_DFL_NOCOPY: By default, the command is copied to the host command's
- *	ring. The transport layer doesn't map the command's buffer to DMA, but
+ * @IWL_HCMD_DFL_NOCOPY: By शेष, the command is copied to the host command's
+ *	ring. The transport layer करोesn't map the command's buffer to DMA, but
  *	rather copies it to a previously allocated DMA buffer. This flag tells
  *	the transport layer not to copy the command, but to map the existing
- *	buffer (that is passed in) instead. This saves the memcpy and allows
+ *	buffer (that is passed in) instead. This saves the स_नकल and allows
  *	commands that are bigger than the fixed buffer to be submitted.
  *	Note that a TFD entry after a NOCOPY one cannot be a normal copied one.
- * @IWL_HCMD_DFL_DUP: Only valid without NOCOPY, duplicate the memory for this
- *	chunk internally and free it again after the command completes. This
+ * @IWL_HCMD_DFL_DUP: Only valid without NOCOPY, duplicate the memory क्रम this
+ *	chunk पूर्णांकernally and मुक्त it again after the command completes. This
  *	can (currently) be used only once per command.
  *	Note that a TFD entry after a DUP one cannot be a normal copied one.
  */
-enum iwl_hcmd_dataflag {
+क्रमागत iwl_hcmd_dataflag अणु
 	IWL_HCMD_DFL_NOCOPY	= BIT(0),
 	IWL_HCMD_DFL_DUP	= BIT(1),
-};
+पूर्ण;
 
-enum iwl_error_event_table_status {
+क्रमागत iwl_error_event_table_status अणु
 	IWL_ERROR_EVENT_TABLE_LMAC1 = BIT(0),
 	IWL_ERROR_EVENT_TABLE_LMAC2 = BIT(1),
 	IWL_ERROR_EVENT_TABLE_UMAC = BIT(2),
-};
+पूर्ण;
 
 /**
- * struct iwl_host_cmd - Host command to the uCode
+ * काष्ठा iwl_host_cmd - Host command to the uCode
  *
  * @data: array of chunks that composes the data of the host command
- * @resp_pkt: response packet, if %CMD_WANT_SKB was set
- * @_rx_page_order: (internally used to free response packet)
- * @_rx_page_addr: (internally used to free response packet)
+ * @resp_pkt: response packet, अगर %CMD_WANT_SKB was set
+ * @_rx_page_order: (पूर्णांकernally used to मुक्त response packet)
+ * @_rx_page_addr: (पूर्णांकernally used to मुक्त response packet)
  * @flags: can be CMD_*
  * @len: array of the lengths of the chunks in data
  * @dataflags: IWL_HCMD_DFL_*
- * @id: command id of the host command, for wide commands encoding the
+ * @id: command id of the host command, क्रम wide commands encoding the
  *	version and group as well
  */
-struct iwl_host_cmd {
-	const void *data[IWL_MAX_CMD_TBS_PER_TFD];
-	struct iwl_rx_packet *resp_pkt;
-	unsigned long _rx_page_addr;
+काष्ठा iwl_host_cmd अणु
+	स्थिर व्योम *data[IWL_MAX_CMD_TBS_PER_TFD];
+	काष्ठा iwl_rx_packet *resp_pkt;
+	अचिन्हित दीर्घ _rx_page_addr;
 	u32 _rx_page_order;
 
 	u32 flags;
 	u32 id;
 	u16 len[IWL_MAX_CMD_TBS_PER_TFD];
 	u8 dataflags[IWL_MAX_CMD_TBS_PER_TFD];
-};
+पूर्ण;
 
-static inline void iwl_free_resp(struct iwl_host_cmd *cmd)
-{
-	free_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
-}
+अटल अंतरभूत व्योम iwl_मुक्त_resp(काष्ठा iwl_host_cmd *cmd)
+अणु
+	मुक्त_pages(cmd->_rx_page_addr, cmd->_rx_page_order);
+पूर्ण
 
-struct iwl_rx_cmd_buffer {
-	struct page *_page;
-	int _offset;
+काष्ठा iwl_rx_cmd_buffer अणु
+	काष्ठा page *_page;
+	पूर्णांक _offset;
 	bool _page_stolen;
 	u32 _rx_page_order;
-	unsigned int truesize;
-};
+	अचिन्हित पूर्णांक truesize;
+पूर्ण;
 
-static inline void *rxb_addr(struct iwl_rx_cmd_buffer *r)
-{
-	return (void *)((unsigned long)page_address(r->_page) + r->_offset);
-}
+अटल अंतरभूत व्योम *rxb_addr(काष्ठा iwl_rx_cmd_buffer *r)
+अणु
+	वापस (व्योम *)((अचिन्हित दीर्घ)page_address(r->_page) + r->_offset);
+पूर्ण
 
-static inline int rxb_offset(struct iwl_rx_cmd_buffer *r)
-{
-	return r->_offset;
-}
+अटल अंतरभूत पूर्णांक rxb_offset(काष्ठा iwl_rx_cmd_buffer *r)
+अणु
+	वापस r->_offset;
+पूर्ण
 
-static inline struct page *rxb_steal_page(struct iwl_rx_cmd_buffer *r)
-{
+अटल अंतरभूत काष्ठा page *rxb_steal_page(काष्ठा iwl_rx_cmd_buffer *r)
+अणु
 	r->_page_stolen = true;
 	get_page(r->_page);
-	return r->_page;
-}
+	वापस r->_page;
+पूर्ण
 
-static inline void iwl_free_rxb(struct iwl_rx_cmd_buffer *r)
-{
-	__free_pages(r->_page, r->_rx_page_order);
-}
+अटल अंतरभूत व्योम iwl_मुक्त_rxb(काष्ठा iwl_rx_cmd_buffer *r)
+अणु
+	__मुक्त_pages(r->_page, r->_rx_page_order);
+पूर्ण
 
-#define MAX_NO_RECLAIM_CMDS	6
+#घोषणा MAX_NO_RECLAIM_CMDS	6
 
-#define IWL_MASK(lo, hi) ((1 << (hi)) | ((1 << (hi)) - (1 << (lo))))
+#घोषणा IWL_MASK(lo, hi) ((1 << (hi)) | ((1 << (hi)) - (1 << (lo))))
 
 /*
  * Maximum number of HW queues the transport layer
  * currently supports
  */
-#define IWL_MAX_HW_QUEUES		32
-#define IWL_MAX_TVQM_QUEUES		512
+#घोषणा IWL_MAX_HW_QUEUES		32
+#घोषणा IWL_MAX_TVQM_QUEUES		512
 
-#define IWL_MAX_TID_COUNT	8
-#define IWL_MGMT_TID		15
-#define IWL_FRAME_LIMIT	64
-#define IWL_MAX_RX_HW_QUEUES	16
-#define IWL_9000_MAX_RX_HW_QUEUES	6
+#घोषणा IWL_MAX_TID_COUNT	8
+#घोषणा IWL_MGMT_TID		15
+#घोषणा IWL_FRAME_LIMIT	64
+#घोषणा IWL_MAX_RX_HW_QUEUES	16
+#घोषणा IWL_9000_MAX_RX_HW_QUEUES	6
 
 /**
- * enum iwl_wowlan_status - WoWLAN image/device status
+ * क्रमागत iwl_wowlan_status - WoWLAN image/device status
  * @IWL_D3_STATUS_ALIVE: firmware is still running after resume
- * @IWL_D3_STATUS_RESET: device was reset while suspended
+ * @IWL_D3_STATUS_RESET: device was reset जबतक suspended
  */
-enum iwl_d3_status {
+क्रमागत iwl_d3_status अणु
 	IWL_D3_STATUS_ALIVE,
 	IWL_D3_STATUS_RESET,
-};
+पूर्ण;
 
 /**
- * enum iwl_trans_status: transport status flags
+ * क्रमागत iwl_trans_status: transport status flags
  * @STATUS_SYNC_HCMD_ACTIVE: a SYNC command is being processed
  * @STATUS_DEVICE_ENABLED: APM is enabled
  * @STATUS_TPOWER_PMI: the device might be asleep (need to wake it up)
- * @STATUS_INT_ENABLED: interrupts are enabled
- * @STATUS_RFKILL_HW: the actual HW state of the RF-kill switch
- * @STATUS_RFKILL_OPMODE: RF-kill state reported to opmode
+ * @STATUS_INT_ENABLED: पूर्णांकerrupts are enabled
+ * @STATUS_RFKILL_HW: the actual HW state of the RF-समाप्त चयन
+ * @STATUS_RFKILL_OPMODE: RF-समाप्त state reported to opmode
  * @STATUS_FW_ERROR: the fw is in error state
- * @STATUS_TRANS_GOING_IDLE: shutting down the trans, only special commands
+ * @STATUS_TRANS_GOING_IDLE: shutting करोwn the trans, only special commands
  *	are sent
  * @STATUS_TRANS_IDLE: the trans is idle - general commands are not to be sent
- * @STATUS_TRANS_DEAD: trans is dead - avoid any read/write operation
+ * @STATUS_TRANS_DEAD: trans is dead - aव्योम any पढ़ो/ग_लिखो operation
  */
-enum iwl_trans_status {
+क्रमागत iwl_trans_status अणु
 	STATUS_SYNC_HCMD_ACTIVE,
 	STATUS_DEVICE_ENABLED,
 	STATUS_TPOWER_PMI,
@@ -307,649 +308,649 @@ enum iwl_trans_status {
 	STATUS_TRANS_GOING_IDLE,
 	STATUS_TRANS_IDLE,
 	STATUS_TRANS_DEAD,
-};
+पूर्ण;
 
-static inline int
-iwl_trans_get_rb_size_order(enum iwl_amsdu_size rb_size)
-{
-	switch (rb_size) {
-	case IWL_AMSDU_2K:
-		return get_order(2 * 1024);
-	case IWL_AMSDU_4K:
-		return get_order(4 * 1024);
-	case IWL_AMSDU_8K:
-		return get_order(8 * 1024);
-	case IWL_AMSDU_12K:
-		return get_order(16 * 1024);
-	default:
+अटल अंतरभूत पूर्णांक
+iwl_trans_get_rb_size_order(क्रमागत iwl_amsdu_size rb_size)
+अणु
+	चयन (rb_size) अणु
+	हाल IWL_AMSDU_2K:
+		वापस get_order(2 * 1024);
+	हाल IWL_AMSDU_4K:
+		वापस get_order(4 * 1024);
+	हाल IWL_AMSDU_8K:
+		वापस get_order(8 * 1024);
+	हाल IWL_AMSDU_12K:
+		वापस get_order(16 * 1024);
+	शेष:
 		WARN_ON(1);
-		return -1;
-	}
-}
+		वापस -1;
+	पूर्ण
+पूर्ण
 
-static inline int
-iwl_trans_get_rb_size(enum iwl_amsdu_size rb_size)
-{
-	switch (rb_size) {
-	case IWL_AMSDU_2K:
-		return 2 * 1024;
-	case IWL_AMSDU_4K:
-		return 4 * 1024;
-	case IWL_AMSDU_8K:
-		return 8 * 1024;
-	case IWL_AMSDU_12K:
-		return 16 * 1024;
-	default:
+अटल अंतरभूत पूर्णांक
+iwl_trans_get_rb_size(क्रमागत iwl_amsdu_size rb_size)
+अणु
+	चयन (rb_size) अणु
+	हाल IWL_AMSDU_2K:
+		वापस 2 * 1024;
+	हाल IWL_AMSDU_4K:
+		वापस 4 * 1024;
+	हाल IWL_AMSDU_8K:
+		वापस 8 * 1024;
+	हाल IWL_AMSDU_12K:
+		वापस 16 * 1024;
+	शेष:
 		WARN_ON(1);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-struct iwl_hcmd_names {
+काष्ठा iwl_hcmd_names अणु
 	u8 cmd_id;
-	const char *const cmd_name;
-};
+	स्थिर अक्षर *स्थिर cmd_name;
+पूर्ण;
 
-#define HCMD_NAME(x)	\
-	{ .cmd_id = x, .cmd_name = #x }
+#घोषणा HCMD_NAME(x)	\
+	अणु .cmd_id = x, .cmd_name = #x पूर्ण
 
-struct iwl_hcmd_arr {
-	const struct iwl_hcmd_names *arr;
-	int size;
-};
+काष्ठा iwl_hcmd_arr अणु
+	स्थिर काष्ठा iwl_hcmd_names *arr;
+	पूर्णांक size;
+पूर्ण;
 
-#define HCMD_ARR(x)	\
-	{ .arr = x, .size = ARRAY_SIZE(x) }
+#घोषणा HCMD_ARR(x)	\
+	अणु .arr = x, .size = ARRAY_SIZE(x) पूर्ण
 
 /**
- * struct iwl_trans_config - transport configuration
+ * काष्ठा iwl_trans_config - transport configuration
  *
- * @op_mode: pointer to the upper layer.
+ * @op_mode: poपूर्णांकer to the upper layer.
  * @cmd_queue: the index of the command queue.
- *	Must be set before start_fw.
- * @cmd_fifo: the fifo for host commands
- * @cmd_q_wdg_timeout: the timeout of the watchdog timer for the command queue.
- * @no_reclaim_cmds: Some devices erroneously don't set the
- *	SEQ_RX_FRAME bit on some notifications, this is the
- *	list of such notifications to filter. Max length is
+ *	Must be set beक्रमe start_fw.
+ * @cmd_fअगरo: the fअगरo क्रम host commands
+ * @cmd_q_wdg_समयout: the समयout of the watchकरोg समयr क्रम the command queue.
+ * @no_reclaim_cmds: Some devices erroneously करोn't set the
+ *	SEQ_RX_FRAME bit on some notअगरications, this is the
+ *	list of such notअगरications to filter. Max length is
  *	%MAX_NO_RECLAIM_CMDS.
  * @n_no_reclaim_cmds: # of commands in list
- * @rx_buf_size: RX buffer size needed for A-MSDUs
- *	if unset 4k will be the RX buffer size
- * @bc_table_dword: set to true if the BC table expects the byte count to be
+ * @rx_buf_size: RX buffer size needed क्रम A-MSDUs
+ *	अगर unset 4k will be the RX buffer size
+ * @bc_table_dword: set to true अगर the BC table expects the byte count to be
  *	in DWORD (as opposed to bytes)
- * @scd_set_active: should the transport configure the SCD for HCMD queue
+ * @scd_set_active: should the transport configure the SCD क्रम HCMD queue
  * @command_groups: array of command groups, each member is an array of the
- *	commands in the group; for debugging only
- * @command_groups_size: number of command groups, to avoid illegal access
+ *	commands in the group; क्रम debugging only
+ * @command_groups_size: number of command groups, to aव्योम illegal access
  * @cb_data_offs: offset inside skb->cb to store transport data at, must have
- *	space for at least two pointers
+ *	space क्रम at least two poपूर्णांकers
  * @fw_reset_handshake: firmware supports reset flow handshake
  */
-struct iwl_trans_config {
-	struct iwl_op_mode *op_mode;
+काष्ठा iwl_trans_config अणु
+	काष्ठा iwl_op_mode *op_mode;
 
 	u8 cmd_queue;
-	u8 cmd_fifo;
-	unsigned int cmd_q_wdg_timeout;
-	const u8 *no_reclaim_cmds;
-	unsigned int n_no_reclaim_cmds;
+	u8 cmd_fअगरo;
+	अचिन्हित पूर्णांक cmd_q_wdg_समयout;
+	स्थिर u8 *no_reclaim_cmds;
+	अचिन्हित पूर्णांक n_no_reclaim_cmds;
 
-	enum iwl_amsdu_size rx_buf_size;
+	क्रमागत iwl_amsdu_size rx_buf_size;
 	bool bc_table_dword;
 	bool scd_set_active;
-	const struct iwl_hcmd_arr *command_groups;
-	int command_groups_size;
+	स्थिर काष्ठा iwl_hcmd_arr *command_groups;
+	पूर्णांक command_groups_size;
 
 	u8 cb_data_offs;
 	bool fw_reset_handshake;
-};
+पूर्ण;
 
-struct iwl_trans_dump_data {
+काष्ठा iwl_trans_dump_data अणु
 	u32 len;
 	u8 data[];
-};
+पूर्ण;
 
-struct iwl_trans;
+काष्ठा iwl_trans;
 
-struct iwl_trans_txq_scd_cfg {
-	u8 fifo;
+काष्ठा iwl_trans_txq_scd_cfg अणु
+	u8 fअगरo;
 	u8 sta_id;
 	u8 tid;
 	bool aggregate;
-	int frame_limit;
-};
+	पूर्णांक frame_limit;
+पूर्ण;
 
 /**
- * struct iwl_trans_rxq_dma_data - RX queue DMA data
- * @fr_bd_cb: DMA address of free BD cyclic buffer
- * @fr_bd_wid: Initial write index of the free BD cyclic buffer
+ * काष्ठा iwl_trans_rxq_dma_data - RX queue DMA data
+ * @fr_bd_cb: DMA address of मुक्त BD cyclic buffer
+ * @fr_bd_wid: Initial ग_लिखो index of the मुक्त BD cyclic buffer
  * @urbd_stts_wrptr: DMA address of urbd_stts_wrptr
  * @ur_bd_cb: DMA address of used BD cyclic buffer
  */
-struct iwl_trans_rxq_dma_data {
+काष्ठा iwl_trans_rxq_dma_data अणु
 	u64 fr_bd_cb;
 	u32 fr_bd_wid;
 	u64 urbd_stts_wrptr;
 	u64 ur_bd_cb;
-};
+पूर्ण;
 
 /**
- * struct iwl_trans_ops - transport specific operations
+ * काष्ठा iwl_trans_ops - transport specअगरic operations
  *
  * All the handlers MUST be implemented
  *
- * @start_hw: starts the HW. From that point on, the HW can send interrupts.
+ * @start_hw: starts the HW. From that poपूर्णांक on, the HW can send पूर्णांकerrupts.
  *	May sleep.
- * @op_mode_leave: Turn off the HW RF kill indication if on
+ * @op_mode_leave: Turn off the HW RF समाप्त indication अगर on
  *	May sleep
- * @start_fw: allocates and inits all the resources for the transport
+ * @start_fw: allocates and inits all the resources क्रम the transport
  *	layer. Also kick a fw image.
  *	May sleep
- * @fw_alive: called when the fw sends alive notification. If the fw provides
+ * @fw_alive: called when the fw sends alive notअगरication. If the fw provides
  *	the SCD base address in SRAM, then provide it here, or 0 otherwise.
  *	May sleep
  * @stop_device: stops the whole device (embedded CPU put to reset) and stops
- *	the HW. From that point on, the HW will be stopped but will still issue
- *	an interrupt if the HW RF kill switch is triggered.
- *	This callback must do the right thing and not crash even if %start_hw()
+ *	the HW. From that poपूर्णांक on, the HW will be stopped but will still issue
+ *	an पूर्णांकerrupt अगर the HW RF समाप्त चयन is triggered.
+ *	This callback must करो the right thing and not crash even अगर %start_hw()
  *	was called but not &start_fw(). May sleep.
- * @d3_suspend: put the device into the correct mode for WoWLAN during
- *	suspend. This is optional, if not implemented WoWLAN will not be
+ * @d3_suspend: put the device पूर्णांकo the correct mode क्रम WoWLAN during
+ *	suspend. This is optional, अगर not implemented WoWLAN will not be
  *	supported. This callback may sleep.
  * @d3_resume: resume the device after WoWLAN, enabling the opmode to
- *	talk to the WoWLAN image to get its status. This is optional, if not
+ *	talk to the WoWLAN image to get its status. This is optional, अगर not
  *	implemented WoWLAN will not be supported. This callback may sleep.
- * @send_cmd:send a host command. Must return -ERFKILL if RFkill is asserted.
- *	If RFkill is asserted in the middle of a SYNC host command, it must
- *	return -ERFKILL straight away.
- *	May sleep only if CMD_ASYNC is not set
+ * @send_cmd:send a host command. Must वापस -ERFKILL अगर RFसमाप्त is निश्चितed.
+ *	If RFसमाप्त is निश्चितed in the middle of a SYNC host command, it must
+ *	वापस -ERFKILL straight away.
+ *	May sleep only अगर CMD_ASYNC is not set
  * @tx: send an skb. The transport relies on the op_mode to zero the
  *	the ieee80211_tx_info->driver_data. If the MPDU is an A-MSDU, all
- *	the CSUM will be taken care of (TCP CSUM and IP header in case of
+ *	the CSUM will be taken care of (TCP CSUM and IP header in हाल of
  *	IPv4). If the MPDU is a single MSDU, the op_mode must compute the IP
- *	header if it is IPv4.
+ *	header अगर it is IPv4.
  *	Must be atomic
- * @reclaim: free packet until ssn. Returns a list of freed packets.
+ * @reclaim: मुक्त packet until ssn. Returns a list of मुक्तd packets.
  *	Must be atomic
  * @txq_enable: setup a queue. To setup an AC queue, use the
- *	iwl_trans_ac_txq_enable wrapper. fw_alive must have been called before
+ *	iwl_trans_ac_txq_enable wrapper. fw_alive must have been called beक्रमe
  *	this one. The op_mode must not configure the HCMD queue. The scheduler
- *	configuration may be %NULL, in which case the hardware will not be
- *	configured. If true is returned, the operation mode needs to increment
+ *	configuration may be %शून्य, in which हाल the hardware will not be
+ *	configured. If true is वापसed, the operation mode needs to increment
  *	the sequence number of the packets routed to this queue because of a
  *	hardware scheduler bug. May sleep.
  * @txq_disable: de-configure a Tx queue to send AMPDUs
  *	Must be atomic
  * @txq_set_shared_mode: change Tx queue shared/unshared marking
- * @wait_tx_queues_empty: wait until tx queues are empty. May sleep.
- * @wait_txq_empty: wait until specific tx queue is empty. May sleep.
- * @freeze_txq_timer: prevents the timer of the queue from firing until the
+ * @रुको_tx_queues_empty: रुको until tx queues are empty. May sleep.
+ * @रुको_txq_empty: रुको until specअगरic tx queue is empty. May sleep.
+ * @मुक्तze_txq_समयr: prevents the समयr of the queue from firing until the
  *	queue is set to awake. Must be atomic.
- * @block_txq_ptrs: stop updating the write pointers of the Tx queues. Note
+ * @block_txq_ptrs: stop updating the ग_लिखो poपूर्णांकers of the Tx queues. Note
  *	that the transport needs to refcount the calls since this function
- *	will be called several times with block = true, and then the queues
+ *	will be called several बार with block = true, and then the queues
  *	need to be unblocked only after the same number of calls with
  *	block = false.
- * @write8: write a u8 to a register at offset ofs from the BAR
- * @write32: write a u32 to a register at offset ofs from the BAR
- * @read32: read a u32 register at offset ofs from the BAR
- * @read_prph: read a DWORD from a periphery register
- * @write_prph: write a DWORD to a periphery register
- * @read_mem: read device's SRAM in DWORD
- * @write_mem: write device's SRAM in DWORD. If %buf is %NULL, then the memory
+ * @ग_लिखो8: ग_लिखो a u8 to a रेजिस्टर at offset ofs from the BAR
+ * @ग_लिखो32: ग_लिखो a u32 to a रेजिस्टर at offset ofs from the BAR
+ * @पढ़ो32: पढ़ो a u32 रेजिस्टर at offset ofs from the BAR
+ * @पढ़ो_prph: पढ़ो a DWORD from a periphery रेजिस्टर
+ * @ग_लिखो_prph: ग_लिखो a DWORD to a periphery रेजिस्टर
+ * @पढ़ो_mem: पढ़ो device's SRAM in DWORD
+ * @ग_लिखो_mem: ग_लिखो device's SRAM in DWORD. If %buf is %शून्य, then the memory
  *	will be zeroed.
- * @read_config32: read a u32 value from the device's config space at
+ * @पढ़ो_config32: पढ़ो a u32 value from the device's config space at
  *	the given offset.
  * @configure: configure parameters required by the transport layer from
- *	the op_mode. May be called several times before start_fw, can't be
+ *	the op_mode. May be called several बार beक्रमe start_fw, can't be
  *	called after that.
- * @set_pmi: set the power pmi state
+ * @set_pmi: set the घातer pmi state
  * @grab_nic_access: wake the NIC to be able to access non-HBUS regs.
  *	Sleeping is not allowed between grab_nic_access and
  *	release_nic_access.
  * @release_nic_access: let the NIC go to sleep. The "flags" parameter
- *	must be the same one that was sent before to the grab_nic_access.
- * @set_bits_mask - set SRAM register according to value and mask.
- * @dump_data: return a vmalloc'ed buffer with debug data, maybe containing last
+ *	must be the same one that was sent beक्रमe to the grab_nic_access.
+ * @set_bits_mask - set SRAM रेजिस्टर according to value and mask.
+ * @dump_data: वापस a vदो_स्मृति'ed buffer with debug data, maybe containing last
  *	TX'ed commands and similar. The buffer will be vfree'd by the caller.
  *	Note that the transport must fill in the proper file headers.
  * @debugfs_cleanup: used in the driver unload flow to make a proper cleanup
  *	of the trans debugfs
  * @set_pnvm: set the pnvm data in the prph scratch buffer, inside the
  *	context info.
- * @interrupts: disable/enable interrupts to transport
+ * @पूर्णांकerrupts: disable/enable पूर्णांकerrupts to transport
  */
-struct iwl_trans_ops {
+काष्ठा iwl_trans_ops अणु
 
-	int (*start_hw)(struct iwl_trans *iwl_trans);
-	void (*op_mode_leave)(struct iwl_trans *iwl_trans);
-	int (*start_fw)(struct iwl_trans *trans, const struct fw_img *fw,
-			bool run_in_rfkill);
-	void (*fw_alive)(struct iwl_trans *trans, u32 scd_addr);
-	void (*stop_device)(struct iwl_trans *trans);
+	पूर्णांक (*start_hw)(काष्ठा iwl_trans *iwl_trans);
+	व्योम (*op_mode_leave)(काष्ठा iwl_trans *iwl_trans);
+	पूर्णांक (*start_fw)(काष्ठा iwl_trans *trans, स्थिर काष्ठा fw_img *fw,
+			bool run_in_rfसमाप्त);
+	व्योम (*fw_alive)(काष्ठा iwl_trans *trans, u32 scd_addr);
+	व्योम (*stop_device)(काष्ठा iwl_trans *trans);
 
-	int (*d3_suspend)(struct iwl_trans *trans, bool test, bool reset);
-	int (*d3_resume)(struct iwl_trans *trans, enum iwl_d3_status *status,
+	पूर्णांक (*d3_suspend)(काष्ठा iwl_trans *trans, bool test, bool reset);
+	पूर्णांक (*d3_resume)(काष्ठा iwl_trans *trans, क्रमागत iwl_d3_status *status,
 			 bool test, bool reset);
 
-	int (*send_cmd)(struct iwl_trans *trans, struct iwl_host_cmd *cmd);
+	पूर्णांक (*send_cmd)(काष्ठा iwl_trans *trans, काष्ठा iwl_host_cmd *cmd);
 
-	int (*tx)(struct iwl_trans *trans, struct sk_buff *skb,
-		  struct iwl_device_tx_cmd *dev_cmd, int queue);
-	void (*reclaim)(struct iwl_trans *trans, int queue, int ssn,
-			struct sk_buff_head *skbs);
+	पूर्णांक (*tx)(काष्ठा iwl_trans *trans, काष्ठा sk_buff *skb,
+		  काष्ठा iwl_device_tx_cmd *dev_cmd, पूर्णांक queue);
+	व्योम (*reclaim)(काष्ठा iwl_trans *trans, पूर्णांक queue, पूर्णांक ssn,
+			काष्ठा sk_buff_head *skbs);
 
-	void (*set_q_ptrs)(struct iwl_trans *trans, int queue, int ptr);
+	व्योम (*set_q_ptrs)(काष्ठा iwl_trans *trans, पूर्णांक queue, पूर्णांक ptr);
 
-	bool (*txq_enable)(struct iwl_trans *trans, int queue, u16 ssn,
-			   const struct iwl_trans_txq_scd_cfg *cfg,
-			   unsigned int queue_wdg_timeout);
-	void (*txq_disable)(struct iwl_trans *trans, int queue,
+	bool (*txq_enable)(काष्ठा iwl_trans *trans, पूर्णांक queue, u16 ssn,
+			   स्थिर काष्ठा iwl_trans_txq_scd_cfg *cfg,
+			   अचिन्हित पूर्णांक queue_wdg_समयout);
+	व्योम (*txq_disable)(काष्ठा iwl_trans *trans, पूर्णांक queue,
 			    bool configure_scd);
 	/* 22000 functions */
-	int (*txq_alloc)(struct iwl_trans *trans,
+	पूर्णांक (*txq_alloc)(काष्ठा iwl_trans *trans,
 			 __le16 flags, u8 sta_id, u8 tid,
-			 int cmd_id, int size,
-			 unsigned int queue_wdg_timeout);
-	void (*txq_free)(struct iwl_trans *trans, int queue);
-	int (*rxq_dma_data)(struct iwl_trans *trans, int queue,
-			    struct iwl_trans_rxq_dma_data *data);
+			 पूर्णांक cmd_id, पूर्णांक size,
+			 अचिन्हित पूर्णांक queue_wdg_समयout);
+	व्योम (*txq_मुक्त)(काष्ठा iwl_trans *trans, पूर्णांक queue);
+	पूर्णांक (*rxq_dma_data)(काष्ठा iwl_trans *trans, पूर्णांक queue,
+			    काष्ठा iwl_trans_rxq_dma_data *data);
 
-	void (*txq_set_shared_mode)(struct iwl_trans *trans, u32 txq_id,
+	व्योम (*txq_set_shared_mode)(काष्ठा iwl_trans *trans, u32 txq_id,
 				    bool shared);
 
-	int (*wait_tx_queues_empty)(struct iwl_trans *trans, u32 txq_bm);
-	int (*wait_txq_empty)(struct iwl_trans *trans, int queue);
-	void (*freeze_txq_timer)(struct iwl_trans *trans, unsigned long txqs,
-				 bool freeze);
-	void (*block_txq_ptrs)(struct iwl_trans *trans, bool block);
+	पूर्णांक (*रुको_tx_queues_empty)(काष्ठा iwl_trans *trans, u32 txq_bm);
+	पूर्णांक (*रुको_txq_empty)(काष्ठा iwl_trans *trans, पूर्णांक queue);
+	व्योम (*मुक्तze_txq_समयr)(काष्ठा iwl_trans *trans, अचिन्हित दीर्घ txqs,
+				 bool मुक्तze);
+	व्योम (*block_txq_ptrs)(काष्ठा iwl_trans *trans, bool block);
 
-	void (*write8)(struct iwl_trans *trans, u32 ofs, u8 val);
-	void (*write32)(struct iwl_trans *trans, u32 ofs, u32 val);
-	u32 (*read32)(struct iwl_trans *trans, u32 ofs);
-	u32 (*read_prph)(struct iwl_trans *trans, u32 ofs);
-	void (*write_prph)(struct iwl_trans *trans, u32 ofs, u32 val);
-	int (*read_mem)(struct iwl_trans *trans, u32 addr,
-			void *buf, int dwords);
-	int (*write_mem)(struct iwl_trans *trans, u32 addr,
-			 const void *buf, int dwords);
-	int (*read_config32)(struct iwl_trans *trans, u32 ofs, u32 *val);
-	void (*configure)(struct iwl_trans *trans,
-			  const struct iwl_trans_config *trans_cfg);
-	void (*set_pmi)(struct iwl_trans *trans, bool state);
-	void (*sw_reset)(struct iwl_trans *trans);
-	bool (*grab_nic_access)(struct iwl_trans *trans);
-	void (*release_nic_access)(struct iwl_trans *trans);
-	void (*set_bits_mask)(struct iwl_trans *trans, u32 reg, u32 mask,
+	व्योम (*ग_लिखो8)(काष्ठा iwl_trans *trans, u32 ofs, u8 val);
+	व्योम (*ग_लिखो32)(काष्ठा iwl_trans *trans, u32 ofs, u32 val);
+	u32 (*पढ़ो32)(काष्ठा iwl_trans *trans, u32 ofs);
+	u32 (*पढ़ो_prph)(काष्ठा iwl_trans *trans, u32 ofs);
+	व्योम (*ग_लिखो_prph)(काष्ठा iwl_trans *trans, u32 ofs, u32 val);
+	पूर्णांक (*पढ़ो_mem)(काष्ठा iwl_trans *trans, u32 addr,
+			व्योम *buf, पूर्णांक dwords);
+	पूर्णांक (*ग_लिखो_mem)(काष्ठा iwl_trans *trans, u32 addr,
+			 स्थिर व्योम *buf, पूर्णांक dwords);
+	पूर्णांक (*पढ़ो_config32)(काष्ठा iwl_trans *trans, u32 ofs, u32 *val);
+	व्योम (*configure)(काष्ठा iwl_trans *trans,
+			  स्थिर काष्ठा iwl_trans_config *trans_cfg);
+	व्योम (*set_pmi)(काष्ठा iwl_trans *trans, bool state);
+	व्योम (*sw_reset)(काष्ठा iwl_trans *trans);
+	bool (*grab_nic_access)(काष्ठा iwl_trans *trans);
+	व्योम (*release_nic_access)(काष्ठा iwl_trans *trans);
+	व्योम (*set_bits_mask)(काष्ठा iwl_trans *trans, u32 reg, u32 mask,
 			      u32 value);
 
-	struct iwl_trans_dump_data *(*dump_data)(struct iwl_trans *trans,
+	काष्ठा iwl_trans_dump_data *(*dump_data)(काष्ठा iwl_trans *trans,
 						 u32 dump_mask);
-	void (*debugfs_cleanup)(struct iwl_trans *trans);
-	void (*sync_nmi)(struct iwl_trans *trans);
-	int (*set_pnvm)(struct iwl_trans *trans, const void *data, u32 len);
-	void (*interrupts)(struct iwl_trans *trans, bool enable);
-};
+	व्योम (*debugfs_cleanup)(काष्ठा iwl_trans *trans);
+	व्योम (*sync_nmi)(काष्ठा iwl_trans *trans);
+	पूर्णांक (*set_pnvm)(काष्ठा iwl_trans *trans, स्थिर व्योम *data, u32 len);
+	व्योम (*पूर्णांकerrupts)(काष्ठा iwl_trans *trans, bool enable);
+पूर्ण;
 
 /**
- * enum iwl_trans_state - state of the transport layer
+ * क्रमागत iwl_trans_state - state of the transport layer
  *
  * @IWL_TRANS_NO_FW: firmware wasn't started yet, or crashed
  * @IWL_TRANS_FW_STARTED: FW was started, but not alive yet
  * @IWL_TRANS_FW_ALIVE: FW has sent an alive response
  */
-enum iwl_trans_state {
+क्रमागत iwl_trans_state अणु
 	IWL_TRANS_NO_FW,
 	IWL_TRANS_FW_STARTED,
 	IWL_TRANS_FW_ALIVE,
-};
+पूर्ण;
 
 /**
- * DOC: Platform power management
+ * DOC: Platक्रमm घातer management
  *
- * In system-wide power management the entire platform goes into a low
- * power state (e.g. idle or suspend to RAM) at the same time and the
- * device is configured as a wakeup source for the entire platform.
+ * In प्रणाली-wide घातer management the entire platक्रमm goes पूर्णांकo a low
+ * घातer state (e.g. idle or suspend to RAM) at the same समय and the
+ * device is configured as a wakeup source क्रम the entire platक्रमm.
  * This is usually triggered by userspace activity (e.g. the user
- * presses the suspend button or a power management daemon decides to
- * put the platform in low power mode).  The device's behavior in this
+ * presses the suspend button or a घातer management daemon decides to
+ * put the platक्रमm in low घातer mode).  The device's behavior in this
  * mode is dictated by the wake-on-WLAN configuration.
  *
- * The terms used for the device's behavior are as follows:
+ * The terms used क्रम the device's behavior are as follows:
  *
- *	- D0: the device is fully powered and the host is awake;
- *	- D3: the device is in low power mode and only reacts to
- *		specific events (e.g. magic-packet received or scan
+ *	- D0: the device is fully घातered and the host is awake;
+ *	- D3: the device is in low घातer mode and only reacts to
+ *		specअगरic events (e.g. magic-packet received or scan
  *		results found);
  *
- * These terms reflect the power modes in the firmware and are not to
- * be confused with the physical device power state.
+ * These terms reflect the घातer modes in the firmware and are not to
+ * be confused with the physical device घातer state.
  */
 
 /**
- * enum iwl_plat_pm_mode - platform power management mode
+ * क्रमागत iwl_plat_pm_mode - platक्रमm घातer management mode
  *
- * This enumeration describes the device's platform power management
- * behavior when in system-wide suspend (i.e WoWLAN).
+ * This क्रमागतeration describes the device's platक्रमm घातer management
+ * behavior when in प्रणाली-wide suspend (i.e WoWLAN).
  *
- * @IWL_PLAT_PM_MODE_DISABLED: power management is disabled for this
- *	device.  In system-wide suspend mode, it means that the all
- *	connections will be closed automatically by mac80211 before
- *	the platform is suspended.
- * @IWL_PLAT_PM_MODE_D3: the device goes into D3 mode (i.e. WoWLAN).
+ * @IWL_PLAT_PM_MODE_DISABLED: घातer management is disabled क्रम this
+ *	device.  In प्रणाली-wide suspend mode, it means that the all
+ *	connections will be बंदd स्वतःmatically by mac80211 beक्रमe
+ *	the platक्रमm is suspended.
+ * @IWL_PLAT_PM_MODE_D3: the device goes पूर्णांकo D3 mode (i.e. WoWLAN).
  */
-enum iwl_plat_pm_mode {
+क्रमागत iwl_plat_pm_mode अणु
 	IWL_PLAT_PM_MODE_DISABLED,
 	IWL_PLAT_PM_MODE_D3,
-};
+पूर्ण;
 
 /**
- * enum iwl_ini_cfg_state
+ * क्रमागत iwl_ini_cfg_state
  * @IWL_INI_CFG_STATE_NOT_LOADED: no debug cfg was given
  * @IWL_INI_CFG_STATE_LOADED: debug cfg was found and loaded
  * @IWL_INI_CFG_STATE_CORRUPTED: debug cfg was found and some of the TLVs
  *	are corrupted. The rest of the debug TLVs will still be used
  */
-enum iwl_ini_cfg_state {
+क्रमागत iwl_ini_cfg_state अणु
 	IWL_INI_CFG_STATE_NOT_LOADED,
 	IWL_INI_CFG_STATE_LOADED,
 	IWL_INI_CFG_STATE_CORRUPTED,
-};
+पूर्ण;
 
-/* Max time to wait for nmi interrupt */
-#define IWL_TRANS_NMI_TIMEOUT (HZ / 4)
+/* Max समय to रुको क्रम nmi पूर्णांकerrupt */
+#घोषणा IWL_TRANS_NMI_TIMEOUT (HZ / 4)
 
 /**
- * struct iwl_dram_data
- * @physical: page phy pointer
- * @block: pointer to the allocated block/page
+ * काष्ठा iwl_dram_data
+ * @physical: page phy poपूर्णांकer
+ * @block: poपूर्णांकer to the allocated block/page
  * @size: size of the block/page
  */
-struct iwl_dram_data {
+काष्ठा iwl_dram_data अणु
 	dma_addr_t physical;
-	void *block;
-	int size;
-};
+	व्योम *block;
+	पूर्णांक size;
+पूर्ण;
 
 /**
- * struct iwl_fw_mon - fw monitor per allocation id
+ * काष्ठा iwl_fw_mon - fw monitor per allocation id
  * @num_frags: number of fragments
  * @frags: an array of DRAM buffer fragments
  */
-struct iwl_fw_mon {
+काष्ठा iwl_fw_mon अणु
 	u32 num_frags;
-	struct iwl_dram_data *frags;
-};
+	काष्ठा iwl_dram_data *frags;
+पूर्ण;
 
 /**
- * struct iwl_self_init_dram - dram data used by self init process
+ * काष्ठा iwl_self_init_dram - dram data used by self init process
  * @fw: lmac and umac dram data
  * @fw_cnt: total number of items in array
  * @paging: paging dram data
  * @paging_cnt: total number of items in array
  */
-struct iwl_self_init_dram {
-	struct iwl_dram_data *fw;
-	int fw_cnt;
-	struct iwl_dram_data *paging;
-	int paging_cnt;
-};
+काष्ठा iwl_self_init_dram अणु
+	काष्ठा iwl_dram_data *fw;
+	पूर्णांक fw_cnt;
+	काष्ठा iwl_dram_data *paging;
+	पूर्णांक paging_cnt;
+पूर्ण;
 
 /**
- * struct iwl_trans_debug - transport debug related data
+ * काष्ठा iwl_trans_debug - transport debug related data
  *
  * @n_dest_reg: num of reg_ops in %dbg_dest_tlv
- * @rec_on: true iff there is a fw debug recording currently active
- * @dest_tlv: points to the destination TLV for debug
- * @conf_tlv: array of pointers to configuration TLVs for debug
- * @trigger_tlv: array of pointers to triggers TLVs for debug
+ * @rec_on: true अगरf there is a fw debug recording currently active
+ * @dest_tlv: poपूर्णांकs to the destination TLV क्रम debug
+ * @conf_tlv: array of poपूर्णांकers to configuration TLVs क्रम debug
+ * @trigger_tlv: array of poपूर्णांकers to triggers TLVs क्रम debug
  * @lmac_error_event_table: addrs of lmacs error tables
  * @umac_error_event_table: addr of umac error table
- * @error_event_table_tlv_status: bitmap that indicates what error table
- *	pointers was recevied via TLV. uses enum &iwl_error_event_table_status
- * @internal_ini_cfg: internal debug cfg state. Uses &enum iwl_ini_cfg_state
- * @external_ini_cfg: external debug cfg state. Uses &enum iwl_ini_cfg_state
+ * @error_event_table_tlv_status: biपंचांगap that indicates what error table
+ *	poपूर्णांकers was recevied via TLV. uses क्रमागत &iwl_error_event_table_status
+ * @पूर्णांकernal_ini_cfg: पूर्णांकernal debug cfg state. Uses &क्रमागत iwl_ini_cfg_state
+ * @बाह्यal_ini_cfg: बाह्यal debug cfg state. Uses &क्रमागत iwl_ini_cfg_state
  * @fw_mon_cfg: debug buffer allocation configuration
  * @fw_mon_ini: DRAM buffer fragments per allocation id
- * @fw_mon: DRAM buffer for firmware monitor
- * @hw_error: equals true if hw error interrupt was received from the FW
- * @ini_dest: debug monitor destination uses &enum iwl_fw_ini_buffer_location
+ * @fw_mon: DRAM buffer क्रम firmware monitor
+ * @hw_error: equals true अगर hw error पूर्णांकerrupt was received from the FW
+ * @ini_dest: debug monitor destination uses &क्रमागत iwl_fw_ini_buffer_location
  * @active_regions: active regions
  * @debug_info_tlv_list: list of debug info TLVs
- * @time_point: array of debug time points
+ * @समय_poपूर्णांक: array of debug समय poपूर्णांकs
  * @periodic_trig_list: periodic triggers list
- * @domains_bitmap: bitmap of active domains other than
+ * @करोमुख्यs_biपंचांगap: biपंचांगap of active करोमुख्यs other than
  *	&IWL_FW_INI_DOMAIN_ALWAYS_ON
  */
-struct iwl_trans_debug {
+काष्ठा iwl_trans_debug अणु
 	u8 n_dest_reg;
 	bool rec_on;
 
-	const struct iwl_fw_dbg_dest_tlv_v1 *dest_tlv;
-	const struct iwl_fw_dbg_conf_tlv *conf_tlv[FW_DBG_CONF_MAX];
-	struct iwl_fw_dbg_trigger_tlv * const *trigger_tlv;
+	स्थिर काष्ठा iwl_fw_dbg_dest_tlv_v1 *dest_tlv;
+	स्थिर काष्ठा iwl_fw_dbg_conf_tlv *conf_tlv[FW_DBG_CONF_MAX];
+	काष्ठा iwl_fw_dbg_trigger_tlv * स्थिर *trigger_tlv;
 
 	u32 lmac_error_event_table[2];
 	u32 umac_error_event_table;
-	unsigned int error_event_table_tlv_status;
+	अचिन्हित पूर्णांक error_event_table_tlv_status;
 
-	enum iwl_ini_cfg_state internal_ini_cfg;
-	enum iwl_ini_cfg_state external_ini_cfg;
+	क्रमागत iwl_ini_cfg_state पूर्णांकernal_ini_cfg;
+	क्रमागत iwl_ini_cfg_state बाह्यal_ini_cfg;
 
-	struct iwl_fw_ini_allocation_tlv fw_mon_cfg[IWL_FW_INI_ALLOCATION_NUM];
-	struct iwl_fw_mon fw_mon_ini[IWL_FW_INI_ALLOCATION_NUM];
+	काष्ठा iwl_fw_ini_allocation_tlv fw_mon_cfg[IWL_FW_INI_ALLOCATION_NUM];
+	काष्ठा iwl_fw_mon fw_mon_ini[IWL_FW_INI_ALLOCATION_NUM];
 
-	struct iwl_dram_data fw_mon;
+	काष्ठा iwl_dram_data fw_mon;
 
 	bool hw_error;
-	enum iwl_fw_ini_buffer_location ini_dest;
+	क्रमागत iwl_fw_ini_buffer_location ini_dest;
 
 	u64 unsupported_region_msk;
-	struct iwl_ucode_tlv *active_regions[IWL_FW_INI_MAX_REGION_ID];
-	struct list_head debug_info_tlv_list;
-	struct iwl_dbg_tlv_time_point_data
-		time_point[IWL_FW_INI_TIME_POINT_NUM];
-	struct list_head periodic_trig_list;
+	काष्ठा iwl_ucode_tlv *active_regions[IWL_FW_INI_MAX_REGION_ID];
+	काष्ठा list_head debug_info_tlv_list;
+	काष्ठा iwl_dbg_tlv_समय_poपूर्णांक_data
+		समय_poपूर्णांक[IWL_FW_INI_TIME_POINT_NUM];
+	काष्ठा list_head periodic_trig_list;
 
-	u32 domains_bitmap;
-};
+	u32 करोमुख्यs_biपंचांगap;
+पूर्ण;
 
-struct iwl_dma_ptr {
+काष्ठा iwl_dma_ptr अणु
 	dma_addr_t dma;
-	void *addr;
-	size_t size;
-};
+	व्योम *addr;
+	माप_प्रकार size;
+पूर्ण;
 
-struct iwl_cmd_meta {
-	/* only for SYNC commands, iff the reply skb is wanted */
-	struct iwl_host_cmd *source;
+काष्ठा iwl_cmd_meta अणु
+	/* only क्रम SYNC commands, अगरf the reply skb is wanted */
+	काष्ठा iwl_host_cmd *source;
 	u32 flags;
 	u32 tbs;
-};
+पूर्ण;
 
 /*
- * The FH will write back to the first TB only, so we need to copy some data
- * into the buffer regardless of whether it should be mapped or not.
+ * The FH will ग_लिखो back to the first TB only, so we need to copy some data
+ * पूर्णांकo the buffer regardless of whether it should be mapped or not.
  * This indicates how big the first TB must be to include the scratch buffer
- * and the assigned PN.
+ * and the asचिन्हित PN.
  * Since PN location is 8 bytes at offset 12, it's 20 now.
  * If we make it bigger then allocations will be bigger and copy slower, so
  * that's probably not useful.
  */
-#define IWL_FIRST_TB_SIZE	20
-#define IWL_FIRST_TB_SIZE_ALIGN ALIGN(IWL_FIRST_TB_SIZE, 64)
+#घोषणा IWL_FIRST_TB_SIZE	20
+#घोषणा IWL_FIRST_TB_SIZE_ALIGN ALIGN(IWL_FIRST_TB_SIZE, 64)
 
-struct iwl_pcie_txq_entry {
-	void *cmd;
-	struct sk_buff *skb;
-	/* buffer to free after command completes */
-	const void *free_buf;
-	struct iwl_cmd_meta meta;
-};
+काष्ठा iwl_pcie_txq_entry अणु
+	व्योम *cmd;
+	काष्ठा sk_buff *skb;
+	/* buffer to मुक्त after command completes */
+	स्थिर व्योम *मुक्त_buf;
+	काष्ठा iwl_cmd_meta meta;
+पूर्ण;
 
-struct iwl_pcie_first_tb_buf {
+काष्ठा iwl_pcie_first_tb_buf अणु
 	u8 buf[IWL_FIRST_TB_SIZE_ALIGN];
-};
+पूर्ण;
 
 /**
- * struct iwl_txq - Tx Queue for DMA
+ * काष्ठा iwl_txq - Tx Queue क्रम DMA
  * @q: generic Rx/Tx queue descriptor
  * @tfds: transmit frame descriptors (DMA memory)
- * @first_tb_bufs: start of command headers, including scratch buffers, for
- *	the writeback -- this is DMA memory and an array holding one buffer
- *	for each command on the queue
- * @first_tb_dma: DMA address for the first_tb_bufs start
+ * @first_tb_bufs: start of command headers, including scratch buffers, क्रम
+ *	the ग_लिखोback -- this is DMA memory and an array holding one buffer
+ *	क्रम each command on the queue
+ * @first_tb_dma: DMA address क्रम the first_tb_bufs start
  * @entries: transmit entries (driver state)
  * @lock: queue lock
- * @stuck_timer: timer that fires if queue gets stuck
- * @trans: pointer back to transport (for timer)
- * @need_update: indicates need to update read/write index
- * @ampdu: true if this queue is an ampdu queue for an specific RA/TID
- * @wd_timeout: queue watchdog timeout (jiffies) - per queue
- * @frozen: tx stuck queue timer is frozen
- * @frozen_expiry_remainder: remember how long until the timer fires
- * @bc_tbl: byte count table of the queue (relevant only for gen2 transport)
- * @write_ptr: 1-st empty entry (index) host_w
- * @read_ptr: last used entry (index) host_r
- * @dma_addr:  physical addr for BD's
- * @n_window: safe queue window
+ * @stuck_समयr: समयr that fires अगर queue माला_लो stuck
+ * @trans: poपूर्णांकer back to transport (क्रम समयr)
+ * @need_update: indicates need to update पढ़ो/ग_लिखो index
+ * @ampdu: true अगर this queue is an ampdu queue क्रम an specअगरic RA/TID
+ * @wd_समयout: queue watchकरोg समयout (jअगरfies) - per queue
+ * @frozen: tx stuck queue समयr is frozen
+ * @frozen_expiry_reमुख्यder: remember how दीर्घ until the समयr fires
+ * @bc_tbl: byte count table of the queue (relevant only क्रम gen2 transport)
+ * @ग_लिखो_ptr: 1-st empty entry (index) host_w
+ * @पढ़ो_ptr: last used entry (index) host_r
+ * @dma_addr:  physical addr क्रम BD's
+ * @n_winकरोw: safe queue winकरोw
  * @id: queue id
- * @low_mark: low watermark, resume queue if free space more than this
- * @high_mark: high watermark, stop queue if free space less than this
+ * @low_mark: low watermark, resume queue अगर मुक्त space more than this
+ * @high_mark: high watermark, stop queue अगर मुक्त space less than this
  *
  * A Tx queue consists of circular buffer of BDs (a.k.a. TFDs, transmit frame
- * descriptors) and required locking structures.
+ * descriptors) and required locking काष्ठाures.
  *
- * Note the difference between TFD_QUEUE_SIZE_MAX and n_window: the hardware
+ * Note the dअगरference between TFD_QUEUE_SIZE_MAX and n_winकरोw: the hardware
  * always assumes 256 descriptors, so TFD_QUEUE_SIZE_MAX is always 256 (unless
  * there might be HW changes in the future). For the normal TX
- * queues, n_window, which is the size of the software queue data
- * is also 256; however, for the command queue, n_window is only
- * 32 since we don't need so many commands pending. Since the HW
- * still uses 256 BDs for DMA though, TFD_QUEUE_SIZE_MAX stays 256.
+ * queues, n_winकरोw, which is the size of the software queue data
+ * is also 256; however, क्रम the command queue, n_winकरोw is only
+ * 32 since we करोn't need so many commands pending. Since the HW
+ * still uses 256 BDs क्रम DMA though, TFD_QUEUE_SIZE_MAX stays 256.
  * This means that we end up with the following:
  *  HW entries: | 0 | ... | N * 32 | ... | N * 32 + 31 | ... | 255 |
  *  SW entries:           | 0      | ... | 31          |
  * where N is a number between 0 and 7. This means that the SW
- * data is a window overlayed over the HW queue.
+ * data is a winकरोw overlayed over the HW queue.
  */
-struct iwl_txq {
-	void *tfds;
-	struct iwl_pcie_first_tb_buf *first_tb_bufs;
+काष्ठा iwl_txq अणु
+	व्योम *tfds;
+	काष्ठा iwl_pcie_first_tb_buf *first_tb_bufs;
 	dma_addr_t first_tb_dma;
-	struct iwl_pcie_txq_entry *entries;
-	/* lock for syncing changes on the queue */
+	काष्ठा iwl_pcie_txq_entry *entries;
+	/* lock क्रम syncing changes on the queue */
 	spinlock_t lock;
-	unsigned long frozen_expiry_remainder;
-	struct timer_list stuck_timer;
-	struct iwl_trans *trans;
+	अचिन्हित दीर्घ frozen_expiry_reमुख्यder;
+	काष्ठा समयr_list stuck_समयr;
+	काष्ठा iwl_trans *trans;
 	bool need_update;
 	bool frozen;
 	bool ampdu;
-	int block;
-	unsigned long wd_timeout;
-	struct sk_buff_head overflow_q;
-	struct iwl_dma_ptr bc_tbl;
+	पूर्णांक block;
+	अचिन्हित दीर्घ wd_समयout;
+	काष्ठा sk_buff_head overflow_q;
+	काष्ठा iwl_dma_ptr bc_tbl;
 
-	int write_ptr;
-	int read_ptr;
+	पूर्णांक ग_लिखो_ptr;
+	पूर्णांक पढ़ो_ptr;
 	dma_addr_t dma_addr;
-	int n_window;
+	पूर्णांक n_winकरोw;
 	u32 id;
-	int low_mark;
-	int high_mark;
+	पूर्णांक low_mark;
+	पूर्णांक high_mark;
 
 	bool overflow_tx;
-};
+पूर्ण;
 
 /**
- * struct iwl_trans_txqs - transport tx queues data
+ * काष्ठा iwl_trans_txqs - transport tx queues data
  *
- * @bc_table_dword: true if the BC table expects DWORD (as opposed to bytes)
- * @page_offs: offset from skb->cb to mac header page pointer
- * @dev_cmd_offs: offset from skb->cb to iwl_device_tx_cmd pointer
+ * @bc_table_dword: true अगर the BC table expects DWORD (as opposed to bytes)
+ * @page_offs: offset from skb->cb to mac header page poपूर्णांकer
+ * @dev_cmd_offs: offset from skb->cb to iwl_device_tx_cmd poपूर्णांकer
  * @queue_used - bit mask of used queues
  * @queue_stopped - bit mask of stopped queues
- * @scd_bc_tbls: gen1 pointer to the byte count table of the scheduler
+ * @scd_bc_tbls: gen1 poपूर्णांकer to the byte count table of the scheduler
  */
-struct iwl_trans_txqs {
-	unsigned long queue_used[BITS_TO_LONGS(IWL_MAX_TVQM_QUEUES)];
-	unsigned long queue_stopped[BITS_TO_LONGS(IWL_MAX_TVQM_QUEUES)];
-	struct iwl_txq *txq[IWL_MAX_TVQM_QUEUES];
-	struct dma_pool *bc_pool;
-	size_t bc_tbl_size;
+काष्ठा iwl_trans_txqs अणु
+	अचिन्हित दीर्घ queue_used[BITS_TO_LONGS(IWL_MAX_TVQM_QUEUES)];
+	अचिन्हित दीर्घ queue_stopped[BITS_TO_LONGS(IWL_MAX_TVQM_QUEUES)];
+	काष्ठा iwl_txq *txq[IWL_MAX_TVQM_QUEUES];
+	काष्ठा dma_pool *bc_pool;
+	माप_प्रकार bc_tbl_size;
 	bool bc_table_dword;
 	u8 page_offs;
 	u8 dev_cmd_offs;
-	struct __percpu iwl_tso_hdr_page * tso_hdr_page;
+	काष्ठा __percpu iwl_tso_hdr_page * tso_hdr_page;
 
-	struct {
-		u8 fifo;
+	काष्ठा अणु
+		u8 fअगरo;
 		u8 q_id;
-		unsigned int wdg_timeout;
-	} cmd;
+		अचिन्हित पूर्णांक wdg_समयout;
+	पूर्ण cmd;
 
-	struct {
+	काष्ठा अणु
 		u8 max_tbs;
 		u16 size;
 		u8 addr_size;
-	} tfd;
+	पूर्ण tfd;
 
-	struct iwl_dma_ptr scd_bc_tbls;
-};
+	काष्ठा iwl_dma_ptr scd_bc_tbls;
+पूर्ण;
 
 /**
- * struct iwl_trans - transport common data
+ * काष्ठा iwl_trans - transport common data
  *
- * @ops - pointer to iwl_trans_ops
- * @op_mode - pointer to the op_mode
- * @trans_cfg: the trans-specific configuration part
- * @cfg - pointer to the configuration
- * @drv - pointer to iwl_drv
+ * @ops - poपूर्णांकer to iwl_trans_ops
+ * @op_mode - poपूर्णांकer to the op_mode
+ * @trans_cfg: the trans-specअगरic configuration part
+ * @cfg - poपूर्णांकer to the configuration
+ * @drv - poपूर्णांकer to iwl_drv
  * @status: a bit-mask of transport status flags
- * @dev - pointer to struct device * that represents the device
+ * @dev - poपूर्णांकer to काष्ठा device * that represents the device
  * @max_skb_frags: maximum number of fragments an SKB can have when transmitted.
  *	0 indicates that frag SKBs (NETIF_F_SG) aren't supported.
  * @hw_rf_id a u32 with the device RF ID
  * @hw_id: a u32 with the ID of the device / sub-device.
  *	Set during transport allocation.
  * @hw_id_str: a string with info about HW ID. Set during transport allocation.
- * @pm_support: set to true in start_hw if link pm is supported
- * @ltr_enabled: set to true if the LTR is enabled
- * @wide_cmd_header: true when ucode supports wide command header format
- * @wait_command_queue: wait queue for sync commands
+ * @pm_support: set to true in start_hw अगर link pm is supported
+ * @ltr_enabled: set to true अगर the LTR is enabled
+ * @wide_cmd_header: true when ucode supports wide command header क्रमmat
+ * @रुको_command_queue: रुको queue क्रम sync commands
  * @num_rx_queues: number of RX queues allocated by the transport;
- *	the transport must set this before calling iwl_drv_start()
+ *	the transport must set this beक्रमe calling iwl_drv_start()
  * @iml_len: the length of the image loader
- * @iml: a pointer to the image loader itself
- * @dev_cmd_pool: pool for Tx cmd allocation - for internal use only.
- *	The user should use iwl_trans_{alloc,free}_tx_cmd.
- * @rx_mpdu_cmd: MPDU RX command ID, must be assigned by opmode before
- *	starting the firmware, used for tracing
- * @rx_mpdu_cmd_hdr_size: used for tracing, amount of data before the
+ * @iml: a poपूर्णांकer to the image loader itself
+ * @dev_cmd_pool: pool क्रम Tx cmd allocation - क्रम पूर्णांकernal use only.
+ *	The user should use iwl_trans_अणुalloc,मुक्तपूर्ण_tx_cmd.
+ * @rx_mpdu_cmd: MPDU RX command ID, must be asचिन्हित by opmode beक्रमe
+ *	starting the firmware, used क्रम tracing
+ * @rx_mpdu_cmd_hdr_size: used क्रम tracing, amount of data beक्रमe the
  *	start of the 802.11 header in the @rx_mpdu_cmd
- * @dflt_pwr_limit: default power limit fetched from the platform (ACPI)
- * @system_pm_mode: the system-wide power management mode in use.
+ * @dflt_pwr_limit: शेष घातer limit fetched from the platक्रमm (ACPI)
+ * @प्रणाली_pm_mode: the प्रणाली-wide घातer management mode in use.
  *	This mode is set dynamically, depending on the WoWLAN values
- *	configured from the userspace at runtime.
+ *	configured from the userspace at runसमय.
  * @iwl_trans_txqs: transport tx queues data.
  */
-struct iwl_trans {
-	const struct iwl_trans_ops *ops;
-	struct iwl_op_mode *op_mode;
-	const struct iwl_cfg_trans_params *trans_cfg;
-	const struct iwl_cfg *cfg;
-	struct iwl_drv *drv;
-	enum iwl_trans_state state;
-	unsigned long status;
+काष्ठा iwl_trans अणु
+	स्थिर काष्ठा iwl_trans_ops *ops;
+	काष्ठा iwl_op_mode *op_mode;
+	स्थिर काष्ठा iwl_cfg_trans_params *trans_cfg;
+	स्थिर काष्ठा iwl_cfg *cfg;
+	काष्ठा iwl_drv *drv;
+	क्रमागत iwl_trans_state state;
+	अचिन्हित दीर्घ status;
 
-	struct device *dev;
+	काष्ठा device *dev;
 	u32 max_skb_frags;
 	u32 hw_rev;
 	u32 hw_rf_id;
 	u32 hw_id;
-	char hw_id_str[52];
+	अक्षर hw_id_str[52];
 	u32 sku_id[3];
 
 	u8 rx_mpdu_cmd, rx_mpdu_cmd_hdr_size;
@@ -958,494 +959,494 @@ struct iwl_trans {
 	bool ltr_enabled;
 	u8 pnvm_loaded:1;
 
-	const struct iwl_hcmd_arr *command_groups;
-	int command_groups_size;
+	स्थिर काष्ठा iwl_hcmd_arr *command_groups;
+	पूर्णांक command_groups_size;
 	bool wide_cmd_header;
 
-	wait_queue_head_t wait_command_queue;
+	रुको_queue_head_t रुको_command_queue;
 	u8 num_rx_queues;
 
-	size_t iml_len;
+	माप_प्रकार iml_len;
 	u8 *iml;
 
-	/* The following fields are internal only */
-	struct kmem_cache *dev_cmd_pool;
-	char dev_cmd_pool_name[50];
+	/* The following fields are पूर्णांकernal only */
+	काष्ठा kmem_cache *dev_cmd_pool;
+	अक्षर dev_cmd_pool_name[50];
 
-	struct dentry *dbgfs_dir;
+	काष्ठा dentry *dbgfs_dir;
 
-#ifdef CONFIG_LOCKDEP
-	struct lockdep_map sync_cmd_lockdep_map;
-#endif
+#अगर_घोषित CONFIG_LOCKDEP
+	काष्ठा lockdep_map sync_cmd_lockdep_map;
+#पूर्ण_अगर
 
-	struct iwl_trans_debug dbg;
-	struct iwl_self_init_dram init_dram;
+	काष्ठा iwl_trans_debug dbg;
+	काष्ठा iwl_self_init_dram init_dram;
 
-	enum iwl_plat_pm_mode system_pm_mode;
+	क्रमागत iwl_plat_pm_mode प्रणाली_pm_mode;
 
-	const char *name;
-	struct iwl_trans_txqs txqs;
+	स्थिर अक्षर *name;
+	काष्ठा iwl_trans_txqs txqs;
 
-	/* pointer to trans specific struct */
-	/*Ensure that this pointer will always be aligned to sizeof pointer */
-	char trans_specific[] __aligned(sizeof(void *));
-};
+	/* poपूर्णांकer to trans specअगरic काष्ठा */
+	/*Ensure that this poपूर्णांकer will always be aligned to माप poपूर्णांकer */
+	अक्षर trans_specअगरic[] __aligned(माप(व्योम *));
+पूर्ण;
 
-const char *iwl_get_cmd_string(struct iwl_trans *trans, u32 id);
-int iwl_cmd_groups_verify_sorted(const struct iwl_trans_config *trans);
+स्थिर अक्षर *iwl_get_cmd_string(काष्ठा iwl_trans *trans, u32 id);
+पूर्णांक iwl_cmd_groups_verअगरy_sorted(स्थिर काष्ठा iwl_trans_config *trans);
 
-static inline void iwl_trans_configure(struct iwl_trans *trans,
-				       const struct iwl_trans_config *trans_cfg)
-{
+अटल अंतरभूत व्योम iwl_trans_configure(काष्ठा iwl_trans *trans,
+				       स्थिर काष्ठा iwl_trans_config *trans_cfg)
+अणु
 	trans->op_mode = trans_cfg->op_mode;
 
 	trans->ops->configure(trans, trans_cfg);
-	WARN_ON(iwl_cmd_groups_verify_sorted(trans_cfg));
-}
+	WARN_ON(iwl_cmd_groups_verअगरy_sorted(trans_cfg));
+पूर्ण
 
-static inline int iwl_trans_start_hw(struct iwl_trans *trans)
-{
+अटल अंतरभूत पूर्णांक iwl_trans_start_hw(काष्ठा iwl_trans *trans)
+अणु
 	might_sleep();
 
-	return trans->ops->start_hw(trans);
-}
+	वापस trans->ops->start_hw(trans);
+पूर्ण
 
-static inline void iwl_trans_op_mode_leave(struct iwl_trans *trans)
-{
+अटल अंतरभूत व्योम iwl_trans_op_mode_leave(काष्ठा iwl_trans *trans)
+अणु
 	might_sleep();
 
-	if (trans->ops->op_mode_leave)
+	अगर (trans->ops->op_mode_leave)
 		trans->ops->op_mode_leave(trans);
 
-	trans->op_mode = NULL;
+	trans->op_mode = शून्य;
 
 	trans->state = IWL_TRANS_NO_FW;
-}
+पूर्ण
 
-static inline void iwl_trans_fw_alive(struct iwl_trans *trans, u32 scd_addr)
-{
+अटल अंतरभूत व्योम iwl_trans_fw_alive(काष्ठा iwl_trans *trans, u32 scd_addr)
+अणु
 	might_sleep();
 
 	trans->state = IWL_TRANS_FW_ALIVE;
 
 	trans->ops->fw_alive(trans, scd_addr);
-}
+पूर्ण
 
-static inline int iwl_trans_start_fw(struct iwl_trans *trans,
-				     const struct fw_img *fw,
-				     bool run_in_rfkill)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक iwl_trans_start_fw(काष्ठा iwl_trans *trans,
+				     स्थिर काष्ठा fw_img *fw,
+				     bool run_in_rfसमाप्त)
+अणु
+	पूर्णांक ret;
 
 	might_sleep();
 
 	WARN_ON_ONCE(!trans->rx_mpdu_cmd);
 
 	clear_bit(STATUS_FW_ERROR, &trans->status);
-	ret = trans->ops->start_fw(trans, fw, run_in_rfkill);
-	if (ret == 0)
+	ret = trans->ops->start_fw(trans, fw, run_in_rfसमाप्त);
+	अगर (ret == 0)
 		trans->state = IWL_TRANS_FW_STARTED;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void iwl_trans_stop_device(struct iwl_trans *trans)
-{
+अटल अंतरभूत व्योम iwl_trans_stop_device(काष्ठा iwl_trans *trans)
+अणु
 	might_sleep();
 
 	trans->ops->stop_device(trans);
 
 	trans->state = IWL_TRANS_NO_FW;
-}
+पूर्ण
 
-static inline int iwl_trans_d3_suspend(struct iwl_trans *trans, bool test,
+अटल अंतरभूत पूर्णांक iwl_trans_d3_suspend(काष्ठा iwl_trans *trans, bool test,
 				       bool reset)
-{
+अणु
 	might_sleep();
-	if (!trans->ops->d3_suspend)
-		return 0;
+	अगर (!trans->ops->d3_suspend)
+		वापस 0;
 
-	return trans->ops->d3_suspend(trans, test, reset);
-}
+	वापस trans->ops->d3_suspend(trans, test, reset);
+पूर्ण
 
-static inline int iwl_trans_d3_resume(struct iwl_trans *trans,
-				      enum iwl_d3_status *status,
+अटल अंतरभूत पूर्णांक iwl_trans_d3_resume(काष्ठा iwl_trans *trans,
+				      क्रमागत iwl_d3_status *status,
 				      bool test, bool reset)
-{
+अणु
 	might_sleep();
-	if (!trans->ops->d3_resume)
-		return 0;
+	अगर (!trans->ops->d3_resume)
+		वापस 0;
 
-	return trans->ops->d3_resume(trans, status, test, reset);
-}
+	वापस trans->ops->d3_resume(trans, status, test, reset);
+पूर्ण
 
-static inline struct iwl_trans_dump_data *
-iwl_trans_dump_data(struct iwl_trans *trans, u32 dump_mask)
-{
-	if (!trans->ops->dump_data)
-		return NULL;
-	return trans->ops->dump_data(trans, dump_mask);
-}
+अटल अंतरभूत काष्ठा iwl_trans_dump_data *
+iwl_trans_dump_data(काष्ठा iwl_trans *trans, u32 dump_mask)
+अणु
+	अगर (!trans->ops->dump_data)
+		वापस शून्य;
+	वापस trans->ops->dump_data(trans, dump_mask);
+पूर्ण
 
-static inline struct iwl_device_tx_cmd *
-iwl_trans_alloc_tx_cmd(struct iwl_trans *trans)
-{
-	return kmem_cache_zalloc(trans->dev_cmd_pool, GFP_ATOMIC);
-}
+अटल अंतरभूत काष्ठा iwl_device_tx_cmd *
+iwl_trans_alloc_tx_cmd(काष्ठा iwl_trans *trans)
+अणु
+	वापस kmem_cache_zalloc(trans->dev_cmd_pool, GFP_ATOMIC);
+पूर्ण
 
-int iwl_trans_send_cmd(struct iwl_trans *trans, struct iwl_host_cmd *cmd);
+पूर्णांक iwl_trans_send_cmd(काष्ठा iwl_trans *trans, काष्ठा iwl_host_cmd *cmd);
 
-static inline void iwl_trans_free_tx_cmd(struct iwl_trans *trans,
-					 struct iwl_device_tx_cmd *dev_cmd)
-{
-	kmem_cache_free(trans->dev_cmd_pool, dev_cmd);
-}
+अटल अंतरभूत व्योम iwl_trans_मुक्त_tx_cmd(काष्ठा iwl_trans *trans,
+					 काष्ठा iwl_device_tx_cmd *dev_cmd)
+अणु
+	kmem_cache_मुक्त(trans->dev_cmd_pool, dev_cmd);
+पूर्ण
 
-static inline int iwl_trans_tx(struct iwl_trans *trans, struct sk_buff *skb,
-			       struct iwl_device_tx_cmd *dev_cmd, int queue)
-{
-	if (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
-		return -EIO;
+अटल अंतरभूत पूर्णांक iwl_trans_tx(काष्ठा iwl_trans *trans, काष्ठा sk_buff *skb,
+			       काष्ठा iwl_device_tx_cmd *dev_cmd, पूर्णांक queue)
+अणु
+	अगर (unlikely(test_bit(STATUS_FW_ERROR, &trans->status)))
+		वापस -EIO;
 
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return trans->ops->tx(trans, skb, dev_cmd, queue);
-}
+	वापस trans->ops->tx(trans, skb, dev_cmd, queue);
+पूर्ण
 
-static inline void iwl_trans_reclaim(struct iwl_trans *trans, int queue,
-				     int ssn, struct sk_buff_head *skbs)
-{
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+अटल अंतरभूत व्योम iwl_trans_reclaim(काष्ठा iwl_trans *trans, पूर्णांक queue,
+				     पूर्णांक ssn, काष्ठा sk_buff_head *skbs)
+अणु
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	trans->ops->reclaim(trans, queue, ssn, skbs);
-}
+पूर्ण
 
-static inline void iwl_trans_set_q_ptrs(struct iwl_trans *trans, int queue,
-					int ptr)
-{
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+अटल अंतरभूत व्योम iwl_trans_set_q_ptrs(काष्ठा iwl_trans *trans, पूर्णांक queue,
+					पूर्णांक ptr)
+अणु
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	trans->ops->set_q_ptrs(trans, queue, ptr);
-}
+पूर्ण
 
-static inline void iwl_trans_txq_disable(struct iwl_trans *trans, int queue,
+अटल अंतरभूत व्योम iwl_trans_txq_disable(काष्ठा iwl_trans *trans, पूर्णांक queue,
 					 bool configure_scd)
-{
+अणु
 	trans->ops->txq_disable(trans, queue, configure_scd);
-}
+पूर्ण
 
-static inline bool
-iwl_trans_txq_enable_cfg(struct iwl_trans *trans, int queue, u16 ssn,
-			 const struct iwl_trans_txq_scd_cfg *cfg,
-			 unsigned int queue_wdg_timeout)
-{
+अटल अंतरभूत bool
+iwl_trans_txq_enable_cfg(काष्ठा iwl_trans *trans, पूर्णांक queue, u16 ssn,
+			 स्थिर काष्ठा iwl_trans_txq_scd_cfg *cfg,
+			 अचिन्हित पूर्णांक queue_wdg_समयout)
+अणु
 	might_sleep();
 
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return trans->ops->txq_enable(trans, queue, ssn,
-				      cfg, queue_wdg_timeout);
-}
+	वापस trans->ops->txq_enable(trans, queue, ssn,
+				      cfg, queue_wdg_समयout);
+पूर्ण
 
-static inline int
-iwl_trans_get_rxq_dma_data(struct iwl_trans *trans, int queue,
-			   struct iwl_trans_rxq_dma_data *data)
-{
-	if (WARN_ON_ONCE(!trans->ops->rxq_dma_data))
-		return -ENOTSUPP;
+अटल अंतरभूत पूर्णांक
+iwl_trans_get_rxq_dma_data(काष्ठा iwl_trans *trans, पूर्णांक queue,
+			   काष्ठा iwl_trans_rxq_dma_data *data)
+अणु
+	अगर (WARN_ON_ONCE(!trans->ops->rxq_dma_data))
+		वापस -ENOTSUPP;
 
-	return trans->ops->rxq_dma_data(trans, queue, data);
-}
+	वापस trans->ops->rxq_dma_data(trans, queue, data);
+पूर्ण
 
-static inline void
-iwl_trans_txq_free(struct iwl_trans *trans, int queue)
-{
-	if (WARN_ON_ONCE(!trans->ops->txq_free))
-		return;
+अटल अंतरभूत व्योम
+iwl_trans_txq_मुक्त(काष्ठा iwl_trans *trans, पूर्णांक queue)
+अणु
+	अगर (WARN_ON_ONCE(!trans->ops->txq_मुक्त))
+		वापस;
 
-	trans->ops->txq_free(trans, queue);
-}
+	trans->ops->txq_मुक्त(trans, queue);
+पूर्ण
 
-static inline int
-iwl_trans_txq_alloc(struct iwl_trans *trans,
+अटल अंतरभूत पूर्णांक
+iwl_trans_txq_alloc(काष्ठा iwl_trans *trans,
 		    __le16 flags, u8 sta_id, u8 tid,
-		    int cmd_id, int size,
-		    unsigned int wdg_timeout)
-{
+		    पूर्णांक cmd_id, पूर्णांक size,
+		    अचिन्हित पूर्णांक wdg_समयout)
+अणु
 	might_sleep();
 
-	if (WARN_ON_ONCE(!trans->ops->txq_alloc))
-		return -ENOTSUPP;
+	अगर (WARN_ON_ONCE(!trans->ops->txq_alloc))
+		वापस -ENOTSUPP;
 
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return trans->ops->txq_alloc(trans, flags, sta_id, tid,
-				     cmd_id, size, wdg_timeout);
-}
+	वापस trans->ops->txq_alloc(trans, flags, sta_id, tid,
+				     cmd_id, size, wdg_समयout);
+पूर्ण
 
-static inline void iwl_trans_txq_set_shared_mode(struct iwl_trans *trans,
-						 int queue, bool shared_mode)
-{
-	if (trans->ops->txq_set_shared_mode)
+अटल अंतरभूत व्योम iwl_trans_txq_set_shared_mode(काष्ठा iwl_trans *trans,
+						 पूर्णांक queue, bool shared_mode)
+अणु
+	अगर (trans->ops->txq_set_shared_mode)
 		trans->ops->txq_set_shared_mode(trans, queue, shared_mode);
-}
+पूर्ण
 
-static inline void iwl_trans_txq_enable(struct iwl_trans *trans, int queue,
-					int fifo, int sta_id, int tid,
-					int frame_limit, u16 ssn,
-					unsigned int queue_wdg_timeout)
-{
-	struct iwl_trans_txq_scd_cfg cfg = {
-		.fifo = fifo,
+अटल अंतरभूत व्योम iwl_trans_txq_enable(काष्ठा iwl_trans *trans, पूर्णांक queue,
+					पूर्णांक fअगरo, पूर्णांक sta_id, पूर्णांक tid,
+					पूर्णांक frame_limit, u16 ssn,
+					अचिन्हित पूर्णांक queue_wdg_समयout)
+अणु
+	काष्ठा iwl_trans_txq_scd_cfg cfg = अणु
+		.fअगरo = fअगरo,
 		.sta_id = sta_id,
 		.tid = tid,
 		.frame_limit = frame_limit,
 		.aggregate = sta_id >= 0,
-	};
+	पूर्ण;
 
-	iwl_trans_txq_enable_cfg(trans, queue, ssn, &cfg, queue_wdg_timeout);
-}
+	iwl_trans_txq_enable_cfg(trans, queue, ssn, &cfg, queue_wdg_समयout);
+पूर्ण
 
-static inline
-void iwl_trans_ac_txq_enable(struct iwl_trans *trans, int queue, int fifo,
-			     unsigned int queue_wdg_timeout)
-{
-	struct iwl_trans_txq_scd_cfg cfg = {
-		.fifo = fifo,
+अटल अंतरभूत
+व्योम iwl_trans_ac_txq_enable(काष्ठा iwl_trans *trans, पूर्णांक queue, पूर्णांक fअगरo,
+			     अचिन्हित पूर्णांक queue_wdg_समयout)
+अणु
+	काष्ठा iwl_trans_txq_scd_cfg cfg = अणु
+		.fअगरo = fअगरo,
 		.sta_id = -1,
 		.tid = IWL_MAX_TID_COUNT,
 		.frame_limit = IWL_FRAME_LIMIT,
 		.aggregate = false,
-	};
+	पूर्ण;
 
-	iwl_trans_txq_enable_cfg(trans, queue, 0, &cfg, queue_wdg_timeout);
-}
+	iwl_trans_txq_enable_cfg(trans, queue, 0, &cfg, queue_wdg_समयout);
+पूर्ण
 
-static inline void iwl_trans_freeze_txq_timer(struct iwl_trans *trans,
-					      unsigned long txqs,
-					      bool freeze)
-{
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+अटल अंतरभूत व्योम iwl_trans_मुक्तze_txq_समयr(काष्ठा iwl_trans *trans,
+					      अचिन्हित दीर्घ txqs,
+					      bool मुक्तze)
+अणु
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (trans->ops->freeze_txq_timer)
-		trans->ops->freeze_txq_timer(trans, txqs, freeze);
-}
+	अगर (trans->ops->मुक्तze_txq_समयr)
+		trans->ops->मुक्तze_txq_समयr(trans, txqs, मुक्तze);
+पूर्ण
 
-static inline void iwl_trans_block_txq_ptrs(struct iwl_trans *trans,
+अटल अंतरभूत व्योम iwl_trans_block_txq_ptrs(काष्ठा iwl_trans *trans,
 					    bool block)
-{
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+अणु
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (trans->ops->block_txq_ptrs)
+	अगर (trans->ops->block_txq_ptrs)
 		trans->ops->block_txq_ptrs(trans, block);
-}
+पूर्ण
 
-static inline int iwl_trans_wait_tx_queues_empty(struct iwl_trans *trans,
+अटल अंतरभूत पूर्णांक iwl_trans_रुको_tx_queues_empty(काष्ठा iwl_trans *trans,
 						 u32 txqs)
-{
-	if (WARN_ON_ONCE(!trans->ops->wait_tx_queues_empty))
-		return -ENOTSUPP;
+अणु
+	अगर (WARN_ON_ONCE(!trans->ops->रुको_tx_queues_empty))
+		वापस -ENOTSUPP;
 
-	/* No need to wait if the firmware is not alive */
-	if (trans->state != IWL_TRANS_FW_ALIVE) {
+	/* No need to रुको अगर the firmware is not alive */
+	अगर (trans->state != IWL_TRANS_FW_ALIVE) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return trans->ops->wait_tx_queues_empty(trans, txqs);
-}
+	वापस trans->ops->रुको_tx_queues_empty(trans, txqs);
+पूर्ण
 
-static inline int iwl_trans_wait_txq_empty(struct iwl_trans *trans, int queue)
-{
-	if (WARN_ON_ONCE(!trans->ops->wait_txq_empty))
-		return -ENOTSUPP;
+अटल अंतरभूत पूर्णांक iwl_trans_रुको_txq_empty(काष्ठा iwl_trans *trans, पूर्णांक queue)
+अणु
+	अगर (WARN_ON_ONCE(!trans->ops->रुको_txq_empty))
+		वापस -ENOTSUPP;
 
-	if (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) {
+	अगर (WARN_ON_ONCE(trans->state != IWL_TRANS_FW_ALIVE)) अणु
 		IWL_ERR(trans, "%s bad state = %d\n", __func__, trans->state);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return trans->ops->wait_txq_empty(trans, queue);
-}
+	वापस trans->ops->रुको_txq_empty(trans, queue);
+पूर्ण
 
-static inline void iwl_trans_write8(struct iwl_trans *trans, u32 ofs, u8 val)
-{
-	trans->ops->write8(trans, ofs, val);
-}
+अटल अंतरभूत व्योम iwl_trans_ग_लिखो8(काष्ठा iwl_trans *trans, u32 ofs, u8 val)
+अणु
+	trans->ops->ग_लिखो8(trans, ofs, val);
+पूर्ण
 
-static inline void iwl_trans_write32(struct iwl_trans *trans, u32 ofs, u32 val)
-{
-	trans->ops->write32(trans, ofs, val);
-}
+अटल अंतरभूत व्योम iwl_trans_ग_लिखो32(काष्ठा iwl_trans *trans, u32 ofs, u32 val)
+अणु
+	trans->ops->ग_लिखो32(trans, ofs, val);
+पूर्ण
 
-static inline u32 iwl_trans_read32(struct iwl_trans *trans, u32 ofs)
-{
-	return trans->ops->read32(trans, ofs);
-}
+अटल अंतरभूत u32 iwl_trans_पढ़ो32(काष्ठा iwl_trans *trans, u32 ofs)
+अणु
+	वापस trans->ops->पढ़ो32(trans, ofs);
+पूर्ण
 
-static inline u32 iwl_trans_read_prph(struct iwl_trans *trans, u32 ofs)
-{
-	return trans->ops->read_prph(trans, ofs);
-}
+अटल अंतरभूत u32 iwl_trans_पढ़ो_prph(काष्ठा iwl_trans *trans, u32 ofs)
+अणु
+	वापस trans->ops->पढ़ो_prph(trans, ofs);
+पूर्ण
 
-static inline void iwl_trans_write_prph(struct iwl_trans *trans, u32 ofs,
+अटल अंतरभूत व्योम iwl_trans_ग_लिखो_prph(काष्ठा iwl_trans *trans, u32 ofs,
 					u32 val)
-{
-	return trans->ops->write_prph(trans, ofs, val);
-}
+अणु
+	वापस trans->ops->ग_लिखो_prph(trans, ofs, val);
+पूर्ण
 
-static inline int iwl_trans_read_mem(struct iwl_trans *trans, u32 addr,
-				     void *buf, int dwords)
-{
-	return trans->ops->read_mem(trans, addr, buf, dwords);
-}
+अटल अंतरभूत पूर्णांक iwl_trans_पढ़ो_mem(काष्ठा iwl_trans *trans, u32 addr,
+				     व्योम *buf, पूर्णांक dwords)
+अणु
+	वापस trans->ops->पढ़ो_mem(trans, addr, buf, dwords);
+पूर्ण
 
-#define iwl_trans_read_mem_bytes(trans, addr, buf, bufsize)		      \
-	do {								      \
-		if (__builtin_constant_p(bufsize))			      \
-			BUILD_BUG_ON((bufsize) % sizeof(u32));		      \
-		iwl_trans_read_mem(trans, addr, buf, (bufsize) / sizeof(u32));\
-	} while (0)
+#घोषणा iwl_trans_पढ़ो_mem_bytes(trans, addr, buf, bufsize)		      \
+	करो अणु								      \
+		अगर (__builtin_स्थिरant_p(bufsize))			      \
+			BUILD_BUG_ON((bufsize) % माप(u32));		      \
+		iwl_trans_पढ़ो_mem(trans, addr, buf, (bufsize) / माप(u32));\
+	पूर्ण जबतक (0)
 
-static inline u32 iwl_trans_read_mem32(struct iwl_trans *trans, u32 addr)
-{
+अटल अंतरभूत u32 iwl_trans_पढ़ो_mem32(काष्ठा iwl_trans *trans, u32 addr)
+अणु
 	u32 value;
 
-	if (WARN_ON(iwl_trans_read_mem(trans, addr, &value, 1)))
-		return 0xa5a5a5a5;
+	अगर (WARN_ON(iwl_trans_पढ़ो_mem(trans, addr, &value, 1)))
+		वापस 0xa5a5a5a5;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static inline int iwl_trans_write_mem(struct iwl_trans *trans, u32 addr,
-				      const void *buf, int dwords)
-{
-	return trans->ops->write_mem(trans, addr, buf, dwords);
-}
+अटल अंतरभूत पूर्णांक iwl_trans_ग_लिखो_mem(काष्ठा iwl_trans *trans, u32 addr,
+				      स्थिर व्योम *buf, पूर्णांक dwords)
+अणु
+	वापस trans->ops->ग_लिखो_mem(trans, addr, buf, dwords);
+पूर्ण
 
-static inline u32 iwl_trans_write_mem32(struct iwl_trans *trans, u32 addr,
+अटल अंतरभूत u32 iwl_trans_ग_लिखो_mem32(काष्ठा iwl_trans *trans, u32 addr,
 					u32 val)
-{
-	return iwl_trans_write_mem(trans, addr, &val, 1);
-}
+अणु
+	वापस iwl_trans_ग_लिखो_mem(trans, addr, &val, 1);
+पूर्ण
 
-static inline void iwl_trans_set_pmi(struct iwl_trans *trans, bool state)
-{
-	if (trans->ops->set_pmi)
+अटल अंतरभूत व्योम iwl_trans_set_pmi(काष्ठा iwl_trans *trans, bool state)
+अणु
+	अगर (trans->ops->set_pmi)
 		trans->ops->set_pmi(trans, state);
-}
+पूर्ण
 
-static inline void iwl_trans_sw_reset(struct iwl_trans *trans)
-{
-	if (trans->ops->sw_reset)
+अटल अंतरभूत व्योम iwl_trans_sw_reset(काष्ठा iwl_trans *trans)
+अणु
+	अगर (trans->ops->sw_reset)
 		trans->ops->sw_reset(trans);
-}
+पूर्ण
 
-static inline void
-iwl_trans_set_bits_mask(struct iwl_trans *trans, u32 reg, u32 mask, u32 value)
-{
+अटल अंतरभूत व्योम
+iwl_trans_set_bits_mask(काष्ठा iwl_trans *trans, u32 reg, u32 mask, u32 value)
+अणु
 	trans->ops->set_bits_mask(trans, reg, mask, value);
-}
+पूर्ण
 
-#define iwl_trans_grab_nic_access(trans)		\
+#घोषणा iwl_trans_grab_nic_access(trans)		\
 	__cond_lock(nic_access,				\
 		    likely((trans)->ops->grab_nic_access(trans)))
 
-static inline void __releases(nic_access)
-iwl_trans_release_nic_access(struct iwl_trans *trans)
-{
+अटल अंतरभूत व्योम __releases(nic_access)
+iwl_trans_release_nic_access(काष्ठा iwl_trans *trans)
+अणु
 	trans->ops->release_nic_access(trans);
 	__release(nic_access);
-}
+पूर्ण
 
-static inline void iwl_trans_fw_error(struct iwl_trans *trans)
-{
-	if (WARN_ON_ONCE(!trans->op_mode))
-		return;
+अटल अंतरभूत व्योम iwl_trans_fw_error(काष्ठा iwl_trans *trans)
+अणु
+	अगर (WARN_ON_ONCE(!trans->op_mode))
+		वापस;
 
-	/* prevent double restarts due to the same erroneous FW */
-	if (!test_and_set_bit(STATUS_FW_ERROR, &trans->status)) {
+	/* prevent द्विगुन restarts due to the same erroneous FW */
+	अगर (!test_and_set_bit(STATUS_FW_ERROR, &trans->status)) अणु
 		iwl_op_mode_nic_error(trans->op_mode);
 		trans->state = IWL_TRANS_NO_FW;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline bool iwl_trans_fw_running(struct iwl_trans *trans)
-{
-	return trans->state == IWL_TRANS_FW_ALIVE;
-}
+अटल अंतरभूत bool iwl_trans_fw_running(काष्ठा iwl_trans *trans)
+अणु
+	वापस trans->state == IWL_TRANS_FW_ALIVE;
+पूर्ण
 
-static inline void iwl_trans_sync_nmi(struct iwl_trans *trans)
-{
-	if (trans->ops->sync_nmi)
+अटल अंतरभूत व्योम iwl_trans_sync_nmi(काष्ठा iwl_trans *trans)
+अणु
+	अगर (trans->ops->sync_nmi)
 		trans->ops->sync_nmi(trans);
-}
+पूर्ण
 
-void iwl_trans_sync_nmi_with_addr(struct iwl_trans *trans, u32 inta_addr,
+व्योम iwl_trans_sync_nmi_with_addr(काष्ठा iwl_trans *trans, u32 पूर्णांकa_addr,
 				  u32 sw_err_bit);
 
-static inline int iwl_trans_set_pnvm(struct iwl_trans *trans,
-				     const void *data, u32 len)
-{
-	if (trans->ops->set_pnvm) {
-		int ret = trans->ops->set_pnvm(trans, data, len);
+अटल अंतरभूत पूर्णांक iwl_trans_set_pnvm(काष्ठा iwl_trans *trans,
+				     स्थिर व्योम *data, u32 len)
+अणु
+	अगर (trans->ops->set_pnvm) अणु
+		पूर्णांक ret = trans->ops->set_pnvm(trans, data, len);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	trans->pnvm_loaded = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline bool iwl_trans_dbg_ini_valid(struct iwl_trans *trans)
-{
-	return trans->dbg.internal_ini_cfg != IWL_INI_CFG_STATE_NOT_LOADED ||
-		trans->dbg.external_ini_cfg != IWL_INI_CFG_STATE_NOT_LOADED;
-}
+अटल अंतरभूत bool iwl_trans_dbg_ini_valid(काष्ठा iwl_trans *trans)
+अणु
+	वापस trans->dbg.पूर्णांकernal_ini_cfg != IWL_INI_CFG_STATE_NOT_LOADED ||
+		trans->dbg.बाह्यal_ini_cfg != IWL_INI_CFG_STATE_NOT_LOADED;
+पूर्ण
 
-static inline void iwl_trans_interrupts(struct iwl_trans *trans, bool enable)
-{
-	if (trans->ops->interrupts)
-		trans->ops->interrupts(trans, enable);
-}
+अटल अंतरभूत व्योम iwl_trans_पूर्णांकerrupts(काष्ठा iwl_trans *trans, bool enable)
+अणु
+	अगर (trans->ops->पूर्णांकerrupts)
+		trans->ops->पूर्णांकerrupts(trans, enable);
+पूर्ण
 
 /*****************************************************
  * transport helper functions
  *****************************************************/
-struct iwl_trans *iwl_trans_alloc(unsigned int priv_size,
-			  struct device *dev,
-			  const struct iwl_trans_ops *ops,
-			  const struct iwl_cfg_trans_params *cfg_trans);
-int iwl_trans_init(struct iwl_trans *trans);
-void iwl_trans_free(struct iwl_trans *trans);
+काष्ठा iwl_trans *iwl_trans_alloc(अचिन्हित पूर्णांक priv_size,
+			  काष्ठा device *dev,
+			  स्थिर काष्ठा iwl_trans_ops *ops,
+			  स्थिर काष्ठा iwl_cfg_trans_params *cfg_trans);
+पूर्णांक iwl_trans_init(काष्ठा iwl_trans *trans);
+व्योम iwl_trans_मुक्त(काष्ठा iwl_trans *trans);
 
 /*****************************************************
-* driver (transport) register/unregister functions
+* driver (transport) रेजिस्टर/unरेजिस्टर functions
 ******************************************************/
-int __must_check iwl_pci_register_driver(void);
-void iwl_pci_unregister_driver(void);
+पूर्णांक __must_check iwl_pci_रेजिस्टर_driver(व्योम);
+व्योम iwl_pci_unरेजिस्टर_driver(व्योम);
 
-#endif /* __iwl_trans_h__ */
+#पूर्ण_अगर /* __iwl_trans_h__ */

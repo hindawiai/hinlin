@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides constants for AM654 SERDES.
+ * This header provides स्थिरants क्रम AM654 SERDES.
  */
 
-#ifndef _DT_BINDINGS_AM654_SERDES
-#define _DT_BINDINGS_AM654_SERDES
+#अगर_अघोषित _DT_BINDINGS_AM654_SERDES
+#घोषणा _DT_BINDINGS_AM654_SERDES
 
-#define AM654_SERDES_CMU_REFCLK	0
-#define AM654_SERDES_LO_REFCLK	1
-#define AM654_SERDES_RO_REFCLK	2
+#घोषणा AM654_SERDES_CMU_REFCLK	0
+#घोषणा AM654_SERDES_LO_REFCLK	1
+#घोषणा AM654_SERDES_RO_REFCLK	2
 
-#endif /* _DT_BINDINGS_AM654_SERDES */
+#पूर्ण_अगर /* _DT_BINDINGS_AM654_SERDES */

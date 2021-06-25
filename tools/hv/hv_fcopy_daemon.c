@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * An implementation of host to guest copy functionality for Linux.
+ * An implementation of host to guest copy functionality क्रम Linux.
  *
  * Copyright (C) 2014, Microsoft, Inc.
  *
@@ -8,259 +9,259 @@
  */
 
 
-#include <sys/types.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-#include <errno.h>
-#include <linux/hyperv.h>
-#include <linux/limits.h>
-#include <syslog.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <getopt.h>
+#समावेश <sys/types.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/hyperv.h>
+#समावेश <linux/सीमा.स>
+#समावेश <syslog.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <getopt.h>
 
-static int target_fd;
-static char target_fname[PATH_MAX];
-static unsigned long long filesize;
+अटल पूर्णांक target_fd;
+अटल अक्षर target_fname[PATH_MAX];
+अटल अचिन्हित दीर्घ दीर्घ filesize;
 
-static int hv_start_fcopy(struct hv_start_fcopy *smsg)
-{
-	int error = HV_E_FAIL;
-	char *q, *p;
+अटल पूर्णांक hv_start_fcopy(काष्ठा hv_start_fcopy *smsg)
+अणु
+	पूर्णांक error = HV_E_FAIL;
+	अक्षर *q, *p;
 
 	filesize = 0;
-	p = (char *)smsg->path_name;
-	snprintf(target_fname, sizeof(target_fname), "%s/%s",
-		 (char *)smsg->path_name, (char *)smsg->file_name);
+	p = (अक्षर *)smsg->path_name;
+	snम_लिखो(target_fname, माप(target_fname), "%s/%s",
+		 (अक्षर *)smsg->path_name, (अक्षर *)smsg->file_name);
 
 	syslog(LOG_INFO, "Target file name: %s", target_fname);
 	/*
-	 * Check to see if the path is already in place; if not,
-	 * create if required.
+	 * Check to see अगर the path is alपढ़ोy in place; अगर not,
+	 * create अगर required.
 	 */
-	while ((q = strchr(p, '/')) != NULL) {
-		if (q == p) {
+	जबतक ((q = म_अक्षर(p, '/')) != शून्य) अणु
+		अगर (q == p) अणु
 			p++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		*q = '\0';
-		if (access((char *)smsg->path_name, F_OK)) {
-			if (smsg->copy_flags & CREATE_PATH) {
-				if (mkdir((char *)smsg->path_name, 0755)) {
+		अगर (access((अक्षर *)smsg->path_name, F_OK)) अणु
+			अगर (smsg->copy_flags & CREATE_PATH) अणु
+				अगर (सूची_गढ़ो((अक्षर *)smsg->path_name, 0755)) अणु
 					syslog(LOG_ERR, "Failed to create %s",
-						(char *)smsg->path_name);
-					goto done;
-				}
-			} else {
+						(अक्षर *)smsg->path_name);
+					जाओ करोne;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				syslog(LOG_ERR, "Invalid path: %s",
-					(char *)smsg->path_name);
-				goto done;
-			}
-		}
+					(अक्षर *)smsg->path_name);
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
 		p = q + 1;
 		*q = '/';
-	}
+	पूर्ण
 
-	if (!access(target_fname, F_OK)) {
+	अगर (!access(target_fname, F_OK)) अणु
 		syslog(LOG_INFO, "File: %s exists", target_fname);
-		if (!(smsg->copy_flags & OVER_WRITE)) {
+		अगर (!(smsg->copy_flags & OVER_WRITE)) अणु
 			error = HV_ERROR_ALREADY_EXISTS;
-			goto done;
-		}
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण
 
-	target_fd = open(target_fname,
+	target_fd = खोलो(target_fname,
 			 O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC, 0744);
-	if (target_fd == -1) {
-		syslog(LOG_INFO, "Open Failed: %s", strerror(errno));
-		goto done;
-	}
+	अगर (target_fd == -1) अणु
+		syslog(LOG_INFO, "Open Failed: %s", म_त्रुटि(त्रुटि_सं));
+		जाओ करोne;
+	पूर्ण
 
 	error = 0;
-done:
-	if (error)
+करोne:
+	अगर (error)
 		target_fname[0] = '\0';
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int hv_copy_data(struct hv_do_fcopy *cpmsg)
-{
-	ssize_t bytes_written;
-	int ret = 0;
+अटल पूर्णांक hv_copy_data(काष्ठा hv_करो_fcopy *cpmsg)
+अणु
+	sमाप_प्रकार bytes_written;
+	पूर्णांक ret = 0;
 
-	bytes_written = pwrite(target_fd, cpmsg->data, cpmsg->size,
+	bytes_written = pग_लिखो(target_fd, cpmsg->data, cpmsg->size,
 				cpmsg->offset);
 
 	filesize += cpmsg->size;
-	if (bytes_written != cpmsg->size) {
-		switch (errno) {
-		case ENOSPC:
+	अगर (bytes_written != cpmsg->size) अणु
+		चयन (त्रुटि_सं) अणु
+		हाल ENOSPC:
 			ret = HV_ERROR_DISK_FULL;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = HV_E_FAIL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		syslog(LOG_ERR, "pwrite failed to write %llu bytes: %ld (%s)",
-		       filesize, (long)bytes_written, strerror(errno));
-	}
+		       filesize, (दीर्घ)bytes_written, म_त्रुटि(त्रुटि_सं));
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Reset target_fname to "" in the two below functions for hibernation: if
- * the fcopy operation is aborted by hibernation, the daemon should remove the
+ * Reset target_fname to "" in the two below functions क्रम hibernation: अगर
+ * the fcopy operation is पातed by hibernation, the daemon should हटाओ the
  * partially-copied file; to achieve this, the hv_utils driver always fakes a
  * CANCEL_FCOPY message upon suspend, and later when the VM resumes back,
- * the daemon calls hv_copy_cancel() to remove the file; if a file is copied
- * successfully before suspend, hv_copy_finished() must reset target_fname to
- * avoid that the file can be incorrectly removed upon resume, since the faked
- * CANCEL_FCOPY message is spurious in this case.
+ * the daemon calls hv_copy_cancel() to हटाओ the file; अगर a file is copied
+ * successfully beक्रमe suspend, hv_copy_finished() must reset target_fname to
+ * aव्योम that the file can be incorrectly हटाओd upon resume, since the faked
+ * CANCEL_FCOPY message is spurious in this हाल.
  */
-static int hv_copy_finished(void)
-{
-	close(target_fd);
+अटल पूर्णांक hv_copy_finished(व्योम)
+अणु
+	बंद(target_fd);
 	target_fname[0] = '\0';
-	return 0;
-}
-static int hv_copy_cancel(void)
-{
-	close(target_fd);
-	if (strlen(target_fname) > 0) {
+	वापस 0;
+पूर्ण
+अटल पूर्णांक hv_copy_cancel(व्योम)
+अणु
+	बंद(target_fd);
+	अगर (म_माप(target_fname) > 0) अणु
 		unlink(target_fname);
 		target_fname[0] = '\0';
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
-}
+पूर्ण
 
-void print_usage(char *argv[])
-{
-	fprintf(stderr, "Usage: %s [options]\n"
+व्योम prपूर्णांक_usage(अक्षर *argv[])
+अणु
+	ख_लिखो(मानक_त्रुटि, "Usage: %s [options]\n"
 		"Options are:\n"
 		"  -n, --no-daemon        stay in foreground, don't daemonize\n"
 		"  -h, --help             print this help\n", argv[0]);
-}
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int fcopy_fd = -1;
-	int error;
-	int daemonize = 1, long_index = 0, opt;
-	int version = FCOPY_CURRENT_VERSION;
-	union {
-		struct hv_fcopy_hdr hdr;
-		struct hv_start_fcopy start;
-		struct hv_do_fcopy copy;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक fcopy_fd = -1;
+	पूर्णांक error;
+	पूर्णांक daemonize = 1, दीर्घ_index = 0, opt;
+	पूर्णांक version = FCOPY_CURRENT_VERSION;
+	जोड़ अणु
+		काष्ठा hv_fcopy_hdr hdr;
+		काष्ठा hv_start_fcopy start;
+		काष्ठा hv_करो_fcopy copy;
 		__u32 kernel_modver;
-	} buffer = { };
-	int in_handshake;
+	पूर्ण buffer = अणु पूर्ण;
+	पूर्णांक in_handshake;
 
-	static struct option long_options[] = {
-		{"help",	no_argument,	   0,  'h' },
-		{"no-daemon",	no_argument,	   0,  'n' },
-		{0,		0,		   0,  0   }
-	};
+	अटल काष्ठा option दीर्घ_options[] = अणु
+		अणु"help",	no_argument,	   0,  'h' पूर्ण,
+		अणु"no-daemon",	no_argument,	   0,  'n' पूर्ण,
+		अणु0,		0,		   0,  0   पूर्ण
+	पूर्ण;
 
-	while ((opt = getopt_long(argc, argv, "hn", long_options,
-				  &long_index)) != -1) {
-		switch (opt) {
-		case 'n':
+	जबतक ((opt = getopt_दीर्घ(argc, argv, "hn", दीर्घ_options,
+				  &दीर्घ_index)) != -1) अणु
+		चयन (opt) अणु
+		हाल 'n':
 			daemonize = 0;
-			break;
-		case 'h':
-		default:
-			print_usage(argv);
-			exit(EXIT_FAILURE);
-		}
-	}
+			अवरोध;
+		हाल 'h':
+		शेष:
+			prपूर्णांक_usage(argv);
+			निकास(निकास_त्रुटि);
+		पूर्ण
+	पूर्ण
 
-	if (daemonize && daemon(1, 0)) {
-		syslog(LOG_ERR, "daemon() failed; error: %s", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+	अगर (daemonize && daemon(1, 0)) अणु
+		syslog(LOG_ERR, "daemon() failed; error: %s", म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	openlog("HV_FCOPY", 0, LOG_USER);
+	खोलोlog("HV_FCOPY", 0, LOG_USER);
 	syslog(LOG_INFO, "starting; pid is:%d", getpid());
 
-reopen_fcopy_fd:
-	if (fcopy_fd != -1)
-		close(fcopy_fd);
+reखोलो_fcopy_fd:
+	अगर (fcopy_fd != -1)
+		बंद(fcopy_fd);
 	/* Remove any possible partially-copied file on error */
 	hv_copy_cancel();
 	in_handshake = 1;
-	fcopy_fd = open("/dev/vmbus/hv_fcopy", O_RDWR);
+	fcopy_fd = खोलो("/dev/vmbus/hv_fcopy", O_RDWR);
 
-	if (fcopy_fd < 0) {
+	अगर (fcopy_fd < 0) अणु
 		syslog(LOG_ERR, "open /dev/vmbus/hv_fcopy failed; error: %d %s",
-			errno, strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+			त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
 	/*
 	 * Register with the kernel.
 	 */
-	if ((write(fcopy_fd, &version, sizeof(int))) != sizeof(int)) {
-		syslog(LOG_ERR, "Registration failed: %s", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+	अगर ((ग_लिखो(fcopy_fd, &version, माप(पूर्णांक))) != माप(पूर्णांक)) अणु
+		syslog(LOG_ERR, "Registration failed: %s", म_त्रुटि(त्रुटि_सं));
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		/*
 		 * In this loop we process fcopy messages after the
 		 * handshake is complete.
 		 */
-		ssize_t len;
+		sमाप_प्रकार len;
 
-		len = pread(fcopy_fd, &buffer, sizeof(buffer), 0);
-		if (len < 0) {
-			syslog(LOG_ERR, "pread failed: %s", strerror(errno));
-			goto reopen_fcopy_fd;
-		}
+		len = pपढ़ो(fcopy_fd, &buffer, माप(buffer), 0);
+		अगर (len < 0) अणु
+			syslog(LOG_ERR, "pread failed: %s", म_त्रुटि(त्रुटि_सं));
+			जाओ reखोलो_fcopy_fd;
+		पूर्ण
 
-		if (in_handshake) {
-			if (len != sizeof(buffer.kernel_modver)) {
+		अगर (in_handshake) अणु
+			अगर (len != माप(buffer.kernel_modver)) अणु
 				syslog(LOG_ERR, "invalid version negotiation");
-				exit(EXIT_FAILURE);
-			}
+				निकास(निकास_त्रुटि);
+			पूर्ण
 			in_handshake = 0;
 			syslog(LOG_INFO, "kernel module version: %u",
 			       buffer.kernel_modver);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (buffer.hdr.operation) {
-		case START_FILE_COPY:
+		चयन (buffer.hdr.operation) अणु
+		हाल START_खाता_COPY:
 			error = hv_start_fcopy(&buffer.start);
-			break;
-		case WRITE_TO_FILE:
+			अवरोध;
+		हाल WRITE_TO_खाता:
 			error = hv_copy_data(&buffer.copy);
-			break;
-		case COMPLETE_FCOPY:
+			अवरोध;
+		हाल COMPLETE_FCOPY:
 			error = hv_copy_finished();
-			break;
-		case CANCEL_FCOPY:
+			अवरोध;
+		हाल CANCEL_FCOPY:
 			error = hv_copy_cancel();
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			error = HV_E_FAIL;
 			syslog(LOG_ERR, "Unknown operation: %d",
 				buffer.hdr.operation);
 
-		}
+		पूर्ण
 
 		/*
-		 * pwrite() may return an error due to the faked CANCEL_FCOPY
+		 * pग_लिखो() may वापस an error due to the faked CANCEL_FCOPY
 		 * message upon hibernation. Ignore the error by resetting the
-		 * dev file, i.e. closing and re-opening it.
+		 * dev file, i.e. closing and re-खोलोing it.
 		 */
-		if (pwrite(fcopy_fd, &error, sizeof(int), 0) != sizeof(int)) {
-			syslog(LOG_ERR, "pwrite failed: %s", strerror(errno));
-			goto reopen_fcopy_fd;
-		}
-	}
-}
+		अगर (pग_लिखो(fcopy_fd, &error, माप(पूर्णांक), 0) != माप(पूर्णांक)) अणु
+			syslog(LOG_ERR, "pwrite failed: %s", म_त्रुटि(त्रुटि_सं));
+			जाओ reखोलो_fcopy_fd;
+		पूर्ण
+	पूर्ण
+पूर्ण

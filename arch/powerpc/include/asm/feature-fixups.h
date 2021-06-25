@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __ASM_POWERPC_FEATURE_FIXUPS_H
-#define __ASM_POWERPC_FEATURE_FIXUPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __ASM_POWERPC_FEATURE_FIXUPS_H
+#घोषणा __ASM_POWERPC_FEATURE_FIXUPS_H
 
-#include <asm/asm-const.h>
+#समावेश <यंत्र/यंत्र-स्थिर.h>
 
 /*
  */
@@ -11,50 +12,50 @@
  * Feature section common macros
  *
  * Note that the entries now contain offsets between the table entry
- * and the code rather than absolute code pointers in order to be
+ * and the code rather than असलolute code poपूर्णांकers in order to be
  * useable with the vdso shared library. There is also an assumption
  * that values will be negative, that is, the fixup table has to be
  * located after the code it fixes up.
  */
-#if defined(CONFIG_PPC64) && !defined(__powerpc64__)
+#अगर defined(CONFIG_PPC64) && !defined(__घातerpc64__)
 /* 64 bits kernel, 32 bits code (ie. vdso32) */
-#define FTR_ENTRY_LONG		.8byte
-#define FTR_ENTRY_OFFSET	.long 0xffffffff; .long
-#elif defined(CONFIG_PPC64)
-#define FTR_ENTRY_LONG		.8byte
-#define FTR_ENTRY_OFFSET	.8byte
-#else
-#define FTR_ENTRY_LONG		.long
-#define FTR_ENTRY_OFFSET	.long
-#endif
+#घोषणा FTR_ENTRY_LONG		.8byte
+#घोषणा FTR_ENTRY_OFFSET	.दीर्घ 0xffffffff; .दीर्घ
+#या_अगर defined(CONFIG_PPC64)
+#घोषणा FTR_ENTRY_LONG		.8byte
+#घोषणा FTR_ENTRY_OFFSET	.8byte
+#अन्यथा
+#घोषणा FTR_ENTRY_LONG		.दीर्घ
+#घोषणा FTR_ENTRY_OFFSET	.दीर्घ
+#पूर्ण_अगर
 
-#define START_FTR_SECTION(label)	label##1:
+#घोषणा START_FTR_SECTION(label)	label##1:
 
-#define FTR_SECTION_ELSE_NESTED(label)			\
+#घोषणा FTR_SECTION_ELSE_NESTED(label)			\
 label##2:						\
 	.pushsection __ftr_alt_##label,"a";		\
 	.align 2;					\
 label##3:
 
 
-#ifndef CONFIG_CC_IS_CLANG
-#define CHECK_ALT_SIZE(else_size, body_size)			\
-	.ifgt (else_size) - (body_size);			\
+#अगर_अघोषित CONFIG_CC_IS_CLANG
+#घोषणा CHECK_ALT_SIZE(अन्यथा_size, body_size)			\
+	.अगरgt (अन्यथा_size) - (body_size);			\
 	.error "Feature section else case larger than body";	\
-	.endif;
-#else
+	.endअगर;
+#अन्यथा
 /*
- * If we use the ifgt syntax above, clang's assembler complains about the
- * expression being non-absolute when the code appears in an inline assembly
+ * If we use the अगरgt syntax above, clang's assembler complains about the
+ * expression being non-असलolute when the code appears in an अंतरभूत assembly
  * statement.
- * As a workaround use an .org directive that has no effect if the else case
- * instructions are smaller than the body, but fails otherwise.
+ * As a workaround use an .org directive that has no effect अगर the अन्यथा हाल
+ * inकाष्ठाions are smaller than the body, but fails otherwise.
  */
-#define CHECK_ALT_SIZE(else_size, body_size)			\
-	.org . + ((else_size) > (body_size));
-#endif
+#घोषणा CHECK_ALT_SIZE(अन्यथा_size, body_size)			\
+	.org . + ((अन्यथा_size) > (body_size));
+#पूर्ण_अगर
 
-#define MAKE_FTR_SECTION_ENTRY(msk, val, label, sect)		\
+#घोषणा MAKE_FTR_SECTION_ENTRY(msk, val, label, sect)		\
 label##4:							\
 	.popsection;						\
 	.pushsection sect,"a";					\
@@ -71,136 +72,136 @@ label##5:							\
 
 
 /* CPU feature dependent sections */
-#define BEGIN_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
-#define BEGIN_FTR_SECTION		START_FTR_SECTION(97)
+#घोषणा BEGIN_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
+#घोषणा BEGIN_FTR_SECTION		START_FTR_SECTION(97)
 
-#define END_FTR_SECTION_NESTED(msk, val, label) 		\
+#घोषणा END_FTR_SECTION_NESTED(msk, val, label) 		\
 	FTR_SECTION_ELSE_NESTED(label)				\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __ftr_fixup)
 
-#define END_FTR_SECTION(msk, val)		\
+#घोषणा END_FTR_SECTION(msk, val)		\
 	END_FTR_SECTION_NESTED(msk, val, 97)
 
-#define END_FTR_SECTION_NESTED_IFSET(msk, label)	\
+#घोषणा END_FTR_SECTION_NESTED_IFSET(msk, label)	\
 	END_FTR_SECTION_NESTED((msk), (msk), label)
 
-#define END_FTR_SECTION_IFSET(msk)	END_FTR_SECTION((msk), (msk))
-#define END_FTR_SECTION_IFCLR(msk)	END_FTR_SECTION((msk), 0)
+#घोषणा END_FTR_SECTION_IFSET(msk)	END_FTR_SECTION((msk), (msk))
+#घोषणा END_FTR_SECTION_IFCLR(msk)	END_FTR_SECTION((msk), 0)
 
 /* CPU feature sections with alternatives, use BEGIN_FTR_SECTION to start */
-#define FTR_SECTION_ELSE	FTR_SECTION_ELSE_NESTED(97)
-#define ALT_FTR_SECTION_END_NESTED(msk, val, label)	\
+#घोषणा FTR_SECTION_ELSE	FTR_SECTION_ELSE_NESTED(97)
+#घोषणा ALT_FTR_SECTION_END_NESTED(msk, val, label)	\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __ftr_fixup)
-#define ALT_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
+#घोषणा ALT_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
 	ALT_FTR_SECTION_END_NESTED(msk, msk, label)
-#define ALT_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
+#घोषणा ALT_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
 	ALT_FTR_SECTION_END_NESTED(msk, 0, label)
-#define ALT_FTR_SECTION_END(msk, val)	\
+#घोषणा ALT_FTR_SECTION_END(msk, val)	\
 	ALT_FTR_SECTION_END_NESTED(msk, val, 97)
-#define ALT_FTR_SECTION_END_IFSET(msk)	\
+#घोषणा ALT_FTR_SECTION_END_IFSET(msk)	\
 	ALT_FTR_SECTION_END_NESTED_IFSET(msk, 97)
-#define ALT_FTR_SECTION_END_IFCLR(msk)	\
+#घोषणा ALT_FTR_SECTION_END_IFCLR(msk)	\
 	ALT_FTR_SECTION_END_NESTED_IFCLR(msk, 97)
 
 /* MMU feature dependent sections */
-#define BEGIN_MMU_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
-#define BEGIN_MMU_FTR_SECTION			START_FTR_SECTION(97)
+#घोषणा BEGIN_MMU_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
+#घोषणा BEGIN_MMU_FTR_SECTION			START_FTR_SECTION(97)
 
-#define END_MMU_FTR_SECTION_NESTED(msk, val, label) 		\
+#घोषणा END_MMU_FTR_SECTION_NESTED(msk, val, label) 		\
 	FTR_SECTION_ELSE_NESTED(label)				\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __mmu_ftr_fixup)
 
-#define END_MMU_FTR_SECTION(msk, val)		\
+#घोषणा END_MMU_FTR_SECTION(msk, val)		\
 	END_MMU_FTR_SECTION_NESTED(msk, val, 97)
 
-#define END_MMU_FTR_SECTION_NESTED_IFSET(msk, label)	\
+#घोषणा END_MMU_FTR_SECTION_NESTED_IFSET(msk, label)	\
 	END_MMU_FTR_SECTION_NESTED((msk), (msk), label)
 
-#define END_MMU_FTR_SECTION_NESTED_IFCLR(msk, label)	\
+#घोषणा END_MMU_FTR_SECTION_NESTED_IFCLR(msk, label)	\
 	END_MMU_FTR_SECTION_NESTED((msk), 0, label)
 
-#define END_MMU_FTR_SECTION_IFSET(msk)	END_MMU_FTR_SECTION((msk), (msk))
-#define END_MMU_FTR_SECTION_IFCLR(msk)	END_MMU_FTR_SECTION((msk), 0)
+#घोषणा END_MMU_FTR_SECTION_IFSET(msk)	END_MMU_FTR_SECTION((msk), (msk))
+#घोषणा END_MMU_FTR_SECTION_IFCLR(msk)	END_MMU_FTR_SECTION((msk), 0)
 
 /* MMU feature sections with alternatives, use BEGIN_FTR_SECTION to start */
-#define MMU_FTR_SECTION_ELSE_NESTED(label)	FTR_SECTION_ELSE_NESTED(label)
-#define MMU_FTR_SECTION_ELSE	MMU_FTR_SECTION_ELSE_NESTED(97)
-#define ALT_MMU_FTR_SECTION_END_NESTED(msk, val, label)	\
+#घोषणा MMU_FTR_SECTION_ELSE_NESTED(label)	FTR_SECTION_ELSE_NESTED(label)
+#घोषणा MMU_FTR_SECTION_ELSE	MMU_FTR_SECTION_ELSE_NESTED(97)
+#घोषणा ALT_MMU_FTR_SECTION_END_NESTED(msk, val, label)	\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __mmu_ftr_fixup)
-#define ALT_MMU_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
+#घोषणा ALT_MMU_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
 	ALT_MMU_FTR_SECTION_END_NESTED(msk, msk, label)
-#define ALT_MMU_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
+#घोषणा ALT_MMU_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
 	ALT_MMU_FTR_SECTION_END_NESTED(msk, 0, label)
-#define ALT_MMU_FTR_SECTION_END(msk, val)	\
+#घोषणा ALT_MMU_FTR_SECTION_END(msk, val)	\
 	ALT_MMU_FTR_SECTION_END_NESTED(msk, val, 97)
-#define ALT_MMU_FTR_SECTION_END_IFSET(msk)	\
+#घोषणा ALT_MMU_FTR_SECTION_END_IFSET(msk)	\
 	ALT_MMU_FTR_SECTION_END_NESTED_IFSET(msk, 97)
-#define ALT_MMU_FTR_SECTION_END_IFCLR(msk)	\
+#घोषणा ALT_MMU_FTR_SECTION_END_IFCLR(msk)	\
 	ALT_MMU_FTR_SECTION_END_NESTED_IFCLR(msk, 97)
 
 /* Firmware feature dependent sections */
-#define BEGIN_FW_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
-#define BEGIN_FW_FTR_SECTION			START_FTR_SECTION(97)
+#घोषणा BEGIN_FW_FTR_SECTION_NESTED(label)	START_FTR_SECTION(label)
+#घोषणा BEGIN_FW_FTR_SECTION			START_FTR_SECTION(97)
 
-#define END_FW_FTR_SECTION_NESTED(msk, val, label) 		\
+#घोषणा END_FW_FTR_SECTION_NESTED(msk, val, label) 		\
 	FTR_SECTION_ELSE_NESTED(label)				\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __fw_ftr_fixup)
 
-#define END_FW_FTR_SECTION(msk, val)		\
+#घोषणा END_FW_FTR_SECTION(msk, val)		\
 	END_FW_FTR_SECTION_NESTED(msk, val, 97)
 
-#define END_FW_FTR_SECTION_IFSET(msk)	END_FW_FTR_SECTION((msk), (msk))
-#define END_FW_FTR_SECTION_IFCLR(msk)	END_FW_FTR_SECTION((msk), 0)
+#घोषणा END_FW_FTR_SECTION_IFSET(msk)	END_FW_FTR_SECTION((msk), (msk))
+#घोषणा END_FW_FTR_SECTION_IFCLR(msk)	END_FW_FTR_SECTION((msk), 0)
 
 /* Firmware feature sections with alternatives */
-#define FW_FTR_SECTION_ELSE_NESTED(label)	FTR_SECTION_ELSE_NESTED(label)
-#define FW_FTR_SECTION_ELSE	FTR_SECTION_ELSE_NESTED(97)
-#define ALT_FW_FTR_SECTION_END_NESTED(msk, val, label)	\
+#घोषणा FW_FTR_SECTION_ELSE_NESTED(label)	FTR_SECTION_ELSE_NESTED(label)
+#घोषणा FW_FTR_SECTION_ELSE	FTR_SECTION_ELSE_NESTED(97)
+#घोषणा ALT_FW_FTR_SECTION_END_NESTED(msk, val, label)	\
 	MAKE_FTR_SECTION_ENTRY(msk, val, label, __fw_ftr_fixup)
-#define ALT_FW_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
+#घोषणा ALT_FW_FTR_SECTION_END_NESTED_IFSET(msk, label)	\
 	ALT_FW_FTR_SECTION_END_NESTED(msk, msk, label)
-#define ALT_FW_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
+#घोषणा ALT_FW_FTR_SECTION_END_NESTED_IFCLR(msk, label)	\
 	ALT_FW_FTR_SECTION_END_NESTED(msk, 0, label)
-#define ALT_FW_FTR_SECTION_END(msk, val)	\
+#घोषणा ALT_FW_FTR_SECTION_END(msk, val)	\
 	ALT_FW_FTR_SECTION_END_NESTED(msk, val, 97)
-#define ALT_FW_FTR_SECTION_END_IFSET(msk)	\
+#घोषणा ALT_FW_FTR_SECTION_END_IFSET(msk)	\
 	ALT_FW_FTR_SECTION_END_NESTED_IFSET(msk, 97)
-#define ALT_FW_FTR_SECTION_END_IFCLR(msk)	\
+#घोषणा ALT_FW_FTR_SECTION_END_IFCLR(msk)	\
 	ALT_FW_FTR_SECTION_END_NESTED_IFCLR(msk, 97)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define ASM_FTR_IF(section_if, section_else, msk, val)	\
-	stringify_in_c(BEGIN_FTR_SECTION)			\
-	section_if "; "						\
-	stringify_in_c(FTR_SECTION_ELSE)			\
-	section_else "; "					\
-	stringify_in_c(ALT_FTR_SECTION_END((msk), (val)))
+#घोषणा ASM_FTR_IF(section_अगर, section_अन्यथा, msk, val)	\
+	stringअगरy_in_c(BEGIN_FTR_SECTION)			\
+	section_अगर "; "						\
+	stringअगरy_in_c(FTR_SECTION_ELSE)			\
+	section_अन्यथा "; "					\
+	stringअगरy_in_c(ALT_FTR_SECTION_END((msk), (val)))
 
-#define ASM_FTR_IFSET(section_if, section_else, msk)	\
-	ASM_FTR_IF(section_if, section_else, (msk), (msk))
+#घोषणा ASM_FTR_IFSET(section_अगर, section_अन्यथा, msk)	\
+	ASM_FTR_IF(section_अगर, section_अन्यथा, (msk), (msk))
 
-#define ASM_FTR_IFCLR(section_if, section_else, msk)	\
-	ASM_FTR_IF(section_if, section_else, (msk), 0)
+#घोषणा ASM_FTR_IFCLR(section_अगर, section_अन्यथा, msk)	\
+	ASM_FTR_IF(section_अगर, section_अन्यथा, (msk), 0)
 
-#define ASM_MMU_FTR_IF(section_if, section_else, msk, val)	\
-	stringify_in_c(BEGIN_MMU_FTR_SECTION)			\
-	section_if "; "						\
-	stringify_in_c(MMU_FTR_SECTION_ELSE)			\
-	section_else "; "					\
-	stringify_in_c(ALT_MMU_FTR_SECTION_END((msk), (val)))
+#घोषणा ASM_MMU_FTR_IF(section_अगर, section_अन्यथा, msk, val)	\
+	stringअगरy_in_c(BEGIN_MMU_FTR_SECTION)			\
+	section_अगर "; "						\
+	stringअगरy_in_c(MMU_FTR_SECTION_ELSE)			\
+	section_अन्यथा "; "					\
+	stringअगरy_in_c(ALT_MMU_FTR_SECTION_END((msk), (val)))
 
-#define ASM_MMU_FTR_IFSET(section_if, section_else, msk)	\
-	ASM_MMU_FTR_IF(section_if, section_else, (msk), (msk))
+#घोषणा ASM_MMU_FTR_IFSET(section_अगर, section_अन्यथा, msk)	\
+	ASM_MMU_FTR_IF(section_अगर, section_अन्यथा, (msk), (msk))
 
-#define ASM_MMU_FTR_IFCLR(section_if, section_else, msk)	\
-	ASM_MMU_FTR_IF(section_if, section_else, (msk), 0)
+#घोषणा ASM_MMU_FTR_IFCLR(section_अगर, section_अन्यथा, msk)	\
+	ASM_MMU_FTR_IF(section_अगर, section_अन्यथा, (msk), 0)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
 /* LWSYNC feature sections */
-#define START_LWSYNC_SECTION(label)	label##1:
-#define MAKE_LWSYNC_SECTION_ENTRY(label, sect)		\
+#घोषणा START_LWSYNC_SECTION(label)	label##1:
+#घोषणा MAKE_LWSYNC_SECTION_ENTRY(label, sect)		\
 label##2:						\
 	.pushsection sect,"a";				\
 	.align 2;					\
@@ -208,7 +209,7 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET label##1b-label##3b;		\
 	.popsection;
 
-#define STF_ENTRY_BARRIER_FIXUP_SECTION			\
+#घोषणा STF_ENTRY_BARRIER_FIXUP_SECTION			\
 953:							\
 	.pushsection __stf_entry_barrier_fixup,"a";	\
 	.align 2;					\
@@ -216,15 +217,15 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 953b-954b;			\
 	.popsection;
 
-#define STF_EXIT_BARRIER_FIXUP_SECTION			\
+#घोषणा STF_EXIT_BARRIER_FIXUP_SECTION			\
 955:							\
-	.pushsection __stf_exit_barrier_fixup,"a";	\
+	.pushsection __stf_निकास_barrier_fixup,"a";	\
 	.align 2;					\
 956:							\
 	FTR_ENTRY_OFFSET 955b-956b;			\
 	.popsection;
 
-#define UACCESS_FLUSH_FIXUP_SECTION			\
+#घोषणा UACCESS_FLUSH_FIXUP_SECTION			\
 959:							\
 	.pushsection __uaccess_flush_fixup,"a";		\
 	.align 2;					\
@@ -232,7 +233,7 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 959b-960b;			\
 	.popsection;
 
-#define ENTRY_FLUSH_FIXUP_SECTION			\
+#घोषणा ENTRY_FLUSH_FIXUP_SECTION			\
 957:							\
 	.pushsection __entry_flush_fixup,"a";		\
 	.align 2;					\
@@ -240,7 +241,7 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 957b-958b;			\
 	.popsection;
 
-#define SCV_ENTRY_FLUSH_FIXUP_SECTION			\
+#घोषणा SCV_ENTRY_FLUSH_FIXUP_SECTION			\
 957:							\
 	.pushsection __scv_entry_flush_fixup,"a";	\
 	.align 2;					\
@@ -248,7 +249,7 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 957b-958b;			\
 	.popsection;
 
-#define RFI_FLUSH_FIXUP_SECTION				\
+#घोषणा RFI_FLUSH_FIXUP_SECTION				\
 951:							\
 	.pushsection __rfi_flush_fixup,"a";		\
 	.align 2;					\
@@ -256,7 +257,7 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 951b-952b;			\
 	.popsection;
 
-#define NOSPEC_BARRIER_FIXUP_SECTION			\
+#घोषणा NOSPEC_BARRIER_FIXUP_SECTION			\
 953:							\
 	.pushsection __barrier_nospec_fixup,"a";	\
 	.align 2;					\
@@ -264,10 +265,10 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 953b-954b;			\
 	.popsection;
 
-#define START_BTB_FLUSH_SECTION			\
+#घोषणा START_BTB_FLUSH_SECTION			\
 955:							\
 
-#define END_BTB_FLUSH_SECTION			\
+#घोषणा END_BTB_FLUSH_SECTION			\
 956:							\
 	.pushsection __btb_flush_fixup,"a";	\
 	.align 2;							\
@@ -276,23 +277,23 @@ label##3:					       	\
 	FTR_ENTRY_OFFSET 956b-957b;			\
 	.popsection;
 
-#ifndef __ASSEMBLY__
-#include <linux/types.h>
+#अगर_अघोषित __ASSEMBLY__
+#समावेश <linux/types.h>
 
-extern long stf_barrier_fallback;
-extern long entry_flush_fallback;
-extern long scv_entry_flush_fallback;
-extern long __start___stf_entry_barrier_fixup, __stop___stf_entry_barrier_fixup;
-extern long __start___stf_exit_barrier_fixup, __stop___stf_exit_barrier_fixup;
-extern long __start___uaccess_flush_fixup, __stop___uaccess_flush_fixup;
-extern long __start___entry_flush_fixup, __stop___entry_flush_fixup;
-extern long __start___scv_entry_flush_fixup, __stop___scv_entry_flush_fixup;
-extern long __start___rfi_flush_fixup, __stop___rfi_flush_fixup;
-extern long __start___barrier_nospec_fixup, __stop___barrier_nospec_fixup;
-extern long __start__btb_flush_fixup, __stop__btb_flush_fixup;
+बाह्य दीर्घ stf_barrier_fallback;
+बाह्य दीर्घ entry_flush_fallback;
+बाह्य दीर्घ scv_entry_flush_fallback;
+बाह्य दीर्घ __start___stf_entry_barrier_fixup, __stop___stf_entry_barrier_fixup;
+बाह्य दीर्घ __start___stf_निकास_barrier_fixup, __stop___stf_निकास_barrier_fixup;
+बाह्य दीर्घ __start___uaccess_flush_fixup, __stop___uaccess_flush_fixup;
+बाह्य दीर्घ __start___entry_flush_fixup, __stop___entry_flush_fixup;
+बाह्य दीर्घ __start___scv_entry_flush_fixup, __stop___scv_entry_flush_fixup;
+बाह्य दीर्घ __start___rfi_flush_fixup, __stop___rfi_flush_fixup;
+बाह्य दीर्घ __start___barrier_nospec_fixup, __stop___barrier_nospec_fixup;
+बाह्य दीर्घ __start__btb_flush_fixup, __stop__btb_flush_fixup;
 
-void apply_feature_fixups(void);
-void setup_feature_keys(void);
-#endif
+व्योम apply_feature_fixups(व्योम);
+व्योम setup_feature_keys(व्योम);
+#पूर्ण_अगर
 
-#endif /* __ASM_POWERPC_FEATURE_FIXUPS_H */
+#पूर्ण_अगर /* __ASM_POWERPC_FEATURE_FIXUPS_H */

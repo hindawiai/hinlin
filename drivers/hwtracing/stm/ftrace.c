@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Simple kernel driver to link kernel Ftrace and an STM device
  * Copyright (c) 2016, Linaro Ltd.
  *
- * STM Ftrace will be registered as a trace_export.
+ * STM Ftrace will be रेजिस्टरed as a trace_export.
  */
 
-#include <linux/module.h>
-#include <linux/stm.h>
-#include <linux/trace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sपंचांग.h>
+#समावेश <linux/trace.h>
 
-#define STM_FTRACE_NR_CHANNELS 1
-#define STM_FTRACE_CHAN 0
+#घोषणा STM_FTRACE_NR_CHANNELS 1
+#घोषणा STM_FTRACE_CHAN 0
 
-static int stm_ftrace_link(struct stm_source_data *data);
-static void stm_ftrace_unlink(struct stm_source_data *data);
+अटल पूर्णांक sपंचांग_ftrace_link(काष्ठा sपंचांग_source_data *data);
+अटल व्योम sपंचांग_ftrace_unlink(काष्ठा sपंचांग_source_data *data);
 
-static struct stm_ftrace {
-	struct stm_source_data	data;
-	struct trace_export	ftrace;
-} stm_ftrace = {
-	.data	= {
+अटल काष्ठा sपंचांग_ftrace अणु
+	काष्ठा sपंचांग_source_data	data;
+	काष्ठा trace_export	ftrace;
+पूर्ण sपंचांग_ftrace = अणु
+	.data	= अणु
 		.name		= "ftrace",
 		.nr_chans	= STM_FTRACE_NR_CHANNELS,
-		.link		= stm_ftrace_link,
-		.unlink		= stm_ftrace_unlink,
-	},
-};
+		.link		= sपंचांग_ftrace_link,
+		.unlink		= sपंचांग_ftrace_unlink,
+	पूर्ण,
+पूर्ण;
 
 /**
- * stm_ftrace_write() - write data to STM via 'stm_ftrace' source
+ * sपंचांग_ftrace_ग_लिखो() - ग_लिखो data to STM via 'stm_ftrace' source
  * @buf:	buffer containing the data packet
  * @len:	length of the data packet
  */
-static void notrace
-stm_ftrace_write(struct trace_export *export, const void *buf, unsigned int len)
-{
-	struct stm_ftrace *stm = container_of(export, struct stm_ftrace, ftrace);
-	/* This is called from trace system with preemption disabled */
-	unsigned int cpu = smp_processor_id();
+अटल व्योम notrace
+sपंचांग_ftrace_ग_लिखो(काष्ठा trace_export *export, स्थिर व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sपंचांग_ftrace *sपंचांग = container_of(export, काष्ठा sपंचांग_ftrace, ftrace);
+	/* This is called from trace प्रणाली with preemption disabled */
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
-	stm_source_write(&stm->data, STM_FTRACE_CHAN + cpu, buf, len);
-}
+	sपंचांग_source_ग_लिखो(&sपंचांग->data, STM_FTRACE_CHAN + cpu, buf, len);
+पूर्ण
 
-static int stm_ftrace_link(struct stm_source_data *data)
-{
-	struct stm_ftrace *sf = container_of(data, struct stm_ftrace, data);
+अटल पूर्णांक sपंचांग_ftrace_link(काष्ठा sपंचांग_source_data *data)
+अणु
+	काष्ठा sपंचांग_ftrace *sf = container_of(data, काष्ठा sपंचांग_ftrace, data);
 
-	sf->ftrace.write = stm_ftrace_write;
+	sf->ftrace.ग_लिखो = sपंचांग_ftrace_ग_लिखो;
 	sf->ftrace.flags = TRACE_EXPORT_FUNCTION | TRACE_EXPORT_EVENT
 			| TRACE_EXPORT_MARKER;
 
-	return register_ftrace_export(&sf->ftrace);
-}
+	वापस रेजिस्टर_ftrace_export(&sf->ftrace);
+पूर्ण
 
-static void stm_ftrace_unlink(struct stm_source_data *data)
-{
-	struct stm_ftrace *sf = container_of(data, struct stm_ftrace, data);
+अटल व्योम sपंचांग_ftrace_unlink(काष्ठा sपंचांग_source_data *data)
+अणु
+	काष्ठा sपंचांग_ftrace *sf = container_of(data, काष्ठा sपंचांग_ftrace, data);
 
-	unregister_ftrace_export(&sf->ftrace);
-}
+	unरेजिस्टर_ftrace_export(&sf->ftrace);
+पूर्ण
 
-static int __init stm_ftrace_init(void)
-{
-	int ret;
+अटल पूर्णांक __init sपंचांग_ftrace_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	stm_ftrace.data.nr_chans = roundup_pow_of_two(num_possible_cpus());
-	ret = stm_source_register_device(NULL, &stm_ftrace.data);
-	if (ret)
+	sपंचांग_ftrace.data.nr_chans = roundup_घात_of_two(num_possible_cpus());
+	ret = sपंचांग_source_रेजिस्टर_device(शून्य, &sपंचांग_ftrace.data);
+	अगर (ret)
 		pr_err("Failed to register stm_source - ftrace.\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit stm_ftrace_exit(void)
-{
-	stm_source_unregister_device(&stm_ftrace.data);
-}
+अटल व्योम __निकास sपंचांग_ftrace_निकास(व्योम)
+अणु
+	sपंचांग_source_unरेजिस्टर_device(&sपंचांग_ftrace.data);
+पूर्ण
 
-module_init(stm_ftrace_init);
-module_exit(stm_ftrace_exit);
+module_init(sपंचांग_ftrace_init);
+module_निकास(sपंचांग_ftrace_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("stm_ftrace driver");

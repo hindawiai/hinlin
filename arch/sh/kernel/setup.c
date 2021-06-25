@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/kernel/setup.c
  *
@@ -7,154 +8,154 @@
  *  Copyright (C) 1999  Niibe Yutaka
  *  Copyright (C) 2002 - 2010 Paul Mundt
  */
-#include <linux/screen_info.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/initrd.h>
-#include <linux/console.h>
-#include <linux/root_dev.h>
-#include <linux/utsname.h>
-#include <linux/nodemask.h>
-#include <linux/cpu.h>
-#include <linux/pfn.h>
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/kexec.h>
-#include <linux/module.h>
-#include <linux/smp.h>
-#include <linux/err.h>
-#include <linux/crash_dump.h>
-#include <linux/mmzone.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/memblock.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/uaccess.h>
-#include <uapi/linux/mount.h>
-#include <asm/io.h>
-#include <asm/page.h>
-#include <asm/elf.h>
-#include <asm/sections.h>
-#include <asm/irq.h>
-#include <asm/setup.h>
-#include <asm/clock.h>
-#include <asm/smp.h>
-#include <asm/mmu_context.h>
-#include <asm/mmzone.h>
-#include <asm/sparsemem.h>
-#include <asm/platform_early.h>
+#समावेश <linux/screen_info.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/console.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/module.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/err.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/uaccess.h>
+#समावेश <uapi/linux/mount.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/घड़ी.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mmzone.h>
+#समावेश <यंत्र/sparseस्मृति.स>
+#समावेश <यंत्र/platक्रमm_early.h>
 
 /*
- * Initialize loops_per_jiffy as 10000000 (1000MIPS).
+ * Initialize loops_per_jअगरfy as 10000000 (1000MIPS).
  * This value will be used at the very early stage of serial setup.
  * The bigger value means no problem.
  */
-struct sh_cpuinfo cpu_data[NR_CPUS] __read_mostly = {
-	[0] = {
+काष्ठा sh_cpuinfo cpu_data[NR_CPUS] __पढ़ो_mostly = अणु
+	[0] = अणु
 		.type			= CPU_SH_NONE,
 		.family			= CPU_FAMILY_UNKNOWN,
-		.loops_per_jiffy	= 10000000,
+		.loops_per_jअगरfy	= 10000000,
 		.phys_bits		= MAX_PHYSMEM_BITS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 EXPORT_SYMBOL(cpu_data);
 
 /*
  * The machine vector. First entry in .machvec.init, or clobbered by
- * sh_mv= on the command line, prior to .machvec.init teardown.
+ * sh_mv= on the command line, prior to .machvec.init tearकरोwn.
  */
-struct sh_machine_vector sh_mv = { .mv_name = "generic", };
+काष्ठा sh_machine_vector sh_mv = अणु .mv_name = "generic", पूर्ण;
 EXPORT_SYMBOL(sh_mv);
 
-#ifdef CONFIG_VT
-struct screen_info screen_info;
-#endif
+#अगर_घोषित CONFIG_VT
+काष्ठा screen_info screen_info;
+#पूर्ण_अगर
 
-extern int root_mountflags;
+बाह्य पूर्णांक root_mountflags;
 
-#define RAMDISK_IMAGE_START_MASK	0x07FF
-#define RAMDISK_PROMPT_FLAG		0x8000
-#define RAMDISK_LOAD_FLAG		0x4000
+#घोषणा RAMDISK_IMAGE_START_MASK	0x07FF
+#घोषणा RAMDISK_PROMPT_FLAG		0x8000
+#घोषणा RAMDISK_LOAD_FLAG		0x4000
 
-static char __initdata command_line[COMMAND_LINE_SIZE] = { 0, };
+अटल अक्षर __initdata command_line[COMMAND_LINE_SIZE] = अणु 0, पूर्ण;
 
-static struct resource code_resource = {
+अटल काष्ठा resource code_resource = अणु
 	.name = "Kernel code",
 	.flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-};
+पूर्ण;
 
-static struct resource data_resource = {
+अटल काष्ठा resource data_resource = अणु
 	.name = "Kernel data",
 	.flags = IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-};
+पूर्ण;
 
-static struct resource bss_resource = {
+अटल काष्ठा resource bss_resource = अणु
 	.name	= "Kernel bss",
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM,
-};
+पूर्ण;
 
-unsigned long memory_start;
+अचिन्हित दीर्घ memory_start;
 EXPORT_SYMBOL(memory_start);
-unsigned long memory_end = 0;
+अचिन्हित दीर्घ memory_end = 0;
 EXPORT_SYMBOL(memory_end);
-unsigned long memory_limit = 0;
+अचिन्हित दीर्घ memory_limit = 0;
 
-static struct resource mem_resources[MAX_NUMNODES];
+अटल काष्ठा resource mem_resources[MAX_NUMNODES];
 
-int l1i_cache_shape, l1d_cache_shape, l2_cache_shape;
+पूर्णांक l1i_cache_shape, l1d_cache_shape, l2_cache_shape;
 
-static int __init early_parse_mem(char *p)
-{
-	if (!p)
-		return 1;
+अटल पूर्णांक __init early_parse_mem(अक्षर *p)
+अणु
+	अगर (!p)
+		वापस 1;
 
 	memory_limit = PAGE_ALIGN(memparse(p, &p));
 
 	pr_notice("Memory limited to %ldMB\n", memory_limit >> 20);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("mem", early_parse_mem);
 
-void __init check_for_initrd(void)
-{
-#ifdef CONFIG_BLK_DEV_INITRD
-	unsigned long start, end;
+व्योम __init check_क्रम_initrd(व्योम)
+अणु
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+	अचिन्हित दीर्घ start, end;
 
 	/*
-	 * Check for the rare cases where boot loaders adhere to the boot
+	 * Check क्रम the rare हालs where boot loaders adhere to the boot
 	 * ABI.
 	 */
-	if (!LOADER_TYPE || !INITRD_START || !INITRD_SIZE)
-		goto disable;
+	अगर (!LOADER_TYPE || !INITRD_START || !INITRD_SIZE)
+		जाओ disable;
 
 	start = INITRD_START + __MEMORY_START;
 	end = start + INITRD_SIZE;
 
-	if (unlikely(end <= start))
-		goto disable;
-	if (unlikely(start & ~PAGE_MASK)) {
+	अगर (unlikely(end <= start))
+		जाओ disable;
+	अगर (unlikely(start & ~PAGE_MASK)) अणु
 		pr_err("initrd must be page aligned\n");
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
-	if (unlikely(start < __MEMORY_START)) {
+	अगर (unlikely(start < __MEMORY_START)) अणु
 		pr_err("initrd start (%08lx) < __MEMORY_START(%x)\n",
 			start, __MEMORY_START);
-		goto disable;
-	}
+		जाओ disable;
+	पूर्ण
 
-	if (unlikely(end > memblock_end_of_DRAM())) {
+	अगर (unlikely(end > memblock_end_of_DRAM())) अणु
 		pr_err("initrd extends beyond end of memory "
 		       "(0x%08lx > 0x%08lx)\ndisabling initrd\n",
-		       end, (unsigned long)memblock_end_of_DRAM());
-		goto disable;
-	}
+		       end, (अचिन्हित दीर्घ)memblock_end_of_DRAM());
+		जाओ disable;
+	पूर्ण
 
 	/*
-	 * If we got this far in spite of the boot loader's best efforts
+	 * If we got this far in spite of the boot loader's best efक्रमts
 	 * to the contrary, assume we actually have a valid initrd and
 	 * fix up the root dev.
 	 */
@@ -163,44 +164,44 @@ void __init check_for_initrd(void)
 	/*
 	 * Address sanitization
 	 */
-	initrd_start = (unsigned long)__va(start);
+	initrd_start = (अचिन्हित दीर्घ)__va(start);
 	initrd_end = initrd_start + INITRD_SIZE;
 
 	memblock_reserve(__pa(initrd_start), INITRD_SIZE);
 
-	return;
+	वापस;
 
 disable:
 	pr_info("initrd disabled\n");
 	initrd_start = initrd_end = 0;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifndef CONFIG_GENERIC_CALIBRATE_DELAY
-void calibrate_delay(void)
-{
-	struct clk *clk = clk_get(NULL, "cpu_clk");
+#अगर_अघोषित CONFIG_GENERIC_CALIBRATE_DELAY
+व्योम calibrate_delay(व्योम)
+अणु
+	काष्ठा clk *clk = clk_get(शून्य, "cpu_clk");
 
-	if (IS_ERR(clk))
+	अगर (IS_ERR(clk))
 		panic("Need a sane CPU clock definition!");
 
-	loops_per_jiffy = (clk_get_rate(clk) >> 1) / HZ;
+	loops_per_jअगरfy = (clk_get_rate(clk) >> 1) / HZ;
 
-	printk(KERN_INFO "Calibrating delay loop (skipped)... "
+	prपूर्णांकk(KERN_INFO "Calibrating delay loop (skipped)... "
 			 "%lu.%02lu BogoMIPS PRESET (lpj=%lu)\n",
-			 loops_per_jiffy/(500000/HZ),
-			 (loops_per_jiffy/(5000/HZ)) % 100,
-			 loops_per_jiffy);
-}
-#endif
+			 loops_per_jअगरfy/(500000/HZ),
+			 (loops_per_jअगरfy/(5000/HZ)) % 100,
+			 loops_per_jअगरfy);
+पूर्ण
+#पूर्ण_अगर
 
-void __init __add_active_range(unsigned int nid, unsigned long start_pfn,
-						unsigned long end_pfn)
-{
-	struct resource *res = &mem_resources[nid];
-	unsigned long start, end;
+व्योम __init __add_active_range(अचिन्हित पूर्णांक nid, अचिन्हित दीर्घ start_pfn,
+						अचिन्हित दीर्घ end_pfn)
+अणु
+	काष्ठा resource *res = &mem_resources[nid];
+	अचिन्हित दीर्घ start, end;
 
-	WARN_ON(res->name); /* max one active range per node for now */
+	WARN_ON(res->name); /* max one active range per node क्रम now */
 
 	start = start_pfn << PAGE_SHIFT;
 	end = end_pfn << PAGE_SHIFT;
@@ -210,74 +211,74 @@ void __init __add_active_range(unsigned int nid, unsigned long start_pfn,
 	res->end = end - 1;
 	res->flags = IORESOURCE_SYSTEM_RAM | IORESOURCE_BUSY;
 
-	if (request_resource(&iomem_resource, res)) {
+	अगर (request_resource(&iomem_resource, res)) अणु
 		pr_err("unable to request memory_resource 0x%lx 0x%lx\n",
 		       start_pfn, end_pfn);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * We don't know which RAM region contains kernel data or
+	 * We करोn't know which RAM region contains kernel data or
 	 * the reserved crashkernel region, so try it repeatedly
 	 * and let the resource manager test it.
 	 */
 	request_resource(res, &code_resource);
 	request_resource(res, &data_resource);
 	request_resource(res, &bss_resource);
-#ifdef CONFIG_KEXEC
+#अगर_घोषित CONFIG_KEXEC
 	request_resource(res, &crashk_res);
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Also make sure that there is a PMB mapping that covers this
-	 * range before we attempt to activate it, to avoid reset by MMU.
+	 * range beक्रमe we attempt to activate it, to aव्योम reset by MMU.
 	 * We can hit this path with NUMA or memory hot-add.
 	 */
-	pmb_bolt_mapping((unsigned long)__va(start), start, end - start,
+	pmb_bolt_mapping((अचिन्हित दीर्घ)__va(start), start, end - start,
 			 PAGE_KERNEL);
 
 	memblock_set_node(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
 			  &memblock.memory, nid);
-}
+पूर्ण
 
-void __init __weak plat_early_device_setup(void)
-{
-}
+व्योम __init __weak plat_early_device_setup(व्योम)
+अणु
+पूर्ण
 
-#ifdef CONFIG_OF_FLATTREE
-void __ref sh_fdt_init(phys_addr_t dt_phys)
-{
-	static int done = 0;
-	void *dt_virt;
+#अगर_घोषित CONFIG_OF_FLATTREE
+व्योम __ref sh_fdt_init(phys_addr_t dt_phys)
+अणु
+	अटल पूर्णांक करोne = 0;
+	व्योम *dt_virt;
 
-	/* Avoid calling an __init function on secondary cpus. */
-	if (done) return;
+	/* Aव्योम calling an __init function on secondary cpus. */
+	अगर (करोne) वापस;
 
-#ifdef CONFIG_USE_BUILTIN_DTB
+#अगर_घोषित CONFIG_USE_BUILTIN_DTB
 	dt_virt = __dtb_start;
-#else
+#अन्यथा
 	dt_virt = phys_to_virt(dt_phys);
-#endif
+#पूर्ण_अगर
 
-	if (!dt_virt || !early_init_dt_scan(dt_virt)) {
+	अगर (!dt_virt || !early_init_dt_scan(dt_virt)) अणु
 		pr_crit("Error: invalid device tree blob"
-			" at physical address %p\n", (void *)dt_phys);
+			" at physical address %p\n", (व्योम *)dt_phys);
 
-		while (true)
+		जबतक (true)
 			cpu_relax();
-	}
+	पूर्ण
 
-	done = 1;
-}
-#endif
+	करोne = 1;
+पूर्ण
+#पूर्ण_अगर
 
-void __init setup_arch(char **cmdline_p)
-{
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
 	enable_mmu();
 
 	ROOT_DEV = old_decode_dev(ORIG_ROOT_DEV);
 
-	printk(KERN_NOTICE "Boot params:\n"
+	prपूर्णांकk(KERN_NOTICE "Boot params:\n"
 			   "... MOUNT_ROOT_RDONLY - %08lx\n"
 			   "... RAMDISK_FLAGS     - %08lx\n"
 			   "... ORIG_ROOT_DEV     - %08lx\n"
@@ -288,16 +289,16 @@ void __init setup_arch(char **cmdline_p)
 			   ORIG_ROOT_DEV, LOADER_TYPE,
 			   INITRD_START, INITRD_SIZE);
 
-#ifdef CONFIG_BLK_DEV_RAM
+#अगर_घोषित CONFIG_BLK_DEV_RAM
 	rd_image_start = RAMDISK_FLAGS & RAMDISK_IMAGE_START_MASK;
-#endif
+#पूर्ण_अगर
 
-	if (!MOUNT_ROOT_RDONLY)
+	अगर (!MOUNT_ROOT_RDONLY)
 		root_mountflags &= ~MS_RDONLY;
-	init_mm.start_code = (unsigned long) _text;
-	init_mm.end_code = (unsigned long) _etext;
-	init_mm.end_data = (unsigned long) _edata;
-	init_mm.brk = (unsigned long) _end;
+	init_mm.start_code = (अचिन्हित दीर्घ) _text;
+	init_mm.end_code = (अचिन्हित दीर्घ) _etext;
+	init_mm.end_data = (अचिन्हित दीर्घ) _edata;
+	init_mm.brk = (अचिन्हित दीर्घ) _end;
 
 	code_resource.start = virt_to_phys(_text);
 	code_resource.end = virt_to_phys(_etext)-1;
@@ -306,18 +307,18 @@ void __init setup_arch(char **cmdline_p)
 	bss_resource.start = virt_to_phys(__bss_start);
 	bss_resource.end = virt_to_phys(__bss_stop)-1;
 
-#ifdef CONFIG_CMDLINE_OVERWRITE
-	strlcpy(command_line, CONFIG_CMDLINE, sizeof(command_line));
-#else
-	strlcpy(command_line, COMMAND_LINE, sizeof(command_line));
-#ifdef CONFIG_CMDLINE_EXTEND
-	strlcat(command_line, " ", sizeof(command_line));
-	strlcat(command_line, CONFIG_CMDLINE, sizeof(command_line));
-#endif
-#endif
+#अगर_घोषित CONFIG_CMDLINE_OVERWRITE
+	strlcpy(command_line, CONFIG_CMDLINE, माप(command_line));
+#अन्यथा
+	strlcpy(command_line, COMMAND_LINE, माप(command_line));
+#अगर_घोषित CONFIG_CMDLINE_EXTEND
+	strlcat(command_line, " ", माप(command_line));
+	strlcat(command_line, CONFIG_CMDLINE, माप(command_line));
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-	/* Save unparsed command line copy for /proc/cmdline */
-	memcpy(boot_command_line, command_line, COMMAND_LINE_SIZE);
+	/* Save unparsed command line copy क्रम /proc/cmdline */
+	स_नकल(boot_command_line, command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = command_line;
 
 	parse_early_param();
@@ -326,34 +327,34 @@ void __init setup_arch(char **cmdline_p)
 
 	sh_mv_setup();
 
-	/* Let earlyprintk output early console messages */
-	sh_early_platform_driver_probe("earlyprintk", 1, 1);
+	/* Let earlyprपूर्णांकk output early console messages */
+	sh_early_platक्रमm_driver_probe("earlyprintk", 1, 1);
 
-#ifdef CONFIG_OF_FLATTREE
-#ifdef CONFIG_USE_BUILTIN_DTB
+#अगर_घोषित CONFIG_OF_FLATTREE
+#अगर_घोषित CONFIG_USE_BUILTIN_DTB
 	unflatten_and_copy_device_tree();
-#else
+#अन्यथा
 	unflatten_device_tree();
-#endif
-#endif
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 	paging_init();
 
-	/* Perform the machine specific initialisation */
-	if (likely(sh_mv.mv_setup))
+	/* Perक्रमm the machine specअगरic initialisation */
+	अगर (likely(sh_mv.mv_setup))
 		sh_mv.mv_setup(cmdline_p);
 
 	plat_smp_setup();
-}
+पूर्ण
 
 /* processor boot mode configuration */
-int generic_mode_pins(void)
-{
+पूर्णांक generic_mode_pins(व्योम)
+अणु
 	pr_warn("generic_mode_pins(): missing mode pin configuration\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test_mode_pin(int pin)
-{
-	return sh_mv.mv_mode_pins() & pin;
-}
+पूर्णांक test_mode_pin(पूर्णांक pin)
+अणु
+	वापस sh_mv.mv_mode_pins() & pin;
+पूर्ण

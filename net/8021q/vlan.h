@@ -1,204 +1,205 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __BEN_VLAN_802_1Q_INC__
-#define __BEN_VLAN_802_1Q_INC__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __BEN_VLAN_802_1Q_INC__
+#घोषणा __BEN_VLAN_802_1Q_INC__
 
-#include <linux/if_vlan.h>
-#include <linux/u64_stats_sync.h>
-#include <linux/list.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/u64_stats_sync.h>
+#समावेश <linux/list.h>
 
-/* if this changes, algorithm will have to be reworked because this
- * depends on completely exhausting the VLAN identifier space.  Thus
- * it gives constant time look-up, but in many cases it wastes memory.
+/* अगर this changes, algorithm will have to be reworked because this
+ * depends on completely exhausting the VLAN identअगरier space.  Thus
+ * it gives स्थिरant समय look-up, but in many हालs it wastes memory.
  */
-#define VLAN_GROUP_ARRAY_SPLIT_PARTS  8
-#define VLAN_GROUP_ARRAY_PART_LEN     (VLAN_N_VID/VLAN_GROUP_ARRAY_SPLIT_PARTS)
+#घोषणा VLAN_GROUP_ARRAY_SPLIT_PARTS  8
+#घोषणा VLAN_GROUP_ARRAY_PART_LEN     (VLAN_N_VID/VLAN_GROUP_ARRAY_SPLIT_PARTS)
 
-enum vlan_protos {
+क्रमागत vlan_protos अणु
 	VLAN_PROTO_8021Q	= 0,
 	VLAN_PROTO_8021AD,
 	VLAN_PROTO_NUM,
-};
+पूर्ण;
 
-struct vlan_group {
-	unsigned int		nr_vlan_devs;
-	struct hlist_node	hlist;	/* linked list */
-	struct net_device **vlan_devices_arrays[VLAN_PROTO_NUM]
+काष्ठा vlan_group अणु
+	अचिन्हित पूर्णांक		nr_vlan_devs;
+	काष्ठा hlist_node	hlist;	/* linked list */
+	काष्ठा net_device **vlan_devices_arrays[VLAN_PROTO_NUM]
 					       [VLAN_GROUP_ARRAY_SPLIT_PARTS];
-};
+पूर्ण;
 
-struct vlan_info {
-	struct net_device	*real_dev; /* The ethernet(like) device
+काष्ठा vlan_info अणु
+	काष्ठा net_device	*real_dev; /* The ethernet(like) device
 					    * the vlan is attached to.
 					    */
-	struct vlan_group	grp;
-	struct list_head	vid_list;
-	unsigned int		nr_vids;
-	struct rcu_head		rcu;
-};
+	काष्ठा vlan_group	grp;
+	काष्ठा list_head	vid_list;
+	अचिन्हित पूर्णांक		nr_vids;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-static inline int vlan_proto_idx(__be16 proto)
-{
-	switch (proto) {
-	case htons(ETH_P_8021Q):
-		return VLAN_PROTO_8021Q;
-	case htons(ETH_P_8021AD):
-		return VLAN_PROTO_8021AD;
-	default:
+अटल अंतरभूत पूर्णांक vlan_proto_idx(__be16 proto)
+अणु
+	चयन (proto) अणु
+	हाल htons(ETH_P_8021Q):
+		वापस VLAN_PROTO_8021Q;
+	हाल htons(ETH_P_8021AD):
+		वापस VLAN_PROTO_8021AD;
+	शेष:
 		WARN(1, "invalid VLAN protocol: 0x%04x\n", ntohs(proto));
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static inline struct net_device *__vlan_group_get_device(struct vlan_group *vg,
-							 unsigned int pidx,
+अटल अंतरभूत काष्ठा net_device *__vlan_group_get_device(काष्ठा vlan_group *vg,
+							 अचिन्हित पूर्णांक pidx,
 							 u16 vlan_id)
-{
-	struct net_device **array;
+अणु
+	काष्ठा net_device **array;
 
 	array = vg->vlan_devices_arrays[pidx]
 				       [vlan_id / VLAN_GROUP_ARRAY_PART_LEN];
 
-	/* paired with smp_wmb() in vlan_group_prealloc_vid() */
+	/* paired with smp_wmb() in vlan_group_pपुनः_स्मृति_vid() */
 	smp_rmb();
 
-	return array ? array[vlan_id % VLAN_GROUP_ARRAY_PART_LEN] : NULL;
-}
+	वापस array ? array[vlan_id % VLAN_GROUP_ARRAY_PART_LEN] : शून्य;
+पूर्ण
 
-static inline struct net_device *vlan_group_get_device(struct vlan_group *vg,
+अटल अंतरभूत काष्ठा net_device *vlan_group_get_device(काष्ठा vlan_group *vg,
 						       __be16 vlan_proto,
 						       u16 vlan_id)
-{
-	int pidx = vlan_proto_idx(vlan_proto);
+अणु
+	पूर्णांक pidx = vlan_proto_idx(vlan_proto);
 
-	if (pidx < 0)
-		return NULL;
+	अगर (pidx < 0)
+		वापस शून्य;
 
-	return __vlan_group_get_device(vg, pidx, vlan_id);
-}
+	वापस __vlan_group_get_device(vg, pidx, vlan_id);
+पूर्ण
 
-static inline void vlan_group_set_device(struct vlan_group *vg,
+अटल अंतरभूत व्योम vlan_group_set_device(काष्ठा vlan_group *vg,
 					 __be16 vlan_proto, u16 vlan_id,
-					 struct net_device *dev)
-{
-	int pidx = vlan_proto_idx(vlan_proto);
-	struct net_device **array;
+					 काष्ठा net_device *dev)
+अणु
+	पूर्णांक pidx = vlan_proto_idx(vlan_proto);
+	काष्ठा net_device **array;
 
-	if (!vg || pidx < 0)
-		return;
+	अगर (!vg || pidx < 0)
+		वापस;
 	array = vg->vlan_devices_arrays[pidx]
 				       [vlan_id / VLAN_GROUP_ARRAY_PART_LEN];
 	array[vlan_id % VLAN_GROUP_ARRAY_PART_LEN] = dev;
-}
+पूर्ण
 
-/* Must be invoked with rcu_read_lock or with RTNL. */
-static inline struct net_device *vlan_find_dev(struct net_device *real_dev,
+/* Must be invoked with rcu_पढ़ो_lock or with RTNL. */
+अटल अंतरभूत काष्ठा net_device *vlan_find_dev(काष्ठा net_device *real_dev,
 					       __be16 vlan_proto, u16 vlan_id)
-{
-	struct vlan_info *vlan_info = rcu_dereference_rtnl(real_dev->vlan_info);
+अणु
+	काष्ठा vlan_info *vlan_info = rcu_dereference_rtnl(real_dev->vlan_info);
 
-	if (vlan_info)
-		return vlan_group_get_device(&vlan_info->grp,
+	अगर (vlan_info)
+		वापस vlan_group_get_device(&vlan_info->grp,
 					     vlan_proto, vlan_id);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline netdev_features_t vlan_tnl_features(struct net_device *real_dev)
-{
+अटल अंतरभूत netdev_features_t vlan_tnl_features(काष्ठा net_device *real_dev)
+अणु
 	netdev_features_t ret;
 
 	ret = real_dev->hw_enc_features &
 	      (NETIF_F_CSUM_MASK | NETIF_F_ALL_TSO | NETIF_F_GSO_ENCAP_ALL);
 
-	if ((ret & NETIF_F_GSO_ENCAP_ALL) && (ret & NETIF_F_CSUM_MASK))
-		return (ret & ~NETIF_F_CSUM_MASK) | NETIF_F_HW_CSUM;
-	return 0;
-}
+	अगर ((ret & NETIF_F_GSO_ENCAP_ALL) && (ret & NETIF_F_CSUM_MASK))
+		वापस (ret & ~NETIF_F_CSUM_MASK) | NETIF_F_HW_CSUM;
+	वापस 0;
+पूर्ण
 
-#define vlan_group_for_each_dev(grp, i, dev) \
-	for ((i) = 0; i < VLAN_PROTO_NUM * VLAN_N_VID; i++) \
-		if (((dev) = __vlan_group_get_device((grp), (i) / VLAN_N_VID, \
+#घोषणा vlan_group_क्रम_each_dev(grp, i, dev) \
+	क्रम ((i) = 0; i < VLAN_PROTO_NUM * VLAN_N_VID; i++) \
+		अगर (((dev) = __vlan_group_get_device((grp), (i) / VLAN_N_VID, \
 							    (i) % VLAN_N_VID)))
 
-int vlan_filter_push_vids(struct vlan_info *vlan_info, __be16 proto);
-void vlan_filter_drop_vids(struct vlan_info *vlan_info, __be16 proto);
+पूर्णांक vlan_filter_push_vids(काष्ठा vlan_info *vlan_info, __be16 proto);
+व्योम vlan_filter_drop_vids(काष्ठा vlan_info *vlan_info, __be16 proto);
 
 /* found in vlan_dev.c */
-void vlan_dev_set_ingress_priority(const struct net_device *dev,
+व्योम vlan_dev_set_ingress_priority(स्थिर काष्ठा net_device *dev,
 				   u32 skb_prio, u16 vlan_prio);
-int vlan_dev_set_egress_priority(const struct net_device *dev,
+पूर्णांक vlan_dev_set_egress_priority(स्थिर काष्ठा net_device *dev,
 				 u32 skb_prio, u16 vlan_prio);
-int vlan_dev_change_flags(const struct net_device *dev, u32 flag, u32 mask);
-void vlan_dev_get_realdev_name(const struct net_device *dev, char *result);
+पूर्णांक vlan_dev_change_flags(स्थिर काष्ठा net_device *dev, u32 flag, u32 mask);
+व्योम vlan_dev_get_realdev_name(स्थिर काष्ठा net_device *dev, अक्षर *result);
 
-int vlan_check_real_dev(struct net_device *real_dev,
+पूर्णांक vlan_check_real_dev(काष्ठा net_device *real_dev,
 			__be16 protocol, u16 vlan_id,
-			struct netlink_ext_ack *extack);
-void vlan_setup(struct net_device *dev);
-int register_vlan_dev(struct net_device *dev, struct netlink_ext_ack *extack);
-void unregister_vlan_dev(struct net_device *dev, struct list_head *head);
-void vlan_dev_uninit(struct net_device *dev);
-bool vlan_dev_inherit_address(struct net_device *dev,
-			      struct net_device *real_dev);
+			काष्ठा netlink_ext_ack *extack);
+व्योम vlan_setup(काष्ठा net_device *dev);
+पूर्णांक रेजिस्टर_vlan_dev(काष्ठा net_device *dev, काष्ठा netlink_ext_ack *extack);
+व्योम unरेजिस्टर_vlan_dev(काष्ठा net_device *dev, काष्ठा list_head *head);
+व्योम vlan_dev_uninit(काष्ठा net_device *dev);
+bool vlan_dev_inherit_address(काष्ठा net_device *dev,
+			      काष्ठा net_device *real_dev);
 
-static inline u32 vlan_get_ingress_priority(struct net_device *dev,
+अटल अंतरभूत u32 vlan_get_ingress_priority(काष्ठा net_device *dev,
 					    u16 vlan_tci)
-{
-	struct vlan_dev_priv *vip = vlan_dev_priv(dev);
+अणु
+	काष्ठा vlan_dev_priv *vip = vlan_dev_priv(dev);
 
-	return vip->ingress_priority_map[(vlan_tci >> VLAN_PRIO_SHIFT) & 0x7];
-}
+	वापस vip->ingress_priority_map[(vlan_tci >> VLAN_PRIO_SHIFT) & 0x7];
+पूर्ण
 
-#ifdef CONFIG_VLAN_8021Q_GVRP
-int vlan_gvrp_request_join(const struct net_device *dev);
-void vlan_gvrp_request_leave(const struct net_device *dev);
-int vlan_gvrp_init_applicant(struct net_device *dev);
-void vlan_gvrp_uninit_applicant(struct net_device *dev);
-int vlan_gvrp_init(void);
-void vlan_gvrp_uninit(void);
-#else
-static inline int vlan_gvrp_request_join(const struct net_device *dev) { return 0; }
-static inline void vlan_gvrp_request_leave(const struct net_device *dev) {}
-static inline int vlan_gvrp_init_applicant(struct net_device *dev) { return 0; }
-static inline void vlan_gvrp_uninit_applicant(struct net_device *dev) {}
-static inline int vlan_gvrp_init(void) { return 0; }
-static inline void vlan_gvrp_uninit(void) {}
-#endif
+#अगर_घोषित CONFIG_VLAN_8021Q_GVRP
+पूर्णांक vlan_gvrp_request_join(स्थिर काष्ठा net_device *dev);
+व्योम vlan_gvrp_request_leave(स्थिर काष्ठा net_device *dev);
+पूर्णांक vlan_gvrp_init_applicant(काष्ठा net_device *dev);
+व्योम vlan_gvrp_uninit_applicant(काष्ठा net_device *dev);
+पूर्णांक vlan_gvrp_init(व्योम);
+व्योम vlan_gvrp_uninit(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक vlan_gvrp_request_join(स्थिर काष्ठा net_device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_gvrp_request_leave(स्थिर काष्ठा net_device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vlan_gvrp_init_applicant(काष्ठा net_device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_gvrp_uninit_applicant(काष्ठा net_device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vlan_gvrp_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_gvrp_uninit(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_VLAN_8021Q_MVRP
-int vlan_mvrp_request_join(const struct net_device *dev);
-void vlan_mvrp_request_leave(const struct net_device *dev);
-int vlan_mvrp_init_applicant(struct net_device *dev);
-void vlan_mvrp_uninit_applicant(struct net_device *dev);
-int vlan_mvrp_init(void);
-void vlan_mvrp_uninit(void);
-#else
-static inline int vlan_mvrp_request_join(const struct net_device *dev) { return 0; }
-static inline void vlan_mvrp_request_leave(const struct net_device *dev) {}
-static inline int vlan_mvrp_init_applicant(struct net_device *dev) { return 0; }
-static inline void vlan_mvrp_uninit_applicant(struct net_device *dev) {}
-static inline int vlan_mvrp_init(void) { return 0; }
-static inline void vlan_mvrp_uninit(void) {}
-#endif
+#अगर_घोषित CONFIG_VLAN_8021Q_MVRP
+पूर्णांक vlan_mvrp_request_join(स्थिर काष्ठा net_device *dev);
+व्योम vlan_mvrp_request_leave(स्थिर काष्ठा net_device *dev);
+पूर्णांक vlan_mvrp_init_applicant(काष्ठा net_device *dev);
+व्योम vlan_mvrp_uninit_applicant(काष्ठा net_device *dev);
+पूर्णांक vlan_mvrp_init(व्योम);
+व्योम vlan_mvrp_uninit(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक vlan_mvrp_request_join(स्थिर काष्ठा net_device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_mvrp_request_leave(स्थिर काष्ठा net_device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vlan_mvrp_init_applicant(काष्ठा net_device *dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_mvrp_uninit_applicant(काष्ठा net_device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vlan_mvrp_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vlan_mvrp_uninit(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-extern const char vlan_fullname[];
-extern const char vlan_version[];
-int vlan_netlink_init(void);
-void vlan_netlink_fini(void);
+बाह्य स्थिर अक्षर vlan_fullname[];
+बाह्य स्थिर अक्षर vlan_version[];
+पूर्णांक vlan_netlink_init(व्योम);
+व्योम vlan_netlink_fini(व्योम);
 
-extern struct rtnl_link_ops vlan_link_ops;
+बाह्य काष्ठा rtnl_link_ops vlan_link_ops;
 
-extern unsigned int vlan_net_id;
+बाह्य अचिन्हित पूर्णांक vlan_net_id;
 
-struct proc_dir_entry;
+काष्ठा proc_dir_entry;
 
-struct vlan_net {
+काष्ठा vlan_net अणु
 	/* /proc/net/vlan */
-	struct proc_dir_entry *proc_vlan_dir;
+	काष्ठा proc_dir_entry *proc_vlan_dir;
 	/* /proc/net/vlan/config */
-	struct proc_dir_entry *proc_vlan_conf;
-	/* Determines interface naming scheme. */
-	unsigned short name_type;
-};
+	काष्ठा proc_dir_entry *proc_vlan_conf;
+	/* Determines पूर्णांकerface naming scheme. */
+	अचिन्हित लघु name_type;
+पूर्ण;
 
-#endif /* !(__BEN_VLAN_802_1Q_INC__) */
+#पूर्ण_अगर /* !(__BEN_VLAN_802_1Q_INC__) */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2017 Intel Corporation
+ * Copyright तऊ 2017 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,24 +23,24 @@
  *
  */
 
-#ifndef __MOCK_DRM_H
-#define __MOCK_DRM_H
+#अगर_अघोषित __MOCK_DRM_H
+#घोषणा __MOCK_DRM_H
 
-#include <drm/drm_file.h>
+#समावेश <drm/drm_file.h>
 
-#include "i915_drv.h"
+#समावेश "i915_drv.h"
 
-struct drm_file;
-struct file;
+काष्ठा drm_file;
+काष्ठा file;
 
-static inline struct file *mock_file(struct drm_i915_private *i915)
-{
-	return mock_drm_getfile(i915->drm.primary, O_RDWR);
-}
+अटल अंतरभूत काष्ठा file *mock_file(काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस mock_drm_getfile(i915->drm.primary, O_RDWR);
+पूर्ण
 
-static inline struct drm_file *to_drm_file(struct file *f)
-{
-	return f->private_data;
-}
+अटल अंतरभूत काष्ठा drm_file *to_drm_file(काष्ठा file *f)
+अणु
+	वापस f->निजी_data;
+पूर्ण
 
-#endif /* !__MOCK_DRM_H */
+#पूर्ण_अगर /* !__MOCK_DRM_H */

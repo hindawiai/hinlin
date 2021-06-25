@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Generic helper functions for touchscreens and other two-dimensional
- *  pointing devices
+ *  Generic helper functions क्रम touchscreens and other two-dimensional
+ *  poपूर्णांकing devices
  *
  *  Copyright (c) 2014 Sebastian Reichel <sre@kernel.org>
  */
 
-#include <linux/property.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/input/touchscreen.h>
-#include <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/input/touchscreen.h>
+#समावेश <linux/module.h>
 
-static bool touchscreen_get_prop_u32(struct device *dev,
-				     const char *property,
-				     unsigned int default_value,
-				     unsigned int *value)
-{
+अटल bool touchscreen_get_prop_u32(काष्ठा device *dev,
+				     स्थिर अक्षर *property,
+				     अचिन्हित पूर्णांक शेष_value,
+				     अचिन्हित पूर्णांक *value)
+अणु
 	u32 val;
-	int error;
+	पूर्णांक error;
 
-	error = device_property_read_u32(dev, property, &val);
-	if (error) {
-		*value = default_value;
-		return false;
-	}
+	error = device_property_पढ़ो_u32(dev, property, &val);
+	अगर (error) अणु
+		*value = शेष_value;
+		वापस false;
+	पूर्ण
 
 	*value = val;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void touchscreen_set_params(struct input_dev *dev,
-				   unsigned long axis,
-				   int min, int max, int fuzz)
-{
-	struct input_absinfo *absinfo;
+अटल व्योम touchscreen_set_params(काष्ठा input_dev *dev,
+				   अचिन्हित दीर्घ axis,
+				   पूर्णांक min, पूर्णांक max, पूर्णांक fuzz)
+अणु
+	काष्ठा input_असलinfo *असलinfo;
 
-	if (!test_bit(axis, dev->absbit)) {
+	अगर (!test_bit(axis, dev->असलbit)) अणु
 		dev_warn(&dev->dev,
 			 "Parameters are specified but the axis %lu is not set up\n",
 			 axis);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	absinfo = &dev->absinfo[axis];
-	absinfo->minimum = min;
-	absinfo->maximum = max;
-	absinfo->fuzz = fuzz;
-}
+	असलinfo = &dev->असलinfo[axis];
+	असलinfo->minimum = min;
+	असलinfo->maximum = max;
+	असलinfo->fuzz = fuzz;
+पूर्ण
 
 /**
  * touchscreen_parse_properties - parse common touchscreen properties
  * @input: input device that should be parsed
- * @multitouch: specifies whether parsed properties should be applied to
+ * @multitouch: specअगरies whether parsed properties should be applied to
  *	single-touch or multi-touch axes
- * @prop: pointer to a struct touchscreen_properties into which to store
- *	axis swap and invert info for use with touchscreen_report_x_y();
- *	or %NULL
+ * @prop: poपूर्णांकer to a काष्ठा touchscreen_properties पूर्णांकo which to store
+ *	axis swap and invert info क्रम use with touchscreen_report_x_y();
+ *	or %शून्य
  *
- * This function parses common properties for touchscreens and sets up the
- * input device accordingly. The function keeps previously set up default
- * values if no value is specified.
+ * This function parses common properties क्रम touchscreens and sets up the
+ * input device accordingly. The function keeps previously set up शेष
+ * values अगर no value is specअगरied.
  */
-void touchscreen_parse_properties(struct input_dev *input, bool multitouch,
-				  struct touchscreen_properties *prop)
-{
-	struct device *dev = input->dev.parent;
-	struct input_absinfo *absinfo;
-	unsigned int axis, axis_x, axis_y;
-	unsigned int minimum, maximum, fuzz;
+व्योम touchscreen_parse_properties(काष्ठा input_dev *input, bool multitouch,
+				  काष्ठा touchscreen_properties *prop)
+अणु
+	काष्ठा device *dev = input->dev.parent;
+	काष्ठा input_असलinfo *असलinfo;
+	अचिन्हित पूर्णांक axis, axis_x, axis_y;
+	अचिन्हित पूर्णांक minimum, maximum, fuzz;
 	bool data_present;
 
-	input_alloc_absinfo(input);
-	if (!input->absinfo)
-		return;
+	input_alloc_असलinfo(input);
+	अगर (!input->असलinfo)
+		वापस;
 
 	axis_x = multitouch ? ABS_MT_POSITION_X : ABS_X;
 	axis_y = multitouch ? ABS_MT_POSITION_Y : ABS_Y;
 
 	data_present = touchscreen_get_prop_u32(dev, "touchscreen-min-x",
-						input_abs_get_min(input, axis_x),
+						input_असल_get_min(input, axis_x),
 						&minimum) |
 		       touchscreen_get_prop_u32(dev, "touchscreen-size-x",
-						input_abs_get_max(input,
+						input_असल_get_max(input,
 								  axis_x) + 1,
 						&maximum) |
 		       touchscreen_get_prop_u32(dev, "touchscreen-fuzz-x",
-						input_abs_get_fuzz(input, axis_x),
+						input_असल_get_fuzz(input, axis_x),
 						&fuzz);
-	if (data_present)
+	अगर (data_present)
 		touchscreen_set_params(input, axis_x, minimum, maximum - 1, fuzz);
 
 	data_present = touchscreen_get_prop_u32(dev, "touchscreen-min-y",
-						input_abs_get_min(input, axis_y),
+						input_असल_get_min(input, axis_y),
 						&minimum) |
 		       touchscreen_get_prop_u32(dev, "touchscreen-size-y",
-						input_abs_get_max(input,
+						input_असल_get_max(input,
 								  axis_y) + 1,
 						&maximum) |
 		       touchscreen_get_prop_u32(dev, "touchscreen-fuzz-y",
-						input_abs_get_fuzz(input, axis_y),
+						input_असल_get_fuzz(input, axis_y),
 						&fuzz);
-	if (data_present)
+	अगर (data_present)
 		touchscreen_set_params(input, axis_y, minimum, maximum - 1, fuzz);
 
 	axis = multitouch ? ABS_MT_PRESSURE : ABS_PRESSURE;
 	data_present = touchscreen_get_prop_u32(dev,
 						"touchscreen-max-pressure",
-						input_abs_get_max(input, axis),
+						input_असल_get_max(input, axis),
 						&maximum) |
 		       touchscreen_get_prop_u32(dev,
 						"touchscreen-fuzz-pressure",
-						input_abs_get_fuzz(input, axis),
+						input_असल_get_fuzz(input, axis),
 						&fuzz);
-	if (data_present)
+	अगर (data_present)
 		touchscreen_set_params(input, axis, 0, maximum, fuzz);
 
-	if (!prop)
-		return;
+	अगर (!prop)
+		वापस;
 
-	prop->max_x = input_abs_get_max(input, axis_x);
-	prop->max_y = input_abs_get_max(input, axis_y);
+	prop->max_x = input_असल_get_max(input, axis_x);
+	prop->max_y = input_असल_get_max(input, axis_y);
 
 	prop->invert_x =
-		device_property_read_bool(dev, "touchscreen-inverted-x");
-	if (prop->invert_x) {
-		absinfo = &input->absinfo[axis_x];
-		absinfo->maximum -= absinfo->minimum;
-		absinfo->minimum = 0;
-	}
+		device_property_पढ़ो_bool(dev, "touchscreen-inverted-x");
+	अगर (prop->invert_x) अणु
+		असलinfo = &input->असलinfo[axis_x];
+		असलinfo->maximum -= असलinfo->minimum;
+		असलinfo->minimum = 0;
+	पूर्ण
 
 	prop->invert_y =
-		device_property_read_bool(dev, "touchscreen-inverted-y");
-	if (prop->invert_y) {
-		absinfo = &input->absinfo[axis_y];
-		absinfo->maximum -= absinfo->minimum;
-		absinfo->minimum = 0;
-	}
+		device_property_पढ़ो_bool(dev, "touchscreen-inverted-y");
+	अगर (prop->invert_y) अणु
+		असलinfo = &input->असलinfo[axis_y];
+		असलinfo->maximum -= असलinfo->minimum;
+		असलinfo->minimum = 0;
+	पूर्ण
 
 	prop->swap_x_y =
-		device_property_read_bool(dev, "touchscreen-swapped-x-y");
-	if (prop->swap_x_y)
-		swap(input->absinfo[axis_x], input->absinfo[axis_y]);
-}
+		device_property_पढ़ो_bool(dev, "touchscreen-swapped-x-y");
+	अगर (prop->swap_x_y)
+		swap(input->असलinfo[axis_x], input->असलinfo[axis_y]);
+पूर्ण
 EXPORT_SYMBOL(touchscreen_parse_properties);
 
-static void
-touchscreen_apply_prop_to_x_y(const struct touchscreen_properties *prop,
-			      unsigned int *x, unsigned int *y)
-{
-	if (prop->invert_x)
+अटल व्योम
+touchscreen_apply_prop_to_x_y(स्थिर काष्ठा touchscreen_properties *prop,
+			      अचिन्हित पूर्णांक *x, अचिन्हित पूर्णांक *y)
+अणु
+	अगर (prop->invert_x)
 		*x = prop->max_x - *x;
 
-	if (prop->invert_y)
+	अगर (prop->invert_y)
 		*y = prop->max_y - *y;
 
-	if (prop->swap_x_y)
+	अगर (prop->swap_x_y)
 		swap(*x, *y);
-}
+पूर्ण
 
 /**
  * touchscreen_set_mt_pos - Set input_mt_pos coordinates
  * @pos: input_mt_pos to set coordinates of
- * @prop: pointer to a struct touchscreen_properties
+ * @prop: poपूर्णांकer to a काष्ठा touchscreen_properties
  * @x: X coordinate to store in pos
  * @y: Y coordinate to store in pos
  *
  * Adjust the passed in x and y values applying any axis inversion and
  * swapping requested in the passed in touchscreen_properties and store
- * the result in a struct input_mt_pos.
+ * the result in a काष्ठा input_mt_pos.
  */
-void touchscreen_set_mt_pos(struct input_mt_pos *pos,
-			    const struct touchscreen_properties *prop,
-			    unsigned int x, unsigned int y)
-{
+व्योम touchscreen_set_mt_pos(काष्ठा input_mt_pos *pos,
+			    स्थिर काष्ठा touchscreen_properties *prop,
+			    अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y)
+अणु
 	touchscreen_apply_prop_to_x_y(prop, &x, &y);
 	pos->x = x;
 	pos->y = y;
-}
+पूर्ण
 EXPORT_SYMBOL(touchscreen_set_mt_pos);
 
 /**
  * touchscreen_report_pos - Report touchscreen coordinates
- * @input: input_device to report coordinates for
- * @prop: pointer to a struct touchscreen_properties
+ * @input: input_device to report coordinates क्रम
+ * @prop: poपूर्णांकer to a काष्ठा touchscreen_properties
  * @x: X coordinate to report
  * @y: Y coordinate to report
  * @multitouch: Report coordinates on single-touch or multi-touch axes
@@ -192,15 +193,15 @@ EXPORT_SYMBOL(touchscreen_set_mt_pos);
  * swapping requested in the passed in touchscreen_properties and then
  * report the resulting coordinates on the input_dev's x and y axis.
  */
-void touchscreen_report_pos(struct input_dev *input,
-			    const struct touchscreen_properties *prop,
-			    unsigned int x, unsigned int y,
+व्योम touchscreen_report_pos(काष्ठा input_dev *input,
+			    स्थिर काष्ठा touchscreen_properties *prop,
+			    अचिन्हित पूर्णांक x, अचिन्हित पूर्णांक y,
 			    bool multitouch)
-{
+अणु
 	touchscreen_apply_prop_to_x_y(prop, &x, &y);
-	input_report_abs(input, multitouch ? ABS_MT_POSITION_X : ABS_X, x);
-	input_report_abs(input, multitouch ? ABS_MT_POSITION_Y : ABS_Y, y);
-}
+	input_report_असल(input, multitouch ? ABS_MT_POSITION_X : ABS_X, x);
+	input_report_असल(input, multitouch ? ABS_MT_POSITION_Y : ABS_Y, y);
+पूर्ण
 EXPORT_SYMBOL(touchscreen_report_pos);
 
 MODULE_LICENSE("GPL v2");

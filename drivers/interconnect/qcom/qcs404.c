@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2019 Linaro Ltd
  */
 
-#include <dt-bindings/interconnect/qcom,qcs404.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/interconnect-provider.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/of_device.h>
+#समावेश <dt-bindings/पूर्णांकerconnect/qcom,qcs404.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerconnect-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_device.h>
 
 
-#include "smd-rpm.h"
-#include "icc-rpm.h"
+#समावेश "smd-rpm.h"
+#समावेश "icc-rpm.h"
 
-enum {
+क्रमागत अणु
 	QCS404_MASTER_AMPSS_M0 = 1,
 	QCS404_MASTER_GRAPHICS_3D,
 	QCS404_MASTER_MDP_PORT0,
@@ -90,12 +91,12 @@ enum {
 	QCS404_SLAVE_CATS_128,
 	QCS404_SLAVE_OCMEM_64,
 	QCS404_SLAVE_LPASS,
-};
+पूर्ण;
 
-static const struct clk_bulk_data qcs404_bus_clocks[] = {
-	{ .id = "bus" },
-	{ .id = "bus_a" },
-};
+अटल स्थिर काष्ठा clk_bulk_data qcs404_bus_घड़ीs[] = अणु
+	अणु .id = "bus" पूर्ण,
+	अणु .id = "bus_a" पूर्ण,
+पूर्ण;
 
 DEFINE_QNODE(mas_apps_proc, QCS404_MASTER_AMPSS_M0, 8, 0, -1, QCS404_SLAVE_EBI_CH0, QCS404_BIMC_SNOC_SLV);
 DEFINE_QNODE(mas_oxili, QCS404_MASTER_GRAPHICS_3D, 8, -1, -1, QCS404_SLAVE_EBI_CH0, QCS404_BIMC_SNOC_SLV);
@@ -118,9 +119,9 @@ DEFINE_QNODE(mas_qdss_etr, QCS404_MASTER_QDSS_ETR, 8, -1, -1, QCS404_SNOC_QDSS_I
 DEFINE_QNODE(mas_emac, QCS404_MASTER_EMAC, 8, -1, -1, QCS404_SNOC_BIMC_1_SLV, QCS404_SNOC_INT_1);
 DEFINE_QNODE(mas_pcie, QCS404_MASTER_PCIE, 8, -1, -1, QCS404_SNOC_BIMC_1_SLV, QCS404_SNOC_INT_1);
 DEFINE_QNODE(mas_usb3, QCS404_MASTER_USB3, 8, -1, -1, QCS404_SNOC_BIMC_1_SLV, QCS404_SNOC_INT_1);
-DEFINE_QNODE(pcnoc_int_0, QCS404_PNOC_INT_0, 8, 85, 114, QCS404_PNOC_SNOC_SLV, QCS404_PNOC_INT_2);
-DEFINE_QNODE(pcnoc_int_2, QCS404_PNOC_INT_2, 8, 124, 184, QCS404_PNOC_SLV_10, QCS404_SLAVE_TCU, QCS404_PNOC_SLV_11, QCS404_PNOC_SLV_2, QCS404_PNOC_SLV_3, QCS404_PNOC_SLV_0, QCS404_PNOC_SLV_1, QCS404_PNOC_SLV_6, QCS404_PNOC_SLV_7, QCS404_PNOC_SLV_4, QCS404_PNOC_SLV_8, QCS404_PNOC_SLV_9);
-DEFINE_QNODE(pcnoc_int_3, QCS404_PNOC_INT_3, 8, 125, 185, QCS404_PNOC_SNOC_SLV);
+DEFINE_QNODE(pcnoc_पूर्णांक_0, QCS404_PNOC_INT_0, 8, 85, 114, QCS404_PNOC_SNOC_SLV, QCS404_PNOC_INT_2);
+DEFINE_QNODE(pcnoc_पूर्णांक_2, QCS404_PNOC_INT_2, 8, 124, 184, QCS404_PNOC_SLV_10, QCS404_SLAVE_TCU, QCS404_PNOC_SLV_11, QCS404_PNOC_SLV_2, QCS404_PNOC_SLV_3, QCS404_PNOC_SLV_0, QCS404_PNOC_SLV_1, QCS404_PNOC_SLV_6, QCS404_PNOC_SLV_7, QCS404_PNOC_SLV_4, QCS404_PNOC_SLV_8, QCS404_PNOC_SLV_9);
+DEFINE_QNODE(pcnoc_पूर्णांक_3, QCS404_PNOC_INT_3, 8, 125, 185, QCS404_PNOC_SNOC_SLV);
 DEFINE_QNODE(pcnoc_s_0, QCS404_PNOC_SLV_0, 4, 89, 118, QCS404_SLAVE_PRNG, QCS404_SLAVE_SPDM_WRAPPER, QCS404_SLAVE_PDM);
 DEFINE_QNODE(pcnoc_s_1, QCS404_PNOC_SLV_1, 4, 90, 119, QCS404_SLAVE_TCSR);
 DEFINE_QNODE(pcnoc_s_2, QCS404_PNOC_SLV_2, 4, -1, -1, QCS404_SLAVE_GRAPHICS_3D_CFG);
@@ -132,10 +133,10 @@ DEFINE_QNODE(pcnoc_s_8, QCS404_PNOC_SLV_8, 4, 96, 125, QCS404_SLAVE_CRYPTO_0_CFG
 DEFINE_QNODE(pcnoc_s_9, QCS404_PNOC_SLV_9, 4, 97, 126, QCS404_SLAVE_BLSP_2, QCS404_SLAVE_TLMM_EAST, QCS404_SLAVE_PMIC_ARB);
 DEFINE_QNODE(pcnoc_s_10, QCS404_PNOC_SLV_10, 4, 157, -1, QCS404_SLAVE_USB_HS);
 DEFINE_QNODE(pcnoc_s_11, QCS404_PNOC_SLV_11, 4, 158, 246, QCS404_SLAVE_USB3);
-DEFINE_QNODE(qdss_int, QCS404_SNOC_QDSS_INT, 8, -1, -1, QCS404_SNOC_BIMC_1_SLV, QCS404_SNOC_INT_1);
-DEFINE_QNODE(snoc_int_0, QCS404_SNOC_INT_0, 8, 99, 130, QCS404_SLAVE_LPASS, QCS404_SLAVE_APPSS, QCS404_SLAVE_WCSS);
-DEFINE_QNODE(snoc_int_1, QCS404_SNOC_INT_1, 8, 100, 131, QCS404_SNOC_PNOC_SLV, QCS404_SNOC_INT_2);
-DEFINE_QNODE(snoc_int_2, QCS404_SNOC_INT_2, 8, 134, 197, QCS404_SLAVE_QDSS_STM, QCS404_SLAVE_OCIMEM);
+DEFINE_QNODE(qdss_पूर्णांक, QCS404_SNOC_QDSS_INT, 8, -1, -1, QCS404_SNOC_BIMC_1_SLV, QCS404_SNOC_INT_1);
+DEFINE_QNODE(snoc_पूर्णांक_0, QCS404_SNOC_INT_0, 8, 99, 130, QCS404_SLAVE_LPASS, QCS404_SLAVE_APPSS, QCS404_SLAVE_WCSS);
+DEFINE_QNODE(snoc_पूर्णांक_1, QCS404_SNOC_INT_1, 8, 100, 131, QCS404_SNOC_PNOC_SLV, QCS404_SNOC_INT_2);
+DEFINE_QNODE(snoc_पूर्णांक_2, QCS404_SNOC_INT_2, 8, 134, 197, QCS404_SLAVE_QDSS_STM, QCS404_SLAVE_OCIMEM);
 DEFINE_QNODE(slv_ebi, QCS404_SLAVE_EBI_CH0, 8, -1, 0, 0);
 DEFINE_QNODE(slv_bimc_snoc, QCS404_BIMC_SNOC_SLV, 8, -1, 2, QCS404_BIMC_SNOC_MAS);
 DEFINE_QNODE(slv_spdm, QCS404_SLAVE_SPDM_WRAPPER, 4, -1, -1, 0);
@@ -166,12 +167,12 @@ DEFINE_QNODE(slv_wcss, QCS404_SLAVE_WCSS, 4, -1, 23, 0);
 DEFINE_QNODE(slv_snoc_bimc_1, QCS404_SNOC_BIMC_1_SLV, 8, -1, 104, QCS404_SNOC_BIMC_1_MAS);
 DEFINE_QNODE(slv_imem, QCS404_SLAVE_OCIMEM, 8, -1, 26, 0);
 DEFINE_QNODE(slv_snoc_pcnoc, QCS404_SNOC_PNOC_SLV, 8, -1, 28, QCS404_SNOC_PNOC_MAS);
-DEFINE_QNODE(slv_qdss_stm, QCS404_SLAVE_QDSS_STM, 4, -1, 30, 0);
+DEFINE_QNODE(slv_qdss_sपंचांग, QCS404_SLAVE_QDSS_STM, 4, -1, 30, 0);
 DEFINE_QNODE(slv_cats_0, QCS404_SLAVE_CATS_128, 16, -1, -1, 0);
 DEFINE_QNODE(slv_cats_1, QCS404_SLAVE_OCMEM_64, 8, -1, -1, 0);
 DEFINE_QNODE(slv_lpass, QCS404_SLAVE_LPASS, 4, -1, -1, 0);
 
-static struct qcom_icc_node *qcs404_bimc_nodes[] = {
+अटल काष्ठा qcom_icc_node *qcs404_bimc_nodes[] = अणु
 	[MASTER_AMPSS_M0] = &mas_apps_proc,
 	[MASTER_OXILI] = &mas_oxili,
 	[MASTER_MDP_PORT0] = &mas_mdp,
@@ -179,14 +180,14 @@ static struct qcom_icc_node *qcs404_bimc_nodes[] = {
 	[MASTER_TCU_0] = &mas_tcu_0,
 	[SLAVE_EBI_CH0] = &slv_ebi,
 	[SLAVE_BIMC_SNOC] = &slv_bimc_snoc,
-};
+पूर्ण;
 
-static struct qcom_icc_desc qcs404_bimc = {
+अटल काष्ठा qcom_icc_desc qcs404_bimc = अणु
 	.nodes = qcs404_bimc_nodes,
 	.num_nodes = ARRAY_SIZE(qcs404_bimc_nodes),
-};
+पूर्ण;
 
-static struct qcom_icc_node *qcs404_pcnoc_nodes[] = {
+अटल काष्ठा qcom_icc_node *qcs404_pcnoc_nodes[] = अणु
 	[MASTER_SPDM] = &mas_spdm,
 	[MASTER_BLSP_1] = &mas_blsp_1,
 	[MASTER_BLSP_2] = &mas_blsp_2,
@@ -196,9 +197,9 @@ static struct qcom_icc_node *qcs404_pcnoc_nodes[] = {
 	[MASTER_SDCC_2] = &mas_sdcc_2,
 	[MASTER_SNOC_PCNOC] = &mas_snoc_pcnoc,
 	[MASTER_QPIC] = &mas_qpic,
-	[PCNOC_INT_0] = &pcnoc_int_0,
-	[PCNOC_INT_2] = &pcnoc_int_2,
-	[PCNOC_INT_3] = &pcnoc_int_3,
+	[PCNOC_INT_0] = &pcnoc_पूर्णांक_0,
+	[PCNOC_INT_2] = &pcnoc_पूर्णांक_2,
+	[PCNOC_INT_3] = &pcnoc_पूर्णांक_3,
 	[PCNOC_S_0] = &pcnoc_s_0,
 	[PCNOC_S_1] = &pcnoc_s_1,
 	[PCNOC_S_2] = &pcnoc_s_2,
@@ -233,14 +234,14 @@ static struct qcom_icc_node *qcs404_pcnoc_nodes[] = {
 	[SLAVE_USB3] = &slv_usb3,
 	[SLAVE_CRYPTO_0_CFG] = &slv_crypto_0_cfg,
 	[SLAVE_PCNOC_SNOC] = &slv_pcnoc_snoc,
-};
+पूर्ण;
 
-static struct qcom_icc_desc qcs404_pcnoc = {
+अटल काष्ठा qcom_icc_desc qcs404_pcnoc = अणु
 	.nodes = qcs404_pcnoc_nodes,
 	.num_nodes = ARRAY_SIZE(qcs404_pcnoc_nodes),
-};
+पूर्ण;
 
-static struct qcom_icc_node *qcs404_snoc_nodes[] = {
+अटल काष्ठा qcom_icc_node *qcs404_snoc_nodes[] = अणु
 	[MASTER_QDSS_BAM] = &mas_qdss_bam,
 	[MASTER_BIMC_SNOC] = &mas_bimc_snoc,
 	[MASTER_PCNOC_SNOC] = &mas_pcnoc_snoc,
@@ -248,49 +249,49 @@ static struct qcom_icc_node *qcs404_snoc_nodes[] = {
 	[MASTER_EMAC] = &mas_emac,
 	[MASTER_PCIE] = &mas_pcie,
 	[MASTER_USB3] = &mas_usb3,
-	[QDSS_INT] = &qdss_int,
-	[SNOC_INT_0] = &snoc_int_0,
-	[SNOC_INT_1] = &snoc_int_1,
-	[SNOC_INT_2] = &snoc_int_2,
+	[QDSS_INT] = &qdss_पूर्णांक,
+	[SNOC_INT_0] = &snoc_पूर्णांक_0,
+	[SNOC_INT_1] = &snoc_पूर्णांक_1,
+	[SNOC_INT_2] = &snoc_पूर्णांक_2,
 	[SLAVE_KPSS_AHB] = &slv_kpss_ahb,
 	[SLAVE_WCSS] = &slv_wcss,
 	[SLAVE_SNOC_BIMC_1] = &slv_snoc_bimc_1,
 	[SLAVE_IMEM] = &slv_imem,
 	[SLAVE_SNOC_PCNOC] = &slv_snoc_pcnoc,
-	[SLAVE_QDSS_STM] = &slv_qdss_stm,
+	[SLAVE_QDSS_STM] = &slv_qdss_sपंचांग,
 	[SLAVE_CATS_0] = &slv_cats_0,
 	[SLAVE_CATS_1] = &slv_cats_1,
 	[SLAVE_LPASS] = &slv_lpass,
-};
+पूर्ण;
 
-static struct qcom_icc_desc qcs404_snoc = {
+अटल काष्ठा qcom_icc_desc qcs404_snoc = अणु
 	.nodes = qcs404_snoc_nodes,
 	.num_nodes = ARRAY_SIZE(qcs404_snoc_nodes),
-};
+पूर्ण;
 
 
-static int qcs404_qnoc_probe(struct platform_device *pdev)
-{
-	return qnoc_probe(pdev, sizeof(qcs404_bus_clocks),
-			  ARRAY_SIZE(qcs404_bus_clocks), qcs404_bus_clocks);
-}
+अटल पूर्णांक qcs404_qnoc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस qnoc_probe(pdev, माप(qcs404_bus_घड़ीs),
+			  ARRAY_SIZE(qcs404_bus_घड़ीs), qcs404_bus_घड़ीs);
+पूर्ण
 
-static const struct of_device_id qcs404_noc_of_match[] = {
-	{ .compatible = "qcom,qcs404-bimc", .data = &qcs404_bimc },
-	{ .compatible = "qcom,qcs404-pcnoc", .data = &qcs404_pcnoc },
-	{ .compatible = "qcom,qcs404-snoc", .data = &qcs404_snoc },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id qcs404_noc_of_match[] = अणु
+	अणु .compatible = "qcom,qcs404-bimc", .data = &qcs404_bimc पूर्ण,
+	अणु .compatible = "qcom,qcs404-pcnoc", .data = &qcs404_pcnoc पूर्ण,
+	अणु .compatible = "qcom,qcs404-snoc", .data = &qcs404_snoc पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcs404_noc_of_match);
 
-static struct platform_driver qcs404_noc_driver = {
+अटल काष्ठा platक्रमm_driver qcs404_noc_driver = अणु
 	.probe = qcs404_qnoc_probe,
-	.remove = qnoc_remove,
-	.driver = {
+	.हटाओ = qnoc_हटाओ,
+	.driver = अणु
 		.name = "qnoc-qcs404",
 		.of_match_table = qcs404_noc_of_match,
-	},
-};
-module_platform_driver(qcs404_noc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(qcs404_noc_driver);
 MODULE_DESCRIPTION("Qualcomm QCS404 NoC driver");
 MODULE_LICENSE("GPL v2");

@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-or-later OR BSD-2-Clause)
 /*
  * libfdt - Flat Device Tree manipulation
  * Copyright (C) 2006 David Gibson, IBM Corporation.
  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "libfdt_env.h"
+#समावेश "libfdt_env.h"
 
-#include <fdt.h>
-#include <libfdt.h>
+#समावेश <fdt.h>
+#समावेश <libfdt.h>
 
-#include "libfdt_internal.h"
+#समावेश "libfdt_internal.h"
 
-struct fdt_errtabent {
-	const char *str;
-};
+काष्ठा fdt_errtabent अणु
+	स्थिर अक्षर *str;
+पूर्ण;
 
-#define FDT_ERRTABENT(val) \
-	[(val)] = { .str = #val, }
+#घोषणा FDT_ERRTABENT(val) \
+	[(val)] = अणु .str = #val, पूर्ण
 
-static struct fdt_errtabent fdt_errtable[] = {
+अटल काष्ठा fdt_errtabent fdt_errtable[] = अणु
 	FDT_ERRTABENT(FDT_ERR_NOTFOUND),
 	FDT_ERRTABENT(FDT_ERR_EXISTS),
 	FDT_ERRTABENT(FDT_ERR_NOSPACE),
@@ -39,21 +40,21 @@ static struct fdt_errtabent fdt_errtable[] = {
 	FDT_ERRTABENT(FDT_ERR_BADOVERLAY),
 	FDT_ERRTABENT(FDT_ERR_NOPHANDLES),
 	FDT_ERRTABENT(FDT_ERR_BADFLAGS),
-};
-#define FDT_ERRTABSIZE	((int)(sizeof(fdt_errtable) / sizeof(fdt_errtable[0])))
+पूर्ण;
+#घोषणा FDT_ERRTABSIZE	((पूर्णांक)(माप(fdt_errtable) / माप(fdt_errtable[0])))
 
-const char *fdt_strerror(int errval)
-{
-	if (errval > 0)
-		return "<valid offset/length>";
-	else if (errval == 0)
-		return "<no error>";
-	else if (-errval < FDT_ERRTABSIZE) {
-		const char *s = fdt_errtable[-errval].str;
+स्थिर अक्षर *fdt_म_त्रुटि(पूर्णांक errval)
+अणु
+	अगर (errval > 0)
+		वापस "<valid offset/length>";
+	अन्यथा अगर (errval == 0)
+		वापस "<no error>";
+	अन्यथा अगर (-errval < FDT_ERRTABSIZE) अणु
+		स्थिर अक्षर *s = fdt_errtable[-errval].str;
 
-		if (s)
-			return s;
-	}
+		अगर (s)
+			वापस s;
+	पूर्ण
 
-	return "<unknown error>";
-}
+	वापस "<unknown error>";
+पूर्ण

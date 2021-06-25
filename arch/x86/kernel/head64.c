@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  prepare to run common code
  *
  *  Copyright (C) 2000 Andrea Arcangeli <andrea@suse.de> SuSE
  */
 
-#define DISABLE_BRANCH_PROFILING
+#घोषणा DISABLE_BRANCH_PROFILING
 
 /* cpu_feature_enabled() cannot be used this early */
-#define USE_EARLY_PGTABLE_L5
+#घोषणा USE_EARLY_PGTABLE_L5
 
-#include <linux/init.h>
-#include <linux/linkage.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/percpu.h>
-#include <linux/start_kernel.h>
-#include <linux/io.h>
-#include <linux/memblock.h>
-#include <linux/mem_encrypt.h>
-#include <linux/pgtable.h>
+#समावेश <linux/init.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/percpu.h>
+#समावेश <linux/start_kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mem_encrypt.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/processor.h>
-#include <asm/proto.h>
-#include <asm/smp.h>
-#include <asm/setup.h>
-#include <asm/desc.h>
-#include <asm/tlbflush.h>
-#include <asm/sections.h>
-#include <asm/kdebug.h>
-#include <asm/e820/api.h>
-#include <asm/bios_ebda.h>
-#include <asm/bootparam_utils.h>
-#include <asm/microcode.h>
-#include <asm/kasan.h>
-#include <asm/fixmap.h>
-#include <asm/realmode.h>
-#include <asm/extable.h>
-#include <asm/trapnr.h>
-#include <asm/sev.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/kdebug.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/bios_ebda.h>
+#समावेश <यंत्र/bootparam_utils.h>
+#समावेश <यंत्र/microcode.h>
+#समावेश <यंत्र/kasan.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/extable.h>
+#समावेश <यंत्र/trapnr.h>
+#समावेश <यंत्र/sev.h>
 
 /*
  * Manage page tables very early on.
  */
-extern pmd_t early_dynamic_pgts[EARLY_DYNAMIC_PAGE_TABLES][PTRS_PER_PMD];
-static unsigned int __initdata next_early_pgt;
+बाह्य pmd_t early_dynamic_pgts[EARLY_DYNAMIC_PAGE_TABLES][PTRS_PER_PMD];
+अटल अचिन्हित पूर्णांक __initdata next_early_pgt;
 pmdval_t early_pmd_flags = __PAGE_KERNEL_LARGE & ~(_PAGE_GLOBAL | _PAGE_NX);
 
-#ifdef CONFIG_X86_5LEVEL
-unsigned int __pgtable_l5_enabled __ro_after_init;
-unsigned int pgdir_shift __ro_after_init = 39;
-EXPORT_SYMBOL(pgdir_shift);
-unsigned int ptrs_per_p4d __ro_after_init = 1;
+#अगर_घोषित CONFIG_X86_5LEVEL
+अचिन्हित पूर्णांक __pgtable_l5_enabled __ro_after_init;
+अचिन्हित पूर्णांक pgdir_shअगरt __ro_after_init = 39;
+EXPORT_SYMBOL(pgdir_shअगरt);
+अचिन्हित पूर्णांक ptrs_per_p4d __ro_after_init = 1;
 EXPORT_SYMBOL(ptrs_per_p4d);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_DYNAMIC_MEMORY_LAYOUT
-unsigned long page_offset_base __ro_after_init = __PAGE_OFFSET_BASE_L4;
+#अगर_घोषित CONFIG_DYNAMIC_MEMORY_LAYOUT
+अचिन्हित दीर्घ page_offset_base __ro_after_init = __PAGE_OFFSET_BASE_L4;
 EXPORT_SYMBOL(page_offset_base);
-unsigned long vmalloc_base __ro_after_init = __VMALLOC_BASE_L4;
-EXPORT_SYMBOL(vmalloc_base);
-unsigned long vmemmap_base __ro_after_init = __VMEMMAP_BASE_L4;
+अचिन्हित दीर्घ vदो_स्मृति_base __ro_after_init = __VMALLOC_BASE_L4;
+EXPORT_SYMBOL(vदो_स्मृति_base);
+अचिन्हित दीर्घ vmemmap_base __ro_after_init = __VMEMMAP_BASE_L4;
 EXPORT_SYMBOL(vmemmap_base);
-#endif
+#पूर्ण_अगर
 
 /*
- * GDT used on the boot CPU before switching to virtual addresses.
+ * GDT used on the boot CPU beक्रमe चयनing to भव addresses.
  */
-static struct desc_struct startup_gdt[GDT_ENTRIES] = {
+अटल काष्ठा desc_काष्ठा startup_gdt[GDT_ENTRIES] = अणु
 	[GDT_ENTRY_KERNEL32_CS]         = GDT_ENTRY_INIT(0xc09b, 0, 0xfffff),
 	[GDT_ENTRY_KERNEL_CS]           = GDT_ENTRY_INIT(0xa09b, 0, 0xfffff),
 	[GDT_ENTRY_KERNEL_DS]           = GDT_ENTRY_INIT(0xc093, 0, 0xfffff),
-};
+पूर्ण;
 
 /*
- * Address needs to be set at runtime because it references the startup_gdt
- * while the kernel still uses a direct mapping.
+ * Address needs to be set at runसमय because it references the startup_gdt
+ * जबतक the kernel still uses a direct mapping.
  */
-static struct desc_ptr startup_gdt_descr = {
-	.size = sizeof(startup_gdt),
+अटल काष्ठा desc_ptr startup_gdt_descr = अणु
+	.size = माप(startup_gdt),
 	.address = 0,
-};
+पूर्ण;
 
-#define __head	__section(".head.text")
+#घोषणा __head	__section(".head.text")
 
-static void __head *fixup_pointer(void *ptr, unsigned long physaddr)
-{
-	return ptr - (void *)_text + (void *)physaddr;
-}
+अटल व्योम __head *fixup_poपूर्णांकer(व्योम *ptr, अचिन्हित दीर्घ physaddr)
+अणु
+	वापस ptr - (व्योम *)_text + (व्योम *)physaddr;
+पूर्ण
 
-static unsigned long __head *fixup_long(void *ptr, unsigned long physaddr)
-{
-	return fixup_pointer(ptr, physaddr);
-}
+अटल अचिन्हित दीर्घ __head *fixup_दीर्घ(व्योम *ptr, अचिन्हित दीर्घ physaddr)
+अणु
+	वापस fixup_poपूर्णांकer(ptr, physaddr);
+पूर्ण
 
-#ifdef CONFIG_X86_5LEVEL
-static unsigned int __head *fixup_int(void *ptr, unsigned long physaddr)
-{
-	return fixup_pointer(ptr, physaddr);
-}
+#अगर_घोषित CONFIG_X86_5LEVEL
+अटल अचिन्हित पूर्णांक __head *fixup_पूर्णांक(व्योम *ptr, अचिन्हित दीर्घ physaddr)
+अणु
+	वापस fixup_poपूर्णांकer(ptr, physaddr);
+पूर्ण
 
-static bool __head check_la57_support(unsigned long physaddr)
-{
+अटल bool __head check_la57_support(अचिन्हित दीर्घ physaddr)
+अणु
 	/*
 	 * 5-level paging is detected and enabled at kernel decompression
-	 * stage. Only check if it has been enabled there.
+	 * stage. Only check अगर it has been enabled there.
 	 */
-	if (!(native_read_cr4() & X86_CR4_LA57))
-		return false;
+	अगर (!(native_पढ़ो_cr4() & X86_CR4_LA57))
+		वापस false;
 
-	*fixup_int(&__pgtable_l5_enabled, physaddr) = 1;
-	*fixup_int(&pgdir_shift, physaddr) = 48;
-	*fixup_int(&ptrs_per_p4d, physaddr) = 512;
-	*fixup_long(&page_offset_base, physaddr) = __PAGE_OFFSET_BASE_L5;
-	*fixup_long(&vmalloc_base, physaddr) = __VMALLOC_BASE_L5;
-	*fixup_long(&vmemmap_base, physaddr) = __VMEMMAP_BASE_L5;
+	*fixup_पूर्णांक(&__pgtable_l5_enabled, physaddr) = 1;
+	*fixup_पूर्णांक(&pgdir_shअगरt, physaddr) = 48;
+	*fixup_पूर्णांक(&ptrs_per_p4d, physaddr) = 512;
+	*fixup_दीर्घ(&page_offset_base, physaddr) = __PAGE_OFFSET_BASE_L5;
+	*fixup_दीर्घ(&vदो_स्मृति_base, physaddr) = __VMALLOC_BASE_L5;
+	*fixup_दीर्घ(&vmemmap_base, physaddr) = __VMEMMAP_BASE_L5;
 
-	return true;
-}
-#else
-static bool __head check_la57_support(unsigned long physaddr)
-{
-	return false;
-}
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल bool __head check_la57_support(अचिन्हित दीर्घ physaddr)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
 /* Code in __startup_64() can be relocated during execution, but the compiler
- * doesn't have to generate PC-relative relocations when accessing globals from
- * that function. Clang actually does not generate them, which leads to
- * boot-time crashes. To work around this problem, every global pointer must
- * be adjusted using fixup_pointer().
+ * करोesn't have to generate PC-relative relocations when accessing globals from
+ * that function. Clang actually करोes not generate them, which leads to
+ * boot-समय crashes. To work around this problem, every global poपूर्णांकer must
+ * be adjusted using fixup_poपूर्णांकer().
  */
-unsigned long __head __startup_64(unsigned long physaddr,
-				  struct boot_params *bp)
-{
-	unsigned long vaddr, vaddr_end;
-	unsigned long load_delta, *p;
-	unsigned long pgtable_flags;
+अचिन्हित दीर्घ __head __startup_64(अचिन्हित दीर्घ physaddr,
+				  काष्ठा boot_params *bp)
+अणु
+	अचिन्हित दीर्घ vaddr, vaddr_end;
+	अचिन्हित दीर्घ load_delta, *p;
+	अचिन्हित दीर्घ pgtable_flags;
 	pgdval_t *pgd;
 	p4dval_t *p4d;
 	pudval_t *pud;
 	pmdval_t *pmd, pmd_entry;
 	pteval_t *mask_ptr;
 	bool la57;
-	int i;
-	unsigned int *next_pgt_ptr;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक *next_pgt_ptr;
 
 	la57 = check_la57_support(physaddr);
 
 	/* Is the address too large? */
-	if (physaddr >> MAX_PHYSMEM_BITS)
-		for (;;);
+	अगर (physaddr >> MAX_PHYSMEM_BITS)
+		क्रम (;;);
 
 	/*
 	 * Compute the delta between the address I am compiled to run at
 	 * and the address I am actually running at.
 	 */
-	load_delta = physaddr - (unsigned long)(_text - __START_KERNEL_map);
+	load_delta = physaddr - (अचिन्हित दीर्घ)(_text - __START_KERNEL_map);
 
 	/* Is the address not 2M aligned? */
-	if (load_delta & ~PMD_PAGE_MASK)
-		for (;;);
+	अगर (load_delta & ~PMD_PAGE_MASK)
+		क्रम (;;);
 
-	/* Activate Secure Memory Encryption (SME) if supported and enabled */
+	/* Activate Secure Memory Encryption (SME) अगर supported and enabled */
 	sme_enable(bp);
 
 	/* Include the SME encryption mask in the fixup value */
@@ -171,56 +172,56 @@ unsigned long __head __startup_64(unsigned long physaddr,
 
 	/* Fixup the physical addresses in the page table */
 
-	pgd = fixup_pointer(&early_top_pgt, physaddr);
+	pgd = fixup_poपूर्णांकer(&early_top_pgt, physaddr);
 	p = pgd + pgd_index(__START_KERNEL_map);
-	if (la57)
-		*p = (unsigned long)level4_kernel_pgt;
-	else
-		*p = (unsigned long)level3_kernel_pgt;
+	अगर (la57)
+		*p = (अचिन्हित दीर्घ)level4_kernel_pgt;
+	अन्यथा
+		*p = (अचिन्हित दीर्घ)level3_kernel_pgt;
 	*p += _PAGE_TABLE_NOENC - __START_KERNEL_map + load_delta;
 
-	if (la57) {
-		p4d = fixup_pointer(&level4_kernel_pgt, physaddr);
+	अगर (la57) अणु
+		p4d = fixup_poपूर्णांकer(&level4_kernel_pgt, physaddr);
 		p4d[511] += load_delta;
-	}
+	पूर्ण
 
-	pud = fixup_pointer(&level3_kernel_pgt, physaddr);
+	pud = fixup_poपूर्णांकer(&level3_kernel_pgt, physaddr);
 	pud[510] += load_delta;
 	pud[511] += load_delta;
 
-	pmd = fixup_pointer(level2_fixmap_pgt, physaddr);
-	for (i = FIXMAP_PMD_TOP; i > FIXMAP_PMD_TOP - FIXMAP_PMD_NUM; i--)
+	pmd = fixup_poपूर्णांकer(level2_fixmap_pgt, physaddr);
+	क्रम (i = FIXMAP_PMD_TOP; i > FIXMAP_PMD_TOP - FIXMAP_PMD_NUM; i--)
 		pmd[i] += load_delta;
 
 	/*
-	 * Set up the identity mapping for the switchover.  These
+	 * Set up the identity mapping क्रम the चयनover.  These
 	 * entries should *NOT* have the global bit set!  This also
 	 * creates a bunch of nonsense entries but that is fine --
-	 * it avoids problems around wraparound.
+	 * it aव्योमs problems around wraparound.
 	 */
 
-	next_pgt_ptr = fixup_pointer(&next_early_pgt, physaddr);
-	pud = fixup_pointer(early_dynamic_pgts[(*next_pgt_ptr)++], physaddr);
-	pmd = fixup_pointer(early_dynamic_pgts[(*next_pgt_ptr)++], physaddr);
+	next_pgt_ptr = fixup_poपूर्णांकer(&next_early_pgt, physaddr);
+	pud = fixup_poपूर्णांकer(early_dynamic_pgts[(*next_pgt_ptr)++], physaddr);
+	pmd = fixup_poपूर्णांकer(early_dynamic_pgts[(*next_pgt_ptr)++], physaddr);
 
 	pgtable_flags = _KERNPG_TABLE_NOENC + sme_get_me_mask();
 
-	if (la57) {
-		p4d = fixup_pointer(early_dynamic_pgts[(*next_pgt_ptr)++],
+	अगर (la57) अणु
+		p4d = fixup_poपूर्णांकer(early_dynamic_pgts[(*next_pgt_ptr)++],
 				    physaddr);
 
-		i = (physaddr >> PGDIR_SHIFT) % PTRS_PER_PGD;
+		i = (physaddr >> PGसूची_SHIFT) % PTRS_PER_PGD;
 		pgd[i + 0] = (pgdval_t)p4d + pgtable_flags;
 		pgd[i + 1] = (pgdval_t)p4d + pgtable_flags;
 
 		i = physaddr >> P4D_SHIFT;
 		p4d[(i + 0) % PTRS_PER_P4D] = (pgdval_t)pud + pgtable_flags;
 		p4d[(i + 1) % PTRS_PER_P4D] = (pgdval_t)pud + pgtable_flags;
-	} else {
-		i = (physaddr >> PGDIR_SHIFT) % PTRS_PER_PGD;
+	पूर्ण अन्यथा अणु
+		i = (physaddr >> PGसूची_SHIFT) % PTRS_PER_PGD;
 		pgd[i + 0] = (pgdval_t)pud + pgtable_flags;
 		pgd[i + 1] = (pgdval_t)pud + pgtable_flags;
-	}
+	पूर्ण
 
 	i = physaddr >> PUD_SHIFT;
 	pud[(i + 0) % PTRS_PER_PUD] = (pudval_t)pmd + pgtable_flags;
@@ -228,108 +229,108 @@ unsigned long __head __startup_64(unsigned long physaddr,
 
 	pmd_entry = __PAGE_KERNEL_LARGE_EXEC & ~_PAGE_GLOBAL;
 	/* Filter out unsupported __PAGE_KERNEL_* bits: */
-	mask_ptr = fixup_pointer(&__supported_pte_mask, physaddr);
+	mask_ptr = fixup_poपूर्णांकer(&__supported_pte_mask, physaddr);
 	pmd_entry &= *mask_ptr;
 	pmd_entry += sme_get_me_mask();
 	pmd_entry +=  physaddr;
 
-	for (i = 0; i < DIV_ROUND_UP(_end - _text, PMD_SIZE); i++) {
-		int idx = i + (physaddr >> PMD_SHIFT);
+	क्रम (i = 0; i < DIV_ROUND_UP(_end - _text, PMD_SIZE); i++) अणु
+		पूर्णांक idx = i + (physaddr >> PMD_SHIFT);
 
 		pmd[idx % PTRS_PER_PMD] = pmd_entry + i * PMD_SIZE;
-	}
+	पूर्ण
 
 	/*
-	 * Fixup the kernel text+data virtual addresses. Note that
-	 * we might write invalid pmds, when the kernel is relocated
-	 * cleanup_highmap() fixes this up along with the mappings
+	 * Fixup the kernel text+data भव addresses. Note that
+	 * we might ग_लिखो invalid pmds, when the kernel is relocated
+	 * cleanup_highmap() fixes this up aदीर्घ with the mappings
 	 * beyond _end.
 	 *
 	 * Only the region occupied by the kernel image has so far
 	 * been checked against the table of usable memory regions
 	 * provided by the firmware, so invalidate pages outside that
 	 * region. A page table entry that maps to a reserved area of
-	 * memory would allow processor speculation into that area,
-	 * and on some hardware (particularly the UV platform) even
+	 * memory would allow processor speculation पूर्णांकo that area,
+	 * and on some hardware (particularly the UV platक्रमm) even
 	 * speculative access to some reserved areas is caught as an
-	 * error, causing the BIOS to halt the system.
+	 * error, causing the BIOS to halt the प्रणाली.
 	 */
 
-	pmd = fixup_pointer(level2_kernel_pgt, physaddr);
+	pmd = fixup_poपूर्णांकer(level2_kernel_pgt, physaddr);
 
-	/* invalidate pages before the kernel image */
-	for (i = 0; i < pmd_index((unsigned long)_text); i++)
+	/* invalidate pages beक्रमe the kernel image */
+	क्रम (i = 0; i < pmd_index((अचिन्हित दीर्घ)_text); i++)
 		pmd[i] &= ~_PAGE_PRESENT;
 
 	/* fixup pages that are part of the kernel image */
-	for (; i <= pmd_index((unsigned long)_end); i++)
-		if (pmd[i] & _PAGE_PRESENT)
+	क्रम (; i <= pmd_index((अचिन्हित दीर्घ)_end); i++)
+		अगर (pmd[i] & _PAGE_PRESENT)
 			pmd[i] += load_delta;
 
 	/* invalidate pages after the kernel image */
-	for (; i < PTRS_PER_PMD; i++)
+	क्रम (; i < PTRS_PER_PMD; i++)
 		pmd[i] &= ~_PAGE_PRESENT;
 
 	/*
-	 * Fixup phys_base - remove the memory encryption mask to obtain
+	 * Fixup phys_base - हटाओ the memory encryption mask to obtain
 	 * the true physical address.
 	 */
-	*fixup_long(&phys_base, physaddr) += load_delta - sme_get_me_mask();
+	*fixup_दीर्घ(&phys_base, physaddr) += load_delta - sme_get_me_mask();
 
-	/* Encrypt the kernel and related (if SME is active) */
+	/* Encrypt the kernel and related (अगर SME is active) */
 	sme_encrypt_kernel(bp);
 
 	/*
 	 * Clear the memory encryption mask from the .bss..decrypted section.
-	 * The bss section will be memset to zero later in the initialization so
+	 * The bss section will be स_रखो to zero later in the initialization so
 	 * there is no need to zero it after changing the memory encryption
 	 * attribute.
 	 */
-	if (mem_encrypt_active()) {
-		vaddr = (unsigned long)__start_bss_decrypted;
-		vaddr_end = (unsigned long)__end_bss_decrypted;
-		for (; vaddr < vaddr_end; vaddr += PMD_SIZE) {
+	अगर (mem_encrypt_active()) अणु
+		vaddr = (अचिन्हित दीर्घ)__start_bss_decrypted;
+		vaddr_end = (अचिन्हित दीर्घ)__end_bss_decrypted;
+		क्रम (; vaddr < vaddr_end; vaddr += PMD_SIZE) अणु
 			i = pmd_index(vaddr);
 			pmd[i] -= sme_get_me_mask();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Return the SME encryption mask (if SME is active) to be used as a
-	 * modifier for the initial pgdir entry programmed into CR3.
+	 * Return the SME encryption mask (अगर SME is active) to be used as a
+	 * modअगरier क्रम the initial pgdir entry programmed पूर्णांकo CR3.
 	 */
-	return sme_get_me_mask();
-}
+	वापस sme_get_me_mask();
+पूर्ण
 
-unsigned long __startup_secondary_64(void)
-{
+अचिन्हित दीर्घ __startup_secondary_64(व्योम)
+अणु
 	/*
-	 * Return the SME encryption mask (if SME is active) to be used as a
-	 * modifier for the initial pgdir entry programmed into CR3.
+	 * Return the SME encryption mask (अगर SME is active) to be used as a
+	 * modअगरier क्रम the initial pgdir entry programmed पूर्णांकo CR3.
 	 */
-	return sme_get_me_mask();
-}
+	वापस sme_get_me_mask();
+पूर्ण
 
-/* Wipe all early page tables except for the kernel symbol map */
-static void __init reset_early_page_tables(void)
-{
-	memset(early_top_pgt, 0, sizeof(pgd_t)*(PTRS_PER_PGD-1));
+/* Wipe all early page tables except क्रम the kernel symbol map */
+अटल व्योम __init reset_early_page_tables(व्योम)
+अणु
+	स_रखो(early_top_pgt, 0, माप(pgd_t)*(PTRS_PER_PGD-1));
 	next_early_pgt = 0;
-	write_cr3(__sme_pa_nodebug(early_top_pgt));
-}
+	ग_लिखो_cr3(__sme_pa_nodebug(early_top_pgt));
+पूर्ण
 
 /* Create a new PMD entry */
-bool __init __early_make_pgtable(unsigned long address, pmdval_t pmd)
-{
-	unsigned long physaddr = address - __PAGE_OFFSET;
+bool __init __early_make_pgtable(अचिन्हित दीर्घ address, pmdval_t pmd)
+अणु
+	अचिन्हित दीर्घ physaddr = address - __PAGE_OFFSET;
 	pgdval_t pgd, *pgd_p;
 	p4dval_t p4d, *p4d_p;
 	pudval_t pud, *pud_p;
 	pmdval_t *pmd_p;
 
-	/* Invalid address or early pgt is done ?  */
-	if (physaddr >= MAXMEM || read_cr3_pa() != __pa_nodebug(early_top_pgt))
-		return false;
+	/* Invalid address or early pgt is करोne ?  */
+	अगर (physaddr >= MAXMEM || पढ़ो_cr3_pa() != __pa_nodebug(early_top_pgt))
+		वापस false;
 
 again:
 	pgd_p = &early_top_pgt[pgd_index(address)].pgd;
@@ -337,102 +338,102 @@ again:
 
 	/*
 	 * The use of __START_KERNEL_map rather than __PAGE_OFFSET here is
-	 * critical -- __PAGE_OFFSET would point us back into the dynamic
-	 * range and we might end up looping forever...
+	 * critical -- __PAGE_OFFSET would poपूर्णांक us back पूर्णांकo the dynamic
+	 * range and we might end up looping क्रमever...
 	 */
-	if (!pgtable_l5_enabled())
+	अगर (!pgtable_l5_enabled())
 		p4d_p = pgd_p;
-	else if (pgd)
+	अन्यथा अगर (pgd)
 		p4d_p = (p4dval_t *)((pgd & PTE_PFN_MASK) + __START_KERNEL_map - phys_base);
-	else {
-		if (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) {
+	अन्यथा अणु
+		अगर (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) अणु
 			reset_early_page_tables();
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
 		p4d_p = (p4dval_t *)early_dynamic_pgts[next_early_pgt++];
-		memset(p4d_p, 0, sizeof(*p4d_p) * PTRS_PER_P4D);
+		स_रखो(p4d_p, 0, माप(*p4d_p) * PTRS_PER_P4D);
 		*pgd_p = (pgdval_t)p4d_p - __START_KERNEL_map + phys_base + _KERNPG_TABLE;
-	}
+	पूर्ण
 	p4d_p += p4d_index(address);
 	p4d = *p4d_p;
 
-	if (p4d)
+	अगर (p4d)
 		pud_p = (pudval_t *)((p4d & PTE_PFN_MASK) + __START_KERNEL_map - phys_base);
-	else {
-		if (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) {
+	अन्यथा अणु
+		अगर (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) अणु
 			reset_early_page_tables();
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
 		pud_p = (pudval_t *)early_dynamic_pgts[next_early_pgt++];
-		memset(pud_p, 0, sizeof(*pud_p) * PTRS_PER_PUD);
+		स_रखो(pud_p, 0, माप(*pud_p) * PTRS_PER_PUD);
 		*p4d_p = (p4dval_t)pud_p - __START_KERNEL_map + phys_base + _KERNPG_TABLE;
-	}
+	पूर्ण
 	pud_p += pud_index(address);
 	pud = *pud_p;
 
-	if (pud)
+	अगर (pud)
 		pmd_p = (pmdval_t *)((pud & PTE_PFN_MASK) + __START_KERNEL_map - phys_base);
-	else {
-		if (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) {
+	अन्यथा अणु
+		अगर (next_early_pgt >= EARLY_DYNAMIC_PAGE_TABLES) अणु
 			reset_early_page_tables();
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 
 		pmd_p = (pmdval_t *)early_dynamic_pgts[next_early_pgt++];
-		memset(pmd_p, 0, sizeof(*pmd_p) * PTRS_PER_PMD);
+		स_रखो(pmd_p, 0, माप(*pmd_p) * PTRS_PER_PMD);
 		*pud_p = (pudval_t)pmd_p - __START_KERNEL_map + phys_base + _KERNPG_TABLE;
-	}
+	पूर्ण
 	pmd_p[pmd_index(address)] = pmd;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool __init early_make_pgtable(unsigned long address)
-{
-	unsigned long physaddr = address - __PAGE_OFFSET;
+अटल bool __init early_make_pgtable(अचिन्हित दीर्घ address)
+अणु
+	अचिन्हित दीर्घ physaddr = address - __PAGE_OFFSET;
 	pmdval_t pmd;
 
 	pmd = (physaddr & PMD_MASK) + early_pmd_flags;
 
-	return __early_make_pgtable(address, pmd);
-}
+	वापस __early_make_pgtable(address, pmd);
+पूर्ण
 
-void __init do_early_exception(struct pt_regs *regs, int trapnr)
-{
-	if (trapnr == X86_TRAP_PF &&
-	    early_make_pgtable(native_read_cr2()))
-		return;
+व्योम __init करो_early_exception(काष्ठा pt_regs *regs, पूर्णांक trapnr)
+अणु
+	अगर (trapnr == X86_TRAP_PF &&
+	    early_make_pgtable(native_पढ़ो_cr2()))
+		वापस;
 
-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT) &&
+	अगर (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT) &&
 	    trapnr == X86_TRAP_VC && handle_vc_boot_ghcb(regs))
-		return;
+		वापस;
 
 	early_fixup_exception(regs, trapnr);
-}
+पूर्ण
 
-/* Don't add a printk in there. printk relies on the PDA which is not initialized 
+/* Don't add a prपूर्णांकk in there. prपूर्णांकk relies on the PDA which is not initialized 
    yet. */
-static void __init clear_bss(void)
-{
-	memset(__bss_start, 0,
-	       (unsigned long) __bss_stop - (unsigned long) __bss_start);
-}
+अटल व्योम __init clear_bss(व्योम)
+अणु
+	स_रखो(__bss_start, 0,
+	       (अचिन्हित दीर्घ) __bss_stop - (अचिन्हित दीर्घ) __bss_start);
+पूर्ण
 
-static unsigned long get_cmd_line_ptr(void)
-{
-	unsigned long cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
+अटल अचिन्हित दीर्घ get_cmd_line_ptr(व्योम)
+अणु
+	अचिन्हित दीर्घ cmd_line_ptr = boot_params.hdr.cmd_line_ptr;
 
 	cmd_line_ptr |= (u64)boot_params.ext_cmd_line_ptr << 32;
 
-	return cmd_line_ptr;
-}
+	वापस cmd_line_ptr;
+पूर्ण
 
-static void __init copy_bootdata(char *real_mode_data)
-{
-	char * command_line;
-	unsigned long cmd_line_ptr;
+अटल व्योम __init copy_bootdata(अक्षर *real_mode_data)
+अणु
+	अक्षर * command_line;
+	अचिन्हित दीर्घ cmd_line_ptr;
 
 	/*
 	 * If SME is active, this will create decrypted mappings of the
@@ -440,28 +441,28 @@ static void __init copy_bootdata(char *real_mode_data)
 	 */
 	sme_map_bootdata(real_mode_data);
 
-	memcpy(&boot_params, real_mode_data, sizeof(boot_params));
+	स_नकल(&boot_params, real_mode_data, माप(boot_params));
 	sanitize_boot_params(&boot_params);
 	cmd_line_ptr = get_cmd_line_ptr();
-	if (cmd_line_ptr) {
+	अगर (cmd_line_ptr) अणु
 		command_line = __va(cmd_line_ptr);
-		memcpy(boot_command_line, command_line, COMMAND_LINE_SIZE);
-	}
+		स_नकल(boot_command_line, command_line, COMMAND_LINE_SIZE);
+	पूर्ण
 
 	/*
-	 * The old boot data is no longer needed and won't be reserved,
-	 * freeing up that memory for use by the system. If SME is active,
-	 * we need to remove the mappings that were created so that the
-	 * memory doesn't remain mapped as decrypted.
+	 * The old boot data is no दीर्घer needed and won't be reserved,
+	 * मुक्तing up that memory क्रम use by the प्रणाली. If SME is active,
+	 * we need to हटाओ the mappings that were created so that the
+	 * memory करोesn't reमुख्य mapped as decrypted.
 	 */
 	sme_unmap_bootdata(real_mode_data);
-}
+पूर्ण
 
-asmlinkage __visible void __init x86_64_start_kernel(char * real_mode_data)
-{
+यंत्रlinkage __visible व्योम __init x86_64_start_kernel(अक्षर * real_mode_data)
+अणु
 	/*
-	 * Build-time sanity checks on the kernel image and module
-	 * area mappings. (these are purely build-time and produce no code)
+	 * Build-समय sanity checks on the kernel image and module
+	 * area mappings. (these are purely build-समय and produce no code)
 	 */
 	BUILD_BUG_ON(MODULES_VADDR < __START_KERNEL_map);
 	BUILD_BUG_ON(MODULES_VADDR - __START_KERNEL_map < KERNEL_IMAGE_SIZE);
@@ -469,11 +470,11 @@ asmlinkage __visible void __init x86_64_start_kernel(char * real_mode_data)
 	BUILD_BUG_ON((__START_KERNEL_map & ~PMD_MASK) != 0);
 	BUILD_BUG_ON((MODULES_VADDR & ~PMD_MASK) != 0);
 	BUILD_BUG_ON(!(MODULES_VADDR > __START_KERNEL));
-	MAYBE_BUILD_BUG_ON(!(((MODULES_END - 1) & PGDIR_MASK) ==
-				(__START_KERNEL & PGDIR_MASK)));
+	MAYBE_BUILD_BUG_ON(!(((MODULES_END - 1) & PGसूची_MASK) ==
+				(__START_KERNEL & PGसूची_MASK)));
 	BUILD_BUG_ON(__fix_to_virt(__end_of_fixed_addresses) <= MODULES_END);
 
-	cr4_init_shadow();
+	cr4_init_shaकरोw();
 
 	/* Kill off the identity-map trampoline */
 	reset_early_page_tables();
@@ -484,7 +485,7 @@ asmlinkage __visible void __init x86_64_start_kernel(char * real_mode_data)
 
 	/*
 	 * SME support may update early_pmd_flags to include the memory
-	 * encryption mask, so it needs to be called before anything
+	 * encryption mask, so it needs to be called beक्रमe anything
 	 * that may generate a page fault.
 	 */
 	sme_early_init();
@@ -504,101 +505,101 @@ asmlinkage __visible void __init x86_64_start_kernel(char * real_mode_data)
 	init_top_pgt[511] = early_top_pgt[511];
 
 	x86_64_start_reservations(real_mode_data);
-}
+पूर्ण
 
-void __init x86_64_start_reservations(char *real_mode_data)
-{
-	/* version is always not zero if it is copied */
-	if (!boot_params.hdr.version)
+व्योम __init x86_64_start_reservations(अक्षर *real_mode_data)
+अणु
+	/* version is always not zero अगर it is copied */
+	अगर (!boot_params.hdr.version)
 		copy_bootdata(__va(real_mode_data));
 
-	x86_early_init_platform_quirks();
+	x86_early_init_platक्रमm_quirks();
 
-	switch (boot_params.hdr.hardware_subarch) {
-	case X86_SUBARCH_INTEL_MID:
-		x86_intel_mid_early_setup();
-		break;
-	default:
-		break;
-	}
+	चयन (boot_params.hdr.hardware_subarch) अणु
+	हाल X86_SUBARCH_INTEL_MID:
+		x86_पूर्णांकel_mid_early_setup();
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	start_kernel();
-}
+पूर्ण
 
 /*
- * Data structures and code used for IDT setup in head_64.S. The bringup-IDT is
+ * Data काष्ठाures and code used क्रम IDT setup in head_64.S. The bringup-IDT is
  * used until the idt_table takes over. On the boot CPU this happens in
- * x86_64_start_kernel(), on secondary CPUs in start_secondary(). In both cases
+ * x86_64_start_kernel(), on secondary CPUs in start_secondary(). In both हालs
  * this happens in the functions called from head_64.S.
  *
- * The idt_table can't be used that early because all the code modifying it is
- * in idt.c and can be instrumented by tracing or KASAN, which both don't work
- * during early CPU bringup. Also the idt_table has the runtime vectors
- * configured which require certain CPU state to be setup already (like TSS),
+ * The idt_table can't be used that early because all the code modअगरying it is
+ * in idt.c and can be instrumented by tracing or KASAN, which both करोn't work
+ * during early CPU bringup. Also the idt_table has the runसमय vectors
+ * configured which require certain CPU state to be setup alपढ़ोy (like TSS),
  * which also hasn't happened yet in early CPU bringup.
  */
-static gate_desc bringup_idt_table[NUM_EXCEPTION_VECTORS] __page_aligned_data;
+अटल gate_desc bringup_idt_table[NUM_EXCEPTION_VECTORS] __page_aligned_data;
 
-static struct desc_ptr bringup_idt_descr = {
-	.size		= (NUM_EXCEPTION_VECTORS * sizeof(gate_desc)) - 1,
-	.address	= 0, /* Set at runtime */
-};
+अटल काष्ठा desc_ptr bringup_idt_descr = अणु
+	.size		= (NUM_EXCEPTION_VECTORS * माप(gate_desc)) - 1,
+	.address	= 0, /* Set at runसमय */
+पूर्ण;
 
-static void set_bringup_idt_handler(gate_desc *idt, int n, void *handler)
-{
-#ifdef CONFIG_AMD_MEM_ENCRYPT
-	struct idt_data data;
+अटल व्योम set_bringup_idt_handler(gate_desc *idt, पूर्णांक n, व्योम *handler)
+अणु
+#अगर_घोषित CONFIG_AMD_MEM_ENCRYPT
+	काष्ठा idt_data data;
 	gate_desc desc;
 
 	init_idt_data(&data, n, handler);
 	idt_init_desc(&desc, &data);
-	native_write_idt_entry(idt, n, &desc);
-#endif
-}
+	native_ग_लिखो_idt_entry(idt, n, &desc);
+#पूर्ण_अगर
+पूर्ण
 
-/* This runs while still in the direct mapping */
-static void startup_64_load_idt(unsigned long physbase)
-{
-	struct desc_ptr *desc = fixup_pointer(&bringup_idt_descr, physbase);
-	gate_desc *idt = fixup_pointer(bringup_idt_table, physbase);
+/* This runs जबतक still in the direct mapping */
+अटल व्योम startup_64_load_idt(अचिन्हित दीर्घ physbase)
+अणु
+	काष्ठा desc_ptr *desc = fixup_poपूर्णांकer(&bringup_idt_descr, physbase);
+	gate_desc *idt = fixup_poपूर्णांकer(bringup_idt_table, physbase);
 
 
-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT)) {
-		void *handler;
+	अगर (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT)) अणु
+		व्योम *handler;
 
 		/* VMM Communication Exception */
-		handler = fixup_pointer(vc_no_ghcb, physbase);
+		handler = fixup_poपूर्णांकer(vc_no_ghcb, physbase);
 		set_bringup_idt_handler(idt, X86_TRAP_VC, handler);
-	}
+	पूर्ण
 
-	desc->address = (unsigned long)idt;
+	desc->address = (अचिन्हित दीर्घ)idt;
 	native_load_idt(desc);
-}
+पूर्ण
 
 /* This is used when running on kernel addresses */
-void early_setup_idt(void)
-{
+व्योम early_setup_idt(व्योम)
+अणु
 	/* VMM Communication Exception */
-	if (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))
+	अगर (IS_ENABLED(CONFIG_AMD_MEM_ENCRYPT))
 		set_bringup_idt_handler(bringup_idt_table, X86_TRAP_VC, vc_boot_ghcb);
 
-	bringup_idt_descr.address = (unsigned long)bringup_idt_table;
+	bringup_idt_descr.address = (अचिन्हित दीर्घ)bringup_idt_table;
 	native_load_idt(&bringup_idt_descr);
-}
+पूर्ण
 
 /*
- * Setup boot CPU state needed before kernel switches to virtual addresses.
+ * Setup boot CPU state needed beक्रमe kernel चयनes to भव addresses.
  */
-void __head startup_64_setup_env(unsigned long physbase)
-{
+व्योम __head startup_64_setup_env(अचिन्हित दीर्घ physbase)
+अणु
 	/* Load GDT */
-	startup_gdt_descr.address = (unsigned long)fixup_pointer(startup_gdt, physbase);
+	startup_gdt_descr.address = (अचिन्हित दीर्घ)fixup_poपूर्णांकer(startup_gdt, physbase);
 	native_load_gdt(&startup_gdt_descr);
 
-	/* New GDT is live - reload data segment registers */
-	asm volatile("movl %%eax, %%ds\n"
+	/* New GDT is live - reload data segment रेजिस्टरs */
+	यंत्र अस्थिर("movl %%eax, %%ds\n"
 		     "movl %%eax, %%ss\n"
 		     "movl %%eax, %%es\n" : : "a"(__KERNEL_DS) : "memory");
 
 	startup_64_load_idt(physbase);
-}
+पूर्ण

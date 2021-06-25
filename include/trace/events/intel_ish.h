@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM intel_ish
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM पूर्णांकel_ish
 
-#if !defined(_TRACE_INTEL_ISH_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_INTEL_ISH_H
+#अगर !defined(_TRACE_INTEL_ISH_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_INTEL_ISH_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(ishtp_dump,
 
-	TP_PROTO(const char *message),
+	TP_PROTO(स्थिर अक्षर *message),
 
 	TP_ARGS(message),
 
@@ -21,11 +22,11 @@ TRACE_EVENT(ishtp_dump,
 		__assign_str(message, message);
 	),
 
-	TP_printk("%s", __get_str(message))
+	TP_prपूर्णांकk("%s", __get_str(message))
 );
 
 
-#endif /* _TRACE_INTEL_ISH_H */
+#पूर्ण_अगर /* _TRACE_INTEL_ISH_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

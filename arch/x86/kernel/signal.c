@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992  Linus Torvalds
- *  Copyright (C) 2000, 2001, 2002 Andi Kleen SuSE Labs
+ *  Copyright (C) 2000, 2001, 2002 Andi Kleen SuSE Lअसल
  *
- *  1997-11-28  Modified for POSIX.1b signals by Richard Henderson
+ *  1997-11-28  Modअगरied क्रम POSIX.1b संकेतs by Riअक्षरd Henderson
  *  2000-06-20  Pentium III FXSR, SSE support by Gareth Hughes
  *  2000-2002   x86-64 support by Andi Kleen
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/wait.h>
-#include <linux/tracehook.h>
-#include <linux/unistd.h>
-#include <linux/stddef.h>
-#include <linux/personality.h>
-#include <linux/uaccess.h>
-#include <linux/user-return-notifier.h>
-#include <linux/uprobes.h>
-#include <linux/context_tracking.h>
-#include <linux/entry-common.h>
-#include <linux/syscalls.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/personality.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/user-वापस-notअगरier.h>
+#समावेश <linux/uprobes.h>
+#समावेश <linux/context_tracking.h>
+#समावेश <linux/entry-common.h>
+#समावेश <linux/syscalls.h>
 
-#include <asm/processor.h>
-#include <asm/ucontext.h>
-#include <asm/fpu/internal.h>
-#include <asm/fpu/signal.h>
-#include <asm/vdso.h>
-#include <asm/mce.h>
-#include <asm/sighandling.h>
-#include <asm/vm86.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/ucontext.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
+#समावेश <यंत्र/fpu/संकेत.स>
+#समावेश <यंत्र/vdso.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/sighandling.h>
+#समावेश <यंत्र/vm86.h>
 
-#ifdef CONFIG_X86_64
-#include <linux/compat.h>
-#include <asm/proto.h>
-#include <asm/ia32_unistd.h>
-#endif /* CONFIG_X86_64 */
+#अगर_घोषित CONFIG_X86_64
+#समावेश <linux/compat.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/ia32_unistd.h>
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-#include <asm/syscall.h>
-#include <asm/sigframe.h>
-#include <asm/signal.h>
+#समावेश <यंत्र/syscall.h>
+#समावेश <यंत्र/sigframe.h>
+#समावेश <यंत्र/संकेत.स>
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 /*
  * If regs->ss will cause an IRET fault, change it.  Otherwise leave it
  * alone.  Using this generally makes no sense unless
- * user_64bit_mode(regs) would return true.
+ * user_64bit_mode(regs) would वापस true.
  */
-static void force_valid_ss(struct pt_regs *regs)
-{
+अटल व्योम क्रमce_valid_ss(काष्ठा pt_regs *regs)
+अणु
 	u32 ar;
-	asm volatile ("lar %[old_ss], %[ar]\n\t"
+	यंत्र अस्थिर ("lar %[old_ss], %[ar]\n\t"
 		      "jz 1f\n\t"		/* If invalid: */
 		      "xorl %[ar], %[ar]\n\t"	/* set ar = 0 */
 		      "1:"
@@ -65,38 +66,38 @@ static void force_valid_ss(struct pt_regs *regs)
 
 	/*
 	 * For a valid 64-bit user context, we need DPL 3, type
-	 * read-write data or read-write exp-down data, and S and P
+	 * पढ़ो-ग_लिखो data or पढ़ो-ग_लिखो exp-करोwn data, and S and P
 	 * set.  We can't use VERW because VERW doesn't check the
 	 * P bit.
 	 */
 	ar &= AR_DPL_MASK | AR_S | AR_P | AR_TYPE_MASK;
-	if (ar != (AR_DPL3 | AR_S | AR_P | AR_TYPE_RWDATA) &&
+	अगर (ar != (AR_DPL3 | AR_S | AR_P | AR_TYPE_RWDATA) &&
 	    ar != (AR_DPL3 | AR_S | AR_P | AR_TYPE_RWDATA_EXPDOWN))
 		regs->ss = __USER_DS;
-}
-# define CONTEXT_COPY_SIZE	offsetof(struct sigcontext, reserved1)
-#else
-# define CONTEXT_COPY_SIZE	sizeof(struct sigcontext)
-#endif
+पूर्ण
+# define CONTEXT_COPY_SIZE	दुरत्व(काष्ठा sigcontext, reserved1)
+#अन्यथा
+# define CONTEXT_COPY_SIZE	माप(काष्ठा sigcontext)
+#पूर्ण_अगर
 
-static int restore_sigcontext(struct pt_regs *regs,
-			      struct sigcontext __user *usc,
-			      unsigned long uc_flags)
-{
-	struct sigcontext sc;
+अटल पूर्णांक restore_sigcontext(काष्ठा pt_regs *regs,
+			      काष्ठा sigcontext __user *usc,
+			      अचिन्हित दीर्घ uc_flags)
+अणु
+	काष्ठा sigcontext sc;
 
-	/* Always make any pending restarted system calls return -EINTR */
-	current->restart_block.fn = do_no_restart_syscall;
+	/* Always make any pending restarted प्रणाली calls वापस -EINTR */
+	current->restart_block.fn = करो_no_restart_syscall;
 
-	if (copy_from_user(&sc, usc, CONTEXT_COPY_SIZE))
-		return -EFAULT;
+	अगर (copy_from_user(&sc, usc, CONTEXT_COPY_SIZE))
+		वापस -EFAULT;
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	set_user_gs(regs, sc.gs);
 	regs->fs = sc.fs;
 	regs->es = sc.es;
 	regs->ds = sc.ds;
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
 	regs->bx = sc.bx;
 	regs->cx = sc.cx;
@@ -108,7 +109,7 @@ static int restore_sigcontext(struct pt_regs *regs,
 	regs->sp = sc.sp;
 	regs->ip = sc.ip;
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	regs->r8 = sc.r8;
 	regs->r9 = sc.r9;
 	regs->r10 = sc.r10;
@@ -117,9 +118,9 @@ static int restore_sigcontext(struct pt_regs *regs,
 	regs->r13 = sc.r13;
 	regs->r14 = sc.r14;
 	regs->r15 = sc.r15;
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-	/* Get CS/SS and force CPL3 */
+	/* Get CS/SS and क्रमce CPL3 */
 	regs->cs = sc.cs | 0x03;
 	regs->ss = sc.ss | 0x03;
 
@@ -127,30 +128,30 @@ static int restore_sigcontext(struct pt_regs *regs,
 	/* disable syscall checks */
 	regs->orig_ax = -1;
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	/*
-	 * Fix up SS if needed for the benefit of old DOSEMU and
+	 * Fix up SS अगर needed क्रम the benefit of old DOSEMU and
 	 * CRIU.
 	 */
-	if (unlikely(!(uc_flags & UC_STRICT_RESTORE_SS) && user_64bit_mode(regs)))
-		force_valid_ss(regs);
-#endif
+	अगर (unlikely(!(uc_flags & UC_STRICT_RESTORE_SS) && user_64bit_mode(regs)))
+		क्रमce_valid_ss(regs);
+#पूर्ण_अगर
 
-	return fpu__restore_sig((void __user *)sc.fpstate,
+	वापस fpu__restore_sig((व्योम __user *)sc.fpstate,
 			       IS_ENABLED(CONFIG_X86_32));
-}
+पूर्ण
 
-static __always_inline int
-__unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
-		     struct pt_regs *regs, unsigned long mask)
-{
-#ifdef CONFIG_X86_32
+अटल __always_अंतरभूत पूर्णांक
+__unsafe_setup_sigcontext(काष्ठा sigcontext __user *sc, व्योम __user *fpstate,
+		     काष्ठा pt_regs *regs, अचिन्हित दीर्घ mask)
+अणु
+#अगर_घोषित CONFIG_X86_32
 	unsafe_put_user(get_user_gs(regs),
-				  (unsigned int __user *)&sc->gs, Efault);
-	unsafe_put_user(regs->fs, (unsigned int __user *)&sc->fs, Efault);
-	unsafe_put_user(regs->es, (unsigned int __user *)&sc->es, Efault);
-	unsafe_put_user(regs->ds, (unsigned int __user *)&sc->ds, Efault);
-#endif /* CONFIG_X86_32 */
+				  (अचिन्हित पूर्णांक __user *)&sc->gs, Efault);
+	unsafe_put_user(regs->fs, (अचिन्हित पूर्णांक __user *)&sc->fs, Efault);
+	unsafe_put_user(regs->es, (अचिन्हित पूर्णांक __user *)&sc->es, Efault);
+	unsafe_put_user(regs->ds, (अचिन्हित पूर्णांक __user *)&sc->ds, Efault);
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
 	unsafe_put_user(regs->di, &sc->di, Efault);
 	unsafe_put_user(regs->si, &sc->si, Efault);
@@ -160,7 +161,7 @@ __unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 	unsafe_put_user(regs->dx, &sc->dx, Efault);
 	unsafe_put_user(regs->cx, &sc->cx, Efault);
 	unsafe_put_user(regs->ax, &sc->ax, Efault);
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	unsafe_put_user(regs->r8, &sc->r8, Efault);
 	unsafe_put_user(regs->r9, &sc->r9, Efault);
 	unsafe_put_user(regs->r10, &sc->r10, Efault);
@@ -169,179 +170,179 @@ __unsafe_setup_sigcontext(struct sigcontext __user *sc, void __user *fpstate,
 	unsafe_put_user(regs->r13, &sc->r13, Efault);
 	unsafe_put_user(regs->r14, &sc->r14, Efault);
 	unsafe_put_user(regs->r15, &sc->r15, Efault);
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-	unsafe_put_user(current->thread.trap_nr, &sc->trapno, Efault);
-	unsafe_put_user(current->thread.error_code, &sc->err, Efault);
+	unsafe_put_user(current->thपढ़ो.trap_nr, &sc->trapno, Efault);
+	unsafe_put_user(current->thपढ़ो.error_code, &sc->err, Efault);
 	unsafe_put_user(regs->ip, &sc->ip, Efault);
-#ifdef CONFIG_X86_32
-	unsafe_put_user(regs->cs, (unsigned int __user *)&sc->cs, Efault);
+#अगर_घोषित CONFIG_X86_32
+	unsafe_put_user(regs->cs, (अचिन्हित पूर्णांक __user *)&sc->cs, Efault);
 	unsafe_put_user(regs->flags, &sc->flags, Efault);
-	unsafe_put_user(regs->sp, &sc->sp_at_signal, Efault);
-	unsafe_put_user(regs->ss, (unsigned int __user *)&sc->ss, Efault);
-#else /* !CONFIG_X86_32 */
+	unsafe_put_user(regs->sp, &sc->sp_at_संकेत, Efault);
+	unsafe_put_user(regs->ss, (अचिन्हित पूर्णांक __user *)&sc->ss, Efault);
+#अन्यथा /* !CONFIG_X86_32 */
 	unsafe_put_user(regs->flags, &sc->flags, Efault);
 	unsafe_put_user(regs->cs, &sc->cs, Efault);
 	unsafe_put_user(0, &sc->gs, Efault);
 	unsafe_put_user(0, &sc->fs, Efault);
 	unsafe_put_user(regs->ss, &sc->ss, Efault);
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-	unsafe_put_user(fpstate, (unsigned long __user *)&sc->fpstate, Efault);
+	unsafe_put_user(fpstate, (अचिन्हित दीर्घ __user *)&sc->fpstate, Efault);
 
 	/* non-iBCS2 extensions.. */
 	unsafe_put_user(mask, &sc->oldmask, Efault);
-	unsafe_put_user(current->thread.cr2, &sc->cr2, Efault);
-	return 0;
+	unsafe_put_user(current->thपढ़ो.cr2, &sc->cr2, Efault);
+	वापस 0;
 Efault:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-#define unsafe_put_sigcontext(sc, fp, regs, set, label)			\
-do {									\
-	if (__unsafe_setup_sigcontext(sc, fp, regs, set->sig[0]))	\
-		goto label;						\
-} while(0);
+#घोषणा unsafe_put_sigcontext(sc, fp, regs, set, label)			\
+करो अणु									\
+	अगर (__unsafe_setup_sigcontext(sc, fp, regs, set->sig[0]))	\
+		जाओ label;						\
+पूर्ण जबतक(0);
 
-#define unsafe_put_sigmask(set, frame, label) \
+#घोषणा unsafe_put_sigmask(set, frame, label) \
 	unsafe_put_user(*(__u64 *)(set), \
 			(__u64 __user *)&(frame)->uc.uc_sigmask, \
 			label)
 
 /*
- * Set up a signal frame.
+ * Set up a संकेत frame.
  */
 
 /*
  * Determine which stack to use..
  */
-static unsigned long align_sigframe(unsigned long sp)
-{
-#ifdef CONFIG_X86_32
+अटल अचिन्हित दीर्घ align_sigframe(अचिन्हित दीर्घ sp)
+अणु
+#अगर_घोषित CONFIG_X86_32
 	/*
-	 * Align the stack pointer according to the i386 ABI,
+	 * Align the stack poपूर्णांकer according to the i386 ABI,
 	 * i.e. so that on function entry ((sp + 4) & 15) == 0.
 	 */
 	sp = ((sp + 4) & -16ul) - 4;
-#else /* !CONFIG_X86_32 */
-	sp = round_down(sp, 16) - 8;
-#endif
-	return sp;
-}
+#अन्यथा /* !CONFIG_X86_32 */
+	sp = round_करोwn(sp, 16) - 8;
+#पूर्ण_अगर
+	वापस sp;
+पूर्ण
 
-static void __user *
-get_sigframe(struct k_sigaction *ka, struct pt_regs *regs, size_t frame_size,
-	     void __user **fpstate)
-{
+अटल व्योम __user *
+get_sigframe(काष्ठा k_sigaction *ka, काष्ठा pt_regs *regs, माप_प्रकार frame_size,
+	     व्योम __user **fpstate)
+अणु
 	/* Default to using normal stack */
-	unsigned long math_size = 0;
-	unsigned long sp = regs->sp;
-	unsigned long buf_fx = 0;
-	int onsigstack = on_sig_stack(sp);
-	int ret;
+	अचिन्हित दीर्घ math_size = 0;
+	अचिन्हित दीर्घ sp = regs->sp;
+	अचिन्हित दीर्घ buf_fx = 0;
+	पूर्णांक onsigstack = on_sig_stack(sp);
+	पूर्णांक ret;
 
 	/* redzone */
-	if (IS_ENABLED(CONFIG_X86_64))
+	अगर (IS_ENABLED(CONFIG_X86_64))
 		sp -= 128;
 
-	/* This is the X/Open sanctioned signal stack switching.  */
-	if (ka->sa.sa_flags & SA_ONSTACK) {
-		if (sas_ss_flags(sp) == 0)
+	/* This is the X/Open sanctioned संकेत stack चयनing.  */
+	अगर (ka->sa.sa_flags & SA_ONSTACK) अणु
+		अगर (sas_ss_flags(sp) == 0)
 			sp = current->sas_ss_sp + current->sas_ss_size;
-	} else if (IS_ENABLED(CONFIG_X86_32) &&
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_X86_32) &&
 		   !onsigstack &&
 		   regs->ss != __USER_DS &&
 		   !(ka->sa.sa_flags & SA_RESTORER) &&
-		   ka->sa.sa_restorer) {
-		/* This is the legacy signal stack switching. */
-		sp = (unsigned long) ka->sa.sa_restorer;
-	}
+		   ka->sa.sa_restorer) अणु
+		/* This is the legacy संकेत stack चयनing. */
+		sp = (अचिन्हित दीर्घ) ka->sa.sa_restorer;
+	पूर्ण
 
 	sp = fpu__alloc_mathframe(sp, IS_ENABLED(CONFIG_X86_32),
 				  &buf_fx, &math_size);
-	*fpstate = (void __user *)sp;
+	*fpstate = (व्योम __user *)sp;
 
 	sp = align_sigframe(sp - frame_size);
 
 	/*
-	 * If we are on the alternate signal stack and would overflow it, don't.
-	 * Return an always-bogus address instead so we will die with SIGSEGV.
+	 * If we are on the alternate संकेत stack and would overflow it, करोn't.
+	 * Return an always-bogus address instead so we will die with संक_अंश.
 	 */
-	if (onsigstack && !likely(on_sig_stack(sp)))
-		return (void __user *)-1L;
+	अगर (onsigstack && !likely(on_sig_stack(sp)))
+		वापस (व्योम __user *)-1L;
 
 	/* save i387 and extended state */
-	ret = copy_fpstate_to_sigframe(*fpstate, (void __user *)buf_fx, math_size);
-	if (ret < 0)
-		return (void __user *)-1L;
+	ret = copy_fpstate_to_sigframe(*fpstate, (व्योम __user *)buf_fx, math_size);
+	अगर (ret < 0)
+		वापस (व्योम __user *)-1L;
 
-	return (void __user *)sp;
-}
+	वापस (व्योम __user *)sp;
+पूर्ण
 
-#ifdef CONFIG_X86_32
-static const struct {
+#अगर_घोषित CONFIG_X86_32
+अटल स्थिर काष्ठा अणु
 	u16 poplmovl;
 	u32 val;
-	u16 int80;
-} __attribute__((packed)) retcode = {
+	u16 पूर्णांक80;
+पूर्ण __attribute__((packed)) retcode = अणु
 	0xb858,		/* popl %eax; movl $..., %eax */
-	__NR_sigreturn,
-	0x80cd,		/* int $0x80 */
-};
+	__NR_sigवापस,
+	0x80cd,		/* पूर्णांक $0x80 */
+पूर्ण;
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u8  movl;
 	u32 val;
-	u16 int80;
+	u16 पूर्णांक80;
 	u8  pad;
-} __attribute__((packed)) rt_retcode = {
+पूर्ण __attribute__((packed)) rt_retcode = अणु
 	0xb8,		/* movl $..., %eax */
-	__NR_rt_sigreturn,
-	0x80cd,		/* int $0x80 */
+	__NR_rt_sigवापस,
+	0x80cd,		/* पूर्णांक $0x80 */
 	0
-};
+पूर्ण;
 
-static int
-__setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
-	      struct pt_regs *regs)
-{
-	struct sigframe __user *frame;
-	void __user *restorer;
-	void __user *fp = NULL;
+अटल पूर्णांक
+__setup_frame(पूर्णांक sig, काष्ठा kसंकेत *ksig, sigset_t *set,
+	      काष्ठा pt_regs *regs)
+अणु
+	काष्ठा sigframe __user *frame;
+	व्योम __user *restorer;
+	व्योम __user *fp = शून्य;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fp);
+	frame = get_sigframe(&ksig->ka, regs, माप(*frame), &fp);
 
-	if (!user_access_begin(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!user_access_begin(frame, माप(*frame)))
+		वापस -EFAULT;
 
 	unsafe_put_user(sig, &frame->sig, Efault);
 	unsafe_put_sigcontext(&frame->sc, fp, regs, set, Efault);
 	unsafe_put_user(set->sig[1], &frame->extramask[0], Efault);
-	if (current->mm->context.vdso)
+	अगर (current->mm->context.vdso)
 		restorer = current->mm->context.vdso +
-			vdso_image_32.sym___kernel_sigreturn;
-	else
+			vdso_image_32.sym___kernel_sigवापस;
+	अन्यथा
 		restorer = &frame->retcode;
-	if (ksig->ka.sa.sa_flags & SA_RESTORER)
+	अगर (ksig->ka.sa.sa_flags & SA_RESTORER)
 		restorer = ksig->ka.sa.sa_restorer;
 
-	/* Set up to return from userspace.  */
+	/* Set up to वापस from userspace.  */
 	unsafe_put_user(restorer, &frame->pretcode, Efault);
 
 	/*
-	 * This is popl %eax ; movl $__NR_sigreturn, %eax ; int $0x80
+	 * This is popl %eax ; movl $__NR_sigवापस, %eax ; पूर्णांक $0x80
 	 *
-	 * WE DO NOT USE IT ANY MORE! It's only left here for historical
+	 * WE DO NOT USE IT ANY MORE! It's only left here क्रम historical
 	 * reasons and because gdb uses it as a signature to notice
-	 * signal handler stack frames.
+	 * संकेत handler stack frames.
 	 */
 	unsafe_put_user(*((u64 *)&retcode), (u64 *)frame->retcode, Efault);
 	user_access_end();
 
-	/* Set up registers for signal handler */
-	regs->sp = (unsigned long)frame;
-	regs->ip = (unsigned long)ksig->ka.sa.sa_handler;
-	regs->ax = (unsigned long)sig;
+	/* Set up रेजिस्टरs क्रम संकेत handler */
+	regs->sp = (अचिन्हित दीर्घ)frame;
+	regs->ip = (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler;
+	regs->ax = (अचिन्हित दीर्घ)sig;
 	regs->dx = 0;
 	regs->cx = 0;
 
@@ -350,213 +351,213 @@ __setup_frame(int sig, struct ksignal *ksig, sigset_t *set,
 	regs->ss = __USER_DS;
 	regs->cs = __USER_CS;
 
-	return 0;
+	वापस 0;
 
 Efault:
 	user_access_end();
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static int __setup_rt_frame(int sig, struct ksignal *ksig,
-			    sigset_t *set, struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame;
-	void __user *restorer;
-	void __user *fp = NULL;
+अटल पूर्णांक __setup_rt_frame(पूर्णांक sig, काष्ठा kसंकेत *ksig,
+			    sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame;
+	व्योम __user *restorer;
+	व्योम __user *fp = शून्य;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fp);
+	frame = get_sigframe(&ksig->ka, regs, माप(*frame), &fp);
 
-	if (!user_access_begin(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!user_access_begin(frame, माप(*frame)))
+		वापस -EFAULT;
 
 	unsafe_put_user(sig, &frame->sig, Efault);
 	unsafe_put_user(&frame->info, &frame->pinfo, Efault);
 	unsafe_put_user(&frame->uc, &frame->puc, Efault);
 
 	/* Create the ucontext.  */
-	if (static_cpu_has(X86_FEATURE_XSAVE))
+	अगर (अटल_cpu_has(X86_FEATURE_XSAVE))
 		unsafe_put_user(UC_FP_XSTATE, &frame->uc.uc_flags, Efault);
-	else
+	अन्यथा
 		unsafe_put_user(0, &frame->uc.uc_flags, Efault);
 	unsafe_put_user(0, &frame->uc.uc_link, Efault);
 	unsafe_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
 
-	/* Set up to return from userspace.  */
+	/* Set up to वापस from userspace.  */
 	restorer = current->mm->context.vdso +
-		vdso_image_32.sym___kernel_rt_sigreturn;
-	if (ksig->ka.sa.sa_flags & SA_RESTORER)
+		vdso_image_32.sym___kernel_rt_sigवापस;
+	अगर (ksig->ka.sa.sa_flags & SA_RESTORER)
 		restorer = ksig->ka.sa.sa_restorer;
 	unsafe_put_user(restorer, &frame->pretcode, Efault);
 
 	/*
-	 * This is movl $__NR_rt_sigreturn, %ax ; int $0x80
+	 * This is movl $__NR_rt_sigवापस, %ax ; पूर्णांक $0x80
 	 *
-	 * WE DO NOT USE IT ANY MORE! It's only left here for historical
+	 * WE DO NOT USE IT ANY MORE! It's only left here क्रम historical
 	 * reasons and because gdb uses it as a signature to notice
-	 * signal handler stack frames.
+	 * संकेत handler stack frames.
 	 */
 	unsafe_put_user(*((u64 *)&rt_retcode), (u64 *)frame->retcode, Efault);
 	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
 	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 	
-	if (copy_siginfo_to_user(&frame->info, &ksig->info))
-		return -EFAULT;
+	अगर (copy_siginfo_to_user(&frame->info, &ksig->info))
+		वापस -EFAULT;
 
-	/* Set up registers for signal handler */
-	regs->sp = (unsigned long)frame;
-	regs->ip = (unsigned long)ksig->ka.sa.sa_handler;
-	regs->ax = (unsigned long)sig;
-	regs->dx = (unsigned long)&frame->info;
-	regs->cx = (unsigned long)&frame->uc;
+	/* Set up रेजिस्टरs क्रम संकेत handler */
+	regs->sp = (अचिन्हित दीर्घ)frame;
+	regs->ip = (अचिन्हित दीर्घ)ksig->ka.sa.sa_handler;
+	regs->ax = (अचिन्हित दीर्घ)sig;
+	regs->dx = (अचिन्हित दीर्घ)&frame->info;
+	regs->cx = (अचिन्हित दीर्घ)&frame->uc;
 
 	regs->ds = __USER_DS;
 	regs->es = __USER_DS;
 	regs->ss = __USER_DS;
 	regs->cs = __USER_CS;
 
-	return 0;
+	वापस 0;
 Efault:
 	user_access_end();
-	return -EFAULT;
-}
-#else /* !CONFIG_X86_32 */
-static unsigned long frame_uc_flags(struct pt_regs *regs)
-{
-	unsigned long flags;
+	वापस -EFAULT;
+पूर्ण
+#अन्यथा /* !CONFIG_X86_32 */
+अटल अचिन्हित दीर्घ frame_uc_flags(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (boot_cpu_has(X86_FEATURE_XSAVE))
+	अगर (boot_cpu_has(X86_FEATURE_XSAVE))
 		flags = UC_FP_XSTATE | UC_SIGCONTEXT_SS;
-	else
+	अन्यथा
 		flags = UC_SIGCONTEXT_SS;
 
-	if (likely(user_64bit_mode(regs)))
+	अगर (likely(user_64bit_mode(regs)))
 		flags |= UC_STRICT_RESTORE_SS;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static int __setup_rt_frame(int sig, struct ksignal *ksig,
-			    sigset_t *set, struct pt_regs *regs)
-{
-	struct rt_sigframe __user *frame;
-	void __user *fp = NULL;
-	unsigned long uc_flags;
+अटल पूर्णांक __setup_rt_frame(पूर्णांक sig, काष्ठा kसंकेत *ksig,
+			    sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा rt_sigframe __user *frame;
+	व्योम __user *fp = शून्य;
+	अचिन्हित दीर्घ uc_flags;
 
 	/* x86-64 should always use SA_RESTORER. */
-	if (!(ksig->ka.sa.sa_flags & SA_RESTORER))
-		return -EFAULT;
+	अगर (!(ksig->ka.sa.sa_flags & SA_RESTORER))
+		वापस -EFAULT;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(struct rt_sigframe), &fp);
+	frame = get_sigframe(&ksig->ka, regs, माप(काष्ठा rt_sigframe), &fp);
 	uc_flags = frame_uc_flags(regs);
 
-	if (!user_access_begin(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!user_access_begin(frame, माप(*frame)))
+		वापस -EFAULT;
 
 	/* Create the ucontext.  */
 	unsafe_put_user(uc_flags, &frame->uc.uc_flags, Efault);
 	unsafe_put_user(0, &frame->uc.uc_link, Efault);
 	unsafe_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
 
-	/* Set up to return from userspace.  If provided, use a stub
-	   already in userspace.  */
+	/* Set up to वापस from userspace.  If provided, use a stub
+	   alपढ़ोy in userspace.  */
 	unsafe_put_user(ksig->ka.sa.sa_restorer, &frame->pretcode, Efault);
 	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
 	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 
-	if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
-		if (copy_siginfo_to_user(&frame->info, &ksig->info))
-			return -EFAULT;
-	}
+	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO) अणु
+		अगर (copy_siginfo_to_user(&frame->info, &ksig->info))
+			वापस -EFAULT;
+	पूर्ण
 
-	/* Set up registers for signal handler */
+	/* Set up रेजिस्टरs क्रम संकेत handler */
 	regs->di = sig;
-	/* In case the signal handler was declared without prototypes */
+	/* In हाल the संकेत handler was declared without prototypes */
 	regs->ax = 0;
 
-	/* This also works for non SA_SIGINFO handlers because they expect the
-	   next argument after the signal number on the stack. */
-	regs->si = (unsigned long)&frame->info;
-	regs->dx = (unsigned long)&frame->uc;
-	regs->ip = (unsigned long) ksig->ka.sa.sa_handler;
+	/* This also works क्रम non SA_SIGINFO handlers because they expect the
+	   next argument after the संकेत number on the stack. */
+	regs->si = (अचिन्हित दीर्घ)&frame->info;
+	regs->dx = (अचिन्हित दीर्घ)&frame->uc;
+	regs->ip = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
 
-	regs->sp = (unsigned long)frame;
+	regs->sp = (अचिन्हित दीर्घ)frame;
 
 	/*
-	 * Set up the CS and SS registers to run signal handlers in
-	 * 64-bit mode, even if the handler happens to be interrupting
+	 * Set up the CS and SS रेजिस्टरs to run संकेत handlers in
+	 * 64-bit mode, even अगर the handler happens to be पूर्णांकerrupting
 	 * 32-bit or 16-bit code.
 	 *
-	 * SS is subtle.  In 64-bit mode, we don't need any particular
-	 * SS descriptor, but we do need SS to be valid.  It's possible
-	 * that the old SS is entirely bogus -- this can happen if the
-	 * signal we're trying to deliver is #GP or #SS caused by a bad
+	 * SS is subtle.  In 64-bit mode, we करोn't need any particular
+	 * SS descriptor, but we करो need SS to be valid.  It's possible
+	 * that the old SS is entirely bogus -- this can happen अगर the
+	 * संकेत we're trying to deliver is #GP or #SS caused by a bad
 	 * SS value.  We also have a compatibility issue here: DOSEMU
-	 * relies on the contents of the SS register indicating the
-	 * SS value at the time of the signal, even though that code in
-	 * DOSEMU predates sigreturn's ability to restore SS.  (DOSEMU
-	 * avoids relying on sigreturn to restore SS; instead it uses
-	 * a trampoline.)  So we do our best: if the old SS was valid,
+	 * relies on the contents of the SS रेजिस्टर indicating the
+	 * SS value at the समय of the संकेत, even though that code in
+	 * DOSEMU predates sigवापस's ability to restore SS.  (DOSEMU
+	 * aव्योमs relying on sigवापस to restore SS; instead it uses
+	 * a trampoline.)  So we करो our best: अगर the old SS was valid,
 	 * we keep it.  Otherwise we replace it.
 	 */
 	regs->cs = __USER_CS;
 
-	if (unlikely(regs->ss != __USER_DS))
-		force_valid_ss(regs);
+	अगर (unlikely(regs->ss != __USER_DS))
+		क्रमce_valid_ss(regs);
 
-	return 0;
+	वापस 0;
 
 Efault:
 	user_access_end();
-	return -EFAULT;
-}
-#endif /* CONFIG_X86_32 */
+	वापस -EFAULT;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-#ifdef CONFIG_X86_X32_ABI
-static int x32_copy_siginfo_to_user(struct compat_siginfo __user *to,
-		const struct kernel_siginfo *from)
-{
-	struct compat_siginfo new;
+#अगर_घोषित CONFIG_X86_X32_ABI
+अटल पूर्णांक x32_copy_siginfo_to_user(काष्ठा compat_siginfo __user *to,
+		स्थिर काष्ठा kernel_siginfo *from)
+अणु
+	काष्ठा compat_siginfo new;
 
-	copy_siginfo_to_external32(&new, from);
-	if (from->si_signo == SIGCHLD) {
-		new._sifields._sigchld_x32._utime = from->si_utime;
-		new._sifields._sigchld_x32._stime = from->si_stime;
-	}
-	if (copy_to_user(to, &new, sizeof(struct compat_siginfo)))
-		return -EFAULT;
-	return 0;
-}
+	copy_siginfo_to_बाह्यal32(&new, from);
+	अगर (from->si_signo == SIGCHLD) अणु
+		new._sअगरields._sigchld_x32._uसमय = from->si_uसमय;
+		new._sअगरields._sigchld_x32._sसमय = from->si_sसमय;
+	पूर्ण
+	अगर (copy_to_user(to, &new, माप(काष्ठा compat_siginfo)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-int copy_siginfo_to_user32(struct compat_siginfo __user *to,
-			   const struct kernel_siginfo *from)
-{
-	if (in_x32_syscall())
-		return x32_copy_siginfo_to_user(to, from);
-	return __copy_siginfo_to_user32(to, from);
-}
-#endif /* CONFIG_X86_X32_ABI */
+पूर्णांक copy_siginfo_to_user32(काष्ठा compat_siginfo __user *to,
+			   स्थिर काष्ठा kernel_siginfo *from)
+अणु
+	अगर (in_x32_syscall())
+		वापस x32_copy_siginfo_to_user(to, from);
+	वापस __copy_siginfo_to_user32(to, from);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_X32_ABI */
 
-static int x32_setup_rt_frame(struct ksignal *ksig,
+अटल पूर्णांक x32_setup_rt_frame(काष्ठा kसंकेत *ksig,
 			      compat_sigset_t *set,
-			      struct pt_regs *regs)
-{
-#ifdef CONFIG_X86_X32_ABI
-	struct rt_sigframe_x32 __user *frame;
-	unsigned long uc_flags;
-	void __user *restorer;
-	void __user *fp = NULL;
+			      काष्ठा pt_regs *regs)
+अणु
+#अगर_घोषित CONFIG_X86_X32_ABI
+	काष्ठा rt_sigframe_x32 __user *frame;
+	अचिन्हित दीर्घ uc_flags;
+	व्योम __user *restorer;
+	व्योम __user *fp = शून्य;
 
-	if (!(ksig->ka.sa.sa_flags & SA_RESTORER))
-		return -EFAULT;
+	अगर (!(ksig->ka.sa.sa_flags & SA_RESTORER))
+		वापस -EFAULT;
 
-	frame = get_sigframe(&ksig->ka, regs, sizeof(*frame), &fp);
+	frame = get_sigframe(&ksig->ka, regs, माप(*frame), &fp);
 
 	uc_flags = frame_uc_flags(regs);
 
-	if (!user_access_begin(frame, sizeof(*frame)))
-		return -EFAULT;
+	अगर (!user_access_begin(frame, माप(*frame)))
+		वापस -EFAULT;
 
 	/* Create the ucontext.  */
 	unsafe_put_user(uc_flags, &frame->uc.uc_flags, Efault);
@@ -564,57 +565,57 @@ static int x32_setup_rt_frame(struct ksignal *ksig,
 	unsafe_compat_save_altstack(&frame->uc.uc_stack, regs->sp, Efault);
 	unsafe_put_user(0, &frame->uc.uc__pad0, Efault);
 	restorer = ksig->ka.sa.sa_restorer;
-	unsafe_put_user(restorer, (unsigned long __user *)&frame->pretcode, Efault);
+	unsafe_put_user(restorer, (अचिन्हित दीर्घ __user *)&frame->pretcode, Efault);
 	unsafe_put_sigcontext(&frame->uc.uc_mcontext, fp, regs, set, Efault);
 	unsafe_put_sigmask(set, frame, Efault);
 	user_access_end();
 
-	if (ksig->ka.sa.sa_flags & SA_SIGINFO) {
-		if (x32_copy_siginfo_to_user(&frame->info, &ksig->info))
-			return -EFAULT;
-	}
+	अगर (ksig->ka.sa.sa_flags & SA_SIGINFO) अणु
+		अगर (x32_copy_siginfo_to_user(&frame->info, &ksig->info))
+			वापस -EFAULT;
+	पूर्ण
 
-	/* Set up registers for signal handler */
-	regs->sp = (unsigned long) frame;
-	regs->ip = (unsigned long) ksig->ka.sa.sa_handler;
+	/* Set up रेजिस्टरs क्रम संकेत handler */
+	regs->sp = (अचिन्हित दीर्घ) frame;
+	regs->ip = (अचिन्हित दीर्घ) ksig->ka.sa.sa_handler;
 
 	/* We use the x32 calling convention here... */
 	regs->di = ksig->sig;
-	regs->si = (unsigned long) &frame->info;
-	regs->dx = (unsigned long) &frame->uc;
+	regs->si = (अचिन्हित दीर्घ) &frame->info;
+	regs->dx = (अचिन्हित दीर्घ) &frame->uc;
 
 	loadsegment(ds, __USER_DS);
 	loadsegment(es, __USER_DS);
 
 	regs->cs = __USER_CS;
 	regs->ss = __USER_DS;
-#endif	/* CONFIG_X86_X32_ABI */
+#पूर्ण_अगर	/* CONFIG_X86_X32_ABI */
 
-	return 0;
-#ifdef CONFIG_X86_X32_ABI
+	वापस 0;
+#अगर_घोषित CONFIG_X86_X32_ABI
 Efault:
 	user_access_end();
-	return -EFAULT;
-#endif
-}
+	वापस -EFAULT;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * Do a signal return; undo the signal stack.
+ * Do a संकेत वापस; unकरो the संकेत stack.
  */
-#ifdef CONFIG_X86_32
-SYSCALL_DEFINE0(sigreturn)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct sigframe __user *frame;
+#अगर_घोषित CONFIG_X86_32
+SYSCALL_DEFINE0(sigवापस)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा sigframe __user *frame;
 	sigset_t set;
 
-	frame = (struct sigframe __user *)(regs->sp - 8);
+	frame = (काष्ठा sigframe __user *)(regs->sp - 8);
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__get_user(set.sig[0], &frame->sc.oldmask) ||
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__get_user(set.sig[0], &frame->sc.oldmask) ||
 	    __get_user(set.sig[1], &frame->extramask[0]))
-		goto badframe;
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
@@ -622,247 +623,247 @@ SYSCALL_DEFINE0(sigreturn)
 	 * x86_32 has no uc_flags bits relevant to restore_sigcontext.
 	 * Save a few cycles by skipping the __get_user.
 	 */
-	if (restore_sigcontext(regs, &frame->sc, 0))
-		goto badframe;
-	return regs->ax;
+	अगर (restore_sigcontext(regs, &frame->sc, 0))
+		जाओ badframe;
+	वापस regs->ax;
 
 badframe:
-	signal_fault(regs, frame, "sigreturn");
+	संकेत_fault(regs, frame, "sigreturn");
 
-	return 0;
-}
-#endif /* CONFIG_X86_32 */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-SYSCALL_DEFINE0(rt_sigreturn)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct rt_sigframe __user *frame;
+SYSCALL_DEFINE0(rt_sigवापस)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा rt_sigframe __user *frame;
 	sigset_t set;
-	unsigned long uc_flags;
+	अचिन्हित दीर्घ uc_flags;
 
-	frame = (struct rt_sigframe __user *)(regs->sp - sizeof(long));
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__get_user(*(__u64 *)&set, (__u64 __user *)&frame->uc.uc_sigmask))
-		goto badframe;
-	if (__get_user(uc_flags, &frame->uc.uc_flags))
-		goto badframe;
+	frame = (काष्ठा rt_sigframe __user *)(regs->sp - माप(दीर्घ));
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__get_user(*(__u64 *)&set, (__u64 __user *)&frame->uc.uc_sigmask))
+		जाओ badframe;
+	अगर (__get_user(uc_flags, &frame->uc.uc_flags))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
-		goto badframe;
+	अगर (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+		जाओ badframe;
 
-	if (restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	अगर (restore_altstack(&frame->uc.uc_stack))
+		जाओ badframe;
 
-	return regs->ax;
+	वापस regs->ax;
 
 badframe:
-	signal_fault(regs, frame, "rt_sigreturn");
-	return 0;
-}
+	संकेत_fault(regs, frame, "rt_sigreturn");
+	वापस 0;
+पूर्ण
 
-static inline int is_ia32_compat_frame(struct ksignal *ksig)
-{
-	return IS_ENABLED(CONFIG_IA32_EMULATION) &&
+अटल अंतरभूत पूर्णांक is_ia32_compat_frame(काष्ठा kसंकेत *ksig)
+अणु
+	वापस IS_ENABLED(CONFIG_IA32_EMULATION) &&
 		ksig->ka.sa.sa_flags & SA_IA32_ABI;
-}
+पूर्ण
 
-static inline int is_ia32_frame(struct ksignal *ksig)
-{
-	return IS_ENABLED(CONFIG_X86_32) || is_ia32_compat_frame(ksig);
-}
+अटल अंतरभूत पूर्णांक is_ia32_frame(काष्ठा kसंकेत *ksig)
+अणु
+	वापस IS_ENABLED(CONFIG_X86_32) || is_ia32_compat_frame(ksig);
+पूर्ण
 
-static inline int is_x32_frame(struct ksignal *ksig)
-{
-	return IS_ENABLED(CONFIG_X86_X32_ABI) &&
+अटल अंतरभूत पूर्णांक is_x32_frame(काष्ठा kसंकेत *ksig)
+अणु
+	वापस IS_ENABLED(CONFIG_X86_X32_ABI) &&
 		ksig->ka.sa.sa_flags & SA_X32_ABI;
-}
+पूर्ण
 
-static int
-setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
-{
-	int usig = ksig->sig;
+अटल पूर्णांक
+setup_rt_frame(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक usig = ksig->sig;
 	sigset_t *set = sigmask_to_save();
 	compat_sigset_t *cset = (compat_sigset_t *) set;
 
-	/* Perform fixup for the pre-signal frame. */
-	rseq_signal_deliver(ksig, regs);
+	/* Perक्रमm fixup क्रम the pre-संकेत frame. */
+	rseq_संकेत_deliver(ksig, regs);
 
 	/* Set up the stack frame */
-	if (is_ia32_frame(ksig)) {
-		if (ksig->ka.sa.sa_flags & SA_SIGINFO)
-			return ia32_setup_rt_frame(usig, ksig, cset, regs);
-		else
-			return ia32_setup_frame(usig, ksig, cset, regs);
-	} else if (is_x32_frame(ksig)) {
-		return x32_setup_rt_frame(ksig, cset, regs);
-	} else {
-		return __setup_rt_frame(ksig->sig, ksig, set, regs);
-	}
-}
+	अगर (is_ia32_frame(ksig)) अणु
+		अगर (ksig->ka.sa.sa_flags & SA_SIGINFO)
+			वापस ia32_setup_rt_frame(usig, ksig, cset, regs);
+		अन्यथा
+			वापस ia32_setup_frame(usig, ksig, cset, regs);
+	पूर्ण अन्यथा अगर (is_x32_frame(ksig)) अणु
+		वापस x32_setup_rt_frame(ksig, cset, regs);
+	पूर्ण अन्यथा अणु
+		वापस __setup_rt_frame(ksig->sig, ksig, set, regs);
+	पूर्ण
+पूर्ण
 
-static void
-handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम
+handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	bool stepping, failed;
-	struct fpu *fpu = &current->thread.fpu;
+	काष्ठा fpu *fpu = &current->thपढ़ो.fpu;
 
-	if (v8086_mode(regs))
-		save_v86_state((struct kernel_vm86_regs *) regs, VM86_SIGNAL);
+	अगर (v8086_mode(regs))
+		save_v86_state((काष्ठा kernel_vm86_regs *) regs, VM86_SIGNAL);
 
-	/* Are we from a system call? */
-	if (syscall_get_nr(current, regs) >= 0) {
-		/* If so, check system call restarting.. */
-		switch (syscall_get_error(current, regs)) {
-		case -ERESTART_RESTARTBLOCK:
-		case -ERESTARTNOHAND:
+	/* Are we from a प्रणाली call? */
+	अगर (syscall_get_nr(current, regs) >= 0) अणु
+		/* If so, check प्रणाली call restarting.. */
+		चयन (syscall_get_error(current, regs)) अणु
+		हाल -ERESTART_RESTARTBLOCK:
+		हाल -ERESTARTNOHAND:
 			regs->ax = -EINTR;
-			break;
+			अवरोध;
 
-		case -ERESTARTSYS:
-			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+		हाल -ERESTARTSYS:
+			अगर (!(ksig->ka.sa.sa_flags & SA_RESTART)) अणु
 				regs->ax = -EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOINTR:
 			regs->ax = regs->orig_ax;
 			regs->ip -= 2;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If TF is set due to a debugger (TIF_FORCED_TF), clear TF now
-	 * so that register information in the sigcontext is correct and
-	 * then notify the tracer before entering the signal handler.
+	 * so that रेजिस्टर inक्रमmation in the sigcontext is correct and
+	 * then notअगरy the tracer beक्रमe entering the संकेत handler.
 	 */
-	stepping = test_thread_flag(TIF_SINGLESTEP);
-	if (stepping)
+	stepping = test_thपढ़ो_flag(TIF_SINGLESTEP);
+	अगर (stepping)
 		user_disable_single_step(current);
 
 	failed = (setup_rt_frame(ksig, regs) < 0);
-	if (!failed) {
+	अगर (!failed) अणु
 		/*
-		 * Clear the direction flag as per the ABI for function entry.
+		 * Clear the direction flag as per the ABI क्रम function entry.
 		 *
-		 * Clear RF when entering the signal handler, because
+		 * Clear RF when entering the संकेत handler, because
 		 * it might disable possible debug exception from the
-		 * signal handler.
+		 * संकेत handler.
 		 *
-		 * Clear TF for the case when it wasn't set by debugger to
-		 * avoid the recursive send_sigtrap() in SIGTRAP handler.
+		 * Clear TF क्रम the हाल when it wasn't set by debugger to
+		 * aव्योम the recursive send_sigtrap() in SIGTRAP handler.
 		 */
 		regs->flags &= ~(X86_EFLAGS_DF|X86_EFLAGS_RF|X86_EFLAGS_TF);
 		/*
-		 * Ensure the signal handler starts with the new fpu state.
+		 * Ensure the संकेत handler starts with the new fpu state.
 		 */
 		fpu__clear_user_states(fpu);
-	}
-	signal_setup_done(failed, ksig, stepping);
-}
+	पूर्ण
+	संकेत_setup_करोne(failed, ksig, stepping);
+पूर्ण
 
-static inline unsigned long get_nr_restart_syscall(const struct pt_regs *regs)
-{
-#ifdef CONFIG_IA32_EMULATION
-	if (current->restart_block.arch_data & TS_COMPAT)
-		return __NR_ia32_restart_syscall;
-#endif
-#ifdef CONFIG_X86_X32_ABI
-	return __NR_restart_syscall | (regs->orig_ax & __X32_SYSCALL_BIT);
-#else
-	return __NR_restart_syscall;
-#endif
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_nr_restart_syscall(स्थिर काष्ठा pt_regs *regs)
+अणु
+#अगर_घोषित CONFIG_IA32_EMULATION
+	अगर (current->restart_block.arch_data & TS_COMPAT)
+		वापस __NR_ia32_restart_syscall;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_X86_X32_ABI
+	वापस __NR_restart_syscall | (regs->orig_ax & __X32_SYSCALL_BIT);
+#अन्यथा
+	वापस __NR_restart_syscall;
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Note that 'init' is a special process: it doesn't get signals it doesn't
- * want to handle. Thus you cannot kill init even with a SIGKILL even by
+ * want to handle. Thus you cannot समाप्त init even with a SIGKILL even by
  * mistake.
  */
-void arch_do_signal_or_restart(struct pt_regs *regs, bool has_signal)
-{
-	struct ksignal ksig;
+व्योम arch_करो_संकेत_or_restart(काष्ठा pt_regs *regs, bool has_संकेत)
+अणु
+	काष्ठा kसंकेत ksig;
 
-	if (has_signal && get_signal(&ksig)) {
-		/* Whee! Actually deliver the signal.  */
-		handle_signal(&ksig, regs);
-		return;
-	}
+	अगर (has_संकेत && get_संकेत(&ksig)) अणु
+		/* Whee! Actually deliver the संकेत.  */
+		handle_संकेत(&ksig, regs);
+		वापस;
+	पूर्ण
 
-	/* Did we come from a system call? */
-	if (syscall_get_nr(current, regs) >= 0) {
-		/* Restart the system call - no handlers present */
-		switch (syscall_get_error(current, regs)) {
-		case -ERESTARTNOHAND:
-		case -ERESTARTSYS:
-		case -ERESTARTNOINTR:
+	/* Did we come from a प्रणाली call? */
+	अगर (syscall_get_nr(current, regs) >= 0) अणु
+		/* Restart the प्रणाली call - no handlers present */
+		चयन (syscall_get_error(current, regs)) अणु
+		हाल -ERESTARTNOHAND:
+		हाल -ERESTARTSYS:
+		हाल -ERESTARTNOINTR:
 			regs->ax = regs->orig_ax;
 			regs->ip -= 2;
-			break;
+			अवरोध;
 
-		case -ERESTART_RESTARTBLOCK:
+		हाल -ERESTART_RESTARTBLOCK:
 			regs->ax = get_nr_restart_syscall(regs);
 			regs->ip -= 2;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If there's no signal to deliver, we just put the saved sigmask
+	 * If there's no संकेत to deliver, we just put the saved sigmask
 	 * back.
 	 */
 	restore_saved_sigmask();
-}
+पूर्ण
 
-void signal_fault(struct pt_regs *regs, void __user *frame, char *where)
-{
-	struct task_struct *me = current;
+व्योम संकेत_fault(काष्ठा pt_regs *regs, व्योम __user *frame, अक्षर *where)
+अणु
+	काष्ठा task_काष्ठा *me = current;
 
-	if (show_unhandled_signals && printk_ratelimit()) {
-		printk("%s"
+	अगर (show_unhandled_संकेतs && prपूर्णांकk_ratelimit()) अणु
+		prपूर्णांकk("%s"
 		       "%s[%d] bad frame in %s frame:%p ip:%lx sp:%lx orax:%lx",
 		       task_pid_nr(current) > 1 ? KERN_INFO : KERN_EMERG,
 		       me->comm, me->pid, where, frame,
 		       regs->ip, regs->sp, regs->orig_ax);
-		print_vma_addr(KERN_CONT " in ", regs->ip);
+		prपूर्णांक_vma_addr(KERN_CONT " in ", regs->ip);
 		pr_cont("\n");
-	}
+	पूर्ण
 
-	force_sig(SIGSEGV);
-}
+	क्रमce_sig(संक_अंश);
+पूर्ण
 
-#ifdef CONFIG_X86_X32_ABI
-COMPAT_SYSCALL_DEFINE0(x32_rt_sigreturn)
-{
-	struct pt_regs *regs = current_pt_regs();
-	struct rt_sigframe_x32 __user *frame;
+#अगर_घोषित CONFIG_X86_X32_ABI
+COMPAT_SYSCALL_DEFINE0(x32_rt_sigवापस)
+अणु
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा rt_sigframe_x32 __user *frame;
 	sigset_t set;
-	unsigned long uc_flags;
+	अचिन्हित दीर्घ uc_flags;
 
-	frame = (struct rt_sigframe_x32 __user *)(regs->sp - 8);
+	frame = (काष्ठा rt_sigframe_x32 __user *)(regs->sp - 8);
 
-	if (!access_ok(frame, sizeof(*frame)))
-		goto badframe;
-	if (__get_user(set.sig[0], (__u64 __user *)&frame->uc.uc_sigmask))
-		goto badframe;
-	if (__get_user(uc_flags, &frame->uc.uc_flags))
-		goto badframe;
+	अगर (!access_ok(frame, माप(*frame)))
+		जाओ badframe;
+	अगर (__get_user(set.sig[0], (__u64 __user *)&frame->uc.uc_sigmask))
+		जाओ badframe;
+	अगर (__get_user(uc_flags, &frame->uc.uc_flags))
+		जाओ badframe;
 
 	set_current_blocked(&set);
 
-	if (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
-		goto badframe;
+	अगर (restore_sigcontext(regs, &frame->uc.uc_mcontext, uc_flags))
+		जाओ badframe;
 
-	if (compat_restore_altstack(&frame->uc.uc_stack))
-		goto badframe;
+	अगर (compat_restore_altstack(&frame->uc.uc_stack))
+		जाओ badframe;
 
-	return regs->ax;
+	वापस regs->ax;
 
 badframe:
-	signal_fault(regs, frame, "x32 rt_sigreturn");
-	return 0;
-}
-#endif
+	संकेत_fault(regs, frame, "x32 rt_sigreturn");
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

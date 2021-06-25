@@ -1,93 +1,94 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
- * SPROM reading
+ * Broadcom specअगरic AMBA
+ * SPROM पढ़ोing
  *
  * Copyright 2011, 2012, Hauke Mehrtens <hauke@hauke-m.de>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
+#समावेश "bcma_private.h"
 
-#include <linux/bcma/bcma.h>
-#include <linux/bcma/bcma_regs.h>
-#include <linux/pci.h>
-#include <linux/io.h>
-#include <linux/dma-mapping.h>
-#include <linux/slab.h>
+#समावेश <linux/bcma/bcma.h>
+#समावेश <linux/bcma/bcma_regs.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
 
-static int(*get_fallback_sprom)(struct bcma_bus *dev, struct ssb_sprom *out);
+अटल पूर्णांक(*get_fallback_sprom)(काष्ठा bcma_bus *dev, काष्ठा ssb_sprom *out);
 
 /**
- * bcma_arch_register_fallback_sprom - Registers a method providing a
- * fallback SPROM if no SPROM is found.
+ * bcma_arch_रेजिस्टर_fallback_sprom - Registers a method providing a
+ * fallback SPROM अगर no SPROM is found.
  *
  * @sprom_callback: The callback function.
  *
- * With this function the architecture implementation may register a
- * callback handler which fills the SPROM data structure. The fallback is
- * used for PCI based BCMA devices, where no valid SPROM can be found
- * in the shadow registers and to provide the SPROM for SoCs where BCMA is
- * to controll the system bus.
+ * With this function the architecture implementation may रेजिस्टर a
+ * callback handler which fills the SPROM data काष्ठाure. The fallback is
+ * used क्रम PCI based BCMA devices, where no valid SPROM can be found
+ * in the shaकरोw रेजिस्टरs and to provide the SPROM क्रम SoCs where BCMA is
+ * to controll the प्रणाली bus.
  *
- * This function is useful for weird architectures that have a half-assed
+ * This function is useful क्रम weird architectures that have a half-assed
  * BCMA device hardwired to their PCI bus.
  *
- * This function is available for architecture code, only. So it is not
+ * This function is available क्रम architecture code, only. So it is not
  * exported.
  */
-int bcma_arch_register_fallback_sprom(int (*sprom_callback)(struct bcma_bus *bus,
-				     struct ssb_sprom *out))
-{
-	if (get_fallback_sprom)
-		return -EEXIST;
+पूर्णांक bcma_arch_रेजिस्टर_fallback_sprom(पूर्णांक (*sprom_callback)(काष्ठा bcma_bus *bus,
+				     काष्ठा ssb_sprom *out))
+अणु
+	अगर (get_fallback_sprom)
+		वापस -EEXIST;
 	get_fallback_sprom = sprom_callback;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcma_fill_sprom_with_fallback(struct bcma_bus *bus,
-					 struct ssb_sprom *out)
-{
-	int err;
+अटल पूर्णांक bcma_fill_sprom_with_fallback(काष्ठा bcma_bus *bus,
+					 काष्ठा ssb_sprom *out)
+अणु
+	पूर्णांक err;
 
-	if (!get_fallback_sprom) {
+	अगर (!get_fallback_sprom) अणु
 		err = -ENOENT;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	err = get_fallback_sprom(bus, out);
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
 	bcma_debug(bus, "Using SPROM revision %d provided by platform.\n",
 		   bus->sprom.revision);
-	return 0;
+	वापस 0;
 fail:
 	bcma_warn(bus, "Using fallback SPROM failed (err %d)\n", err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**************************************************
  * R/W ops.
  **************************************************/
 
-static void bcma_sprom_read(struct bcma_bus *bus, u16 offset, u16 *sprom,
-			    size_t words)
-{
-	int i;
-	for (i = 0; i < words; i++)
-		sprom[i] = bcma_read16(bus->drv_cc.core, offset + (i * 2));
-}
+अटल व्योम bcma_sprom_पढ़ो(काष्ठा bcma_bus *bus, u16 offset, u16 *sprom,
+			    माप_प्रकार words)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < words; i++)
+		sprom[i] = bcma_पढ़ो16(bus->drv_cc.core, offset + (i * 2));
+पूर्ण
 
 /**************************************************
  * Validation.
  **************************************************/
 
-static inline u8 bcma_crc8(u8 crc, u8 data)
-{
+अटल अंतरभूत u8 bcma_crc8(u8 crc, u8 data)
+अणु
 	/* Polynomial:   x^8 + x^7 + x^6 + x^4 + x^2 + 1   */
-	static const u8 t[] = {
+	अटल स्थिर u8 t[] = अणु
 		0x00, 0xF7, 0xB9, 0x4E, 0x25, 0xD2, 0x9C, 0x6B,
 		0x4A, 0xBD, 0xF3, 0x04, 0x6F, 0x98, 0xD6, 0x21,
 		0x94, 0x63, 0x2D, 0xDA, 0xB1, 0x46, 0x08, 0xFF,
@@ -120,119 +121,119 @@ static inline u8 bcma_crc8(u8 crc, u8 data)
 		0x60, 0x97, 0xD9, 0x2E, 0x45, 0xB2, 0xFC, 0x0B,
 		0xBE, 0x49, 0x07, 0xF0, 0x9B, 0x6C, 0x22, 0xD5,
 		0xF4, 0x03, 0x4D, 0xBA, 0xD1, 0x26, 0x68, 0x9F,
-	};
-	return t[crc ^ data];
-}
+	पूर्ण;
+	वापस t[crc ^ data];
+पूर्ण
 
-static u8 bcma_sprom_crc(const u16 *sprom, size_t words)
-{
-	int word;
+अटल u8 bcma_sprom_crc(स्थिर u16 *sprom, माप_प्रकार words)
+अणु
+	पूर्णांक word;
 	u8 crc = 0xFF;
 
-	for (word = 0; word < words - 1; word++) {
+	क्रम (word = 0; word < words - 1; word++) अणु
 		crc = bcma_crc8(crc, sprom[word] & 0x00FF);
 		crc = bcma_crc8(crc, (sprom[word] & 0xFF00) >> 8);
-	}
+	पूर्ण
 	crc = bcma_crc8(crc, sprom[words - 1] & 0x00FF);
 	crc ^= 0xFF;
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static int bcma_sprom_check_crc(const u16 *sprom, size_t words)
-{
+अटल पूर्णांक bcma_sprom_check_crc(स्थिर u16 *sprom, माप_प्रकार words)
+अणु
 	u8 crc;
 	u8 expected_crc;
-	u16 tmp;
+	u16 पंचांगp;
 
 	crc = bcma_sprom_crc(sprom, words);
-	tmp = sprom[words - 1] & SSB_SPROM_REVISION_CRC;
-	expected_crc = tmp >> SSB_SPROM_REVISION_CRC_SHIFT;
-	if (crc != expected_crc)
-		return -EPROTO;
+	पंचांगp = sprom[words - 1] & SSB_SPROM_REVISION_CRC;
+	expected_crc = पंचांगp >> SSB_SPROM_REVISION_CRC_SHIFT;
+	अगर (crc != expected_crc)
+		वापस -EPROTO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcma_sprom_valid(struct bcma_bus *bus, const u16 *sprom,
-			    size_t words)
-{
+अटल पूर्णांक bcma_sprom_valid(काष्ठा bcma_bus *bus, स्थिर u16 *sprom,
+			    माप_प्रकार words)
+अणु
 	u16 revision;
-	int err;
+	पूर्णांक err;
 
 	err = bcma_sprom_check_crc(sprom, words);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	revision = sprom[words - 1] & SSB_SPROM_REVISION_REV;
-	if (revision != 8 && revision != 9 && revision != 10) {
+	अगर (revision != 8 && revision != 9 && revision != 10) अणु
 		pr_err("Unsupported SPROM revision: %d\n", revision);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	bus->sprom.revision = revision;
 	bcma_debug(bus, "Found SPROM revision %d\n", revision);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**************************************************
  * SPROM extraction.
  **************************************************/
 
-#define SPOFF(offset)	((offset) / sizeof(u16))
+#घोषणा SPOFF(offset)	((offset) / माप(u16))
 
-#define SPEX(_field, _offset, _mask, _shift)	\
-	bus->sprom._field = ((sprom[SPOFF(_offset)] & (_mask)) >> (_shift))
+#घोषणा SPEX(_field, _offset, _mask, _shअगरt)	\
+	bus->sprom._field = ((sprom[SPOFF(_offset)] & (_mask)) >> (_shअगरt))
 
-#define SPEX32(_field, _offset, _mask, _shift)	\
+#घोषणा SPEX32(_field, _offset, _mask, _shअगरt)	\
 	bus->sprom._field = ((((u32)sprom[SPOFF((_offset)+2)] << 16 | \
-				sprom[SPOFF(_offset)]) & (_mask)) >> (_shift))
+				sprom[SPOFF(_offset)]) & (_mask)) >> (_shअगरt))
 
-#define SPEX_ARRAY8(_field, _offset, _mask, _shift)	\
-	do {	\
-		SPEX(_field[0], _offset +  0, _mask, _shift);	\
-		SPEX(_field[1], _offset +  2, _mask, _shift);	\
-		SPEX(_field[2], _offset +  4, _mask, _shift);	\
-		SPEX(_field[3], _offset +  6, _mask, _shift);	\
-		SPEX(_field[4], _offset +  8, _mask, _shift);	\
-		SPEX(_field[5], _offset + 10, _mask, _shift);	\
-		SPEX(_field[6], _offset + 12, _mask, _shift);	\
-		SPEX(_field[7], _offset + 14, _mask, _shift);	\
-	} while (0)
+#घोषणा SPEX_ARRAY8(_field, _offset, _mask, _shअगरt)	\
+	करो अणु	\
+		SPEX(_field[0], _offset +  0, _mask, _shअगरt);	\
+		SPEX(_field[1], _offset +  2, _mask, _shअगरt);	\
+		SPEX(_field[2], _offset +  4, _mask, _shअगरt);	\
+		SPEX(_field[3], _offset +  6, _mask, _shअगरt);	\
+		SPEX(_field[4], _offset +  8, _mask, _shअगरt);	\
+		SPEX(_field[5], _offset + 10, _mask, _shअगरt);	\
+		SPEX(_field[6], _offset + 12, _mask, _shअगरt);	\
+		SPEX(_field[7], _offset + 14, _mask, _shअगरt);	\
+	पूर्ण जबतक (0)
 
-static s8 sprom_extract_antgain(const u16 *in, u16 offset, u16 mask, u16 shift)
-{
+अटल s8 sprom_extract_antgain(स्थिर u16 *in, u16 offset, u16 mask, u16 shअगरt)
+अणु
 	u16 v;
 	u8 gain;
 
 	v = in[SPOFF(offset)];
-	gain = (v & mask) >> shift;
-	if (gain == 0xFF) {
+	gain = (v & mask) >> shअगरt;
+	अगर (gain == 0xFF) अणु
 		gain = 8; /* If unset use 2dBm */
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Q5.2 Fractional part is stored in 0xC0 */
 		gain = ((gain & 0xC0) >> 6) | ((gain & 0x3F) << 2);
-	}
+	पूर्ण
 
-	return (s8)gain;
-}
+	वापस (s8)gain;
+पूर्ण
 
-static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
-{
+अटल व्योम bcma_sprom_extract_r8(काष्ठा bcma_bus *bus, स्थिर u16 *sprom)
+अणु
 	u16 v, o;
-	int i;
-	static const u16 pwr_info_offset[] = {
+	पूर्णांक i;
+	अटल स्थिर u16 pwr_info_offset[] = अणु
 		SSB_SROM8_PWR_INFO_CORE0, SSB_SROM8_PWR_INFO_CORE1,
 		SSB_SROM8_PWR_INFO_CORE2, SSB_SROM8_PWR_INFO_CORE3
-	};
+	पूर्ण;
 	BUILD_BUG_ON(ARRAY_SIZE(pwr_info_offset) !=
 			ARRAY_SIZE(bus->sprom.core_pwr_info));
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		v = sprom[SPOFF(SSB_SPROM8_IL0MAC) + i];
 		*(((__be16 *)bus->sprom.il0mac) + i) = cpu_to_be16(v);
-	}
+	पूर्ण
 
 	SPEX(board_rev, SSB_SPROM8_BOARDREV, ~0, 0);
 	SPEX(board_type, SSB_SPROM1_SPID, ~0, 0);
@@ -281,8 +282,8 @@ static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
 	SPEX(alpha2[0], SSB_SPROM8_CCODE, 0xff00, 8);
 	SPEX(alpha2[1], SSB_SPROM8_CCODE, 0x00ff, 0);
 
-	/* Extract cores power info info */
-	for (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) {
+	/* Extract cores घातer info info */
+	क्रम (i = 0; i < ARRAY_SIZE(pwr_info_offset); i++) अणु
 		o = pwr_info_offset[i];
 		SPEX(core_pwr_info[i].itssi_2g, o + SSB_SROM8_2G_MAXP_ITSSI,
 			SSB_SPROM8_2G_ITSSI, SSB_SPROM8_2G_ITSSI_SHIFT);
@@ -311,7 +312,7 @@ static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
 		SPEX(core_pwr_info[i].pa_5gh[0], o + SSB_SROM8_5GH_PA_0, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[1], o + SSB_SROM8_5GH_PA_1, ~0, 0);
 		SPEX(core_pwr_info[i].pa_5gh[2], o + SSB_SROM8_5GH_PA_2, ~0, 0);
-	}
+	पूर्ण
 
 	SPEX(fem.ghz2.tssipos, SSB_SPROM8_FEM2G, SSB_SROM8_FEM_TSSIPOS,
 	     SSB_SROM8_FEM_TSSIPOS_SHIFT);
@@ -415,16 +416,16 @@ static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
 							   SSB_SPROM8_AGAIN3,
 							   SSB_SPROM8_AGAIN3_SHIFT);
 
-	SPEX(leddc_on_time, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_ON,
+	SPEX(leddc_on_समय, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_ON,
 	     SSB_SPROM8_LEDDC_ON_SHIFT);
-	SPEX(leddc_off_time, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_OFF,
+	SPEX(leddc_off_समय, SSB_SPROM8_LEDDC, SSB_SPROM8_LEDDC_OFF,
 	     SSB_SPROM8_LEDDC_OFF_SHIFT);
 
 	SPEX(txchain, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_TXCHAIN,
 	     SSB_SPROM8_TXRXC_TXCHAIN_SHIFT);
 	SPEX(rxchain, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_RXCHAIN,
 	     SSB_SPROM8_TXRXC_RXCHAIN_SHIFT);
-	SPEX(antswitch, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_SWITCH,
+	SPEX(antचयन, SSB_SPROM8_TXRXC, SSB_SPROM8_TXRXC_SWITCH,
 	     SSB_SPROM8_TXRXC_SWITCH_SHIFT);
 
 	SPEX(opo, SSB_SPROM8_OFDM2GPO, 0x00ff, 0);
@@ -436,7 +437,7 @@ static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
 
 	SPEX(rawtempsense, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_RAWTEMP,
 	     SSB_SPROM8_RAWTS_RAWTEMP_SHIFT);
-	SPEX(measpower, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_MEASPOWER,
+	SPEX(measघातer, SSB_SPROM8_RAWTS, SSB_SPROM8_RAWTS_MEASPOWER,
 	     SSB_SPROM8_RAWTS_MEASPOWER_SHIFT);
 	SPEX(tempsense_slope, SSB_SPROM8_OPT_CORRX,
 	     SSB_SPROM8_OPT_CORRX_TEMP_SLOPE,
@@ -472,177 +473,177 @@ static void bcma_sprom_extract_r8(struct bcma_bus *bus, const u16 *sprom)
 	SPEX(temps_hysteresis, SSB_SPROM8_TEMPDELTA,
 	     SSB_SPROM8_TEMPDELTA_HYSTERESIS,
 	     SSB_SPROM8_TEMPDELTA_HYSTERESIS_SHIFT);
-}
+पूर्ण
 
 /*
- * Indicates the presence of external SPROM.
+ * Indicates the presence of बाह्यal SPROM.
  */
-static bool bcma_sprom_ext_available(struct bcma_bus *bus)
-{
+अटल bool bcma_sprom_ext_available(काष्ठा bcma_bus *bus)
+अणु
 	u32 chip_status;
 	u32 srom_control;
 	u32 present_mask;
 
-	if (bus->drv_cc.core->id.rev >= 31) {
-		if (!(bus->drv_cc.capabilities & BCMA_CC_CAP_SPROM))
-			return false;
+	अगर (bus->drv_cc.core->id.rev >= 31) अणु
+		अगर (!(bus->drv_cc.capabilities & BCMA_CC_CAP_SPROM))
+			वापस false;
 
-		srom_control = bcma_read32(bus->drv_cc.core,
+		srom_control = bcma_पढ़ो32(bus->drv_cc.core,
 					   BCMA_CC_SROM_CONTROL);
-		return srom_control & BCMA_CC_SROM_CONTROL_PRESENT;
-	}
+		वापस srom_control & BCMA_CC_SROM_CONTROL_PRESENT;
+	पूर्ण
 
-	/* older chipcommon revisions use chip status register */
-	chip_status = bcma_read32(bus->drv_cc.core, BCMA_CC_CHIPSTAT);
-	switch (bus->chipinfo.id) {
-	case BCMA_CHIP_ID_BCM4313:
+	/* older chipcommon revisions use chip status रेजिस्टर */
+	chip_status = bcma_पढ़ो32(bus->drv_cc.core, BCMA_CC_CHIPSTAT);
+	चयन (bus->chipinfo.id) अणु
+	हाल BCMA_CHIP_ID_BCM4313:
 		present_mask = BCMA_CC_CHIPST_4313_SPROM_PRESENT;
-		break;
+		अवरोध;
 
-	case BCMA_CHIP_ID_BCM4331:
+	हाल BCMA_CHIP_ID_BCM4331:
 		present_mask = BCMA_CC_CHIPST_4331_SPROM_PRESENT;
-		break;
+		अवरोध;
 
-	default:
-		return true;
-	}
+	शेष:
+		वापस true;
+	पूर्ण
 
-	return chip_status & present_mask;
-}
+	वापस chip_status & present_mask;
+पूर्ण
 
 /*
  * Indicates that on-chip OTP memory is present and enabled.
  */
-static bool bcma_sprom_onchip_available(struct bcma_bus *bus)
-{
+अटल bool bcma_sprom_onchip_available(काष्ठा bcma_bus *bus)
+अणु
 	u32 chip_status;
 	u32 otpsize = 0;
 	bool present;
 
-	chip_status = bcma_read32(bus->drv_cc.core, BCMA_CC_CHIPSTAT);
-	switch (bus->chipinfo.id) {
-	case BCMA_CHIP_ID_BCM4313:
+	chip_status = bcma_पढ़ो32(bus->drv_cc.core, BCMA_CC_CHIPSTAT);
+	चयन (bus->chipinfo.id) अणु
+	हाल BCMA_CHIP_ID_BCM4313:
 		present = chip_status & BCMA_CC_CHIPST_4313_OTP_PRESENT;
-		break;
+		अवरोध;
 
-	case BCMA_CHIP_ID_BCM4331:
+	हाल BCMA_CHIP_ID_BCM4331:
 		present = chip_status & BCMA_CC_CHIPST_4331_OTP_PRESENT;
-		break;
-	case BCMA_CHIP_ID_BCM43142:
-	case BCMA_CHIP_ID_BCM43224:
-	case BCMA_CHIP_ID_BCM43225:
-		/* for these chips OTP is always available */
+		अवरोध;
+	हाल BCMA_CHIP_ID_BCM43142:
+	हाल BCMA_CHIP_ID_BCM43224:
+	हाल BCMA_CHIP_ID_BCM43225:
+		/* क्रम these chips OTP is always available */
 		present = true;
-		break;
-	case BCMA_CHIP_ID_BCM43131:
-	case BCMA_CHIP_ID_BCM43217:
-	case BCMA_CHIP_ID_BCM43227:
-	case BCMA_CHIP_ID_BCM43228:
-	case BCMA_CHIP_ID_BCM43428:
+		अवरोध;
+	हाल BCMA_CHIP_ID_BCM43131:
+	हाल BCMA_CHIP_ID_BCM43217:
+	हाल BCMA_CHIP_ID_BCM43227:
+	हाल BCMA_CHIP_ID_BCM43228:
+	हाल BCMA_CHIP_ID_BCM43428:
 		present = chip_status & BCMA_CC_CHIPST_43228_OTP_PRESENT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		present = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (present) {
+	अगर (present) अणु
 		otpsize = bus->drv_cc.capabilities & BCMA_CC_CAP_OTPS;
 		otpsize >>= BCMA_CC_CAP_OTPS_SHIFT;
-	}
+	पूर्ण
 
-	return otpsize != 0;
-}
+	वापस otpsize != 0;
+पूर्ण
 
 /*
- * Verify OTP is filled and determine the byte
+ * Verअगरy OTP is filled and determine the byte
  * offset where SPROM data is located.
  *
- * On error, returns 0; byte offset otherwise.
+ * On error, वापसs 0; byte offset otherwise.
  */
-static int bcma_sprom_onchip_offset(struct bcma_bus *bus)
-{
-	struct bcma_device *cc = bus->drv_cc.core;
+अटल पूर्णांक bcma_sprom_onchip_offset(काष्ठा bcma_bus *bus)
+अणु
+	काष्ठा bcma_device *cc = bus->drv_cc.core;
 	u32 offset;
 
-	/* verify OTP status */
-	if ((bcma_read32(cc, BCMA_CC_OTPS) & BCMA_CC_OTPS_GU_PROG_HW) == 0)
-		return 0;
+	/* verअगरy OTP status */
+	अगर ((bcma_पढ़ो32(cc, BCMA_CC_OTPS) & BCMA_CC_OTPS_GU_PROG_HW) == 0)
+		वापस 0;
 
-	/* obtain bit offset from otplayout register */
-	offset = (bcma_read32(cc, BCMA_CC_OTPL) & BCMA_CC_OTPL_GURGN_OFFSET);
-	return BCMA_CC_SPROM + (offset >> 3);
-}
+	/* obtain bit offset from otplayout रेजिस्टर */
+	offset = (bcma_पढ़ो32(cc, BCMA_CC_OTPL) & BCMA_CC_OTPL_GURGN_OFFSET);
+	वापस BCMA_CC_SPROM + (offset >> 3);
+पूर्ण
 
-int bcma_sprom_get(struct bcma_bus *bus)
-{
+पूर्णांक bcma_sprom_get(काष्ठा bcma_bus *bus)
+अणु
 	u16 offset = BCMA_CC_SPROM;
 	u16 *sprom;
-	static const size_t sprom_sizes[] = {
+	अटल स्थिर माप_प्रकार sprom_sizes[] = अणु
 		SSB_SPROMSIZE_WORDS_R4,
 		SSB_SPROMSIZE_WORDS_R10,
 		SSB_SPROMSIZE_WORDS_R11,
-	};
-	int i, err = 0;
+	पूर्ण;
+	पूर्णांक i, err = 0;
 
-	if (!bus->drv_cc.core)
-		return -EOPNOTSUPP;
+	अगर (!bus->drv_cc.core)
+		वापस -EOPNOTSUPP;
 
-	if (!bcma_sprom_ext_available(bus)) {
+	अगर (!bcma_sprom_ext_available(bus)) अणु
 		bool sprom_onchip;
 
 		/*
 		 * External SPROM takes precedence so check
-		 * on-chip OTP only when no external SPROM
+		 * on-chip OTP only when no बाह्यal SPROM
 		 * is present.
 		 */
 		sprom_onchip = bcma_sprom_onchip_available(bus);
-		if (sprom_onchip) {
+		अगर (sprom_onchip) अणु
 			/* determine offset */
 			offset = bcma_sprom_onchip_offset(bus);
-		}
-		if (!offset || !sprom_onchip) {
+		पूर्ण
+		अगर (!offset || !sprom_onchip) अणु
 			/*
 			 * Maybe there is no SPROM on the device?
-			 * Now we ask the arch code if there is some sprom
-			 * available for this device in some other storage.
+			 * Now we ask the arch code अगर there is some sprom
+			 * available क्रम this device in some other storage.
 			 */
 			err = bcma_fill_sprom_with_fallback(bus, &bus->sprom);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (bus->chipinfo.id == BCMA_CHIP_ID_BCM4331 ||
+	अगर (bus->chipinfo.id == BCMA_CHIP_ID_BCM4331 ||
 	    bus->chipinfo.id == BCMA_CHIP_ID_BCM43431)
 		bcma_chipco_bcm4331_ext_pa_lines_ctl(&bus->drv_cc, false);
 
 	bcma_debug(bus, "SPROM offset 0x%x\n", offset);
-	for (i = 0; i < ARRAY_SIZE(sprom_sizes); i++) {
-		size_t words = sprom_sizes[i];
+	क्रम (i = 0; i < ARRAY_SIZE(sprom_sizes); i++) अणु
+		माप_प्रकार words = sprom_sizes[i];
 
-		sprom = kcalloc(words, sizeof(u16), GFP_KERNEL);
-		if (!sprom)
-			return -ENOMEM;
+		sprom = kसुस्मृति(words, माप(u16), GFP_KERNEL);
+		अगर (!sprom)
+			वापस -ENOMEM;
 
-		bcma_sprom_read(bus, offset, sprom, words);
+		bcma_sprom_पढ़ो(bus, offset, sprom, words);
 		err = bcma_sprom_valid(bus, sprom, words);
-		if (!err)
-			break;
+		अगर (!err)
+			अवरोध;
 
-		kfree(sprom);
-	}
+		kमुक्त(sprom);
+	पूर्ण
 
-	if (bus->chipinfo.id == BCMA_CHIP_ID_BCM4331 ||
+	अगर (bus->chipinfo.id == BCMA_CHIP_ID_BCM4331 ||
 	    bus->chipinfo.id == BCMA_CHIP_ID_BCM43431)
 		bcma_chipco_bcm4331_ext_pa_lines_ctl(&bus->drv_cc, true);
 
-	if (err) {
+	अगर (err) अणु
 		bcma_warn(bus, "Invalid SPROM read from the PCIe card, trying to use fallback SPROM\n");
 		err = bcma_fill_sprom_with_fallback(bus, &bus->sprom);
-	} else {
+	पूर्ण अन्यथा अणु
 		bcma_sprom_extract_r8(bus, sprom);
-		kfree(sprom);
-	}
+		kमुक्त(sprom);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण

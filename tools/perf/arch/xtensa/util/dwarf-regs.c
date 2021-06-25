@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Mapping of DWARF debug register numbers into register names.
+ * Mapping of DWARF debug रेजिस्टर numbers पूर्णांकo रेजिस्टर names.
  *
  * Copyright (c) 2015 Cadence Design Systems Inc.
  */
 
-#include <stddef.h>
-#include <dwarf-regs.h>
+#समावेश <मानकघोष.स>
+#समावेश <dwarf-regs.h>
 
-#define XTENSA_MAX_REGS 16
+#घोषणा XTENSA_MAX_REGS 16
 
-const char *xtensa_regs_table[XTENSA_MAX_REGS] = {
+स्थिर अक्षर *xtensa_regs_table[XTENSA_MAX_REGS] = अणु
 	"a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7",
 	"a8", "a9", "a10", "a11", "a12", "a13", "a14", "a15",
-};
+पूर्ण;
 
-const char *get_arch_regstr(unsigned int n)
-{
-	return n < XTENSA_MAX_REGS ? xtensa_regs_table[n] : NULL;
-}
+स्थिर अक्षर *get_arch_regstr(अचिन्हित पूर्णांक n)
+अणु
+	वापस n < XTENSA_MAX_REGS ? xtensa_regs_table[n] : शून्य;
+पूर्ण

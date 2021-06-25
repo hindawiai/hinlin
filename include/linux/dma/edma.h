@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2018-2019 Synopsys, Inc. and/or its affiliates.
  * Synopsys DesignWare eDMA core driver
@@ -6,42 +7,42 @@
  * Author: Gustavo Pimentel <gustavo.pimentel@synopsys.com>
  */
 
-#ifndef _DW_EDMA_H
-#define _DW_EDMA_H
+#अगर_अघोषित _DW_EDMA_H
+#घोषणा _DW_EDMA_H
 
-#include <linux/device.h>
-#include <linux/dmaengine.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmaengine.h>
 
-struct dw_edma;
+काष्ठा dw_edma;
 
 /**
- * struct dw_edma_chip - representation of DesignWare eDMA controller hardware
- * @dev:		 struct device of the eDMA controller
+ * काष्ठा dw_edma_chip - representation of DesignWare eDMA controller hardware
+ * @dev:		 काष्ठा device of the eDMA controller
  * @id:			 instance ID
  * @irq:		 irq line
- * @dw:			 struct dw_edma that is filed by dw_edma_probe()
+ * @dw:			 काष्ठा dw_edma that is filed by dw_edma_probe()
  */
-struct dw_edma_chip {
-	struct device		*dev;
-	int			id;
-	int			irq;
-	struct dw_edma		*dw;
-};
+काष्ठा dw_edma_chip अणु
+	काष्ठा device		*dev;
+	पूर्णांक			id;
+	पूर्णांक			irq;
+	काष्ठा dw_edma		*dw;
+पूर्ण;
 
-/* Export to the platform drivers */
-#if IS_ENABLED(CONFIG_DW_EDMA)
-int dw_edma_probe(struct dw_edma_chip *chip);
-int dw_edma_remove(struct dw_edma_chip *chip);
-#else
-static inline int dw_edma_probe(struct dw_edma_chip *chip)
-{
-	return -ENODEV;
-}
+/* Export to the platक्रमm drivers */
+#अगर IS_ENABLED(CONFIG_DW_EDMA)
+पूर्णांक dw_edma_probe(काष्ठा dw_edma_chip *chip);
+पूर्णांक dw_edma_हटाओ(काष्ठा dw_edma_chip *chip);
+#अन्यथा
+अटल अंतरभूत पूर्णांक dw_edma_probe(काष्ठा dw_edma_chip *chip)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int dw_edma_remove(struct dw_edma_chip *chip)
-{
-	return 0;
-}
-#endif /* CONFIG_DW_EDMA */
+अटल अंतरभूत पूर्णांक dw_edma_हटाओ(काष्ठा dw_edma_chip *chip)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DW_EDMA */
 
-#endif /* _DW_EDMA_H */
+#पूर्ण_अगर /* _DW_EDMA_H */

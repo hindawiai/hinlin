@@ -1,220 +1,221 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
  * Copyright (C) 2007 John Williams
  *
- * Reasonably optimised generic C-code for memcpy on Microblaze
- * This is generic C code to do efficient, alignment-aware memmove.
+ * Reasonably optimised generic C-code क्रम स_नकल on Microblaze
+ * This is generic C code to करो efficient, alignment-aware स_हटाओ.
  *
  * It is based on demo code originally Copyright 2001 by Intel Corp, taken from
- * http://www.embedded.com/showArticle.jhtml?articleID=19205567
+ * http://www.embedded.com/showArticle.jhपंचांगl?articleID=19205567
  *
  * Attempts were made, unsuccessfully, to contact the original
  * author of this code (Michael Morrow, Intel).  Below is the original
  * copyright notice.
  *
  * This software has been developed by Intel Corporation.
- * Intel specifically disclaims all warranties, express or
+ * Intel specअगरically disclaims all warranties, express or
  * implied, and all liability, including consequential and
- * other indirect damages, for the use of this program, including
- * liability for infringement of any proprietary rights,
+ * other indirect damages, क्रम the use of this program, including
+ * liability क्रम infringement of any proprietary rights,
  * and including the warranties of merchantability and fitness
- * for a particular purpose. Intel does not assume any
- * responsibility for and errors which may appear in this program
+ * क्रम a particular purpose. Intel करोes not assume any
+ * responsibility क्रम and errors which may appear in this program
  * not any responsibility to update it.
  */
 
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/stddef.h>
-#include <linux/compiler.h>
-#include <linux/string.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/compiler.h>
+#समावेश <linux/माला.स>
 
-#ifdef __HAVE_ARCH_MEMMOVE
-#ifndef CONFIG_OPT_LIB_FUNCTION
-void *memmove(void *v_dst, const void *v_src, __kernel_size_t c)
-{
-	const char *src = v_src;
-	char *dst = v_dst;
+#अगर_घोषित __HAVE_ARCH_MEMMOVE
+#अगर_अघोषित CONFIG_OPT_LIB_FUNCTION
+व्योम *स_हटाओ(व्योम *v_dst, स्थिर व्योम *v_src, __kernel_माप_प्रकार c)
+अणु
+	स्थिर अक्षर *src = v_src;
+	अक्षर *dst = v_dst;
 
-	if (!c)
-		return v_dst;
+	अगर (!c)
+		वापस v_dst;
 
-	/* Use memcpy when source is higher than dest */
-	if (v_dst <= v_src)
-		return memcpy(v_dst, v_src, c);
+	/* Use स_नकल when source is higher than dest */
+	अगर (v_dst <= v_src)
+		वापस स_नकल(v_dst, v_src, c);
 
 	/* copy backwards, from end to beginning */
 	src += c;
 	dst += c;
 
-	/* Simple, byte oriented memmove. */
-	while (c--)
+	/* Simple, byte oriented स_हटाओ. */
+	जबतक (c--)
 		*--dst = *--src;
 
-	return v_dst;
-}
-#else /* CONFIG_OPT_LIB_FUNCTION */
-void *memmove(void *v_dst, const void *v_src, __kernel_size_t c)
-{
-	const char *src = v_src;
-	char *dst = v_dst;
-	const uint32_t *i_src;
-	uint32_t *i_dst;
+	वापस v_dst;
+पूर्ण
+#अन्यथा /* CONFIG_OPT_LIB_FUNCTION */
+व्योम *स_हटाओ(व्योम *v_dst, स्थिर व्योम *v_src, __kernel_माप_प्रकार c)
+अणु
+	स्थिर अक्षर *src = v_src;
+	अक्षर *dst = v_dst;
+	स्थिर uपूर्णांक32_t *i_src;
+	uपूर्णांक32_t *i_dst;
 
-	if (!c)
-		return v_dst;
+	अगर (!c)
+		वापस v_dst;
 
-	/* Use memcpy when source is higher than dest */
-	if (v_dst <= v_src)
-		return memcpy(v_dst, v_src, c);
+	/* Use स_नकल when source is higher than dest */
+	अगर (v_dst <= v_src)
+		वापस स_नकल(v_dst, v_src, c);
 
-	/* The following code tries to optimize the copy by using unsigned
-	 * alignment. This will work fine if both source and destination are
-	 * aligned on the same boundary. However, if they are aligned on
-	 * different boundaries shifts will be necessary. This might result in
-	 * bad performance on MicroBlaze systems without a barrel shifter.
+	/* The following code tries to optimize the copy by using अचिन्हित
+	 * alignment. This will work fine अगर both source and destination are
+	 * aligned on the same boundary. However, अगर they are aligned on
+	 * dअगरferent boundaries shअगरts will be necessary. This might result in
+	 * bad perक्रमmance on MicroBlaze प्रणालीs without a barrel shअगरter.
 	 */
 	/* FIXME this part needs more test */
 	/* Do a descending copy - this is a bit trickier! */
 	dst += c;
 	src += c;
 
-	if (c >= 4) {
-		unsigned  value, buf_hold;
+	अगर (c >= 4) अणु
+		अचिन्हित  value, buf_hold;
 
 		/* Align the destination to a word boundary. */
-		/* This is done in an endian independent manner. */
+		/* This is करोne in an endian independent manner. */
 
-		switch ((unsigned long)dst & 3) {
-		case 3:
+		चयन ((अचिन्हित दीर्घ)dst & 3) अणु
+		हाल 3:
 			*--dst = *--src;
 			--c;
 			fallthrough;
-		case 2:
+		हाल 2:
 			*--dst = *--src;
 			--c;
 			fallthrough;
-		case 1:
+		हाल 1:
 			*--dst = *--src;
 			--c;
-		}
+		पूर्ण
 
-		i_dst = (void *)dst;
+		i_dst = (व्योम *)dst;
 		/* Choose a copy scheme based on the source */
 		/* alignment relative to dstination. */
-		switch ((unsigned long)src & 3) {
-		case 0x0:	/* Both byte offsets are aligned */
+		चयन ((अचिन्हित दीर्घ)src & 3) अणु
+		हाल 0x0:	/* Both byte offsets are aligned */
 
-			i_src  = (const void *)src;
+			i_src  = (स्थिर व्योम *)src;
 
-			for (; c >= 4; c -= 4)
+			क्रम (; c >= 4; c -= 4)
 				*--i_dst = *--i_src;
 
-			src  = (const void *)i_src;
-			break;
-		case 0x1:	/* Unaligned - Off by 1 */
+			src  = (स्थिर व्योम *)i_src;
+			अवरोध;
+		हाल 0x1:	/* Unaligned - Off by 1 */
 			/* Word align the source */
-			i_src = (const void *) (((unsigned)src + 4) & ~3);
-#ifndef __MICROBLAZEEL__
+			i_src = (स्थिर व्योम *) (((अचिन्हित)src + 4) & ~3);
+#अगर_अघोषित __MICROBLAZEEL__
 			/* Load the holding buffer */
 			buf_hold = *--i_src >> 24;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold << 8 | value;
 				buf_hold = value >> 24;
-			}
-#else
+			पूर्ण
+#अन्यथा
 			/* Load the holding buffer */
 			buf_hold = (*--i_src & 0xFF) << 24;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold |
 						((value & 0xFFFFFF00) >> 8);
 				buf_hold = (value  & 0xFF) << 24;
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* Realign the source */
-			src = (const void *)i_src;
+			src = (स्थिर व्योम *)i_src;
 			src += 1;
-			break;
-		case 0x2:	/* Unaligned - Off by 2 */
+			अवरोध;
+		हाल 0x2:	/* Unaligned - Off by 2 */
 			/* Word align the source */
-			i_src = (const void *) (((unsigned)src + 4) & ~3);
-#ifndef __MICROBLAZEEL__
+			i_src = (स्थिर व्योम *) (((अचिन्हित)src + 4) & ~3);
+#अगर_अघोषित __MICROBLAZEEL__
 			/* Load the holding buffer */
 			buf_hold = *--i_src >> 16;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold << 16 | value;
 				buf_hold = value >> 16;
-			}
-#else
+			पूर्ण
+#अन्यथा
 			/* Load the holding buffer */
 			buf_hold = (*--i_src & 0xFFFF) << 16;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold |
 						((value & 0xFFFF0000) >> 16);
 				buf_hold = (value & 0xFFFF) << 16;
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* Realign the source */
-			src = (const void *)i_src;
+			src = (स्थिर व्योम *)i_src;
 			src += 2;
-			break;
-		case 0x3:	/* Unaligned - Off by 3 */
+			अवरोध;
+		हाल 0x3:	/* Unaligned - Off by 3 */
 			/* Word align the source */
-			i_src = (const void *) (((unsigned)src + 4) & ~3);
-#ifndef __MICROBLAZEEL__
+			i_src = (स्थिर व्योम *) (((अचिन्हित)src + 4) & ~3);
+#अगर_अघोषित __MICROBLAZEEL__
 			/* Load the holding buffer */
 			buf_hold = *--i_src >> 8;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold << 24 | value;
 				buf_hold = value >> 8;
-			}
-#else
+			पूर्ण
+#अन्यथा
 			/* Load the holding buffer */
 			buf_hold = (*--i_src & 0xFFFFFF) << 8;
 
-			for (; c >= 4; c -= 4) {
+			क्रम (; c >= 4; c -= 4) अणु
 				value = *--i_src;
 				*--i_dst = buf_hold |
 						((value & 0xFF000000) >> 24);
 				buf_hold = (value & 0xFFFFFF) << 8;
-			}
-#endif
+			पूर्ण
+#पूर्ण_अगर
 			/* Realign the source */
-			src = (const void *)i_src;
+			src = (स्थिर व्योम *)i_src;
 			src += 3;
-			break;
-		}
-		dst = (void *)i_dst;
-	}
+			अवरोध;
+		पूर्ण
+		dst = (व्योम *)i_dst;
+	पूर्ण
 
 	/* simple fast copy, ... unless a cache boundary is crossed */
-	/* Finish off any remaining bytes */
-	switch (c) {
-	case 4:
+	/* Finish off any reमुख्यing bytes */
+	चयन (c) अणु
+	हाल 4:
 		*--dst = *--src;
 		fallthrough;
-	case 3:
+	हाल 3:
 		*--dst = *--src;
 		fallthrough;
-	case 2:
+	हाल 2:
 		*--dst = *--src;
 		fallthrough;
-	case 1:
+	हाल 1:
 		*--dst = *--src;
-	}
-	return v_dst;
-}
-#endif /* CONFIG_OPT_LIB_FUNCTION */
-EXPORT_SYMBOL(memmove);
-#endif /* __HAVE_ARCH_MEMMOVE */
+	पूर्ण
+	वापस v_dst;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OPT_LIB_FUNCTION */
+EXPORT_SYMBOL(स_हटाओ);
+#पूर्ण_अगर /* __HAVE_ARCH_MEMMOVE */

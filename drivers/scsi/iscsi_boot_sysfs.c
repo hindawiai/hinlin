@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Export the iSCSI boot info to userland via sysfs.
  *
@@ -6,71 +7,71 @@
  * Copyright (C) 2010 Mike Christie
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/sysfs.h>
-#include <linux/capability.h>
-#include <linux/iscsi_boot_sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/iscsi_boot_sysfs.h>
 
 
 MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>");
 MODULE_DESCRIPTION("sysfs interface and helpers to export iSCSI boot information");
 MODULE_LICENSE("GPL");
 /*
- * The kobject and attribute structures.
+ * The kobject and attribute काष्ठाures.
  */
-struct iscsi_boot_attr {
-	struct attribute attr;
-	int type;
-	ssize_t (*show) (void *data, int type, char *buf);
-};
+काष्ठा iscsi_boot_attr अणु
+	काष्ठा attribute attr;
+	पूर्णांक type;
+	sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf);
+पूर्ण;
 
 /*
- * The routine called for all sysfs attributes.
+ * The routine called क्रम all sysfs attributes.
  */
-static ssize_t iscsi_boot_show_attribute(struct kobject *kobj,
-					 struct attribute *attr, char *buf)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
-	struct iscsi_boot_attr *boot_attr =
-			container_of(attr, struct iscsi_boot_attr, attr);
-	ssize_t ret = -EIO;
-	char *str = buf;
+अटल sमाप_प्रकार iscsi_boot_show_attribute(काष्ठा kobject *kobj,
+					 काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
+	काष्ठा iscsi_boot_attr *boot_attr =
+			container_of(attr, काष्ठा iscsi_boot_attr, attr);
+	sमाप_प्रकार ret = -EIO;
+	अक्षर *str = buf;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 
-	if (boot_kobj->show)
+	अगर (boot_kobj->show)
 		ret = boot_kobj->show(boot_kobj->data, boot_attr->type, str);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops iscsi_boot_attr_ops = {
+अटल स्थिर काष्ठा sysfs_ops iscsi_boot_attr_ops = अणु
 	.show = iscsi_boot_show_attribute,
-};
+पूर्ण;
 
-static void iscsi_boot_kobj_release(struct kobject *kobj)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
+अटल व्योम iscsi_boot_kobj_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
 
-	if (boot_kobj->release)
+	अगर (boot_kobj->release)
 		boot_kobj->release(boot_kobj->data);
-	kfree(boot_kobj);
-}
+	kमुक्त(boot_kobj);
+पूर्ण
 
-static struct kobj_type iscsi_boot_ktype = {
+अटल काष्ठा kobj_type iscsi_boot_ktype = अणु
 	.release = iscsi_boot_kobj_release,
 	.sysfs_ops = &iscsi_boot_attr_ops,
-};
+पूर्ण;
 
-#define iscsi_boot_rd_attr(fnname, sysfs_name, attr_type)		\
-static struct iscsi_boot_attr iscsi_boot_attr_##fnname = {	\
-	.attr	= { .name = __stringify(sysfs_name), .mode = 0444 },	\
+#घोषणा iscsi_boot_rd_attr(fnname, sysfs_name, attr_type)		\
+अटल काष्ठा iscsi_boot_attr iscsi_boot_attr_##fnname = अणु	\
+	.attr	= अणु .name = __stringअगरy(sysfs_name), .mode = 0444 पूर्ण,	\
 	.type	= attr_type,						\
-}
+पूर्ण
 
 /* Target attrs */
 iscsi_boot_rd_attr(tgt_index, index, ISCSI_BOOT_TGT_INDEX);
@@ -88,7 +89,7 @@ iscsi_boot_rd_attr(tgt_chap_rev_name, rev-chap-name,
 iscsi_boot_rd_attr(tgt_chap_rev_secret, rev-chap-name-secret,
 		   ISCSI_BOOT_TGT_REV_CHAP_SECRET);
 
-static struct attribute *target_attrs[] = {
+अटल काष्ठा attribute *target_attrs[] = अणु
 	&iscsi_boot_attr_tgt_index.attr,
 	&iscsi_boot_attr_tgt_flags.attr,
 	&iscsi_boot_attr_tgt_ip.attr,
@@ -101,58 +102,58 @@ static struct attribute *target_attrs[] = {
 	&iscsi_boot_attr_tgt_chap_secret.attr,
 	&iscsi_boot_attr_tgt_chap_rev_name.attr,
 	&iscsi_boot_attr_tgt_chap_rev_secret.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t iscsi_boot_tgt_attr_is_visible(struct kobject *kobj,
-					     struct attribute *attr, int i)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
+अटल umode_t iscsi_boot_tgt_attr_is_visible(काष्ठा kobject *kobj,
+					     काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
 
-	if (attr ==  &iscsi_boot_attr_tgt_index.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_tgt_index.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_INDEX);
-	else if (attr == &iscsi_boot_attr_tgt_flags.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_flags.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_FLAGS);
-	else if (attr == &iscsi_boot_attr_tgt_ip.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_ip.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					      ISCSI_BOOT_TGT_IP_ADDR);
-	else if (attr == &iscsi_boot_attr_tgt_port.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_port.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					      ISCSI_BOOT_TGT_PORT);
-	else if (attr == &iscsi_boot_attr_tgt_lun.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_lun.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					      ISCSI_BOOT_TGT_LUN);
-	else if (attr == &iscsi_boot_attr_tgt_chap.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_chap.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_CHAP_TYPE);
-	else if (attr == &iscsi_boot_attr_tgt_nic.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_nic.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_NIC_ASSOC);
-	else if (attr == &iscsi_boot_attr_tgt_name.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_name.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_NAME);
-	else if (attr == &iscsi_boot_attr_tgt_chap_name.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_chap_name.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_CHAP_NAME);
-	else if (attr == &iscsi_boot_attr_tgt_chap_secret.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_chap_secret.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_CHAP_SECRET);
-	else if (attr == &iscsi_boot_attr_tgt_chap_rev_name.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_chap_rev_name.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_REV_CHAP_NAME);
-	else if (attr == &iscsi_boot_attr_tgt_chap_rev_secret.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr == &iscsi_boot_attr_tgt_chap_rev_secret.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_TGT_REV_CHAP_SECRET);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group iscsi_boot_target_attr_group = {
+अटल काष्ठा attribute_group iscsi_boot_target_attr_group = अणु
 	.attrs = target_attrs,
 	.is_visible = iscsi_boot_tgt_attr_is_visible,
-};
+पूर्ण;
 
 /* Ethernet attrs */
 iscsi_boot_rd_attr(eth_index, index, ISCSI_BOOT_ETH_INDEX);
@@ -170,7 +171,7 @@ iscsi_boot_rd_attr(eth_vlan, vlan, ISCSI_BOOT_ETH_VLAN);
 iscsi_boot_rd_attr(eth_mac, mac, ISCSI_BOOT_ETH_MAC);
 iscsi_boot_rd_attr(eth_hostname, hostname, ISCSI_BOOT_ETH_HOSTNAME);
 
-static struct attribute *ethernet_attrs[] = {
+अटल काष्ठा attribute *ethernet_attrs[] = अणु
 	&iscsi_boot_attr_eth_index.attr,
 	&iscsi_boot_attr_eth_flags.attr,
 	&iscsi_boot_attr_eth_ip.attr,
@@ -184,61 +185,61 @@ static struct attribute *ethernet_attrs[] = {
 	&iscsi_boot_attr_eth_vlan.attr,
 	&iscsi_boot_attr_eth_mac.attr,
 	&iscsi_boot_attr_eth_hostname.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t iscsi_boot_eth_attr_is_visible(struct kobject *kobj,
-					     struct attribute *attr, int i)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
+अटल umode_t iscsi_boot_eth_attr_is_visible(काष्ठा kobject *kobj,
+					     काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
 
-	if (attr ==  &iscsi_boot_attr_eth_index.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_eth_index.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_INDEX);
-	else if (attr ==  &iscsi_boot_attr_eth_flags.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_flags.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_FLAGS);
-	else if (attr ==  &iscsi_boot_attr_eth_ip.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_ip.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_IP_ADDR);
-	else if (attr ==  &iscsi_boot_attr_eth_prefix.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_prefix.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_PREFIX_LEN);
-	else if (attr ==  &iscsi_boot_attr_eth_subnet.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_subnet.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_SUBNET_MASK);
-	else if (attr ==  &iscsi_boot_attr_eth_origin.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_origin.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_ORIGIN);
-	else if (attr ==  &iscsi_boot_attr_eth_gateway.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_gateway.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_GATEWAY);
-	else if (attr ==  &iscsi_boot_attr_eth_primary_dns.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_primary_dns.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_PRIMARY_DNS);
-	else if (attr ==  &iscsi_boot_attr_eth_secondary_dns.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_secondary_dns.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_SECONDARY_DNS);
-	else if (attr ==  &iscsi_boot_attr_eth_dhcp.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_dhcp.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_DHCP);
-	else if (attr ==  &iscsi_boot_attr_eth_vlan.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_vlan.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_VLAN);
-	else if (attr ==  &iscsi_boot_attr_eth_mac.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_mac.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_MAC);
-	else if (attr ==  &iscsi_boot_attr_eth_hostname.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अन्यथा अगर (attr ==  &iscsi_boot_attr_eth_hostname.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ETH_HOSTNAME);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group iscsi_boot_ethernet_attr_group = {
+अटल काष्ठा attribute_group iscsi_boot_ethernet_attr_group = अणु
 	.attrs = ethernet_attrs,
 	.is_visible = iscsi_boot_eth_attr_is_visible,
-};
+पूर्ण;
 
 /* Initiator attrs */
 iscsi_boot_rd_attr(ini_index, index, ISCSI_BOOT_INI_INDEX);
@@ -251,7 +252,7 @@ iscsi_boot_rd_attr(ini_secondary_radius, sec-radius-server,
 		   ISCSI_BOOT_INI_SEC_RADIUS_SERVER);
 iscsi_boot_rd_attr(ini_name, initiator-name, ISCSI_BOOT_INI_INITIATOR_NAME);
 
-static struct attribute *initiator_attrs[] = {
+अटल काष्ठा attribute *initiator_attrs[] = अणु
 	&iscsi_boot_attr_ini_index.attr,
 	&iscsi_boot_attr_ini_flags.attr,
 	&iscsi_boot_attr_ini_isns.attr,
@@ -259,44 +260,44 @@ static struct attribute *initiator_attrs[] = {
 	&iscsi_boot_attr_ini_primary_radius.attr,
 	&iscsi_boot_attr_ini_secondary_radius.attr,
 	&iscsi_boot_attr_ini_name.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t iscsi_boot_ini_attr_is_visible(struct kobject *kobj,
-					     struct attribute *attr, int i)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
+अटल umode_t iscsi_boot_ini_attr_is_visible(काष्ठा kobject *kobj,
+					     काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
 
-	if (attr ==  &iscsi_boot_attr_ini_index.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_index.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_INDEX);
-	if (attr ==  &iscsi_boot_attr_ini_flags.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_flags.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_FLAGS);
-	if (attr ==  &iscsi_boot_attr_ini_isns.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_isns.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_ISNS_SERVER);
-	if (attr ==  &iscsi_boot_attr_ini_slp.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_slp.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_SLP_SERVER);
-	if (attr ==  &iscsi_boot_attr_ini_primary_radius.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_primary_radius.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_PRI_RADIUS_SERVER);
-	if (attr ==  &iscsi_boot_attr_ini_secondary_radius.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_secondary_radius.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_SEC_RADIUS_SERVER);
-	if (attr ==  &iscsi_boot_attr_ini_name.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_ini_name.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_INI_INITIATOR_NAME);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group iscsi_boot_initiator_attr_group = {
+अटल काष्ठा attribute_group iscsi_boot_initiator_attr_group = अणु
 	.attrs = initiator_attrs,
 	.is_visible = iscsi_boot_ini_attr_is_visible,
-};
+पूर्ण;
 
 /* iBFT ACPI Table attributes */
 iscsi_boot_rd_attr(acpitbl_signature, signature, ISCSI_BOOT_ACPITBL_SIGNATURE);
@@ -304,251 +305,251 @@ iscsi_boot_rd_attr(acpitbl_oem_id, oem_id, ISCSI_BOOT_ACPITBL_OEM_ID);
 iscsi_boot_rd_attr(acpitbl_oem_table_id, oem_table_id,
 		   ISCSI_BOOT_ACPITBL_OEM_TABLE_ID);
 
-static struct attribute *acpitbl_attrs[] = {
+अटल काष्ठा attribute *acpitbl_attrs[] = अणु
 	&iscsi_boot_attr_acpitbl_signature.attr,
 	&iscsi_boot_attr_acpitbl_oem_id.attr,
 	&iscsi_boot_attr_acpitbl_oem_table_id.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t iscsi_boot_acpitbl_attr_is_visible(struct kobject *kobj,
-					     struct attribute *attr, int i)
-{
-	struct iscsi_boot_kobj *boot_kobj =
-			container_of(kobj, struct iscsi_boot_kobj, kobj);
+अटल umode_t iscsi_boot_acpitbl_attr_is_visible(काष्ठा kobject *kobj,
+					     काष्ठा attribute *attr, पूर्णांक i)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj =
+			container_of(kobj, काष्ठा iscsi_boot_kobj, kobj);
 
-	if (attr ==  &iscsi_boot_attr_acpitbl_signature.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_acpitbl_signature.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ACPITBL_SIGNATURE);
-	if (attr ==  &iscsi_boot_attr_acpitbl_oem_id.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_acpitbl_oem_id.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ACPITBL_OEM_ID);
-	if (attr ==  &iscsi_boot_attr_acpitbl_oem_table_id.attr)
-		return boot_kobj->is_visible(boot_kobj->data,
+	अगर (attr ==  &iscsi_boot_attr_acpitbl_oem_table_id.attr)
+		वापस boot_kobj->is_visible(boot_kobj->data,
 					     ISCSI_BOOT_ACPITBL_OEM_TABLE_ID);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group iscsi_boot_acpitbl_attr_group = {
+अटल काष्ठा attribute_group iscsi_boot_acpitbl_attr_group = अणु
 	.attrs = acpitbl_attrs,
 	.is_visible = iscsi_boot_acpitbl_attr_is_visible,
-};
+पूर्ण;
 
-static struct iscsi_boot_kobj *
-iscsi_boot_create_kobj(struct iscsi_boot_kset *boot_kset,
-		       struct attribute_group *attr_group,
-		       const char *name, int index, void *data,
-		       ssize_t (*show) (void *data, int type, char *buf),
-		       umode_t (*is_visible) (void *data, int type),
-		       void (*release) (void *data))
-{
-	struct iscsi_boot_kobj *boot_kobj;
+अटल काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_kobj(काष्ठा iscsi_boot_kset *boot_kset,
+		       काष्ठा attribute_group *attr_group,
+		       स्थिर अक्षर *name, पूर्णांक index, व्योम *data,
+		       sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+		       umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+		       व्योम (*release) (व्योम *data))
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj;
 
-	boot_kobj = kzalloc(sizeof(*boot_kobj), GFP_KERNEL);
-	if (!boot_kobj)
-		return NULL;
+	boot_kobj = kzalloc(माप(*boot_kobj), GFP_KERNEL);
+	अगर (!boot_kobj)
+		वापस शून्य;
 	INIT_LIST_HEAD(&boot_kobj->list);
 
 	boot_kobj->kobj.kset = boot_kset->kset;
-	if (kobject_init_and_add(&boot_kobj->kobj, &iscsi_boot_ktype,
-				 NULL, name, index)) {
+	अगर (kobject_init_and_add(&boot_kobj->kobj, &iscsi_boot_ktype,
+				 शून्य, name, index)) अणु
 		kobject_put(&boot_kobj->kobj);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	boot_kobj->data = data;
 	boot_kobj->show = show;
 	boot_kobj->is_visible = is_visible;
 	boot_kobj->release = release;
 
-	if (sysfs_create_group(&boot_kobj->kobj, attr_group)) {
+	अगर (sysfs_create_group(&boot_kobj->kobj, attr_group)) अणु
 		/*
-		 * We do not want to free this because the caller
+		 * We करो not want to मुक्त this because the caller
 		 * will assume that since the creation call failed
 		 * the boot kobj was not setup and the normal release
 		 * path is not being run.
 		 */
-		boot_kobj->release = NULL;
+		boot_kobj->release = शून्य;
 		kobject_put(&boot_kobj->kobj);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	boot_kobj->attr_group = attr_group;
 
 	kobject_uevent(&boot_kobj->kobj, KOBJ_ADD);
 	/* Nothing broke so lets add it to the list. */
 	list_add_tail(&boot_kobj->list, &boot_kset->kobj_list);
-	return boot_kobj;
-}
+	वापस boot_kobj;
+पूर्ण
 
-static void iscsi_boot_remove_kobj(struct iscsi_boot_kobj *boot_kobj)
-{
+अटल व्योम iscsi_boot_हटाओ_kobj(काष्ठा iscsi_boot_kobj *boot_kobj)
+अणु
 	list_del(&boot_kobj->list);
-	sysfs_remove_group(&boot_kobj->kobj, boot_kobj->attr_group);
+	sysfs_हटाओ_group(&boot_kobj->kobj, boot_kobj->attr_group);
 	kobject_put(&boot_kobj->kobj);
-}
+पूर्ण
 
 /**
  * iscsi_boot_create_target() - create boot target sysfs dir
  * @boot_kset: boot kset
  * @index: the target id
- * @data: driver specific data for target
+ * @data: driver specअगरic data क्रम target
  * @show: attr show function
  * @is_visible: attr visibility function
  * @release: release function
  *
- * Note: The boot sysfs lib will free the data passed in for the caller
+ * Note: The boot sysfs lib will मुक्त the data passed in क्रम the caller
  * when all refs to the target kobject have been released.
  */
-struct iscsi_boot_kobj *
-iscsi_boot_create_target(struct iscsi_boot_kset *boot_kset, int index,
-			 void *data,
-			 ssize_t (*show) (void *data, int type, char *buf),
-			 umode_t (*is_visible) (void *data, int type),
-			 void (*release) (void *data))
-{
-	return iscsi_boot_create_kobj(boot_kset, &iscsi_boot_target_attr_group,
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_target(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			 व्योम *data,
+			 sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			 umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			 व्योम (*release) (व्योम *data))
+अणु
+	वापस iscsi_boot_create_kobj(boot_kset, &iscsi_boot_target_attr_group,
 				      "target%d", index, data, show, is_visible,
 				      release);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_target);
 
 /**
  * iscsi_boot_create_initiator() - create boot initiator sysfs dir
  * @boot_kset: boot kset
  * @index: the initiator id
- * @data: driver specific data
+ * @data: driver specअगरic data
  * @show: attr show function
  * @is_visible: attr visibility function
  * @release: release function
  *
- * Note: The boot sysfs lib will free the data passed in for the caller
+ * Note: The boot sysfs lib will मुक्त the data passed in क्रम the caller
  * when all refs to the initiator kobject have been released.
  */
-struct iscsi_boot_kobj *
-iscsi_boot_create_initiator(struct iscsi_boot_kset *boot_kset, int index,
-			    void *data,
-			    ssize_t (*show) (void *data, int type, char *buf),
-			    umode_t (*is_visible) (void *data, int type),
-			    void (*release) (void *data))
-{
-	return iscsi_boot_create_kobj(boot_kset,
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_initiator(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			    व्योम *data,
+			    sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			    umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			    व्योम (*release) (व्योम *data))
+अणु
+	वापस iscsi_boot_create_kobj(boot_kset,
 				      &iscsi_boot_initiator_attr_group,
 				      "initiator", index, data, show,
 				      is_visible, release);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_initiator);
 
 /**
  * iscsi_boot_create_ethernet() - create boot ethernet sysfs dir
  * @boot_kset: boot kset
  * @index: the ethernet device id
- * @data: driver specific data
+ * @data: driver specअगरic data
  * @show: attr show function
  * @is_visible: attr visibility function
  * @release: release function
  *
- * Note: The boot sysfs lib will free the data passed in for the caller
+ * Note: The boot sysfs lib will मुक्त the data passed in क्रम the caller
  * when all refs to the ethernet kobject have been released.
  */
-struct iscsi_boot_kobj *
-iscsi_boot_create_ethernet(struct iscsi_boot_kset *boot_kset, int index,
-			   void *data,
-			   ssize_t (*show) (void *data, int type, char *buf),
-			   umode_t (*is_visible) (void *data, int type),
-			   void (*release) (void *data))
-{
-	return iscsi_boot_create_kobj(boot_kset,
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_ethernet(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			   व्योम *data,
+			   sमाप_प्रकार (*show) (व्योम *data, पूर्णांक type, अक्षर *buf),
+			   umode_t (*is_visible) (व्योम *data, पूर्णांक type),
+			   व्योम (*release) (व्योम *data))
+अणु
+	वापस iscsi_boot_create_kobj(boot_kset,
 				      &iscsi_boot_ethernet_attr_group,
 				      "ethernet%d", index, data, show,
 				      is_visible, release);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_ethernet);
 
 /**
  * iscsi_boot_create_acpitbl() - create boot acpi table sysfs dir
  * @boot_kset: boot kset
  * @index: not used
- * @data: driver specific data
+ * @data: driver specअगरic data
  * @show: attr show function
  * @is_visible: attr visibility function
  * @release: release function
  *
- * Note: The boot sysfs lib will free the data passed in for the caller
+ * Note: The boot sysfs lib will मुक्त the data passed in क्रम the caller
  * when all refs to the acpitbl kobject have been released.
  */
-struct iscsi_boot_kobj *
-iscsi_boot_create_acpitbl(struct iscsi_boot_kset *boot_kset, int index,
-			   void *data,
-			   ssize_t (*show)(void *data, int type, char *buf),
-			   umode_t (*is_visible)(void *data, int type),
-			   void (*release)(void *data))
-{
-	return iscsi_boot_create_kobj(boot_kset,
+काष्ठा iscsi_boot_kobj *
+iscsi_boot_create_acpitbl(काष्ठा iscsi_boot_kset *boot_kset, पूर्णांक index,
+			   व्योम *data,
+			   sमाप_प्रकार (*show)(व्योम *data, पूर्णांक type, अक्षर *buf),
+			   umode_t (*is_visible)(व्योम *data, पूर्णांक type),
+			   व्योम (*release)(व्योम *data))
+अणु
+	वापस iscsi_boot_create_kobj(boot_kset,
 				      &iscsi_boot_acpitbl_attr_group,
 				      "acpi_header", index, data, show,
 				      is_visible, release);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_acpitbl);
 
 /**
  * iscsi_boot_create_kset() - creates root sysfs tree
  * @set_name: name of root dir
  */
-struct iscsi_boot_kset *iscsi_boot_create_kset(const char *set_name)
-{
-	struct iscsi_boot_kset *boot_kset;
+काष्ठा iscsi_boot_kset *iscsi_boot_create_kset(स्थिर अक्षर *set_name)
+अणु
+	काष्ठा iscsi_boot_kset *boot_kset;
 
-	boot_kset = kzalloc(sizeof(*boot_kset), GFP_KERNEL);
-	if (!boot_kset)
-		return NULL;
+	boot_kset = kzalloc(माप(*boot_kset), GFP_KERNEL);
+	अगर (!boot_kset)
+		वापस शून्य;
 
-	boot_kset->kset = kset_create_and_add(set_name, NULL, firmware_kobj);
-	if (!boot_kset->kset) {
-		kfree(boot_kset);
-		return NULL;
-	}
+	boot_kset->kset = kset_create_and_add(set_name, शून्य, firmware_kobj);
+	अगर (!boot_kset->kset) अणु
+		kमुक्त(boot_kset);
+		वापस शून्य;
+	पूर्ण
 
 	INIT_LIST_HEAD(&boot_kset->kobj_list);
-	return boot_kset;
-}
+	वापस boot_kset;
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_kset);
 
 /**
- * iscsi_boot_create_host_kset() - creates root sysfs tree for a scsi host
+ * iscsi_boot_create_host_kset() - creates root sysfs tree क्रम a scsi host
  * @hostno: host number of scsi host
  */
-struct iscsi_boot_kset *iscsi_boot_create_host_kset(unsigned int hostno)
-{
-	struct iscsi_boot_kset *boot_kset;
-	char *set_name;
+काष्ठा iscsi_boot_kset *iscsi_boot_create_host_kset(अचिन्हित पूर्णांक hostno)
+अणु
+	काष्ठा iscsi_boot_kset *boot_kset;
+	अक्षर *set_name;
 
-	set_name = kasprintf(GFP_KERNEL, "iscsi_boot%u", hostno);
-	if (!set_name)
-		return NULL;
+	set_name = kaप्र_लिखो(GFP_KERNEL, "iscsi_boot%u", hostno);
+	अगर (!set_name)
+		वापस शून्य;
 
 	boot_kset = iscsi_boot_create_kset(set_name);
-	kfree(set_name);
-	return boot_kset;
-}
+	kमुक्त(set_name);
+	वापस boot_kset;
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_create_host_kset);
 
 /**
  * iscsi_boot_destroy_kset() - destroy kset and kobjects under it
  * @boot_kset: boot kset
  *
- * This will remove the kset and kobjects and attrs under it.
+ * This will हटाओ the kset and kobjects and attrs under it.
  */
-void iscsi_boot_destroy_kset(struct iscsi_boot_kset *boot_kset)
-{
-	struct iscsi_boot_kobj *boot_kobj, *tmp_kobj;
+व्योम iscsi_boot_destroy_kset(काष्ठा iscsi_boot_kset *boot_kset)
+अणु
+	काष्ठा iscsi_boot_kobj *boot_kobj, *पंचांगp_kobj;
 
-	if (!boot_kset)
-		return;
+	अगर (!boot_kset)
+		वापस;
 
-	list_for_each_entry_safe(boot_kobj, tmp_kobj,
+	list_क्रम_each_entry_safe(boot_kobj, पंचांगp_kobj,
 				 &boot_kset->kobj_list, list)
-		iscsi_boot_remove_kobj(boot_kobj);
+		iscsi_boot_हटाओ_kobj(boot_kobj);
 
-	kset_unregister(boot_kset->kset);
-	kfree(boot_kset);
-}
+	kset_unरेजिस्टर(boot_kset->kset);
+	kमुक्त(boot_kset);
+पूर्ण
 EXPORT_SYMBOL_GPL(iscsi_boot_destroy_kset);

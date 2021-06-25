@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_SPARC_IOCTLS_H
-#define _ASM_SPARC_IOCTLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_SPARC_IOCTLS_H
+#घोषणा _ASM_SPARC_IOCTLS_H
 
-#include <uapi/asm/ioctls.h>
+#समावेश <uapi/यंत्र/ioctls.h>
 
-#define TIOCGETC __TIOCGETC
-#define TIOCGETP __TIOCGETP
-#define TIOCGLTC __TIOCGLTC
-#define TIOCSLTC __TIOCSLTC
-#define TIOCSETP __TIOCSETP
-#define TIOCSETN __TIOCSETN
-#define TIOCSETC __TIOCSETC
-#endif /* !(_ASM_SPARC_IOCTLS_H) */
+#घोषणा TIOCGETC __TIOCGETC
+#घोषणा TIOCGETP __TIOCGETP
+#घोषणा TIOCGLTC __TIOCGLTC
+#घोषणा TIOCSLTC __TIOCSLTC
+#घोषणा TIOCSETP __TIOCSETP
+#घोषणा TIOCSETN __TIOCSETN
+#घोषणा TIOCSETC __TIOCSETC
+#पूर्ण_अगर /* !(_ASM_SPARC_IOCTLS_H) */

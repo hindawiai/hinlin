@@ -1,127 +1,128 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2005 MIPS Technologies, Inc.  All rights reserved.
  * Copyright (C) 2013 Imagination Technologies Ltd.
  */
-#ifndef _ASM_VPE_H
-#define _ASM_VPE_H
+#अगर_अघोषित _ASM_VPE_H
+#घोषणा _ASM_VPE_H
 
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
 
-#define VPE_MODULE_NAME "vpe"
-#define VPE_MODULE_MINOR 1
+#घोषणा VPE_MODULE_NAME "vpe"
+#घोषणा VPE_MODULE_MINOR 1
 
 /* grab the likely amount of memory we will need. */
-#ifdef CONFIG_MIPS_VPE_LOADER_TOM
-#define P_SIZE (2 * 1024 * 1024)
-#else
-/* add an overhead to the max kmalloc size for non-striped symbols/etc */
-#define P_SIZE (256 * 1024)
-#endif
+#अगर_घोषित CONFIG_MIPS_VPE_LOADER_TOM
+#घोषणा P_SIZE (2 * 1024 * 1024)
+#अन्यथा
+/* add an overhead to the max kदो_स्मृति size क्रम non-striped symbols/etc */
+#घोषणा P_SIZE (256 * 1024)
+#पूर्ण_अगर
 
-#define MAX_VPES 16
+#घोषणा MAX_VPES 16
 
-static inline int aprp_cpu_index(void)
-{
-#ifdef CONFIG_MIPS_CMP
-	return setup_max_cpus;
-#else
-	extern int tclimit;
-	return tclimit;
-#endif
-}
+अटल अंतरभूत पूर्णांक aprp_cpu_index(व्योम)
+अणु
+#अगर_घोषित CONFIG_MIPS_CMP
+	वापस setup_max_cpus;
+#अन्यथा
+	बाह्य पूर्णांक tclimit;
+	वापस tclimit;
+#पूर्ण_अगर
+पूर्ण
 
-enum vpe_state {
+क्रमागत vpe_state अणु
 	VPE_STATE_UNUSED = 0,
 	VPE_STATE_INUSE,
 	VPE_STATE_RUNNING
-};
+पूर्ण;
 
-enum tc_state {
+क्रमागत tc_state अणु
 	TC_STATE_UNUSED = 0,
 	TC_STATE_INUSE,
 	TC_STATE_RUNNING,
 	TC_STATE_DYNAMIC
-};
+पूर्ण;
 
-struct vpe {
-	enum vpe_state state;
+काष्ठा vpe अणु
+	क्रमागत vpe_state state;
 
 	/* (device) minor associated with this vpe */
-	int minor;
+	पूर्णांक minor;
 
 	/* elfloader stuff */
-	void *load_addr;
-	unsigned long len;
-	char *pbuffer;
-	unsigned long plen;
+	व्योम *load_addr;
+	अचिन्हित दीर्घ len;
+	अक्षर *pbuffer;
+	अचिन्हित दीर्घ plen;
 
-	unsigned long __start;
+	अचिन्हित दीर्घ __start;
 
 	/* tc's associated with this vpe */
-	struct list_head tc;
+	काष्ठा list_head tc;
 
 	/* The list of vpe's */
-	struct list_head list;
+	काष्ठा list_head list;
 
 	/* shared symbol address */
-	void *shared_ptr;
+	व्योम *shared_ptr;
 
 	/* the list of who wants to know when something major happens */
-	struct list_head notify;
+	काष्ठा list_head notअगरy;
 
-	unsigned int ntcs;
-};
+	अचिन्हित पूर्णांक ntcs;
+पूर्ण;
 
-struct tc {
-	enum tc_state state;
-	int index;
+काष्ठा tc अणु
+	क्रमागत tc_state state;
+	पूर्णांक index;
 
-	struct vpe *pvpe;	/* parent VPE */
-	struct list_head tc;	/* The list of TC's with this VPE */
-	struct list_head list;	/* The global list of tc's */
-};
+	काष्ठा vpe *pvpe;	/* parent VPE */
+	काष्ठा list_head tc;	/* The list of TC's with this VPE */
+	काष्ठा list_head list;	/* The global list of tc's */
+पूर्ण;
 
-struct vpe_notifications {
-	void (*start)(int vpe);
-	void (*stop)(int vpe);
+काष्ठा vpe_notअगरications अणु
+	व्योम (*start)(पूर्णांक vpe);
+	व्योम (*stop)(पूर्णांक vpe);
 
-	struct list_head list;
-};
+	काष्ठा list_head list;
+पूर्ण;
 
-struct vpe_control {
+काष्ठा vpe_control अणु
 	spinlock_t vpe_list_lock;
-	struct list_head vpe_list;      /* Virtual processing elements */
+	काष्ठा list_head vpe_list;      /* Virtual processing elements */
 	spinlock_t tc_list_lock;
-	struct list_head tc_list;       /* Thread contexts */
-};
+	काष्ठा list_head tc_list;       /* Thपढ़ो contexts */
+पूर्ण;
 
-extern unsigned long physical_memsize;
-extern struct vpe_control vpecontrol;
-extern const struct file_operations vpe_fops;
+बाह्य अचिन्हित दीर्घ physical_memsize;
+बाह्य काष्ठा vpe_control vpecontrol;
+बाह्य स्थिर काष्ठा file_operations vpe_fops;
 
-int vpe_notify(int index, struct vpe_notifications *notify);
+पूर्णांक vpe_notअगरy(पूर्णांक index, काष्ठा vpe_notअगरications *notअगरy);
 
-void *vpe_get_shared(int index);
+व्योम *vpe_get_shared(पूर्णांक index);
 
-struct vpe *get_vpe(int minor);
-struct tc *get_tc(int index);
-struct vpe *alloc_vpe(int minor);
-struct tc *alloc_tc(int index);
-void release_vpe(struct vpe *v);
+काष्ठा vpe *get_vpe(पूर्णांक minor);
+काष्ठा tc *get_tc(पूर्णांक index);
+काष्ठा vpe *alloc_vpe(पूर्णांक minor);
+काष्ठा tc *alloc_tc(पूर्णांक index);
+व्योम release_vpe(काष्ठा vpe *v);
 
-void *alloc_progmem(unsigned long len);
-void release_progmem(void *ptr);
+व्योम *alloc_progmem(अचिन्हित दीर्घ len);
+व्योम release_progmem(व्योम *ptr);
 
-int vpe_run(struct vpe *v);
-void cleanup_tc(struct tc *tc);
+पूर्णांक vpe_run(काष्ठा vpe *v);
+व्योम cleanup_tc(काष्ठा tc *tc);
 
-int __init vpe_module_init(void);
-void __exit vpe_module_exit(void);
-#endif /* _ASM_VPE_H */
+पूर्णांक __init vpe_module_init(व्योम);
+व्योम __निकास vpe_module_निकास(व्योम);
+#पूर्ण_अगर /* _ASM_VPE_H */

@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#ifndef __MTD_ORION_NAND_H
-#define __MTD_ORION_NAND_H
+#अगर_अघोषित __MTD_ORION_न_अंकD_H
+#घोषणा __MTD_ORION_न_अंकD_H
 
 /*
- * Device bus NAND private data
+ * Device bus न_अंकD निजी data
  */
-struct orion_nand_data {
-	struct mtd_partition *parts;
+काष्ठा orion_nand_data अणु
+	काष्ठा mtd_partition *parts;
 	u32 nr_parts;
 	u8 ale;		/* address line number connected to ALE */
 	u8 cle;		/* address line number connected to CLE */
 	u8 width;	/* buswidth */
 	u8 chip_delay;
-};
+पूर्ण;
 
 
-#endif
+#पूर्ण_अगर

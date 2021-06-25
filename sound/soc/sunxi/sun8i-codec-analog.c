@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * This driver supports the analog controls for the internal codec
+ * This driver supports the analog controls क्रम the पूर्णांकernal codec
  * found in Allwinner's A31s, A23, A33 and H3 SoCs.
  *
  * Copyright 2016 Chen-Yu Tsai <wens@csie.org>
  */
 
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/soc.h>
-#include <sound/soc-dapm.h>
-#include <sound/tlv.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/tlv.h>
 
-#include "sun8i-adda-pr-regmap.h"
+#समावेश "sun8i-adda-pr-regmap.h"
 
-/* Codec analog control register offsets and bit fields */
-#define SUN8I_ADDA_HP_VOLC		0x00
-#define SUN8I_ADDA_HP_VOLC_PA_CLK_GATE		7
-#define SUN8I_ADDA_HP_VOLC_HP_VOL		0
-#define SUN8I_ADDA_LOMIXSC		0x01
-#define SUN8I_ADDA_LOMIXSC_MIC1			6
-#define SUN8I_ADDA_LOMIXSC_MIC2			5
-#define SUN8I_ADDA_LOMIXSC_PHONE		4
-#define SUN8I_ADDA_LOMIXSC_PHONEN		3
-#define SUN8I_ADDA_LOMIXSC_LINEINL		2
-#define SUN8I_ADDA_LOMIXSC_DACL			1
-#define SUN8I_ADDA_LOMIXSC_DACR			0
-#define SUN8I_ADDA_ROMIXSC		0x02
-#define SUN8I_ADDA_ROMIXSC_MIC1			6
-#define SUN8I_ADDA_ROMIXSC_MIC2			5
-#define SUN8I_ADDA_ROMIXSC_PHONE		4
-#define SUN8I_ADDA_ROMIXSC_PHONEP		3
-#define SUN8I_ADDA_ROMIXSC_LINEINR		2
-#define SUN8I_ADDA_ROMIXSC_DACR			1
-#define SUN8I_ADDA_ROMIXSC_DACL			0
-#define SUN8I_ADDA_DAC_PA_SRC		0x03
-#define SUN8I_ADDA_DAC_PA_SRC_DACAREN		7
-#define SUN8I_ADDA_DAC_PA_SRC_DACALEN		6
-#define SUN8I_ADDA_DAC_PA_SRC_RMIXEN		5
-#define SUN8I_ADDA_DAC_PA_SRC_LMIXEN		4
-#define SUN8I_ADDA_DAC_PA_SRC_RHPPAMUTE		3
-#define SUN8I_ADDA_DAC_PA_SRC_LHPPAMUTE		2
-#define SUN8I_ADDA_DAC_PA_SRC_RHPIS		1
-#define SUN8I_ADDA_DAC_PA_SRC_LHPIS		0
-#define SUN8I_ADDA_PHONEIN_GCTRL	0x04
-#define SUN8I_ADDA_PHONEIN_GCTRL_PHONEPG	4
-#define SUN8I_ADDA_PHONEIN_GCTRL_PHONENG	0
-#define SUN8I_ADDA_LINEIN_GCTRL		0x05
-#define SUN8I_ADDA_LINEIN_GCTRL_LINEING		4
-#define SUN8I_ADDA_LINEIN_GCTRL_PHONEG		0
-#define SUN8I_ADDA_MICIN_GCTRL		0x06
-#define SUN8I_ADDA_MICIN_GCTRL_MIC1G		4
-#define SUN8I_ADDA_MICIN_GCTRL_MIC2G		0
-#define SUN8I_ADDA_PAEN_HP_CTRL		0x07
-#define SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN		7
-#define SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN	7	/* H3 specific */
-#define SUN8I_ADDA_PAEN_HP_CTRL_HPCOM_FC	5
-#define SUN8I_ADDA_PAEN_HP_CTRL_COMPTEN		4
-#define SUN8I_ADDA_PAEN_HP_CTRL_PA_ANTI_POP_CTRL	2
-#define SUN8I_ADDA_PAEN_HP_CTRL_LTRNMUTE	1
-#define SUN8I_ADDA_PAEN_HP_CTRL_RTLNMUTE	0
-#define SUN8I_ADDA_PHONEOUT_CTRL	0x08
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUTG	5
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUTEN	4
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_MIC1	3
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_MIC2	2
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_RMIX	1
-#define SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_LMIX	0
-#define SUN8I_ADDA_PHONE_GAIN_CTRL	0x09
-#define SUN8I_ADDA_PHONE_GAIN_CTRL_LINEOUT_VOL	3
-#define SUN8I_ADDA_PHONE_GAIN_CTRL_PHONEPREG	0
-#define SUN8I_ADDA_MIC2G_CTRL		0x0a
-#define SUN8I_ADDA_MIC2G_CTRL_MIC2AMPEN		7
-#define SUN8I_ADDA_MIC2G_CTRL_MIC2BOOST		4
-#define SUN8I_ADDA_MIC2G_CTRL_LINEOUTLEN	3
-#define SUN8I_ADDA_MIC2G_CTRL_LINEOUTREN	2
-#define SUN8I_ADDA_MIC2G_CTRL_LINEOUTLSRC	1
-#define SUN8I_ADDA_MIC2G_CTRL_LINEOUTRSRC	0
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL	0x0b
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL_HMICBIASEN	7
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MMICBIASEN	6
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL_HMICBIAS_MODE	5
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1AMPEN		3
-#define SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1BOOST		0
-#define SUN8I_ADDA_LADCMIXSC		0x0c
-#define SUN8I_ADDA_LADCMIXSC_MIC1		6
-#define SUN8I_ADDA_LADCMIXSC_MIC2		5
-#define SUN8I_ADDA_LADCMIXSC_PHONE		4
-#define SUN8I_ADDA_LADCMIXSC_PHONEN		3
-#define SUN8I_ADDA_LADCMIXSC_LINEINL		2
-#define SUN8I_ADDA_LADCMIXSC_OMIXRL		1
-#define SUN8I_ADDA_LADCMIXSC_OMIXRR		0
-#define SUN8I_ADDA_RADCMIXSC		0x0d
-#define SUN8I_ADDA_RADCMIXSC_MIC1		6
-#define SUN8I_ADDA_RADCMIXSC_MIC2		5
-#define SUN8I_ADDA_RADCMIXSC_PHONE		4
-#define SUN8I_ADDA_RADCMIXSC_PHONEP		3
-#define SUN8I_ADDA_RADCMIXSC_LINEINR		2
-#define SUN8I_ADDA_RADCMIXSC_OMIXR		1
-#define SUN8I_ADDA_RADCMIXSC_OMIXL		0
-#define SUN8I_ADDA_RES			0x0e
-#define SUN8I_ADDA_RES_MMICBIAS_SEL		4
-#define SUN8I_ADDA_RES_PA_ANTI_POP_CTRL		0
-#define SUN8I_ADDA_ADC_AP_EN		0x0f
-#define SUN8I_ADDA_ADC_AP_EN_ADCREN		7
-#define SUN8I_ADDA_ADC_AP_EN_ADCLEN		6
-#define SUN8I_ADDA_ADC_AP_EN_ADCG		0
+/* Codec analog control रेजिस्टर offsets and bit fields */
+#घोषणा SUN8I_ADDA_HP_VOLC		0x00
+#घोषणा SUN8I_ADDA_HP_VOLC_PA_CLK_GATE		7
+#घोषणा SUN8I_ADDA_HP_VOLC_HP_VOL		0
+#घोषणा SUN8I_ADDA_LOMIXSC		0x01
+#घोषणा SUN8I_ADDA_LOMIXSC_MIC1			6
+#घोषणा SUN8I_ADDA_LOMIXSC_MIC2			5
+#घोषणा SUN8I_ADDA_LOMIXSC_PHONE		4
+#घोषणा SUN8I_ADDA_LOMIXSC_PHONEN		3
+#घोषणा SUN8I_ADDA_LOMIXSC_LINEINL		2
+#घोषणा SUN8I_ADDA_LOMIXSC_DACL			1
+#घोषणा SUN8I_ADDA_LOMIXSC_DACR			0
+#घोषणा SUN8I_ADDA_ROMIXSC		0x02
+#घोषणा SUN8I_ADDA_ROMIXSC_MIC1			6
+#घोषणा SUN8I_ADDA_ROMIXSC_MIC2			5
+#घोषणा SUN8I_ADDA_ROMIXSC_PHONE		4
+#घोषणा SUN8I_ADDA_ROMIXSC_PHONEP		3
+#घोषणा SUN8I_ADDA_ROMIXSC_LINEINR		2
+#घोषणा SUN8I_ADDA_ROMIXSC_DACR			1
+#घोषणा SUN8I_ADDA_ROMIXSC_DACL			0
+#घोषणा SUN8I_ADDA_DAC_PA_SRC		0x03
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_DACAREN		7
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_DACALEN		6
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_RMIXEN		5
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_LMIXEN		4
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_RHPPAMUTE		3
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_LHPPAMUTE		2
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_RHPIS		1
+#घोषणा SUN8I_ADDA_DAC_PA_SRC_LHPIS		0
+#घोषणा SUN8I_ADDA_PHONEIN_GCTRL	0x04
+#घोषणा SUN8I_ADDA_PHONEIN_GCTRL_PHONEPG	4
+#घोषणा SUN8I_ADDA_PHONEIN_GCTRL_PHONENG	0
+#घोषणा SUN8I_ADDA_LINEIN_GCTRL		0x05
+#घोषणा SUN8I_ADDA_LINEIN_GCTRL_LINEING		4
+#घोषणा SUN8I_ADDA_LINEIN_GCTRL_PHONEG		0
+#घोषणा SUN8I_ADDA_MICIN_GCTRL		0x06
+#घोषणा SUN8I_ADDA_MICIN_GCTRL_MIC1G		4
+#घोषणा SUN8I_ADDA_MICIN_GCTRL_MIC2G		0
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL		0x07
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN		7
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN	7	/* H3 specअगरic */
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_HPCOM_FC	5
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_COMPTEN		4
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_PA_ANTI_POP_CTRL	2
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_LTRNMUTE	1
+#घोषणा SUN8I_ADDA_PAEN_HP_CTRL_RTLNMUTE	0
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL	0x08
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUTG	5
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUTEN	4
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_MIC1	3
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_MIC2	2
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_RMIX	1
+#घोषणा SUN8I_ADDA_PHONEOUT_CTRL_PHONEOUT_LMIX	0
+#घोषणा SUN8I_ADDA_PHONE_GAIN_CTRL	0x09
+#घोषणा SUN8I_ADDA_PHONE_GAIN_CTRL_LINEOUT_VOL	3
+#घोषणा SUN8I_ADDA_PHONE_GAIN_CTRL_PHONEPREG	0
+#घोषणा SUN8I_ADDA_MIC2G_CTRL		0x0a
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_MIC2AMPEN		7
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_MIC2BOOST		4
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_LINEOUTLEN	3
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_LINEOUTREN	2
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_LINEOUTLSRC	1
+#घोषणा SUN8I_ADDA_MIC2G_CTRL_LINEOUTRSRC	0
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL	0x0b
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL_HMICBIASEN	7
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MMICBIASEN	6
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL_HMICBIAS_MODE	5
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1AMPEN		3
+#घोषणा SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1BOOST		0
+#घोषणा SUN8I_ADDA_LADCMIXSC		0x0c
+#घोषणा SUN8I_ADDA_LADCMIXSC_MIC1		6
+#घोषणा SUN8I_ADDA_LADCMIXSC_MIC2		5
+#घोषणा SUN8I_ADDA_LADCMIXSC_PHONE		4
+#घोषणा SUN8I_ADDA_LADCMIXSC_PHONEN		3
+#घोषणा SUN8I_ADDA_LADCMIXSC_LINEINL		2
+#घोषणा SUN8I_ADDA_LADCMIXSC_OMIXRL		1
+#घोषणा SUN8I_ADDA_LADCMIXSC_OMIXRR		0
+#घोषणा SUN8I_ADDA_RADCMIXSC		0x0d
+#घोषणा SUN8I_ADDA_RADCMIXSC_MIC1		6
+#घोषणा SUN8I_ADDA_RADCMIXSC_MIC2		5
+#घोषणा SUN8I_ADDA_RADCMIXSC_PHONE		4
+#घोषणा SUN8I_ADDA_RADCMIXSC_PHONEP		3
+#घोषणा SUN8I_ADDA_RADCMIXSC_LINEINR		2
+#घोषणा SUN8I_ADDA_RADCMIXSC_OMIXR		1
+#घोषणा SUN8I_ADDA_RADCMIXSC_OMIXL		0
+#घोषणा SUN8I_ADDA_RES			0x0e
+#घोषणा SUN8I_ADDA_RES_MMICBIAS_SEL		4
+#घोषणा SUN8I_ADDA_RES_PA_ANTI_POP_CTRL		0
+#घोषणा SUN8I_ADDA_ADC_AP_EN		0x0f
+#घोषणा SUN8I_ADDA_ADC_AP_EN_ADCREN		7
+#घोषणा SUN8I_ADDA_ADC_AP_EN_ADCLEN		6
+#घोषणा SUN8I_ADDA_ADC_AP_EN_ADCG		0
 
 /* mixer controls */
-static const struct snd_kcontrol_new sun8i_codec_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("DAC Playback Switch",
 			  SUN8I_ADDA_LOMIXSC,
 			  SUN8I_ADDA_ROMIXSC,
@@ -135,10 +136,10 @@ static const struct snd_kcontrol_new sun8i_codec_mixer_controls[] = {
 			  SUN8I_ADDA_LOMIXSC,
 			  SUN8I_ADDA_ROMIXSC,
 			  SUN8I_ADDA_LOMIXSC_MIC2, 1, 0),
-};
+पूर्ण;
 
 /* mixer controls */
-static const struct snd_kcontrol_new sun8i_v3s_codec_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_v3s_codec_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("DAC Playback Switch",
 			  SUN8I_ADDA_LOMIXSC,
 			  SUN8I_ADDA_ROMIXSC,
@@ -151,10 +152,10 @@ static const struct snd_kcontrol_new sun8i_v3s_codec_mixer_controls[] = {
 			  SUN8I_ADDA_LOMIXSC,
 			  SUN8I_ADDA_ROMIXSC,
 			  SUN8I_ADDA_LOMIXSC_MIC1, 1, 0),
-};
+पूर्ण;
 
 /* ADC mixer controls */
-static const struct snd_kcontrol_new sun8i_codec_adc_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_adc_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("Mixer Capture Switch",
 			  SUN8I_ADDA_LADCMIXSC,
 			  SUN8I_ADDA_RADCMIXSC,
@@ -175,10 +176,10 @@ static const struct snd_kcontrol_new sun8i_codec_adc_mixer_controls[] = {
 			  SUN8I_ADDA_LADCMIXSC,
 			  SUN8I_ADDA_RADCMIXSC,
 			  SUN8I_ADDA_LADCMIXSC_MIC2, 1, 0),
-};
+पूर्ण;
 
 /* ADC mixer controls */
-static const struct snd_kcontrol_new sun8i_v3s_codec_adc_mixer_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_v3s_codec_adc_mixer_controls[] = अणु
 	SOC_DAPM_DOUBLE_R("Mixer Capture Switch",
 			  SUN8I_ADDA_LADCMIXSC,
 			  SUN8I_ADDA_RADCMIXSC,
@@ -191,17 +192,17 @@ static const struct snd_kcontrol_new sun8i_v3s_codec_adc_mixer_controls[] = {
 			  SUN8I_ADDA_LADCMIXSC,
 			  SUN8I_ADDA_RADCMIXSC,
 			  SUN8I_ADDA_LADCMIXSC_MIC1, 1, 0),
-};
+पूर्ण;
 
 /* volume / mute controls */
-static const DECLARE_TLV_DB_SCALE(sun8i_codec_out_mixer_pregain_scale,
+अटल स्थिर DECLARE_TLV_DB_SCALE(sun8i_codec_out_mixer_pregain_scale,
 				  -450, 150, 0);
-static const DECLARE_TLV_DB_RANGE(sun8i_codec_mic_gain_scale,
+अटल स्थिर DECLARE_TLV_DB_RANGE(sun8i_codec_mic_gain_scale,
 	0, 0, TLV_DB_SCALE_ITEM(0, 0, 0),
 	1, 7, TLV_DB_SCALE_ITEM(2400, 300, 0),
 );
 
-static const struct snd_kcontrol_new sun8i_codec_common_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_common_controls[] = अणु
 	/* Mixer pre-gain */
 	SOC_SINGLE_TLV("Mic1 Playback Volume", SUN8I_ADDA_MICIN_GCTRL,
 		       SUN8I_ADDA_MICIN_GCTRL_MIC1G,
@@ -216,24 +217,24 @@ static const struct snd_kcontrol_new sun8i_codec_common_controls[] = {
 	SOC_SINGLE_TLV("ADC Gain Capture Volume", SUN8I_ADDA_ADC_AP_EN,
 		       SUN8I_ADDA_ADC_AP_EN_ADCG, 0x7, 0,
 		       sun8i_codec_out_mixer_pregain_scale),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_codec_common_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_common_widमाला_लो[] = अणु
 	/* ADC */
-	SND_SOC_DAPM_ADC("Left ADC", NULL, SUN8I_ADDA_ADC_AP_EN,
+	SND_SOC_DAPM_ADC("Left ADC", शून्य, SUN8I_ADDA_ADC_AP_EN,
 			 SUN8I_ADDA_ADC_AP_EN_ADCLEN, 0),
-	SND_SOC_DAPM_ADC("Right ADC", NULL, SUN8I_ADDA_ADC_AP_EN,
+	SND_SOC_DAPM_ADC("Right ADC", शून्य, SUN8I_ADDA_ADC_AP_EN,
 			 SUN8I_ADDA_ADC_AP_EN_ADCREN, 0),
 
 	/* DAC */
-	SND_SOC_DAPM_DAC("Left DAC", NULL, SUN8I_ADDA_DAC_PA_SRC,
+	SND_SOC_DAPM_DAC("Left DAC", शून्य, SUN8I_ADDA_DAC_PA_SRC,
 			 SUN8I_ADDA_DAC_PA_SRC_DACALEN, 0),
-	SND_SOC_DAPM_DAC("Right DAC", NULL, SUN8I_ADDA_DAC_PA_SRC,
+	SND_SOC_DAPM_DAC("Right DAC", शून्य, SUN8I_ADDA_DAC_PA_SRC,
 			 SUN8I_ADDA_DAC_PA_SRC_DACAREN, 0),
 	/*
-	 * Due to this component and the codec belonging to separate DAPM
-	 * contexts, we need to manually link the above widgets to their
-	 * stream widgets at the card level.
+	 * Due to this component and the codec beदीर्घing to separate DAPM
+	 * contexts, we need to manually link the above widमाला_लो to their
+	 * stream widमाला_लो at the card level.
 	 */
 
 	/* Microphone input */
@@ -241,10 +242,10 @@ static const struct snd_soc_dapm_widget sun8i_codec_common_widgets[] = {
 
 	/* Mic input path */
 	SND_SOC_DAPM_PGA("Mic1 Amplifier", SUN8I_ADDA_MIC1G_MICBIAS_CTRL,
-			 SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1AMPEN, 0, NULL, 0),
-};
+			 SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MIC1AMPEN, 0, शून्य, 0),
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_codec_mixer_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_mixer_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MIXER("Left Mixer", SUN8I_ADDA_DAC_PA_SRC,
 			   SUN8I_ADDA_DAC_PA_SRC_LMIXEN, 0,
 			   sun8i_codec_mixer_controls,
@@ -261,9 +262,9 @@ static const struct snd_soc_dapm_widget sun8i_codec_mixer_widgets[] = {
 			   SUN8I_ADDA_ADC_AP_EN_ADCREN, 0,
 			   sun8i_codec_adc_mixer_controls,
 			   ARRAY_SIZE(sun8i_codec_adc_mixer_controls)),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_v3s_codec_mixer_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_v3s_codec_mixer_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MIXER("Left Mixer", SUN8I_ADDA_DAC_PA_SRC,
 			   SUN8I_ADDA_DAC_PA_SRC_LMIXEN, 0,
 			   sun8i_v3s_codec_mixer_controls,
@@ -280,42 +281,42 @@ static const struct snd_soc_dapm_widget sun8i_v3s_codec_mixer_widgets[] = {
 			   SUN8I_ADDA_ADC_AP_EN_ADCREN, 0,
 			   sun8i_v3s_codec_adc_mixer_controls,
 			   ARRAY_SIZE(sun8i_v3s_codec_adc_mixer_controls)),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_common_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_common_routes[] = अणु
 	/* Microphone Routes */
-	{ "Mic1 Amplifier", NULL, "MIC1"},
-};
+	अणु "Mic1 Amplifier", शून्य, "MIC1"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_mixer_routes[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_mixer_routes[] = अणु
 	/* Left Mixer Routes */
-	{ "Left Mixer", "DAC Playback Switch", "Left DAC" },
-	{ "Left Mixer", "DAC Reversed Playback Switch", "Right DAC" },
-	{ "Left Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" },
+	अणु "Left Mixer", "DAC Playback Switch", "Left DAC" पूर्ण,
+	अणु "Left Mixer", "DAC Reversed Playback Switch", "Right DAC" पूर्ण,
+	अणु "Left Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" पूर्ण,
 
 	/* Right Mixer Routes */
-	{ "Right Mixer", "DAC Playback Switch", "Right DAC" },
-	{ "Right Mixer", "DAC Reversed Playback Switch", "Left DAC" },
-	{ "Right Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" },
+	अणु "Right Mixer", "DAC Playback Switch", "Right DAC" पूर्ण,
+	अणु "Right Mixer", "DAC Reversed Playback Switch", "Left DAC" पूर्ण,
+	अणु "Right Mixer", "Mic1 Playback Switch", "Mic1 Amplifier" पूर्ण,
 
 	/* Left ADC Mixer Routes */
-	{ "Left ADC Mixer", "Mixer Capture Switch", "Left Mixer" },
-	{ "Left ADC Mixer", "Mixer Reversed Capture Switch", "Right Mixer" },
-	{ "Left ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" },
+	अणु "Left ADC Mixer", "Mixer Capture Switch", "Left Mixer" पूर्ण,
+	अणु "Left ADC Mixer", "Mixer Reversed Capture Switch", "Right Mixer" पूर्ण,
+	अणु "Left ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" पूर्ण,
 
 	/* Right ADC Mixer Routes */
-	{ "Right ADC Mixer", "Mixer Capture Switch", "Right Mixer" },
-	{ "Right ADC Mixer", "Mixer Reversed Capture Switch", "Left Mixer" },
-	{ "Right ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" },
+	अणु "Right ADC Mixer", "Mixer Capture Switch", "Right Mixer" पूर्ण,
+	अणु "Right ADC Mixer", "Mixer Reversed Capture Switch", "Left Mixer" पूर्ण,
+	अणु "Right ADC Mixer", "Mic1 Capture Switch", "Mic1 Amplifier" पूर्ण,
 
 	/* ADC Routes */
-	{ "Left ADC", NULL, "Left ADC Mixer" },
-	{ "Right ADC", NULL, "Right ADC Mixer" },
-};
+	अणु "Left ADC", शून्य, "Left ADC Mixer" पूर्ण,
+	अणु "Right ADC", शून्य, "Right ADC Mixer" पूर्ण,
+पूर्ण;
 
-/* headphone specific controls, widgets, and routes */
-static const DECLARE_TLV_DB_SCALE(sun8i_codec_hp_vol_scale, -6300, 100, 1);
-static const struct snd_kcontrol_new sun8i_codec_headphone_controls[] = {
+/* headphone specअगरic controls, widमाला_लो, and routes */
+अटल स्थिर DECLARE_TLV_DB_SCALE(sun8i_codec_hp_vol_scale, -6300, 100, 1);
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_headphone_controls[] = अणु
 	SOC_SINGLE_TLV("Headphone Playback Volume",
 		       SUN8I_ADDA_HP_VOLC,
 		       SUN8I_ADDA_HP_VOLC_HP_VOL, 0x3f, 0,
@@ -324,205 +325,205 @@ static const struct snd_kcontrol_new sun8i_codec_headphone_controls[] = {
 		   SUN8I_ADDA_DAC_PA_SRC,
 		   SUN8I_ADDA_DAC_PA_SRC_LHPPAMUTE,
 		   SUN8I_ADDA_DAC_PA_SRC_RHPPAMUTE, 1, 0),
-};
+पूर्ण;
 
-static const char * const sun8i_codec_hp_src_enum_text[] = {
+अटल स्थिर अक्षर * स्थिर sun8i_codec_hp_src_क्रमागत_text[] = अणु
 	"DAC", "Mixer",
-};
+पूर्ण;
 
-static SOC_ENUM_DOUBLE_DECL(sun8i_codec_hp_src_enum,
+अटल SOC_ENUM_DOUBLE_DECL(sun8i_codec_hp_src_क्रमागत,
 			    SUN8I_ADDA_DAC_PA_SRC,
 			    SUN8I_ADDA_DAC_PA_SRC_LHPIS,
 			    SUN8I_ADDA_DAC_PA_SRC_RHPIS,
-			    sun8i_codec_hp_src_enum_text);
+			    sun8i_codec_hp_src_क्रमागत_text);
 
-static const struct snd_kcontrol_new sun8i_codec_hp_src[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_hp_src[] = अणु
 	SOC_DAPM_ENUM("Headphone Source Playback Route",
-		      sun8i_codec_hp_src_enum),
-};
+		      sun8i_codec_hp_src_क्रमागत),
+पूर्ण;
 
-static int sun8i_headphone_amp_event(struct snd_soc_dapm_widget *w,
-				     struct snd_kcontrol *k, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+अटल पूर्णांक sun8i_headphone_amp_event(काष्ठा snd_soc_dapm_widget *w,
+				     काष्ठा snd_kcontrol *k, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
 
-	if (SND_SOC_DAPM_EVENT_ON(event)) {
+	अगर (SND_SOC_DAPM_EVENT_ON(event)) अणु
 		snd_soc_component_update_bits(component, SUN8I_ADDA_PAEN_HP_CTRL,
 					      BIT(SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN),
 					      BIT(SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN));
 		/*
-		 * Need a delay to have the amplifier up. 700ms seems the best
-		 * compromise between the time to let the amplifier up and the
-		 * time not to feel this delay while playing a sound.
+		 * Need a delay to have the amplअगरier up. 700ms seems the best
+		 * compromise between the समय to let the amplअगरier up and the
+		 * समय not to feel this delay जबतक playing a sound.
 		 */
 		msleep(700);
-	} else if (SND_SOC_DAPM_EVENT_OFF(event)) {
+	पूर्ण अन्यथा अगर (SND_SOC_DAPM_EVENT_OFF(event)) अणु
 		snd_soc_component_update_bits(component, SUN8I_ADDA_PAEN_HP_CTRL,
 					      BIT(SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN),
 					      0x0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget sun8i_codec_headphone_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_headphone_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MUX("Headphone Source Playback Route",
 			 SND_SOC_NOPM, 0, 0, sun8i_codec_hp_src),
 	SND_SOC_DAPM_OUT_DRV_E("Headphone Amp", SUN8I_ADDA_PAEN_HP_CTRL,
-			       SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN, 0, NULL, 0,
+			       SUN8I_ADDA_PAEN_HP_CTRL_HPPAEN, 0, शून्य, 0,
 			       sun8i_headphone_amp_event,
 			       SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD),
 	SND_SOC_DAPM_SUPPLY("HPCOM Protection", SUN8I_ADDA_PAEN_HP_CTRL,
-			    SUN8I_ADDA_PAEN_HP_CTRL_COMPTEN, 0, NULL, 0),
+			    SUN8I_ADDA_PAEN_HP_CTRL_COMPTEN, 0, शून्य, 0),
 	SND_SOC_DAPM_REG(snd_soc_dapm_supply, "HPCOM", SUN8I_ADDA_PAEN_HP_CTRL,
 			 SUN8I_ADDA_PAEN_HP_CTRL_HPCOM_FC, 0x3, 0x3, 0),
 	SND_SOC_DAPM_OUTPUT("HP"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_headphone_routes[] = {
-	{ "Headphone Source Playback Route", "DAC", "Left DAC" },
-	{ "Headphone Source Playback Route", "DAC", "Right DAC" },
-	{ "Headphone Source Playback Route", "Mixer", "Left Mixer" },
-	{ "Headphone Source Playback Route", "Mixer", "Right Mixer" },
-	{ "Headphone Amp", NULL, "Headphone Source Playback Route" },
-	{ "HPCOM", NULL, "HPCOM Protection" },
-	{ "HP", NULL, "Headphone Amp" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_headphone_routes[] = अणु
+	अणु "Headphone Source Playback Route", "DAC", "Left DAC" पूर्ण,
+	अणु "Headphone Source Playback Route", "DAC", "Right DAC" पूर्ण,
+	अणु "Headphone Source Playback Route", "Mixer", "Left Mixer" पूर्ण,
+	अणु "Headphone Source Playback Route", "Mixer", "Right Mixer" पूर्ण,
+	अणु "Headphone Amp", शून्य, "Headphone Source Playback Route" पूर्ण,
+	अणु "HPCOM", शून्य, "HPCOM Protection" पूर्ण,
+	अणु "HP", शून्य, "Headphone Amp" पूर्ण,
+पूर्ण;
 
-static int sun8i_codec_add_headphone(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_headphone(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
 	ret = snd_soc_add_component_controls(cmpnt,
 					     sun8i_codec_headphone_controls,
 					     ARRAY_SIZE(sun8i_codec_headphone_controls));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Headphone controls: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_headphone_widgets,
-					ARRAY_SIZE(sun8i_codec_headphone_widgets));
-	if (ret) {
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_headphone_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_headphone_widमाला_लो));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Headphone DAPM widgets: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(dapm, sun8i_codec_headphone_routes,
 				      ARRAY_SIZE(sun8i_codec_headphone_routes));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Headphone DAPM routes: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* mbias specific widget */
-static const struct snd_soc_dapm_widget sun8i_codec_mbias_widgets[] = {
+/* mbias specअगरic widget */
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_mbias_widमाला_लो[] = अणु
 	SND_SOC_DAPM_SUPPLY("MBIAS", SUN8I_ADDA_MIC1G_MICBIAS_CTRL,
 			    SUN8I_ADDA_MIC1G_MICBIAS_CTRL_MMICBIASEN,
-			    0, NULL, 0),
-};
+			    0, शून्य, 0),
+पूर्ण;
 
-static int sun8i_codec_add_mbias(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_mbias(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_mbias_widgets,
-					ARRAY_SIZE(sun8i_codec_mbias_widgets));
-	if (ret)
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_mbias_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_mbias_widमाला_लो));
+	अगर (ret)
 		dev_err(dev, "Failed to add MBIAS DAPM widgets: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* hmic specific widget */
-static const struct snd_soc_dapm_widget sun8i_codec_hmic_widgets[] = {
+/* hmic specअगरic widget */
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_hmic_widमाला_लो[] = अणु
 	SND_SOC_DAPM_SUPPLY("HBIAS", SUN8I_ADDA_MIC1G_MICBIAS_CTRL,
 			    SUN8I_ADDA_MIC1G_MICBIAS_CTRL_HMICBIASEN,
-			    0, NULL, 0),
-};
+			    0, शून्य, 0),
+पूर्ण;
 
-static int sun8i_codec_add_hmic(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_hmic(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_hmic_widgets,
-					ARRAY_SIZE(sun8i_codec_hmic_widgets));
-	if (ret)
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_hmic_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_hmic_widमाला_लो));
+	अगर (ret)
 		dev_err(dev, "Failed to add Mic3 DAPM widgets: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* line in specific controls, widgets and rines */
-static const struct snd_kcontrol_new sun8i_codec_linein_controls[] = {
+/* line in specअगरic controls, widमाला_लो and rines */
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_linein_controls[] = अणु
 	/* Mixer pre-gain */
 	SOC_SINGLE_TLV("Line In Playback Volume", SUN8I_ADDA_LINEIN_GCTRL,
 		       SUN8I_ADDA_LINEIN_GCTRL_LINEING,
 		       0x7, 0, sun8i_codec_out_mixer_pregain_scale),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_codec_linein_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_linein_widमाला_लो[] = अणु
 	/* Line input */
 	SND_SOC_DAPM_INPUT("LINEIN"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_linein_routes[] = {
-	{ "Left Mixer", "Line In Playback Switch", "LINEIN" },
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_linein_routes[] = अणु
+	अणु "Left Mixer", "Line In Playback Switch", "LINEIN" पूर्ण,
 
-	{ "Right Mixer", "Line In Playback Switch", "LINEIN" },
+	अणु "Right Mixer", "Line In Playback Switch", "LINEIN" पूर्ण,
 
-	{ "Left ADC Mixer", "Line In Capture Switch", "LINEIN" },
+	अणु "Left ADC Mixer", "Line In Capture Switch", "LINEIN" पूर्ण,
 
-	{ "Right ADC Mixer", "Line In Capture Switch", "LINEIN" },
-};
+	अणु "Right ADC Mixer", "Line In Capture Switch", "LINEIN" पूर्ण,
+पूर्ण;
 
-static int sun8i_codec_add_linein(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_linein(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
 	ret = snd_soc_add_component_controls(cmpnt,
 					     sun8i_codec_linein_controls,
 					     ARRAY_SIZE(sun8i_codec_linein_controls));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line In controls: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_linein_widgets,
-					ARRAY_SIZE(sun8i_codec_linein_widgets));
-	if (ret) {
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_linein_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_linein_widमाला_लो));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line In DAPM widgets: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(dapm, sun8i_codec_linein_routes,
 				      ARRAY_SIZE(sun8i_codec_linein_routes));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line In DAPM routes: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* line out specific controls, widgets and routes */
-static const DECLARE_TLV_DB_RANGE(sun8i_codec_lineout_vol_scale,
+/* line out specअगरic controls, widमाला_लो and routes */
+अटल स्थिर DECLARE_TLV_DB_RANGE(sun8i_codec_lineout_vol_scale,
 	0, 1, TLV_DB_SCALE_ITEM(TLV_DB_GAIN_MUTE, 0, 1),
 	2, 31, TLV_DB_SCALE_ITEM(-4350, 150, 0),
 );
-static const struct snd_kcontrol_new sun8i_codec_lineout_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_lineout_controls[] = अणु
 	SOC_SINGLE_TLV("Line Out Playback Volume",
 		       SUN8I_ADDA_PHONE_GAIN_CTRL,
 		       SUN8I_ADDA_PHONE_GAIN_CTRL_LINEOUT_VOL, 0x1f, 0,
@@ -531,74 +532,74 @@ static const struct snd_kcontrol_new sun8i_codec_lineout_controls[] = {
 		   SUN8I_ADDA_MIC2G_CTRL,
 		   SUN8I_ADDA_MIC2G_CTRL_LINEOUTLEN,
 		   SUN8I_ADDA_MIC2G_CTRL_LINEOUTREN, 1, 0),
-};
+पूर्ण;
 
-static const char * const sun8i_codec_lineout_src_enum_text[] = {
+अटल स्थिर अक्षर * स्थिर sun8i_codec_lineout_src_क्रमागत_text[] = अणु
 	"Stereo", "Mono Differential",
-};
+पूर्ण;
 
-static SOC_ENUM_DOUBLE_DECL(sun8i_codec_lineout_src_enum,
+अटल SOC_ENUM_DOUBLE_DECL(sun8i_codec_lineout_src_क्रमागत,
 			    SUN8I_ADDA_MIC2G_CTRL,
 			    SUN8I_ADDA_MIC2G_CTRL_LINEOUTLSRC,
 			    SUN8I_ADDA_MIC2G_CTRL_LINEOUTRSRC,
-			    sun8i_codec_lineout_src_enum_text);
+			    sun8i_codec_lineout_src_क्रमागत_text);
 
-static const struct snd_kcontrol_new sun8i_codec_lineout_src[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_lineout_src[] = अणु
 	SOC_DAPM_ENUM("Line Out Source Playback Route",
-		      sun8i_codec_lineout_src_enum),
-};
+		      sun8i_codec_lineout_src_क्रमागत),
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_codec_lineout_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_lineout_widमाला_लो[] = अणु
 	SND_SOC_DAPM_MUX("Line Out Source Playback Route",
 			 SND_SOC_NOPM, 0, 0, sun8i_codec_lineout_src),
-	/* It is unclear if this is a buffer or gate, model it as a supply */
+	/* It is unclear अगर this is a buffer or gate, model it as a supply */
 	SND_SOC_DAPM_SUPPLY("Line Out Enable", SUN8I_ADDA_PAEN_HP_CTRL,
-			    SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN, 0, NULL, 0),
+			    SUN8I_ADDA_PAEN_HP_CTRL_LINEOUTEN, 0, शून्य, 0),
 	SND_SOC_DAPM_OUTPUT("LINEOUT"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_lineout_routes[] = {
-	{ "Line Out Source Playback Route", "Stereo", "Left Mixer" },
-	{ "Line Out Source Playback Route", "Stereo", "Right Mixer" },
-	{ "Line Out Source Playback Route", "Mono Differential", "Left Mixer" },
-	{ "Line Out Source Playback Route", "Mono Differential", "Right Mixer" },
-	{ "LINEOUT", NULL, "Line Out Source Playback Route" },
-	{ "LINEOUT", NULL, "Line Out Enable", },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_lineout_routes[] = अणु
+	अणु "Line Out Source Playback Route", "Stereo", "Left Mixer" पूर्ण,
+	अणु "Line Out Source Playback Route", "Stereo", "Right Mixer" पूर्ण,
+	अणु "Line Out Source Playback Route", "Mono Differential", "Left Mixer" पूर्ण,
+	अणु "Line Out Source Playback Route", "Mono Differential", "Right Mixer" पूर्ण,
+	अणु "LINEOUT", शून्य, "Line Out Source Playback Route" पूर्ण,
+	अणु "LINEOUT", शून्य, "Line Out Enable", पूर्ण,
+पूर्ण;
 
-static int sun8i_codec_add_lineout(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_lineout(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
 	ret = snd_soc_add_component_controls(cmpnt,
 					     sun8i_codec_lineout_controls,
 					     ARRAY_SIZE(sun8i_codec_lineout_controls));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line Out controls: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_lineout_widgets,
-					ARRAY_SIZE(sun8i_codec_lineout_widgets));
-	if (ret) {
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_lineout_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_lineout_widमाला_लो));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line Out DAPM widgets: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(dapm, sun8i_codec_lineout_routes,
 				      ARRAY_SIZE(sun8i_codec_lineout_routes));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Line Out DAPM routes: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* mic2 specific controls, widgets and routes */
-static const struct snd_kcontrol_new sun8i_codec_mic2_controls[] = {
+/* mic2 specअगरic controls, widमाला_लो and routes */
+अटल स्थिर काष्ठा snd_kcontrol_new sun8i_codec_mic2_controls[] = अणु
 	/* Mixer pre-gain */
 	SOC_SINGLE_TLV("Mic2 Playback Volume",
 		       SUN8I_ADDA_MICIN_GCTRL, SUN8I_ADDA_MICIN_GCTRL_MIC2G,
@@ -608,245 +609,245 @@ static const struct snd_kcontrol_new sun8i_codec_mic2_controls[] = {
 	SOC_SINGLE_TLV("Mic2 Boost Volume", SUN8I_ADDA_MIC2G_CTRL,
 		       SUN8I_ADDA_MIC2G_CTRL_MIC2BOOST, 0x7, 0,
 		       sun8i_codec_mic_gain_scale),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget sun8i_codec_mic2_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget sun8i_codec_mic2_widमाला_लो[] = अणु
 	/* Microphone input */
 	SND_SOC_DAPM_INPUT("MIC2"),
 
 	/* Mic input path */
 	SND_SOC_DAPM_PGA("Mic2 Amplifier", SUN8I_ADDA_MIC2G_CTRL,
-			 SUN8I_ADDA_MIC2G_CTRL_MIC2AMPEN, 0, NULL, 0),
-};
+			 SUN8I_ADDA_MIC2G_CTRL_MIC2AMPEN, 0, शून्य, 0),
+पूर्ण;
 
-static const struct snd_soc_dapm_route sun8i_codec_mic2_routes[] = {
-	{ "Mic2 Amplifier", NULL, "MIC2"},
+अटल स्थिर काष्ठा snd_soc_dapm_route sun8i_codec_mic2_routes[] = अणु
+	अणु "Mic2 Amplifier", शून्य, "MIC2"पूर्ण,
 
-	{ "Left Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" },
+	अणु "Left Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" पूर्ण,
 
-	{ "Right Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" },
+	अणु "Right Mixer", "Mic2 Playback Switch", "Mic2 Amplifier" पूर्ण,
 
-	{ "Left ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" },
+	अणु "Left ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" पूर्ण,
 
-	{ "Right ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" },
-};
+	अणु "Right ADC Mixer", "Mic2 Capture Switch", "Mic2 Amplifier" पूर्ण,
+पूर्ण;
 
-static int sun8i_codec_add_mic2(struct snd_soc_component *cmpnt)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_add_mic2(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
 	ret = snd_soc_add_component_controls(cmpnt,
 					     sun8i_codec_mic2_controls,
 					     ARRAY_SIZE(sun8i_codec_mic2_controls));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add MIC2 controls: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_mic2_widgets,
-					ARRAY_SIZE(sun8i_codec_mic2_widgets));
-	if (ret) {
+	ret = snd_soc_dapm_new_controls(dapm, sun8i_codec_mic2_widमाला_लो,
+					ARRAY_SIZE(sun8i_codec_mic2_widमाला_लो));
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add MIC2 DAPM widgets: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(dapm, sun8i_codec_mic2_routes,
 				      ARRAY_SIZE(sun8i_codec_mic2_routes));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add MIC2 DAPM routes: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sun8i_codec_analog_quirks {
+काष्ठा sun8i_codec_analog_quirks अणु
 	bool has_headphone;
 	bool has_hmic;
 	bool has_linein;
 	bool has_lineout;
 	bool has_mbias;
 	bool has_mic2;
-};
+पूर्ण;
 
-static const struct sun8i_codec_analog_quirks sun8i_a23_quirks = {
+अटल स्थिर काष्ठा sun8i_codec_analog_quirks sun8i_a23_quirks = अणु
 	.has_headphone	= true,
 	.has_hmic	= true,
 	.has_linein	= true,
 	.has_mbias	= true,
 	.has_mic2	= true,
-};
+पूर्ण;
 
-static const struct sun8i_codec_analog_quirks sun8i_h3_quirks = {
+अटल स्थिर काष्ठा sun8i_codec_analog_quirks sun8i_h3_quirks = अणु
 	.has_linein	= true,
 	.has_lineout	= true,
 	.has_mbias	= true,
 	.has_mic2	= true,
-};
+पूर्ण;
 
-static int sun8i_codec_analog_add_mixer(struct snd_soc_component *cmpnt,
-					const struct sun8i_codec_analog_quirks *quirks)
-{
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
-	struct device *dev = cmpnt->dev;
-	int ret;
+अटल पूर्णांक sun8i_codec_analog_add_mixer(काष्ठा snd_soc_component *cmpnt,
+					स्थिर काष्ठा sun8i_codec_analog_quirks *quirks)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(cmpnt);
+	काष्ठा device *dev = cmpnt->dev;
+	पूर्णांक ret;
 
-	if (!quirks->has_mic2 && !quirks->has_linein) {
+	अगर (!quirks->has_mic2 && !quirks->has_linein) अणु
 		/*
 		 * Apply the special widget set which has uses a control
-		 * without MIC2 and Line In, for SoCs without these.
-		 * TODO: not all special cases are supported now, this case
-		 * is present because it's the case of V3s.
+		 * without MIC2 and Line In, क्रम SoCs without these.
+		 * TODO: not all special हालs are supported now, this हाल
+		 * is present because it's the हाल of V3s.
 		 */
 		ret = snd_soc_dapm_new_controls(dapm,
-						sun8i_v3s_codec_mixer_widgets,
-						ARRAY_SIZE(sun8i_v3s_codec_mixer_widgets));
-		if (ret) {
+						sun8i_v3s_codec_mixer_widमाला_लो,
+						ARRAY_SIZE(sun8i_v3s_codec_mixer_widमाला_लो));
+		अगर (ret) अणु
 			dev_err(dev, "Failed to add V3s Mixer DAPM widgets: %d\n", ret);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Apply the generic mixer widget set. */
 		ret = snd_soc_dapm_new_controls(dapm,
-						sun8i_codec_mixer_widgets,
-						ARRAY_SIZE(sun8i_codec_mixer_widgets));
-		if (ret) {
+						sun8i_codec_mixer_widमाला_लो,
+						ARRAY_SIZE(sun8i_codec_mixer_widमाला_लो));
+		अगर (ret) अणु
 			dev_err(dev, "Failed to add Mixer DAPM widgets: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = snd_soc_dapm_add_routes(dapm, sun8i_codec_mixer_routes,
 				      ARRAY_SIZE(sun8i_codec_mixer_routes));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to add Mixer DAPM routes: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sun8i_codec_analog_quirks sun8i_v3s_quirks = {
+अटल स्थिर काष्ठा sun8i_codec_analog_quirks sun8i_v3s_quirks = अणु
 	.has_headphone	= true,
 	.has_hmic	= true,
-};
+पूर्ण;
 
-static int sun8i_codec_analog_cmpnt_probe(struct snd_soc_component *cmpnt)
-{
-	struct device *dev = cmpnt->dev;
-	const struct sun8i_codec_analog_quirks *quirks;
-	int ret;
+अटल पूर्णांक sun8i_codec_analog_cmpnt_probe(काष्ठा snd_soc_component *cmpnt)
+अणु
+	काष्ठा device *dev = cmpnt->dev;
+	स्थिर काष्ठा sun8i_codec_analog_quirks *quirks;
+	पूर्णांक ret;
 
 	/*
-	 * This would never return NULL unless someone directly registers a
-	 * platform device matching this driver's name, without specifying a
+	 * This would never वापस शून्य unless someone directly रेजिस्टरs a
+	 * platक्रमm device matching this driver's name, without specअगरying a
 	 * device tree node.
 	 */
 	quirks = of_device_get_match_data(dev);
 
-	/* Add controls, widgets, and routes for individual features */
+	/* Add controls, widमाला_लो, and routes क्रम inभागidual features */
 	ret = sun8i_codec_analog_add_mixer(cmpnt, quirks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (quirks->has_headphone) {
+	अगर (quirks->has_headphone) अणु
 		ret = sun8i_codec_add_headphone(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (quirks->has_hmic) {
+	अगर (quirks->has_hmic) अणु
 		ret = sun8i_codec_add_hmic(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (quirks->has_linein) {
+	अगर (quirks->has_linein) अणु
 		ret = sun8i_codec_add_linein(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (quirks->has_lineout) {
+	अगर (quirks->has_lineout) अणु
 		ret = sun8i_codec_add_lineout(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (quirks->has_mbias) {
+	अगर (quirks->has_mbias) अणु
 		ret = sun8i_codec_add_mbias(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (quirks->has_mic2) {
+	अगर (quirks->has_mic2) अणु
 		ret = sun8i_codec_add_mic2(cmpnt);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_component_driver sun8i_codec_analog_cmpnt_drv = {
+अटल स्थिर काष्ठा snd_soc_component_driver sun8i_codec_analog_cmpnt_drv = अणु
 	.controls		= sun8i_codec_common_controls,
 	.num_controls		= ARRAY_SIZE(sun8i_codec_common_controls),
-	.dapm_widgets		= sun8i_codec_common_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(sun8i_codec_common_widgets),
+	.dapm_widमाला_लो		= sun8i_codec_common_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(sun8i_codec_common_widमाला_लो),
 	.dapm_routes		= sun8i_codec_common_routes,
 	.num_dapm_routes	= ARRAY_SIZE(sun8i_codec_common_routes),
 	.probe			= sun8i_codec_analog_cmpnt_probe,
-};
+पूर्ण;
 
-static const struct of_device_id sun8i_codec_analog_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun8i_codec_analog_of_match[] = अणु
+	अणु
 		.compatible = "allwinner,sun8i-a23-codec-analog",
 		.data = &sun8i_a23_quirks,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun8i-h3-codec-analog",
 		.data = &sun8i_h3_quirks,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "allwinner,sun8i-v3s-codec-analog",
 		.data = &sun8i_v3s_quirks,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sun8i_codec_analog_of_match);
 
-static int sun8i_codec_analog_probe(struct platform_device *pdev)
-{
-	struct regmap *regmap;
-	void __iomem *base;
+अटल पूर्णांक sun8i_codec_analog_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regmap *regmap;
+	व्योम __iomem *base;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base)) {
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base)) अणु
 		dev_err(&pdev->dev, "Failed to map the registers\n");
-		return PTR_ERR(base);
-	}
+		वापस PTR_ERR(base);
+	पूर्ण
 
 	regmap = sun8i_adda_pr_regmap_init(&pdev->dev, base);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&pdev->dev, "Failed to create regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return devm_snd_soc_register_component(&pdev->dev,
+	वापस devm_snd_soc_रेजिस्टर_component(&pdev->dev,
 					       &sun8i_codec_analog_cmpnt_drv,
-					       NULL, 0);
-}
+					       शून्य, 0);
+पूर्ण
 
-static struct platform_driver sun8i_codec_analog_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun8i_codec_analog_driver = अणु
+	.driver = अणु
 		.name = "sun8i-codec-analog",
 		.of_match_table = sun8i_codec_analog_of_match,
-	},
+	पूर्ण,
 	.probe = sun8i_codec_analog_probe,
-};
-module_platform_driver(sun8i_codec_analog_driver);
+पूर्ण;
+module_platक्रमm_driver(sun8i_codec_analog_driver);
 
 MODULE_DESCRIPTION("Allwinner internal codec analog controls driver");
 MODULE_AUTHOR("Chen-Yu Tsai <wens@csie.org>");

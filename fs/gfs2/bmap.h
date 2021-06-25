@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) Sistina Software, Inc.  1997-2003 All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc.  All rights reserved.
  */
 
-#ifndef __BMAP_DOT_H__
-#define __BMAP_DOT_H__
+#अगर_अघोषित __BMAP_DOT_H__
+#घोषणा __BMAP_DOT_H__
 
-#include <linux/iomap.h>
+#समावेश <linux/iomap.h>
 
-#include "inode.h"
+#समावेश "inode.h"
 
-struct inode;
-struct gfs2_inode;
-struct page;
+काष्ठा inode;
+काष्ठा gfs2_inode;
+काष्ठा page;
 
 
 /**
- * gfs2_write_calc_reserv - calculate number of blocks needed to write to a file
+ * gfs2_ग_लिखो_calc_reserv - calculate number of blocks needed to ग_लिखो to a file
  * @ip: the file
  * @len: the number of bytes to be written to the file
- * @data_blocks: returns the number of data blocks required
- * @ind_blocks: returns the number of indirect blocks required
+ * @data_blocks: वापसs the number of data blocks required
+ * @ind_blocks: वापसs the number of indirect blocks required
  *
  */
 
-static inline void gfs2_write_calc_reserv(const struct gfs2_inode *ip,
-					  unsigned int len,
-					  unsigned int *data_blocks,
-					  unsigned int *ind_blocks)
-{
-	const struct gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
-	unsigned int tmp;
+अटल अंतरभूत व्योम gfs2_ग_लिखो_calc_reserv(स्थिर काष्ठा gfs2_inode *ip,
+					  अचिन्हित पूर्णांक len,
+					  अचिन्हित पूर्णांक *data_blocks,
+					  अचिन्हित पूर्णांक *ind_blocks)
+अणु
+	स्थिर काष्ठा gfs2_sbd *sdp = GFS2_SB(&ip->i_inode);
+	अचिन्हित पूर्णांक पंचांगp;
 
 	BUG_ON(gfs2_is_dir(ip));
-	*data_blocks = (len >> sdp->sd_sb.sb_bsize_shift) + 3;
+	*data_blocks = (len >> sdp->sd_sb.sb_bsize_shअगरt) + 3;
 	*ind_blocks = 3 * (sdp->sd_max_height - 1);
 
-	for (tmp = *data_blocks; tmp > sdp->sd_diptrs;) {
-		tmp = DIV_ROUND_UP(tmp, sdp->sd_inptrs);
-		*ind_blocks += tmp;
-	}
-}
+	क्रम (पंचांगp = *data_blocks; पंचांगp > sdp->sd_diptrs;) अणु
+		पंचांगp = DIV_ROUND_UP(पंचांगp, sdp->sd_inptrs);
+		*ind_blocks += पंचांगp;
+	पूर्ण
+पूर्ण
 
-extern const struct iomap_ops gfs2_iomap_ops;
-extern const struct iomap_writeback_ops gfs2_writeback_ops;
+बाह्य स्थिर काष्ठा iomap_ops gfs2_iomap_ops;
+बाह्य स्थिर काष्ठा iomap_ग_लिखोback_ops gfs2_ग_लिखोback_ops;
 
-extern int gfs2_unstuff_dinode(struct gfs2_inode *ip, struct page *page);
-extern int gfs2_block_map(struct inode *inode, sector_t lblock,
-			  struct buffer_head *bh, int create);
-extern int gfs2_iomap_get(struct inode *inode, loff_t pos, loff_t length,
-			  struct iomap *iomap);
-extern int gfs2_iomap_alloc(struct inode *inode, loff_t pos, loff_t length,
-			    struct iomap *iomap);
-extern int gfs2_get_extent(struct inode *inode, u64 lblock, u64 *dblock,
-			   unsigned int *extlen);
-extern int gfs2_alloc_extent(struct inode *inode, u64 lblock, u64 *dblock,
-			     unsigned *extlen, bool *new);
-extern int gfs2_setattr_size(struct inode *inode, u64 size);
-extern void gfs2_trim_blocks(struct inode *inode);
-extern int gfs2_truncatei_resume(struct gfs2_inode *ip);
-extern int gfs2_file_dealloc(struct gfs2_inode *ip);
-extern int gfs2_write_alloc_required(struct gfs2_inode *ip, u64 offset,
-				     unsigned int len);
-extern int gfs2_map_journal_extents(struct gfs2_sbd *sdp, struct gfs2_jdesc *jd);
-extern void gfs2_free_journal_extents(struct gfs2_jdesc *jd);
-extern int __gfs2_punch_hole(struct file *file, loff_t offset, loff_t length);
+बाह्य पूर्णांक gfs2_unstuff_dinode(काष्ठा gfs2_inode *ip, काष्ठा page *page);
+बाह्य पूर्णांक gfs2_block_map(काष्ठा inode *inode, sector_t lblock,
+			  काष्ठा buffer_head *bh, पूर्णांक create);
+बाह्य पूर्णांक gfs2_iomap_get(काष्ठा inode *inode, loff_t pos, loff_t length,
+			  काष्ठा iomap *iomap);
+बाह्य पूर्णांक gfs2_iomap_alloc(काष्ठा inode *inode, loff_t pos, loff_t length,
+			    काष्ठा iomap *iomap);
+बाह्य पूर्णांक gfs2_get_extent(काष्ठा inode *inode, u64 lblock, u64 *dblock,
+			   अचिन्हित पूर्णांक *extlen);
+बाह्य पूर्णांक gfs2_alloc_extent(काष्ठा inode *inode, u64 lblock, u64 *dblock,
+			     अचिन्हित *extlen, bool *new);
+बाह्य पूर्णांक gfs2_setattr_size(काष्ठा inode *inode, u64 size);
+बाह्य व्योम gfs2_trim_blocks(काष्ठा inode *inode);
+बाह्य पूर्णांक gfs2_truncatei_resume(काष्ठा gfs2_inode *ip);
+बाह्य पूर्णांक gfs2_file_dealloc(काष्ठा gfs2_inode *ip);
+बाह्य पूर्णांक gfs2_ग_लिखो_alloc_required(काष्ठा gfs2_inode *ip, u64 offset,
+				     अचिन्हित पूर्णांक len);
+बाह्य पूर्णांक gfs2_map_journal_extents(काष्ठा gfs2_sbd *sdp, काष्ठा gfs2_jdesc *jd);
+बाह्य व्योम gfs2_मुक्त_journal_extents(काष्ठा gfs2_jdesc *jd);
+बाह्य पूर्णांक __gfs2_punch_hole(काष्ठा file *file, loff_t offset, loff_t length);
 
-#endif /* __BMAP_DOT_H__ */
+#पूर्ण_अगर /* __BMAP_DOT_H__ */

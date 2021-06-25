@@ -1,273 +1,274 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 ARM Limited
  *
  * Author: Vladimir Murzin <vladimir.murzin@arm.com>
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/of_address.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/sched_clock.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/slab.h>
 
-#define TIMER_CTRL		0x0
-#define TIMER_CTRL_ENABLE	BIT(0)
-#define TIMER_CTRL_IE		BIT(3)
+#घोषणा TIMER_CTRL		0x0
+#घोषणा TIMER_CTRL_ENABLE	BIT(0)
+#घोषणा TIMER_CTRL_IE		BIT(3)
 
-#define TIMER_VALUE		0x4
-#define TIMER_RELOAD		0x8
-#define TIMER_INT		0xc
+#घोषणा TIMER_VALUE		0x4
+#घोषणा TIMER_RELOAD		0x8
+#घोषणा TIMER_INT		0xc
 
-struct clockevent_mps2 {
-	void __iomem *reg;
-	u32 clock_count_per_tick;
-	struct clock_event_device clkevt;
-};
+काष्ठा घड़ीevent_mps2 अणु
+	व्योम __iomem *reg;
+	u32 घड़ी_count_per_tick;
+	काष्ठा घड़ी_event_device clkevt;
+पूर्ण;
 
-static void __iomem *sched_clock_base;
+अटल व्योम __iomem *sched_घड़ी_base;
 
-static u64 notrace mps2_sched_read(void)
-{
-	return ~readl_relaxed(sched_clock_base + TIMER_VALUE);
-}
+अटल u64 notrace mps2_sched_पढ़ो(व्योम)
+अणु
+	वापस ~पढ़ोl_relaxed(sched_घड़ी_base + TIMER_VALUE);
+पूर्ण
 
-static inline struct clockevent_mps2 *to_mps2_clkevt(struct clock_event_device *c)
-{
-	return container_of(c, struct clockevent_mps2, clkevt);
-}
+अटल अंतरभूत काष्ठा घड़ीevent_mps2 *to_mps2_clkevt(काष्ठा घड़ी_event_device *c)
+अणु
+	वापस container_of(c, काष्ठा घड़ीevent_mps2, clkevt);
+पूर्ण
 
-static void clockevent_mps2_writel(u32 val, struct clock_event_device *c, u32 offset)
-{
-	writel_relaxed(val, to_mps2_clkevt(c)->reg + offset);
-}
+अटल व्योम घड़ीevent_mps2_ग_लिखोl(u32 val, काष्ठा घड़ी_event_device *c, u32 offset)
+अणु
+	ग_लिखोl_relaxed(val, to_mps2_clkevt(c)->reg + offset);
+पूर्ण
 
-static int mps2_timer_shutdown(struct clock_event_device *ce)
-{
-	clockevent_mps2_writel(0, ce, TIMER_RELOAD);
-	clockevent_mps2_writel(0, ce, TIMER_CTRL);
+अटल पूर्णांक mps2_समयr_shutकरोwn(काष्ठा घड़ी_event_device *ce)
+अणु
+	घड़ीevent_mps2_ग_लिखोl(0, ce, TIMER_RELOAD);
+	घड़ीevent_mps2_ग_लिखोl(0, ce, TIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mps2_timer_set_next_event(unsigned long next, struct clock_event_device *ce)
-{
-	clockevent_mps2_writel(next, ce, TIMER_VALUE);
-	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
+अटल पूर्णांक mps2_समयr_set_next_event(अचिन्हित दीर्घ next, काष्ठा घड़ी_event_device *ce)
+अणु
+	घड़ीevent_mps2_ग_लिखोl(next, ce, TIMER_VALUE);
+	घड़ीevent_mps2_ग_लिखोl(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mps2_timer_set_periodic(struct clock_event_device *ce)
-{
-	u32 clock_count_per_tick = to_mps2_clkevt(ce)->clock_count_per_tick;
+अटल पूर्णांक mps2_समयr_set_periodic(काष्ठा घड़ी_event_device *ce)
+अणु
+	u32 घड़ी_count_per_tick = to_mps2_clkevt(ce)->घड़ी_count_per_tick;
 
-	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_RELOAD);
-	clockevent_mps2_writel(clock_count_per_tick, ce, TIMER_VALUE);
-	clockevent_mps2_writel(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
+	घड़ीevent_mps2_ग_लिखोl(घड़ी_count_per_tick, ce, TIMER_RELOAD);
+	घड़ीevent_mps2_ग_लिखोl(घड़ी_count_per_tick, ce, TIMER_VALUE);
+	घड़ीevent_mps2_ग_लिखोl(TIMER_CTRL_IE | TIMER_CTRL_ENABLE, ce, TIMER_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t mps2_timer_interrupt(int irq, void *dev_id)
-{
-	struct clockevent_mps2 *ce = dev_id;
-	u32 status = readl_relaxed(ce->reg + TIMER_INT);
+अटल irqवापस_t mps2_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ीevent_mps2 *ce = dev_id;
+	u32 status = पढ़ोl_relaxed(ce->reg + TIMER_INT);
 
-	if (!status) {
+	अगर (!status) अणु
 		pr_warn("spurious interrupt\n");
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	writel_relaxed(1, ce->reg + TIMER_INT);
+	ग_लिखोl_relaxed(1, ce->reg + TIMER_INT);
 
 	ce->clkevt.event_handler(&ce->clkevt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __init mps2_clockevent_init(struct device_node *np)
-{
-	void __iomem *base;
-	struct clk *clk = NULL;
-	struct clockevent_mps2 *ce;
+अटल पूर्णांक __init mps2_घड़ीevent_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk = शून्य;
+	काष्ठा घड़ीevent_mps2 *ce;
 	u32 rate;
-	int irq, ret;
-	const char *name = "mps2-clkevt";
+	पूर्णांक irq, ret;
+	स्थिर अक्षर *name = "mps2-clkevt";
 
-	ret = of_property_read_u32(np, "clock-frequency", &rate);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "clock-frequency", &rate);
+	अगर (ret) अणु
 		clk = of_clk_get(np, 0);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			ret = PTR_ERR(clk);
 			pr_err("failed to get clock for clockevent: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = clk_prepare_enable(clk);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("failed to enable clock for clockevent: %d\n", ret);
-			goto out_clk_put;
-		}
+			जाओ out_clk_put;
+		पूर्ण
 
 		rate = clk_get_rate(clk);
-	}
+	पूर्ण
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		ret = -EADDRNOTAVAIL;
 		pr_err("failed to map register for clockevent: %d\n", ret);
-		goto out_clk_disable;
-	}
+		जाओ out_clk_disable;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		ret = -ENOENT;
 		pr_err("failed to get irq for clockevent: %d\n", ret);
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
-	ce = kzalloc(sizeof(*ce), GFP_KERNEL);
-	if (!ce) {
+	ce = kzalloc(माप(*ce), GFP_KERNEL);
+	अगर (!ce) अणु
 		ret = -ENOMEM;
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
 	ce->reg = base;
-	ce->clock_count_per_tick = DIV_ROUND_CLOSEST(rate, HZ);
+	ce->घड़ी_count_per_tick = DIV_ROUND_CLOSEST(rate, HZ);
 	ce->clkevt.irq = irq;
 	ce->clkevt.name = name;
 	ce->clkevt.rating = 200;
 	ce->clkevt.features = CLOCK_EVT_FEAT_PERIODIC | CLOCK_EVT_FEAT_ONESHOT;
 	ce->clkevt.cpumask = cpu_possible_mask;
-	ce->clkevt.set_state_shutdown	= mps2_timer_shutdown;
-	ce->clkevt.set_state_periodic	= mps2_timer_set_periodic;
-	ce->clkevt.set_state_oneshot	= mps2_timer_shutdown;
-	ce->clkevt.set_next_event	= mps2_timer_set_next_event;
+	ce->clkevt.set_state_shutकरोwn	= mps2_समयr_shutकरोwn;
+	ce->clkevt.set_state_periodic	= mps2_समयr_set_periodic;
+	ce->clkevt.set_state_oneshot	= mps2_समयr_shutकरोwn;
+	ce->clkevt.set_next_event	= mps2_समयr_set_next_event;
 
-	/* Ensure timer is disabled */
-	writel_relaxed(0, base + TIMER_CTRL);
+	/* Ensure समयr is disabled */
+	ग_लिखोl_relaxed(0, base + TIMER_CTRL);
 
-	ret = request_irq(irq, mps2_timer_interrupt, IRQF_TIMER, name, ce);
-	if (ret) {
+	ret = request_irq(irq, mps2_समयr_पूर्णांकerrupt, IRQF_TIMER, name, ce);
+	अगर (ret) अणु
 		pr_err("failed to request irq for clockevent: %d\n", ret);
-		goto out_kfree;
-	}
+		जाओ out_kमुक्त;
+	पूर्ण
 
-	clockevents_config_and_register(&ce->clkevt, rate, 0xf, 0xffffffff);
+	घड़ीevents_config_and_रेजिस्टर(&ce->clkevt, rate, 0xf, 0xffffffff);
 
-	return 0;
+	वापस 0;
 
-out_kfree:
-	kfree(ce);
+out_kमुक्त:
+	kमुक्त(ce);
 out_iounmap:
 	iounmap(base);
 out_clk_disable:
-	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
+	/* clk_अणुdisable, unprepare, putपूर्ण() can handle शून्य as a parameter */
 	clk_disable_unprepare(clk);
 out_clk_put:
 	clk_put(clk);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init mps2_clocksource_init(struct device_node *np)
-{
-	void __iomem *base;
-	struct clk *clk = NULL;
+अटल पूर्णांक __init mps2_घड़ीsource_init(काष्ठा device_node *np)
+अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk = शून्य;
 	u32 rate;
-	int ret;
-	const char *name = "mps2-clksrc";
+	पूर्णांक ret;
+	स्थिर अक्षर *name = "mps2-clksrc";
 
-	ret = of_property_read_u32(np, "clock-frequency", &rate);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "clock-frequency", &rate);
+	अगर (ret) अणु
 		clk = of_clk_get(np, 0);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			ret = PTR_ERR(clk);
 			pr_err("failed to get clock for clocksource: %d\n", ret);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ret = clk_prepare_enable(clk);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("failed to enable clock for clocksource: %d\n", ret);
-			goto out_clk_put;
-		}
+			जाओ out_clk_put;
+		पूर्ण
 
 		rate = clk_get_rate(clk);
-	}
+	पूर्ण
 
 	base = of_iomap(np, 0);
-	if (!base) {
+	अगर (!base) अणु
 		ret = -EADDRNOTAVAIL;
 		pr_err("failed to map register for clocksource: %d\n", ret);
-		goto out_clk_disable;
-	}
+		जाओ out_clk_disable;
+	पूर्ण
 
-	/* Ensure timer is disabled */
-	writel_relaxed(0, base + TIMER_CTRL);
+	/* Ensure समयr is disabled */
+	ग_लिखोl_relaxed(0, base + TIMER_CTRL);
 
-	/* ... and set it up as free-running clocksource */
-	writel_relaxed(0xffffffff, base + TIMER_VALUE);
-	writel_relaxed(0xffffffff, base + TIMER_RELOAD);
+	/* ... and set it up as मुक्त-running घड़ीsource */
+	ग_लिखोl_relaxed(0xffffffff, base + TIMER_VALUE);
+	ग_लिखोl_relaxed(0xffffffff, base + TIMER_RELOAD);
 
-	writel_relaxed(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
+	ग_लिखोl_relaxed(TIMER_CTRL_ENABLE, base + TIMER_CTRL);
 
-	ret = clocksource_mmio_init(base + TIMER_VALUE, name,
+	ret = घड़ीsource_mmio_init(base + TIMER_VALUE, name,
 				    rate, 200, 32,
-				    clocksource_mmio_readl_down);
-	if (ret) {
+				    घड़ीsource_mmio_पढ़ोl_करोwn);
+	अगर (ret) अणु
 		pr_err("failed to init clocksource: %d\n", ret);
-		goto out_iounmap;
-	}
+		जाओ out_iounmap;
+	पूर्ण
 
-	sched_clock_base = base;
-	sched_clock_register(mps2_sched_read, 32, rate);
+	sched_घड़ी_base = base;
+	sched_घड़ी_रेजिस्टर(mps2_sched_पढ़ो, 32, rate);
 
-	return 0;
+	वापस 0;
 
 out_iounmap:
 	iounmap(base);
 out_clk_disable:
-	/* clk_{disable, unprepare, put}() can handle NULL as a parameter */
+	/* clk_अणुdisable, unprepare, putपूर्ण() can handle शून्य as a parameter */
 	clk_disable_unprepare(clk);
 out_clk_put:
 	clk_put(clk);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init mps2_timer_init(struct device_node *np)
-{
-	static int has_clocksource, has_clockevent;
-	int ret;
+अटल पूर्णांक __init mps2_समयr_init(काष्ठा device_node *np)
+अणु
+	अटल पूर्णांक has_घड़ीsource, has_घड़ीevent;
+	पूर्णांक ret;
 
-	if (!has_clocksource) {
-		ret = mps2_clocksource_init(np);
-		if (!ret) {
-			has_clocksource = 1;
-			return 0;
-		}
-	}
+	अगर (!has_घड़ीsource) अणु
+		ret = mps2_घड़ीsource_init(np);
+		अगर (!ret) अणु
+			has_घड़ीsource = 1;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	if (!has_clockevent) {
-		ret = mps2_clockevent_init(np);
-		if (!ret) {
-			has_clockevent = 1;
-			return 0;
-		}
-	}
+	अगर (!has_घड़ीevent) अणु
+		ret = mps2_घड़ीevent_init(np);
+		अगर (!ret) अणु
+			has_घड़ीevent = 1;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(mps2_timer, "arm,mps2-timer", mps2_timer_init);
+TIMER_OF_DECLARE(mps2_समयr, "arm,mps2-timer", mps2_समयr_init);

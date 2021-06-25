@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Neighbour Discovery for IPv6
+ *	Neighbour Discovery क्रम IPv6
  *	Linux INET6 implementation
  *
  *	Authors:
@@ -16,113 +17,113 @@
  *						through netlink (RDNSS support)
  *	Lars Fenneberg			:	fixed MTU setting on receipt
  *						of an RA.
- *	Janos Farkas			:	kmalloc failure checks
+ *	Janos Farkas			:	kदो_स्मृति failure checks
  *	Alexey Kuznetsov		:	state machine reworked
  *						and moved to net/core.
  *	Pekka Savola			:	RFC2461 validation
- *	YOSHIFUJI Hideaki @USAGI	:	Verify ND options properly
+ *	YOSHIFUJI Hideaki @USAGI	:	Verअगरy ND options properly
  */
 
-#define pr_fmt(fmt) "ICMPv6: " fmt
+#घोषणा pr_fmt(fmt) "ICMPv6: " fmt
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/sched.h>
-#include <linux/net.h>
-#include <linux/in6.h>
-#include <linux/route.h>
-#include <linux/init.h>
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
-#ifdef CONFIG_SYSCTL
-#include <linux/sysctl.h>
-#endif
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/net.h>
+#समावेश <linux/in6.h>
+#समावेश <linux/route.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
+#अगर_घोषित CONFIG_SYSCTL
+#समावेश <linux/sysctl.h>
+#पूर्ण_अगर
 
-#include <linux/if_addr.h>
-#include <linux/if_ether.h>
-#include <linux/if_arp.h>
-#include <linux/ipv6.h>
-#include <linux/icmpv6.h>
-#include <linux/jhash.h>
+#समावेश <linux/अगर_addr.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/icmpv6.h>
+#समावेश <linux/jhash.h>
 
-#include <net/sock.h>
-#include <net/snmp.h>
+#समावेश <net/sock.h>
+#समावेश <net/snmp.h>
 
-#include <net/ipv6.h>
-#include <net/protocol.h>
-#include <net/ndisc.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
-#include <net/icmp.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/protocol.h>
+#समावेश <net/ndisc.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/icmp.h>
 
-#include <net/netlink.h>
-#include <linux/rtnetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <linux/rtnetlink.h>
 
-#include <net/flow.h>
-#include <net/ip6_checksum.h>
-#include <net/inet_common.h>
-#include <linux/proc_fs.h>
+#समावेश <net/flow.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/inet_common.h>
+#समावेश <linux/proc_fs.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv6.h>
 
-static u32 ndisc_hash(const void *pkey,
-		      const struct net_device *dev,
+अटल u32 ndisc_hash(स्थिर व्योम *pkey,
+		      स्थिर काष्ठा net_device *dev,
 		      __u32 *hash_rnd);
-static bool ndisc_key_eq(const struct neighbour *neigh, const void *pkey);
-static bool ndisc_allow_add(const struct net_device *dev,
-			    struct netlink_ext_ack *extack);
-static int ndisc_constructor(struct neighbour *neigh);
-static void ndisc_solicit(struct neighbour *neigh, struct sk_buff *skb);
-static void ndisc_error_report(struct neighbour *neigh, struct sk_buff *skb);
-static int pndisc_constructor(struct pneigh_entry *n);
-static void pndisc_destructor(struct pneigh_entry *n);
-static void pndisc_redo(struct sk_buff *skb);
-static int ndisc_is_multicast(const void *pkey);
+अटल bool ndisc_key_eq(स्थिर काष्ठा neighbour *neigh, स्थिर व्योम *pkey);
+अटल bool ndisc_allow_add(स्थिर काष्ठा net_device *dev,
+			    काष्ठा netlink_ext_ack *extack);
+अटल पूर्णांक ndisc_स्थिरructor(काष्ठा neighbour *neigh);
+अटल व्योम ndisc_solicit(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb);
+अटल व्योम ndisc_error_report(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb);
+अटल पूर्णांक pndisc_स्थिरructor(काष्ठा pneigh_entry *n);
+अटल व्योम pndisc_deकाष्ठाor(काष्ठा pneigh_entry *n);
+अटल व्योम pndisc_reकरो(काष्ठा sk_buff *skb);
+अटल पूर्णांक ndisc_is_multicast(स्थिर व्योम *pkey);
 
-static const struct neigh_ops ndisc_generic_ops = {
+अटल स्थिर काष्ठा neigh_ops ndisc_generic_ops = अणु
 	.family =		AF_INET6,
 	.solicit =		ndisc_solicit,
 	.error_report =		ndisc_error_report,
 	.output =		neigh_resolve_output,
 	.connected_output =	neigh_connected_output,
-};
+पूर्ण;
 
-static const struct neigh_ops ndisc_hh_ops = {
+अटल स्थिर काष्ठा neigh_ops ndisc_hh_ops = अणु
 	.family =		AF_INET6,
 	.solicit =		ndisc_solicit,
 	.error_report =		ndisc_error_report,
 	.output =		neigh_resolve_output,
 	.connected_output =	neigh_resolve_output,
-};
+पूर्ण;
 
 
-static const struct neigh_ops ndisc_direct_ops = {
+अटल स्थिर काष्ठा neigh_ops ndisc_direct_ops = अणु
 	.family =		AF_INET6,
 	.output =		neigh_direct_output,
 	.connected_output =	neigh_direct_output,
-};
+पूर्ण;
 
-struct neigh_table nd_tbl = {
+काष्ठा neigh_table nd_tbl = अणु
 	.family =	AF_INET6,
-	.key_len =	sizeof(struct in6_addr),
+	.key_len =	माप(काष्ठा in6_addr),
 	.protocol =	cpu_to_be16(ETH_P_IPV6),
 	.hash =		ndisc_hash,
 	.key_eq =	ndisc_key_eq,
-	.constructor =	ndisc_constructor,
-	.pconstructor =	pndisc_constructor,
-	.pdestructor =	pndisc_destructor,
-	.proxy_redo =	pndisc_redo,
+	.स्थिरructor =	ndisc_स्थिरructor,
+	.pस्थिरructor =	pndisc_स्थिरructor,
+	.pdeकाष्ठाor =	pndisc_deकाष्ठाor,
+	.proxy_reकरो =	pndisc_reकरो,
 	.is_multicast =	ndisc_is_multicast,
 	.allow_add  =   ndisc_allow_add,
 	.id =		"ndisc_cache",
-	.parms = {
+	.parms = अणु
 		.tbl			= &nd_tbl,
-		.reachable_time		= ND_REACHABLE_TIME,
-		.data = {
+		.reachable_समय		= ND_REACHABLE_TIME,
+		.data = अणु
 			[NEIGH_VAR_MCAST_PROBES] = 3,
 			[NEIGH_VAR_UCAST_PROBES] = 3,
 			[NEIGH_VAR_RETRANS_TIME] = ND_RETRANS_TIMER,
@@ -133,138 +134,138 @@ struct neigh_table nd_tbl = {
 			[NEIGH_VAR_PROXY_QLEN] = 64,
 			[NEIGH_VAR_ANYCAST_DELAY] = 1 * HZ,
 			[NEIGH_VAR_PROXY_DELAY] = (8 * HZ) / 10,
-		},
-	},
-	.gc_interval =	  30 * HZ,
+		पूर्ण,
+	पूर्ण,
+	.gc_पूर्णांकerval =	  30 * HZ,
 	.gc_thresh1 =	 128,
 	.gc_thresh2 =	 512,
 	.gc_thresh3 =	1024,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(nd_tbl);
 
-void __ndisc_fill_addr_option(struct sk_buff *skb, int type, void *data,
-			      int data_len, int pad)
-{
-	int space = __ndisc_opt_addr_space(data_len, pad);
+व्योम __ndisc_fill_addr_option(काष्ठा sk_buff *skb, पूर्णांक type, व्योम *data,
+			      पूर्णांक data_len, पूर्णांक pad)
+अणु
+	पूर्णांक space = __ndisc_opt_addr_space(data_len, pad);
 	u8 *opt = skb_put(skb, space);
 
 	opt[0] = type;
 	opt[1] = space>>3;
 
-	memset(opt + 2, 0, pad);
+	स_रखो(opt + 2, 0, pad);
 	opt   += pad;
 	space -= pad;
 
-	memcpy(opt+2, data, data_len);
+	स_नकल(opt+2, data, data_len);
 	data_len += 2;
 	opt += data_len;
 	space -= data_len;
-	if (space > 0)
-		memset(opt, 0, space);
-}
+	अगर (space > 0)
+		स_रखो(opt, 0, space);
+पूर्ण
 EXPORT_SYMBOL_GPL(__ndisc_fill_addr_option);
 
-static inline void ndisc_fill_addr_option(struct sk_buff *skb, int type,
-					  void *data, u8 icmp6_type)
-{
+अटल अंतरभूत व्योम ndisc_fill_addr_option(काष्ठा sk_buff *skb, पूर्णांक type,
+					  व्योम *data, u8 icmp6_type)
+अणु
 	__ndisc_fill_addr_option(skb, type, data, skb->dev->addr_len,
 				 ndisc_addr_option_pad(skb->dev->type));
 	ndisc_ops_fill_addr_option(skb->dev, skb, icmp6_type);
-}
+पूर्ण
 
-static inline void ndisc_fill_redirect_addr_option(struct sk_buff *skb,
-						   void *ha,
-						   const u8 *ops_data)
-{
-	ndisc_fill_addr_option(skb, ND_OPT_TARGET_LL_ADDR, ha, NDISC_REDIRECT);
+अटल अंतरभूत व्योम ndisc_fill_redirect_addr_option(काष्ठा sk_buff *skb,
+						   व्योम *ha,
+						   स्थिर u8 *ops_data)
+अणु
+	ndisc_fill_addr_option(skb, ND_OPT_TARGET_LL_ADDR, ha, NDISC_REसूचीECT);
 	ndisc_ops_fill_redirect_addr_option(skb->dev, skb, ops_data);
-}
+पूर्ण
 
-static struct nd_opt_hdr *ndisc_next_option(struct nd_opt_hdr *cur,
-					    struct nd_opt_hdr *end)
-{
-	int type;
-	if (!cur || !end || cur >= end)
-		return NULL;
+अटल काष्ठा nd_opt_hdr *ndisc_next_option(काष्ठा nd_opt_hdr *cur,
+					    काष्ठा nd_opt_hdr *end)
+अणु
+	पूर्णांक type;
+	अगर (!cur || !end || cur >= end)
+		वापस शून्य;
 	type = cur->nd_opt_type;
-	do {
-		cur = ((void *)cur) + (cur->nd_opt_len << 3);
-	} while (cur < end && cur->nd_opt_type != type);
-	return cur <= end && cur->nd_opt_type == type ? cur : NULL;
-}
+	करो अणु
+		cur = ((व्योम *)cur) + (cur->nd_opt_len << 3);
+	पूर्ण जबतक (cur < end && cur->nd_opt_type != type);
+	वापस cur <= end && cur->nd_opt_type == type ? cur : शून्य;
+पूर्ण
 
-static inline int ndisc_is_useropt(const struct net_device *dev,
-				   struct nd_opt_hdr *opt)
-{
-	return opt->nd_opt_type == ND_OPT_RDNSS ||
+अटल अंतरभूत पूर्णांक ndisc_is_useropt(स्थिर काष्ठा net_device *dev,
+				   काष्ठा nd_opt_hdr *opt)
+अणु
+	वापस opt->nd_opt_type == ND_OPT_RDNSS ||
 		opt->nd_opt_type == ND_OPT_DNSSL ||
 		opt->nd_opt_type == ND_OPT_CAPTIVE_PORTAL ||
 		opt->nd_opt_type == ND_OPT_PREF64 ||
 		ndisc_ops_is_useropt(dev, opt->nd_opt_type);
-}
+पूर्ण
 
-static struct nd_opt_hdr *ndisc_next_useropt(const struct net_device *dev,
-					     struct nd_opt_hdr *cur,
-					     struct nd_opt_hdr *end)
-{
-	if (!cur || !end || cur >= end)
-		return NULL;
-	do {
-		cur = ((void *)cur) + (cur->nd_opt_len << 3);
-	} while (cur < end && !ndisc_is_useropt(dev, cur));
-	return cur <= end && ndisc_is_useropt(dev, cur) ? cur : NULL;
-}
+अटल काष्ठा nd_opt_hdr *ndisc_next_useropt(स्थिर काष्ठा net_device *dev,
+					     काष्ठा nd_opt_hdr *cur,
+					     काष्ठा nd_opt_hdr *end)
+अणु
+	अगर (!cur || !end || cur >= end)
+		वापस शून्य;
+	करो अणु
+		cur = ((व्योम *)cur) + (cur->nd_opt_len << 3);
+	पूर्ण जबतक (cur < end && !ndisc_is_useropt(dev, cur));
+	वापस cur <= end && ndisc_is_useropt(dev, cur) ? cur : शून्य;
+पूर्ण
 
-struct ndisc_options *ndisc_parse_options(const struct net_device *dev,
-					  u8 *opt, int opt_len,
-					  struct ndisc_options *ndopts)
-{
-	struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)opt;
+काष्ठा ndisc_options *ndisc_parse_options(स्थिर काष्ठा net_device *dev,
+					  u8 *opt, पूर्णांक opt_len,
+					  काष्ठा ndisc_options *nकरोpts)
+अणु
+	काष्ठा nd_opt_hdr *nd_opt = (काष्ठा nd_opt_hdr *)opt;
 
-	if (!nd_opt || opt_len < 0 || !ndopts)
-		return NULL;
-	memset(ndopts, 0, sizeof(*ndopts));
-	while (opt_len) {
-		int l;
-		if (opt_len < sizeof(struct nd_opt_hdr))
-			return NULL;
+	अगर (!nd_opt || opt_len < 0 || !nकरोpts)
+		वापस शून्य;
+	स_रखो(nकरोpts, 0, माप(*nकरोpts));
+	जबतक (opt_len) अणु
+		पूर्णांक l;
+		अगर (opt_len < माप(काष्ठा nd_opt_hdr))
+			वापस शून्य;
 		l = nd_opt->nd_opt_len << 3;
-		if (opt_len < l || l == 0)
-			return NULL;
-		if (ndisc_ops_parse_options(dev, nd_opt, ndopts))
-			goto next_opt;
-		switch (nd_opt->nd_opt_type) {
-		case ND_OPT_SOURCE_LL_ADDR:
-		case ND_OPT_TARGET_LL_ADDR:
-		case ND_OPT_MTU:
-		case ND_OPT_NONCE:
-		case ND_OPT_REDIRECT_HDR:
-			if (ndopts->nd_opt_array[nd_opt->nd_opt_type]) {
+		अगर (opt_len < l || l == 0)
+			वापस शून्य;
+		अगर (ndisc_ops_parse_options(dev, nd_opt, nकरोpts))
+			जाओ next_opt;
+		चयन (nd_opt->nd_opt_type) अणु
+		हाल ND_OPT_SOURCE_LL_ADDR:
+		हाल ND_OPT_TARGET_LL_ADDR:
+		हाल ND_OPT_MTU:
+		हाल ND_OPT_NONCE:
+		हाल ND_OPT_REसूचीECT_HDR:
+			अगर (nकरोpts->nd_opt_array[nd_opt->nd_opt_type]) अणु
 				ND_PRINTK(2, warn,
 					  "%s: duplicated ND6 option found: type=%d\n",
 					  __func__, nd_opt->nd_opt_type);
-			} else {
-				ndopts->nd_opt_array[nd_opt->nd_opt_type] = nd_opt;
-			}
-			break;
-		case ND_OPT_PREFIX_INFO:
-			ndopts->nd_opts_pi_end = nd_opt;
-			if (!ndopts->nd_opt_array[nd_opt->nd_opt_type])
-				ndopts->nd_opt_array[nd_opt->nd_opt_type] = nd_opt;
-			break;
-#ifdef CONFIG_IPV6_ROUTE_INFO
-		case ND_OPT_ROUTE_INFO:
-			ndopts->nd_opts_ri_end = nd_opt;
-			if (!ndopts->nd_opts_ri)
-				ndopts->nd_opts_ri = nd_opt;
-			break;
-#endif
-		default:
-			if (ndisc_is_useropt(dev, nd_opt)) {
-				ndopts->nd_useropts_end = nd_opt;
-				if (!ndopts->nd_useropts)
-					ndopts->nd_useropts = nd_opt;
-			} else {
+			पूर्ण अन्यथा अणु
+				nकरोpts->nd_opt_array[nd_opt->nd_opt_type] = nd_opt;
+			पूर्ण
+			अवरोध;
+		हाल ND_OPT_PREFIX_INFO:
+			nकरोpts->nd_opts_pi_end = nd_opt;
+			अगर (!nकरोpts->nd_opt_array[nd_opt->nd_opt_type])
+				nकरोpts->nd_opt_array[nd_opt->nd_opt_type] = nd_opt;
+			अवरोध;
+#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
+		हाल ND_OPT_ROUTE_INFO:
+			nकरोpts->nd_opts_ri_end = nd_opt;
+			अगर (!nकरोpts->nd_opts_ri)
+				nकरोpts->nd_opts_ri = nd_opt;
+			अवरोध;
+#पूर्ण_अगर
+		शेष:
+			अगर (ndisc_is_useropt(dev, nd_opt)) अणु
+				nकरोpts->nd_useropts_end = nd_opt;
+				अगर (!nकरोpts->nd_useropts)
+					nकरोpts->nd_useropts = nd_opt;
+			पूर्ण अन्यथा अणु
 				/*
 				 * Unknown options must be silently ignored,
 				 * to accommodate future extension to the
@@ -275,184 +276,184 @@ struct ndisc_options *ndisc_parse_options(const struct net_device *dev,
 					  __func__,
 					  nd_opt->nd_opt_type,
 					  nd_opt->nd_opt_len);
-			}
-		}
+			पूर्ण
+		पूर्ण
 next_opt:
 		opt_len -= l;
-		nd_opt = ((void *)nd_opt) + l;
-	}
-	return ndopts;
-}
+		nd_opt = ((व्योम *)nd_opt) + l;
+	पूर्ण
+	वापस nकरोpts;
+पूर्ण
 
-int ndisc_mc_map(const struct in6_addr *addr, char *buf, struct net_device *dev, int dir)
-{
-	switch (dev->type) {
-	case ARPHRD_ETHER:
-	case ARPHRD_IEEE802:	/* Not sure. Check it later. --ANK */
-	case ARPHRD_FDDI:
+पूर्णांक ndisc_mc_map(स्थिर काष्ठा in6_addr *addr, अक्षर *buf, काष्ठा net_device *dev, पूर्णांक dir)
+अणु
+	चयन (dev->type) अणु
+	हाल ARPHRD_ETHER:
+	हाल ARPHRD_IEEE802:	/* Not sure. Check it later. --ANK */
+	हाल ARPHRD_FDDI:
 		ipv6_eth_mc_map(addr, buf);
-		return 0;
-	case ARPHRD_ARCNET:
+		वापस 0;
+	हाल ARPHRD_ARCNET:
 		ipv6_arcnet_mc_map(addr, buf);
-		return 0;
-	case ARPHRD_INFINIBAND:
+		वापस 0;
+	हाल ARPHRD_INFINIBAND:
 		ipv6_ib_mc_map(addr, dev->broadcast, buf);
-		return 0;
-	case ARPHRD_IPGRE:
-		return ipv6_ipgre_mc_map(addr, dev->broadcast, buf);
-	default:
-		if (dir) {
-			memcpy(buf, dev->broadcast, dev->addr_len);
-			return 0;
-		}
-	}
-	return -EINVAL;
-}
+		वापस 0;
+	हाल ARPHRD_IPGRE:
+		वापस ipv6_ipgre_mc_map(addr, dev->broadcast, buf);
+	शेष:
+		अगर (dir) अणु
+			स_नकल(buf, dev->broadcast, dev->addr_len);
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(ndisc_mc_map);
 
-static u32 ndisc_hash(const void *pkey,
-		      const struct net_device *dev,
+अटल u32 ndisc_hash(स्थिर व्योम *pkey,
+		      स्थिर काष्ठा net_device *dev,
 		      __u32 *hash_rnd)
-{
-	return ndisc_hashfn(pkey, dev, hash_rnd);
-}
+अणु
+	वापस ndisc_hashfn(pkey, dev, hash_rnd);
+पूर्ण
 
-static bool ndisc_key_eq(const struct neighbour *n, const void *pkey)
-{
-	return neigh_key_eq128(n, pkey);
-}
+अटल bool ndisc_key_eq(स्थिर काष्ठा neighbour *n, स्थिर व्योम *pkey)
+अणु
+	वापस neigh_key_eq128(n, pkey);
+पूर्ण
 
-static int ndisc_constructor(struct neighbour *neigh)
-{
-	struct in6_addr *addr = (struct in6_addr *)&neigh->primary_key;
-	struct net_device *dev = neigh->dev;
-	struct inet6_dev *in6_dev;
-	struct neigh_parms *parms;
+अटल पूर्णांक ndisc_स्थिरructor(काष्ठा neighbour *neigh)
+अणु
+	काष्ठा in6_addr *addr = (काष्ठा in6_addr *)&neigh->primary_key;
+	काष्ठा net_device *dev = neigh->dev;
+	काष्ठा inet6_dev *in6_dev;
+	काष्ठा neigh_parms *parms;
 	bool is_multicast = ipv6_addr_is_multicast(addr);
 
 	in6_dev = in6_dev_get(dev);
-	if (!in6_dev) {
-		return -EINVAL;
-	}
+	अगर (!in6_dev) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	parms = in6_dev->nd_parms;
 	__neigh_parms_put(neigh->parms);
 	neigh->parms = neigh_parms_clone(parms);
 
 	neigh->type = is_multicast ? RTN_MULTICAST : RTN_UNICAST;
-	if (!dev->header_ops) {
+	अगर (!dev->header_ops) अणु
 		neigh->nud_state = NUD_NOARP;
 		neigh->ops = &ndisc_direct_ops;
 		neigh->output = neigh_direct_output;
-	} else {
-		if (is_multicast) {
+	पूर्ण अन्यथा अणु
+		अगर (is_multicast) अणु
 			neigh->nud_state = NUD_NOARP;
 			ndisc_mc_map(addr, neigh->ha, dev, 1);
-		} else if (dev->flags&(IFF_NOARP|IFF_LOOPBACK)) {
+		पूर्ण अन्यथा अगर (dev->flags&(IFF_NOARP|IFF_LOOPBACK)) अणु
 			neigh->nud_state = NUD_NOARP;
-			memcpy(neigh->ha, dev->dev_addr, dev->addr_len);
-			if (dev->flags&IFF_LOOPBACK)
+			स_नकल(neigh->ha, dev->dev_addr, dev->addr_len);
+			अगर (dev->flags&IFF_LOOPBACK)
 				neigh->type = RTN_LOCAL;
-		} else if (dev->flags&IFF_POINTOPOINT) {
+		पूर्ण अन्यथा अगर (dev->flags&IFF_POINTOPOINT) अणु
 			neigh->nud_state = NUD_NOARP;
-			memcpy(neigh->ha, dev->broadcast, dev->addr_len);
-		}
-		if (dev->header_ops->cache)
+			स_नकल(neigh->ha, dev->broadcast, dev->addr_len);
+		पूर्ण
+		अगर (dev->header_ops->cache)
 			neigh->ops = &ndisc_hh_ops;
-		else
+		अन्यथा
 			neigh->ops = &ndisc_generic_ops;
-		if (neigh->nud_state&NUD_VALID)
+		अगर (neigh->nud_state&NUD_VALID)
 			neigh->output = neigh->ops->connected_output;
-		else
+		अन्यथा
 			neigh->output = neigh->ops->output;
-	}
+	पूर्ण
 	in6_dev_put(in6_dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pndisc_constructor(struct pneigh_entry *n)
-{
-	struct in6_addr *addr = (struct in6_addr *)&n->key;
-	struct in6_addr maddr;
-	struct net_device *dev = n->dev;
+अटल पूर्णांक pndisc_स्थिरructor(काष्ठा pneigh_entry *n)
+अणु
+	काष्ठा in6_addr *addr = (काष्ठा in6_addr *)&n->key;
+	काष्ठा in6_addr maddr;
+	काष्ठा net_device *dev = n->dev;
 
-	if (!dev || !__in6_dev_get(dev))
-		return -EINVAL;
+	अगर (!dev || !__in6_dev_get(dev))
+		वापस -EINVAL;
 	addrconf_addr_solict_mult(addr, &maddr);
 	ipv6_dev_mc_inc(dev, &maddr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pndisc_destructor(struct pneigh_entry *n)
-{
-	struct in6_addr *addr = (struct in6_addr *)&n->key;
-	struct in6_addr maddr;
-	struct net_device *dev = n->dev;
+अटल व्योम pndisc_deकाष्ठाor(काष्ठा pneigh_entry *n)
+अणु
+	काष्ठा in6_addr *addr = (काष्ठा in6_addr *)&n->key;
+	काष्ठा in6_addr maddr;
+	काष्ठा net_device *dev = n->dev;
 
-	if (!dev || !__in6_dev_get(dev))
-		return;
+	अगर (!dev || !__in6_dev_get(dev))
+		वापस;
 	addrconf_addr_solict_mult(addr, &maddr);
 	ipv6_dev_mc_dec(dev, &maddr);
-}
+पूर्ण
 
 /* called with rtnl held */
-static bool ndisc_allow_add(const struct net_device *dev,
-			    struct netlink_ext_ack *extack)
-{
-	struct inet6_dev *idev = __in6_dev_get(dev);
+अटल bool ndisc_allow_add(स्थिर काष्ठा net_device *dev,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
 
-	if (!idev || idev->cnf.disable_ipv6) {
+	अगर (!idev || idev->cnf.disable_ipv6) अणु
 		NL_SET_ERR_MSG(extack, "IPv6 is disabled on this device");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct sk_buff *ndisc_alloc_skb(struct net_device *dev,
-				       int len)
-{
-	int hlen = LL_RESERVED_SPACE(dev);
-	int tlen = dev->needed_tailroom;
-	struct sock *sk = dev_net(dev)->ipv6.ndisc_sk;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *ndisc_alloc_skb(काष्ठा net_device *dev,
+				       पूर्णांक len)
+अणु
+	पूर्णांक hlen = LL_RESERVED_SPACE(dev);
+	पूर्णांक tlen = dev->needed_tailroom;
+	काष्ठा sock *sk = dev_net(dev)->ipv6.ndisc_sk;
+	काष्ठा sk_buff *skb;
 
-	skb = alloc_skb(hlen + sizeof(struct ipv6hdr) + len + tlen, GFP_ATOMIC);
-	if (!skb) {
+	skb = alloc_skb(hlen + माप(काष्ठा ipv6hdr) + len + tlen, GFP_ATOMIC);
+	अगर (!skb) अणु
 		ND_PRINTK(0, err, "ndisc: %s failed to allocate an skb\n",
 			  __func__);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	skb->protocol = htons(ETH_P_IPV6);
 	skb->dev = dev;
 
-	skb_reserve(skb, hlen + sizeof(struct ipv6hdr));
+	skb_reserve(skb, hlen + माप(काष्ठा ipv6hdr));
 	skb_reset_transport_header(skb);
 
-	/* Manually assign socket ownership as we avoid calling
+	/* Manually assign socket ownership as we aव्योम calling
 	 * sock_alloc_send_pskb() to bypass wmem buffer limits
 	 */
 	skb_set_owner_w(skb, sk);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static void ip6_nd_hdr(struct sk_buff *skb,
-		       const struct in6_addr *saddr,
-		       const struct in6_addr *daddr,
-		       int hop_limit, int len)
-{
-	struct ipv6hdr *hdr;
-	struct inet6_dev *idev;
-	unsigned tclass;
+अटल व्योम ip6_nd_hdr(काष्ठा sk_buff *skb,
+		       स्थिर काष्ठा in6_addr *saddr,
+		       स्थिर काष्ठा in6_addr *daddr,
+		       पूर्णांक hop_limit, पूर्णांक len)
+अणु
+	काष्ठा ipv6hdr *hdr;
+	काष्ठा inet6_dev *idev;
+	अचिन्हित tclass;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	idev = __in6_dev_get(skb->dev);
 	tclass = idev ? idev->cnf.ndisc_tclass : 0;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	skb_push(skb, sizeof(*hdr));
+	skb_push(skb, माप(*hdr));
 	skb_reset_network_header(skb);
 	hdr = ipv6_hdr(skb);
 
@@ -464,35 +465,35 @@ static void ip6_nd_hdr(struct sk_buff *skb,
 
 	hdr->saddr = *saddr;
 	hdr->daddr = *daddr;
-}
+पूर्ण
 
-static void ndisc_send_skb(struct sk_buff *skb,
-			   const struct in6_addr *daddr,
-			   const struct in6_addr *saddr)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	struct net *net = dev_net(skb->dev);
-	struct sock *sk = net->ipv6.ndisc_sk;
-	struct inet6_dev *idev;
-	int err;
-	struct icmp6hdr *icmp6h = icmp6_hdr(skb);
+अटल व्योम ndisc_send_skb(काष्ठा sk_buff *skb,
+			   स्थिर काष्ठा in6_addr *daddr,
+			   स्थिर काष्ठा in6_addr *saddr)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा sock *sk = net->ipv6.ndisc_sk;
+	काष्ठा inet6_dev *idev;
+	पूर्णांक err;
+	काष्ठा icmp6hdr *icmp6h = icmp6_hdr(skb);
 	u8 type;
 
 	type = icmp6h->icmp6_type;
 
-	if (!dst) {
-		struct flowi6 fl6;
-		int oif = skb->dev->ifindex;
+	अगर (!dst) अणु
+		काष्ठा flowi6 fl6;
+		पूर्णांक oअगर = skb->dev->अगरindex;
 
-		icmpv6_flow_init(sk, &fl6, type, saddr, daddr, oif);
+		icmpv6_flow_init(sk, &fl6, type, saddr, daddr, oअगर);
 		dst = icmp6_dst_alloc(skb->dev, &fl6);
-		if (IS_ERR(dst)) {
-			kfree_skb(skb);
-			return;
-		}
+		अगर (IS_ERR(dst)) अणु
+			kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
 		skb_dst_set(skb, dst);
-	}
+	पूर्ण
 
 	icmp6h->icmp6_cksum = csum_ipv6_magic(saddr, daddr, skb->len,
 					      IPPROTO_ICMPV6,
@@ -501,549 +502,549 @@ static void ndisc_send_skb(struct sk_buff *skb,
 
 	ip6_nd_hdr(skb, saddr, daddr, inet6_sk(sk)->hop_limit, skb->len);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	idev = __in6_dev_get(dst->dev);
 	IP6_UPD_PO_STATS(net, idev, IPSTATS_MIB_OUT, skb->len);
 
 	err = NF_HOOK(NFPROTO_IPV6, NF_INET_LOCAL_OUT,
-		      net, sk, skb, NULL, dst->dev,
+		      net, sk, skb, शून्य, dst->dev,
 		      dst_output);
-	if (!err) {
+	अगर (!err) अणु
 		ICMP6MSGOUT_INC_STATS(net, idev, type);
 		ICMP6_INC_STATS(net, idev, ICMP6_MIB_OUTMSGS);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-void ndisc_send_na(struct net_device *dev, const struct in6_addr *daddr,
-		   const struct in6_addr *solicited_addr,
+व्योम ndisc_send_na(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *daddr,
+		   स्थिर काष्ठा in6_addr *solicited_addr,
 		   bool router, bool solicited, bool override, bool inc_opt)
-{
-	struct sk_buff *skb;
-	struct in6_addr tmpaddr;
-	struct inet6_ifaddr *ifp;
-	const struct in6_addr *src_addr;
-	struct nd_msg *msg;
-	int optlen = 0;
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा in6_addr पंचांगpaddr;
+	काष्ठा inet6_अगरaddr *अगरp;
+	स्थिर काष्ठा in6_addr *src_addr;
+	काष्ठा nd_msg *msg;
+	पूर्णांक optlen = 0;
 
-	/* for anycast or proxy, solicited_addr != src_addr */
-	ifp = ipv6_get_ifaddr(dev_net(dev), solicited_addr, dev, 1);
-	if (ifp) {
+	/* क्रम anycast or proxy, solicited_addr != src_addr */
+	अगरp = ipv6_get_अगरaddr(dev_net(dev), solicited_addr, dev, 1);
+	अगर (अगरp) अणु
 		src_addr = solicited_addr;
-		if (ifp->flags & IFA_F_OPTIMISTIC)
+		अगर (अगरp->flags & IFA_F_OPTIMISTIC)
 			override = false;
-		inc_opt |= ifp->idev->cnf.force_tllao;
-		in6_ifa_put(ifp);
-	} else {
-		if (ipv6_dev_get_saddr(dev_net(dev), dev, daddr,
+		inc_opt |= अगरp->idev->cnf.क्रमce_tllao;
+		in6_अगरa_put(अगरp);
+	पूर्ण अन्यथा अणु
+		अगर (ipv6_dev_get_saddr(dev_net(dev), dev, daddr,
 				       inet6_sk(dev_net(dev)->ipv6.ndisc_sk)->srcprefs,
-				       &tmpaddr))
-			return;
-		src_addr = &tmpaddr;
-	}
+				       &पंचांगpaddr))
+			वापस;
+		src_addr = &पंचांगpaddr;
+	पूर्ण
 
-	if (!dev->addr_len)
+	अगर (!dev->addr_len)
 		inc_opt = false;
-	if (inc_opt)
+	अगर (inc_opt)
 		optlen += ndisc_opt_addr_space(dev,
 					       NDISC_NEIGHBOUR_ADVERTISEMENT);
 
-	skb = ndisc_alloc_skb(dev, sizeof(*msg) + optlen);
-	if (!skb)
-		return;
+	skb = ndisc_alloc_skb(dev, माप(*msg) + optlen);
+	अगर (!skb)
+		वापस;
 
-	msg = skb_put(skb, sizeof(*msg));
-	*msg = (struct nd_msg) {
-		.icmph = {
+	msg = skb_put(skb, माप(*msg));
+	*msg = (काष्ठा nd_msg) अणु
+		.icmph = अणु
 			.icmp6_type = NDISC_NEIGHBOUR_ADVERTISEMENT,
 			.icmp6_router = router,
 			.icmp6_solicited = solicited,
 			.icmp6_override = override,
-		},
+		पूर्ण,
 		.target = *solicited_addr,
-	};
+	पूर्ण;
 
-	if (inc_opt)
+	अगर (inc_opt)
 		ndisc_fill_addr_option(skb, ND_OPT_TARGET_LL_ADDR,
 				       dev->dev_addr,
 				       NDISC_NEIGHBOUR_ADVERTISEMENT);
 
 	ndisc_send_skb(skb, daddr, src_addr);
-}
+पूर्ण
 
-static void ndisc_send_unsol_na(struct net_device *dev)
-{
-	struct inet6_dev *idev;
-	struct inet6_ifaddr *ifa;
+अटल व्योम ndisc_send_unsol_na(काष्ठा net_device *dev)
+अणु
+	काष्ठा inet6_dev *idev;
+	काष्ठा inet6_अगरaddr *अगरa;
 
 	idev = in6_dev_get(dev);
-	if (!idev)
-		return;
+	अगर (!idev)
+		वापस;
 
-	read_lock_bh(&idev->lock);
-	list_for_each_entry(ifa, &idev->addr_list, if_list) {
+	पढ़ो_lock_bh(&idev->lock);
+	list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
 		/* skip tentative addresses until dad completes */
-		if (ifa->flags & IFA_F_TENTATIVE &&
-		    !(ifa->flags & IFA_F_OPTIMISTIC))
-			continue;
+		अगर (अगरa->flags & IFA_F_TENTATIVE &&
+		    !(अगरa->flags & IFA_F_OPTIMISTIC))
+			जारी;
 
-		ndisc_send_na(dev, &in6addr_linklocal_allnodes, &ifa->addr,
-			      /*router=*/ !!idev->cnf.forwarding,
+		ndisc_send_na(dev, &in6addr_linklocal_allnodes, &अगरa->addr,
+			      /*router=*/ !!idev->cnf.क्रमwarding,
 			      /*solicited=*/ false, /*override=*/ true,
 			      /*inc_opt=*/ true);
-	}
-	read_unlock_bh(&idev->lock);
+	पूर्ण
+	पढ़ो_unlock_bh(&idev->lock);
 
 	in6_dev_put(idev);
-}
+पूर्ण
 
-void ndisc_send_ns(struct net_device *dev, const struct in6_addr *solicit,
-		   const struct in6_addr *daddr, const struct in6_addr *saddr,
+व्योम ndisc_send_ns(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *solicit,
+		   स्थिर काष्ठा in6_addr *daddr, स्थिर काष्ठा in6_addr *saddr,
 		   u64 nonce)
-{
-	struct sk_buff *skb;
-	struct in6_addr addr_buf;
-	int inc_opt = dev->addr_len;
-	int optlen = 0;
-	struct nd_msg *msg;
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा in6_addr addr_buf;
+	पूर्णांक inc_opt = dev->addr_len;
+	पूर्णांक optlen = 0;
+	काष्ठा nd_msg *msg;
 
-	if (!saddr) {
-		if (ipv6_get_lladdr(dev, &addr_buf,
+	अगर (!saddr) अणु
+		अगर (ipv6_get_lladdr(dev, &addr_buf,
 				   (IFA_F_TENTATIVE|IFA_F_OPTIMISTIC)))
-			return;
+			वापस;
 		saddr = &addr_buf;
-	}
+	पूर्ण
 
-	if (ipv6_addr_any(saddr))
+	अगर (ipv6_addr_any(saddr))
 		inc_opt = false;
-	if (inc_opt)
+	अगर (inc_opt)
 		optlen += ndisc_opt_addr_space(dev,
 					       NDISC_NEIGHBOUR_SOLICITATION);
-	if (nonce != 0)
+	अगर (nonce != 0)
 		optlen += 8;
 
-	skb = ndisc_alloc_skb(dev, sizeof(*msg) + optlen);
-	if (!skb)
-		return;
+	skb = ndisc_alloc_skb(dev, माप(*msg) + optlen);
+	अगर (!skb)
+		वापस;
 
-	msg = skb_put(skb, sizeof(*msg));
-	*msg = (struct nd_msg) {
-		.icmph = {
+	msg = skb_put(skb, माप(*msg));
+	*msg = (काष्ठा nd_msg) अणु
+		.icmph = अणु
 			.icmp6_type = NDISC_NEIGHBOUR_SOLICITATION,
-		},
+		पूर्ण,
 		.target = *solicit,
-	};
+	पूर्ण;
 
-	if (inc_opt)
+	अगर (inc_opt)
 		ndisc_fill_addr_option(skb, ND_OPT_SOURCE_LL_ADDR,
 				       dev->dev_addr,
 				       NDISC_NEIGHBOUR_SOLICITATION);
-	if (nonce != 0) {
+	अगर (nonce != 0) अणु
 		u8 *opt = skb_put(skb, 8);
 
 		opt[0] = ND_OPT_NONCE;
 		opt[1] = 8 >> 3;
-		memcpy(opt + 2, &nonce, 6);
-	}
+		स_नकल(opt + 2, &nonce, 6);
+	पूर्ण
 
 	ndisc_send_skb(skb, daddr, saddr);
-}
+पूर्ण
 
-void ndisc_send_rs(struct net_device *dev, const struct in6_addr *saddr,
-		   const struct in6_addr *daddr)
-{
-	struct sk_buff *skb;
-	struct rs_msg *msg;
-	int send_sllao = dev->addr_len;
-	int optlen = 0;
+व्योम ndisc_send_rs(काष्ठा net_device *dev, स्थिर काष्ठा in6_addr *saddr,
+		   स्थिर काष्ठा in6_addr *daddr)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा rs_msg *msg;
+	पूर्णांक send_sllao = dev->addr_len;
+	पूर्णांक optlen = 0;
 
-#ifdef CONFIG_IPV6_OPTIMISTIC_DAD
+#अगर_घोषित CONFIG_IPV6_OPTIMISTIC_DAD
 	/*
 	 * According to section 2.2 of RFC 4429, we must not
 	 * send router solicitations with a sllao from
 	 * optimistic addresses, but we may send the solicitation
-	 * if we don't include the sllao.  So here we check
-	 * if our address is optimistic, and if so, we
+	 * अगर we करोn't include the sllao.  So here we check
+	 * अगर our address is optimistic, and अगर so, we
 	 * suppress the inclusion of the sllao.
 	 */
-	if (send_sllao) {
-		struct inet6_ifaddr *ifp = ipv6_get_ifaddr(dev_net(dev), saddr,
+	अगर (send_sllao) अणु
+		काष्ठा inet6_अगरaddr *अगरp = ipv6_get_अगरaddr(dev_net(dev), saddr,
 							   dev, 1);
-		if (ifp) {
-			if (ifp->flags & IFA_F_OPTIMISTIC)  {
+		अगर (अगरp) अणु
+			अगर (अगरp->flags & IFA_F_OPTIMISTIC)  अणु
 				send_sllao = 0;
-			}
-			in6_ifa_put(ifp);
-		} else {
+			पूर्ण
+			in6_अगरa_put(अगरp);
+		पूर्ण अन्यथा अणु
 			send_sllao = 0;
-		}
-	}
-#endif
-	if (send_sllao)
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	अगर (send_sllao)
 		optlen += ndisc_opt_addr_space(dev, NDISC_ROUTER_SOLICITATION);
 
-	skb = ndisc_alloc_skb(dev, sizeof(*msg) + optlen);
-	if (!skb)
-		return;
+	skb = ndisc_alloc_skb(dev, माप(*msg) + optlen);
+	अगर (!skb)
+		वापस;
 
-	msg = skb_put(skb, sizeof(*msg));
-	*msg = (struct rs_msg) {
-		.icmph = {
+	msg = skb_put(skb, माप(*msg));
+	*msg = (काष्ठा rs_msg) अणु
+		.icmph = अणु
 			.icmp6_type = NDISC_ROUTER_SOLICITATION,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	if (send_sllao)
+	अगर (send_sllao)
 		ndisc_fill_addr_option(skb, ND_OPT_SOURCE_LL_ADDR,
 				       dev->dev_addr,
 				       NDISC_ROUTER_SOLICITATION);
 
 	ndisc_send_skb(skb, daddr, saddr);
-}
+पूर्ण
 
 
-static void ndisc_error_report(struct neighbour *neigh, struct sk_buff *skb)
-{
+अटल व्योम ndisc_error_report(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
 	/*
-	 *	"The sender MUST return an ICMP
+	 *	"The sender MUST वापस an ICMP
 	 *	 destination unreachable"
 	 */
 	dst_link_failure(skb);
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-/* Called with locked neigh: either read or both */
+/* Called with locked neigh: either पढ़ो or both */
 
-static void ndisc_solicit(struct neighbour *neigh, struct sk_buff *skb)
-{
-	struct in6_addr *saddr = NULL;
-	struct in6_addr mcaddr;
-	struct net_device *dev = neigh->dev;
-	struct in6_addr *target = (struct in6_addr *)&neigh->primary_key;
-	int probes = atomic_read(&neigh->probes);
+अटल व्योम ndisc_solicit(काष्ठा neighbour *neigh, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा in6_addr *saddr = शून्य;
+	काष्ठा in6_addr mcaddr;
+	काष्ठा net_device *dev = neigh->dev;
+	काष्ठा in6_addr *target = (काष्ठा in6_addr *)&neigh->primary_key;
+	पूर्णांक probes = atomic_पढ़ो(&neigh->probes);
 
-	if (skb && ipv6_chk_addr_and_flags(dev_net(dev), &ipv6_hdr(skb)->saddr,
+	अगर (skb && ipv6_chk_addr_and_flags(dev_net(dev), &ipv6_hdr(skb)->saddr,
 					   dev, false, 1,
 					   IFA_F_TENTATIVE|IFA_F_OPTIMISTIC))
 		saddr = &ipv6_hdr(skb)->saddr;
 	probes -= NEIGH_VAR(neigh->parms, UCAST_PROBES);
-	if (probes < 0) {
-		if (!(neigh->nud_state & NUD_VALID)) {
+	अगर (probes < 0) अणु
+		अगर (!(neigh->nud_state & NUD_VALID)) अणु
 			ND_PRINTK(1, dbg,
 				  "%s: trying to ucast probe in NUD_INVALID: %pI6\n",
 				  __func__, target);
-		}
+		पूर्ण
 		ndisc_send_ns(dev, target, target, saddr, 0);
-	} else if ((probes -= NEIGH_VAR(neigh->parms, APP_PROBES)) < 0) {
+	पूर्ण अन्यथा अगर ((probes -= NEIGH_VAR(neigh->parms, APP_PROBES)) < 0) अणु
 		neigh_app_ns(neigh);
-	} else {
+	पूर्ण अन्यथा अणु
 		addrconf_addr_solict_mult(target, &mcaddr);
 		ndisc_send_ns(dev, target, &mcaddr, saddr, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pndisc_is_router(const void *pkey,
-			    struct net_device *dev)
-{
-	struct pneigh_entry *n;
-	int ret = -1;
+अटल पूर्णांक pndisc_is_router(स्थिर व्योम *pkey,
+			    काष्ठा net_device *dev)
+अणु
+	काष्ठा pneigh_entry *n;
+	पूर्णांक ret = -1;
 
-	read_lock_bh(&nd_tbl.lock);
+	पढ़ो_lock_bh(&nd_tbl.lock);
 	n = __pneigh_lookup(&nd_tbl, dev_net(dev), pkey, dev);
-	if (n)
+	अगर (n)
 		ret = !!(n->flags & NTF_ROUTER);
-	read_unlock_bh(&nd_tbl.lock);
+	पढ़ो_unlock_bh(&nd_tbl.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ndisc_update(const struct net_device *dev, struct neighbour *neigh,
-		  const u8 *lladdr, u8 new, u32 flags, u8 icmp6_type,
-		  struct ndisc_options *ndopts)
-{
+व्योम ndisc_update(स्थिर काष्ठा net_device *dev, काष्ठा neighbour *neigh,
+		  स्थिर u8 *lladdr, u8 new, u32 flags, u8 icmp6_type,
+		  काष्ठा ndisc_options *nकरोpts)
+अणु
 	neigh_update(neigh, lladdr, new, flags, 0);
 	/* report ndisc ops about neighbour update */
-	ndisc_ops_update(dev, neigh, flags, icmp6_type, ndopts);
-}
+	ndisc_ops_update(dev, neigh, flags, icmp6_type, nकरोpts);
+पूर्ण
 
-static void ndisc_recv_ns(struct sk_buff *skb)
-{
-	struct nd_msg *msg = (struct nd_msg *)skb_transport_header(skb);
-	const struct in6_addr *saddr = &ipv6_hdr(skb)->saddr;
-	const struct in6_addr *daddr = &ipv6_hdr(skb)->daddr;
-	u8 *lladdr = NULL;
-	u32 ndoptlen = skb_tail_pointer(skb) - (skb_transport_header(skb) +
-				    offsetof(struct nd_msg, opt));
-	struct ndisc_options ndopts;
-	struct net_device *dev = skb->dev;
-	struct inet6_ifaddr *ifp;
-	struct inet6_dev *idev = NULL;
-	struct neighbour *neigh;
-	int dad = ipv6_addr_any(saddr);
+अटल व्योम ndisc_recv_ns(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nd_msg *msg = (काष्ठा nd_msg *)skb_transport_header(skb);
+	स्थिर काष्ठा in6_addr *saddr = &ipv6_hdr(skb)->saddr;
+	स्थिर काष्ठा in6_addr *daddr = &ipv6_hdr(skb)->daddr;
+	u8 *lladdr = शून्य;
+	u32 nकरोptlen = skb_tail_poपूर्णांकer(skb) - (skb_transport_header(skb) +
+				    दुरत्व(काष्ठा nd_msg, opt));
+	काष्ठा ndisc_options nकरोpts;
+	काष्ठा net_device *dev = skb->dev;
+	काष्ठा inet6_अगरaddr *अगरp;
+	काष्ठा inet6_dev *idev = शून्य;
+	काष्ठा neighbour *neigh;
+	पूर्णांक dad = ipv6_addr_any(saddr);
 	bool inc;
-	int is_router = -1;
+	पूर्णांक is_router = -1;
 	u64 nonce = 0;
 
-	if (skb->len < sizeof(struct nd_msg)) {
+	अगर (skb->len < माप(काष्ठा nd_msg)) अणु
 		ND_PRINTK(2, warn, "NS: packet too short\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ipv6_addr_is_multicast(&msg->target)) {
+	अगर (ipv6_addr_is_multicast(&msg->target)) अणु
 		ND_PRINTK(2, warn, "NS: multicast target address\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * RFC2461 7.1.1:
-	 * DAD has to be destined for solicited node multicast address.
+	 * DAD has to be destined क्रम solicited node multicast address.
 	 */
-	if (dad && !ipv6_addr_is_solict_mult(daddr)) {
+	अगर (dad && !ipv6_addr_is_solict_mult(daddr)) अणु
 		ND_PRINTK(2, warn, "NS: bad DAD packet (wrong destination)\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ndisc_parse_options(dev, msg->opt, ndoptlen, &ndopts)) {
+	अगर (!ndisc_parse_options(dev, msg->opt, nकरोptlen, &nकरोpts)) अणु
 		ND_PRINTK(2, warn, "NS: invalid ND options\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ndopts.nd_opts_src_lladdr) {
-		lladdr = ndisc_opt_addr_data(ndopts.nd_opts_src_lladdr, dev);
-		if (!lladdr) {
+	अगर (nकरोpts.nd_opts_src_lladdr) अणु
+		lladdr = ndisc_opt_addr_data(nकरोpts.nd_opts_src_lladdr, dev);
+		अगर (!lladdr) अणु
 			ND_PRINTK(2, warn,
 				  "NS: invalid link-layer address length\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		/* RFC2461 7.1.1:
-		 *	If the IP source address is the unspecified address,
+		 *	If the IP source address is the unspecअगरied address,
 		 *	there MUST NOT be source link-layer address option
 		 *	in the message.
 		 */
-		if (dad) {
+		अगर (dad) अणु
 			ND_PRINTK(2, warn,
 				  "NS: bad DAD packet (link-layer address option)\n");
-			return;
-		}
-	}
-	if (ndopts.nd_opts_nonce && ndopts.nd_opts_nonce->nd_opt_len == 1)
-		memcpy(&nonce, (u8 *)(ndopts.nd_opts_nonce + 1), 6);
+			वापस;
+		पूर्ण
+	पूर्ण
+	अगर (nकरोpts.nd_opts_nonce && nकरोpts.nd_opts_nonce->nd_opt_len == 1)
+		स_नकल(&nonce, (u8 *)(nकरोpts.nd_opts_nonce + 1), 6);
 
 	inc = ipv6_addr_is_multicast(daddr);
 
-	ifp = ipv6_get_ifaddr(dev_net(dev), &msg->target, dev, 1);
-	if (ifp) {
-have_ifp:
-		if (ifp->flags & (IFA_F_TENTATIVE|IFA_F_OPTIMISTIC)) {
-			if (dad) {
-				if (nonce != 0 && ifp->dad_nonce == nonce) {
+	अगरp = ipv6_get_अगरaddr(dev_net(dev), &msg->target, dev, 1);
+	अगर (अगरp) अणु
+have_अगरp:
+		अगर (अगरp->flags & (IFA_F_TENTATIVE|IFA_F_OPTIMISTIC)) अणु
+			अगर (dad) अणु
+				अगर (nonce != 0 && अगरp->dad_nonce == nonce) अणु
 					u8 *np = (u8 *)&nonce;
-					/* Matching nonce if looped back */
+					/* Matching nonce अगर looped back */
 					ND_PRINTK(2, notice,
 						  "%s: IPv6 DAD loopback for address %pI6c nonce %pM ignored\n",
-						  ifp->idev->dev->name,
-						  &ifp->addr, np);
-					goto out;
-				}
+						  अगरp->idev->dev->name,
+						  &अगरp->addr, np);
+					जाओ out;
+				पूर्ण
 				/*
 				 * We are colliding with another node
-				 * who is doing DAD
+				 * who is करोing DAD
 				 * so fail our DAD process
 				 */
-				addrconf_dad_failure(skb, ifp);
-				return;
-			} else {
+				addrconf_dad_failure(skb, अगरp);
+				वापस;
+			पूर्ण अन्यथा अणु
 				/*
 				 * This is not a dad solicitation.
 				 * If we are an optimistic node,
 				 * we should respond.
 				 * Otherwise, we should ignore it.
 				 */
-				if (!(ifp->flags & IFA_F_OPTIMISTIC))
-					goto out;
-			}
-		}
+				अगर (!(अगरp->flags & IFA_F_OPTIMISTIC))
+					जाओ out;
+			पूर्ण
+		पूर्ण
 
-		idev = ifp->idev;
-	} else {
-		struct net *net = dev_net(dev);
+		idev = अगरp->idev;
+	पूर्ण अन्यथा अणु
+		काष्ठा net *net = dev_net(dev);
 
 		/* perhaps an address on the master device */
-		if (netif_is_l3_slave(dev)) {
-			struct net_device *mdev;
+		अगर (netअगर_is_l3_slave(dev)) अणु
+			काष्ठा net_device *mdev;
 
 			mdev = netdev_master_upper_dev_get_rcu(dev);
-			if (mdev) {
-				ifp = ipv6_get_ifaddr(net, &msg->target, mdev, 1);
-				if (ifp)
-					goto have_ifp;
-			}
-		}
+			अगर (mdev) अणु
+				अगरp = ipv6_get_अगरaddr(net, &msg->target, mdev, 1);
+				अगर (अगरp)
+					जाओ have_अगरp;
+			पूर्ण
+		पूर्ण
 
 		idev = in6_dev_get(dev);
-		if (!idev) {
+		अगर (!idev) अणु
 			/* XXX: count this drop? */
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (ipv6_chk_acast_addr(net, dev, &msg->target) ||
-		    (idev->cnf.forwarding &&
+		अगर (ipv6_chk_acast_addr(net, dev, &msg->target) ||
+		    (idev->cnf.क्रमwarding &&
 		     (net->ipv6.devconf_all->proxy_ndp || idev->cnf.proxy_ndp) &&
-		     (is_router = pndisc_is_router(&msg->target, dev)) >= 0)) {
-			if (!(NEIGH_CB(skb)->flags & LOCALLY_ENQUEUED) &&
+		     (is_router = pndisc_is_router(&msg->target, dev)) >= 0)) अणु
+			अगर (!(NEIGH_CB(skb)->flags & LOCALLY_ENQUEUED) &&
 			    skb->pkt_type != PACKET_HOST &&
 			    inc &&
-			    NEIGH_VAR(idev->nd_parms, PROXY_DELAY) != 0) {
+			    NEIGH_VAR(idev->nd_parms, PROXY_DELAY) != 0) अणु
 				/*
-				 * for anycast or proxy,
+				 * क्रम anycast or proxy,
 				 * sender should delay its response
-				 * by a random time between 0 and
+				 * by a अक्रमom समय between 0 and
 				 * MAX_ANYCAST_DELAY_TIME seconds.
 				 * (RFC2461) -- yoshfuji
 				 */
-				struct sk_buff *n = skb_clone(skb, GFP_ATOMIC);
-				if (n)
+				काष्ठा sk_buff *n = skb_clone(skb, GFP_ATOMIC);
+				अगर (n)
 					pneigh_enqueue(&nd_tbl, idev->nd_parms, n);
-				goto out;
-			}
-		} else
-			goto out;
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा
+			जाओ out;
+	पूर्ण
 
-	if (is_router < 0)
-		is_router = idev->cnf.forwarding;
+	अगर (is_router < 0)
+		is_router = idev->cnf.क्रमwarding;
 
-	if (dad) {
+	अगर (dad) अणु
 		ndisc_send_na(dev, &in6addr_linklocal_allnodes, &msg->target,
-			      !!is_router, false, (ifp != NULL), true);
-		goto out;
-	}
+			      !!is_router, false, (अगरp != शून्य), true);
+		जाओ out;
+	पूर्ण
 
-	if (inc)
+	अगर (inc)
 		NEIGH_CACHE_STAT_INC(&nd_tbl, rcv_probes_mcast);
-	else
+	अन्यथा
 		NEIGH_CACHE_STAT_INC(&nd_tbl, rcv_probes_ucast);
 
 	/*
 	 *	update / create cache entry
-	 *	for the source address
+	 *	क्रम the source address
 	 */
 	neigh = __neigh_lookup(&nd_tbl, saddr, dev,
 			       !inc || lladdr || !dev->addr_len);
-	if (neigh)
+	अगर (neigh)
 		ndisc_update(dev, neigh, lladdr, NUD_STALE,
 			     NEIGH_UPDATE_F_WEAK_OVERRIDE|
 			     NEIGH_UPDATE_F_OVERRIDE,
-			     NDISC_NEIGHBOUR_SOLICITATION, &ndopts);
-	if (neigh || !dev->header_ops) {
+			     NDISC_NEIGHBOUR_SOLICITATION, &nकरोpts);
+	अगर (neigh || !dev->header_ops) अणु
 		ndisc_send_na(dev, saddr, &msg->target, !!is_router,
-			      true, (ifp != NULL && inc), inc);
-		if (neigh)
+			      true, (अगरp != शून्य && inc), inc);
+		अगर (neigh)
 			neigh_release(neigh);
-	}
+	पूर्ण
 
 out:
-	if (ifp)
-		in6_ifa_put(ifp);
-	else
+	अगर (अगरp)
+		in6_अगरa_put(अगरp);
+	अन्यथा
 		in6_dev_put(idev);
-}
+पूर्ण
 
-static void ndisc_recv_na(struct sk_buff *skb)
-{
-	struct nd_msg *msg = (struct nd_msg *)skb_transport_header(skb);
-	struct in6_addr *saddr = &ipv6_hdr(skb)->saddr;
-	const struct in6_addr *daddr = &ipv6_hdr(skb)->daddr;
-	u8 *lladdr = NULL;
-	u32 ndoptlen = skb_tail_pointer(skb) - (skb_transport_header(skb) +
-				    offsetof(struct nd_msg, opt));
-	struct ndisc_options ndopts;
-	struct net_device *dev = skb->dev;
-	struct inet6_dev *idev = __in6_dev_get(dev);
-	struct inet6_ifaddr *ifp;
-	struct neighbour *neigh;
+अटल व्योम ndisc_recv_na(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nd_msg *msg = (काष्ठा nd_msg *)skb_transport_header(skb);
+	काष्ठा in6_addr *saddr = &ipv6_hdr(skb)->saddr;
+	स्थिर काष्ठा in6_addr *daddr = &ipv6_hdr(skb)->daddr;
+	u8 *lladdr = शून्य;
+	u32 nकरोptlen = skb_tail_poपूर्णांकer(skb) - (skb_transport_header(skb) +
+				    दुरत्व(काष्ठा nd_msg, opt));
+	काष्ठा ndisc_options nकरोpts;
+	काष्ठा net_device *dev = skb->dev;
+	काष्ठा inet6_dev *idev = __in6_dev_get(dev);
+	काष्ठा inet6_अगरaddr *अगरp;
+	काष्ठा neighbour *neigh;
 
-	if (skb->len < sizeof(struct nd_msg)) {
+	अगर (skb->len < माप(काष्ठा nd_msg)) अणु
 		ND_PRINTK(2, warn, "NA: packet too short\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ipv6_addr_is_multicast(&msg->target)) {
+	अगर (ipv6_addr_is_multicast(&msg->target)) अणु
 		ND_PRINTK(2, warn, "NA: target address is multicast\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ipv6_addr_is_multicast(daddr) &&
-	    msg->icmph.icmp6_solicited) {
+	अगर (ipv6_addr_is_multicast(daddr) &&
+	    msg->icmph.icmp6_solicited) अणु
 		ND_PRINTK(2, warn, "NA: solicited NA is multicasted\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* For some 802.11 wireless deployments (and possibly other networks),
 	 * there will be a NA proxy and unsolicitd packets are attacks
 	 * and thus should not be accepted.
 	 */
-	if (!msg->icmph.icmp6_solicited && idev &&
+	अगर (!msg->icmph.icmp6_solicited && idev &&
 	    idev->cnf.drop_unsolicited_na)
-		return;
+		वापस;
 
-	if (!ndisc_parse_options(dev, msg->opt, ndoptlen, &ndopts)) {
+	अगर (!ndisc_parse_options(dev, msg->opt, nकरोptlen, &nकरोpts)) अणु
 		ND_PRINTK(2, warn, "NS: invalid ND option\n");
-		return;
-	}
-	if (ndopts.nd_opts_tgt_lladdr) {
-		lladdr = ndisc_opt_addr_data(ndopts.nd_opts_tgt_lladdr, dev);
-		if (!lladdr) {
+		वापस;
+	पूर्ण
+	अगर (nकरोpts.nd_opts_tgt_lladdr) अणु
+		lladdr = ndisc_opt_addr_data(nकरोpts.nd_opts_tgt_lladdr, dev);
+		अगर (!lladdr) अणु
 			ND_PRINTK(2, warn,
 				  "NA: invalid link-layer address length\n");
-			return;
-		}
-	}
-	ifp = ipv6_get_ifaddr(dev_net(dev), &msg->target, dev, 1);
-	if (ifp) {
-		if (skb->pkt_type != PACKET_LOOPBACK
-		    && (ifp->flags & IFA_F_TENTATIVE)) {
-				addrconf_dad_failure(skb, ifp);
-				return;
-		}
+			वापस;
+		पूर्ण
+	पूर्ण
+	अगरp = ipv6_get_अगरaddr(dev_net(dev), &msg->target, dev, 1);
+	अगर (अगरp) अणु
+		अगर (skb->pkt_type != PACKET_LOOPBACK
+		    && (अगरp->flags & IFA_F_TENTATIVE)) अणु
+				addrconf_dad_failure(skb, अगरp);
+				वापस;
+		पूर्ण
 		/* What should we make now? The advertisement
 		   is invalid, but ndisc specs say nothing
 		   about it. It could be misconfiguration, or
 		   an smart proxy agent tries to help us :-)
 
-		   We should not print the error if NA has been
+		   We should not prपूर्णांक the error अगर NA has been
 		   received from loopback - it is just our own
 		   unsolicited advertisement.
 		 */
-		if (skb->pkt_type != PACKET_LOOPBACK)
+		अगर (skb->pkt_type != PACKET_LOOPBACK)
 			ND_PRINTK(1, warn,
 				  "NA: %pM advertised our address %pI6c on %s!\n",
-				  eth_hdr(skb)->h_source, &ifp->addr, ifp->idev->dev->name);
-		in6_ifa_put(ifp);
-		return;
-	}
+				  eth_hdr(skb)->h_source, &अगरp->addr, अगरp->idev->dev->name);
+		in6_अगरa_put(अगरp);
+		वापस;
+	पूर्ण
 	neigh = neigh_lookup(&nd_tbl, &msg->target, dev);
 
-	if (neigh) {
+	अगर (neigh) अणु
 		u8 old_flags = neigh->flags;
-		struct net *net = dev_net(dev);
+		काष्ठा net *net = dev_net(dev);
 
-		if (neigh->nud_state & NUD_FAILED)
-			goto out;
+		अगर (neigh->nud_state & NUD_FAILED)
+			जाओ out;
 
 		/*
 		 * Don't update the neighbor cache entry on a proxy NA from
 		 * ourselves because either the proxied node is off link or it
-		 * has already sent a NA to us.
+		 * has alपढ़ोy sent a NA to us.
 		 */
-		if (lladdr && !memcmp(lladdr, dev->dev_addr, dev->addr_len) &&
-		    net->ipv6.devconf_all->forwarding && net->ipv6.devconf_all->proxy_ndp &&
-		    pneigh_lookup(&nd_tbl, net, &msg->target, dev, 0)) {
+		अगर (lladdr && !स_भेद(lladdr, dev->dev_addr, dev->addr_len) &&
+		    net->ipv6.devconf_all->क्रमwarding && net->ipv6.devconf_all->proxy_ndp &&
+		    pneigh_lookup(&nd_tbl, net, &msg->target, dev, 0)) अणु
 			/* XXX: idev->cnf.proxy_ndp */
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		ndisc_update(dev, neigh, lladdr,
 			     msg->icmph.icmp6_solicited ? NUD_REACHABLE : NUD_STALE,
@@ -1051,308 +1052,308 @@ static void ndisc_recv_na(struct sk_buff *skb)
 			     (msg->icmph.icmp6_override ? NEIGH_UPDATE_F_OVERRIDE : 0)|
 			     NEIGH_UPDATE_F_OVERRIDE_ISROUTER|
 			     (msg->icmph.icmp6_router ? NEIGH_UPDATE_F_ISROUTER : 0),
-			     NDISC_NEIGHBOUR_ADVERTISEMENT, &ndopts);
+			     NDISC_NEIGHBOUR_ADVERTISEMENT, &nकरोpts);
 
-		if ((old_flags & ~neigh->flags) & NTF_ROUTER) {
+		अगर ((old_flags & ~neigh->flags) & NTF_ROUTER) अणु
 			/*
 			 * Change: router to host
 			 */
 			rt6_clean_tohost(dev_net(dev),  saddr);
-		}
+		पूर्ण
 
 out:
 		neigh_release(neigh);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ndisc_recv_rs(struct sk_buff *skb)
-{
-	struct rs_msg *rs_msg = (struct rs_msg *)skb_transport_header(skb);
-	unsigned long ndoptlen = skb->len - sizeof(*rs_msg);
-	struct neighbour *neigh;
-	struct inet6_dev *idev;
-	const struct in6_addr *saddr = &ipv6_hdr(skb)->saddr;
-	struct ndisc_options ndopts;
-	u8 *lladdr = NULL;
+अटल व्योम ndisc_recv_rs(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rs_msg *rs_msg = (काष्ठा rs_msg *)skb_transport_header(skb);
+	अचिन्हित दीर्घ nकरोptlen = skb->len - माप(*rs_msg);
+	काष्ठा neighbour *neigh;
+	काष्ठा inet6_dev *idev;
+	स्थिर काष्ठा in6_addr *saddr = &ipv6_hdr(skb)->saddr;
+	काष्ठा ndisc_options nकरोpts;
+	u8 *lladdr = शून्य;
 
-	if (skb->len < sizeof(*rs_msg))
-		return;
+	अगर (skb->len < माप(*rs_msg))
+		वापस;
 
 	idev = __in6_dev_get(skb->dev);
-	if (!idev) {
+	अगर (!idev) अणु
 		ND_PRINTK(1, err, "RS: can't find in6 device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Don't accept RS if we're not in router mode */
-	if (!idev->cnf.forwarding)
-		goto out;
+	अगर (!idev->cnf.क्रमwarding)
+		जाओ out;
 
 	/*
-	 * Don't update NCE if src = ::;
-	 * this implies that the source node has no ip address assigned yet.
+	 * Don't update NCE अगर src = ::;
+	 * this implies that the source node has no ip address asचिन्हित yet.
 	 */
-	if (ipv6_addr_any(saddr))
-		goto out;
+	अगर (ipv6_addr_any(saddr))
+		जाओ out;
 
 	/* Parse ND options */
-	if (!ndisc_parse_options(skb->dev, rs_msg->opt, ndoptlen, &ndopts)) {
+	अगर (!ndisc_parse_options(skb->dev, rs_msg->opt, nकरोptlen, &nकरोpts)) अणु
 		ND_PRINTK(2, notice, "NS: invalid ND option, ignored\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (ndopts.nd_opts_src_lladdr) {
-		lladdr = ndisc_opt_addr_data(ndopts.nd_opts_src_lladdr,
+	अगर (nकरोpts.nd_opts_src_lladdr) अणु
+		lladdr = ndisc_opt_addr_data(nकरोpts.nd_opts_src_lladdr,
 					     skb->dev);
-		if (!lladdr)
-			goto out;
-	}
+		अगर (!lladdr)
+			जाओ out;
+	पूर्ण
 
 	neigh = __neigh_lookup(&nd_tbl, saddr, skb->dev, 1);
-	if (neigh) {
+	अगर (neigh) अणु
 		ndisc_update(skb->dev, neigh, lladdr, NUD_STALE,
 			     NEIGH_UPDATE_F_WEAK_OVERRIDE|
 			     NEIGH_UPDATE_F_OVERRIDE|
 			     NEIGH_UPDATE_F_OVERRIDE_ISROUTER,
-			     NDISC_ROUTER_SOLICITATION, &ndopts);
+			     NDISC_ROUTER_SOLICITATION, &nकरोpts);
 		neigh_release(neigh);
-	}
+	पूर्ण
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-static void ndisc_ra_useropt(struct sk_buff *ra, struct nd_opt_hdr *opt)
-{
-	struct icmp6hdr *icmp6h = (struct icmp6hdr *)skb_transport_header(ra);
-	struct sk_buff *skb;
-	struct nlmsghdr *nlh;
-	struct nduseroptmsg *ndmsg;
-	struct net *net = dev_net(ra->dev);
-	int err;
-	int base_size = NLMSG_ALIGN(sizeof(struct nduseroptmsg)
+अटल व्योम ndisc_ra_useropt(काष्ठा sk_buff *ra, काष्ठा nd_opt_hdr *opt)
+अणु
+	काष्ठा icmp6hdr *icmp6h = (काष्ठा icmp6hdr *)skb_transport_header(ra);
+	काष्ठा sk_buff *skb;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा nduseropपंचांगsg *ndmsg;
+	काष्ठा net *net = dev_net(ra->dev);
+	पूर्णांक err;
+	पूर्णांक base_size = NLMSG_ALIGN(माप(काष्ठा nduseropपंचांगsg)
 				    + (opt->nd_opt_len << 3));
-	size_t msg_size = base_size + nla_total_size(sizeof(struct in6_addr));
+	माप_प्रकार msg_size = base_size + nla_total_size(माप(काष्ठा in6_addr));
 
 	skb = nlmsg_new(msg_size, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		err = -ENOBUFS;
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	nlh = nlmsg_put(skb, 0, 0, RTM_NEWNDUSEROPT, base_size, 0);
-	if (!nlh) {
-		goto nla_put_failure;
-	}
+	अगर (!nlh) अणु
+		जाओ nla_put_failure;
+	पूर्ण
 
 	ndmsg = nlmsg_data(nlh);
 	ndmsg->nduseropt_family = AF_INET6;
-	ndmsg->nduseropt_ifindex = ra->dev->ifindex;
+	ndmsg->nduseropt_अगरindex = ra->dev->अगरindex;
 	ndmsg->nduseropt_icmp_type = icmp6h->icmp6_type;
 	ndmsg->nduseropt_icmp_code = icmp6h->icmp6_code;
 	ndmsg->nduseropt_opts_len = opt->nd_opt_len << 3;
 
-	memcpy(ndmsg + 1, opt, opt->nd_opt_len << 3);
+	स_नकल(ndmsg + 1, opt, opt->nd_opt_len << 3);
 
-	if (nla_put_in6_addr(skb, NDUSEROPT_SRCADDR, &ipv6_hdr(ra)->saddr))
-		goto nla_put_failure;
+	अगर (nla_put_in6_addr(skb, NDUSEROPT_SRCADDR, &ipv6_hdr(ra)->saddr))
+		जाओ nla_put_failure;
 	nlmsg_end(skb, nlh);
 
-	rtnl_notify(skb, net, 0, RTNLGRP_ND_USEROPT, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_ND_USEROPT, शून्य, GFP_ATOMIC);
+	वापस;
 
 nla_put_failure:
-	nlmsg_free(skb);
+	nlmsg_मुक्त(skb);
 	err = -EMSGSIZE;
 errout:
 	rtnl_set_sk_err(net, RTNLGRP_ND_USEROPT, err);
-}
+पूर्ण
 
-static void ndisc_router_discovery(struct sk_buff *skb)
-{
-	struct ra_msg *ra_msg = (struct ra_msg *)skb_transport_header(skb);
-	struct neighbour *neigh = NULL;
-	struct inet6_dev *in6_dev;
-	struct fib6_info *rt = NULL;
+अटल व्योम ndisc_router_discovery(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ra_msg *ra_msg = (काष्ठा ra_msg *)skb_transport_header(skb);
+	काष्ठा neighbour *neigh = शून्य;
+	काष्ठा inet6_dev *in6_dev;
+	काष्ठा fib6_info *rt = शून्य;
 	u32 defrtr_usr_metric;
-	struct net *net;
-	int lifetime;
-	struct ndisc_options ndopts;
-	int optlen;
-	unsigned int pref = 0;
-	__u32 old_if_flags;
-	bool send_ifinfo_notify = false;
+	काष्ठा net *net;
+	पूर्णांक lअगरeसमय;
+	काष्ठा ndisc_options nकरोpts;
+	पूर्णांक optlen;
+	अचिन्हित पूर्णांक pref = 0;
+	__u32 old_अगर_flags;
+	bool send_अगरinfo_notअगरy = false;
 
 	__u8 *opt = (__u8 *)(ra_msg + 1);
 
-	optlen = (skb_tail_pointer(skb) - skb_transport_header(skb)) -
-		sizeof(struct ra_msg);
+	optlen = (skb_tail_poपूर्णांकer(skb) - skb_transport_header(skb)) -
+		माप(काष्ठा ra_msg);
 
 	ND_PRINTK(2, info,
 		  "RA: %s, dev: %s\n",
 		  __func__, skb->dev->name);
-	if (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL)) {
+	अगर (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL)) अणु
 		ND_PRINTK(2, warn, "RA: source address is not link-local\n");
-		return;
-	}
-	if (optlen < 0) {
+		वापस;
+	पूर्ण
+	अगर (optlen < 0) अणु
 		ND_PRINTK(2, warn, "RA: packet too short\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_IPV6_NDISC_NODETYPE
-	if (skb->ndisc_nodetype == NDISC_NODETYPE_HOST) {
+#अगर_घोषित CONFIG_IPV6_NDISC_NODETYPE
+	अगर (skb->ndisc_nodetype == NDISC_NODETYPE_HOST) अणु
 		ND_PRINTK(2, warn, "RA: from host or unauthorized router\n");
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 *	set the RA_RECV flag in the interface
+	 *	set the RA_RECV flag in the पूर्णांकerface
 	 */
 
 	in6_dev = __in6_dev_get(skb->dev);
-	if (!in6_dev) {
+	अगर (!in6_dev) अणु
 		ND_PRINTK(0, err, "RA: can't find inet6 device for %s\n",
 			  skb->dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ndisc_parse_options(skb->dev, opt, optlen, &ndopts)) {
+	अगर (!ndisc_parse_options(skb->dev, opt, optlen, &nकरोpts)) अणु
 		ND_PRINTK(2, warn, "RA: invalid ND options\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ipv6_accept_ra(in6_dev)) {
+	अगर (!ipv6_accept_ra(in6_dev)) अणु
 		ND_PRINTK(2, info,
 			  "RA: %s, did not accept ra for dev: %s\n",
 			  __func__, skb->dev->name);
-		goto skip_linkparms;
-	}
+		जाओ skip_linkparms;
+	पूर्ण
 
-#ifdef CONFIG_IPV6_NDISC_NODETYPE
-	/* skip link-specific parameters from interior routers */
-	if (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT) {
+#अगर_घोषित CONFIG_IPV6_NDISC_NODETYPE
+	/* skip link-specअगरic parameters from पूर्णांकerior routers */
+	अगर (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT) अणु
 		ND_PRINTK(2, info,
 			  "RA: %s, nodetype is NODEFAULT, dev: %s\n",
 			  __func__, skb->dev->name);
-		goto skip_linkparms;
-	}
-#endif
+		जाओ skip_linkparms;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (in6_dev->if_flags & IF_RS_SENT) {
+	अगर (in6_dev->अगर_flags & IF_RS_SENT) अणु
 		/*
 		 *	flag that an RA was received after an RS was sent
-		 *	out on this interface.
+		 *	out on this पूर्णांकerface.
 		 */
-		in6_dev->if_flags |= IF_RA_RCVD;
-	}
+		in6_dev->अगर_flags |= IF_RA_RCVD;
+	पूर्ण
 
 	/*
 	 * Remember the managed/otherconf flags from most recently
 	 * received RA message (RFC 2462) -- yoshfuji
 	 */
-	old_if_flags = in6_dev->if_flags;
-	in6_dev->if_flags = (in6_dev->if_flags & ~(IF_RA_MANAGED |
+	old_अगर_flags = in6_dev->अगर_flags;
+	in6_dev->अगर_flags = (in6_dev->अगर_flags & ~(IF_RA_MANAGED |
 				IF_RA_OTHERCONF)) |
 				(ra_msg->icmph.icmp6_addrconf_managed ?
 					IF_RA_MANAGED : 0) |
 				(ra_msg->icmph.icmp6_addrconf_other ?
 					IF_RA_OTHERCONF : 0);
 
-	if (old_if_flags != in6_dev->if_flags)
-		send_ifinfo_notify = true;
+	अगर (old_अगर_flags != in6_dev->अगर_flags)
+		send_अगरinfo_notअगरy = true;
 
-	if (!in6_dev->cnf.accept_ra_defrtr) {
+	अगर (!in6_dev->cnf.accept_ra_defrtr) अणु
 		ND_PRINTK(2, info,
 			  "RA: %s, defrtr is false for dev: %s\n",
 			  __func__, skb->dev->name);
-		goto skip_defrtr;
-	}
+		जाओ skip_defrtr;
+	पूर्ण
 
 	/* Do not accept RA with source-addr found on local machine unless
 	 * accept_ra_from_local is set to true.
 	 */
 	net = dev_net(in6_dev->dev);
-	if (!in6_dev->cnf.accept_ra_from_local &&
-	    ipv6_chk_addr(net, &ipv6_hdr(skb)->saddr, in6_dev->dev, 0)) {
+	अगर (!in6_dev->cnf.accept_ra_from_local &&
+	    ipv6_chk_addr(net, &ipv6_hdr(skb)->saddr, in6_dev->dev, 0)) अणु
 		ND_PRINTK(2, info,
 			  "RA from local address detected on dev: %s: default router ignored\n",
 			  skb->dev->name);
-		goto skip_defrtr;
-	}
+		जाओ skip_defrtr;
+	पूर्ण
 
-	lifetime = ntohs(ra_msg->icmph.icmp6_rt_lifetime);
+	lअगरeसमय = ntohs(ra_msg->icmph.icmp6_rt_lअगरeसमय);
 
-#ifdef CONFIG_IPV6_ROUTER_PREF
+#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
 	pref = ra_msg->icmph.icmp6_router_pref;
-	/* 10b is handled as if it were 00b (medium) */
-	if (pref == ICMPV6_ROUTER_PREF_INVALID ||
+	/* 10b is handled as अगर it were 00b (medium) */
+	अगर (pref == ICMPV6_ROUTER_PREF_INVALID ||
 	    !in6_dev->cnf.accept_ra_rtr_pref)
 		pref = ICMPV6_ROUTER_PREF_MEDIUM;
-#endif
-	/* routes added from RAs do not use nexthop objects */
+#पूर्ण_अगर
+	/* routes added from RAs करो not use nexthop objects */
 	rt = rt6_get_dflt_router(net, &ipv6_hdr(skb)->saddr, skb->dev);
-	if (rt) {
+	अगर (rt) अणु
 		neigh = ip6_neigh_lookup(&rt->fib6_nh->fib_nh_gw6,
-					 rt->fib6_nh->fib_nh_dev, NULL,
+					 rt->fib6_nh->fib_nh_dev, शून्य,
 					  &ipv6_hdr(skb)->saddr);
-		if (!neigh) {
+		अगर (!neigh) अणु
 			ND_PRINTK(0, err,
 				  "RA: %s got default router without neighbour\n",
 				  __func__);
 			fib6_info_release(rt);
-			return;
-		}
-	}
-	/* Set default route metric as specified by user */
+			वापस;
+		पूर्ण
+	पूर्ण
+	/* Set शेष route metric as specअगरied by user */
 	defrtr_usr_metric = in6_dev->cnf.ra_defrtr_metric;
-	/* delete the route if lifetime is 0 or if metric needs change */
-	if (rt && (lifetime == 0 || rt->fib6_metric != defrtr_usr_metric)) {
+	/* delete the route अगर lअगरeसमय is 0 or अगर metric needs change */
+	अगर (rt && (lअगरeसमय == 0 || rt->fib6_metric != defrtr_usr_metric)) अणु
 		ip6_del_rt(net, rt, false);
-		rt = NULL;
-	}
+		rt = शून्य;
+	पूर्ण
 
 	ND_PRINTK(3, info, "RA: rt: %p  lifetime: %d, metric: %d, for dev: %s\n",
-		  rt, lifetime, defrtr_usr_metric, skb->dev->name);
-	if (!rt && lifetime) {
+		  rt, lअगरeसमय, defrtr_usr_metric, skb->dev->name);
+	अगर (!rt && lअगरeसमय) अणु
 		ND_PRINTK(3, info, "RA: adding default router\n");
 
 		rt = rt6_add_dflt_router(net, &ipv6_hdr(skb)->saddr,
 					 skb->dev, pref, defrtr_usr_metric);
-		if (!rt) {
+		अगर (!rt) अणु
 			ND_PRINTK(0, err,
 				  "RA: %s failed to add default route\n",
 				  __func__);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		neigh = ip6_neigh_lookup(&rt->fib6_nh->fib_nh_gw6,
-					 rt->fib6_nh->fib_nh_dev, NULL,
+					 rt->fib6_nh->fib_nh_dev, शून्य,
 					  &ipv6_hdr(skb)->saddr);
-		if (!neigh) {
+		अगर (!neigh) अणु
 			ND_PRINTK(0, err,
 				  "RA: %s got default router without neighbour\n",
 				  __func__);
 			fib6_info_release(rt);
-			return;
-		}
+			वापस;
+		पूर्ण
 		neigh->flags |= NTF_ROUTER;
-	} else if (rt) {
+	पूर्ण अन्यथा अगर (rt) अणु
 		rt->fib6_flags = (rt->fib6_flags & ~RTF_PREF_MASK) | RTF_PREF(pref);
-	}
+	पूर्ण
 
-	if (rt)
-		fib6_set_expires(rt, jiffies + (HZ * lifetime));
-	if (in6_dev->cnf.accept_ra_min_hop_limit < 256 &&
-	    ra_msg->icmph.icmp6_hop_limit) {
-		if (in6_dev->cnf.accept_ra_min_hop_limit <= ra_msg->icmph.icmp6_hop_limit) {
+	अगर (rt)
+		fib6_set_expires(rt, jअगरfies + (HZ * lअगरeसमय));
+	अगर (in6_dev->cnf.accept_ra_min_hop_limit < 256 &&
+	    ra_msg->icmph.icmp6_hop_limit) अणु
+		अगर (in6_dev->cnf.accept_ra_min_hop_limit <= ra_msg->icmph.icmp6_hop_limit) अणु
 			in6_dev->cnf.hop_limit = ra_msg->icmph.icmp6_hop_limit;
 			fib6_metric_set(rt, RTAX_HOPLIMIT,
 					ra_msg->icmph.icmp6_hop_limit);
-		} else {
+		पूर्ण अन्यथा अणु
 			ND_PRINTK(2, warn, "RA: Got route advertisement with lower hop_limit than minimum\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 skip_defrtr:
 
@@ -1360,42 +1361,42 @@ skip_defrtr:
 	 *	Update Reachable Time and Retrans Timer
 	 */
 
-	if (in6_dev->nd_parms) {
-		unsigned long rtime = ntohl(ra_msg->retrans_timer);
+	अगर (in6_dev->nd_parms) अणु
+		अचिन्हित दीर्घ rसमय = ntohl(ra_msg->retrans_समयr);
 
-		if (rtime && rtime/1000 < MAX_SCHEDULE_TIMEOUT/HZ) {
-			rtime = (rtime*HZ)/1000;
-			if (rtime < HZ/100)
-				rtime = HZ/100;
-			NEIGH_VAR_SET(in6_dev->nd_parms, RETRANS_TIME, rtime);
-			in6_dev->tstamp = jiffies;
-			send_ifinfo_notify = true;
-		}
+		अगर (rसमय && rसमय/1000 < MAX_SCHEDULE_TIMEOUT/HZ) अणु
+			rसमय = (rसमय*HZ)/1000;
+			अगर (rसमय < HZ/100)
+				rसमय = HZ/100;
+			NEIGH_VAR_SET(in6_dev->nd_parms, RETRANS_TIME, rसमय);
+			in6_dev->tstamp = jअगरfies;
+			send_अगरinfo_notअगरy = true;
+		पूर्ण
 
-		rtime = ntohl(ra_msg->reachable_time);
-		if (rtime && rtime/1000 < MAX_SCHEDULE_TIMEOUT/(3*HZ)) {
-			rtime = (rtime*HZ)/1000;
+		rसमय = ntohl(ra_msg->reachable_समय);
+		अगर (rसमय && rसमय/1000 < MAX_SCHEDULE_TIMEOUT/(3*HZ)) अणु
+			rसमय = (rसमय*HZ)/1000;
 
-			if (rtime < HZ/10)
-				rtime = HZ/10;
+			अगर (rसमय < HZ/10)
+				rसमय = HZ/10;
 
-			if (rtime != NEIGH_VAR(in6_dev->nd_parms, BASE_REACHABLE_TIME)) {
+			अगर (rसमय != NEIGH_VAR(in6_dev->nd_parms, BASE_REACHABLE_TIME)) अणु
 				NEIGH_VAR_SET(in6_dev->nd_parms,
-					      BASE_REACHABLE_TIME, rtime);
+					      BASE_REACHABLE_TIME, rसमय);
 				NEIGH_VAR_SET(in6_dev->nd_parms,
-					      GC_STALETIME, 3 * rtime);
-				in6_dev->nd_parms->reachable_time = neigh_rand_reach_time(rtime);
-				in6_dev->tstamp = jiffies;
-				send_ifinfo_notify = true;
-			}
-		}
-	}
+					      GC_STALETIME, 3 * rसमय);
+				in6_dev->nd_parms->reachable_समय = neigh_अक्रम_reach_समय(rसमय);
+				in6_dev->tstamp = jअगरfies;
+				send_अगरinfo_notअगरy = true;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 *	Send a notify if RA changed managed/otherconf flags or timer settings
+	 *	Send a notअगरy अगर RA changed managed/otherconf flags or समयr settings
 	 */
-	if (send_ifinfo_notify)
-		inet6_ifinfo_notify(RTM_NEWLINK, in6_dev);
+	अगर (send_अगरinfo_notअगरy)
+		inet6_अगरinfo_notअगरy(RTM_NEWLINK, in6_dev);
 
 skip_linkparms:
 
@@ -1403,502 +1404,502 @@ skip_linkparms:
 	 *	Process options.
 	 */
 
-	if (!neigh)
+	अगर (!neigh)
 		neigh = __neigh_lookup(&nd_tbl, &ipv6_hdr(skb)->saddr,
 				       skb->dev, 1);
-	if (neigh) {
-		u8 *lladdr = NULL;
-		if (ndopts.nd_opts_src_lladdr) {
-			lladdr = ndisc_opt_addr_data(ndopts.nd_opts_src_lladdr,
+	अगर (neigh) अणु
+		u8 *lladdr = शून्य;
+		अगर (nकरोpts.nd_opts_src_lladdr) अणु
+			lladdr = ndisc_opt_addr_data(nकरोpts.nd_opts_src_lladdr,
 						     skb->dev);
-			if (!lladdr) {
+			अगर (!lladdr) अणु
 				ND_PRINTK(2, warn,
 					  "RA: invalid link-layer address length\n");
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 		ndisc_update(skb->dev, neigh, lladdr, NUD_STALE,
 			     NEIGH_UPDATE_F_WEAK_OVERRIDE|
 			     NEIGH_UPDATE_F_OVERRIDE|
 			     NEIGH_UPDATE_F_OVERRIDE_ISROUTER|
 			     NEIGH_UPDATE_F_ISROUTER,
-			     NDISC_ROUTER_ADVERTISEMENT, &ndopts);
-	}
+			     NDISC_ROUTER_ADVERTISEMENT, &nकरोpts);
+	पूर्ण
 
-	if (!ipv6_accept_ra(in6_dev)) {
+	अगर (!ipv6_accept_ra(in6_dev)) अणु
 		ND_PRINTK(2, info,
 			  "RA: %s, accept_ra is false for dev: %s\n",
 			  __func__, skb->dev->name);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-#ifdef CONFIG_IPV6_ROUTE_INFO
-	if (!in6_dev->cnf.accept_ra_from_local &&
+#अगर_घोषित CONFIG_IPV6_ROUTE_INFO
+	अगर (!in6_dev->cnf.accept_ra_from_local &&
 	    ipv6_chk_addr(dev_net(in6_dev->dev), &ipv6_hdr(skb)->saddr,
-			  in6_dev->dev, 0)) {
+			  in6_dev->dev, 0)) अणु
 		ND_PRINTK(2, info,
 			  "RA from local address detected on dev: %s: router info ignored.\n",
 			  skb->dev->name);
-		goto skip_routeinfo;
-	}
+		जाओ skip_routeinfo;
+	पूर्ण
 
-	if (in6_dev->cnf.accept_ra_rtr_pref && ndopts.nd_opts_ri) {
-		struct nd_opt_hdr *p;
-		for (p = ndopts.nd_opts_ri;
+	अगर (in6_dev->cnf.accept_ra_rtr_pref && nकरोpts.nd_opts_ri) अणु
+		काष्ठा nd_opt_hdr *p;
+		क्रम (p = nकरोpts.nd_opts_ri;
 		     p;
-		     p = ndisc_next_option(p, ndopts.nd_opts_ri_end)) {
-			struct route_info *ri = (struct route_info *)p;
-#ifdef CONFIG_IPV6_NDISC_NODETYPE
-			if (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT &&
+		     p = ndisc_next_option(p, nकरोpts.nd_opts_ri_end)) अणु
+			काष्ठा route_info *ri = (काष्ठा route_info *)p;
+#अगर_घोषित CONFIG_IPV6_NDISC_NODETYPE
+			अगर (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT &&
 			    ri->prefix_len == 0)
-				continue;
-#endif
-			if (ri->prefix_len == 0 &&
+				जारी;
+#पूर्ण_अगर
+			अगर (ri->prefix_len == 0 &&
 			    !in6_dev->cnf.accept_ra_defrtr)
-				continue;
-			if (ri->prefix_len < in6_dev->cnf.accept_ra_rt_info_min_plen)
-				continue;
-			if (ri->prefix_len > in6_dev->cnf.accept_ra_rt_info_max_plen)
-				continue;
+				जारी;
+			अगर (ri->prefix_len < in6_dev->cnf.accept_ra_rt_info_min_plen)
+				जारी;
+			अगर (ri->prefix_len > in6_dev->cnf.accept_ra_rt_info_max_plen)
+				जारी;
 			rt6_route_rcv(skb->dev, (u8 *)p, (p->nd_opt_len) << 3,
 				      &ipv6_hdr(skb)->saddr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 skip_routeinfo:
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_IPV6_NDISC_NODETYPE
-	/* skip link-specific ndopts from interior routers */
-	if (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT) {
+#अगर_घोषित CONFIG_IPV6_NDISC_NODETYPE
+	/* skip link-specअगरic nकरोpts from पूर्णांकerior routers */
+	अगर (skb->ndisc_nodetype == NDISC_NODETYPE_NODEFAULT) अणु
 		ND_PRINTK(2, info,
 			  "RA: %s, nodetype is NODEFAULT (interior routes), dev: %s\n",
 			  __func__, skb->dev->name);
-		goto out;
-	}
-#endif
+		जाओ out;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (in6_dev->cnf.accept_ra_pinfo && ndopts.nd_opts_pi) {
-		struct nd_opt_hdr *p;
-		for (p = ndopts.nd_opts_pi;
+	अगर (in6_dev->cnf.accept_ra_pinfo && nकरोpts.nd_opts_pi) अणु
+		काष्ठा nd_opt_hdr *p;
+		क्रम (p = nकरोpts.nd_opts_pi;
 		     p;
-		     p = ndisc_next_option(p, ndopts.nd_opts_pi_end)) {
+		     p = ndisc_next_option(p, nकरोpts.nd_opts_pi_end)) अणु
 			addrconf_prefix_rcv(skb->dev, (u8 *)p,
 					    (p->nd_opt_len) << 3,
-					    ndopts.nd_opts_src_lladdr != NULL);
-		}
-	}
+					    nकरोpts.nd_opts_src_lladdr != शून्य);
+		पूर्ण
+	पूर्ण
 
-	if (ndopts.nd_opts_mtu && in6_dev->cnf.accept_ra_mtu) {
+	अगर (nकरोpts.nd_opts_mtu && in6_dev->cnf.accept_ra_mtu) अणु
 		__be32 n;
 		u32 mtu;
 
-		memcpy(&n, ((u8 *)(ndopts.nd_opts_mtu+1))+2, sizeof(mtu));
+		स_नकल(&n, ((u8 *)(nकरोpts.nd_opts_mtu+1))+2, माप(mtu));
 		mtu = ntohl(n);
 
-		if (mtu < IPV6_MIN_MTU || mtu > skb->dev->mtu) {
+		अगर (mtu < IPV6_MIN_MTU || mtu > skb->dev->mtu) अणु
 			ND_PRINTK(2, warn, "RA: invalid mtu: %d\n", mtu);
-		} else if (in6_dev->cnf.mtu6 != mtu) {
+		पूर्ण अन्यथा अगर (in6_dev->cnf.mtu6 != mtu) अणु
 			in6_dev->cnf.mtu6 = mtu;
 			fib6_metric_set(rt, RTAX_MTU, mtu);
 			rt6_mtu_change(skb->dev, mtu);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ndopts.nd_useropts) {
-		struct nd_opt_hdr *p;
-		for (p = ndopts.nd_useropts;
+	अगर (nकरोpts.nd_useropts) अणु
+		काष्ठा nd_opt_hdr *p;
+		क्रम (p = nकरोpts.nd_useropts;
 		     p;
 		     p = ndisc_next_useropt(skb->dev, p,
-					    ndopts.nd_useropts_end)) {
+					    nकरोpts.nd_useropts_end)) अणु
 			ndisc_ra_useropt(skb, p);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ndopts.nd_opts_tgt_lladdr || ndopts.nd_opts_rh) {
+	अगर (nकरोpts.nd_opts_tgt_lladdr || nकरोpts.nd_opts_rh) अणु
 		ND_PRINTK(2, warn, "RA: invalid RA options\n");
-	}
+	पूर्ण
 out:
 	fib6_info_release(rt);
-	if (neigh)
+	अगर (neigh)
 		neigh_release(neigh);
-}
+पूर्ण
 
-static void ndisc_redirect_rcv(struct sk_buff *skb)
-{
+अटल व्योम ndisc_redirect_rcv(काष्ठा sk_buff *skb)
+अणु
 	u8 *hdr;
-	struct ndisc_options ndopts;
-	struct rd_msg *msg = (struct rd_msg *)skb_transport_header(skb);
-	u32 ndoptlen = skb_tail_pointer(skb) - (skb_transport_header(skb) +
-				    offsetof(struct rd_msg, opt));
+	काष्ठा ndisc_options nकरोpts;
+	काष्ठा rd_msg *msg = (काष्ठा rd_msg *)skb_transport_header(skb);
+	u32 nकरोptlen = skb_tail_poपूर्णांकer(skb) - (skb_transport_header(skb) +
+				    दुरत्व(काष्ठा rd_msg, opt));
 
-#ifdef CONFIG_IPV6_NDISC_NODETYPE
-	switch (skb->ndisc_nodetype) {
-	case NDISC_NODETYPE_HOST:
-	case NDISC_NODETYPE_NODEFAULT:
+#अगर_घोषित CONFIG_IPV6_NDISC_NODETYPE
+	चयन (skb->ndisc_nodetype) अणु
+	हाल NDISC_NODETYPE_HOST:
+	हाल NDISC_NODETYPE_NODEFAULT:
 		ND_PRINTK(2, warn,
 			  "Redirect: from host or unauthorized router\n");
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL)) {
+	अगर (!(ipv6_addr_type(&ipv6_hdr(skb)->saddr) & IPV6_ADDR_LINKLOCAL)) अणु
 		ND_PRINTK(2, warn,
 			  "Redirect: source address is not link-local\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ndisc_parse_options(skb->dev, msg->opt, ndoptlen, &ndopts))
-		return;
+	अगर (!ndisc_parse_options(skb->dev, msg->opt, nकरोptlen, &nकरोpts))
+		वापस;
 
-	if (!ndopts.nd_opts_rh) {
+	अगर (!nकरोpts.nd_opts_rh) अणु
 		ip6_redirect_no_header(skb, dev_net(skb->dev),
-					skb->dev->ifindex);
-		return;
-	}
+					skb->dev->अगरindex);
+		वापस;
+	पूर्ण
 
-	hdr = (u8 *)ndopts.nd_opts_rh;
+	hdr = (u8 *)nकरोpts.nd_opts_rh;
 	hdr += 8;
-	if (!pskb_pull(skb, hdr - skb_transport_header(skb)))
-		return;
+	अगर (!pskb_pull(skb, hdr - skb_transport_header(skb)))
+		वापस;
 
-	icmpv6_notify(skb, NDISC_REDIRECT, 0, 0);
-}
+	icmpv6_notअगरy(skb, NDISC_REसूचीECT, 0, 0);
+पूर्ण
 
-static void ndisc_fill_redirect_hdr_option(struct sk_buff *skb,
-					   struct sk_buff *orig_skb,
-					   int rd_len)
-{
+अटल व्योम ndisc_fill_redirect_hdr_option(काष्ठा sk_buff *skb,
+					   काष्ठा sk_buff *orig_skb,
+					   पूर्णांक rd_len)
+अणु
 	u8 *opt = skb_put(skb, rd_len);
 
-	memset(opt, 0, 8);
-	*(opt++) = ND_OPT_REDIRECT_HDR;
+	स_रखो(opt, 0, 8);
+	*(opt++) = ND_OPT_REसूचीECT_HDR;
 	*(opt++) = (rd_len >> 3);
 	opt += 6;
 
 	skb_copy_bits(orig_skb, skb_network_offset(orig_skb), opt,
 		      rd_len - 8);
-}
+पूर्ण
 
-void ndisc_send_redirect(struct sk_buff *skb, const struct in6_addr *target)
-{
-	struct net_device *dev = skb->dev;
-	struct net *net = dev_net(dev);
-	struct sock *sk = net->ipv6.ndisc_sk;
-	int optlen = 0;
-	struct inet_peer *peer;
-	struct sk_buff *buff;
-	struct rd_msg *msg;
-	struct in6_addr saddr_buf;
-	struct rt6_info *rt;
-	struct dst_entry *dst;
-	struct flowi6 fl6;
-	int rd_len;
-	u8 ha_buf[MAX_ADDR_LEN], *ha = NULL,
-	   ops_data_buf[NDISC_OPS_REDIRECT_DATA_SPACE], *ops_data = NULL;
+व्योम ndisc_send_redirect(काष्ठा sk_buff *skb, स्थिर काष्ठा in6_addr *target)
+अणु
+	काष्ठा net_device *dev = skb->dev;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा sock *sk = net->ipv6.ndisc_sk;
+	पूर्णांक optlen = 0;
+	काष्ठा inet_peer *peer;
+	काष्ठा sk_buff *buff;
+	काष्ठा rd_msg *msg;
+	काष्ठा in6_addr saddr_buf;
+	काष्ठा rt6_info *rt;
+	काष्ठा dst_entry *dst;
+	काष्ठा flowi6 fl6;
+	पूर्णांक rd_len;
+	u8 ha_buf[MAX_ADDR_LEN], *ha = शून्य,
+	   ops_data_buf[NDISC_OPS_REसूचीECT_DATA_SPACE], *ops_data = शून्य;
 	bool ret;
 
-	if (netif_is_l3_master(skb->dev)) {
-		dev = __dev_get_by_index(dev_net(skb->dev), IPCB(skb)->iif);
-		if (!dev)
-			return;
-	}
+	अगर (netअगर_is_l3_master(skb->dev)) अणु
+		dev = __dev_get_by_index(dev_net(skb->dev), IPCB(skb)->iअगर);
+		अगर (!dev)
+			वापस;
+	पूर्ण
 
-	if (ipv6_get_lladdr(dev, &saddr_buf, IFA_F_TENTATIVE)) {
+	अगर (ipv6_get_lladdr(dev, &saddr_buf, IFA_F_TENTATIVE)) अणु
 		ND_PRINTK(2, warn, "Redirect: no link-local address on %s\n",
 			  dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!ipv6_addr_equal(&ipv6_hdr(skb)->daddr, target) &&
-	    ipv6_addr_type(target) != (IPV6_ADDR_UNICAST|IPV6_ADDR_LINKLOCAL)) {
+	अगर (!ipv6_addr_equal(&ipv6_hdr(skb)->daddr, target) &&
+	    ipv6_addr_type(target) != (IPV6_ADDR_UNICAST|IPV6_ADDR_LINKLOCAL)) अणु
 		ND_PRINTK(2, warn,
 			  "Redirect: target address is not link-local unicast\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	icmpv6_flow_init(sk, &fl6, NDISC_REDIRECT,
-			 &saddr_buf, &ipv6_hdr(skb)->saddr, dev->ifindex);
+	icmpv6_flow_init(sk, &fl6, NDISC_REसूचीECT,
+			 &saddr_buf, &ipv6_hdr(skb)->saddr, dev->अगरindex);
 
-	dst = ip6_route_output(net, NULL, &fl6);
-	if (dst->error) {
+	dst = ip6_route_output(net, शून्य, &fl6);
+	अगर (dst->error) अणु
 		dst_release(dst);
-		return;
-	}
-	dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), NULL, 0);
-	if (IS_ERR(dst))
-		return;
+		वापस;
+	पूर्ण
+	dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), शून्य, 0);
+	अगर (IS_ERR(dst))
+		वापस;
 
-	rt = (struct rt6_info *) dst;
+	rt = (काष्ठा rt6_info *) dst;
 
-	if (rt->rt6i_flags & RTF_GATEWAY) {
+	अगर (rt->rt6i_flags & RTF_GATEWAY) अणु
 		ND_PRINTK(2, warn,
 			  "Redirect: destination is not a neighbour\n");
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 	peer = inet_getpeer_v6(net->ipv6.peers, &ipv6_hdr(skb)->saddr, 1);
 	ret = inet_peer_xrlim_allow(peer, 1*HZ);
-	if (peer)
+	अगर (peer)
 		inet_putpeer(peer);
-	if (!ret)
-		goto release;
+	अगर (!ret)
+		जाओ release;
 
-	if (dev->addr_len) {
-		struct neighbour *neigh = dst_neigh_lookup(skb_dst(skb), target);
-		if (!neigh) {
+	अगर (dev->addr_len) अणु
+		काष्ठा neighbour *neigh = dst_neigh_lookup(skb_dst(skb), target);
+		अगर (!neigh) अणु
 			ND_PRINTK(2, warn,
 				  "Redirect: no neigh for target address\n");
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		read_lock_bh(&neigh->lock);
-		if (neigh->nud_state & NUD_VALID) {
-			memcpy(ha_buf, neigh->ha, dev->addr_len);
-			read_unlock_bh(&neigh->lock);
+		पढ़ो_lock_bh(&neigh->lock);
+		अगर (neigh->nud_state & NUD_VALID) अणु
+			स_नकल(ha_buf, neigh->ha, dev->addr_len);
+			पढ़ो_unlock_bh(&neigh->lock);
 			ha = ha_buf;
 			optlen += ndisc_redirect_opt_addr_space(dev, neigh,
 								ops_data_buf,
 								&ops_data);
-		} else
-			read_unlock_bh(&neigh->lock);
+		पूर्ण अन्यथा
+			पढ़ो_unlock_bh(&neigh->lock);
 
 		neigh_release(neigh);
-	}
+	पूर्ण
 
-	rd_len = min_t(unsigned int,
-		       IPV6_MIN_MTU - sizeof(struct ipv6hdr) - sizeof(*msg) - optlen,
+	rd_len = min_t(अचिन्हित पूर्णांक,
+		       IPV6_MIN_MTU - माप(काष्ठा ipv6hdr) - माप(*msg) - optlen,
 		       skb->len + 8);
 	rd_len &= ~0x7;
 	optlen += rd_len;
 
-	buff = ndisc_alloc_skb(dev, sizeof(*msg) + optlen);
-	if (!buff)
-		goto release;
+	buff = ndisc_alloc_skb(dev, माप(*msg) + optlen);
+	अगर (!buff)
+		जाओ release;
 
-	msg = skb_put(buff, sizeof(*msg));
-	*msg = (struct rd_msg) {
-		.icmph = {
-			.icmp6_type = NDISC_REDIRECT,
-		},
+	msg = skb_put(buff, माप(*msg));
+	*msg = (काष्ठा rd_msg) अणु
+		.icmph = अणु
+			.icmp6_type = NDISC_REसूचीECT,
+		पूर्ण,
 		.target = *target,
 		.dest = ipv6_hdr(skb)->daddr,
-	};
+	पूर्ण;
 
 	/*
 	 *	include target_address option
 	 */
 
-	if (ha)
+	अगर (ha)
 		ndisc_fill_redirect_addr_option(buff, ha, ops_data);
 
 	/*
 	 *	build redirect option and copy skb over to the new packet.
 	 */
 
-	if (rd_len)
+	अगर (rd_len)
 		ndisc_fill_redirect_hdr_option(buff, skb, rd_len);
 
 	skb_dst_set(buff, dst);
 	ndisc_send_skb(buff, &ipv6_hdr(skb)->saddr, &saddr_buf);
-	return;
+	वापस;
 
 release:
 	dst_release(dst);
-}
+पूर्ण
 
-static void pndisc_redo(struct sk_buff *skb)
-{
+अटल व्योम pndisc_reकरो(काष्ठा sk_buff *skb)
+अणु
 	ndisc_recv_ns(skb);
-	kfree_skb(skb);
-}
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int ndisc_is_multicast(const void *pkey)
-{
-	return ipv6_addr_is_multicast((struct in6_addr *)pkey);
-}
+अटल पूर्णांक ndisc_is_multicast(स्थिर व्योम *pkey)
+अणु
+	वापस ipv6_addr_is_multicast((काष्ठा in6_addr *)pkey);
+पूर्ण
 
-static bool ndisc_suppress_frag_ndisc(struct sk_buff *skb)
-{
-	struct inet6_dev *idev = __in6_dev_get(skb->dev);
+अटल bool ndisc_suppress_frag_ndisc(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा inet6_dev *idev = __in6_dev_get(skb->dev);
 
-	if (!idev)
-		return true;
-	if (IP6CB(skb)->flags & IP6SKB_FRAGMENTED &&
-	    idev->cnf.suppress_frag_ndisc) {
+	अगर (!idev)
+		वापस true;
+	अगर (IP6CB(skb)->flags & IP6SKB_FRAGMENTED &&
+	    idev->cnf.suppress_frag_ndisc) अणु
 		net_warn_ratelimited("Received fragmented ndisc packet. Carefully consider disabling suppress_frag_ndisc.\n");
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-int ndisc_rcv(struct sk_buff *skb)
-{
-	struct nd_msg *msg;
+पूर्णांक ndisc_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nd_msg *msg;
 
-	if (ndisc_suppress_frag_ndisc(skb))
-		return 0;
+	अगर (ndisc_suppress_frag_ndisc(skb))
+		वापस 0;
 
-	if (skb_linearize(skb))
-		return 0;
+	अगर (skb_linearize(skb))
+		वापस 0;
 
-	msg = (struct nd_msg *)skb_transport_header(skb);
+	msg = (काष्ठा nd_msg *)skb_transport_header(skb);
 
 	__skb_push(skb, skb->data - skb_transport_header(skb));
 
-	if (ipv6_hdr(skb)->hop_limit != 255) {
+	अगर (ipv6_hdr(skb)->hop_limit != 255) अणु
 		ND_PRINTK(2, warn, "NDISC: invalid hop-limit: %d\n",
 			  ipv6_hdr(skb)->hop_limit);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (msg->icmph.icmp6_code != 0) {
+	अगर (msg->icmph.icmp6_code != 0) अणु
 		ND_PRINTK(2, warn, "NDISC: invalid ICMPv6 code: %d\n",
 			  msg->icmph.icmp6_code);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (msg->icmph.icmp6_type) {
-	case NDISC_NEIGHBOUR_SOLICITATION:
-		memset(NEIGH_CB(skb), 0, sizeof(struct neighbour_cb));
+	चयन (msg->icmph.icmp6_type) अणु
+	हाल NDISC_NEIGHBOUR_SOLICITATION:
+		स_रखो(NEIGH_CB(skb), 0, माप(काष्ठा neighbour_cb));
 		ndisc_recv_ns(skb);
-		break;
+		अवरोध;
 
-	case NDISC_NEIGHBOUR_ADVERTISEMENT:
+	हाल NDISC_NEIGHBOUR_ADVERTISEMENT:
 		ndisc_recv_na(skb);
-		break;
+		अवरोध;
 
-	case NDISC_ROUTER_SOLICITATION:
+	हाल NDISC_ROUTER_SOLICITATION:
 		ndisc_recv_rs(skb);
-		break;
+		अवरोध;
 
-	case NDISC_ROUTER_ADVERTISEMENT:
+	हाल NDISC_ROUTER_ADVERTISEMENT:
 		ndisc_router_discovery(skb);
-		break;
+		अवरोध;
 
-	case NDISC_REDIRECT:
+	हाल NDISC_REसूचीECT:
 		ndisc_redirect_rcv(skb);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ndisc_netdev_event(struct notifier_block *this, unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct netdev_notifier_change_info *change_info;
-	struct net *net = dev_net(dev);
-	struct inet6_dev *idev;
+अटल पूर्णांक ndisc_netdev_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा netdev_notअगरier_change_info *change_info;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा inet6_dev *idev;
 
-	switch (event) {
-	case NETDEV_CHANGEADDR:
+	चयन (event) अणु
+	हाल NETDEV_CHANGEADDR:
 		neigh_changeaddr(&nd_tbl, dev);
 		fib6_run_gc(0, net, false);
 		fallthrough;
-	case NETDEV_UP:
+	हाल NETDEV_UP:
 		idev = in6_dev_get(dev);
-		if (!idev)
-			break;
-		if (idev->cnf.ndisc_notify ||
-		    net->ipv6.devconf_all->ndisc_notify)
+		अगर (!idev)
+			अवरोध;
+		अगर (idev->cnf.ndisc_notअगरy ||
+		    net->ipv6.devconf_all->ndisc_notअगरy)
 			ndisc_send_unsol_na(dev);
 		in6_dev_put(idev);
-		break;
-	case NETDEV_CHANGE:
+		अवरोध;
+	हाल NETDEV_CHANGE:
 		change_info = ptr;
-		if (change_info->flags_changed & IFF_NOARP)
+		अगर (change_info->flags_changed & IFF_NOARP)
 			neigh_changeaddr(&nd_tbl, dev);
-		if (!netif_carrier_ok(dev))
-			neigh_carrier_down(&nd_tbl, dev);
-		break;
-	case NETDEV_DOWN:
-		neigh_ifdown(&nd_tbl, dev);
+		अगर (!netअगर_carrier_ok(dev))
+			neigh_carrier_करोwn(&nd_tbl, dev);
+		अवरोध;
+	हाल NETDEV_DOWN:
+		neigh_अगरकरोwn(&nd_tbl, dev);
 		fib6_run_gc(0, net, false);
-		break;
-	case NETDEV_NOTIFY_PEERS:
+		अवरोध;
+	हाल NETDEV_NOTIFY_PEERS:
 		ndisc_send_unsol_na(dev);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block ndisc_netdev_notifier = {
-	.notifier_call = ndisc_netdev_event,
+अटल काष्ठा notअगरier_block ndisc_netdev_notअगरier = अणु
+	.notअगरier_call = ndisc_netdev_event,
 	.priority = ADDRCONF_NOTIFY_PRIORITY - 5,
-};
+पूर्ण;
 
-#ifdef CONFIG_SYSCTL
-static void ndisc_warn_deprecated_sysctl(struct ctl_table *ctl,
-					 const char *func, const char *dev_name)
-{
-	static char warncomm[TASK_COMM_LEN];
-	static int warned;
-	if (strcmp(warncomm, current->comm) && warned < 5) {
-		strcpy(warncomm, current->comm);
+#अगर_घोषित CONFIG_SYSCTL
+अटल व्योम ndisc_warn_deprecated_sysctl(काष्ठा ctl_table *ctl,
+					 स्थिर अक्षर *func, स्थिर अक्षर *dev_name)
+अणु
+	अटल अक्षर warncomm[TASK_COMM_LEN];
+	अटल पूर्णांक warned;
+	अगर (म_भेद(warncomm, current->comm) && warned < 5) अणु
+		म_नकल(warncomm, current->comm);
 		pr_warn("process `%s' is using deprecated sysctl (%s) net.ipv6.neigh.%s.%s - use net.ipv6.neigh.%s.%s_ms instead\n",
 			warncomm, func,
 			dev_name, ctl->procname,
 			dev_name, ctl->procname);
 		warned++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ndisc_ifinfo_sysctl_change(struct ctl_table *ctl, int write, void *buffer,
-		size_t *lenp, loff_t *ppos)
-{
-	struct net_device *dev = ctl->extra1;
-	struct inet6_dev *idev;
-	int ret;
+पूर्णांक ndisc_अगरinfo_sysctl_change(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो, व्योम *buffer,
+		माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	काष्ठा net_device *dev = ctl->extra1;
+	काष्ठा inet6_dev *idev;
+	पूर्णांक ret;
 
-	if ((strcmp(ctl->procname, "retrans_time") == 0) ||
-	    (strcmp(ctl->procname, "base_reachable_time") == 0))
+	अगर ((म_भेद(ctl->procname, "retrans_time") == 0) ||
+	    (म_भेद(ctl->procname, "base_reachable_time") == 0))
 		ndisc_warn_deprecated_sysctl(ctl, "syscall", dev ? dev->name : "default");
 
-	if (strcmp(ctl->procname, "retrans_time") == 0)
-		ret = neigh_proc_dointvec(ctl, write, buffer, lenp, ppos);
+	अगर (म_भेद(ctl->procname, "retrans_time") == 0)
+		ret = neigh_proc_करोपूर्णांकvec(ctl, ग_लिखो, buffer, lenp, ppos);
 
-	else if (strcmp(ctl->procname, "base_reachable_time") == 0)
-		ret = neigh_proc_dointvec_jiffies(ctl, write,
+	अन्यथा अगर (म_भेद(ctl->procname, "base_reachable_time") == 0)
+		ret = neigh_proc_करोपूर्णांकvec_jअगरfies(ctl, ग_लिखो,
 						  buffer, lenp, ppos);
 
-	else if ((strcmp(ctl->procname, "retrans_time_ms") == 0) ||
-		 (strcmp(ctl->procname, "base_reachable_time_ms") == 0))
-		ret = neigh_proc_dointvec_ms_jiffies(ctl, write,
+	अन्यथा अगर ((म_भेद(ctl->procname, "retrans_time_ms") == 0) ||
+		 (म_भेद(ctl->procname, "base_reachable_time_ms") == 0))
+		ret = neigh_proc_करोपूर्णांकvec_ms_jअगरfies(ctl, ग_लिखो,
 						     buffer, lenp, ppos);
-	else
+	अन्यथा
 		ret = -1;
 
-	if (write && ret == 0 && dev && (idev = in6_dev_get(dev)) != NULL) {
-		if (ctl->data == &NEIGH_VAR(idev->nd_parms, BASE_REACHABLE_TIME))
-			idev->nd_parms->reachable_time =
-					neigh_rand_reach_time(NEIGH_VAR(idev->nd_parms, BASE_REACHABLE_TIME));
-		idev->tstamp = jiffies;
-		inet6_ifinfo_notify(RTM_NEWLINK, idev);
+	अगर (ग_लिखो && ret == 0 && dev && (idev = in6_dev_get(dev)) != शून्य) अणु
+		अगर (ctl->data == &NEIGH_VAR(idev->nd_parms, BASE_REACHABLE_TIME))
+			idev->nd_parms->reachable_समय =
+					neigh_अक्रम_reach_समय(NEIGH_VAR(idev->nd_parms, BASE_REACHABLE_TIME));
+		idev->tstamp = jअगरfies;
+		inet6_अगरinfo_notअगरy(RTM_NEWLINK, idev);
 		in6_dev_put(idev);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-#endif
+#पूर्ण_अगर
 
-static int __net_init ndisc_net_init(struct net *net)
-{
-	struct ipv6_pinfo *np;
-	struct sock *sk;
-	int err;
+अटल पूर्णांक __net_init ndisc_net_init(काष्ठा net *net)
+अणु
+	काष्ठा ipv6_pinfo *np;
+	काष्ठा sock *sk;
+	पूर्णांक err;
 
 	err = inet_ctl_sock_create(&sk, PF_INET6,
 				   SOCK_RAW, IPPROTO_ICMPV6, net);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		ND_PRINTK(0, err,
 			  "NDISC: Failed to initialize the control socket (err %d)\n",
 			  err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	net->ipv6.ndisc_sk = sk;
 
@@ -1907,62 +1908,62 @@ static int __net_init ndisc_net_init(struct net *net)
 	/* Do not loopback ndisc messages */
 	np->mc_loop = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit ndisc_net_exit(struct net *net)
-{
+अटल व्योम __net_निकास ndisc_net_निकास(काष्ठा net *net)
+अणु
 	inet_ctl_sock_destroy(net->ipv6.ndisc_sk);
-}
+पूर्ण
 
-static struct pernet_operations ndisc_net_ops = {
+अटल काष्ठा pernet_operations ndisc_net_ops = अणु
 	.init = ndisc_net_init,
-	.exit = ndisc_net_exit,
-};
+	.निकास = ndisc_net_निकास,
+पूर्ण;
 
-int __init ndisc_init(void)
-{
-	int err;
+पूर्णांक __init ndisc_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = register_pernet_subsys(&ndisc_net_ops);
-	if (err)
-		return err;
+	err = रेजिस्टर_pernet_subsys(&ndisc_net_ops);
+	अगर (err)
+		वापस err;
 	/*
 	 * Initialize the neighbour table
 	 */
 	neigh_table_init(NEIGH_ND_TABLE, &nd_tbl);
 
-#ifdef CONFIG_SYSCTL
-	err = neigh_sysctl_register(NULL, &nd_tbl.parms,
-				    ndisc_ifinfo_sysctl_change);
-	if (err)
-		goto out_unregister_pernet;
+#अगर_घोषित CONFIG_SYSCTL
+	err = neigh_sysctl_रेजिस्टर(शून्य, &nd_tbl.parms,
+				    ndisc_अगरinfo_sysctl_change);
+	अगर (err)
+		जाओ out_unरेजिस्टर_pernet;
 out:
-#endif
-	return err;
+#पूर्ण_अगर
+	वापस err;
 
-#ifdef CONFIG_SYSCTL
-out_unregister_pernet:
-	unregister_pernet_subsys(&ndisc_net_ops);
-	goto out;
-#endif
-}
+#अगर_घोषित CONFIG_SYSCTL
+out_unरेजिस्टर_pernet:
+	unरेजिस्टर_pernet_subsys(&ndisc_net_ops);
+	जाओ out;
+#पूर्ण_अगर
+पूर्ण
 
-int __init ndisc_late_init(void)
-{
-	return register_netdevice_notifier(&ndisc_netdev_notifier);
-}
+पूर्णांक __init ndisc_late_init(व्योम)
+अणु
+	वापस रेजिस्टर_netdevice_notअगरier(&ndisc_netdev_notअगरier);
+पूर्ण
 
-void ndisc_late_cleanup(void)
-{
-	unregister_netdevice_notifier(&ndisc_netdev_notifier);
-}
+व्योम ndisc_late_cleanup(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&ndisc_netdev_notअगरier);
+पूर्ण
 
-void ndisc_cleanup(void)
-{
-#ifdef CONFIG_SYSCTL
-	neigh_sysctl_unregister(&nd_tbl.parms);
-#endif
+व्योम ndisc_cleanup(व्योम)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	neigh_sysctl_unरेजिस्टर(&nd_tbl.parms);
+#पूर्ण_अगर
 	neigh_table_clear(NEIGH_ND_TABLE, &nd_tbl);
-	unregister_pernet_subsys(&ndisc_net_ops);
-}
+	unरेजिस्टर_pernet_subsys(&ndisc_net_ops);
+पूर्ण

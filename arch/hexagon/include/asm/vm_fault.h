@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_HEXAGON_VM_FAULT_H
-#define _ASM_HEXAGON_VM_FAULT_H
+#अगर_अघोषित _ASM_HEXAGON_VM_FAULT_H
+#घोषणा _ASM_HEXAGON_VM_FAULT_H
 
-extern void execute_protection_fault(struct pt_regs *);
-extern void write_protection_fault(struct pt_regs *);
-extern void read_protection_fault(struct pt_regs *);
+बाह्य व्योम execute_protection_fault(काष्ठा pt_regs *);
+बाह्य व्योम ग_लिखो_protection_fault(काष्ठा pt_regs *);
+बाह्य व्योम पढ़ो_protection_fault(काष्ठा pt_regs *);
 
-#endif
+#पूर्ण_अगर

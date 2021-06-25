@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MICROBLAZE_FTRACE
-#define _ASM_MICROBLAZE_FTRACE
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MICROBLAZE_FTRACE
+#घोषणा _ASM_MICROBLAZE_FTRACE
 
-#ifdef CONFIG_FUNCTION_TRACER
+#अगर_घोषित CONFIG_FUNCTION_TRACER
 
-#define MCOUNT_ADDR		((unsigned long)(_mcount))
-#define MCOUNT_INSN_SIZE	8 /* sizeof mcount call */
+#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)(_mcount))
+#घोषणा MCOUNT_INSN_SIZE	8 /* माप mcount call */
 
-#ifndef __ASSEMBLY__
-extern void _mcount(void);
-extern void ftrace_call_graph(void);
-#endif
+#अगर_अघोषित __ASSEMBLY__
+बाह्य व्योम _mcount(व्योम);
+बाह्य व्योम ftrace_call_graph(व्योम);
+#पूर्ण_अगर
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 /* relocation of mcount call site is the same as the address */
-static inline unsigned long ftrace_call_adjust(unsigned long addr)
-{
-	return addr;
-}
+अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr;
+पूर्ण
 
-struct dyn_arch_ftrace {
-};
-#endif /* CONFIG_DYNAMIC_FTRACE */
+काष्ठा dyn_arch_ftrace अणु
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_DYNAMIC_FTRACE */
 
-#endif /* CONFIG_FUNCTION_TRACER */
-#endif /* _ASM_MICROBLAZE_FTRACE */
+#पूर्ण_अगर /* CONFIG_FUNCTION_TRACER */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_FTRACE */

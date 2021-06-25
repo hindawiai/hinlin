@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* 10G controller driver for Samsung SoCs
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* 10G controller driver क्रम Samsung SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -7,229 +8,229 @@
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/io.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/jiffies.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/jअगरfies.h>
 
-#include "sxgbe_mtl.h"
-#include "sxgbe_reg.h"
+#समावेश "sxgbe_mtl.h"
+#समावेश "sxgbe_reg.h"
 
-static void sxgbe_mtl_init(void __iomem *ioaddr, unsigned int etsalg,
-			   unsigned int raa)
-{
+अटल व्योम sxgbe_mtl_init(व्योम __iomem *ioaddr, अचिन्हित पूर्णांक etsalg,
+			   अचिन्हित पूर्णांक raa)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_OP_MODE_REG);
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_OP_MODE_REG);
 	reg_val &= ETS_RST;
 
 	/* ETS Algorith */
-	switch (etsalg & SXGBE_MTL_OPMODE_ESTMASK) {
-	case ETS_WRR:
+	चयन (etsalg & SXGBE_MTL_OPMODE_ESTMASK) अणु
+	हाल ETS_WRR:
 		reg_val &= ETS_WRR;
-		break;
-	case ETS_WFQ:
+		अवरोध;
+	हाल ETS_WFQ:
 		reg_val |= ETS_WFQ;
-		break;
-	case ETS_DWRR:
+		अवरोध;
+	हाल ETS_DWRR:
 		reg_val |= ETS_DWRR;
-		break;
-	}
-	writel(reg_val, ioaddr + SXGBE_MTL_OP_MODE_REG);
+		अवरोध;
+	पूर्ण
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_OP_MODE_REG);
 
-	switch (raa & SXGBE_MTL_OPMODE_RAAMASK) {
-	case RAA_SP:
+	चयन (raa & SXGBE_MTL_OPMODE_RAAMASK) अणु
+	हाल RAA_SP:
 		reg_val &= RAA_SP;
-		break;
-	case RAA_WSP:
+		अवरोध;
+	हाल RAA_WSP:
 		reg_val |= RAA_WSP;
-		break;
-	}
-	writel(reg_val, ioaddr + SXGBE_MTL_OP_MODE_REG);
-}
+		अवरोध;
+	पूर्ण
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_OP_MODE_REG);
+पूर्ण
 
-/* For Dynamic DMA channel mapping for Rx queue */
-static void sxgbe_mtl_dma_dm_rxqueue(void __iomem *ioaddr)
-{
-	writel(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP0_REG);
-	writel(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP1_REG);
-	writel(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP2_REG);
-}
+/* For Dynamic DMA channel mapping क्रम Rx queue */
+अटल व्योम sxgbe_mtl_dma_dm_rxqueue(व्योम __iomem *ioaddr)
+अणु
+	ग_लिखोl(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP0_REG);
+	ग_लिखोl(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP1_REG);
+	ग_लिखोl(RX_QUEUE_DYNAMIC, ioaddr + SXGBE_MTL_RXQ_DMAMAP2_REG);
+पूर्ण
 
-static void sxgbe_mtl_set_txfifosize(void __iomem *ioaddr, int queue_num,
-				     int queue_fifo)
-{
-	u32 fifo_bits, reg_val;
-
-	/* 0 means 256 bytes */
-	fifo_bits = (queue_fifo / SXGBE_MTL_TX_FIFO_DIV) - 1;
-	reg_val = readl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-	reg_val |= (fifo_bits << SXGBE_MTL_FIFO_LSHIFT);
-	writel(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-}
-
-static void sxgbe_mtl_set_rxfifosize(void __iomem *ioaddr, int queue_num,
-				     int queue_fifo)
-{
-	u32 fifo_bits, reg_val;
+अटल व्योम sxgbe_mtl_set_txfअगरosize(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				     पूर्णांक queue_fअगरo)
+अणु
+	u32 fअगरo_bits, reg_val;
 
 	/* 0 means 256 bytes */
-	fifo_bits = (queue_fifo / SXGBE_MTL_RX_FIFO_DIV)-1;
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-	reg_val |= (fifo_bits << SXGBE_MTL_FIFO_LSHIFT);
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	fअगरo_bits = (queue_fअगरo / SXGBE_MTL_TX_FIFO_DIV) - 1;
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+	reg_val |= (fअगरo_bits << SXGBE_MTL_FIFO_LSHIFT);
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_enable_txqueue(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_set_rxfअगरosize(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				     पूर्णांक queue_fअगरo)
+अणु
+	u32 fअगरo_bits, reg_val;
+
+	/* 0 means 256 bytes */
+	fअगरo_bits = (queue_fअगरo / SXGBE_MTL_RX_FIFO_DIV)-1;
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val |= (fअगरo_bits << SXGBE_MTL_FIFO_LSHIFT);
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
+
+अटल व्योम sxgbe_mtl_enable_txqueue(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
 	reg_val |= SXGBE_MTL_ENABLE_QUEUE;
-	writel(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_disable_txqueue(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_disable_txqueue(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
 	reg_val &= ~SXGBE_MTL_ENABLE_QUEUE;
-	writel(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fc_active(void __iomem *ioaddr, int queue_num,
-				int threshold)
-{
+अटल व्योम sxgbe_mtl_fc_active(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				पूर्णांक threshold)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val &= ~(SXGBE_MTL_FCMASK << RX_FC_ACTIVE);
 	reg_val |= (threshold << RX_FC_ACTIVE);
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fc_enable(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_fc_enable(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val |= SXGBE_MTL_ENABLE_FC;
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fc_deactive(void __iomem *ioaddr, int queue_num,
-				  int threshold)
-{
+अटल व्योम sxgbe_mtl_fc_deactive(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				  पूर्णांक threshold)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val &= ~(SXGBE_MTL_FCMASK << RX_FC_DEACTIVE);
 	reg_val |= (threshold << RX_FC_DEACTIVE);
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fep_enable(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_fep_enable(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val |= SXGBE_MTL_RXQ_OP_FEP;
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fep_disable(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_fep_disable(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val &= ~(SXGBE_MTL_RXQ_OP_FEP);
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fup_enable(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_fup_enable(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val |= SXGBE_MTL_RXQ_OP_FUP;
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_mtl_fup_disable(void __iomem *ioaddr, int queue_num)
-{
+अटल व्योम sxgbe_mtl_fup_disable(व्योम __iomem *ioaddr, पूर्णांक queue_num)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
 	reg_val &= ~(SXGBE_MTL_RXQ_OP_FUP);
 
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
 
-static void sxgbe_set_tx_mtl_mode(void __iomem *ioaddr, int queue_num,
-				  int tx_mode)
-{
+अटल व्योम sxgbe_set_tx_mtl_mode(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				  पूर्णांक tx_mode)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-	/* TX specific MTL mode settings */
-	if (tx_mode == SXGBE_MTL_SFMODE) {
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+	/* TX specअगरic MTL mode settings */
+	अगर (tx_mode == SXGBE_MTL_SFMODE) अणु
 		reg_val |= SXGBE_MTL_SFMODE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* set the TTC values */
-		if (tx_mode <= 64)
+		अगर (tx_mode <= 64)
 			reg_val |= MTL_CONTROL_TTC_64;
-		else if (tx_mode <= 96)
+		अन्यथा अगर (tx_mode <= 96)
 			reg_val |= MTL_CONTROL_TTC_96;
-		else if (tx_mode <= 128)
+		अन्यथा अगर (tx_mode <= 128)
 			reg_val |= MTL_CONTROL_TTC_128;
-		else if (tx_mode <= 192)
+		अन्यथा अगर (tx_mode <= 192)
 			reg_val |= MTL_CONTROL_TTC_192;
-		else if (tx_mode <= 256)
+		अन्यथा अगर (tx_mode <= 256)
 			reg_val |= MTL_CONTROL_TTC_256;
-		else if (tx_mode <= 384)
+		अन्यथा अगर (tx_mode <= 384)
 			reg_val |= MTL_CONTROL_TTC_384;
-		else
+		अन्यथा
 			reg_val |= MTL_CONTROL_TTC_512;
-	}
+	पूर्ण
 
-	/* write into TXQ operation register */
-	writel(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
-}
+	/* ग_लिखो पूर्णांकo TXQ operation रेजिस्टर */
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_TXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static void sxgbe_set_rx_mtl_mode(void __iomem *ioaddr, int queue_num,
-				  int rx_mode)
-{
+अटल व्योम sxgbe_set_rx_mtl_mode(व्योम __iomem *ioaddr, पूर्णांक queue_num,
+				  पूर्णांक rx_mode)
+अणु
 	u32 reg_val;
 
-	reg_val = readl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-	/* RX specific MTL mode settings */
-	if (rx_mode == SXGBE_RX_MTL_SFMODE) {
+	reg_val = पढ़ोl(ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+	/* RX specअगरic MTL mode settings */
+	अगर (rx_mode == SXGBE_RX_MTL_SFMODE) अणु
 		reg_val |= SXGBE_RX_MTL_SFMODE;
-	} else {
-		if (rx_mode <= 64)
+	पूर्ण अन्यथा अणु
+		अगर (rx_mode <= 64)
 			reg_val |= MTL_CONTROL_RTC_64;
-		else if (rx_mode <= 96)
+		अन्यथा अगर (rx_mode <= 96)
 			reg_val |= MTL_CONTROL_RTC_96;
-		else if (rx_mode <= 128)
+		अन्यथा अगर (rx_mode <= 128)
 			reg_val |= MTL_CONTROL_RTC_128;
-	}
+	पूर्ण
 
-	/* write into RXQ operation register */
-	writel(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
-}
+	/* ग_लिखो पूर्णांकo RXQ operation रेजिस्टर */
+	ग_लिखोl(reg_val, ioaddr + SXGBE_MTL_RXQ_OPMODE_REG(queue_num));
+पूर्ण
 
-static const struct sxgbe_mtl_ops mtl_ops = {
-	.mtl_set_txfifosize		= sxgbe_mtl_set_txfifosize,
-	.mtl_set_rxfifosize		= sxgbe_mtl_set_rxfifosize,
+अटल स्थिर काष्ठा sxgbe_mtl_ops mtl_ops = अणु
+	.mtl_set_txfअगरosize		= sxgbe_mtl_set_txfअगरosize,
+	.mtl_set_rxfअगरosize		= sxgbe_mtl_set_rxfअगरosize,
 	.mtl_enable_txqueue		= sxgbe_mtl_enable_txqueue,
 	.mtl_disable_txqueue		= sxgbe_mtl_disable_txqueue,
 	.mtl_dynamic_dma_rxqueue	= sxgbe_mtl_dma_dm_rxqueue,
@@ -243,9 +244,9 @@ static const struct sxgbe_mtl_ops mtl_ops = {
 	.mtl_fep_disable		= sxgbe_mtl_fep_disable,
 	.mtl_fup_enable			= sxgbe_mtl_fup_enable,
 	.mtl_fup_disable		= sxgbe_mtl_fup_disable
-};
+पूर्ण;
 
-const struct sxgbe_mtl_ops *sxgbe_get_mtl_ops(void)
-{
-	return &mtl_ops;
-}
+स्थिर काष्ठा sxgbe_mtl_ops *sxgbe_get_mtl_ops(व्योम)
+अणु
+	वापस &mtl_ops;
+पूर्ण

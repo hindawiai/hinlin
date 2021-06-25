@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Floating proportions with flexible aging period
  *
  *   Copyright (C) 2011, SUSE, Jan Kara <jack@suse.cz>
  *
- * The goal of this code is: Given different types of event, measure proportion
- * of each type of event over time. The proportions are measured with
- * exponentially decaying history to give smooth transitions. A formula
+ * The goal of this code is: Given dअगरferent types of event, measure proportion
+ * of each type of event over समय. The proportions are measured with
+ * exponentially decaying history to give smooth transitions. A क्रमmula
  * expressing proportion of event of type 'j' is:
  *
- *   p_{j} = (\Sum_{i>=0} x_{i,j}/2^{i+1})/(\Sum_{i>=0} x_i/2^{i+1})
+ *   p_अणुjपूर्ण = (\Sum_अणुi>=0पूर्ण x_अणुi,jपूर्ण/2^अणुi+1पूर्ण)/(\Sum_अणुi>=0पूर्ण x_i/2^अणुi+1पूर्ण)
  *
- * Where x_{i,j} is j's number of events in i-th last time period and x_i is
- * total number of events in i-th last time period.
+ * Where x_अणुi,jपूर्ण is j's number of events in i-th last समय period and x_i is
+ * total number of events in i-th last समय period.
  *
- * Note that p_{j}'s are normalised, i.e.
+ * Note that p_अणुjपूर्ण's are normalised, i.e.
  *
- *   \Sum_{j} p_{j} = 1,
+ *   \Sum_अणुjपूर्ण p_अणुjपूर्ण = 1,
  *
- * This formula can be straightforwardly computed by maintaining denominator
+ * This क्रमmula can be straightक्रमwardly computed by मुख्यtaining denominator
  * (let's call it 'd') and for each event type its numerator (let's call it
- * 'n_j'). When an event of type 'j' happens, we simply need to do:
+ * 'n_j'). When an event of type 'j' happens, we simply need to करो:
  *   n_j++; d++;
  *
- * When a new period is declared, we could do:
+ * When a new period is declared, we could करो:
  *   d /= 2
- *   for each j
+ *   क्रम each j
  *     n_j /= 2
  *
- * To avoid iteration over all event types, we instead shift numerator of event
- * j lazily when someone asks for a proportion of event j or when event j
+ * To aव्योम iteration over all event types, we instead shअगरt numerator of event
+ * j lazily when someone asks क्रम a proportion of event j or when event j
  * occurs. This can bit trivially implemented by remembering last period in
  * which something happened with proportion of type j.
  */
-#include <linux/flex_proportions.h>
+#समावेश <linux/flex_proportions.h>
 
-int fprop_global_init(struct fprop_global *p, gfp_t gfp)
-{
-	int err;
+पूर्णांक fprop_global_init(काष्ठा fprop_global *p, gfp_t gfp)
+अणु
+	पूर्णांक err;
 
 	p->period = 0;
-	/* Use 1 to avoid dealing with periods with 0 events... */
+	/* Use 1 to aव्योम dealing with periods with 0 events... */
 	err = percpu_counter_init(&p->events, 1, gfp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	seqcount_init(&p->sequence);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fprop_global_destroy(struct fprop_global *p)
-{
+व्योम fprop_global_destroy(काष्ठा fprop_global *p)
+अणु
 	percpu_counter_destroy(&p->events);
-}
+पूर्ण
 
 /*
  * Declare @periods new periods. It is upto the caller to make sure period
  * transitions cannot happen in parallel.
  *
- * The function returns true if the proportions are still defined and false
- * if aging zeroed out all events. This can be used to detect whether declaring
+ * The function वापसs true अगर the proportions are still defined and false
+ * अगर aging zeroed out all events. This can be used to detect whether declaring
  * further periods has any effect.
  */
-bool fprop_new_period(struct fprop_global *p, int periods)
-{
+bool fprop_new_period(काष्ठा fprop_global *p, पूर्णांक periods)
+अणु
 	s64 events;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	events = percpu_counter_sum(&p->events);
 	/*
-	 * Don't do anything if there are no events.
+	 * Don't करो anything अगर there are no events.
 	 */
-	if (events <= 1) {
+	अगर (events <= 1) अणु
 		local_irq_restore(flags);
-		return false;
-	}
-	write_seqcount_begin(&p->sequence);
-	if (periods < 64)
+		वापस false;
+	पूर्ण
+	ग_लिखो_seqcount_begin(&p->sequence);
+	अगर (periods < 64)
 		events -= events >> periods;
-	/* Use addition to avoid losing events happening between sum and set */
+	/* Use addition to aव्योम losing events happening between sum and set */
 	percpu_counter_add(&p->events, -events);
 	p->period += periods;
-	write_seqcount_end(&p->sequence);
+	ग_लिखो_seqcount_end(&p->sequence);
 	local_irq_restore(flags);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * ---- SINGLE ----
  */
 
-int fprop_local_init_single(struct fprop_local_single *pl)
-{
+पूर्णांक fprop_local_init_single(काष्ठा fprop_local_single *pl)
+अणु
 	pl->events = 0;
 	pl->period = 0;
 	raw_spin_lock_init(&pl->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fprop_local_destroy_single(struct fprop_local_single *pl)
-{
-}
+व्योम fprop_local_destroy_single(काष्ठा fprop_local_single *pl)
+अणु
+पूर्ण
 
-static void fprop_reflect_period_single(struct fprop_global *p,
-					struct fprop_local_single *pl)
-{
-	unsigned int period = p->period;
-	unsigned long flags;
+अटल व्योम fprop_reflect_period_single(काष्ठा fprop_global *p,
+					काष्ठा fprop_local_single *pl)
+अणु
+	अचिन्हित पूर्णांक period = p->period;
+	अचिन्हित दीर्घ flags;
 
 	/* Fast path - period didn't change */
-	if (pl->period == period)
-		return;
+	अगर (pl->period == period)
+		वापस;
 	raw_spin_lock_irqsave(&pl->lock, flags);
-	/* Someone updated pl->period while we were spinning? */
-	if (pl->period >= period) {
+	/* Someone updated pl->period जबतक we were spinning? */
+	अगर (pl->period >= period) अणु
 		raw_spin_unlock_irqrestore(&pl->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* Aging zeroed our fraction? */
-	if (period - pl->period < BITS_PER_LONG)
+	अगर (period - pl->period < BITS_PER_LONG)
 		pl->events >>= period - pl->period;
-	else
+	अन्यथा
 		pl->events = 0;
 	pl->period = period;
 	raw_spin_unlock_irqrestore(&pl->lock, flags);
-}
+पूर्ण
 
 /* Event of type pl happened */
-void __fprop_inc_single(struct fprop_global *p, struct fprop_local_single *pl)
-{
+व्योम __fprop_inc_single(काष्ठा fprop_global *p, काष्ठा fprop_local_single *pl)
+अणु
 	fprop_reflect_period_single(p, pl);
 	pl->events++;
 	percpu_counter_add(&p->events, 1);
-}
+पूर्ण
 
 /* Return fraction of events of type pl */
-void fprop_fraction_single(struct fprop_global *p,
-			   struct fprop_local_single *pl,
-			   unsigned long *numerator, unsigned long *denominator)
-{
-	unsigned int seq;
+व्योम fprop_fraction_single(काष्ठा fprop_global *p,
+			   काष्ठा fprop_local_single *pl,
+			   अचिन्हित दीर्घ *numerator, अचिन्हित दीर्घ *denominator)
+अणु
+	अचिन्हित पूर्णांक seq;
 	s64 num, den;
 
-	do {
-		seq = read_seqcount_begin(&p->sequence);
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&p->sequence);
 		fprop_reflect_period_single(p, pl);
 		num = pl->events;
-		den = percpu_counter_read_positive(&p->events);
-	} while (read_seqcount_retry(&p->sequence, seq));
+		den = percpu_counter_पढ़ो_positive(&p->events);
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&p->sequence, seq));
 
 	/*
 	 * Make fraction <= 1 and denominator > 0 even in presence of percpu
 	 * counter errors
 	 */
-	if (den <= num) {
-		if (num)
+	अगर (den <= num) अणु
+		अगर (num)
 			den = num;
-		else
+		अन्यथा
 			den = 1;
-	}
+	पूर्ण
 	*denominator = den;
 	*numerator = num;
-}
+पूर्ण
 
 /*
  * ---- PERCPU ----
  */
-#define PROP_BATCH (8*(1+ilog2(nr_cpu_ids)))
+#घोषणा PROP_BATCH (8*(1+ilog2(nr_cpu_ids)))
 
-int fprop_local_init_percpu(struct fprop_local_percpu *pl, gfp_t gfp)
-{
-	int err;
+पूर्णांक fprop_local_init_percpu(काष्ठा fprop_local_percpu *pl, gfp_t gfp)
+अणु
+	पूर्णांक err;
 
 	err = percpu_counter_init(&pl->events, 0, gfp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	pl->period = 0;
 	raw_spin_lock_init(&pl->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void fprop_local_destroy_percpu(struct fprop_local_percpu *pl)
-{
+व्योम fprop_local_destroy_percpu(काष्ठा fprop_local_percpu *pl)
+अणु
 	percpu_counter_destroy(&pl->events);
-}
+पूर्ण
 
-static void fprop_reflect_period_percpu(struct fprop_global *p,
-					struct fprop_local_percpu *pl)
-{
-	unsigned int period = p->period;
-	unsigned long flags;
+अटल व्योम fprop_reflect_period_percpu(काष्ठा fprop_global *p,
+					काष्ठा fprop_local_percpu *pl)
+अणु
+	अचिन्हित पूर्णांक period = p->period;
+	अचिन्हित दीर्घ flags;
 
 	/* Fast path - period didn't change */
-	if (pl->period == period)
-		return;
+	अगर (pl->period == period)
+		वापस;
 	raw_spin_lock_irqsave(&pl->lock, flags);
-	/* Someone updated pl->period while we were spinning? */
-	if (pl->period >= period) {
+	/* Someone updated pl->period जबतक we were spinning? */
+	अगर (pl->period >= period) अणु
 		raw_spin_unlock_irqrestore(&pl->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* Aging zeroed our fraction? */
-	if (period - pl->period < BITS_PER_LONG) {
-		s64 val = percpu_counter_read(&pl->events);
+	अगर (period - pl->period < BITS_PER_LONG) अणु
+		s64 val = percpu_counter_पढ़ो(&pl->events);
 
-		if (val < (nr_cpu_ids * PROP_BATCH))
+		अगर (val < (nr_cpu_ids * PROP_BATCH))
 			val = percpu_counter_sum(&pl->events);
 
 		percpu_counter_add_batch(&pl->events,
 			-val + (val >> (period-pl->period)), PROP_BATCH);
-	} else
+	पूर्ण अन्यथा
 		percpu_counter_set(&pl->events, 0);
 	pl->period = period;
 	raw_spin_unlock_irqrestore(&pl->lock, flags);
-}
+पूर्ण
 
 /* Event of type pl happened */
-void __fprop_inc_percpu(struct fprop_global *p, struct fprop_local_percpu *pl)
-{
+व्योम __fprop_inc_percpu(काष्ठा fprop_global *p, काष्ठा fprop_local_percpu *pl)
+अणु
 	fprop_reflect_period_percpu(p, pl);
 	percpu_counter_add_batch(&pl->events, 1, PROP_BATCH);
 	percpu_counter_add(&p->events, 1);
-}
+पूर्ण
 
-void fprop_fraction_percpu(struct fprop_global *p,
-			   struct fprop_local_percpu *pl,
-			   unsigned long *numerator, unsigned long *denominator)
-{
-	unsigned int seq;
+व्योम fprop_fraction_percpu(काष्ठा fprop_global *p,
+			   काष्ठा fprop_local_percpu *pl,
+			   अचिन्हित दीर्घ *numerator, अचिन्हित दीर्घ *denominator)
+अणु
+	अचिन्हित पूर्णांक seq;
 	s64 num, den;
 
-	do {
-		seq = read_seqcount_begin(&p->sequence);
+	करो अणु
+		seq = पढ़ो_seqcount_begin(&p->sequence);
 		fprop_reflect_period_percpu(p, pl);
-		num = percpu_counter_read_positive(&pl->events);
-		den = percpu_counter_read_positive(&p->events);
-	} while (read_seqcount_retry(&p->sequence, seq));
+		num = percpu_counter_पढ़ो_positive(&pl->events);
+		den = percpu_counter_पढ़ो_positive(&p->events);
+	पूर्ण जबतक (पढ़ो_seqcount_retry(&p->sequence, seq));
 
 	/*
 	 * Make fraction <= 1 and denominator > 0 even in presence of percpu
 	 * counter errors
 	 */
-	if (den <= num) {
-		if (num)
+	अगर (den <= num) अणु
+		अगर (num)
 			den = num;
-		else
+		अन्यथा
 			den = 1;
-	}
+	पूर्ण
 	*denominator = den;
 	*numerator = num;
-}
+पूर्ण
 
 /*
- * Like __fprop_inc_percpu() except that event is counted only if the given
+ * Like __fprop_inc_percpu() except that event is counted only अगर the given
  * type has fraction smaller than @max_frac/FPROP_FRAC_BASE
  */
-void __fprop_inc_percpu_max(struct fprop_global *p,
-			    struct fprop_local_percpu *pl, int max_frac)
-{
-	if (unlikely(max_frac < FPROP_FRAC_BASE)) {
-		unsigned long numerator, denominator;
+व्योम __fprop_inc_percpu_max(काष्ठा fprop_global *p,
+			    काष्ठा fprop_local_percpu *pl, पूर्णांक max_frac)
+अणु
+	अगर (unlikely(max_frac < FPROP_FRAC_BASE)) अणु
+		अचिन्हित दीर्घ numerator, denominator;
 
 		fprop_fraction_percpu(p, pl, &numerator, &denominator);
-		if (numerator >
+		अगर (numerator >
 		    (((u64)denominator) * max_frac) >> FPROP_FRAC_SHIFT)
-			return;
-	}
+			वापस;
+	पूर्ण
 
 	__fprop_inc_percpu(p, pl);
-}
+पूर्ण

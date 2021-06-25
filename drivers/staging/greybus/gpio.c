@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * GPIO Greybus driver.
  *
@@ -6,18 +7,18 @@
  * Copyright 2014 Linaro Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/gpio/driver.h>
-#include <linux/mutex.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/greybus.h>
 
-#include "gbphy.h"
+#समावेश "gbphy.h"
 
-struct gb_gpio_line {
+काष्ठा gb_gpio_line अणु
 	/* The following has to be an array of line_max entries */
 	/* --> make them just a flags field */
 	u8			active:    1,
@@ -29,497 +30,497 @@ struct gb_gpio_line {
 	bool			irq_type_pending;
 	bool			masked;
 	bool			masked_pending;
-};
+पूर्ण;
 
-struct gb_gpio_controller {
-	struct gbphy_device	*gbphy_dev;
-	struct gb_connection	*connection;
+काष्ठा gb_gpio_controller अणु
+	काष्ठा gbphy_device	*gbphy_dev;
+	काष्ठा gb_connection	*connection;
 	u8			line_max;	/* max line number */
-	struct gb_gpio_line	*lines;
+	काष्ठा gb_gpio_line	*lines;
 
-	struct gpio_chip	chip;
-	struct irq_chip		irqc;
-	struct mutex		irq_lock;
-};
-#define gpio_chip_to_gb_gpio_controller(chip) \
-	container_of(chip, struct gb_gpio_controller, chip)
-#define irq_data_to_gpio_chip(d) (d->domain->host_data)
+	काष्ठा gpio_chip	chip;
+	काष्ठा irq_chip		irqc;
+	काष्ठा mutex		irq_lock;
+पूर्ण;
+#घोषणा gpio_chip_to_gb_gpio_controller(chip) \
+	container_of(chip, काष्ठा gb_gpio_controller, chip)
+#घोषणा irq_data_to_gpio_chip(d) (d->करोमुख्य->host_data)
 
-static int gb_gpio_line_count_operation(struct gb_gpio_controller *ggc)
-{
-	struct gb_gpio_line_count_response response;
-	int ret;
+अटल पूर्णांक gb_gpio_line_count_operation(काष्ठा gb_gpio_controller *ggc)
+अणु
+	काष्ठा gb_gpio_line_count_response response;
+	पूर्णांक ret;
 
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_LINE_COUNT,
-				NULL, 0, &response, sizeof(response));
-	if (!ret)
+				शून्य, 0, &response, माप(response));
+	अगर (!ret)
 		ggc->line_max = response.count;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_gpio_activate_operation(struct gb_gpio_controller *ggc, u8 which)
-{
-	struct gb_gpio_activate_request request;
-	struct gbphy_device *gbphy_dev = ggc->gbphy_dev;
-	int ret;
+अटल पूर्णांक gb_gpio_activate_operation(काष्ठा gb_gpio_controller *ggc, u8 which)
+अणु
+	काष्ठा gb_gpio_activate_request request;
+	काष्ठा gbphy_device *gbphy_dev = ggc->gbphy_dev;
+	पूर्णांक ret;
 
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		return ret;
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		वापस ret;
 
 	request.which = which;
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_ACTIVATE,
-				&request, sizeof(request), NULL, 0);
-	if (ret) {
-		gbphy_runtime_put_autosuspend(gbphy_dev);
-		return ret;
-	}
+				&request, माप(request), शून्य, 0);
+	अगर (ret) अणु
+		gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
+		वापस ret;
+	पूर्ण
 
 	ggc->lines[which].active = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gb_gpio_deactivate_operation(struct gb_gpio_controller *ggc,
+अटल व्योम gb_gpio_deactivate_operation(काष्ठा gb_gpio_controller *ggc,
 					 u8 which)
-{
-	struct gbphy_device *gbphy_dev = ggc->gbphy_dev;
-	struct device *dev = &gbphy_dev->dev;
-	struct gb_gpio_deactivate_request request;
-	int ret;
+अणु
+	काष्ठा gbphy_device *gbphy_dev = ggc->gbphy_dev;
+	काष्ठा device *dev = &gbphy_dev->dev;
+	काष्ठा gb_gpio_deactivate_request request;
+	पूर्णांक ret;
 
 	request.which = which;
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_DEACTIVATE,
-				&request, sizeof(request), NULL, 0);
-	if (ret) {
+				&request, माप(request), शून्य, 0);
+	अगर (ret) अणु
 		dev_err(dev, "failed to deactivate gpio %u\n", which);
-		goto out_pm_put;
-	}
+		जाओ out_pm_put;
+	पूर्ण
 
 	ggc->lines[which].active = false;
 
 out_pm_put:
-	gbphy_runtime_put_autosuspend(gbphy_dev);
-}
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
+पूर्ण
 
-static int gb_gpio_get_direction_operation(struct gb_gpio_controller *ggc,
+अटल पूर्णांक gb_gpio_get_direction_operation(काष्ठा gb_gpio_controller *ggc,
 					   u8 which)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_get_direction_request request;
-	struct gb_gpio_get_direction_response response;
-	int ret;
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_get_direction_request request;
+	काष्ठा gb_gpio_get_direction_response response;
+	पूर्णांक ret;
 	u8 direction;
 
 	request.which = which;
-	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_GET_DIRECTION,
-				&request, sizeof(request),
-				&response, sizeof(response));
-	if (ret)
-		return ret;
+	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_GET_सूचीECTION,
+				&request, माप(request),
+				&response, माप(response));
+	अगर (ret)
+		वापस ret;
 
 	direction = response.direction;
-	if (direction && direction != 1) {
+	अगर (direction && direction != 1) अणु
 		dev_warn(dev, "gpio %u direction was %u (should be 0 or 1)\n",
 			 which, direction);
-	}
+	पूर्ण
 	ggc->lines[which].direction = direction ? 1 : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_gpio_direction_in_operation(struct gb_gpio_controller *ggc,
+अटल पूर्णांक gb_gpio_direction_in_operation(काष्ठा gb_gpio_controller *ggc,
 					  u8 which)
-{
-	struct gb_gpio_direction_in_request request;
-	int ret;
+अणु
+	काष्ठा gb_gpio_direction_in_request request;
+	पूर्णांक ret;
 
 	request.which = which;
-	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_DIRECTION_IN,
-				&request, sizeof(request), NULL, 0);
-	if (!ret)
+	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_सूचीECTION_IN,
+				&request, माप(request), शून्य, 0);
+	अगर (!ret)
 		ggc->lines[which].direction = 1;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_gpio_direction_out_operation(struct gb_gpio_controller *ggc,
+अटल पूर्णांक gb_gpio_direction_out_operation(काष्ठा gb_gpio_controller *ggc,
 					   u8 which, bool value_high)
-{
-	struct gb_gpio_direction_out_request request;
-	int ret;
+अणु
+	काष्ठा gb_gpio_direction_out_request request;
+	पूर्णांक ret;
 
 	request.which = which;
 	request.value = value_high ? 1 : 0;
-	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_DIRECTION_OUT,
-				&request, sizeof(request), NULL, 0);
-	if (!ret)
+	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_सूचीECTION_OUT,
+				&request, माप(request), शून्य, 0);
+	अगर (!ret)
 		ggc->lines[which].direction = 0;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_gpio_get_value_operation(struct gb_gpio_controller *ggc,
+अटल पूर्णांक gb_gpio_get_value_operation(काष्ठा gb_gpio_controller *ggc,
 				       u8 which)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_get_value_request request;
-	struct gb_gpio_get_value_response response;
-	int ret;
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_get_value_request request;
+	काष्ठा gb_gpio_get_value_response response;
+	पूर्णांक ret;
 	u8 value;
 
 	request.which = which;
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_GET_VALUE,
-				&request, sizeof(request),
-				&response, sizeof(response));
-	if (ret) {
+				&request, माप(request),
+				&response, माप(response));
+	अगर (ret) अणु
 		dev_err(dev, "failed to get value of gpio %u\n", which);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	value = response.value;
-	if (value && value != 1) {
+	अगर (value && value != 1) अणु
 		dev_warn(dev, "gpio %u value was %u (should be 0 or 1)\n",
 			 which, value);
-	}
+	पूर्ण
 	ggc->lines[which].value = value ? 1 : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gb_gpio_set_value_operation(struct gb_gpio_controller *ggc,
+अटल व्योम gb_gpio_set_value_operation(काष्ठा gb_gpio_controller *ggc,
 					u8 which, bool value_high)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_set_value_request request;
-	int ret;
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_set_value_request request;
+	पूर्णांक ret;
 
-	if (ggc->lines[which].direction == 1) {
+	अगर (ggc->lines[which].direction == 1) अणु
 		dev_warn(dev, "refusing to set value of input gpio %u\n",
 			 which);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	request.which = which;
 	request.value = value_high ? 1 : 0;
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_SET_VALUE,
-				&request, sizeof(request), NULL, 0);
-	if (ret) {
+				&request, माप(request), शून्य, 0);
+	अगर (ret) अणु
 		dev_err(dev, "failed to set value of gpio %u\n", which);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ggc->lines[which].value = request.value;
-}
+पूर्ण
 
-static int gb_gpio_set_debounce_operation(struct gb_gpio_controller *ggc,
+अटल पूर्णांक gb_gpio_set_debounce_operation(काष्ठा gb_gpio_controller *ggc,
 					  u8 which, u16 debounce_usec)
-{
-	struct gb_gpio_set_debounce_request request;
-	int ret;
+अणु
+	काष्ठा gb_gpio_set_debounce_request request;
+	पूर्णांक ret;
 
 	request.which = which;
 	request.usec = cpu_to_le16(debounce_usec);
 	ret = gb_operation_sync(ggc->connection, GB_GPIO_TYPE_SET_DEBOUNCE,
-				&request, sizeof(request), NULL, 0);
-	if (!ret)
+				&request, माप(request), शून्य, 0);
+	अगर (!ret)
 		ggc->lines[which].debounce_usec = debounce_usec;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void _gb_gpio_irq_mask(struct gb_gpio_controller *ggc, u8 hwirq)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_irq_mask_request request;
-	int ret;
+अटल व्योम _gb_gpio_irq_mask(काष्ठा gb_gpio_controller *ggc, u8 hwirq)
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_irq_mask_request request;
+	पूर्णांक ret;
 
 	request.which = hwirq;
 	ret = gb_operation_sync(ggc->connection,
 				GB_GPIO_TYPE_IRQ_MASK,
-				&request, sizeof(request), NULL, 0);
-	if (ret)
+				&request, माप(request), शून्य, 0);
+	अगर (ret)
 		dev_err(dev, "failed to mask irq: %d\n", ret);
-}
+पूर्ण
 
-static void _gb_gpio_irq_unmask(struct gb_gpio_controller *ggc, u8 hwirq)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_irq_unmask_request request;
-	int ret;
+अटल व्योम _gb_gpio_irq_unmask(काष्ठा gb_gpio_controller *ggc, u8 hwirq)
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_irq_unmask_request request;
+	पूर्णांक ret;
 
 	request.which = hwirq;
 	ret = gb_operation_sync(ggc->connection,
 				GB_GPIO_TYPE_IRQ_UNMASK,
-				&request, sizeof(request), NULL, 0);
-	if (ret)
+				&request, माप(request), शून्य, 0);
+	अगर (ret)
 		dev_err(dev, "failed to unmask irq: %d\n", ret);
-}
+पूर्ण
 
-static void _gb_gpio_irq_set_type(struct gb_gpio_controller *ggc,
+अटल व्योम _gb_gpio_irq_set_type(काष्ठा gb_gpio_controller *ggc,
 				  u8 hwirq, u8 type)
-{
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_gpio_irq_type_request request;
-	int ret;
+अणु
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_gpio_irq_type_request request;
+	पूर्णांक ret;
 
 	request.which = hwirq;
 	request.type = type;
 
 	ret = gb_operation_sync(ggc->connection,
 				GB_GPIO_TYPE_IRQ_TYPE,
-				&request, sizeof(request), NULL, 0);
-	if (ret)
+				&request, माप(request), शून्य, 0);
+	अगर (ret)
 		dev_err(dev, "failed to set irq type: %d\n", ret);
-}
+पूर्ण
 
-static void gb_gpio_irq_mask(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_to_gpio_chip(d);
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
-	struct gb_gpio_line *line = &ggc->lines[d->hwirq];
+अटल व्योम gb_gpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_to_gpio_chip(d);
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+	काष्ठा gb_gpio_line *line = &ggc->lines[d->hwirq];
 
 	line->masked = true;
 	line->masked_pending = true;
-}
+पूर्ण
 
-static void gb_gpio_irq_unmask(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_to_gpio_chip(d);
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
-	struct gb_gpio_line *line = &ggc->lines[d->hwirq];
+अटल व्योम gb_gpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_to_gpio_chip(d);
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+	काष्ठा gb_gpio_line *line = &ggc->lines[d->hwirq];
 
 	line->masked = false;
 	line->masked_pending = true;
-}
+पूर्ण
 
-static int gb_gpio_irq_set_type(struct irq_data *d, unsigned int type)
-{
-	struct gpio_chip *chip = irq_data_to_gpio_chip(d);
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
-	struct gb_gpio_line *line = &ggc->lines[d->hwirq];
-	struct device *dev = &ggc->gbphy_dev->dev;
+अटल पूर्णांक gb_gpio_irq_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_to_gpio_chip(d);
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+	काष्ठा gb_gpio_line *line = &ggc->lines[d->hwirq];
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
 	u8 irq_type;
 
-	switch (type) {
-	case IRQ_TYPE_NONE:
+	चयन (type) अणु
+	हाल IRQ_TYPE_NONE:
 		irq_type = GB_GPIO_IRQ_TYPE_NONE;
-		break;
-	case IRQ_TYPE_EDGE_RISING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
 		irq_type = GB_GPIO_IRQ_TYPE_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		irq_type = GB_GPIO_IRQ_TYPE_EDGE_FALLING;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		irq_type = GB_GPIO_IRQ_TYPE_EDGE_BOTH;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		irq_type = GB_GPIO_IRQ_TYPE_LEVEL_LOW;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		irq_type = GB_GPIO_IRQ_TYPE_LEVEL_HIGH;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported irq type: %u\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	line->irq_type = irq_type;
 	line->irq_type_pending = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gb_gpio_irq_bus_lock(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_to_gpio_chip(d);
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल व्योम gb_gpio_irq_bus_lock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_to_gpio_chip(d);
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
 	mutex_lock(&ggc->irq_lock);
-}
+पूर्ण
 
-static void gb_gpio_irq_bus_sync_unlock(struct irq_data *d)
-{
-	struct gpio_chip *chip = irq_data_to_gpio_chip(d);
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
-	struct gb_gpio_line *line = &ggc->lines[d->hwirq];
+अटल व्योम gb_gpio_irq_bus_sync_unlock(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_to_gpio_chip(d);
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+	काष्ठा gb_gpio_line *line = &ggc->lines[d->hwirq];
 
-	if (line->irq_type_pending) {
+	अगर (line->irq_type_pending) अणु
 		_gb_gpio_irq_set_type(ggc, d->hwirq, line->irq_type);
 		line->irq_type_pending = false;
-	}
+	पूर्ण
 
-	if (line->masked_pending) {
-		if (line->masked)
+	अगर (line->masked_pending) अणु
+		अगर (line->masked)
 			_gb_gpio_irq_mask(ggc, d->hwirq);
-		else
+		अन्यथा
 			_gb_gpio_irq_unmask(ggc, d->hwirq);
 		line->masked_pending = false;
-	}
+	पूर्ण
 
 	mutex_unlock(&ggc->irq_lock);
-}
+पूर्ण
 
-static int gb_gpio_request_handler(struct gb_operation *op)
-{
-	struct gb_connection *connection = op->connection;
-	struct gb_gpio_controller *ggc = gb_connection_get_data(connection);
-	struct device *dev = &ggc->gbphy_dev->dev;
-	struct gb_message *request;
-	struct gb_gpio_irq_event_request *event;
+अटल पूर्णांक gb_gpio_request_handler(काष्ठा gb_operation *op)
+अणु
+	काष्ठा gb_connection *connection = op->connection;
+	काष्ठा gb_gpio_controller *ggc = gb_connection_get_data(connection);
+	काष्ठा device *dev = &ggc->gbphy_dev->dev;
+	काष्ठा gb_message *request;
+	काष्ठा gb_gpio_irq_event_request *event;
 	u8 type = op->type;
-	int irq, ret;
+	पूर्णांक irq, ret;
 
-	if (type != GB_GPIO_TYPE_IRQ_EVENT) {
+	अगर (type != GB_GPIO_TYPE_IRQ_EVENT) अणु
 		dev_err(dev, "unsupported unsolicited request: %u\n", type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	request = op->request;
 
-	if (request->payload_size < sizeof(*event)) {
+	अगर (request->payload_size < माप(*event)) अणु
 		dev_err(dev, "short event received (%zu < %zu)\n",
-			request->payload_size, sizeof(*event));
-		return -EINVAL;
-	}
+			request->payload_size, माप(*event));
+		वापस -EINVAL;
+	पूर्ण
 
 	event = request->payload;
-	if (event->which > ggc->line_max) {
+	अगर (event->which > ggc->line_max) अणु
 		dev_err(dev, "invalid hw irq: %d\n", event->which);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	irq = irq_find_mapping(ggc->chip.irq.domain, event->which);
-	if (!irq) {
+	irq = irq_find_mapping(ggc->chip.irq.करोमुख्य, event->which);
+	अगर (!irq) अणु
 		dev_err(dev, "failed to find IRQ\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	local_irq_disable();
 	ret = generic_handle_irq(irq);
 	local_irq_enable();
 
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "failed to invoke irq handler\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_gpio_request(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
-	return gb_gpio_activate_operation(ggc, (u8)offset);
-}
+	वापस gb_gpio_activate_operation(ggc, (u8)offset);
+पूर्ण
 
-static void gb_gpio_free(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल व्योम gb_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
 	gb_gpio_deactivate_operation(ggc, (u8)offset);
-}
+पूर्ण
 
-static int gb_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 	u8 which;
-	int ret;
+	पूर्णांक ret;
 
 	which = (u8)offset;
 	ret = gb_gpio_get_direction_operation(ggc, which);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ggc->lines[which].direction ? 1 : 0;
-}
+	वापस ggc->lines[which].direction ? 1 : 0;
+पूर्ण
 
-static int gb_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
-	return gb_gpio_direction_in_operation(ggc, (u8)offset);
-}
+	वापस gb_gpio_direction_in_operation(ggc, (u8)offset);
+पूर्ण
 
-static int gb_gpio_direction_output(struct gpio_chip *chip, unsigned int offset,
-				    int value)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+				    पूर्णांक value)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
-	return gb_gpio_direction_out_operation(ggc, (u8)offset, !!value);
-}
+	वापस gb_gpio_direction_out_operation(ggc, (u8)offset, !!value);
+पूर्ण
 
-static int gb_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 	u8 which;
-	int ret;
+	पूर्णांक ret;
 
 	which = (u8)offset;
 	ret = gb_gpio_get_value_operation(ggc, which);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return ggc->lines[which].value;
-}
+	वापस ggc->lines[which].value;
+पूर्ण
 
-static void gb_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल व्योम gb_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 
 	gb_gpio_set_value_operation(ggc, (u8)offset, !!value);
-}
+पूर्ण
 
-static int gb_gpio_set_config(struct gpio_chip *chip, unsigned int offset,
-			      unsigned long config)
-{
-	struct gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
+अटल पूर्णांक gb_gpio_set_config(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			      अचिन्हित दीर्घ config)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gpio_chip_to_gb_gpio_controller(chip);
 	u32 debounce;
 
-	if (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
-		return -ENOTSUPP;
+	अगर (pinconf_to_config_param(config) != PIN_CONFIG_INPUT_DEBOUNCE)
+		वापस -ENOTSUPP;
 
 	debounce = pinconf_to_config_argument(config);
-	if (debounce > U16_MAX)
-		return -EINVAL;
+	अगर (debounce > U16_MAX)
+		वापस -EINVAL;
 
-	return gb_gpio_set_debounce_operation(ggc, (u8)offset, (u16)debounce);
-}
+	वापस gb_gpio_set_debounce_operation(ggc, (u8)offset, (u16)debounce);
+पूर्ण
 
-static int gb_gpio_controller_setup(struct gb_gpio_controller *ggc)
-{
-	int ret;
+अटल पूर्णांक gb_gpio_controller_setup(काष्ठा gb_gpio_controller *ggc)
+अणु
+	पूर्णांक ret;
 
 	/* Now find out how many lines there are */
 	ret = gb_gpio_line_count_operation(ggc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ggc->lines = kcalloc(ggc->line_max + 1, sizeof(*ggc->lines),
+	ggc->lines = kसुस्मृति(ggc->line_max + 1, माप(*ggc->lines),
 			     GFP_KERNEL);
-	if (!ggc->lines)
-		return -ENOMEM;
+	अगर (!ggc->lines)
+		वापस -ENOMEM;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gb_gpio_probe(struct gbphy_device *gbphy_dev,
-			 const struct gbphy_device_id *id)
-{
-	struct gb_connection *connection;
-	struct gb_gpio_controller *ggc;
-	struct gpio_chip *gpio;
-	struct gpio_irq_chip *girq;
-	struct irq_chip *irqc;
-	int ret;
+अटल पूर्णांक gb_gpio_probe(काष्ठा gbphy_device *gbphy_dev,
+			 स्थिर काष्ठा gbphy_device_id *id)
+अणु
+	काष्ठा gb_connection *connection;
+	काष्ठा gb_gpio_controller *ggc;
+	काष्ठा gpio_chip *gpio;
+	काष्ठा gpio_irq_chip *girq;
+	काष्ठा irq_chip *irqc;
+	पूर्णांक ret;
 
-	ggc = kzalloc(sizeof(*ggc), GFP_KERNEL);
-	if (!ggc)
-		return -ENOMEM;
+	ggc = kzalloc(माप(*ggc), GFP_KERNEL);
+	अगर (!ggc)
+		वापस -ENOMEM;
 
 	connection =
 		gb_connection_create(gbphy_dev->bundle,
 				     le16_to_cpu(gbphy_dev->cport_desc->id),
 				     gb_gpio_request_handler);
-	if (IS_ERR(connection)) {
+	अगर (IS_ERR(connection)) अणु
 		ret = PTR_ERR(connection);
-		goto exit_ggc_free;
-	}
+		जाओ निकास_ggc_मुक्त;
+	पूर्ण
 
 	ggc->connection = connection;
 	gb_connection_set_data(connection, ggc);
@@ -527,12 +528,12 @@ static int gb_gpio_probe(struct gbphy_device *gbphy_dev,
 	gb_gbphy_set_data(gbphy_dev, ggc);
 
 	ret = gb_connection_enable_tx(connection);
-	if (ret)
-		goto exit_connection_destroy;
+	अगर (ret)
+		जाओ निकास_connection_destroy;
 
 	ret = gb_gpio_controller_setup(ggc);
-	if (ret)
-		goto exit_connection_disable;
+	अगर (ret)
+		जाओ निकास_connection_disable;
 
 	irqc = &ggc->irqc;
 	irqc->irq_mask = gb_gpio_irq_mask;
@@ -551,7 +552,7 @@ static int gb_gpio_probe(struct gbphy_device *gbphy_dev,
 	gpio->owner = THIS_MODULE;
 
 	gpio->request = gb_gpio_request;
-	gpio->free = gb_gpio_free;
+	gpio->मुक्त = gb_gpio_मुक्त;
 	gpio->get_direction = gb_gpio_get_direction;
 	gpio->direction_input = gb_gpio_direction_input;
 	gpio->direction_output = gb_gpio_direction_output;
@@ -565,66 +566,66 @@ static int gb_gpio_probe(struct gbphy_device *gbphy_dev,
 	girq = &gpio->irq;
 	girq->chip = irqc;
 	/* The event comes from the outside so no parent handler */
-	girq->parent_handler = NULL;
+	girq->parent_handler = शून्य;
 	girq->num_parents = 0;
-	girq->parents = NULL;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->parents = शून्य;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_level_irq;
 
 	ret = gb_connection_enable(connection);
-	if (ret)
-		goto exit_line_free;
+	अगर (ret)
+		जाओ निकास_line_मुक्त;
 
 	ret = gpiochip_add(gpio);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&gbphy_dev->dev, "failed to add gpio chip: %d\n", ret);
-		goto exit_line_free;
-	}
+		जाओ निकास_line_मुक्त;
+	पूर्ण
 
-	gbphy_runtime_put_autosuspend(gbphy_dev);
-	return 0;
+	gbphy_runसमय_put_स्वतःsuspend(gbphy_dev);
+	वापस 0;
 
-exit_line_free:
-	kfree(ggc->lines);
-exit_connection_disable:
+निकास_line_मुक्त:
+	kमुक्त(ggc->lines);
+निकास_connection_disable:
 	gb_connection_disable(connection);
-exit_connection_destroy:
+निकास_connection_destroy:
 	gb_connection_destroy(connection);
-exit_ggc_free:
-	kfree(ggc);
-	return ret;
-}
+निकास_ggc_मुक्त:
+	kमुक्त(ggc);
+	वापस ret;
+पूर्ण
 
-static void gb_gpio_remove(struct gbphy_device *gbphy_dev)
-{
-	struct gb_gpio_controller *ggc = gb_gbphy_get_data(gbphy_dev);
-	struct gb_connection *connection = ggc->connection;
-	int ret;
+अटल व्योम gb_gpio_हटाओ(काष्ठा gbphy_device *gbphy_dev)
+अणु
+	काष्ठा gb_gpio_controller *ggc = gb_gbphy_get_data(gbphy_dev);
+	काष्ठा gb_connection *connection = ggc->connection;
+	पूर्णांक ret;
 
-	ret = gbphy_runtime_get_sync(gbphy_dev);
-	if (ret)
-		gbphy_runtime_get_noresume(gbphy_dev);
+	ret = gbphy_runसमय_get_sync(gbphy_dev);
+	अगर (ret)
+		gbphy_runसमय_get_noresume(gbphy_dev);
 
 	gb_connection_disable_rx(connection);
-	gpiochip_remove(&ggc->chip);
+	gpiochip_हटाओ(&ggc->chip);
 	gb_connection_disable(connection);
 	gb_connection_destroy(connection);
-	kfree(ggc->lines);
-	kfree(ggc);
-}
+	kमुक्त(ggc->lines);
+	kमुक्त(ggc);
+पूर्ण
 
-static const struct gbphy_device_id gb_gpio_id_table[] = {
-	{ GBPHY_PROTOCOL(GREYBUS_PROTOCOL_GPIO) },
-	{ },
-};
+अटल स्थिर काष्ठा gbphy_device_id gb_gpio_id_table[] = अणु
+	अणु GBPHY_PROTOCOL(GREYBUS_PROTOCOL_GPIO) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(gbphy, gb_gpio_id_table);
 
-static struct gbphy_driver gpio_driver = {
+अटल काष्ठा gbphy_driver gpio_driver = अणु
 	.name		= "gpio",
 	.probe		= gb_gpio_probe,
-	.remove		= gb_gpio_remove,
+	.हटाओ		= gb_gpio_हटाओ,
 	.id_table	= gb_gpio_id_table,
-};
+पूर्ण;
 
 module_gbphy_driver(gpio_driver);
 MODULE_LICENSE("GPL v2");

@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/spinlock.h>
-#include <linux/smp.h>
-#include <linux/mm.h>
-#include <asm/cache.h>
-#include <asm/barrier.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/cache.h>
+#समावेश <यंत्र/barrier.h>
 
-/* for L1-cache */
-#define INS_CACHE		(1 << 0)
-#define DATA_CACHE		(1 << 1)
-#define CACHE_INV		(1 << 4)
-#define CACHE_CLR		(1 << 5)
-#define CACHE_OMS		(1 << 6)
+/* क्रम L1-cache */
+#घोषणा INS_CACHE		(1 << 0)
+#घोषणा DATA_CACHE		(1 << 1)
+#घोषणा CACHE_INV		(1 << 4)
+#घोषणा CACHE_CLR		(1 << 5)
+#घोषणा CACHE_OMS		(1 << 6)
 
-void local_icache_inv_all(void *priv)
-{
+व्योम local_icache_inv_all(व्योम *priv)
+अणु
 	mtcr("cr17", INS_CACHE|CACHE_INV);
 	sync_is();
-}
+पूर्ण
 
-#ifdef CONFIG_CPU_HAS_ICACHE_INS
-void icache_inv_range(unsigned long start, unsigned long end)
-{
-	unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+#अगर_घोषित CONFIG_CPU_HAS_ICACHE_INS
+व्योम icache_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ i = start & ~(L1_CACHE_BYTES - 1);
 
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile("icache.iva %0\n"::"r"(i):"memory");
+	क्रम (; i < end; i += L1_CACHE_BYTES)
+		यंत्र अस्थिर("icache.iva %0\n"::"r"(i):"memory");
 	sync_is();
-}
-#else
-struct cache_range {
-	unsigned long start;
-	unsigned long end;
-};
+पूर्ण
+#अन्यथा
+काष्ठा cache_range अणु
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+पूर्ण;
 
-static DEFINE_SPINLOCK(cache_lock);
+अटल DEFINE_SPINLOCK(cache_lock);
 
-static inline void cache_op_line(unsigned long i, unsigned int val)
-{
+अटल अंतरभूत व्योम cache_op_line(अचिन्हित दीर्घ i, अचिन्हित पूर्णांक val)
+अणु
 	mtcr("cr22", i);
 	mtcr("cr17", val);
-}
+पूर्ण
 
-void local_icache_inv_range(void *priv)
-{
-	struct cache_range *param = priv;
-	unsigned long i = param->start & ~(L1_CACHE_BYTES - 1);
-	unsigned long flags;
+व्योम local_icache_inv_range(व्योम *priv)
+अणु
+	काष्ठा cache_range *param = priv;
+	अचिन्हित दीर्घ i = param->start & ~(L1_CACHE_BYTES - 1);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cache_lock, flags);
 
-	for (; i < param->end; i += L1_CACHE_BYTES)
+	क्रम (; i < param->end; i += L1_CACHE_BYTES)
 		cache_op_line(i, INS_CACHE | CACHE_INV | CACHE_OMS);
 
 	spin_unlock_irqrestore(&cache_lock, flags);
 
 	sync_is();
-}
+पूर्ण
 
-void icache_inv_range(unsigned long start, unsigned long end)
-{
-	struct cache_range param = { start, end };
+व्योम icache_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	काष्ठा cache_range param = अणु start, end पूर्ण;
 
-	if (irqs_disabled())
+	अगर (irqs_disabled())
 		local_icache_inv_range(&param);
-	else
+	अन्यथा
 		on_each_cpu(local_icache_inv_range, &param, 1);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-inline void dcache_wb_line(unsigned long start)
-{
-	asm volatile("dcache.cval1 %0\n"::"r"(start):"memory");
+अंतरभूत व्योम dcache_wb_line(अचिन्हित दीर्घ start)
+अणु
+	यंत्र अस्थिर("dcache.cval1 %0\n"::"r"(start):"memory");
 	sync_is();
-}
+पूर्ण
 
-void dcache_wb_range(unsigned long start, unsigned long end)
-{
-	unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+व्योम dcache_wb_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ i = start & ~(L1_CACHE_BYTES - 1);
 
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile("dcache.cval1 %0\n"::"r"(i):"memory");
+	क्रम (; i < end; i += L1_CACHE_BYTES)
+		यंत्र अस्थिर("dcache.cval1 %0\n"::"r"(i):"memory");
 	sync_is();
-}
+पूर्ण
 
-void cache_wbinv_range(unsigned long start, unsigned long end)
-{
+व्योम cache_wbinv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	dcache_wb_range(start, end);
 	icache_inv_range(start, end);
-}
+पूर्ण
 EXPORT_SYMBOL(cache_wbinv_range);
 
-void dma_wbinv_range(unsigned long start, unsigned long end)
-{
-	unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+व्योम dma_wbinv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ i = start & ~(L1_CACHE_BYTES - 1);
 
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile("dcache.civa %0\n"::"r"(i):"memory");
+	क्रम (; i < end; i += L1_CACHE_BYTES)
+		यंत्र अस्थिर("dcache.civa %0\n"::"r"(i):"memory");
 	sync_is();
-}
+पूर्ण
 
-void dma_inv_range(unsigned long start, unsigned long end)
-{
-	unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+व्योम dma_inv_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ i = start & ~(L1_CACHE_BYTES - 1);
 
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile("dcache.iva %0\n"::"r"(i):"memory");
+	क्रम (; i < end; i += L1_CACHE_BYTES)
+		यंत्र अस्थिर("dcache.iva %0\n"::"r"(i):"memory");
 	sync_is();
-}
+पूर्ण
 
-void dma_wb_range(unsigned long start, unsigned long end)
-{
-	unsigned long i = start & ~(L1_CACHE_BYTES - 1);
+व्योम dma_wb_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ i = start & ~(L1_CACHE_BYTES - 1);
 
-	for (; i < end; i += L1_CACHE_BYTES)
-		asm volatile("dcache.cva %0\n"::"r"(i):"memory");
+	क्रम (; i < end; i += L1_CACHE_BYTES)
+		यंत्र अस्थिर("dcache.cva %0\n"::"r"(i):"memory");
 	sync_is();
-}
+पूर्ण

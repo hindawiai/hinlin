@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,138 +22,138 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef QXL_DRM_H
-#define QXL_DRM_H
+#अगर_अघोषित QXL_DRM_H
+#घोषणा QXL_DRM_H
 
-#include "drm.h"
+#समावेश "drm.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-/* Please note that modifications to all structs defined here are
- * subject to backwards-compatibility constraints.
+/* Please note that modअगरications to all काष्ठाs defined here are
+ * subject to backwards-compatibility स्थिरraपूर्णांकs.
  *
- * Do not use pointers, use __u64 instead for 32 bit / 64 bit user/kernel
+ * Do not use poपूर्णांकers, use __u64 instead क्रम 32 bit / 64 bit user/kernel
  * compatibility Keep fields aligned to their size
  */
 
-#define QXL_GEM_DOMAIN_CPU 0
-#define QXL_GEM_DOMAIN_VRAM 1
-#define QXL_GEM_DOMAIN_SURFACE 2
+#घोषणा QXL_GEM_DOMAIN_CPU 0
+#घोषणा QXL_GEM_DOMAIN_VRAM 1
+#घोषणा QXL_GEM_DOMAIN_SURFACE 2
 
-#define DRM_QXL_ALLOC       0x00
-#define DRM_QXL_MAP         0x01
-#define DRM_QXL_EXECBUFFER  0x02
-#define DRM_QXL_UPDATE_AREA 0x03
-#define DRM_QXL_GETPARAM    0x04
-#define DRM_QXL_CLIENTCAP   0x05
+#घोषणा DRM_QXL_ALLOC       0x00
+#घोषणा DRM_QXL_MAP         0x01
+#घोषणा DRM_QXL_EXECBUFFER  0x02
+#घोषणा DRM_QXL_UPDATE_AREA 0x03
+#घोषणा DRM_QXL_GETPARAM    0x04
+#घोषणा DRM_QXL_CLIENTCAP   0x05
 
-#define DRM_QXL_ALLOC_SURF  0x06
+#घोषणा DRM_QXL_ALLOC_SURF  0x06
 
-struct drm_qxl_alloc {
+काष्ठा drm_qxl_alloc अणु
 	__u32 size;
 	__u32 handle; /* 0 is an invalid handle */
-};
+पूर्ण;
 
-struct drm_qxl_map {
-	__u64 offset; /* use for mmap system call */
+काष्ठा drm_qxl_map अणु
+	__u64 offset; /* use क्रम mmap प्रणाली call */
 	__u32 handle;
 	__u32 pad;
-};
+पूर्ण;
 
 /*
- * dest is the bo we are writing the relocation into
+ * dest is the bo we are writing the relocation पूर्णांकo
  * src is bo we are relocating.
  * *(dest_handle.base_addr + dest_offset) = physical_address(src_handle.addr +
  * src_offset)
  */
-#define QXL_RELOC_TYPE_BO 1
-#define QXL_RELOC_TYPE_SURF 2
+#घोषणा QXL_RELOC_TYPE_BO 1
+#घोषणा QXL_RELOC_TYPE_SURF 2
 
-struct drm_qxl_reloc {
-	__u64 src_offset; /* offset into src_handle or src buffer */
+काष्ठा drm_qxl_reloc अणु
+	__u64 src_offset; /* offset पूर्णांकo src_handle or src buffer */
 	__u64 dst_offset; /* offset in dest handle */
 	__u32 src_handle; /* dest handle to compute address from */
-	__u32 dst_handle; /* 0 if to command buffer */
+	__u32 dst_handle; /* 0 अगर to command buffer */
 	__u32 reloc_type;
 	__u32 pad;
-};
+पूर्ण;
 
-struct drm_qxl_command {
-	__u64		command; /* void* */
-	__u64		relocs; /* struct drm_qxl_reloc* */
+काष्ठा drm_qxl_command अणु
+	__u64		command; /* व्योम* */
+	__u64		relocs; /* काष्ठा drm_qxl_reloc* */
 	__u32		type;
 	__u32		command_size;
 	__u32		relocs_num;
 	__u32                pad;
-};
+पूर्ण;
 
-struct drm_qxl_execbuffer {
-	__u32		flags;		/* for future use */
+काष्ठा drm_qxl_execbuffer अणु
+	__u32		flags;		/* क्रम future use */
 	__u32		commands_num;
-	__u64		commands;	/* struct drm_qxl_command* */
-};
+	__u64		commands;	/* काष्ठा drm_qxl_command* */
+पूर्ण;
 
-struct drm_qxl_update_area {
+काष्ठा drm_qxl_update_area अणु
 	__u32 handle;
 	__u32 top;
 	__u32 left;
 	__u32 bottom;
 	__u32 right;
 	__u32 pad;
-};
+पूर्ण;
 
-#define QXL_PARAM_NUM_SURFACES 1 /* rom->n_surfaces */
-#define QXL_PARAM_MAX_RELOCS 2
-struct drm_qxl_getparam {
+#घोषणा QXL_PARAM_NUM_SURFACES 1 /* rom->n_surfaces */
+#घोषणा QXL_PARAM_MAX_RELOCS 2
+काष्ठा drm_qxl_getparam अणु
 	__u64 param;
 	__u64 value;
-};
+पूर्ण;
 
 /* these are one bit values */
-struct drm_qxl_clientcap {
+काष्ठा drm_qxl_clientcap अणु
 	__u32 index;
 	__u32 pad;
-};
+पूर्ण;
 
-struct drm_qxl_alloc_surf {
-	__u32 format;
+काष्ठा drm_qxl_alloc_surf अणु
+	__u32 क्रमmat;
 	__u32 width;
 	__u32 height;
 	__s32 stride;
 	__u32 handle;
 	__u32 pad;
-};
+पूर्ण;
 
-#define DRM_IOCTL_QXL_ALLOC \
-	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_ALLOC, struct drm_qxl_alloc)
+#घोषणा DRM_IOCTL_QXL_ALLOC \
+	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_ALLOC, काष्ठा drm_qxl_alloc)
 
-#define DRM_IOCTL_QXL_MAP \
-	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_MAP, struct drm_qxl_map)
+#घोषणा DRM_IOCTL_QXL_MAP \
+	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_MAP, काष्ठा drm_qxl_map)
 
-#define DRM_IOCTL_QXL_EXECBUFFER \
+#घोषणा DRM_IOCTL_QXL_EXECBUFFER \
 	DRM_IOW(DRM_COMMAND_BASE + DRM_QXL_EXECBUFFER,\
-		struct drm_qxl_execbuffer)
+		काष्ठा drm_qxl_execbuffer)
 
-#define DRM_IOCTL_QXL_UPDATE_AREA \
+#घोषणा DRM_IOCTL_QXL_UPDATE_AREA \
 	DRM_IOW(DRM_COMMAND_BASE + DRM_QXL_UPDATE_AREA,\
-		struct drm_qxl_update_area)
+		काष्ठा drm_qxl_update_area)
 
-#define DRM_IOCTL_QXL_GETPARAM \
+#घोषणा DRM_IOCTL_QXL_GETPARAM \
 	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_GETPARAM,\
-		struct drm_qxl_getparam)
+		काष्ठा drm_qxl_getparam)
 
-#define DRM_IOCTL_QXL_CLIENTCAP \
+#घोषणा DRM_IOCTL_QXL_CLIENTCAP \
 	DRM_IOW(DRM_COMMAND_BASE + DRM_QXL_CLIENTCAP,\
-		struct drm_qxl_clientcap)
+		काष्ठा drm_qxl_clientcap)
 
-#define DRM_IOCTL_QXL_ALLOC_SURF \
+#घोषणा DRM_IOCTL_QXL_ALLOC_SURF \
 	DRM_IOWR(DRM_COMMAND_BASE + DRM_QXL_ALLOC_SURF,\
-		struct drm_qxl_alloc_surf)
+		काष्ठा drm_qxl_alloc_surf)
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

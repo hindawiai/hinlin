@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
 
-#include <asm/bitfield.h>
-#include <asm/uaccess.h>
-#include <asm/sfp-machine.h>
-#include <asm/fpuemu.h>
-#include <asm/nds32_fpu_inst.h>
+#समावेश <यंत्र/bitfield.h>
+#समावेश <यंत्र/uaccess.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <यंत्र/fpuemu.h>
+#समावेश <यंत्र/nds32_fpu_inst.h>
 
-#define DPFROMREG(dp, x) (dp = (void *)((unsigned long *)fpu_reg + 2*x))
-#ifdef __NDS32_EL__
-#define SPFROMREG(sp, x)\
-	((sp) = (void *)((unsigned long *)fpu_reg + (x^1)))
-#else
-#define SPFROMREG(sp, x) ((sp) = (void *)((unsigned long *)fpu_reg + x))
-#endif
+#घोषणा DPFROMREG(dp, x) (dp = (व्योम *)((अचिन्हित दीर्घ *)fpu_reg + 2*x))
+#अगर_घोषित __NDS32_EL__
+#घोषणा SPFROMREG(sp, x)\
+	((sp) = (व्योम *)((अचिन्हित दीर्घ *)fpu_reg + (x^1)))
+#अन्यथा
+#घोषणा SPFROMREG(sp, x) ((sp) = (व्योम *)((अचिन्हित दीर्घ *)fpu_reg + x))
+#पूर्ण_अगर
 
-#define DEF3OP(name, p, f1, f2) \
-void fpemu_##name##p(void *ft, void *fa, void *fb) \
-{ \
+#घोषणा DEF3OP(name, p, f1, f2) \
+व्योम fpemu_##name##p(व्योम *ft, व्योम *fa, व्योम *fb) \
+अणु \
 	f1(fa, fa, fb); \
 	f2(ft, ft, fa); \
-}
+पूर्ण
 
-#define DEF3OPNEG(name, p, f1, f2, f3) \
-void fpemu_##name##p(void *ft, void *fa, void *fb) \
-{ \
+#घोषणा DEF3OPNEG(name, p, f1, f2, f3) \
+व्योम fpemu_##name##p(व्योम *ft, व्योम *fa, व्योम *fb) \
+अणु \
 	f1(fa, fa, fb); \
 	f2(ft, ft, fa); \
 	f3(ft, ft); \
-}
+पूर्ण
 DEF3OP(fmadd, s, fmuls, fadds);
 DEF3OP(fmsub, s, fmuls, fsubs);
 DEF3OP(fmadd, d, fmuld, faddd);
@@ -38,7 +39,7 @@ DEF3OPNEG(fnmsub, s, fmuls, fsubs, fnegs);
 DEF3OPNEG(fnmadd, d, fmuld, faddd, fnegd);
 DEF3OPNEG(fnmsub, d, fmuld, fsubd, fnegd);
 
-static const unsigned char cmptab[8] = {
+अटल स्थिर अचिन्हित अक्षर cmptab[8] = अणु
 	SF_CEQ,
 	SF_CEQ,
 	SF_CLT,
@@ -47,9 +48,9 @@ static const unsigned char cmptab[8] = {
 	SF_CLT | SF_CEQ,
 	SF_CUN,
 	SF_CUN
-};
+पूर्ण;
 
-enum ARGTYPE {
+क्रमागत ARGTYPE अणु
 	S1S = 1,
 	S2S,
 	S1D,
@@ -58,349 +59,349 @@ enum ARGTYPE {
 	D2D,
 	D1S,
 	CD
-};
-union func_t {
-	void (*t)(void *ft, void *fa, void *fb);
-	void (*b)(void *ft, void *fa);
-};
+पूर्ण;
+जोड़ func_t अणु
+	व्योम (*t)(व्योम *ft, व्योम *fa, व्योम *fb);
+	व्योम (*b)(व्योम *ft, व्योम *fa);
+पूर्ण;
 /*
- * Emulate a single FPU arithmetic instruction.
+ * Emulate a single FPU arithmetic inकाष्ठाion.
  */
-static int fpu_emu(struct fpu_struct *fpu_reg, unsigned long insn)
-{
-	int rfmt;		/* resulting format */
-	union func_t func;
-	int ftype = 0;
+अटल पूर्णांक fpu_emu(काष्ठा fpu_काष्ठा *fpu_reg, अचिन्हित दीर्घ insn)
+अणु
+	पूर्णांक rfmt;		/* resulting क्रमmat */
+	जोड़ func_t func;
+	पूर्णांक ftype = 0;
 
-	switch (rfmt = NDS32Insn_OPCODE_COP0(insn)) {
-	case fs1_op:{
-			switch (NDS32Insn_OPCODE_BIT69(insn)) {
-			case fadds_op:
+	चयन (rfmt = NDS32Insn_OPCODE_COP0(insn)) अणु
+	हाल fs1_op:अणु
+			चयन (NDS32Insn_OPCODE_BIT69(insn)) अणु
+			हाल fadds_op:
 				func.t = fadds;
 				ftype = S2S;
-				break;
-			case fsubs_op:
+				अवरोध;
+			हाल fsubs_op:
 				func.t = fsubs;
 				ftype = S2S;
-				break;
-			case fmadds_op:
+				अवरोध;
+			हाल fmadds_op:
 				func.t = fpemu_fmadds;
 				ftype = S2S;
-				break;
-			case fmsubs_op:
+				अवरोध;
+			हाल fmsubs_op:
 				func.t = fpemu_fmsubs;
 				ftype = S2S;
-				break;
-			case fnmadds_op:
+				अवरोध;
+			हाल fnmadds_op:
 				func.t = fpemu_fnmadds;
 				ftype = S2S;
-				break;
-			case fnmsubs_op:
+				अवरोध;
+			हाल fnmsubs_op:
 				func.t = fpemu_fnmsubs;
 				ftype = S2S;
-				break;
-			case fmuls_op:
+				अवरोध;
+			हाल fmuls_op:
 				func.t = fmuls;
 				ftype = S2S;
-				break;
-			case fdivs_op:
-				func.t = fdivs;
+				अवरोध;
+			हाल fभागs_op:
+				func.t = fभागs;
 				ftype = S2S;
-				break;
-			case fs1_f2op_op:
-				switch (NDS32Insn_OPCODE_BIT1014(insn)) {
-				case fs2d_op:
+				अवरोध;
+			हाल fs1_f2op_op:
+				चयन (NDS32Insn_OPCODE_BIT1014(insn)) अणु
+				हाल fs2d_op:
 					func.b = fs2d;
 					ftype = S1D;
-					break;
-				case fs2si_op:
+					अवरोध;
+				हाल fs2si_op:
 					func.b = fs2si;
 					ftype = S1S;
-					break;
-				case fs2si_z_op:
+					अवरोध;
+				हाल fs2si_z_op:
 					func.b = fs2si_z;
 					ftype = S1S;
-					break;
-				case fs2ui_op:
+					अवरोध;
+				हाल fs2ui_op:
 					func.b = fs2ui;
 					ftype = S1S;
-					break;
-				case fs2ui_z_op:
+					अवरोध;
+				हाल fs2ui_z_op:
 					func.b = fs2ui_z;
 					ftype = S1S;
-					break;
-				case fsi2s_op:
+					अवरोध;
+				हाल fsi2s_op:
 					func.b = fsi2s;
 					ftype = S1S;
-					break;
-				case fui2s_op:
+					अवरोध;
+				हाल fui2s_op:
 					func.b = fui2s;
 					ftype = S1S;
-					break;
-				case fsqrts_op:
-					func.b = fsqrts;
+					अवरोध;
+				हाल fवर्ग_मूलs_op:
+					func.b = fवर्ग_मूलs;
 					ftype = S1S;
-					break;
-				default:
-					return SIGILL;
-				}
-				break;
-			default:
-				return SIGILL;
-			}
-			break;
-		}
-	case fs2_op:
-		switch (NDS32Insn_OPCODE_BIT69(insn)) {
-		case fcmpeqs_op:
-		case fcmpeqs_e_op:
-		case fcmplts_op:
-		case fcmplts_e_op:
-		case fcmples_op:
-		case fcmples_e_op:
-		case fcmpuns_op:
-		case fcmpuns_e_op:
+					अवरोध;
+				शेष:
+					वापस संक_अवैध;
+				पूर्ण
+				अवरोध;
+			शेष:
+				वापस संक_अवैध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल fs2_op:
+		चयन (NDS32Insn_OPCODE_BIT69(insn)) अणु
+		हाल fcmpeqs_op:
+		हाल fcmpeqs_e_op:
+		हाल fcmplts_op:
+		हाल fcmplts_e_op:
+		हाल fcmples_op:
+		हाल fcmples_e_op:
+		हाल fcmpuns_op:
+		हाल fcmpuns_e_op:
 			ftype = CS;
-			break;
-		default:
-			return SIGILL;
-		}
-		break;
-	case fd1_op:{
-			switch (NDS32Insn_OPCODE_BIT69(insn)) {
-			case faddd_op:
+			अवरोध;
+		शेष:
+			वापस संक_अवैध;
+		पूर्ण
+		अवरोध;
+	हाल fd1_op:अणु
+			चयन (NDS32Insn_OPCODE_BIT69(insn)) अणु
+			हाल faddd_op:
 				func.t = faddd;
 				ftype = D2D;
-				break;
-			case fsubd_op:
+				अवरोध;
+			हाल fsubd_op:
 				func.t = fsubd;
 				ftype = D2D;
-				break;
-			case fmaddd_op:
+				अवरोध;
+			हाल fmaddd_op:
 				func.t = fpemu_fmaddd;
 				ftype = D2D;
-				break;
-			case fmsubd_op:
+				अवरोध;
+			हाल fmsubd_op:
 				func.t = fpemu_fmsubd;
 				ftype = D2D;
-				break;
-			case fnmaddd_op:
+				अवरोध;
+			हाल fnmaddd_op:
 				func.t = fpemu_fnmaddd;
 				ftype = D2D;
-				break;
-			case fnmsubd_op:
+				अवरोध;
+			हाल fnmsubd_op:
 				func.t = fpemu_fnmsubd;
 				ftype = D2D;
-				break;
-			case fmuld_op:
+				अवरोध;
+			हाल fmuld_op:
 				func.t = fmuld;
 				ftype = D2D;
-				break;
-			case fdivd_op:
-				func.t = fdivd;
+				अवरोध;
+			हाल fभागd_op:
+				func.t = fभागd;
 				ftype = D2D;
-				break;
-			case fd1_f2op_op:
-				switch (NDS32Insn_OPCODE_BIT1014(insn)) {
-				case fd2s_op:
+				अवरोध;
+			हाल fd1_f2op_op:
+				चयन (NDS32Insn_OPCODE_BIT1014(insn)) अणु
+				हाल fd2s_op:
 					func.b = fd2s;
 					ftype = D1S;
-					break;
-				case fd2si_op:
+					अवरोध;
+				हाल fd2si_op:
 					func.b = fd2si;
 					ftype = D1S;
-					break;
-				case fd2si_z_op:
+					अवरोध;
+				हाल fd2si_z_op:
 					func.b = fd2si_z;
 					ftype = D1S;
-					break;
-				case fd2ui_op:
+					अवरोध;
+				हाल fd2ui_op:
 					func.b = fd2ui;
 					ftype = D1S;
-					break;
-				case fd2ui_z_op:
+					अवरोध;
+				हाल fd2ui_z_op:
 					func.b = fd2ui_z;
 					ftype = D1S;
-					break;
-				case fsi2d_op:
+					अवरोध;
+				हाल fsi2d_op:
 					func.b = fsi2d;
 					ftype = D1S;
-					break;
-				case fui2d_op:
+					अवरोध;
+				हाल fui2d_op:
 					func.b = fui2d;
 					ftype = D1S;
-					break;
-				case fsqrtd_op:
-					func.b = fsqrtd;
+					अवरोध;
+				हाल fवर्ग_मूलd_op:
+					func.b = fवर्ग_मूलd;
 					ftype = D1D;
-					break;
-				default:
-					return SIGILL;
-				}
-				break;
-			default:
-				return SIGILL;
+					अवरोध;
+				शेष:
+					वापस संक_अवैध;
+				पूर्ण
+				अवरोध;
+			शेष:
+				वापस संक_अवैध;
 
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-	case fd2_op:
-		switch (NDS32Insn_OPCODE_BIT69(insn)) {
-		case fcmpeqd_op:
-		case fcmpeqd_e_op:
-		case fcmpltd_op:
-		case fcmpltd_e_op:
-		case fcmpled_op:
-		case fcmpled_e_op:
-		case fcmpund_op:
-		case fcmpund_e_op:
+	हाल fd2_op:
+		चयन (NDS32Insn_OPCODE_BIT69(insn)) अणु
+		हाल fcmpeqd_op:
+		हाल fcmpeqd_e_op:
+		हाल fcmpltd_op:
+		हाल fcmpltd_e_op:
+		हाल fcmpled_op:
+		हाल fcmpled_e_op:
+		हाल fcmpund_op:
+		हाल fcmpund_e_op:
 			ftype = CD;
-			break;
-		default:
-			return SIGILL;
-		}
-		break;
+			अवरोध;
+		शेष:
+			वापस संक_अवैध;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return SIGILL;
-	}
+	शेष:
+		वापस संक_अवैध;
+	पूर्ण
 
-	switch (ftype) {
-	case S1S:{
-			void *ft, *fa;
+	चयन (ftype) अणु
+	हाल S1S:अणु
+			व्योम *ft, *fa;
 
 			SPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			SPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			func.b(ft, fa);
-			break;
-		}
-	case S2S:{
-			void *ft, *fa, *fb;
+			अवरोध;
+		पूर्ण
+	हाल S2S:अणु
+			व्योम *ft, *fa, *fb;
 
 			SPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			SPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			SPFROMREG(fb, NDS32Insn_OPCODE_Rb(insn));
 			func.t(ft, fa, fb);
-			break;
-		}
-	case S1D:{
-			void *ft, *fa;
+			अवरोध;
+		पूर्ण
+	हाल S1D:अणु
+			व्योम *ft, *fa;
 
 			DPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			SPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			func.b(ft, fa);
-			break;
-		}
-	case CS:{
-			unsigned int cmpop = NDS32Insn_OPCODE_BIT69(insn);
-			void *ft, *fa, *fb;
+			अवरोध;
+		पूर्ण
+	हाल CS:अणु
+			अचिन्हित पूर्णांक cmpop = NDS32Insn_OPCODE_BIT69(insn);
+			व्योम *ft, *fa, *fb;
 
 			SPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			SPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			SPFROMREG(fb, NDS32Insn_OPCODE_Rb(insn));
-			if (cmpop < 0x8) {
+			अगर (cmpop < 0x8) अणु
 				cmpop = cmptab[cmpop];
 				fcmps(ft, fa, fb, cmpop);
-			} else
-				return SIGILL;
-			break;
-		}
-	case D1D:{
-			void *ft, *fa;
+			पूर्ण अन्यथा
+				वापस संक_अवैध;
+			अवरोध;
+		पूर्ण
+	हाल D1D:अणु
+			व्योम *ft, *fa;
 
 			DPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			DPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			func.b(ft, fa);
-			break;
-		}
-	case D2D:{
-			void *ft, *fa, *fb;
+			अवरोध;
+		पूर्ण
+	हाल D2D:अणु
+			व्योम *ft, *fa, *fb;
 
 			DPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			DPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			DPFROMREG(fb, NDS32Insn_OPCODE_Rb(insn));
 			func.t(ft, fa, fb);
-			break;
-		}
-	case D1S:{
-			void *ft, *fa;
+			अवरोध;
+		पूर्ण
+	हाल D1S:अणु
+			व्योम *ft, *fa;
 
 			SPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			DPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			func.b(ft, fa);
-			break;
-		}
-	case CD:{
-			unsigned int cmpop = NDS32Insn_OPCODE_BIT69(insn);
-			void *ft, *fa, *fb;
+			अवरोध;
+		पूर्ण
+	हाल CD:अणु
+			अचिन्हित पूर्णांक cmpop = NDS32Insn_OPCODE_BIT69(insn);
+			व्योम *ft, *fa, *fb;
 
 			SPFROMREG(ft, NDS32Insn_OPCODE_Rt(insn));
 			DPFROMREG(fa, NDS32Insn_OPCODE_Ra(insn));
 			DPFROMREG(fb, NDS32Insn_OPCODE_Rb(insn));
-			if (cmpop < 0x8) {
+			अगर (cmpop < 0x8) अणु
 				cmpop = cmptab[cmpop];
 				fcmpd(ft, fa, fb, cmpop);
-			} else
-				return SIGILL;
-			break;
-		}
-	default:
-		return SIGILL;
-	}
+			पूर्ण अन्यथा
+				वापस संक_अवैध;
+			अवरोध;
+		पूर्ण
+	शेष:
+		वापस संक_अवैध;
+	पूर्ण
 
 	/*
-	 * If an exception is required, generate a tidy SIGFPE exception.
+	 * If an exception is required, generate a tidy संक_भ_त्रुटि exception.
 	 */
-#if IS_ENABLED(CONFIG_SUPPORT_DENORMAL_ARITHMETIC)
-	if (((fpu_reg->fpcsr << 5) & fpu_reg->fpcsr & FPCSR_mskALLE_NO_UDF_IEXE)
-	    || ((fpu_reg->fpcsr << 5) & (fpu_reg->UDF_IEX_trap))) {
-#else
-	if ((fpu_reg->fpcsr << 5) & fpu_reg->fpcsr & FPCSR_mskALLE) {
-#endif
-		return SIGFPE;
-	}
-	return 0;
-}
+#अगर IS_ENABLED(CONFIG_SUPPORT_DENORMAL_ARITHMETIC)
+	अगर (((fpu_reg->fpcsr << 5) & fpu_reg->fpcsr & FPCSR_mskALLE_NO_UDF_IEXE)
+	    || ((fpu_reg->fpcsr << 5) & (fpu_reg->UDF_IEX_trap))) अणु
+#अन्यथा
+	अगर ((fpu_reg->fpcsr << 5) & fpu_reg->fpcsr & FPCSR_mskALLE) अणु
+#पूर्ण_अगर
+		वापस संक_भ_त्रुटि;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int do_fpuemu(struct pt_regs *regs, struct fpu_struct *fpu)
-{
-	unsigned long insn = 0, addr = regs->ipc;
-	unsigned long emulpc, contpc;
-	unsigned char *pc = (void *)&insn;
-	char c;
-	int i = 0, ret;
+पूर्णांक करो_fpuemu(काष्ठा pt_regs *regs, काष्ठा fpu_काष्ठा *fpu)
+अणु
+	अचिन्हित दीर्घ insn = 0, addr = regs->ipc;
+	अचिन्हित दीर्घ emulpc, contpc;
+	अचिन्हित अक्षर *pc = (व्योम *)&insn;
+	अक्षर c;
+	पूर्णांक i = 0, ret;
 
-	for (i = 0; i < 4; i++) {
-		if (__get_user(c, (unsigned char *)addr++))
-			return SIGBUS;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (__get_user(c, (अचिन्हित अक्षर *)addr++))
+			वापस SIGBUS;
 		*pc++ = c;
-	}
+	पूर्ण
 
 	insn = be32_to_cpu(insn);
 
 	emulpc = regs->ipc;
 	contpc = regs->ipc + 4;
 
-	if (NDS32Insn_OPCODE(insn) != cop0_op)
-		return SIGILL;
+	अगर (NDS32Insn_OPCODE(insn) != cop0_op)
+		वापस संक_अवैध;
 
-	switch (NDS32Insn_OPCODE_COP0(insn)) {
-	case fs1_op:
-	case fs2_op:
-	case fd1_op:
-	case fd2_op:
-		{
-			/* a real fpu computation instruction */
+	चयन (NDS32Insn_OPCODE_COP0(insn)) अणु
+	हाल fs1_op:
+	हाल fs2_op:
+	हाल fd1_op:
+	हाल fd2_op:
+		अणु
+			/* a real fpu computation inकाष्ठाion */
 			ret = fpu_emu(fpu, insn);
-			if (!ret)
+			अगर (!ret)
 				regs->ipc = contpc;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return SIGILL;
-	}
+	शेष:
+		वापस संक_अवैध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

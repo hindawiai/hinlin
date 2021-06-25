@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * mpc624.c
- * Hardware driver for a Micro/sys inc. MPC-624 PC/104 board
+ * Hardware driver क्रम a Micro/sys inc. MPC-624 PC/104 board
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
@@ -43,111 +44,111 @@
  *	   1	-10.1V .. +10.1V
  */
 
-#include <linux/module.h>
-#include "../comedidev.h"
+#समावेश <linux/module.h>
+#समावेश "../comedidev.h"
 
-#include <linux/delay.h>
+#समावेश <linux/delay.h>
 
-/* Offsets of different ports */
-#define MPC624_MASTER_CONTROL	0 /* not used */
-#define MPC624_GNMUXCH		1 /* Gain, Mux, Channel of ADC */
-#define MPC624_ADC		2 /* read/write to/from ADC */
-#define MPC624_EE		3 /* read/write to/from serial EEPROM via I2C */
-#define MPC624_LEDS		4 /* write to LEDs */
-#define MPC624_DIO		5 /* read/write to/from digital I/O ports */
-#define MPC624_IRQ_MASK		6 /* IRQ masking enable/disable */
+/* Offsets of dअगरferent ports */
+#घोषणा MPC624_MASTER_CONTROL	0 /* not used */
+#घोषणा MPC624_GNMUXCH		1 /* Gain, Mux, Channel of ADC */
+#घोषणा MPC624_ADC		2 /* पढ़ो/ग_लिखो to/from ADC */
+#घोषणा MPC624_EE		3 /* पढ़ो/ग_लिखो to/from serial EEPROM via I2C */
+#घोषणा MPC624_LEDS		4 /* ग_लिखो to LEDs */
+#घोषणा MPC624_DIO		5 /* पढ़ो/ग_लिखो to/from digital I/O ports */
+#घोषणा MPC624_IRQ_MASK		6 /* IRQ masking enable/disable */
 
 /* Register bits' names */
-#define MPC624_ADBUSY		BIT(5)
-#define MPC624_ADSDO		BIT(4)
-#define MPC624_ADFO		BIT(3)
-#define MPC624_ADCS		BIT(2)
-#define MPC624_ADSCK		BIT(1)
-#define MPC624_ADSDI		BIT(0)
+#घोषणा MPC624_ADBUSY		BIT(5)
+#घोषणा MPC624_ADSDO		BIT(4)
+#घोषणा MPC624_ADFO		BIT(3)
+#घोषणा MPC624_ADCS		BIT(2)
+#घोषणा MPC624_ADSCK		BIT(1)
+#घोषणा MPC624_ADSDI		BIT(0)
 
 /* 32-bit output value bits' names */
-#define MPC624_EOC_BIT		BIT(31)
-#define MPC624_DMY_BIT		BIT(30)
-#define MPC624_SGN_BIT		BIT(29)
+#घोषणा MPC624_EOC_BIT		BIT(31)
+#घोषणा MPC624_DMY_BIT		BIT(30)
+#घोषणा MPC624_SGN_BIT		BIT(29)
 
 /* SDI Speed/Resolution Programming bits */
-#define MPC624_OSR(x)		(((x) & 0x1f) << 27)
-#define MPC624_SPEED_3_52_KHZ	MPC624_OSR(0x11)
-#define MPC624_SPEED_1_76_KHZ	MPC624_OSR(0x12)
-#define MPC624_SPEED_880_HZ	MPC624_OSR(0x13)
-#define MPC624_SPEED_440_HZ	MPC624_OSR(0x14)
-#define MPC624_SPEED_220_HZ	MPC624_OSR(0x15)
-#define MPC624_SPEED_110_HZ	MPC624_OSR(0x16)
-#define MPC624_SPEED_55_HZ	MPC624_OSR(0x17)
-#define MPC624_SPEED_27_5_HZ	MPC624_OSR(0x18)
-#define MPC624_SPEED_13_75_HZ	MPC624_OSR(0x19)
-#define MPC624_SPEED_6_875_HZ	MPC624_OSR(0x1f)
+#घोषणा MPC624_OSR(x)		(((x) & 0x1f) << 27)
+#घोषणा MPC624_SPEED_3_52_KHZ	MPC624_OSR(0x11)
+#घोषणा MPC624_SPEED_1_76_KHZ	MPC624_OSR(0x12)
+#घोषणा MPC624_SPEED_880_HZ	MPC624_OSR(0x13)
+#घोषणा MPC624_SPEED_440_HZ	MPC624_OSR(0x14)
+#घोषणा MPC624_SPEED_220_HZ	MPC624_OSR(0x15)
+#घोषणा MPC624_SPEED_110_HZ	MPC624_OSR(0x16)
+#घोषणा MPC624_SPEED_55_HZ	MPC624_OSR(0x17)
+#घोषणा MPC624_SPEED_27_5_HZ	MPC624_OSR(0x18)
+#घोषणा MPC624_SPEED_13_75_HZ	MPC624_OSR(0x19)
+#घोषणा MPC624_SPEED_6_875_HZ	MPC624_OSR(0x1f)
 
-struct mpc624_private {
-	unsigned int ai_speed;
-};
+काष्ठा mpc624_निजी अणु
+	अचिन्हित पूर्णांक ai_speed;
+पूर्ण;
 
 /* -------------------------------------------------------------------------- */
-static const struct comedi_lrange range_mpc624_bipolar1 = {
+अटल स्थिर काष्ठा comedi_lrange range_mpc624_bipolar1 = अणु
 	1,
-	{
+	अणु
 /* BIP_RANGE(1.01)  this is correct, */
 	 /*  but my MPC-624 actually seems to have a range of 2.02 */
 	 BIP_RANGE(2.02)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_mpc624_bipolar10 = {
+अटल स्थिर काष्ठा comedi_lrange range_mpc624_bipolar10 = अणु
 	1,
-	{
+	अणु
 /* BIP_RANGE(10.1)   this is correct, */
 	 /*  but my MPC-624 actually seems to have a range of 20.2 */
 	 BIP_RANGE(20.2)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static unsigned int mpc624_ai_get_sample(struct comedi_device *dev,
-					 struct comedi_subdevice *s)
-{
-	struct mpc624_private *devpriv = dev->private;
-	unsigned int data_out = devpriv->ai_speed;
-	unsigned int data_in = 0;
-	unsigned int bit;
-	int i;
+अटल अचिन्हित पूर्णांक mpc624_ai_get_sample(काष्ठा comedi_device *dev,
+					 काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा mpc624_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक data_out = devpriv->ai_speed;
+	अचिन्हित पूर्णांक data_in = 0;
+	अचिन्हित पूर्णांक bit;
+	पूर्णांक i;
 
-	/* Start reading data */
+	/* Start पढ़ोing data */
 	udelay(1);
-	for (i = 0; i < 32; i++) {
-		/* Set the clock low */
+	क्रम (i = 0; i < 32; i++) अणु
+		/* Set the घड़ी low */
 		outb(0, dev->iobase + MPC624_ADC);
 		udelay(1);
 
-		/* Set the ADSDI line for the next bit (send to MPC624) */
+		/* Set the ADSDI line क्रम the next bit (send to MPC624) */
 		bit = (data_out & BIT(31)) ? MPC624_ADSDI : 0;
 		outb(bit, dev->iobase + MPC624_ADC);
 		udelay(1);
 
-		/* Set the clock high */
+		/* Set the घड़ी high */
 		outb(MPC624_ADSCK | bit, dev->iobase + MPC624_ADC);
 		udelay(1);
 
-		/* Read ADSDO on high clock (receive from MPC624) */
+		/* Read ADSDO on high घड़ी (receive from MPC624) */
 		data_in <<= 1;
 		data_in |= (inb(dev->iobase + MPC624_ADC) & MPC624_ADSDO) >> 4;
 		udelay(1);
 
 		data_out <<= 1;
-	}
+	पूर्ण
 
 	/*
-	 * Received 32-bit long value consist of:
+	 * Received 32-bit दीर्घ value consist of:
 	 *	31: EOC - (End Of Transmission) bit - should be 0
 	 *	30: DMY - (Dummy) bit - should be 0
-	 *	29: SIG - (Sign) bit - 1 if positive, 0 if negative
-	 *	28: MSB - (Most Significant Bit) - the first bit of the
+	 *	29: SIG - (Sign) bit - 1 अगर positive, 0 अगर negative
+	 *	28: MSB - (Most Signअगरicant Bit) - the first bit of the
 	 *					   conversion result
 	 *	....
-	 *	05: LSB - (Least Significant Bit)- the last bit of the
+	 *	05: LSB - (Least Signअगरicant Bit)- the last bit of the
 	 *					   conversion result
 	 *	04-00: sub-LSB - sub-LSBs are basically noise, but when
 	 *			 averaged properly, they can increase
@@ -155,20 +156,20 @@ static unsigned int mpc624_ai_get_sample(struct comedi_device *dev,
 	 *			 they can be discarded without loss of
 	 *			 resolution.
 	 */
-	if (data_in & MPC624_EOC_BIT)
+	अगर (data_in & MPC624_EOC_BIT)
 		dev_dbg(dev->class_dev, "EOC bit is set!");
-	if (data_in & MPC624_DMY_BIT)
+	अगर (data_in & MPC624_DMY_BIT)
 		dev_dbg(dev->class_dev, "DMY bit is set!");
 
-	if (data_in & MPC624_SGN_BIT) {
+	अगर (data_in & MPC624_SGN_BIT) अणु
 		/*
 		 * Voltage is positive
 		 *
-		 * comedi operates on unsigned numbers, so mask off EOC
-		 * and DMY and don't clear the SGN bit
+		 * comedi operates on अचिन्हित numbers, so mask off EOC
+		 * and DMY and करोn't clear the SGN bit
 		 */
 		data_in &= 0x3fffffff;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * The voltage is negative
 		 *
@@ -181,38 +182,38 @@ static unsigned int mpc624_ai_get_sample(struct comedi_device *dev,
 		/* clear EOC and DMY bits */
 		data_in &= ~(MPC624_EOC_BIT | MPC624_DMY_BIT);
 		data_in = 0x20000000 - data_in;
-	}
-	return data_in;
-}
+	पूर्ण
+	वापस data_in;
+पूर्ण
 
-static int mpc624_ai_eoc(struct comedi_device *dev,
-			 struct comedi_subdevice *s,
-			 struct comedi_insn *insn,
-			 unsigned long context)
-{
-	unsigned char status;
+अटल पूर्णांक mpc624_ai_eoc(काष्ठा comedi_device *dev,
+			 काष्ठा comedi_subdevice *s,
+			 काष्ठा comedi_insn *insn,
+			 अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित अक्षर status;
 
 	status = inb(dev->iobase + MPC624_ADC);
-	if ((status & MPC624_ADBUSY) == 0)
-		return 0;
-	return -EBUSY;
-}
+	अगर ((status & MPC624_ADBUSY) == 0)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int mpc624_ai_insn_read(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	int ret;
-	int i;
+अटल पूर्णांक mpc624_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
 	/*
 	 *  WARNING:
-	 *  We always write 0 to GNSWA bit, so the channel range is +-/10.1Vdc
+	 *  We always ग_लिखो 0 to GNSWA bit, so the channel range is +-/10.1Vdc
 	 */
 	outb(insn->chanspec, dev->iobase + MPC624_GNMUXCH);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		/*  Trigger the conversion */
 		outb(MPC624_ADSCK, dev->iobase + MPC624_ADC);
 		udelay(1);
@@ -221,69 +222,69 @@ static int mpc624_ai_insn_read(struct comedi_device *dev,
 		outb(0, dev->iobase + MPC624_ADC);
 		udelay(1);
 
-		/*  Wait for the conversion to end */
-		ret = comedi_timeout(dev, s, insn, mpc624_ai_eoc, 0);
-		if (ret)
-			return ret;
+		/*  Wait क्रम the conversion to end */
+		ret = comedi_समयout(dev, s, insn, mpc624_ai_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
 		data[i] = mpc624_ai_get_sample(dev, s);
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int mpc624_attach(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	struct mpc624_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक mpc624_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	काष्ठा mpc624_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
 	ret = comedi_request_region(dev, it->options[0], 0x10);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
-	switch (it->options[1]) {
-	case 0:
+	चयन (it->options[1]) अणु
+	हाल 0:
 		devpriv->ai_speed = MPC624_SPEED_3_52_KHZ;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		devpriv->ai_speed = MPC624_SPEED_1_76_KHZ;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		devpriv->ai_speed = MPC624_SPEED_880_HZ;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		devpriv->ai_speed = MPC624_SPEED_440_HZ;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		devpriv->ai_speed = MPC624_SPEED_220_HZ;
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		devpriv->ai_speed = MPC624_SPEED_110_HZ;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		devpriv->ai_speed = MPC624_SPEED_55_HZ;
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		devpriv->ai_speed = MPC624_SPEED_27_5_HZ;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		devpriv->ai_speed = MPC624_SPEED_13_75_HZ;
-		break;
-	case 9:
+		अवरोध;
+	हाल 9:
 		devpriv->ai_speed = MPC624_SPEED_6_875_HZ;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		devpriv->ai_speed = MPC624_SPEED_3_52_KHZ;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Analog Input subdevice */
 	s = &dev->subdevices[0];
@@ -293,17 +294,17 @@ static int mpc624_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s->maxdata	= 0x3fffffff;
 	s->range_table	= (it->options[1] == 0) ? &range_mpc624_bipolar1
 						: &range_mpc624_bipolar10;
-	s->insn_read	= mpc624_ai_insn_read;
+	s->insn_पढ़ो	= mpc624_ai_insn_पढ़ो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver mpc624_driver = {
+अटल काष्ठा comedi_driver mpc624_driver = अणु
 	.driver_name	= "mpc624",
 	.module		= THIS_MODULE,
 	.attach		= mpc624_attach,
 	.detach		= comedi_legacy_detach,
-};
+पूर्ण;
 module_comedi_driver(mpc624_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

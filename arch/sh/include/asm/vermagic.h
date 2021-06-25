@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_VERMAGIC_H
-#define _ASM_VERMAGIC_H
+#अगर_अघोषित _ASM_VERMAGIC_H
+#घोषणा _ASM_VERMAGIC_H
 
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
-# ifdef CONFIG_CPU_SH2
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
+# अगरdef CONFIG_CPU_SH2
 #  define MODULE_PROC_FAMILY "SH2LE "
-# elif defined  CONFIG_CPU_SH3
+# elअगर defined  CONFIG_CPU_SH3
 #  define MODULE_PROC_FAMILY "SH3LE "
-# elif defined  CONFIG_CPU_SH4
+# elअगर defined  CONFIG_CPU_SH4
 #  define MODULE_PROC_FAMILY "SH4LE "
-# else
+# अन्यथा
 #  error unknown processor family
-# endif
-#else
-# ifdef CONFIG_CPU_SH2
+# endअगर
+#अन्यथा
+# अगरdef CONFIG_CPU_SH2
 #  define MODULE_PROC_FAMILY "SH2BE "
-# elif defined  CONFIG_CPU_SH3
+# elअगर defined  CONFIG_CPU_SH3
 #  define MODULE_PROC_FAMILY "SH3BE "
-# elif defined  CONFIG_CPU_SH4
+# elअगर defined  CONFIG_CPU_SH4
 #  define MODULE_PROC_FAMILY "SH4BE "
-# else
+# अन्यथा
 #  error unknown processor family
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#define MODULE_ARCH_VERMAGIC MODULE_PROC_FAMILY
+#घोषणा MODULE_ARCH_VERMAGIC MODULE_PROC_FAMILY
 
-#endif /* _ASM_VERMAGIC_H */
+#पूर्ण_अगर /* _ASM_VERMAGIC_H */

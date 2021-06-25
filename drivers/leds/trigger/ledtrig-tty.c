@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/delay.h>
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <uapi/linux/serial.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <uapi/linux/serial.h>
 
-struct ledtrig_tty_data {
-	struct led_classdev *led_cdev;
-	struct delayed_work dwork;
-	struct mutex mutex;
-	const char *ttyname;
-	struct tty_struct *tty;
-	int rx, tx;
-};
+काष्ठा ledtrig_tty_data अणु
+	काष्ठा led_classdev *led_cdev;
+	काष्ठा delayed_work dwork;
+	काष्ठा mutex mutex;
+	स्थिर अक्षर *ttyname;
+	काष्ठा tty_काष्ठा *tty;
+	पूर्णांक rx, tx;
+पूर्ण;
 
-static void ledtrig_tty_restart(struct ledtrig_tty_data *trigger_data)
-{
+अटल व्योम ledtrig_tty_restart(काष्ठा ledtrig_tty_data *trigger_data)
+अणु
 	schedule_delayed_work(&trigger_data->dwork, 0);
-}
+पूर्ण
 
-static ssize_t ttyname_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct ledtrig_tty_data *trigger_data = led_trigger_get_drvdata(dev);
-	ssize_t len = 0;
+अटल sमाप_प्रकार ttyname_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ledtrig_tty_data *trigger_data = led_trigger_get_drvdata(dev);
+	sमाप_प्रकार len = 0;
 
 	mutex_lock(&trigger_data->mutex);
 
-	if (trigger_data->ttyname)
-		len = sprintf(buf, "%s\n", trigger_data->ttyname);
+	अगर (trigger_data->ttyname)
+		len = प्र_लिखो(buf, "%s\n", trigger_data->ttyname);
 
 	mutex_unlock(&trigger_data->mutex);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t ttyname_store(struct device *dev,
-			     struct device_attribute *attr, const char *buf,
-			     size_t size)
-{
-	struct ledtrig_tty_data *trigger_data = led_trigger_get_drvdata(dev);
-	char *ttyname;
-	ssize_t ret = size;
+अटल sमाप_प्रकार ttyname_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+			     माप_प्रकार size)
+अणु
+	काष्ठा ledtrig_tty_data *trigger_data = led_trigger_get_drvdata(dev);
+	अक्षर *ttyname;
+	sमाप_प्रकार ret = size;
 	bool running;
 
-	if (size > 0 && buf[size - 1] == '\n')
+	अगर (size > 0 && buf[size - 1] == '\n')
 		size -= 1;
 
-	if (size) {
+	अगर (size) अणु
 		ttyname = kmemdup_nul(buf, size, GFP_KERNEL);
-		if (!ttyname)
-			return -ENOMEM;
-	} else {
-		ttyname = NULL;
-	}
+		अगर (!ttyname)
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
+		ttyname = शून्य;
+	पूर्ण
 
 	mutex_lock(&trigger_data->mutex);
 
-	running = trigger_data->ttyname != NULL;
+	running = trigger_data->ttyname != शून्य;
 
-	kfree(trigger_data->ttyname);
+	kमुक्त(trigger_data->ttyname);
 	tty_kref_put(trigger_data->tty);
-	trigger_data->tty = NULL;
+	trigger_data->tty = शून्य;
 
 	trigger_data->ttyname = ttyname;
 
 	mutex_unlock(&trigger_data->mutex);
 
-	if (ttyname && !running)
+	अगर (ttyname && !running)
 		ledtrig_tty_restart(trigger_data);
 
-	return ret;
-}
-static DEVICE_ATTR_RW(ttyname);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RW(ttyname);
 
-static void ledtrig_tty_work(struct work_struct *work)
-{
-	struct ledtrig_tty_data *trigger_data =
-		container_of(work, struct ledtrig_tty_data, dwork.work);
-	struct serial_icounter_struct icount;
-	int ret;
+अटल व्योम ledtrig_tty_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ledtrig_tty_data *trigger_data =
+		container_of(work, काष्ठा ledtrig_tty_data, dwork.work);
+	काष्ठा serial_icounter_काष्ठा icount;
+	पूर्णांक ret;
 
 	mutex_lock(&trigger_data->mutex);
 
-	if (!trigger_data->ttyname) {
-		/* exit without rescheduling */
+	अगर (!trigger_data->ttyname) अणु
+		/* निकास without rescheduling */
 		mutex_unlock(&trigger_data->mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* try to get the tty corresponding to $ttyname */
-	if (!trigger_data->tty) {
+	अगर (!trigger_data->tty) अणु
 		dev_t devno;
-		struct tty_struct *tty;
-		int ret;
+		काष्ठा tty_काष्ठा *tty;
+		पूर्णांक ret;
 
 		ret = tty_dev_name_to_number(trigger_data->ttyname, &devno);
-		if (ret < 0)
+		अगर (ret < 0)
 			/*
 			 * A device with this name might appear later, so keep
 			 * retrying.
 			 */
-			goto out;
+			जाओ out;
 
-		tty = tty_kopen_shared(devno);
-		if (IS_ERR(tty) || !tty)
-			/* What to do? retry or abort */
-			goto out;
+		tty = tty_kखोलो_shared(devno);
+		अगर (IS_ERR(tty) || !tty)
+			/* What to करो? retry or पात */
+			जाओ out;
 
 		trigger_data->tty = tty;
-	}
+	पूर्ण
 
 	ret = tty_get_icount(trigger_data->tty, &icount);
-	if (ret) {
+	अगर (ret) अणु
 		dev_info(trigger_data->tty->dev, "Failed to get icount, stopped polling\n");
 		mutex_unlock(&trigger_data->mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (icount.rx != trigger_data->rx ||
-	    icount.tx != trigger_data->tx) {
+	अगर (icount.rx != trigger_data->rx ||
+	    icount.tx != trigger_data->tx) अणु
 		led_set_brightness_sync(trigger_data->led_cdev, LED_ON);
 
 		trigger_data->rx = icount.rx;
 		trigger_data->tx = icount.tx;
-	} else {
+	पूर्ण अन्यथा अणु
 		led_set_brightness_sync(trigger_data->led_cdev, LED_OFF);
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&trigger_data->mutex);
-	schedule_delayed_work(&trigger_data->dwork, msecs_to_jiffies(100));
-}
+	schedule_delayed_work(&trigger_data->dwork, msecs_to_jअगरfies(100));
+पूर्ण
 
-static struct attribute *ledtrig_tty_attrs[] = {
+अटल काष्ठा attribute *ledtrig_tty_attrs[] = अणु
 	&dev_attr_ttyname.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(ledtrig_tty);
 
-static int ledtrig_tty_activate(struct led_classdev *led_cdev)
-{
-	struct ledtrig_tty_data *trigger_data;
+अटल पूर्णांक ledtrig_tty_activate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ledtrig_tty_data *trigger_data;
 
-	trigger_data = kzalloc(sizeof(*trigger_data), GFP_KERNEL);
-	if (!trigger_data)
-		return -ENOMEM;
+	trigger_data = kzalloc(माप(*trigger_data), GFP_KERNEL);
+	अगर (!trigger_data)
+		वापस -ENOMEM;
 
 	led_set_trigger_data(led_cdev, trigger_data);
 
@@ -155,26 +156,26 @@ static int ledtrig_tty_activate(struct led_classdev *led_cdev)
 	trigger_data->led_cdev = led_cdev;
 	mutex_init(&trigger_data->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ledtrig_tty_deactivate(struct led_classdev *led_cdev)
-{
-	struct ledtrig_tty_data *trigger_data = led_get_trigger_data(led_cdev);
+अटल व्योम ledtrig_tty_deactivate(काष्ठा led_classdev *led_cdev)
+अणु
+	काष्ठा ledtrig_tty_data *trigger_data = led_get_trigger_data(led_cdev);
 
 	cancel_delayed_work_sync(&trigger_data->dwork);
 
-	kfree(trigger_data);
-}
+	kमुक्त(trigger_data);
+पूर्ण
 
-static struct led_trigger ledtrig_tty = {
+अटल काष्ठा led_trigger ledtrig_tty = अणु
 	.name = "tty",
 	.activate = ledtrig_tty_activate,
 	.deactivate = ledtrig_tty_deactivate,
 	.groups = ledtrig_tty_groups,
-};
+पूर्ण;
 module_led_trigger(ledtrig_tty);
 
-MODULE_AUTHOR("Uwe Kleine-König <u.kleine-koenig@pengutronix.de>");
+MODULE_AUTHOR("Uwe Kleine-Kथघnig <u.kleine-koenig@pengutronix.de>");
 MODULE_DESCRIPTION("UART LED trigger");
 MODULE_LICENSE("GPL v2");

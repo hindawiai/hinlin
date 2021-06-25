@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,441 +26,441 @@
  *
  */
 
-#include "i915_drv.h"
-#include "i915_trace.h"
-#include "intel_display_types.h"
-#include "intel_fbc.h"
-#include "intel_fifo_underrun.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_trace.h"
+#समावेश "intel_display_types.h"
+#समावेश "intel_fbc.h"
+#समावेश "intel_fifo_underrun.h"
 
 /**
- * DOC: fifo underrun handling
+ * DOC: fअगरo underrun handling
  *
- * The i915 driver checks for display fifo underruns using the interrupt signals
- * provided by the hardware. This is enabled by default and fairly useful to
+ * The i915 driver checks क्रम display fअगरo underruns using the पूर्णांकerrupt संकेतs
+ * provided by the hardware. This is enabled by शेष and fairly useful to
  * debug display issues, especially watermark settings.
  *
- * If an underrun is detected this is logged into dmesg. To avoid flooding logs
- * and occupying the cpu underrun interrupts are disabled after the first
+ * If an underrun is detected this is logged पूर्णांकo dmesg. To aव्योम flooding logs
+ * and occupying the cpu underrun पूर्णांकerrupts are disabled after the first
  * occurrence until the next modeset on a given pipe.
  *
- * Note that underrun detection on gmch platforms is a bit more ugly since there
- * is no interrupt (despite that the signalling bit is in the PIPESTAT pipe
- * interrupt register). Also on some other platforms underrun interrupts are
- * shared, which means that if we detect an underrun we need to disable underrun
+ * Note that underrun detection on gmch platक्रमms is a bit more ugly since there
+ * is no पूर्णांकerrupt (despite that the संकेतling bit is in the PIPESTAT pipe
+ * पूर्णांकerrupt रेजिस्टर). Also on some other platक्रमms underrun पूर्णांकerrupts are
+ * shared, which means that अगर we detect an underrun we need to disable underrun
  * reporting on all pipes.
  *
  * The code also supports underrun detection on the PCH transcoder.
  */
 
-static bool ivb_can_enable_err_int(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct intel_crtc *crtc;
-	enum pipe pipe;
+अटल bool ivb_can_enable_err_पूर्णांक(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा पूर्णांकel_crtc *crtc;
+	क्रमागत pipe pipe;
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	for_each_pipe(dev_priv, pipe) {
-		crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+	क्रम_each_pipe(dev_priv, pipe) अणु
+		crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 
-		if (crtc->cpu_fifo_underrun_disabled)
-			return false;
-	}
+		अगर (crtc->cpu_fअगरo_underrun_disabled)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool cpt_can_enable_serr_int(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	enum pipe pipe;
-	struct intel_crtc *crtc;
+अटल bool cpt_can_enable_serr_पूर्णांक(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	क्रमागत pipe pipe;
+	काष्ठा पूर्णांकel_crtc *crtc;
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	for_each_pipe(dev_priv, pipe) {
-		crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+	क्रम_each_pipe(dev_priv, pipe) अणु
+		crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 
-		if (crtc->pch_fifo_underrun_disabled)
-			return false;
-	}
+		अगर (crtc->pch_fअगरo_underrun_disabled)
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void i9xx_check_fifo_underruns(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+अटल व्योम i9xx_check_fअगरo_underruns(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
 	i915_reg_t reg = PIPESTAT(crtc->pipe);
 	u32 enable_mask;
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	if ((intel_de_read(dev_priv, reg) & PIPE_FIFO_UNDERRUN_STATUS) == 0)
-		return;
+	अगर ((पूर्णांकel_de_पढ़ो(dev_priv, reg) & PIPE_FIFO_UNDERRUN_STATUS) == 0)
+		वापस;
 
 	enable_mask = i915_pipestat_enable_mask(dev_priv, crtc->pipe);
-	intel_de_write(dev_priv, reg, enable_mask | PIPE_FIFO_UNDERRUN_STATUS);
-	intel_de_posting_read(dev_priv, reg);
+	पूर्णांकel_de_ग_लिखो(dev_priv, reg, enable_mask | PIPE_FIFO_UNDERRUN_STATUS);
+	पूर्णांकel_de_posting_पढ़ो(dev_priv, reg);
 
-	trace_intel_cpu_fifo_underrun(dev_priv, crtc->pipe);
+	trace_पूर्णांकel_cpu_fअगरo_underrun(dev_priv, crtc->pipe);
 	drm_err(&dev_priv->drm, "pipe %c underrun\n", pipe_name(crtc->pipe));
-}
+पूर्ण
 
-static void i9xx_set_fifo_underrun_reporting(struct drm_device *dev,
-					     enum pipe pipe,
+अटल व्योम i9xx_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					     क्रमागत pipe pipe,
 					     bool enable, bool old)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
 	i915_reg_t reg = PIPESTAT(pipe);
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	if (enable) {
+	अगर (enable) अणु
 		u32 enable_mask = i915_pipestat_enable_mask(dev_priv, pipe);
 
-		intel_de_write(dev_priv, reg,
+		पूर्णांकel_de_ग_लिखो(dev_priv, reg,
 			       enable_mask | PIPE_FIFO_UNDERRUN_STATUS);
-		intel_de_posting_read(dev_priv, reg);
-	} else {
-		if (old && intel_de_read(dev_priv, reg) & PIPE_FIFO_UNDERRUN_STATUS)
+		पूर्णांकel_de_posting_पढ़ो(dev_priv, reg);
+	पूर्ण अन्यथा अणु
+		अगर (old && पूर्णांकel_de_पढ़ो(dev_priv, reg) & PIPE_FIFO_UNDERRUN_STATUS)
 			drm_err(&dev_priv->drm, "pipe %c underrun\n",
 				pipe_name(pipe));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ilk_set_fifo_underrun_reporting(struct drm_device *dev,
-					    enum pipe pipe, bool enable)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
+अटल व्योम ilk_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					    क्रमागत pipe pipe, bool enable)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
 	u32 bit = (pipe == PIPE_A) ?
 		DE_PIPEA_FIFO_UNDERRUN : DE_PIPEB_FIFO_UNDERRUN;
 
-	if (enable)
+	अगर (enable)
 		ilk_enable_display_irq(dev_priv, bit);
-	else
+	अन्यथा
 		ilk_disable_display_irq(dev_priv, bit);
-}
+पूर्ण
 
-static void ivb_check_fifo_underruns(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	enum pipe pipe = crtc->pipe;
-	u32 err_int = intel_de_read(dev_priv, GEN7_ERR_INT);
+अटल व्योम ivb_check_fअगरo_underruns(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	क्रमागत pipe pipe = crtc->pipe;
+	u32 err_पूर्णांक = पूर्णांकel_de_पढ़ो(dev_priv, GEN7_ERR_INT);
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	if ((err_int & ERR_INT_FIFO_UNDERRUN(pipe)) == 0)
-		return;
+	अगर ((err_पूर्णांक & ERR_INT_FIFO_UNDERRUN(pipe)) == 0)
+		वापस;
 
-	intel_de_write(dev_priv, GEN7_ERR_INT, ERR_INT_FIFO_UNDERRUN(pipe));
-	intel_de_posting_read(dev_priv, GEN7_ERR_INT);
+	पूर्णांकel_de_ग_लिखो(dev_priv, GEN7_ERR_INT, ERR_INT_FIFO_UNDERRUN(pipe));
+	पूर्णांकel_de_posting_पढ़ो(dev_priv, GEN7_ERR_INT);
 
-	trace_intel_cpu_fifo_underrun(dev_priv, pipe);
+	trace_पूर्णांकel_cpu_fअगरo_underrun(dev_priv, pipe);
 	drm_err(&dev_priv->drm, "fifo underrun on pipe %c\n", pipe_name(pipe));
-}
+पूर्ण
 
-static void ivb_set_fifo_underrun_reporting(struct drm_device *dev,
-					    enum pipe pipe, bool enable,
+अटल व्योम ivb_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					    क्रमागत pipe pipe, bool enable,
 					    bool old)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	if (enable) {
-		intel_de_write(dev_priv, GEN7_ERR_INT,
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	अगर (enable) अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, GEN7_ERR_INT,
 			       ERR_INT_FIFO_UNDERRUN(pipe));
 
-		if (!ivb_can_enable_err_int(dev))
-			return;
+		अगर (!ivb_can_enable_err_पूर्णांक(dev))
+			वापस;
 
 		ilk_enable_display_irq(dev_priv, DE_ERR_INT_IVB);
-	} else {
+	पूर्ण अन्यथा अणु
 		ilk_disable_display_irq(dev_priv, DE_ERR_INT_IVB);
 
-		if (old &&
-		    intel_de_read(dev_priv, GEN7_ERR_INT) & ERR_INT_FIFO_UNDERRUN(pipe)) {
+		अगर (old &&
+		    पूर्णांकel_de_पढ़ो(dev_priv, GEN7_ERR_INT) & ERR_INT_FIFO_UNDERRUN(pipe)) अणु
 			drm_err(&dev_priv->drm,
 				"uncleared fifo underrun on pipe %c\n",
 				pipe_name(pipe));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bdw_set_fifo_underrun_reporting(struct drm_device *dev,
-					    enum pipe pipe, bool enable)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
+अटल व्योम bdw_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					    क्रमागत pipe pipe, bool enable)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
 
-	if (enable)
+	अगर (enable)
 		bdw_enable_pipe_irq(dev_priv, pipe, GEN8_PIPE_FIFO_UNDERRUN);
-	else
+	अन्यथा
 		bdw_disable_pipe_irq(dev_priv, pipe, GEN8_PIPE_FIFO_UNDERRUN);
-}
+पूर्ण
 
-static void ibx_set_fifo_underrun_reporting(struct drm_device *dev,
-					    enum pipe pch_transcoder,
+अटल व्योम ibx_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					    क्रमागत pipe pch_transcoder,
 					    bool enable)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
 	u32 bit = (pch_transcoder == PIPE_A) ?
 		SDE_TRANSA_FIFO_UNDER : SDE_TRANSB_FIFO_UNDER;
 
-	if (enable)
-		ibx_enable_display_interrupt(dev_priv, bit);
-	else
-		ibx_disable_display_interrupt(dev_priv, bit);
-}
+	अगर (enable)
+		ibx_enable_display_पूर्णांकerrupt(dev_priv, bit);
+	अन्यथा
+		ibx_disable_display_पूर्णांकerrupt(dev_priv, bit);
+पूर्ण
 
-static void cpt_check_pch_fifo_underruns(struct intel_crtc *crtc)
-{
-	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	enum pipe pch_transcoder = crtc->pipe;
-	u32 serr_int = intel_de_read(dev_priv, SERR_INT);
+अटल व्योम cpt_check_pch_fअगरo_underruns(काष्ठा पूर्णांकel_crtc *crtc)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+	क्रमागत pipe pch_transcoder = crtc->pipe;
+	u32 serr_पूर्णांक = पूर्णांकel_de_पढ़ो(dev_priv, SERR_INT);
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	if ((serr_int & SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder)) == 0)
-		return;
+	अगर ((serr_पूर्णांक & SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder)) == 0)
+		वापस;
 
-	intel_de_write(dev_priv, SERR_INT,
+	पूर्णांकel_de_ग_लिखो(dev_priv, SERR_INT,
 		       SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder));
-	intel_de_posting_read(dev_priv, SERR_INT);
+	पूर्णांकel_de_posting_पढ़ो(dev_priv, SERR_INT);
 
-	trace_intel_pch_fifo_underrun(dev_priv, pch_transcoder);
+	trace_पूर्णांकel_pch_fअगरo_underrun(dev_priv, pch_transcoder);
 	drm_err(&dev_priv->drm, "pch fifo underrun on pch transcoder %c\n",
 		pipe_name(pch_transcoder));
-}
+पूर्ण
 
-static void cpt_set_fifo_underrun_reporting(struct drm_device *dev,
-					    enum pipe pch_transcoder,
+अटल व्योम cpt_set_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+					    क्रमागत pipe pch_transcoder,
 					    bool enable, bool old)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
 
-	if (enable) {
-		intel_de_write(dev_priv, SERR_INT,
+	अगर (enable) अणु
+		पूर्णांकel_de_ग_लिखो(dev_priv, SERR_INT,
 			       SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder));
 
-		if (!cpt_can_enable_serr_int(dev))
-			return;
+		अगर (!cpt_can_enable_serr_पूर्णांक(dev))
+			वापस;
 
-		ibx_enable_display_interrupt(dev_priv, SDE_ERROR_CPT);
-	} else {
-		ibx_disable_display_interrupt(dev_priv, SDE_ERROR_CPT);
+		ibx_enable_display_पूर्णांकerrupt(dev_priv, SDE_ERROR_CPT);
+	पूर्ण अन्यथा अणु
+		ibx_disable_display_पूर्णांकerrupt(dev_priv, SDE_ERROR_CPT);
 
-		if (old && intel_de_read(dev_priv, SERR_INT) &
-		    SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder)) {
+		अगर (old && पूर्णांकel_de_पढ़ो(dev_priv, SERR_INT) &
+		    SERR_INT_TRANS_FIFO_UNDERRUN(pch_transcoder)) अणु
 			drm_err(&dev_priv->drm,
 				"uncleared pch fifo underrun on pch transcoder %c\n",
 				pipe_name(pch_transcoder));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool __intel_set_cpu_fifo_underrun_reporting(struct drm_device *dev,
-						    enum pipe pipe, bool enable)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct intel_crtc *crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+अटल bool __पूर्णांकel_set_cpu_fअगरo_underrun_reporting(काष्ठा drm_device *dev,
+						    क्रमागत pipe pipe, bool enable)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा पूर्णांकel_crtc *crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 	bool old;
 
-	lockdep_assert_held(&dev_priv->irq_lock);
+	lockdep_निश्चित_held(&dev_priv->irq_lock);
 
-	old = !crtc->cpu_fifo_underrun_disabled;
-	crtc->cpu_fifo_underrun_disabled = !enable;
+	old = !crtc->cpu_fअगरo_underrun_disabled;
+	crtc->cpu_fअगरo_underrun_disabled = !enable;
 
-	if (HAS_GMCH(dev_priv))
-		i9xx_set_fifo_underrun_reporting(dev, pipe, enable, old);
-	else if (IS_IRONLAKE(dev_priv) || IS_SANDYBRIDGE(dev_priv))
-		ilk_set_fifo_underrun_reporting(dev, pipe, enable);
-	else if (IS_DISPLAY_VER(dev_priv, 7))
-		ivb_set_fifo_underrun_reporting(dev, pipe, enable, old);
-	else if (DISPLAY_VER(dev_priv) >= 8)
-		bdw_set_fifo_underrun_reporting(dev, pipe, enable);
+	अगर (HAS_GMCH(dev_priv))
+		i9xx_set_fअगरo_underrun_reporting(dev, pipe, enable, old);
+	अन्यथा अगर (IS_IRONLAKE(dev_priv) || IS_SANDYBRIDGE(dev_priv))
+		ilk_set_fअगरo_underrun_reporting(dev, pipe, enable);
+	अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 7))
+		ivb_set_fअगरo_underrun_reporting(dev, pipe, enable, old);
+	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 8)
+		bdw_set_fअगरo_underrun_reporting(dev, pipe, enable);
 
-	return old;
-}
+	वापस old;
+पूर्ण
 
 /**
- * intel_set_cpu_fifo_underrun_reporting - set cpu fifo underrrun reporting state
+ * पूर्णांकel_set_cpu_fअगरo_underrun_reporting - set cpu fअगरo underrrun reporting state
  * @dev_priv: i915 device instance
- * @pipe: (CPU) pipe to set state for
+ * @pipe: (CPU) pipe to set state क्रम
  * @enable: whether underruns should be reported or not
  *
- * This function sets the fifo underrun state for @pipe. It is used in the
- * modeset code to avoid false positives since on many platforms underruns are
+ * This function sets the fअगरo underrun state क्रम @pipe. It is used in the
+ * modeset code to aव्योम false positives since on many platक्रमms underruns are
  * expected when disabling or enabling the pipe.
  *
- * Notice that on some platforms disabling underrun reports for one pipe
- * disables for all due to shared interrupts. Actual reporting is still per-pipe
+ * Notice that on some platक्रमms disabling underrun reports क्रम one pipe
+ * disables क्रम all due to shared पूर्णांकerrupts. Actual reporting is still per-pipe
  * though.
  *
  * Returns the previous state of underrun reporting.
  */
-bool intel_set_cpu_fifo_underrun_reporting(struct drm_i915_private *dev_priv,
-					   enum pipe pipe, bool enable)
-{
-	unsigned long flags;
+bool पूर्णांकel_set_cpu_fअगरo_underrun_reporting(काष्ठा drm_i915_निजी *dev_priv,
+					   क्रमागत pipe pipe, bool enable)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
-	ret = __intel_set_cpu_fifo_underrun_reporting(&dev_priv->drm, pipe,
+	ret = __पूर्णांकel_set_cpu_fअगरo_underrun_reporting(&dev_priv->drm, pipe,
 						      enable);
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * intel_set_pch_fifo_underrun_reporting - set PCH fifo underrun reporting state
+ * पूर्णांकel_set_pch_fअगरo_underrun_reporting - set PCH fअगरo underrun reporting state
  * @dev_priv: i915 device instance
  * @pch_transcoder: the PCH transcoder (same as pipe on IVB and older)
  * @enable: whether underruns should be reported or not
  *
- * This function makes us disable or enable PCH fifo underruns for a specific
+ * This function makes us disable or enable PCH fअगरo underruns क्रम a specअगरic
  * PCH transcoder. Notice that on some PCHs (e.g. CPT/PPT), disabling FIFO
- * underrun reporting for one transcoder may also disable all the other PCH
- * error interruts for the other transcoders, due to the fact that there's just
- * one interrupt mask/enable bit for all the transcoders.
+ * underrun reporting क्रम one transcoder may also disable all the other PCH
+ * error पूर्णांकerruts क्रम the other transcoders, due to the fact that there's just
+ * one पूर्णांकerrupt mask/enable bit क्रम all the transcoders.
  *
  * Returns the previous state of underrun reporting.
  */
-bool intel_set_pch_fifo_underrun_reporting(struct drm_i915_private *dev_priv,
-					   enum pipe pch_transcoder,
+bool पूर्णांकel_set_pch_fअगरo_underrun_reporting(काष्ठा drm_i915_निजी *dev_priv,
+					   क्रमागत pipe pch_transcoder,
 					   bool enable)
-{
-	struct intel_crtc *crtc =
-		intel_get_crtc_for_pipe(dev_priv, pch_transcoder);
-	unsigned long flags;
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc =
+		पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pch_transcoder);
+	अचिन्हित दीर्घ flags;
 	bool old;
 
 	/*
 	 * NOTE: Pre-LPT has a fixed cpu pipe -> pch transcoder mapping, but LPT
-	 * has only one pch transcoder A that all pipes can use. To avoid racy
-	 * pch transcoder -> pipe lookups from interrupt code simply store the
+	 * has only one pch transcoder A that all pipes can use. To aव्योम racy
+	 * pch transcoder -> pipe lookups from पूर्णांकerrupt code simply store the
 	 * underrun statistics in crtc A. Since we never expose this anywhere
-	 * nor use it outside of the fifo underrun code here using the "wrong"
+	 * nor use it outside of the fअगरo underrun code here using the "wrong"
 	 * crtc on LPT won't cause issues.
 	 */
 
 	spin_lock_irqsave(&dev_priv->irq_lock, flags);
 
-	old = !crtc->pch_fifo_underrun_disabled;
-	crtc->pch_fifo_underrun_disabled = !enable;
+	old = !crtc->pch_fअगरo_underrun_disabled;
+	crtc->pch_fअगरo_underrun_disabled = !enable;
 
-	if (HAS_PCH_IBX(dev_priv))
-		ibx_set_fifo_underrun_reporting(&dev_priv->drm,
+	अगर (HAS_PCH_IBX(dev_priv))
+		ibx_set_fअगरo_underrun_reporting(&dev_priv->drm,
 						pch_transcoder,
 						enable);
-	else
-		cpt_set_fifo_underrun_reporting(&dev_priv->drm,
+	अन्यथा
+		cpt_set_fअगरo_underrun_reporting(&dev_priv->drm,
 						pch_transcoder,
 						enable, old);
 
 	spin_unlock_irqrestore(&dev_priv->irq_lock, flags);
-	return old;
-}
+	वापस old;
+पूर्ण
 
 /**
- * intel_cpu_fifo_underrun_irq_handler - handle CPU fifo underrun interrupt
+ * पूर्णांकel_cpu_fअगरo_underrun_irq_handler - handle CPU fअगरo underrun पूर्णांकerrupt
  * @dev_priv: i915 device instance
- * @pipe: (CPU) pipe to set state for
+ * @pipe: (CPU) pipe to set state क्रम
  *
- * This handles a CPU fifo underrun interrupt, generating an underrun warning
- * into dmesg if underrun reporting is enabled and then disables the underrun
- * interrupt to avoid an irq storm.
+ * This handles a CPU fअगरo underrun पूर्णांकerrupt, generating an underrun warning
+ * पूर्णांकo dmesg अगर underrun reporting is enabled and then disables the underrun
+ * पूर्णांकerrupt to aव्योम an irq storm.
  */
-void intel_cpu_fifo_underrun_irq_handler(struct drm_i915_private *dev_priv,
-					 enum pipe pipe)
-{
-	struct intel_crtc *crtc = intel_get_crtc_for_pipe(dev_priv, pipe);
+व्योम पूर्णांकel_cpu_fअगरo_underrun_irq_handler(काष्ठा drm_i915_निजी *dev_priv,
+					 क्रमागत pipe pipe)
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc = पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe);
 
 	/* We may be called too early in init, thanks BIOS! */
-	if (crtc == NULL)
-		return;
+	अगर (crtc == शून्य)
+		वापस;
 
-	/* GMCH can't disable fifo underruns, filter them. */
-	if (HAS_GMCH(dev_priv) &&
-	    crtc->cpu_fifo_underrun_disabled)
-		return;
+	/* GMCH can't disable fअगरo underruns, filter them. */
+	अगर (HAS_GMCH(dev_priv) &&
+	    crtc->cpu_fअगरo_underrun_disabled)
+		वापस;
 
-	if (intel_set_cpu_fifo_underrun_reporting(dev_priv, pipe, false)) {
-		trace_intel_cpu_fifo_underrun(dev_priv, pipe);
+	अगर (पूर्णांकel_set_cpu_fअगरo_underrun_reporting(dev_priv, pipe, false)) अणु
+		trace_पूर्णांकel_cpu_fअगरo_underrun(dev_priv, pipe);
 		drm_err(&dev_priv->drm, "CPU pipe %c FIFO underrun\n",
 			pipe_name(pipe));
-	}
+	पूर्ण
 
-	intel_fbc_handle_fifo_underrun_irq(dev_priv);
-}
+	पूर्णांकel_fbc_handle_fअगरo_underrun_irq(dev_priv);
+पूर्ण
 
 /**
- * intel_pch_fifo_underrun_irq_handler - handle PCH fifo underrun interrupt
+ * पूर्णांकel_pch_fअगरo_underrun_irq_handler - handle PCH fअगरo underrun पूर्णांकerrupt
  * @dev_priv: i915 device instance
  * @pch_transcoder: the PCH transcoder (same as pipe on IVB and older)
  *
- * This handles a PCH fifo underrun interrupt, generating an underrun warning
- * into dmesg if underrun reporting is enabled and then disables the underrun
- * interrupt to avoid an irq storm.
+ * This handles a PCH fअगरo underrun पूर्णांकerrupt, generating an underrun warning
+ * पूर्णांकo dmesg अगर underrun reporting is enabled and then disables the underrun
+ * पूर्णांकerrupt to aव्योम an irq storm.
  */
-void intel_pch_fifo_underrun_irq_handler(struct drm_i915_private *dev_priv,
-					 enum pipe pch_transcoder)
-{
-	if (intel_set_pch_fifo_underrun_reporting(dev_priv, pch_transcoder,
-						  false)) {
-		trace_intel_pch_fifo_underrun(dev_priv, pch_transcoder);
+व्योम पूर्णांकel_pch_fअगरo_underrun_irq_handler(काष्ठा drm_i915_निजी *dev_priv,
+					 क्रमागत pipe pch_transcoder)
+अणु
+	अगर (पूर्णांकel_set_pch_fअगरo_underrun_reporting(dev_priv, pch_transcoder,
+						  false)) अणु
+		trace_पूर्णांकel_pch_fअगरo_underrun(dev_priv, pch_transcoder);
 		drm_err(&dev_priv->drm, "PCH transcoder %c FIFO underrun\n",
 			pipe_name(pch_transcoder));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * intel_check_cpu_fifo_underruns - check for CPU fifo underruns immediately
+ * पूर्णांकel_check_cpu_fअगरo_underruns - check क्रम CPU fअगरo underruns immediately
  * @dev_priv: i915 device instance
  *
- * Check for CPU fifo underruns immediately. Useful on IVB/HSW where the shared
- * error interrupt may have been disabled, and so CPU fifo underruns won't
- * necessarily raise an interrupt, and on GMCH platforms where underruns never
- * raise an interrupt.
+ * Check क्रम CPU fअगरo underruns immediately. Useful on IVB/HSW where the shared
+ * error पूर्णांकerrupt may have been disabled, and so CPU fअगरo underruns won't
+ * necessarily उठाओ an पूर्णांकerrupt, and on GMCH platक्रमms where underruns never
+ * उठाओ an पूर्णांकerrupt.
  */
-void intel_check_cpu_fifo_underruns(struct drm_i915_private *dev_priv)
-{
-	struct intel_crtc *crtc;
+व्योम पूर्णांकel_check_cpu_fअगरo_underruns(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc;
 
 	spin_lock_irq(&dev_priv->irq_lock);
 
-	for_each_intel_crtc(&dev_priv->drm, crtc) {
-		if (crtc->cpu_fifo_underrun_disabled)
-			continue;
+	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
+		अगर (crtc->cpu_fअगरo_underrun_disabled)
+			जारी;
 
-		if (HAS_GMCH(dev_priv))
-			i9xx_check_fifo_underruns(crtc);
-		else if (IS_DISPLAY_VER(dev_priv, 7))
-			ivb_check_fifo_underruns(crtc);
-	}
+		अगर (HAS_GMCH(dev_priv))
+			i9xx_check_fअगरo_underruns(crtc);
+		अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 7))
+			ivb_check_fअगरo_underruns(crtc);
+	पूर्ण
 
 	spin_unlock_irq(&dev_priv->irq_lock);
-}
+पूर्ण
 
 /**
- * intel_check_pch_fifo_underruns - check for PCH fifo underruns immediately
+ * पूर्णांकel_check_pch_fअगरo_underruns - check क्रम PCH fअगरo underruns immediately
  * @dev_priv: i915 device instance
  *
- * Check for PCH fifo underruns immediately. Useful on CPT/PPT where the shared
- * error interrupt may have been disabled, and so PCH fifo underruns won't
- * necessarily raise an interrupt.
+ * Check क्रम PCH fअगरo underruns immediately. Useful on CPT/PPT where the shared
+ * error पूर्णांकerrupt may have been disabled, and so PCH fअगरo underruns won't
+ * necessarily उठाओ an पूर्णांकerrupt.
  */
-void intel_check_pch_fifo_underruns(struct drm_i915_private *dev_priv)
-{
-	struct intel_crtc *crtc;
+व्योम पूर्णांकel_check_pch_fअगरo_underruns(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा पूर्णांकel_crtc *crtc;
 
 	spin_lock_irq(&dev_priv->irq_lock);
 
-	for_each_intel_crtc(&dev_priv->drm, crtc) {
-		if (crtc->pch_fifo_underrun_disabled)
-			continue;
+	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
+		अगर (crtc->pch_fअगरo_underrun_disabled)
+			जारी;
 
-		if (HAS_PCH_CPT(dev_priv))
-			cpt_check_pch_fifo_underruns(crtc);
-	}
+		अगर (HAS_PCH_CPT(dev_priv))
+			cpt_check_pch_fअगरo_underruns(crtc);
+	पूर्ण
 
 	spin_unlock_irq(&dev_priv->irq_lock);
-}
+पूर्ण

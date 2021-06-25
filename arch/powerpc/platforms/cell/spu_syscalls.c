@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SPU file system -- system call stubs
+ * SPU file प्रणाली -- प्रणाली call stubs
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  * (C) Copyright 2006-2007, IBM Corporation
  *
  * Author: Arnd Bergmann <arndb@de.ibm.com>
  */
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/syscalls.h>
-#include <linux/rcupdate.h>
-#include <linux/binfmts.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/binfmts.h>
 
-#include <asm/spu.h>
+#समावेश <यंत्र/spu.h>
 
-/* protected by rcu */
-static struct spufs_calls *spufs_calls;
+/* रक्षित by rcu */
+अटल काष्ठा spufs_calls *spufs_calls;
 
-#ifdef CONFIG_SPU_FS_MODULE
+#अगर_घोषित CONFIG_SPU_FS_MODULE
 
-static inline struct spufs_calls *spufs_calls_get(void)
-{
-	struct spufs_calls *calls = NULL;
+अटल अंतरभूत काष्ठा spufs_calls *spufs_calls_get(व्योम)
+अणु
+	काष्ठा spufs_calls *calls = शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	calls = rcu_dereference(spufs_calls);
-	if (calls && !try_module_get(calls->owner))
-		calls = NULL;
-	rcu_read_unlock();
+	अगर (calls && !try_module_get(calls->owner))
+		calls = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return calls;
-}
+	वापस calls;
+पूर्ण
 
-static inline void spufs_calls_put(struct spufs_calls *calls)
-{
+अटल अंतरभूत व्योम spufs_calls_put(काष्ठा spufs_calls *calls)
+अणु
 	BUG_ON(calls != spufs_calls);
 
-	/* we don't need to rcu this, as we hold a reference to the module */
+	/* we करोn't need to rcu this, as we hold a reference to the module */
 	module_put(spufs_calls->owner);
-}
+पूर्ण
 
-#else /* !defined CONFIG_SPU_FS_MODULE */
+#अन्यथा /* !defined CONFIG_SPU_FS_MODULE */
 
-static inline struct spufs_calls *spufs_calls_get(void)
-{
-	return spufs_calls;
-}
+अटल अंतरभूत काष्ठा spufs_calls *spufs_calls_get(व्योम)
+अणु
+	वापस spufs_calls;
+पूर्ण
 
-static inline void spufs_calls_put(struct spufs_calls *calls) { }
+अटल अंतरभूत व्योम spufs_calls_put(काष्ठा spufs_calls *calls) अणु पूर्ण
 
-#endif /* CONFIG_SPU_FS_MODULE */
+#पूर्ण_अगर /* CONFIG_SPU_FS_MODULE */
 
-SYSCALL_DEFINE4(spu_create, const char __user *, name, unsigned int, flags,
-	umode_t, mode, int, neighbor_fd)
-{
-	long ret;
-	struct spufs_calls *calls;
+SYSCALL_DEFINE4(spu_create, स्थिर अक्षर __user *, name, अचिन्हित पूर्णांक, flags,
+	umode_t, mode, पूर्णांक, neighbor_fd)
+अणु
+	दीर्घ ret;
+	काष्ठा spufs_calls *calls;
 
 	calls = spufs_calls_get();
-	if (!calls)
-		return -ENOSYS;
+	अगर (!calls)
+		वापस -ENOSYS;
 
-	if (flags & SPU_CREATE_AFFINITY_SPU) {
-		struct fd neighbor = fdget(neighbor_fd);
+	अगर (flags & SPU_CREATE_AFFINITY_SPU) अणु
+		काष्ठा fd neighbor = fdget(neighbor_fd);
 		ret = -EBADF;
-		if (neighbor.file) {
-			ret = calls->create_thread(name, flags, mode, neighbor.file);
+		अगर (neighbor.file) अणु
+			ret = calls->create_thपढ़ो(name, flags, mode, neighbor.file);
 			fdput(neighbor);
-		}
-	} else
-		ret = calls->create_thread(name, flags, mode, NULL);
+		पूर्ण
+	पूर्ण अन्यथा
+		ret = calls->create_thपढ़ो(name, flags, mode, शून्य);
 
 	spufs_calls_put(calls);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE3(spu_run,int, fd, __u32 __user *, unpc, __u32 __user *, ustatus)
-{
-	long ret;
-	struct fd arg;
-	struct spufs_calls *calls;
+SYSCALL_DEFINE3(spu_run,पूर्णांक, fd, __u32 __user *, unpc, __u32 __user *, ustatus)
+अणु
+	दीर्घ ret;
+	काष्ठा fd arg;
+	काष्ठा spufs_calls *calls;
 
 	calls = spufs_calls_get();
-	if (!calls)
-		return -ENOSYS;
+	अगर (!calls)
+		वापस -ENOSYS;
 
 	ret = -EBADF;
 	arg = fdget(fd);
-	if (arg.file) {
+	अगर (arg.file) अणु
 		ret = calls->spu_run(arg.file, unpc, ustatus);
 		fdput(arg);
-	}
+	पूर्ण
 
 	spufs_calls_put(calls);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COREDUMP
-int elf_coredump_extra_notes_size(void)
-{
-	struct spufs_calls *calls;
-	int ret;
+#अगर_घोषित CONFIG_COREDUMP
+पूर्णांक elf_coredump_extra_notes_size(व्योम)
+अणु
+	काष्ठा spufs_calls *calls;
+	पूर्णांक ret;
 
 	calls = spufs_calls_get();
-	if (!calls)
-		return 0;
+	अगर (!calls)
+		वापस 0;
 
 	ret = calls->coredump_extra_notes_size();
 
 	spufs_calls_put(calls);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int elf_coredump_extra_notes_write(struct coredump_params *cprm)
-{
-	struct spufs_calls *calls;
-	int ret;
+पूर्णांक elf_coredump_extra_notes_ग_लिखो(काष्ठा coredump_params *cprm)
+अणु
+	काष्ठा spufs_calls *calls;
+	पूर्णांक ret;
 
 	calls = spufs_calls_get();
-	if (!calls)
-		return 0;
+	अगर (!calls)
+		वापस 0;
 
-	ret = calls->coredump_extra_notes_write(cprm);
+	ret = calls->coredump_extra_notes_ग_लिखो(cprm);
 
 	spufs_calls_put(calls);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-void notify_spus_active(void)
-{
-	struct spufs_calls *calls;
+व्योम notअगरy_spus_active(व्योम)
+अणु
+	काष्ठा spufs_calls *calls;
 
 	calls = spufs_calls_get();
-	if (!calls)
-		return;
+	अगर (!calls)
+		वापस;
 
-	calls->notify_spus_active();
+	calls->notअगरy_spus_active();
 	spufs_calls_put(calls);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-int register_spu_syscalls(struct spufs_calls *calls)
-{
-	if (spufs_calls)
-		return -EBUSY;
+पूर्णांक रेजिस्टर_spu_syscalls(काष्ठा spufs_calls *calls)
+अणु
+	अगर (spufs_calls)
+		वापस -EBUSY;
 
-	rcu_assign_pointer(spufs_calls, calls);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(register_spu_syscalls);
+	rcu_assign_poपूर्णांकer(spufs_calls, calls);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_spu_syscalls);
 
-void unregister_spu_syscalls(struct spufs_calls *calls)
-{
+व्योम unरेजिस्टर_spu_syscalls(काष्ठा spufs_calls *calls)
+अणु
 	BUG_ON(spufs_calls->owner != calls->owner);
-	RCU_INIT_POINTER(spufs_calls, NULL);
+	RCU_INIT_POINTER(spufs_calls, शून्य);
 	synchronize_rcu();
-}
-EXPORT_SYMBOL_GPL(unregister_spu_syscalls);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_spu_syscalls);

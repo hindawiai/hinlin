@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * security/tomoyo/load_policy.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include "common.h"
+#समावेश "common.h"
 
-#ifndef CONFIG_SECURITY_TOMOYO_OMIT_USERSPACE_LOADER
+#अगर_अघोषित CONFIG_SECURITY_TOMOYO_OMIT_USERSPACE_LOADER
 
 /*
- * Path to the policy loader. (default = CONFIG_SECURITY_TOMOYO_POLICY_LOADER)
+ * Path to the policy loader. (शेष = CONFIG_SECURITY_TOMOYO_POLICY_LOADER)
  */
-static const char *tomoyo_loader;
+अटल स्थिर अक्षर *tomoyo_loader;
 
 /**
  * tomoyo_loader_setup - Set policy loader.
@@ -21,90 +22,90 @@ static const char *tomoyo_loader;
  *
  * Returns 0.
  */
-static int __init tomoyo_loader_setup(char *str)
-{
+अटल पूर्णांक __init tomoyo_loader_setup(अक्षर *str)
+अणु
 	tomoyo_loader = str;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __setup("TOMOYO_loader=", tomoyo_loader_setup);
 
 /**
  * tomoyo_policy_loader_exists - Check whether /sbin/tomoyo-init exists.
  *
- * Returns true if /sbin/tomoyo-init exists, false otherwise.
+ * Returns true अगर /sbin/tomoyo-init exists, false otherwise.
  */
-static bool tomoyo_policy_loader_exists(void)
-{
-	struct path path;
+अटल bool tomoyo_policy_loader_exists(व्योम)
+अणु
+	काष्ठा path path;
 
-	if (!tomoyo_loader)
+	अगर (!tomoyo_loader)
 		tomoyo_loader = CONFIG_SECURITY_TOMOYO_POLICY_LOADER;
-	if (kern_path(tomoyo_loader, LOOKUP_FOLLOW, &path)) {
+	अगर (kern_path(tomoyo_loader, LOOKUP_FOLLOW, &path)) अणु
 		pr_info("Not activating Mandatory Access Control as %s does not exist.\n",
 			tomoyo_loader);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	path_put(&path);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Path to the trigger. (default = CONFIG_SECURITY_TOMOYO_ACTIVATION_TRIGGER)
+ * Path to the trigger. (शेष = CONFIG_SECURITY_TOMOYO_ACTIVATION_TRIGGER)
  */
-static const char *tomoyo_trigger;
+अटल स्थिर अक्षर *tomoyo_trigger;
 
 /**
- * tomoyo_trigger_setup - Set trigger for activation.
+ * tomoyo_trigger_setup - Set trigger क्रम activation.
  *
  * @str: Program to use as an activation trigger (e.g. /sbin/init ).
  *
  * Returns 0.
  */
-static int __init tomoyo_trigger_setup(char *str)
-{
+अटल पूर्णांक __init tomoyo_trigger_setup(अक्षर *str)
+अणु
 	tomoyo_trigger = str;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __setup("TOMOYO_trigger=", tomoyo_trigger_setup);
 
 /**
- * tomoyo_load_policy - Run external policy loader to load policy.
+ * tomoyo_load_policy - Run बाह्यal policy loader to load policy.
  *
  * @filename: The program about to start.
  *
- * This function checks whether @filename is /sbin/init , and if so
- * invoke /sbin/tomoyo-init and wait for the termination of /sbin/tomoyo-init
- * and then continues invocation of /sbin/init.
- * /sbin/tomoyo-init reads policy files in /etc/tomoyo/ directory and
- * writes to /sys/kernel/security/tomoyo/ interfaces.
+ * This function checks whether @filename is /sbin/init , and अगर so
+ * invoke /sbin/tomoyo-init and रुको क्रम the termination of /sbin/tomoyo-init
+ * and then जारीs invocation of /sbin/init.
+ * /sbin/tomoyo-init पढ़ोs policy files in /etc/tomoyo/ directory and
+ * ग_लिखोs to /sys/kernel/security/tomoyo/ पूर्णांकerfaces.
  *
  * Returns nothing.
  */
-void tomoyo_load_policy(const char *filename)
-{
-	static bool done;
-	char *argv[2];
-	char *envp[3];
+व्योम tomoyo_load_policy(स्थिर अक्षर *filename)
+अणु
+	अटल bool करोne;
+	अक्षर *argv[2];
+	अक्षर *envp[3];
 
-	if (tomoyo_policy_loaded || done)
-		return;
-	if (!tomoyo_trigger)
+	अगर (tomoyo_policy_loaded || करोne)
+		वापस;
+	अगर (!tomoyo_trigger)
 		tomoyo_trigger = CONFIG_SECURITY_TOMOYO_ACTIVATION_TRIGGER;
-	if (strcmp(filename, tomoyo_trigger))
-		return;
-	if (!tomoyo_policy_loader_exists())
-		return;
-	done = true;
+	अगर (म_भेद(filename, tomoyo_trigger))
+		वापस;
+	अगर (!tomoyo_policy_loader_exists())
+		वापस;
+	करोne = true;
 	pr_info("Calling %s to load policy. Please wait.\n", tomoyo_loader);
-	argv[0] = (char *) tomoyo_loader;
-	argv[1] = NULL;
+	argv[0] = (अक्षर *) tomoyo_loader;
+	argv[1] = शून्य;
 	envp[0] = "HOME=/";
 	envp[1] = "PATH=/sbin:/bin:/usr/sbin:/usr/bin";
-	envp[2] = NULL;
+	envp[2] = शून्य;
 	call_usermodehelper(argv[0], argv, envp, UMH_WAIT_PROC);
 	tomoyo_check_profile();
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

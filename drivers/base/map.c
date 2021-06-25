@@ -1,154 +1,155 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/drivers/base/map.c
  *
  * (C) Copyright Al Viro 2002,2003
  *
- * NOTE: data structure needs to be changed.  It works, but for large dev_t
+ * NOTE: data काष्ठाure needs to be changed.  It works, but क्रम large dev_t
  * it will be too slow.  It is isolated, though, so these changes will be
  * local to that file.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/kdev_t.h>
-#include <linux/kobject.h>
-#include <linux/kobj_map.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/kobj_map.h>
 
-struct kobj_map {
-	struct probe {
-		struct probe *next;
+काष्ठा kobj_map अणु
+	काष्ठा probe अणु
+		काष्ठा probe *next;
 		dev_t dev;
-		unsigned long range;
-		struct module *owner;
+		अचिन्हित दीर्घ range;
+		काष्ठा module *owner;
 		kobj_probe_t *get;
-		int (*lock)(dev_t, void *);
-		void *data;
-	} *probes[255];
-	struct mutex *lock;
-};
+		पूर्णांक (*lock)(dev_t, व्योम *);
+		व्योम *data;
+	पूर्ण *probes[255];
+	काष्ठा mutex *lock;
+पूर्ण;
 
-int kobj_map(struct kobj_map *domain, dev_t dev, unsigned long range,
-	     struct module *module, kobj_probe_t *probe,
-	     int (*lock)(dev_t, void *), void *data)
-{
-	unsigned n = MAJOR(dev + range - 1) - MAJOR(dev) + 1;
-	unsigned index = MAJOR(dev);
-	unsigned i;
-	struct probe *p;
+पूर्णांक kobj_map(काष्ठा kobj_map *करोमुख्य, dev_t dev, अचिन्हित दीर्घ range,
+	     काष्ठा module *module, kobj_probe_t *probe,
+	     पूर्णांक (*lock)(dev_t, व्योम *), व्योम *data)
+अणु
+	अचिन्हित n = MAJOR(dev + range - 1) - MAJOR(dev) + 1;
+	अचिन्हित index = MAJOR(dev);
+	अचिन्हित i;
+	काष्ठा probe *p;
 
-	if (n > 255)
+	अगर (n > 255)
 		n = 255;
 
-	p = kmalloc_array(n, sizeof(struct probe), GFP_KERNEL);
-	if (p == NULL)
-		return -ENOMEM;
+	p = kदो_स्मृति_array(n, माप(काष्ठा probe), GFP_KERNEL);
+	अगर (p == शून्य)
+		वापस -ENOMEM;
 
-	for (i = 0; i < n; i++, p++) {
+	क्रम (i = 0; i < n; i++, p++) अणु
 		p->owner = module;
 		p->get = probe;
 		p->lock = lock;
 		p->dev = dev;
 		p->range = range;
 		p->data = data;
-	}
-	mutex_lock(domain->lock);
-	for (i = 0, p -= n; i < n; i++, p++, index++) {
-		struct probe **s = &domain->probes[index % 255];
-		while (*s && (*s)->range < range)
+	पूर्ण
+	mutex_lock(करोमुख्य->lock);
+	क्रम (i = 0, p -= n; i < n; i++, p++, index++) अणु
+		काष्ठा probe **s = &करोमुख्य->probes[index % 255];
+		जबतक (*s && (*s)->range < range)
 			s = &(*s)->next;
 		p->next = *s;
 		*s = p;
-	}
-	mutex_unlock(domain->lock);
-	return 0;
-}
+	पूर्ण
+	mutex_unlock(करोमुख्य->lock);
+	वापस 0;
+पूर्ण
 
-void kobj_unmap(struct kobj_map *domain, dev_t dev, unsigned long range)
-{
-	unsigned n = MAJOR(dev + range - 1) - MAJOR(dev) + 1;
-	unsigned index = MAJOR(dev);
-	unsigned i;
-	struct probe *found = NULL;
+व्योम kobj_unmap(काष्ठा kobj_map *करोमुख्य, dev_t dev, अचिन्हित दीर्घ range)
+अणु
+	अचिन्हित n = MAJOR(dev + range - 1) - MAJOR(dev) + 1;
+	अचिन्हित index = MAJOR(dev);
+	अचिन्हित i;
+	काष्ठा probe *found = शून्य;
 
-	if (n > 255)
+	अगर (n > 255)
 		n = 255;
 
-	mutex_lock(domain->lock);
-	for (i = 0; i < n; i++, index++) {
-		struct probe **s;
-		for (s = &domain->probes[index % 255]; *s; s = &(*s)->next) {
-			struct probe *p = *s;
-			if (p->dev == dev && p->range == range) {
+	mutex_lock(करोमुख्य->lock);
+	क्रम (i = 0; i < n; i++, index++) अणु
+		काष्ठा probe **s;
+		क्रम (s = &करोमुख्य->probes[index % 255]; *s; s = &(*s)->next) अणु
+			काष्ठा probe *p = *s;
+			अगर (p->dev == dev && p->range == range) अणु
 				*s = p->next;
-				if (!found)
+				अगर (!found)
 					found = p;
-				break;
-			}
-		}
-	}
-	mutex_unlock(domain->lock);
-	kfree(found);
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	mutex_unlock(करोमुख्य->lock);
+	kमुक्त(found);
+पूर्ण
 
-struct kobject *kobj_lookup(struct kobj_map *domain, dev_t dev, int *index)
-{
-	struct kobject *kobj;
-	struct probe *p;
-	unsigned long best = ~0UL;
+काष्ठा kobject *kobj_lookup(काष्ठा kobj_map *करोमुख्य, dev_t dev, पूर्णांक *index)
+अणु
+	काष्ठा kobject *kobj;
+	काष्ठा probe *p;
+	अचिन्हित दीर्घ best = ~0UL;
 
 retry:
-	mutex_lock(domain->lock);
-	for (p = domain->probes[MAJOR(dev) % 255]; p; p = p->next) {
-		struct kobject *(*probe)(dev_t, int *, void *);
-		struct module *owner;
-		void *data;
+	mutex_lock(करोमुख्य->lock);
+	क्रम (p = करोमुख्य->probes[MAJOR(dev) % 255]; p; p = p->next) अणु
+		काष्ठा kobject *(*probe)(dev_t, पूर्णांक *, व्योम *);
+		काष्ठा module *owner;
+		व्योम *data;
 
-		if (p->dev > dev || p->dev + p->range - 1 < dev)
-			continue;
-		if (p->range - 1 >= best)
-			break;
-		if (!try_module_get(p->owner))
-			continue;
+		अगर (p->dev > dev || p->dev + p->range - 1 < dev)
+			जारी;
+		अगर (p->range - 1 >= best)
+			अवरोध;
+		अगर (!try_module_get(p->owner))
+			जारी;
 		owner = p->owner;
 		data = p->data;
 		probe = p->get;
 		best = p->range - 1;
 		*index = dev - p->dev;
-		if (p->lock && p->lock(dev, data) < 0) {
+		अगर (p->lock && p->lock(dev, data) < 0) अणु
 			module_put(owner);
-			continue;
-		}
-		mutex_unlock(domain->lock);
+			जारी;
+		पूर्ण
+		mutex_unlock(करोमुख्य->lock);
 		kobj = probe(dev, index, data);
 		/* Currently ->owner protects _only_ ->probe() itself. */
 		module_put(owner);
-		if (kobj)
-			return kobj;
-		goto retry;
-	}
-	mutex_unlock(domain->lock);
-	return NULL;
-}
+		अगर (kobj)
+			वापस kobj;
+		जाओ retry;
+	पूर्ण
+	mutex_unlock(करोमुख्य->lock);
+	वापस शून्य;
+पूर्ण
 
-struct kobj_map *kobj_map_init(kobj_probe_t *base_probe, struct mutex *lock)
-{
-	struct kobj_map *p = kmalloc(sizeof(struct kobj_map), GFP_KERNEL);
-	struct probe *base = kzalloc(sizeof(*base), GFP_KERNEL);
-	int i;
+काष्ठा kobj_map *kobj_map_init(kobj_probe_t *base_probe, काष्ठा mutex *lock)
+अणु
+	काष्ठा kobj_map *p = kदो_स्मृति(माप(काष्ठा kobj_map), GFP_KERNEL);
+	काष्ठा probe *base = kzalloc(माप(*base), GFP_KERNEL);
+	पूर्णांक i;
 
-	if ((p == NULL) || (base == NULL)) {
-		kfree(p);
-		kfree(base);
-		return NULL;
-	}
+	अगर ((p == शून्य) || (base == शून्य)) अणु
+		kमुक्त(p);
+		kमुक्त(base);
+		वापस शून्य;
+	पूर्ण
 
 	base->dev = 1;
 	base->range = ~0;
 	base->get = base_probe;
-	for (i = 0; i < 255; i++)
+	क्रम (i = 0; i < 255; i++)
 		p->probes[i] = base;
 	p->lock = lock;
-	return p;
-}
+	वापस p;
+पूर्ण

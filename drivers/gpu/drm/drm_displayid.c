@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2021 Intel Corporation
+ * Copyright तऊ 2021 Intel Corporation
  */
 
-#include <drm/drm_displayid.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_print.h>
+#समावेश <drm/drm_displayid.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-static int validate_displayid(const u8 *displayid, int length, int idx)
-{
-	int i, dispid_length;
+अटल पूर्णांक validate_displayid(स्थिर u8 *displayid, पूर्णांक length, पूर्णांक idx)
+अणु
+	पूर्णांक i, dispid_length;
 	u8 csum = 0;
-	const struct displayid_header *base;
+	स्थिर काष्ठा displayid_header *base;
 
-	base = (const struct displayid_header *)&displayid[idx];
+	base = (स्थिर काष्ठा displayid_header *)&displayid[idx];
 
 	DRM_DEBUG_KMS("base revision 0x%x, length %d, %d %d\n",
 		      base->rev, base->bytes, base->prod_id, base->ext_count);
 
-	/* +1 for DispID checksum */
-	dispid_length = sizeof(*base) + base->bytes + 1;
-	if (dispid_length > length - idx)
-		return -EINVAL;
+	/* +1 क्रम DispID checksum */
+	dispid_length = माप(*base) + base->bytes + 1;
+	अगर (dispid_length > length - idx)
+		वापस -EINVAL;
 
-	for (i = 0; i < dispid_length; i++)
+	क्रम (i = 0; i < dispid_length; i++)
 		csum += displayid[idx + i];
-	if (csum) {
+	अगर (csum) अणु
 		DRM_NOTE("DisplayID checksum invalid, remainder is %d\n", csum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const u8 *drm_find_displayid_extension(const struct edid *edid,
-					      int *length, int *idx,
-					      int *ext_index)
-{
-	const u8 *displayid = drm_find_edid_extension(edid, DISPLAYID_EXT, ext_index);
-	const struct displayid_header *base;
-	int ret;
+अटल स्थिर u8 *drm_find_displayid_extension(स्थिर काष्ठा edid *edid,
+					      पूर्णांक *length, पूर्णांक *idx,
+					      पूर्णांक *ext_index)
+अणु
+	स्थिर u8 *displayid = drm_find_edid_extension(edid, DISPLAYID_EXT, ext_index);
+	स्थिर काष्ठा displayid_header *base;
+	पूर्णांक ret;
 
-	if (!displayid)
-		return NULL;
+	अगर (!displayid)
+		वापस शून्य;
 
-	/* EDID extensions block checksum isn't for us */
+	/* EDID extensions block checksum isn't क्रम us */
 	*length = EDID_LENGTH - 1;
 	*idx = 1;
 
 	ret = validate_displayid(displayid, *length, *idx);
-	if (ret)
-		return NULL;
+	अगर (ret)
+		वापस शून्य;
 
-	base = (const struct displayid_header *)&displayid[*idx];
-	*length = *idx + sizeof(*base) + base->bytes;
+	base = (स्थिर काष्ठा displayid_header *)&displayid[*idx];
+	*length = *idx + माप(*base) + base->bytes;
 
-	return displayid;
-}
+	वापस displayid;
+पूर्ण
 
-void displayid_iter_edid_begin(const struct edid *edid,
-			       struct displayid_iter *iter)
-{
-	memset(iter, 0, sizeof(*iter));
+व्योम displayid_iter_edid_begin(स्थिर काष्ठा edid *edid,
+			       काष्ठा displayid_iter *iter)
+अणु
+	स_रखो(iter, 0, माप(*iter));
 
 	iter->edid = edid;
-}
+पूर्ण
 
-static const struct displayid_block *
-displayid_iter_block(const struct displayid_iter *iter)
-{
-	const struct displayid_block *block;
+अटल स्थिर काष्ठा displayid_block *
+displayid_iter_block(स्थिर काष्ठा displayid_iter *iter)
+अणु
+	स्थिर काष्ठा displayid_block *block;
 
-	if (!iter->section)
-		return NULL;
+	अगर (!iter->section)
+		वापस शून्य;
 
-	block = (const struct displayid_block *)&iter->section[iter->idx];
+	block = (स्थिर काष्ठा displayid_block *)&iter->section[iter->idx];
 
-	if (iter->idx + sizeof(*block) <= iter->length &&
-	    iter->idx + sizeof(*block) + block->num_bytes <= iter->length)
-		return block;
+	अगर (iter->idx + माप(*block) <= iter->length &&
+	    iter->idx + माप(*block) + block->num_bytes <= iter->length)
+		वापस block;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-const struct displayid_block *
-__displayid_iter_next(struct displayid_iter *iter)
-{
-	const struct displayid_block *block;
+स्थिर काष्ठा displayid_block *
+__displayid_iter_next(काष्ठा displayid_iter *iter)
+अणु
+	स्थिर काष्ठा displayid_block *block;
 
-	if (!iter->edid)
-		return NULL;
+	अगर (!iter->edid)
+		वापस शून्य;
 
-	if (iter->section) {
+	अगर (iter->section) अणु
 		/* current block should always be valid */
 		block = displayid_iter_block(iter);
-		if (WARN_ON(!block)) {
-			iter->section = NULL;
-			iter->edid = NULL;
-			return NULL;
-		}
+		अगर (WARN_ON(!block)) अणु
+			iter->section = शून्य;
+			iter->edid = शून्य;
+			वापस शून्य;
+		पूर्ण
 
 		/* next block in section */
-		iter->idx += sizeof(*block) + block->num_bytes;
+		iter->idx += माप(*block) + block->num_bytes;
 
 		block = displayid_iter_block(iter);
-		if (block)
-			return block;
-	}
+		अगर (block)
+			वापस block;
+	पूर्ण
 
-	for (;;) {
+	क्रम (;;) अणु
 		iter->section = drm_find_displayid_extension(iter->edid,
 							     &iter->length,
 							     &iter->idx,
 							     &iter->ext_index);
-		if (!iter->section) {
-			iter->edid = NULL;
-			return NULL;
-		}
+		अगर (!iter->section) अणु
+			iter->edid = शून्य;
+			वापस शून्य;
+		पूर्ण
 
-		iter->idx += sizeof(struct displayid_header);
+		iter->idx += माप(काष्ठा displayid_header);
 
 		block = displayid_iter_block(iter);
-		if (block)
-			return block;
-	}
-}
+		अगर (block)
+			वापस block;
+	पूर्ण
+पूर्ण
 
-void displayid_iter_end(struct displayid_iter *iter)
-{
-	memset(iter, 0, sizeof(*iter));
-}
+व्योम displayid_iter_end(काष्ठा displayid_iter *iter)
+अणु
+	स_रखो(iter, 0, माप(*iter));
+पूर्ण

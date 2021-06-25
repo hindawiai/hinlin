@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 National Instruments Corp.
  */
 
-#include <linux/acpi.h>
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/watchdog.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/watchकरोg.h>
 
-#define LOCK			0xA5
-#define UNLOCK			0x5A
+#घोषणा LOCK			0xA5
+#घोषणा UNLOCK			0x5A
 
-#define WDT_CTRL_RESET_EN	BIT(7)
-#define WDT_RELOAD_PORT_EN	BIT(7)
+#घोषणा WDT_CTRL_RESET_EN	BIT(7)
+#घोषणा WDT_RELOAD_PORT_EN	BIT(7)
 
-#define WDT_CTRL		1
-#define WDT_RELOAD_CTRL		2
-#define WDT_PRESET_PRESCALE	4
-#define WDT_REG_LOCK		5
-#define WDT_COUNT		6
-#define WDT_RELOAD_PORT		7
+#घोषणा WDT_CTRL		1
+#घोषणा WDT_RELOAD_CTRL		2
+#घोषणा WDT_PRESET_PRESCALE	4
+#घोषणा WDT_REG_LOCK		5
+#घोषणा WDT_COUNT		6
+#घोषणा WDT_RELOAD_PORT		7
 
-#define WDT_MIN_TIMEOUT		1
-#define WDT_MAX_TIMEOUT		464
-#define WDT_DEFAULT_TIMEOUT	80
+#घोषणा WDT_MIN_TIMEOUT		1
+#घोषणा WDT_MAX_TIMEOUT		464
+#घोषणा WDT_DEFAULT_TIMEOUT	80
 
-#define WDT_MAX_COUNTER		15
+#घोषणा WDT_MAX_COUNTER		15
 
-static unsigned int timeout;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout,
+अटल अचिन्हित पूर्णांक समयout;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout,
 		 "Watchdog timeout in seconds. (default="
 		 __MODULE_STRING(WDT_DEFAULT_TIMEOUT) ")");
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
 module_param(nowayout, bool, 0);
 MODULE_PARM_DESC(nowayout,
 		 "Watchdog cannot be stopped once started. (default="
 		 __MODULE_STRING(WATCHDOG_NOWAYOUT) ")");
 
-struct nic7018_wdt {
+काष्ठा nic7018_wdt अणु
 	u16 io_base;
 	u32 period;
-	struct watchdog_device wdd;
-};
+	काष्ठा watchकरोg_device wdd;
+पूर्ण;
 
-struct nic7018_config {
+काष्ठा nic7018_config अणु
 	u32 period;
-	u8 divider;
-};
+	u8 भागider;
+पूर्ण;
 
-static const struct nic7018_config nic7018_configs[] = {
-	{  2, 4 },
-	{ 32, 5 },
-};
+अटल स्थिर काष्ठा nic7018_config nic7018_configs[] = अणु
+	अणु  2, 4 पूर्ण,
+	अणु 32, 5 पूर्ण,
+पूर्ण;
 
-static inline u32 nic7018_timeout(u32 period, u8 counter)
-{
-	return period * counter - period / 2;
-}
+अटल अंतरभूत u32 nic7018_समयout(u32 period, u8 counter)
+अणु
+	वापस period * counter - period / 2;
+पूर्ण
 
-static const struct nic7018_config *nic7018_get_config(u32 timeout,
+अटल स्थिर काष्ठा nic7018_config *nic7018_get_config(u32 समयout,
 						       u8 *counter)
-{
-	const struct nic7018_config *config;
+अणु
+	स्थिर काष्ठा nic7018_config *config;
 	u8 count;
 
-	if (timeout < 30 && timeout != 16) {
+	अगर (समयout < 30 && समयout != 16) अणु
 		config = &nic7018_configs[0];
-		count = timeout / 2 + 1;
-	} else {
+		count = समयout / 2 + 1;
+	पूर्ण अन्यथा अणु
 		config = &nic7018_configs[1];
-		count = DIV_ROUND_UP(timeout + 16, 32);
+		count = DIV_ROUND_UP(समयout + 16, 32);
 
-		if (count > WDT_MAX_COUNTER)
+		अगर (count > WDT_MAX_COUNTER)
 			count = WDT_MAX_COUNTER;
-	}
+	पूर्ण
 	*counter = count;
-	return config;
-}
+	वापस config;
+पूर्ण
 
-static int nic7018_set_timeout(struct watchdog_device *wdd,
-			       unsigned int timeout)
-{
-	struct nic7018_wdt *wdt = watchdog_get_drvdata(wdd);
-	const struct nic7018_config *config;
+अटल पूर्णांक nic7018_set_समयout(काष्ठा watchकरोg_device *wdd,
+			       अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा nic7018_wdt *wdt = watchकरोg_get_drvdata(wdd);
+	स्थिर काष्ठा nic7018_config *config;
 	u8 counter;
 
-	config = nic7018_get_config(timeout, &counter);
+	config = nic7018_get_config(समयout, &counter);
 
-	outb(counter << 4 | config->divider,
+	outb(counter << 4 | config->भागider,
 	     wdt->io_base + WDT_PRESET_PRESCALE);
 
-	wdd->timeout = nic7018_timeout(config->period, counter);
+	wdd->समयout = nic7018_समयout(config->period, counter);
 	wdt->period = config->period;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nic7018_start(struct watchdog_device *wdd)
-{
-	struct nic7018_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक nic7018_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा nic7018_wdt *wdt = watchकरोg_get_drvdata(wdd);
 	u8 control;
 
-	nic7018_set_timeout(wdd, wdd->timeout);
+	nic7018_set_समयout(wdd, wdd->समयout);
 
 	control = inb(wdt->io_base + WDT_RELOAD_CTRL);
 	outb(control | WDT_RELOAD_PORT_EN, wdt->io_base + WDT_RELOAD_CTRL);
@@ -116,136 +117,136 @@ static int nic7018_start(struct watchdog_device *wdd)
 	control = inb(wdt->io_base + WDT_CTRL);
 	outb(control | WDT_CTRL_RESET_EN, wdt->io_base + WDT_CTRL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nic7018_stop(struct watchdog_device *wdd)
-{
-	struct nic7018_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक nic7018_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा nic7018_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
 	outb(0, wdt->io_base + WDT_CTRL);
 	outb(0, wdt->io_base + WDT_RELOAD_CTRL);
 	outb(0xF0, wdt->io_base + WDT_PRESET_PRESCALE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nic7018_ping(struct watchdog_device *wdd)
-{
-	struct nic7018_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल पूर्णांक nic7018_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा nic7018_wdt *wdt = watchकरोg_get_drvdata(wdd);
 
 	outb(1, wdt->io_base + WDT_RELOAD_PORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int nic7018_get_timeleft(struct watchdog_device *wdd)
-{
-	struct nic7018_wdt *wdt = watchdog_get_drvdata(wdd);
+अटल अचिन्हित पूर्णांक nic7018_get_समयleft(काष्ठा watchकरोg_device *wdd)
+अणु
+	काष्ठा nic7018_wdt *wdt = watchकरोg_get_drvdata(wdd);
 	u8 count;
 
 	count = inb(wdt->io_base + WDT_COUNT) & 0xF;
-	if (!count)
-		return 0;
+	अगर (!count)
+		वापस 0;
 
-	return nic7018_timeout(wdt->period, count);
-}
+	वापस nic7018_समयout(wdt->period, count);
+पूर्ण
 
-static const struct watchdog_info nic7018_wdd_info = {
+अटल स्थिर काष्ठा watchकरोg_info nic7018_wdd_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "NIC7018 Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops nic7018_wdd_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops nic7018_wdd_ops = अणु
 	.owner = THIS_MODULE,
 	.start = nic7018_start,
 	.stop = nic7018_stop,
 	.ping = nic7018_ping,
-	.set_timeout = nic7018_set_timeout,
-	.get_timeleft = nic7018_get_timeleft,
-};
+	.set_समयout = nic7018_set_समयout,
+	.get_समयleft = nic7018_get_समयleft,
+पूर्ण;
 
-static int nic7018_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct watchdog_device *wdd;
-	struct nic7018_wdt *wdt;
-	struct resource *io_rc;
-	int ret;
+अटल पूर्णांक nic7018_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा watchकरोg_device *wdd;
+	काष्ठा nic7018_wdt *wdt;
+	काष्ठा resource *io_rc;
+	पूर्णांक ret;
 
-	wdt = devm_kzalloc(dev, sizeof(*wdt), GFP_KERNEL);
-	if (!wdt)
-		return -ENOMEM;
+	wdt = devm_kzalloc(dev, माप(*wdt), GFP_KERNEL);
+	अगर (!wdt)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, wdt);
+	platक्रमm_set_drvdata(pdev, wdt);
 
-	io_rc = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!io_rc) {
+	io_rc = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!io_rc) अणु
 		dev_err(dev, "missing IO resources\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!devm_request_region(dev, io_rc->start, resource_size(io_rc),
-				 KBUILD_MODNAME)) {
+	अगर (!devm_request_region(dev, io_rc->start, resource_size(io_rc),
+				 KBUILD_MODNAME)) अणु
 		dev_err(dev, "failed to get IO region\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	wdt->io_base = io_rc->start;
 	wdd = &wdt->wdd;
 	wdd->info = &nic7018_wdd_info;
 	wdd->ops = &nic7018_wdd_ops;
-	wdd->min_timeout = WDT_MIN_TIMEOUT;
-	wdd->max_timeout = WDT_MAX_TIMEOUT;
-	wdd->timeout = WDT_DEFAULT_TIMEOUT;
+	wdd->min_समयout = WDT_MIN_TIMEOUT;
+	wdd->max_समयout = WDT_MAX_TIMEOUT;
+	wdd->समयout = WDT_DEFAULT_TIMEOUT;
 	wdd->parent = dev;
 
-	watchdog_set_drvdata(wdd, wdt);
-	watchdog_set_nowayout(wdd, nowayout);
-	watchdog_init_timeout(wdd, timeout, dev);
+	watchकरोg_set_drvdata(wdd, wdt);
+	watchकरोg_set_nowayout(wdd, nowayout);
+	watchकरोg_init_समयout(wdd, समयout, dev);
 
-	/* Unlock WDT register */
+	/* Unlock WDT रेजिस्टर */
 	outb(UNLOCK, wdt->io_base + WDT_REG_LOCK);
 
-	ret = watchdog_register_device(wdd);
-	if (ret) {
+	ret = watchकरोg_रेजिस्टर_device(wdd);
+	अगर (ret) अणु
 		outb(LOCK, wdt->io_base + WDT_REG_LOCK);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(dev, "io_base=0x%04X, timeout=%d, nowayout=%d\n",
-		wdt->io_base, timeout, nowayout);
-	return 0;
-}
+		wdt->io_base, समयout, nowayout);
+	वापस 0;
+पूर्ण
 
-static int nic7018_remove(struct platform_device *pdev)
-{
-	struct nic7018_wdt *wdt = platform_get_drvdata(pdev);
+अटल पूर्णांक nic7018_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा nic7018_wdt *wdt = platक्रमm_get_drvdata(pdev);
 
-	watchdog_unregister_device(&wdt->wdd);
+	watchकरोg_unरेजिस्टर_device(&wdt->wdd);
 
-	/* Lock WDT register */
+	/* Lock WDT रेजिस्टर */
 	outb(LOCK, wdt->io_base + WDT_REG_LOCK);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id nic7018_device_ids[] = {
-	{"NIC7018", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id nic7018_device_ids[] = अणु
+	अणु"NIC7018", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, nic7018_device_ids);
 
-static struct platform_driver watchdog_driver = {
+अटल काष्ठा platक्रमm_driver watchकरोg_driver = अणु
 	.probe = nic7018_probe,
-	.remove = nic7018_remove,
-	.driver = {
+	.हटाओ = nic7018_हटाओ,
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.acpi_match_table = ACPI_PTR(nic7018_device_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(watchdog_driver);
+module_platक्रमm_driver(watchकरोg_driver);
 
 MODULE_DESCRIPTION("National Instruments NIC7018 Watchdog driver");
 MODULE_AUTHOR("Hui Chun Ong <hui.chun.ong@ni.com>");

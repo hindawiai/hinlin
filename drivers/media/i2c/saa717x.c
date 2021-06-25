@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * saa717x - Philips SAA717xHL video decoder driver
  *
@@ -13,26 +14,26 @@
  * Cleaned up by Hans Verkuil <hverkuil@xs4all.nl>
  *
  * Note: this is a reversed engineered driver based on captures from
- * the I2C bus under Windows. This chip is very similar to the saa7134,
- * though. Unfortunately, this driver is currently only working for NTSC.
+ * the I2C bus under Winकरोws. This chip is very similar to the saa7134,
+ * though. Unक्रमtunately, this driver is currently only working क्रम NTSC.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
 
-#include <linux/videodev2.h>
-#include <linux/i2c.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/i2c.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
 MODULE_DESCRIPTION("Philips SAA717x audio/video decoder driver");
 MODULE_AUTHOR("K. Ohta, T. Adachi, Hans Verkuil");
 MODULE_LICENSE("GPL");
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
 /*
@@ -40,91 +41,91 @@ MODULE_PARM_DESC(debug, "Debug level (0-1)");
  * concerning the addresses: i2c wants 7 bit (without the r/w bit), so '>>1'
  */
 
-struct saa717x_state {
-	struct v4l2_subdev sd;
-	struct v4l2_ctrl_handler hdl;
+काष्ठा saa717x_state अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा v4l2_ctrl_handler hdl;
 	v4l2_std_id std;
-	int input;
-	int enable;
-	int radio;
-	int playback;
-	int audio;
-	int tuner_audio_mode;
-	int audio_main_mute;
-	int audio_main_vol_r;
-	int audio_main_vol_l;
-	u16 audio_main_bass;
-	u16 audio_main_treble;
-	u16 audio_main_volume;
-	u16 audio_main_balance;
-	int audio_input;
-};
+	पूर्णांक input;
+	पूर्णांक enable;
+	पूर्णांक radio;
+	पूर्णांक playback;
+	पूर्णांक audio;
+	पूर्णांक tuner_audio_mode;
+	पूर्णांक audio_मुख्य_mute;
+	पूर्णांक audio_मुख्य_vol_r;
+	पूर्णांक audio_मुख्य_vol_l;
+	u16 audio_मुख्य_bass;
+	u16 audio_मुख्य_treble;
+	u16 audio_मुख्य_volume;
+	u16 audio_मुख्य_balance;
+	पूर्णांक audio_input;
+पूर्ण;
 
-static inline struct saa717x_state *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct saa717x_state, sd);
-}
+अटल अंतरभूत काष्ठा saa717x_state *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा saa717x_state, sd);
+पूर्ण
 
-static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
-{
-	return &container_of(ctrl->handler, struct saa717x_state, hdl)->sd;
-}
-
-/* ----------------------------------------------------------------------- */
-
-/* for audio mode */
-#define TUNER_AUDIO_MONO	0  /* LL */
-#define TUNER_AUDIO_STEREO	1  /* LR */
-#define TUNER_AUDIO_LANG1	2  /* LL */
-#define TUNER_AUDIO_LANG2	3  /* RR */
-
-#define SAA717X_NTSC_WIDTH	(704)
-#define SAA717X_NTSC_HEIGHT	(480)
+अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस &container_of(ctrl->handler, काष्ठा saa717x_state, hdl)->sd;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static int saa717x_write(struct v4l2_subdev *sd, u32 reg, u32 value)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct i2c_adapter *adap = client->adapter;
-	int fw_addr = reg == 0x454 || (reg >= 0x464 && reg <= 0x478) || reg == 0x480 || reg == 0x488;
-	unsigned char mm1[6];
-	struct i2c_msg msg;
+/* क्रम audio mode */
+#घोषणा TUNER_AUDIO_MONO	0  /* LL */
+#घोषणा TUNER_AUDIO_STEREO	1  /* LR */
+#घोषणा TUNER_AUDIO_LANG1	2  /* LL */
+#घोषणा TUNER_AUDIO_LANG2	3  /* RR */
+
+#घोषणा SAA717X_NTSC_WIDTH	(704)
+#घोषणा SAA717X_NTSC_HEIGHT	(480)
+
+/* ----------------------------------------------------------------------- */
+
+अटल पूर्णांक saa717x_ग_लिखो(काष्ठा v4l2_subdev *sd, u32 reg, u32 value)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा i2c_adapter *adap = client->adapter;
+	पूर्णांक fw_addr = reg == 0x454 || (reg >= 0x464 && reg <= 0x478) || reg == 0x480 || reg == 0x488;
+	अचिन्हित अक्षर mm1[6];
+	काष्ठा i2c_msg msg;
 
 	msg.flags = 0;
 	msg.addr = client->addr;
 	mm1[0] = (reg >> 8) & 0xff;
 	mm1[1] = reg & 0xff;
 
-	if (fw_addr) {
+	अगर (fw_addr) अणु
 		mm1[4] = (value >> 16) & 0xff;
 		mm1[3] = (value >> 8) & 0xff;
 		mm1[2] = value & 0xff;
-	} else {
+	पूर्ण अन्यथा अणु
 		mm1[2] = value & 0xff;
-	}
+	पूर्ण
 	msg.len = fw_addr ? 5 : 3; /* Long Registers have *only* three bytes! */
 	msg.buf = mm1;
 	v4l2_dbg(2, debug, sd, "wrote:  reg 0x%03x=%08x\n", reg, value);
-	return i2c_transfer(adap, &msg, 1) == 1;
-}
+	वापस i2c_transfer(adap, &msg, 1) == 1;
+पूर्ण
 
-static void saa717x_write_regs(struct v4l2_subdev *sd, u32 *data)
-{
-	while (data[0] || data[1]) {
-		saa717x_write(sd, data[0], data[1]);
+अटल व्योम saa717x_ग_लिखो_regs(काष्ठा v4l2_subdev *sd, u32 *data)
+अणु
+	जबतक (data[0] || data[1]) अणु
+		saa717x_ग_लिखो(sd, data[0], data[1]);
 		data += 2;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static u32 saa717x_read(struct v4l2_subdev *sd, u32 reg)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct i2c_adapter *adap = client->adapter;
-	int fw_addr = (reg >= 0x404 && reg <= 0x4b8) || reg == 0x528;
-	unsigned char mm1[2];
-	unsigned char mm2[4] = { 0, 0, 0, 0 };
-	struct i2c_msg msgs[2];
+अटल u32 saa717x_पढ़ो(काष्ठा v4l2_subdev *sd, u32 reg)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा i2c_adapter *adap = client->adapter;
+	पूर्णांक fw_addr = (reg >= 0x404 && reg <= 0x4b8) || reg == 0x528;
+	अचिन्हित अक्षर mm1[2];
+	अचिन्हित अक्षर mm2[4] = अणु 0, 0, 0, 0 पूर्ण;
+	काष्ठा i2c_msg msgs[2];
 	u32 value;
 
 	msgs[0].flags = 0;
@@ -138,19 +139,19 @@ static u32 saa717x_read(struct v4l2_subdev *sd, u32 reg)
 	msgs[1].buf = mm2;
 	i2c_transfer(adap, msgs, 2);
 
-	if (fw_addr)
+	अगर (fw_addr)
 		value = (mm2[2] << 16)  | (mm2[1] << 8) | mm2[0];
-	else
+	अन्यथा
 		value = mm2[0];
 
 	v4l2_dbg(2, debug, sd, "read:  reg 0x%03x=0x%08x\n", reg, value);
-	return value;
-}
+	वापस value;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static u32 reg_init_initialize[] =
-{
+अटल u32 reg_init_initialize[] =
+अणु
 	/* from linux driver */
 	0x101, 0x008, /* Increment delay */
 
@@ -169,12 +170,12 @@ static u32 reg_init_initialize[] =
 	0x118, 0x040, /* RAW data gain */
 	0x119, 0x080, /* RAW data offset */
 
-	0x044, 0x000, /* VBI horizontal input window start (L) TASK A */
-	0x045, 0x000, /* VBI horizontal input window start (H) TASK A */
-	0x046, 0x0cf, /* VBI horizontal input window stop (L) TASK A */
-	0x047, 0x002, /* VBI horizontal input window stop (H) TASK A */
+	0x044, 0x000, /* VBI horizontal input winकरोw start (L) TASK A */
+	0x045, 0x000, /* VBI horizontal input winकरोw start (H) TASK A */
+	0x046, 0x0cf, /* VBI horizontal input winकरोw stop (L) TASK A */
+	0x047, 0x002, /* VBI horizontal input winकरोw stop (H) TASK A */
 
-	0x049, 0x000, /* VBI vertical input window start (H) TASK A */
+	0x049, 0x000, /* VBI vertical input winकरोw start (H) TASK A */
 
 	0x04c, 0x0d0, /* VBI horizontal output length (L) TASK A */
 	0x04d, 0x002, /* VBI horizontal output length (H) TASK A */
@@ -192,12 +193,12 @@ static u32 reg_init_initialize[] =
 
 	0x072, 0x000, /* Vertical filter mode TASK A */
 
-	0x084, 0x000, /* VBI horizontal input window start (L) TAKS B */
-	0x085, 0x000, /* VBI horizontal input window start (H) TAKS B */
-	0x086, 0x0cf, /* VBI horizontal input window stop (L) TAKS B */
-	0x087, 0x002, /* VBI horizontal input window stop (H) TAKS B */
+	0x084, 0x000, /* VBI horizontal input winकरोw start (L) TAKS B */
+	0x085, 0x000, /* VBI horizontal input winकरोw start (H) TAKS B */
+	0x086, 0x0cf, /* VBI horizontal input winकरोw stop (L) TAKS B */
+	0x087, 0x002, /* VBI horizontal input winकरोw stop (H) TAKS B */
 
-	0x089, 0x000, /* VBI vertical input window start (H) TAKS B */
+	0x089, 0x000, /* VBI vertical input winकरोw start (H) TAKS B */
 
 	0x08c, 0x0d0, /* VBI horizontal output length (L) TASK B */
 	0x08d, 0x002, /* VBI horizontal output length (H) TASK B */
@@ -215,9 +216,9 @@ static u32 reg_init_initialize[] =
 
 	0x0b2, 0x000, /* Vertical filter mode TASK B */
 
-	0x00c, 0x000, /* Start point GREEN path */
-	0x00d, 0x000, /* Start point BLUE path */
-	0x00e, 0x000, /* Start point RED path */
+	0x00c, 0x000, /* Start poपूर्णांक GREEN path */
+	0x00d, 0x000, /* Start poपूर्णांक BLUE path */
+	0x00e, 0x000, /* Start poपूर्णांक RED path */
 
 	0x010, 0x010, /* GREEN path gamma curve --- */
 	0x011, 0x020,
@@ -283,7 +284,7 @@ static u32 reg_init_initialize[] =
 	0x58c, 0x010, /* Audio channel assign1 */
 	0x58d, 0x032, /* Audio channel assign2 */
 	0x58e, 0x054, /* Audio channel assign3 */
-	0x58f, 0x023, /* Audio format */
+	0x58f, 0x023, /* Audio क्रमmat */
 	0x590, 0x000, /* SIF control */
 
 	0x595, 0x000, /* ?? */
@@ -297,16 +298,16 @@ static u32 reg_init_initialize[] =
 
 	0x478, 0x00, /* Sound feature control */
 
-	0x474, 0x18, /* Softmute control */
+	0x474, 0x18, /* Sofपंचांगute control */
 
 	0x454, 0x0425b9, /* Sound Easy programming(reset) */
 	0x454, 0x042539, /* Sound Easy programming(reset) */
 
 
 	/**** common setting( of DVD play, including scaler commands) ****/
-	0x042, 0x003, /* Data path configuration for VBI (TASK A) */
+	0x042, 0x003, /* Data path configuration क्रम VBI (TASK A) */
 
-	0x082, 0x003, /* Data path configuration for VBI (TASK B) */
+	0x082, 0x003, /* Data path configuration क्रम VBI (TASK B) */
 
 	0x108, 0x0f8, /* Sync control */
 	0x2a9, 0x0fd, /* ??? */
@@ -618,35 +619,35 @@ static u32 reg_init_initialize[] =
 	0x464, 0x000,
 
 	0, 0
-};
+पूर्ण;
 
 /* Tuner */
-static u32 reg_init_tuner_input[] = {
+अटल u32 reg_init_tuner_input[] = अणु
 	0x108, 0x0f8, /* Sync control */
 	0x111, 0x000, /* Mode/delay control */
 	0x10e, 0x00a, /* Chroma control 1 */
 	0, 0
-};
+पूर्ण;
 
 /* Composite */
-static u32 reg_init_composite_input[] = {
+अटल u32 reg_init_composite_input[] = अणु
 	0x108, 0x0e8, /* Sync control */
 	0x111, 0x000, /* Mode/delay control */
 	0x10e, 0x04a, /* Chroma control 1 */
 	0, 0
-};
+पूर्ण;
 
 /* S-Video */
-static u32 reg_init_svideo_input[] = {
+अटल u32 reg_init_svideo_input[] = अणु
 	0x108, 0x0e8, /* Sync control */
 	0x111, 0x000, /* Mode/delay control */
 	0x10e, 0x04a, /* Chroma control 1 */
 	0, 0
-};
+पूर्ण;
 
-static u32 reg_set_audio_template[4][2] =
-{
-	{ /* for MONO
+अटल u32 reg_set_audio_ढाँचा[4][2] =
+अणु
+	अणु /* क्रम MONO
 		tadachi 6/29 DMA audio output select?
 		Register 0x46c
 		7-4: DMA2, 3-0: DMA1 ch. DMA4, DMA3 DMA2, DMA1
@@ -663,26 +664,26 @@ static u32 reg_set_audio_template[4][2] =
 		   7-4:DAC right ch. 3-0:DAC left ch.
 		   I2S1 right,left  I2S2 right,left */
 		0x00,
-	},
-	{ /* for STEREO */
+	पूर्ण,
+	अणु /* क्रम STEREO */
 		0xbbbb10, 0x101010,
-	},
-	{ /* for LANG1 */
+	पूर्ण,
+	अणु /* क्रम LANG1 */
 		0xbbbb00, 0x00,
-	},
-	{ /* for LANG2/SAP */
+	पूर्ण,
+	अणु /* क्रम LANG2/SAP */
 		0xbbbb11, 0x111111,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 
 /* Get detected audio flags (from saa7134 driver) */
-static void get_inf_dev_status(struct v4l2_subdev *sd,
-		int *dual_flag, int *stereo_flag)
-{
+अटल व्योम get_inf_dev_status(काष्ठा v4l2_subdev *sd,
+		पूर्णांक *dual_flag, पूर्णांक *stereo_flag)
+अणु
 	u32 reg_data3;
 
-	static char *stdres[0x20] = {
+	अटल अक्षर *stdres[0x20] = अणु
 		[0x00] = "no standard detected",
 		[0x01] = "B/G (in progress)",
 		[0x02] = "D/K (in progress)",
@@ -708,15 +709,15 @@ static void get_inf_dev_status(struct v4l2_subdev *sd,
 
 		[0x13 ... 0x1e] = "unknown",
 		[0x1f] = "??? [in progress]",
-	};
+	पूर्ण;
 
 
 	*dual_flag = *stereo_flag = 0;
 
 	/* (demdec status: 0x528) */
 
-	/* read current status */
-	reg_data3 = saa717x_read(sd, 0x0528);
+	/* पढ़ो current status */
+	reg_data3 = saa717x_पढ़ो(sd, 0x0528);
 
 	v4l2_dbg(1, debug, sd, "tvaudio thread status: 0x%x [%s%s%s]\n",
 		reg_data3, stdres[reg_data3 & 0x1f],
@@ -742,188 +743,188 @@ static void get_inf_dev_status(struct v4l2_subdev *sd,
 
 		(reg_data3 & 0x100000) ? " init done "              : "");
 
-	if (reg_data3 & 0x000220) {
+	अगर (reg_data3 & 0x000220) अणु
 		v4l2_dbg(1, debug, sd, "ST!!!\n");
 		*stereo_flag = 1;
-	}
+	पूर्ण
 
-	if (reg_data3 & 0x000140) {
+	अगर (reg_data3 & 0x000140) अणु
 		v4l2_dbg(1, debug, sd, "DUAL!!!\n");
 		*dual_flag = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* regs write to set audio mode */
-static void set_audio_mode(struct v4l2_subdev *sd, int audio_mode)
-{
+/* regs ग_लिखो to set audio mode */
+अटल व्योम set_audio_mode(काष्ठा v4l2_subdev *sd, पूर्णांक audio_mode)
+अणु
 	v4l2_dbg(1, debug, sd, "writing registers to set audio mode by set %d\n",
 			audio_mode);
 
-	saa717x_write(sd, 0x46c, reg_set_audio_template[audio_mode][0]);
-	saa717x_write(sd, 0x470, reg_set_audio_template[audio_mode][1]);
-}
+	saa717x_ग_लिखो(sd, 0x46c, reg_set_audio_ढाँचा[audio_mode][0]);
+	saa717x_ग_लिखो(sd, 0x470, reg_set_audio_ढाँचा[audio_mode][1]);
+पूर्ण
 
-/* write regs to set audio volume, bass and treble */
-static int set_audio_regs(struct v4l2_subdev *sd,
-		struct saa717x_state *decoder)
-{
+/* ग_लिखो regs to set audio volume, bass and treble */
+अटल पूर्णांक set_audio_regs(काष्ठा v4l2_subdev *sd,
+		काष्ठा saa717x_state *decoder)
+अणु
 	u8 mute = 0xac; /* -84 dB */
 	u32 val;
-	unsigned int work_l, work_r;
+	अचिन्हित पूर्णांक work_l, work_r;
 
 	/* set SIF analog I/O select */
-	saa717x_write(sd, 0x0594, decoder->audio_input);
+	saa717x_ग_लिखो(sd, 0x0594, decoder->audio_input);
 	v4l2_dbg(1, debug, sd, "set audio input %d\n",
 			decoder->audio_input);
 
 	/* normalize ( 65535 to 0 -> 24 to -40 (not -84)) */
-	work_l = (min(65536 - decoder->audio_main_balance, 32768) * decoder->audio_main_volume) / 32768;
-	work_r = (min(decoder->audio_main_balance, (u16)32768) * decoder->audio_main_volume) / 32768;
-	decoder->audio_main_vol_l = (long)work_l * (24 - (-40)) / 65535 - 40;
-	decoder->audio_main_vol_r = (long)work_r * (24 - (-40)) / 65535 - 40;
+	work_l = (min(65536 - decoder->audio_मुख्य_balance, 32768) * decoder->audio_मुख्य_volume) / 32768;
+	work_r = (min(decoder->audio_मुख्य_balance, (u16)32768) * decoder->audio_मुख्य_volume) / 32768;
+	decoder->audio_मुख्य_vol_l = (दीर्घ)work_l * (24 - (-40)) / 65535 - 40;
+	decoder->audio_मुख्य_vol_r = (दीर्घ)work_r * (24 - (-40)) / 65535 - 40;
 
-	/* set main volume */
-	/* main volume L[7-0],R[7-0],0x00  24=24dB,-83dB, -84(mute) */
+	/* set मुख्य volume */
+	/* मुख्य volume L[7-0],R[7-0],0x00  24=24dB,-83dB, -84(mute) */
 	/*    def:0dB->6dB(MPG600GR) */
-	/* if mute is on, set mute */
-	if (decoder->audio_main_mute) {
+	/* अगर mute is on, set mute */
+	अगर (decoder->audio_मुख्य_mute) अणु
 		val = mute | (mute << 8);
-	} else {
-		val = (u8)decoder->audio_main_vol_l |
-			((u8)decoder->audio_main_vol_r << 8);
-	}
+	पूर्ण अन्यथा अणु
+		val = (u8)decoder->audio_मुख्य_vol_l |
+			((u8)decoder->audio_मुख्य_vol_r << 8);
+	पूर्ण
 
-	saa717x_write(sd, 0x480, val);
+	saa717x_ग_लिखो(sd, 0x480, val);
 
 	/* set bass and treble */
-	val = decoder->audio_main_bass & 0x1f;
-	val |= (decoder->audio_main_treble & 0x1f) << 5;
-	saa717x_write(sd, 0x488, val);
-	return 0;
-}
+	val = decoder->audio_मुख्य_bass & 0x1f;
+	val |= (decoder->audio_मुख्य_treble & 0x1f) << 5;
+	saa717x_ग_लिखो(sd, 0x488, val);
+	वापस 0;
+पूर्ण
 
 /********** scaling staff ***********/
-static void set_h_prescale(struct v4l2_subdev *sd,
-		int task, int prescale)
-{
-	static const struct {
-		int xpsc;
-		int xacl;
-		int xc2_1;
-		int xdcg;
-		int vpfy;
-	} vals[] = {
+अटल व्योम set_h_prescale(काष्ठा v4l2_subdev *sd,
+		पूर्णांक task, पूर्णांक prescale)
+अणु
+	अटल स्थिर काष्ठा अणु
+		पूर्णांक xpsc;
+		पूर्णांक xacl;
+		पूर्णांक xc2_1;
+		पूर्णांक xdcg;
+		पूर्णांक vpfy;
+	पूर्ण vals[] = अणु
 		/* XPSC XACL XC2_1 XDCG VPFY */
-		{    1,   0,    0,    0,   0 },
-		{    2,   2,    1,    2,   2 },
-		{    3,   4,    1,    3,   2 },
-		{    4,   8,    1,    4,   2 },
-		{    5,   8,    1,    4,   2 },
-		{    6,   8,    1,    4,   3 },
-		{    7,   8,    1,    4,   3 },
-		{    8,  15,    0,    4,   3 },
-		{    9,  15,    0,    4,   3 },
-		{   10,  16,    1,    5,   3 },
-	};
-	static const int count = ARRAY_SIZE(vals);
-	int i, task_shift;
+		अणु    1,   0,    0,    0,   0 पूर्ण,
+		अणु    2,   2,    1,    2,   2 पूर्ण,
+		अणु    3,   4,    1,    3,   2 पूर्ण,
+		अणु    4,   8,    1,    4,   2 पूर्ण,
+		अणु    5,   8,    1,    4,   2 पूर्ण,
+		अणु    6,   8,    1,    4,   3 पूर्ण,
+		अणु    7,   8,    1,    4,   3 पूर्ण,
+		अणु    8,  15,    0,    4,   3 पूर्ण,
+		अणु    9,  15,    0,    4,   3 पूर्ण,
+		अणु   10,  16,    1,    5,   3 पूर्ण,
+	पूर्ण;
+	अटल स्थिर पूर्णांक count = ARRAY_SIZE(vals);
+	पूर्णांक i, task_shअगरt;
 
-	task_shift = task * 0x40;
-	for (i = 0; i < count; i++)
-		if (vals[i].xpsc == prescale)
-			break;
-	if (i == count)
-		return;
+	task_shअगरt = task * 0x40;
+	क्रम (i = 0; i < count; i++)
+		अगर (vals[i].xpsc == prescale)
+			अवरोध;
+	अगर (i == count)
+		वापस;
 
 	/* horizontal prescaling */
-	saa717x_write(sd, 0x60 + task_shift, vals[i].xpsc);
+	saa717x_ग_लिखो(sd, 0x60 + task_shअगरt, vals[i].xpsc);
 	/* accumulation length */
-	saa717x_write(sd, 0x61 + task_shift, vals[i].xacl);
+	saa717x_ग_लिखो(sd, 0x61 + task_shअगरt, vals[i].xacl);
 	/* level control */
-	saa717x_write(sd, 0x62 + task_shift,
+	saa717x_ग_लिखो(sd, 0x62 + task_shअगरt,
 			(vals[i].xc2_1 << 3) | vals[i].xdcg);
 	/*FIR prefilter control */
-	saa717x_write(sd, 0x63 + task_shift,
+	saa717x_ग_लिखो(sd, 0x63 + task_shअगरt,
 			(vals[i].vpfy << 2) | vals[i].vpfy);
-}
+पूर्ण
 
 /********** scaling staff ***********/
-static void set_v_scale(struct v4l2_subdev *sd, int task, int yscale)
-{
-	int task_shift;
+अटल व्योम set_v_scale(काष्ठा v4l2_subdev *sd, पूर्णांक task, पूर्णांक yscale)
+अणु
+	पूर्णांक task_shअगरt;
 
-	task_shift = task * 0x40;
+	task_shअगरt = task * 0x40;
 	/* Vertical scaling ratio (LOW) */
-	saa717x_write(sd, 0x70 + task_shift, yscale & 0xff);
+	saa717x_ग_लिखो(sd, 0x70 + task_shअगरt, yscale & 0xff);
 	/* Vertical scaling ratio (HI) */
-	saa717x_write(sd, 0x71 + task_shift, yscale >> 8);
-}
+	saa717x_ग_लिखो(sd, 0x71 + task_shअगरt, yscale >> 8);
+पूर्ण
 
-static int saa717x_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct v4l2_subdev *sd = to_sd(ctrl);
-	struct saa717x_state *state = to_state(sd);
+अटल पूर्णांक saa717x_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
+	काष्ठा saa717x_state *state = to_state(sd);
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
-		saa717x_write(sd, 0x10a, ctrl->val);
-		return 0;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
+		saa717x_ग_लिखो(sd, 0x10a, ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_CONTRAST:
-		saa717x_write(sd, 0x10b, ctrl->val);
-		return 0;
+	हाल V4L2_CID_CONTRAST:
+		saa717x_ग_लिखो(sd, 0x10b, ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_SATURATION:
-		saa717x_write(sd, 0x10c, ctrl->val);
-		return 0;
+	हाल V4L2_CID_SATURATION:
+		saa717x_ग_लिखो(sd, 0x10c, ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_HUE:
-		saa717x_write(sd, 0x10d, ctrl->val);
-		return 0;
+	हाल V4L2_CID_HUE:
+		saa717x_ग_लिखो(sd, 0x10d, ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_AUDIO_MUTE:
-		state->audio_main_mute = ctrl->val;
-		break;
+	हाल V4L2_CID_AUDIO_MUTE:
+		state->audio_मुख्य_mute = ctrl->val;
+		अवरोध;
 
-	case V4L2_CID_AUDIO_VOLUME:
-		state->audio_main_volume = ctrl->val;
-		break;
+	हाल V4L2_CID_AUDIO_VOLUME:
+		state->audio_मुख्य_volume = ctrl->val;
+		अवरोध;
 
-	case V4L2_CID_AUDIO_BALANCE:
-		state->audio_main_balance = ctrl->val;
-		break;
+	हाल V4L2_CID_AUDIO_BALANCE:
+		state->audio_मुख्य_balance = ctrl->val;
+		अवरोध;
 
-	case V4L2_CID_AUDIO_TREBLE:
-		state->audio_main_treble = ctrl->val;
-		break;
+	हाल V4L2_CID_AUDIO_TREBLE:
+		state->audio_मुख्य_treble = ctrl->val;
+		अवरोध;
 
-	case V4L2_CID_AUDIO_BASS:
-		state->audio_main_bass = ctrl->val;
-		break;
+	हाल V4L2_CID_AUDIO_BASS:
+		state->audio_मुख्य_bass = ctrl->val;
+		अवरोध;
 
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 	set_audio_regs(sd, state);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa717x_s_video_routing(struct v4l2_subdev *sd,
+अटल पूर्णांक saa717x_s_video_routing(काष्ठा v4l2_subdev *sd,
 				   u32 input, u32 output, u32 config)
-{
-	struct saa717x_state *decoder = to_state(sd);
-	int is_tuner = input & 0x80;  /* tuner input flag */
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
+	पूर्णांक is_tuner = input & 0x80;  /* tuner input flag */
 
 	input &= 0x7f;
 
 	v4l2_dbg(1, debug, sd, "decoder set input (%d)\n", input);
-	/* inputs from 0-9 are available*/
+	/* inमाला_दो from 0-9 are available*/
 	/* saa717x have mode0-mode9 but mode5 is reserved. */
-	if (input > 9 || input == 5)
-		return -EINVAL;
+	अगर (input > 9 || input == 5)
+		वापस -EINVAL;
 
-	if (decoder->input != input) {
-		int input_line = input;
+	अगर (decoder->input != input) अणु
+		पूर्णांक input_line = input;
 
 		decoder->input = input_line;
 		v4l2_dbg(1, debug, sd,  "now setting %s input %d\n",
@@ -931,85 +932,85 @@ static int saa717x_s_video_routing(struct v4l2_subdev *sd,
 				input_line);
 
 		/* select mode */
-		saa717x_write(sd, 0x102,
-				(saa717x_read(sd, 0x102) & 0xf0) |
+		saa717x_ग_लिखो(sd, 0x102,
+				(saa717x_पढ़ो(sd, 0x102) & 0xf0) |
 				input_line);
 
-		/* bypass chrominance trap for modes 6..9 */
-		saa717x_write(sd, 0x109,
-				(saa717x_read(sd, 0x109) & 0x7f) |
+		/* bypass chrominance trap क्रम modes 6..9 */
+		saa717x_ग_लिखो(sd, 0x109,
+				(saa717x_पढ़ो(sd, 0x109) & 0x7f) |
 				(input_line < 6 ? 0x0 : 0x80));
 
 		/* change audio_mode */
-		if (is_tuner) {
+		अगर (is_tuner) अणु
 			/* tuner */
 			set_audio_mode(sd, decoder->tuner_audio_mode);
-		} else {
-			/* Force to STEREO mode if Composite or
+		पूर्ण अन्यथा अणु
+			/* Force to STEREO mode अगर Composite or
 			 * S-Video were chosen */
 			set_audio_mode(sd, TUNER_AUDIO_STEREO);
-		}
+		पूर्ण
 		/* change initialize procedure (Composite/S-Video) */
-		if (is_tuner)
-			saa717x_write_regs(sd, reg_init_tuner_input);
-		else if (input_line >= 6)
-			saa717x_write_regs(sd, reg_init_svideo_input);
-		else
-			saa717x_write_regs(sd, reg_init_composite_input);
-	}
+		अगर (is_tuner)
+			saa717x_ग_लिखो_regs(sd, reg_init_tuner_input);
+		अन्यथा अगर (input_line >= 6)
+			saa717x_ग_लिखो_regs(sd, reg_init_svideo_input);
+		अन्यथा
+			saa717x_ग_लिखो_regs(sd, reg_init_composite_input);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-static int saa717x_g_register(struct v4l2_subdev *sd, struct v4l2_dbg_register *reg)
-{
-	reg->val = saa717x_read(sd, reg->reg);
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+अटल पूर्णांक saa717x_g_रेजिस्टर(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
+	reg->val = saa717x_पढ़ो(sd, reg->reg);
 	reg->size = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa717x_s_register(struct v4l2_subdev *sd, const struct v4l2_dbg_register *reg)
-{
+अटल पूर्णांक saa717x_s_रेजिस्टर(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
 	u16 addr = reg->reg & 0xffff;
 	u8 val = reg->val & 0xff;
 
-	saa717x_write(sd, addr, val);
-	return 0;
-}
-#endif
+	saa717x_ग_लिखो(sd, addr, val);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int saa717x_set_fmt(struct v4l2_subdev *sd,
-		struct v4l2_subdev_pad_config *cfg,
-		struct v4l2_subdev_format *format)
-{
-	struct v4l2_mbus_framefmt *fmt = &format->format;
-	int prescale, h_scale, v_scale;
+अटल पूर्णांक saa717x_set_fmt(काष्ठा v4l2_subdev *sd,
+		काष्ठा v4l2_subdev_pad_config *cfg,
+		काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा v4l2_mbus_framefmt *fmt = &क्रमmat->क्रमmat;
+	पूर्णांक prescale, h_scale, v_scale;
 
 	v4l2_dbg(1, debug, sd, "decoder set size\n");
 
-	if (format->pad || fmt->code != MEDIA_BUS_FMT_FIXED)
-		return -EINVAL;
+	अगर (क्रमmat->pad || fmt->code != MEDIA_BUS_FMT_FIXED)
+		वापस -EINVAL;
 
 	/* FIXME need better bounds checking here */
-	if (fmt->width < 1 || fmt->width > 1440)
-		return -EINVAL;
-	if (fmt->height < 1 || fmt->height > 960)
-		return -EINVAL;
+	अगर (fmt->width < 1 || fmt->width > 1440)
+		वापस -EINVAL;
+	अगर (fmt->height < 1 || fmt->height > 960)
+		वापस -EINVAL;
 
 	fmt->field = V4L2_FIELD_INTERLACED;
 	fmt->colorspace = V4L2_COLORSPACE_SMPTE170M;
 
-	if (format->which == V4L2_SUBDEV_FORMAT_TRY)
-		return 0;
+	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_TRY)
+		वापस 0;
 
 	/* scaling setting */
-	/* NTSC and interlace only */
+	/* NTSC and पूर्णांकerlace only */
 	prescale = SAA717X_NTSC_WIDTH / fmt->width;
-	if (prescale == 0)
+	अगर (prescale == 0)
 		prescale = 1;
 	h_scale = 1024 * SAA717X_NTSC_WIDTH / prescale / fmt->width;
-	/* interlace */
+	/* पूर्णांकerlace */
 	v_scale = 512 * 2 * SAA717X_NTSC_HEIGHT / fmt->height;
 
 	/* Horizontal prescaling etc */
@@ -1018,11 +1019,11 @@ static int saa717x_set_fmt(struct v4l2_subdev *sd,
 
 	/* Horizontal scaling increment */
 	/* TASK A */
-	saa717x_write(sd, 0x6C, (u8)(h_scale & 0xFF));
-	saa717x_write(sd, 0x6D, (u8)((h_scale >> 8) & 0xFF));
+	saa717x_ग_लिखो(sd, 0x6C, (u8)(h_scale & 0xFF));
+	saa717x_ग_लिखो(sd, 0x6D, (u8)((h_scale >> 8) & 0xFF));
 	/* TASK B */
-	saa717x_write(sd, 0xAC, (u8)(h_scale & 0xFF));
-	saa717x_write(sd, 0xAD, (u8)((h_scale >> 8) & 0xFF));
+	saa717x_ग_लिखो(sd, 0xAC, (u8)(h_scale & 0xFF));
+	saa717x_ग_लिखो(sd, 0xAD, (u8)((h_scale >> 8) & 0xFF));
 
 	/* Vertical prescaling etc */
 	set_v_scale(sd, 0, v_scale);
@@ -1031,196 +1032,196 @@ static int saa717x_set_fmt(struct v4l2_subdev *sd,
 	/* set video output size */
 	/* video number of pixels at output */
 	/* TASK A */
-	saa717x_write(sd, 0x5C, (u8)(fmt->width & 0xFF));
-	saa717x_write(sd, 0x5D, (u8)((fmt->width >> 8) & 0xFF));
+	saa717x_ग_लिखो(sd, 0x5C, (u8)(fmt->width & 0xFF));
+	saa717x_ग_लिखो(sd, 0x5D, (u8)((fmt->width >> 8) & 0xFF));
 	/* TASK B */
-	saa717x_write(sd, 0x9C, (u8)(fmt->width & 0xFF));
-	saa717x_write(sd, 0x9D, (u8)((fmt->width >> 8) & 0xFF));
+	saa717x_ग_लिखो(sd, 0x9C, (u8)(fmt->width & 0xFF));
+	saa717x_ग_लिखो(sd, 0x9D, (u8)((fmt->width >> 8) & 0xFF));
 
 	/* video number of lines at output */
 	/* TASK A */
-	saa717x_write(sd, 0x5E, (u8)(fmt->height & 0xFF));
-	saa717x_write(sd, 0x5F, (u8)((fmt->height >> 8) & 0xFF));
+	saa717x_ग_लिखो(sd, 0x5E, (u8)(fmt->height & 0xFF));
+	saa717x_ग_लिखो(sd, 0x5F, (u8)((fmt->height >> 8) & 0xFF));
 	/* TASK B */
-	saa717x_write(sd, 0x9E, (u8)(fmt->height & 0xFF));
-	saa717x_write(sd, 0x9F, (u8)((fmt->height >> 8) & 0xFF));
-	return 0;
-}
+	saa717x_ग_लिखो(sd, 0x9E, (u8)(fmt->height & 0xFF));
+	saa717x_ग_लिखो(sd, 0x9F, (u8)((fmt->height >> 8) & 0xFF));
+	वापस 0;
+पूर्ण
 
-static int saa717x_s_radio(struct v4l2_subdev *sd)
-{
-	struct saa717x_state *decoder = to_state(sd);
+अटल पूर्णांक saa717x_s_radio(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
 
 	decoder->radio = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa717x_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
-{
-	struct saa717x_state *decoder = to_state(sd);
+अटल पूर्णांक saa717x_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
 
 	v4l2_dbg(1, debug, sd, "decoder set norm ");
 	v4l2_dbg(1, debug, sd, "(not yet implemented)\n");
 
 	decoder->radio = 0;
 	decoder->std = std;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa717x_s_audio_routing(struct v4l2_subdev *sd,
+अटल पूर्णांक saa717x_s_audio_routing(काष्ठा v4l2_subdev *sd,
 				   u32 input, u32 output, u32 config)
-{
-	struct saa717x_state *decoder = to_state(sd);
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
 
-	if (input < 3) { /* FIXME! --tadachi */
+	अगर (input < 3) अणु /* FIXME! --tadachi */
 		decoder->audio_input = input;
 		v4l2_dbg(1, debug, sd,
 				"set decoder audio input to %d\n",
 				decoder->audio_input);
 		set_audio_regs(sd, decoder);
-		return 0;
-	}
-	return -ERANGE;
-}
+		वापस 0;
+	पूर्ण
+	वापस -दुस्फल;
+पूर्ण
 
-static int saa717x_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct saa717x_state *decoder = to_state(sd);
+अटल पूर्णांक saa717x_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
 
 	v4l2_dbg(1, debug, sd, "decoder %s output\n",
 			enable ? "enable" : "disable");
 	decoder->enable = enable;
-	saa717x_write(sd, 0x193, enable ? 0xa6 : 0x26);
-	return 0;
-}
+	saa717x_ग_लिखो(sd, 0x193, enable ? 0xa6 : 0x26);
+	वापस 0;
+पूर्ण
 
 /* change audio mode */
-static int saa717x_s_tuner(struct v4l2_subdev *sd, const struct v4l2_tuner *vt)
-{
-	struct saa717x_state *decoder = to_state(sd);
-	int audio_mode;
-	char *mes[4] = {
+अटल पूर्णांक saa717x_s_tuner(काष्ठा v4l2_subdev *sd, स्थिर काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
+	पूर्णांक audio_mode;
+	अक्षर *mes[4] = अणु
 		"MONO", "STEREO", "LANG1", "LANG2/SAP"
-	};
+	पूर्ण;
 
 	audio_mode = TUNER_AUDIO_STEREO;
 
-	switch (vt->audmode) {
-		case V4L2_TUNER_MODE_MONO:
+	चयन (vt->audmode) अणु
+		हाल V4L2_TUNER_MODE_MONO:
 			audio_mode = TUNER_AUDIO_MONO;
-			break;
-		case V4L2_TUNER_MODE_STEREO:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_STEREO:
 			audio_mode = TUNER_AUDIO_STEREO;
-			break;
-		case V4L2_TUNER_MODE_LANG2:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_LANG2:
 			audio_mode = TUNER_AUDIO_LANG2;
-			break;
-		case V4L2_TUNER_MODE_LANG1:
+			अवरोध;
+		हाल V4L2_TUNER_MODE_LANG1:
 			audio_mode = TUNER_AUDIO_LANG1;
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
 	v4l2_dbg(1, debug, sd, "change audio mode to %s\n",
 			mes[audio_mode]);
 	decoder->tuner_audio_mode = audio_mode;
-	/* The registers are not changed here. */
+	/* The रेजिस्टरs are not changed here. */
 	/* See DECODER_ENABLE_OUTPUT section. */
 	set_audio_mode(sd, decoder->tuner_audio_mode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int saa717x_g_tuner(struct v4l2_subdev *sd, struct v4l2_tuner *vt)
-{
-	struct saa717x_state *decoder = to_state(sd);
-	int dual_f, stereo_f;
+अटल पूर्णांक saa717x_g_tuner(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा saa717x_state *decoder = to_state(sd);
+	पूर्णांक dual_f, stereo_f;
 
-	if (decoder->radio)
-		return 0;
+	अगर (decoder->radio)
+		वापस 0;
 	get_inf_dev_status(sd, &dual_f, &stereo_f);
 
 	v4l2_dbg(1, debug, sd, "DETECT==st:%d dual:%d\n",
 			stereo_f, dual_f);
 
 	/* mono */
-	if ((dual_f == 0) && (stereo_f == 0)) {
+	अगर ((dual_f == 0) && (stereo_f == 0)) अणु
 		vt->rxsubchans = V4L2_TUNER_SUB_MONO;
 		v4l2_dbg(1, debug, sd, "DETECT==MONO\n");
-	}
+	पूर्ण
 
 	/* stereo */
-	if (stereo_f == 1) {
-		if (vt->audmode == V4L2_TUNER_MODE_STEREO ||
-				vt->audmode == V4L2_TUNER_MODE_LANG1) {
+	अगर (stereo_f == 1) अणु
+		अगर (vt->audmode == V4L2_TUNER_MODE_STEREO ||
+				vt->audmode == V4L2_TUNER_MODE_LANG1) अणु
 			vt->rxsubchans = V4L2_TUNER_SUB_STEREO;
 			v4l2_dbg(1, debug, sd, "DETECT==ST(ST)\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			vt->rxsubchans = V4L2_TUNER_SUB_MONO;
 			v4l2_dbg(1, debug, sd, "DETECT==ST(MONO)\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* dual */
-	if (dual_f == 1) {
-		if (vt->audmode == V4L2_TUNER_MODE_LANG2) {
+	अगर (dual_f == 1) अणु
+		अगर (vt->audmode == V4L2_TUNER_MODE_LANG2) अणु
 			vt->rxsubchans = V4L2_TUNER_SUB_LANG2 | V4L2_TUNER_SUB_MONO;
 			v4l2_dbg(1, debug, sd, "DETECT==DUAL1\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			vt->rxsubchans = V4L2_TUNER_SUB_LANG1 | V4L2_TUNER_SUB_MONO;
 			v4l2_dbg(1, debug, sd, "DETECT==DUAL2\n");
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int saa717x_log_status(struct v4l2_subdev *sd)
-{
-	struct saa717x_state *state = to_state(sd);
+अटल पूर्णांक saa717x_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा saa717x_state *state = to_state(sd);
 
 	v4l2_ctrl_handler_log_status(&state->hdl, sd->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static const struct v4l2_ctrl_ops saa717x_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops saa717x_ctrl_ops = अणु
 	.s_ctrl = saa717x_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_core_ops saa717x_core_ops = {
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-	.g_register = saa717x_g_register,
-	.s_register = saa717x_s_register,
-#endif
+अटल स्थिर काष्ठा v4l2_subdev_core_ops saa717x_core_ops = अणु
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+	.g_रेजिस्टर = saa717x_g_रेजिस्टर,
+	.s_रेजिस्टर = saa717x_s_रेजिस्टर,
+#पूर्ण_अगर
 	.log_status = saa717x_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_tuner_ops saa717x_tuner_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_tuner_ops saa717x_tuner_ops = अणु
 	.g_tuner = saa717x_g_tuner,
 	.s_tuner = saa717x_s_tuner,
 	.s_radio = saa717x_s_radio,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops saa717x_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops saa717x_video_ops = अणु
 	.s_std = saa717x_s_std,
 	.s_routing = saa717x_s_video_routing,
 	.s_stream = saa717x_s_stream,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_audio_ops saa717x_audio_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_audio_ops saa717x_audio_ops = अणु
 	.s_routing = saa717x_s_audio_routing,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_pad_ops saa717x_pad_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops saa717x_pad_ops = अणु
 	.set_fmt = saa717x_set_fmt,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops saa717x_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops saa717x_ops = अणु
 	.core = &saa717x_core_ops,
 	.tuner = &saa717x_tuner_ops,
 	.audio = &saa717x_audio_ops,
 	.video = &saa717x_video_ops,
 	.pad = &saa717x_pad_ops,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
@@ -1228,42 +1229,42 @@ static const struct v4l2_subdev_ops saa717x_ops = {
 /* i2c implementation */
 
 /* ----------------------------------------------------------------------- */
-static int saa717x_probe(struct i2c_client *client,
-			 const struct i2c_device_id *did)
-{
-	struct saa717x_state *decoder;
-	struct v4l2_ctrl_handler *hdl;
-	struct v4l2_subdev *sd;
+अटल पूर्णांक saa717x_probe(काष्ठा i2c_client *client,
+			 स्थिर काष्ठा i2c_device_id *did)
+अणु
+	काष्ठा saa717x_state *decoder;
+	काष्ठा v4l2_ctrl_handler *hdl;
+	काष्ठा v4l2_subdev *sd;
 	u8 id = 0;
-	char *p = "";
+	अक्षर *p = "";
 
-	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -EIO;
+	/* Check अगर the adapter supports the needed features */
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -EIO;
 
-	decoder = devm_kzalloc(&client->dev, sizeof(*decoder), GFP_KERNEL);
-	if (decoder == NULL)
-		return -ENOMEM;
+	decoder = devm_kzalloc(&client->dev, माप(*decoder), GFP_KERNEL);
+	अगर (decoder == शून्य)
+		वापस -ENOMEM;
 
 	sd = &decoder->sd;
 	v4l2_i2c_subdev_init(sd, client, &saa717x_ops);
 
-	if (saa717x_write(sd, 0x5a4, 0xfe) &&
-			saa717x_write(sd, 0x5a5, 0x0f) &&
-			saa717x_write(sd, 0x5a6, 0x00) &&
-			saa717x_write(sd, 0x5a7, 0x01))
-		id = saa717x_read(sd, 0x5a0);
-	if (id != 0xc2 && id != 0x32 && id != 0xf2 && id != 0x6c) {
+	अगर (saa717x_ग_लिखो(sd, 0x5a4, 0xfe) &&
+			saa717x_ग_लिखो(sd, 0x5a5, 0x0f) &&
+			saa717x_ग_लिखो(sd, 0x5a6, 0x00) &&
+			saa717x_ग_लिखो(sd, 0x5a7, 0x01))
+		id = saa717x_पढ़ो(sd, 0x5a0);
+	अगर (id != 0xc2 && id != 0x32 && id != 0xf2 && id != 0x6c) अणु
 		v4l2_dbg(1, debug, sd, "saa717x not found (id=%02x)\n", id);
-		return -ENODEV;
-	}
-	if (id == 0xc2)
+		वापस -ENODEV;
+	पूर्ण
+	अगर (id == 0xc2)
 		p = "saa7173";
-	else if (id == 0x32)
+	अन्यथा अगर (id == 0x32)
 		p = "saa7174A";
-	else if (id == 0x6c)
+	अन्यथा अगर (id == 0x6c)
 		p = "saa7174HL";
-	else
+	अन्यथा
 		p = "saa7171";
 	v4l2_info(sd, "%s found @ 0x%x (%s)\n", p,
 			client->addr << 1, client->adapter->name);
@@ -1290,12 +1291,12 @@ static int saa717x_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(hdl, &saa717x_ctrl_ops,
 			V4L2_CID_AUDIO_MUTE, 0, 1, 1, 0);
 	sd->ctrl_handler = hdl;
-	if (hdl->error) {
-		int err = hdl->error;
+	अगर (hdl->error) अणु
+		पूर्णांक err = hdl->error;
 
-		v4l2_ctrl_handler_free(hdl);
-		return err;
-	}
+		v4l2_ctrl_handler_मुक्त(hdl);
+		वापस err;
+	पूर्ण
 
 	decoder->std = V4L2_STD_NTSC;
 	decoder->input = -1;
@@ -1309,45 +1310,45 @@ static int saa717x_probe(struct i2c_client *client,
 
 	decoder->tuner_audio_mode = TUNER_AUDIO_STEREO;
 	/* set volume, bass and treble */
-	decoder->audio_main_vol_l = 6;
-	decoder->audio_main_vol_r = 6;
+	decoder->audio_मुख्य_vol_l = 6;
+	decoder->audio_मुख्य_vol_r = 6;
 
 	v4l2_dbg(1, debug, sd, "writing init values\n");
 
 	/* FIXME!! */
-	saa717x_write_regs(sd, reg_init_initialize);
+	saa717x_ग_लिखो_regs(sd, reg_init_initialize);
 
 	v4l2_ctrl_handler_setup(hdl);
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	schedule_timeout(2*HZ);
-	return 0;
-}
+	schedule_समयout(2*HZ);
+	वापस 0;
+पूर्ण
 
-static int saa717x_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+अटल पूर्णांक saa717x_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unregister_subdev(sd);
-	v4l2_ctrl_handler_free(sd->ctrl_handler);
-	return 0;
-}
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(sd->ctrl_handler);
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static const struct i2c_device_id saa717x_id[] = {
-	{ "saa717x", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id saa717x_id[] = अणु
+	अणु "saa717x", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, saa717x_id);
 
-static struct i2c_driver saa717x_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver saa717x_driver = अणु
+	.driver = अणु
 		.name	= "saa717x",
-	},
+	पूर्ण,
 	.probe		= saa717x_probe,
-	.remove		= saa717x_remove,
+	.हटाओ		= saa717x_हटाओ,
 	.id_table	= saa717x_id,
-};
+पूर्ण;
 
 module_i2c_driver(saa717x_driver);

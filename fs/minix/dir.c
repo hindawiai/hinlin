@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/minix/dir.c
  *
@@ -6,213 +7,213 @@
  *
  *  minix directory handling functions
  *
- *  Updated to filesystem version 3 by Daniel Aragones
+ *  Updated to fileप्रणाली version 3 by Daniel Aragones
  */
 
-#include "minix.h"
-#include <linux/buffer_head.h>
-#include <linux/highmem.h>
-#include <linux/swap.h>
+#समावेश "minix.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/swap.h>
 
-typedef struct minix_dir_entry minix_dirent;
-typedef struct minix3_dir_entry minix3_dirent;
+प्रकार काष्ठा minix_dir_entry minix_dirent;
+प्रकार काष्ठा minix3_dir_entry minix3_dirent;
 
-static int minix_readdir(struct file *, struct dir_context *);
+अटल पूर्णांक minix_सूची_पढ़ो(काष्ठा file *, काष्ठा dir_context *);
 
-const struct file_operations minix_dir_operations = {
+स्थिर काष्ठा file_operations minix_dir_operations = अणु
 	.llseek		= generic_file_llseek,
-	.read		= generic_read_dir,
-	.iterate_shared	= minix_readdir,
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= minix_सूची_पढ़ो,
 	.fsync		= generic_file_fsync,
-};
+पूर्ण;
 
-static inline void dir_put_page(struct page *page)
-{
+अटल अंतरभूत व्योम dir_put_page(काष्ठा page *page)
+अणु
 	kunmap(page);
 	put_page(page);
-}
+पूर्ण
 
 /*
- * Return the offset into page `page_nr' of the last valid
+ * Return the offset पूर्णांकo page `page_nr' of the last valid
  * byte in that page, plus one.
  */
-static unsigned
-minix_last_byte(struct inode *inode, unsigned long page_nr)
-{
-	unsigned last_byte = PAGE_SIZE;
+अटल अचिन्हित
+minix_last_byte(काष्ठा inode *inode, अचिन्हित दीर्घ page_nr)
+अणु
+	अचिन्हित last_byte = PAGE_SIZE;
 
-	if (page_nr == (inode->i_size >> PAGE_SHIFT))
+	अगर (page_nr == (inode->i_size >> PAGE_SHIFT))
 		last_byte = inode->i_size & (PAGE_SIZE - 1);
-	return last_byte;
-}
+	वापस last_byte;
+पूर्ण
 
-static int dir_commit_chunk(struct page *page, loff_t pos, unsigned len)
-{
-	struct address_space *mapping = page->mapping;
-	struct inode *dir = mapping->host;
-	int err = 0;
-	block_write_end(NULL, mapping, pos, len, len, page, NULL);
+अटल पूर्णांक dir_commit_chunk(काष्ठा page *page, loff_t pos, अचिन्हित len)
+अणु
+	काष्ठा address_space *mapping = page->mapping;
+	काष्ठा inode *dir = mapping->host;
+	पूर्णांक err = 0;
+	block_ग_लिखो_end(शून्य, mapping, pos, len, len, page, शून्य);
 
-	if (pos+len > dir->i_size) {
-		i_size_write(dir, pos+len);
+	अगर (pos+len > dir->i_size) अणु
+		i_size_ग_लिखो(dir, pos+len);
 		mark_inode_dirty(dir);
-	}
-	if (IS_DIRSYNC(dir))
-		err = write_one_page(page);
-	else
+	पूर्ण
+	अगर (IS_सूचीSYNC(dir))
+		err = ग_लिखो_one_page(page);
+	अन्यथा
 		unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct page * dir_get_page(struct inode *dir, unsigned long n)
-{
-	struct address_space *mapping = dir->i_mapping;
-	struct page *page = read_mapping_page(mapping, n, NULL);
-	if (!IS_ERR(page))
+अटल काष्ठा page * dir_get_page(काष्ठा inode *dir, अचिन्हित दीर्घ n)
+अणु
+	काष्ठा address_space *mapping = dir->i_mapping;
+	काष्ठा page *page = पढ़ो_mapping_page(mapping, n, शून्य);
+	अगर (!IS_ERR(page))
 		kmap(page);
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static inline void *minix_next_entry(void *de, struct minix_sb_info *sbi)
-{
-	return (void*)((char*)de + sbi->s_dirsize);
-}
+अटल अंतरभूत व्योम *minix_next_entry(व्योम *de, काष्ठा minix_sb_info *sbi)
+अणु
+	वापस (व्योम*)((अक्षर*)de + sbi->s_dirsize);
+पूर्ण
 
-static int minix_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *inode = file_inode(file);
-	struct super_block *sb = inode->i_sb;
-	struct minix_sb_info *sbi = minix_sb(sb);
-	unsigned chunk_size = sbi->s_dirsize;
-	unsigned long npages = dir_pages(inode);
-	unsigned long pos = ctx->pos;
-	unsigned offset;
-	unsigned long n;
+अटल पूर्णांक minix_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा super_block *sb = inode->i_sb;
+	काष्ठा minix_sb_info *sbi = minix_sb(sb);
+	अचिन्हित chunk_size = sbi->s_dirsize;
+	अचिन्हित दीर्घ npages = dir_pages(inode);
+	अचिन्हित दीर्घ pos = ctx->pos;
+	अचिन्हित offset;
+	अचिन्हित दीर्घ n;
 
 	ctx->pos = pos = ALIGN(pos, chunk_size);
-	if (pos >= inode->i_size)
-		return 0;
+	अगर (pos >= inode->i_size)
+		वापस 0;
 
 	offset = pos & ~PAGE_MASK;
 	n = pos >> PAGE_SHIFT;
 
-	for ( ; n < npages; n++, offset = 0) {
-		char *p, *kaddr, *limit;
-		struct page *page = dir_get_page(inode, n);
+	क्रम ( ; n < npages; n++, offset = 0) अणु
+		अक्षर *p, *kaddr, *limit;
+		काष्ठा page *page = dir_get_page(inode, n);
 
-		if (IS_ERR(page))
-			continue;
-		kaddr = (char *)page_address(page);
+		अगर (IS_ERR(page))
+			जारी;
+		kaddr = (अक्षर *)page_address(page);
 		p = kaddr+offset;
 		limit = kaddr + minix_last_byte(inode, n) - chunk_size;
-		for ( ; p <= limit; p = minix_next_entry(p, sbi)) {
-			const char *name;
+		क्रम ( ; p <= limit; p = minix_next_entry(p, sbi)) अणु
+			स्थिर अक्षर *name;
 			__u32 inumber;
-			if (sbi->s_version == MINIX_V3) {
+			अगर (sbi->s_version == MINIX_V3) अणु
 				minix3_dirent *de3 = (minix3_dirent *)p;
 				name = de3->name;
 				inumber = de3->inode;
-	 		} else {
+	 		पूर्ण अन्यथा अणु
 				minix_dirent *de = (minix_dirent *)p;
 				name = de->name;
 				inumber = de->inode;
-			}
-			if (inumber) {
-				unsigned l = strnlen(name, sbi->s_namelen);
-				if (!dir_emit(ctx, name, l,
-					      inumber, DT_UNKNOWN)) {
+			पूर्ण
+			अगर (inumber) अणु
+				अचिन्हित l = strnlen(name, sbi->s_namelen);
+				अगर (!dir_emit(ctx, name, l,
+					      inumber, DT_UNKNOWN)) अणु
 					dir_put_page(page);
-					return 0;
-				}
-			}
+					वापस 0;
+				पूर्ण
+			पूर्ण
 			ctx->pos += chunk_size;
-		}
+		पूर्ण
 		dir_put_page(page);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline int namecompare(int len, int maxlen,
-	const char * name, const char * buffer)
-{
-	if (len < maxlen && buffer[len])
-		return 0;
-	return !memcmp(name, buffer, len);
-}
+अटल अंतरभूत पूर्णांक namecompare(पूर्णांक len, पूर्णांक maxlen,
+	स्थिर अक्षर * name, स्थिर अक्षर * buffer)
+अणु
+	अगर (len < maxlen && buffer[len])
+		वापस 0;
+	वापस !स_भेद(name, buffer, len);
+पूर्ण
 
 /*
  *	minix_find_entry()
  *
- * finds an entry in the specified directory with the wanted name. It
- * returns the cache buffer in which the entry was found, and the entry
- * itself (as a parameter - res_dir). It does NOT read the inode of the
- * entry - you'll have to do that yourself if you want to.
+ * finds an entry in the specअगरied directory with the wanted name. It
+ * वापसs the cache buffer in which the entry was found, and the entry
+ * itself (as a parameter - res_dir). It करोes NOT पढ़ो the inode of the
+ * entry - you'll have to करो that yourself अगर you want to.
  */
-minix_dirent *minix_find_entry(struct dentry *dentry, struct page **res_page)
-{
-	const char * name = dentry->d_name.name;
-	int namelen = dentry->d_name.len;
-	struct inode * dir = d_inode(dentry->d_parent);
-	struct super_block * sb = dir->i_sb;
-	struct minix_sb_info * sbi = minix_sb(sb);
-	unsigned long n;
-	unsigned long npages = dir_pages(dir);
-	struct page *page = NULL;
-	char *p;
+minix_dirent *minix_find_entry(काष्ठा dentry *dentry, काष्ठा page **res_page)
+अणु
+	स्थिर अक्षर * name = dentry->d_name.name;
+	पूर्णांक namelen = dentry->d_name.len;
+	काष्ठा inode * dir = d_inode(dentry->d_parent);
+	काष्ठा super_block * sb = dir->i_sb;
+	काष्ठा minix_sb_info * sbi = minix_sb(sb);
+	अचिन्हित दीर्घ n;
+	अचिन्हित दीर्घ npages = dir_pages(dir);
+	काष्ठा page *page = शून्य;
+	अक्षर *p;
 
-	char *namx;
+	अक्षर *namx;
 	__u32 inumber;
-	*res_page = NULL;
+	*res_page = शून्य;
 
-	for (n = 0; n < npages; n++) {
-		char *kaddr, *limit;
+	क्रम (n = 0; n < npages; n++) अणु
+		अक्षर *kaddr, *limit;
 
 		page = dir_get_page(dir, n);
-		if (IS_ERR(page))
-			continue;
+		अगर (IS_ERR(page))
+			जारी;
 
-		kaddr = (char*)page_address(page);
+		kaddr = (अक्षर*)page_address(page);
 		limit = kaddr + minix_last_byte(dir, n) - sbi->s_dirsize;
-		for (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) {
-			if (sbi->s_version == MINIX_V3) {
+		क्रम (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) अणु
+			अगर (sbi->s_version == MINIX_V3) अणु
 				minix3_dirent *de3 = (minix3_dirent *)p;
 				namx = de3->name;
 				inumber = de3->inode;
- 			} else {
+ 			पूर्ण अन्यथा अणु
 				minix_dirent *de = (minix_dirent *)p;
 				namx = de->name;
 				inumber = de->inode;
-			}
-			if (!inumber)
-				continue;
-			if (namecompare(namelen, sbi->s_namelen, name, namx))
-				goto found;
-		}
+			पूर्ण
+			अगर (!inumber)
+				जारी;
+			अगर (namecompare(namelen, sbi->s_namelen, name, namx))
+				जाओ found;
+		पूर्ण
 		dir_put_page(page);
-	}
-	return NULL;
+	पूर्ण
+	वापस शून्य;
 
 found:
 	*res_page = page;
-	return (minix_dirent *)p;
-}
+	वापस (minix_dirent *)p;
+पूर्ण
 
-int minix_add_link(struct dentry *dentry, struct inode *inode)
-{
-	struct inode *dir = d_inode(dentry->d_parent);
-	const char * name = dentry->d_name.name;
-	int namelen = dentry->d_name.len;
-	struct super_block * sb = dir->i_sb;
-	struct minix_sb_info * sbi = minix_sb(sb);
-	struct page *page = NULL;
-	unsigned long npages = dir_pages(dir);
-	unsigned long n;
-	char *kaddr, *p;
+पूर्णांक minix_add_link(काष्ठा dentry *dentry, काष्ठा inode *inode)
+अणु
+	काष्ठा inode *dir = d_inode(dentry->d_parent);
+	स्थिर अक्षर * name = dentry->d_name.name;
+	पूर्णांक namelen = dentry->d_name.len;
+	काष्ठा super_block * sb = dir->i_sb;
+	काष्ठा minix_sb_info * sbi = minix_sb(sb);
+	काष्ठा page *page = शून्य;
+	अचिन्हित दीर्घ npages = dir_pages(dir);
+	अचिन्हित दीर्घ n;
+	अक्षर *kaddr, *p;
 	minix_dirent *de;
 	minix3_dirent *de3;
 	loff_t pos;
-	int err;
-	char *namx = NULL;
+	पूर्णांक err;
+	अक्षर *namx = शून्य;
 	__u32 inumber;
 
 	/*
@@ -220,250 +221,250 @@ int minix_add_link(struct dentry *dentry, struct inode *inode)
 	 * This code plays outside i_size, so it locks the page
 	 * to protect that region.
 	 */
-	for (n = 0; n <= npages; n++) {
-		char *limit, *dir_end;
+	क्रम (n = 0; n <= npages; n++) अणु
+		अक्षर *limit, *dir_end;
 
 		page = dir_get_page(dir, n);
 		err = PTR_ERR(page);
-		if (IS_ERR(page))
-			goto out;
+		अगर (IS_ERR(page))
+			जाओ out;
 		lock_page(page);
-		kaddr = (char*)page_address(page);
+		kaddr = (अक्षर*)page_address(page);
 		dir_end = kaddr + minix_last_byte(dir, n);
 		limit = kaddr + PAGE_SIZE - sbi->s_dirsize;
-		for (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) {
+		क्रम (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) अणु
 			de = (minix_dirent *)p;
 			de3 = (minix3_dirent *)p;
-			if (sbi->s_version == MINIX_V3) {
+			अगर (sbi->s_version == MINIX_V3) अणु
 				namx = de3->name;
 				inumber = de3->inode;
-		 	} else {
+		 	पूर्ण अन्यथा अणु
   				namx = de->name;
 				inumber = de->inode;
-			}
-			if (p == dir_end) {
+			पूर्ण
+			अगर (p == dir_end) अणु
 				/* We hit i_size */
-				if (sbi->s_version == MINIX_V3)
+				अगर (sbi->s_version == MINIX_V3)
 					de3->inode = 0;
-		 		else
+		 		अन्यथा
 					de->inode = 0;
-				goto got_it;
-			}
-			if (!inumber)
-				goto got_it;
+				जाओ got_it;
+			पूर्ण
+			अगर (!inumber)
+				जाओ got_it;
 			err = -EEXIST;
-			if (namecompare(namelen, sbi->s_namelen, name, namx))
-				goto out_unlock;
-		}
+			अगर (namecompare(namelen, sbi->s_namelen, name, namx))
+				जाओ out_unlock;
+		पूर्ण
 		unlock_page(page);
 		dir_put_page(page);
-	}
+	पूर्ण
 	BUG();
-	return -EINVAL;
+	वापस -EINVAL;
 
 got_it:
-	pos = page_offset(page) + p - (char *)page_address(page);
+	pos = page_offset(page) + p - (अक्षर *)page_address(page);
 	err = minix_prepare_chunk(page, pos, sbi->s_dirsize);
-	if (err)
-		goto out_unlock;
-	memcpy (namx, name, namelen);
-	if (sbi->s_version == MINIX_V3) {
-		memset (namx + namelen, 0, sbi->s_dirsize - namelen - 4);
+	अगर (err)
+		जाओ out_unlock;
+	स_नकल (namx, name, namelen);
+	अगर (sbi->s_version == MINIX_V3) अणु
+		स_रखो (namx + namelen, 0, sbi->s_dirsize - namelen - 4);
 		de3->inode = inode->i_ino;
-	} else {
-		memset (namx + namelen, 0, sbi->s_dirsize - namelen - 2);
+	पूर्ण अन्यथा अणु
+		स_रखो (namx + namelen, 0, sbi->s_dirsize - namelen - 2);
 		de->inode = inode->i_ino;
-	}
+	पूर्ण
 	err = dir_commit_chunk(page, pos, sbi->s_dirsize);
-	dir->i_mtime = dir->i_ctime = current_time(dir);
+	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
 	mark_inode_dirty(dir);
 out_put:
 	dir_put_page(page);
 out:
-	return err;
+	वापस err;
 out_unlock:
 	unlock_page(page);
-	goto out_put;
-}
+	जाओ out_put;
+पूर्ण
 
-int minix_delete_entry(struct minix_dir_entry *de, struct page *page)
-{
-	struct inode *inode = page->mapping->host;
-	char *kaddr = page_address(page);
-	loff_t pos = page_offset(page) + (char*)de - kaddr;
-	struct minix_sb_info *sbi = minix_sb(inode->i_sb);
-	unsigned len = sbi->s_dirsize;
-	int err;
+पूर्णांक minix_delete_entry(काष्ठा minix_dir_entry *de, काष्ठा page *page)
+अणु
+	काष्ठा inode *inode = page->mapping->host;
+	अक्षर *kaddr = page_address(page);
+	loff_t pos = page_offset(page) + (अक्षर*)de - kaddr;
+	काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
+	अचिन्हित len = sbi->s_dirsize;
+	पूर्णांक err;
 
 	lock_page(page);
 	err = minix_prepare_chunk(page, pos, len);
-	if (err == 0) {
-		if (sbi->s_version == MINIX_V3)
+	अगर (err == 0) अणु
+		अगर (sbi->s_version == MINIX_V3)
 			((minix3_dirent *) de)->inode = 0;
-		else
+		अन्यथा
 			de->inode = 0;
 		err = dir_commit_chunk(page, pos, len);
-	} else {
+	पूर्ण अन्यथा अणु
 		unlock_page(page);
-	}
+	पूर्ण
 	dir_put_page(page);
-	inode->i_ctime = inode->i_mtime = current_time(inode);
+	inode->i_स_समय = inode->i_mसमय = current_समय(inode);
 	mark_inode_dirty(inode);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int minix_make_empty(struct inode *inode, struct inode *dir)
-{
-	struct page *page = grab_cache_page(inode->i_mapping, 0);
-	struct minix_sb_info *sbi = minix_sb(inode->i_sb);
-	char *kaddr;
-	int err;
+पूर्णांक minix_make_empty(काष्ठा inode *inode, काष्ठा inode *dir)
+अणु
+	काष्ठा page *page = grab_cache_page(inode->i_mapping, 0);
+	काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
+	अक्षर *kaddr;
+	पूर्णांक err;
 
-	if (!page)
-		return -ENOMEM;
+	अगर (!page)
+		वापस -ENOMEM;
 	err = minix_prepare_chunk(page, 0, 2 * sbi->s_dirsize);
-	if (err) {
+	अगर (err) अणु
 		unlock_page(page);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	kaddr = kmap_atomic(page);
-	memset(kaddr, 0, PAGE_SIZE);
+	स_रखो(kaddr, 0, PAGE_SIZE);
 
-	if (sbi->s_version == MINIX_V3) {
+	अगर (sbi->s_version == MINIX_V3) अणु
 		minix3_dirent *de3 = (minix3_dirent *)kaddr;
 
 		de3->inode = inode->i_ino;
-		strcpy(de3->name, ".");
+		म_नकल(de3->name, ".");
 		de3 = minix_next_entry(de3, sbi);
 		de3->inode = dir->i_ino;
-		strcpy(de3->name, "..");
-	} else {
+		म_नकल(de3->name, "..");
+	पूर्ण अन्यथा अणु
 		minix_dirent *de = (minix_dirent *)kaddr;
 
 		de->inode = inode->i_ino;
-		strcpy(de->name, ".");
+		म_नकल(de->name, ".");
 		de = minix_next_entry(de, sbi);
 		de->inode = dir->i_ino;
-		strcpy(de->name, "..");
-	}
+		म_नकल(de->name, "..");
+	पूर्ण
 	kunmap_atomic(kaddr);
 
 	err = dir_commit_chunk(page, 0, 2 * sbi->s_dirsize);
 fail:
 	put_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * routine to check that the specified directory is empty (for rmdir)
+ * routine to check that the specअगरied directory is empty (क्रम सूची_हटाओ)
  */
-int minix_empty_dir(struct inode * inode)
-{
-	struct page *page = NULL;
-	unsigned long i, npages = dir_pages(inode);
-	struct minix_sb_info *sbi = minix_sb(inode->i_sb);
-	char *name;
+पूर्णांक minix_empty_dir(काष्ठा inode * inode)
+अणु
+	काष्ठा page *page = शून्य;
+	अचिन्हित दीर्घ i, npages = dir_pages(inode);
+	काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
+	अक्षर *name;
 	__u32 inumber;
 
-	for (i = 0; i < npages; i++) {
-		char *p, *kaddr, *limit;
+	क्रम (i = 0; i < npages; i++) अणु
+		अक्षर *p, *kaddr, *limit;
 
 		page = dir_get_page(inode, i);
-		if (IS_ERR(page))
-			continue;
+		अगर (IS_ERR(page))
+			जारी;
 
-		kaddr = (char *)page_address(page);
+		kaddr = (अक्षर *)page_address(page);
 		limit = kaddr + minix_last_byte(inode, i) - sbi->s_dirsize;
-		for (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) {
-			if (sbi->s_version == MINIX_V3) {
+		क्रम (p = kaddr; p <= limit; p = minix_next_entry(p, sbi)) अणु
+			अगर (sbi->s_version == MINIX_V3) अणु
 				minix3_dirent *de3 = (minix3_dirent *)p;
 				name = de3->name;
 				inumber = de3->inode;
-			} else {
+			पूर्ण अन्यथा अणु
 				minix_dirent *de = (minix_dirent *)p;
 				name = de->name;
 				inumber = de->inode;
-			}
+			पूर्ण
 
-			if (inumber != 0) {
-				/* check for . and .. */
-				if (name[0] != '.')
-					goto not_empty;
-				if (!name[1]) {
-					if (inumber != inode->i_ino)
-						goto not_empty;
-				} else if (name[1] != '.')
-					goto not_empty;
-				else if (name[2])
-					goto not_empty;
-			}
-		}
+			अगर (inumber != 0) अणु
+				/* check क्रम . and .. */
+				अगर (name[0] != '.')
+					जाओ not_empty;
+				अगर (!name[1]) अणु
+					अगर (inumber != inode->i_ino)
+						जाओ not_empty;
+				पूर्ण अन्यथा अगर (name[1] != '.')
+					जाओ not_empty;
+				अन्यथा अगर (name[2])
+					जाओ not_empty;
+			पूर्ण
+		पूर्ण
 		dir_put_page(page);
-	}
-	return 1;
+	पूर्ण
+	वापस 1;
 
 not_empty:
 	dir_put_page(page);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Releases the page */
-void minix_set_link(struct minix_dir_entry *de, struct page *page,
-	struct inode *inode)
-{
-	struct inode *dir = page->mapping->host;
-	struct minix_sb_info *sbi = minix_sb(dir->i_sb);
+व्योम minix_set_link(काष्ठा minix_dir_entry *de, काष्ठा page *page,
+	काष्ठा inode *inode)
+अणु
+	काष्ठा inode *dir = page->mapping->host;
+	काष्ठा minix_sb_info *sbi = minix_sb(dir->i_sb);
 	loff_t pos = page_offset(page) +
-			(char *)de-(char*)page_address(page);
-	int err;
+			(अक्षर *)de-(अक्षर*)page_address(page);
+	पूर्णांक err;
 
 	lock_page(page);
 
 	err = minix_prepare_chunk(page, pos, sbi->s_dirsize);
-	if (err == 0) {
-		if (sbi->s_version == MINIX_V3)
+	अगर (err == 0) अणु
+		अगर (sbi->s_version == MINIX_V3)
 			((minix3_dirent *) de)->inode = inode->i_ino;
-		else
+		अन्यथा
 			de->inode = inode->i_ino;
 		err = dir_commit_chunk(page, pos, sbi->s_dirsize);
-	} else {
+	पूर्ण अन्यथा अणु
 		unlock_page(page);
-	}
+	पूर्ण
 	dir_put_page(page);
-	dir->i_mtime = dir->i_ctime = current_time(dir);
+	dir->i_mसमय = dir->i_स_समय = current_समय(dir);
 	mark_inode_dirty(dir);
-}
+पूर्ण
 
-struct minix_dir_entry * minix_dotdot (struct inode *dir, struct page **p)
-{
-	struct page *page = dir_get_page(dir, 0);
-	struct minix_sb_info *sbi = minix_sb(dir->i_sb);
-	struct minix_dir_entry *de = NULL;
+काष्ठा minix_dir_entry * minix_करोtकरोt (काष्ठा inode *dir, काष्ठा page **p)
+अणु
+	काष्ठा page *page = dir_get_page(dir, 0);
+	काष्ठा minix_sb_info *sbi = minix_sb(dir->i_sb);
+	काष्ठा minix_dir_entry *de = शून्य;
 
-	if (!IS_ERR(page)) {
+	अगर (!IS_ERR(page)) अणु
 		de = minix_next_entry(page_address(page), sbi);
 		*p = page;
-	}
-	return de;
-}
+	पूर्ण
+	वापस de;
+पूर्ण
 
-ino_t minix_inode_by_name(struct dentry *dentry)
-{
-	struct page *page;
-	struct minix_dir_entry *de = minix_find_entry(dentry, &page);
+ino_t minix_inode_by_name(काष्ठा dentry *dentry)
+अणु
+	काष्ठा page *page;
+	काष्ठा minix_dir_entry *de = minix_find_entry(dentry, &page);
 	ino_t res = 0;
 
-	if (de) {
-		struct address_space *mapping = page->mapping;
-		struct inode *inode = mapping->host;
-		struct minix_sb_info *sbi = minix_sb(inode->i_sb);
+	अगर (de) अणु
+		काष्ठा address_space *mapping = page->mapping;
+		काष्ठा inode *inode = mapping->host;
+		काष्ठा minix_sb_info *sbi = minix_sb(inode->i_sb);
 
-		if (sbi->s_version == MINIX_V3)
+		अगर (sbi->s_version == MINIX_V3)
 			res = ((minix3_dirent *) de)->inode;
-		else
+		अन्यथा
 			res = de->inode;
 		dir_put_page(page);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: dswload - Dispatcher first pass namespace load callbacks
@@ -7,18 +8,18 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#ifdef ACPI_ASL_COMPILER
-#include "acdisasm.h"
-#endif
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acparser.h"
+#समावेश "amlcode.h"
+#समावेश "acdispat.h"
+#समावेश "acinterp.h"
+#समावेश "acnamesp.h"
+#अगर_घोषित ACPI_ASL_COMPILER
+#समावेश "acdisasm.h"
+#पूर्ण_अगर
 
-#define _COMPONENT          ACPI_DISPATCHER
+#घोषणा _COMPONENT          ACPI_DISPATCHER
 ACPI_MODULE_NAME("dswload")
 
 /*******************************************************************************
@@ -34,21 +35,21 @@ ACPI_MODULE_NAME("dswload")
  *
  ******************************************************************************/
 acpi_status
-acpi_ds_init_callbacks(struct acpi_walk_state *walk_state, u32 pass_number)
-{
+acpi_ds_init_callbacks(काष्ठा acpi_walk_state *walk_state, u32 pass_number)
+अणु
 
-	switch (pass_number) {
-	case 0:
+	चयन (pass_number) अणु
+	हाल 0:
 
 		/* Parse only - caller will setup callbacks */
 
 		walk_state->parse_flags = ACPI_PARSE_LOAD_PASS1 |
 		    ACPI_PARSE_DELETE_TREE | ACPI_PARSE_DISASSEMBLE;
-		walk_state->descending_callback = NULL;
-		walk_state->ascending_callback = NULL;
-		break;
+		walk_state->descending_callback = शून्य;
+		walk_state->ascending_callback = शून्य;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 
 		/* Load pass 1 */
 
@@ -56,9 +57,9 @@ acpi_ds_init_callbacks(struct acpi_walk_state *walk_state, u32 pass_number)
 		    ACPI_PARSE_DELETE_TREE;
 		walk_state->descending_callback = acpi_ds_load1_begin_op;
 		walk_state->ascending_callback = acpi_ds_load1_end_op;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 
 		/* Load pass 2 */
 
@@ -66,9 +67,9 @@ acpi_ds_init_callbacks(struct acpi_walk_state *walk_state, u32 pass_number)
 		    ACPI_PARSE_DELETE_TREE;
 		walk_state->descending_callback = acpi_ds_load2_begin_op;
 		walk_state->ascending_callback = acpi_ds_load2_end_op;
-		break;
+		अवरोध;
 
-	case 3:
+	हाल 3:
 
 		/* Execution pass */
 
@@ -76,22 +77,22 @@ acpi_ds_init_callbacks(struct acpi_walk_state *walk_state, u32 pass_number)
 		    ACPI_PARSE_DELETE_TREE;
 		walk_state->descending_callback = acpi_ds_exec_begin_op;
 		walk_state->ascending_callback = acpi_ds_exec_end_op;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
-		return (AE_BAD_PARAMETER);
-	}
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ds_load1_begin_op
  *
  * PARAMETERS:  walk_state      - Current state of the parse tree walk
- *              out_op          - Where to return op if a new one is created
+ *              out_op          - Where to वापस op अगर a new one is created
  *
  * RETURN:      Status
  *
@@ -100,14 +101,14 @@ acpi_ds_init_callbacks(struct acpi_walk_state *walk_state, u32 pass_number)
  ******************************************************************************/
 
 acpi_status
-acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
-		       union acpi_parse_object **out_op)
-{
-	union acpi_parse_object *op;
-	struct acpi_namespace_node *node;
+acpi_ds_load1_begin_op(काष्ठा acpi_walk_state *walk_state,
+		       जोड़ acpi_parse_object **out_op)
+अणु
+	जोड़ acpi_parse_object *op;
+	काष्ठा acpi_namespace_node *node;
 	acpi_status status;
 	acpi_object_type object_type;
-	char *path;
+	अक्षर *path;
 	u32 flags;
 
 	ACPI_FUNCTION_TRACE_PTR(ds_load1_begin_op, walk_state->op);
@@ -116,25 +117,25 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 	ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH, "Op=%p State=%p\n", op,
 			  walk_state));
 
-	/* We are only interested in opcodes that have an associated name */
+	/* We are only पूर्णांकerested in opcodes that have an associated name */
 
-	if (op) {
-		if (!(walk_state->op_info->flags & AML_NAMED)) {
+	अगर (op) अणु
+		अगर (!(walk_state->op_info->flags & AML_NAMED)) अणु
 			*out_op = op;
-			return_ACPI_STATUS(AE_OK);
-		}
+			वापस_ACPI_STATUS(AE_OK);
+		पूर्ण
 
-		/* Check if this object has already been installed in the namespace */
+		/* Check अगर this object has alपढ़ोy been installed in the namespace */
 
-		if (op->common.node) {
+		अगर (op->common.node) अणु
 			*out_op = op;
-			return_ACPI_STATUS(AE_OK);
-		}
-	}
+			वापस_ACPI_STATUS(AE_OK);
+		पूर्ण
+	पूर्ण
 
 	path = acpi_ps_get_next_namestring(&walk_state->parser_state);
 
-	/* Map the raw opcode into an internal object type */
+	/* Map the raw opcode पूर्णांकo an पूर्णांकernal object type */
 
 	object_type = walk_state->op_info->object_type;
 
@@ -142,63 +143,63 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 			  "State=%p Op=%p [%s]\n", walk_state, op,
 			  acpi_ut_get_type_name(object_type)));
 
-	switch (walk_state->opcode) {
-	case AML_SCOPE_OP:
+	चयन (walk_state->opcode) अणु
+	हाल AML_SCOPE_OP:
 		/*
-		 * The target name of the Scope() operator must exist at this point so
-		 * that we can actually open the scope to enter new names underneath it.
-		 * Allow search-to-root for single namesegs.
+		 * The target name of the Scope() चालक must exist at this poपूर्णांक so
+		 * that we can actually खोलो the scope to enter new names underneath it.
+		 * Allow search-to-root क्रम single namesegs.
 		 */
 		status =
 		    acpi_ns_lookup(walk_state->scope_info, path, object_type,
 				   ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
 				   walk_state, &(node));
-#ifdef ACPI_ASL_COMPILER
-		if (status == AE_NOT_FOUND) {
+#अगर_घोषित ACPI_ASL_COMPILER
+		अगर (status == AE_NOT_FOUND) अणु
 			/*
 			 * Table disassembly:
-			 * Target of Scope() not found. Generate an External for it, and
-			 * insert the name into the namespace.
+			 * Target of Scope() not found. Generate an External क्रम it, and
+			 * insert the name पूर्णांकo the namespace.
 			 */
-			acpi_dm_add_op_to_external_list(op, path,
+			acpi_dm_add_op_to_बाह्यal_list(op, path,
 							ACPI_TYPE_DEVICE, 0, 0);
 			status =
 			    acpi_ns_lookup(walk_state->scope_info, path,
 					   object_type, ACPI_IMODE_LOAD_PASS1,
 					   ACPI_NS_SEARCH_PARENT, walk_state,
 					   &node);
-		}
-#endif
-		if (ACPI_FAILURE(status)) {
+		पूर्ण
+#पूर्ण_अगर
+		अगर (ACPI_FAILURE(status)) अणु
 			ACPI_ERROR_NAMESPACE(walk_state->scope_info, path,
 					     status);
-			return_ACPI_STATUS(status);
-		}
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
 		/*
 		 * Check to make sure that the target is
-		 * one of the opcodes that actually opens a scope
+		 * one of the opcodes that actually खोलोs a scope
 		 */
-		switch (node->type) {
-		case ACPI_TYPE_ANY:
-		case ACPI_TYPE_LOCAL_SCOPE:	/* Scope  */
-		case ACPI_TYPE_DEVICE:
-		case ACPI_TYPE_POWER:
-		case ACPI_TYPE_PROCESSOR:
-		case ACPI_TYPE_THERMAL:
+		चयन (node->type) अणु
+		हाल ACPI_TYPE_ANY:
+		हाल ACPI_TYPE_LOCAL_SCOPE:	/* Scope  */
+		हाल ACPI_TYPE_DEVICE:
+		हाल ACPI_TYPE_POWER:
+		हाल ACPI_TYPE_PROCESSOR:
+		हाल ACPI_TYPE_THERMAL:
 
 			/* These are acceptable types */
-			break;
+			अवरोध;
 
-		case ACPI_TYPE_INTEGER:
-		case ACPI_TYPE_STRING:
-		case ACPI_TYPE_BUFFER:
+		हाल ACPI_TYPE_INTEGER:
+		हाल ACPI_TYPE_STRING:
+		हाल ACPI_TYPE_BUFFER:
 			/*
 			 * These types we will allow, but we will change the type.
-			 * This enables some existing code of the form:
+			 * This enables some existing code of the क्रमm:
 			 *
 			 *  Name (DEB, 0)
-			 *  Scope (DEB) { ... }
+			 *  Scope (DEB) अणु ... पूर्ण
 			 *
 			 * Note: silently change the type here. On the second pass,
 			 * we will report a warning
@@ -211,22 +212,22 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 
 			node->type = ACPI_TYPE_ANY;
 			walk_state->scope_info->common.value = ACPI_TYPE_ANY;
-			break;
+			अवरोध;
 
-		case ACPI_TYPE_METHOD:
+		हाल ACPI_TYPE_METHOD:
 			/*
 			 * Allow scope change to root during execution of module-level
-			 * code. Root is typed METHOD during this time.
+			 * code. Root is typed METHOD during this समय.
 			 */
-			if ((node == acpi_gbl_root_node) &&
+			अगर ((node == acpi_gbl_root_node) &&
 			    (walk_state->
-			     parse_flags & ACPI_PARSE_MODULE_LEVEL)) {
-				break;
-			}
+			     parse_flags & ACPI_PARSE_MODULE_LEVEL)) अणु
+				अवरोध;
+			पूर्ण
 
 			ACPI_FALLTHROUGH;
 
-		default:
+		शेष:
 
 			/* All other types are an error */
 
@@ -236,71 +237,71 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 				    acpi_ut_get_type_name(node->type),
 				    acpi_ut_get_node_name(node)));
 
-			return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-		}
-		break;
+			वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/*
-		 * For all other named opcodes, we will enter the name into
+		 * For all other named opcodes, we will enter the name पूर्णांकo
 		 * the namespace.
 		 *
 		 * Setup the search flags.
-		 * Since we are entering a name into the namespace, we do not want to
+		 * Since we are entering a name पूर्णांकo the namespace, we करो not want to
 		 * enable the search-to-root upsearch.
 		 *
 		 * There are only two conditions where it is acceptable that the name
-		 * already exists:
-		 *    1) the Scope() operator can reopen a scoping object that was
+		 * alपढ़ोy exists:
+		 *    1) the Scope() चालक can reखोलो a scoping object that was
 		 *       previously defined (Scope, Method, Device, etc.)
 		 *    2) Whenever we are parsing a deferred opcode (op_region, Buffer,
-		 *       buffer_field, or Package), the name of the object is already
+		 *       buffer_field, or Package), the name of the object is alपढ़ोy
 		 *       in the namespace.
 		 */
-		if (walk_state->deferred_node) {
+		अगर (walk_state->deferred_node) अणु
 
-			/* This name is already in the namespace, get the node */
+			/* This name is alपढ़ोy in the namespace, get the node */
 
 			node = walk_state->deferred_node;
 			status = AE_OK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * If we are executing a method, do not create any namespace objects
+		 * If we are executing a method, करो not create any namespace objects
 		 * during the load phase, only during execution.
 		 */
-		if (walk_state->method_node) {
-			node = NULL;
+		अगर (walk_state->method_node) अणु
+			node = शून्य;
 			status = AE_OK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		flags = ACPI_NS_NO_UPSEARCH;
-		if ((walk_state->opcode != AML_SCOPE_OP) &&
-		    (!(walk_state->parse_flags & ACPI_PARSE_DEFERRED_OP))) {
-			if (walk_state->namespace_override) {
+		अगर ((walk_state->opcode != AML_SCOPE_OP) &&
+		    (!(walk_state->parse_flags & ACPI_PARSE_DEFERRED_OP))) अणु
+			अगर (walk_state->namespace_override) अणु
 				flags |= ACPI_NS_OVERRIDE_IF_FOUND;
 				ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 						  "[%s] Override allowed\n",
 						  acpi_ut_get_type_name
 						  (object_type)));
-			} else {
+			पूर्ण अन्यथा अणु
 				flags |= ACPI_NS_ERROR_IF_FOUND;
 				ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 						  "[%s] Cannot already exist\n",
 						  acpi_ut_get_type_name
 						  (object_type)));
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 					  "[%s] Both Find or Create allowed\n",
 					  acpi_ut_get_type_name(object_type)));
-		}
+		पूर्ण
 
 		/*
-		 * Enter the named type into the internal namespace. We enter the name
-		 * as we go downward in the parse tree. Any necessary subobjects that
+		 * Enter the named type पूर्णांकo the पूर्णांकernal namespace. We enter the name
+		 * as we go करोwnward in the parse tree. Any necessary subobjects that
 		 * involve arguments to the opcode must be created as we go back up the
 		 * parse tree later.
 		 */
@@ -308,12 +309,12 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 		    acpi_ns_lookup(walk_state->scope_info, path, object_type,
 				   ACPI_IMODE_LOAD_PASS1, flags, walk_state,
 				   &node);
-		if (ACPI_FAILURE(status)) {
-			if (status == AE_ALREADY_EXISTS) {
+		अगर (ACPI_FAILURE(status)) अणु
+			अगर (status == AE_ALREADY_EXISTS) अणु
 
-				/* The name already exists in this scope */
+				/* The name alपढ़ोy exists in this scope */
 
-				if (node->flags & ANOBJ_IS_EXTERNAL) {
+				अगर (node->flags & ANOBJ_IS_EXTERNAL) अणु
 					/*
 					 * Allow one create on an object or segment that was
 					 * previously declared External
@@ -321,64 +322,64 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
 					node->flags &= ~ANOBJ_IS_EXTERNAL;
 					node->type = (u8) object_type;
 
-					/* Just retyped a node, probably will need to open a scope */
+					/* Just retyped a node, probably will need to खोलो a scope */
 
-					if (acpi_ns_opens_scope(object_type)) {
+					अगर (acpi_ns_खोलोs_scope(object_type)) अणु
 						status =
 						    acpi_ds_scope_stack_push
 						    (node, object_type,
 						     walk_state);
-						if (ACPI_FAILURE(status)) {
-							return_ACPI_STATUS
+						अगर (ACPI_FAILURE(status)) अणु
+							वापस_ACPI_STATUS
 							    (status);
-						}
-					}
+						पूर्ण
+					पूर्ण
 
 					status = AE_OK;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (ACPI_FAILURE(status)) {
+			अगर (ACPI_FAILURE(status)) अणु
 				ACPI_ERROR_NAMESPACE(walk_state->scope_info,
 						     path, status);
-				return_ACPI_STATUS(status);
-			}
-		}
-		break;
-	}
+				वापस_ACPI_STATUS(status);
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	/* Common exit */
+	/* Common निकास */
 
-	if (!op) {
+	अगर (!op) अणु
 
 		/* Create a new op */
 
 		op = acpi_ps_alloc_op(walk_state->opcode, walk_state->aml);
-		if (!op) {
-			return_ACPI_STATUS(AE_NO_MEMORY);
-		}
-	}
+		अगर (!op) अणु
+			वापस_ACPI_STATUS(AE_NO_MEMORY);
+		पूर्ण
+	पूर्ण
 
 	/* Initialize the op */
 
-#ifdef ACPI_CONSTANT_EVAL_ONLY
+#अगर_घोषित ACPI_CONSTANT_EVAL_ONLY
 	op->named.path = path;
-#endif
+#पूर्ण_अगर
 
-	if (node) {
+	अगर (node) अणु
 		/*
 		 * Put the Node in the "op" object that the parser uses, so we
-		 * can get it again quickly when this scope is closed
+		 * can get it again quickly when this scope is बंदd
 		 */
 		op->common.node = node;
-		op->named.name = node->name.integer;
-	}
+		op->named.name = node->name.पूर्णांकeger;
+	पूर्ण
 
 	acpi_ps_append_arg(acpi_ps_get_parent_scope(&walk_state->parser_state),
 			   op);
 	*out_op = op;
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -389,18 +390,18 @@ acpi_ds_load1_begin_op(struct acpi_walk_state *walk_state,
  * RETURN:      Status
  *
  * DESCRIPTION: Ascending callback used during the loading of the namespace,
- *              both control methods and everything else.
+ *              both control methods and everything अन्यथा.
  *
  ******************************************************************************/
 
-acpi_status acpi_ds_load1_end_op(struct acpi_walk_state *walk_state)
-{
-	union acpi_parse_object *op;
+acpi_status acpi_ds_load1_end_op(काष्ठा acpi_walk_state *walk_state)
+अणु
+	जोड़ acpi_parse_object *op;
 	acpi_object_type object_type;
 	acpi_status status = AE_OK;
-#ifdef ACPI_ASL_COMPILER
+#अगर_घोषित ACPI_ASL_COMPILER
 	u8 param_count;
-#endif
+#पूर्ण_अगर
 
 	ACPI_FUNCTION_TRACE(ds_load1_end_op);
 
@@ -409,13 +410,13 @@ acpi_status acpi_ds_load1_end_op(struct acpi_walk_state *walk_state)
 			  walk_state));
 
 	/*
-	 * Disassembler: handle create field operators here.
+	 * Disassembler: handle create field चालकs here.
 	 *
 	 * create_buffer_field is a deferred op that is typically processed in load
 	 * pass 2. However, disassembly of control method contents walk the parse
-	 * tree with ACPI_PARSE_LOAD_PASS1 and AML_CREATE operators are processed
+	 * tree with ACPI_PARSE_LOAD_PASS1 and AML_CREATE चालकs are processed
 	 * in a later walk. This is a problem when there is a control method that
-	 * has the same name as the AML_CREATE object. In this case, any use of the
+	 * has the same name as the AML_CREATE object. In this हाल, any use of the
 	 * name segment will be detected as a method call rather than a reference
 	 * to a buffer field.
 	 *
@@ -423,123 +424,123 @@ acpi_status acpi_ds_load1_end_op(struct acpi_walk_state *walk_state)
 	 * the named object in the ACPI namespace so that references to this name
 	 * would be a name string rather than a method call.
 	 */
-	if ((walk_state->parse_flags & ACPI_PARSE_DISASSEMBLE) &&
-	    (walk_state->op_info->flags & AML_CREATE)) {
+	अगर ((walk_state->parse_flags & ACPI_PARSE_DISASSEMBLE) &&
+	    (walk_state->op_info->flags & AML_CREATE)) अणु
 		status = acpi_ds_create_buffer_field(op, walk_state);
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	/* We are only interested in opcodes that have an associated name */
+	/* We are only पूर्णांकerested in opcodes that have an associated name */
 
-	if (!(walk_state->op_info->flags & (AML_NAMED | AML_FIELD))) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (!(walk_state->op_info->flags & (AML_NAMED | AML_FIELD))) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
-	/* Get the object type to determine if we should pop the scope */
+	/* Get the object type to determine अगर we should pop the scope */
 
 	object_type = walk_state->op_info->object_type;
 
-	if (walk_state->op_info->flags & AML_FIELD) {
+	अगर (walk_state->op_info->flags & AML_FIELD) अणु
 		/*
-		 * If we are executing a method, do not create any namespace objects
+		 * If we are executing a method, करो not create any namespace objects
 		 * during the load phase, only during execution.
 		 */
-		if (!walk_state->method_node) {
-			if (walk_state->opcode == AML_FIELD_OP ||
+		अगर (!walk_state->method_node) अणु
+			अगर (walk_state->opcode == AML_FIELD_OP ||
 			    walk_state->opcode == AML_BANK_FIELD_OP ||
-			    walk_state->opcode == AML_INDEX_FIELD_OP) {
+			    walk_state->opcode == AML_INDEX_FIELD_OP) अणु
 				status =
 				    acpi_ds_init_field_objects(op, walk_state);
-			}
-		}
-		return_ACPI_STATUS(status);
-	}
+			पूर्ण
+		पूर्ण
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
-	 * If we are executing a method, do not create any namespace objects
+	 * If we are executing a method, करो not create any namespace objects
 	 * during the load phase, only during execution.
 	 */
-	if (!walk_state->method_node) {
-		if (op->common.aml_opcode == AML_REGION_OP) {
+	अगर (!walk_state->method_node) अणु
+		अगर (op->common.aml_opcode == AML_REGION_OP) अणु
 			status =
 			    acpi_ex_create_region(op->named.data,
 						  op->named.length,
 						  (acpi_adr_space_type)
 						  ((op->common.value.arg)->
-						   common.value.integer),
+						   common.value.पूर्णांकeger),
 						  walk_state);
-			if (ACPI_FAILURE(status)) {
-				return_ACPI_STATUS(status);
-			}
-		} else if (op->common.aml_opcode == AML_DATA_REGION_OP) {
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस_ACPI_STATUS(status);
+			पूर्ण
+		पूर्ण अन्यथा अगर (op->common.aml_opcode == AML_DATA_REGION_OP) अणु
 			status =
 			    acpi_ex_create_region(op->named.data,
 						  op->named.length,
 						  ACPI_ADR_SPACE_DATA_TABLE,
 						  walk_state);
-			if (ACPI_FAILURE(status)) {
-				return_ACPI_STATUS(status);
-			}
-		}
-	}
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस_ACPI_STATUS(status);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (op->common.aml_opcode == AML_NAME_OP) {
+	अगर (op->common.aml_opcode == AML_NAME_OP) अणु
 
 		/* For Name opcode, get the object type from the argument */
 
-		if (op->common.value.arg) {
+		अगर (op->common.value.arg) अणु
 			object_type = (acpi_ps_get_opcode_info((op->common.
 								value.arg)->
 							       common.
 							       aml_opcode))->
 			    object_type;
 
-			/* Set node type if we have a namespace node */
+			/* Set node type अगर we have a namespace node */
 
-			if (op->common.node) {
+			अगर (op->common.node) अणु
 				op->common.node->type = (u8) object_type;
-			}
-		}
-	}
-#ifdef ACPI_ASL_COMPILER
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#अगर_घोषित ACPI_ASL_COMPILER
 	/*
-	 * For external opcode, get the object type from the argument and
+	 * For बाह्यal opcode, get the object type from the argument and
 	 * get the parameter count from the argument's next.
 	 */
-	if (acpi_gbl_disasm_flag &&
-	    op->common.node && op->common.aml_opcode == AML_EXTERNAL_OP) {
+	अगर (acpi_gbl_disयंत्र_flag &&
+	    op->common.node && op->common.aml_opcode == AML_EXTERNAL_OP) अणु
 		/*
-		 * Note, if this external is not a method
+		 * Note, अगर this बाह्यal is not a method
 		 * Op->Common.Value.Arg->Common.Next->Common.Value.Integer == 0
-		 * Therefore, param_count will be 0.
+		 * Thereक्रमe, param_count will be 0.
 		 */
 		param_count =
-		    (u8)op->common.value.arg->common.next->common.value.integer;
-		object_type = (u8)op->common.value.arg->common.value.integer;
+		    (u8)op->common.value.arg->common.next->common.value.पूर्णांकeger;
+		object_type = (u8)op->common.value.arg->common.value.पूर्णांकeger;
 		op->common.node->flags |= ANOBJ_IS_EXTERNAL;
 		op->common.node->type = (u8)object_type;
 
-		acpi_dm_create_subobject_for_external((u8)object_type,
+		acpi_dm_create_subobject_क्रम_बाह्यal((u8)object_type,
 						      &op->common.node,
 						      param_count);
 
 		/*
-		 * Add the external to the external list because we may be
-		 * emitting code based off of the items within the external list.
+		 * Add the बाह्यal to the बाह्यal list because we may be
+		 * emitting code based off of the items within the बाह्यal list.
 		 */
-		acpi_dm_add_op_to_external_list(op, op->named.path,
+		acpi_dm_add_op_to_बाह्यal_list(op, op->named.path,
 						(u8)object_type, param_count,
 						ACPI_EXT_ORIGIN_FROM_OPCODE |
 						ACPI_EXT_RESOLVED_REFERENCE);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * If we are executing a method, do not create any namespace objects
+	 * If we are executing a method, करो not create any namespace objects
 	 * during the load phase, only during execution.
 	 */
-	if (!walk_state->method_node) {
-		if (op->common.aml_opcode == AML_METHOD_OP) {
+	अगर (!walk_state->method_node) अणु
+		अगर (op->common.aml_opcode == AML_METHOD_OP) अणु
 			/*
 			 * method_op pkg_length name_string method_flags term_list
 			 *
@@ -552,45 +553,45 @@ acpi_status acpi_ds_load1_end_op(struct acpi_walk_state *walk_state)
 					  "LOADING-Method: State=%p Op=%p NamedObj=%p\n",
 					  walk_state, op, op->named.node));
 
-			if (!acpi_ns_get_attached_object(op->named.node)) {
-				walk_state->operands[0] =
-				    ACPI_CAST_PTR(void, op->named.node);
-				walk_state->num_operands = 1;
+			अगर (!acpi_ns_get_attached_object(op->named.node)) अणु
+				walk_state->opeअक्रमs[0] =
+				    ACPI_CAST_PTR(व्योम, op->named.node);
+				walk_state->num_opeअक्रमs = 1;
 
 				status =
-				    acpi_ds_create_operands(walk_state,
+				    acpi_ds_create_opeअक्रमs(walk_state,
 							    op->common.value.
 							    arg);
-				if (ACPI_SUCCESS(status)) {
+				अगर (ACPI_SUCCESS(status)) अणु
 					status =
 					    acpi_ex_create_method(op->named.
 								  data,
 								  op->named.
 								  length,
 								  walk_state);
-				}
+				पूर्ण
 
-				walk_state->operands[0] = NULL;
-				walk_state->num_operands = 0;
+				walk_state->opeअक्रमs[0] = शून्य;
+				walk_state->num_opeअक्रमs = 0;
 
-				if (ACPI_FAILURE(status)) {
-					return_ACPI_STATUS(status);
-				}
-			}
-		}
-	}
+				अगर (ACPI_FAILURE(status)) अणु
+					वापस_ACPI_STATUS(status);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Pop the scope stack (only if loading a table) */
+	/* Pop the scope stack (only अगर loading a table) */
 
-	if (!walk_state->method_node &&
+	अगर (!walk_state->method_node &&
 	    op->common.aml_opcode != AML_EXTERNAL_OP &&
-	    acpi_ns_opens_scope(object_type)) {
+	    acpi_ns_खोलोs_scope(object_type)) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_DISPATCH,
 				  "(%s): Popping scope for Op %p\n",
 				  acpi_ut_get_type_name(object_type), op));
 
 		status = acpi_ds_scope_stack_pop(walk_state);
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण

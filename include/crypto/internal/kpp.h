@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Key-agreement Protocol Primitives (KPP)
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
  */
-#ifndef _CRYPTO_KPP_INT_H
-#define _CRYPTO_KPP_INT_H
-#include <crypto/kpp.h>
-#include <crypto/algapi.h>
+#अगर_अघोषित _CRYPTO_KPP_INT_H
+#घोषणा _CRYPTO_KPP_INT_H
+#समावेश <crypto/kpp.h>
+#समावेश <crypto/algapi.h>
 
 /*
- * Transform internal helpers.
+ * Transक्रमm पूर्णांकernal helpers.
  */
-static inline void *kpp_request_ctx(struct kpp_request *req)
-{
-	return req->__ctx;
-}
+अटल अंतरभूत व्योम *kpp_request_ctx(काष्ठा kpp_request *req)
+अणु
+	वापस req->__ctx;
+पूर्ण
 
-static inline void *kpp_tfm_ctx(struct crypto_kpp *tfm)
-{
-	return tfm->base.__crt_ctx;
-}
+अटल अंतरभूत व्योम *kpp_tfm_ctx(काष्ठा crypto_kpp *tfm)
+अणु
+	वापस tfm->base.__crt_ctx;
+पूर्ण
 
-static inline void kpp_request_complete(struct kpp_request *req, int err)
-{
+अटल अंतरभूत व्योम kpp_request_complete(काष्ठा kpp_request *req, पूर्णांक err)
+अणु
 	req->base.complete(&req->base, err);
-}
+पूर्ण
 
-static inline const char *kpp_alg_name(struct crypto_kpp *tfm)
-{
-	return crypto_kpp_tfm(tfm)->__crt_alg->cra_name;
-}
+अटल अंतरभूत स्थिर अक्षर *kpp_alg_name(काष्ठा crypto_kpp *tfm)
+अणु
+	वापस crypto_kpp_tfm(tfm)->__crt_alg->cra_name;
+पूर्ण
 
 /**
- * crypto_register_kpp() -- Register key-agreement protocol primitives algorithm
+ * crypto_रेजिस्टर_kpp() -- Register key-agreement protocol primitives algorithm
  *
- * Function registers an implementation of a key-agreement protocol primitive
+ * Function रेजिस्टरs an implementation of a key-agreement protocol primitive
  * algorithm
  *
  * @alg:	algorithm definition
  *
- * Return: zero on success; error code in case of error
+ * Return: zero on success; error code in हाल of error
  */
-int crypto_register_kpp(struct kpp_alg *alg);
+पूर्णांक crypto_रेजिस्टर_kpp(काष्ठा kpp_alg *alg);
 
 /**
- * crypto_unregister_kpp() -- Unregister key-agreement protocol primitive
+ * crypto_unरेजिस्टर_kpp() -- Unरेजिस्टर key-agreement protocol primitive
  * algorithm
  *
- * Function unregisters an implementation of a key-agreement protocol primitive
+ * Function unरेजिस्टरs an implementation of a key-agreement protocol primitive
  * algorithm
  *
  * @alg:	algorithm definition
  */
-void crypto_unregister_kpp(struct kpp_alg *alg);
+व्योम crypto_unरेजिस्टर_kpp(काष्ठा kpp_alg *alg);
 
-#endif
+#पूर्ण_अगर

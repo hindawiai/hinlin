@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2018 Andes Technology Corporation
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/double.h>
-#include <math-emu/single.h>
-#include <math-emu/soft-fp.h>
-void fd2s(void *ft, void *fa)
-{
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/द्विगुन.h>
+#समावेश <math-emu/single.h>
+#समावेश <math-emu/soft-fp.h>
+व्योम fd2s(व्योम *ft, व्योम *fa)
+अणु
 	FP_DECL_D(A);
 	FP_DECL_S(R);
 	FP_DECL_EX;
@@ -19,4 +20,4 @@ void fd2s(void *ft, void *fa)
 	FP_PACK_SP(ft, R);
 
 	__FPU_FPCSR |= FP_CUR_EXCEPTIONS;
-}
+पूर्ण

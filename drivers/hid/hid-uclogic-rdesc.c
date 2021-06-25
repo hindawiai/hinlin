@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *  HID driver for UC-Logic devices not fully compliant with HID standard
+ *  HID driver क्रम UC-Logic devices not fully compliant with HID standard
  *  - original and fixed report descriptors
  *
  *  Copyright (c) 2010-2017 Nikolai Kondrashov
@@ -8,18 +9,18 @@
  */
 
 /*
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
  */
 
-#include "hid-uclogic-rdesc.h"
-#include <linux/slab.h>
-#include <asm/unaligned.h>
+#समावेश "hid-uclogic-rdesc.h"
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
 
 /* Fixed WP4030U report descriptor */
-__u8 uclogic_rdesc_wp4030u_fixed_arr[] = {
+__u8 uclogic_rdesc_wp4030u_fixed_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -58,13 +59,13 @@ __u8 uclogic_rdesc_wp4030u_fixed_arr[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_wp4030u_fixed_size =
-			sizeof(uclogic_rdesc_wp4030u_fixed_arr);
+स्थिर माप_प्रकार uclogic_rdesc_wp4030u_fixed_size =
+			माप(uclogic_rdesc_wp4030u_fixed_arr);
 
 /* Fixed WP5540U report descriptor */
-__u8 uclogic_rdesc_wp5540u_fixed_arr[] = {
+__u8 uclogic_rdesc_wp5540u_fixed_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -107,7 +108,7 @@ __u8 uclogic_rdesc_wp5540u_fixed_arr[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x08,         /*      Report ID (8),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x01,         /*          Report Size (1),            */
 	0x05, 0x09,         /*          Usage Page (Button),        */
@@ -135,13 +136,13 @@ __u8 uclogic_rdesc_wp5540u_fixed_arr[] = {
 	0x81, 0x01,         /*          Input (Constant),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_wp5540u_fixed_size =
-			sizeof(uclogic_rdesc_wp5540u_fixed_arr);
+स्थिर माप_प्रकार uclogic_rdesc_wp5540u_fixed_size =
+			माप(uclogic_rdesc_wp5540u_fixed_arr);
 
 /* Fixed WP8060U report descriptor */
-__u8 uclogic_rdesc_wp8060u_fixed_arr[] = {
+__u8 uclogic_rdesc_wp8060u_fixed_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -184,7 +185,7 @@ __u8 uclogic_rdesc_wp8060u_fixed_arr[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x08,         /*      Report ID (8),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x01,         /*          Report Size (1),            */
 	0x05, 0x09,         /*          Usage Page (Button),        */
@@ -212,13 +213,13 @@ __u8 uclogic_rdesc_wp8060u_fixed_arr[] = {
 	0x81, 0x01,         /*          Input (Constant),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_wp8060u_fixed_size =
-			sizeof(uclogic_rdesc_wp8060u_fixed_arr);
+स्थिर माप_प्रकार uclogic_rdesc_wp8060u_fixed_size =
+			माप(uclogic_rdesc_wp8060u_fixed_arr);
 
 /* Fixed WP1062 report descriptor */
-__u8 uclogic_rdesc_wp1062_fixed_arr[] = {
+__u8 uclogic_rdesc_wp1062_fixed_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -260,13 +261,13 @@ __u8 uclogic_rdesc_wp1062_fixed_arr[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_wp1062_fixed_size =
-			sizeof(uclogic_rdesc_wp1062_fixed_arr);
+स्थिर माप_प्रकार uclogic_rdesc_wp1062_fixed_size =
+			माप(uclogic_rdesc_wp1062_fixed_arr);
 
 /* Fixed PF1209 report descriptor */
-__u8 uclogic_rdesc_pf1209_fixed_arr[] = {
+__u8 uclogic_rdesc_pf1209_fixed_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -309,7 +310,7 @@ __u8 uclogic_rdesc_pf1209_fixed_arr[] = {
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x08,         /*      Report ID (8),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x75, 0x01,         /*          Report Size (1),            */
 	0x05, 0x09,         /*          Usage Page (Button),        */
@@ -337,13 +338,13 @@ __u8 uclogic_rdesc_pf1209_fixed_arr[] = {
 	0x81, 0x01,         /*          Input (Constant),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_pf1209_fixed_size =
-			sizeof(uclogic_rdesc_pf1209_fixed_arr);
+स्थिर माप_प्रकार uclogic_rdesc_pf1209_fixed_size =
+			माप(uclogic_rdesc_pf1209_fixed_arr);
 
-/* Fixed PID 0522 tablet report descriptor, interface 0 (stylus) */
-__u8 uclogic_rdesc_twhl850_fixed0_arr[] = {
+/* Fixed PID 0522 tablet report descriptor, पूर्णांकerface 0 (stylus) */
+__u8 uclogic_rdesc_twhl850_fixed0_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -383,18 +384,18 @@ __u8 uclogic_rdesc_twhl850_fixed0_arr[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_twhl850_fixed0_size =
-			sizeof(uclogic_rdesc_twhl850_fixed0_arr);
+स्थिर माप_प्रकार uclogic_rdesc_twhl850_fixed0_size =
+			माप(uclogic_rdesc_twhl850_fixed0_arr);
 
-/* Fixed PID 0522 tablet report descriptor, interface 1 (mouse) */
-__u8 uclogic_rdesc_twhl850_fixed1_arr[] = {
+/* Fixed PID 0522 tablet report descriptor, पूर्णांकerface 1 (mouse) */
+__u8 uclogic_rdesc_twhl850_fixed1_arr[] = अणु
 	0x05, 0x01,         /*  Usage Page (Desktop),               */
 	0x09, 0x02,         /*  Usage (Mouse),                      */
 	0xA1, 0x01,         /*  Collection (Application),           */
 	0x85, 0x01,         /*      Report ID (1),                  */
-	0x09, 0x01,         /*      Usage (Pointer),                */
+	0x09, 0x01,         /*      Usage (Poपूर्णांकer),                */
 	0xA0,               /*      Collection (Physical),          */
 	0x05, 0x09,         /*          Usage Page (Button),        */
 	0x75, 0x01,         /*          Report Size (1),            */
@@ -423,13 +424,13 @@ __u8 uclogic_rdesc_twhl850_fixed1_arr[] = {
 	0x81, 0x03,         /*          Input (Constant, Variable), */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_twhl850_fixed1_size =
-			sizeof(uclogic_rdesc_twhl850_fixed1_arr);
+स्थिर माप_प्रकार uclogic_rdesc_twhl850_fixed1_size =
+			माप(uclogic_rdesc_twhl850_fixed1_arr);
 
-/* Fixed PID 0522 tablet report descriptor, interface 2 (frame buttons) */
-__u8 uclogic_rdesc_twhl850_fixed2_arr[] = {
+/* Fixed PID 0522 tablet report descriptor, पूर्णांकerface 2 (frame buttons) */
+__u8 uclogic_rdesc_twhl850_fixed2_arr[] = अणु
 	0x05, 0x01,         /*  Usage Page (Desktop),               */
 	0x09, 0x06,         /*  Usage (Keyboard),                   */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -449,13 +450,13 @@ __u8 uclogic_rdesc_twhl850_fixed2_arr[] = {
 	0x95, 0x06,         /*      Report Count (6),               */
 	0x80,               /*      Input,                          */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_twhl850_fixed2_size =
-			sizeof(uclogic_rdesc_twhl850_fixed2_arr);
+स्थिर माप_प्रकार uclogic_rdesc_twhl850_fixed2_size =
+			माप(uclogic_rdesc_twhl850_fixed2_arr);
 
-/* Fixed TWHA60 report descriptor, interface 0 (stylus) */
-__u8 uclogic_rdesc_twha60_fixed0_arr[] = {
+/* Fixed TWHA60 report descriptor, पूर्णांकerface 0 (stylus) */
+__u8 uclogic_rdesc_twha60_fixed0_arr[] = अणु
 	0x05, 0x0D,         /*  Usage Page (Digitizer),             */
 	0x09, 0x02,         /*  Usage (Pen),                        */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -498,13 +499,13 @@ __u8 uclogic_rdesc_twha60_fixed0_arr[] = {
 	0x81, 0x02,         /*          Input (Variable),           */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_twha60_fixed0_size =
-			sizeof(uclogic_rdesc_twha60_fixed0_arr);
+स्थिर माप_प्रकार uclogic_rdesc_twha60_fixed0_size =
+			माप(uclogic_rdesc_twha60_fixed0_arr);
 
-/* Fixed TWHA60 report descriptor, interface 1 (frame buttons) */
-__u8 uclogic_rdesc_twha60_fixed1_arr[] = {
+/* Fixed TWHA60 report descriptor, पूर्णांकerface 1 (frame buttons) */
+__u8 uclogic_rdesc_twha60_fixed1_arr[] = अणु
 	0x05, 0x01, /*  Usage Page (Desktop),       */
 	0x09, 0x06, /*  Usage (Keyboard),           */
 	0xA1, 0x01, /*  Collection (Application),   */
@@ -526,13 +527,13 @@ __u8 uclogic_rdesc_twha60_fixed1_arr[] = {
 	0x95, 0x08, /*      Report Count (8),       */
 	0x81, 0x01, /*      Input (Constant),       */
 	0xC0        /*  End Collection              */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_twha60_fixed1_size =
-			sizeof(uclogic_rdesc_twha60_fixed1_arr);
+स्थिर माप_प्रकार uclogic_rdesc_twha60_fixed1_size =
+			माप(uclogic_rdesc_twha60_fixed1_arr);
 
-/* Fixed report descriptor template for (tweaked) v1 pen reports */
-const __u8 uclogic_rdesc_pen_v1_template_arr[] = {
+/* Fixed report descriptor ढाँचा क्रम (tweaked) v1 pen reports */
+स्थिर __u8 uclogic_rdesc_pen_v1_ढाँचा_arr[] = अणु
 	0x05, 0x0D,             /*  Usage Page (Digitizer),                 */
 	0x09, 0x02,             /*  Usage (Pen),                            */
 	0xA1, 0x01,             /*  Collection (Application),               */
@@ -580,13 +581,13 @@ const __u8 uclogic_rdesc_pen_v1_template_arr[] = {
 	0x81, 0x02,             /*          Input (Variable),               */
 	0xC0,                   /*      End Collection,                     */
 	0xC0                    /*  End Collection                          */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_pen_v1_template_size =
-			sizeof(uclogic_rdesc_pen_v1_template_arr);
+स्थिर माप_प्रकार uclogic_rdesc_pen_v1_ढाँचा_size =
+			माप(uclogic_rdesc_pen_v1_ढाँचा_arr);
 
-/* Fixed report descriptor template for (tweaked) v2 pen reports */
-const __u8 uclogic_rdesc_pen_v2_template_arr[] = {
+/* Fixed report descriptor ढाँचा क्रम (tweaked) v2 pen reports */
+स्थिर __u8 uclogic_rdesc_pen_v2_ढाँचा_arr[] = अणु
 	0x05, 0x0D,             /*  Usage Page (Digitizer),                 */
 	0x09, 0x02,             /*  Usage (Pen),                            */
 	0xA1, 0x01,             /*  Collection (Application),               */
@@ -636,10 +637,10 @@ const __u8 uclogic_rdesc_pen_v2_template_arr[] = {
 	0x81, 0x03,             /*          Input (Constant, Variable),     */
 	0xC0,                   /*      End Collection,                     */
 	0xC0                    /*  End Collection                          */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_pen_v2_template_size =
-			sizeof(uclogic_rdesc_pen_v2_template_arr);
+स्थिर माप_प्रकार uclogic_rdesc_pen_v2_ढाँचा_size =
+			माप(uclogic_rdesc_pen_v2_ढाँचा_arr);
 
 /*
  * Expand to the contents of a generic buttonpad report descriptor.
@@ -647,7 +648,7 @@ const size_t uclogic_rdesc_pen_v2_template_size =
  * @_padding:	Padding from the end of button bits at bit 44, until
  *		the end of the report, in bits.
  */
-#define UCLOGIC_RDESC_BUTTONPAD_BYTES(_padding) \
+#घोषणा UCLOGIC_RDESC_BUTTONPAD_BYTES(_padding) \
 	0x05, 0x01,     /*  Usage Page (Desktop),               */ \
 	0x09, 0x07,     /*  Usage (Keypad),                     */ \
 	0xA1, 0x01,     /*  Collection (Application),           */ \
@@ -687,22 +688,22 @@ const size_t uclogic_rdesc_pen_v2_template_size =
 	0xC0,           /*      End Collection,                 */ \
 	0xC0            /*  End Collection                      */
 
-/* Fixed report descriptor for (tweaked) v1 buttonpad reports */
-const __u8 uclogic_rdesc_buttonpad_v1_arr[] = {
+/* Fixed report descriptor क्रम (tweaked) v1 buttonpad reports */
+स्थिर __u8 uclogic_rdesc_buttonpad_v1_arr[] = अणु
 	UCLOGIC_RDESC_BUTTONPAD_BYTES(20)
-};
-const size_t uclogic_rdesc_buttonpad_v1_size =
-			sizeof(uclogic_rdesc_buttonpad_v1_arr);
+पूर्ण;
+स्थिर माप_प्रकार uclogic_rdesc_buttonpad_v1_size =
+			माप(uclogic_rdesc_buttonpad_v1_arr);
 
-/* Fixed report descriptor for (tweaked) v2 buttonpad reports */
-const __u8 uclogic_rdesc_buttonpad_v2_arr[] = {
+/* Fixed report descriptor क्रम (tweaked) v2 buttonpad reports */
+स्थिर __u8 uclogic_rdesc_buttonpad_v2_arr[] = अणु
 	UCLOGIC_RDESC_BUTTONPAD_BYTES(52)
-};
-const size_t uclogic_rdesc_buttonpad_v2_size =
-			sizeof(uclogic_rdesc_buttonpad_v2_arr);
+पूर्ण;
+स्थिर माप_प्रकार uclogic_rdesc_buttonpad_v2_size =
+			माप(uclogic_rdesc_buttonpad_v2_arr);
 
-/* Fixed report descriptor for Ugee EX07 buttonpad */
-const __u8 uclogic_rdesc_ugee_ex07_buttonpad_arr[] = {
+/* Fixed report descriptor क्रम Ugee EX07 buttonpad */
+स्थिर __u8 uclogic_rdesc_ugee_ex07_buttonpad_arr[] = अणु
 	0x05, 0x01,             /*  Usage Page (Desktop),                   */
 	0x09, 0x07,             /*  Usage (Keypad),                         */
 	0xA1, 0x01,             /*  Collection (Application),               */
@@ -724,12 +725,12 @@ const __u8 uclogic_rdesc_ugee_ex07_buttonpad_arr[] = {
 	0x81, 0x02,             /*          Input (Variable),               */
 	0xC0,                   /*      End Collection,                     */
 	0xC0                    /*  End Collection                          */
-};
-const size_t uclogic_rdesc_ugee_ex07_buttonpad_size =
-			sizeof(uclogic_rdesc_ugee_ex07_buttonpad_arr);
+पूर्ण;
+स्थिर माप_प्रकार uclogic_rdesc_ugee_ex07_buttonpad_size =
+			माप(uclogic_rdesc_ugee_ex07_buttonpad_arr);
 
-/* Fixed report descriptor for Ugee G5 frame controls */
-const __u8 uclogic_rdesc_ugee_g5_frame_arr[] = {
+/* Fixed report descriptor क्रम Ugee G5 frame controls */
+स्थिर __u8 uclogic_rdesc_ugee_g5_frame_arr[] = अणु
 	0x05, 0x01,         /*  Usage Page (Desktop),               */
 	0x09, 0x07,         /*  Usage (Keypad),                     */
 	0xA1, 0x01,         /*  Collection (Application),           */
@@ -778,12 +779,12 @@ const __u8 uclogic_rdesc_ugee_g5_frame_arr[] = {
 	0x81, 0x06,         /*          Input (Variable, Relative), */
 	0xC0,               /*      End Collection,                 */
 	0xC0                /*  End Collection                      */
-};
-const size_t uclogic_rdesc_ugee_g5_frame_size =
-			sizeof(uclogic_rdesc_ugee_g5_frame_arr);
+पूर्ण;
+स्थिर माप_प्रकार uclogic_rdesc_ugee_g5_frame_size =
+			माप(uclogic_rdesc_ugee_g5_frame_arr);
 
-/* Fixed report descriptor for XP-Pen Deco 01 frame controls */
-const __u8 uclogic_rdesc_xppen_deco01_frame_arr[] = {
+/* Fixed report descriptor क्रम XP-Pen Deco 01 frame controls */
+स्थिर __u8 uclogic_rdesc_xppen_deco01_frame_arr[] = अणु
 	0x05, 0x01, /*  Usage Page (Desktop),               */
 	0x09, 0x07, /*  Usage (Keypad),                     */
 	0xA1, 0x01, /*  Collection (Application),           */
@@ -812,51 +813,51 @@ const __u8 uclogic_rdesc_xppen_deco01_frame_arr[] = {
 	0x81, 0x01, /*          Input (Constant),           */
 	0xC0,       /*      End Collection,                 */
 	0xC0        /*  End Collection                      */
-};
+पूर्ण;
 
-const size_t uclogic_rdesc_xppen_deco01_frame_size =
-			sizeof(uclogic_rdesc_xppen_deco01_frame_arr);
+स्थिर माप_प्रकार uclogic_rdesc_xppen_deco01_frame_size =
+			माप(uclogic_rdesc_xppen_deco01_frame_arr);
 
 /**
- * uclogic_rdesc_template_apply() - apply report descriptor parameters to a
- * report descriptor template, creating a report descriptor. Copies the
- * template over to the new report descriptor and replaces every occurrence of
+ * uclogic_rdesc_ढाँचा_apply() - apply report descriptor parameters to a
+ * report descriptor ढाँचा, creating a report descriptor. Copies the
+ * ढाँचा over to the new report descriptor and replaces every occurrence of
  * UCLOGIC_RDESC_PH_HEAD, followed by an index byte, with the value from the
  * parameter list at that index.
  *
- * @template_ptr:	Pointer to the template buffer.
- * @template_size:	Size of the template buffer.
- * @param_list:		List of template parameters.
+ * @ढाँचा_ptr:	Poपूर्णांकer to the ढाँचा buffer.
+ * @ढाँचा_size:	Size of the ढाँचा buffer.
+ * @param_list:		List of ढाँचा parameters.
  * @param_num:		Number of parameters in the list.
  *
  * Returns:
- *	Kmalloc-allocated pointer to the created report descriptor,
- *	or NULL if allocation failed.
+ *	Kदो_स्मृति-allocated poपूर्णांकer to the created report descriptor,
+ *	or शून्य अगर allocation failed.
  */
-__u8 *uclogic_rdesc_template_apply(const __u8 *template_ptr,
-				   size_t template_size,
-				   const s32 *param_list,
-				   size_t param_num)
-{
-	static const __u8 head[] = {UCLOGIC_RDESC_PH_HEAD};
+__u8 *uclogic_rdesc_ढाँचा_apply(स्थिर __u8 *ढाँचा_ptr,
+				   माप_प्रकार ढाँचा_size,
+				   स्थिर s32 *param_list,
+				   माप_प्रकार param_num)
+अणु
+	अटल स्थिर __u8 head[] = अणुUCLOGIC_RDESC_PH_HEADपूर्ण;
 	__u8 *rdesc_ptr;
 	__u8 *p;
 	s32 v;
 
-	rdesc_ptr = kmemdup(template_ptr, template_size, GFP_KERNEL);
-	if (rdesc_ptr == NULL)
-		return NULL;
+	rdesc_ptr = kmemdup(ढाँचा_ptr, ढाँचा_size, GFP_KERNEL);
+	अगर (rdesc_ptr == शून्य)
+		वापस शून्य;
 
-	for (p = rdesc_ptr; p + sizeof(head) < rdesc_ptr + template_size;) {
-		if (memcmp(p, head, sizeof(head)) == 0 &&
-		    p[sizeof(head)] < param_num) {
-			v = param_list[p[sizeof(head)]];
+	क्रम (p = rdesc_ptr; p + माप(head) < rdesc_ptr + ढाँचा_size;) अणु
+		अगर (स_भेद(p, head, माप(head)) == 0 &&
+		    p[माप(head)] < param_num) अणु
+			v = param_list[p[माप(head)]];
 			put_unaligned(cpu_to_le32(v), (s32 *)p);
-			p += sizeof(head) + 1;
-		} else {
+			p += माप(head) + 1;
+		पूर्ण अन्यथा अणु
 			p++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return rdesc_ptr;
-}
+	वापस rdesc_ptr;
+पूर्ण

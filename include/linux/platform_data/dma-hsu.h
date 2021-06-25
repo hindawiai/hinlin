@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Driver for the High Speed UART DMA
+ * Driver क्रम the High Speed UART DMA
  *
  * Copyright (C) 2015 Intel Corporation
  */
 
-#ifndef _PLATFORM_DATA_DMA_HSU_H
-#define _PLATFORM_DATA_DMA_HSU_H
+#अगर_अघोषित _PLATFORM_DATA_DMA_HSU_H
+#घोषणा _PLATFORM_DATA_DMA_HSU_H
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
-struct hsu_dma_slave {
-	struct device	*dma_dev;
-	int		chan_id;
-};
+काष्ठा hsu_dma_slave अणु
+	काष्ठा device	*dma_dev;
+	पूर्णांक		chan_id;
+पूर्ण;
 
-#endif /* _PLATFORM_DATA_DMA_HSU_H */
+#पूर्ण_अगर /* _PLATFORM_DATA_DMA_HSU_H */

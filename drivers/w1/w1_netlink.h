@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2003 Evgeniy Polyakov <zbr@ioremap.net>
  */
 
-#ifndef __W1_NETLINK_H
-#define __W1_NETLINK_H
+#अगर_अघोषित __W1_NETLINK_H
+#घोषणा __W1_NETLINK_H
 
-#include <asm/types.h>
-#include <linux/connector.h>
+#समावेश <यंत्र/types.h>
+#समावेश <linux/connector.h>
 
-#include "w1_internal.h"
+#समावेश "w1_internal.h"
 
 /**
- * enum w1_cn_msg_flags - bitfield flags for struct cn_msg.flags
+ * क्रमागत w1_cn_msg_flags - bitfield flags क्रम काष्ठा cn_msg.flags
  *
- * @W1_CN_BUNDLE: Request bundling replies into fewer messagse.  Be prepared
- * to handle multiple struct cn_msg, struct w1_netlink_msg, and
- * struct w1_netlink_cmd in one packet.
+ * @W1_CN_BUNDLE: Request bundling replies पूर्णांकo fewer messagse.  Be prepared
+ * to handle multiple काष्ठा cn_msg, काष्ठा w1_netlink_msg, and
+ * काष्ठा w1_netlink_cmd in one packet.
  */
-enum w1_cn_msg_flags {
+क्रमागत w1_cn_msg_flags अणु
 	W1_CN_BUNDLE = 1,
-};
+पूर्ण;
 
 /**
- * enum w1_netlink_message_types - message type
+ * क्रमागत w1_netlink_message_types - message type
  *
- * @W1_SLAVE_ADD: notification that a slave device was added
- * @W1_SLAVE_REMOVE: notification that a slave device was removed
- * @W1_MASTER_ADD: notification that a new bus master was added
- * @W1_MASTER_REMOVE: notification that a bus masterwas removed
- * @W1_MASTER_CMD: initiate operations on a specific master
- * @W1_SLAVE_CMD: sends reset, selects the slave, then does a read/write/touch
+ * @W1_SLAVE_ADD: notअगरication that a slave device was added
+ * @W1_SLAVE_REMOVE: notअगरication that a slave device was हटाओd
+ * @W1_MASTER_ADD: notअगरication that a new bus master was added
+ * @W1_MASTER_REMOVE: notअगरication that a bus masterwas हटाओd
+ * @W1_MASTER_CMD: initiate operations on a specअगरic master
+ * @W1_SLAVE_CMD: sends reset, selects the slave, then करोes a पढ़ो/ग_लिखो/touch
  * operation
- * @W1_LIST_MASTERS: used to determine the bus master identifiers
+ * @W1_LIST_MASTERS: used to determine the bus master identअगरiers
  */
-enum w1_netlink_message_types {
+क्रमागत w1_netlink_message_types अणु
 	W1_SLAVE_ADD = 0,
 	W1_SLAVE_REMOVE,
 	W1_MASTER_ADD,
@@ -42,58 +43,58 @@ enum w1_netlink_message_types {
 	W1_MASTER_CMD,
 	W1_SLAVE_CMD,
 	W1_LIST_MASTERS,
-};
+पूर्ण;
 
 /**
- * struct w1_netlink_msg - holds w1 message type, id, and result
+ * काष्ठा w1_netlink_msg - holds w1 message type, id, and result
  *
- * @type: one of enum w1_netlink_message_types
- * @status: kernel feedback for success 0 or errno failure value
+ * @type: one of क्रमागत w1_netlink_message_types
+ * @status: kernel feedback क्रम success 0 or त्रुटि_सं failure value
  * @len: length of data following w1_netlink_msg
- * @id: union holding bus master id (msg.id) and slave device id (id[8]).
+ * @id: जोड़ holding bus master id (msg.id) and slave device id (id[8]).
  * @id.id: Slave ID (8 bytes)
- * @id.mst: bus master identification
+ * @id.mst: bus master identअगरication
  * @id.mst.id: bus master ID
  * @id.mst.res: bus master reserved
  * @data: start address of any following data
  *
- * The base message structure for w1 messages over netlink.
- * The netlink connector data sequence is, struct nlmsghdr, struct cn_msg,
- * then one or more struct w1_netlink_msg (each with optional data).
+ * The base message काष्ठाure क्रम w1 messages over netlink.
+ * The netlink connector data sequence is, काष्ठा nlmsghdr, काष्ठा cn_msg,
+ * then one or more काष्ठा w1_netlink_msg (each with optional data).
  */
-struct w1_netlink_msg
-{
+काष्ठा w1_netlink_msg
+अणु
 	__u8				type;
 	__u8				status;
 	__u16				len;
-	union {
+	जोड़ अणु
 		__u8			id[8];
-		struct w1_mst {
+		काष्ठा w1_mst अणु
 			__u32		id;
 			__u32		res;
-		} mst;
-	} id;
+		पूर्ण mst;
+	पूर्ण id;
 	__u8				data[];
-};
+पूर्ण;
 
 /**
- * enum w1_commands - commands available for master or slave operations
+ * क्रमागत w1_commands - commands available क्रम master or slave operations
  *
- * @W1_CMD_READ: read len bytes
- * @W1_CMD_WRITE: write len bytes
- * @W1_CMD_SEARCH: initiate a standard search, returns only the slave
+ * @W1_CMD_READ: पढ़ो len bytes
+ * @W1_CMD_WRITE: ग_लिखो len bytes
+ * @W1_CMD_SEARCH: initiate a standard search, वापसs only the slave
  * devices found during that search
- * @W1_CMD_ALARM_SEARCH: search for devices that are currently alarming
+ * @W1_CMD_ALARM_SEARCH: search क्रम devices that are currently alarming
  * @W1_CMD_TOUCH: Touches a series of bytes.
  * @W1_CMD_RESET: sends a bus reset on the given master
  * @W1_CMD_SLAVE_ADD: adds a slave to the given master,
  * 8 byte slave id at data[0]
- * @W1_CMD_SLAVE_REMOVE: removes a slave to the given master,
+ * @W1_CMD_SLAVE_REMOVE: हटाओs a slave to the given master,
  * 8 byte slave id at data[0]
- * @W1_CMD_LIST_SLAVES: list of slaves registered on this master
+ * @W1_CMD_LIST_SLAVES: list of slaves रेजिस्टरed on this master
  * @W1_CMD_MAX: number of available commands
  */
-enum w1_commands {
+क्रमागत w1_commands अणु
 	W1_CMD_READ = 0,
 	W1_CMD_WRITE,
 	W1_CMD_SEARCH,
@@ -104,32 +105,32 @@ enum w1_commands {
 	W1_CMD_SLAVE_REMOVE,
 	W1_CMD_LIST_SLAVES,
 	W1_CMD_MAX
-};
+पूर्ण;
 
 /**
- * struct w1_netlink_cmd - holds the command and data
+ * काष्ठा w1_netlink_cmd - holds the command and data
  *
- * @cmd: one of enum w1_commands
+ * @cmd: one of क्रमागत w1_commands
  * @res: reserved
  * @len: length of data following w1_netlink_cmd
  * @data: start address of any following data
  *
- * One or more struct w1_netlink_cmd is placed starting at w1_netlink_msg.data
+ * One or more काष्ठा w1_netlink_cmd is placed starting at w1_netlink_msg.data
  * each with optional data.
  */
-struct w1_netlink_cmd
-{
+काष्ठा w1_netlink_cmd
+अणु
 	__u8				cmd;
 	__u8				res;
 	__u16				len;
 	__u8				data[];
-};
+पूर्ण;
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-void w1_netlink_send(struct w1_master *, struct w1_netlink_msg *);
-int w1_init_netlink(void);
-void w1_fini_netlink(void);
+व्योम w1_netlink_send(काष्ठा w1_master *, काष्ठा w1_netlink_msg *);
+पूर्णांक w1_init_netlink(व्योम);
+व्योम w1_fini_netlink(व्योम);
 
-#endif /* __KERNEL__ */
-#endif /* __W1_NETLINK_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* __W1_NETLINK_H */

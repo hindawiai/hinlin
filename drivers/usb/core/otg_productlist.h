@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (C) 2004 Texas Instruments */
 
 /*
@@ -8,95 +9,95 @@
  * YOU _SHOULD_ CHANGE THIS LIST TO MATCH YOUR PRODUCT AND ITS TESTING!
  */
 
-static struct usb_device_id productlist_table[] = {
+अटल काष्ठा usb_device_id productlist_table[] = अणु
 
 /* hubs are optional in OTG, but very handy ... */
-{ USB_DEVICE_INFO(USB_CLASS_HUB, 0, 0), },
-{ USB_DEVICE_INFO(USB_CLASS_HUB, 0, 1), },
+अणु USB_DEVICE_INFO(USB_CLASS_HUB, 0, 0), पूर्ण,
+अणु USB_DEVICE_INFO(USB_CLASS_HUB, 0, 1), पूर्ण,
 
-#ifdef	CONFIG_USB_PRINTER		/* ignoring nonstatic linkage! */
-/* FIXME actually, printers are NOT supposed to use device classes;
- * they're supposed to use interface classes...
+#अगर_घोषित	CONFIG_USB_PRINTER		/* ignoring nonअटल linkage! */
+/* FIXME actually, prपूर्णांकers are NOT supposed to use device classes;
+ * they're supposed to use पूर्णांकerface classes...
  */
-{ USB_DEVICE_INFO(7, 1, 1) },
-{ USB_DEVICE_INFO(7, 1, 2) },
-{ USB_DEVICE_INFO(7, 1, 3) },
-#endif
+अणु USB_DEVICE_INFO(7, 1, 1) पूर्ण,
+अणु USB_DEVICE_INFO(7, 1, 2) पूर्ण,
+अणु USB_DEVICE_INFO(7, 1, 3) पूर्ण,
+#पूर्ण_अगर
 
-#ifdef	CONFIG_USB_NET_CDCETHER
+#अगर_घोषित	CONFIG_USB_NET_CDCETHER
 /* Linux-USB CDC Ethernet gadget */
-{ USB_DEVICE(0x0525, 0xa4a1), },
+अणु USB_DEVICE(0x0525, 0xa4a1), पूर्ण,
 /* Linux-USB CDC Ethernet + RNDIS gadget */
-{ USB_DEVICE(0x0525, 0xa4a2), },
-#endif
+अणु USB_DEVICE(0x0525, 0xa4a2), पूर्ण,
+#पूर्ण_अगर
 
-#if	IS_ENABLED(CONFIG_USB_TEST)
-/* gadget zero, for testing */
-{ USB_DEVICE(0x0525, 0xa4a0), },
-#endif
+#अगर	IS_ENABLED(CONFIG_USB_TEST)
+/* gadget zero, क्रम testing */
+अणु USB_DEVICE(0x0525, 0xa4a0), पूर्ण,
+#पूर्ण_अगर
 
-{ }	/* Terminating entry */
-};
+अणु पूर्ण	/* Terminating entry */
+पूर्ण;
 
-static int is_targeted(struct usb_device *dev)
-{
-	struct usb_device_id	*id = productlist_table;
+अटल पूर्णांक is_targeted(काष्ठा usb_device *dev)
+अणु
+	काष्ठा usb_device_id	*id = productlist_table;
 
 	/* HNP test device is _never_ targeted (see OTG spec 6.6.6) */
-	if ((le16_to_cpu(dev->descriptor.idVendor) == 0x1a0a &&
+	अगर ((le16_to_cpu(dev->descriptor.idVenकरोr) == 0x1a0a &&
 	     le16_to_cpu(dev->descriptor.idProduct) == 0xbadd))
-		return 0;
+		वापस 0;
 
 	/* OTG PET device is always targeted (see OTG 2.0 ECN 6.4.2) */
-	if ((le16_to_cpu(dev->descriptor.idVendor) == 0x1a0a &&
+	अगर ((le16_to_cpu(dev->descriptor.idVenकरोr) == 0x1a0a &&
 	     le16_to_cpu(dev->descriptor.idProduct) == 0x0200))
-		return 1;
+		वापस 1;
 
-	/* NOTE: can't use usb_match_id() since interface caches
+	/* NOTE: can't use usb_match_id() since पूर्णांकerface caches
 	 * aren't set up yet. this is cut/paste from that code.
 	 */
-	for (id = productlist_table; id->match_flags; id++) {
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_VENDOR) &&
-		    id->idVendor != le16_to_cpu(dev->descriptor.idVendor))
-			continue;
+	क्रम (id = productlist_table; id->match_flags; id++) अणु
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_VENDOR) &&
+		    id->idVenकरोr != le16_to_cpu(dev->descriptor.idVenकरोr))
+			जारी;
 
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_PRODUCT) &&
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_PRODUCT) &&
 		    id->idProduct != le16_to_cpu(dev->descriptor.idProduct))
-			continue;
+			जारी;
 
 		/* No need to test id->bcdDevice_lo != 0, since 0 is never
-		   greater than any unsigned number. */
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_LO) &&
+		   greater than any अचिन्हित number. */
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_LO) &&
 		    (id->bcdDevice_lo > le16_to_cpu(dev->descriptor.bcdDevice)))
-			continue;
+			जारी;
 
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_HI) &&
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_HI) &&
 		    (id->bcdDevice_hi < le16_to_cpu(dev->descriptor.bcdDevice)))
-			continue;
+			जारी;
 
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_CLASS) &&
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_CLASS) &&
 		    (id->bDeviceClass != dev->descriptor.bDeviceClass))
-			continue;
+			जारी;
 
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_SUBCLASS) &&
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_SUBCLASS) &&
 		    (id->bDeviceSubClass != dev->descriptor.bDeviceSubClass))
-			continue;
+			जारी;
 
-		if ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_PROTOCOL) &&
+		अगर ((id->match_flags & USB_DEVICE_ID_MATCH_DEV_PROTOCOL) &&
 		    (id->bDeviceProtocol != dev->descriptor.bDeviceProtocol))
-			continue;
+			जारी;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* add other match criteria here ... */
 
 
 	/* OTG MESSAGE: report errors here, customize to match your product */
 	dev_err(&dev->dev, "device v%04x p%04x is not supported\n",
-		le16_to_cpu(dev->descriptor.idVendor),
+		le16_to_cpu(dev->descriptor.idVenकरोr),
 		le16_to_cpu(dev->descriptor.idProduct));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

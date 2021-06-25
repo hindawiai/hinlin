@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * AArch64 processor specific defines
+ * AArch64 processor specअगरic defines
  *
  * Copyright (C) 2018, Red Hat, Inc.
  */
-#ifndef SELFTEST_KVM_PROCESSOR_H
-#define SELFTEST_KVM_PROCESSOR_H
+#अगर_अघोषित SELFTEST_KVM_PROCESSOR_H
+#घोषणा SELFTEST_KVM_PROCESSOR_H
 
-#include "kvm_util.h"
+#समावेश "kvm_util.h"
 
 
-#define ARM64_CORE_REG(x) (KVM_REG_ARM64 | KVM_REG_SIZE_U64 | \
+#घोषणा ARM64_CORE_REG(x) (KVM_REG_ARM64 | KVM_REG_SIZE_U64 | \
 			   KVM_REG_ARM_CORE | KVM_REG_ARM_CORE_REG(x))
 
-#define CPACR_EL1	3, 0,  1, 0, 2
-#define TCR_EL1		3, 0,  2, 0, 2
-#define MAIR_EL1	3, 0, 10, 2, 0
-#define TTBR0_EL1	3, 0,  2, 0, 0
-#define SCTLR_EL1	3, 0,  1, 0, 0
+#घोषणा CPACR_EL1	3, 0,  1, 0, 2
+#घोषणा TCR_EL1		3, 0,  2, 0, 2
+#घोषणा MAIR_EL1	3, 0, 10, 2, 0
+#घोषणा TTBR0_EL1	3, 0,  2, 0, 0
+#घोषणा SCTLR_EL1	3, 0,  1, 0, 0
 
 /*
  * Default MAIR
@@ -29,31 +30,31 @@
  * NORMAL             4     1111:1111
  * NORMAL_WT          5     1011:1011
  */
-#define DEFAULT_MAIR_EL1 ((0x00ul << (0 * 8)) | \
+#घोषणा DEFAULT_MAIR_EL1 ((0x00ul << (0 * 8)) | \
 			  (0x04ul << (1 * 8)) | \
 			  (0x0cul << (2 * 8)) | \
 			  (0x44ul << (3 * 8)) | \
 			  (0xfful << (4 * 8)) | \
 			  (0xbbul << (5 * 8)))
 
-static inline void get_reg(struct kvm_vm *vm, uint32_t vcpuid, uint64_t id, uint64_t *addr)
-{
-	struct kvm_one_reg reg;
+अटल अंतरभूत व्योम get_reg(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, uपूर्णांक64_t id, uपूर्णांक64_t *addr)
+अणु
+	काष्ठा kvm_one_reg reg;
 	reg.id = id;
-	reg.addr = (uint64_t)addr;
+	reg.addr = (uपूर्णांक64_t)addr;
 	vcpu_ioctl(vm, vcpuid, KVM_GET_ONE_REG, &reg);
-}
+पूर्ण
 
-static inline void set_reg(struct kvm_vm *vm, uint32_t vcpuid, uint64_t id, uint64_t val)
-{
-	struct kvm_one_reg reg;
+अटल अंतरभूत व्योम set_reg(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, uपूर्णांक64_t id, uपूर्णांक64_t val)
+अणु
+	काष्ठा kvm_one_reg reg;
 	reg.id = id;
-	reg.addr = (uint64_t)&val;
+	reg.addr = (uपूर्णांक64_t)&val;
 	vcpu_ioctl(vm, vcpuid, KVM_SET_ONE_REG, &reg);
-}
+पूर्ण
 
-void aarch64_vcpu_setup(struct kvm_vm *vm, int vcpuid, struct kvm_vcpu_init *init);
-void aarch64_vcpu_add_default(struct kvm_vm *vm, uint32_t vcpuid,
-			      struct kvm_vcpu_init *init, void *guest_code);
+व्योम aarch64_vcpu_setup(काष्ठा kvm_vm *vm, पूर्णांक vcpuid, काष्ठा kvm_vcpu_init *init);
+व्योम aarch64_vcpu_add_शेष(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+			      काष्ठा kvm_vcpu_init *init, व्योम *guest_code);
 
-#endif /* SELFTEST_KVM_PROCESSOR_H */
+#पूर्ण_अगर /* SELFTEST_KVM_PROCESSOR_H */

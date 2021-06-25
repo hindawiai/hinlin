@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP4+ Power Management Routines
  *
@@ -7,89 +8,89 @@
  * Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
 
-#include <linux/pm.h>
-#include <linux/suspend.h>
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <asm/system_misc.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#include "soc.h"
-#include "common.h"
-#include "clockdomain.h"
-#include "powerdomain.h"
-#include "pm.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "clockdomain.h"
+#समावेश "powerdomain.h"
+#समावेश "pm.h"
 
 u16 pm44xx_errata;
 
-struct power_state {
-	struct powerdomain *pwrdm;
+काष्ठा घातer_state अणु
+	काष्ठा घातerकरोमुख्य *pwrdm;
 	u32 next_state;
 	u32 next_logic_state;
-#ifdef CONFIG_SUSPEND
+#अगर_घोषित CONFIG_SUSPEND
 	u32 saved_state;
 	u32 saved_logic_state;
-#endif
-	struct list_head node;
-};
+#पूर्ण_अगर
+	काष्ठा list_head node;
+पूर्ण;
 
 /**
- * struct static_dep_map - Static dependency map
- * @from:	from clockdomain
- * @to:		to clockdomain
+ * काष्ठा अटल_dep_map - Static dependency map
+ * @from:	from घड़ीकरोमुख्य
+ * @to:		to घड़ीकरोमुख्य
   */
-struct static_dep_map {
-	const char *from;
-	const char *to;
-};
+काष्ठा अटल_dep_map अणु
+	स्थिर अक्षर *from;
+	स्थिर अक्षर *to;
+पूर्ण;
 
-static u32 cpu_suspend_state = PWRDM_POWER_OFF;
+अटल u32 cpu_suspend_state = PWRDM_POWER_OFF;
 
-static LIST_HEAD(pwrst_list);
+अटल LIST_HEAD(pwrst_list);
 
-#ifdef CONFIG_SUSPEND
-static int omap4_pm_suspend(void)
-{
-	struct power_state *pwrst;
-	int state, ret = 0;
+#अगर_घोषित CONFIG_SUSPEND
+अटल पूर्णांक omap4_pm_suspend(व्योम)
+अणु
+	काष्ठा घातer_state *pwrst;
+	पूर्णांक state, ret = 0;
 	u32 cpu_id = smp_processor_id();
 
-	/* Save current powerdomain state */
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		pwrst->saved_state = pwrdm_read_next_pwrst(pwrst->pwrdm);
-		pwrst->saved_logic_state = pwrdm_read_logic_retst(pwrst->pwrdm);
-	}
+	/* Save current घातerकरोमुख्य state */
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		pwrst->saved_state = pwrdm_पढ़ो_next_pwrst(pwrst->pwrdm);
+		pwrst->saved_logic_state = pwrdm_पढ़ो_logic_retst(pwrst->pwrdm);
+	पूर्ण
 
-	/* Set targeted power domain states by suspend */
-	list_for_each_entry(pwrst, &pwrst_list, node) {
+	/* Set targeted घातer करोमुख्य states by suspend */
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
 		omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
 		pwrdm_set_logic_retst(pwrst->pwrdm, pwrst->next_logic_state);
-	}
+	पूर्ण
 
 	/*
-	 * For MPUSS to hit power domain retention(CSWR or OSWR),
-	 * CPU0 and CPU1 power domains need to be in OFF or DORMANT state,
-	 * since CPU power domain CSWR is not supported by hardware
+	 * For MPUSS to hit घातer करोमुख्य retention(CSWR or OSWR),
+	 * CPU0 and CPU1 घातer करोमुख्यs need to be in OFF or DORMANT state,
+	 * since CPU घातer करोमुख्य CSWR is not supported by hardware
 	 * Only master CPU follows suspend path. All other CPUs follow
-	 * CPU hotplug path in system wide suspend. On OMAP4, CPU power
-	 * domain CSWR is not supported by hardware.
+	 * CPU hotplug path in प्रणाली wide suspend. On OMAP4, CPU घातer
+	 * करोमुख्य CSWR is not supported by hardware.
 	 * More details can be found in OMAP4430 TRM section 4.3.4.2.
 	 */
-	omap4_enter_lowpower(cpu_id, cpu_suspend_state);
+	omap4_enter_lowघातer(cpu_id, cpu_suspend_state);
 
-	/* Restore next powerdomain state */
-	list_for_each_entry(pwrst, &pwrst_list, node) {
-		state = pwrdm_read_prev_pwrst(pwrst->pwrdm);
-		if (state > pwrst->next_state) {
+	/* Restore next घातerकरोमुख्य state */
+	list_क्रम_each_entry(pwrst, &pwrst_list, node) अणु
+		state = pwrdm_पढ़ो_prev_pwrst(pwrst->pwrdm);
+		अगर (state > pwrst->next_state) अणु
 			pr_info("Powerdomain (%s) didn't enter target state %d\n",
 				pwrst->pwrdm->name, pwrst->next_state);
 			ret = -1;
-		}
+		पूर्ण
 		omap_set_pwrdm_state(pwrst->pwrdm, pwrst->saved_state);
 		pwrdm_set_logic_retst(pwrst->pwrdm, pwrst->saved_logic_state);
-	}
-	if (ret) {
+	पूर्ण
+	अगर (ret) अणु
 		pr_crit("Could not enter target state in pm_suspend\n");
 		/*
 		 * OMAP4 chip PM currently works only with certain (newer)
@@ -97,44 +98,44 @@ static int omap4_pm_suspend(void)
 		 * kernel to properly reset and initialize some devices.
 		 * Warn the user about the bootloader version being one of the
 		 * possible causes.
-		 * http://www.spinics.net/lists/arm-kernel/msg218641.html
+		 * http://www.spinics.net/lists/arm-kernel/msg218641.hपंचांगl
 		 */
 		pr_warn("A possible cause could be an old bootloader - try u-boot >= v2012.07\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_info("Successfully put all powerdomains to target state\n");
-	}
+	पूर्ण
 
-	return 0;
-}
-#else
-#define omap4_pm_suspend NULL
-#endif /* CONFIG_SUSPEND */
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा omap4_pm_suspend शून्य
+#पूर्ण_अगर /* CONFIG_SUSPEND */
 
-static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
-{
-	struct power_state *pwrst;
+अटल पूर्णांक __init pwrdms_setup(काष्ठा घातerकरोमुख्य *pwrdm, व्योम *unused)
+अणु
+	काष्ठा घातer_state *pwrst;
 
-	if (!pwrdm->pwrsts)
-		return 0;
+	अगर (!pwrdm->pwrsts)
+		वापस 0;
 
 	/*
-	 * Skip CPU0 and CPU1 power domains. CPU1 is programmed
+	 * Skip CPU0 and CPU1 घातer करोमुख्यs. CPU1 is programmed
 	 * through hotplug path and CPU0 explicitly programmed
-	 * further down in the code path
+	 * further करोwn in the code path
 	 */
-	if (!strncmp(pwrdm->name, "cpu", 3)) {
-		if (IS_PM44XX_ERRATUM(PM_OMAP4_CPU_OSWR_DISABLE))
+	अगर (!म_भेदन(pwrdm->name, "cpu", 3)) अणु
+		अगर (IS_PM44XX_ERRATUM(PM_OMAP4_CPU_OSWR_DISABLE))
 			cpu_suspend_state = PWRDM_POWER_RET;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!strncmp(pwrdm->name, "core", 4) ||
-	    !strncmp(pwrdm->name, "l4per", 5))
+	अगर (!म_भेदन(pwrdm->name, "core", 4) ||
+	    !म_भेदन(pwrdm->name, "l4per", 5))
 		pwrdm_set_logic_retst(pwrdm, PWRDM_POWER_OFF);
 
-	pwrst = kmalloc(sizeof(struct power_state), GFP_ATOMIC);
-	if (!pwrst)
-		return -ENOMEM;
+	pwrst = kदो_स्मृति(माप(काष्ठा घातer_state), GFP_ATOMIC);
+	अगर (!pwrst)
+		वापस -ENOMEM;
 
 	pwrst->pwrdm = pwrdm;
 	pwrst->next_state = pwrdm_get_valid_lp_state(pwrdm, false,
@@ -144,109 +145,109 @@ static int __init pwrdms_setup(struct powerdomain *pwrdm, void *unused)
 
 	list_add(&pwrst->node, &pwrst_list);
 
-	return omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
-}
+	वापस omap_set_pwrdm_state(pwrst->pwrdm, pwrst->next_state);
+पूर्ण
 
 /**
- * omap_default_idle - OMAP4 default ilde routine.'
+ * omap_शेष_idle - OMAP4 शेष ilde routine.'
  *
  * Implements OMAP4 memory, IO ordering requirements which can't be addressed
- * with default cpu_do_idle() hook. Used by all CPUs with !CONFIG_CPU_IDLE and
+ * with शेष cpu_करो_idle() hook. Used by all CPUs with !CONFIG_CPU_IDLE and
  * by secondary CPU with CONFIG_CPU_IDLE.
  */
-static void omap_default_idle(void)
-{
-	omap_do_wfi();
-}
+अटल व्योम omap_शेष_idle(व्योम)
+अणु
+	omap_करो_wfi();
+पूर्ण
 
 /*
  * The dynamic dependency between MPUSS -> MEMIF and
- * MPUSS -> L4_PER/L3_* and DUCATI -> L3_* doesn't work as
- * expected. The hardware recommendation is to enable static
- * dependencies for these to avoid system lock ups or random crashes.
+ * MPUSS -> L4_PER/L3_* and DUCATI -> L3_* करोesn't work as
+ * expected. The hardware recommendation is to enable अटल
+ * dependencies क्रम these to aव्योम प्रणाली lock ups or अक्रमom crashes.
  * The L4 wakeup depedency is added to workaround the OCP sync hardware
- * BUG with 32K synctimer which lead to incorrect timer value read
- * from the 32K counter. The BUG applies for GPTIMER1 and WDT2 which
- * are part of L4 wakeup clockdomain.
+ * BUG with 32K synस_समयr which lead to incorrect समयr value पढ़ो
+ * from the 32K counter. The BUG applies क्रम GPTIMER1 and WDT2 which
+ * are part of L4 wakeup घड़ीकरोमुख्य.
  */
-static const struct static_dep_map omap4_static_dep_map[] = {
-	{.from = "mpuss_clkdm", .to = "l3_emif_clkdm"},
-	{.from = "mpuss_clkdm", .to = "l3_1_clkdm"},
-	{.from = "mpuss_clkdm", .to = "l3_2_clkdm"},
-	{.from = "ducati_clkdm", .to = "l3_1_clkdm"},
-	{.from = "ducati_clkdm", .to = "l3_2_clkdm"},
-	{.from  = NULL} /* TERMINATION */
-};
+अटल स्थिर काष्ठा अटल_dep_map omap4_अटल_dep_map[] = अणु
+	अणु.from = "mpuss_clkdm", .to = "l3_emif_clkdm"पूर्ण,
+	अणु.from = "mpuss_clkdm", .to = "l3_1_clkdm"पूर्ण,
+	अणु.from = "mpuss_clkdm", .to = "l3_2_clkdm"पूर्ण,
+	अणु.from = "ducati_clkdm", .to = "l3_1_clkdm"पूर्ण,
+	अणु.from = "ducati_clkdm", .to = "l3_2_clkdm"पूर्ण,
+	अणु.from  = शून्यपूर्ण /* TERMINATION */
+पूर्ण;
 
-static const struct static_dep_map omap5_dra7_static_dep_map[] = {
-	{.from = "mpu_clkdm", .to = "emif_clkdm"},
-	{.from  = NULL} /* TERMINATION */
-};
+अटल स्थिर काष्ठा अटल_dep_map omap5_dra7_अटल_dep_map[] = अणु
+	अणु.from = "mpu_clkdm", .to = "emif_clkdm"पूर्ण,
+	अणु.from  = शून्यपूर्ण /* TERMINATION */
+पूर्ण;
 
 /**
- * omap4plus_init_static_deps() - Initialize a static dependency map
- * @map:	Mapping of clock domains
+ * omap4plus_init_अटल_deps() - Initialize a अटल dependency map
+ * @map:	Mapping of घड़ी करोमुख्यs
  */
-static inline int omap4plus_init_static_deps(const struct static_dep_map *map)
-{
-	int ret;
-	struct clockdomain *from, *to;
+अटल अंतरभूत पूर्णांक omap4plus_init_अटल_deps(स्थिर काष्ठा अटल_dep_map *map)
+अणु
+	पूर्णांक ret;
+	काष्ठा घड़ीकरोमुख्य *from, *to;
 
-	if (!map)
-		return 0;
+	अगर (!map)
+		वापस 0;
 
-	while (map->from) {
+	जबतक (map->from) अणु
 		from = clkdm_lookup(map->from);
 		to = clkdm_lookup(map->to);
-		if (!from || !to) {
+		अगर (!from || !to) अणु
 			pr_err("Failed lookup %s or %s for wakeup dependency\n",
 			       map->from, map->to);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ret = clkdm_add_wkdep(from, to);
-		if (ret) {
+		अगर (ret) अणु
 			pr_err("Failed to add %s -> %s wakeup dependency(%d)\n",
 			       map->from, map->to, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		map++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap4_pm_init_early - Does early initialization necessary for OMAP4+ devices
+ * omap4_pm_init_early - Does early initialization necessary क्रम OMAP4+ devices
  *
- * Initializes basic stuff for power management functionality.
+ * Initializes basic stuff क्रम घातer management functionality.
  */
-int __init omap4_pm_init_early(void)
-{
-	if (cpu_is_omap446x())
+पूर्णांक __init omap4_pm_init_early(व्योम)
+अणु
+	अगर (cpu_is_omap446x())
 		pm44xx_errata |= PM_OMAP4_ROM_SMP_BOOT_ERRATUM_GICD;
 
-	if (soc_is_omap54xx() || soc_is_dra7xx())
+	अगर (soc_is_omap54xx() || soc_is_dra7xx())
 		pm44xx_errata |= PM_OMAP4_CPU_OSWR_DISABLE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap4_pm_init - Init routine for OMAP4+ devices
+ * omap4_pm_init - Init routine क्रम OMAP4+ devices
  *
- * Initializes all powerdomain and clockdomain target states
+ * Initializes all घातerकरोमुख्य and घड़ीकरोमुख्य target states
  * and all PRCM settings.
- * Return: Returns the error code returned by called functions.
+ * Return: Returns the error code वापसed by called functions.
  */
-int __init omap4_pm_init(void)
-{
-	int ret = 0;
+पूर्णांक __init omap4_pm_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	if (omap_rev() == OMAP4430_REV_ES1_0) {
+	अगर (omap_rev() == OMAP4430_REV_ES1_0) अणु
 		WARN(1, "Power Management not supported on OMAP4430 ES1.0\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pr_info("Power Management for TI OMAP4+ devices.\n");
 
@@ -254,43 +255,43 @@ int __init omap4_pm_init(void)
 	 * OMAP4 chip PM currently works only with certain (newer)
 	 * versions of bootloaders. This is due to missing code in the
 	 * kernel to properly reset and initialize some devices.
-	 * http://www.spinics.net/lists/arm-kernel/msg218641.html
+	 * http://www.spinics.net/lists/arm-kernel/msg218641.hपंचांगl
 	 */
-	if (cpu_is_omap44xx())
+	अगर (cpu_is_omap44xx())
 		pr_warn("OMAP4 PM: u-boot >= v2012.07 is required for full PM support\n");
 
-	ret = pwrdm_for_each(pwrdms_setup, NULL);
-	if (ret) {
+	ret = pwrdm_क्रम_each(pwrdms_setup, शून्य);
+	अगर (ret) अणु
 		pr_err("Failed to setup powerdomains.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	if (cpu_is_omap44xx())
-		ret = omap4plus_init_static_deps(omap4_static_dep_map);
-	else if (soc_is_omap54xx() || soc_is_dra7xx())
-		ret = omap4plus_init_static_deps(omap5_dra7_static_dep_map);
+	अगर (cpu_is_omap44xx())
+		ret = omap4plus_init_अटल_deps(omap4_अटल_dep_map);
+	अन्यथा अगर (soc_is_omap54xx() || soc_is_dra7xx())
+		ret = omap4plus_init_अटल_deps(omap5_dra7_अटल_dep_map);
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to initialise static dependencies.\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	ret = omap4_mpuss_init();
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Failed to initialise OMAP4 MPUSS\n");
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
-	(void) clkdm_for_each(omap_pm_clkdms_setup, NULL);
+	(व्योम) clkdm_क्रम_each(omap_pm_clkdms_setup, शून्य);
 
 	omap_common_suspend_init(omap4_pm_suspend);
 
-	/* Overwrite the default cpu_do_idle() */
-	arm_pm_idle = omap_default_idle;
+	/* Overग_लिखो the शेष cpu_करो_idle() */
+	arm_pm_idle = omap_शेष_idle;
 
-	if (cpu_is_omap44xx() || soc_is_omap54xx())
+	अगर (cpu_is_omap44xx() || soc_is_omap54xx())
 		omap4_idle_init();
 
 err2:
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Copyright (C) 2018 ROHM Semiconductors */
 
-#ifndef __LINUX_MFD_BD718XX_H__
-#define __LINUX_MFD_BD718XX_H__
+#अगर_अघोषित __LINUX_MFD_BD718XX_H__
+#घोषणा __LINUX_MFD_BD718XX_H__
 
-#include <linux/mfd/rohm-generic.h>
-#include <linux/regmap.h>
+#समावेश <linux/mfd/rohm-generic.h>
+#समावेश <linux/regmap.h>
 
-enum {
+क्रमागत अणु
 	BD718XX_BUCK1 = 0,
 	BD718XX_BUCK2,
 	BD718XX_BUCK3,
@@ -24,41 +25,41 @@ enum {
 	BD718XX_LDO6,
 	BD718XX_LDO7,
 	BD718XX_REGULATOR_AMOUNT,
-};
+पूर्ण;
 
 /* Common voltage configurations */
-#define BD718XX_DVS_BUCK_VOLTAGE_NUM		0x3D
-#define BD718XX_4TH_NODVS_BUCK_VOLTAGE_NUM	0x3D
+#घोषणा BD718XX_DVS_BUCK_VOLTAGE_NUM		0x3D
+#घोषणा BD718XX_4TH_NODVS_BUCK_VOLTAGE_NUM	0x3D
 
-#define BD718XX_LDO1_VOLTAGE_NUM	0x08
-#define BD718XX_LDO2_VOLTAGE_NUM	0x02
-#define BD718XX_LDO3_VOLTAGE_NUM	0x10
-#define BD718XX_LDO4_VOLTAGE_NUM	0x0A
-#define BD718XX_LDO6_VOLTAGE_NUM	0x0A
+#घोषणा BD718XX_LDO1_VOLTAGE_NUM	0x08
+#घोषणा BD718XX_LDO2_VOLTAGE_NUM	0x02
+#घोषणा BD718XX_LDO3_VOLTAGE_NUM	0x10
+#घोषणा BD718XX_LDO4_VOLTAGE_NUM	0x0A
+#घोषणा BD718XX_LDO6_VOLTAGE_NUM	0x0A
 
-/* BD71837 specific voltage configurations */
-#define BD71837_BUCK5_VOLTAGE_NUM	0x10
-#define BD71837_BUCK6_VOLTAGE_NUM	0x04
-#define BD71837_BUCK7_VOLTAGE_NUM	0x08
-#define BD71837_LDO5_VOLTAGE_NUM	0x10
-#define BD71837_LDO7_VOLTAGE_NUM	0x10
+/* BD71837 specअगरic voltage configurations */
+#घोषणा BD71837_BUCK5_VOLTAGE_NUM	0x10
+#घोषणा BD71837_BUCK6_VOLTAGE_NUM	0x04
+#घोषणा BD71837_BUCK7_VOLTAGE_NUM	0x08
+#घोषणा BD71837_LDO5_VOLTAGE_NUM	0x10
+#घोषणा BD71837_LDO7_VOLTAGE_NUM	0x10
 
-/* BD71847 specific voltage configurations */
-#define BD71847_BUCK3_VOLTAGE_NUM	0x18
-#define BD71847_BUCK4_VOLTAGE_NUM	0x08
-#define BD71847_LDO5_VOLTAGE_NUM	0x20
+/* BD71847 specअगरic voltage configurations */
+#घोषणा BD71847_BUCK3_VOLTAGE_NUM	0x18
+#घोषणा BD71847_BUCK4_VOLTAGE_NUM	0x08
+#घोषणा BD71847_LDO5_VOLTAGE_NUM	0x20
 
-/* Registers specific to BD71837 */
-enum {
+/* Registers specअगरic to BD71837 */
+क्रमागत अणु
 	BD71837_REG_BUCK3_CTRL =	0x07,
 	BD71837_REG_BUCK4_CTRL =	0x08,
 	BD71837_REG_BUCK3_VOLT_RUN =	0x12,
 	BD71837_REG_BUCK4_VOLT_RUN =	0x13,
 	BD71837_REG_LDO7_VOLT =		0x1E,
-};
+पूर्ण;
 
-/* Registers common for BD71837 and BD71847 */
-enum {
+/* Registers common क्रम BD71837 and BD71847 */
+क्रमागत अणु
 	BD718XX_REG_REV =			0x00,
 	BD718XX_REG_SWRESET =			0x01,
 	BD718XX_REG_I2C_DEV =			0x02,
@@ -104,95 +105,95 @@ enum {
 	BD718XX_REG_REGLOCK =			0x2F,
 	BD718XX_REG_OTPVER =			0xFF,
 	BD718XX_MAX_REGISTER =			0x100,
-};
+पूर्ण;
 
-#define REGLOCK_PWRSEQ	0x1
-#define REGLOCK_VREG	0x10
+#घोषणा REGLOCK_PWRSEQ	0x1
+#घोषणा REGLOCK_VREG	0x10
 
 /* Generic BUCK control masks */
-#define BD718XX_BUCK_SEL	0x02
-#define BD718XX_BUCK_EN		0x01
-#define BD718XX_BUCK_RUN_ON	0x04
+#घोषणा BD718XX_BUCK_SEL	0x02
+#घोषणा BD718XX_BUCK_EN		0x01
+#घोषणा BD718XX_BUCK_RUN_ON	0x04
 
 /* Generic LDO masks */
-#define BD718XX_LDO_SEL		0x80
-#define BD718XX_LDO_EN		0x40
+#घोषणा BD718XX_LDO_SEL		0x80
+#घोषणा BD718XX_LDO_EN		0x40
 
 /* BD71837 BUCK ramp rate CTRL reg bits */
-#define BUCK_RAMPRATE_MASK	0xC0
-#define BUCK_RAMPRATE_10P00MV	0x0
-#define BUCK_RAMPRATE_5P00MV	0x1
-#define BUCK_RAMPRATE_2P50MV	0x2
-#define BUCK_RAMPRATE_1P25MV	0x3
+#घोषणा BUCK_RAMPRATE_MASK	0xC0
+#घोषणा BUCK_RAMPRATE_10P00MV	0x0
+#घोषणा BUCK_RAMPRATE_5P00MV	0x1
+#घोषणा BUCK_RAMPRATE_2P50MV	0x2
+#घोषणा BUCK_RAMPRATE_1P25MV	0x3
 
-#define DVS_BUCK_RUN_MASK	0x3F
-#define DVS_BUCK_SUSP_MASK	0x3F
-#define DVS_BUCK_IDLE_MASK	0x3F
+#घोषणा DVS_BUCK_RUN_MASK	0x3F
+#घोषणा DVS_BUCK_SUSP_MASK	0x3F
+#घोषणा DVS_BUCK_IDLE_MASK	0x3F
 
-#define BD718XX_1ST_NODVS_BUCK_MASK	0x07
-#define BD718XX_3RD_NODVS_BUCK_MASK	0x07
-#define BD718XX_4TH_NODVS_BUCK_MASK	0x3F
+#घोषणा BD718XX_1ST_NODVS_BUCK_MASK	0x07
+#घोषणा BD718XX_3RD_NODVS_BUCK_MASK	0x07
+#घोषणा BD718XX_4TH_NODVS_BUCK_MASK	0x3F
 
-#define BD71847_BUCK3_MASK		0x07
-#define BD71847_BUCK3_RANGE_MASK	0xC0
-#define BD71847_BUCK4_MASK		0x03
-#define BD71847_BUCK4_RANGE_MASK	0x40
+#घोषणा BD71847_BUCK3_MASK		0x07
+#घोषणा BD71847_BUCK3_RANGE_MASK	0xC0
+#घोषणा BD71847_BUCK4_MASK		0x03
+#घोषणा BD71847_BUCK4_RANGE_MASK	0x40
 
-#define BD71837_BUCK5_MASK		0x07
-#define BD71837_BUCK5_RANGE_MASK	0x80
-#define BD71837_BUCK6_MASK		0x03
+#घोषणा BD71837_BUCK5_MASK		0x07
+#घोषणा BD71837_BUCK5_RANGE_MASK	0x80
+#घोषणा BD71837_BUCK6_MASK		0x03
 
-#define BD718XX_LDO1_MASK		0x03
-#define BD718XX_LDO1_RANGE_MASK		0x20
-#define BD718XX_LDO2_MASK		0x20
-#define BD718XX_LDO3_MASK		0x0F
-#define BD718XX_LDO4_MASK		0x0F
-#define BD718XX_LDO6_MASK		0x0F
+#घोषणा BD718XX_LDO1_MASK		0x03
+#घोषणा BD718XX_LDO1_RANGE_MASK		0x20
+#घोषणा BD718XX_LDO2_MASK		0x20
+#घोषणा BD718XX_LDO3_MASK		0x0F
+#घोषणा BD718XX_LDO4_MASK		0x0F
+#घोषणा BD718XX_LDO6_MASK		0x0F
 
-#define BD71837_LDO5_MASK		0x0F
-#define BD71847_LDO5_MASK		0x0F
-#define BD71847_LDO5_RANGE_MASK		0x20
+#घोषणा BD71837_LDO5_MASK		0x0F
+#घोषणा BD71847_LDO5_MASK		0x0F
+#घोषणा BD71847_LDO5_RANGE_MASK		0x20
 
-#define BD71837_LDO7_MASK		0x0F
+#घोषणा BD71837_LDO7_MASK		0x0F
 
 /* BD718XX Voltage monitoring masks */
-#define BD718XX_BUCK1_VRMON80           0x1
-#define BD718XX_BUCK1_VRMON130          0x2
-#define BD718XX_BUCK2_VRMON80           0x4
-#define BD718XX_BUCK2_VRMON130          0x8
-#define BD718XX_1ST_NODVS_BUCK_VRMON80  0x1
-#define BD718XX_1ST_NODVS_BUCK_VRMON130 0x2
-#define BD718XX_2ND_NODVS_BUCK_VRMON80  0x4
-#define BD718XX_2ND_NODVS_BUCK_VRMON130 0x8
-#define BD718XX_3RD_NODVS_BUCK_VRMON80  0x10
-#define BD718XX_3RD_NODVS_BUCK_VRMON130 0x20
-#define BD718XX_4TH_NODVS_BUCK_VRMON80  0x40
-#define BD718XX_4TH_NODVS_BUCK_VRMON130 0x80
-#define BD718XX_LDO1_VRMON80            0x1
-#define BD718XX_LDO2_VRMON80            0x2
-#define BD718XX_LDO3_VRMON80            0x4
-#define BD718XX_LDO4_VRMON80            0x8
-#define BD718XX_LDO5_VRMON80            0x10
-#define BD718XX_LDO6_VRMON80            0x20
+#घोषणा BD718XX_BUCK1_VRMON80           0x1
+#घोषणा BD718XX_BUCK1_VRMON130          0x2
+#घोषणा BD718XX_BUCK2_VRMON80           0x4
+#घोषणा BD718XX_BUCK2_VRMON130          0x8
+#घोषणा BD718XX_1ST_NODVS_BUCK_VRMON80  0x1
+#घोषणा BD718XX_1ST_NODVS_BUCK_VRMON130 0x2
+#घोषणा BD718XX_2ND_NODVS_BUCK_VRMON80  0x4
+#घोषणा BD718XX_2ND_NODVS_BUCK_VRMON130 0x8
+#घोषणा BD718XX_3RD_NODVS_BUCK_VRMON80  0x10
+#घोषणा BD718XX_3RD_NODVS_BUCK_VRMON130 0x20
+#घोषणा BD718XX_4TH_NODVS_BUCK_VRMON80  0x40
+#घोषणा BD718XX_4TH_NODVS_BUCK_VRMON130 0x80
+#घोषणा BD718XX_LDO1_VRMON80            0x1
+#घोषणा BD718XX_LDO2_VRMON80            0x2
+#घोषणा BD718XX_LDO3_VRMON80            0x4
+#घोषणा BD718XX_LDO4_VRMON80            0x8
+#घोषणा BD718XX_LDO5_VRMON80            0x10
+#घोषणा BD718XX_LDO6_VRMON80            0x20
 
-/* BD71837 specific voltage monitoring masks */
-#define BD71837_BUCK3_VRMON80           0x10
-#define BD71837_BUCK3_VRMON130          0x20
-#define BD71837_BUCK4_VRMON80           0x40
-#define BD71837_BUCK4_VRMON130          0x80
-#define BD71837_LDO7_VRMON80            0x40
+/* BD71837 specअगरic voltage monitoring masks */
+#घोषणा BD71837_BUCK3_VRMON80           0x10
+#घोषणा BD71837_BUCK3_VRMON130          0x20
+#घोषणा BD71837_BUCK4_VRMON80           0x40
+#घोषणा BD71837_BUCK4_VRMON130          0x80
+#घोषणा BD71837_LDO7_VRMON80            0x40
 
 /* BD718XX_REG_IRQ bits */
-#define IRQ_SWRST		0x40
-#define IRQ_PWRON_S		0x20
-#define IRQ_PWRON_L		0x10
-#define IRQ_PWRON		0x08
-#define IRQ_WDOG		0x04
-#define IRQ_ON_REQ		0x02
-#define IRQ_STBY_REQ		0x01
+#घोषणा IRQ_SWRST		0x40
+#घोषणा IRQ_PWRON_S		0x20
+#घोषणा IRQ_PWRON_L		0x10
+#घोषणा IRQ_PWRON		0x08
+#घोषणा IRQ_WDOG		0x04
+#घोषणा IRQ_ON_REQ		0x02
+#घोषणा IRQ_STBY_REQ		0x01
 
 /* ROHM BD718XX irqs */
-enum {
+क्रमागत अणु
 	BD718XX_INT_STBY_REQ,
 	BD718XX_INT_ON_REQ,
 	BD718XX_INT_WDOG,
@@ -200,45 +201,45 @@ enum {
 	BD718XX_INT_PWRBTN_L,
 	BD718XX_INT_PWRBTN_S,
 	BD718XX_INT_SWRST
-};
+पूर्ण;
 
-/* ROHM BD718XX interrupt masks */
-#define BD718XX_INT_SWRST_MASK		0x40
-#define BD718XX_INT_PWRBTN_S_MASK	0x20
-#define BD718XX_INT_PWRBTN_L_MASK	0x10
-#define BD718XX_INT_PWRBTN_MASK		0x8
-#define BD718XX_INT_WDOG_MASK		0x4
-#define BD718XX_INT_ON_REQ_MASK		0x2
-#define BD718XX_INT_STBY_REQ_MASK	0x1
+/* ROHM BD718XX पूर्णांकerrupt masks */
+#घोषणा BD718XX_INT_SWRST_MASK		0x40
+#घोषणा BD718XX_INT_PWRBTN_S_MASK	0x20
+#घोषणा BD718XX_INT_PWRBTN_L_MASK	0x10
+#घोषणा BD718XX_INT_PWRBTN_MASK		0x8
+#घोषणा BD718XX_INT_WDOG_MASK		0x4
+#घोषणा BD718XX_INT_ON_REQ_MASK		0x2
+#घोषणा BD718XX_INT_STBY_REQ_MASK	0x1
 
-/* Register write induced reset settings */
+/* Register ग_लिखो induced reset settings */
 
 /*
- * Even though the bit zero is not SWRESET type we still want to write zero
- * to it when changing type. Bit zero is 'SWRESET' trigger bit and if we
- * write 1 to it we will trigger the action. So always write 0 to it when
- * changning SWRESET action - no matter what we read from it.
+ * Even though the bit zero is not SWRESET type we still want to ग_लिखो zero
+ * to it when changing type. Bit zero is 'SWRESET' trigger bit and अगर we
+ * ग_लिखो 1 to it we will trigger the action. So always ग_लिखो 0 to it when
+ * changning SWRESET action - no matter what we पढ़ो from it.
  */
-#define BD718XX_SWRESET_TYPE_MASK	7
-#define BD718XX_SWRESET_TYPE_DISABLED	0
-#define BD718XX_SWRESET_TYPE_COLD	4
-#define BD718XX_SWRESET_TYPE_WARM	6
+#घोषणा BD718XX_SWRESET_TYPE_MASK	7
+#घोषणा BD718XX_SWRESET_TYPE_DISABLED	0
+#घोषणा BD718XX_SWRESET_TYPE_COLD	4
+#घोषणा BD718XX_SWRESET_TYPE_WARM	6
 
-#define BD718XX_SWRESET_RESET_MASK	1
-#define BD718XX_SWRESET_RESET		1
+#घोषणा BD718XX_SWRESET_RESET_MASK	1
+#घोषणा BD718XX_SWRESET_RESET		1
 
 /* Poweroff state transition conditions */
 
-#define BD718XX_ON_REQ_POWEROFF_MASK	1
-#define BD718XX_SWRESET_POWEROFF_MASK	2
-#define BD718XX_WDOG_POWEROFF_MASK	4
-#define BD718XX_KEY_L_POWEROFF_MASK	8
+#घोषणा BD718XX_ON_REQ_POWEROFF_MASK	1
+#घोषणा BD718XX_SWRESET_POWEROFF_MASK	2
+#घोषणा BD718XX_WDOG_POWEROFF_MASK	4
+#घोषणा BD718XX_KEY_L_POWEROFF_MASK	8
 
-#define BD718XX_POWOFF_TO_SNVS	0
-#define BD718XX_POWOFF_TO_RDY	0xF
+#घोषणा BD718XX_POWOFF_TO_SNVS	0
+#घोषणा BD718XX_POWOFF_TO_RDY	0xF
 
-#define BD718XX_POWOFF_TIME_MASK 0xF0
-enum {
+#घोषणा BD718XX_POWOFF_TIME_MASK 0xF0
+क्रमागत अणु
 	BD718XX_POWOFF_TIME_5MS = 0,
 	BD718XX_POWOFF_TIME_10MS,
 	BD718XX_POWOFF_TIME_15MS,
@@ -255,23 +256,23 @@ enum {
 	BD718XX_POWOFF_TIME_500MS,
 	BD718XX_POWOFF_TIME_750MS,
 	BD718XX_POWOFF_TIME_1500MS
-};
+पूर्ण;
 
 /* Poweron sequence state transition conditions */
-#define BD718XX_RDY_TO_SNVS_MASK 0xF
-#define BD718XX_SNVS_TO_RUN_MASK 0xF0
+#घोषणा BD718XX_RDY_TO_SNVS_MASK 0xF
+#घोषणा BD718XX_SNVS_TO_RUN_MASK 0xF0
 
-#define BD718XX_PWR_TRIG_KEY_L		1
-#define BD718XX_PWR_TRIG_KEY_S		2
-#define BD718XX_PWR_TRIG_PMIC_ON	4
-#define BD718XX_PWR_TRIG_VSYS_UVLO	8
-#define BD718XX_RDY_TO_SNVS_SIFT	0
-#define BD718XX_SNVS_TO_RUN_SIFT	4
+#घोषणा BD718XX_PWR_TRIG_KEY_L		1
+#घोषणा BD718XX_PWR_TRIG_KEY_S		2
+#घोषणा BD718XX_PWR_TRIG_PMIC_ON	4
+#घोषणा BD718XX_PWR_TRIG_VSYS_UVLO	8
+#घोषणा BD718XX_RDY_TO_SNVS_SIFT	0
+#घोषणा BD718XX_SNVS_TO_RUN_SIFT	4
 
-#define BD718XX_PWRBTN_PRESS_DURATION_MASK 0xF
+#घोषणा BD718XX_PWRBTN_PRESS_DURATION_MASK 0xF
 
-/* Timeout value for detecting short press */
-enum {
+/* Timeout value क्रम detecting लघु press */
+क्रमागत अणु
 	BD718XX_PWRBTN_SHORT_PRESS_10MS = 0,
 	BD718XX_PWRBTN_SHORT_PRESS_500MS,
 	BD718XX_PWRBTN_SHORT_PRESS_1000MS,
@@ -288,10 +289,10 @@ enum {
 	BD718XX_PWRBTN_SHORT_PRESS_6500MS,
 	BD718XX_PWRBTN_SHORT_PRESS_7000MS,
 	BD718XX_PWRBTN_SHORT_PRESS_7500MS
-};
+पूर्ण;
 
-/* Timeout value for detecting LONG press */
-enum {
+/* Timeout value क्रम detecting LONG press */
+क्रमागत अणु
 	BD718XX_PWRBTN_LONG_PRESS_10MS = 0,
 	BD718XX_PWRBTN_LONG_PRESS_1S,
 	BD718XX_PWRBTN_LONG_PRESS_2S,
@@ -308,6 +309,6 @@ enum {
 	BD718XX_PWRBTN_LONG_PRESS_13S,
 	BD718XX_PWRBTN_LONG_PRESS_14S,
 	BD718XX_PWRBTN_LONG_PRESS_15S
-};
+पूर्ण;
 
-#endif /* __LINUX_MFD_BD718XX_H__ */
+#पूर्ण_अगर /* __LINUX_MFD_BD718XX_H__ */

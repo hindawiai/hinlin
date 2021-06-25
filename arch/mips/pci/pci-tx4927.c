@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Based on linux/arch/mips/txx9/rbtx4938/setup.c,
  *	    and RBTX49xx patch from CELF patch archive.
@@ -7,85 +8,85 @@
  * (C) Copyright TOSHIBA CORPORATION 2000-2001, 2004-2007
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <asm/txx9/generic.h>
-#include <asm/txx9/tx4927.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <यंत्र/txx9/generic.h>
+#समावेश <यंत्र/txx9/tx4927.h>
 
-int __init tx4927_report_pciclk(void)
-{
-	int pciclk = 0;
+पूर्णांक __init tx4927_report_pciclk(व्योम)
+अणु
+	पूर्णांक pciclk = 0;
 
 	pr_info("PCIC --%s PCICLK:",
-		(__raw_readq(&tx4927_ccfgptr->ccfg) & TX4927_CCFG_PCI66) ?
+		(__raw_पढ़ोq(&tx4927_ccfgptr->ccfg) & TX4927_CCFG_PCI66) ?
 		" PCI66" : "");
-	if (__raw_readq(&tx4927_ccfgptr->pcfg) & TX4927_PCFG_PCICLKEN_ALL) {
-		u64 ccfg = __raw_readq(&tx4927_ccfgptr->ccfg);
-		switch ((unsigned long)ccfg &
-			TX4927_CCFG_PCIDIVMODE_MASK) {
-		case TX4927_CCFG_PCIDIVMODE_2_5:
-			pciclk = txx9_cpu_clock * 2 / 5; break;
-		case TX4927_CCFG_PCIDIVMODE_3:
-			pciclk = txx9_cpu_clock / 3; break;
-		case TX4927_CCFG_PCIDIVMODE_5:
-			pciclk = txx9_cpu_clock / 5; break;
-		case TX4927_CCFG_PCIDIVMODE_6:
-			pciclk = txx9_cpu_clock / 6; break;
-		}
+	अगर (__raw_पढ़ोq(&tx4927_ccfgptr->pcfg) & TX4927_PCFG_PCICLKEN_ALL) अणु
+		u64 ccfg = __raw_पढ़ोq(&tx4927_ccfgptr->ccfg);
+		चयन ((अचिन्हित दीर्घ)ccfg &
+			TX4927_CCFG_PCIDIVMODE_MASK) अणु
+		हाल TX4927_CCFG_PCIDIVMODE_2_5:
+			pciclk = txx9_cpu_घड़ी * 2 / 5; अवरोध;
+		हाल TX4927_CCFG_PCIDIVMODE_3:
+			pciclk = txx9_cpu_घड़ी / 3; अवरोध;
+		हाल TX4927_CCFG_PCIDIVMODE_5:
+			pciclk = txx9_cpu_घड़ी / 5; अवरोध;
+		हाल TX4927_CCFG_PCIDIVMODE_6:
+			pciclk = txx9_cpu_घड़ी / 6; अवरोध;
+		पूर्ण
 		pr_cont("Internal(%u.%uMHz)",
 			(pciclk + 50000) / 1000000,
 			((pciclk + 50000) / 100000) % 10);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_cont("External");
 		pciclk = -1;
-	}
+	पूर्ण
 	pr_cont("\n");
-	return pciclk;
-}
+	वापस pciclk;
+पूर्ण
 
-int __init tx4927_pciclk66_setup(void)
-{
-	int pciclk;
+पूर्णांक __init tx4927_pciclk66_setup(व्योम)
+अणु
+	पूर्णांक pciclk;
 
 	/* Assert M66EN */
 	tx4927_ccfg_set(TX4927_CCFG_PCI66);
-	/* Double PCICLK (if possible) */
-	if (__raw_readq(&tx4927_ccfgptr->pcfg) & TX4927_PCFG_PCICLKEN_ALL) {
-		unsigned int pcidivmode = 0;
-		u64 ccfg = __raw_readq(&tx4927_ccfgptr->ccfg);
-		pcidivmode = (unsigned long)ccfg &
+	/* Double PCICLK (अगर possible) */
+	अगर (__raw_पढ़ोq(&tx4927_ccfgptr->pcfg) & TX4927_PCFG_PCICLKEN_ALL) अणु
+		अचिन्हित पूर्णांक pciभागmode = 0;
+		u64 ccfg = __raw_पढ़ोq(&tx4927_ccfgptr->ccfg);
+		pciभागmode = (अचिन्हित दीर्घ)ccfg &
 			TX4927_CCFG_PCIDIVMODE_MASK;
-		switch (pcidivmode) {
-		case TX4927_CCFG_PCIDIVMODE_5:
-		case TX4927_CCFG_PCIDIVMODE_2_5:
-			pcidivmode = TX4927_CCFG_PCIDIVMODE_2_5;
-			pciclk = txx9_cpu_clock * 2 / 5;
-			break;
-		case TX4927_CCFG_PCIDIVMODE_6:
-		case TX4927_CCFG_PCIDIVMODE_3:
-		default:
-			pcidivmode = TX4927_CCFG_PCIDIVMODE_3;
-			pciclk = txx9_cpu_clock / 3;
-		}
+		चयन (pciभागmode) अणु
+		हाल TX4927_CCFG_PCIDIVMODE_5:
+		हाल TX4927_CCFG_PCIDIVMODE_2_5:
+			pciभागmode = TX4927_CCFG_PCIDIVMODE_2_5;
+			pciclk = txx9_cpu_घड़ी * 2 / 5;
+			अवरोध;
+		हाल TX4927_CCFG_PCIDIVMODE_6:
+		हाल TX4927_CCFG_PCIDIVMODE_3:
+		शेष:
+			pciभागmode = TX4927_CCFG_PCIDIVMODE_3;
+			pciclk = txx9_cpu_घड़ी / 3;
+		पूर्ण
 		tx4927_ccfg_change(TX4927_CCFG_PCIDIVMODE_MASK,
-				   pcidivmode);
+				   pciभागmode);
 		pr_debug("PCICLK: ccfg:%08lx\n",
-			 (unsigned long)__raw_readq(&tx4927_ccfgptr->ccfg));
-	} else
+			 (अचिन्हित दीर्घ)__raw_पढ़ोq(&tx4927_ccfgptr->ccfg));
+	पूर्ण अन्यथा
 		pciclk = -1;
-	return pciclk;
-}
+	वापस pciclk;
+पूर्ण
 
-void __init tx4927_setup_pcierr_irq(void)
-{
-	if (request_irq(TXX9_IRQ_BASE + TX4927_IR_PCIERR,
-			tx4927_pcierr_interrupt,
+व्योम __init tx4927_setup_pcierr_irq(व्योम)
+अणु
+	अगर (request_irq(TXX9_IRQ_BASE + TX4927_IR_PCIERR,
+			tx4927_pcierr_पूर्णांकerrupt,
 			0, "PCI error",
-			(void *)TX4927_PCIC_REG))
+			(व्योम *)TX4927_PCIC_REG))
 		pr_warn("Failed to request irq for PCIERR\n");
-}
+पूर्ण

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019-2020 Marvell International Ltd. All rights reserved. */
 
-#ifndef _PRESTERA_RXTX_H_
-#define _PRESTERA_RXTX_H_
+#अगर_अघोषित _PRESTERA_RXTX_H_
+#घोषणा _PRESTERA_RXTX_H_
 
-#include <linux/netdevice.h>
+#समावेश <linux/netdevice.h>
 
-struct prestera_switch;
-struct prestera_port;
+काष्ठा prestera_चयन;
+काष्ठा prestera_port;
 
-int prestera_rxtx_switch_init(struct prestera_switch *sw);
-void prestera_rxtx_switch_fini(struct prestera_switch *sw);
+पूर्णांक prestera_rxtx_चयन_init(काष्ठा prestera_चयन *sw);
+व्योम prestera_rxtx_चयन_fini(काष्ठा prestera_चयन *sw);
 
-int prestera_rxtx_port_init(struct prestera_port *port);
+पूर्णांक prestera_rxtx_port_init(काष्ठा prestera_port *port);
 
-netdev_tx_t prestera_rxtx_xmit(struct prestera_port *port, struct sk_buff *skb);
+netdev_tx_t prestera_rxtx_xmit(काष्ठा prestera_port *port, काष्ठा sk_buff *skb);
 
-#endif /* _PRESTERA_RXTX_H_ */
+#पूर्ण_अगर /* _PRESTERA_RXTX_H_ */

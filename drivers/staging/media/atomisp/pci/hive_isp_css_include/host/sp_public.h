@@ -1,224 +1,225 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __SP_PUBLIC_H_INCLUDED__
-#define __SP_PUBLIC_H_INCLUDED__
+#अगर_अघोषित __SP_PUBLIC_H_INCLUDED__
+#घोषणा __SP_PUBLIC_H_INCLUDED__
 
-#include <type_support.h>
-#include "system_local.h"
+#समावेश <type_support.h>
+#समावेश "system_local.h"
 
-typedef struct sp_state_s		sp_state_t;
-typedef struct sp_stall_s		sp_stall_t;
+प्रकार काष्ठा sp_state_s		sp_state_t;
+प्रकार काष्ठा sp_stall_s		sp_stall_t;
 
-/*! Enable or disable the program complete irq signal of SP[ID]
+/*! Enable or disable the program complete irq संकेत of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	cnd[in]				predicate
 
- \return none, if(cnd) enable(SP[ID].irq) else disable(SP[ID].irq)
+ \लeturn none, अगर(cnd) enable(SP[ID].irq) अन्यथा disable(SP[ID].irq)
  */
-void cnd_sp_irq_enable(
-    const sp_ID_t		ID,
-    const bool			cnd);
+व्योम cnd_sp_irq_enable(
+    स्थिर sp_ID_t		ID,
+    स्थिर bool			cnd);
 
 /*! Read the state of cell SP[ID]
 
- \param	ID[in]				SP identifier
- \param	state[out]			sp state structure
+ \param	ID[in]				SP identअगरier
+ \param	state[out]			sp state काष्ठाure
  \param	stall[out]			isp stall conditions
 
- \return none, state = SP[ID].state, stall = SP[ID].stall
+ \लeturn none, state = SP[ID].state, stall = SP[ID].stall
  */
-void sp_get_state(
-    const sp_ID_t		ID,
+व्योम sp_get_state(
+    स्थिर sp_ID_t		ID,
     sp_state_t			*state,
     sp_stall_t			*stall);
 
-/*! Write to the status and control register of SP[ID]
+/*! Write to the status and control रेजिस्टर of SP[ID]
 
- \param	ID[in]				SP identifier
- \param	reg[in]				register index
+ \param	ID[in]				SP identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return none, SP[ID].sc[reg] = value
+ \लeturn none, SP[ID].sc[reg] = value
  */
-STORAGE_CLASS_SP_H void sp_ctrl_store(
-    const sp_ID_t		ID,
-    const hrt_address	reg,
-    const hrt_data		value);
+STORAGE_CLASS_SP_H व्योम sp_ctrl_store(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	reg,
+    स्थिर hrt_data		value);
 
-/*! Read from the status and control register of SP[ID]
+/*! Read from the status and control रेजिस्टर of SP[ID]
 
- \param	ID[in]				SP identifier
- \param	reg[in]				register index
+ \param	ID[in]				SP identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return SP[ID].sc[reg]
+ \लeturn SP[ID].sc[reg]
  */
 STORAGE_CLASS_SP_H hrt_data sp_ctrl_load(
-    const sp_ID_t		ID,
-    const hrt_address	reg);
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	reg);
 
-/*! Get the status of a bitfield in the control register of SP[ID]
+/*! Get the status of a bitfield in the control रेजिस्टर of SP[ID]
 
- \param	ID[in]				SP identifier
- \param	reg[in]				register index
+ \param	ID[in]				SP identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param bit[in]				The bit index to be checked
 
- \return  (SP[ID].sc[reg] & (1<<bit)) != 0
+ \लeturn  (SP[ID].sc[reg] & (1<<bit)) != 0
  */
 STORAGE_CLASS_SP_H bool sp_ctrl_getbit(
-    const sp_ID_t		ID,
-    const hrt_address	reg,
-    const unsigned int	bit);
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	reg,
+    स्थिर अचिन्हित पूर्णांक	bit);
 
-/*! Set a bitfield in the control register of SP[ID]
+/*! Set a bitfield in the control रेजिस्टर of SP[ID]
 
- \param	ID[in]				SP identifier
- \param	reg[in]				register index
+ \param	ID[in]				SP identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param bit[in]				The bit index to be set
 
- \return none, SP[ID].sc[reg] |= (1<<bit)
+ \लeturn none, SP[ID].sc[reg] |= (1<<bit)
  */
-STORAGE_CLASS_SP_H void sp_ctrl_setbit(
-    const sp_ID_t		ID,
-    const hrt_address	reg,
-    const unsigned int	bit);
+STORAGE_CLASS_SP_H व्योम sp_ctrl_setbit(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	reg,
+    स्थिर अचिन्हित पूर्णांक	bit);
 
-/*! Clear a bitfield in the control register of SP[ID]
+/*! Clear a bitfield in the control रेजिस्टर of SP[ID]
 
- \param	ID[in]				SP identifier
- \param	reg[in]				register index
+ \param	ID[in]				SP identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param bit[in]				The bit index to be set
 
- \return none, SP[ID].sc[reg] &= ~(1<<bit)
+ \लeturn none, SP[ID].sc[reg] &= ~(1<<bit)
  */
-STORAGE_CLASS_SP_H void sp_ctrl_clearbit(
-    const sp_ID_t		ID,
-    const hrt_address	reg,
-    const unsigned int	bit);
+STORAGE_CLASS_SP_H व्योम sp_ctrl_clearbit(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	reg,
+    स्थिर अचिन्हित पूर्णांक	bit);
 
 /*! Write to the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
  \param data[in]			The data to be written
  \param size[in]			The size(in bytes) of the data to be written
 
- \return none, SP[ID].dmem[addr...addr+size-1] = data
+ \लeturn none, SP[ID].dmem[addr...addr+size-1] = data
  */
-STORAGE_CLASS_SP_H void sp_dmem_store(
-    const sp_ID_t		ID,
+STORAGE_CLASS_SP_H व्योम sp_dmem_store(
+    स्थिर sp_ID_t		ID,
     hrt_address		addr,
-    const void			*data,
-    const size_t		size);
+    स्थिर व्योम			*data,
+    स्थिर माप_प्रकार		size);
 
 /*! Read from the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
- \param data[in]			The data to be read
- \param size[in]			The size(in bytes) of the data to be read
+ \param data[in]			The data to be पढ़ो
+ \param size[in]			The size(in bytes) of the data to be पढ़ो
 
- \return none, data = SP[ID].dmem[addr...addr+size-1]
+ \लeturn none, data = SP[ID].dmem[addr...addr+size-1]
  */
-STORAGE_CLASS_SP_H void sp_dmem_load(
-    const sp_ID_t		ID,
-    const hrt_address	addr,
-    void			*data,
-    const size_t		size);
+STORAGE_CLASS_SP_H व्योम sp_dmem_load(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	addr,
+    व्योम			*data,
+    स्थिर माप_प्रकार		size);
 
 /*! Write a 8-bit datum to the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
  \param data[in]			The data to be written
  \param size[in]			The size(in bytes) of the data to be written
 
- \return none, SP[ID].dmem[addr...addr+size-1] = data
+ \लeturn none, SP[ID].dmem[addr...addr+size-1] = data
  */
-STORAGE_CLASS_SP_H void sp_dmem_store_uint8(
-    const sp_ID_t		ID,
+STORAGE_CLASS_SP_H व्योम sp_dmem_store_uपूर्णांक8(
+    स्थिर sp_ID_t		ID,
     hrt_address		addr,
-    const uint8_t		data);
+    स्थिर uपूर्णांक8_t		data);
 
 /*! Write a 16-bit datum to the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
  \param data[in]			The data to be written
  \param size[in]			The size(in bytes) of the data to be written
 
- \return none, SP[ID].dmem[addr...addr+size-1] = data
+ \लeturn none, SP[ID].dmem[addr...addr+size-1] = data
  */
-STORAGE_CLASS_SP_H void sp_dmem_store_uint16(
-    const sp_ID_t		ID,
+STORAGE_CLASS_SP_H व्योम sp_dmem_store_uपूर्णांक16(
+    स्थिर sp_ID_t		ID,
     hrt_address		addr,
-    const uint16_t		data);
+    स्थिर uपूर्णांक16_t		data);
 
 /*! Write a 32-bit datum to the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
  \param data[in]			The data to be written
  \param size[in]			The size(in bytes) of the data to be written
 
- \return none, SP[ID].dmem[addr...addr+size-1] = data
+ \लeturn none, SP[ID].dmem[addr...addr+size-1] = data
  */
-STORAGE_CLASS_SP_H void sp_dmem_store_uint32(
-    const sp_ID_t		ID,
+STORAGE_CLASS_SP_H व्योम sp_dmem_store_uपूर्णांक32(
+    स्थिर sp_ID_t		ID,
     hrt_address		addr,
-    const uint32_t		data);
+    स्थिर uपूर्णांक32_t		data);
 
 /*! Load a 8-bit datum from the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
- \param data[in]			The data to be read
- \param size[in]			The size(in bytes) of the data to be read
+ \param data[in]			The data to be पढ़ो
+ \param size[in]			The size(in bytes) of the data to be पढ़ो
 
- \return none, data = SP[ID].dmem[addr...addr+size-1]
+ \लeturn none, data = SP[ID].dmem[addr...addr+size-1]
  */
-STORAGE_CLASS_SP_H uint8_t sp_dmem_load_uint8(
-    const sp_ID_t		ID,
-    const hrt_address	addr);
+STORAGE_CLASS_SP_H uपूर्णांक8_t sp_dmem_load_uपूर्णांक8(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	addr);
 
 /*! Load a 16-bit datum from the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
- \param data[in]			The data to be read
- \param size[in]			The size(in bytes) of the data to be read
+ \param data[in]			The data to be पढ़ो
+ \param size[in]			The size(in bytes) of the data to be पढ़ो
 
- \return none, data = SP[ID].dmem[addr...addr+size-1]
+ \लeturn none, data = SP[ID].dmem[addr...addr+size-1]
  */
-STORAGE_CLASS_SP_H uint16_t sp_dmem_load_uint16(
-    const sp_ID_t		ID,
-    const hrt_address	addr);
+STORAGE_CLASS_SP_H uपूर्णांक16_t sp_dmem_load_uपूर्णांक16(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	addr);
 
 /*! Load a 32-bit datum from the DMEM of SP[ID]
 
- \param	ID[in]				SP identifier
+ \param	ID[in]				SP identअगरier
  \param	addr[in]			the address in DMEM
- \param data[in]			The data to be read
- \param size[in]			The size(in bytes) of the data to be read
+ \param data[in]			The data to be पढ़ो
+ \param size[in]			The size(in bytes) of the data to be पढ़ो
 
- \return none, data = SP[ID].dmem[addr...addr+size-1]
+ \लeturn none, data = SP[ID].dmem[addr...addr+size-1]
  */
-STORAGE_CLASS_SP_H uint32_t sp_dmem_load_uint32(
-    const sp_ID_t		ID,
-    const hrt_address	addr);
+STORAGE_CLASS_SP_H uपूर्णांक32_t sp_dmem_load_uपूर्णांक32(
+    स्थिर sp_ID_t		ID,
+    स्थिर hrt_address	addr);
 
-#endif /* __SP_PUBLIC_H_INCLUDED__ */
+#पूर्ण_अगर /* __SP_PUBLIC_H_INCLUDED__ */

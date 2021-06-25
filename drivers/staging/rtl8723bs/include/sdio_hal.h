@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __SDIO_HAL_H__
-#define __SDIO_HAL_H__
+#अगर_अघोषित __SDIO_HAL_H__
+#घोषणा __SDIO_HAL_H__
 
 
-extern u8 sd_hal_bus_init(struct adapter *padapter);
-extern u8 sd_hal_bus_deinit(struct adapter *padapter);
+बाह्य u8 sd_hal_bus_init(काष्ठा adapter *padapter);
+बाह्य u8 sd_hal_bus_deinit(काष्ठा adapter *padapter);
 
-u8 sd_int_isr(struct adapter *padapter);
-void sd_int_dpc(struct adapter *padapter);
-void rtw_set_hal_ops(struct adapter *padapter);
+u8 sd_पूर्णांक_isr(काष्ठा adapter *padapter);
+व्योम sd_पूर्णांक_dpc(काष्ठा adapter *padapter);
+व्योम rtw_set_hal_ops(काष्ठा adapter *padapter);
 
-void rtl8723bs_set_hal_ops(struct adapter *padapter);
+व्योम rtl8723bs_set_hal_ops(काष्ठा adapter *padapter);
 
-#endif /* __SDIO_HAL_H__ */
+#पूर्ण_अगर /* __SDIO_HAL_H__ */

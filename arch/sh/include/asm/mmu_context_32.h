@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_MMU_CONTEXT_32_H
-#define __ASM_SH_MMU_CONTEXT_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_MMU_CONTEXT_32_H
+#घोषणा __ASM_SH_MMU_CONTEXT_32_H
 
-#ifdef CONFIG_CPU_HAS_PTEAEX
-static inline void set_asid(unsigned long asid)
-{
-	__raw_writel(asid, MMU_PTEAEX);
-}
+#अगर_घोषित CONFIG_CPU_HAS_PTEAEX
+अटल अंतरभूत व्योम set_asid(अचिन्हित दीर्घ asid)
+अणु
+	__raw_ग_लिखोl(asid, MMU_PTEAEX);
+पूर्ण
 
-static inline unsigned long get_asid(void)
-{
-	return __raw_readl(MMU_PTEAEX) & MMU_CONTEXT_ASID_MASK;
-}
-#else
-static inline void set_asid(unsigned long asid)
-{
-	unsigned long __dummy;
+अटल अंतरभूत अचिन्हित दीर्घ get_asid(व्योम)
+अणु
+	वापस __raw_पढ़ोl(MMU_PTEAEX) & MMU_CONTEXT_ASID_MASK;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम set_asid(अचिन्हित दीर्घ asid)
+अणु
+	अचिन्हित दीर्घ __dummy;
 
-	__asm__ __volatile__ ("mov.l	%2, %0\n\t"
+	__यंत्र__ __अस्थिर__ ("mov.l	%2, %0\n\t"
 			      "and	%3, %0\n\t"
 			      "or	%1, %0\n\t"
 			      "mov.l	%0, %2"
 			      : "=&r" (__dummy)
 			      : "r" (asid), "m" (__m(MMU_PTEH)),
 			        "r" (0xffffff00));
-}
+पूर्ण
 
-static inline unsigned long get_asid(void)
-{
-	unsigned long asid;
+अटल अंतरभूत अचिन्हित दीर्घ get_asid(व्योम)
+अणु
+	अचिन्हित दीर्घ asid;
 
-	__asm__ __volatile__ ("mov.l	%1, %0"
+	__यंत्र__ __अस्थिर__ ("mov.l	%1, %0"
 			      : "=r" (asid)
 			      : "m" (__m(MMU_PTEH)));
 	asid &= MMU_CONTEXT_ASID_MASK;
-	return asid;
-}
-#endif /* CONFIG_CPU_HAS_PTEAEX */
+	वापस asid;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CPU_HAS_PTEAEX */
 
-/* MMU_TTB is used for optimizing the fault handling. */
-static inline void set_TTB(pgd_t *pgd)
-{
-	__raw_writel((unsigned long)pgd, MMU_TTB);
-}
+/* MMU_TTB is used क्रम optimizing the fault handling. */
+अटल अंतरभूत व्योम set_TTB(pgd_t *pgd)
+अणु
+	__raw_ग_लिखोl((अचिन्हित दीर्घ)pgd, MMU_TTB);
+पूर्ण
 
-static inline pgd_t *get_TTB(void)
-{
-	return (pgd_t *)__raw_readl(MMU_TTB);
-}
-#endif /* __ASM_SH_MMU_CONTEXT_32_H */
+अटल अंतरभूत pgd_t *get_TTB(व्योम)
+अणु
+	वापस (pgd_t *)__raw_पढ़ोl(MMU_TTB);
+पूर्ण
+#पूर्ण_अगर /* __ASM_SH_MMU_CONTEXT_32_H */

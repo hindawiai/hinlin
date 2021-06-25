@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2012, Fabio Baltieri <fabio.baltieri@gmail.com>
  */
 
-#ifndef _CAN_LED_H
-#define _CAN_LED_H
+#अगर_अघोषित _CAN_LED_H
+#घोषणा _CAN_LED_H
 
-#include <linux/if.h>
-#include <linux/leds.h>
-#include <linux/netdevice.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/netdevice.h>
 
-enum can_led_event {
+क्रमागत can_led_event अणु
 	CAN_LED_EVENT_OPEN,
 	CAN_LED_EVENT_STOP,
 	CAN_LED_EVENT_TX,
 	CAN_LED_EVENT_RX,
-};
+पूर्ण;
 
-#ifdef CONFIG_CAN_LEDS
+#अगर_घोषित CONFIG_CAN_LEDS
 
-/* keep space for interface name + "-tx"/"-rx"/"-rxtx"
+/* keep space क्रम पूर्णांकerface name + "-tx"/"-rx"/"-rxtx"
  * suffix and null terminator
  */
-#define CAN_LED_NAME_SZ (IFNAMSIZ + 6)
+#घोषणा CAN_LED_NAME_SZ (IFNAMSIZ + 6)
 
-void can_led_event(struct net_device *netdev, enum can_led_event event);
-void devm_can_led_init(struct net_device *netdev);
-int __init can_led_notifier_init(void);
-void __exit can_led_notifier_exit(void);
+व्योम can_led_event(काष्ठा net_device *netdev, क्रमागत can_led_event event);
+व्योम devm_can_led_init(काष्ठा net_device *netdev);
+पूर्णांक __init can_led_notअगरier_init(व्योम);
+व्योम __निकास can_led_notअगरier_निकास(व्योम);
 
-#else
+#अन्यथा
 
-static inline void can_led_event(struct net_device *netdev,
-				 enum can_led_event event)
-{
-}
-static inline void devm_can_led_init(struct net_device *netdev)
-{
-}
-static inline int can_led_notifier_init(void)
-{
-	return 0;
-}
-static inline void can_led_notifier_exit(void)
-{
-}
+अटल अंतरभूत व्योम can_led_event(काष्ठा net_device *netdev,
+				 क्रमागत can_led_event event)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम devm_can_led_init(काष्ठा net_device *netdev)
+अणु
+पूर्ण
+अटल अंतरभूत पूर्णांक can_led_notअगरier_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम can_led_notअगरier_निकास(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* !_CAN_LED_H */
+#पूर्ण_अगर /* !_CAN_LED_H */

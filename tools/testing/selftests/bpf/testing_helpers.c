@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 /* Copyright (C) 2020 Facebook, Inc. */
-#include <stdlib.h>
-#include <errno.h>
-#include "testing_helpers.h"
+#समावेश <मानककोष.स>
+#समावेश <त्रुटिसं.स>
+#समावेश "testing_helpers.h"
 
-int parse_num_list(const char *s, bool **num_set, int *num_set_len)
-{
-	int i, set_len = 0, new_len, num, start = 0, end = -1;
-	bool *set = NULL, *tmp, parsing_end = false;
-	char *next;
+पूर्णांक parse_num_list(स्थिर अक्षर *s, bool **num_set, पूर्णांक *num_set_len)
+अणु
+	पूर्णांक i, set_len = 0, new_len, num, start = 0, end = -1;
+	bool *set = शून्य, *पंचांगp, parsing_end = false;
+	अक्षर *next;
 
-	while (s[0]) {
-		errno = 0;
-		num = strtol(s, &next, 10);
-		if (errno)
-			return -errno;
+	जबतक (s[0]) अणु
+		त्रुटि_सं = 0;
+		num = म_से_दीर्घ(s, &next, 10);
+		अगर (त्रुटि_सं)
+			वापस -त्रुटि_सं;
 
-		if (parsing_end)
+		अगर (parsing_end)
 			end = num;
-		else
+		अन्यथा
 			start = num;
 
-		if (!parsing_end && *next == '-') {
+		अगर (!parsing_end && *next == '-') अणु
 			s = next + 1;
 			parsing_end = true;
-			continue;
-		} else if (*next == ',') {
+			जारी;
+		पूर्ण अन्यथा अगर (*next == ',') अणु
 			parsing_end = false;
 			s = next + 1;
 			end = num;
-		} else if (*next == '\0') {
+		पूर्ण अन्यथा अगर (*next == '\0') अणु
 			parsing_end = false;
 			s = next;
 			end = num;
-		} else {
-			return -EINVAL;
-		}
+		पूर्ण अन्यथा अणु
+			वापस -EINVAL;
+		पूर्ण
 
-		if (start > end)
-			return -EINVAL;
+		अगर (start > end)
+			वापस -EINVAL;
 
-		if (end + 1 > set_len) {
+		अगर (end + 1 > set_len) अणु
 			new_len = end + 1;
-			tmp = realloc(set, new_len);
-			if (!tmp) {
-				free(set);
-				return -ENOMEM;
-			}
-			for (i = set_len; i < start; i++)
-				tmp[i] = false;
-			set = tmp;
+			पंचांगp = पुनः_स्मृति(set, new_len);
+			अगर (!पंचांगp) अणु
+				मुक्त(set);
+				वापस -ENOMEM;
+			पूर्ण
+			क्रम (i = set_len; i < start; i++)
+				पंचांगp[i] = false;
+			set = पंचांगp;
 			set_len = new_len;
-		}
-		for (i = start; i <= end; i++)
+		पूर्ण
+		क्रम (i = start; i <= end; i++)
 			set[i] = true;
-	}
+	पूर्ण
 
-	if (!set)
-		return -EINVAL;
+	अगर (!set)
+		वापस -EINVAL;
 
 	*num_set = set;
 	*num_set_len = set_len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__u32 link_info_prog_id(const struct bpf_link *link, struct bpf_link_info *info)
-{
-	__u32 info_len = sizeof(*info);
-	int err;
+__u32 link_info_prog_id(स्थिर काष्ठा bpf_link *link, काष्ठा bpf_link_info *info)
+अणु
+	__u32 info_len = माप(*info);
+	पूर्णांक err;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	err = bpf_obj_get_info_by_fd(bpf_link__fd(link), info, &info_len);
-	if (err) {
-		printf("failed to get link info: %d\n", -errno);
-		return 0;
-	}
-	return info->prog_id;
-}
+	अगर (err) अणु
+		म_लिखो("failed to get link info: %d\n", -त्रुटि_सं);
+		वापस 0;
+	पूर्ण
+	वापस info->prog_id;
+पूर्ण

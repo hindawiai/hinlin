@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence USBSS DRD Driver.
  *
@@ -12,323 +13,323 @@
  *         Roger Quadros <rogerq@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "core.h"
-#include "gadget-export.h"
-#include "drd.h"
+#समावेश "core.h"
+#समावेश "gadget-export.h"
+#समावेश "drd.h"
 
-static int set_phy_power_on(struct cdns *cdns)
-{
-	int ret;
+अटल पूर्णांक set_phy_घातer_on(काष्ठा cdns *cdns)
+अणु
+	पूर्णांक ret;
 
-	ret = phy_power_on(cdns->usb2_phy);
-	if (ret)
-		return ret;
+	ret = phy_घातer_on(cdns->usb2_phy);
+	अगर (ret)
+		वापस ret;
 
-	ret = phy_power_on(cdns->usb3_phy);
-	if (ret)
-		phy_power_off(cdns->usb2_phy);
+	ret = phy_घातer_on(cdns->usb3_phy);
+	अगर (ret)
+		phy_घातer_off(cdns->usb2_phy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void set_phy_power_off(struct cdns *cdns)
-{
-	phy_power_off(cdns->usb3_phy);
-	phy_power_off(cdns->usb2_phy);
-}
+अटल व्योम set_phy_घातer_off(काष्ठा cdns *cdns)
+अणु
+	phy_घातer_off(cdns->usb3_phy);
+	phy_घातer_off(cdns->usb2_phy);
+पूर्ण
 
 /**
- * cdns3_plat_probe - probe for cdns3 core device
- * @pdev: Pointer to cdns3 core platform device
+ * cdns3_plat_probe - probe क्रम cdns3 core device
+ * @pdev: Poपूर्णांकer to cdns3 core platक्रमm device
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-static int cdns3_plat_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource	*res;
-	struct cdns *cdns;
-	void __iomem *regs;
-	int ret;
+अटल पूर्णांक cdns3_plat_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource	*res;
+	काष्ठा cdns *cdns;
+	व्योम __iomem *regs;
+	पूर्णांक ret;
 
-	cdns = devm_kzalloc(dev, sizeof(*cdns), GFP_KERNEL);
-	if (!cdns)
-		return -ENOMEM;
+	cdns = devm_kzalloc(dev, माप(*cdns), GFP_KERNEL);
+	अगर (!cdns)
+		वापस -ENOMEM;
 
 	cdns->dev = dev;
 	cdns->pdata = dev_get_platdata(dev);
 
-	platform_set_drvdata(pdev, cdns);
+	platक्रमm_set_drvdata(pdev, cdns);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "host");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "host");
+	अगर (!res) अणु
 		dev_err(dev, "missing host IRQ\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	cdns->xhci_res[0] = *res;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "xhci");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "xhci");
+	अगर (!res) अणु
 		dev_err(dev, "couldn't get xhci resource\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	cdns->xhci_res[1] = *res;
 
-	cdns->dev_irq = platform_get_irq_byname(pdev, "peripheral");
+	cdns->dev_irq = platक्रमm_get_irq_byname(pdev, "peripheral");
 
-	if (cdns->dev_irq < 0)
-		return cdns->dev_irq;
+	अगर (cdns->dev_irq < 0)
+		वापस cdns->dev_irq;
 
-	regs = devm_platform_ioremap_resource_byname(pdev, "dev");
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	regs = devm_platक्रमm_ioremap_resource_byname(pdev, "dev");
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 	cdns->dev_regs	= regs;
 
-	cdns->otg_irq = platform_get_irq_byname(pdev, "otg");
-	if (cdns->otg_irq < 0)
-		return cdns->otg_irq;
+	cdns->otg_irq = platक्रमm_get_irq_byname(pdev, "otg");
+	अगर (cdns->otg_irq < 0)
+		वापस cdns->otg_irq;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "otg");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "otg");
+	अगर (!res) अणु
 		dev_err(dev, "couldn't get otg resource\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	cdns->phyrst_a_enable = device_property_read_bool(dev, "cdns,phyrst-a-enable");
+	cdns->phyrst_a_enable = device_property_पढ़ो_bool(dev, "cdns,phyrst-a-enable");
 
 	cdns->otg_res = *res;
 
-	cdns->wakeup_irq = platform_get_irq_byname_optional(pdev, "wakeup");
-	if (cdns->wakeup_irq == -EPROBE_DEFER)
-		return cdns->wakeup_irq;
-	else if (cdns->wakeup_irq == 0)
-		return -EINVAL;
+	cdns->wakeup_irq = platक्रमm_get_irq_byname_optional(pdev, "wakeup");
+	अगर (cdns->wakeup_irq == -EPROBE_DEFER)
+		वापस cdns->wakeup_irq;
+	अन्यथा अगर (cdns->wakeup_irq == 0)
+		वापस -EINVAL;
 
-	if (cdns->wakeup_irq < 0) {
+	अगर (cdns->wakeup_irq < 0) अणु
 		dev_dbg(dev, "couldn't get wakeup irq\n");
 		cdns->wakeup_irq = 0x0;
-	}
+	पूर्ण
 
 	cdns->usb2_phy = devm_phy_optional_get(dev, "cdns3,usb2-phy");
-	if (IS_ERR(cdns->usb2_phy))
-		return PTR_ERR(cdns->usb2_phy);
+	अगर (IS_ERR(cdns->usb2_phy))
+		वापस PTR_ERR(cdns->usb2_phy);
 
 	ret = phy_init(cdns->usb2_phy);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cdns->usb3_phy = devm_phy_optional_get(dev, "cdns3,usb3-phy");
-	if (IS_ERR(cdns->usb3_phy))
-		return PTR_ERR(cdns->usb3_phy);
+	अगर (IS_ERR(cdns->usb3_phy))
+		वापस PTR_ERR(cdns->usb3_phy);
 
 	ret = phy_init(cdns->usb3_phy);
-	if (ret)
-		goto err_phy3_init;
+	अगर (ret)
+		जाओ err_phy3_init;
 
-	ret = set_phy_power_on(cdns);
-	if (ret)
-		goto err_phy_power_on;
+	ret = set_phy_घातer_on(cdns);
+	अगर (ret)
+		जाओ err_phy_घातer_on;
 
 	cdns->gadget_init = cdns3_gadget_init;
 
 	ret = cdns_init(cdns);
-	if (ret)
-		goto err_cdns_init;
+	अगर (ret)
+		जाओ err_cdns_init;
 
 	device_set_wakeup_capable(dev, true);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
-	if (!(cdns->pdata && (cdns->pdata->quirks & CDNS3_DEFAULT_PM_RUNTIME_ALLOW)))
-		pm_runtime_forbid(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
+	अगर (!(cdns->pdata && (cdns->pdata->quirks & CDNS3_DEFAULT_PM_RUNTIME_ALLOW)))
+		pm_runसमय_क्रमbid(dev);
 
 	/*
-	 * The controller needs less time between bus and controller suspend,
-	 * and we also needs a small delay to avoid frequently entering low
-	 * power mode.
+	 * The controller needs less समय between bus and controller suspend,
+	 * and we also needs a small delay to aव्योम frequently entering low
+	 * घातer mode.
 	 */
-	pm_runtime_set_autosuspend_delay(dev, 20);
-	pm_runtime_mark_last_busy(dev);
-	pm_runtime_use_autosuspend(dev);
+	pm_runसमय_set_स्वतःsuspend_delay(dev, 20);
+	pm_runसमय_mark_last_busy(dev);
+	pm_runसमय_use_स्वतःsuspend(dev);
 
-	return 0;
+	वापस 0;
 
 err_cdns_init:
-	set_phy_power_off(cdns);
-err_phy_power_on:
-	phy_exit(cdns->usb3_phy);
+	set_phy_घातer_off(cdns);
+err_phy_घातer_on:
+	phy_निकास(cdns->usb3_phy);
 err_phy3_init:
-	phy_exit(cdns->usb2_phy);
+	phy_निकास(cdns->usb2_phy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cdns3_remove - unbind drd driver and clean up
- * @pdev: Pointer to Linux platform device
+ * cdns3_हटाओ - unbind drd driver and clean up
+ * @pdev: Poपूर्णांकer to Linux platक्रमm device
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-static int cdns3_plat_remove(struct platform_device *pdev)
-{
-	struct cdns *cdns = platform_get_drvdata(pdev);
-	struct device *dev = cdns->dev;
+अटल पूर्णांक cdns3_plat_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा cdns *cdns = platक्रमm_get_drvdata(pdev);
+	काष्ठा device *dev = cdns->dev;
 
-	pm_runtime_get_sync(dev);
-	pm_runtime_disable(dev);
-	pm_runtime_put_noidle(dev);
-	cdns_remove(cdns);
-	set_phy_power_off(cdns);
-	phy_exit(cdns->usb2_phy);
-	phy_exit(cdns->usb3_phy);
-	return 0;
-}
+	pm_runसमय_get_sync(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_put_noidle(dev);
+	cdns_हटाओ(cdns);
+	set_phy_घातer_off(cdns);
+	phy_निकास(cdns->usb2_phy);
+	phy_निकास(cdns->usb3_phy);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-static int cdns3_set_platform_suspend(struct device *dev,
+अटल पूर्णांक cdns3_set_platक्रमm_suspend(काष्ठा device *dev,
 				      bool suspend, bool wakeup)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
-	int ret = 0;
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
+	पूर्णांक ret = 0;
 
-	if (cdns->pdata && cdns->pdata->platform_suspend)
-		ret = cdns->pdata->platform_suspend(dev, suspend, wakeup);
+	अगर (cdns->pdata && cdns->pdata->platक्रमm_suspend)
+		ret = cdns->pdata->platक्रमm_suspend(dev, suspend, wakeup);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdns3_controller_suspend(struct device *dev, pm_message_t msg)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
+अटल पूर्णांक cdns3_controller_suspend(काष्ठा device *dev, pm_message_t msg)
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
 	bool wakeup;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (cdns->in_lpm)
-		return 0;
+	अगर (cdns->in_lpm)
+		वापस 0;
 
-	if (PMSG_IS_AUTO(msg))
+	अगर (PMSG_IS_AUTO(msg))
 		wakeup = true;
-	else
+	अन्यथा
 		wakeup = device_may_wakeup(dev);
 
-	cdns3_set_platform_suspend(cdns->dev, true, wakeup);
-	set_phy_power_off(cdns);
+	cdns3_set_platक्रमm_suspend(cdns->dev, true, wakeup);
+	set_phy_घातer_off(cdns);
 	spin_lock_irqsave(&cdns->lock, flags);
 	cdns->in_lpm = true;
 	spin_unlock_irqrestore(&cdns->lock, flags);
 	dev_dbg(cdns->dev, "%s ends\n", __func__);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdns3_controller_resume(struct device *dev, pm_message_t msg)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
-	int ret;
-	unsigned long flags;
+अटल पूर्णांक cdns3_controller_resume(काष्ठा device *dev, pm_message_t msg)
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
-	if (!cdns->in_lpm)
-		return 0;
+	अगर (!cdns->in_lpm)
+		वापस 0;
 
-	if (cdns_power_is_lost(cdns)) {
-		phy_exit(cdns->usb2_phy);
+	अगर (cdns_घातer_is_lost(cdns)) अणु
+		phy_निकास(cdns->usb2_phy);
 		ret = phy_init(cdns->usb2_phy);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		phy_exit(cdns->usb3_phy);
+		phy_निकास(cdns->usb3_phy);
 		ret = phy_init(cdns->usb3_phy);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = set_phy_power_on(cdns);
-	if (ret)
-		return ret;
+	ret = set_phy_घातer_on(cdns);
+	अगर (ret)
+		वापस ret;
 
-	cdns3_set_platform_suspend(cdns->dev, false, false);
+	cdns3_set_platक्रमm_suspend(cdns->dev, false, false);
 
 	spin_lock_irqsave(&cdns->lock, flags);
 	cdns_resume(cdns, !PMSG_IS_AUTO(msg));
 	cdns->in_lpm = false;
 	spin_unlock_irqrestore(&cdns->lock, flags);
-	if (cdns->wakeup_pending) {
+	अगर (cdns->wakeup_pending) अणु
 		cdns->wakeup_pending = false;
 		enable_irq(cdns->wakeup_irq);
-	}
+	पूर्ण
 	dev_dbg(cdns->dev, "%s ends\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdns3_plat_runtime_suspend(struct device *dev)
-{
-	return cdns3_controller_suspend(dev, PMSG_AUTO_SUSPEND);
-}
+अटल पूर्णांक cdns3_plat_runसमय_suspend(काष्ठा device *dev)
+अणु
+	वापस cdns3_controller_suspend(dev, PMSG_AUTO_SUSPEND);
+पूर्ण
 
-static int cdns3_plat_runtime_resume(struct device *dev)
-{
-	return cdns3_controller_resume(dev, PMSG_AUTO_RESUME);
-}
+अटल पूर्णांक cdns3_plat_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस cdns3_controller_resume(dev, PMSG_AUTO_RESUME);
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 
-static int cdns3_plat_suspend(struct device *dev)
-{
-	struct cdns *cdns = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक cdns3_plat_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cdns *cdns = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	cdns_suspend(cdns);
 
 	ret = cdns3_controller_suspend(dev, PMSG_SUSPEND);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (device_may_wakeup(dev) && cdns->wakeup_irq)
+	अगर (device_may_wakeup(dev) && cdns->wakeup_irq)
 		enable_irq_wake(cdns->wakeup_irq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdns3_plat_resume(struct device *dev)
-{
-	return cdns3_controller_resume(dev, PMSG_RESUME);
-}
-#endif /* CONFIG_PM_SLEEP */
-#endif /* CONFIG_PM */
+अटल पूर्णांक cdns3_plat_resume(काष्ठा device *dev)
+अणु
+	वापस cdns3_controller_resume(dev, PMSG_RESUME);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static const struct dev_pm_ops cdns3_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cdns3_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(cdns3_plat_suspend, cdns3_plat_resume)
-	SET_RUNTIME_PM_OPS(cdns3_plat_runtime_suspend,
-			   cdns3_plat_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(cdns3_plat_runसमय_suspend,
+			   cdns3_plat_runसमय_resume, शून्य)
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id of_cdns3_match[] = {
-	{ .compatible = "cdns,usb3" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id of_cdns3_match[] = अणु
+	अणु .compatible = "cdns,usb3" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_cdns3_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver cdns3_driver = {
+अटल काष्ठा platक्रमm_driver cdns3_driver = अणु
 	.probe		= cdns3_plat_probe,
-	.remove		= cdns3_plat_remove,
-	.driver		= {
+	.हटाओ		= cdns3_plat_हटाओ,
+	.driver		= अणु
 		.name	= "cdns-usb3",
 		.of_match_table	= of_match_ptr(of_cdns3_match),
 		.pm	= &cdns3_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cdns3_driver);
+module_platक्रमm_driver(cdns3_driver);
 
 MODULE_ALIAS("platform:cdns3");
 MODULE_AUTHOR("Pawel Laszczak <pawell@cadence.com>");

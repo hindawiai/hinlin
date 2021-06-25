@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /*
  * Copyright (C) 2017 Intel Deutschland GmbH
  */
-#ifndef __iwl_fw_api_led_h__
-#define __iwl_fw_api_led_h__
+#अगर_अघोषित __iwl_fw_api_led_h__
+#घोषणा __iwl_fw_api_led_h__
 
 /**
- * struct iwl_led_cmd - LED switching command
+ * काष्ठा iwl_led_cmd - LED चयनing command
  *
  * @status: LED status (on/off)
  */
-struct iwl_led_cmd {
+काष्ठा iwl_led_cmd अणु
 	__le32 status;
-} __packed; /* LEDS_CMD_API_S_VER_2 */
+पूर्ण __packed; /* LEDS_CMD_API_S_VER_2 */
 
-#endif /* __iwl_fw_api_led_h__ */
+#पूर्ण_अगर /* __iwl_fw_api_led_h__ */

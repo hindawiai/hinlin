@@ -1,813 +1,814 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Linux I2C core
  *
  * Copyright (C) 1995-99 Simon G. Vogl
- *   With some changes from Kyösti Mälkki <kmalkki@cc.hut.fi>
- *   Mux support by Rodolfo Giometti <giometti@enneenne.com> and
+ *   With some changes from Kyथघsti Mथअlkki <kmalkki@cc.hut.fi>
+ *   Mux support by Roकरोlfo Giometti <giometti@enneenne.com> and
  *   Michael Lawnick <michael.lawnick.ext@nsn.com>
  *
  * Copyright (C) 2013-2017 Wolfram Sang <wsa@kernel.org>
  */
 
-#define pr_fmt(fmt) "i2c-core: " fmt
+#घोषणा pr_fmt(fmt) "i2c-core: " fmt
 
-#include <dt-bindings/i2c/i2c.h>
-#include <linux/acpi.h>
-#include <linux/clk/clk-conf.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/i2c-smbus.h>
-#include <linux/idr.h>
-#include <linux/init.h>
-#include <linux/irqflags.h>
-#include <linux/jump_label.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/of_device.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_runtime.h>
-#include <linux/pm_wakeirq.h>
-#include <linux/property.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
+#समावेश <dt-bindings/i2c/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk/clk-conf.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-smbus.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pm_wakeirq.h>
+#समावेश <linux/property.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/slab.h>
 
-#include "i2c-core.h"
+#समावेश "i2c-core.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/i2c.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/i2c.h>
 
-#define I2C_ADDR_OFFSET_TEN_BIT	0xa000
-#define I2C_ADDR_OFFSET_SLAVE	0x1000
+#घोषणा I2C_ADDR_OFFSET_TEN_BIT	0xa000
+#घोषणा I2C_ADDR_OFFSET_SLAVE	0x1000
 
-#define I2C_ADDR_7BITS_MAX	0x77
-#define I2C_ADDR_7BITS_COUNT	(I2C_ADDR_7BITS_MAX + 1)
+#घोषणा I2C_ADDR_7BITS_MAX	0x77
+#घोषणा I2C_ADDR_7BITS_COUNT	(I2C_ADDR_7BITS_MAX + 1)
 
-#define I2C_ADDR_DEVICE_ID	0x7c
+#घोषणा I2C_ADDR_DEVICE_ID	0x7c
 
 /*
  * core_lock protects i2c_adapter_idr, and guarantees that device detection,
  * deletion of detected devices are serialized
  */
-static DEFINE_MUTEX(core_lock);
-static DEFINE_IDR(i2c_adapter_idr);
+अटल DEFINE_MUTEX(core_lock);
+अटल DEFINE_IDR(i2c_adapter_idr);
 
-static int i2c_detect(struct i2c_adapter *adapter, struct i2c_driver *driver);
+अटल पूर्णांक i2c_detect(काष्ठा i2c_adapter *adapter, काष्ठा i2c_driver *driver);
 
-static DEFINE_STATIC_KEY_FALSE(i2c_trace_msg_key);
-static bool is_registered;
+अटल DEFINE_STATIC_KEY_FALSE(i2c_trace_msg_key);
+अटल bool is_रेजिस्टरed;
 
-int i2c_transfer_trace_reg(void)
-{
-	static_branch_inc(&i2c_trace_msg_key);
-	return 0;
-}
+पूर्णांक i2c_transfer_trace_reg(व्योम)
+अणु
+	अटल_branch_inc(&i2c_trace_msg_key);
+	वापस 0;
+पूर्ण
 
-void i2c_transfer_trace_unreg(void)
-{
-	static_branch_dec(&i2c_trace_msg_key);
-}
+व्योम i2c_transfer_trace_unreg(व्योम)
+अणु
+	अटल_branch_dec(&i2c_trace_msg_key);
+पूर्ण
 
-const char *i2c_freq_mode_string(u32 bus_freq_hz)
-{
-	switch (bus_freq_hz) {
-	case I2C_MAX_STANDARD_MODE_FREQ:
-		return "Standard Mode (100 kHz)";
-	case I2C_MAX_FAST_MODE_FREQ:
-		return "Fast Mode (400 kHz)";
-	case I2C_MAX_FAST_MODE_PLUS_FREQ:
-		return "Fast Mode Plus (1.0 MHz)";
-	case I2C_MAX_TURBO_MODE_FREQ:
-		return "Turbo Mode (1.4 MHz)";
-	case I2C_MAX_HIGH_SPEED_MODE_FREQ:
-		return "High Speed Mode (3.4 MHz)";
-	case I2C_MAX_ULTRA_FAST_MODE_FREQ:
-		return "Ultra Fast Mode (5.0 MHz)";
-	default:
-		return "Unknown Mode";
-	}
-}
+स्थिर अक्षर *i2c_freq_mode_string(u32 bus_freq_hz)
+अणु
+	चयन (bus_freq_hz) अणु
+	हाल I2C_MAX_STANDARD_MODE_FREQ:
+		वापस "Standard Mode (100 kHz)";
+	हाल I2C_MAX_FAST_MODE_FREQ:
+		वापस "Fast Mode (400 kHz)";
+	हाल I2C_MAX_FAST_MODE_PLUS_FREQ:
+		वापस "Fast Mode Plus (1.0 MHz)";
+	हाल I2C_MAX_TURBO_MODE_FREQ:
+		वापस "Turbo Mode (1.4 MHz)";
+	हाल I2C_MAX_HIGH_SPEED_MODE_FREQ:
+		वापस "High Speed Mode (3.4 MHz)";
+	हाल I2C_MAX_ULTRA_FAST_MODE_FREQ:
+		वापस "Ultra Fast Mode (5.0 MHz)";
+	शेष:
+		वापस "Unknown Mode";
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_freq_mode_string);
 
-const struct i2c_device_id *i2c_match_id(const struct i2c_device_id *id,
-						const struct i2c_client *client)
-{
-	if (!(id && client))
-		return NULL;
+स्थिर काष्ठा i2c_device_id *i2c_match_id(स्थिर काष्ठा i2c_device_id *id,
+						स्थिर काष्ठा i2c_client *client)
+अणु
+	अगर (!(id && client))
+		वापस शून्य;
 
-	while (id->name[0]) {
-		if (strcmp(client->name, id->name) == 0)
-			return id;
+	जबतक (id->name[0]) अणु
+		अगर (म_भेद(client->name, id->name) == 0)
+			वापस id;
 		id++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_match_id);
 
-static int i2c_device_match(struct device *dev, struct device_driver *drv)
-{
-	struct i2c_client	*client = i2c_verify_client(dev);
-	struct i2c_driver	*driver;
+अटल पूर्णांक i2c_device_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा i2c_client	*client = i2c_verअगरy_client(dev);
+	काष्ठा i2c_driver	*driver;
 
 
 	/* Attempt an OF style match */
-	if (i2c_of_match_device(drv->of_match_table, client))
-		return 1;
+	अगर (i2c_of_match_device(drv->of_match_table, client))
+		वापस 1;
 
 	/* Then ACPI style match */
-	if (acpi_driver_match_device(dev, drv))
-		return 1;
+	अगर (acpi_driver_match_device(dev, drv))
+		वापस 1;
 
 	driver = to_i2c_driver(drv);
 
 	/* Finally an I2C match */
-	if (i2c_match_id(driver->id_table, client))
-		return 1;
+	अगर (i2c_match_id(driver->id_table, client))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i2c_device_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int rc;
+अटल पूर्णांक i2c_device_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक rc;
 
 	rc = of_device_uevent_modalias(dev, env);
-	if (rc != -ENODEV)
-		return rc;
+	अगर (rc != -ENODEV)
+		वापस rc;
 
 	rc = acpi_device_uevent_modalias(dev, env);
-	if (rc != -ENODEV)
-		return rc;
+	अगर (rc != -ENODEV)
+		वापस rc;
 
-	return add_uevent_var(env, "MODALIAS=%s%s", I2C_MODULE_PREFIX, client->name);
-}
+	वापस add_uevent_var(env, "MODALIAS=%s%s", I2C_MODULE_PREFIX, client->name);
+पूर्ण
 
 /* i2c bus recovery routines */
-static int get_scl_gpio_value(struct i2c_adapter *adap)
-{
-	return gpiod_get_value_cansleep(adap->bus_recovery_info->scl_gpiod);
-}
+अटल पूर्णांक get_scl_gpio_value(काष्ठा i2c_adapter *adap)
+अणु
+	वापस gpiod_get_value_cansleep(adap->bus_recovery_info->scl_gpiod);
+पूर्ण
 
-static void set_scl_gpio_value(struct i2c_adapter *adap, int val)
-{
+अटल व्योम set_scl_gpio_value(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
 	gpiod_set_value_cansleep(adap->bus_recovery_info->scl_gpiod, val);
-}
+पूर्ण
 
-static int get_sda_gpio_value(struct i2c_adapter *adap)
-{
-	return gpiod_get_value_cansleep(adap->bus_recovery_info->sda_gpiod);
-}
+अटल पूर्णांक get_sda_gpio_value(काष्ठा i2c_adapter *adap)
+अणु
+	वापस gpiod_get_value_cansleep(adap->bus_recovery_info->sda_gpiod);
+पूर्ण
 
-static void set_sda_gpio_value(struct i2c_adapter *adap, int val)
-{
+अटल व्योम set_sda_gpio_value(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
 	gpiod_set_value_cansleep(adap->bus_recovery_info->sda_gpiod, val);
-}
+पूर्ण
 
-static int i2c_generic_bus_free(struct i2c_adapter *adap)
-{
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक i2c_generic_bus_मुक्त(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	if (bri->get_bus_free)
-		ret = bri->get_bus_free(adap);
-	else if (bri->get_sda)
+	अगर (bri->get_bus_मुक्त)
+		ret = bri->get_bus_मुक्त(adap);
+	अन्यथा अगर (bri->get_sda)
 		ret = bri->get_sda(adap);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return ret ? 0 : -EBUSY;
-}
+	वापस ret ? 0 : -EBUSY;
+पूर्ण
 
 /*
- * We are generating clock pulses. ndelay() determines durating of clk pulses.
- * We will generate clock with rate 100 KHz and so duration of both clock levels
+ * We are generating घड़ी pulses. ndelay() determines durating of clk pulses.
+ * We will generate घड़ी with rate 100 KHz and so duration of both घड़ी levels
  * is: delay in ns = (10^6 / 100) / 2
  */
-#define RECOVERY_NDELAY		5000
-#define RECOVERY_CLK_CNT	9
+#घोषणा RECOVERY_NDELAY		5000
+#घोषणा RECOVERY_CLK_CNT	9
 
-int i2c_generic_scl_recovery(struct i2c_adapter *adap)
-{
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	int i = 0, scl = 1, ret = 0;
+पूर्णांक i2c_generic_scl_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+	पूर्णांक i = 0, scl = 1, ret = 0;
 
-	if (bri->prepare_recovery)
+	अगर (bri->prepare_recovery)
 		bri->prepare_recovery(adap);
-	if (bri->pinctrl)
+	अगर (bri->pinctrl)
 		pinctrl_select_state(bri->pinctrl, bri->pins_gpio);
 
 	/*
 	 * If we can set SDA, we will always create a STOP to ensure additional
-	 * pulses will do no harm. This is achieved by letting SDA follow SCL
+	 * pulses will करो no harm. This is achieved by letting SDA follow SCL
 	 * half a cycle later. Check the 'incomplete_write_byte' fault injector
-	 * for details. Note that we must honour tsu:sto, 4us, but lets use 5us
-	 * here for simplicity.
+	 * क्रम details. Note that we must honour tsu:sto, 4us, but lets use 5us
+	 * here क्रम simplicity.
 	 */
 	bri->set_scl(adap, scl);
 	ndelay(RECOVERY_NDELAY);
-	if (bri->set_sda)
+	अगर (bri->set_sda)
 		bri->set_sda(adap, scl);
 	ndelay(RECOVERY_NDELAY / 2);
 
 	/*
-	 * By this time SCL is high, as we need to give 9 falling-rising edges
+	 * By this समय SCL is high, as we need to give 9 falling-rising edges
 	 */
-	while (i++ < RECOVERY_CLK_CNT * 2) {
-		if (scl) {
+	जबतक (i++ < RECOVERY_CLK_CNT * 2) अणु
+		अगर (scl) अणु
 			/* SCL shouldn't be low here */
-			if (!bri->get_scl(adap)) {
+			अगर (!bri->get_scl(adap)) अणु
 				dev_err(&adap->dev,
 					"SCL is stuck low, exit recovery\n");
 				ret = -EBUSY;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		scl = !scl;
 		bri->set_scl(adap, scl);
 		/* Creating STOP again, see above */
-		if (scl)  {
+		अगर (scl)  अणु
 			/* Honour minimum tsu:sto */
 			ndelay(RECOVERY_NDELAY);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Honour minimum tf and thd:dat */
 			ndelay(RECOVERY_NDELAY / 2);
-		}
-		if (bri->set_sda)
+		पूर्ण
+		अगर (bri->set_sda)
 			bri->set_sda(adap, scl);
 		ndelay(RECOVERY_NDELAY / 2);
 
-		if (scl) {
-			ret = i2c_generic_bus_free(adap);
-			if (ret == 0)
-				break;
-		}
-	}
+		अगर (scl) अणु
+			ret = i2c_generic_bus_मुक्त(adap);
+			अगर (ret == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* If we can't check bus status, assume recovery worked */
-	if (ret == -EOPNOTSUPP)
+	अगर (ret == -EOPNOTSUPP)
 		ret = 0;
 
-	if (bri->unprepare_recovery)
+	अगर (bri->unprepare_recovery)
 		bri->unprepare_recovery(adap);
-	if (bri->pinctrl)
-		pinctrl_select_state(bri->pinctrl, bri->pins_default);
+	अगर (bri->pinctrl)
+		pinctrl_select_state(bri->pinctrl, bri->pins_शेष);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_generic_scl_recovery);
 
-int i2c_recover_bus(struct i2c_adapter *adap)
-{
-	if (!adap->bus_recovery_info)
-		return -EBUSY;
+पूर्णांक i2c_recover_bus(काष्ठा i2c_adapter *adap)
+अणु
+	अगर (!adap->bus_recovery_info)
+		वापस -EBUSY;
 
 	dev_dbg(&adap->dev, "Trying i2c bus recovery\n");
-	return adap->bus_recovery_info->recover_bus(adap);
-}
+	वापस adap->bus_recovery_info->recover_bus(adap);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_recover_bus);
 
-static void i2c_gpio_init_pinctrl_recovery(struct i2c_adapter *adap)
-{
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	struct device *dev = &adap->dev;
-	struct pinctrl *p = bri->pinctrl;
+अटल व्योम i2c_gpio_init_pinctrl_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+	काष्ठा device *dev = &adap->dev;
+	काष्ठा pinctrl *p = bri->pinctrl;
 
 	/*
-	 * we can't change states without pinctrl, so remove the states if
+	 * we can't change states without pinctrl, so हटाओ the states अगर
 	 * populated
 	 */
-	if (!p) {
-		bri->pins_default = NULL;
-		bri->pins_gpio = NULL;
-		return;
-	}
+	अगर (!p) अणु
+		bri->pins_शेष = शून्य;
+		bri->pins_gpio = शून्य;
+		वापस;
+	पूर्ण
 
-	if (!bri->pins_default) {
-		bri->pins_default = pinctrl_lookup_state(p,
+	अगर (!bri->pins_शेष) अणु
+		bri->pins_शेष = pinctrl_lookup_state(p,
 							 PINCTRL_STATE_DEFAULT);
-		if (IS_ERR(bri->pins_default)) {
+		अगर (IS_ERR(bri->pins_शेष)) अणु
 			dev_dbg(dev, PINCTRL_STATE_DEFAULT " state not found for GPIO recovery\n");
-			bri->pins_default = NULL;
-		}
-	}
-	if (!bri->pins_gpio) {
+			bri->pins_शेष = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (!bri->pins_gpio) अणु
 		bri->pins_gpio = pinctrl_lookup_state(p, "gpio");
-		if (IS_ERR(bri->pins_gpio))
+		अगर (IS_ERR(bri->pins_gpio))
 			bri->pins_gpio = pinctrl_lookup_state(p, "recovery");
 
-		if (IS_ERR(bri->pins_gpio)) {
+		अगर (IS_ERR(bri->pins_gpio)) अणु
 			dev_dbg(dev, "no gpio or recovery state found for GPIO recovery\n");
-			bri->pins_gpio = NULL;
-		}
-	}
+			bri->pins_gpio = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* for pinctrl state changes, we need all the information */
-	if (bri->pins_default && bri->pins_gpio) {
+	/* क्रम pinctrl state changes, we need all the inक्रमmation */
+	अगर (bri->pins_शेष && bri->pins_gpio) अणु
 		dev_info(dev, "using pinctrl states for GPIO recovery");
-	} else {
-		bri->pinctrl = NULL;
-		bri->pins_default = NULL;
-		bri->pins_gpio = NULL;
-	}
-}
+	पूर्ण अन्यथा अणु
+		bri->pinctrl = शून्य;
+		bri->pins_शेष = शून्य;
+		bri->pins_gpio = शून्य;
+	पूर्ण
+पूर्ण
 
-static int i2c_gpio_init_generic_recovery(struct i2c_adapter *adap)
-{
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	struct device *dev = &adap->dev;
-	struct gpio_desc *gpiod;
-	int ret = 0;
+अटल पूर्णांक i2c_gpio_init_generic_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+	काष्ठा device *dev = &adap->dev;
+	काष्ठा gpio_desc *gpiod;
+	पूर्णांक ret = 0;
 
 	/*
-	 * don't touch the recovery information if the driver is not using
+	 * करोn't touch the recovery inक्रमmation अगर the driver is not using
 	 * generic SCL recovery
 	 */
-	if (bri->recover_bus && bri->recover_bus != i2c_generic_scl_recovery)
-		return 0;
+	अगर (bri->recover_bus && bri->recover_bus != i2c_generic_scl_recovery)
+		वापस 0;
 
 	/*
-	 * pins might be taken as GPIO, so we should inform pinctrl about
+	 * pins might be taken as GPIO, so we should inक्रमm pinctrl about
 	 * this and move the state to GPIO
 	 */
-	if (bri->pinctrl)
+	अगर (bri->pinctrl)
 		pinctrl_select_state(bri->pinctrl, bri->pins_gpio);
 
 	/*
-	 * if there is incomplete or no recovery information, see if generic
+	 * अगर there is incomplete or no recovery inक्रमmation, see अगर generic
 	 * GPIO recovery is available
 	 */
-	if (!bri->scl_gpiod) {
+	अगर (!bri->scl_gpiod) अणु
 		gpiod = devm_gpiod_get(dev, "scl", GPIOD_OUT_HIGH_OPEN_DRAIN);
-		if (PTR_ERR(gpiod) == -EPROBE_DEFER) {
+		अगर (PTR_ERR(gpiod) == -EPROBE_DEFER) अणु
 			ret  = -EPROBE_DEFER;
-			goto cleanup_pinctrl_state;
-		}
-		if (!IS_ERR(gpiod)) {
+			जाओ cleanup_pinctrl_state;
+		पूर्ण
+		अगर (!IS_ERR(gpiod)) अणु
 			bri->scl_gpiod = gpiod;
 			bri->recover_bus = i2c_generic_scl_recovery;
 			dev_info(dev, "using generic GPIOs for recovery\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* SDA GPIOD line is optional, so we care about DEFER only */
-	if (!bri->sda_gpiod) {
+	अगर (!bri->sda_gpiod) अणु
 		/*
-		 * We have SCL. Pull SCL low and wait a bit so that SDA glitches
+		 * We have SCL. Pull SCL low and रुको a bit so that SDA glitches
 		 * have no effect.
 		 */
 		gpiod_direction_output(bri->scl_gpiod, 0);
 		udelay(10);
 		gpiod = devm_gpiod_get(dev, "sda", GPIOD_IN);
 
-		/* Wait a bit in case of a SDA glitch, and then release SCL. */
+		/* Wait a bit in हाल of a SDA glitch, and then release SCL. */
 		udelay(10);
 		gpiod_direction_output(bri->scl_gpiod, 1);
 
-		if (PTR_ERR(gpiod) == -EPROBE_DEFER) {
+		अगर (PTR_ERR(gpiod) == -EPROBE_DEFER) अणु
 			ret = -EPROBE_DEFER;
-			goto cleanup_pinctrl_state;
-		}
-		if (!IS_ERR(gpiod))
+			जाओ cleanup_pinctrl_state;
+		पूर्ण
+		अगर (!IS_ERR(gpiod))
 			bri->sda_gpiod = gpiod;
-	}
+	पूर्ण
 
 cleanup_pinctrl_state:
-	/* change the state of the pins back to their default state */
-	if (bri->pinctrl)
-		pinctrl_select_state(bri->pinctrl, bri->pins_default);
+	/* change the state of the pins back to their शेष state */
+	अगर (bri->pinctrl)
+		pinctrl_select_state(bri->pinctrl, bri->pins_शेष);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int i2c_gpio_init_recovery(struct i2c_adapter *adap)
-{
+अटल पूर्णांक i2c_gpio_init_recovery(काष्ठा i2c_adapter *adap)
+अणु
 	i2c_gpio_init_pinctrl_recovery(adap);
-	return i2c_gpio_init_generic_recovery(adap);
-}
+	वापस i2c_gpio_init_generic_recovery(adap);
+पूर्ण
 
-static int i2c_init_recovery(struct i2c_adapter *adap)
-{
-	struct i2c_bus_recovery_info *bri = adap->bus_recovery_info;
-	char *err_str, *err_level = KERN_ERR;
+अटल पूर्णांक i2c_init_recovery(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_bus_recovery_info *bri = adap->bus_recovery_info;
+	अक्षर *err_str, *err_level = KERN_ERR;
 
-	if (!bri)
-		return 0;
+	अगर (!bri)
+		वापस 0;
 
-	if (i2c_gpio_init_recovery(adap) == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
+	अगर (i2c_gpio_init_recovery(adap) == -EPROBE_DEFER)
+		वापस -EPROBE_DEFER;
 
-	if (!bri->recover_bus) {
+	अगर (!bri->recover_bus) अणु
 		err_str = "no suitable method provided";
 		err_level = KERN_DEBUG;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (bri->scl_gpiod && bri->recover_bus == i2c_generic_scl_recovery) {
+	अगर (bri->scl_gpiod && bri->recover_bus == i2c_generic_scl_recovery) अणु
 		bri->get_scl = get_scl_gpio_value;
 		bri->set_scl = set_scl_gpio_value;
-		if (bri->sda_gpiod) {
+		अगर (bri->sda_gpiod) अणु
 			bri->get_sda = get_sda_gpio_value;
 			/* FIXME: add proper flag instead of '0' once available */
-			if (gpiod_get_direction(bri->sda_gpiod) == 0)
+			अगर (gpiod_get_direction(bri->sda_gpiod) == 0)
 				bri->set_sda = set_sda_gpio_value;
-		}
-	} else if (bri->recover_bus == i2c_generic_scl_recovery) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (bri->recover_bus == i2c_generic_scl_recovery) अणु
 		/* Generic SCL recovery */
-		if (!bri->set_scl || !bri->get_scl) {
+		अगर (!bri->set_scl || !bri->get_scl) अणु
 			err_str = "no {get|set}_scl() found";
-			goto err;
-		}
-		if (!bri->set_sda && !bri->get_sda) {
+			जाओ err;
+		पूर्ण
+		अगर (!bri->set_sda && !bri->get_sda) अणु
 			err_str = "either get_sda() or set_sda() needed";
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
  err:
-	dev_printk(err_level, &adap->dev, "Not using recovery: %s\n", err_str);
-	adap->bus_recovery_info = NULL;
+	dev_prपूर्णांकk(err_level, &adap->dev, "Not using recovery: %s\n", err_str);
+	adap->bus_recovery_info = शून्य;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int i2c_smbus_host_notify_to_irq(const struct i2c_client *client)
-{
-	struct i2c_adapter *adap = client->adapter;
-	unsigned int irq;
+अटल पूर्णांक i2c_smbus_host_notअगरy_to_irq(स्थिर काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_adapter *adap = client->adapter;
+	अचिन्हित पूर्णांक irq;
 
-	if (!adap->host_notify_domain)
-		return -ENXIO;
+	अगर (!adap->host_notअगरy_करोमुख्य)
+		वापस -ENXIO;
 
-	if (client->flags & I2C_CLIENT_TEN)
-		return -EINVAL;
+	अगर (client->flags & I2C_CLIENT_TEN)
+		वापस -EINVAL;
 
-	irq = irq_create_mapping(adap->host_notify_domain, client->addr);
+	irq = irq_create_mapping(adap->host_notअगरy_करोमुख्य, client->addr);
 
-	return irq > 0 ? irq : -ENXIO;
-}
+	वापस irq > 0 ? irq : -ENXIO;
+पूर्ण
 
-static int i2c_device_probe(struct device *dev)
-{
-	struct i2c_client	*client = i2c_verify_client(dev);
-	struct i2c_driver	*driver;
-	int status;
+अटल पूर्णांक i2c_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client	*client = i2c_verअगरy_client(dev);
+	काष्ठा i2c_driver	*driver;
+	पूर्णांक status;
 
-	if (!client)
-		return 0;
+	अगर (!client)
+		वापस 0;
 
 	client->irq = client->init_irq;
 
-	if (!client->irq) {
-		int irq = -ENOENT;
+	अगर (!client->irq) अणु
+		पूर्णांक irq = -ENOENT;
 
-		if (client->flags & I2C_CLIENT_HOST_NOTIFY) {
+		अगर (client->flags & I2C_CLIENT_HOST_NOTIFY) अणु
 			dev_dbg(dev, "Using Host Notify IRQ\n");
-			/* Keep adapter active when Host Notify is required */
-			pm_runtime_get_sync(&client->adapter->dev);
-			irq = i2c_smbus_host_notify_to_irq(client);
-		} else if (dev->of_node) {
+			/* Keep adapter active when Host Notअगरy is required */
+			pm_runसमय_get_sync(&client->adapter->dev);
+			irq = i2c_smbus_host_notअगरy_to_irq(client);
+		पूर्ण अन्यथा अगर (dev->of_node) अणु
 			irq = of_irq_get_byname(dev->of_node, "irq");
-			if (irq == -EINVAL || irq == -ENODATA)
+			अगर (irq == -EINVAL || irq == -ENODATA)
 				irq = of_irq_get(dev->of_node, 0);
-		} else if (ACPI_COMPANION(dev)) {
+		पूर्ण अन्यथा अगर (ACPI_COMPANION(dev)) अणु
 			irq = i2c_acpi_get_irq(client);
-		}
-		if (irq == -EPROBE_DEFER) {
+		पूर्ण
+		अगर (irq == -EPROBE_DEFER) अणु
 			status = irq;
-			goto put_sync_adapter;
-		}
+			जाओ put_sync_adapter;
+		पूर्ण
 
-		if (irq < 0)
+		अगर (irq < 0)
 			irq = 0;
 
 		client->irq = irq;
-	}
+	पूर्ण
 
 	driver = to_i2c_driver(dev->driver);
 
 	/*
-	 * An I2C ID table is not mandatory, if and only if, a suitable OF
-	 * or ACPI ID table is supplied for the probing device.
+	 * An I2C ID table is not mandatory, अगर and only अगर, a suitable OF
+	 * or ACPI ID table is supplied क्रम the probing device.
 	 */
-	if (!driver->id_table &&
+	अगर (!driver->id_table &&
 	    !acpi_driver_match_device(dev, dev->driver) &&
-	    !i2c_of_match_device(dev->driver->of_match_table, client)) {
+	    !i2c_of_match_device(dev->driver->of_match_table, client)) अणु
 		status = -ENODEV;
-		goto put_sync_adapter;
-	}
+		जाओ put_sync_adapter;
+	पूर्ण
 
-	if (client->flags & I2C_CLIENT_WAKE) {
-		int wakeirq;
+	अगर (client->flags & I2C_CLIENT_WAKE) अणु
+		पूर्णांक wakeirq;
 
 		wakeirq = of_irq_get_byname(dev->of_node, "wakeup");
-		if (wakeirq == -EPROBE_DEFER) {
+		अगर (wakeirq == -EPROBE_DEFER) अणु
 			status = wakeirq;
-			goto put_sync_adapter;
-		}
+			जाओ put_sync_adapter;
+		पूर्ण
 
 		device_init_wakeup(&client->dev, true);
 
-		if (wakeirq > 0 && wakeirq != client->irq)
+		अगर (wakeirq > 0 && wakeirq != client->irq)
 			status = dev_pm_set_dedicated_wake_irq(dev, wakeirq);
-		else if (client->irq > 0)
+		अन्यथा अगर (client->irq > 0)
 			status = dev_pm_set_wake_irq(dev, client->irq);
-		else
+		अन्यथा
 			status = 0;
 
-		if (status)
+		अगर (status)
 			dev_warn(&client->dev, "failed to set up wakeup irq\n");
-	}
+	पूर्ण
 
 	dev_dbg(dev, "probe\n");
 
-	status = of_clk_set_defaults(dev->of_node, false);
-	if (status < 0)
-		goto err_clear_wakeup_irq;
+	status = of_clk_set_शेषs(dev->of_node, false);
+	अगर (status < 0)
+		जाओ err_clear_wakeup_irq;
 
-	status = dev_pm_domain_attach(&client->dev, true);
-	if (status)
-		goto err_clear_wakeup_irq;
+	status = dev_pm_करोमुख्य_attach(&client->dev, true);
+	अगर (status)
+		जाओ err_clear_wakeup_irq;
 
-	client->devres_group_id = devres_open_group(&client->dev, NULL,
+	client->devres_group_id = devres_खोलो_group(&client->dev, शून्य,
 						    GFP_KERNEL);
-	if (!client->devres_group_id) {
+	अगर (!client->devres_group_id) अणु
 		status = -ENOMEM;
-		goto err_detach_pm_domain;
-	}
+		जाओ err_detach_pm_करोमुख्य;
+	पूर्ण
 
 	/*
 	 * When there are no more users of probe(),
-	 * rename probe_new to probe.
+	 * नाम probe_new to probe.
 	 */
-	if (driver->probe_new)
+	अगर (driver->probe_new)
 		status = driver->probe_new(client);
-	else if (driver->probe)
+	अन्यथा अगर (driver->probe)
 		status = driver->probe(client,
 				       i2c_match_id(driver->id_table, client));
-	else
+	अन्यथा
 		status = -EINVAL;
 
 	/*
-	 * Note that we are not closing the devres group opened above so
+	 * Note that we are not closing the devres group खोलोed above so
 	 * even resources that were attached to the device after probe is
-	 * run are released when i2c_device_remove() is executed. This is
+	 * run are released when i2c_device_हटाओ() is executed. This is
 	 * needed as some drivers would allocate additional resources,
-	 * for example when updating firmware.
+	 * क्रम example when updating firmware.
 	 */
 
-	if (status)
-		goto err_release_driver_resources;
+	अगर (status)
+		जाओ err_release_driver_resources;
 
-	return 0;
+	वापस 0;
 
 err_release_driver_resources:
 	devres_release_group(&client->dev, client->devres_group_id);
-err_detach_pm_domain:
-	dev_pm_domain_detach(&client->dev, true);
+err_detach_pm_करोमुख्य:
+	dev_pm_करोमुख्य_detach(&client->dev, true);
 err_clear_wakeup_irq:
 	dev_pm_clear_wake_irq(&client->dev);
 	device_init_wakeup(&client->dev, false);
 put_sync_adapter:
-	if (client->flags & I2C_CLIENT_HOST_NOTIFY)
-		pm_runtime_put_sync(&client->adapter->dev);
+	अगर (client->flags & I2C_CLIENT_HOST_NOTIFY)
+		pm_runसमय_put_sync(&client->adapter->dev);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int i2c_device_remove(struct device *dev)
-{
-	struct i2c_client	*client = to_i2c_client(dev);
-	struct i2c_driver	*driver;
+अटल पूर्णांक i2c_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client	*client = to_i2c_client(dev);
+	काष्ठा i2c_driver	*driver;
 
 	driver = to_i2c_driver(dev->driver);
-	if (driver->remove) {
-		int status;
+	अगर (driver->हटाओ) अणु
+		पूर्णांक status;
 
 		dev_dbg(dev, "remove\n");
 
-		status = driver->remove(client);
-		if (status)
+		status = driver->हटाओ(client);
+		अगर (status)
 			dev_warn(dev, "remove failed (%pe), will be ignored\n", ERR_PTR(status));
-	}
+	पूर्ण
 
 	devres_release_group(&client->dev, client->devres_group_id);
 
-	dev_pm_domain_detach(&client->dev, true);
+	dev_pm_करोमुख्य_detach(&client->dev, true);
 
 	dev_pm_clear_wake_irq(&client->dev);
 	device_init_wakeup(&client->dev, false);
 
 	client->irq = 0;
-	if (client->flags & I2C_CLIENT_HOST_NOTIFY)
-		pm_runtime_put(&client->adapter->dev);
+	अगर (client->flags & I2C_CLIENT_HOST_NOTIFY)
+		pm_runसमय_put(&client->adapter->dev);
 
-	/* return always 0 because there is WIP to make remove-functions void */
-	return 0;
-}
+	/* वापस always 0 because there is WIP to make हटाओ-functions व्योम */
+	वापस 0;
+पूर्ण
 
-static void i2c_device_shutdown(struct device *dev)
-{
-	struct i2c_client *client = i2c_verify_client(dev);
-	struct i2c_driver *driver;
+अटल व्योम i2c_device_shutकरोwn(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = i2c_verअगरy_client(dev);
+	काष्ठा i2c_driver *driver;
 
-	if (!client || !dev->driver)
-		return;
+	अगर (!client || !dev->driver)
+		वापस;
 	driver = to_i2c_driver(dev->driver);
-	if (driver->shutdown)
-		driver->shutdown(client);
-}
+	अगर (driver->shutकरोwn)
+		driver->shutकरोwn(client);
+पूर्ण
 
-static void i2c_client_dev_release(struct device *dev)
-{
-	kfree(to_i2c_client(dev));
-}
+अटल व्योम i2c_client_dev_release(काष्ठा device *dev)
+अणु
+	kमुक्त(to_i2c_client(dev));
+पूर्ण
 
-static ssize_t
-name_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%s\n", dev->type == &i2c_client_type ?
+अटल sमाप_प्रकार
+name_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", dev->type == &i2c_client_type ?
 		       to_i2c_client(dev)->name : to_i2c_adapter(dev)->name);
-}
-static DEVICE_ATTR_RO(name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t
-modalias_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	int len;
+अटल sमाप_प्रकार
+modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	पूर्णांक len;
 
 	len = of_device_modalias(dev, buf, PAGE_SIZE);
-	if (len != -ENODEV)
-		return len;
+	अगर (len != -ENODEV)
+		वापस len;
 
 	len = acpi_device_modalias(dev, buf, PAGE_SIZE - 1);
-	if (len != -ENODEV)
-		return len;
+	अगर (len != -ENODEV)
+		वापस len;
 
-	return sprintf(buf, "%s%s\n", I2C_MODULE_PREFIX, client->name);
-}
-static DEVICE_ATTR_RO(modalias);
+	वापस प्र_लिखो(buf, "%s%s\n", I2C_MODULE_PREFIX, client->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(modalias);
 
-static struct attribute *i2c_dev_attrs[] = {
+अटल काष्ठा attribute *i2c_dev_attrs[] = अणु
 	&dev_attr_name.attr,
 	/* modalias helps coldplug:  modprobe $(cat .../modalias) */
 	&dev_attr_modalias.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(i2c_dev);
 
-struct bus_type i2c_bus_type = {
+काष्ठा bus_type i2c_bus_type = अणु
 	.name		= "i2c",
 	.match		= i2c_device_match,
 	.probe		= i2c_device_probe,
-	.remove		= i2c_device_remove,
-	.shutdown	= i2c_device_shutdown,
-};
+	.हटाओ		= i2c_device_हटाओ,
+	.shutकरोwn	= i2c_device_shutकरोwn,
+पूर्ण;
 EXPORT_SYMBOL_GPL(i2c_bus_type);
 
-struct device_type i2c_client_type = {
+काष्ठा device_type i2c_client_type = अणु
 	.groups		= i2c_dev_groups,
 	.uevent		= i2c_device_uevent,
 	.release	= i2c_client_dev_release,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(i2c_client_type);
 
 
 /**
- * i2c_verify_client - return parameter as i2c_client, or NULL
+ * i2c_verअगरy_client - वापस parameter as i2c_client, or शून्य
  * @dev: device, probably from some driver model iterator
  *
  * When traversing the driver model tree, perhaps using driver model
- * iterators like @device_for_each_child(), you can't assume very much
- * about the nodes you find.  Use this function to avoid oopses caused
+ * iterators like @device_क्रम_each_child(), you can't assume very much
+ * about the nodes you find.  Use this function to aव्योम oopses caused
  * by wrongly treating some non-I2C device as an i2c_client.
  */
-struct i2c_client *i2c_verify_client(struct device *dev)
-{
-	return (dev->type == &i2c_client_type)
+काष्ठा i2c_client *i2c_verअगरy_client(काष्ठा device *dev)
+अणु
+	वापस (dev->type == &i2c_client_type)
 			? to_i2c_client(dev)
-			: NULL;
-}
-EXPORT_SYMBOL(i2c_verify_client);
+			: शून्य;
+पूर्ण
+EXPORT_SYMBOL(i2c_verअगरy_client);
 
 
-/* Return a unique address which takes the flags of the client into account */
-static unsigned short i2c_encode_flags_to_addr(struct i2c_client *client)
-{
-	unsigned short addr = client->addr;
+/* Return a unique address which takes the flags of the client पूर्णांकo account */
+अटल अचिन्हित लघु i2c_encode_flags_to_addr(काष्ठा i2c_client *client)
+अणु
+	अचिन्हित लघु addr = client->addr;
 
-	/* For some client flags, add an arbitrary offset to avoid collisions */
-	if (client->flags & I2C_CLIENT_TEN)
+	/* For some client flags, add an arbitrary offset to aव्योम collisions */
+	अगर (client->flags & I2C_CLIENT_TEN)
 		addr |= I2C_ADDR_OFFSET_TEN_BIT;
 
-	if (client->flags & I2C_CLIENT_SLAVE)
+	अगर (client->flags & I2C_CLIENT_SLAVE)
 		addr |= I2C_ADDR_OFFSET_SLAVE;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-/* This is a permissive address validity check, I2C address map constraints
- * are purposely not enforced, except for the general call address. */
-static int i2c_check_addr_validity(unsigned int addr, unsigned short flags)
-{
-	if (flags & I2C_CLIENT_TEN) {
+/* This is a permissive address validity check, I2C address map स्थिरraपूर्णांकs
+ * are purposely not enक्रमced, except क्रम the general call address. */
+अटल पूर्णांक i2c_check_addr_validity(अचिन्हित पूर्णांक addr, अचिन्हित लघु flags)
+अणु
+	अगर (flags & I2C_CLIENT_TEN) अणु
 		/* 10-bit address, all values are valid */
-		if (addr > 0x3ff)
-			return -EINVAL;
-	} else {
+		अगर (addr > 0x3ff)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		/* 7-bit address, reject the general call address */
-		if (addr == 0x00 || addr > 0x7f)
-			return -EINVAL;
-	}
-	return 0;
-}
+		अगर (addr == 0x00 || addr > 0x7f)
+			वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* And this is a strict address validity check, used when probing. If a
  * device uses a reserved address, then it shouldn't be probed. 7-bit
  * addressing is assumed, 10-bit address devices are rare and should be
- * explicitly enumerated. */
-int i2c_check_7bit_addr_validity_strict(unsigned short addr)
-{
+ * explicitly क्रमागतerated. */
+पूर्णांक i2c_check_7bit_addr_validity_strict(अचिन्हित लघु addr)
+अणु
 	/*
-	 * Reserved addresses per I2C specification:
+	 * Reserved addresses per I2C specअगरication:
 	 *  0x00       General call address / START byte
 	 *  0x01       CBUS address
-	 *  0x02       Reserved for different bus format
-	 *  0x03       Reserved for future purposes
+	 *  0x02       Reserved क्रम dअगरferent bus क्रमmat
+	 *  0x03       Reserved क्रम future purposes
 	 *  0x04-0x07  Hs-mode master code
 	 *  0x78-0x7b  10-bit slave addressing
-	 *  0x7c-0x7f  Reserved for future purposes
+	 *  0x7c-0x7f  Reserved क्रम future purposes
 	 */
-	if (addr < 0x08 || addr > 0x77)
-		return -EINVAL;
-	return 0;
-}
+	अगर (addr < 0x08 || addr > 0x77)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int __i2c_check_addr_busy(struct device *dev, void *addrp)
-{
-	struct i2c_client	*client = i2c_verify_client(dev);
-	int			addr = *(int *)addrp;
+अटल पूर्णांक __i2c_check_addr_busy(काष्ठा device *dev, व्योम *addrp)
+अणु
+	काष्ठा i2c_client	*client = i2c_verअगरy_client(dev);
+	पूर्णांक			addr = *(पूर्णांक *)addrp;
 
-	if (client && i2c_encode_flags_to_addr(client) == addr)
-		return -EBUSY;
-	return 0;
-}
+	अगर (client && i2c_encode_flags_to_addr(client) == addr)
+		वापस -EBUSY;
+	वापस 0;
+पूर्ण
 
 /* walk up mux tree */
-static int i2c_check_mux_parents(struct i2c_adapter *adapter, int addr)
-{
-	struct i2c_adapter *parent = i2c_parent_is_i2c_adapter(adapter);
-	int result;
+अटल पूर्णांक i2c_check_mux_parents(काष्ठा i2c_adapter *adapter, पूर्णांक addr)
+अणु
+	काष्ठा i2c_adapter *parent = i2c_parent_is_i2c_adapter(adapter);
+	पूर्णांक result;
 
-	result = device_for_each_child(&adapter->dev, &addr,
+	result = device_क्रम_each_child(&adapter->dev, &addr,
 					__i2c_check_addr_busy);
 
-	if (!result && parent)
+	अगर (!result && parent)
 		result = i2c_check_mux_parents(parent, addr);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* recurse down mux tree */
-static int i2c_check_mux_children(struct device *dev, void *addrp)
-{
-	int result;
+/* recurse करोwn mux tree */
+अटल पूर्णांक i2c_check_mux_children(काष्ठा device *dev, व्योम *addrp)
+अणु
+	पूर्णांक result;
 
-	if (dev->type == &i2c_adapter_type)
-		result = device_for_each_child(dev, addrp,
+	अगर (dev->type == &i2c_adapter_type)
+		result = device_क्रम_each_child(dev, addrp,
 						i2c_check_mux_children);
-	else
+	अन्यथा
 		result = __i2c_check_addr_busy(dev, addrp);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int i2c_check_addr_busy(struct i2c_adapter *adapter, int addr)
-{
-	struct i2c_adapter *parent = i2c_parent_is_i2c_adapter(adapter);
-	int result = 0;
+अटल पूर्णांक i2c_check_addr_busy(काष्ठा i2c_adapter *adapter, पूर्णांक addr)
+अणु
+	काष्ठा i2c_adapter *parent = i2c_parent_is_i2c_adapter(adapter);
+	पूर्णांक result = 0;
 
-	if (parent)
+	अगर (parent)
 		result = i2c_check_mux_parents(parent, addr);
 
-	if (!result)
-		result = device_for_each_child(&adapter->dev, &addr,
+	अगर (!result)
+		result = device_क्रम_each_child(&adapter->dev, &addr,
 						i2c_check_mux_children);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * i2c_adapter_lock_bus - Get exclusive access to an I2C bus segment
@@ -815,11 +816,11 @@ static int i2c_check_addr_busy(struct i2c_adapter *adapter, int addr)
  * @flags: I2C_LOCK_ROOT_ADAPTER locks the root i2c adapter, I2C_LOCK_SEGMENT
  *	locks only this branch in the adapter tree
  */
-static void i2c_adapter_lock_bus(struct i2c_adapter *adapter,
-				 unsigned int flags)
-{
+अटल व्योम i2c_adapter_lock_bus(काष्ठा i2c_adapter *adapter,
+				 अचिन्हित पूर्णांक flags)
+अणु
 	rt_mutex_lock_nested(&adapter->bus_lock, i2c_adapter_depth(adapter));
-}
+पूर्ण
 
 /**
  * i2c_adapter_trylock_bus - Try to get exclusive access to an I2C bus segment
@@ -827,11 +828,11 @@ static void i2c_adapter_lock_bus(struct i2c_adapter *adapter,
  * @flags: I2C_LOCK_ROOT_ADAPTER trylocks the root i2c adapter, I2C_LOCK_SEGMENT
  *	trylocks only this branch in the adapter tree
  */
-static int i2c_adapter_trylock_bus(struct i2c_adapter *adapter,
-				   unsigned int flags)
-{
-	return rt_mutex_trylock(&adapter->bus_lock);
-}
+अटल पूर्णांक i2c_adapter_trylock_bus(काष्ठा i2c_adapter *adapter,
+				   अचिन्हित पूर्णांक flags)
+अणु
+	वापस rt_mutex_trylock(&adapter->bus_lock);
+पूर्ण
 
 /**
  * i2c_adapter_unlock_bus - Release exclusive access to an I2C bus segment
@@ -839,57 +840,57 @@ static int i2c_adapter_trylock_bus(struct i2c_adapter *adapter,
  * @flags: I2C_LOCK_ROOT_ADAPTER unlocks the root i2c adapter, I2C_LOCK_SEGMENT
  *	unlocks only this branch in the adapter tree
  */
-static void i2c_adapter_unlock_bus(struct i2c_adapter *adapter,
-				   unsigned int flags)
-{
+अटल व्योम i2c_adapter_unlock_bus(काष्ठा i2c_adapter *adapter,
+				   अचिन्हित पूर्णांक flags)
+अणु
 	rt_mutex_unlock(&adapter->bus_lock);
-}
+पूर्ण
 
-static void i2c_dev_set_name(struct i2c_adapter *adap,
-			     struct i2c_client *client,
-			     struct i2c_board_info const *info)
-{
-	struct acpi_device *adev = ACPI_COMPANION(&client->dev);
+अटल व्योम i2c_dev_set_name(काष्ठा i2c_adapter *adap,
+			     काष्ठा i2c_client *client,
+			     काष्ठा i2c_board_info स्थिर *info)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(&client->dev);
 
-	if (info && info->dev_name) {
+	अगर (info && info->dev_name) अणु
 		dev_set_name(&client->dev, "i2c-%s", info->dev_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (adev) {
+	अगर (adev) अणु
 		dev_set_name(&client->dev, "i2c-%s", acpi_dev_name(adev));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_set_name(&client->dev, "%d-%04x", i2c_adapter_id(adap),
 		     i2c_encode_flags_to_addr(client));
-}
+पूर्ण
 
-int i2c_dev_irq_from_resources(const struct resource *resources,
-			       unsigned int num_resources)
-{
-	struct irq_data *irqd;
-	int i;
+पूर्णांक i2c_dev_irq_from_resources(स्थिर काष्ठा resource *resources,
+			       अचिन्हित पूर्णांक num_resources)
+अणु
+	काष्ठा irq_data *irqd;
+	पूर्णांक i;
 
-	for (i = 0; i < num_resources; i++) {
-		const struct resource *r = &resources[i];
+	क्रम (i = 0; i < num_resources; i++) अणु
+		स्थिर काष्ठा resource *r = &resources[i];
 
-		if (resource_type(r) != IORESOURCE_IRQ)
-			continue;
+		अगर (resource_type(r) != IORESOURCE_IRQ)
+			जारी;
 
-		if (r->flags & IORESOURCE_BITS) {
+		अगर (r->flags & IORESOURCE_BITS) अणु
 			irqd = irq_get_irq_data(r->start);
-			if (!irqd)
-				break;
+			अगर (!irqd)
+				अवरोध;
 
 			irqd_set_trigger_type(irqd, r->flags & IORESOURCE_BITS);
-		}
+		पूर्ण
 
-		return r->start;
-	}
+		वापस r->start;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * i2c_new_client_device - instantiate an i2c device
@@ -898,49 +899,49 @@ int i2c_dev_irq_from_resources(const struct resource *resources,
  * Context: can sleep
  *
  * Create an i2c device. Binding is handled through driver model
- * probe()/remove() methods.  A driver may be bound to this device when we
- * return from this function, or any later moment (e.g. maybe hotplugging will
- * load the driver module).  This call is not appropriate for use by mainboard
- * initialization logic, which usually runs during an arch_initcall() long
- * before any i2c_adapter could exist.
+ * probe()/हटाओ() methods.  A driver may be bound to this device when we
+ * वापस from this function, or any later moment (e.g. maybe hotplugging will
+ * load the driver module).  This call is not appropriate क्रम use by मुख्यboard
+ * initialization logic, which usually runs during an arch_initcall() दीर्घ
+ * beक्रमe any i2c_adapter could exist.
  *
- * This returns the new i2c client, which may be saved for later use with
- * i2c_unregister_device(); or an ERR_PTR to describe the error.
+ * This वापसs the new i2c client, which may be saved क्रम later use with
+ * i2c_unरेजिस्टर_device(); or an ERR_PTR to describe the error.
  */
-struct i2c_client *
-i2c_new_client_device(struct i2c_adapter *adap, struct i2c_board_info const *info)
-{
-	struct i2c_client	*client;
-	int			status;
+काष्ठा i2c_client *
+i2c_new_client_device(काष्ठा i2c_adapter *adap, काष्ठा i2c_board_info स्थिर *info)
+अणु
+	काष्ठा i2c_client	*client;
+	पूर्णांक			status;
 
-	client = kzalloc(sizeof *client, GFP_KERNEL);
-	if (!client)
-		return ERR_PTR(-ENOMEM);
+	client = kzalloc(माप *client, GFP_KERNEL);
+	अगर (!client)
+		वापस ERR_PTR(-ENOMEM);
 
 	client->adapter = adap;
 
-	client->dev.platform_data = info->platform_data;
+	client->dev.platक्रमm_data = info->platक्रमm_data;
 	client->flags = info->flags;
 	client->addr = info->addr;
 
 	client->init_irq = info->irq;
-	if (!client->init_irq)
+	अगर (!client->init_irq)
 		client->init_irq = i2c_dev_irq_from_resources(info->resources,
 							 info->num_resources);
 
-	strlcpy(client->name, info->type, sizeof(client->name));
+	strlcpy(client->name, info->type, माप(client->name));
 
 	status = i2c_check_addr_validity(client->addr, client->flags);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&adap->dev, "Invalid %d-bit I2C address 0x%02hx\n",
 			client->flags & I2C_CLIENT_TEN ? 10 : 7, client->addr);
-		goto out_err_silent;
-	}
+		जाओ out_err_silent;
+	पूर्ण
 
-	/* Check for address business */
+	/* Check क्रम address business */
 	status = i2c_check_addr_busy(adap, i2c_encode_flags_to_addr(client));
-	if (status)
-		goto out_err;
+	अगर (status)
+		जाओ out_err;
 
 	client->dev.parent = &client->adapter->dev;
 	client->dev.bus = &i2c_bus_type;
@@ -950,27 +951,27 @@ i2c_new_client_device(struct i2c_adapter *adap, struct i2c_board_info const *inf
 
 	i2c_dev_set_name(adap, client, info);
 
-	if (info->swnode) {
+	अगर (info->swnode) अणु
 		status = device_add_software_node(&client->dev, info->swnode);
-		if (status) {
+		अगर (status) अणु
 			dev_err(&adap->dev,
 				"Failed to add software node to client %s: %d\n",
 				client->name, status);
-			goto out_err_put_of_node;
-		}
-	}
+			जाओ out_err_put_of_node;
+		पूर्ण
+	पूर्ण
 
-	status = device_register(&client->dev);
-	if (status)
-		goto out_remove_swnode;
+	status = device_रेजिस्टर(&client->dev);
+	अगर (status)
+		जाओ out_हटाओ_swnode;
 
 	dev_dbg(&adap->dev, "client [%s] registered with bus id %s\n",
 		client->name, dev_name(&client->dev));
 
-	return client;
+	वापस client;
 
-out_remove_swnode:
-	device_remove_software_node(&client->dev);
+out_हटाओ_swnode:
+	device_हटाओ_software_node(&client->dev);
 out_err_put_of_node:
 	of_node_put(info->of_node);
 out_err:
@@ -978,241 +979,241 @@ out_err:
 		"Failed to register i2c client %s at 0x%02x (%d)\n",
 		client->name, client->addr, status);
 out_err_silent:
-	kfree(client);
-	return ERR_PTR(status);
-}
+	kमुक्त(client);
+	वापस ERR_PTR(status);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_new_client_device);
 
 /**
- * i2c_unregister_device - reverse effect of i2c_new_*_device()
- * @client: value returned from i2c_new_*_device()
+ * i2c_unरेजिस्टर_device - reverse effect of i2c_new_*_device()
+ * @client: value वापसed from i2c_new_*_device()
  * Context: can sleep
  */
-void i2c_unregister_device(struct i2c_client *client)
-{
-	if (IS_ERR_OR_NULL(client))
-		return;
+व्योम i2c_unरेजिस्टर_device(काष्ठा i2c_client *client)
+अणु
+	अगर (IS_ERR_OR_शून्य(client))
+		वापस;
 
-	if (client->dev.of_node) {
+	अगर (client->dev.of_node) अणु
 		of_node_clear_flag(client->dev.of_node, OF_POPULATED);
 		of_node_put(client->dev.of_node);
-	}
+	पूर्ण
 
-	if (ACPI_COMPANION(&client->dev))
-		acpi_device_clear_enumerated(ACPI_COMPANION(&client->dev));
-	device_remove_software_node(&client->dev);
-	device_unregister(&client->dev);
-}
-EXPORT_SYMBOL_GPL(i2c_unregister_device);
+	अगर (ACPI_COMPANION(&client->dev))
+		acpi_device_clear_क्रमागतerated(ACPI_COMPANION(&client->dev));
+	device_हटाओ_software_node(&client->dev);
+	device_unरेजिस्टर(&client->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(i2c_unरेजिस्टर_device);
 
 
-static const struct i2c_device_id dummy_id[] = {
-	{ "dummy", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा i2c_device_id dummy_id[] = अणु
+	अणु "dummy", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int dummy_probe(struct i2c_client *client,
-		       const struct i2c_device_id *id)
-{
-	return 0;
-}
+अटल पूर्णांक dummy_probe(काष्ठा i2c_client *client,
+		       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	वापस 0;
+पूर्ण
 
-static int dummy_remove(struct i2c_client *client)
-{
-	return 0;
-}
+अटल पूर्णांक dummy_हटाओ(काष्ठा i2c_client *client)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct i2c_driver dummy_driver = {
+अटल काष्ठा i2c_driver dummy_driver = अणु
 	.driver.name	= "dummy",
 	.probe		= dummy_probe,
-	.remove		= dummy_remove,
+	.हटाओ		= dummy_हटाओ,
 	.id_table	= dummy_id,
-};
+पूर्ण;
 
 /**
- * i2c_new_dummy_device - return a new i2c device bound to a dummy driver
+ * i2c_new_dummy_device - वापस a new i2c device bound to a dummy driver
  * @adapter: the adapter managing the device
  * @address: seven bit address to be used
  * Context: can sleep
  *
- * This returns an I2C client bound to the "dummy" driver, intended for use
+ * This वापसs an I2C client bound to the "dummy" driver, पूर्णांकended क्रम use
  * with devices that consume multiple addresses.  Examples of such chips
  * include various EEPROMS (like 24c04 and 24c08 models).
  *
- * These dummy devices have two main uses.  First, most I2C and SMBus calls
+ * These dummy devices have two मुख्य uses.  First, most I2C and SMBus calls
  * except i2c_transfer() need a client handle; the dummy will be that handle.
- * And second, this prevents the specified address from being bound to a
- * different driver.
+ * And second, this prevents the specअगरied address from being bound to a
+ * dअगरferent driver.
  *
- * This returns the new i2c client, which should be saved for later use with
- * i2c_unregister_device(); or an ERR_PTR to describe the error.
+ * This वापसs the new i2c client, which should be saved क्रम later use with
+ * i2c_unरेजिस्टर_device(); or an ERR_PTR to describe the error.
  */
-struct i2c_client *i2c_new_dummy_device(struct i2c_adapter *adapter, u16 address)
-{
-	struct i2c_board_info info = {
+काष्ठा i2c_client *i2c_new_dummy_device(काष्ठा i2c_adapter *adapter, u16 address)
+अणु
+	काष्ठा i2c_board_info info = अणु
 		I2C_BOARD_INFO("dummy", address),
-	};
+	पूर्ण;
 
-	return i2c_new_client_device(adapter, &info);
-}
+	वापस i2c_new_client_device(adapter, &info);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_new_dummy_device);
 
-static void devm_i2c_release_dummy(void *client)
-{
-	i2c_unregister_device(client);
-}
+अटल व्योम devm_i2c_release_dummy(व्योम *client)
+अणु
+	i2c_unरेजिस्टर_device(client);
+पूर्ण
 
 /**
- * devm_i2c_new_dummy_device - return a new i2c device bound to a dummy driver
+ * devm_i2c_new_dummy_device - वापस a new i2c device bound to a dummy driver
  * @dev: device the managed resource is bound to
  * @adapter: the adapter managing the device
  * @address: seven bit address to be used
  * Context: can sleep
  *
- * This is the device-managed version of @i2c_new_dummy_device. It returns the
- * new i2c client or an ERR_PTR in case of an error.
+ * This is the device-managed version of @i2c_new_dummy_device. It वापसs the
+ * new i2c client or an ERR_PTR in हाल of an error.
  */
-struct i2c_client *devm_i2c_new_dummy_device(struct device *dev,
-					     struct i2c_adapter *adapter,
+काष्ठा i2c_client *devm_i2c_new_dummy_device(काष्ठा device *dev,
+					     काष्ठा i2c_adapter *adapter,
 					     u16 address)
-{
-	struct i2c_client *client;
-	int ret;
+अणु
+	काष्ठा i2c_client *client;
+	पूर्णांक ret;
 
 	client = i2c_new_dummy_device(adapter, address);
-	if (IS_ERR(client))
-		return client;
+	अगर (IS_ERR(client))
+		वापस client;
 
 	ret = devm_add_action_or_reset(dev, devm_i2c_release_dummy, client);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return client;
-}
+	वापस client;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_i2c_new_dummy_device);
 
 /**
  * i2c_new_ancillary_device - Helper to get the instantiated secondary address
  * and create the associated device
  * @client: Handle to the primary client
- * @name: Handle to specify which secondary address to get
- * @default_addr: Used as a fallback if no secondary address was specified
+ * @name: Handle to specअगरy which secondary address to get
+ * @शेष_addr: Used as a fallback अगर no secondary address was specअगरied
  * Context: can sleep
  *
  * I2C clients can be composed of multiple I2C slaves bound together in a single
  * component. The I2C client driver then binds to the master I2C slave and needs
  * to create I2C dummy clients to communicate with all the other slaves.
  *
- * This function creates and returns an I2C dummy client whose I2C address is
- * retrieved from the platform firmware based on the given slave name. If no
- * address is specified by the firmware default_addr is used.
+ * This function creates and वापसs an I2C dummy client whose I2C address is
+ * retrieved from the platक्रमm firmware based on the given slave name. If no
+ * address is specअगरied by the firmware शेष_addr is used.
  *
- * On DT-based platforms the address is retrieved from the "reg" property entry
+ * On DT-based platक्रमms the address is retrieved from the "reg" property entry
  * cell whose "reg-names" value matches the slave name.
  *
- * This returns the new i2c client, which should be saved for later use with
- * i2c_unregister_device(); or an ERR_PTR to describe the error.
+ * This वापसs the new i2c client, which should be saved क्रम later use with
+ * i2c_unरेजिस्टर_device(); or an ERR_PTR to describe the error.
  */
-struct i2c_client *i2c_new_ancillary_device(struct i2c_client *client,
-						const char *name,
-						u16 default_addr)
-{
-	struct device_node *np = client->dev.of_node;
-	u32 addr = default_addr;
-	int i;
+काष्ठा i2c_client *i2c_new_ancillary_device(काष्ठा i2c_client *client,
+						स्थिर अक्षर *name,
+						u16 शेष_addr)
+अणु
+	काष्ठा device_node *np = client->dev.of_node;
+	u32 addr = शेष_addr;
+	पूर्णांक i;
 
-	if (np) {
+	अगर (np) अणु
 		i = of_property_match_string(np, "reg-names", name);
-		if (i >= 0)
-			of_property_read_u32_index(np, "reg", i, &addr);
-	}
+		अगर (i >= 0)
+			of_property_पढ़ो_u32_index(np, "reg", i, &addr);
+	पूर्ण
 
 	dev_dbg(&client->adapter->dev, "Address for %s : 0x%x\n", name, addr);
-	return i2c_new_dummy_device(client->adapter, addr);
-}
+	वापस i2c_new_dummy_device(client->adapter, addr);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_new_ancillary_device);
 
 /* ------------------------------------------------------------------------- */
 
 /* I2C bus adapters -- one roots each I2C or SMBUS segment */
 
-static void i2c_adapter_dev_release(struct device *dev)
-{
-	struct i2c_adapter *adap = to_i2c_adapter(dev);
+अटल व्योम i2c_adapter_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_adapter *adap = to_i2c_adapter(dev);
 	complete(&adap->dev_released);
-}
+पूर्ण
 
-unsigned int i2c_adapter_depth(struct i2c_adapter *adapter)
-{
-	unsigned int depth = 0;
+अचिन्हित पूर्णांक i2c_adapter_depth(काष्ठा i2c_adapter *adapter)
+अणु
+	अचिन्हित पूर्णांक depth = 0;
 
-	while ((adapter = i2c_parent_is_i2c_adapter(adapter)))
+	जबतक ((adapter = i2c_parent_is_i2c_adapter(adapter)))
 		depth++;
 
 	WARN_ONCE(depth >= MAX_LOCKDEP_SUBCLASSES,
 		  "adapter depth exceeds lockdep subclass limit\n");
 
-	return depth;
-}
+	वापस depth;
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_adapter_depth);
 
 /*
  * Let users instantiate I2C devices through sysfs. This can be used when
- * platform initialization code doesn't contain the proper data for
- * whatever reason. Also useful for drivers that do device detection and
+ * platक्रमm initialization code करोesn't contain the proper data क्रम
+ * whatever reason. Also useful क्रम drivers that करो device detection and
  * detection fails, either because the device uses an unexpected address,
- * or this is a compatible device with different ID register values.
+ * or this is a compatible device with dअगरferent ID रेजिस्टर values.
  *
- * Parameter checking may look overzealous, but we really don't want
+ * Parameter checking may look overzealous, but we really करोn't want
  * the user to provide incorrect parameters.
  */
-static ssize_t
-new_device_store(struct device *dev, struct device_attribute *attr,
-		 const char *buf, size_t count)
-{
-	struct i2c_adapter *adap = to_i2c_adapter(dev);
-	struct i2c_board_info info;
-	struct i2c_client *client;
-	char *blank, end;
-	int res;
+अटल sमाप_प्रकार
+new_device_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_adapter *adap = to_i2c_adapter(dev);
+	काष्ठा i2c_board_info info;
+	काष्ठा i2c_client *client;
+	अक्षर *blank, end;
+	पूर्णांक res;
 
-	memset(&info, 0, sizeof(struct i2c_board_info));
+	स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 
-	blank = strchr(buf, ' ');
-	if (!blank) {
+	blank = म_अक्षर(buf, ' ');
+	अगर (!blank) अणु
 		dev_err(dev, "%s: Missing parameters\n", "new_device");
-		return -EINVAL;
-	}
-	if (blank - buf > I2C_NAME_SIZE - 1) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (blank - buf > I2C_NAME_SIZE - 1) अणु
 		dev_err(dev, "%s: Invalid device name\n", "new_device");
-		return -EINVAL;
-	}
-	memcpy(info.type, buf, blank - buf);
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(info.type, buf, blank - buf);
 
-	/* Parse remaining parameters, reject extra parameters */
-	res = sscanf(++blank, "%hi%c", &info.addr, &end);
-	if (res < 1) {
+	/* Parse reमुख्यing parameters, reject extra parameters */
+	res = माला_पूछो(++blank, "%hi%c", &info.addr, &end);
+	अगर (res < 1) अणु
 		dev_err(dev, "%s: Can't parse I2C address\n", "new_device");
-		return -EINVAL;
-	}
-	if (res > 1  && end != '\n') {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (res > 1  && end != '\n') अणु
 		dev_err(dev, "%s: Extra parameters\n", "new_device");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((info.addr & I2C_ADDR_OFFSET_TEN_BIT) == I2C_ADDR_OFFSET_TEN_BIT) {
+	अगर ((info.addr & I2C_ADDR_OFFSET_TEN_BIT) == I2C_ADDR_OFFSET_TEN_BIT) अणु
 		info.addr &= ~I2C_ADDR_OFFSET_TEN_BIT;
 		info.flags |= I2C_CLIENT_TEN;
-	}
+	पूर्ण
 
-	if (info.addr & I2C_ADDR_OFFSET_SLAVE) {
+	अगर (info.addr & I2C_ADDR_OFFSET_SLAVE) अणु
 		info.addr &= ~I2C_ADDR_OFFSET_SLAVE;
 		info.flags |= I2C_CLIENT_SLAVE;
-	}
+	पूर्ण
 
 	client = i2c_new_client_device(adap, &info);
-	if (IS_ERR(client))
-		return PTR_ERR(client);
+	अगर (IS_ERR(client))
+		वापस PTR_ERR(client);
 
 	/* Keep track of the added device */
 	mutex_lock(&adap->userspace_clients_lock);
@@ -1221,229 +1222,229 @@ new_device_store(struct device *dev, struct device_attribute *attr,
 	dev_info(dev, "%s: Instantiated device %s at 0x%02hx\n", "new_device",
 		 info.type, info.addr);
 
-	return count;
-}
-static DEVICE_ATTR_WO(new_device);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(new_device);
 
 /*
- * And of course let the users delete the devices they instantiated, if
- * they got it wrong. This interface can only be used to delete devices
+ * And of course let the users delete the devices they instantiated, अगर
+ * they got it wrong. This पूर्णांकerface can only be used to delete devices
  * instantiated by i2c_sysfs_new_device above. This guarantees that we
- * don't delete devices to which some kernel code still has references.
+ * करोn't delete devices to which some kernel code still has references.
  *
- * Parameter checking may look overzealous, but we really don't want
+ * Parameter checking may look overzealous, but we really करोn't want
  * the user to delete the wrong device.
  */
-static ssize_t
-delete_device_store(struct device *dev, struct device_attribute *attr,
-		    const char *buf, size_t count)
-{
-	struct i2c_adapter *adap = to_i2c_adapter(dev);
-	struct i2c_client *client, *next;
-	unsigned short addr;
-	char end;
-	int res;
+अटल sमाप_प्रकार
+delete_device_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_adapter *adap = to_i2c_adapter(dev);
+	काष्ठा i2c_client *client, *next;
+	अचिन्हित लघु addr;
+	अक्षर end;
+	पूर्णांक res;
 
 	/* Parse parameters, reject extra parameters */
-	res = sscanf(buf, "%hi%c", &addr, &end);
-	if (res < 1) {
+	res = माला_पूछो(buf, "%hi%c", &addr, &end);
+	अगर (res < 1) अणु
 		dev_err(dev, "%s: Can't parse I2C address\n", "delete_device");
-		return -EINVAL;
-	}
-	if (res > 1  && end != '\n') {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (res > 1  && end != '\n') अणु
 		dev_err(dev, "%s: Extra parameters\n", "delete_device");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Make sure the device was added through sysfs */
 	res = -ENOENT;
 	mutex_lock_nested(&adap->userspace_clients_lock,
 			  i2c_adapter_depth(adap));
-	list_for_each_entry_safe(client, next, &adap->userspace_clients,
-				 detected) {
-		if (i2c_encode_flags_to_addr(client) == addr) {
+	list_क्रम_each_entry_safe(client, next, &adap->userspace_clients,
+				 detected) अणु
+		अगर (i2c_encode_flags_to_addr(client) == addr) अणु
 			dev_info(dev, "%s: Deleting device %s at 0x%02hx\n",
 				 "delete_device", client->name, client->addr);
 
 			list_del(&client->detected);
-			i2c_unregister_device(client);
+			i2c_unरेजिस्टर_device(client);
 			res = count;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&adap->userspace_clients_lock);
 
-	if (res < 0)
+	अगर (res < 0)
 		dev_err(dev, "%s: Can't find device in list\n",
 			"delete_device");
-	return res;
-}
-static DEVICE_ATTR_IGNORE_LOCKDEP(delete_device, S_IWUSR, NULL,
+	वापस res;
+पूर्ण
+अटल DEVICE_ATTR_IGNORE_LOCKDEP(delete_device, S_IWUSR, शून्य,
 				  delete_device_store);
 
-static struct attribute *i2c_adapter_attrs[] = {
+अटल काष्ठा attribute *i2c_adapter_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_new_device.attr,
 	&dev_attr_delete_device.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 ATTRIBUTE_GROUPS(i2c_adapter);
 
-struct device_type i2c_adapter_type = {
+काष्ठा device_type i2c_adapter_type = अणु
 	.groups		= i2c_adapter_groups,
 	.release	= i2c_adapter_dev_release,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(i2c_adapter_type);
 
 /**
- * i2c_verify_adapter - return parameter as i2c_adapter or NULL
+ * i2c_verअगरy_adapter - वापस parameter as i2c_adapter or शून्य
  * @dev: device, probably from some driver model iterator
  *
  * When traversing the driver model tree, perhaps using driver model
- * iterators like @device_for_each_child(), you can't assume very much
- * about the nodes you find.  Use this function to avoid oopses caused
+ * iterators like @device_क्रम_each_child(), you can't assume very much
+ * about the nodes you find.  Use this function to aव्योम oopses caused
  * by wrongly treating some non-I2C device as an i2c_adapter.
  */
-struct i2c_adapter *i2c_verify_adapter(struct device *dev)
-{
-	return (dev->type == &i2c_adapter_type)
+काष्ठा i2c_adapter *i2c_verअगरy_adapter(काष्ठा device *dev)
+अणु
+	वापस (dev->type == &i2c_adapter_type)
 			? to_i2c_adapter(dev)
-			: NULL;
-}
-EXPORT_SYMBOL(i2c_verify_adapter);
+			: शून्य;
+पूर्ण
+EXPORT_SYMBOL(i2c_verअगरy_adapter);
 
-#ifdef CONFIG_I2C_COMPAT
-static struct class_compat *i2c_adapter_compat_class;
-#endif
+#अगर_घोषित CONFIG_I2C_COMPAT
+अटल काष्ठा class_compat *i2c_adapter_compat_class;
+#पूर्ण_अगर
 
-static void i2c_scan_static_board_info(struct i2c_adapter *adapter)
-{
-	struct i2c_devinfo	*devinfo;
+अटल व्योम i2c_scan_अटल_board_info(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा i2c_devinfo	*devinfo;
 
-	down_read(&__i2c_board_lock);
-	list_for_each_entry(devinfo, &__i2c_board_list, list) {
-		if (devinfo->busnum == adapter->nr &&
+	करोwn_पढ़ो(&__i2c_board_lock);
+	list_क्रम_each_entry(devinfo, &__i2c_board_list, list) अणु
+		अगर (devinfo->busnum == adapter->nr &&
 		    IS_ERR(i2c_new_client_device(adapter, &devinfo->board_info)))
 			dev_err(&adapter->dev,
 				"Can't create device at 0x%02x\n",
 				devinfo->board_info.addr);
-	}
-	up_read(&__i2c_board_lock);
-}
+	पूर्ण
+	up_पढ़ो(&__i2c_board_lock);
+पूर्ण
 
-static int i2c_do_add_adapter(struct i2c_driver *driver,
-			      struct i2c_adapter *adap)
-{
+अटल पूर्णांक i2c_करो_add_adapter(काष्ठा i2c_driver *driver,
+			      काष्ठा i2c_adapter *adap)
+अणु
 	/* Detect supported devices on that bus, and instantiate them */
 	i2c_detect(adap, driver);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __process_new_adapter(struct device_driver *d, void *data)
-{
-	return i2c_do_add_adapter(to_i2c_driver(d), data);
-}
+अटल पूर्णांक __process_new_adapter(काष्ठा device_driver *d, व्योम *data)
+अणु
+	वापस i2c_करो_add_adapter(to_i2c_driver(d), data);
+पूर्ण
 
-static const struct i2c_lock_operations i2c_adapter_lock_ops = {
+अटल स्थिर काष्ठा i2c_lock_operations i2c_adapter_lock_ops = अणु
 	.lock_bus =    i2c_adapter_lock_bus,
 	.trylock_bus = i2c_adapter_trylock_bus,
 	.unlock_bus =  i2c_adapter_unlock_bus,
-};
+पूर्ण;
 
-static void i2c_host_notify_irq_teardown(struct i2c_adapter *adap)
-{
-	struct irq_domain *domain = adap->host_notify_domain;
+अटल व्योम i2c_host_notअगरy_irq_tearकरोwn(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य = adap->host_notअगरy_करोमुख्य;
 	irq_hw_number_t hwirq;
 
-	if (!domain)
-		return;
+	अगर (!करोमुख्य)
+		वापस;
 
-	for (hwirq = 0 ; hwirq < I2C_ADDR_7BITS_COUNT ; hwirq++)
-		irq_dispose_mapping(irq_find_mapping(domain, hwirq));
+	क्रम (hwirq = 0 ; hwirq < I2C_ADDR_7BITS_COUNT ; hwirq++)
+		irq_dispose_mapping(irq_find_mapping(करोमुख्य, hwirq));
 
-	irq_domain_remove(domain);
-	adap->host_notify_domain = NULL;
-}
+	irq_करोमुख्य_हटाओ(करोमुख्य);
+	adap->host_notअगरy_करोमुख्य = शून्य;
+पूर्ण
 
-static int i2c_host_notify_irq_map(struct irq_domain *h,
-					  unsigned int virq,
+अटल पूर्णांक i2c_host_notअगरy_irq_map(काष्ठा irq_करोमुख्य *h,
+					  अचिन्हित पूर्णांक virq,
 					  irq_hw_number_t hw_irq_num)
-{
+अणु
 	irq_set_chip_and_handler(virq, &dummy_irq_chip, handle_simple_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops i2c_host_notify_irq_ops = {
-	.map = i2c_host_notify_irq_map,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops i2c_host_notअगरy_irq_ops = अणु
+	.map = i2c_host_notअगरy_irq_map,
+पूर्ण;
 
-static int i2c_setup_host_notify_irq_domain(struct i2c_adapter *adap)
-{
-	struct irq_domain *domain;
+अटल पूर्णांक i2c_setup_host_notअगरy_irq_करोमुख्य(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 
-	if (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_HOST_NOTIFY))
-		return 0;
+	अगर (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_HOST_NOTIFY))
+		वापस 0;
 
-	domain = irq_domain_create_linear(adap->dev.parent->fwnode,
+	करोमुख्य = irq_करोमुख्य_create_linear(adap->dev.parent->fwnode,
 					  I2C_ADDR_7BITS_COUNT,
-					  &i2c_host_notify_irq_ops, adap);
-	if (!domain)
-		return -ENOMEM;
+					  &i2c_host_notअगरy_irq_ops, adap);
+	अगर (!करोमुख्य)
+		वापस -ENOMEM;
 
-	adap->host_notify_domain = domain;
+	adap->host_notअगरy_करोमुख्य = करोमुख्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * i2c_handle_smbus_host_notify - Forward a Host Notify event to the correct
+ * i2c_handle_smbus_host_notअगरy - Forward a Host Notअगरy event to the correct
  * I2C client.
  * @adap: the adapter
- * @addr: the I2C address of the notifying device
+ * @addr: the I2C address of the notअगरying device
  * Context: can't sleep
  *
- * Helper function to be called from an I2C bus driver's interrupt
- * handler. It will schedule the Host Notify IRQ.
+ * Helper function to be called from an I2C bus driver's पूर्णांकerrupt
+ * handler. It will schedule the Host Notअगरy IRQ.
  */
-int i2c_handle_smbus_host_notify(struct i2c_adapter *adap, unsigned short addr)
-{
-	int irq;
+पूर्णांक i2c_handle_smbus_host_notअगरy(काष्ठा i2c_adapter *adap, अचिन्हित लघु addr)
+अणु
+	पूर्णांक irq;
 
-	if (!adap)
-		return -EINVAL;
+	अगर (!adap)
+		वापस -EINVAL;
 
-	irq = irq_find_mapping(adap->host_notify_domain, addr);
-	if (irq <= 0)
-		return -ENXIO;
+	irq = irq_find_mapping(adap->host_notअगरy_करोमुख्य, addr);
+	अगर (irq <= 0)
+		वापस -ENXIO;
 
 	generic_handle_irq(irq);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(i2c_handle_smbus_host_notify);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(i2c_handle_smbus_host_notअगरy);
 
-static int i2c_register_adapter(struct i2c_adapter *adap)
-{
-	int res = -EINVAL;
+अटल पूर्णांक i2c_रेजिस्टर_adapter(काष्ठा i2c_adapter *adap)
+अणु
+	पूर्णांक res = -EINVAL;
 
-	/* Can't register until after driver model init */
-	if (WARN_ON(!is_registered)) {
+	/* Can't रेजिस्टर until after driver model init */
+	अगर (WARN_ON(!is_रेजिस्टरed)) अणु
 		res = -EAGAIN;
-		goto out_list;
-	}
+		जाओ out_list;
+	पूर्ण
 
 	/* Sanity checks */
-	if (WARN(!adap->name[0], "i2c adapter has no name"))
-		goto out_list;
+	अगर (WARN(!adap->name[0], "i2c adapter has no name"))
+		जाओ out_list;
 
-	if (!adap->algo) {
+	अगर (!adap->algo) अणु
 		pr_err("adapter '%s': no algo supplied!\n", adap->name);
-		goto out_list;
-	}
+		जाओ out_list;
+	पूर्ण
 
-	if (!adap->lock_ops)
+	अगर (!adap->lock_ops)
 		adap->lock_ops = &i2c_adapter_lock_ops;
 
 	adap->locked_flags = 0;
@@ -1452,94 +1453,94 @@ static int i2c_register_adapter(struct i2c_adapter *adap)
 	mutex_init(&adap->userspace_clients_lock);
 	INIT_LIST_HEAD(&adap->userspace_clients);
 
-	/* Set default timeout to 1 second if not already set */
-	if (adap->timeout == 0)
-		adap->timeout = HZ;
+	/* Set शेष समयout to 1 second अगर not alपढ़ोy set */
+	अगर (adap->समयout == 0)
+		adap->समयout = HZ;
 
-	/* register soft irqs for Host Notify */
-	res = i2c_setup_host_notify_irq_domain(adap);
-	if (res) {
+	/* रेजिस्टर soft irqs क्रम Host Notअगरy */
+	res = i2c_setup_host_notअगरy_irq_करोमुख्य(adap);
+	अगर (res) अणु
 		pr_err("adapter '%s': can't create Host Notify IRQs (%d)\n",
 		       adap->name, res);
-		goto out_list;
-	}
+		जाओ out_list;
+	पूर्ण
 
 	dev_set_name(&adap->dev, "i2c-%d", adap->nr);
 	adap->dev.bus = &i2c_bus_type;
 	adap->dev.type = &i2c_adapter_type;
-	res = device_register(&adap->dev);
-	if (res) {
+	res = device_रेजिस्टर(&adap->dev);
+	अगर (res) अणु
 		pr_err("adapter '%s': can't register device (%d)\n", adap->name, res);
-		goto out_list;
-	}
+		जाओ out_list;
+	पूर्ण
 
 	res = of_i2c_setup_smbus_alert(adap);
-	if (res)
-		goto out_reg;
+	अगर (res)
+		जाओ out_reg;
 
-	pm_runtime_no_callbacks(&adap->dev);
+	pm_runसमय_no_callbacks(&adap->dev);
 	pm_suspend_ignore_children(&adap->dev, true);
-	pm_runtime_enable(&adap->dev);
+	pm_runसमय_enable(&adap->dev);
 
 	res = i2c_init_recovery(adap);
-	if (res == -EPROBE_DEFER)
-		goto out_reg;
+	अगर (res == -EPROBE_DEFER)
+		जाओ out_reg;
 
 	dev_dbg(&adap->dev, "adapter [%s] registered\n", adap->name);
 
-#ifdef CONFIG_I2C_COMPAT
+#अगर_घोषित CONFIG_I2C_COMPAT
 	res = class_compat_create_link(i2c_adapter_compat_class, &adap->dev,
 				       adap->dev.parent);
-	if (res)
+	अगर (res)
 		dev_warn(&adap->dev,
 			 "Failed to create compatibility class link\n");
-#endif
+#पूर्ण_अगर
 
 	/* create pre-declared device nodes */
-	of_i2c_register_devices(adap);
+	of_i2c_रेजिस्टर_devices(adap);
 	i2c_acpi_install_space_handler(adap);
-	i2c_acpi_register_devices(adap);
+	i2c_acpi_रेजिस्टर_devices(adap);
 
-	if (adap->nr < __i2c_first_dynamic_bus_num)
-		i2c_scan_static_board_info(adap);
+	अगर (adap->nr < __i2c_first_dynamic_bus_num)
+		i2c_scan_अटल_board_info(adap);
 
-	/* Notify drivers */
+	/* Notअगरy drivers */
 	mutex_lock(&core_lock);
-	bus_for_each_drv(&i2c_bus_type, NULL, adap, __process_new_adapter);
+	bus_क्रम_each_drv(&i2c_bus_type, शून्य, adap, __process_new_adapter);
 	mutex_unlock(&core_lock);
 
-	return 0;
+	वापस 0;
 
 out_reg:
 	init_completion(&adap->dev_released);
-	device_unregister(&adap->dev);
-	wait_for_completion(&adap->dev_released);
+	device_unरेजिस्टर(&adap->dev);
+	रुको_क्रम_completion(&adap->dev_released);
 out_list:
 	mutex_lock(&core_lock);
-	idr_remove(&i2c_adapter_idr, adap->nr);
+	idr_हटाओ(&i2c_adapter_idr, adap->nr);
 	mutex_unlock(&core_lock);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * __i2c_add_numbered_adapter - i2c_add_numbered_adapter where nr is never -1
- * @adap: the adapter to register (with adap->nr initialized)
+ * @adap: the adapter to रेजिस्टर (with adap->nr initialized)
  * Context: can sleep
  *
- * See i2c_add_numbered_adapter() for details.
+ * See i2c_add_numbered_adapter() क्रम details.
  */
-static int __i2c_add_numbered_adapter(struct i2c_adapter *adap)
-{
-	int id;
+अटल पूर्णांक __i2c_add_numbered_adapter(काष्ठा i2c_adapter *adap)
+अणु
+	पूर्णांक id;
 
 	mutex_lock(&core_lock);
 	id = idr_alloc(&i2c_adapter_idr, adap, adap->nr, adap->nr + 1, GFP_KERNEL);
 	mutex_unlock(&core_lock);
-	if (WARN(id < 0, "couldn't get idr"))
-		return id == -ENOSPC ? -EBUSY : id;
+	अगर (WARN(id < 0, "couldn't get idr"))
+		वापस id == -ENOSPC ? -EBUSY : id;
 
-	return i2c_register_adapter(adap);
-}
+	वापस i2c_रेजिस्टर_adapter(adap);
+पूर्ण
 
 /**
  * i2c_add_adapter - declare i2c adapter, use dynamic bus number
@@ -1547,250 +1548,250 @@ static int __i2c_add_numbered_adapter(struct i2c_adapter *adap)
  * Context: can sleep
  *
  * This routine is used to declare an I2C adapter when its bus number
- * doesn't matter or when its bus number is specified by an dt alias.
- * Examples of bases when the bus number doesn't matter: I2C adapters
+ * करोesn't matter or when its bus number is specअगरied by an dt alias.
+ * Examples of bases when the bus number करोesn't matter: I2C adapters
  * dynamically added by USB links or PCI plugin cards.
  *
- * When this returns zero, a new bus number was allocated and stored
- * in adap->nr, and the specified adapter became available for clients.
- * Otherwise, a negative errno value is returned.
+ * When this वापसs zero, a new bus number was allocated and stored
+ * in adap->nr, and the specअगरied adapter became available क्रम clients.
+ * Otherwise, a negative त्रुटि_सं value is वापसed.
  */
-int i2c_add_adapter(struct i2c_adapter *adapter)
-{
-	struct device *dev = &adapter->dev;
-	int id;
+पूर्णांक i2c_add_adapter(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा device *dev = &adapter->dev;
+	पूर्णांक id;
 
-	if (dev->of_node) {
+	अगर (dev->of_node) अणु
 		id = of_alias_get_id(dev->of_node, "i2c");
-		if (id >= 0) {
+		अगर (id >= 0) अणु
 			adapter->nr = id;
-			return __i2c_add_numbered_adapter(adapter);
-		}
-	}
+			वापस __i2c_add_numbered_adapter(adapter);
+		पूर्ण
+	पूर्ण
 
 	mutex_lock(&core_lock);
 	id = idr_alloc(&i2c_adapter_idr, adapter,
 		       __i2c_first_dynamic_bus_num, 0, GFP_KERNEL);
 	mutex_unlock(&core_lock);
-	if (WARN(id < 0, "couldn't get idr"))
-		return id;
+	अगर (WARN(id < 0, "couldn't get idr"))
+		वापस id;
 
 	adapter->nr = id;
 
-	return i2c_register_adapter(adapter);
-}
+	वापस i2c_रेजिस्टर_adapter(adapter);
+पूर्ण
 EXPORT_SYMBOL(i2c_add_adapter);
 
 /**
- * i2c_add_numbered_adapter - declare i2c adapter, use static bus number
- * @adap: the adapter to register (with adap->nr initialized)
+ * i2c_add_numbered_adapter - declare i2c adapter, use अटल bus number
+ * @adap: the adapter to रेजिस्टर (with adap->nr initialized)
  * Context: can sleep
  *
  * This routine is used to declare an I2C adapter when its bus number
- * matters.  For example, use it for I2C adapters from system-on-chip CPUs,
- * or otherwise built in to the system's mainboard, and where i2c_board_info
+ * matters.  For example, use it क्रम I2C adapters from प्रणाली-on-chip CPUs,
+ * or otherwise built in to the प्रणाली's मुख्यboard, and where i2c_board_info
  * is used to properly configure I2C devices.
  *
  * If the requested bus number is set to -1, then this function will behave
  * identically to i2c_add_adapter, and will dynamically assign a bus number.
  *
- * If no devices have pre-been declared for this bus, then be sure to
- * register the adapter before any dynamically allocated ones.  Otherwise
+ * If no devices have pre-been declared क्रम this bus, then be sure to
+ * रेजिस्टर the adapter beक्रमe any dynamically allocated ones.  Otherwise
  * the required bus ID may not be available.
  *
- * When this returns zero, the specified adapter became available for
+ * When this वापसs zero, the specअगरied adapter became available क्रम
  * clients using the bus number provided in adap->nr.  Also, the table
- * of I2C devices pre-declared using i2c_register_board_info() is scanned,
+ * of I2C devices pre-declared using i2c_रेजिस्टर_board_info() is scanned,
  * and the appropriate driver model device nodes are created.  Otherwise, a
- * negative errno value is returned.
+ * negative त्रुटि_सं value is वापसed.
  */
-int i2c_add_numbered_adapter(struct i2c_adapter *adap)
-{
-	if (adap->nr == -1) /* -1 means dynamically assign bus id */
-		return i2c_add_adapter(adap);
+पूर्णांक i2c_add_numbered_adapter(काष्ठा i2c_adapter *adap)
+अणु
+	अगर (adap->nr == -1) /* -1 means dynamically assign bus id */
+		वापस i2c_add_adapter(adap);
 
-	return __i2c_add_numbered_adapter(adap);
-}
+	वापस __i2c_add_numbered_adapter(adap);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_add_numbered_adapter);
 
-static void i2c_do_del_adapter(struct i2c_driver *driver,
-			      struct i2c_adapter *adapter)
-{
-	struct i2c_client *client, *_n;
+अटल व्योम i2c_करो_del_adapter(काष्ठा i2c_driver *driver,
+			      काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा i2c_client *client, *_n;
 
 	/* Remove the devices we created ourselves as the result of hardware
 	 * probing (using a driver's detect method) */
-	list_for_each_entry_safe(client, _n, &driver->clients, detected) {
-		if (client->adapter == adapter) {
+	list_क्रम_each_entry_safe(client, _n, &driver->clients, detected) अणु
+		अगर (client->adapter == adapter) अणु
 			dev_dbg(&adapter->dev, "Removing %s at 0x%x\n",
 				client->name, client->addr);
 			list_del(&client->detected);
-			i2c_unregister_device(client);
-		}
-	}
-}
+			i2c_unरेजिस्टर_device(client);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __unregister_client(struct device *dev, void *dummy)
-{
-	struct i2c_client *client = i2c_verify_client(dev);
-	if (client && strcmp(client->name, "dummy"))
-		i2c_unregister_device(client);
-	return 0;
-}
+अटल पूर्णांक __unरेजिस्टर_client(काष्ठा device *dev, व्योम *dummy)
+अणु
+	काष्ठा i2c_client *client = i2c_verअगरy_client(dev);
+	अगर (client && म_भेद(client->name, "dummy"))
+		i2c_unरेजिस्टर_device(client);
+	वापस 0;
+पूर्ण
 
-static int __unregister_dummy(struct device *dev, void *dummy)
-{
-	struct i2c_client *client = i2c_verify_client(dev);
-	i2c_unregister_device(client);
-	return 0;
-}
+अटल पूर्णांक __unरेजिस्टर_dummy(काष्ठा device *dev, व्योम *dummy)
+अणु
+	काष्ठा i2c_client *client = i2c_verअगरy_client(dev);
+	i2c_unरेजिस्टर_device(client);
+	वापस 0;
+पूर्ण
 
-static int __process_removed_adapter(struct device_driver *d, void *data)
-{
-	i2c_do_del_adapter(to_i2c_driver(d), data);
-	return 0;
-}
+अटल पूर्णांक __process_हटाओd_adapter(काष्ठा device_driver *d, व्योम *data)
+अणु
+	i2c_करो_del_adapter(to_i2c_driver(d), data);
+	वापस 0;
+पूर्ण
 
 /**
- * i2c_del_adapter - unregister I2C adapter
- * @adap: the adapter being unregistered
+ * i2c_del_adapter - unरेजिस्टर I2C adapter
+ * @adap: the adapter being unरेजिस्टरed
  * Context: can sleep
  *
- * This unregisters an I2C adapter which was previously registered
+ * This unरेजिस्टरs an I2C adapter which was previously रेजिस्टरed
  * by @i2c_add_adapter or @i2c_add_numbered_adapter.
  */
-void i2c_del_adapter(struct i2c_adapter *adap)
-{
-	struct i2c_adapter *found;
-	struct i2c_client *client, *next;
+व्योम i2c_del_adapter(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा i2c_adapter *found;
+	काष्ठा i2c_client *client, *next;
 
 	/* First make sure that this adapter was ever added */
 	mutex_lock(&core_lock);
 	found = idr_find(&i2c_adapter_idr, adap->nr);
 	mutex_unlock(&core_lock);
-	if (found != adap) {
+	अगर (found != adap) अणु
 		pr_debug("attempting to delete unregistered adapter [%s]\n", adap->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	i2c_acpi_remove_space_handler(adap);
+	i2c_acpi_हटाओ_space_handler(adap);
 	/* Tell drivers about this removal */
 	mutex_lock(&core_lock);
-	bus_for_each_drv(&i2c_bus_type, NULL, adap,
-			       __process_removed_adapter);
+	bus_क्रम_each_drv(&i2c_bus_type, शून्य, adap,
+			       __process_हटाओd_adapter);
 	mutex_unlock(&core_lock);
 
 	/* Remove devices instantiated from sysfs */
 	mutex_lock_nested(&adap->userspace_clients_lock,
 			  i2c_adapter_depth(adap));
-	list_for_each_entry_safe(client, next, &adap->userspace_clients,
-				 detected) {
+	list_क्रम_each_entry_safe(client, next, &adap->userspace_clients,
+				 detected) अणु
 		dev_dbg(&adap->dev, "Removing %s at 0x%x\n", client->name,
 			client->addr);
 		list_del(&client->detected);
-		i2c_unregister_device(client);
-	}
+		i2c_unरेजिस्टर_device(client);
+	पूर्ण
 	mutex_unlock(&adap->userspace_clients_lock);
 
-	/* Detach any active clients. This can't fail, thus we do not
-	 * check the returned value. This is a two-pass process, because
-	 * we can't remove the dummy devices during the first pass: they
+	/* Detach any active clients. This can't fail, thus we करो not
+	 * check the वापसed value. This is a two-pass process, because
+	 * we can't हटाओ the dummy devices during the first pass: they
 	 * could have been instantiated by real devices wishing to clean
-	 * them up properly, so we give them a chance to do that first. */
-	device_for_each_child(&adap->dev, NULL, __unregister_client);
-	device_for_each_child(&adap->dev, NULL, __unregister_dummy);
+	 * them up properly, so we give them a chance to करो that first. */
+	device_क्रम_each_child(&adap->dev, शून्य, __unरेजिस्टर_client);
+	device_क्रम_each_child(&adap->dev, शून्य, __unरेजिस्टर_dummy);
 
-#ifdef CONFIG_I2C_COMPAT
-	class_compat_remove_link(i2c_adapter_compat_class, &adap->dev,
+#अगर_घोषित CONFIG_I2C_COMPAT
+	class_compat_हटाओ_link(i2c_adapter_compat_class, &adap->dev,
 				 adap->dev.parent);
-#endif
+#पूर्ण_अगर
 
-	/* device name is gone after device_unregister */
+	/* device name is gone after device_unरेजिस्टर */
 	dev_dbg(&adap->dev, "adapter [%s] unregistered\n", adap->name);
 
-	pm_runtime_disable(&adap->dev);
+	pm_runसमय_disable(&adap->dev);
 
-	i2c_host_notify_irq_teardown(adap);
+	i2c_host_notअगरy_irq_tearकरोwn(adap);
 
-	/* wait until all references to the device are gone
+	/* रुको until all references to the device are gone
 	 *
 	 * FIXME: This is old code and should ideally be replaced by an
-	 * alternative which results in decoupling the lifetime of the struct
-	 * device from the i2c_adapter, like spi or netdev do. Any solution
+	 * alternative which results in decoupling the lअगरeसमय of the काष्ठा
+	 * device from the i2c_adapter, like spi or netdev करो. Any solution
 	 * should be thoroughly tested with DEBUG_KOBJECT_RELEASE enabled!
 	 */
 	init_completion(&adap->dev_released);
-	device_unregister(&adap->dev);
-	wait_for_completion(&adap->dev_released);
+	device_unरेजिस्टर(&adap->dev);
+	रुको_क्रम_completion(&adap->dev_released);
 
-	/* free bus id */
+	/* मुक्त bus id */
 	mutex_lock(&core_lock);
-	idr_remove(&i2c_adapter_idr, adap->nr);
+	idr_हटाओ(&i2c_adapter_idr, adap->nr);
 	mutex_unlock(&core_lock);
 
-	/* Clear the device structure in case this adapter is ever going to be
+	/* Clear the device काष्ठाure in हाल this adapter is ever going to be
 	   added again */
-	memset(&adap->dev, 0, sizeof(adap->dev));
-}
+	स_रखो(&adap->dev, 0, माप(adap->dev));
+पूर्ण
 EXPORT_SYMBOL(i2c_del_adapter);
 
-static void devm_i2c_del_adapter(void *adapter)
-{
+अटल व्योम devm_i2c_del_adapter(व्योम *adapter)
+अणु
 	i2c_del_adapter(adapter);
-}
+पूर्ण
 
 /**
  * devm_i2c_add_adapter - device-managed variant of i2c_add_adapter()
- * @dev: managing device for adding this I2C adapter
+ * @dev: managing device क्रम adding this I2C adapter
  * @adapter: the adapter to add
  * Context: can sleep
  *
  * Add adapter with dynamic bus number, same with i2c_add_adapter()
- * but the adapter will be auto deleted on driver detach.
+ * but the adapter will be स्वतः deleted on driver detach.
  */
-int devm_i2c_add_adapter(struct device *dev, struct i2c_adapter *adapter)
-{
-	int ret;
+पूर्णांक devm_i2c_add_adapter(काष्ठा device *dev, काष्ठा i2c_adapter *adapter)
+अणु
+	पूर्णांक ret;
 
 	ret = i2c_add_adapter(adapter);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return devm_add_action_or_reset(dev, devm_i2c_del_adapter, adapter);
-}
+	वापस devm_add_action_or_reset(dev, devm_i2c_del_adapter, adapter);
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_i2c_add_adapter);
 
-static void i2c_parse_timing(struct device *dev, char *prop_name, u32 *cur_val_p,
+अटल व्योम i2c_parse_timing(काष्ठा device *dev, अक्षर *prop_name, u32 *cur_val_p,
 			    u32 def_val, bool use_def)
-{
-	int ret;
+अणु
+	पूर्णांक ret;
 
-	ret = device_property_read_u32(dev, prop_name, cur_val_p);
-	if (ret && use_def)
+	ret = device_property_पढ़ो_u32(dev, prop_name, cur_val_p);
+	अगर (ret && use_def)
 		*cur_val_p = def_val;
 
 	dev_dbg(dev, "%s: %u\n", prop_name, *cur_val_p);
-}
+पूर्ण
 
 /**
  * i2c_parse_fw_timings - get I2C related timing parameters from firmware
- * @dev: The device to scan for I2C timing properties
- * @t: the i2c_timings struct to be filled with values
- * @use_defaults: bool to use sane defaults derived from the I2C specification
- *		  when properties are not found, otherwise don't update
+ * @dev: The device to scan क्रम I2C timing properties
+ * @t: the i2c_timings काष्ठा to be filled with values
+ * @use_शेषs: bool to use sane शेषs derived from the I2C specअगरication
+ *		  when properties are not found, otherwise करोn't update
  *
- * Scan the device for the generic I2C properties describing timing parameters
- * for the signal and fill the given struct with the results. If a property was
- * not found and use_defaults was true, then maximum timings are assumed which
- * are derived from the I2C specification. If use_defaults is not used, the
- * results will be as before, so drivers can apply their own defaults before
- * calling this helper. The latter is mainly intended for avoiding regressions
- * of existing drivers which want to switch to this function. New drivers
- * almost always should use the defaults.
+ * Scan the device क्रम the generic I2C properties describing timing parameters
+ * क्रम the संकेत and fill the given काष्ठा with the results. If a property was
+ * not found and use_शेषs was true, then maximum timings are assumed which
+ * are derived from the I2C specअगरication. If use_शेषs is not used, the
+ * results will be as beक्रमe, so drivers can apply their own शेषs beक्रमe
+ * calling this helper. The latter is मुख्यly पूर्णांकended क्रम aव्योमing regressions
+ * of existing drivers which want to चयन to this function. New drivers
+ * almost always should use the शेषs.
  */
-void i2c_parse_fw_timings(struct device *dev, struct i2c_timings *t, bool use_defaults)
-{
-	bool u = use_defaults;
+व्योम i2c_parse_fw_timings(काष्ठा device *dev, काष्ठा i2c_timings *t, bool use_शेषs)
+अणु
+	bool u = use_शेषs;
 	u32 d;
 
 	i2c_parse_timing(dev, "clock-frequency", &t->bus_freq_hz,
@@ -1804,7 +1805,7 @@ void i2c_parse_fw_timings(struct device *dev, struct i2c_timings *t, bool use_de
 	i2c_parse_timing(dev, "i2c-scl-falling-time-ns", &t->scl_fall_ns, d, u);
 
 	i2c_parse_timing(dev, "i2c-scl-internal-delay-ns",
-			 &t->scl_int_delay_ns, 0, u);
+			 &t->scl_पूर्णांक_delay_ns, 0, u);
 	i2c_parse_timing(dev, "i2c-sda-falling-time-ns", &t->sda_fall_ns,
 			 t->scl_fall_ns, u);
 	i2c_parse_timing(dev, "i2c-sda-hold-time-ns", &t->sda_hold_ns, 0, u);
@@ -1812,339 +1813,339 @@ void i2c_parse_fw_timings(struct device *dev, struct i2c_timings *t, bool use_de
 			 &t->digital_filter_width_ns, 0, u);
 	i2c_parse_timing(dev, "i2c-analog-filter-cutoff-frequency",
 			 &t->analog_filter_cutoff_freq_hz, 0, u);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_parse_fw_timings);
 
 /* ------------------------------------------------------------------------- */
 
-int i2c_for_each_dev(void *data, int (*fn)(struct device *dev, void *data))
-{
-	int res;
+पूर्णांक i2c_क्रम_each_dev(व्योम *data, पूर्णांक (*fn)(काष्ठा device *dev, व्योम *data))
+अणु
+	पूर्णांक res;
 
 	mutex_lock(&core_lock);
-	res = bus_for_each_dev(&i2c_bus_type, NULL, data, fn);
+	res = bus_क्रम_each_dev(&i2c_bus_type, शून्य, data, fn);
 	mutex_unlock(&core_lock);
 
-	return res;
-}
-EXPORT_SYMBOL_GPL(i2c_for_each_dev);
+	वापस res;
+पूर्ण
+EXPORT_SYMBOL_GPL(i2c_क्रम_each_dev);
 
-static int __process_new_driver(struct device *dev, void *data)
-{
-	if (dev->type != &i2c_adapter_type)
-		return 0;
-	return i2c_do_add_adapter(data, to_i2c_adapter(dev));
-}
+अटल पूर्णांक __process_new_driver(काष्ठा device *dev, व्योम *data)
+अणु
+	अगर (dev->type != &i2c_adapter_type)
+		वापस 0;
+	वापस i2c_करो_add_adapter(data, to_i2c_adapter(dev));
+पूर्ण
 
 /*
  * An i2c_driver is used with one or more i2c_client (device) nodes to access
  * i2c slave chips, on a bus instance associated with some i2c_adapter.
  */
 
-int i2c_register_driver(struct module *owner, struct i2c_driver *driver)
-{
-	int res;
+पूर्णांक i2c_रेजिस्टर_driver(काष्ठा module *owner, काष्ठा i2c_driver *driver)
+अणु
+	पूर्णांक res;
 
-	/* Can't register until after driver model init */
-	if (WARN_ON(!is_registered))
-		return -EAGAIN;
+	/* Can't रेजिस्टर until after driver model init */
+	अगर (WARN_ON(!is_रेजिस्टरed))
+		वापस -EAGAIN;
 
 	/* add the driver to the list of i2c drivers in the driver core */
 	driver->driver.owner = owner;
 	driver->driver.bus = &i2c_bus_type;
 	INIT_LIST_HEAD(&driver->clients);
 
-	/* When registration returns, the driver core
-	 * will have called probe() for all matching-but-unbound devices.
+	/* When registration वापसs, the driver core
+	 * will have called probe() क्रम all matching-but-unbound devices.
 	 */
-	res = driver_register(&driver->driver);
-	if (res)
-		return res;
+	res = driver_रेजिस्टर(&driver->driver);
+	अगर (res)
+		वापस res;
 
 	pr_debug("driver [%s] registered\n", driver->driver.name);
 
-	/* Walk the adapters that are already present */
-	i2c_for_each_dev(driver, __process_new_driver);
+	/* Walk the adapters that are alपढ़ोy present */
+	i2c_क्रम_each_dev(driver, __process_new_driver);
 
-	return 0;
-}
-EXPORT_SYMBOL(i2c_register_driver);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(i2c_रेजिस्टर_driver);
 
-static int __process_removed_driver(struct device *dev, void *data)
-{
-	if (dev->type == &i2c_adapter_type)
-		i2c_do_del_adapter(data, to_i2c_adapter(dev));
-	return 0;
-}
+अटल पूर्णांक __process_हटाओd_driver(काष्ठा device *dev, व्योम *data)
+अणु
+	अगर (dev->type == &i2c_adapter_type)
+		i2c_करो_del_adapter(data, to_i2c_adapter(dev));
+	वापस 0;
+पूर्ण
 
 /**
- * i2c_del_driver - unregister I2C driver
- * @driver: the driver being unregistered
+ * i2c_del_driver - unरेजिस्टर I2C driver
+ * @driver: the driver being unरेजिस्टरed
  * Context: can sleep
  */
-void i2c_del_driver(struct i2c_driver *driver)
-{
-	i2c_for_each_dev(driver, __process_removed_driver);
+व्योम i2c_del_driver(काष्ठा i2c_driver *driver)
+अणु
+	i2c_क्रम_each_dev(driver, __process_हटाओd_driver);
 
-	driver_unregister(&driver->driver);
+	driver_unरेजिस्टर(&driver->driver);
 	pr_debug("driver [%s] unregistered\n", driver->driver.name);
-}
+पूर्ण
 EXPORT_SYMBOL(i2c_del_driver);
 
 /* ------------------------------------------------------------------------- */
 
-struct i2c_cmd_arg {
-	unsigned	cmd;
-	void		*arg;
-};
+काष्ठा i2c_cmd_arg अणु
+	अचिन्हित	cmd;
+	व्योम		*arg;
+पूर्ण;
 
-static int i2c_cmd(struct device *dev, void *_arg)
-{
-	struct i2c_client	*client = i2c_verify_client(dev);
-	struct i2c_cmd_arg	*arg = _arg;
-	struct i2c_driver	*driver;
+अटल पूर्णांक i2c_cmd(काष्ठा device *dev, व्योम *_arg)
+अणु
+	काष्ठा i2c_client	*client = i2c_verअगरy_client(dev);
+	काष्ठा i2c_cmd_arg	*arg = _arg;
+	काष्ठा i2c_driver	*driver;
 
-	if (!client || !client->dev.driver)
-		return 0;
+	अगर (!client || !client->dev.driver)
+		वापस 0;
 
 	driver = to_i2c_driver(client->dev.driver);
-	if (driver->command)
+	अगर (driver->command)
 		driver->command(client, arg->cmd, arg->arg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void i2c_clients_command(struct i2c_adapter *adap, unsigned int cmd, void *arg)
-{
-	struct i2c_cmd_arg	cmd_arg;
+व्योम i2c_clients_command(काष्ठा i2c_adapter *adap, अचिन्हित पूर्णांक cmd, व्योम *arg)
+अणु
+	काष्ठा i2c_cmd_arg	cmd_arg;
 
 	cmd_arg.cmd = cmd;
 	cmd_arg.arg = arg;
-	device_for_each_child(&adap->dev, &cmd_arg, i2c_cmd);
-}
+	device_क्रम_each_child(&adap->dev, &cmd_arg, i2c_cmd);
+पूर्ण
 EXPORT_SYMBOL(i2c_clients_command);
 
-static int __init i2c_init(void)
-{
-	int retval;
+अटल पूर्णांक __init i2c_init(व्योम)
+अणु
+	पूर्णांक retval;
 
 	retval = of_alias_get_highest_id("i2c");
 
-	down_write(&__i2c_board_lock);
-	if (retval >= __i2c_first_dynamic_bus_num)
+	करोwn_ग_लिखो(&__i2c_board_lock);
+	अगर (retval >= __i2c_first_dynamic_bus_num)
 		__i2c_first_dynamic_bus_num = retval + 1;
-	up_write(&__i2c_board_lock);
+	up_ग_लिखो(&__i2c_board_lock);
 
-	retval = bus_register(&i2c_bus_type);
-	if (retval)
-		return retval;
+	retval = bus_रेजिस्टर(&i2c_bus_type);
+	अगर (retval)
+		वापस retval;
 
-	is_registered = true;
+	is_रेजिस्टरed = true;
 
-#ifdef CONFIG_I2C_COMPAT
-	i2c_adapter_compat_class = class_compat_register("i2c-adapter");
-	if (!i2c_adapter_compat_class) {
+#अगर_घोषित CONFIG_I2C_COMPAT
+	i2c_adapter_compat_class = class_compat_रेजिस्टर("i2c-adapter");
+	अगर (!i2c_adapter_compat_class) अणु
 		retval = -ENOMEM;
-		goto bus_err;
-	}
-#endif
+		जाओ bus_err;
+	पूर्ण
+#पूर्ण_अगर
 	retval = i2c_add_driver(&dummy_driver);
-	if (retval)
-		goto class_err;
+	अगर (retval)
+		जाओ class_err;
 
-	if (IS_ENABLED(CONFIG_OF_DYNAMIC))
-		WARN_ON(of_reconfig_notifier_register(&i2c_of_notifier));
-	if (IS_ENABLED(CONFIG_ACPI))
-		WARN_ON(acpi_reconfig_notifier_register(&i2c_acpi_notifier));
+	अगर (IS_ENABLED(CONFIG_OF_DYNAMIC))
+		WARN_ON(of_reconfig_notअगरier_रेजिस्टर(&i2c_of_notअगरier));
+	अगर (IS_ENABLED(CONFIG_ACPI))
+		WARN_ON(acpi_reconfig_notअगरier_रेजिस्टर(&i2c_acpi_notअगरier));
 
-	return 0;
+	वापस 0;
 
 class_err:
-#ifdef CONFIG_I2C_COMPAT
-	class_compat_unregister(i2c_adapter_compat_class);
+#अगर_घोषित CONFIG_I2C_COMPAT
+	class_compat_unरेजिस्टर(i2c_adapter_compat_class);
 bus_err:
-#endif
-	is_registered = false;
-	bus_unregister(&i2c_bus_type);
-	return retval;
-}
+#पूर्ण_अगर
+	is_रेजिस्टरed = false;
+	bus_unरेजिस्टर(&i2c_bus_type);
+	वापस retval;
+पूर्ण
 
-static void __exit i2c_exit(void)
-{
-	if (IS_ENABLED(CONFIG_ACPI))
-		WARN_ON(acpi_reconfig_notifier_unregister(&i2c_acpi_notifier));
-	if (IS_ENABLED(CONFIG_OF_DYNAMIC))
-		WARN_ON(of_reconfig_notifier_unregister(&i2c_of_notifier));
+अटल व्योम __निकास i2c_निकास(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_ACPI))
+		WARN_ON(acpi_reconfig_notअगरier_unरेजिस्टर(&i2c_acpi_notअगरier));
+	अगर (IS_ENABLED(CONFIG_OF_DYNAMIC))
+		WARN_ON(of_reconfig_notअगरier_unरेजिस्टर(&i2c_of_notअगरier));
 	i2c_del_driver(&dummy_driver);
-#ifdef CONFIG_I2C_COMPAT
-	class_compat_unregister(i2c_adapter_compat_class);
-#endif
-	bus_unregister(&i2c_bus_type);
-	tracepoint_synchronize_unregister();
-}
+#अगर_घोषित CONFIG_I2C_COMPAT
+	class_compat_unरेजिस्टर(i2c_adapter_compat_class);
+#पूर्ण_अगर
+	bus_unरेजिस्टर(&i2c_bus_type);
+	tracepoपूर्णांक_synchronize_unरेजिस्टर();
+पूर्ण
 
-/* We must initialize early, because some subsystems register i2c drivers
- * in subsys_initcall() code, but are linked (and initialized) before i2c.
+/* We must initialize early, because some subप्रणालीs रेजिस्टर i2c drivers
+ * in subsys_initcall() code, but are linked (and initialized) beक्रमe i2c.
  */
 postcore_initcall(i2c_init);
-module_exit(i2c_exit);
+module_निकास(i2c_निकास);
 
 /* ----------------------------------------------------
- * the functional interface to the i2c busses.
+ * the functional पूर्णांकerface to the i2c busses.
  * ----------------------------------------------------
  */
 
-/* Check if val is exceeding the quirk IFF quirk is non 0 */
-#define i2c_quirk_exceeded(val, quirk) ((quirk) && ((val) > (quirk)))
+/* Check अगर val is exceeding the quirk IFF quirk is non 0 */
+#घोषणा i2c_quirk_exceeded(val, quirk) ((quirk) && ((val) > (quirk)))
 
-static int i2c_quirk_error(struct i2c_adapter *adap, struct i2c_msg *msg, char *err_msg)
-{
+अटल पूर्णांक i2c_quirk_error(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msg, अक्षर *err_msg)
+अणु
 	dev_err_ratelimited(&adap->dev, "adapter quirk: %s (addr 0x%04x, size %u, %s)\n",
 			    err_msg, msg->addr, msg->len,
 			    msg->flags & I2C_M_RD ? "read" : "write");
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int i2c_check_for_quirks(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
-{
-	const struct i2c_adapter_quirks *q = adap->quirks;
-	int max_num = q->max_num_msgs, i;
-	bool do_len_check = true;
+अटल पूर्णांक i2c_check_क्रम_quirks(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	स्थिर काष्ठा i2c_adapter_quirks *q = adap->quirks;
+	पूर्णांक max_num = q->max_num_msgs, i;
+	bool करो_len_check = true;
 
-	if (q->flags & I2C_AQ_COMB) {
+	अगर (q->flags & I2C_AQ_COMB) अणु
 		max_num = 2;
 
-		/* special checks for combined messages */
-		if (num == 2) {
-			if (q->flags & I2C_AQ_COMB_WRITE_FIRST && msgs[0].flags & I2C_M_RD)
-				return i2c_quirk_error(adap, &msgs[0], "1st comb msg must be write");
+		/* special checks क्रम combined messages */
+		अगर (num == 2) अणु
+			अगर (q->flags & I2C_AQ_COMB_WRITE_FIRST && msgs[0].flags & I2C_M_RD)
+				वापस i2c_quirk_error(adap, &msgs[0], "1st comb msg must be write");
 
-			if (q->flags & I2C_AQ_COMB_READ_SECOND && !(msgs[1].flags & I2C_M_RD))
-				return i2c_quirk_error(adap, &msgs[1], "2nd comb msg must be read");
+			अगर (q->flags & I2C_AQ_COMB_READ_SECOND && !(msgs[1].flags & I2C_M_RD))
+				वापस i2c_quirk_error(adap, &msgs[1], "2nd comb msg must be read");
 
-			if (q->flags & I2C_AQ_COMB_SAME_ADDR && msgs[0].addr != msgs[1].addr)
-				return i2c_quirk_error(adap, &msgs[0], "comb msg only to same addr");
+			अगर (q->flags & I2C_AQ_COMB_SAME_ADDR && msgs[0].addr != msgs[1].addr)
+				वापस i2c_quirk_error(adap, &msgs[0], "comb msg only to same addr");
 
-			if (i2c_quirk_exceeded(msgs[0].len, q->max_comb_1st_msg_len))
-				return i2c_quirk_error(adap, &msgs[0], "msg too long");
+			अगर (i2c_quirk_exceeded(msgs[0].len, q->max_comb_1st_msg_len))
+				वापस i2c_quirk_error(adap, &msgs[0], "msg too long");
 
-			if (i2c_quirk_exceeded(msgs[1].len, q->max_comb_2nd_msg_len))
-				return i2c_quirk_error(adap, &msgs[1], "msg too long");
+			अगर (i2c_quirk_exceeded(msgs[1].len, q->max_comb_2nd_msg_len))
+				वापस i2c_quirk_error(adap, &msgs[1], "msg too long");
 
-			do_len_check = false;
-		}
-	}
+			करो_len_check = false;
+		पूर्ण
+	पूर्ण
 
-	if (i2c_quirk_exceeded(num, max_num))
-		return i2c_quirk_error(adap, &msgs[0], "too many messages");
+	अगर (i2c_quirk_exceeded(num, max_num))
+		वापस i2c_quirk_error(adap, &msgs[0], "too many messages");
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		u16 len = msgs[i].len;
 
-		if (msgs[i].flags & I2C_M_RD) {
-			if (do_len_check && i2c_quirk_exceeded(len, q->max_read_len))
-				return i2c_quirk_error(adap, &msgs[i], "msg too long");
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			अगर (करो_len_check && i2c_quirk_exceeded(len, q->max_पढ़ो_len))
+				वापस i2c_quirk_error(adap, &msgs[i], "msg too long");
 
-			if (q->flags & I2C_AQ_NO_ZERO_LEN_READ && len == 0)
-				return i2c_quirk_error(adap, &msgs[i], "no zero length");
-		} else {
-			if (do_len_check && i2c_quirk_exceeded(len, q->max_write_len))
-				return i2c_quirk_error(adap, &msgs[i], "msg too long");
+			अगर (q->flags & I2C_AQ_NO_ZERO_LEN_READ && len == 0)
+				वापस i2c_quirk_error(adap, &msgs[i], "no zero length");
+		पूर्ण अन्यथा अणु
+			अगर (करो_len_check && i2c_quirk_exceeded(len, q->max_ग_लिखो_len))
+				वापस i2c_quirk_error(adap, &msgs[i], "msg too long");
 
-			if (q->flags & I2C_AQ_NO_ZERO_LEN_WRITE && len == 0)
-				return i2c_quirk_error(adap, &msgs[i], "no zero length");
-		}
-	}
+			अगर (q->flags & I2C_AQ_NO_ZERO_LEN_WRITE && len == 0)
+				वापस i2c_quirk_error(adap, &msgs[i], "no zero length");
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * __i2c_transfer - unlocked flavor of i2c_transfer
  * @adap: Handle to I2C bus
- * @msgs: One or more messages to execute before STOP is issued to
+ * @msgs: One or more messages to execute beक्रमe STOP is issued to
  *	terminate the operation; each message begins with a START.
  * @num: Number of messages to be executed.
  *
- * Returns negative errno, else the number of messages executed.
+ * Returns negative त्रुटि_सं, अन्यथा the number of messages executed.
  *
  * Adapter lock must be held when calling this function. No debug logging
  * takes place. adap->algo->master_xfer existence isn't checked.
  */
-int __i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
-{
-	unsigned long orig_jiffies;
-	int ret, try;
+पूर्णांक __i2c_transfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	अचिन्हित दीर्घ orig_jअगरfies;
+	पूर्णांक ret, try;
 
-	if (WARN_ON(!msgs || num < 1))
-		return -EINVAL;
+	अगर (WARN_ON(!msgs || num < 1))
+		वापस -EINVAL;
 
 	ret = __i2c_check_suspended(adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (adap->quirks && i2c_check_for_quirks(adap, msgs, num))
-		return -EOPNOTSUPP;
+	अगर (adap->quirks && i2c_check_क्रम_quirks(adap, msgs, num))
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * i2c_trace_msg_key gets enabled when tracepoint i2c_transfer gets
-	 * enabled.  This is an efficient way of keeping the for-loop from
+	 * i2c_trace_msg_key माला_लो enabled when tracepoपूर्णांक i2c_transfer माला_लो
+	 * enabled.  This is an efficient way of keeping the क्रम-loop from
 	 * being executed when not needed.
 	 */
-	if (static_branch_unlikely(&i2c_trace_msg_key)) {
-		int i;
-		for (i = 0; i < num; i++)
-			if (msgs[i].flags & I2C_M_RD)
-				trace_i2c_read(adap, &msgs[i], i);
-			else
-				trace_i2c_write(adap, &msgs[i], i);
-	}
+	अगर (अटल_branch_unlikely(&i2c_trace_msg_key)) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < num; i++)
+			अगर (msgs[i].flags & I2C_M_RD)
+				trace_i2c_पढ़ो(adap, &msgs[i], i);
+			अन्यथा
+				trace_i2c_ग_लिखो(adap, &msgs[i], i);
+	पूर्ण
 
-	/* Retry automatically on arbitration loss */
-	orig_jiffies = jiffies;
-	for (ret = 0, try = 0; try <= adap->retries; try++) {
-		if (i2c_in_atomic_xfer_mode() && adap->algo->master_xfer_atomic)
+	/* Retry स्वतःmatically on arbitration loss */
+	orig_jअगरfies = jअगरfies;
+	क्रम (ret = 0, try = 0; try <= adap->retries; try++) अणु
+		अगर (i2c_in_atomic_xfer_mode() && adap->algo->master_xfer_atomic)
 			ret = adap->algo->master_xfer_atomic(adap, msgs, num);
-		else
+		अन्यथा
 			ret = adap->algo->master_xfer(adap, msgs, num);
 
-		if (ret != -EAGAIN)
-			break;
-		if (time_after(jiffies, orig_jiffies + adap->timeout))
-			break;
-	}
+		अगर (ret != -EAGAIN)
+			अवरोध;
+		अगर (समय_after(jअगरfies, orig_jअगरfies + adap->समयout))
+			अवरोध;
+	पूर्ण
 
-	if (static_branch_unlikely(&i2c_trace_msg_key)) {
-		int i;
-		for (i = 0; i < ret; i++)
-			if (msgs[i].flags & I2C_M_RD)
+	अगर (अटल_branch_unlikely(&i2c_trace_msg_key)) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < ret; i++)
+			अगर (msgs[i].flags & I2C_M_RD)
 				trace_i2c_reply(adap, &msgs[i], i);
 		trace_i2c_result(adap, num, ret);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(__i2c_transfer);
 
 /**
  * i2c_transfer - execute a single or combined I2C message
  * @adap: Handle to I2C bus
- * @msgs: One or more messages to execute before STOP is issued to
+ * @msgs: One or more messages to execute beक्रमe STOP is issued to
  *	terminate the operation; each message begins with a START.
  * @num: Number of messages to be executed.
  *
- * Returns negative errno, else the number of messages executed.
+ * Returns negative त्रुटि_सं, अन्यथा the number of messages executed.
  *
  * Note that there is no requirement that each message be sent to
  * the same slave address, although that is the most common model.
  */
-int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
-{
-	int ret;
+पूर्णांक i2c_transfer(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	पूर्णांक ret;
 
-	if (!adap->algo->master_xfer) {
+	अगर (!adap->algo->master_xfer) अणु
 		dev_dbg(&adap->dev, "I2C level transfers not supported\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* REVISIT the fault reporting model here is weak:
 	 *
@@ -2153,24 +2154,24 @@ int i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 	 *
 	 *  - When we get a NAK after transmitting N bytes to a slave,
 	 *    there is no way to report "N" ... or to let the master
-	 *    continue executing the rest of this combined message, if
+	 *    जारी executing the rest of this combined message, अगर
 	 *    that's the appropriate response.
 	 *
-	 *  - When for example "num" is two and we successfully complete
+	 *  - When क्रम example "num" is two and we successfully complete
 	 *    the first message but get an error part way through the
 	 *    second, it's unclear whether that should be reported as
-	 *    one (discarding status on the second message) or errno
+	 *    one (discarding status on the second message) or त्रुटि_सं
 	 *    (discarding status on the first one).
 	 */
 	ret = __i2c_lock_bus_helper(adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = __i2c_transfer(adap, msgs, num);
 	i2c_unlock_bus(adap, I2C_LOCK_SEGMENT);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(i2c_transfer);
 
 /**
@@ -2179,152 +2180,152 @@ EXPORT_SYMBOL(i2c_transfer);
  * @client: Handle to slave device
  * @buf: Where the data is stored
  * @count: How many bytes to transfer, must be less than 64k since msg.len is u16
- * @flags: The flags to be used for the message, e.g. I2C_M_RD for reads
+ * @flags: The flags to be used क्रम the message, e.g. I2C_M_RD क्रम पढ़ोs
  *
- * Returns negative errno, or else the number of bytes transferred.
+ * Returns negative त्रुटि_सं, or अन्यथा the number of bytes transferred.
  */
-int i2c_transfer_buffer_flags(const struct i2c_client *client, char *buf,
-			      int count, u16 flags)
-{
-	int ret;
-	struct i2c_msg msg = {
+पूर्णांक i2c_transfer_buffer_flags(स्थिर काष्ठा i2c_client *client, अक्षर *buf,
+			      पूर्णांक count, u16 flags)
+अणु
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg = अणु
 		.addr = client->addr,
 		.flags = flags | (client->flags & I2C_M_TEN),
 		.len = count,
 		.buf = buf,
-	};
+	पूर्ण;
 
 	ret = i2c_transfer(client->adapter, &msg, 1);
 
 	/*
-	 * If everything went ok (i.e. 1 msg transferred), return #bytes
-	 * transferred, else error code.
+	 * If everything went ok (i.e. 1 msg transferred), वापस #bytes
+	 * transferred, अन्यथा error code.
 	 */
-	return (ret == 1) ? count : ret;
-}
+	वापस (ret == 1) ? count : ret;
+पूर्ण
 EXPORT_SYMBOL(i2c_transfer_buffer_flags);
 
 /**
  * i2c_get_device_id - get manufacturer, part id and die revision of a device
  * @client: The device to query
- * @id: The queried information
+ * @id: The queried inक्रमmation
  *
- * Returns negative errno on error, zero on success.
+ * Returns negative त्रुटि_सं on error, zero on success.
  */
-int i2c_get_device_id(const struct i2c_client *client,
-		      struct i2c_device_identity *id)
-{
-	struct i2c_adapter *adap = client->adapter;
-	union i2c_smbus_data raw_id;
-	int ret;
+पूर्णांक i2c_get_device_id(स्थिर काष्ठा i2c_client *client,
+		      काष्ठा i2c_device_identity *id)
+अणु
+	काष्ठा i2c_adapter *adap = client->adapter;
+	जोड़ i2c_smbus_data raw_id;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_READ_I2C_BLOCK))
-		return -EOPNOTSUPP;
+	अगर (!i2c_check_functionality(adap, I2C_FUNC_SMBUS_READ_I2C_BLOCK))
+		वापस -EOPNOTSUPP;
 
 	raw_id.block[0] = 3;
 	ret = i2c_smbus_xfer(adap, I2C_ADDR_DEVICE_ID, 0,
 			     I2C_SMBUS_READ, client->addr << 1,
 			     I2C_SMBUS_I2C_BLOCK_DATA, &raw_id);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	id->manufacturer_id = (raw_id.block[1] << 4) | (raw_id.block[2] >> 4);
 	id->part_id = ((raw_id.block[2] & 0xf) << 5) | (raw_id.block[3] >> 3);
 	id->die_revision = raw_id.block[3] & 0x7;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_get_device_id);
 
 /* ----------------------------------------------------
  * the i2c address scanning function
- * Will not work for 10-bit addresses!
+ * Will not work क्रम 10-bit addresses!
  * ----------------------------------------------------
  */
 
 /*
- * Legacy default probe function, mostly relevant for SMBus. The default
- * probe method is a quick write, but it is known to corrupt the 24RF08
+ * Legacy शेष probe function, mostly relevant क्रम SMBus. The शेष
+ * probe method is a quick ग_लिखो, but it is known to corrupt the 24RF08
  * EEPROMs due to a state machine bug, and could also irreversibly
- * write-protect some EEPROMs, so for address ranges 0x30-0x37 and 0x50-0x5f,
- * we use a short byte read instead. Also, some bus drivers don't implement
- * quick write, so we fallback to a byte read in that case too.
- * On x86, there is another special case for FSC hardware monitoring chips,
- * which want regular byte reads (address 0x73.) Fortunately, these are the
+ * ग_लिखो-protect some EEPROMs, so क्रम address ranges 0x30-0x37 and 0x50-0x5f,
+ * we use a लघु byte पढ़ो instead. Also, some bus drivers करोn't implement
+ * quick ग_लिखो, so we fallback to a byte पढ़ो in that हाल too.
+ * On x86, there is another special हाल क्रम FSC hardware monitoring chips,
+ * which want regular byte पढ़ोs (address 0x73.) Fortunately, these are the
  * only known chips using this I2C address on PC hardware.
- * Returns 1 if probe succeeded, 0 if not.
+ * Returns 1 अगर probe succeeded, 0 अगर not.
  */
-static int i2c_default_probe(struct i2c_adapter *adap, unsigned short addr)
-{
-	int err;
-	union i2c_smbus_data dummy;
+अटल पूर्णांक i2c_शेष_probe(काष्ठा i2c_adapter *adap, अचिन्हित लघु addr)
+अणु
+	पूर्णांक err;
+	जोड़ i2c_smbus_data dummy;
 
-#ifdef CONFIG_X86
-	if (addr == 0x73 && (adap->class & I2C_CLASS_HWMON)
+#अगर_घोषित CONFIG_X86
+	अगर (addr == 0x73 && (adap->class & I2C_CLASS_HWMON)
 	 && i2c_check_functionality(adap, I2C_FUNC_SMBUS_READ_BYTE_DATA))
 		err = i2c_smbus_xfer(adap, addr, 0, I2C_SMBUS_READ, 0,
 				     I2C_SMBUS_BYTE_DATA, &dummy);
-	else
-#endif
-	if (!((addr & ~0x07) == 0x30 || (addr & ~0x0f) == 0x50)
+	अन्यथा
+#पूर्ण_अगर
+	अगर (!((addr & ~0x07) == 0x30 || (addr & ~0x0f) == 0x50)
 	 && i2c_check_functionality(adap, I2C_FUNC_SMBUS_QUICK))
 		err = i2c_smbus_xfer(adap, addr, 0, I2C_SMBUS_WRITE, 0,
-				     I2C_SMBUS_QUICK, NULL);
-	else if (i2c_check_functionality(adap, I2C_FUNC_SMBUS_READ_BYTE))
+				     I2C_SMBUS_QUICK, शून्य);
+	अन्यथा अगर (i2c_check_functionality(adap, I2C_FUNC_SMBUS_READ_BYTE))
 		err = i2c_smbus_xfer(adap, addr, 0, I2C_SMBUS_READ, 0,
 				     I2C_SMBUS_BYTE, &dummy);
-	else {
+	अन्यथा अणु
 		dev_warn(&adap->dev, "No suitable probing method supported for address 0x%02X\n",
 			 addr);
 		err = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	return err >= 0;
-}
+	वापस err >= 0;
+पूर्ण
 
-static int i2c_detect_address(struct i2c_client *temp_client,
-			      struct i2c_driver *driver)
-{
-	struct i2c_board_info info;
-	struct i2c_adapter *adapter = temp_client->adapter;
-	int addr = temp_client->addr;
-	int err;
+अटल पूर्णांक i2c_detect_address(काष्ठा i2c_client *temp_client,
+			      काष्ठा i2c_driver *driver)
+अणु
+	काष्ठा i2c_board_info info;
+	काष्ठा i2c_adapter *adapter = temp_client->adapter;
+	पूर्णांक addr = temp_client->addr;
+	पूर्णांक err;
 
 	/* Make sure the address is valid */
 	err = i2c_check_7bit_addr_validity_strict(addr);
-	if (err) {
+	अगर (err) अणु
 		dev_warn(&adapter->dev, "Invalid probe address 0x%02x\n",
 			 addr);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Skip if already in use (7 bit, no need to encode flags) */
-	if (i2c_check_addr_busy(adapter, addr))
-		return 0;
+	/* Skip अगर alपढ़ोy in use (7 bit, no need to encode flags) */
+	अगर (i2c_check_addr_busy(adapter, addr))
+		वापस 0;
 
 	/* Make sure there is something at this address */
-	if (!i2c_default_probe(adapter, addr))
-		return 0;
+	अगर (!i2c_शेष_probe(adapter, addr))
+		वापस 0;
 
 	/* Finally call the custom detection function */
-	memset(&info, 0, sizeof(struct i2c_board_info));
+	स_रखो(&info, 0, माप(काष्ठा i2c_board_info));
 	info.addr = addr;
 	err = driver->detect(temp_client, &info);
-	if (err) {
-		/* -ENODEV is returned if the detection fails. We catch it
+	अगर (err) अणु
+		/* -ENODEV is वापसed अगर the detection fails. We catch it
 		   here as this isn't an error. */
-		return err == -ENODEV ? 0 : err;
-	}
+		वापस err == -ENODEV ? 0 : err;
+	पूर्ण
 
 	/* Consistency check */
-	if (info.type[0] == '\0') {
+	अगर (info.type[0] == '\0') अणु
 		dev_err(&adapter->dev,
 			"%s detection function provided no name for 0x%x\n",
 			driver->driver.name, addr);
-	} else {
-		struct i2c_client *client;
+	पूर्ण अन्यथा अणु
+		काष्ठा i2c_client *client;
 
 		/* Detection succeeded, instantiate the device */
-		if (adapter->class & I2C_CLASS_DEPRECATED)
+		अगर (adapter->class & I2C_CLASS_DEPRECATED)
 			dev_warn(&adapter->dev,
 				"This adapter will soon drop class based instantiation of devices. "
 				"Please make sure client 0x%02x gets instantiated by other means. "
@@ -2334,187 +2335,187 @@ static int i2c_detect_address(struct i2c_client *temp_client,
 		dev_dbg(&adapter->dev, "Creating %s at 0x%02x\n",
 			info.type, info.addr);
 		client = i2c_new_client_device(adapter, &info);
-		if (!IS_ERR(client))
+		अगर (!IS_ERR(client))
 			list_add_tail(&client->detected, &driver->clients);
-		else
+		अन्यथा
 			dev_err(&adapter->dev, "Failed creating %s at 0x%02x\n",
 				info.type, info.addr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i2c_detect(struct i2c_adapter *adapter, struct i2c_driver *driver)
-{
-	const unsigned short *address_list;
-	struct i2c_client *temp_client;
-	int i, err = 0;
+अटल पूर्णांक i2c_detect(काष्ठा i2c_adapter *adapter, काष्ठा i2c_driver *driver)
+अणु
+	स्थिर अचिन्हित लघु *address_list;
+	काष्ठा i2c_client *temp_client;
+	पूर्णांक i, err = 0;
 
 	address_list = driver->address_list;
-	if (!driver->detect || !address_list)
-		return 0;
+	अगर (!driver->detect || !address_list)
+		वापस 0;
 
 	/* Warn that the adapter lost class based instantiation */
-	if (adapter->class == I2C_CLASS_DEPRECATED) {
+	अगर (adapter->class == I2C_CLASS_DEPRECATED) अणु
 		dev_dbg(&adapter->dev,
 			"This adapter dropped support for I2C classes and won't auto-detect %s devices anymore. "
 			"If you need it, check 'Documentation/i2c/instantiating-devices.rst' for alternatives.\n",
 			driver->driver.name);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Stop here if the classes do not match */
-	if (!(adapter->class & driver->class))
-		return 0;
+	/* Stop here अगर the classes करो not match */
+	अगर (!(adapter->class & driver->class))
+		वापस 0;
 
 	/* Set up a temporary client to help detect callback */
-	temp_client = kzalloc(sizeof(struct i2c_client), GFP_KERNEL);
-	if (!temp_client)
-		return -ENOMEM;
+	temp_client = kzalloc(माप(काष्ठा i2c_client), GFP_KERNEL);
+	अगर (!temp_client)
+		वापस -ENOMEM;
 	temp_client->adapter = adapter;
 
-	for (i = 0; address_list[i] != I2C_CLIENT_END; i += 1) {
+	क्रम (i = 0; address_list[i] != I2C_CLIENT_END; i += 1) अणु
 		dev_dbg(&adapter->dev,
 			"found normal entry for adapter %d, addr 0x%02x\n",
 			i2c_adapter_id(adapter), address_list[i]);
 		temp_client->addr = address_list[i];
 		err = i2c_detect_address(temp_client, driver);
-		if (unlikely(err))
-			break;
-	}
+		अगर (unlikely(err))
+			अवरोध;
+	पूर्ण
 
-	kfree(temp_client);
-	return err;
-}
+	kमुक्त(temp_client);
+	वापस err;
+पूर्ण
 
-int i2c_probe_func_quick_read(struct i2c_adapter *adap, unsigned short addr)
-{
-	return i2c_smbus_xfer(adap, addr, 0, I2C_SMBUS_READ, 0,
-			      I2C_SMBUS_QUICK, NULL) >= 0;
-}
-EXPORT_SYMBOL_GPL(i2c_probe_func_quick_read);
+पूर्णांक i2c_probe_func_quick_पढ़ो(काष्ठा i2c_adapter *adap, अचिन्हित लघु addr)
+अणु
+	वापस i2c_smbus_xfer(adap, addr, 0, I2C_SMBUS_READ, 0,
+			      I2C_SMBUS_QUICK, शून्य) >= 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(i2c_probe_func_quick_पढ़ो);
 
-struct i2c_client *
-i2c_new_scanned_device(struct i2c_adapter *adap,
-		       struct i2c_board_info *info,
-		       unsigned short const *addr_list,
-		       int (*probe)(struct i2c_adapter *adap, unsigned short addr))
-{
-	int i;
+काष्ठा i2c_client *
+i2c_new_scanned_device(काष्ठा i2c_adapter *adap,
+		       काष्ठा i2c_board_info *info,
+		       अचिन्हित लघु स्थिर *addr_list,
+		       पूर्णांक (*probe)(काष्ठा i2c_adapter *adap, अचिन्हित लघु addr))
+अणु
+	पूर्णांक i;
 
-	if (!probe)
-		probe = i2c_default_probe;
+	अगर (!probe)
+		probe = i2c_शेष_probe;
 
-	for (i = 0; addr_list[i] != I2C_CLIENT_END; i++) {
+	क्रम (i = 0; addr_list[i] != I2C_CLIENT_END; i++) अणु
 		/* Check address validity */
-		if (i2c_check_7bit_addr_validity_strict(addr_list[i]) < 0) {
+		अगर (i2c_check_7bit_addr_validity_strict(addr_list[i]) < 0) अणु
 			dev_warn(&adap->dev, "Invalid 7-bit address 0x%02x\n",
 				 addr_list[i]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Check address availability (7 bit, no need to encode flags) */
-		if (i2c_check_addr_busy(adap, addr_list[i])) {
+		अगर (i2c_check_addr_busy(adap, addr_list[i])) अणु
 			dev_dbg(&adap->dev,
 				"Address 0x%02x already in use, not probing\n",
 				addr_list[i]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Test address responsiveness */
-		if (probe(adap, addr_list[i]))
-			break;
-	}
+		अगर (probe(adap, addr_list[i]))
+			अवरोध;
+	पूर्ण
 
-	if (addr_list[i] == I2C_CLIENT_END) {
+	अगर (addr_list[i] == I2C_CLIENT_END) अणु
 		dev_dbg(&adap->dev, "Probing failed, no device found\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	info->addr = addr_list[i];
-	return i2c_new_client_device(adap, info);
-}
+	वापस i2c_new_client_device(adap, info);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_new_scanned_device);
 
-struct i2c_adapter *i2c_get_adapter(int nr)
-{
-	struct i2c_adapter *adapter;
+काष्ठा i2c_adapter *i2c_get_adapter(पूर्णांक nr)
+अणु
+	काष्ठा i2c_adapter *adapter;
 
 	mutex_lock(&core_lock);
 	adapter = idr_find(&i2c_adapter_idr, nr);
-	if (!adapter)
-		goto exit;
+	अगर (!adapter)
+		जाओ निकास;
 
-	if (try_module_get(adapter->owner))
+	अगर (try_module_get(adapter->owner))
 		get_device(&adapter->dev);
-	else
-		adapter = NULL;
+	अन्यथा
+		adapter = शून्य;
 
- exit:
+ निकास:
 	mutex_unlock(&core_lock);
-	return adapter;
-}
+	वापस adapter;
+पूर्ण
 EXPORT_SYMBOL(i2c_get_adapter);
 
-void i2c_put_adapter(struct i2c_adapter *adap)
-{
-	if (!adap)
-		return;
+व्योम i2c_put_adapter(काष्ठा i2c_adapter *adap)
+अणु
+	अगर (!adap)
+		वापस;
 
 	put_device(&adap->dev);
 	module_put(adap->owner);
-}
+पूर्ण
 EXPORT_SYMBOL(i2c_put_adapter);
 
 /**
- * i2c_get_dma_safe_msg_buf() - get a DMA safe buffer for the given i2c_msg
+ * i2c_get_dma_safe_msg_buf() - get a DMA safe buffer क्रम the given i2c_msg
  * @msg: the message to be checked
- * @threshold: the minimum number of bytes for which using DMA makes sense.
+ * @threshold: the minimum number of bytes क्रम which using DMA makes sense.
  *	       Should at least be 1.
  *
- * Return: NULL if a DMA safe buffer was not obtained. Use msg->buf with PIO.
- *	   Or a valid pointer to be used with DMA. After use, release it by
+ * Return: शून्य अगर a DMA safe buffer was not obtained. Use msg->buf with PIO.
+ *	   Or a valid poपूर्णांकer to be used with DMA. After use, release it by
  *	   calling i2c_put_dma_safe_msg_buf().
  *
  * This function must only be called from process context!
  */
-u8 *i2c_get_dma_safe_msg_buf(struct i2c_msg *msg, unsigned int threshold)
-{
-	/* also skip 0-length msgs for bogus thresholds of 0 */
-	if (!threshold)
+u8 *i2c_get_dma_safe_msg_buf(काष्ठा i2c_msg *msg, अचिन्हित पूर्णांक threshold)
+अणु
+	/* also skip 0-length msgs क्रम bogus thresholds of 0 */
+	अगर (!threshold)
 		pr_debug("DMA buffer for addr=0x%02x with length 0 is bogus\n",
 			 msg->addr);
-	if (msg->len < threshold || msg->len == 0)
-		return NULL;
+	अगर (msg->len < threshold || msg->len == 0)
+		वापस शून्य;
 
-	if (msg->flags & I2C_M_DMA_SAFE)
-		return msg->buf;
+	अगर (msg->flags & I2C_M_DMA_SAFE)
+		वापस msg->buf;
 
 	pr_debug("using bounce buffer for addr=0x%02x, len=%d\n",
 		 msg->addr, msg->len);
 
-	if (msg->flags & I2C_M_RD)
-		return kzalloc(msg->len, GFP_KERNEL);
-	else
-		return kmemdup(msg->buf, msg->len, GFP_KERNEL);
-}
+	अगर (msg->flags & I2C_M_RD)
+		वापस kzalloc(msg->len, GFP_KERNEL);
+	अन्यथा
+		वापस kmemdup(msg->buf, msg->len, GFP_KERNEL);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_get_dma_safe_msg_buf);
 
 /**
  * i2c_put_dma_safe_msg_buf - release DMA safe buffer and sync with i2c_msg
- * @buf: the buffer obtained from i2c_get_dma_safe_msg_buf(). May be NULL.
+ * @buf: the buffer obtained from i2c_get_dma_safe_msg_buf(). May be शून्य.
  * @msg: the message which the buffer corresponds to
- * @xferred: bool saying if the message was transferred
+ * @xferred: bool saying अगर the message was transferred
  */
-void i2c_put_dma_safe_msg_buf(u8 *buf, struct i2c_msg *msg, bool xferred)
-{
-	if (!buf || buf == msg->buf)
-		return;
+व्योम i2c_put_dma_safe_msg_buf(u8 *buf, काष्ठा i2c_msg *msg, bool xferred)
+अणु
+	अगर (!buf || buf == msg->buf)
+		वापस;
 
-	if (xferred && msg->flags & I2C_M_RD)
-		memcpy(msg->buf, buf, msg->len);
+	अगर (xferred && msg->flags & I2C_M_RD)
+		स_नकल(msg->buf, buf, msg->len);
 
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 EXPORT_SYMBOL_GPL(i2c_put_dma_safe_msg_buf);
 
 MODULE_AUTHOR("Simon G. Vogl <simon@tk.uni-linz.ac.at>");

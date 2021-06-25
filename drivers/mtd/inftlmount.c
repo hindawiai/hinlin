@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * inftlmount.c -- INFTL mount code with extensive checks.
  *
  * Author: Greg Ungerer (gerg@snapgear.com)
- * Copyright © 2002-2003, Greg Ungerer (gerg@snapgear.com)
+ * Copyright तऊ 2002-2003, Greg Ungerer (gerg@snapgear.com)
  *
  * Based heavily on the nftlmount.c code which is:
  * Author: Fabrice Bellard (fabrice.bellard@netgem.com)
- * Copyright © 2000 Netgem S.A.
+ * Copyright तऊ 2000 Netgem S.A.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/errno.h>
-#include <asm/io.h>
-#include <linux/uaccess.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/nftl.h>
-#include <linux/mtd/inftl.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/nftl.h>
+#समावेश <linux/mtd/inftl.h>
 
 /*
  * find_boot_record: Find the INFTL Media Header and its Spare copy which
- *	contains the various device information of the INFTL partition and
+ *	contains the various device inक्रमmation of the INFTL partition and
  *	Bad Unit Table. Update the PUtable[] table according to the Bad
- *	Unit Table. PUtable[] is used for management of Erase Unit in
+ *	Unit Table. PUtable[] is used क्रम management of Erase Unit in
  *	other routines in inftlcore.c and inftlmount.c.
  */
-static int find_boot_record(struct INFTLrecord *inftl)
-{
-	struct inftl_unittail h1;
-	//struct inftl_oob oob;
-	unsigned int i, block;
+अटल पूर्णांक find_boot_record(काष्ठा INFTLrecord *inftl)
+अणु
+	काष्ठा inftl_unittail h1;
+	//काष्ठा inftl_oob oob;
+	अचिन्हित पूर्णांक i, block;
 	u8 buf[SECTORSIZE];
-	struct INFTLMediaHeader *mh = &inftl->MediaHdr;
-	struct mtd_info *mtd = inftl->mbd.mtd;
-	struct INFTLPartition *ip;
-	size_t retlen;
+	काष्ठा INFTLMediaHeader *mh = &inftl->MediaHdr;
+	काष्ठा mtd_info *mtd = inftl->mbd.mtd;
+	काष्ठा INFTLPartition *ip;
+	माप_प्रकार retlen;
 
 	pr_debug("INFTL: find_boot_record(inftl=%p)\n", inftl);
 
         /*
-	 * Assume logical EraseSize == physical erasesize for starting the
-	 * scan. We'll sort it out later if we find a MediaHeader which says
+	 * Assume logical EraseSize == physical erasesize क्रम starting the
+	 * scan. We'll sort it out later अगर we find a MediaHeader which says
 	 * otherwise.
 	 */
 	inftl->EraseSize = inftl->mbd.mtd->erasesize;
@@ -51,72 +52,72 @@ static int find_boot_record(struct INFTLrecord *inftl)
 
 	inftl->MediaUnit = BLOCK_NIL;
 
-	/* Search for a valid boot record */
-	for (block = 0; block < inftl->nb_blocks; block++) {
-		int ret;
+	/* Search क्रम a valid boot record */
+	क्रम (block = 0; block < inftl->nb_blocks; block++) अणु
+		पूर्णांक ret;
 
 		/*
-		 * Check for BNAND header first. Then whinge if it's found
+		 * Check क्रम Bन_अंकD header first. Then whinge अगर it's found
 		 * but later checks fail.
 		 */
-		ret = mtd_read(mtd, block * inftl->EraseSize, SECTORSIZE,
+		ret = mtd_पढ़ो(mtd, block * inftl->EraseSize, SECTORSIZE,
 			       &retlen, buf);
-		/* We ignore ret in case the ECC of the MediaHeader is invalid
+		/* We ignore ret in हाल the ECC of the MediaHeader is invalid
 		   (which is apparently acceptable) */
-		if (retlen != SECTORSIZE) {
-			static int warncount = 5;
+		अगर (retlen != SECTORSIZE) अणु
+			अटल पूर्णांक warncount = 5;
 
-			if (warncount) {
-				printk(KERN_WARNING "INFTL: block read at 0x%x "
+			अगर (warncount) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: block read at 0x%x "
 					"of mtd%d failed: %d\n",
 					block * inftl->EraseSize,
 					inftl->mbd.mtd->index, ret);
-				if (!--warncount)
-					printk(KERN_WARNING "INFTL: further "
+				अगर (!--warncount)
+					prपूर्णांकk(KERN_WARNING "INFTL: further "
 						"failures for this block will "
 						"not be printed\n");
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		if (retlen < 6 || memcmp(buf, "BNAND", 6)) {
-			/* BNAND\0 not found. Continue */
-			continue;
-		}
+		अगर (retlen < 6 || स_भेद(buf, "BNAND", 6)) अणु
+			/* Bन_अंकD\0 not found. Continue */
+			जारी;
+		पूर्ण
 
 		/* To be safer with BIOS, also use erase mark as discriminant */
-		ret = inftl_read_oob(mtd,
+		ret = inftl_पढ़ो_oob(mtd,
 				     block * inftl->EraseSize + SECTORSIZE + 8,
-				     8, &retlen,(char *)&h1);
-		if (ret < 0) {
-			printk(KERN_WARNING "INFTL: ANAND header found at "
+				     8, &retlen,(अक्षर *)&h1);
+		अगर (ret < 0) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: ANAND header found at "
 				"0x%x in mtd%d, but OOB data read failed "
 				"(err %d)\n", block * inftl->EraseSize,
 				inftl->mbd.mtd->index, ret);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 
 		/*
 		 * This is the first we've seen.
-		 * Copy the media header structure into place.
+		 * Copy the media header काष्ठाure पूर्णांकo place.
 		 */
-		memcpy(mh, buf, sizeof(struct INFTLMediaHeader));
+		स_नकल(mh, buf, माप(काष्ठा INFTLMediaHeader));
 
 		/* Read the spare media header at offset 4096 */
-		mtd_read(mtd, block * inftl->EraseSize + 4096, SECTORSIZE,
+		mtd_पढ़ो(mtd, block * inftl->EraseSize + 4096, SECTORSIZE,
 			 &retlen, buf);
-		if (retlen != SECTORSIZE) {
-			printk(KERN_WARNING "INFTL: Unable to read spare "
+		अगर (retlen != SECTORSIZE) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Unable to read spare "
 			       "Media Header\n");
-			return -1;
-		}
-		/* Check if this one is the same as the first one we found. */
-		if (memcmp(mh, buf, sizeof(struct INFTLMediaHeader))) {
-			printk(KERN_WARNING "INFTL: Primary and spare Media "
+			वापस -1;
+		पूर्ण
+		/* Check अगर this one is the same as the first one we found. */
+		अगर (स_भेद(mh, buf, माप(काष्ठा INFTLMediaHeader))) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Primary and spare Media "
 			       "Headers disagree.\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		mh->NoOfBootImageBlocks = le32_to_cpu(mh->NoOfBootImageBlocks);
 		mh->NoOfBinaryPartitions = le32_to_cpu(mh->NoOfBinaryPartitions);
@@ -140,42 +141,42 @@ static int find_boot_record(struct INFTLrecord *inftl)
 			 mh->BlockMultiplierBits, mh->FormatFlags,
 			 mh->OsakVersion, mh->PercentUsed);
 
-		if (mh->NoOfBDTLPartitions == 0) {
-			printk(KERN_WARNING "INFTL: Media Header sanity check "
+		अगर (mh->NoOfBDTLPartitions == 0) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Media Header sanity check "
 				"failed: NoOfBDTLPartitions (%d) == 0, "
 				"must be at least 1\n", mh->NoOfBDTLPartitions);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if ((mh->NoOfBDTLPartitions + mh->NoOfBinaryPartitions) > 4) {
-			printk(KERN_WARNING "INFTL: Media Header sanity check "
+		अगर ((mh->NoOfBDTLPartitions + mh->NoOfBinaryPartitions) > 4) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Media Header sanity check "
 				"failed: Total Partitions (%d) > 4, "
 				"BDTL=%d Binary=%d\n", mh->NoOfBDTLPartitions +
 				mh->NoOfBinaryPartitions,
 				mh->NoOfBDTLPartitions,
 				mh->NoOfBinaryPartitions);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (mh->BlockMultiplierBits > 1) {
-			printk(KERN_WARNING "INFTL: sorry, we don't support "
+		अगर (mh->BlockMultiplierBits > 1) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: sorry, we don't support "
 				"UnitSizeFactor 0x%02x\n",
 				mh->BlockMultiplierBits);
-			return -1;
-		} else if (mh->BlockMultiplierBits == 1) {
-			printk(KERN_WARNING "INFTL: support for INFTL with "
+			वापस -1;
+		पूर्ण अन्यथा अगर (mh->BlockMultiplierBits == 1) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: support for INFTL with "
 				"UnitSizeFactor 0x%02x is experimental\n",
 				mh->BlockMultiplierBits);
 			inftl->EraseSize = inftl->mbd.mtd->erasesize <<
 				mh->BlockMultiplierBits;
 			inftl->nb_blocks = (u32)inftl->mbd.mtd->size / inftl->EraseSize;
 			block >>= mh->BlockMultiplierBits;
-		}
+		पूर्ण
 
 		/* Scan the partitions */
-		for (i = 0; (i < 4); i++) {
+		क्रम (i = 0; (i < 4); i++) अणु
 			ip = &mh->Partitions[i];
-			ip->virtualUnits = le32_to_cpu(ip->virtualUnits);
+			ip->भवUnits = le32_to_cpu(ip->भवUnits);
 			ip->firstUnit = le32_to_cpu(ip->firstUnit);
 			ip->lastUnit = le32_to_cpu(ip->lastUnit);
 			ip->flags = le32_to_cpu(ip->flags);
@@ -188,223 +189,223 @@ static int find_boot_record(struct INFTLrecord *inftl)
 				 "        lastUnit        = %d\n"
 				 "        flags           = 0x%x\n"
 				 "        spareUnits      = %d\n",
-				 i, ip->virtualUnits, ip->firstUnit,
+				 i, ip->भवUnits, ip->firstUnit,
 				 ip->lastUnit, ip->flags,
 				 ip->spareUnits);
 
-			if (ip->Reserved0 != ip->firstUnit) {
-				struct erase_info *instr = &inftl->instr;
+			अगर (ip->Reserved0 != ip->firstUnit) अणु
+				काष्ठा erase_info *instr = &inftl->instr;
 
 				/*
 				 * 	Most likely this is using the
-				 * 	undocumented qiuck mount feature.
-				 * 	We don't support that, we will need
-				 * 	to erase the hidden block for full
+				 * 	unकरोcumented qiuck mount feature.
+				 * 	We करोn't support that, we will need
+				 * 	to erase the hidden block क्रम full
 				 * 	compatibility.
 				 */
 				instr->addr = ip->Reserved0 * inftl->EraseSize;
 				instr->len = inftl->EraseSize;
 				mtd_erase(mtd, instr);
-			}
-			if ((ip->lastUnit - ip->firstUnit + 1) < ip->virtualUnits) {
-				printk(KERN_WARNING "INFTL: Media Header "
+			पूर्ण
+			अगर ((ip->lastUnit - ip->firstUnit + 1) < ip->भवUnits) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: Media Header "
 					"Partition %d sanity check failed\n"
 					"    firstUnit %d : lastUnit %d  >  "
 					"virtualUnits %d\n", i, ip->lastUnit,
 					ip->firstUnit, ip->Reserved0);
-				return -1;
-			}
-			if (ip->Reserved1 != 0) {
-				printk(KERN_WARNING "INFTL: Media Header "
+				वापस -1;
+			पूर्ण
+			अगर (ip->Reserved1 != 0) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: Media Header "
 					"Partition %d sanity check failed: "
 					"Reserved1 %d != 0\n",
 					i, ip->Reserved1);
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 
-			if (ip->flags & INFTL_BDTL)
-				break;
-		}
+			अगर (ip->flags & INFTL_BDTL)
+				अवरोध;
+		पूर्ण
 
-		if (i >= 4) {
-			printk(KERN_WARNING "INFTL: Media Header Partition "
+		अगर (i >= 4) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Media Header Partition "
 				"sanity check failed:\n       No partition "
 				"marked as Disk Partition\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		inftl->nb_boot_blocks = ip->firstUnit;
-		inftl->numvunits = ip->virtualUnits;
-		if (inftl->numvunits > (inftl->nb_blocks -
-		    inftl->nb_boot_blocks - 2)) {
-			printk(KERN_WARNING "INFTL: Media Header sanity check "
+		inftl->numvunits = ip->भवUnits;
+		अगर (inftl->numvunits > (inftl->nb_blocks -
+		    inftl->nb_boot_blocks - 2)) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: Media Header sanity check "
 				"failed:\n        numvunits (%d) > nb_blocks "
 				"(%d) - nb_boot_blocks(%d) - 2\n",
 				inftl->numvunits, inftl->nb_blocks,
 				inftl->nb_boot_blocks);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		inftl->mbd.size  = inftl->numvunits *
 			(inftl->EraseSize / SECTORSIZE);
 
 		/*
 		 * Block count is set to last used EUN (we won't need to keep
-		 * any meta-data past that point).
+		 * any meta-data past that poपूर्णांक).
 		 */
 		inftl->firstEUN = ip->firstUnit;
 		inftl->lastEUN = ip->lastUnit;
 		inftl->nb_blocks = ip->lastUnit + 1;
 
 		/* Memory alloc */
-		inftl->PUtable = kmalloc_array(inftl->nb_blocks, sizeof(u16),
+		inftl->PUtable = kदो_स्मृति_array(inftl->nb_blocks, माप(u16),
 					       GFP_KERNEL);
-		if (!inftl->PUtable) {
-			printk(KERN_WARNING "INFTL: allocation of PUtable "
+		अगर (!inftl->PUtable) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: allocation of PUtable "
 				"failed (%zd bytes)\n",
-				inftl->nb_blocks * sizeof(u16));
-			return -ENOMEM;
-		}
+				inftl->nb_blocks * माप(u16));
+			वापस -ENOMEM;
+		पूर्ण
 
-		inftl->VUtable = kmalloc_array(inftl->nb_blocks, sizeof(u16),
+		inftl->VUtable = kदो_स्मृति_array(inftl->nb_blocks, माप(u16),
 					       GFP_KERNEL);
-		if (!inftl->VUtable) {
-			kfree(inftl->PUtable);
-			printk(KERN_WARNING "INFTL: allocation of VUtable "
+		अगर (!inftl->VUtable) अणु
+			kमुक्त(inftl->PUtable);
+			prपूर्णांकk(KERN_WARNING "INFTL: allocation of VUtable "
 				"failed (%zd bytes)\n",
-				inftl->nb_blocks * sizeof(u16));
-			return -ENOMEM;
-		}
+				inftl->nb_blocks * माप(u16));
+			वापस -ENOMEM;
+		पूर्ण
 
-		/* Mark the blocks before INFTL MediaHeader as reserved */
-		for (i = 0; i < inftl->nb_boot_blocks; i++)
+		/* Mark the blocks beक्रमe INFTL MediaHeader as reserved */
+		क्रम (i = 0; i < inftl->nb_boot_blocks; i++)
 			inftl->PUtable[i] = BLOCK_RESERVED;
-		/* Mark all remaining blocks as potentially containing data */
-		for (; i < inftl->nb_blocks; i++)
+		/* Mark all reमुख्यing blocks as potentially containing data */
+		क्रम (; i < inftl->nb_blocks; i++)
 			inftl->PUtable[i] = BLOCK_NOTEXPLORED;
 
 		/* Mark this boot record (NFTL MediaHeader) block as reserved */
 		inftl->PUtable[block] = BLOCK_RESERVED;
 
-		/* Read Bad Erase Unit Table and modify PUtable[] accordingly */
-		for (i = 0; i < inftl->nb_blocks; i++) {
-			int physblock;
-			/* If any of the physical eraseblocks are bad, don't
+		/* Read Bad Erase Unit Table and modअगरy PUtable[] accordingly */
+		क्रम (i = 0; i < inftl->nb_blocks; i++) अणु
+			पूर्णांक physblock;
+			/* If any of the physical eraseblocks are bad, करोn't
 			   use the unit. */
-			for (physblock = 0; physblock < inftl->EraseSize; physblock += inftl->mbd.mtd->erasesize) {
-				if (mtd_block_isbad(inftl->mbd.mtd,
+			क्रम (physblock = 0; physblock < inftl->EraseSize; physblock += inftl->mbd.mtd->erasesize) अणु
+				अगर (mtd_block_isbad(inftl->mbd.mtd,
 						    i * inftl->EraseSize + physblock))
 					inftl->PUtable[i] = BLOCK_RESERVED;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		inftl->MediaUnit = block;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Not found. */
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int memcmpb(void *a, int c, int n)
-{
-	int i;
-	for (i = 0; i < n; i++) {
-		if (c != ((unsigned char *)a)[i])
-			return 1;
-	}
-	return 0;
-}
+अटल पूर्णांक स_भेदb(व्योम *a, पूर्णांक c, पूर्णांक n)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (c != ((अचिन्हित अक्षर *)a)[i])
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * check_free_sector: check if a free sector is actually FREE,
+ * check_मुक्त_sector: check अगर a मुक्त sector is actually FREE,
  *	i.e. All 0xff in data and oob area.
  */
-static int check_free_sectors(struct INFTLrecord *inftl, unsigned int address,
-	int len, int check_oob)
-{
-	struct mtd_info *mtd = inftl->mbd.mtd;
-	size_t retlen;
-	int i, ret;
+अटल पूर्णांक check_मुक्त_sectors(काष्ठा INFTLrecord *inftl, अचिन्हित पूर्णांक address,
+	पूर्णांक len, पूर्णांक check_oob)
+अणु
+	काष्ठा mtd_info *mtd = inftl->mbd.mtd;
+	माप_प्रकार retlen;
+	पूर्णांक i, ret;
 	u8 *buf;
 
-	buf = kmalloc(SECTORSIZE + mtd->oobsize, GFP_KERNEL);
-	if (!buf)
-		return -1;
+	buf = kदो_स्मृति(SECTORSIZE + mtd->oobsize, GFP_KERNEL);
+	अगर (!buf)
+		वापस -1;
 
 	ret = -1;
-	for (i = 0; i < len; i += SECTORSIZE) {
-		if (mtd_read(mtd, address, SECTORSIZE, &retlen, buf))
-			goto out;
-		if (memcmpb(buf, 0xff, SECTORSIZE) != 0)
-			goto out;
+	क्रम (i = 0; i < len; i += SECTORSIZE) अणु
+		अगर (mtd_पढ़ो(mtd, address, SECTORSIZE, &retlen, buf))
+			जाओ out;
+		अगर (स_भेदb(buf, 0xff, SECTORSIZE) != 0)
+			जाओ out;
 
-		if (check_oob) {
-			if(inftl_read_oob(mtd, address, mtd->oobsize,
+		अगर (check_oob) अणु
+			अगर(inftl_पढ़ो_oob(mtd, address, mtd->oobsize,
 					  &retlen, &buf[SECTORSIZE]) < 0)
-				goto out;
-			if (memcmpb(buf + SECTORSIZE, 0xff, mtd->oobsize) != 0)
-				goto out;
-		}
+				जाओ out;
+			अगर (स_भेदb(buf + SECTORSIZE, 0xff, mtd->oobsize) != 0)
+				जाओ out;
+		पूर्ण
 		address += SECTORSIZE;
-	}
+	पूर्ण
 
 	ret = 0;
 
 out:
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
- * INFTL_format: format a Erase Unit by erasing ALL Erase Zones in the Erase
+ * INFTL_क्रमmat: क्रमmat a Erase Unit by erasing ALL Erase Zones in the Erase
  *		 Unit and Update INFTL metadata. Each erase operation is
- *		 checked with check_free_sectors.
+ *		 checked with check_मुक्त_sectors.
  *
  * Return: 0 when succeed, -1 on error.
  *
- * ToDo: 1. Is it necessary to check_free_sector after erasing ??
+ * ToDo: 1. Is it necessary to check_मुक्त_sector after erasing ??
  */
-int INFTL_formatblock(struct INFTLrecord *inftl, int block)
-{
-	size_t retlen;
-	struct inftl_unittail uci;
-	struct erase_info *instr = &inftl->instr;
-	struct mtd_info *mtd = inftl->mbd.mtd;
-	int physblock;
+पूर्णांक INFTL_क्रमmatblock(काष्ठा INFTLrecord *inftl, पूर्णांक block)
+अणु
+	माप_प्रकार retlen;
+	काष्ठा inftl_unittail uci;
+	काष्ठा erase_info *instr = &inftl->instr;
+	काष्ठा mtd_info *mtd = inftl->mbd.mtd;
+	पूर्णांक physblock;
 
 	pr_debug("INFTL: INFTL_formatblock(inftl=%p,block=%d)\n", inftl, block);
 
-	memset(instr, 0, sizeof(struct erase_info));
+	स_रखो(instr, 0, माप(काष्ठा erase_info));
 
 	/* FIXME: Shouldn't we be setting the 'discarded' flag to zero
 	   _first_? */
 
-	/* Use async erase interface, test return code */
+	/* Use async erase पूर्णांकerface, test वापस code */
 	instr->addr = block * inftl->EraseSize;
 	instr->len = inftl->mbd.mtd->erasesize;
-	/* Erase one physical eraseblock at a time, even though the NAND api
-	   allows us to group them.  This way we if we have a failure, we can
+	/* Erase one physical eraseblock at a समय, even though the न_अंकD api
+	   allows us to group them.  This way we अगर we have a failure, we can
 	   mark only the failed block in the bbt. */
-	for (physblock = 0; physblock < inftl->EraseSize;
-	     physblock += instr->len, instr->addr += instr->len) {
-		int ret;
+	क्रम (physblock = 0; physblock < inftl->EraseSize;
+	     physblock += instr->len, instr->addr += instr->len) अणु
+		पूर्णांक ret;
 
 		ret = mtd_erase(inftl->mbd.mtd, instr);
-		if (ret) {
-			printk(KERN_WARNING "INFTL: error while formatting block %d\n",
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_WARNING "INFTL: error while formatting block %d\n",
 				block);
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
 		/*
-		 * Check the "freeness" of Erase Unit before updating metadata.
+		 * Check the "freeness" of Erase Unit beक्रमe updating metadata.
 		 * FixMe: is this check really necessary? Since we have check
-		 * the return code after the erase operation.
+		 * the वापस code after the erase operation.
 		 */
-		if (check_free_sectors(inftl, instr->addr, instr->len, 1) != 0)
-			goto fail;
-	}
+		अगर (check_मुक्त_sectors(inftl, instr->addr, instr->len, 1) != 0)
+			जाओ fail;
+	पूर्ण
 
 	uci.EraseMark = cpu_to_le16(ERASE_MARK);
 	uci.EraseMark1 = cpu_to_le16(ERASE_MARK);
@@ -413,75 +414,75 @@ int INFTL_formatblock(struct INFTLrecord *inftl, int block)
 	uci.Reserved[2] = 0;
 	uci.Reserved[3] = 0;
 	instr->addr = block * inftl->EraseSize + SECTORSIZE * 2;
-	if (inftl_write_oob(mtd, instr->addr + 8, 8, &retlen, (char *)&uci) < 0)
-		goto fail;
-	return 0;
+	अगर (inftl_ग_लिखो_oob(mtd, instr->addr + 8, 8, &retlen, (अक्षर *)&uci) < 0)
+		जाओ fail;
+	वापस 0;
 fail:
-	/* could not format, update the bad block table (caller is responsible
-	   for setting the PUtable to BLOCK_RESERVED on failure) */
+	/* could not क्रमmat, update the bad block table (caller is responsible
+	   क्रम setting the PUtable to BLOCK_RESERVED on failure) */
 	mtd_block_markbad(inftl->mbd.mtd, instr->addr);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * format_chain: Format an invalid Virtual Unit chain. It frees all the Erase
+ * क्रमmat_chain: Format an invalid Virtual Unit chain. It मुक्तs all the Erase
  *	Units in a Virtual Unit Chain, i.e. all the units are disconnected.
  *
  *	Since the chain is invalid then we will have to erase it from its
- *	head (normally for INFTL we go from the oldest). But if it has a
+ *	head (normally क्रम INFTL we go from the oldest). But अगर it has a
  *	loop then there is no oldest...
  */
-static void format_chain(struct INFTLrecord *inftl, unsigned int first_block)
-{
-	unsigned int block = first_block, block1;
+अटल व्योम क्रमmat_chain(काष्ठा INFTLrecord *inftl, अचिन्हित पूर्णांक first_block)
+अणु
+	अचिन्हित पूर्णांक block = first_block, block1;
 
-	printk(KERN_WARNING "INFTL: formatting chain at block %d\n",
+	prपूर्णांकk(KERN_WARNING "INFTL: formatting chain at block %d\n",
 		first_block);
 
-	for (;;) {
+	क्रम (;;) अणु
 		block1 = inftl->PUtable[block];
 
-		printk(KERN_WARNING "INFTL: formatting block %d\n", block);
-		if (INFTL_formatblock(inftl, block) < 0) {
+		prपूर्णांकk(KERN_WARNING "INFTL: formatting block %d\n", block);
+		अगर (INFTL_क्रमmatblock(inftl, block) < 0) अणु
 			/*
-			 * Cannot format !!!! Mark it as Bad Unit,
+			 * Cannot क्रमmat !!!! Mark it as Bad Unit,
 			 */
 			inftl->PUtable[block] = BLOCK_RESERVED;
-		} else {
+		पूर्ण अन्यथा अणु
 			inftl->PUtable[block] = BLOCK_FREE;
-		}
+		पूर्ण
 
 		/* Goto next block on the chain */
 		block = block1;
 
-		if (block == BLOCK_NIL || block >= inftl->lastEUN)
-			break;
-	}
-}
+		अगर (block == BLOCK_NIL || block >= inftl->lastEUN)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-void INFTL_dumptables(struct INFTLrecord *s)
-{
-	int i;
+व्योम INFTL_dumptables(काष्ठा INFTLrecord *s)
+अणु
+	पूर्णांक i;
 
 	pr_debug("-------------------------------------------"
 		"----------------------------------\n");
 
 	pr_debug("VUtable[%d] ->", s->nb_blocks);
-	for (i = 0; i < s->nb_blocks; i++) {
-		if ((i % 8) == 0)
+	क्रम (i = 0; i < s->nb_blocks; i++) अणु
+		अगर ((i % 8) == 0)
 			pr_debug("\n%04x: ", i);
 		pr_debug("%04x ", s->VUtable[i]);
-	}
+	पूर्ण
 
 	pr_debug("\n-------------------------------------------"
 		"----------------------------------\n");
 
 	pr_debug("PUtable[%d-%d=%d] ->", s->firstEUN, s->lastEUN, s->nb_blocks);
-	for (i = 0; i <= s->lastEUN; i++) {
-		if ((i % 8) == 0)
+	क्रम (i = 0; i <= s->lastEUN; i++) अणु
+		अगर ((i % 8) == 0)
 			pr_debug("\n%04x: ", i);
 		pr_debug("%04x ", s->PUtable[i]);
-	}
+	पूर्ण
 
 	pr_debug("\n-------------------------------------------"
 		"----------------------------------\n");
@@ -497,131 +498,131 @@ void INFTL_dumptables(struct INFTLrecord *s)
 		"  nb_blocks       = %d\n"
 		"  nb_boot_blocks  = %d",
 		s->EraseSize, s->heads, s->sectors, s->cylinders,
-		s->numvunits, s->firstEUN, s->lastEUN, s->numfreeEUNs,
+		s->numvunits, s->firstEUN, s->lastEUN, s->numमुक्तEUNs,
 		s->LastFreeEUN, s->nb_blocks, s->nb_boot_blocks);
 
 	pr_debug("\n-------------------------------------------"
 		"----------------------------------\n");
-}
+पूर्ण
 
-void INFTL_dumpVUchains(struct INFTLrecord *s)
-{
-	int logical, block, i;
+व्योम INFTL_dumpVUchains(काष्ठा INFTLrecord *s)
+अणु
+	पूर्णांक logical, block, i;
 
 	pr_debug("-------------------------------------------"
 		"----------------------------------\n");
 
 	pr_debug("INFTL Virtual Unit Chains:\n");
-	for (logical = 0; logical < s->nb_blocks; logical++) {
+	क्रम (logical = 0; logical < s->nb_blocks; logical++) अणु
 		block = s->VUtable[logical];
-		if (block >= s->nb_blocks)
-			continue;
+		अगर (block >= s->nb_blocks)
+			जारी;
 		pr_debug("  LOGICAL %d --> %d ", logical, block);
-		for (i = 0; i < s->nb_blocks; i++) {
-			if (s->PUtable[block] == BLOCK_NIL)
-				break;
+		क्रम (i = 0; i < s->nb_blocks; i++) अणु
+			अगर (s->PUtable[block] == BLOCK_NIL)
+				अवरोध;
 			block = s->PUtable[block];
 			pr_debug("%d ", block);
-		}
+		पूर्ण
 		pr_debug("\n");
-	}
+	पूर्ण
 
 	pr_debug("-------------------------------------------"
 		"----------------------------------\n");
-}
+पूर्ण
 
-int INFTL_mount(struct INFTLrecord *s)
-{
-	struct mtd_info *mtd = s->mbd.mtd;
-	unsigned int block, first_block, prev_block, last_block;
-	unsigned int first_logical_block, logical_block, erase_mark;
-	int chain_length, do_format_chain;
-	struct inftl_unithead1 h0;
-	struct inftl_unittail h1;
-	size_t retlen;
-	int i;
+पूर्णांक INFTL_mount(काष्ठा INFTLrecord *s)
+अणु
+	काष्ठा mtd_info *mtd = s->mbd.mtd;
+	अचिन्हित पूर्णांक block, first_block, prev_block, last_block;
+	अचिन्हित पूर्णांक first_logical_block, logical_block, erase_mark;
+	पूर्णांक chain_length, करो_क्रमmat_chain;
+	काष्ठा inftl_unithead1 h0;
+	काष्ठा inftl_unittail h1;
+	माप_प्रकार retlen;
+	पूर्णांक i;
 	u8 *ANACtable, ANAC;
 
 	pr_debug("INFTL: INFTL_mount(inftl=%p)\n", s);
 
-	/* Search for INFTL MediaHeader and Spare INFTL Media Header */
-	if (find_boot_record(s) < 0) {
-		printk(KERN_WARNING "INFTL: could not find valid boot record?\n");
-		return -ENXIO;
-	}
+	/* Search क्रम INFTL MediaHeader and Spare INFTL Media Header */
+	अगर (find_boot_record(s) < 0) अणु
+		prपूर्णांकk(KERN_WARNING "INFTL: could not find valid boot record?\n");
+		वापस -ENXIO;
+	पूर्ण
 
 	/* Init the logical to physical table */
-	for (i = 0; i < s->nb_blocks; i++)
+	क्रम (i = 0; i < s->nb_blocks; i++)
 		s->VUtable[i] = BLOCK_NIL;
 
 	logical_block = block = BLOCK_NIL;
 
 	/* Temporary buffer to store ANAC numbers. */
-	ANACtable = kcalloc(s->nb_blocks, sizeof(u8), GFP_KERNEL);
-	if (!ANACtable) {
-		printk(KERN_WARNING "INFTL: allocation of ANACtable "
+	ANACtable = kसुस्मृति(s->nb_blocks, माप(u8), GFP_KERNEL);
+	अगर (!ANACtable) अणु
+		prपूर्णांकk(KERN_WARNING "INFTL: allocation of ANACtable "
 				"failed (%zd bytes)\n",
-				s->nb_blocks * sizeof(u8));
-		return -ENOMEM;
-	}
+				s->nb_blocks * माप(u8));
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * First pass is to explore each physical unit, and construct the
-	 * virtual chains that exist (newest physical unit goes into VUtable).
+	 * First pass is to explore each physical unit, and स्थिरruct the
+	 * भव chains that exist (newest physical unit goes पूर्णांकo VUtable).
 	 * Any block that is in any way invalid will be left in the
-	 * NOTEXPLORED state. Then at the end we will try to format it and
-	 * mark it as free.
+	 * NOTEXPLORED state. Then at the end we will try to क्रमmat it and
+	 * mark it as मुक्त.
 	 */
 	pr_debug("INFTL: pass 1, explore each unit\n");
-	for (first_block = s->firstEUN; first_block <= s->lastEUN; first_block++) {
-		if (s->PUtable[first_block] != BLOCK_NOTEXPLORED)
-			continue;
+	क्रम (first_block = s->firstEUN; first_block <= s->lastEUN; first_block++) अणु
+		अगर (s->PUtable[first_block] != BLOCK_NOTEXPLORED)
+			जारी;
 
-		do_format_chain = 0;
+		करो_क्रमmat_chain = 0;
 		first_logical_block = BLOCK_NIL;
 		last_block = BLOCK_NIL;
 		block = first_block;
 
-		for (chain_length = 0; ; chain_length++) {
+		क्रम (chain_length = 0; ; chain_length++) अणु
 
-			if ((chain_length == 0) &&
-			    (s->PUtable[block] != BLOCK_NOTEXPLORED)) {
-				/* Nothing to do here, onto next block */
-				break;
-			}
+			अगर ((chain_length == 0) &&
+			    (s->PUtable[block] != BLOCK_NOTEXPLORED)) अणु
+				/* Nothing to करो here, onto next block */
+				अवरोध;
+			पूर्ण
 
-			if (inftl_read_oob(mtd, block * s->EraseSize + 8,
-					   8, &retlen, (char *)&h0) < 0 ||
-			    inftl_read_oob(mtd, block * s->EraseSize +
+			अगर (inftl_पढ़ो_oob(mtd, block * s->EraseSize + 8,
+					   8, &retlen, (अक्षर *)&h0) < 0 ||
+			    inftl_पढ़ो_oob(mtd, block * s->EraseSize +
 					   2 * SECTORSIZE + 8, 8, &retlen,
-					   (char *)&h1) < 0) {
+					   (अक्षर *)&h1) < 0) अणु
 				/* Should never happen? */
-				do_format_chain++;
-				break;
-			}
+				करो_क्रमmat_chain++;
+				अवरोध;
+			पूर्ण
 
-			logical_block = le16_to_cpu(h0.virtualUnitNo);
+			logical_block = le16_to_cpu(h0.भवUnitNo);
 			prev_block = le16_to_cpu(h0.prevUnitNo);
 			erase_mark = le16_to_cpu((h1.EraseMark | h1.EraseMark1));
 			ANACtable[block] = h0.ANAC;
 
 			/* Previous block is relative to start of Partition */
-			if (prev_block < s->nb_blocks)
+			अगर (prev_block < s->nb_blocks)
 				prev_block += s->firstEUN;
 
-			/* Already explored partial chain? */
-			if (s->PUtable[block] != BLOCK_NOTEXPLORED) {
-				/* Check if chain for this logical */
-				if (logical_block == first_logical_block) {
-					if (last_block != BLOCK_NIL)
+			/* Alपढ़ोy explored partial chain? */
+			अगर (s->PUtable[block] != BLOCK_NOTEXPLORED) अणु
+				/* Check अगर chain क्रम this logical */
+				अगर (logical_block == first_logical_block) अणु
+					अगर (last_block != BLOCK_NIL)
 						s->PUtable[last_block] = block;
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			/* Check for invalid block */
-			if (erase_mark != ERASE_MARK) {
-				printk(KERN_WARNING "INFTL: corrupt block %d "
+			/* Check क्रम invalid block */
+			अगर (erase_mark != ERASE_MARK) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: corrupt block %d "
 					"in chain %d, chain length %d, erase "
 					"mark 0x%x?\n", block, first_block,
 					chain_length, erase_mark);
@@ -629,159 +630,159 @@ int INFTL_mount(struct INFTLrecord *s)
 				 * Assume end of chain, probably incomplete
 				 * fold/erase...
 				 */
-				if (chain_length == 0)
-					do_format_chain++;
-				break;
-			}
+				अगर (chain_length == 0)
+					करो_क्रमmat_chain++;
+				अवरोध;
+			पूर्ण
 
-			/* Check for it being free already then... */
-			if ((logical_block == BLOCK_FREE) ||
-			    (logical_block == BLOCK_NIL)) {
+			/* Check क्रम it being मुक्त alपढ़ोy then... */
+			अगर ((logical_block == BLOCK_FREE) ||
+			    (logical_block == BLOCK_NIL)) अणु
 				s->PUtable[block] = BLOCK_FREE;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Sanity checks on block numbers */
-			if ((logical_block >= s->nb_blocks) ||
+			अगर ((logical_block >= s->nb_blocks) ||
 			    ((prev_block >= s->nb_blocks) &&
-			     (prev_block != BLOCK_NIL))) {
-				if (chain_length > 0) {
-					printk(KERN_WARNING "INFTL: corrupt "
+			     (prev_block != BLOCK_NIL))) अणु
+				अगर (chain_length > 0) अणु
+					prपूर्णांकk(KERN_WARNING "INFTL: corrupt "
 						"block %d in chain %d?\n",
 						block, first_block);
-					do_format_chain++;
-				}
-				break;
-			}
+					करो_क्रमmat_chain++;
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			if (first_logical_block == BLOCK_NIL) {
+			अगर (first_logical_block == BLOCK_NIL) अणु
 				first_logical_block = logical_block;
-			} else {
-				if (first_logical_block != logical_block) {
-					/* Normal for folded chain... */
-					break;
-				}
-			}
+			पूर्ण अन्यथा अणु
+				अगर (first_logical_block != logical_block) अणु
+					/* Normal क्रम folded chain... */
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
 			/*
-			 * Current block is valid, so if we followed a virtual
+			 * Current block is valid, so अगर we followed a भव
 			 * chain to get here then we can set the previous
-			 * block pointer in our PUtable now. Then move onto
+			 * block poपूर्णांकer in our PUtable now. Then move onto
 			 * the previous block in the chain.
 			 */
 			s->PUtable[block] = BLOCK_NIL;
-			if (last_block != BLOCK_NIL)
+			अगर (last_block != BLOCK_NIL)
 				s->PUtable[last_block] = block;
 			last_block = block;
 			block = prev_block;
 
-			/* Check for end of chain */
-			if (block == BLOCK_NIL)
-				break;
+			/* Check क्रम end of chain */
+			अगर (block == BLOCK_NIL)
+				अवरोध;
 
-			/* Validate next block before following it... */
-			if (block > s->lastEUN) {
-				printk(KERN_WARNING "INFTL: invalid previous "
+			/* Validate next block beक्रमe following it... */
+			अगर (block > s->lastEUN) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: invalid previous "
 					"block %d in chain %d?\n", block,
 					first_block);
-				do_format_chain++;
-				break;
-			}
-		}
+				करो_क्रमmat_chain++;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (do_format_chain) {
-			format_chain(s, first_block);
-			continue;
-		}
+		अगर (करो_क्रमmat_chain) अणु
+			क्रमmat_chain(s, first_block);
+			जारी;
+		पूर्ण
 
 		/*
 		 * Looks like a valid chain then. It may not really be the
 		 * newest block in the chain, but it is the newest we have
 		 * found so far. We might update it in later iterations of
-		 * this loop if we find something newer.
+		 * this loop अगर we find something newer.
 		 */
 		s->VUtable[first_logical_block] = first_block;
 		logical_block = BLOCK_NIL;
-	}
+	पूर्ण
 
 	INFTL_dumptables(s);
 
 	/*
-	 * Second pass, check for infinite loops in chains. These are
-	 * possible because we don't update the previous pointers when
+	 * Second pass, check क्रम infinite loops in chains. These are
+	 * possible because we करोn't update the previous poपूर्णांकers when
 	 * we fold chains. No big deal, just fix them up in PUtable.
 	 */
 	pr_debug("INFTL: pass 2, validate virtual chains\n");
-	for (logical_block = 0; logical_block < s->numvunits; logical_block++) {
+	क्रम (logical_block = 0; logical_block < s->numvunits; logical_block++) अणु
 		block = s->VUtable[logical_block];
 		last_block = BLOCK_NIL;
 
-		/* Check for free/reserved/nil */
-		if (block >= BLOCK_RESERVED)
-			continue;
+		/* Check क्रम मुक्त/reserved/nil */
+		अगर (block >= BLOCK_RESERVED)
+			जारी;
 
 		ANAC = ANACtable[block];
-		for (i = 0; i < s->numvunits; i++) {
-			if (s->PUtable[block] == BLOCK_NIL)
-				break;
-			if (s->PUtable[block] > s->lastEUN) {
-				printk(KERN_WARNING "INFTL: invalid prev %d, "
+		क्रम (i = 0; i < s->numvunits; i++) अणु
+			अगर (s->PUtable[block] == BLOCK_NIL)
+				अवरोध;
+			अगर (s->PUtable[block] > s->lastEUN) अणु
+				prपूर्णांकk(KERN_WARNING "INFTL: invalid prev %d, "
 					"in virtual chain %d\n",
 					s->PUtable[block], logical_block);
 				s->PUtable[block] = BLOCK_NIL;
 
-			}
-			if (ANACtable[block] != ANAC) {
+			पूर्ण
+			अगर (ANACtable[block] != ANAC) अणु
 				/*
-				 * Chain must point back to itself. This is ok,
+				 * Chain must poपूर्णांक back to itself. This is ok,
 				 * but we will need adjust the tables with this
 				 * newest block and oldest block.
 				 */
 				s->VUtable[logical_block] = block;
 				s->PUtable[last_block] = BLOCK_NIL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			ANAC--;
 			last_block = block;
 			block = s->PUtable[block];
-		}
+		पूर्ण
 
-		if (i >= s->nb_blocks) {
+		अगर (i >= s->nb_blocks) अणु
 			/*
 			 * Uhoo, infinite chain with valid ANACS!
 			 * Format whole chain...
 			 */
-			format_chain(s, first_block);
-		}
-	}
+			क्रमmat_chain(s, first_block);
+		पूर्ण
+	पूर्ण
 
 	INFTL_dumptables(s);
 	INFTL_dumpVUchains(s);
 
 	/*
-	 * Third pass, format unreferenced blocks and init free block count.
+	 * Third pass, क्रमmat unreferenced blocks and init मुक्त block count.
 	 */
-	s->numfreeEUNs = 0;
+	s->numमुक्तEUNs = 0;
 	s->LastFreeEUN = BLOCK_NIL;
 
 	pr_debug("INFTL: pass 3, format unused blocks\n");
-	for (block = s->firstEUN; block <= s->lastEUN; block++) {
-		if (s->PUtable[block] == BLOCK_NOTEXPLORED) {
-			printk("INFTL: unreferenced block %d, formatting it\n",
+	क्रम (block = s->firstEUN; block <= s->lastEUN; block++) अणु
+		अगर (s->PUtable[block] == BLOCK_NOTEXPLORED) अणु
+			prपूर्णांकk("INFTL: unreferenced block %d, formatting it\n",
 				block);
-			if (INFTL_formatblock(s, block) < 0)
+			अगर (INFTL_क्रमmatblock(s, block) < 0)
 				s->PUtable[block] = BLOCK_RESERVED;
-			else
+			अन्यथा
 				s->PUtable[block] = BLOCK_FREE;
-		}
-		if (s->PUtable[block] == BLOCK_FREE) {
-			s->numfreeEUNs++;
-			if (s->LastFreeEUN == BLOCK_NIL)
+		पूर्ण
+		अगर (s->PUtable[block] == BLOCK_FREE) अणु
+			s->numमुक्तEUNs++;
+			अगर (s->LastFreeEUN == BLOCK_NIL)
 				s->LastFreeEUN = block;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kfree(ANACtable);
-	return 0;
-}
+	kमुक्त(ANACtable);
+	वापस 0;
+पूर्ण

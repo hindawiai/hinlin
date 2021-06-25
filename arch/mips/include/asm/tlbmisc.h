@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_TLBMISC_H
-#define __ASM_TLBMISC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_TLBMISC_H
+#घोषणा __ASM_TLBMISC_H
 
 /*
- * - add_wired_entry() add a fixed TLB entry, and move wired register
+ * - add_wired_entry() add a fixed TLB entry, and move wired रेजिस्टर
  */
-extern void add_wired_entry(unsigned long entrylo0, unsigned long entrylo1,
-	unsigned long entryhi, unsigned long pagemask);
+बाह्य व्योम add_wired_entry(अचिन्हित दीर्घ entrylo0, अचिन्हित दीर्घ entrylo1,
+	अचिन्हित दीर्घ entryhi, अचिन्हित दीर्घ pagemask);
 
-#endif /* __ASM_TLBMISC_H */
+#पूर्ण_अगर /* __ASM_TLBMISC_H */

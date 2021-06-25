@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /* Copyright 2018-2019 Qiang Yu <yuq825@gmail.com> */
 
-#ifndef __LIMA_CTX_H__
-#define __LIMA_CTX_H__
+#अगर_अघोषित __LIMA_CTX_H__
+#घोषणा __LIMA_CTX_H__
 
-#include <linux/xarray.h>
-#include <linux/sched.h>
+#समावेश <linux/xarray.h>
+#समावेश <linux/sched.h>
 
-#include "lima_device.h"
+#समावेश "lima_device.h"
 
-struct lima_ctx {
-	struct kref refcnt;
-	struct lima_device *dev;
-	struct lima_sched_context context[lima_pipe_num];
+काष्ठा lima_ctx अणु
+	काष्ठा kref refcnt;
+	काष्ठा lima_device *dev;
+	काष्ठा lima_sched_context context[lima_pipe_num];
 	atomic_t guilty;
 
 	/* debug info */
-	char pname[TASK_COMM_LEN];
+	अक्षर pname[TASK_COMM_LEN];
 	pid_t pid;
-};
+पूर्ण;
 
-struct lima_ctx_mgr {
-	struct mutex lock;
-	struct xarray handles;
-};
+काष्ठा lima_ctx_mgr अणु
+	काष्ठा mutex lock;
+	काष्ठा xarray handles;
+पूर्ण;
 
-int lima_ctx_create(struct lima_device *dev, struct lima_ctx_mgr *mgr, u32 *id);
-int lima_ctx_free(struct lima_ctx_mgr *mgr, u32 id);
-struct lima_ctx *lima_ctx_get(struct lima_ctx_mgr *mgr, u32 id);
-void lima_ctx_put(struct lima_ctx *ctx);
-void lima_ctx_mgr_init(struct lima_ctx_mgr *mgr);
-void lima_ctx_mgr_fini(struct lima_ctx_mgr *mgr);
+पूर्णांक lima_ctx_create(काष्ठा lima_device *dev, काष्ठा lima_ctx_mgr *mgr, u32 *id);
+पूर्णांक lima_ctx_मुक्त(काष्ठा lima_ctx_mgr *mgr, u32 id);
+काष्ठा lima_ctx *lima_ctx_get(काष्ठा lima_ctx_mgr *mgr, u32 id);
+व्योम lima_ctx_put(काष्ठा lima_ctx *ctx);
+व्योम lima_ctx_mgr_init(काष्ठा lima_ctx_mgr *mgr);
+व्योम lima_ctx_mgr_fini(काष्ठा lima_ctx_mgr *mgr);
 
-#endif
+#पूर्ण_अगर

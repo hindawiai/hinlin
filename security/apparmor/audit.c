@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AppArmor security module
  *
@@ -8,24 +9,24 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#include <linux/audit.h>
-#include <linux/socket.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/socket.h>
 
-#include "include/apparmor.h"
-#include "include/audit.h"
-#include "include/policy.h"
-#include "include/policy_ns.h"
-#include "include/secid.h"
+#समावेश "include/apparmor.h"
+#समावेश "include/audit.h"
+#समावेश "include/policy.h"
+#समावेश "include/policy_ns.h"
+#समावेश "include/secid.h"
 
-const char *const audit_mode_names[] = {
+स्थिर अक्षर *स्थिर audit_mode_names[] = अणु
 	"normal",
 	"quiet_denied",
 	"quiet",
 	"noquiet",
 	"all"
-};
+पूर्ण;
 
-static const char *const aa_audit_type[] = {
+अटल स्थिर अक्षर *स्थिर aa_audit_type[] = अणु
 	"AUDIT",
 	"ALLOWED",
 	"DENIED",
@@ -34,214 +35,214 @@ static const char *const aa_audit_type[] = {
 	"ERROR",
 	"KILLED",
 	"AUTO"
-};
+पूर्ण;
 
 /*
- * Currently AppArmor auditing is fed straight into the audit framework.
+ * Currently AppArmor auditing is fed straight पूर्णांकo the audit framework.
  *
  * TODO:
- * netlink interface for complain mode
- * user auditing, - send user auditing to netlink interface
- * system control of whether user audit messages go to system log
+ * netlink पूर्णांकerface क्रम complain mode
+ * user auditing, - send user auditing to netlink पूर्णांकerface
+ * प्रणाली control of whether user audit messages go to प्रणाली log
  */
 
 /**
  * audit_base - core AppArmor function.
- * @ab: audit buffer to fill (NOT NULL)
- * @ca: audit structure containing data to audit (NOT NULL)
+ * @ab: audit buffer to fill (NOT शून्य)
+ * @ca: audit काष्ठाure containing data to audit (NOT शून्य)
  *
  * Record common AppArmor audit data from @sa
  */
-static void audit_pre(struct audit_buffer *ab, void *ca)
-{
-	struct common_audit_data *sa = ca;
+अटल व्योम audit_pre(काष्ठा audit_buffer *ab, व्योम *ca)
+अणु
+	काष्ठा common_audit_data *sa = ca;
 
-	if (aa_g_audit_header) {
-		audit_log_format(ab, "apparmor=\"%s\"",
+	अगर (aa_g_audit_header) अणु
+		audit_log_क्रमmat(ab, "apparmor=\"%s\"",
 				 aa_audit_type[aad(sa)->type]);
-	}
+	पूर्ण
 
-	if (aad(sa)->op) {
-		audit_log_format(ab, " operation=\"%s\"", aad(sa)->op);
-	}
+	अगर (aad(sa)->op) अणु
+		audit_log_क्रमmat(ab, " operation=\"%s\"", aad(sa)->op);
+	पूर्ण
 
-	if (aad(sa)->info) {
-		audit_log_format(ab, " info=\"%s\"", aad(sa)->info);
-		if (aad(sa)->error)
-			audit_log_format(ab, " error=%d", aad(sa)->error);
-	}
+	अगर (aad(sa)->info) अणु
+		audit_log_क्रमmat(ab, " info=\"%s\"", aad(sa)->info);
+		अगर (aad(sa)->error)
+			audit_log_क्रमmat(ab, " error=%d", aad(sa)->error);
+	पूर्ण
 
-	if (aad(sa)->label) {
-		struct aa_label *label = aad(sa)->label;
+	अगर (aad(sa)->label) अणु
+		काष्ठा aa_label *label = aad(sa)->label;
 
-		if (label_isprofile(label)) {
-			struct aa_profile *profile = labels_profile(label);
+		अगर (label_isprofile(label)) अणु
+			काष्ठा aa_profile *profile = labels_profile(label);
 
-			if (profile->ns != root_ns) {
-				audit_log_format(ab, " namespace=");
+			अगर (profile->ns != root_ns) अणु
+				audit_log_क्रमmat(ab, " namespace=");
 				audit_log_untrustedstring(ab,
 						       profile->ns->base.hname);
-			}
-			audit_log_format(ab, " profile=");
+			पूर्ण
+			audit_log_क्रमmat(ab, " profile=");
 			audit_log_untrustedstring(ab, profile->base.hname);
-		} else {
-			audit_log_format(ab, " label=");
+		पूर्ण अन्यथा अणु
+			audit_log_क्रमmat(ab, " label=");
 			aa_label_xaudit(ab, root_ns, label, FLAG_VIEW_SUBNS,
 					GFP_ATOMIC);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (aad(sa)->name) {
-		audit_log_format(ab, " name=");
+	अगर (aad(sa)->name) अणु
+		audit_log_क्रमmat(ab, " name=");
 		audit_log_untrustedstring(ab, aad(sa)->name);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * aa_audit_msg - Log a message to the audit subsystem
- * @sa: audit event structure (NOT NULL)
- * @cb: optional callback fn for type specific fields (MAYBE NULL)
+ * aa_audit_msg - Log a message to the audit subप्रणाली
+ * @sa: audit event काष्ठाure (NOT शून्य)
+ * @cb: optional callback fn क्रम type specअगरic fields (MAYBE शून्य)
  */
-void aa_audit_msg(int type, struct common_audit_data *sa,
-		  void (*cb) (struct audit_buffer *, void *))
-{
+व्योम aa_audit_msg(पूर्णांक type, काष्ठा common_audit_data *sa,
+		  व्योम (*cb) (काष्ठा audit_buffer *, व्योम *))
+अणु
 	aad(sa)->type = type;
 	common_lsm_audit(sa, audit_pre, cb);
-}
+पूर्ण
 
 /**
- * aa_audit - Log a profile based audit event to the audit subsystem
- * @type: audit type for the message
- * @profile: profile to check against (NOT NULL)
- * @sa: audit event (NOT NULL)
- * @cb: optional callback fn for type specific fields (MAYBE NULL)
+ * aa_audit - Log a profile based audit event to the audit subप्रणाली
+ * @type: audit type क्रम the message
+ * @profile: profile to check against (NOT शून्य)
+ * @sa: audit event (NOT शून्य)
+ * @cb: optional callback fn क्रम type specअगरic fields (MAYBE शून्य)
  *
- * Handle default message switching based off of audit mode flags
+ * Handle शेष message चयनing based off of audit mode flags
  *
  * Returns: error on failure
  */
-int aa_audit(int type, struct aa_profile *profile, struct common_audit_data *sa,
-	     void (*cb) (struct audit_buffer *, void *))
-{
+पूर्णांक aa_audit(पूर्णांक type, काष्ठा aa_profile *profile, काष्ठा common_audit_data *sa,
+	     व्योम (*cb) (काष्ठा audit_buffer *, व्योम *))
+अणु
 	AA_BUG(!profile);
 
-	if (type == AUDIT_APPARMOR_AUTO) {
-		if (likely(!aad(sa)->error)) {
-			if (AUDIT_MODE(profile) != AUDIT_ALL)
-				return 0;
+	अगर (type == AUDIT_APPARMOR_AUTO) अणु
+		अगर (likely(!aad(sa)->error)) अणु
+			अगर (AUDIT_MODE(profile) != AUDIT_ALL)
+				वापस 0;
 			type = AUDIT_APPARMOR_AUDIT;
-		} else if (COMPLAIN_MODE(profile))
+		पूर्ण अन्यथा अगर (COMPLAIN_MODE(profile))
 			type = AUDIT_APPARMOR_ALLOWED;
-		else
+		अन्यथा
 			type = AUDIT_APPARMOR_DENIED;
-	}
-	if (AUDIT_MODE(profile) == AUDIT_QUIET ||
+	पूर्ण
+	अगर (AUDIT_MODE(profile) == AUDIT_QUIET ||
 	    (type == AUDIT_APPARMOR_DENIED &&
 	     AUDIT_MODE(profile) == AUDIT_QUIET))
-		return aad(sa)->error;
+		वापस aad(sa)->error;
 
-	if (KILL_MODE(profile) && type == AUDIT_APPARMOR_DENIED)
+	अगर (KILL_MODE(profile) && type == AUDIT_APPARMOR_DENIED)
 		type = AUDIT_APPARMOR_KILL;
 
 	aad(sa)->label = &profile->label;
 
 	aa_audit_msg(type, sa, cb);
 
-	if (aad(sa)->type == AUDIT_APPARMOR_KILL)
-		(void)send_sig_info(SIGKILL, NULL,
+	अगर (aad(sa)->type == AUDIT_APPARMOR_KILL)
+		(व्योम)send_sig_info(SIGKILL, शून्य,
 			sa->type == LSM_AUDIT_DATA_TASK && sa->u.tsk ?
 				    sa->u.tsk : current);
 
-	if (aad(sa)->type == AUDIT_APPARMOR_ALLOWED)
-		return complain_error(aad(sa)->error);
+	अगर (aad(sa)->type == AUDIT_APPARMOR_ALLOWED)
+		वापस complain_error(aad(sa)->error);
 
-	return aad(sa)->error;
-}
+	वापस aad(sa)->error;
+पूर्ण
 
-struct aa_audit_rule {
-	struct aa_label *label;
-};
+काष्ठा aa_audit_rule अणु
+	काष्ठा aa_label *label;
+पूर्ण;
 
-void aa_audit_rule_free(void *vrule)
-{
-	struct aa_audit_rule *rule = vrule;
+व्योम aa_audit_rule_मुक्त(व्योम *vrule)
+अणु
+	काष्ठा aa_audit_rule *rule = vrule;
 
-	if (rule) {
-		if (!IS_ERR(rule->label))
+	अगर (rule) अणु
+		अगर (!IS_ERR(rule->label))
 			aa_put_label(rule->label);
-		kfree(rule);
-	}
-}
+		kमुक्त(rule);
+	पूर्ण
+पूर्ण
 
-int aa_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule)
-{
-	struct aa_audit_rule *rule;
+पूर्णांक aa_audit_rule_init(u32 field, u32 op, अक्षर *rulestr, व्योम **vrule)
+अणु
+	काष्ठा aa_audit_rule *rule;
 
-	switch (field) {
-	case AUDIT_SUBJ_ROLE:
-		if (op != Audit_equal && op != Audit_not_equal)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (field) अणु
+	हाल AUDIT_SUBJ_ROLE:
+		अगर (op != Audit_equal && op != Audit_not_equal)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	rule = kzalloc(sizeof(struct aa_audit_rule), GFP_KERNEL);
+	rule = kzalloc(माप(काष्ठा aa_audit_rule), GFP_KERNEL);
 
-	if (!rule)
-		return -ENOMEM;
+	अगर (!rule)
+		वापस -ENOMEM;
 
 	/* Currently rules are treated as coming from the root ns */
 	rule->label = aa_label_parse(&root_ns->unconfined->label, rulestr,
 				     GFP_KERNEL, true, false);
-	if (IS_ERR(rule->label)) {
-		int err = PTR_ERR(rule->label);
-		aa_audit_rule_free(rule);
-		return err;
-	}
+	अगर (IS_ERR(rule->label)) अणु
+		पूर्णांक err = PTR_ERR(rule->label);
+		aa_audit_rule_मुक्त(rule);
+		वापस err;
+	पूर्ण
 
 	*vrule = rule;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aa_audit_rule_known(struct audit_krule *rule)
-{
-	int i;
+पूर्णांक aa_audit_rule_known(काष्ठा audit_krule *rule)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < rule->field_count; i++) {
-		struct audit_field *f = &rule->fields[i];
+	क्रम (i = 0; i < rule->field_count; i++) अणु
+		काष्ठा audit_field *f = &rule->fields[i];
 
-		switch (f->type) {
-		case AUDIT_SUBJ_ROLE:
-			return 1;
-		}
-	}
+		चयन (f->type) अणु
+		हाल AUDIT_SUBJ_ROLE:
+			वापस 1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int aa_audit_rule_match(u32 sid, u32 field, u32 op, void *vrule)
-{
-	struct aa_audit_rule *rule = vrule;
-	struct aa_label *label;
-	int found = 0;
+पूर्णांक aa_audit_rule_match(u32 sid, u32 field, u32 op, व्योम *vrule)
+अणु
+	काष्ठा aa_audit_rule *rule = vrule;
+	काष्ठा aa_label *label;
+	पूर्णांक found = 0;
 
 	label = aa_secid_to_label(sid);
 
-	if (!label)
-		return -ENOENT;
+	अगर (!label)
+		वापस -ENOENT;
 
-	if (aa_label_is_subset(label, rule->label))
+	अगर (aa_label_is_subset(label, rule->label))
 		found = 1;
 
-	switch (field) {
-	case AUDIT_SUBJ_ROLE:
-		switch (op) {
-		case Audit_equal:
-			return found;
-		case Audit_not_equal:
-			return !found;
-		}
-	}
-	return 0;
-}
+	चयन (field) अणु
+	हाल AUDIT_SUBJ_ROLE:
+		चयन (op) अणु
+		हाल Audit_equal:
+			वापस found;
+		हाल Audit_not_equal:
+			वापस !found;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

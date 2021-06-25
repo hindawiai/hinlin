@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * linux/drivers/video/hitfb.c -- Hitachi LCD frame buffer device
  *
@@ -7,260 +8,260 @@
  * (C) 2003, 2004, 2006 Andriy Skulysh
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License. See the file COPYING in the main directory of this archive for
+ *  License. See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/fb.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/fb.h>
 
-#include <asm/machvec.h>
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/hd64461.h>
-#include <cpu/dac.h>
+#समावेश <यंत्र/machvec.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hd64461.h>
+#समावेश <cpu/dac.h>
 
-#define	WIDTH 640
+#घोषणा	WIDTH 640
 
-static struct fb_var_screeninfo hitfb_var = {
+अटल काष्ठा fb_var_screeninfo hitfb_var = अणु
 	.activate	= FB_ACTIVATE_NOW,
 	.height		= -1,
 	.width		= -1,
 	.vmode		= FB_VMODE_NONINTERLACED,
-};
+पूर्ण;
 
-static struct fb_fix_screeninfo hitfb_fix = {
+अटल काष्ठा fb_fix_screeninfo hitfb_fix = अणु
 	.id		= "Hitachi HD64461",
 	.type		= FB_TYPE_PACKED_PIXELS,
 	.accel		= FB_ACCEL_NONE,
-};
+पूर्ण;
 
-static inline void hitfb_accel_wait(void)
-{
-	while (fb_readw(HD64461_GRCFGR) & HD64461_GRCFGR_ACCSTATUS) ;
-}
+अटल अंतरभूत व्योम hitfb_accel_रुको(व्योम)
+अणु
+	जबतक (fb_पढ़ोw(HD64461_GRCFGR) & HD64461_GRCFGR_ACCSTATUS) ;
+पूर्ण
 
-static inline void hitfb_accel_start(int truecolor)
-{
-	if (truecolor) {
-		fb_writew(6, HD64461_GRCFGR);
-	} else {
-		fb_writew(7, HD64461_GRCFGR);
-	}
-}
+अटल अंतरभूत व्योम hitfb_accel_start(पूर्णांक truecolor)
+अणु
+	अगर (truecolor) अणु
+		fb_ग_लिखोw(6, HD64461_GRCFGR);
+	पूर्ण अन्यथा अणु
+		fb_ग_लिखोw(7, HD64461_GRCFGR);
+	पूर्ण
+पूर्ण
 
-static inline void hitfb_accel_set_dest(int truecolor, u16 dx, u16 dy,
+अटल अंतरभूत व्योम hitfb_accel_set_dest(पूर्णांक truecolor, u16 dx, u16 dy,
 					u16 width, u16 height)
-{
+अणु
 	u32 saddr = WIDTH * dy + dx;
-	if (truecolor)
+	अगर (truecolor)
 		saddr <<= 1;
 
-	fb_writew(width-1, HD64461_BBTDWR);
-	fb_writew(height-1, HD64461_BBTDHR);
+	fb_ग_लिखोw(width-1, HD64461_BBTDWR);
+	fb_ग_लिखोw(height-1, HD64461_BBTDHR);
 
-	fb_writew(saddr & 0xffff, HD64461_BBTDSARL);
-	fb_writew(saddr >> 16, HD64461_BBTDSARH);
+	fb_ग_लिखोw(saddr & 0xffff, HD64461_BBTDSARL);
+	fb_ग_लिखोw(saddr >> 16, HD64461_BBTDSARH);
 
-}
+पूर्ण
 
-static inline void hitfb_accel_bitblt(int truecolor, u16 sx, u16 sy, u16 dx,
+अटल अंतरभूत व्योम hitfb_accel_bitblt(पूर्णांक truecolor, u16 sx, u16 sy, u16 dx,
 				      u16 dy, u16 width, u16 height, u16 rop,
 				      u32 mask_addr)
-{
+अणु
 	u32 saddr, daddr;
 	u32 maddr = 0;
 
 	height--;
 	width--;
-	fb_writew(rop, HD64461_BBTROPR);
-	if ((sy < dy) || ((sy == dy) && (sx <= dx))) {
+	fb_ग_लिखोw(rop, HD64461_BBTROPR);
+	अगर ((sy < dy) || ((sy == dy) && (sx <= dx))) अणु
 		saddr = WIDTH * (sy + height) + sx + width;
 		daddr = WIDTH * (dy + height) + dx + width;
-		if (mask_addr) {
-			if (truecolor)
+		अगर (mask_addr) अणु
+			अगर (truecolor)
 				maddr = ((width >> 3) + 1) * (height + 1) - 1;
-			else
+			अन्यथा
 				maddr =
 				    (((width >> 4) + 1) * (height + 1) - 1) * 2;
 
-			fb_writew((1 << 5) | 1, HD64461_BBTMDR);
-		} else
-			fb_writew(1, HD64461_BBTMDR);
-	} else {
+			fb_ग_लिखोw((1 << 5) | 1, HD64461_BBTMDR);
+		पूर्ण अन्यथा
+			fb_ग_लिखोw(1, HD64461_BBTMDR);
+	पूर्ण अन्यथा अणु
 		saddr = WIDTH * sy + sx;
 		daddr = WIDTH * dy + dx;
-		if (mask_addr) {
-			fb_writew((1 << 5), HD64461_BBTMDR);
-		} else {
-			fb_writew(0, HD64461_BBTMDR);
-		}
-	}
-	if (truecolor) {
+		अगर (mask_addr) अणु
+			fb_ग_लिखोw((1 << 5), HD64461_BBTMDR);
+		पूर्ण अन्यथा अणु
+			fb_ग_लिखोw(0, HD64461_BBTMDR);
+		पूर्ण
+	पूर्ण
+	अगर (truecolor) अणु
 		saddr <<= 1;
 		daddr <<= 1;
-	}
-	fb_writew(width, HD64461_BBTDWR);
-	fb_writew(height, HD64461_BBTDHR);
-	fb_writew(saddr & 0xffff, HD64461_BBTSSARL);
-	fb_writew(saddr >> 16, HD64461_BBTSSARH);
-	fb_writew(daddr & 0xffff, HD64461_BBTDSARL);
-	fb_writew(daddr >> 16, HD64461_BBTDSARH);
-	if (mask_addr) {
+	पूर्ण
+	fb_ग_लिखोw(width, HD64461_BBTDWR);
+	fb_ग_लिखोw(height, HD64461_BBTDHR);
+	fb_ग_लिखोw(saddr & 0xffff, HD64461_BBTSSARL);
+	fb_ग_लिखोw(saddr >> 16, HD64461_BBTSSARH);
+	fb_ग_लिखोw(daddr & 0xffff, HD64461_BBTDSARL);
+	fb_ग_लिखोw(daddr >> 16, HD64461_BBTDSARH);
+	अगर (mask_addr) अणु
 		maddr += mask_addr;
-		fb_writew(maddr & 0xffff, HD64461_BBTMARL);
-		fb_writew(maddr >> 16, HD64461_BBTMARH);
-	}
+		fb_ग_लिखोw(maddr & 0xffff, HD64461_BBTMARL);
+		fb_ग_लिखोw(maddr >> 16, HD64461_BBTMARH);
+	पूर्ण
 	hitfb_accel_start(truecolor);
-}
+पूर्ण
 
-static void hitfb_fillrect(struct fb_info *p, const struct fb_fillrect *rect)
-{
-	if (rect->rop != ROP_COPY)
+अटल व्योम hitfb_fillrect(काष्ठा fb_info *p, स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	अगर (rect->rop != ROP_COPY)
 		cfb_fillrect(p, rect);
-	else {
-		hitfb_accel_wait();
-		fb_writew(0x00f0, HD64461_BBTROPR);
-		fb_writew(16, HD64461_BBTMDR);
+	अन्यथा अणु
+		hitfb_accel_रुको();
+		fb_ग_लिखोw(0x00f0, HD64461_BBTROPR);
+		fb_ग_लिखोw(16, HD64461_BBTMDR);
 
-		if (p->var.bits_per_pixel == 16) {
-			fb_writew(((u32 *) (p->pseudo_palette))[rect->color],
+		अगर (p->var.bits_per_pixel == 16) अणु
+			fb_ग_लिखोw(((u32 *) (p->pseuकरो_palette))[rect->color],
 				  HD64461_GRSCR);
 			hitfb_accel_set_dest(1, rect->dx, rect->dy, rect->width,
 					     rect->height);
 			hitfb_accel_start(1);
-		} else {
-			fb_writew(rect->color, HD64461_GRSCR);
+		पूर्ण अन्यथा अणु
+			fb_ग_लिखोw(rect->color, HD64461_GRSCR);
 			hitfb_accel_set_dest(0, rect->dx, rect->dy, rect->width,
 					     rect->height);
 			hitfb_accel_start(0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void hitfb_copyarea(struct fb_info *p, const struct fb_copyarea *area)
-{
-	hitfb_accel_wait();
+अटल व्योम hitfb_copyarea(काष्ठा fb_info *p, स्थिर काष्ठा fb_copyarea *area)
+अणु
+	hitfb_accel_रुको();
 	hitfb_accel_bitblt(p->var.bits_per_pixel == 16, area->sx, area->sy,
 			   area->dx, area->dy, area->width, area->height,
 			   0x00cc, 0);
-}
+पूर्ण
 
-static int hitfb_pan_display(struct fb_var_screeninfo *var,
-			     struct fb_info *info)
-{
-	int xoffset = var->xoffset;
-	int yoffset = var->yoffset;
+अटल पूर्णांक hitfb_pan_display(काष्ठा fb_var_screeninfo *var,
+			     काष्ठा fb_info *info)
+अणु
+	पूर्णांक xoffset = var->xoffset;
+	पूर्णांक yoffset = var->yoffset;
 
-	if (xoffset != 0)
-		return -EINVAL;
+	अगर (xoffset != 0)
+		वापस -EINVAL;
 
-	fb_writew((yoffset*info->fix.line_length)>>10, HD64461_LCDCBAR);
+	fb_ग_लिखोw((yoffset*info->fix.line_length)>>10, HD64461_LCDCBAR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hitfb_blank(int blank_mode, struct fb_info *info)
-{
-	unsigned short v;
+पूर्णांक hitfb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
+	अचिन्हित लघु v;
 
-	if (blank_mode) {
-		v = fb_readw(HD64461_LDR1);
+	अगर (blank_mode) अणु
+		v = fb_पढ़ोw(HD64461_LDR1);
 		v &= ~HD64461_LDR1_DON;
-		fb_writew(v, HD64461_LDR1);
+		fb_ग_लिखोw(v, HD64461_LDR1);
 
-		v = fb_readw(HD64461_LCDCCR);
+		v = fb_पढ़ोw(HD64461_LCDCCR);
 		v |= HD64461_LCDCCR_MOFF;
-		fb_writew(v, HD64461_LCDCCR);
+		fb_ग_लिखोw(v, HD64461_LCDCCR);
 
-		v = fb_readw(HD64461_STBCR);
+		v = fb_पढ़ोw(HD64461_STBCR);
 		v |= HD64461_STBCR_SLCDST;
-		fb_writew(v, HD64461_STBCR);
-	} else {
-		v = fb_readw(HD64461_STBCR);
+		fb_ग_लिखोw(v, HD64461_STBCR);
+	पूर्ण अन्यथा अणु
+		v = fb_पढ़ोw(HD64461_STBCR);
 		v &= ~HD64461_STBCR_SLCDST;
-		fb_writew(v, HD64461_STBCR);
+		fb_ग_लिखोw(v, HD64461_STBCR);
 
-		v = fb_readw(HD64461_LCDCCR);
+		v = fb_पढ़ोw(HD64461_LCDCCR);
 		v &= ~(HD64461_LCDCCR_MOFF | HD64461_LCDCCR_STREQ);
-		fb_writew(v, HD64461_LCDCCR);
+		fb_ग_लिखोw(v, HD64461_LCDCCR);
 
-		do {
-		    v = fb_readw(HD64461_LCDCCR);
-		} while(v&HD64461_LCDCCR_STBACK);
+		करो अणु
+		    v = fb_पढ़ोw(HD64461_LCDCCR);
+		पूर्ण जबतक(v&HD64461_LCDCCR_STBACK);
 
-		v = fb_readw(HD64461_LDR1);
+		v = fb_पढ़ोw(HD64461_LDR1);
 		v |= HD64461_LDR1_DON;
-		fb_writew(v, HD64461_LDR1);
-	}
-	return 0;
-}
+		fb_ग_लिखोw(v, HD64461_LDR1);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hitfb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			   unsigned blue, unsigned transp, struct fb_info *info)
-{
-	if (regno >= 256)
-		return 1;
+अटल पूर्णांक hitfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			   अचिन्हित blue, अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	अगर (regno >= 256)
+		वापस 1;
 
-	switch (info->var.bits_per_pixel) {
-	case 8:
-		fb_writew(regno << 8, HD64461_CPTWAR);
-		fb_writew(red >> 10, HD64461_CPTWDR);
-		fb_writew(green >> 10, HD64461_CPTWDR);
-		fb_writew(blue >> 10, HD64461_CPTWDR);
-		break;
-	case 16:
-		if (regno >= 16)
-			return 1;
-		((u32 *) (info->pseudo_palette))[regno] =
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 8:
+		fb_ग_लिखोw(regno << 8, HD64461_CPTWAR);
+		fb_ग_लिखोw(red >> 10, HD64461_CPTWDR);
+		fb_ग_लिखोw(green >> 10, HD64461_CPTWDR);
+		fb_ग_लिखोw(blue >> 10, HD64461_CPTWDR);
+		अवरोध;
+	हाल 16:
+		अगर (regno >= 16)
+			वापस 1;
+		((u32 *) (info->pseuकरो_palette))[regno] =
 		    ((red & 0xf800)) |
 		    ((green & 0xfc00) >> 5) | ((blue & 0xf800) >> 11);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hitfb_sync(struct fb_info *info)
-{
-	hitfb_accel_wait();
+अटल पूर्णांक hitfb_sync(काष्ठा fb_info *info)
+अणु
+	hitfb_accel_रुको();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hitfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	int maxy;
+अटल पूर्णांक hitfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	पूर्णांक maxy;
 
 	var->xres = info->var.xres;
-	var->xres_virtual = info->var.xres;
+	var->xres_भव = info->var.xres;
 	var->yres = info->var.yres;
 
-	if ((var->bits_per_pixel != 8) && (var->bits_per_pixel != 16))
+	अगर ((var->bits_per_pixel != 8) && (var->bits_per_pixel != 16))
 		var->bits_per_pixel = info->var.bits_per_pixel;
 
-	if (var->yres_virtual < var->yres)
-		var->yres_virtual = var->yres;
+	अगर (var->yres_भव < var->yres)
+		var->yres_भव = var->yres;
 
 	maxy = info->fix.smem_len / var->xres;
 
-	if (var->bits_per_pixel == 16)
+	अगर (var->bits_per_pixel == 16)
 		maxy /= 2;
 
-	if (var->yres_virtual > maxy)
-		var->yres_virtual = maxy;
+	अगर (var->yres_भव > maxy)
+		var->yres_भव = maxy;
 
 	var->xoffset = 0;
 	var->yoffset = 0;
 
-	switch (var->bits_per_pixel) {
-	case 8:
+	चयन (var->bits_per_pixel) अणु
+	हाल 8:
 		var->red.offset = 0;
 		var->red.length = 8;
 		var->green.offset = 0;
@@ -269,8 +270,8 @@ static int hitfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 		var->blue.length = 8;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	case 16:		/* RGB 565 */
+		अवरोध;
+	हाल 16:		/* RGB 565 */
 		var->red.offset = 11;
 		var->red.length = 5;
 		var->green.offset = 5;
@@ -279,38 +280,38 @@ static int hitfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
 		var->blue.length = 5;
 		var->transp.offset = 0;
 		var->transp.length = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hitfb_set_par(struct fb_info *info)
-{
-	unsigned short ldr3;
+अटल पूर्णांक hitfb_set_par(काष्ठा fb_info *info)
+अणु
+	अचिन्हित लघु ldr3;
 
-	switch (info->var.bits_per_pixel) {
-	case 8:
+	चयन (info->var.bits_per_pixel) अणु
+	हाल 8:
 		info->fix.line_length = info->var.xres;
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
 		info->fix.ypanstep = 16;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		info->fix.line_length = info->var.xres*2;
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
 		info->fix.ypanstep = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	fb_writew(info->fix.line_length, HD64461_LCDCLOR);
-	ldr3 = fb_readw(HD64461_LDR3);
+	fb_ग_लिखोw(info->fix.line_length, HD64461_LCDCLOR);
+	ldr3 = fb_पढ़ोw(HD64461_LDR3);
 	ldr3 &= ~15;
 	ldr3 |= (info->var.bits_per_pixel == 8) ? 4 : 8;
-	fb_writew(ldr3, HD64461_LDR3);
-	return 0;
-}
+	fb_ग_लिखोw(ldr3, HD64461_LDR3);
+	वापस 0;
+पूर्ण
 
-static const struct fb_ops hitfb_ops = {
+अटल स्थिर काष्ठा fb_ops hitfb_ops = अणु
 	.owner		= THIS_MODULE,
 	.fb_check_var	= hitfb_check_var,
 	.fb_set_par		= hitfb_set_par,
@@ -321,45 +322,45 @@ static const struct fb_ops hitfb_ops = {
 	.fb_fillrect	= hitfb_fillrect,
 	.fb_copyarea	= hitfb_copyarea,
 	.fb_imageblit	= cfb_imageblit,
-};
+पूर्ण;
 
-static int hitfb_probe(struct platform_device *dev)
-{
-	unsigned short lcdclor, ldr3, ldvndr;
-	struct fb_info *info;
-	int ret;
+अटल पूर्णांक hitfb_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	अचिन्हित लघु lcdclor, ldr3, ldvndr;
+	काष्ठा fb_info *info;
+	पूर्णांक ret;
 
-	if (fb_get_options("hitfb", NULL))
-		return -ENODEV;
+	अगर (fb_get_options("hitfb", शून्य))
+		वापस -ENODEV;
 
 	hitfb_fix.mmio_start = HD64461_IO_OFFSET(0x1000);
 	hitfb_fix.mmio_len = 0x1000;
 	hitfb_fix.smem_start = HD64461_IO_OFFSET(0x02000000);
 	hitfb_fix.smem_len = 512 * 1024;
 
-	lcdclor = fb_readw(HD64461_LCDCLOR);
-	ldvndr = fb_readw(HD64461_LDVNDR);
-	ldr3 = fb_readw(HD64461_LDR3);
+	lcdclor = fb_पढ़ोw(HD64461_LCDCLOR);
+	ldvndr = fb_पढ़ोw(HD64461_LDVNDR);
+	ldr3 = fb_पढ़ोw(HD64461_LDR3);
 
-	switch (ldr3 & 15) {
-	default:
-	case 4:
+	चयन (ldr3 & 15) अणु
+	शेष:
+	हाल 4:
 		hitfb_var.bits_per_pixel = 8;
 		hitfb_var.xres = lcdclor;
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		hitfb_var.bits_per_pixel = 16;
 		hitfb_var.xres = lcdclor / 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	hitfb_fix.line_length = lcdclor;
 	hitfb_fix.visual = (hitfb_var.bits_per_pixel == 8) ?
 	    FB_VISUAL_PSEUDOCOLOR : FB_VISUAL_TRUECOLOR;
 	hitfb_var.yres = ldvndr + 1;
-	hitfb_var.xres_virtual = hitfb_var.xres;
-	hitfb_var.yres_virtual = hitfb_fix.smem_len / lcdclor;
-	switch (hitfb_var.bits_per_pixel) {
-	case 8:
+	hitfb_var.xres_भव = hitfb_var.xres;
+	hitfb_var.yres_भव = hitfb_fix.smem_len / lcdclor;
+	चयन (hitfb_var.bits_per_pixel) अणु
+	हाल 8:
 		hitfb_var.red.offset = 0;
 		hitfb_var.red.length = 8;
 		hitfb_var.green.offset = 0;
@@ -368,8 +369,8 @@ static int hitfb_probe(struct platform_device *dev)
 		hitfb_var.blue.length = 8;
 		hitfb_var.transp.offset = 0;
 		hitfb_var.transp.length = 0;
-		break;
-	case 16:		/* RGB 565 */
+		अवरोध;
+	हाल 16:		/* RGB 565 */
 		hitfb_var.red.offset = 11;
 		hitfb_var.red.length = 5;
 		hitfb_var.green.offset = 5;
@@ -378,121 +379,121 @@ static int hitfb_probe(struct platform_device *dev)
 		hitfb_var.blue.length = 5;
 		hitfb_var.transp.offset = 0;
 		hitfb_var.transp.length = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(u32) * 16, &dev->dev);
-	if (unlikely(!info))
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(u32) * 16, &dev->dev);
+	अगर (unlikely(!info))
+		वापस -ENOMEM;
 
 	info->fbops = &hitfb_ops;
 	info->var = hitfb_var;
 	info->fix = hitfb_fix;
-	info->pseudo_palette = info->par;
+	info->pseuकरो_palette = info->par;
 	info->flags = FBINFO_DEFAULT | FBINFO_HWACCEL_YPAN |
 		FBINFO_HWACCEL_FILLRECT | FBINFO_HWACCEL_COPYAREA;
 
-	info->screen_base = (void *)hitfb_fix.smem_start;
+	info->screen_base = (व्योम *)hitfb_fix.smem_start;
 
 	ret = fb_alloc_cmap(&info->cmap, 256, 0);
-	if (unlikely(ret < 0))
-		goto err_fb;
+	अगर (unlikely(ret < 0))
+		जाओ err_fb;
 
-	ret = register_framebuffer(info);
-	if (unlikely(ret < 0))
-		goto err;
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (unlikely(ret < 0))
+		जाओ err;
 
-	platform_set_drvdata(dev, info);
+	platक्रमm_set_drvdata(dev, info);
 
 	fb_info(info, "%s frame buffer device\n", info->fix.id);
 
-	return 0;
+	वापस 0;
 
 err:
 	fb_dealloc_cmap(&info->cmap);
 err_fb:
 	framebuffer_release(info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hitfb_remove(struct platform_device *dev)
-{
-	struct fb_info *info = platform_get_drvdata(dev);
+अटल पूर्णांक hitfb_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा fb_info *info = platक्रमm_get_drvdata(dev);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hitfb_suspend(struct device *dev)
-{
+अटल पूर्णांक hitfb_suspend(काष्ठा device *dev)
+अणु
 	u16 v;
 
 	hitfb_blank(1,0);
-	v = fb_readw(HD64461_STBCR);
+	v = fb_पढ़ोw(HD64461_STBCR);
 	v |= HD64461_STBCR_SLCKE_IST;
-	fb_writew(v, HD64461_STBCR);
+	fb_ग_लिखोw(v, HD64461_STBCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hitfb_resume(struct device *dev)
-{
+अटल पूर्णांक hitfb_resume(काष्ठा device *dev)
+अणु
 	u16 v;
 
-	v = fb_readw(HD64461_STBCR);
+	v = fb_पढ़ोw(HD64461_STBCR);
 	v &= ~HD64461_STBCR_SLCKE_OST;
 	msleep(100);
-	v = fb_readw(HD64461_STBCR);
+	v = fb_पढ़ोw(HD64461_STBCR);
 	v &= ~HD64461_STBCR_SLCKE_IST;
-	fb_writew(v, HD64461_STBCR);
+	fb_ग_लिखोw(v, HD64461_STBCR);
 	hitfb_blank(0,0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops hitfb_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops hitfb_dev_pm_ops = अणु
 	.suspend	= hitfb_suspend,
 	.resume		= hitfb_resume,
-};
+पूर्ण;
 
-static struct platform_driver hitfb_driver = {
+अटल काष्ठा platक्रमm_driver hitfb_driver = अणु
 	.probe		= hitfb_probe,
-	.remove		= hitfb_remove,
-	.driver		= {
+	.हटाओ		= hitfb_हटाओ,
+	.driver		= अणु
 		.name	= "hitfb",
 		.pm	= &hitfb_dev_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device hitfb_device = {
+अटल काष्ठा platक्रमm_device hitfb_device = अणु
 	.name	= "hitfb",
 	.id	= -1,
-};
+पूर्ण;
 
-static int __init hitfb_init(void)
-{
-	int ret;
+अटल पूर्णांक __init hitfb_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&hitfb_driver);
-	if (!ret) {
-		ret = platform_device_register(&hitfb_device);
-		if (ret)
-			platform_driver_unregister(&hitfb_driver);
-	}
-	return ret;
-}
+	ret = platक्रमm_driver_रेजिस्टर(&hitfb_driver);
+	अगर (!ret) अणु
+		ret = platक्रमm_device_रेजिस्टर(&hitfb_device);
+		अगर (ret)
+			platक्रमm_driver_unरेजिस्टर(&hitfb_driver);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 
-static void __exit hitfb_exit(void)
-{
-	platform_device_unregister(&hitfb_device);
-	platform_driver_unregister(&hitfb_driver);
-}
+अटल व्योम __निकास hitfb_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(&hitfb_device);
+	platक्रमm_driver_unरेजिस्टर(&hitfb_driver);
+पूर्ण
 
 module_init(hitfb_init);
-module_exit(hitfb_exit);
+module_निकास(hitfb_निकास);
 
 MODULE_LICENSE("GPL");

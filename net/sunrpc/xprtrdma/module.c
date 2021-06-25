@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2015, 2017 Oracle.  All rights reserved.
  */
@@ -6,18 +7,18 @@
 /* rpcrdma.ko module initialization
  */
 
-#include <linux/types.h>
-#include <linux/compiler.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sunrpc/svc_rdma.h>
+#समावेश <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sunrpc/svc_rdma.h>
 
-#include <asm/swab.h>
+#समावेश <यंत्र/swab.h>
 
-#include "xprt_rdma.h"
+#समावेश "xprt_rdma.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/rpcrdma.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/rpcrdma.h>
 
 MODULE_AUTHOR("Open Grid Computing and Network Appliance, Inc.");
 MODULE_DESCRIPTION("RPC/RDMA Transport");
@@ -26,27 +27,27 @@ MODULE_ALIAS("svcrdma");
 MODULE_ALIAS("xprtrdma");
 MODULE_ALIAS("rpcrdma6");
 
-static void __exit rpc_rdma_cleanup(void)
-{
+अटल व्योम __निकास rpc_rdma_cleanup(व्योम)
+अणु
 	xprt_rdma_cleanup();
 	svc_rdma_cleanup();
-}
+पूर्ण
 
-static int __init rpc_rdma_init(void)
-{
-	int rc;
+अटल पूर्णांक __init rpc_rdma_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = svc_rdma_init();
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = xprt_rdma_init();
-	if (rc)
+	अगर (rc)
 		svc_rdma_cleanup();
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 module_init(rpc_rdma_init);
-module_exit(rpc_rdma_cleanup);
+module_निकास(rpc_rdma_cleanup);

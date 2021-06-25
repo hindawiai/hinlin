@@ -1,95 +1,96 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __MMU_PUBLIC_H_INCLUDED__
-#define __MMU_PUBLIC_H_INCLUDED__
+#अगर_अघोषित __MMU_PUBLIC_H_INCLUDED__
+#घोषणा __MMU_PUBLIC_H_INCLUDED__
 
-#include "system_local.h"
-#include "device_access.h"
-#include "assert_support.h"
+#समावेश "system_local.h"
+#समावेश "device_access.h"
+#समावेश "assert_support.h"
 
 /*! Set the page table base index of MMU[ID]
 
- \param	ID[in]				MMU identifier
+ \param	ID[in]				MMU identअगरier
  \param	base_index[in]		page table base index
 
- \return none, MMU[ID].page_table_base_index = base_index
+ \लeturn none, MMU[ID].page_table_base_index = base_index
  */
-void mmu_set_page_table_base_index(
-    const mmu_ID_t		ID,
-    const hrt_data		base_index);
+व्योम mmu_set_page_table_base_index(
+    स्थिर mmu_ID_t		ID,
+    स्थिर hrt_data		base_index);
 
 /*! Get the page table base index of MMU[ID]
 
- \param	ID[in]				MMU identifier
+ \param	ID[in]				MMU identअगरier
  \param	base_index[in]		page table base index
 
- \return MMU[ID].page_table_base_index
+ \लeturn MMU[ID].page_table_base_index
  */
 hrt_data mmu_get_page_table_base_index(
-    const mmu_ID_t		ID);
+    स्थिर mmu_ID_t		ID);
 
 /*! Invalidate the page table cache of MMU[ID]
 
- \param	ID[in]				MMU identifier
+ \param	ID[in]				MMU identअगरier
 
- \return none
+ \लeturn none
  */
-void mmu_invalidate_cache(
-    const mmu_ID_t		ID);
+व्योम mmu_invalidate_cache(
+    स्थिर mmu_ID_t		ID);
 
 /*! Invalidate the page table cache of all MMUs
 
- \return none
+ \लeturn none
  */
-void mmu_invalidate_cache_all(void);
+व्योम mmu_invalidate_cache_all(व्योम);
 
-/*! Write to a control register of MMU[ID]
+/*! Write to a control रेजिस्टर of MMU[ID]
 
- \param	ID[in]				MMU identifier
- \param	reg[in]				register index
+ \param	ID[in]				MMU identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return none, MMU[ID].ctrl[reg] = value
+ \लeturn none, MMU[ID].ctrl[reg] = value
  */
-static inline void mmu_reg_store(
-    const mmu_ID_t		ID,
-    const unsigned int	reg,
-    const hrt_data		value)
-{
-	assert(ID < N_MMU_ID);
-	assert(MMU_BASE[ID] != (hrt_address) - 1);
-	ia_css_device_store_uint32(MMU_BASE[ID] + reg * sizeof(hrt_data), value);
-	return;
-}
+अटल अंतरभूत व्योम mmu_reg_store(
+    स्थिर mmu_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg,
+    स्थिर hrt_data		value)
+अणु
+	निश्चित(ID < N_MMU_ID);
+	निश्चित(MMU_BASE[ID] != (hrt_address) - 1);
+	ia_css_device_store_uपूर्णांक32(MMU_BASE[ID] + reg * माप(hrt_data), value);
+	वापस;
+पूर्ण
 
-/*! Read from a control register of MMU[ID]
+/*! Read from a control रेजिस्टर of MMU[ID]
 
- \param	ID[in]				MMU identifier
- \param	reg[in]				register index
+ \param	ID[in]				MMU identअगरier
+ \param	reg[in]				रेजिस्टर index
  \param value[in]			The data to be written
 
- \return MMU[ID].ctrl[reg]
+ \लeturn MMU[ID].ctrl[reg]
  */
-static inline hrt_data mmu_reg_load(
-    const mmu_ID_t		ID,
-    const unsigned int	reg)
-{
-	assert(ID < N_MMU_ID);
-	assert(MMU_BASE[ID] != (hrt_address) - 1);
-	return ia_css_device_load_uint32(MMU_BASE[ID] + reg * sizeof(hrt_data));
-}
+अटल अंतरभूत hrt_data mmu_reg_load(
+    स्थिर mmu_ID_t		ID,
+    स्थिर अचिन्हित पूर्णांक	reg)
+अणु
+	निश्चित(ID < N_MMU_ID);
+	निश्चित(MMU_BASE[ID] != (hrt_address) - 1);
+	वापस ia_css_device_load_uपूर्णांक32(MMU_BASE[ID] + reg * माप(hrt_data));
+पूर्ण
 
-#endif /* __MMU_PUBLIC_H_INCLUDED__ */
+#पूर्ण_अगर /* __MMU_PUBLIC_H_INCLUDED__ */

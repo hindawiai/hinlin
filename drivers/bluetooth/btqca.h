@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Bluetooth supports for Qualcomm Atheros ROME chips
+ *  Bluetooth supports क्रम Qualcomm Atheros ROME chips
  *
  *  Copyright (c) 2015 The Linux Foundation. All rights reserved.
  */
 
-#define EDL_PATCH_CMD_OPCODE		(0xFC00)
-#define EDL_NVM_ACCESS_OPCODE		(0xFC0B)
-#define EDL_WRITE_BD_ADDR_OPCODE	(0xFC14)
-#define EDL_PATCH_CMD_LEN		(1)
-#define EDL_PATCH_VER_REQ_CMD		(0x19)
-#define EDL_PATCH_TLV_REQ_CMD		(0x1E)
-#define EDL_GET_BUILD_INFO_CMD		(0x20)
-#define EDL_NVM_ACCESS_SET_REQ_CMD	(0x01)
-#define MAX_SIZE_PER_TLV_SEGMENT	(243)
-#define QCA_PRE_SHUTDOWN_CMD		(0xFC08)
-#define QCA_DISABLE_LOGGING		(0xFC17)
+#घोषणा EDL_PATCH_CMD_OPCODE		(0xFC00)
+#घोषणा EDL_NVM_ACCESS_OPCODE		(0xFC0B)
+#घोषणा EDL_WRITE_BD_ADDR_OPCODE	(0xFC14)
+#घोषणा EDL_PATCH_CMD_LEN		(1)
+#घोषणा EDL_PATCH_VER_REQ_CMD		(0x19)
+#घोषणा EDL_PATCH_TLV_REQ_CMD		(0x1E)
+#घोषणा EDL_GET_BUILD_INFO_CMD		(0x20)
+#घोषणा EDL_NVM_ACCESS_SET_REQ_CMD	(0x01)
+#घोषणा MAX_SIZE_PER_TLV_SEGMENT	(243)
+#घोषणा QCA_PRE_SHUTDOWN_CMD		(0xFC08)
+#घोषणा QCA_DISABLE_LOGGING		(0xFC17)
 
-#define EDL_CMD_REQ_RES_EVT		(0x00)
-#define EDL_PATCH_VER_RES_EVT		(0x19)
-#define EDL_APP_VER_RES_EVT		(0x02)
-#define EDL_TVL_DNLD_RES_EVT		(0x04)
-#define EDL_CMD_EXE_STATUS_EVT		(0x00)
-#define EDL_SET_BAUDRATE_RSP_EVT	(0x92)
-#define EDL_NVM_ACCESS_CODE_EVT		(0x0B)
-#define QCA_DISABLE_LOGGING_SUB_OP	(0x14)
+#घोषणा EDL_CMD_REQ_RES_EVT		(0x00)
+#घोषणा EDL_PATCH_VER_RES_EVT		(0x19)
+#घोषणा EDL_APP_VER_RES_EVT		(0x02)
+#घोषणा EDL_TVL_DNLD_RES_EVT		(0x04)
+#घोषणा EDL_CMD_EXE_STATUS_EVT		(0x00)
+#घोषणा EDL_SET_BAUDRATE_RSP_EVT	(0x92)
+#घोषणा EDL_NVM_ACCESS_CODE_EVT		(0x0B)
+#घोषणा QCA_DISABLE_LOGGING_SUB_OP	(0x14)
 
-#define EDL_TAG_ID_HCI			(17)
-#define EDL_TAG_ID_DEEP_SLEEP		(27)
+#घोषणा EDL_TAG_ID_HCI			(17)
+#घोषणा EDL_TAG_ID_DEEP_SLEEP		(27)
 
-#define QCA_WCN3990_POWERON_PULSE	0xFC
-#define QCA_WCN3990_POWEROFF_PULSE	0xC0
+#घोषणा QCA_WCN3990_POWERON_PULSE	0xFC
+#घोषणा QCA_WCN3990_POWEROFF_PULSE	0xC0
 
-#define QCA_HCI_CC_OPCODE		0xFC00
-#define QCA_HCI_CC_SUCCESS		0x00
+#घोषणा QCA_HCI_CC_OPCODE		0xFC00
+#घोषणा QCA_HCI_CC_SUCCESS		0x00
 
-#define QCA_WCN3991_SOC_ID		(0x40014320)
+#घोषणा QCA_WCN3991_SOC_ID		(0x40014320)
 
 /* QCA chipset version can be decided by patch and SoC
  * version, combination with upper 2 bytes from SoC
  * and lower 2 bytes from patch will be used.
  */
-#define get_soc_ver(soc_id, rom_ver)	\
+#घोषणा get_soc_ver(soc_id, rom_ver)	\
 	((le32_to_cpu(soc_id) << 16) | (le16_to_cpu(rom_ver)))
 
-#define QCA_FW_BUILD_VER_LEN		255
+#घोषणा QCA_FW_BUILD_VER_LEN		255
 
 
-enum qca_baudrate {
+क्रमागत qca_baudrate अणु
 	QCA_BAUDRATE_115200 	= 0,
 	QCA_BAUDRATE_57600,
 	QCA_BAUDRATE_38400,
@@ -69,73 +70,73 @@ enum qca_baudrate {
 	QCA_BAUDRATE_3500000,
 	QCA_BAUDRATE_AUTO 	= 0xFE,
 	QCA_BAUDRATE_RESERVED
-};
+पूर्ण;
 
-enum qca_tlv_dnld_mode {
+क्रमागत qca_tlv_dnld_mode अणु
 	QCA_SKIP_EVT_NONE,
 	QCA_SKIP_EVT_VSE,
 	QCA_SKIP_EVT_CC,
 	QCA_SKIP_EVT_VSE_CC
-};
+पूर्ण;
 
-enum qca_tlv_type {
+क्रमागत qca_tlv_type अणु
 	TLV_TYPE_PATCH = 1,
 	TLV_TYPE_NVM
-};
+पूर्ण;
 
-struct qca_fw_config {
+काष्ठा qca_fw_config अणु
 	u8 type;
-	char fwname[64];
-	uint8_t user_baud_rate;
-	enum qca_tlv_dnld_mode dnld_mode;
-	enum qca_tlv_dnld_mode dnld_type;
-};
+	अक्षर fwname[64];
+	uपूर्णांक8_t user_baud_rate;
+	क्रमागत qca_tlv_dnld_mode dnld_mode;
+	क्रमागत qca_tlv_dnld_mode dnld_type;
+पूर्ण;
 
-struct edl_event_hdr {
+काष्ठा edl_event_hdr अणु
 	__u8 cresp;
 	__u8 rtype;
 	__u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct qca_btsoc_version {
+काष्ठा qca_btsoc_version अणु
 	__le32 product_id;
 	__le16 patch_ver;
 	__le16 rom_ver;
 	__le32 soc_id;
-} __packed;
+पूर्ण __packed;
 
-struct tlv_seg_resp {
+काष्ठा tlv_seg_resp अणु
 	__u8 result;
-} __packed;
+पूर्ण __packed;
 
-struct tlv_type_patch {
+काष्ठा tlv_type_patch अणु
 	__le32 total_size;
 	__le32 data_length;
-	__u8   format_version;
+	__u8   क्रमmat_version;
 	__u8   signature;
-	__u8   download_mode;
+	__u8   करोwnload_mode;
 	__u8   reserved1;
 	__le16 product_id;
 	__le16 rom_build;
 	__le16 patch_version;
 	__le16 reserved2;
 	__le32 entry;
-} __packed;
+पूर्ण __packed;
 
-struct tlv_type_nvm {
+काष्ठा tlv_type_nvm अणु
 	__le16 tag_id;
 	__le16 tag_len;
 	__le32 reserve1;
 	__le32 reserve2;
 	__u8   data[];
-} __packed;
+पूर्ण __packed;
 
-struct tlv_type_hdr {
+काष्ठा tlv_type_hdr अणु
 	__le32 type_len;
 	__u8   data[];
-} __packed;
+पूर्ण __packed;
 
-enum qca_btsoc_type {
+क्रमागत qca_btsoc_type अणु
 	QCA_INVALID = -1,
 	QCA_AR3002,
 	QCA_ROME,
@@ -143,57 +144,57 @@ enum qca_btsoc_type {
 	QCA_WCN3998,
 	QCA_WCN3991,
 	QCA_QCA6390,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_BT_QCA)
+#अगर IS_ENABLED(CONFIG_BT_QCA)
 
-int qca_set_bdaddr_rome(struct hci_dev *hdev, const bdaddr_t *bdaddr);
-int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
-		   enum qca_btsoc_type soc_type, struct qca_btsoc_version ver,
-		   const char *firmware_name);
-int qca_read_soc_version(struct hci_dev *hdev, struct qca_btsoc_version *ver,
-			 enum qca_btsoc_type);
-int qca_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr);
-int qca_send_pre_shutdown_cmd(struct hci_dev *hdev);
-static inline bool qca_is_wcn399x(enum qca_btsoc_type soc_type)
-{
-	return soc_type == QCA_WCN3990 || soc_type == QCA_WCN3991 ||
+पूर्णांक qca_set_bdaddr_rome(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr);
+पूर्णांक qca_uart_setup(काष्ठा hci_dev *hdev, uपूर्णांक8_t baudrate,
+		   क्रमागत qca_btsoc_type soc_type, काष्ठा qca_btsoc_version ver,
+		   स्थिर अक्षर *firmware_name);
+पूर्णांक qca_पढ़ो_soc_version(काष्ठा hci_dev *hdev, काष्ठा qca_btsoc_version *ver,
+			 क्रमागत qca_btsoc_type);
+पूर्णांक qca_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr);
+पूर्णांक qca_send_pre_shutकरोwn_cmd(काष्ठा hci_dev *hdev);
+अटल अंतरभूत bool qca_is_wcn399x(क्रमागत qca_btsoc_type soc_type)
+अणु
+	वापस soc_type == QCA_WCN3990 || soc_type == QCA_WCN3991 ||
 	       soc_type == QCA_WCN3998;
-}
-#else
+पूर्ण
+#अन्यथा
 
-static inline int qca_set_bdaddr_rome(struct hci_dev *hdev, const bdaddr_t *bdaddr)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक qca_set_bdaddr_rome(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int qca_uart_setup(struct hci_dev *hdev, uint8_t baudrate,
-				 enum qca_btsoc_type soc_type,
-				 struct qca_btsoc_version ver,
-				 const char *firmware_name)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक qca_uart_setup(काष्ठा hci_dev *hdev, uपूर्णांक8_t baudrate,
+				 क्रमागत qca_btsoc_type soc_type,
+				 काष्ठा qca_btsoc_version ver,
+				 स्थिर अक्षर *firmware_name)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int qca_read_soc_version(struct hci_dev *hdev,
-				       struct qca_btsoc_version *ver,
-				       enum qca_btsoc_type)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक qca_पढ़ो_soc_version(काष्ठा hci_dev *hdev,
+				       काष्ठा qca_btsoc_version *ver,
+				       क्रमागत qca_btsoc_type)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline int qca_set_bdaddr(struct hci_dev *hdev, const bdaddr_t *bdaddr)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक qca_set_bdaddr(काष्ठा hci_dev *hdev, स्थिर bdaddr_t *bdaddr)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline bool qca_is_wcn399x(enum qca_btsoc_type soc_type)
-{
-	return false;
-}
+अटल अंतरभूत bool qca_is_wcn399x(क्रमागत qca_btsoc_type soc_type)
+अणु
+	वापस false;
+पूर्ण
 
-static inline int qca_send_pre_shutdown_cmd(struct hci_dev *hdev)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+अटल अंतरभूत पूर्णांक qca_send_pre_shutकरोwn_cmd(काष्ठा hci_dev *hdev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर

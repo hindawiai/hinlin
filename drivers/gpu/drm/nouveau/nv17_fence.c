@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,31 +22,31 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "nouveau_drv.h"
-#include "nouveau_dma.h"
-#include "nv10_fence.h"
+#समावेश "nouveau_drv.h"
+#समावेश "nouveau_dma.h"
+#समावेश "nv10_fence.h"
 
-#include <nvif/push006c.h>
+#समावेश <nvअगर/push006c.h>
 
-#include <nvif/class.h>
-#include <nvif/cl0002.h>
+#समावेश <nvअगर/class.h>
+#समावेश <nvअगर/cl0002.h>
 
-#include <nvhw/class/cl176e.h>
+#समावेश <nvhw/class/cl176e.h>
 
-int
-nv17_fence_sync(struct nouveau_fence *fence,
-		struct nouveau_channel *prev, struct nouveau_channel *chan)
-{
-	struct nouveau_cli *cli = (void *)prev->user.client;
-	struct nv10_fence_priv *priv = chan->drm->fence;
-	struct nv10_fence_chan *fctx = chan->fence;
-	struct nvif_push *ppush = prev->chan.push;
-	struct nvif_push *npush = chan->chan.push;
+पूर्णांक
+nv17_fence_sync(काष्ठा nouveau_fence *fence,
+		काष्ठा nouveau_channel *prev, काष्ठा nouveau_channel *chan)
+अणु
+	काष्ठा nouveau_cli *cli = (व्योम *)prev->user.client;
+	काष्ठा nv10_fence_priv *priv = chan->drm->fence;
+	काष्ठा nv10_fence_chan *fctx = chan->fence;
+	काष्ठा nvअगर_push *ppush = prev->chan.push;
+	काष्ठा nvअगर_push *npush = chan->chan.push;
 	u32 value;
-	int ret;
+	पूर्णांक ret;
 
-	if (!mutex_trylock(&cli->mutex))
-		return -EBUSY;
+	अगर (!mutex_trylock(&cli->mutex))
+		वापस -EBUSY;
 
 	spin_lock(&priv->lock);
 	value = priv->sequence;
@@ -53,76 +54,76 @@ nv17_fence_sync(struct nouveau_fence *fence,
 	spin_unlock(&priv->lock);
 
 	ret = PUSH_WAIT(ppush, 5);
-	if (!ret) {
+	अगर (!ret) अणु
 		PUSH_MTHD(ppush, NV176E, SET_CONTEXT_DMA_SEMAPHORE, fctx->sema.handle,
 					 SEMAPHORE_OFFSET, 0,
 					 SEMAPHORE_ACQUIRE, value + 0,
 					 SEMAPHORE_RELEASE, value + 1);
 		PUSH_KICK(ppush);
-	}
+	पूर्ण
 
-	if (!ret && !(ret = PUSH_WAIT(npush, 5))) {
+	अगर (!ret && !(ret = PUSH_WAIT(npush, 5))) अणु
 		PUSH_MTHD(npush, NV176E, SET_CONTEXT_DMA_SEMAPHORE, fctx->sema.handle,
 					 SEMAPHORE_OFFSET, 0,
 					 SEMAPHORE_ACQUIRE, value + 1,
 					 SEMAPHORE_RELEASE, value + 2);
 		PUSH_KICK(npush);
-	}
+	पूर्ण
 
 	mutex_unlock(&cli->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nv17_fence_context_new(struct nouveau_channel *chan)
-{
-	struct nv10_fence_priv *priv = chan->drm->fence;
-	struct nv10_fence_chan *fctx;
-	struct ttm_resource *reg = &priv->bo->bo.mem;
+अटल पूर्णांक
+nv17_fence_context_new(काष्ठा nouveau_channel *chan)
+अणु
+	काष्ठा nv10_fence_priv *priv = chan->drm->fence;
+	काष्ठा nv10_fence_chan *fctx;
+	काष्ठा tपंचांग_resource *reg = &priv->bo->bo.mem;
 	u32 start = reg->start * PAGE_SIZE;
 	u32 limit = start + priv->bo->bo.base.size - 1;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	fctx = chan->fence = kzalloc(sizeof(*fctx), GFP_KERNEL);
-	if (!fctx)
-		return -ENOMEM;
+	fctx = chan->fence = kzalloc(माप(*fctx), GFP_KERNEL);
+	अगर (!fctx)
+		वापस -ENOMEM;
 
 	nouveau_fence_context_new(chan, &fctx->base);
 	fctx->base.emit = nv10_fence_emit;
-	fctx->base.read = nv10_fence_read;
+	fctx->base.पढ़ो = nv10_fence_पढ़ो;
 	fctx->base.sync = nv17_fence_sync;
 
-	ret = nvif_object_ctor(&chan->user, "fenceCtxDma", NvSema,
+	ret = nvअगर_object_ctor(&chan->user, "fenceCtxDma", NvSema,
 			       NV_DMA_FROM_MEMORY,
-			       &(struct nv_dma_v0) {
+			       &(काष्ठा nv_dma_v0) अणु
 					.target = NV_DMA_V0_TARGET_VRAM,
 					.access = NV_DMA_V0_ACCESS_RDWR,
 					.start = start,
 					.limit = limit,
-			       }, sizeof(struct nv_dma_v0),
+			       पूर्ण, माप(काष्ठा nv_dma_v0),
 			       &fctx->sema);
-	if (ret)
+	अगर (ret)
 		nv10_fence_context_del(chan);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-nv17_fence_resume(struct nouveau_drm *drm)
-{
-	struct nv10_fence_priv *priv = drm->fence;
+व्योम
+nv17_fence_resume(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nv10_fence_priv *priv = drm->fence;
 
 	nouveau_bo_wr32(priv->bo, 0, priv->sequence);
-}
+पूर्ण
 
-int
-nv17_fence_create(struct nouveau_drm *drm)
-{
-	struct nv10_fence_priv *priv;
-	int ret = 0;
+पूर्णांक
+nv17_fence_create(काष्ठा nouveau_drm *drm)
+अणु
+	काष्ठा nv10_fence_priv *priv;
+	पूर्णांक ret = 0;
 
-	priv = drm->fence = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = drm->fence = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->base.dtor = nv10_fence_destroy;
 	priv->base.resume = nv17_fence_resume;
@@ -132,23 +133,23 @@ nv17_fence_create(struct nouveau_drm *drm)
 
 	ret = nouveau_bo_new(&drm->client, 4096, 0x1000,
 			     NOUVEAU_GEM_DOMAIN_VRAM,
-			     0, 0x0000, NULL, NULL, &priv->bo);
-	if (!ret) {
+			     0, 0x0000, शून्य, शून्य, &priv->bo);
+	अगर (!ret) अणु
 		ret = nouveau_bo_pin(priv->bo, NOUVEAU_GEM_DOMAIN_VRAM, false);
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = nouveau_bo_map(priv->bo);
-			if (ret)
+			अगर (ret)
 				nouveau_bo_unpin(priv->bo);
-		}
-		if (ret)
-			nouveau_bo_ref(NULL, &priv->bo);
-	}
+		पूर्ण
+		अगर (ret)
+			nouveau_bo_ref(शून्य, &priv->bo);
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		nv10_fence_destroy(drm);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	nouveau_bo_wr32(priv->bo, 0x000, 0x00000000);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,160 +1,161 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_THREAD_H
-#define __PERF_THREAD_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_THREAD_H
+#घोषणा __PERF_THREAD_H
 
-#include <linux/refcount.h>
-#include <linux/rbtree.h>
-#include <linux/list.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include "srccode.h"
-#include "symbol_conf.h"
-#include <strlist.h>
-#include <intlist.h>
-#include "rwsem.h"
-#include "event.h"
-#include "callchain.h"
+#समावेश <linux/refcount.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/list.h>
+#समावेश <मानकपन.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश "srccode.h"
+#समावेश "symbol_conf.h"
+#समावेश <strlist.h>
+#समावेश <पूर्णांकlist.h>
+#समावेश "rwsem.h"
+#समावेश "event.h"
+#समावेश "callchain.h"
 
-struct addr_location;
-struct map;
-struct perf_record_namespaces;
-struct thread_stack;
-struct unwind_libunwind_ops;
+काष्ठा addr_location;
+काष्ठा map;
+काष्ठा perf_record_namespaces;
+काष्ठा thपढ़ो_stack;
+काष्ठा unwind_libunwind_ops;
 
-struct lbr_stitch {
-	struct list_head		lists;
-	struct list_head		free_lists;
-	struct perf_sample		prev_sample;
-	struct callchain_cursor_node	*prev_lbr_cursor;
-};
+काष्ठा lbr_stitch अणु
+	काष्ठा list_head		lists;
+	काष्ठा list_head		मुक्त_lists;
+	काष्ठा perf_sample		prev_sample;
+	काष्ठा callchain_cursor_node	*prev_lbr_cursor;
+पूर्ण;
 
-struct thread {
-	union {
-		struct rb_node	 rb_node;
-		struct list_head node;
-	};
-	struct maps		*maps;
+काष्ठा thपढ़ो अणु
+	जोड़ अणु
+		काष्ठा rb_node	 rb_node;
+		काष्ठा list_head node;
+	पूर्ण;
+	काष्ठा maps		*maps;
 	pid_t			pid_; /* Not all tools update this */
 	pid_t			tid;
 	pid_t			ppid;
-	int			cpu;
+	पूर्णांक			cpu;
 	refcount_t		refcnt;
 	bool			comm_set;
-	int			comm_len;
-	bool			dead; /* if set thread has exited */
-	struct list_head	namespaces_list;
-	struct rw_semaphore	namespaces_lock;
-	struct list_head	comm_list;
-	struct rw_semaphore	comm_lock;
+	पूर्णांक			comm_len;
+	bool			dead; /* अगर set thपढ़ो has निकासed */
+	काष्ठा list_head	namespaces_list;
+	काष्ठा rw_semaphore	namespaces_lock;
+	काष्ठा list_head	comm_list;
+	काष्ठा rw_semaphore	comm_lock;
 	u64			db_id;
 
-	void			*priv;
-	struct thread_stack	*ts;
-	struct nsinfo		*nsinfo;
-	struct srccode_state	srccode_state;
+	व्योम			*priv;
+	काष्ठा thपढ़ो_stack	*ts;
+	काष्ठा nsinfo		*nsinfo;
+	काष्ठा srccode_state	srccode_state;
 	bool			filter;
-	int			filter_entry_depth;
+	पूर्णांक			filter_entry_depth;
 
 	/* LBR call stack stitch */
 	bool			lbr_stitch_enable;
-	struct lbr_stitch	*lbr_stitch;
-};
+	काष्ठा lbr_stitch	*lbr_stitch;
+पूर्ण;
 
-struct machine;
-struct namespaces;
-struct comm;
+काष्ठा machine;
+काष्ठा namespaces;
+काष्ठा comm;
 
-struct thread *thread__new(pid_t pid, pid_t tid);
-int thread__init_maps(struct thread *thread, struct machine *machine);
-void thread__delete(struct thread *thread);
+काष्ठा thपढ़ो *thपढ़ो__new(pid_t pid, pid_t tid);
+पूर्णांक thपढ़ो__init_maps(काष्ठा thपढ़ो *thपढ़ो, काष्ठा machine *machine);
+व्योम thपढ़ो__delete(काष्ठा thपढ़ो *thपढ़ो);
 
-struct thread *thread__get(struct thread *thread);
-void thread__put(struct thread *thread);
+काष्ठा thपढ़ो *thपढ़ो__get(काष्ठा thपढ़ो *thपढ़ो);
+व्योम thपढ़ो__put(काष्ठा thपढ़ो *thपढ़ो);
 
-static inline void __thread__zput(struct thread **thread)
-{
-	thread__put(*thread);
-	*thread = NULL;
-}
+अटल अंतरभूत व्योम __thपढ़ो__zput(काष्ठा thपढ़ो **thपढ़ो)
+अणु
+	thपढ़ो__put(*thपढ़ो);
+	*thपढ़ो = शून्य;
+पूर्ण
 
-#define thread__zput(thread) __thread__zput(&thread)
+#घोषणा thपढ़ो__zput(thपढ़ो) __thपढ़ो__zput(&thपढ़ो)
 
-static inline void thread__exited(struct thread *thread)
-{
-	thread->dead = true;
-}
+अटल अंतरभूत व्योम thपढ़ो__निकासed(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	thपढ़ो->dead = true;
+पूर्ण
 
-struct namespaces *thread__namespaces(struct thread *thread);
-int thread__set_namespaces(struct thread *thread, u64 timestamp,
-			   struct perf_record_namespaces *event);
+काष्ठा namespaces *thपढ़ो__namespaces(काष्ठा thपढ़ो *thपढ़ो);
+पूर्णांक thपढ़ो__set_namespaces(काष्ठा thपढ़ो *thपढ़ो, u64 बारtamp,
+			   काष्ठा perf_record_namespaces *event);
 
-int __thread__set_comm(struct thread *thread, const char *comm, u64 timestamp,
+पूर्णांक __thपढ़ो__set_comm(काष्ठा thपढ़ो *thपढ़ो, स्थिर अक्षर *comm, u64 बारtamp,
 		       bool exec);
-static inline int thread__set_comm(struct thread *thread, const char *comm,
-				   u64 timestamp)
-{
-	return __thread__set_comm(thread, comm, timestamp, false);
-}
+अटल अंतरभूत पूर्णांक thपढ़ो__set_comm(काष्ठा thपढ़ो *thपढ़ो, स्थिर अक्षर *comm,
+				   u64 बारtamp)
+अणु
+	वापस __thपढ़ो__set_comm(thपढ़ो, comm, बारtamp, false);
+पूर्ण
 
-int thread__set_comm_from_proc(struct thread *thread);
+पूर्णांक thपढ़ो__set_comm_from_proc(काष्ठा thपढ़ो *thपढ़ो);
 
-int thread__comm_len(struct thread *thread);
-struct comm *thread__comm(const struct thread *thread);
-struct comm *thread__exec_comm(const struct thread *thread);
-const char *thread__comm_str(struct thread *thread);
-int thread__insert_map(struct thread *thread, struct map *map);
-int thread__fork(struct thread *thread, struct thread *parent, u64 timestamp, bool do_maps_clone);
-size_t thread__fprintf(struct thread *thread, FILE *fp);
+पूर्णांक thपढ़ो__comm_len(काष्ठा thपढ़ो *thपढ़ो);
+काष्ठा comm *thपढ़ो__comm(स्थिर काष्ठा thपढ़ो *thपढ़ो);
+काष्ठा comm *thपढ़ो__exec_comm(स्थिर काष्ठा thपढ़ो *thपढ़ो);
+स्थिर अक्षर *thपढ़ो__comm_str(काष्ठा thपढ़ो *thपढ़ो);
+पूर्णांक thपढ़ो__insert_map(काष्ठा thपढ़ो *thपढ़ो, काष्ठा map *map);
+पूर्णांक thपढ़ो__विभाजन(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो *parent, u64 बारtamp, bool करो_maps_clone);
+माप_प्रकार thपढ़ो__ख_लिखो(काष्ठा thपढ़ो *thपढ़ो, खाता *fp);
 
-struct thread *thread__main_thread(struct machine *machine, struct thread *thread);
+काष्ठा thपढ़ो *thपढ़ो__मुख्य_thपढ़ो(काष्ठा machine *machine, काष्ठा thपढ़ो *thपढ़ो);
 
-struct map *thread__find_map(struct thread *thread, u8 cpumode, u64 addr,
-			     struct addr_location *al);
-struct map *thread__find_map_fb(struct thread *thread, u8 cpumode, u64 addr,
-				struct addr_location *al);
+काष्ठा map *thपढ़ो__find_map(काष्ठा thपढ़ो *thपढ़ो, u8 cpumode, u64 addr,
+			     काष्ठा addr_location *al);
+काष्ठा map *thपढ़ो__find_map_fb(काष्ठा thपढ़ो *thपढ़ो, u8 cpumode, u64 addr,
+				काष्ठा addr_location *al);
 
-struct symbol *thread__find_symbol(struct thread *thread, u8 cpumode,
-				   u64 addr, struct addr_location *al);
-struct symbol *thread__find_symbol_fb(struct thread *thread, u8 cpumode,
-				      u64 addr, struct addr_location *al);
+काष्ठा symbol *thपढ़ो__find_symbol(काष्ठा thपढ़ो *thपढ़ो, u8 cpumode,
+				   u64 addr, काष्ठा addr_location *al);
+काष्ठा symbol *thपढ़ो__find_symbol_fb(काष्ठा thपढ़ो *thपढ़ो, u8 cpumode,
+				      u64 addr, काष्ठा addr_location *al);
 
-void thread__find_cpumode_addr_location(struct thread *thread, u64 addr,
-					struct addr_location *al);
+व्योम thपढ़ो__find_cpumode_addr_location(काष्ठा thपढ़ो *thपढ़ो, u64 addr,
+					काष्ठा addr_location *al);
 
-int thread__memcpy(struct thread *thread, struct machine *machine,
-		   void *buf, u64 ip, int len, bool *is64bit);
+पूर्णांक thपढ़ो__स_नकल(काष्ठा thपढ़ो *thपढ़ो, काष्ठा machine *machine,
+		   व्योम *buf, u64 ip, पूर्णांक len, bool *is64bit);
 
-static inline void *thread__priv(struct thread *thread)
-{
-	return thread->priv;
-}
+अटल अंतरभूत व्योम *thपढ़ो__priv(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	वापस thपढ़ो->priv;
+पूर्ण
 
-static inline void thread__set_priv(struct thread *thread, void *p)
-{
-	thread->priv = p;
-}
+अटल अंतरभूत व्योम thपढ़ो__set_priv(काष्ठा thपढ़ो *thपढ़ो, व्योम *p)
+अणु
+	thपढ़ो->priv = p;
+पूर्ण
 
-static inline bool thread__is_filtered(struct thread *thread)
-{
-	if (symbol_conf.comm_list &&
-	    !strlist__has_entry(symbol_conf.comm_list, thread__comm_str(thread))) {
-		return true;
-	}
+अटल अंतरभूत bool thपढ़ो__is_filtered(काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	अगर (symbol_conf.comm_list &&
+	    !strlist__has_entry(symbol_conf.comm_list, thपढ़ो__comm_str(thपढ़ो))) अणु
+		वापस true;
+	पूर्ण
 
-	if (symbol_conf.pid_list &&
-	    !intlist__has_entry(symbol_conf.pid_list, thread->pid_)) {
-		return true;
-	}
+	अगर (symbol_conf.pid_list &&
+	    !पूर्णांकlist__has_entry(symbol_conf.pid_list, thपढ़ो->pid_)) अणु
+		वापस true;
+	पूर्ण
 
-	if (symbol_conf.tid_list &&
-	    !intlist__has_entry(symbol_conf.tid_list, thread->tid)) {
-		return true;
-	}
+	अगर (symbol_conf.tid_list &&
+	    !पूर्णांकlist__has_entry(symbol_conf.tid_list, thपढ़ो->tid)) अणु
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void thread__free_stitch_list(struct thread *thread);
+व्योम thपढ़ो__मुक्त_stitch_list(काष्ठा thपढ़ो *thपढ़ो);
 
-#endif	/* __PERF_THREAD_H */
+#पूर्ण_अगर	/* __PERF_THREAD_H */

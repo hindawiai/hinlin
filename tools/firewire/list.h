@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-struct list {
-	struct list *next, *prev;
-};
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+काष्ठा list अणु
+	काष्ठा list *next, *prev;
+पूर्ण;
 
-static inline void
-list_init(struct list *list)
-{
+अटल अंतरभूत व्योम
+list_init(काष्ठा list *list)
+अणु
 	list->next = list;
 	list->prev = list;
-}
+पूर्ण
 
-static inline int
-list_empty(struct list *list)
-{
-	return list->next == list;
-}
+अटल अंतरभूत पूर्णांक
+list_empty(काष्ठा list *list)
+अणु
+	वापस list->next == list;
+पूर्ण
 
-static inline void
-list_insert(struct list *link, struct list *new_link)
-{
+अटल अंतरभूत व्योम
+list_insert(काष्ठा list *link, काष्ठा list *new_link)
+अणु
 	new_link->prev		= link->prev;
 	new_link->next		= link;
 	new_link->prev->next	= new_link;
 	new_link->next->prev	= new_link;
-}
+पूर्ण
 
-static inline void
-list_append(struct list *list, struct list *new_link)
-{
-	list_insert((struct list *)list, new_link);
-}
+अटल अंतरभूत व्योम
+list_append(काष्ठा list *list, काष्ठा list *new_link)
+अणु
+	list_insert((काष्ठा list *)list, new_link);
+पूर्ण
 
-static inline void
-list_prepend(struct list *list, struct list *new_link)
-{
+अटल अंतरभूत व्योम
+list_prepend(काष्ठा list *list, काष्ठा list *new_link)
+अणु
 	list_insert(list->next, new_link);
-}
+पूर्ण
 
-static inline void
-list_remove(struct list *link)
-{
+अटल अंतरभूत व्योम
+list_हटाओ(काष्ठा list *link)
+अणु
 	link->prev->next = link->next;
 	link->next->prev = link->prev;
-}
+पूर्ण
 
-#define list_entry(link, type, member) \
-	((type *)((char *)(link)-(unsigned long)(&((type *)0)->member)))
+#घोषणा list_entry(link, type, member) \
+	((type *)((अक्षर *)(link)-(अचिन्हित दीर्घ)(&((type *)0)->member)))
 
-#define list_head(list, type, member)		\
+#घोषणा list_head(list, type, member)		\
 	list_entry((list)->next, type, member)
 
-#define list_tail(list, type, member)		\
+#घोषणा list_tail(list, type, member)		\
 	list_entry((list)->prev, type, member)
 
-#define list_next(elm, member)					\
+#घोषणा list_next(elm, member)					\
 	list_entry((elm)->member.next, typeof(*elm), member)
 
-#define list_for_each_entry(pos, list, member)			\
-	for (pos = list_head(list, typeof(*pos), member);	\
+#घोषणा list_क्रम_each_entry(pos, list, member)			\
+	क्रम (pos = list_head(list, typeof(*pos), member);	\
 	     &pos->member != (list);				\
 	     pos = list_next(pos, member))
 

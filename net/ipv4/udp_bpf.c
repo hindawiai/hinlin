@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Cloudflare Ltd https://cloudflare.com */
 
-#include <linux/skmsg.h>
-#include <net/sock.h>
-#include <net/udp.h>
-#include <net/inet_common.h>
+#समावेश <linux/skmsg.h>
+#समावेश <net/sock.h>
+#समावेश <net/udp.h>
+#समावेश <net/inet_common.h>
 
-#include "udp_impl.h"
+#समावेश "udp_impl.h"
 
-static struct proto *udpv6_prot_saved __read_mostly;
+अटल काष्ठा proto *udpv6_prot_saved __पढ़ो_mostly;
 
-static int sk_udp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			  int noblock, int flags, int *addr_len)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	if (sk->sk_family == AF_INET6)
-		return udpv6_prot_saved->recvmsg(sk, msg, len, noblock, flags,
+अटल पूर्णांक sk_udp_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			  पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (sk->sk_family == AF_INET6)
+		वापस udpv6_prot_saved->recvmsg(sk, msg, len, noblock, flags,
 						 addr_len);
-#endif
-	return udp_prot.recvmsg(sk, msg, len, noblock, flags, addr_len);
-}
+#पूर्ण_अगर
+	वापस udp_prot.recvmsg(sk, msg, len, noblock, flags, addr_len);
+पूर्ण
 
-static int udp_bpf_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			   int nonblock, int flags, int *addr_len)
-{
-	struct sk_psock *psock;
-	int copied, ret;
+अटल पूर्णांक udp_bpf_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			   पूर्णांक nonblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा sk_psock *psock;
+	पूर्णांक copied, ret;
 
-	if (unlikely(flags & MSG_ERRQUEUE))
-		return inet_recv_error(sk, msg, len, addr_len);
+	अगर (unlikely(flags & MSG_ERRQUEUE))
+		वापस inet_recv_error(sk, msg, len, addr_len);
 
 	psock = sk_psock_get(sk);
-	if (unlikely(!psock))
-		return sk_udp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
+	अगर (unlikely(!psock))
+		वापस sk_udp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
 
 	lock_sock(sk);
-	if (sk_psock_queue_empty(psock)) {
+	अगर (sk_psock_queue_empty(psock)) अणु
 		ret = sk_udp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-msg_bytes_ready:
+msg_bytes_पढ़ोy:
 	copied = sk_msg_recvmsg(sk, psock, msg, len, flags);
-	if (!copied) {
-		int data, err = 0;
-		long timeo;
+	अगर (!copied) अणु
+		पूर्णांक data, err = 0;
+		दीर्घ समयo;
 
-		timeo = sock_rcvtimeo(sk, nonblock);
-		data = sk_msg_wait_data(sk, psock, flags, timeo, &err);
-		if (data) {
-			if (!sk_psock_queue_empty(psock))
-				goto msg_bytes_ready;
+		समयo = sock_rcvसमयo(sk, nonblock);
+		data = sk_msg_रुको_data(sk, psock, flags, समयo, &err);
+		अगर (data) अणु
+			अगर (!sk_psock_queue_empty(psock))
+				जाओ msg_bytes_पढ़ोy;
 			ret = sk_udp_recvmsg(sk, msg, len, nonblock, flags, addr_len);
-			goto out;
-		}
-		if (err) {
+			जाओ out;
+		पूर्ण
+		अगर (err) अणु
 			ret = err;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		copied = -EAGAIN;
-	}
+	पूर्ण
 	ret = copied;
 out:
 	release_sock(sk);
 	sk_psock_put(sk, psock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	UDP_BPF_IPV4,
 	UDP_BPF_IPV6,
 	UDP_BPF_NUM_PROTS,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(udpv6_prot_lock);
-static struct proto udp_bpf_prots[UDP_BPF_NUM_PROTS];
+अटल DEFINE_SPINLOCK(udpv6_prot_lock);
+अटल काष्ठा proto udp_bpf_prots[UDP_BPF_NUM_PROTS];
 
-static void udp_bpf_rebuild_protos(struct proto *prot, const struct proto *base)
-{
+अटल व्योम udp_bpf_rebuild_protos(काष्ठा proto *prot, स्थिर काष्ठा proto *base)
+अणु
 	*prot        = *base;
 	prot->unhash = sock_map_unhash;
-	prot->close  = sock_map_close;
+	prot->बंद  = sock_map_बंद;
 	prot->recvmsg = udp_bpf_recvmsg;
-}
+पूर्ण
 
-static void udp_bpf_check_v6_needs_rebuild(struct proto *ops)
-{
-	if (unlikely(ops != smp_load_acquire(&udpv6_prot_saved))) {
+अटल व्योम udp_bpf_check_v6_needs_rebuild(काष्ठा proto *ops)
+अणु
+	अगर (unlikely(ops != smp_load_acquire(&udpv6_prot_saved))) अणु
 		spin_lock_bh(&udpv6_prot_lock);
-		if (likely(ops != udpv6_prot_saved)) {
+		अगर (likely(ops != udpv6_prot_saved)) अणु
 			udp_bpf_rebuild_protos(&udp_bpf_prots[UDP_BPF_IPV6], ops);
 			smp_store_release(&udpv6_prot_saved, ops);
-		}
+		पूर्ण
 		spin_unlock_bh(&udpv6_prot_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init udp_bpf_v4_build_proto(void)
-{
+अटल पूर्णांक __init udp_bpf_v4_build_proto(व्योम)
+अणु
 	udp_bpf_rebuild_protos(&udp_bpf_prots[UDP_BPF_IPV4], &udp_prot);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 core_initcall(udp_bpf_v4_build_proto);
 
-int udp_bpf_update_proto(struct sock *sk, struct sk_psock *psock, bool restore)
-{
-	int family = sk->sk_family == AF_INET ? UDP_BPF_IPV4 : UDP_BPF_IPV6;
+पूर्णांक udp_bpf_update_proto(काष्ठा sock *sk, काष्ठा sk_psock *psock, bool restore)
+अणु
+	पूर्णांक family = sk->sk_family == AF_INET ? UDP_BPF_IPV4 : UDP_BPF_IPV6;
 
-	if (restore) {
-		sk->sk_write_space = psock->saved_write_space;
+	अगर (restore) अणु
+		sk->sk_ग_लिखो_space = psock->saved_ग_लिखो_space;
 		WRITE_ONCE(sk->sk_prot, psock->sk_proto);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sk->sk_family == AF_INET6)
+	अगर (sk->sk_family == AF_INET6)
 		udp_bpf_check_v6_needs_rebuild(psock->sk_proto);
 
 	WRITE_ONCE(sk->sk_prot, &udp_bpf_prots[family]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(udp_bpf_update_proto);

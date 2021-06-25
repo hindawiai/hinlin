@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
- * SHA-3, as specified in
+ * SHA-3, as specअगरied in
  * https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.202.pdf
  *
  * SHA-3 code by Jeff Garzik <jeff@garzik.org>
  *               Ard Biesheuvel <ard.biesheuvel@linaro.org>
  */
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <crypto/sha3.h>
-#include <asm/unaligned.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha3.h>
+#समावेश <यंत्र/unaligned.h>
 
 /*
  * On some 32-bit architectures (h8300), GCC ends up using
- * over 1 KB of stack if we inline the round calculation into the loop
+ * over 1 KB of stack अगर we अंतरभूत the round calculation पूर्णांकo the loop
  * in keccakf(). On the other hand, on 64-bit architectures with plenty
- * of [64-bit wide] general purpose registers, not inlining it severely
- * hurts performance. So let's use 64-bitness as a heuristic to decide
- * whether to inline or not.
+ * of [64-bit wide] general purpose रेजिस्टरs, not inlining it severely
+ * hurts perक्रमmance. So let's use 64-bitness as a heuristic to decide
+ * whether to अंतरभूत or not.
  */
-#ifdef CONFIG_64BIT
-#define SHA3_INLINE	inline
-#else
-#define SHA3_INLINE	noinline
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा SHA3_INLINE	अंतरभूत
+#अन्यथा
+#घोषणा SHA3_INLINE	noअंतरभूत
+#पूर्ण_अगर
 
-#define KECCAK_ROUNDS 24
+#घोषणा KECCAK_ROUNDS 24
 
-static const u64 keccakf_rndc[24] = {
+अटल स्थिर u64 keccakf_rndc[24] = अणु
 	0x0000000000000001ULL, 0x0000000000008082ULL, 0x800000000000808aULL,
 	0x8000000080008000ULL, 0x000000000000808bULL, 0x0000000080000001ULL,
 	0x8000000080008081ULL, 0x8000000000008009ULL, 0x000000000000008aULL,
@@ -40,12 +41,12 @@ static const u64 keccakf_rndc[24] = {
 	0x8000000000008003ULL, 0x8000000000008002ULL, 0x8000000000000080ULL,
 	0x000000000000800aULL, 0x800000008000000aULL, 0x8000000080008081ULL,
 	0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL
-};
+पूर्ण;
 
 /* update the state with given number of rounds */
 
-static SHA3_INLINE void keccakf_round(u64 st[25])
-{
+अटल SHA3_INLINE व्योम keccakf_round(u64 st[25])
+अणु
 	u64 t[5], tt, bc[5];
 
 	/* Theta */
@@ -145,152 +146,152 @@ static SHA3_INLINE void keccakf_round(u64 st[25])
 	st[22] ^= bc[ 2];
 	st[23] ^= bc[ 3];
 	st[24] ^= bc[ 4];
-}
+पूर्ण
 
-static void keccakf(u64 st[25])
-{
-	int round;
+अटल व्योम keccakf(u64 st[25])
+अणु
+	पूर्णांक round;
 
-	for (round = 0; round < KECCAK_ROUNDS; round++) {
+	क्रम (round = 0; round < KECCAK_ROUNDS; round++) अणु
 		keccakf_round(st);
 		/* Iota */
 		st[0] ^= keccakf_rndc[round];
-	}
-}
+	पूर्ण
+पूर्ण
 
-int crypto_sha3_init(struct shash_desc *desc)
-{
-	struct sha3_state *sctx = shash_desc_ctx(desc);
-	unsigned int digest_size = crypto_shash_digestsize(desc->tfm);
+पूर्णांक crypto_sha3_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha3_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक digest_size = crypto_shash_digestsize(desc->tfm);
 
 	sctx->rsiz = 200 - 2 * digest_size;
 	sctx->rsizw = sctx->rsiz / 8;
 	sctx->partial = 0;
 
-	memset(sctx->st, 0, sizeof(sctx->st));
-	return 0;
-}
+	स_रखो(sctx->st, 0, माप(sctx->st));
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(crypto_sha3_init);
 
-int crypto_sha3_update(struct shash_desc *desc, const u8 *data,
-		       unsigned int len)
-{
-	struct sha3_state *sctx = shash_desc_ctx(desc);
-	unsigned int done;
-	const u8 *src;
+पूर्णांक crypto_sha3_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		       अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha3_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक करोne;
+	स्थिर u8 *src;
 
-	done = 0;
+	करोne = 0;
 	src = data;
 
-	if ((sctx->partial + len) > (sctx->rsiz - 1)) {
-		if (sctx->partial) {
-			done = -sctx->partial;
-			memcpy(sctx->buf + sctx->partial, data,
-			       done + sctx->rsiz);
+	अगर ((sctx->partial + len) > (sctx->rsiz - 1)) अणु
+		अगर (sctx->partial) अणु
+			करोne = -sctx->partial;
+			स_नकल(sctx->buf + sctx->partial, data,
+			       करोne + sctx->rsiz);
 			src = sctx->buf;
-		}
+		पूर्ण
 
-		do {
-			unsigned int i;
+		करो अणु
+			अचिन्हित पूर्णांक i;
 
-			for (i = 0; i < sctx->rsizw; i++)
+			क्रम (i = 0; i < sctx->rsizw; i++)
 				sctx->st[i] ^= get_unaligned_le64(src + 8 * i);
 			keccakf(sctx->st);
 
-			done += sctx->rsiz;
-			src = data + done;
-		} while (done + (sctx->rsiz - 1) < len);
+			करोne += sctx->rsiz;
+			src = data + करोne;
+		पूर्ण जबतक (करोne + (sctx->rsiz - 1) < len);
 
 		sctx->partial = 0;
-	}
-	memcpy(sctx->buf + sctx->partial, src, len - done);
-	sctx->partial += (len - done);
+	पूर्ण
+	स_नकल(sctx->buf + sctx->partial, src, len - करोne);
+	sctx->partial += (len - करोne);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(crypto_sha3_update);
 
-int crypto_sha3_final(struct shash_desc *desc, u8 *out)
-{
-	struct sha3_state *sctx = shash_desc_ctx(desc);
-	unsigned int i, inlen = sctx->partial;
-	unsigned int digest_size = crypto_shash_digestsize(desc->tfm);
+पूर्णांक crypto_sha3_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sha3_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक i, inlen = sctx->partial;
+	अचिन्हित पूर्णांक digest_size = crypto_shash_digestsize(desc->tfm);
 	__le64 *digest = (__le64 *)out;
 
 	sctx->buf[inlen++] = 0x06;
-	memset(sctx->buf + inlen, 0, sctx->rsiz - inlen);
+	स_रखो(sctx->buf + inlen, 0, sctx->rsiz - inlen);
 	sctx->buf[sctx->rsiz - 1] |= 0x80;
 
-	for (i = 0; i < sctx->rsizw; i++)
+	क्रम (i = 0; i < sctx->rsizw; i++)
 		sctx->st[i] ^= get_unaligned_le64(sctx->buf + 8 * i);
 
 	keccakf(sctx->st);
 
-	for (i = 0; i < digest_size / 8; i++)
+	क्रम (i = 0; i < digest_size / 8; i++)
 		put_unaligned_le64(sctx->st[i], digest++);
 
-	if (digest_size & 4)
+	अगर (digest_size & 4)
 		put_unaligned_le32(sctx->st[i], (__le32 *)digest);
 
-	memset(sctx, 0, sizeof(*sctx));
-	return 0;
-}
+	स_रखो(sctx, 0, माप(*sctx));
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(crypto_sha3_final);
 
-static struct shash_alg algs[] = { {
+अटल काष्ठा shash_alg algs[] = अणु अणु
 	.digestsize		= SHA3_224_DIGEST_SIZE,
 	.init			= crypto_sha3_init,
 	.update			= crypto_sha3_update,
 	.final			= crypto_sha3_final,
-	.descsize		= sizeof(struct sha3_state),
+	.descsize		= माप(काष्ठा sha3_state),
 	.base.cra_name		= "sha3-224",
 	.base.cra_driver_name	= "sha3-224-generic",
 	.base.cra_blocksize	= SHA3_224_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-}, {
+पूर्ण, अणु
 	.digestsize		= SHA3_256_DIGEST_SIZE,
 	.init			= crypto_sha3_init,
 	.update			= crypto_sha3_update,
 	.final			= crypto_sha3_final,
-	.descsize		= sizeof(struct sha3_state),
+	.descsize		= माप(काष्ठा sha3_state),
 	.base.cra_name		= "sha3-256",
 	.base.cra_driver_name	= "sha3-256-generic",
 	.base.cra_blocksize	= SHA3_256_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-}, {
+पूर्ण, अणु
 	.digestsize		= SHA3_384_DIGEST_SIZE,
 	.init			= crypto_sha3_init,
 	.update			= crypto_sha3_update,
 	.final			= crypto_sha3_final,
-	.descsize		= sizeof(struct sha3_state),
+	.descsize		= माप(काष्ठा sha3_state),
 	.base.cra_name		= "sha3-384",
 	.base.cra_driver_name	= "sha3-384-generic",
 	.base.cra_blocksize	= SHA3_384_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-}, {
+पूर्ण, अणु
 	.digestsize		= SHA3_512_DIGEST_SIZE,
 	.init			= crypto_sha3_init,
 	.update			= crypto_sha3_update,
 	.final			= crypto_sha3_final,
-	.descsize		= sizeof(struct sha3_state),
+	.descsize		= माप(काष्ठा sha3_state),
 	.base.cra_name		= "sha3-512",
 	.base.cra_driver_name	= "sha3-512-generic",
 	.base.cra_blocksize	= SHA3_512_BLOCK_SIZE,
 	.base.cra_module	= THIS_MODULE,
-} };
+पूर्ण पूर्ण;
 
-static int __init sha3_generic_mod_init(void)
-{
-	return crypto_register_shashes(algs, ARRAY_SIZE(algs));
-}
+अटल पूर्णांक __init sha3_generic_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shashes(algs, ARRAY_SIZE(algs));
+पूर्ण
 
-static void __exit sha3_generic_mod_fini(void)
-{
-	crypto_unregister_shashes(algs, ARRAY_SIZE(algs));
-}
+अटल व्योम __निकास sha3_generic_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shashes(algs, ARRAY_SIZE(algs));
+पूर्ण
 
 subsys_initcall(sha3_generic_mod_init);
-module_exit(sha3_generic_mod_fini);
+module_निकास(sha3_generic_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA-3 Secure Hash Algorithm");

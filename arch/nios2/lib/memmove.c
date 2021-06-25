@@ -1,80 +1,81 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2011 Tobias Klauser <tklauser@distanz.ch>
  * Copyright (C) 2004 Microtronix Datacom Ltd
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/types.h>
-#include <linux/string.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
 
-void *memmove(void *d, const void *s, size_t count)
-{
-	unsigned long dst, src;
+व्योम *स_हटाओ(व्योम *d, स्थिर व्योम *s, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ dst, src;
 
-	if (!count)
-		return d;
+	अगर (!count)
+		वापस d;
 
-	if (d < s) {
-		dst = (unsigned long) d;
-		src = (unsigned long) s;
+	अगर (d < s) अणु
+		dst = (अचिन्हित दीर्घ) d;
+		src = (अचिन्हित दीर्घ) s;
 
-		if ((count < 8) || ((dst ^ src) & 3))
-			goto restup;
+		अगर ((count < 8) || ((dst ^ src) & 3))
+			जाओ restup;
 
-		if (dst & 1) {
-			*(char *)dst++ = *(char *)src++;
+		अगर (dst & 1) अणु
+			*(अक्षर *)dst++ = *(अक्षर *)src++;
 			count--;
-		}
-		if (dst & 2) {
-			*(short *)dst = *(short *)src;
+		पूर्ण
+		अगर (dst & 2) अणु
+			*(लघु *)dst = *(लघु *)src;
 			src += 2;
 			dst += 2;
 			count -= 2;
-		}
-		while (count > 3) {
-			*(long *)dst = *(long *)src;
+		पूर्ण
+		जबतक (count > 3) अणु
+			*(दीर्घ *)dst = *(दीर्घ *)src;
 			src += 4;
 			dst += 4;
 			count -= 4;
-		}
+		पूर्ण
 restup:
-		while (count--)
-			*(char *)dst++ = *(char *)src++;
-	} else {
-		dst = (unsigned long) d + count;
-		src = (unsigned long) s + count;
+		जबतक (count--)
+			*(अक्षर *)dst++ = *(अक्षर *)src++;
+	पूर्ण अन्यथा अणु
+		dst = (अचिन्हित दीर्घ) d + count;
+		src = (अचिन्हित दीर्घ) s + count;
 
-		if ((count < 8) || ((dst ^ src) & 3))
-			goto restdown;
+		अगर ((count < 8) || ((dst ^ src) & 3))
+			जाओ restकरोwn;
 
-		if (dst & 1) {
+		अगर (dst & 1) अणु
 			src--;
 			dst--;
 			count--;
-			*(char *)dst = *(char *)src;
-		}
-		if (dst & 2) {
+			*(अक्षर *)dst = *(अक्षर *)src;
+		पूर्ण
+		अगर (dst & 2) अणु
 			src -= 2;
 			dst -= 2;
 			count -= 2;
-			*(short *)dst = *(short *)src;
-		}
-		while (count > 3) {
+			*(लघु *)dst = *(लघु *)src;
+		पूर्ण
+		जबतक (count > 3) अणु
 			src -= 4;
 			dst -= 4;
 			count -= 4;
-			*(long *)dst = *(long *)src;
-		}
-restdown:
-		while (count--) {
+			*(दीर्घ *)dst = *(दीर्घ *)src;
+		पूर्ण
+restकरोwn:
+		जबतक (count--) अणु
 			src--;
 			dst--;
-			*(char *)dst = *(char *)src;
-		}
-	}
+			*(अक्षर *)dst = *(अक्षर *)src;
+		पूर्ण
+	पूर्ण
 
-	return d;
-}
+	वापस d;
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * NXP Wireless LAN device driver: station command response handling
  *
@@ -5,111 +6,111 @@
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include "decl.h"
-#include "ioctl.h"
-#include "util.h"
-#include "fw.h"
-#include "main.h"
-#include "wmm.h"
-#include "11n.h"
-#include "11ac.h"
+#समावेश "decl.h"
+#समावेश "ioctl.h"
+#समावेश "util.h"
+#समावेश "fw.h"
+#समावेश "main.h"
+#समावेश "wmm.h"
+#समावेश "11n.h"
+#समावेश "11ac.h"
 
 
 /*
- * This function handles the command response error case.
+ * This function handles the command response error हाल.
  *
  * For scan response error, the function cancels all the pending
- * scan commands and generates an event to inform the applications
+ * scan commands and generates an event to inक्रमm the applications
  * of the scan completion.
  *
- * For Power Save command failure, we do not retry enter PS
- * command in case of Ad-hoc mode.
+ * For Power Save command failure, we करो not retry enter PS
+ * command in हाल of Ad-hoc mode.
  *
- * For all other response errors, the current command buffer is freed
- * and returned to the free command queue.
+ * For all other response errors, the current command buffer is मुक्तd
+ * and वापसed to the मुक्त command queue.
  */
-static void
-mwifiex_process_cmdresp_error(struct mwifiex_private *priv,
-			      struct host_cmd_ds_command *resp)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	struct host_cmd_ds_802_11_ps_mode_enh *pm;
+अटल व्योम
+mwअगरiex_process_cmdresp_error(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	काष्ठा host_cmd_ds_802_11_ps_mode_enh *pm;
 
-	mwifiex_dbg(adapter, ERROR,
+	mwअगरiex_dbg(adapter, ERROR,
 		    "CMD_RESP: cmd %#x error, result=%#x\n",
 		    resp->command, resp->result);
 
-	if (adapter->curr_cmd->wait_q_enabled)
-		adapter->cmd_wait_q.status = -1;
+	अगर (adapter->curr_cmd->रुको_q_enabled)
+		adapter->cmd_रुको_q.status = -1;
 
-	switch (le16_to_cpu(resp->command)) {
-	case HostCmd_CMD_802_11_PS_MODE_ENH:
+	चयन (le16_to_cpu(resp->command)) अणु
+	हाल HostCmd_CMD_802_11_PS_MODE_ENH:
 		pm = &resp->params.psmode_enh;
-		mwifiex_dbg(adapter, ERROR,
+		mwअगरiex_dbg(adapter, ERROR,
 			    "PS_MODE_ENH cmd failed: result=0x%x action=0x%X\n",
 			    resp->result, le16_to_cpu(pm->action));
-		/* We do not re-try enter-ps command in ad-hoc mode. */
-		if (le16_to_cpu(pm->action) == EN_AUTO_PS &&
-		    (le16_to_cpu(pm->params.ps_bitmap) & BITMAP_STA_PS) &&
+		/* We करो not re-try enter-ps command in ad-hoc mode. */
+		अगर (le16_to_cpu(pm->action) == EN_AUTO_PS &&
+		    (le16_to_cpu(pm->params.ps_biपंचांगap) & BITMAP_STA_PS) &&
 		    priv->bss_mode == NL80211_IFTYPE_ADHOC)
 			adapter->ps_mode = MWIFIEX_802_11_POWER_MODE_CAM;
 
-		break;
-	case HostCmd_CMD_802_11_SCAN:
-	case HostCmd_CMD_802_11_SCAN_EXT:
-		mwifiex_cancel_scan(adapter);
-		break;
+		अवरोध;
+	हाल HostCmd_CMD_802_11_SCAN:
+	हाल HostCmd_CMD_802_11_SCAN_EXT:
+		mwअगरiex_cancel_scan(adapter);
+		अवरोध;
 
-	case HostCmd_CMD_MAC_CONTROL:
-		break;
+	हाल HostCmd_CMD_MAC_CONTROL:
+		अवरोध;
 
-	case HostCmd_CMD_SDIO_SP_RX_AGGR_CFG:
-		mwifiex_dbg(adapter, MSG,
+	हाल HostCmd_CMD_SDIO_SP_RX_AGGR_CFG:
+		mwअगरiex_dbg(adapter, MSG,
 			    "SDIO RX single-port aggregation Not support\n");
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 	/* Handling errors here */
-	mwifiex_recycle_cmd_node(adapter, adapter->curr_cmd);
+	mwअगरiex_recycle_cmd_node(adapter, adapter->curr_cmd);
 
-	spin_lock_bh(&adapter->mwifiex_cmd_lock);
-	adapter->curr_cmd = NULL;
-	spin_unlock_bh(&adapter->mwifiex_cmd_lock);
-}
+	spin_lock_bh(&adapter->mwअगरiex_cmd_lock);
+	adapter->curr_cmd = शून्य;
+	spin_unlock_bh(&adapter->mwअगरiex_cmd_lock);
+पूर्ण
 
 /*
  * This function handles the command response of get RSSI info.
  *
- * Handling includes changing the header fields into CPU format
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
  * and saving the following parameters in driver -
  *      - Last data and beacon RSSI value
  *      - Average data and beacon RSSI value
  *      - Last data and beacon NF value
  *      - Average data and beacon NF value
  *
- * The parameters are send to the application as well, along with
+ * The parameters are send to the application as well, aदीर्घ with
  * calculated SNR values.
  */
-static int mwifiex_ret_802_11_rssi_info(struct mwifiex_private *priv,
-					struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_rssi_info_rsp *rssi_info_rsp =
+अटल पूर्णांक mwअगरiex_ret_802_11_rssi_info(काष्ठा mwअगरiex_निजी *priv,
+					काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_rssi_info_rsp *rssi_info_rsp =
 						&resp->params.rssi_info_rsp;
-	struct mwifiex_ds_misc_subsc_evt *subsc_evt =
+	काष्ठा mwअगरiex_ds_misc_subsc_evt *subsc_evt =
 						&priv->async_subsc_evt_storage;
 
 	priv->data_rssi_last = le16_to_cpu(rssi_info_rsp->data_rssi_last);
@@ -124,39 +125,39 @@ static int mwifiex_ret_802_11_rssi_info(struct mwifiex_private *priv,
 	priv->bcn_rssi_avg = le16_to_cpu(rssi_info_rsp->bcn_rssi_avg);
 	priv->bcn_nf_avg = le16_to_cpu(rssi_info_rsp->bcn_nf_avg);
 
-	if (priv->subsc_evt_rssi_state == EVENT_HANDLED)
-		return 0;
+	अगर (priv->subsc_evt_rssi_state == EVENT_HANDLED)
+		वापस 0;
 
-	memset(subsc_evt, 0x00, sizeof(struct mwifiex_ds_misc_subsc_evt));
+	स_रखो(subsc_evt, 0x00, माप(काष्ठा mwअगरiex_ds_misc_subsc_evt));
 
 	/* Resubscribe low and high rssi events with new thresholds */
 	subsc_evt->events = BITMASK_BCN_RSSI_LOW | BITMASK_BCN_RSSI_HIGH;
 	subsc_evt->action = HostCmd_ACT_BITWISE_SET;
-	if (priv->subsc_evt_rssi_state == RSSI_LOW_RECVD) {
-		subsc_evt->bcn_l_rssi_cfg.abs_value = abs(priv->bcn_rssi_avg -
+	अगर (priv->subsc_evt_rssi_state == RSSI_LOW_RECVD) अणु
+		subsc_evt->bcn_l_rssi_cfg.असल_value = असल(priv->bcn_rssi_avg -
 				priv->cqm_rssi_hyst);
-		subsc_evt->bcn_h_rssi_cfg.abs_value = abs(priv->cqm_rssi_thold);
-	} else if (priv->subsc_evt_rssi_state == RSSI_HIGH_RECVD) {
-		subsc_evt->bcn_l_rssi_cfg.abs_value = abs(priv->cqm_rssi_thold);
-		subsc_evt->bcn_h_rssi_cfg.abs_value = abs(priv->bcn_rssi_avg +
+		subsc_evt->bcn_h_rssi_cfg.असल_value = असल(priv->cqm_rssi_thold);
+	पूर्ण अन्यथा अगर (priv->subsc_evt_rssi_state == RSSI_HIGH_RECVD) अणु
+		subsc_evt->bcn_l_rssi_cfg.असल_value = असल(priv->cqm_rssi_thold);
+		subsc_evt->bcn_h_rssi_cfg.असल_value = असल(priv->bcn_rssi_avg +
 				priv->cqm_rssi_hyst);
-	}
+	पूर्ण
 	subsc_evt->bcn_l_rssi_cfg.evt_freq = 1;
 	subsc_evt->bcn_h_rssi_cfg.evt_freq = 1;
 
 	priv->subsc_evt_rssi_state = EVENT_HANDLED;
 
-	mwifiex_send_cmd(priv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
+	mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_SUBSCRIBE_EVENT,
 			 0, 0, subsc_evt, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get SNMP
  * MIB parameters.
  *
- * Handling includes changing the header fields into CPU format
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
  * and saving the parameter in driver.
  *
  * The following parameters are supported -
@@ -164,66 +165,66 @@ static int mwifiex_ret_802_11_rssi_info(struct mwifiex_private *priv,
  *      - RTS threshold
  *      - Short retry limit
  */
-static int mwifiex_ret_802_11_snmp_mib(struct mwifiex_private *priv,
-				       struct host_cmd_ds_command *resp,
+अटल पूर्णांक mwअगरiex_ret_802_11_snmp_mib(काष्ठा mwअगरiex_निजी *priv,
+				       काष्ठा host_cmd_ds_command *resp,
 				       u32 *data_buf)
-{
-	struct host_cmd_ds_802_11_snmp_mib *smib = &resp->params.smib;
+अणु
+	काष्ठा host_cmd_ds_802_11_snmp_mib *smib = &resp->params.smib;
 	u16 oid = le16_to_cpu(smib->oid);
 	u16 query_type = le16_to_cpu(smib->query_type);
 	u32 ul_temp;
 
-	mwifiex_dbg(priv->adapter, INFO,
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "info: SNMP_RESP: oid value = %#x,\t"
 		    "query_type = %#x, buf size = %#x\n",
 		    oid, query_type, le16_to_cpu(smib->buf_size));
-	if (query_type == HostCmd_ACT_GEN_GET) {
+	अगर (query_type == HostCmd_ACT_GEN_GET) अणु
 		ul_temp = get_unaligned_le16(smib->value);
-		if (data_buf)
+		अगर (data_buf)
 			*data_buf = ul_temp;
-		switch (oid) {
-		case FRAG_THRESH_I:
-			mwifiex_dbg(priv->adapter, INFO,
+		चयन (oid) अणु
+		हाल FRAG_THRESH_I:
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: SNMP_RESP: FragThsd =%u\n",
 				    ul_temp);
-			break;
-		case RTS_THRESH_I:
-			mwifiex_dbg(priv->adapter, INFO,
+			अवरोध;
+		हाल RTS_THRESH_I:
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: SNMP_RESP: RTSThsd =%u\n",
 				    ul_temp);
-			break;
-		case SHORT_RETRY_LIM_I:
-			mwifiex_dbg(priv->adapter, INFO,
+			अवरोध;
+		हाल SHORT_RETRY_LIM_I:
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: SNMP_RESP: TxRetryCount=%u\n",
 				    ul_temp);
-			break;
-		case DTIM_PERIOD_I:
-			mwifiex_dbg(priv->adapter, INFO,
+			अवरोध;
+		हाल DTIM_PERIOD_I:
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: SNMP_RESP: DTIM period=%u\n",
 				    ul_temp);
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of get log request
  *
- * Handling includes changing the header fields into CPU format
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
  * and sending the received parameters to application.
  */
-static int mwifiex_ret_get_log(struct mwifiex_private *priv,
-			       struct host_cmd_ds_command *resp,
-			       struct mwifiex_ds_get_stats *stats)
-{
-	struct host_cmd_ds_802_11_get_log *get_log =
+अटल पूर्णांक mwअगरiex_ret_get_log(काष्ठा mwअगरiex_निजी *priv,
+			       काष्ठा host_cmd_ds_command *resp,
+			       काष्ठा mwअगरiex_ds_get_stats *stats)
+अणु
+	काष्ठा host_cmd_ds_802_11_get_log *get_log =
 		&resp->params.get_log;
 
-	if (stats) {
+	अगर (stats) अणु
 		stats->mcast_tx_frame = le32_to_cpu(get_log->mcast_tx_frame);
 		stats->failed = le32_to_cpu(get_log->failed);
 		stats->retry = le32_to_cpu(get_log->retry);
@@ -246,295 +247,295 @@ static int mwifiex_ret_get_log(struct mwifiex_private *priv,
 			le32_to_cpu(get_log->wep_icv_err_cnt[3]);
 		stats->bcn_rcv_cnt = le32_to_cpu(get_log->bcn_rcv_cnt);
 		stats->bcn_miss_cnt = le32_to_cpu(get_log->bcn_miss_cnt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get Tx rate
  * configurations.
  *
- * Handling includes changing the header fields into CPU format
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
  * and saving the following parameters in driver -
- *      - DSSS rate bitmap
- *      - OFDM rate bitmap
- *      - HT MCS rate bitmaps
+ *      - DSSS rate biपंचांगap
+ *      - OFDM rate biपंचांगap
+ *      - HT MCS rate biपंचांगaps
  *
- * Based on the new rate bitmaps, the function re-evaluates if
- * auto data rate has been activated. If not, it sends another
+ * Based on the new rate biपंचांगaps, the function re-evaluates अगर
+ * स्वतः data rate has been activated. If not, it sends another
  * query to the firmware to get the current Tx data rate.
  */
-static int mwifiex_ret_tx_rate_cfg(struct mwifiex_private *priv,
-				   struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_tx_rate_cfg *rate_cfg = &resp->params.tx_rate_cfg;
-	struct mwifiex_rate_scope *rate_scope;
-	struct mwifiex_ie_types_header *head;
+अटल पूर्णांक mwअगरiex_ret_tx_rate_cfg(काष्ठा mwअगरiex_निजी *priv,
+				   काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_tx_rate_cfg *rate_cfg = &resp->params.tx_rate_cfg;
+	काष्ठा mwअगरiex_rate_scope *rate_scope;
+	काष्ठा mwअगरiex_ie_types_header *head;
 	u16 tlv, tlv_buf_len, tlv_buf_left;
 	u8 *tlv_buf;
 	u32 i;
 
-	tlv_buf = ((u8 *)rate_cfg) + sizeof(struct host_cmd_ds_tx_rate_cfg);
-	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - sizeof(*rate_cfg);
+	tlv_buf = ((u8 *)rate_cfg) + माप(काष्ठा host_cmd_ds_tx_rate_cfg);
+	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - माप(*rate_cfg);
 
-	while (tlv_buf_left >= sizeof(*head)) {
-		head = (struct mwifiex_ie_types_header *)tlv_buf;
+	जबतक (tlv_buf_left >= माप(*head)) अणु
+		head = (काष्ठा mwअगरiex_ie_types_header *)tlv_buf;
 		tlv = le16_to_cpu(head->type);
 		tlv_buf_len = le16_to_cpu(head->len);
 
-		if (tlv_buf_left < (sizeof(*head) + tlv_buf_len))
-			break;
+		अगर (tlv_buf_left < (माप(*head) + tlv_buf_len))
+			अवरोध;
 
-		switch (tlv) {
-		case TLV_TYPE_RATE_SCOPE:
-			rate_scope = (struct mwifiex_rate_scope *) tlv_buf;
-			priv->bitmap_rates[0] =
-				le16_to_cpu(rate_scope->hr_dsss_rate_bitmap);
-			priv->bitmap_rates[1] =
-				le16_to_cpu(rate_scope->ofdm_rate_bitmap);
-			for (i = 0;
-			     i < ARRAY_SIZE(rate_scope->ht_mcs_rate_bitmap);
+		चयन (tlv) अणु
+		हाल TLV_TYPE_RATE_SCOPE:
+			rate_scope = (काष्ठा mwअगरiex_rate_scope *) tlv_buf;
+			priv->biपंचांगap_rates[0] =
+				le16_to_cpu(rate_scope->hr_dsss_rate_biपंचांगap);
+			priv->biपंचांगap_rates[1] =
+				le16_to_cpu(rate_scope->ofdm_rate_biपंचांगap);
+			क्रम (i = 0;
+			     i < ARRAY_SIZE(rate_scope->ht_mcs_rate_biपंचांगap);
 			     i++)
-				priv->bitmap_rates[2 + i] =
+				priv->biपंचांगap_rates[2 + i] =
 					le16_to_cpu(rate_scope->
-						    ht_mcs_rate_bitmap[i]);
+						    ht_mcs_rate_biपंचांगap[i]);
 
-			if (priv->adapter->fw_api_ver == MWIFIEX_FW_V15) {
-				for (i = 0; i < ARRAY_SIZE(rate_scope->
-							   vht_mcs_rate_bitmap);
+			अगर (priv->adapter->fw_api_ver == MWIFIEX_FW_V15) अणु
+				क्रम (i = 0; i < ARRAY_SIZE(rate_scope->
+							   vht_mcs_rate_biपंचांगap);
 				     i++)
-					priv->bitmap_rates[10 + i] =
+					priv->biपंचांगap_rates[10 + i] =
 					    le16_to_cpu(rate_scope->
-							vht_mcs_rate_bitmap[i]);
-			}
-			break;
+							vht_mcs_rate_biपंचांगap[i]);
+			पूर्ण
+			अवरोध;
 			/* Add RATE_DROP tlv here */
-		}
+		पूर्ण
 
-		tlv_buf += (sizeof(*head) + tlv_buf_len);
-		tlv_buf_left -= (sizeof(*head) + tlv_buf_len);
-	}
+		tlv_buf += (माप(*head) + tlv_buf_len);
+		tlv_buf_left -= (माप(*head) + tlv_buf_len);
+	पूर्ण
 
-	priv->is_data_rate_auto = mwifiex_is_rate_auto(priv);
+	priv->is_data_rate_स्वतः = mwअगरiex_is_rate_स्वतः(priv);
 
-	if (priv->is_data_rate_auto)
+	अगर (priv->is_data_rate_स्वतः)
 		priv->data_rate = 0;
-	else
-		return mwifiex_send_cmd(priv, HostCmd_CMD_802_11_TX_RATE_QUERY,
-					HostCmd_ACT_GEN_GET, 0, NULL, false);
+	अन्यथा
+		वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_TX_RATE_QUERY,
+					HostCmd_ACT_GEN_GET, 0, शून्य, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function handles the command response of get Tx power level.
+ * This function handles the command response of get Tx घातer level.
  *
- * Handling includes saving the maximum and minimum Tx power levels
+ * Handling includes saving the maximum and minimum Tx घातer levels
  * in driver, as well as sending the values to user.
  */
-static int mwifiex_get_power_level(struct mwifiex_private *priv, void *data_buf)
-{
-	int length, max_power = -1, min_power = -1;
-	struct mwifiex_types_power_group *pg_tlv_hdr;
-	struct mwifiex_power_group *pg;
+अटल पूर्णांक mwअगरiex_get_घातer_level(काष्ठा mwअगरiex_निजी *priv, व्योम *data_buf)
+अणु
+	पूर्णांक length, max_घातer = -1, min_घातer = -1;
+	काष्ठा mwअगरiex_types_घातer_group *pg_tlv_hdr;
+	काष्ठा mwअगरiex_घातer_group *pg;
 
-	if (!data_buf)
-		return -1;
+	अगर (!data_buf)
+		वापस -1;
 
-	pg_tlv_hdr = (struct mwifiex_types_power_group *)((u8 *)data_buf);
-	pg = (struct mwifiex_power_group *)
-		((u8 *) pg_tlv_hdr + sizeof(struct mwifiex_types_power_group));
+	pg_tlv_hdr = (काष्ठा mwअगरiex_types_घातer_group *)((u8 *)data_buf);
+	pg = (काष्ठा mwअगरiex_घातer_group *)
+		((u8 *) pg_tlv_hdr + माप(काष्ठा mwअगरiex_types_घातer_group));
 	length = le16_to_cpu(pg_tlv_hdr->length);
 
-	/* At least one structure required to update power */
-	if (length < sizeof(struct mwifiex_power_group))
-		return 0;
+	/* At least one काष्ठाure required to update घातer */
+	अगर (length < माप(काष्ठा mwअगरiex_घातer_group))
+		वापस 0;
 
-	max_power = pg->power_max;
-	min_power = pg->power_min;
-	length -= sizeof(struct mwifiex_power_group);
+	max_घातer = pg->घातer_max;
+	min_घातer = pg->घातer_min;
+	length -= माप(काष्ठा mwअगरiex_घातer_group);
 
-	while (length >= sizeof(struct mwifiex_power_group)) {
+	जबतक (length >= माप(काष्ठा mwअगरiex_घातer_group)) अणु
 		pg++;
-		if (max_power < pg->power_max)
-			max_power = pg->power_max;
+		अगर (max_घातer < pg->घातer_max)
+			max_घातer = pg->घातer_max;
 
-		if (min_power > pg->power_min)
-			min_power = pg->power_min;
+		अगर (min_घातer > pg->घातer_min)
+			min_घातer = pg->घातer_min;
 
-		length -= sizeof(struct mwifiex_power_group);
-	}
-	priv->min_tx_power_level = (u8) min_power;
-	priv->max_tx_power_level = (u8) max_power;
+		length -= माप(काष्ठा mwअगरiex_घातer_group);
+	पूर्ण
+	priv->min_tx_घातer_level = (u8) min_घातer;
+	priv->max_tx_घातer_level = (u8) max_घातer;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function handles the command response of set/get Tx power
+ * This function handles the command response of set/get Tx घातer
  * configurations.
  *
- * Handling includes changing the header fields into CPU format
- * and saving the current Tx power level in driver.
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
+ * and saving the current Tx घातer level in driver.
  */
-static int mwifiex_ret_tx_power_cfg(struct mwifiex_private *priv,
-				    struct host_cmd_ds_command *resp)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	struct host_cmd_ds_txpwr_cfg *txp_cfg = &resp->params.txp_cfg;
-	struct mwifiex_types_power_group *pg_tlv_hdr;
-	struct mwifiex_power_group *pg;
+अटल पूर्णांक mwअगरiex_ret_tx_घातer_cfg(काष्ठा mwअगरiex_निजी *priv,
+				    काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	काष्ठा host_cmd_ds_txpwr_cfg *txp_cfg = &resp->params.txp_cfg;
+	काष्ठा mwअगरiex_types_घातer_group *pg_tlv_hdr;
+	काष्ठा mwअगरiex_घातer_group *pg;
 	u16 action = le16_to_cpu(txp_cfg->action);
 	u16 tlv_buf_left;
 
-	pg_tlv_hdr = (struct mwifiex_types_power_group *)
+	pg_tlv_hdr = (काष्ठा mwअगरiex_types_घातer_group *)
 		((u8 *)txp_cfg +
-		 sizeof(struct host_cmd_ds_txpwr_cfg));
+		 माप(काष्ठा host_cmd_ds_txpwr_cfg));
 
-	pg = (struct mwifiex_power_group *)
+	pg = (काष्ठा mwअगरiex_घातer_group *)
 		((u8 *)pg_tlv_hdr +
-		 sizeof(struct mwifiex_types_power_group));
+		 माप(काष्ठा mwअगरiex_types_घातer_group));
 
-	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - sizeof(*txp_cfg);
-	if (tlv_buf_left <
-			le16_to_cpu(pg_tlv_hdr->length) + sizeof(*pg_tlv_hdr))
-		return 0;
+	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - माप(*txp_cfg);
+	अगर (tlv_buf_left <
+			le16_to_cpu(pg_tlv_hdr->length) + माप(*pg_tlv_hdr))
+		वापस 0;
 
-	switch (action) {
-	case HostCmd_ACT_GEN_GET:
-		if (adapter->hw_status == MWIFIEX_HW_STATUS_INITIALIZING)
-			mwifiex_get_power_level(priv, pg_tlv_hdr);
+	चयन (action) अणु
+	हाल HostCmd_ACT_GEN_GET:
+		अगर (adapter->hw_status == MWIFIEX_HW_STATUS_INITIALIZING)
+			mwअगरiex_get_घातer_level(priv, pg_tlv_hdr);
 
-		priv->tx_power_level = (u16) pg->power_min;
-		break;
+		priv->tx_घातer_level = (u16) pg->घातer_min;
+		अवरोध;
 
-	case HostCmd_ACT_GEN_SET:
-		if (!le32_to_cpu(txp_cfg->mode))
-			break;
+	हाल HostCmd_ACT_GEN_SET:
+		अगर (!le32_to_cpu(txp_cfg->mode))
+			अवरोध;
 
-		if (pg->power_max == pg->power_min)
-			priv->tx_power_level = (u16) pg->power_min;
-		break;
-	default:
-		mwifiex_dbg(adapter, ERROR,
+		अगर (pg->घातer_max == pg->घातer_min)
+			priv->tx_घातer_level = (u16) pg->घातer_min;
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(adapter, ERROR,
 			    "CMD_RESP: unknown cmd action %d\n",
 			    action);
-		return 0;
-	}
-	mwifiex_dbg(adapter, INFO,
+		वापस 0;
+	पूर्ण
+	mwअगरiex_dbg(adapter, INFO,
 		    "info: Current TxPower Level = %d, Max Power=%d, Min Power=%d\n",
-		    priv->tx_power_level, priv->max_tx_power_level,
-		    priv->min_tx_power_level);
+		    priv->tx_घातer_level, priv->max_tx_घातer_level,
+		    priv->min_tx_घातer_level);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * This function handles the command response of get RF Tx power.
+ * This function handles the command response of get RF Tx घातer.
  */
-static int mwifiex_ret_rf_tx_power(struct mwifiex_private *priv,
-				   struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_rf_tx_pwr *txp = &resp->params.txp;
+अटल पूर्णांक mwअगरiex_ret_rf_tx_घातer(काष्ठा mwअगरiex_निजी *priv,
+				   काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_rf_tx_pwr *txp = &resp->params.txp;
 	u16 action = le16_to_cpu(txp->action);
 
-	priv->tx_power_level = le16_to_cpu(txp->cur_level);
+	priv->tx_घातer_level = le16_to_cpu(txp->cur_level);
 
-	if (action == HostCmd_ACT_GEN_GET) {
-		priv->max_tx_power_level = txp->max_power;
-		priv->min_tx_power_level = txp->min_power;
-	}
+	अगर (action == HostCmd_ACT_GEN_GET) अणु
+		priv->max_tx_घातer_level = txp->max_घातer;
+		priv->min_tx_घातer_level = txp->min_घातer;
+	पूर्ण
 
-	mwifiex_dbg(priv->adapter, INFO,
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "Current TxPower Level=%d, Max Power=%d, Min Power=%d\n",
-		    priv->tx_power_level, priv->max_tx_power_level,
-		    priv->min_tx_power_level);
+		    priv->tx_घातer_level, priv->max_tx_घातer_level,
+		    priv->min_tx_घातer_level);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set rf antenna
  */
-static int mwifiex_ret_rf_antenna(struct mwifiex_private *priv,
-				  struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_rf_ant_mimo *ant_mimo = &resp->params.ant_mimo;
-	struct host_cmd_ds_rf_ant_siso *ant_siso = &resp->params.ant_siso;
-	struct mwifiex_adapter *adapter = priv->adapter;
+अटल पूर्णांक mwअगरiex_ret_rf_antenna(काष्ठा mwअगरiex_निजी *priv,
+				  काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_rf_ant_mimo *ant_mimo = &resp->params.ant_mimo;
+	काष्ठा host_cmd_ds_rf_ant_siso *ant_siso = &resp->params.ant_siso;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 
-	if (adapter->hw_dev_mcs_support == HT_STREAM_2X2) {
+	अगर (adapter->hw_dev_mcs_support == HT_STREAM_2X2) अणु
 		priv->tx_ant = le16_to_cpu(ant_mimo->tx_ant_mode);
 		priv->rx_ant = le16_to_cpu(ant_mimo->rx_ant_mode);
-		mwifiex_dbg(adapter, INFO,
+		mwअगरiex_dbg(adapter, INFO,
 			    "RF_ANT_RESP: Tx action = 0x%x, Tx Mode = 0x%04x\t"
 			    "Rx action = 0x%x, Rx Mode = 0x%04x\n",
 			    le16_to_cpu(ant_mimo->action_tx),
 			    le16_to_cpu(ant_mimo->tx_ant_mode),
 			    le16_to_cpu(ant_mimo->action_rx),
 			    le16_to_cpu(ant_mimo->rx_ant_mode));
-	} else {
+	पूर्ण अन्यथा अणु
 		priv->tx_ant = le16_to_cpu(ant_siso->ant_mode);
 		priv->rx_ant = le16_to_cpu(ant_siso->ant_mode);
-		mwifiex_dbg(adapter, INFO,
+		mwअगरiex_dbg(adapter, INFO,
 			    "RF_ANT_RESP: action = 0x%x, Mode = 0x%04x\n",
 			    le16_to_cpu(ant_siso->action),
 			    le16_to_cpu(ant_siso->ant_mode));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get MAC address.
  *
  * Handling includes saving the MAC address in driver.
  */
-static int mwifiex_ret_802_11_mac_address(struct mwifiex_private *priv,
-					  struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_mac_address *cmd_mac_addr =
+अटल पूर्णांक mwअगरiex_ret_802_11_mac_address(काष्ठा mwअगरiex_निजी *priv,
+					  काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_mac_address *cmd_mac_addr =
 							&resp->params.mac_addr;
 
-	memcpy(priv->curr_addr, cmd_mac_addr->mac_addr, ETH_ALEN);
+	स_नकल(priv->curr_addr, cmd_mac_addr->mac_addr, ETH_ALEN);
 
-	mwifiex_dbg(priv->adapter, INFO,
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "info: set mac address: %pM\n", priv->curr_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get MAC multicast
  * address.
  */
-static int mwifiex_ret_mac_multicast_adr(struct mwifiex_private *priv,
-					 struct host_cmd_ds_command *resp)
-{
-	return 0;
-}
+अटल पूर्णांक mwअगरiex_ret_mac_multicast_adr(काष्ठा mwअगरiex_निजी *priv,
+					 काष्ठा host_cmd_ds_command *resp)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of get Tx rate query.
  *
- * Handling includes changing the header fields into CPU format
- * and saving the Tx rate and HT information parameters in driver.
+ * Handling includes changing the header fields पूर्णांकo CPU क्रमmat
+ * and saving the Tx rate and HT inक्रमmation parameters in driver.
  *
  * Both rate configuration and current data rate can be retrieved
  * with this request.
  */
-static int mwifiex_ret_802_11_tx_rate_query(struct mwifiex_private *priv,
-					    struct host_cmd_ds_command *resp)
-{
+अटल पूर्णांक mwअगरiex_ret_802_11_tx_rate_query(काष्ठा mwअगरiex_निजी *priv,
+					    काष्ठा host_cmd_ds_command *resp)
+अणु
 	priv->tx_rate = resp->params.tx_rate.tx_rate;
 	priv->tx_htinfo = resp->params.tx_rate.ht_info;
-	if (!priv->is_data_rate_auto)
+	अगर (!priv->is_data_rate_स्वतः)
 		priv->data_rate =
-			mwifiex_index_to_data_rate(priv, priv->tx_rate,
+			mwअगरiex_index_to_data_rate(priv, priv->tx_rate,
 						   priv->tx_htinfo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of a deauthenticate
@@ -543,32 +544,32 @@ static int mwifiex_ret_802_11_tx_rate_query(struct mwifiex_private *priv,
  * If the deauthenticated MAC matches the current BSS MAC, the connection
  * state is reset.
  */
-static int mwifiex_ret_802_11_deauthenticate(struct mwifiex_private *priv,
-					     struct host_cmd_ds_command *resp)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
+अटल पूर्णांक mwअगरiex_ret_802_11_deauthenticate(काष्ठा mwअगरiex_निजी *priv,
+					     काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 
 	adapter->dbg.num_cmd_deauth++;
-	if (!memcmp(resp->params.deauth.mac_addr,
+	अगर (!स_भेद(resp->params.deauth.mac_addr,
 		    &priv->curr_bss_params.bss_descriptor.mac_address,
-		    sizeof(resp->params.deauth.mac_addr)))
-		mwifiex_reset_connect_state(priv, WLAN_REASON_DEAUTH_LEAVING,
+		    माप(resp->params.deauth.mac_addr)))
+		mwअगरiex_reset_connect_state(priv, WLAN_REASON_DEAUTH_LEAVING,
 					    false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of ad-hoc stop.
  *
  * The function resets the connection state in driver.
  */
-static int mwifiex_ret_802_11_ad_hoc_stop(struct mwifiex_private *priv,
-					  struct host_cmd_ds_command *resp)
-{
-	mwifiex_reset_connect_state(priv, WLAN_REASON_DEAUTH_LEAVING, false);
-	return 0;
-}
+अटल पूर्णांक mwअगरiex_ret_802_11_ad_hoc_stop(काष्ठा mwअगरiex_निजी *priv,
+					  काष्ठा host_cmd_ds_command *resp)
+अणु
+	mwअगरiex_reset_connect_state(priv, WLAN_REASON_DEAUTH_LEAVING, false);
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get v1 key material.
@@ -576,34 +577,34 @@ static int mwifiex_ret_802_11_ad_hoc_stop(struct mwifiex_private *priv,
  * Handling includes updating the driver parameters to reflect the
  * changes.
  */
-static int mwifiex_ret_802_11_key_material_v1(struct mwifiex_private *priv,
-					      struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_key_material *key =
+अटल पूर्णांक mwअगरiex_ret_802_11_key_material_v1(काष्ठा mwअगरiex_निजी *priv,
+					      काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_key_material *key =
 						&resp->params.key_material;
-	int len;
+	पूर्णांक len;
 
 	len = le16_to_cpu(key->key_param_set.key_len);
-	if (len > sizeof(key->key_param_set.key))
-		return -EINVAL;
+	अगर (len > माप(key->key_param_set.key))
+		वापस -EINVAL;
 
-	if (le16_to_cpu(key->action) == HostCmd_ACT_GEN_SET) {
-		if ((le16_to_cpu(key->key_param_set.key_info) & KEY_MCAST)) {
-			mwifiex_dbg(priv->adapter, INFO,
+	अगर (le16_to_cpu(key->action) == HostCmd_ACT_GEN_SET) अणु
+		अगर ((le16_to_cpu(key->key_param_set.key_info) & KEY_MCAST)) अणु
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: key: GTK is set\n");
 			priv->wpa_is_gtk_set = true;
 			priv->scan_block = false;
-			priv->port_open = true;
-		}
-	}
+			priv->port_खोलो = true;
+		पूर्ण
+	पूर्ण
 
-	memset(priv->aes_key.key_param_set.key, 0,
-	       sizeof(key->key_param_set.key));
+	स_रखो(priv->aes_key.key_param_set.key, 0,
+	       माप(key->key_param_set.key));
 	priv->aes_key.key_param_set.key_len = cpu_to_le16(len);
-	memcpy(priv->aes_key.key_param_set.key, key->key_param_set.key, len);
+	स_नकल(priv->aes_key.key_param_set.key, key->key_param_set.key, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of set/get v2 key material.
@@ -611,475 +612,475 @@ static int mwifiex_ret_802_11_key_material_v1(struct mwifiex_private *priv,
  * Handling includes updating the driver parameters to reflect the
  * changes.
  */
-static int mwifiex_ret_802_11_key_material_v2(struct mwifiex_private *priv,
-					      struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_key_material_v2 *key_v2;
-	int len;
+अटल पूर्णांक mwअगरiex_ret_802_11_key_material_v2(काष्ठा mwअगरiex_निजी *priv,
+					      काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_key_material_v2 *key_v2;
+	पूर्णांक len;
 
 	key_v2 = &resp->params.key_material_v2;
 
 	len = le16_to_cpu(key_v2->key_param_set.key_params.aes.key_len);
-	if (len > sizeof(key_v2->key_param_set.key_params.aes.key))
-		return -EINVAL;
+	अगर (len > माप(key_v2->key_param_set.key_params.aes.key))
+		वापस -EINVAL;
 
-	if (le16_to_cpu(key_v2->action) == HostCmd_ACT_GEN_SET) {
-		if ((le16_to_cpu(key_v2->key_param_set.key_info) & KEY_MCAST)) {
-			mwifiex_dbg(priv->adapter, INFO, "info: key: GTK is set\n");
+	अगर (le16_to_cpu(key_v2->action) == HostCmd_ACT_GEN_SET) अणु
+		अगर ((le16_to_cpu(key_v2->key_param_set.key_info) & KEY_MCAST)) अणु
+			mwअगरiex_dbg(priv->adapter, INFO, "info: key: GTK is set\n");
 			priv->wpa_is_gtk_set = true;
 			priv->scan_block = false;
-			priv->port_open = true;
-		}
-	}
+			priv->port_खोलो = true;
+		पूर्ण
+	पूर्ण
 
-	if (key_v2->key_param_set.key_type != KEY_TYPE_ID_AES)
-		return 0;
+	अगर (key_v2->key_param_set.key_type != KEY_TYPE_ID_AES)
+		वापस 0;
 
-	memset(priv->aes_key_v2.key_param_set.key_params.aes.key, 0,
-	       sizeof(key_v2->key_param_set.key_params.aes.key));
+	स_रखो(priv->aes_key_v2.key_param_set.key_params.aes.key, 0,
+	       माप(key_v2->key_param_set.key_params.aes.key));
 	priv->aes_key_v2.key_param_set.key_params.aes.key_len =
 				cpu_to_le16(len);
-	memcpy(priv->aes_key_v2.key_param_set.key_params.aes.key,
+	स_नकल(priv->aes_key_v2.key_param_set.key_params.aes.key,
 	       key_v2->key_param_set.key_params.aes.key, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Wrapper function for processing response of key material command */
-static int mwifiex_ret_802_11_key_material(struct mwifiex_private *priv,
-					   struct host_cmd_ds_command *resp)
-{
-	if (priv->adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2)
-		return mwifiex_ret_802_11_key_material_v2(priv, resp);
-	else
-		return mwifiex_ret_802_11_key_material_v1(priv, resp);
-}
+/* Wrapper function क्रम processing response of key material command */
+अटल पूर्णांक mwअगरiex_ret_802_11_key_material(काष्ठा mwअगरiex_निजी *priv,
+					   काष्ठा host_cmd_ds_command *resp)
+अणु
+	अगर (priv->adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2)
+		वापस mwअगरiex_ret_802_11_key_material_v2(priv, resp);
+	अन्यथा
+		वापस mwअगरiex_ret_802_11_key_material_v1(priv, resp);
+पूर्ण
 
 /*
- * This function handles the command response of get 11d domain information.
+ * This function handles the command response of get 11d करोमुख्य inक्रमmation.
  */
-static int mwifiex_ret_802_11d_domain_info(struct mwifiex_private *priv,
-					   struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11d_domain_info_rsp *domain_info =
-		&resp->params.domain_info_resp;
-	struct mwifiex_ietypes_domain_param_set *domain = &domain_info->domain;
-	u16 action = le16_to_cpu(domain_info->action);
+अटल पूर्णांक mwअगरiex_ret_802_11d_करोमुख्य_info(काष्ठा mwअगरiex_निजी *priv,
+					   काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11d_करोमुख्य_info_rsp *करोमुख्य_info =
+		&resp->params.करोमुख्य_info_resp;
+	काष्ठा mwअगरiex_ietypes_करोमुख्य_param_set *करोमुख्य = &करोमुख्य_info->करोमुख्य;
+	u16 action = le16_to_cpu(करोमुख्य_info->action);
 	u8 no_of_triplet;
 
-	no_of_triplet = (u8) ((le16_to_cpu(domain->header.len)
+	no_of_triplet = (u8) ((le16_to_cpu(करोमुख्य->header.len)
 				- IEEE80211_COUNTRY_STRING_LEN)
-			      / sizeof(struct ieee80211_country_ie_triplet));
+			      / माप(काष्ठा ieee80211_country_ie_triplet));
 
-	mwifiex_dbg(priv->adapter, INFO,
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "info: 11D Domain Info Resp: no_of_triplet=%d\n",
 		    no_of_triplet);
 
-	if (no_of_triplet > MWIFIEX_MAX_TRIPLET_802_11D) {
-		mwifiex_dbg(priv->adapter, FATAL,
+	अगर (no_of_triplet > MWIFIEX_MAX_TRIPLET_802_11D) अणु
+		mwअगरiex_dbg(priv->adapter, FATAL,
 			    "11D: invalid number of triplets %d returned\n",
 			    no_of_triplet);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	switch (action) {
-	case HostCmd_ACT_GEN_SET:  /* Proc Set Action */
-		break;
-	case HostCmd_ACT_GEN_GET:
-		break;
-	default:
-		mwifiex_dbg(priv->adapter, ERROR,
-			    "11D: invalid action:%d\n", domain_info->action);
-		return -1;
-	}
+	चयन (action) अणु
+	हाल HostCmd_ACT_GEN_SET:  /* Proc Set Action */
+		अवरोध;
+	हाल HostCmd_ACT_GEN_GET:
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(priv->adapter, ERROR,
+			    "11D: invalid action:%d\n", करोमुख्य_info->action);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of get extended version.
  *
- * Handling includes forming the extended version string and sending it
+ * Handling includes क्रमming the extended version string and sending it
  * to application.
  */
-static int mwifiex_ret_ver_ext(struct mwifiex_private *priv,
-			       struct host_cmd_ds_command *resp,
-			       struct host_cmd_ds_version_ext *version_ext)
-{
-	struct host_cmd_ds_version_ext *ver_ext = &resp->params.verext;
+अटल पूर्णांक mwअगरiex_ret_ver_ext(काष्ठा mwअगरiex_निजी *priv,
+			       काष्ठा host_cmd_ds_command *resp,
+			       काष्ठा host_cmd_ds_version_ext *version_ext)
+अणु
+	काष्ठा host_cmd_ds_version_ext *ver_ext = &resp->params.verext;
 
-	if (version_ext) {
+	अगर (version_ext) अणु
 		version_ext->version_str_sel = ver_ext->version_str_sel;
-		memcpy(version_ext->version_str, ver_ext->version_str,
-		       sizeof(char) * 128);
-		memcpy(priv->version_str, ver_ext->version_str, 128);
-	}
-	return 0;
-}
+		स_नकल(version_ext->version_str, ver_ext->version_str,
+		       माप(अक्षर) * 128);
+		स_नकल(priv->version_str, ver_ext->version_str, 128);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * This function handles the command response of remain on channel.
+ * This function handles the command response of reमुख्य on channel.
  */
-static int
-mwifiex_ret_remain_on_chan(struct mwifiex_private *priv,
-			   struct host_cmd_ds_command *resp,
-			   struct host_cmd_ds_remain_on_chan *roc_cfg)
-{
-	struct host_cmd_ds_remain_on_chan *resp_cfg = &resp->params.roc_cfg;
+अटल पूर्णांक
+mwअगरiex_ret_reमुख्य_on_chan(काष्ठा mwअगरiex_निजी *priv,
+			   काष्ठा host_cmd_ds_command *resp,
+			   काष्ठा host_cmd_ds_reमुख्य_on_chan *roc_cfg)
+अणु
+	काष्ठा host_cmd_ds_reमुख्य_on_chan *resp_cfg = &resp->params.roc_cfg;
 
-	if (roc_cfg)
-		memcpy(roc_cfg, resp_cfg, sizeof(*roc_cfg));
+	अगर (roc_cfg)
+		स_नकल(roc_cfg, resp_cfg, माप(*roc_cfg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of P2P mode cfg.
  */
-static int
-mwifiex_ret_p2p_mode_cfg(struct mwifiex_private *priv,
-			 struct host_cmd_ds_command *resp,
-			 void *data_buf)
-{
-	struct host_cmd_ds_p2p_mode_cfg *mode_cfg = &resp->params.mode_cfg;
+अटल पूर्णांक
+mwअगरiex_ret_p2p_mode_cfg(काष्ठा mwअगरiex_निजी *priv,
+			 काष्ठा host_cmd_ds_command *resp,
+			 व्योम *data_buf)
+अणु
+	काष्ठा host_cmd_ds_p2p_mode_cfg *mode_cfg = &resp->params.mode_cfg;
 
-	if (data_buf)
+	अगर (data_buf)
 		put_unaligned_le16(le16_to_cpu(mode_cfg->mode), data_buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This function handles the command response of mem_access command
  */
-static int
-mwifiex_ret_mem_access(struct mwifiex_private *priv,
-		       struct host_cmd_ds_command *resp, void *pioctl_buf)
-{
-	struct host_cmd_ds_mem_access *mem = (void *)&resp->params.mem;
+अटल पूर्णांक
+mwअगरiex_ret_mem_access(काष्ठा mwअगरiex_निजी *priv,
+		       काष्ठा host_cmd_ds_command *resp, व्योम *pioctl_buf)
+अणु
+	काष्ठा host_cmd_ds_mem_access *mem = (व्योम *)&resp->params.mem;
 
 	priv->mem_rw.addr = le32_to_cpu(mem->addr);
 	priv->mem_rw.value = le32_to_cpu(mem->value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
- * This function handles the command response of register access.
+ * This function handles the command response of रेजिस्टर access.
  *
- * The register value and offset are returned to the user. For EEPROM
- * access, the byte count is also returned.
+ * The रेजिस्टर value and offset are वापसed to the user. For EEPROM
+ * access, the byte count is also वापसed.
  */
-static int mwifiex_ret_reg_access(u16 type, struct host_cmd_ds_command *resp,
-				  void *data_buf)
-{
-	struct mwifiex_ds_reg_rw *reg_rw;
-	struct mwifiex_ds_read_eeprom *eeprom;
-	union reg {
-		struct host_cmd_ds_mac_reg_access *mac;
-		struct host_cmd_ds_bbp_reg_access *bbp;
-		struct host_cmd_ds_rf_reg_access *rf;
-		struct host_cmd_ds_pmic_reg_access *pmic;
-		struct host_cmd_ds_802_11_eeprom_access *eeprom;
-	} r;
+अटल पूर्णांक mwअगरiex_ret_reg_access(u16 type, काष्ठा host_cmd_ds_command *resp,
+				  व्योम *data_buf)
+अणु
+	काष्ठा mwअगरiex_ds_reg_rw *reg_rw;
+	काष्ठा mwअगरiex_ds_पढ़ो_eeprom *eeprom;
+	जोड़ reg अणु
+		काष्ठा host_cmd_ds_mac_reg_access *mac;
+		काष्ठा host_cmd_ds_bbp_reg_access *bbp;
+		काष्ठा host_cmd_ds_rf_reg_access *rf;
+		काष्ठा host_cmd_ds_pmic_reg_access *pmic;
+		काष्ठा host_cmd_ds_802_11_eeprom_access *eeprom;
+	पूर्ण r;
 
-	if (!data_buf)
-		return 0;
+	अगर (!data_buf)
+		वापस 0;
 
 	reg_rw = data_buf;
 	eeprom = data_buf;
-	switch (type) {
-	case HostCmd_CMD_MAC_REG_ACCESS:
+	चयन (type) अणु
+	हाल HostCmd_CMD_MAC_REG_ACCESS:
 		r.mac = &resp->params.mac_reg;
 		reg_rw->offset = (u32) le16_to_cpu(r.mac->offset);
 		reg_rw->value = le32_to_cpu(r.mac->value);
-		break;
-	case HostCmd_CMD_BBP_REG_ACCESS:
+		अवरोध;
+	हाल HostCmd_CMD_BBP_REG_ACCESS:
 		r.bbp = &resp->params.bbp_reg;
 		reg_rw->offset = (u32) le16_to_cpu(r.bbp->offset);
 		reg_rw->value = (u32) r.bbp->value;
-		break;
+		अवरोध;
 
-	case HostCmd_CMD_RF_REG_ACCESS:
+	हाल HostCmd_CMD_RF_REG_ACCESS:
 		r.rf = &resp->params.rf_reg;
 		reg_rw->offset = (u32) le16_to_cpu(r.rf->offset);
 		reg_rw->value = (u32) r.bbp->value;
-		break;
-	case HostCmd_CMD_PMIC_REG_ACCESS:
+		अवरोध;
+	हाल HostCmd_CMD_PMIC_REG_ACCESS:
 		r.pmic = &resp->params.pmic_reg;
 		reg_rw->offset = (u32) le16_to_cpu(r.pmic->offset);
 		reg_rw->value = (u32) r.pmic->value;
-		break;
-	case HostCmd_CMD_CAU_REG_ACCESS:
+		अवरोध;
+	हाल HostCmd_CMD_CAU_REG_ACCESS:
 		r.rf = &resp->params.rf_reg;
 		reg_rw->offset = (u32) le16_to_cpu(r.rf->offset);
 		reg_rw->value = (u32) r.rf->value;
-		break;
-	case HostCmd_CMD_802_11_EEPROM_ACCESS:
+		अवरोध;
+	हाल HostCmd_CMD_802_11_EEPROM_ACCESS:
 		r.eeprom = &resp->params.eeprom;
 		pr_debug("info: EEPROM read len=%x\n",
 				le16_to_cpu(r.eeprom->byte_count));
-		if (eeprom->byte_count < le16_to_cpu(r.eeprom->byte_count)) {
+		अगर (eeprom->byte_count < le16_to_cpu(r.eeprom->byte_count)) अणु
 			eeprom->byte_count = 0;
 			pr_debug("info: EEPROM read length is too big\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		eeprom->offset = le16_to_cpu(r.eeprom->offset);
 		eeprom->byte_count = le16_to_cpu(r.eeprom->byte_count);
-		if (eeprom->byte_count > 0)
-			memcpy(&eeprom->value, &r.eeprom->value,
+		अगर (eeprom->byte_count > 0)
+			स_नकल(&eeprom->value, &r.eeprom->value,
 			       min((u16)MAX_EEPROM_DATA, eeprom->byte_count));
-		break;
-	default:
-		return -1;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command response of get IBSS coalescing status.
  *
- * If the received BSSID is different than the current one, the current BSSID,
- * beacon interval, ATIM window and ERP information are updated, along with
+ * If the received BSSID is dअगरferent than the current one, the current BSSID,
+ * beacon पूर्णांकerval, ATIM winकरोw and ERP inक्रमmation are updated, aदीर्घ with
  * changing the ad-hoc state accordingly.
  */
-static int mwifiex_ret_ibss_coalescing_status(struct mwifiex_private *priv,
-					      struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_ibss_status *ibss_coal_resp =
+अटल पूर्णांक mwअगरiex_ret_ibss_coalescing_status(काष्ठा mwअगरiex_निजी *priv,
+					      काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_ibss_status *ibss_coal_resp =
 					&(resp->params.ibss_coalescing);
 
-	if (le16_to_cpu(ibss_coal_resp->action) == HostCmd_ACT_GEN_SET)
-		return 0;
+	अगर (le16_to_cpu(ibss_coal_resp->action) == HostCmd_ACT_GEN_SET)
+		वापस 0;
 
-	mwifiex_dbg(priv->adapter, INFO,
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "info: new BSSID %pM\n", ibss_coal_resp->bssid);
 
-	/* If rsp has NULL BSSID, Just return..... No Action */
-	if (is_zero_ether_addr(ibss_coal_resp->bssid)) {
-		mwifiex_dbg(priv->adapter, FATAL, "new BSSID is NULL\n");
-		return 0;
-	}
+	/* If rsp has शून्य BSSID, Just वापस..... No Action */
+	अगर (is_zero_ether_addr(ibss_coal_resp->bssid)) अणु
+		mwअगरiex_dbg(priv->adapter, FATAL, "new BSSID is NULL\n");
+		वापस 0;
+	पूर्ण
 
-	/* If BSSID is diff, modify current BSS parameters */
-	if (!ether_addr_equal(priv->curr_bss_params.bss_descriptor.mac_address, ibss_coal_resp->bssid)) {
+	/* If BSSID is dअगरf, modअगरy current BSS parameters */
+	अगर (!ether_addr_equal(priv->curr_bss_params.bss_descriptor.mac_address, ibss_coal_resp->bssid)) अणु
 		/* BSSID */
-		memcpy(priv->curr_bss_params.bss_descriptor.mac_address,
+		स_नकल(priv->curr_bss_params.bss_descriptor.mac_address,
 		       ibss_coal_resp->bssid, ETH_ALEN);
 
 		/* Beacon Interval */
 		priv->curr_bss_params.bss_descriptor.beacon_period
-			= le16_to_cpu(ibss_coal_resp->beacon_interval);
+			= le16_to_cpu(ibss_coal_resp->beacon_पूर्णांकerval);
 
-		/* ERP Information */
+		/* ERP Inक्रमmation */
 		priv->curr_bss_params.bss_descriptor.erp_flags =
 			(u8) le16_to_cpu(ibss_coal_resp->use_g_rate_protect);
 
 		priv->adhoc_state = ADHOC_COALESCED;
-	}
+	पूर्ण
 
-	return 0;
-}
-static int mwifiex_ret_tdls_oper(struct mwifiex_private *priv,
-				 struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_tdls_oper *cmd_tdls_oper = &resp->params.tdls_oper;
+	वापस 0;
+पूर्ण
+अटल पूर्णांक mwअगरiex_ret_tdls_oper(काष्ठा mwअगरiex_निजी *priv,
+				 काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_tdls_oper *cmd_tdls_oper = &resp->params.tdls_oper;
 	u16 reason = le16_to_cpu(cmd_tdls_oper->reason);
 	u16 action = le16_to_cpu(cmd_tdls_oper->tdls_action);
-	struct mwifiex_sta_node *node =
-			   mwifiex_get_sta_entry(priv, cmd_tdls_oper->peer_mac);
+	काष्ठा mwअगरiex_sta_node *node =
+			   mwअगरiex_get_sta_entry(priv, cmd_tdls_oper->peer_mac);
 
-	switch (action) {
-	case ACT_TDLS_DELETE:
-		if (reason) {
-			if (!node || reason == TDLS_ERR_LINK_NONEXISTENT)
-				mwifiex_dbg(priv->adapter, MSG,
+	चयन (action) अणु
+	हाल ACT_TDLS_DELETE:
+		अगर (reason) अणु
+			अगर (!node || reason == TDLS_ERR_LINK_NONEXISTENT)
+				mwअगरiex_dbg(priv->adapter, MSG,
 					    "TDLS link delete for %pM failed: reason %d\n",
 					    cmd_tdls_oper->peer_mac, reason);
-			else
-				mwifiex_dbg(priv->adapter, ERROR,
+			अन्यथा
+				mwअगरiex_dbg(priv->adapter, ERROR,
 					    "TDLS link delete for %pM failed: reason %d\n",
 					    cmd_tdls_oper->peer_mac, reason);
-		} else {
-			mwifiex_dbg(priv->adapter, MSG,
+		पूर्ण अन्यथा अणु
+			mwअगरiex_dbg(priv->adapter, MSG,
 				    "TDLS link delete for %pM successful\n",
 				    cmd_tdls_oper->peer_mac);
-		}
-		break;
-	case ACT_TDLS_CREATE:
-		if (reason) {
-			mwifiex_dbg(priv->adapter, ERROR,
+		पूर्ण
+		अवरोध;
+	हाल ACT_TDLS_CREATE:
+		अगर (reason) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "TDLS link creation for %pM failed: reason %d",
 				    cmd_tdls_oper->peer_mac, reason);
-			if (node && reason != TDLS_ERR_LINK_EXISTS)
+			अगर (node && reason != TDLS_ERR_LINK_EXISTS)
 				node->tdls_status = TDLS_SETUP_FAILURE;
-		} else {
-			mwifiex_dbg(priv->adapter, MSG,
+		पूर्ण अन्यथा अणु
+			mwअगरiex_dbg(priv->adapter, MSG,
 				    "TDLS link creation for %pM successful",
 				    cmd_tdls_oper->peer_mac);
-		}
-		break;
-	case ACT_TDLS_CONFIG:
-		if (reason) {
-			mwifiex_dbg(priv->adapter, ERROR,
+		पूर्ण
+		अवरोध;
+	हाल ACT_TDLS_CONFIG:
+		अगर (reason) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "TDLS link config for %pM failed, reason %d\n",
 				    cmd_tdls_oper->peer_mac, reason);
-			if (node)
+			अगर (node)
 				node->tdls_status = TDLS_SETUP_FAILURE;
-		} else {
-			mwifiex_dbg(priv->adapter, MSG,
+		पूर्ण अन्यथा अणु
+			mwअगरiex_dbg(priv->adapter, MSG,
 				    "TDLS link config for %pM successful\n",
 				    cmd_tdls_oper->peer_mac);
-		}
-		break;
-	default:
-		mwifiex_dbg(priv->adapter, ERROR,
+		पूर्ण
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Unknown TDLS command action response %d", action);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /*
- * This function handles the command response for subscribe event command.
+ * This function handles the command response क्रम subscribe event command.
  */
-static int mwifiex_ret_subsc_evt(struct mwifiex_private *priv,
-				 struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_802_11_subsc_evt *cmd_sub_event =
+अटल पूर्णांक mwअगरiex_ret_subsc_evt(काष्ठा mwअगरiex_निजी *priv,
+				 काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_802_11_subsc_evt *cmd_sub_event =
 		&resp->params.subsc_evt;
 
 	/* For every subscribe event command (Get/Set/Clear), FW reports the
 	 * current set of subscribed events*/
-	mwifiex_dbg(priv->adapter, EVENT,
+	mwअगरiex_dbg(priv->adapter, EVENT,
 		    "Bitmap of currently subscribed events: %16x\n",
 		    le16_to_cpu(cmd_sub_event->events));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mwifiex_ret_uap_sta_list(struct mwifiex_private *priv,
-				    struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_sta_list *sta_list =
+अटल पूर्णांक mwअगरiex_ret_uap_sta_list(काष्ठा mwअगरiex_निजी *priv,
+				    काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_sta_list *sta_list =
 		&resp->params.sta_list;
-	struct mwifiex_ie_types_sta_info *sta_info = (void *)&sta_list->tlv;
-	int i;
-	struct mwifiex_sta_node *sta_node;
+	काष्ठा mwअगरiex_ie_types_sta_info *sta_info = (व्योम *)&sta_list->tlv;
+	पूर्णांक i;
+	काष्ठा mwअगरiex_sta_node *sta_node;
 
-	for (i = 0; i < (le16_to_cpu(sta_list->sta_count)); i++) {
-		sta_node = mwifiex_get_sta_entry(priv, sta_info->mac);
-		if (unlikely(!sta_node))
-			continue;
+	क्रम (i = 0; i < (le16_to_cpu(sta_list->sta_count)); i++) अणु
+		sta_node = mwअगरiex_get_sta_entry(priv, sta_info->mac);
+		अगर (unlikely(!sta_node))
+			जारी;
 
 		sta_node->stats.rssi = sta_info->rssi;
 		sta_info++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This function handles the command response of set_cfg_data */
-static int mwifiex_ret_cfg_data(struct mwifiex_private *priv,
-				struct host_cmd_ds_command *resp)
-{
-	if (resp->result != HostCmd_RESULT_OK) {
-		mwifiex_dbg(priv->adapter, ERROR, "Cal data cmd resp failed\n");
-		return -1;
-	}
+अटल पूर्णांक mwअगरiex_ret_cfg_data(काष्ठा mwअगरiex_निजी *priv,
+				काष्ठा host_cmd_ds_command *resp)
+अणु
+	अगर (resp->result != HostCmd_RESULT_OK) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR, "Cal data cmd resp failed\n");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /** This Function handles the command response of sdio rx aggr */
-static int mwifiex_ret_sdio_rx_aggr_cfg(struct mwifiex_private *priv,
-					struct host_cmd_ds_command *resp)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	struct host_cmd_sdio_sp_rx_aggr_cfg *cfg =
+अटल पूर्णांक mwअगरiex_ret_sdio_rx_aggr_cfg(काष्ठा mwअगरiex_निजी *priv,
+					काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	काष्ठा host_cmd_sdio_sp_rx_aggr_cfg *cfg =
 				&resp->params.sdio_rx_aggr_cfg;
 
 	adapter->sdio_rx_aggr_enable = cfg->enable;
 	adapter->sdio_rx_block_size = le16_to_cpu(cfg->block_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mwifiex_ret_robust_coex(struct mwifiex_private *priv,
-				   struct host_cmd_ds_command *resp,
-				   bool *is_timeshare)
-{
-	struct host_cmd_ds_robust_coex *coex = &resp->params.coex;
-	struct mwifiex_ie_types_robust_coex *coex_tlv;
+अटल पूर्णांक mwअगरiex_ret_robust_coex(काष्ठा mwअगरiex_निजी *priv,
+				   काष्ठा host_cmd_ds_command *resp,
+				   bool *is_बारhare)
+अणु
+	काष्ठा host_cmd_ds_robust_coex *coex = &resp->params.coex;
+	काष्ठा mwअगरiex_ie_types_robust_coex *coex_tlv;
 	u16 action = le16_to_cpu(coex->action);
 	u32 mode;
 
-	coex_tlv = (struct mwifiex_ie_types_robust_coex
-		    *)((u8 *)coex + sizeof(struct host_cmd_ds_robust_coex));
-	if (action == HostCmd_ACT_GEN_GET) {
+	coex_tlv = (काष्ठा mwअगरiex_ie_types_robust_coex
+		    *)((u8 *)coex + माप(काष्ठा host_cmd_ds_robust_coex));
+	अगर (action == HostCmd_ACT_GEN_GET) अणु
 		mode = le32_to_cpu(coex_tlv->mode);
-		if (mode == MWIFIEX_COEX_MODE_TIMESHARE)
-			*is_timeshare = true;
-		else
-			*is_timeshare = false;
-	}
+		अगर (mode == MWIFIEX_COEX_MODE_TIMESHARE)
+			*is_बारhare = true;
+		अन्यथा
+			*is_बारhare = false;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ieee80211_regdomain *
-mwifiex_create_custom_regdomain(struct mwifiex_private *priv,
+अटल काष्ठा ieee80211_regकरोमुख्य *
+mwअगरiex_create_custom_regकरोमुख्य(काष्ठा mwअगरiex_निजी *priv,
 				u8 *buf, u16 buf_len)
-{
+अणु
 	u16 num_chan = buf_len / 2;
-	struct ieee80211_regdomain *regd;
-	struct ieee80211_reg_rule *rule;
+	काष्ठा ieee80211_regकरोमुख्य *regd;
+	काष्ठा ieee80211_reg_rule *rule;
 	bool new_rule;
-	int idx, freq, prev_freq = 0;
+	पूर्णांक idx, freq, prev_freq = 0;
 	u32 bw, prev_bw = 0;
 	u8 chflags, prev_chflags = 0, valid_rules = 0;
 
-	if (WARN_ON_ONCE(num_chan > NL80211_MAX_SUPP_REG_RULES))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON_ONCE(num_chan > NL80211_MAX_SUPP_REG_RULES))
+		वापस ERR_PTR(-EINVAL);
 
-	regd = kzalloc(struct_size(regd, reg_rules, num_chan), GFP_KERNEL);
-	if (!regd)
-		return ERR_PTR(-ENOMEM);
+	regd = kzalloc(काष्ठा_size(regd, reg_rules, num_chan), GFP_KERNEL);
+	अगर (!regd)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (idx = 0; idx < num_chan; idx++) {
+	क्रम (idx = 0; idx < num_chan; idx++) अणु
 		u8 chan;
-		enum nl80211_band band;
+		क्रमागत nl80211_band band;
 
 		chan = *buf++;
-		if (!chan) {
-			kfree(regd);
-			return NULL;
-		}
+		अगर (!chan) अणु
+			kमुक्त(regd);
+			वापस शून्य;
+		पूर्ण
 		chflags = *buf++;
 		band = (chan <= 14) ? NL80211_BAND_2GHZ : NL80211_BAND_5GHZ;
 		freq = ieee80211_channel_to_frequency(chan, band);
 		new_rule = false;
 
-		if (chflags & MWIFIEX_CHANNEL_DISABLED)
-			continue;
+		अगर (chflags & MWIFIEX_CHANNEL_DISABLED)
+			जारी;
 
-		if (band == NL80211_BAND_5GHZ) {
-			if (!(chflags & MWIFIEX_CHANNEL_NOHT80))
+		अगर (band == NL80211_BAND_5GHZ) अणु
+			अगर (!(chflags & MWIFIEX_CHANNEL_NOHT80))
 				bw = MHZ_TO_KHZ(80);
-			else if (!(chflags & MWIFIEX_CHANNEL_NOHT40))
+			अन्यथा अगर (!(chflags & MWIFIEX_CHANNEL_NOHT40))
 				bw = MHZ_TO_KHZ(40);
-			else
+			अन्यथा
 				bw = MHZ_TO_KHZ(20);
-		} else {
-			if (!(chflags & MWIFIEX_CHANNEL_NOHT40))
+		पूर्ण अन्यथा अणु
+			अगर (!(chflags & MWIFIEX_CHANNEL_NOHT40))
 				bw = MHZ_TO_KHZ(40);
-			else
+			अन्यथा
 				bw = MHZ_TO_KHZ(20);
-		}
+		पूर्ण
 
-		if (idx == 0 || prev_chflags != chflags || prev_bw != bw ||
-		    freq - prev_freq > 20) {
+		अगर (idx == 0 || prev_chflags != chflags || prev_bw != bw ||
+		    freq - prev_freq > 20) अणु
 			valid_rules++;
 			new_rule = true;
-		}
+		पूर्ण
 
 		rule = &regd->reg_rules[valid_rules - 1];
 
@@ -1089,81 +1090,81 @@ mwifiex_create_custom_regdomain(struct mwifiex_private *priv,
 		prev_freq = freq;
 		prev_bw = bw;
 
-		if (!new_rule)
-			continue;
+		अगर (!new_rule)
+			जारी;
 
 		rule->freq_range.start_freq_khz = MHZ_TO_KHZ(freq - 10);
-		rule->power_rule.max_eirp = DBM_TO_MBM(19);
+		rule->घातer_rule.max_eirp = DBM_TO_MBM(19);
 
-		if (chflags & MWIFIEX_CHANNEL_PASSIVE)
+		अगर (chflags & MWIFIEX_CHANNEL_PASSIVE)
 			rule->flags = NL80211_RRF_NO_IR;
 
-		if (chflags & MWIFIEX_CHANNEL_DFS)
+		अगर (chflags & MWIFIEX_CHANNEL_DFS)
 			rule->flags = NL80211_RRF_DFS;
 
 		rule->freq_range.max_bandwidth_khz = bw;
-	}
+	पूर्ण
 
 	regd->n_reg_rules = valid_rules;
 	regd->alpha2[0] = '9';
 	regd->alpha2[1] = '9';
 
-	return regd;
-}
+	वापस regd;
+पूर्ण
 
-static int mwifiex_ret_chan_region_cfg(struct mwifiex_private *priv,
-				       struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_chan_region_cfg *reg = &resp->params.reg_cfg;
+अटल पूर्णांक mwअगरiex_ret_chan_region_cfg(काष्ठा mwअगरiex_निजी *priv,
+				       काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_chan_region_cfg *reg = &resp->params.reg_cfg;
 	u16 action = le16_to_cpu(reg->action);
 	u16 tlv, tlv_buf_len, tlv_buf_left;
-	struct mwifiex_ie_types_header *head;
-	struct ieee80211_regdomain *regd;
+	काष्ठा mwअगरiex_ie_types_header *head;
+	काष्ठा ieee80211_regकरोमुख्य *regd;
 	u8 *tlv_buf;
 
-	if (action != HostCmd_ACT_GEN_GET)
-		return 0;
+	अगर (action != HostCmd_ACT_GEN_GET)
+		वापस 0;
 
-	tlv_buf = (u8 *)reg + sizeof(*reg);
-	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - sizeof(*reg);
+	tlv_buf = (u8 *)reg + माप(*reg);
+	tlv_buf_left = le16_to_cpu(resp->size) - S_DS_GEN - माप(*reg);
 
-	while (tlv_buf_left >= sizeof(*head)) {
-		head = (struct mwifiex_ie_types_header *)tlv_buf;
+	जबतक (tlv_buf_left >= माप(*head)) अणु
+		head = (काष्ठा mwअगरiex_ie_types_header *)tlv_buf;
 		tlv = le16_to_cpu(head->type);
 		tlv_buf_len = le16_to_cpu(head->len);
 
-		if (tlv_buf_left < (sizeof(*head) + tlv_buf_len))
-			break;
+		अगर (tlv_buf_left < (माप(*head) + tlv_buf_len))
+			अवरोध;
 
-		switch (tlv) {
-		case TLV_TYPE_CHAN_ATTR_CFG:
-			mwifiex_dbg_dump(priv->adapter, CMD_D, "CHAN:",
-					 (u8 *)head + sizeof(*head),
+		चयन (tlv) अणु
+		हाल TLV_TYPE_CHAN_ATTR_CFG:
+			mwअगरiex_dbg_dump(priv->adapter, CMD_D, "CHAN:",
+					 (u8 *)head + माप(*head),
 					 tlv_buf_len);
-			regd = mwifiex_create_custom_regdomain(priv,
-				(u8 *)head + sizeof(*head), tlv_buf_len);
-			if (!IS_ERR(regd))
+			regd = mwअगरiex_create_custom_regकरोमुख्य(priv,
+				(u8 *)head + माप(*head), tlv_buf_len);
+			अगर (!IS_ERR(regd))
 				priv->adapter->regd = regd;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		tlv_buf += (sizeof(*head) + tlv_buf_len);
-		tlv_buf_left -= (sizeof(*head) + tlv_buf_len);
-	}
+		tlv_buf += (माप(*head) + tlv_buf_len);
+		tlv_buf_left -= (माप(*head) + tlv_buf_len);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mwifiex_ret_pkt_aggr_ctrl(struct mwifiex_private *priv,
-				     struct host_cmd_ds_command *resp)
-{
-	struct host_cmd_ds_pkt_aggr_ctrl *pkt_aggr_ctrl =
+अटल पूर्णांक mwअगरiex_ret_pkt_aggr_ctrl(काष्ठा mwअगरiex_निजी *priv,
+				     काष्ठा host_cmd_ds_command *resp)
+अणु
+	काष्ठा host_cmd_ds_pkt_aggr_ctrl *pkt_aggr_ctrl =
 					&resp->params.pkt_aggr_ctrl;
-	struct mwifiex_adapter *adapter = priv->adapter;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 
 	adapter->bus_aggr.enable = le16_to_cpu(pkt_aggr_ctrl->enable);
-	if (adapter->bus_aggr.enable)
-		adapter->intf_hdr_len = INTF_HEADER_LEN;
+	अगर (adapter->bus_aggr.enable)
+		adapter->पूर्णांकf_hdr_len = INTF_HEADER_LEN;
 	adapter->bus_aggr.mode = MWIFIEX_BUS_AGGR_MODE_LEN_V2;
 	adapter->bus_aggr.tx_aggr_max_size =
 				le16_to_cpu(pkt_aggr_ctrl->tx_aggr_max_size);
@@ -1172,258 +1173,258 @@ static int mwifiex_ret_pkt_aggr_ctrl(struct mwifiex_private *priv,
 	adapter->bus_aggr.tx_aggr_align =
 				le16_to_cpu(pkt_aggr_ctrl->tx_aggr_align);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mwifiex_ret_get_chan_info(struct mwifiex_private *priv,
-				     struct host_cmd_ds_command *resp,
-				     struct mwifiex_channel_band *channel_band)
-{
-	struct host_cmd_ds_sta_configure *sta_cfg_cmd = &resp->params.sta_cfg;
-	struct host_cmd_tlv_channel_band *tlv_band_channel;
+अटल पूर्णांक mwअगरiex_ret_get_chan_info(काष्ठा mwअगरiex_निजी *priv,
+				     काष्ठा host_cmd_ds_command *resp,
+				     काष्ठा mwअगरiex_channel_band *channel_band)
+अणु
+	काष्ठा host_cmd_ds_sta_configure *sta_cfg_cmd = &resp->params.sta_cfg;
+	काष्ठा host_cmd_tlv_channel_band *tlv_band_channel;
 
 	tlv_band_channel =
-	(struct host_cmd_tlv_channel_band *)sta_cfg_cmd->tlv_buffer;
-	memcpy(&channel_band->band_config, &tlv_band_channel->band_config,
-	       sizeof(struct mwifiex_band_config));
+	(काष्ठा host_cmd_tlv_channel_band *)sta_cfg_cmd->tlv_buffer;
+	स_नकल(&channel_band->band_config, &tlv_band_channel->band_config,
+	       माप(काष्ठा mwअगरiex_band_config));
 	channel_band->channel = tlv_band_channel->channel;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This function handles the command responses.
  *
- * This is a generic function, which calls command specific
+ * This is a generic function, which calls command specअगरic
  * response handlers based on the command ID.
  */
-int mwifiex_process_sta_cmdresp(struct mwifiex_private *priv, u16 cmdresp_no,
-				struct host_cmd_ds_command *resp)
-{
-	int ret = 0;
-	struct mwifiex_adapter *adapter = priv->adapter;
-	void *data_buf = adapter->curr_cmd->data_buf;
+पूर्णांक mwअगरiex_process_sta_cmdresp(काष्ठा mwअगरiex_निजी *priv, u16 cmdresp_no,
+				काष्ठा host_cmd_ds_command *resp)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	व्योम *data_buf = adapter->curr_cmd->data_buf;
 
-	/* If the command is not successful, cleanup and return failure */
-	if (resp->result != HostCmd_RESULT_OK) {
-		mwifiex_process_cmdresp_error(priv, resp);
-		return -1;
-	}
+	/* If the command is not successful, cleanup and वापस failure */
+	अगर (resp->result != HostCmd_RESULT_OK) अणु
+		mwअगरiex_process_cmdresp_error(priv, resp);
+		वापस -1;
+	पूर्ण
 	/* Command successful, handle response */
-	switch (cmdresp_no) {
-	case HostCmd_CMD_GET_HW_SPEC:
-		ret = mwifiex_ret_get_hw_spec(priv, resp);
-		break;
-	case HostCmd_CMD_CFG_DATA:
-		ret = mwifiex_ret_cfg_data(priv, resp);
-		break;
-	case HostCmd_CMD_MAC_CONTROL:
-		break;
-	case HostCmd_CMD_802_11_MAC_ADDRESS:
-		ret = mwifiex_ret_802_11_mac_address(priv, resp);
-		break;
-	case HostCmd_CMD_MAC_MULTICAST_ADR:
-		ret = mwifiex_ret_mac_multicast_adr(priv, resp);
-		break;
-	case HostCmd_CMD_TX_RATE_CFG:
-		ret = mwifiex_ret_tx_rate_cfg(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_SCAN:
-		ret = mwifiex_ret_802_11_scan(priv, resp);
-		adapter->curr_cmd->wait_q_enabled = false;
-		break;
-	case HostCmd_CMD_802_11_SCAN_EXT:
-		ret = mwifiex_ret_802_11_scan_ext(priv, resp);
-		adapter->curr_cmd->wait_q_enabled = false;
-		break;
-	case HostCmd_CMD_802_11_BG_SCAN_QUERY:
-		ret = mwifiex_ret_802_11_scan(priv, resp);
+	चयन (cmdresp_no) अणु
+	हाल HostCmd_CMD_GET_HW_SPEC:
+		ret = mwअगरiex_ret_get_hw_spec(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_CFG_DATA:
+		ret = mwअगरiex_ret_cfg_data(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_MAC_CONTROL:
+		अवरोध;
+	हाल HostCmd_CMD_802_11_MAC_ADDRESS:
+		ret = mwअगरiex_ret_802_11_mac_address(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_MAC_MULTICAST_ADR:
+		ret = mwअगरiex_ret_mac_multicast_adr(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_TX_RATE_CFG:
+		ret = mwअगरiex_ret_tx_rate_cfg(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_SCAN:
+		ret = mwअगरiex_ret_802_11_scan(priv, resp);
+		adapter->curr_cmd->रुको_q_enabled = false;
+		अवरोध;
+	हाल HostCmd_CMD_802_11_SCAN_EXT:
+		ret = mwअगरiex_ret_802_11_scan_ext(priv, resp);
+		adapter->curr_cmd->रुको_q_enabled = false;
+		अवरोध;
+	हाल HostCmd_CMD_802_11_BG_SCAN_QUERY:
+		ret = mwअगरiex_ret_802_11_scan(priv, resp);
 		cfg80211_sched_scan_results(priv->wdev.wiphy, 0);
-		mwifiex_dbg(adapter, CMD,
+		mwअगरiex_dbg(adapter, CMD,
 			    "info: CMD_RESP: BG_SCAN result is ready!\n");
-		break;
-	case HostCmd_CMD_802_11_BG_SCAN_CONFIG:
-		break;
-	case HostCmd_CMD_TXPWR_CFG:
-		ret = mwifiex_ret_tx_power_cfg(priv, resp);
-		break;
-	case HostCmd_CMD_RF_TX_PWR:
-		ret = mwifiex_ret_rf_tx_power(priv, resp);
-		break;
-	case HostCmd_CMD_RF_ANTENNA:
-		ret = mwifiex_ret_rf_antenna(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_PS_MODE_ENH:
-		ret = mwifiex_ret_enh_power_mode(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_802_11_HS_CFG_ENH:
-		ret = mwifiex_ret_802_11_hs_cfg(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_ASSOCIATE:
-		ret = mwifiex_ret_802_11_associate(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_DEAUTHENTICATE:
-		ret = mwifiex_ret_802_11_deauthenticate(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_AD_HOC_START:
-	case HostCmd_CMD_802_11_AD_HOC_JOIN:
-		ret = mwifiex_ret_802_11_ad_hoc(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_AD_HOC_STOP:
-		ret = mwifiex_ret_802_11_ad_hoc_stop(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_GET_LOG:
-		ret = mwifiex_ret_get_log(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_RSSI_INFO:
-		ret = mwifiex_ret_802_11_rssi_info(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_SNMP_MIB:
-		ret = mwifiex_ret_802_11_snmp_mib(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_802_11_TX_RATE_QUERY:
-		ret = mwifiex_ret_802_11_tx_rate_query(priv, resp);
-		break;
-	case HostCmd_CMD_VERSION_EXT:
-		ret = mwifiex_ret_ver_ext(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_REMAIN_ON_CHAN:
-		ret = mwifiex_ret_remain_on_chan(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_11AC_CFG:
-		break;
-	case HostCmd_CMD_PACKET_AGGR_CTRL:
-		ret = mwifiex_ret_pkt_aggr_ctrl(priv, resp);
-		break;
-	case HostCmd_CMD_P2P_MODE_CFG:
-		ret = mwifiex_ret_p2p_mode_cfg(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_MGMT_FRAME_REG:
-	case HostCmd_CMD_FUNC_INIT:
-	case HostCmd_CMD_FUNC_SHUTDOWN:
-		break;
-	case HostCmd_CMD_802_11_KEY_MATERIAL:
-		ret = mwifiex_ret_802_11_key_material(priv, resp);
-		break;
-	case HostCmd_CMD_802_11D_DOMAIN_INFO:
-		ret = mwifiex_ret_802_11d_domain_info(priv, resp);
-		break;
-	case HostCmd_CMD_11N_ADDBA_REQ:
-		ret = mwifiex_ret_11n_addba_req(priv, resp);
-		break;
-	case HostCmd_CMD_11N_DELBA:
-		ret = mwifiex_ret_11n_delba(priv, resp);
-		break;
-	case HostCmd_CMD_11N_ADDBA_RSP:
-		ret = mwifiex_ret_11n_addba_resp(priv, resp);
-		break;
-	case HostCmd_CMD_RECONFIGURE_TX_BUFF:
-		if (0xffff == (u16)le16_to_cpu(resp->params.tx_buf.buff_size)) {
-			if (adapter->iface_type == MWIFIEX_USB &&
-			    adapter->usb_mc_setup) {
-				if (adapter->if_ops.multi_port_resync)
-					adapter->if_ops.
+		अवरोध;
+	हाल HostCmd_CMD_802_11_BG_SCAN_CONFIG:
+		अवरोध;
+	हाल HostCmd_CMD_TXPWR_CFG:
+		ret = mwअगरiex_ret_tx_घातer_cfg(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_RF_TX_PWR:
+		ret = mwअगरiex_ret_rf_tx_घातer(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_RF_ANTENNA:
+		ret = mwअगरiex_ret_rf_antenna(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_PS_MODE_ENH:
+		ret = mwअगरiex_ret_enh_घातer_mode(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_HS_CFG_ENH:
+		ret = mwअगरiex_ret_802_11_hs_cfg(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_ASSOCIATE:
+		ret = mwअगरiex_ret_802_11_associate(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_DEAUTHENTICATE:
+		ret = mwअगरiex_ret_802_11_deauthenticate(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_AD_HOC_START:
+	हाल HostCmd_CMD_802_11_AD_HOC_JOIN:
+		ret = mwअगरiex_ret_802_11_ad_hoc(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_AD_HOC_STOP:
+		ret = mwअगरiex_ret_802_11_ad_hoc_stop(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_GET_LOG:
+		ret = mwअगरiex_ret_get_log(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_RSSI_INFO:
+		ret = mwअगरiex_ret_802_11_rssi_info(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_SNMP_MIB:
+		ret = mwअगरiex_ret_802_11_snmp_mib(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_TX_RATE_QUERY:
+		ret = mwअगरiex_ret_802_11_tx_rate_query(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_VERSION_EXT:
+		ret = mwअगरiex_ret_ver_ext(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_REMAIN_ON_CHAN:
+		ret = mwअगरiex_ret_reमुख्य_on_chan(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_11AC_CFG:
+		अवरोध;
+	हाल HostCmd_CMD_PACKET_AGGR_CTRL:
+		ret = mwअगरiex_ret_pkt_aggr_ctrl(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_P2P_MODE_CFG:
+		ret = mwअगरiex_ret_p2p_mode_cfg(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_MGMT_FRAME_REG:
+	हाल HostCmd_CMD_FUNC_INIT:
+	हाल HostCmd_CMD_FUNC_SHUTDOWN:
+		अवरोध;
+	हाल HostCmd_CMD_802_11_KEY_MATERIAL:
+		ret = mwअगरiex_ret_802_11_key_material(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11D_DOMAIN_INFO:
+		ret = mwअगरiex_ret_802_11d_करोमुख्य_info(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_11N_ADDBA_REQ:
+		ret = mwअगरiex_ret_11n_addba_req(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_11N_DELBA:
+		ret = mwअगरiex_ret_11n_delba(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_11N_ADDBA_RSP:
+		ret = mwअगरiex_ret_11n_addba_resp(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_RECONFIGURE_TX_BUFF:
+		अगर (0xffff == (u16)le16_to_cpu(resp->params.tx_buf.buff_size)) अणु
+			अगर (adapter->अगरace_type == MWIFIEX_USB &&
+			    adapter->usb_mc_setup) अणु
+				अगर (adapter->अगर_ops.multi_port_resync)
+					adapter->अगर_ops.
 						multi_port_resync(adapter);
 				adapter->usb_mc_setup = false;
 				adapter->tx_lock_flag = false;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		adapter->tx_buf_size = (u16) le16_to_cpu(resp->params.
 							     tx_buf.buff_size);
 		adapter->tx_buf_size = (adapter->tx_buf_size
 					/ MWIFIEX_SDIO_BLOCK_SIZE)
 				       * MWIFIEX_SDIO_BLOCK_SIZE;
 		adapter->curr_tx_buf_size = adapter->tx_buf_size;
-		mwifiex_dbg(adapter, CMD, "cmd: curr_tx_buf_size=%d\n",
+		mwअगरiex_dbg(adapter, CMD, "cmd: curr_tx_buf_size=%d\n",
 			    adapter->curr_tx_buf_size);
 
-		if (adapter->if_ops.update_mp_end_port)
-			adapter->if_ops.update_mp_end_port(adapter,
+		अगर (adapter->अगर_ops.update_mp_end_port)
+			adapter->अगर_ops.update_mp_end_port(adapter,
 				le16_to_cpu(resp->params.tx_buf.mp_end_port));
-		break;
-	case HostCmd_CMD_AMSDU_AGGR_CTRL:
-		break;
-	case HostCmd_CMD_WMM_GET_STATUS:
-		ret = mwifiex_ret_wmm_get_status(priv, resp);
-		break;
-	case HostCmd_CMD_802_11_IBSS_COALESCING_STATUS:
-		ret = mwifiex_ret_ibss_coalescing_status(priv, resp);
-		break;
-	case HostCmd_CMD_MEM_ACCESS:
-		ret = mwifiex_ret_mem_access(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_MAC_REG_ACCESS:
-	case HostCmd_CMD_BBP_REG_ACCESS:
-	case HostCmd_CMD_RF_REG_ACCESS:
-	case HostCmd_CMD_PMIC_REG_ACCESS:
-	case HostCmd_CMD_CAU_REG_ACCESS:
-	case HostCmd_CMD_802_11_EEPROM_ACCESS:
-		ret = mwifiex_ret_reg_access(cmdresp_no, resp, data_buf);
-		break;
-	case HostCmd_CMD_SET_BSS_MODE:
-		break;
-	case HostCmd_CMD_11N_CFG:
-		break;
-	case HostCmd_CMD_PCIE_DESC_DETAILS:
-		break;
-	case HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
-		ret = mwifiex_ret_subsc_evt(priv, resp);
-		break;
-	case HostCmd_CMD_UAP_SYS_CONFIG:
-		break;
-	case HOST_CMD_APCMD_STA_LIST:
-		ret = mwifiex_ret_uap_sta_list(priv, resp);
-		break;
-	case HostCmd_CMD_UAP_BSS_START:
+		अवरोध;
+	हाल HostCmd_CMD_AMSDU_AGGR_CTRL:
+		अवरोध;
+	हाल HostCmd_CMD_WMM_GET_STATUS:
+		ret = mwअगरiex_ret_wmm_get_status(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_802_11_IBSS_COALESCING_STATUS:
+		ret = mwअगरiex_ret_ibss_coalescing_status(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_MEM_ACCESS:
+		ret = mwअगरiex_ret_mem_access(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_MAC_REG_ACCESS:
+	हाल HostCmd_CMD_BBP_REG_ACCESS:
+	हाल HostCmd_CMD_RF_REG_ACCESS:
+	हाल HostCmd_CMD_PMIC_REG_ACCESS:
+	हाल HostCmd_CMD_CAU_REG_ACCESS:
+	हाल HostCmd_CMD_802_11_EEPROM_ACCESS:
+		ret = mwअगरiex_ret_reg_access(cmdresp_no, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_SET_BSS_MODE:
+		अवरोध;
+	हाल HostCmd_CMD_11N_CFG:
+		अवरोध;
+	हाल HostCmd_CMD_PCIE_DESC_DETAILS:
+		अवरोध;
+	हाल HostCmd_CMD_802_11_SUBSCRIBE_EVENT:
+		ret = mwअगरiex_ret_subsc_evt(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_UAP_SYS_CONFIG:
+		अवरोध;
+	हाल HOST_CMD_APCMD_STA_LIST:
+		ret = mwअगरiex_ret_uap_sta_list(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_UAP_BSS_START:
 		adapter->tx_lock_flag = false;
 		adapter->pps_uapsd_mode = false;
 		adapter->delay_null_pkt = false;
 		priv->bss_started = 1;
-		break;
-	case HostCmd_CMD_UAP_BSS_STOP:
+		अवरोध;
+	हाल HostCmd_CMD_UAP_BSS_STOP:
 		priv->bss_started = 0;
-		break;
-	case HostCmd_CMD_UAP_STA_DEAUTH:
-		break;
-	case HOST_CMD_APCMD_SYS_RESET:
-		break;
-	case HostCmd_CMD_MEF_CFG:
-		break;
-	case HostCmd_CMD_COALESCE_CFG:
-		break;
-	case HostCmd_CMD_TDLS_OPER:
-		ret = mwifiex_ret_tdls_oper(priv, resp);
-		break;
-	case HostCmd_CMD_MC_POLICY:
-		break;
-	case HostCmd_CMD_CHAN_REPORT_REQUEST:
-		break;
-	case HostCmd_CMD_SDIO_SP_RX_AGGR_CFG:
-		ret = mwifiex_ret_sdio_rx_aggr_cfg(priv, resp);
-		break;
-	case HostCmd_CMD_HS_WAKEUP_REASON:
-		ret = mwifiex_ret_wakeup_reason(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_TDLS_CONFIG:
-		break;
-	case HostCmd_CMD_ROBUST_COEX:
-		ret = mwifiex_ret_robust_coex(priv, resp, data_buf);
-		break;
-	case HostCmd_CMD_GTK_REKEY_OFFLOAD_CFG:
-		break;
-	case HostCmd_CMD_CHAN_REGION_CFG:
-		ret = mwifiex_ret_chan_region_cfg(priv, resp);
-		break;
-	case HostCmd_CMD_STA_CONFIGURE:
-		ret = mwifiex_ret_get_chan_info(priv, resp, data_buf);
-		break;
-	default:
-		mwifiex_dbg(adapter, ERROR,
+		अवरोध;
+	हाल HostCmd_CMD_UAP_STA_DEAUTH:
+		अवरोध;
+	हाल HOST_CMD_APCMD_SYS_RESET:
+		अवरोध;
+	हाल HostCmd_CMD_MEF_CFG:
+		अवरोध;
+	हाल HostCmd_CMD_COALESCE_CFG:
+		अवरोध;
+	हाल HostCmd_CMD_TDLS_OPER:
+		ret = mwअगरiex_ret_tdls_oper(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_MC_POLICY:
+		अवरोध;
+	हाल HostCmd_CMD_CHAN_REPORT_REQUEST:
+		अवरोध;
+	हाल HostCmd_CMD_SDIO_SP_RX_AGGR_CFG:
+		ret = mwअगरiex_ret_sdio_rx_aggr_cfg(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_HS_WAKEUP_REASON:
+		ret = mwअगरiex_ret_wakeup_reason(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_TDLS_CONFIG:
+		अवरोध;
+	हाल HostCmd_CMD_ROBUST_COEX:
+		ret = mwअगरiex_ret_robust_coex(priv, resp, data_buf);
+		अवरोध;
+	हाल HostCmd_CMD_GTK_REKEY_OFFLOAD_CFG:
+		अवरोध;
+	हाल HostCmd_CMD_CHAN_REGION_CFG:
+		ret = mwअगरiex_ret_chan_region_cfg(priv, resp);
+		अवरोध;
+	हाल HostCmd_CMD_STA_CONFIGURE:
+		ret = mwअगरiex_ret_get_chan_info(priv, resp, data_buf);
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(adapter, ERROR,
 			    "CMD_RESP: unknown cmd response %#x\n",
 			    resp->command);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

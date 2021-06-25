@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_TSC_H
-#define __PERF_TSC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_TSC_H
+#घोषणा __PERF_TSC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "event.h"
+#समावेश "event.h"
 
-struct perf_tsc_conversion {
-	u16 time_shift;
-	u32 time_mult;
-	u64 time_zero;
-	u64 time_cycles;
-	u64 time_mask;
+काष्ठा perf_tsc_conversion अणु
+	u16 समय_shअगरt;
+	u32 समय_mult;
+	u64 समय_zero;
+	u64 समय_cycles;
+	u64 समय_mask;
 
-	bool cap_user_time_zero;
-	bool cap_user_time_short;
-};
+	bool cap_user_समय_zero;
+	bool cap_user_समय_लघु;
+पूर्ण;
 
-struct perf_event_mmap_page;
+काष्ठा perf_event_mmap_page;
 
-int perf_read_tsc_conversion(const struct perf_event_mmap_page *pc,
-			     struct perf_tsc_conversion *tc);
+पूर्णांक perf_पढ़ो_tsc_conversion(स्थिर काष्ठा perf_event_mmap_page *pc,
+			     काष्ठा perf_tsc_conversion *tc);
 
-u64 perf_time_to_tsc(u64 ns, struct perf_tsc_conversion *tc);
-u64 tsc_to_perf_time(u64 cyc, struct perf_tsc_conversion *tc);
-u64 rdtsc(void);
+u64 perf_समय_प्रकारo_tsc(u64 ns, काष्ठा perf_tsc_conversion *tc);
+u64 tsc_to_perf_समय(u64 cyc, काष्ठा perf_tsc_conversion *tc);
+u64 rdtsc(व्योम);
 
-size_t perf_event__fprintf_time_conv(union perf_event *event, FILE *fp);
+माप_प्रकार perf_event__ख_लिखो_समय_conv(जोड़ perf_event *event, खाता *fp);
 
-#endif // __PERF_TSC_H
+#पूर्ण_अगर // __PERF_TSC_H

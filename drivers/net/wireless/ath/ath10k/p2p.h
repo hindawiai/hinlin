@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2015 Qualcomm Atheros, Inc.
  */
 
-#ifndef _P2P_H
-#define _P2P_H
+#अगर_अघोषित _P2P_H
+#घोषणा _P2P_H
 
-struct ath10k_vif;
-struct wmi_p2p_noa_info;
+काष्ठा ath10k_vअगर;
+काष्ठा wmi_p2p_noa_info;
 
-void ath10k_p2p_noa_update(struct ath10k_vif *arvif,
-			   const struct wmi_p2p_noa_info *noa);
-void ath10k_p2p_noa_update_by_vdev_id(struct ath10k *ar, u32 vdev_id,
-				      const struct wmi_p2p_noa_info *noa);
+व्योम ath10k_p2p_noa_update(काष्ठा ath10k_vअगर *arvअगर,
+			   स्थिर काष्ठा wmi_p2p_noa_info *noa);
+व्योम ath10k_p2p_noa_update_by_vdev_id(काष्ठा ath10k *ar, u32 vdev_id,
+				      स्थिर काष्ठा wmi_p2p_noa_info *noa);
 
-#endif
+#पूर्ण_अगर

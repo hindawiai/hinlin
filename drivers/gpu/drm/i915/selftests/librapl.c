@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#include <asm/msr.h>
+#समावेश <यंत्र/msr.h>
 
-#include "librapl.h"
+#समावेश "librapl.h"
 
-u64 librapl_energy_uJ(void)
-{
-	unsigned long long power;
+u64 librapl_energy_uJ(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ घातer;
 	u32 units;
 
-	if (rdmsrl_safe(MSR_RAPL_POWER_UNIT, &power))
-		return 0;
+	अगर (rdmsrl_safe(MSR_RAPL_POWER_UNIT, &घातer))
+		वापस 0;
 
-	units = (power & 0x1f00) >> 8;
+	units = (घातer & 0x1f00) >> 8;
 
-	if (rdmsrl_safe(MSR_PP1_ENERGY_STATUS, &power))
-		return 0;
+	अगर (rdmsrl_safe(MSR_PP1_ENERGY_STATUS, &घातer))
+		वापस 0;
 
-	return (1000000 * power) >> units; /* convert to uJ */
-}
+	वापस (1000000 * घातer) >> units; /* convert to uJ */
+पूर्ण

@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * lowlevel.c
  *
  * PURPOSE
- *  Low Level Device Routines for the UDF filesystem
+ *  Low Level Device Routines क्रम the UDF fileप्रणाली
  *
  * COPYRIGHT
  *	This file is distributed under the terms of the GNU General Public
@@ -17,48 +18,48 @@
  *  03/26/99 blf  Created.
  */
 
-#include "udfdecl.h"
+#समावेश "udfdecl.h"
 
-#include <linux/blkdev.h>
-#include <linux/cdrom.h>
-#include <linux/uaccess.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/cdrom.h>
+#समावेश <linux/uaccess.h>
 
-#include "udf_sb.h"
+#समावेश "udf_sb.h"
 
-unsigned int udf_get_last_session(struct super_block *sb)
-{
-	struct cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
-	struct cdrom_multisession ms_info;
+अचिन्हित पूर्णांक udf_get_last_session(काष्ठा super_block *sb)
+अणु
+	काष्ठा cdrom_device_info *cdi = disk_to_cdi(sb->s_bdev->bd_disk);
+	काष्ठा cdrom_multisession ms_info;
 
-	if (!cdi) {
+	अगर (!cdi) अणु
 		udf_debug("CDROMMULTISESSION not supported.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ms_info.addr_format = CDROM_LBA;
-	if (cdrom_multisession(cdi, &ms_info) == 0) {
+	ms_info.addr_क्रमmat = CDROM_LBA;
+	अगर (cdrom_multisession(cdi, &ms_info) == 0) अणु
 		udf_debug("XA disk: %s, vol_desc_start=%d\n",
 			  ms_info.xa_flag ? "yes" : "no", ms_info.addr.lba);
-		if (ms_info.xa_flag) /* necessary for a valid ms_info.addr */
-			return ms_info.addr.lba;
-	}
-	return 0;
-}
+		अगर (ms_info.xa_flag) /* necessary क्रम a valid ms_info.addr */
+			वापस ms_info.addr.lba;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-unsigned long udf_get_last_block(struct super_block *sb)
-{
-	struct block_device *bdev = sb->s_bdev;
-	struct cdrom_device_info *cdi = disk_to_cdi(bdev->bd_disk);
-	unsigned long lblock = 0;
+अचिन्हित दीर्घ udf_get_last_block(काष्ठा super_block *sb)
+अणु
+	काष्ठा block_device *bdev = sb->s_bdev;
+	काष्ठा cdrom_device_info *cdi = disk_to_cdi(bdev->bd_disk);
+	अचिन्हित दीर्घ lblock = 0;
 
 	/*
-	 * The cdrom layer call failed or returned obviously bogus value?
+	 * The cdrom layer call failed or वापसed obviously bogus value?
 	 * Try using the device size...
 	 */
-	if (!cdi || cdrom_get_last_written(cdi, &lblock) || lblock == 0)
-		lblock = i_size_read(bdev->bd_inode) >> sb->s_blocksize_bits;
+	अगर (!cdi || cdrom_get_last_written(cdi, &lblock) || lblock == 0)
+		lblock = i_size_पढ़ो(bdev->bd_inode) >> sb->s_blocksize_bits;
 
-	if (lblock)
-		return lblock - 1;
-	return 0;
-}
+	अगर (lblock)
+		वापस lblock - 1;
+	वापस 0;
+पूर्ण

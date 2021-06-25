@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Cedar Fork PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2017, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define CDF_PAD_OWN	0x020
-#define CDF_PADCFGLOCK	0x0c0
-#define CDF_HOSTSW_OWN	0x120
-#define CDF_GPI_IS	0x200
-#define CDF_GPI_IE	0x230
+#घोषणा CDF_PAD_OWN	0x020
+#घोषणा CDF_PADCFGLOCK	0x0c0
+#घोषणा CDF_HOSTSW_OWN	0x120
+#घोषणा CDF_GPI_IS	0x200
+#घोषणा CDF_GPI_IE	0x230
 
-#define CDF_GPP(r, s, e)				\
-	{						\
+#घोषणा CDF_GPP(r, s, e)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
-#define CDF_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा CDF_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = CDF_PAD_OWN,		\
+		.paकरोwn_offset = CDF_PAD_OWN,		\
 		.padcfglock_offset = CDF_PADCFGLOCK,	\
 		.hostown_offset = CDF_HOSTSW_OWN,	\
 		.is_offset = CDF_GPI_IS,		\
@@ -39,10 +40,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Cedar Fork PCH */
-static const struct pinctrl_pin_desc cdf_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc cdf_pins[] = अणु
 	/* WEST2 */
 	PINCTRL_PIN(0, "GBE_SDP_TIMESYNC0_S2N"),
 	PINCTRL_PIN(1, "GBE_SDP_TIMESYNC1_S2N"),
@@ -295,9 +296,9 @@ static const struct pinctrl_pin_desc cdf_pins[] = {
 	PINCTRL_PIN(234, "EMMC_D5"),
 	PINCTRL_PIN(235, "EMMC_D6"),
 	PINCTRL_PIN(236, "EMMC_D7"),
-};
+पूर्ण;
 
-static const struct intel_padgroup cdf_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cdf_community0_gpps[] = अणु
 	CDF_GPP(0, 0, 23),	/* WEST2 */
 	CDF_GPP(1, 24, 47),	/* WEST3 */
 	CDF_GPP(2, 48, 70),	/* WEST01 */
@@ -309,55 +310,55 @@ static const struct intel_padgroup cdf_community0_gpps[] = {
 	CDF_GPP(8, 124, 143),	/* WESTD */
 	CDF_GPP(9, 144, 144),	/* WESTD_PECI */
 	CDF_GPP(10, 145, 167),	/* WESTF */
-};
+पूर्ण;
 
-static const struct intel_padgroup cdf_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup cdf_community1_gpps[] = अणु
 	CDF_GPP(0, 168, 191),	/* EAST2 */
 	CDF_GPP(1, 192, 202),	/* EAST3 */
 	CDF_GPP(2, 203, 225),	/* EAST0 */
 	CDF_GPP(3, 226, 236),	/* EMMC */
-};
+पूर्ण;
 
-static const struct intel_community cdf_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community cdf_communities[] = अणु
 	CDF_COMMUNITY(0, 0, 167, cdf_community0_gpps),		/* West */
 	CDF_COMMUNITY(1, 168, 236, cdf_community1_gpps),	/* East */
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data cdf_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data cdf_soc_data = अणु
 	.pins = cdf_pins,
 	.npins = ARRAY_SIZE(cdf_pins),
 	.communities = cdf_communities,
 	.ncommunities = ARRAY_SIZE(cdf_communities),
-};
+पूर्ण;
 
-static INTEL_PINCTRL_PM_OPS(cdf_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(cdf_pinctrl_pm_ops);
 
-static const struct acpi_device_id cdf_pinctrl_acpi_match[] = {
-	{ "INTC3001", (kernel_ulong_t)&cdf_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id cdf_pinctrl_acpi_match[] = अणु
+	अणु "INTC3001", (kernel_uदीर्घ_t)&cdf_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, cdf_pinctrl_acpi_match);
 
-static struct platform_driver cdf_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver cdf_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "cedarfork-pinctrl",
 		.acpi_match_table = cdf_pinctrl_acpi_match,
 		.pm = &cdf_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init cdf_pinctrl_init(void)
-{
-	return platform_driver_register(&cdf_pinctrl_driver);
-}
+अटल पूर्णांक __init cdf_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&cdf_pinctrl_driver);
+पूर्ण
 subsys_initcall(cdf_pinctrl_init);
 
-static void __exit cdf_pinctrl_exit(void)
-{
-	platform_driver_unregister(&cdf_pinctrl_driver);
-}
-module_exit(cdf_pinctrl_exit);
+अटल व्योम __निकास cdf_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&cdf_pinctrl_driver);
+पूर्ण
+module_निकास(cdf_pinctrl_निकास);
 
 MODULE_AUTHOR("Mika Westerberg <mika.westerberg@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Cedar Fork PCH pinctrl/GPIO driver");

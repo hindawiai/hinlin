@@ -1,469 +1,470 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Filesystem access-by-fd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Fileप्रणाली access-by-fd.
  *
  * Copyright (C) 2017 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/fs_context.h>
-#include <linux/fs_parser.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/syscalls.h>
-#include <linux/security.h>
-#include <linux/anon_inodes.h>
-#include <linux/namei.h>
-#include <linux/file.h>
-#include <uapi/linux/mount.h>
-#include "internal.h"
-#include "mount.h"
+#समावेश <linux/fs_context.h>
+#समावेश <linux/fs_parser.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/security.h>
+#समावेश <linux/anon_inodes.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/file.h>
+#समावेश <uapi/linux/mount.h>
+#समावेश "internal.h"
+#समावेश "mount.h"
 
 /*
- * Allow the user to read back any error, warning or informational messages.
+ * Allow the user to पढ़ो back any error, warning or inक्रमmational messages.
  */
-static ssize_t fscontext_read(struct file *file,
-			      char __user *_buf, size_t len, loff_t *pos)
-{
-	struct fs_context *fc = file->private_data;
-	struct fc_log *log = fc->log.log;
-	unsigned int logsize = ARRAY_SIZE(log->buffer);
-	ssize_t ret;
-	char *p;
-	bool need_free;
-	int index, n;
+अटल sमाप_प्रकार fscontext_पढ़ो(काष्ठा file *file,
+			      अक्षर __user *_buf, माप_प्रकार len, loff_t *pos)
+अणु
+	काष्ठा fs_context *fc = file->निजी_data;
+	काष्ठा fc_log *log = fc->log.log;
+	अचिन्हित पूर्णांक logsize = ARRAY_SIZE(log->buffer);
+	sमाप_प्रकार ret;
+	अक्षर *p;
+	bool need_मुक्त;
+	पूर्णांक index, n;
 
-	ret = mutex_lock_interruptible(&fc->uapi_mutex);
-	if (ret < 0)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&fc->uapi_mutex);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (log->head == log->tail) {
+	अगर (log->head == log->tail) अणु
 		mutex_unlock(&fc->uapi_mutex);
-		return -ENODATA;
-	}
+		वापस -ENODATA;
+	पूर्ण
 
 	index = log->tail & (logsize - 1);
 	p = log->buffer[index];
-	need_free = log->need_free & (1 << index);
-	log->buffer[index] = NULL;
-	log->need_free &= ~(1 << index);
+	need_मुक्त = log->need_मुक्त & (1 << index);
+	log->buffer[index] = शून्य;
+	log->need_मुक्त &= ~(1 << index);
 	log->tail++;
 	mutex_unlock(&fc->uapi_mutex);
 
 	ret = -EMSGSIZE;
-	n = strlen(p);
-	if (n > len)
-		goto err_free;
+	n = म_माप(p);
+	अगर (n > len)
+		जाओ err_मुक्त;
 	ret = -EFAULT;
-	if (copy_to_user(_buf, p, n) != 0)
-		goto err_free;
+	अगर (copy_to_user(_buf, p, n) != 0)
+		जाओ err_मुक्त;
 	ret = n;
 
-err_free:
-	if (need_free)
-		kfree(p);
-	return ret;
-}
+err_मुक्त:
+	अगर (need_मुक्त)
+		kमुक्त(p);
+	वापस ret;
+पूर्ण
 
-static int fscontext_release(struct inode *inode, struct file *file)
-{
-	struct fs_context *fc = file->private_data;
+अटल पूर्णांक fscontext_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा fs_context *fc = file->निजी_data;
 
-	if (fc) {
-		file->private_data = NULL;
+	अगर (fc) अणु
+		file->निजी_data = शून्य;
 		put_fs_context(fc);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-const struct file_operations fscontext_fops = {
-	.read		= fscontext_read,
+स्थिर काष्ठा file_operations fscontext_fops = अणु
+	.पढ़ो		= fscontext_पढ़ो,
 	.release	= fscontext_release,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
 /*
- * Attach a filesystem context to a file and an fd.
+ * Attach a fileप्रणाली context to a file and an fd.
  */
-static int fscontext_create_fd(struct fs_context *fc, unsigned int o_flags)
-{
-	int fd;
+अटल पूर्णांक fscontext_create_fd(काष्ठा fs_context *fc, अचिन्हित पूर्णांक o_flags)
+अणु
+	पूर्णांक fd;
 
 	fd = anon_inode_getfd("[fscontext]", &fscontext_fops, fc,
 			      O_RDWR | o_flags);
-	if (fd < 0)
+	अगर (fd < 0)
 		put_fs_context(fc);
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int fscontext_alloc_log(struct fs_context *fc)
-{
-	fc->log.log = kzalloc(sizeof(*fc->log.log), GFP_KERNEL);
-	if (!fc->log.log)
-		return -ENOMEM;
+अटल पूर्णांक fscontext_alloc_log(काष्ठा fs_context *fc)
+अणु
+	fc->log.log = kzalloc(माप(*fc->log.log), GFP_KERNEL);
+	अगर (!fc->log.log)
+		वापस -ENOMEM;
 	refcount_set(&fc->log.log->usage, 1);
 	fc->log.log->owner = fc->fs_type->owner;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Open a filesystem by name so that it can be configured for mounting.
+ * Open a fileप्रणाली by name so that it can be configured क्रम mounting.
  *
- * We are allowed to specify a container in which the filesystem will be
- * opened, thereby indicating which namespaces will be used (notably, which
- * network namespace will be used for network filesystems).
+ * We are allowed to specअगरy a container in which the fileप्रणाली will be
+ * खोलोed, thereby indicating which namespaces will be used (notably, which
+ * network namespace will be used क्रम network fileप्रणालीs).
  */
-SYSCALL_DEFINE2(fsopen, const char __user *, _fs_name, unsigned int, flags)
-{
-	struct file_system_type *fs_type;
-	struct fs_context *fc;
-	const char *fs_name;
-	int ret;
+SYSCALL_DEFINE2(fsखोलो, स्थिर अक्षर __user *, _fs_name, अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा file_प्रणाली_type *fs_type;
+	काष्ठा fs_context *fc;
+	स्थिर अक्षर *fs_name;
+	पूर्णांक ret;
 
-	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (flags & ~FSOPEN_CLOEXEC)
-		return -EINVAL;
+	अगर (flags & ~FSOPEN_CLOEXEC)
+		वापस -EINVAL;
 
 	fs_name = strndup_user(_fs_name, PAGE_SIZE);
-	if (IS_ERR(fs_name))
-		return PTR_ERR(fs_name);
+	अगर (IS_ERR(fs_name))
+		वापस PTR_ERR(fs_name);
 
 	fs_type = get_fs_type(fs_name);
-	kfree(fs_name);
-	if (!fs_type)
-		return -ENODEV;
+	kमुक्त(fs_name);
+	अगर (!fs_type)
+		वापस -ENODEV;
 
-	fc = fs_context_for_mount(fs_type, 0);
-	put_filesystem(fs_type);
-	if (IS_ERR(fc))
-		return PTR_ERR(fc);
+	fc = fs_context_क्रम_mount(fs_type, 0);
+	put_fileप्रणाली(fs_type);
+	अगर (IS_ERR(fc))
+		वापस PTR_ERR(fc);
 
 	fc->phase = FS_CONTEXT_CREATE_PARAMS;
 
 	ret = fscontext_alloc_log(fc);
-	if (ret < 0)
-		goto err_fc;
+	अगर (ret < 0)
+		जाओ err_fc;
 
-	return fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
+	वापस fscontext_create_fd(fc, flags & FSOPEN_CLOEXEC ? O_CLOEXEC : 0);
 
 err_fc:
 	put_fs_context(fc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Pick a superblock into a context for reconfiguration.
+ * Pick a superblock पूर्णांकo a context क्रम reconfiguration.
  */
-SYSCALL_DEFINE3(fspick, int, dfd, const char __user *, path, unsigned int, flags)
-{
-	struct fs_context *fc;
-	struct path target;
-	unsigned int lookup_flags;
-	int ret;
+SYSCALL_DEFINE3(fspick, पूर्णांक, dfd, स्थिर अक्षर __user *, path, अचिन्हित पूर्णांक, flags)
+अणु
+	काष्ठा fs_context *fc;
+	काष्ठा path target;
+	अचिन्हित पूर्णांक lookup_flags;
+	पूर्णांक ret;
 
-	if (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!ns_capable(current->nsproxy->mnt_ns->user_ns, CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if ((flags & ~(FSPICK_CLOEXEC |
+	अगर ((flags & ~(FSPICK_CLOEXEC |
 		       FSPICK_SYMLINK_NOFOLLOW |
 		       FSPICK_NO_AUTOMOUNT |
 		       FSPICK_EMPTY_PATH)) != 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
-	if (flags & FSPICK_SYMLINK_NOFOLLOW)
+	अगर (flags & FSPICK_SYMLINK_NOFOLLOW)
 		lookup_flags &= ~LOOKUP_FOLLOW;
-	if (flags & FSPICK_NO_AUTOMOUNT)
+	अगर (flags & FSPICK_NO_AUTOMOUNT)
 		lookup_flags &= ~LOOKUP_AUTOMOUNT;
-	if (flags & FSPICK_EMPTY_PATH)
+	अगर (flags & FSPICK_EMPTY_PATH)
 		lookup_flags |= LOOKUP_EMPTY;
 	ret = user_path_at(dfd, path, lookup_flags, &target);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 	ret = -EINVAL;
-	if (target.mnt->mnt_root != target.dentry)
-		goto err_path;
+	अगर (target.mnt->mnt_root != target.dentry)
+		जाओ err_path;
 
-	fc = fs_context_for_reconfigure(target.dentry, 0, 0);
-	if (IS_ERR(fc)) {
+	fc = fs_context_क्रम_reconfigure(target.dentry, 0, 0);
+	अगर (IS_ERR(fc)) अणु
 		ret = PTR_ERR(fc);
-		goto err_path;
-	}
+		जाओ err_path;
+	पूर्ण
 
 	fc->phase = FS_CONTEXT_RECONF_PARAMS;
 
 	ret = fscontext_alloc_log(fc);
-	if (ret < 0)
-		goto err_fc;
+	अगर (ret < 0)
+		जाओ err_fc;
 
 	path_put(&target);
-	return fscontext_create_fd(fc, flags & FSPICK_CLOEXEC ? O_CLOEXEC : 0);
+	वापस fscontext_create_fd(fc, flags & FSPICK_CLOEXEC ? O_CLOEXEC : 0);
 
 err_fc:
 	put_fs_context(fc);
 err_path:
 	path_put(&target);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Check the state and apply the configuration.  Note that this function is
- * allowed to 'steal' the value by setting param->xxx to NULL before returning.
+ * allowed to 'steal' the value by setting param->xxx to शून्य beक्रमe वापसing.
  */
-static int vfs_fsconfig_locked(struct fs_context *fc, int cmd,
-			       struct fs_parameter *param)
-{
-	struct super_block *sb;
-	int ret;
+अटल पूर्णांक vfs_fsconfig_locked(काष्ठा fs_context *fc, पूर्णांक cmd,
+			       काष्ठा fs_parameter *param)
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक ret;
 
 	ret = finish_clean_context(fc);
-	if (ret)
-		return ret;
-	switch (cmd) {
-	case FSCONFIG_CMD_CREATE:
-		if (fc->phase != FS_CONTEXT_CREATE_PARAMS)
-			return -EBUSY;
-		if (!mount_capable(fc))
-			return -EPERM;
+	अगर (ret)
+		वापस ret;
+	चयन (cmd) अणु
+	हाल FSCONFIG_CMD_CREATE:
+		अगर (fc->phase != FS_CONTEXT_CREATE_PARAMS)
+			वापस -EBUSY;
+		अगर (!mount_capable(fc))
+			वापस -EPERM;
 		fc->phase = FS_CONTEXT_CREATING;
 		ret = vfs_get_tree(fc);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		sb = fc->root->d_sb;
 		ret = security_sb_kern_mount(sb);
-		if (unlikely(ret)) {
+		अगर (unlikely(ret)) अणु
 			fc_drop_locked(fc);
-			break;
-		}
-		up_write(&sb->s_umount);
+			अवरोध;
+		पूर्ण
+		up_ग_लिखो(&sb->s_umount);
 		fc->phase = FS_CONTEXT_AWAITING_MOUNT;
-		return 0;
-	case FSCONFIG_CMD_RECONFIGURE:
-		if (fc->phase != FS_CONTEXT_RECONF_PARAMS)
-			return -EBUSY;
+		वापस 0;
+	हाल FSCONFIG_CMD_RECONFIGURE:
+		अगर (fc->phase != FS_CONTEXT_RECONF_PARAMS)
+			वापस -EBUSY;
 		fc->phase = FS_CONTEXT_RECONFIGURING;
 		sb = fc->root->d_sb;
-		if (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) {
+		अगर (!ns_capable(sb->s_user_ns, CAP_SYS_ADMIN)) अणु
 			ret = -EPERM;
-			break;
-		}
-		down_write(&sb->s_umount);
+			अवरोध;
+		पूर्ण
+		करोwn_ग_लिखो(&sb->s_umount);
 		ret = reconfigure_super(fc);
-		up_write(&sb->s_umount);
-		if (ret)
-			break;
+		up_ग_लिखो(&sb->s_umount);
+		अगर (ret)
+			अवरोध;
 		vfs_clean_context(fc);
-		return 0;
-	default:
-		if (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
+		वापस 0;
+	शेष:
+		अगर (fc->phase != FS_CONTEXT_CREATE_PARAMS &&
 		    fc->phase != FS_CONTEXT_RECONF_PARAMS)
-			return -EBUSY;
+			वापस -EBUSY;
 
-		return vfs_parse_fs_param(fc, param);
-	}
+		वापस vfs_parse_fs_param(fc, param);
+	पूर्ण
 	fc->phase = FS_CONTEXT_FAILED;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sys_fsconfig - Set parameters and trigger actions on a context
- * @fd: The filesystem context to act upon
+ * @fd: The fileप्रणाली context to act upon
  * @cmd: The action to take
  * @_key: Where appropriate, the parameter key to set
  * @_value: Where appropriate, the parameter value to set
- * @aux: Additional information for the value
+ * @aux: Additional inक्रमmation क्रम the value
  *
- * This system call is used to set parameters on a context, including
+ * This प्रणाली call is used to set parameters on a context, including
  * superblock settings, data source and security labelling.
  *
  * Actions include triggering the creation of a superblock and the
- * reconfiguration of the superblock attached to the specified context.
+ * reconfiguration of the superblock attached to the specअगरied context.
  *
  * When setting a parameter, @cmd indicates the type of value being proposed
  * and @_key indicates the parameter to be altered.
  *
- * @_value and @aux are used to specify the value, should a value be required:
+ * @_value and @aux are used to specअगरy the value, should a value be required:
  *
- * (*) fsconfig_set_flag: No value is specified.  The parameter must be boolean
+ * (*) fsconfig_set_flag: No value is specअगरied.  The parameter must be boolean
  *     in nature.  The key may be prefixed with "no" to invert the
- *     setting. @_value must be NULL and @aux must be 0.
+ *     setting. @_value must be शून्य and @aux must be 0.
  *
- * (*) fsconfig_set_string: A string value is specified.  The parameter can be
- *     expecting boolean, integer, string or take a path.  A conversion to an
+ * (*) fsconfig_set_string: A string value is specअगरied.  The parameter can be
+ *     expecting boolean, पूर्णांकeger, string or take a path.  A conversion to an
  *     appropriate type will be attempted (which may include looking up as a
- *     path).  @_value points to a NUL-terminated string and @aux must be 0.
+ *     path).  @_value poपूर्णांकs to a NUL-terminated string and @aux must be 0.
  *
- * (*) fsconfig_set_binary: A binary blob is specified.  @_value points to the
+ * (*) fsconfig_set_binary: A binary blob is specअगरied.  @_value poपूर्णांकs to the
  *     blob and @aux indicates its size.  The parameter must be expecting a
  *     blob.
  *
- * (*) fsconfig_set_path: A non-empty path is specified.  The parameter must be
- *     expecting a path object.  @_value points to a NUL-terminated string that
+ * (*) fsconfig_set_path: A non-empty path is specअगरied.  The parameter must be
+ *     expecting a path object.  @_value poपूर्णांकs to a NUL-terminated string that
  *     is the path and @aux is a file descriptor at which to start a relative
  *     lookup or AT_FDCWD.
  *
  * (*) fsconfig_set_path_empty: As fsconfig_set_path, but with AT_EMPTY_PATH
  *     implied.
  *
- * (*) fsconfig_set_fd: An open file descriptor is specified.  @_value must be
- *     NULL and @aux indicates the file descriptor.
+ * (*) fsconfig_set_fd: An खोलो file descriptor is specअगरied.  @_value must be
+ *     शून्य and @aux indicates the file descriptor.
  */
 SYSCALL_DEFINE5(fsconfig,
-		int, fd,
-		unsigned int, cmd,
-		const char __user *, _key,
-		const void __user *, _value,
-		int, aux)
-{
-	struct fs_context *fc;
-	struct fd f;
-	int ret;
-	int lookup_flags = 0;
+		पूर्णांक, fd,
+		अचिन्हित पूर्णांक, cmd,
+		स्थिर अक्षर __user *, _key,
+		स्थिर व्योम __user *, _value,
+		पूर्णांक, aux)
+अणु
+	काष्ठा fs_context *fc;
+	काष्ठा fd f;
+	पूर्णांक ret;
+	पूर्णांक lookup_flags = 0;
 
-	struct fs_parameter param = {
+	काष्ठा fs_parameter param = अणु
 		.type	= fs_value_is_undefined,
-	};
+	पूर्ण;
 
-	if (fd < 0)
-		return -EINVAL;
+	अगर (fd < 0)
+		वापस -EINVAL;
 
-	switch (cmd) {
-	case FSCONFIG_SET_FLAG:
-		if (!_key || _value || aux)
-			return -EINVAL;
-		break;
-	case FSCONFIG_SET_STRING:
-		if (!_key || !_value || aux)
-			return -EINVAL;
-		break;
-	case FSCONFIG_SET_BINARY:
-		if (!_key || !_value || aux <= 0 || aux > 1024 * 1024)
-			return -EINVAL;
-		break;
-	case FSCONFIG_SET_PATH:
-	case FSCONFIG_SET_PATH_EMPTY:
-		if (!_key || !_value || (aux != AT_FDCWD && aux < 0))
-			return -EINVAL;
-		break;
-	case FSCONFIG_SET_FD:
-		if (!_key || _value || aux < 0)
-			return -EINVAL;
-		break;
-	case FSCONFIG_CMD_CREATE:
-	case FSCONFIG_CMD_RECONFIGURE:
-		if (_key || _value || aux)
-			return -EINVAL;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	चयन (cmd) अणु
+	हाल FSCONFIG_SET_FLAG:
+		अगर (!_key || _value || aux)
+			वापस -EINVAL;
+		अवरोध;
+	हाल FSCONFIG_SET_STRING:
+		अगर (!_key || !_value || aux)
+			वापस -EINVAL;
+		अवरोध;
+	हाल FSCONFIG_SET_BINARY:
+		अगर (!_key || !_value || aux <= 0 || aux > 1024 * 1024)
+			वापस -EINVAL;
+		अवरोध;
+	हाल FSCONFIG_SET_PATH:
+	हाल FSCONFIG_SET_PATH_EMPTY:
+		अगर (!_key || !_value || (aux != AT_FDCWD && aux < 0))
+			वापस -EINVAL;
+		अवरोध;
+	हाल FSCONFIG_SET_FD:
+		अगर (!_key || _value || aux < 0)
+			वापस -EINVAL;
+		अवरोध;
+	हाल FSCONFIG_CMD_CREATE:
+	हाल FSCONFIG_CMD_RECONFIGURE:
+		अगर (_key || _value || aux)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	f = fdget(fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 	ret = -EINVAL;
-	if (f.file->f_op != &fscontext_fops)
-		goto out_f;
+	अगर (f.file->f_op != &fscontext_fops)
+		जाओ out_f;
 
-	fc = f.file->private_data;
-	if (fc->ops == &legacy_fs_context_ops) {
-		switch (cmd) {
-		case FSCONFIG_SET_BINARY:
-		case FSCONFIG_SET_PATH:
-		case FSCONFIG_SET_PATH_EMPTY:
-		case FSCONFIG_SET_FD:
+	fc = f.file->निजी_data;
+	अगर (fc->ops == &legacy_fs_context_ops) अणु
+		चयन (cmd) अणु
+		हाल FSCONFIG_SET_BINARY:
+		हाल FSCONFIG_SET_PATH:
+		हाल FSCONFIG_SET_PATH_EMPTY:
+		हाल FSCONFIG_SET_FD:
 			ret = -EOPNOTSUPP;
-			goto out_f;
-		}
-	}
+			जाओ out_f;
+		पूर्ण
+	पूर्ण
 
-	if (_key) {
+	अगर (_key) अणु
 		param.key = strndup_user(_key, 256);
-		if (IS_ERR(param.key)) {
+		अगर (IS_ERR(param.key)) अणु
 			ret = PTR_ERR(param.key);
-			goto out_f;
-		}
-	}
+			जाओ out_f;
+		पूर्ण
+	पूर्ण
 
-	switch (cmd) {
-	case FSCONFIG_SET_FLAG:
+	चयन (cmd) अणु
+	हाल FSCONFIG_SET_FLAG:
 		param.type = fs_value_is_flag;
-		break;
-	case FSCONFIG_SET_STRING:
+		अवरोध;
+	हाल FSCONFIG_SET_STRING:
 		param.type = fs_value_is_string;
 		param.string = strndup_user(_value, 256);
-		if (IS_ERR(param.string)) {
+		अगर (IS_ERR(param.string)) अणु
 			ret = PTR_ERR(param.string);
-			goto out_key;
-		}
-		param.size = strlen(param.string);
-		break;
-	case FSCONFIG_SET_BINARY:
+			जाओ out_key;
+		पूर्ण
+		param.size = म_माप(param.string);
+		अवरोध;
+	हाल FSCONFIG_SET_BINARY:
 		param.type = fs_value_is_blob;
 		param.size = aux;
 		param.blob = memdup_user_nul(_value, aux);
-		if (IS_ERR(param.blob)) {
+		अगर (IS_ERR(param.blob)) अणु
 			ret = PTR_ERR(param.blob);
-			goto out_key;
-		}
-		break;
-	case FSCONFIG_SET_PATH_EMPTY:
+			जाओ out_key;
+		पूर्ण
+		अवरोध;
+	हाल FSCONFIG_SET_PATH_EMPTY:
 		lookup_flags = LOOKUP_EMPTY;
 		fallthrough;
-	case FSCONFIG_SET_PATH:
+	हाल FSCONFIG_SET_PATH:
 		param.type = fs_value_is_filename;
-		param.name = getname_flags(_value, lookup_flags, NULL);
-		if (IS_ERR(param.name)) {
+		param.name = getname_flags(_value, lookup_flags, शून्य);
+		अगर (IS_ERR(param.name)) अणु
 			ret = PTR_ERR(param.name);
-			goto out_key;
-		}
+			जाओ out_key;
+		पूर्ण
 		param.dirfd = aux;
-		param.size = strlen(param.name->name);
-		break;
-	case FSCONFIG_SET_FD:
+		param.size = म_माप(param.name->name);
+		अवरोध;
+	हाल FSCONFIG_SET_FD:
 		param.type = fs_value_is_file;
 		ret = -EBADF;
 		param.file = fget(aux);
-		if (!param.file)
-			goto out_key;
-		break;
-	default:
-		break;
-	}
+		अगर (!param.file)
+			जाओ out_key;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	ret = mutex_lock_interruptible(&fc->uapi_mutex);
-	if (ret == 0) {
+	ret = mutex_lock_पूर्णांकerruptible(&fc->uapi_mutex);
+	अगर (ret == 0) अणु
 		ret = vfs_fsconfig_locked(fc, cmd, &param);
 		mutex_unlock(&fc->uapi_mutex);
-	}
+	पूर्ण
 
 	/* Clean up the our record of any value that we obtained from
 	 * userspace.  Note that the value may have been stolen by the LSM or
-	 * filesystem, in which case the value pointer will have been cleared.
+	 * fileप्रणाली, in which हाल the value poपूर्णांकer will have been cleared.
 	 */
-	switch (cmd) {
-	case FSCONFIG_SET_STRING:
-	case FSCONFIG_SET_BINARY:
-		kfree(param.string);
-		break;
-	case FSCONFIG_SET_PATH:
-	case FSCONFIG_SET_PATH_EMPTY:
-		if (param.name)
+	चयन (cmd) अणु
+	हाल FSCONFIG_SET_STRING:
+	हाल FSCONFIG_SET_BINARY:
+		kमुक्त(param.string);
+		अवरोध;
+	हाल FSCONFIG_SET_PATH:
+	हाल FSCONFIG_SET_PATH_EMPTY:
+		अगर (param.name)
 			putname(param.name);
-		break;
-	case FSCONFIG_SET_FD:
-		if (param.file)
+		अवरोध;
+	हाल FSCONFIG_SET_FD:
+		अगर (param.file)
 			fput(param.file);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 out_key:
-	kfree(param.key);
+	kमुक्त(param.key);
 out_f:
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण

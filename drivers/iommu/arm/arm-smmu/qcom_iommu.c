@@ -1,296 +1,297 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IOMMU API for QCOM secure IOMMUs.  Somewhat based on arm-smmu.c
+ * IOMMU API क्रम QCOM secure IOMMUs.  Somewhat based on arm-smmu.c
  *
  * Copyright (C) 2013 ARM Limited
  * Copyright (C) 2017 Red Hat
  */
 
-#include <linux/atomic.h>
-#include <linux/bitfield.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/dma-iommu.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/io-64-nonatomic-hi-lo.h>
-#include <linux/io-pgtable.h>
-#include <linux/iommu.h>
-#include <linux/iopoll.h>
-#include <linux/kconfig.h>
-#include <linux/init.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_iommu.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/qcom_scm.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-iommu.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/io-64-nonatomic-hi-lo.h>
+#समावेश <linux/io-pgtable.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kconfig.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_iommu.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/qcom_scm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include "arm-smmu.h"
+#समावेश "arm-smmu.h"
 
-#define SMMU_INTR_SEL_NS     0x2000
+#घोषणा SMMU_INTR_SEL_NS     0x2000
 
-enum qcom_iommu_clk {
+क्रमागत qcom_iommu_clk अणु
 	CLK_IFACE,
 	CLK_BUS,
 	CLK_TBU,
 	CLK_NUM,
-};
+पूर्ण;
 
-struct qcom_iommu_ctx;
+काष्ठा qcom_iommu_ctx;
 
-struct qcom_iommu_dev {
+काष्ठा qcom_iommu_dev अणु
 	/* IOMMU core code handle */
-	struct iommu_device	 iommu;
-	struct device		*dev;
-	struct clk_bulk_data clks[CLK_NUM];
-	void __iomem		*local_base;
+	काष्ठा iommu_device	 iommu;
+	काष्ठा device		*dev;
+	काष्ठा clk_bulk_data clks[CLK_NUM];
+	व्योम __iomem		*local_base;
 	u32			 sec_id;
 	u8			 num_ctxs;
-	struct qcom_iommu_ctx	*ctxs[];   /* indexed by asid-1 */
-};
+	काष्ठा qcom_iommu_ctx	*ctxs[];   /* indexed by asid-1 */
+पूर्ण;
 
-struct qcom_iommu_ctx {
-	struct device		*dev;
-	void __iomem		*base;
+काष्ठा qcom_iommu_ctx अणु
+	काष्ठा device		*dev;
+	व्योम __iomem		*base;
 	bool			 secure_init;
 	u8			 asid;      /* asid and ctx bank # are 1:1 */
-	struct iommu_domain	*domain;
-};
+	काष्ठा iommu_करोमुख्य	*करोमुख्य;
+पूर्ण;
 
-struct qcom_iommu_domain {
-	struct io_pgtable_ops	*pgtbl_ops;
+काष्ठा qcom_iommu_करोमुख्य अणु
+	काष्ठा io_pgtable_ops	*pgtbl_ops;
 	spinlock_t		 pgtbl_lock;
-	struct mutex		 init_mutex; /* Protects iommu pointer */
-	struct iommu_domain	 domain;
-	struct qcom_iommu_dev	*iommu;
-	struct iommu_fwspec	*fwspec;
-};
+	काष्ठा mutex		 init_mutex; /* Protects iommu poपूर्णांकer */
+	काष्ठा iommu_करोमुख्य	 करोमुख्य;
+	काष्ठा qcom_iommu_dev	*iommu;
+	काष्ठा iommu_fwspec	*fwspec;
+पूर्ण;
 
-static struct qcom_iommu_domain *to_qcom_iommu_domain(struct iommu_domain *dom)
-{
-	return container_of(dom, struct qcom_iommu_domain, domain);
-}
+अटल काष्ठा qcom_iommu_करोमुख्य *to_qcom_iommu_करोमुख्य(काष्ठा iommu_करोमुख्य *करोm)
+अणु
+	वापस container_of(करोm, काष्ठा qcom_iommu_करोमुख्य, करोमुख्य);
+पूर्ण
 
-static const struct iommu_ops qcom_iommu_ops;
+अटल स्थिर काष्ठा iommu_ops qcom_iommu_ops;
 
-static struct qcom_iommu_dev * to_iommu(struct device *dev)
-{
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+अटल काष्ठा qcom_iommu_dev * to_iommu(काष्ठा device *dev)
+अणु
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
 
-	if (!fwspec || fwspec->ops != &qcom_iommu_ops)
-		return NULL;
+	अगर (!fwspec || fwspec->ops != &qcom_iommu_ops)
+		वापस शून्य;
 
-	return dev_iommu_priv_get(dev);
-}
+	वापस dev_iommu_priv_get(dev);
+पूर्ण
 
-static struct qcom_iommu_ctx * to_ctx(struct qcom_iommu_domain *d, unsigned asid)
-{
-	struct qcom_iommu_dev *qcom_iommu = d->iommu;
-	if (!qcom_iommu)
-		return NULL;
-	return qcom_iommu->ctxs[asid - 1];
-}
+अटल काष्ठा qcom_iommu_ctx * to_ctx(काष्ठा qcom_iommu_करोमुख्य *d, अचिन्हित asid)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = d->iommu;
+	अगर (!qcom_iommu)
+		वापस शून्य;
+	वापस qcom_iommu->ctxs[asid - 1];
+पूर्ण
 
-static inline void
-iommu_writel(struct qcom_iommu_ctx *ctx, unsigned reg, u32 val)
-{
-	writel_relaxed(val, ctx->base + reg);
-}
+अटल अंतरभूत व्योम
+iommu_ग_लिखोl(काष्ठा qcom_iommu_ctx *ctx, अचिन्हित reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, ctx->base + reg);
+पूर्ण
 
-static inline void
-iommu_writeq(struct qcom_iommu_ctx *ctx, unsigned reg, u64 val)
-{
-	writeq_relaxed(val, ctx->base + reg);
-}
+अटल अंतरभूत व्योम
+iommu_ग_लिखोq(काष्ठा qcom_iommu_ctx *ctx, अचिन्हित reg, u64 val)
+अणु
+	ग_लिखोq_relaxed(val, ctx->base + reg);
+पूर्ण
 
-static inline u32
-iommu_readl(struct qcom_iommu_ctx *ctx, unsigned reg)
-{
-	return readl_relaxed(ctx->base + reg);
-}
+अटल अंतरभूत u32
+iommu_पढ़ोl(काष्ठा qcom_iommu_ctx *ctx, अचिन्हित reg)
+अणु
+	वापस पढ़ोl_relaxed(ctx->base + reg);
+पूर्ण
 
-static inline u64
-iommu_readq(struct qcom_iommu_ctx *ctx, unsigned reg)
-{
-	return readq_relaxed(ctx->base + reg);
-}
+अटल अंतरभूत u64
+iommu_पढ़ोq(काष्ठा qcom_iommu_ctx *ctx, अचिन्हित reg)
+अणु
+	वापस पढ़ोq_relaxed(ctx->base + reg);
+पूर्ण
 
-static void qcom_iommu_tlb_sync(void *cookie)
-{
-	struct qcom_iommu_domain *qcom_domain = cookie;
-	struct iommu_fwspec *fwspec = qcom_domain->fwspec;
-	unsigned i;
+अटल व्योम qcom_iommu_tlb_sync(व्योम *cookie)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = cookie;
+	काष्ठा iommu_fwspec *fwspec = qcom_करोमुख्य->fwspec;
+	अचिन्हित i;
 
-	for (i = 0; i < fwspec->num_ids; i++) {
-		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
-		unsigned int val, ret;
+	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
+		काष्ठा qcom_iommu_ctx *ctx = to_ctx(qcom_करोमुख्य, fwspec->ids[i]);
+		अचिन्हित पूर्णांक val, ret;
 
-		iommu_writel(ctx, ARM_SMMU_CB_TLBSYNC, 0);
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_TLBSYNC, 0);
 
-		ret = readl_poll_timeout(ctx->base + ARM_SMMU_CB_TLBSTATUS, val,
+		ret = पढ़ोl_poll_समयout(ctx->base + ARM_SMMU_CB_TLBSTATUS, val,
 					 (val & 0x1) == 0, 0, 5000000);
-		if (ret)
+		अगर (ret)
 			dev_err(ctx->dev, "timeout waiting for TLB SYNC\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void qcom_iommu_tlb_inv_context(void *cookie)
-{
-	struct qcom_iommu_domain *qcom_domain = cookie;
-	struct iommu_fwspec *fwspec = qcom_domain->fwspec;
-	unsigned i;
+अटल व्योम qcom_iommu_tlb_inv_context(व्योम *cookie)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = cookie;
+	काष्ठा iommu_fwspec *fwspec = qcom_करोमुख्य->fwspec;
+	अचिन्हित i;
 
-	for (i = 0; i < fwspec->num_ids; i++) {
-		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
-		iommu_writel(ctx, ARM_SMMU_CB_S1_TLBIASID, ctx->asid);
-	}
+	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
+		काष्ठा qcom_iommu_ctx *ctx = to_ctx(qcom_करोमुख्य, fwspec->ids[i]);
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_S1_TLBIASID, ctx->asid);
+	पूर्ण
 
 	qcom_iommu_tlb_sync(cookie);
-}
+पूर्ण
 
-static void qcom_iommu_tlb_inv_range_nosync(unsigned long iova, size_t size,
-					    size_t granule, bool leaf, void *cookie)
-{
-	struct qcom_iommu_domain *qcom_domain = cookie;
-	struct iommu_fwspec *fwspec = qcom_domain->fwspec;
-	unsigned i, reg;
+अटल व्योम qcom_iommu_tlb_inv_range_nosync(अचिन्हित दीर्घ iova, माप_प्रकार size,
+					    माप_प्रकार granule, bool leaf, व्योम *cookie)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = cookie;
+	काष्ठा iommu_fwspec *fwspec = qcom_करोमुख्य->fwspec;
+	अचिन्हित i, reg;
 
 	reg = leaf ? ARM_SMMU_CB_S1_TLBIVAL : ARM_SMMU_CB_S1_TLBIVA;
 
-	for (i = 0; i < fwspec->num_ids; i++) {
-		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
-		size_t s = size;
+	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
+		काष्ठा qcom_iommu_ctx *ctx = to_ctx(qcom_करोमुख्य, fwspec->ids[i]);
+		माप_प्रकार s = size;
 
 		iova = (iova >> 12) << 12;
 		iova |= ctx->asid;
-		do {
-			iommu_writel(ctx, reg, iova);
+		करो अणु
+			iommu_ग_लिखोl(ctx, reg, iova);
 			iova += granule;
-		} while (s -= granule);
-	}
-}
+		पूर्ण जबतक (s -= granule);
+	पूर्ण
+पूर्ण
 
-static void qcom_iommu_tlb_flush_walk(unsigned long iova, size_t size,
-				      size_t granule, void *cookie)
-{
+अटल व्योम qcom_iommu_tlb_flush_walk(अचिन्हित दीर्घ iova, माप_प्रकार size,
+				      माप_प्रकार granule, व्योम *cookie)
+अणु
 	qcom_iommu_tlb_inv_range_nosync(iova, size, granule, false, cookie);
 	qcom_iommu_tlb_sync(cookie);
-}
+पूर्ण
 
-static void qcom_iommu_tlb_add_page(struct iommu_iotlb_gather *gather,
-				    unsigned long iova, size_t granule,
-				    void *cookie)
-{
+अटल व्योम qcom_iommu_tlb_add_page(काष्ठा iommu_iotlb_gather *gather,
+				    अचिन्हित दीर्घ iova, माप_प्रकार granule,
+				    व्योम *cookie)
+अणु
 	qcom_iommu_tlb_inv_range_nosync(iova, granule, granule, true, cookie);
-}
+पूर्ण
 
-static const struct iommu_flush_ops qcom_flush_ops = {
+अटल स्थिर काष्ठा iommu_flush_ops qcom_flush_ops = अणु
 	.tlb_flush_all	= qcom_iommu_tlb_inv_context,
 	.tlb_flush_walk = qcom_iommu_tlb_flush_walk,
 	.tlb_add_page	= qcom_iommu_tlb_add_page,
-};
+पूर्ण;
 
-static irqreturn_t qcom_iommu_fault(int irq, void *dev)
-{
-	struct qcom_iommu_ctx *ctx = dev;
+अटल irqवापस_t qcom_iommu_fault(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा qcom_iommu_ctx *ctx = dev;
 	u32 fsr, fsynr;
 	u64 iova;
 
-	fsr = iommu_readl(ctx, ARM_SMMU_CB_FSR);
+	fsr = iommu_पढ़ोl(ctx, ARM_SMMU_CB_FSR);
 
-	if (!(fsr & ARM_SMMU_FSR_FAULT))
-		return IRQ_NONE;
+	अगर (!(fsr & ARM_SMMU_FSR_FAULT))
+		वापस IRQ_NONE;
 
-	fsynr = iommu_readl(ctx, ARM_SMMU_CB_FSYNR0);
-	iova = iommu_readq(ctx, ARM_SMMU_CB_FAR);
+	fsynr = iommu_पढ़ोl(ctx, ARM_SMMU_CB_FSYNR0);
+	iova = iommu_पढ़ोq(ctx, ARM_SMMU_CB_FAR);
 
-	if (!report_iommu_fault(ctx->domain, ctx->dev, iova, 0)) {
+	अगर (!report_iommu_fault(ctx->करोमुख्य, ctx->dev, iova, 0)) अणु
 		dev_err_ratelimited(ctx->dev,
 				    "Unhandled context fault: fsr=0x%x, "
 				    "iova=0x%016llx, fsynr=0x%x, cb=%d\n",
 				    fsr, iova, fsynr, ctx->asid);
-	}
+	पूर्ण
 
-	iommu_writel(ctx, ARM_SMMU_CB_FSR, fsr);
-	iommu_writel(ctx, ARM_SMMU_CB_RESUME, ARM_SMMU_RESUME_TERMINATE);
+	iommu_ग_लिखोl(ctx, ARM_SMMU_CB_FSR, fsr);
+	iommu_ग_लिखोl(ctx, ARM_SMMU_CB_RESUME, ARM_SMMU_RESUME_TERMINATE);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int qcom_iommu_init_domain(struct iommu_domain *domain,
-				  struct qcom_iommu_dev *qcom_iommu,
-				  struct device *dev)
-{
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	struct io_pgtable_ops *pgtbl_ops;
-	struct io_pgtable_cfg pgtbl_cfg;
-	int i, ret = 0;
+अटल पूर्णांक qcom_iommu_init_करोमुख्य(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				  काष्ठा qcom_iommu_dev *qcom_iommu,
+				  काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	काष्ठा io_pgtable_ops *pgtbl_ops;
+	काष्ठा io_pgtable_cfg pgtbl_cfg;
+	पूर्णांक i, ret = 0;
 	u32 reg;
 
-	mutex_lock(&qcom_domain->init_mutex);
-	if (qcom_domain->iommu)
-		goto out_unlock;
+	mutex_lock(&qcom_करोमुख्य->init_mutex);
+	अगर (qcom_करोमुख्य->iommu)
+		जाओ out_unlock;
 
-	pgtbl_cfg = (struct io_pgtable_cfg) {
-		.pgsize_bitmap	= qcom_iommu_ops.pgsize_bitmap,
+	pgtbl_cfg = (काष्ठा io_pgtable_cfg) अणु
+		.pgsize_biपंचांगap	= qcom_iommu_ops.pgsize_biपंचांगap,
 		.ias		= 32,
 		.oas		= 40,
 		.tlb		= &qcom_flush_ops,
 		.iommu_dev	= qcom_iommu->dev,
-	};
+	पूर्ण;
 
-	qcom_domain->iommu = qcom_iommu;
-	qcom_domain->fwspec = fwspec;
+	qcom_करोमुख्य->iommu = qcom_iommu;
+	qcom_करोमुख्य->fwspec = fwspec;
 
-	pgtbl_ops = alloc_io_pgtable_ops(ARM_32_LPAE_S1, &pgtbl_cfg, qcom_domain);
-	if (!pgtbl_ops) {
+	pgtbl_ops = alloc_io_pgtable_ops(ARM_32_LPAE_S1, &pgtbl_cfg, qcom_करोमुख्य);
+	अगर (!pgtbl_ops) अणु
 		dev_err(qcom_iommu->dev, "failed to allocate pagetable ops\n");
 		ret = -ENOMEM;
-		goto out_clear_iommu;
-	}
+		जाओ out_clear_iommu;
+	पूर्ण
 
-	/* Update the domain's page sizes to reflect the page table format */
-	domain->pgsize_bitmap = pgtbl_cfg.pgsize_bitmap;
-	domain->geometry.aperture_end = (1ULL << pgtbl_cfg.ias) - 1;
-	domain->geometry.force_aperture = true;
+	/* Update the करोमुख्य's page sizes to reflect the page table क्रमmat */
+	करोमुख्य->pgsize_biपंचांगap = pgtbl_cfg.pgsize_biपंचांगap;
+	करोमुख्य->geometry.aperture_end = (1ULL << pgtbl_cfg.ias) - 1;
+	करोमुख्य->geometry.क्रमce_aperture = true;
 
-	for (i = 0; i < fwspec->num_ids; i++) {
-		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
+	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
+		काष्ठा qcom_iommu_ctx *ctx = to_ctx(qcom_करोमुख्य, fwspec->ids[i]);
 
-		if (!ctx->secure_init) {
+		अगर (!ctx->secure_init) अणु
 			ret = qcom_scm_restore_sec_cfg(qcom_iommu->sec_id, ctx->asid);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(qcom_iommu->dev, "secure init failed: %d\n", ret);
-				goto out_clear_iommu;
-			}
+				जाओ out_clear_iommu;
+			पूर्ण
 			ctx->secure_init = true;
-		}
+		पूर्ण
 
 		/* TTBRs */
-		iommu_writeq(ctx, ARM_SMMU_CB_TTBR0,
+		iommu_ग_लिखोq(ctx, ARM_SMMU_CB_TTBR0,
 				pgtbl_cfg.arm_lpae_s1_cfg.ttbr |
 				FIELD_PREP(ARM_SMMU_TTBRn_ASID, ctx->asid));
-		iommu_writeq(ctx, ARM_SMMU_CB_TTBR1, 0);
+		iommu_ग_लिखोq(ctx, ARM_SMMU_CB_TTBR1, 0);
 
 		/* TCR */
-		iommu_writel(ctx, ARM_SMMU_CB_TCR2,
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_TCR2,
 				arm_smmu_lpae_tcr2(&pgtbl_cfg));
-		iommu_writel(ctx, ARM_SMMU_CB_TCR,
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_TCR,
 			     arm_smmu_lpae_tcr(&pgtbl_cfg) | ARM_SMMU_TCR_EAE);
 
 		/* MAIRs (stage-1 only) */
-		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR0,
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_S1_MAIR0,
 				pgtbl_cfg.arm_lpae_s1_cfg.mair);
-		iommu_writel(ctx, ARM_SMMU_CB_S1_MAIR1,
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_S1_MAIR1,
 				pgtbl_cfg.arm_lpae_s1_cfg.mair >> 32);
 
 		/* SCTLR */
@@ -299,308 +300,308 @@ static int qcom_iommu_init_domain(struct iommu_domain *domain,
 		      ARM_SMMU_SCTLR_M | ARM_SMMU_SCTLR_S1_ASIDPNE |
 		      ARM_SMMU_SCTLR_CFCFG;
 
-		if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		अगर (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 			reg |= ARM_SMMU_SCTLR_E;
 
-		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, reg);
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_SCTLR, reg);
 
-		ctx->domain = domain;
-	}
+		ctx->करोमुख्य = करोमुख्य;
+	पूर्ण
 
-	mutex_unlock(&qcom_domain->init_mutex);
+	mutex_unlock(&qcom_करोमुख्य->init_mutex);
 
-	/* Publish page table ops for map/unmap */
-	qcom_domain->pgtbl_ops = pgtbl_ops;
+	/* Publish page table ops क्रम map/unmap */
+	qcom_करोमुख्य->pgtbl_ops = pgtbl_ops;
 
-	return 0;
+	वापस 0;
 
 out_clear_iommu:
-	qcom_domain->iommu = NULL;
+	qcom_करोमुख्य->iommu = शून्य;
 out_unlock:
-	mutex_unlock(&qcom_domain->init_mutex);
-	return ret;
-}
+	mutex_unlock(&qcom_करोमुख्य->init_mutex);
+	वापस ret;
+पूर्ण
 
-static struct iommu_domain *qcom_iommu_domain_alloc(unsigned type)
-{
-	struct qcom_iommu_domain *qcom_domain;
+अटल काष्ठा iommu_करोमुख्य *qcom_iommu_करोमुख्य_alloc(अचिन्हित type)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य;
 
-	if (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_DMA)
-		return NULL;
+	अगर (type != IOMMU_DOMAIN_UNMANAGED && type != IOMMU_DOMAIN_DMA)
+		वापस शून्य;
 	/*
-	 * Allocate the domain and initialise some of its data structures.
+	 * Allocate the करोमुख्य and initialise some of its data काष्ठाures.
 	 * We can't really do anything meaningful until we've added a
 	 * master.
 	 */
-	qcom_domain = kzalloc(sizeof(*qcom_domain), GFP_KERNEL);
-	if (!qcom_domain)
-		return NULL;
+	qcom_करोमुख्य = kzalloc(माप(*qcom_करोमुख्य), GFP_KERNEL);
+	अगर (!qcom_करोमुख्य)
+		वापस शून्य;
 
-	if (type == IOMMU_DOMAIN_DMA &&
-	    iommu_get_dma_cookie(&qcom_domain->domain)) {
-		kfree(qcom_domain);
-		return NULL;
-	}
+	अगर (type == IOMMU_DOMAIN_DMA &&
+	    iommu_get_dma_cookie(&qcom_करोमुख्य->करोमुख्य)) अणु
+		kमुक्त(qcom_करोमुख्य);
+		वापस शून्य;
+	पूर्ण
 
-	mutex_init(&qcom_domain->init_mutex);
-	spin_lock_init(&qcom_domain->pgtbl_lock);
+	mutex_init(&qcom_करोमुख्य->init_mutex);
+	spin_lock_init(&qcom_करोमुख्य->pgtbl_lock);
 
-	return &qcom_domain->domain;
-}
+	वापस &qcom_करोमुख्य->करोमुख्य;
+पूर्ण
 
-static void qcom_iommu_domain_free(struct iommu_domain *domain)
-{
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
+अटल व्योम qcom_iommu_करोमुख्य_मुक्त(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
 
-	iommu_put_dma_cookie(domain);
+	iommu_put_dma_cookie(करोमुख्य);
 
-	if (qcom_domain->iommu) {
+	अगर (qcom_करोमुख्य->iommu) अणु
 		/*
-		 * NOTE: unmap can be called after client device is powered
-		 * off, for example, with GPUs or anything involving dma-buf.
+		 * NOTE: unmap can be called after client device is घातered
+		 * off, क्रम example, with GPUs or anything involving dma-buf.
 		 * So we cannot rely on the device_link.  Make sure the IOMMU
-		 * is on to avoid unclocked accesses in the TLB inv path:
+		 * is on to aव्योम unघड़ीed accesses in the TLB inv path:
 		 */
-		pm_runtime_get_sync(qcom_domain->iommu->dev);
-		free_io_pgtable_ops(qcom_domain->pgtbl_ops);
-		pm_runtime_put_sync(qcom_domain->iommu->dev);
-	}
+		pm_runसमय_get_sync(qcom_करोमुख्य->iommu->dev);
+		मुक्त_io_pgtable_ops(qcom_करोमुख्य->pgtbl_ops);
+		pm_runसमय_put_sync(qcom_करोमुख्य->iommu->dev);
+	पूर्ण
 
-	kfree(qcom_domain);
-}
+	kमुक्त(qcom_करोमुख्य);
+पूर्ण
 
-static int qcom_iommu_attach_dev(struct iommu_domain *domain, struct device *dev)
-{
-	struct qcom_iommu_dev *qcom_iommu = to_iommu(dev);
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	int ret;
+अटल पूर्णांक qcom_iommu_attach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = to_iommu(dev);
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	पूर्णांक ret;
 
-	if (!qcom_iommu) {
+	अगर (!qcom_iommu) अणु
 		dev_err(dev, "cannot attach to IOMMU, is it on the same bus?\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	/* Ensure that the domain is finalized */
-	pm_runtime_get_sync(qcom_iommu->dev);
-	ret = qcom_iommu_init_domain(domain, qcom_iommu, dev);
-	pm_runtime_put_sync(qcom_iommu->dev);
-	if (ret < 0)
-		return ret;
+	/* Ensure that the करोमुख्य is finalized */
+	pm_runसमय_get_sync(qcom_iommu->dev);
+	ret = qcom_iommu_init_करोमुख्य(करोमुख्य, qcom_iommu, dev);
+	pm_runसमय_put_sync(qcom_iommu->dev);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * Sanity check the domain. We don't support domains across
-	 * different IOMMUs.
+	 * Sanity check the करोमुख्य. We करोn't support करोमुख्यs across
+	 * dअगरferent IOMMUs.
 	 */
-	if (qcom_domain->iommu != qcom_iommu) {
+	अगर (qcom_करोमुख्य->iommu != qcom_iommu) अणु
 		dev_err(dev, "cannot attach to IOMMU %s while already "
 			"attached to domain on IOMMU %s\n",
-			dev_name(qcom_domain->iommu->dev),
+			dev_name(qcom_करोमुख्य->iommu->dev),
 			dev_name(qcom_iommu->dev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qcom_iommu_detach_dev(struct iommu_domain *domain, struct device *dev)
-{
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
-	struct qcom_iommu_dev *qcom_iommu = to_iommu(dev);
-	unsigned i;
+अटल व्योम qcom_iommu_detach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा iommu_fwspec *fwspec = dev_iommu_fwspec_get(dev);
+	काष्ठा qcom_iommu_dev *qcom_iommu = to_iommu(dev);
+	अचिन्हित i;
 
-	if (WARN_ON(!qcom_domain->iommu))
-		return;
+	अगर (WARN_ON(!qcom_करोमुख्य->iommu))
+		वापस;
 
-	pm_runtime_get_sync(qcom_iommu->dev);
-	for (i = 0; i < fwspec->num_ids; i++) {
-		struct qcom_iommu_ctx *ctx = to_ctx(qcom_domain, fwspec->ids[i]);
+	pm_runसमय_get_sync(qcom_iommu->dev);
+	क्रम (i = 0; i < fwspec->num_ids; i++) अणु
+		काष्ठा qcom_iommu_ctx *ctx = to_ctx(qcom_करोमुख्य, fwspec->ids[i]);
 
 		/* Disable the context bank: */
-		iommu_writel(ctx, ARM_SMMU_CB_SCTLR, 0);
+		iommu_ग_लिखोl(ctx, ARM_SMMU_CB_SCTLR, 0);
 
-		ctx->domain = NULL;
-	}
-	pm_runtime_put_sync(qcom_iommu->dev);
-}
+		ctx->करोमुख्य = शून्य;
+	पूर्ण
+	pm_runसमय_put_sync(qcom_iommu->dev);
+पूर्ण
 
-static int qcom_iommu_map(struct iommu_domain *domain, unsigned long iova,
-			  phys_addr_t paddr, size_t size, int prot, gfp_t gfp)
-{
-	int ret;
-	unsigned long flags;
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct io_pgtable_ops *ops = qcom_domain->pgtbl_ops;
+अटल पूर्णांक qcom_iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+			  phys_addr_t paddr, माप_प्रकार size, पूर्णांक prot, gfp_t gfp)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा io_pgtable_ops *ops = qcom_करोमुख्य->pgtbl_ops;
 
-	if (!ops)
-		return -ENODEV;
+	अगर (!ops)
+		वापस -ENODEV;
 
-	spin_lock_irqsave(&qcom_domain->pgtbl_lock, flags);
+	spin_lock_irqsave(&qcom_करोमुख्य->pgtbl_lock, flags);
 	ret = ops->map(ops, iova, paddr, size, prot, GFP_ATOMIC);
-	spin_unlock_irqrestore(&qcom_domain->pgtbl_lock, flags);
-	return ret;
-}
+	spin_unlock_irqrestore(&qcom_करोमुख्य->pgtbl_lock, flags);
+	वापस ret;
+पूर्ण
 
-static size_t qcom_iommu_unmap(struct iommu_domain *domain, unsigned long iova,
-			       size_t size, struct iommu_iotlb_gather *gather)
-{
-	size_t ret;
-	unsigned long flags;
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct io_pgtable_ops *ops = qcom_domain->pgtbl_ops;
+अटल माप_प्रकार qcom_iommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ iova,
+			       माप_प्रकार size, काष्ठा iommu_iotlb_gather *gather)
+अणु
+	माप_प्रकार ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा io_pgtable_ops *ops = qcom_करोमुख्य->pgtbl_ops;
 
-	if (!ops)
-		return 0;
+	अगर (!ops)
+		वापस 0;
 
-	/* NOTE: unmap can be called after client device is powered off,
-	 * for example, with GPUs or anything involving dma-buf.  So we
+	/* NOTE: unmap can be called after client device is घातered off,
+	 * क्रम example, with GPUs or anything involving dma-buf.  So we
 	 * cannot rely on the device_link.  Make sure the IOMMU is on to
-	 * avoid unclocked accesses in the TLB inv path:
+	 * aव्योम unघड़ीed accesses in the TLB inv path:
 	 */
-	pm_runtime_get_sync(qcom_domain->iommu->dev);
-	spin_lock_irqsave(&qcom_domain->pgtbl_lock, flags);
+	pm_runसमय_get_sync(qcom_करोमुख्य->iommu->dev);
+	spin_lock_irqsave(&qcom_करोमुख्य->pgtbl_lock, flags);
 	ret = ops->unmap(ops, iova, size, gather);
-	spin_unlock_irqrestore(&qcom_domain->pgtbl_lock, flags);
-	pm_runtime_put_sync(qcom_domain->iommu->dev);
+	spin_unlock_irqrestore(&qcom_करोमुख्य->pgtbl_lock, flags);
+	pm_runसमय_put_sync(qcom_करोमुख्य->iommu->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qcom_iommu_flush_iotlb_all(struct iommu_domain *domain)
-{
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct io_pgtable *pgtable = container_of(qcom_domain->pgtbl_ops,
-						  struct io_pgtable, ops);
-	if (!qcom_domain->pgtbl_ops)
-		return;
+अटल व्योम qcom_iommu_flush_iotlb_all(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा io_pgtable *pgtable = container_of(qcom_करोमुख्य->pgtbl_ops,
+						  काष्ठा io_pgtable, ops);
+	अगर (!qcom_करोमुख्य->pgtbl_ops)
+		वापस;
 
-	pm_runtime_get_sync(qcom_domain->iommu->dev);
+	pm_runसमय_get_sync(qcom_करोमुख्य->iommu->dev);
 	qcom_iommu_tlb_sync(pgtable->cookie);
-	pm_runtime_put_sync(qcom_domain->iommu->dev);
-}
+	pm_runसमय_put_sync(qcom_करोमुख्य->iommu->dev);
+पूर्ण
 
-static void qcom_iommu_iotlb_sync(struct iommu_domain *domain,
-				  struct iommu_iotlb_gather *gather)
-{
-	qcom_iommu_flush_iotlb_all(domain);
-}
+अटल व्योम qcom_iommu_iotlb_sync(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				  काष्ठा iommu_iotlb_gather *gather)
+अणु
+	qcom_iommu_flush_iotlb_all(करोमुख्य);
+पूर्ण
 
-static phys_addr_t qcom_iommu_iova_to_phys(struct iommu_domain *domain,
+अटल phys_addr_t qcom_iommu_iova_to_phys(काष्ठा iommu_करोमुख्य *करोमुख्य,
 					   dma_addr_t iova)
-{
+अणु
 	phys_addr_t ret;
-	unsigned long flags;
-	struct qcom_iommu_domain *qcom_domain = to_qcom_iommu_domain(domain);
-	struct io_pgtable_ops *ops = qcom_domain->pgtbl_ops;
+	अचिन्हित दीर्घ flags;
+	काष्ठा qcom_iommu_करोमुख्य *qcom_करोमुख्य = to_qcom_iommu_करोमुख्य(करोमुख्य);
+	काष्ठा io_pgtable_ops *ops = qcom_करोमुख्य->pgtbl_ops;
 
-	if (!ops)
-		return 0;
+	अगर (!ops)
+		वापस 0;
 
-	spin_lock_irqsave(&qcom_domain->pgtbl_lock, flags);
+	spin_lock_irqsave(&qcom_करोमुख्य->pgtbl_lock, flags);
 	ret = ops->iova_to_phys(ops, iova);
-	spin_unlock_irqrestore(&qcom_domain->pgtbl_lock, flags);
+	spin_unlock_irqrestore(&qcom_करोमुख्य->pgtbl_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool qcom_iommu_capable(enum iommu_cap cap)
-{
-	switch (cap) {
-	case IOMMU_CAP_CACHE_COHERENCY:
+अटल bool qcom_iommu_capable(क्रमागत iommu_cap cap)
+अणु
+	चयन (cap) अणु
+	हाल IOMMU_CAP_CACHE_COHERENCY:
 		/*
 		 * Return true here as the SMMU can always send out coherent
 		 * requests.
 		 */
-		return true;
-	case IOMMU_CAP_NOEXEC:
-		return true;
-	default:
-		return false;
-	}
-}
+		वापस true;
+	हाल IOMMU_CAP_NOEXEC:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static struct iommu_device *qcom_iommu_probe_device(struct device *dev)
-{
-	struct qcom_iommu_dev *qcom_iommu = to_iommu(dev);
-	struct device_link *link;
+अटल काष्ठा iommu_device *qcom_iommu_probe_device(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = to_iommu(dev);
+	काष्ठा device_link *link;
 
-	if (!qcom_iommu)
-		return ERR_PTR(-ENODEV);
+	अगर (!qcom_iommu)
+		वापस ERR_PTR(-ENODEV);
 
 	/*
 	 * Establish the link between iommu and master, so that the
-	 * iommu gets runtime enabled/disabled as per the master's
+	 * iommu माला_लो runसमय enabled/disabled as per the master's
 	 * needs.
 	 */
 	link = device_link_add(dev, qcom_iommu->dev, DL_FLAG_PM_RUNTIME);
-	if (!link) {
+	अगर (!link) अणु
 		dev_err(qcom_iommu->dev, "Unable to create device link between %s and %s\n",
 			dev_name(qcom_iommu->dev), dev_name(dev));
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	return &qcom_iommu->iommu;
-}
+	वापस &qcom_iommu->iommu;
+पूर्ण
 
-static void qcom_iommu_release_device(struct device *dev)
-{
-	struct qcom_iommu_dev *qcom_iommu = to_iommu(dev);
+अटल व्योम qcom_iommu_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = to_iommu(dev);
 
-	if (!qcom_iommu)
-		return;
+	अगर (!qcom_iommu)
+		वापस;
 
-	iommu_fwspec_free(dev);
-}
+	iommu_fwspec_मुक्त(dev);
+पूर्ण
 
-static int qcom_iommu_of_xlate(struct device *dev, struct of_phandle_args *args)
-{
-	struct qcom_iommu_dev *qcom_iommu;
-	struct platform_device *iommu_pdev;
-	unsigned asid = args->args[0];
+अटल पूर्णांक qcom_iommu_of_xlate(काष्ठा device *dev, काष्ठा of_phandle_args *args)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu;
+	काष्ठा platक्रमm_device *iommu_pdev;
+	अचिन्हित asid = args->args[0];
 
-	if (args->args_count != 1) {
+	अगर (args->args_count != 1) अणु
 		dev_err(dev, "incorrect number of iommu params found for %s "
 			"(found %d, expected 1)\n",
 			args->np->full_name, args->args_count);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	iommu_pdev = of_find_device_by_node(args->np);
-	if (WARN_ON(!iommu_pdev))
-		return -EINVAL;
+	अगर (WARN_ON(!iommu_pdev))
+		वापस -EINVAL;
 
-	qcom_iommu = platform_get_drvdata(iommu_pdev);
+	qcom_iommu = platक्रमm_get_drvdata(iommu_pdev);
 
-	/* make sure the asid specified in dt is valid, so we don't have
-	 * to sanity check this elsewhere, since 'asid - 1' is used to
-	 * index into qcom_iommu->ctxs:
+	/* make sure the asid specअगरied in dt is valid, so we करोn't have
+	 * to sanity check this अन्यथाwhere, since 'asid - 1' is used to
+	 * index पूर्णांकo qcom_iommu->ctxs:
 	 */
-	if (WARN_ON(asid < 1) ||
-	    WARN_ON(asid > qcom_iommu->num_ctxs)) {
+	अगर (WARN_ON(asid < 1) ||
+	    WARN_ON(asid > qcom_iommu->num_ctxs)) अणु
 		put_device(&iommu_pdev->dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!dev_iommu_priv_get(dev)) {
+	अगर (!dev_iommu_priv_get(dev)) अणु
 		dev_iommu_priv_set(dev, qcom_iommu);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* make sure devices iommus dt node isn't referring to
-		 * multiple different iommu devices.  Multiple context
+		 * multiple dअगरferent iommu devices.  Multiple context
 		 * banks are ok, but multiple devices are not:
 		 */
-		if (WARN_ON(qcom_iommu != dev_iommu_priv_get(dev))) {
+		अगर (WARN_ON(qcom_iommu != dev_iommu_priv_get(dev))) अणु
 			put_device(&iommu_pdev->dev);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return iommu_fwspec_add_ids(dev, &asid, 1);
-}
+	वापस iommu_fwspec_add_ids(dev, &asid, 1);
+पूर्ण
 
-static const struct iommu_ops qcom_iommu_ops = {
+अटल स्थिर काष्ठा iommu_ops qcom_iommu_ops = अणु
 	.capable	= qcom_iommu_capable,
-	.domain_alloc	= qcom_iommu_domain_alloc,
-	.domain_free	= qcom_iommu_domain_free,
+	.करोमुख्य_alloc	= qcom_iommu_करोमुख्य_alloc,
+	.करोमुख्य_मुक्त	= qcom_iommu_करोमुख्य_मुक्त,
 	.attach_dev	= qcom_iommu_attach_dev,
 	.detach_dev	= qcom_iommu_detach_dev,
 	.map		= qcom_iommu_map,
@@ -612,111 +613,111 @@ static const struct iommu_ops qcom_iommu_ops = {
 	.release_device	= qcom_iommu_release_device,
 	.device_group	= generic_device_group,
 	.of_xlate	= qcom_iommu_of_xlate,
-	.pgsize_bitmap	= SZ_4K | SZ_64K | SZ_1M | SZ_16M,
-};
+	.pgsize_biपंचांगap	= SZ_4K | SZ_64K | SZ_1M | SZ_16M,
+पूर्ण;
 
-static int qcom_iommu_sec_ptbl_init(struct device *dev)
-{
-	size_t psize = 0;
-	unsigned int spare = 0;
-	void *cpu_addr;
+अटल पूर्णांक qcom_iommu_sec_ptbl_init(काष्ठा device *dev)
+अणु
+	माप_प्रकार psize = 0;
+	अचिन्हित पूर्णांक spare = 0;
+	व्योम *cpu_addr;
 	dma_addr_t paddr;
-	unsigned long attrs;
-	static bool allocated = false;
-	int ret;
+	अचिन्हित दीर्घ attrs;
+	अटल bool allocated = false;
+	पूर्णांक ret;
 
-	if (allocated)
-		return 0;
+	अगर (allocated)
+		वापस 0;
 
 	ret = qcom_scm_iommu_secure_ptbl_size(spare, &psize);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to get iommu secure pgtable size (%d)\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_info(dev, "iommu sec: pgtable size: %zu\n", psize);
 
 	attrs = DMA_ATTR_NO_KERNEL_MAPPING;
 
 	cpu_addr = dma_alloc_attrs(dev, psize, &paddr, GFP_KERNEL, attrs);
-	if (!cpu_addr) {
+	अगर (!cpu_addr) अणु
 		dev_err(dev, "failed to allocate %zu bytes for pgtable\n",
 			psize);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = qcom_scm_iommu_secure_ptbl_init(paddr, psize, spare);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to init iommu pgtable (%d)\n", ret);
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 
 	allocated = true;
-	return 0;
+	वापस 0;
 
-free_mem:
-	dma_free_attrs(dev, psize, cpu_addr, paddr, attrs);
-	return ret;
-}
+मुक्त_mem:
+	dma_मुक्त_attrs(dev, psize, cpu_addr, paddr, attrs);
+	वापस ret;
+पूर्ण
 
-static int get_asid(const struct device_node *np)
-{
+अटल पूर्णांक get_asid(स्थिर काष्ठा device_node *np)
+अणु
 	u32 reg;
 
-	/* read the "reg" property directly to get the relative address
+	/* पढ़ो the "reg" property directly to get the relative address
 	 * of the context bank, and calculate the asid from that:
 	 */
-	if (of_property_read_u32_index(np, "reg", 0, &reg))
-		return -ENODEV;
+	अगर (of_property_पढ़ो_u32_index(np, "reg", 0, &reg))
+		वापस -ENODEV;
 
-	return reg / 0x1000;      /* context banks are 0x1000 apart */
-}
+	वापस reg / 0x1000;      /* context banks are 0x1000 apart */
+पूर्ण
 
-static int qcom_iommu_ctx_probe(struct platform_device *pdev)
-{
-	struct qcom_iommu_ctx *ctx;
-	struct device *dev = &pdev->dev;
-	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev->parent);
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक qcom_iommu_ctx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_iommu_ctx *ctx;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev->parent);
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
-	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = devm_kzalloc(dev, माप(*ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->dev = dev;
-	platform_set_drvdata(pdev, ctx);
+	platक्रमm_set_drvdata(pdev, ctx);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	ctx->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(ctx->base))
-		return PTR_ERR(ctx->base);
+	अगर (IS_ERR(ctx->base))
+		वापस PTR_ERR(ctx->base);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -ENODEV;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -ENODEV;
 
-	/* clear IRQs before registering fault handler, just in case the
+	/* clear IRQs beक्रमe रेजिस्टरing fault handler, just in हाल the
 	 * boot-loader left us a surprise:
 	 */
-	iommu_writel(ctx, ARM_SMMU_CB_FSR, iommu_readl(ctx, ARM_SMMU_CB_FSR));
+	iommu_ग_लिखोl(ctx, ARM_SMMU_CB_FSR, iommu_पढ़ोl(ctx, ARM_SMMU_CB_FSR));
 
 	ret = devm_request_irq(dev, irq,
 			       qcom_iommu_fault,
 			       IRQF_SHARED,
 			       "qcom-iommu-fault",
 			       ctx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request IRQ %u\n", irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = get_asid(dev->of_node);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "missing reg property\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ctx->asid = ret;
 
@@ -724,209 +725,209 @@ static int qcom_iommu_ctx_probe(struct platform_device *pdev)
 
 	qcom_iommu->ctxs[ctx->asid - 1] = ctx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_iommu_ctx_remove(struct platform_device *pdev)
-{
-	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(pdev->dev.parent);
-	struct qcom_iommu_ctx *ctx = platform_get_drvdata(pdev);
+अटल पूर्णांक qcom_iommu_ctx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा qcom_iommu_ctx *ctx = platक्रमm_get_drvdata(pdev);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	qcom_iommu->ctxs[ctx->asid - 1] = NULL;
+	qcom_iommu->ctxs[ctx->asid - 1] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ctx_of_match[] = {
-	{ .compatible = "qcom,msm-iommu-v1-ns" },
-	{ .compatible = "qcom,msm-iommu-v1-sec" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id ctx_of_match[] = अणु
+	अणु .compatible = "qcom,msm-iommu-v1-ns" पूर्ण,
+	अणु .compatible = "qcom,msm-iommu-v1-sec" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver qcom_iommu_ctx_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver qcom_iommu_ctx_driver = अणु
+	.driver	= अणु
 		.name		= "qcom-iommu-ctx",
 		.of_match_table	= ctx_of_match,
-	},
+	पूर्ण,
 	.probe	= qcom_iommu_ctx_probe,
-	.remove = qcom_iommu_ctx_remove,
-};
+	.हटाओ = qcom_iommu_ctx_हटाओ,
+पूर्ण;
 
-static bool qcom_iommu_has_secure_context(struct qcom_iommu_dev *qcom_iommu)
-{
-	struct device_node *child;
+अटल bool qcom_iommu_has_secure_context(काष्ठा qcom_iommu_dev *qcom_iommu)
+अणु
+	काष्ठा device_node *child;
 
-	for_each_child_of_node(qcom_iommu->dev->of_node, child)
-		if (of_device_is_compatible(child, "qcom,msm-iommu-v1-sec"))
-			return true;
+	क्रम_each_child_of_node(qcom_iommu->dev->of_node, child)
+		अगर (of_device_is_compatible(child, "qcom,msm-iommu-v1-sec"))
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int qcom_iommu_device_probe(struct platform_device *pdev)
-{
-	struct device_node *child;
-	struct qcom_iommu_dev *qcom_iommu;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct clk *clk;
-	int ret, max_asid = 0;
+अटल पूर्णांक qcom_iommu_device_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *child;
+	काष्ठा qcom_iommu_dev *qcom_iommu;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा clk *clk;
+	पूर्णांक ret, max_asid = 0;
 
 	/* find the max asid (which is 1:1 to ctx bank idx), so we know how
 	 * many child ctx devices we have:
 	 */
-	for_each_child_of_node(dev->of_node, child)
+	क्रम_each_child_of_node(dev->of_node, child)
 		max_asid = max(max_asid, get_asid(child));
 
-	qcom_iommu = devm_kzalloc(dev, struct_size(qcom_iommu, ctxs, max_asid),
+	qcom_iommu = devm_kzalloc(dev, काष्ठा_size(qcom_iommu, ctxs, max_asid),
 				  GFP_KERNEL);
-	if (!qcom_iommu)
-		return -ENOMEM;
+	अगर (!qcom_iommu)
+		वापस -ENOMEM;
 	qcom_iommu->num_ctxs = max_asid;
 	qcom_iommu->dev = dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res) अणु
 		qcom_iommu->local_base = devm_ioremap_resource(dev, res);
-		if (IS_ERR(qcom_iommu->local_base))
-			return PTR_ERR(qcom_iommu->local_base);
-	}
+		अगर (IS_ERR(qcom_iommu->local_base))
+			वापस PTR_ERR(qcom_iommu->local_base);
+	पूर्ण
 
 	clk = devm_clk_get(dev, "iface");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "failed to get iface clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	qcom_iommu->clks[CLK_IFACE].clk = clk;
 
 	clk = devm_clk_get(dev, "bus");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "failed to get bus clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	qcom_iommu->clks[CLK_BUS].clk = clk;
 
 	clk = devm_clk_get_optional(dev, "tbu");
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "failed to get tbu clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	qcom_iommu->clks[CLK_TBU].clk = clk;
 
-	if (of_property_read_u32(dev->of_node, "qcom,iommu-secure-id",
-				 &qcom_iommu->sec_id)) {
+	अगर (of_property_पढ़ो_u32(dev->of_node, "qcom,iommu-secure-id",
+				 &qcom_iommu->sec_id)) अणु
 		dev_err(dev, "missing qcom,iommu-secure-id property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (qcom_iommu_has_secure_context(qcom_iommu)) {
+	अगर (qcom_iommu_has_secure_context(qcom_iommu)) अणु
 		ret = qcom_iommu_sec_ptbl_init(dev);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "cannot init secure pg table(%d)\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, qcom_iommu);
+	platक्रमm_set_drvdata(pdev, qcom_iommu);
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	/* register context bank devices, which are child nodes: */
-	ret = devm_of_platform_populate(dev);
-	if (ret) {
+	/* रेजिस्टर context bank devices, which are child nodes: */
+	ret = devm_of_platक्रमm_populate(dev);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to populate iommu contexts\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = iommu_device_sysfs_add(&qcom_iommu->iommu, dev, NULL,
+	ret = iommu_device_sysfs_add(&qcom_iommu->iommu, dev, शून्य,
 				     dev_name(dev));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register iommu in sysfs\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = iommu_device_register(&qcom_iommu->iommu, &qcom_iommu_ops, dev);
-	if (ret) {
+	ret = iommu_device_रेजिस्टर(&qcom_iommu->iommu, &qcom_iommu_ops, dev);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register iommu\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	bus_set_iommu(&platform_bus_type, &qcom_iommu_ops);
+	bus_set_iommu(&platक्रमm_bus_type, &qcom_iommu_ops);
 
-	if (qcom_iommu->local_base) {
-		pm_runtime_get_sync(dev);
-		writel_relaxed(0xffffffff, qcom_iommu->local_base + SMMU_INTR_SEL_NS);
-		pm_runtime_put_sync(dev);
-	}
+	अगर (qcom_iommu->local_base) अणु
+		pm_runसमय_get_sync(dev);
+		ग_लिखोl_relaxed(0xffffffff, qcom_iommu->local_base + SMMU_INTR_SEL_NS);
+		pm_runसमय_put_sync(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_iommu_device_remove(struct platform_device *pdev)
-{
-	struct qcom_iommu_dev *qcom_iommu = platform_get_drvdata(pdev);
+अटल पूर्णांक qcom_iommu_device_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = platक्रमm_get_drvdata(pdev);
 
-	bus_set_iommu(&platform_bus_type, NULL);
+	bus_set_iommu(&platक्रमm_bus_type, शून्य);
 
-	pm_runtime_force_suspend(&pdev->dev);
-	platform_set_drvdata(pdev, NULL);
-	iommu_device_sysfs_remove(&qcom_iommu->iommu);
-	iommu_device_unregister(&qcom_iommu->iommu);
+	pm_runसमय_क्रमce_suspend(&pdev->dev);
+	platक्रमm_set_drvdata(pdev, शून्य);
+	iommu_device_sysfs_हटाओ(&qcom_iommu->iommu);
+	iommu_device_unरेजिस्टर(&qcom_iommu->iommu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused qcom_iommu_resume(struct device *dev)
-{
-	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused qcom_iommu_resume(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
 
-	return clk_bulk_prepare_enable(CLK_NUM, qcom_iommu->clks);
-}
+	वापस clk_bulk_prepare_enable(CLK_NUM, qcom_iommu->clks);
+पूर्ण
 
-static int __maybe_unused qcom_iommu_suspend(struct device *dev)
-{
-	struct qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused qcom_iommu_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा qcom_iommu_dev *qcom_iommu = dev_get_drvdata(dev);
 
 	clk_bulk_disable_unprepare(CLK_NUM, qcom_iommu->clks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops qcom_iommu_pm_ops = {
-	SET_RUNTIME_PM_OPS(qcom_iommu_suspend, qcom_iommu_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops qcom_iommu_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(qcom_iommu_suspend, qcom_iommu_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+पूर्ण;
 
-static const struct of_device_id qcom_iommu_of_match[] = {
-	{ .compatible = "qcom,msm-iommu-v1" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id qcom_iommu_of_match[] = अणु
+	अणु .compatible = "qcom,msm-iommu-v1" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver qcom_iommu_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver qcom_iommu_driver = अणु
+	.driver	= अणु
 		.name		= "qcom-iommu",
 		.of_match_table	= qcom_iommu_of_match,
 		.pm		= &qcom_iommu_pm_ops,
-	},
+	पूर्ण,
 	.probe	= qcom_iommu_device_probe,
-	.remove	= qcom_iommu_device_remove,
-};
+	.हटाओ	= qcom_iommu_device_हटाओ,
+पूर्ण;
 
-static int __init qcom_iommu_init(void)
-{
-	int ret;
+अटल पूर्णांक __init qcom_iommu_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&qcom_iommu_ctx_driver);
-	if (ret)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&qcom_iommu_ctx_driver);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&qcom_iommu_driver);
-	if (ret)
-		platform_driver_unregister(&qcom_iommu_ctx_driver);
+	ret = platक्रमm_driver_रेजिस्टर(&qcom_iommu_driver);
+	अगर (ret)
+		platक्रमm_driver_unरेजिस्टर(&qcom_iommu_ctx_driver);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 device_initcall(qcom_iommu_init);

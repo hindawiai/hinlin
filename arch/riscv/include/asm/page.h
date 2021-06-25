@@ -1,188 +1,189 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009 Chen Liqin <liqin.chen@sunplusct.com>
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  * Copyright (C) 2017 SiFive
  * Copyright (C) 2017 XiaojingZhu <zhuxiaoj@ict.ac.cn>
  */
 
-#ifndef _ASM_RISCV_PAGE_H
-#define _ASM_RISCV_PAGE_H
+#अगर_अघोषित _ASM_RISCV_PAGE_H
+#घोषणा _ASM_RISCV_PAGE_H
 
-#include <linux/pfn.h>
-#include <linux/const.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/स्थिर.h>
 
-#define PAGE_SHIFT	(12)
-#define PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
-#define PAGE_MASK	(~(PAGE_SIZE - 1))
+#घोषणा PAGE_SHIFT	(12)
+#घोषणा PAGE_SIZE	(_AC(1, UL) << PAGE_SHIFT)
+#घोषणा PAGE_MASK	(~(PAGE_SIZE - 1))
 
-#ifdef CONFIG_64BIT
-#define HUGE_MAX_HSTATE		2
-#else
-#define HUGE_MAX_HSTATE		1
-#endif
-#define HPAGE_SHIFT		PMD_SHIFT
-#define HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
-#define HPAGE_MASK              (~(HPAGE_SIZE - 1))
-#define HUGETLB_PAGE_ORDER      (HPAGE_SHIFT - PAGE_SHIFT)
+#अगर_घोषित CONFIG_64BIT
+#घोषणा HUGE_MAX_HSTATE		2
+#अन्यथा
+#घोषणा HUGE_MAX_HSTATE		1
+#पूर्ण_अगर
+#घोषणा HPAGE_SHIFT		PMD_SHIFT
+#घोषणा HPAGE_SIZE		(_AC(1, UL) << HPAGE_SHIFT)
+#घोषणा HPAGE_MASK              (~(HPAGE_SIZE - 1))
+#घोषणा HUGETLB_PAGE_ORDER      (HPAGE_SHIFT - PAGE_SHIFT)
 
 /*
  * PAGE_OFFSET -- the first address of the first page of memory.
- * When not using MMU this corresponds to the first free page in
+ * When not using MMU this corresponds to the first मुक्त page in
  * physical memory (aligned on a page boundary).
  */
-#define PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL)
+#घोषणा PAGE_OFFSET		_AC(CONFIG_PAGE_OFFSET, UL)
 
-#define KERN_VIRT_SIZE (-PAGE_OFFSET)
+#घोषणा KERN_VIRT_SIZE (-PAGE_OFFSET)
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define PAGE_UP(addr)	(((addr)+((PAGE_SIZE)-1))&(~((PAGE_SIZE)-1)))
-#define PAGE_DOWN(addr)	((addr)&(~((PAGE_SIZE)-1)))
+#घोषणा PAGE_UP(addr)	(((addr)+((PAGE_SIZE)-1))&(~((PAGE_SIZE)-1)))
+#घोषणा PAGE_DOWN(addr)	((addr)&(~((PAGE_SIZE)-1)))
 
-/* align addr on a size boundary - adjust address up/down if needed */
-#define _ALIGN_UP(addr, size)	(((addr)+((size)-1))&(~((size)-1)))
-#define _ALIGN_DOWN(addr, size)	((addr)&(~((size)-1)))
+/* align addr on a size boundary - adjust address up/करोwn अगर needed */
+#घोषणा _ALIGN_UP(addr, size)	(((addr)+((size)-1))&(~((size)-1)))
+#घोषणा _ALIGN_DOWN(addr, size)	((addr)&(~((size)-1)))
 
-/* align addr on a size boundary - adjust address up if needed */
-#define _ALIGN(addr, size)	_ALIGN_UP(addr, size)
+/* align addr on a size boundary - adjust address up अगर needed */
+#घोषणा _ALIGN(addr, size)	_ALIGN_UP(addr, size)
 
-#define clear_page(pgaddr)			memset((pgaddr), 0, PAGE_SIZE)
-#define copy_page(to, from)			memcpy((to), (from), PAGE_SIZE)
+#घोषणा clear_page(pgaddr)			स_रखो((pgaddr), 0, PAGE_SIZE)
+#घोषणा copy_page(to, from)			स_नकल((to), (from), PAGE_SIZE)
 
-#define clear_user_page(pgaddr, vaddr, page)	memset((pgaddr), 0, PAGE_SIZE)
-#define copy_user_page(vto, vfrom, vaddr, topg) \
-			memcpy((vto), (vfrom), PAGE_SIZE)
+#घोषणा clear_user_page(pgaddr, vaddr, page)	स_रखो((pgaddr), 0, PAGE_SIZE)
+#घोषणा copy_user_page(vto, vfrom, vaddr, topg) \
+			स_नकल((vto), (vfrom), PAGE_SIZE)
 
 /*
- * Use struct definitions to apply C type checking
+ * Use काष्ठा definitions to apply C type checking
  */
 
 /* Page Global Directory entry */
-typedef struct {
-	unsigned long pgd;
-} pgd_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ pgd;
+पूर्ण pgd_t;
 
 /* Page Table entry */
-typedef struct {
-	unsigned long pte;
-} pte_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ pte;
+पूर्ण pte_t;
 
-typedef struct {
-	unsigned long pgprot;
-} pgprot_t;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ pgprot;
+पूर्ण pgprot_t;
 
-typedef struct page *pgtable_t;
+प्रकार काष्ठा page *pgtable_t;
 
-#define pte_val(x)	((x).pte)
-#define pgd_val(x)	((x).pgd)
-#define pgprot_val(x)	((x).pgprot)
+#घोषणा pte_val(x)	((x).pte)
+#घोषणा pgd_val(x)	((x).pgd)
+#घोषणा pgprot_val(x)	((x).pgprot)
 
-#define __pte(x)	((pte_t) { (x) })
-#define __pgd(x)	((pgd_t) { (x) })
-#define __pgprot(x)	((pgprot_t) { (x) })
+#घोषणा __pte(x)	((pte_t) अणु (x) पूर्ण)
+#घोषणा __pgd(x)	((pgd_t) अणु (x) पूर्ण)
+#घोषणा __pgprot(x)	((pgprot_t) अणु (x) पूर्ण)
 
-#ifdef CONFIG_64BIT
-#define PTE_FMT "%016lx"
-#else
-#define PTE_FMT "%08lx"
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा PTE_FMT "%016lx"
+#अन्यथा
+#घोषणा PTE_FMT "%08lx"
+#पूर्ण_अगर
 
-#ifdef CONFIG_MMU
-extern unsigned long va_pa_offset;
-#ifdef CONFIG_64BIT
-extern unsigned long va_kernel_pa_offset;
-#endif
-#ifdef CONFIG_XIP_KERNEL
-extern unsigned long va_kernel_xip_pa_offset;
-#endif
-extern unsigned long pfn_base;
-#define ARCH_PFN_OFFSET		(pfn_base)
-#else
-#define va_pa_offset		0
-#ifdef CONFIG_64BIT
-#define va_kernel_pa_offset	0
-#endif
-#define ARCH_PFN_OFFSET		(PAGE_OFFSET >> PAGE_SHIFT)
-#endif /* CONFIG_MMU */
+#अगर_घोषित CONFIG_MMU
+बाह्य अचिन्हित दीर्घ va_pa_offset;
+#अगर_घोषित CONFIG_64BIT
+बाह्य अचिन्हित दीर्घ va_kernel_pa_offset;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_XIP_KERNEL
+बाह्य अचिन्हित दीर्घ va_kernel_xip_pa_offset;
+#पूर्ण_अगर
+बाह्य अचिन्हित दीर्घ pfn_base;
+#घोषणा ARCH_PFN_OFFSET		(pfn_base)
+#अन्यथा
+#घोषणा va_pa_offset		0
+#अगर_घोषित CONFIG_64BIT
+#घोषणा va_kernel_pa_offset	0
+#पूर्ण_अगर
+#घोषणा ARCH_PFN_OFFSET		(PAGE_OFFSET >> PAGE_SHIFT)
+#पूर्ण_अगर /* CONFIG_MMU */
 
-extern unsigned long kernel_virt_addr;
+बाह्य अचिन्हित दीर्घ kernel_virt_addr;
 
-#ifdef CONFIG_64BIT
-#define linear_mapping_pa_to_va(x)	((void *)((unsigned long)(x) + va_pa_offset))
-#ifdef CONFIG_XIP_KERNEL
-#define kernel_mapping_pa_to_va(y)	({						\
-	unsigned long _y = y;								\
+#अगर_घोषित CONFIG_64BIT
+#घोषणा linear_mapping_pa_to_va(x)	((व्योम *)((अचिन्हित दीर्घ)(x) + va_pa_offset))
+#अगर_घोषित CONFIG_XIP_KERNEL
+#घोषणा kernel_mapping_pa_to_va(y)	(अणु						\
+	अचिन्हित दीर्घ _y = y;								\
 	(_y >= CONFIG_PHYS_RAM_BASE) ?							\
-		(void *)((unsigned long)(_y) + va_kernel_pa_offset + XIP_OFFSET) :	\
-		(void *)((unsigned long)(_y) + va_kernel_xip_pa_offset);		\
-	})
-#else
-#define kernel_mapping_pa_to_va(x)	((void *)((unsigned long)(x) + va_kernel_pa_offset))
-#endif
-#define __pa_to_va_nodebug(x)		linear_mapping_pa_to_va(x)
+		(व्योम *)((अचिन्हित दीर्घ)(_y) + va_kernel_pa_offset + XIP_OFFSET) :	\
+		(व्योम *)((अचिन्हित दीर्घ)(_y) + va_kernel_xip_pa_offset);		\
+	पूर्ण)
+#अन्यथा
+#घोषणा kernel_mapping_pa_to_va(x)	((व्योम *)((अचिन्हित दीर्घ)(x) + va_kernel_pa_offset))
+#पूर्ण_अगर
+#घोषणा __pa_to_va_nodebug(x)		linear_mapping_pa_to_va(x)
 
-#define linear_mapping_va_to_pa(x)	((unsigned long)(x) - va_pa_offset)
-#ifdef CONFIG_XIP_KERNEL
-#define kernel_mapping_va_to_pa(y) ({						\
-	unsigned long _y = y;							\
+#घोषणा linear_mapping_va_to_pa(x)	((अचिन्हित दीर्घ)(x) - va_pa_offset)
+#अगर_घोषित CONFIG_XIP_KERNEL
+#घोषणा kernel_mapping_va_to_pa(y) (अणु						\
+	अचिन्हित दीर्घ _y = y;							\
 	(_y < kernel_virt_addr + XIP_OFFSET) ?					\
-		((unsigned long)(_y) - va_kernel_xip_pa_offset) :		\
-		((unsigned long)(_y) - va_kernel_pa_offset - XIP_OFFSET);	\
-	})
-#else
-#define kernel_mapping_va_to_pa(x)	((unsigned long)(x) - va_kernel_pa_offset)
-#endif
-#define __va_to_pa_nodebug(x)	({						\
-	unsigned long _x = x;							\
+		((अचिन्हित दीर्घ)(_y) - va_kernel_xip_pa_offset) :		\
+		((अचिन्हित दीर्घ)(_y) - va_kernel_pa_offset - XIP_OFFSET);	\
+	पूर्ण)
+#अन्यथा
+#घोषणा kernel_mapping_va_to_pa(x)	((अचिन्हित दीर्घ)(x) - va_kernel_pa_offset)
+#पूर्ण_अगर
+#घोषणा __va_to_pa_nodebug(x)	(अणु						\
+	अचिन्हित दीर्घ _x = x;							\
 	(_x < kernel_virt_addr) ?						\
 		linear_mapping_va_to_pa(_x) : kernel_mapping_va_to_pa(_x);	\
-	})
-#else
-#define __pa_to_va_nodebug(x)  ((void *)((unsigned long) (x) + va_pa_offset))
-#define __va_to_pa_nodebug(x)  ((unsigned long)(x) - va_pa_offset)
-#endif
+	पूर्ण)
+#अन्यथा
+#घोषणा __pa_to_va_nodebug(x)  ((व्योम *)((अचिन्हित दीर्घ) (x) + va_pa_offset))
+#घोषणा __va_to_pa_nodebug(x)  ((अचिन्हित दीर्घ)(x) - va_pa_offset)
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_VIRTUAL
-extern phys_addr_t __virt_to_phys(unsigned long x);
-extern phys_addr_t __phys_addr_symbol(unsigned long x);
-#else
-#define __virt_to_phys(x)	__va_to_pa_nodebug(x)
-#define __phys_addr_symbol(x)	__va_to_pa_nodebug(x)
-#endif /* CONFIG_DEBUG_VIRTUAL */
+#अगर_घोषित CONFIG_DEBUG_VIRTUAL
+बाह्य phys_addr_t __virt_to_phys(अचिन्हित दीर्घ x);
+बाह्य phys_addr_t __phys_addr_symbol(अचिन्हित दीर्घ x);
+#अन्यथा
+#घोषणा __virt_to_phys(x)	__va_to_pa_nodebug(x)
+#घोषणा __phys_addr_symbol(x)	__va_to_pa_nodebug(x)
+#पूर्ण_अगर /* CONFIG_DEBUG_VIRTUAL */
 
-#define __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((unsigned long)(x), 0))
-#define __pa(x)		__virt_to_phys((unsigned long)(x))
-#define __va(x)		((void *)__pa_to_va_nodebug((phys_addr_t)(x)))
+#घोषणा __pa_symbol(x)	__phys_addr_symbol(RELOC_HIDE((अचिन्हित दीर्घ)(x), 0))
+#घोषणा __pa(x)		__virt_to_phys((अचिन्हित दीर्घ)(x))
+#घोषणा __va(x)		((व्योम *)__pa_to_va_nodebug((phys_addr_t)(x)))
 
-#define phys_to_pfn(phys)	(PFN_DOWN(phys))
-#define pfn_to_phys(pfn)	(PFN_PHYS(pfn))
+#घोषणा phys_to_pfn(phys)	(PFN_DOWN(phys))
+#घोषणा pfn_to_phys(pfn)	(PFN_PHYS(pfn))
 
-#define virt_to_pfn(vaddr)	(phys_to_pfn(__pa(vaddr)))
-#define pfn_to_virt(pfn)	(__va(pfn_to_phys(pfn)))
+#घोषणा virt_to_pfn(vaddr)	(phys_to_pfn(__pa(vaddr)))
+#घोषणा pfn_to_virt(pfn)	(__va(pfn_to_phys(pfn)))
 
-#define virt_to_page(vaddr)	(pfn_to_page(virt_to_pfn(vaddr)))
-#define page_to_virt(page)	(pfn_to_virt(page_to_pfn(page)))
+#घोषणा virt_to_page(vaddr)	(pfn_to_page(virt_to_pfn(vaddr)))
+#घोषणा page_to_virt(page)	(pfn_to_virt(page_to_pfn(page)))
 
-#define page_to_phys(page)	(pfn_to_phys(page_to_pfn(page)))
-#define page_to_bus(page)	(page_to_phys(page))
-#define phys_to_page(paddr)	(pfn_to_page(phys_to_pfn(paddr)))
+#घोषणा page_to_phys(page)	(pfn_to_phys(page_to_pfn(page)))
+#घोषणा page_to_bus(page)	(page_to_phys(page))
+#घोषणा phys_to_page(paddr)	(pfn_to_page(phys_to_pfn(paddr)))
 
-#ifdef CONFIG_FLATMEM
-#define pfn_valid(pfn) \
+#अगर_घोषित CONFIG_FLATMEM
+#घोषणा pfn_valid(pfn) \
 	(((pfn) >= ARCH_PFN_OFFSET) && (((pfn) - ARCH_PFN_OFFSET) < max_mapnr))
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#define virt_addr_valid(vaddr)	({						\
-	unsigned long _addr = (unsigned long)vaddr;				\
-	(unsigned long)(_addr) >= PAGE_OFFSET && pfn_valid(virt_to_pfn(_addr));	\
-})
+#घोषणा virt_addr_valid(vaddr)	(अणु						\
+	अचिन्हित दीर्घ _addr = (अचिन्हित दीर्घ)vaddr;				\
+	(अचिन्हित दीर्घ)(_addr) >= PAGE_OFFSET && pfn_valid(virt_to_pfn(_addr));	\
+पूर्ण)
 
-#define VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_NON_EXEC
+#घोषणा VM_DATA_DEFAULT_FLAGS	VM_DATA_FLAGS_NON_EXEC
 
-#include <asm-generic/memory_model.h>
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/memory_model.h>
+#समावेश <यंत्र-generic/getorder.h>
 
-#endif /* _ASM_RISCV_PAGE_H */
+#पूर्ण_अगर /* _ASM_RISCV_PAGE_H */

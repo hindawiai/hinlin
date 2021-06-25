@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Force feedback support for PantherLord/GreenAsia based devices
+ *  Force feedback support क्रम PantherLord/GreenAsia based devices
  *
  *  The devices are distributed under various names and the same USB device ID
  *  can be used in both adapters and actual game controllers.
  *
  *  0810:0001 "Twin USB Joystick"
  *   - tested with PantherLord USB/PS2 2in1 Adapter
- *   - contains two reports, one for each port (HID_QUIRK_MULTI_INPUT)
+ *   - contains two reports, one क्रम each port (HID_QUIRK_MULTI_INPUT)
  *
  *  0e8f:0003 "GreenAsia Inc.    USB Joystick     "
- *   - tested with König Gaming gamepad
+ *   - tested with Kथघnig Gaming gamepad
  *
  *  0e8f:0003 "GASIA USB Gamepad"
- *   - another version of the König gamepad
+ *   - another version of the Kथघnig gamepad
  *
  *  0f30:0111 "Saitek Color Rumble Pad"
  *
@@ -24,32 +25,32 @@
  */
 
 
-/* #define DEBUG */
+/* #घोषणा DEBUG */
 
-#define debug(format, arg...) pr_debug("hid-plff: " format "\n" , ## arg)
+#घोषणा debug(क्रमmat, arg...) pr_debug("hid-plff: " क्रमmat "\n" , ## arg)
 
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/hid.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/hid.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-#ifdef CONFIG_PANTHERLORD_FF
+#अगर_घोषित CONFIG_PANTHERLORD_FF
 
-struct plff_device {
-	struct hid_report *report;
+काष्ठा plff_device अणु
+	काष्ठा hid_report *report;
 	s32 maxval;
 	s32 *strong;
 	s32 *weak;
-};
+पूर्ण;
 
-static int hid_plff_play(struct input_dev *dev, void *data,
-			 struct ff_effect *effect)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct plff_device *plff = data;
-	int left, right;
+अटल पूर्णांक hid_plff_play(काष्ठा input_dev *dev, व्योम *data,
+			 काष्ठा ff_effect *effect)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा plff_device *plff = data;
+	पूर्णांक left, right;
 
 	left = effect->u.rumble.strong_magnitude;
 	right = effect->u.rumble.weak_magnitude;
@@ -63,26 +64,26 @@ static int hid_plff_play(struct input_dev *dev, void *data,
 	debug("running with 0x%02x 0x%02x", left, right);
 	hid_hw_request(hid, plff->report, HID_REQ_SET_REPORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int plff_init(struct hid_device *hid)
-{
-	struct plff_device *plff;
-	struct hid_report *report;
-	struct hid_input *hidinput;
-	struct list_head *report_list =
-			&hid->report_enum[HID_OUTPUT_REPORT].report_list;
-	struct list_head *report_ptr = report_list;
-	struct input_dev *dev;
-	int error;
+अटल पूर्णांक plff_init(काष्ठा hid_device *hid)
+अणु
+	काष्ठा plff_device *plff;
+	काष्ठा hid_report *report;
+	काष्ठा hid_input *hidinput;
+	काष्ठा list_head *report_list =
+			&hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
+	काष्ठा list_head *report_ptr = report_list;
+	काष्ठा input_dev *dev;
+	पूर्णांक error;
 	s32 maxval;
 	s32 *strong;
 	s32 *weak;
 
 	/* The device contains one output report per physical device, all
 	   containing 1 field, which contains 4 ff00.0002 usages and 4 16bit
-	   absolute values.
+	   असलolute values.
 
 	   The input reports also contain a field which contains
 	   8 ff00.0001 usages and 8 boolean values. Their meaning is
@@ -93,66 +94,66 @@ static int plff_init(struct hid_device *hid)
 	   Zeroplus (hid-zpff) devices.
 	*/
 
-	if (list_empty(report_list)) {
+	अगर (list_empty(report_list)) अणु
 		hid_err(hid, "no output reports found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	list_for_each_entry(hidinput, &hid->inputs, list) {
+	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list) अणु
 
 		report_ptr = report_ptr->next;
 
-		if (report_ptr == report_list) {
+		अगर (report_ptr == report_list) अणु
 			hid_err(hid, "required output report is missing\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		report = list_entry(report_ptr, struct hid_report, list);
-		if (report->maxfield < 1) {
+		report = list_entry(report_ptr, काष्ठा hid_report, list);
+		अगर (report->maxfield < 1) अणु
 			hid_err(hid, "no fields in the report\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		maxval = 0x7f;
-		if (report->field[0]->report_count >= 4) {
+		अगर (report->field[0]->report_count >= 4) अणु
 			report->field[0]->value[0] = 0x00;
 			report->field[0]->value[1] = 0x00;
 			strong = &report->field[0]->value[2];
 			weak = &report->field[0]->value[3];
 			debug("detected single-field device");
-		} else if (report->field[0]->maxusage == 1 &&
+		पूर्ण अन्यथा अगर (report->field[0]->maxusage == 1 &&
 			   report->field[0]->usage[0].hid ==
 				(HID_UP_LED | 0x43) &&
 			   report->maxfield >= 4 &&
 			   report->field[0]->report_count >= 1 &&
 			   report->field[1]->report_count >= 1 &&
 			   report->field[2]->report_count >= 1 &&
-			   report->field[3]->report_count >= 1) {
+			   report->field[3]->report_count >= 1) अणु
 			report->field[0]->value[0] = 0x00;
 			report->field[1]->value[0] = 0x00;
 			strong = &report->field[2]->value[0];
 			weak = &report->field[3]->value[0];
-			if (hid->vendor == USB_VENDOR_ID_JESS2)
+			अगर (hid->venकरोr == USB_VENDOR_ID_JESS2)
 				maxval = 0xff;
 			debug("detected 4-field device");
-		} else {
+		पूर्ण अन्यथा अणु
 			hid_err(hid, "not enough fields or values\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		plff = kzalloc(sizeof(struct plff_device), GFP_KERNEL);
-		if (!plff)
-			return -ENOMEM;
+		plff = kzalloc(माप(काष्ठा plff_device), GFP_KERNEL);
+		अगर (!plff)
+			वापस -ENOMEM;
 
 		dev = hidinput->input;
 
 		set_bit(FF_RUMBLE, dev->ffbit);
 
 		error = input_ff_create_memless(dev, plff, hid_plff_play);
-		if (error) {
-			kfree(plff);
-			return error;
-		}
+		अगर (error) अणु
+			kमुक्त(plff);
+			वापस error;
+		पूर्ण
 
 		plff->report = report;
 		plff->strong = strong;
@@ -162,61 +163,61 @@ static int plff_init(struct hid_device *hid)
 		*strong = 0x00;
 		*weak = 0x00;
 		hid_hw_request(hid, plff->report, HID_REQ_SET_REPORT);
-	}
+	पूर्ण
 
 	hid_info(hid, "Force feedback for PantherLord/GreenAsia devices by Anssi Hannula <anssi.hannula@gmail.com>\n");
 
-	return 0;
-}
-#else
-static inline int plff_init(struct hid_device *hid)
-{
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक plff_init(काष्ठा hid_device *hid)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int pl_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int ret;
+अटल पूर्णांक pl_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
 
-	if (id->driver_data)
+	अगर (id->driver_data)
 		hdev->quirks |= HID_QUIRK_MULTI_INPUT;
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "parse failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	plff_init(hdev);
 
-	return 0;
+	वापस 0;
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hid_device_id pl_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GAMERON, USB_DEVICE_ID_GAMERON_DUAL_PSX_ADAPTOR),
-		.driver_data = 1 }, /* Twin USB Joystick */
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GAMERON, USB_DEVICE_ID_GAMERON_DUAL_PCS_ADAPTOR),
-		.driver_data = 1 }, /* Twin USB Joystick */
-	{ HID_USB_DEVICE(USB_VENDOR_ID_GREENASIA, 0x0003), },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_JESS2, USB_DEVICE_ID_JESS2_COLOR_RUMBLE_PAD), },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id pl_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GAMERON, USB_DEVICE_ID_GAMERON_DUAL_PSX_ADAPTOR),
+		.driver_data = 1 पूर्ण, /* Twin USB Joystick */
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GAMERON, USB_DEVICE_ID_GAMERON_DUAL_PCS_ADAPTOR),
+		.driver_data = 1 पूर्ण, /* Twin USB Joystick */
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_GREENASIA, 0x0003), पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_JESS2, USB_DEVICE_ID_JESS2_COLOR_RUMBLE_PAD), पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, pl_devices);
 
-static struct hid_driver pl_driver = {
+अटल काष्ठा hid_driver pl_driver = अणु
 	.name = "pantherlord",
 	.id_table = pl_devices,
 	.probe = pl_probe,
-};
+पूर्ण;
 module_hid_driver(pl_driver);
 
 MODULE_LICENSE("GPL");

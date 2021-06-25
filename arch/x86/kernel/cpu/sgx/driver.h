@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ARCH_SGX_DRIVER_H__
-#define __ARCH_SGX_DRIVER_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ARCH_SGX_DRIVER_H__
+#घोषणा __ARCH_SGX_DRIVER_H__
 
-#include <crypto/hash.h>
-#include <linux/kref.h>
-#include <linux/mmu_notifier.h>
-#include <linux/radix-tree.h>
-#include <linux/rwsem.h>
-#include <linux/sched.h>
-#include <linux/workqueue.h>
-#include <uapi/asm/sgx.h>
-#include "sgx.h"
+#समावेश <crypto/hash.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mmu_notअगरier.h>
+#समावेश <linux/radix-tree.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/workqueue.h>
+#समावेश <uapi/यंत्र/sgx.h>
+#समावेश "sgx.h"
 
-#define SGX_EINIT_SPIN_COUNT	20
-#define SGX_EINIT_SLEEP_COUNT	50
-#define SGX_EINIT_SLEEP_TIME	20
+#घोषणा SGX_EINIT_SPIN_COUNT	20
+#घोषणा SGX_EINIT_SLEEP_COUNT	50
+#घोषणा SGX_EINIT_SLEEP_TIME	20
 
-extern u64 sgx_attributes_reserved_mask;
-extern u64 sgx_xfrm_reserved_mask;
-extern u32 sgx_misc_reserved_mask;
+बाह्य u64 sgx_attributes_reserved_mask;
+बाह्य u64 sgx_xfrm_reserved_mask;
+बाह्य u32 sgx_misc_reserved_mask;
 
-extern const struct file_operations sgx_provision_fops;
+बाह्य स्थिर काष्ठा file_operations sgx_provision_fops;
 
-long sgx_ioctl(struct file *filep, unsigned int cmd, unsigned long arg);
+दीर्घ sgx_ioctl(काष्ठा file *filep, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
 
-int sgx_drv_init(void);
+पूर्णांक sgx_drv_init(व्योम);
 
-#endif /* __ARCH_X86_SGX_DRIVER_H__ */
+#पूर्ण_अगर /* __ARCH_X86_SGX_DRIVER_H__ */

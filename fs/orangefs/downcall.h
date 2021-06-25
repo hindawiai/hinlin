@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * (C) 2001 Clemson University and The University of Chicago
  *
@@ -6,132 +7,132 @@
  */
 
 /*
- *  Definitions of downcalls used in Linux kernel module.
+ *  Definitions of करोwncalls used in Linux kernel module.
  */
 
-#ifndef __DOWNCALL_H
-#define __DOWNCALL_H
+#अगर_अघोषित __DOWNCALL_H
+#घोषणा __DOWNCALL_H
 
 /*
- * Sanitized the device-client core interaction
- * for clean 32-64 bit usage
+ * Sanitized the device-client core पूर्णांकeraction
+ * क्रम clean 32-64 bit usage
  */
-struct orangefs_io_response {
+काष्ठा orangefs_io_response अणु
 	__s64 amt_complete;
-};
+पूर्ण;
 
-struct orangefs_lookup_response {
-	struct orangefs_object_kref refn;
-};
+काष्ठा orangefs_lookup_response अणु
+	काष्ठा orangefs_object_kref refn;
+पूर्ण;
 
-struct orangefs_create_response {
-	struct orangefs_object_kref refn;
-};
+काष्ठा orangefs_create_response अणु
+	काष्ठा orangefs_object_kref refn;
+पूर्ण;
 
-struct orangefs_symlink_response {
-	struct orangefs_object_kref refn;
-};
+काष्ठा orangefs_symlink_response अणु
+	काष्ठा orangefs_object_kref refn;
+पूर्ण;
 
-struct orangefs_getattr_response {
-	struct ORANGEFS_sys_attr_s attributes;
-	char link_target[ORANGEFS_NAME_MAX];
-};
+काष्ठा orangefs_getattr_response अणु
+	काष्ठा ORANGEFS_sys_attr_s attributes;
+	अक्षर link_target[ORANGEFS_NAME_MAX];
+पूर्ण;
 
-struct orangefs_mkdir_response {
-	struct orangefs_object_kref refn;
-};
+काष्ठा orangefs_सूची_गढ़ो_response अणु
+	काष्ठा orangefs_object_kref refn;
+पूर्ण;
 
-struct orangefs_statfs_response {
+काष्ठा orangefs_statfs_response अणु
 	__s64 block_size;
 	__s64 blocks_total;
 	__s64 blocks_avail;
 	__s64 files_total;
 	__s64 files_avail;
-};
+पूर्ण;
 
-struct orangefs_fs_mount_response {
+काष्ठा orangefs_fs_mount_response अणु
 	__s32 fs_id;
 	__s32 id;
-	struct orangefs_khandle root_khandle;
-};
+	काष्ठा orangefs_khandle root_khandle;
+पूर्ण;
 
 /* the getxattr response is the attribute value */
-struct orangefs_getxattr_response {
+काष्ठा orangefs_getxattr_response अणु
 	__s32 val_sz;
 	__s32 __pad1;
-	char val[ORANGEFS_MAX_XATTR_VALUELEN];
-};
+	अक्षर val[ORANGEFS_MAX_XATTR_VALUELEN];
+पूर्ण;
 
 /* the listxattr response is an array of attribute names */
-struct orangefs_listxattr_response {
-	__s32 returned_count;
+काष्ठा orangefs_listxattr_response अणु
+	__s32 वापसed_count;
 	__s32 __pad1;
 	__u64 token;
-	char key[ORANGEFS_MAX_XATTR_LISTLEN * ORANGEFS_MAX_XATTR_NAMELEN];
+	अक्षर key[ORANGEFS_MAX_XATTR_LISTLEN * ORANGEFS_MAX_XATTR_NAMELEN];
 	__s32 keylen;
 	__s32 __pad2;
 	__s32 lengths[ORANGEFS_MAX_XATTR_LISTLEN];
-};
+पूर्ण;
 
-struct orangefs_param_response {
-	union {
+काष्ठा orangefs_param_response अणु
+	जोड़ अणु
 		__s64 value64;
 		__s32 value32[2];
-	} u;
-};
+	पूर्ण u;
+पूर्ण;
 
-#define PERF_COUNT_BUF_SIZE 4096
-struct orangefs_perf_count_response {
-	char buffer[PERF_COUNT_BUF_SIZE];
-};
+#घोषणा PERF_COUNT_BUF_SIZE 4096
+काष्ठा orangefs_perf_count_response अणु
+	अक्षर buffer[PERF_COUNT_BUF_SIZE];
+पूर्ण;
 
-#define FS_KEY_BUF_SIZE 4096
-struct orangefs_fs_key_response {
+#घोषणा FS_KEY_BUF_SIZE 4096
+काष्ठा orangefs_fs_key_response अणु
 	__s32 fs_keylen;
 	__s32 __pad1;
-	char fs_key[FS_KEY_BUF_SIZE];
-};
+	अक्षर fs_key[FS_KEY_BUF_SIZE];
+पूर्ण;
 
 /* 2.9.6 */
-struct orangefs_features_response {
+काष्ठा orangefs_features_response अणु
 	__u64 features;
-};
+पूर्ण;
 
-struct orangefs_downcall_s {
+काष्ठा orangefs_करोwncall_s अणु
 	__s32 type;
 	__s32 status;
-	/* currently trailer is used only by readdir */
+	/* currently trailer is used only by सूची_पढ़ो */
 	__s64 trailer_size;
-	char *trailer_buf;
+	अक्षर *trailer_buf;
 
-	union {
-		struct orangefs_io_response io;
-		struct orangefs_lookup_response lookup;
-		struct orangefs_create_response create;
-		struct orangefs_symlink_response sym;
-		struct orangefs_getattr_response getattr;
-		struct orangefs_mkdir_response mkdir;
-		struct orangefs_statfs_response statfs;
-		struct orangefs_fs_mount_response fs_mount;
-		struct orangefs_getxattr_response getxattr;
-		struct orangefs_listxattr_response listxattr;
-		struct orangefs_param_response param;
-		struct orangefs_perf_count_response perf_count;
-		struct orangefs_fs_key_response fs_key;
-		struct orangefs_features_response features;
-	} resp;
-};
+	जोड़ अणु
+		काष्ठा orangefs_io_response io;
+		काष्ठा orangefs_lookup_response lookup;
+		काष्ठा orangefs_create_response create;
+		काष्ठा orangefs_symlink_response sym;
+		काष्ठा orangefs_getattr_response getattr;
+		काष्ठा orangefs_सूची_गढ़ो_response सूची_गढ़ो;
+		काष्ठा orangefs_statfs_response statfs;
+		काष्ठा orangefs_fs_mount_response fs_mount;
+		काष्ठा orangefs_getxattr_response getxattr;
+		काष्ठा orangefs_listxattr_response listxattr;
+		काष्ठा orangefs_param_response param;
+		काष्ठा orangefs_perf_count_response perf_count;
+		काष्ठा orangefs_fs_key_response fs_key;
+		काष्ठा orangefs_features_response features;
+	पूर्ण resp;
+पूर्ण;
 
 /*
- * The readdir response comes in the trailer.  It is followed by the
+ * The सूची_पढ़ो response comes in the trailer.  It is followed by the
  * directory entries as described in dir.c.
  */
 
-struct orangefs_readdir_response_s {
+काष्ठा orangefs_सूची_पढ़ो_response_s अणु
 	__u64 token;
 	__u64 directory_version;
 	__u32 __pad2;
 	__u32 orangefs_dirent_outcount;
-};
+पूर्ण;
 
-#endif /* __DOWNCALL_H */
+#पूर्ण_अगर /* __DOWNCALL_H */

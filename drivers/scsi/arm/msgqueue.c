@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/acorn/scsi/msgqueue.c
  *
@@ -6,160 +7,160 @@
  *
  *  message queue handling
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/stddef.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/init.h>
 
-#include "msgqueue.h"
+#समावेश "msgqueue.h"
 
 /*
- * Function: struct msgqueue_entry *mqe_alloc(MsgQueue_t *msgq)
+ * Function: काष्ठा msgqueue_entry *mqe_alloc(MsgQueue_t *msgq)
  * Purpose : Allocate a message queue entry
- * Params  : msgq - message queue to claim entry for
- * Returns : message queue entry or NULL.
+ * Params  : msgq - message queue to claim entry क्रम
+ * Returns : message queue entry or शून्य.
  */
-static struct msgqueue_entry *mqe_alloc(MsgQueue_t *msgq)
-{
-	struct msgqueue_entry *mq;
+अटल काष्ठा msgqueue_entry *mqe_alloc(MsgQueue_t *msgq)
+अणु
+	काष्ठा msgqueue_entry *mq;
 
-	if ((mq = msgq->free) != NULL)
-		msgq->free = mq->next;
+	अगर ((mq = msgq->मुक्त) != शून्य)
+		msgq->मुक्त = mq->next;
 
-	return mq;
-}
+	वापस mq;
+पूर्ण
 
 /*
- * Function: void mqe_free(MsgQueue_t *msgq, struct msgqueue_entry *mq)
- * Purpose : free a message queue entry
- * Params  : msgq - message queue to free entry from
- *	     mq   - message queue entry to free
+ * Function: व्योम mqe_मुक्त(MsgQueue_t *msgq, काष्ठा msgqueue_entry *mq)
+ * Purpose : मुक्त a message queue entry
+ * Params  : msgq - message queue to मुक्त entry from
+ *	     mq   - message queue entry to मुक्त
  */
-static void mqe_free(MsgQueue_t *msgq, struct msgqueue_entry *mq)
-{
-	if (mq) {
-		mq->next = msgq->free;
-		msgq->free = mq;
-	}
-}
+अटल व्योम mqe_मुक्त(MsgQueue_t *msgq, काष्ठा msgqueue_entry *mq)
+अणु
+	अगर (mq) अणु
+		mq->next = msgq->मुक्त;
+		msgq->मुक्त = mq;
+	पूर्ण
+पूर्ण
 
 /*
- * Function: void msgqueue_initialise(MsgQueue_t *msgq)
+ * Function: व्योम msgqueue_initialise(MsgQueue_t *msgq)
  * Purpose : initialise a message queue
  * Params  : msgq - queue to initialise
  */
-void msgqueue_initialise(MsgQueue_t *msgq)
-{
-	int i;
+व्योम msgqueue_initialise(MsgQueue_t *msgq)
+अणु
+	पूर्णांक i;
 
-	msgq->qe = NULL;
-	msgq->free = &msgq->entries[0];
+	msgq->qe = शून्य;
+	msgq->मुक्त = &msgq->entries[0];
 
-	for (i = 0; i < NR_MESSAGES; i++)
+	क्रम (i = 0; i < NR_MESSAGES; i++)
 		msgq->entries[i].next = &msgq->entries[i + 1];
 
-	msgq->entries[NR_MESSAGES - 1].next = NULL;
-}
+	msgq->entries[NR_MESSAGES - 1].next = शून्य;
+पूर्ण
 
 
 /*
- * Function: void msgqueue_free(MsgQueue_t *msgq)
- * Purpose : free a queue
- * Params  : msgq - queue to free
+ * Function: व्योम msgqueue_मुक्त(MsgQueue_t *msgq)
+ * Purpose : मुक्त a queue
+ * Params  : msgq - queue to मुक्त
  */
-void msgqueue_free(MsgQueue_t *msgq)
-{
-}
+व्योम msgqueue_मुक्त(MsgQueue_t *msgq)
+अणु
+पूर्ण
 
 /*
- * Function: int msgqueue_msglength(MsgQueue_t *msgq)
+ * Function: पूर्णांक msgqueue_msglength(MsgQueue_t *msgq)
  * Purpose : calculate the total length of all messages on the message queue
  * Params  : msgq - queue to examine
  * Returns : number of bytes of messages in queue
  */
-int msgqueue_msglength(MsgQueue_t *msgq)
-{
-	struct msgqueue_entry *mq = msgq->qe;
-	int length = 0;
+पूर्णांक msgqueue_msglength(MsgQueue_t *msgq)
+अणु
+	काष्ठा msgqueue_entry *mq = msgq->qe;
+	पूर्णांक length = 0;
 
-	for (mq = msgq->qe; mq; mq = mq->next)
+	क्रम (mq = msgq->qe; mq; mq = mq->next)
 		length += mq->msg.length;
 
-	return length;
-}
+	वापस length;
+पूर्ण
 
 /*
- * Function: struct message *msgqueue_getmsg(MsgQueue_t *msgq, int msgno)
- * Purpose : return a message
+ * Function: काष्ठा message *msgqueue_geपंचांगsg(MsgQueue_t *msgq, पूर्णांक msgno)
+ * Purpose : वापस a message
  * Params  : msgq   - queue to obtain message from
  *	   : msgno  - message number
- * Returns : pointer to message string, or NULL
+ * Returns : poपूर्णांकer to message string, or शून्य
  */
-struct message *msgqueue_getmsg(MsgQueue_t *msgq, int msgno)
-{
-	struct msgqueue_entry *mq;
+काष्ठा message *msgqueue_geपंचांगsg(MsgQueue_t *msgq, पूर्णांक msgno)
+अणु
+	काष्ठा msgqueue_entry *mq;
 
-	for (mq = msgq->qe; mq && msgno; mq = mq->next, msgno--);
+	क्रम (mq = msgq->qe; mq && msgno; mq = mq->next, msgno--);
 
-	return mq ? &mq->msg : NULL;
-}
+	वापस mq ? &mq->msg : शून्य;
+पूर्ण
 
 /*
- * Function: int msgqueue_addmsg(MsgQueue_t *msgq, int length, ...)
+ * Function: पूर्णांक msgqueue_addmsg(MsgQueue_t *msgq, पूर्णांक length, ...)
  * Purpose : add a message onto a message queue
  * Params  : msgq   - queue to add message on
  *	     length - length of message
  *	     ...    - message bytes
- * Returns : != 0 if successful
+ * Returns : != 0 अगर successful
  */
-int msgqueue_addmsg(MsgQueue_t *msgq, int length, ...)
-{
-	struct msgqueue_entry *mq = mqe_alloc(msgq);
-	va_list ap;
+पूर्णांक msgqueue_addmsg(MsgQueue_t *msgq, पूर्णांक length, ...)
+अणु
+	काष्ठा msgqueue_entry *mq = mqe_alloc(msgq);
+	बहु_सूची ap;
 
-	if (mq) {
-		struct msgqueue_entry **mqp;
-		int i;
+	अगर (mq) अणु
+		काष्ठा msgqueue_entry **mqp;
+		पूर्णांक i;
 
-		va_start(ap, length);
-		for (i = 0; i < length; i++)
-			mq->msg.msg[i] = va_arg(ap, unsigned int);
-		va_end(ap);
+		बहु_शुरू(ap, length);
+		क्रम (i = 0; i < length; i++)
+			mq->msg.msg[i] = बहु_तर्क(ap, अचिन्हित पूर्णांक);
+		बहु_पूर्ण(ap);
 
 		mq->msg.length = length;
-		mq->msg.fifo = 0;
-		mq->next = NULL;
+		mq->msg.fअगरo = 0;
+		mq->next = शून्य;
 
 		mqp = &msgq->qe;
-		while (*mqp)
+		जबतक (*mqp)
 			mqp = &(*mqp)->next;
 
 		*mqp = mq;
-	}
+	पूर्ण
 
-	return mq != NULL;
-}
+	वापस mq != शून्य;
+पूर्ण
 
 /*
- * Function: void msgqueue_flush(MsgQueue_t *msgq)
+ * Function: व्योम msgqueue_flush(MsgQueue_t *msgq)
  * Purpose : flush all messages from message queue
  * Params  : msgq - queue to flush
  */
-void msgqueue_flush(MsgQueue_t *msgq)
-{
-	struct msgqueue_entry *mq, *mqnext;
+व्योम msgqueue_flush(MsgQueue_t *msgq)
+अणु
+	काष्ठा msgqueue_entry *mq, *mqnext;
 
-	for (mq = msgq->qe; mq; mq = mqnext) {
+	क्रम (mq = msgq->qe; mq; mq = mqnext) अणु
 		mqnext = mq->next;
-		mqe_free(msgq, mq);
-	}
-	msgq->qe = NULL;
-}
+		mqe_मुक्त(msgq, mq);
+	पूर्ण
+	msgq->qe = शून्य;
+पूर्ण
 
 EXPORT_SYMBOL(msgqueue_initialise);
-EXPORT_SYMBOL(msgqueue_free);
+EXPORT_SYMBOL(msgqueue_मुक्त);
 EXPORT_SYMBOL(msgqueue_msglength);
-EXPORT_SYMBOL(msgqueue_getmsg);
+EXPORT_SYMBOL(msgqueue_geपंचांगsg);
 EXPORT_SYMBOL(msgqueue_addmsg);
 EXPORT_SYMBOL(msgqueue_flush);
 

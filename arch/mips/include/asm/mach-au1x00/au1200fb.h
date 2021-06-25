@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * platform data for au1200fb driver.
+ * platक्रमm data क्रम au1200fb driver.
  */
 
-#ifndef _AU1200FB_PLAT_H_
-#define _AU1200FB_PLAT_H_
+#अगर_अघोषित _AU1200FB_PLAT_H_
+#घोषणा _AU1200FB_PLAT_H_
 
-struct au1200fb_platdata {
-	int (*panel_index)(void);
-	int (*panel_init)(void);
-	int (*panel_shutdown)(void);
-};
+काष्ठा au1200fb_platdata अणु
+	पूर्णांक (*panel_index)(व्योम);
+	पूर्णांक (*panel_init)(व्योम);
+	पूर्णांक (*panel_shutकरोwn)(व्योम);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * 3-axis accelerometer driver supporting SPI Bosch-Sensortec accelerometer chip
- * Copyright © 2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
+ * Copyright तऊ 2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
  */
 
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/regmap.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/spi/spi.h>
 
-#include "bmc150-accel.h"
+#समावेश "bmc150-accel.h"
 
-static int bmc150_accel_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
-	const struct spi_device_id *id = spi_get_device_id(spi);
+अटल पूर्णांक bmc150_accel_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
+	स्थिर काष्ठा spi_device_id *id = spi_get_device_id(spi);
 
 	regmap = devm_regmap_init_spi(spi, &bmc150_regmap_conf);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&spi->dev, "Failed to initialize spi regmap\n");
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return bmc150_accel_core_probe(&spi->dev, regmap, spi->irq, id->name,
+	वापस bmc150_accel_core_probe(&spi->dev, regmap, spi->irq, id->name,
 				       true);
-}
+पूर्ण
 
-static int bmc150_accel_remove(struct spi_device *spi)
-{
-	return bmc150_accel_core_remove(&spi->dev);
-}
+अटल पूर्णांक bmc150_accel_हटाओ(काष्ठा spi_device *spi)
+अणु
+	वापस bmc150_accel_core_हटाओ(&spi->dev);
+पूर्ण
 
-static const struct acpi_device_id bmc150_accel_acpi_match[] = {
-	{"BSBA0150",	bmc150},
-	{"BMC150A",	bmc150},
-	{"BMI055A",	bmi055},
-	{"BMA0255",	bma255},
-	{"BMA250E",	bma250e},
-	{"BMA222",	bma222},
-	{"BMA222E",	bma222e},
-	{"BMA0280",	bma280},
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id bmc150_accel_acpi_match[] = अणु
+	अणु"BSBA0150",	bmc150पूर्ण,
+	अणु"BMC150A",	bmc150पूर्ण,
+	अणु"BMI055A",	bmi055पूर्ण,
+	अणु"BMA0255",	bma255पूर्ण,
+	अणु"BMA250E",	bma250eपूर्ण,
+	अणु"BMA222",	bma222पूर्ण,
+	अणु"BMA222E",	bma222eपूर्ण,
+	अणु"BMA0280",	bma280पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bmc150_accel_acpi_match);
 
-static const struct spi_device_id bmc150_accel_id[] = {
-	{"bmc150_accel",	bmc150},
-	{"bmi055_accel",	bmi055},
-	{"bma255",		bma255},
-	{"bma250e",		bma250e},
-	{"bma222",		bma222},
-	{"bma222e",		bma222e},
-	{"bma280",		bma280},
-	{}
-};
+अटल स्थिर काष्ठा spi_device_id bmc150_accel_id[] = अणु
+	अणु"bmc150_accel",	bmc150पूर्ण,
+	अणु"bmi055_accel",	bmi055पूर्ण,
+	अणु"bma255",		bma255पूर्ण,
+	अणु"bma250e",		bma250eपूर्ण,
+	अणु"bma222",		bma222पूर्ण,
+	अणु"bma222e",		bma222eपूर्ण,
+	अणु"bma280",		bma280पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, bmc150_accel_id);
 
-static struct spi_driver bmc150_accel_driver = {
-	.driver = {
+अटल काष्ठा spi_driver bmc150_accel_driver = अणु
+	.driver = अणु
 		.name	= "bmc150_accel_spi",
 		.acpi_match_table = ACPI_PTR(bmc150_accel_acpi_match),
 		.pm	= &bmc150_accel_pm_ops,
-	},
+	पूर्ण,
 	.probe		= bmc150_accel_probe,
-	.remove		= bmc150_accel_remove,
+	.हटाओ		= bmc150_accel_हटाओ,
 	.id_table	= bmc150_accel_id,
-};
+पूर्ण;
 module_spi_driver(bmc150_accel_driver);
 
 MODULE_AUTHOR("Markus Pargmann <mpa@pengutronix.de>");

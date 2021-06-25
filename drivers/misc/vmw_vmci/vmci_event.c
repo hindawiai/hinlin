@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/vmw_vmci_api.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/rculist.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/vmw_vmci_api.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
 
-#include "vmci_driver.h"
-#include "vmci_event.h"
+#समावेश "vmci_driver.h"
+#समावेश "vmci_event.h"
 
-#define EVENT_MAGIC 0xEABE0000
-#define VMCI_EVENT_MAX_ATTEMPTS 10
+#घोषणा EVENT_MAGIC 0xEABE0000
+#घोषणा VMCI_EVENT_MAX_ATTEMPTS 10
 
-struct vmci_subscription {
+काष्ठा vmci_subscription अणु
 	u32 id;
 	u32 event;
 	vmci_event_cb callback;
-	void *callback_data;
-	struct list_head node;	/* on one of subscriber lists */
-};
+	व्योम *callback_data;
+	काष्ठा list_head node;	/* on one of subscriber lists */
+पूर्ण;
 
-static struct list_head subscriber_array[VMCI_EVENT_MAX];
-static DEFINE_MUTEX(subscriber_mutex);
+अटल काष्ठा list_head subscriber_array[VMCI_EVENT_MAX];
+अटल DEFINE_MUTEX(subscriber_mutex);
 
-int __init vmci_event_init(void)
-{
-	int i;
+पूर्णांक __init vmci_event_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < VMCI_EVENT_MAX; i++)
+	क्रम (i = 0; i < VMCI_EVENT_MAX; i++)
 		INIT_LIST_HEAD(&subscriber_array[i]);
 
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 
-void vmci_event_exit(void)
-{
-	int e;
+व्योम vmci_event_निकास(व्योम)
+अणु
+	पूर्णांक e;
 
-	/* We free all memory at exit. */
-	for (e = 0; e < VMCI_EVENT_MAX; e++) {
-		struct vmci_subscription *cur, *p2;
-		list_for_each_entry_safe(cur, p2, &subscriber_array[e], node) {
+	/* We मुक्त all memory at निकास. */
+	क्रम (e = 0; e < VMCI_EVENT_MAX; e++) अणु
+		काष्ठा vmci_subscription *cur, *p2;
+		list_क्रम_each_entry_safe(cur, p2, &subscriber_array[e], node) अणु
 
 			/*
 			 * We should never get here because all events
-			 * should have been unregistered before we try
+			 * should have been unरेजिस्टरed beक्रमe we try
 			 * to unload the driver module.
 			 */
 			pr_warn("Unexpected free events occurring\n");
 			list_del(&cur->node);
-			kfree(cur);
-		}
-	}
-}
+			kमुक्त(cur);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Find entry. Assumes subscriber_mutex is held.
  */
-static struct vmci_subscription *event_find(u32 sub_id)
-{
-	int e;
+अटल काष्ठा vmci_subscription *event_find(u32 sub_id)
+अणु
+	पूर्णांक e;
 
-	for (e = 0; e < VMCI_EVENT_MAX; e++) {
-		struct vmci_subscription *cur;
-		list_for_each_entry(cur, &subscriber_array[e], node) {
-			if (cur->id == sub_id)
-				return cur;
-		}
-	}
-	return NULL;
-}
+	क्रम (e = 0; e < VMCI_EVENT_MAX; e++) अणु
+		काष्ठा vmci_subscription *cur;
+		list_क्रम_each_entry(cur, &subscriber_array[e], node) अणु
+			अगर (cur->id == sub_id)
+				वापस cur;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * Actually delivers the events to the subscribers.
- * The callback function for each subscriber is invoked.
+ * The callback function क्रम each subscriber is invoked.
  */
-static void event_deliver(struct vmci_event_msg *event_msg)
-{
-	struct vmci_subscription *cur;
-	struct list_head *subscriber_list;
+अटल व्योम event_deliver(काष्ठा vmci_event_msg *event_msg)
+अणु
+	काष्ठा vmci_subscription *cur;
+	काष्ठा list_head *subscriber_list;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	subscriber_list = &subscriber_array[event_msg->event_data.event];
-	list_for_each_entry_rcu(cur, subscriber_list, node) {
+	list_क्रम_each_entry_rcu(cur, subscriber_list, node) अणु
 		cur->callback(cur->id, &event_msg->event_data,
 			      cur->callback_data);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /*
- * Dispatcher for the VMCI_EVENT_RECEIVE datagrams. Calls all
- * subscribers for given event.
+ * Dispatcher क्रम the VMCI_EVENT_RECEIVE datagrams. Calls all
+ * subscribers क्रम given event.
  */
-int vmci_event_dispatch(struct vmci_datagram *msg)
-{
-	struct vmci_event_msg *event_msg = (struct vmci_event_msg *)msg;
+पूर्णांक vmci_event_dispatch(काष्ठा vmci_datagram *msg)
+अणु
+	काष्ठा vmci_event_msg *event_msg = (काष्ठा vmci_event_msg *)msg;
 
-	if (msg->payload_size < sizeof(u32) ||
-	    msg->payload_size > sizeof(struct vmci_event_data_max))
-		return VMCI_ERROR_INVALID_ARGS;
+	अगर (msg->payload_size < माप(u32) ||
+	    msg->payload_size > माप(काष्ठा vmci_event_data_max))
+		वापस VMCI_ERROR_INVALID_ARGS;
 
-	if (!VMCI_EVENT_VALID(event_msg->event_data.event))
-		return VMCI_ERROR_EVENT_UNKNOWN;
+	अगर (!VMCI_EVENT_VALID(event_msg->event_data.event))
+		वापस VMCI_ERROR_EVENT_UNKNOWN;
 
 	event_deliver(event_msg);
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 
 /*
  * vmci_event_subscribe() - Subscribe to a given event.
@@ -123,33 +124,33 @@ int vmci_event_dispatch(struct vmci_datagram *msg)
  * @subscription_id:    ID used to track subscription.  Used with
  *              vmci_event_unsubscribe()
  *
- * Subscribes to the provided event. The callback specified will be
- * fired from RCU critical section and therefore must not sleep.
+ * Subscribes to the provided event. The callback specअगरied will be
+ * fired from RCU critical section and thereक्रमe must not sleep.
  */
-int vmci_event_subscribe(u32 event,
+पूर्णांक vmci_event_subscribe(u32 event,
 			 vmci_event_cb callback,
-			 void *callback_data,
+			 व्योम *callback_data,
 			 u32 *new_subscription_id)
-{
-	struct vmci_subscription *sub;
-	int attempts;
-	int retval;
+अणु
+	काष्ठा vmci_subscription *sub;
+	पूर्णांक attempts;
+	पूर्णांक retval;
 	bool have_new_id = false;
 
-	if (!new_subscription_id) {
+	अगर (!new_subscription_id) अणु
 		pr_devel("%s: Invalid subscription (NULL)\n", __func__);
-		return VMCI_ERROR_INVALID_ARGS;
-	}
+		वापस VMCI_ERROR_INVALID_ARGS;
+	पूर्ण
 
-	if (!VMCI_EVENT_VALID(event) || !callback) {
+	अगर (!VMCI_EVENT_VALID(event) || !callback) अणु
 		pr_devel("%s: Failed to subscribe to event (type=%d) (callback=%p) (data=%p)\n",
 			 __func__, event, callback, callback_data);
-		return VMCI_ERROR_INVALID_ARGS;
-	}
+		वापस VMCI_ERROR_INVALID_ARGS;
+	पूर्ण
 
-	sub = kzalloc(sizeof(*sub), GFP_KERNEL);
-	if (!sub)
-		return VMCI_ERROR_NO_MEM;
+	sub = kzalloc(माप(*sub), GFP_KERNEL);
+	अगर (!sub)
+		वापस VMCI_ERROR_NO_MEM;
 
 	sub->id = VMCI_EVENT_MAX;
 	sub->event = event;
@@ -160,58 +161,58 @@ int vmci_event_subscribe(u32 event,
 	mutex_lock(&subscriber_mutex);
 
 	/* Creation of a new event is always allowed. */
-	for (attempts = 0; attempts < VMCI_EVENT_MAX_ATTEMPTS; attempts++) {
-		static u32 subscription_id;
+	क्रम (attempts = 0; attempts < VMCI_EVENT_MAX_ATTEMPTS; attempts++) अणु
+		अटल u32 subscription_id;
 		/*
-		 * We try to get an id a couple of time before
+		 * We try to get an id a couple of समय beक्रमe
 		 * claiming we are out of resources.
 		 */
 
-		/* Test for duplicate id. */
-		if (!event_find(++subscription_id)) {
+		/* Test क्रम duplicate id. */
+		अगर (!event_find(++subscription_id)) अणु
 			sub->id = subscription_id;
 			have_new_id = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (have_new_id) {
+	अगर (have_new_id) अणु
 		list_add_rcu(&sub->node, &subscriber_array[event]);
 		retval = VMCI_SUCCESS;
-	} else {
+	पूर्ण अन्यथा अणु
 		retval = VMCI_ERROR_NO_RESOURCES;
-	}
+	पूर्ण
 
 	mutex_unlock(&subscriber_mutex);
 
 	*new_subscription_id = sub->id;
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(vmci_event_subscribe);
 
 /*
  * vmci_event_unsubscribe() - unsubscribe from an event.
  * @sub_id:     A subscription ID as provided by vmci_event_subscribe()
  *
- * Unsubscribe from given event. Removes it from list and frees it.
- * Will return callback_data if requested by caller.
+ * Unsubscribe from given event. Removes it from list and मुक्तs it.
+ * Will वापस callback_data अगर requested by caller.
  */
-int vmci_event_unsubscribe(u32 sub_id)
-{
-	struct vmci_subscription *s;
+पूर्णांक vmci_event_unsubscribe(u32 sub_id)
+अणु
+	काष्ठा vmci_subscription *s;
 
 	mutex_lock(&subscriber_mutex);
 	s = event_find(sub_id);
-	if (s)
+	अगर (s)
 		list_del_rcu(&s->node);
 	mutex_unlock(&subscriber_mutex);
 
-	if (!s)
-		return VMCI_ERROR_NOT_FOUND;
+	अगर (!s)
+		वापस VMCI_ERROR_NOT_FOUND;
 
 	synchronize_rcu();
-	kfree(s);
+	kमुक्त(s);
 
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण
 EXPORT_SYMBOL_GPL(vmci_event_unsubscribe);

@@ -1,4 +1,5 @@
-/* rtc-starfire.c: Starfire platform RTC driver.
+<शैली गुरु>
+/* rtc-starfire.c: Starfire platक्रमm RTC driver.
  *
  * Author: David S. Miller
  * License: GPL
@@ -6,55 +7,55 @@
  * Copyright (C) 2008 David S. Miller <davem@davemloft.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/rtc.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/oplib.h>
+#समावेश <यंत्र/oplib.h>
 
-static u32 starfire_get_time(void)
-{
-	static char obp_gettod[32];
-	static u32 unix_tod;
+अटल u32 starfire_get_समय(व्योम)
+अणु
+	अटल अक्षर obp_gettod[32];
+	अटल u32 unix_tod;
 
-	sprintf(obp_gettod, "h# %08x unix-gettod",
-		(unsigned int) (long) &unix_tod);
+	प्र_लिखो(obp_gettod, "h# %08x unix-gettod",
+		(अचिन्हित पूर्णांक) (दीर्घ) &unix_tod);
 	prom_feval(obp_gettod);
 
-	return unix_tod;
-}
+	वापस unix_tod;
+पूर्ण
 
-static int starfire_read_time(struct device *dev, struct rtc_time *tm)
-{
-	rtc_time64_to_tm(starfire_get_time(), tm);
-	return 0;
-}
+अटल पूर्णांक starfire_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	rtc_समय64_to_पंचांग(starfire_get_समय(), पंचांग);
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops starfire_rtc_ops = {
-	.read_time	= starfire_read_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops starfire_rtc_ops = अणु
+	.पढ़ो_समय	= starfire_पढ़ो_समय,
+पूर्ण;
 
-static int __init starfire_rtc_probe(struct platform_device *pdev)
-{
-	struct rtc_device *rtc;
+अटल पूर्णांक __init starfire_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rtc_device *rtc;
 
 	rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc))
-		return PTR_ERR(rtc);
+	अगर (IS_ERR(rtc))
+		वापस PTR_ERR(rtc);
 
 	rtc->ops = &starfire_rtc_ops;
 	rtc->range_max = U32_MAX;
 
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
-	return devm_rtc_register_device(rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(rtc);
+पूर्ण
 
-static struct platform_driver starfire_rtc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver starfire_rtc_driver = अणु
+	.driver		= अणु
 		.name	= "rtc-starfire",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-builtin_platform_driver_probe(starfire_rtc_driver, starfire_rtc_probe);
+builtin_platक्रमm_driver_probe(starfire_rtc_driver, starfire_rtc_probe);

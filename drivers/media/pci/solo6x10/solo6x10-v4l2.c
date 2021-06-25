@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2010-2013 Bluecherry, LLC <https://www.bluecherrydvr.com>
  *
@@ -9,91 +10,91 @@
  * John Brooks <john.brooks@bluecherry.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
 
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-event.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "solo6x10.h"
-#include "solo6x10-tw28.h"
+#समावेश "solo6x10.h"
+#समावेश "solo6x10-tw28.h"
 
 /* Image size is two fields, SOLO_HW_BPL is one horizontal line in hardware */
-#define SOLO_HW_BPL		2048
-#define solo_vlines(__solo)	(__solo->video_vsize * 2)
-#define solo_image_size(__solo) (solo_bytesperline(__solo) * \
+#घोषणा SOLO_HW_BPL		2048
+#घोषणा solo_vlines(__solo)	(__solo->video_vsize * 2)
+#घोषणा solo_image_size(__solo) (solo_bytesperline(__solo) * \
 				 solo_vlines(__solo))
-#define solo_bytesperline(__solo) (__solo->video_hsize * 2)
+#घोषणा solo_bytesperline(__solo) (__solo->video_hsize * 2)
 
-#define MIN_VID_BUFFERS		2
+#घोषणा MIN_VID_BUFFERS		2
 
-static inline void erase_on(struct solo_dev *solo_dev)
-{
-	solo_reg_write(solo_dev, SOLO_VO_DISP_ERASE, SOLO_VO_DISP_ERASE_ON);
+अटल अंतरभूत व्योम erase_on(काष्ठा solo_dev *solo_dev)
+अणु
+	solo_reg_ग_लिखो(solo_dev, SOLO_VO_DISP_ERASE, SOLO_VO_DISP_ERASE_ON);
 	solo_dev->erasing = 1;
 	solo_dev->frame_blank = 0;
-}
+पूर्ण
 
-static inline int erase_off(struct solo_dev *solo_dev)
-{
-	if (!solo_dev->erasing)
-		return 0;
+अटल अंतरभूत पूर्णांक erase_off(काष्ठा solo_dev *solo_dev)
+अणु
+	अगर (!solo_dev->erasing)
+		वापस 0;
 
-	/* First time around, assert erase off */
-	if (!solo_dev->frame_blank)
-		solo_reg_write(solo_dev, SOLO_VO_DISP_ERASE, 0);
-	/* Keep the erasing flag on for 8 frames minimum */
-	if (solo_dev->frame_blank++ >= 8)
+	/* First समय around, निश्चित erase off */
+	अगर (!solo_dev->frame_blank)
+		solo_reg_ग_लिखो(solo_dev, SOLO_VO_DISP_ERASE, 0);
+	/* Keep the erasing flag on क्रम 8 frames minimum */
+	अगर (solo_dev->frame_blank++ >= 8)
 		solo_dev->erasing = 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void solo_video_in_isr(struct solo_dev *solo_dev)
-{
-	wake_up_interruptible_all(&solo_dev->disp_thread_wait);
-}
+व्योम solo_video_in_isr(काष्ठा solo_dev *solo_dev)
+अणु
+	wake_up_पूर्णांकerruptible_all(&solo_dev->disp_thपढ़ो_रुको);
+पूर्ण
 
-static void solo_win_setup(struct solo_dev *solo_dev, u8 ch,
-			   int sx, int sy, int ex, int ey, int scale)
-{
-	if (ch >= solo_dev->nr_chans)
-		return;
+अटल व्योम solo_win_setup(काष्ठा solo_dev *solo_dev, u8 ch,
+			   पूर्णांक sx, पूर्णांक sy, पूर्णांक ex, पूर्णांक ey, पूर्णांक scale)
+अणु
+	अगर (ch >= solo_dev->nr_chans)
+		वापस;
 
-	/* Here, we just keep window/channel the same */
-	solo_reg_write(solo_dev, SOLO_VI_WIN_CTRL0(ch),
+	/* Here, we just keep winकरोw/channel the same */
+	solo_reg_ग_लिखो(solo_dev, SOLO_VI_WIN_CTRL0(ch),
 		       SOLO_VI_WIN_CHANNEL(ch) |
 		       SOLO_VI_WIN_SX(sx) |
 		       SOLO_VI_WIN_EX(ex) |
 		       SOLO_VI_WIN_SCALE(scale));
 
-	solo_reg_write(solo_dev, SOLO_VI_WIN_CTRL1(ch),
+	solo_reg_ग_लिखो(solo_dev, SOLO_VI_WIN_CTRL1(ch),
 		       SOLO_VI_WIN_SY(sy) |
 		       SOLO_VI_WIN_EY(ey));
-}
+पूर्ण
 
-static int solo_v4l2_ch_ext_4up(struct solo_dev *solo_dev, u8 idx, int on)
-{
+अटल पूर्णांक solo_v4l2_ch_ext_4up(काष्ठा solo_dev *solo_dev, u8 idx, पूर्णांक on)
+अणु
 	u8 ch = idx * 4;
 
-	if (ch >= solo_dev->nr_chans)
-		return -EINVAL;
+	अगर (ch >= solo_dev->nr_chans)
+		वापस -EINVAL;
 
-	if (!on) {
+	अगर (!on) अणु
 		u8 i;
 
-		for (i = ch; i < ch + 4; i++)
+		क्रम (i = ch; i < ch + 4; i++)
 			solo_win_setup(solo_dev, i, solo_dev->video_hsize,
 				       solo_vlines(solo_dev),
 				       solo_dev->video_hsize,
 				       solo_vlines(solo_dev), 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Row 1 */
 	solo_win_setup(solo_dev, ch, 0, 0, solo_dev->video_hsize / 2,
@@ -107,26 +108,26 @@ static int solo_v4l2_ch_ext_4up(struct solo_dev *solo_dev, u8 idx, int on)
 		       solo_vlines(solo_dev) / 2, solo_dev->video_hsize,
 		       solo_vlines(solo_dev), 3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_v4l2_ch_ext_16up(struct solo_dev *solo_dev, int on)
-{
-	int sy, ysize, hsize, i;
+अटल पूर्णांक solo_v4l2_ch_ext_16up(काष्ठा solo_dev *solo_dev, पूर्णांक on)
+अणु
+	पूर्णांक sy, ysize, hsize, i;
 
-	if (!on) {
-		for (i = 0; i < 16; i++)
+	अगर (!on) अणु
+		क्रम (i = 0; i < 16; i++)
 			solo_win_setup(solo_dev, i, solo_dev->video_hsize,
 				       solo_vlines(solo_dev),
 				       solo_dev->video_hsize,
 				       solo_vlines(solo_dev), 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ysize = solo_vlines(solo_dev) / 4;
 	hsize = solo_dev->video_hsize / 4;
 
-	for (sy = 0, i = 0; i < 4; i++, sy += ysize) {
+	क्रम (sy = 0, i = 0; i < 4; i++, sy += ysize) अणु
 		solo_win_setup(solo_dev, i * 4, 0, sy, hsize,
 			       sy + ysize, 5);
 		solo_win_setup(solo_dev, (i * 4) + 1, hsize, sy,
@@ -135,40 +136,40 @@ static int solo_v4l2_ch_ext_16up(struct solo_dev *solo_dev, int on)
 			       hsize * 3, sy + ysize, 5);
 		solo_win_setup(solo_dev, (i * 4) + 3, hsize * 3, sy,
 			       solo_dev->video_hsize, sy + ysize, 5);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_v4l2_ch(struct solo_dev *solo_dev, u8 ch, int on)
-{
+अटल पूर्णांक solo_v4l2_ch(काष्ठा solo_dev *solo_dev, u8 ch, पूर्णांक on)
+अणु
 	u8 ext_ch;
 
-	if (ch < solo_dev->nr_chans) {
+	अगर (ch < solo_dev->nr_chans) अणु
 		solo_win_setup(solo_dev, ch, on ? 0 : solo_dev->video_hsize,
 			       on ? 0 : solo_vlines(solo_dev),
 			       solo_dev->video_hsize, solo_vlines(solo_dev),
 			       on ? 1 : 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (ch >= solo_dev->nr_chans + solo_dev->nr_ext)
-		return -EINVAL;
+	अगर (ch >= solo_dev->nr_chans + solo_dev->nr_ext)
+		वापस -EINVAL;
 
 	ext_ch = ch - solo_dev->nr_chans;
 
 	/* 4up's first */
-	if (ext_ch < 4)
-		return solo_v4l2_ch_ext_4up(solo_dev, ext_ch, on);
+	अगर (ext_ch < 4)
+		वापस solo_v4l2_ch_ext_4up(solo_dev, ext_ch, on);
 
-	/* Remaining case is 16up for 16-port */
-	return solo_v4l2_ch_ext_16up(solo_dev, on);
-}
+	/* Reमुख्यing हाल is 16up क्रम 16-port */
+	वापस solo_v4l2_ch_ext_16up(solo_dev, on);
+पूर्ण
 
-static int solo_v4l2_set_ch(struct solo_dev *solo_dev, u8 ch)
-{
-	if (ch >= solo_dev->nr_chans + solo_dev->nr_ext)
-		return -EINVAL;
+अटल पूर्णांक solo_v4l2_set_ch(काष्ठा solo_dev *solo_dev, u8 ch)
+अणु
+	अगर (ch >= solo_dev->nr_chans + solo_dev->nr_ext)
+		वापस -EINVAL;
 
 	erase_on(solo_dev);
 
@@ -177,427 +178,427 @@ static int solo_v4l2_set_ch(struct solo_dev *solo_dev, u8 ch)
 
 	solo_dev->cur_disp_ch = ch;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void solo_fillbuf(struct solo_dev *solo_dev,
-			 struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+अटल व्योम solo_fillbuf(काष्ठा solo_dev *solo_dev,
+			 काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
 	dma_addr_t addr;
-	unsigned int fdma_addr;
-	int error = -1;
-	int i;
+	अचिन्हित पूर्णांक fdma_addr;
+	पूर्णांक error = -1;
+	पूर्णांक i;
 
 	addr = vb2_dma_contig_plane_dma_addr(vb, 0);
-	if (!addr)
-		goto finish_buf;
+	अगर (!addr)
+		जाओ finish_buf;
 
-	if (erase_off(solo_dev)) {
-		void *p = vb2_plane_vaddr(vb, 0);
-		int image_size = solo_image_size(solo_dev);
+	अगर (erase_off(solo_dev)) अणु
+		व्योम *p = vb2_plane_vaddr(vb, 0);
+		पूर्णांक image_size = solo_image_size(solo_dev);
 
-		for (i = 0; i < image_size; i += 2) {
+		क्रम (i = 0; i < image_size; i += 2) अणु
 			((u8 *)p)[i] = 0x80;
 			((u8 *)p)[i + 1] = 0x00;
-		}
+		पूर्ण
 		error = 0;
-	} else {
-		fdma_addr = SOLO_DISP_EXT_ADDR + (solo_dev->old_write *
+	पूर्ण अन्यथा अणु
+		fdma_addr = SOLO_DISP_EXT_ADDR + (solo_dev->old_ग_लिखो *
 				(SOLO_HW_BPL * solo_vlines(solo_dev)));
 
 		error = solo_p2m_dma_t(solo_dev, 0, addr, fdma_addr,
 				       solo_bytesperline(solo_dev),
 				       solo_vlines(solo_dev), SOLO_HW_BPL);
-	}
+	पूर्ण
 
 finish_buf:
-	if (!error) {
+	अगर (!error) अणु
 		vb2_set_plane_payload(vb, 0,
 			solo_vlines(solo_dev) * solo_bytesperline(solo_dev));
 		vbuf->sequence = solo_dev->sequence++;
-		vb->timestamp = ktime_get_ns();
-	}
+		vb->बारtamp = kसमय_get_ns();
+	पूर्ण
 
-	vb2_buffer_done(vb, error ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-}
+	vb2_buffer_करोne(vb, error ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
+पूर्ण
 
-static void solo_thread_try(struct solo_dev *solo_dev)
-{
-	struct solo_vb2_buf *vb;
+अटल व्योम solo_thपढ़ो_try(काष्ठा solo_dev *solo_dev)
+अणु
+	काष्ठा solo_vb2_buf *vb;
 
-	/* Only "break" from this loop if slock is held, otherwise
-	 * just return. */
-	for (;;) {
-		unsigned int cur_write;
+	/* Only "break" from this loop अगर slock is held, otherwise
+	 * just वापस. */
+	क्रम (;;) अणु
+		अचिन्हित पूर्णांक cur_ग_लिखो;
 
-		cur_write = SOLO_VI_STATUS0_PAGE(
-			solo_reg_read(solo_dev, SOLO_VI_STATUS0));
-		if (cur_write == solo_dev->old_write)
-			return;
+		cur_ग_लिखो = SOLO_VI_STATUS0_PAGE(
+			solo_reg_पढ़ो(solo_dev, SOLO_VI_STATUS0));
+		अगर (cur_ग_लिखो == solo_dev->old_ग_लिखो)
+			वापस;
 
 		spin_lock(&solo_dev->slock);
 
-		if (list_empty(&solo_dev->vidq_active))
-			break;
+		अगर (list_empty(&solo_dev->vidq_active))
+			अवरोध;
 
-		vb = list_first_entry(&solo_dev->vidq_active, struct solo_vb2_buf,
+		vb = list_first_entry(&solo_dev->vidq_active, काष्ठा solo_vb2_buf,
 				      list);
 
-		solo_dev->old_write = cur_write;
+		solo_dev->old_ग_लिखो = cur_ग_लिखो;
 		list_del(&vb->list);
 
 		spin_unlock(&solo_dev->slock);
 
 		solo_fillbuf(solo_dev, &vb->vb.vb2_buf);
-	}
+	पूर्ण
 
-	assert_spin_locked(&solo_dev->slock);
+	निश्चित_spin_locked(&solo_dev->slock);
 	spin_unlock(&solo_dev->slock);
-}
+पूर्ण
 
-static int solo_thread(void *data)
-{
-	struct solo_dev *solo_dev = data;
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक solo_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा solo_dev *solo_dev = data;
+	DECLARE_WAITQUEUE(रुको, current);
 
-	set_freezable();
-	add_wait_queue(&solo_dev->disp_thread_wait, &wait);
+	set_मुक्तzable();
+	add_रुको_queue(&solo_dev->disp_thपढ़ो_रुको, &रुको);
 
-	for (;;) {
-		long timeout = schedule_timeout_interruptible(HZ);
+	क्रम (;;) अणु
+		दीर्घ समयout = schedule_समयout_पूर्णांकerruptible(HZ);
 
-		if (timeout == -ERESTARTSYS || kthread_should_stop())
-			break;
-		solo_thread_try(solo_dev);
-		try_to_freeze();
-	}
+		अगर (समयout == -ERESTARTSYS || kthपढ़ो_should_stop())
+			अवरोध;
+		solo_thपढ़ो_try(solo_dev);
+		try_to_मुक्तze();
+	पूर्ण
 
-	remove_wait_queue(&solo_dev->disp_thread_wait, &wait);
+	हटाओ_रुको_queue(&solo_dev->disp_thपढ़ो_रुको, &रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_start_thread(struct solo_dev *solo_dev)
-{
-	int ret = 0;
+अटल पूर्णांक solo_start_thपढ़ो(काष्ठा solo_dev *solo_dev)
+अणु
+	पूर्णांक ret = 0;
 
-	solo_dev->kthread = kthread_run(solo_thread, solo_dev, SOLO6X10_NAME "_disp");
+	solo_dev->kthपढ़ो = kthपढ़ो_run(solo_thपढ़ो, solo_dev, SOLO6X10_NAME "_disp");
 
-	if (IS_ERR(solo_dev->kthread)) {
-		ret = PTR_ERR(solo_dev->kthread);
-		solo_dev->kthread = NULL;
-		return ret;
-	}
+	अगर (IS_ERR(solo_dev->kthपढ़ो)) अणु
+		ret = PTR_ERR(solo_dev->kthपढ़ो);
+		solo_dev->kthपढ़ो = शून्य;
+		वापस ret;
+	पूर्ण
 	solo_irq_on(solo_dev, SOLO_IRQ_VIDEO_IN);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void solo_stop_thread(struct solo_dev *solo_dev)
-{
-	if (!solo_dev->kthread)
-		return;
+अटल व्योम solo_stop_thपढ़ो(काष्ठा solo_dev *solo_dev)
+अणु
+	अगर (!solo_dev->kthपढ़ो)
+		वापस;
 
 	solo_irq_off(solo_dev, SOLO_IRQ_VIDEO_IN);
-	kthread_stop(solo_dev->kthread);
-	solo_dev->kthread = NULL;
-}
+	kthपढ़ो_stop(solo_dev->kthपढ़ो);
+	solo_dev->kthपढ़ो = शून्य;
+पूर्ण
 
-static int solo_queue_setup(struct vb2_queue *q,
-			   unsigned int *num_buffers, unsigned int *num_planes,
-			   unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct solo_dev *solo_dev = vb2_get_drv_priv(q);
+अटल पूर्णांक solo_queue_setup(काष्ठा vb2_queue *q,
+			   अचिन्हित पूर्णांक *num_buffers, अचिन्हित पूर्णांक *num_planes,
+			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा solo_dev *solo_dev = vb2_get_drv_priv(q);
 
 	sizes[0] = solo_image_size(solo_dev);
 	*num_planes = 1;
 
-	if (*num_buffers < MIN_VID_BUFFERS)
+	अगर (*num_buffers < MIN_VID_BUFFERS)
 		*num_buffers = MIN_VID_BUFFERS;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_start_streaming(struct vb2_queue *q, unsigned int count)
-{
-	struct solo_dev *solo_dev = vb2_get_drv_priv(q);
+अटल पूर्णांक solo_start_streaming(काष्ठा vb2_queue *q, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा solo_dev *solo_dev = vb2_get_drv_priv(q);
 
 	solo_dev->sequence = 0;
-	return solo_start_thread(solo_dev);
-}
+	वापस solo_start_thपढ़ो(solo_dev);
+पूर्ण
 
-static void solo_stop_streaming(struct vb2_queue *q)
-{
-	struct solo_dev *solo_dev = vb2_get_drv_priv(q);
+अटल व्योम solo_stop_streaming(काष्ठा vb2_queue *q)
+अणु
+	काष्ठा solo_dev *solo_dev = vb2_get_drv_priv(q);
 
-	solo_stop_thread(solo_dev);
+	solo_stop_thपढ़ो(solo_dev);
 
 	spin_lock(&solo_dev->slock);
-	while (!list_empty(&solo_dev->vidq_active)) {
-		struct solo_vb2_buf *buf = list_entry(
+	जबतक (!list_empty(&solo_dev->vidq_active)) अणु
+		काष्ठा solo_vb2_buf *buf = list_entry(
 				solo_dev->vidq_active.next,
-				struct solo_vb2_buf, list);
+				काष्ठा solo_vb2_buf, list);
 
 		list_del(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	}
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
 	spin_unlock(&solo_dev->slock);
 	INIT_LIST_HEAD(&solo_dev->vidq_active);
-}
+पूर्ण
 
-static void solo_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct vb2_queue *vq = vb->vb2_queue;
-	struct solo_dev *solo_dev = vb2_get_drv_priv(vq);
-	struct solo_vb2_buf *solo_vb =
-		container_of(vbuf, struct solo_vb2_buf, vb);
+अटल व्योम solo_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा vb2_queue *vq = vb->vb2_queue;
+	काष्ठा solo_dev *solo_dev = vb2_get_drv_priv(vq);
+	काष्ठा solo_vb2_buf *solo_vb =
+		container_of(vbuf, काष्ठा solo_vb2_buf, vb);
 
 	spin_lock(&solo_dev->slock);
 	list_add_tail(&solo_vb->list, &solo_dev->vidq_active);
 	spin_unlock(&solo_dev->slock);
-	wake_up_interruptible(&solo_dev->disp_thread_wait);
-}
+	wake_up_पूर्णांकerruptible(&solo_dev->disp_thपढ़ो_रुको);
+पूर्ण
 
-static const struct vb2_ops solo_video_qops = {
+अटल स्थिर काष्ठा vb2_ops solo_video_qops = अणु
 	.queue_setup	= solo_queue_setup,
 	.buf_queue	= solo_buf_queue,
 	.start_streaming = solo_start_streaming,
 	.stop_streaming = solo_stop_streaming,
-	.wait_prepare	= vb2_ops_wait_prepare,
-	.wait_finish	= vb2_ops_wait_finish,
-};
+	.रुको_prepare	= vb2_ops_रुको_prepare,
+	.रुको_finish	= vb2_ops_रुको_finish,
+पूर्ण;
 
-static int solo_querycap(struct file *file, void  *priv,
-			 struct v4l2_capability *cap)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_querycap(काष्ठा file *file, व्योम  *priv,
+			 काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
-	strscpy(cap->driver, SOLO6X10_NAME, sizeof(cap->driver));
-	strscpy(cap->card, "Softlogic 6x10", sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info), "PCI:%s",
+	strscpy(cap->driver, SOLO6X10_NAME, माप(cap->driver));
+	strscpy(cap->card, "Softlogic 6x10", माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info), "PCI:%s",
 		 pci_name(solo_dev->pdev));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_enum_ext_input(struct solo_dev *solo_dev,
-			       struct v4l2_input *input)
-{
-	int ext = input->index - solo_dev->nr_chans;
-	unsigned int nup, first;
+अटल पूर्णांक solo_क्रमागत_ext_input(काष्ठा solo_dev *solo_dev,
+			       काष्ठा v4l2_input *input)
+अणु
+	पूर्णांक ext = input->index - solo_dev->nr_chans;
+	अचिन्हित पूर्णांक nup, first;
 
-	if (ext >= solo_dev->nr_ext)
-		return -EINVAL;
+	अगर (ext >= solo_dev->nr_ext)
+		वापस -EINVAL;
 
 	nup   = (ext == 4) ? 16 : 4;
 	first = (ext & 3) << 2; /* first channel in the n-up */
-	snprintf(input->name, sizeof(input->name),
+	snम_लिखो(input->name, माप(input->name),
 		 "Multi %d-up (cameras %d-%d)",
 		 nup, first + 1, first + nup);
-	/* Possible outputs:
+	/* Possible outमाला_दो:
 	 *  Multi 4-up (cameras 1-4)
 	 *  Multi 4-up (cameras 5-8)
 	 *  Multi 4-up (cameras 9-12)
 	 *  Multi 4-up (cameras 13-16)
 	 *  Multi 16-up (cameras 1-16)
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_enum_input(struct file *file, void *priv,
-			   struct v4l2_input *input)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_input *input)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
-	if (input->index >= solo_dev->nr_chans) {
-		int ret = solo_enum_ext_input(solo_dev, input);
+	अगर (input->index >= solo_dev->nr_chans) अणु
+		पूर्णांक ret = solo_क्रमागत_ext_input(solo_dev, input);
 
-		if (ret < 0)
-			return ret;
-	} else {
-		snprintf(input->name, sizeof(input->name), "Camera %d",
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		snम_लिखो(input->name, माप(input->name), "Camera %d",
 			 input->index + 1);
 
-		/* We can only check this for normal inputs */
-		if (!tw28_get_video_status(solo_dev, input->index))
+		/* We can only check this क्रम normal inमाला_दो */
+		अगर (!tw28_get_video_status(solo_dev, input->index))
 			input->status = V4L2_IN_ST_NO_SIGNAL;
-	}
+	पूर्ण
 
 	input->type = V4L2_INPUT_TYPE_CAMERA;
 	input->std = solo_dev->vfd->tvnorms;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_set_input(struct file *file, void *priv, unsigned int index)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
-	int ret = solo_v4l2_set_ch(solo_dev, index);
+अटल पूर्णांक solo_set_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
+	पूर्णांक ret = solo_v4l2_set_ch(solo_dev, index);
 
-	if (!ret) {
-		while (erase_off(solo_dev))
+	अगर (!ret) अणु
+		जबतक (erase_off(solo_dev))
 			/* Do nothing */;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int solo_get_input(struct file *file, void *priv, unsigned int *index)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_get_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *index)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
 	*index = solo_dev->cur_disp_ch;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_enum_fmt_cap(struct file *file, void *priv,
-			     struct v4l2_fmtdesc *f)
-{
-	if (f->index)
-		return -EINVAL;
+अटल पूर्णांक solo_क्रमागत_fmt_cap(काष्ठा file *file, व्योम *priv,
+			     काष्ठा v4l2_fmtdesc *f)
+अणु
+	अगर (f->index)
+		वापस -EINVAL;
 
-	f->pixelformat = V4L2_PIX_FMT_UYVY;
-	return 0;
-}
+	f->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
+	वापस 0;
+पूर्ण
 
-static int solo_try_fmt_cap(struct file *file, void *priv,
-			    struct v4l2_format *f)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	int image_size = solo_image_size(solo_dev);
+अटल पूर्णांक solo_try_fmt_cap(काष्ठा file *file, व्योम *priv,
+			    काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	पूर्णांक image_size = solo_image_size(solo_dev);
 
-	if (pix->pixelformat != V4L2_PIX_FMT_UYVY)
-		return -EINVAL;
+	अगर (pix->pixelक्रमmat != V4L2_PIX_FMT_UYVY)
+		वापस -EINVAL;
 
 	pix->width = solo_dev->video_hsize;
 	pix->height = solo_vlines(solo_dev);
 	pix->sizeimage = image_size;
 	pix->field = V4L2_FIELD_INTERLACED;
-	pix->pixelformat = V4L2_PIX_FMT_UYVY;
+	pix->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
 	pix->colorspace = V4L2_COLORSPACE_SMPTE170M;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_set_fmt_cap(struct file *file, void *priv,
-			    struct v4l2_format *f)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_set_fmt_cap(काष्ठा file *file, व्योम *priv,
+			    काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
-	if (vb2_is_busy(&solo_dev->vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&solo_dev->vidq))
+		वापस -EBUSY;
 
-	/* For right now, if it doesn't match our running config,
+	/* For right now, अगर it करोesn't match our running config,
 	 * then fail */
-	return solo_try_fmt_cap(file, priv, f);
-}
+	वापस solo_try_fmt_cap(file, priv, f);
+पूर्ण
 
-static int solo_get_fmt_cap(struct file *file, void *priv,
-			    struct v4l2_format *f)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
-	struct v4l2_pix_format *pix = &f->fmt.pix;
+अटल पूर्णांक solo_get_fmt_cap(काष्ठा file *file, व्योम *priv,
+			    काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
 
 	pix->width = solo_dev->video_hsize;
 	pix->height = solo_vlines(solo_dev);
-	pix->pixelformat = V4L2_PIX_FMT_UYVY;
+	pix->pixelक्रमmat = V4L2_PIX_FMT_UYVY;
 	pix->field = V4L2_FIELD_INTERLACED;
 	pix->sizeimage = solo_image_size(solo_dev);
 	pix->colorspace = V4L2_COLORSPACE_SMPTE170M;
 	pix->bytesperline = solo_bytesperline(solo_dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int solo_g_std(struct file *file, void *priv, v4l2_std_id *i)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *i)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
-	if (solo_dev->video_type == SOLO_VO_FMT_TYPE_NTSC)
+	अगर (solo_dev->video_type == SOLO_VO_FMT_TYPE_NTSC)
 		*i = V4L2_STD_NTSC_M;
-	else
+	अन्यथा
 		*i = V4L2_STD_PAL;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int solo_set_video_type(struct solo_dev *solo_dev, bool is_50hz)
-{
-	int i;
+पूर्णांक solo_set_video_type(काष्ठा solo_dev *solo_dev, bool is_50hz)
+अणु
+	पूर्णांक i;
 
 	/* Make sure all video nodes are idle */
-	if (vb2_is_busy(&solo_dev->vidq))
-		return -EBUSY;
-	for (i = 0; i < solo_dev->nr_chans; i++)
-		if (vb2_is_busy(&solo_dev->v4l2_enc[i]->vidq))
-			return -EBUSY;
+	अगर (vb2_is_busy(&solo_dev->vidq))
+		वापस -EBUSY;
+	क्रम (i = 0; i < solo_dev->nr_chans; i++)
+		अगर (vb2_is_busy(&solo_dev->v4l2_enc[i]->vidq))
+			वापस -EBUSY;
 	solo_dev->video_type = is_50hz ? SOLO_VO_FMT_TYPE_PAL :
 					 SOLO_VO_FMT_TYPE_NTSC;
-	/* Reconfigure for the new standard */
+	/* Reconfigure क्रम the new standard */
 	solo_disp_init(solo_dev);
 	solo_enc_init(solo_dev);
 	solo_tw28_init(solo_dev);
-	for (i = 0; i < solo_dev->nr_chans; i++)
+	क्रम (i = 0; i < solo_dev->nr_chans; i++)
 		solo_update_mode(solo_dev->v4l2_enc[i]);
-	return solo_v4l2_set_ch(solo_dev, solo_dev->cur_disp_ch);
-}
+	वापस solo_v4l2_set_ch(solo_dev, solo_dev->cur_disp_ch);
+पूर्ण
 
-static int solo_s_std(struct file *file, void *priv, v4l2_std_id std)
-{
-	struct solo_dev *solo_dev = video_drvdata(file);
+अटल पूर्णांक solo_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id std)
+अणु
+	काष्ठा solo_dev *solo_dev = video_drvdata(file);
 
-	return solo_set_video_type(solo_dev, std & V4L2_STD_625_50);
-}
+	वापस solo_set_video_type(solo_dev, std & V4L2_STD_625_50);
+पूर्ण
 
-static int solo_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct solo_dev *solo_dev =
-		container_of(ctrl->handler, struct solo_dev, disp_hdl);
+अटल पूर्णांक solo_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा solo_dev *solo_dev =
+		container_of(ctrl->handler, काष्ठा solo_dev, disp_hdl);
 
-	switch (ctrl->id) {
-	case V4L2_CID_MOTION_TRACE:
-		if (ctrl->val) {
-			solo_reg_write(solo_dev, SOLO_VI_MOTION_BORDER,
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_MOTION_TRACE:
+		अगर (ctrl->val) अणु
+			solo_reg_ग_लिखो(solo_dev, SOLO_VI_MOTION_BORDER,
 					SOLO_VI_MOTION_Y_ADD |
 					SOLO_VI_MOTION_Y_VALUE(0x20) |
 					SOLO_VI_MOTION_CB_VALUE(0x10) |
 					SOLO_VI_MOTION_CR_VALUE(0x10));
-			solo_reg_write(solo_dev, SOLO_VI_MOTION_BAR,
+			solo_reg_ग_लिखो(solo_dev, SOLO_VI_MOTION_BAR,
 					SOLO_VI_MOTION_CR_ADD |
 					SOLO_VI_MOTION_Y_VALUE(0x10) |
 					SOLO_VI_MOTION_CB_VALUE(0x80) |
 					SOLO_VI_MOTION_CR_VALUE(0x10));
-		} else {
-			solo_reg_write(solo_dev, SOLO_VI_MOTION_BORDER, 0);
-			solo_reg_write(solo_dev, SOLO_VI_MOTION_BAR, 0);
-		}
-		return 0;
-	default:
-		break;
-	}
-	return -EINVAL;
-}
+		पूर्ण अन्यथा अणु
+			solo_reg_ग_लिखो(solo_dev, SOLO_VI_MOTION_BORDER, 0);
+			solo_reg_ग_लिखो(solo_dev, SOLO_VI_MOTION_BAR, 0);
+		पूर्ण
+		वापस 0;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static const struct v4l2_file_operations solo_v4l2_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations solo_v4l2_fops = अणु
 	.owner			= THIS_MODULE,
-	.open			= v4l2_fh_open,
+	.खोलो			= v4l2_fh_खोलो,
 	.release		= vb2_fop_release,
-	.read			= vb2_fop_read,
+	.पढ़ो			= vb2_fop_पढ़ो,
 	.poll			= vb2_fop_poll,
 	.mmap			= vb2_fop_mmap,
 	.unlocked_ioctl		= video_ioctl2,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops solo_v4l2_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops solo_v4l2_ioctl_ops = अणु
 	.vidioc_querycap		= solo_querycap,
 	.vidioc_s_std			= solo_s_std,
 	.vidioc_g_std			= solo_g_std,
 	/* Input callbacks */
-	.vidioc_enum_input		= solo_enum_input,
+	.vidioc_क्रमागत_input		= solo_क्रमागत_input,
 	.vidioc_s_input			= solo_set_input,
 	.vidioc_g_input			= solo_get_input,
-	/* Video capture format callbacks */
-	.vidioc_enum_fmt_vid_cap	= solo_enum_fmt_cap,
+	/* Video capture क्रमmat callbacks */
+	.vidioc_क्रमागत_fmt_vid_cap	= solo_क्रमागत_fmt_cap,
 	.vidioc_try_fmt_vid_cap		= solo_try_fmt_cap,
 	.vidioc_s_fmt_vid_cap		= solo_set_fmt_cap,
 	.vidioc_g_fmt_vid_cap		= solo_get_fmt_cap,
@@ -612,9 +613,9 @@ static const struct v4l2_ioctl_ops solo_v4l2_ioctl_ops = {
 	.vidioc_log_status		= v4l2_ctrl_log_status,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static const struct video_device solo_v4l2_template = {
+अटल स्थिर काष्ठा video_device solo_v4l2_ढाँचा = अणु
 	.name			= SOLO6X10_NAME,
 	.fops			= &solo_v4l2_fops,
 	.ioctl_ops		= &solo_v4l2_ioctl_ops,
@@ -623,45 +624,45 @@ static const struct video_device solo_v4l2_template = {
 	.tvnorms		= V4L2_STD_NTSC_M | V4L2_STD_PAL,
 	.device_caps		= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 				  V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_ops solo_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops solo_ctrl_ops = अणु
 	.s_ctrl = solo_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_ctrl_config solo_motion_trace_ctrl = {
+अटल स्थिर काष्ठा v4l2_ctrl_config solo_motion_trace_ctrl = अणु
 	.ops = &solo_ctrl_ops,
 	.id = V4L2_CID_MOTION_TRACE,
 	.name = "Motion Detection Trace",
 	.type = V4L2_CTRL_TYPE_BOOLEAN,
 	.max = 1,
 	.step = 1,
-};
+पूर्ण;
 
-int solo_v4l2_init(struct solo_dev *solo_dev, unsigned nr)
-{
-	int ret;
-	int i;
+पूर्णांक solo_v4l2_init(काष्ठा solo_dev *solo_dev, अचिन्हित nr)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	init_waitqueue_head(&solo_dev->disp_thread_wait);
+	init_रुकोqueue_head(&solo_dev->disp_thपढ़ो_रुको);
 	spin_lock_init(&solo_dev->slock);
 	mutex_init(&solo_dev->lock);
 	INIT_LIST_HEAD(&solo_dev->vidq_active);
 
 	solo_dev->vfd = video_device_alloc();
-	if (!solo_dev->vfd)
-		return -ENOMEM;
+	अगर (!solo_dev->vfd)
+		वापस -ENOMEM;
 
-	*solo_dev->vfd = solo_v4l2_template;
+	*solo_dev->vfd = solo_v4l2_ढाँचा;
 	solo_dev->vfd->v4l2_dev = &solo_dev->v4l2_dev;
 	solo_dev->vfd->queue = &solo_dev->vidq;
 	solo_dev->vfd->lock = &solo_dev->lock;
 	v4l2_ctrl_handler_init(&solo_dev->disp_hdl, 1);
-	v4l2_ctrl_new_custom(&solo_dev->disp_hdl, &solo_motion_trace_ctrl, NULL);
-	if (solo_dev->disp_hdl.error) {
+	v4l2_ctrl_new_custom(&solo_dev->disp_hdl, &solo_motion_trace_ctrl, शून्य);
+	अगर (solo_dev->disp_hdl.error) अणु
 		ret = solo_dev->disp_hdl.error;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 	solo_dev->vfd->ctrl_handler = &solo_dev->disp_hdl;
 
 	video_set_drvdata(solo_dev->vfd, solo_dev);
@@ -671,53 +672,53 @@ int solo_v4l2_init(struct solo_dev *solo_dev, unsigned nr)
 	solo_dev->vidq.ops = &solo_video_qops;
 	solo_dev->vidq.mem_ops = &vb2_dma_contig_memops;
 	solo_dev->vidq.drv_priv = solo_dev;
-	solo_dev->vidq.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	solo_dev->vidq.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	solo_dev->vidq.gfp_flags = __GFP_DMA32 | __GFP_KSWAPD_RECLAIM;
-	solo_dev->vidq.buf_struct_size = sizeof(struct solo_vb2_buf);
+	solo_dev->vidq.buf_काष्ठा_size = माप(काष्ठा solo_vb2_buf);
 	solo_dev->vidq.lock = &solo_dev->lock;
 	solo_dev->vidq.dev = &solo_dev->pdev->dev;
 	ret = vb2_queue_init(&solo_dev->vidq);
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
 	/* Cycle all the channels and clear */
-	for (i = 0; i < solo_dev->nr_chans; i++) {
+	क्रम (i = 0; i < solo_dev->nr_chans; i++) अणु
 		solo_v4l2_set_ch(solo_dev, i);
-		while (erase_off(solo_dev))
+		जबतक (erase_off(solo_dev))
 			/* Do nothing */;
-	}
+	पूर्ण
 
-	/* Set the default display channel */
+	/* Set the शेष display channel */
 	solo_v4l2_set_ch(solo_dev, 0);
-	while (erase_off(solo_dev))
+	जबतक (erase_off(solo_dev))
 		/* Do nothing */;
 
-	ret = video_register_device(solo_dev->vfd, VFL_TYPE_VIDEO, nr);
-	if (ret < 0)
-		goto fail;
+	ret = video_रेजिस्टर_device(solo_dev->vfd, VFL_TYPE_VIDEO, nr);
+	अगर (ret < 0)
+		जाओ fail;
 
-	snprintf(solo_dev->vfd->name, sizeof(solo_dev->vfd->name), "%s (%i)",
+	snम_लिखो(solo_dev->vfd->name, माप(solo_dev->vfd->name), "%s (%i)",
 		 SOLO6X10_NAME, solo_dev->vfd->num);
 
 	dev_info(&solo_dev->pdev->dev, "Display as /dev/video%d with %d inputs (%d extended)\n",
 		 solo_dev->vfd->num,
 		 solo_dev->nr_chans, solo_dev->nr_ext);
 
-	return 0;
+	वापस 0;
 
 fail:
 	video_device_release(solo_dev->vfd);
-	v4l2_ctrl_handler_free(&solo_dev->disp_hdl);
-	solo_dev->vfd = NULL;
-	return ret;
-}
+	v4l2_ctrl_handler_मुक्त(&solo_dev->disp_hdl);
+	solo_dev->vfd = शून्य;
+	वापस ret;
+पूर्ण
 
-void solo_v4l2_exit(struct solo_dev *solo_dev)
-{
-	if (solo_dev->vfd == NULL)
-		return;
+व्योम solo_v4l2_निकास(काष्ठा solo_dev *solo_dev)
+अणु
+	अगर (solo_dev->vfd == शून्य)
+		वापस;
 
-	video_unregister_device(solo_dev->vfd);
-	v4l2_ctrl_handler_free(&solo_dev->disp_hdl);
-	solo_dev->vfd = NULL;
-}
+	video_unरेजिस्टर_device(solo_dev->vfd);
+	v4l2_ctrl_handler_मुक्त(&solo_dev->disp_hdl);
+	solo_dev->vfd = शून्य;
+पूर्ण

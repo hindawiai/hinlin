@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * AES CBC routines supporting the Power 7+ Nest Accelerators driver
  *
@@ -7,121 +8,121 @@
  * Author: Kent Yoder <yoder1@us.ibm.com>
  */
 
-#include <crypto/aes.h>
-#include <crypto/algapi.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/crypto.h>
-#include <asm/vio.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/algapi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crypto.h>
+#समावेश <यंत्र/vपन.स>
 
-#include "nx_csbcpb.h"
-#include "nx.h"
+#समावेश "nx_csbcpb.h"
+#समावेश "nx.h"
 
 
-static int cbc_aes_nx_set_key(struct crypto_skcipher *tfm,
-			      const u8               *in_key,
-			      unsigned int            key_len)
-{
-	struct nx_crypto_ctx *nx_ctx = crypto_skcipher_ctx(tfm);
-	struct nx_csbcpb *csbcpb = nx_ctx->csbcpb;
+अटल पूर्णांक cbc_aes_nx_set_key(काष्ठा crypto_skcipher *tfm,
+			      स्थिर u8               *in_key,
+			      अचिन्हित पूर्णांक            key_len)
+अणु
+	काष्ठा nx_crypto_ctx *nx_ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा nx_csbcpb *csbcpb = nx_ctx->csbcpb;
 
 	nx_ctx_init(nx_ctx, HCOP_FC_AES);
 
-	switch (key_len) {
-	case AES_KEYSIZE_128:
+	चयन (key_len) अणु
+	हाल AES_KEYSIZE_128:
 		NX_CPB_SET_KEY_SIZE(csbcpb, NX_KS_AES_128);
 		nx_ctx->ap = &nx_ctx->props[NX_PROPS_AES_128];
-		break;
-	case AES_KEYSIZE_192:
+		अवरोध;
+	हाल AES_KEYSIZE_192:
 		NX_CPB_SET_KEY_SIZE(csbcpb, NX_KS_AES_192);
 		nx_ctx->ap = &nx_ctx->props[NX_PROPS_AES_192];
-		break;
-	case AES_KEYSIZE_256:
+		अवरोध;
+	हाल AES_KEYSIZE_256:
 		NX_CPB_SET_KEY_SIZE(csbcpb, NX_KS_AES_256);
 		nx_ctx->ap = &nx_ctx->props[NX_PROPS_AES_256];
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	csbcpb->cpb.hdr.mode = NX_MODE_AES_CBC;
-	memcpy(csbcpb->cpb.aes_cbc.key, in_key, key_len);
+	स_नकल(csbcpb->cpb.aes_cbc.key, in_key, key_len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cbc_aes_nx_crypt(struct skcipher_request *req,
-			    int                      enc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct nx_crypto_ctx *nx_ctx = crypto_skcipher_ctx(tfm);
-	struct nx_csbcpb *csbcpb = nx_ctx->csbcpb;
-	unsigned long irq_flags;
-	unsigned int processed = 0, to_process;
-	int rc;
+अटल पूर्णांक cbc_aes_nx_crypt(काष्ठा skcipher_request *req,
+			    पूर्णांक                      enc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा nx_crypto_ctx *nx_ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा nx_csbcpb *csbcpb = nx_ctx->csbcpb;
+	अचिन्हित दीर्घ irq_flags;
+	अचिन्हित पूर्णांक processed = 0, to_process;
+	पूर्णांक rc;
 
 	spin_lock_irqsave(&nx_ctx->lock, irq_flags);
 
-	if (enc)
+	अगर (enc)
 		NX_CPB_FDM(csbcpb) |= NX_FDM_ENDE_ENCRYPT;
-	else
+	अन्यथा
 		NX_CPB_FDM(csbcpb) &= ~NX_FDM_ENDE_ENCRYPT;
 
-	do {
+	करो अणु
 		to_process = req->cryptlen - processed;
 
 		rc = nx_build_sg_lists(nx_ctx, req->iv, req->dst, req->src,
 				       &to_process, processed,
 				       csbcpb->cpb.aes_cbc.iv);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 
-		if (!nx_ctx->op.inlen || !nx_ctx->op.outlen) {
+		अगर (!nx_ctx->op.inlen || !nx_ctx->op.outlen) अणु
 			rc = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		rc = nx_hcall_sync(nx_ctx, &nx_ctx->op,
 				   req->base.flags & CRYPTO_TFM_REQ_MAY_SLEEP);
-		if (rc)
-			goto out;
+		अगर (rc)
+			जाओ out;
 
-		memcpy(req->iv, csbcpb->cpb.aes_cbc.cv, AES_BLOCK_SIZE);
+		स_नकल(req->iv, csbcpb->cpb.aes_cbc.cv, AES_BLOCK_SIZE);
 		atomic_inc(&(nx_ctx->stats->aes_ops));
 		atomic64_add(csbcpb->csb.processed_byte_count,
 			     &(nx_ctx->stats->aes_bytes));
 
 		processed += to_process;
-	} while (processed < req->cryptlen);
+	पूर्ण जबतक (processed < req->cryptlen);
 out:
 	spin_unlock_irqrestore(&nx_ctx->lock, irq_flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cbc_aes_nx_encrypt(struct skcipher_request *req)
-{
-	return cbc_aes_nx_crypt(req, 1);
-}
+अटल पूर्णांक cbc_aes_nx_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_aes_nx_crypt(req, 1);
+पूर्ण
 
-static int cbc_aes_nx_decrypt(struct skcipher_request *req)
-{
-	return cbc_aes_nx_crypt(req, 0);
-}
+अटल पूर्णांक cbc_aes_nx_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_aes_nx_crypt(req, 0);
+पूर्ण
 
-struct skcipher_alg nx_cbc_aes_alg = {
+काष्ठा skcipher_alg nx_cbc_aes_alg = अणु
 	.base.cra_name		= "cbc(aes)",
 	.base.cra_driver_name	= "cbc-aes-nx",
 	.base.cra_priority	= 300,
 	.base.cra_blocksize	= AES_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct nx_crypto_ctx),
+	.base.cra_ctxsize	= माप(काष्ठा nx_crypto_ctx),
 	.base.cra_alignmask	= 0xf,
 	.base.cra_module	= THIS_MODULE,
 	.init			= nx_crypto_ctx_aes_cbc_init,
-	.exit			= nx_crypto_ctx_skcipher_exit,
+	.निकास			= nx_crypto_ctx_skcipher_निकास,
 	.min_keysize		= AES_MIN_KEY_SIZE,
 	.max_keysize		= AES_MAX_KEY_SIZE,
 	.ivsize			= AES_BLOCK_SIZE,
 	.setkey			= cbc_aes_nx_set_key,
 	.encrypt		= cbc_aes_nx_encrypt,
 	.decrypt		= cbc_aes_nx_decrypt,
-};
+पूर्ण;

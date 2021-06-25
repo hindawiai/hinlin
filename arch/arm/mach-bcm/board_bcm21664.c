@@ -1,29 +1,30 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "kona_l2_cache.h"
+#समावेश "kona_l2_cache.h"
 
-static void __init bcm21664_init(void)
-{
+अटल व्योम __init bcm21664_init(व्योम)
+अणु
 	kona_l2_cache_init();
-}
+पूर्ण
 
-static const char * const bcm21664_dt_compat[] = {
+अटल स्थिर अक्षर * स्थिर bcm21664_dt_compat[] = अणु
 	"brcm,bcm21664",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(BCM21664_DT, "BCM21664 Broadcom Application Processor")
 	.init_machine = bcm21664_init,

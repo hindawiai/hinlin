@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC_SIGCONTEXT_H
-#define __SPARC_SIGCONTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC_SIGCONTEXT_H
+#घोषणा __SPARC_SIGCONTEXT_H
 
-#include <asm/ptrace.h>
-#include <uapi/asm/sigcontext.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <uapi/यंत्र/sigcontext.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#define __SUNOS_MAXWIN   31
+#घोषणा __SUNOS_MAXWIN   31
 
-/* This is what SunOS does, so shall I unless we use new 32bit signals or rt signals. */
-struct sigcontext32 {
-	int sigc_onstack;      /* state to restore */
-	int sigc_mask;         /* sigmask to restore */
-	int sigc_sp;           /* stack pointer */
-	int sigc_pc;           /* program counter */
-	int sigc_npc;          /* next program counter */
-	int sigc_psr;          /* for condition codes etc */
-	int sigc_g1;           /* User uses these two registers */
-	int sigc_o0;           /* within the trampoline code. */
+/* This is what SunOS करोes, so shall I unless we use new 32bit संकेतs or rt संकेतs. */
+काष्ठा sigcontext32 अणु
+	पूर्णांक sigc_onstack;      /* state to restore */
+	पूर्णांक sigc_mask;         /* sigmask to restore */
+	पूर्णांक sigc_sp;           /* stack poपूर्णांकer */
+	पूर्णांक sigc_pc;           /* program counter */
+	पूर्णांक sigc_npc;          /* next program counter */
+	पूर्णांक sigc_psr;          /* क्रम condition codes etc */
+	पूर्णांक sigc_g1;           /* User uses these two रेजिस्टरs */
+	पूर्णांक sigc_o0;           /* within the trampoline code. */
 
-	/* Now comes information regarding the users window set
-	 * at the time of the signal.
+	/* Now comes inक्रमmation regarding the users winकरोw set
+	 * at the समय of the संकेत.
 	 */
-	int sigc_oswins;       /* outstanding windows */
+	पूर्णांक sigc_oswins;       /* outstanding winकरोws */
 
-	/* stack ptrs for each regwin buf */
-	unsigned int sigc_spbuf[__SUNOS_MAXWIN];
+	/* stack ptrs क्रम each regwin buf */
+	अचिन्हित पूर्णांक sigc_spbuf[__SUNOS_MAXWIN];
 
-	/* Windows to restore after signal */
-	struct reg_window32 sigc_wbuf[__SUNOS_MAXWIN];
-};
+	/* Winकरोws to restore after संकेत */
+	काष्ठा reg_winकरोw32 sigc_wbuf[__SUNOS_MAXWIN];
+पूर्ण;
 
 
-/* This is what we use for 32bit new non-rt signals. */
+/* This is what we use क्रम 32bit new non-rt संकेतs. */
 
-typedef struct {
-	struct {
-		unsigned int psr;
-		unsigned int pc;
-		unsigned int npc;
-		unsigned int y;
-		unsigned int u_regs[16]; /* globals and ins */
-	}			si_regs;
-	int			si_mask;
-} __siginfo32_t;
+प्रकार काष्ठा अणु
+	काष्ठा अणु
+		अचिन्हित पूर्णांक psr;
+		अचिन्हित पूर्णांक pc;
+		अचिन्हित पूर्णांक npc;
+		अचिन्हित पूर्णांक y;
+		अचिन्हित पूर्णांक u_regs[16]; /* globals and ins */
+	पूर्ण			si_regs;
+	पूर्णांक			si_mask;
+पूर्ण __siginfo32_t;
 
-#define __SIGC_MAXWIN	7
+#घोषणा __SIGC_MAXWIN	7
 
-typedef struct {
-	unsigned long locals[8];
-	unsigned long ins[8];
-} __siginfo_reg_window;
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ locals[8];
+	अचिन्हित दीर्घ ins[8];
+पूर्ण __siginfo_reg_winकरोw;
 
-typedef struct {
-	int			wsaved;
-	__siginfo_reg_window	reg_window[__SIGC_MAXWIN];
-	unsigned long		rwbuf_stkptrs[__SIGC_MAXWIN];
-} __siginfo_rwin_t;
+प्रकार काष्ठा अणु
+	पूर्णांक			wsaved;
+	__siginfo_reg_winकरोw	reg_winकरोw[__SIGC_MAXWIN];
+	अचिन्हित दीर्घ		rwbuf_stkptrs[__SIGC_MAXWIN];
+पूर्ण __siginfo_rwin_t;
 
-#ifdef CONFIG_SPARC64
-typedef struct {
-	unsigned   int si_float_regs [64];
-	unsigned   long si_fsr;
-	unsigned   long si_gsr;
-	unsigned   long si_fprs;
-} __siginfo_fpu_t;
+#अगर_घोषित CONFIG_SPARC64
+प्रकार काष्ठा अणु
+	अचिन्हित   पूर्णांक si_भग्न_regs [64];
+	अचिन्हित   दीर्घ si_fsr;
+	अचिन्हित   दीर्घ si_gsr;
+	अचिन्हित   दीर्घ si_fprs;
+पूर्ण __siginfo_fpu_t;
 
-/* This is what SunOS doesn't, so we have to write this alone
-   and do it properly. */
-struct sigcontext {
+/* This is what SunOS करोesn't, so we have to ग_लिखो this alone
+   and करो it properly. */
+काष्ठा sigcontext अणु
 	/* The size of this array has to match SI_MAX_SIZE from siginfo.h */
-	char			sigc_info[128];
-	struct {
-		unsigned long	u_regs[16]; /* globals and ins */
-		unsigned long	tstate;
-		unsigned long	tpc;
-		unsigned long	tnpc;
-		unsigned int	y;
-		unsigned int	fprs;
-	}			sigc_regs;
+	अक्षर			sigc_info[128];
+	काष्ठा अणु
+		अचिन्हित दीर्घ	u_regs[16]; /* globals and ins */
+		अचिन्हित दीर्घ	tstate;
+		अचिन्हित दीर्घ	tpc;
+		अचिन्हित दीर्घ	tnpc;
+		अचिन्हित पूर्णांक	y;
+		अचिन्हित पूर्णांक	fprs;
+	पूर्ण			sigc_regs;
 	__siginfo_fpu_t *	sigc_fpu_save;
-	struct {
-		void	*	ss_sp;
-		int		ss_flags;
-		unsigned long	ss_size;
-	}			sigc_stack;
-	unsigned long		sigc_mask;
+	काष्ठा अणु
+		व्योम	*	ss_sp;
+		पूर्णांक		ss_flags;
+		अचिन्हित दीर्घ	ss_size;
+	पूर्ण			sigc_stack;
+	अचिन्हित दीर्घ		sigc_mask;
 	__siginfo_rwin_t *	sigc_rwin_save;
-};
+पूर्ण;
 
-#else
+#अन्यथा
 
-typedef struct {
-	unsigned long si_float_regs [32];
-	unsigned long si_fsr;
-	unsigned long si_fpqdepth;
-	struct {
-		unsigned long *insn_addr;
-		unsigned long insn;
-	} si_fpqueue [16];
-} __siginfo_fpu_t;
-#endif /* (CONFIG_SPARC64) */
+प्रकार काष्ठा अणु
+	अचिन्हित दीर्घ si_भग्न_regs [32];
+	अचिन्हित दीर्घ si_fsr;
+	अचिन्हित दीर्घ si_fpqdepth;
+	काष्ठा अणु
+		अचिन्हित दीर्घ *insn_addr;
+		अचिन्हित दीर्घ insn;
+	पूर्ण si_fpqueue [16];
+पूर्ण __siginfo_fpu_t;
+#पूर्ण_अगर /* (CONFIG_SPARC64) */
 
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-#endif /* !(__SPARC_SIGCONTEXT_H) */
+#पूर्ण_अगर /* !(__SPARC_SIGCONTEXT_H) */

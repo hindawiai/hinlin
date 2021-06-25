@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* 
  *  Copyright 10/16/2005 Tilman Kranz <tilde@tk-sls.de>
- *  Creative Audio MIDI, for the CA0106 Driver
+ *  Creative Audio MIDI, क्रम the CA0106 Driver
  *  Version: 0.0.1
  *
  *  Changelog:
  *    See ca_midi.c
  */
 
-#include <linux/spinlock.h>
-#include <sound/rawmidi.h>
-#include <sound/mpu401.h>
+#समावेश <linux/spinlock.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/mpu401.h>
 
-#define CA_MIDI_MODE_INPUT	MPU401_MODE_INPUT
-#define CA_MIDI_MODE_OUTPUT	MPU401_MODE_OUTPUT
+#घोषणा CA_MIDI_MODE_INPUT	MPU401_MODE_INPUT
+#घोषणा CA_MIDI_MODE_OUTPUT	MPU401_MODE_OUTPUT
 
-struct snd_ca_midi {
+काष्ठा snd_ca_midi अणु
 
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *substream_input;
-	struct snd_rawmidi_substream *substream_output;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *substream_input;
+	काष्ठा snd_rawmidi_substream *substream_output;
 
-	void *dev_id;
+	व्योम *dev_id;
 
 	spinlock_t input_lock;
 	spinlock_t output_lock;
-	spinlock_t open_lock;
+	spinlock_t खोलो_lock;
 
-	unsigned int channel;
+	अचिन्हित पूर्णांक channel;
 
-	unsigned int midi_mode;
-	int port;
-	int tx_enable, rx_enable;
-	int ipr_tx, ipr_rx;            
+	अचिन्हित पूर्णांक midi_mode;
+	पूर्णांक port;
+	पूर्णांक tx_enable, rx_enable;
+	पूर्णांक ipr_tx, ipr_rx;            
 	
-	int input_avail, output_ready;
-	int ack, reset, enter_uart;
+	पूर्णांक input_avail, output_पढ़ोy;
+	पूर्णांक ack, reset, enter_uart;
 
-	void (*interrupt)(struct snd_ca_midi *midi, unsigned int status);
-	void (*interrupt_enable)(struct snd_ca_midi *midi, int intr);
-	void (*interrupt_disable)(struct snd_ca_midi *midi, int intr);
+	व्योम (*पूर्णांकerrupt)(काष्ठा snd_ca_midi *midi, अचिन्हित पूर्णांक status);
+	व्योम (*पूर्णांकerrupt_enable)(काष्ठा snd_ca_midi *midi, पूर्णांक पूर्णांकr);
+	व्योम (*पूर्णांकerrupt_disable)(काष्ठा snd_ca_midi *midi, पूर्णांक पूर्णांकr);
 
-	unsigned char (*read)(struct snd_ca_midi *midi, int idx);
-	void (*write)(struct snd_ca_midi *midi, int data, int idx);
+	अचिन्हित अक्षर (*पढ़ो)(काष्ठा snd_ca_midi *midi, पूर्णांक idx);
+	व्योम (*ग_लिखो)(काष्ठा snd_ca_midi *midi, पूर्णांक data, पूर्णांक idx);
 
 	/* get info from dev_id */
-	struct snd_card *(*get_dev_id_card)(void *dev_id);
-	int (*get_dev_id_port)(void *dev_id);
-};
+	काष्ठा snd_card *(*get_dev_id_card)(व्योम *dev_id);
+	पूर्णांक (*get_dev_id_port)(व्योम *dev_id);
+पूर्ण;
 
-int ca_midi_init(void *card, struct snd_ca_midi *midi, int device, char *name);
+पूर्णांक ca_midi_init(व्योम *card, काष्ठा snd_ca_midi *midi, पूर्णांक device, अक्षर *name);

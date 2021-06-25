@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2014-2015 Broadcom
+ * Copyright तऊ 2014-2015 Broadcom
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,109 +22,109 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _UAPI_VC4_DRM_H_
-#define _UAPI_VC4_DRM_H_
+#अगर_अघोषित _UAPI_VC4_DRM_H_
+#घोषणा _UAPI_VC4_DRM_H_
 
-#include "drm.h"
+#समावेश "drm.h"
 
-#if defined(__cplusplus)
-extern "C" {
-#endif
+#अगर defined(__cplusplus)
+बाह्य "C" अणु
+#पूर्ण_अगर
 
-#define DRM_VC4_SUBMIT_CL                         0x00
-#define DRM_VC4_WAIT_SEQNO                        0x01
-#define DRM_VC4_WAIT_BO                           0x02
-#define DRM_VC4_CREATE_BO                         0x03
-#define DRM_VC4_MMAP_BO                           0x04
-#define DRM_VC4_CREATE_SHADER_BO                  0x05
-#define DRM_VC4_GET_HANG_STATE                    0x06
-#define DRM_VC4_GET_PARAM                         0x07
-#define DRM_VC4_SET_TILING                        0x08
-#define DRM_VC4_GET_TILING                        0x09
-#define DRM_VC4_LABEL_BO                          0x0a
-#define DRM_VC4_GEM_MADVISE                       0x0b
-#define DRM_VC4_PERFMON_CREATE                    0x0c
-#define DRM_VC4_PERFMON_DESTROY                   0x0d
-#define DRM_VC4_PERFMON_GET_VALUES                0x0e
+#घोषणा DRM_VC4_SUBMIT_CL                         0x00
+#घोषणा DRM_VC4_WAIT_SEQNO                        0x01
+#घोषणा DRM_VC4_WAIT_BO                           0x02
+#घोषणा DRM_VC4_CREATE_BO                         0x03
+#घोषणा DRM_VC4_MMAP_BO                           0x04
+#घोषणा DRM_VC4_CREATE_SHADER_BO                  0x05
+#घोषणा DRM_VC4_GET_HANG_STATE                    0x06
+#घोषणा DRM_VC4_GET_PARAM                         0x07
+#घोषणा DRM_VC4_SET_TILING                        0x08
+#घोषणा DRM_VC4_GET_TILING                        0x09
+#घोषणा DRM_VC4_LABEL_BO                          0x0a
+#घोषणा DRM_VC4_GEM_MADVISE                       0x0b
+#घोषणा DRM_VC4_PERFMON_CREATE                    0x0c
+#घोषणा DRM_VC4_PERFMON_DESTROY                   0x0d
+#घोषणा DRM_VC4_PERFMON_GET_VALUES                0x0e
 
-#define DRM_IOCTL_VC4_SUBMIT_CL           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_SUBMIT_CL, struct drm_vc4_submit_cl)
-#define DRM_IOCTL_VC4_WAIT_SEQNO          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_WAIT_SEQNO, struct drm_vc4_wait_seqno)
-#define DRM_IOCTL_VC4_WAIT_BO             DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_WAIT_BO, struct drm_vc4_wait_bo)
-#define DRM_IOCTL_VC4_CREATE_BO           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_CREATE_BO, struct drm_vc4_create_bo)
-#define DRM_IOCTL_VC4_MMAP_BO             DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_MMAP_BO, struct drm_vc4_mmap_bo)
-#define DRM_IOCTL_VC4_CREATE_SHADER_BO    DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_CREATE_SHADER_BO, struct drm_vc4_create_shader_bo)
-#define DRM_IOCTL_VC4_GET_HANG_STATE      DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_HANG_STATE, struct drm_vc4_get_hang_state)
-#define DRM_IOCTL_VC4_GET_PARAM           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_PARAM, struct drm_vc4_get_param)
-#define DRM_IOCTL_VC4_SET_TILING          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_SET_TILING, struct drm_vc4_set_tiling)
-#define DRM_IOCTL_VC4_GET_TILING          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_TILING, struct drm_vc4_get_tiling)
-#define DRM_IOCTL_VC4_LABEL_BO            DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_LABEL_BO, struct drm_vc4_label_bo)
-#define DRM_IOCTL_VC4_GEM_MADVISE         DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GEM_MADVISE, struct drm_vc4_gem_madvise)
-#define DRM_IOCTL_VC4_PERFMON_CREATE      DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_CREATE, struct drm_vc4_perfmon_create)
-#define DRM_IOCTL_VC4_PERFMON_DESTROY     DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_DESTROY, struct drm_vc4_perfmon_destroy)
-#define DRM_IOCTL_VC4_PERFMON_GET_VALUES  DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_GET_VALUES, struct drm_vc4_perfmon_get_values)
+#घोषणा DRM_IOCTL_VC4_SUBMIT_CL           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_SUBMIT_CL, काष्ठा drm_vc4_submit_cl)
+#घोषणा DRM_IOCTL_VC4_WAIT_SEQNO          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_WAIT_SEQNO, काष्ठा drm_vc4_रुको_seqno)
+#घोषणा DRM_IOCTL_VC4_WAIT_BO             DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_WAIT_BO, काष्ठा drm_vc4_रुको_bo)
+#घोषणा DRM_IOCTL_VC4_CREATE_BO           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_CREATE_BO, काष्ठा drm_vc4_create_bo)
+#घोषणा DRM_IOCTL_VC4_MMAP_BO             DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_MMAP_BO, काष्ठा drm_vc4_mmap_bo)
+#घोषणा DRM_IOCTL_VC4_CREATE_SHADER_BO    DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_CREATE_SHADER_BO, काष्ठा drm_vc4_create_shader_bo)
+#घोषणा DRM_IOCTL_VC4_GET_HANG_STATE      DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_HANG_STATE, काष्ठा drm_vc4_get_hang_state)
+#घोषणा DRM_IOCTL_VC4_GET_PARAM           DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_PARAM, काष्ठा drm_vc4_get_param)
+#घोषणा DRM_IOCTL_VC4_SET_TILING          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_SET_TILING, काष्ठा drm_vc4_set_tiling)
+#घोषणा DRM_IOCTL_VC4_GET_TILING          DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GET_TILING, काष्ठा drm_vc4_get_tiling)
+#घोषणा DRM_IOCTL_VC4_LABEL_BO            DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_LABEL_BO, काष्ठा drm_vc4_label_bo)
+#घोषणा DRM_IOCTL_VC4_GEM_MADVISE         DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_GEM_MADVISE, काष्ठा drm_vc4_gem_madvise)
+#घोषणा DRM_IOCTL_VC4_PERFMON_CREATE      DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_CREATE, काष्ठा drm_vc4_perfmon_create)
+#घोषणा DRM_IOCTL_VC4_PERFMON_DESTROY     DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_DESTROY, काष्ठा drm_vc4_perfmon_destroy)
+#घोषणा DRM_IOCTL_VC4_PERFMON_GET_VALUES  DRM_IOWR(DRM_COMMAND_BASE + DRM_VC4_PERFMON_GET_VALUES, काष्ठा drm_vc4_perfmon_get_values)
 
-struct drm_vc4_submit_rcl_surface {
-	__u32 hindex; /* Handle index, or ~0 if not present. */
+काष्ठा drm_vc4_submit_rcl_surface अणु
+	__u32 hindex; /* Handle index, or ~0 अगर not present. */
 	__u32 offset; /* Offset to start of buffer. */
 	/*
-	 * Bits for either render config (color_write) or load/store packet.
-	 * Bits should all be 0 for MSAA load/stores.
+	 * Bits क्रम either render config (color_ग_लिखो) or load/store packet.
+	 * Bits should all be 0 क्रम MSAA load/stores.
 	 */
 	__u16 bits;
 
-#define VC4_SUBMIT_RCL_SURFACE_READ_IS_FULL_RES		(1 << 0)
+#घोषणा VC4_SUBMIT_RCL_SURFACE_READ_IS_FULL_RES		(1 << 0)
 	__u16 flags;
-};
+पूर्ण;
 
 /**
- * struct drm_vc4_submit_cl - ioctl argument for submitting commands to the 3D
+ * काष्ठा drm_vc4_submit_cl - ioctl argument क्रम submitting commands to the 3D
  * engine.
  *
  * Drivers typically use GPU BOs to store batchbuffers / command lists and
  * their associated state.  However, because the VC4 lacks an MMU, we have to
- * do validation of memory accesses by the GPU commands.  If we were to store
- * our commands in BOs, we'd need to do uncached readback from them to do the
+ * करो validation of memory accesses by the GPU commands.  If we were to store
+ * our commands in BOs, we'd need to करो uncached पढ़ोback from them to करो the
  * validation process, which is too expensive.  Instead, userspace accumulates
  * commands and associated state in plain memory, then the kernel copies the
  * data to its own address space, and then validates and stores it in a GPU
  * BO.
  */
-struct drm_vc4_submit_cl {
-	/* Pointer to the binner command list.
+काष्ठा drm_vc4_submit_cl अणु
+	/* Poपूर्णांकer to the binner command list.
 	 *
 	 * This is the first set of commands executed, which runs the
 	 * coordinate shader to determine where primitives land on the screen,
-	 * then writes out the state updates and draw calls necessary per tile
+	 * then ग_लिखोs out the state updates and draw calls necessary per tile
 	 * to the tile allocation BO.
 	 */
 	__u64 bin_cl;
 
-	/* Pointer to the shader records.
+	/* Poपूर्णांकer to the shader records.
 	 *
-	 * Shader records are the structures read by the hardware that contain
-	 * pointers to uniforms, shaders, and vertex attributes.  The
-	 * reference to the shader record has enough information to determine
-	 * how many pointers are necessary (fixed number for shaders/uniforms,
-	 * and an attribute count), so those BO indices into bo_handles are
-	 * just stored as __u32s before each shader record passed in.
+	 * Shader records are the काष्ठाures पढ़ो by the hardware that contain
+	 * poपूर्णांकers to unअगरorms, shaders, and vertex attributes.  The
+	 * reference to the shader record has enough inक्रमmation to determine
+	 * how many poपूर्णांकers are necessary (fixed number क्रम shaders/unअगरorms,
+	 * and an attribute count), so those BO indices पूर्णांकo bo_handles are
+	 * just stored as __u32s beक्रमe each shader record passed in.
 	 */
 	__u64 shader_rec;
 
-	/* Pointer to uniform data and texture handles for the textures
+	/* Poपूर्णांकer to unअगरorm data and texture handles क्रम the textures
 	 * referenced by the shader.
 	 *
-	 * For each shader state record, there is a set of uniform data in the
+	 * For each shader state record, there is a set of unअगरorm data in the
 	 * order referenced by the record (FS, VS, then CS).  Each set of
-	 * uniform data has a __u32 index into bo_handles per texture
-	 * sample operation, in the order the QPU_W_TMUn_S writes appear in
+	 * unअगरorm data has a __u32 index पूर्णांकo bo_handles per texture
+	 * sample operation, in the order the QPU_W_TMUn_S ग_लिखोs appear in
 	 * the program.  Following the texture BO handle indices is the actual
-	 * uniform data.
+	 * unअगरorm data.
 	 *
-	 * The individual uniform state blocks don't have sizes passed in,
+	 * The inभागidual unअगरorm state blocks करोn't have sizes passed in,
 	 * because the kernel has to determine the sizes anyway during shader
 	 * code validation.
 	 */
-	__u64 uniforms;
+	__u64 unअगरorms;
 	__u64 bo_handles;
 
 	/* Size in bytes of the binner command list. */
@@ -137,10 +138,10 @@ struct drm_vc4_submit_cl {
 	 * keeps the kernel from having to resize some allocations it makes.
 	 */
 	__u32 shader_rec_count;
-	/* Size in bytes of the uniform state. */
-	__u32 uniforms_size;
+	/* Size in bytes of the unअगरorm state. */
+	__u32 unअगरorms_size;
 
-	/* Number of BO handles passed in (size is that times 4). */
+	/* Number of BO handles passed in (size is that बार 4). */
 	__u32 bo_handle_count;
 
 	/* RCL setup: */
@@ -150,152 +151,152 @@ struct drm_vc4_submit_cl {
 	__u8 min_y_tile;
 	__u8 max_x_tile;
 	__u8 max_y_tile;
-	struct drm_vc4_submit_rcl_surface color_read;
-	struct drm_vc4_submit_rcl_surface color_write;
-	struct drm_vc4_submit_rcl_surface zs_read;
-	struct drm_vc4_submit_rcl_surface zs_write;
-	struct drm_vc4_submit_rcl_surface msaa_color_write;
-	struct drm_vc4_submit_rcl_surface msaa_zs_write;
+	काष्ठा drm_vc4_submit_rcl_surface color_पढ़ो;
+	काष्ठा drm_vc4_submit_rcl_surface color_ग_लिखो;
+	काष्ठा drm_vc4_submit_rcl_surface zs_पढ़ो;
+	काष्ठा drm_vc4_submit_rcl_surface zs_ग_लिखो;
+	काष्ठा drm_vc4_submit_rcl_surface msaa_color_ग_लिखो;
+	काष्ठा drm_vc4_submit_rcl_surface msaa_zs_ग_लिखो;
 	__u32 clear_color[2];
 	__u32 clear_z;
 	__u8 clear_s;
 
 	__u32 pad:24;
 
-#define VC4_SUBMIT_CL_USE_CLEAR_COLOR			(1 << 0)
-/* By default, the kernel gets to choose the order that the tiles are
+#घोषणा VC4_SUBMIT_CL_USE_CLEAR_COLOR			(1 << 0)
+/* By शेष, the kernel माला_लो to choose the order that the tiles are
  * rendered in.  If this is set, then the tiles will be rendered in a
  * raster order, with the right-to-left vs left-to-right and
  * top-to-bottom vs bottom-to-top dictated by
  * VC4_SUBMIT_CL_RCL_ORDER_INCREASING_*.  This allows overlapping
  * blits to be implemented using the 3D engine.
  */
-#define VC4_SUBMIT_CL_FIXED_RCL_ORDER			(1 << 1)
-#define VC4_SUBMIT_CL_RCL_ORDER_INCREASING_X		(1 << 2)
-#define VC4_SUBMIT_CL_RCL_ORDER_INCREASING_Y		(1 << 3)
+#घोषणा VC4_SUBMIT_CL_FIXED_RCL_ORDER			(1 << 1)
+#घोषणा VC4_SUBMIT_CL_RCL_ORDER_INCREASING_X		(1 << 2)
+#घोषणा VC4_SUBMIT_CL_RCL_ORDER_INCREASING_Y		(1 << 3)
 	__u32 flags;
 
-	/* Returned value of the seqno of this render job (for the
-	 * wait ioctl).
+	/* Returned value of the seqno of this render job (क्रम the
+	 * रुको ioctl).
 	 */
 	__u64 seqno;
 
 	/* ID of the perfmon to attach to this job. 0 means no perfmon. */
 	__u32 perfmonid;
 
-	/* Syncobj handle to wait on. If set, processing of this render job
-	 * will not start until the syncobj is signaled. 0 means ignore.
+	/* Syncobj handle to रुको on. If set, processing of this render job
+	 * will not start until the syncobj is संकेतed. 0 means ignore.
 	 */
 	__u32 in_sync;
 
 	/* Syncobj handle to export fence to. If set, the fence in the syncobj
-	 * will be replaced with a fence that signals upon completion of this
+	 * will be replaced with a fence that संकेतs upon completion of this
 	 * render job. 0 means ignore.
 	 */
 	__u32 out_sync;
 
 	__u32 pad2;
-};
+पूर्ण;
 
 /**
- * struct drm_vc4_wait_seqno - ioctl argument for waiting for
- * DRM_VC4_SUBMIT_CL completion using its returned seqno.
+ * काष्ठा drm_vc4_रुको_seqno - ioctl argument क्रम रुकोing क्रम
+ * DRM_VC4_SUBMIT_CL completion using its वापसed seqno.
  *
- * timeout_ns is the timeout in nanoseconds, where "0" means "don't
- * block, just return the status."
+ * समयout_ns is the समयout in nanoseconds, where "0" means "करोn't
+ * block, just वापस the status."
  */
-struct drm_vc4_wait_seqno {
+काष्ठा drm_vc4_रुको_seqno अणु
 	__u64 seqno;
-	__u64 timeout_ns;
-};
+	__u64 समयout_ns;
+पूर्ण;
 
 /**
- * struct drm_vc4_wait_bo - ioctl argument for waiting for
+ * काष्ठा drm_vc4_रुको_bo - ioctl argument क्रम रुकोing क्रम
  * completion of the last DRM_VC4_SUBMIT_CL on a BO.
  *
- * This is useful for cases where multiple processes might be
- * rendering to a BO and you want to wait for all rendering to be
+ * This is useful क्रम हालs where multiple processes might be
+ * rendering to a BO and you want to रुको क्रम all rendering to be
  * completed.
  */
-struct drm_vc4_wait_bo {
+काष्ठा drm_vc4_रुको_bo अणु
 	__u32 handle;
 	__u32 pad;
-	__u64 timeout_ns;
-};
+	__u64 समयout_ns;
+पूर्ण;
 
 /**
- * struct drm_vc4_create_bo - ioctl argument for creating VC4 BOs.
+ * काष्ठा drm_vc4_create_bo - ioctl argument क्रम creating VC4 BOs.
  *
- * There are currently no values for the flags argument, but it may be
+ * There are currently no values क्रम the flags argument, but it may be
  * used in a future extension.
  */
-struct drm_vc4_create_bo {
+काष्ठा drm_vc4_create_bo अणु
 	__u32 size;
 	__u32 flags;
-	/** Returned GEM handle for the BO. */
+	/** Returned GEM handle क्रम the BO. */
 	__u32 handle;
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_vc4_mmap_bo - ioctl argument for mapping VC4 BOs.
+ * काष्ठा drm_vc4_mmap_bo - ioctl argument क्रम mapping VC4 BOs.
  *
- * This doesn't actually perform an mmap.  Instead, it returns the
+ * This करोesn't actually perक्रमm an mmap.  Instead, it वापसs the
  * offset you need to use in an mmap on the DRM device node.  This
  * means that tools like valgrind end up knowing about the mapped
  * memory.
  *
- * There are currently no values for the flags argument, but it may be
+ * There are currently no values क्रम the flags argument, but it may be
  * used in a future extension.
  */
-struct drm_vc4_mmap_bo {
-	/** Handle for the object being mapped. */
+काष्ठा drm_vc4_mmap_bo अणु
+	/** Handle क्रम the object being mapped. */
 	__u32 handle;
 	__u32 flags;
-	/** offset into the drm node to use for subsequent mmap call. */
+	/** offset पूर्णांकo the drm node to use क्रम subsequent mmap call. */
 	__u64 offset;
-};
+पूर्ण;
 
 /**
- * struct drm_vc4_create_shader_bo - ioctl argument for creating VC4
+ * काष्ठा drm_vc4_create_shader_bo - ioctl argument क्रम creating VC4
  * shader BOs.
  *
- * Since allowing a shader to be overwritten while it's also being
+ * Since allowing a shader to be overwritten जबतक it's also being
  * executed from would allow privlege escalation, shaders must be
  * created using this ioctl, and they can't be mmapped later.
  */
-struct drm_vc4_create_shader_bo {
+काष्ठा drm_vc4_create_shader_bo अणु
 	/* Size of the data argument. */
 	__u32 size;
 	/* Flags, currently must be 0. */
 	__u32 flags;
 
-	/* Pointer to the data. */
+	/* Poपूर्णांकer to the data. */
 	__u64 data;
 
-	/** Returned GEM handle for the BO. */
+	/** Returned GEM handle क्रम the BO. */
 	__u32 handle;
 	/* Pad, must be 0. */
 	__u32 pad;
-};
+पूर्ण;
 
-struct drm_vc4_get_hang_state_bo {
+काष्ठा drm_vc4_get_hang_state_bo अणु
 	__u32 handle;
 	__u32 paddr;
 	__u32 size;
 	__u32 pad;
-};
+पूर्ण;
 
 /**
- * struct drm_vc4_hang_state - ioctl argument for collecting state
- * from a GPU hang for analysis.
+ * काष्ठा drm_vc4_hang_state - ioctl argument क्रम collecting state
+ * from a GPU hang क्रम analysis.
 */
-struct drm_vc4_get_hang_state {
-	/** Pointer to array of struct drm_vc4_get_hang_state_bo. */
+काष्ठा drm_vc4_get_hang_state अणु
+	/** Poपूर्णांकer to array of काष्ठा drm_vc4_get_hang_state_bo. */
 	__u64 bo;
 	/**
 	 * On input, the size of the bo array.  Output is the number
-	 * of bos to be returned.
+	 * of bos to be वापसed.
 	 */
 	__u32 bo_count;
 
@@ -318,64 +319,64 @@ struct drm_vc4_get_hang_state {
 	__u32 fdbgs;
 	__u32 errstat;
 
-	/* Pad that we may save more registers into in the future. */
+	/* Pad that we may save more रेजिस्टरs पूर्णांकo in the future. */
 	__u32 pad[16];
-};
+पूर्ण;
 
-#define DRM_VC4_PARAM_V3D_IDENT0		0
-#define DRM_VC4_PARAM_V3D_IDENT1		1
-#define DRM_VC4_PARAM_V3D_IDENT2		2
-#define DRM_VC4_PARAM_SUPPORTS_BRANCHES		3
-#define DRM_VC4_PARAM_SUPPORTS_ETC1		4
-#define DRM_VC4_PARAM_SUPPORTS_THREADED_FS	5
-#define DRM_VC4_PARAM_SUPPORTS_FIXED_RCL_ORDER	6
-#define DRM_VC4_PARAM_SUPPORTS_MADVISE		7
-#define DRM_VC4_PARAM_SUPPORTS_PERFMON		8
+#घोषणा DRM_VC4_PARAM_V3D_IDENT0		0
+#घोषणा DRM_VC4_PARAM_V3D_IDENT1		1
+#घोषणा DRM_VC4_PARAM_V3D_IDENT2		2
+#घोषणा DRM_VC4_PARAM_SUPPORTS_BRANCHES		3
+#घोषणा DRM_VC4_PARAM_SUPPORTS_ETC1		4
+#घोषणा DRM_VC4_PARAM_SUPPORTS_THREADED_FS	5
+#घोषणा DRM_VC4_PARAM_SUPPORTS_FIXED_RCL_ORDER	6
+#घोषणा DRM_VC4_PARAM_SUPPORTS_MADVISE		7
+#घोषणा DRM_VC4_PARAM_SUPPORTS_PERFMON		8
 
-struct drm_vc4_get_param {
+काष्ठा drm_vc4_get_param अणु
 	__u32 param;
 	__u32 pad;
 	__u64 value;
-};
+पूर्ण;
 
-struct drm_vc4_get_tiling {
+काष्ठा drm_vc4_get_tiling अणु
 	__u32 handle;
 	__u32 flags;
-	__u64 modifier;
-};
+	__u64 modअगरier;
+पूर्ण;
 
-struct drm_vc4_set_tiling {
+काष्ठा drm_vc4_set_tiling अणु
 	__u32 handle;
 	__u32 flags;
-	__u64 modifier;
-};
+	__u64 modअगरier;
+पूर्ण;
 
 /**
- * struct drm_vc4_label_bo - Attach a name to a BO for debug purposes.
+ * काष्ठा drm_vc4_label_bo - Attach a name to a BO क्रम debug purposes.
  */
-struct drm_vc4_label_bo {
+काष्ठा drm_vc4_label_bo अणु
 	__u32 handle;
 	__u32 len;
 	__u64 name;
-};
+पूर्ण;
 
 /*
- * States prefixed with '__' are internal states and cannot be passed to the
+ * States prefixed with '__' are पूर्णांकernal states and cannot be passed to the
  * DRM_IOCTL_VC4_GEM_MADVISE ioctl.
  */
-#define VC4_MADV_WILLNEED			0
-#define VC4_MADV_DONTNEED			1
-#define __VC4_MADV_PURGED			2
-#define __VC4_MADV_NOTSUPP			3
+#घोषणा VC4_MADV_WILLNEED			0
+#घोषणा VC4_MADV_DONTNEED			1
+#घोषणा __VC4_MADV_PURGED			2
+#घोषणा __VC4_MADV_NOTSUPP			3
 
-struct drm_vc4_gem_madvise {
+काष्ठा drm_vc4_gem_madvise अणु
 	__u32 handle;
 	__u32 madv;
 	__u32 retained;
 	__u32 pad;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	VC4_PERFCNT_FEP_VALID_PRIMS_NO_RENDER,
 	VC4_PERFCNT_FEP_VALID_PRIMS_RENDER,
 	VC4_PERFCNT_FEP_CLIPPED_QUADS,
@@ -407,36 +408,36 @@ enum {
 	VC4_PERFCNT_L2C_TOTAL_L2_CACHE_HIT,
 	VC4_PERFCNT_L2C_TOTAL_L2_CACHE_MISS,
 	VC4_PERFCNT_NUM_EVENTS,
-};
+पूर्ण;
 
-#define DRM_VC4_MAX_PERF_COUNTERS	16
+#घोषणा DRM_VC4_MAX_PERF_COUNTERS	16
 
-struct drm_vc4_perfmon_create {
+काष्ठा drm_vc4_perfmon_create अणु
 	__u32 id;
 	__u32 ncounters;
 	__u8 events[DRM_VC4_MAX_PERF_COUNTERS];
-};
+पूर्ण;
 
-struct drm_vc4_perfmon_destroy {
+काष्ठा drm_vc4_perfmon_destroy अणु
 	__u32 id;
-};
+पूर्ण;
 
 /*
- * Returns the values of the performance counters tracked by this
+ * Returns the values of the perक्रमmance counters tracked by this
  * perfmon (as an array of ncounters u64 values).
  *
- * No implicit synchronization is performed, so the user has to
- * guarantee that any jobs using this perfmon have already been
- * completed  (probably by blocking on the seqno returned by the
+ * No implicit synchronization is perक्रमmed, so the user has to
+ * guarantee that any jobs using this perfmon have alपढ़ोy been
+ * completed  (probably by blocking on the seqno वापसed by the
  * last exec that used the perfmon).
  */
-struct drm_vc4_perfmon_get_values {
+काष्ठा drm_vc4_perfmon_get_values अणु
 	__u32 id;
 	__u64 values_ptr;
-};
+पूर्ण;
 
-#if defined(__cplusplus)
-}
-#endif
+#अगर defined(__cplusplus)
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _UAPI_VC4_DRM_H_ */
+#पूर्ण_अगर /* _UAPI_VC4_DRM_H_ */

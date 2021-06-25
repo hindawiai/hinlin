@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Chipidea Device Mode Trace Support
  *
@@ -7,17 +8,17 @@
  * Author: Peter Chen <peter.chen@nxp.com>
  */
 
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"
 
-void ci_log(struct ci_hdrc *ci, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम ci_log(काष्ठा ci_hdrc *ci, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 	vaf.fmt = fmt;
 	vaf.va = &args;
 	trace_ci_log(ci, &vaf);
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण

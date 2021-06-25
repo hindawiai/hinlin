@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Documentation/ABI/stable/sysfs-fs-orangefs:
  *
@@ -6,7 +7,7 @@
  * Date:		June 2015
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
- * 			echo a 0 or a 1 into perf_counter_reset to
+ * 			echo a 0 or a 1 पूर्णांकo perf_counter_reset to
  * 			reset all the counters in
  * 			/sys/fs/orangefs/perf_counters
  * 			except ones with PINT_PERF_PRESERVE set.
@@ -16,15 +17,15 @@
  * Date:		Jun 2015
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
- * 			Counters and settings for various caches.
+ * 			Counters and settings क्रम various caches.
  * 			Read only.
  *
  *
- * What:		/sys/fs/orangefs/perf_time_interval_secs
+ * What:		/sys/fs/orangefs/perf_समय_पूर्णांकerval_secs
  * Date:		Jun 2015
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
- *			Length of perf counter intervals in
+ *			Length of perf counter पूर्णांकervals in
  *			seconds.
  *
  *
@@ -33,83 +34,83 @@
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
  * 			The perf_counters cache statistics have N, or
- * 			perf_history_size, samples. The default is
+ * 			perf_history_size, samples. The शेष is
  * 			one.
  *
- *			Every perf_time_interval_secs the (first)
+ *			Every perf_समय_पूर्णांकerval_secs the (first)
  *			samples are reset.
  *
  *			If N is greater than one, the "current" set
  *			of samples is reset, and the samples from the
- *			other N-1 intervals remain available.
+ *			other N-1 पूर्णांकervals reमुख्य available.
  *
  *
- * What:		/sys/fs/orangefs/op_timeout_secs
+ * What:		/sys/fs/orangefs/op_समयout_secs
  * Date:		Jun 2015
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
- *			Service operation timeout in seconds.
+ *			Service operation समयout in seconds.
  *
  *
- * What:		/sys/fs/orangefs/slot_timeout_secs
+ * What:		/sys/fs/orangefs/slot_समयout_secs
  * Date:		Jun 2015
  * Contact:		Mike Marshall <hubcap@omnibond.com>
  * Description:
- *			"Slot" timeout in seconds. A "slot"
+ *			"Slot" समयout in seconds. A "slot"
  *			is an indexed buffer in the shared
- *			memory segment used for communication
+ *			memory segment used क्रम communication
  *			between the kernel module and userspace.
- *			Slots are requested and waited for,
- *			the wait times out after slot_timeout_secs.
+ *			Slots are requested and रुकोed क्रम,
+ *			the रुको बार out after slot_समयout_secs.
  *
- * What:		/sys/fs/orangefs/cache_timeout_msecs
+ * What:		/sys/fs/orangefs/cache_समयout_msecs
  * Date:		Mar 2018
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Time in milliseconds between which
  *			orangefs_revalidate_mapping will invalidate the page
  *			cache.
  *
- * What:		/sys/fs/orangefs/dcache_timeout_msecs
+ * What:		/sys/fs/orangefs/dcache_समयout_msecs
  * Date:		Jul 2016
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Time lookup is valid in milliseconds.
  *
- * What:		/sys/fs/orangefs/getattr_timeout_msecs
+ * What:		/sys/fs/orangefs/getattr_समयout_msecs
  * Date:		Jul 2016
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Time getattr is valid in milliseconds.
  *
- * What:		/sys/fs/orangefs/readahead_count
+ * What:		/sys/fs/orangefs/पढ़ोahead_count
  * Date:		Aug 2016
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Readahead cache buffer count.
  *
- * What:		/sys/fs/orangefs/readahead_size
+ * What:		/sys/fs/orangefs/पढ़ोahead_size
  * Date:		Aug 2016
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Readahead cache buffer size.
  *
- * What:		/sys/fs/orangefs/readahead_count_size
+ * What:		/sys/fs/orangefs/पढ़ोahead_count_size
  * Date:		Aug 2016
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  *			Readahead cache buffer count and size.
  *
- * What:		/sys/fs/orangefs/readahead_readcnt
+ * What:		/sys/fs/orangefs/पढ़ोahead_पढ़ोcnt
  * Date:		Jan 2017
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
- *			Number of buffers (in multiples of readahead_size)
- *			which can be read ahead for a single file at once.
+ *			Number of buffers (in multiples of पढ़ोahead_size)
+ *			which can be पढ़ो ahead क्रम a single file at once.
  *
  * What:		/sys/fs/orangefs/acache/...
  * Date:		Jun 2015
- * Contact:		Martin Brandenburg <martin@omnibond.com>
+ * Contact:		Martin Bअक्रमenburg <martin@omnibond.com>
  * Description:
  * 			Attribute cache configurable settings.
  *
@@ -136,1102 +137,1102 @@
  *
  */
 
-#include <linux/fs.h>
-#include <linux/kobject.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include "protocol.h"
-#include "orangefs-kernel.h"
-#include "orangefs-sysfs.h"
+#समावेश "protocol.h"
+#समावेश "orangefs-kernel.h"
+#समावेश "orangefs-sysfs.h"
 
-#define ORANGEFS_KOBJ_ID "orangefs"
-#define ACACHE_KOBJ_ID "acache"
-#define CAPCACHE_KOBJ_ID "capcache"
-#define CCACHE_KOBJ_ID "ccache"
-#define NCACHE_KOBJ_ID "ncache"
-#define PC_KOBJ_ID "pc"
-#define STATS_KOBJ_ID "stats"
+#घोषणा ORANGEFS_KOBJ_ID "orangefs"
+#घोषणा ACACHE_KOBJ_ID "acache"
+#घोषणा CAPCACHE_KOBJ_ID "capcache"
+#घोषणा CCACHE_KOBJ_ID "ccache"
+#घोषणा NCACHE_KOBJ_ID "ncache"
+#घोषणा PC_KOBJ_ID "pc"
+#घोषणा STATS_KOBJ_ID "stats"
 
 /*
  * Every item calls orangefs_attr_show and orangefs_attr_store through
  * orangefs_sysfs_ops. They look at the orangefs_attributes further below to
- * call one of sysfs_int_show, sysfs_int_store, sysfs_service_op_show, or
+ * call one of sysfs_पूर्णांक_show, sysfs_पूर्णांक_store, sysfs_service_op_show, or
  * sysfs_service_op_store.
  */
 
-struct orangefs_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct kobject *kobj,
-			struct orangefs_attribute *attr,
-			char *buf);
-	ssize_t (*store)(struct kobject *kobj,
-			 struct orangefs_attribute *attr,
-			 const char *buf,
-			 size_t count);
-};
+काष्ठा orangefs_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा kobject *kobj,
+			काष्ठा orangefs_attribute *attr,
+			अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा kobject *kobj,
+			 काष्ठा orangefs_attribute *attr,
+			 स्थिर अक्षर *buf,
+			 माप_प्रकार count);
+पूर्ण;
 
-static ssize_t orangefs_attr_show(struct kobject *kobj,
-				  struct attribute *attr,
-				  char *buf)
-{
-	struct orangefs_attribute *attribute;
+अटल sमाप_प्रकार orangefs_attr_show(काष्ठा kobject *kobj,
+				  काष्ठा attribute *attr,
+				  अक्षर *buf)
+अणु
+	काष्ठा orangefs_attribute *attribute;
 
-	attribute = container_of(attr, struct orangefs_attribute, attr);
-	if (!attribute->show)
-		return -EIO;
-	return attribute->show(kobj, attribute, buf);
-}
+	attribute = container_of(attr, काष्ठा orangefs_attribute, attr);
+	अगर (!attribute->show)
+		वापस -EIO;
+	वापस attribute->show(kobj, attribute, buf);
+पूर्ण
 
-static ssize_t orangefs_attr_store(struct kobject *kobj,
-				   struct attribute *attr,
-				   const char *buf,
-				   size_t len)
-{
-	struct orangefs_attribute *attribute;
+अटल sमाप_प्रकार orangefs_attr_store(काष्ठा kobject *kobj,
+				   काष्ठा attribute *attr,
+				   स्थिर अक्षर *buf,
+				   माप_प्रकार len)
+अणु
+	काष्ठा orangefs_attribute *attribute;
 
-	if (!strcmp(kobj->name, PC_KOBJ_ID) ||
-	    !strcmp(kobj->name, STATS_KOBJ_ID))
-		return -EPERM;
+	अगर (!म_भेद(kobj->name, PC_KOBJ_ID) ||
+	    !म_भेद(kobj->name, STATS_KOBJ_ID))
+		वापस -EPERM;
 
-	attribute = container_of(attr, struct orangefs_attribute, attr);
-	if (!attribute->store)
-		return -EIO;
-	return attribute->store(kobj, attribute, buf, len);
-}
+	attribute = container_of(attr, काष्ठा orangefs_attribute, attr);
+	अगर (!attribute->store)
+		वापस -EIO;
+	वापस attribute->store(kobj, attribute, buf, len);
+पूर्ण
 
-static const struct sysfs_ops orangefs_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops orangefs_sysfs_ops = अणु
 	.show = orangefs_attr_show,
 	.store = orangefs_attr_store,
-};
+पूर्ण;
 
-static ssize_t sysfs_int_show(struct kobject *kobj,
-    struct orangefs_attribute *attr, char *buf)
-{
-	int rc = -EIO;
+अटल sमाप_प्रकार sysfs_पूर्णांक_show(काष्ठा kobject *kobj,
+    काष्ठा orangefs_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक rc = -EIO;
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG, "sysfs_int_show: id:%s:\n",
 	    kobj->name);
 
-	if (!strcmp(kobj->name, ORANGEFS_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "op_timeout_secs")) {
-			rc = scnprintf(buf,
+	अगर (!म_भेद(kobj->name, ORANGEFS_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "op_timeout_secs")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%d\n",
-				       op_timeout_secs);
-			goto out;
-		} else if (!strcmp(attr->attr.name,
-				   "slot_timeout_secs")) {
-			rc = scnprintf(buf,
+				       op_समयout_secs);
+			जाओ out;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "slot_timeout_secs")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%d\n",
-				       slot_timeout_secs);
-			goto out;
-		} else if (!strcmp(attr->attr.name,
-				   "cache_timeout_msecs")) {
-			rc = scnprintf(buf,
+				       slot_समयout_secs);
+			जाओ out;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "cache_timeout_msecs")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%d\n",
-				       orangefs_cache_timeout_msecs);
-			goto out;
-		} else if (!strcmp(attr->attr.name,
-				   "dcache_timeout_msecs")) {
-			rc = scnprintf(buf,
+				       orangefs_cache_समयout_msecs);
+			जाओ out;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "dcache_timeout_msecs")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%d\n",
-				       orangefs_dcache_timeout_msecs);
-			goto out;
-		} else if (!strcmp(attr->attr.name,
-				   "getattr_timeout_msecs")) {
-			rc = scnprintf(buf,
+				       orangefs_dcache_समयout_msecs);
+			जाओ out;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "getattr_timeout_msecs")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%d\n",
-				       orangefs_getattr_timeout_msecs);
-			goto out;
-		} else {
-			goto out;
-		}
+				       orangefs_getattr_समयout_msecs);
+			जाओ out;
+		पूर्ण अन्यथा अणु
+			जाओ out;
+		पूर्ण
 
-	} else if (!strcmp(kobj->name, STATS_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "reads")) {
-			rc = scnprintf(buf,
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, STATS_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "reads")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%lu\n",
-				       orangefs_stats.reads);
-			goto out;
-		} else if (!strcmp(attr->attr.name, "writes")) {
-			rc = scnprintf(buf,
+				       orangefs_stats.पढ़ोs);
+			जाओ out;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "writes")) अणु
+			rc = scnम_लिखो(buf,
 				       PAGE_SIZE,
 				       "%lu\n",
-				       orangefs_stats.writes);
-			goto out;
-		} else {
-			goto out;
-		}
-	}
+				       orangefs_stats.ग_लिखोs);
+			जाओ out;
+		पूर्ण अन्यथा अणु
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t sysfs_int_store(struct kobject *kobj,
-    struct orangefs_attribute *attr, const char *buf, size_t count)
-{
-	int rc = 0;
+अटल sमाप_प्रकार sysfs_पूर्णांक_store(काष्ठा kobject *kobj,
+    काष्ठा orangefs_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक rc = 0;
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG,
 		     "sysfs_int_store: start attr->attr.name:%s: buf:%s:\n",
 		     attr->attr.name, buf);
 
-	if (!strcmp(attr->attr.name, "op_timeout_secs")) {
-		rc = kstrtoint(buf, 0, &op_timeout_secs);
-		goto out;
-	} else if (!strcmp(attr->attr.name, "slot_timeout_secs")) {
-		rc = kstrtoint(buf, 0, &slot_timeout_secs);
-		goto out;
-	} else if (!strcmp(attr->attr.name, "cache_timeout_msecs")) {
-		rc = kstrtoint(buf, 0, &orangefs_cache_timeout_msecs);
-		goto out;
-	} else if (!strcmp(attr->attr.name, "dcache_timeout_msecs")) {
-		rc = kstrtoint(buf, 0, &orangefs_dcache_timeout_msecs);
-		goto out;
-	} else if (!strcmp(attr->attr.name, "getattr_timeout_msecs")) {
-		rc = kstrtoint(buf, 0, &orangefs_getattr_timeout_msecs);
-		goto out;
-	} else {
-		goto out;
-	}
+	अगर (!म_भेद(attr->attr.name, "op_timeout_secs")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &op_समयout_secs);
+		जाओ out;
+	पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "slot_timeout_secs")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &slot_समयout_secs);
+		जाओ out;
+	पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "cache_timeout_msecs")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &orangefs_cache_समयout_msecs);
+		जाओ out;
+	पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "dcache_timeout_msecs")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &orangefs_dcache_समयout_msecs);
+		जाओ out;
+	पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "getattr_timeout_msecs")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &orangefs_getattr_समयout_msecs);
+		जाओ out;
+	पूर्ण अन्यथा अणु
+		जाओ out;
+	पूर्ण
 
 out:
-	if (rc)
+	अगर (rc)
 		rc = -EINVAL;
-	else
+	अन्यथा
 		rc = count;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * obtain attribute values from userspace with a service operation.
  */
-static ssize_t sysfs_service_op_show(struct kobject *kobj,
-    struct orangefs_attribute *attr, char *buf)
-{
-	struct orangefs_kernel_op_s *new_op = NULL;
-	int rc = 0;
-	char *ser_op_type = NULL;
+अटल sमाप_प्रकार sysfs_service_op_show(काष्ठा kobject *kobj,
+    काष्ठा orangefs_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा orangefs_kernel_op_s *new_op = शून्य;
+	पूर्णांक rc = 0;
+	अक्षर *ser_op_type = शून्य;
 	__u32 op_alloc_type;
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG,
 		     "sysfs_service_op_show: id:%s:\n",
 		     kobj->name);
 
-	if (strcmp(kobj->name, PC_KOBJ_ID))
+	अगर (म_भेद(kobj->name, PC_KOBJ_ID))
 		op_alloc_type = ORANGEFS_VFS_OP_PARAM;
-	else
+	अन्यथा
 		op_alloc_type = ORANGEFS_VFS_OP_PERF_COUNT;
 
 	new_op = op_alloc(op_alloc_type);
-	if (!new_op)
-		return -ENOMEM;
+	अगर (!new_op)
+		वापस -ENOMEM;
 
-	/* Can't do a service_operation if the client is not running... */
+	/* Can't करो a service_operation अगर the client is not running... */
 	rc = is_daemon_in_service();
-	if (rc) {
+	अगर (rc) अणु
 		pr_info_ratelimited("%s: Client not running :%d:\n",
 			__func__,
 			is_daemon_in_service());
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (strcmp(kobj->name, PC_KOBJ_ID))
+	अगर (म_भेद(kobj->name, PC_KOBJ_ID))
 		new_op->upcall.req.param.type = ORANGEFS_PARAM_REQUEST_GET;
 
-	if (!strcmp(kobj->name, ORANGEFS_KOBJ_ID)) {
+	अगर (!म_भेद(kobj->name, ORANGEFS_KOBJ_ID)) अणु
 		/* Drop unsupported requests first. */
-		if (!(orangefs_features & ORANGEFS_FEATURE_READAHEAD) &&
-		    (!strcmp(attr->attr.name, "readahead_count") ||
-		    !strcmp(attr->attr.name, "readahead_size") ||
-		    !strcmp(attr->attr.name, "readahead_count_size") ||
-		    !strcmp(attr->attr.name, "readahead_readcnt"))) {
+		अगर (!(orangefs_features & ORANGEFS_FEATURE_READAHEAD) &&
+		    (!म_भेद(attr->attr.name, "readahead_count") ||
+		    !म_भेद(attr->attr.name, "readahead_size") ||
+		    !म_भेद(attr->attr.name, "readahead_count_size") ||
+		    !म_भेद(attr->attr.name, "readahead_readcnt"))) अणु
 			rc = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!strcmp(attr->attr.name, "perf_history_size"))
+		अगर (!म_भेद(attr->attr.name, "perf_history_size"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_PERF_HISTORY_SIZE;
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "perf_time_interval_secs"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_PERF_TIME_INTERVAL_SECS;
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "perf_counter_reset"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_PERF_RESET;
 
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "readahead_count"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT;
 
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "readahead_size"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_SIZE;
 
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "readahead_count_size"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT_SIZE;
 
-		else if (!strcmp(attr->attr.name,
+		अन्यथा अगर (!म_भेद(attr->attr.name,
 				 "readahead_readcnt"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_READCNT;
-	} else if (!strcmp(kobj->name, ACACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "timeout_msecs"))
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, ACACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "timeout_msecs"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_ACACHE_TIMEOUT_MSECS;
 
-		if (!strcmp(attr->attr.name, "hard_limit"))
+		अगर (!म_भेद(attr->attr.name, "hard_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_ACACHE_HARD_LIMIT;
 
-		if (!strcmp(attr->attr.name, "soft_limit"))
+		अगर (!म_भेद(attr->attr.name, "soft_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_ACACHE_SOFT_LIMIT;
 
-		if (!strcmp(attr->attr.name, "reclaim_percentage"))
+		अगर (!म_भेद(attr->attr.name, "reclaim_percentage"))
 			new_op->upcall.req.param.op =
 			  ORANGEFS_PARAM_REQUEST_OP_ACACHE_RECLAIM_PERCENTAGE;
 
-	} else if (!strcmp(kobj->name, CAPCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "timeout_secs"))
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, CAPCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "timeout_secs"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_TIMEOUT_SECS;
 
-		if (!strcmp(attr->attr.name, "hard_limit"))
+		अगर (!म_भेद(attr->attr.name, "hard_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_HARD_LIMIT;
 
-		if (!strcmp(attr->attr.name, "soft_limit"))
+		अगर (!म_भेद(attr->attr.name, "soft_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_SOFT_LIMIT;
 
-		if (!strcmp(attr->attr.name, "reclaim_percentage"))
+		अगर (!म_भेद(attr->attr.name, "reclaim_percentage"))
 			new_op->upcall.req.param.op =
 			  ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_RECLAIM_PERCENTAGE;
 
-	} else if (!strcmp(kobj->name, CCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "timeout_secs"))
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, CCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "timeout_secs"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CCACHE_TIMEOUT_SECS;
 
-		if (!strcmp(attr->attr.name, "hard_limit"))
+		अगर (!म_भेद(attr->attr.name, "hard_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CCACHE_HARD_LIMIT;
 
-		if (!strcmp(attr->attr.name, "soft_limit"))
+		अगर (!म_भेद(attr->attr.name, "soft_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_CCACHE_SOFT_LIMIT;
 
-		if (!strcmp(attr->attr.name, "reclaim_percentage"))
+		अगर (!म_भेद(attr->attr.name, "reclaim_percentage"))
 			new_op->upcall.req.param.op =
 			  ORANGEFS_PARAM_REQUEST_OP_CCACHE_RECLAIM_PERCENTAGE;
 
-	} else if (!strcmp(kobj->name, NCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "timeout_msecs"))
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, NCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "timeout_msecs"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_NCACHE_TIMEOUT_MSECS;
 
-		if (!strcmp(attr->attr.name, "hard_limit"))
+		अगर (!म_भेद(attr->attr.name, "hard_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_NCACHE_HARD_LIMIT;
 
-		if (!strcmp(attr->attr.name, "soft_limit"))
+		अगर (!म_भेद(attr->attr.name, "soft_limit"))
 			new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_NCACHE_SOFT_LIMIT;
 
-		if (!strcmp(attr->attr.name, "reclaim_percentage"))
+		अगर (!म_भेद(attr->attr.name, "reclaim_percentage"))
 			new_op->upcall.req.param.op =
 			  ORANGEFS_PARAM_REQUEST_OP_NCACHE_RECLAIM_PERCENTAGE;
 
-	} else if (!strcmp(kobj->name, PC_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, ACACHE_KOBJ_ID))
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, PC_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, ACACHE_KOBJ_ID))
 			new_op->upcall.req.perf_count.type =
 				ORANGEFS_PERF_COUNT_REQUEST_ACACHE;
 
-		if (!strcmp(attr->attr.name, CAPCACHE_KOBJ_ID))
+		अगर (!म_भेद(attr->attr.name, CAPCACHE_KOBJ_ID))
 			new_op->upcall.req.perf_count.type =
 				ORANGEFS_PERF_COUNT_REQUEST_CAPCACHE;
 
-		if (!strcmp(attr->attr.name, NCACHE_KOBJ_ID))
+		अगर (!म_भेद(attr->attr.name, NCACHE_KOBJ_ID))
 			new_op->upcall.req.perf_count.type =
 				ORANGEFS_PERF_COUNT_REQUEST_NCACHE;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		gossip_err("sysfs_service_op_show: unknown kobj_id:%s:\n",
 			   kobj->name);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 
-	if (strcmp(kobj->name, PC_KOBJ_ID))
+	अगर (म_भेद(kobj->name, PC_KOBJ_ID))
 		ser_op_type = "orangefs_param";
-	else
+	अन्यथा
 		ser_op_type = "orangefs_perf_count";
 
 	/*
-	 * The service_operation will return an errno return code on
+	 * The service_operation will वापस an त्रुटि_सं वापस code on
 	 * error, and zero on success.
 	 */
 	rc = service_operation(new_op, ser_op_type, ORANGEFS_OP_INTERRUPTIBLE);
 
 out:
-	if (!rc) {
-		if (strcmp(kobj->name, PC_KOBJ_ID)) {
-			if (new_op->upcall.req.param.op ==
-			    ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT_SIZE) {
-				rc = scnprintf(buf, PAGE_SIZE, "%d %d\n",
-				    (int)new_op->downcall.resp.param.u.
+	अगर (!rc) अणु
+		अगर (म_भेद(kobj->name, PC_KOBJ_ID)) अणु
+			अगर (new_op->upcall.req.param.op ==
+			    ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT_SIZE) अणु
+				rc = scnम_लिखो(buf, PAGE_SIZE, "%d %d\n",
+				    (पूर्णांक)new_op->करोwncall.resp.param.u.
 				    value32[0],
-				    (int)new_op->downcall.resp.param.u.
+				    (पूर्णांक)new_op->करोwncall.resp.param.u.
 				    value32[1]);
-			} else {
-				rc = scnprintf(buf, PAGE_SIZE, "%d\n",
-				    (int)new_op->downcall.resp.param.u.value64);
-			}
-		} else {
-			rc = scnprintf(
+			पूर्ण अन्यथा अणु
+				rc = scnम_लिखो(buf, PAGE_SIZE, "%d\n",
+				    (पूर्णांक)new_op->करोwncall.resp.param.u.value64);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			rc = scnम_लिखो(
 				buf,
 				PAGE_SIZE,
 				"%s",
-				new_op->downcall.resp.perf_count.buffer);
-		}
-	}
+				new_op->करोwncall.resp.perf_count.buffer);
+		पूर्ण
+	पूर्ण
 
 	op_release(new_op);
 
-	return rc;
+	वापस rc;
 
-}
+पूर्ण
 
 /*
  * pass attribute values back to userspace with a service operation.
  *
- * We have to do a memory allocation, an sscanf and a service operation.
+ * We have to करो a memory allocation, an माला_पूछो and a service operation.
  * And we have to evaluate what the user entered, to make sure the
  * value is within the range supported by the attribute. So, there's
- * a lot of return code checking and mapping going on here.
+ * a lot of वापस code checking and mapping going on here.
  *
- * We want to return 1 if we think everything went OK, and
- * EINVAL if not.
+ * We want to वापस 1 अगर we think everything went OK, and
+ * EINVAL अगर not.
  */
-static ssize_t sysfs_service_op_store(struct kobject *kobj,
-    struct orangefs_attribute *attr, const char *buf, size_t count)
-{
-	struct orangefs_kernel_op_s *new_op = NULL;
-	int val = 0;
-	int rc = 0;
+अटल sमाप_प्रकार sysfs_service_op_store(काष्ठा kobject *kobj,
+    काष्ठा orangefs_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा orangefs_kernel_op_s *new_op = शून्य;
+	पूर्णांक val = 0;
+	पूर्णांक rc = 0;
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG,
 		     "sysfs_service_op_store: id:%s:\n",
 		     kobj->name);
 
 	new_op = op_alloc(ORANGEFS_VFS_OP_PARAM);
-	if (!new_op)
-		return -EINVAL; /* sic */
+	अगर (!new_op)
+		वापस -EINVAL; /* sic */
 
-	/* Can't do a service_operation if the client is not running... */
+	/* Can't करो a service_operation अगर the client is not running... */
 	rc = is_daemon_in_service();
-	if (rc) {
+	अगर (rc) अणु
 		pr_info("%s: Client not running :%d:\n",
 			__func__,
 			is_daemon_in_service());
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * The value we want to send back to userspace is in buf, unless this
 	 * there are two parameters, which is specially handled below.
 	 */
-	if (strcmp(kobj->name, ORANGEFS_KOBJ_ID) ||
-	    strcmp(attr->attr.name, "readahead_count_size")) {
-		rc = kstrtoint(buf, 0, &val);
-		if (rc)
-			goto out;
-	}
+	अगर (म_भेद(kobj->name, ORANGEFS_KOBJ_ID) ||
+	    म_भेद(attr->attr.name, "readahead_count_size")) अणु
+		rc = kstrtoपूर्णांक(buf, 0, &val);
+		अगर (rc)
+			जाओ out;
+	पूर्ण
 
 	new_op->upcall.req.param.type = ORANGEFS_PARAM_REQUEST_SET;
 
-	if (!strcmp(kobj->name, ORANGEFS_KOBJ_ID)) {
+	अगर (!म_भेद(kobj->name, ORANGEFS_KOBJ_ID)) अणु
 		/* Drop unsupported requests first. */
-		if (!(orangefs_features & ORANGEFS_FEATURE_READAHEAD) &&
-		    (!strcmp(attr->attr.name, "readahead_count") ||
-		    !strcmp(attr->attr.name, "readahead_size") ||
-		    !strcmp(attr->attr.name, "readahead_count_size") ||
-		    !strcmp(attr->attr.name, "readahead_readcnt"))) {
+		अगर (!(orangefs_features & ORANGEFS_FEATURE_READAHEAD) &&
+		    (!म_भेद(attr->attr.name, "readahead_count") ||
+		    !म_भेद(attr->attr.name, "readahead_size") ||
+		    !म_भेद(attr->attr.name, "readahead_count_size") ||
+		    !म_भेद(attr->attr.name, "readahead_readcnt"))) अणु
 			rc = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!strcmp(attr->attr.name, "perf_history_size")) {
-			if (val > 0) {
+		अगर (!म_भेद(attr->attr.name, "perf_history_size")) अणु
+			अगर (val > 0) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_PERF_HISTORY_SIZE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "perf_time_interval_secs")) {
-			if (val > 0) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "perf_time_interval_secs")) अणु
+			अगर (val > 0) अणु
 				new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_PERF_TIME_INTERVAL_SECS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "perf_counter_reset")) {
-			if ((val == 0) || (val == 1)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "perf_counter_reset")) अणु
+			अगर ((val == 0) || (val == 1)) अणु
 				new_op->upcall.req.param.op =
 					ORANGEFS_PARAM_REQUEST_OP_PERF_RESET;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "readahead_count")) {
-			if ((val >= 0)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "readahead_count")) अणु
+			अगर ((val >= 0)) अणु
 				new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "readahead_size")) {
-			if ((val >= 0)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "readahead_size")) अणु
+			अगर ((val >= 0)) अणु
 				new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_SIZE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "readahead_count_size")) {
-			int val1, val2;
-			rc = sscanf(buf, "%d %d", &val1, &val2);
-			if (rc < 2) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "readahead_count_size")) अणु
+			पूर्णांक val1, val2;
+			rc = माला_पूछो(buf, "%d %d", &val1, &val2);
+			अगर (rc < 2) अणु
 				rc = 0;
-				goto out;
-			}
-			if ((val1 >= 0) && (val2 >= 0)) {
+				जाओ out;
+			पूर्ण
+			अगर ((val1 >= 0) && (val2 >= 0)) अणु
 				new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_COUNT_SIZE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			new_op->upcall.req.param.u.value32[0] = val1;
 			new_op->upcall.req.param.u.value32[1] = val2;
-			goto value_set;
-		} else if (!strcmp(attr->attr.name,
-				   "readahead_readcnt")) {
-			if ((val >= 0)) {
+			जाओ value_set;
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "readahead_readcnt")) अणु
+			अगर ((val >= 0)) अणु
 				new_op->upcall.req.param.op =
 				ORANGEFS_PARAM_REQUEST_OP_READAHEAD_READCNT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-	} else if (!strcmp(kobj->name, ACACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "hard_limit")) {
-			if (val > -1) {
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, ACACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "hard_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_ACACHE_HARD_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "soft_limit")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "soft_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_ACACHE_SOFT_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "reclaim_percentage")) {
-			if ((val > -1) && (val < 101)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "reclaim_percentage")) अणु
+			अगर ((val > -1) && (val < 101)) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_ACACHE_RECLAIM_PERCENTAGE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "timeout_msecs")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "timeout_msecs")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_ACACHE_TIMEOUT_MSECS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-	} else if (!strcmp(kobj->name, CAPCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "hard_limit")) {
-			if (val > -1) {
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, CAPCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "hard_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_HARD_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "soft_limit")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "soft_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_SOFT_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "reclaim_percentage")) {
-			if ((val > -1) && (val < 101)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "reclaim_percentage")) अणु
+			अगर ((val > -1) && (val < 101)) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_RECLAIM_PERCENTAGE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "timeout_secs")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "timeout_secs")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CAPCACHE_TIMEOUT_SECS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-	} else if (!strcmp(kobj->name, CCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "hard_limit")) {
-			if (val > -1) {
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, CCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "hard_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CCACHE_HARD_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "soft_limit")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "soft_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CCACHE_SOFT_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "reclaim_percentage")) {
-			if ((val > -1) && (val < 101)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "reclaim_percentage")) अणु
+			अगर ((val > -1) && (val < 101)) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CCACHE_RECLAIM_PERCENTAGE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "timeout_secs")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "timeout_secs")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_CCACHE_TIMEOUT_SECS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-	} else if (!strcmp(kobj->name, NCACHE_KOBJ_ID)) {
-		if (!strcmp(attr->attr.name, "hard_limit")) {
-			if (val > -1) {
+	पूर्ण अन्यथा अगर (!म_भेद(kobj->name, NCACHE_KOBJ_ID)) अणु
+		अगर (!म_भेद(attr->attr.name, "hard_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_NCACHE_HARD_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "soft_limit")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "soft_limit")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_NCACHE_SOFT_LIMIT;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name,
-				   "reclaim_percentage")) {
-			if ((val > -1) && (val < 101)) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name,
+				   "reclaim_percentage")) अणु
+			अगर ((val > -1) && (val < 101)) अणु
 				new_op->upcall.req.param.op =
 					ORANGEFS_PARAM_REQUEST_OP_NCACHE_RECLAIM_PERCENTAGE;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		} else if (!strcmp(attr->attr.name, "timeout_msecs")) {
-			if (val > -1) {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!म_भेद(attr->attr.name, "timeout_msecs")) अणु
+			अगर (val > -1) अणु
 				new_op->upcall.req.param.op =
 				  ORANGEFS_PARAM_REQUEST_OP_NCACHE_TIMEOUT_MSECS;
-			} else {
+			पूर्ण अन्यथा अणु
 				rc = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		gossip_err("sysfs_service_op_store: unknown kobj_id:%s:\n",
 			   kobj->name);
 		rc = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	new_op->upcall.req.param.u.value64 = val;
 value_set:
 
 	/*
-	 * The service_operation will return a errno return code on
+	 * The service_operation will वापस a त्रुटि_सं वापस code on
 	 * error, and zero on success.
 	 */
 	rc = service_operation(new_op, "orangefs_param", ORANGEFS_OP_INTERRUPTIBLE);
 
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		gossip_err("sysfs_service_op_store: service op returned:%d:\n",
 			rc);
 		rc = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		rc = count;
-	}
+	पूर्ण
 
 out:
 	op_release(new_op);
 
-	if (rc == -ENOMEM || rc == 0)
+	अगर (rc == -ENOMEM || rc == 0)
 		rc = -EINVAL;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static struct orangefs_attribute op_timeout_secs_attribute =
-	__ATTR(op_timeout_secs, 0664, sysfs_int_show, sysfs_int_store);
+अटल काष्ठा orangefs_attribute op_समयout_secs_attribute =
+	__ATTR(op_समयout_secs, 0664, sysfs_पूर्णांक_show, sysfs_पूर्णांक_store);
 
-static struct orangefs_attribute slot_timeout_secs_attribute =
-	__ATTR(slot_timeout_secs, 0664, sysfs_int_show, sysfs_int_store);
+अटल काष्ठा orangefs_attribute slot_समयout_secs_attribute =
+	__ATTR(slot_समयout_secs, 0664, sysfs_पूर्णांक_show, sysfs_पूर्णांक_store);
 
-static struct orangefs_attribute cache_timeout_msecs_attribute =
-	__ATTR(cache_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+अटल काष्ठा orangefs_attribute cache_समयout_msecs_attribute =
+	__ATTR(cache_समयout_msecs, 0664, sysfs_पूर्णांक_show, sysfs_पूर्णांक_store);
 
-static struct orangefs_attribute dcache_timeout_msecs_attribute =
-	__ATTR(dcache_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+अटल काष्ठा orangefs_attribute dcache_समयout_msecs_attribute =
+	__ATTR(dcache_समयout_msecs, 0664, sysfs_पूर्णांक_show, sysfs_पूर्णांक_store);
 
-static struct orangefs_attribute getattr_timeout_msecs_attribute =
-	__ATTR(getattr_timeout_msecs, 0664, sysfs_int_show, sysfs_int_store);
+अटल काष्ठा orangefs_attribute getattr_समयout_msecs_attribute =
+	__ATTR(getattr_समयout_msecs, 0664, sysfs_पूर्णांक_show, sysfs_पूर्णांक_store);
 
-static struct orangefs_attribute readahead_count_attribute =
-	__ATTR(readahead_count, 0664, sysfs_service_op_show,
+अटल काष्ठा orangefs_attribute पढ़ोahead_count_attribute =
+	__ATTR(पढ़ोahead_count, 0664, sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute readahead_size_attribute =
-	__ATTR(readahead_size, 0664, sysfs_service_op_show,
+अटल काष्ठा orangefs_attribute पढ़ोahead_size_attribute =
+	__ATTR(पढ़ोahead_size, 0664, sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute readahead_count_size_attribute =
-	__ATTR(readahead_count_size, 0664, sysfs_service_op_show,
+अटल काष्ठा orangefs_attribute पढ़ोahead_count_size_attribute =
+	__ATTR(पढ़ोahead_count_size, 0664, sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute readahead_readcnt_attribute =
-	__ATTR(readahead_readcnt, 0664, sysfs_service_op_show,
+अटल काष्ठा orangefs_attribute पढ़ोahead_पढ़ोcnt_attribute =
+	__ATTR(पढ़ोahead_पढ़ोcnt, 0664, sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute perf_counter_reset_attribute =
+अटल काष्ठा orangefs_attribute perf_counter_reset_attribute =
 	__ATTR(perf_counter_reset,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute perf_history_size_attribute =
+अटल काष्ठा orangefs_attribute perf_history_size_attribute =
 	__ATTR(perf_history_size,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute perf_time_interval_secs_attribute =
-	__ATTR(perf_time_interval_secs,
+अटल काष्ठा orangefs_attribute perf_समय_पूर्णांकerval_secs_attribute =
+	__ATTR(perf_समय_पूर्णांकerval_secs,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct attribute *orangefs_default_attrs[] = {
-	&op_timeout_secs_attribute.attr,
-	&slot_timeout_secs_attribute.attr,
-	&cache_timeout_msecs_attribute.attr,
-	&dcache_timeout_msecs_attribute.attr,
-	&getattr_timeout_msecs_attribute.attr,
-	&readahead_count_attribute.attr,
-	&readahead_size_attribute.attr,
-	&readahead_count_size_attribute.attr,
-	&readahead_readcnt_attribute.attr,
+अटल काष्ठा attribute *orangefs_शेष_attrs[] = अणु
+	&op_समयout_secs_attribute.attr,
+	&slot_समयout_secs_attribute.attr,
+	&cache_समयout_msecs_attribute.attr,
+	&dcache_समयout_msecs_attribute.attr,
+	&getattr_समयout_msecs_attribute.attr,
+	&पढ़ोahead_count_attribute.attr,
+	&पढ़ोahead_size_attribute.attr,
+	&पढ़ोahead_count_size_attribute.attr,
+	&पढ़ोahead_पढ़ोcnt_attribute.attr,
 	&perf_counter_reset_attribute.attr,
 	&perf_history_size_attribute.attr,
-	&perf_time_interval_secs_attribute.attr,
-	NULL,
-};
+	&perf_समय_पूर्णांकerval_secs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type orangefs_ktype = {
+अटल काष्ठा kobj_type orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = orangefs_default_attrs,
-};
+	.शेष_attrs = orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute acache_hard_limit_attribute =
+अटल काष्ठा orangefs_attribute acache_hard_limit_attribute =
 	__ATTR(hard_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute acache_reclaim_percent_attribute =
+अटल काष्ठा orangefs_attribute acache_reclaim_percent_attribute =
 	__ATTR(reclaim_percentage,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute acache_soft_limit_attribute =
+अटल काष्ठा orangefs_attribute acache_soft_limit_attribute =
 	__ATTR(soft_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute acache_timeout_msecs_attribute =
-	__ATTR(timeout_msecs,
+अटल काष्ठा orangefs_attribute acache_समयout_msecs_attribute =
+	__ATTR(समयout_msecs,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct attribute *acache_orangefs_default_attrs[] = {
+अटल काष्ठा attribute *acache_orangefs_शेष_attrs[] = अणु
 	&acache_hard_limit_attribute.attr,
 	&acache_reclaim_percent_attribute.attr,
 	&acache_soft_limit_attribute.attr,
-	&acache_timeout_msecs_attribute.attr,
-	NULL,
-};
+	&acache_समयout_msecs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type acache_orangefs_ktype = {
+अटल काष्ठा kobj_type acache_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = acache_orangefs_default_attrs,
-};
+	.शेष_attrs = acache_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute capcache_hard_limit_attribute =
+अटल काष्ठा orangefs_attribute capcache_hard_limit_attribute =
 	__ATTR(hard_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute capcache_reclaim_percent_attribute =
+अटल काष्ठा orangefs_attribute capcache_reclaim_percent_attribute =
 	__ATTR(reclaim_percentage,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute capcache_soft_limit_attribute =
+अटल काष्ठा orangefs_attribute capcache_soft_limit_attribute =
 	__ATTR(soft_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute capcache_timeout_secs_attribute =
-	__ATTR(timeout_secs,
+अटल काष्ठा orangefs_attribute capcache_समयout_secs_attribute =
+	__ATTR(समयout_secs,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct attribute *capcache_orangefs_default_attrs[] = {
+अटल काष्ठा attribute *capcache_orangefs_शेष_attrs[] = अणु
 	&capcache_hard_limit_attribute.attr,
 	&capcache_reclaim_percent_attribute.attr,
 	&capcache_soft_limit_attribute.attr,
-	&capcache_timeout_secs_attribute.attr,
-	NULL,
-};
+	&capcache_समयout_secs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type capcache_orangefs_ktype = {
+अटल काष्ठा kobj_type capcache_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = capcache_orangefs_default_attrs,
-};
+	.शेष_attrs = capcache_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute ccache_hard_limit_attribute =
+अटल काष्ठा orangefs_attribute ccache_hard_limit_attribute =
 	__ATTR(hard_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ccache_reclaim_percent_attribute =
+अटल काष्ठा orangefs_attribute ccache_reclaim_percent_attribute =
 	__ATTR(reclaim_percentage,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ccache_soft_limit_attribute =
+अटल काष्ठा orangefs_attribute ccache_soft_limit_attribute =
 	__ATTR(soft_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ccache_timeout_secs_attribute =
-	__ATTR(timeout_secs,
+अटल काष्ठा orangefs_attribute ccache_समयout_secs_attribute =
+	__ATTR(समयout_secs,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct attribute *ccache_orangefs_default_attrs[] = {
+अटल काष्ठा attribute *ccache_orangefs_शेष_attrs[] = अणु
 	&ccache_hard_limit_attribute.attr,
 	&ccache_reclaim_percent_attribute.attr,
 	&ccache_soft_limit_attribute.attr,
-	&ccache_timeout_secs_attribute.attr,
-	NULL,
-};
+	&ccache_समयout_secs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type ccache_orangefs_ktype = {
+अटल काष्ठा kobj_type ccache_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = ccache_orangefs_default_attrs,
-};
+	.शेष_attrs = ccache_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute ncache_hard_limit_attribute =
+अटल काष्ठा orangefs_attribute ncache_hard_limit_attribute =
 	__ATTR(hard_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ncache_reclaim_percent_attribute =
+अटल काष्ठा orangefs_attribute ncache_reclaim_percent_attribute =
 	__ATTR(reclaim_percentage,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ncache_soft_limit_attribute =
+अटल काष्ठा orangefs_attribute ncache_soft_limit_attribute =
 	__ATTR(soft_limit,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct orangefs_attribute ncache_timeout_msecs_attribute =
-	__ATTR(timeout_msecs,
+अटल काष्ठा orangefs_attribute ncache_समयout_msecs_attribute =
+	__ATTR(समयout_msecs,
 	       0664,
 	       sysfs_service_op_show,
 	       sysfs_service_op_store);
 
-static struct attribute *ncache_orangefs_default_attrs[] = {
+अटल काष्ठा attribute *ncache_orangefs_शेष_attrs[] = अणु
 	&ncache_hard_limit_attribute.attr,
 	&ncache_reclaim_percent_attribute.attr,
 	&ncache_soft_limit_attribute.attr,
-	&ncache_timeout_msecs_attribute.attr,
-	NULL,
-};
+	&ncache_समयout_msecs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type ncache_orangefs_ktype = {
+अटल काष्ठा kobj_type ncache_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = ncache_orangefs_default_attrs,
-};
+	.शेष_attrs = ncache_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute pc_acache_attribute =
+अटल काष्ठा orangefs_attribute pc_acache_attribute =
 	__ATTR(acache,
 	       0664,
 	       sysfs_service_op_show,
-	       NULL);
+	       शून्य);
 
-static struct orangefs_attribute pc_capcache_attribute =
+अटल काष्ठा orangefs_attribute pc_capcache_attribute =
 	__ATTR(capcache,
 	       0664,
 	       sysfs_service_op_show,
-	       NULL);
+	       शून्य);
 
-static struct orangefs_attribute pc_ncache_attribute =
+अटल काष्ठा orangefs_attribute pc_ncache_attribute =
 	__ATTR(ncache,
 	       0664,
 	       sysfs_service_op_show,
-	       NULL);
+	       शून्य);
 
-static struct attribute *pc_orangefs_default_attrs[] = {
+अटल काष्ठा attribute *pc_orangefs_शेष_attrs[] = अणु
 	&pc_acache_attribute.attr,
 	&pc_capcache_attribute.attr,
 	&pc_ncache_attribute.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct kobj_type pc_orangefs_ktype = {
+अटल काष्ठा kobj_type pc_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = pc_orangefs_default_attrs,
-};
+	.शेष_attrs = pc_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct orangefs_attribute stats_reads_attribute =
-	__ATTR(reads,
+अटल काष्ठा orangefs_attribute stats_पढ़ोs_attribute =
+	__ATTR(पढ़ोs,
 	       0664,
-	       sysfs_int_show,
-	       NULL);
+	       sysfs_पूर्णांक_show,
+	       शून्य);
 
-static struct orangefs_attribute stats_writes_attribute =
-	__ATTR(writes,
+अटल काष्ठा orangefs_attribute stats_ग_लिखोs_attribute =
+	__ATTR(ग_लिखोs,
 	       0664,
-	       sysfs_int_show,
-	       NULL);
+	       sysfs_पूर्णांक_show,
+	       शून्य);
 
-static struct attribute *stats_orangefs_default_attrs[] = {
-	&stats_reads_attribute.attr,
-	&stats_writes_attribute.attr,
-	NULL,
-};
+अटल काष्ठा attribute *stats_orangefs_शेष_attrs[] = अणु
+	&stats_पढ़ोs_attribute.attr,
+	&stats_ग_लिखोs_attribute.attr,
+	शून्य,
+पूर्ण;
 
-static struct kobj_type stats_orangefs_ktype = {
+अटल काष्ठा kobj_type stats_orangefs_ktype = अणु
 	.sysfs_ops = &orangefs_sysfs_ops,
-	.default_attrs = stats_orangefs_default_attrs,
-};
+	.शेष_attrs = stats_orangefs_शेष_attrs,
+पूर्ण;
 
-static struct kobject *orangefs_obj;
-static struct kobject *acache_orangefs_obj;
-static struct kobject *capcache_orangefs_obj;
-static struct kobject *ccache_orangefs_obj;
-static struct kobject *ncache_orangefs_obj;
-static struct kobject *pc_orangefs_obj;
-static struct kobject *stats_orangefs_obj;
+अटल काष्ठा kobject *orangefs_obj;
+अटल काष्ठा kobject *acache_orangefs_obj;
+अटल काष्ठा kobject *capcache_orangefs_obj;
+अटल काष्ठा kobject *ccache_orangefs_obj;
+अटल काष्ठा kobject *ncache_orangefs_obj;
+अटल काष्ठा kobject *pc_orangefs_obj;
+अटल काष्ठा kobject *stats_orangefs_obj;
 
-int orangefs_sysfs_init(void)
-{
-	int rc = -EINVAL;
+पूर्णांक orangefs_sysfs_init(व्योम)
+अणु
+	पूर्णांक rc = -EINVAL;
 
 	gossip_debug(GOSSIP_SYSFS_DEBUG, "orangefs_sysfs_init: start\n");
 
 	/* create /sys/fs/orangefs. */
-	orangefs_obj = kzalloc(sizeof(*orangefs_obj), GFP_KERNEL);
-	if (!orangefs_obj)
-		goto out;
+	orangefs_obj = kzalloc(माप(*orangefs_obj), GFP_KERNEL);
+	अगर (!orangefs_obj)
+		जाओ out;
 
 	rc = kobject_init_and_add(orangefs_obj,
 				  &orangefs_ktype,
 				  fs_kobj,
 				  ORANGEFS_KOBJ_ID);
 
-	if (rc)
-		goto ofs_obj_bail;
+	अगर (rc)
+		जाओ ofs_obj_bail;
 
 	kobject_uevent(orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/acache. */
-	acache_orangefs_obj = kzalloc(sizeof(*acache_orangefs_obj), GFP_KERNEL);
-	if (!acache_orangefs_obj) {
+	acache_orangefs_obj = kzalloc(माप(*acache_orangefs_obj), GFP_KERNEL);
+	अगर (!acache_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto ofs_obj_bail;
-	}
+		जाओ ofs_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(acache_orangefs_obj,
 				  &acache_orangefs_ktype,
 				  orangefs_obj,
 				  ACACHE_KOBJ_ID);
 
-	if (rc)
-		goto acache_obj_bail;
+	अगर (rc)
+		जाओ acache_obj_bail;
 
 	kobject_uevent(acache_orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/capcache. */
 	capcache_orangefs_obj =
-		kzalloc(sizeof(*capcache_orangefs_obj), GFP_KERNEL);
-	if (!capcache_orangefs_obj) {
+		kzalloc(माप(*capcache_orangefs_obj), GFP_KERNEL);
+	अगर (!capcache_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto acache_obj_bail;
-	}
+		जाओ acache_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(capcache_orangefs_obj,
 				  &capcache_orangefs_ktype,
 				  orangefs_obj,
 				  CAPCACHE_KOBJ_ID);
-	if (rc)
-		goto capcache_obj_bail;
+	अगर (rc)
+		जाओ capcache_obj_bail;
 
 	kobject_uevent(capcache_orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/ccache. */
 	ccache_orangefs_obj =
-		kzalloc(sizeof(*ccache_orangefs_obj), GFP_KERNEL);
-	if (!ccache_orangefs_obj) {
+		kzalloc(माप(*ccache_orangefs_obj), GFP_KERNEL);
+	अगर (!ccache_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto capcache_obj_bail;
-	}
+		जाओ capcache_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(ccache_orangefs_obj,
 				  &ccache_orangefs_ktype,
 				  orangefs_obj,
 				  CCACHE_KOBJ_ID);
-	if (rc)
-		goto ccache_obj_bail;
+	अगर (rc)
+		जाओ ccache_obj_bail;
 
 	kobject_uevent(ccache_orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/ncache. */
-	ncache_orangefs_obj = kzalloc(sizeof(*ncache_orangefs_obj), GFP_KERNEL);
-	if (!ncache_orangefs_obj) {
+	ncache_orangefs_obj = kzalloc(माप(*ncache_orangefs_obj), GFP_KERNEL);
+	अगर (!ncache_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto ccache_obj_bail;
-	}
+		जाओ ccache_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(ncache_orangefs_obj,
 				  &ncache_orangefs_ktype,
 				  orangefs_obj,
 				  NCACHE_KOBJ_ID);
 
-	if (rc)
-		goto ncache_obj_bail;
+	अगर (rc)
+		जाओ ncache_obj_bail;
 
 	kobject_uevent(ncache_orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/perf_counters. */
-	pc_orangefs_obj = kzalloc(sizeof(*pc_orangefs_obj), GFP_KERNEL);
-	if (!pc_orangefs_obj) {
+	pc_orangefs_obj = kzalloc(माप(*pc_orangefs_obj), GFP_KERNEL);
+	अगर (!pc_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto ncache_obj_bail;
-	}
+		जाओ ncache_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(pc_orangefs_obj,
 				  &pc_orangefs_ktype,
 				  orangefs_obj,
 				  "perf_counters");
 
-	if (rc)
-		goto pc_obj_bail;
+	अगर (rc)
+		जाओ pc_obj_bail;
 
 	kobject_uevent(pc_orangefs_obj, KOBJ_ADD);
 
 	/* create /sys/fs/orangefs/stats. */
-	stats_orangefs_obj = kzalloc(sizeof(*stats_orangefs_obj), GFP_KERNEL);
-	if (!stats_orangefs_obj) {
+	stats_orangefs_obj = kzalloc(माप(*stats_orangefs_obj), GFP_KERNEL);
+	अगर (!stats_orangefs_obj) अणु
 		rc = -EINVAL;
-		goto pc_obj_bail;
-	}
+		जाओ pc_obj_bail;
+	पूर्ण
 
 	rc = kobject_init_and_add(stats_orangefs_obj,
 				  &stats_orangefs_ktype,
 				  orangefs_obj,
 				  STATS_KOBJ_ID);
 
-	if (rc)
-		goto stats_obj_bail;
+	अगर (rc)
+		जाओ stats_obj_bail;
 
 	kobject_uevent(stats_orangefs_obj, KOBJ_ADD);
-	goto out;
+	जाओ out;
 
 stats_obj_bail:
 		kobject_put(stats_orangefs_obj);
@@ -1248,11 +1249,11 @@ acache_obj_bail:
 ofs_obj_bail:
 		kobject_put(orangefs_obj);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void orangefs_sysfs_exit(void)
-{
+व्योम orangefs_sysfs_निकास(व्योम)
+अणु
 	gossip_debug(GOSSIP_SYSFS_DEBUG, "orangefs_sysfs_exit: start\n");
 	kobject_put(acache_orangefs_obj);
 	kobject_put(capcache_orangefs_obj);
@@ -1261,4 +1262,4 @@ void orangefs_sysfs_exit(void)
 	kobject_put(pc_orangefs_obj);
 	kobject_put(stats_orangefs_obj);
 	kobject_put(orangefs_obj);
-}
+पूर्ण

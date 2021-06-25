@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Linux driver for RPC-IF HyperFlash
+ * Linux driver क्रम RPC-IF HyperFlash
  *
  * Copyright (C) 2019-2020 Cogent Embedded, Inc.
  */
 
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mtd/hyperbus.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mux/consumer.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mtd/hyperbus.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mux/consumer.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#include <memory/renesas-rpc-if.h>
+#समावेश <memory/renesas-rpc-अगर.h>
 
-struct	rpcif_hyperbus {
-	struct rpcif rpc;
-	struct hyperbus_ctlr ctlr;
-	struct hyperbus_device hbdev;
-};
+काष्ठा	rpcअगर_hyperbus अणु
+	काष्ठा rpcअगर rpc;
+	काष्ठा hyperbus_ctlr ctlr;
+	काष्ठा hyperbus_device hbdev;
+पूर्ण;
 
-static const struct rpcif_op rpcif_op_tmpl = {
-	.cmd = {
+अटल स्थिर काष्ठा rpcअगर_op rpcअगर_op_पंचांगpl = अणु
+	.cmd = अणु
 		.buswidth = 8,
 		.ddr = true,
-	},
-	.ocmd = {
+	पूर्ण,
+	.ocmd = अणु
 		.buswidth = 8,
 		.ddr = true,
-	},
-	.addr = {
+	पूर्ण,
+	.addr = अणु
 		.nbytes = 1,
 		.buswidth = 8,
 		.ddr = true,
-	},
-	.data = {
+	पूर्ण,
+	.data = अणु
 		.buswidth = 8,
 		.ddr = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void rpcif_hb_prepare_read(struct rpcif *rpc, void *to,
-				  unsigned long from, ssize_t len)
-{
-	struct rpcif_op op = rpcif_op_tmpl;
+अटल व्योम rpcअगर_hb_prepare_पढ़ो(काष्ठा rpcअगर *rpc, व्योम *to,
+				  अचिन्हित दीर्घ from, sमाप_प्रकार len)
+अणु
+	काष्ठा rpcअगर_op op = rpcअगर_op_पंचांगpl;
 
 	op.cmd.opcode = HYPERBUS_RW_READ | HYPERBUS_AS_MEM;
 	op.addr.val = from >> 1;
@@ -56,13 +57,13 @@ static void rpcif_hb_prepare_read(struct rpcif *rpc, void *to,
 	op.data.nbytes = len;
 	op.data.buf.in = to;
 
-	rpcif_prepare(rpc, &op, NULL, NULL);
-}
+	rpcअगर_prepare(rpc, &op, शून्य, शून्य);
+पूर्ण
 
-static void rpcif_hb_prepare_write(struct rpcif *rpc, unsigned long to,
-				   void *from, ssize_t len)
-{
-	struct rpcif_op op = rpcif_op_tmpl;
+अटल व्योम rpcअगर_hb_prepare_ग_लिखो(काष्ठा rpcअगर *rpc, अचिन्हित दीर्घ to,
+				   व्योम *from, sमाप_प्रकार len)
+अणु
+	काष्ठा rpcअगर_op op = rpcअगर_op_पंचांगpl;
 
 	op.cmd.opcode = HYPERBUS_RW_WRITE | HYPERBUS_AS_MEM;
 	op.addr.val = to >> 1;
@@ -70,101 +71,101 @@ static void rpcif_hb_prepare_write(struct rpcif *rpc, unsigned long to,
 	op.data.nbytes = len;
 	op.data.buf.out = from;
 
-	rpcif_prepare(rpc, &op, NULL, NULL);
-}
+	rpcअगर_prepare(rpc, &op, शून्य, शून्य);
+पूर्ण
 
-static u16 rpcif_hb_read16(struct hyperbus_device *hbdev, unsigned long addr)
-{
-	struct rpcif_hyperbus *hyperbus =
-		container_of(hbdev, struct rpcif_hyperbus, hbdev);
+अटल u16 rpcअगर_hb_पढ़ो16(काष्ठा hyperbus_device *hbdev, अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा rpcअगर_hyperbus *hyperbus =
+		container_of(hbdev, काष्ठा rpcअगर_hyperbus, hbdev);
 	map_word data;
 
-	rpcif_hb_prepare_read(&hyperbus->rpc, &data, addr, 2);
+	rpcअगर_hb_prepare_पढ़ो(&hyperbus->rpc, &data, addr, 2);
 
-	rpcif_manual_xfer(&hyperbus->rpc);
+	rpcअगर_manual_xfer(&hyperbus->rpc);
 
-	return data.x[0];
-}
+	वापस data.x[0];
+पूर्ण
 
-static void rpcif_hb_write16(struct hyperbus_device *hbdev, unsigned long addr,
+अटल व्योम rpcअगर_hb_ग_लिखो16(काष्ठा hyperbus_device *hbdev, अचिन्हित दीर्घ addr,
 			     u16 data)
-{
-	struct rpcif_hyperbus *hyperbus =
-		container_of(hbdev, struct rpcif_hyperbus, hbdev);
+अणु
+	काष्ठा rpcअगर_hyperbus *hyperbus =
+		container_of(hbdev, काष्ठा rpcअगर_hyperbus, hbdev);
 
-	rpcif_hb_prepare_write(&hyperbus->rpc, addr, &data, 2);
+	rpcअगर_hb_prepare_ग_लिखो(&hyperbus->rpc, addr, &data, 2);
 
-	rpcif_manual_xfer(&hyperbus->rpc);
-}
+	rpcअगर_manual_xfer(&hyperbus->rpc);
+पूर्ण
 
-static void rpcif_hb_copy_from(struct hyperbus_device *hbdev, void *to,
-			       unsigned long from, ssize_t len)
-{
-	struct rpcif_hyperbus *hyperbus =
-		container_of(hbdev, struct rpcif_hyperbus, hbdev);
+अटल व्योम rpcअगर_hb_copy_from(काष्ठा hyperbus_device *hbdev, व्योम *to,
+			       अचिन्हित दीर्घ from, sमाप_प्रकार len)
+अणु
+	काष्ठा rpcअगर_hyperbus *hyperbus =
+		container_of(hbdev, काष्ठा rpcअगर_hyperbus, hbdev);
 
-	rpcif_hb_prepare_read(&hyperbus->rpc, to, from, len);
+	rpcअगर_hb_prepare_पढ़ो(&hyperbus->rpc, to, from, len);
 
-	rpcif_dirmap_read(&hyperbus->rpc, from, len, to);
-}
+	rpcअगर_dirmap_पढ़ो(&hyperbus->rpc, from, len, to);
+पूर्ण
 
-static const struct hyperbus_ops rpcif_hb_ops = {
-	.read16 = rpcif_hb_read16,
-	.write16 = rpcif_hb_write16,
-	.copy_from = rpcif_hb_copy_from,
-};
+अटल स्थिर काष्ठा hyperbus_ops rpcअगर_hb_ops = अणु
+	.पढ़ो16 = rpcअगर_hb_पढ़ो16,
+	.ग_लिखो16 = rpcअगर_hb_ग_लिखो16,
+	.copy_from = rpcअगर_hb_copy_from,
+पूर्ण;
 
-static int rpcif_hb_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rpcif_hyperbus *hyperbus;
-	int error;
+अटल पूर्णांक rpcअगर_hb_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rpcअगर_hyperbus *hyperbus;
+	पूर्णांक error;
 
-	hyperbus = devm_kzalloc(dev, sizeof(*hyperbus), GFP_KERNEL);
-	if (!hyperbus)
-		return -ENOMEM;
+	hyperbus = devm_kzalloc(dev, माप(*hyperbus), GFP_KERNEL);
+	अगर (!hyperbus)
+		वापस -ENOMEM;
 
-	rpcif_sw_init(&hyperbus->rpc, pdev->dev.parent);
+	rpcअगर_sw_init(&hyperbus->rpc, pdev->dev.parent);
 
-	platform_set_drvdata(pdev, hyperbus);
+	platक्रमm_set_drvdata(pdev, hyperbus);
 
-	rpcif_enable_rpm(&hyperbus->rpc);
+	rpcअगर_enable_rpm(&hyperbus->rpc);
 
-	rpcif_hw_init(&hyperbus->rpc, true);
+	rpcअगर_hw_init(&hyperbus->rpc, true);
 
 	hyperbus->hbdev.map.size = hyperbus->rpc.size;
 	hyperbus->hbdev.map.virt = hyperbus->rpc.dirmap;
 
 	hyperbus->ctlr.dev = dev;
-	hyperbus->ctlr.ops = &rpcif_hb_ops;
+	hyperbus->ctlr.ops = &rpcअगर_hb_ops;
 	hyperbus->hbdev.ctlr = &hyperbus->ctlr;
-	hyperbus->hbdev.np = of_get_next_child(pdev->dev.parent->of_node, NULL);
-	error = hyperbus_register_device(&hyperbus->hbdev);
-	if (error)
-		rpcif_disable_rpm(&hyperbus->rpc);
+	hyperbus->hbdev.np = of_get_next_child(pdev->dev.parent->of_node, शून्य);
+	error = hyperbus_रेजिस्टर_device(&hyperbus->hbdev);
+	अगर (error)
+		rpcअगर_disable_rpm(&hyperbus->rpc);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int rpcif_hb_remove(struct platform_device *pdev)
-{
-	struct rpcif_hyperbus *hyperbus = platform_get_drvdata(pdev);
-	int error = hyperbus_unregister_device(&hyperbus->hbdev);
-	struct rpcif *rpc = dev_get_drvdata(pdev->dev.parent);
+अटल पूर्णांक rpcअगर_hb_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rpcअगर_hyperbus *hyperbus = platक्रमm_get_drvdata(pdev);
+	पूर्णांक error = hyperbus_unरेजिस्टर_device(&hyperbus->hbdev);
+	काष्ठा rpcअगर *rpc = dev_get_drvdata(pdev->dev.parent);
 
-	rpcif_disable_rpm(rpc);
-	return error;
-}
+	rpcअगर_disable_rpm(rpc);
+	वापस error;
+पूर्ण
 
-static struct platform_driver rpcif_platform_driver = {
-	.probe	= rpcif_hb_probe,
-	.remove	= rpcif_hb_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver rpcअगर_platक्रमm_driver = अणु
+	.probe	= rpcअगर_hb_probe,
+	.हटाओ	= rpcअगर_hb_हटाओ,
+	.driver	= अणु
 		.name	= "rpc-if-hyperflash",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rpcif_platform_driver);
+module_platक्रमm_driver(rpcअगर_platक्रमm_driver);
 
 MODULE_DESCRIPTION("Renesas RPC-IF HyperFlash driver");
 MODULE_LICENSE("GPL v2");

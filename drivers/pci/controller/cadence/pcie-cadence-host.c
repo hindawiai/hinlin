@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2017 Cadence
 // Cadence PCIe host controller driver.
-// Author: Cyrille Pitchen <cyrille.pitchen@free-electrons.com>
+// Author: Cyrille Pitchen <cyrille.pitchen@मुक्त-electrons.com>
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/list_sort.h>
-#include <linux/of_address.h>
-#include <linux/of_pci.h>
-#include <linux/platform_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list_sort.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "pcie-cadence.h"
+#समावेश "pcie-cadence.h"
 
-static u64 bar_max_size[] = {
+अटल u64 bar_max_size[] = अणु
 	[RP_BAR0] = _ULL(128 * SZ_2G),
 	[RP_BAR1] = SZ_2G,
 	[RP_NO_BAR] = _BITULL(63),
-};
+पूर्ण;
 
-static u8 bar_aperture_mask[] = {
+अटल u8 bar_aperture_mask[] = अणु
 	[RP_BAR0] = 0x1F,
 	[RP_BAR1] = 0xF,
-};
+पूर्ण;
 
-void __iomem *cdns_pci_map_bus(struct pci_bus *bus, unsigned int devfn,
-			       int where)
-{
-	struct pci_host_bridge *bridge = pci_find_host_bridge(bus);
-	struct cdns_pcie_rc *rc = pci_host_bridge_priv(bridge);
-	struct cdns_pcie *pcie = &rc->pcie;
-	unsigned int busn = bus->number;
+व्योम __iomem *cdns_pci_map_bus(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn,
+			       पूर्णांक where)
+अणु
+	काष्ठा pci_host_bridge *bridge = pci_find_host_bridge(bus);
+	काष्ठा cdns_pcie_rc *rc = pci_host_bridge_priv(bridge);
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
+	अचिन्हित पूर्णांक busn = bus->number;
 	u32 addr0, desc0;
 
-	if (pci_is_root_bus(bus)) {
+	अगर (pci_is_root_bus(bus)) अणु
 		/*
 		 * Only the root port (devfn == 0) is connected to this bus.
 		 * All other PCI devices are behind some bridge hence on another
 		 * bus.
 		 */
-		if (devfn)
-			return NULL;
+		अगर (devfn)
+			वापस शून्य;
 
-		return pcie->reg_base + (where & 0xfff);
-	}
+		वापस pcie->reg_base + (where & 0xfff);
+	पूर्ण
 	/* Check that the link is up */
-	if (!(cdns_pcie_readl(pcie, CDNS_PCIE_LM_BASE) & 0x1))
-		return NULL;
-	/* Clear AXI link-down status */
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_LINKDOWN, 0x0);
+	अगर (!(cdns_pcie_पढ़ोl(pcie, CDNS_PCIE_LM_BASE) & 0x1))
+		वापस शून्य;
+	/* Clear AXI link-करोwn status */
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_LINKDOWN, 0x0);
 
-	/* Update Output registers for AXI region 0. */
+	/* Update Output रेजिस्टरs क्रम AXI region 0. */
 	addr0 = CDNS_PCIE_AT_OB_REGION_PCI_ADDR0_NBITS(12) |
 		CDNS_PCIE_AT_OB_REGION_PCI_ADDR0_DEVFN(devfn) |
 		CDNS_PCIE_AT_OB_REGION_PCI_ADDR0_BUS(busn);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR0(0), addr0);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR0(0), addr0);
 
 	/* Configuration Type 0 or Type 1 access. */
 	desc0 = CDNS_PCIE_AT_OB_REGION_DESC0_HARDCODED_RID |
 		CDNS_PCIE_AT_OB_REGION_DESC0_DEVFN(0);
 	/*
-	 * The bus number was already set once for all in desc1 by
+	 * The bus number was alपढ़ोy set once क्रम all in desc1 by
 	 * cdns_pcie_host_init_address_translation().
 	 */
-	if (busn == bridge->busnr + 1)
+	अगर (busn == bridge->busnr + 1)
 		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_TYPE_CONF_TYPE0;
-	else
+	अन्यथा
 		desc0 |= CDNS_PCIE_AT_OB_REGION_DESC0_TYPE_CONF_TYPE1;
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC0(0), desc0);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_DESC0(0), desc0);
 
-	return rc->cfg_base + (where & 0xfff);
-}
+	वापस rc->cfg_base + (where & 0xfff);
+पूर्ण
 
-static struct pci_ops cdns_pcie_host_ops = {
+अटल काष्ठा pci_ops cdns_pcie_host_ops = अणु
 	.map_bus	= cdns_pci_map_bus,
-	.read		= pci_generic_config_read,
-	.write		= pci_generic_config_write,
-};
+	.पढ़ो		= pci_generic_config_पढ़ो,
+	.ग_लिखो		= pci_generic_config_ग_लिखो,
+पूर्ण;
 
-static int cdns_pcie_host_wait_for_link(struct cdns_pcie *pcie)
-{
-	struct device *dev = pcie->dev;
-	int retries;
+अटल पूर्णांक cdns_pcie_host_रुको_क्रम_link(काष्ठा cdns_pcie *pcie)
+अणु
+	काष्ठा device *dev = pcie->dev;
+	पूर्णांक retries;
 
-	/* Check if the link is up or not */
-	for (retries = 0; retries < LINK_WAIT_MAX_RETRIES; retries++) {
-		if (cdns_pcie_link_up(pcie)) {
+	/* Check अगर the link is up or not */
+	क्रम (retries = 0; retries < LINK_WAIT_MAX_RETRIES; retries++) अणु
+		अगर (cdns_pcie_link_up(pcie)) अणु
 			dev_info(dev, "Link up\n");
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		usleep_range(LINK_WAIT_USLEEP_MIN, LINK_WAIT_USLEEP_MAX);
-	}
+	पूर्ण
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int cdns_pcie_retrain(struct cdns_pcie *pcie)
-{
+अटल पूर्णांक cdns_pcie_retrain(काष्ठा cdns_pcie *pcie)
+अणु
 	u32 lnk_cap_sls, pcie_cap_off = CDNS_PCIE_RP_CAP_OFFSET;
 	u16 lnk_stat, lnk_ctl;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/*
-	 * Set retrain bit if current speed is 2.5 GB/s,
+	 * Set retrain bit अगर current speed is 2.5 GB/s,
 	 * but the PCIe root port support is > 2.5 GB/s.
 	 */
 
-	lnk_cap_sls = cdns_pcie_readl(pcie, (CDNS_PCIE_RP_BASE + pcie_cap_off +
+	lnk_cap_sls = cdns_pcie_पढ़ोl(pcie, (CDNS_PCIE_RP_BASE + pcie_cap_off +
 					     PCI_EXP_LNKCAP));
-	if ((lnk_cap_sls & PCI_EXP_LNKCAP_SLS) <= PCI_EXP_LNKCAP_SLS_2_5GB)
-		return ret;
+	अगर ((lnk_cap_sls & PCI_EXP_LNKCAP_SLS) <= PCI_EXP_LNKCAP_SLS_2_5GB)
+		वापस ret;
 
-	lnk_stat = cdns_pcie_rp_readw(pcie, pcie_cap_off + PCI_EXP_LNKSTA);
-	if ((lnk_stat & PCI_EXP_LNKSTA_CLS) == PCI_EXP_LNKSTA_CLS_2_5GB) {
-		lnk_ctl = cdns_pcie_rp_readw(pcie,
+	lnk_stat = cdns_pcie_rp_पढ़ोw(pcie, pcie_cap_off + PCI_EXP_LNKSTA);
+	अगर ((lnk_stat & PCI_EXP_LNKSTA_CLS) == PCI_EXP_LNKSTA_CLS_2_5GB) अणु
+		lnk_ctl = cdns_pcie_rp_पढ़ोw(pcie,
 					     pcie_cap_off + PCI_EXP_LNKCTL);
 		lnk_ctl |= PCI_EXP_LNKCTL_RL;
-		cdns_pcie_rp_writew(pcie, pcie_cap_off + PCI_EXP_LNKCTL,
+		cdns_pcie_rp_ग_लिखोw(pcie, pcie_cap_off + PCI_EXP_LNKCTL,
 				    lnk_ctl);
 
-		ret = cdns_pcie_host_wait_for_link(pcie);
-	}
-	return ret;
-}
+		ret = cdns_pcie_host_रुको_क्रम_link(pcie);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cdns_pcie_host_start_link(struct cdns_pcie_rc *rc)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
-	int ret;
+अटल पूर्णांक cdns_pcie_host_start_link(काष्ठा cdns_pcie_rc *rc)
+अणु
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
+	पूर्णांक ret;
 
-	ret = cdns_pcie_host_wait_for_link(pcie);
+	ret = cdns_pcie_host_रुको_क्रम_link(pcie);
 
 	/*
-	 * Retrain link for Gen2 training defect
-	 * if quirk flag is set.
+	 * Retrain link क्रम Gen2 training defect
+	 * अगर quirk flag is set.
 	 */
-	if (!ret && rc->quirk_retrain_flag)
+	अगर (!ret && rc->quirk_retrain_flag)
 		ret = cdns_pcie_retrain(pcie);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cdns_pcie_host_init_root_port(struct cdns_pcie_rc *rc)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
+अटल पूर्णांक cdns_pcie_host_init_root_port(काष्ठा cdns_pcie_rc *rc)
+अणु
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
 	u32 value, ctrl;
 	u32 id;
 
 	/*
-	 * Set the root complex BAR configuration register:
+	 * Set the root complex BAR configuration रेजिस्टर:
 	 * - disable both BAR0 and BAR1.
-	 * - enable Prefetchable Memory Base and Limit registers in type 1
+	 * - enable Prefetchable Memory Base and Limit रेजिस्टरs in type 1
 	 *   config space (64 bits).
-	 * - enable IO Base and Limit registers in type 1 config
+	 * - enable IO Base and Limit रेजिस्टरs in type 1 config
 	 *   space (32 bits).
 	 */
 	ctrl = CDNS_PCIE_LM_BAR_CFG_CTRL_DISABLED;
@@ -161,35 +162,35 @@ static int cdns_pcie_host_init_root_port(struct cdns_pcie_rc *rc)
 		CDNS_PCIE_LM_RC_BAR_CFG_PREFETCH_MEM_64BITS |
 		CDNS_PCIE_LM_RC_BAR_CFG_IO_ENABLE |
 		CDNS_PCIE_LM_RC_BAR_CFG_IO_32BITS;
-	cdns_pcie_writel(pcie, CDNS_PCIE_LM_RC_BAR_CFG, value);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_LM_RC_BAR_CFG, value);
 
 	/* Set root port configuration space */
-	if (rc->vendor_id != 0xffff) {
-		id = CDNS_PCIE_LM_ID_VENDOR(rc->vendor_id) |
-			CDNS_PCIE_LM_ID_SUBSYS(rc->vendor_id);
-		cdns_pcie_writel(pcie, CDNS_PCIE_LM_ID, id);
-	}
+	अगर (rc->venकरोr_id != 0xffff) अणु
+		id = CDNS_PCIE_LM_ID_VENDOR(rc->venकरोr_id) |
+			CDNS_PCIE_LM_ID_SUBSYS(rc->venकरोr_id);
+		cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_LM_ID, id);
+	पूर्ण
 
-	if (rc->device_id != 0xffff)
-		cdns_pcie_rp_writew(pcie, PCI_DEVICE_ID, rc->device_id);
+	अगर (rc->device_id != 0xffff)
+		cdns_pcie_rp_ग_लिखोw(pcie, PCI_DEVICE_ID, rc->device_id);
 
-	cdns_pcie_rp_writeb(pcie, PCI_CLASS_REVISION, 0);
-	cdns_pcie_rp_writeb(pcie, PCI_CLASS_PROG, 0);
-	cdns_pcie_rp_writew(pcie, PCI_CLASS_DEVICE, PCI_CLASS_BRIDGE_PCI);
+	cdns_pcie_rp_ग_लिखोb(pcie, PCI_CLASS_REVISION, 0);
+	cdns_pcie_rp_ग_लिखोb(pcie, PCI_CLASS_PROG, 0);
+	cdns_pcie_rp_ग_लिखोw(pcie, PCI_CLASS_DEVICE, PCI_CLASS_BRIDGE_PCI);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdns_pcie_host_bar_ib_config(struct cdns_pcie_rc *rc,
-					enum cdns_pcie_rp_bar bar,
+अटल पूर्णांक cdns_pcie_host_bar_ib_config(काष्ठा cdns_pcie_rc *rc,
+					क्रमागत cdns_pcie_rp_bar bar,
 					u64 cpu_addr, u64 size,
-					unsigned long flags)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
+					अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
 	u32 addr0, addr1, aperture, value;
 
-	if (!rc->avail_ib_bar[bar])
-		return -EBUSY;
+	अगर (!rc->avail_ib_bar[bar])
+		वापस -EBUSY;
 
 	rc->avail_ib_bar[bar] = false;
 
@@ -197,247 +198,247 @@ static int cdns_pcie_host_bar_ib_config(struct cdns_pcie_rc *rc,
 	addr0 = CDNS_PCIE_AT_IB_RP_BAR_ADDR0_NBITS(aperture) |
 		(lower_32_bits(cpu_addr) & GENMASK(31, 8));
 	addr1 = upper_32_bits(cpu_addr);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_IB_RP_BAR_ADDR0(bar), addr0);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_IB_RP_BAR_ADDR1(bar), addr1);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_IB_RP_BAR_ADDR0(bar), addr0);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_IB_RP_BAR_ADDR1(bar), addr1);
 
-	if (bar == RP_NO_BAR)
-		return 0;
+	अगर (bar == RP_NO_BAR)
+		वापस 0;
 
-	value = cdns_pcie_readl(pcie, CDNS_PCIE_LM_RC_BAR_CFG);
+	value = cdns_pcie_पढ़ोl(pcie, CDNS_PCIE_LM_RC_BAR_CFG);
 	value &= ~(LM_RC_BAR_CFG_CTRL_MEM_64BITS(bar) |
 		   LM_RC_BAR_CFG_CTRL_PREF_MEM_64BITS(bar) |
 		   LM_RC_BAR_CFG_CTRL_MEM_32BITS(bar) |
 		   LM_RC_BAR_CFG_CTRL_PREF_MEM_32BITS(bar) |
 		   LM_RC_BAR_CFG_APERTURE(bar, bar_aperture_mask[bar] + 2));
-	if (size + cpu_addr >= SZ_4G) {
-		if (!(flags & IORESOURCE_PREFETCH))
+	अगर (size + cpu_addr >= SZ_4G) अणु
+		अगर (!(flags & IORESOURCE_PREFETCH))
 			value |= LM_RC_BAR_CFG_CTRL_MEM_64BITS(bar);
 		value |= LM_RC_BAR_CFG_CTRL_PREF_MEM_64BITS(bar);
-	} else {
-		if (!(flags & IORESOURCE_PREFETCH))
+	पूर्ण अन्यथा अणु
+		अगर (!(flags & IORESOURCE_PREFETCH))
 			value |= LM_RC_BAR_CFG_CTRL_MEM_32BITS(bar);
 		value |= LM_RC_BAR_CFG_CTRL_PREF_MEM_32BITS(bar);
-	}
+	पूर्ण
 
 	value |= LM_RC_BAR_CFG_APERTURE(bar, aperture);
-	cdns_pcie_writel(pcie, CDNS_PCIE_LM_RC_BAR_CFG, value);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_LM_RC_BAR_CFG, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum cdns_pcie_rp_bar
-cdns_pcie_host_find_min_bar(struct cdns_pcie_rc *rc, u64 size)
-{
-	enum cdns_pcie_rp_bar bar, sel_bar;
-
-	sel_bar = RP_BAR_UNDEFINED;
-	for (bar = RP_BAR0; bar <= RP_NO_BAR; bar++) {
-		if (!rc->avail_ib_bar[bar])
-			continue;
-
-		if (size <= bar_max_size[bar]) {
-			if (sel_bar == RP_BAR_UNDEFINED) {
-				sel_bar = bar;
-				continue;
-			}
-
-			if (bar_max_size[bar] < bar_max_size[sel_bar])
-				sel_bar = bar;
-		}
-	}
-
-	return sel_bar;
-}
-
-static enum cdns_pcie_rp_bar
-cdns_pcie_host_find_max_bar(struct cdns_pcie_rc *rc, u64 size)
-{
-	enum cdns_pcie_rp_bar bar, sel_bar;
+अटल क्रमागत cdns_pcie_rp_bar
+cdns_pcie_host_find_min_bar(काष्ठा cdns_pcie_rc *rc, u64 size)
+अणु
+	क्रमागत cdns_pcie_rp_bar bar, sel_bar;
 
 	sel_bar = RP_BAR_UNDEFINED;
-	for (bar = RP_BAR0; bar <= RP_NO_BAR; bar++) {
-		if (!rc->avail_ib_bar[bar])
-			continue;
+	क्रम (bar = RP_BAR0; bar <= RP_NO_BAR; bar++) अणु
+		अगर (!rc->avail_ib_bar[bar])
+			जारी;
 
-		if (size >= bar_max_size[bar]) {
-			if (sel_bar == RP_BAR_UNDEFINED) {
+		अगर (size <= bar_max_size[bar]) अणु
+			अगर (sel_bar == RP_BAR_UNDEFINED) अणु
 				sel_bar = bar;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			if (bar_max_size[bar] > bar_max_size[sel_bar])
+			अगर (bar_max_size[bar] < bar_max_size[sel_bar])
 				sel_bar = bar;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return sel_bar;
-}
+	वापस sel_bar;
+पूर्ण
 
-static int cdns_pcie_host_bar_config(struct cdns_pcie_rc *rc,
-				     struct resource_entry *entry)
-{
+अटल क्रमागत cdns_pcie_rp_bar
+cdns_pcie_host_find_max_bar(काष्ठा cdns_pcie_rc *rc, u64 size)
+अणु
+	क्रमागत cdns_pcie_rp_bar bar, sel_bar;
+
+	sel_bar = RP_BAR_UNDEFINED;
+	क्रम (bar = RP_BAR0; bar <= RP_NO_BAR; bar++) अणु
+		अगर (!rc->avail_ib_bar[bar])
+			जारी;
+
+		अगर (size >= bar_max_size[bar]) अणु
+			अगर (sel_bar == RP_BAR_UNDEFINED) अणु
+				sel_bar = bar;
+				जारी;
+			पूर्ण
+
+			अगर (bar_max_size[bar] > bar_max_size[sel_bar])
+				sel_bar = bar;
+		पूर्ण
+	पूर्ण
+
+	वापस sel_bar;
+पूर्ण
+
+अटल पूर्णांक cdns_pcie_host_bar_config(काष्ठा cdns_pcie_rc *rc,
+				     काष्ठा resource_entry *entry)
+अणु
 	u64 cpu_addr, pci_addr, size, winsize;
-	struct cdns_pcie *pcie = &rc->pcie;
-	struct device *dev = pcie->dev;
-	enum cdns_pcie_rp_bar bar;
-	unsigned long flags;
-	int ret;
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
+	काष्ठा device *dev = pcie->dev;
+	क्रमागत cdns_pcie_rp_bar bar;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	cpu_addr = entry->res->start;
 	pci_addr = entry->res->start - entry->offset;
 	flags = entry->res->flags;
 	size = resource_size(entry->res);
 
-	if (entry->offset) {
+	अगर (entry->offset) अणु
 		dev_err(dev, "PCI addr: %llx must be equal to CPU addr: %llx\n",
 			pci_addr, cpu_addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (size > 0) {
+	जबतक (size > 0) अणु
 		/*
 		 * Try to find a minimum BAR whose size is greater than
-		 * or equal to the remaining resource_entry size. This will
-		 * fail if the size of each of the available BARs is less than
-		 * the remaining resource_entry size.
+		 * or equal to the reमुख्यing resource_entry size. This will
+		 * fail अगर the size of each of the available BARs is less than
+		 * the reमुख्यing resource_entry size.
 		 * If a minimum BAR is found, IB ATU will be configured and
-		 * exited.
+		 * निकासed.
 		 */
 		bar = cdns_pcie_host_find_min_bar(rc, size);
-		if (bar != RP_BAR_UNDEFINED) {
+		अगर (bar != RP_BAR_UNDEFINED) अणु
 			ret = cdns_pcie_host_bar_ib_config(rc, bar, cpu_addr,
 							   size, flags);
-			if (ret)
+			अगर (ret)
 				dev_err(dev, "IB BAR: %d config failed\n", bar);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/*
-		 * If the control reaches here, it would mean the remaining
+		 * If the control reaches here, it would mean the reमुख्यing
 		 * resource_entry size cannot be fitted in a single BAR. So we
 		 * find a maximum BAR whose size is less than or equal to the
-		 * remaining resource_entry size and split the resource entry
+		 * reमुख्यing resource_entry size and split the resource entry
 		 * so that part of resource entry is fitted inside the maximum
-		 * BAR. The remaining size would be fitted during the next
+		 * BAR. The reमुख्यing size would be fitted during the next
 		 * iteration of the loop.
 		 * If a maximum BAR is not found, there is no way we can fit
 		 * this resource_entry, so we error out.
 		 */
 		bar = cdns_pcie_host_find_max_bar(rc, size);
-		if (bar == RP_BAR_UNDEFINED) {
+		अगर (bar == RP_BAR_UNDEFINED) अणु
 			dev_err(dev, "No free BAR to map cpu_addr %llx\n",
 				cpu_addr);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		winsize = bar_max_size[bar];
 		ret = cdns_pcie_host_bar_ib_config(rc, bar, cpu_addr, winsize,
 						   flags);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "IB BAR: %d config failed\n", bar);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		size -= winsize;
 		cpu_addr += winsize;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdns_pcie_host_dma_ranges_cmp(void *priv, const struct list_head *a,
-					 const struct list_head *b)
-{
-	struct resource_entry *entry1, *entry2;
+अटल पूर्णांक cdns_pcie_host_dma_ranges_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
+					 स्थिर काष्ठा list_head *b)
+अणु
+	काष्ठा resource_entry *entry1, *entry2;
 
-        entry1 = container_of(a, struct resource_entry, node);
-        entry2 = container_of(b, struct resource_entry, node);
+        entry1 = container_of(a, काष्ठा resource_entry, node);
+        entry2 = container_of(b, काष्ठा resource_entry, node);
 
-        return resource_size(entry2->res) - resource_size(entry1->res);
-}
+        वापस resource_size(entry2->res) - resource_size(entry1->res);
+पूर्ण
 
-static int cdns_pcie_host_map_dma_ranges(struct cdns_pcie_rc *rc)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
-	struct device *dev = pcie->dev;
-	struct device_node *np = dev->of_node;
-	struct pci_host_bridge *bridge;
-	struct resource_entry *entry;
+अटल पूर्णांक cdns_pcie_host_map_dma_ranges(काष्ठा cdns_pcie_rc *rc)
+अणु
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
+	काष्ठा device *dev = pcie->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा pci_host_bridge *bridge;
+	काष्ठा resource_entry *entry;
 	u32 no_bar_nbits = 32;
-	int err;
+	पूर्णांक err;
 
 	bridge = pci_host_bridge_from_priv(rc);
-	if (!bridge)
-		return -ENOMEM;
+	अगर (!bridge)
+		वापस -ENOMEM;
 
-	if (list_empty(&bridge->dma_ranges)) {
-		of_property_read_u32(np, "cdns,no-bar-match-nbits",
+	अगर (list_empty(&bridge->dma_ranges)) अणु
+		of_property_पढ़ो_u32(np, "cdns,no-bar-match-nbits",
 				     &no_bar_nbits);
 		err = cdns_pcie_host_bar_ib_config(rc, RP_NO_BAR, 0x0,
 						   (u64)1 << no_bar_nbits, 0);
-		if (err)
+		अगर (err)
 			dev_err(dev, "IB BAR: %d config failed\n", RP_NO_BAR);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	list_sort(NULL, &bridge->dma_ranges, cdns_pcie_host_dma_ranges_cmp);
+	list_sort(शून्य, &bridge->dma_ranges, cdns_pcie_host_dma_ranges_cmp);
 
-	resource_list_for_each_entry(entry, &bridge->dma_ranges) {
+	resource_list_क्रम_each_entry(entry, &bridge->dma_ranges) अणु
 		err = cdns_pcie_host_bar_config(rc, entry);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "Fail to configure IB using dma-ranges\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
-{
-	struct cdns_pcie *pcie = &rc->pcie;
-	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(rc);
-	struct resource *cfg_res = rc->cfg_res;
-	struct resource_entry *entry;
+अटल पूर्णांक cdns_pcie_host_init_address_translation(काष्ठा cdns_pcie_rc *rc)
+अणु
+	काष्ठा cdns_pcie *pcie = &rc->pcie;
+	काष्ठा pci_host_bridge *bridge = pci_host_bridge_from_priv(rc);
+	काष्ठा resource *cfg_res = rc->cfg_res;
+	काष्ठा resource_entry *entry;
 	u64 cpu_addr = cfg_res->start;
 	u32 addr0, addr1, desc1;
-	int r, busnr = 0;
+	पूर्णांक r, busnr = 0;
 
-	entry = resource_list_first_type(&bridge->windows, IORESOURCE_BUS);
-	if (entry)
+	entry = resource_list_first_type(&bridge->winकरोws, IORESOURCE_BUS);
+	अगर (entry)
 		busnr = entry->res->start;
 
 	/*
-	 * Reserve region 0 for PCI configure space accesses:
+	 * Reserve region 0 क्रम PCI configure space accesses:
 	 * OB_REGION_PCI_ADDR0 and OB_REGION_DESC0 are updated dynamically by
-	 * cdns_pci_map_bus(), other region registers are set here once for all.
+	 * cdns_pci_map_bus(), other region रेजिस्टरs are set here once क्रम all.
 	 */
 	addr1 = 0; /* Should be programmed to zero. */
 	desc1 = CDNS_PCIE_AT_OB_REGION_DESC1_BUS(busnr);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR1(0), addr1);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_DESC1(0), desc1);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_PCI_ADDR1(0), addr1);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_DESC1(0), desc1);
 
-	if (pcie->ops->cpu_addr_fixup)
+	अगर (pcie->ops->cpu_addr_fixup)
 		cpu_addr = pcie->ops->cpu_addr_fixup(pcie, cpu_addr);
 
 	addr0 = CDNS_PCIE_AT_OB_REGION_CPU_ADDR0_NBITS(12) |
 		(lower_32_bits(cpu_addr) & GENMASK(31, 8));
 	addr1 = upper_32_bits(cpu_addr);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(0), addr0);
-	cdns_pcie_writel(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(0), addr1);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR0(0), addr0);
+	cdns_pcie_ग_लिखोl(pcie, CDNS_PCIE_AT_OB_REGION_CPU_ADDR1(0), addr1);
 
 	r = 1;
-	resource_list_for_each_entry(entry, &bridge->windows) {
-		struct resource *res = entry->res;
+	resource_list_क्रम_each_entry(entry, &bridge->winकरोws) अणु
+		काष्ठा resource *res = entry->res;
 		u64 pci_addr = res->start - entry->offset;
 
-		if (resource_type(res) == IORESOURCE_IO)
+		अगर (resource_type(res) == IORESOURCE_IO)
 			cdns_pcie_set_outbound_region(pcie, busnr, 0, r,
 						      true,
 						      pci_pio_to_address(res->start),
 						      pci_addr,
 						      resource_size(res));
-		else
+		अन्यथा
 			cdns_pcie_set_outbound_region(pcie, busnr, 0, r,
 						      false,
 						      res->start,
@@ -445,87 +446,87 @@ static int cdns_pcie_host_init_address_translation(struct cdns_pcie_rc *rc)
 						      resource_size(res));
 
 		r++;
-	}
+	पूर्ण
 
-	return cdns_pcie_host_map_dma_ranges(rc);
-}
+	वापस cdns_pcie_host_map_dma_ranges(rc);
+पूर्ण
 
-static int cdns_pcie_host_init(struct device *dev,
-			       struct cdns_pcie_rc *rc)
-{
-	int err;
+अटल पूर्णांक cdns_pcie_host_init(काष्ठा device *dev,
+			       काष्ठा cdns_pcie_rc *rc)
+अणु
+	पूर्णांक err;
 
 	err = cdns_pcie_host_init_root_port(rc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return cdns_pcie_host_init_address_translation(rc);
-}
+	वापस cdns_pcie_host_init_address_translation(rc);
+पूर्ण
 
-int cdns_pcie_host_setup(struct cdns_pcie_rc *rc)
-{
-	struct device *dev = rc->pcie.dev;
-	struct platform_device *pdev = to_platform_device(dev);
-	struct device_node *np = dev->of_node;
-	struct pci_host_bridge *bridge;
-	enum cdns_pcie_rp_bar bar;
-	struct cdns_pcie *pcie;
-	struct resource *res;
-	int ret;
+पूर्णांक cdns_pcie_host_setup(काष्ठा cdns_pcie_rc *rc)
+अणु
+	काष्ठा device *dev = rc->pcie.dev;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा pci_host_bridge *bridge;
+	क्रमागत cdns_pcie_rp_bar bar;
+	काष्ठा cdns_pcie *pcie;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
 	bridge = pci_host_bridge_from_priv(rc);
-	if (!bridge)
-		return -ENOMEM;
+	अगर (!bridge)
+		वापस -ENOMEM;
 
 	pcie = &rc->pcie;
 	pcie->is_rc = true;
 
-	rc->vendor_id = 0xffff;
-	of_property_read_u32(np, "vendor-id", &rc->vendor_id);
+	rc->venकरोr_id = 0xffff;
+	of_property_पढ़ो_u32(np, "vendor-id", &rc->venकरोr_id);
 
 	rc->device_id = 0xffff;
-	of_property_read_u32(np, "device-id", &rc->device_id);
+	of_property_पढ़ो_u32(np, "device-id", &rc->device_id);
 
-	pcie->reg_base = devm_platform_ioremap_resource_byname(pdev, "reg");
-	if (IS_ERR(pcie->reg_base)) {
+	pcie->reg_base = devm_platक्रमm_ioremap_resource_byname(pdev, "reg");
+	अगर (IS_ERR(pcie->reg_base)) अणु
 		dev_err(dev, "missing \"reg\"\n");
-		return PTR_ERR(pcie->reg_base);
-	}
+		वापस PTR_ERR(pcie->reg_base);
+	पूर्ण
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "cfg");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "cfg");
 	rc->cfg_base = devm_pci_remap_cfg_resource(dev, res);
-	if (IS_ERR(rc->cfg_base))
-		return PTR_ERR(rc->cfg_base);
+	अगर (IS_ERR(rc->cfg_base))
+		वापस PTR_ERR(rc->cfg_base);
 	rc->cfg_res = res;
 
 	ret = cdns_pcie_start_link(pcie);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to start link\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = cdns_pcie_host_start_link(rc);
-	if (ret)
+	अगर (ret)
 		dev_dbg(dev, "PCIe link never came up\n");
 
-	for (bar = RP_BAR0; bar <= RP_NO_BAR; bar++)
+	क्रम (bar = RP_BAR0; bar <= RP_NO_BAR; bar++)
 		rc->avail_ib_bar[bar] = true;
 
 	ret = cdns_pcie_host_init(dev, rc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!bridge->ops)
+	अगर (!bridge->ops)
 		bridge->ops = &cdns_pcie_host_ops;
 
 	ret = pci_host_probe(bridge);
-	if (ret < 0)
-		goto err_init;
+	अगर (ret < 0)
+		जाओ err_init;
 
-	return 0;
+	वापस 0;
 
  err_init:
-	pm_runtime_put_sync(dev);
+	pm_runसमय_put_sync(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

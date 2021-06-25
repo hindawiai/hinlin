@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2016 Noralf Trønnes
+ * Copyright (C) 2016 Noralf Trथचnnes
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
 /**
  * DOC: overview
  *
- * This helper library provides helpers for drivers for simple display
+ * This helper library provides helpers क्रम drivers क्रम simple display
  * hardware.
  *
  * drm_simple_display_pipe_init() initializes a simple display pipeline
  * which has only one full-screen scanout buffer feeding one output. The
- * pipeline is represented by &struct drm_simple_display_pipe and binds
- * together &drm_plane, &drm_crtc and &drm_encoder structures into one fixed
- * entity. Some flexibility for code reuse is provided through a separately
+ * pipeline is represented by &काष्ठा drm_simple_display_pipe and binds
+ * together &drm_plane, &drm_crtc and &drm_encoder काष्ठाures पूर्णांकo one fixed
+ * entity. Some flexibility क्रम code reuse is provided through a separately
  * allocated &drm_connector object and supporting optional &drm_bridge
  * encoder drivers.
  *
  * Many drivers require only a very simple encoder that fulfills the minimum
- * requirements of the display pipeline and does not add additional
+ * requirements of the display pipeline and करोes not add additional
  * functionality. The function drm_simple_encoder_init() provides an
  * implementation of such an encoder.
  */
 
-static const struct drm_encoder_funcs drm_simple_encoder_funcs_cleanup = {
+अटल स्थिर काष्ठा drm_encoder_funcs drm_simple_encoder_funcs_cleanup = अणु
 	.destroy = drm_encoder_cleanup,
-};
+पूर्ण;
 
 /**
- * drm_simple_encoder_init - Initialize a preallocated encoder with
+ * drm_simple_encoder_init - Initialize a pपुनः_स्मृतिated encoder with
  *                           basic functionality.
  * @dev: drm device
  * @encoder: the encoder to initialize
  * @encoder_type: user visible type of the encoder
  *
- * Initialises a preallocated encoder that has no further functionality.
- * Settings for possible CRTC and clones are left to their initial values.
- * The encoder will be cleaned up automatically as part of the mode-setting
+ * Initialises a pपुनः_स्मृतिated encoder that has no further functionality.
+ * Settings क्रम possible CRTC and clones are left to their initial values.
+ * The encoder will be cleaned up स्वतःmatically as part of the mode-setting
  * cleanup.
  *
- * The caller of drm_simple_encoder_init() is responsible for freeing
+ * The caller of drm_simple_encoder_init() is responsible क्रम मुक्तing
  * the encoder's memory after the encoder has been cleaned up. At the
- * moment this only works reliably if the encoder data structure is
- * stored in the device structure. Free the encoder's memory as part of
+ * moment this only works reliably अगर the encoder data काष्ठाure is
+ * stored in the device काष्ठाure. Free the encoder's memory as part of
  * the device release function.
  *
  * Note: consider using drmm_simple_encoder_alloc() instead of
- * drm_simple_encoder_init() to let the DRM managed resource infrastructure
+ * drm_simple_encoder_init() to let the DRM managed resource infraकाष्ठाure
  * take care of cleanup and deallocation.
  *
  * Returns:
  * Zero on success, error code on failure.
  */
-int drm_simple_encoder_init(struct drm_device *dev,
-			    struct drm_encoder *encoder,
-			    int encoder_type)
-{
-	return drm_encoder_init(dev, encoder,
+पूर्णांक drm_simple_encoder_init(काष्ठा drm_device *dev,
+			    काष्ठा drm_encoder *encoder,
+			    पूर्णांक encoder_type)
+अणु
+	वापस drm_encoder_init(dev, encoder,
 				&drm_simple_encoder_funcs_cleanup,
-				encoder_type, NULL);
-}
+				encoder_type, शून्य);
+पूर्ण
 EXPORT_SYMBOL(drm_simple_encoder_init);
 
-void *__drmm_simple_encoder_alloc(struct drm_device *dev, size_t size,
-				  size_t offset, int encoder_type)
-{
-	return __drmm_encoder_alloc(dev, size, offset, NULL, encoder_type,
-				    NULL);
-}
+व्योम *__drmm_simple_encoder_alloc(काष्ठा drm_device *dev, माप_प्रकार size,
+				  माप_प्रकार offset, पूर्णांक encoder_type)
+अणु
+	वापस __drmm_encoder_alloc(dev, size, offset, शून्य, encoder_type,
+				    शून्य);
+पूर्ण
 EXPORT_SYMBOL(__drmm_simple_encoder_alloc);
 
-static enum drm_mode_status
-drm_simple_kms_crtc_mode_valid(struct drm_crtc *crtc,
-			       const struct drm_display_mode *mode)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल क्रमागत drm_mode_status
+drm_simple_kms_crtc_mode_valid(काष्ठा drm_crtc *crtc,
+			       स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(crtc, struct drm_simple_display_pipe, crtc);
-	if (!pipe->funcs || !pipe->funcs->mode_valid)
+	pipe = container_of(crtc, काष्ठा drm_simple_display_pipe, crtc);
+	अगर (!pipe->funcs || !pipe->funcs->mode_valid)
 		/* Anything goes */
-		return MODE_OK;
+		वापस MODE_OK;
 
-	return pipe->funcs->mode_valid(pipe, mode);
-}
+	वापस pipe->funcs->mode_valid(pipe, mode);
+पूर्ण
 
-static int drm_simple_kms_crtc_check(struct drm_crtc *crtc,
-				     struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
+अटल पूर्णांक drm_simple_kms_crtc_check(काष्ठा drm_crtc *crtc,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state = drm_atomic_get_new_crtc_state(state,
 									  crtc);
 	bool has_primary = crtc_state->plane_mask &
 			   drm_plane_mask(crtc->primary);
 
 	/* We always want to have an active plane with an active CRTC */
-	if (has_primary != crtc_state->enable)
-		return -EINVAL;
+	अगर (has_primary != crtc_state->enable)
+		वापस -EINVAL;
 
-	return drm_atomic_add_affected_planes(state, crtc);
-}
+	वापस drm_atomic_add_affected_planes(state, crtc);
+पूर्ण
 
-static void drm_simple_kms_crtc_enable(struct drm_crtc *crtc,
-				       struct drm_atomic_state *state)
-{
-	struct drm_plane *plane;
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_crtc_enable(काष्ठा drm_crtc *crtc,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(crtc, struct drm_simple_display_pipe, crtc);
-	if (!pipe->funcs || !pipe->funcs->enable)
-		return;
+	pipe = container_of(crtc, काष्ठा drm_simple_display_pipe, crtc);
+	अगर (!pipe->funcs || !pipe->funcs->enable)
+		वापस;
 
 	plane = &pipe->plane;
 	pipe->funcs->enable(pipe, crtc->state, plane->state);
-}
+पूर्ण
 
-static void drm_simple_kms_crtc_disable(struct drm_crtc *crtc,
-					struct drm_atomic_state *state)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_crtc_disable(काष्ठा drm_crtc *crtc,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(crtc, struct drm_simple_display_pipe, crtc);
-	if (!pipe->funcs || !pipe->funcs->disable)
-		return;
+	pipe = container_of(crtc, काष्ठा drm_simple_display_pipe, crtc);
+	अगर (!pipe->funcs || !pipe->funcs->disable)
+		वापस;
 
 	pipe->funcs->disable(pipe);
-}
+पूर्ण
 
-static const struct drm_crtc_helper_funcs drm_simple_kms_crtc_helper_funcs = {
+अटल स्थिर काष्ठा drm_crtc_helper_funcs drm_simple_kms_crtc_helper_funcs = अणु
 	.mode_valid = drm_simple_kms_crtc_mode_valid,
 	.atomic_check = drm_simple_kms_crtc_check,
 	.atomic_enable = drm_simple_kms_crtc_enable,
 	.atomic_disable = drm_simple_kms_crtc_disable,
-};
+पूर्ण;
 
-static int drm_simple_kms_crtc_enable_vblank(struct drm_crtc *crtc)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल पूर्णांक drm_simple_kms_crtc_enable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(crtc, struct drm_simple_display_pipe, crtc);
-	if (!pipe->funcs || !pipe->funcs->enable_vblank)
-		return 0;
+	pipe = container_of(crtc, काष्ठा drm_simple_display_pipe, crtc);
+	अगर (!pipe->funcs || !pipe->funcs->enable_vblank)
+		वापस 0;
 
-	return pipe->funcs->enable_vblank(pipe);
-}
+	वापस pipe->funcs->enable_vblank(pipe);
+पूर्ण
 
-static void drm_simple_kms_crtc_disable_vblank(struct drm_crtc *crtc)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_crtc_disable_vblank(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(crtc, struct drm_simple_display_pipe, crtc);
-	if (!pipe->funcs || !pipe->funcs->disable_vblank)
-		return;
+	pipe = container_of(crtc, काष्ठा drm_simple_display_pipe, crtc);
+	अगर (!pipe->funcs || !pipe->funcs->disable_vblank)
+		वापस;
 
 	pipe->funcs->disable_vblank(pipe);
-}
+पूर्ण
 
-static const struct drm_crtc_funcs drm_simple_kms_crtc_funcs = {
+अटल स्थिर काष्ठा drm_crtc_funcs drm_simple_kms_crtc_funcs = अणु
 	.reset = drm_atomic_helper_crtc_reset,
 	.destroy = drm_crtc_cleanup,
 	.set_config = drm_atomic_helper_set_config,
@@ -174,18 +175,18 @@ static const struct drm_crtc_funcs drm_simple_kms_crtc_funcs = {
 	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
 	.enable_vblank = drm_simple_kms_crtc_enable_vblank,
 	.disable_vblank = drm_simple_kms_crtc_disable_vblank,
-};
+पूर्ण;
 
-static int drm_simple_kms_plane_atomic_check(struct drm_plane *plane,
-					struct drm_atomic_state *state)
-{
-	struct drm_plane_state *plane_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक drm_simple_kms_plane_atomic_check(काष्ठा drm_plane *plane,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *plane_state = drm_atomic_get_new_plane_state(state,
 									     plane);
-	struct drm_simple_display_pipe *pipe;
-	struct drm_crtc_state *crtc_state;
-	int ret;
+	काष्ठा drm_simple_display_pipe *pipe;
+	काष्ठा drm_crtc_state *crtc_state;
+	पूर्णांक ret;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
 	crtc_state = drm_atomic_get_new_crtc_state(state,
 						   &pipe->crtc);
 
@@ -193,113 +194,113 @@ static int drm_simple_kms_plane_atomic_check(struct drm_plane *plane,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  DRM_PLANE_HELPER_NO_SCALING,
 						  false, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!plane_state->visible)
-		return 0;
+	अगर (!plane_state->visible)
+		वापस 0;
 
-	if (!pipe->funcs || !pipe->funcs->check)
-		return 0;
+	अगर (!pipe->funcs || !pipe->funcs->check)
+		वापस 0;
 
-	return pipe->funcs->check(pipe, plane_state, crtc_state);
-}
+	वापस pipe->funcs->check(pipe, plane_state, crtc_state);
+पूर्ण
 
-static void drm_simple_kms_plane_atomic_update(struct drm_plane *plane,
-					struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_pstate = drm_atomic_get_old_plane_state(state,
+अटल व्योम drm_simple_kms_plane_atomic_update(काष्ठा drm_plane *plane,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_pstate = drm_atomic_get_old_plane_state(state,
 									    plane);
-	struct drm_simple_display_pipe *pipe;
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->update)
-		return;
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->update)
+		वापस;
 
 	pipe->funcs->update(pipe, old_pstate);
-}
+पूर्ण
 
-static int drm_simple_kms_plane_prepare_fb(struct drm_plane *plane,
-					   struct drm_plane_state *state)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल पूर्णांक drm_simple_kms_plane_prepare_fb(काष्ठा drm_plane *plane,
+					   काष्ठा drm_plane_state *state)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->prepare_fb)
-		return 0;
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->prepare_fb)
+		वापस 0;
 
-	return pipe->funcs->prepare_fb(pipe, state);
-}
+	वापस pipe->funcs->prepare_fb(pipe, state);
+पूर्ण
 
-static void drm_simple_kms_plane_cleanup_fb(struct drm_plane *plane,
-					    struct drm_plane_state *state)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_plane_cleanup_fb(काष्ठा drm_plane *plane,
+					    काष्ठा drm_plane_state *state)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->cleanup_fb)
-		return;
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->cleanup_fb)
+		वापस;
 
 	pipe->funcs->cleanup_fb(pipe, state);
-}
+पूर्ण
 
-static bool drm_simple_kms_format_mod_supported(struct drm_plane *plane,
-						uint32_t format,
-						uint64_t modifier)
-{
-	return modifier == DRM_FORMAT_MOD_LINEAR;
-}
+अटल bool drm_simple_kms_क्रमmat_mod_supported(काष्ठा drm_plane *plane,
+						uपूर्णांक32_t क्रमmat,
+						uपूर्णांक64_t modअगरier)
+अणु
+	वापस modअगरier == DRM_FORMAT_MOD_LINEAR;
+पूर्ण
 
-static const struct drm_plane_helper_funcs drm_simple_kms_plane_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs drm_simple_kms_plane_helper_funcs = अणु
 	.prepare_fb = drm_simple_kms_plane_prepare_fb,
 	.cleanup_fb = drm_simple_kms_plane_cleanup_fb,
 	.atomic_check = drm_simple_kms_plane_atomic_check,
 	.atomic_update = drm_simple_kms_plane_atomic_update,
-};
+पूर्ण;
 
-static void drm_simple_kms_plane_reset(struct drm_plane *plane)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_plane_reset(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->reset_plane)
-		return drm_atomic_helper_plane_reset(plane);
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->reset_plane)
+		वापस drm_atomic_helper_plane_reset(plane);
 
-	return pipe->funcs->reset_plane(pipe);
-}
+	वापस pipe->funcs->reset_plane(pipe);
+पूर्ण
 
-static struct drm_plane_state *drm_simple_kms_plane_duplicate_state(struct drm_plane *plane)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल काष्ठा drm_plane_state *drm_simple_kms_plane_duplicate_state(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->duplicate_plane_state)
-		return drm_atomic_helper_plane_duplicate_state(plane);
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->duplicate_plane_state)
+		वापस drm_atomic_helper_plane_duplicate_state(plane);
 
-	return pipe->funcs->duplicate_plane_state(pipe);
-}
+	वापस pipe->funcs->duplicate_plane_state(pipe);
+पूर्ण
 
-static void drm_simple_kms_plane_destroy_state(struct drm_plane *plane,
-					       struct drm_plane_state *state)
-{
-	struct drm_simple_display_pipe *pipe;
+अटल व्योम drm_simple_kms_plane_destroy_state(काष्ठा drm_plane *plane,
+					       काष्ठा drm_plane_state *state)
+अणु
+	काष्ठा drm_simple_display_pipe *pipe;
 
-	pipe = container_of(plane, struct drm_simple_display_pipe, plane);
-	if (!pipe->funcs || !pipe->funcs->destroy_plane_state)
+	pipe = container_of(plane, काष्ठा drm_simple_display_pipe, plane);
+	अगर (!pipe->funcs || !pipe->funcs->destroy_plane_state)
 		drm_atomic_helper_plane_destroy_state(plane, state);
-	else
+	अन्यथा
 		pipe->funcs->destroy_plane_state(pipe, state);
-}
+पूर्ण
 
-static const struct drm_plane_funcs drm_simple_kms_plane_funcs = {
+अटल स्थिर काष्ठा drm_plane_funcs drm_simple_kms_plane_funcs = अणु
 	.update_plane		= drm_atomic_helper_update_plane,
 	.disable_plane		= drm_atomic_helper_disable_plane,
 	.destroy		= drm_plane_cleanup,
 	.reset			= drm_simple_kms_plane_reset,
 	.atomic_duplicate_state	= drm_simple_kms_plane_duplicate_state,
 	.atomic_destroy_state	= drm_simple_kms_plane_destroy_state,
-	.format_mod_supported   = drm_simple_kms_format_mod_supported,
-};
+	.क्रमmat_mod_supported   = drm_simple_kms_क्रमmat_mod_supported,
+पूर्ण;
 
 /**
  * drm_simple_display_pipe_attach_bridge - Attach a bridge to the display pipe
@@ -309,54 +310,54 @@ static const struct drm_plane_funcs drm_simple_kms_plane_funcs = {
  * Makes it possible to still use the drm_simple_display_pipe helpers when
  * a DRM bridge has to be used.
  *
- * Note that you probably want to initialize the pipe by passing a NULL
+ * Note that you probably want to initialize the pipe by passing a शून्य
  * connector to drm_simple_display_pipe_init().
  *
  * Returns:
  * Zero on success, negative error code on failure.
  */
-int drm_simple_display_pipe_attach_bridge(struct drm_simple_display_pipe *pipe,
-					  struct drm_bridge *bridge)
-{
-	return drm_bridge_attach(&pipe->encoder, bridge, NULL, 0);
-}
+पूर्णांक drm_simple_display_pipe_attach_bridge(काष्ठा drm_simple_display_pipe *pipe,
+					  काष्ठा drm_bridge *bridge)
+अणु
+	वापस drm_bridge_attach(&pipe->encoder, bridge, शून्य, 0);
+पूर्ण
 EXPORT_SYMBOL(drm_simple_display_pipe_attach_bridge);
 
 /**
  * drm_simple_display_pipe_init - Initialize a simple display pipeline
  * @dev: DRM device
  * @pipe: simple display pipe object to initialize
- * @funcs: callbacks for the display pipe (optional)
- * @formats: array of supported formats (DRM_FORMAT\_\*)
- * @format_count: number of elements in @formats
- * @format_modifiers: array of formats modifiers
- * @connector: connector to attach and register (optional)
+ * @funcs: callbacks क्रम the display pipe (optional)
+ * @क्रमmats: array of supported क्रमmats (DRM_FORMAT\_\*)
+ * @क्रमmat_count: number of elements in @क्रमmats
+ * @क्रमmat_modअगरiers: array of क्रमmats modअगरiers
+ * @connector: connector to attach and रेजिस्टर (optional)
  *
  * Sets up a display pipeline which consist of a really simple
  * plane-crtc-encoder pipe.
  *
  * If a connector is supplied, the pipe will be coupled with the provided
- * connector. You may supply a NULL connector when using drm bridges, that
+ * connector. You may supply a शून्य connector when using drm bridges, that
  * handle connectors themselves (see drm_simple_display_pipe_attach_bridge()).
  *
- * Teardown of a simple display pipe is all handled automatically by the drm
+ * Tearकरोwn of a simple display pipe is all handled स्वतःmatically by the drm
  * core through calling drm_mode_config_cleanup(). Drivers afterwards need to
- * release the memory for the structure themselves.
+ * release the memory क्रम the काष्ठाure themselves.
  *
  * Returns:
  * Zero on success, negative error code on failure.
  */
-int drm_simple_display_pipe_init(struct drm_device *dev,
-			struct drm_simple_display_pipe *pipe,
-			const struct drm_simple_display_pipe_funcs *funcs,
-			const uint32_t *formats, unsigned int format_count,
-			const uint64_t *format_modifiers,
-			struct drm_connector *connector)
-{
-	struct drm_encoder *encoder = &pipe->encoder;
-	struct drm_plane *plane = &pipe->plane;
-	struct drm_crtc *crtc = &pipe->crtc;
-	int ret;
+पूर्णांक drm_simple_display_pipe_init(काष्ठा drm_device *dev,
+			काष्ठा drm_simple_display_pipe *pipe,
+			स्थिर काष्ठा drm_simple_display_pipe_funcs *funcs,
+			स्थिर uपूर्णांक32_t *क्रमmats, अचिन्हित पूर्णांक क्रमmat_count,
+			स्थिर uपूर्णांक64_t *क्रमmat_modअगरiers,
+			काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder = &pipe->encoder;
+	काष्ठा drm_plane *plane = &pipe->plane;
+	काष्ठा drm_crtc *crtc = &pipe->crtc;
+	पूर्णांक ret;
 
 	pipe->connector = connector;
 	pipe->funcs = funcs;
@@ -364,25 +365,25 @@ int drm_simple_display_pipe_init(struct drm_device *dev,
 	drm_plane_helper_add(plane, &drm_simple_kms_plane_helper_funcs);
 	ret = drm_universal_plane_init(dev, plane, 0,
 				       &drm_simple_kms_plane_funcs,
-				       formats, format_count,
-				       format_modifiers,
-				       DRM_PLANE_TYPE_PRIMARY, NULL);
-	if (ret)
-		return ret;
+				       क्रमmats, क्रमmat_count,
+				       क्रमmat_modअगरiers,
+				       DRM_PLANE_TYPE_PRIMARY, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	drm_crtc_helper_add(crtc, &drm_simple_kms_crtc_helper_funcs);
-	ret = drm_crtc_init_with_planes(dev, crtc, plane, NULL,
-					&drm_simple_kms_crtc_funcs, NULL);
-	if (ret)
-		return ret;
+	ret = drm_crtc_init_with_planes(dev, crtc, plane, शून्य,
+					&drm_simple_kms_crtc_funcs, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	encoder->possible_crtcs = drm_crtc_mask(crtc);
 	ret = drm_simple_encoder_init(dev, encoder, DRM_MODE_ENCODER_NONE);
-	if (ret || !connector)
-		return ret;
+	अगर (ret || !connector)
+		वापस ret;
 
-	return drm_connector_attach_encoder(connector, encoder);
-}
+	वापस drm_connector_attach_encoder(connector, encoder);
+पूर्ण
 EXPORT_SYMBOL(drm_simple_display_pipe_init);
 
 MODULE_LICENSE("GPL");

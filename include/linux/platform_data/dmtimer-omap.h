@@ -1,58 +1,59 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * DMTIMER platform data for TI OMAP platforms
+ * DMTIMER platक्रमm data क्रम TI OMAP platक्रमms
  *
  * Copyright (C) 2012 Texas Instruments
  * Author: Jon Hunter <jon-hunter@ti.com>
  */
 
-#ifndef __PLATFORM_DATA_DMTIMER_OMAP_H__
-#define __PLATFORM_DATA_DMTIMER_OMAP_H__
+#अगर_अघोषित __PLATFORM_DATA_DMTIMER_OMAP_H__
+#घोषणा __PLATFORM_DATA_DMTIMER_OMAP_H__
 
-struct omap_dm_timer_ops {
-	struct omap_dm_timer *(*request_by_node)(struct device_node *np);
-	struct omap_dm_timer *(*request_specific)(int timer_id);
-	struct omap_dm_timer *(*request)(void);
+काष्ठा omap_dm_समयr_ops अणु
+	काष्ठा omap_dm_समयr *(*request_by_node)(काष्ठा device_node *np);
+	काष्ठा omap_dm_समयr *(*request_specअगरic)(पूर्णांक समयr_id);
+	काष्ठा omap_dm_समयr *(*request)(व्योम);
 
-	int	(*free)(struct omap_dm_timer *timer);
+	पूर्णांक	(*मुक्त)(काष्ठा omap_dm_समयr *समयr);
 
-	void	(*enable)(struct omap_dm_timer *timer);
-	void	(*disable)(struct omap_dm_timer *timer);
+	व्योम	(*enable)(काष्ठा omap_dm_समयr *समयr);
+	व्योम	(*disable)(काष्ठा omap_dm_समयr *समयr);
 
-	int	(*get_irq)(struct omap_dm_timer *timer);
-	int	(*set_int_enable)(struct omap_dm_timer *timer,
-				  unsigned int value);
-	int	(*set_int_disable)(struct omap_dm_timer *timer, u32 mask);
+	पूर्णांक	(*get_irq)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*set_पूर्णांक_enable)(काष्ठा omap_dm_समयr *समयr,
+				  अचिन्हित पूर्णांक value);
+	पूर्णांक	(*set_पूर्णांक_disable)(काष्ठा omap_dm_समयr *समयr, u32 mask);
 
-	struct clk *(*get_fclk)(struct omap_dm_timer *timer);
+	काष्ठा clk *(*get_fclk)(काष्ठा omap_dm_समयr *समयr);
 
-	int	(*start)(struct omap_dm_timer *timer);
-	int	(*stop)(struct omap_dm_timer *timer);
-	int	(*set_source)(struct omap_dm_timer *timer, int source);
+	पूर्णांक	(*start)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*stop)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*set_source)(काष्ठा omap_dm_समयr *समयr, पूर्णांक source);
 
-	int	(*set_load)(struct omap_dm_timer *timer, unsigned int value);
-	int	(*set_match)(struct omap_dm_timer *timer, int enable,
-			     unsigned int match);
-	int	(*set_pwm)(struct omap_dm_timer *timer, int def_on,
-			   int toggle, int trigger, int autoreload);
-	int	(*get_pwm_status)(struct omap_dm_timer *timer);
-	int	(*set_prescaler)(struct omap_dm_timer *timer, int prescaler);
+	पूर्णांक	(*set_load)(काष्ठा omap_dm_समयr *समयr, अचिन्हित पूर्णांक value);
+	पूर्णांक	(*set_match)(काष्ठा omap_dm_समयr *समयr, पूर्णांक enable,
+			     अचिन्हित पूर्णांक match);
+	पूर्णांक	(*set_pwm)(काष्ठा omap_dm_समयr *समयr, पूर्णांक def_on,
+			   पूर्णांक toggle, पूर्णांक trigger, पूर्णांक स्वतःreload);
+	पूर्णांक	(*get_pwm_status)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*set_prescaler)(काष्ठा omap_dm_समयr *समयr, पूर्णांक prescaler);
 
-	unsigned int (*read_counter)(struct omap_dm_timer *timer);
-	int	(*write_counter)(struct omap_dm_timer *timer,
-				 unsigned int value);
-	unsigned int (*read_status)(struct omap_dm_timer *timer);
-	int	(*write_status)(struct omap_dm_timer *timer,
-				unsigned int value);
-};
+	अचिन्हित पूर्णांक (*पढ़ो_counter)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*ग_लिखो_counter)(काष्ठा omap_dm_समयr *समयr,
+				 अचिन्हित पूर्णांक value);
+	अचिन्हित पूर्णांक (*पढ़ो_status)(काष्ठा omap_dm_समयr *समयr);
+	पूर्णांक	(*ग_लिखो_status)(काष्ठा omap_dm_समयr *समयr,
+				अचिन्हित पूर्णांक value);
+पूर्ण;
 
-struct dmtimer_platform_data {
-	/* set_timer_src - Only used for OMAP1 devices */
-	int (*set_timer_src)(struct platform_device *pdev, int source);
-	u32 timer_capability;
-	u32 timer_errata;
-	int (*get_context_loss_count)(struct device *);
-	const struct omap_dm_timer_ops *timer_ops;
-};
+काष्ठा dmसमयr_platक्रमm_data अणु
+	/* set_समयr_src - Only used क्रम OMAP1 devices */
+	पूर्णांक (*set_समयr_src)(काष्ठा platक्रमm_device *pdev, पूर्णांक source);
+	u32 समयr_capability;
+	u32 समयr_errata;
+	पूर्णांक (*get_context_loss_count)(काष्ठा device *);
+	स्थिर काष्ठा omap_dm_समयr_ops *समयr_ops;
+पूर्ण;
 
-#endif /* __PLATFORM_DATA_DMTIMER_OMAP_H__ */
+#पूर्ण_अगर /* __PLATFORM_DATA_DMTIMER_OMAP_H__ */

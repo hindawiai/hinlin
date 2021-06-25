@@ -1,525 +1,526 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * class.c - basic device class management
  *
  * Copyright (c) 2002-3 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Labs
- * Copyright (c) 2003-2004 Greg Kroah-Hartman
+ * Copyright (c) 2002-3 Open Source Development Lअसल
+ * Copyright (c) 2003-2004 Greg Kroah-Harपंचांगan
  * Copyright (c) 2003-2004 IBM Corp.
  */
 
-#include <linux/device/class.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/kdev_t.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/genhd.h>
-#include <linux/mutex.h>
-#include "base.h"
+#समावेश <linux/device/class.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/mutex.h>
+#समावेश "base.h"
 
-#define to_class_attr(_attr) container_of(_attr, struct class_attribute, attr)
+#घोषणा to_class_attr(_attr) container_of(_attr, काष्ठा class_attribute, attr)
 
-static ssize_t class_attr_show(struct kobject *kobj, struct attribute *attr,
-			       char *buf)
-{
-	struct class_attribute *class_attr = to_class_attr(attr);
-	struct subsys_private *cp = to_subsys_private(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार class_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा class_attribute *class_attr = to_class_attr(attr);
+	काष्ठा subsys_निजी *cp = to_subsys_निजी(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (class_attr->show)
+	अगर (class_attr->show)
 		ret = class_attr->show(cp->class, class_attr, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t class_attr_store(struct kobject *kobj, struct attribute *attr,
-				const char *buf, size_t count)
-{
-	struct class_attribute *class_attr = to_class_attr(attr);
-	struct subsys_private *cp = to_subsys_private(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार class_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा class_attribute *class_attr = to_class_attr(attr);
+	काष्ठा subsys_निजी *cp = to_subsys_निजी(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (class_attr->store)
+	अगर (class_attr->store)
 		ret = class_attr->store(cp->class, class_attr, buf, count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void class_release(struct kobject *kobj)
-{
-	struct subsys_private *cp = to_subsys_private(kobj);
-	struct class *class = cp->class;
+अटल व्योम class_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा subsys_निजी *cp = to_subsys_निजी(kobj);
+	काष्ठा class *class = cp->class;
 
 	pr_debug("class '%s': release.\n", class->name);
 
-	if (class->class_release)
+	अगर (class->class_release)
 		class->class_release(class);
-	else
+	अन्यथा
 		pr_debug("class '%s' does not have a release() function, "
 			 "be careful\n", class->name);
 
-	kfree(cp);
-}
+	kमुक्त(cp);
+पूर्ण
 
-static const struct kobj_ns_type_operations *class_child_ns_type(struct kobject *kobj)
-{
-	struct subsys_private *cp = to_subsys_private(kobj);
-	struct class *class = cp->class;
+अटल स्थिर काष्ठा kobj_ns_type_operations *class_child_ns_type(काष्ठा kobject *kobj)
+अणु
+	काष्ठा subsys_निजी *cp = to_subsys_निजी(kobj);
+	काष्ठा class *class = cp->class;
 
-	return class->ns_type;
-}
+	वापस class->ns_type;
+पूर्ण
 
-static const struct sysfs_ops class_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops class_sysfs_ops = अणु
 	.show	   = class_attr_show,
 	.store	   = class_attr_store,
-};
+पूर्ण;
 
-static struct kobj_type class_ktype = {
+अटल काष्ठा kobj_type class_ktype = अणु
 	.sysfs_ops	= &class_sysfs_ops,
 	.release	= class_release,
 	.child_ns_type	= class_child_ns_type,
-};
+पूर्ण;
 
-/* Hotplug events for classes go to the class subsys */
-static struct kset *class_kset;
+/* Hotplug events क्रम classes go to the class subsys */
+अटल काष्ठा kset *class_kset;
 
 
-int class_create_file_ns(struct class *cls, const struct class_attribute *attr,
-			 const void *ns)
-{
-	int error;
+पूर्णांक class_create_file_ns(काष्ठा class *cls, स्थिर काष्ठा class_attribute *attr,
+			 स्थिर व्योम *ns)
+अणु
+	पूर्णांक error;
 
-	if (cls)
+	अगर (cls)
 		error = sysfs_create_file_ns(&cls->p->subsys.kobj,
 					     &attr->attr, ns);
-	else
+	अन्यथा
 		error = -EINVAL;
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void class_remove_file_ns(struct class *cls, const struct class_attribute *attr,
-			  const void *ns)
-{
-	if (cls)
-		sysfs_remove_file_ns(&cls->p->subsys.kobj, &attr->attr, ns);
-}
+व्योम class_हटाओ_file_ns(काष्ठा class *cls, स्थिर काष्ठा class_attribute *attr,
+			  स्थिर व्योम *ns)
+अणु
+	अगर (cls)
+		sysfs_हटाओ_file_ns(&cls->p->subsys.kobj, &attr->attr, ns);
+पूर्ण
 
-static struct class *class_get(struct class *cls)
-{
-	if (cls)
+अटल काष्ठा class *class_get(काष्ठा class *cls)
+अणु
+	अगर (cls)
 		kset_get(&cls->p->subsys);
-	return cls;
-}
+	वापस cls;
+पूर्ण
 
-static void class_put(struct class *cls)
-{
-	if (cls)
+अटल व्योम class_put(काष्ठा class *cls)
+अणु
+	अगर (cls)
 		kset_put(&cls->p->subsys);
-}
+पूर्ण
 
-static struct device *klist_class_to_dev(struct klist_node *n)
-{
-	struct device_private *p = to_device_private_class(n);
-	return p->device;
-}
+अटल काष्ठा device *klist_class_to_dev(काष्ठा klist_node *n)
+अणु
+	काष्ठा device_निजी *p = to_device_निजी_class(n);
+	वापस p->device;
+पूर्ण
 
-static void klist_class_dev_get(struct klist_node *n)
-{
-	struct device *dev = klist_class_to_dev(n);
+अटल व्योम klist_class_dev_get(काष्ठा klist_node *n)
+अणु
+	काष्ठा device *dev = klist_class_to_dev(n);
 
 	get_device(dev);
-}
+पूर्ण
 
-static void klist_class_dev_put(struct klist_node *n)
-{
-	struct device *dev = klist_class_to_dev(n);
+अटल व्योम klist_class_dev_put(काष्ठा klist_node *n)
+अणु
+	काष्ठा device *dev = klist_class_to_dev(n);
 
 	put_device(dev);
-}
+पूर्ण
 
-static int class_add_groups(struct class *cls,
-			    const struct attribute_group **groups)
-{
-	return sysfs_create_groups(&cls->p->subsys.kobj, groups);
-}
+अटल पूर्णांक class_add_groups(काष्ठा class *cls,
+			    स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस sysfs_create_groups(&cls->p->subsys.kobj, groups);
+पूर्ण
 
-static void class_remove_groups(struct class *cls,
-				const struct attribute_group **groups)
-{
-	return sysfs_remove_groups(&cls->p->subsys.kobj, groups);
-}
+अटल व्योम class_हटाओ_groups(काष्ठा class *cls,
+				स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस sysfs_हटाओ_groups(&cls->p->subsys.kobj, groups);
+पूर्ण
 
-int __class_register(struct class *cls, struct lock_class_key *key)
-{
-	struct subsys_private *cp;
-	int error;
+पूर्णांक __class_रेजिस्टर(काष्ठा class *cls, काष्ठा lock_class_key *key)
+अणु
+	काष्ठा subsys_निजी *cp;
+	पूर्णांक error;
 
 	pr_debug("device class '%s': registering\n", cls->name);
 
-	cp = kzalloc(sizeof(*cp), GFP_KERNEL);
-	if (!cp)
-		return -ENOMEM;
+	cp = kzalloc(माप(*cp), GFP_KERNEL);
+	अगर (!cp)
+		वापस -ENOMEM;
 	klist_init(&cp->klist_devices, klist_class_dev_get, klist_class_dev_put);
-	INIT_LIST_HEAD(&cp->interfaces);
+	INIT_LIST_HEAD(&cp->पूर्णांकerfaces);
 	kset_init(&cp->glue_dirs);
 	__mutex_init(&cp->mutex, "subsys mutex", key);
 	error = kobject_set_name(&cp->subsys.kobj, "%s", cls->name);
-	if (error) {
-		kfree(cp);
-		return error;
-	}
+	अगर (error) अणु
+		kमुक्त(cp);
+		वापस error;
+	पूर्ण
 
-	/* set the default /sys/dev directory for devices of this class */
-	if (!cls->dev_kobj)
-		cls->dev_kobj = sysfs_dev_char_kobj;
+	/* set the शेष /sys/dev directory क्रम devices of this class */
+	अगर (!cls->dev_kobj)
+		cls->dev_kobj = sysfs_dev_अक्षर_kobj;
 
-#if defined(CONFIG_BLOCK)
+#अगर defined(CONFIG_BLOCK)
 	/* let the block class directory show up in the root of sysfs */
-	if (!sysfs_deprecated || cls != &block_class)
+	अगर (!sysfs_deprecated || cls != &block_class)
 		cp->subsys.kobj.kset = class_kset;
-#else
+#अन्यथा
 	cp->subsys.kobj.kset = class_kset;
-#endif
+#पूर्ण_अगर
 	cp->subsys.kobj.ktype = &class_ktype;
 	cp->class = cls;
 	cls->p = cp;
 
-	error = kset_register(&cp->subsys);
-	if (error) {
-		kfree(cp);
-		return error;
-	}
+	error = kset_रेजिस्टर(&cp->subsys);
+	अगर (error) अणु
+		kमुक्त(cp);
+		वापस error;
+	पूर्ण
 	error = class_add_groups(class_get(cls), cls->class_groups);
 	class_put(cls);
-	return error;
-}
-EXPORT_SYMBOL_GPL(__class_register);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(__class_रेजिस्टर);
 
-void class_unregister(struct class *cls)
-{
+व्योम class_unरेजिस्टर(काष्ठा class *cls)
+अणु
 	pr_debug("device class '%s': unregistering\n", cls->name);
-	class_remove_groups(cls, cls->class_groups);
-	kset_unregister(&cls->p->subsys);
-}
+	class_हटाओ_groups(cls, cls->class_groups);
+	kset_unरेजिस्टर(&cls->p->subsys);
+पूर्ण
 
-static void class_create_release(struct class *cls)
-{
+अटल व्योम class_create_release(काष्ठा class *cls)
+अणु
 	pr_debug("%s called for %s\n", __func__, cls->name);
-	kfree(cls);
-}
+	kमुक्त(cls);
+पूर्ण
 
 /**
- * __class_create - create a struct class structure
- * @owner: pointer to the module that is to "own" this struct class
- * @name: pointer to a string for the name of this class.
- * @key: the lock_class_key for this class; used by mutex lock debugging
+ * __class_create - create a काष्ठा class काष्ठाure
+ * @owner: poपूर्णांकer to the module that is to "own" this काष्ठा class
+ * @name: poपूर्णांकer to a string क्रम the name of this class.
+ * @key: the lock_class_key क्रम this class; used by mutex lock debugging
  *
- * This is used to create a struct class pointer that can then be used
+ * This is used to create a काष्ठा class poपूर्णांकer that can then be used
  * in calls to device_create().
  *
- * Returns &struct class pointer on success, or ERR_PTR() on error.
+ * Returns &काष्ठा class poपूर्णांकer on success, or ERR_PTR() on error.
  *
- * Note, the pointer created here is to be destroyed when finished by
+ * Note, the poपूर्णांकer created here is to be destroyed when finished by
  * making a call to class_destroy().
  */
-struct class *__class_create(struct module *owner, const char *name,
-			     struct lock_class_key *key)
-{
-	struct class *cls;
-	int retval;
+काष्ठा class *__class_create(काष्ठा module *owner, स्थिर अक्षर *name,
+			     काष्ठा lock_class_key *key)
+अणु
+	काष्ठा class *cls;
+	पूर्णांक retval;
 
-	cls = kzalloc(sizeof(*cls), GFP_KERNEL);
-	if (!cls) {
+	cls = kzalloc(माप(*cls), GFP_KERNEL);
+	अगर (!cls) अणु
 		retval = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	cls->name = name;
 	cls->owner = owner;
 	cls->class_release = class_create_release;
 
-	retval = __class_register(cls, key);
-	if (retval)
-		goto error;
+	retval = __class_रेजिस्टर(cls, key);
+	अगर (retval)
+		जाओ error;
 
-	return cls;
+	वापस cls;
 
 error:
-	kfree(cls);
-	return ERR_PTR(retval);
-}
+	kमुक्त(cls);
+	वापस ERR_PTR(retval);
+पूर्ण
 EXPORT_SYMBOL_GPL(__class_create);
 
 /**
- * class_destroy - destroys a struct class structure
- * @cls: pointer to the struct class that is to be destroyed
+ * class_destroy - destroys a काष्ठा class काष्ठाure
+ * @cls: poपूर्णांकer to the काष्ठा class that is to be destroyed
  *
- * Note, the pointer to be destroyed must have been created with a call
+ * Note, the poपूर्णांकer to be destroyed must have been created with a call
  * to class_create().
  */
-void class_destroy(struct class *cls)
-{
-	if ((cls == NULL) || (IS_ERR(cls)))
-		return;
+व्योम class_destroy(काष्ठा class *cls)
+अणु
+	अगर ((cls == शून्य) || (IS_ERR(cls)))
+		वापस;
 
-	class_unregister(cls);
-}
+	class_unरेजिस्टर(cls);
+पूर्ण
 
 /**
  * class_dev_iter_init - initialize class device iterator
  * @iter: class iterator to initialize
  * @class: the class we wanna iterate over
- * @start: the device to start iterating from, if any
- * @type: device_type of the devices to iterate over, NULL for all
+ * @start: the device to start iterating from, अगर any
+ * @type: device_type of the devices to iterate over, शून्य क्रम all
  *
  * Initialize class iterator @iter such that it iterates over devices
  * of @class.  If @start is set, the list iteration will start there,
- * otherwise if it is NULL, the iteration starts at the beginning of
+ * otherwise अगर it is शून्य, the iteration starts at the beginning of
  * the list.
  */
-void class_dev_iter_init(struct class_dev_iter *iter, struct class *class,
-			 struct device *start, const struct device_type *type)
-{
-	struct klist_node *start_knode = NULL;
+व्योम class_dev_iter_init(काष्ठा class_dev_iter *iter, काष्ठा class *class,
+			 काष्ठा device *start, स्थिर काष्ठा device_type *type)
+अणु
+	काष्ठा klist_node *start_knode = शून्य;
 
-	if (start)
+	अगर (start)
 		start_knode = &start->p->knode_class;
 	klist_iter_init_node(&class->p->klist_devices, &iter->ki, start_knode);
 	iter->type = type;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(class_dev_iter_init);
 
 /**
  * class_dev_iter_next - iterate to the next device
  * @iter: class iterator to proceed
  *
- * Proceed @iter to the next device and return it.  Returns NULL if
+ * Proceed @iter to the next device and वापस it.  Returns शून्य अगर
  * iteration is complete.
  *
- * The returned device is referenced and won't be released till
- * iterator is proceed to the next device or exited.  The caller is
- * free to do whatever it wants to do with the device including
- * calling back into class code.
+ * The वापसed device is referenced and won't be released till
+ * iterator is proceed to the next device or निकासed.  The caller is
+ * मुक्त to करो whatever it wants to करो with the device including
+ * calling back पूर्णांकo class code.
  */
-struct device *class_dev_iter_next(struct class_dev_iter *iter)
-{
-	struct klist_node *knode;
-	struct device *dev;
+काष्ठा device *class_dev_iter_next(काष्ठा class_dev_iter *iter)
+अणु
+	काष्ठा klist_node *knode;
+	काष्ठा device *dev;
 
-	while (1) {
+	जबतक (1) अणु
 		knode = klist_next(&iter->ki);
-		if (!knode)
-			return NULL;
+		अगर (!knode)
+			वापस शून्य;
 		dev = klist_class_to_dev(knode);
-		if (!iter->type || iter->type == dev->type)
-			return dev;
-	}
-}
+		अगर (!iter->type || iter->type == dev->type)
+			वापस dev;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(class_dev_iter_next);
 
 /**
- * class_dev_iter_exit - finish iteration
+ * class_dev_iter_निकास - finish iteration
  * @iter: class iterator to finish
  *
  * Finish an iteration.  Always call this function after iteration is
  * complete whether the iteration ran till the end or not.
  */
-void class_dev_iter_exit(struct class_dev_iter *iter)
-{
-	klist_iter_exit(&iter->ki);
-}
-EXPORT_SYMBOL_GPL(class_dev_iter_exit);
+व्योम class_dev_iter_निकास(काष्ठा class_dev_iter *iter)
+अणु
+	klist_iter_निकास(&iter->ki);
+पूर्ण
+EXPORT_SYMBOL_GPL(class_dev_iter_निकास);
 
 /**
- * class_for_each_device - device iterator
+ * class_क्रम_each_device - device iterator
  * @class: the class we're iterating
- * @start: the device to start with in the list, if any.
- * @data: data for the callback
- * @fn: function to be called for each device
+ * @start: the device to start with in the list, अगर any.
+ * @data: data क्रम the callback
+ * @fn: function to be called क्रम each device
  *
- * Iterate over @class's list of devices, and call @fn for each,
+ * Iterate over @class's list of devices, and call @fn क्रम each,
  * passing it @data.  If @start is set, the list iteration will start
- * there, otherwise if it is NULL, the iteration starts at the
+ * there, otherwise अगर it is शून्य, the iteration starts at the
  * beginning of the list.
  *
- * We check the return of @fn each time. If it returns anything
- * other than 0, we break out and return that value.
+ * We check the वापस of @fn each समय. If it वापसs anything
+ * other than 0, we अवरोध out and वापस that value.
  *
- * @fn is allowed to do anything including calling back into class
+ * @fn is allowed to करो anything including calling back पूर्णांकo class
  * code.  There's no locking restriction.
  */
-int class_for_each_device(struct class *class, struct device *start,
-			  void *data, int (*fn)(struct device *, void *))
-{
-	struct class_dev_iter iter;
-	struct device *dev;
-	int error = 0;
+पूर्णांक class_क्रम_each_device(काष्ठा class *class, काष्ठा device *start,
+			  व्योम *data, पूर्णांक (*fn)(काष्ठा device *, व्योम *))
+अणु
+	काष्ठा class_dev_iter iter;
+	काष्ठा device *dev;
+	पूर्णांक error = 0;
 
-	if (!class)
-		return -EINVAL;
-	if (!class->p) {
+	अगर (!class)
+		वापस -EINVAL;
+	अगर (!class->p) अणु
 		WARN(1, "%s called for class '%s' before it was initialized",
 		     __func__, class->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	class_dev_iter_init(&iter, class, start, NULL);
-	while ((dev = class_dev_iter_next(&iter))) {
+	class_dev_iter_init(&iter, class, start, शून्य);
+	जबतक ((dev = class_dev_iter_next(&iter))) अणु
 		error = fn(dev, data);
-		if (error)
-			break;
-	}
-	class_dev_iter_exit(&iter);
+		अगर (error)
+			अवरोध;
+	पूर्ण
+	class_dev_iter_निकास(&iter);
 
-	return error;
-}
-EXPORT_SYMBOL_GPL(class_for_each_device);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(class_क्रम_each_device);
 
 /**
- * class_find_device - device iterator for locating a particular device
+ * class_find_device - device iterator क्रम locating a particular device
  * @class: the class we're iterating
  * @start: Device to begin with
- * @data: data for the match function
+ * @data: data क्रम the match function
  * @match: function to check device
  *
- * This is similar to the class_for_each_dev() function above, but it
- * returns a reference to a device that is 'found' for later use, as
+ * This is similar to the class_क्रम_each_dev() function above, but it
+ * वापसs a reference to a device that is 'found' क्रम later use, as
  * determined by the @match callback.
  *
- * The callback should return 0 if the device doesn't match and non-zero
- * if it does.  If the callback returns non-zero, this function will
- * return to the caller and not iterate over any more devices.
+ * The callback should वापस 0 अगर the device करोesn't match and non-zero
+ * अगर it करोes.  If the callback वापसs non-zero, this function will
+ * वापस to the caller and not iterate over any more devices.
  *
  * Note, you will need to drop the reference with put_device() after use.
  *
- * @match is allowed to do anything including calling back into class
+ * @match is allowed to करो anything including calling back पूर्णांकo class
  * code.  There's no locking restriction.
  */
-struct device *class_find_device(struct class *class, struct device *start,
-				 const void *data,
-				 int (*match)(struct device *, const void *))
-{
-	struct class_dev_iter iter;
-	struct device *dev;
+काष्ठा device *class_find_device(काष्ठा class *class, काष्ठा device *start,
+				 स्थिर व्योम *data,
+				 पूर्णांक (*match)(काष्ठा device *, स्थिर व्योम *))
+अणु
+	काष्ठा class_dev_iter iter;
+	काष्ठा device *dev;
 
-	if (!class)
-		return NULL;
-	if (!class->p) {
+	अगर (!class)
+		वापस शून्य;
+	अगर (!class->p) अणु
 		WARN(1, "%s called for class '%s' before it was initialized",
 		     __func__, class->name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	class_dev_iter_init(&iter, class, start, NULL);
-	while ((dev = class_dev_iter_next(&iter))) {
-		if (match(dev, data)) {
+	class_dev_iter_init(&iter, class, start, शून्य);
+	जबतक ((dev = class_dev_iter_next(&iter))) अणु
+		अगर (match(dev, data)) अणु
 			get_device(dev);
-			break;
-		}
-	}
-	class_dev_iter_exit(&iter);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	class_dev_iter_निकास(&iter);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(class_find_device);
 
-int class_interface_register(struct class_interface *class_intf)
-{
-	struct class *parent;
-	struct class_dev_iter iter;
-	struct device *dev;
+पूर्णांक class_पूर्णांकerface_रेजिस्टर(काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	काष्ठा class *parent;
+	काष्ठा class_dev_iter iter;
+	काष्ठा device *dev;
 
-	if (!class_intf || !class_intf->class)
-		return -ENODEV;
+	अगर (!class_पूर्णांकf || !class_पूर्णांकf->class)
+		वापस -ENODEV;
 
-	parent = class_get(class_intf->class);
-	if (!parent)
-		return -EINVAL;
+	parent = class_get(class_पूर्णांकf->class);
+	अगर (!parent)
+		वापस -EINVAL;
 
 	mutex_lock(&parent->p->mutex);
-	list_add_tail(&class_intf->node, &parent->p->interfaces);
-	if (class_intf->add_dev) {
-		class_dev_iter_init(&iter, parent, NULL, NULL);
-		while ((dev = class_dev_iter_next(&iter)))
-			class_intf->add_dev(dev, class_intf);
-		class_dev_iter_exit(&iter);
-	}
+	list_add_tail(&class_पूर्णांकf->node, &parent->p->पूर्णांकerfaces);
+	अगर (class_पूर्णांकf->add_dev) अणु
+		class_dev_iter_init(&iter, parent, शून्य, शून्य);
+		जबतक ((dev = class_dev_iter_next(&iter)))
+			class_पूर्णांकf->add_dev(dev, class_पूर्णांकf);
+		class_dev_iter_निकास(&iter);
+	पूर्ण
 	mutex_unlock(&parent->p->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void class_interface_unregister(struct class_interface *class_intf)
-{
-	struct class *parent = class_intf->class;
-	struct class_dev_iter iter;
-	struct device *dev;
+व्योम class_पूर्णांकerface_unरेजिस्टर(काष्ठा class_पूर्णांकerface *class_पूर्णांकf)
+अणु
+	काष्ठा class *parent = class_पूर्णांकf->class;
+	काष्ठा class_dev_iter iter;
+	काष्ठा device *dev;
 
-	if (!parent)
-		return;
+	अगर (!parent)
+		वापस;
 
 	mutex_lock(&parent->p->mutex);
-	list_del_init(&class_intf->node);
-	if (class_intf->remove_dev) {
-		class_dev_iter_init(&iter, parent, NULL, NULL);
-		while ((dev = class_dev_iter_next(&iter)))
-			class_intf->remove_dev(dev, class_intf);
-		class_dev_iter_exit(&iter);
-	}
+	list_del_init(&class_पूर्णांकf->node);
+	अगर (class_पूर्णांकf->हटाओ_dev) अणु
+		class_dev_iter_init(&iter, parent, शून्य, शून्य);
+		जबतक ((dev = class_dev_iter_next(&iter)))
+			class_पूर्णांकf->हटाओ_dev(dev, class_पूर्णांकf);
+		class_dev_iter_निकास(&iter);
+	पूर्ण
 	mutex_unlock(&parent->p->mutex);
 
 	class_put(parent);
-}
+पूर्ण
 
-ssize_t show_class_attr_string(struct class *class,
-			       struct class_attribute *attr, char *buf)
-{
-	struct class_attribute_string *cs;
+sमाप_प्रकार show_class_attr_string(काष्ठा class *class,
+			       काष्ठा class_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा class_attribute_string *cs;
 
-	cs = container_of(attr, struct class_attribute_string, attr);
-	return sysfs_emit(buf, "%s\n", cs->str);
-}
+	cs = container_of(attr, काष्ठा class_attribute_string, attr);
+	वापस sysfs_emit(buf, "%s\n", cs->str);
+पूर्ण
 
 EXPORT_SYMBOL_GPL(show_class_attr_string);
 
-struct class_compat {
-	struct kobject *kobj;
-};
+काष्ठा class_compat अणु
+	काष्ठा kobject *kobj;
+पूर्ण;
 
 /**
- * class_compat_register - register a compatibility class
+ * class_compat_रेजिस्टर - रेजिस्टर a compatibility class
  * @name: the name of the class
  *
  * Compatibility class are meant as a temporary user-space compatibility
  * workaround when converting a family of class devices to a bus devices.
  */
-struct class_compat *class_compat_register(const char *name)
-{
-	struct class_compat *cls;
+काष्ठा class_compat *class_compat_रेजिस्टर(स्थिर अक्षर *name)
+अणु
+	काष्ठा class_compat *cls;
 
-	cls = kmalloc(sizeof(struct class_compat), GFP_KERNEL);
-	if (!cls)
-		return NULL;
+	cls = kदो_स्मृति(माप(काष्ठा class_compat), GFP_KERNEL);
+	अगर (!cls)
+		वापस शून्य;
 	cls->kobj = kobject_create_and_add(name, &class_kset->kobj);
-	if (!cls->kobj) {
-		kfree(cls);
-		return NULL;
-	}
-	return cls;
-}
-EXPORT_SYMBOL_GPL(class_compat_register);
+	अगर (!cls->kobj) अणु
+		kमुक्त(cls);
+		वापस शून्य;
+	पूर्ण
+	वापस cls;
+पूर्ण
+EXPORT_SYMBOL_GPL(class_compat_रेजिस्टर);
 
 /**
- * class_compat_unregister - unregister a compatibility class
- * @cls: the class to unregister
+ * class_compat_unरेजिस्टर - unरेजिस्टर a compatibility class
+ * @cls: the class to unरेजिस्टर
  */
-void class_compat_unregister(struct class_compat *cls)
-{
+व्योम class_compat_unरेजिस्टर(काष्ठा class_compat *cls)
+अणु
 	kobject_put(cls->kobj);
-	kfree(cls);
-}
-EXPORT_SYMBOL_GPL(class_compat_unregister);
+	kमुक्त(cls);
+पूर्ण
+EXPORT_SYMBOL_GPL(class_compat_unरेजिस्टर);
 
 /**
  * class_compat_create_link - create a compatibility class device link to
@@ -528,60 +529,60 @@ EXPORT_SYMBOL_GPL(class_compat_unregister);
  * @dev: the target bus device
  * @device_link: an optional device to which a "device" link should be created
  */
-int class_compat_create_link(struct class_compat *cls, struct device *dev,
-			     struct device *device_link)
-{
-	int error;
+पूर्णांक class_compat_create_link(काष्ठा class_compat *cls, काष्ठा device *dev,
+			     काष्ठा device *device_link)
+अणु
+	पूर्णांक error;
 
 	error = sysfs_create_link(cls->kobj, &dev->kobj, dev_name(dev));
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
 	 * Optionally add a "device" link (typically to the parent), as a
 	 * class device would have one and we want to provide as much
 	 * backwards compatibility as possible.
 	 */
-	if (device_link) {
+	अगर (device_link) अणु
 		error = sysfs_create_link(&dev->kobj, &device_link->kobj,
 					  "device");
-		if (error)
-			sysfs_remove_link(cls->kobj, dev_name(dev));
-	}
+		अगर (error)
+			sysfs_हटाओ_link(cls->kobj, dev_name(dev));
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(class_compat_create_link);
 
 /**
- * class_compat_remove_link - remove a compatibility class device link to
+ * class_compat_हटाओ_link - हटाओ a compatibility class device link to
  *			      a bus device
  * @cls: the compatibility class
  * @dev: the target bus device
  * @device_link: an optional device to which a "device" link was previously
  * 		 created
  */
-void class_compat_remove_link(struct class_compat *cls, struct device *dev,
-			      struct device *device_link)
-{
-	if (device_link)
-		sysfs_remove_link(&dev->kobj, "device");
-	sysfs_remove_link(cls->kobj, dev_name(dev));
-}
-EXPORT_SYMBOL_GPL(class_compat_remove_link);
+व्योम class_compat_हटाओ_link(काष्ठा class_compat *cls, काष्ठा device *dev,
+			      काष्ठा device *device_link)
+अणु
+	अगर (device_link)
+		sysfs_हटाओ_link(&dev->kobj, "device");
+	sysfs_हटाओ_link(cls->kobj, dev_name(dev));
+पूर्ण
+EXPORT_SYMBOL_GPL(class_compat_हटाओ_link);
 
-int __init classes_init(void)
-{
-	class_kset = kset_create_and_add("class", NULL, NULL);
-	if (!class_kset)
-		return -ENOMEM;
-	return 0;
-}
+पूर्णांक __init classes_init(व्योम)
+अणु
+	class_kset = kset_create_and_add("class", शून्य, शून्य);
+	अगर (!class_kset)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(class_create_file_ns);
-EXPORT_SYMBOL_GPL(class_remove_file_ns);
-EXPORT_SYMBOL_GPL(class_unregister);
+EXPORT_SYMBOL_GPL(class_हटाओ_file_ns);
+EXPORT_SYMBOL_GPL(class_unरेजिस्टर);
 EXPORT_SYMBOL_GPL(class_destroy);
 
-EXPORT_SYMBOL_GPL(class_interface_register);
-EXPORT_SYMBOL_GPL(class_interface_unregister);
+EXPORT_SYMBOL_GPL(class_पूर्णांकerface_रेजिस्टर);
+EXPORT_SYMBOL_GPL(class_पूर्णांकerface_unरेजिस्टर);

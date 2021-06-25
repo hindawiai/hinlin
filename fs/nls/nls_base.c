@@ -1,153 +1,154 @@
+<शैली गुरु>
 /*
  * linux/fs/nls/nls_base.c
  *
- * Native language support--charsets and unicode translations.
- * By Gordon Chaffee 1996, 1997
+ * Native language support--अक्षरsets and unicode translations.
+ * By Gorकरोn Chaffee 1996, 1997
  *
- * Unicode based case conversion 1999 by Wolfram Pienkoss
+ * Unicode based हाल conversion 1999 by Wolfram Pienkoss
  *
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/nls.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/kmod.h>
-#include <linux/spinlock.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nls.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kmod.h>
+#समावेश <linux/spinlock.h>
+#समावेश <यंत्र/byteorder.h>
 
-static struct nls_table default_table;
-static struct nls_table *tables = &default_table;
-static DEFINE_SPINLOCK(nls_lock);
+अटल काष्ठा nls_table शेष_table;
+अटल काष्ठा nls_table *tables = &शेष_table;
+अटल DEFINE_SPINLOCK(nls_lock);
 
 /*
  * Sample implementation from Unicode home page.
- * http://www.stonehand.com/unicode/standard/fss-utf.html
+ * http://www.stonehand.com/unicode/standard/fss-utf.hपंचांगl
  */
-struct utf8_table {
-	int     cmask;
-	int     cval;
-	int     shift;
-	long    lmask;
-	long    lval;
-};
+काष्ठा utf8_table अणु
+	पूर्णांक     cmask;
+	पूर्णांक     cval;
+	पूर्णांक     shअगरt;
+	दीर्घ    lmask;
+	दीर्घ    lval;
+पूर्ण;
 
-static const struct utf8_table utf8_table[] =
-{
-    {0x80,  0x00,   0*6,    0x7F,           0,         /* 1 byte sequence */},
-    {0xE0,  0xC0,   1*6,    0x7FF,          0x80,      /* 2 byte sequence */},
-    {0xF0,  0xE0,   2*6,    0xFFFF,         0x800,     /* 3 byte sequence */},
-    {0xF8,  0xF0,   3*6,    0x1FFFFF,       0x10000,   /* 4 byte sequence */},
-    {0xFC,  0xF8,   4*6,    0x3FFFFFF,      0x200000,  /* 5 byte sequence */},
-    {0xFE,  0xFC,   5*6,    0x7FFFFFFF,     0x4000000, /* 6 byte sequence */},
-    {0,						       /* end of table    */}
-};
+अटल स्थिर काष्ठा utf8_table utf8_table[] =
+अणु
+    अणु0x80,  0x00,   0*6,    0x7F,           0,         /* 1 byte sequence */पूर्ण,
+    अणु0xE0,  0xC0,   1*6,    0x7FF,          0x80,      /* 2 byte sequence */पूर्ण,
+    अणु0xF0,  0xE0,   2*6,    0xFFFF,         0x800,     /* 3 byte sequence */पूर्ण,
+    अणु0xF8,  0xF0,   3*6,    0x1FFFFF,       0x10000,   /* 4 byte sequence */पूर्ण,
+    अणु0xFC,  0xF8,   4*6,    0x3FFFFFF,      0x200000,  /* 5 byte sequence */पूर्ण,
+    अणु0xFE,  0xFC,   5*6,    0x7FFFFFFF,     0x4000000, /* 6 byte sequence */पूर्ण,
+    अणु0,						       /* end of table    */पूर्ण
+पूर्ण;
 
-#define UNICODE_MAX	0x0010ffff
-#define PLANE_SIZE	0x00010000
+#घोषणा UNICODE_MAX	0x0010ffff
+#घोषणा PLANE_SIZE	0x00010000
 
-#define SURROGATE_MASK	0xfffff800
-#define SURROGATE_PAIR	0x0000d800
-#define SURROGATE_LOW	0x00000400
-#define SURROGATE_BITS	0x000003ff
+#घोषणा SURROGATE_MASK	0xfffff800
+#घोषणा SURROGATE_PAIR	0x0000d800
+#घोषणा SURROGATE_LOW	0x00000400
+#घोषणा SURROGATE_BITS	0x000003ff
 
-int utf8_to_utf32(const u8 *s, int inlen, unicode_t *pu)
-{
-	unsigned long l;
-	int c0, c, nc;
-	const struct utf8_table *t;
+पूर्णांक utf8_to_utf32(स्थिर u8 *s, पूर्णांक inlen, unicode_t *pu)
+अणु
+	अचिन्हित दीर्घ l;
+	पूर्णांक c0, c, nc;
+	स्थिर काष्ठा utf8_table *t;
   
 	nc = 0;
 	c0 = *s;
 	l = c0;
-	for (t = utf8_table; t->cmask; t++) {
+	क्रम (t = utf8_table; t->cmask; t++) अणु
 		nc++;
-		if ((c0 & t->cmask) == t->cval) {
+		अगर ((c0 & t->cmask) == t->cval) अणु
 			l &= t->lmask;
-			if (l < t->lval || l > UNICODE_MAX ||
+			अगर (l < t->lval || l > UNICODE_MAX ||
 					(l & SURROGATE_MASK) == SURROGATE_PAIR)
-				return -1;
+				वापस -1;
 			*pu = (unicode_t) l;
-			return nc;
-		}
-		if (inlen <= nc)
-			return -1;
+			वापस nc;
+		पूर्ण
+		अगर (inlen <= nc)
+			वापस -1;
 		s++;
 		c = (*s ^ 0x80) & 0xFF;
-		if (c & 0xC0)
-			return -1;
+		अगर (c & 0xC0)
+			वापस -1;
 		l = (l << 6) | c;
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(utf8_to_utf32);
 
-int utf32_to_utf8(unicode_t u, u8 *s, int maxout)
-{
-	unsigned long l;
-	int c, nc;
-	const struct utf8_table *t;
+पूर्णांक utf32_to_utf8(unicode_t u, u8 *s, पूर्णांक maxout)
+अणु
+	अचिन्हित दीर्घ l;
+	पूर्णांक c, nc;
+	स्थिर काष्ठा utf8_table *t;
 
-	if (!s)
-		return 0;
+	अगर (!s)
+		वापस 0;
 
 	l = u;
-	if (l > UNICODE_MAX || (l & SURROGATE_MASK) == SURROGATE_PAIR)
-		return -1;
+	अगर (l > UNICODE_MAX || (l & SURROGATE_MASK) == SURROGATE_PAIR)
+		वापस -1;
 
 	nc = 0;
-	for (t = utf8_table; t->cmask && maxout; t++, maxout--) {
+	क्रम (t = utf8_table; t->cmask && maxout; t++, maxout--) अणु
 		nc++;
-		if (l <= t->lmask) {
-			c = t->shift;
+		अगर (l <= t->lmask) अणु
+			c = t->shअगरt;
 			*s = (u8) (t->cval | (l >> c));
-			while (c > 0) {
+			जबतक (c > 0) अणु
 				c -= 6;
 				s++;
 				*s = (u8) (0x80 | ((l >> c) & 0x3F));
-			}
-			return nc;
-		}
-	}
-	return -1;
-}
+			पूर्ण
+			वापस nc;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(utf32_to_utf8);
 
-static inline void put_utf16(wchar_t *s, unsigned c, enum utf16_endian endian)
-{
-	switch (endian) {
-	default:
-		*s = (wchar_t) c;
-		break;
-	case UTF16_LITTLE_ENDIAN:
+अटल अंतरभूत व्योम put_utf16(ब_अक्षर_प्रकार *s, अचिन्हित c, क्रमागत utf16_endian endian)
+अणु
+	चयन (endian) अणु
+	शेष:
+		*s = (ब_अक्षर_प्रकार) c;
+		अवरोध;
+	हाल UTF16_LITTLE_ENDIAN:
 		*s = __cpu_to_le16(c);
-		break;
-	case UTF16_BIG_ENDIAN:
+		अवरोध;
+	हाल UTF16_BIG_ENDIAN:
 		*s = __cpu_to_be16(c);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-int utf8s_to_utf16s(const u8 *s, int inlen, enum utf16_endian endian,
-		wchar_t *pwcs, int maxout)
-{
+पूर्णांक utf8s_to_utf16s(स्थिर u8 *s, पूर्णांक inlen, क्रमागत utf16_endian endian,
+		ब_अक्षर_प्रकार *pwcs, पूर्णांक maxout)
+अणु
 	u16 *op;
-	int size;
+	पूर्णांक size;
 	unicode_t u;
 
 	op = pwcs;
-	while (inlen > 0 && maxout > 0 && *s) {
-		if (*s & 0x80) {
+	जबतक (inlen > 0 && maxout > 0 && *s) अणु
+		अगर (*s & 0x80) अणु
 			size = utf8_to_utf32(s, inlen, &u);
-			if (size < 0)
-				return -EINVAL;
+			अगर (size < 0)
+				वापस -EINVAL;
 			s += size;
 			inlen -= size;
 
-			if (u >= PLANE_SIZE) {
-				if (maxout < 2)
-					break;
+			अगर (u >= PLANE_SIZE) अणु
+				अगर (maxout < 2)
+					अवरोध;
 				u -= PLANE_SIZE;
 				put_utf16(op++, SURROGATE_PAIR |
 						((u >> 10) & SURROGATE_BITS),
@@ -157,149 +158,149 @@ int utf8s_to_utf16s(const u8 *s, int inlen, enum utf16_endian endian,
 						(u & SURROGATE_BITS),
 						endian);
 				maxout -= 2;
-			} else {
+			पूर्ण अन्यथा अणु
 				put_utf16(op++, u, endian);
 				maxout--;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			put_utf16(op++, *s++, endian);
 			inlen--;
 			maxout--;
-		}
-	}
-	return op - pwcs;
-}
+		पूर्ण
+	पूर्ण
+	वापस op - pwcs;
+पूर्ण
 EXPORT_SYMBOL(utf8s_to_utf16s);
 
-static inline unsigned long get_utf16(unsigned c, enum utf16_endian endian)
-{
-	switch (endian) {
-	default:
-		return c;
-	case UTF16_LITTLE_ENDIAN:
-		return __le16_to_cpu(c);
-	case UTF16_BIG_ENDIAN:
-		return __be16_to_cpu(c);
-	}
-}
+अटल अंतरभूत अचिन्हित दीर्घ get_utf16(अचिन्हित c, क्रमागत utf16_endian endian)
+अणु
+	चयन (endian) अणु
+	शेष:
+		वापस c;
+	हाल UTF16_LITTLE_ENDIAN:
+		वापस __le16_to_cpu(c);
+	हाल UTF16_BIG_ENDIAN:
+		वापस __be16_to_cpu(c);
+	पूर्ण
+पूर्ण
 
-int utf16s_to_utf8s(const wchar_t *pwcs, int inlen, enum utf16_endian endian,
-		u8 *s, int maxout)
-{
+पूर्णांक utf16s_to_utf8s(स्थिर ब_अक्षर_प्रकार *pwcs, पूर्णांक inlen, क्रमागत utf16_endian endian,
+		u8 *s, पूर्णांक maxout)
+अणु
 	u8 *op;
-	int size;
-	unsigned long u, v;
+	पूर्णांक size;
+	अचिन्हित दीर्घ u, v;
 
 	op = s;
-	while (inlen > 0 && maxout > 0) {
+	जबतक (inlen > 0 && maxout > 0) अणु
 		u = get_utf16(*pwcs, endian);
-		if (!u)
-			break;
+		अगर (!u)
+			अवरोध;
 		pwcs++;
 		inlen--;
-		if (u > 0x7f) {
-			if ((u & SURROGATE_MASK) == SURROGATE_PAIR) {
-				if (u & SURROGATE_LOW) {
-					/* Ignore character and move on */
-					continue;
-				}
-				if (inlen <= 0)
-					break;
+		अगर (u > 0x7f) अणु
+			अगर ((u & SURROGATE_MASK) == SURROGATE_PAIR) अणु
+				अगर (u & SURROGATE_LOW) अणु
+					/* Ignore अक्षरacter and move on */
+					जारी;
+				पूर्ण
+				अगर (inlen <= 0)
+					अवरोध;
 				v = get_utf16(*pwcs, endian);
-				if ((v & SURROGATE_MASK) != SURROGATE_PAIR ||
-						!(v & SURROGATE_LOW)) {
-					/* Ignore character and move on */
-					continue;
-				}
+				अगर ((v & SURROGATE_MASK) != SURROGATE_PAIR ||
+						!(v & SURROGATE_LOW)) अणु
+					/* Ignore अक्षरacter and move on */
+					जारी;
+				पूर्ण
 				u = PLANE_SIZE + ((u & SURROGATE_BITS) << 10)
 						+ (v & SURROGATE_BITS);
 				pwcs++;
 				inlen--;
-			}
+			पूर्ण
 			size = utf32_to_utf8(u, op, maxout);
-			if (size == -1) {
-				/* Ignore character and move on */
-			} else {
+			अगर (size == -1) अणु
+				/* Ignore अक्षरacter and move on */
+			पूर्ण अन्यथा अणु
 				op += size;
 				maxout -= size;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			*op++ = (u8) u;
 			maxout--;
-		}
-	}
-	return op - s;
-}
+		पूर्ण
+	पूर्ण
+	वापस op - s;
+पूर्ण
 EXPORT_SYMBOL(utf16s_to_utf8s);
 
-int __register_nls(struct nls_table *nls, struct module *owner)
-{
-	struct nls_table ** tmp = &tables;
+पूर्णांक __रेजिस्टर_nls(काष्ठा nls_table *nls, काष्ठा module *owner)
+अणु
+	काष्ठा nls_table ** पंचांगp = &tables;
 
-	if (nls->next)
-		return -EBUSY;
+	अगर (nls->next)
+		वापस -EBUSY;
 
 	nls->owner = owner;
 	spin_lock(&nls_lock);
-	while (*tmp) {
-		if (nls == *tmp) {
+	जबतक (*पंचांगp) अणु
+		अगर (nls == *पंचांगp) अणु
 			spin_unlock(&nls_lock);
-			return -EBUSY;
-		}
-		tmp = &(*tmp)->next;
-	}
+			वापस -EBUSY;
+		पूर्ण
+		पंचांगp = &(*पंचांगp)->next;
+	पूर्ण
 	nls->next = tables;
 	tables = nls;
 	spin_unlock(&nls_lock);
-	return 0;	
-}
-EXPORT_SYMBOL(__register_nls);
+	वापस 0;	
+पूर्ण
+EXPORT_SYMBOL(__रेजिस्टर_nls);
 
-int unregister_nls(struct nls_table * nls)
-{
-	struct nls_table ** tmp = &tables;
+पूर्णांक unरेजिस्टर_nls(काष्ठा nls_table * nls)
+अणु
+	काष्ठा nls_table ** पंचांगp = &tables;
 
 	spin_lock(&nls_lock);
-	while (*tmp) {
-		if (nls == *tmp) {
-			*tmp = nls->next;
+	जबतक (*पंचांगp) अणु
+		अगर (nls == *पंचांगp) अणु
+			*पंचांगp = nls->next;
 			spin_unlock(&nls_lock);
-			return 0;
-		}
-		tmp = &(*tmp)->next;
-	}
+			वापस 0;
+		पूर्ण
+		पंचांगp = &(*पंचांगp)->next;
+	पूर्ण
 	spin_unlock(&nls_lock);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static struct nls_table *find_nls(char *charset)
-{
-	struct nls_table *nls;
+अटल काष्ठा nls_table *find_nls(अक्षर *अक्षरset)
+अणु
+	काष्ठा nls_table *nls;
 	spin_lock(&nls_lock);
-	for (nls = tables; nls; nls = nls->next) {
-		if (!strcmp(nls->charset, charset))
-			break;
-		if (nls->alias && !strcmp(nls->alias, charset))
-			break;
-	}
-	if (nls && !try_module_get(nls->owner))
-		nls = NULL;
+	क्रम (nls = tables; nls; nls = nls->next) अणु
+		अगर (!म_भेद(nls->अक्षरset, अक्षरset))
+			अवरोध;
+		अगर (nls->alias && !म_भेद(nls->alias, अक्षरset))
+			अवरोध;
+	पूर्ण
+	अगर (nls && !try_module_get(nls->owner))
+		nls = शून्य;
 	spin_unlock(&nls_lock);
-	return nls;
-}
+	वापस nls;
+पूर्ण
 
-struct nls_table *load_nls(char *charset)
-{
-	return try_then_request_module(find_nls(charset), "nls_%s", charset);
-}
+काष्ठा nls_table *load_nls(अक्षर *अक्षरset)
+अणु
+	वापस try_then_request_module(find_nls(अक्षरset), "nls_%s", अक्षरset);
+पूर्ण
 
-void unload_nls(struct nls_table *nls)
-{
-	if (nls)
+व्योम unload_nls(काष्ठा nls_table *nls)
+अणु
+	अगर (nls)
 		module_put(nls->owner);
-}
+पूर्ण
 
-static const wchar_t charset2uni[256] = {
+अटल स्थिर ब_अक्षर_प्रकार अक्षरset2uni[256] = अणु
 	/* 0x00*/
 	0x0000, 0x0001, 0x0002, 0x0003,
 	0x0004, 0x0005, 0x0006, 0x0007,
@@ -380,9 +381,9 @@ static const wchar_t charset2uni[256] = {
 	0x00f4, 0x00f5, 0x00f6, 0x00f7,
 	0x00f8, 0x00f9, 0x00fa, 0x00fb,
 	0x00fc, 0x00fd, 0x00fe, 0x00ff,
-};
+पूर्ण;
 
-static const unsigned char page00[256] = {
+अटल स्थिर अचिन्हित अक्षर page00[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -416,13 +417,13 @@ static const unsigned char page00[256] = {
 	0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, /* 0xe8-0xef */
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 0xf0-0xf7 */
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char *const page_uni2charset[256] = {
+अटल स्थिर अचिन्हित अक्षर *स्थिर page_uni2अक्षरset[256] = अणु
 	page00
-};
+पूर्ण;
 
-static const unsigned char charset2lower[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2lower[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -456,9 +457,9 @@ static const unsigned char charset2lower[256] = {
 	0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, /* 0xe8-0xef */
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 0xf0-0xf7 */
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char charset2upper[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2upper[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -492,57 +493,57 @@ static const unsigned char charset2upper[256] = {
 	0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef, /* 0xe8-0xef */
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, /* 0xf0-0xf7 */
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
 
-static int uni2char(wchar_t uni, unsigned char *out, int boundlen)
-{
-	const unsigned char *uni2charset;
-	unsigned char cl = uni & 0x00ff;
-	unsigned char ch = (uni & 0xff00) >> 8;
+अटल पूर्णांक uni2अक्षर(ब_अक्षर_प्रकार uni, अचिन्हित अक्षर *out, पूर्णांक boundlen)
+अणु
+	स्थिर अचिन्हित अक्षर *uni2अक्षरset;
+	अचिन्हित अक्षर cl = uni & 0x00ff;
+	अचिन्हित अक्षर ch = (uni & 0xff00) >> 8;
 
-	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+	अगर (boundlen <= 0)
+		वापस -ENAMETOOLONG;
 
-	uni2charset = page_uni2charset[ch];
-	if (uni2charset && uni2charset[cl])
-		out[0] = uni2charset[cl];
-	else
-		return -EINVAL;
-	return 1;
-}
+	uni2अक्षरset = page_uni2अक्षरset[ch];
+	अगर (uni2अक्षरset && uni2अक्षरset[cl])
+		out[0] = uni2अक्षरset[cl];
+	अन्यथा
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static int char2uni(const unsigned char *rawstring, int boundlen, wchar_t *uni)
-{
-	*uni = charset2uni[*rawstring];
-	if (*uni == 0x0000)
-		return -EINVAL;
-	return 1;
-}
+अटल पूर्णांक अक्षर2uni(स्थिर अचिन्हित अक्षर *rawstring, पूर्णांक boundlen, ब_अक्षर_प्रकार *uni)
+अणु
+	*uni = अक्षरset2uni[*rawstring];
+	अगर (*uni == 0x0000)
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static struct nls_table default_table = {
-	.charset	= "default",
-	.uni2char	= uni2char,
-	.char2uni	= char2uni,
-	.charset2lower	= charset2lower,
-	.charset2upper	= charset2upper,
-};
+अटल काष्ठा nls_table शेष_table = अणु
+	.अक्षरset	= "default",
+	.uni2अक्षर	= uni2अक्षर,
+	.अक्षर2uni	= अक्षर2uni,
+	.अक्षरset2lower	= अक्षरset2lower,
+	.अक्षरset2upper	= अक्षरset2upper,
+पूर्ण;
 
-/* Returns a simple default translation table */
-struct nls_table *load_nls_default(void)
-{
-	struct nls_table *default_nls;
+/* Returns a simple शेष translation table */
+काष्ठा nls_table *load_nls_शेष(व्योम)
+अणु
+	काष्ठा nls_table *शेष_nls;
 	
-	default_nls = load_nls(CONFIG_NLS_DEFAULT);
-	if (default_nls != NULL)
-		return default_nls;
-	else
-		return &default_table;
-}
+	शेष_nls = load_nls(CONFIG_NLS_DEFAULT);
+	अगर (शेष_nls != शून्य)
+		वापस शेष_nls;
+	अन्यथा
+		वापस &शेष_table;
+पूर्ण
 
-EXPORT_SYMBOL(unregister_nls);
+EXPORT_SYMBOL(unरेजिस्टर_nls);
 EXPORT_SYMBOL(unload_nls);
 EXPORT_SYMBOL(load_nls);
-EXPORT_SYMBOL(load_nls_default);
+EXPORT_SYMBOL(load_nls_शेष);
 
 MODULE_LICENSE("Dual BSD/GPL");

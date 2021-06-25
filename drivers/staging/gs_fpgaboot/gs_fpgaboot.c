@@ -1,220 +1,221 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/fs.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/firmware.h>
-#include <asm/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/firmware.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "gs_fpgaboot.h"
-#include "io.h"
+#समावेश "gs_fpgaboot.h"
+#समावेश "io.h"
 
-#define DEVICE_NAME "device"
-#define CLASS_NAME  "fpgaboot"
+#घोषणा DEVICE_NAME "device"
+#घोषणा CLASS_NAME  "fpgaboot"
 
-static u8 bits_magic[] = {
+अटल u8 bits_magic[] = अणु
 	0x0, 0x9, 0xf, 0xf0, 0xf, 0xf0,
-	0xf, 0xf0, 0xf, 0xf0, 0x0, 0x0, 0x1};
+	0xf, 0xf0, 0xf, 0xf0, 0x0, 0x0, 0x1पूर्ण;
 
-/* fake device for request_firmware */
-static struct platform_device	*firmware_pdev;
+/* fake device क्रम request_firmware */
+अटल काष्ठा platक्रमm_device	*firmware_pdev;
 
-static char	*file = "xlinx_fpga_firmware.bit";
-module_param(file, charp, 0444);
+अटल अक्षर	*file = "xlinx_fpga_firmware.bit";
+module_param(file, अक्षरp, 0444);
 MODULE_PARM_DESC(file, "Xilinx FPGA firmware file.");
 
-static void read_bitstream(u8 *bitdata, u8 *buf, int *offset, int rdsize)
-{
-	memcpy(buf, bitdata + *offset, rdsize);
+अटल व्योम पढ़ो_bitstream(u8 *bitdata, u8 *buf, पूर्णांक *offset, पूर्णांक rdsize)
+अणु
+	स_नकल(buf, bitdata + *offset, rdsize);
 	*offset += rdsize;
-}
+पूर्ण
 
-static int readinfo_bitstream(u8 *bitdata, u8 *buf, int size, int *offset)
-{
+अटल पूर्णांक पढ़ोinfo_bitstream(u8 *bitdata, u8 *buf, पूर्णांक size, पूर्णांक *offset)
+अणु
 	u8 tbuf[2];
 	u16 len;
 
-	/* read section char */
-	read_bitstream(bitdata, tbuf, offset, 1);
+	/* पढ़ो section अक्षर */
+	पढ़ो_bitstream(bitdata, tbuf, offset, 1);
 
-	/* read length */
-	read_bitstream(bitdata, tbuf, offset, 2);
+	/* पढ़ो length */
+	पढ़ो_bitstream(bitdata, tbuf, offset, 2);
 
 	len = get_unaligned_be16(tbuf);
-	if (len >= size) {
+	अगर (len >= size) अणु
 		pr_err("error: readinfo buffer too small\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	read_bitstream(bitdata, buf, offset, len);
+	पढ़ो_bitstream(bitdata, buf, offset, len);
 	buf[len] = '\0';
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * read bitdata length
+ * पढ़ो bitdata length
  */
-static int readlength_bitstream(u8 *bitdata, int *lendata, int *offset)
-{
+अटल पूर्णांक पढ़ोlength_bitstream(u8 *bitdata, पूर्णांक *lendata, पूर्णांक *offset)
+अणु
 	u8 tbuf[4];
 
-	/* read section char */
-	read_bitstream(bitdata, tbuf, offset, 1);
+	/* पढ़ो section अक्षर */
+	पढ़ो_bitstream(bitdata, tbuf, offset, 1);
 
 	/* make sure it is section 'e' */
-	if (tbuf[0] != 'e') {
+	अगर (tbuf[0] != 'e') अणु
 		pr_err("error: length section is not 'e', but %c\n", tbuf[0]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* read 4bytes length */
-	read_bitstream(bitdata, tbuf, offset, 4);
+	/* पढ़ो 4bytes length */
+	पढ़ो_bitstream(bitdata, tbuf, offset, 4);
 
 	*lendata = get_unaligned_be32(tbuf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * read first 13 bytes to check bitstream magic number
+ * पढ़ो first 13 bytes to check bitstream magic number
  */
-static int readmagic_bitstream(u8 *bitdata, int *offset)
-{
+अटल पूर्णांक पढ़ोmagic_bitstream(u8 *bitdata, पूर्णांक *offset)
+अणु
 	u8 buf[13];
-	int r;
+	पूर्णांक r;
 
-	read_bitstream(bitdata, buf, offset, 13);
-	r = memcmp(buf, bits_magic, 13);
-	if (r) {
+	पढ़ो_bitstream(bitdata, buf, offset, 13);
+	r = स_भेद(buf, bits_magic, 13);
+	अगर (r) अणु
 		pr_err("error: corrupted header\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pr_info("bitstream file magic number Ok\n");
 
 	*offset = 13;	/* magic length */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NOTE: supports only bitstream format
+ * NOTE: supports only bitstream क्रमmat
  */
-static enum fmt_image get_imageformat(void)
-{
-	return f_bit;
-}
+अटल क्रमागत fmt_image get_imageक्रमmat(व्योम)
+अणु
+	वापस f_bit;
+पूर्ण
 
-static void gs_print_header(struct fpgaimage *fimage)
-{
+अटल व्योम gs_prपूर्णांक_header(काष्ठा fpgaimage *fimage)
+अणु
 	pr_info("file: %s\n", fimage->filename);
 	pr_info("part: %s\n", fimage->part);
 	pr_info("date: %s\n", fimage->date);
-	pr_info("time: %s\n", fimage->time);
+	pr_info("time: %s\n", fimage->समय);
 	pr_info("lendata: %d\n", fimage->lendata);
-}
+पूर्ण
 
-static int gs_read_bitstream(struct fpgaimage *fimage)
-{
+अटल पूर्णांक gs_पढ़ो_bitstream(काष्ठा fpgaimage *fimage)
+अणु
 	u8 *bitdata;
-	int offset;
-	int err;
+	पूर्णांक offset;
+	पूर्णांक err;
 
 	offset = 0;
 	bitdata = (u8 *)fimage->fw_entry->data;
 
-	err = readmagic_bitstream(bitdata, &offset);
-	if (err)
-		return err;
+	err = पढ़ोmagic_bitstream(bitdata, &offset);
+	अगर (err)
+		वापस err;
 
-	err = readinfo_bitstream(bitdata, fimage->filename, MAX_STR, &offset);
-	if (err)
-		return err;
-	err = readinfo_bitstream(bitdata, fimage->part, MAX_STR, &offset);
-	if (err)
-		return err;
-	err = readinfo_bitstream(bitdata, fimage->date, MAX_STR, &offset);
-	if (err)
-		return err;
-	err = readinfo_bitstream(bitdata, fimage->time, MAX_STR, &offset);
-	if (err)
-		return err;
+	err = पढ़ोinfo_bitstream(bitdata, fimage->filename, MAX_STR, &offset);
+	अगर (err)
+		वापस err;
+	err = पढ़ोinfo_bitstream(bitdata, fimage->part, MAX_STR, &offset);
+	अगर (err)
+		वापस err;
+	err = पढ़ोinfo_bitstream(bitdata, fimage->date, MAX_STR, &offset);
+	अगर (err)
+		वापस err;
+	err = पढ़ोinfo_bitstream(bitdata, fimage->समय, MAX_STR, &offset);
+	अगर (err)
+		वापस err;
 
-	err = readlength_bitstream(bitdata, &fimage->lendata, &offset);
-	if (err)
-		return err;
+	err = पढ़ोlength_bitstream(bitdata, &fimage->lendata, &offset);
+	अगर (err)
+		वापस err;
 
 	fimage->fpgadata = bitdata + offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gs_read_image(struct fpgaimage *fimage)
-{
-	int img_fmt;
-	int err;
+अटल पूर्णांक gs_पढ़ो_image(काष्ठा fpgaimage *fimage)
+अणु
+	पूर्णांक img_fmt;
+	पूर्णांक err;
 
-	img_fmt = get_imageformat();
+	img_fmt = get_imageक्रमmat();
 
-	switch (img_fmt) {
-	case f_bit:
+	चयन (img_fmt) अणु
+	हाल f_bit:
 		pr_info("image is bitstream format\n");
-		err = gs_read_bitstream(fimage);
-		if (err)
-			return err;
-		break;
-	default:
+		err = gs_पढ़ो_bitstream(fimage);
+		अगर (err)
+			वापस err;
+		अवरोध;
+	शेष:
 		pr_err("unsupported fpga image format\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	gs_print_header(fimage);
+	gs_prपूर्णांक_header(fimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gs_load_image(struct fpgaimage *fimage, char *fw_file)
-{
-	int err;
+अटल पूर्णांक gs_load_image(काष्ठा fpgaimage *fimage, अक्षर *fw_file)
+अणु
+	पूर्णांक err;
 
 	pr_info("load fpgaimage %s\n", fw_file);
 
 	err = request_firmware(&fimage->fw_entry, fw_file, &firmware_pdev->dev);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		pr_err("firmware %s is missing, cannot continue.\n", fw_file);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gs_download_image(struct fpgaimage *fimage, enum wbus bus_bytes)
-{
+अटल पूर्णांक gs_करोwnload_image(काष्ठा fpgaimage *fimage, क्रमागत wbus bus_bytes)
+अणु
 	u8 *bitdata;
-	int size, i, cnt;
+	पूर्णांक size, i, cnt;
 
 	cnt = 0;
 	bitdata = (u8 *)fimage->fpgadata;
 	size = fimage->lendata;
 
-#ifdef DEBUG_FPGA
-	print_hex_dump_bytes("bitfile sample: ", DUMP_PREFIX_OFFSET,
+#अगर_घोषित DEBUG_FPGA
+	prपूर्णांक_hex_dump_bytes("bitfile sample: ", DUMP_PREFIX_OFFSET,
 			     bitdata, 0x100);
-#endif /* DEBUG_FPGA */
-	if (!xl_supported_prog_bus_width(bus_bytes)) {
+#पूर्ण_अगर /* DEBUG_FPGA */
+	अगर (!xl_supported_prog_bus_width(bus_bytes)) अणु
 		pr_err("unsupported program bus width %d\n",
 		       bus_bytes);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Bring csi_b, rdwr_b Low and program_b High */
 	xl_program_b(1);
@@ -226,168 +227,168 @@ static int gs_download_image(struct fpgaimage *fimage, enum wbus bus_bytes)
 	msleep(20);
 	xl_program_b(1);
 
-	/* Wait for Device Initialization */
-	while (xl_get_init_b() == 0)
+	/* Wait क्रम Device Initialization */
+	जबतक (xl_get_init_b() == 0)
 		;
 
 	pr_info("device init done\n");
 
-	for (i = 0; i < size; i += bus_bytes)
-		xl_shift_bytes_out(bus_bytes, bitdata + i);
+	क्रम (i = 0; i < size; i += bus_bytes)
+		xl_shअगरt_bytes_out(bus_bytes, bitdata + i);
 
 	pr_info("program done\n");
 
 	/* Check INIT_B */
-	if (xl_get_init_b() == 0) {
+	अगर (xl_get_init_b() == 0) अणु
 		pr_err("init_b 0\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	while (xl_get_done_b() == 0) {
-		if (cnt++ > MAX_WAIT_DONE) {
+	जबतक (xl_get_करोne_b() == 0) अणु
+		अगर (cnt++ > MAX_WAIT_DONE) अणु
 			pr_err("init_B %d\n", xl_get_init_b());
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (cnt > MAX_WAIT_DONE) {
+	अगर (cnt > MAX_WAIT_DONE) अणु
 		pr_err("fpga download fail\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	pr_info("download fpgaimage\n");
 
-	/* Compensate for Special Startup Conditions */
-	xl_shift_cclk(8);
+	/* Compensate क्रम Special Startup Conditions */
+	xl_shअगरt_cclk(8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gs_release_image(struct fpgaimage *fimage)
-{
+अटल पूर्णांक gs_release_image(काष्ठा fpgaimage *fimage)
+अणु
 	release_firmware(fimage->fw_entry);
 	pr_info("release fpgaimage\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * NOTE: supports systemmap parallel programming
+ * NOTE: supports प्रणालीmap parallel programming
  */
-static int gs_set_download_method(struct fpgaimage *fimage)
-{
+अटल पूर्णांक gs_set_करोwnload_method(काष्ठा fpgaimage *fimage)
+अणु
 	pr_info("set program method\n");
 
-	fimage->dmethod = m_systemmap;
+	fimage->dmethod = m_प्रणालीmap;
 
 	pr_info("systemmap program method\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_driver(void)
-{
-	firmware_pdev = platform_device_register_simple("fpgaboot", -1,
-							NULL, 0);
-	return PTR_ERR_OR_ZERO(firmware_pdev);
-}
+अटल पूर्णांक init_driver(व्योम)
+अणु
+	firmware_pdev = platक्रमm_device_रेजिस्टर_simple("fpgaboot", -1,
+							शून्य, 0);
+	वापस PTR_ERR_OR_ZERO(firmware_pdev);
+पूर्ण
 
-static int gs_fpgaboot(void)
-{
-	int err;
-	struct fpgaimage	*fimage;
+अटल पूर्णांक gs_fpgaboot(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा fpgaimage	*fimage;
 
-	fimage = kmalloc(sizeof(*fimage), GFP_KERNEL);
-	if (!fimage)
-		return -ENOMEM;
+	fimage = kदो_स्मृति(माप(*fimage), GFP_KERNEL);
+	अगर (!fimage)
+		वापस -ENOMEM;
 
 	err = gs_load_image(fimage, file);
-	if (err) {
+	अगर (err) अणु
 		pr_err("gs_load_image error\n");
-		goto err_out1;
-	}
+		जाओ err_out1;
+	पूर्ण
 
-	err = gs_read_image(fimage);
-	if (err) {
+	err = gs_पढ़ो_image(fimage);
+	अगर (err) अणु
 		pr_err("gs_read_image error\n");
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
-	err = gs_set_download_method(fimage);
-	if (err) {
+	err = gs_set_करोwnload_method(fimage);
+	अगर (err) अणु
 		pr_err("gs_set_download_method error\n");
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
-	err = gs_download_image(fimage, bus_2byte);
-	if (err) {
+	err = gs_करोwnload_image(fimage, bus_2byte);
+	अगर (err) अणु
 		pr_err("gs_download_image error\n");
-		goto err_out2;
-	}
+		जाओ err_out2;
+	पूर्ण
 
 	err = gs_release_image(fimage);
-	if (err) {
+	अगर (err) अणु
 		pr_err("gs_release_image error\n");
-		goto err_out1;
-	}
+		जाओ err_out1;
+	पूर्ण
 
-	kfree(fimage);
-	return 0;
+	kमुक्त(fimage);
+	वापस 0;
 
 err_out2:
 	err = gs_release_image(fimage);
-	if (err)
+	अगर (err)
 		pr_err("gs_release_image error\n");
 err_out1:
-	kfree(fimage);
+	kमुक्त(fimage);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __init gs_fpgaboot_init(void)
-{
-	int err;
+अटल पूर्णांक __init gs_fpgaboot_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pr_info("FPGA DOWNLOAD --->\n");
 
 	pr_info("FPGA image file name: %s\n", file);
 
 	err = init_driver();
-	if (err) {
+	अगर (err) अणु
 		pr_err("FPGA DRIVER INIT FAIL!!\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = xl_init_io();
-	if (err) {
+	अगर (err) अणु
 		pr_err("GPIO INIT FAIL!!\n");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	err = gs_fpgaboot();
-	if (err) {
+	अगर (err) अणु
 		pr_err("FPGA DOWNLOAD FAIL!!\n");
-		goto errout;
-	}
+		जाओ errout;
+	पूर्ण
 
 	pr_info("FPGA DOWNLOAD DONE <---\n");
 
-	return 0;
+	वापस 0;
 
 errout:
-	platform_device_unregister(firmware_pdev);
+	platक्रमm_device_unरेजिस्टर(firmware_pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit gs_fpgaboot_exit(void)
-{
-	platform_device_unregister(firmware_pdev);
+अटल व्योम __निकास gs_fpgaboot_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(firmware_pdev);
 	pr_info("FPGA image download module removed\n");
-}
+पूर्ण
 
 module_init(gs_fpgaboot_init);
-module_exit(gs_fpgaboot_exit);
+module_निकास(gs_fpgaboot_निकास);
 
 MODULE_AUTHOR("Insop Song");
 MODULE_DESCRIPTION("Xlinix FPGA firmware download");

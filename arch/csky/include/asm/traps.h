@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_TRAPS_H
-#define __ASM_CSKY_TRAPS_H
+#अगर_अघोषित __ASM_CSKY_TRAPS_H
+#घोषणा __ASM_CSKY_TRAPS_H
 
-#define VEC_RESET	0
-#define VEC_ALIGN	1
-#define VEC_ACCESS	2
-#define VEC_ZERODIV	3
-#define VEC_ILLEGAL	4
-#define VEC_PRIV	5
-#define VEC_TRACE	6
-#define VEC_BREAKPOINT	7
-#define VEC_UNRECOVER	8
-#define VEC_SOFTRESET	9
-#define VEC_AUTOVEC	10
-#define VEC_FAUTOVEC	11
-#define VEC_HWACCEL	12
+#घोषणा VEC_RESET	0
+#घोषणा VEC_ALIGN	1
+#घोषणा VEC_ACCESS	2
+#घोषणा VEC_ZERODIV	3
+#घोषणा VEC_ILLEGAL	4
+#घोषणा VEC_PRIV	5
+#घोषणा VEC_TRACE	6
+#घोषणा VEC_BREAKPOINT	7
+#घोषणा VEC_UNRECOVER	8
+#घोषणा VEC_SOFTRESET	9
+#घोषणा VEC_AUTOVEC	10
+#घोषणा VEC_FAUTOVEC	11
+#घोषणा VEC_HWACCEL	12
 
-#define	VEC_TLBMISS	14
-#define	VEC_TLBMODIFIED	15
+#घोषणा	VEC_TLBMISS	14
+#घोषणा	VEC_TLBMODIFIED	15
 
-#define VEC_TRAP0	16
-#define VEC_TRAP1	17
-#define VEC_TRAP2	18
-#define VEC_TRAP3	19
+#घोषणा VEC_TRAP0	16
+#घोषणा VEC_TRAP1	17
+#घोषणा VEC_TRAP2	18
+#घोषणा VEC_TRAP3	19
 
-#define	VEC_TLBINVALIDL	20
-#define	VEC_TLBINVALIDS	21
+#घोषणा	VEC_TLBINVALIDL	20
+#घोषणा	VEC_TLBINVALIDS	21
 
-#define VEC_PRFL	29
-#define VEC_FPE		30
+#घोषणा VEC_PRFL	29
+#घोषणा VEC_FPE		30
 
-extern void *vec_base[];
+बाह्य व्योम *vec_base[];
 
-#define VEC_INIT(i, func) \
-do { \
-	vec_base[i] = (void *)func; \
-} while (0)
+#घोषणा VEC_INIT(i, func) \
+करो अणु \
+	vec_base[i] = (व्योम *)func; \
+पूर्ण जबतक (0)
 
-void csky_alignment(struct pt_regs *regs);
+व्योम csky_alignment(काष्ठा pt_regs *regs);
 
-#endif /* __ASM_CSKY_TRAPS_H */
+#पूर्ण_अगर /* __ASM_CSKY_TRAPS_H */

@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* cavium_ptp.h - PTP 1588 clock on Cavium hardware
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* cavium_ptp.h - PTP 1588 घड़ी on Cavium hardware
  * Copyright (c) 2003-2015, 2017 Cavium, Inc.
  */
 
-#ifndef CAVIUM_PTP_H
-#define CAVIUM_PTP_H
+#अगर_अघोषित CAVIUM_PTP_H
+#घोषणा CAVIUM_PTP_H
 
-#include <linux/ptp_clock_kernel.h>
-#include <linux/timecounter.h>
+#समावेश <linux/ptp_घड़ी_kernel.h>
+#समावेश <linux/समयcounter.h>
 
-struct cavium_ptp {
-	struct pci_dev *pdev;
+काष्ठा cavium_ptp अणु
+	काष्ठा pci_dev *pdev;
 
-	/* Serialize access to cycle_counter, time_counter and hw_registers */
+	/* Serialize access to cycle_counter, समय_counter and hw_रेजिस्टरs */
 	spinlock_t spin_lock;
-	struct cyclecounter cycle_counter;
-	struct timecounter time_counter;
-	void __iomem *reg_base;
+	काष्ठा cyclecounter cycle_counter;
+	काष्ठा समयcounter समय_counter;
+	व्योम __iomem *reg_base;
 
-	u32 clock_rate;
+	u32 घड़ी_rate;
 
-	struct ptp_clock_info ptp_info;
-	struct ptp_clock *ptp_clock;
-};
+	काष्ठा ptp_घड़ी_info ptp_info;
+	काष्ठा ptp_घड़ी *ptp_घड़ी;
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_CAVIUM_PTP)
+#अगर IS_REACHABLE(CONFIG_CAVIUM_PTP)
 
-struct cavium_ptp *cavium_ptp_get(void);
-void cavium_ptp_put(struct cavium_ptp *ptp);
+काष्ठा cavium_ptp *cavium_ptp_get(व्योम);
+व्योम cavium_ptp_put(काष्ठा cavium_ptp *ptp);
 
-static inline u64 cavium_ptp_tstamp2time(struct cavium_ptp *ptp, u64 tstamp)
-{
-	unsigned long flags;
+अटल अंतरभूत u64 cavium_ptp_tstamp2समय(काष्ठा cavium_ptp *ptp, u64 tstamp)
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 ret;
 
 	spin_lock_irqsave(&ptp->spin_lock, flags);
-	ret = timecounter_cyc2time(&ptp->time_counter, tstamp);
+	ret = समयcounter_cyc2समय(&ptp->समय_counter, tstamp);
 	spin_unlock_irqrestore(&ptp->spin_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int cavium_ptp_clock_index(struct cavium_ptp *clock)
-{
-	return ptp_clock_index(clock->ptp_clock);
-}
+अटल अंतरभूत पूर्णांक cavium_ptp_घड़ी_index(काष्ठा cavium_ptp *घड़ी)
+अणु
+	वापस ptp_घड़ी_index(घड़ी->ptp_घड़ी);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline struct cavium_ptp *cavium_ptp_get(void)
-{
-	return ERR_PTR(-ENODEV);
-}
+अटल अंतरभूत काष्ठा cavium_ptp *cavium_ptp_get(व्योम)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static inline void cavium_ptp_put(struct cavium_ptp *ptp) {}
+अटल अंतरभूत व्योम cavium_ptp_put(काष्ठा cavium_ptp *ptp) अणुपूर्ण
 
-static inline u64 cavium_ptp_tstamp2time(struct cavium_ptp *ptp, u64 tstamp)
-{
-	return 0;
-}
+अटल अंतरभूत u64 cavium_ptp_tstamp2समय(काष्ठा cavium_ptp *ptp, u64 tstamp)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int cavium_ptp_clock_index(struct cavium_ptp *clock)
-{
-	return -1;
-}
+अटल अंतरभूत पूर्णांक cavium_ptp_घड़ी_index(काष्ठा cavium_ptp *घड़ी)
+अणु
+	वापस -1;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

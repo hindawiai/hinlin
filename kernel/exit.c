@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/kernel/exit.c
+ *  linux/kernel/निकास.c
  *
  *  Copyright (C) 1991, 1992  Linus Torvalds
  */
 
-#include <linux/mm.h>
-#include <linux/slab.h>
-#include <linux/sched/autogroup.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/stat.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/sched/cputime.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/capability.h>
-#include <linux/completion.h>
-#include <linux/personality.h>
-#include <linux/tty.h>
-#include <linux/iocontext.h>
-#include <linux/key.h>
-#include <linux/cpu.h>
-#include <linux/acct.h>
-#include <linux/tsacct_kern.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/freezer.h>
-#include <linux/binfmts.h>
-#include <linux/nsproxy.h>
-#include <linux/pid_namespace.h>
-#include <linux/ptrace.h>
-#include <linux/profile.h>
-#include <linux/mount.h>
-#include <linux/proc_fs.h>
-#include <linux/kthread.h>
-#include <linux/mempolicy.h>
-#include <linux/taskstats_kern.h>
-#include <linux/delayacct.h>
-#include <linux/cgroup.h>
-#include <linux/syscalls.h>
-#include <linux/signal.h>
-#include <linux/posix-timers.h>
-#include <linux/cn_proc.h>
-#include <linux/mutex.h>
-#include <linux/futex.h>
-#include <linux/pipe_fs_i.h>
-#include <linux/audit.h> /* for audit_free() */
-#include <linux/resource.h>
-#include <linux/blkdev.h>
-#include <linux/task_io_accounting_ops.h>
-#include <linux/tracehook.h>
-#include <linux/fs_struct.h>
-#include <linux/init_task.h>
-#include <linux/perf_event.h>
-#include <trace/events/sched.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/oom.h>
-#include <linux/writeback.h>
-#include <linux/shm.h>
-#include <linux/kcov.h>
-#include <linux/random.h>
-#include <linux/rcuwait.h>
-#include <linux/compat.h>
-#include <linux/io_uring.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/स्वतःgroup.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/स्थिति.स>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/sched/cpuसमय.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/iocontext.h>
+#समावेश <linux/key.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/acct.h>
+#समावेश <linux/tsacct_kern.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/profile.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/taskstats_kern.h>
+#समावेश <linux/delayacct.h>
+#समावेश <linux/cgroup.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/cn_proc.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/futex.h>
+#समावेश <linux/pipe_fs_i.h>
+#समावेश <linux/audit.h> /* क्रम audit_मुक्त() */
+#समावेश <linux/resource.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/task_io_accounting_ops.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/init_task.h>
+#समावेश <linux/perf_event.h>
+#समावेश <trace/events/sched.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/kcov.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/rcuरुको.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/io_uring.h>
 
-#include <linux/uaccess.h>
-#include <asm/unistd.h>
-#include <asm/mmu_context.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unistd.h>
+#समावेश <यंत्र/mmu_context.h>
 
-static void __unhash_process(struct task_struct *p, bool group_dead)
-{
-	nr_threads--;
+अटल व्योम __unhash_process(काष्ठा task_काष्ठा *p, bool group_dead)
+अणु
+	nr_thपढ़ोs--;
 	detach_pid(p, PIDTYPE_PID);
-	if (group_dead) {
+	अगर (group_dead) अणु
 		detach_pid(p, PIDTYPE_TGID);
 		detach_pid(p, PIDTYPE_PGID);
 		detach_pid(p, PIDTYPE_SID);
@@ -81,61 +82,61 @@ static void __unhash_process(struct task_struct *p, bool group_dead)
 		list_del_rcu(&p->tasks);
 		list_del_init(&p->sibling);
 		__this_cpu_dec(process_counts);
-	}
-	list_del_rcu(&p->thread_group);
-	list_del_rcu(&p->thread_node);
-}
+	पूर्ण
+	list_del_rcu(&p->thपढ़ो_group);
+	list_del_rcu(&p->thपढ़ो_node);
+पूर्ण
 
 /*
- * This function expects the tasklist_lock write-locked.
+ * This function expects the tasklist_lock ग_लिखो-locked.
  */
-static void __exit_signal(struct task_struct *tsk)
-{
-	struct signal_struct *sig = tsk->signal;
-	bool group_dead = thread_group_leader(tsk);
-	struct sighand_struct *sighand;
-	struct tty_struct *tty;
-	u64 utime, stime;
+अटल व्योम __निकास_संकेत(काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा संकेत_काष्ठा *sig = tsk->संकेत;
+	bool group_dead = thपढ़ो_group_leader(tsk);
+	काष्ठा sighand_काष्ठा *sighand;
+	काष्ठा tty_काष्ठा *tty;
+	u64 uसमय, sसमय;
 
 	sighand = rcu_dereference_check(tsk->sighand,
 					lockdep_tasklist_lock_is_held());
 	spin_lock(&sighand->siglock);
 
-#ifdef CONFIG_POSIX_TIMERS
-	posix_cpu_timers_exit(tsk);
-	if (group_dead)
-		posix_cpu_timers_exit_group(tsk);
-#endif
+#अगर_घोषित CONFIG_POSIX_TIMERS
+	posix_cpu_समयrs_निकास(tsk);
+	अगर (group_dead)
+		posix_cpu_समयrs_निकास_group(tsk);
+#पूर्ण_अगर
 
-	if (group_dead) {
+	अगर (group_dead) अणु
 		tty = sig->tty;
-		sig->tty = NULL;
-	} else {
+		sig->tty = शून्य;
+	पूर्ण अन्यथा अणु
 		/*
-		 * If there is any task waiting for the group exit
-		 * then notify it:
+		 * If there is any task रुकोing क्रम the group निकास
+		 * then notअगरy it:
 		 */
-		if (sig->notify_count > 0 && !--sig->notify_count)
-			wake_up_process(sig->group_exit_task);
+		अगर (sig->notअगरy_count > 0 && !--sig->notअगरy_count)
+			wake_up_process(sig->group_निकास_task);
 
-		if (tsk == sig->curr_target)
-			sig->curr_target = next_thread(tsk);
-	}
+		अगर (tsk == sig->curr_target)
+			sig->curr_target = next_thपढ़ो(tsk);
+	पूर्ण
 
-	add_device_randomness((const void*) &tsk->se.sum_exec_runtime,
-			      sizeof(unsigned long long));
+	add_device_अक्रमomness((स्थिर व्योम*) &tsk->se.sum_exec_runसमय,
+			      माप(अचिन्हित दीर्घ दीर्घ));
 
 	/*
-	 * Accumulate here the counters for all threads as they die. We could
-	 * skip the group leader because it is the last user of signal_struct,
-	 * but we want to avoid the race with thread_group_cputime() which can
-	 * see the empty ->thread_head list.
+	 * Accumulate here the counters क्रम all thपढ़ोs as they die. We could
+	 * skip the group leader because it is the last user of संकेत_काष्ठा,
+	 * but we want to aव्योम the race with thपढ़ो_group_cpuसमय() which can
+	 * see the empty ->thपढ़ो_head list.
 	 */
-	task_cputime(tsk, &utime, &stime);
-	write_seqlock(&sig->stats_lock);
-	sig->utime += utime;
-	sig->stime += stime;
-	sig->gtime += task_gtime(tsk);
+	task_cpuसमय(tsk, &uसमय, &sसमय);
+	ग_लिखो_seqlock(&sig->stats_lock);
+	sig->uसमय += uसमय;
+	sig->sसमय += sसमय;
+	sig->gसमय += task_gसमय(tsk);
 	sig->min_flt += tsk->min_flt;
 	sig->maj_flt += tsk->maj_flt;
 	sig->nvcsw += tsk->nvcsw;
@@ -143,105 +144,105 @@ static void __exit_signal(struct task_struct *tsk)
 	sig->inblock += task_io_get_inblock(tsk);
 	sig->oublock += task_io_get_oublock(tsk);
 	task_io_accounting_add(&sig->ioac, &tsk->ioac);
-	sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
-	sig->nr_threads--;
+	sig->sum_sched_runसमय += tsk->se.sum_exec_runसमय;
+	sig->nr_thपढ़ोs--;
 	__unhash_process(tsk, group_dead);
-	write_sequnlock(&sig->stats_lock);
+	ग_लिखो_sequnlock(&sig->stats_lock);
 
 	/*
-	 * Do this under ->siglock, we can race with another thread
-	 * doing sigqueue_free() if we have SIGQUEUE_PREALLOC signals.
+	 * Do this under ->siglock, we can race with another thपढ़ो
+	 * करोing sigqueue_मुक्त() अगर we have SIGQUEUE_PREALLOC संकेतs.
 	 */
 	flush_sigqueue(&tsk->pending);
-	tsk->sighand = NULL;
+	tsk->sighand = शून्य;
 	spin_unlock(&sighand->siglock);
 
 	__cleanup_sighand(sighand);
-	clear_tsk_thread_flag(tsk, TIF_SIGPENDING);
-	if (group_dead) {
+	clear_tsk_thपढ़ो_flag(tsk, TIF_SIGPENDING);
+	अगर (group_dead) अणु
 		flush_sigqueue(&sig->shared_pending);
 		tty_kref_put(tty);
-	}
-	exit_task_sigqueue_cache(tsk);
-}
+	पूर्ण
+	निकास_task_sigqueue_cache(tsk);
+पूर्ण
 
-static void delayed_put_task_struct(struct rcu_head *rhp)
-{
-	struct task_struct *tsk = container_of(rhp, struct task_struct, rcu);
+अटल व्योम delayed_put_task_काष्ठा(काष्ठा rcu_head *rhp)
+अणु
+	काष्ठा task_काष्ठा *tsk = container_of(rhp, काष्ठा task_काष्ठा, rcu);
 
 	perf_event_delayed_put(tsk);
-	trace_sched_process_free(tsk);
-	put_task_struct(tsk);
-}
+	trace_sched_process_मुक्त(tsk);
+	put_task_काष्ठा(tsk);
+पूर्ण
 
-void put_task_struct_rcu_user(struct task_struct *task)
-{
-	if (refcount_dec_and_test(&task->rcu_users))
-		call_rcu(&task->rcu, delayed_put_task_struct);
-}
+व्योम put_task_काष्ठा_rcu_user(काष्ठा task_काष्ठा *task)
+अणु
+	अगर (refcount_dec_and_test(&task->rcu_users))
+		call_rcu(&task->rcu, delayed_put_task_काष्ठा);
+पूर्ण
 
-void release_task(struct task_struct *p)
-{
-	struct task_struct *leader;
-	struct pid *thread_pid;
-	int zap_leader;
+व्योम release_task(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा task_काष्ठा *leader;
+	काष्ठा pid *thपढ़ो_pid;
+	पूर्णांक zap_leader;
 repeat:
-	/* don't need to get the RCU readlock here - the process is dead and
-	 * can't be modifying its own credentials. But shut RCU-lockdep up */
-	rcu_read_lock();
+	/* करोn't need to get the RCU पढ़ोlock here - the process is dead and
+	 * can't be modअगरying its own credentials. But shut RCU-lockdep up */
+	rcu_पढ़ो_lock();
 	atomic_dec(&__task_cred(p)->user->processes);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	cgroup_release(p);
 
-	write_lock_irq(&tasklist_lock);
+	ग_लिखो_lock_irq(&tasklist_lock);
 	ptrace_release_task(p);
-	thread_pid = get_pid(p->thread_pid);
-	__exit_signal(p);
+	thपढ़ो_pid = get_pid(p->thपढ़ो_pid);
+	__निकास_संकेत(p);
 
 	/*
-	 * If we are the last non-leader member of the thread
-	 * group, and the leader is zombie, then notify the
-	 * group leader's parent process. (if it wants notification.)
+	 * If we are the last non-leader member of the thपढ़ो
+	 * group, and the leader is zombie, then notअगरy the
+	 * group leader's parent process. (अगर it wants notअगरication.)
 	 */
 	zap_leader = 0;
 	leader = p->group_leader;
-	if (leader != p && thread_group_empty(leader)
-			&& leader->exit_state == EXIT_ZOMBIE) {
+	अगर (leader != p && thपढ़ो_group_empty(leader)
+			&& leader->निकास_state == EXIT_ZOMBIE) अणु
 		/*
-		 * If we were the last child thread and the leader has
-		 * exited already, and the leader's parent ignores SIGCHLD,
+		 * If we were the last child thपढ़ो and the leader has
+		 * निकासed alपढ़ोy, and the leader's parent ignores SIGCHLD,
 		 * then we are the one who should release the leader.
 		 */
-		zap_leader = do_notify_parent(leader, leader->exit_signal);
-		if (zap_leader)
-			leader->exit_state = EXIT_DEAD;
-	}
+		zap_leader = करो_notअगरy_parent(leader, leader->निकास_संकेत);
+		अगर (zap_leader)
+			leader->निकास_state = EXIT_DEAD;
+	पूर्ण
 
-	write_unlock_irq(&tasklist_lock);
+	ग_लिखो_unlock_irq(&tasklist_lock);
 	seccomp_filter_release(p);
-	proc_flush_pid(thread_pid);
-	put_pid(thread_pid);
-	release_thread(p);
-	put_task_struct_rcu_user(p);
+	proc_flush_pid(thपढ़ो_pid);
+	put_pid(thपढ़ो_pid);
+	release_thपढ़ो(p);
+	put_task_काष्ठा_rcu_user(p);
 
 	p = leader;
-	if (unlikely(zap_leader))
-		goto repeat;
-}
+	अगर (unlikely(zap_leader))
+		जाओ repeat;
+पूर्ण
 
-int rcuwait_wake_up(struct rcuwait *w)
-{
-	int ret = 0;
-	struct task_struct *task;
+पूर्णांक rcuरुको_wake_up(काष्ठा rcuरुको *w)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा task_काष्ठा *task;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	/*
 	 * Order condition vs @task, such that everything prior to the load
 	 * of @task is visible. This is the condition as to why the user called
-	 * rcuwait_wake() in the first place. Pairs with set_current_state()
-	 * barrier (A) in rcuwait_wait_event().
+	 * rcuरुको_wake() in the first place. Pairs with set_current_state()
+	 * barrier (A) in rcuरुको_रुको_event().
 	 *
 	 *    WAIT                WAKE
 	 *    [S] tsk = current	  [S] cond = true
@@ -251,818 +252,818 @@ int rcuwait_wake_up(struct rcuwait *w)
 	smp_mb(); /* (B) */
 
 	task = rcu_dereference(w->task);
-	if (task)
+	अगर (task)
 		ret = wake_up_process(task);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(rcuwait_wake_up);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(rcuरुको_wake_up);
 
 /*
- * Determine if a process group is "orphaned", according to the POSIX
+ * Determine अगर a process group is "orphaned", according to the POSIX
  * definition in 2.2.2.52.  Orphaned process groups are not to be affected
- * by terminal-generated stop signals.  Newly orphaned process groups are
+ * by terminal-generated stop संकेतs.  Newly orphaned process groups are
  * to receive a SIGHUP and a SIGCONT.
  *
  * "I ask you, have you ever known what it is to be an orphan?"
  */
-static int will_become_orphaned_pgrp(struct pid *pgrp,
-					struct task_struct *ignored_task)
-{
-	struct task_struct *p;
+अटल पूर्णांक will_become_orphaned_pgrp(काष्ठा pid *pgrp,
+					काष्ठा task_काष्ठा *ignored_task)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
-		if ((p == ignored_task) ||
-		    (p->exit_state && thread_group_empty(p)) ||
+	करो_each_pid_task(pgrp, PIDTYPE_PGID, p) अणु
+		अगर ((p == ignored_task) ||
+		    (p->निकास_state && thपढ़ो_group_empty(p)) ||
 		    is_global_init(p->real_parent))
-			continue;
+			जारी;
 
-		if (task_pgrp(p->real_parent) != pgrp &&
+		अगर (task_pgrp(p->real_parent) != pgrp &&
 		    task_session(p->real_parent) == task_session(p))
-			return 0;
-	} while_each_pid_task(pgrp, PIDTYPE_PGID, p);
+			वापस 0;
+	पूर्ण जबतक_each_pid_task(pgrp, PIDTYPE_PGID, p);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int is_current_pgrp_orphaned(void)
-{
-	int retval;
+पूर्णांक is_current_pgrp_orphaned(व्योम)
+अणु
+	पूर्णांक retval;
 
-	read_lock(&tasklist_lock);
-	retval = will_become_orphaned_pgrp(task_pgrp(current), NULL);
-	read_unlock(&tasklist_lock);
+	पढ़ो_lock(&tasklist_lock);
+	retval = will_become_orphaned_pgrp(task_pgrp(current), शून्य);
+	पढ़ो_unlock(&tasklist_lock);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static bool has_stopped_jobs(struct pid *pgrp)
-{
-	struct task_struct *p;
+अटल bool has_stopped_jobs(काष्ठा pid *pgrp)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	do_each_pid_task(pgrp, PIDTYPE_PGID, p) {
-		if (p->signal->flags & SIGNAL_STOP_STOPPED)
-			return true;
-	} while_each_pid_task(pgrp, PIDTYPE_PGID, p);
+	करो_each_pid_task(pgrp, PIDTYPE_PGID, p) अणु
+		अगर (p->संकेत->flags & SIGNAL_STOP_STOPPED)
+			वापस true;
+	पूर्ण जबतक_each_pid_task(pgrp, PIDTYPE_PGID, p);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Check to see if any process groups have become orphaned as
- * a result of our exiting, and if they have any stopped jobs,
+ * Check to see अगर any process groups have become orphaned as
+ * a result of our निकासing, and अगर they have any stopped jobs,
  * send them a SIGHUP and then a SIGCONT. (POSIX 3.2.2.2)
  */
-static void
-kill_orphaned_pgrp(struct task_struct *tsk, struct task_struct *parent)
-{
-	struct pid *pgrp = task_pgrp(tsk);
-	struct task_struct *ignored_task = tsk;
+अटल व्योम
+समाप्त_orphaned_pgrp(काष्ठा task_काष्ठा *tsk, काष्ठा task_काष्ठा *parent)
+अणु
+	काष्ठा pid *pgrp = task_pgrp(tsk);
+	काष्ठा task_काष्ठा *ignored_task = tsk;
 
-	if (!parent)
-		/* exit: our father is in a different pgrp than
+	अगर (!parent)
+		/* निकास: our father is in a dअगरferent pgrp than
 		 * we are and we were the only connection outside.
 		 */
 		parent = tsk->real_parent;
-	else
-		/* reparent: our child is in a different pgrp than
+	अन्यथा
+		/* reparent: our child is in a dअगरferent pgrp than
 		 * we are, and it was the only connection outside.
 		 */
-		ignored_task = NULL;
+		ignored_task = शून्य;
 
-	if (task_pgrp(parent) != pgrp &&
+	अगर (task_pgrp(parent) != pgrp &&
 	    task_session(parent) == task_session(tsk) &&
 	    will_become_orphaned_pgrp(pgrp, ignored_task) &&
-	    has_stopped_jobs(pgrp)) {
-		__kill_pgrp_info(SIGHUP, SEND_SIG_PRIV, pgrp);
-		__kill_pgrp_info(SIGCONT, SEND_SIG_PRIV, pgrp);
-	}
-}
+	    has_stopped_jobs(pgrp)) अणु
+		__समाप्त_pgrp_info(SIGHUP, SEND_SIG_PRIV, pgrp);
+		__समाप्त_pgrp_info(SIGCONT, SEND_SIG_PRIV, pgrp);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_MEMCG
+#अगर_घोषित CONFIG_MEMCG
 /*
- * A task is exiting.   If it owned this mm, find a new owner for the mm.
+ * A task is निकासing.   If it owned this mm, find a new owner क्रम the mm.
  */
-void mm_update_next_owner(struct mm_struct *mm)
-{
-	struct task_struct *c, *g, *p = current;
+व्योम mm_update_next_owner(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा task_काष्ठा *c, *g, *p = current;
 
 retry:
 	/*
-	 * If the exiting or execing task is not the owner, it's
-	 * someone else's problem.
+	 * If the निकासing or execing task is not the owner, it's
+	 * someone अन्यथा's problem.
 	 */
-	if (mm->owner != p)
-		return;
+	अगर (mm->owner != p)
+		वापस;
 	/*
-	 * The current owner is exiting/execing and there are no other
-	 * candidates.  Do not leave the mm pointing to a possibly
-	 * freed task structure.
+	 * The current owner is निकासing/execing and there are no other
+	 * candidates.  Do not leave the mm poपूर्णांकing to a possibly
+	 * मुक्तd task काष्ठाure.
 	 */
-	if (atomic_read(&mm->mm_users) <= 1) {
-		WRITE_ONCE(mm->owner, NULL);
-		return;
-	}
+	अगर (atomic_पढ़ो(&mm->mm_users) <= 1) अणु
+		WRITE_ONCE(mm->owner, शून्य);
+		वापस;
+	पूर्ण
 
-	read_lock(&tasklist_lock);
+	पढ़ो_lock(&tasklist_lock);
 	/*
 	 * Search in the children
 	 */
-	list_for_each_entry(c, &p->children, sibling) {
-		if (c->mm == mm)
-			goto assign_new_owner;
-	}
+	list_क्रम_each_entry(c, &p->children, sibling) अणु
+		अगर (c->mm == mm)
+			जाओ assign_new_owner;
+	पूर्ण
 
 	/*
 	 * Search in the siblings
 	 */
-	list_for_each_entry(c, &p->real_parent->children, sibling) {
-		if (c->mm == mm)
-			goto assign_new_owner;
-	}
+	list_क्रम_each_entry(c, &p->real_parent->children, sibling) अणु
+		अगर (c->mm == mm)
+			जाओ assign_new_owner;
+	पूर्ण
 
 	/*
-	 * Search through everything else, we should not get here often.
+	 * Search through everything अन्यथा, we should not get here often.
 	 */
-	for_each_process(g) {
-		if (g->flags & PF_KTHREAD)
-			continue;
-		for_each_thread(g, c) {
-			if (c->mm == mm)
-				goto assign_new_owner;
-			if (c->mm)
-				break;
-		}
-	}
-	read_unlock(&tasklist_lock);
+	क्रम_each_process(g) अणु
+		अगर (g->flags & PF_KTHREAD)
+			जारी;
+		क्रम_each_thपढ़ो(g, c) अणु
+			अगर (c->mm == mm)
+				जाओ assign_new_owner;
+			अगर (c->mm)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&tasklist_lock);
 	/*
 	 * We found no owner yet mm_users > 1: this implies that we are
 	 * most likely racing with swapoff (try_to_unuse()) or /proc or
-	 * ptrace or page migration (get_task_mm()).  Mark owner as NULL.
+	 * ptrace or page migration (get_task_mm()).  Mark owner as शून्य.
 	 */
-	WRITE_ONCE(mm->owner, NULL);
-	return;
+	WRITE_ONCE(mm->owner, शून्य);
+	वापस;
 
 assign_new_owner:
 	BUG_ON(c == p);
-	get_task_struct(c);
+	get_task_काष्ठा(c);
 	/*
 	 * The task_lock protects c->mm from changing.
 	 * We always want mm->owner->mm == mm
 	 */
 	task_lock(c);
 	/*
-	 * Delay read_unlock() till we have the task_lock()
-	 * to ensure that c does not slip away underneath us
+	 * Delay पढ़ो_unlock() till we have the task_lock()
+	 * to ensure that c करोes not slip away underneath us
 	 */
-	read_unlock(&tasklist_lock);
-	if (c->mm != mm) {
+	पढ़ो_unlock(&tasklist_lock);
+	अगर (c->mm != mm) अणु
 		task_unlock(c);
-		put_task_struct(c);
-		goto retry;
-	}
+		put_task_काष्ठा(c);
+		जाओ retry;
+	पूर्ण
 	WRITE_ONCE(mm->owner, c);
 	task_unlock(c);
-	put_task_struct(c);
-}
-#endif /* CONFIG_MEMCG */
+	put_task_काष्ठा(c);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMCG */
 
 /*
- * Turn us into a lazy TLB process if we
- * aren't already..
+ * Turn us पूर्णांकo a lazy TLB process अगर we
+ * aren't alपढ़ोy..
  */
-static void exit_mm(void)
-{
-	struct mm_struct *mm = current->mm;
-	struct core_state *core_state;
+अटल व्योम निकास_mm(व्योम)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा core_state *core_state;
 
-	exit_mm_release(current, mm);
-	if (!mm)
-		return;
+	निकास_mm_release(current, mm);
+	अगर (!mm)
+		वापस;
 	sync_mm_rss(mm);
 	/*
 	 * Serialize with any possible pending coredump.
 	 * We must hold mmap_lock around checking core_state
-	 * and clearing tsk->mm.  The core-inducing thread
-	 * will increment ->nr_threads for each thread in the
-	 * group with ->mm != NULL.
+	 * and clearing tsk->mm.  The core-inducing thपढ़ो
+	 * will increment ->nr_thपढ़ोs क्रम each thपढ़ो in the
+	 * group with ->mm != शून्य.
 	 */
-	mmap_read_lock(mm);
+	mmap_पढ़ो_lock(mm);
 	core_state = mm->core_state;
-	if (core_state) {
-		struct core_thread self;
+	अगर (core_state) अणु
+		काष्ठा core_thपढ़ो self;
 
-		mmap_read_unlock(mm);
+		mmap_पढ़ो_unlock(mm);
 
 		self.task = current;
-		if (self.task->flags & PF_SIGNALED)
+		अगर (self.task->flags & PF_SIGNALED)
 			self.next = xchg(&core_state->dumper.next, &self);
-		else
-			self.task = NULL;
+		अन्यथा
+			self.task = शून्य;
 		/*
 		 * Implies mb(), the result of xchg() must be visible
 		 * to core_state->dumper.
 		 */
-		if (atomic_dec_and_test(&core_state->nr_threads))
+		अगर (atomic_dec_and_test(&core_state->nr_thपढ़ोs))
 			complete(&core_state->startup);
 
-		for (;;) {
+		क्रम (;;) अणु
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			if (!self.task) /* see coredump_finish() */
-				break;
-			freezable_schedule();
-		}
+			अगर (!self.task) /* see coredump_finish() */
+				अवरोध;
+			मुक्तzable_schedule();
+		पूर्ण
 		__set_current_state(TASK_RUNNING);
-		mmap_read_lock(mm);
-	}
+		mmap_पढ़ो_lock(mm);
+	पूर्ण
 	mmgrab(mm);
 	BUG_ON(mm != current->active_mm);
 	/* more a memory barrier than a real lock */
 	task_lock(current);
 	/*
-	 * When a thread stops operating on an address space, the loop
-	 * in membarrier_private_expedited() may not observe that
+	 * When a thपढ़ो stops operating on an address space, the loop
+	 * in membarrier_निजी_expedited() may not observe that
 	 * tsk->mm, and the loop in membarrier_global_expedited() may
 	 * not observe a MEMBARRIER_STATE_GLOBAL_EXPEDITED
 	 * rq->membarrier_state, so those would not issue an IPI.
 	 * Membarrier requires a memory barrier after accessing
-	 * user-space memory, before clearing tsk->mm or the
+	 * user-space memory, beक्रमe clearing tsk->mm or the
 	 * rq->membarrier_state.
 	 */
 	smp_mb__after_spinlock();
 	local_irq_disable();
-	current->mm = NULL;
-	membarrier_update_current_mm(NULL);
+	current->mm = शून्य;
+	membarrier_update_current_mm(शून्य);
 	enter_lazy_tlb(mm, current);
 	local_irq_enable();
 	task_unlock(current);
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 	mm_update_next_owner(mm);
 	mmput(mm);
-	if (test_thread_flag(TIF_MEMDIE))
-		exit_oom_victim();
-}
+	अगर (test_thपढ़ो_flag(TIF_MEMDIE))
+		निकास_oom_victim();
+पूर्ण
 
-static struct task_struct *find_alive_thread(struct task_struct *p)
-{
-	struct task_struct *t;
+अटल काष्ठा task_काष्ठा *find_alive_thपढ़ो(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा task_काष्ठा *t;
 
-	for_each_thread(p, t) {
-		if (!(t->flags & PF_EXITING))
-			return t;
-	}
-	return NULL;
-}
+	क्रम_each_thपढ़ो(p, t) अणु
+		अगर (!(t->flags & PF_EXITING))
+			वापस t;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct task_struct *find_child_reaper(struct task_struct *father,
-						struct list_head *dead)
+अटल काष्ठा task_काष्ठा *find_child_reaper(काष्ठा task_काष्ठा *father,
+						काष्ठा list_head *dead)
 	__releases(&tasklist_lock)
 	__acquires(&tasklist_lock)
-{
-	struct pid_namespace *pid_ns = task_active_pid_ns(father);
-	struct task_struct *reaper = pid_ns->child_reaper;
-	struct task_struct *p, *n;
+अणु
+	काष्ठा pid_namespace *pid_ns = task_active_pid_ns(father);
+	काष्ठा task_काष्ठा *reaper = pid_ns->child_reaper;
+	काष्ठा task_काष्ठा *p, *n;
 
-	if (likely(reaper != father))
-		return reaper;
+	अगर (likely(reaper != father))
+		वापस reaper;
 
-	reaper = find_alive_thread(father);
-	if (reaper) {
+	reaper = find_alive_thपढ़ो(father);
+	अगर (reaper) अणु
 		pid_ns->child_reaper = reaper;
-		return reaper;
-	}
+		वापस reaper;
+	पूर्ण
 
-	write_unlock_irq(&tasklist_lock);
+	ग_लिखो_unlock_irq(&tasklist_lock);
 
-	list_for_each_entry_safe(p, n, dead, ptrace_entry) {
+	list_क्रम_each_entry_safe(p, n, dead, ptrace_entry) अणु
 		list_del_init(&p->ptrace_entry);
 		release_task(p);
-	}
+	पूर्ण
 
 	zap_pid_ns_processes(pid_ns);
-	write_lock_irq(&tasklist_lock);
+	ग_लिखो_lock_irq(&tasklist_lock);
 
-	return father;
-}
+	वापस father;
+पूर्ण
 
 /*
  * When we die, we re-parent all our children, and try to:
- * 1. give them to another thread in our thread group, if such a member exists
+ * 1. give them to another thपढ़ो in our thपढ़ो group, अगर such a member exists
  * 2. give it to the first ancestor process which prctl'd itself as a
- *    child_subreaper for its children (like a service manager)
+ *    child_subreaper क्रम its children (like a service manager)
  * 3. give it to the init process (PID 1) in our pid namespace
  */
-static struct task_struct *find_new_reaper(struct task_struct *father,
-					   struct task_struct *child_reaper)
-{
-	struct task_struct *thread, *reaper;
+अटल काष्ठा task_काष्ठा *find_new_reaper(काष्ठा task_काष्ठा *father,
+					   काष्ठा task_काष्ठा *child_reaper)
+अणु
+	काष्ठा task_काष्ठा *thपढ़ो, *reaper;
 
-	thread = find_alive_thread(father);
-	if (thread)
-		return thread;
+	thपढ़ो = find_alive_thपढ़ो(father);
+	अगर (thपढ़ो)
+		वापस thपढ़ो;
 
-	if (father->signal->has_child_subreaper) {
-		unsigned int ns_level = task_pid(father)->level;
+	अगर (father->संकेत->has_child_subreaper) अणु
+		अचिन्हित पूर्णांक ns_level = task_pid(father)->level;
 		/*
 		 * Find the first ->is_child_subreaper ancestor in our pid_ns.
-		 * We can't check reaper != child_reaper to ensure we do not
-		 * cross the namespaces, the exiting parent could be injected
-		 * by setns() + fork().
+		 * We can't check reaper != child_reaper to ensure we करो not
+		 * cross the namespaces, the निकासing parent could be injected
+		 * by setns() + विभाजन().
 		 * We check pid->level, this is slightly more efficient than
 		 * task_active_pid_ns(reaper) != task_active_pid_ns(father).
 		 */
-		for (reaper = father->real_parent;
+		क्रम (reaper = father->real_parent;
 		     task_pid(reaper)->level == ns_level;
-		     reaper = reaper->real_parent) {
-			if (reaper == &init_task)
-				break;
-			if (!reaper->signal->is_child_subreaper)
-				continue;
-			thread = find_alive_thread(reaper);
-			if (thread)
-				return thread;
-		}
-	}
+		     reaper = reaper->real_parent) अणु
+			अगर (reaper == &init_task)
+				अवरोध;
+			अगर (!reaper->संकेत->is_child_subreaper)
+				जारी;
+			thपढ़ो = find_alive_thपढ़ो(reaper);
+			अगर (thपढ़ो)
+				वापस thपढ़ो;
+		पूर्ण
+	पूर्ण
 
-	return child_reaper;
-}
+	वापस child_reaper;
+पूर्ण
 
 /*
 * Any that need to be release_task'd are put on the @dead list.
  */
-static void reparent_leader(struct task_struct *father, struct task_struct *p,
-				struct list_head *dead)
-{
-	if (unlikely(p->exit_state == EXIT_DEAD))
-		return;
+अटल व्योम reparent_leader(काष्ठा task_काष्ठा *father, काष्ठा task_काष्ठा *p,
+				काष्ठा list_head *dead)
+अणु
+	अगर (unlikely(p->निकास_state == EXIT_DEAD))
+		वापस;
 
-	/* We don't want people slaying init. */
-	p->exit_signal = SIGCHLD;
+	/* We करोn't want people slaying init. */
+	p->निकास_संकेत = SIGCHLD;
 
-	/* If it has exited notify the new parent about this child's death. */
-	if (!p->ptrace &&
-	    p->exit_state == EXIT_ZOMBIE && thread_group_empty(p)) {
-		if (do_notify_parent(p, p->exit_signal)) {
-			p->exit_state = EXIT_DEAD;
+	/* If it has निकासed notअगरy the new parent about this child's death. */
+	अगर (!p->ptrace &&
+	    p->निकास_state == EXIT_ZOMBIE && thपढ़ो_group_empty(p)) अणु
+		अगर (करो_notअगरy_parent(p, p->निकास_संकेत)) अणु
+			p->निकास_state = EXIT_DEAD;
 			list_add(&p->ptrace_entry, dead);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kill_orphaned_pgrp(p, father);
-}
+	समाप्त_orphaned_pgrp(p, father);
+पूर्ण
 
 /*
- * This does two things:
+ * This करोes two things:
  *
  * A.  Make init inherit all the child processes
- * B.  Check to see if any process groups have become orphaned
- *	as a result of our exiting, and if they have any stopped
+ * B.  Check to see अगर any process groups have become orphaned
+ *	as a result of our निकासing, and अगर they have any stopped
  *	jobs, send them a SIGHUP and then a SIGCONT.  (POSIX 3.2.2.2)
  */
-static void forget_original_parent(struct task_struct *father,
-					struct list_head *dead)
-{
-	struct task_struct *p, *t, *reaper;
+अटल व्योम क्रमget_original_parent(काष्ठा task_काष्ठा *father,
+					काष्ठा list_head *dead)
+अणु
+	काष्ठा task_काष्ठा *p, *t, *reaper;
 
-	if (unlikely(!list_empty(&father->ptraced)))
-		exit_ptrace(father, dead);
+	अगर (unlikely(!list_empty(&father->ptraced)))
+		निकास_ptrace(father, dead);
 
 	/* Can drop and reacquire tasklist_lock */
 	reaper = find_child_reaper(father, dead);
-	if (list_empty(&father->children))
-		return;
+	अगर (list_empty(&father->children))
+		वापस;
 
 	reaper = find_new_reaper(father, reaper);
-	list_for_each_entry(p, &father->children, sibling) {
-		for_each_thread(p, t) {
+	list_क्रम_each_entry(p, &father->children, sibling) अणु
+		क्रम_each_thपढ़ो(p, t) अणु
 			RCU_INIT_POINTER(t->real_parent, reaper);
-			BUG_ON((!t->ptrace) != (rcu_access_pointer(t->parent) == father));
-			if (likely(!t->ptrace))
+			BUG_ON((!t->ptrace) != (rcu_access_poपूर्णांकer(t->parent) == father));
+			अगर (likely(!t->ptrace))
 				t->parent = t->real_parent;
-			if (t->pdeath_signal)
-				group_send_sig_info(t->pdeath_signal,
+			अगर (t->pdeath_संकेत)
+				group_send_sig_info(t->pdeath_संकेत,
 						    SEND_SIG_NOINFO, t,
 						    PIDTYPE_TGID);
-		}
+		पूर्ण
 		/*
-		 * If this is a threaded reparent there is no need to
-		 * notify anyone anything has happened.
+		 * If this is a thपढ़ोed reparent there is no need to
+		 * notअगरy anyone anything has happened.
 		 */
-		if (!same_thread_group(reaper, father))
+		अगर (!same_thपढ़ो_group(reaper, father))
 			reparent_leader(father, p, dead);
-	}
+	पूर्ण
 	list_splice_tail_init(&father->children, &reaper->children);
-}
+पूर्ण
 
 /*
- * Send signals to all our closest relatives so that they know
+ * Send संकेतs to all our बंदst relatives so that they know
  * to properly mourn us..
  */
-static void exit_notify(struct task_struct *tsk, int group_dead)
-{
-	bool autoreap;
-	struct task_struct *p, *n;
+अटल व्योम निकास_notअगरy(काष्ठा task_काष्ठा *tsk, पूर्णांक group_dead)
+अणु
+	bool स्वतःreap;
+	काष्ठा task_काष्ठा *p, *n;
 	LIST_HEAD(dead);
 
-	write_lock_irq(&tasklist_lock);
-	forget_original_parent(tsk, &dead);
+	ग_लिखो_lock_irq(&tasklist_lock);
+	क्रमget_original_parent(tsk, &dead);
 
-	if (group_dead)
-		kill_orphaned_pgrp(tsk->group_leader, NULL);
+	अगर (group_dead)
+		समाप्त_orphaned_pgrp(tsk->group_leader, शून्य);
 
-	tsk->exit_state = EXIT_ZOMBIE;
-	if (unlikely(tsk->ptrace)) {
-		int sig = thread_group_leader(tsk) &&
-				thread_group_empty(tsk) &&
+	tsk->निकास_state = EXIT_ZOMBIE;
+	अगर (unlikely(tsk->ptrace)) अणु
+		पूर्णांक sig = thपढ़ो_group_leader(tsk) &&
+				thपढ़ो_group_empty(tsk) &&
 				!ptrace_reparented(tsk) ?
-			tsk->exit_signal : SIGCHLD;
-		autoreap = do_notify_parent(tsk, sig);
-	} else if (thread_group_leader(tsk)) {
-		autoreap = thread_group_empty(tsk) &&
-			do_notify_parent(tsk, tsk->exit_signal);
-	} else {
-		autoreap = true;
-	}
+			tsk->निकास_संकेत : SIGCHLD;
+		स्वतःreap = करो_notअगरy_parent(tsk, sig);
+	पूर्ण अन्यथा अगर (thपढ़ो_group_leader(tsk)) अणु
+		स्वतःreap = thपढ़ो_group_empty(tsk) &&
+			करो_notअगरy_parent(tsk, tsk->निकास_संकेत);
+	पूर्ण अन्यथा अणु
+		स्वतःreap = true;
+	पूर्ण
 
-	if (autoreap) {
-		tsk->exit_state = EXIT_DEAD;
+	अगर (स्वतःreap) अणु
+		tsk->निकास_state = EXIT_DEAD;
 		list_add(&tsk->ptrace_entry, &dead);
-	}
+	पूर्ण
 
-	/* mt-exec, de_thread() is waiting for group leader */
-	if (unlikely(tsk->signal->notify_count < 0))
-		wake_up_process(tsk->signal->group_exit_task);
-	write_unlock_irq(&tasklist_lock);
+	/* mt-exec, de_thपढ़ो() is रुकोing क्रम group leader */
+	अगर (unlikely(tsk->संकेत->notअगरy_count < 0))
+		wake_up_process(tsk->संकेत->group_निकास_task);
+	ग_लिखो_unlock_irq(&tasklist_lock);
 
-	list_for_each_entry_safe(p, n, &dead, ptrace_entry) {
+	list_क्रम_each_entry_safe(p, n, &dead, ptrace_entry) अणु
 		list_del_init(&p->ptrace_entry);
 		release_task(p);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_DEBUG_STACK_USAGE
-static void check_stack_usage(void)
-{
-	static DEFINE_SPINLOCK(low_water_lock);
-	static int lowest_to_date = THREAD_SIZE;
-	unsigned long free;
+#अगर_घोषित CONFIG_DEBUG_STACK_USAGE
+अटल व्योम check_stack_usage(व्योम)
+अणु
+	अटल DEFINE_SPINLOCK(low_water_lock);
+	अटल पूर्णांक lowest_to_date = THREAD_SIZE;
+	अचिन्हित दीर्घ मुक्त;
 
-	free = stack_not_used(current);
+	मुक्त = stack_not_used(current);
 
-	if (free >= lowest_to_date)
-		return;
+	अगर (मुक्त >= lowest_to_date)
+		वापस;
 
 	spin_lock(&low_water_lock);
-	if (free < lowest_to_date) {
+	अगर (मुक्त < lowest_to_date) अणु
 		pr_info("%s (%d) used greatest stack depth: %lu bytes left\n",
-			current->comm, task_pid_nr(current), free);
-		lowest_to_date = free;
-	}
+			current->comm, task_pid_nr(current), मुक्त);
+		lowest_to_date = मुक्त;
+	पूर्ण
 	spin_unlock(&low_water_lock);
-}
-#else
-static inline void check_stack_usage(void) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम check_stack_usage(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-void __noreturn do_exit(long code)
-{
-	struct task_struct *tsk = current;
-	int group_dead;
+व्योम __noवापस करो_निकास(दीर्घ code)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	पूर्णांक group_dead;
 
 	/*
-	 * We can get here from a kernel oops, sometimes with preemption off.
-	 * Start by checking for critical errors.
+	 * We can get here from a kernel oops, someबार with preemption off.
+	 * Start by checking क्रम critical errors.
 	 * Then fix up important state like USER_DS and preemption.
-	 * Then do everything else.
+	 * Then करो everything अन्यथा.
 	 */
 
 	WARN_ON(blk_needs_flush_plug(tsk));
 
-	if (unlikely(in_interrupt()))
+	अगर (unlikely(in_पूर्णांकerrupt()))
 		panic("Aiee, killing interrupt handler!");
-	if (unlikely(!tsk->pid))
+	अगर (unlikely(!tsk->pid))
 		panic("Attempted to kill the idle task!");
 
 	/*
-	 * If do_exit is called because this processes oopsed, it's possible
-	 * that get_fs() was left as KERNEL_DS, so reset it to USER_DS before
+	 * If करो_निकास is called because this processes oopsed, it's possible
+	 * that get_fs() was left as KERNEL_DS, so reset it to USER_DS beक्रमe
 	 * continuing. Amongst other possible reasons, this is to prevent
 	 * mm_release()->clear_child_tid() from writing to a user-controlled
 	 * kernel address.
 	 */
-	force_uaccess_begin();
+	क्रमce_uaccess_begin();
 
-	if (unlikely(in_atomic())) {
+	अगर (unlikely(in_atomic())) अणु
 		pr_info("note: %s[%d] exited with preempt_count %d\n",
 			current->comm, task_pid_nr(current),
 			preempt_count());
 		preempt_count_set(PREEMPT_ENABLED);
-	}
+	पूर्ण
 
-	profile_task_exit(tsk);
-	kcov_task_exit(tsk);
+	profile_task_निकास(tsk);
+	kcov_task_निकास(tsk);
 
 	ptrace_event(PTRACE_EVENT_EXIT, code);
 
-	validate_creds_for_do_exit(tsk);
+	validate_creds_क्रम_करो_निकास(tsk);
 
 	/*
-	 * We're taking recursive faults here in do_exit. Safest is to just
-	 * leave this task alone and wait for reboot.
+	 * We're taking recursive faults here in करो_निकास. Safest is to just
+	 * leave this task alone and रुको क्रम reboot.
 	 */
-	if (unlikely(tsk->flags & PF_EXITING)) {
+	अगर (unlikely(tsk->flags & PF_EXITING)) अणु
 		pr_alert("Fixing recursive fault but reboot is needed!\n");
-		futex_exit_recursive(tsk);
+		futex_निकास_recursive(tsk);
 		set_current_state(TASK_UNINTERRUPTIBLE);
 		schedule();
-	}
+	पूर्ण
 
 	io_uring_files_cancel(tsk->files);
-	exit_signals(tsk);  /* sets PF_EXITING */
+	निकास_संकेतs(tsk);  /* sets PF_EXITING */
 
-	/* sync mm's RSS info before statistics gathering */
-	if (tsk->mm)
+	/* sync mm's RSS info beक्रमe statistics gathering */
+	अगर (tsk->mm)
 		sync_mm_rss(tsk->mm);
-	acct_update_integrals(tsk);
-	group_dead = atomic_dec_and_test(&tsk->signal->live);
-	if (group_dead) {
+	acct_update_पूर्णांकegrals(tsk);
+	group_dead = atomic_dec_and_test(&tsk->संकेत->live);
+	अगर (group_dead) अणु
 		/*
-		 * If the last thread of global init has exited, panic
+		 * If the last thपढ़ो of global init has निकासed, panic
 		 * immediately to get a useable coredump.
 		 */
-		if (unlikely(is_global_init(tsk)))
+		अगर (unlikely(is_global_init(tsk)))
 			panic("Attempted to kill init! exitcode=0x%08x\n",
-				tsk->signal->group_exit_code ?: (int)code);
+				tsk->संकेत->group_निकास_code ?: (पूर्णांक)code);
 
-#ifdef CONFIG_POSIX_TIMERS
-		hrtimer_cancel(&tsk->signal->real_timer);
-		exit_itimers(tsk->signal);
-#endif
-		if (tsk->mm)
-			setmax_mm_hiwater_rss(&tsk->signal->maxrss, tsk->mm);
-	}
+#अगर_घोषित CONFIG_POSIX_TIMERS
+		hrसमयr_cancel(&tsk->संकेत->real_समयr);
+		निकास_iसमयrs(tsk->संकेत);
+#पूर्ण_अगर
+		अगर (tsk->mm)
+			seपंचांगax_mm_hiwater_rss(&tsk->संकेत->maxrss, tsk->mm);
+	पूर्ण
 	acct_collect(code, group_dead);
-	if (group_dead)
-		tty_audit_exit();
-	audit_free(tsk);
+	अगर (group_dead)
+		tty_audit_निकास();
+	audit_मुक्त(tsk);
 
-	tsk->exit_code = code;
-	taskstats_exit(tsk, group_dead);
+	tsk->निकास_code = code;
+	taskstats_निकास(tsk, group_dead);
 
-	exit_mm();
+	निकास_mm();
 
-	if (group_dead)
+	अगर (group_dead)
 		acct_process();
-	trace_sched_process_exit(tsk);
+	trace_sched_process_निकास(tsk);
 
-	exit_sem(tsk);
-	exit_shm(tsk);
-	exit_files(tsk);
-	exit_fs(tsk);
-	if (group_dead)
+	निकास_sem(tsk);
+	निकास_shm(tsk);
+	निकास_files(tsk);
+	निकास_fs(tsk);
+	अगर (group_dead)
 		disassociate_ctty(1);
-	exit_task_namespaces(tsk);
-	exit_task_work(tsk);
-	exit_thread(tsk);
+	निकास_task_namespaces(tsk);
+	निकास_task_work(tsk);
+	निकास_thपढ़ो(tsk);
 
 	/*
-	 * Flush inherited counters to the parent - before the parent
-	 * gets woken up by child-exit notifications.
+	 * Flush inherited counters to the parent - beक्रमe the parent
+	 * माला_लो woken up by child-निकास notअगरications.
 	 *
-	 * because of cgroup mode, must be called before cgroup_exit()
+	 * because of cgroup mode, must be called beक्रमe cgroup_निकास()
 	 */
-	perf_event_exit_task(tsk);
+	perf_event_निकास_task(tsk);
 
-	sched_autogroup_exit_task(tsk);
-	cgroup_exit(tsk);
+	sched_स्वतःgroup_निकास_task(tsk);
+	cgroup_निकास(tsk);
 
 	/*
-	 * FIXME: do that only when needed, using sched_exit tracepoint
+	 * FIXME: करो that only when needed, using sched_निकास tracepoपूर्णांक
 	 */
-	flush_ptrace_hw_breakpoint(tsk);
+	flush_ptrace_hw_अवरोधpoपूर्णांक(tsk);
 
-	exit_tasks_rcu_start();
-	exit_notify(tsk, group_dead);
-	proc_exit_connector(tsk);
+	निकास_tasks_rcu_start();
+	निकास_notअगरy(tsk, group_dead);
+	proc_निकास_connector(tsk);
 	mpol_put_task_policy(tsk);
-#ifdef CONFIG_FUTEX
-	if (unlikely(current->pi_state_cache))
-		kfree(current->pi_state_cache);
-#endif
+#अगर_घोषित CONFIG_FUTEX
+	अगर (unlikely(current->pi_state_cache))
+		kमुक्त(current->pi_state_cache);
+#पूर्ण_अगर
 	/*
 	 * Make sure we are holding no locks:
 	 */
 	debug_check_no_locks_held();
 
-	if (tsk->io_context)
-		exit_io_context(tsk);
+	अगर (tsk->io_context)
+		निकास_io_context(tsk);
 
-	if (tsk->splice_pipe)
-		free_pipe_info(tsk->splice_pipe);
+	अगर (tsk->splice_pipe)
+		मुक्त_pipe_info(tsk->splice_pipe);
 
-	if (tsk->task_frag.page)
+	अगर (tsk->task_frag.page)
 		put_page(tsk->task_frag.page);
 
-	validate_creds_for_do_exit(tsk);
+	validate_creds_क्रम_करो_निकास(tsk);
 
 	check_stack_usage();
 	preempt_disable();
-	if (tsk->nr_dirtied)
+	अगर (tsk->nr_dirtied)
 		__this_cpu_add(dirty_throttle_leaks, tsk->nr_dirtied);
-	exit_rcu();
-	exit_tasks_rcu_finish();
+	निकास_rcu();
+	निकास_tasks_rcu_finish();
 
-	lockdep_free_task(tsk);
-	do_task_dead();
-}
-EXPORT_SYMBOL_GPL(do_exit);
+	lockdep_मुक्त_task(tsk);
+	करो_task_dead();
+पूर्ण
+EXPORT_SYMBOL_GPL(करो_निकास);
 
-void complete_and_exit(struct completion *comp, long code)
-{
-	if (comp)
+व्योम complete_and_निकास(काष्ठा completion *comp, दीर्घ code)
+अणु
+	अगर (comp)
 		complete(comp);
 
-	do_exit(code);
-}
-EXPORT_SYMBOL(complete_and_exit);
+	करो_निकास(code);
+पूर्ण
+EXPORT_SYMBOL(complete_and_निकास);
 
-SYSCALL_DEFINE1(exit, int, error_code)
-{
-	do_exit((error_code&0xff)<<8);
-}
+SYSCALL_DEFINE1(निकास, पूर्णांक, error_code)
+अणु
+	करो_निकास((error_code&0xff)<<8);
+पूर्ण
 
 /*
- * Take down every thread in the group.  This is called by fatal signals
- * as well as by sys_exit_group (below).
+ * Take करोwn every thपढ़ो in the group.  This is called by fatal संकेतs
+ * as well as by sys_निकास_group (below).
  */
-void
-do_group_exit(int exit_code)
-{
-	struct signal_struct *sig = current->signal;
+व्योम
+करो_group_निकास(पूर्णांक निकास_code)
+अणु
+	काष्ठा संकेत_काष्ठा *sig = current->संकेत;
 
-	BUG_ON(exit_code & 0x80); /* core dumps don't get here */
+	BUG_ON(निकास_code & 0x80); /* core dumps करोn't get here */
 
-	if (signal_group_exit(sig))
-		exit_code = sig->group_exit_code;
-	else if (!thread_group_empty(current)) {
-		struct sighand_struct *const sighand = current->sighand;
+	अगर (संकेत_group_निकास(sig))
+		निकास_code = sig->group_निकास_code;
+	अन्यथा अगर (!thपढ़ो_group_empty(current)) अणु
+		काष्ठा sighand_काष्ठा *स्थिर sighand = current->sighand;
 
 		spin_lock_irq(&sighand->siglock);
-		if (signal_group_exit(sig))
-			/* Another thread got here before we took the lock.  */
-			exit_code = sig->group_exit_code;
-		else {
-			sig->group_exit_code = exit_code;
+		अगर (संकेत_group_निकास(sig))
+			/* Another thपढ़ो got here beक्रमe we took the lock.  */
+			निकास_code = sig->group_निकास_code;
+		अन्यथा अणु
+			sig->group_निकास_code = निकास_code;
 			sig->flags = SIGNAL_GROUP_EXIT;
-			zap_other_threads(current);
-		}
+			zap_other_thपढ़ोs(current);
+		पूर्ण
 		spin_unlock_irq(&sighand->siglock);
-	}
+	पूर्ण
 
-	do_exit(exit_code);
+	करो_निकास(निकास_code);
 	/* NOTREACHED */
-}
+पूर्ण
 
 /*
- * this kills every thread in the thread group. Note that any externally
- * wait4()-ing process will get the correct exit code - even if this
- * thread is not the thread group leader.
+ * this समाप्तs every thपढ़ो in the thपढ़ो group. Note that any बाह्यally
+ * रुको4()-ing process will get the correct निकास code - even अगर this
+ * thपढ़ो is not the thपढ़ो group leader.
  */
-SYSCALL_DEFINE1(exit_group, int, error_code)
-{
-	do_group_exit((error_code & 0xff) << 8);
+SYSCALL_DEFINE1(निकास_group, पूर्णांक, error_code)
+अणु
+	करो_group_निकास((error_code & 0xff) << 8);
 	/* NOTREACHED */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct waitid_info {
+काष्ठा रुकोid_info अणु
 	pid_t pid;
 	uid_t uid;
-	int status;
-	int cause;
-};
+	पूर्णांक status;
+	पूर्णांक cause;
+पूर्ण;
 
-struct wait_opts {
-	enum pid_type		wo_type;
-	int			wo_flags;
-	struct pid		*wo_pid;
+काष्ठा रुको_opts अणु
+	क्रमागत pid_type		wo_type;
+	पूर्णांक			wo_flags;
+	काष्ठा pid		*wo_pid;
 
-	struct waitid_info	*wo_info;
-	int			wo_stat;
-	struct rusage		*wo_rusage;
+	काष्ठा रुकोid_info	*wo_info;
+	पूर्णांक			wo_stat;
+	काष्ठा rusage		*wo_rusage;
 
-	wait_queue_entry_t		child_wait;
-	int			notask_error;
-};
+	रुको_queue_entry_t		child_रुको;
+	पूर्णांक			notask_error;
+पूर्ण;
 
-static int eligible_pid(struct wait_opts *wo, struct task_struct *p)
-{
-	return	wo->wo_type == PIDTYPE_MAX ||
+अटल पूर्णांक eligible_pid(काष्ठा रुको_opts *wo, काष्ठा task_काष्ठा *p)
+अणु
+	वापस	wo->wo_type == PIDTYPE_MAX ||
 		task_pid_type(p, wo->wo_type) == wo->wo_pid;
-}
+पूर्ण
 
-static int
-eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
-{
-	if (!eligible_pid(wo, p))
-		return 0;
+अटल पूर्णांक
+eligible_child(काष्ठा रुको_opts *wo, bool ptrace, काष्ठा task_काष्ठा *p)
+अणु
+	अगर (!eligible_pid(wo, p))
+		वापस 0;
 
 	/*
-	 * Wait for all children (clone and not) if __WALL is set or
-	 * if it is traced by us.
+	 * Wait क्रम all children (clone and not) अगर __WALL is set or
+	 * अगर it is traced by us.
 	 */
-	if (ptrace || (wo->wo_flags & __WALL))
-		return 1;
+	अगर (ptrace || (wo->wo_flags & __WALL))
+		वापस 1;
 
 	/*
-	 * Otherwise, wait for clone children *only* if __WCLONE is set;
-	 * otherwise, wait for non-clone children *only*.
+	 * Otherwise, रुको क्रम clone children *only* अगर __WCLONE is set;
+	 * otherwise, रुको क्रम non-clone children *only*.
 	 *
 	 * Note: a "clone" child here is one that reports to its parent
-	 * using a signal other than SIGCHLD, or a non-leader thread which
-	 * we can only see if it is traced by us.
+	 * using a संकेत other than SIGCHLD, or a non-leader thपढ़ो which
+	 * we can only see अगर it is traced by us.
 	 */
-	if ((p->exit_signal != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
-		return 0;
+	अगर ((p->निकास_संकेत != SIGCHLD) ^ !!(wo->wo_flags & __WCLONE))
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Handle sys_wait4 work for one task in state EXIT_ZOMBIE.  We hold
- * read_lock(&tasklist_lock) on entry.  If we return zero, we still hold
- * the lock and this task is uninteresting.  If we return nonzero, we have
- * released the lock and the system call should return.
+ * Handle sys_रुको4 work क्रम one task in state EXIT_ZOMBIE.  We hold
+ * पढ़ो_lock(&tasklist_lock) on entry.  If we वापस zero, we still hold
+ * the lock and this task is unपूर्णांकeresting.  If we वापस nonzero, we have
+ * released the lock and the प्रणाली call should वापस.
  */
-static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
-{
-	int state, status;
+अटल पूर्णांक रुको_task_zombie(काष्ठा रुको_opts *wo, काष्ठा task_काष्ठा *p)
+अणु
+	पूर्णांक state, status;
 	pid_t pid = task_pid_vnr(p);
 	uid_t uid = from_kuid_munged(current_user_ns(), task_uid(p));
-	struct waitid_info *infop;
+	काष्ठा रुकोid_info *infop;
 
-	if (!likely(wo->wo_flags & WEXITED))
-		return 0;
+	अगर (!likely(wo->wo_flags & WEXITED))
+		वापस 0;
 
-	if (unlikely(wo->wo_flags & WNOWAIT)) {
-		status = p->exit_code;
-		get_task_struct(p);
-		read_unlock(&tasklist_lock);
+	अगर (unlikely(wo->wo_flags & WNOWAIT)) अणु
+		status = p->निकास_code;
+		get_task_काष्ठा(p);
+		पढ़ो_unlock(&tasklist_lock);
 		sched_annotate_sleep();
-		if (wo->wo_rusage)
+		अगर (wo->wo_rusage)
 			getrusage(p, RUSAGE_BOTH, wo->wo_rusage);
-		put_task_struct(p);
-		goto out_info;
-	}
+		put_task_काष्ठा(p);
+		जाओ out_info;
+	पूर्ण
 	/*
-	 * Move the task's state to DEAD/TRACE, only one thread can do this.
+	 * Move the task's state to DEAD/TRACE, only one thपढ़ो can करो this.
 	 */
-	state = (ptrace_reparented(p) && thread_group_leader(p)) ?
+	state = (ptrace_reparented(p) && thपढ़ो_group_leader(p)) ?
 		EXIT_TRACE : EXIT_DEAD;
-	if (cmpxchg(&p->exit_state, EXIT_ZOMBIE, state) != EXIT_ZOMBIE)
-		return 0;
+	अगर (cmpxchg(&p->निकास_state, EXIT_ZOMBIE, state) != EXIT_ZOMBIE)
+		वापस 0;
 	/*
-	 * We own this thread, nobody else can reap it.
+	 * We own this thपढ़ो, nobody अन्यथा can reap it.
 	 */
-	read_unlock(&tasklist_lock);
+	पढ़ो_unlock(&tasklist_lock);
 	sched_annotate_sleep();
 
 	/*
-	 * Check thread_group_leader() to exclude the traced sub-threads.
+	 * Check thपढ़ो_group_leader() to exclude the traced sub-thपढ़ोs.
 	 */
-	if (state == EXIT_DEAD && thread_group_leader(p)) {
-		struct signal_struct *sig = p->signal;
-		struct signal_struct *psig = current->signal;
-		unsigned long maxrss;
-		u64 tgutime, tgstime;
+	अगर (state == EXIT_DEAD && thपढ़ो_group_leader(p)) अणु
+		काष्ठा संकेत_काष्ठा *sig = p->संकेत;
+		काष्ठा संकेत_काष्ठा *psig = current->संकेत;
+		अचिन्हित दीर्घ maxrss;
+		u64 tguसमय, tgsसमय;
 
 		/*
-		 * The resource counters for the group leader are in its
-		 * own task_struct.  Those for dead threads in the group
-		 * are in its signal_struct, as are those for the child
+		 * The resource counters क्रम the group leader are in its
+		 * own task_काष्ठा.  Those क्रम dead thपढ़ोs in the group
+		 * are in its संकेत_काष्ठा, as are those क्रम the child
 		 * processes it has previously reaped.  All these
-		 * accumulate in the parent's signal_struct c* fields.
+		 * accumulate in the parent's संकेत_काष्ठा c* fields.
 		 *
-		 * We don't bother to take a lock here to protect these
-		 * p->signal fields because the whole thread group is dead
+		 * We करोn't bother to take a lock here to protect these
+		 * p->संकेत fields because the whole thपढ़ो group is dead
 		 * and nobody can change them.
 		 *
 		 * psig->stats_lock also protects us from our sub-theads
-		 * which can reap other children at the same time. Until
+		 * which can reap other children at the same समय. Until
 		 * we change k_getrusage()-like users to rely on this lock
 		 * we have to take ->siglock as well.
 		 *
-		 * We use thread_group_cputime_adjusted() to get times for
-		 * the thread group, which consolidates times for all threads
+		 * We use thपढ़ो_group_cpuसमय_adjusted() to get बार क्रम
+		 * the thपढ़ो group, which consolidates बार क्रम all thपढ़ोs
 		 * in the group including the group leader.
 		 */
-		thread_group_cputime_adjusted(p, &tgutime, &tgstime);
+		thपढ़ो_group_cpuसमय_adjusted(p, &tguसमय, &tgsसमय);
 		spin_lock_irq(&current->sighand->siglock);
-		write_seqlock(&psig->stats_lock);
-		psig->cutime += tgutime + sig->cutime;
-		psig->cstime += tgstime + sig->cstime;
-		psig->cgtime += task_gtime(p) + sig->gtime + sig->cgtime;
+		ग_लिखो_seqlock(&psig->stats_lock);
+		psig->cuसमय += tguसमय + sig->cuसमय;
+		psig->csसमय += tgsसमय + sig->csसमय;
+		psig->cgसमय += task_gसमय(p) + sig->gसमय + sig->cgसमय;
 		psig->cmin_flt +=
 			p->min_flt + sig->min_flt + sig->cmin_flt;
 		psig->cmaj_flt +=
@@ -1078,741 +1079,741 @@ static int wait_task_zombie(struct wait_opts *wo, struct task_struct *p)
 			task_io_get_oublock(p) +
 			sig->oublock + sig->coublock;
 		maxrss = max(sig->maxrss, sig->cmaxrss);
-		if (psig->cmaxrss < maxrss)
+		अगर (psig->cmaxrss < maxrss)
 			psig->cmaxrss = maxrss;
 		task_io_accounting_add(&psig->ioac, &p->ioac);
 		task_io_accounting_add(&psig->ioac, &sig->ioac);
-		write_sequnlock(&psig->stats_lock);
+		ग_लिखो_sequnlock(&psig->stats_lock);
 		spin_unlock_irq(&current->sighand->siglock);
-	}
+	पूर्ण
 
-	if (wo->wo_rusage)
+	अगर (wo->wo_rusage)
 		getrusage(p, RUSAGE_BOTH, wo->wo_rusage);
-	status = (p->signal->flags & SIGNAL_GROUP_EXIT)
-		? p->signal->group_exit_code : p->exit_code;
+	status = (p->संकेत->flags & SIGNAL_GROUP_EXIT)
+		? p->संकेत->group_निकास_code : p->निकास_code;
 	wo->wo_stat = status;
 
-	if (state == EXIT_TRACE) {
-		write_lock_irq(&tasklist_lock);
+	अगर (state == EXIT_TRACE) अणु
+		ग_लिखो_lock_irq(&tasklist_lock);
 		/* We dropped tasklist, ptracer could die and untrace */
 		ptrace_unlink(p);
 
-		/* If parent wants a zombie, don't release it now */
+		/* If parent wants a zombie, करोn't release it now */
 		state = EXIT_ZOMBIE;
-		if (do_notify_parent(p, p->exit_signal))
+		अगर (करो_notअगरy_parent(p, p->निकास_संकेत))
 			state = EXIT_DEAD;
-		p->exit_state = state;
-		write_unlock_irq(&tasklist_lock);
-	}
-	if (state == EXIT_DEAD)
+		p->निकास_state = state;
+		ग_लिखो_unlock_irq(&tasklist_lock);
+	पूर्ण
+	अगर (state == EXIT_DEAD)
 		release_task(p);
 
 out_info:
 	infop = wo->wo_info;
-	if (infop) {
-		if ((status & 0x7f) == 0) {
+	अगर (infop) अणु
+		अगर ((status & 0x7f) == 0) अणु
 			infop->cause = CLD_EXITED;
 			infop->status = status >> 8;
-		} else {
+		पूर्ण अन्यथा अणु
 			infop->cause = (status & 0x80) ? CLD_DUMPED : CLD_KILLED;
 			infop->status = status & 0x7f;
-		}
+		पूर्ण
 		infop->pid = pid;
 		infop->uid = uid;
-	}
+	पूर्ण
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-static int *task_stopped_code(struct task_struct *p, bool ptrace)
-{
-	if (ptrace) {
-		if (task_is_traced(p) && !(p->jobctl & JOBCTL_LISTENING))
-			return &p->exit_code;
-	} else {
-		if (p->signal->flags & SIGNAL_STOP_STOPPED)
-			return &p->signal->group_exit_code;
-	}
-	return NULL;
-}
+अटल पूर्णांक *task_stopped_code(काष्ठा task_काष्ठा *p, bool ptrace)
+अणु
+	अगर (ptrace) अणु
+		अगर (task_is_traced(p) && !(p->jobctl & JOBCTL_LISTENING))
+			वापस &p->निकास_code;
+	पूर्ण अन्यथा अणु
+		अगर (p->संकेत->flags & SIGNAL_STOP_STOPPED)
+			वापस &p->संकेत->group_निकास_code;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * wait_task_stopped - Wait for %TASK_STOPPED or %TASK_TRACED
- * @wo: wait options
- * @ptrace: is the wait for ptrace
- * @p: task to wait for
+ * रुको_task_stopped - Wait क्रम %TASK_STOPPED or %TASK_TRACED
+ * @wo: रुको options
+ * @ptrace: is the रुको क्रम ptrace
+ * @p: task to रुको क्रम
  *
- * Handle sys_wait4() work for %p in state %TASK_STOPPED or %TASK_TRACED.
+ * Handle sys_रुको4() work क्रम %p in state %TASK_STOPPED or %TASK_TRACED.
  *
  * CONTEXT:
- * read_lock(&tasklist_lock), which is released if return value is
- * non-zero.  Also, grabs and releases @p->sighand->siglock.
+ * पढ़ो_lock(&tasklist_lock), which is released अगर वापस value is
+ * non-zero.  Also, grअसल and releases @p->sighand->siglock.
  *
  * RETURNS:
- * 0 if wait condition didn't exist and search for other wait conditions
- * should continue.  Non-zero return, -errno on failure and @p's pid on
- * success, implies that tasklist_lock is released and wait condition
+ * 0 अगर रुको condition didn't exist and search क्रम other रुको conditions
+ * should जारी.  Non-zero वापस, -त्रुटि_सं on failure and @p's pid on
+ * success, implies that tasklist_lock is released and रुको condition
  * search should terminate.
  */
-static int wait_task_stopped(struct wait_opts *wo,
-				int ptrace, struct task_struct *p)
-{
-	struct waitid_info *infop;
-	int exit_code, *p_code, why;
+अटल पूर्णांक रुको_task_stopped(काष्ठा रुको_opts *wo,
+				पूर्णांक ptrace, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा रुकोid_info *infop;
+	पूर्णांक निकास_code, *p_code, why;
 	uid_t uid = 0; /* unneeded, required by compiler */
 	pid_t pid;
 
 	/*
 	 * Traditionally we see ptrace'd stopped tasks regardless of options.
 	 */
-	if (!ptrace && !(wo->wo_flags & WUNTRACED))
-		return 0;
+	अगर (!ptrace && !(wo->wo_flags & WUNTRACED))
+		वापस 0;
 
-	if (!task_stopped_code(p, ptrace))
-		return 0;
+	अगर (!task_stopped_code(p, ptrace))
+		वापस 0;
 
-	exit_code = 0;
+	निकास_code = 0;
 	spin_lock_irq(&p->sighand->siglock);
 
 	p_code = task_stopped_code(p, ptrace);
-	if (unlikely(!p_code))
-		goto unlock_sig;
+	अगर (unlikely(!p_code))
+		जाओ unlock_sig;
 
-	exit_code = *p_code;
-	if (!exit_code)
-		goto unlock_sig;
+	निकास_code = *p_code;
+	अगर (!निकास_code)
+		जाओ unlock_sig;
 
-	if (!unlikely(wo->wo_flags & WNOWAIT))
+	अगर (!unlikely(wo->wo_flags & WNOWAIT))
 		*p_code = 0;
 
 	uid = from_kuid_munged(current_user_ns(), task_uid(p));
 unlock_sig:
 	spin_unlock_irq(&p->sighand->siglock);
-	if (!exit_code)
-		return 0;
+	अगर (!निकास_code)
+		वापस 0;
 
 	/*
-	 * Now we are pretty sure this task is interesting.
-	 * Make sure it doesn't get reaped out from under us while we
-	 * give up the lock and then examine it below.  We don't want to
-	 * keep holding onto the tasklist_lock while we call getrusage and
-	 * possibly take page faults for user memory.
+	 * Now we are pretty sure this task is पूर्णांकeresting.
+	 * Make sure it करोesn't get reaped out from under us जबतक we
+	 * give up the lock and then examine it below.  We करोn't want to
+	 * keep holding onto the tasklist_lock जबतक we call getrusage and
+	 * possibly take page faults क्रम user memory.
 	 */
-	get_task_struct(p);
+	get_task_काष्ठा(p);
 	pid = task_pid_vnr(p);
 	why = ptrace ? CLD_TRAPPED : CLD_STOPPED;
-	read_unlock(&tasklist_lock);
+	पढ़ो_unlock(&tasklist_lock);
 	sched_annotate_sleep();
-	if (wo->wo_rusage)
+	अगर (wo->wo_rusage)
 		getrusage(p, RUSAGE_BOTH, wo->wo_rusage);
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	if (likely(!(wo->wo_flags & WNOWAIT)))
-		wo->wo_stat = (exit_code << 8) | 0x7f;
+	अगर (likely(!(wo->wo_flags & WNOWAIT)))
+		wo->wo_stat = (निकास_code << 8) | 0x7f;
 
 	infop = wo->wo_info;
-	if (infop) {
+	अगर (infop) अणु
 		infop->cause = why;
-		infop->status = exit_code;
+		infop->status = निकास_code;
 		infop->pid = pid;
 		infop->uid = uid;
-	}
-	return pid;
-}
+	पूर्ण
+	वापस pid;
+पूर्ण
 
 /*
- * Handle do_wait work for one task in a live, non-stopped state.
- * read_lock(&tasklist_lock) on entry.  If we return zero, we still hold
- * the lock and this task is uninteresting.  If we return nonzero, we have
- * released the lock and the system call should return.
+ * Handle करो_रुको work क्रम one task in a live, non-stopped state.
+ * पढ़ो_lock(&tasklist_lock) on entry.  If we वापस zero, we still hold
+ * the lock and this task is unपूर्णांकeresting.  If we वापस nonzero, we have
+ * released the lock and the प्रणाली call should वापस.
  */
-static int wait_task_continued(struct wait_opts *wo, struct task_struct *p)
-{
-	struct waitid_info *infop;
+अटल पूर्णांक रुको_task_जारीd(काष्ठा रुको_opts *wo, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा रुकोid_info *infop;
 	pid_t pid;
 	uid_t uid;
 
-	if (!unlikely(wo->wo_flags & WCONTINUED))
-		return 0;
+	अगर (!unlikely(wo->wo_flags & WCONTINUED))
+		वापस 0;
 
-	if (!(p->signal->flags & SIGNAL_STOP_CONTINUED))
-		return 0;
+	अगर (!(p->संकेत->flags & SIGNAL_STOP_CONTINUED))
+		वापस 0;
 
 	spin_lock_irq(&p->sighand->siglock);
 	/* Re-check with the lock held.  */
-	if (!(p->signal->flags & SIGNAL_STOP_CONTINUED)) {
+	अगर (!(p->संकेत->flags & SIGNAL_STOP_CONTINUED)) अणु
 		spin_unlock_irq(&p->sighand->siglock);
-		return 0;
-	}
-	if (!unlikely(wo->wo_flags & WNOWAIT))
-		p->signal->flags &= ~SIGNAL_STOP_CONTINUED;
+		वापस 0;
+	पूर्ण
+	अगर (!unlikely(wo->wo_flags & WNOWAIT))
+		p->संकेत->flags &= ~SIGNAL_STOP_CONTINUED;
 	uid = from_kuid_munged(current_user_ns(), task_uid(p));
 	spin_unlock_irq(&p->sighand->siglock);
 
 	pid = task_pid_vnr(p);
-	get_task_struct(p);
-	read_unlock(&tasklist_lock);
+	get_task_काष्ठा(p);
+	पढ़ो_unlock(&tasklist_lock);
 	sched_annotate_sleep();
-	if (wo->wo_rusage)
+	अगर (wo->wo_rusage)
 		getrusage(p, RUSAGE_BOTH, wo->wo_rusage);
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
 	infop = wo->wo_info;
-	if (!infop) {
+	अगर (!infop) अणु
 		wo->wo_stat = 0xffff;
-	} else {
+	पूर्ण अन्यथा अणु
 		infop->cause = CLD_CONTINUED;
 		infop->pid = pid;
 		infop->uid = uid;
 		infop->status = SIGCONT;
-	}
-	return pid;
-}
+	पूर्ण
+	वापस pid;
+पूर्ण
 
 /*
- * Consider @p for a wait by @parent.
+ * Consider @p क्रम a रुको by @parent.
  *
- * -ECHILD should be in ->notask_error before the first call.
- * Returns nonzero for a final return, when we have unlocked tasklist_lock.
- * Returns zero if the search for a child should continue;
- * then ->notask_error is 0 if @p is an eligible child,
+ * -ECHILD should be in ->notask_error beक्रमe the first call.
+ * Returns nonzero क्रम a final वापस, when we have unlocked tasklist_lock.
+ * Returns zero अगर the search क्रम a child should जारी;
+ * then ->notask_error is 0 अगर @p is an eligible child,
  * or still -ECHILD.
  */
-static int wait_consider_task(struct wait_opts *wo, int ptrace,
-				struct task_struct *p)
-{
+अटल पूर्णांक रुको_consider_task(काष्ठा रुको_opts *wo, पूर्णांक ptrace,
+				काष्ठा task_काष्ठा *p)
+अणु
 	/*
-	 * We can race with wait_task_zombie() from another thread.
+	 * We can race with रुको_task_zombie() from another thपढ़ो.
 	 * Ensure that EXIT_ZOMBIE -> EXIT_DEAD/EXIT_TRACE transition
 	 * can't confuse the checks below.
 	 */
-	int exit_state = READ_ONCE(p->exit_state);
-	int ret;
+	पूर्णांक निकास_state = READ_ONCE(p->निकास_state);
+	पूर्णांक ret;
 
-	if (unlikely(exit_state == EXIT_DEAD))
-		return 0;
+	अगर (unlikely(निकास_state == EXIT_DEAD))
+		वापस 0;
 
 	ret = eligible_child(wo, ptrace, p);
-	if (!ret)
-		return ret;
+	अगर (!ret)
+		वापस ret;
 
-	if (unlikely(exit_state == EXIT_TRACE)) {
+	अगर (unlikely(निकास_state == EXIT_TRACE)) अणु
 		/*
-		 * ptrace == 0 means we are the natural parent. In this case
-		 * we should clear notask_error, debugger will notify us.
+		 * ptrace == 0 means we are the natural parent. In this हाल
+		 * we should clear notask_error, debugger will notअगरy us.
 		 */
-		if (likely(!ptrace))
+		अगर (likely(!ptrace))
 			wo->notask_error = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (likely(!ptrace) && unlikely(p->ptrace)) {
+	अगर (likely(!ptrace) && unlikely(p->ptrace)) अणु
 		/*
 		 * If it is traced by its real parent's group, just pretend
-		 * the caller is ptrace_do_wait() and reap this child if it
+		 * the caller is ptrace_करो_रुको() and reap this child अगर it
 		 * is zombie.
 		 *
 		 * This also hides group stop state from real parent; otherwise
 		 * a single stop can be reported twice as group and ptrace stop.
-		 * If a ptracer wants to distinguish these two events for its
+		 * If a ptracer wants to distinguish these two events क्रम its
 		 * own children it should create a separate process which takes
 		 * the role of real parent.
 		 */
-		if (!ptrace_reparented(p))
+		अगर (!ptrace_reparented(p))
 			ptrace = 1;
-	}
+	पूर्ण
 
 	/* slay zombie? */
-	if (exit_state == EXIT_ZOMBIE) {
-		/* we don't reap group leaders with subthreads */
-		if (!delay_group_leader(p)) {
+	अगर (निकास_state == EXIT_ZOMBIE) अणु
+		/* we करोn't reap group leaders with subthपढ़ोs */
+		अगर (!delay_group_leader(p)) अणु
 			/*
 			 * A zombie ptracee is only visible to its ptracer.
-			 * Notification and reaping will be cascaded to the
+			 * Notअगरication and reaping will be cascaded to the
 			 * real parent when the ptracer detaches.
 			 */
-			if (unlikely(ptrace) || likely(!p->ptrace))
-				return wait_task_zombie(wo, p);
-		}
+			अगर (unlikely(ptrace) || likely(!p->ptrace))
+				वापस रुको_task_zombie(wo, p);
+		पूर्ण
 
 		/*
-		 * Allow access to stopped/continued state via zombie by
+		 * Allow access to stopped/जारीd state via zombie by
 		 * falling through.  Clearing of notask_error is complex.
 		 *
 		 * When !@ptrace:
 		 *
 		 * If WEXITED is set, notask_error should naturally be
 		 * cleared.  If not, subset of WSTOPPED|WCONTINUED is set,
-		 * so, if there are live subthreads, there are events to
-		 * wait for.  If all subthreads are dead, it's still safe
+		 * so, अगर there are live subthपढ़ोs, there are events to
+		 * रुको क्रम.  If all subthपढ़ोs are dead, it's still safe
 		 * to clear - this function will be called again in finite
-		 * amount time once all the subthreads are released and
-		 * will then return without clearing.
+		 * amount समय once all the subthपढ़ोs are released and
+		 * will then वापस without clearing.
 		 *
 		 * When @ptrace:
 		 *
 		 * Stopped state is per-task and thus can't change once the
-		 * target task dies.  Only continued and exited can happen.
-		 * Clear notask_error if WCONTINUED | WEXITED.
+		 * target task dies.  Only जारीd and निकासed can happen.
+		 * Clear notask_error अगर WCONTINUED | WEXITED.
 		 */
-		if (likely(!ptrace) || (wo->wo_flags & (WCONTINUED | WEXITED)))
+		अगर (likely(!ptrace) || (wo->wo_flags & (WCONTINUED | WEXITED)))
 			wo->notask_error = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * @p is alive and it's gonna stop, continue or exit, so
-		 * there always is something to wait for.
+		 * @p is alive and it's gonna stop, जारी or निकास, so
+		 * there always is something to रुको क्रम.
 		 */
 		wo->notask_error = 0;
-	}
+	पूर्ण
 
 	/*
-	 * Wait for stopped.  Depending on @ptrace, different stopped state
-	 * is used and the two don't interact with each other.
+	 * Wait क्रम stopped.  Depending on @ptrace, dअगरferent stopped state
+	 * is used and the two करोn't पूर्णांकeract with each other.
 	 */
-	ret = wait_task_stopped(wo, ptrace, p);
-	if (ret)
-		return ret;
+	ret = रुको_task_stopped(wo, ptrace, p);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Wait for continued.  There's only one continued state and the
+	 * Wait क्रम जारीd.  There's only one जारीd state and the
 	 * ptracer can consume it which can confuse the real parent.  Don't
-	 * use WCONTINUED from ptracer.  You don't need or want it.
+	 * use WCONTINUED from ptracer.  You करोn't need or want it.
 	 */
-	return wait_task_continued(wo, p);
-}
+	वापस रुको_task_जारीd(wo, p);
+पूर्ण
 
 /*
- * Do the work of do_wait() for one thread in the group, @tsk.
+ * Do the work of करो_रुको() क्रम one thपढ़ो in the group, @tsk.
  *
- * -ECHILD should be in ->notask_error before the first call.
- * Returns nonzero for a final return, when we have unlocked tasklist_lock.
- * Returns zero if the search for a child should continue; then
- * ->notask_error is 0 if there were any eligible children,
+ * -ECHILD should be in ->notask_error beक्रमe the first call.
+ * Returns nonzero क्रम a final वापस, when we have unlocked tasklist_lock.
+ * Returns zero अगर the search क्रम a child should जारी; then
+ * ->notask_error is 0 अगर there were any eligible children,
  * or still -ECHILD.
  */
-static int do_wait_thread(struct wait_opts *wo, struct task_struct *tsk)
-{
-	struct task_struct *p;
+अटल पूर्णांक करो_रुको_thपढ़ो(काष्ठा रुको_opts *wo, काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	list_for_each_entry(p, &tsk->children, sibling) {
-		int ret = wait_consider_task(wo, 0, p);
+	list_क्रम_each_entry(p, &tsk->children, sibling) अणु
+		पूर्णांक ret = रुको_consider_task(wo, 0, p);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptrace_do_wait(struct wait_opts *wo, struct task_struct *tsk)
-{
-	struct task_struct *p;
+अटल पूर्णांक ptrace_करो_रुको(काष्ठा रुको_opts *wo, काष्ठा task_काष्ठा *tsk)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	list_for_each_entry(p, &tsk->ptraced, ptrace_entry) {
-		int ret = wait_consider_task(wo, 1, p);
+	list_क्रम_each_entry(p, &tsk->ptraced, ptrace_entry) अणु
+		पूर्णांक ret = रुको_consider_task(wo, 1, p);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int child_wait_callback(wait_queue_entry_t *wait, unsigned mode,
-				int sync, void *key)
-{
-	struct wait_opts *wo = container_of(wait, struct wait_opts,
-						child_wait);
-	struct task_struct *p = key;
+अटल पूर्णांक child_रुको_callback(रुको_queue_entry_t *रुको, अचिन्हित mode,
+				पूर्णांक sync, व्योम *key)
+अणु
+	काष्ठा रुको_opts *wo = container_of(रुको, काष्ठा रुको_opts,
+						child_रुको);
+	काष्ठा task_काष्ठा *p = key;
 
-	if (!eligible_pid(wo, p))
-		return 0;
+	अगर (!eligible_pid(wo, p))
+		वापस 0;
 
-	if ((wo->wo_flags & __WNOTHREAD) && wait->private != p->parent)
-		return 0;
+	अगर ((wo->wo_flags & __WNOTHREAD) && रुको->निजी != p->parent)
+		वापस 0;
 
-	return default_wake_function(wait, mode, sync, key);
-}
+	वापस शेष_wake_function(रुको, mode, sync, key);
+पूर्ण
 
-void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
-{
-	__wake_up_sync_key(&parent->signal->wait_chldexit,
+व्योम __wake_up_parent(काष्ठा task_काष्ठा *p, काष्ठा task_काष्ठा *parent)
+अणु
+	__wake_up_sync_key(&parent->संकेत->रुको_chldनिकास,
 			   TASK_INTERRUPTIBLE, p);
-}
+पूर्ण
 
-static bool is_effectively_child(struct wait_opts *wo, bool ptrace,
-				 struct task_struct *target)
-{
-	struct task_struct *parent =
+अटल bool is_effectively_child(काष्ठा रुको_opts *wo, bool ptrace,
+				 काष्ठा task_काष्ठा *target)
+अणु
+	काष्ठा task_काष्ठा *parent =
 		!ptrace ? target->real_parent : target->parent;
 
-	return current == parent || (!(wo->wo_flags & __WNOTHREAD) &&
-				     same_thread_group(current, parent));
-}
+	वापस current == parent || (!(wo->wo_flags & __WNOTHREAD) &&
+				     same_thपढ़ो_group(current, parent));
+पूर्ण
 
 /*
- * Optimization for waiting on PIDTYPE_PID. No need to iterate through child
+ * Optimization क्रम रुकोing on PIDTYPE_PID. No need to iterate through child
  * and tracee lists to find the target task.
  */
-static int do_wait_pid(struct wait_opts *wo)
-{
+अटल पूर्णांक करो_रुको_pid(काष्ठा रुको_opts *wo)
+अणु
 	bool ptrace;
-	struct task_struct *target;
-	int retval;
+	काष्ठा task_काष्ठा *target;
+	पूर्णांक retval;
 
 	ptrace = false;
 	target = pid_task(wo->wo_pid, PIDTYPE_TGID);
-	if (target && is_effectively_child(wo, ptrace, target)) {
-		retval = wait_consider_task(wo, ptrace, target);
-		if (retval)
-			return retval;
-	}
+	अगर (target && is_effectively_child(wo, ptrace, target)) अणु
+		retval = रुको_consider_task(wo, ptrace, target);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
 	ptrace = true;
 	target = pid_task(wo->wo_pid, PIDTYPE_PID);
-	if (target && target->ptrace &&
-	    is_effectively_child(wo, ptrace, target)) {
-		retval = wait_consider_task(wo, ptrace, target);
-		if (retval)
-			return retval;
-	}
+	अगर (target && target->ptrace &&
+	    is_effectively_child(wo, ptrace, target)) अणु
+		retval = रुको_consider_task(wo, ptrace, target);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long do_wait(struct wait_opts *wo)
-{
-	int retval;
+अटल दीर्घ करो_रुको(काष्ठा रुको_opts *wo)
+अणु
+	पूर्णांक retval;
 
-	trace_sched_process_wait(wo->wo_pid);
+	trace_sched_process_रुको(wo->wo_pid);
 
-	init_waitqueue_func_entry(&wo->child_wait, child_wait_callback);
-	wo->child_wait.private = current;
-	add_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
+	init_रुकोqueue_func_entry(&wo->child_रुको, child_रुको_callback);
+	wo->child_रुको.निजी = current;
+	add_रुको_queue(&current->संकेत->रुको_chldनिकास, &wo->child_रुको);
 repeat:
 	/*
 	 * If there is nothing that can match our criteria, just get out.
-	 * We will clear ->notask_error to zero if we see any child that
-	 * might later match our criteria, even if we are not able to reap
+	 * We will clear ->notask_error to zero अगर we see any child that
+	 * might later match our criteria, even अगर we are not able to reap
 	 * it yet.
 	 */
 	wo->notask_error = -ECHILD;
-	if ((wo->wo_type < PIDTYPE_MAX) &&
+	अगर ((wo->wo_type < PIDTYPE_MAX) &&
 	   (!wo->wo_pid || !pid_has_task(wo->wo_pid, wo->wo_type)))
-		goto notask;
+		जाओ notask;
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	read_lock(&tasklist_lock);
+	पढ़ो_lock(&tasklist_lock);
 
-	if (wo->wo_type == PIDTYPE_PID) {
-		retval = do_wait_pid(wo);
-		if (retval)
-			goto end;
-	} else {
-		struct task_struct *tsk = current;
+	अगर (wo->wo_type == PIDTYPE_PID) अणु
+		retval = करो_रुको_pid(wo);
+		अगर (retval)
+			जाओ end;
+	पूर्ण अन्यथा अणु
+		काष्ठा task_काष्ठा *tsk = current;
 
-		do {
-			retval = do_wait_thread(wo, tsk);
-			if (retval)
-				goto end;
+		करो अणु
+			retval = करो_रुको_thपढ़ो(wo, tsk);
+			अगर (retval)
+				जाओ end;
 
-			retval = ptrace_do_wait(wo, tsk);
-			if (retval)
-				goto end;
+			retval = ptrace_करो_रुको(wo, tsk);
+			अगर (retval)
+				जाओ end;
 
-			if (wo->wo_flags & __WNOTHREAD)
-				break;
-		} while_each_thread(current, tsk);
-	}
-	read_unlock(&tasklist_lock);
+			अगर (wo->wo_flags & __WNOTHREAD)
+				अवरोध;
+		पूर्ण जबतक_each_thपढ़ो(current, tsk);
+	पूर्ण
+	पढ़ो_unlock(&tasklist_lock);
 
 notask:
 	retval = wo->notask_error;
-	if (!retval && !(wo->wo_flags & WNOHANG)) {
+	अगर (!retval && !(wo->wo_flags & WNOHANG)) अणु
 		retval = -ERESTARTSYS;
-		if (!signal_pending(current)) {
+		अगर (!संकेत_pending(current)) अणु
 			schedule();
-			goto repeat;
-		}
-	}
+			जाओ repeat;
+		पूर्ण
+	पूर्ण
 end:
 	__set_current_state(TASK_RUNNING);
-	remove_wait_queue(&current->signal->wait_chldexit, &wo->child_wait);
-	return retval;
-}
+	हटाओ_रुको_queue(&current->संकेत->रुको_chldनिकास, &wo->child_रुको);
+	वापस retval;
+पूर्ण
 
-static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
-			  int options, struct rusage *ru)
-{
-	struct wait_opts wo;
-	struct pid *pid = NULL;
-	enum pid_type type;
-	long ret;
-	unsigned int f_flags = 0;
+अटल दीर्घ kernel_रुकोid(पूर्णांक which, pid_t upid, काष्ठा रुकोid_info *infop,
+			  पूर्णांक options, काष्ठा rusage *ru)
+अणु
+	काष्ठा रुको_opts wo;
+	काष्ठा pid *pid = शून्य;
+	क्रमागत pid_type type;
+	दीर्घ ret;
+	अचिन्हित पूर्णांक f_flags = 0;
 
-	if (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
+	अगर (options & ~(WNOHANG|WNOWAIT|WEXITED|WSTOPPED|WCONTINUED|
 			__WNOTHREAD|__WCLONE|__WALL))
-		return -EINVAL;
-	if (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (!(options & (WEXITED|WSTOPPED|WCONTINUED)))
+		वापस -EINVAL;
 
-	switch (which) {
-	case P_ALL:
+	चयन (which) अणु
+	हाल P_ALL:
 		type = PIDTYPE_MAX;
-		break;
-	case P_PID:
+		अवरोध;
+	हाल P_PID:
 		type = PIDTYPE_PID;
-		if (upid <= 0)
-			return -EINVAL;
+		अगर (upid <= 0)
+			वापस -EINVAL;
 
 		pid = find_get_pid(upid);
-		break;
-	case P_PGID:
+		अवरोध;
+	हाल P_PGID:
 		type = PIDTYPE_PGID;
-		if (upid < 0)
-			return -EINVAL;
+		अगर (upid < 0)
+			वापस -EINVAL;
 
-		if (upid)
+		अगर (upid)
 			pid = find_get_pid(upid);
-		else
+		अन्यथा
 			pid = get_task_pid(current, PIDTYPE_PGID);
-		break;
-	case P_PIDFD:
+		अवरोध;
+	हाल P_PIDFD:
 		type = PIDTYPE_PID;
-		if (upid < 0)
-			return -EINVAL;
+		अगर (upid < 0)
+			वापस -EINVAL;
 
 		pid = pidfd_get_pid(upid, &f_flags);
-		if (IS_ERR(pid))
-			return PTR_ERR(pid);
+		अगर (IS_ERR(pid))
+			वापस PTR_ERR(pid);
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
 	wo.wo_flags	= options;
 	wo.wo_info	= infop;
 	wo.wo_rusage	= ru;
-	if (f_flags & O_NONBLOCK)
+	अगर (f_flags & O_NONBLOCK)
 		wo.wo_flags |= WNOHANG;
 
-	ret = do_wait(&wo);
-	if (!ret && !(options & WNOHANG) && (f_flags & O_NONBLOCK))
+	ret = करो_रुको(&wo);
+	अगर (!ret && !(options & WNOHANG) && (f_flags & O_NONBLOCK))
 		ret = -EAGAIN;
 
 	put_pid(pid);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE5(waitid, int, which, pid_t, upid, struct siginfo __user *,
-		infop, int, options, struct rusage __user *, ru)
-{
-	struct rusage r;
-	struct waitid_info info = {.status = 0};
-	long err = kernel_waitid(which, upid, &info, options, ru ? &r : NULL);
-	int signo = 0;
+SYSCALL_DEFINE5(रुकोid, पूर्णांक, which, pid_t, upid, काष्ठा siginfo __user *,
+		infop, पूर्णांक, options, काष्ठा rusage __user *, ru)
+अणु
+	काष्ठा rusage r;
+	काष्ठा रुकोid_info info = अणु.status = 0पूर्ण;
+	दीर्घ err = kernel_रुकोid(which, upid, &info, options, ru ? &r : शून्य);
+	पूर्णांक signo = 0;
 
-	if (err > 0) {
+	अगर (err > 0) अणु
 		signo = SIGCHLD;
 		err = 0;
-		if (ru && copy_to_user(ru, &r, sizeof(struct rusage)))
-			return -EFAULT;
-	}
-	if (!infop)
-		return err;
+		अगर (ru && copy_to_user(ru, &r, माप(काष्ठा rusage)))
+			वापस -EFAULT;
+	पूर्ण
+	अगर (!infop)
+		वापस err;
 
-	if (!user_write_access_begin(infop, sizeof(*infop)))
-		return -EFAULT;
+	अगर (!user_ग_लिखो_access_begin(infop, माप(*infop)))
+		वापस -EFAULT;
 
 	unsafe_put_user(signo, &infop->si_signo, Efault);
-	unsafe_put_user(0, &infop->si_errno, Efault);
+	unsafe_put_user(0, &infop->si_त्रुटि_सं, Efault);
 	unsafe_put_user(info.cause, &infop->si_code, Efault);
 	unsafe_put_user(info.pid, &infop->si_pid, Efault);
 	unsafe_put_user(info.uid, &infop->si_uid, Efault);
 	unsafe_put_user(info.status, &infop->si_status, Efault);
-	user_write_access_end();
-	return err;
+	user_ग_लिखो_access_end();
+	वापस err;
 Efault:
-	user_write_access_end();
-	return -EFAULT;
-}
+	user_ग_लिखो_access_end();
+	वापस -EFAULT;
+पूर्ण
 
-long kernel_wait4(pid_t upid, int __user *stat_addr, int options,
-		  struct rusage *ru)
-{
-	struct wait_opts wo;
-	struct pid *pid = NULL;
-	enum pid_type type;
-	long ret;
+दीर्घ kernel_रुको4(pid_t upid, पूर्णांक __user *stat_addr, पूर्णांक options,
+		  काष्ठा rusage *ru)
+अणु
+	काष्ठा रुको_opts wo;
+	काष्ठा pid *pid = शून्य;
+	क्रमागत pid_type type;
+	दीर्घ ret;
 
-	if (options & ~(WNOHANG|WUNTRACED|WCONTINUED|
+	अगर (options & ~(WNOHANG|WUNTRACED|WCONTINUED|
 			__WNOTHREAD|__WCLONE|__WALL))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* -INT_MIN is not defined */
-	if (upid == INT_MIN)
-		return -ESRCH;
+	/* -पूर्णांक_न्यून is not defined */
+	अगर (upid == पूर्णांक_न्यून)
+		वापस -ESRCH;
 
-	if (upid == -1)
+	अगर (upid == -1)
 		type = PIDTYPE_MAX;
-	else if (upid < 0) {
+	अन्यथा अगर (upid < 0) अणु
 		type = PIDTYPE_PGID;
 		pid = find_get_pid(-upid);
-	} else if (upid == 0) {
+	पूर्ण अन्यथा अगर (upid == 0) अणु
 		type = PIDTYPE_PGID;
 		pid = get_task_pid(current, PIDTYPE_PGID);
-	} else /* upid > 0 */ {
+	पूर्ण अन्यथा /* upid > 0 */ अणु
 		type = PIDTYPE_PID;
 		pid = find_get_pid(upid);
-	}
+	पूर्ण
 
 	wo.wo_type	= type;
 	wo.wo_pid	= pid;
 	wo.wo_flags	= options | WEXITED;
-	wo.wo_info	= NULL;
+	wo.wo_info	= शून्य;
 	wo.wo_stat	= 0;
 	wo.wo_rusage	= ru;
-	ret = do_wait(&wo);
+	ret = करो_रुको(&wo);
 	put_pid(pid);
-	if (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))
+	अगर (ret > 0 && stat_addr && put_user(wo.wo_stat, stat_addr))
 		ret = -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kernel_wait(pid_t pid, int *stat)
-{
-	struct wait_opts wo = {
+पूर्णांक kernel_रुको(pid_t pid, पूर्णांक *stat)
+अणु
+	काष्ठा रुको_opts wo = अणु
 		.wo_type	= PIDTYPE_PID,
 		.wo_pid		= find_get_pid(pid),
 		.wo_flags	= WEXITED,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	ret = do_wait(&wo);
-	if (ret > 0 && wo.wo_stat)
+	ret = करो_रुको(&wo);
+	अगर (ret > 0 && wo.wo_stat)
 		*stat = wo.wo_stat;
 	put_pid(wo.wo_pid);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE4(wait4, pid_t, upid, int __user *, stat_addr,
-		int, options, struct rusage __user *, ru)
-{
-	struct rusage r;
-	long err = kernel_wait4(upid, stat_addr, options, ru ? &r : NULL);
+SYSCALL_DEFINE4(रुको4, pid_t, upid, पूर्णांक __user *, stat_addr,
+		पूर्णांक, options, काष्ठा rusage __user *, ru)
+अणु
+	काष्ठा rusage r;
+	दीर्घ err = kernel_रुको4(upid, stat_addr, options, ru ? &r : शून्य);
 
-	if (err > 0) {
-		if (ru && copy_to_user(ru, &r, sizeof(struct rusage)))
-			return -EFAULT;
-	}
-	return err;
-}
+	अगर (err > 0) अणु
+		अगर (ru && copy_to_user(ru, &r, माप(काष्ठा rusage)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-#ifdef __ARCH_WANT_SYS_WAITPID
+#अगर_घोषित __ARCH_WANT_SYS_WAITPID
 
 /*
- * sys_waitpid() remains for compatibility. waitpid() should be
- * implemented by calling sys_wait4() from libc.a.
+ * sys_रुकोpid() reमुख्यs क्रम compatibility. रुकोpid() should be
+ * implemented by calling sys_रुको4() from libc.a.
  */
-SYSCALL_DEFINE3(waitpid, pid_t, pid, int __user *, stat_addr, int, options)
-{
-	return kernel_wait4(pid, stat_addr, options, NULL);
-}
+SYSCALL_DEFINE3(रुकोpid, pid_t, pid, पूर्णांक __user *, stat_addr, पूर्णांक, options)
+अणु
+	वापस kernel_रुको4(pid, stat_addr, options, शून्य);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_COMPAT
-COMPAT_SYSCALL_DEFINE4(wait4,
+#अगर_घोषित CONFIG_COMPAT
+COMPAT_SYSCALL_DEFINE4(रुको4,
 	compat_pid_t, pid,
-	compat_uint_t __user *, stat_addr,
-	int, options,
-	struct compat_rusage __user *, ru)
-{
-	struct rusage r;
-	long err = kernel_wait4(pid, stat_addr, options, ru ? &r : NULL);
-	if (err > 0) {
-		if (ru && put_compat_rusage(&r, ru))
-			return -EFAULT;
-	}
-	return err;
-}
+	compat_uपूर्णांक_t __user *, stat_addr,
+	पूर्णांक, options,
+	काष्ठा compat_rusage __user *, ru)
+अणु
+	काष्ठा rusage r;
+	दीर्घ err = kernel_रुको4(pid, stat_addr, options, ru ? &r : शून्य);
+	अगर (err > 0) अणु
+		अगर (ru && put_compat_rusage(&r, ru))
+			वापस -EFAULT;
+	पूर्ण
+	वापस err;
+पूर्ण
 
-COMPAT_SYSCALL_DEFINE5(waitid,
-		int, which, compat_pid_t, pid,
-		struct compat_siginfo __user *, infop, int, options,
-		struct compat_rusage __user *, uru)
-{
-	struct rusage ru;
-	struct waitid_info info = {.status = 0};
-	long err = kernel_waitid(which, pid, &info, options, uru ? &ru : NULL);
-	int signo = 0;
-	if (err > 0) {
+COMPAT_SYSCALL_DEFINE5(रुकोid,
+		पूर्णांक, which, compat_pid_t, pid,
+		काष्ठा compat_siginfo __user *, infop, पूर्णांक, options,
+		काष्ठा compat_rusage __user *, uru)
+अणु
+	काष्ठा rusage ru;
+	काष्ठा रुकोid_info info = अणु.status = 0पूर्ण;
+	दीर्घ err = kernel_रुकोid(which, pid, &info, options, uru ? &ru : शून्य);
+	पूर्णांक signo = 0;
+	अगर (err > 0) अणु
 		signo = SIGCHLD;
 		err = 0;
-		if (uru) {
-			/* kernel_waitid() overwrites everything in ru */
-			if (COMPAT_USE_64BIT_TIME)
-				err = copy_to_user(uru, &ru, sizeof(ru));
-			else
+		अगर (uru) अणु
+			/* kernel_रुकोid() overग_लिखोs everything in ru */
+			अगर (COMPAT_USE_64BIT_TIME)
+				err = copy_to_user(uru, &ru, माप(ru));
+			अन्यथा
 				err = put_compat_rusage(&ru, uru);
-			if (err)
-				return -EFAULT;
-		}
-	}
+			अगर (err)
+				वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	if (!infop)
-		return err;
+	अगर (!infop)
+		वापस err;
 
-	if (!user_write_access_begin(infop, sizeof(*infop)))
-		return -EFAULT;
+	अगर (!user_ग_लिखो_access_begin(infop, माप(*infop)))
+		वापस -EFAULT;
 
 	unsafe_put_user(signo, &infop->si_signo, Efault);
-	unsafe_put_user(0, &infop->si_errno, Efault);
+	unsafe_put_user(0, &infop->si_त्रुटि_सं, Efault);
 	unsafe_put_user(info.cause, &infop->si_code, Efault);
 	unsafe_put_user(info.pid, &infop->si_pid, Efault);
 	unsafe_put_user(info.uid, &infop->si_uid, Efault);
 	unsafe_put_user(info.status, &infop->si_status, Efault);
-	user_write_access_end();
-	return err;
+	user_ग_लिखो_access_end();
+	वापस err;
 Efault:
-	user_write_access_end();
-	return -EFAULT;
-}
-#endif
+	user_ग_लिखो_access_end();
+	वापस -EFAULT;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * thread_group_exited - check that a thread group has exited
- * @pid: tgid of thread group to be checked.
+ * thपढ़ो_group_निकासed - check that a thपढ़ो group has निकासed
+ * @pid: tgid of thपढ़ो group to be checked.
  *
- * Test if the thread group represented by tgid has exited (all
- * threads are zombies, dead or completely gone).
+ * Test अगर the thपढ़ो group represented by tgid has निकासed (all
+ * thपढ़ोs are zombies, dead or completely gone).
  *
- * Return: true if the thread group has exited. false otherwise.
+ * Return: true अगर the thपढ़ो group has निकासed. false otherwise.
  */
-bool thread_group_exited(struct pid *pid)
-{
-	struct task_struct *task;
-	bool exited;
+bool thपढ़ो_group_निकासed(काष्ठा pid *pid)
+अणु
+	काष्ठा task_काष्ठा *task;
+	bool निकासed;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = pid_task(pid, PIDTYPE_PID);
-	exited = !task ||
-		(READ_ONCE(task->exit_state) && thread_group_empty(task));
-	rcu_read_unlock();
+	निकासed = !task ||
+		(READ_ONCE(task->निकास_state) && thपढ़ो_group_empty(task));
+	rcu_पढ़ो_unlock();
 
-	return exited;
-}
-EXPORT_SYMBOL(thread_group_exited);
+	वापस निकासed;
+पूर्ण
+EXPORT_SYMBOL(thपढ़ो_group_निकासed);
 
-__weak void abort(void)
-{
+__weak व्योम पात(व्योम)
+अणु
 	BUG();
 
-	/* if that doesn't kill us, halt */
+	/* अगर that करोesn't समाप्त us, halt */
 	panic("Oops failed to kill thread");
-}
-EXPORT_SYMBOL(abort);
+पूर्ण
+EXPORT_SYMBOL(पात);

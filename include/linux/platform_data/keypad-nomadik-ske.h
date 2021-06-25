@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) ST-Ericsson SA 2010
  *
@@ -7,44 +8,44 @@
  * ux500 Scroll key and Keypad Encoder (SKE) header
  */
 
-#ifndef __SKE_H
-#define __SKE_H
+#अगर_अघोषित __SKE_H
+#घोषणा __SKE_H
 
-#include <linux/input/matrix_keypad.h>
+#समावेश <linux/input/matrix_keypad.h>
 
-/* register definitions for SKE peripheral */
-#define SKE_CR		0x00
-#define SKE_VAL0	0x04
-#define SKE_VAL1	0x08
-#define SKE_DBCR	0x0C
-#define SKE_IMSC	0x10
-#define SKE_RIS		0x14
-#define SKE_MIS		0x18
-#define SKE_ICR		0x1C
+/* रेजिस्टर definitions क्रम SKE peripheral */
+#घोषणा SKE_CR		0x00
+#घोषणा SKE_VAL0	0x04
+#घोषणा SKE_VAL1	0x08
+#घोषणा SKE_DBCR	0x0C
+#घोषणा SKE_IMSC	0x10
+#घोषणा SKE_RIS		0x14
+#घोषणा SKE_MIS		0x18
+#घोषणा SKE_ICR		0x1C
 
 /*
  * Keypad module
  */
 
 /**
- * struct keypad_platform_data - structure for platform specific data
- * @init:	pointer to keypad init function
- * @exit:	pointer to keypad deinitialisation function
- * @keymap_data: matrix scan code table for keycodes
+ * काष्ठा keypad_platक्रमm_data - काष्ठाure क्रम platक्रमm specअगरic data
+ * @init:	poपूर्णांकer to keypad init function
+ * @निकास:	poपूर्णांकer to keypad deinitialisation function
+ * @keymap_data: matrix scan code table क्रम keycodes
  * @krow:	maximum number of rows
  * @kcol:	maximum number of columns
- * @debounce_ms: platform specific debounce time
- * @no_autorepeat: flag for auto repetition
- * @wakeup_enable: allow waking up the system
+ * @debounce_ms: platक्रमm specअगरic debounce समय
+ * @no_स्वतःrepeat: flag क्रम स्वतः repetition
+ * @wakeup_enable: allow waking up the प्रणाली
  */
-struct ske_keypad_platform_data {
-	int (*init)(void);
-	int (*exit)(void);
-	const struct matrix_keymap_data *keymap_data;
+काष्ठा ske_keypad_platक्रमm_data अणु
+	पूर्णांक (*init)(व्योम);
+	पूर्णांक (*निकास)(व्योम);
+	स्थिर काष्ठा matrix_keymap_data *keymap_data;
 	u8 krow;
 	u8 kcol;
 	u8 debounce_ms;
-	bool no_autorepeat;
+	bool no_स्वतःrepeat;
 	bool wakeup_enable;
-};
-#endif	/*__SKE_KPD_H*/
+पूर्ण;
+#पूर्ण_अगर	/*__SKE_KPD_H*/

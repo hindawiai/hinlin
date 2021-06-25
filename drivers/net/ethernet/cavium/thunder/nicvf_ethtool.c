@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Cavium, Inc.
  */
 
-/* ETHTOOL Support for VNIC_VF Device*/
+/* ETHTOOL Support क्रम VNIC_VF Device*/
 
-#include <linux/ethtool.h>
-#include <linux/pci.h>
-#include <linux/net_tstamp.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/net_tstamp.h>
 
-#include "nic_reg.h"
-#include "nic.h"
-#include "nicvf_queues.h"
-#include "q_struct.h"
-#include "thunder_bgx.h"
-#include "../common/cavium_ptp.h"
+#समावेश "nic_reg.h"
+#समावेश "nic.h"
+#समावेश "nicvf_queues.h"
+#समावेश "q_struct.h"
+#समावेश "thunder_bgx.h"
+#समावेश "../common/cavium_ptp.h"
 
-#define DRV_NAME	"nicvf"
+#घोषणा DRV_NAME	"nicvf"
 
-struct nicvf_stat {
-	char name[ETH_GSTRING_LEN];
-	unsigned int index;
-};
+काष्ठा nicvf_stat अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	अचिन्हित पूर्णांक index;
+पूर्ण;
 
-#define NICVF_HW_STAT(stat) { \
+#घोषणा NICVF_HW_STAT(stat) अणु \
 	.name = #stat, \
-	.index = offsetof(struct nicvf_hw_stats, stat) / sizeof(u64), \
-}
+	.index = दुरत्व(काष्ठा nicvf_hw_stats, stat) / माप(u64), \
+पूर्ण
 
-#define NICVF_DRV_STAT(stat) { \
+#घोषणा NICVF_DRV_STAT(stat) अणु \
 	.name = #stat, \
-	.index = offsetof(struct nicvf_drv_stats, stat) / sizeof(u64), \
-}
+	.index = दुरत्व(काष्ठा nicvf_drv_stats, stat) / माप(u64), \
+पूर्ण
 
-static const struct nicvf_stat nicvf_hw_stats[] = {
+अटल स्थिर काष्ठा nicvf_stat nicvf_hw_stats[] = अणु
 	NICVF_HW_STAT(rx_bytes),
 	NICVF_HW_STAT(rx_frames),
 	NICVF_HW_STAT(rx_ucast_frames),
@@ -56,26 +57,26 @@ static const struct nicvf_stat nicvf_hw_stats[] = {
 	NICVF_HW_STAT(tx_bcast_frames),
 	NICVF_HW_STAT(tx_mcast_frames),
 	NICVF_HW_STAT(tx_drops),
-};
+पूर्ण;
 
-static const struct nicvf_stat nicvf_drv_stats[] = {
+अटल स्थिर काष्ठा nicvf_stat nicvf_drv_stats[] = अणु
 	NICVF_DRV_STAT(rx_bgx_truncated_pkts),
 	NICVF_DRV_STAT(rx_jabber_errs),
 	NICVF_DRV_STAT(rx_fcs_errs),
 	NICVF_DRV_STAT(rx_bgx_errs),
 	NICVF_DRV_STAT(rx_prel2_errs),
-	NICVF_DRV_STAT(rx_l2_hdr_malformed),
+	NICVF_DRV_STAT(rx_l2_hdr_malक्रमmed),
 	NICVF_DRV_STAT(rx_oversize),
 	NICVF_DRV_STAT(rx_undersize),
 	NICVF_DRV_STAT(rx_l2_len_mismatch),
 	NICVF_DRV_STAT(rx_l2_pclp),
 	NICVF_DRV_STAT(rx_ip_ver_errs),
 	NICVF_DRV_STAT(rx_ip_csum_errs),
-	NICVF_DRV_STAT(rx_ip_hdr_malformed),
-	NICVF_DRV_STAT(rx_ip_payload_malformed),
+	NICVF_DRV_STAT(rx_ip_hdr_malक्रमmed),
+	NICVF_DRV_STAT(rx_ip_payload_malक्रमmed),
 	NICVF_DRV_STAT(rx_ip_ttl_errs),
 	NICVF_DRV_STAT(rx_l3_pclp),
-	NICVF_DRV_STAT(rx_l4_malformed),
+	NICVF_DRV_STAT(rx_l4_malक्रमmed),
 	NICVF_DRV_STAT(rx_l4_csum_errs),
 	NICVF_DRV_STAT(rx_udp_len_errs),
 	NICVF_DRV_STAT(rx_l4_port_errs),
@@ -93,48 +94,48 @@ static const struct nicvf_stat nicvf_drv_stats[] = {
 	NICVF_DRV_STAT(tx_mem_seq_err),
 	NICVF_DRV_STAT(tx_lock_viol),
 	NICVF_DRV_STAT(tx_data_fault),
-	NICVF_DRV_STAT(tx_tstmp_conflict),
-	NICVF_DRV_STAT(tx_tstmp_timeout),
+	NICVF_DRV_STAT(tx_tsपंचांगp_conflict),
+	NICVF_DRV_STAT(tx_tsपंचांगp_समयout),
 	NICVF_DRV_STAT(tx_mem_fault),
 	NICVF_DRV_STAT(tx_csum_overlap),
 	NICVF_DRV_STAT(tx_csum_overflow),
 
 	NICVF_DRV_STAT(tx_tso),
-	NICVF_DRV_STAT(tx_timeout),
+	NICVF_DRV_STAT(tx_समयout),
 	NICVF_DRV_STAT(txq_stop),
 	NICVF_DRV_STAT(txq_wake),
 	NICVF_DRV_STAT(rcv_buffer_alloc_failures),
 	NICVF_DRV_STAT(page_alloc),
-};
+पूर्ण;
 
-static const struct nicvf_stat nicvf_queue_stats[] = {
-	{ "bytes", 0 },
-	{ "frames", 1 },
-};
+अटल स्थिर काष्ठा nicvf_stat nicvf_queue_stats[] = अणु
+	अणु "bytes", 0 पूर्ण,
+	अणु "frames", 1 पूर्ण,
+पूर्ण;
 
-static const unsigned int nicvf_n_hw_stats = ARRAY_SIZE(nicvf_hw_stats);
-static const unsigned int nicvf_n_drv_stats = ARRAY_SIZE(nicvf_drv_stats);
-static const unsigned int nicvf_n_queue_stats = ARRAY_SIZE(nicvf_queue_stats);
+अटल स्थिर अचिन्हित पूर्णांक nicvf_n_hw_stats = ARRAY_SIZE(nicvf_hw_stats);
+अटल स्थिर अचिन्हित पूर्णांक nicvf_n_drv_stats = ARRAY_SIZE(nicvf_drv_stats);
+अटल स्थिर अचिन्हित पूर्णांक nicvf_n_queue_stats = ARRAY_SIZE(nicvf_queue_stats);
 
-static int nicvf_get_link_ksettings(struct net_device *netdev,
-				    struct ethtool_link_ksettings *cmd)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल पूर्णांक nicvf_get_link_ksettings(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 	u32 supported, advertising;
 
 	supported = 0;
 	advertising = 0;
 
-	if (!nic->link_up) {
+	अगर (!nic->link_up) अणु
 		cmd->base.duplex = DUPLEX_UNKNOWN;
 		cmd->base.speed = SPEED_UNKNOWN;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (nic->speed) {
-	case SPEED_1000:
+	चयन (nic->speed) अणु
+	हाल SPEED_1000:
 		cmd->base.port = PORT_MII | PORT_TP;
-		cmd->base.autoneg = AUTONEG_ENABLE;
+		cmd->base.स्वतःneg = AUTONEG_ENABLE;
 		supported |= SUPPORTED_MII | SUPPORTED_TP;
 		supported |= SUPPORTED_1000baseT_Full |
 				  SUPPORTED_1000baseT_Half |
@@ -149,25 +150,25 @@ static int nicvf_get_link_ksettings(struct net_device *netdev,
 				    ADVERTISED_100baseT_Half  |
 				    ADVERTISED_10baseT_Full   |
 				    ADVERTISED_10baseT_Half;
-		break;
-	case SPEED_10000:
-		if (nic->mac_type == BGX_MODE_RXAUI) {
+		अवरोध;
+	हाल SPEED_10000:
+		अगर (nic->mac_type == BGX_MODE_RXAUI) अणु
 			cmd->base.port = PORT_TP;
 			supported |= SUPPORTED_TP;
-		} else {
+		पूर्ण अन्यथा अणु
 			cmd->base.port = PORT_FIBRE;
 			supported |= SUPPORTED_FIBRE;
-		}
-		cmd->base.autoneg = AUTONEG_DISABLE;
+		पूर्ण
+		cmd->base.स्वतःneg = AUTONEG_DISABLE;
 		supported |= SUPPORTED_10000baseT_Full;
-		break;
-	case SPEED_40000:
+		अवरोध;
+	हाल SPEED_40000:
 		cmd->base.port = PORT_FIBRE;
-		cmd->base.autoneg = AUTONEG_DISABLE;
+		cmd->base.स्वतःneg = AUTONEG_DISABLE;
 		supported |= SUPPORTED_FIBRE;
 		supported |= SUPPORTED_40000baseCR4_Full;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	cmd->base.duplex = nic->duplex;
 	cmd->base.speed = nic->speed;
 
@@ -176,679 +177,679 @@ static int nicvf_get_link_ksettings(struct net_device *netdev,
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 nicvf_get_link(struct net_device *netdev)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल u32 nicvf_get_link(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
-	return nic->link_up;
-}
+	वापस nic->link_up;
+पूर्ण
 
-static void nicvf_get_drvinfo(struct net_device *netdev,
-			      struct ethtool_drvinfo *info)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल व्योम nicvf_get_drvinfo(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->bus_info, pci_name(nic->pdev), sizeof(info->bus_info));
-}
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->bus_info, pci_name(nic->pdev), माप(info->bus_info));
+पूर्ण
 
-static u32 nicvf_get_msglevel(struct net_device *netdev)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल u32 nicvf_get_msglevel(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
-	return nic->msg_enable;
-}
+	वापस nic->msg_enable;
+पूर्ण
 
-static void nicvf_set_msglevel(struct net_device *netdev, u32 lvl)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल व्योम nicvf_set_msglevel(काष्ठा net_device *netdev, u32 lvl)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
 	nic->msg_enable = lvl;
-}
+पूर्ण
 
-static void nicvf_get_qset_strings(struct nicvf *nic, u8 **data, int qset)
-{
-	int stats, qidx;
-	int start_qidx = qset * MAX_RCV_QUEUES_PER_QS;
+अटल व्योम nicvf_get_qset_strings(काष्ठा nicvf *nic, u8 **data, पूर्णांक qset)
+अणु
+	पूर्णांक stats, qidx;
+	पूर्णांक start_qidx = qset * MAX_RCV_QUEUES_PER_QS;
 
-	for (qidx = 0; qidx < nic->qs->rq_cnt; qidx++) {
-		for (stats = 0; stats < nicvf_n_queue_stats; stats++) {
-			sprintf(*data, "rxq%d: %s", qidx + start_qidx,
+	क्रम (qidx = 0; qidx < nic->qs->rq_cnt; qidx++) अणु
+		क्रम (stats = 0; stats < nicvf_n_queue_stats; stats++) अणु
+			प्र_लिखो(*data, "rxq%d: %s", qidx + start_qidx,
 				nicvf_queue_stats[stats].name);
 			*data += ETH_GSTRING_LEN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (qidx = 0; qidx < nic->qs->sq_cnt; qidx++) {
-		for (stats = 0; stats < nicvf_n_queue_stats; stats++) {
-			sprintf(*data, "txq%d: %s", qidx + start_qidx,
+	क्रम (qidx = 0; qidx < nic->qs->sq_cnt; qidx++) अणु
+		क्रम (stats = 0; stats < nicvf_n_queue_stats; stats++) अणु
+			प्र_लिखो(*data, "txq%d: %s", qidx + start_qidx,
 				nicvf_queue_stats[stats].name);
 			*data += ETH_GSTRING_LEN;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void nicvf_get_strings(struct net_device *netdev, u32 sset, u8 *data)
-{
-	struct nicvf *nic = netdev_priv(netdev);
-	int stats;
-	int sqs;
+अटल व्योम nicvf_get_strings(काष्ठा net_device *netdev, u32 sset, u8 *data)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
+	पूर्णांक stats;
+	पूर्णांक sqs;
 
-	if (sset != ETH_SS_STATS)
-		return;
+	अगर (sset != ETH_SS_STATS)
+		वापस;
 
-	for (stats = 0; stats < nicvf_n_hw_stats; stats++) {
-		memcpy(data, nicvf_hw_stats[stats].name, ETH_GSTRING_LEN);
+	क्रम (stats = 0; stats < nicvf_n_hw_stats; stats++) अणु
+		स_नकल(data, nicvf_hw_stats[stats].name, ETH_GSTRING_LEN);
 		data += ETH_GSTRING_LEN;
-	}
+	पूर्ण
 
-	for (stats = 0; stats < nicvf_n_drv_stats; stats++) {
-		memcpy(data, nicvf_drv_stats[stats].name, ETH_GSTRING_LEN);
+	क्रम (stats = 0; stats < nicvf_n_drv_stats; stats++) अणु
+		स_नकल(data, nicvf_drv_stats[stats].name, ETH_GSTRING_LEN);
 		data += ETH_GSTRING_LEN;
-	}
+	पूर्ण
 
 	nicvf_get_qset_strings(nic, &data, 0);
 
-	for (sqs = 0; sqs < nic->sqs_count; sqs++) {
-		if (!nic->snicvf[sqs])
-			continue;
+	क्रम (sqs = 0; sqs < nic->sqs_count; sqs++) अणु
+		अगर (!nic->snicvf[sqs])
+			जारी;
 		nicvf_get_qset_strings(nic->snicvf[sqs], &data, sqs + 1);
-	}
+	पूर्ण
 
-	for (stats = 0; stats < BGX_RX_STATS_COUNT; stats++) {
-		sprintf(data, "bgx_rxstat%d: ", stats);
+	क्रम (stats = 0; stats < BGX_RX_STATS_COUNT; stats++) अणु
+		प्र_लिखो(data, "bgx_rxstat%d: ", stats);
 		data += ETH_GSTRING_LEN;
-	}
+	पूर्ण
 
-	for (stats = 0; stats < BGX_TX_STATS_COUNT; stats++) {
-		sprintf(data, "bgx_txstat%d: ", stats);
+	क्रम (stats = 0; stats < BGX_TX_STATS_COUNT; stats++) अणु
+		प्र_लिखो(data, "bgx_txstat%d: ", stats);
 		data += ETH_GSTRING_LEN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nicvf_get_sset_count(struct net_device *netdev, int sset)
-{
-	struct nicvf *nic = netdev_priv(netdev);
-	int qstats_count;
-	int sqs;
+अटल पूर्णांक nicvf_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
+	पूर्णांक qstats_count;
+	पूर्णांक sqs;
 
-	if (sset != ETH_SS_STATS)
-		return -EINVAL;
+	अगर (sset != ETH_SS_STATS)
+		वापस -EINVAL;
 
 	qstats_count = nicvf_n_queue_stats *
 		       (nic->qs->rq_cnt + nic->qs->sq_cnt);
-	for (sqs = 0; sqs < nic->sqs_count; sqs++) {
-		struct nicvf *snic;
+	क्रम (sqs = 0; sqs < nic->sqs_count; sqs++) अणु
+		काष्ठा nicvf *snic;
 
 		snic = nic->snicvf[sqs];
-		if (!snic)
-			continue;
+		अगर (!snic)
+			जारी;
 		qstats_count += nicvf_n_queue_stats *
 				(snic->qs->rq_cnt + snic->qs->sq_cnt);
-	}
+	पूर्ण
 
-	return nicvf_n_hw_stats + nicvf_n_drv_stats +
+	वापस nicvf_n_hw_stats + nicvf_n_drv_stats +
 		qstats_count +
 		BGX_RX_STATS_COUNT + BGX_TX_STATS_COUNT;
-}
+पूर्ण
 
-static void nicvf_get_qset_stats(struct nicvf *nic,
-				 struct ethtool_stats *stats, u64 **data)
-{
-	int stat, qidx;
+अटल व्योम nicvf_get_qset_stats(काष्ठा nicvf *nic,
+				 काष्ठा ethtool_stats *stats, u64 **data)
+अणु
+	पूर्णांक stat, qidx;
 
-	if (!nic)
-		return;
+	अगर (!nic)
+		वापस;
 
-	for (qidx = 0; qidx < nic->qs->rq_cnt; qidx++) {
+	क्रम (qidx = 0; qidx < nic->qs->rq_cnt; qidx++) अणु
 		nicvf_update_rq_stats(nic, qidx);
-		for (stat = 0; stat < nicvf_n_queue_stats; stat++)
+		क्रम (stat = 0; stat < nicvf_n_queue_stats; stat++)
 			*((*data)++) = ((u64 *)&nic->qs->rq[qidx].stats)
 					[nicvf_queue_stats[stat].index];
-	}
+	पूर्ण
 
-	for (qidx = 0; qidx < nic->qs->sq_cnt; qidx++) {
+	क्रम (qidx = 0; qidx < nic->qs->sq_cnt; qidx++) अणु
 		nicvf_update_sq_stats(nic, qidx);
-		for (stat = 0; stat < nicvf_n_queue_stats; stat++)
+		क्रम (stat = 0; stat < nicvf_n_queue_stats; stat++)
 			*((*data)++) = ((u64 *)&nic->qs->sq[qidx].stats)
 					[nicvf_queue_stats[stat].index];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nicvf_get_ethtool_stats(struct net_device *netdev,
-				    struct ethtool_stats *stats, u64 *data)
-{
-	struct nicvf *nic = netdev_priv(netdev);
-	int stat, tmp_stats;
-	int sqs, cpu;
+अटल व्योम nicvf_get_ethtool_stats(काष्ठा net_device *netdev,
+				    काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
+	पूर्णांक stat, पंचांगp_stats;
+	पूर्णांक sqs, cpu;
 
 	nicvf_update_stats(nic);
 
 	/* Update LMAC stats */
 	nicvf_update_lmac_stats(nic);
 
-	for (stat = 0; stat < nicvf_n_hw_stats; stat++)
+	क्रम (stat = 0; stat < nicvf_n_hw_stats; stat++)
 		*(data++) = ((u64 *)&nic->hw_stats)
 				[nicvf_hw_stats[stat].index];
-	for (stat = 0; stat < nicvf_n_drv_stats; stat++) {
-		tmp_stats = 0;
-		for_each_possible_cpu(cpu)
-			tmp_stats += ((u64 *)per_cpu_ptr(nic->drv_stats, cpu))
+	क्रम (stat = 0; stat < nicvf_n_drv_stats; stat++) अणु
+		पंचांगp_stats = 0;
+		क्रम_each_possible_cpu(cpu)
+			पंचांगp_stats += ((u64 *)per_cpu_ptr(nic->drv_stats, cpu))
 				     [nicvf_drv_stats[stat].index];
-		*(data++) = tmp_stats;
-	}
+		*(data++) = पंचांगp_stats;
+	पूर्ण
 
 	nicvf_get_qset_stats(nic, stats, &data);
 
-	for (sqs = 0; sqs < nic->sqs_count; sqs++) {
-		if (!nic->snicvf[sqs])
-			continue;
+	क्रम (sqs = 0; sqs < nic->sqs_count; sqs++) अणु
+		अगर (!nic->snicvf[sqs])
+			जारी;
 		nicvf_get_qset_stats(nic->snicvf[sqs], stats, &data);
-	}
+	पूर्ण
 
-	for (stat = 0; stat < BGX_RX_STATS_COUNT; stat++)
+	क्रम (stat = 0; stat < BGX_RX_STATS_COUNT; stat++)
 		*(data++) = nic->bgx_stats.rx_stats[stat];
-	for (stat = 0; stat < BGX_TX_STATS_COUNT; stat++)
+	क्रम (stat = 0; stat < BGX_TX_STATS_COUNT; stat++)
 		*(data++) = nic->bgx_stats.tx_stats[stat];
-}
+पूर्ण
 
-static int nicvf_get_regs_len(struct net_device *dev)
-{
-	return sizeof(u64) * NIC_VF_REG_COUNT;
-}
+अटल पूर्णांक nicvf_get_regs_len(काष्ठा net_device *dev)
+अणु
+	वापस माप(u64) * NIC_VF_REG_COUNT;
+पूर्ण
 
-static void nicvf_get_regs(struct net_device *dev,
-			   struct ethtool_regs *regs, void *reg)
-{
-	struct nicvf *nic = netdev_priv(dev);
+अटल व्योम nicvf_get_regs(काष्ठा net_device *dev,
+			   काष्ठा ethtool_regs *regs, व्योम *reg)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
 	u64 *p = (u64 *)reg;
 	u64 reg_offset;
-	int mbox, key, stat, q;
-	int i = 0;
+	पूर्णांक mbox, key, stat, q;
+	पूर्णांक i = 0;
 
 	regs->version = 0;
-	memset(p, 0, NIC_VF_REG_COUNT);
+	स_रखो(p, 0, NIC_VF_REG_COUNT);
 
-	p[i++] = nicvf_reg_read(nic, NIC_VNIC_CFG);
-	/* Mailbox registers */
-	for (mbox = 0; mbox < NIC_PF_VF_MAILBOX_SIZE; mbox++)
-		p[i++] = nicvf_reg_read(nic,
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VNIC_CFG);
+	/* Mailbox रेजिस्टरs */
+	क्रम (mbox = 0; mbox < NIC_PF_VF_MAILBOX_SIZE; mbox++)
+		p[i++] = nicvf_reg_पढ़ो(nic,
 					NIC_VF_PF_MAILBOX_0_1 | (mbox << 3));
 
-	p[i++] = nicvf_reg_read(nic, NIC_VF_INT);
-	p[i++] = nicvf_reg_read(nic, NIC_VF_INT_W1S);
-	p[i++] = nicvf_reg_read(nic, NIC_VF_ENA_W1C);
-	p[i++] = nicvf_reg_read(nic, NIC_VF_ENA_W1S);
-	p[i++] = nicvf_reg_read(nic, NIC_VNIC_RSS_CFG);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VF_INT);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VF_INT_W1S);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VF_ENA_W1C);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VF_ENA_W1S);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_VNIC_RSS_CFG);
 
-	for (key = 0; key < RSS_HASH_KEY_SIZE; key++)
-		p[i++] = nicvf_reg_read(nic, NIC_VNIC_RSS_KEY_0_4 | (key << 3));
+	क्रम (key = 0; key < RSS_HASH_KEY_SIZE; key++)
+		p[i++] = nicvf_reg_पढ़ो(nic, NIC_VNIC_RSS_KEY_0_4 | (key << 3));
 
 	/* Tx/Rx statistics */
-	for (stat = 0; stat < TX_STATS_ENUM_LAST; stat++)
-		p[i++] = nicvf_reg_read(nic,
+	क्रम (stat = 0; stat < TX_STATS_ENUM_LAST; stat++)
+		p[i++] = nicvf_reg_पढ़ो(nic,
 					NIC_VNIC_TX_STAT_0_4 | (stat << 3));
 
-	for (i = 0; i < RX_STATS_ENUM_LAST; i++)
-		p[i++] = nicvf_reg_read(nic,
+	क्रम (i = 0; i < RX_STATS_ENUM_LAST; i++)
+		p[i++] = nicvf_reg_पढ़ो(nic,
 					NIC_VNIC_RX_STAT_0_13 | (stat << 3));
 
-	p[i++] = nicvf_reg_read(nic, NIC_QSET_RQ_GEN_CFG);
+	p[i++] = nicvf_reg_पढ़ो(nic, NIC_QSET_RQ_GEN_CFG);
 
-	/* All completion queue's registers */
-	for (q = 0; q < MAX_CMP_QUEUES_PER_QS; q++) {
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_CFG, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_CFG2, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_THRESH, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_BASE, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_HEAD, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_TAIL, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_DOOR, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_STATUS, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_STATUS2, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_CQ_0_7_DEBUG, q);
-	}
+	/* All completion queue's रेजिस्टरs */
+	क्रम (q = 0; q < MAX_CMP_QUEUES_PER_QS; q++) अणु
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_CFG, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_CFG2, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_THRESH, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_BASE, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_HEAD, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_TAIL, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_DOOR, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_STATUS, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_STATUS2, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_CQ_0_7_DEBUG, q);
+	पूर्ण
 
-	/* All receive queue's registers */
-	for (q = 0; q < MAX_RCV_QUEUES_PER_QS; q++) {
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RQ_0_7_CFG, q);
-		p[i++] = nicvf_queue_reg_read(nic,
+	/* All receive queue's रेजिस्टरs */
+	क्रम (q = 0; q < MAX_RCV_QUEUES_PER_QS; q++) अणु
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RQ_0_7_CFG, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic,
 						  NIC_QSET_RQ_0_7_STAT_0_1, q);
 		reg_offset = NIC_QSET_RQ_0_7_STAT_0_1 | (1 << 3);
-		p[i++] = nicvf_queue_reg_read(nic, reg_offset, q);
-	}
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, reg_offset, q);
+	पूर्ण
 
-	for (q = 0; q < MAX_SND_QUEUES_PER_QS; q++) {
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_CFG, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_THRESH, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_BASE, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_HEAD, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_TAIL, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_DOOR, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_STATUS, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_DEBUG, q);
+	क्रम (q = 0; q < MAX_SND_QUEUES_PER_QS; q++) अणु
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_CFG, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_THRESH, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_BASE, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_HEAD, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_TAIL, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_DOOR, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_STATUS, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_DEBUG, q);
 		/* Padding, was NIC_QSET_SQ_0_7_CNM_CHG, which
-		 * produces bus errors when read
+		 * produces bus errors when पढ़ो
 		 */
 		p[i++] = 0;
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_SQ_0_7_STAT_0_1, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_SQ_0_7_STAT_0_1, q);
 		reg_offset = NIC_QSET_SQ_0_7_STAT_0_1 | (1 << 3);
-		p[i++] = nicvf_queue_reg_read(nic, reg_offset, q);
-	}
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, reg_offset, q);
+	पूर्ण
 
-	for (q = 0; q < MAX_RCV_BUF_DESC_RINGS_PER_QS; q++) {
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_CFG, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_THRESH, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_BASE, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_HEAD, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_TAIL, q);
-		p[i++] = nicvf_queue_reg_read(nic, NIC_QSET_RBDR_0_1_DOOR, q);
-		p[i++] = nicvf_queue_reg_read(nic,
+	क्रम (q = 0; q < MAX_RCV_BUF_DESC_RINGS_PER_QS; q++) अणु
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_CFG, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_THRESH, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_BASE, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_HEAD, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_TAIL, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, NIC_QSET_RBDR_0_1_DOOR, q);
+		p[i++] = nicvf_queue_reg_पढ़ो(nic,
 					      NIC_QSET_RBDR_0_1_STATUS0, q);
-		p[i++] = nicvf_queue_reg_read(nic,
+		p[i++] = nicvf_queue_reg_पढ़ो(nic,
 					      NIC_QSET_RBDR_0_1_STATUS1, q);
 		reg_offset = NIC_QSET_RBDR_0_1_PREFETCH_STATUS;
-		p[i++] = nicvf_queue_reg_read(nic, reg_offset, q);
-	}
-}
+		p[i++] = nicvf_queue_reg_पढ़ो(nic, reg_offset, q);
+	पूर्ण
+पूर्ण
 
-static int nicvf_get_coalesce(struct net_device *netdev,
-			      struct ethtool_coalesce *cmd)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल पूर्णांक nicvf_get_coalesce(काष्ठा net_device *netdev,
+			      काष्ठा ethtool_coalesce *cmd)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
 	cmd->rx_coalesce_usecs = nic->cq_coalesce_usecs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nicvf_get_ringparam(struct net_device *netdev,
-				struct ethtool_ringparam *ring)
-{
-	struct nicvf *nic = netdev_priv(netdev);
-	struct queue_set *qs = nic->qs;
+अटल व्योम nicvf_get_ringparam(काष्ठा net_device *netdev,
+				काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
+	काष्ठा queue_set *qs = nic->qs;
 
 	ring->rx_max_pending = MAX_CMP_QUEUE_LEN;
 	ring->rx_pending = qs->cq_len;
 	ring->tx_max_pending = MAX_SND_QUEUE_LEN;
 	ring->tx_pending = qs->sq_len;
-}
+पूर्ण
 
-static int nicvf_set_ringparam(struct net_device *netdev,
-			       struct ethtool_ringparam *ring)
-{
-	struct nicvf *nic = netdev_priv(netdev);
-	struct queue_set *qs = nic->qs;
+अटल पूर्णांक nicvf_set_ringparam(काष्ठा net_device *netdev,
+			       काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
+	काष्ठा queue_set *qs = nic->qs;
 	u32 rx_count, tx_count;
 
 	/* Due to HW errata this is not supported on T88 pass 1.x silicon */
-	if (pass1_silicon(nic->pdev))
-		return -EINVAL;
+	अगर (pass1_silicon(nic->pdev))
+		वापस -EINVAL;
 
-	if ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
-		return -EINVAL;
+	अगर ((ring->rx_mini_pending) || (ring->rx_jumbo_pending))
+		वापस -EINVAL;
 
 	tx_count = clamp_t(u32, ring->tx_pending,
 			   MIN_SND_QUEUE_LEN, MAX_SND_QUEUE_LEN);
 	rx_count = clamp_t(u32, ring->rx_pending,
 			   MIN_CMP_QUEUE_LEN, MAX_CMP_QUEUE_LEN);
 
-	if ((tx_count == qs->sq_len) && (rx_count == qs->cq_len))
-		return 0;
+	अगर ((tx_count == qs->sq_len) && (rx_count == qs->cq_len))
+		वापस 0;
 
 	/* Permitted lengths are 1K, 2K, 4K, 8K, 16K, 32K, 64K */
-	qs->sq_len = rounddown_pow_of_two(tx_count);
-	qs->cq_len = rounddown_pow_of_two(rx_count);
+	qs->sq_len = roundकरोwn_घात_of_two(tx_count);
+	qs->cq_len = roundकरोwn_घात_of_two(rx_count);
 
-	if (netif_running(netdev)) {
+	अगर (netअगर_running(netdev)) अणु
 		nicvf_stop(netdev);
-		nicvf_open(netdev);
-	}
+		nicvf_खोलो(netdev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nicvf_get_rss_hash_opts(struct nicvf *nic,
-				   struct ethtool_rxnfc *info)
-{
+अटल पूर्णांक nicvf_get_rss_hash_opts(काष्ठा nicvf *nic,
+				   काष्ठा ethtool_rxnfc *info)
+अणु
 	info->data = 0;
 
-	switch (info->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
-	case UDP_V4_FLOW:
-	case UDP_V6_FLOW:
-	case SCTP_V4_FLOW:
-	case SCTP_V6_FLOW:
+	चयन (info->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
+	हाल UDP_V4_FLOW:
+	हाल UDP_V6_FLOW:
+	हाल SCTP_V4_FLOW:
+	हाल SCTP_V6_FLOW:
 		info->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 		fallthrough;
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		info->data |= RXH_IP_SRC | RXH_IP_DST;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nicvf_get_rxnfc(struct net_device *dev,
-			   struct ethtool_rxnfc *info, u32 *rules)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	int ret = -EOPNOTSUPP;
+अटल पूर्णांक nicvf_get_rxnfc(काष्ठा net_device *dev,
+			   काष्ठा ethtool_rxnfc *info, u32 *rules)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	पूर्णांक ret = -EOPNOTSUPP;
 
-	switch (info->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		info->data = nic->rx_queues;
 		ret = 0;
-		break;
-	case ETHTOOL_GRXFH:
-		return nicvf_get_rss_hash_opts(nic, info);
-	default:
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	हाल ETHTOOL_GRXFH:
+		वापस nicvf_get_rss_hash_opts(nic, info);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int nicvf_set_rss_hash_opts(struct nicvf *nic,
-				   struct ethtool_rxnfc *info)
-{
-	struct nicvf_rss_info *rss = &nic->rss_info;
-	u64 rss_cfg = nicvf_reg_read(nic, NIC_VNIC_RSS_CFG);
+अटल पूर्णांक nicvf_set_rss_hash_opts(काष्ठा nicvf *nic,
+				   काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा nicvf_rss_info *rss = &nic->rss_info;
+	u64 rss_cfg = nicvf_reg_पढ़ो(nic, NIC_VNIC_RSS_CFG);
 
-	if (!rss->enable)
+	अगर (!rss->enable)
 		netdev_err(nic->netdev,
 			   "RSS is disabled, hash cannot be set\n");
 
 	netdev_info(nic->netdev, "Set RSS flow type = %d, data = %lld\n",
 		    info->flow_type, info->data);
 
-	if (!(info->data & RXH_IP_SRC) || !(info->data & RXH_IP_DST))
-		return -EINVAL;
+	अगर (!(info->data & RXH_IP_SRC) || !(info->data & RXH_IP_DST))
+		वापस -EINVAL;
 
-	switch (info->flow_type) {
-	case TCP_V4_FLOW:
-	case TCP_V6_FLOW:
-		switch (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+	चयन (info->flow_type) अणु
+	हाल TCP_V4_FLOW:
+	हाल TCP_V6_FLOW:
+		चयन (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			rss_cfg &= ~(1ULL << RSS_HASH_TCP);
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_cfg |= (1ULL << RSS_HASH_TCP);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case UDP_V4_FLOW:
-	case UDP_V6_FLOW:
-		switch (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल UDP_V4_FLOW:
+	हाल UDP_V6_FLOW:
+		चयन (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			rss_cfg &= ~(1ULL << RSS_HASH_UDP);
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_cfg |= (1ULL << RSS_HASH_UDP);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case SCTP_V4_FLOW:
-	case SCTP_V6_FLOW:
-		switch (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-		case 0:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल SCTP_V4_FLOW:
+	हाल SCTP_V6_FLOW:
+		चयन (info->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+		हाल 0:
 			rss_cfg &= ~(1ULL << RSS_HASH_L4ETC);
-			break;
-		case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+			अवरोध;
+		हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 			rss_cfg |= (1ULL << RSS_HASH_L4ETC);
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case IPV4_FLOW:
-	case IPV6_FLOW:
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल IPV4_FLOW:
+	हाल IPV6_FLOW:
 		rss_cfg = RSS_HASH_IP;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	nicvf_reg_write(nic, NIC_VNIC_RSS_CFG, rss_cfg);
-	return 0;
-}
+	nicvf_reg_ग_लिखो(nic, NIC_VNIC_RSS_CFG, rss_cfg);
+	वापस 0;
+पूर्ण
 
-static int nicvf_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *info)
-{
-	struct nicvf *nic = netdev_priv(dev);
+अटल पूर्णांक nicvf_set_rxnfc(काष्ठा net_device *dev, काष्ठा ethtool_rxnfc *info)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
 
-	switch (info->cmd) {
-	case ETHTOOL_SRXFH:
-		return nicvf_set_rss_hash_opts(nic, info);
-	default:
-		break;
-	}
-	return -EOPNOTSUPP;
-}
+	चयन (info->cmd) अणु
+	हाल ETHTOOL_SRXFH:
+		वापस nicvf_set_rss_hash_opts(nic, info);
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static u32 nicvf_get_rxfh_key_size(struct net_device *netdev)
-{
-	return RSS_HASH_KEY_SIZE * sizeof(u64);
-}
+अटल u32 nicvf_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	वापस RSS_HASH_KEY_SIZE * माप(u64);
+पूर्ण
 
-static u32 nicvf_get_rxfh_indir_size(struct net_device *dev)
-{
-	struct nicvf *nic = netdev_priv(dev);
+अटल u32 nicvf_get_rxfh_indir_size(काष्ठा net_device *dev)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
 
-	return nic->rss_info.rss_size;
-}
+	वापस nic->rss_info.rss_size;
+पूर्ण
 
-static int nicvf_get_rxfh(struct net_device *dev, u32 *indir, u8 *hkey,
+अटल पूर्णांक nicvf_get_rxfh(काष्ठा net_device *dev, u32 *indir, u8 *hkey,
 			  u8 *hfunc)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	struct nicvf_rss_info *rss = &nic->rss_info;
-	int idx;
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	काष्ठा nicvf_rss_info *rss = &nic->rss_info;
+	पूर्णांक idx;
 
-	if (indir) {
-		for (idx = 0; idx < rss->rss_size; idx++)
+	अगर (indir) अणु
+		क्रम (idx = 0; idx < rss->rss_size; idx++)
 			indir[idx] = rss->ind_tbl[idx];
-	}
+	पूर्ण
 
-	if (hkey)
-		memcpy(hkey, rss->key, RSS_HASH_KEY_SIZE * sizeof(u64));
+	अगर (hkey)
+		स_नकल(hkey, rss->key, RSS_HASH_KEY_SIZE * माप(u64));
 
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nicvf_set_rxfh(struct net_device *dev, const u32 *indir,
-			  const u8 *hkey, const u8 hfunc)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	struct nicvf_rss_info *rss = &nic->rss_info;
-	int idx;
+अटल पूर्णांक nicvf_set_rxfh(काष्ठा net_device *dev, स्थिर u32 *indir,
+			  स्थिर u8 *hkey, स्थिर u8 hfunc)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	काष्ठा nicvf_rss_info *rss = &nic->rss_info;
+	पूर्णांक idx;
 
-	if (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
-		return -EOPNOTSUPP;
+	अगर (hfunc != ETH_RSS_HASH_NO_CHANGE && hfunc != ETH_RSS_HASH_TOP)
+		वापस -EOPNOTSUPP;
 
-	if (!rss->enable) {
+	अगर (!rss->enable) अणु
 		netdev_err(nic->netdev,
 			   "RSS is disabled, cannot change settings\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (indir) {
-		for (idx = 0; idx < rss->rss_size; idx++)
+	अगर (indir) अणु
+		क्रम (idx = 0; idx < rss->rss_size; idx++)
 			rss->ind_tbl[idx] = indir[idx];
-	}
+	पूर्ण
 
-	if (hkey) {
-		memcpy(rss->key, hkey, RSS_HASH_KEY_SIZE * sizeof(u64));
+	अगर (hkey) अणु
+		स_नकल(rss->key, hkey, RSS_HASH_KEY_SIZE * माप(u64));
 		nicvf_set_rss_key(nic);
-	}
+	पूर्ण
 
 	nicvf_config_rss(nic);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Get no of queues device supports and current queue count */
-static void nicvf_get_channels(struct net_device *dev,
-			       struct ethtool_channels *channel)
-{
-	struct nicvf *nic = netdev_priv(dev);
+अटल व्योम nicvf_get_channels(काष्ठा net_device *dev,
+			       काष्ठा ethtool_channels *channel)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
 
-	memset(channel, 0, sizeof(*channel));
+	स_रखो(channel, 0, माप(*channel));
 
 	channel->max_rx = nic->max_queues;
 	channel->max_tx = nic->max_queues;
 
 	channel->rx_count = nic->rx_queues;
 	channel->tx_count = nic->tx_queues;
-}
+पूर्ण
 
 /* Set no of Tx, Rx queues to be used */
-static int nicvf_set_channels(struct net_device *dev,
-			      struct ethtool_channels *channel)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	int err = 0;
-	bool if_up = netif_running(dev);
+अटल पूर्णांक nicvf_set_channels(काष्ठा net_device *dev,
+			      काष्ठा ethtool_channels *channel)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	पूर्णांक err = 0;
+	bool अगर_up = netअगर_running(dev);
 	u8 cqcount, txq_count;
 
-	if (!channel->rx_count || !channel->tx_count)
-		return -EINVAL;
-	if (channel->rx_count > nic->max_queues)
-		return -EINVAL;
-	if (channel->tx_count > nic->max_queues)
-		return -EINVAL;
+	अगर (!channel->rx_count || !channel->tx_count)
+		वापस -EINVAL;
+	अगर (channel->rx_count > nic->max_queues)
+		वापस -EINVAL;
+	अगर (channel->tx_count > nic->max_queues)
+		वापस -EINVAL;
 
-	if (nic->xdp_prog &&
-	    ((channel->tx_count + channel->rx_count) > nic->max_queues)) {
+	अगर (nic->xdp_prog &&
+	    ((channel->tx_count + channel->rx_count) > nic->max_queues)) अणु
 		netdev_err(nic->netdev,
 			   "XDP mode, RXQs + TXQs > Max %d\n",
 			   nic->max_queues);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (if_up)
+	अगर (अगर_up)
 		nicvf_stop(dev);
 
 	nic->rx_queues = channel->rx_count;
 	nic->tx_queues = channel->tx_count;
-	if (!nic->xdp_prog)
+	अगर (!nic->xdp_prog)
 		nic->xdp_tx_queues = 0;
-	else
+	अन्यथा
 		nic->xdp_tx_queues = channel->rx_count;
 
 	txq_count = nic->xdp_tx_queues + nic->tx_queues;
 	cqcount = max(nic->rx_queues, txq_count);
 
-	if (cqcount > MAX_CMP_QUEUES_PER_QS) {
+	अगर (cqcount > MAX_CMP_QUEUES_PER_QS) अणु
 		nic->sqs_count = roundup(cqcount, MAX_CMP_QUEUES_PER_QS);
 		nic->sqs_count = (nic->sqs_count / MAX_CMP_QUEUES_PER_QS) - 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		nic->sqs_count = 0;
-	}
+	पूर्ण
 
 	nic->qs->rq_cnt = min_t(u8, nic->rx_queues, MAX_RCV_QUEUES_PER_QS);
 	nic->qs->sq_cnt = min_t(u8, txq_count, MAX_SND_QUEUES_PER_QS);
 	nic->qs->cq_cnt = max(nic->qs->rq_cnt, nic->qs->sq_cnt);
 
 	err = nicvf_set_real_num_queues(dev, nic->tx_queues, nic->rx_queues);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (if_up)
-		nicvf_open(dev);
+	अगर (अगर_up)
+		nicvf_खोलो(dev);
 
 	netdev_info(dev, "Setting num Tx rings to %d, Rx rings to %d success\n",
 		    nic->tx_queues, nic->rx_queues);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nicvf_get_pauseparam(struct net_device *dev,
-				 struct ethtool_pauseparam *pause)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	union nic_mbx mbx = {};
+अटल व्योम nicvf_get_छोड़ोparam(काष्ठा net_device *dev,
+				 काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	जोड़ nic_mbx mbx = अणुपूर्ण;
 
-	/* Supported only for 10G/40G interfaces */
-	if ((nic->mac_type == BGX_MODE_SGMII) ||
+	/* Supported only क्रम 10G/40G पूर्णांकerfaces */
+	अगर ((nic->mac_type == BGX_MODE_SGMII) ||
 	    (nic->mac_type == BGX_MODE_QSGMII) ||
 	    (nic->mac_type == BGX_MODE_RGMII))
-		return;
+		वापस;
 
 	mbx.pfc.msg = NIC_MBOX_MSG_PFC;
 	mbx.pfc.get = 1;
-	if (!nicvf_send_msg_to_pf(nic, &mbx)) {
-		pause->autoneg = nic->pfc.autoneg;
-		pause->rx_pause = nic->pfc.fc_rx;
-		pause->tx_pause = nic->pfc.fc_tx;
-	}
-}
+	अगर (!nicvf_send_msg_to_pf(nic, &mbx)) अणु
+		छोड़ो->स्वतःneg = nic->pfc.स्वतःneg;
+		छोड़ो->rx_छोड़ो = nic->pfc.fc_rx;
+		छोड़ो->tx_छोड़ो = nic->pfc.fc_tx;
+	पूर्ण
+पूर्ण
 
-static int nicvf_set_pauseparam(struct net_device *dev,
-				struct ethtool_pauseparam *pause)
-{
-	struct nicvf *nic = netdev_priv(dev);
-	union nic_mbx mbx = {};
+अटल पूर्णांक nicvf_set_छोड़ोparam(काष्ठा net_device *dev,
+				काष्ठा ethtool_छोड़ोparam *छोड़ो)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(dev);
+	जोड़ nic_mbx mbx = अणुपूर्ण;
 
-	/* Supported only for 10G/40G interfaces */
-	if ((nic->mac_type == BGX_MODE_SGMII) ||
+	/* Supported only क्रम 10G/40G पूर्णांकerfaces */
+	अगर ((nic->mac_type == BGX_MODE_SGMII) ||
 	    (nic->mac_type == BGX_MODE_QSGMII) ||
 	    (nic->mac_type == BGX_MODE_RGMII))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (pause->autoneg)
-		return -EOPNOTSUPP;
+	अगर (छोड़ो->स्वतःneg)
+		वापस -EOPNOTSUPP;
 
 	mbx.pfc.msg = NIC_MBOX_MSG_PFC;
 	mbx.pfc.get = 0;
-	mbx.pfc.fc_rx = pause->rx_pause;
-	mbx.pfc.fc_tx = pause->tx_pause;
-	if (nicvf_send_msg_to_pf(nic, &mbx))
-		return -EAGAIN;
+	mbx.pfc.fc_rx = छोड़ो->rx_छोड़ो;
+	mbx.pfc.fc_tx = छोड़ो->tx_छोड़ो;
+	अगर (nicvf_send_msg_to_pf(nic, &mbx))
+		वापस -EAGAIN;
 
-	nic->pfc.fc_rx = pause->rx_pause;
-	nic->pfc.fc_tx = pause->tx_pause;
+	nic->pfc.fc_rx = छोड़ो->rx_छोड़ो;
+	nic->pfc.fc_tx = छोड़ो->tx_छोड़ो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nicvf_get_ts_info(struct net_device *netdev,
-			     struct ethtool_ts_info *info)
-{
-	struct nicvf *nic = netdev_priv(netdev);
+अटल पूर्णांक nicvf_get_ts_info(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_ts_info *info)
+अणु
+	काष्ठा nicvf *nic = netdev_priv(netdev);
 
-	if (!nic->ptp_clock)
-		return ethtool_op_get_ts_info(netdev, info);
+	अगर (!nic->ptp_घड़ी)
+		वापस ethtool_op_get_ts_info(netdev, info);
 
-	info->so_timestamping = SOF_TIMESTAMPING_TX_SOFTWARE |
+	info->so_बारtamping = SOF_TIMESTAMPING_TX_SOFTWARE |
 				SOF_TIMESTAMPING_RX_SOFTWARE |
 				SOF_TIMESTAMPING_SOFTWARE |
 				SOF_TIMESTAMPING_TX_HARDWARE |
 				SOF_TIMESTAMPING_RX_HARDWARE |
 				SOF_TIMESTAMPING_RAW_HARDWARE;
 
-	info->phc_index = cavium_ptp_clock_index(nic->ptp_clock);
+	info->phc_index = cavium_ptp_घड़ी_index(nic->ptp_घड़ी);
 
 	info->tx_types = (1 << HWTSTAMP_TX_OFF) | (1 << HWTSTAMP_TX_ON);
 
 	info->rx_filters = (1 << HWTSTAMP_FILTER_NONE) |
 			   (1 << HWTSTAMP_FILTER_ALL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops nicvf_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops nicvf_ethtool_ops = अणु
 	.get_link		= nicvf_get_link,
 	.get_drvinfo		= nicvf_get_drvinfo,
 	.get_msglevel		= nicvf_get_msglevel,
@@ -869,13 +870,13 @@ static const struct ethtool_ops nicvf_ethtool_ops = {
 	.set_rxfh		= nicvf_set_rxfh,
 	.get_channels		= nicvf_get_channels,
 	.set_channels		= nicvf_set_channels,
-	.get_pauseparam         = nicvf_get_pauseparam,
-	.set_pauseparam         = nicvf_set_pauseparam,
+	.get_छोड़ोparam         = nicvf_get_छोड़ोparam,
+	.set_छोड़ोparam         = nicvf_set_छोड़ोparam,
 	.get_ts_info		= nicvf_get_ts_info,
 	.get_link_ksettings	= nicvf_get_link_ksettings,
-};
+पूर्ण;
 
-void nicvf_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम nicvf_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &nicvf_ethtool_ops;
-}
+पूर्ण

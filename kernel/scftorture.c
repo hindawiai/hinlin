@@ -1,414 +1,415 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// Torture test for smp_call_function() and friends.
+// Torture test क्रम smp_call_function() and मित्रs.
 //
 // Copyright (C) Facebook, 2020.
 //
 // Author: Paul E. McKenney <paulmck@kernel.org>
 
-#define pr_fmt(fmt) fmt
+#घोषणा pr_fmt(fmt) fmt
 
-#include <linux/atomic.h>
-#include <linux/bitops.h>
-#include <linux/completion.h>
-#include <linux/cpu.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kthread.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/notifier.h>
-#include <linux/percpu.h>
-#include <linux/rcupdate.h>
-#include <linux/rcupdate_trace.h>
-#include <linux/reboot.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/smp.h>
-#include <linux/stat.h>
-#include <linux/srcu.h>
-#include <linux/slab.h>
-#include <linux/torture.h>
-#include <linux/types.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rcupdate_trace.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/srcu.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/torture.h>
+#समावेश <linux/types.h>
 
-#define SCFTORT_STRING "scftorture"
-#define SCFTORT_FLAG SCFTORT_STRING ": "
+#घोषणा SCFTORT_STRING "scftorture"
+#घोषणा SCFTORT_FLAG SCFTORT_STRING ": "
 
-#define SCFTORTOUT(s, x...) \
+#घोषणा SCFTORTOUT(s, x...) \
 	pr_alert(SCFTORT_FLAG s, ## x)
 
-#define VERBOSE_SCFTORTOUT(s, x...) \
-	do { if (verbose) pr_alert(SCFTORT_FLAG s, ## x); } while (0)
+#घोषणा VERBOSE_SCFTORTOUT(s, x...) \
+	करो अणु अगर (verbose) pr_alert(SCFTORT_FLAG s, ## x); पूर्ण जबतक (0)
 
-#define VERBOSE_SCFTORTOUT_ERRSTRING(s, x...) \
-	do { if (verbose) pr_alert(SCFTORT_FLAG "!!! " s, ## x); } while (0)
+#घोषणा VERBOSE_SCFTORTOUT_ERRSTRING(s, x...) \
+	करो अणु अगर (verbose) pr_alert(SCFTORT_FLAG "!!! " s, ## x); पूर्ण जबतक (0)
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Paul E. McKenney <paulmck@kernel.org>");
 
-// Wait until there are multiple CPUs before starting test.
-torture_param(int, holdoff, IS_BUILTIN(CONFIG_SCF_TORTURE_TEST) ? 10 : 0,
+// Wait until there are multiple CPUs beक्रमe starting test.
+torture_param(पूर्णांक, holकरोff, IS_BUILTIN(CONFIG_SCF_TORTURE_TEST) ? 10 : 0,
 	      "Holdoff time before test start (s)");
-torture_param(int, longwait, 0, "Include ridiculously long waits? (seconds)");
-torture_param(int, nthreads, -1, "# threads, defaults to -1 for all CPUs.");
-torture_param(int, onoff_holdoff, 0, "Time after boot before CPU hotplugs (s)");
-torture_param(int, onoff_interval, 0, "Time between CPU hotplugs (s), 0=disable");
-torture_param(int, shutdown_secs, 0, "Shutdown time (ms), <= zero to disable.");
-torture_param(int, stat_interval, 60, "Number of seconds between stats printk()s.");
-torture_param(int, stutter, 5, "Number of jiffies to run/halt test, 0=disable");
-torture_param(bool, use_cpus_read_lock, 0, "Use cpus_read_lock() to exclude CPU hotplug.");
-torture_param(int, verbose, 0, "Enable verbose debugging printk()s");
-torture_param(int, weight_resched, -1, "Testing weight for resched_cpu() operations.");
-torture_param(int, weight_single, -1, "Testing weight for single-CPU no-wait operations.");
-torture_param(int, weight_single_wait, -1, "Testing weight for single-CPU operations.");
-torture_param(int, weight_many, -1, "Testing weight for multi-CPU no-wait operations.");
-torture_param(int, weight_many_wait, -1, "Testing weight for multi-CPU operations.");
-torture_param(int, weight_all, -1, "Testing weight for all-CPU no-wait operations.");
-torture_param(int, weight_all_wait, -1, "Testing weight for all-CPU operations.");
+torture_param(पूर्णांक, दीर्घरुको, 0, "Include ridiculously long waits? (seconds)");
+torture_param(पूर्णांक, nthपढ़ोs, -1, "# threads, defaults to -1 for all CPUs.");
+torture_param(पूर्णांक, onoff_holकरोff, 0, "Time after boot before CPU hotplugs (s)");
+torture_param(पूर्णांक, onoff_पूर्णांकerval, 0, "Time between CPU hotplugs (s), 0=disable");
+torture_param(पूर्णांक, shutकरोwn_secs, 0, "Shutdown time (ms), <= zero to disable.");
+torture_param(पूर्णांक, stat_पूर्णांकerval, 60, "Number of seconds between stats printk()s.");
+torture_param(पूर्णांक, stutter, 5, "Number of jiffies to run/halt test, 0=disable");
+torture_param(bool, use_cpus_पढ़ो_lock, 0, "Use cpus_read_lock() to exclude CPU hotplug.");
+torture_param(पूर्णांक, verbose, 0, "Enable verbose debugging printk()s");
+torture_param(पूर्णांक, weight_resched, -1, "Testing weight for resched_cpu() operations.");
+torture_param(पूर्णांक, weight_single, -1, "Testing weight for single-CPU no-wait operations.");
+torture_param(पूर्णांक, weight_single_रुको, -1, "Testing weight for single-CPU operations.");
+torture_param(पूर्णांक, weight_many, -1, "Testing weight for multi-CPU no-wait operations.");
+torture_param(पूर्णांक, weight_many_रुको, -1, "Testing weight for multi-CPU operations.");
+torture_param(पूर्णांक, weight_all, -1, "Testing weight for all-CPU no-wait operations.");
+torture_param(पूर्णांक, weight_all_रुको, -1, "Testing weight for all-CPU operations.");
 
-char *torture_type = "";
+अक्षर *torture_type = "";
 
-#ifdef MODULE
+#अगर_घोषित MODULE
 # define SCFTORT_SHUTDOWN 0
-#else
+#अन्यथा
 # define SCFTORT_SHUTDOWN 1
-#endif
+#पूर्ण_अगर
 
-torture_param(bool, shutdown, SCFTORT_SHUTDOWN, "Shutdown at end of torture test.");
+torture_param(bool, shutकरोwn, SCFTORT_SHUTDOWN, "Shutdown at end of torture test.");
 
-struct scf_statistics {
-	struct task_struct *task;
-	int cpu;
-	long long n_resched;
-	long long n_single;
-	long long n_single_ofl;
-	long long n_single_wait;
-	long long n_single_wait_ofl;
-	long long n_many;
-	long long n_many_wait;
-	long long n_all;
-	long long n_all_wait;
-};
+काष्ठा scf_statistics अणु
+	काष्ठा task_काष्ठा *task;
+	पूर्णांक cpu;
+	दीर्घ दीर्घ n_resched;
+	दीर्घ दीर्घ n_single;
+	दीर्घ दीर्घ n_single_ofl;
+	दीर्घ दीर्घ n_single_रुको;
+	दीर्घ दीर्घ n_single_रुको_ofl;
+	दीर्घ दीर्घ n_many;
+	दीर्घ दीर्घ n_many_रुको;
+	दीर्घ दीर्घ n_all;
+	दीर्घ दीर्घ n_all_रुको;
+पूर्ण;
 
-static struct scf_statistics *scf_stats_p;
-static struct task_struct *scf_torture_stats_task;
-static DEFINE_PER_CPU(long long, scf_invoked_count);
+अटल काष्ठा scf_statistics *scf_stats_p;
+अटल काष्ठा task_काष्ठा *scf_torture_stats_task;
+अटल DEFINE_PER_CPU(दीर्घ दीर्घ, scf_invoked_count);
 
-// Data for random primitive selection
-#define SCF_PRIM_RESCHED	0
-#define SCF_PRIM_SINGLE		1
-#define SCF_PRIM_MANY		2
-#define SCF_PRIM_ALL		3
-#define SCF_NPRIMS		7 // Need wait and no-wait versions of each,
-				  //  except for SCF_PRIM_RESCHED.
+// Data क्रम अक्रमom primitive selection
+#घोषणा SCF_PRIM_RESCHED	0
+#घोषणा SCF_PRIM_SINGLE		1
+#घोषणा SCF_PRIM_MANY		2
+#घोषणा SCF_PRIM_ALL		3
+#घोषणा SCF_NPRIMS		7 // Need रुको and no-रुको versions of each,
+				  //  except क्रम SCF_PRIM_RESCHED.
 
-static char *scf_prim_name[] = {
+अटल अक्षर *scf_prim_name[] = अणु
 	"resched_cpu",
 	"smp_call_function_single",
 	"smp_call_function_many",
 	"smp_call_function",
-};
+पूर्ण;
 
-struct scf_selector {
-	unsigned long scfs_weight;
-	int scfs_prim;
-	bool scfs_wait;
-};
-static struct scf_selector scf_sel_array[SCF_NPRIMS];
-static int scf_sel_array_len;
-static unsigned long scf_sel_totweight;
+काष्ठा scf_selector अणु
+	अचिन्हित दीर्घ scfs_weight;
+	पूर्णांक scfs_prim;
+	bool scfs_रुको;
+पूर्ण;
+अटल काष्ठा scf_selector scf_sel_array[SCF_NPRIMS];
+अटल पूर्णांक scf_sel_array_len;
+अटल अचिन्हित दीर्घ scf_sel_totweight;
 
 // Communicate between caller and handler.
-struct scf_check {
+काष्ठा scf_check अणु
 	bool scfc_in;
 	bool scfc_out;
-	int scfc_cpu; // -1 for not _single().
-	bool scfc_wait;
-};
+	पूर्णांक scfc_cpu; // -1 क्रम not _single().
+	bool scfc_रुको;
+पूर्ण;
 
-// Use to wait for all threads to start.
-static atomic_t n_started;
-static atomic_t n_errs;
-static atomic_t n_mb_in_errs;
-static atomic_t n_mb_out_errs;
-static atomic_t n_alloc_errs;
-static bool scfdone;
-static char *bangstr = "";
+// Use to रुको क्रम all thपढ़ोs to start.
+अटल atomic_t n_started;
+अटल atomic_t n_errs;
+अटल atomic_t n_mb_in_errs;
+अटल atomic_t n_mb_out_errs;
+अटल atomic_t n_alloc_errs;
+अटल bool scfकरोne;
+अटल अक्षर *bangstr = "";
 
-static DEFINE_TORTURE_RANDOM_PERCPU(scf_torture_rand);
+अटल DEFINE_TORTURE_RANDOM_PERCPU(scf_torture_अक्रम);
 
-extern void resched_cpu(int cpu); // An alternative IPI vector.
+बाह्य व्योम resched_cpu(पूर्णांक cpu); // An alternative IPI vector.
 
-// Print torture statistics.  Caller must ensure serialization.
-static void scf_torture_stats_print(void)
-{
-	int cpu;
-	int i;
-	long long invoked_count = 0;
-	bool isdone = READ_ONCE(scfdone);
-	struct scf_statistics scfs = {};
+// Prपूर्णांक torture statistics.  Caller must ensure serialization.
+अटल व्योम scf_torture_stats_prपूर्णांक(व्योम)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक i;
+	दीर्घ दीर्घ invoked_count = 0;
+	bool isकरोne = READ_ONCE(scfकरोne);
+	काष्ठा scf_statistics scfs = अणुपूर्ण;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		invoked_count += data_race(per_cpu(scf_invoked_count, cpu));
-	for (i = 0; i < nthreads; i++) {
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
 		scfs.n_resched += scf_stats_p[i].n_resched;
 		scfs.n_single += scf_stats_p[i].n_single;
 		scfs.n_single_ofl += scf_stats_p[i].n_single_ofl;
-		scfs.n_single_wait += scf_stats_p[i].n_single_wait;
-		scfs.n_single_wait_ofl += scf_stats_p[i].n_single_wait_ofl;
+		scfs.n_single_रुको += scf_stats_p[i].n_single_रुको;
+		scfs.n_single_रुको_ofl += scf_stats_p[i].n_single_रुको_ofl;
 		scfs.n_many += scf_stats_p[i].n_many;
-		scfs.n_many_wait += scf_stats_p[i].n_many_wait;
+		scfs.n_many_रुको += scf_stats_p[i].n_many_रुको;
 		scfs.n_all += scf_stats_p[i].n_all;
-		scfs.n_all_wait += scf_stats_p[i].n_all_wait;
-	}
-	if (atomic_read(&n_errs) || atomic_read(&n_mb_in_errs) ||
-	    atomic_read(&n_mb_out_errs) || atomic_read(&n_alloc_errs))
+		scfs.n_all_रुको += scf_stats_p[i].n_all_रुको;
+	पूर्ण
+	अगर (atomic_पढ़ो(&n_errs) || atomic_पढ़ो(&n_mb_in_errs) ||
+	    atomic_पढ़ो(&n_mb_out_errs) || atomic_पढ़ो(&n_alloc_errs))
 		bangstr = "!!! ";
 	pr_alert("%s %sscf_invoked_count %s: %lld resched: %lld single: %lld/%lld single_ofl: %lld/%lld many: %lld/%lld all: %lld/%lld ",
-		 SCFTORT_FLAG, bangstr, isdone ? "VER" : "ver", invoked_count, scfs.n_resched,
-		 scfs.n_single, scfs.n_single_wait, scfs.n_single_ofl, scfs.n_single_wait_ofl,
-		 scfs.n_many, scfs.n_many_wait, scfs.n_all, scfs.n_all_wait);
+		 SCFTORT_FLAG, bangstr, isकरोne ? "VER" : "ver", invoked_count, scfs.n_resched,
+		 scfs.n_single, scfs.n_single_रुको, scfs.n_single_ofl, scfs.n_single_रुको_ofl,
+		 scfs.n_many, scfs.n_many_रुको, scfs.n_all, scfs.n_all_रुको);
 	torture_onoff_stats();
-	pr_cont("ste: %d stnmie: %d stnmoe: %d staf: %d\n", atomic_read(&n_errs),
-		atomic_read(&n_mb_in_errs), atomic_read(&n_mb_out_errs),
-		atomic_read(&n_alloc_errs));
-}
+	pr_cont("ste: %d stnmie: %d stnmoe: %d staf: %d\n", atomic_पढ़ो(&n_errs),
+		atomic_पढ़ो(&n_mb_in_errs), atomic_पढ़ो(&n_mb_out_errs),
+		atomic_पढ़ो(&n_alloc_errs));
+पूर्ण
 
-// Periodically prints torture statistics, if periodic statistics printing
-// was specified via the stat_interval module parameter.
-static int
-scf_torture_stats(void *arg)
-{
+// Periodically prपूर्णांकs torture statistics, अगर periodic statistics prपूर्णांकing
+// was specअगरied via the stat_पूर्णांकerval module parameter.
+अटल पूर्णांक
+scf_torture_stats(व्योम *arg)
+अणु
 	VERBOSE_TOROUT_STRING("scf_torture_stats task started");
-	do {
-		schedule_timeout_interruptible(stat_interval * HZ);
-		scf_torture_stats_print();
-		torture_shutdown_absorb("scf_torture_stats");
-	} while (!torture_must_stop());
-	torture_kthread_stopping("scf_torture_stats");
-	return 0;
-}
+	करो अणु
+		schedule_समयout_पूर्णांकerruptible(stat_पूर्णांकerval * HZ);
+		scf_torture_stats_prपूर्णांक();
+		torture_shutकरोwn_असलorb("scf_torture_stats");
+	पूर्ण जबतक (!torture_must_stop());
+	torture_kthपढ़ो_stopping("scf_torture_stats");
+	वापस 0;
+पूर्ण
 
 // Add a primitive to the scf_sel_array[].
-static void scf_sel_add(unsigned long weight, int prim, bool wait)
-{
-	struct scf_selector *scfsp = &scf_sel_array[scf_sel_array_len];
+अटल व्योम scf_sel_add(अचिन्हित दीर्घ weight, पूर्णांक prim, bool रुको)
+अणु
+	काष्ठा scf_selector *scfsp = &scf_sel_array[scf_sel_array_len];
 
-	// If no weight, if array would overflow, if computing three-place
-	// percentages would overflow, or if the scf_prim_name[] array would
-	// overflow, don't bother.  In the last three two cases, complain.
-	if (!weight ||
+	// If no weight, अगर array would overflow, अगर computing three-place
+	// percentages would overflow, or अगर the scf_prim_name[] array would
+	// overflow, करोn't bother.  In the last three two हालs, complain.
+	अगर (!weight ||
 	    WARN_ON_ONCE(scf_sel_array_len >= ARRAY_SIZE(scf_sel_array)) ||
 	    WARN_ON_ONCE(0 - 100000 * weight <= 100000 * scf_sel_totweight) ||
 	    WARN_ON_ONCE(prim >= ARRAY_SIZE(scf_prim_name)))
-		return;
+		वापस;
 	scf_sel_totweight += weight;
 	scfsp->scfs_weight = scf_sel_totweight;
 	scfsp->scfs_prim = prim;
-	scfsp->scfs_wait = wait;
+	scfsp->scfs_रुको = रुको;
 	scf_sel_array_len++;
-}
+पूर्ण
 
-// Dump out weighting percentages for scf_prim_name[] array.
-static void scf_sel_dump(void)
-{
-	int i;
-	unsigned long oldw = 0;
-	struct scf_selector *scfsp;
-	unsigned long w;
+// Dump out weighting percentages क्रम scf_prim_name[] array.
+अटल व्योम scf_sel_dump(व्योम)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ oldw = 0;
+	काष्ठा scf_selector *scfsp;
+	अचिन्हित दीर्घ w;
 
-	for (i = 0; i < scf_sel_array_len; i++) {
+	क्रम (i = 0; i < scf_sel_array_len; i++) अणु
 		scfsp = &scf_sel_array[i];
 		w = (scfsp->scfs_weight - oldw) * 100000 / scf_sel_totweight;
 		pr_info("%s: %3lu.%03lu %s(%s)\n", __func__, w / 1000, w % 1000,
 			scf_prim_name[scfsp->scfs_prim],
-			scfsp->scfs_wait ? "wait" : "nowait");
+			scfsp->scfs_रुको ? "wait" : "nowait");
 		oldw = scfsp->scfs_weight;
-	}
-}
+	पूर्ण
+पूर्ण
 
-// Randomly pick a primitive and wait/nowait, based on weightings.
-static struct scf_selector *scf_sel_rand(struct torture_random_state *trsp)
-{
-	int i;
-	unsigned long w = torture_random(trsp) % (scf_sel_totweight + 1);
+// Ranकरोmly pick a primitive and रुको/noरुको, based on weightings.
+अटल काष्ठा scf_selector *scf_sel_अक्रम(काष्ठा torture_अक्रमom_state *trsp)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ w = torture_अक्रमom(trsp) % (scf_sel_totweight + 1);
 
-	for (i = 0; i < scf_sel_array_len; i++)
-		if (scf_sel_array[i].scfs_weight >= w)
-			return &scf_sel_array[i];
+	क्रम (i = 0; i < scf_sel_array_len; i++)
+		अगर (scf_sel_array[i].scfs_weight >= w)
+			वापस &scf_sel_array[i];
 	WARN_ON_ONCE(1);
-	return &scf_sel_array[0];
-}
+	वापस &scf_sel_array[0];
+पूर्ण
 
-// Update statistics and occasionally burn up mass quantities of CPU time,
-// if told to do so via scftorture.longwait.  Otherwise, occasionally burn
+// Update statistics and occasionally burn up mass quantities of CPU समय,
+// अगर told to करो so via scftorture.दीर्घरुको.  Otherwise, occasionally burn
 // a little bit.
-static void scf_handler(void *scfc_in)
-{
-	int i;
-	int j;
-	unsigned long r = torture_random(this_cpu_ptr(&scf_torture_rand));
-	struct scf_check *scfcp = scfc_in;
+अटल व्योम scf_handler(व्योम *scfc_in)
+अणु
+	पूर्णांक i;
+	पूर्णांक j;
+	अचिन्हित दीर्घ r = torture_अक्रमom(this_cpu_ptr(&scf_torture_अक्रम));
+	काष्ठा scf_check *scfcp = scfc_in;
 
-	if (likely(scfcp)) {
+	अगर (likely(scfcp)) अणु
 		WRITE_ONCE(scfcp->scfc_out, false); // For multiple receivers.
-		if (WARN_ON_ONCE(unlikely(!READ_ONCE(scfcp->scfc_in))))
+		अगर (WARN_ON_ONCE(unlikely(!READ_ONCE(scfcp->scfc_in))))
 			atomic_inc(&n_mb_in_errs);
-	}
+	पूर्ण
 	this_cpu_inc(scf_invoked_count);
-	if (longwait <= 0) {
-		if (!(r & 0xffc0))
+	अगर (दीर्घरुको <= 0) अणु
+		अगर (!(r & 0xffc0))
 			udelay(r & 0x3f);
-		goto out;
-	}
-	if (r & 0xfff)
-		goto out;
+		जाओ out;
+	पूर्ण
+	अगर (r & 0xfff)
+		जाओ out;
 	r = (r >> 12);
-	if (longwait <= 0) {
+	अगर (दीर्घरुको <= 0) अणु
 		udelay((r & 0xff) + 1);
-		goto out;
-	}
-	r = r % longwait + 1;
-	for (i = 0; i < r; i++) {
-		for (j = 0; j < 1000; j++) {
+		जाओ out;
+	पूर्ण
+	r = r % दीर्घरुको + 1;
+	क्रम (i = 0; i < r; i++) अणु
+		क्रम (j = 0; j < 1000; j++) अणु
 			udelay(1000);
 			cpu_relax();
-		}
-	}
+		पूर्ण
+	पूर्ण
 out:
-	if (unlikely(!scfcp))
-		return;
-	if (scfcp->scfc_wait)
+	अगर (unlikely(!scfcp))
+		वापस;
+	अगर (scfcp->scfc_रुको)
 		WRITE_ONCE(scfcp->scfc_out, true);
-	else
-		kfree(scfcp);
-}
+	अन्यथा
+		kमुक्त(scfcp);
+पूर्ण
 
-// As above, but check for correct CPU.
-static void scf_handler_1(void *scfc_in)
-{
-	struct scf_check *scfcp = scfc_in;
+// As above, but check क्रम correct CPU.
+अटल व्योम scf_handler_1(व्योम *scfc_in)
+अणु
+	काष्ठा scf_check *scfcp = scfc_in;
 
-	if (likely(scfcp) && WARN_ONCE(smp_processor_id() != scfcp->scfc_cpu, "%s: Wanted CPU %d got CPU %d\n", __func__, scfcp->scfc_cpu, smp_processor_id())) {
+	अगर (likely(scfcp) && WARN_ONCE(smp_processor_id() != scfcp->scfc_cpu, "%s: Wanted CPU %d got CPU %d\n", __func__, scfcp->scfc_cpu, smp_processor_id())) अणु
 		atomic_inc(&n_errs);
-	}
+	पूर्ण
 	scf_handler(scfcp);
-}
+पूर्ण
 
-// Randomly do an smp_call_function*() invocation.
-static void scftorture_invoke_one(struct scf_statistics *scfp, struct torture_random_state *trsp)
-{
-	uintptr_t cpu;
-	int ret = 0;
-	struct scf_check *scfcp = NULL;
-	struct scf_selector *scfsp = scf_sel_rand(trsp);
+// Ranकरोmly करो an smp_call_function*() invocation.
+अटल व्योम scftorture_invoke_one(काष्ठा scf_statistics *scfp, काष्ठा torture_अक्रमom_state *trsp)
+अणु
+	uपूर्णांकptr_t cpu;
+	पूर्णांक ret = 0;
+	काष्ठा scf_check *scfcp = शून्य;
+	काष्ठा scf_selector *scfsp = scf_sel_अक्रम(trsp);
 
-	if (use_cpus_read_lock)
-		cpus_read_lock();
-	else
+	अगर (use_cpus_पढ़ो_lock)
+		cpus_पढ़ो_lock();
+	अन्यथा
 		preempt_disable();
-	if (scfsp->scfs_prim == SCF_PRIM_SINGLE || scfsp->scfs_wait) {
-		scfcp = kmalloc(sizeof(*scfcp), GFP_ATOMIC);
-		if (WARN_ON_ONCE(!scfcp)) {
+	अगर (scfsp->scfs_prim == SCF_PRIM_SINGLE || scfsp->scfs_रुको) अणु
+		scfcp = kदो_स्मृति(माप(*scfcp), GFP_ATOMIC);
+		अगर (WARN_ON_ONCE(!scfcp)) अणु
 			atomic_inc(&n_alloc_errs);
-		} else {
+		पूर्ण अन्यथा अणु
 			scfcp->scfc_cpu = -1;
-			scfcp->scfc_wait = scfsp->scfs_wait;
+			scfcp->scfc_रुको = scfsp->scfs_रुको;
 			scfcp->scfc_out = false;
-		}
-	}
-	switch (scfsp->scfs_prim) {
-	case SCF_PRIM_RESCHED:
-		if (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST)) {
-			cpu = torture_random(trsp) % nr_cpu_ids;
+		पूर्ण
+	पूर्ण
+	चयन (scfsp->scfs_prim) अणु
+	हाल SCF_PRIM_RESCHED:
+		अगर (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST)) अणु
+			cpu = torture_अक्रमom(trsp) % nr_cpu_ids;
 			scfp->n_resched++;
 			resched_cpu(cpu);
-		}
-		break;
-	case SCF_PRIM_SINGLE:
-		cpu = torture_random(trsp) % nr_cpu_ids;
-		if (scfsp->scfs_wait)
-			scfp->n_single_wait++;
-		else
+		पूर्ण
+		अवरोध;
+	हाल SCF_PRIM_SINGLE:
+		cpu = torture_अक्रमom(trsp) % nr_cpu_ids;
+		अगर (scfsp->scfs_रुको)
+			scfp->n_single_रुको++;
+		अन्यथा
 			scfp->n_single++;
-		if (scfcp) {
+		अगर (scfcp) अणु
 			scfcp->scfc_cpu = cpu;
 			barrier(); // Prevent race-reduction compiler optimizations.
 			scfcp->scfc_in = true;
-		}
-		ret = smp_call_function_single(cpu, scf_handler_1, (void *)scfcp, scfsp->scfs_wait);
-		if (ret) {
-			if (scfsp->scfs_wait)
-				scfp->n_single_wait_ofl++;
-			else
+		पूर्ण
+		ret = smp_call_function_single(cpu, scf_handler_1, (व्योम *)scfcp, scfsp->scfs_रुको);
+		अगर (ret) अणु
+			अगर (scfsp->scfs_रुको)
+				scfp->n_single_रुको_ofl++;
+			अन्यथा
 				scfp->n_single_ofl++;
-			kfree(scfcp);
-			scfcp = NULL;
-		}
-		break;
-	case SCF_PRIM_MANY:
-		if (scfsp->scfs_wait)
-			scfp->n_many_wait++;
-		else
+			kमुक्त(scfcp);
+			scfcp = शून्य;
+		पूर्ण
+		अवरोध;
+	हाल SCF_PRIM_MANY:
+		अगर (scfsp->scfs_रुको)
+			scfp->n_many_रुको++;
+		अन्यथा
 			scfp->n_many++;
-		if (scfcp) {
+		अगर (scfcp) अणु
 			barrier(); // Prevent race-reduction compiler optimizations.
 			scfcp->scfc_in = true;
-		}
-		smp_call_function_many(cpu_online_mask, scf_handler, scfcp, scfsp->scfs_wait);
-		break;
-	case SCF_PRIM_ALL:
-		if (scfsp->scfs_wait)
-			scfp->n_all_wait++;
-		else
+		पूर्ण
+		smp_call_function_many(cpu_online_mask, scf_handler, scfcp, scfsp->scfs_रुको);
+		अवरोध;
+	हाल SCF_PRIM_ALL:
+		अगर (scfsp->scfs_रुको)
+			scfp->n_all_रुको++;
+		अन्यथा
 			scfp->n_all++;
-		if (scfcp) {
+		अगर (scfcp) अणु
 			barrier(); // Prevent race-reduction compiler optimizations.
 			scfcp->scfc_in = true;
-		}
-		smp_call_function(scf_handler, scfcp, scfsp->scfs_wait);
-		break;
-	default:
+		पूर्ण
+		smp_call_function(scf_handler, scfcp, scfsp->scfs_रुको);
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		if (scfcp)
+		अगर (scfcp)
 			scfcp->scfc_out = true;
-	}
-	if (scfcp && scfsp->scfs_wait) {
-		if (WARN_ON_ONCE((num_online_cpus() > 1 || scfsp->scfs_prim == SCF_PRIM_SINGLE) &&
+	पूर्ण
+	अगर (scfcp && scfsp->scfs_रुको) अणु
+		अगर (WARN_ON_ONCE((num_online_cpus() > 1 || scfsp->scfs_prim == SCF_PRIM_SINGLE) &&
 				 !scfcp->scfc_out))
 			atomic_inc(&n_mb_out_errs); // Leak rather than trash!
-		else
-			kfree(scfcp);
+		अन्यथा
+			kमुक्त(scfcp);
 		barrier(); // Prevent race-reduction compiler optimizations.
-	}
-	if (use_cpus_read_lock)
-		cpus_read_unlock();
-	else
+	पूर्ण
+	अगर (use_cpus_पढ़ो_lock)
+		cpus_पढ़ो_unlock();
+	अन्यथा
 		preempt_enable();
-	if (!(torture_random(trsp) & 0xfff))
-		schedule_timeout_uninterruptible(1);
-}
+	अगर (!(torture_अक्रमom(trsp) & 0xfff))
+		schedule_समयout_unपूर्णांकerruptible(1);
+पूर्ण
 
-// SCF test kthread.  Repeatedly does calls to members of the
+// SCF test kthपढ़ो.  Repeatedly करोes calls to members of the
 // smp_call_function() family of functions.
-static int scftorture_invoker(void *arg)
-{
-	int cpu;
-	int curcpu;
-	DEFINE_TORTURE_RANDOM(rand);
-	struct scf_statistics *scfp = (struct scf_statistics *)arg;
+अटल पूर्णांक scftorture_invoker(व्योम *arg)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक curcpu;
+	DEFINE_TORTURE_RANDOM(अक्रम);
+	काष्ठा scf_statistics *scfp = (काष्ठा scf_statistics *)arg;
 	bool was_offline = false;
 
 	VERBOSE_SCFTORTOUT("scftorture_invoker %d: task started", scfp->cpu);
 	cpu = scfp->cpu % nr_cpu_ids;
 	set_cpus_allowed_ptr(current, cpumask_of(cpu));
 	set_user_nice(current, MAX_NICE);
-	if (holdoff)
-		schedule_timeout_interruptible(holdoff * HZ);
+	अगर (holकरोff)
+		schedule_समयout_पूर्णांकerruptible(holकरोff * HZ);
 
 	VERBOSE_SCFTORTOUT("scftorture_invoker %d: Waiting for all SCF torturers from cpu %d", scfp->cpu, smp_processor_id());
 
@@ -418,191 +419,191 @@ static int scftorture_invoker(void *arg)
 		  "%s: Wanted CPU %d, running on %d, nr_cpu_ids = %d\n",
 		  __func__, scfp->cpu, curcpu, nr_cpu_ids);
 
-	if (!atomic_dec_return(&n_started))
-		while (atomic_read_acquire(&n_started)) {
-			if (torture_must_stop()) {
+	अगर (!atomic_dec_वापस(&n_started))
+		जबतक (atomic_पढ़ो_acquire(&n_started)) अणु
+			अगर (torture_must_stop()) अणु
 				VERBOSE_SCFTORTOUT("scftorture_invoker %d ended before starting", scfp->cpu);
-				goto end;
-			}
-			schedule_timeout_uninterruptible(1);
-		}
+				जाओ end;
+			पूर्ण
+			schedule_समयout_unपूर्णांकerruptible(1);
+		पूर्ण
 
 	VERBOSE_SCFTORTOUT("scftorture_invoker %d started", scfp->cpu);
 
-	do {
-		scftorture_invoke_one(scfp, &rand);
-		while (cpu_is_offline(cpu) && !torture_must_stop()) {
-			schedule_timeout_interruptible(HZ / 5);
+	करो अणु
+		scftorture_invoke_one(scfp, &अक्रम);
+		जबतक (cpu_is_offline(cpu) && !torture_must_stop()) अणु
+			schedule_समयout_पूर्णांकerruptible(HZ / 5);
 			was_offline = true;
-		}
-		if (was_offline) {
+		पूर्ण
+		अगर (was_offline) अणु
 			set_cpus_allowed_ptr(current, cpumask_of(cpu));
 			was_offline = false;
-		}
+		पूर्ण
 		cond_resched();
-		stutter_wait("scftorture_invoker");
-	} while (!torture_must_stop());
+		stutter_रुको("scftorture_invoker");
+	पूर्ण जबतक (!torture_must_stop());
 
 	VERBOSE_SCFTORTOUT("scftorture_invoker %d ended", scfp->cpu);
 end:
-	torture_kthread_stopping("scftorture_invoker");
-	return 0;
-}
+	torture_kthपढ़ो_stopping("scftorture_invoker");
+	वापस 0;
+पूर्ण
 
-static void
-scftorture_print_module_parms(const char *tag)
-{
+अटल व्योम
+scftorture_prपूर्णांक_module_parms(स्थिर अक्षर *tag)
+अणु
 	pr_alert(SCFTORT_FLAG
 		 "--- %s:  verbose=%d holdoff=%d longwait=%d nthreads=%d onoff_holdoff=%d onoff_interval=%d shutdown_secs=%d stat_interval=%d stutter=%d use_cpus_read_lock=%d, weight_resched=%d, weight_single=%d, weight_single_wait=%d, weight_many=%d, weight_many_wait=%d, weight_all=%d, weight_all_wait=%d\n", tag,
-		 verbose, holdoff, longwait, nthreads, onoff_holdoff, onoff_interval, shutdown, stat_interval, stutter, use_cpus_read_lock, weight_resched, weight_single, weight_single_wait, weight_many, weight_many_wait, weight_all, weight_all_wait);
-}
+		 verbose, holकरोff, दीर्घरुको, nthपढ़ोs, onoff_holकरोff, onoff_पूर्णांकerval, shutकरोwn, stat_पूर्णांकerval, stutter, use_cpus_पढ़ो_lock, weight_resched, weight_single, weight_single_रुको, weight_many, weight_many_रुको, weight_all, weight_all_रुको);
+पूर्ण
 
-static void scf_cleanup_handler(void *unused)
-{
-}
+अटल व्योम scf_cleanup_handler(व्योम *unused)
+अणु
+पूर्ण
 
-static void scf_torture_cleanup(void)
-{
-	int i;
+अटल व्योम scf_torture_cleanup(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (torture_cleanup_begin())
-		return;
+	अगर (torture_cleanup_begin())
+		वापस;
 
-	WRITE_ONCE(scfdone, true);
-	if (nthreads)
-		for (i = 0; i < nthreads; i++)
-			torture_stop_kthread("scftorture_invoker", scf_stats_p[i].task);
-	else
-		goto end;
-	smp_call_function(scf_cleanup_handler, NULL, 0);
-	torture_stop_kthread(scf_torture_stats, scf_torture_stats_task);
-	scf_torture_stats_print();  // -After- the stats thread is stopped!
-	kfree(scf_stats_p);  // -After- the last stats print has completed!
-	scf_stats_p = NULL;
+	WRITE_ONCE(scfकरोne, true);
+	अगर (nthपढ़ोs)
+		क्रम (i = 0; i < nthपढ़ोs; i++)
+			torture_stop_kthपढ़ो("scftorture_invoker", scf_stats_p[i].task);
+	अन्यथा
+		जाओ end;
+	smp_call_function(scf_cleanup_handler, शून्य, 0);
+	torture_stop_kthपढ़ो(scf_torture_stats, scf_torture_stats_task);
+	scf_torture_stats_prपूर्णांक();  // -After- the stats thपढ़ो is stopped!
+	kमुक्त(scf_stats_p);  // -After- the last stats prपूर्णांक has completed!
+	scf_stats_p = शून्य;
 
-	if (atomic_read(&n_errs) || atomic_read(&n_mb_in_errs) || atomic_read(&n_mb_out_errs))
-		scftorture_print_module_parms("End of test: FAILURE");
-	else if (torture_onoff_failures())
-		scftorture_print_module_parms("End of test: LOCK_HOTPLUG");
-	else
-		scftorture_print_module_parms("End of test: SUCCESS");
+	अगर (atomic_पढ़ो(&n_errs) || atomic_पढ़ो(&n_mb_in_errs) || atomic_पढ़ो(&n_mb_out_errs))
+		scftorture_prपूर्णांक_module_parms("End of test: FAILURE");
+	अन्यथा अगर (torture_onoff_failures())
+		scftorture_prपूर्णांक_module_parms("End of test: LOCK_HOTPLUG");
+	अन्यथा
+		scftorture_prपूर्णांक_module_parms("End of test: SUCCESS");
 
 end:
 	torture_cleanup_end();
-}
+पूर्ण
 
-static int __init scf_torture_init(void)
-{
-	long i;
-	int firsterr = 0;
-	unsigned long weight_resched1 = weight_resched;
-	unsigned long weight_single1 = weight_single;
-	unsigned long weight_single_wait1 = weight_single_wait;
-	unsigned long weight_many1 = weight_many;
-	unsigned long weight_many_wait1 = weight_many_wait;
-	unsigned long weight_all1 = weight_all;
-	unsigned long weight_all_wait1 = weight_all_wait;
+अटल पूर्णांक __init scf_torture_init(व्योम)
+अणु
+	दीर्घ i;
+	पूर्णांक firsterr = 0;
+	अचिन्हित दीर्घ weight_resched1 = weight_resched;
+	अचिन्हित दीर्घ weight_single1 = weight_single;
+	अचिन्हित दीर्घ weight_single_रुको1 = weight_single_रुको;
+	अचिन्हित दीर्घ weight_many1 = weight_many;
+	अचिन्हित दीर्घ weight_many_रुको1 = weight_many_रुको;
+	अचिन्हित दीर्घ weight_all1 = weight_all;
+	अचिन्हित दीर्घ weight_all_रुको1 = weight_all_रुको;
 
-	if (!torture_init_begin(SCFTORT_STRING, verbose))
-		return -EBUSY;
+	अगर (!torture_init_begin(SCFTORT_STRING, verbose))
+		वापस -EBUSY;
 
-	scftorture_print_module_parms("Start of test");
+	scftorture_prपूर्णांक_module_parms("Start of test");
 
-	if (weight_resched == -1 && weight_single == -1 && weight_single_wait == -1 &&
-	    weight_many == -1 && weight_many_wait == -1 &&
-	    weight_all == -1 && weight_all_wait == -1) {
+	अगर (weight_resched == -1 && weight_single == -1 && weight_single_रुको == -1 &&
+	    weight_many == -1 && weight_many_रुको == -1 &&
+	    weight_all == -1 && weight_all_रुको == -1) अणु
 		weight_resched1 = 2 * nr_cpu_ids;
 		weight_single1 = 2 * nr_cpu_ids;
-		weight_single_wait1 = 2 * nr_cpu_ids;
+		weight_single_रुको1 = 2 * nr_cpu_ids;
 		weight_many1 = 2;
-		weight_many_wait1 = 2;
+		weight_many_रुको1 = 2;
 		weight_all1 = 1;
-		weight_all_wait1 = 1;
-	} else {
-		if (weight_resched == -1)
+		weight_all_रुको1 = 1;
+	पूर्ण अन्यथा अणु
+		अगर (weight_resched == -1)
 			weight_resched1 = 0;
-		if (weight_single == -1)
+		अगर (weight_single == -1)
 			weight_single1 = 0;
-		if (weight_single_wait == -1)
-			weight_single_wait1 = 0;
-		if (weight_many == -1)
+		अगर (weight_single_रुको == -1)
+			weight_single_रुको1 = 0;
+		अगर (weight_many == -1)
 			weight_many1 = 0;
-		if (weight_many_wait == -1)
-			weight_many_wait1 = 0;
-		if (weight_all == -1)
+		अगर (weight_many_रुको == -1)
+			weight_many_रुको1 = 0;
+		अगर (weight_all == -1)
 			weight_all1 = 0;
-		if (weight_all_wait == -1)
-			weight_all_wait1 = 0;
-	}
-	if (weight_single1 == 0 && weight_single_wait1 == 0 &&
-	    weight_many1 == 0 && weight_many_wait1 == 0 &&
-	    weight_all1 == 0 && weight_all_wait1 == 0) {
+		अगर (weight_all_रुको == -1)
+			weight_all_रुको1 = 0;
+	पूर्ण
+	अगर (weight_single1 == 0 && weight_single_रुको1 == 0 &&
+	    weight_many1 == 0 && weight_many_रुको1 == 0 &&
+	    weight_all1 == 0 && weight_all_रुको1 == 0) अणु
 		VERBOSE_SCFTORTOUT_ERRSTRING("all zero weights makes no sense");
 		firsterr = -EINVAL;
-		goto unwind;
-	}
-	if (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST))
+		जाओ unwind;
+	पूर्ण
+	अगर (IS_BUILTIN(CONFIG_SCF_TORTURE_TEST))
 		scf_sel_add(weight_resched1, SCF_PRIM_RESCHED, false);
-	else if (weight_resched1)
+	अन्यथा अगर (weight_resched1)
 		VERBOSE_SCFTORTOUT_ERRSTRING("built as module, weight_resched ignored");
 	scf_sel_add(weight_single1, SCF_PRIM_SINGLE, false);
-	scf_sel_add(weight_single_wait1, SCF_PRIM_SINGLE, true);
+	scf_sel_add(weight_single_रुको1, SCF_PRIM_SINGLE, true);
 	scf_sel_add(weight_many1, SCF_PRIM_MANY, false);
-	scf_sel_add(weight_many_wait1, SCF_PRIM_MANY, true);
+	scf_sel_add(weight_many_रुको1, SCF_PRIM_MANY, true);
 	scf_sel_add(weight_all1, SCF_PRIM_ALL, false);
-	scf_sel_add(weight_all_wait1, SCF_PRIM_ALL, true);
+	scf_sel_add(weight_all_रुको1, SCF_PRIM_ALL, true);
 	scf_sel_dump();
 
-	if (onoff_interval > 0) {
-		firsterr = torture_onoff_init(onoff_holdoff * HZ, onoff_interval, NULL);
-		if (firsterr)
-			goto unwind;
-	}
-	if (shutdown_secs > 0) {
-		firsterr = torture_shutdown_init(shutdown_secs, scf_torture_cleanup);
-		if (firsterr)
-			goto unwind;
-	}
-	if (stutter > 0) {
+	अगर (onoff_पूर्णांकerval > 0) अणु
+		firsterr = torture_onoff_init(onoff_holकरोff * HZ, onoff_पूर्णांकerval, शून्य);
+		अगर (firsterr)
+			जाओ unwind;
+	पूर्ण
+	अगर (shutकरोwn_secs > 0) अणु
+		firsterr = torture_shutकरोwn_init(shutकरोwn_secs, scf_torture_cleanup);
+		अगर (firsterr)
+			जाओ unwind;
+	पूर्ण
+	अगर (stutter > 0) अणु
 		firsterr = torture_stutter_init(stutter, stutter);
-		if (firsterr)
-			goto unwind;
-	}
+		अगर (firsterr)
+			जाओ unwind;
+	पूर्ण
 
 	// Worker tasks invoking smp_call_function().
-	if (nthreads < 0)
-		nthreads = num_online_cpus();
-	scf_stats_p = kcalloc(nthreads, sizeof(scf_stats_p[0]), GFP_KERNEL);
-	if (!scf_stats_p) {
+	अगर (nthपढ़ोs < 0)
+		nthपढ़ोs = num_online_cpus();
+	scf_stats_p = kसुस्मृति(nthपढ़ोs, माप(scf_stats_p[0]), GFP_KERNEL);
+	अगर (!scf_stats_p) अणु
 		VERBOSE_SCFTORTOUT_ERRSTRING("out of memory");
 		firsterr = -ENOMEM;
-		goto unwind;
-	}
+		जाओ unwind;
+	पूर्ण
 
-	VERBOSE_SCFTORTOUT("Starting %d smp_call_function() threads\n", nthreads);
+	VERBOSE_SCFTORTOUT("Starting %d smp_call_function() threads\n", nthपढ़ोs);
 
-	atomic_set(&n_started, nthreads);
-	for (i = 0; i < nthreads; i++) {
+	atomic_set(&n_started, nthपढ़ोs);
+	क्रम (i = 0; i < nthपढ़ोs; i++) अणु
 		scf_stats_p[i].cpu = i;
-		firsterr = torture_create_kthread(scftorture_invoker, (void *)&scf_stats_p[i],
+		firsterr = torture_create_kthपढ़ो(scftorture_invoker, (व्योम *)&scf_stats_p[i],
 						  scf_stats_p[i].task);
-		if (firsterr)
-			goto unwind;
-	}
-	if (stat_interval > 0) {
-		firsterr = torture_create_kthread(scf_torture_stats, NULL, scf_torture_stats_task);
-		if (firsterr)
-			goto unwind;
-	}
+		अगर (firsterr)
+			जाओ unwind;
+	पूर्ण
+	अगर (stat_पूर्णांकerval > 0) अणु
+		firsterr = torture_create_kthपढ़ो(scf_torture_stats, शून्य, scf_torture_stats_task);
+		अगर (firsterr)
+			जाओ unwind;
+	पूर्ण
 
 	torture_init_end();
-	return 0;
+	वापस 0;
 
 unwind:
 	torture_init_end();
 	scf_torture_cleanup();
-	return firsterr;
-}
+	वापस firsterr;
+पूर्ण
 
 module_init(scf_torture_init);
-module_exit(scf_torture_cleanup);
+module_निकास(scf_torture_cleanup);

@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * w83l785ts.c - Part of lm_sensors, Linux kernel modules for hardware
+ * w83l785ts.c - Part of lm_sensors, Linux kernel modules क्रम hardware
  *               monitoring
  * Copyright (C) 2003-2009  Jean Delvare <jdelvare@suse.de>
  *
  * Inspired from the lm83 driver. The W83L785TS-S is a sensor chip made
- * by Winbond. It reports a single external temperature with a 1 deg
+ * by Winbond. It reports a single बाह्यal temperature with a 1 deg
  * resolution and a 3 deg accuracy. Datasheet can be obtained from
  * Winbond's website at:
  *   http://www.winbond-usa.com/products/winbond_products/pdfs/PCIC/W83L785TS-S.pdf
@@ -13,270 +14,270 @@
  * Ported to Linux 2.6 by Wolfgang Ziegler <nuppla@gmx.at> and Jean Delvare
  * <jdelvare@suse.de>.
  *
- * Thanks to James Bolt <james@evilpenguin.com> for benchmarking the read
+ * Thanks to James Bolt <james@evilpenguin.com> क्रम benchmarking the पढ़ो
  * error handling mechanism.
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
 
-/* How many retries on register read error */
-#define MAX_RETRIES	5
+/* How many retries on रेजिस्टर पढ़ो error */
+#घोषणा MAX_RETRIES	5
 
 /*
  * Address to scan
- * Address is fully defined internally and cannot be changed.
+ * Address is fully defined पूर्णांकernally and cannot be changed.
  */
 
-static const unsigned short normal_i2c[] = { 0x2e, I2C_CLIENT_END };
+अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु 0x2e, I2C_CLIENT_END पूर्ण;
 
 /*
- * The W83L785TS-S registers
- * Manufacturer ID is 0x5CA3 for Winbond.
+ * The W83L785TS-S रेजिस्टरs
+ * Manufacturer ID is 0x5CA3 क्रम Winbond.
  */
 
-#define W83L785TS_REG_MAN_ID1		0x4D
-#define W83L785TS_REG_MAN_ID2		0x4C
-#define W83L785TS_REG_CHIP_ID		0x4E
-#define W83L785TS_REG_CONFIG		0x40
-#define W83L785TS_REG_TYPE		0x52
-#define W83L785TS_REG_TEMP		0x27
-#define W83L785TS_REG_TEMP_OVER		0x53 /* not sure about this one */
+#घोषणा W83L785TS_REG_MAN_ID1		0x4D
+#घोषणा W83L785TS_REG_MAN_ID2		0x4C
+#घोषणा W83L785TS_REG_CHIP_ID		0x4E
+#घोषणा W83L785TS_REG_CONFIG		0x40
+#घोषणा W83L785TS_REG_TYPE		0x52
+#घोषणा W83L785TS_REG_TEMP		0x27
+#घोषणा W83L785TS_REG_TEMP_OVER		0x53 /* not sure about this one */
 
 /*
  * Conversions
- * The W83L785TS-S uses signed 8-bit values.
+ * The W83L785TS-S uses चिन्हित 8-bit values.
  */
 
-#define TEMP_FROM_REG(val)	((val) * 1000)
+#घोषणा TEMP_FROM_REG(val)	((val) * 1000)
 
 /*
  * Functions declaration
  */
 
-static int w83l785ts_probe(struct i2c_client *client);
-static int w83l785ts_detect(struct i2c_client *client,
-			    struct i2c_board_info *info);
-static int w83l785ts_remove(struct i2c_client *client);
-static u8 w83l785ts_read_value(struct i2c_client *client, u8 reg, u8 defval);
-static struct w83l785ts_data *w83l785ts_update_device(struct device *dev);
+अटल पूर्णांक w83l785ts_probe(काष्ठा i2c_client *client);
+अटल पूर्णांक w83l785ts_detect(काष्ठा i2c_client *client,
+			    काष्ठा i2c_board_info *info);
+अटल पूर्णांक w83l785ts_हटाओ(काष्ठा i2c_client *client);
+अटल u8 w83l785ts_पढ़ो_value(काष्ठा i2c_client *client, u8 reg, u8 defval);
+अटल काष्ठा w83l785ts_data *w83l785ts_update_device(काष्ठा device *dev);
 
 /*
  * Driver data (common to all clients)
  */
 
-static const struct i2c_device_id w83l785ts_id[] = {
-	{ "w83l785ts", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id w83l785ts_id[] = अणु
+	अणु "w83l785ts", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, w83l785ts_id);
 
-static struct i2c_driver w83l785ts_driver = {
+अटल काष्ठा i2c_driver w83l785ts_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name	= "w83l785ts",
-	},
+	पूर्ण,
 	.probe_new	= w83l785ts_probe,
-	.remove		= w83l785ts_remove,
+	.हटाओ		= w83l785ts_हटाओ,
 	.id_table	= w83l785ts_id,
 	.detect		= w83l785ts_detect,
 	.address_list	= normal_i2c,
-};
+पूर्ण;
 
 /*
- * Client data (each client gets its own)
+ * Client data (each client माला_लो its own)
  */
 
-struct w83l785ts_data {
-	struct device *hwmon_dev;
-	struct mutex update_lock;
-	char valid; /* zero until following fields are valid */
-	unsigned long last_updated; /* in jiffies */
+काष्ठा w83l785ts_data अणु
+	काष्ठा device *hwmon_dev;
+	काष्ठा mutex update_lock;
+	अक्षर valid; /* zero until following fields are valid */
+	अचिन्हित दीर्घ last_updated; /* in jअगरfies */
 
-	/* registers values */
+	/* रेजिस्टरs values */
 	s8 temp[2]; /* 0: input, 1: critical limit */
-};
+पूर्ण;
 
 /*
  * Sysfs stuff
  */
 
-static ssize_t show_temp(struct device *dev, struct device_attribute *devattr,
-	char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
-	struct w83l785ts_data *data = w83l785ts_update_device(dev);
-	return sprintf(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index]));
-}
+अटल sमाप_प्रकार show_temp(काष्ठा device *dev, काष्ठा device_attribute *devattr,
+	अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+	काष्ठा w83l785ts_data *data = w83l785ts_update_device(dev);
+	वापस प्र_लिखो(buf, "%d\n", TEMP_FROM_REG(data->temp[attr->index]));
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, show_temp, NULL, 0);
-static SENSOR_DEVICE_ATTR(temp1_max, S_IRUGO, show_temp, NULL, 1);
+अटल SENSOR_DEVICE_ATTR(temp1_input, S_IRUGO, show_temp, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(temp1_max, S_IRUGO, show_temp, शून्य, 1);
 
 /*
  * Real code
  */
 
-/* Return 0 if detection is successful, -ENODEV otherwise */
-static int w83l785ts_detect(struct i2c_client *client,
-			    struct i2c_board_info *info)
-{
-	struct i2c_adapter *adapter = client->adapter;
+/* Return 0 अगर detection is successful, -ENODEV otherwise */
+अटल पूर्णांक w83l785ts_detect(काष्ठा i2c_client *client,
+			    काष्ठा i2c_board_info *info)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
 	u16 man_id;
 	u8 chip_id;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
 	/* detection */
-	if ((w83l785ts_read_value(client, W83L785TS_REG_CONFIG, 0) & 0x80)
-	 || (w83l785ts_read_value(client, W83L785TS_REG_TYPE, 0) & 0xFC)) {
+	अगर ((w83l785ts_पढ़ो_value(client, W83L785TS_REG_CONFIG, 0) & 0x80)
+	 || (w83l785ts_पढ़ो_value(client, W83L785TS_REG_TYPE, 0) & 0xFC)) अणु
 		dev_dbg(&adapter->dev,
 			"W83L785TS-S detection failed at 0x%02x\n",
 			client->addr);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Identification */
-	man_id = (w83l785ts_read_value(client, W83L785TS_REG_MAN_ID1, 0) << 8)
-	       + w83l785ts_read_value(client, W83L785TS_REG_MAN_ID2, 0);
-	chip_id = w83l785ts_read_value(client, W83L785TS_REG_CHIP_ID, 0);
+	/* Identअगरication */
+	man_id = (w83l785ts_पढ़ो_value(client, W83L785TS_REG_MAN_ID1, 0) << 8)
+	       + w83l785ts_पढ़ो_value(client, W83L785TS_REG_MAN_ID2, 0);
+	chip_id = w83l785ts_पढ़ो_value(client, W83L785TS_REG_CHIP_ID, 0);
 
-	if (man_id != 0x5CA3		/* Winbond */
-	 || chip_id != 0x70) {		/* W83L785TS-S */
+	अगर (man_id != 0x5CA3		/* Winbond */
+	 || chip_id != 0x70) अणु		/* W83L785TS-S */
 		dev_dbg(&adapter->dev,
 			"Unsupported chip (man_id=0x%04X, chip_id=0x%02X)\n",
 			man_id, chip_id);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	strlcpy(info->type, "w83l785ts", I2C_NAME_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int w83l785ts_probe(struct i2c_client *client)
-{
-	struct w83l785ts_data *data;
-	struct device *dev = &client->dev;
-	int err;
+अटल पूर्णांक w83l785ts_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा w83l785ts_data *data;
+	काष्ठा device *dev = &client->dev;
+	पूर्णांक err;
 
-	data = devm_kzalloc(dev, sizeof(struct w83l785ts_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा w83l785ts_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	mutex_init(&data->update_lock);
 
 	/*
 	 * Initialize the W83L785TS chip
-	 * Nothing yet, assume it is already started.
+	 * Nothing yet, assume it is alपढ़ोy started.
 	 */
 
 	err = device_create_file(dev, &sensor_dev_attr_temp1_input.dev_attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = device_create_file(dev, &sensor_dev_attr_temp1_max.dev_attr);
-	if (err)
-		goto exit_remove;
+	अगर (err)
+		जाओ निकास_हटाओ;
 
 	/* Register sysfs hooks */
-	data->hwmon_dev = hwmon_device_register(dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		err = PTR_ERR(data->hwmon_dev);
-		goto exit_remove;
-	}
+		जाओ निकास_हटाओ;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_remove:
-	device_remove_file(dev, &sensor_dev_attr_temp1_input.dev_attr);
-	device_remove_file(dev, &sensor_dev_attr_temp1_max.dev_attr);
-	return err;
-}
+निकास_हटाओ:
+	device_हटाओ_file(dev, &sensor_dev_attr_temp1_input.dev_attr);
+	device_हटाओ_file(dev, &sensor_dev_attr_temp1_max.dev_attr);
+	वापस err;
+पूर्ण
 
-static int w83l785ts_remove(struct i2c_client *client)
-{
-	struct w83l785ts_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक w83l785ts_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा w83l785ts_data *data = i2c_get_clientdata(client);
 
-	hwmon_device_unregister(data->hwmon_dev);
-	device_remove_file(&client->dev,
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	device_हटाओ_file(&client->dev,
 			   &sensor_dev_attr_temp1_input.dev_attr);
-	device_remove_file(&client->dev,
+	device_हटाओ_file(&client->dev,
 			   &sensor_dev_attr_temp1_max.dev_attr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 w83l785ts_read_value(struct i2c_client *client, u8 reg, u8 defval)
-{
-	int value, i;
-	struct device *dev;
-	const char *prefix;
+अटल u8 w83l785ts_पढ़ो_value(काष्ठा i2c_client *client, u8 reg, u8 defval)
+अणु
+	पूर्णांक value, i;
+	काष्ठा device *dev;
+	स्थिर अक्षर *prefix;
 
 	/*
-	 * We might be called during detection, at which point the client
+	 * We might be called during detection, at which poपूर्णांक the client
 	 * isn't yet fully initialized, so we can't use dev_dbg on it
 	 */
-	if (i2c_get_clientdata(client)) {
+	अगर (i2c_get_clientdata(client)) अणु
 		dev = &client->dev;
 		prefix = "";
-	} else {
+	पूर्ण अन्यथा अणु
 		dev = &client->adapter->dev;
 		prefix = "w83l785ts: ";
-	}
+	पूर्ण
 
 	/*
-	 * Frequent read errors have been reported on Asus boards, so we
-	 * retry on read errors. If it still fails (unlikely), return the
-	 * default value requested by the caller.
+	 * Frequent पढ़ो errors have been reported on Asus boards, so we
+	 * retry on पढ़ो errors. If it still fails (unlikely), वापस the
+	 * शेष value requested by the caller.
 	 */
-	for (i = 1; i <= MAX_RETRIES; i++) {
-		value = i2c_smbus_read_byte_data(client, reg);
-		if (value >= 0) {
+	क्रम (i = 1; i <= MAX_RETRIES; i++) अणु
+		value = i2c_smbus_पढ़ो_byte_data(client, reg);
+		अगर (value >= 0) अणु
 			dev_dbg(dev, "%sRead 0x%02x from register 0x%02x.\n",
 				prefix, value, reg);
-			return value;
-		}
+			वापस value;
+		पूर्ण
 		dev_dbg(dev, "%sRead failed, will retry in %d.\n", prefix, i);
 		msleep(i);
-	}
+	पूर्ण
 
 	dev_err(dev, "%sCouldn't read value from register 0x%02x.\n", prefix,
 		reg);
-	return defval;
-}
+	वापस defval;
+पूर्ण
 
-static struct w83l785ts_data *w83l785ts_update_device(struct device *dev)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct w83l785ts_data *data = i2c_get_clientdata(client);
+अटल काष्ठा w83l785ts_data *w83l785ts_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा w83l785ts_data *data = i2c_get_clientdata(client);
 
 	mutex_lock(&data->update_lock);
 
-	if (!data->valid || time_after(jiffies, data->last_updated + HZ * 2)) {
+	अगर (!data->valid || समय_after(jअगरfies, data->last_updated + HZ * 2)) अणु
 		dev_dbg(&client->dev, "Updating w83l785ts data.\n");
-		data->temp[0] = w83l785ts_read_value(client,
+		data->temp[0] = w83l785ts_पढ़ो_value(client,
 				W83L785TS_REG_TEMP, data->temp[0]);
-		data->temp[1] = w83l785ts_read_value(client,
+		data->temp[1] = w83l785ts_पढ़ो_value(client,
 				W83L785TS_REG_TEMP_OVER, data->temp[1]);
 
-		data->last_updated = jiffies;
+		data->last_updated = jअगरfies;
 		data->valid = 1;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
 module_i2c_driver(w83l785ts_driver);
 

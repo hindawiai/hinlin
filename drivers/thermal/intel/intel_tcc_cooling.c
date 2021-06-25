@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * cooling device driver that activates the processor throttling by
- * programming the TCC Offset register.
+ * programming the TCC Offset रेजिस्टर.
  * Copyright (c) 2021, Intel Corporation.
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/thermal.h>
-#include <asm/cpu_device_id.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/thermal.h>
+#समावेश <यंत्र/cpu_device_id.h>
 
-#define TCC_SHIFT 24
-#define TCC_MASK	(0x3fULL<<24)
-#define TCC_PROGRAMMABLE	BIT(30)
+#घोषणा TCC_SHIFT 24
+#घोषणा TCC_MASK	(0x3fULL<<24)
+#घोषणा TCC_PROGRAMMABLE	BIT(30)
 
-static struct thermal_cooling_device *tcc_cdev;
+अटल काष्ठा thermal_cooling_device *tcc_cdev;
 
-static int tcc_get_max_state(struct thermal_cooling_device *cdev, unsigned long
+अटल पूर्णांक tcc_get_max_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ
 			     *state)
-{
+अणु
 	*state = TCC_MASK >> TCC_SHIFT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcc_offset_update(int tcc)
-{
+अटल पूर्णांक tcc_offset_update(पूर्णांक tcc)
+अणु
 	u64 val;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	val &= ~TCC_MASK;
 	val |= tcc << TCC_SHIFT;
 
 	err = wrmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcc_get_cur_state(struct thermal_cooling_device *cdev, unsigned long
+अटल पूर्णांक tcc_get_cur_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ
 			     *state)
-{
+अणु
 	u64 val;
-	int err;
+	पूर्णांक err;
 
 	err = rdmsrl_safe(MSR_IA32_TEMPERATURE_TARGET, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	*state = (val & TCC_MASK) >> TCC_SHIFT;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tcc_set_cur_state(struct thermal_cooling_device *cdev, unsigned long
+अटल पूर्णांक tcc_set_cur_state(काष्ठा thermal_cooling_device *cdev, अचिन्हित दीर्घ
 			     state)
-{
-	return tcc_offset_update(state);
-}
+अणु
+	वापस tcc_offset_update(state);
+पूर्ण
 
-static const struct thermal_cooling_device_ops tcc_cooling_ops = {
+अटल स्थिर काष्ठा thermal_cooling_device_ops tcc_cooling_ops = अणु
 	.get_max_state = tcc_get_max_state,
 	.get_cur_state = tcc_get_cur_state,
 	.set_cur_state = tcc_set_cur_state,
-};
+पूर्ण;
 
-static const struct x86_cpu_id tcc_ids[] __initconst = {
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_L, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_L, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE_L, NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE, NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id tcc_ids[] __initस्थिर = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(SKYLAKE_L, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(KABYLAKE_L, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(ICELAKE_L, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(TIGERLAKE_L, शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(COMETLAKE, शून्य),
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(x86cpu, tcc_ids);
 
-static int __init tcc_cooling_init(void)
-{
-	int ret;
+अटल पूर्णांक __init tcc_cooling_init(व्योम)
+अणु
+	पूर्णांक ret;
 	u64 val;
-	const struct x86_cpu_id *id;
+	स्थिर काष्ठा x86_cpu_id *id;
 
-	int err;
+	पूर्णांक err;
 
 	id = x86_match_cpu(tcc_ids);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
 	err = rdmsrl_safe(MSR_PLATFORM_INFO, &val);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!(val & TCC_PROGRAMMABLE))
-		return -ENODEV;
+	अगर (!(val & TCC_PROGRAMMABLE))
+		वापस -ENODEV;
 
 	pr_info("Programmable TCC Offset detected\n");
 
 	tcc_cdev =
-	    thermal_cooling_device_register("TCC Offset", NULL,
+	    thermal_cooling_device_रेजिस्टर("TCC Offset", शून्य,
 					    &tcc_cooling_ops);
-	if (IS_ERR(tcc_cdev)) {
+	अगर (IS_ERR(tcc_cdev)) अणु
 		ret = PTR_ERR(tcc_cdev);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 module_init(tcc_cooling_init)
 
-static void __exit tcc_cooling_exit(void)
-{
-	thermal_cooling_device_unregister(tcc_cdev);
-}
+अटल व्योम __निकास tcc_cooling_निकास(व्योम)
+अणु
+	thermal_cooling_device_unरेजिस्टर(tcc_cdev);
+पूर्ण
 
-module_exit(tcc_cooling_exit)
+module_निकास(tcc_cooling_निकास)
 
 MODULE_DESCRIPTION("TCC offset cooling device Driver");
 MODULE_AUTHOR("Zhang Rui <rui.zhang@intel.com>");

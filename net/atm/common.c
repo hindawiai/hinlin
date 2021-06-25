@@ -1,436 +1,437 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* net/atm/common.c - ATM sockets (common part for PVC and SVC) */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* net/aपंचांग/common.c - ATM sockets (common part क्रम PVC and SVC) */
 
 /* Written 1995-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#include <linux/module.h>
-#include <linux/kmod.h>
-#include <linux/net.h>		/* struct socket, struct proto_ops */
-#include <linux/atm.h>		/* ATM stuff */
-#include <linux/atmdev.h>
-#include <linux/socket.h>	/* SOL_SOCKET */
-#include <linux/errno.h>	/* error codes */
-#include <linux/capability.h>
-#include <linux/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/time64.h>	/* 64-bit time for seconds */
-#include <linux/skbuff.h>
-#include <linux/bitops.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <net/sock.h>		/* struct sock */
-#include <linux/uaccess.h>
-#include <linux/poll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/net.h>		/* काष्ठा socket, काष्ठा proto_ops */
+#समावेश <linux/aपंचांग.h>		/* ATM stuff */
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/socket.h>	/* SOL_SOCKET */
+#समावेश <linux/त्रुटिसं.स>	/* error codes */
+#समावेश <linux/capability.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/समय64.h>	/* 64-bit समय क्रम seconds */
+#समावेश <linux/skbuff.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <net/sock.h>		/* काष्ठा sock */
+#समावेश <linux/uaccess.h>
+#समावेश <linux/poll.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-#include "resources.h"		/* atm_find_dev */
-#include "common.h"		/* prototypes */
-#include "protocols.h"		/* atm_init_<transport> */
-#include "addr.h"		/* address registry */
-#include "signaling.h"		/* for WAITING and sigd_attach */
+#समावेश "resources.h"		/* aपंचांग_find_dev */
+#समावेश "common.h"		/* prototypes */
+#समावेश "protocols.h"		/* aपंचांग_init_<transport> */
+#समावेश "addr.h"		/* address registry */
+#समावेश "signaling.h"		/* क्रम WAITING and sigd_attach */
 
-struct hlist_head vcc_hash[VCC_HTABLE_SIZE];
+काष्ठा hlist_head vcc_hash[VCC_HTABLE_SIZE];
 EXPORT_SYMBOL(vcc_hash);
 
 DEFINE_RWLOCK(vcc_sklist_lock);
 EXPORT_SYMBOL(vcc_sklist_lock);
 
-static ATOMIC_NOTIFIER_HEAD(atm_dev_notify_chain);
+अटल ATOMIC_NOTIFIER_HEAD(aपंचांग_dev_notअगरy_chain);
 
-static void __vcc_insert_socket(struct sock *sk)
-{
-	struct atm_vcc *vcc = atm_sk(sk);
-	struct hlist_head *head = &vcc_hash[vcc->vci & (VCC_HTABLE_SIZE - 1)];
+अटल व्योम __vcc_insert_socket(काष्ठा sock *sk)
+अणु
+	काष्ठा aपंचांग_vcc *vcc = aपंचांग_sk(sk);
+	काष्ठा hlist_head *head = &vcc_hash[vcc->vci & (VCC_HTABLE_SIZE - 1)];
 	sk->sk_hash = vcc->vci & (VCC_HTABLE_SIZE - 1);
 	sk_add_node(sk, head);
-}
+पूर्ण
 
-void vcc_insert_socket(struct sock *sk)
-{
-	write_lock_irq(&vcc_sklist_lock);
+व्योम vcc_insert_socket(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_irq(&vcc_sklist_lock);
 	__vcc_insert_socket(sk);
-	write_unlock_irq(&vcc_sklist_lock);
-}
+	ग_लिखो_unlock_irq(&vcc_sklist_lock);
+पूर्ण
 EXPORT_SYMBOL(vcc_insert_socket);
 
-static void vcc_remove_socket(struct sock *sk)
-{
-	write_lock_irq(&vcc_sklist_lock);
+अटल व्योम vcc_हटाओ_socket(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_irq(&vcc_sklist_lock);
 	sk_del_node_init(sk);
-	write_unlock_irq(&vcc_sklist_lock);
-}
+	ग_लिखो_unlock_irq(&vcc_sklist_lock);
+पूर्ण
 
-static bool vcc_tx_ready(struct atm_vcc *vcc, unsigned int size)
-{
-	struct sock *sk = sk_atm(vcc);
+अटल bool vcc_tx_पढ़ोy(काष्ठा aपंचांग_vcc *vcc, अचिन्हित पूर्णांक size)
+अणु
+	काष्ठा sock *sk = sk_aपंचांग(vcc);
 
-	if (sk_wmem_alloc_get(sk) && !atm_may_send(vcc, size)) {
+	अगर (sk_wmem_alloc_get(sk) && !aपंचांग_may_send(vcc, size)) अणु
 		pr_debug("Sorry: wmem_alloc = %d, size = %d, sndbuf = %d\n",
 			 sk_wmem_alloc_get(sk), size, sk->sk_sndbuf);
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void vcc_sock_destruct(struct sock *sk)
-{
-	if (atomic_read(&sk->sk_rmem_alloc))
-		printk(KERN_DEBUG "%s: rmem leakage (%d bytes) detected.\n",
-		       __func__, atomic_read(&sk->sk_rmem_alloc));
+अटल व्योम vcc_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	अगर (atomic_पढ़ो(&sk->sk_rmem_alloc))
+		prपूर्णांकk(KERN_DEBUG "%s: rmem leakage (%d bytes) detected.\n",
+		       __func__, atomic_पढ़ो(&sk->sk_rmem_alloc));
 
-	if (refcount_read(&sk->sk_wmem_alloc))
-		printk(KERN_DEBUG "%s: wmem leakage (%d bytes) detected.\n",
-		       __func__, refcount_read(&sk->sk_wmem_alloc));
-}
+	अगर (refcount_पढ़ो(&sk->sk_wmem_alloc))
+		prपूर्णांकk(KERN_DEBUG "%s: wmem leakage (%d bytes) detected.\n",
+		       __func__, refcount_पढ़ो(&sk->sk_wmem_alloc));
+पूर्ण
 
-static void vcc_def_wakeup(struct sock *sk)
-{
-	struct socket_wq *wq;
+अटल व्योम vcc_def_wakeup(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up(&wq->wait);
-	rcu_read_unlock();
-}
+	अगर (skwq_has_sleeper(wq))
+		wake_up(&wq->रुको);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static inline int vcc_writable(struct sock *sk)
-{
-	struct atm_vcc *vcc = atm_sk(sk);
+अटल अंतरभूत पूर्णांक vcc_writable(काष्ठा sock *sk)
+अणु
+	काष्ठा aपंचांग_vcc *vcc = aपंचांग_sk(sk);
 
-	return (vcc->qos.txtp.max_sdu +
-		refcount_read(&sk->sk_wmem_alloc)) <= sk->sk_sndbuf;
-}
+	वापस (vcc->qos.txtp.max_sdu +
+		refcount_पढ़ो(&sk->sk_wmem_alloc)) <= sk->sk_sndbuf;
+पूर्ण
 
-static void vcc_write_space(struct sock *sk)
-{
-	struct socket_wq *wq;
+अटल व्योम vcc_ग_लिखो_space(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	if (vcc_writable(sk)) {
+	अगर (vcc_writable(sk)) अणु
 		wq = rcu_dereference(sk->sk_wq);
-		if (skwq_has_sleeper(wq))
-			wake_up_interruptible(&wq->wait);
+		अगर (skwq_has_sleeper(wq))
+			wake_up_पूर्णांकerruptible(&wq->रुको);
 
 		sk_wake_async(sk, SOCK_WAKE_SPACE, POLL_OUT);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void vcc_release_cb(struct sock *sk)
-{
-	struct atm_vcc *vcc = atm_sk(sk);
+अटल व्योम vcc_release_cb(काष्ठा sock *sk)
+अणु
+	काष्ठा aपंचांग_vcc *vcc = aपंचांग_sk(sk);
 
-	if (vcc->release_cb)
+	अगर (vcc->release_cb)
 		vcc->release_cb(vcc);
-}
+पूर्ण
 
-static struct proto vcc_proto = {
+अटल काष्ठा proto vcc_proto = अणु
 	.name	  = "VCC",
 	.owner	  = THIS_MODULE,
-	.obj_size = sizeof(struct atm_vcc),
+	.obj_size = माप(काष्ठा aपंचांग_vcc),
 	.release_cb = vcc_release_cb,
-};
+पूर्ण;
 
-int vcc_create(struct net *net, struct socket *sock, int protocol, int family, int kern)
-{
-	struct sock *sk;
-	struct atm_vcc *vcc;
+पूर्णांक vcc_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol, पूर्णांक family, पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा aपंचांग_vcc *vcc;
 
-	sock->sk = NULL;
-	if (sock->type == SOCK_STREAM)
-		return -EINVAL;
+	sock->sk = शून्य;
+	अगर (sock->type == SOCK_STREAM)
+		वापस -EINVAL;
 	sk = sk_alloc(net, family, GFP_KERNEL, &vcc_proto, kern);
-	if (!sk)
-		return -ENOMEM;
+	अगर (!sk)
+		वापस -ENOMEM;
 	sock_init_data(sock, sk);
 	sk->sk_state_change = vcc_def_wakeup;
-	sk->sk_write_space = vcc_write_space;
+	sk->sk_ग_लिखो_space = vcc_ग_लिखो_space;
 
-	vcc = atm_sk(sk);
-	vcc->dev = NULL;
-	memset(&vcc->local, 0, sizeof(struct sockaddr_atmsvc));
-	memset(&vcc->remote, 0, sizeof(struct sockaddr_atmsvc));
-	vcc->qos.txtp.max_sdu = 1 << 16; /* for meta VCs */
+	vcc = aपंचांग_sk(sk);
+	vcc->dev = शून्य;
+	स_रखो(&vcc->local, 0, माप(काष्ठा sockaddr_aपंचांगsvc));
+	स_रखो(&vcc->remote, 0, माप(काष्ठा sockaddr_aपंचांगsvc));
+	vcc->qos.txtp.max_sdu = 1 << 16; /* क्रम meta VCs */
 	refcount_set(&sk->sk_wmem_alloc, 1);
 	atomic_set(&sk->sk_rmem_alloc, 0);
-	vcc->push = NULL;
-	vcc->pop = NULL;
-	vcc->owner = NULL;
-	vcc->push_oam = NULL;
-	vcc->release_cb = NULL;
+	vcc->push = शून्य;
+	vcc->pop = शून्य;
+	vcc->owner = शून्य;
+	vcc->push_oam = शून्य;
+	vcc->release_cb = शून्य;
 	vcc->vpi = vcc->vci = 0; /* no VCI/VPI yet */
-	vcc->atm_options = vcc->aal_options = 0;
-	sk->sk_destruct = vcc_sock_destruct;
-	return 0;
-}
+	vcc->aपंचांग_options = vcc->aal_options = 0;
+	sk->sk_deकाष्ठा = vcc_sock_deकाष्ठा;
+	वापस 0;
+पूर्ण
 
-static void vcc_destroy_socket(struct sock *sk)
-{
-	struct atm_vcc *vcc = atm_sk(sk);
-	struct sk_buff *skb;
+अटल व्योम vcc_destroy_socket(काष्ठा sock *sk)
+अणु
+	काष्ठा aपंचांग_vcc *vcc = aपंचांग_sk(sk);
+	काष्ठा sk_buff *skb;
 
 	set_bit(ATM_VF_CLOSE, &vcc->flags);
 	clear_bit(ATM_VF_READY, &vcc->flags);
-	if (vcc->dev && vcc->dev->ops->close)
-		vcc->dev->ops->close(vcc);
-	if (vcc->push)
-		vcc->push(vcc, NULL); /* atmarpd has no push */
+	अगर (vcc->dev && vcc->dev->ops->बंद)
+		vcc->dev->ops->बंद(vcc);
+	अगर (vcc->push)
+		vcc->push(vcc, शून्य); /* aपंचांगarpd has no push */
 	module_put(vcc->owner);
 
-	while ((skb = skb_dequeue(&sk->sk_receive_queue)) != NULL) {
-		atm_return(vcc, skb->truesize);
-		kfree_skb(skb);
-	}
+	जबतक ((skb = skb_dequeue(&sk->sk_receive_queue)) != शून्य) अणु
+		aपंचांग_वापस(vcc, skb->truesize);
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	if (vcc->dev && vcc->dev->ops->owner) {
+	अगर (vcc->dev && vcc->dev->ops->owner) अणु
 		module_put(vcc->dev->ops->owner);
-		atm_dev_put(vcc->dev);
-	}
+		aपंचांग_dev_put(vcc->dev);
+	पूर्ण
 
-	vcc_remove_socket(sk);
-}
+	vcc_हटाओ_socket(sk);
+पूर्ण
 
-int vcc_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+पूर्णांक vcc_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (sk) {
+	अगर (sk) अणु
 		lock_sock(sk);
 		vcc_destroy_socket(sock->sk);
 		release_sock(sk);
 		sock_put(sk);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vcc_release_async(struct atm_vcc *vcc, int reply)
-{
-	struct sock *sk = sk_atm(vcc);
+व्योम vcc_release_async(काष्ठा aपंचांग_vcc *vcc, पूर्णांक reply)
+अणु
+	काष्ठा sock *sk = sk_aपंचांग(vcc);
 
 	set_bit(ATM_VF_CLOSE, &vcc->flags);
-	sk->sk_shutdown |= RCV_SHUTDOWN;
+	sk->sk_shutकरोwn |= RCV_SHUTDOWN;
 	sk->sk_err = -reply;
 	clear_bit(ATM_VF_WAITING, &vcc->flags);
 	sk->sk_state_change(sk);
-}
+पूर्ण
 EXPORT_SYMBOL(vcc_release_async);
 
-void vcc_process_recv_queue(struct atm_vcc *vcc)
-{
-	struct sk_buff_head queue, *rq;
-	struct sk_buff *skb, *tmp;
-	unsigned long flags;
+व्योम vcc_process_recv_queue(काष्ठा aपंचांग_vcc *vcc)
+अणु
+	काष्ठा sk_buff_head queue, *rq;
+	काष्ठा sk_buff *skb, *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
 	__skb_queue_head_init(&queue);
-	rq = &sk_atm(vcc)->sk_receive_queue;
+	rq = &sk_aपंचांग(vcc)->sk_receive_queue;
 
 	spin_lock_irqsave(&rq->lock, flags);
 	skb_queue_splice_init(rq, &queue);
 	spin_unlock_irqrestore(&rq->lock, flags);
 
-	skb_queue_walk_safe(&queue, skb, tmp) {
+	skb_queue_walk_safe(&queue, skb, पंचांगp) अणु
 		__skb_unlink(skb, &queue);
 		vcc->push(vcc, skb);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(vcc_process_recv_queue);
 
-void atm_dev_signal_change(struct atm_dev *dev, char signal)
-{
+व्योम aपंचांग_dev_संकेत_change(काष्ठा aपंचांग_dev *dev, अक्षर संकेत)
+अणु
 	pr_debug("%s signal=%d dev=%p number=%d dev->signal=%d\n",
-		__func__, signal, dev, dev->number, dev->signal);
+		__func__, संकेत, dev, dev->number, dev->संकेत);
 
-	/* atm driver sending invalid signal */
-	WARN_ON(signal < ATM_PHY_SIG_LOST || signal > ATM_PHY_SIG_FOUND);
+	/* aपंचांग driver sending invalid संकेत */
+	WARN_ON(संकेत < ATM_PHY_SIG_LOST || संकेत > ATM_PHY_SIG_FOUND);
 
-	if (dev->signal == signal)
-		return; /* no change */
+	अगर (dev->संकेत == संकेत)
+		वापस; /* no change */
 
-	dev->signal = signal;
+	dev->संकेत = संकेत;
 
-	atomic_notifier_call_chain(&atm_dev_notify_chain, signal, dev);
-}
-EXPORT_SYMBOL(atm_dev_signal_change);
+	atomic_notअगरier_call_chain(&aपंचांग_dev_notअगरy_chain, संकेत, dev);
+पूर्ण
+EXPORT_SYMBOL(aपंचांग_dev_संकेत_change);
 
-void atm_dev_release_vccs(struct atm_dev *dev)
-{
-	int i;
+व्योम aपंचांग_dev_release_vccs(काष्ठा aपंचांग_dev *dev)
+अणु
+	पूर्णांक i;
 
-	write_lock_irq(&vcc_sklist_lock);
-	for (i = 0; i < VCC_HTABLE_SIZE; i++) {
-		struct hlist_head *head = &vcc_hash[i];
-		struct hlist_node *tmp;
-		struct sock *s;
-		struct atm_vcc *vcc;
+	ग_लिखो_lock_irq(&vcc_sklist_lock);
+	क्रम (i = 0; i < VCC_HTABLE_SIZE; i++) अणु
+		काष्ठा hlist_head *head = &vcc_hash[i];
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा sock *s;
+		काष्ठा aपंचांग_vcc *vcc;
 
-		sk_for_each_safe(s, tmp, head) {
-			vcc = atm_sk(s);
-			if (vcc->dev == dev) {
+		sk_क्रम_each_safe(s, पंचांगp, head) अणु
+			vcc = aपंचांग_sk(s);
+			अगर (vcc->dev == dev) अणु
 				vcc_release_async(vcc, -EPIPE);
 				sk_del_node_init(s);
-			}
-		}
-	}
-	write_unlock_irq(&vcc_sklist_lock);
-}
-EXPORT_SYMBOL(atm_dev_release_vccs);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	ग_लिखो_unlock_irq(&vcc_sklist_lock);
+पूर्ण
+EXPORT_SYMBOL(aपंचांग_dev_release_vccs);
 
-static int adjust_tp(struct atm_trafprm *tp, unsigned char aal)
-{
-	int max_sdu;
+अटल पूर्णांक adjust_tp(काष्ठा aपंचांग_trafprm *tp, अचिन्हित अक्षर aal)
+अणु
+	पूर्णांक max_sdu;
 
-	if (!tp->traffic_class)
-		return 0;
-	switch (aal) {
-	case ATM_AAL0:
+	अगर (!tp->traffic_class)
+		वापस 0;
+	चयन (aal) अणु
+	हाल ATM_AAL0:
 		max_sdu = ATM_CELL_SIZE-1;
-		break;
-	case ATM_AAL34:
+		अवरोध;
+	हाल ATM_AAL34:
 		max_sdu = ATM_MAX_AAL34_PDU;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("AAL problems ... (%d)\n", aal);
 		fallthrough;
-	case ATM_AAL5:
+	हाल ATM_AAL5:
 		max_sdu = ATM_MAX_AAL5_PDU;
-	}
-	if (!tp->max_sdu)
+	पूर्ण
+	अगर (!tp->max_sdu)
 		tp->max_sdu = max_sdu;
-	else if (tp->max_sdu > max_sdu)
-		return -EINVAL;
-	if (!tp->max_cdv)
+	अन्यथा अगर (tp->max_sdu > max_sdu)
+		वापस -EINVAL;
+	अगर (!tp->max_cdv)
 		tp->max_cdv = ATM_MAX_CDV;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_ci(const struct atm_vcc *vcc, short vpi, int vci)
-{
-	struct hlist_head *head = &vcc_hash[vci & (VCC_HTABLE_SIZE - 1)];
-	struct sock *s;
-	struct atm_vcc *walk;
+अटल पूर्णांक check_ci(स्थिर काष्ठा aपंचांग_vcc *vcc, लघु vpi, पूर्णांक vci)
+अणु
+	काष्ठा hlist_head *head = &vcc_hash[vci & (VCC_HTABLE_SIZE - 1)];
+	काष्ठा sock *s;
+	काष्ठा aपंचांग_vcc *walk;
 
-	sk_for_each(s, head) {
-		walk = atm_sk(s);
-		if (walk->dev != vcc->dev)
-			continue;
-		if (test_bit(ATM_VF_ADDR, &walk->flags) && walk->vpi == vpi &&
+	sk_क्रम_each(s, head) अणु
+		walk = aपंचांग_sk(s);
+		अगर (walk->dev != vcc->dev)
+			जारी;
+		अगर (test_bit(ATM_VF_ADDR, &walk->flags) && walk->vpi == vpi &&
 		    walk->vci == vci && ((walk->qos.txtp.traffic_class !=
 		    ATM_NONE && vcc->qos.txtp.traffic_class != ATM_NONE) ||
 		    (walk->qos.rxtp.traffic_class != ATM_NONE &&
 		    vcc->qos.rxtp.traffic_class != ATM_NONE)))
-			return -EADDRINUSE;
-	}
+			वापस -EADDRINUSE;
+	पूर्ण
 
-	/* allow VCCs with same VPI/VCI iff they don't collide on
-	   TX/RX (but we may refuse such sharing for other reasons,
-	   e.g. if protocol requires to have both channels) */
+	/* allow VCCs with same VPI/VCI अगरf they करोn't collide on
+	   TX/RX (but we may refuse such sharing क्रम other reasons,
+	   e.g. अगर protocol requires to have both channels) */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_ci(const struct atm_vcc *vcc, short *vpi, int *vci)
-{
-	static short p;        /* poor man's per-device cache */
-	static int c;
-	short old_p;
-	int old_c;
-	int err;
+अटल पूर्णांक find_ci(स्थिर काष्ठा aपंचांग_vcc *vcc, लघु *vpi, पूर्णांक *vci)
+अणु
+	अटल लघु p;        /* poor man's per-device cache */
+	अटल पूर्णांक c;
+	लघु old_p;
+	पूर्णांक old_c;
+	पूर्णांक err;
 
-	if (*vpi != ATM_VPI_ANY && *vci != ATM_VCI_ANY) {
+	अगर (*vpi != ATM_VPI_ANY && *vci != ATM_VCI_ANY) अणु
 		err = check_ci(vcc, *vpi, *vci);
-		return err;
-	}
-	/* last scan may have left values out of bounds for current device */
-	if (*vpi != ATM_VPI_ANY)
+		वापस err;
+	पूर्ण
+	/* last scan may have left values out of bounds क्रम current device */
+	अगर (*vpi != ATM_VPI_ANY)
 		p = *vpi;
-	else if (p >= 1 << vcc->dev->ci_range.vpi_bits)
+	अन्यथा अगर (p >= 1 << vcc->dev->ci_range.vpi_bits)
 		p = 0;
-	if (*vci != ATM_VCI_ANY)
+	अगर (*vci != ATM_VCI_ANY)
 		c = *vci;
-	else if (c < ATM_NOT_RSV_VCI || c >= 1 << vcc->dev->ci_range.vci_bits)
+	अन्यथा अगर (c < ATM_NOT_RSV_VCI || c >= 1 << vcc->dev->ci_range.vci_bits)
 			c = ATM_NOT_RSV_VCI;
 	old_p = p;
 	old_c = c;
-	do {
-		if (!check_ci(vcc, p, c)) {
+	करो अणु
+		अगर (!check_ci(vcc, p, c)) अणु
 			*vpi = p;
 			*vci = c;
-			return 0;
-		}
-		if (*vci == ATM_VCI_ANY) {
+			वापस 0;
+		पूर्ण
+		अगर (*vci == ATM_VCI_ANY) अणु
 			c++;
-			if (c >= 1 << vcc->dev->ci_range.vci_bits)
+			अगर (c >= 1 << vcc->dev->ci_range.vci_bits)
 				c = ATM_NOT_RSV_VCI;
-		}
-		if ((c == ATM_NOT_RSV_VCI || *vci != ATM_VCI_ANY) &&
-		    *vpi == ATM_VPI_ANY) {
+		पूर्ण
+		अगर ((c == ATM_NOT_RSV_VCI || *vci != ATM_VCI_ANY) &&
+		    *vpi == ATM_VPI_ANY) अणु
 			p++;
-			if (p >= 1 << vcc->dev->ci_range.vpi_bits)
+			अगर (p >= 1 << vcc->dev->ci_range.vpi_bits)
 				p = 0;
-		}
-	} while (old_p != p || old_c != c);
-	return -EADDRINUSE;
-}
+		पूर्ण
+	पूर्ण जबतक (old_p != p || old_c != c);
+	वापस -EADDRINUSE;
+पूर्ण
 
-static int __vcc_connect(struct atm_vcc *vcc, struct atm_dev *dev, short vpi,
-			 int vci)
-{
-	struct sock *sk = sk_atm(vcc);
-	int error;
+अटल पूर्णांक __vcc_connect(काष्ठा aपंचांग_vcc *vcc, काष्ठा aपंचांग_dev *dev, लघु vpi,
+			 पूर्णांक vci)
+अणु
+	काष्ठा sock *sk = sk_aपंचांग(vcc);
+	पूर्णांक error;
 
-	if ((vpi != ATM_VPI_UNSPEC && vpi != ATM_VPI_ANY &&
+	अगर ((vpi != ATM_VPI_UNSPEC && vpi != ATM_VPI_ANY &&
 	    vpi >> dev->ci_range.vpi_bits) || (vci != ATM_VCI_UNSPEC &&
 	    vci != ATM_VCI_ANY && vci >> dev->ci_range.vci_bits))
-		return -EINVAL;
-	if (vci > 0 && vci < ATM_NOT_RSV_VCI && !capable(CAP_NET_BIND_SERVICE))
-		return -EPERM;
+		वापस -EINVAL;
+	अगर (vci > 0 && vci < ATM_NOT_RSV_VCI && !capable(CAP_NET_BIND_SERVICE))
+		वापस -EPERM;
 	error = -ENODEV;
-	if (!try_module_get(dev->ops->owner))
-		return error;
+	अगर (!try_module_get(dev->ops->owner))
+		वापस error;
 	vcc->dev = dev;
-	write_lock_irq(&vcc_sklist_lock);
-	if (test_bit(ATM_DF_REMOVED, &dev->flags) ||
-	    (error = find_ci(vcc, &vpi, &vci))) {
-		write_unlock_irq(&vcc_sklist_lock);
-		goto fail_module_put;
-	}
+	ग_लिखो_lock_irq(&vcc_sklist_lock);
+	अगर (test_bit(ATM_DF_REMOVED, &dev->flags) ||
+	    (error = find_ci(vcc, &vpi, &vci))) अणु
+		ग_लिखो_unlock_irq(&vcc_sklist_lock);
+		जाओ fail_module_put;
+	पूर्ण
 	vcc->vpi = vpi;
 	vcc->vci = vci;
 	__vcc_insert_socket(sk);
-	write_unlock_irq(&vcc_sklist_lock);
-	switch (vcc->qos.aal) {
-	case ATM_AAL0:
-		error = atm_init_aal0(vcc);
+	ग_लिखो_unlock_irq(&vcc_sklist_lock);
+	चयन (vcc->qos.aal) अणु
+	हाल ATM_AAL0:
+		error = aपंचांग_init_aal0(vcc);
 		vcc->stats = &dev->stats.aal0;
-		break;
-	case ATM_AAL34:
-		error = atm_init_aal34(vcc);
+		अवरोध;
+	हाल ATM_AAL34:
+		error = aपंचांग_init_aal34(vcc);
 		vcc->stats = &dev->stats.aal34;
-		break;
-	case ATM_NO_AAL:
-		/* ATM_AAL5 is also used in the "0 for default" case */
+		अवरोध;
+	हाल ATM_NO_AAL:
+		/* ATM_AAL5 is also used in the "0 for default" हाल */
 		vcc->qos.aal = ATM_AAL5;
 		fallthrough;
-	case ATM_AAL5:
-		error = atm_init_aal5(vcc);
+	हाल ATM_AAL5:
+		error = aपंचांग_init_aal5(vcc);
 		vcc->stats = &dev->stats.aal5;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		error = -EPROTOTYPE;
-	}
-	if (!error)
+	पूर्ण
+	अगर (!error)
 		error = adjust_tp(&vcc->qos.txtp, vcc->qos.aal);
-	if (!error)
+	अगर (!error)
 		error = adjust_tp(&vcc->qos.rxtp, vcc->qos.aal);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 	pr_debug("VCC %d.%d, AAL %d\n", vpi, vci, vcc->qos.aal);
 	pr_debug("  TX: %d, PCR %d..%d, SDU %d\n",
 		 vcc->qos.txtp.traffic_class,
@@ -443,41 +444,41 @@ static int __vcc_connect(struct atm_vcc *vcc, struct atm_dev *dev, short vpi,
 		 vcc->qos.rxtp.max_pcr,
 		 vcc->qos.rxtp.max_sdu);
 
-	if (dev->ops->open) {
-		error = dev->ops->open(vcc);
-		if (error)
-			goto fail;
-	}
-	return 0;
+	अगर (dev->ops->खोलो) अणु
+		error = dev->ops->खोलो(vcc);
+		अगर (error)
+			जाओ fail;
+	पूर्ण
+	वापस 0;
 
 fail:
-	vcc_remove_socket(sk);
+	vcc_हटाओ_socket(sk);
 fail_module_put:
 	module_put(dev->ops->owner);
 	/* ensure we get dev module ref count correct */
-	vcc->dev = NULL;
-	return error;
-}
+	vcc->dev = शून्य;
+	वापस error;
+पूर्ण
 
-int vcc_connect(struct socket *sock, int itf, short vpi, int vci)
-{
-	struct atm_dev *dev;
-	struct atm_vcc *vcc = ATM_SD(sock);
-	int error;
+पूर्णांक vcc_connect(काष्ठा socket *sock, पूर्णांक itf, लघु vpi, पूर्णांक vci)
+अणु
+	काष्ठा aपंचांग_dev *dev;
+	काष्ठा aपंचांग_vcc *vcc = ATM_SD(sock);
+	पूर्णांक error;
 
 	pr_debug("(vpi %d, vci %d)\n", vpi, vci);
-	if (sock->state == SS_CONNECTED)
-		return -EISCONN;
-	if (sock->state != SS_UNCONNECTED)
-		return -EINVAL;
-	if (!(vpi || vci))
-		return -EINVAL;
+	अगर (sock->state == SS_CONNECTED)
+		वापस -EISCONN;
+	अगर (sock->state != SS_UNCONNECTED)
+		वापस -EINVAL;
+	अगर (!(vpi || vci))
+		वापस -EINVAL;
 
-	if (vpi != ATM_VPI_UNSPEC && vci != ATM_VCI_UNSPEC)
+	अगर (vpi != ATM_VPI_UNSPEC && vci != ATM_VCI_UNSPEC)
 		clear_bit(ATM_VF_PARTIAL, &vcc->flags);
-	else
-		if (test_bit(ATM_VF_PARTIAL, &vcc->flags))
-			return -EINVAL;
+	अन्यथा
+		अगर (test_bit(ATM_VF_PARTIAL, &vcc->flags))
+			वापस -EINVAL;
 	pr_debug("(TX: cl %d,bw %d-%d,sdu %d; "
 		 "RX: cl %d,bw %d-%d,sdu %d,AAL %s%d)\n",
 		 vcc->qos.txtp.traffic_class, vcc->qos.txtp.min_pcr,
@@ -487,408 +488,408 @@ int vcc_connect(struct socket *sock, int itf, short vpi, int vci)
 		 vcc->qos.aal == ATM_AAL5 ? "" :
 		 vcc->qos.aal == ATM_AAL0 ? "" : " ??? code ",
 		 vcc->qos.aal == ATM_AAL0 ? 0 : vcc->qos.aal);
-	if (!test_bit(ATM_VF_HASQOS, &vcc->flags))
-		return -EBADFD;
-	if (vcc->qos.txtp.traffic_class == ATM_ANYCLASS ||
+	अगर (!test_bit(ATM_VF_HASQOS, &vcc->flags))
+		वापस -EBADFD;
+	अगर (vcc->qos.txtp.traffic_class == ATM_ANYCLASS ||
 	    vcc->qos.rxtp.traffic_class == ATM_ANYCLASS)
-		return -EINVAL;
-	if (likely(itf != ATM_ITF_ANY)) {
-		dev = try_then_request_module(atm_dev_lookup(itf),
+		वापस -EINVAL;
+	अगर (likely(itf != ATM_ITF_ANY)) अणु
+		dev = try_then_request_module(aपंचांग_dev_lookup(itf),
 					      "atm-device-%d", itf);
-	} else {
-		dev = NULL;
-		mutex_lock(&atm_dev_mutex);
-		if (!list_empty(&atm_devs)) {
-			dev = list_entry(atm_devs.next,
-					 struct atm_dev, dev_list);
-			atm_dev_hold(dev);
-		}
-		mutex_unlock(&atm_dev_mutex);
-	}
-	if (!dev)
-		return -ENODEV;
+	पूर्ण अन्यथा अणु
+		dev = शून्य;
+		mutex_lock(&aपंचांग_dev_mutex);
+		अगर (!list_empty(&aपंचांग_devs)) अणु
+			dev = list_entry(aपंचांग_devs.next,
+					 काष्ठा aपंचांग_dev, dev_list);
+			aपंचांग_dev_hold(dev);
+		पूर्ण
+		mutex_unlock(&aपंचांग_dev_mutex);
+	पूर्ण
+	अगर (!dev)
+		वापस -ENODEV;
 	error = __vcc_connect(vcc, dev, vpi, vci);
-	if (error) {
-		atm_dev_put(dev);
-		return error;
-	}
-	if (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC)
+	अगर (error) अणु
+		aपंचांग_dev_put(dev);
+		वापस error;
+	पूर्ण
+	अगर (vpi == ATM_VPI_UNSPEC || vci == ATM_VCI_UNSPEC)
 		set_bit(ATM_VF_PARTIAL, &vcc->flags);
-	if (test_bit(ATM_VF_READY, &ATM_SD(sock)->flags))
+	अगर (test_bit(ATM_VF_READY, &ATM_SD(sock)->flags))
 		sock->state = SS_CONNECTED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vcc_recvmsg(struct socket *sock, struct msghdr *msg, size_t size,
-		int flags)
-{
-	struct sock *sk = sock->sk;
-	struct atm_vcc *vcc;
-	struct sk_buff *skb;
-	int copied, error = -EINVAL;
+पूर्णांक vcc_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार size,
+		पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा aपंचांग_vcc *vcc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक copied, error = -EINVAL;
 
-	if (sock->state != SS_CONNECTED)
-		return -ENOTCONN;
+	अगर (sock->state != SS_CONNECTED)
+		वापस -ENOTCONN;
 
 	/* only handle MSG_DONTWAIT and MSG_PEEK */
-	if (flags & ~(MSG_DONTWAIT | MSG_PEEK))
-		return -EOPNOTSUPP;
+	अगर (flags & ~(MSG_DONTWAIT | MSG_PEEK))
+		वापस -EOPNOTSUPP;
 
 	vcc = ATM_SD(sock);
-	if (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
+	अगर (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
 	    test_bit(ATM_VF_CLOSE, &vcc->flags) ||
 	    !test_bit(ATM_VF_READY, &vcc->flags))
-		return 0;
+		वापस 0;
 
 	skb = skb_recv_datagram(sk, flags, flags & MSG_DONTWAIT, &error);
-	if (!skb)
-		return error;
+	अगर (!skb)
+		वापस error;
 
 	copied = skb->len;
-	if (copied > size) {
+	अगर (copied > size) अणु
 		copied = size;
 		msg->msg_flags |= MSG_TRUNC;
-	}
+	पूर्ण
 
 	error = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	sock_recv_ts_and_drops(msg, sk, skb);
 
-	if (!(flags & MSG_PEEK)) {
-		pr_debug("%d -= %d\n", atomic_read(&sk->sk_rmem_alloc),
+	अगर (!(flags & MSG_PEEK)) अणु
+		pr_debug("%d -= %d\n", atomic_पढ़ो(&sk->sk_rmem_alloc),
 			 skb->truesize);
-		atm_return(vcc, skb->truesize);
-	}
+		aपंचांग_वापस(vcc, skb->truesize);
+	पूर्ण
 
-	skb_free_datagram(sk, skb);
-	return copied;
-}
+	skb_मुक्त_datagram(sk, skb);
+	वापस copied;
+पूर्ण
 
-int vcc_sendmsg(struct socket *sock, struct msghdr *m, size_t size)
-{
-	struct sock *sk = sock->sk;
-	DEFINE_WAIT(wait);
-	struct atm_vcc *vcc;
-	struct sk_buff *skb;
-	int eff, error;
+पूर्णांक vcc_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *m, माप_प्रकार size)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	DEFINE_WAIT(रुको);
+	काष्ठा aपंचांग_vcc *vcc;
+	काष्ठा sk_buff *skb;
+	पूर्णांक eff, error;
 
 	lock_sock(sk);
-	if (sock->state != SS_CONNECTED) {
+	अगर (sock->state != SS_CONNECTED) अणु
 		error = -ENOTCONN;
-		goto out;
-	}
-	if (m->msg_name) {
+		जाओ out;
+	पूर्ण
+	अगर (m->msg_name) अणु
 		error = -EISCONN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	vcc = ATM_SD(sock);
-	if (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
+	अगर (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
 	    test_bit(ATM_VF_CLOSE, &vcc->flags) ||
-	    !test_bit(ATM_VF_READY, &vcc->flags)) {
+	    !test_bit(ATM_VF_READY, &vcc->flags)) अणु
 		error = -EPIPE;
 		send_sig(SIGPIPE, current, 0);
-		goto out;
-	}
-	if (!size) {
+		जाओ out;
+	पूर्ण
+	अगर (!size) अणु
 		error = 0;
-		goto out;
-	}
-	if (size > vcc->qos.txtp.max_sdu) {
+		जाओ out;
+	पूर्ण
+	अगर (size > vcc->qos.txtp.max_sdu) अणु
 		error = -EMSGSIZE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	eff = (size+3) & ~3; /* align to word boundary */
-	prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
 	error = 0;
-	while (!vcc_tx_ready(vcc, eff)) {
-		if (m->msg_flags & MSG_DONTWAIT) {
+	जबतक (!vcc_tx_पढ़ोy(vcc, eff)) अणु
+		अगर (m->msg_flags & MSG_DONTWAIT) अणु
 			error = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		schedule();
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			error = -ERESTARTSYS;
-			break;
-		}
-		if (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
+			अवरोध;
+		पूर्ण
+		अगर (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
 		    test_bit(ATM_VF_CLOSE, &vcc->flags) ||
-		    !test_bit(ATM_VF_READY, &vcc->flags)) {
+		    !test_bit(ATM_VF_READY, &vcc->flags)) अणु
 			error = -EPIPE;
 			send_sig(SIGPIPE, current, 0);
-			break;
-		}
-		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-	}
-	finish_wait(sk_sleep(sk), &wait);
-	if (error)
-		goto out;
+			अवरोध;
+		पूर्ण
+		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+	पूर्ण
+	finish_रुको(sk_sleep(sk), &रुको);
+	अगर (error)
+		जाओ out;
 
 	skb = alloc_skb(eff, GFP_KERNEL);
-	if (!skb) {
+	अगर (!skb) अणु
 		error = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pr_debug("%d += %d\n", sk_wmem_alloc_get(sk), skb->truesize);
-	atm_account_tx(vcc, skb);
+	aपंचांग_account_tx(vcc, skb);
 
-	skb->dev = NULL; /* for paths shared with net_device interfaces */
-	if (!copy_from_iter_full(skb_put(skb, size), size, &m->msg_iter)) {
-		kfree_skb(skb);
+	skb->dev = शून्य; /* क्रम paths shared with net_device पूर्णांकerfaces */
+	अगर (!copy_from_iter_full(skb_put(skb, size), size, &m->msg_iter)) अणु
+		kमुक्त_skb(skb);
 		error = -EFAULT;
-		goto out;
-	}
-	if (eff != size)
-		memset(skb->data + size, 0, eff-size);
+		जाओ out;
+	पूर्ण
+	अगर (eff != size)
+		स_रखो(skb->data + size, 0, eff-size);
 	error = vcc->dev->ops->send(vcc, skb);
 	error = error ? error : size;
 out:
 	release_sock(sk);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-__poll_t vcc_poll(struct file *file, struct socket *sock, poll_table *wait)
-{
-	struct sock *sk = sock->sk;
-	struct atm_vcc *vcc;
+__poll_t vcc_poll(काष्ठा file *file, काष्ठा socket *sock, poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा aपंचांग_vcc *vcc;
 	__poll_t mask;
 
-	sock_poll_wait(file, sock, wait);
+	sock_poll_रुको(file, sock, रुको);
 	mask = 0;
 
 	vcc = ATM_SD(sock);
 
 	/* exceptional events */
-	if (sk->sk_err)
+	अगर (sk->sk_err)
 		mask = EPOLLERR;
 
-	if (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
+	अगर (test_bit(ATM_VF_RELEASED, &vcc->flags) ||
 	    test_bit(ATM_VF_CLOSE, &vcc->flags))
 		mask |= EPOLLHUP;
 
-	/* readable? */
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	/* पढ़ोable? */
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
 	/* writable? */
-	if (sock->state == SS_CONNECTING &&
+	अगर (sock->state == SS_CONNECTING &&
 	    test_bit(ATM_VF_WAITING, &vcc->flags))
-		return mask;
+		वापस mask;
 
-	if (vcc->qos.txtp.traffic_class != ATM_NONE &&
+	अगर (vcc->qos.txtp.traffic_class != ATM_NONE &&
 	    vcc_writable(sk))
 		mask |= EPOLLOUT | EPOLLWRNORM | EPOLLWRBAND;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static int atm_change_qos(struct atm_vcc *vcc, struct atm_qos *qos)
-{
-	int error;
+अटल पूर्णांक aपंचांग_change_qos(काष्ठा aपंचांग_vcc *vcc, काष्ठा aपंचांग_qos *qos)
+अणु
+	पूर्णांक error;
 
 	/*
-	 * Don't let the QoS change the already connected AAL type nor the
+	 * Don't let the QoS change the alपढ़ोy connected AAL type nor the
 	 * traffic class.
 	 */
-	if (qos->aal != vcc->qos.aal ||
+	अगर (qos->aal != vcc->qos.aal ||
 	    qos->rxtp.traffic_class != vcc->qos.rxtp.traffic_class ||
 	    qos->txtp.traffic_class != vcc->qos.txtp.traffic_class)
-		return -EINVAL;
+		वापस -EINVAL;
 	error = adjust_tp(&qos->txtp, qos->aal);
-	if (!error)
+	अगर (!error)
 		error = adjust_tp(&qos->rxtp, qos->aal);
-	if (error)
-		return error;
-	if (!vcc->dev->ops->change_qos)
-		return -EOPNOTSUPP;
-	if (sk_atm(vcc)->sk_family == AF_ATMPVC)
-		return vcc->dev->ops->change_qos(vcc, qos, ATM_MF_SET);
-	return svc_change_qos(vcc, qos);
-}
+	अगर (error)
+		वापस error;
+	अगर (!vcc->dev->ops->change_qos)
+		वापस -EOPNOTSUPP;
+	अगर (sk_aपंचांग(vcc)->sk_family == AF_ATMPVC)
+		वापस vcc->dev->ops->change_qos(vcc, qos, ATM_MF_SET);
+	वापस svc_change_qos(vcc, qos);
+पूर्ण
 
-static int check_tp(const struct atm_trafprm *tp)
-{
+अटल पूर्णांक check_tp(स्थिर काष्ठा aपंचांग_trafprm *tp)
+अणु
 	/* @@@ Should be merged with adjust_tp */
-	if (!tp->traffic_class || tp->traffic_class == ATM_ANYCLASS)
-		return 0;
-	if (tp->traffic_class != ATM_UBR && !tp->min_pcr && !tp->pcr &&
+	अगर (!tp->traffic_class || tp->traffic_class == ATM_ANYCLASS)
+		वापस 0;
+	अगर (tp->traffic_class != ATM_UBR && !tp->min_pcr && !tp->pcr &&
 	    !tp->max_pcr)
-		return -EINVAL;
-	if (tp->min_pcr == ATM_MAX_PCR)
-		return -EINVAL;
-	if (tp->min_pcr && tp->max_pcr && tp->max_pcr != ATM_MAX_PCR &&
+		वापस -EINVAL;
+	अगर (tp->min_pcr == ATM_MAX_PCR)
+		वापस -EINVAL;
+	अगर (tp->min_pcr && tp->max_pcr && tp->max_pcr != ATM_MAX_PCR &&
 	    tp->min_pcr > tp->max_pcr)
-		return -EINVAL;
+		वापस -EINVAL;
 	/*
 	 * We allow pcr to be outside [min_pcr,max_pcr], because later
-	 * adjustment may still push it in the valid range.
+	 * adjusपंचांगent may still push it in the valid range.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_qos(const struct atm_qos *qos)
-{
-	int error;
+अटल पूर्णांक check_qos(स्थिर काष्ठा aपंचांग_qos *qos)
+अणु
+	पूर्णांक error;
 
-	if (!qos->txtp.traffic_class && !qos->rxtp.traffic_class)
-		return -EINVAL;
-	if (qos->txtp.traffic_class != qos->rxtp.traffic_class &&
+	अगर (!qos->txtp.traffic_class && !qos->rxtp.traffic_class)
+		वापस -EINVAL;
+	अगर (qos->txtp.traffic_class != qos->rxtp.traffic_class &&
 	    qos->txtp.traffic_class && qos->rxtp.traffic_class &&
 	    qos->txtp.traffic_class != ATM_ANYCLASS &&
 	    qos->rxtp.traffic_class != ATM_ANYCLASS)
-		return -EINVAL;
+		वापस -EINVAL;
 	error = check_tp(&qos->txtp);
-	if (error)
-		return error;
-	return check_tp(&qos->rxtp);
-}
+	अगर (error)
+		वापस error;
+	वापस check_tp(&qos->rxtp);
+पूर्ण
 
-int vcc_setsockopt(struct socket *sock, int level, int optname,
-		   sockptr_t optval, unsigned int optlen)
-{
-	struct atm_vcc *vcc;
-	unsigned long value;
-	int error;
+पूर्णांक vcc_setsockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+		   sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा aपंचांग_vcc *vcc;
+	अचिन्हित दीर्घ value;
+	पूर्णांक error;
 
-	if (__SO_LEVEL_MATCH(optname, level) && optlen != __SO_SIZE(optname))
-		return -EINVAL;
+	अगर (__SO_LEVEL_MATCH(optname, level) && optlen != __SO_SIZE(optname))
+		वापस -EINVAL;
 
 	vcc = ATM_SD(sock);
-	switch (optname) {
-	case SO_ATMQOS:
-	{
-		struct atm_qos qos;
+	चयन (optname) अणु
+	हाल SO_ATMQOS:
+	अणु
+		काष्ठा aपंचांग_qos qos;
 
-		if (copy_from_sockptr(&qos, optval, sizeof(qos)))
-			return -EFAULT;
+		अगर (copy_from_sockptr(&qos, optval, माप(qos)))
+			वापस -EFAULT;
 		error = check_qos(&qos);
-		if (error)
-			return error;
-		if (sock->state == SS_CONNECTED)
-			return atm_change_qos(vcc, &qos);
-		if (sock->state != SS_UNCONNECTED)
-			return -EBADFD;
+		अगर (error)
+			वापस error;
+		अगर (sock->state == SS_CONNECTED)
+			वापस aपंचांग_change_qos(vcc, &qos);
+		अगर (sock->state != SS_UNCONNECTED)
+			वापस -EBADFD;
 		vcc->qos = qos;
 		set_bit(ATM_VF_HASQOS, &vcc->flags);
-		return 0;
-	}
-	case SO_SETCLP:
-		if (copy_from_sockptr(&value, optval, sizeof(value)))
-			return -EFAULT;
-		if (value)
-			vcc->atm_options |= ATM_ATMOPT_CLP;
-		else
-			vcc->atm_options &= ~ATM_ATMOPT_CLP;
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	पूर्ण
+	हाल SO_SETCLP:
+		अगर (copy_from_sockptr(&value, optval, माप(value)))
+			वापस -EFAULT;
+		अगर (value)
+			vcc->aपंचांग_options |= ATM_ATMOPT_CLP;
+		अन्यथा
+			vcc->aपंचांग_options &= ~ATM_ATMOPT_CLP;
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int vcc_getsockopt(struct socket *sock, int level, int optname,
-		   char __user *optval, int __user *optlen)
-{
-	struct atm_vcc *vcc;
-	int len;
+पूर्णांक vcc_माला_लोockopt(काष्ठा socket *sock, पूर्णांक level, पूर्णांक optname,
+		   अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा aपंचांग_vcc *vcc;
+	पूर्णांक len;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
-	if (__SO_LEVEL_MATCH(optname, level) && len != __SO_SIZE(optname))
-		return -EINVAL;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
+	अगर (__SO_LEVEL_MATCH(optname, level) && len != __SO_SIZE(optname))
+		वापस -EINVAL;
 
 	vcc = ATM_SD(sock);
-	switch (optname) {
-	case SO_ATMQOS:
-		if (!test_bit(ATM_VF_HASQOS, &vcc->flags))
-			return -EINVAL;
-		return copy_to_user(optval, &vcc->qos, sizeof(vcc->qos))
+	चयन (optname) अणु
+	हाल SO_ATMQOS:
+		अगर (!test_bit(ATM_VF_HASQOS, &vcc->flags))
+			वापस -EINVAL;
+		वापस copy_to_user(optval, &vcc->qos, माप(vcc->qos))
 			? -EFAULT : 0;
-	case SO_SETCLP:
-		return put_user(vcc->atm_options & ATM_ATMOPT_CLP ? 1 : 0,
-				(unsigned long __user *)optval) ? -EFAULT : 0;
-	case SO_ATMPVC:
-	{
-		struct sockaddr_atmpvc pvc;
+	हाल SO_SETCLP:
+		वापस put_user(vcc->aपंचांग_options & ATM_ATMOPT_CLP ? 1 : 0,
+				(अचिन्हित दीर्घ __user *)optval) ? -EFAULT : 0;
+	हाल SO_ATMPVC:
+	अणु
+		काष्ठा sockaddr_aपंचांगpvc pvc;
 
-		if (!vcc->dev || !test_bit(ATM_VF_ADDR, &vcc->flags))
-			return -ENOTCONN;
-		memset(&pvc, 0, sizeof(pvc));
+		अगर (!vcc->dev || !test_bit(ATM_VF_ADDR, &vcc->flags))
+			वापस -ENOTCONN;
+		स_रखो(&pvc, 0, माप(pvc));
 		pvc.sap_family = AF_ATMPVC;
 		pvc.sap_addr.itf = vcc->dev->number;
 		pvc.sap_addr.vpi = vcc->vpi;
 		pvc.sap_addr.vci = vcc->vci;
-		return copy_to_user(optval, &pvc, sizeof(pvc)) ? -EFAULT : 0;
-	}
-	default:
-		return -EINVAL;
-	}
-}
+		वापस copy_to_user(optval, &pvc, माप(pvc)) ? -EFAULT : 0;
+	पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int register_atmdevice_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&atm_dev_notify_chain, nb);
-}
-EXPORT_SYMBOL_GPL(register_atmdevice_notifier);
+पूर्णांक रेजिस्टर_aपंचांगdevice_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&aपंचांग_dev_notअगरy_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_aपंचांगdevice_notअगरier);
 
-void unregister_atmdevice_notifier(struct notifier_block *nb)
-{
-	atomic_notifier_chain_unregister(&atm_dev_notify_chain, nb);
-}
-EXPORT_SYMBOL_GPL(unregister_atmdevice_notifier);
+व्योम unरेजिस्टर_aपंचांगdevice_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	atomic_notअगरier_chain_unरेजिस्टर(&aपंचांग_dev_notअगरy_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_aपंचांगdevice_notअगरier);
 
-static int __init atm_init(void)
-{
-	int error;
+अटल पूर्णांक __init aपंचांग_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	error = proto_register(&vcc_proto, 0);
-	if (error < 0)
-		goto out;
-	error = atmpvc_init();
-	if (error < 0) {
+	error = proto_रेजिस्टर(&vcc_proto, 0);
+	अगर (error < 0)
+		जाओ out;
+	error = aपंचांगpvc_init();
+	अगर (error < 0) अणु
 		pr_err("atmpvc_init() failed with %d\n", error);
-		goto out_unregister_vcc_proto;
-	}
-	error = atmsvc_init();
-	if (error < 0) {
+		जाओ out_unरेजिस्टर_vcc_proto;
+	पूर्ण
+	error = aपंचांगsvc_init();
+	अगर (error < 0) अणु
 		pr_err("atmsvc_init() failed with %d\n", error);
-		goto out_atmpvc_exit;
-	}
-	error = atm_proc_init();
-	if (error < 0) {
+		जाओ out_aपंचांगpvc_निकास;
+	पूर्ण
+	error = aपंचांग_proc_init();
+	अगर (error < 0) अणु
 		pr_err("atm_proc_init() failed with %d\n", error);
-		goto out_atmsvc_exit;
-	}
-	error = atm_sysfs_init();
-	if (error < 0) {
+		जाओ out_aपंचांगsvc_निकास;
+	पूर्ण
+	error = aपंचांग_sysfs_init();
+	अगर (error < 0) अणु
 		pr_err("atm_sysfs_init() failed with %d\n", error);
-		goto out_atmproc_exit;
-	}
+		जाओ out_aपंचांगproc_निकास;
+	पूर्ण
 out:
-	return error;
-out_atmproc_exit:
-	atm_proc_exit();
-out_atmsvc_exit:
-	atmsvc_exit();
-out_atmpvc_exit:
-	atmsvc_exit();
-out_unregister_vcc_proto:
-	proto_unregister(&vcc_proto);
-	goto out;
-}
+	वापस error;
+out_aपंचांगproc_निकास:
+	aपंचांग_proc_निकास();
+out_aपंचांगsvc_निकास:
+	aपंचांगsvc_निकास();
+out_aपंचांगpvc_निकास:
+	aपंचांगsvc_निकास();
+out_unरेजिस्टर_vcc_proto:
+	proto_unरेजिस्टर(&vcc_proto);
+	जाओ out;
+पूर्ण
 
-static void __exit atm_exit(void)
-{
-	atm_proc_exit();
-	atm_sysfs_exit();
-	atmsvc_exit();
-	atmpvc_exit();
-	proto_unregister(&vcc_proto);
-}
+अटल व्योम __निकास aपंचांग_निकास(व्योम)
+अणु
+	aपंचांग_proc_निकास();
+	aपंचांग_sysfs_निकास();
+	aपंचांगsvc_निकास();
+	aपंचांगpvc_निकास();
+	proto_unरेजिस्टर(&vcc_proto);
+पूर्ण
 
-subsys_initcall(atm_init);
+subsys_initcall(aपंचांग_init);
 
-module_exit(atm_exit);
+module_निकास(aपंचांग_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_ATMPVC);

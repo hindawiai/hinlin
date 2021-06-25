@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,22 +22,22 @@
  *
  * Authors: Ben Skeggs
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static const struct nvkm_engine_func
-gm200_ce = {
-	.intr = gk104_ce_intr,
-	.sclass = {
-		{ -1, -1, MAXWELL_DMA_COPY_A },
-		{}
-	}
-};
+अटल स्थिर काष्ठा nvkm_engine_func
+gm200_ce = अणु
+	.पूर्णांकr = gk104_ce_पूर्णांकr,
+	.sclass = अणु
+		अणु -1, -1, MAXWELL_DMA_COPY_A पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gm200_ce_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	     struct nvkm_engine **pengine)
-{
-	return nvkm_engine_new_(&gm200_ce, device, type, inst, true, pengine);
-}
+पूर्णांक
+gm200_ce_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	     काष्ठा nvkm_engine **pengine)
+अणु
+	वापस nvkm_engine_new_(&gm200_ce, device, type, inst, true, pengine);
+पूर्ण

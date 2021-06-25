@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ftrace.h>
-#include <xen/interface/xen.h>
-#include <xen/interface/xen-mca.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ftrace.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/पूर्णांकerface/xen-mca.h>
 
-#define HYPERCALL(x)	[__HYPERVISOR_##x] = "("#x")",
-static const char *xen_hypercall_names[] = {
-#include <asm/xen-hypercalls.h>
-};
-#undef HYPERCALL
+#घोषणा HYPERCALL(x)	[__HYPERVISOR_##x] = "("#x")",
+अटल स्थिर अक्षर *xen_hypercall_names[] = अणु
+#समावेश <यंत्र/xen-hypercalls.h>
+पूर्ण;
+#अघोषित HYPERCALL
 
-static const char *xen_hypercall_name(unsigned op)
-{
-	if (op < ARRAY_SIZE(xen_hypercall_names) && xen_hypercall_names[op] != NULL)
-		return xen_hypercall_names[op];
+अटल स्थिर अक्षर *xen_hypercall_name(अचिन्हित op)
+अणु
+	अगर (op < ARRAY_SIZE(xen_hypercall_names) && xen_hypercall_names[op] != शून्य)
+		वापस xen_hypercall_names[op];
 
-	return "";
-}
+	वापस "";
+पूर्ण
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/xen.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/xen.h>

@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * isl6405.c - driver for dual lnb supply and control ic ISL6405
+ * isl6405.c - driver क्रम dual lnb supply and control ic ISL6405
  *
- * Copyright (C) 2008 Hartmut Hackmann
+ * Copyright (C) 2008 Harपंचांगut Hackmann
  * Copyright (C) 2006 Oliver Endriss
  *
  * the project's page is at https://linuxtv.org
  */
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
 
-#include <media/dvb_frontend.h>
-#include "isl6405.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "isl6405.h"
 
-struct isl6405 {
+काष्ठा isl6405 अणु
 	u8			config;
 	u8			override_or;
 	u8			override_and;
-	struct i2c_adapter	*i2c;
+	काष्ठा i2c_adapter	*i2c;
 	u8			i2c_addr;
-};
+पूर्ण;
 
-static int isl6405_set_voltage(struct dvb_frontend *fe,
-			       enum fe_sec_voltage voltage)
-{
-	struct isl6405 *isl6405 = (struct isl6405 *) fe->sec_priv;
-	struct i2c_msg msg = {	.addr = isl6405->i2c_addr, .flags = 0,
+अटल पूर्णांक isl6405_set_voltage(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_sec_voltage voltage)
+अणु
+	काष्ठा isl6405 *isl6405 = (काष्ठा isl6405 *) fe->sec_priv;
+	काष्ठा i2c_msg msg = अणु	.addr = isl6405->i2c_addr, .flags = 0,
 				.buf = &isl6405->config,
-				.len = sizeof(isl6405->config) };
+				.len = माप(isl6405->config) पूर्ण;
 
-	if (isl6405->override_or & 0x80) {
+	अगर (isl6405->override_or & 0x80) अणु
 		isl6405->config &= ~(ISL6405_VSEL2 | ISL6405_EN2);
-		switch (voltage) {
-		case SEC_VOLTAGE_OFF:
-			break;
-		case SEC_VOLTAGE_13:
+		चयन (voltage) अणु
+		हाल SEC_VOLTAGE_OFF:
+			अवरोध;
+		हाल SEC_VOLTAGE_13:
 			isl6405->config |= ISL6405_EN2;
-			break;
-		case SEC_VOLTAGE_18:
+			अवरोध;
+		हाल SEC_VOLTAGE_18:
 			isl6405->config |= (ISL6405_EN2 | ISL6405_VSEL2);
-			break;
-		default:
-			return -EINVAL;
-		}
-	} else {
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		isl6405->config &= ~(ISL6405_VSEL1 | ISL6405_EN1);
-		switch (voltage) {
-		case SEC_VOLTAGE_OFF:
-			break;
-		case SEC_VOLTAGE_13:
+		चयन (voltage) अणु
+		हाल SEC_VOLTAGE_OFF:
+			अवरोध;
+		हाल SEC_VOLTAGE_13:
 			isl6405->config |= ISL6405_EN1;
-			break;
-		case SEC_VOLTAGE_18:
+			अवरोध;
+		हाल SEC_VOLTAGE_18:
 			isl6405->config |= (ISL6405_EN1 | ISL6405_VSEL1);
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	isl6405->config |= isl6405->override_or;
 	isl6405->config &= isl6405->override_and;
 
-	return (i2c_transfer(isl6405->i2c, &msg, 1) == 1) ? 0 : -EIO;
-}
+	वापस (i2c_transfer(isl6405->i2c, &msg, 1) == 1) ? 0 : -EIO;
+पूर्ण
 
-static int isl6405_enable_high_lnb_voltage(struct dvb_frontend *fe, long arg)
-{
-	struct isl6405 *isl6405 = (struct isl6405 *) fe->sec_priv;
-	struct i2c_msg msg = {	.addr = isl6405->i2c_addr, .flags = 0,
+अटल पूर्णांक isl6405_enable_high_lnb_voltage(काष्ठा dvb_frontend *fe, दीर्घ arg)
+अणु
+	काष्ठा isl6405 *isl6405 = (काष्ठा isl6405 *) fe->sec_priv;
+	काष्ठा i2c_msg msg = अणु	.addr = isl6405->i2c_addr, .flags = 0,
 				.buf = &isl6405->config,
-				.len = sizeof(isl6405->config) };
+				.len = माप(isl6405->config) पूर्ण;
 
-	if (isl6405->override_or & 0x80) {
-		if (arg)
+	अगर (isl6405->override_or & 0x80) अणु
+		अगर (arg)
 			isl6405->config |= ISL6405_LLC2;
-		else
+		अन्यथा
 			isl6405->config &= ~ISL6405_LLC2;
-	} else {
-		if (arg)
+	पूर्ण अन्यथा अणु
+		अगर (arg)
 			isl6405->config |= ISL6405_LLC1;
-		else
+		अन्यथा
 			isl6405->config &= ~ISL6405_LLC1;
-	}
+	पूर्ण
 	isl6405->config |= isl6405->override_or;
 	isl6405->config &= isl6405->override_and;
 
-	return (i2c_transfer(isl6405->i2c, &msg, 1) == 1) ? 0 : -EIO;
-}
+	वापस (i2c_transfer(isl6405->i2c, &msg, 1) == 1) ? 0 : -EIO;
+पूर्ण
 
-static void isl6405_release(struct dvb_frontend *fe)
-{
-	/* power off */
+अटल व्योम isl6405_release(काष्ठा dvb_frontend *fe)
+अणु
+	/* घातer off */
 	isl6405_set_voltage(fe, SEC_VOLTAGE_OFF);
 
-	/* free */
-	kfree(fe->sec_priv);
-	fe->sec_priv = NULL;
-}
+	/* मुक्त */
+	kमुक्त(fe->sec_priv);
+	fe->sec_priv = शून्य;
+पूर्ण
 
-struct dvb_frontend *isl6405_attach(struct dvb_frontend *fe, struct i2c_adapter *i2c,
+काष्ठा dvb_frontend *isl6405_attach(काष्ठा dvb_frontend *fe, काष्ठा i2c_adapter *i2c,
 				    u8 i2c_addr, u8 override_set, u8 override_clear)
-{
-	struct isl6405 *isl6405 = kmalloc(sizeof(struct isl6405), GFP_KERNEL);
-	if (!isl6405)
-		return NULL;
+अणु
+	काष्ठा isl6405 *isl6405 = kदो_स्मृति(माप(काष्ठा isl6405), GFP_KERNEL);
+	अगर (!isl6405)
+		वापस शून्य;
 
-	/* default configuration */
-	if (override_set & 0x80)
+	/* शेष configuration */
+	अगर (override_set & 0x80)
 		isl6405->config = ISL6405_ISEL2;
-	else
+	अन्यथा
 		isl6405->config = ISL6405_ISEL1;
 	isl6405->i2c = i2c;
 	isl6405->i2c_addr = i2c_addr;
 	fe->sec_priv = isl6405;
 
-	/* bits which should be forced to '1' */
+	/* bits which should be क्रमced to '1' */
 	isl6405->override_or = override_set;
 
-	/* bits which should be forced to '0' */
+	/* bits which should be क्रमced to '0' */
 	isl6405->override_and = ~override_clear;
 
-	/* detect if it is present or not */
-	if (isl6405_set_voltage(fe, SEC_VOLTAGE_OFF)) {
-		kfree(isl6405);
-		fe->sec_priv = NULL;
-		return NULL;
-	}
+	/* detect अगर it is present or not */
+	अगर (isl6405_set_voltage(fe, SEC_VOLTAGE_OFF)) अणु
+		kमुक्त(isl6405);
+		fe->sec_priv = शून्य;
+		वापस शून्य;
+	पूर्ण
 
 	/* install release callback */
 	fe->ops.release_sec = isl6405_release;
@@ -139,8 +140,8 @@ struct dvb_frontend *isl6405_attach(struct dvb_frontend *fe, struct i2c_adapter 
 	fe->ops.set_voltage = isl6405_set_voltage;
 	fe->ops.enable_high_lnb_voltage = isl6405_enable_high_lnb_voltage;
 
-	return fe;
-}
+	वापस fe;
+पूर्ण
 EXPORT_SYMBOL(isl6405_attach);
 
 MODULE_DESCRIPTION("Driver for lnb supply and control ic isl6405");

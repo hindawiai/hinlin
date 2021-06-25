@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *	linux/arch/alpha/kernel/core_cia.c
  *
@@ -7,49 +8,49 @@
  *
  *	Copyright (C) 1995  David A Rusling
  *	Copyright (C) 1997, 1998  Jay Estabrook
- *	Copyright (C) 1998, 1999, 2000  Richard Henderson
+ *	Copyright (C) 1998, 1999, 2000  Riअक्षरd Henderson
  *
  * Code common to all CIA core logic chips.
  */
 
-#define __EXTERN_INLINE inline
-#include <asm/io.h>
-#include <asm/core_cia.h>
-#undef __EXTERN_INLINE
+#घोषणा __EXTERN_INLINE अंतरभूत
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/core_cia.h>
+#अघोषित __EXTERN_INLINE
 
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
 
-#include <asm/ptrace.h>
-#include <asm/mce.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/mce.h>
 
-#include "proto.h"
-#include "pci_impl.h"
+#समावेश "proto.h"
+#समावेश "pci_impl.h"
 
 
 /*
- * NOTE: Herein lie back-to-back mb instructions.  They are magic. 
- * One plausible explanation is that the i/o controller does not properly
- * handle the system transaction.  Another involves timing.  Ho hum.
+ * NOTE: Herein lie back-to-back mb inकाष्ठाions.  They are magic. 
+ * One plausible explanation is that the i/o controller करोes not properly
+ * handle the प्रणाली transaction.  Another involves timing.  Ho hum.
  */
 
-#define DEBUG_CONFIG 0
-#if DEBUG_CONFIG
-# define DBGC(args)	printk args
-#else
+#घोषणा DEBUG_CONFIG 0
+#अगर DEBUG_CONFIG
+# define DBGC(args)	prपूर्णांकk args
+#अन्यथा
 # define DBGC(args)
-#endif
+#पूर्ण_अगर
 
-#define vip	volatile int  *
+#घोषणा vip	अस्थिर पूर्णांक  *
 
 /*
  * Given a bus, device, and function number, compute resulting
- * configuration space address.  It is therefore not safe to have
+ * configuration space address.  It is thereक्रमe not safe to have
  * concurrent invocations to configuration space access routines, but
- * there really shouldn't be any need for this.
+ * there really shouldn't be any need क्रम this.
  *
  * Type 0:
  *
@@ -75,21 +76,21 @@
  *	23:16	bus number (8 bits = 128 possible buses)
  *	15:11	Device number (5 bits)
  *	10:8	function number
- *	 7:2	register number
+ *	 7:2	रेजिस्टर number
  *  
  * Notes:
  *	The function number selects which function of a multi-function device 
  *	(e.g., SCSI and Ethernet).
  * 
- *	The register selects a DWORD (32 bit) register offset.  Hence it
- *	doesn't get shifted by 2 bits as we want to "drop" the bottom two
+ *	The रेजिस्टर selects a DWORD (32 bit) रेजिस्टर offset.  Hence it
+ *	करोesn't get shअगरted by 2 bits as we want to "drop" the bottom two
  *	bits.
  */
 
-static int
-mk_conf_addr(struct pci_bus *bus_dev, unsigned int device_fn, int where,
-	     unsigned long *pci_addr, unsigned char *type1)
-{
+अटल पूर्णांक
+mk_conf_addr(काष्ठा pci_bus *bus_dev, अचिन्हित पूर्णांक device_fn, पूर्णांक where,
+	     अचिन्हित दीर्घ *pci_addr, अचिन्हित अक्षर *type1)
+अणु
 	u8 bus = bus_dev->number;
 
 	*type1 = (bus != 0);
@@ -99,32 +100,32 @@ mk_conf_addr(struct pci_bus *bus_dev, unsigned int device_fn, int where,
 	      " returning address 0x%p\n"
 	      bus, device_fn, where, *pci_addr));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int
-conf_read(unsigned long addr, unsigned char type1)
-{
-	unsigned long flags;
-	int stat0, value;
-	int cia_cfg = 0;
+अटल अचिन्हित पूर्णांक
+conf_पढ़ो(अचिन्हित दीर्घ addr, अचिन्हित अक्षर type1)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक stat0, value;
+	पूर्णांक cia_cfg = 0;
 
 	DBGC(("conf_read(addr=0x%lx, type1=%d) ", addr, type1));
 	local_irq_save(flags);
 
-	/* Reset status register to avoid losing errors.  */
+	/* Reset status रेजिस्टर to aव्योम losing errors.  */
 	stat0 = *(vip)CIA_IOC_CIA_ERR;
 	*(vip)CIA_IOC_CIA_ERR = stat0;
 	mb();
-	*(vip)CIA_IOC_CIA_ERR; /* re-read to force write */
+	*(vip)CIA_IOC_CIA_ERR; /* re-पढ़ो to क्रमce ग_लिखो */
 
 	/* If Type1 access, must set CIA CFG. */
-	if (type1) {
+	अगर (type1) अणु
 		cia_cfg = *(vip)CIA_IOC_CFG;
 		*(vip)CIA_IOC_CFG = (cia_cfg & ~3) | 1;
 		mb();
 		*(vip)CIA_IOC_CFG;
-	}
+	पूर्ण
 
 	mb();
 	draina();
@@ -136,49 +137,49 @@ conf_read(unsigned long addr, unsigned char type1)
 	value = *(vip)addr;
 	mb();
 	mb();  /* magic */
-	if (mcheck_taken(0)) {
+	अगर (mcheck_taken(0)) अणु
 		mcheck_taken(0) = 0;
 		value = 0xffffffff;
 		mb();
-	}
+	पूर्ण
 	mcheck_expected(0) = 0;
 	mb();
 
 	/* If Type1 access, must reset IOC CFG so normal IO space ops work.  */
-	if (type1) {
+	अगर (type1) अणु
 		*(vip)CIA_IOC_CFG = cia_cfg;
 		mb();
 		*(vip)CIA_IOC_CFG;
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 	DBGC(("done\n"));
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void
-conf_write(unsigned long addr, unsigned int value, unsigned char type1)
-{
-	unsigned long flags;
-	int stat0, cia_cfg = 0;
+अटल व्योम
+conf_ग_लिखो(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक value, अचिन्हित अक्षर type1)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक stat0, cia_cfg = 0;
 
 	DBGC(("conf_write(addr=0x%lx, type1=%d) ", addr, type1));
 	local_irq_save(flags);
 
-	/* Reset status register to avoid losing errors.  */
+	/* Reset status रेजिस्टर to aव्योम losing errors.  */
 	stat0 = *(vip)CIA_IOC_CIA_ERR;
 	*(vip)CIA_IOC_CIA_ERR = stat0;
 	mb();
-	*(vip)CIA_IOC_CIA_ERR; /* re-read to force write */
+	*(vip)CIA_IOC_CIA_ERR; /* re-पढ़ो to क्रमce ग_लिखो */
 
 	/* If Type1 access, must set CIA CFG.  */
-	if (type1) {
+	अगर (type1) अणु
 		cia_cfg = *(vip)CIA_IOC_CFG;
 		*(vip)CIA_IOC_CFG = (cia_cfg & ~3) | 1;
 		mb();
 		*(vip)CIA_IOC_CFG;
-	}
+	पूर्ण
 
 	mb();
 	draina();
@@ -189,105 +190,105 @@ conf_write(unsigned long addr, unsigned int value, unsigned char type1)
 	/* Access configuration space.  */
 	*(vip)addr = value;
 	mb();
-	*(vip)addr; /* read back to force the write */
+	*(vip)addr; /* पढ़ो back to क्रमce the ग_लिखो */
 
 	mcheck_expected(0) = 0;
 	mb();
 
 	/* If Type1 access, must reset IOC CFG so normal IO space ops work.  */
-	if (type1) {
+	अगर (type1) अणु
 		*(vip)CIA_IOC_CFG = cia_cfg;
 		mb();
 		*(vip)CIA_IOC_CFG;
-	}
+	पूर्ण
 
 	local_irq_restore(flags);
 	DBGC(("done\n"));
-}
+पूर्ण
 
-static int 
-cia_read_config(struct pci_bus *bus, unsigned int devfn, int where, int size,
+अटल पूर्णांक 
+cia_पढ़ो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size,
 		u32 *value)
-{
-	unsigned long addr, pci_addr;
-	long mask;
-	unsigned char type1;
-	int shift;
+अणु
+	अचिन्हित दीर्घ addr, pci_addr;
+	दीर्घ mask;
+	अचिन्हित अक्षर type1;
+	पूर्णांक shअगरt;
 
-	if (mk_conf_addr(bus, devfn, where, &pci_addr, &type1))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (mk_conf_addr(bus, devfn, where, &pci_addr, &type1))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
 	mask = (size - 1) * 8;
-	shift = (where & 3) * 8;
+	shअगरt = (where & 3) * 8;
 	addr = (pci_addr << 5) + mask + CIA_CONF;
-	*value = conf_read(addr, type1) >> (shift);
-	return PCIBIOS_SUCCESSFUL;
-}
+	*value = conf_पढ़ो(addr, type1) >> (shअगरt);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int 
-cia_write_config(struct pci_bus *bus, unsigned int devfn, int where, int size,
+अटल पूर्णांक 
+cia_ग_लिखो_config(काष्ठा pci_bus *bus, अचिन्हित पूर्णांक devfn, पूर्णांक where, पूर्णांक size,
 		 u32 value)
-{
-	unsigned long addr, pci_addr;
-	long mask;
-	unsigned char type1;
+अणु
+	अचिन्हित दीर्घ addr, pci_addr;
+	दीर्घ mask;
+	अचिन्हित अक्षर type1;
 
-	if (mk_conf_addr(bus, devfn, where, &pci_addr, &type1))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (mk_conf_addr(bus, devfn, where, &pci_addr, &type1))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
 	mask = (size - 1) * 8;
 	addr = (pci_addr << 5) + mask + CIA_CONF;
-	conf_write(addr, value << ((where & 3) * 8), type1);
-	return PCIBIOS_SUCCESSFUL;
-}
+	conf_ग_लिखो(addr, value << ((where & 3) * 8), type1);
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-struct pci_ops cia_pci_ops = 
-{
-	.read = 	cia_read_config,
-	.write =	cia_write_config,
-};
+काष्ठा pci_ops cia_pci_ops = 
+अणु
+	.पढ़ो = 	cia_पढ़ो_config,
+	.ग_लिखो =	cia_ग_लिखो_config,
+पूर्ण;
 
 /*
  * CIA Pass 1 and PYXIS Pass 1 and 2 have a broken scatter-gather tlb.
  * It cannot be invalidated.  Rather than hard code the pass numbers,
- * actually try the tbia to see if it works.
+ * actually try the tbia to see अगर it works.
  */
 
-void
-cia_pci_tbi(struct pci_controller *hose, dma_addr_t start, dma_addr_t end)
-{
+व्योम
+cia_pci_tbi(काष्ठा pci_controller *hose, dma_addr_t start, dma_addr_t end)
+अणु
 	wmb();
 	*(vip)CIA_IOC_PCI_TBIA = 3;	/* Flush all locked and unlocked.  */
 	mb();
 	*(vip)CIA_IOC_PCI_TBIA;
-}
+पूर्ण
 
 /*
- * On PYXIS, even if the tbia works, we cannot use it. It effectively locks
- * the chip (as well as direct write to the tag registers) if there is a
- * SG DMA operation in progress. This is true at least for PYXIS rev. 1,
+ * On PYXIS, even अगर the tbia works, we cannot use it. It effectively locks
+ * the chip (as well as direct ग_लिखो to the tag रेजिस्टरs) अगर there is a
+ * SG DMA operation in progress. This is true at least क्रम PYXIS rev. 1,
  * so always use the method below.
  */
 /*
  * This is the method NT and NetBSD use.
  *
- * Allocate mappings, and put the chip into DMA loopback mode to read a
+ * Allocate mappings, and put the chip पूर्णांकo DMA loopback mode to पढ़ो a
  * garbage page.  This works by causing TLB misses, causing old entries to
- * be purged to make room for the new entries coming in for the garbage page.
+ * be purged to make room क्रम the new entries coming in क्रम the garbage page.
  */
 
-#define CIA_BROKEN_TBIA_BASE	0x30000000
-#define CIA_BROKEN_TBIA_SIZE	1024
+#घोषणा CIA_BROKEN_TBIA_BASE	0x30000000
+#घोषणा CIA_BROKEN_TBIA_SIZE	1024
 
-/* Always called with interrupts disabled */
-void
-cia_pci_tbi_try2(struct pci_controller *hose,
+/* Always called with पूर्णांकerrupts disabled */
+व्योम
+cia_pci_tbi_try2(काष्ठा pci_controller *hose,
 		 dma_addr_t start, dma_addr_t end)
-{
-	void __iomem *bus_addr;
-	int ctrl;
+अणु
+	व्योम __iomem *bus_addr;
+	पूर्णांक ctrl;
 
-	/* Put the chip into PCI loopback mode.  */
+	/* Put the chip पूर्णांकo PCI loopback mode.  */
 	mb();
 	ctrl = *(vip)CIA_IOC_CIA_CTRL;
 	*(vip)CIA_IOC_CIA_CTRL = ctrl | CIA_CTRL_PCI_LOOP_EN;
@@ -296,23 +297,23 @@ cia_pci_tbi_try2(struct pci_controller *hose,
 	mb();
 
 	/* Read from PCI dense memory space at TBI_ADDR, skipping 32k on
-	   each read.  This forces SG TLB misses.  NetBSD claims that the
-	   TLB entries are not quite LRU, meaning that we need to read more
-	   times than there are actual tags.  The 2117x docs claim strict
+	   each पढ़ो.  This क्रमces SG TLB misses.  NetBSD claims that the
+	   TLB entries are not quite LRU, meaning that we need to पढ़ो more
+	   बार than there are actual tags.  The 2117x करोcs claim strict
 	   round-robin.  Oh well, we've come this far...  */
 	/* Even better - as seen on the PYXIS rev 1 the TLB tags 0-3 can
 	   be filled by the TLB misses *only once* after being invalidated
-	   (by tbia or direct write). Next misses won't update them even
+	   (by tbia or direct ग_लिखो). Next misses won't update them even
 	   though the lock bits are cleared. Tags 4-7 are "quite LRU" though,
-	   so use them and read at window 3 base exactly 4 times. Reading
-	   more sometimes makes the chip crazy.  -ink */
+	   so use them and पढ़ो at winकरोw 3 base exactly 4 बार. Reading
+	   more someबार makes the chip crazy.  -ink */
 
 	bus_addr = cia_ioremap(CIA_BROKEN_TBIA_BASE, 32768 * 4);
 
-	cia_readl(bus_addr + 0x00000);
-	cia_readl(bus_addr + 0x08000);
-	cia_readl(bus_addr + 0x10000);
-	cia_readl(bus_addr + 0x18000);
+	cia_पढ़ोl(bus_addr + 0x00000);
+	cia_पढ़ोl(bus_addr + 0x08000);
+	cia_पढ़ोl(bus_addr + 0x10000);
+	cia_पढ़ोl(bus_addr + 0x18000);
 
 	cia_iounmap(bus_addr);
 
@@ -322,47 +323,47 @@ cia_pci_tbi_try2(struct pci_controller *hose,
 	mb();
 	*(vip)CIA_IOC_CIA_CTRL;
 	mb();
-}
+पूर्ण
 
-static inline void
-cia_prepare_tbia_workaround(int window)
-{
-	unsigned long *ppte, pte;
-	long i;
+अटल अंतरभूत व्योम
+cia_prepare_tbia_workaround(पूर्णांक winकरोw)
+अणु
+	अचिन्हित दीर्घ *ppte, pte;
+	दीर्घ i;
 
 	/* Use minimal 1K map. */
 	ppte = memblock_alloc(CIA_BROKEN_TBIA_SIZE, 32768);
-	if (!ppte)
+	अगर (!ppte)
 		panic("%s: Failed to allocate %u bytes align=0x%x\n",
 		      __func__, CIA_BROKEN_TBIA_SIZE, 32768);
 	pte = (virt_to_phys(ppte) >> (PAGE_SHIFT - 1)) | 1;
 
-	for (i = 0; i < CIA_BROKEN_TBIA_SIZE / sizeof(unsigned long); ++i)
+	क्रम (i = 0; i < CIA_BROKEN_TBIA_SIZE / माप(अचिन्हित दीर्घ); ++i)
 		ppte[i] = pte;
 
-	*(vip)CIA_IOC_PCI_Wn_BASE(window) = CIA_BROKEN_TBIA_BASE | 3;
-	*(vip)CIA_IOC_PCI_Wn_MASK(window)
+	*(vip)CIA_IOC_PCI_Wn_BASE(winकरोw) = CIA_BROKEN_TBIA_BASE | 3;
+	*(vip)CIA_IOC_PCI_Wn_MASK(winकरोw)
 	  = (CIA_BROKEN_TBIA_SIZE*1024 - 1) & 0xfff00000;
-	*(vip)CIA_IOC_PCI_Tn_BASE(window) = virt_to_phys(ppte) >> 2;
-}
+	*(vip)CIA_IOC_PCI_Tn_BASE(winकरोw) = virt_to_phys(ppte) >> 2;
+पूर्ण
 
-static void __init
-verify_tb_operation(void)
-{
-	static int page[PAGE_SIZE/4]
+अटल व्योम __init
+verअगरy_tb_operation(व्योम)
+अणु
+	अटल पूर्णांक page[PAGE_SIZE/4]
 		__attribute__((aligned(PAGE_SIZE)))
-		__initdata = { 0 };
+		__initdata = अणु 0 पूर्ण;
 
-	struct pci_iommu_arena *arena = pci_isa_hose->sg_isa;
-	int ctrl, addr0, tag0, pte0, data0;
-	int temp, use_tbia_try2 = 0;
-	void __iomem *bus_addr;
+	काष्ठा pci_iommu_arena *arena = pci_isa_hose->sg_isa;
+	पूर्णांक ctrl, addr0, tag0, pte0, data0;
+	पूर्णांक temp, use_tbia_try2 = 0;
+	व्योम __iomem *bus_addr;
 
 	/* pyxis -- tbia is broken */
-	if (pci_isa_hose->dense_io_base)
+	अगर (pci_isa_hose->dense_io_base)
 		use_tbia_try2 = 1;
 
-	/* Put the chip into PCI loopback mode.  */
+	/* Put the chip पूर्णांकo PCI loopback mode.  */
 	mb();
 	ctrl = *(vip)CIA_IOC_CIA_CTRL;
 	*(vip)CIA_IOC_CIA_CTRL = ctrl | CIA_CTRL_PCI_LOOP_EN;
@@ -370,7 +371,7 @@ verify_tb_operation(void)
 	*(vip)CIA_IOC_CIA_CTRL;
 	mb();
 
-	/* Write a valid entry directly into the TLB registers.  */
+	/* Write a valid entry directly पूर्णांकo the TLB रेजिस्टरs.  */
 
 	addr0 = arena->dma_base;
 	tag0 = addr0 | 1;
@@ -393,71 +394,71 @@ verify_tb_operation(void)
 	/* Get a usable bus address */
 	bus_addr = cia_ioremap(addr0, 8*PAGE_SIZE);
 
-	/* First, verify we can read back what we've written.  If
+	/* First, verअगरy we can पढ़ो back what we've written.  If
 	   this fails, we can't be sure of any of the other testing
-	   we're going to do, so bail.  */
-	/* ??? Actually, we could do the work with machine checks.
-	   By passing this register update test, we pretty much
+	   we're going to करो, so bail.  */
+	/* ??? Actually, we could करो the work with machine checks.
+	   By passing this रेजिस्टर update test, we pretty much
 	   guarantee that cia_pci_tbi_try1 works.  If this test
 	   fails, cia_pci_tbi_try2 might still work.  */
 
 	temp = *(vip)CIA_IOC_TB_TAGn(0);
-	if (temp != tag0) {
-		printk("pci: failed tb register update test "
+	अगर (temp != tag0) अणु
+		prपूर्णांकk("pci: failed tb register update test "
 		       "(tag0 %#x != %#x)\n", temp, tag0);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	temp = *(vip)CIA_IOC_TB_TAGn(1);
-	if (temp != 0) {
-		printk("pci: failed tb register update test "
+	अगर (temp != 0) अणु
+		prपूर्णांकk("pci: failed tb register update test "
 		       "(tag1 %#x != 0)\n", temp);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 	temp = *(vip)CIA_IOC_TBn_PAGEm(0,0);
-	if (temp != pte0) {
-		printk("pci: failed tb register update test "
+	अगर (temp != pte0) अणु
+		prपूर्णांकk("pci: failed tb register update test "
 		       "(pte0 %#x != %#x)\n", temp, pte0);
-		goto failed;
-	}
-	printk("pci: passed tb register update test\n");
+		जाओ failed;
+	पूर्ण
+	prपूर्णांकk("pci: passed tb register update test\n");
 
-	/* Second, verify we can actually do I/O through this entry.  */
+	/* Second, verअगरy we can actually करो I/O through this entry.  */
 
 	data0 = 0xdeadbeef;
 	page[0] = data0;
 	mcheck_expected(0) = 1;
 	mcheck_taken(0) = 0;
 	mb();
-	temp = cia_readl(bus_addr);
+	temp = cia_पढ़ोl(bus_addr);
 	mb();
 	mcheck_expected(0) = 0;
 	mb();
-	if (mcheck_taken(0)) {
-		printk("pci: failed sg loopback i/o read test (mcheck)\n");
-		goto failed;
-	}
-	if (temp != data0) {
-		printk("pci: failed sg loopback i/o read test "
+	अगर (mcheck_taken(0)) अणु
+		prपूर्णांकk("pci: failed sg loopback i/o read test (mcheck)\n");
+		जाओ failed;
+	पूर्ण
+	अगर (temp != data0) अणु
+		prपूर्णांकk("pci: failed sg loopback i/o read test "
 		       "(%#x != %#x)\n", temp, data0);
-		goto failed;
-	}
-	printk("pci: passed sg loopback i/o read test\n");
+		जाओ failed;
+	पूर्ण
+	prपूर्णांकk("pci: passed sg loopback i/o read test\n");
 
 	/* Third, try to invalidate the TLB.  */
 
-	if (! use_tbia_try2) {
+	अगर (! use_tbia_try2) अणु
 		cia_pci_tbi(arena->hose, 0, -1);
 		temp = *(vip)CIA_IOC_TB_TAGn(0);
-		if (temp & 1) {
+		अगर (temp & 1) अणु
 			use_tbia_try2 = 1;
-			printk("pci: failed tbia test; workaround available\n");
-		} else {
-			printk("pci: passed tbia test\n");
-		}
-	}
+			prपूर्णांकk("pci: failed tbia test; workaround available\n");
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk("pci: passed tbia test\n");
+		पूर्ण
+	पूर्ण
 
-	/* Fourth, verify the TLB snoops the EV5's caches when
-	   doing a tlb fill.  */
+	/* Fourth, verअगरy the TLB snoops the EV5's caches when
+	   करोing a tlb fill.  */
 
 	data0 = 0x5adda15e;
 	page[0] = data0;
@@ -465,22 +466,22 @@ verify_tb_operation(void)
 	mcheck_expected(0) = 1;
 	mcheck_taken(0) = 0;
 	mb();
-	temp = cia_readl(bus_addr + 4*PAGE_SIZE);
+	temp = cia_पढ़ोl(bus_addr + 4*PAGE_SIZE);
 	mb();
 	mcheck_expected(0) = 0;
 	mb();
-	if (mcheck_taken(0)) {
-		printk("pci: failed pte write cache snoop test (mcheck)\n");
-		goto failed;
-	}
-	if (temp != data0) {
-		printk("pci: failed pte write cache snoop test "
+	अगर (mcheck_taken(0)) अणु
+		prपूर्णांकk("pci: failed pte write cache snoop test (mcheck)\n");
+		जाओ failed;
+	पूर्ण
+	अगर (temp != data0) अणु
+		prपूर्णांकk("pci: failed pte write cache snoop test "
 		       "(%#x != %#x)\n", temp, data0);
-		goto failed;
-	}
-	printk("pci: passed pte write cache snoop test\n");
+		जाओ failed;
+	पूर्ण
+	prपूर्णांकk("pci: passed pte write cache snoop test\n");
 
-	/* Fifth, verify that a previously invalid PTE entry gets
+	/* Fअगरth, verअगरy that a previously invalid PTE entry माला_लो
 	   filled from the page table.  */
 
 	data0 = 0xabcdef12;
@@ -489,56 +490,56 @@ verify_tb_operation(void)
 	mcheck_expected(0) = 1;
 	mcheck_taken(0) = 0;
 	mb();
-	temp = cia_readl(bus_addr + 5*PAGE_SIZE);
+	temp = cia_पढ़ोl(bus_addr + 5*PAGE_SIZE);
 	mb();
 	mcheck_expected(0) = 0;
 	mb();
-	if (mcheck_taken(0)) {
-		printk("pci: failed valid tag invalid pte reload test "
+	अगर (mcheck_taken(0)) अणु
+		prपूर्णांकk("pci: failed valid tag invalid pte reload test "
 		       "(mcheck; workaround available)\n");
 		/* Work around this bug by aligning new allocations
 		   on 4 page boundaries.  */
 		arena->align_entry = 4;
-	} else if (temp != data0) {
-		printk("pci: failed valid tag invalid pte reload test "
+	पूर्ण अन्यथा अगर (temp != data0) अणु
+		prपूर्णांकk("pci: failed valid tag invalid pte reload test "
 		       "(%#x != %#x)\n", temp, data0);
-		goto failed;
-	} else {
-		printk("pci: passed valid tag invalid pte reload test\n");
-	}
+		जाओ failed;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk("pci: passed valid tag invalid pte reload test\n");
+	पूर्ण
 
-	/* Sixth, verify machine checks are working.  Test invalid
+	/* Sixth, verअगरy machine checks are working.  Test invalid
 	   pte under the same valid tag as we used above.  */
 
 	mcheck_expected(0) = 1;
 	mcheck_taken(0) = 0;
 	mb();
-	temp = cia_readl(bus_addr + 6*PAGE_SIZE);
+	temp = cia_पढ़ोl(bus_addr + 6*PAGE_SIZE);
 	mb();
 	mcheck_expected(0) = 0;
 	mb();
-	printk("pci: %s pci machine check test\n",
+	prपूर्णांकk("pci: %s pci machine check test\n",
 	       mcheck_taken(0) ? "passed" : "failed");
 
 	/* Clean up after the tests.  */
 	arena->ptes[4] = 0;
 	arena->ptes[5] = 0;
 
-	if (use_tbia_try2) {
+	अगर (use_tbia_try2) अणु
 		alpha_mv.mv_pci_tbi = cia_pci_tbi_try2;
 
-		/* Tags 0-3 must be disabled if we use this workaraund. */
+		/* Tags 0-3 must be disabled अगर we use this workaraund. */
 		wmb();
 		*(vip)CIA_IOC_TB_TAGn(0) = 2;
 		*(vip)CIA_IOC_TB_TAGn(1) = 2;
 		*(vip)CIA_IOC_TB_TAGn(2) = 2;
 		*(vip)CIA_IOC_TB_TAGn(3) = 2;
 
-		printk("pci: tbia workaround enabled\n");
-	}
+		prपूर्णांकk("pci: tbia workaround enabled\n");
+	पूर्ण
 	alpha_mv.mv_pci_tbi(arena->hose, 0, -1);
 
-exit:
+निकास:
 	/* unmap the bus addr */
 	cia_iounmap(bus_addr);
 
@@ -548,70 +549,70 @@ exit:
 	mb();
 	*(vip)CIA_IOC_CIA_CTRL;
 	mb();
-	return;
+	वापस;
 
 failed:
-	printk("pci: disabling sg translation window\n");
+	prपूर्णांकk("pci: disabling sg translation window\n");
 	*(vip)CIA_IOC_PCI_W0_BASE = 0;
 	*(vip)CIA_IOC_PCI_W1_BASE = 0;
-	pci_isa_hose->sg_isa = NULL;
-	alpha_mv.mv_pci_tbi = NULL;
-	goto exit;
-}
+	pci_isa_hose->sg_isa = शून्य;
+	alpha_mv.mv_pci_tbi = शून्य;
+	जाओ निकास;
+पूर्ण
 
-#if defined(ALPHA_RESTORE_SRM_SETUP)
+#अगर defined(ALPHA_RESTORE_SRM_SETUP)
 /* Save CIA configuration data as the console had it set up.  */
-struct 
-{
-    unsigned int hae_mem;
-    unsigned int hae_io;
-    unsigned int pci_dac_offset;
-    unsigned int err_mask;
-    unsigned int cia_ctrl;
-    unsigned int cia_cnfg;
-    struct {
-	unsigned int w_base;
-	unsigned int w_mask;
-	unsigned int t_base;
-    } window[4];
-} saved_config __attribute((common));
+काष्ठा 
+अणु
+    अचिन्हित पूर्णांक hae_mem;
+    अचिन्हित पूर्णांक hae_io;
+    अचिन्हित पूर्णांक pci_dac_offset;
+    अचिन्हित पूर्णांक err_mask;
+    अचिन्हित पूर्णांक cia_ctrl;
+    अचिन्हित पूर्णांक cia_cnfg;
+    काष्ठा अणु
+	अचिन्हित पूर्णांक w_base;
+	अचिन्हित पूर्णांक w_mask;
+	अचिन्हित पूर्णांक t_base;
+    पूर्ण winकरोw[4];
+पूर्ण saved_config __attribute((common));
 
-void
-cia_save_srm_settings(int is_pyxis)
-{
-	int i;
+व्योम
+cia_save_srm_settings(पूर्णांक is_pyxis)
+अणु
+	पूर्णांक i;
 
-	/* Save some important registers. */
+	/* Save some important रेजिस्टरs. */
 	saved_config.err_mask       = *(vip)CIA_IOC_ERR_MASK;
 	saved_config.cia_ctrl       = *(vip)CIA_IOC_CIA_CTRL;
 	saved_config.hae_mem        = *(vip)CIA_IOC_HAE_MEM;
 	saved_config.hae_io         = *(vip)CIA_IOC_HAE_IO;
 	saved_config.pci_dac_offset = *(vip)CIA_IOC_PCI_W_DAC;
 
-	if (is_pyxis)
+	अगर (is_pyxis)
 	    saved_config.cia_cnfg   = *(vip)CIA_IOC_CIA_CNFG;
-	else
+	अन्यथा
 	    saved_config.cia_cnfg   = 0;
 
-	/* Save DMA windows configuration. */
-	for (i = 0; i < 4; i++) {
-	    saved_config.window[i].w_base = *(vip)CIA_IOC_PCI_Wn_BASE(i);
-	    saved_config.window[i].w_mask = *(vip)CIA_IOC_PCI_Wn_MASK(i);
-	    saved_config.window[i].t_base = *(vip)CIA_IOC_PCI_Tn_BASE(i);
-	}
+	/* Save DMA winकरोws configuration. */
+	क्रम (i = 0; i < 4; i++) अणु
+	    saved_config.winकरोw[i].w_base = *(vip)CIA_IOC_PCI_Wn_BASE(i);
+	    saved_config.winकरोw[i].w_mask = *(vip)CIA_IOC_PCI_Wn_MASK(i);
+	    saved_config.winकरोw[i].t_base = *(vip)CIA_IOC_PCI_Tn_BASE(i);
+	पूर्ण
 	mb();
-}
+पूर्ण
 
-void
-cia_restore_srm_settings(void)
-{
-	int i;
+व्योम
+cia_restore_srm_settings(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-	    *(vip)CIA_IOC_PCI_Wn_BASE(i) = saved_config.window[i].w_base;
-	    *(vip)CIA_IOC_PCI_Wn_MASK(i) = saved_config.window[i].w_mask;
-	    *(vip)CIA_IOC_PCI_Tn_BASE(i) = saved_config.window[i].t_base;
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+	    *(vip)CIA_IOC_PCI_Wn_BASE(i) = saved_config.winकरोw[i].w_base;
+	    *(vip)CIA_IOC_PCI_Wn_MASK(i) = saved_config.winकरोw[i].w_mask;
+	    *(vip)CIA_IOC_PCI_Tn_BASE(i) = saved_config.winकरोw[i].t_base;
+	पूर्ण
 
 	*(vip)CIA_IOC_HAE_MEM   = saved_config.hae_mem;
 	*(vip)CIA_IOC_HAE_IO    = saved_config.hae_io;
@@ -619,28 +620,28 @@ cia_restore_srm_settings(void)
 	*(vip)CIA_IOC_ERR_MASK  = saved_config.err_mask;
 	*(vip)CIA_IOC_CIA_CTRL  = saved_config.cia_ctrl;
 
-	if (saved_config.cia_cnfg) /* Must be pyxis. */
+	अगर (saved_config.cia_cnfg) /* Must be pyxis. */
 	    *(vip)CIA_IOC_CIA_CNFG  = saved_config.cia_cnfg;
 
 	mb();
-}
-#else /* ALPHA_RESTORE_SRM_SETUP */
-#define cia_save_srm_settings(p)	do {} while (0)
-#define cia_restore_srm_settings()	do {} while (0)
-#endif /* ALPHA_RESTORE_SRM_SETUP */
+पूर्ण
+#अन्यथा /* ALPHA_RESTORE_SRM_SETUP */
+#घोषणा cia_save_srm_settings(p)	करो अणुपूर्ण जबतक (0)
+#घोषणा cia_restore_srm_settings()	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर /* ALPHA_RESTORE_SRM_SETUP */
 
 
-static void __init
-do_init_arch(int is_pyxis)
-{
-	struct pci_controller *hose;
-	int temp, cia_rev, tbia_window;
+अटल व्योम __init
+करो_init_arch(पूर्णांक is_pyxis)
+अणु
+	काष्ठा pci_controller *hose;
+	पूर्णांक temp, cia_rev, tbia_winकरोw;
 
 	cia_rev = *(vip)CIA_IOC_CIA_REV & CIA_REV_MASK;
-	printk("pci: cia revision %d%s\n",
+	prपूर्णांकk("pci: cia revision %d%s\n",
 	       cia_rev, is_pyxis ? " (pyxis)" : "");
 
-	if (alpha_using_srm)
+	अगर (alpha_using_srm)
 		cia_save_srm_settings(is_pyxis);
 
 	/* Set up error reporting.  */
@@ -658,8 +659,8 @@ do_init_arch(int is_pyxis)
 	temp |= CIA_CTRL_FILL_ERR_EN | CIA_CTRL_MCHK_ERR_EN;
 	*(vip)CIA_IOC_CIA_CTRL = temp;
 
-	/* Clear the CFG register, which gets used for PCI config space
-	   accesses.  That is the way we want to use it, and we do not
+	/* Clear the CFG रेजिस्टर, which माला_लो used क्रम PCI config space
+	   accesses.  That is the way we want to use it, and we करो not
 	   want to depend on what ARC or SRM might have left behind.  */
 	*(vip)CIA_IOC_CFG = 0;
  
@@ -668,13 +669,13 @@ do_init_arch(int is_pyxis)
 	*(vip)CIA_IOC_HAE_IO = 0;
 
 	/* For PYXIS, we always use BWX bus and i/o accesses.  To that end,
-	   make sure they're enabled on the controller.  At the same time,
-	   enable the monster window.  */
-	if (is_pyxis) {
+	   make sure they're enabled on the controller.  At the same समय,
+	   enable the monster winकरोw.  */
+	अगर (is_pyxis) अणु
 		temp = *(vip)CIA_IOC_CIA_CNFG;
 		temp |= CIA_CNFG_IOA_BWEN | CIA_CNFG_PCI_MWEN;
 		*(vip)CIA_IOC_CIA_CNFG = temp;
-	}
+	पूर्ण
 
 	/* Synchronize with all previous changes.  */
 	mb();
@@ -689,8 +690,8 @@ do_init_arch(int is_pyxis)
 	hose->mem_space = &iomem_resource;
 	hose->index = 0;
 
-	if (! is_pyxis) {
-		struct resource *hae_mem = alloc_resource();
+	अगर (! is_pyxis) अणु
+		काष्ठा resource *hae_mem = alloc_resource();
 		hose->mem_space = hae_mem;
 
 		hae_mem->start = 0;
@@ -698,35 +699,35 @@ do_init_arch(int is_pyxis)
 		hae_mem->name = pci_hae0_name;
 		hae_mem->flags = IORESOURCE_MEM;
 
-		if (request_resource(&iomem_resource, hae_mem) < 0)
-			printk(KERN_ERR "Failed to request HAE_MEM\n");
+		अगर (request_resource(&iomem_resource, hae_mem) < 0)
+			prपूर्णांकk(KERN_ERR "Failed to request HAE_MEM\n");
 
 		hose->sparse_mem_base = CIA_SPARSE_MEM - IDENT_ADDR;
 		hose->dense_mem_base = CIA_DENSE_MEM - IDENT_ADDR;
 		hose->sparse_io_base = CIA_IO - IDENT_ADDR;
 		hose->dense_io_base = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		hose->sparse_mem_base = 0;
 		hose->dense_mem_base = CIA_BW_MEM - IDENT_ADDR;
 		hose->sparse_io_base = 0;
 		hose->dense_io_base = CIA_BW_IO - IDENT_ADDR;
-	}
+	पूर्ण
 
 	/*
-	 * Set up the PCI to main memory translation windows.
+	 * Set up the PCI to मुख्य memory translation winकरोws.
 	 *
-	 * Window 0 is S/G 8MB at 8MB (for isa)
-	 * Window 1 is S/G 1MB at 768MB (for tbia) (unused for CIA rev 1)
-	 * Window 2 is direct access 2GB at 2GB
-	 * Window 3 is DAC access 4GB at 8GB (or S/G for tbia if CIA rev 1)
+	 * Winकरोw 0 is S/G 8MB at 8MB (क्रम isa)
+	 * Winकरोw 1 is S/G 1MB at 768MB (क्रम tbia) (unused क्रम CIA rev 1)
+	 * Winकरोw 2 is direct access 2GB at 2GB
+	 * Winकरोw 3 is DAC access 4GB at 8GB (or S/G क्रम tbia अगर CIA rev 1)
 	 *
-	 * ??? NetBSD hints that page tables must be aligned to 32K,
+	 * ??? NetBSD hपूर्णांकs that page tables must be aligned to 32K,
 	 * possibly due to a hardware bug.  This is over-aligned
-	 * from the 8K alignment one would expect for an 8MB window. 
+	 * from the 8K alignment one would expect क्रम an 8MB winकरोw. 
 	 * No description of what revisions affected.
 	 */
 
-	hose->sg_pci = NULL;
+	hose->sg_pci = शून्य;
 	hose->sg_isa = iommu_arena_new(hose, 0x00800000, 0x00800000, 32768);
 
 	__direct_map_base = 0x80000000;
@@ -740,150 +741,150 @@ do_init_arch(int is_pyxis)
 	*(vip)CIA_IOC_PCI_W2_MASK = (__direct_map_size - 1) & 0xfff00000;
 	*(vip)CIA_IOC_PCI_T2_BASE = 0 >> 2;
 
-	/* On PYXIS we have the monster window, selected by bit 40, so
-	   there is no need for window3 to be enabled.
+	/* On PYXIS we have the monster winकरोw, selected by bit 40, so
+	   there is no need क्रम winकरोw3 to be enabled.
 
-	   On CIA, we don't have true arbitrary addressing -- bits <39:32>
+	   On CIA, we करोn't have true arbitrary addressing -- bits <39:32>
 	   are compared against W_DAC.  We can, however, directly map 4GB,
-	   which is better than before.  However, due to assumptions made
-	   elsewhere, we should not claim that we support DAC unless that
+	   which is better than beक्रमe.  However, due to assumptions made
+	   अन्यथाwhere, we should not claim that we support DAC unless that
 	   4GB covers all of physical memory.
 
-	   On CIA rev 1, apparently W1 and W2 can't be used for SG. 
-	   At least, there are reports that it doesn't work for Alcor. 
-	   In that case, we have no choice but to use W3 for the TBIA 
+	   On CIA rev 1, apparently W1 and W2 can't be used क्रम SG. 
+	   At least, there are reports that it करोesn't work क्रम Alcor. 
+	   In that हाल, we have no choice but to use W3 क्रम the TBIA 
 	   workaround, which means we can't use DAC at all. */ 
 
-	tbia_window = 1;
-	if (is_pyxis) {
+	tbia_winकरोw = 1;
+	अगर (is_pyxis) अणु
 		*(vip)CIA_IOC_PCI_W3_BASE = 0;
-	} else if (cia_rev == 1) {
+	पूर्ण अन्यथा अगर (cia_rev == 1) अणु
 		*(vip)CIA_IOC_PCI_W1_BASE = 0;
-		tbia_window = 3;
-	} else if (max_low_pfn > (0x100000000UL >> PAGE_SHIFT)) {
+		tbia_winकरोw = 3;
+	पूर्ण अन्यथा अगर (max_low_pfn > (0x100000000UL >> PAGE_SHIFT)) अणु
 		*(vip)CIA_IOC_PCI_W3_BASE = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		*(vip)CIA_IOC_PCI_W3_BASE = 0x00000000 | 1 | 8;
 		*(vip)CIA_IOC_PCI_W3_MASK = 0xfff00000;
 		*(vip)CIA_IOC_PCI_T3_BASE = 0 >> 2;
 
 		alpha_mv.pci_dac_offset = 0x200000000UL;
 		*(vip)CIA_IOC_PCI_W_DAC = alpha_mv.pci_dac_offset >> 32;
-	}
+	पूर्ण
 
-	/* Prepare workaround for apparently broken tbia. */
-	cia_prepare_tbia_workaround(tbia_window);
-}
+	/* Prepare workaround क्रम apparently broken tbia. */
+	cia_prepare_tbia_workaround(tbia_winकरोw);
+पूर्ण
 
-void __init
-cia_init_arch(void)
-{
-	do_init_arch(0);
-}
+व्योम __init
+cia_init_arch(व्योम)
+अणु
+	करो_init_arch(0);
+पूर्ण
 
-void __init
-pyxis_init_arch(void)
-{
+व्योम __init
+pyxis_init_arch(व्योम)
+अणु
 	/* On pyxis machines we can precisely calculate the
-	   CPU clock frequency using pyxis real time counter.
-	   It's especially useful for SX164 with broken RTC.
+	   CPU घड़ी frequency using pyxis real समय counter.
+	   It's especially useful क्रम SX164 with broken RTC.
 
 	   Both CPU and chipset are driven by the single 16.666M
-	   or 16.667M crystal oscillator. PYXIS_RT_COUNT clock is
+	   or 16.667M crystal oscillator. PYXIS_RT_COUNT घड़ी is
 	   66.66 MHz. -ink */
 
-	unsigned int cc0, cc1;
-	unsigned long pyxis_cc;
+	अचिन्हित पूर्णांक cc0, cc1;
+	अचिन्हित दीर्घ pyxis_cc;
 
-	__asm__ __volatile__ ("rpcc %0" : "=r"(cc0));
+	__यंत्र__ __अस्थिर__ ("rpcc %0" : "=r"(cc0));
 	pyxis_cc = *(vulp)PYXIS_RT_COUNT;
-	do { } while(*(vulp)PYXIS_RT_COUNT - pyxis_cc < 4096);
-	__asm__ __volatile__ ("rpcc %0" : "=r"(cc1));
+	करो अणु पूर्ण जबतक(*(vulp)PYXIS_RT_COUNT - pyxis_cc < 4096);
+	__यंत्र__ __अस्थिर__ ("rpcc %0" : "=r"(cc1));
 	cc1 -= cc0;
 	hwrpb->cycle_freq = ((cc1 >> 11) * 100000000UL) / 3;
 	hwrpb_update_checksum(hwrpb);
 
-	do_init_arch(1);
-}
+	करो_init_arch(1);
+पूर्ण
 
-void
-cia_kill_arch(int mode)
-{
-	if (alpha_using_srm)
+व्योम
+cia_समाप्त_arch(पूर्णांक mode)
+अणु
+	अगर (alpha_using_srm)
 		cia_restore_srm_settings();
-}
+पूर्ण
 
-void __init
-cia_init_pci(void)
-{
+व्योम __init
+cia_init_pci(व्योम)
+अणु
 	/* Must delay this from init_arch, as we need machine checks.  */
-	verify_tb_operation();
+	verअगरy_tb_operation();
 	common_init_pci();
-}
+पूर्ण
 
-static inline void
-cia_pci_clr_err(void)
-{
-	int jd;
+अटल अंतरभूत व्योम
+cia_pci_clr_err(व्योम)
+अणु
+	पूर्णांक jd;
 
 	jd = *(vip)CIA_IOC_CIA_ERR;
 	*(vip)CIA_IOC_CIA_ERR = jd;
 	mb();
-	*(vip)CIA_IOC_CIA_ERR;		/* re-read to force write.  */
-}
+	*(vip)CIA_IOC_CIA_ERR;		/* re-पढ़ो to क्रमce ग_लिखो.  */
+पूर्ण
 
-#ifdef CONFIG_VERBOSE_MCHECK
-static void
-cia_decode_pci_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
-{
-	static const char * const pci_cmd_desc[16] = {
+#अगर_घोषित CONFIG_VERBOSE_MCHECK
+अटल व्योम
+cia_decode_pci_error(काष्ठा el_CIA_sysdata_mcheck *cia, स्थिर अक्षर *msg)
+अणु
+	अटल स्थिर अक्षर * स्थिर pci_cmd_desc[16] = अणु
 		"Interrupt Acknowledge", "Special Cycle", "I/O Read",
 		"I/O Write", "Reserved 0x4", "Reserved 0x5", "Memory Read",
 		"Memory Write", "Reserved 0x8", "Reserved 0x9",
 		"Configuration Read", "Configuration Write",
 		"Memory Read Multiple", "Dual Address Cycle",
 		"Memory Read Line", "Memory Write and Invalidate"
-	};
+	पूर्ण;
 
-	if (cia->cia_err & (CIA_ERR_COR_ERR
+	अगर (cia->cia_err & (CIA_ERR_COR_ERR
 			    | CIA_ERR_UN_COR_ERR
 			    | CIA_ERR_MEM_NEM
-			    | CIA_ERR_PA_PTE_INV)) {
-		static const char * const window_desc[6] = {
+			    | CIA_ERR_PA_PTE_INV)) अणु
+		अटल स्थिर अक्षर * स्थिर winकरोw_desc[6] = अणु
 			"No window active", "Window 0 hit", "Window 1 hit",
 			"Window 2 hit", "Window 3 hit", "Monster window hit"
-		};
+		पूर्ण;
 
-		const char *window;
-		const char *cmd;
-		unsigned long addr, tmp;
-		int lock, dac;
+		स्थिर अक्षर *winकरोw;
+		स्थिर अक्षर *cmd;
+		अचिन्हित दीर्घ addr, पंचांगp;
+		पूर्णांक lock, dac;
 	
 		cmd = pci_cmd_desc[cia->pci_err0 & 0x7];
 		lock = (cia->pci_err0 >> 4) & 1;
 		dac = (cia->pci_err0 >> 5) & 1;
 
-		tmp = (cia->pci_err0 >> 8) & 0x1F;
-		tmp = ffs(tmp);
-		window = window_desc[tmp];
+		पंचांगp = (cia->pci_err0 >> 8) & 0x1F;
+		पंचांगp = ffs(पंचांगp);
+		winकरोw = winकरोw_desc[पंचांगp];
 
 		addr = cia->pci_err1;
-		if (dac) {
-			tmp = *(vip)CIA_IOC_PCI_W_DAC & 0xFFUL;
-			addr |= tmp << 32;
-		}
+		अगर (dac) अणु
+			पंचांगp = *(vip)CIA_IOC_PCI_W_DAC & 0xFFUL;
+			addr |= पंचांगp << 32;
+		पूर्ण
 
-		printk(KERN_CRIT "CIA machine check: %s\n", msg);
-		printk(KERN_CRIT "  DMA command: %s\n", cmd);
-		printk(KERN_CRIT "  PCI address: %#010lx\n", addr);
-		printk(KERN_CRIT "  %s, Lock: %d, DAC: %d\n",
-		       window, lock, dac);
-	} else if (cia->cia_err & (CIA_ERR_PERR
+		prपूर्णांकk(KERN_CRIT "CIA machine check: %s\n", msg);
+		prपूर्णांकk(KERN_CRIT "  DMA command: %s\n", cmd);
+		prपूर्णांकk(KERN_CRIT "  PCI address: %#010lx\n", addr);
+		prपूर्णांकk(KERN_CRIT "  %s, Lock: %d, DAC: %d\n",
+		       winकरोw, lock, dac);
+	पूर्ण अन्यथा अगर (cia->cia_err & (CIA_ERR_PERR
 				   | CIA_ERR_PCI_ADDR_PE
 				   | CIA_ERR_RCVD_MAS_ABT
 				   | CIA_ERR_RCVD_TAR_ABT
-				   | CIA_ERR_IOA_TIMEOUT)) {
-		static const char * const master_st_desc[16] = {
+				   | CIA_ERR_IOA_TIMEOUT)) अणु
+		अटल स्थिर अक्षर * स्थिर master_st_desc[16] = अणु
 			"Idle", "Drive bus", "Address step cycle",
 			"Address cycle", "Data cycle", "Last read data cycle",
 			"Last write data cycle", "Read stop cycle",
@@ -891,20 +892,20 @@ cia_decode_pci_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
 			"Write turnaround cycle", "Reserved 0xB",
 			"Reserved 0xC", "Reserved 0xD", "Reserved 0xE",
 			"Unknown state"
-		};
-		static const char * const target_st_desc[16] = {
+		पूर्ण;
+		अटल स्थिर अक्षर * स्थिर target_st_desc[16] = अणु
 			"Idle", "Busy", "Read data cycle", "Write data cycle",
 			"Read stop cycle", "Write stop cycle",
 			"Read turnaround cycle", "Write turnaround cycle",
 			"Read wait cycle", "Write wait cycle",
 			"Reserved 0xA", "Reserved 0xB", "Reserved 0xC",
 			"Reserved 0xD", "Reserved 0xE", "Unknown state"
-		};
+		पूर्ण;
 
-		const char *cmd;
-		const char *master, *target;
-		unsigned long addr, tmp;
-		int dac;
+		स्थिर अक्षर *cmd;
+		स्थिर अक्षर *master, *target;
+		अचिन्हित दीर्घ addr, पंचांगp;
+		पूर्णांक dac;
 
 		master = master_st_desc[(cia->pci_err0 >> 16) & 0xF];
 		target = target_st_desc[(cia->pci_err0 >> 20) & 0xF];
@@ -912,137 +913,137 @@ cia_decode_pci_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
 		dac = (cia->pci_err0 >> 28) & 1;
 
 		addr = cia->pci_err2;
-		if (dac) {
-			tmp = *(volatile int *)CIA_IOC_PCI_W_DAC & 0xFFUL;
-			addr |= tmp << 32;
-		}
+		अगर (dac) अणु
+			पंचांगp = *(अस्थिर पूर्णांक *)CIA_IOC_PCI_W_DAC & 0xFFUL;
+			addr |= पंचांगp << 32;
+		पूर्ण
 
-		printk(KERN_CRIT "CIA machine check: %s\n", msg);
-		printk(KERN_CRIT "  PCI command: %s\n", cmd);
-		printk(KERN_CRIT "  Master state: %s, Target state: %s\n",
+		prपूर्णांकk(KERN_CRIT "CIA machine check: %s\n", msg);
+		prपूर्णांकk(KERN_CRIT "  PCI command: %s\n", cmd);
+		prपूर्णांकk(KERN_CRIT "  Master state: %s, Target state: %s\n",
 		       master, target);
-		printk(KERN_CRIT "  PCI address: %#010lx, DAC: %d\n",
+		prपूर्णांकk(KERN_CRIT "  PCI address: %#010lx, DAC: %d\n",
 		       addr, dac);
-	} else {
-		printk(KERN_CRIT "CIA machine check: %s\n", msg);
-		printk(KERN_CRIT "  Unknown PCI error\n");
-		printk(KERN_CRIT "  PCI_ERR0 = %#08lx", cia->pci_err0);
-		printk(KERN_CRIT "  PCI_ERR1 = %#08lx", cia->pci_err1);
-		printk(KERN_CRIT "  PCI_ERR2 = %#08lx", cia->pci_err2);
-	}
-}
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_CRIT "CIA machine check: %s\n", msg);
+		prपूर्णांकk(KERN_CRIT "  Unknown PCI error\n");
+		prपूर्णांकk(KERN_CRIT "  PCI_ERR0 = %#08lx", cia->pci_err0);
+		prपूर्णांकk(KERN_CRIT "  PCI_ERR1 = %#08lx", cia->pci_err1);
+		prपूर्णांकk(KERN_CRIT "  PCI_ERR2 = %#08lx", cia->pci_err2);
+	पूर्ण
+पूर्ण
 
-static void
-cia_decode_mem_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
-{
-	unsigned long mem_port_addr;
-	unsigned long mem_port_mask;
-	const char *mem_port_cmd;
-	const char *seq_state;
-	const char *set_select;
-	unsigned long tmp;
+अटल व्योम
+cia_decode_mem_error(काष्ठा el_CIA_sysdata_mcheck *cia, स्थिर अक्षर *msg)
+अणु
+	अचिन्हित दीर्घ mem_port_addr;
+	अचिन्हित दीर्घ mem_port_mask;
+	स्थिर अक्षर *mem_port_cmd;
+	स्थिर अक्षर *seq_state;
+	स्थिर अक्षर *set_select;
+	अचिन्हित दीर्घ पंचांगp;
 
 	/* If this is a DMA command, also decode the PCI bits.  */
-	if ((cia->mem_err1 >> 20) & 1)
+	अगर ((cia->mem_err1 >> 20) & 1)
 		cia_decode_pci_error(cia, msg);
-	else
-		printk(KERN_CRIT "CIA machine check: %s\n", msg);
+	अन्यथा
+		prपूर्णांकk(KERN_CRIT "CIA machine check: %s\n", msg);
 
 	mem_port_addr = cia->mem_err0 & 0xfffffff0;
 	mem_port_addr |= (cia->mem_err1 & 0x83UL) << 32;
 
 	mem_port_mask = (cia->mem_err1 >> 12) & 0xF;
 
-	tmp = (cia->mem_err1 >> 8) & 0xF;
-	tmp |= ((cia->mem_err1 >> 20) & 1) << 4;
-	if ((tmp & 0x1E) == 0x06)
+	पंचांगp = (cia->mem_err1 >> 8) & 0xF;
+	पंचांगp |= ((cia->mem_err1 >> 20) & 1) << 4;
+	अगर ((पंचांगp & 0x1E) == 0x06)
 		mem_port_cmd = "WRITE BLOCK or WRITE BLOCK LOCK";
-	else if ((tmp & 0x1C) == 0x08)
+	अन्यथा अगर ((पंचांगp & 0x1C) == 0x08)
 		mem_port_cmd = "READ MISS or READ MISS MODIFY";
-	else if (tmp == 0x1C)
+	अन्यथा अगर (पंचांगp == 0x1C)
 		mem_port_cmd = "BC VICTIM";
-	else if ((tmp & 0x1E) == 0x0E)
+	अन्यथा अगर ((पंचांगp & 0x1E) == 0x0E)
 		mem_port_cmd = "READ MISS MODIFY";
-	else if ((tmp & 0x1C) == 0x18)
+	अन्यथा अगर ((पंचांगp & 0x1C) == 0x18)
 		mem_port_cmd = "DMA READ or DMA READ MODIFY";
-	else if ((tmp & 0x1E) == 0x12)
+	अन्यथा अगर ((पंचांगp & 0x1E) == 0x12)
 		mem_port_cmd = "DMA WRITE";
-	else
+	अन्यथा
 		mem_port_cmd = "Unknown";
 
-	tmp = (cia->mem_err1 >> 16) & 0xF;
-	switch (tmp) {
-	case 0x0:
+	पंचांगp = (cia->mem_err1 >> 16) & 0xF;
+	चयन (पंचांगp) अणु
+	हाल 0x0:
 		seq_state = "Idle";
-		break;
-	case 0x1:
+		अवरोध;
+	हाल 0x1:
 		seq_state = "DMA READ or DMA WRITE";
-		break;
-	case 0x2: case 0x3:
+		अवरोध;
+	हाल 0x2: हाल 0x3:
 		seq_state = "READ MISS (or READ MISS MODIFY) with victim";
-		break;
-	case 0x4: case 0x5: case 0x6:
+		अवरोध;
+	हाल 0x4: हाल 0x5: हाल 0x6:
 		seq_state = "READ MISS (or READ MISS MODIFY) with no victim";
-		break;
-	case 0x8: case 0x9: case 0xB:
+		अवरोध;
+	हाल 0x8: हाल 0x9: हाल 0xB:
 		seq_state = "Refresh";
-		break;
-	case 0xC:
+		अवरोध;
+	हाल 0xC:
 		seq_state = "Idle, waiting for DMA pending read";
-		break;
-	case 0xE: case 0xF:
+		अवरोध;
+	हाल 0xE: हाल 0xF:
 		seq_state = "Idle, ras precharge";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		seq_state = "Unknown";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	tmp = (cia->mem_err1 >> 24) & 0x1F;
-	switch (tmp) {
-	case 0x00: set_select = "Set 0 selected"; break;
-	case 0x01: set_select = "Set 1 selected"; break;
-	case 0x02: set_select = "Set 2 selected"; break;
-	case 0x03: set_select = "Set 3 selected"; break;
-	case 0x04: set_select = "Set 4 selected"; break;
-	case 0x05: set_select = "Set 5 selected"; break;
-	case 0x06: set_select = "Set 6 selected"; break;
-	case 0x07: set_select = "Set 7 selected"; break;
-	case 0x08: set_select = "Set 8 selected"; break;
-	case 0x09: set_select = "Set 9 selected"; break;
-	case 0x0A: set_select = "Set A selected"; break;
-	case 0x0B: set_select = "Set B selected"; break;
-	case 0x0C: set_select = "Set C selected"; break;
-	case 0x0D: set_select = "Set D selected"; break;
-	case 0x0E: set_select = "Set E selected"; break;
-	case 0x0F: set_select = "Set F selected"; break;
-	case 0x10: set_select = "No set selected"; break;
-	case 0x1F: set_select = "Refresh cycle"; break;
-	default:   set_select = "Unknown"; break;
-	}
+	पंचांगp = (cia->mem_err1 >> 24) & 0x1F;
+	चयन (पंचांगp) अणु
+	हाल 0x00: set_select = "Set 0 selected"; अवरोध;
+	हाल 0x01: set_select = "Set 1 selected"; अवरोध;
+	हाल 0x02: set_select = "Set 2 selected"; अवरोध;
+	हाल 0x03: set_select = "Set 3 selected"; अवरोध;
+	हाल 0x04: set_select = "Set 4 selected"; अवरोध;
+	हाल 0x05: set_select = "Set 5 selected"; अवरोध;
+	हाल 0x06: set_select = "Set 6 selected"; अवरोध;
+	हाल 0x07: set_select = "Set 7 selected"; अवरोध;
+	हाल 0x08: set_select = "Set 8 selected"; अवरोध;
+	हाल 0x09: set_select = "Set 9 selected"; अवरोध;
+	हाल 0x0A: set_select = "Set A selected"; अवरोध;
+	हाल 0x0B: set_select = "Set B selected"; अवरोध;
+	हाल 0x0C: set_select = "Set C selected"; अवरोध;
+	हाल 0x0D: set_select = "Set D selected"; अवरोध;
+	हाल 0x0E: set_select = "Set E selected"; अवरोध;
+	हाल 0x0F: set_select = "Set F selected"; अवरोध;
+	हाल 0x10: set_select = "No set selected"; अवरोध;
+	हाल 0x1F: set_select = "Refresh cycle"; अवरोध;
+	शेष:   set_select = "Unknown"; अवरोध;
+	पूर्ण
 
-	printk(KERN_CRIT "  Memory port command: %s\n", mem_port_cmd);
-	printk(KERN_CRIT "  Memory port address: %#010lx, mask: %#lx\n",
+	prपूर्णांकk(KERN_CRIT "  Memory port command: %s\n", mem_port_cmd);
+	prपूर्णांकk(KERN_CRIT "  Memory port address: %#010lx, mask: %#lx\n",
 	       mem_port_addr, mem_port_mask);
-	printk(KERN_CRIT "  Memory sequencer state: %s\n", seq_state);
-	printk(KERN_CRIT "  Memory set: %s\n", set_select);
-}
+	prपूर्णांकk(KERN_CRIT "  Memory sequencer state: %s\n", seq_state);
+	prपूर्णांकk(KERN_CRIT "  Memory set: %s\n", set_select);
+पूर्ण
 
-static void
-cia_decode_ecc_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
-{
-	long syn;
-	long i;
-	const char *fmt;
+अटल व्योम
+cia_decode_ecc_error(काष्ठा el_CIA_sysdata_mcheck *cia, स्थिर अक्षर *msg)
+अणु
+	दीर्घ syn;
+	दीर्घ i;
+	स्थिर अक्षर *fmt;
 
 	cia_decode_mem_error(cia, msg);
 
 	syn = cia->cia_syn & 0xff;
-	if (syn == (syn & -syn)) {
+	अगर (syn == (syn & -syn)) अणु
 		fmt = KERN_CRIT "  ECC syndrome %#x -- check bit %d\n";
 		i = ffs(syn) - 1;
-	} else {
-		static unsigned char const data_bit[64] = {
+	पूर्ण अन्यथा अणु
+		अटल अचिन्हित अक्षर स्थिर data_bit[64] = अणु
 			0xCE, 0xCB, 0xD3, 0xD5,
 			0xD6, 0xD9, 0xDA, 0xDC,
 			0x23, 0x25, 0x26, 0x29,
@@ -1059,36 +1060,36 @@ cia_decode_ecc_error(struct el_CIA_sysdata_mcheck *cia, const char *msg)
 			0x97, 0x98, 0x9B, 0x9D,
 			0x62, 0x64, 0x67, 0x68,
 			0x6B, 0x6D, 0x70, 0x75
-		};
+		पूर्ण;
 
-		for (i = 0; i < 64; ++i)
-			if (data_bit[i] == syn)
-				break;
+		क्रम (i = 0; i < 64; ++i)
+			अगर (data_bit[i] == syn)
+				अवरोध;
 
-		if (i < 64)
+		अगर (i < 64)
 			fmt = KERN_CRIT "  ECC syndrome %#x -- data bit %d\n";
-		else
+		अन्यथा
 			fmt = KERN_CRIT "  ECC syndrome %#x -- unknown bit\n";
-	}
+	पूर्ण
 
-	printk (fmt, syn, i);
-}
+	prपूर्णांकk (fmt, syn, i);
+पूर्ण
 
-static void
-cia_decode_parity_error(struct el_CIA_sysdata_mcheck *cia)
-{
-	static const char * const cmd_desc[16] = {
+अटल व्योम
+cia_decode_parity_error(काष्ठा el_CIA_sysdata_mcheck *cia)
+अणु
+	अटल स्थिर अक्षर * स्थिर cmd_desc[16] = अणु
 		"NOP", "LOCK", "FETCH", "FETCH_M", "MEMORY BARRIER",
 		"SET DIRTY", "WRITE BLOCK", "WRITE BLOCK LOCK",
 		"READ MISS0", "READ MISS1", "READ MISS MOD0",
 		"READ MISS MOD1", "BCACHE VICTIM", "Spare",
 		"READ MISS MOD STC0", "READ MISS MOD STC1"
-	};
+	पूर्ण;
 
-	unsigned long addr;
-	unsigned long mask;
-	const char *cmd;
-	int par;
+	अचिन्हित दीर्घ addr;
+	अचिन्हित दीर्घ mask;
+	स्थिर अक्षर *cmd;
+	पूर्णांक par;
 
 	addr = cia->cpu_err0 & 0xfffffff0;
 	addr |= (cia->cpu_err1 & 0x83UL) << 32;
@@ -1096,112 +1097,112 @@ cia_decode_parity_error(struct el_CIA_sysdata_mcheck *cia)
 	mask = (cia->cpu_err1 >> 12) & 0xF;
 	par = (cia->cpu_err1 >> 21) & 1;
 
-	printk(KERN_CRIT "CIA machine check: System bus parity error\n");
-	printk(KERN_CRIT "  Command: %s, Parity bit: %d\n", cmd, par);
-	printk(KERN_CRIT "  Address: %#010lx, Mask: %#lx\n", addr, mask);
-}
-#endif /* CONFIG_VERBOSE_MCHECK */
+	prपूर्णांकk(KERN_CRIT "CIA machine check: System bus parity error\n");
+	prपूर्णांकk(KERN_CRIT "  Command: %s, Parity bit: %d\n", cmd, par);
+	prपूर्णांकk(KERN_CRIT "  Address: %#010lx, Mask: %#lx\n", addr, mask);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VERBOSE_MCHECK */
 
 
-static int
-cia_decode_mchk(unsigned long la_ptr)
-{
-	struct el_common *com;
-	struct el_CIA_sysdata_mcheck *cia;
+अटल पूर्णांक
+cia_decode_mchk(अचिन्हित दीर्घ la_ptr)
+अणु
+	काष्ठा el_common *com;
+	काष्ठा el_CIA_sysdata_mcheck *cia;
 
-	com = (void *)la_ptr;
-	cia = (void *)(la_ptr + com->sys_offset);
+	com = (व्योम *)la_ptr;
+	cia = (व्योम *)(la_ptr + com->sys_offset);
 
-	if ((cia->cia_err & CIA_ERR_VALID) == 0)
-		return 0;
+	अगर ((cia->cia_err & CIA_ERR_VALID) == 0)
+		वापस 0;
 
-#ifdef CONFIG_VERBOSE_MCHECK
-	if (!alpha_verbose_mcheck)
-		return 1;
+#अगर_घोषित CONFIG_VERBOSE_MCHECK
+	अगर (!alpha_verbose_mcheck)
+		वापस 1;
 
-	switch (ffs(cia->cia_err & 0xfff) - 1) {
-	case 0: /* CIA_ERR_COR_ERR */
+	चयन (ffs(cia->cia_err & 0xfff) - 1) अणु
+	हाल 0: /* CIA_ERR_COR_ERR */
 		cia_decode_ecc_error(cia, "Corrected ECC error");
-		break;
-	case 1: /* CIA_ERR_UN_COR_ERR */
+		अवरोध;
+	हाल 1: /* CIA_ERR_UN_COR_ERR */
 		cia_decode_ecc_error(cia, "Uncorrected ECC error");
-		break;
-	case 2: /* CIA_ERR_CPU_PE */
+		अवरोध;
+	हाल 2: /* CIA_ERR_CPU_PE */
 		cia_decode_parity_error(cia);
-		break;
-	case 3: /* CIA_ERR_MEM_NEM */
+		अवरोध;
+	हाल 3: /* CIA_ERR_MEM_NEM */
 		cia_decode_mem_error(cia, "Access to nonexistent memory");
-		break;
-	case 4: /* CIA_ERR_PCI_SERR */
+		अवरोध;
+	हाल 4: /* CIA_ERR_PCI_SERR */
 		cia_decode_pci_error(cia, "PCI bus system error");
-		break;
-	case 5: /* CIA_ERR_PERR */
+		अवरोध;
+	हाल 5: /* CIA_ERR_PERR */
 		cia_decode_pci_error(cia, "PCI data parity error");
-		break;
-	case 6: /* CIA_ERR_PCI_ADDR_PE */
+		अवरोध;
+	हाल 6: /* CIA_ERR_PCI_ADDR_PE */
 		cia_decode_pci_error(cia, "PCI address parity error");
-		break;
-	case 7: /* CIA_ERR_RCVD_MAS_ABT */
+		अवरोध;
+	हाल 7: /* CIA_ERR_RCVD_MAS_ABT */
 		cia_decode_pci_error(cia, "PCI master abort");
-		break;
-	case 8: /* CIA_ERR_RCVD_TAR_ABT */
+		अवरोध;
+	हाल 8: /* CIA_ERR_RCVD_TAR_ABT */
 		cia_decode_pci_error(cia, "PCI target abort");
-		break;
-	case 9: /* CIA_ERR_PA_PTE_INV */
+		अवरोध;
+	हाल 9: /* CIA_ERR_PA_PTE_INV */
 		cia_decode_pci_error(cia, "PCI invalid PTE");
-		break;
-	case 10: /* CIA_ERR_FROM_WRT_ERR */
+		अवरोध;
+	हाल 10: /* CIA_ERR_FROM_WRT_ERR */
 		cia_decode_mem_error(cia, "Write to flash ROM attempted");
-		break;
-	case 11: /* CIA_ERR_IOA_TIMEOUT */
+		अवरोध;
+	हाल 11: /* CIA_ERR_IOA_TIMEOUT */
 		cia_decode_pci_error(cia, "I/O timeout");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (cia->cia_err & CIA_ERR_LOST_CORR_ERR)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_CORR_ERR)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "Correctable ECC error\n");
-	if (cia->cia_err & CIA_ERR_LOST_UN_CORR_ERR)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_UN_CORR_ERR)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "Uncorrectable ECC error\n");
-	if (cia->cia_err & CIA_ERR_LOST_CPU_PE)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_CPU_PE)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "System bus parity error\n");
-	if (cia->cia_err & CIA_ERR_LOST_MEM_NEM)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_MEM_NEM)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "Access to nonexistent memory\n");
-	if (cia->cia_err & CIA_ERR_LOST_PERR)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_PERR)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "PCI data parity error\n");
-	if (cia->cia_err & CIA_ERR_LOST_PCI_ADDR_PE)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_PCI_ADDR_PE)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "PCI address parity error\n");
-	if (cia->cia_err & CIA_ERR_LOST_RCVD_MAS_ABT)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_RCVD_MAS_ABT)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "PCI master abort\n");
-	if (cia->cia_err & CIA_ERR_LOST_RCVD_TAR_ABT)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_RCVD_TAR_ABT)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "PCI target abort\n");
-	if (cia->cia_err & CIA_ERR_LOST_PA_PTE_INV)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_PA_PTE_INV)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "PCI invalid PTE\n");
-	if (cia->cia_err & CIA_ERR_LOST_FROM_WRT_ERR)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_FROM_WRT_ERR)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "Write to flash ROM attempted\n");
-	if (cia->cia_err & CIA_ERR_LOST_IOA_TIMEOUT)
-		printk(KERN_CRIT "CIA lost machine check: "
+	अगर (cia->cia_err & CIA_ERR_LOST_IOA_TIMEOUT)
+		prपूर्णांकk(KERN_CRIT "CIA lost machine check: "
 		       "I/O timeout\n");
-#endif /* CONFIG_VERBOSE_MCHECK */
+#पूर्ण_अगर /* CONFIG_VERBOSE_MCHECK */
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void
-cia_machine_check(unsigned long vector, unsigned long la_ptr)
-{
-	int expected;
+व्योम
+cia_machine_check(अचिन्हित दीर्घ vector, अचिन्हित दीर्घ la_ptr)
+अणु
+	पूर्णांक expected;
 
-	/* Clear the error before any reporting.  */
+	/* Clear the error beक्रमe any reporting.  */
 	mb();
 	mb();  /* magic */
 	draina();
@@ -1210,7 +1211,7 @@ cia_machine_check(unsigned long vector, unsigned long la_ptr)
 	mb();
 
 	expected = mcheck_expected(0);
-	if (!expected && vector == 0x660)
+	अगर (!expected && vector == 0x660)
 		expected = cia_decode_mchk(la_ptr);
 	process_mcheck_info(vector, la_ptr, "CIA", expected);
-}
+पूर्ण

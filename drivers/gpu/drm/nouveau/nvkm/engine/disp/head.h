@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_DISP_HEAD_H__
-#define __NVKM_DISP_HEAD_H__
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_DISP_HEAD_H__
+#घोषणा __NVKM_DISP_HEAD_H__
+#समावेश "priv.h"
 
-struct nvkm_head {
-	const struct nvkm_head_func *func;
-	struct nvkm_disp *disp;
-	int id;
+काष्ठा nvkm_head अणु
+	स्थिर काष्ठा nvkm_head_func *func;
+	काष्ठा nvkm_disp *disp;
+	पूर्णांक id;
 
-	struct list_head head;
+	काष्ठा list_head head;
 
-	struct nvkm_head_state {
+	काष्ठा nvkm_head_state अणु
 		u16 htotal;
 		u16 hsynce;
 		u16 hblanke;
@@ -22,44 +23,44 @@ struct nvkm_head {
 		u32 hz;
 
 		/* Prior to GF119, these are set by the OR. */
-		struct {
+		काष्ठा अणु
 			u8 depth;
-		} or;
-	} arm, asy;
-};
+		पूर्ण or;
+	पूर्ण arm, asy;
+पूर्ण;
 
-int nvkm_head_new_(const struct nvkm_head_func *, struct nvkm_disp *, int id);
-void nvkm_head_del(struct nvkm_head **);
-int nvkm_head_mthd_scanoutpos(struct nvkm_object *,
-			      struct nvkm_head *, void *, u32);
-struct nvkm_head *nvkm_head_find(struct nvkm_disp *, int id);
+पूर्णांक nvkm_head_new_(स्थिर काष्ठा nvkm_head_func *, काष्ठा nvkm_disp *, पूर्णांक id);
+व्योम nvkm_head_del(काष्ठा nvkm_head **);
+पूर्णांक nvkm_head_mthd_scanoutpos(काष्ठा nvkm_object *,
+			      काष्ठा nvkm_head *, व्योम *, u32);
+काष्ठा nvkm_head *nvkm_head_find(काष्ठा nvkm_disp *, पूर्णांक id);
 
-struct nvkm_head_func {
-	void (*state)(struct nvkm_head *, struct nvkm_head_state *);
-	void (*rgpos)(struct nvkm_head *, u16 *hline, u16 *vline);
-	void (*rgclk)(struct nvkm_head *, int div);
-	void (*vblank_get)(struct nvkm_head *);
-	void (*vblank_put)(struct nvkm_head *);
-};
+काष्ठा nvkm_head_func अणु
+	व्योम (*state)(काष्ठा nvkm_head *, काष्ठा nvkm_head_state *);
+	व्योम (*rgpos)(काष्ठा nvkm_head *, u16 *hline, u16 *vline);
+	व्योम (*rgclk)(काष्ठा nvkm_head *, पूर्णांक भाग);
+	व्योम (*vblank_get)(काष्ठा nvkm_head *);
+	व्योम (*vblank_put)(काष्ठा nvkm_head *);
+पूर्ण;
 
-void nv50_head_rgpos(struct nvkm_head *, u16 *, u16 *);
+व्योम nv50_head_rgpos(काष्ठा nvkm_head *, u16 *, u16 *);
 
-#define HEAD_MSG(h,l,f,a...) do {                                              \
-	struct nvkm_head *_h = (h);                                            \
+#घोषणा HEAD_MSG(h,l,f,a...) करो अणु                                              \
+	काष्ठा nvkm_head *_h = (h);                                            \
 	nvkm_##l(&_h->disp->engine.subdev, "head-%d: "f"\n", _h->id, ##a);     \
-} while(0)
-#define HEAD_WARN(h,f,a...) HEAD_MSG((h), warn, f, ##a)
-#define HEAD_DBG(h,f,a...) HEAD_MSG((h), debug, f, ##a)
+पूर्ण जबतक(0)
+#घोषणा HEAD_WARN(h,f,a...) HEAD_MSG((h), warn, f, ##a)
+#घोषणा HEAD_DBG(h,f,a...) HEAD_MSG((h), debug, f, ##a)
 
-int nv04_head_new(struct nvkm_disp *, int id);
+पूर्णांक nv04_head_new(काष्ठा nvkm_disp *, पूर्णांक id);
 
-int nv50_head_cnt(struct nvkm_disp *, unsigned long *);
-int nv50_head_new(struct nvkm_disp *, int id);
+पूर्णांक nv50_head_cnt(काष्ठा nvkm_disp *, अचिन्हित दीर्घ *);
+पूर्णांक nv50_head_new(काष्ठा nvkm_disp *, पूर्णांक id);
 
-int gf119_head_cnt(struct nvkm_disp *, unsigned long *);
-int gf119_head_new(struct nvkm_disp *, int id);
-void gf119_head_rgclk(struct nvkm_head *, int);
+पूर्णांक gf119_head_cnt(काष्ठा nvkm_disp *, अचिन्हित दीर्घ *);
+पूर्णांक gf119_head_new(काष्ठा nvkm_disp *, पूर्णांक id);
+व्योम gf119_head_rgclk(काष्ठा nvkm_head *, पूर्णांक);
 
-int gv100_head_cnt(struct nvkm_disp *, unsigned long *);
-int gv100_head_new(struct nvkm_disp *, int id);
-#endif
+पूर्णांक gv100_head_cnt(काष्ठा nvkm_disp *, अचिन्हित दीर्घ *);
+पूर्णांक gv100_head_new(काष्ठा nvkm_disp *, पूर्णांक id);
+#पूर्ण_अगर

@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_X86_XOR_H
-#define _ASM_X86_XOR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_X86_XOR_H
+#घोषणा _ASM_X86_XOR_H
 
 /*
- * Optimized RAID-5 checksumming functions for SSE.
+ * Optimized RAID-5 checksumming functions क्रम SSE.
  */
 
 /*
- * Cache avoiding checksumming functions utilizing KNI instructions
+ * Cache aव्योमing checksumming functions utilizing KNI inकाष्ठाions
  * Copyright (C) 1999 Zach Brown (with obvious credit due Ingo)
  */
 
 /*
  * Based on
- * High-speed RAID5 checksumming functions utilizing SSE instructions.
+ * High-speed RAID5 checksumming functions utilizing SSE inकाष्ठाions.
  * Copyright (C) 1998 Ingo Molnar.
  */
 
 /*
  * x86-64 changes / gcc fixes from Andi Kleen.
- * Copyright 2002 Andi Kleen, SuSE Labs.
+ * Copyright 2002 Andi Kleen, SuSE Lअसल.
  *
- * This hasn't been optimized for the hammer yet, but there are likely
+ * This hasn't been optimized क्रम the hammer yet, but there are likely
  * no advantages to be gotten from x86-64 here anyways.
  */
 
-#include <asm/fpu/api.h>
+#समावेश <यंत्र/fpu/api.h>
 
-#ifdef CONFIG_X86_32
-/* reduce register pressure */
+#अगर_घोषित CONFIG_X86_32
+/* reduce रेजिस्टर pressure */
 # define XOR_CONSTANT_CONSTRAINT "i"
-#else
+#अन्यथा
 # define XOR_CONSTANT_CONSTRAINT "re"
-#endif
+#पूर्ण_अगर
 
-#define OFFS(x)		"16*("#x")"
-#define PF_OFFS(x)	"256+16*("#x")"
-#define PF0(x)		"	prefetchnta "PF_OFFS(x)"(%[p1])		;\n"
-#define LD(x, y)	"	movaps "OFFS(x)"(%[p1]), %%xmm"#y"	;\n"
-#define ST(x, y)	"	movaps %%xmm"#y", "OFFS(x)"(%[p1])	;\n"
-#define PF1(x)		"	prefetchnta "PF_OFFS(x)"(%[p2])		;\n"
-#define PF2(x)		"	prefetchnta "PF_OFFS(x)"(%[p3])		;\n"
-#define PF3(x)		"	prefetchnta "PF_OFFS(x)"(%[p4])		;\n"
-#define PF4(x)		"	prefetchnta "PF_OFFS(x)"(%[p5])		;\n"
-#define XO1(x, y)	"	xorps "OFFS(x)"(%[p2]), %%xmm"#y"	;\n"
-#define XO2(x, y)	"	xorps "OFFS(x)"(%[p3]), %%xmm"#y"	;\n"
-#define XO3(x, y)	"	xorps "OFFS(x)"(%[p4]), %%xmm"#y"	;\n"
-#define XO4(x, y)	"	xorps "OFFS(x)"(%[p5]), %%xmm"#y"	;\n"
-#define NOP(x)
+#घोषणा OFFS(x)		"16*("#x")"
+#घोषणा PF_OFFS(x)	"256+16*("#x")"
+#घोषणा PF0(x)		"	prefetchnta "PF_OFFS(x)"(%[p1])		;\n"
+#घोषणा LD(x, y)	"	movaps "OFFS(x)"(%[p1]), %%xmm"#y"	;\n"
+#घोषणा ST(x, y)	"	movaps %%xmm"#y", "OFFS(x)"(%[p1])	;\n"
+#घोषणा PF1(x)		"	prefetchnta "PF_OFFS(x)"(%[p2])		;\n"
+#घोषणा PF2(x)		"	prefetchnta "PF_OFFS(x)"(%[p3])		;\n"
+#घोषणा PF3(x)		"	prefetchnta "PF_OFFS(x)"(%[p4])		;\n"
+#घोषणा PF4(x)		"	prefetchnta "PF_OFFS(x)"(%[p5])		;\n"
+#घोषणा XO1(x, y)	"	xorps "OFFS(x)"(%[p2]), %%xmm"#y"	;\n"
+#घोषणा XO2(x, y)	"	xorps "OFFS(x)"(%[p3]), %%xmm"#y"	;\n"
+#घोषणा XO3(x, y)	"	xorps "OFFS(x)"(%[p4]), %%xmm"#y"	;\n"
+#घोषणा XO4(x, y)	"	xorps "OFFS(x)"(%[p5]), %%xmm"#y"	;\n"
+#घोषणा NOP(x)
 
-#define BLK64(pf, op, i)				\
+#घोषणा BLK64(pf, op, i)				\
 		pf(i)					\
 		op(i, 0)				\
 			op(i + 1, 1)			\
 				op(i + 2, 2)		\
 					op(i + 3, 3)
 
-static void
-xor_sse_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_2(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)					\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)					\
 		LD(i, 0)				\
 			LD(i + 1, 1)			\
 		PF1(i)					\
@@ -105,18 +106,18 @@ xor_sse_2(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_2_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_2_pf64(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)			\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)			\
 		BLK64(PF0, LD, i)	\
 		BLK64(PF1, XO1, i)	\
 		BLK64(NOP, ST, i)	\
@@ -139,19 +140,19 @@ xor_sse_2_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2)
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	  unsigned long *p3)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_3(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	  अचिन्हित दीर्घ *p3)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i) \
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i) \
 		PF1(i)					\
 				PF1(i + 2)		\
 		LD(i, 0)				\
@@ -198,19 +199,19 @@ xor_sse_3(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_3_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	       unsigned long *p3)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_3_pf64(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	       अचिन्हित दीर्घ *p3)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)			\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)			\
 		BLK64(PF0, LD, i)	\
 		BLK64(PF1, XO1, i)	\
 		BLK64(PF2, XO2, i)	\
@@ -235,19 +236,19 @@ xor_sse_3_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	  unsigned long *p3, unsigned long *p4)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_4(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	  अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i) \
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i) \
 		PF1(i)					\
 				PF1(i + 2)		\
 		LD(i, 0)				\
@@ -301,19 +302,19 @@ xor_sse_4(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_4_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	       unsigned long *p3, unsigned long *p4)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_4_pf64(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	       अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)			\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)			\
 		BLK64(PF0, LD, i)	\
 		BLK64(PF1, XO1, i)	\
 		BLK64(PF2, XO2, i)	\
@@ -340,19 +341,19 @@ xor_sse_4_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	  unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_5(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	  अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i) \
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i) \
 		PF1(i)					\
 				PF1(i + 2)		\
 		LD(i, 0)				\
@@ -413,19 +414,19 @@ xor_sse_5(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static void
-xor_sse_5_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
-	       unsigned long *p3, unsigned long *p4, unsigned long *p5)
-{
-	unsigned long lines = bytes >> 8;
+अटल व्योम
+xor_sse_5_pf64(अचिन्हित दीर्घ bytes, अचिन्हित दीर्घ *p1, अचिन्हित दीर्घ *p2,
+	       अचिन्हित दीर्घ *p3, अचिन्हित दीर्घ *p4, अचिन्हित दीर्घ *p5)
+अणु
+	अचिन्हित दीर्घ lines = bytes >> 8;
 
 	kernel_fpu_begin();
 
-	asm volatile(
-#undef BLOCK
-#define BLOCK(i)			\
+	यंत्र अस्थिर(
+#अघोषित BLOCK
+#घोषणा BLOCK(i)			\
 		BLK64(PF0, LD, i)	\
 		BLK64(PF1, XO1, i)	\
 		BLK64(PF2, XO2, i)	\
@@ -454,35 +455,35 @@ xor_sse_5_pf64(unsigned long bytes, unsigned long *p1, unsigned long *p2,
 	: "memory");
 
 	kernel_fpu_end();
-}
+पूर्ण
 
-static struct xor_block_template xor_block_sse_pf64 = {
+अटल काष्ठा xor_block_ढाँचा xor_block_sse_pf64 = अणु
 	.name = "prefetch64-sse",
-	.do_2 = xor_sse_2_pf64,
-	.do_3 = xor_sse_3_pf64,
-	.do_4 = xor_sse_4_pf64,
-	.do_5 = xor_sse_5_pf64,
-};
+	.करो_2 = xor_sse_2_pf64,
+	.करो_3 = xor_sse_3_pf64,
+	.करो_4 = xor_sse_4_pf64,
+	.करो_5 = xor_sse_5_pf64,
+पूर्ण;
 
-#undef LD
-#undef XO1
-#undef XO2
-#undef XO3
-#undef XO4
-#undef ST
-#undef NOP
-#undef BLK64
-#undef BLOCK
+#अघोषित LD
+#अघोषित XO1
+#अघोषित XO2
+#अघोषित XO3
+#अघोषित XO4
+#अघोषित ST
+#अघोषित NOP
+#अघोषित BLK64
+#अघोषित BLOCK
 
-#undef XOR_CONSTANT_CONSTRAINT
+#अघोषित XOR_CONSTANT_CONSTRAINT
 
-#ifdef CONFIG_X86_32
-# include <asm/xor_32.h>
-#else
-# include <asm/xor_64.h>
-#endif
+#अगर_घोषित CONFIG_X86_32
+# include <यंत्र/xor_32.h>
+#अन्यथा
+# include <यंत्र/xor_64.h>
+#पूर्ण_अगर
 
-#define XOR_SELECT_TEMPLATE(FASTEST) \
+#घोषणा XOR_SELECT_TEMPLATE(FASTEST) \
 	AVX_SELECT(FASTEST)
 
-#endif /* _ASM_X86_XOR_H */
+#पूर्ण_अगर /* _ASM_X86_XOR_H */

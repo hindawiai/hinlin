@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * mos7720.c
  *   Controls the Moschip 7720 usb to dual port serial converter
@@ -11,100 +12,100 @@
  *	Gurudeva <ngurudeva@yahoo.com>
  *
  * Cleaned up from the original by:
- *	Greg Kroah-Hartman <gregkh@suse.de>
+ *	Greg Kroah-Harपंचांगan <gregkh@suse.de>
  *
  * Originally based on drivers/usb/serial/io_edgeport.c which is:
  *	Copyright (C) 2000 Inside Out Networks, All rights reserved.
- *	Copyright (C) 2001-2002 Greg Kroah-Hartman <greg@kroah.com>
+ *	Copyright (C) 2001-2002 Greg Kroah-Harपंचांगan <greg@kroah.com>
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/serial.h>
-#include <linux/serial_reg.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
-#include <linux/uaccess.h>
-#include <linux/parport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/parport.h>
 
-#define DRIVER_AUTHOR "Aspire Communications pvt Ltd."
-#define DRIVER_DESC "Moschip USB Serial Driver"
+#घोषणा DRIVER_AUTHOR "Aspire Communications pvt Ltd."
+#घोषणा DRIVER_DESC "Moschip USB Serial Driver"
 
-/* default urb timeout */
-#define MOS_WDR_TIMEOUT	5000
+/* शेष urb समयout */
+#घोषणा MOS_WDR_TIMEOUT	5000
 
-#define MOS_MAX_PORT	0x02
-#define MOS_WRITE	0x0E
-#define MOS_READ	0x0D
+#घोषणा MOS_MAX_PORT	0x02
+#घोषणा MOS_WRITE	0x0E
+#घोषणा MOS_READ	0x0D
 
 /* Interrupt Routines Defines	*/
-#define SERIAL_IIR_RLS	0x06
-#define SERIAL_IIR_RDA	0x04
-#define SERIAL_IIR_CTI	0x0c
-#define SERIAL_IIR_THR	0x02
-#define SERIAL_IIR_MS	0x00
+#घोषणा SERIAL_IIR_RLS	0x06
+#घोषणा SERIAL_IIR_RDA	0x04
+#घोषणा SERIAL_IIR_CTI	0x0c
+#घोषणा SERIAL_IIR_THR	0x02
+#घोषणा SERIAL_IIR_MS	0x00
 
-#define NUM_URBS			16	/* URB Count */
-#define URB_TRANSFER_BUFFER_SIZE	32	/* URB Size */
+#घोषणा NUM_URBS			16	/* URB Count */
+#घोषणा URB_TRANSFER_BUFFER_SIZE	32	/* URB Size */
 
-/* This structure holds all of the local serial port information */
-struct moschip_port {
-	__u8	shadowLCR;		/* last LCR value received */
-	__u8	shadowMCR;		/* last MCR value received */
-	__u8	shadowMSR;		/* last MSR value received */
-	char			open;
-	struct usb_serial_port	*port;	/* loop back to the owner */
-	struct urb		*write_urb_pool[NUM_URBS];
-};
+/* This काष्ठाure holds all of the local serial port inक्रमmation */
+काष्ठा moschip_port अणु
+	__u8	shaकरोwLCR;		/* last LCR value received */
+	__u8	shaकरोwMCR;		/* last MCR value received */
+	__u8	shaकरोwMSR;		/* last MSR value received */
+	अक्षर			खोलो;
+	काष्ठा usb_serial_port	*port;	/* loop back to the owner */
+	काष्ठा urb		*ग_लिखो_urb_pool[NUM_URBS];
+पूर्ण;
 
-#define USB_VENDOR_ID_MOSCHIP		0x9710
-#define MOSCHIP_DEVICE_ID_7720		0x7720
-#define MOSCHIP_DEVICE_ID_7715		0x7715
+#घोषणा USB_VENDOR_ID_MOSCHIP		0x9710
+#घोषणा MOSCHIP_DEVICE_ID_7720		0x7720
+#घोषणा MOSCHIP_DEVICE_ID_7715		0x7715
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(USB_VENDOR_ID_MOSCHIP, MOSCHIP_DEVICE_ID_7720) },
-	{ USB_DEVICE(USB_VENDOR_ID_MOSCHIP, MOSCHIP_DEVICE_ID_7715) },
-	{ } /* terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(USB_VENDOR_ID_MOSCHIP, MOSCHIP_DEVICE_ID_7720) पूर्ण,
+	अणु USB_DEVICE(USB_VENDOR_ID_MOSCHIP, MOSCHIP_DEVICE_ID_7715) पूर्ण,
+	अणु पूर्ण /* terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-#ifdef CONFIG_USB_SERIAL_MOS7715_PARPORT
+#अगर_घोषित CONFIG_USB_SERIAL_MOS7715_PARPORT
 
-/* initial values for parport regs */
-#define DCR_INIT_VAL       0x0c	/* SLCTIN, nINIT */
-#define ECR_INIT_VAL       0x00	/* SPP mode */
+/* initial values क्रम parport regs */
+#घोषणा DCR_INIT_VAL       0x0c	/* SLCTIN, nINIT */
+#घोषणा ECR_INIT_VAL       0x00	/* SPP mode */
 
-enum mos7715_pp_modes {
+क्रमागत mos7715_pp_modes अणु
 	SPP = 0<<5,
 	PS2 = 1<<5,      /* moschip calls this 'NIBBLE' mode */
 	PPF = 2<<5,	 /* moschip calls this 'CB-FIFO mode */
-};
+पूर्ण;
 
-struct mos7715_parport {
-	struct parport          *pp;	       /* back to containing struct */
-	struct kref             ref_count;     /* to instance of this struct */
+काष्ठा mos7715_parport अणु
+	काष्ठा parport          *pp;	       /* back to containing काष्ठा */
+	काष्ठा kref             ref_count;     /* to instance of this काष्ठा */
 	bool                    msg_pending;   /* usb sync call pending */
-	struct completion       syncmsg_compl; /* usb sync call completed */
-	struct work_struct      work;          /* restore deferred writes */
-	struct usb_serial       *serial;       /* back to containing struct */
-	__u8	                shadowECR;     /* parallel port regs... */
-	__u8	                shadowDCR;
-	atomic_t                shadowDSR;     /* updated in int-in callback */
-};
+	काष्ठा completion       syncmsg_compl; /* usb sync call completed */
+	काष्ठा work_काष्ठा      work;          /* restore deferred ग_लिखोs */
+	काष्ठा usb_serial       *serial;       /* back to containing काष्ठा */
+	__u8	                shaकरोwECR;     /* parallel port regs... */
+	__u8	                shaकरोwDCR;
+	atomic_t                shaकरोwDSR;     /* updated in पूर्णांक-in callback */
+पूर्ण;
 
-/* lock guards against dereferencing NULL ptr in parport ops callbacks */
-static DEFINE_SPINLOCK(release_lock);
+/* lock guards against dereferencing शून्य ptr in parport ops callbacks */
+अटल DEFINE_SPINLOCK(release_lock);
 
-#endif	/* CONFIG_USB_SERIAL_MOS7715_PARPORT */
+#पूर्ण_अगर	/* CONFIG_USB_SERIAL_MOS7715_PARPORT */
 
-static const unsigned int dummy; /* for clarity in register access fns */
+अटल स्थिर अचिन्हित पूर्णांक dummy; /* क्रम clarity in रेजिस्टर access fns */
 
-enum mos_regs {
+क्रमागत mos_regs अणु
 	MOS7720_THR,		  /* serial port regs */
 	MOS7720_RHR,
 	MOS7720_IER,
@@ -125,15 +126,15 @@ enum mos_regs {
 	MOS7720_SP2_REG,	  /* serial port 2 (7720 only) */
 	MOS7720_PP_REG,
 	MOS7720_SP_CONTROL_REG,
-};
+पूर्ण;
 
 /*
- * Return the correct value for the Windex field of the setup packet
- * for a control endpoint message.  See the 7715 datasheet.
+ * Return the correct value क्रम the Windex field of the setup packet
+ * क्रम a control endpoपूर्णांक message.  See the 7715 datasheet.
  */
-static inline __u16 get_reg_index(enum mos_regs reg)
-{
-	static const __u16 mos7715_index_lookup_table[] = {
+अटल अंतरभूत __u16 get_reg_index(क्रमागत mos_regs reg)
+अणु
+	अटल स्थिर __u16 mos7715_index_lookup_table[] = अणु
 		0x00,		/* MOS7720_THR */
 		0x00,		/* MOS7720_RHR */
 		0x01,		/* MOS7720_IER */
@@ -154,478 +155,478 @@ static inline __u16 get_reg_index(enum mos_regs reg)
 		0x02,		/* MOS7720_SP2_REG (7720 only) */
 		0x04,		/* MOS7720_PP_REG (7715 only) */
 		0x08,		/* MOS7720_SP_CONTROL_REG */
-	};
-	return mos7715_index_lookup_table[reg];
-}
+	पूर्ण;
+	वापस mos7715_index_lookup_table[reg];
+पूर्ण
 
 /*
- * Return the correct value for the upper byte of the Wvalue field of
- * the setup packet for a control endpoint message.
+ * Return the correct value क्रम the upper byte of the Wvalue field of
+ * the setup packet क्रम a control endpoपूर्णांक message.
  */
-static inline __u16 get_reg_value(enum mos_regs reg,
-				  unsigned int serial_portnum)
-{
-	if (reg >= MOS7720_SP1_REG)	/* control reg */
-		return 0x0000;
+अटल अंतरभूत __u16 get_reg_value(क्रमागत mos_regs reg,
+				  अचिन्हित पूर्णांक serial_portnum)
+अणु
+	अगर (reg >= MOS7720_SP1_REG)	/* control reg */
+		वापस 0x0000;
 
-	else if (reg >= MOS7720_DPR)	/* parallel port reg (7715 only) */
-		return 0x0100;
+	अन्यथा अगर (reg >= MOS7720_DPR)	/* parallel port reg (7715 only) */
+		वापस 0x0100;
 
-	else			      /* serial port reg */
-		return (serial_portnum + 2) << 8;
-}
+	अन्यथा			      /* serial port reg */
+		वापस (serial_portnum + 2) << 8;
+पूर्ण
 
 /*
- * Write data byte to the specified device register.  The data is embedded in
- * the value field of the setup packet. serial_portnum is ignored for registers
- * not specific to a particular serial port.
+ * Write data byte to the specअगरied device रेजिस्टर.  The data is embedded in
+ * the value field of the setup packet. serial_portnum is ignored क्रम रेजिस्टरs
+ * not specअगरic to a particular serial port.
  */
-static int write_mos_reg(struct usb_serial *serial, unsigned int serial_portnum,
-			 enum mos_regs reg, __u8 data)
-{
-	struct usb_device *usbdev = serial->dev;
-	unsigned int pipe = usb_sndctrlpipe(usbdev, 0);
+अटल पूर्णांक ग_लिखो_mos_reg(काष्ठा usb_serial *serial, अचिन्हित पूर्णांक serial_portnum,
+			 क्रमागत mos_regs reg, __u8 data)
+अणु
+	काष्ठा usb_device *usbdev = serial->dev;
+	अचिन्हित पूर्णांक pipe = usb_sndctrlpipe(usbdev, 0);
 	__u8 request = (__u8)0x0e;
 	__u8 requesttype = (__u8)0x40;
 	__u16 index = get_reg_index(reg);
 	__u16 value = get_reg_value(reg, serial_portnum) + data;
-	int status = usb_control_msg(usbdev, pipe, request, requesttype, value,
-				     index, NULL, 0, MOS_WDR_TIMEOUT);
-	if (status < 0)
+	पूर्णांक status = usb_control_msg(usbdev, pipe, request, requesttype, value,
+				     index, शून्य, 0, MOS_WDR_TIMEOUT);
+	अगर (status < 0)
 		dev_err(&usbdev->dev,
 			"mos7720: usb_control_msg() failed: %d\n", status);
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * Read data byte from the specified device register.  The data returned by the
+ * Read data byte from the specअगरied device रेजिस्टर.  The data वापसed by the
  * device is embedded in the value field of the setup packet.  serial_portnum is
- * ignored for registers that are not specific to a particular serial port.
+ * ignored क्रम रेजिस्टरs that are not specअगरic to a particular serial port.
  */
-static int read_mos_reg(struct usb_serial *serial, unsigned int serial_portnum,
-			enum mos_regs reg, __u8 *data)
-{
-	struct usb_device *usbdev = serial->dev;
-	unsigned int pipe = usb_rcvctrlpipe(usbdev, 0);
+अटल पूर्णांक पढ़ो_mos_reg(काष्ठा usb_serial *serial, अचिन्हित पूर्णांक serial_portnum,
+			क्रमागत mos_regs reg, __u8 *data)
+अणु
+	काष्ठा usb_device *usbdev = serial->dev;
+	अचिन्हित पूर्णांक pipe = usb_rcvctrlpipe(usbdev, 0);
 	__u8 request = (__u8)0x0d;
 	__u8 requesttype = (__u8)0xc0;
 	__u16 index = get_reg_index(reg);
 	__u16 value = get_reg_value(reg, serial_portnum);
 	u8 *buf;
-	int status;
+	पूर्णांक status;
 
-	buf = kmalloc(1, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति(1, GFP_KERNEL);
+	अगर (!buf) अणु
 		*data = 0;
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	status = usb_control_msg(usbdev, pipe, request, requesttype, value,
 				     index, buf, 1, MOS_WDR_TIMEOUT);
-	if (status == 1) {
+	अगर (status == 1) अणु
 		*data = *buf;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&usbdev->dev,
 			"mos7720: usb_control_msg() failed: %d\n", status);
-		if (status >= 0)
+		अगर (status >= 0)
 			status = -EIO;
 		*data = 0;
-	}
+	पूर्ण
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-#ifdef CONFIG_USB_SERIAL_MOS7715_PARPORT
+#अगर_घोषित CONFIG_USB_SERIAL_MOS7715_PARPORT
 
-static inline int mos7715_change_mode(struct mos7715_parport *mos_parport,
-				      enum mos7715_pp_modes mode)
-{
-	mos_parport->shadowECR = mode;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
-		      mos_parport->shadowECR);
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mos7715_change_mode(काष्ठा mos7715_parport *mos_parport,
+				      क्रमागत mos7715_pp_modes mode)
+अणु
+	mos_parport->shaकरोwECR = mode;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
+		      mos_parport->shaकरोwECR);
+	वापस 0;
+पूर्ण
 
-static void destroy_mos_parport(struct kref *kref)
-{
-	struct mos7715_parport *mos_parport =
-		container_of(kref, struct mos7715_parport, ref_count);
+अटल व्योम destroy_mos_parport(काष्ठा kref *kref)
+अणु
+	काष्ठा mos7715_parport *mos_parport =
+		container_of(kref, काष्ठा mos7715_parport, ref_count);
 
-	kfree(mos_parport);
-}
+	kमुक्त(mos_parport);
+पूर्ण
 
 /*
  * This is the common top part of all parallel port callback operations that
  * send synchronous messages to the device.  This implements convoluted locking
- * that avoids two scenarios: (1) a port operation is called after usbserial
- * has called our release function, at which point struct mos7715_parport has
+ * that aव्योमs two scenarios: (1) a port operation is called after usbserial
+ * has called our release function, at which poपूर्णांक काष्ठा mos7715_parport has
  * been destroyed, and (2) the device has been disconnected, but usbserial has
- * not called the release function yet because someone has a serial port open.
+ * not called the release function yet because someone has a serial port खोलो.
  * The shared release_lock prevents the first, and the mutex and disconnected
- * flag maintained by usbserial covers the second.  We also use the msg_pending
- * flag to ensure that all synchronous usb message calls have completed before
- * our release function can return.
+ * flag मुख्यtained by usbserial covers the second.  We also use the msg_pending
+ * flag to ensure that all synchronous usb message calls have completed beक्रमe
+ * our release function can वापस.
  */
-static int parport_prologue(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport;
+अटल पूर्णांक parport_prologue(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 
 	spin_lock(&release_lock);
-	mos_parport = pp->private_data;
-	if (unlikely(mos_parport == NULL)) {
-		/* release fn called, port struct destroyed */
+	mos_parport = pp->निजी_data;
+	अगर (unlikely(mos_parport == शून्य)) अणु
+		/* release fn called, port काष्ठा destroyed */
 		spin_unlock(&release_lock);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	mos_parport->msg_pending = true;   /* synch usb call pending */
 	reinit_completion(&mos_parport->syncmsg_compl);
 	spin_unlock(&release_lock);
 
-	/* ensure writes from restore are submitted before new requests */
-	if (work_pending(&mos_parport->work))
+	/* ensure ग_लिखोs from restore are submitted beक्रमe new requests */
+	अगर (work_pending(&mos_parport->work))
 		flush_work(&mos_parport->work);
 
 	mutex_lock(&mos_parport->serial->disc_mutex);
-	if (mos_parport->serial->disconnected) {
+	अगर (mos_parport->serial->disconnected) अणु
 		/* device disconnected */
 		mutex_unlock(&mos_parport->serial->disc_mutex);
 		mos_parport->msg_pending = false;
 		complete(&mos_parport->syncmsg_compl);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This is the common bottom part of all parallel port functions that send
  * synchronous messages to the device.
  */
-static inline void parport_epilogue(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल अंतरभूत व्योम parport_epilogue(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 	mutex_unlock(&mos_parport->serial->disc_mutex);
 	mos_parport->msg_pending = false;
 	complete(&mos_parport->syncmsg_compl);
-}
+पूर्ण
 
-static void deferred_restore_writes(struct work_struct *work)
-{
-	struct mos7715_parport *mos_parport;
+अटल व्योम deferred_restore_ग_लिखोs(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 
-	mos_parport = container_of(work, struct mos7715_parport, work);
+	mos_parport = container_of(work, काष्ठा mos7715_parport, work);
 
 	mutex_lock(&mos_parport->serial->disc_mutex);
 
-	/* if device disconnected, game over */
-	if (mos_parport->serial->disconnected)
-		goto done;
+	/* अगर device disconnected, game over */
+	अगर (mos_parport->serial->disconnected)
+		जाओ करोne;
 
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
-		      mos_parport->shadowDCR);
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
-		      mos_parport->shadowECR);
-done:
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
+		      mos_parport->shaकरोwDCR);
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
+		      mos_parport->shaकरोwECR);
+करोne:
 	mutex_unlock(&mos_parport->serial->disc_mutex);
-}
+पूर्ण
 
-static void parport_mos7715_write_data(struct parport *pp, unsigned char d)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल व्योम parport_mos7715_ग_लिखो_data(काष्ठा parport *pp, अचिन्हित अक्षर d)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 
-	if (parport_prologue(pp) < 0)
-		return;
+	अगर (parport_prologue(pp) < 0)
+		वापस;
 	mos7715_change_mode(mos_parport, SPP);
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DPR, (__u8)d);
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DPR, (__u8)d);
 	parport_epilogue(pp);
-}
+पूर्ण
 
-static unsigned char parport_mos7715_read_data(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
-	unsigned char d;
+अटल अचिन्हित अक्षर parport_mos7715_पढ़ो_data(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
+	अचिन्हित अक्षर d;
 
-	if (parport_prologue(pp) < 0)
-		return 0;
-	read_mos_reg(mos_parport->serial, dummy, MOS7720_DPR, &d);
+	अगर (parport_prologue(pp) < 0)
+		वापस 0;
+	पढ़ो_mos_reg(mos_parport->serial, dummy, MOS7720_DPR, &d);
 	parport_epilogue(pp);
-	return d;
-}
+	वापस d;
+पूर्ण
 
-static void parport_mos7715_write_control(struct parport *pp, unsigned char d)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल व्योम parport_mos7715_ग_लिखो_control(काष्ठा parport *pp, अचिन्हित अक्षर d)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 	__u8 data;
 
-	if (parport_prologue(pp) < 0)
-		return;
-	data = ((__u8)d & 0x0f) | (mos_parport->shadowDCR & 0xf0);
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR, data);
-	mos_parport->shadowDCR = data;
+	अगर (parport_prologue(pp) < 0)
+		वापस;
+	data = ((__u8)d & 0x0f) | (mos_parport->shaकरोwDCR & 0xf0);
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR, data);
+	mos_parport->shaकरोwDCR = data;
 	parport_epilogue(pp);
-}
+पूर्ण
 
-static unsigned char parport_mos7715_read_control(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport;
+अटल अचिन्हित अक्षर parport_mos7715_पढ़ो_control(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 	__u8 dcr;
 
 	spin_lock(&release_lock);
-	mos_parport = pp->private_data;
-	if (unlikely(mos_parport == NULL)) {
+	mos_parport = pp->निजी_data;
+	अगर (unlikely(mos_parport == शून्य)) अणु
 		spin_unlock(&release_lock);
-		return 0;
-	}
-	dcr = mos_parport->shadowDCR & 0x0f;
+		वापस 0;
+	पूर्ण
+	dcr = mos_parport->shaकरोwDCR & 0x0f;
 	spin_unlock(&release_lock);
-	return dcr;
-}
+	वापस dcr;
+पूर्ण
 
-static unsigned char parport_mos7715_frob_control(struct parport *pp,
-						  unsigned char mask,
-						  unsigned char val)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल अचिन्हित अक्षर parport_mos7715_frob_control(काष्ठा parport *pp,
+						  अचिन्हित अक्षर mask,
+						  अचिन्हित अक्षर val)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 	__u8 dcr;
 
 	mask &= 0x0f;
 	val &= 0x0f;
-	if (parport_prologue(pp) < 0)
-		return 0;
-	mos_parport->shadowDCR = (mos_parport->shadowDCR & (~mask)) ^ val;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
-		      mos_parport->shadowDCR);
-	dcr = mos_parport->shadowDCR & 0x0f;
+	अगर (parport_prologue(pp) < 0)
+		वापस 0;
+	mos_parport->shaकरोwDCR = (mos_parport->shaकरोwDCR & (~mask)) ^ val;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
+		      mos_parport->shaकरोwDCR);
+	dcr = mos_parport->shaकरोwDCR & 0x0f;
 	parport_epilogue(pp);
-	return dcr;
-}
+	वापस dcr;
+पूर्ण
 
-static unsigned char parport_mos7715_read_status(struct parport *pp)
-{
-	unsigned char status;
-	struct mos7715_parport *mos_parport;
+अटल अचिन्हित अक्षर parport_mos7715_पढ़ो_status(काष्ठा parport *pp)
+अणु
+	अचिन्हित अक्षर status;
+	काष्ठा mos7715_parport *mos_parport;
 
 	spin_lock(&release_lock);
-	mos_parport = pp->private_data;
-	if (unlikely(mos_parport == NULL)) {	/* release called */
+	mos_parport = pp->निजी_data;
+	अगर (unlikely(mos_parport == शून्य)) अणु	/* release called */
 		spin_unlock(&release_lock);
-		return 0;
-	}
-	status = atomic_read(&mos_parport->shadowDSR) & 0xf8;
+		वापस 0;
+	पूर्ण
+	status = atomic_पढ़ो(&mos_parport->shaकरोwDSR) & 0xf8;
 	spin_unlock(&release_lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void parport_mos7715_enable_irq(struct parport *pp)
-{
-}
+अटल व्योम parport_mos7715_enable_irq(काष्ठा parport *pp)
+अणु
+पूर्ण
 
-static void parport_mos7715_disable_irq(struct parport *pp)
-{
-}
+अटल व्योम parport_mos7715_disable_irq(काष्ठा parport *pp)
+अणु
+पूर्ण
 
-static void parport_mos7715_data_forward(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल व्योम parport_mos7715_data_क्रमward(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 
-	if (parport_prologue(pp) < 0)
-		return;
+	अगर (parport_prologue(pp) < 0)
+		वापस;
 	mos7715_change_mode(mos_parport, PS2);
-	mos_parport->shadowDCR &=  ~0x20;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
-		      mos_parport->shadowDCR);
+	mos_parport->shaकरोwDCR &=  ~0x20;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
+		      mos_parport->shaकरोwDCR);
 	parport_epilogue(pp);
-}
+पूर्ण
 
-static void parport_mos7715_data_reverse(struct parport *pp)
-{
-	struct mos7715_parport *mos_parport = pp->private_data;
+अटल व्योम parport_mos7715_data_reverse(काष्ठा parport *pp)
+अणु
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
 
-	if (parport_prologue(pp) < 0)
-		return;
+	अगर (parport_prologue(pp) < 0)
+		वापस;
 	mos7715_change_mode(mos_parport, PS2);
-	mos_parport->shadowDCR |= 0x20;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
-		      mos_parport->shadowDCR);
+	mos_parport->shaकरोwDCR |= 0x20;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
+		      mos_parport->shaकरोwDCR);
 	parport_epilogue(pp);
-}
+पूर्ण
 
-static void parport_mos7715_init_state(struct pardevice *dev,
-				       struct parport_state *s)
-{
+अटल व्योम parport_mos7715_init_state(काष्ठा pardevice *dev,
+				       काष्ठा parport_state *s)
+अणु
 	s->u.pc.ctr = DCR_INIT_VAL;
 	s->u.pc.ecr = ECR_INIT_VAL;
-}
+पूर्ण
 
 /* N.B. Parport core code requires that this function not block */
-static void parport_mos7715_save_state(struct parport *pp,
-				       struct parport_state *s)
-{
-	struct mos7715_parport *mos_parport;
+अटल व्योम parport_mos7715_save_state(काष्ठा parport *pp,
+				       काष्ठा parport_state *s)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 
 	spin_lock(&release_lock);
-	mos_parport = pp->private_data;
-	if (unlikely(mos_parport == NULL)) {	/* release called */
+	mos_parport = pp->निजी_data;
+	अगर (unlikely(mos_parport == शून्य)) अणु	/* release called */
 		spin_unlock(&release_lock);
-		return;
-	}
-	s->u.pc.ctr = mos_parport->shadowDCR;
-	s->u.pc.ecr = mos_parport->shadowECR;
+		वापस;
+	पूर्ण
+	s->u.pc.ctr = mos_parport->shaकरोwDCR;
+	s->u.pc.ecr = mos_parport->shaकरोwECR;
 	spin_unlock(&release_lock);
-}
+पूर्ण
 
 /* N.B. Parport core code requires that this function not block */
-static void parport_mos7715_restore_state(struct parport *pp,
-					  struct parport_state *s)
-{
-	struct mos7715_parport *mos_parport;
+अटल व्योम parport_mos7715_restore_state(काष्ठा parport *pp,
+					  काष्ठा parport_state *s)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 
 	spin_lock(&release_lock);
-	mos_parport = pp->private_data;
-	if (unlikely(mos_parport == NULL)) {	/* release called */
+	mos_parport = pp->निजी_data;
+	अगर (unlikely(mos_parport == शून्य)) अणु	/* release called */
 		spin_unlock(&release_lock);
-		return;
-	}
-	mos_parport->shadowDCR = s->u.pc.ctr;
-	mos_parport->shadowECR = s->u.pc.ecr;
+		वापस;
+	पूर्ण
+	mos_parport->shaकरोwDCR = s->u.pc.ctr;
+	mos_parport->shaकरोwECR = s->u.pc.ecr;
 
 	schedule_work(&mos_parport->work);
 	spin_unlock(&release_lock);
-}
+पूर्ण
 
-static size_t parport_mos7715_write_compat(struct parport *pp,
-					   const void *buffer,
-					   size_t len, int flags)
-{
-	int retval;
-	struct mos7715_parport *mos_parport = pp->private_data;
-	int actual_len;
+अटल माप_प्रकार parport_mos7715_ग_लिखो_compat(काष्ठा parport *pp,
+					   स्थिर व्योम *buffer,
+					   माप_प्रकार len, पूर्णांक flags)
+अणु
+	पूर्णांक retval;
+	काष्ठा mos7715_parport *mos_parport = pp->निजी_data;
+	पूर्णांक actual_len;
 
-	if (parport_prologue(pp) < 0)
-		return 0;
+	अगर (parport_prologue(pp) < 0)
+		वापस 0;
 	mos7715_change_mode(mos_parport, PPF);
 	retval = usb_bulk_msg(mos_parport->serial->dev,
 			      usb_sndbulkpipe(mos_parport->serial->dev, 2),
-			      (void *)buffer, len, &actual_len,
+			      (व्योम *)buffer, len, &actual_len,
 			      MOS_WDR_TIMEOUT);
 	parport_epilogue(pp);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(&mos_parport->serial->dev->dev,
 			"mos7720: usb_bulk_msg() failed: %d\n", retval);
-		return 0;
-	}
-	return actual_len;
-}
+		वापस 0;
+	पूर्ण
+	वापस actual_len;
+पूर्ण
 
-static struct parport_operations parport_mos7715_ops = {
+अटल काष्ठा parport_operations parport_mos7715_ops = अणु
 	.owner =		THIS_MODULE,
-	.write_data =		parport_mos7715_write_data,
-	.read_data =		parport_mos7715_read_data,
+	.ग_लिखो_data =		parport_mos7715_ग_लिखो_data,
+	.पढ़ो_data =		parport_mos7715_पढ़ो_data,
 
-	.write_control =	parport_mos7715_write_control,
-	.read_control =		parport_mos7715_read_control,
+	.ग_लिखो_control =	parport_mos7715_ग_लिखो_control,
+	.पढ़ो_control =		parport_mos7715_पढ़ो_control,
 	.frob_control =		parport_mos7715_frob_control,
 
-	.read_status =		parport_mos7715_read_status,
+	.पढ़ो_status =		parport_mos7715_पढ़ो_status,
 
 	.enable_irq =		parport_mos7715_enable_irq,
 	.disable_irq =		parport_mos7715_disable_irq,
 
-	.data_forward =		parport_mos7715_data_forward,
+	.data_क्रमward =		parport_mos7715_data_क्रमward,
 	.data_reverse =		parport_mos7715_data_reverse,
 
 	.init_state =		parport_mos7715_init_state,
 	.save_state =		parport_mos7715_save_state,
 	.restore_state =	parport_mos7715_restore_state,
 
-	.compat_write_data =	parport_mos7715_write_compat,
+	.compat_ग_लिखो_data =	parport_mos7715_ग_लिखो_compat,
 
-	.nibble_read_data =	parport_ieee1284_read_nibble,
-	.byte_read_data =	parport_ieee1284_read_byte,
-};
+	.nibble_पढ़ो_data =	parport_ieee1284_पढ़ो_nibble,
+	.byte_पढ़ो_data =	parport_ieee1284_पढ़ो_byte,
+पूर्ण;
 
 /*
- * Allocate and initialize parallel port control struct, initialize
- * the parallel port hardware device, and register with the parport subsystem.
+ * Allocate and initialize parallel port control काष्ठा, initialize
+ * the parallel port hardware device, and रेजिस्टर with the parport subप्रणाली.
  */
-static int mos7715_parport_init(struct usb_serial *serial)
-{
-	struct mos7715_parport *mos_parport;
+अटल पूर्णांक mos7715_parport_init(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा mos7715_parport *mos_parport;
 
-	/* allocate and initialize parallel port control struct */
-	mos_parport = kzalloc(sizeof(struct mos7715_parport), GFP_KERNEL);
-	if (!mos_parport)
-		return -ENOMEM;
+	/* allocate and initialize parallel port control काष्ठा */
+	mos_parport = kzalloc(माप(काष्ठा mos7715_parport), GFP_KERNEL);
+	अगर (!mos_parport)
+		वापस -ENOMEM;
 
 	mos_parport->msg_pending = false;
 	kref_init(&mos_parport->ref_count);
-	usb_set_serial_data(serial, mos_parport); /* hijack private pointer */
+	usb_set_serial_data(serial, mos_parport); /* hijack निजी poपूर्णांकer */
 	mos_parport->serial = serial;
-	INIT_WORK(&mos_parport->work, deferred_restore_writes);
+	INIT_WORK(&mos_parport->work, deferred_restore_ग_लिखोs);
 	init_completion(&mos_parport->syncmsg_compl);
 
 	/* cycle parallel port reset bit */
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_PP_REG, (__u8)0x80);
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_PP_REG, (__u8)0x00);
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_PP_REG, (__u8)0x80);
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_PP_REG, (__u8)0x00);
 
-	/* initialize device registers */
-	mos_parport->shadowDCR = DCR_INIT_VAL;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
-		      mos_parport->shadowDCR);
-	mos_parport->shadowECR = ECR_INIT_VAL;
-	write_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
-		      mos_parport->shadowECR);
+	/* initialize device रेजिस्टरs */
+	mos_parport->shaकरोwDCR = DCR_INIT_VAL;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_DCR,
+		      mos_parport->shaकरोwDCR);
+	mos_parport->shaकरोwECR = ECR_INIT_VAL;
+	ग_लिखो_mos_reg(mos_parport->serial, dummy, MOS7720_ECR,
+		      mos_parport->shaकरोwECR);
 
-	/* register with parport core */
-	mos_parport->pp = parport_register_port(0, PARPORT_IRQ_NONE,
+	/* रेजिस्टर with parport core */
+	mos_parport->pp = parport_रेजिस्टर_port(0, PARPORT_IRQ_NONE,
 						PARPORT_DMA_NONE,
 						&parport_mos7715_ops);
-	if (mos_parport->pp == NULL) {
-		dev_err(&serial->interface->dev,
+	अगर (mos_parport->pp == शून्य) अणु
+		dev_err(&serial->पूर्णांकerface->dev,
 			"Could not register parport\n");
 		kref_put(&mos_parport->ref_count, destroy_mos_parport);
-		return -EIO;
-	}
-	mos_parport->pp->private_data = mos_parport;
+		वापस -EIO;
+	पूर्ण
+	mos_parport->pp->निजी_data = mos_parport;
 	mos_parport->pp->modes = PARPORT_MODE_COMPAT | PARPORT_MODE_PCSPP;
-	mos_parport->pp->dev = &serial->interface->dev;
+	mos_parport->pp->dev = &serial->पूर्णांकerface->dev;
 	parport_announce_port(mos_parport->pp);
 
-	return 0;
-}
-#endif	/* CONFIG_USB_SERIAL_MOS7715_PARPORT */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_USB_SERIAL_MOS7715_PARPORT */
 
 /*
- * mos7720_interrupt_callback
- *	this is the callback function for when we have received data on the
- *	interrupt endpoint.
+ * mos7720_पूर्णांकerrupt_callback
+ *	this is the callback function क्रम when we have received data on the
+ *	पूर्णांकerrupt endpoपूर्णांक.
  */
-static void mos7720_interrupt_callback(struct urb *urb)
-{
-	int result;
-	int length;
-	int status = urb->status;
-	struct device *dev = &urb->dev->dev;
+अटल व्योम mos7720_पूर्णांकerrupt_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक result;
+	पूर्णांक length;
+	पूर्णांक status = urb->status;
+	काष्ठा device *dev = &urb->dev->dev;
 	__u8 *data;
 	__u8 sp1;
 	__u8 sp2;
 
-	switch (status) {
-	case 0:
+	चयन (status) अणु
+	हाल 0:
 		/* success */
-		break;
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
+		अवरोध;
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(dev, "%s - urb shutting down with status: %d\n", __func__, status);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_dbg(dev, "%s - nonzero urb status received: %d\n", __func__, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	length = urb->actual_length;
 	data = urb->transfer_buffer;
@@ -634,83 +635,83 @@ static void mos7720_interrupt_callback(struct urb *urb)
 	 * Byte 1 IIR Port 1 (port.number is 0)
 	 * Byte 2 IIR Port 2 (port.number is 1)
 	 * Byte 3 --------------
-	 * Byte 4 FIFO status for both */
+	 * Byte 4 FIFO status क्रम both */
 
 	/* the above description is inverted
 	 * 	oneukum 2007-03-14 */
 
-	if (unlikely(length != 4)) {
+	अगर (unlikely(length != 4)) अणु
 		dev_dbg(dev, "Wrong data !!!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sp1 = data[3];
 	sp2 = data[2];
 
-	if ((sp1 | sp2) & 0x01) {
+	अगर ((sp1 | sp2) & 0x01) अणु
 		/* No Interrupt Pending in both the ports */
 		dev_dbg(dev, "No Interrupt !!!\n");
-	} else {
-		switch (sp1 & 0x0f) {
-		case SERIAL_IIR_RLS:
+	पूर्ण अन्यथा अणु
+		चयन (sp1 & 0x0f) अणु
+		हाल SERIAL_IIR_RLS:
 			dev_dbg(dev, "Serial Port 1: Receiver status error or address bit detected in 9-bit mode\n");
-			break;
-		case SERIAL_IIR_CTI:
+			अवरोध;
+		हाल SERIAL_IIR_CTI:
 			dev_dbg(dev, "Serial Port 1: Receiver time out\n");
-			break;
-		case SERIAL_IIR_MS:
+			अवरोध;
+		हाल SERIAL_IIR_MS:
 			/* dev_dbg(dev, "Serial Port 1: Modem status change\n"); */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (sp2 & 0x0f) {
-		case SERIAL_IIR_RLS:
+		चयन (sp2 & 0x0f) अणु
+		हाल SERIAL_IIR_RLS:
 			dev_dbg(dev, "Serial Port 2: Receiver status error or address bit detected in 9-bit mode\n");
-			break;
-		case SERIAL_IIR_CTI:
+			अवरोध;
+		हाल SERIAL_IIR_CTI:
 			dev_dbg(dev, "Serial Port 2: Receiver time out\n");
-			break;
-		case SERIAL_IIR_MS:
+			अवरोध;
+		हाल SERIAL_IIR_MS:
 			/* dev_dbg(dev, "Serial Port 2: Modem status change\n"); */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	result = usb_submit_urb(urb, GFP_ATOMIC);
-	if (result)
+	अगर (result)
 		dev_err(dev, "%s - Error %d submitting control urb\n", __func__, result);
-}
+पूर्ण
 
 /*
- * mos7715_interrupt_callback
- *	this is the 7715's callback function for when we have received data on
- *	the interrupt endpoint.
+ * mos7715_पूर्णांकerrupt_callback
+ *	this is the 7715's callback function क्रम when we have received data on
+ *	the पूर्णांकerrupt endpoपूर्णांक.
  */
-static void mos7715_interrupt_callback(struct urb *urb)
-{
-	int result;
-	int length;
-	int status = urb->status;
-	struct device *dev = &urb->dev->dev;
+अटल व्योम mos7715_पूर्णांकerrupt_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक result;
+	पूर्णांक length;
+	पूर्णांक status = urb->status;
+	काष्ठा device *dev = &urb->dev->dev;
 	__u8 *data;
 	__u8 iir;
 
-	switch (status) {
-	case 0:
+	चयन (status) अणु
+	हाल 0:
 		/* success */
-		break;
-	case -ECONNRESET:
-	case -ENOENT:
-	case -ESHUTDOWN:
-	case -ENODEV:
+		अवरोध;
+	हाल -ECONNRESET:
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+	हाल -ENODEV:
 		/* this urb is terminated, clean up */
 		dev_dbg(dev, "%s - urb shutting down with status: %d\n", __func__, status);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_dbg(dev, "%s - nonzero urb status received: %d\n", __func__, status);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	length = urb->actual_length;
 	data = urb->transfer_buffer;
@@ -719,60 +720,60 @@ static void mos7715_interrupt_callback(struct urb *urb)
 	 * Byte 1: IIR serial Port
 	 * Byte 2: unused
 	 * Byte 2: DSR parallel port
-	 * Byte 4: FIFO status for both */
+	 * Byte 4: FIFO status क्रम both */
 
-	if (unlikely(length != 4)) {
+	अगर (unlikely(length != 4)) अणु
 		dev_dbg(dev, "Wrong data !!!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iir = data[0];
-	if (!(iir & 0x01)) {	/* serial port interrupt pending */
-		switch (iir & 0x0f) {
-		case SERIAL_IIR_RLS:
+	अगर (!(iir & 0x01)) अणु	/* serial port पूर्णांकerrupt pending */
+		चयन (iir & 0x0f) अणु
+		हाल SERIAL_IIR_RLS:
 			dev_dbg(dev, "Serial Port: Receiver status error or address bit detected in 9-bit mode\n");
-			break;
-		case SERIAL_IIR_CTI:
+			अवरोध;
+		हाल SERIAL_IIR_CTI:
 			dev_dbg(dev, "Serial Port: Receiver time out\n");
-			break;
-		case SERIAL_IIR_MS:
+			अवरोध;
+		हाल SERIAL_IIR_MS:
 			/* dev_dbg(dev, "Serial Port: Modem status change\n"); */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_USB_SERIAL_MOS7715_PARPORT
-	{       /* update local copy of DSR reg */
-		struct usb_serial_port *port = urb->context;
-		struct mos7715_parport *mos_parport = port->serial->private;
-		if (unlikely(mos_parport == NULL))
-			return;
-		atomic_set(&mos_parport->shadowDSR, data[2]);
-	}
-#endif
+#अगर_घोषित CONFIG_USB_SERIAL_MOS7715_PARPORT
+	अणु       /* update local copy of DSR reg */
+		काष्ठा usb_serial_port *port = urb->context;
+		काष्ठा mos7715_parport *mos_parport = port->serial->निजी;
+		अगर (unlikely(mos_parport == शून्य))
+			वापस;
+		atomic_set(&mos_parport->shaकरोwDSR, data[2]);
+	पूर्ण
+#पूर्ण_अगर
 
-exit:
+निकास:
 	result = usb_submit_urb(urb, GFP_ATOMIC);
-	if (result)
+	अगर (result)
 		dev_err(dev, "%s - Error %d submitting control urb\n", __func__, result);
-}
+पूर्ण
 
 /*
  * mos7720_bulk_in_callback
- *	this is the callback function for when we have received data on the
- *	bulk in endpoint.
+ *	this is the callback function क्रम when we have received data on the
+ *	bulk in endpoपूर्णांक.
  */
-static void mos7720_bulk_in_callback(struct urb *urb)
-{
-	int retval;
-	unsigned char *data ;
-	struct usb_serial_port *port;
-	int status = urb->status;
+अटल व्योम mos7720_bulk_in_callback(काष्ठा urb *urb)
+अणु
+	पूर्णांक retval;
+	अचिन्हित अक्षर *data ;
+	काष्ठा usb_serial_port *port;
+	पूर्णांक status = urb->status;
 
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(&urb->dev->dev, "nonzero read bulk status received: %d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	port = urb->context;
 
@@ -780,104 +781,104 @@ static void mos7720_bulk_in_callback(struct urb *urb)
 
 	data = urb->transfer_buffer;
 
-	if (urb->actual_length) {
+	अगर (urb->actual_length) अणु
 		tty_insert_flip_string(&port->port, data, urb->actual_length);
 		tty_flip_buffer_push(&port->port);
-	}
+	पूर्ण
 
-	if (port->read_urb->status != -EINPROGRESS) {
-		retval = usb_submit_urb(port->read_urb, GFP_ATOMIC);
-		if (retval)
+	अगर (port->पढ़ो_urb->status != -EINPROGRESS) अणु
+		retval = usb_submit_urb(port->पढ़ो_urb, GFP_ATOMIC);
+		अगर (retval)
 			dev_dbg(&port->dev, "usb_submit_urb(read bulk) failed, retval = %d\n", retval);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * mos7720_bulk_out_data_callback
- *	this is the callback function for when we have finished sending serial
- *	data on the bulk out endpoint.
+ *	this is the callback function क्रम when we have finished sending serial
+ *	data on the bulk out endpoपूर्णांक.
  */
-static void mos7720_bulk_out_data_callback(struct urb *urb)
-{
-	struct moschip_port *mos7720_port;
-	int status = urb->status;
+अटल व्योम mos7720_bulk_out_data_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा moschip_port *mos7720_port;
+	पूर्णांक status = urb->status;
 
-	if (status) {
+	अगर (status) अणु
 		dev_dbg(&urb->dev->dev, "nonzero write bulk status received:%d\n", status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mos7720_port = urb->context;
-	if (!mos7720_port) {
+	अगर (!mos7720_port) अणु
 		dev_dbg(&urb->dev->dev, "NULL mos7720_port pointer\n");
-		return ;
-	}
+		वापस ;
+	पूर्ण
 
-	if (mos7720_port->open)
+	अगर (mos7720_port->खोलो)
 		tty_port_tty_wakeup(&mos7720_port->port->port);
-}
+पूर्ण
 
-static int mos77xx_calc_num_ports(struct usb_serial *serial,
-					struct usb_serial_endpoints *epds)
-{
+अटल पूर्णांक mos77xx_calc_num_ports(काष्ठा usb_serial *serial,
+					काष्ठा usb_serial_endpoपूर्णांकs *epds)
+अणु
 	u16 product = le16_to_cpu(serial->dev->descriptor.idProduct);
 
-	if (product == MOSCHIP_DEVICE_ID_7715) {
+	अगर (product == MOSCHIP_DEVICE_ID_7715) अणु
 		/*
-		 * The 7715 uses the first bulk in/out endpoint pair for the
-		 * parallel port, and the second for the serial port. We swap
-		 * the endpoint descriptors here so that the the first and
-		 * only registered port structure uses the serial-port
-		 * endpoints.
+		 * The 7715 uses the first bulk in/out endpoपूर्णांक pair क्रम the
+		 * parallel port, and the second क्रम the serial port. We swap
+		 * the endpoपूर्णांक descriptors here so that the the first and
+		 * only रेजिस्टरed port काष्ठाure uses the serial-port
+		 * endpoपूर्णांकs.
 		 */
 		swap(epds->bulk_in[0], epds->bulk_in[1]);
 		swap(epds->bulk_out[0], epds->bulk_out[1]);
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static int mos7720_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct usb_serial *serial;
-	struct urb *urb;
-	struct moschip_port *mos7720_port;
-	int response;
-	int port_number;
+अटल पूर्णांक mos7720_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial;
+	काष्ठा urb *urb;
+	काष्ठा moschip_port *mos7720_port;
+	पूर्णांक response;
+	पूर्णांक port_number;
 	__u8 data;
-	int allocated_urbs = 0;
-	int j;
+	पूर्णांक allocated_urbs = 0;
+	पूर्णांक j;
 
 	serial = port->serial;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return -ENODEV;
+	अगर (mos7720_port == शून्य)
+		वापस -ENODEV;
 
-	usb_clear_halt(serial->dev, port->write_urb->pipe);
-	usb_clear_halt(serial->dev, port->read_urb->pipe);
+	usb_clear_halt(serial->dev, port->ग_लिखो_urb->pipe);
+	usb_clear_halt(serial->dev, port->पढ़ो_urb->pipe);
 
-	/* Initialising the write urb pool */
-	for (j = 0; j < NUM_URBS; ++j) {
+	/* Initialising the ग_लिखो urb pool */
+	क्रम (j = 0; j < NUM_URBS; ++j) अणु
 		urb = usb_alloc_urb(0, GFP_KERNEL);
-		mos7720_port->write_urb_pool[j] = urb;
-		if (!urb)
-			continue;
+		mos7720_port->ग_लिखो_urb_pool[j] = urb;
+		अगर (!urb)
+			जारी;
 
-		urb->transfer_buffer = kmalloc(URB_TRANSFER_BUFFER_SIZE,
+		urb->transfer_buffer = kदो_स्मृति(URB_TRANSFER_BUFFER_SIZE,
 					       GFP_KERNEL);
-		if (!urb->transfer_buffer) {
-			usb_free_urb(mos7720_port->write_urb_pool[j]);
-			mos7720_port->write_urb_pool[j] = NULL;
-			continue;
-		}
+		अगर (!urb->transfer_buffer) अणु
+			usb_मुक्त_urb(mos7720_port->ग_लिखो_urb_pool[j]);
+			mos7720_port->ग_लिखो_urb_pool[j] = शून्य;
+			जारी;
+		पूर्ण
 		allocated_urbs++;
-	}
+	पूर्ण
 
-	if (!allocated_urbs)
-		return -ENOMEM;
+	अगर (!allocated_urbs)
+		वापस -ENOMEM;
 
 	 /* Initialize MCS7720 -- Write Init values to corresponding Registers
 	  *
@@ -894,393 +895,393 @@ static int mos7720_open(struct tty_struct *tty, struct usb_serial_port *port)
 	  * 0x08 : SP1/2 Control Reg
 	  */
 	port_number = port->port_number;
-	read_mos_reg(serial, port_number, MOS7720_LSR, &data);
+	पढ़ो_mos_reg(serial, port_number, MOS7720_LSR, &data);
 
 	dev_dbg(&port->dev, "SS::%p LSR:%x\n", mos7720_port, data);
 
-	write_mos_reg(serial, dummy, MOS7720_SP1_REG, 0x02);
-	write_mos_reg(serial, dummy, MOS7720_SP2_REG, 0x02);
+	ग_लिखो_mos_reg(serial, dummy, MOS7720_SP1_REG, 0x02);
+	ग_लिखो_mos_reg(serial, dummy, MOS7720_SP2_REG, 0x02);
 
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x00);
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
 
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
-	mos7720_port->shadowLCR = 0x03;
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-	mos7720_port->shadowMCR = 0x0b;
-	write_mos_reg(serial, port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
+	mos7720_port->shaकरोwLCR = 0x03;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+	mos7720_port->shaकरोwMCR = 0x0b;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
 
-	write_mos_reg(serial, port_number, MOS7720_SP_CONTROL_REG, 0x00);
-	read_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, &data);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_SP_CONTROL_REG, 0x00);
+	पढ़ो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, &data);
 	data = data | (port->port_number + 1);
-	write_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, data);
-	mos7720_port->shadowLCR = 0x83;
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-	write_mos_reg(serial, port_number, MOS7720_THR, 0x0c);
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x00);
-	mos7720_port->shadowLCR = 0x03;
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
+	ग_लिखो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, data);
+	mos7720_port->shaकरोwLCR = 0x83;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_THR, 0x0c);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x00);
+	mos7720_port->shaकरोwLCR = 0x03;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
 
-	response = usb_submit_urb(port->read_urb, GFP_KERNEL);
-	if (response)
+	response = usb_submit_urb(port->पढ़ो_urb, GFP_KERNEL);
+	अगर (response)
 		dev_err(&port->dev, "%s - Error %d submitting read urb\n",
 							__func__, response);
 
 	/* initialize our port settings */
-	mos7720_port->shadowMCR = UART_MCR_OUT2; /* Must set to enable ints! */
+	mos7720_port->shaकरोwMCR = UART_MCR_OUT2; /* Must set to enable पूर्णांकs! */
 
-	/* send a open port command */
-	mos7720_port->open = 1;
+	/* send a खोलो port command */
+	mos7720_port->खोलो = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * mos7720_chars_in_buffer
+ * mos7720_अक्षरs_in_buffer
  *	this function is called by the tty driver when it wants to know how many
  *	bytes of data we currently have outstanding in the port (data that has
  *	been written, but hasn't made it out the port yet)
- *	If successful, we return the number of bytes left to be written in the
- *	system,
- *	Otherwise we return a negative error number.
+ *	If successful, we वापस the number of bytes left to be written in the
+ *	प्रणाली,
+ *	Otherwise we वापस a negative error number.
  */
-static int mos7720_chars_in_buffer(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	int i;
-	int chars = 0;
-	struct moschip_port *mos7720_port;
+अटल पूर्णांक mos7720_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	पूर्णांक i;
+	पूर्णांक अक्षरs = 0;
+	काष्ठा moschip_port *mos7720_port;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return 0;
+	अगर (mos7720_port == शून्य)
+		वापस 0;
 
-	for (i = 0; i < NUM_URBS; ++i) {
-		if (mos7720_port->write_urb_pool[i] &&
-		    mos7720_port->write_urb_pool[i]->status == -EINPROGRESS)
-			chars += URB_TRANSFER_BUFFER_SIZE;
-	}
-	dev_dbg(&port->dev, "%s - returns %d\n", __func__, chars);
-	return chars;
-}
+	क्रम (i = 0; i < NUM_URBS; ++i) अणु
+		अगर (mos7720_port->ग_लिखो_urb_pool[i] &&
+		    mos7720_port->ग_लिखो_urb_pool[i]->status == -EINPROGRESS)
+			अक्षरs += URB_TRANSFER_BUFFER_SIZE;
+	पूर्ण
+	dev_dbg(&port->dev, "%s - returns %d\n", __func__, अक्षरs);
+	वापस अक्षरs;
+पूर्ण
 
-static void mos7720_close(struct usb_serial_port *port)
-{
-	struct usb_serial *serial;
-	struct moschip_port *mos7720_port;
-	int j;
+अटल व्योम mos7720_बंद(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial;
+	काष्ठा moschip_port *mos7720_port;
+	पूर्णांक j;
 
 	serial = port->serial;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return;
+	अगर (mos7720_port == शून्य)
+		वापस;
 
-	for (j = 0; j < NUM_URBS; ++j)
-		usb_kill_urb(mos7720_port->write_urb_pool[j]);
+	क्रम (j = 0; j < NUM_URBS; ++j)
+		usb_समाप्त_urb(mos7720_port->ग_लिखो_urb_pool[j]);
 
 	/* Freeing Write URBs */
-	for (j = 0; j < NUM_URBS; ++j) {
-		if (mos7720_port->write_urb_pool[j]) {
-			kfree(mos7720_port->write_urb_pool[j]->transfer_buffer);
-			usb_free_urb(mos7720_port->write_urb_pool[j]);
-		}
-	}
+	क्रम (j = 0; j < NUM_URBS; ++j) अणु
+		अगर (mos7720_port->ग_लिखो_urb_pool[j]) अणु
+			kमुक्त(mos7720_port->ग_लिखो_urb_pool[j]->transfer_buffer);
+			usb_मुक्त_urb(mos7720_port->ग_लिखो_urb_pool[j]);
+		पूर्ण
+	पूर्ण
 
-	/* While closing port, shutdown all bulk read, write  *
-	 * and interrupt read if they exists, otherwise nop   */
-	usb_kill_urb(port->write_urb);
-	usb_kill_urb(port->read_urb);
+	/* While closing port, shutकरोwn all bulk पढ़ो, ग_लिखो  *
+	 * and पूर्णांकerrupt पढ़ो अगर they exists, otherwise nop   */
+	usb_समाप्त_urb(port->ग_लिखो_urb);
+	usb_समाप्त_urb(port->पढ़ो_urb);
 
-	write_mos_reg(serial, port->port_number, MOS7720_MCR, 0x00);
-	write_mos_reg(serial, port->port_number, MOS7720_IER, 0x00);
+	ग_लिखो_mos_reg(serial, port->port_number, MOS7720_MCR, 0x00);
+	ग_लिखो_mos_reg(serial, port->port_number, MOS7720_IER, 0x00);
 
-	mos7720_port->open = 0;
-}
+	mos7720_port->खोलो = 0;
+पूर्ण
 
-static void mos7720_break(struct tty_struct *tty, int break_state)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	unsigned char data;
-	struct usb_serial *serial;
-	struct moschip_port *mos7720_port;
+अटल व्योम mos7720_अवरोध(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	अचिन्हित अक्षर data;
+	काष्ठा usb_serial *serial;
+	काष्ठा moschip_port *mos7720_port;
 
 	serial = port->serial;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return;
+	अगर (mos7720_port == शून्य)
+		वापस;
 
-	if (break_state == -1)
-		data = mos7720_port->shadowLCR | UART_LCR_SBC;
-	else
-		data = mos7720_port->shadowLCR & ~UART_LCR_SBC;
+	अगर (अवरोध_state == -1)
+		data = mos7720_port->shaकरोwLCR | UART_LCR_SBC;
+	अन्यथा
+		data = mos7720_port->shaकरोwLCR & ~UART_LCR_SBC;
 
-	mos7720_port->shadowLCR  = data;
-	write_mos_reg(serial, port->port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-}
+	mos7720_port->shaकरोwLCR  = data;
+	ग_लिखो_mos_reg(serial, port->port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+पूर्ण
 
 /*
- * mos7720_write_room
+ * mos7720_ग_लिखो_room
  *	this function is called by the tty driver when it wants to know how many
- *	bytes of data we can accept for a specific port.
- *	If successful, we return the amount of room that we have for this port
- *	Otherwise we return a negative error number.
+ *	bytes of data we can accept क्रम a specअगरic port.
+ *	If successful, we वापस the amount of room that we have क्रम this port
+ *	Otherwise we वापस a negative error number.
  */
-static int mos7720_write_room(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port;
-	int room = 0;
-	int i;
+अटल पूर्णांक mos7720_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port;
+	पूर्णांक room = 0;
+	पूर्णांक i;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return 0;
+	अगर (mos7720_port == शून्य)
+		वापस 0;
 
 	/* FIXME: Locking */
-	for (i = 0; i < NUM_URBS; ++i) {
-		if (mos7720_port->write_urb_pool[i] &&
-		    mos7720_port->write_urb_pool[i]->status != -EINPROGRESS)
+	क्रम (i = 0; i < NUM_URBS; ++i) अणु
+		अगर (mos7720_port->ग_लिखो_urb_pool[i] &&
+		    mos7720_port->ग_लिखो_urb_pool[i]->status != -EINPROGRESS)
 			room += URB_TRANSFER_BUFFER_SIZE;
-	}
+	पूर्ण
 
 	dev_dbg(&port->dev, "%s - returns %d\n", __func__, room);
-	return room;
-}
+	वापस room;
+पूर्ण
 
-static int mos7720_write(struct tty_struct *tty, struct usb_serial_port *port,
-				 const unsigned char *data, int count)
-{
-	int status;
-	int i;
-	int bytes_sent = 0;
-	int transfer_size;
+अटल पूर्णांक mos7720_ग_लिखो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port,
+				 स्थिर अचिन्हित अक्षर *data, पूर्णांक count)
+अणु
+	पूर्णांक status;
+	पूर्णांक i;
+	पूर्णांक bytes_sent = 0;
+	पूर्णांक transfer_size;
 
-	struct moschip_port *mos7720_port;
-	struct usb_serial *serial;
-	struct urb    *urb;
-	const unsigned char *current_position = data;
+	काष्ठा moschip_port *mos7720_port;
+	काष्ठा usb_serial *serial;
+	काष्ठा urb    *urb;
+	स्थिर अचिन्हित अक्षर *current_position = data;
 
 	serial = port->serial;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return -ENODEV;
+	अगर (mos7720_port == शून्य)
+		वापस -ENODEV;
 
-	/* try to find a free urb in the list */
-	urb = NULL;
+	/* try to find a मुक्त urb in the list */
+	urb = शून्य;
 
-	for (i = 0; i < NUM_URBS; ++i) {
-		if (mos7720_port->write_urb_pool[i] &&
-		    mos7720_port->write_urb_pool[i]->status != -EINPROGRESS) {
-			urb = mos7720_port->write_urb_pool[i];
+	क्रम (i = 0; i < NUM_URBS; ++i) अणु
+		अगर (mos7720_port->ग_लिखो_urb_pool[i] &&
+		    mos7720_port->ग_लिखो_urb_pool[i]->status != -EINPROGRESS) अणु
+			urb = mos7720_port->ग_लिखो_urb_pool[i];
 			dev_dbg(&port->dev, "URB:%d\n", i);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (urb == NULL) {
+	अगर (urb == शून्य) अणु
 		dev_dbg(&port->dev, "%s - no more free urbs\n", __func__);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (urb->transfer_buffer == NULL) {
-		urb->transfer_buffer = kmalloc(URB_TRANSFER_BUFFER_SIZE,
+	अगर (urb->transfer_buffer == शून्य) अणु
+		urb->transfer_buffer = kदो_स्मृति(URB_TRANSFER_BUFFER_SIZE,
 					       GFP_ATOMIC);
-		if (!urb->transfer_buffer) {
+		अगर (!urb->transfer_buffer) अणु
 			bytes_sent = -ENOMEM;
-			goto exit;
-		}
-	}
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
 	transfer_size = min(count, URB_TRANSFER_BUFFER_SIZE);
 
-	memcpy(urb->transfer_buffer, current_position, transfer_size);
+	स_नकल(urb->transfer_buffer, current_position, transfer_size);
 	usb_serial_debug_data(&port->dev, __func__, transfer_size,
 			      urb->transfer_buffer);
 
 	/* fill urb with data and submit  */
 	usb_fill_bulk_urb(urb, serial->dev,
 			  usb_sndbulkpipe(serial->dev,
-					port->bulk_out_endpointAddress),
+					port->bulk_out_endpoपूर्णांकAddress),
 			  urb->transfer_buffer, transfer_size,
 			  mos7720_bulk_out_data_callback, mos7720_port);
 
-	/* send it down the pipe */
+	/* send it करोwn the pipe */
 	status = usb_submit_urb(urb, GFP_ATOMIC);
-	if (status) {
+	अगर (status) अणु
 		dev_err_console(port, "%s - usb_submit_urb(write bulk) failed "
 			"with status = %d\n", __func__, status);
 		bytes_sent = status;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	bytes_sent = transfer_size;
 
-exit:
-	return bytes_sent;
-}
+निकास:
+	वापस bytes_sent;
+पूर्ण
 
-static void mos7720_throttle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port;
-	int status;
+अटल व्योम mos7720_throttle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port;
+	पूर्णांक status;
 
 	mos7720_port = usb_get_serial_port_data(port);
 
-	if (mos7720_port == NULL)
-		return;
+	अगर (mos7720_port == शून्य)
+		वापस;
 
-	if (!mos7720_port->open) {
+	अगर (!mos7720_port->खोलो) अणु
 		dev_dbg(&port->dev, "%s - port not opened\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if we are implementing XON/XOFF, send the stop character */
-	if (I_IXOFF(tty)) {
-		unsigned char stop_char = STOP_CHAR(tty);
-		status = mos7720_write(tty, port, &stop_char, 1);
-		if (status <= 0)
-			return;
-	}
+	/* अगर we are implementing XON/XOFF, send the stop अक्षरacter */
+	अगर (I_IXOFF(tty)) अणु
+		अचिन्हित अक्षर stop_अक्षर = STOP_CHAR(tty);
+		status = mos7720_ग_लिखो(tty, port, &stop_अक्षर, 1);
+		अगर (status <= 0)
+			वापस;
+	पूर्ण
 
-	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
-		mos7720_port->shadowMCR &= ~UART_MCR_RTS;
-		write_mos_reg(port->serial, port->port_number, MOS7720_MCR,
-			      mos7720_port->shadowMCR);
-	}
-}
+	/* अगर we are implementing RTS/CTS, toggle that line */
+	अगर (C_CRTSCTS(tty)) अणु
+		mos7720_port->shaकरोwMCR &= ~UART_MCR_RTS;
+		ग_लिखो_mos_reg(port->serial, port->port_number, MOS7720_MCR,
+			      mos7720_port->shaकरोwMCR);
+	पूर्ण
+पूर्ण
 
-static void mos7720_unthrottle(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port = usb_get_serial_port_data(port);
-	int status;
+अटल व्योम mos7720_unthrottle(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port = usb_get_serial_port_data(port);
+	पूर्णांक status;
 
-	if (mos7720_port == NULL)
-		return;
+	अगर (mos7720_port == शून्य)
+		वापस;
 
-	if (!mos7720_port->open) {
+	अगर (!mos7720_port->खोलो) अणु
 		dev_dbg(&port->dev, "%s - port not opened\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if we are implementing XON/XOFF, send the start character */
-	if (I_IXOFF(tty)) {
-		unsigned char start_char = START_CHAR(tty);
-		status = mos7720_write(tty, port, &start_char, 1);
-		if (status <= 0)
-			return;
-	}
+	/* अगर we are implementing XON/XOFF, send the start अक्षरacter */
+	अगर (I_IXOFF(tty)) अणु
+		अचिन्हित अक्षर start_अक्षर = START_CHAR(tty);
+		status = mos7720_ग_लिखो(tty, port, &start_अक्षर, 1);
+		अगर (status <= 0)
+			वापस;
+	पूर्ण
 
-	/* if we are implementing RTS/CTS, toggle that line */
-	if (C_CRTSCTS(tty)) {
-		mos7720_port->shadowMCR |= UART_MCR_RTS;
-		write_mos_reg(port->serial, port->port_number, MOS7720_MCR,
-			      mos7720_port->shadowMCR);
-	}
-}
+	/* अगर we are implementing RTS/CTS, toggle that line */
+	अगर (C_CRTSCTS(tty)) अणु
+		mos7720_port->shaकरोwMCR |= UART_MCR_RTS;
+		ग_लिखो_mos_reg(port->serial, port->port_number, MOS7720_MCR,
+			      mos7720_port->shaकरोwMCR);
+	पूर्ण
+पूर्ण
 
-/* FIXME: this function does not work */
-static int set_higher_rates(struct moschip_port *mos7720_port,
-			    unsigned int baud)
-{
-	struct usb_serial_port *port;
-	struct usb_serial *serial;
-	int port_number;
-	enum mos_regs sp_reg;
-	if (mos7720_port == NULL)
-		return -EINVAL;
+/* FIXME: this function करोes not work */
+अटल पूर्णांक set_higher_rates(काष्ठा moschip_port *mos7720_port,
+			    अचिन्हित पूर्णांक baud)
+अणु
+	काष्ठा usb_serial_port *port;
+	काष्ठा usb_serial *serial;
+	पूर्णांक port_number;
+	क्रमागत mos_regs sp_reg;
+	अगर (mos7720_port == शून्य)
+		वापस -EINVAL;
 
 	port = mos7720_port->port;
 	serial = port->serial;
 
 	 /***********************************************
-	 *      Init Sequence for higher rates
+	 *      Init Sequence क्रम higher rates
 	 ***********************************************/
 	dev_dbg(&port->dev, "Sending Setting Commands ..........\n");
 	port_number = port->port_number;
 
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x00);
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
-	mos7720_port->shadowMCR = 0x0b;
-	write_mos_reg(serial, port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
-	write_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
+	mos7720_port->shaकरोwMCR = 0x0b;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
+	ग_लिखो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, 0x00);
 
 	/***********************************************
-	 *              Set for higher rates           *
+	 *              Set क्रम higher rates           *
 	 ***********************************************/
-	/* writing baud rate verbatum into uart clock field clearly not right */
-	if (port_number == 0)
+	/* writing baud rate verbatum पूर्णांकo uart घड़ी field clearly not right */
+	अगर (port_number == 0)
 		sp_reg = MOS7720_SP1_REG;
-	else
+	अन्यथा
 		sp_reg = MOS7720_SP2_REG;
-	write_mos_reg(serial, dummy, sp_reg, baud * 0x10);
-	write_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, 0x03);
-	mos7720_port->shadowMCR = 0x2b;
-	write_mos_reg(serial, port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
+	ग_लिखो_mos_reg(serial, dummy, sp_reg, baud * 0x10);
+	ग_लिखो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG, 0x03);
+	mos7720_port->shaकरोwMCR = 0x2b;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
 
 	/***********************************************
 	 *              Set DLL/DLM
 	 ***********************************************/
-	mos7720_port->shadowLCR = mos7720_port->shadowLCR | UART_LCR_DLAB;
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-	write_mos_reg(serial, port_number, MOS7720_DLL, 0x01);
-	write_mos_reg(serial, port_number, MOS7720_DLM, 0x00);
-	mos7720_port->shadowLCR = mos7720_port->shadowLCR & ~UART_LCR_DLAB;
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
+	mos7720_port->shaकरोwLCR = mos7720_port->shaकरोwLCR | UART_LCR_DLAB;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_DLL, 0x01);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_DLM, 0x00);
+	mos7720_port->shaकरोwLCR = mos7720_port->shaकरोwLCR & ~UART_LCR_DLAB;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* baud rate information */
-struct divisor_table_entry {
+/* baud rate inक्रमmation */
+काष्ठा भागisor_table_entry अणु
 	__u32  baudrate;
-	__u16  divisor;
-};
+	__u16  भागisor;
+पूर्ण;
 
-/* Define table of divisors for moschip 7720 hardware	   *
+/* Define table of भागisors क्रम moschip 7720 hardware	   *
  * These assume a 3.6864MHz crystal, the standard /16, and *
  * MCR.7 = 0.						   */
-static const struct divisor_table_entry divisor_table[] = {
-	{   50,		2304},
-	{   110,	1047},	/* 2094.545455 => 230450   => .0217 % over */
-	{   134,	857},	/* 1713.011152 => 230398.5 => .00065% under */
-	{   150,	768},
-	{   300,	384},
-	{   600,	192},
-	{   1200,	96},
-	{   1800,	64},
-	{   2400,	48},
-	{   4800,	24},
-	{   7200,	16},
-	{   9600,	12},
-	{   19200,	6},
-	{   38400,	3},
-	{   57600,	2},
-	{   115200,	1},
-};
+अटल स्थिर काष्ठा भागisor_table_entry भागisor_table[] = अणु
+	अणु   50,		2304पूर्ण,
+	अणु   110,	1047पूर्ण,	/* 2094.545455 => 230450   => .0217 % over */
+	अणु   134,	857पूर्ण,	/* 1713.011152 => 230398.5 => .00065% under */
+	अणु   150,	768पूर्ण,
+	अणु   300,	384पूर्ण,
+	अणु   600,	192पूर्ण,
+	अणु   1200,	96पूर्ण,
+	अणु   1800,	64पूर्ण,
+	अणु   2400,	48पूर्ण,
+	अणु   4800,	24पूर्ण,
+	अणु   7200,	16पूर्ण,
+	अणु   9600,	12पूर्ण,
+	अणु   19200,	6पूर्ण,
+	अणु   38400,	3पूर्ण,
+	अणु   57600,	2पूर्ण,
+	अणु   115200,	1पूर्ण,
+पूर्ण;
 
 /*****************************************************************************
- * calc_baud_rate_divisor
- *	this function calculates the proper baud rate divisor for the specified
+ * calc_baud_rate_भागisor
+ *	this function calculates the proper baud rate भागisor क्रम the specअगरied
  *	baud rate.
  *****************************************************************************/
-static int calc_baud_rate_divisor(struct usb_serial_port *port, int baudrate, int *divisor)
-{
-	int i;
+अटल पूर्णांक calc_baud_rate_भागisor(काष्ठा usb_serial_port *port, पूर्णांक baudrate, पूर्णांक *भागisor)
+अणु
+	पूर्णांक i;
 	__u16 custom;
 	__u16 round1;
 	__u16 round;
@@ -1288,50 +1289,50 @@ static int calc_baud_rate_divisor(struct usb_serial_port *port, int baudrate, in
 
 	dev_dbg(&port->dev, "%s - %d\n", __func__, baudrate);
 
-	for (i = 0; i < ARRAY_SIZE(divisor_table); i++) {
-		if (divisor_table[i].baudrate == baudrate) {
-			*divisor = divisor_table[i].divisor;
-			return 0;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(भागisor_table); i++) अणु
+		अगर (भागisor_table[i].baudrate == baudrate) अणु
+			*भागisor = भागisor_table[i].भागisor;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* After trying for all the standard baud rates    *
-	 * Try calculating the divisor for this baud rate  */
-	if (baudrate > 75 &&  baudrate < 230400) {
-		/* get the divisor */
+	/* After trying क्रम all the standard baud rates    *
+	 * Try calculating the भागisor क्रम this baud rate  */
+	अगर (baudrate > 75 &&  baudrate < 230400) अणु
+		/* get the भागisor */
 		custom = (__u16)(230400L  / baudrate);
 
-		/* Check for round off */
+		/* Check क्रम round off */
 		round1 = (__u16)(2304000L / baudrate);
 		round = (__u16)(round1 - (custom * 10));
-		if (round > 4)
+		अगर (round > 4)
 			custom++;
-		*divisor = custom;
+		*भागisor = custom;
 
 		dev_dbg(&port->dev, "Baud %d = %d\n", baudrate, custom);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dev_dbg(&port->dev, "Baud calculation Failed...\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
- * send_cmd_write_baud_rate
+ * send_cmd_ग_लिखो_baud_rate
  *	this function sends the proper command to change the baud rate of the
- *	specified port.
+ *	specअगरied port.
  */
-static int send_cmd_write_baud_rate(struct moschip_port *mos7720_port,
-				    int baudrate)
-{
-	struct usb_serial_port *port;
-	struct usb_serial *serial;
-	int divisor;
-	int status;
-	unsigned char number;
+अटल पूर्णांक send_cmd_ग_लिखो_baud_rate(काष्ठा moschip_port *mos7720_port,
+				    पूर्णांक baudrate)
+अणु
+	काष्ठा usb_serial_port *port;
+	काष्ठा usb_serial *serial;
+	पूर्णांक भागisor;
+	पूर्णांक status;
+	अचिन्हित अक्षर number;
 
-	if (mos7720_port == NULL)
-		return -1;
+	अगर (mos7720_port == शून्य)
+		वापस -1;
 
 	port = mos7720_port->port;
 	serial = port->serial;
@@ -1340,58 +1341,58 @@ static int send_cmd_write_baud_rate(struct moschip_port *mos7720_port,
 	dev_dbg(&port->dev, "%s - baud = %d\n", __func__, baudrate);
 
 	/* Calculate the Divisor */
-	status = calc_baud_rate_divisor(port, baudrate, &divisor);
-	if (status) {
+	status = calc_baud_rate_भागisor(port, baudrate, &भागisor);
+	अगर (status) अणु
 		dev_err(&port->dev, "%s - bad baud rate\n", __func__);
-		return status;
-	}
+		वापस status;
+	पूर्ण
 
-	/* Enable access to divisor latch */
-	mos7720_port->shadowLCR = mos7720_port->shadowLCR | UART_LCR_DLAB;
-	write_mos_reg(serial, number, MOS7720_LCR, mos7720_port->shadowLCR);
+	/* Enable access to भागisor latch */
+	mos7720_port->shaकरोwLCR = mos7720_port->shaकरोwLCR | UART_LCR_DLAB;
+	ग_लिखो_mos_reg(serial, number, MOS7720_LCR, mos7720_port->shaकरोwLCR);
 
-	/* Write the divisor */
-	write_mos_reg(serial, number, MOS7720_DLL, (__u8)(divisor & 0xff));
-	write_mos_reg(serial, number, MOS7720_DLM,
-		      (__u8)((divisor & 0xff00) >> 8));
+	/* Write the भागisor */
+	ग_लिखो_mos_reg(serial, number, MOS7720_DLL, (__u8)(भागisor & 0xff));
+	ग_लिखो_mos_reg(serial, number, MOS7720_DLM,
+		      (__u8)((भागisor & 0xff00) >> 8));
 
-	/* Disable access to divisor latch */
-	mos7720_port->shadowLCR = mos7720_port->shadowLCR & ~UART_LCR_DLAB;
-	write_mos_reg(serial, number, MOS7720_LCR, mos7720_port->shadowLCR);
+	/* Disable access to भागisor latch */
+	mos7720_port->shaकरोwLCR = mos7720_port->shaकरोwLCR & ~UART_LCR_DLAB;
+	ग_लिखो_mos_reg(serial, number, MOS7720_LCR, mos7720_port->shaकरोwLCR);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * change_port_settings
  *	This routine is called to set the UART on the device to match
- *      the specified new settings.
+ *      the specअगरied new settings.
  */
-static void change_port_settings(struct tty_struct *tty,
-				 struct moschip_port *mos7720_port,
-				 struct ktermios *old_termios)
-{
-	struct usb_serial_port *port;
-	struct usb_serial *serial;
-	int baud;
-	unsigned cflag;
+अटल व्योम change_port_settings(काष्ठा tty_काष्ठा *tty,
+				 काष्ठा moschip_port *mos7720_port,
+				 काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा usb_serial_port *port;
+	काष्ठा usb_serial *serial;
+	पूर्णांक baud;
+	अचिन्हित cflag;
 	__u8 lData;
 	__u8 lParity;
 	__u8 lStop;
-	int status;
-	int port_number;
+	पूर्णांक status;
+	पूर्णांक port_number;
 
-	if (mos7720_port == NULL)
-		return ;
+	अगर (mos7720_port == शून्य)
+		वापस ;
 
 	port = mos7720_port->port;
 	serial = port->serial;
 	port_number = port->port_number;
 
-	if (!mos7720_port->open) {
+	अगर (!mos7720_port->खोलो) अणु
 		dev_dbg(&port->dev, "%s - port not opened\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	lData = UART_LCR_WLEN8;
 	lStop = 0x00;	/* 1 stop bit */
@@ -1400,199 +1401,199 @@ static void change_port_settings(struct tty_struct *tty,
 	cflag = tty->termios.c_cflag;
 
 	/* Change the number of bits */
-	switch (cflag & CSIZE) {
-	case CS5:
+	चयन (cflag & CSIZE) अणु
+	हाल CS5:
 		lData = UART_LCR_WLEN5;
-		break;
+		अवरोध;
 
-	case CS6:
+	हाल CS6:
 		lData = UART_LCR_WLEN6;
-		break;
+		अवरोध;
 
-	case CS7:
+	हाल CS7:
 		lData = UART_LCR_WLEN7;
-		break;
-	default:
-	case CS8:
+		अवरोध;
+	शेष:
+	हाल CS8:
 		lData = UART_LCR_WLEN8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Change the Parity bit */
-	if (cflag & PARENB) {
-		if (cflag & PARODD) {
+	अगर (cflag & PARENB) अणु
+		अगर (cflag & PARODD) अणु
 			lParity = UART_LCR_PARITY;
 			dev_dbg(&port->dev, "%s - parity = odd\n", __func__);
-		} else {
+		पूर्ण अन्यथा अणु
 			lParity = (UART_LCR_EPAR | UART_LCR_PARITY);
 			dev_dbg(&port->dev, "%s - parity = even\n", __func__);
-		}
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&port->dev, "%s - parity = none\n", __func__);
-	}
+	पूर्ण
 
-	if (cflag & CMSPAR)
+	अगर (cflag & CMSPAR)
 		lParity = lParity | 0x20;
 
 	/* Change the Stop bit */
-	if (cflag & CSTOPB) {
+	अगर (cflag & CSTOPB) अणु
 		lStop = UART_LCR_STOP;
 		dev_dbg(&port->dev, "%s - stop bits = 2\n", __func__);
-	} else {
+	पूर्ण अन्यथा अणु
 		lStop = 0x00;
 		dev_dbg(&port->dev, "%s - stop bits = 1\n", __func__);
-	}
+	पूर्ण
 
-#define LCR_BITS_MASK		0x03	/* Mask for bits/char field */
-#define LCR_STOP_MASK		0x04	/* Mask for stop bits field */
-#define LCR_PAR_MASK		0x38	/* Mask for parity field */
+#घोषणा LCR_BITS_MASK		0x03	/* Mask क्रम bits/अक्षर field */
+#घोषणा LCR_STOP_MASK		0x04	/* Mask क्रम stop bits field */
+#घोषणा LCR_PAR_MASK		0x38	/* Mask क्रम parity field */
 
 	/* Update the LCR with the correct value */
-	mos7720_port->shadowLCR &=
+	mos7720_port->shaकरोwLCR &=
 		~(LCR_BITS_MASK | LCR_STOP_MASK | LCR_PAR_MASK);
-	mos7720_port->shadowLCR |= (lData | lParity | lStop);
+	mos7720_port->shaकरोwLCR |= (lData | lParity | lStop);
 
 
 	/* Disable Interrupts */
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x00);
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
-	write_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0x00);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_FCR, 0xcf);
 
 	/* Send the updated LCR value to the mos7720 */
-	write_mos_reg(serial, port_number, MOS7720_LCR,
-		      mos7720_port->shadowLCR);
-	mos7720_port->shadowMCR = 0x0b;
-	write_mos_reg(serial, port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_LCR,
+		      mos7720_port->shaकरोwLCR);
+	mos7720_port->shaकरोwMCR = 0x0b;
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
 
-	/* set up the MCR register and send it to the mos7720 */
-	mos7720_port->shadowMCR = UART_MCR_OUT2;
-	if (cflag & CBAUD)
-		mos7720_port->shadowMCR |= (UART_MCR_DTR | UART_MCR_RTS);
+	/* set up the MCR रेजिस्टर and send it to the mos7720 */
+	mos7720_port->shaकरोwMCR = UART_MCR_OUT2;
+	अगर (cflag & CBAUD)
+		mos7720_port->shaकरोwMCR |= (UART_MCR_DTR | UART_MCR_RTS);
 
-	if (cflag & CRTSCTS) {
-		mos7720_port->shadowMCR |= (UART_MCR_XONANY);
-		/* To set hardware flow control to the specified *
+	अगर (cflag & CRTSCTS) अणु
+		mos7720_port->shaकरोwMCR |= (UART_MCR_XOन_अंकY);
+		/* To set hardware flow control to the specअगरied *
 		 * serial port, in SP1/2_CONTROL_REG             */
-		if (port_number)
-			write_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG,
+		अगर (port_number)
+			ग_लिखो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG,
 				      0x01);
-		else
-			write_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG,
+		अन्यथा
+			ग_लिखो_mos_reg(serial, dummy, MOS7720_SP_CONTROL_REG,
 				      0x02);
 
-	} else
-		mos7720_port->shadowMCR &= ~(UART_MCR_XONANY);
+	पूर्ण अन्यथा
+		mos7720_port->shaकरोwMCR &= ~(UART_MCR_XOन_अंकY);
 
-	write_mos_reg(serial, port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
 
-	/* Determine divisor based on baud rate */
+	/* Determine भागisor based on baud rate */
 	baud = tty_get_baud_rate(tty);
-	if (!baud) {
-		/* pick a default, any default... */
+	अगर (!baud) अणु
+		/* pick a शेष, any शेष... */
 		dev_dbg(&port->dev, "Picked default baud...\n");
 		baud = 9600;
-	}
+	पूर्ण
 
-	if (baud >= 230400) {
+	अगर (baud >= 230400) अणु
 		set_higher_rates(mos7720_port, baud);
 		/* Enable Interrupts */
-		write_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
-		return;
-	}
+		ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
+		वापस;
+	पूर्ण
 
 	dev_dbg(&port->dev, "%s - baud rate = %d\n", __func__, baud);
-	status = send_cmd_write_baud_rate(mos7720_port, baud);
-	/* FIXME: needs to write actual resulting baud back not just
-	   blindly do so */
-	if (cflag & CBAUD)
+	status = send_cmd_ग_लिखो_baud_rate(mos7720_port, baud);
+	/* FIXME: needs to ग_लिखो actual resulting baud back not just
+	   blindly करो so */
+	अगर (cflag & CBAUD)
 		tty_encode_baud_rate(tty, baud, baud);
 	/* Enable Interrupts */
-	write_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
+	ग_लिखो_mos_reg(serial, port_number, MOS7720_IER, 0x0c);
 
-	if (port->read_urb->status != -EINPROGRESS) {
-		status = usb_submit_urb(port->read_urb, GFP_KERNEL);
-		if (status)
+	अगर (port->पढ़ो_urb->status != -EINPROGRESS) अणु
+		status = usb_submit_urb(port->पढ़ो_urb, GFP_KERNEL);
+		अगर (status)
 			dev_dbg(&port->dev, "usb_submit_urb(read bulk) failed, status = %d\n", status);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * mos7720_set_termios
  *	this function is called by the tty driver when it wants to change the
- *	termios structure.
+ *	termios काष्ठाure.
  */
-static void mos7720_set_termios(struct tty_struct *tty,
-		struct usb_serial_port *port, struct ktermios *old_termios)
-{
-	int status;
-	struct moschip_port *mos7720_port;
+अटल व्योम mos7720_set_termios(काष्ठा tty_काष्ठा *tty,
+		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
+अणु
+	पूर्णांक status;
+	काष्ठा moschip_port *mos7720_port;
 
 	mos7720_port = usb_get_serial_port_data(port);
 
-	if (mos7720_port == NULL)
-		return;
+	अगर (mos7720_port == शून्य)
+		वापस;
 
-	if (!mos7720_port->open) {
+	अगर (!mos7720_port->खोलो) अणु
 		dev_dbg(&port->dev, "%s - port not opened\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* change the port settings to the new ones specified */
+	/* change the port settings to the new ones specअगरied */
 	change_port_settings(tty, mos7720_port, old_termios);
 
-	if (port->read_urb->status != -EINPROGRESS) {
-		status = usb_submit_urb(port->read_urb, GFP_KERNEL);
-		if (status)
+	अगर (port->पढ़ो_urb->status != -EINPROGRESS) अणु
+		status = usb_submit_urb(port->पढ़ो_urb, GFP_KERNEL);
+		अगर (status)
 			dev_dbg(&port->dev, "usb_submit_urb(read bulk) failed, status = %d\n", status);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * get_lsr_info - get line status register info
+ * get_lsr_info - get line status रेजिस्टर info
  *
  * Purpose: Let user call ioctl() to get info when the UART physically
  * 	    is emptied.  On bus types like RS485, the transmitter must
- * 	    release the bus after transmitting. This must be done when
- * 	    the transmit shift register is empty, not be done when the
- * 	    transmit holding register is empty.  This functionality
+ * 	    release the bus after transmitting. This must be करोne when
+ * 	    the transmit shअगरt रेजिस्टर is empty, not be करोne when the
+ * 	    transmit holding रेजिस्टर is empty.  This functionality
  * 	    allows an RS485 driver to be written in user space.
  */
-static int get_lsr_info(struct tty_struct *tty,
-		struct moschip_port *mos7720_port, unsigned int __user *value)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	unsigned int result = 0;
-	unsigned char data = 0;
-	int port_number = port->port_number;
-	int count;
+अटल पूर्णांक get_lsr_info(काष्ठा tty_काष्ठा *tty,
+		काष्ठा moschip_port *mos7720_port, अचिन्हित पूर्णांक __user *value)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	अचिन्हित पूर्णांक result = 0;
+	अचिन्हित अक्षर data = 0;
+	पूर्णांक port_number = port->port_number;
+	पूर्णांक count;
 
-	count = mos7720_chars_in_buffer(tty);
-	if (count == 0) {
-		read_mos_reg(port->serial, port_number, MOS7720_LSR, &data);
-		if ((data & (UART_LSR_TEMT | UART_LSR_THRE))
-					== (UART_LSR_TEMT | UART_LSR_THRE)) {
+	count = mos7720_अक्षरs_in_buffer(tty);
+	अगर (count == 0) अणु
+		पढ़ो_mos_reg(port->serial, port_number, MOS7720_LSR, &data);
+		अगर ((data & (UART_LSR_TEMT | UART_LSR_THRE))
+					== (UART_LSR_TEMT | UART_LSR_THRE)) अणु
 			dev_dbg(&port->dev, "%s -- Empty\n", __func__);
 			result = TIOCSER_TEMT;
-		}
-	}
-	if (copy_to_user(value, &result, sizeof(int)))
-		return -EFAULT;
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	अगर (copy_to_user(value, &result, माप(पूर्णांक)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int mos7720_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port = usb_get_serial_port_data(port);
-	unsigned int result = 0;
-	unsigned int mcr ;
-	unsigned int msr ;
+अटल पूर्णांक mos7720_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक result = 0;
+	अचिन्हित पूर्णांक mcr ;
+	अचिन्हित पूर्णांक msr ;
 
-	mcr = mos7720_port->shadowMCR;
-	msr = mos7720_port->shadowMSR;
+	mcr = mos7720_port->shaकरोwMCR;
+	msr = mos7720_port->shaकरोwMSR;
 
 	result = ((mcr & UART_MCR_DTR)  ? TIOCM_DTR : 0)   /* 0x002 */
 	  | ((mcr & UART_MCR_RTS)   ? TIOCM_RTS : 0)   /* 0x004 */
@@ -1601,190 +1602,190 @@ static int mos7720_tiocmget(struct tty_struct *tty)
 	  | ((msr & UART_MSR_RI)    ? TIOCM_RI :  0)   /* 0x080 */
 	  | ((msr & UART_MSR_DSR)   ? TIOCM_DSR : 0);  /* 0x100 */
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int mos7720_tiocmset(struct tty_struct *tty,
-			    unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port = usb_get_serial_port_data(port);
-	unsigned int mcr ;
+अटल पूर्णांक mos7720_tiocmset(काष्ठा tty_काष्ठा *tty,
+			    अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port = usb_get_serial_port_data(port);
+	अचिन्हित पूर्णांक mcr ;
 
-	mcr = mos7720_port->shadowMCR;
+	mcr = mos7720_port->shaकरोwMCR;
 
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		mcr |= UART_MCR_RTS;
-	if (set & TIOCM_DTR)
+	अगर (set & TIOCM_DTR)
 		mcr |= UART_MCR_DTR;
-	if (set & TIOCM_LOOP)
+	अगर (set & TIOCM_LOOP)
 		mcr |= UART_MCR_LOOP;
 
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		mcr &= ~UART_MCR_RTS;
-	if (clear & TIOCM_DTR)
+	अगर (clear & TIOCM_DTR)
 		mcr &= ~UART_MCR_DTR;
-	if (clear & TIOCM_LOOP)
+	अगर (clear & TIOCM_LOOP)
 		mcr &= ~UART_MCR_LOOP;
 
-	mos7720_port->shadowMCR = mcr;
-	write_mos_reg(port->serial, port->port_number, MOS7720_MCR,
-		      mos7720_port->shadowMCR);
+	mos7720_port->shaकरोwMCR = mcr;
+	ग_लिखो_mos_reg(port->serial, port->port_number, MOS7720_MCR,
+		      mos7720_port->shaकरोwMCR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mos7720_ioctl(struct tty_struct *tty,
-			 unsigned int cmd, unsigned long arg)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct moschip_port *mos7720_port;
+अटल पूर्णांक mos7720_ioctl(काष्ठा tty_काष्ठा *tty,
+			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा moschip_port *mos7720_port;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	if (mos7720_port == NULL)
-		return -ENODEV;
+	अगर (mos7720_port == शून्य)
+		वापस -ENODEV;
 
-	switch (cmd) {
-	case TIOCSERGETLSR:
+	चयन (cmd) अणु
+	हाल TIOCSERGETLSR:
 		dev_dbg(&port->dev, "%s TIOCSERGETLSR\n", __func__);
-		return get_lsr_info(tty, mos7720_port,
-					(unsigned int __user *)arg);
-	}
+		वापस get_lsr_info(tty, mos7720_port,
+					(अचिन्हित पूर्णांक __user *)arg);
+	पूर्ण
 
-	return -ENOIOCTLCMD;
-}
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static int mos7720_startup(struct usb_serial *serial)
-{
-	struct usb_device *dev;
-	char data;
+अटल पूर्णांक mos7720_startup(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा usb_device *dev;
+	अक्षर data;
 	u16 product;
-	int ret_val;
+	पूर्णांक ret_val;
 
 	product = le16_to_cpu(serial->dev->descriptor.idProduct);
 	dev = serial->dev;
 
-	if (product == MOSCHIP_DEVICE_ID_7715) {
-		struct urb *urb = serial->port[0]->interrupt_in_urb;
+	अगर (product == MOSCHIP_DEVICE_ID_7715) अणु
+		काष्ठा urb *urb = serial->port[0]->पूर्णांकerrupt_in_urb;
 
-		urb->complete = mos7715_interrupt_callback;
+		urb->complete = mos7715_पूर्णांकerrupt_callback;
 
-#ifdef CONFIG_USB_SERIAL_MOS7715_PARPORT
+#अगर_घोषित CONFIG_USB_SERIAL_MOS7715_PARPORT
 		ret_val = mos7715_parport_init(serial);
-		if (ret_val < 0)
-			return ret_val;
-#endif
-	}
-	/* start the interrupt urb */
-	ret_val = usb_submit_urb(serial->port[0]->interrupt_in_urb, GFP_KERNEL);
-	if (ret_val) {
+		अगर (ret_val < 0)
+			वापस ret_val;
+#पूर्ण_अगर
+	पूर्ण
+	/* start the पूर्णांकerrupt urb */
+	ret_val = usb_submit_urb(serial->port[0]->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+	अगर (ret_val) अणु
 		dev_err(&dev->dev, "failed to submit interrupt urb: %d\n",
 			ret_val);
-	}
+	पूर्ण
 
 	/* LSR For Port 1 */
-	read_mos_reg(serial, 0, MOS7720_LSR, &data);
+	पढ़ो_mos_reg(serial, 0, MOS7720_LSR, &data);
 	dev_dbg(&dev->dev, "LSR:%x\n", data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mos7720_release(struct usb_serial *serial)
-{
-	usb_kill_urb(serial->port[0]->interrupt_in_urb);
+अटल व्योम mos7720_release(काष्ठा usb_serial *serial)
+अणु
+	usb_समाप्त_urb(serial->port[0]->पूर्णांकerrupt_in_urb);
 
-#ifdef CONFIG_USB_SERIAL_MOS7715_PARPORT
-	/* close the parallel port */
+#अगर_घोषित CONFIG_USB_SERIAL_MOS7715_PARPORT
+	/* बंद the parallel port */
 
-	if (le16_to_cpu(serial->dev->descriptor.idProduct)
-	    == MOSCHIP_DEVICE_ID_7715) {
-		struct mos7715_parport *mos_parport =
+	अगर (le16_to_cpu(serial->dev->descriptor.idProduct)
+	    == MOSCHIP_DEVICE_ID_7715) अणु
+		काष्ठा mos7715_parport *mos_parport =
 			usb_get_serial_data(serial);
 
-		/* prevent NULL ptr dereference in port callbacks */
+		/* prevent शून्य ptr dereference in port callbacks */
 		spin_lock(&release_lock);
-		mos_parport->pp->private_data = NULL;
+		mos_parport->pp->निजी_data = शून्य;
 		spin_unlock(&release_lock);
 
-		/* wait for synchronous usb calls to return */
-		if (mos_parport->msg_pending)
-			wait_for_completion_timeout(&mos_parport->syncmsg_compl,
-					    msecs_to_jiffies(MOS_WDR_TIMEOUT));
+		/* रुको क्रम synchronous usb calls to वापस */
+		अगर (mos_parport->msg_pending)
+			रुको_क्रम_completion_समयout(&mos_parport->syncmsg_compl,
+					    msecs_to_jअगरfies(MOS_WDR_TIMEOUT));
 		/*
-		 * If delayed work is currently scheduled, wait for it to
+		 * If delayed work is currently scheduled, रुको क्रम it to
 		 * complete. This also implies barriers that ensure the
 		 * below serial clearing is not hoisted above the ->work.
 		 */
 		cancel_work_sync(&mos_parport->work);
 
-		parport_remove_port(mos_parport->pp);
-		usb_set_serial_data(serial, NULL);
-		mos_parport->serial = NULL;
+		parport_हटाओ_port(mos_parport->pp);
+		usb_set_serial_data(serial, शून्य);
+		mos_parport->serial = शून्य;
 
 		parport_del_port(mos_parport->pp);
 
 		kref_put(&mos_parport->ref_count, destroy_mos_parport);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static int mos7720_port_probe(struct usb_serial_port *port)
-{
-	struct moschip_port *mos7720_port;
+अटल पूर्णांक mos7720_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा moschip_port *mos7720_port;
 
-	mos7720_port = kzalloc(sizeof(*mos7720_port), GFP_KERNEL);
-	if (!mos7720_port)
-		return -ENOMEM;
+	mos7720_port = kzalloc(माप(*mos7720_port), GFP_KERNEL);
+	अगर (!mos7720_port)
+		वापस -ENOMEM;
 
 	mos7720_port->port = port;
 
 	usb_set_serial_port_data(port, mos7720_port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mos7720_port_remove(struct usb_serial_port *port)
-{
-	struct moschip_port *mos7720_port;
+अटल व्योम mos7720_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा moschip_port *mos7720_port;
 
 	mos7720_port = usb_get_serial_port_data(port);
-	kfree(mos7720_port);
-}
+	kमुक्त(mos7720_port);
+पूर्ण
 
-static struct usb_serial_driver moschip7720_2port_driver = {
-	.driver = {
+अटल काष्ठा usb_serial_driver moschip7720_2port_driver = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"moschip7720",
-	},
+	पूर्ण,
 	.description		= "Moschip 2 port adapter",
 	.id_table		= id_table,
 	.num_bulk_in		= 2,
 	.num_bulk_out		= 2,
-	.num_interrupt_in	= 1,
+	.num_पूर्णांकerrupt_in	= 1,
 	.calc_num_ports		= mos77xx_calc_num_ports,
-	.open			= mos7720_open,
-	.close			= mos7720_close,
+	.खोलो			= mos7720_खोलो,
+	.बंद			= mos7720_बंद,
 	.throttle		= mos7720_throttle,
 	.unthrottle		= mos7720_unthrottle,
 	.attach			= mos7720_startup,
 	.release		= mos7720_release,
 	.port_probe		= mos7720_port_probe,
-	.port_remove		= mos7720_port_remove,
+	.port_हटाओ		= mos7720_port_हटाओ,
 	.ioctl			= mos7720_ioctl,
 	.tiocmget		= mos7720_tiocmget,
 	.tiocmset		= mos7720_tiocmset,
 	.set_termios		= mos7720_set_termios,
-	.write			= mos7720_write,
-	.write_room		= mos7720_write_room,
-	.chars_in_buffer	= mos7720_chars_in_buffer,
-	.break_ctl		= mos7720_break,
-	.read_bulk_callback	= mos7720_bulk_in_callback,
-	.read_int_callback	= mos7720_interrupt_callback,
-};
+	.ग_लिखो			= mos7720_ग_लिखो,
+	.ग_लिखो_room		= mos7720_ग_लिखो_room,
+	.अक्षरs_in_buffer	= mos7720_अक्षरs_in_buffer,
+	.अवरोध_ctl		= mos7720_अवरोध,
+	.पढ़ो_bulk_callback	= mos7720_bulk_in_callback,
+	.पढ़ो_पूर्णांक_callback	= mos7720_पूर्णांकerrupt_callback,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&moschip7720_2port_driver, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&moschip7720_2port_driver, शून्य
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

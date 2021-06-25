@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* SCTP kernel implementation
  * (C) Copyright IBM Corp. 2001, 2004
  * Copyright (c) 1999-2000 Cisco, Inc.
@@ -9,303 +10,303 @@
  *
  * This file is part of the SCTP kernel implementation
  *
- * These functions interface with the sockets layer to implement the
- * SCTP Extensions for the Sockets API.
+ * These functions पूर्णांकerface with the sockets layer to implement the
+ * SCTP Extensions क्रम the Sockets API.
  *
- * Note that the descriptions from the specification are USER level
- * functions--this file is the functions which populate the struct proto
- * for SCTP which is the BOTTOM of the sockets interface.
+ * Note that the descriptions from the specअगरication are USER level
+ * functions--this file is the functions which populate the काष्ठा proto
+ * क्रम SCTP which is the BOTTOM of the sockets पूर्णांकerface.
  *
  * Please send any bug reports or fixes you make to the
  * email address(es):
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
+ * Written or modअगरied by:
  *    La Monte H.P. Yarroll <piggy@acm.org>
  *    Narasimha Budihal     <narsi@refcode.org>
  *    Karl Knutson          <karl@athena.chicago.il.us>
  *    Jon Grimm             <jgrimm@us.ibm.com>
- *    Xingang Guo           <xingang.guo@intel.com>
+ *    Xingang Guo           <xingang.guo@पूर्णांकel.com>
  *    Daisy Chang           <daisyc@us.ibm.com>
  *    Sridhar Samudrala     <samudrala@us.ibm.com>
- *    Inaky Perez-Gonzalez  <inaky.gonzalez@intel.com>
- *    Ardelle Fan	    <ardelle.fan@intel.com>
+ *    Inaky Perez-Gonzalez  <inaky.gonzalez@पूर्णांकel.com>
+ *    Ardelle Fan	    <ardelle.fan@पूर्णांकel.com>
  *    Ryan Layer	    <rmlayer@us.ibm.com>
  *    Anup Pemmaiah         <pemmaiah@cc.usu.edu>
- *    Kevin Gao             <kevin.gao@intel.com>
+ *    Kevin Gao             <kevin.gao@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <crypto/hash.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/wait.h>
-#include <linux/time.h>
-#include <linux/sched/signal.h>
-#include <linux/ip.h>
-#include <linux/capability.h>
-#include <linux/fcntl.h>
-#include <linux/poll.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/compat.h>
-#include <linux/rhashtable.h>
+#समावेश <crypto/hash.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/ip.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/rhashtable.h>
 
-#include <net/ip.h>
-#include <net/icmp.h>
-#include <net/route.h>
-#include <net/ipv6.h>
-#include <net/inet_common.h>
-#include <net/busy_poll.h>
+#समावेश <net/ip.h>
+#समावेश <net/icmp.h>
+#समावेश <net/route.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/inet_common.h>
+#समावेश <net/busy_poll.h>
 
-#include <linux/socket.h> /* for sa_family_t */
-#include <linux/export.h>
-#include <net/sock.h>
-#include <net/sctp/sctp.h>
-#include <net/sctp/sm.h>
-#include <net/sctp/stream_sched.h>
+#समावेश <linux/socket.h> /* क्रम sa_family_t */
+#समावेश <linux/export.h>
+#समावेश <net/sock.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/sctp/sm.h>
+#समावेश <net/sctp/stream_sched.h>
 
-/* Forward declarations for internal helper functions. */
-static bool sctp_writeable(struct sock *sk);
-static void sctp_wfree(struct sk_buff *skb);
-static int sctp_wait_for_sndbuf(struct sctp_association *asoc, long *timeo_p,
-				size_t msg_len);
-static int sctp_wait_for_packet(struct sock *sk, int *err, long *timeo_p);
-static int sctp_wait_for_connect(struct sctp_association *, long *timeo_p);
-static int sctp_wait_for_accept(struct sock *sk, long timeo);
-static void sctp_wait_for_close(struct sock *sk, long timeo);
-static void sctp_destruct_sock(struct sock *sk);
-static struct sctp_af *sctp_sockaddr_af(struct sctp_sock *opt,
-					union sctp_addr *addr, int len);
-static int sctp_bindx_add(struct sock *, struct sockaddr *, int);
-static int sctp_bindx_rem(struct sock *, struct sockaddr *, int);
-static int sctp_send_asconf_add_ip(struct sock *, struct sockaddr *, int);
-static int sctp_send_asconf_del_ip(struct sock *, struct sockaddr *, int);
-static int sctp_send_asconf(struct sctp_association *asoc,
-			    struct sctp_chunk *chunk);
-static int sctp_do_bind(struct sock *, union sctp_addr *, int);
-static int sctp_autobind(struct sock *sk);
-static int sctp_sock_migrate(struct sock *oldsk, struct sock *newsk,
-			     struct sctp_association *assoc,
-			     enum sctp_socket_type type);
+/* Forward declarations क्रम पूर्णांकernal helper functions. */
+अटल bool sctp_ग_लिखोable(काष्ठा sock *sk);
+अटल व्योम sctp_wमुक्त(काष्ठा sk_buff *skb);
+अटल पूर्णांक sctp_रुको_क्रम_sndbuf(काष्ठा sctp_association *asoc, दीर्घ *समयo_p,
+				माप_प्रकार msg_len);
+अटल पूर्णांक sctp_रुको_क्रम_packet(काष्ठा sock *sk, पूर्णांक *err, दीर्घ *समयo_p);
+अटल पूर्णांक sctp_रुको_क्रम_connect(काष्ठा sctp_association *, दीर्घ *समयo_p);
+अटल पूर्णांक sctp_रुको_क्रम_accept(काष्ठा sock *sk, दीर्घ समयo);
+अटल व्योम sctp_रुको_क्रम_बंद(काष्ठा sock *sk, दीर्घ समयo);
+अटल व्योम sctp_deकाष्ठा_sock(काष्ठा sock *sk);
+अटल काष्ठा sctp_af *sctp_sockaddr_af(काष्ठा sctp_sock *opt,
+					जोड़ sctp_addr *addr, पूर्णांक len);
+अटल पूर्णांक sctp_bindx_add(काष्ठा sock *, काष्ठा sockaddr *, पूर्णांक);
+अटल पूर्णांक sctp_bindx_rem(काष्ठा sock *, काष्ठा sockaddr *, पूर्णांक);
+अटल पूर्णांक sctp_send_asconf_add_ip(काष्ठा sock *, काष्ठा sockaddr *, पूर्णांक);
+अटल पूर्णांक sctp_send_asconf_del_ip(काष्ठा sock *, काष्ठा sockaddr *, पूर्णांक);
+अटल पूर्णांक sctp_send_asconf(काष्ठा sctp_association *asoc,
+			    काष्ठा sctp_chunk *chunk);
+अटल पूर्णांक sctp_करो_bind(काष्ठा sock *, जोड़ sctp_addr *, पूर्णांक);
+अटल पूर्णांक sctp_स्वतःbind(काष्ठा sock *sk);
+अटल पूर्णांक sctp_sock_migrate(काष्ठा sock *oldsk, काष्ठा sock *newsk,
+			     काष्ठा sctp_association *assoc,
+			     क्रमागत sctp_socket_type type);
 
-static unsigned long sctp_memory_pressure;
-static atomic_long_t sctp_memory_allocated;
-struct percpu_counter sctp_sockets_allocated;
+अटल अचिन्हित दीर्घ sctp_memory_pressure;
+अटल atomic_दीर्घ_t sctp_memory_allocated;
+काष्ठा percpu_counter sctp_sockets_allocated;
 
-static void sctp_enter_memory_pressure(struct sock *sk)
-{
+अटल व्योम sctp_enter_memory_pressure(काष्ठा sock *sk)
+अणु
 	sctp_memory_pressure = 1;
-}
+पूर्ण
 
 
-/* Get the sndbuf space available at the time on the association.  */
-static inline int sctp_wspace(struct sctp_association *asoc)
-{
-	struct sock *sk = asoc->base.sk;
+/* Get the sndbuf space available at the समय on the association.  */
+अटल अंतरभूत पूर्णांक sctp_wspace(काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
 
-	return asoc->ep->sndbuf_policy ? sk->sk_sndbuf - asoc->sndbuf_used
+	वापस asoc->ep->sndbuf_policy ? sk->sk_sndbuf - asoc->sndbuf_used
 				       : sk_stream_wspace(sk);
-}
+पूर्ण
 
 /* Increment the used sndbuf space count of the corresponding association by
  * the size of the outgoing data chunk.
- * Also, set the skb destructor for sndbuf accounting later.
+ * Also, set the skb deकाष्ठाor क्रम sndbuf accounting later.
  *
  * Since it is always 1-1 between chunk and skb, and also a new skb is always
- * allocated for chunk bundling in sctp_packet_transmit(), we can use the
- * destructor in the data chunk skb for the purpose of the sndbuf space
+ * allocated क्रम chunk bundling in sctp_packet_transmit(), we can use the
+ * deकाष्ठाor in the data chunk skb क्रम the purpose of the sndbuf space
  * tracking.
  */
-static inline void sctp_set_owner_w(struct sctp_chunk *chunk)
-{
-	struct sctp_association *asoc = chunk->asoc;
-	struct sock *sk = asoc->base.sk;
+अटल अंतरभूत व्योम sctp_set_owner_w(काष्ठा sctp_chunk *chunk)
+अणु
+	काष्ठा sctp_association *asoc = chunk->asoc;
+	काष्ठा sock *sk = asoc->base.sk;
 
 	/* The sndbuf space is tracked per association.  */
 	sctp_association_hold(asoc);
 
-	if (chunk->shkey)
+	अगर (chunk->shkey)
 		sctp_auth_shkey_hold(chunk->shkey);
 
 	skb_set_owner_w(chunk->skb, sk);
 
-	chunk->skb->destructor = sctp_wfree;
-	/* Save the chunk pointer in skb for sctp_wfree to use later.  */
-	skb_shinfo(chunk->skb)->destructor_arg = chunk;
+	chunk->skb->deकाष्ठाor = sctp_wमुक्त;
+	/* Save the chunk poपूर्णांकer in skb क्रम sctp_wमुक्त to use later.  */
+	skb_shinfo(chunk->skb)->deकाष्ठाor_arg = chunk;
 
-	refcount_add(sizeof(struct sctp_chunk), &sk->sk_wmem_alloc);
-	asoc->sndbuf_used += chunk->skb->truesize + sizeof(struct sctp_chunk);
-	sk->sk_wmem_queued += chunk->skb->truesize + sizeof(struct sctp_chunk);
-	sk_mem_charge(sk, chunk->skb->truesize);
-}
+	refcount_add(माप(काष्ठा sctp_chunk), &sk->sk_wmem_alloc);
+	asoc->sndbuf_used += chunk->skb->truesize + माप(काष्ठा sctp_chunk);
+	sk->sk_wmem_queued += chunk->skb->truesize + माप(काष्ठा sctp_chunk);
+	sk_mem_अक्षरge(sk, chunk->skb->truesize);
+पूर्ण
 
-static void sctp_clear_owner_w(struct sctp_chunk *chunk)
-{
+अटल व्योम sctp_clear_owner_w(काष्ठा sctp_chunk *chunk)
+अणु
 	skb_orphan(chunk->skb);
-}
+पूर्ण
 
-#define traverse_and_process()	\
-do {				\
+#घोषणा traverse_and_process()	\
+करो अणु				\
 	msg = chunk->msg;	\
-	if (msg == prev_msg)	\
-		continue;	\
-	list_for_each_entry(c, &msg->chunks, frag_list) {	\
-		if ((clear && asoc->base.sk == c->skb->sk) ||	\
+	अगर (msg == prev_msg)	\
+		जारी;	\
+	list_क्रम_each_entry(c, &msg->chunks, frag_list) अणु	\
+		अगर ((clear && asoc->base.sk == c->skb->sk) ||	\
 		    (!clear && asoc->base.sk != c->skb->sk))	\
 			cb(c);	\
-	}			\
+	पूर्ण			\
 	prev_msg = msg;		\
-} while (0)
+पूर्ण जबतक (0)
 
-static void sctp_for_each_tx_datachunk(struct sctp_association *asoc,
+अटल व्योम sctp_क्रम_each_tx_datachunk(काष्ठा sctp_association *asoc,
 				       bool clear,
-				       void (*cb)(struct sctp_chunk *))
+				       व्योम (*cb)(काष्ठा sctp_chunk *))
 
-{
-	struct sctp_datamsg *msg, *prev_msg = NULL;
-	struct sctp_outq *q = &asoc->outqueue;
-	struct sctp_chunk *chunk, *c;
-	struct sctp_transport *t;
+अणु
+	काष्ठा sctp_datamsg *msg, *prev_msg = शून्य;
+	काष्ठा sctp_outq *q = &asoc->outqueue;
+	काष्ठा sctp_chunk *chunk, *c;
+	काष्ठा sctp_transport *t;
 
-	list_for_each_entry(t, &asoc->peer.transport_addr_list, transports)
-		list_for_each_entry(chunk, &t->transmitted, transmitted_list)
+	list_क्रम_each_entry(t, &asoc->peer.transport_addr_list, transports)
+		list_क्रम_each_entry(chunk, &t->transmitted, transmitted_list)
 			traverse_and_process();
 
-	list_for_each_entry(chunk, &q->retransmit, transmitted_list)
+	list_क्रम_each_entry(chunk, &q->retransmit, transmitted_list)
 		traverse_and_process();
 
-	list_for_each_entry(chunk, &q->sacked, transmitted_list)
+	list_क्रम_each_entry(chunk, &q->sacked, transmitted_list)
 		traverse_and_process();
 
-	list_for_each_entry(chunk, &q->abandoned, transmitted_list)
+	list_क्रम_each_entry(chunk, &q->abanकरोned, transmitted_list)
 		traverse_and_process();
 
-	list_for_each_entry(chunk, &q->out_chunk_list, list)
+	list_क्रम_each_entry(chunk, &q->out_chunk_list, list)
 		traverse_and_process();
-}
+पूर्ण
 
-static void sctp_for_each_rx_skb(struct sctp_association *asoc, struct sock *sk,
-				 void (*cb)(struct sk_buff *, struct sock *))
+अटल व्योम sctp_क्रम_each_rx_skb(काष्ठा sctp_association *asoc, काष्ठा sock *sk,
+				 व्योम (*cb)(काष्ठा sk_buff *, काष्ठा sock *))
 
-{
-	struct sk_buff *skb, *tmp;
+अणु
+	काष्ठा sk_buff *skb, *पंचांगp;
 
-	sctp_skb_for_each(skb, &asoc->ulpq.lobby, tmp)
+	sctp_skb_क्रम_each(skb, &asoc->ulpq.lobby, पंचांगp)
 		cb(skb, sk);
 
-	sctp_skb_for_each(skb, &asoc->ulpq.reasm, tmp)
+	sctp_skb_क्रम_each(skb, &asoc->ulpq.reयंत्र, पंचांगp)
 		cb(skb, sk);
 
-	sctp_skb_for_each(skb, &asoc->ulpq.reasm_uo, tmp)
+	sctp_skb_क्रम_each(skb, &asoc->ulpq.reयंत्र_uo, पंचांगp)
 		cb(skb, sk);
-}
+पूर्ण
 
-/* Verify that this is a valid address. */
-static inline int sctp_verify_addr(struct sock *sk, union sctp_addr *addr,
-				   int len)
-{
-	struct sctp_af *af;
+/* Verअगरy that this is a valid address. */
+अटल अंतरभूत पूर्णांक sctp_verअगरy_addr(काष्ठा sock *sk, जोड़ sctp_addr *addr,
+				   पूर्णांक len)
+अणु
+	काष्ठा sctp_af *af;
 
-	/* Verify basic sockaddr. */
+	/* Verअगरy basic sockaddr. */
 	af = sctp_sockaddr_af(sctp_sk(sk), addr, len);
-	if (!af)
-		return -EINVAL;
+	अगर (!af)
+		वापस -EINVAL;
 
 	/* Is this a valid SCTP address?  */
-	if (!af->addr_valid(addr, sctp_sk(sk), NULL))
-		return -EINVAL;
+	अगर (!af->addr_valid(addr, sctp_sk(sk), शून्य))
+		वापस -EINVAL;
 
-	if (!sctp_sk(sk)->pf->send_verify(sctp_sk(sk), (addr)))
-		return -EINVAL;
+	अगर (!sctp_sk(sk)->pf->send_verअगरy(sctp_sk(sk), (addr)))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Look up the association by its id.  If this is not a UDP-style
  * socket, the ID field is always ignored.
  */
-struct sctp_association *sctp_id2assoc(struct sock *sk, sctp_assoc_t id)
-{
-	struct sctp_association *asoc = NULL;
+काष्ठा sctp_association *sctp_id2assoc(काष्ठा sock *sk, sctp_assoc_t id)
+अणु
+	काष्ठा sctp_association *asoc = शून्य;
 
 	/* If this is not a UDP-style socket, assoc id should be ignored. */
-	if (!sctp_style(sk, UDP)) {
-		/* Return NULL if the socket state is not ESTABLISHED. It
+	अगर (!sctp_style(sk, UDP)) अणु
+		/* Return शून्य अगर the socket state is not ESTABLISHED. It
 		 * could be a TCP-style listening socket or a socket which
 		 * hasn't yet called connect() to establish an association.
 		 */
-		if (!sctp_sstate(sk, ESTABLISHED) && !sctp_sstate(sk, CLOSING))
-			return NULL;
+		अगर (!sctp_sstate(sk, ESTABLISHED) && !sctp_sstate(sk, CLOSING))
+			वापस शून्य;
 
 		/* Get the first and the only association from the list. */
-		if (!list_empty(&sctp_sk(sk)->ep->asocs))
+		अगर (!list_empty(&sctp_sk(sk)->ep->asocs))
 			asoc = list_entry(sctp_sk(sk)->ep->asocs.next,
-					  struct sctp_association, asocs);
-		return asoc;
-	}
+					  काष्ठा sctp_association, asocs);
+		वापस asoc;
+	पूर्ण
 
 	/* Otherwise this is a UDP-style socket. */
-	if (id <= SCTP_ALL_ASSOC)
-		return NULL;
+	अगर (id <= SCTP_ALL_ASSOC)
+		वापस शून्य;
 
 	spin_lock_bh(&sctp_assocs_id_lock);
-	asoc = (struct sctp_association *)idr_find(&sctp_assocs_id, (int)id);
-	if (asoc && (asoc->base.sk != sk || asoc->base.dead))
-		asoc = NULL;
+	asoc = (काष्ठा sctp_association *)idr_find(&sctp_assocs_id, (पूर्णांक)id);
+	अगर (asoc && (asoc->base.sk != sk || asoc->base.dead))
+		asoc = शून्य;
 	spin_unlock_bh(&sctp_assocs_id_lock);
 
-	return asoc;
-}
+	वापस asoc;
+पूर्ण
 
 /* Look up the transport from an address and an assoc id. If both address and
- * id are specified, the associations matching the address and the id should be
+ * id are specअगरied, the associations matching the address and the id should be
  * the same.
  */
-static struct sctp_transport *sctp_addr_id2transport(struct sock *sk,
-					      struct sockaddr_storage *addr,
+अटल काष्ठा sctp_transport *sctp_addr_id2transport(काष्ठा sock *sk,
+					      काष्ठा sockaddr_storage *addr,
 					      sctp_assoc_t id)
-{
-	struct sctp_association *addr_asoc = NULL, *id_asoc = NULL;
-	struct sctp_af *af = sctp_get_af_specific(addr->ss_family);
-	union sctp_addr *laddr = (union sctp_addr *)addr;
-	struct sctp_transport *transport;
+अणु
+	काष्ठा sctp_association *addr_asoc = शून्य, *id_asoc = शून्य;
+	काष्ठा sctp_af *af = sctp_get_af_specअगरic(addr->ss_family);
+	जोड़ sctp_addr *laddr = (जोड़ sctp_addr *)addr;
+	काष्ठा sctp_transport *transport;
 
-	if (!af || sctp_verify_addr(sk, laddr, af->sockaddr_len))
-		return NULL;
+	अगर (!af || sctp_verअगरy_addr(sk, laddr, af->sockaddr_len))
+		वापस शून्य;
 
-	addr_asoc = sctp_endpoint_lookup_assoc(sctp_sk(sk)->ep,
+	addr_asoc = sctp_endpoपूर्णांक_lookup_assoc(sctp_sk(sk)->ep,
 					       laddr,
 					       &transport);
 
-	if (!addr_asoc)
-		return NULL;
+	अगर (!addr_asoc)
+		वापस शून्य;
 
 	id_asoc = sctp_id2assoc(sk, id);
-	if (id_asoc && (id_asoc != addr_asoc))
-		return NULL;
+	अगर (id_asoc && (id_asoc != addr_asoc))
+		वापस शून्य;
 
-	sctp_get_pf_specific(sk->sk_family)->addr_to_user(sctp_sk(sk),
-						(union sctp_addr *)addr);
+	sctp_get_pf_specअगरic(sk->sk_family)->addr_to_user(sctp_sk(sk),
+						(जोड़ sctp_addr *)addr);
 
-	return transport;
-}
+	वापस transport;
+पूर्ण
 
 /* API 3.1.2 bind() - UDP Style Syntax
  * The syntax of bind() is,
  *
- *   ret = bind(int sd, struct sockaddr *addr, int addrlen);
+ *   ret = bind(पूर्णांक sd, काष्ठा sockaddr *addr, पूर्णांक addrlen);
  *
- *   sd      - the socket descriptor returned by socket().
- *   addr    - the address structure (struct sockaddr_in or struct
+ *   sd      - the socket descriptor वापसed by socket().
+ *   addr    - the address काष्ठाure (काष्ठा sockaddr_in or काष्ठा
  *             sockaddr_in6 [RFC 2553]),
- *   addr_len - the size of the address structure.
+ *   addr_len - the size of the address काष्ठाure.
  */
-static int sctp_bind(struct sock *sk, struct sockaddr *addr, int addr_len)
-{
-	int retval = 0;
+अटल पूर्णांक sctp_bind(काष्ठा sock *sk, काष्ठा sockaddr *addr, पूर्णांक addr_len)
+अणु
+	पूर्णांक retval = 0;
 
 	lock_sock(sk);
 
@@ -313,127 +314,127 @@ static int sctp_bind(struct sock *sk, struct sockaddr *addr, int addr_len)
 		 addr, addr_len);
 
 	/* Disallow binding twice. */
-	if (!sctp_sk(sk)->ep->base.bind_addr.port)
-		retval = sctp_do_bind(sk, (union sctp_addr *)addr,
+	अगर (!sctp_sk(sk)->ep->base.bind_addr.port)
+		retval = sctp_करो_bind(sk, (जोड़ sctp_addr *)addr,
 				      addr_len);
-	else
+	अन्यथा
 		retval = -EINVAL;
 
 	release_sock(sk);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_get_port_local(struct sock *, union sctp_addr *);
+अटल पूर्णांक sctp_get_port_local(काष्ठा sock *, जोड़ sctp_addr *);
 
-/* Verify this is a valid sockaddr. */
-static struct sctp_af *sctp_sockaddr_af(struct sctp_sock *opt,
-					union sctp_addr *addr, int len)
-{
-	struct sctp_af *af;
+/* Verअगरy this is a valid sockaddr. */
+अटल काष्ठा sctp_af *sctp_sockaddr_af(काष्ठा sctp_sock *opt,
+					जोड़ sctp_addr *addr, पूर्णांक len)
+अणु
+	काष्ठा sctp_af *af;
 
 	/* Check minimum size.  */
-	if (len < sizeof (struct sockaddr))
-		return NULL;
+	अगर (len < माप (काष्ठा sockaddr))
+		वापस शून्य;
 
-	if (!opt->pf->af_supported(addr->sa.sa_family, opt))
-		return NULL;
+	अगर (!opt->pf->af_supported(addr->sa.sa_family, opt))
+		वापस शून्य;
 
-	if (addr->sa.sa_family == AF_INET6) {
-		if (len < SIN6_LEN_RFC2133)
-			return NULL;
+	अगर (addr->sa.sa_family == AF_INET6) अणु
+		अगर (len < SIN6_LEN_RFC2133)
+			वापस शून्य;
 		/* V4 mapped address are really of AF_INET family */
-		if (ipv6_addr_v4mapped(&addr->v6.sin6_addr) &&
+		अगर (ipv6_addr_v4mapped(&addr->v6.sin6_addr) &&
 		    !opt->pf->af_supported(AF_INET, opt))
-			return NULL;
-	}
+			वापस शून्य;
+	पूर्ण
 
 	/* If we get this far, af is valid. */
-	af = sctp_get_af_specific(addr->sa.sa_family);
+	af = sctp_get_af_specअगरic(addr->sa.sa_family);
 
-	if (len < af->sockaddr_len)
-		return NULL;
+	अगर (len < af->sockaddr_len)
+		वापस शून्य;
 
-	return af;
-}
+	वापस af;
+पूर्ण
 
-static void sctp_auto_asconf_init(struct sctp_sock *sp)
-{
-	struct net *net = sock_net(&sp->inet.sk);
+अटल व्योम sctp_स्वतः_asconf_init(काष्ठा sctp_sock *sp)
+अणु
+	काष्ठा net *net = sock_net(&sp->inet.sk);
 
-	if (net->sctp.default_auto_asconf) {
+	अगर (net->sctp.शेष_स्वतः_asconf) अणु
 		spin_lock(&net->sctp.addr_wq_lock);
-		list_add_tail(&sp->auto_asconf_list, &net->sctp.auto_asconf_splist);
+		list_add_tail(&sp->स्वतः_asconf_list, &net->sctp.स्वतः_asconf_splist);
 		spin_unlock(&net->sctp.addr_wq_lock);
-		sp->do_auto_asconf = 1;
-	}
-}
+		sp->करो_स्वतः_asconf = 1;
+	पूर्ण
+पूर्ण
 
-/* Bind a local address either to an endpoint or to an association.  */
-static int sctp_do_bind(struct sock *sk, union sctp_addr *addr, int len)
-{
-	struct net *net = sock_net(sk);
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
-	struct sctp_bind_addr *bp = &ep->base.bind_addr;
-	struct sctp_af *af;
-	unsigned short snum;
-	int ret = 0;
+/* Bind a local address either to an endpoपूर्णांक or to an association.  */
+अटल पूर्णांक sctp_करो_bind(काष्ठा sock *sk, जोड़ sctp_addr *addr, पूर्णांक len)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep = sp->ep;
+	काष्ठा sctp_bind_addr *bp = &ep->base.bind_addr;
+	काष्ठा sctp_af *af;
+	अचिन्हित लघु snum;
+	पूर्णांक ret = 0;
 
-	/* Common sockaddr verification. */
+	/* Common sockaddr verअगरication. */
 	af = sctp_sockaddr_af(sp, addr, len);
-	if (!af) {
+	अगर (!af) अणु
 		pr_debug("%s: sk:%p, newaddr:%p, len:%d EINVAL\n",
 			 __func__, sk, addr, len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	snum = ntohs(addr->v4.sin_port);
 
 	pr_debug("%s: sk:%p, new addr:%pISc, port:%d, new port:%d, len:%d\n",
 		 __func__, sk, &addr->sa, bp->port, snum, len);
 
-	/* PF specific bind() address verification. */
-	if (!sp->pf->bind_verify(sp, addr))
-		return -EADDRNOTAVAIL;
+	/* PF specअगरic bind() address verअगरication. */
+	अगर (!sp->pf->bind_verअगरy(sp, addr))
+		वापस -EADDRNOTAVAIL;
 
 	/* We must either be unbound, or bind to the same port.
-	 * It's OK to allow 0 ports if we are already bound.
-	 * We'll just inhert an already bound port in this case
+	 * It's OK to allow 0 ports अगर we are alपढ़ोy bound.
+	 * We'll just inhert an alपढ़ोy bound port in this हाल
 	 */
-	if (bp->port) {
-		if (!snum)
+	अगर (bp->port) अणु
+		अगर (!snum)
 			snum = bp->port;
-		else if (snum != bp->port) {
+		अन्यथा अगर (snum != bp->port) अणु
 			pr_debug("%s: new port %d doesn't match existing port "
 				 "%d\n", __func__, snum, bp->port);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (snum && inet_port_requires_bind_service(net, snum) &&
+	अगर (snum && inet_port_requires_bind_service(net, snum) &&
 	    !ns_capable(net->user_ns, CAP_NET_BIND_SERVICE))
-		return -EACCES;
+		वापस -EACCES;
 
-	/* See if the address matches any of the addresses we may have
-	 * already bound before checking against other endpoints.
+	/* See अगर the address matches any of the addresses we may have
+	 * alपढ़ोy bound beक्रमe checking against other endpoपूर्णांकs.
 	 */
-	if (sctp_bind_addr_match(bp, addr, sp))
-		return -EINVAL;
+	अगर (sctp_bind_addr_match(bp, addr, sp))
+		वापस -EINVAL;
 
 	/* Make sure we are allowed to bind here.
-	 * The function sctp_get_port_local() does duplicate address
+	 * The function sctp_get_port_local() करोes duplicate address
 	 * detection.
 	 */
 	addr->v4.sin_port = htons(snum);
-	if (sctp_get_port_local(sk, addr))
-		return -EADDRINUSE;
+	अगर (sctp_get_port_local(sk, addr))
+		वापस -EADDRINUSE;
 
 	/* Refresh ephemeral port.  */
-	if (!bp->port) {
+	अगर (!bp->port) अणु
 		bp->port = inet_sk(sk)->inet_num;
-		sctp_auto_asconf_init(sp);
-	}
+		sctp_स्वतः_asconf_init(sp);
+	पूर्ण
 
 	/* Add the address to the bind address list.
 	 * Use GFP_ATOMIC since BHs will be disabled.
@@ -441,204 +442,204 @@ static int sctp_do_bind(struct sock *sk, union sctp_addr *addr, int len)
 	ret = sctp_add_bind_addr(bp, addr, af->sockaddr_len,
 				 SCTP_ADDR_SRC, GFP_ATOMIC);
 
-	if (ret) {
+	अगर (ret) अणु
 		sctp_put_port(sk);
-		return ret;
-	}
-	/* Copy back into socket for getsockname() use. */
+		वापस ret;
+	पूर्ण
+	/* Copy back पूर्णांकo socket क्रम माला_लोockname() use. */
 	inet_sk(sk)->inet_sport = htons(inet_sk(sk)->inet_num);
 	sp->pf->to_sk_saddr(addr, sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
  /* ADDIP Section 4.1.1 Congestion Control of ASCONF Chunks
  *
  * R1) One and only one ASCONF Chunk MAY be in transit and unacknowledged
- * at any one time.  If a sender, after sending an ASCONF chunk, decides
- * it needs to transfer another ASCONF Chunk, it MUST wait until the
- * ASCONF-ACK Chunk returns from the previous ASCONF Chunk before sending a
+ * at any one समय.  If a sender, after sending an ASCONF chunk, decides
+ * it needs to transfer another ASCONF Chunk, it MUST रुको until the
+ * ASCONF-ACK Chunk वापसs from the previous ASCONF Chunk beक्रमe sending a
  * subsequent ASCONF. Note this restriction binds each side, so at any
- * time two ASCONF may be in-transit on any given association (one sent
- * from each endpoint).
+ * समय two ASCONF may be in-transit on any given association (one sent
+ * from each endpoपूर्णांक).
  */
-static int sctp_send_asconf(struct sctp_association *asoc,
-			    struct sctp_chunk *chunk)
-{
-	int retval = 0;
+अटल पूर्णांक sctp_send_asconf(काष्ठा sctp_association *asoc,
+			    काष्ठा sctp_chunk *chunk)
+अणु
+	पूर्णांक retval = 0;
 
-	/* If there is an outstanding ASCONF chunk, queue it for later
+	/* If there is an outstanding ASCONF chunk, queue it क्रम later
 	 * transmission.
 	 */
-	if (asoc->addip_last_asconf) {
+	अगर (asoc->addip_last_asconf) अणु
 		list_add_tail(&chunk->list, &asoc->addip_chunk_list);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Hold the chunk until an ASCONF_ACK is received. */
 	sctp_chunk_hold(chunk);
 	retval = sctp_primitive_ASCONF(asoc->base.net, asoc, chunk);
-	if (retval)
-		sctp_chunk_free(chunk);
-	else
+	अगर (retval)
+		sctp_chunk_मुक्त(chunk);
+	अन्यथा
 		asoc->addip_last_asconf = chunk;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* Add a list of addresses as bind addresses to local endpoint or
+/* Add a list of addresses as bind addresses to local endpoपूर्णांक or
  * association.
  *
- * Basically run through each address specified in the addrs/addrcnt
- * array/length pair, determine if it is IPv6 or IPv4 and call
- * sctp_do_bind() on it.
+ * Basically run through each address specअगरied in the addrs/addrcnt
+ * array/length pair, determine अगर it is IPv6 or IPv4 and call
+ * sctp_करो_bind() on it.
  *
  * If any of them fails, then the operation will be reversed and the
- * ones that were added will be removed.
+ * ones that were added will be हटाओd.
  *
  * Only sctp_setsockopt_bindx() is supposed to call this function.
  */
-static int sctp_bindx_add(struct sock *sk, struct sockaddr *addrs, int addrcnt)
-{
-	int cnt;
-	int retval = 0;
-	void *addr_buf;
-	struct sockaddr *sa_addr;
-	struct sctp_af *af;
+अटल पूर्णांक sctp_bindx_add(काष्ठा sock *sk, काष्ठा sockaddr *addrs, पूर्णांक addrcnt)
+अणु
+	पूर्णांक cnt;
+	पूर्णांक retval = 0;
+	व्योम *addr_buf;
+	काष्ठा sockaddr *sa_addr;
+	काष्ठा sctp_af *af;
 
 	pr_debug("%s: sk:%p, addrs:%p, addrcnt:%d\n", __func__, sk,
 		 addrs, addrcnt);
 
 	addr_buf = addrs;
-	for (cnt = 0; cnt < addrcnt; cnt++) {
+	क्रम (cnt = 0; cnt < addrcnt; cnt++) अणु
 		/* The list may contain either IPv4 or IPv6 address;
-		 * determine the address length for walking thru the list.
+		 * determine the address length क्रम walking thru the list.
 		 */
 		sa_addr = addr_buf;
-		af = sctp_get_af_specific(sa_addr->sa_family);
-		if (!af) {
+		af = sctp_get_af_specअगरic(sa_addr->sa_family);
+		अगर (!af) अणु
 			retval = -EINVAL;
-			goto err_bindx_add;
-		}
+			जाओ err_bindx_add;
+		पूर्ण
 
-		retval = sctp_do_bind(sk, (union sctp_addr *)sa_addr,
+		retval = sctp_करो_bind(sk, (जोड़ sctp_addr *)sa_addr,
 				      af->sockaddr_len);
 
 		addr_buf += af->sockaddr_len;
 
 err_bindx_add:
-		if (retval < 0) {
+		अगर (retval < 0) अणु
 			/* Failed. Cleanup the ones that have been added */
-			if (cnt > 0)
+			अगर (cnt > 0)
 				sctp_bindx_rem(sk, addrs, cnt);
-			return retval;
-		}
-	}
+			वापस retval;
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* Send an ASCONF chunk with Add IP address parameters to all the peers of the
- * associations that are part of the endpoint indicating that a list of local
- * addresses are added to the endpoint.
+ * associations that are part of the endpoपूर्णांक indicating that a list of local
+ * addresses are added to the endpoपूर्णांक.
  *
- * If any of the addresses is already in the bind address list of the
- * association, we do not send the chunk for that association.  But it will not
+ * If any of the addresses is alपढ़ोy in the bind address list of the
+ * association, we करो not send the chunk क्रम that association.  But it will not
  * affect other associations.
  *
  * Only sctp_setsockopt_bindx() is supposed to call this function.
  */
-static int sctp_send_asconf_add_ip(struct sock		*sk,
-				   struct sockaddr	*addrs,
-				   int 			addrcnt)
-{
-	struct sctp_sock		*sp;
-	struct sctp_endpoint		*ep;
-	struct sctp_association		*asoc;
-	struct sctp_bind_addr		*bp;
-	struct sctp_chunk		*chunk;
-	struct sctp_sockaddr_entry	*laddr;
-	union sctp_addr			*addr;
-	union sctp_addr			saveaddr;
-	void				*addr_buf;
-	struct sctp_af			*af;
-	struct list_head		*p;
-	int 				i;
-	int 				retval = 0;
+अटल पूर्णांक sctp_send_asconf_add_ip(काष्ठा sock		*sk,
+				   काष्ठा sockaddr	*addrs,
+				   पूर्णांक 			addrcnt)
+अणु
+	काष्ठा sctp_sock		*sp;
+	काष्ठा sctp_endpoपूर्णांक		*ep;
+	काष्ठा sctp_association		*asoc;
+	काष्ठा sctp_bind_addr		*bp;
+	काष्ठा sctp_chunk		*chunk;
+	काष्ठा sctp_sockaddr_entry	*laddr;
+	जोड़ sctp_addr			*addr;
+	जोड़ sctp_addr			saveaddr;
+	व्योम				*addr_buf;
+	काष्ठा sctp_af			*af;
+	काष्ठा list_head		*p;
+	पूर्णांक 				i;
+	पूर्णांक 				retval = 0;
 
 	sp = sctp_sk(sk);
 	ep = sp->ep;
 
-	if (!ep->asconf_enable)
-		return retval;
+	अगर (!ep->asconf_enable)
+		वापस retval;
 
 	pr_debug("%s: sk:%p, addrs:%p, addrcnt:%d\n",
 		 __func__, sk, addrs, addrcnt);
 
-	list_for_each_entry(asoc, &ep->asocs, asocs) {
-		if (!asoc->peer.asconf_capable)
-			continue;
+	list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
+		अगर (!asoc->peer.asconf_capable)
+			जारी;
 
-		if (asoc->peer.addip_disabled_mask & SCTP_PARAM_ADD_IP)
-			continue;
+		अगर (asoc->peer.addip_disabled_mask & SCTP_PARAM_ADD_IP)
+			जारी;
 
-		if (!sctp_state(asoc, ESTABLISHED))
-			continue;
+		अगर (!sctp_state(asoc, ESTABLISHED))
+			जारी;
 
-		/* Check if any address in the packed array of addresses is
+		/* Check अगर any address in the packed array of addresses is
 		 * in the bind address list of the association. If so,
-		 * do not send the asconf chunk to its peer, but continue with
+		 * करो not send the asconf chunk to its peer, but जारी with
 		 * other associations.
 		 */
 		addr_buf = addrs;
-		for (i = 0; i < addrcnt; i++) {
+		क्रम (i = 0; i < addrcnt; i++) अणु
 			addr = addr_buf;
-			af = sctp_get_af_specific(addr->v4.sin_family);
-			if (!af) {
+			af = sctp_get_af_specअगरic(addr->v4.sin_family);
+			अगर (!af) अणु
 				retval = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (sctp_assoc_lookup_laddr(asoc, addr))
-				break;
+			अगर (sctp_assoc_lookup_laddr(asoc, addr))
+				अवरोध;
 
 			addr_buf += af->sockaddr_len;
-		}
-		if (i < addrcnt)
-			continue;
+		पूर्ण
+		अगर (i < addrcnt)
+			जारी;
 
 		/* Use the first valid address in bind addr list of
 		 * association as Address Parameter of ASCONF CHUNK.
 		 */
 		bp = &asoc->base.bind_addr;
 		p = bp->address_list.next;
-		laddr = list_entry(p, struct sctp_sockaddr_entry, list);
+		laddr = list_entry(p, काष्ठा sctp_sockaddr_entry, list);
 		chunk = sctp_make_asconf_update_ip(asoc, &laddr->a, addrs,
 						   addrcnt, SCTP_PARAM_ADD_IP);
-		if (!chunk) {
+		अगर (!chunk) अणु
 			retval = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Add the new addresses to the bind address list with
 		 * use_as_src set to 0.
 		 */
 		addr_buf = addrs;
-		for (i = 0; i < addrcnt; i++) {
+		क्रम (i = 0; i < addrcnt; i++) अणु
 			addr = addr_buf;
-			af = sctp_get_af_specific(addr->v4.sin_family);
-			memcpy(&saveaddr, addr, af->sockaddr_len);
+			af = sctp_get_af_specअगरic(addr->v4.sin_family);
+			स_नकल(&saveaddr, addr, af->sockaddr_len);
 			retval = sctp_add_bind_addr(bp, &saveaddr,
-						    sizeof(saveaddr),
+						    माप(saveaddr),
 						    SCTP_ADDR_NEW, GFP_ATOMIC);
 			addr_buf += af->sockaddr_len;
-		}
-		if (asoc->src_out_of_asoc_ok) {
-			struct sctp_transport *trans;
+		पूर्ण
+		अगर (asoc->src_out_of_asoc_ok) अणु
+			काष्ठा sctp_transport *trans;
 
-			list_for_each_entry(trans,
-			    &asoc->peer.transport_addr_list, transports) {
+			list_क्रम_each_entry(trans,
+			    &asoc->peer.transport_addr_list, transports) अणु
 				trans->cwnd = min(4*asoc->pathmtu, max_t(__u32,
 				    2*asoc->pathmtu, 4380));
 				trans->ssthresh = asoc->peer.i.a_rwnd;
@@ -646,204 +647,204 @@ static int sctp_send_asconf_add_ip(struct sock		*sk,
 				sctp_max_rto(asoc, trans);
 				trans->rtt = trans->srtt = trans->rttvar = 0;
 				/* Clear the source and route cache */
-				sctp_transport_route(trans, NULL,
+				sctp_transport_route(trans, शून्य,
 						     sctp_sk(asoc->base.sk));
-			}
-		}
+			पूर्ण
+		पूर्ण
 		retval = sctp_send_asconf(asoc, chunk);
-	}
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* Remove a list of addresses from bind addresses list.  Do not remove the
+/* Remove a list of addresses from bind addresses list.  Do not हटाओ the
  * last address.
  *
- * Basically run through each address specified in the addrs/addrcnt
- * array/length pair, determine if it is IPv6 or IPv4 and call
+ * Basically run through each address specअगरied in the addrs/addrcnt
+ * array/length pair, determine अगर it is IPv6 or IPv4 and call
  * sctp_del_bind() on it.
  *
  * If any of them fails, then the operation will be reversed and the
- * ones that were removed will be added back.
+ * ones that were हटाओd will be added back.
  *
- * At least one address has to be left; if only one address is
- * available, the operation will return -EBUSY.
+ * At least one address has to be left; अगर only one address is
+ * available, the operation will वापस -EBUSY.
  *
  * Only sctp_setsockopt_bindx() is supposed to call this function.
  */
-static int sctp_bindx_rem(struct sock *sk, struct sockaddr *addrs, int addrcnt)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
-	int cnt;
-	struct sctp_bind_addr *bp = &ep->base.bind_addr;
-	int retval = 0;
-	void *addr_buf;
-	union sctp_addr *sa_addr;
-	struct sctp_af *af;
+अटल पूर्णांक sctp_bindx_rem(काष्ठा sock *sk, काष्ठा sockaddr *addrs, पूर्णांक addrcnt)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep = sp->ep;
+	पूर्णांक cnt;
+	काष्ठा sctp_bind_addr *bp = &ep->base.bind_addr;
+	पूर्णांक retval = 0;
+	व्योम *addr_buf;
+	जोड़ sctp_addr *sa_addr;
+	काष्ठा sctp_af *af;
 
 	pr_debug("%s: sk:%p, addrs:%p, addrcnt:%d\n",
 		 __func__, sk, addrs, addrcnt);
 
 	addr_buf = addrs;
-	for (cnt = 0; cnt < addrcnt; cnt++) {
-		/* If the bind address list is empty or if there is only one
-		 * bind address, there is nothing more to be removed (we need
+	क्रम (cnt = 0; cnt < addrcnt; cnt++) अणु
+		/* If the bind address list is empty or अगर there is only one
+		 * bind address, there is nothing more to be हटाओd (we need
 		 * at least one address here).
 		 */
-		if (list_empty(&bp->address_list) ||
-		    (sctp_list_single_entry(&bp->address_list))) {
+		अगर (list_empty(&bp->address_list) ||
+		    (sctp_list_single_entry(&bp->address_list))) अणु
 			retval = -EBUSY;
-			goto err_bindx_rem;
-		}
+			जाओ err_bindx_rem;
+		पूर्ण
 
 		sa_addr = addr_buf;
-		af = sctp_get_af_specific(sa_addr->sa.sa_family);
-		if (!af) {
+		af = sctp_get_af_specअगरic(sa_addr->sa.sa_family);
+		अगर (!af) अणु
 			retval = -EINVAL;
-			goto err_bindx_rem;
-		}
+			जाओ err_bindx_rem;
+		पूर्ण
 
-		if (!af->addr_valid(sa_addr, sp, NULL)) {
+		अगर (!af->addr_valid(sa_addr, sp, शून्य)) अणु
 			retval = -EADDRNOTAVAIL;
-			goto err_bindx_rem;
-		}
+			जाओ err_bindx_rem;
+		पूर्ण
 
-		if (sa_addr->v4.sin_port &&
-		    sa_addr->v4.sin_port != htons(bp->port)) {
+		अगर (sa_addr->v4.sin_port &&
+		    sa_addr->v4.sin_port != htons(bp->port)) अणु
 			retval = -EINVAL;
-			goto err_bindx_rem;
-		}
+			जाओ err_bindx_rem;
+		पूर्ण
 
-		if (!sa_addr->v4.sin_port)
+		अगर (!sa_addr->v4.sin_port)
 			sa_addr->v4.sin_port = htons(bp->port);
 
-		/* FIXME - There is probably a need to check if sk->sk_saddr and
+		/* FIXME - There is probably a need to check अगर sk->sk_saddr and
 		 * sk->sk_rcv_addr are currently set to one of the addresses to
-		 * be removed. This is something which needs to be looked into
+		 * be हटाओd. This is something which needs to be looked पूर्णांकo
 		 * when we are fixing the outstanding issues with multi-homing
 		 * socket routing and failover schemes. Refer to comments in
-		 * sctp_do_bind(). -daisy
+		 * sctp_करो_bind(). -daisy
 		 */
 		retval = sctp_del_bind_addr(bp, sa_addr);
 
 		addr_buf += af->sockaddr_len;
 err_bindx_rem:
-		if (retval < 0) {
-			/* Failed. Add the ones that has been removed back */
-			if (cnt > 0)
+		अगर (retval < 0) अणु
+			/* Failed. Add the ones that has been हटाओd back */
+			अगर (cnt > 0)
 				sctp_bindx_add(sk, addrs, cnt);
-			return retval;
-		}
-	}
+			वापस retval;
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* Send an ASCONF chunk with Delete IP address parameters to all the peers of
- * the associations that are part of the endpoint indicating that a list of
- * local addresses are removed from the endpoint.
+ * the associations that are part of the endpoपूर्णांक indicating that a list of
+ * local addresses are हटाओd from the endpoपूर्णांक.
  *
- * If any of the addresses is already in the bind address list of the
- * association, we do not send the chunk for that association.  But it will not
+ * If any of the addresses is alपढ़ोy in the bind address list of the
+ * association, we करो not send the chunk क्रम that association.  But it will not
  * affect other associations.
  *
  * Only sctp_setsockopt_bindx() is supposed to call this function.
  */
-static int sctp_send_asconf_del_ip(struct sock		*sk,
-				   struct sockaddr	*addrs,
-				   int			addrcnt)
-{
-	struct sctp_sock	*sp;
-	struct sctp_endpoint	*ep;
-	struct sctp_association	*asoc;
-	struct sctp_transport	*transport;
-	struct sctp_bind_addr	*bp;
-	struct sctp_chunk	*chunk;
-	union sctp_addr		*laddr;
-	void			*addr_buf;
-	struct sctp_af		*af;
-	struct sctp_sockaddr_entry *saddr;
-	int 			i;
-	int 			retval = 0;
-	int			stored = 0;
+अटल पूर्णांक sctp_send_asconf_del_ip(काष्ठा sock		*sk,
+				   काष्ठा sockaddr	*addrs,
+				   पूर्णांक			addrcnt)
+अणु
+	काष्ठा sctp_sock	*sp;
+	काष्ठा sctp_endpoपूर्णांक	*ep;
+	काष्ठा sctp_association	*asoc;
+	काष्ठा sctp_transport	*transport;
+	काष्ठा sctp_bind_addr	*bp;
+	काष्ठा sctp_chunk	*chunk;
+	जोड़ sctp_addr		*laddr;
+	व्योम			*addr_buf;
+	काष्ठा sctp_af		*af;
+	काष्ठा sctp_sockaddr_entry *saddr;
+	पूर्णांक 			i;
+	पूर्णांक 			retval = 0;
+	पूर्णांक			stored = 0;
 
-	chunk = NULL;
+	chunk = शून्य;
 	sp = sctp_sk(sk);
 	ep = sp->ep;
 
-	if (!ep->asconf_enable)
-		return retval;
+	अगर (!ep->asconf_enable)
+		वापस retval;
 
 	pr_debug("%s: sk:%p, addrs:%p, addrcnt:%d\n",
 		 __func__, sk, addrs, addrcnt);
 
-	list_for_each_entry(asoc, &ep->asocs, asocs) {
+	list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
 
-		if (!asoc->peer.asconf_capable)
-			continue;
+		अगर (!asoc->peer.asconf_capable)
+			जारी;
 
-		if (asoc->peer.addip_disabled_mask & SCTP_PARAM_DEL_IP)
-			continue;
+		अगर (asoc->peer.addip_disabled_mask & SCTP_PARAM_DEL_IP)
+			जारी;
 
-		if (!sctp_state(asoc, ESTABLISHED))
-			continue;
+		अगर (!sctp_state(asoc, ESTABLISHED))
+			जारी;
 
-		/* Check if any address in the packed array of addresses is
+		/* Check अगर any address in the packed array of addresses is
 		 * not present in the bind address list of the association.
-		 * If so, do not send the asconf chunk to its peer, but
-		 * continue with other associations.
+		 * If so, करो not send the asconf chunk to its peer, but
+		 * जारी with other associations.
 		 */
 		addr_buf = addrs;
-		for (i = 0; i < addrcnt; i++) {
+		क्रम (i = 0; i < addrcnt; i++) अणु
 			laddr = addr_buf;
-			af = sctp_get_af_specific(laddr->v4.sin_family);
-			if (!af) {
+			af = sctp_get_af_specअगरic(laddr->v4.sin_family);
+			अगर (!af) अणु
 				retval = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!sctp_assoc_lookup_laddr(asoc, laddr))
-				break;
+			अगर (!sctp_assoc_lookup_laddr(asoc, laddr))
+				अवरोध;
 
 			addr_buf += af->sockaddr_len;
-		}
-		if (i < addrcnt)
-			continue;
+		पूर्ण
+		अगर (i < addrcnt)
+			जारी;
 
 		/* Find one address in the association's bind address list
 		 * that is not in the packed array of addresses. This is to
-		 * make sure that we do not delete all the addresses in the
+		 * make sure that we करो not delete all the addresses in the
 		 * association.
 		 */
 		bp = &asoc->base.bind_addr;
-		laddr = sctp_find_unmatch_addr(bp, (union sctp_addr *)addrs,
+		laddr = sctp_find_unmatch_addr(bp, (जोड़ sctp_addr *)addrs,
 					       addrcnt, sp);
-		if ((laddr == NULL) && (addrcnt == 1)) {
-			if (asoc->asconf_addr_del_pending)
-				continue;
+		अगर ((laddr == शून्य) && (addrcnt == 1)) अणु
+			अगर (asoc->asconf_addr_del_pending)
+				जारी;
 			asoc->asconf_addr_del_pending =
-			    kzalloc(sizeof(union sctp_addr), GFP_ATOMIC);
-			if (asoc->asconf_addr_del_pending == NULL) {
+			    kzalloc(माप(जोड़ sctp_addr), GFP_ATOMIC);
+			अगर (asoc->asconf_addr_del_pending == शून्य) अणु
 				retval = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			asoc->asconf_addr_del_pending->sa.sa_family =
 				    addrs->sa_family;
 			asoc->asconf_addr_del_pending->v4.sin_port =
 				    htons(bp->port);
-			if (addrs->sa_family == AF_INET) {
-				struct sockaddr_in *sin;
+			अगर (addrs->sa_family == AF_INET) अणु
+				काष्ठा sockaddr_in *sin;
 
-				sin = (struct sockaddr_in *)addrs;
+				sin = (काष्ठा sockaddr_in *)addrs;
 				asoc->asconf_addr_del_pending->v4.sin_addr.s_addr = sin->sin_addr.s_addr;
-			} else if (addrs->sa_family == AF_INET6) {
-				struct sockaddr_in6 *sin6;
+			पूर्ण अन्यथा अगर (addrs->sa_family == AF_INET6) अणु
+				काष्ठा sockaddr_in6 *sin6;
 
-				sin6 = (struct sockaddr_in6 *)addrs;
+				sin6 = (काष्ठा sockaddr_in6 *)addrs;
 				asoc->asconf_addr_del_pending->v6.sin6_addr = sin6->sin6_addr;
-			}
+			पूर्ण
 
 			pr_debug("%s: keep the last address asoc:%p %pISc at %p\n",
 				 __func__, asoc, &asoc->asconf_addr_del_pending->sa,
@@ -851,106 +852,106 @@ static int sctp_send_asconf_del_ip(struct sock		*sk,
 
 			asoc->src_out_of_asoc_ok = 1;
 			stored = 1;
-			goto skip_mkasconf;
-		}
+			जाओ skip_mkasconf;
+		पूर्ण
 
-		if (laddr == NULL)
-			return -EINVAL;
+		अगर (laddr == शून्य)
+			वापस -EINVAL;
 
-		/* We do not need RCU protection throughout this loop
-		 * because this is done under a socket lock from the
+		/* We करो not need RCU protection throughout this loop
+		 * because this is करोne under a socket lock from the
 		 * setsockopt call.
 		 */
 		chunk = sctp_make_asconf_update_ip(asoc, laddr, addrs, addrcnt,
 						   SCTP_PARAM_DEL_IP);
-		if (!chunk) {
+		अगर (!chunk) अणु
 			retval = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 skip_mkasconf:
-		/* Reset use_as_src flag for the addresses in the bind address
+		/* Reset use_as_src flag क्रम the addresses in the bind address
 		 * list that are to be deleted.
 		 */
 		addr_buf = addrs;
-		for (i = 0; i < addrcnt; i++) {
+		क्रम (i = 0; i < addrcnt; i++) अणु
 			laddr = addr_buf;
-			af = sctp_get_af_specific(laddr->v4.sin_family);
-			list_for_each_entry(saddr, &bp->address_list, list) {
-				if (sctp_cmp_addr_exact(&saddr->a, laddr))
+			af = sctp_get_af_specअगरic(laddr->v4.sin_family);
+			list_क्रम_each_entry(saddr, &bp->address_list, list) अणु
+				अगर (sctp_cmp_addr_exact(&saddr->a, laddr))
 					saddr->state = SCTP_ADDR_DEL;
-			}
+			पूर्ण
 			addr_buf += af->sockaddr_len;
-		}
+		पूर्ण
 
-		/* Update the route and saddr entries for all the transports
+		/* Update the route and saddr entries क्रम all the transports
 		 * as some of the addresses in the bind address list are
 		 * about to be deleted and cannot be used as source addresses.
 		 */
-		list_for_each_entry(transport, &asoc->peer.transport_addr_list,
-					transports) {
-			sctp_transport_route(transport, NULL,
+		list_क्रम_each_entry(transport, &asoc->peer.transport_addr_list,
+					transports) अणु
+			sctp_transport_route(transport, शून्य,
 					     sctp_sk(asoc->base.sk));
-		}
+		पूर्ण
 
-		if (stored)
-			/* We don't need to transmit ASCONF */
-			continue;
+		अगर (stored)
+			/* We करोn't need to transmit ASCONF */
+			जारी;
 		retval = sctp_send_asconf(asoc, chunk);
-	}
+	पूर्ण
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* set addr events to assocs in the endpoint.  ep and addr_wq must be locked */
-int sctp_asconf_mgmt(struct sctp_sock *sp, struct sctp_sockaddr_entry *addrw)
-{
-	struct sock *sk = sctp_opt2sk(sp);
-	union sctp_addr *addr;
-	struct sctp_af *af;
+/* set addr events to assocs in the endpoपूर्णांक.  ep and addr_wq must be locked */
+पूर्णांक sctp_asconf_mgmt(काष्ठा sctp_sock *sp, काष्ठा sctp_sockaddr_entry *addrw)
+अणु
+	काष्ठा sock *sk = sctp_opt2sk(sp);
+	जोड़ sctp_addr *addr;
+	काष्ठा sctp_af *af;
 
-	/* It is safe to write port space in caller. */
+	/* It is safe to ग_लिखो port space in caller. */
 	addr = &addrw->a;
 	addr->v4.sin_port = htons(sp->ep->base.bind_addr.port);
-	af = sctp_get_af_specific(addr->sa.sa_family);
-	if (!af)
-		return -EINVAL;
-	if (sctp_verify_addr(sk, addr, af->sockaddr_len))
-		return -EINVAL;
+	af = sctp_get_af_specअगरic(addr->sa.sa_family);
+	अगर (!af)
+		वापस -EINVAL;
+	अगर (sctp_verअगरy_addr(sk, addr, af->sockaddr_len))
+		वापस -EINVAL;
 
-	if (addrw->state == SCTP_ADDR_NEW)
-		return sctp_send_asconf_add_ip(sk, (struct sockaddr *)addr, 1);
-	else
-		return sctp_send_asconf_del_ip(sk, (struct sockaddr *)addr, 1);
-}
+	अगर (addrw->state == SCTP_ADDR_NEW)
+		वापस sctp_send_asconf_add_ip(sk, (काष्ठा sockaddr *)addr, 1);
+	अन्यथा
+		वापस sctp_send_asconf_del_ip(sk, (काष्ठा sockaddr *)addr, 1);
+पूर्ण
 
-/* Helper for tunneling sctp_bindx() requests through sctp_setsockopt()
+/* Helper क्रम tunneling sctp_bindx() requests through sctp_setsockopt()
  *
  * API 8.1
- * int sctp_bindx(int sd, struct sockaddr *addrs, int addrcnt,
- *                int flags);
+ * पूर्णांक sctp_bindx(पूर्णांक sd, काष्ठा sockaddr *addrs, पूर्णांक addrcnt,
+ *                पूर्णांक flags);
  *
  * If sd is an IPv4 socket, the addresses passed must be IPv4 addresses.
  * If the sd is an IPv6 socket, the addresses passed can either be IPv4
  * or IPv6 addresses.
  *
- * A single address may be specified as INADDR_ANY or IN6ADDR_ANY, see
- * Section 3.1.2 for this usage.
+ * A single address may be specअगरied as INADDR_ANY or IN6ADDR_ANY, see
+ * Section 3.1.2 क्रम this usage.
  *
- * addrs is a pointer to an array of one or more socket addresses. Each
- * address is contained in its appropriate structure (i.e. struct
- * sockaddr_in or struct sockaddr_in6) the family of the address type
+ * addrs is a poपूर्णांकer to an array of one or more socket addresses. Each
+ * address is contained in its appropriate काष्ठाure (i.e. काष्ठा
+ * sockaddr_in or काष्ठा sockaddr_in6) the family of the address type
  * must be used to distinguish the address length (note that this
  * representation is termed a "packed array" of addresses). The caller
- * specifies the number of addresses in the array with addrcnt.
+ * specअगरies the number of addresses in the array with addrcnt.
  *
- * On success, sctp_bindx() returns 0. On failure, sctp_bindx() returns
- * -1, and sets errno to the appropriate error code.
+ * On success, sctp_bindx() वापसs 0. On failure, sctp_bindx() वापसs
+ * -1, and sets त्रुटि_सं to the appropriate error code.
  *
  * For SCTP, the port given in each socket address must be the same, or
- * sctp_bindx() will fail, setting errno to EINVAL.
+ * sctp_bindx() will fail, setting त्रुटि_सं to EINVAL.
  *
- * The flags parameter is formed from the bitwise OR of zero or more of
+ * The flags parameter is क्रमmed from the bitwise OR of zero or more of
  * the following currently defined flags:
  *
  * SCTP_BINDX_ADD_ADDR
@@ -958,576 +959,576 @@ int sctp_asconf_mgmt(struct sctp_sock *sp, struct sctp_sockaddr_entry *addrw)
  * SCTP_BINDX_REM_ADDR
  *
  * SCTP_BINDX_ADD_ADDR directs SCTP to add the given addresses to the
- * association, and SCTP_BINDX_REM_ADDR directs SCTP to remove the given
+ * association, and SCTP_BINDX_REM_ADDR directs SCTP to हटाओ the given
  * addresses from the association. The two flags are mutually exclusive;
- * if both are given, sctp_bindx() will fail with EINVAL. A caller may
- * not remove all addresses from an association; sctp_bindx() will
+ * अगर both are given, sctp_bindx() will fail with EINVAL. A caller may
+ * not हटाओ all addresses from an association; sctp_bindx() will
  * reject such an attempt with EINVAL.
  *
  * An application can use sctp_bindx(SCTP_BINDX_ADD_ADDR) to associate
- * additional addresses with an endpoint after calling bind().  Or use
- * sctp_bindx(SCTP_BINDX_REM_ADDR) to remove some addresses a listening
+ * additional addresses with an endpoपूर्णांक after calling bind().  Or use
+ * sctp_bindx(SCTP_BINDX_REM_ADDR) to हटाओ some addresses a listening
  * socket is associated with so that no new association accepted will be
- * associated with those addresses. If the endpoint supports dynamic
+ * associated with those addresses. If the endpoपूर्णांक supports dynamic
  * address a SCTP_BINDX_REM_ADDR or SCTP_BINDX_ADD_ADDR may cause a
- * endpoint to send the appropriate message to the peer to change the
+ * endpoपूर्णांक to send the appropriate message to the peer to change the
  * peers address lists.
  *
  * Adding and removing addresses from a connected association is
- * optional functionality. Implementations that do not support this
- * functionality should return EOPNOTSUPP.
+ * optional functionality. Implementations that करो not support this
+ * functionality should वापस EOPNOTSUPP.
  *
- * Basically do nothing but copying the addresses from user to kernel
+ * Basically करो nothing but copying the addresses from user to kernel
  * land and invoking either sctp_bindx_add() or sctp_bindx_rem() on the sk.
- * This is used for tunneling the sctp_bindx() request through sctp_setsockopt()
+ * This is used क्रम tunneling the sctp_bindx() request through sctp_setsockopt()
  * from userspace.
  *
- * On exit there is no need to do sockfd_put(), sys_setsockopt() does
+ * On निकास there is no need to करो sockfd_put(), sys_setsockopt() करोes
  * it.
  *
  * sk        The sk of the socket
- * addrs     The pointer to the addresses
+ * addrs     The poपूर्णांकer to the addresses
  * addrssize Size of the addrs buffer
- * op        Operation to perform (add or remove, see the flags of
+ * op        Operation to perक्रमm (add or हटाओ, see the flags of
  *           sctp_bindx)
  *
- * Returns 0 if ok, <0 errno code on error.
+ * Returns 0 अगर ok, <0 त्रुटि_सं code on error.
  */
-static int sctp_setsockopt_bindx(struct sock *sk, struct sockaddr *addrs,
-				 int addrs_size, int op)
-{
-	int err;
-	int addrcnt = 0;
-	int walk_size = 0;
-	struct sockaddr *sa_addr;
-	void *addr_buf = addrs;
-	struct sctp_af *af;
+अटल पूर्णांक sctp_setsockopt_bindx(काष्ठा sock *sk, काष्ठा sockaddr *addrs,
+				 पूर्णांक addrs_size, पूर्णांक op)
+अणु
+	पूर्णांक err;
+	पूर्णांक addrcnt = 0;
+	पूर्णांक walk_size = 0;
+	काष्ठा sockaddr *sa_addr;
+	व्योम *addr_buf = addrs;
+	काष्ठा sctp_af *af;
 
 	pr_debug("%s: sk:%p addrs:%p addrs_size:%d opt:%d\n",
 		 __func__, sk, addr_buf, addrs_size, op);
 
-	if (unlikely(addrs_size <= 0))
-		return -EINVAL;
+	अगर (unlikely(addrs_size <= 0))
+		वापस -EINVAL;
 
 	/* Walk through the addrs buffer and count the number of addresses. */
-	while (walk_size < addrs_size) {
-		if (walk_size + sizeof(sa_family_t) > addrs_size)
-			return -EINVAL;
+	जबतक (walk_size < addrs_size) अणु
+		अगर (walk_size + माप(sa_family_t) > addrs_size)
+			वापस -EINVAL;
 
 		sa_addr = addr_buf;
-		af = sctp_get_af_specific(sa_addr->sa_family);
+		af = sctp_get_af_specअगरic(sa_addr->sa_family);
 
-		/* If the address family is not supported or if this address
-		 * causes the address buffer to overflow return EINVAL.
+		/* If the address family is not supported or अगर this address
+		 * causes the address buffer to overflow वापस EINVAL.
 		 */
-		if (!af || (walk_size + af->sockaddr_len) > addrs_size)
-			return -EINVAL;
+		अगर (!af || (walk_size + af->sockaddr_len) > addrs_size)
+			वापस -EINVAL;
 		addrcnt++;
 		addr_buf += af->sockaddr_len;
 		walk_size += af->sockaddr_len;
-	}
+	पूर्ण
 
 	/* Do the work. */
-	switch (op) {
-	case SCTP_BINDX_ADD_ADDR:
+	चयन (op) अणु
+	हाल SCTP_BINDX_ADD_ADDR:
 		/* Allow security module to validate bindx addresses. */
 		err = security_sctp_bind_connect(sk, SCTP_SOCKOPT_BINDX_ADD,
 						 addrs, addrs_size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = sctp_bindx_add(sk, addrs, addrcnt);
-		if (err)
-			return err;
-		return sctp_send_asconf_add_ip(sk, addrs, addrcnt);
-	case SCTP_BINDX_REM_ADDR:
+		अगर (err)
+			वापस err;
+		वापस sctp_send_asconf_add_ip(sk, addrs, addrcnt);
+	हाल SCTP_BINDX_REM_ADDR:
 		err = sctp_bindx_rem(sk, addrs, addrcnt);
-		if (err)
-			return err;
-		return sctp_send_asconf_del_ip(sk, addrs, addrcnt);
+		अगर (err)
+			वापस err;
+		वापस sctp_send_asconf_del_ip(sk, addrs, addrcnt);
 
-	default:
-		return -EINVAL;
-	}
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int sctp_bind_add(struct sock *sk, struct sockaddr *addrs,
-		int addrlen)
-{
-	int err;
+अटल पूर्णांक sctp_bind_add(काष्ठा sock *sk, काष्ठा sockaddr *addrs,
+		पूर्णांक addrlen)
+अणु
+	पूर्णांक err;
 
 	lock_sock(sk);
 	err = sctp_setsockopt_bindx(sk, addrs, addrlen, SCTP_BINDX_ADD_ADDR);
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sctp_connect_new_asoc(struct sctp_endpoint *ep,
-				 const union sctp_addr *daddr,
-				 const struct sctp_initmsg *init,
-				 struct sctp_transport **tp)
-{
-	struct sctp_association *asoc;
-	struct sock *sk = ep->base.sk;
-	struct net *net = sock_net(sk);
-	enum sctp_scope scope;
-	int err;
+अटल पूर्णांक sctp_connect_new_asoc(काष्ठा sctp_endpoपूर्णांक *ep,
+				 स्थिर जोड़ sctp_addr *daddr,
+				 स्थिर काष्ठा sctp_iniपंचांगsg *init,
+				 काष्ठा sctp_transport **tp)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sock *sk = ep->base.sk;
+	काष्ठा net *net = sock_net(sk);
+	क्रमागत sctp_scope scope;
+	पूर्णांक err;
 
-	if (sctp_endpoint_is_peeled_off(ep, daddr))
-		return -EADDRNOTAVAIL;
+	अगर (sctp_endpoपूर्णांक_is_peeled_off(ep, daddr))
+		वापस -EADDRNOTAVAIL;
 
-	if (!ep->base.bind_addr.port) {
-		if (sctp_autobind(sk))
-			return -EAGAIN;
-	} else {
-		if (inet_port_requires_bind_service(net, ep->base.bind_addr.port) &&
+	अगर (!ep->base.bind_addr.port) अणु
+		अगर (sctp_स्वतःbind(sk))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
+		अगर (inet_port_requires_bind_service(net, ep->base.bind_addr.port) &&
 		    !ns_capable(net->user_ns, CAP_NET_BIND_SERVICE))
-			return -EACCES;
-	}
+			वापस -EACCES;
+	पूर्ण
 
 	scope = sctp_scope(daddr);
 	asoc = sctp_association_new(ep, sk, scope, GFP_KERNEL);
-	if (!asoc)
-		return -ENOMEM;
+	अगर (!asoc)
+		वापस -ENOMEM;
 
 	err = sctp_assoc_set_bind_addr_from_ep(asoc, scope, GFP_KERNEL);
-	if (err < 0)
-		goto free;
+	अगर (err < 0)
+		जाओ मुक्त;
 
 	*tp = sctp_assoc_add_peer(asoc, daddr, GFP_KERNEL, SCTP_UNKNOWN);
-	if (!*tp) {
+	अगर (!*tp) अणु
 		err = -ENOMEM;
-		goto free;
-	}
+		जाओ मुक्त;
+	पूर्ण
 
-	if (!init)
-		return 0;
+	अगर (!init)
+		वापस 0;
 
-	if (init->sinit_num_ostreams) {
+	अगर (init->sinit_num_ostreams) अणु
 		__u16 outcnt = init->sinit_num_ostreams;
 
 		asoc->c.sinit_num_ostreams = outcnt;
 		/* outcnt has been changed, need to re-init stream */
 		err = sctp_stream_init(&asoc->stream, outcnt, 0, GFP_KERNEL);
-		if (err)
-			goto free;
-	}
+		अगर (err)
+			जाओ मुक्त;
+	पूर्ण
 
-	if (init->sinit_max_instreams)
+	अगर (init->sinit_max_instreams)
 		asoc->c.sinit_max_instreams = init->sinit_max_instreams;
 
-	if (init->sinit_max_attempts)
+	अगर (init->sinit_max_attempts)
 		asoc->max_init_attempts = init->sinit_max_attempts;
 
-	if (init->sinit_max_init_timeo)
-		asoc->max_init_timeo =
-			msecs_to_jiffies(init->sinit_max_init_timeo);
+	अगर (init->sinit_max_init_समयo)
+		asoc->max_init_समयo =
+			msecs_to_jअगरfies(init->sinit_max_init_समयo);
 
-	return 0;
-free:
-	sctp_association_free(asoc);
-	return err;
-}
+	वापस 0;
+मुक्त:
+	sctp_association_मुक्त(asoc);
+	वापस err;
+पूर्ण
 
-static int sctp_connect_add_peer(struct sctp_association *asoc,
-				 union sctp_addr *daddr, int addr_len)
-{
-	struct sctp_endpoint *ep = asoc->ep;
-	struct sctp_association *old;
-	struct sctp_transport *t;
-	int err;
+अटल पूर्णांक sctp_connect_add_peer(काष्ठा sctp_association *asoc,
+				 जोड़ sctp_addr *daddr, पूर्णांक addr_len)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = asoc->ep;
+	काष्ठा sctp_association *old;
+	काष्ठा sctp_transport *t;
+	पूर्णांक err;
 
-	err = sctp_verify_addr(ep->base.sk, daddr, addr_len);
-	if (err)
-		return err;
+	err = sctp_verअगरy_addr(ep->base.sk, daddr, addr_len);
+	अगर (err)
+		वापस err;
 
-	old = sctp_endpoint_lookup_assoc(ep, daddr, &t);
-	if (old && old != asoc)
-		return old->state >= SCTP_STATE_ESTABLISHED ? -EISCONN
+	old = sctp_endpoपूर्णांक_lookup_assoc(ep, daddr, &t);
+	अगर (old && old != asoc)
+		वापस old->state >= SCTP_STATE_ESTABLISHED ? -EISCONN
 							    : -EALREADY;
 
-	if (sctp_endpoint_is_peeled_off(ep, daddr))
-		return -EADDRNOTAVAIL;
+	अगर (sctp_endpoपूर्णांक_is_peeled_off(ep, daddr))
+		वापस -EADDRNOTAVAIL;
 
 	t = sctp_assoc_add_peer(asoc, daddr, GFP_KERNEL, SCTP_UNKNOWN);
-	if (!t)
-		return -ENOMEM;
+	अगर (!t)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* __sctp_connect(struct sock* sk, struct sockaddr *kaddrs, int addrs_size)
+/* __sctp_connect(काष्ठा sock* sk, काष्ठा sockaddr *kaddrs, पूर्णांक addrs_size)
  *
- * Common routine for handling connect() and sctp_connectx().
+ * Common routine क्रम handling connect() and sctp_connectx().
  * Connect will come in with just a single address.
  */
-static int __sctp_connect(struct sock *sk, struct sockaddr *kaddrs,
-			  int addrs_size, int flags, sctp_assoc_t *assoc_id)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
-	struct sctp_transport *transport;
-	struct sctp_association *asoc;
-	void *addr_buf = kaddrs;
-	union sctp_addr *daddr;
-	struct sctp_af *af;
-	int walk_size, err;
-	long timeo;
+अटल पूर्णांक __sctp_connect(काष्ठा sock *sk, काष्ठा sockaddr *kaddrs,
+			  पूर्णांक addrs_size, पूर्णांक flags, sctp_assoc_t *assoc_id)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep = sp->ep;
+	काष्ठा sctp_transport *transport;
+	काष्ठा sctp_association *asoc;
+	व्योम *addr_buf = kaddrs;
+	जोड़ sctp_addr *daddr;
+	काष्ठा sctp_af *af;
+	पूर्णांक walk_size, err;
+	दीर्घ समयo;
 
-	if (sctp_sstate(sk, ESTABLISHED) || sctp_sstate(sk, CLOSING) ||
+	अगर (sctp_sstate(sk, ESTABLISHED) || sctp_sstate(sk, CLOSING) ||
 	    (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING)))
-		return -EISCONN;
+		वापस -EISCONN;
 
 	daddr = addr_buf;
-	af = sctp_get_af_specific(daddr->sa.sa_family);
-	if (!af || af->sockaddr_len > addrs_size)
-		return -EINVAL;
+	af = sctp_get_af_specअगरic(daddr->sa.sa_family);
+	अगर (!af || af->sockaddr_len > addrs_size)
+		वापस -EINVAL;
 
-	err = sctp_verify_addr(sk, daddr, af->sockaddr_len);
-	if (err)
-		return err;
+	err = sctp_verअगरy_addr(sk, daddr, af->sockaddr_len);
+	अगर (err)
+		वापस err;
 
-	asoc = sctp_endpoint_lookup_assoc(ep, daddr, &transport);
-	if (asoc)
-		return asoc->state >= SCTP_STATE_ESTABLISHED ? -EISCONN
+	asoc = sctp_endpoपूर्णांक_lookup_assoc(ep, daddr, &transport);
+	अगर (asoc)
+		वापस asoc->state >= SCTP_STATE_ESTABLISHED ? -EISCONN
 							     : -EALREADY;
 
-	err = sctp_connect_new_asoc(ep, daddr, NULL, &transport);
-	if (err)
-		return err;
+	err = sctp_connect_new_asoc(ep, daddr, शून्य, &transport);
+	अगर (err)
+		वापस err;
 	asoc = transport->asoc;
 
 	addr_buf += af->sockaddr_len;
 	walk_size = af->sockaddr_len;
-	while (walk_size < addrs_size) {
+	जबतक (walk_size < addrs_size) अणु
 		err = -EINVAL;
-		if (walk_size + sizeof(sa_family_t) > addrs_size)
-			goto out_free;
+		अगर (walk_size + माप(sa_family_t) > addrs_size)
+			जाओ out_मुक्त;
 
 		daddr = addr_buf;
-		af = sctp_get_af_specific(daddr->sa.sa_family);
-		if (!af || af->sockaddr_len + walk_size > addrs_size)
-			goto out_free;
+		af = sctp_get_af_specअगरic(daddr->sa.sa_family);
+		अगर (!af || af->sockaddr_len + walk_size > addrs_size)
+			जाओ out_मुक्त;
 
-		if (asoc->peer.port != ntohs(daddr->v4.sin_port))
-			goto out_free;
+		अगर (asoc->peer.port != ntohs(daddr->v4.sin_port))
+			जाओ out_मुक्त;
 
 		err = sctp_connect_add_peer(asoc, daddr, af->sockaddr_len);
-		if (err)
-			goto out_free;
+		अगर (err)
+			जाओ out_मुक्त;
 
 		addr_buf  += af->sockaddr_len;
 		walk_size += af->sockaddr_len;
-	}
+	पूर्ण
 
-	/* In case the user of sctp_connectx() wants an association
+	/* In हाल the user of sctp_connectx() wants an association
 	 * id back, assign one now.
 	 */
-	if (assoc_id) {
+	अगर (assoc_id) अणु
 		err = sctp_assoc_set_id(asoc, GFP_KERNEL);
-		if (err < 0)
-			goto out_free;
-	}
+		अगर (err < 0)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	err = sctp_primitive_ASSOCIATE(sock_net(sk), asoc, NULL);
-	if (err < 0)
-		goto out_free;
+	err = sctp_primitive_ASSOCIATE(sock_net(sk), asoc, शून्य);
+	अगर (err < 0)
+		जाओ out_मुक्त;
 
-	/* Initialize sk's dport and daddr for getpeername() */
+	/* Initialize sk's dport and daddr क्रम getpeername() */
 	inet_sk(sk)->inet_dport = htons(asoc->peer.port);
 	sp->pf->to_sk_daddr(daddr, sk);
 	sk->sk_err = 0;
 
-	if (assoc_id)
+	अगर (assoc_id)
 		*assoc_id = asoc->assoc_id;
 
-	timeo = sock_sndtimeo(sk, flags & O_NONBLOCK);
-	return sctp_wait_for_connect(asoc, &timeo);
+	समयo = sock_sndसमयo(sk, flags & O_NONBLOCK);
+	वापस sctp_रुको_क्रम_connect(asoc, &समयo);
 
-out_free:
+out_मुक्त:
 	pr_debug("%s: took out_free path with asoc:%p kaddrs:%p err:%d\n",
 		 __func__, asoc, kaddrs, err);
-	sctp_association_free(asoc);
-	return err;
-}
+	sctp_association_मुक्त(asoc);
+	वापस err;
+पूर्ण
 
-/* Helper for tunneling sctp_connectx() requests through sctp_setsockopt()
+/* Helper क्रम tunneling sctp_connectx() requests through sctp_setsockopt()
  *
  * API 8.9
- * int sctp_connectx(int sd, struct sockaddr *addrs, int addrcnt,
+ * पूर्णांक sctp_connectx(पूर्णांक sd, काष्ठा sockaddr *addrs, पूर्णांक addrcnt,
  * 			sctp_assoc_t *asoc);
  *
  * If sd is an IPv4 socket, the addresses passed must be IPv4 addresses.
  * If the sd is an IPv6 socket, the addresses passed can either be IPv4
  * or IPv6 addresses.
  *
- * A single address may be specified as INADDR_ANY or IN6ADDR_ANY, see
- * Section 3.1.2 for this usage.
+ * A single address may be specअगरied as INADDR_ANY or IN6ADDR_ANY, see
+ * Section 3.1.2 क्रम this usage.
  *
- * addrs is a pointer to an array of one or more socket addresses. Each
- * address is contained in its appropriate structure (i.e. struct
- * sockaddr_in or struct sockaddr_in6) the family of the address type
+ * addrs is a poपूर्णांकer to an array of one or more socket addresses. Each
+ * address is contained in its appropriate काष्ठाure (i.e. काष्ठा
+ * sockaddr_in or काष्ठा sockaddr_in6) the family of the address type
  * must be used to distengish the address length (note that this
  * representation is termed a "packed array" of addresses). The caller
- * specifies the number of addresses in the array with addrcnt.
+ * specअगरies the number of addresses in the array with addrcnt.
  *
- * On success, sctp_connectx() returns 0. It also sets the assoc_id to
+ * On success, sctp_connectx() वापसs 0. It also sets the assoc_id to
  * the association id of the new association.  On failure, sctp_connectx()
- * returns -1, and sets errno to the appropriate error code.  The assoc_id
+ * वापसs -1, and sets त्रुटि_सं to the appropriate error code.  The assoc_id
  * is not touched by the kernel.
  *
  * For SCTP, the port given in each socket address must be the same, or
- * sctp_connectx() will fail, setting errno to EINVAL.
+ * sctp_connectx() will fail, setting त्रुटि_सं to EINVAL.
  *
  * An application can use sctp_connectx to initiate an association with
- * an endpoint that is multi-homed.  Much like sctp_bindx() this call
- * allows a caller to specify multiple addresses at which a peer can be
+ * an endpoपूर्णांक that is multi-homed.  Much like sctp_bindx() this call
+ * allows a caller to specअगरy multiple addresses at which a peer can be
  * reached.  The way the SCTP stack uses the list of addresses to set up
  * the association is implementation dependent.  This function only
- * specifies that the stack will try to make use of all the addresses in
+ * specअगरies that the stack will try to make use of all the addresses in
  * the list when needed.
  *
- * Note that the list of addresses passed in is only used for setting up
- * the association.  It does not necessarily equal the set of addresses
- * the peer uses for the resulting association.  If the caller wants to
+ * Note that the list of addresses passed in is only used क्रम setting up
+ * the association.  It करोes not necessarily equal the set of addresses
+ * the peer uses क्रम the resulting association.  If the caller wants to
  * find out the set of peer addresses, it must use sctp_getpaddrs() to
  * retrieve them after the association has been set up.
  *
- * Basically do nothing but copying the addresses from user to kernel
- * land and invoking either sctp_connectx(). This is used for tunneling
+ * Basically करो nothing but copying the addresses from user to kernel
+ * land and invoking either sctp_connectx(). This is used क्रम tunneling
  * the sctp_connectx() request through sctp_setsockopt() from userspace.
  *
- * On exit there is no need to do sockfd_put(), sys_setsockopt() does
+ * On निकास there is no need to करो sockfd_put(), sys_setsockopt() करोes
  * it.
  *
  * sk        The sk of the socket
- * addrs     The pointer to the addresses
+ * addrs     The poपूर्णांकer to the addresses
  * addrssize Size of the addrs buffer
  *
- * Returns >=0 if ok, <0 errno code on error.
+ * Returns >=0 अगर ok, <0 त्रुटि_सं code on error.
  */
-static int __sctp_setsockopt_connectx(struct sock *sk, struct sockaddr *kaddrs,
-				      int addrs_size, sctp_assoc_t *assoc_id)
-{
-	int err = 0, flags = 0;
+अटल पूर्णांक __sctp_setsockopt_connectx(काष्ठा sock *sk, काष्ठा sockaddr *kaddrs,
+				      पूर्णांक addrs_size, sctp_assoc_t *assoc_id)
+अणु
+	पूर्णांक err = 0, flags = 0;
 
 	pr_debug("%s: sk:%p addrs:%p addrs_size:%d\n",
 		 __func__, sk, kaddrs, addrs_size);
 
 	/* make sure the 1st addr's sa_family is accessible later */
-	if (unlikely(addrs_size < sizeof(sa_family_t)))
-		return -EINVAL;
+	अगर (unlikely(addrs_size < माप(sa_family_t)))
+		वापस -EINVAL;
 
 	/* Allow security module to validate connectx addresses. */
 	err = security_sctp_bind_connect(sk, SCTP_SOCKOPT_CONNECTX,
-					 (struct sockaddr *)kaddrs,
+					 (काष्ठा sockaddr *)kaddrs,
 					  addrs_size);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* in-kernel sockets don't generally have a file allocated to them
-	 * if all they do is call sock_create_kern().
+	/* in-kernel sockets करोn't generally have a file allocated to them
+	 * अगर all they करो is call sock_create_kern().
 	 */
-	if (sk->sk_socket->file)
+	अगर (sk->sk_socket->file)
 		flags = sk->sk_socket->file->f_flags;
 
-	return __sctp_connect(sk, kaddrs, addrs_size, flags, assoc_id);
-}
+	वापस __sctp_connect(sk, kaddrs, addrs_size, flags, assoc_id);
+पूर्ण
 
 /*
- * This is an older interface.  It's kept for backward compatibility
- * to the option that doesn't provide association id.
+ * This is an older पूर्णांकerface.  It's kept क्रम backward compatibility
+ * to the option that करोesn't provide association id.
  */
-static int sctp_setsockopt_connectx_old(struct sock *sk,
-					struct sockaddr *kaddrs,
-					int addrs_size)
-{
-	return __sctp_setsockopt_connectx(sk, kaddrs, addrs_size, NULL);
-}
+अटल पूर्णांक sctp_setsockopt_connectx_old(काष्ठा sock *sk,
+					काष्ठा sockaddr *kaddrs,
+					पूर्णांक addrs_size)
+अणु
+	वापस __sctp_setsockopt_connectx(sk, kaddrs, addrs_size, शून्य);
+पूर्ण
 
 /*
- * New interface for the API.  The since the API is done with a socket
- * option, to make it simple we feed back the association id is as a return
+ * New पूर्णांकerface क्रम the API.  The since the API is करोne with a socket
+ * option, to make it simple we feed back the association id is as a वापस
  * indication to the call.  Error is always negative and association id is
  * always positive.
  */
-static int sctp_setsockopt_connectx(struct sock *sk,
-				    struct sockaddr *kaddrs,
-				    int addrs_size)
-{
+अटल पूर्णांक sctp_setsockopt_connectx(काष्ठा sock *sk,
+				    काष्ठा sockaddr *kaddrs,
+				    पूर्णांक addrs_size)
+अणु
 	sctp_assoc_t assoc_id = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	err = __sctp_setsockopt_connectx(sk, kaddrs, addrs_size, &assoc_id);
 
-	if (err)
-		return err;
-	else
-		return assoc_id;
-}
+	अगर (err)
+		वापस err;
+	अन्यथा
+		वापस assoc_id;
+पूर्ण
 
 /*
- * New (hopefully final) interface for the API.
- * We use the sctp_getaddrs_old structure so that use-space library
- * can avoid any unnecessary allocations. The only different part
- * is that we store the actual length of the address buffer into the
- * addrs_num structure member. That way we can re-use the existing
+ * New (hopefully final) पूर्णांकerface क्रम the API.
+ * We use the sctp_getaddrs_old काष्ठाure so that use-space library
+ * can aव्योम any unnecessary allocations. The only dअगरferent part
+ * is that we store the actual length of the address buffer पूर्णांकo the
+ * addrs_num काष्ठाure member. That way we can re-use the existing
  * code.
  */
-#ifdef CONFIG_COMPAT
-struct compat_sctp_getaddrs_old {
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_sctp_getaddrs_old अणु
 	sctp_assoc_t	assoc_id;
 	s32		addr_num;
-	compat_uptr_t	addrs;		/* struct sockaddr * */
-};
-#endif
+	compat_uptr_t	addrs;		/* काष्ठा sockaddr * */
+पूर्ण;
+#पूर्ण_अगर
 
-static int sctp_getsockopt_connectx3(struct sock *sk, int len,
-				     char __user *optval,
-				     int __user *optlen)
-{
-	struct sctp_getaddrs_old param;
+अटल पूर्णांक sctp_माला_लोockopt_connectx3(काष्ठा sock *sk, पूर्णांक len,
+				     अक्षर __user *optval,
+				     पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_getaddrs_old param;
 	sctp_assoc_t assoc_id = 0;
-	struct sockaddr *kaddrs;
-	int err = 0;
+	काष्ठा sockaddr *kaddrs;
+	पूर्णांक err = 0;
 
-#ifdef CONFIG_COMPAT
-	if (in_compat_syscall()) {
-		struct compat_sctp_getaddrs_old param32;
+#अगर_घोषित CONFIG_COMPAT
+	अगर (in_compat_syscall()) अणु
+		काष्ठा compat_sctp_getaddrs_old param32;
 
-		if (len < sizeof(param32))
-			return -EINVAL;
-		if (copy_from_user(&param32, optval, sizeof(param32)))
-			return -EFAULT;
+		अगर (len < माप(param32))
+			वापस -EINVAL;
+		अगर (copy_from_user(&param32, optval, माप(param32)))
+			वापस -EFAULT;
 
 		param.assoc_id = param32.assoc_id;
 		param.addr_num = param32.addr_num;
 		param.addrs = compat_ptr(param32.addrs);
-	} else
-#endif
-	{
-		if (len < sizeof(param))
-			return -EINVAL;
-		if (copy_from_user(&param, optval, sizeof(param)))
-			return -EFAULT;
-	}
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		अगर (len < माप(param))
+			वापस -EINVAL;
+		अगर (copy_from_user(&param, optval, माप(param)))
+			वापस -EFAULT;
+	पूर्ण
 
 	kaddrs = memdup_user(param.addrs, param.addr_num);
-	if (IS_ERR(kaddrs))
-		return PTR_ERR(kaddrs);
+	अगर (IS_ERR(kaddrs))
+		वापस PTR_ERR(kaddrs);
 
 	err = __sctp_setsockopt_connectx(sk, kaddrs, param.addr_num, &assoc_id);
-	kfree(kaddrs);
-	if (err == 0 || err == -EINPROGRESS) {
-		if (copy_to_user(optval, &assoc_id, sizeof(assoc_id)))
-			return -EFAULT;
-		if (put_user(sizeof(assoc_id), optlen))
-			return -EFAULT;
-	}
+	kमुक्त(kaddrs);
+	अगर (err == 0 || err == -EINPROGRESS) अणु
+		अगर (copy_to_user(optval, &assoc_id, माप(assoc_id)))
+			वापस -EFAULT;
+		अगर (put_user(माप(assoc_id), optlen))
+			वापस -EFAULT;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* API 3.1.4 close() - UDP Style Syntax
- * Applications use close() to perform graceful shutdown (as described in
+/* API 3.1.4 बंद() - UDP Style Syntax
+ * Applications use बंद() to perक्रमm graceful shutकरोwn (as described in
  * Section 10.1 of [SCTP]) on ALL the associations currently represented
  * by a UDP-style socket.
  *
  * The syntax is
  *
- *   ret = close(int sd);
+ *   ret = बंद(पूर्णांक sd);
  *
- *   sd      - the socket descriptor of the associations to be closed.
+ *   sd      - the socket descriptor of the associations to be बंदd.
  *
- * To gracefully shutdown a specific association represented by the
+ * To gracefully shutकरोwn a specअगरic association represented by the
  * UDP-style socket, an application should use the sendmsg() call,
  * passing no user data, but including the appropriate flag in the
  * ancillary data (see Section xxxx).
  *
- * If sd in the close() call is a branched-off socket representing only
- * one association, the shutdown is performed on that association only.
+ * If sd in the बंद() call is a branched-off socket representing only
+ * one association, the shutकरोwn is perक्रमmed on that association only.
  *
- * 4.1.6 close() - TCP Style Syntax
+ * 4.1.6 बंद() - TCP Style Syntax
  *
- * Applications use close() to gracefully close down an association.
+ * Applications use बंद() to gracefully बंद करोwn an association.
  *
  * The syntax is:
  *
- *    int close(int sd);
+ *    पूर्णांक बंद(पूर्णांक sd);
  *
- *      sd      - the socket descriptor of the association to be closed.
+ *      sd      - the socket descriptor of the association to be बंदd.
  *
- * After an application calls close() on a socket descriptor, no further
+ * After an application calls बंद() on a socket descriptor, no further
  * socket operations will succeed on that descriptor.
  *
  * API 7.1.4 SO_LINGER
  *
  * An application using the TCP-style socket can use this option to
- * perform the SCTP ABORT primitive.  The linger option structure is:
+ * perक्रमm the SCTP ABORT primitive.  The linger option काष्ठाure is:
  *
- *  struct  linger {
- *     int     l_onoff;                // option on/off
- *     int     l_linger;               // linger time
- * };
+ *  काष्ठा  linger अणु
+ *     पूर्णांक     l_onoff;                // option on/off
+ *     पूर्णांक     l_linger;               // linger समय
+ * पूर्ण;
  *
  * To enable the option, set l_onoff to 1.  If the l_linger value is set
- * to 0, calling close() is the same as the ABORT primitive.  If the
- * value is set to a negative value, the setsockopt() call will return
- * an error.  If the value is set to a positive value linger_time, the
- * close() can be blocked for at most linger_time ms.  If the graceful
- * shutdown phase does not finish during this period, close() will
- * return but the graceful shutdown phase continues in the system.
+ * to 0, calling बंद() is the same as the ABORT primitive.  If the
+ * value is set to a negative value, the setsockopt() call will वापस
+ * an error.  If the value is set to a positive value linger_समय, the
+ * बंद() can be blocked क्रम at most linger_समय ms.  If the graceful
+ * shutकरोwn phase करोes not finish during this period, बंद() will
+ * वापस but the graceful shutकरोwn phase जारीs in the प्रणाली.
  */
-static void sctp_close(struct sock *sk, long timeout)
-{
-	struct net *net = sock_net(sk);
-	struct sctp_endpoint *ep;
-	struct sctp_association *asoc;
-	struct list_head *pos, *temp;
-	unsigned int data_was_unread;
+अटल व्योम sctp_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep;
+	काष्ठा sctp_association *asoc;
+	काष्ठा list_head *pos, *temp;
+	अचिन्हित पूर्णांक data_was_unपढ़ो;
 
-	pr_debug("%s: sk:%p, timeout:%ld\n", __func__, sk, timeout);
+	pr_debug("%s: sk:%p, timeout:%ld\n", __func__, sk, समयout);
 
 	lock_sock_nested(sk, SINGLE_DEPTH_NESTING);
-	sk->sk_shutdown = SHUTDOWN_MASK;
+	sk->sk_shutकरोwn = SHUTDOWN_MASK;
 	inet_sk_set_state(sk, SCTP_SS_CLOSING);
 
 	ep = sctp_sk(sk)->ep;
 
 	/* Clean up any skbs sitting on the receive queue.  */
-	data_was_unread = sctp_queue_purge_ulpevents(&sk->sk_receive_queue);
-	data_was_unread += sctp_queue_purge_ulpevents(&sctp_sk(sk)->pd_lobby);
+	data_was_unपढ़ो = sctp_queue_purge_ulpevents(&sk->sk_receive_queue);
+	data_was_unपढ़ो += sctp_queue_purge_ulpevents(&sctp_sk(sk)->pd_lobby);
 
-	/* Walk all associations on an endpoint.  */
-	list_for_each_safe(pos, temp, &ep->asocs) {
-		asoc = list_entry(pos, struct sctp_association, asocs);
+	/* Walk all associations on an endpoपूर्णांक.  */
+	list_क्रम_each_safe(pos, temp, &ep->asocs) अणु
+		asoc = list_entry(pos, काष्ठा sctp_association, asocs);
 
-		if (sctp_style(sk, TCP)) {
-			/* A closed association can still be in the list if
-			 * it belongs to a TCP-style listening socket that is
-			 * not yet accepted. If so, free it. If not, send an
+		अगर (sctp_style(sk, TCP)) अणु
+			/* A बंदd association can still be in the list अगर
+			 * it beदीर्घs to a TCP-style listening socket that is
+			 * not yet accepted. If so, मुक्त it. If not, send an
 			 * ABORT or SHUTDOWN based on the linger options.
 			 */
-			if (sctp_state(asoc, CLOSED)) {
-				sctp_association_free(asoc);
-				continue;
-			}
-		}
+			अगर (sctp_state(asoc, CLOSED)) अणु
+				sctp_association_मुक्त(asoc);
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		if (data_was_unread || !skb_queue_empty(&asoc->ulpq.lobby) ||
-		    !skb_queue_empty(&asoc->ulpq.reasm) ||
-		    !skb_queue_empty(&asoc->ulpq.reasm_uo) ||
-		    (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime)) {
-			struct sctp_chunk *chunk;
+		अगर (data_was_unपढ़ो || !skb_queue_empty(&asoc->ulpq.lobby) ||
+		    !skb_queue_empty(&asoc->ulpq.reयंत्र) ||
+		    !skb_queue_empty(&asoc->ulpq.reयंत्र_uo) ||
+		    (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingerसमय)) अणु
+			काष्ठा sctp_chunk *chunk;
 
-			chunk = sctp_make_abort_user(asoc, NULL, 0);
+			chunk = sctp_make_पात_user(asoc, शून्य, 0);
 			sctp_primitive_ABORT(net, asoc, chunk);
-		} else
-			sctp_primitive_SHUTDOWN(net, asoc, NULL);
-	}
+		पूर्ण अन्यथा
+			sctp_primitive_SHUTDOWN(net, asoc, शून्य);
+	पूर्ण
 
-	/* On a TCP-style socket, block for at most linger_time if set. */
-	if (sctp_style(sk, TCP) && timeout)
-		sctp_wait_for_close(sk, timeout);
+	/* On a TCP-style socket, block क्रम at most linger_समय अगर set. */
+	अगर (sctp_style(sk, TCP) && समयout)
+		sctp_रुको_क्रम_बंद(sk, समयout);
 
 	/* This will run the backlog queue.  */
 	release_sock(sk);
@@ -1535,7 +1536,7 @@ static void sctp_close(struct sock *sk, long timeout)
 	/* Supposedly, no process has access to the socket, but
 	 * the net layers still may.
 	 * Also, sctp_destroy_sock() needs to be called with addr_wq_lock
-	 * held and that should be grabbed before socket lock.
+	 * held and that should be grabbed beक्रमe socket lock.
 	 */
 	spin_lock_bh(&net->sctp.addr_wq_lock);
 	bh_lock_sock_nested(sk);
@@ -1552,546 +1553,546 @@ static void sctp_close(struct sock *sk, long timeout)
 	sock_put(sk);
 
 	SCTP_DBG_OBJCNT_DEC(sock);
-}
+पूर्ण
 
 /* Handle EPIPE error. */
-static int sctp_error(struct sock *sk, int flags, int err)
-{
-	if (err == -EPIPE)
+अटल पूर्णांक sctp_error(काष्ठा sock *sk, पूर्णांक flags, पूर्णांक err)
+अणु
+	अगर (err == -EPIPE)
 		err = sock_error(sk) ? : -EPIPE;
-	if (err == -EPIPE && !(flags & MSG_NOSIGNAL))
+	अगर (err == -EPIPE && !(flags & MSG_NOSIGNAL))
 		send_sig(SIGPIPE, current, 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* API 3.1.3 sendmsg() - UDP Style Syntax
  *
  * An application uses sendmsg() and recvmsg() calls to transmit data to
  * and receive data from its peer.
  *
- *  ssize_t sendmsg(int socket, const struct msghdr *message,
- *                  int flags);
+ *  sमाप_प्रकार sendmsg(पूर्णांक socket, स्थिर काष्ठा msghdr *message,
+ *                  पूर्णांक flags);
  *
- *  socket  - the socket descriptor of the endpoint.
- *  message - pointer to the msghdr structure which contains a single
+ *  socket  - the socket descriptor of the endpoपूर्णांक.
+ *  message - poपूर्णांकer to the msghdr काष्ठाure which contains a single
  *            user message and possibly some ancillary data.
  *
- *            See Section 5 for complete description of the data
- *            structures.
+ *            See Section 5 क्रम complete description of the data
+ *            काष्ठाures.
  *
  *  flags   - flags sent or received with the user message, see Section
- *            5 for complete description of the flags.
+ *            5 क्रम complete description of the flags.
  *
- * Note:  This function could use a rewrite especially when explicit
+ * Note:  This function could use a reग_लिखो especially when explicit
  * connect support comes in.
  */
-/* BUG:  We do not implement the equivalent of sk_stream_wait_memory(). */
+/* BUG:  We करो not implement the equivalent of sk_stream_रुको_memory(). */
 
-static int sctp_msghdr_parse(const struct msghdr *msg,
-			     struct sctp_cmsgs *cmsgs);
+अटल पूर्णांक sctp_msghdr_parse(स्थिर काष्ठा msghdr *msg,
+			     काष्ठा sctp_cmsgs *cmsgs);
 
-static int sctp_sendmsg_parse(struct sock *sk, struct sctp_cmsgs *cmsgs,
-			      struct sctp_sndrcvinfo *srinfo,
-			      const struct msghdr *msg, size_t msg_len)
-{
+अटल पूर्णांक sctp_sendmsg_parse(काष्ठा sock *sk, काष्ठा sctp_cmsgs *cmsgs,
+			      काष्ठा sctp_sndrcvinfo *srinfo,
+			      स्थिर काष्ठा msghdr *msg, माप_प्रकार msg_len)
+अणु
 	__u16 sflags;
-	int err;
+	पूर्णांक err;
 
-	if (sctp_sstate(sk, LISTENING) && sctp_style(sk, TCP))
-		return -EPIPE;
+	अगर (sctp_sstate(sk, LISTENING) && sctp_style(sk, TCP))
+		वापस -EPIPE;
 
-	if (msg_len > sk->sk_sndbuf)
-		return -EMSGSIZE;
+	अगर (msg_len > sk->sk_sndbuf)
+		वापस -EMSGSIZE;
 
-	memset(cmsgs, 0, sizeof(*cmsgs));
+	स_रखो(cmsgs, 0, माप(*cmsgs));
 	err = sctp_msghdr_parse(msg, cmsgs);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("%s: msghdr parse err:%x\n", __func__, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	memset(srinfo, 0, sizeof(*srinfo));
-	if (cmsgs->srinfo) {
+	स_रखो(srinfo, 0, माप(*srinfo));
+	अगर (cmsgs->srinfo) अणु
 		srinfo->sinfo_stream = cmsgs->srinfo->sinfo_stream;
 		srinfo->sinfo_flags = cmsgs->srinfo->sinfo_flags;
 		srinfo->sinfo_ppid = cmsgs->srinfo->sinfo_ppid;
 		srinfo->sinfo_context = cmsgs->srinfo->sinfo_context;
 		srinfo->sinfo_assoc_id = cmsgs->srinfo->sinfo_assoc_id;
-		srinfo->sinfo_timetolive = cmsgs->srinfo->sinfo_timetolive;
-	}
+		srinfo->sinfo_समयtolive = cmsgs->srinfo->sinfo_समयtolive;
+	पूर्ण
 
-	if (cmsgs->sinfo) {
+	अगर (cmsgs->sinfo) अणु
 		srinfo->sinfo_stream = cmsgs->sinfo->snd_sid;
 		srinfo->sinfo_flags = cmsgs->sinfo->snd_flags;
 		srinfo->sinfo_ppid = cmsgs->sinfo->snd_ppid;
 		srinfo->sinfo_context = cmsgs->sinfo->snd_context;
 		srinfo->sinfo_assoc_id = cmsgs->sinfo->snd_assoc_id;
-	}
+	पूर्ण
 
-	if (cmsgs->prinfo) {
-		srinfo->sinfo_timetolive = cmsgs->prinfo->pr_value;
+	अगर (cmsgs->prinfo) अणु
+		srinfo->sinfo_समयtolive = cmsgs->prinfo->pr_value;
 		SCTP_PR_SET_POLICY(srinfo->sinfo_flags,
 				   cmsgs->prinfo->pr_policy);
-	}
+	पूर्ण
 
 	sflags = srinfo->sinfo_flags;
-	if (!sflags && msg_len)
-		return 0;
+	अगर (!sflags && msg_len)
+		वापस 0;
 
-	if (sctp_style(sk, TCP) && (sflags & (SCTP_EOF | SCTP_ABORT)))
-		return -EINVAL;
+	अगर (sctp_style(sk, TCP) && (sflags & (SCTP_खातापूर्ण | SCTP_ABORT)))
+		वापस -EINVAL;
 
-	if (((sflags & SCTP_EOF) && msg_len > 0) ||
-	    (!(sflags & (SCTP_EOF | SCTP_ABORT)) && msg_len == 0))
-		return -EINVAL;
+	अगर (((sflags & SCTP_खातापूर्ण) && msg_len > 0) ||
+	    (!(sflags & (SCTP_खातापूर्ण | SCTP_ABORT)) && msg_len == 0))
+		वापस -EINVAL;
 
-	if ((sflags & SCTP_ADDR_OVER) && !msg->msg_name)
-		return -EINVAL;
+	अगर ((sflags & SCTP_ADDR_OVER) && !msg->msg_name)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_sendmsg_new_asoc(struct sock *sk, __u16 sflags,
-				 struct sctp_cmsgs *cmsgs,
-				 union sctp_addr *daddr,
-				 struct sctp_transport **tp)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	struct cmsghdr *cmsg;
+अटल पूर्णांक sctp_sendmsg_new_asoc(काष्ठा sock *sk, __u16 sflags,
+				 काष्ठा sctp_cmsgs *cmsgs,
+				 जोड़ sctp_addr *daddr,
+				 काष्ठा sctp_transport **tp)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	काष्ठा cmsghdr *cmsg;
 	__be32 flowinfo = 0;
-	struct sctp_af *af;
-	int err;
+	काष्ठा sctp_af *af;
+	पूर्णांक err;
 
-	*tp = NULL;
+	*tp = शून्य;
 
-	if (sflags & (SCTP_EOF | SCTP_ABORT))
-		return -EINVAL;
+	अगर (sflags & (SCTP_खातापूर्ण | SCTP_ABORT))
+		वापस -EINVAL;
 
-	if (sctp_style(sk, TCP) && (sctp_sstate(sk, ESTABLISHED) ||
+	अगर (sctp_style(sk, TCP) && (sctp_sstate(sk, ESTABLISHED) ||
 				    sctp_sstate(sk, CLOSING)))
-		return -EADDRNOTAVAIL;
+		वापस -EADDRNOTAVAIL;
 
-	/* Label connection socket for first association 1-to-many
-	 * style for client sequence socket()->sendmsg(). This
-	 * needs to be done before sctp_assoc_add_peer() as that will
-	 * set up the initial packet that needs to account for any
+	/* Label connection socket क्रम first association 1-to-many
+	 * style क्रम client sequence socket()->sendmsg(). This
+	 * needs to be करोne beक्रमe sctp_assoc_add_peer() as that will
+	 * set up the initial packet that needs to account क्रम any
 	 * security ip options (CIPSO/CALIPSO) added to the packet.
 	 */
-	af = sctp_get_af_specific(daddr->sa.sa_family);
-	if (!af)
-		return -EINVAL;
+	af = sctp_get_af_specअगरic(daddr->sa.sa_family);
+	अगर (!af)
+		वापस -EINVAL;
 	err = security_sctp_bind_connect(sk, SCTP_SENDMSG_CONNECT,
-					 (struct sockaddr *)daddr,
+					 (काष्ठा sockaddr *)daddr,
 					 af->sockaddr_len);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = sctp_connect_new_asoc(ep, daddr, cmsgs->init, tp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	asoc = (*tp)->asoc;
 
-	if (!cmsgs->addrs_msg)
-		return 0;
+	अगर (!cmsgs->addrs_msg)
+		वापस 0;
 
-	if (daddr->sa.sa_family == AF_INET6)
+	अगर (daddr->sa.sa_family == AF_INET6)
 		flowinfo = daddr->v6.sin6_flowinfo;
 
 	/* sendv addr list parse */
-	for_each_cmsghdr(cmsg, cmsgs->addrs_msg) {
-		union sctp_addr _daddr;
-		int dlen;
+	क्रम_each_cmsghdr(cmsg, cmsgs->addrs_msg) अणु
+		जोड़ sctp_addr _daddr;
+		पूर्णांक dlen;
 
-		if (cmsg->cmsg_level != IPPROTO_SCTP ||
+		अगर (cmsg->cmsg_level != IPPROTO_SCTP ||
 		    (cmsg->cmsg_type != SCTP_DSTADDRV4 &&
 		     cmsg->cmsg_type != SCTP_DSTADDRV6))
-			continue;
+			जारी;
 
 		daddr = &_daddr;
-		memset(daddr, 0, sizeof(*daddr));
-		dlen = cmsg->cmsg_len - sizeof(struct cmsghdr);
-		if (cmsg->cmsg_type == SCTP_DSTADDRV4) {
-			if (dlen < sizeof(struct in_addr)) {
+		स_रखो(daddr, 0, माप(*daddr));
+		dlen = cmsg->cmsg_len - माप(काष्ठा cmsghdr);
+		अगर (cmsg->cmsg_type == SCTP_DSTADDRV4) अणु
+			अगर (dlen < माप(काष्ठा in_addr)) अणु
 				err = -EINVAL;
-				goto free;
-			}
+				जाओ मुक्त;
+			पूर्ण
 
-			dlen = sizeof(struct in_addr);
+			dlen = माप(काष्ठा in_addr);
 			daddr->v4.sin_family = AF_INET;
 			daddr->v4.sin_port = htons(asoc->peer.port);
-			memcpy(&daddr->v4.sin_addr, CMSG_DATA(cmsg), dlen);
-		} else {
-			if (dlen < sizeof(struct in6_addr)) {
+			स_नकल(&daddr->v4.sin_addr, CMSG_DATA(cmsg), dlen);
+		पूर्ण अन्यथा अणु
+			अगर (dlen < माप(काष्ठा in6_addr)) अणु
 				err = -EINVAL;
-				goto free;
-			}
+				जाओ मुक्त;
+			पूर्ण
 
-			dlen = sizeof(struct in6_addr);
+			dlen = माप(काष्ठा in6_addr);
 			daddr->v6.sin6_flowinfo = flowinfo;
 			daddr->v6.sin6_family = AF_INET6;
 			daddr->v6.sin6_port = htons(asoc->peer.port);
-			memcpy(&daddr->v6.sin6_addr, CMSG_DATA(cmsg), dlen);
-		}
+			स_नकल(&daddr->v6.sin6_addr, CMSG_DATA(cmsg), dlen);
+		पूर्ण
 
-		err = sctp_connect_add_peer(asoc, daddr, sizeof(*daddr));
-		if (err)
-			goto free;
-	}
+		err = sctp_connect_add_peer(asoc, daddr, माप(*daddr));
+		अगर (err)
+			जाओ मुक्त;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free:
-	sctp_association_free(asoc);
-	return err;
-}
+मुक्त:
+	sctp_association_मुक्त(asoc);
+	वापस err;
+पूर्ण
 
-static int sctp_sendmsg_check_sflags(struct sctp_association *asoc,
-				     __u16 sflags, struct msghdr *msg,
-				     size_t msg_len)
-{
-	struct sock *sk = asoc->base.sk;
-	struct net *net = sock_net(sk);
+अटल पूर्णांक sctp_sendmsg_check_sflags(काष्ठा sctp_association *asoc,
+				     __u16 sflags, काष्ठा msghdr *msg,
+				     माप_प्रकार msg_len)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
+	काष्ठा net *net = sock_net(sk);
 
-	if (sctp_state(asoc, CLOSED) && sctp_style(sk, TCP))
-		return -EPIPE;
+	अगर (sctp_state(asoc, CLOSED) && sctp_style(sk, TCP))
+		वापस -EPIPE;
 
-	if ((sflags & SCTP_SENDALL) && sctp_style(sk, UDP) &&
+	अगर ((sflags & SCTP_SENDALL) && sctp_style(sk, UDP) &&
 	    !sctp_state(asoc, ESTABLISHED))
-		return 0;
+		वापस 0;
 
-	if (sflags & SCTP_EOF) {
+	अगर (sflags & SCTP_खातापूर्ण) अणु
 		pr_debug("%s: shutting down association:%p\n", __func__, asoc);
-		sctp_primitive_SHUTDOWN(net, asoc, NULL);
+		sctp_primitive_SHUTDOWN(net, asoc, शून्य);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sflags & SCTP_ABORT) {
-		struct sctp_chunk *chunk;
+	अगर (sflags & SCTP_ABORT) अणु
+		काष्ठा sctp_chunk *chunk;
 
-		chunk = sctp_make_abort_user(asoc, msg, msg_len);
-		if (!chunk)
-			return -ENOMEM;
+		chunk = sctp_make_पात_user(asoc, msg, msg_len);
+		अगर (!chunk)
+			वापस -ENOMEM;
 
 		pr_debug("%s: aborting association:%p\n", __func__, asoc);
 		sctp_primitive_ABORT(net, asoc, chunk);
 		iov_iter_revert(&msg->msg_iter, msg_len);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int sctp_sendmsg_to_asoc(struct sctp_association *asoc,
-				struct msghdr *msg, size_t msg_len,
-				struct sctp_transport *transport,
-				struct sctp_sndrcvinfo *sinfo)
-{
-	struct sock *sk = asoc->base.sk;
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct net *net = sock_net(sk);
-	struct sctp_datamsg *datamsg;
-	bool wait_connect = false;
-	struct sctp_chunk *chunk;
-	long timeo;
-	int err;
+अटल पूर्णांक sctp_sendmsg_to_asoc(काष्ठा sctp_association *asoc,
+				काष्ठा msghdr *msg, माप_प्रकार msg_len,
+				काष्ठा sctp_transport *transport,
+				काष्ठा sctp_sndrcvinfo *sinfo)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sctp_datamsg *datamsg;
+	bool रुको_connect = false;
+	काष्ठा sctp_chunk *chunk;
+	दीर्घ समयo;
+	पूर्णांक err;
 
-	if (sinfo->sinfo_stream >= asoc->stream.outcnt) {
+	अगर (sinfo->sinfo_stream >= asoc->stream.outcnt) अणु
 		err = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (unlikely(!SCTP_SO(&asoc->stream, sinfo->sinfo_stream)->ext)) {
+	अगर (unlikely(!SCTP_SO(&asoc->stream, sinfo->sinfo_stream)->ext)) अणु
 		err = sctp_stream_init_ext(&asoc->stream, sinfo->sinfo_stream);
-		if (err)
-			goto err;
-	}
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
-	if (sp->disable_fragments && msg_len > asoc->frag_point) {
+	अगर (sp->disable_fragments && msg_len > asoc->frag_poपूर्णांक) अणु
 		err = -EMSGSIZE;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (asoc->pmtu_pending) {
-		if (sp->param_flags & SPP_PMTUD_ENABLE)
+	अगर (asoc->pmtu_pending) अणु
+		अगर (sp->param_flags & SPP_PMTUD_ENABLE)
 			sctp_assoc_sync_pmtu(asoc);
 		asoc->pmtu_pending = 0;
-	}
+	पूर्ण
 
-	if (sctp_wspace(asoc) < (int)msg_len)
+	अगर (sctp_wspace(asoc) < (पूर्णांक)msg_len)
 		sctp_prsctp_prune(asoc, sinfo, msg_len - sctp_wspace(asoc));
 
-	if (sk_under_memory_pressure(sk))
+	अगर (sk_under_memory_pressure(sk))
 		sk_mem_reclaim(sk);
 
-	if (sctp_wspace(asoc) <= 0 || !sk_wmem_schedule(sk, msg_len)) {
-		timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
-		err = sctp_wait_for_sndbuf(asoc, &timeo, msg_len);
-		if (err)
-			goto err;
-	}
+	अगर (sctp_wspace(asoc) <= 0 || !sk_wmem_schedule(sk, msg_len)) अणु
+		समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
+		err = sctp_रुको_क्रम_sndbuf(asoc, &समयo, msg_len);
+		अगर (err)
+			जाओ err;
+	पूर्ण
 
-	if (sctp_state(asoc, CLOSED)) {
-		err = sctp_primitive_ASSOCIATE(net, asoc, NULL);
-		if (err)
-			goto err;
+	अगर (sctp_state(asoc, CLOSED)) अणु
+		err = sctp_primitive_ASSOCIATE(net, asoc, शून्य);
+		अगर (err)
+			जाओ err;
 
-		if (asoc->ep->intl_enable) {
-			timeo = sock_sndtimeo(sk, 0);
-			err = sctp_wait_for_connect(asoc, &timeo);
-			if (err) {
+		अगर (asoc->ep->पूर्णांकl_enable) अणु
+			समयo = sock_sndसमयo(sk, 0);
+			err = sctp_रुको_क्रम_connect(asoc, &समयo);
+			अगर (err) अणु
 				err = -ESRCH;
-				goto err;
-			}
-		} else {
-			wait_connect = true;
-		}
+				जाओ err;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			रुको_connect = true;
+		पूर्ण
 
 		pr_debug("%s: we associated primitively\n", __func__);
-	}
+	पूर्ण
 
 	datamsg = sctp_datamsg_from_user(asoc, sinfo, &msg->msg_iter);
-	if (IS_ERR(datamsg)) {
+	अगर (IS_ERR(datamsg)) अणु
 		err = PTR_ERR(datamsg);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	asoc->force_delay = !!(msg->msg_flags & MSG_MORE);
+	asoc->क्रमce_delay = !!(msg->msg_flags & MSG_MORE);
 
-	list_for_each_entry(chunk, &datamsg->chunks, frag_list) {
+	list_क्रम_each_entry(chunk, &datamsg->chunks, frag_list) अणु
 		sctp_chunk_hold(chunk);
 		sctp_set_owner_w(chunk);
 		chunk->transport = transport;
-	}
+	पूर्ण
 
 	err = sctp_primitive_SEND(net, asoc, datamsg);
-	if (err) {
-		sctp_datamsg_free(datamsg);
-		goto err;
-	}
+	अगर (err) अणु
+		sctp_datamsg_मुक्त(datamsg);
+		जाओ err;
+	पूर्ण
 
 	pr_debug("%s: we sent primitively\n", __func__);
 
 	sctp_datamsg_put(datamsg);
 
-	if (unlikely(wait_connect)) {
-		timeo = sock_sndtimeo(sk, msg->msg_flags & MSG_DONTWAIT);
-		sctp_wait_for_connect(asoc, &timeo);
-	}
+	अगर (unlikely(रुको_connect)) अणु
+		समयo = sock_sndसमयo(sk, msg->msg_flags & MSG_DONTWAIT);
+		sctp_रुको_क्रम_connect(asoc, &समयo);
+	पूर्ण
 
 	err = msg_len;
 
 err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static union sctp_addr *sctp_sendmsg_get_daddr(struct sock *sk,
-					       const struct msghdr *msg,
-					       struct sctp_cmsgs *cmsgs)
-{
-	union sctp_addr *daddr = NULL;
-	int err;
+अटल जोड़ sctp_addr *sctp_sendmsg_get_daddr(काष्ठा sock *sk,
+					       स्थिर काष्ठा msghdr *msg,
+					       काष्ठा sctp_cmsgs *cmsgs)
+अणु
+	जोड़ sctp_addr *daddr = शून्य;
+	पूर्णांक err;
 
-	if (!sctp_style(sk, UDP_HIGH_BANDWIDTH) && msg->msg_name) {
-		int len = msg->msg_namelen;
+	अगर (!sctp_style(sk, UDP_HIGH_BANDWIDTH) && msg->msg_name) अणु
+		पूर्णांक len = msg->msg_namelen;
 
-		if (len > sizeof(*daddr))
-			len = sizeof(*daddr);
+		अगर (len > माप(*daddr))
+			len = माप(*daddr);
 
-		daddr = (union sctp_addr *)msg->msg_name;
+		daddr = (जोड़ sctp_addr *)msg->msg_name;
 
-		err = sctp_verify_addr(sk, daddr, len);
-		if (err)
-			return ERR_PTR(err);
-	}
+		err = sctp_verअगरy_addr(sk, daddr, len);
+		अगर (err)
+			वापस ERR_PTR(err);
+	पूर्ण
 
-	return daddr;
-}
+	वापस daddr;
+पूर्ण
 
-static void sctp_sendmsg_update_sinfo(struct sctp_association *asoc,
-				      struct sctp_sndrcvinfo *sinfo,
-				      struct sctp_cmsgs *cmsgs)
-{
-	if (!cmsgs->srinfo && !cmsgs->sinfo) {
-		sinfo->sinfo_stream = asoc->default_stream;
-		sinfo->sinfo_ppid = asoc->default_ppid;
-		sinfo->sinfo_context = asoc->default_context;
+अटल व्योम sctp_sendmsg_update_sinfo(काष्ठा sctp_association *asoc,
+				      काष्ठा sctp_sndrcvinfo *sinfo,
+				      काष्ठा sctp_cmsgs *cmsgs)
+अणु
+	अगर (!cmsgs->srinfo && !cmsgs->sinfo) अणु
+		sinfo->sinfo_stream = asoc->शेष_stream;
+		sinfo->sinfo_ppid = asoc->शेष_ppid;
+		sinfo->sinfo_context = asoc->शेष_context;
 		sinfo->sinfo_assoc_id = sctp_assoc2id(asoc);
 
-		if (!cmsgs->prinfo)
-			sinfo->sinfo_flags = asoc->default_flags;
-	}
+		अगर (!cmsgs->prinfo)
+			sinfo->sinfo_flags = asoc->शेष_flags;
+	पूर्ण
 
-	if (!cmsgs->srinfo && !cmsgs->prinfo)
-		sinfo->sinfo_timetolive = asoc->default_timetolive;
+	अगर (!cmsgs->srinfo && !cmsgs->prinfo)
+		sinfo->sinfo_समयtolive = asoc->शेष_समयtolive;
 
-	if (cmsgs->authinfo) {
+	अगर (cmsgs->authinfo) अणु
 		/* Reuse sinfo_tsn to indicate that authinfo was set and
 		 * sinfo_ssn to save the keyid on tx path.
 		 */
 		sinfo->sinfo_tsn = 1;
 		sinfo->sinfo_ssn = cmsgs->authinfo->auth_keynumber;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sctp_sendmsg(struct sock *sk, struct msghdr *msg, size_t msg_len)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_transport *transport = NULL;
-	struct sctp_sndrcvinfo _sinfo, *sinfo;
-	struct sctp_association *asoc, *tmp;
-	struct sctp_cmsgs cmsgs;
-	union sctp_addr *daddr;
+अटल पूर्णांक sctp_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार msg_len)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_transport *transport = शून्य;
+	काष्ठा sctp_sndrcvinfo _sinfo, *sinfo;
+	काष्ठा sctp_association *asoc, *पंचांगp;
+	काष्ठा sctp_cmsgs cmsgs;
+	जोड़ sctp_addr *daddr;
 	bool new = false;
 	__u16 sflags;
-	int err;
+	पूर्णांक err;
 
 	/* Parse and get snd_info */
 	err = sctp_sendmsg_parse(sk, &cmsgs, &_sinfo, msg, msg_len);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	sinfo  = &_sinfo;
 	sflags = sinfo->sinfo_flags;
 
 	/* Get daddr from msg */
 	daddr = sctp_sendmsg_get_daddr(sk, msg, &cmsgs);
-	if (IS_ERR(daddr)) {
+	अगर (IS_ERR(daddr)) अणु
 		err = PTR_ERR(daddr);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	lock_sock(sk);
 
 	/* SCTP_SENDALL process */
-	if ((sflags & SCTP_SENDALL) && sctp_style(sk, UDP)) {
-		list_for_each_entry_safe(asoc, tmp, &ep->asocs, asocs) {
+	अगर ((sflags & SCTP_SENDALL) && sctp_style(sk, UDP)) अणु
+		list_क्रम_each_entry_safe(asoc, पंचांगp, &ep->asocs, asocs) अणु
 			err = sctp_sendmsg_check_sflags(asoc, sflags, msg,
 							msg_len);
-			if (err == 0)
-				continue;
-			if (err < 0)
-				goto out_unlock;
+			अगर (err == 0)
+				जारी;
+			अगर (err < 0)
+				जाओ out_unlock;
 
 			sctp_sendmsg_update_sinfo(asoc, sinfo, &cmsgs);
 
 			err = sctp_sendmsg_to_asoc(asoc, msg, msg_len,
-						   NULL, sinfo);
-			if (err < 0)
-				goto out_unlock;
+						   शून्य, sinfo);
+			अगर (err < 0)
+				जाओ out_unlock;
 
 			iov_iter_revert(&msg->msg_iter, err);
-		}
+		पूर्ण
 
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* Get and check or create asoc */
-	if (daddr) {
-		asoc = sctp_endpoint_lookup_assoc(ep, daddr, &transport);
-		if (asoc) {
+	अगर (daddr) अणु
+		asoc = sctp_endpoपूर्णांक_lookup_assoc(ep, daddr, &transport);
+		अगर (asoc) अणु
 			err = sctp_sendmsg_check_sflags(asoc, sflags, msg,
 							msg_len);
-			if (err <= 0)
-				goto out_unlock;
-		} else {
+			अगर (err <= 0)
+				जाओ out_unlock;
+		पूर्ण अन्यथा अणु
 			err = sctp_sendmsg_new_asoc(sk, sflags, &cmsgs, daddr,
 						    &transport);
-			if (err)
-				goto out_unlock;
+			अगर (err)
+				जाओ out_unlock;
 
 			asoc = transport->asoc;
 			new = true;
-		}
+		पूर्ण
 
-		if (!sctp_style(sk, TCP) && !(sflags & SCTP_ADDR_OVER))
-			transport = NULL;
-	} else {
+		अगर (!sctp_style(sk, TCP) && !(sflags & SCTP_ADDR_OVER))
+			transport = शून्य;
+	पूर्ण अन्यथा अणु
 		asoc = sctp_id2assoc(sk, sinfo->sinfo_assoc_id);
-		if (!asoc) {
+		अगर (!asoc) अणु
 			err = -EPIPE;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		err = sctp_sendmsg_check_sflags(asoc, sflags, msg, msg_len);
-		if (err <= 0)
-			goto out_unlock;
-	}
+		अगर (err <= 0)
+			जाओ out_unlock;
+	पूर्ण
 
 	/* Update snd_info with the asoc */
 	sctp_sendmsg_update_sinfo(asoc, sinfo, &cmsgs);
 
 	/* Send msg to the asoc */
 	err = sctp_sendmsg_to_asoc(asoc, msg, msg_len, transport, sinfo);
-	if (err < 0 && err != -ESRCH && new)
-		sctp_association_free(asoc);
+	अगर (err < 0 && err != -ESRCH && new)
+		sctp_association_मुक्त(asoc);
 
 out_unlock:
 	release_sock(sk);
 out:
-	return sctp_error(sk, msg->msg_flags, err);
-}
+	वापस sctp_error(sk, msg->msg_flags, err);
+पूर्ण
 
-/* This is an extended version of skb_pull() that removes the data from the
- * start of a skb even when data is spread across the list of skb's in the
- * frag_list. len specifies the total amount of data that needs to be removed.
- * when 'len' bytes could be removed from the skb, it returns 0.
- * If 'len' exceeds the total skb length,  it returns the no. of bytes that
- * could not be removed.
+/* This is an extended version of skb_pull() that हटाओs the data from the
+ * start of a skb even when data is spपढ़ो across the list of skb's in the
+ * frag_list. len specअगरies the total amount of data that needs to be हटाओd.
+ * when 'len' bytes could be हटाओd from the skb, it वापसs 0.
+ * If 'len' exceeds the total skb length,  it वापसs the no. of bytes that
+ * could not be हटाओd.
  */
-static int sctp_skb_pull(struct sk_buff *skb, int len)
-{
-	struct sk_buff *list;
-	int skb_len = skb_headlen(skb);
-	int rlen;
+अटल पूर्णांक sctp_skb_pull(काष्ठा sk_buff *skb, पूर्णांक len)
+अणु
+	काष्ठा sk_buff *list;
+	पूर्णांक skb_len = skb_headlen(skb);
+	पूर्णांक rlen;
 
-	if (len <= skb_len) {
+	अगर (len <= skb_len) अणु
 		__skb_pull(skb, len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	len -= skb_len;
 	__skb_pull(skb, skb_len);
 
-	skb_walk_frags(skb, list) {
+	skb_walk_frags(skb, list) अणु
 		rlen = sctp_skb_pull(list, len);
 		skb->len -= (len-rlen);
 		skb->data_len -= (len-rlen);
 
-		if (!rlen)
-			return 0;
+		अगर (!rlen)
+			वापस 0;
 
 		len = rlen;
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /* API 3.1.3  recvmsg() - UDP Style Syntax
  *
- *  ssize_t recvmsg(int socket, struct msghdr *message,
- *                    int flags);
+ *  sमाप_प्रकार recvmsg(पूर्णांक socket, काष्ठा msghdr *message,
+ *                    पूर्णांक flags);
  *
- *  socket  - the socket descriptor of the endpoint.
- *  message - pointer to the msghdr structure which contains a single
+ *  socket  - the socket descriptor of the endpoपूर्णांक.
+ *  message - poपूर्णांकer to the msghdr काष्ठाure which contains a single
  *            user message and possibly some ancillary data.
  *
- *            See Section 5 for complete description of the data
- *            structures.
+ *            See Section 5 क्रम complete description of the data
+ *            काष्ठाures.
  *
  *  flags   - flags sent or received with the user message, see Section
- *            5 for complete description of the flags.
+ *            5 क्रम complete description of the flags.
  */
-static int sctp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			int noblock, int flags, int *addr_len)
-{
-	struct sctp_ulpevent *event = NULL;
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sk_buff *skb, *head_skb;
-	int copied;
-	int err = 0;
-	int skb_len;
+अटल पूर्णांक sctp_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	काष्ठा sctp_ulpevent *event = शून्य;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sk_buff *skb, *head_skb;
+	पूर्णांक copied;
+	पूर्णांक err = 0;
+	पूर्णांक skb_len;
 
 	pr_debug("%s: sk:%p, msghdr:%p, len:%zd, noblock:%d, flags:0x%x, "
 		 "addr_len:%p)\n", __func__, sk, msg, len, noblock, flags,
@@ -2099,15 +2100,15 @@ static int sctp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 
 	lock_sock(sk);
 
-	if (sctp_style(sk, TCP) && !sctp_sstate(sk, ESTABLISHED) &&
-	    !sctp_sstate(sk, CLOSING) && !sctp_sstate(sk, CLOSED)) {
+	अगर (sctp_style(sk, TCP) && !sctp_sstate(sk, ESTABLISHED) &&
+	    !sctp_sstate(sk, CLOSING) && !sctp_sstate(sk, CLOSED)) अणु
 		err = -ENOTCONN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	skb = sctp_skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	/* Get the total length of the skb including any skb's in the
 	 * frag_list.
@@ -2115,261 +2116,261 @@ static int sctp_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
 	skb_len = skb->len;
 
 	copied = skb_len;
-	if (copied > len)
+	अगर (copied > len)
 		copied = len;
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
 
 	event = sctp_skb2event(skb);
 
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
-	if (event->chunk && event->chunk->head_skb)
+	अगर (event->chunk && event->chunk->head_skb)
 		head_skb = event->chunk->head_skb;
-	else
+	अन्यथा
 		head_skb = skb;
 	sock_recv_ts_and_drops(msg, sk, head_skb);
-	if (sctp_ulpevent_is_notification(event)) {
+	अगर (sctp_ulpevent_is_notअगरication(event)) अणु
 		msg->msg_flags |= MSG_NOTIFICATION;
 		sp->pf->event_msgname(event, msg->msg_name, addr_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		sp->pf->skb_msgname(head_skb, msg->msg_name, addr_len);
-	}
+	पूर्ण
 
-	/* Check if we allow SCTP_NXTINFO. */
-	if (sp->recvnxtinfo)
-		sctp_ulpevent_read_nxtinfo(event, msg, sk);
-	/* Check if we allow SCTP_RCVINFO. */
-	if (sp->recvrcvinfo)
-		sctp_ulpevent_read_rcvinfo(event, msg);
-	/* Check if we allow SCTP_SNDRCVINFO. */
-	if (sctp_ulpevent_type_enabled(sp->subscribe, SCTP_DATA_IO_EVENT))
-		sctp_ulpevent_read_sndrcvinfo(event, msg);
+	/* Check अगर we allow SCTP_NXTINFO. */
+	अगर (sp->recvnxtinfo)
+		sctp_ulpevent_पढ़ो_nxtinfo(event, msg, sk);
+	/* Check अगर we allow SCTP_RCVINFO. */
+	अगर (sp->recvrcvinfo)
+		sctp_ulpevent_पढ़ो_rcvinfo(event, msg);
+	/* Check अगर we allow SCTP_SNDRCVINFO. */
+	अगर (sctp_ulpevent_type_enabled(sp->subscribe, SCTP_DATA_IO_EVENT))
+		sctp_ulpevent_पढ़ो_sndrcvinfo(event, msg);
 
 	err = copied;
 
 	/* If skb's length exceeds the user's buffer, update the skb and
 	 * push it back to the receive_queue so that the next call to
-	 * recvmsg() will return the remaining data. Don't set MSG_EOR.
+	 * recvmsg() will वापस the reमुख्यing data. Don't set MSG_EOR.
 	 */
-	if (skb_len > copied) {
+	अगर (skb_len > copied) अणु
 		msg->msg_flags &= ~MSG_EOR;
-		if (flags & MSG_PEEK)
-			goto out_free;
+		अगर (flags & MSG_PEEK)
+			जाओ out_मुक्त;
 		sctp_skb_pull(skb, copied);
 		skb_queue_head(&sk->sk_receive_queue, skb);
 
 		/* When only partial message is copied to the user, increase
-		 * rwnd by that amount. If all the data in the skb is read,
-		 * rwnd is updated when the event is freed.
+		 * rwnd by that amount. If all the data in the skb is पढ़ो,
+		 * rwnd is updated when the event is मुक्तd.
 		 */
-		if (!sctp_ulpevent_is_notification(event))
+		अगर (!sctp_ulpevent_is_notअगरication(event))
 			sctp_assoc_rwnd_increase(event->asoc, copied);
-		goto out;
-	} else if ((event->msg_flags & MSG_NOTIFICATION) ||
+		जाओ out;
+	पूर्ण अन्यथा अगर ((event->msg_flags & MSG_NOTIFICATION) ||
 		   (event->msg_flags & MSG_EOR))
 		msg->msg_flags |= MSG_EOR;
-	else
+	अन्यथा
 		msg->msg_flags &= ~MSG_EOR;
 
-out_free:
-	if (flags & MSG_PEEK) {
+out_मुक्त:
+	अगर (flags & MSG_PEEK) अणु
 		/* Release the skb reference acquired after peeking the skb in
 		 * sctp_skb_recv_datagram().
 		 */
-		kfree_skb(skb);
-	} else {
+		kमुक्त_skb(skb);
+	पूर्ण अन्यथा अणु
 		/* Free the event which includes releasing the reference to
-		 * the owner of the skb, freeing the skb and updating the
+		 * the owner of the skb, मुक्तing the skb and updating the
 		 * rwnd.
 		 */
-		sctp_ulpevent_free(event);
-	}
+		sctp_ulpevent_मुक्त(event);
+	पूर्ण
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* 7.1.12 Enable/Disable message fragmentation (SCTP_DISABLE_FRAGMENTS)
  *
  * This option is a on/off flag.  If enabled no SCTP message
- * fragmentation will be performed.  Instead if a message being sent
+ * fragmentation will be perक्रमmed.  Instead अगर a message being sent
  * exceeds the current PMTU size, the message will NOT be sent and
  * instead a error will be indicated to the user.
  */
-static int sctp_setsockopt_disable_fragments(struct sock *sk, int *val,
-					     unsigned int optlen)
-{
-	if (optlen < sizeof(int))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_disable_fragments(काष्ठा sock *sk, पूर्णांक *val,
+					     अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 	sctp_sk(sk)->disable_fragments = (*val == 0) ? 0 : 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_events(struct sock *sk, __u8 *sn_type,
-				  unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	int i;
+अटल पूर्णांक sctp_setsockopt_events(काष्ठा sock *sk, __u8 *sn_type,
+				  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	पूर्णांक i;
 
-	if (optlen > sizeof(struct sctp_event_subscribe))
-		return -EINVAL;
+	अगर (optlen > माप(काष्ठा sctp_event_subscribe))
+		वापस -EINVAL;
 
-	for (i = 0; i < optlen; i++)
+	क्रम (i = 0; i < optlen; i++)
 		sctp_ulpevent_type_set(&sp->subscribe, SCTP_SN_TYPE_BASE + i,
 				       sn_type[i]);
 
-	list_for_each_entry(asoc, &sp->ep->asocs, asocs)
+	list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs)
 		asoc->subscribe = sctp_sk(sk)->subscribe;
 
-	/* At the time when a user app subscribes to SCTP_SENDER_DRY_EVENT,
-	 * if there is no data to be sent or retransmit, the stack will
-	 * immediately send up this notification.
+	/* At the समय when a user app subscribes to SCTP_SENDER_DRY_EVENT,
+	 * अगर there is no data to be sent or retransmit, the stack will
+	 * immediately send up this notअगरication.
 	 */
-	if (sctp_ulpevent_type_enabled(sp->subscribe, SCTP_SENDER_DRY_EVENT)) {
-		struct sctp_ulpevent *event;
+	अगर (sctp_ulpevent_type_enabled(sp->subscribe, SCTP_SENDER_DRY_EVENT)) अणु
+		काष्ठा sctp_ulpevent *event;
 
 		asoc = sctp_id2assoc(sk, 0);
-		if (asoc && sctp_outq_is_empty(&asoc->outqueue)) {
+		अगर (asoc && sctp_outq_is_empty(&asoc->outqueue)) अणु
 			event = sctp_ulpevent_make_sender_dry_event(asoc,
 					GFP_USER | __GFP_NOWARN);
-			if (!event)
-				return -ENOMEM;
+			अगर (!event)
+				वापस -ENOMEM;
 
 			asoc->stream.si->enqueue_event(&asoc->ulpq, event);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 7.1.8 Automatic Close of associations (SCTP_AUTOCLOSE)
  *
  * This socket option is applicable to the UDP-style socket only.  When
- * set it will cause associations that are idle for more than the
- * specified number of seconds to automatically close.  An association
+ * set it will cause associations that are idle क्रम more than the
+ * specअगरied number of seconds to स्वतःmatically बंद.  An association
  * being idle is defined an association that has NOT sent or received
- * user data.  The special value of '0' indicates that no automatic
- * close of any associations should be performed.  The option expects an
- * integer defining the number of seconds of idle time before an
- * association is closed.
+ * user data.  The special value of '0' indicates that no स्वतःmatic
+ * बंद of any associations should be perक्रमmed.  The option expects an
+ * पूर्णांकeger defining the number of seconds of idle समय beक्रमe an
+ * association is बंदd.
  */
-static int sctp_setsockopt_autoclose(struct sock *sk, u32 *optval,
-				     unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct net *net = sock_net(sk);
+अटल पूर्णांक sctp_setsockopt_स्वतःबंद(काष्ठा sock *sk, u32 *optval,
+				     अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा net *net = sock_net(sk);
 
 	/* Applicable to UDP-style socket only */
-	if (sctp_style(sk, TCP))
-		return -EOPNOTSUPP;
-	if (optlen != sizeof(int))
-		return -EINVAL;
+	अगर (sctp_style(sk, TCP))
+		वापस -EOPNOTSUPP;
+	अगर (optlen != माप(पूर्णांक))
+		वापस -EINVAL;
 
-	sp->autoclose = *optval;
-	if (sp->autoclose > net->sctp.max_autoclose)
-		sp->autoclose = net->sctp.max_autoclose;
+	sp->स्वतःबंद = *optval;
+	अगर (sp->स्वतःबंद > net->sctp.max_स्वतःबंद)
+		sp->स्वतःबंद = net->sctp.max_स्वतःबंद;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 7.1.13 Peer Address Parameters (SCTP_PEER_ADDR_PARAMS)
  *
- * Applications can enable or disable heartbeats for any peer address of
- * an association, modify an address's heartbeat interval, force a
+ * Applications can enable or disable heartbeats क्रम any peer address of
+ * an association, modअगरy an address's heartbeat पूर्णांकerval, क्रमce a
  * heartbeat to be sent immediately, and adjust the address's maximum
- * number of retransmissions sent before an address is considered
- * unreachable.  The following structure is used to access and modify an
+ * number of retransmissions sent beक्रमe an address is considered
+ * unreachable.  The following काष्ठाure is used to access and modअगरy an
  * address's parameters:
  *
- *  struct sctp_paddrparams {
+ *  काष्ठा sctp_paddrparams अणु
  *     sctp_assoc_t            spp_assoc_id;
- *     struct sockaddr_storage spp_address;
- *     uint32_t                spp_hbinterval;
- *     uint16_t                spp_pathmaxrxt;
- *     uint32_t                spp_pathmtu;
- *     uint32_t                spp_sackdelay;
- *     uint32_t                spp_flags;
- *     uint32_t                spp_ipv6_flowlabel;
- *     uint8_t                 spp_dscp;
- * };
+ *     काष्ठा sockaddr_storage spp_address;
+ *     uपूर्णांक32_t                spp_hbपूर्णांकerval;
+ *     uपूर्णांक16_t                spp_pathmaxrxt;
+ *     uपूर्णांक32_t                spp_pathmtu;
+ *     uपूर्णांक32_t                spp_sackdelay;
+ *     uपूर्णांक32_t                spp_flags;
+ *     uपूर्णांक32_t                spp_ipv6_flowlabel;
+ *     uपूर्णांक8_t                 spp_dscp;
+ * पूर्ण;
  *
  *   spp_assoc_id    - (one-to-many style socket) This is filled in the
- *                     application, and identifies the association for
+ *                     application, and identअगरies the association क्रम
  *                     this query.
- *   spp_address     - This specifies which address is of interest.
- *   spp_hbinterval  - This contains the value of the heartbeat interval,
+ *   spp_address     - This specअगरies which address is of पूर्णांकerest.
+ *   spp_hbपूर्णांकerval  - This contains the value of the heartbeat पूर्णांकerval,
  *                     in milliseconds.  If a  value of zero
  *                     is present in this field then no changes are to
  *                     be made to this parameter.
  *   spp_pathmaxrxt  - This contains the maximum number of
- *                     retransmissions before this address shall be
+ *                     retransmissions beक्रमe this address shall be
  *                     considered unreachable. If a  value of zero
  *                     is present in this field then no changes are to
  *                     be made to this parameter.
  *   spp_pathmtu     - When Path MTU discovery is disabled the value
- *                     specified here will be the "fixed" path mtu.
- *                     Note that if the spp_address field is empty
+ *                     specअगरied here will be the "fixed" path mtu.
+ *                     Note that अगर the spp_address field is empty
  *                     then all associations on this address will
  *                     have this fixed path mtu set upon them.
  *
- *   spp_sackdelay   - When delayed sack is enabled, this value specifies
+ *   spp_sackdelay   - When delayed sack is enabled, this value specअगरies
  *                     the number of milliseconds that sacks will be delayed
- *                     for. This value will apply to all addresses of an
- *                     association if the spp_address field is empty. Note
- *                     also, that if delayed sack is enabled and this
+ *                     क्रम. This value will apply to all addresses of an
+ *                     association अगर the spp_address field is empty. Note
+ *                     also, that अगर delayed sack is enabled and this
  *                     value is set to 0, no change is made to the last
- *                     recorded delayed sack timer value.
+ *                     recorded delayed sack समयr value.
  *
  *   spp_flags       - These flags are used to control various features
  *                     on an association. The flag field may contain
  *                     zero or more of the following options.
  *
  *                     SPP_HB_ENABLE  - Enable heartbeats on the
- *                     specified address. Note that if the address
- *                     field is empty all addresses for the association
+ *                     specअगरied address. Note that अगर the address
+ *                     field is empty all addresses क्रम the association
  *                     have heartbeats enabled upon them.
  *
  *                     SPP_HB_DISABLE - Disable heartbeats on the
- *                     speicifed address. Note that if the address
- *                     field is empty all addresses for the association
+ *                     speicअगरed address. Note that अगर the address
+ *                     field is empty all addresses क्रम the association
  *                     will have their heartbeats disabled. Note also
  *                     that SPP_HB_ENABLE and SPP_HB_DISABLE are
  *                     mutually exclusive, only one of these two should
- *                     be specified. Enabling both fields will have
+ *                     be specअगरied. Enabling both fields will have
  *                     undetermined results.
  *
  *                     SPP_HB_DEMAND - Request a user initiated heartbeat
  *                     to be made immediately.
  *
- *                     SPP_HB_TIME_IS_ZERO - Specify's that the time for
+ *                     SPP_HB_TIME_IS_ZERO - Specअगरy's that the समय क्रम
  *                     heartbeat delayis to be set to the value of 0
  *                     milliseconds.
  *
  *                     SPP_PMTUD_ENABLE - This field will enable PMTU
- *                     discovery upon the specified address. Note that
- *                     if the address feild is empty then all addresses
+ *                     discovery upon the specअगरied address. Note that
+ *                     अगर the address feild is empty then all addresses
  *                     on the association are effected.
  *
  *                     SPP_PMTUD_DISABLE - This field will disable PMTU
- *                     discovery upon the specified address. Note that
- *                     if the address feild is empty then all addresses
+ *                     discovery upon the specअगरied address. Note that
+ *                     अगर the address feild is empty then all addresses
  *                     on the association are effected. Not also that
  *                     SPP_PMTUD_ENABLE and SPP_PMTUD_DISABLE are mutually
  *                     exclusive. Enabling both will have undetermined
  *                     results.
  *
  *                     SPP_SACKDELAY_ENABLE - Setting this flag turns
- *                     on delayed sack. The time specified in spp_sackdelay
- *                     is used to specify the sack delay for this address. Note
- *                     that if spp_address is empty then all addresses will
+ *                     on delayed sack. The समय specअगरied in spp_sackdelay
+ *                     is used to specअगरy the sack delay क्रम this address. Note
+ *                     that अगर spp_address is empty then all addresses will
  *                     enable delayed sack and take on the sack delay
- *                     value specified in spp_sackdelay.
+ *                     value specअगरied in spp_sackdelay.
  *                     SPP_SACKDELAY_DISABLE - Setting this flag turns
  *                     off delayed sack. If the spp_address field is blank then
- *                     delayed sack is disabled for the entire association. Note
+ *                     delayed sack is disabled क्रम the entire association. Note
  *                     also that this field is mutually exclusive to
  *                     SPP_SACKDELAY_ENABLE, setting both will have undefined
  *                     results.
@@ -2378,451 +2379,451 @@ static int sctp_setsockopt_autoclose(struct sock *sk, u32 *optval,
  *                     setting of the IPV6 flow label value.  The value is
  *                     contained in the spp_ipv6_flowlabel field.
  *                     Upon retrieval, this flag will be set to indicate that
- *                     the spp_ipv6_flowlabel field has a valid value returned.
- *                     If a specific destination address is set (in the
- *                     spp_address field), then the value returned is that of
- *                     the address.  If just an association is specified (and
- *                     no address), then the association's default flow label
- *                     is returned.  If neither an association nor a destination
- *                     is specified, then the socket's default flow label is
- *                     returned.  For non-IPv6 sockets, this flag will be left
+ *                     the spp_ipv6_flowlabel field has a valid value वापसed.
+ *                     If a specअगरic destination address is set (in the
+ *                     spp_address field), then the value वापसed is that of
+ *                     the address.  If just an association is specअगरied (and
+ *                     no address), then the association's शेष flow label
+ *                     is वापसed.  If neither an association nor a destination
+ *                     is specअगरied, then the socket's शेष flow label is
+ *                     वापसed.  For non-IPv6 sockets, this flag will be left
  *                     cleared.
  *
  *                     SPP_DSCP:  Setting this flag enables the setting of the
- *                     Differentiated Services Code Point (DSCP) value
- *                     associated with either the association or a specific
+ *                     Dअगरferentiated Services Code Poपूर्णांक (DSCP) value
+ *                     associated with either the association or a specअगरic
  *                     address.  The value is obtained in the spp_dscp field.
  *                     Upon retrieval, this flag will be set to indicate that
- *                     the spp_dscp field has a valid value returned.  If a
- *                     specific destination address is set when called (in the
- *                     spp_address field), then that specific destination
- *                     address's DSCP value is returned.  If just an association
- *                     is specified, then the association's default DSCP is
- *                     returned.  If neither an association nor a destination is
- *                     specified, then the socket's default DSCP is returned.
+ *                     the spp_dscp field has a valid value वापसed.  If a
+ *                     specअगरic destination address is set when called (in the
+ *                     spp_address field), then that specअगरic destination
+ *                     address's DSCP value is वापसed.  If just an association
+ *                     is specअगरied, then the association's शेष DSCP is
+ *                     वापसed.  If neither an association nor a destination is
+ *                     specअगरied, then the socket's शेष DSCP is वापसed.
  *
  *   spp_ipv6_flowlabel
  *                   - This field is used in conjunction with the
  *                     SPP_IPV6_FLOWLABEL flag and contains the IPv6 flow label.
- *                     The 20 least significant bits are used for the flow
+ *                     The 20 least signअगरicant bits are used क्रम the flow
  *                     label.  This setting has precedence over any IPv6-layer
  *                     setting.
  *
  *   spp_dscp        - This field is used in conjunction with the SPP_DSCP flag
- *                     and contains the DSCP.  The 6 most significant bits are
- *                     used for the DSCP.  This setting has precedence over any
+ *                     and contains the DSCP.  The 6 most signअगरicant bits are
+ *                     used क्रम the DSCP.  This setting has precedence over any
  *                     IPv4- or IPv6- layer setting.
  */
-static int sctp_apply_peer_addr_params(struct sctp_paddrparams *params,
-				       struct sctp_transport   *trans,
-				       struct sctp_association *asoc,
-				       struct sctp_sock        *sp,
-				       int                      hb_change,
-				       int                      pmtud_change,
-				       int                      sackdelay_change)
-{
-	int error;
+अटल पूर्णांक sctp_apply_peer_addr_params(काष्ठा sctp_paddrparams *params,
+				       काष्ठा sctp_transport   *trans,
+				       काष्ठा sctp_association *asoc,
+				       काष्ठा sctp_sock        *sp,
+				       पूर्णांक                      hb_change,
+				       पूर्णांक                      pmtud_change,
+				       पूर्णांक                      sackdelay_change)
+अणु
+	पूर्णांक error;
 
-	if (params->spp_flags & SPP_HB_DEMAND && trans) {
+	अगर (params->spp_flags & SPP_HB_DEMAND && trans) अणु
 		error = sctp_primitive_REQUESTHEARTBEAT(trans->asoc->base.net,
 							trans->asoc, trans);
-		if (error)
-			return error;
-	}
+		अगर (error)
+			वापस error;
+	पूर्ण
 
 	/* Note that unless the spp_flag is set to SPP_HB_ENABLE the value of
 	 * this field is ignored.  Note also that a value of zero indicates
 	 * the current setting should be left unchanged.
 	 */
-	if (params->spp_flags & SPP_HB_ENABLE) {
+	अगर (params->spp_flags & SPP_HB_ENABLE) अणु
 
-		/* Re-zero the interval if the SPP_HB_TIME_IS_ZERO is
+		/* Re-zero the पूर्णांकerval अगर the SPP_HB_TIME_IS_ZERO is
 		 * set.  This lets us use 0 value when this flag
 		 * is set.
 		 */
-		if (params->spp_flags & SPP_HB_TIME_IS_ZERO)
-			params->spp_hbinterval = 0;
+		अगर (params->spp_flags & SPP_HB_TIME_IS_ZERO)
+			params->spp_hbपूर्णांकerval = 0;
 
-		if (params->spp_hbinterval ||
-		    (params->spp_flags & SPP_HB_TIME_IS_ZERO)) {
-			if (trans) {
-				trans->hbinterval =
-				    msecs_to_jiffies(params->spp_hbinterval);
-			} else if (asoc) {
-				asoc->hbinterval =
-				    msecs_to_jiffies(params->spp_hbinterval);
-			} else {
-				sp->hbinterval = params->spp_hbinterval;
-			}
-		}
-	}
+		अगर (params->spp_hbपूर्णांकerval ||
+		    (params->spp_flags & SPP_HB_TIME_IS_ZERO)) अणु
+			अगर (trans) अणु
+				trans->hbपूर्णांकerval =
+				    msecs_to_jअगरfies(params->spp_hbपूर्णांकerval);
+			पूर्ण अन्यथा अगर (asoc) अणु
+				asoc->hbपूर्णांकerval =
+				    msecs_to_jअगरfies(params->spp_hbपूर्णांकerval);
+			पूर्ण अन्यथा अणु
+				sp->hbपूर्णांकerval = params->spp_hbपूर्णांकerval;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (hb_change) {
-		if (trans) {
+	अगर (hb_change) अणु
+		अगर (trans) अणु
 			trans->param_flags =
 				(trans->param_flags & ~SPP_HB) | hb_change;
-		} else if (asoc) {
+		पूर्ण अन्यथा अगर (asoc) अणु
 			asoc->param_flags =
 				(asoc->param_flags & ~SPP_HB) | hb_change;
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->param_flags =
 				(sp->param_flags & ~SPP_HB) | hb_change;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* When Path MTU discovery is disabled the value specified here will
+	/* When Path MTU discovery is disabled the value specअगरied here will
 	 * be the "fixed" path mtu (i.e. the value of the spp_flags field must
-	 * include the flag SPP_PMTUD_DISABLE for this field to have any
+	 * include the flag SPP_PMTUD_DISABLE क्रम this field to have any
 	 * effect).
 	 */
-	if ((params->spp_flags & SPP_PMTUD_DISABLE) && params->spp_pathmtu) {
-		if (trans) {
+	अगर ((params->spp_flags & SPP_PMTUD_DISABLE) && params->spp_pathmtu) अणु
+		अगर (trans) अणु
 			trans->pathmtu = params->spp_pathmtu;
 			sctp_assoc_sync_pmtu(asoc);
-		} else if (asoc) {
+		पूर्ण अन्यथा अगर (asoc) अणु
 			sctp_assoc_set_pmtu(asoc, params->spp_pathmtu);
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->pathmtu = params->spp_pathmtu;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pmtud_change) {
-		if (trans) {
-			int update = (trans->param_flags & SPP_PMTUD_DISABLE) &&
+	अगर (pmtud_change) अणु
+		अगर (trans) अणु
+			पूर्णांक update = (trans->param_flags & SPP_PMTUD_DISABLE) &&
 				(params->spp_flags & SPP_PMTUD_ENABLE);
 			trans->param_flags =
 				(trans->param_flags & ~SPP_PMTUD) | pmtud_change;
-			if (update) {
+			अगर (update) अणु
 				sctp_transport_pmtu(trans, sctp_opt2sk(sp));
 				sctp_assoc_sync_pmtu(asoc);
-			}
-		} else if (asoc) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (asoc) अणु
 			asoc->param_flags =
 				(asoc->param_flags & ~SPP_PMTUD) | pmtud_change;
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->param_flags =
 				(sp->param_flags & ~SPP_PMTUD) | pmtud_change;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Note that unless the spp_flag is set to SPP_SACKDELAY_ENABLE the
 	 * value of this field is ignored.  Note also that a value of zero
 	 * indicates the current setting should be left unchanged.
 	 */
-	if ((params->spp_flags & SPP_SACKDELAY_ENABLE) && params->spp_sackdelay) {
-		if (trans) {
+	अगर ((params->spp_flags & SPP_SACKDELAY_ENABLE) && params->spp_sackdelay) अणु
+		अगर (trans) अणु
 			trans->sackdelay =
-				msecs_to_jiffies(params->spp_sackdelay);
-		} else if (asoc) {
+				msecs_to_jअगरfies(params->spp_sackdelay);
+		पूर्ण अन्यथा अगर (asoc) अणु
 			asoc->sackdelay =
-				msecs_to_jiffies(params->spp_sackdelay);
-		} else {
+				msecs_to_jअगरfies(params->spp_sackdelay);
+		पूर्ण अन्यथा अणु
 			sp->sackdelay = params->spp_sackdelay;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sackdelay_change) {
-		if (trans) {
+	अगर (sackdelay_change) अणु
+		अगर (trans) अणु
 			trans->param_flags =
 				(trans->param_flags & ~SPP_SACKDELAY) |
 				sackdelay_change;
-		} else if (asoc) {
+		पूर्ण अन्यथा अगर (asoc) अणु
 			asoc->param_flags =
 				(asoc->param_flags & ~SPP_SACKDELAY) |
 				sackdelay_change;
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->param_flags =
 				(sp->param_flags & ~SPP_SACKDELAY) |
 				sackdelay_change;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Note that a value of zero indicates the current setting should be
 	   left unchanged.
 	 */
-	if (params->spp_pathmaxrxt) {
-		if (trans) {
+	अगर (params->spp_pathmaxrxt) अणु
+		अगर (trans) अणु
 			trans->pathmaxrxt = params->spp_pathmaxrxt;
-		} else if (asoc) {
+		पूर्ण अन्यथा अगर (asoc) अणु
 			asoc->pathmaxrxt = params->spp_pathmaxrxt;
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->pathmaxrxt = params->spp_pathmaxrxt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (params->spp_flags & SPP_IPV6_FLOWLABEL) {
-		if (trans) {
-			if (trans->ipaddr.sa.sa_family == AF_INET6) {
+	अगर (params->spp_flags & SPP_IPV6_FLOWLABEL) अणु
+		अगर (trans) अणु
+			अगर (trans->ipaddr.sa.sa_family == AF_INET6) अणु
 				trans->flowlabel = params->spp_ipv6_flowlabel &
 						   SCTP_FLOWLABEL_VAL_MASK;
 				trans->flowlabel |= SCTP_FLOWLABEL_SET_MASK;
-			}
-		} else if (asoc) {
-			struct sctp_transport *t;
+			पूर्ण
+		पूर्ण अन्यथा अगर (asoc) अणु
+			काष्ठा sctp_transport *t;
 
-			list_for_each_entry(t, &asoc->peer.transport_addr_list,
-					    transports) {
-				if (t->ipaddr.sa.sa_family != AF_INET6)
-					continue;
+			list_क्रम_each_entry(t, &asoc->peer.transport_addr_list,
+					    transports) अणु
+				अगर (t->ipaddr.sa.sa_family != AF_INET6)
+					जारी;
 				t->flowlabel = params->spp_ipv6_flowlabel &
 					       SCTP_FLOWLABEL_VAL_MASK;
 				t->flowlabel |= SCTP_FLOWLABEL_SET_MASK;
-			}
+			पूर्ण
 			asoc->flowlabel = params->spp_ipv6_flowlabel &
 					  SCTP_FLOWLABEL_VAL_MASK;
 			asoc->flowlabel |= SCTP_FLOWLABEL_SET_MASK;
-		} else if (sctp_opt2sk(sp)->sk_family == AF_INET6) {
+		पूर्ण अन्यथा अगर (sctp_opt2sk(sp)->sk_family == AF_INET6) अणु
 			sp->flowlabel = params->spp_ipv6_flowlabel &
 					SCTP_FLOWLABEL_VAL_MASK;
 			sp->flowlabel |= SCTP_FLOWLABEL_SET_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (params->spp_flags & SPP_DSCP) {
-		if (trans) {
+	अगर (params->spp_flags & SPP_DSCP) अणु
+		अगर (trans) अणु
 			trans->dscp = params->spp_dscp & SCTP_DSCP_VAL_MASK;
 			trans->dscp |= SCTP_DSCP_SET_MASK;
-		} else if (asoc) {
-			struct sctp_transport *t;
+		पूर्ण अन्यथा अगर (asoc) अणु
+			काष्ठा sctp_transport *t;
 
-			list_for_each_entry(t, &asoc->peer.transport_addr_list,
-					    transports) {
+			list_क्रम_each_entry(t, &asoc->peer.transport_addr_list,
+					    transports) अणु
 				t->dscp = params->spp_dscp &
 					  SCTP_DSCP_VAL_MASK;
 				t->dscp |= SCTP_DSCP_SET_MASK;
-			}
+			पूर्ण
 			asoc->dscp = params->spp_dscp & SCTP_DSCP_VAL_MASK;
 			asoc->dscp |= SCTP_DSCP_SET_MASK;
-		} else {
+		पूर्ण अन्यथा अणु
 			sp->dscp = params->spp_dscp & SCTP_DSCP_VAL_MASK;
 			sp->dscp |= SCTP_DSCP_SET_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_peer_addr_params(struct sock *sk,
-					    struct sctp_paddrparams *params,
-					    unsigned int optlen)
-{
-	struct sctp_transport   *trans = NULL;
-	struct sctp_association *asoc = NULL;
-	struct sctp_sock        *sp = sctp_sk(sk);
-	int error;
-	int hb_change, pmtud_change, sackdelay_change;
+अटल पूर्णांक sctp_setsockopt_peer_addr_params(काष्ठा sock *sk,
+					    काष्ठा sctp_paddrparams *params,
+					    अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_transport   *trans = शून्य;
+	काष्ठा sctp_association *asoc = शून्य;
+	काष्ठा sctp_sock        *sp = sctp_sk(sk);
+	पूर्णांक error;
+	पूर्णांक hb_change, pmtud_change, sackdelay_change;
 
-	if (optlen == ALIGN(offsetof(struct sctp_paddrparams,
-					    spp_ipv6_flowlabel), 4)) {
-		if (params->spp_flags & (SPP_DSCP | SPP_IPV6_FLOWLABEL))
-			return -EINVAL;
-	} else if (optlen != sizeof(*params)) {
-		return -EINVAL;
-	}
+	अगर (optlen == ALIGN(दुरत्व(काष्ठा sctp_paddrparams,
+					    spp_ipv6_flowlabel), 4)) अणु
+		अगर (params->spp_flags & (SPP_DSCP | SPP_IPV6_FLOWLABEL))
+			वापस -EINVAL;
+	पूर्ण अन्यथा अगर (optlen != माप(*params)) अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Validate flags and value parameters. */
 	hb_change        = params->spp_flags & SPP_HB;
 	pmtud_change     = params->spp_flags & SPP_PMTUD;
 	sackdelay_change = params->spp_flags & SPP_SACKDELAY;
 
-	if (hb_change        == SPP_HB ||
+	अगर (hb_change        == SPP_HB ||
 	    pmtud_change     == SPP_PMTUD ||
 	    sackdelay_change == SPP_SACKDELAY ||
 	    params->spp_sackdelay > 500 ||
 	    (params->spp_pathmtu &&
 	     params->spp_pathmtu < SCTP_DEFAULT_MINSEGMENT))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* If an address other than INADDR_ANY is specified, and
+	/* If an address other than INADDR_ANY is specअगरied, and
 	 * no transport is found, then the request is invalid.
 	 */
-	if (!sctp_is_any(sk, (union sctp_addr *)&params->spp_address)) {
+	अगर (!sctp_is_any(sk, (जोड़ sctp_addr *)&params->spp_address)) अणु
 		trans = sctp_addr_id2transport(sk, &params->spp_address,
 					       params->spp_assoc_id);
-		if (!trans)
-			return -EINVAL;
-	}
+		अगर (!trans)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Get association, if assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, params->spp_assoc_id);
-	if (!asoc && params->spp_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->spp_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Heartbeat demand can only be sent on a transport or
 	 * association, but not a socket.
 	 */
-	if (params->spp_flags & SPP_HB_DEMAND && !trans && !asoc)
-		return -EINVAL;
+	अगर (params->spp_flags & SPP_HB_DEMAND && !trans && !asoc)
+		वापस -EINVAL;
 
 	/* Process parameters. */
 	error = sctp_apply_peer_addr_params(params, trans, asoc, sp,
 					    hb_change, pmtud_change,
 					    sackdelay_change);
 
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	/* If changes are for association, also apply parameters to each
+	/* If changes are क्रम association, also apply parameters to each
 	 * transport.
 	 */
-	if (!trans && asoc) {
-		list_for_each_entry(trans, &asoc->peer.transport_addr_list,
-				transports) {
+	अगर (!trans && asoc) अणु
+		list_क्रम_each_entry(trans, &asoc->peer.transport_addr_list,
+				transports) अणु
 			sctp_apply_peer_addr_params(params, trans, asoc, sp,
 						    hb_change, pmtud_change,
 						    sackdelay_change);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline __u32 sctp_spp_sackdelay_enable(__u32 param_flags)
-{
-	return (param_flags & ~SPP_SACKDELAY) | SPP_SACKDELAY_ENABLE;
-}
+अटल अंतरभूत __u32 sctp_spp_sackdelay_enable(__u32 param_flags)
+अणु
+	वापस (param_flags & ~SPP_SACKDELAY) | SPP_SACKDELAY_ENABLE;
+पूर्ण
 
-static inline __u32 sctp_spp_sackdelay_disable(__u32 param_flags)
-{
-	return (param_flags & ~SPP_SACKDELAY) | SPP_SACKDELAY_DISABLE;
-}
+अटल अंतरभूत __u32 sctp_spp_sackdelay_disable(__u32 param_flags)
+अणु
+	वापस (param_flags & ~SPP_SACKDELAY) | SPP_SACKDELAY_DISABLE;
+पूर्ण
 
-static void sctp_apply_asoc_delayed_ack(struct sctp_sack_info *params,
-					struct sctp_association *asoc)
-{
-	struct sctp_transport *trans;
+अटल व्योम sctp_apply_asoc_delayed_ack(काष्ठा sctp_sack_info *params,
+					काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा sctp_transport *trans;
 
-	if (params->sack_delay) {
-		asoc->sackdelay = msecs_to_jiffies(params->sack_delay);
+	अगर (params->sack_delay) अणु
+		asoc->sackdelay = msecs_to_jअगरfies(params->sack_delay);
 		asoc->param_flags =
 			sctp_spp_sackdelay_enable(asoc->param_flags);
-	}
-	if (params->sack_freq == 1) {
+	पूर्ण
+	अगर (params->sack_freq == 1) अणु
 		asoc->param_flags =
 			sctp_spp_sackdelay_disable(asoc->param_flags);
-	} else if (params->sack_freq > 1) {
+	पूर्ण अन्यथा अगर (params->sack_freq > 1) अणु
 		asoc->sackfreq = params->sack_freq;
 		asoc->param_flags =
 			sctp_spp_sackdelay_enable(asoc->param_flags);
-	}
+	पूर्ण
 
-	list_for_each_entry(trans, &asoc->peer.transport_addr_list,
-			    transports) {
-		if (params->sack_delay) {
-			trans->sackdelay = msecs_to_jiffies(params->sack_delay);
+	list_क्रम_each_entry(trans, &asoc->peer.transport_addr_list,
+			    transports) अणु
+		अगर (params->sack_delay) अणु
+			trans->sackdelay = msecs_to_jअगरfies(params->sack_delay);
 			trans->param_flags =
 				sctp_spp_sackdelay_enable(trans->param_flags);
-		}
-		if (params->sack_freq == 1) {
+		पूर्ण
+		अगर (params->sack_freq == 1) अणु
 			trans->param_flags =
 				sctp_spp_sackdelay_disable(trans->param_flags);
-		} else if (params->sack_freq > 1) {
+		पूर्ण अन्यथा अगर (params->sack_freq > 1) अणु
 			trans->sackfreq = params->sack_freq;
 			trans->param_flags =
 				sctp_spp_sackdelay_enable(trans->param_flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * 7.1.23.  Get or set delayed ack timer (SCTP_DELAYED_SACK)
+ * 7.1.23.  Get or set delayed ack समयr (SCTP_DELAYED_SACK)
  *
- * This option will effect the way delayed acks are performed.  This
- * option allows you to get or set the delayed ack time, in
+ * This option will effect the way delayed acks are perक्रमmed.  This
+ * option allows you to get or set the delayed ack समय, in
  * milliseconds.  It also allows changing the delayed ack frequency.
  * Changing the frequency to 1 disables the delayed sack algorithm.  If
- * the assoc_id is 0, then this sets or gets the endpoints default
+ * the assoc_id is 0, then this sets or माला_लो the endpoपूर्णांकs शेष
  * values.  If the assoc_id field is non-zero, then the set or get
- * effects the specified association for the one to many model (the
- * assoc_id field is ignored by the one to one model).  Note that if
+ * effects the specअगरied association क्रम the one to many model (the
+ * assoc_id field is ignored by the one to one model).  Note that अगर
  * sack_delay or sack_freq are 0 when setting this option, then the
- * current values will remain unchanged.
+ * current values will reमुख्य unchanged.
  *
- * struct sctp_sack_info {
+ * काष्ठा sctp_sack_info अणु
  *     sctp_assoc_t            sack_assoc_id;
- *     uint32_t                sack_delay;
- *     uint32_t                sack_freq;
- * };
+ *     uपूर्णांक32_t                sack_delay;
+ *     uपूर्णांक32_t                sack_freq;
+ * पूर्ण;
  *
  * sack_assoc_id -  This parameter, indicates which association the user
- *    is performing an action upon.  Note that if this field's value is
- *    zero then the endpoints default value is changed (effecting future
+ *    is perक्रमming an action upon.  Note that अगर this field's value is
+ *    zero then the endpoपूर्णांकs शेष value is changed (effecting future
  *    associations only).
  *
  * sack_delay -  This parameter contains the number of milliseconds that
- *    the user is requesting the delayed ACK timer be set to.  Note that
+ *    the user is requesting the delayed ACK समयr be set to.  Note that
  *    this value is defined in the standard to be between 200 and 500
  *    milliseconds.
  *
  * sack_freq -  This parameter contains the number of packets that must
- *    be received before a sack is sent without waiting for the delay
- *    timer to expire.  The default value for this is 2, setting this
+ *    be received beक्रमe a sack is sent without रुकोing क्रम the delay
+ *    समयr to expire.  The शेष value क्रम this is 2, setting this
  *    value to 1 will disable the delayed sack algorithm.
  */
-static int __sctp_setsockopt_delayed_ack(struct sock *sk,
-					 struct sctp_sack_info *params)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक __sctp_setsockopt_delayed_ack(काष्ठा sock *sk,
+					 काष्ठा sctp_sack_info *params)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 
 	/* Validate value parameter. */
-	if (params->sack_delay > 500)
-		return -EINVAL;
+	अगर (params->sack_delay > 500)
+		वापस -EINVAL;
 
-	/* Get association, if sack_assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर sack_assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, params->sack_assoc_id);
-	if (!asoc && params->sack_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && params->sack_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		sctp_apply_asoc_delayed_ack(params, asoc);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		params->sack_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (params->sack_assoc_id == SCTP_FUTURE_ASSOC ||
-	    params->sack_assoc_id == SCTP_ALL_ASSOC) {
-		if (params->sack_delay) {
+	अगर (params->sack_assoc_id == SCTP_FUTURE_ASSOC ||
+	    params->sack_assoc_id == SCTP_ALL_ASSOC) अणु
+		अगर (params->sack_delay) अणु
 			sp->sackdelay = params->sack_delay;
 			sp->param_flags =
 				sctp_spp_sackdelay_enable(sp->param_flags);
-		}
-		if (params->sack_freq == 1) {
+		पूर्ण
+		अगर (params->sack_freq == 1) अणु
 			sp->param_flags =
 				sctp_spp_sackdelay_disable(sp->param_flags);
-		} else if (params->sack_freq > 1) {
+		पूर्ण अन्यथा अगर (params->sack_freq > 1) अणु
 			sp->sackfreq = params->sack_freq;
 			sp->param_flags =
 				sctp_spp_sackdelay_enable(sp->param_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (params->sack_assoc_id == SCTP_CURRENT_ASSOC ||
+	अगर (params->sack_assoc_id == SCTP_CURRENT_ASSOC ||
 	    params->sack_assoc_id == SCTP_ALL_ASSOC)
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs)
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs)
 			sctp_apply_asoc_delayed_ack(params, asoc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_delayed_ack(struct sock *sk,
-				       struct sctp_sack_info *params,
-				       unsigned int optlen)
-{
-	if (optlen == sizeof(struct sctp_assoc_value)) {
-		struct sctp_assoc_value *v = (struct sctp_assoc_value *)params;
-		struct sctp_sack_info p;
+अटल पूर्णांक sctp_setsockopt_delayed_ack(काष्ठा sock *sk,
+				       काष्ठा sctp_sack_info *params,
+				       अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen == माप(काष्ठा sctp_assoc_value)) अणु
+		काष्ठा sctp_assoc_value *v = (काष्ठा sctp_assoc_value *)params;
+		काष्ठा sctp_sack_info p;
 
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
@@ -2833,288 +2834,288 @@ static int sctp_setsockopt_delayed_ack(struct sock *sk,
 		p.sack_assoc_id = v->assoc_id;
 		p.sack_delay = v->assoc_value;
 		p.sack_freq = v->assoc_value ? 0 : 1;
-		return __sctp_setsockopt_delayed_ack(sk, &p);
-	}
+		वापस __sctp_setsockopt_delayed_ack(sk, &p);
+	पूर्ण
 
-	if (optlen != sizeof(struct sctp_sack_info))
-		return -EINVAL;
-	if (params->sack_delay == 0 && params->sack_freq == 0)
-		return 0;
-	return __sctp_setsockopt_delayed_ack(sk, params);
-}
+	अगर (optlen != माप(काष्ठा sctp_sack_info))
+		वापस -EINVAL;
+	अगर (params->sack_delay == 0 && params->sack_freq == 0)
+		वापस 0;
+	वापस __sctp_setsockopt_delayed_ack(sk, params);
+पूर्ण
 
 /* 7.1.3 Initialization Parameters (SCTP_INITMSG)
  *
- * Applications can specify protocol parameters for the default association
- * initialization.  The option name argument to setsockopt() and getsockopt()
+ * Applications can specअगरy protocol parameters क्रम the शेष association
+ * initialization.  The option name argument to setsockopt() and माला_लोockopt()
  * is SCTP_INITMSG.
  *
  * Setting initialization parameters is effective only on an unconnected
- * socket (for UDP-style sockets only future associations are effected
+ * socket (क्रम UDP-style sockets only future associations are effected
  * by the change).  With TCP-style sockets, this option is inherited by
  * sockets derived from a listener socket.
  */
-static int sctp_setsockopt_initmsg(struct sock *sk, struct sctp_initmsg *sinit,
-				   unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_setsockopt_iniपंचांगsg(काष्ठा sock *sk, काष्ठा sctp_iniपंचांगsg *sinit,
+				   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (optlen != sizeof(struct sctp_initmsg))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_iniपंचांगsg))
+		वापस -EINVAL;
 
-	if (sinit->sinit_num_ostreams)
-		sp->initmsg.sinit_num_ostreams = sinit->sinit_num_ostreams;
-	if (sinit->sinit_max_instreams)
-		sp->initmsg.sinit_max_instreams = sinit->sinit_max_instreams;
-	if (sinit->sinit_max_attempts)
-		sp->initmsg.sinit_max_attempts = sinit->sinit_max_attempts;
-	if (sinit->sinit_max_init_timeo)
-		sp->initmsg.sinit_max_init_timeo = sinit->sinit_max_init_timeo;
+	अगर (sinit->sinit_num_ostreams)
+		sp->iniपंचांगsg.sinit_num_ostreams = sinit->sinit_num_ostreams;
+	अगर (sinit->sinit_max_instreams)
+		sp->iniपंचांगsg.sinit_max_instreams = sinit->sinit_max_instreams;
+	अगर (sinit->sinit_max_attempts)
+		sp->iniपंचांगsg.sinit_max_attempts = sinit->sinit_max_attempts;
+	अगर (sinit->sinit_max_init_समयo)
+		sp->iniपंचांगsg.sinit_max_init_समयo = sinit->sinit_max_init_समयo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.14 Set default send parameters (SCTP_DEFAULT_SEND_PARAM)
+ * 7.1.14 Set शेष send parameters (SCTP_DEFAULT_SEND_PARAM)
  *
- *   Applications that wish to use the sendto() system call may wish to
- *   specify a default set of parameters that would normally be supplied
+ *   Applications that wish to use the sendto() प्रणाली call may wish to
+ *   specअगरy a शेष set of parameters that would normally be supplied
  *   through the inclusion of ancillary data.  This socket option allows
- *   such an application to set the default sctp_sndrcvinfo structure.
+ *   such an application to set the शेष sctp_sndrcvinfo काष्ठाure.
  *   The application that wishes to use this socket option simply passes
- *   in to this call the sctp_sndrcvinfo structure defined in Section
+ *   in to this call the sctp_sndrcvinfo काष्ठाure defined in Section
  *   5.2.2) The input parameters accepted by this call include
  *   sinfo_stream, sinfo_flags, sinfo_ppid, sinfo_context,
- *   sinfo_timetolive.  The user must provide the sinfo_assoc_id field in
- *   to this call if the caller is using the UDP model.
+ *   sinfo_समयtolive.  The user must provide the sinfo_assoc_id field in
+ *   to this call अगर the caller is using the UDP model.
  */
-static int sctp_setsockopt_default_send_param(struct sock *sk,
-					      struct sctp_sndrcvinfo *info,
-					      unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_शेष_send_param(काष्ठा sock *sk,
+					      काष्ठा sctp_sndrcvinfo *info,
+					      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(*info))
-		return -EINVAL;
-	if (info->sinfo_flags &
+	अगर (optlen != माप(*info))
+		वापस -EINVAL;
+	अगर (info->sinfo_flags &
 	    ~(SCTP_UNORDERED | SCTP_ADDR_OVER |
-	      SCTP_ABORT | SCTP_EOF))
-		return -EINVAL;
+	      SCTP_ABORT | SCTP_खातापूर्ण))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, info->sinfo_assoc_id);
-	if (!asoc && info->sinfo_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && info->sinfo_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		asoc->default_stream = info->sinfo_stream;
-		asoc->default_flags = info->sinfo_flags;
-		asoc->default_ppid = info->sinfo_ppid;
-		asoc->default_context = info->sinfo_context;
-		asoc->default_timetolive = info->sinfo_timetolive;
+	अगर (asoc) अणु
+		asoc->शेष_stream = info->sinfo_stream;
+		asoc->शेष_flags = info->sinfo_flags;
+		asoc->शेष_ppid = info->sinfo_ppid;
+		asoc->शेष_context = info->sinfo_context;
+		asoc->शेष_समयtolive = info->sinfo_समयtolive;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		info->sinfo_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (info->sinfo_assoc_id == SCTP_FUTURE_ASSOC ||
-	    info->sinfo_assoc_id == SCTP_ALL_ASSOC) {
-		sp->default_stream = info->sinfo_stream;
-		sp->default_flags = info->sinfo_flags;
-		sp->default_ppid = info->sinfo_ppid;
-		sp->default_context = info->sinfo_context;
-		sp->default_timetolive = info->sinfo_timetolive;
-	}
+	अगर (info->sinfo_assoc_id == SCTP_FUTURE_ASSOC ||
+	    info->sinfo_assoc_id == SCTP_ALL_ASSOC) अणु
+		sp->शेष_stream = info->sinfo_stream;
+		sp->शेष_flags = info->sinfo_flags;
+		sp->शेष_ppid = info->sinfo_ppid;
+		sp->शेष_context = info->sinfo_context;
+		sp->शेष_समयtolive = info->sinfo_समयtolive;
+	पूर्ण
 
-	if (info->sinfo_assoc_id == SCTP_CURRENT_ASSOC ||
-	    info->sinfo_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs) {
-			asoc->default_stream = info->sinfo_stream;
-			asoc->default_flags = info->sinfo_flags;
-			asoc->default_ppid = info->sinfo_ppid;
-			asoc->default_context = info->sinfo_context;
-			asoc->default_timetolive = info->sinfo_timetolive;
-		}
-	}
+	अगर (info->sinfo_assoc_id == SCTP_CURRENT_ASSOC ||
+	    info->sinfo_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs) अणु
+			asoc->शेष_stream = info->sinfo_stream;
+			asoc->शेष_flags = info->sinfo_flags;
+			asoc->शेष_ppid = info->sinfo_ppid;
+			asoc->शेष_context = info->sinfo_context;
+			asoc->शेष_समयtolive = info->sinfo_समयtolive;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* RFC6458, Section 8.1.31. Set/get Default Send Parameters
  * (SCTP_DEFAULT_SNDINFO)
  */
-static int sctp_setsockopt_default_sndinfo(struct sock *sk,
-					   struct sctp_sndinfo *info,
-					   unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_शेष_sndinfo(काष्ठा sock *sk,
+					   काष्ठा sctp_sndinfo *info,
+					   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(*info))
-		return -EINVAL;
-	if (info->snd_flags &
+	अगर (optlen != माप(*info))
+		वापस -EINVAL;
+	अगर (info->snd_flags &
 	    ~(SCTP_UNORDERED | SCTP_ADDR_OVER |
-	      SCTP_ABORT | SCTP_EOF))
-		return -EINVAL;
+	      SCTP_ABORT | SCTP_खातापूर्ण))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, info->snd_assoc_id);
-	if (!asoc && info->snd_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && info->snd_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		asoc->default_stream = info->snd_sid;
-		asoc->default_flags = info->snd_flags;
-		asoc->default_ppid = info->snd_ppid;
-		asoc->default_context = info->snd_context;
+	अगर (asoc) अणु
+		asoc->शेष_stream = info->snd_sid;
+		asoc->शेष_flags = info->snd_flags;
+		asoc->शेष_ppid = info->snd_ppid;
+		asoc->शेष_context = info->snd_context;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		info->snd_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (info->snd_assoc_id == SCTP_FUTURE_ASSOC ||
-	    info->snd_assoc_id == SCTP_ALL_ASSOC) {
-		sp->default_stream = info->snd_sid;
-		sp->default_flags = info->snd_flags;
-		sp->default_ppid = info->snd_ppid;
-		sp->default_context = info->snd_context;
-	}
+	अगर (info->snd_assoc_id == SCTP_FUTURE_ASSOC ||
+	    info->snd_assoc_id == SCTP_ALL_ASSOC) अणु
+		sp->शेष_stream = info->snd_sid;
+		sp->शेष_flags = info->snd_flags;
+		sp->शेष_ppid = info->snd_ppid;
+		sp->शेष_context = info->snd_context;
+	पूर्ण
 
-	if (info->snd_assoc_id == SCTP_CURRENT_ASSOC ||
-	    info->snd_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs) {
-			asoc->default_stream = info->snd_sid;
-			asoc->default_flags = info->snd_flags;
-			asoc->default_ppid = info->snd_ppid;
-			asoc->default_context = info->snd_context;
-		}
-	}
+	अगर (info->snd_assoc_id == SCTP_CURRENT_ASSOC ||
+	    info->snd_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs) अणु
+			asoc->शेष_stream = info->snd_sid;
+			asoc->शेष_flags = info->snd_flags;
+			asoc->शेष_ppid = info->snd_ppid;
+			asoc->शेष_context = info->snd_context;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 7.1.10 Set Primary Address (SCTP_PRIMARY_ADDR)
  *
- * Requests that the local SCTP stack use the enclosed peer address as
- * the association primary.  The enclosed address must be one of the
+ * Requests that the local SCTP stack use the enबंदd peer address as
+ * the association primary.  The enबंदd address must be one of the
  * association peer's addresses.
  */
-static int sctp_setsockopt_primary_addr(struct sock *sk, struct sctp_prim *prim,
-					unsigned int optlen)
-{
-	struct sctp_transport *trans;
-	struct sctp_af *af;
-	int err;
+अटल पूर्णांक sctp_setsockopt_primary_addr(काष्ठा sock *sk, काष्ठा sctp_prim *prim,
+					अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_transport *trans;
+	काष्ठा sctp_af *af;
+	पूर्णांक err;
 
-	if (optlen != sizeof(struct sctp_prim))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_prim))
+		वापस -EINVAL;
 
 	/* Allow security module to validate address but need address len. */
-	af = sctp_get_af_specific(prim->ssp_addr.ss_family);
-	if (!af)
-		return -EINVAL;
+	af = sctp_get_af_specअगरic(prim->ssp_addr.ss_family);
+	अगर (!af)
+		वापस -EINVAL;
 
 	err = security_sctp_bind_connect(sk, SCTP_PRIMARY_ADDR,
-					 (struct sockaddr *)&prim->ssp_addr,
+					 (काष्ठा sockaddr *)&prim->ssp_addr,
 					 af->sockaddr_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	trans = sctp_addr_id2transport(sk, &prim->ssp_addr, prim->ssp_assoc_id);
-	if (!trans)
-		return -EINVAL;
+	अगर (!trans)
+		वापस -EINVAL;
 
 	sctp_assoc_set_primary(trans->asoc, trans);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.5 SCTP_NODELAY
  *
  * Turn on/off any Nagle-like algorithm.  This means that packets are
  * generally sent as soon as possible and no unnecessary delays are
- * introduced, at the cost of more packets in the network.  Expects an
- *  integer boolean flag.
+ * पूर्णांकroduced, at the cost of more packets in the network.  Expects an
+ *  पूर्णांकeger boolean flag.
  */
-static int sctp_setsockopt_nodelay(struct sock *sk, int *val,
-				   unsigned int optlen)
-{
-	if (optlen < sizeof(int))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_nodelay(काष्ठा sock *sk, पूर्णांक *val,
+				   अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 	sctp_sk(sk)->nodelay = (*val == 0) ? 0 : 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
  * 7.1.1 SCTP_RTOINFO
  *
  * The protocol parameters used to initialize and bound retransmission
- * timeout (RTO) are tunable. sctp_rtoinfo structure is used to access
- * and modify these parameters.
- * All parameters are time values, in milliseconds.  A value of 0, when
- * modifying the parameters, indicates that the current value should not
+ * समयout (RTO) are tunable. sctp_rtoinfo काष्ठाure is used to access
+ * and modअगरy these parameters.
+ * All parameters are समय values, in milliseconds.  A value of 0, when
+ * modअगरying the parameters, indicates that the current value should not
  * be changed.
  *
  */
-static int sctp_setsockopt_rtoinfo(struct sock *sk,
-				   struct sctp_rtoinfo *rtoinfo,
-				   unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	unsigned long rto_min, rto_max;
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_setsockopt_rtoinfo(काष्ठा sock *sk,
+				   काष्ठा sctp_rtoinfo *rtoinfo,
+				   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	अचिन्हित दीर्घ rto_min, rto_max;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (optlen != sizeof (struct sctp_rtoinfo))
-		return -EINVAL;
+	अगर (optlen != माप (काष्ठा sctp_rtoinfo))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, rtoinfo->srto_assoc_id);
 
-	/* Set the values to the specific association */
-	if (!asoc && rtoinfo->srto_assoc_id != SCTP_FUTURE_ASSOC &&
+	/* Set the values to the specअगरic association */
+	अगर (!asoc && rtoinfo->srto_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	rto_max = rtoinfo->srto_max;
 	rto_min = rtoinfo->srto_min;
 
-	if (rto_max)
-		rto_max = asoc ? msecs_to_jiffies(rto_max) : rto_max;
-	else
+	अगर (rto_max)
+		rto_max = asoc ? msecs_to_jअगरfies(rto_max) : rto_max;
+	अन्यथा
 		rto_max = asoc ? asoc->rto_max : sp->rtoinfo.srto_max;
 
-	if (rto_min)
-		rto_min = asoc ? msecs_to_jiffies(rto_min) : rto_min;
-	else
+	अगर (rto_min)
+		rto_min = asoc ? msecs_to_jअगरfies(rto_min) : rto_min;
+	अन्यथा
 		rto_min = asoc ? asoc->rto_min : sp->rtoinfo.srto_min;
 
-	if (rto_min > rto_max)
-		return -EINVAL;
+	अगर (rto_min > rto_max)
+		वापस -EINVAL;
 
-	if (asoc) {
-		if (rtoinfo->srto_initial != 0)
+	अगर (asoc) अणु
+		अगर (rtoinfo->srto_initial != 0)
 			asoc->rto_initial =
-				msecs_to_jiffies(rtoinfo->srto_initial);
+				msecs_to_jअगरfies(rtoinfo->srto_initial);
 		asoc->rto_max = rto_max;
 		asoc->rto_min = rto_min;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* If there is no association or the association-id = 0
-		 * set the values to the endpoint.
+		 * set the values to the endpoपूर्णांक.
 		 */
-		if (rtoinfo->srto_initial != 0)
+		अगर (rtoinfo->srto_initial != 0)
 			sp->rtoinfo.srto_initial = rtoinfo->srto_initial;
 		sp->rtoinfo.srto_max = rto_max;
 		sp->rtoinfo.srto_min = rto_min;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
@@ -3122,68 +3123,68 @@ static int sctp_setsockopt_rtoinfo(struct sock *sk,
  *
  * This option is used to tune the maximum retransmission attempts
  * of the association.
- * Returns an error if the new association retransmission value is
+ * Returns an error अगर the new association retransmission value is
  * greater than the sum of the retransmission value  of the peer.
- * See [SCTP] for more information.
+ * See [SCTP] क्रम more inक्रमmation.
  *
  */
-static int sctp_setsockopt_associnfo(struct sock *sk,
-				     struct sctp_assocparams *assocparams,
-				     unsigned int optlen)
-{
+अटल पूर्णांक sctp_setsockopt_associnfo(काष्ठा sock *sk,
+				     काष्ठा sctp_assocparams *assocparams,
+				     अचिन्हित पूर्णांक optlen)
+अणु
 
-	struct sctp_association *asoc;
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(struct sctp_assocparams))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_assocparams))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, assocparams->sasoc_assoc_id);
 
-	if (!asoc && assocparams->sasoc_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && assocparams->sasoc_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Set the values to the specific association */
-	if (asoc) {
-		if (assocparams->sasoc_asocmaxrxt != 0) {
+	/* Set the values to the specअगरic association */
+	अगर (asoc) अणु
+		अगर (assocparams->sasoc_asocmaxrxt != 0) अणु
 			__u32 path_sum = 0;
-			int   paths = 0;
-			struct sctp_transport *peer_addr;
+			पूर्णांक   paths = 0;
+			काष्ठा sctp_transport *peer_addr;
 
-			list_for_each_entry(peer_addr, &asoc->peer.transport_addr_list,
-					transports) {
+			list_क्रम_each_entry(peer_addr, &asoc->peer.transport_addr_list,
+					transports) अणु
 				path_sum += peer_addr->pathmaxrxt;
 				paths++;
-			}
+			पूर्ण
 
-			/* Only validate asocmaxrxt if we have more than
-			 * one path/transport.  We do this because path
+			/* Only validate asocmaxrxt अगर we have more than
+			 * one path/transport.  We करो this because path
 			 * retransmissions are only counted when we have more
 			 * then one path.
 			 */
-			if (paths > 1 &&
+			अगर (paths > 1 &&
 			    assocparams->sasoc_asocmaxrxt > path_sum)
-				return -EINVAL;
+				वापस -EINVAL;
 
 			asoc->max_retrans = assocparams->sasoc_asocmaxrxt;
-		}
+		पूर्ण
 
-		if (assocparams->sasoc_cookie_life != 0)
-			asoc->cookie_life =
-				ms_to_ktime(assocparams->sasoc_cookie_life);
-	} else {
-		/* Set the values to the endpoint */
-		struct sctp_sock *sp = sctp_sk(sk);
+		अगर (assocparams->sasoc_cookie_lअगरe != 0)
+			asoc->cookie_lअगरe =
+				ms_to_kसमय(assocparams->sasoc_cookie_lअगरe);
+	पूर्ण अन्यथा अणु
+		/* Set the values to the endpoपूर्णांक */
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-		if (assocparams->sasoc_asocmaxrxt != 0)
+		अगर (assocparams->sasoc_asocmaxrxt != 0)
 			sp->assocparams.sasoc_asocmaxrxt =
 						assocparams->sasoc_asocmaxrxt;
-		if (assocparams->sasoc_cookie_life != 0)
-			sp->assocparams.sasoc_cookie_life =
-						assocparams->sasoc_cookie_life;
-	}
-	return 0;
-}
+		अगर (assocparams->sasoc_cookie_lअगरe != 0)
+			sp->assocparams.sasoc_cookie_lअगरe =
+						assocparams->sasoc_cookie_lअगरe;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.16 Set/clear IPv4 mapped addresses (SCTP_I_WANT_MAPPED_V4_ADDR)
@@ -3191,363 +3192,363 @@ static int sctp_setsockopt_associnfo(struct sock *sk,
  * This socket option is a boolean flag which turns on or off mapped V4
  * addresses.  If this option is turned on and the socket is type
  * PF_INET6, then IPv4 addresses will be mapped to V6 representation.
- * If this option is turned off, then no mapping will be done of V4
+ * If this option is turned off, then no mapping will be करोne of V4
  * addresses and a user will receive both PF_INET6 and PF_INET type
  * addresses on the socket.
  */
-static int sctp_setsockopt_mappedv4(struct sock *sk, int *val,
-				    unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_setsockopt_mappedv4(काष्ठा sock *sk, पूर्णांक *val,
+				    अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (optlen < sizeof(int))
-		return -EINVAL;
-	if (*val)
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
+	अगर (*val)
 		sp->v4mapped = 1;
-	else
+	अन्यथा
 		sp->v4mapped = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 8.1.16.  Get or Set the Maximum Fragmentation Size (SCTP_MAXSEG)
  * This option will get or set the maximum size to put in any outgoing
  * SCTP DATA chunk.  If a message is larger than this size it will be
- * fragmented by SCTP into the specified size.  Note that the underlying
- * SCTP implementation may fragment into smaller sized chunks when the
+ * fragmented by SCTP पूर्णांकo the specअगरied size.  Note that the underlying
+ * SCTP implementation may fragment पूर्णांकo smaller sized chunks when the
  * PMTU of the underlying association is smaller than the value set by
- * the user.  The default value for this option is '0' which indicates
+ * the user.  The शेष value क्रम this option is '0' which indicates
  * the user is NOT limiting fragmentation and only the PMTU will effect
  * SCTP's choice of DATA chunk size.  Note also that values set larger
  * than the maximum size of an IP datagram will effectively let SCTP
  * control fragmentation (i.e. the same as setting this option to 0).
  *
- * The following structure is used to access and modify this parameter:
+ * The following काष्ठाure is used to access and modअगरy this parameter:
  *
- * struct sctp_assoc_value {
+ * काष्ठा sctp_assoc_value अणु
  *   sctp_assoc_t assoc_id;
- *   uint32_t assoc_value;
- * };
+ *   uपूर्णांक32_t assoc_value;
+ * पूर्ण;
  *
- * assoc_id:  This parameter is ignored for one-to-one style sockets.
+ * assoc_id:  This parameter is ignored क्रम one-to-one style sockets.
  *    For one-to-many style sockets this parameter indicates which
- *    association the user is performing an action upon.  Note that if
- *    this field's value is zero then the endpoints default value is
+ *    association the user is perक्रमming an action upon.  Note that अगर
+ *    this field's value is zero then the endpoपूर्णांकs शेष value is
  *    changed (effecting future associations only).
- * assoc_value:  This parameter specifies the maximum size in bytes.
+ * assoc_value:  This parameter specअगरies the maximum size in bytes.
  */
-static int sctp_setsockopt_maxseg(struct sock *sk,
-				  struct sctp_assoc_value *params,
-				  unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_maxseg(काष्ठा sock *sk,
+				  काष्ठा sctp_assoc_value *params,
+				  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 	sctp_assoc_t assoc_id;
-	int val;
+	पूर्णांक val;
 
-	if (optlen == sizeof(int)) {
+	अगर (optlen == माप(पूर्णांक)) अणु
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
 				    "Use of int in maxseg socket option.\n"
 				    "Use struct sctp_assoc_value instead\n",
 				    current->comm, task_pid_nr(current));
 		assoc_id = SCTP_FUTURE_ASSOC;
-		val = *(int *)params;
-	} else if (optlen == sizeof(struct sctp_assoc_value)) {
+		val = *(पूर्णांक *)params;
+	पूर्ण अन्यथा अगर (optlen == माप(काष्ठा sctp_assoc_value)) अणु
 		assoc_id = params->assoc_id;
 		val = params->assoc_value;
-	} else {
-		return -EINVAL;
-	}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
 
 	asoc = sctp_id2assoc(sk, assoc_id);
-	if (!asoc && assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (val) {
-		int min_len, max_len;
+	अगर (val) अणु
+		पूर्णांक min_len, max_len;
 		__u16 datasize = asoc ? sctp_datachk_len(&asoc->stream) :
-				 sizeof(struct sctp_data_chunk);
+				 माप(काष्ठा sctp_data_chunk);
 
-		min_len = sctp_min_frag_point(sp, datasize);
+		min_len = sctp_min_frag_poपूर्णांक(sp, datasize);
 		max_len = SCTP_MAX_CHUNK_LEN - datasize;
 
-		if (val < min_len || val > max_len)
-			return -EINVAL;
-	}
+		अगर (val < min_len || val > max_len)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (asoc) {
+	अगर (asoc) अणु
 		asoc->user_frag = val;
-		sctp_assoc_update_frag_point(asoc);
-	} else {
+		sctp_assoc_update_frag_poपूर्णांक(asoc);
+	पूर्ण अन्यथा अणु
 		sp->user_frag = val;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *  7.1.9 Set Peer Primary Address (SCTP_SET_PEER_PRIMARY_ADDR)
  *
- *   Requests that the peer mark the enclosed address as the association
- *   primary. The enclosed address must be one of the association's
- *   locally bound addresses. The following structure is used to make a
+ *   Requests that the peer mark the enबंदd address as the association
+ *   primary. The enबंदd address must be one of the association's
+ *   locally bound addresses. The following काष्ठाure is used to make a
  *   set primary request:
  */
-static int sctp_setsockopt_peer_primary_addr(struct sock *sk,
-					     struct sctp_setpeerprim *prim,
-					     unsigned int optlen)
-{
-	struct sctp_sock	*sp;
-	struct sctp_association	*asoc = NULL;
-	struct sctp_chunk	*chunk;
-	struct sctp_af		*af;
-	int 			err;
+अटल पूर्णांक sctp_setsockopt_peer_primary_addr(काष्ठा sock *sk,
+					     काष्ठा sctp_setpeerprim *prim,
+					     अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock	*sp;
+	काष्ठा sctp_association	*asoc = शून्य;
+	काष्ठा sctp_chunk	*chunk;
+	काष्ठा sctp_af		*af;
+	पूर्णांक 			err;
 
 	sp = sctp_sk(sk);
 
-	if (!sp->ep->asconf_enable)
-		return -EPERM;
+	अगर (!sp->ep->asconf_enable)
+		वापस -EPERM;
 
-	if (optlen != sizeof(struct sctp_setpeerprim))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_setpeerprim))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, prim->sspp_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	if (!asoc->peer.asconf_capable)
-		return -EPERM;
+	अगर (!asoc->peer.asconf_capable)
+		वापस -EPERM;
 
-	if (asoc->peer.addip_disabled_mask & SCTP_PARAM_SET_PRIMARY)
-		return -EPERM;
+	अगर (asoc->peer.addip_disabled_mask & SCTP_PARAM_SET_PRIMARY)
+		वापस -EPERM;
 
-	if (!sctp_state(asoc, ESTABLISHED))
-		return -ENOTCONN;
+	अगर (!sctp_state(asoc, ESTABLISHED))
+		वापस -ENOTCONN;
 
-	af = sctp_get_af_specific(prim->sspp_addr.ss_family);
-	if (!af)
-		return -EINVAL;
+	af = sctp_get_af_specअगरic(prim->sspp_addr.ss_family);
+	अगर (!af)
+		वापस -EINVAL;
 
-	if (!af->addr_valid((union sctp_addr *)&prim->sspp_addr, sp, NULL))
-		return -EADDRNOTAVAIL;
+	अगर (!af->addr_valid((जोड़ sctp_addr *)&prim->sspp_addr, sp, शून्य))
+		वापस -EADDRNOTAVAIL;
 
-	if (!sctp_assoc_lookup_laddr(asoc, (union sctp_addr *)&prim->sspp_addr))
-		return -EADDRNOTAVAIL;
+	अगर (!sctp_assoc_lookup_laddr(asoc, (जोड़ sctp_addr *)&prim->sspp_addr))
+		वापस -EADDRNOTAVAIL;
 
 	/* Allow security module to validate address. */
 	err = security_sctp_bind_connect(sk, SCTP_SET_PEER_PRIMARY_ADDR,
-					 (struct sockaddr *)&prim->sspp_addr,
+					 (काष्ठा sockaddr *)&prim->sspp_addr,
 					 af->sockaddr_len);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Create an ASCONF chunk with SET_PRIMARY parameter	*/
 	chunk = sctp_make_asconf_set_prim(asoc,
-					  (union sctp_addr *)&prim->sspp_addr);
-	if (!chunk)
-		return -ENOMEM;
+					  (जोड़ sctp_addr *)&prim->sspp_addr);
+	अगर (!chunk)
+		वापस -ENOMEM;
 
 	err = sctp_send_asconf(asoc, chunk);
 
 	pr_debug("%s: we set peer primary addr primitively\n", __func__);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sctp_setsockopt_adaptation_layer(struct sock *sk,
-					    struct sctp_setadaptation *adapt,
-					    unsigned int optlen)
-{
-	if (optlen != sizeof(struct sctp_setadaptation))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_adaptation_layer(काष्ठा sock *sk,
+					    काष्ठा sctp_setadaptation *adapt,
+					    अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen != माप(काष्ठा sctp_setadaptation))
+		वापस -EINVAL;
 
 	sctp_sk(sk)->adaptation_ind = adapt->ssb_adaptation_ind;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.29.  Set or Get the default context (SCTP_CONTEXT)
+ * 7.1.29.  Set or Get the शेष context (SCTP_CONTEXT)
  *
- * The context field in the sctp_sndrcvinfo structure is normally only
+ * The context field in the sctp_sndrcvinfo काष्ठाure is normally only
  * used when a failed message is retrieved holding the value that was
- * sent down on the actual send call.  This option allows the setting of
- * a default context on an association basis that will be received on
- * reading messages from the peer.  This is especially helpful in the
- * one-2-many model for an application to keep some reference to an
- * internal state machine that is processing messages on the
+ * sent करोwn on the actual send call.  This option allows the setting of
+ * a शेष context on an association basis that will be received on
+ * पढ़ोing messages from the peer.  This is especially helpful in the
+ * one-2-many model क्रम an application to keep some reference to an
+ * पूर्णांकernal state machine that is processing messages on the
  * association.  Note that the setting of this value only effects
- * received messages from the peer and does not effect the value that is
+ * received messages from the peer and करोes not effect the value that is
  * saved with outbound messages.
  */
-static int sctp_setsockopt_context(struct sock *sk,
-				   struct sctp_assoc_value *params,
-				   unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_context(काष्ठा sock *sk,
+				   काष्ठा sctp_assoc_value *params,
+				   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(struct sctp_assoc_value))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_assoc_value))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		asoc->default_rcv_context = params->assoc_value;
+	अगर (asoc) अणु
+		asoc->शेष_rcv_context = params->assoc_value;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		params->assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (params->assoc_id == SCTP_FUTURE_ASSOC ||
+	अगर (params->assoc_id == SCTP_FUTURE_ASSOC ||
 	    params->assoc_id == SCTP_ALL_ASSOC)
-		sp->default_rcv_context = params->assoc_value;
+		sp->शेष_rcv_context = params->assoc_value;
 
-	if (params->assoc_id == SCTP_CURRENT_ASSOC ||
+	अगर (params->assoc_id == SCTP_CURRENT_ASSOC ||
 	    params->assoc_id == SCTP_ALL_ASSOC)
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs)
-			asoc->default_rcv_context = params->assoc_value;
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs)
+			asoc->शेष_rcv_context = params->assoc_value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.24.  Get or set fragmented interleave (SCTP_FRAGMENT_INTERLEAVE)
+ * 7.1.24.  Get or set fragmented पूर्णांकerleave (SCTP_FRAGMENT_INTERLEAVE)
  *
- * This options will at a minimum specify if the implementation is doing
- * fragmented interleave.  Fragmented interleave, for a one to many
- * socket, is when subsequent calls to receive a message may return
- * parts of messages from different associations.  Some implementations
+ * This options will at a minimum specअगरy अगर the implementation is करोing
+ * fragmented पूर्णांकerleave.  Fragmented पूर्णांकerleave, क्रम a one to many
+ * socket, is when subsequent calls to receive a message may वापस
+ * parts of messages from dअगरferent associations.  Some implementations
  * may allow you to turn this value on or off.  If so, when turned off,
- * no fragment interleave will occur (which will cause a head of line
+ * no fragment पूर्णांकerleave will occur (which will cause a head of line
  * blocking amongst multiple associations sharing the same one to many
  * socket).  When this option is turned on, then each receive call may
- * come from a different association (thus the user must receive data
+ * come from a dअगरferent association (thus the user must receive data
  * with the extended calls (e.g. sctp_recvmsg) to keep track of which
- * association each receive belongs to.
+ * association each receive beदीर्घs to.
  *
  * This option takes a boolean value.  A non-zero value indicates that
- * fragmented interleave is on.  A value of zero indicates that
- * fragmented interleave is off.
+ * fragmented पूर्णांकerleave is on.  A value of zero indicates that
+ * fragmented पूर्णांकerleave is off.
  *
  * Note that it is important that an implementation that allows this
- * option to be turned on, have it off by default.  Otherwise an unaware
+ * option to be turned on, have it off by शेष.  Otherwise an unaware
  * application using the one to many model may become confused and act
  * incorrectly.
  */
-static int sctp_setsockopt_fragment_interleave(struct sock *sk, int *val,
-					       unsigned int optlen)
-{
-	if (optlen != sizeof(int))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_fragment_पूर्णांकerleave(काष्ठा sock *sk, पूर्णांक *val,
+					       अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen != माप(पूर्णांक))
+		वापस -EINVAL;
 
-	sctp_sk(sk)->frag_interleave = !!*val;
+	sctp_sk(sk)->frag_पूर्णांकerleave = !!*val;
 
-	if (!sctp_sk(sk)->frag_interleave)
-		sctp_sk(sk)->ep->intl_enable = 0;
+	अगर (!sctp_sk(sk)->frag_पूर्णांकerleave)
+		sctp_sk(sk)->ep->पूर्णांकl_enable = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 8.1.21.  Set or Get the SCTP Partial Delivery Point
+ * 8.1.21.  Set or Get the SCTP Partial Delivery Poपूर्णांक
  *       (SCTP_PARTIAL_DELIVERY_POINT)
  *
- * This option will set or get the SCTP partial delivery point.  This
- * point is the size of a message where the partial delivery API will be
- * invoked to help free up rwnd space for the peer.  Setting this to a
+ * This option will set or get the SCTP partial delivery poपूर्णांक.  This
+ * poपूर्णांक is the size of a message where the partial delivery API will be
+ * invoked to help मुक्त up rwnd space क्रम the peer.  Setting this to a
  * lower value will cause partial deliveries to happen more often.  The
- * calls argument is an integer that sets or gets the partial delivery
- * point.  Note also that the call will fail if the user attempts to set
+ * calls argument is an पूर्णांकeger that sets or माला_लो the partial delivery
+ * poपूर्णांक.  Note also that the call will fail अगर the user attempts to set
  * this value larger than the socket receive buffer size.
  *
  * Note that any single message having a length smaller than or equal to
- * the SCTP partial delivery point will be delivered in one single read
- * call as long as the user provided buffer is large enough to hold the
+ * the SCTP partial delivery poपूर्णांक will be delivered in one single पढ़ो
+ * call as दीर्घ as the user provided buffer is large enough to hold the
  * message.
  */
-static int sctp_setsockopt_partial_delivery_point(struct sock *sk, u32 *val,
-						  unsigned int optlen)
-{
-	if (optlen != sizeof(u32))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_partial_delivery_poपूर्णांक(काष्ठा sock *sk, u32 *val,
+						  अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen != माप(u32))
+		वापस -EINVAL;
 
-	/* Note: We double the receive buffer from what the user sets
+	/* Note: We द्विगुन the receive buffer from what the user sets
 	 * it to be, also initial rwnd is based on rcvbuf/2.
 	 */
-	if (*val > (sk->sk_rcvbuf >> 1))
-		return -EINVAL;
+	अगर (*val > (sk->sk_rcvbuf >> 1))
+		वापस -EINVAL;
 
-	sctp_sk(sk)->pd_point = *val;
+	sctp_sk(sk)->pd_poपूर्णांक = *val;
 
-	return 0; /* is this the right error code? */
-}
+	वापस 0; /* is this the right error code? */
+पूर्ण
 
 /*
  * 7.1.28.  Set or Get the maximum burst (SCTP_MAX_BURST)
  *
  * This option will allow a user to change the maximum burst of packets
- * that can be emitted by this association.  Note that the default value
+ * that can be emitted by this association.  Note that the शेष value
  * is 4, and some implementations may restrict this setting so that it
  * can only be lowered.
  *
- * NOTE: This text doesn't seem right.  Do this on a socket basis with
+ * NOTE: This text करोesn't seem right.  Do this on a socket basis with
  * future associations inheriting the socket value.
  */
-static int sctp_setsockopt_maxburst(struct sock *sk,
-				    struct sctp_assoc_value *params,
-				    unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_maxburst(काष्ठा sock *sk,
+				    काष्ठा sctp_assoc_value *params,
+				    अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 	sctp_assoc_t assoc_id;
 	u32 assoc_value;
 
-	if (optlen == sizeof(int)) {
+	अगर (optlen == माप(पूर्णांक)) अणु
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
 				    "Use of int in max_burst socket option deprecated.\n"
 				    "Use struct sctp_assoc_value instead\n",
 				    current->comm, task_pid_nr(current));
 		assoc_id = SCTP_FUTURE_ASSOC;
-		assoc_value = *((int *)params);
-	} else if (optlen == sizeof(struct sctp_assoc_value)) {
+		assoc_value = *((पूर्णांक *)params);
+	पूर्ण अन्यथा अगर (optlen == माप(काष्ठा sctp_assoc_value)) अणु
 		assoc_id = params->assoc_id;
 		assoc_value = params->assoc_value;
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, assoc_id);
-	if (!asoc && assoc_id > SCTP_ALL_ASSOC && sctp_style(sk, UDP))
-		return -EINVAL;
+	अगर (!asoc && assoc_id > SCTP_ALL_ASSOC && sctp_style(sk, UDP))
+		वापस -EINVAL;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		asoc->max_burst = assoc_value;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (assoc_id == SCTP_FUTURE_ASSOC || assoc_id == SCTP_ALL_ASSOC)
+	अगर (assoc_id == SCTP_FUTURE_ASSOC || assoc_id == SCTP_ALL_ASSOC)
 		sp->max_burst = assoc_value;
 
-	if (assoc_id == SCTP_CURRENT_ASSOC || assoc_id == SCTP_ALL_ASSOC)
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs)
+	अगर (assoc_id == SCTP_CURRENT_ASSOC || assoc_id == SCTP_ALL_ASSOC)
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs)
 			asoc->max_burst = assoc_value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.18.  Add a chunk that must be authenticated (SCTP_AUTH_CHUNK)
@@ -3556,58 +3557,58 @@ static int sctp_setsockopt_maxburst(struct sock *sk,
  * received only in an authenticated way.  Changes to the list of chunks
  * will only effect future associations on the socket.
  */
-static int sctp_setsockopt_auth_chunk(struct sock *sk,
-				      struct sctp_authchunk *val,
-				      unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
+अटल पूर्णांक sctp_setsockopt_auth_chunk(काष्ठा sock *sk,
+				      काष्ठा sctp_authchunk *val,
+				      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
 
-	if (!ep->auth_enable)
-		return -EACCES;
+	अगर (!ep->auth_enable)
+		वापस -EACCES;
 
-	if (optlen != sizeof(struct sctp_authchunk))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_authchunk))
+		वापस -EINVAL;
 
-	switch (val->sauth_chunk) {
-	case SCTP_CID_INIT:
-	case SCTP_CID_INIT_ACK:
-	case SCTP_CID_SHUTDOWN_COMPLETE:
-	case SCTP_CID_AUTH:
-		return -EINVAL;
-	}
+	चयन (val->sauth_chunk) अणु
+	हाल SCTP_CID_INIT:
+	हाल SCTP_CID_INIT_ACK:
+	हाल SCTP_CID_SHUTDOWN_COMPLETE:
+	हाल SCTP_CID_AUTH:
+		वापस -EINVAL;
+	पूर्ण
 
-	/* add this chunk id to the endpoint */
-	return sctp_auth_ep_add_chunkid(ep, val->sauth_chunk);
-}
+	/* add this chunk id to the endpoपूर्णांक */
+	वापस sctp_auth_ep_add_chunkid(ep, val->sauth_chunk);
+पूर्ण
 
 /*
- * 7.1.19.  Get or set the list of supported HMAC Identifiers (SCTP_HMAC_IDENT)
+ * 7.1.19.  Get or set the list of supported HMAC Identअगरiers (SCTP_HMAC_IDENT)
  *
- * This option gets or sets the list of HMAC algorithms that the local
- * endpoint requires the peer to use.
+ * This option माला_लो or sets the list of HMAC algorithms that the local
+ * endpoपूर्णांक requires the peer to use.
  */
-static int sctp_setsockopt_hmac_ident(struct sock *sk,
-				      struct sctp_hmacalgo *hmacs,
-				      unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
+अटल पूर्णांक sctp_setsockopt_hmac_ident(काष्ठा sock *sk,
+				      काष्ठा sctp_hmacalgo *hmacs,
+				      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
 	u32 idents;
 
-	if (!ep->auth_enable)
-		return -EACCES;
+	अगर (!ep->auth_enable)
+		वापस -EACCES;
 
-	if (optlen < sizeof(struct sctp_hmacalgo))
-		return -EINVAL;
-	optlen = min_t(unsigned int, optlen, sizeof(struct sctp_hmacalgo) +
-					     SCTP_AUTH_NUM_HMACS * sizeof(u16));
+	अगर (optlen < माप(काष्ठा sctp_hmacalgo))
+		वापस -EINVAL;
+	optlen = min_t(अचिन्हित पूर्णांक, optlen, माप(काष्ठा sctp_hmacalgo) +
+					     SCTP_AUTH_NUM_HMACS * माप(u16));
 
 	idents = hmacs->shmac_num_idents;
-	if (idents == 0 || idents > SCTP_AUTH_NUM_HMACS ||
-	    (idents * sizeof(u16)) > (optlen - sizeof(struct sctp_hmacalgo)))
-		return -EINVAL;
+	अगर (idents == 0 || idents > SCTP_AUTH_NUM_HMACS ||
+	    (idents * माप(u16)) > (optlen - माप(काष्ठा sctp_hmacalgo)))
+		वापस -EINVAL;
 
-	return sctp_auth_ep_set_hmacs(ep, hmacs);
-}
+	वापस sctp_auth_ep_set_hmacs(ep, hmacs);
+पूर्ण
 
 /*
  * 7.1.20.  Set a shared key (SCTP_AUTH_KEY)
@@ -3615,60 +3616,60 @@ static int sctp_setsockopt_hmac_ident(struct sock *sk,
  * This option will set a shared secret key which is used to build an
  * association shared key.
  */
-static int sctp_setsockopt_auth_key(struct sock *sk,
-				    struct sctp_authkey *authkey,
-				    unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	int ret = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_auth_key(काष्ठा sock *sk,
+				    काष्ठा sctp_authkey *authkey,
+				    अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक ret = -EINVAL;
 
-	if (optlen <= sizeof(struct sctp_authkey))
-		return -EINVAL;
+	अगर (optlen <= माप(काष्ठा sctp_authkey))
+		वापस -EINVAL;
 	/* authkey->sca_keylength is u16, so optlen can't be bigger than
 	 * this.
 	 */
-	optlen = min_t(unsigned int, optlen, USHRT_MAX + sizeof(*authkey));
+	optlen = min_t(अचिन्हित पूर्णांक, optlen, अच_लघु_उच्च + माप(*authkey));
 
-	if (authkey->sca_keylength > optlen - sizeof(*authkey))
-		goto out;
+	अगर (authkey->sca_keylength > optlen - माप(*authkey))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, authkey->sca_assoc_id);
-	if (!asoc && authkey->sca_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && authkey->sca_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		ret = sctp_auth_set_key(ep, asoc, authkey);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		authkey->sca_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (authkey->sca_assoc_id == SCTP_FUTURE_ASSOC ||
-	    authkey->sca_assoc_id == SCTP_ALL_ASSOC) {
+	अगर (authkey->sca_assoc_id == SCTP_FUTURE_ASSOC ||
+	    authkey->sca_assoc_id == SCTP_ALL_ASSOC) अणु
 		ret = sctp_auth_set_key(ep, asoc, authkey);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
 	ret = 0;
 
-	if (authkey->sca_assoc_id == SCTP_CURRENT_ASSOC ||
-	    authkey->sca_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &ep->asocs, asocs) {
-			int res = sctp_auth_set_key(ep, asoc, authkey);
+	अगर (authkey->sca_assoc_id == SCTP_CURRENT_ASSOC ||
+	    authkey->sca_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
+			पूर्णांक res = sctp_auth_set_key(ep, asoc, authkey);
 
-			if (res && !ret)
+			अगर (res && !ret)
 				ret = res;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	memzero_explicit(authkey, optlen);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * 7.1.21.  Get or set the active shared key (SCTP_AUTH_ACTIVE_KEY)
@@ -3676,835 +3677,835 @@ out:
  * This option will get or set the active shared key to be used to build
  * the association shared key.
  */
-static int sctp_setsockopt_active_key(struct sock *sk,
-				      struct sctp_authkeyid *val,
-				      unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	int ret = 0;
+अटल पूर्णांक sctp_setsockopt_active_key(काष्ठा sock *sk,
+				      काष्ठा sctp_authkeyid *val,
+				      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक ret = 0;
 
-	if (optlen != sizeof(struct sctp_authkeyid))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_authkeyid))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, val->scact_assoc_id);
-	if (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		return sctp_auth_set_active_key(ep, asoc, val->scact_keynumber);
+	अगर (asoc)
+		वापस sctp_auth_set_active_key(ep, asoc, val->scact_keynumber);
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		val->scact_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
+	अगर (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
 		ret = sctp_auth_set_active_key(ep, asoc, val->scact_keynumber);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &ep->asocs, asocs) {
-			int res = sctp_auth_set_active_key(ep, asoc,
+	अगर (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
+			पूर्णांक res = sctp_auth_set_active_key(ep, asoc,
 							   val->scact_keynumber);
 
-			if (res && !ret)
+			अगर (res && !ret)
 				ret = res;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * 7.1.22.  Delete a shared key (SCTP_AUTH_DELETE_KEY)
  *
  * This set option will delete a shared secret key from use.
  */
-static int sctp_setsockopt_del_key(struct sock *sk,
-				   struct sctp_authkeyid *val,
-				   unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	int ret = 0;
+अटल पूर्णांक sctp_setsockopt_del_key(काष्ठा sock *sk,
+				   काष्ठा sctp_authkeyid *val,
+				   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक ret = 0;
 
-	if (optlen != sizeof(struct sctp_authkeyid))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_authkeyid))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, val->scact_assoc_id);
-	if (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		return sctp_auth_del_key_id(ep, asoc, val->scact_keynumber);
+	अगर (asoc)
+		वापस sctp_auth_del_key_id(ep, asoc, val->scact_keynumber);
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		val->scact_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
+	अगर (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
 		ret = sctp_auth_del_key_id(ep, asoc, val->scact_keynumber);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &ep->asocs, asocs) {
-			int res = sctp_auth_del_key_id(ep, asoc,
+	अगर (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
+			पूर्णांक res = sctp_auth_del_key_id(ep, asoc,
 						       val->scact_keynumber);
 
-			if (res && !ret)
+			अगर (res && !ret)
 				ret = res;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * 8.3.4  Deactivate a Shared Key (SCTP_AUTH_DEACTIVATE_KEY)
  *
  * This set option will deactivate a shared secret key.
  */
-static int sctp_setsockopt_deactivate_key(struct sock *sk,
-					  struct sctp_authkeyid *val,
-					  unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	int ret = 0;
+अटल पूर्णांक sctp_setsockopt_deactivate_key(काष्ठा sock *sk,
+					  काष्ठा sctp_authkeyid *val,
+					  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक ret = 0;
 
-	if (optlen != sizeof(struct sctp_authkeyid))
-		return -EINVAL;
+	अगर (optlen != माप(काष्ठा sctp_authkeyid))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, val->scact_assoc_id);
-	if (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && val->scact_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		return sctp_auth_deact_key_id(ep, asoc, val->scact_keynumber);
+	अगर (asoc)
+		वापस sctp_auth_deact_key_id(ep, asoc, val->scact_keynumber);
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		val->scact_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
+	अगर (val->scact_assoc_id == SCTP_FUTURE_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
 		ret = sctp_auth_deact_key_id(ep, asoc, val->scact_keynumber);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
-	    val->scact_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &ep->asocs, asocs) {
-			int res = sctp_auth_deact_key_id(ep, asoc,
+	अगर (val->scact_assoc_id == SCTP_CURRENT_ASSOC ||
+	    val->scact_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &ep->asocs, asocs) अणु
+			पूर्णांक res = sctp_auth_deact_key_id(ep, asoc,
 							 val->scact_keynumber);
 
-			if (res && !ret)
+			अगर (res && !ret)
 				ret = res;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * 8.1.23 SCTP_AUTO_ASCONF
  *
- * This option will enable or disable the use of the automatic generation of
+ * This option will enable or disable the use of the स्वतःmatic generation of
  * ASCONF chunks to add and delete addresses to an existing association.  Note
  * that this option has two caveats namely: a) it only affects sockets that
- * are bound to all addresses available to the SCTP stack, and b) the system
+ * are bound to all addresses available to the SCTP stack, and b) the प्रणाली
  * administrator may have an overriding control that turns the ASCONF feature
  * off no matter what setting the socket option may have.
- * This option expects an integer boolean flag, where a non-zero value turns on
+ * This option expects an पूर्णांकeger boolean flag, where a non-zero value turns on
  * the option, and a zero value turns off the option.
- * Note. In this implementation, socket operation overrides default parameter
+ * Note. In this implementation, socket operation overrides शेष parameter
  * being set by sysctl as well as FreeBSD implementation
  */
-static int sctp_setsockopt_auto_asconf(struct sock *sk, int *val,
-					unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_setsockopt_स्वतः_asconf(काष्ठा sock *sk, पूर्णांक *val,
+					अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (optlen < sizeof(int))
-		return -EINVAL;
-	if (!sctp_is_ep_boundall(sk) && *val)
-		return -EINVAL;
-	if ((*val && sp->do_auto_asconf) || (!*val && !sp->do_auto_asconf))
-		return 0;
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
+	अगर (!sctp_is_ep_boundall(sk) && *val)
+		वापस -EINVAL;
+	अगर ((*val && sp->करो_स्वतः_asconf) || (!*val && !sp->करो_स्वतः_asconf))
+		वापस 0;
 
 	spin_lock_bh(&sock_net(sk)->sctp.addr_wq_lock);
-	if (*val == 0 && sp->do_auto_asconf) {
-		list_del(&sp->auto_asconf_list);
-		sp->do_auto_asconf = 0;
-	} else if (*val && !sp->do_auto_asconf) {
-		list_add_tail(&sp->auto_asconf_list,
-		    &sock_net(sk)->sctp.auto_asconf_splist);
-		sp->do_auto_asconf = 1;
-	}
+	अगर (*val == 0 && sp->करो_स्वतः_asconf) अणु
+		list_del(&sp->स्वतः_asconf_list);
+		sp->करो_स्वतः_asconf = 0;
+	पूर्ण अन्यथा अगर (*val && !sp->करो_स्वतः_asconf) अणु
+		list_add_tail(&sp->स्वतः_asconf_list,
+		    &sock_net(sk)->sctp.स्वतः_asconf_splist);
+		sp->करो_स्वतः_asconf = 1;
+	पूर्ण
 	spin_unlock_bh(&sock_net(sk)->sctp.addr_wq_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * SCTP_PEER_ADDR_THLDS
  *
- * This option allows us to alter the partially failed threshold for one or all
+ * This option allows us to alter the partially failed threshold क्रम one or all
  * transports in an association.  See Section 6.1 of:
  * http://www.ietf.org/id/draft-nishida-tsvwg-sctp-failover-05.txt
  */
-static int sctp_setsockopt_paddr_thresholds(struct sock *sk,
-					    struct sctp_paddrthlds_v2 *val,
-					    unsigned int optlen, bool v2)
-{
-	struct sctp_transport *trans;
-	struct sctp_association *asoc;
-	int len;
+अटल पूर्णांक sctp_setsockopt_paddr_thresholds(काष्ठा sock *sk,
+					    काष्ठा sctp_paddrthlds_v2 *val,
+					    अचिन्हित पूर्णांक optlen, bool v2)
+अणु
+	काष्ठा sctp_transport *trans;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक len;
 
-	len = v2 ? sizeof(*val) : sizeof(struct sctp_paddrthlds);
-	if (optlen < len)
-		return -EINVAL;
+	len = v2 ? माप(*val) : माप(काष्ठा sctp_paddrthlds);
+	अगर (optlen < len)
+		वापस -EINVAL;
 
-	if (v2 && val->spt_pathpfthld > val->spt_pathcpthld)
-		return -EINVAL;
+	अगर (v2 && val->spt_pathpfthld > val->spt_pathcpthld)
+		वापस -EINVAL;
 
-	if (!sctp_is_any(sk, (const union sctp_addr *)&val->spt_address)) {
+	अगर (!sctp_is_any(sk, (स्थिर जोड़ sctp_addr *)&val->spt_address)) अणु
 		trans = sctp_addr_id2transport(sk, &val->spt_address,
 					       val->spt_assoc_id);
-		if (!trans)
-			return -ENOENT;
+		अगर (!trans)
+			वापस -ENOENT;
 
-		if (val->spt_pathmaxrxt)
+		अगर (val->spt_pathmaxrxt)
 			trans->pathmaxrxt = val->spt_pathmaxrxt;
-		if (v2)
+		अगर (v2)
 			trans->ps_retrans = val->spt_pathcpthld;
 		trans->pf_retrans = val->spt_pathpfthld;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	asoc = sctp_id2assoc(sk, val->spt_assoc_id);
-	if (!asoc && val->spt_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && val->spt_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		list_for_each_entry(trans, &asoc->peer.transport_addr_list,
-				    transports) {
-			if (val->spt_pathmaxrxt)
+	अगर (asoc) अणु
+		list_क्रम_each_entry(trans, &asoc->peer.transport_addr_list,
+				    transports) अणु
+			अगर (val->spt_pathmaxrxt)
 				trans->pathmaxrxt = val->spt_pathmaxrxt;
-			if (v2)
+			अगर (v2)
 				trans->ps_retrans = val->spt_pathcpthld;
 			trans->pf_retrans = val->spt_pathpfthld;
-		}
+		पूर्ण
 
-		if (val->spt_pathmaxrxt)
+		अगर (val->spt_pathmaxrxt)
 			asoc->pathmaxrxt = val->spt_pathmaxrxt;
-		if (v2)
+		अगर (v2)
 			asoc->ps_retrans = val->spt_pathcpthld;
 		asoc->pf_retrans = val->spt_pathpfthld;
-	} else {
-		struct sctp_sock *sp = sctp_sk(sk);
+	पूर्ण अन्यथा अणु
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-		if (val->spt_pathmaxrxt)
+		अगर (val->spt_pathmaxrxt)
 			sp->pathmaxrxt = val->spt_pathmaxrxt;
-		if (v2)
+		अगर (v2)
 			sp->ps_retrans = val->spt_pathcpthld;
 		sp->pf_retrans = val->spt_pathpfthld;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_recvrcvinfo(struct sock *sk, int *val,
-				       unsigned int optlen)
-{
-	if (optlen < sizeof(int))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_recvrcvinfo(काष्ठा sock *sk, पूर्णांक *val,
+				       अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 
 	sctp_sk(sk)->recvrcvinfo = (*val == 0) ? 0 : 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_recvnxtinfo(struct sock *sk, int *val,
-				       unsigned int optlen)
-{
-	if (optlen < sizeof(int))
-		return -EINVAL;
+अटल पूर्णांक sctp_setsockopt_recvnxtinfo(काष्ठा sock *sk, पूर्णांक *val,
+				       अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 
 	sctp_sk(sk)->recvnxtinfo = (*val == 0) ? 0 : 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_pr_supported(struct sock *sk,
-					struct sctp_assoc_value *params,
-					unsigned int optlen)
-{
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_pr_supported(काष्ठा sock *sk,
+					काष्ठा sctp_assoc_value *params,
+					अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(*params))
-		return -EINVAL;
+	अगर (optlen != माप(*params))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	sctp_sk(sk)->ep->prsctp_enable = !!params->assoc_value;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_default_prinfo(struct sock *sk,
-					  struct sctp_default_prinfo *info,
-					  unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_शेष_prinfo(काष्ठा sock *sk,
+					  काष्ठा sctp_शेष_prinfo *info,
+					  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*info))
-		goto out;
+	अगर (optlen != माप(*info))
+		जाओ out;
 
-	if (info->pr_policy & ~SCTP_PR_SCTP_MASK)
-		goto out;
+	अगर (info->pr_policy & ~SCTP_PR_SCTP_MASK)
+		जाओ out;
 
-	if (info->pr_policy == SCTP_PR_SCTP_NONE)
+	अगर (info->pr_policy == SCTP_PR_SCTP_NONE)
 		info->pr_value = 0;
 
 	asoc = sctp_id2assoc(sk, info->pr_assoc_id);
-	if (!asoc && info->pr_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && info->pr_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	retval = 0;
 
-	if (asoc) {
-		SCTP_PR_SET_POLICY(asoc->default_flags, info->pr_policy);
-		asoc->default_timetolive = info->pr_value;
-		goto out;
-	}
+	अगर (asoc) अणु
+		SCTP_PR_SET_POLICY(asoc->शेष_flags, info->pr_policy);
+		asoc->शेष_समयtolive = info->pr_value;
+		जाओ out;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		info->pr_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (info->pr_assoc_id == SCTP_FUTURE_ASSOC ||
-	    info->pr_assoc_id == SCTP_ALL_ASSOC) {
-		SCTP_PR_SET_POLICY(sp->default_flags, info->pr_policy);
-		sp->default_timetolive = info->pr_value;
-	}
+	अगर (info->pr_assoc_id == SCTP_FUTURE_ASSOC ||
+	    info->pr_assoc_id == SCTP_ALL_ASSOC) अणु
+		SCTP_PR_SET_POLICY(sp->शेष_flags, info->pr_policy);
+		sp->शेष_समयtolive = info->pr_value;
+	पूर्ण
 
-	if (info->pr_assoc_id == SCTP_CURRENT_ASSOC ||
-	    info->pr_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs) {
-			SCTP_PR_SET_POLICY(asoc->default_flags,
+	अगर (info->pr_assoc_id == SCTP_CURRENT_ASSOC ||
+	    info->pr_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs) अणु
+			SCTP_PR_SET_POLICY(asoc->शेष_flags,
 					   info->pr_policy);
-			asoc->default_timetolive = info->pr_value;
-		}
-	}
+			asoc->शेष_समयtolive = info->pr_value;
+		पूर्ण
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_reconfig_supported(struct sock *sk,
-					      struct sctp_assoc_value *params,
-					      unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_reconfig_supported(काष्ठा sock *sk,
+					      काष्ठा sctp_assoc_value *params,
+					      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	sctp_sk(sk)->ep->reconf_enable = !!params->assoc_value;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_enable_strreset(struct sock *sk,
-					   struct sctp_assoc_value *params,
-					   unsigned int optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_enable_strreset(काष्ठा sock *sk,
+					   काष्ठा sctp_assoc_value *params,
+					   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
-	if (params->assoc_value & (~SCTP_ENABLE_STRRESET_MASK))
-		goto out;
+	अगर (params->assoc_value & (~SCTP_ENABLE_STRRESET_MASK))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	retval = 0;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		asoc->strreset_enable = params->assoc_value;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		params->assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (params->assoc_id == SCTP_FUTURE_ASSOC ||
+	अगर (params->assoc_id == SCTP_FUTURE_ASSOC ||
 	    params->assoc_id == SCTP_ALL_ASSOC)
 		ep->strreset_enable = params->assoc_value;
 
-	if (params->assoc_id == SCTP_CURRENT_ASSOC ||
+	अगर (params->assoc_id == SCTP_CURRENT_ASSOC ||
 	    params->assoc_id == SCTP_ALL_ASSOC)
-		list_for_each_entry(asoc, &ep->asocs, asocs)
+		list_क्रम_each_entry(asoc, &ep->asocs, asocs)
 			asoc->strreset_enable = params->assoc_value;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_reset_streams(struct sock *sk,
-					 struct sctp_reset_streams *params,
-					 unsigned int optlen)
-{
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_reset_streams(काष्ठा sock *sk,
+					 काष्ठा sctp_reset_streams *params,
+					 अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	if (optlen < sizeof(*params))
-		return -EINVAL;
+	अगर (optlen < माप(*params))
+		वापस -EINVAL;
 	/* srs_number_streams is u16, so optlen can't be bigger than this. */
-	optlen = min_t(unsigned int, optlen, USHRT_MAX +
-					     sizeof(__u16) * sizeof(*params));
+	optlen = min_t(अचिन्हित पूर्णांक, optlen, अच_लघु_उच्च +
+					     माप(__u16) * माप(*params));
 
-	if (params->srs_number_streams * sizeof(__u16) >
-	    optlen - sizeof(*params))
-		return -EINVAL;
+	अगर (params->srs_number_streams * माप(__u16) >
+	    optlen - माप(*params))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params->srs_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	return sctp_send_reset_streams(asoc, params);
-}
+	वापस sctp_send_reset_streams(asoc, params);
+पूर्ण
 
-static int sctp_setsockopt_reset_assoc(struct sock *sk, sctp_assoc_t *associd,
-				       unsigned int optlen)
-{
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_reset_assoc(काष्ठा sock *sk, sctp_assoc_t *associd,
+				       अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(*associd))
-		return -EINVAL;
+	अगर (optlen != माप(*associd))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, *associd);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	return sctp_send_reset_assoc(asoc);
-}
+	वापस sctp_send_reset_assoc(asoc);
+पूर्ण
 
-static int sctp_setsockopt_add_streams(struct sock *sk,
-				       struct sctp_add_streams *params,
-				       unsigned int optlen)
-{
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_add_streams(काष्ठा sock *sk,
+				       काष्ठा sctp_add_streams *params,
+				       अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	if (optlen != sizeof(*params))
-		return -EINVAL;
+	अगर (optlen != माप(*params))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params->sas_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	return sctp_send_add_streams(asoc, params);
-}
+	वापस sctp_send_add_streams(asoc, params);
+पूर्ण
 
-static int sctp_setsockopt_scheduler(struct sock *sk,
-				     struct sctp_assoc_value *params,
-				     unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	int retval = 0;
+अटल पूर्णांक sctp_setsockopt_scheduler(काष्ठा sock *sk,
+				     काष्ठा sctp_assoc_value *params,
+				     अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = 0;
 
-	if (optlen < sizeof(*params))
-		return -EINVAL;
+	अगर (optlen < माप(*params))
+		वापस -EINVAL;
 
-	if (params->assoc_value > SCTP_SS_MAX)
-		return -EINVAL;
+	अगर (params->assoc_value > SCTP_SS_MAX)
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && params->assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		return sctp_sched_set_sched(asoc, params->assoc_value);
+	अगर (asoc)
+		वापस sctp_sched_set_sched(asoc, params->assoc_value);
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		params->assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (params->assoc_id == SCTP_FUTURE_ASSOC ||
+	अगर (params->assoc_id == SCTP_FUTURE_ASSOC ||
 	    params->assoc_id == SCTP_ALL_ASSOC)
-		sp->default_ss = params->assoc_value;
+		sp->शेष_ss = params->assoc_value;
 
-	if (params->assoc_id == SCTP_CURRENT_ASSOC ||
-	    params->assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs) {
-			int ret = sctp_sched_set_sched(asoc,
+	अगर (params->assoc_id == SCTP_CURRENT_ASSOC ||
+	    params->assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs) अणु
+			पूर्णांक ret = sctp_sched_set_sched(asoc,
 						       params->assoc_value);
 
-			if (ret && !retval)
+			अगर (ret && !retval)
 				retval = ret;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_scheduler_value(struct sock *sk,
-					   struct sctp_stream_value *params,
-					   unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_scheduler_value(काष्ठा sock *sk,
+					   काष्ठा sctp_stream_value *params,
+					   अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen < sizeof(*params))
-		goto out;
+	अगर (optlen < माप(*params))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_CURRENT_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_CURRENT_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		retval = sctp_sched_set_value(asoc, params->stream_id,
 					      params->stream_value, GFP_KERNEL);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = 0;
 
-	list_for_each_entry(asoc, &sctp_sk(sk)->ep->asocs, asocs) {
-		int ret = sctp_sched_set_value(asoc, params->stream_id,
+	list_क्रम_each_entry(asoc, &sctp_sk(sk)->ep->asocs, asocs) अणु
+		पूर्णांक ret = sctp_sched_set_value(asoc, params->stream_id,
 					       params->stream_value,
 					       GFP_KERNEL);
-		if (ret && !retval) /* try to return the 1st error. */
+		अगर (ret && !retval) /* try to वापस the 1st error. */
 			retval = ret;
-	}
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_interleaving_supported(struct sock *sk,
-						  struct sctp_assoc_value *p,
-						  unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_setsockopt_पूर्णांकerleaving_supported(काष्ठा sock *sk,
+						  काष्ठा sctp_assoc_value *p,
+						  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 
-	if (optlen < sizeof(*p))
-		return -EINVAL;
+	अगर (optlen < माप(*p))
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, p->assoc_id);
-	if (!asoc && p->assoc_id != SCTP_FUTURE_ASSOC && sctp_style(sk, UDP))
-		return -EINVAL;
+	अगर (!asoc && p->assoc_id != SCTP_FUTURE_ASSOC && sctp_style(sk, UDP))
+		वापस -EINVAL;
 
-	if (!sock_net(sk)->sctp.intl_enable || !sp->frag_interleave) {
-		return -EPERM;
-	}
+	अगर (!sock_net(sk)->sctp.पूर्णांकl_enable || !sp->frag_पूर्णांकerleave) अणु
+		वापस -EPERM;
+	पूर्ण
 
-	sp->ep->intl_enable = !!p->assoc_value;
-	return 0;
-}
+	sp->ep->पूर्णांकl_enable = !!p->assoc_value;
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_reuse_port(struct sock *sk, int *val,
-				      unsigned int optlen)
-{
-	if (!sctp_style(sk, TCP))
-		return -EOPNOTSUPP;
+अटल पूर्णांक sctp_setsockopt_reuse_port(काष्ठा sock *sk, पूर्णांक *val,
+				      अचिन्हित पूर्णांक optlen)
+अणु
+	अगर (!sctp_style(sk, TCP))
+		वापस -EOPNOTSUPP;
 
-	if (sctp_sk(sk)->ep->base.bind_addr.port)
-		return -EFAULT;
+	अगर (sctp_sk(sk)->ep->base.bind_addr.port)
+		वापस -EFAULT;
 
-	if (optlen < sizeof(int))
-		return -EINVAL;
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 
 	sctp_sk(sk)->reuse = !!*val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_assoc_ulpevent_type_set(struct sctp_event *param,
-					struct sctp_association *asoc)
-{
-	struct sctp_ulpevent *event;
+अटल पूर्णांक sctp_assoc_ulpevent_type_set(काष्ठा sctp_event *param,
+					काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा sctp_ulpevent *event;
 
 	sctp_ulpevent_type_set(&asoc->subscribe, param->se_type, param->se_on);
 
-	if (param->se_type == SCTP_SENDER_DRY_EVENT && param->se_on) {
-		if (sctp_outq_is_empty(&asoc->outqueue)) {
+	अगर (param->se_type == SCTP_SENDER_DRY_EVENT && param->se_on) अणु
+		अगर (sctp_outq_is_empty(&asoc->outqueue)) अणु
 			event = sctp_ulpevent_make_sender_dry_event(asoc,
 					GFP_USER | __GFP_NOWARN);
-			if (!event)
-				return -ENOMEM;
+			अगर (!event)
+				वापस -ENOMEM;
 
 			asoc->stream.si->enqueue_event(&asoc->ulpq, event);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_setsockopt_event(struct sock *sk, struct sctp_event *param,
-				 unsigned int optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	int retval = 0;
+अटल पूर्णांक sctp_setsockopt_event(काष्ठा sock *sk, काष्ठा sctp_event *param,
+				 अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = 0;
 
-	if (optlen < sizeof(*param))
-		return -EINVAL;
+	अगर (optlen < माप(*param))
+		वापस -EINVAL;
 
-	if (param->se_type < SCTP_SN_TYPE_BASE ||
+	अगर (param->se_type < SCTP_SN_TYPE_BASE ||
 	    param->se_type > SCTP_SN_TYPE_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, param->se_assoc_id);
-	if (!asoc && param->se_assoc_id > SCTP_ALL_ASSOC &&
+	अगर (!asoc && param->se_assoc_id > SCTP_ALL_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		return sctp_assoc_ulpevent_type_set(param, asoc);
+	अगर (asoc)
+		वापस sctp_assoc_ulpevent_type_set(param, asoc);
 
-	if (sctp_style(sk, TCP))
+	अगर (sctp_style(sk, TCP))
 		param->se_assoc_id = SCTP_FUTURE_ASSOC;
 
-	if (param->se_assoc_id == SCTP_FUTURE_ASSOC ||
+	अगर (param->se_assoc_id == SCTP_FUTURE_ASSOC ||
 	    param->se_assoc_id == SCTP_ALL_ASSOC)
 		sctp_ulpevent_type_set(&sp->subscribe,
 				       param->se_type, param->se_on);
 
-	if (param->se_assoc_id == SCTP_CURRENT_ASSOC ||
-	    param->se_assoc_id == SCTP_ALL_ASSOC) {
-		list_for_each_entry(asoc, &sp->ep->asocs, asocs) {
-			int ret = sctp_assoc_ulpevent_type_set(param, asoc);
+	अगर (param->se_assoc_id == SCTP_CURRENT_ASSOC ||
+	    param->se_assoc_id == SCTP_ALL_ASSOC) अणु
+		list_क्रम_each_entry(asoc, &sp->ep->asocs, asocs) अणु
+			पूर्णांक ret = sctp_assoc_ulpevent_type_set(param, asoc);
 
-			if (ret && !retval)
+			अगर (ret && !retval)
 				retval = ret;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_asconf_supported(struct sock *sk,
-					    struct sctp_assoc_value *params,
-					    unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	struct sctp_endpoint *ep;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_asconf_supported(काष्ठा sock *sk,
+					    काष्ठा sctp_assoc_value *params,
+					    अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_endpoपूर्णांक *ep;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	ep = sctp_sk(sk)->ep;
 	ep->asconf_enable = !!params->assoc_value;
 
-	if (ep->asconf_enable && ep->auth_enable) {
+	अगर (ep->asconf_enable && ep->auth_enable) अणु
 		sctp_auth_ep_add_chunkid(ep, SCTP_CID_ASCONF);
 		sctp_auth_ep_add_chunkid(ep, SCTP_CID_ASCONF_ACK);
-	}
+	पूर्ण
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_auth_supported(struct sock *sk,
-					  struct sctp_assoc_value *params,
-					  unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	struct sctp_endpoint *ep;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_auth_supported(काष्ठा sock *sk,
+					  काष्ठा sctp_assoc_value *params,
+					  अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_endpoपूर्णांक *ep;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	ep = sctp_sk(sk)->ep;
-	if (params->assoc_value) {
+	अगर (params->assoc_value) अणु
 		retval = sctp_auth_init(ep, GFP_KERNEL);
-		if (retval)
-			goto out;
-		if (ep->asconf_enable) {
+		अगर (retval)
+			जाओ out;
+		अगर (ep->asconf_enable) अणु
 			sctp_auth_ep_add_chunkid(ep, SCTP_CID_ASCONF);
 			sctp_auth_ep_add_chunkid(ep, SCTP_CID_ASCONF_ACK);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ep->auth_enable = !!params->assoc_value;
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_ecn_supported(struct sock *sk,
-					 struct sctp_assoc_value *params,
-					 unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_ecn_supported(काष्ठा sock *sk,
+					 काष्ठा sctp_assoc_value *params,
+					 अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
 	sctp_sk(sk)->ep->ecn_enable = !!params->assoc_value;
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_pf_expose(struct sock *sk,
-				     struct sctp_assoc_value *params,
-				     unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	int retval = -EINVAL;
+अटल पूर्णांक sctp_setsockopt_pf_expose(काष्ठा sock *sk,
+				     काष्ठा sctp_assoc_value *params,
+				     अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EINVAL;
 
-	if (optlen != sizeof(*params))
-		goto out;
+	अगर (optlen != माप(*params))
+		जाओ out;
 
-	if (params->assoc_value > SCTP_PF_EXPOSE_MAX)
-		goto out;
+	अगर (params->assoc_value > SCTP_PF_EXPOSE_MAX)
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params->assoc_id);
-	if (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params->assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		goto out;
+		जाओ out;
 
-	if (asoc)
+	अगर (asoc)
 		asoc->pf_expose = params->assoc_value;
-	else
+	अन्यथा
 		sctp_sk(sk)->pf_expose = params->assoc_value;
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_setsockopt_encap_port(struct sock *sk,
-				      struct sctp_udpencaps *encap,
-				      unsigned int optlen)
-{
-	struct sctp_association *asoc;
-	struct sctp_transport *t;
+अटल पूर्णांक sctp_setsockopt_encap_port(काष्ठा sock *sk,
+				      काष्ठा sctp_udpencaps *encap,
+				      अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_transport *t;
 	__be16 encap_port;
 
-	if (optlen != sizeof(*encap))
-		return -EINVAL;
+	अगर (optlen != माप(*encap))
+		वापस -EINVAL;
 
-	/* If an address other than INADDR_ANY is specified, and
+	/* If an address other than INADDR_ANY is specअगरied, and
 	 * no transport is found, then the request is invalid.
 	 */
-	encap_port = (__force __be16)encap->sue_port;
-	if (!sctp_is_any(sk, (union sctp_addr *)&encap->sue_address)) {
+	encap_port = (__क्रमce __be16)encap->sue_port;
+	अगर (!sctp_is_any(sk, (जोड़ sctp_addr *)&encap->sue_address)) अणु
 		t = sctp_addr_id2transport(sk, &encap->sue_address,
 					   encap->sue_assoc_id);
-		if (!t)
-			return -EINVAL;
+		अगर (!t)
+			वापस -EINVAL;
 
 		t->encap_port = encap_port;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Get association, if assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, encap->sue_assoc_id);
-	if (!asoc && encap->sue_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && encap->sue_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* If changes are for association, also apply encap_port to
+	/* If changes are क्रम association, also apply encap_port to
 	 * each transport.
 	 */
-	if (asoc) {
-		list_for_each_entry(t, &asoc->peer.transport_addr_list,
+	अगर (asoc) अणु
+		list_क्रम_each_entry(t, &asoc->peer.transport_addr_list,
 				    transports)
 			t->encap_port = encap_port;
 
 		asoc->encap_port = encap_port;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	sctp_sk(sk)->encap_port = encap_port;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* API 6.2 setsockopt(), getsockopt()
+/* API 6.2 setsockopt(), माला_लोockopt()
  *
- * Applications use setsockopt() and getsockopt() to set or retrieve
- * socket options.  Socket options are used to change the default
+ * Applications use setsockopt() and माला_लोockopt() to set or retrieve
+ * socket options.  Socket options are used to change the शेष
  * behavior of sockets calls.  They are described in Section 7.
  *
  * The syntax is:
  *
- *   ret = getsockopt(int sd, int level, int optname, void __user *optval,
- *                    int __user *optlen);
- *   ret = setsockopt(int sd, int level, int optname, const void __user *optval,
- *                    int optlen);
+ *   ret = माला_लोockopt(पूर्णांक sd, पूर्णांक level, पूर्णांक optname, व्योम __user *optval,
+ *                    पूर्णांक __user *optlen);
+ *   ret = setsockopt(पूर्णांक sd, पूर्णांक level, पूर्णांक optname, स्थिर व्योम __user *optval,
+ *                    पूर्णांक optlen);
  *
  *   sd      - the socket descript.
- *   level   - set to IPPROTO_SCTP for all SCTP options.
+ *   level   - set to IPPROTO_SCTP क्रम all SCTP options.
  *   optname - the option name.
  *   optval  - the buffer to store the value of the option.
  *   optlen  - the size of the buffer.
  */
-static int sctp_setsockopt(struct sock *sk, int level, int optname,
-			   sockptr_t optval, unsigned int optlen)
-{
-	void *kopt = NULL;
-	int retval = 0;
+अटल पूर्णांक sctp_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			   sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	व्योम *kopt = शून्य;
+	पूर्णांक retval = 0;
 
 	pr_debug("%s: sk:%p, optname:%d\n", __func__, sk, optname);
 
@@ -4514,204 +4515,204 @@ static int sctp_setsockopt(struct sock *sk, int level, int optname,
 	 * semantics of setsockopt() with a level OTHER THAN SOL_SCTP
 	 * are at all well-founded.
 	 */
-	if (level != SOL_SCTP) {
-		struct sctp_af *af = sctp_sk(sk)->pf->af;
+	अगर (level != SOL_SCTP) अणु
+		काष्ठा sctp_af *af = sctp_sk(sk)->pf->af;
 
-		return af->setsockopt(sk, level, optname, optval, optlen);
-	}
+		वापस af->setsockopt(sk, level, optname, optval, optlen);
+	पूर्ण
 
-	if (optlen > 0) {
+	अगर (optlen > 0) अणु
 		kopt = memdup_sockptr(optval, optlen);
-		if (IS_ERR(kopt))
-			return PTR_ERR(kopt);
-	}
+		अगर (IS_ERR(kopt))
+			वापस PTR_ERR(kopt);
+	पूर्ण
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case SCTP_SOCKOPT_BINDX_ADD:
+	चयन (optname) अणु
+	हाल SCTP_SOCKOPT_BINDX_ADD:
 		/* 'optlen' is the size of the addresses buffer. */
 		retval = sctp_setsockopt_bindx(sk, kopt, optlen,
 					       SCTP_BINDX_ADD_ADDR);
-		break;
+		अवरोध;
 
-	case SCTP_SOCKOPT_BINDX_REM:
+	हाल SCTP_SOCKOPT_BINDX_REM:
 		/* 'optlen' is the size of the addresses buffer. */
 		retval = sctp_setsockopt_bindx(sk, kopt, optlen,
 					       SCTP_BINDX_REM_ADDR);
-		break;
+		अवरोध;
 
-	case SCTP_SOCKOPT_CONNECTX_OLD:
+	हाल SCTP_SOCKOPT_CONNECTX_OLD:
 		/* 'optlen' is the size of the addresses buffer. */
 		retval = sctp_setsockopt_connectx_old(sk, kopt, optlen);
-		break;
+		अवरोध;
 
-	case SCTP_SOCKOPT_CONNECTX:
+	हाल SCTP_SOCKOPT_CONNECTX:
 		/* 'optlen' is the size of the addresses buffer. */
 		retval = sctp_setsockopt_connectx(sk, kopt, optlen);
-		break;
+		अवरोध;
 
-	case SCTP_DISABLE_FRAGMENTS:
+	हाल SCTP_DISABLE_FRAGMENTS:
 		retval = sctp_setsockopt_disable_fragments(sk, kopt, optlen);
-		break;
+		अवरोध;
 
-	case SCTP_EVENTS:
+	हाल SCTP_EVENTS:
 		retval = sctp_setsockopt_events(sk, kopt, optlen);
-		break;
+		अवरोध;
 
-	case SCTP_AUTOCLOSE:
-		retval = sctp_setsockopt_autoclose(sk, kopt, optlen);
-		break;
+	हाल SCTP_AUTOCLOSE:
+		retval = sctp_setsockopt_स्वतःबंद(sk, kopt, optlen);
+		अवरोध;
 
-	case SCTP_PEER_ADDR_PARAMS:
+	हाल SCTP_PEER_ADDR_PARAMS:
 		retval = sctp_setsockopt_peer_addr_params(sk, kopt, optlen);
-		break;
+		अवरोध;
 
-	case SCTP_DELAYED_SACK:
+	हाल SCTP_DELAYED_SACK:
 		retval = sctp_setsockopt_delayed_ack(sk, kopt, optlen);
-		break;
-	case SCTP_PARTIAL_DELIVERY_POINT:
-		retval = sctp_setsockopt_partial_delivery_point(sk, kopt, optlen);
-		break;
+		अवरोध;
+	हाल SCTP_PARTIAL_DELIVERY_POINT:
+		retval = sctp_setsockopt_partial_delivery_poपूर्णांक(sk, kopt, optlen);
+		अवरोध;
 
-	case SCTP_INITMSG:
-		retval = sctp_setsockopt_initmsg(sk, kopt, optlen);
-		break;
-	case SCTP_DEFAULT_SEND_PARAM:
-		retval = sctp_setsockopt_default_send_param(sk, kopt, optlen);
-		break;
-	case SCTP_DEFAULT_SNDINFO:
-		retval = sctp_setsockopt_default_sndinfo(sk, kopt, optlen);
-		break;
-	case SCTP_PRIMARY_ADDR:
+	हाल SCTP_INITMSG:
+		retval = sctp_setsockopt_iniपंचांगsg(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_DEFAULT_SEND_PARAM:
+		retval = sctp_setsockopt_शेष_send_param(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_DEFAULT_SNDINFO:
+		retval = sctp_setsockopt_शेष_sndinfo(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_PRIMARY_ADDR:
 		retval = sctp_setsockopt_primary_addr(sk, kopt, optlen);
-		break;
-	case SCTP_SET_PEER_PRIMARY_ADDR:
+		अवरोध;
+	हाल SCTP_SET_PEER_PRIMARY_ADDR:
 		retval = sctp_setsockopt_peer_primary_addr(sk, kopt, optlen);
-		break;
-	case SCTP_NODELAY:
+		अवरोध;
+	हाल SCTP_NODELAY:
 		retval = sctp_setsockopt_nodelay(sk, kopt, optlen);
-		break;
-	case SCTP_RTOINFO:
+		अवरोध;
+	हाल SCTP_RTOINFO:
 		retval = sctp_setsockopt_rtoinfo(sk, kopt, optlen);
-		break;
-	case SCTP_ASSOCINFO:
+		अवरोध;
+	हाल SCTP_ASSOCINFO:
 		retval = sctp_setsockopt_associnfo(sk, kopt, optlen);
-		break;
-	case SCTP_I_WANT_MAPPED_V4_ADDR:
+		अवरोध;
+	हाल SCTP_I_WANT_MAPPED_V4_ADDR:
 		retval = sctp_setsockopt_mappedv4(sk, kopt, optlen);
-		break;
-	case SCTP_MAXSEG:
+		अवरोध;
+	हाल SCTP_MAXSEG:
 		retval = sctp_setsockopt_maxseg(sk, kopt, optlen);
-		break;
-	case SCTP_ADAPTATION_LAYER:
+		अवरोध;
+	हाल SCTP_ADAPTATION_LAYER:
 		retval = sctp_setsockopt_adaptation_layer(sk, kopt, optlen);
-		break;
-	case SCTP_CONTEXT:
+		अवरोध;
+	हाल SCTP_CONTEXT:
 		retval = sctp_setsockopt_context(sk, kopt, optlen);
-		break;
-	case SCTP_FRAGMENT_INTERLEAVE:
-		retval = sctp_setsockopt_fragment_interleave(sk, kopt, optlen);
-		break;
-	case SCTP_MAX_BURST:
+		अवरोध;
+	हाल SCTP_FRAGMENT_INTERLEAVE:
+		retval = sctp_setsockopt_fragment_पूर्णांकerleave(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_MAX_BURST:
 		retval = sctp_setsockopt_maxburst(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_CHUNK:
+		अवरोध;
+	हाल SCTP_AUTH_CHUNK:
 		retval = sctp_setsockopt_auth_chunk(sk, kopt, optlen);
-		break;
-	case SCTP_HMAC_IDENT:
+		अवरोध;
+	हाल SCTP_HMAC_IDENT:
 		retval = sctp_setsockopt_hmac_ident(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_KEY:
+		अवरोध;
+	हाल SCTP_AUTH_KEY:
 		retval = sctp_setsockopt_auth_key(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_ACTIVE_KEY:
+		अवरोध;
+	हाल SCTP_AUTH_ACTIVE_KEY:
 		retval = sctp_setsockopt_active_key(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_DELETE_KEY:
+		अवरोध;
+	हाल SCTP_AUTH_DELETE_KEY:
 		retval = sctp_setsockopt_del_key(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_DEACTIVATE_KEY:
+		अवरोध;
+	हाल SCTP_AUTH_DEACTIVATE_KEY:
 		retval = sctp_setsockopt_deactivate_key(sk, kopt, optlen);
-		break;
-	case SCTP_AUTO_ASCONF:
-		retval = sctp_setsockopt_auto_asconf(sk, kopt, optlen);
-		break;
-	case SCTP_PEER_ADDR_THLDS:
+		अवरोध;
+	हाल SCTP_AUTO_ASCONF:
+		retval = sctp_setsockopt_स्वतः_asconf(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_PEER_ADDR_THLDS:
 		retval = sctp_setsockopt_paddr_thresholds(sk, kopt, optlen,
 							  false);
-		break;
-	case SCTP_PEER_ADDR_THLDS_V2:
+		अवरोध;
+	हाल SCTP_PEER_ADDR_THLDS_V2:
 		retval = sctp_setsockopt_paddr_thresholds(sk, kopt, optlen,
 							  true);
-		break;
-	case SCTP_RECVRCVINFO:
+		अवरोध;
+	हाल SCTP_RECVRCVINFO:
 		retval = sctp_setsockopt_recvrcvinfo(sk, kopt, optlen);
-		break;
-	case SCTP_RECVNXTINFO:
+		अवरोध;
+	हाल SCTP_RECVNXTINFO:
 		retval = sctp_setsockopt_recvnxtinfo(sk, kopt, optlen);
-		break;
-	case SCTP_PR_SUPPORTED:
+		अवरोध;
+	हाल SCTP_PR_SUPPORTED:
 		retval = sctp_setsockopt_pr_supported(sk, kopt, optlen);
-		break;
-	case SCTP_DEFAULT_PRINFO:
-		retval = sctp_setsockopt_default_prinfo(sk, kopt, optlen);
-		break;
-	case SCTP_RECONFIG_SUPPORTED:
+		अवरोध;
+	हाल SCTP_DEFAULT_PRINFO:
+		retval = sctp_setsockopt_शेष_prinfo(sk, kopt, optlen);
+		अवरोध;
+	हाल SCTP_RECONFIG_SUPPORTED:
 		retval = sctp_setsockopt_reconfig_supported(sk, kopt, optlen);
-		break;
-	case SCTP_ENABLE_STREAM_RESET:
+		अवरोध;
+	हाल SCTP_ENABLE_STREAM_RESET:
 		retval = sctp_setsockopt_enable_strreset(sk, kopt, optlen);
-		break;
-	case SCTP_RESET_STREAMS:
+		अवरोध;
+	हाल SCTP_RESET_STREAMS:
 		retval = sctp_setsockopt_reset_streams(sk, kopt, optlen);
-		break;
-	case SCTP_RESET_ASSOC:
+		अवरोध;
+	हाल SCTP_RESET_ASSOC:
 		retval = sctp_setsockopt_reset_assoc(sk, kopt, optlen);
-		break;
-	case SCTP_ADD_STREAMS:
+		अवरोध;
+	हाल SCTP_ADD_STREAMS:
 		retval = sctp_setsockopt_add_streams(sk, kopt, optlen);
-		break;
-	case SCTP_STREAM_SCHEDULER:
+		अवरोध;
+	हाल SCTP_STREAM_SCHEDULER:
 		retval = sctp_setsockopt_scheduler(sk, kopt, optlen);
-		break;
-	case SCTP_STREAM_SCHEDULER_VALUE:
+		अवरोध;
+	हाल SCTP_STREAM_SCHEDULER_VALUE:
 		retval = sctp_setsockopt_scheduler_value(sk, kopt, optlen);
-		break;
-	case SCTP_INTERLEAVING_SUPPORTED:
-		retval = sctp_setsockopt_interleaving_supported(sk, kopt,
+		अवरोध;
+	हाल SCTP_INTERLEAVING_SUPPORTED:
+		retval = sctp_setsockopt_पूर्णांकerleaving_supported(sk, kopt,
 								optlen);
-		break;
-	case SCTP_REUSE_PORT:
+		अवरोध;
+	हाल SCTP_REUSE_PORT:
 		retval = sctp_setsockopt_reuse_port(sk, kopt, optlen);
-		break;
-	case SCTP_EVENT:
+		अवरोध;
+	हाल SCTP_EVENT:
 		retval = sctp_setsockopt_event(sk, kopt, optlen);
-		break;
-	case SCTP_ASCONF_SUPPORTED:
+		अवरोध;
+	हाल SCTP_ASCONF_SUPPORTED:
 		retval = sctp_setsockopt_asconf_supported(sk, kopt, optlen);
-		break;
-	case SCTP_AUTH_SUPPORTED:
+		अवरोध;
+	हाल SCTP_AUTH_SUPPORTED:
 		retval = sctp_setsockopt_auth_supported(sk, kopt, optlen);
-		break;
-	case SCTP_ECN_SUPPORTED:
+		अवरोध;
+	हाल SCTP_ECN_SUPPORTED:
 		retval = sctp_setsockopt_ecn_supported(sk, kopt, optlen);
-		break;
-	case SCTP_EXPOSE_POTENTIALLY_FAILED_STATE:
+		अवरोध;
+	हाल SCTP_EXPOSE_POTENTIALLY_FAILED_STATE:
 		retval = sctp_setsockopt_pf_expose(sk, kopt, optlen);
-		break;
-	case SCTP_REMOTE_UDP_ENCAPS_PORT:
+		अवरोध;
+	हाल SCTP_REMOTE_UDP_ENCAPS_PORT:
 		retval = sctp_setsockopt_encap_port(sk, kopt, optlen);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	kfree(kopt);
-	return retval;
-}
+	kमुक्त(kopt);
+	वापस retval;
+पूर्ण
 
 /* API 3.1.6 connect() - UDP Style Syntax
  *
@@ -4720,287 +4721,287 @@ static int sctp_setsockopt(struct sock *sk, int level, int optname,
  *
  * The syntax is:
  *
- * ret = connect(int sd, const struct sockaddr *nam, socklen_t len);
+ * ret = connect(पूर्णांक sd, स्थिर काष्ठा sockaddr *nam, socklen_t len);
  *
  * sd: the socket descriptor to have a new association added to.
  *
- * nam: the address structure (either struct sockaddr_in or struct
+ * nam: the address काष्ठाure (either काष्ठा sockaddr_in or काष्ठा
  *    sockaddr_in6 defined in RFC2553 [7]).
  *
  * len: the size of the address.
  */
-static int sctp_connect(struct sock *sk, struct sockaddr *addr,
-			int addr_len, int flags)
-{
-	struct sctp_af *af;
-	int err = -EINVAL;
+अटल पूर्णांक sctp_connect(काष्ठा sock *sk, काष्ठा sockaddr *addr,
+			पूर्णांक addr_len, पूर्णांक flags)
+अणु
+	काष्ठा sctp_af *af;
+	पूर्णांक err = -EINVAL;
 
 	lock_sock(sk);
 	pr_debug("%s: sk:%p, sockaddr:%p, addr_len:%d\n", __func__, sk,
 		 addr, addr_len);
 
-	/* Validate addr_len before calling common connect/connectx routine. */
-	af = sctp_get_af_specific(addr->sa_family);
-	if (af && addr_len >= af->sockaddr_len)
-		err = __sctp_connect(sk, addr, af->sockaddr_len, flags, NULL);
+	/* Validate addr_len beक्रमe calling common connect/connectx routine. */
+	af = sctp_get_af_specअगरic(addr->sa_family);
+	अगर (af && addr_len >= af->sockaddr_len)
+		err = __sctp_connect(sk, addr, af->sockaddr_len, flags, शून्य);
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int sctp_inet_connect(struct socket *sock, struct sockaddr *uaddr,
-		      int addr_len, int flags)
-{
-	if (addr_len < sizeof(uaddr->sa_family))
-		return -EINVAL;
+पूर्णांक sctp_inet_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+		      पूर्णांक addr_len, पूर्णांक flags)
+अणु
+	अगर (addr_len < माप(uaddr->sa_family))
+		वापस -EINVAL;
 
-	if (uaddr->sa_family == AF_UNSPEC)
-		return -EOPNOTSUPP;
+	अगर (uaddr->sa_family == AF_UNSPEC)
+		वापस -EOPNOTSUPP;
 
-	return sctp_connect(sock->sk, uaddr, addr_len, flags);
-}
+	वापस sctp_connect(sock->sk, uaddr, addr_len, flags);
+पूर्ण
 
 /* FIXME: Write comments. */
-static int sctp_disconnect(struct sock *sk, int flags)
-{
-	return -EOPNOTSUPP; /* STUB */
-}
+अटल पूर्णांक sctp_disconnect(काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	वापस -EOPNOTSUPP; /* STUB */
+पूर्ण
 
 /* 4.1.4 accept() - TCP Style Syntax
  *
- * Applications use accept() call to remove an established SCTP
- * association from the accept queue of the endpoint.  A new socket
- * descriptor will be returned from accept() to represent the newly
- * formed association.
+ * Applications use accept() call to हटाओ an established SCTP
+ * association from the accept queue of the endpoपूर्णांक.  A new socket
+ * descriptor will be वापसed from accept() to represent the newly
+ * क्रमmed association.
  */
-static struct sock *sctp_accept(struct sock *sk, int flags, int *err, bool kern)
-{
-	struct sctp_sock *sp;
-	struct sctp_endpoint *ep;
-	struct sock *newsk = NULL;
-	struct sctp_association *asoc;
-	long timeo;
-	int error = 0;
+अटल काष्ठा sock *sctp_accept(काष्ठा sock *sk, पूर्णांक flags, पूर्णांक *err, bool kern)
+अणु
+	काष्ठा sctp_sock *sp;
+	काष्ठा sctp_endpoपूर्णांक *ep;
+	काष्ठा sock *newsk = शून्य;
+	काष्ठा sctp_association *asoc;
+	दीर्घ समयo;
+	पूर्णांक error = 0;
 
 	lock_sock(sk);
 
 	sp = sctp_sk(sk);
 	ep = sp->ep;
 
-	if (!sctp_style(sk, TCP)) {
+	अगर (!sctp_style(sk, TCP)) अणु
 		error = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!sctp_sstate(sk, LISTENING)) {
+	अगर (!sctp_sstate(sk, LISTENING)) अणु
 		error = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	timeo = sock_rcvtimeo(sk, flags & O_NONBLOCK);
+	समयo = sock_rcvसमयo(sk, flags & O_NONBLOCK);
 
-	error = sctp_wait_for_accept(sk, timeo);
-	if (error)
-		goto out;
+	error = sctp_रुको_क्रम_accept(sk, समयo);
+	अगर (error)
+		जाओ out;
 
-	/* We treat the list of associations on the endpoint as the accept
+	/* We treat the list of associations on the endpoपूर्णांक as the accept
 	 * queue and pick the first association on the list.
 	 */
-	asoc = list_entry(ep->asocs.next, struct sctp_association, asocs);
+	asoc = list_entry(ep->asocs.next, काष्ठा sctp_association, asocs);
 
 	newsk = sp->pf->create_accept_sk(sk, asoc, kern);
-	if (!newsk) {
+	अगर (!newsk) अणु
 		error = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Populate the fields of the newsk from the oldsk and migrate the
 	 * asoc to the newsk.
 	 */
 	error = sctp_sock_migrate(sk, newsk, asoc, SCTP_SOCKET_TCP);
-	if (error) {
+	अगर (error) अणु
 		sk_common_release(newsk);
-		newsk = NULL;
-	}
+		newsk = शून्य;
+	पूर्ण
 
 out:
 	release_sock(sk);
 	*err = error;
-	return newsk;
-}
+	वापस newsk;
+पूर्ण
 
 /* The SCTP ioctl handler. */
-static int sctp_ioctl(struct sock *sk, int cmd, unsigned long arg)
-{
-	int rc = -ENOTCONN;
+अटल पूर्णांक sctp_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक rc = -ENOTCONN;
 
 	lock_sock(sk);
 
 	/*
-	 * SEQPACKET-style sockets in LISTENING state are valid, for
+	 * SEQPACKET-style sockets in LISTENING state are valid, क्रम
 	 * SCTP, so only discard TCP-style sockets in LISTENING state.
 	 */
-	if (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING))
-		goto out;
+	अगर (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING))
+		जाओ out;
 
-	switch (cmd) {
-	case SIOCINQ: {
-		struct sk_buff *skb;
-		unsigned int amount = 0;
+	चयन (cmd) अणु
+	हाल SIOCINQ: अणु
+		काष्ठा sk_buff *skb;
+		अचिन्हित पूर्णांक amount = 0;
 
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb != NULL) {
+		अगर (skb != शून्य) अणु
 			/*
-			 * We will only return the amount of this packet since
-			 * that is all that will be read.
+			 * We will only वापस the amount of this packet since
+			 * that is all that will be पढ़ो.
 			 */
 			amount = skb->len;
-		}
-		rc = put_user(amount, (int __user *)arg);
-		break;
-	}
-	default:
+		पूर्ण
+		rc = put_user(amount, (पूर्णांक __user *)arg);
+		अवरोध;
+	पूर्ण
+	शेष:
 		rc = -ENOIOCTLCMD;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
 	release_sock(sk);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* This is the function which gets called during socket creation to
- * initialized the SCTP-specific portion of the sock.
- * The sock structure should already be zero-filled memory.
+/* This is the function which माला_लो called during socket creation to
+ * initialized the SCTP-specअगरic portion of the sock.
+ * The sock काष्ठाure should alपढ़ोy be zero-filled memory.
  */
-static int sctp_init_sock(struct sock *sk)
-{
-	struct net *net = sock_net(sk);
-	struct sctp_sock *sp;
+अटल पूर्णांक sctp_init_sock(काष्ठा sock *sk)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sctp_sock *sp;
 
 	pr_debug("%s: sk:%p\n", __func__, sk);
 
 	sp = sctp_sk(sk);
 
 	/* Initialize the SCTP per socket area.  */
-	switch (sk->sk_type) {
-	case SOCK_SEQPACKET:
+	चयन (sk->sk_type) अणु
+	हाल SOCK_SEQPACKET:
 		sp->type = SCTP_SOCKET_UDP;
-		break;
-	case SOCK_STREAM:
+		अवरोध;
+	हाल SOCK_STREAM:
 		sp->type = SCTP_SOCKET_TCP;
-		break;
-	default:
-		return -ESOCKTNOSUPPORT;
-	}
+		अवरोध;
+	शेष:
+		वापस -ESOCKTNOSUPPORT;
+	पूर्ण
 
 	sk->sk_gso_type = SKB_GSO_SCTP;
 
-	/* Initialize default send parameters. These parameters can be
-	 * modified with the SCTP_DEFAULT_SEND_PARAM socket option.
+	/* Initialize शेष send parameters. These parameters can be
+	 * modअगरied with the SCTP_DEFAULT_SEND_PARAM socket option.
 	 */
-	sp->default_stream = 0;
-	sp->default_ppid = 0;
-	sp->default_flags = 0;
-	sp->default_context = 0;
-	sp->default_timetolive = 0;
+	sp->शेष_stream = 0;
+	sp->शेष_ppid = 0;
+	sp->शेष_flags = 0;
+	sp->शेष_context = 0;
+	sp->शेष_समयtolive = 0;
 
-	sp->default_rcv_context = 0;
+	sp->शेष_rcv_context = 0;
 	sp->max_burst = net->sctp.max_burst;
 
 	sp->sctp_hmac_alg = net->sctp.sctp_hmac_alg;
 
-	/* Initialize default setup parameters. These parameters
-	 * can be modified with the SCTP_INITMSG socket option or
+	/* Initialize शेष setup parameters. These parameters
+	 * can be modअगरied with the SCTP_INITMSG socket option or
 	 * overridden by the SCTP_INIT CMSG.
 	 */
-	sp->initmsg.sinit_num_ostreams   = sctp_max_outstreams;
-	sp->initmsg.sinit_max_instreams  = sctp_max_instreams;
-	sp->initmsg.sinit_max_attempts   = net->sctp.max_retrans_init;
-	sp->initmsg.sinit_max_init_timeo = net->sctp.rto_max;
+	sp->iniपंचांगsg.sinit_num_ostreams   = sctp_max_outstreams;
+	sp->iniपंचांगsg.sinit_max_instreams  = sctp_max_instreams;
+	sp->iniपंचांगsg.sinit_max_attempts   = net->sctp.max_retrans_init;
+	sp->iniपंचांगsg.sinit_max_init_समयo = net->sctp.rto_max;
 
-	/* Initialize default RTO related parameters.  These parameters can
-	 * be modified for with the SCTP_RTOINFO socket option.
+	/* Initialize शेष RTO related parameters.  These parameters can
+	 * be modअगरied क्रम with the SCTP_RTOINFO socket option.
 	 */
 	sp->rtoinfo.srto_initial = net->sctp.rto_initial;
 	sp->rtoinfo.srto_max     = net->sctp.rto_max;
 	sp->rtoinfo.srto_min     = net->sctp.rto_min;
 
-	/* Initialize default association related parameters. These parameters
-	 * can be modified with the SCTP_ASSOCINFO socket option.
+	/* Initialize शेष association related parameters. These parameters
+	 * can be modअगरied with the SCTP_ASSOCINFO socket option.
 	 */
 	sp->assocparams.sasoc_asocmaxrxt = net->sctp.max_retrans_association;
 	sp->assocparams.sasoc_number_peer_destinations = 0;
 	sp->assocparams.sasoc_peer_rwnd = 0;
 	sp->assocparams.sasoc_local_rwnd = 0;
-	sp->assocparams.sasoc_cookie_life = net->sctp.valid_cookie_life;
+	sp->assocparams.sasoc_cookie_lअगरe = net->sctp.valid_cookie_lअगरe;
 
-	/* Initialize default event subscriptions. By default, all the
+	/* Initialize शेष event subscriptions. By शेष, all the
 	 * options are off.
 	 */
 	sp->subscribe = 0;
 
-	/* Default Peer Address Parameters.  These defaults can
-	 * be modified via SCTP_PEER_ADDR_PARAMS
+	/* Default Peer Address Parameters.  These शेषs can
+	 * be modअगरied via SCTP_PEER_ADDR_PARAMS
 	 */
-	sp->hbinterval  = net->sctp.hb_interval;
+	sp->hbपूर्णांकerval  = net->sctp.hb_पूर्णांकerval;
 	sp->udp_port    = htons(net->sctp.udp_port);
 	sp->encap_port  = htons(net->sctp.encap_port);
 	sp->pathmaxrxt  = net->sctp.max_retrans_path;
 	sp->pf_retrans  = net->sctp.pf_retrans;
 	sp->ps_retrans  = net->sctp.ps_retrans;
 	sp->pf_expose   = net->sctp.pf_expose;
-	sp->pathmtu     = 0; /* allow default discovery */
-	sp->sackdelay   = net->sctp.sack_timeout;
+	sp->pathmtu     = 0; /* allow शेष discovery */
+	sp->sackdelay   = net->sctp.sack_समयout;
 	sp->sackfreq	= 2;
 	sp->param_flags = SPP_HB_ENABLE |
 			  SPP_PMTUD_ENABLE |
 			  SPP_SACKDELAY_ENABLE;
-	sp->default_ss = SCTP_SS_DEFAULT;
+	sp->शेष_ss = SCTP_SS_DEFAULT;
 
-	/* If enabled no SCTP message fragmentation will be performed.
+	/* If enabled no SCTP message fragmentation will be perक्रमmed.
 	 * Configure through SCTP_DISABLE_FRAGMENTS socket option.
 	 */
 	sp->disable_fragments = 0;
 
-	/* Enable Nagle algorithm by default.  */
+	/* Enable Nagle algorithm by शेष.  */
 	sp->nodelay           = 0;
 
 	sp->recvrcvinfo = 0;
 	sp->recvnxtinfo = 0;
 
-	/* Enable by default. */
+	/* Enable by शेष. */
 	sp->v4mapped          = 1;
 
-	/* Auto-close idle associations after the configured
+	/* Auto-बंद idle associations after the configured
 	 * number of seconds.  A value of 0 disables this
 	 * feature.  Configure through the SCTP_AUTOCLOSE socket option,
-	 * for UDP-style sockets only.
+	 * क्रम UDP-style sockets only.
 	 */
-	sp->autoclose         = 0;
+	sp->स्वतःबंद         = 0;
 
-	/* User specified fragmentation limit. */
+	/* User specअगरied fragmentation limit. */
 	sp->user_frag         = 0;
 
 	sp->adaptation_ind = 0;
 
-	sp->pf = sctp_get_pf_specific(sk->sk_family);
+	sp->pf = sctp_get_pf_specअगरic(sk->sk_family);
 
-	/* Control variables for partial data delivery. */
+	/* Control variables क्रम partial data delivery. */
 	atomic_set(&sp->pd_mode, 0);
 	skb_queue_head_init(&sp->pd_lobby);
-	sp->frag_interleave = 0;
+	sp->frag_पूर्णांकerleave = 0;
 
-	/* Create a per socket endpoint structure.  Even if we
-	 * change the data structure relationships, this may still
-	 * be useful for storing pre-connect address information.
+	/* Create a per socket endpoपूर्णांक काष्ठाure.  Even अगर we
+	 * change the data काष्ठाure relationships, this may still
+	 * be useful क्रम storing pre-connect address inक्रमmation.
 	 */
-	sp->ep = sctp_endpoint_new(sk, GFP_KERNEL);
-	if (!sp->ep)
-		return -ENOMEM;
+	sp->ep = sctp_endpoपूर्णांक_new(sk, GFP_KERNEL);
+	अगर (!sp->ep)
+		वापस -ENOMEM;
 
-	sp->hmac = NULL;
+	sp->hmac = शून्य;
 
-	sk->sk_destruct = sctp_destruct_sock;
+	sk->sk_deकाष्ठा = sctp_deकाष्ठा_sock;
 
 	SCTP_DBG_OBJCNT_INC(sock);
 
@@ -5010,105 +5011,105 @@ static int sctp_init_sock(struct sock *sk)
 
 	local_bh_enable();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Cleanup any SCTP per socket resources. Must be called with
- * sock_net(sk)->sctp.addr_wq_lock held if sp->do_auto_asconf is true
+ * sock_net(sk)->sctp.addr_wq_lock held अगर sp->करो_स्वतः_asconf is true
  */
-static void sctp_destroy_sock(struct sock *sk)
-{
-	struct sctp_sock *sp;
+अटल व्योम sctp_destroy_sock(काष्ठा sock *sk)
+अणु
+	काष्ठा sctp_sock *sp;
 
 	pr_debug("%s: sk:%p\n", __func__, sk);
 
-	/* Release our hold on the endpoint. */
+	/* Release our hold on the endpoपूर्णांक. */
 	sp = sctp_sk(sk);
 	/* This could happen during socket init, thus we bail out
 	 * early, since the rest of the below is not setup either.
 	 */
-	if (sp->ep == NULL)
-		return;
+	अगर (sp->ep == शून्य)
+		वापस;
 
-	if (sp->do_auto_asconf) {
-		sp->do_auto_asconf = 0;
-		list_del(&sp->auto_asconf_list);
-	}
-	sctp_endpoint_free(sp->ep);
+	अगर (sp->करो_स्वतः_asconf) अणु
+		sp->करो_स्वतः_asconf = 0;
+		list_del(&sp->स्वतः_asconf_list);
+	पूर्ण
+	sctp_endpoपूर्णांक_मुक्त(sp->ep);
 	local_bh_disable();
 	sk_sockets_allocated_dec(sk);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
 	local_bh_enable();
-}
+पूर्ण
 
 /* Triggered when there are no references on the socket anymore */
-static void sctp_destruct_sock(struct sock *sk)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल व्योम sctp_deकाष्ठा_sock(काष्ठा sock *sk)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	/* Free up the HMAC transform. */
-	crypto_free_shash(sp->hmac);
+	/* Free up the HMAC transक्रमm. */
+	crypto_मुक्त_shash(sp->hmac);
 
-	inet_sock_destruct(sk);
-}
+	inet_sock_deकाष्ठा(sk);
+पूर्ण
 
-/* API 4.1.7 shutdown() - TCP Style Syntax
- *     int shutdown(int socket, int how);
+/* API 4.1.7 shutकरोwn() - TCP Style Syntax
+ *     पूर्णांक shutकरोwn(पूर्णांक socket, पूर्णांक how);
  *
- *     sd      - the socket descriptor of the association to be closed.
- *     how     - Specifies the type of shutdown.  The  values  are
+ *     sd      - the socket descriptor of the association to be बंदd.
+ *     how     - Specअगरies the type of shutकरोwn.  The  values  are
  *               as follows:
  *               SHUT_RD
  *                     Disables further receive operations. No SCTP
  *                     protocol action is taken.
  *               SHUT_WR
  *                     Disables further send operations, and initiates
- *                     the SCTP shutdown sequence.
+ *                     the SCTP shutकरोwn sequence.
  *               SHUT_RDWR
  *                     Disables further send  and  receive  operations
- *                     and initiates the SCTP shutdown sequence.
+ *                     and initiates the SCTP shutकरोwn sequence.
  */
-static void sctp_shutdown(struct sock *sk, int how)
-{
-	struct net *net = sock_net(sk);
-	struct sctp_endpoint *ep;
+अटल व्योम sctp_shutकरोwn(काष्ठा sock *sk, पूर्णांक how)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep;
 
-	if (!sctp_style(sk, TCP))
-		return;
+	अगर (!sctp_style(sk, TCP))
+		वापस;
 
 	ep = sctp_sk(sk)->ep;
-	if (how & SEND_SHUTDOWN && !list_empty(&ep->asocs)) {
-		struct sctp_association *asoc;
+	अगर (how & SEND_SHUTDOWN && !list_empty(&ep->asocs)) अणु
+		काष्ठा sctp_association *asoc;
 
 		inet_sk_set_state(sk, SCTP_SS_CLOSING);
 		asoc = list_entry(ep->asocs.next,
-				  struct sctp_association, asocs);
-		sctp_primitive_SHUTDOWN(net, asoc, NULL);
-	}
-}
+				  काष्ठा sctp_association, asocs);
+		sctp_primitive_SHUTDOWN(net, asoc, शून्य);
+	पूर्ण
+पूर्ण
 
-int sctp_get_sctp_info(struct sock *sk, struct sctp_association *asoc,
-		       struct sctp_info *info)
-{
-	struct sctp_transport *prim;
-	struct list_head *pos;
-	int mask;
+पूर्णांक sctp_get_sctp_info(काष्ठा sock *sk, काष्ठा sctp_association *asoc,
+		       काष्ठा sctp_info *info)
+अणु
+	काष्ठा sctp_transport *prim;
+	काष्ठा list_head *pos;
+	पूर्णांक mask;
 
-	memset(info, 0, sizeof(*info));
-	if (!asoc) {
-		struct sctp_sock *sp = sctp_sk(sk);
+	स_रखो(info, 0, माप(*info));
+	अगर (!asoc) अणु
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-		info->sctpi_s_autoclose = sp->autoclose;
+		info->sctpi_s_स्वतःबंद = sp->स्वतःबंद;
 		info->sctpi_s_adaptation_ind = sp->adaptation_ind;
-		info->sctpi_s_pd_point = sp->pd_point;
+		info->sctpi_s_pd_poपूर्णांक = sp->pd_poपूर्णांक;
 		info->sctpi_s_nodelay = sp->nodelay;
 		info->sctpi_s_disable_fragments = sp->disable_fragments;
 		info->sctpi_s_v4mapped = sp->v4mapped;
-		info->sctpi_s_frag_interleave = sp->frag_interleave;
+		info->sctpi_s_frag_पूर्णांकerleave = sp->frag_पूर्णांकerleave;
 		info->sctpi_s_type = sp->type;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	info->sctpi_tag = asoc->c.my_vtag;
 	info->sctpi_state = asoc->state;
@@ -5117,13 +5118,13 @@ int sctp_get_sctp_info(struct sock *sk, struct sctp_association *asoc,
 	info->sctpi_penddata = sctp_tsnmap_pending(&asoc->peer.tsn_map);
 	info->sctpi_instrms = asoc->stream.incnt;
 	info->sctpi_outstrms = asoc->stream.outcnt;
-	list_for_each(pos, &asoc->base.inqueue.in_chunk_list)
+	list_क्रम_each(pos, &asoc->base.inqueue.in_chunk_list)
 		info->sctpi_inqueue++;
-	list_for_each(pos, &asoc->outqueue.out_chunk_list)
+	list_क्रम_each(pos, &asoc->outqueue.out_chunk_list)
 		info->sctpi_outqueue++;
 	info->sctpi_overall_error = asoc->overall_error_count;
 	info->sctpi_max_burst = asoc->max_burst;
-	info->sctpi_maxseg = asoc->frag_point;
+	info->sctpi_maxseg = asoc->frag_poपूर्णांक;
 	info->sctpi_peer_rwnd = asoc->peer.rwnd;
 	info->sctpi_peer_tag = asoc->c.peer_vtag;
 
@@ -5137,7 +5138,7 @@ int sctp_get_sctp_info(struct sock *sk, struct sctp_association *asoc,
 	info->sctpi_peer_capable = mask;
 	mask = asoc->peer.sack_needed << 1;
 	mask = (mask | asoc->peer.sack_generation) << 1;
-	mask = (mask | asoc->peer.zero_window_announced);
+	mask = (mask | asoc->peer.zero_winकरोw_announced);
 	info->sctpi_peer_sack = mask;
 
 	info->sctpi_isacks = asoc->stats.isacks;
@@ -5156,192 +5157,192 @@ int sctp_get_sctp_info(struct sock *sk, struct sctp_association *asoc,
 	info->sctpi_ictrlchunks = asoc->stats.ictrlchunks;
 
 	prim = asoc->peer.primary_path;
-	memcpy(&info->sctpi_p_address, &prim->ipaddr, sizeof(prim->ipaddr));
+	स_नकल(&info->sctpi_p_address, &prim->ipaddr, माप(prim->ipaddr));
 	info->sctpi_p_state = prim->state;
 	info->sctpi_p_cwnd = prim->cwnd;
 	info->sctpi_p_srtt = prim->srtt;
-	info->sctpi_p_rto = jiffies_to_msecs(prim->rto);
-	info->sctpi_p_hbinterval = prim->hbinterval;
+	info->sctpi_p_rto = jअगरfies_to_msecs(prim->rto);
+	info->sctpi_p_hbपूर्णांकerval = prim->hbपूर्णांकerval;
 	info->sctpi_p_pathmaxrxt = prim->pathmaxrxt;
-	info->sctpi_p_sackdelay = jiffies_to_msecs(prim->sackdelay);
+	info->sctpi_p_sackdelay = jअगरfies_to_msecs(prim->sackdelay);
 	info->sctpi_p_ssthresh = prim->ssthresh;
 	info->sctpi_p_partial_bytes_acked = prim->partial_bytes_acked;
 	info->sctpi_p_flight_size = prim->flight_size;
 	info->sctpi_p_error = prim->error_count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sctp_get_sctp_info);
 
-/* use callback to avoid exporting the core structure */
-void sctp_transport_walk_start(struct rhashtable_iter *iter) __acquires(RCU)
-{
+/* use callback to aव्योम exporting the core काष्ठाure */
+व्योम sctp_transport_walk_start(काष्ठा rhashtable_iter *iter) __acquires(RCU)
+अणु
 	rhltable_walk_enter(&sctp_transport_hashtable, iter);
 
 	rhashtable_walk_start(iter);
-}
+पूर्ण
 
-void sctp_transport_walk_stop(struct rhashtable_iter *iter) __releases(RCU)
-{
+व्योम sctp_transport_walk_stop(काष्ठा rhashtable_iter *iter) __releases(RCU)
+अणु
 	rhashtable_walk_stop(iter);
-	rhashtable_walk_exit(iter);
-}
+	rhashtable_walk_निकास(iter);
+पूर्ण
 
-struct sctp_transport *sctp_transport_get_next(struct net *net,
-					       struct rhashtable_iter *iter)
-{
-	struct sctp_transport *t;
+काष्ठा sctp_transport *sctp_transport_get_next(काष्ठा net *net,
+					       काष्ठा rhashtable_iter *iter)
+अणु
+	काष्ठा sctp_transport *t;
 
 	t = rhashtable_walk_next(iter);
-	for (; t; t = rhashtable_walk_next(iter)) {
-		if (IS_ERR(t)) {
-			if (PTR_ERR(t) == -EAGAIN)
-				continue;
-			break;
-		}
+	क्रम (; t; t = rhashtable_walk_next(iter)) अणु
+		अगर (IS_ERR(t)) अणु
+			अगर (PTR_ERR(t) == -EAGAIN)
+				जारी;
+			अवरोध;
+		पूर्ण
 
-		if (!sctp_transport_hold(t))
-			continue;
+		अगर (!sctp_transport_hold(t))
+			जारी;
 
-		if (net_eq(t->asoc->base.net, net) &&
+		अगर (net_eq(t->asoc->base.net, net) &&
 		    t->asoc->peer.primary_path == t)
-			break;
+			अवरोध;
 
 		sctp_transport_put(t);
-	}
+	पूर्ण
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-struct sctp_transport *sctp_transport_get_idx(struct net *net,
-					      struct rhashtable_iter *iter,
-					      int pos)
-{
-	struct sctp_transport *t;
+काष्ठा sctp_transport *sctp_transport_get_idx(काष्ठा net *net,
+					      काष्ठा rhashtable_iter *iter,
+					      पूर्णांक pos)
+अणु
+	काष्ठा sctp_transport *t;
 
-	if (!pos)
-		return SEQ_START_TOKEN;
+	अगर (!pos)
+		वापस SEQ_START_TOKEN;
 
-	while ((t = sctp_transport_get_next(net, iter)) && !IS_ERR(t)) {
-		if (!--pos)
-			break;
+	जबतक ((t = sctp_transport_get_next(net, iter)) && !IS_ERR(t)) अणु
+		अगर (!--pos)
+			अवरोध;
 		sctp_transport_put(t);
-	}
+	पूर्ण
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
-int sctp_for_each_endpoint(int (*cb)(struct sctp_endpoint *, void *),
-			   void *p) {
-	int err = 0;
-	int hash = 0;
-	struct sctp_ep_common *epb;
-	struct sctp_hashbucket *head;
+पूर्णांक sctp_क्रम_each_endpoपूर्णांक(पूर्णांक (*cb)(काष्ठा sctp_endpoपूर्णांक *, व्योम *),
+			   व्योम *p) अणु
+	पूर्णांक err = 0;
+	पूर्णांक hash = 0;
+	काष्ठा sctp_ep_common *epb;
+	काष्ठा sctp_hashbucket *head;
 
-	for (head = sctp_ep_hashtable; hash < sctp_ep_hashsize;
-	     hash++, head++) {
-		read_lock_bh(&head->lock);
-		sctp_for_each_hentry(epb, &head->chain) {
+	क्रम (head = sctp_ep_hashtable; hash < sctp_ep_hashsize;
+	     hash++, head++) अणु
+		पढ़ो_lock_bh(&head->lock);
+		sctp_क्रम_each_hentry(epb, &head->chain) अणु
 			err = cb(sctp_ep(epb), p);
-			if (err)
-				break;
-		}
-		read_unlock_bh(&head->lock);
-	}
+			अगर (err)
+				अवरोध;
+		पूर्ण
+		पढ़ो_unlock_bh(&head->lock);
+	पूर्ण
 
-	return err;
-}
-EXPORT_SYMBOL_GPL(sctp_for_each_endpoint);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(sctp_क्रम_each_endpoपूर्णांक);
 
-int sctp_transport_lookup_process(int (*cb)(struct sctp_transport *, void *),
-				  struct net *net,
-				  const union sctp_addr *laddr,
-				  const union sctp_addr *paddr, void *p)
-{
-	struct sctp_transport *transport;
-	int err;
+पूर्णांक sctp_transport_lookup_process(पूर्णांक (*cb)(काष्ठा sctp_transport *, व्योम *),
+				  काष्ठा net *net,
+				  स्थिर जोड़ sctp_addr *laddr,
+				  स्थिर जोड़ sctp_addr *paddr, व्योम *p)
+अणु
+	काष्ठा sctp_transport *transport;
+	पूर्णांक err;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	transport = sctp_addrs_lookup_transport(net, laddr, paddr);
-	rcu_read_unlock();
-	if (!transport)
-		return -ENOENT;
+	rcu_पढ़ो_unlock();
+	अगर (!transport)
+		वापस -ENOENT;
 
 	err = cb(transport, p);
 	sctp_transport_put(transport);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(sctp_transport_lookup_process);
 
-int sctp_for_each_transport(int (*cb)(struct sctp_transport *, void *),
-			    int (*cb_done)(struct sctp_transport *, void *),
-			    struct net *net, int *pos, void *p) {
-	struct rhashtable_iter hti;
-	struct sctp_transport *tsp;
-	int ret;
+पूर्णांक sctp_क्रम_each_transport(पूर्णांक (*cb)(काष्ठा sctp_transport *, व्योम *),
+			    पूर्णांक (*cb_करोne)(काष्ठा sctp_transport *, व्योम *),
+			    काष्ठा net *net, पूर्णांक *pos, व्योम *p) अणु
+	काष्ठा rhashtable_iter hti;
+	काष्ठा sctp_transport *tsp;
+	पूर्णांक ret;
 
 again:
 	ret = 0;
 	sctp_transport_walk_start(&hti);
 
 	tsp = sctp_transport_get_idx(net, &hti, *pos + 1);
-	for (; !IS_ERR_OR_NULL(tsp); tsp = sctp_transport_get_next(net, &hti)) {
+	क्रम (; !IS_ERR_OR_शून्य(tsp); tsp = sctp_transport_get_next(net, &hti)) अणु
 		ret = cb(tsp, p);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		(*pos)++;
 		sctp_transport_put(tsp);
-	}
+	पूर्ण
 	sctp_transport_walk_stop(&hti);
 
-	if (ret) {
-		if (cb_done && !cb_done(tsp, p)) {
+	अगर (ret) अणु
+		अगर (cb_करोne && !cb_करोne(tsp, p)) अणु
 			(*pos)++;
 			sctp_transport_put(tsp);
-			goto again;
-		}
+			जाओ again;
+		पूर्ण
 		sctp_transport_put(tsp);
-	}
+	पूर्ण
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(sctp_for_each_transport);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(sctp_क्रम_each_transport);
 
 /* 7.2.1 Association Status (SCTP_STATUS)
 
- * Applications can retrieve current status information about an
- * association, including association state, peer receiver window size,
+ * Applications can retrieve current status inक्रमmation about an
+ * association, including association state, peer receiver winकरोw size,
  * number of unacked data chunks, and number of data chunks pending
- * receipt.  This information is read-only.
+ * receipt.  This inक्रमmation is पढ़ो-only.
  */
-static int sctp_getsockopt_sctp_status(struct sock *sk, int len,
-				       char __user *optval,
-				       int __user *optlen)
-{
-	struct sctp_status status;
-	struct sctp_association *asoc = NULL;
-	struct sctp_transport *transport;
+अटल पूर्णांक sctp_माला_लोockopt_sctp_status(काष्ठा sock *sk, पूर्णांक len,
+				       अक्षर __user *optval,
+				       पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_status status;
+	काष्ठा sctp_association *asoc = शून्य;
+	काष्ठा sctp_transport *transport;
 	sctp_assoc_t associd;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
-	if (len < sizeof(status)) {
+	अगर (len < माप(status)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(status);
-	if (copy_from_user(&status, optval, len)) {
+	len = माप(status);
+	अगर (copy_from_user(&status, optval, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	associd = status.sstat_assoc_id;
 	asoc = sctp_id2assoc(sk, associd);
-	if (!asoc) {
+	अगर (!asoc) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	transport = asoc->peer.primary_path;
 
@@ -5353,213 +5354,213 @@ static int sctp_getsockopt_sctp_status(struct sock *sk, int len,
 	status.sstat_penddata = sctp_tsnmap_pending(&asoc->peer.tsn_map);
 	status.sstat_instrms = asoc->stream.incnt;
 	status.sstat_outstrms = asoc->stream.outcnt;
-	status.sstat_fragmentation_point = asoc->frag_point;
+	status.sstat_fragmentation_poपूर्णांक = asoc->frag_poपूर्णांक;
 	status.sstat_primary.spinfo_assoc_id = sctp_assoc2id(transport->asoc);
-	memcpy(&status.sstat_primary.spinfo_address, &transport->ipaddr,
-			transport->af_specific->sockaddr_len);
-	/* Map ipv4 address into v4-mapped-on-v6 address.  */
-	sctp_get_pf_specific(sk->sk_family)->addr_to_user(sctp_sk(sk),
-		(union sctp_addr *)&status.sstat_primary.spinfo_address);
+	स_नकल(&status.sstat_primary.spinfo_address, &transport->ipaddr,
+			transport->af_specअगरic->sockaddr_len);
+	/* Map ipv4 address पूर्णांकo v4-mapped-on-v6 address.  */
+	sctp_get_pf_specअगरic(sk->sk_family)->addr_to_user(sctp_sk(sk),
+		(जोड़ sctp_addr *)&status.sstat_primary.spinfo_address);
 	status.sstat_primary.spinfo_state = transport->state;
 	status.sstat_primary.spinfo_cwnd = transport->cwnd;
 	status.sstat_primary.spinfo_srtt = transport->srtt;
-	status.sstat_primary.spinfo_rto = jiffies_to_msecs(transport->rto);
+	status.sstat_primary.spinfo_rto = jअगरfies_to_msecs(transport->rto);
 	status.sstat_primary.spinfo_mtu = transport->pathmtu;
 
-	if (status.sstat_primary.spinfo_state == SCTP_UNKNOWN)
+	अगर (status.sstat_primary.spinfo_state == SCTP_UNKNOWN)
 		status.sstat_primary.spinfo_state = SCTP_ACTIVE;
 
-	if (put_user(len, optlen)) {
+	अगर (put_user(len, optlen)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_debug("%s: len:%d, state:%d, rwnd:%d, assoc_id:%d\n",
 		 __func__, len, status.sstat_state, status.sstat_rwnd,
 		 status.sstat_assoc_id);
 
-	if (copy_to_user(optval, &status, len)) {
+	अगर (copy_to_user(optval, &status, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
-/* 7.2.2 Peer Address Information (SCTP_GET_PEER_ADDR_INFO)
+/* 7.2.2 Peer Address Inक्रमmation (SCTP_GET_PEER_ADDR_INFO)
  *
- * Applications can retrieve information about a specific peer address
+ * Applications can retrieve inक्रमmation about a specअगरic peer address
  * of an association, including its reachability state, congestion
- * window, and retransmission timer values.  This information is
- * read-only.
+ * winकरोw, and retransmission समयr values.  This inक्रमmation is
+ * पढ़ो-only.
  */
-static int sctp_getsockopt_peer_addr_info(struct sock *sk, int len,
-					  char __user *optval,
-					  int __user *optlen)
-{
-	struct sctp_paddrinfo pinfo;
-	struct sctp_transport *transport;
-	int retval = 0;
+अटल पूर्णांक sctp_माला_लोockopt_peer_addr_info(काष्ठा sock *sk, पूर्णांक len,
+					  अक्षर __user *optval,
+					  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_paddrinfo pinfo;
+	काष्ठा sctp_transport *transport;
+	पूर्णांक retval = 0;
 
-	if (len < sizeof(pinfo)) {
+	अगर (len < माप(pinfo)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(pinfo);
-	if (copy_from_user(&pinfo, optval, len)) {
+	len = माप(pinfo);
+	अगर (copy_from_user(&pinfo, optval, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	transport = sctp_addr_id2transport(sk, &pinfo.spinfo_address,
 					   pinfo.spinfo_assoc_id);
-	if (!transport) {
+	अगर (!transport) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (transport->state == SCTP_PF &&
-	    transport->asoc->pf_expose == SCTP_PF_EXPOSE_DISABLE) {
+	अगर (transport->state == SCTP_PF &&
+	    transport->asoc->pf_expose == SCTP_PF_EXPOSE_DISABLE) अणु
 		retval = -EACCES;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pinfo.spinfo_assoc_id = sctp_assoc2id(transport->asoc);
 	pinfo.spinfo_state = transport->state;
 	pinfo.spinfo_cwnd = transport->cwnd;
 	pinfo.spinfo_srtt = transport->srtt;
-	pinfo.spinfo_rto = jiffies_to_msecs(transport->rto);
+	pinfo.spinfo_rto = jअगरfies_to_msecs(transport->rto);
 	pinfo.spinfo_mtu = transport->pathmtu;
 
-	if (pinfo.spinfo_state == SCTP_UNKNOWN)
+	अगर (pinfo.spinfo_state == SCTP_UNKNOWN)
 		pinfo.spinfo_state = SCTP_ACTIVE;
 
-	if (put_user(len, optlen)) {
+	अगर (put_user(len, optlen)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_to_user(optval, &pinfo, len)) {
+	अगर (copy_to_user(optval, &pinfo, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* 7.1.12 Enable/Disable message fragmentation (SCTP_DISABLE_FRAGMENTS)
  *
  * This option is a on/off flag.  If enabled no SCTP message
- * fragmentation will be performed.  Instead if a message being sent
+ * fragmentation will be perक्रमmed.  Instead अगर a message being sent
  * exceeds the current PMTU size, the message will NOT be sent and
  * instead a error will be indicated to the user.
  */
-static int sctp_getsockopt_disable_fragments(struct sock *sk, int len,
-					char __user *optval, int __user *optlen)
-{
-	int val;
+अटल पूर्णांक sctp_माला_लोockopt_disable_fragments(काष्ठा sock *sk, पूर्णांक len,
+					अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
+	len = माप(पूर्णांक);
 	val = (sctp_sk(sk)->disable_fragments == 1);
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-/* 7.1.15 Set notification and ancillary events (SCTP_EVENTS)
+/* 7.1.15 Set notअगरication and ancillary events (SCTP_EVENTS)
  *
- * This socket option is used to specify various notifications and
+ * This socket option is used to specअगरy various notअगरications and
  * ancillary data the user wishes to receive.
  */
-static int sctp_getsockopt_events(struct sock *sk, int len, char __user *optval,
-				  int __user *optlen)
-{
-	struct sctp_event_subscribe subscribe;
+अटल पूर्णांक sctp_माला_लोockopt_events(काष्ठा sock *sk, पूर्णांक len, अक्षर __user *optval,
+				  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_event_subscribe subscribe;
 	__u8 *sn_type = (__u8 *)&subscribe;
-	int i;
+	पूर्णांक i;
 
-	if (len == 0)
-		return -EINVAL;
-	if (len > sizeof(struct sctp_event_subscribe))
-		len = sizeof(struct sctp_event_subscribe);
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (len == 0)
+		वापस -EINVAL;
+	अगर (len > माप(काष्ठा sctp_event_subscribe))
+		len = माप(काष्ठा sctp_event_subscribe);
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		sn_type[i] = sctp_ulpevent_type_enabled(sctp_sk(sk)->subscribe,
 							SCTP_SN_TYPE_BASE + i);
 
-	if (copy_to_user(optval, &subscribe, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &subscribe, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 7.1.8 Automatic Close of associations (SCTP_AUTOCLOSE)
  *
  * This socket option is applicable to the UDP-style socket only.  When
- * set it will cause associations that are idle for more than the
- * specified number of seconds to automatically close.  An association
+ * set it will cause associations that are idle क्रम more than the
+ * specअगरied number of seconds to स्वतःmatically बंद.  An association
  * being idle is defined an association that has NOT sent or received
- * user data.  The special value of '0' indicates that no automatic
- * close of any associations should be performed.  The option expects an
- * integer defining the number of seconds of idle time before an
- * association is closed.
+ * user data.  The special value of '0' indicates that no स्वतःmatic
+ * बंद of any associations should be perक्रमmed.  The option expects an
+ * पूर्णांकeger defining the number of seconds of idle समय beक्रमe an
+ * association is बंदd.
  */
-static int sctp_getsockopt_autoclose(struct sock *sk, int len, char __user *optval, int __user *optlen)
-{
+अटल पूर्णांक sctp_माला_लोockopt_स्वतःबंद(काष्ठा sock *sk, पूर्णांक len, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
 	/* Applicable to UDP-style socket only */
-	if (sctp_style(sk, TCP))
-		return -EOPNOTSUPP;
-	if (len < sizeof(int))
-		return -EINVAL;
-	len = sizeof(int);
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (put_user(sctp_sk(sk)->autoclose, (int __user *)optval))
-		return -EFAULT;
-	return 0;
-}
+	अगर (sctp_style(sk, TCP))
+		वापस -EOPNOTSUPP;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
+	len = माप(पूर्णांक);
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (put_user(sctp_sk(sk)->स्वतःबंद, (पूर्णांक __user *)optval))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /* Helper routine to branch off an association to a new socket.  */
-int sctp_do_peeloff(struct sock *sk, sctp_assoc_t id, struct socket **sockp)
-{
-	struct sctp_association *asoc = sctp_id2assoc(sk, id);
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct socket *sock;
-	int err = 0;
+पूर्णांक sctp_करो_peeloff(काष्ठा sock *sk, sctp_assoc_t id, काष्ठा socket **sockp)
+अणु
+	काष्ठा sctp_association *asoc = sctp_id2assoc(sk, id);
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा socket *sock;
+	पूर्णांक err = 0;
 
 	/* Do not peel off from one netns to another one. */
-	if (!net_eq(current->nsproxy->net_ns, sock_net(sk)))
-		return -EINVAL;
+	अगर (!net_eq(current->nsproxy->net_ns, sock_net(sk)))
+		वापस -EINVAL;
 
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	/* An association cannot be branched off from an already peeled-off
-	 * socket, nor is this supported for tcp style sockets.
+	/* An association cannot be branched off from an alपढ़ोy peeled-off
+	 * socket, nor is this supported क्रम tcp style sockets.
 	 */
-	if (!sctp_style(sk, UDP))
-		return -EINVAL;
+	अगर (!sctp_style(sk, UDP))
+		वापस -EINVAL;
 
 	/* Create a new socket.  */
 	err = sock_create(sk->sk_family, SOCK_SEQPACKET, IPPROTO_SCTP, &sock);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	sctp_copy_sock(sock->sk, sk, asoc);
 
 	/* Make peeled-off sockets more like 1-1 accepted sockets.
-	 * Set the daddr and initialize id to something more random and also
+	 * Set the daddr and initialize id to something more अक्रमom and also
 	 * copy over any ip options.
 	 */
 	sp->pf->to_sk_daddr(&asoc->peer.primary_addr, sk);
@@ -5570,210 +5571,210 @@ int sctp_do_peeloff(struct sock *sk, sctp_assoc_t id, struct socket **sockp)
 	 */
 	err = sctp_sock_migrate(sk, sock->sk, asoc,
 				SCTP_SOCKET_UDP_HIGH_BANDWIDTH);
-	if (err) {
+	अगर (err) अणु
 		sock_release(sock);
-		sock = NULL;
-	}
+		sock = शून्य;
+	पूर्ण
 
 	*sockp = sock;
 
-	return err;
-}
-EXPORT_SYMBOL(sctp_do_peeloff);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(sctp_करो_peeloff);
 
-static int sctp_getsockopt_peeloff_common(struct sock *sk, sctp_peeloff_arg_t *peeloff,
-					  struct file **newfile, unsigned flags)
-{
-	struct socket *newsock;
-	int retval;
+अटल पूर्णांक sctp_माला_लोockopt_peeloff_common(काष्ठा sock *sk, sctp_peeloff_arg_t *peeloff,
+					  काष्ठा file **newfile, अचिन्हित flags)
+अणु
+	काष्ठा socket *newsock;
+	पूर्णांक retval;
 
-	retval = sctp_do_peeloff(sk, peeloff->associd, &newsock);
-	if (retval < 0)
-		goto out;
+	retval = sctp_करो_peeloff(sk, peeloff->associd, &newsock);
+	अगर (retval < 0)
+		जाओ out;
 
-	/* Map the socket to an unused fd that can be returned to the user.  */
+	/* Map the socket to an unused fd that can be वापसed to the user.  */
 	retval = get_unused_fd_flags(flags & SOCK_CLOEXEC);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		sock_release(newsock);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	*newfile = sock_alloc_file(newsock, 0, NULL);
-	if (IS_ERR(*newfile)) {
+	*newfile = sock_alloc_file(newsock, 0, शून्य);
+	अगर (IS_ERR(*newfile)) अणु
 		put_unused_fd(retval);
 		retval = PTR_ERR(*newfile);
-		*newfile = NULL;
-		return retval;
-	}
+		*newfile = शून्य;
+		वापस retval;
+	पूर्ण
 
 	pr_debug("%s: sk:%p, newsk:%p, sd:%d\n", __func__, sk, newsock->sk,
 		 retval);
 
 	peeloff->sd = retval;
 
-	if (flags & SOCK_NONBLOCK)
+	अगर (flags & SOCK_NONBLOCK)
 		(*newfile)->f_flags |= O_NONBLOCK;
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_peeloff(struct sock *sk, int len, char __user *optval, int __user *optlen)
-{
+अटल पूर्णांक sctp_माला_लोockopt_peeloff(काष्ठा sock *sk, पूर्णांक len, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
 	sctp_peeloff_arg_t peeloff;
-	struct file *newfile = NULL;
-	int retval = 0;
+	काष्ठा file *newfile = शून्य;
+	पूर्णांक retval = 0;
 
-	if (len < sizeof(sctp_peeloff_arg_t))
-		return -EINVAL;
-	len = sizeof(sctp_peeloff_arg_t);
-	if (copy_from_user(&peeloff, optval, len))
-		return -EFAULT;
+	अगर (len < माप(sctp_peeloff_arg_t))
+		वापस -EINVAL;
+	len = माप(sctp_peeloff_arg_t);
+	अगर (copy_from_user(&peeloff, optval, len))
+		वापस -EFAULT;
 
-	retval = sctp_getsockopt_peeloff_common(sk, &peeloff, &newfile, 0);
-	if (retval < 0)
-		goto out;
+	retval = sctp_माला_लोockopt_peeloff_common(sk, &peeloff, &newfile, 0);
+	अगर (retval < 0)
+		जाओ out;
 
 	/* Return the fd mapped to the new socket.  */
-	if (put_user(len, optlen)) {
+	अगर (put_user(len, optlen)) अणु
 		fput(newfile);
 		put_unused_fd(retval);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (copy_to_user(optval, &peeloff, len)) {
+	अगर (copy_to_user(optval, &peeloff, len)) अणु
 		fput(newfile);
 		put_unused_fd(retval);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 	fd_install(retval, newfile);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_peeloff_flags(struct sock *sk, int len,
-					 char __user *optval, int __user *optlen)
-{
+अटल पूर्णांक sctp_माला_लोockopt_peeloff_flags(काष्ठा sock *sk, पूर्णांक len,
+					 अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
 	sctp_peeloff_flags_arg_t peeloff;
-	struct file *newfile = NULL;
-	int retval = 0;
+	काष्ठा file *newfile = शून्य;
+	पूर्णांक retval = 0;
 
-	if (len < sizeof(sctp_peeloff_flags_arg_t))
-		return -EINVAL;
-	len = sizeof(sctp_peeloff_flags_arg_t);
-	if (copy_from_user(&peeloff, optval, len))
-		return -EFAULT;
+	अगर (len < माप(sctp_peeloff_flags_arg_t))
+		वापस -EINVAL;
+	len = माप(sctp_peeloff_flags_arg_t);
+	अगर (copy_from_user(&peeloff, optval, len))
+		वापस -EFAULT;
 
-	retval = sctp_getsockopt_peeloff_common(sk, &peeloff.p_arg,
+	retval = sctp_माला_लोockopt_peeloff_common(sk, &peeloff.p_arg,
 						&newfile, peeloff.flags);
-	if (retval < 0)
-		goto out;
+	अगर (retval < 0)
+		जाओ out;
 
 	/* Return the fd mapped to the new socket.  */
-	if (put_user(len, optlen)) {
+	अगर (put_user(len, optlen)) अणु
 		fput(newfile);
 		put_unused_fd(retval);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	if (copy_to_user(optval, &peeloff, len)) {
+	अगर (copy_to_user(optval, &peeloff, len)) अणु
 		fput(newfile);
 		put_unused_fd(retval);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 	fd_install(retval, newfile);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* 7.1.13 Peer Address Parameters (SCTP_PEER_ADDR_PARAMS)
  *
- * Applications can enable or disable heartbeats for any peer address of
- * an association, modify an address's heartbeat interval, force a
+ * Applications can enable or disable heartbeats क्रम any peer address of
+ * an association, modअगरy an address's heartbeat पूर्णांकerval, क्रमce a
  * heartbeat to be sent immediately, and adjust the address's maximum
- * number of retransmissions sent before an address is considered
- * unreachable.  The following structure is used to access and modify an
+ * number of retransmissions sent beक्रमe an address is considered
+ * unreachable.  The following काष्ठाure is used to access and modअगरy an
  * address's parameters:
  *
- *  struct sctp_paddrparams {
+ *  काष्ठा sctp_paddrparams अणु
  *     sctp_assoc_t            spp_assoc_id;
- *     struct sockaddr_storage spp_address;
- *     uint32_t                spp_hbinterval;
- *     uint16_t                spp_pathmaxrxt;
- *     uint32_t                spp_pathmtu;
- *     uint32_t                spp_sackdelay;
- *     uint32_t                spp_flags;
- * };
+ *     काष्ठा sockaddr_storage spp_address;
+ *     uपूर्णांक32_t                spp_hbपूर्णांकerval;
+ *     uपूर्णांक16_t                spp_pathmaxrxt;
+ *     uपूर्णांक32_t                spp_pathmtu;
+ *     uपूर्णांक32_t                spp_sackdelay;
+ *     uपूर्णांक32_t                spp_flags;
+ * पूर्ण;
  *
  *   spp_assoc_id    - (one-to-many style socket) This is filled in the
- *                     application, and identifies the association for
+ *                     application, and identअगरies the association क्रम
  *                     this query.
- *   spp_address     - This specifies which address is of interest.
- *   spp_hbinterval  - This contains the value of the heartbeat interval,
+ *   spp_address     - This specअगरies which address is of पूर्णांकerest.
+ *   spp_hbपूर्णांकerval  - This contains the value of the heartbeat पूर्णांकerval,
  *                     in milliseconds.  If a  value of zero
  *                     is present in this field then no changes are to
  *                     be made to this parameter.
  *   spp_pathmaxrxt  - This contains the maximum number of
- *                     retransmissions before this address shall be
+ *                     retransmissions beक्रमe this address shall be
  *                     considered unreachable. If a  value of zero
  *                     is present in this field then no changes are to
  *                     be made to this parameter.
  *   spp_pathmtu     - When Path MTU discovery is disabled the value
- *                     specified here will be the "fixed" path mtu.
- *                     Note that if the spp_address field is empty
+ *                     specअगरied here will be the "fixed" path mtu.
+ *                     Note that अगर the spp_address field is empty
  *                     then all associations on this address will
  *                     have this fixed path mtu set upon them.
  *
- *   spp_sackdelay   - When delayed sack is enabled, this value specifies
+ *   spp_sackdelay   - When delayed sack is enabled, this value specअगरies
  *                     the number of milliseconds that sacks will be delayed
- *                     for. This value will apply to all addresses of an
- *                     association if the spp_address field is empty. Note
- *                     also, that if delayed sack is enabled and this
+ *                     क्रम. This value will apply to all addresses of an
+ *                     association अगर the spp_address field is empty. Note
+ *                     also, that अगर delayed sack is enabled and this
  *                     value is set to 0, no change is made to the last
- *                     recorded delayed sack timer value.
+ *                     recorded delayed sack समयr value.
  *
  *   spp_flags       - These flags are used to control various features
  *                     on an association. The flag field may contain
  *                     zero or more of the following options.
  *
  *                     SPP_HB_ENABLE  - Enable heartbeats on the
- *                     specified address. Note that if the address
- *                     field is empty all addresses for the association
+ *                     specअगरied address. Note that अगर the address
+ *                     field is empty all addresses क्रम the association
  *                     have heartbeats enabled upon them.
  *
  *                     SPP_HB_DISABLE - Disable heartbeats on the
- *                     speicifed address. Note that if the address
- *                     field is empty all addresses for the association
+ *                     speicअगरed address. Note that अगर the address
+ *                     field is empty all addresses क्रम the association
  *                     will have their heartbeats disabled. Note also
  *                     that SPP_HB_ENABLE and SPP_HB_DISABLE are
  *                     mutually exclusive, only one of these two should
- *                     be specified. Enabling both fields will have
+ *                     be specअगरied. Enabling both fields will have
  *                     undetermined results.
  *
  *                     SPP_HB_DEMAND - Request a user initiated heartbeat
  *                     to be made immediately.
  *
  *                     SPP_PMTUD_ENABLE - This field will enable PMTU
- *                     discovery upon the specified address. Note that
- *                     if the address feild is empty then all addresses
+ *                     discovery upon the specअगरied address. Note that
+ *                     अगर the address feild is empty then all addresses
  *                     on the association are effected.
  *
  *                     SPP_PMTUD_DISABLE - This field will disable PMTU
- *                     discovery upon the specified address. Note that
- *                     if the address feild is empty then all addresses
+ *                     discovery upon the specअगरied address. Note that
+ *                     अगर the address feild is empty then all addresses
  *                     on the association are effected. Not also that
  *                     SPP_PMTUD_ENABLE and SPP_PMTUD_DISABLE are mutually
  *                     exclusive. Enabling both will have undetermined
  *                     results.
  *
  *                     SPP_SACKDELAY_ENABLE - Setting this flag turns
- *                     on delayed sack. The time specified in spp_sackdelay
- *                     is used to specify the sack delay for this address. Note
- *                     that if spp_address is empty then all addresses will
+ *                     on delayed sack. The समय specअगरied in spp_sackdelay
+ *                     is used to specअगरy the sack delay क्रम this address. Note
+ *                     that अगर spp_address is empty then all addresses will
  *                     enable delayed sack and take on the sack delay
- *                     value specified in spp_sackdelay.
+ *                     value specअगरied in spp_sackdelay.
  *                     SPP_SACKDELAY_DISABLE - Setting this flag turns
  *                     off delayed sack. If the spp_address field is blank then
- *                     delayed sack is disabled for the entire association. Note
+ *                     delayed sack is disabled क्रम the entire association. Note
  *                     also that this field is mutually exclusive to
  *                     SPP_SACKDELAY_ENABLE, setting both will have undefined
  *                     results.
@@ -5782,642 +5783,642 @@ out:
  *                     setting of the IPV6 flow label value.  The value is
  *                     contained in the spp_ipv6_flowlabel field.
  *                     Upon retrieval, this flag will be set to indicate that
- *                     the spp_ipv6_flowlabel field has a valid value returned.
- *                     If a specific destination address is set (in the
- *                     spp_address field), then the value returned is that of
- *                     the address.  If just an association is specified (and
- *                     no address), then the association's default flow label
- *                     is returned.  If neither an association nor a destination
- *                     is specified, then the socket's default flow label is
- *                     returned.  For non-IPv6 sockets, this flag will be left
+ *                     the spp_ipv6_flowlabel field has a valid value वापसed.
+ *                     If a specअगरic destination address is set (in the
+ *                     spp_address field), then the value वापसed is that of
+ *                     the address.  If just an association is specअगरied (and
+ *                     no address), then the association's शेष flow label
+ *                     is वापसed.  If neither an association nor a destination
+ *                     is specअगरied, then the socket's शेष flow label is
+ *                     वापसed.  For non-IPv6 sockets, this flag will be left
  *                     cleared.
  *
  *                     SPP_DSCP:  Setting this flag enables the setting of the
- *                     Differentiated Services Code Point (DSCP) value
- *                     associated with either the association or a specific
+ *                     Dअगरferentiated Services Code Poपूर्णांक (DSCP) value
+ *                     associated with either the association or a specअगरic
  *                     address.  The value is obtained in the spp_dscp field.
  *                     Upon retrieval, this flag will be set to indicate that
- *                     the spp_dscp field has a valid value returned.  If a
- *                     specific destination address is set when called (in the
- *                     spp_address field), then that specific destination
- *                     address's DSCP value is returned.  If just an association
- *                     is specified, then the association's default DSCP is
- *                     returned.  If neither an association nor a destination is
- *                     specified, then the socket's default DSCP is returned.
+ *                     the spp_dscp field has a valid value वापसed.  If a
+ *                     specअगरic destination address is set when called (in the
+ *                     spp_address field), then that specअगरic destination
+ *                     address's DSCP value is वापसed.  If just an association
+ *                     is specअगरied, then the association's शेष DSCP is
+ *                     वापसed.  If neither an association nor a destination is
+ *                     specअगरied, then the socket's शेष DSCP is वापसed.
  *
  *   spp_ipv6_flowlabel
  *                   - This field is used in conjunction with the
  *                     SPP_IPV6_FLOWLABEL flag and contains the IPv6 flow label.
- *                     The 20 least significant bits are used for the flow
+ *                     The 20 least signअगरicant bits are used क्रम the flow
  *                     label.  This setting has precedence over any IPv6-layer
  *                     setting.
  *
  *   spp_dscp        - This field is used in conjunction with the SPP_DSCP flag
- *                     and contains the DSCP.  The 6 most significant bits are
- *                     used for the DSCP.  This setting has precedence over any
+ *                     and contains the DSCP.  The 6 most signअगरicant bits are
+ *                     used क्रम the DSCP.  This setting has precedence over any
  *                     IPv4- or IPv6- layer setting.
  */
-static int sctp_getsockopt_peer_addr_params(struct sock *sk, int len,
-					    char __user *optval, int __user *optlen)
-{
-	struct sctp_paddrparams  params;
-	struct sctp_transport   *trans = NULL;
-	struct sctp_association *asoc = NULL;
-	struct sctp_sock        *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_माला_लोockopt_peer_addr_params(काष्ठा sock *sk, पूर्णांक len,
+					    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_paddrparams  params;
+	काष्ठा sctp_transport   *trans = शून्य;
+	काष्ठा sctp_association *asoc = शून्य;
+	काष्ठा sctp_sock        *sp = sctp_sk(sk);
 
-	if (len >= sizeof(params))
-		len = sizeof(params);
-	else if (len >= ALIGN(offsetof(struct sctp_paddrparams,
+	अगर (len >= माप(params))
+		len = माप(params);
+	अन्यथा अगर (len >= ALIGN(दुरत्व(काष्ठा sctp_paddrparams,
 				       spp_ipv6_flowlabel), 4))
-		len = ALIGN(offsetof(struct sctp_paddrparams,
+		len = ALIGN(दुरत्व(काष्ठा sctp_paddrparams,
 				     spp_ipv6_flowlabel), 4);
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	if (copy_from_user(&params, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&params, optval, len))
+		वापस -EFAULT;
 
-	/* If an address other than INADDR_ANY is specified, and
+	/* If an address other than INADDR_ANY is specअगरied, and
 	 * no transport is found, then the request is invalid.
 	 */
-	if (!sctp_is_any(sk, (union sctp_addr *)&params.spp_address)) {
+	अगर (!sctp_is_any(sk, (जोड़ sctp_addr *)&params.spp_address)) अणु
 		trans = sctp_addr_id2transport(sk, &params.spp_address,
 					       params.spp_assoc_id);
-		if (!trans) {
+		अगर (!trans) अणु
 			pr_debug("%s: failed no transport\n", __func__);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	/* Get association, if assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, params.spp_assoc_id);
-	if (!asoc && params.spp_assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.spp_assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		pr_debug("%s: failed no association\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (trans) {
+	अगर (trans) अणु
 		/* Fetch transport values. */
-		params.spp_hbinterval = jiffies_to_msecs(trans->hbinterval);
+		params.spp_hbपूर्णांकerval = jअगरfies_to_msecs(trans->hbपूर्णांकerval);
 		params.spp_pathmtu    = trans->pathmtu;
 		params.spp_pathmaxrxt = trans->pathmaxrxt;
-		params.spp_sackdelay  = jiffies_to_msecs(trans->sackdelay);
+		params.spp_sackdelay  = jअगरfies_to_msecs(trans->sackdelay);
 
-		/*draft-11 doesn't say what to return in spp_flags*/
+		/*draft-11 करोesn't say what to वापस in spp_flags*/
 		params.spp_flags      = trans->param_flags;
-		if (trans->flowlabel & SCTP_FLOWLABEL_SET_MASK) {
+		अगर (trans->flowlabel & SCTP_FLOWLABEL_SET_MASK) अणु
 			params.spp_ipv6_flowlabel = trans->flowlabel &
 						    SCTP_FLOWLABEL_VAL_MASK;
 			params.spp_flags |= SPP_IPV6_FLOWLABEL;
-		}
-		if (trans->dscp & SCTP_DSCP_SET_MASK) {
+		पूर्ण
+		अगर (trans->dscp & SCTP_DSCP_SET_MASK) अणु
 			params.spp_dscp	= trans->dscp & SCTP_DSCP_VAL_MASK;
 			params.spp_flags |= SPP_DSCP;
-		}
-	} else if (asoc) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (asoc) अणु
 		/* Fetch association values. */
-		params.spp_hbinterval = jiffies_to_msecs(asoc->hbinterval);
+		params.spp_hbपूर्णांकerval = jअगरfies_to_msecs(asoc->hbपूर्णांकerval);
 		params.spp_pathmtu    = asoc->pathmtu;
 		params.spp_pathmaxrxt = asoc->pathmaxrxt;
-		params.spp_sackdelay  = jiffies_to_msecs(asoc->sackdelay);
+		params.spp_sackdelay  = jअगरfies_to_msecs(asoc->sackdelay);
 
-		/*draft-11 doesn't say what to return in spp_flags*/
+		/*draft-11 करोesn't say what to वापस in spp_flags*/
 		params.spp_flags      = asoc->param_flags;
-		if (asoc->flowlabel & SCTP_FLOWLABEL_SET_MASK) {
+		अगर (asoc->flowlabel & SCTP_FLOWLABEL_SET_MASK) अणु
 			params.spp_ipv6_flowlabel = asoc->flowlabel &
 						    SCTP_FLOWLABEL_VAL_MASK;
 			params.spp_flags |= SPP_IPV6_FLOWLABEL;
-		}
-		if (asoc->dscp & SCTP_DSCP_SET_MASK) {
+		पूर्ण
+		अगर (asoc->dscp & SCTP_DSCP_SET_MASK) अणु
 			params.spp_dscp	= asoc->dscp & SCTP_DSCP_VAL_MASK;
 			params.spp_flags |= SPP_DSCP;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Fetch socket values. */
-		params.spp_hbinterval = sp->hbinterval;
+		params.spp_hbपूर्णांकerval = sp->hbपूर्णांकerval;
 		params.spp_pathmtu    = sp->pathmtu;
 		params.spp_sackdelay  = sp->sackdelay;
 		params.spp_pathmaxrxt = sp->pathmaxrxt;
 
-		/*draft-11 doesn't say what to return in spp_flags*/
+		/*draft-11 करोesn't say what to वापस in spp_flags*/
 		params.spp_flags      = sp->param_flags;
-		if (sp->flowlabel & SCTP_FLOWLABEL_SET_MASK) {
+		अगर (sp->flowlabel & SCTP_FLOWLABEL_SET_MASK) अणु
 			params.spp_ipv6_flowlabel = sp->flowlabel &
 						    SCTP_FLOWLABEL_VAL_MASK;
 			params.spp_flags |= SPP_IPV6_FLOWLABEL;
-		}
-		if (sp->dscp & SCTP_DSCP_SET_MASK) {
+		पूर्ण
+		अगर (sp->dscp & SCTP_DSCP_SET_MASK) अणु
 			params.spp_dscp	= sp->dscp & SCTP_DSCP_VAL_MASK;
 			params.spp_flags |= SPP_DSCP;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (copy_to_user(optval, &params, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &params, len))
+		वापस -EFAULT;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.23.  Get or set delayed ack timer (SCTP_DELAYED_SACK)
+ * 7.1.23.  Get or set delayed ack समयr (SCTP_DELAYED_SACK)
  *
- * This option will effect the way delayed acks are performed.  This
- * option allows you to get or set the delayed ack time, in
+ * This option will effect the way delayed acks are perक्रमmed.  This
+ * option allows you to get or set the delayed ack समय, in
  * milliseconds.  It also allows changing the delayed ack frequency.
  * Changing the frequency to 1 disables the delayed sack algorithm.  If
- * the assoc_id is 0, then this sets or gets the endpoints default
+ * the assoc_id is 0, then this sets or माला_लो the endpoपूर्णांकs शेष
  * values.  If the assoc_id field is non-zero, then the set or get
- * effects the specified association for the one to many model (the
- * assoc_id field is ignored by the one to one model).  Note that if
+ * effects the specअगरied association क्रम the one to many model (the
+ * assoc_id field is ignored by the one to one model).  Note that अगर
  * sack_delay or sack_freq are 0 when setting this option, then the
- * current values will remain unchanged.
+ * current values will reमुख्य unchanged.
  *
- * struct sctp_sack_info {
+ * काष्ठा sctp_sack_info अणु
  *     sctp_assoc_t            sack_assoc_id;
- *     uint32_t                sack_delay;
- *     uint32_t                sack_freq;
- * };
+ *     uपूर्णांक32_t                sack_delay;
+ *     uपूर्णांक32_t                sack_freq;
+ * पूर्ण;
  *
  * sack_assoc_id -  This parameter, indicates which association the user
- *    is performing an action upon.  Note that if this field's value is
- *    zero then the endpoints default value is changed (effecting future
+ *    is perक्रमming an action upon.  Note that अगर this field's value is
+ *    zero then the endpoपूर्णांकs शेष value is changed (effecting future
  *    associations only).
  *
  * sack_delay -  This parameter contains the number of milliseconds that
- *    the user is requesting the delayed ACK timer be set to.  Note that
+ *    the user is requesting the delayed ACK समयr be set to.  Note that
  *    this value is defined in the standard to be between 200 and 500
  *    milliseconds.
  *
  * sack_freq -  This parameter contains the number of packets that must
- *    be received before a sack is sent without waiting for the delay
- *    timer to expire.  The default value for this is 2, setting this
+ *    be received beक्रमe a sack is sent without रुकोing क्रम the delay
+ *    समयr to expire.  The शेष value क्रम this is 2, setting this
  *    value to 1 will disable the delayed sack algorithm.
  */
-static int sctp_getsockopt_delayed_ack(struct sock *sk, int len,
-					    char __user *optval,
-					    int __user *optlen)
-{
-	struct sctp_sack_info    params;
-	struct sctp_association *asoc = NULL;
-	struct sctp_sock        *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_माला_लोockopt_delayed_ack(काष्ठा sock *sk, पूर्णांक len,
+					    अक्षर __user *optval,
+					    पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_sack_info    params;
+	काष्ठा sctp_association *asoc = शून्य;
+	काष्ठा sctp_sock        *sp = sctp_sk(sk);
 
-	if (len >= sizeof(struct sctp_sack_info)) {
-		len = sizeof(struct sctp_sack_info);
+	अगर (len >= माप(काष्ठा sctp_sack_info)) अणु
+		len = माप(काष्ठा sctp_sack_info);
 
-		if (copy_from_user(&params, optval, len))
-			return -EFAULT;
-	} else if (len == sizeof(struct sctp_assoc_value)) {
+		अगर (copy_from_user(&params, optval, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अगर (len == माप(काष्ठा sctp_assoc_value)) अणु
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
 				    "Use of struct sctp_assoc_value in delayed_ack socket option.\n"
 				    "Use struct sctp_sack_info instead\n",
 				    current->comm, task_pid_nr(current));
-		if (copy_from_user(&params, optval, len))
-			return -EFAULT;
-	} else
-		return -EINVAL;
+		अगर (copy_from_user(&params, optval, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
-	/* Get association, if sack_assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर sack_assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, params.sack_assoc_id);
-	if (!asoc && params.sack_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params.sack_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		/* Fetch association values. */
-		if (asoc->param_flags & SPP_SACKDELAY_ENABLE) {
-			params.sack_delay = jiffies_to_msecs(asoc->sackdelay);
+		अगर (asoc->param_flags & SPP_SACKDELAY_ENABLE) अणु
+			params.sack_delay = jअगरfies_to_msecs(asoc->sackdelay);
 			params.sack_freq = asoc->sackfreq;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			params.sack_delay = 0;
 			params.sack_freq = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Fetch socket values. */
-		if (sp->param_flags & SPP_SACKDELAY_ENABLE) {
+		अगर (sp->param_flags & SPP_SACKDELAY_ENABLE) अणु
 			params.sack_delay  = sp->sackdelay;
 			params.sack_freq = sp->sackfreq;
-		} else {
+		पूर्ण अन्यथा अणु
 			params.sack_delay  = 0;
 			params.sack_freq = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (copy_to_user(optval, &params, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &params, len))
+		वापस -EFAULT;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 7.1.3 Initialization Parameters (SCTP_INITMSG)
  *
- * Applications can specify protocol parameters for the default association
- * initialization.  The option name argument to setsockopt() and getsockopt()
+ * Applications can specअगरy protocol parameters क्रम the शेष association
+ * initialization.  The option name argument to setsockopt() and माला_लोockopt()
  * is SCTP_INITMSG.
  *
  * Setting initialization parameters is effective only on an unconnected
- * socket (for UDP-style sockets only future associations are effected
+ * socket (क्रम UDP-style sockets only future associations are effected
  * by the change).  With TCP-style sockets, this option is inherited by
  * sockets derived from a listener socket.
  */
-static int sctp_getsockopt_initmsg(struct sock *sk, int len, char __user *optval, int __user *optlen)
-{
-	if (len < sizeof(struct sctp_initmsg))
-		return -EINVAL;
-	len = sizeof(struct sctp_initmsg);
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &sctp_sk(sk)->initmsg, len))
-		return -EFAULT;
-	return 0;
-}
+अटल पूर्णांक sctp_माला_लोockopt_iniपंचांगsg(काष्ठा sock *sk, पूर्णांक len, अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	अगर (len < माप(काष्ठा sctp_iniपंचांगsg))
+		वापस -EINVAL;
+	len = माप(काष्ठा sctp_iniपंचांगsg);
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &sctp_sk(sk)->iniपंचांगsg, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 
-static int sctp_getsockopt_peer_addrs(struct sock *sk, int len,
-				      char __user *optval, int __user *optlen)
-{
-	struct sctp_association *asoc;
-	int cnt = 0;
-	struct sctp_getaddrs getaddrs;
-	struct sctp_transport *from;
-	void __user *to;
-	union sctp_addr temp;
-	struct sctp_sock *sp = sctp_sk(sk);
-	int addrlen;
-	size_t space_left;
-	int bytes_copied;
+अटल पूर्णांक sctp_माला_लोockopt_peer_addrs(काष्ठा sock *sk, पूर्णांक len,
+				      अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	पूर्णांक cnt = 0;
+	काष्ठा sctp_getaddrs getaddrs;
+	काष्ठा sctp_transport *from;
+	व्योम __user *to;
+	जोड़ sctp_addr temp;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	पूर्णांक addrlen;
+	माप_प्रकार space_left;
+	पूर्णांक bytes_copied;
 
-	if (len < sizeof(struct sctp_getaddrs))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_getaddrs))
+		वापस -EINVAL;
 
-	if (copy_from_user(&getaddrs, optval, sizeof(struct sctp_getaddrs)))
-		return -EFAULT;
+	अगर (copy_from_user(&getaddrs, optval, माप(काष्ठा sctp_getaddrs)))
+		वापस -EFAULT;
 
-	/* For UDP-style sockets, id specifies the association to query.  */
+	/* For UDP-style sockets, id specअगरies the association to query.  */
 	asoc = sctp_id2assoc(sk, getaddrs.assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	to = optval + offsetof(struct sctp_getaddrs, addrs);
-	space_left = len - offsetof(struct sctp_getaddrs, addrs);
+	to = optval + दुरत्व(काष्ठा sctp_getaddrs, addrs);
+	space_left = len - दुरत्व(काष्ठा sctp_getaddrs, addrs);
 
-	list_for_each_entry(from, &asoc->peer.transport_addr_list,
-				transports) {
-		memcpy(&temp, &from->ipaddr, sizeof(temp));
-		addrlen = sctp_get_pf_specific(sk->sk_family)
+	list_क्रम_each_entry(from, &asoc->peer.transport_addr_list,
+				transports) अणु
+		स_नकल(&temp, &from->ipaddr, माप(temp));
+		addrlen = sctp_get_pf_specअगरic(sk->sk_family)
 			      ->addr_to_user(sp, &temp);
-		if (space_left < addrlen)
-			return -ENOMEM;
-		if (copy_to_user(to, &temp, addrlen))
-			return -EFAULT;
+		अगर (space_left < addrlen)
+			वापस -ENOMEM;
+		अगर (copy_to_user(to, &temp, addrlen))
+			वापस -EFAULT;
 		to += addrlen;
 		cnt++;
 		space_left -= addrlen;
-	}
+	पूर्ण
 
-	if (put_user(cnt, &((struct sctp_getaddrs __user *)optval)->addr_num))
-		return -EFAULT;
-	bytes_copied = ((char __user *)to) - optval;
-	if (put_user(bytes_copied, optlen))
-		return -EFAULT;
+	अगर (put_user(cnt, &((काष्ठा sctp_getaddrs __user *)optval)->addr_num))
+		वापस -EFAULT;
+	bytes_copied = ((अक्षर __user *)to) - optval;
+	अगर (put_user(bytes_copied, optlen))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_copy_laddrs(struct sock *sk, __u16 port, void *to,
-			    size_t space_left, int *bytes_copied)
-{
-	struct sctp_sockaddr_entry *addr;
-	union sctp_addr temp;
-	int cnt = 0;
-	int addrlen;
-	struct net *net = sock_net(sk);
+अटल पूर्णांक sctp_copy_laddrs(काष्ठा sock *sk, __u16 port, व्योम *to,
+			    माप_प्रकार space_left, पूर्णांक *bytes_copied)
+अणु
+	काष्ठा sctp_sockaddr_entry *addr;
+	जोड़ sctp_addr temp;
+	पूर्णांक cnt = 0;
+	पूर्णांक addrlen;
+	काष्ठा net *net = sock_net(sk);
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(addr, &net->sctp.local_addr_list, list) {
-		if (!addr->valid)
-			continue;
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(addr, &net->sctp.local_addr_list, list) अणु
+		अगर (!addr->valid)
+			जारी;
 
-		if ((PF_INET == sk->sk_family) &&
+		अगर ((PF_INET == sk->sk_family) &&
 		    (AF_INET6 == addr->a.sa.sa_family))
-			continue;
-		if ((PF_INET6 == sk->sk_family) &&
+			जारी;
+		अगर ((PF_INET6 == sk->sk_family) &&
 		    inet_v6_ipv6only(sk) &&
 		    (AF_INET == addr->a.sa.sa_family))
-			continue;
-		memcpy(&temp, &addr->a, sizeof(temp));
-		if (!temp.v4.sin_port)
+			जारी;
+		स_नकल(&temp, &addr->a, माप(temp));
+		अगर (!temp.v4.sin_port)
 			temp.v4.sin_port = htons(port);
 
-		addrlen = sctp_get_pf_specific(sk->sk_family)
+		addrlen = sctp_get_pf_specअगरic(sk->sk_family)
 			      ->addr_to_user(sctp_sk(sk), &temp);
 
-		if (space_left < addrlen) {
+		अगर (space_left < addrlen) अणु
 			cnt =  -ENOMEM;
-			break;
-		}
-		memcpy(to, &temp, addrlen);
+			अवरोध;
+		पूर्ण
+		स_नकल(to, &temp, addrlen);
 
 		to += addrlen;
 		cnt++;
 		space_left -= addrlen;
 		*bytes_copied += addrlen;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
 
-static int sctp_getsockopt_local_addrs(struct sock *sk, int len,
-				       char __user *optval, int __user *optlen)
-{
-	struct sctp_bind_addr *bp;
-	struct sctp_association *asoc;
-	int cnt = 0;
-	struct sctp_getaddrs getaddrs;
-	struct sctp_sockaddr_entry *addr;
-	void __user *to;
-	union sctp_addr temp;
-	struct sctp_sock *sp = sctp_sk(sk);
-	int addrlen;
-	int err = 0;
-	size_t space_left;
-	int bytes_copied = 0;
-	void *addrs;
-	void *buf;
+अटल पूर्णांक sctp_माला_लोockopt_local_addrs(काष्ठा sock *sk, पूर्णांक len,
+				       अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_bind_addr *bp;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक cnt = 0;
+	काष्ठा sctp_getaddrs getaddrs;
+	काष्ठा sctp_sockaddr_entry *addr;
+	व्योम __user *to;
+	जोड़ sctp_addr temp;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	पूर्णांक addrlen;
+	पूर्णांक err = 0;
+	माप_प्रकार space_left;
+	पूर्णांक bytes_copied = 0;
+	व्योम *addrs;
+	व्योम *buf;
 
-	if (len < sizeof(struct sctp_getaddrs))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_getaddrs))
+		वापस -EINVAL;
 
-	if (copy_from_user(&getaddrs, optval, sizeof(struct sctp_getaddrs)))
-		return -EFAULT;
+	अगर (copy_from_user(&getaddrs, optval, माप(काष्ठा sctp_getaddrs)))
+		वापस -EFAULT;
 
 	/*
-	 *  For UDP-style sockets, id specifies the association to query.
+	 *  For UDP-style sockets, id specअगरies the association to query.
 	 *  If the id field is set to the value '0' then the locally bound
-	 *  addresses are returned without regard to any particular
+	 *  addresses are वापसed without regard to any particular
 	 *  association.
 	 */
-	if (0 == getaddrs.assoc_id) {
+	अगर (0 == getaddrs.assoc_id) अणु
 		bp = &sctp_sk(sk)->ep->base.bind_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		asoc = sctp_id2assoc(sk, getaddrs.assoc_id);
-		if (!asoc)
-			return -EINVAL;
+		अगर (!asoc)
+			वापस -EINVAL;
 		bp = &asoc->base.bind_addr;
-	}
+	पूर्ण
 
-	to = optval + offsetof(struct sctp_getaddrs, addrs);
-	space_left = len - offsetof(struct sctp_getaddrs, addrs);
+	to = optval + दुरत्व(काष्ठा sctp_getaddrs, addrs);
+	space_left = len - दुरत्व(काष्ठा sctp_getaddrs, addrs);
 
-	addrs = kmalloc(space_left, GFP_USER | __GFP_NOWARN);
-	if (!addrs)
-		return -ENOMEM;
+	addrs = kदो_स्मृति(space_left, GFP_USER | __GFP_NOWARN);
+	अगर (!addrs)
+		वापस -ENOMEM;
 
-	/* If the endpoint is bound to 0.0.0.0 or ::0, get the valid
+	/* If the endpoपूर्णांक is bound to 0.0.0.0 or ::0, get the valid
 	 * addresses from the global local address list.
 	 */
-	if (sctp_list_single_entry(&bp->address_list)) {
+	अगर (sctp_list_single_entry(&bp->address_list)) अणु
 		addr = list_entry(bp->address_list.next,
-				  struct sctp_sockaddr_entry, list);
-		if (sctp_is_any(sk, &addr->a)) {
+				  काष्ठा sctp_sockaddr_entry, list);
+		अगर (sctp_is_any(sk, &addr->a)) अणु
 			cnt = sctp_copy_laddrs(sk, bp->port, addrs,
 						space_left, &bytes_copied);
-			if (cnt < 0) {
+			अगर (cnt < 0) अणु
 				err = cnt;
-				goto out;
-			}
-			goto copy_getaddrs;
-		}
-	}
+				जाओ out;
+			पूर्ण
+			जाओ copy_getaddrs;
+		पूर्ण
+	पूर्ण
 
 	buf = addrs;
 	/* Protection on the bound address list is not needed since
 	 * in the socket option context we hold a socket lock and
 	 * thus the bound address list can't change.
 	 */
-	list_for_each_entry(addr, &bp->address_list, list) {
-		memcpy(&temp, &addr->a, sizeof(temp));
-		addrlen = sctp_get_pf_specific(sk->sk_family)
+	list_क्रम_each_entry(addr, &bp->address_list, list) अणु
+		स_नकल(&temp, &addr->a, माप(temp));
+		addrlen = sctp_get_pf_specअगरic(sk->sk_family)
 			      ->addr_to_user(sp, &temp);
-		if (space_left < addrlen) {
+		अगर (space_left < addrlen) अणु
 			err =  -ENOMEM; /*fixme: right error?*/
-			goto out;
-		}
-		memcpy(buf, &temp, addrlen);
+			जाओ out;
+		पूर्ण
+		स_नकल(buf, &temp, addrlen);
 		buf += addrlen;
 		bytes_copied += addrlen;
 		cnt++;
 		space_left -= addrlen;
-	}
+	पूर्ण
 
 copy_getaddrs:
-	if (copy_to_user(to, addrs, bytes_copied)) {
+	अगर (copy_to_user(to, addrs, bytes_copied)) अणु
 		err = -EFAULT;
-		goto out;
-	}
-	if (put_user(cnt, &((struct sctp_getaddrs __user *)optval)->addr_num)) {
+		जाओ out;
+	पूर्ण
+	अगर (put_user(cnt, &((काष्ठा sctp_getaddrs __user *)optval)->addr_num)) अणु
 		err = -EFAULT;
-		goto out;
-	}
-	/* XXX: We should have accounted for sizeof(struct sctp_getaddrs) too,
+		जाओ out;
+	पूर्ण
+	/* XXX: We should have accounted क्रम माप(काष्ठा sctp_getaddrs) too,
 	 * but we can't change it anymore.
 	 */
-	if (put_user(bytes_copied, optlen))
+	अगर (put_user(bytes_copied, optlen))
 		err = -EFAULT;
 out:
-	kfree(addrs);
-	return err;
-}
+	kमुक्त(addrs);
+	वापस err;
+पूर्ण
 
 /* 7.1.10 Set Primary Address (SCTP_PRIMARY_ADDR)
  *
- * Requests that the local SCTP stack use the enclosed peer address as
- * the association primary.  The enclosed address must be one of the
+ * Requests that the local SCTP stack use the enबंदd peer address as
+ * the association primary.  The enबंदd address must be one of the
  * association peer's addresses.
  */
-static int sctp_getsockopt_primary_addr(struct sock *sk, int len,
-					char __user *optval, int __user *optlen)
-{
-	struct sctp_prim prim;
-	struct sctp_association *asoc;
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_माला_लोockopt_primary_addr(काष्ठा sock *sk, पूर्णांक len,
+					अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_prim prim;
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (len < sizeof(struct sctp_prim))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_prim))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_prim);
+	len = माप(काष्ठा sctp_prim);
 
-	if (copy_from_user(&prim, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&prim, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, prim.ssp_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	if (!asoc->peer.primary_path)
-		return -ENOTCONN;
+	अगर (!asoc->peer.primary_path)
+		वापस -ENOTCONN;
 
-	memcpy(&prim.ssp_addr, &asoc->peer.primary_path->ipaddr,
-		asoc->peer.primary_path->af_specific->sockaddr_len);
+	स_नकल(&prim.ssp_addr, &asoc->peer.primary_path->ipaddr,
+		asoc->peer.primary_path->af_specअगरic->sockaddr_len);
 
-	sctp_get_pf_specific(sk->sk_family)->addr_to_user(sp,
-			(union sctp_addr *)&prim.ssp_addr);
+	sctp_get_pf_specअगरic(sk->sk_family)->addr_to_user(sp,
+			(जोड़ sctp_addr *)&prim.ssp_addr);
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &prim, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &prim, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.11  Set Adaptation Layer Indicator (SCTP_ADAPTATION_LAYER)
  *
- * Requests that the local endpoint set the specified Adaptation Layer
- * Indication parameter for all future INIT and INIT-ACK exchanges.
+ * Requests that the local endpoपूर्णांक set the specअगरied Adaptation Layer
+ * Indication parameter क्रम all future INIT and INIT-ACK exchanges.
  */
-static int sctp_getsockopt_adaptation_layer(struct sock *sk, int len,
-				  char __user *optval, int __user *optlen)
-{
-	struct sctp_setadaptation adaptation;
+अटल पूर्णांक sctp_माला_लोockopt_adaptation_layer(काष्ठा sock *sk, पूर्णांक len,
+				  अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_setadaptation adaptation;
 
-	if (len < sizeof(struct sctp_setadaptation))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_setadaptation))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_setadaptation);
+	len = माप(काष्ठा sctp_setadaptation);
 
 	adaptation.ssb_adaptation_ind = sctp_sk(sk)->adaptation_ind;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &adaptation, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &adaptation, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
- * 7.1.14 Set default send parameters (SCTP_DEFAULT_SEND_PARAM)
+ * 7.1.14 Set शेष send parameters (SCTP_DEFAULT_SEND_PARAM)
  *
- *   Applications that wish to use the sendto() system call may wish to
- *   specify a default set of parameters that would normally be supplied
+ *   Applications that wish to use the sendto() प्रणाली call may wish to
+ *   specअगरy a शेष set of parameters that would normally be supplied
  *   through the inclusion of ancillary data.  This socket option allows
- *   such an application to set the default sctp_sndrcvinfo structure.
+ *   such an application to set the शेष sctp_sndrcvinfo काष्ठाure.
 
 
  *   The application that wishes to use this socket option simply passes
- *   in to this call the sctp_sndrcvinfo structure defined in Section
+ *   in to this call the sctp_sndrcvinfo काष्ठाure defined in Section
  *   5.2.2) The input parameters accepted by this call include
  *   sinfo_stream, sinfo_flags, sinfo_ppid, sinfo_context,
- *   sinfo_timetolive.  The user must provide the sinfo_assoc_id field in
- *   to this call if the caller is using the UDP model.
+ *   sinfo_समयtolive.  The user must provide the sinfo_assoc_id field in
+ *   to this call अगर the caller is using the UDP model.
  *
- *   For getsockopt, it get the default sctp_sndrcvinfo structure.
+ *   For माला_लोockopt, it get the शेष sctp_sndrcvinfo काष्ठाure.
  */
-static int sctp_getsockopt_default_send_param(struct sock *sk,
-					int len, char __user *optval,
-					int __user *optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	struct sctp_sndrcvinfo info;
+अटल पूर्णांक sctp_माला_लोockopt_शेष_send_param(काष्ठा sock *sk,
+					पूर्णांक len, अक्षर __user *optval,
+					पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_sndrcvinfo info;
 
-	if (len < sizeof(info))
-		return -EINVAL;
+	अगर (len < माप(info))
+		वापस -EINVAL;
 
-	len = sizeof(info);
+	len = माप(info);
 
-	if (copy_from_user(&info, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&info, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, info.sinfo_assoc_id);
-	if (!asoc && info.sinfo_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && info.sinfo_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		info.sinfo_stream = asoc->default_stream;
-		info.sinfo_flags = asoc->default_flags;
-		info.sinfo_ppid = asoc->default_ppid;
-		info.sinfo_context = asoc->default_context;
-		info.sinfo_timetolive = asoc->default_timetolive;
-	} else {
-		info.sinfo_stream = sp->default_stream;
-		info.sinfo_flags = sp->default_flags;
-		info.sinfo_ppid = sp->default_ppid;
-		info.sinfo_context = sp->default_context;
-		info.sinfo_timetolive = sp->default_timetolive;
-	}
+	अगर (asoc) अणु
+		info.sinfo_stream = asoc->शेष_stream;
+		info.sinfo_flags = asoc->शेष_flags;
+		info.sinfo_ppid = asoc->शेष_ppid;
+		info.sinfo_context = asoc->शेष_context;
+		info.sinfo_समयtolive = asoc->शेष_समयtolive;
+	पूर्ण अन्यथा अणु
+		info.sinfo_stream = sp->शेष_stream;
+		info.sinfo_flags = sp->शेष_flags;
+		info.sinfo_ppid = sp->शेष_ppid;
+		info.sinfo_context = sp->शेष_context;
+		info.sinfo_समयtolive = sp->शेष_समयtolive;
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &info, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &info, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* RFC6458, Section 8.1.31. Set/get Default Send Parameters
  * (SCTP_DEFAULT_SNDINFO)
  */
-static int sctp_getsockopt_default_sndinfo(struct sock *sk, int len,
-					   char __user *optval,
-					   int __user *optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	struct sctp_sndinfo info;
+अटल पूर्णांक sctp_माला_लोockopt_शेष_sndinfo(काष्ठा sock *sk, पूर्णांक len,
+					   अक्षर __user *optval,
+					   पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_sndinfo info;
 
-	if (len < sizeof(info))
-		return -EINVAL;
+	अगर (len < माप(info))
+		वापस -EINVAL;
 
-	len = sizeof(info);
+	len = माप(info);
 
-	if (copy_from_user(&info, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&info, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, info.snd_assoc_id);
-	if (!asoc && info.snd_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && info.snd_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		info.snd_sid = asoc->default_stream;
-		info.snd_flags = asoc->default_flags;
-		info.snd_ppid = asoc->default_ppid;
-		info.snd_context = asoc->default_context;
-	} else {
-		info.snd_sid = sp->default_stream;
-		info.snd_flags = sp->default_flags;
-		info.snd_ppid = sp->default_ppid;
-		info.snd_context = sp->default_context;
-	}
+	अगर (asoc) अणु
+		info.snd_sid = asoc->शेष_stream;
+		info.snd_flags = asoc->शेष_flags;
+		info.snd_ppid = asoc->शेष_ppid;
+		info.snd_context = asoc->शेष_context;
+	पूर्ण अन्यथा अणु
+		info.snd_sid = sp->शेष_stream;
+		info.snd_flags = sp->शेष_flags;
+		info.snd_ppid = sp->शेष_ppid;
+		info.snd_context = sp->शेष_context;
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &info, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &info, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
@@ -6425,81 +6426,81 @@ static int sctp_getsockopt_default_sndinfo(struct sock *sk, int len,
  *
  * Turn on/off any Nagle-like algorithm.  This means that packets are
  * generally sent as soon as possible and no unnecessary delays are
- * introduced, at the cost of more packets in the network.  Expects an
- * integer boolean flag.
+ * पूर्णांकroduced, at the cost of more packets in the network.  Expects an
+ * पूर्णांकeger boolean flag.
  */
 
-static int sctp_getsockopt_nodelay(struct sock *sk, int len,
-				   char __user *optval, int __user *optlen)
-{
-	int val;
+अटल पूर्णांक sctp_माला_लोockopt_nodelay(काष्ठा sock *sk, पूर्णांक len,
+				   अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
+	len = माप(पूर्णांक);
 	val = (sctp_sk(sk)->nodelay == 1);
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
  *
  * 7.1.1 SCTP_RTOINFO
  *
  * The protocol parameters used to initialize and bound retransmission
- * timeout (RTO) are tunable. sctp_rtoinfo structure is used to access
- * and modify these parameters.
- * All parameters are time values, in milliseconds.  A value of 0, when
- * modifying the parameters, indicates that the current value should not
+ * समयout (RTO) are tunable. sctp_rtoinfo काष्ठाure is used to access
+ * and modअगरy these parameters.
+ * All parameters are समय values, in milliseconds.  A value of 0, when
+ * modअगरying the parameters, indicates that the current value should not
  * be changed.
  *
  */
-static int sctp_getsockopt_rtoinfo(struct sock *sk, int len,
-				char __user *optval,
-				int __user *optlen) {
-	struct sctp_rtoinfo rtoinfo;
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_rtoinfo(काष्ठा sock *sk, पूर्णांक len,
+				अक्षर __user *optval,
+				पूर्णांक __user *optlen) अणु
+	काष्ठा sctp_rtoinfo rtoinfo;
+	काष्ठा sctp_association *asoc;
 
-	if (len < sizeof (struct sctp_rtoinfo))
-		return -EINVAL;
+	अगर (len < माप (काष्ठा sctp_rtoinfo))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_rtoinfo);
+	len = माप(काष्ठा sctp_rtoinfo);
 
-	if (copy_from_user(&rtoinfo, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&rtoinfo, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, rtoinfo.srto_assoc_id);
 
-	if (!asoc && rtoinfo.srto_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && rtoinfo.srto_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Values corresponding to the specific association. */
-	if (asoc) {
-		rtoinfo.srto_initial = jiffies_to_msecs(asoc->rto_initial);
-		rtoinfo.srto_max = jiffies_to_msecs(asoc->rto_max);
-		rtoinfo.srto_min = jiffies_to_msecs(asoc->rto_min);
-	} else {
-		/* Values corresponding to the endpoint. */
-		struct sctp_sock *sp = sctp_sk(sk);
+	/* Values corresponding to the specअगरic association. */
+	अगर (asoc) अणु
+		rtoinfo.srto_initial = jअगरfies_to_msecs(asoc->rto_initial);
+		rtoinfo.srto_max = jअगरfies_to_msecs(asoc->rto_max);
+		rtoinfo.srto_min = jअगरfies_to_msecs(asoc->rto_min);
+	पूर्ण अन्यथा अणु
+		/* Values corresponding to the endpoपूर्णांक. */
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
 		rtoinfo.srto_initial = sp->rtoinfo.srto_initial;
 		rtoinfo.srto_max = sp->rtoinfo.srto_max;
 		rtoinfo.srto_min = sp->rtoinfo.srto_min;
-	}
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	if (copy_to_user(optval, &rtoinfo, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &rtoinfo, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
@@ -6507,69 +6508,69 @@ static int sctp_getsockopt_rtoinfo(struct sock *sk, int len,
  *
  * This option is used to tune the maximum retransmission attempts
  * of the association.
- * Returns an error if the new association retransmission value is
+ * Returns an error अगर the new association retransmission value is
  * greater than the sum of the retransmission value  of the peer.
- * See [SCTP] for more information.
+ * See [SCTP] क्रम more inक्रमmation.
  *
  */
-static int sctp_getsockopt_associnfo(struct sock *sk, int len,
-				     char __user *optval,
-				     int __user *optlen)
-{
+अटल पूर्णांक sctp_माला_लोockopt_associnfo(काष्ठा sock *sk, पूर्णांक len,
+				     अक्षर __user *optval,
+				     पूर्णांक __user *optlen)
+अणु
 
-	struct sctp_assocparams assocparams;
-	struct sctp_association *asoc;
-	struct list_head *pos;
-	int cnt = 0;
+	काष्ठा sctp_assocparams assocparams;
+	काष्ठा sctp_association *asoc;
+	काष्ठा list_head *pos;
+	पूर्णांक cnt = 0;
 
-	if (len < sizeof (struct sctp_assocparams))
-		return -EINVAL;
+	अगर (len < माप (काष्ठा sctp_assocparams))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_assocparams);
+	len = माप(काष्ठा sctp_assocparams);
 
-	if (copy_from_user(&assocparams, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&assocparams, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, assocparams.sasoc_assoc_id);
 
-	if (!asoc && assocparams.sasoc_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && assocparams.sasoc_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Values correspoinding to the specific association */
-	if (asoc) {
+	/* Values correspoinding to the specअगरic association */
+	अगर (asoc) अणु
 		assocparams.sasoc_asocmaxrxt = asoc->max_retrans;
 		assocparams.sasoc_peer_rwnd = asoc->peer.rwnd;
 		assocparams.sasoc_local_rwnd = asoc->a_rwnd;
-		assocparams.sasoc_cookie_life = ktime_to_ms(asoc->cookie_life);
+		assocparams.sasoc_cookie_lअगरe = kसमय_प्रकारo_ms(asoc->cookie_lअगरe);
 
-		list_for_each(pos, &asoc->peer.transport_addr_list) {
+		list_क्रम_each(pos, &asoc->peer.transport_addr_list) अणु
 			cnt++;
-		}
+		पूर्ण
 
 		assocparams.sasoc_number_peer_destinations = cnt;
-	} else {
-		/* Values corresponding to the endpoint */
-		struct sctp_sock *sp = sctp_sk(sk);
+	पूर्ण अन्यथा अणु
+		/* Values corresponding to the endpoपूर्णांक */
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
 		assocparams.sasoc_asocmaxrxt = sp->assocparams.sasoc_asocmaxrxt;
 		assocparams.sasoc_peer_rwnd = sp->assocparams.sasoc_peer_rwnd;
 		assocparams.sasoc_local_rwnd = sp->assocparams.sasoc_local_rwnd;
-		assocparams.sasoc_cookie_life =
-					sp->assocparams.sasoc_cookie_life;
+		assocparams.sasoc_cookie_lअगरe =
+					sp->assocparams.sasoc_cookie_lअगरe;
 		assocparams.sasoc_number_peer_destinations =
 					sp->assocparams.
 					sasoc_number_peer_destinations;
-	}
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	if (copy_to_user(optval, &assocparams, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &assocparams, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.16 Set/clear IPv4 mapped addresses (SCTP_I_WANT_MAPPED_V4_ADDR)
@@ -6577,580 +6578,580 @@ static int sctp_getsockopt_associnfo(struct sock *sk, int len,
  * This socket option is a boolean flag which turns on or off mapped V4
  * addresses.  If this option is turned on and the socket is type
  * PF_INET6, then IPv4 addresses will be mapped to V6 representation.
- * If this option is turned off, then no mapping will be done of V4
+ * If this option is turned off, then no mapping will be करोne of V4
  * addresses and a user will receive both PF_INET6 and PF_INET type
  * addresses on the socket.
  */
-static int sctp_getsockopt_mappedv4(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	int val;
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_माला_लोockopt_mappedv4(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
+	len = माप(पूर्णांक);
 	val = sp->v4mapped;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.29.  Set or Get the default context (SCTP_CONTEXT)
+ * 7.1.29.  Set or Get the शेष context (SCTP_CONTEXT)
  * (chapter and verse is quoted at sctp_setsockopt_context())
  */
-static int sctp_getsockopt_context(struct sock *sk, int len,
-				   char __user *optval, int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_context(काष्ठा sock *sk, पूर्णांक len,
+				   अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
 
-	if (len < sizeof(struct sctp_assoc_value))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_assoc_value))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_assoc_value);
+	len = माप(काष्ठा sctp_assoc_value);
 
-	if (copy_from_user(&params, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&params, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	params.assoc_value = asoc ? asoc->default_rcv_context
-				  : sctp_sk(sk)->default_rcv_context;
+	params.assoc_value = asoc ? asoc->शेष_rcv_context
+				  : sctp_sk(sk)->शेष_rcv_context;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &params, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &params, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 8.1.16.  Get or Set the Maximum Fragmentation Size (SCTP_MAXSEG)
  * This option will get or set the maximum size to put in any outgoing
  * SCTP DATA chunk.  If a message is larger than this size it will be
- * fragmented by SCTP into the specified size.  Note that the underlying
- * SCTP implementation may fragment into smaller sized chunks when the
+ * fragmented by SCTP पूर्णांकo the specअगरied size.  Note that the underlying
+ * SCTP implementation may fragment पूर्णांकo smaller sized chunks when the
  * PMTU of the underlying association is smaller than the value set by
- * the user.  The default value for this option is '0' which indicates
+ * the user.  The शेष value क्रम this option is '0' which indicates
  * the user is NOT limiting fragmentation and only the PMTU will effect
  * SCTP's choice of DATA chunk size.  Note also that values set larger
  * than the maximum size of an IP datagram will effectively let SCTP
  * control fragmentation (i.e. the same as setting this option to 0).
  *
- * The following structure is used to access and modify this parameter:
+ * The following काष्ठाure is used to access and modअगरy this parameter:
  *
- * struct sctp_assoc_value {
+ * काष्ठा sctp_assoc_value अणु
  *   sctp_assoc_t assoc_id;
- *   uint32_t assoc_value;
- * };
+ *   uपूर्णांक32_t assoc_value;
+ * पूर्ण;
  *
- * assoc_id:  This parameter is ignored for one-to-one style sockets.
+ * assoc_id:  This parameter is ignored क्रम one-to-one style sockets.
  *    For one-to-many style sockets this parameter indicates which
- *    association the user is performing an action upon.  Note that if
- *    this field's value is zero then the endpoints default value is
+ *    association the user is perक्रमming an action upon.  Note that अगर
+ *    this field's value is zero then the endpoपूर्णांकs शेष value is
  *    changed (effecting future associations only).
- * assoc_value:  This parameter specifies the maximum size in bytes.
+ * assoc_value:  This parameter specअगरies the maximum size in bytes.
  */
-static int sctp_getsockopt_maxseg(struct sock *sk, int len,
-				  char __user *optval, int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_maxseg(काष्ठा sock *sk, पूर्णांक len,
+				  अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
 
-	if (len == sizeof(int)) {
+	अगर (len == माप(पूर्णांक)) अणु
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
 				    "Use of int in maxseg socket option.\n"
 				    "Use struct sctp_assoc_value instead\n",
 				    current->comm, task_pid_nr(current));
 		params.assoc_id = SCTP_FUTURE_ASSOC;
-	} else if (len >= sizeof(struct sctp_assoc_value)) {
-		len = sizeof(struct sctp_assoc_value);
-		if (copy_from_user(&params, optval, len))
-			return -EFAULT;
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा अगर (len >= माप(काष्ठा sctp_assoc_value)) अणु
+		len = माप(काष्ठा sctp_assoc_value);
+		अगर (copy_from_user(&params, optval, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc)
-		params.assoc_value = asoc->frag_point;
-	else
+	अगर (asoc)
+		params.assoc_value = asoc->frag_poपूर्णांक;
+	अन्यथा
 		params.assoc_value = sctp_sk(sk)->user_frag;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (len == sizeof(int)) {
-		if (copy_to_user(optval, &params.assoc_value, len))
-			return -EFAULT;
-	} else {
-		if (copy_to_user(optval, &params, len))
-			return -EFAULT;
-	}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (len == माप(पूर्णांक)) अणु
+		अगर (copy_to_user(optval, &params.assoc_value, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		अगर (copy_to_user(optval, &params, len))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
-
-/*
- * 7.1.24.  Get or set fragmented interleave (SCTP_FRAGMENT_INTERLEAVE)
- * (chapter and verse is quoted at sctp_setsockopt_fragment_interleave())
- */
-static int sctp_getsockopt_fragment_interleave(struct sock *sk, int len,
-					       char __user *optval, int __user *optlen)
-{
-	int val;
-
-	if (len < sizeof(int))
-		return -EINVAL;
-
-	len = sizeof(int);
-
-	val = sctp_sk(sk)->frag_interleave;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * 7.1.25.  Set or Get the sctp partial delivery point
- * (chapter and verse is quoted at sctp_setsockopt_partial_delivery_point())
+ * 7.1.24.  Get or set fragmented पूर्णांकerleave (SCTP_FRAGMENT_INTERLEAVE)
+ * (chapter and verse is quoted at sctp_setsockopt_fragment_पूर्णांकerleave())
  */
-static int sctp_getsockopt_partial_delivery_point(struct sock *sk, int len,
-						  char __user *optval,
-						  int __user *optlen)
-{
+अटल पूर्णांक sctp_माला_लोockopt_fragment_पूर्णांकerleave(काष्ठा sock *sk, पूर्णांक len,
+					       अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val;
+
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
+
+	len = माप(पूर्णांक);
+
+	val = sctp_sk(sk)->frag_पूर्णांकerleave;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+
+	वापस 0;
+पूर्ण
+
+/*
+ * 7.1.25.  Set or Get the sctp partial delivery poपूर्णांक
+ * (chapter and verse is quoted at sctp_setsockopt_partial_delivery_poपूर्णांक())
+ */
+अटल पूर्णांक sctp_माला_लोockopt_partial_delivery_poपूर्णांक(काष्ठा sock *sk, पूर्णांक len,
+						  अक्षर __user *optval,
+						  पूर्णांक __user *optlen)
+अणु
 	u32 val;
 
-	if (len < sizeof(u32))
-		return -EINVAL;
+	अगर (len < माप(u32))
+		वापस -EINVAL;
 
-	len = sizeof(u32);
+	len = माप(u32);
 
-	val = sctp_sk(sk)->pd_point;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	val = sctp_sk(sk)->pd_poपूर्णांक;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 7.1.28.  Set or Get the maximum burst (SCTP_MAX_BURST)
  * (chapter and verse is quoted at sctp_setsockopt_maxburst())
  */
-static int sctp_getsockopt_maxburst(struct sock *sk, int len,
-				    char __user *optval,
-				    int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_maxburst(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval,
+				    पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
 
-	if (len == sizeof(int)) {
+	अगर (len == माप(पूर्णांक)) अणु
 		pr_warn_ratelimited(DEPRECATED
 				    "%s (pid %d) "
 				    "Use of int in max_burst socket option.\n"
 				    "Use struct sctp_assoc_value instead\n",
 				    current->comm, task_pid_nr(current));
 		params.assoc_id = SCTP_FUTURE_ASSOC;
-	} else if (len >= sizeof(struct sctp_assoc_value)) {
-		len = sizeof(struct sctp_assoc_value);
-		if (copy_from_user(&params, optval, len))
-			return -EFAULT;
-	} else
-		return -EINVAL;
+	पूर्ण अन्यथा अगर (len >= माप(काष्ठा sctp_assoc_value)) अणु
+		len = माप(काष्ठा sctp_assoc_value);
+		अगर (copy_from_user(&params, optval, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	params.assoc_value = asoc ? asoc->max_burst : sctp_sk(sk)->max_burst;
 
-	if (len == sizeof(int)) {
-		if (copy_to_user(optval, &params.assoc_value, len))
-			return -EFAULT;
-	} else {
-		if (copy_to_user(optval, &params, len))
-			return -EFAULT;
-	}
+	अगर (len == माप(पूर्णांक)) अणु
+		अगर (copy_to_user(optval, &params.assoc_value, len))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		अगर (copy_to_user(optval, &params, len))
+			वापस -EFAULT;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int sctp_getsockopt_hmac_ident(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_hmacalgo  __user *p = (void __user *)optval;
-	struct sctp_hmac_algo_param *hmacs;
+अटल पूर्णांक sctp_माला_लोockopt_hmac_ident(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_hmacalgo  __user *p = (व्योम __user *)optval;
+	काष्ठा sctp_hmac_algo_param *hmacs;
 	__u16 data_len = 0;
 	u32 num_idents;
-	int i;
+	पूर्णांक i;
 
-	if (!ep->auth_enable)
-		return -EACCES;
+	अगर (!ep->auth_enable)
+		वापस -EACCES;
 
 	hmacs = ep->auth_hmacs_list;
 	data_len = ntohs(hmacs->param_hdr.length) -
-		   sizeof(struct sctp_paramhdr);
+		   माप(काष्ठा sctp_paramhdr);
 
-	if (len < sizeof(struct sctp_hmacalgo) + data_len)
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_hmacalgo) + data_len)
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_hmacalgo) + data_len;
-	num_idents = data_len / sizeof(u16);
+	len = माप(काष्ठा sctp_hmacalgo) + data_len;
+	num_idents = data_len / माप(u16);
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (put_user(num_idents, &p->shmac_num_idents))
-		return -EFAULT;
-	for (i = 0; i < num_idents; i++) {
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (put_user(num_idents, &p->shmac_num_idents))
+		वापस -EFAULT;
+	क्रम (i = 0; i < num_idents; i++) अणु
 		__u16 hmacid = ntohs(hmacs->hmac_ids[i]);
 
-		if (copy_to_user(&p->shmac_idents[i], &hmacid, sizeof(__u16)))
-			return -EFAULT;
-	}
-	return 0;
-}
+		अगर (copy_to_user(&p->shmac_idents[i], &hmacid, माप(__u16)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_active_key(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_authkeyid val;
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_active_key(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_authkeyid val;
+	काष्ठा sctp_association *asoc;
 
-	if (len < sizeof(struct sctp_authkeyid))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_authkeyid))
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_authkeyid);
-	if (copy_from_user(&val, optval, len))
-		return -EFAULT;
+	len = माप(काष्ठा sctp_authkeyid);
+	अगर (copy_from_user(&val, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, val.scact_assoc_id);
-	if (!asoc && val.scact_assoc_id && sctp_style(sk, UDP))
-		return -EINVAL;
+	अगर (!asoc && val.scact_assoc_id && sctp_style(sk, UDP))
+		वापस -EINVAL;
 
-	if (asoc) {
-		if (!asoc->peer.auth_capable)
-			return -EACCES;
+	अगर (asoc) अणु
+		अगर (!asoc->peer.auth_capable)
+			वापस -EACCES;
 		val.scact_keynumber = asoc->active_key_id;
-	} else {
-		if (!ep->auth_enable)
-			return -EACCES;
+	पूर्ण अन्यथा अणु
+		अगर (!ep->auth_enable)
+			वापस -EACCES;
 		val.scact_keynumber = ep->active_key_id;
-	}
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_peer_auth_chunks(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_authchunks __user *p = (void __user *)optval;
-	struct sctp_authchunks val;
-	struct sctp_association *asoc;
-	struct sctp_chunks_param *ch;
+अटल पूर्णांक sctp_माला_लोockopt_peer_auth_chunks(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_authchunks __user *p = (व्योम __user *)optval;
+	काष्ठा sctp_authchunks val;
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_chunks_param *ch;
 	u32    num_chunks = 0;
-	char __user *to;
+	अक्षर __user *to;
 
-	if (len < sizeof(struct sctp_authchunks))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_authchunks))
+		वापस -EINVAL;
 
-	if (copy_from_user(&val, optval, sizeof(val)))
-		return -EFAULT;
+	अगर (copy_from_user(&val, optval, माप(val)))
+		वापस -EFAULT;
 
 	to = p->gauth_chunks;
 	asoc = sctp_id2assoc(sk, val.gauth_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
-	if (!asoc->peer.auth_capable)
-		return -EACCES;
+	अगर (!asoc->peer.auth_capable)
+		वापस -EACCES;
 
 	ch = asoc->peer.peer_chunks;
-	if (!ch)
-		goto num;
+	अगर (!ch)
+		जाओ num;
 
-	/* See if the user provided enough room for all the data */
-	num_chunks = ntohs(ch->param_hdr.length) - sizeof(struct sctp_paramhdr);
-	if (len < num_chunks)
-		return -EINVAL;
+	/* See अगर the user provided enough room क्रम all the data */
+	num_chunks = ntohs(ch->param_hdr.length) - माप(काष्ठा sctp_paramhdr);
+	अगर (len < num_chunks)
+		वापस -EINVAL;
 
-	if (copy_to_user(to, ch->chunks, num_chunks))
-		return -EFAULT;
+	अगर (copy_to_user(to, ch->chunks, num_chunks))
+		वापस -EFAULT;
 num:
-	len = sizeof(struct sctp_authchunks) + num_chunks;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (put_user(num_chunks, &p->gauth_number_of_chunks))
-		return -EFAULT;
-	return 0;
-}
+	len = माप(काष्ठा sctp_authchunks) + num_chunks;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (put_user(num_chunks, &p->gauth_number_of_chunks))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_local_auth_chunks(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	struct sctp_authchunks __user *p = (void __user *)optval;
-	struct sctp_authchunks val;
-	struct sctp_association *asoc;
-	struct sctp_chunks_param *ch;
+अटल पूर्णांक sctp_माला_लोockopt_local_auth_chunks(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	काष्ठा sctp_authchunks __user *p = (व्योम __user *)optval;
+	काष्ठा sctp_authchunks val;
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_chunks_param *ch;
 	u32    num_chunks = 0;
-	char __user *to;
+	अक्षर __user *to;
 
-	if (len < sizeof(struct sctp_authchunks))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_authchunks))
+		वापस -EINVAL;
 
-	if (copy_from_user(&val, optval, sizeof(val)))
-		return -EFAULT;
+	अगर (copy_from_user(&val, optval, माप(val)))
+		वापस -EFAULT;
 
 	to = p->gauth_chunks;
 	asoc = sctp_id2assoc(sk, val.gauth_assoc_id);
-	if (!asoc && val.gauth_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && val.gauth_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
-		if (!asoc->peer.auth_capable)
-			return -EACCES;
-		ch = (struct sctp_chunks_param *)asoc->c.auth_chunks;
-	} else {
-		if (!ep->auth_enable)
-			return -EACCES;
+	अगर (asoc) अणु
+		अगर (!asoc->peer.auth_capable)
+			वापस -EACCES;
+		ch = (काष्ठा sctp_chunks_param *)asoc->c.auth_chunks;
+	पूर्ण अन्यथा अणु
+		अगर (!ep->auth_enable)
+			वापस -EACCES;
 		ch = ep->auth_chunk_list;
-	}
-	if (!ch)
-		goto num;
+	पूर्ण
+	अगर (!ch)
+		जाओ num;
 
-	num_chunks = ntohs(ch->param_hdr.length) - sizeof(struct sctp_paramhdr);
-	if (len < sizeof(struct sctp_authchunks) + num_chunks)
-		return -EINVAL;
+	num_chunks = ntohs(ch->param_hdr.length) - माप(काष्ठा sctp_paramhdr);
+	अगर (len < माप(काष्ठा sctp_authchunks) + num_chunks)
+		वापस -EINVAL;
 
-	if (copy_to_user(to, ch->chunks, num_chunks))
-		return -EFAULT;
+	अगर (copy_to_user(to, ch->chunks, num_chunks))
+		वापस -EFAULT;
 num:
-	len = sizeof(struct sctp_authchunks) + num_chunks;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (put_user(num_chunks, &p->gauth_number_of_chunks))
-		return -EFAULT;
+	len = माप(काष्ठा sctp_authchunks) + num_chunks;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (put_user(num_chunks, &p->gauth_number_of_chunks))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 8.2.5.  Get the Current Number of Associations (SCTP_GET_ASSOC_NUMBER)
- * This option gets the current number of associations that are attached
- * to a one-to-many style socket.  The option value is an uint32_t.
+ * This option माला_लो the current number of associations that are attached
+ * to a one-to-many style socket.  The option value is an uपूर्णांक32_t.
  */
-static int sctp_getsockopt_assoc_number(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
+अटल पूर्णांक sctp_माला_लोockopt_assoc_number(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
 	u32 val = 0;
 
-	if (sctp_style(sk, TCP))
-		return -EOPNOTSUPP;
+	अगर (sctp_style(sk, TCP))
+		वापस -EOPNOTSUPP;
 
-	if (len < sizeof(u32))
-		return -EINVAL;
+	अगर (len < माप(u32))
+		वापस -EINVAL;
 
-	len = sizeof(u32);
+	len = माप(u32);
 
-	list_for_each_entry(asoc, &(sp->ep->asocs), asocs) {
+	list_क्रम_each_entry(asoc, &(sp->ep->asocs), asocs) अणु
 		val++;
-	}
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * 8.1.23 SCTP_AUTO_ASCONF
  * See the corresponding setsockopt entry as description
  */
-static int sctp_getsockopt_auto_asconf(struct sock *sk, int len,
-				   char __user *optval, int __user *optlen)
-{
-	int val = 0;
+अटल पूर्णांक sctp_माला_लोockopt_स्वतः_asconf(काष्ठा sock *sk, पूर्णांक len,
+				   अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val = 0;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
-	if (sctp_sk(sk)->do_auto_asconf && sctp_is_ep_boundall(sk))
+	len = माप(पूर्णांक);
+	अगर (sctp_sk(sk)->करो_स्वतः_asconf && sctp_is_ep_boundall(sk))
 		val = 1;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
- * 8.2.6. Get the Current Identifiers of Associations
+ * 8.2.6. Get the Current Identअगरiers of Associations
  *        (SCTP_GET_ASSOC_ID_LIST)
  *
- * This option gets the current list of SCTP association identifiers of
+ * This option माला_लो the current list of SCTP association identअगरiers of
  * the SCTP associations handled by a one-to-many style socket.
  */
-static int sctp_getsockopt_assoc_ids(struct sock *sk, int len,
-				    char __user *optval, int __user *optlen)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_association *asoc;
-	struct sctp_assoc_ids *ids;
+अटल पूर्णांक sctp_माला_लोockopt_assoc_ids(काष्ठा sock *sk, पूर्णांक len,
+				    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_assoc_ids *ids;
 	u32 num = 0;
 
-	if (sctp_style(sk, TCP))
-		return -EOPNOTSUPP;
+	अगर (sctp_style(sk, TCP))
+		वापस -EOPNOTSUPP;
 
-	if (len < sizeof(struct sctp_assoc_ids))
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_assoc_ids))
+		वापस -EINVAL;
 
-	list_for_each_entry(asoc, &(sp->ep->asocs), asocs) {
+	list_क्रम_each_entry(asoc, &(sp->ep->asocs), asocs) अणु
 		num++;
-	}
+	पूर्ण
 
-	if (len < sizeof(struct sctp_assoc_ids) + sizeof(sctp_assoc_t) * num)
-		return -EINVAL;
+	अगर (len < माप(काष्ठा sctp_assoc_ids) + माप(sctp_assoc_t) * num)
+		वापस -EINVAL;
 
-	len = sizeof(struct sctp_assoc_ids) + sizeof(sctp_assoc_t) * num;
+	len = माप(काष्ठा sctp_assoc_ids) + माप(sctp_assoc_t) * num;
 
-	ids = kmalloc(len, GFP_USER | __GFP_NOWARN);
-	if (unlikely(!ids))
-		return -ENOMEM;
+	ids = kदो_स्मृति(len, GFP_USER | __GFP_NOWARN);
+	अगर (unlikely(!ids))
+		वापस -ENOMEM;
 
 	ids->gaids_number_of_ids = num;
 	num = 0;
-	list_for_each_entry(asoc, &(sp->ep->asocs), asocs) {
+	list_क्रम_each_entry(asoc, &(sp->ep->asocs), asocs) अणु
 		ids->gaids_assoc_id[num++] = asoc->assoc_id;
-	}
+	पूर्ण
 
-	if (put_user(len, optlen) || copy_to_user(optval, ids, len)) {
-		kfree(ids);
-		return -EFAULT;
-	}
+	अगर (put_user(len, optlen) || copy_to_user(optval, ids, len)) अणु
+		kमुक्त(ids);
+		वापस -EFAULT;
+	पूर्ण
 
-	kfree(ids);
-	return 0;
-}
+	kमुक्त(ids);
+	वापस 0;
+पूर्ण
 
 /*
  * SCTP_PEER_ADDR_THLDS
  *
- * This option allows us to fetch the partially failed threshold for one or all
+ * This option allows us to fetch the partially failed threshold क्रम one or all
  * transports in an association.  See Section 6.1 of:
  * http://www.ietf.org/id/draft-nishida-tsvwg-sctp-failover-05.txt
  */
-static int sctp_getsockopt_paddr_thresholds(struct sock *sk,
-					    char __user *optval, int len,
-					    int __user *optlen, bool v2)
-{
-	struct sctp_paddrthlds_v2 val;
-	struct sctp_transport *trans;
-	struct sctp_association *asoc;
-	int min;
+अटल पूर्णांक sctp_माला_लोockopt_paddr_thresholds(काष्ठा sock *sk,
+					    अक्षर __user *optval, पूर्णांक len,
+					    पूर्णांक __user *optlen, bool v2)
+अणु
+	काष्ठा sctp_paddrthlds_v2 val;
+	काष्ठा sctp_transport *trans;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक min;
 
-	min = v2 ? sizeof(val) : sizeof(struct sctp_paddrthlds);
-	if (len < min)
-		return -EINVAL;
+	min = v2 ? माप(val) : माप(काष्ठा sctp_paddrthlds);
+	अगर (len < min)
+		वापस -EINVAL;
 	len = min;
-	if (copy_from_user(&val, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&val, optval, len))
+		वापस -EFAULT;
 
-	if (!sctp_is_any(sk, (const union sctp_addr *)&val.spt_address)) {
+	अगर (!sctp_is_any(sk, (स्थिर जोड़ sctp_addr *)&val.spt_address)) अणु
 		trans = sctp_addr_id2transport(sk, &val.spt_address,
 					       val.spt_assoc_id);
-		if (!trans)
-			return -ENOENT;
+		अगर (!trans)
+			वापस -ENOENT;
 
 		val.spt_pathmaxrxt = trans->pathmaxrxt;
 		val.spt_pathpfthld = trans->pf_retrans;
 		val.spt_pathcpthld = trans->ps_retrans;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	asoc = sctp_id2assoc(sk, val.spt_assoc_id);
-	if (!asoc && val.spt_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && val.spt_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (asoc) {
+	अगर (asoc) अणु
 		val.spt_pathpfthld = asoc->pf_retrans;
 		val.spt_pathmaxrxt = asoc->pathmaxrxt;
 		val.spt_pathcpthld = asoc->ps_retrans;
-	} else {
-		struct sctp_sock *sp = sctp_sk(sk);
+	पूर्ण अन्यथा अणु
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
 		val.spt_pathpfthld = sp->pf_retrans;
 		val.spt_pathmaxrxt = sp->pathmaxrxt;
 		val.spt_pathcpthld = sp->ps_retrans;
-	}
+	पूर्ण
 
 out:
-	if (put_user(len, optlen) || copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen) || copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * SCTP_GET_ASSOC_STATS
  *
- * This option retrieves local per endpoint statistics. It is modeled
+ * This option retrieves local per endpoपूर्णांक statistics. It is modeled
  * after OpenSolaris' implementation
  */
-static int sctp_getsockopt_assoc_stats(struct sock *sk, int len,
-				       char __user *optval,
-				       int __user *optlen)
-{
-	struct sctp_assoc_stats sas;
-	struct sctp_association *asoc = NULL;
+अटल पूर्णांक sctp_माला_लोockopt_assoc_stats(काष्ठा sock *sk, पूर्णांक len,
+				       अक्षर __user *optval,
+				       पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_stats sas;
+	काष्ठा sctp_association *asoc = शून्य;
 
 	/* User must provide at least the assoc id */
-	if (len < sizeof(sctp_assoc_t))
-		return -EINVAL;
+	अगर (len < माप(sctp_assoc_t))
+		वापस -EINVAL;
 
-	/* Allow the struct to grow and fill in as much as possible */
-	len = min_t(size_t, len, sizeof(sas));
+	/* Allow the काष्ठा to grow and fill in as much as possible */
+	len = min_t(माप_प्रकार, len, माप(sas));
 
-	if (copy_from_user(&sas, optval, len))
-		return -EFAULT;
+	अगर (copy_from_user(&sas, optval, len))
+		वापस -EFAULT;
 
 	asoc = sctp_id2assoc(sk, sas.sas_assoc_id);
-	if (!asoc)
-		return -EINVAL;
+	अगर (!asoc)
+		वापस -EINVAL;
 
 	sas.sas_rtxchunks = asoc->stats.rtxchunks;
 	sas.sas_gapcnt = asoc->stats.gapcnt;
@@ -7167,1208 +7168,1208 @@ static int sctp_getsockopt_assoc_stats(struct sock *sk, int len,
 	sas.sas_opackets = asoc->stats.opackets;
 	sas.sas_ipackets = asoc->stats.ipackets;
 
-	/* New high max rto observed, will return 0 if not a single
+	/* New high max rto observed, will वापस 0 अगर not a single
 	 * RTO update took place. obs_rto_ipaddr will be bogus
-	 * in such a case
+	 * in such a हाल
 	 */
 	sas.sas_maxrto = asoc->stats.max_obs_rto;
-	memcpy(&sas.sas_obs_rto_ipaddr, &asoc->stats.obs_rto_ipaddr,
-		sizeof(struct sockaddr_storage));
+	स_नकल(&sas.sas_obs_rto_ipaddr, &asoc->stats.obs_rto_ipaddr,
+		माप(काष्ठा sockaddr_storage));
 
 	/* Mark beginning of a new observation period */
 	asoc->stats.max_obs_rto = asoc->rto_min;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
 	pr_debug("%s: len:%d, assoc_id:%d\n", __func__, len, sas.sas_assoc_id);
 
-	if (copy_to_user(optval, &sas, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &sas, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_recvrcvinfo(struct sock *sk,	int len,
-				       char __user *optval,
-				       int __user *optlen)
-{
-	int val = 0;
+अटल पूर्णांक sctp_माला_लोockopt_recvrcvinfo(काष्ठा sock *sk,	पूर्णांक len,
+				       अक्षर __user *optval,
+				       पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val = 0;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
-	if (sctp_sk(sk)->recvrcvinfo)
+	len = माप(पूर्णांक);
+	अगर (sctp_sk(sk)->recvrcvinfo)
 		val = 1;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_recvnxtinfo(struct sock *sk,	int len,
-				       char __user *optval,
-				       int __user *optlen)
-{
-	int val = 0;
+अटल पूर्णांक sctp_माला_लोockopt_recvnxtinfo(काष्ठा sock *sk,	पूर्णांक len,
+				       अक्षर __user *optval,
+				       पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val = 0;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
-	if (sctp_sk(sk)->recvnxtinfo)
+	len = माप(पूर्णांक);
+	अगर (sctp_sk(sk)->recvnxtinfo)
 		val = 1;
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_pr_supported(struct sock *sk, int len,
-					char __user *optval,
-					int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_pr_supported(काष्ठा sock *sk, पूर्णांक len,
+					अक्षर __user *optval,
+					पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->peer.prsctp_capable
 				  : sctp_sk(sk)->ep->prsctp_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_default_prinfo(struct sock *sk, int len,
-					  char __user *optval,
-					  int __user *optlen)
-{
-	struct sctp_default_prinfo info;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_शेष_prinfo(काष्ठा sock *sk, पूर्णांक len,
+					  अक्षर __user *optval,
+					  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_शेष_prinfo info;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(info)) {
+	अगर (len < माप(info)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(info);
-	if (copy_from_user(&info, optval, len))
-		goto out;
+	len = माप(info);
+	अगर (copy_from_user(&info, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, info.pr_assoc_id);
-	if (!asoc && info.pr_assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && info.pr_assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (asoc) {
-		info.pr_policy = SCTP_PR_POLICY(asoc->default_flags);
-		info.pr_value = asoc->default_timetolive;
-	} else {
-		struct sctp_sock *sp = sctp_sk(sk);
+	अगर (asoc) अणु
+		info.pr_policy = SCTP_PR_POLICY(asoc->शेष_flags);
+		info.pr_value = asoc->शेष_समयtolive;
+	पूर्ण अन्यथा अणु
+		काष्ठा sctp_sock *sp = sctp_sk(sk);
 
-		info.pr_policy = SCTP_PR_POLICY(sp->default_flags);
-		info.pr_value = sp->default_timetolive;
-	}
+		info.pr_policy = SCTP_PR_POLICY(sp->शेष_flags);
+		info.pr_value = sp->शेष_समयtolive;
+	पूर्ण
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &info, len))
-		goto out;
-
-	retval = 0;
-
-out:
-	return retval;
-}
-
-static int sctp_getsockopt_pr_assocstatus(struct sock *sk, int len,
-					  char __user *optval,
-					  int __user *optlen)
-{
-	struct sctp_prstatus params;
-	struct sctp_association *asoc;
-	int policy;
-	int retval = -EINVAL;
-
-	if (len < sizeof(params))
-		goto out;
-
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len)) {
-		retval = -EFAULT;
-		goto out;
-	}
-
-	policy = params.sprstat_policy;
-	if (!policy || (policy & ~(SCTP_PR_SCTP_MASK | SCTP_PR_SCTP_ALL)) ||
-	    ((policy & SCTP_PR_SCTP_ALL) && (policy & SCTP_PR_SCTP_MASK)))
-		goto out;
-
-	asoc = sctp_id2assoc(sk, params.sprstat_assoc_id);
-	if (!asoc)
-		goto out;
-
-	if (policy == SCTP_PR_SCTP_ALL) {
-		params.sprstat_abandoned_unsent = 0;
-		params.sprstat_abandoned_sent = 0;
-		for (policy = 0; policy <= SCTP_PR_INDEX(MAX); policy++) {
-			params.sprstat_abandoned_unsent +=
-				asoc->abandoned_unsent[policy];
-			params.sprstat_abandoned_sent +=
-				asoc->abandoned_sent[policy];
-		}
-	} else {
-		params.sprstat_abandoned_unsent =
-			asoc->abandoned_unsent[__SCTP_PR_INDEX(policy)];
-		params.sprstat_abandoned_sent =
-			asoc->abandoned_sent[__SCTP_PR_INDEX(policy)];
-	}
-
-	if (put_user(len, optlen)) {
-		retval = -EFAULT;
-		goto out;
-	}
-
-	if (copy_to_user(optval, &params, len)) {
-		retval = -EFAULT;
-		goto out;
-	}
+	अगर (copy_to_user(optval, &info, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_pr_streamstatus(struct sock *sk, int len,
-					   char __user *optval,
-					   int __user *optlen)
-{
-	struct sctp_stream_out_ext *streamoute;
-	struct sctp_association *asoc;
-	struct sctp_prstatus params;
-	int retval = -EINVAL;
-	int policy;
+अटल पूर्णांक sctp_माला_लोockopt_pr_assocstatus(काष्ठा sock *sk, पूर्णांक len,
+					  अक्षर __user *optval,
+					  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_prstatus params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक policy;
+	पूर्णांक retval = -EINVAL;
 
-	if (len < sizeof(params))
-		goto out;
+	अगर (len < माप(params))
+		जाओ out;
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len)) {
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	policy = params.sprstat_policy;
-	if (!policy || (policy & ~(SCTP_PR_SCTP_MASK | SCTP_PR_SCTP_ALL)) ||
+	अगर (!policy || (policy & ~(SCTP_PR_SCTP_MASK | SCTP_PR_SCTP_ALL)) ||
 	    ((policy & SCTP_PR_SCTP_ALL) && (policy & SCTP_PR_SCTP_MASK)))
-		goto out;
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.sprstat_assoc_id);
-	if (!asoc || params.sprstat_sid >= asoc->stream.outcnt)
-		goto out;
+	अगर (!asoc)
+		जाओ out;
+
+	अगर (policy == SCTP_PR_SCTP_ALL) अणु
+		params.sprstat_abanकरोned_unsent = 0;
+		params.sprstat_abanकरोned_sent = 0;
+		क्रम (policy = 0; policy <= SCTP_PR_INDEX(MAX); policy++) अणु
+			params.sprstat_abanकरोned_unsent +=
+				asoc->abanकरोned_unsent[policy];
+			params.sprstat_abanकरोned_sent +=
+				asoc->abanकरोned_sent[policy];
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		params.sprstat_abanकरोned_unsent =
+			asoc->abanकरोned_unsent[__SCTP_PR_INDEX(policy)];
+		params.sprstat_abanकरोned_sent =
+			asoc->abanकरोned_sent[__SCTP_PR_INDEX(policy)];
+	पूर्ण
+
+	अगर (put_user(len, optlen)) अणु
+		retval = -EFAULT;
+		जाओ out;
+	पूर्ण
+
+	अगर (copy_to_user(optval, &params, len)) अणु
+		retval = -EFAULT;
+		जाओ out;
+	पूर्ण
+
+	retval = 0;
+
+out:
+	वापस retval;
+पूर्ण
+
+अटल पूर्णांक sctp_माला_लोockopt_pr_streamstatus(काष्ठा sock *sk, पूर्णांक len,
+					   अक्षर __user *optval,
+					   पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_stream_out_ext *streamoute;
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_prstatus params;
+	पूर्णांक retval = -EINVAL;
+	पूर्णांक policy;
+
+	अगर (len < माप(params))
+		जाओ out;
+
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len)) अणु
+		retval = -EFAULT;
+		जाओ out;
+	पूर्ण
+
+	policy = params.sprstat_policy;
+	अगर (!policy || (policy & ~(SCTP_PR_SCTP_MASK | SCTP_PR_SCTP_ALL)) ||
+	    ((policy & SCTP_PR_SCTP_ALL) && (policy & SCTP_PR_SCTP_MASK)))
+		जाओ out;
+
+	asoc = sctp_id2assoc(sk, params.sprstat_assoc_id);
+	अगर (!asoc || params.sprstat_sid >= asoc->stream.outcnt)
+		जाओ out;
 
 	streamoute = SCTP_SO(&asoc->stream, params.sprstat_sid)->ext;
-	if (!streamoute) {
+	अगर (!streamoute) अणु
 		/* Not allocated yet, means all stats are 0 */
-		params.sprstat_abandoned_unsent = 0;
-		params.sprstat_abandoned_sent = 0;
+		params.sprstat_abanकरोned_unsent = 0;
+		params.sprstat_abanकरोned_sent = 0;
 		retval = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (policy == SCTP_PR_SCTP_ALL) {
-		params.sprstat_abandoned_unsent = 0;
-		params.sprstat_abandoned_sent = 0;
-		for (policy = 0; policy <= SCTP_PR_INDEX(MAX); policy++) {
-			params.sprstat_abandoned_unsent +=
-				streamoute->abandoned_unsent[policy];
-			params.sprstat_abandoned_sent +=
-				streamoute->abandoned_sent[policy];
-		}
-	} else {
-		params.sprstat_abandoned_unsent =
-			streamoute->abandoned_unsent[__SCTP_PR_INDEX(policy)];
-		params.sprstat_abandoned_sent =
-			streamoute->abandoned_sent[__SCTP_PR_INDEX(policy)];
-	}
+	अगर (policy == SCTP_PR_SCTP_ALL) अणु
+		params.sprstat_abanकरोned_unsent = 0;
+		params.sprstat_abanकरोned_sent = 0;
+		क्रम (policy = 0; policy <= SCTP_PR_INDEX(MAX); policy++) अणु
+			params.sprstat_abanकरोned_unsent +=
+				streamoute->abanकरोned_unsent[policy];
+			params.sprstat_abanकरोned_sent +=
+				streamoute->abanकरोned_sent[policy];
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		params.sprstat_abanकरोned_unsent =
+			streamoute->abanकरोned_unsent[__SCTP_PR_INDEX(policy)];
+		params.sprstat_abanकरोned_sent =
+			streamoute->abanकरोned_sent[__SCTP_PR_INDEX(policy)];
+	पूर्ण
 
-	if (put_user(len, optlen) || copy_to_user(optval, &params, len)) {
+	अगर (put_user(len, optlen) || copy_to_user(optval, &params, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_reconfig_supported(struct sock *sk, int len,
-					      char __user *optval,
-					      int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_reconfig_supported(काष्ठा sock *sk, पूर्णांक len,
+					      अक्षर __user *optval,
+					      पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->peer.reconf_capable
 				  : sctp_sk(sk)->ep->reconf_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_enable_strreset(struct sock *sk, int len,
-					   char __user *optval,
-					   int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_enable_strreset(काष्ठा sock *sk, पूर्णांक len,
+					   अक्षर __user *optval,
+					   पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->strreset_enable
 				  : sctp_sk(sk)->ep->strreset_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_scheduler(struct sock *sk, int len,
-				     char __user *optval,
-				     int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_scheduler(काष्ठा sock *sk, पूर्णांक len,
+				     अक्षर __user *optval,
+				     पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? sctp_sched_get_sched(asoc)
-				  : sctp_sk(sk)->default_ss;
+				  : sctp_sk(sk)->शेष_ss;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_scheduler_value(struct sock *sk, int len,
-					   char __user *optval,
-					   int __user *optlen)
-{
-	struct sctp_stream_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_scheduler_value(काष्ठा sock *sk, पूर्णांक len,
+					   अक्षर __user *optval,
+					   पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_stream_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc) {
+	अगर (!asoc) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	retval = sctp_sched_get_value(asoc, params.stream_id,
 				      &params.stream_value);
-	if (retval)
-		goto out;
+	अगर (retval)
+		जाओ out;
 
-	if (put_user(len, optlen)) {
+	अगर (put_user(len, optlen)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_to_user(optval, &params, len)) {
+	अगर (copy_to_user(optval, &params, len)) अणु
 		retval = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_interleaving_supported(struct sock *sk, int len,
-						  char __user *optval,
-						  int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_पूर्णांकerleaving_supported(काष्ठा sock *sk, पूर्णांक len,
+						  अक्षर __user *optval,
+						  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	params.assoc_value = asoc ? asoc->peer.intl_capable
-				  : sctp_sk(sk)->ep->intl_enable;
+	params.assoc_value = asoc ? asoc->peer.पूर्णांकl_capable
+				  : sctp_sk(sk)->ep->पूर्णांकl_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_reuse_port(struct sock *sk, int len,
-				      char __user *optval,
-				      int __user *optlen)
-{
-	int val;
+अटल पूर्णांक sctp_माला_लोockopt_reuse_port(काष्ठा sock *sk, पूर्णांक len,
+				      अक्षर __user *optval,
+				      पूर्णांक __user *optlen)
+अणु
+	पूर्णांक val;
 
-	if (len < sizeof(int))
-		return -EINVAL;
+	अगर (len < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	len = sizeof(int);
+	len = माप(पूर्णांक);
 	val = sctp_sk(sk)->reuse;
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_event(struct sock *sk, int len, char __user *optval,
-				 int __user *optlen)
-{
-	struct sctp_association *asoc;
-	struct sctp_event param;
+अटल पूर्णांक sctp_माला_लोockopt_event(काष्ठा sock *sk, पूर्णांक len, अक्षर __user *optval,
+				 पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_event param;
 	__u16 subscribe;
 
-	if (len < sizeof(param))
-		return -EINVAL;
+	अगर (len < माप(param))
+		वापस -EINVAL;
 
-	len = sizeof(param);
-	if (copy_from_user(&param, optval, len))
-		return -EFAULT;
+	len = माप(param);
+	अगर (copy_from_user(&param, optval, len))
+		वापस -EFAULT;
 
-	if (param.se_type < SCTP_SN_TYPE_BASE ||
+	अगर (param.se_type < SCTP_SN_TYPE_BASE ||
 	    param.se_type > SCTP_SN_TYPE_MAX)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	asoc = sctp_id2assoc(sk, param.se_assoc_id);
-	if (!asoc && param.se_assoc_id != SCTP_FUTURE_ASSOC &&
+	अगर (!asoc && param.se_assoc_id != SCTP_FUTURE_ASSOC &&
 	    sctp_style(sk, UDP))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	subscribe = asoc ? asoc->subscribe : sctp_sk(sk)->subscribe;
 	param.se_on = sctp_ulpevent_type_enabled(subscribe, param.se_type);
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	if (copy_to_user(optval, &param, len))
-		return -EFAULT;
+	अगर (copy_to_user(optval, &param, len))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt_asconf_supported(struct sock *sk, int len,
-					    char __user *optval,
-					    int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_asconf_supported(काष्ठा sock *sk, पूर्णांक len,
+					    अक्षर __user *optval,
+					    पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->peer.asconf_capable
 				  : sctp_sk(sk)->ep->asconf_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_auth_supported(struct sock *sk, int len,
-					  char __user *optval,
-					  int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_auth_supported(काष्ठा sock *sk, पूर्णांक len,
+					  अक्षर __user *optval,
+					  पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->peer.auth_capable
 				  : sctp_sk(sk)->ep->auth_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_ecn_supported(struct sock *sk, int len,
-					 char __user *optval,
-					 int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_ecn_supported(काष्ठा sock *sk, पूर्णांक len,
+					 अक्षर __user *optval,
+					 पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->peer.ecn_capable
 				  : sctp_sk(sk)->ep->ecn_enable;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_pf_expose(struct sock *sk, int len,
-				     char __user *optval,
-				     int __user *optlen)
-{
-	struct sctp_assoc_value params;
-	struct sctp_association *asoc;
-	int retval = -EFAULT;
+अटल पूर्णांक sctp_माला_लोockopt_pf_expose(काष्ठा sock *sk, पूर्णांक len,
+				     अक्षर __user *optval,
+				     पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_assoc_value params;
+	काष्ठा sctp_association *asoc;
+	पूर्णांक retval = -EFAULT;
 
-	if (len < sizeof(params)) {
+	अगर (len < माप(params)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	len = sizeof(params);
-	if (copy_from_user(&params, optval, len))
-		goto out;
+	len = माप(params);
+	अगर (copy_from_user(&params, optval, len))
+		जाओ out;
 
 	asoc = sctp_id2assoc(sk, params.assoc_id);
-	if (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && params.assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		retval = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	params.assoc_value = asoc ? asoc->pf_expose
 				  : sctp_sk(sk)->pf_expose;
 
-	if (put_user(len, optlen))
-		goto out;
+	अगर (put_user(len, optlen))
+		जाओ out;
 
-	if (copy_to_user(optval, &params, len))
-		goto out;
+	अगर (copy_to_user(optval, &params, len))
+		जाओ out;
 
 	retval = 0;
 
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_getsockopt_encap_port(struct sock *sk, int len,
-				      char __user *optval, int __user *optlen)
-{
-	struct sctp_association *asoc;
-	struct sctp_udpencaps encap;
-	struct sctp_transport *t;
+अटल पूर्णांक sctp_माला_लोockopt_encap_port(काष्ठा sock *sk, पूर्णांक len,
+				      अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा sctp_association *asoc;
+	काष्ठा sctp_udpencaps encap;
+	काष्ठा sctp_transport *t;
 	__be16 encap_port;
 
-	if (len < sizeof(encap))
-		return -EINVAL;
+	अगर (len < माप(encap))
+		वापस -EINVAL;
 
-	len = sizeof(encap);
-	if (copy_from_user(&encap, optval, len))
-		return -EFAULT;
+	len = माप(encap);
+	अगर (copy_from_user(&encap, optval, len))
+		वापस -EFAULT;
 
-	/* If an address other than INADDR_ANY is specified, and
+	/* If an address other than INADDR_ANY is specअगरied, and
 	 * no transport is found, then the request is invalid.
 	 */
-	if (!sctp_is_any(sk, (union sctp_addr *)&encap.sue_address)) {
+	अगर (!sctp_is_any(sk, (जोड़ sctp_addr *)&encap.sue_address)) अणु
 		t = sctp_addr_id2transport(sk, &encap.sue_address,
 					   encap.sue_assoc_id);
-		if (!t) {
+		अगर (!t) अणु
 			pr_debug("%s: failed no transport\n", __func__);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		encap_port = t->encap_port;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Get association, if assoc_id != SCTP_FUTURE_ASSOC and the
+	/* Get association, अगर assoc_id != SCTP_FUTURE_ASSOC and the
 	 * socket is a one to many style socket, and an association
 	 * was not found, then the id was invalid.
 	 */
 	asoc = sctp_id2assoc(sk, encap.sue_assoc_id);
-	if (!asoc && encap.sue_assoc_id != SCTP_FUTURE_ASSOC &&
-	    sctp_style(sk, UDP)) {
+	अगर (!asoc && encap.sue_assoc_id != SCTP_FUTURE_ASSOC &&
+	    sctp_style(sk, UDP)) अणु
 		pr_debug("%s: failed no association\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (asoc) {
+	अगर (asoc) अणु
 		encap_port = asoc->encap_port;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	encap_port = sctp_sk(sk)->encap_port;
 
 out:
-	encap.sue_port = (__force uint16_t)encap_port;
-	if (copy_to_user(optval, &encap, len))
-		return -EFAULT;
+	encap.sue_port = (__क्रमce uपूर्णांक16_t)encap_port;
+	अगर (copy_to_user(optval, &encap, len))
+		वापस -EFAULT;
 
-	if (put_user(len, optlen))
-		return -EFAULT;
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sctp_getsockopt(struct sock *sk, int level, int optname,
-			   char __user *optval, int __user *optlen)
-{
-	int retval = 0;
-	int len;
+अटल पूर्णांक sctp_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			   अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक retval = 0;
+	पूर्णांक len;
 
 	pr_debug("%s: sk:%p, optname:%d\n", __func__, sk, optname);
 
 	/* I can hardly begin to describe how wrong this is.  This is
 	 * so broken as to be worse than useless.  The API draft
 	 * REALLY is NOT helpful here...  I am not convinced that the
-	 * semantics of getsockopt() with a level OTHER THAN SOL_SCTP
+	 * semantics of माला_लोockopt() with a level OTHER THAN SOL_SCTP
 	 * are at all well-founded.
 	 */
-	if (level != SOL_SCTP) {
-		struct sctp_af *af = sctp_sk(sk)->pf->af;
+	अगर (level != SOL_SCTP) अणु
+		काष्ठा sctp_af *af = sctp_sk(sk)->pf->af;
 
-		retval = af->getsockopt(sk, level, optname, optval, optlen);
-		return retval;
-	}
+		retval = af->माला_लोockopt(sk, level, optname, optval, optlen);
+		वापस retval;
+	पूर्ण
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
-	if (len < 0)
-		return -EINVAL;
+	अगर (len < 0)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case SCTP_STATUS:
-		retval = sctp_getsockopt_sctp_status(sk, len, optval, optlen);
-		break;
-	case SCTP_DISABLE_FRAGMENTS:
-		retval = sctp_getsockopt_disable_fragments(sk, len, optval,
+	चयन (optname) अणु
+	हाल SCTP_STATUS:
+		retval = sctp_माला_लोockopt_sctp_status(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_DISABLE_FRAGMENTS:
+		retval = sctp_माला_लोockopt_disable_fragments(sk, len, optval,
 							   optlen);
-		break;
-	case SCTP_EVENTS:
-		retval = sctp_getsockopt_events(sk, len, optval, optlen);
-		break;
-	case SCTP_AUTOCLOSE:
-		retval = sctp_getsockopt_autoclose(sk, len, optval, optlen);
-		break;
-	case SCTP_SOCKOPT_PEELOFF:
-		retval = sctp_getsockopt_peeloff(sk, len, optval, optlen);
-		break;
-	case SCTP_SOCKOPT_PEELOFF_FLAGS:
-		retval = sctp_getsockopt_peeloff_flags(sk, len, optval, optlen);
-		break;
-	case SCTP_PEER_ADDR_PARAMS:
-		retval = sctp_getsockopt_peer_addr_params(sk, len, optval,
+		अवरोध;
+	हाल SCTP_EVENTS:
+		retval = sctp_माला_लोockopt_events(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_AUTOCLOSE:
+		retval = sctp_माला_लोockopt_स्वतःबंद(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_SOCKOPT_PEELOFF:
+		retval = sctp_माला_लोockopt_peeloff(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_SOCKOPT_PEELOFF_FLAGS:
+		retval = sctp_माला_लोockopt_peeloff_flags(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_PEER_ADDR_PARAMS:
+		retval = sctp_माला_लोockopt_peer_addr_params(sk, len, optval,
 							  optlen);
-		break;
-	case SCTP_DELAYED_SACK:
-		retval = sctp_getsockopt_delayed_ack(sk, len, optval,
+		अवरोध;
+	हाल SCTP_DELAYED_SACK:
+		retval = sctp_माला_लोockopt_delayed_ack(sk, len, optval,
 							  optlen);
-		break;
-	case SCTP_INITMSG:
-		retval = sctp_getsockopt_initmsg(sk, len, optval, optlen);
-		break;
-	case SCTP_GET_PEER_ADDRS:
-		retval = sctp_getsockopt_peer_addrs(sk, len, optval,
+		अवरोध;
+	हाल SCTP_INITMSG:
+		retval = sctp_माला_लोockopt_iniपंचांगsg(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_GET_PEER_ADDRS:
+		retval = sctp_माला_लोockopt_peer_addrs(sk, len, optval,
 						    optlen);
-		break;
-	case SCTP_GET_LOCAL_ADDRS:
-		retval = sctp_getsockopt_local_addrs(sk, len, optval,
+		अवरोध;
+	हाल SCTP_GET_LOCAL_ADDRS:
+		retval = sctp_माला_लोockopt_local_addrs(sk, len, optval,
 						     optlen);
-		break;
-	case SCTP_SOCKOPT_CONNECTX3:
-		retval = sctp_getsockopt_connectx3(sk, len, optval, optlen);
-		break;
-	case SCTP_DEFAULT_SEND_PARAM:
-		retval = sctp_getsockopt_default_send_param(sk, len,
+		अवरोध;
+	हाल SCTP_SOCKOPT_CONNECTX3:
+		retval = sctp_माला_लोockopt_connectx3(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_DEFAULT_SEND_PARAM:
+		retval = sctp_माला_लोockopt_शेष_send_param(sk, len,
 							    optval, optlen);
-		break;
-	case SCTP_DEFAULT_SNDINFO:
-		retval = sctp_getsockopt_default_sndinfo(sk, len,
+		अवरोध;
+	हाल SCTP_DEFAULT_SNDINFO:
+		retval = sctp_माला_लोockopt_शेष_sndinfo(sk, len,
 							 optval, optlen);
-		break;
-	case SCTP_PRIMARY_ADDR:
-		retval = sctp_getsockopt_primary_addr(sk, len, optval, optlen);
-		break;
-	case SCTP_NODELAY:
-		retval = sctp_getsockopt_nodelay(sk, len, optval, optlen);
-		break;
-	case SCTP_RTOINFO:
-		retval = sctp_getsockopt_rtoinfo(sk, len, optval, optlen);
-		break;
-	case SCTP_ASSOCINFO:
-		retval = sctp_getsockopt_associnfo(sk, len, optval, optlen);
-		break;
-	case SCTP_I_WANT_MAPPED_V4_ADDR:
-		retval = sctp_getsockopt_mappedv4(sk, len, optval, optlen);
-		break;
-	case SCTP_MAXSEG:
-		retval = sctp_getsockopt_maxseg(sk, len, optval, optlen);
-		break;
-	case SCTP_GET_PEER_ADDR_INFO:
-		retval = sctp_getsockopt_peer_addr_info(sk, len, optval,
+		अवरोध;
+	हाल SCTP_PRIMARY_ADDR:
+		retval = sctp_माला_लोockopt_primary_addr(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_NODELAY:
+		retval = sctp_माला_लोockopt_nodelay(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_RTOINFO:
+		retval = sctp_माला_लोockopt_rtoinfo(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_ASSOCINFO:
+		retval = sctp_माला_लोockopt_associnfo(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_I_WANT_MAPPED_V4_ADDR:
+		retval = sctp_माला_लोockopt_mappedv4(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_MAXSEG:
+		retval = sctp_माला_लोockopt_maxseg(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_GET_PEER_ADDR_INFO:
+		retval = sctp_माला_लोockopt_peer_addr_info(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_ADAPTATION_LAYER:
-		retval = sctp_getsockopt_adaptation_layer(sk, len, optval,
+		अवरोध;
+	हाल SCTP_ADAPTATION_LAYER:
+		retval = sctp_माला_लोockopt_adaptation_layer(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_CONTEXT:
-		retval = sctp_getsockopt_context(sk, len, optval, optlen);
-		break;
-	case SCTP_FRAGMENT_INTERLEAVE:
-		retval = sctp_getsockopt_fragment_interleave(sk, len, optval,
+		अवरोध;
+	हाल SCTP_CONTEXT:
+		retval = sctp_माला_लोockopt_context(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_FRAGMENT_INTERLEAVE:
+		retval = sctp_माला_लोockopt_fragment_पूर्णांकerleave(sk, len, optval,
 							     optlen);
-		break;
-	case SCTP_PARTIAL_DELIVERY_POINT:
-		retval = sctp_getsockopt_partial_delivery_point(sk, len, optval,
+		अवरोध;
+	हाल SCTP_PARTIAL_DELIVERY_POINT:
+		retval = sctp_माला_लोockopt_partial_delivery_poपूर्णांक(sk, len, optval,
 								optlen);
-		break;
-	case SCTP_MAX_BURST:
-		retval = sctp_getsockopt_maxburst(sk, len, optval, optlen);
-		break;
-	case SCTP_AUTH_KEY:
-	case SCTP_AUTH_CHUNK:
-	case SCTP_AUTH_DELETE_KEY:
-	case SCTP_AUTH_DEACTIVATE_KEY:
+		अवरोध;
+	हाल SCTP_MAX_BURST:
+		retval = sctp_माला_लोockopt_maxburst(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_AUTH_KEY:
+	हाल SCTP_AUTH_CHUNK:
+	हाल SCTP_AUTH_DELETE_KEY:
+	हाल SCTP_AUTH_DEACTIVATE_KEY:
 		retval = -EOPNOTSUPP;
-		break;
-	case SCTP_HMAC_IDENT:
-		retval = sctp_getsockopt_hmac_ident(sk, len, optval, optlen);
-		break;
-	case SCTP_AUTH_ACTIVE_KEY:
-		retval = sctp_getsockopt_active_key(sk, len, optval, optlen);
-		break;
-	case SCTP_PEER_AUTH_CHUNKS:
-		retval = sctp_getsockopt_peer_auth_chunks(sk, len, optval,
+		अवरोध;
+	हाल SCTP_HMAC_IDENT:
+		retval = sctp_माला_लोockopt_hmac_ident(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_AUTH_ACTIVE_KEY:
+		retval = sctp_माला_लोockopt_active_key(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_PEER_AUTH_CHUNKS:
+		retval = sctp_माला_लोockopt_peer_auth_chunks(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_LOCAL_AUTH_CHUNKS:
-		retval = sctp_getsockopt_local_auth_chunks(sk, len, optval,
+		अवरोध;
+	हाल SCTP_LOCAL_AUTH_CHUNKS:
+		retval = sctp_माला_लोockopt_local_auth_chunks(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_GET_ASSOC_NUMBER:
-		retval = sctp_getsockopt_assoc_number(sk, len, optval, optlen);
-		break;
-	case SCTP_GET_ASSOC_ID_LIST:
-		retval = sctp_getsockopt_assoc_ids(sk, len, optval, optlen);
-		break;
-	case SCTP_AUTO_ASCONF:
-		retval = sctp_getsockopt_auto_asconf(sk, len, optval, optlen);
-		break;
-	case SCTP_PEER_ADDR_THLDS:
-		retval = sctp_getsockopt_paddr_thresholds(sk, optval, len,
+		अवरोध;
+	हाल SCTP_GET_ASSOC_NUMBER:
+		retval = sctp_माला_लोockopt_assoc_number(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_GET_ASSOC_ID_LIST:
+		retval = sctp_माला_लोockopt_assoc_ids(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_AUTO_ASCONF:
+		retval = sctp_माला_लोockopt_स्वतः_asconf(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_PEER_ADDR_THLDS:
+		retval = sctp_माला_लोockopt_paddr_thresholds(sk, optval, len,
 							  optlen, false);
-		break;
-	case SCTP_PEER_ADDR_THLDS_V2:
-		retval = sctp_getsockopt_paddr_thresholds(sk, optval, len,
+		अवरोध;
+	हाल SCTP_PEER_ADDR_THLDS_V2:
+		retval = sctp_माला_लोockopt_paddr_thresholds(sk, optval, len,
 							  optlen, true);
-		break;
-	case SCTP_GET_ASSOC_STATS:
-		retval = sctp_getsockopt_assoc_stats(sk, len, optval, optlen);
-		break;
-	case SCTP_RECVRCVINFO:
-		retval = sctp_getsockopt_recvrcvinfo(sk, len, optval, optlen);
-		break;
-	case SCTP_RECVNXTINFO:
-		retval = sctp_getsockopt_recvnxtinfo(sk, len, optval, optlen);
-		break;
-	case SCTP_PR_SUPPORTED:
-		retval = sctp_getsockopt_pr_supported(sk, len, optval, optlen);
-		break;
-	case SCTP_DEFAULT_PRINFO:
-		retval = sctp_getsockopt_default_prinfo(sk, len, optval,
+		अवरोध;
+	हाल SCTP_GET_ASSOC_STATS:
+		retval = sctp_माला_लोockopt_assoc_stats(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_RECVRCVINFO:
+		retval = sctp_माला_लोockopt_recvrcvinfo(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_RECVNXTINFO:
+		retval = sctp_माला_लोockopt_recvnxtinfo(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_PR_SUPPORTED:
+		retval = sctp_माला_लोockopt_pr_supported(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_DEFAULT_PRINFO:
+		retval = sctp_माला_लोockopt_शेष_prinfo(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_PR_ASSOC_STATUS:
-		retval = sctp_getsockopt_pr_assocstatus(sk, len, optval,
+		अवरोध;
+	हाल SCTP_PR_ASSOC_STATUS:
+		retval = sctp_माला_लोockopt_pr_assocstatus(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_PR_STREAM_STATUS:
-		retval = sctp_getsockopt_pr_streamstatus(sk, len, optval,
+		अवरोध;
+	हाल SCTP_PR_STREAM_STATUS:
+		retval = sctp_माला_लोockopt_pr_streamstatus(sk, len, optval,
 							 optlen);
-		break;
-	case SCTP_RECONFIG_SUPPORTED:
-		retval = sctp_getsockopt_reconfig_supported(sk, len, optval,
+		अवरोध;
+	हाल SCTP_RECONFIG_SUPPORTED:
+		retval = sctp_माला_लोockopt_reconfig_supported(sk, len, optval,
 							    optlen);
-		break;
-	case SCTP_ENABLE_STREAM_RESET:
-		retval = sctp_getsockopt_enable_strreset(sk, len, optval,
+		अवरोध;
+	हाल SCTP_ENABLE_STREAM_RESET:
+		retval = sctp_माला_लोockopt_enable_strreset(sk, len, optval,
 							 optlen);
-		break;
-	case SCTP_STREAM_SCHEDULER:
-		retval = sctp_getsockopt_scheduler(sk, len, optval,
+		अवरोध;
+	हाल SCTP_STREAM_SCHEDULER:
+		retval = sctp_माला_लोockopt_scheduler(sk, len, optval,
 						   optlen);
-		break;
-	case SCTP_STREAM_SCHEDULER_VALUE:
-		retval = sctp_getsockopt_scheduler_value(sk, len, optval,
+		अवरोध;
+	हाल SCTP_STREAM_SCHEDULER_VALUE:
+		retval = sctp_माला_लोockopt_scheduler_value(sk, len, optval,
 							 optlen);
-		break;
-	case SCTP_INTERLEAVING_SUPPORTED:
-		retval = sctp_getsockopt_interleaving_supported(sk, len, optval,
+		अवरोध;
+	हाल SCTP_INTERLEAVING_SUPPORTED:
+		retval = sctp_माला_लोockopt_पूर्णांकerleaving_supported(sk, len, optval,
 								optlen);
-		break;
-	case SCTP_REUSE_PORT:
-		retval = sctp_getsockopt_reuse_port(sk, len, optval, optlen);
-		break;
-	case SCTP_EVENT:
-		retval = sctp_getsockopt_event(sk, len, optval, optlen);
-		break;
-	case SCTP_ASCONF_SUPPORTED:
-		retval = sctp_getsockopt_asconf_supported(sk, len, optval,
+		अवरोध;
+	हाल SCTP_REUSE_PORT:
+		retval = sctp_माला_लोockopt_reuse_port(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_EVENT:
+		retval = sctp_माला_लोockopt_event(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_ASCONF_SUPPORTED:
+		retval = sctp_माला_लोockopt_asconf_supported(sk, len, optval,
 							  optlen);
-		break;
-	case SCTP_AUTH_SUPPORTED:
-		retval = sctp_getsockopt_auth_supported(sk, len, optval,
+		अवरोध;
+	हाल SCTP_AUTH_SUPPORTED:
+		retval = sctp_माला_लोockopt_auth_supported(sk, len, optval,
 							optlen);
-		break;
-	case SCTP_ECN_SUPPORTED:
-		retval = sctp_getsockopt_ecn_supported(sk, len, optval, optlen);
-		break;
-	case SCTP_EXPOSE_POTENTIALLY_FAILED_STATE:
-		retval = sctp_getsockopt_pf_expose(sk, len, optval, optlen);
-		break;
-	case SCTP_REMOTE_UDP_ENCAPS_PORT:
-		retval = sctp_getsockopt_encap_port(sk, len, optval, optlen);
-		break;
-	default:
+		अवरोध;
+	हाल SCTP_ECN_SUPPORTED:
+		retval = sctp_माला_लोockopt_ecn_supported(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_EXPOSE_POTENTIALLY_FAILED_STATE:
+		retval = sctp_माला_लोockopt_pf_expose(sk, len, optval, optlen);
+		अवरोध;
+	हाल SCTP_REMOTE_UDP_ENCAPS_PORT:
+		retval = sctp_माला_लोockopt_encap_port(sk, len, optval, optlen);
+		अवरोध;
+	शेष:
 		retval = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sctp_hash(struct sock *sk)
-{
+अटल पूर्णांक sctp_hash(काष्ठा sock *sk)
+अणु
 	/* STUB */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sctp_unhash(struct sock *sk)
-{
+अटल व्योम sctp_unhash(काष्ठा sock *sk)
+अणु
 	/* STUB */
-}
+पूर्ण
 
-/* Check if port is acceptable.  Possibly find first available port.
+/* Check अगर port is acceptable.  Possibly find first available port.
  *
  * The port hash table (contained in the 'global' SCTP protocol storage
- * returned by struct sctp_protocol *sctp_get_protocol()). The hash
+ * वापसed by काष्ठा sctp_protocol *sctp_get_protocol()). The hash
  * table is an array of 4096 lists (sctp_bind_hashbucket). Each
  * list (the list number is the port number hashed out, so as you
  * would expect from a hash function, all the ports in a given list have
  * such a number that hashes out to the same list number; you were
  * expecting that, right?); so each list has a set of ports, with a
- * link to the socket (struct sock) that uses it, the port number and
+ * link to the socket (काष्ठा sock) that uses it, the port number and
  * a fastreuse flag (FIXME: NPI ipg).
  */
-static struct sctp_bind_bucket *sctp_bucket_create(
-	struct sctp_bind_hashbucket *head, struct net *, unsigned short snum);
+अटल काष्ठा sctp_bind_bucket *sctp_bucket_create(
+	काष्ठा sctp_bind_hashbucket *head, काष्ठा net *, अचिन्हित लघु snum);
 
-static int sctp_get_port_local(struct sock *sk, union sctp_addr *addr)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
+अटल पूर्णांक sctp_get_port_local(काष्ठा sock *sk, जोड़ sctp_addr *addr)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 	bool reuse = (sk->sk_reuse || sp->reuse);
-	struct sctp_bind_hashbucket *head; /* hash list */
-	struct net *net = sock_net(sk);
+	काष्ठा sctp_bind_hashbucket *head; /* hash list */
+	काष्ठा net *net = sock_net(sk);
 	kuid_t uid = sock_i_uid(sk);
-	struct sctp_bind_bucket *pp;
-	unsigned short snum;
-	int ret;
+	काष्ठा sctp_bind_bucket *pp;
+	अचिन्हित लघु snum;
+	पूर्णांक ret;
 
 	snum = ntohs(addr->v4.sin_port);
 
 	pr_debug("%s: begins, snum:%d\n", __func__, snum);
 
-	if (snum == 0) {
-		/* Search for an available port. */
-		int low, high, remaining, index;
-		unsigned int rover;
+	अगर (snum == 0) अणु
+		/* Search क्रम an available port. */
+		पूर्णांक low, high, reमुख्यing, index;
+		अचिन्हित पूर्णांक rover;
 
 		inet_get_local_port_range(net, &low, &high);
-		remaining = (high - low) + 1;
-		rover = prandom_u32() % remaining + low;
+		reमुख्यing = (high - low) + 1;
+		rover = pअक्रमom_u32() % reमुख्यing + low;
 
-		do {
+		करो अणु
 			rover++;
-			if ((rover < low) || (rover > high))
+			अगर ((rover < low) || (rover > high))
 				rover = low;
-			if (inet_is_local_reserved_port(net, rover))
-				continue;
+			अगर (inet_is_local_reserved_port(net, rover))
+				जारी;
 			index = sctp_phashfn(net, rover);
 			head = &sctp_port_hashtable[index];
 			spin_lock_bh(&head->lock);
-			sctp_for_each_hentry(pp, &head->chain)
-				if ((pp->port == rover) &&
+			sctp_क्रम_each_hentry(pp, &head->chain)
+				अगर ((pp->port == rover) &&
 				    net_eq(net, pp->net))
-					goto next;
-			break;
+					जाओ next;
+			अवरोध;
 		next:
 			spin_unlock_bh(&head->lock);
 			cond_resched();
-		} while (--remaining > 0);
+		पूर्ण जबतक (--reमुख्यing > 0);
 
 		/* Exhausted local port range during search? */
 		ret = 1;
-		if (remaining <= 0)
-			return ret;
+		अगर (reमुख्यing <= 0)
+			वापस ret;
 
 		/* OK, here is the one we will use.  HEAD (the port
-		 * hash table list entry) is non-NULL and we hold it's
+		 * hash table list entry) is non-शून्य and we hold it's
 		 * mutex.
 		 */
 		snum = rover;
-	} else {
-		/* We are given an specific port number; we verify
+	पूर्ण अन्यथा अणु
+		/* We are given an specअगरic port number; we verअगरy
 		 * that it is not being used. If it is used, we will
 		 * exahust the search in the hash list corresponding
 		 * to the port number (snum) - we detect that with the
-		 * port iterator, pp being NULL.
+		 * port iterator, pp being शून्य.
 		 */
 		head = &sctp_port_hashtable[sctp_phashfn(net, snum)];
 		spin_lock_bh(&head->lock);
-		sctp_for_each_hentry(pp, &head->chain) {
-			if ((pp->port == snum) && net_eq(pp->net, net))
-				goto pp_found;
-		}
-	}
-	pp = NULL;
-	goto pp_not_found;
+		sctp_क्रम_each_hentry(pp, &head->chain) अणु
+			अगर ((pp->port == snum) && net_eq(pp->net, net))
+				जाओ pp_found;
+		पूर्ण
+	पूर्ण
+	pp = शून्य;
+	जाओ pp_not_found;
 pp_found:
-	if (!hlist_empty(&pp->owner)) {
+	अगर (!hlist_empty(&pp->owner)) अणु
 		/* We had a port hash table hit - there is an
-		 * available port (pp != NULL) and it is being
+		 * available port (pp != शून्य) and it is being
 		 * used by other socket (pp->owner not empty); that other
 		 * socket is going to be sk2.
 		 */
-		struct sock *sk2;
+		काष्ठा sock *sk2;
 
 		pr_debug("%s: found a possible match\n", __func__);
 
-		if ((pp->fastreuse && reuse &&
+		अगर ((pp->fastreuse && reuse &&
 		     sk->sk_state != SCTP_SS_LISTENING) ||
 		    (pp->fastreuseport && sk->sk_reuseport &&
 		     uid_eq(pp->fastuid, uid)))
-			goto success;
+			जाओ success;
 
 		/* Run through the list of sockets bound to the port
-		 * (pp->port) [via the pointers bind_next and
-		 * bind_pprev in the struct sock *sk2 (pp->sk)]. On each one,
-		 * we get the endpoint they describe and run through
-		 * the endpoint's list of IP (v4 or v6) addresses,
+		 * (pp->port) [via the poपूर्णांकers bind_next and
+		 * bind_pprev in the काष्ठा sock *sk2 (pp->sk)]. On each one,
+		 * we get the endpoपूर्णांक they describe and run through
+		 * the endpoपूर्णांक's list of IP (v4 or v6) addresses,
 		 * comparing each of the addresses with the address of
 		 * the socket sk. If we find a match, then that means
-		 * that this port/socket (sk) combination are already
-		 * in an endpoint.
+		 * that this port/socket (sk) combination are alपढ़ोy
+		 * in an endpoपूर्णांक.
 		 */
-		sk_for_each_bound(sk2, &pp->owner) {
-			struct sctp_sock *sp2 = sctp_sk(sk2);
-			struct sctp_endpoint *ep2 = sp2->ep;
+		sk_क्रम_each_bound(sk2, &pp->owner) अणु
+			काष्ठा sctp_sock *sp2 = sctp_sk(sk2);
+			काष्ठा sctp_endpoपूर्णांक *ep2 = sp2->ep;
 
-			if (sk == sk2 ||
+			अगर (sk == sk2 ||
 			    (reuse && (sk2->sk_reuse || sp2->reuse) &&
 			     sk2->sk_state != SCTP_SS_LISTENING) ||
 			    (sk->sk_reuseport && sk2->sk_reuseport &&
 			     uid_eq(uid, sock_i_uid(sk2))))
-				continue;
+				जारी;
 
-			if (sctp_bind_addr_conflict(&ep2->base.bind_addr,
-						    addr, sp2, sp)) {
+			अगर (sctp_bind_addr_conflict(&ep2->base.bind_addr,
+						    addr, sp2, sp)) अणु
 				ret = 1;
-				goto fail_unlock;
-			}
-		}
+				जाओ fail_unlock;
+			पूर्ण
+		पूर्ण
 
 		pr_debug("%s: found a match\n", __func__);
-	}
+	पूर्ण
 pp_not_found:
 	/* If there was a hash table miss, create a new port.  */
 	ret = 1;
-	if (!pp && !(pp = sctp_bucket_create(head, net, snum)))
-		goto fail_unlock;
+	अगर (!pp && !(pp = sctp_bucket_create(head, net, snum)))
+		जाओ fail_unlock;
 
-	/* In either case (hit or miss), make sure fastreuse is 1 only
-	 * if sk->sk_reuse is too (that is, if the caller requested
+	/* In either हाल (hit or miss), make sure fastreuse is 1 only
+	 * अगर sk->sk_reuse is too (that is, अगर the caller requested
 	 * SO_REUSEADDR on this socket -sk-).
 	 */
-	if (hlist_empty(&pp->owner)) {
-		if (reuse && sk->sk_state != SCTP_SS_LISTENING)
+	अगर (hlist_empty(&pp->owner)) अणु
+		अगर (reuse && sk->sk_state != SCTP_SS_LISTENING)
 			pp->fastreuse = 1;
-		else
+		अन्यथा
 			pp->fastreuse = 0;
 
-		if (sk->sk_reuseport) {
+		अगर (sk->sk_reuseport) अणु
 			pp->fastreuseport = 1;
 			pp->fastuid = uid;
-		} else {
+		पूर्ण अन्यथा अणु
 			pp->fastreuseport = 0;
-		}
-	} else {
-		if (pp->fastreuse &&
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (pp->fastreuse &&
 		    (!reuse || sk->sk_state == SCTP_SS_LISTENING))
 			pp->fastreuse = 0;
 
-		if (pp->fastreuseport &&
+		अगर (pp->fastreuseport &&
 		    (!sk->sk_reuseport || !uid_eq(pp->fastuid, uid)))
 			pp->fastreuseport = 0;
-	}
+	पूर्ण
 
 	/* We are set, so fill up all the data in the hash table
-	 * entry, tie the socket list information with the rest of the
+	 * entry, tie the socket list inक्रमmation with the rest of the
 	 * sockets FIXME: Blurry, NPI (ipg).
 	 */
 success:
-	if (!sp->bind_hash) {
+	अगर (!sp->bind_hash) अणु
 		inet_sk(sk)->inet_num = snum;
 		sk_add_bind_node(sk, &pp->owner);
 		sp->bind_hash = pp;
-	}
+	पूर्ण
 	ret = 0;
 
 fail_unlock:
 	spin_unlock_bh(&head->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Assign a 'snum' port to the socket.  If snum == 0, an ephemeral
  * port is requested.
  */
-static int sctp_get_port(struct sock *sk, unsigned short snum)
-{
-	union sctp_addr addr;
-	struct sctp_af *af = sctp_sk(sk)->pf->af;
+अटल पूर्णांक sctp_get_port(काष्ठा sock *sk, अचिन्हित लघु snum)
+अणु
+	जोड़ sctp_addr addr;
+	काष्ठा sctp_af *af = sctp_sk(sk)->pf->af;
 
-	/* Set up a dummy address struct from the sk. */
+	/* Set up a dummy address काष्ठा from the sk. */
 	af->from_sk(&addr, sk);
 	addr.v4.sin_port = htons(snum);
 
-	/* Note: sk->sk_num gets filled in if ephemeral port request. */
-	return sctp_get_port_local(sk, &addr);
-}
+	/* Note: sk->sk_num माला_लो filled in अगर ephemeral port request. */
+	वापस sctp_get_port_local(sk, &addr);
+पूर्ण
 
 /*
  *  Move a socket to LISTENING state.
  */
-static int sctp_listen_start(struct sock *sk, int backlog)
-{
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
-	struct crypto_shash *tfm = NULL;
-	char alg[32];
+अटल पूर्णांक sctp_listen_start(काष्ठा sock *sk, पूर्णांक backlog)
+अणु
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep = sp->ep;
+	काष्ठा crypto_shash *tfm = शून्य;
+	अक्षर alg[32];
 
-	/* Allocate HMAC for generating cookie. */
-	if (!sp->hmac && sp->sctp_hmac_alg) {
-		sprintf(alg, "hmac(%s)", sp->sctp_hmac_alg);
+	/* Allocate HMAC क्रम generating cookie. */
+	अगर (!sp->hmac && sp->sctp_hmac_alg) अणु
+		प्र_लिखो(alg, "hmac(%s)", sp->sctp_hmac_alg);
 		tfm = crypto_alloc_shash(alg, 0, 0);
-		if (IS_ERR(tfm)) {
+		अगर (IS_ERR(tfm)) अणु
 			net_info_ratelimited("failed to load transform for %s: %ld\n",
 					     sp->sctp_hmac_alg, PTR_ERR(tfm));
-			return -ENOSYS;
-		}
+			वापस -ENOSYS;
+		पूर्ण
 		sctp_sk(sk)->hmac = tfm;
-	}
+	पूर्ण
 
 	/*
 	 * If a bind() or sctp_bindx() is not called prior to a listen()
-	 * call that allows new associations to be accepted, the system
+	 * call that allows new associations to be accepted, the प्रणाली
 	 * picks an ephemeral port and will choose an address set equivalent
 	 * to binding with a wildcard address.
 	 *
@@ -8378,238 +8379,238 @@ static int sctp_listen_start(struct sock *sk, int backlog)
 	 *
 	 */
 	inet_sk_set_state(sk, SCTP_SS_LISTENING);
-	if (!ep->base.bind_addr.port) {
-		if (sctp_autobind(sk))
-			return -EAGAIN;
-	} else {
-		if (sctp_get_port(sk, inet_sk(sk)->inet_num)) {
+	अगर (!ep->base.bind_addr.port) अणु
+		अगर (sctp_स्वतःbind(sk))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
+		अगर (sctp_get_port(sk, inet_sk(sk)->inet_num)) अणु
 			inet_sk_set_state(sk, SCTP_SS_CLOSED);
-			return -EADDRINUSE;
-		}
-	}
+			वापस -EADDRINUSE;
+		पूर्ण
+	पूर्ण
 
 	WRITE_ONCE(sk->sk_max_ack_backlog, backlog);
-	return sctp_hash_endpoint(ep);
-}
+	वापस sctp_hash_endpoपूर्णांक(ep);
+पूर्ण
 
 /*
  * 4.1.3 / 5.1.3 listen()
  *
- *   By default, new associations are not accepted for UDP style sockets.
+ *   By शेष, new associations are not accepted क्रम UDP style sockets.
  *   An application uses listen() to mark a socket as being able to
  *   accept new associations.
  *
- *   On TCP style sockets, applications use listen() to ready the SCTP
- *   endpoint for accepting inbound associations.
+ *   On TCP style sockets, applications use listen() to पढ़ोy the SCTP
+ *   endpoपूर्णांक क्रम accepting inbound associations.
  *
- *   On both types of endpoints a backlog of '0' disables listening.
+ *   On both types of endpoपूर्णांकs a backlog of '0' disables listening.
  *
  *  Move a socket to LISTENING state.
  */
-int sctp_inet_listen(struct socket *sock, int backlog)
-{
-	struct sock *sk = sock->sk;
-	struct sctp_endpoint *ep = sctp_sk(sk)->ep;
-	int err = -EINVAL;
+पूर्णांक sctp_inet_listen(काष्ठा socket *sock, पूर्णांक backlog)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sctp_endpoपूर्णांक *ep = sctp_sk(sk)->ep;
+	पूर्णांक err = -EINVAL;
 
-	if (unlikely(backlog < 0))
-		return err;
+	अगर (unlikely(backlog < 0))
+		वापस err;
 
 	lock_sock(sk);
 
 	/* Peeled-off sockets are not allowed to listen().  */
-	if (sctp_style(sk, UDP_HIGH_BANDWIDTH))
-		goto out;
+	अगर (sctp_style(sk, UDP_HIGH_BANDWIDTH))
+		जाओ out;
 
-	if (sock->state != SS_UNCONNECTED)
-		goto out;
+	अगर (sock->state != SS_UNCONNECTED)
+		जाओ out;
 
-	if (!sctp_sstate(sk, LISTENING) && !sctp_sstate(sk, CLOSED))
-		goto out;
+	अगर (!sctp_sstate(sk, LISTENING) && !sctp_sstate(sk, CLOSED))
+		जाओ out;
 
 	/* If backlog is zero, disable listening. */
-	if (!backlog) {
-		if (sctp_sstate(sk, CLOSED))
-			goto out;
+	अगर (!backlog) अणु
+		अगर (sctp_sstate(sk, CLOSED))
+			जाओ out;
 
 		err = 0;
-		sctp_unhash_endpoint(ep);
+		sctp_unhash_endpoपूर्णांक(ep);
 		sk->sk_state = SCTP_SS_CLOSED;
-		if (sk->sk_reuse || sctp_sk(sk)->reuse)
+		अगर (sk->sk_reuse || sctp_sk(sk)->reuse)
 			sctp_sk(sk)->bind_hash->fastreuse = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* If we are already listening, just update the backlog */
-	if (sctp_sstate(sk, LISTENING))
+	/* If we are alपढ़ोy listening, just update the backlog */
+	अगर (sctp_sstate(sk, LISTENING))
 		WRITE_ONCE(sk->sk_max_ack_backlog, backlog);
-	else {
+	अन्यथा अणु
 		err = sctp_listen_start(sk, backlog);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	err = 0;
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This function is done by modeling the current datagram_poll() and the
- * tcp_poll().  Note that, based on these implementations, we don't
+ * This function is करोne by modeling the current datagram_poll() and the
+ * tcp_poll().  Note that, based on these implementations, we करोn't
  * lock the socket in this function, even though it seems that,
  * ideally, locking or some other mechanisms can be used to ensure
- * the integrity of the counters (sndbuf and wmem_alloc) used
- * in this place.  We assume that we don't need locks either until proven
+ * the पूर्णांकegrity of the counters (sndbuf and wmem_alloc) used
+ * in this place.  We assume that we करोn't need locks either until proven
  * otherwise.
  *
  * Another thing to note is that we include the Async I/O support
- * here, again, by modeling the current TCP/UDP code.  We don't have
+ * here, again, by modeling the current TCP/UDP code.  We करोn't have
  * a good way to test with it yet.
  */
-__poll_t sctp_poll(struct file *file, struct socket *sock, poll_table *wait)
-{
-	struct sock *sk = sock->sk;
-	struct sctp_sock *sp = sctp_sk(sk);
+__poll_t sctp_poll(काष्ठा file *file, काष्ठा socket *sock, poll_table *रुको)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
 	__poll_t mask;
 
-	poll_wait(file, sk_sleep(sk), wait);
+	poll_रुको(file, sk_sleep(sk), रुको);
 
 	sock_rps_record_flow(sk);
 
-	/* A TCP-style listening socket becomes readable when the accept queue
+	/* A TCP-style listening socket becomes पढ़ोable when the accept queue
 	 * is not empty.
 	 */
-	if (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING))
-		return (!list_empty(&sp->ep->asocs)) ?
+	अगर (sctp_style(sk, TCP) && sctp_sstate(sk, LISTENING))
+		वापस (!list_empty(&sp->ep->asocs)) ?
 			(EPOLLIN | EPOLLRDNORM) : 0;
 
 	mask = 0;
 
 	/* Is there any exceptional events?  */
-	if (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
+	अगर (sk->sk_err || !skb_queue_empty_lockless(&sk->sk_error_queue))
 		mask |= EPOLLERR |
 			(sock_flag(sk, SOCK_SELECT_ERR_QUEUE) ? EPOLLPRI : 0);
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
 		mask |= EPOLLRDHUP | EPOLLIN | EPOLLRDNORM;
-	if (sk->sk_shutdown == SHUTDOWN_MASK)
+	अगर (sk->sk_shutकरोwn == SHUTDOWN_MASK)
 		mask |= EPOLLHUP;
 
-	/* Is it readable?  Reconsider this code with TCP-style support.  */
-	if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+	/* Is it पढ़ोable?  Reconsider this code with TCP-style support.  */
+	अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	/* The association is either gone or not ready.  */
-	if (!sctp_style(sk, UDP) && sctp_sstate(sk, CLOSED))
-		return mask;
+	/* The association is either gone or not पढ़ोy.  */
+	अगर (!sctp_style(sk, UDP) && sctp_sstate(sk, CLOSED))
+		वापस mask;
 
 	/* Is it writable?  */
-	if (sctp_writeable(sk)) {
+	अगर (sctp_ग_लिखोable(sk)) अणु
 		mask |= EPOLLOUT | EPOLLWRNORM;
-	} else {
+	पूर्ण अन्यथा अणु
 		sk_set_bit(SOCKWQ_ASYNC_NOSPACE, sk);
 		/*
 		 * Since the socket is not locked, the buffer
-		 * might be made available after the writeable check and
-		 * before the bit is set.  This could cause a lost I/O
-		 * signal.  tcp_poll() has a race breaker for this race
+		 * might be made available after the ग_लिखोable check and
+		 * beक्रमe the bit is set.  This could cause a lost I/O
+		 * संकेत.  tcp_poll() has a race अवरोधer क्रम this race
 		 * condition.  Based on their implementation, we put
 		 * in the following code to cover it as well.
 		 */
-		if (sctp_writeable(sk))
+		अगर (sctp_ग_लिखोable(sk))
 			mask |= EPOLLOUT | EPOLLWRNORM;
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण
 
 /********************************************************************
  * 2nd Level Abstractions
  ********************************************************************/
 
-static struct sctp_bind_bucket *sctp_bucket_create(
-	struct sctp_bind_hashbucket *head, struct net *net, unsigned short snum)
-{
-	struct sctp_bind_bucket *pp;
+अटल काष्ठा sctp_bind_bucket *sctp_bucket_create(
+	काष्ठा sctp_bind_hashbucket *head, काष्ठा net *net, अचिन्हित लघु snum)
+अणु
+	काष्ठा sctp_bind_bucket *pp;
 
 	pp = kmem_cache_alloc(sctp_bucket_cachep, GFP_ATOMIC);
-	if (pp) {
+	अगर (pp) अणु
 		SCTP_DBG_OBJCNT_INC(bind_bucket);
 		pp->port = snum;
 		pp->fastreuse = 0;
 		INIT_HLIST_HEAD(&pp->owner);
 		pp->net = net;
 		hlist_add_head(&pp->node, &head->chain);
-	}
-	return pp;
-}
+	पूर्ण
+	वापस pp;
+पूर्ण
 
-/* Caller must hold hashbucket lock for this tb with local BH disabled */
-static void sctp_bucket_destroy(struct sctp_bind_bucket *pp)
-{
-	if (pp && hlist_empty(&pp->owner)) {
+/* Caller must hold hashbucket lock क्रम this tb with local BH disabled */
+अटल व्योम sctp_bucket_destroy(काष्ठा sctp_bind_bucket *pp)
+अणु
+	अगर (pp && hlist_empty(&pp->owner)) अणु
 		__hlist_del(&pp->node);
-		kmem_cache_free(sctp_bucket_cachep, pp);
+		kmem_cache_मुक्त(sctp_bucket_cachep, pp);
 		SCTP_DBG_OBJCNT_DEC(bind_bucket);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Release this socket's reference to a local port.  */
-static inline void __sctp_put_port(struct sock *sk)
-{
-	struct sctp_bind_hashbucket *head =
+अटल अंतरभूत व्योम __sctp_put_port(काष्ठा sock *sk)
+अणु
+	काष्ठा sctp_bind_hashbucket *head =
 		&sctp_port_hashtable[sctp_phashfn(sock_net(sk),
 						  inet_sk(sk)->inet_num)];
-	struct sctp_bind_bucket *pp;
+	काष्ठा sctp_bind_bucket *pp;
 
 	spin_lock(&head->lock);
 	pp = sctp_sk(sk)->bind_hash;
 	__sk_del_bind_node(sk);
-	sctp_sk(sk)->bind_hash = NULL;
+	sctp_sk(sk)->bind_hash = शून्य;
 	inet_sk(sk)->inet_num = 0;
 	sctp_bucket_destroy(pp);
 	spin_unlock(&head->lock);
-}
+पूर्ण
 
-void sctp_put_port(struct sock *sk)
-{
+व्योम sctp_put_port(काष्ठा sock *sk)
+अणु
 	local_bh_disable();
 	__sctp_put_port(sk);
 	local_bh_enable();
-}
+पूर्ण
 
 /*
- * The system picks an ephemeral port and choose an address set equivalent
+ * The प्रणाली picks an ephemeral port and choose an address set equivalent
  * to binding with a wildcard address.
- * One of those addresses will be the primary address for the association.
- * This automatically enables the multihoming capability of SCTP.
+ * One of those addresses will be the primary address क्रम the association.
+ * This स्वतःmatically enables the multihoming capability of SCTP.
  */
-static int sctp_autobind(struct sock *sk)
-{
-	union sctp_addr autoaddr;
-	struct sctp_af *af;
+अटल पूर्णांक sctp_स्वतःbind(काष्ठा sock *sk)
+अणु
+	जोड़ sctp_addr स्वतःaddr;
+	काष्ठा sctp_af *af;
 	__be16 port;
 
-	/* Initialize a local sockaddr structure to INADDR_ANY. */
+	/* Initialize a local sockaddr काष्ठाure to INADDR_ANY. */
 	af = sctp_sk(sk)->pf->af;
 
 	port = htons(inet_sk(sk)->inet_num);
-	af->inaddr_any(&autoaddr, port);
+	af->inaddr_any(&स्वतःaddr, port);
 
-	return sctp_do_bind(sk, &autoaddr, af->sockaddr_len);
-}
+	वापस sctp_करो_bind(sk, &स्वतःaddr, af->sockaddr_len);
+पूर्ण
 
-/* Parse out IPPROTO_SCTP CMSG headers.  Perform only minimal validation.
+/* Parse out IPPROTO_SCTP CMSG headers.  Perक्रमm only minimal validation.
  *
  * From RFC 2292
  * 4.2 The cmsghdr Structure *
  *
  * When ancillary data is sent or received, any number of ancillary data
- * objects can be specified by the msg_control and msg_controllen members of
- * the msghdr structure, because each object is preceded by
- * a cmsghdr structure defining the object's length (the cmsg_len member).
+ * objects can be specअगरied by the msg_control and msg_controllen members of
+ * the msghdr काष्ठाure, because each object is preceded by
+ * a cmsghdr काष्ठाure defining the object's length (the cmsg_len member).
  * Historically Berkeley-derived implementations have passed only one object
- * at a time, but this API allows multiple objects to be
+ * at a समय, but this API allows multiple objects to be
  * passed in a single call to sendmsg() or recvmsg(). The following example
  * shows two ancillary data objects in a control buffer.
  *
@@ -8636,171 +8637,171 @@ static int sctp_autobind(struct sock *sk)
  *    |
  *
  * msg_control
- * points here
+ * poपूर्णांकs here
  */
-static int sctp_msghdr_parse(const struct msghdr *msg, struct sctp_cmsgs *cmsgs)
-{
-	struct msghdr *my_msg = (struct msghdr *)msg;
-	struct cmsghdr *cmsg;
+अटल पूर्णांक sctp_msghdr_parse(स्थिर काष्ठा msghdr *msg, काष्ठा sctp_cmsgs *cmsgs)
+अणु
+	काष्ठा msghdr *my_msg = (काष्ठा msghdr *)msg;
+	काष्ठा cmsghdr *cmsg;
 
-	for_each_cmsghdr(cmsg, my_msg) {
-		if (!CMSG_OK(my_msg, cmsg))
-			return -EINVAL;
+	क्रम_each_cmsghdr(cmsg, my_msg) अणु
+		अगर (!CMSG_OK(my_msg, cmsg))
+			वापस -EINVAL;
 
 		/* Should we parse this header or ignore?  */
-		if (cmsg->cmsg_level != IPPROTO_SCTP)
-			continue;
+		अगर (cmsg->cmsg_level != IPPROTO_SCTP)
+			जारी;
 
 		/* Strictly check lengths following example in SCM code.  */
-		switch (cmsg->cmsg_type) {
-		case SCTP_INIT:
+		चयन (cmsg->cmsg_type) अणु
+		हाल SCTP_INIT:
 			/* SCTP Socket API Extension
 			 * 5.3.1 SCTP Initiation Structure (SCTP_INIT)
 			 *
-			 * This cmsghdr structure provides information for
+			 * This cmsghdr काष्ठाure provides inक्रमmation क्रम
 			 * initializing new SCTP associations with sendmsg().
 			 * The SCTP_INITMSG socket option uses this same data
-			 * structure.  This structure is not used for
+			 * काष्ठाure.  This काष्ठाure is not used क्रम
 			 * recvmsg().
 			 *
 			 * cmsg_level    cmsg_type      cmsg_data[]
 			 * ------------  ------------   ----------------------
-			 * IPPROTO_SCTP  SCTP_INIT      struct sctp_initmsg
+			 * IPPROTO_SCTP  SCTP_INIT      काष्ठा sctp_iniपंचांगsg
 			 */
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct sctp_initmsg)))
-				return -EINVAL;
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा sctp_iniपंचांगsg)))
+				वापस -EINVAL;
 
 			cmsgs->init = CMSG_DATA(cmsg);
-			break;
+			अवरोध;
 
-		case SCTP_SNDRCV:
+		हाल SCTP_SNDRCV:
 			/* SCTP Socket API Extension
-			 * 5.3.2 SCTP Header Information Structure(SCTP_SNDRCV)
+			 * 5.3.2 SCTP Header Inक्रमmation Structure(SCTP_SNDRCV)
 			 *
-			 * This cmsghdr structure specifies SCTP options for
-			 * sendmsg() and describes SCTP header information
+			 * This cmsghdr काष्ठाure specअगरies SCTP options क्रम
+			 * sendmsg() and describes SCTP header inक्रमmation
 			 * about a received message through recvmsg().
 			 *
 			 * cmsg_level    cmsg_type      cmsg_data[]
 			 * ------------  ------------   ----------------------
-			 * IPPROTO_SCTP  SCTP_SNDRCV    struct sctp_sndrcvinfo
+			 * IPPROTO_SCTP  SCTP_SNDRCV    काष्ठा sctp_sndrcvinfo
 			 */
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct sctp_sndrcvinfo)))
-				return -EINVAL;
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा sctp_sndrcvinfo)))
+				वापस -EINVAL;
 
 			cmsgs->srinfo = CMSG_DATA(cmsg);
 
-			if (cmsgs->srinfo->sinfo_flags &
+			अगर (cmsgs->srinfo->sinfo_flags &
 			    ~(SCTP_UNORDERED | SCTP_ADDR_OVER |
 			      SCTP_SACK_IMMEDIATELY | SCTP_SENDALL |
-			      SCTP_PR_SCTP_MASK | SCTP_ABORT | SCTP_EOF))
-				return -EINVAL;
-			break;
+			      SCTP_PR_SCTP_MASK | SCTP_ABORT | SCTP_खातापूर्ण))
+				वापस -EINVAL;
+			अवरोध;
 
-		case SCTP_SNDINFO:
+		हाल SCTP_SNDINFO:
 			/* SCTP Socket API Extension
-			 * 5.3.4 SCTP Send Information Structure (SCTP_SNDINFO)
+			 * 5.3.4 SCTP Send Inक्रमmation Structure (SCTP_SNDINFO)
 			 *
-			 * This cmsghdr structure specifies SCTP options for
-			 * sendmsg(). This structure and SCTP_RCVINFO replaces
+			 * This cmsghdr काष्ठाure specअगरies SCTP options क्रम
+			 * sendmsg(). This काष्ठाure and SCTP_RCVINFO replaces
 			 * SCTP_SNDRCV which has been deprecated.
 			 *
 			 * cmsg_level    cmsg_type      cmsg_data[]
 			 * ------------  ------------   ---------------------
-			 * IPPROTO_SCTP  SCTP_SNDINFO    struct sctp_sndinfo
+			 * IPPROTO_SCTP  SCTP_SNDINFO    काष्ठा sctp_sndinfo
 			 */
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct sctp_sndinfo)))
-				return -EINVAL;
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा sctp_sndinfo)))
+				वापस -EINVAL;
 
 			cmsgs->sinfo = CMSG_DATA(cmsg);
 
-			if (cmsgs->sinfo->snd_flags &
+			अगर (cmsgs->sinfo->snd_flags &
 			    ~(SCTP_UNORDERED | SCTP_ADDR_OVER |
 			      SCTP_SACK_IMMEDIATELY | SCTP_SENDALL |
-			      SCTP_PR_SCTP_MASK | SCTP_ABORT | SCTP_EOF))
-				return -EINVAL;
-			break;
-		case SCTP_PRINFO:
+			      SCTP_PR_SCTP_MASK | SCTP_ABORT | SCTP_खातापूर्ण))
+				वापस -EINVAL;
+			अवरोध;
+		हाल SCTP_PRINFO:
 			/* SCTP Socket API Extension
-			 * 5.3.7 SCTP PR-SCTP Information Structure (SCTP_PRINFO)
+			 * 5.3.7 SCTP PR-SCTP Inक्रमmation Structure (SCTP_PRINFO)
 			 *
-			 * This cmsghdr structure specifies SCTP options for sendmsg().
+			 * This cmsghdr काष्ठाure specअगरies SCTP options क्रम sendmsg().
 			 *
 			 * cmsg_level    cmsg_type      cmsg_data[]
 			 * ------------  ------------   ---------------------
-			 * IPPROTO_SCTP  SCTP_PRINFO    struct sctp_prinfo
+			 * IPPROTO_SCTP  SCTP_PRINFO    काष्ठा sctp_prinfo
 			 */
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct sctp_prinfo)))
-				return -EINVAL;
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा sctp_prinfo)))
+				वापस -EINVAL;
 
 			cmsgs->prinfo = CMSG_DATA(cmsg);
-			if (cmsgs->prinfo->pr_policy & ~SCTP_PR_SCTP_MASK)
-				return -EINVAL;
+			अगर (cmsgs->prinfo->pr_policy & ~SCTP_PR_SCTP_MASK)
+				वापस -EINVAL;
 
-			if (cmsgs->prinfo->pr_policy == SCTP_PR_SCTP_NONE)
+			अगर (cmsgs->prinfo->pr_policy == SCTP_PR_SCTP_NONE)
 				cmsgs->prinfo->pr_value = 0;
-			break;
-		case SCTP_AUTHINFO:
+			अवरोध;
+		हाल SCTP_AUTHINFO:
 			/* SCTP Socket API Extension
-			 * 5.3.8 SCTP AUTH Information Structure (SCTP_AUTHINFO)
+			 * 5.3.8 SCTP AUTH Inक्रमmation Structure (SCTP_AUTHINFO)
 			 *
-			 * This cmsghdr structure specifies SCTP options for sendmsg().
+			 * This cmsghdr काष्ठाure specअगरies SCTP options क्रम sendmsg().
 			 *
 			 * cmsg_level    cmsg_type      cmsg_data[]
 			 * ------------  ------------   ---------------------
-			 * IPPROTO_SCTP  SCTP_AUTHINFO  struct sctp_authinfo
+			 * IPPROTO_SCTP  SCTP_AUTHINFO  काष्ठा sctp_authinfo
 			 */
-			if (cmsg->cmsg_len != CMSG_LEN(sizeof(struct sctp_authinfo)))
-				return -EINVAL;
+			अगर (cmsg->cmsg_len != CMSG_LEN(माप(काष्ठा sctp_authinfo)))
+				वापस -EINVAL;
 
 			cmsgs->authinfo = CMSG_DATA(cmsg);
-			break;
-		case SCTP_DSTADDRV4:
-		case SCTP_DSTADDRV6:
+			अवरोध;
+		हाल SCTP_DSTADDRV4:
+		हाल SCTP_DSTADDRV6:
 			/* SCTP Socket API Extension
 			 * 5.3.9/10 SCTP Destination IPv4/6 Address Structure (SCTP_DSTADDRV4/6)
 			 *
-			 * This cmsghdr structure specifies SCTP options for sendmsg().
+			 * This cmsghdr काष्ठाure specअगरies SCTP options क्रम sendmsg().
 			 *
 			 * cmsg_level    cmsg_type         cmsg_data[]
 			 * ------------  ------------   ---------------------
-			 * IPPROTO_SCTP  SCTP_DSTADDRV4 struct in_addr
+			 * IPPROTO_SCTP  SCTP_DSTADDRV4 काष्ठा in_addr
 			 * ------------  ------------   ---------------------
-			 * IPPROTO_SCTP  SCTP_DSTADDRV6 struct in6_addr
+			 * IPPROTO_SCTP  SCTP_DSTADDRV6 काष्ठा in6_addr
 			 */
 			cmsgs->addrs_msg = my_msg;
-			break;
-		default:
-			return -EINVAL;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Wait for a packet..
+ * Wait क्रम a packet..
  * Note: This function is the same function as in core/datagram.c
- * with a few modifications to make lksctp work.
+ * with a few modअगरications to make lksctp work.
  */
-static int sctp_wait_for_packet(struct sock *sk, int *err, long *timeo_p)
-{
-	int error;
-	DEFINE_WAIT(wait);
+अटल पूर्णांक sctp_रुको_क्रम_packet(काष्ठा sock *sk, पूर्णांक *err, दीर्घ *समयo_p)
+अणु
+	पूर्णांक error;
+	DEFINE_WAIT(रुको);
 
-	prepare_to_wait_exclusive(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
+	prepare_to_रुको_exclusive(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
 
 	/* Socket errors? */
 	error = sock_error(sk);
-	if (error)
-		goto out;
+	अगर (error)
+		जाओ out;
 
-	if (!skb_queue_empty(&sk->sk_receive_queue))
-		goto ready;
+	अगर (!skb_queue_empty(&sk->sk_receive_queue))
+		जाओ पढ़ोy;
 
-	/* Socket shut down?  */
-	if (sk->sk_shutdown & RCV_SHUTDOWN)
-		goto out;
+	/* Socket shut करोwn?  */
+	अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+		जाओ out;
 
 	/* Sequenced packets can come disconnected.  If so we report the
 	 * problem.
@@ -8808,487 +8809,487 @@ static int sctp_wait_for_packet(struct sock *sk, int *err, long *timeo_p)
 	error = -ENOTCONN;
 
 	/* Is there a good reason to think that we may receive some data?  */
-	if (list_empty(&sctp_sk(sk)->ep->asocs) && !sctp_sstate(sk, LISTENING))
-		goto out;
+	अगर (list_empty(&sctp_sk(sk)->ep->asocs) && !sctp_sstate(sk, LISTENING))
+		जाओ out;
 
-	/* Handle signals.  */
-	if (signal_pending(current))
-		goto interrupted;
+	/* Handle संकेतs.  */
+	अगर (संकेत_pending(current))
+		जाओ पूर्णांकerrupted;
 
 	/* Let another process have a go.  Since we are going to sleep
-	 * anyway.  Note: This may cause odd behaviors if the message
-	 * does not fit in the user's buffer, but this seems to be the
+	 * anyway.  Note: This may cause odd behaviors अगर the message
+	 * करोes not fit in the user's buffer, but this seems to be the
 	 * only way to honor MSG_DONTWAIT realistically.
 	 */
 	release_sock(sk);
-	*timeo_p = schedule_timeout(*timeo_p);
+	*समयo_p = schedule_समयout(*समयo_p);
 	lock_sock(sk);
 
-ready:
-	finish_wait(sk_sleep(sk), &wait);
-	return 0;
+पढ़ोy:
+	finish_रुको(sk_sleep(sk), &रुको);
+	वापस 0;
 
-interrupted:
-	error = sock_intr_errno(*timeo_p);
+पूर्णांकerrupted:
+	error = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
 
 out:
-	finish_wait(sk_sleep(sk), &wait);
+	finish_रुको(sk_sleep(sk), &रुको);
 	*err = error;
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* Receive a datagram.
  * Note: This is pretty much the same routine as in core/datagram.c
  * with a few changes to make lksctp work.
  */
-struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags,
-				       int noblock, int *err)
-{
-	int error;
-	struct sk_buff *skb;
-	long timeo;
+काष्ठा sk_buff *sctp_skb_recv_datagram(काष्ठा sock *sk, पूर्णांक flags,
+				       पूर्णांक noblock, पूर्णांक *err)
+अणु
+	पूर्णांक error;
+	काष्ठा sk_buff *skb;
+	दीर्घ समयo;
 
-	timeo = sock_rcvtimeo(sk, noblock);
+	समयo = sock_rcvसमयo(sk, noblock);
 
-	pr_debug("%s: timeo:%ld, max:%ld\n", __func__, timeo,
+	pr_debug("%s: timeo:%ld, max:%ld\n", __func__, समयo,
 		 MAX_SCHEDULE_TIMEOUT);
 
-	do {
+	करो अणु
 		/* Again only user level code calls this function,
-		 * so nothing interrupt level
+		 * so nothing पूर्णांकerrupt level
 		 * will suddenly eat the receive_queue.
 		 *
 		 *  Look at current nfs client by the way...
-		 *  However, this function was correct in any case. 8)
+		 *  However, this function was correct in any हाल. 8)
 		 */
-		if (flags & MSG_PEEK) {
+		अगर (flags & MSG_PEEK) अणु
 			skb = skb_peek(&sk->sk_receive_queue);
-			if (skb)
+			अगर (skb)
 				refcount_inc(&skb->users);
-		} else {
+		पूर्ण अन्यथा अणु
 			skb = __skb_dequeue(&sk->sk_receive_queue);
-		}
+		पूर्ण
 
-		if (skb)
-			return skb;
+		अगर (skb)
+			वापस skb;
 
-		/* Caller is allowed not to check sk->sk_err before calling. */
+		/* Caller is allowed not to check sk->sk_err beक्रमe calling. */
 		error = sock_error(sk);
-		if (error)
-			goto no_packet;
+		अगर (error)
+			जाओ no_packet;
 
-		if (sk->sk_shutdown & RCV_SHUTDOWN)
-			break;
+		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+			अवरोध;
 
-		if (sk_can_busy_loop(sk)) {
+		अगर (sk_can_busy_loop(sk)) अणु
 			sk_busy_loop(sk, noblock);
 
-			if (!skb_queue_empty_lockless(&sk->sk_receive_queue))
-				continue;
-		}
+			अगर (!skb_queue_empty_lockless(&sk->sk_receive_queue))
+				जारी;
+		पूर्ण
 
-		/* User doesn't want to wait.  */
+		/* User करोesn't want to रुको.  */
 		error = -EAGAIN;
-		if (!timeo)
-			goto no_packet;
-	} while (sctp_wait_for_packet(sk, err, &timeo) == 0);
+		अगर (!समयo)
+			जाओ no_packet;
+	पूर्ण जबतक (sctp_रुको_क्रम_packet(sk, err, &समयo) == 0);
 
-	return NULL;
+	वापस शून्य;
 
 no_packet:
 	*err = error;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* If sndbuf has changed, wake up per association sndbuf waiters.  */
-static void __sctp_write_space(struct sctp_association *asoc)
-{
-	struct sock *sk = asoc->base.sk;
+/* If sndbuf has changed, wake up per association sndbuf रुकोers.  */
+अटल व्योम __sctp_ग_लिखो_space(काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
 
-	if (sctp_wspace(asoc) <= 0)
-		return;
+	अगर (sctp_wspace(asoc) <= 0)
+		वापस;
 
-	if (waitqueue_active(&asoc->wait))
-		wake_up_interruptible(&asoc->wait);
+	अगर (रुकोqueue_active(&asoc->रुको))
+		wake_up_पूर्णांकerruptible(&asoc->रुको);
 
-	if (sctp_writeable(sk)) {
-		struct socket_wq *wq;
+	अगर (sctp_ग_लिखोable(sk)) अणु
+		काष्ठा socket_wq *wq;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		wq = rcu_dereference(sk->sk_wq);
-		if (wq) {
-			if (waitqueue_active(&wq->wait))
-				wake_up_interruptible(&wq->wait);
+		अगर (wq) अणु
+			अगर (रुकोqueue_active(&wq->रुको))
+				wake_up_पूर्णांकerruptible(&wq->रुको);
 
 			/* Note that we try to include the Async I/O support
 			 * here by modeling from the current TCP/UDP code.
 			 * We have not tested with it yet.
 			 */
-			if (!(sk->sk_shutdown & SEND_SHUTDOWN))
+			अगर (!(sk->sk_shutकरोwn & SEND_SHUTDOWN))
 				sock_wake_async(wq, SOCK_WAKE_SPACE, POLL_OUT);
-		}
-		rcu_read_unlock();
-	}
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static void sctp_wake_up_waiters(struct sock *sk,
-				 struct sctp_association *asoc)
-{
-	struct sctp_association *tmp = asoc;
+अटल व्योम sctp_wake_up_रुकोers(काष्ठा sock *sk,
+				 काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा sctp_association *पंचांगp = asoc;
 
-	/* We do accounting for the sndbuf space per association,
+	/* We करो accounting क्रम the sndbuf space per association,
 	 * so we only need to wake our own association.
 	 */
-	if (asoc->ep->sndbuf_policy)
-		return __sctp_write_space(asoc);
+	अगर (asoc->ep->sndbuf_policy)
+		वापस __sctp_ग_लिखो_space(asoc);
 
-	/* If association goes down and is just flushing its
-	 * outq, then just normally notify others.
+	/* If association goes करोwn and is just flushing its
+	 * outq, then just normally notअगरy others.
 	 */
-	if (asoc->base.dead)
-		return sctp_write_space(sk);
+	अगर (asoc->base.dead)
+		वापस sctp_ग_लिखो_space(sk);
 
-	/* Accounting for the sndbuf space is per socket, so we
-	 * need to wake up others, try to be fair and in case of
+	/* Accounting क्रम the sndbuf space is per socket, so we
+	 * need to wake up others, try to be fair and in हाल of
 	 * other associations, let them have a go first instead
-	 * of just doing a sctp_write_space() call.
+	 * of just करोing a sctp_ग_लिखो_space() call.
 	 *
-	 * Note that we reach sctp_wake_up_waiters() only when
-	 * associations free up queued chunks, thus we are under
+	 * Note that we reach sctp_wake_up_रुकोers() only when
+	 * associations मुक्त up queued chunks, thus we are under
 	 * lock and the list of associations on a socket is
 	 * guaranteed not to change.
 	 */
-	for (tmp = list_next_entry(tmp, asocs); 1;
-	     tmp = list_next_entry(tmp, asocs)) {
+	क्रम (पंचांगp = list_next_entry(पंचांगp, asocs); 1;
+	     पंचांगp = list_next_entry(पंचांगp, asocs)) अणु
 		/* Manually skip the head element. */
-		if (&tmp->asocs == &((sctp_sk(sk))->ep->asocs))
-			continue;
+		अगर (&पंचांगp->asocs == &((sctp_sk(sk))->ep->asocs))
+			जारी;
 		/* Wake up association. */
-		__sctp_write_space(tmp);
+		__sctp_ग_लिखो_space(पंचांगp);
 		/* We've reached the end. */
-		if (tmp == asoc)
-			break;
-	}
-}
+		अगर (पंचांगp == asoc)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-/* Do accounting for the sndbuf space.
+/* Do accounting क्रम the sndbuf space.
  * Decrement the used sndbuf space of the corresponding association by the
- * data size which was just transmitted(freed).
+ * data size which was just transmitted(मुक्तd).
  */
-static void sctp_wfree(struct sk_buff *skb)
-{
-	struct sctp_chunk *chunk = skb_shinfo(skb)->destructor_arg;
-	struct sctp_association *asoc = chunk->asoc;
-	struct sock *sk = asoc->base.sk;
+अटल व्योम sctp_wमुक्त(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sctp_chunk *chunk = skb_shinfo(skb)->deकाष्ठाor_arg;
+	काष्ठा sctp_association *asoc = chunk->asoc;
+	काष्ठा sock *sk = asoc->base.sk;
 
-	sk_mem_uncharge(sk, skb->truesize);
-	sk->sk_wmem_queued -= skb->truesize + sizeof(struct sctp_chunk);
-	asoc->sndbuf_used -= skb->truesize + sizeof(struct sctp_chunk);
-	WARN_ON(refcount_sub_and_test(sizeof(struct sctp_chunk),
+	sk_mem_unअक्षरge(sk, skb->truesize);
+	sk->sk_wmem_queued -= skb->truesize + माप(काष्ठा sctp_chunk);
+	asoc->sndbuf_used -= skb->truesize + माप(काष्ठा sctp_chunk);
+	WARN_ON(refcount_sub_and_test(माप(काष्ठा sctp_chunk),
 				      &sk->sk_wmem_alloc));
 
-	if (chunk->shkey) {
-		struct sctp_shared_key *shkey = chunk->shkey;
+	अगर (chunk->shkey) अणु
+		काष्ठा sctp_shared_key *shkey = chunk->shkey;
 
 		/* refcnt == 2 and !list_empty mean after this release, it's
-		 * not being used anywhere, and it's time to notify userland
-		 * that this shkey can be freed if it's been deactivated.
+		 * not being used anywhere, and it's समय to notअगरy userland
+		 * that this shkey can be मुक्तd अगर it's been deactivated.
 		 */
-		if (shkey->deactivated && !list_empty(&shkey->key_list) &&
-		    refcount_read(&shkey->refcnt) == 2) {
-			struct sctp_ulpevent *ev;
+		अगर (shkey->deactivated && !list_empty(&shkey->key_list) &&
+		    refcount_पढ़ो(&shkey->refcnt) == 2) अणु
+			काष्ठा sctp_ulpevent *ev;
 
 			ev = sctp_ulpevent_make_authkey(asoc, shkey->key_id,
 							SCTP_AUTH_FREE_KEY,
 							GFP_KERNEL);
-			if (ev)
+			अगर (ev)
 				asoc->stream.si->enqueue_event(&asoc->ulpq, ev);
-		}
+		पूर्ण
 		sctp_auth_shkey_release(chunk->shkey);
-	}
+	पूर्ण
 
-	sock_wfree(skb);
-	sctp_wake_up_waiters(sk, asoc);
+	sock_wमुक्त(skb);
+	sctp_wake_up_रुकोers(sk, asoc);
 
 	sctp_association_put(asoc);
-}
+पूर्ण
 
-/* Do accounting for the receive space on the socket.
- * Accounting for the association is done in ulpevent.c
- * We set this as a destructor for the cloned data skbs so that
- * accounting is done at the correct time.
+/* Do accounting क्रम the receive space on the socket.
+ * Accounting क्रम the association is करोne in ulpevent.c
+ * We set this as a deकाष्ठाor क्रम the cloned data skbs so that
+ * accounting is करोne at the correct समय.
  */
-void sctp_sock_rfree(struct sk_buff *skb)
-{
-	struct sock *sk = skb->sk;
-	struct sctp_ulpevent *event = sctp_skb2event(skb);
+व्योम sctp_sock_rमुक्त(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk = skb->sk;
+	काष्ठा sctp_ulpevent *event = sctp_skb2event(skb);
 
 	atomic_sub(event->rmem_len, &sk->sk_rmem_alloc);
 
 	/*
-	 * Mimic the behavior of sock_rfree
+	 * Mimic the behavior of sock_rमुक्त
 	 */
-	sk_mem_uncharge(sk, event->rmem_len);
-}
+	sk_mem_unअक्षरge(sk, event->rmem_len);
+पूर्ण
 
 
-/* Helper function to wait for space in the sndbuf.  */
-static int sctp_wait_for_sndbuf(struct sctp_association *asoc, long *timeo_p,
-				size_t msg_len)
-{
-	struct sock *sk = asoc->base.sk;
-	long current_timeo = *timeo_p;
-	DEFINE_WAIT(wait);
-	int err = 0;
+/* Helper function to रुको क्रम space in the sndbuf.  */
+अटल पूर्णांक sctp_रुको_क्रम_sndbuf(काष्ठा sctp_association *asoc, दीर्घ *समयo_p,
+				माप_प्रकार msg_len)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
+	दीर्घ current_समयo = *समयo_p;
+	DEFINE_WAIT(रुको);
+	पूर्णांक err = 0;
 
 	pr_debug("%s: asoc:%p, timeo:%ld, msg_len:%zu\n", __func__, asoc,
-		 *timeo_p, msg_len);
+		 *समयo_p, msg_len);
 
 	/* Increment the association's refcnt.  */
 	sctp_association_hold(asoc);
 
-	/* Wait on the association specific sndbuf space. */
-	for (;;) {
-		prepare_to_wait_exclusive(&asoc->wait, &wait,
+	/* Wait on the association specअगरic sndbuf space. */
+	क्रम (;;) अणु
+		prepare_to_रुको_exclusive(&asoc->रुको, &रुको,
 					  TASK_INTERRUPTIBLE);
-		if (asoc->base.dead)
-			goto do_dead;
-		if (!*timeo_p)
-			goto do_nonblock;
-		if (sk->sk_err || asoc->state >= SCTP_STATE_SHUTDOWN_PENDING)
-			goto do_error;
-		if (signal_pending(current))
-			goto do_interrupted;
-		if (sk_under_memory_pressure(sk))
+		अगर (asoc->base.dead)
+			जाओ करो_dead;
+		अगर (!*समयo_p)
+			जाओ करो_nonblock;
+		अगर (sk->sk_err || asoc->state >= SCTP_STATE_SHUTDOWN_PENDING)
+			जाओ करो_error;
+		अगर (संकेत_pending(current))
+			जाओ करो_पूर्णांकerrupted;
+		अगर (sk_under_memory_pressure(sk))
 			sk_mem_reclaim(sk);
-		if ((int)msg_len <= sctp_wspace(asoc) &&
+		अगर ((पूर्णांक)msg_len <= sctp_wspace(asoc) &&
 		    sk_wmem_schedule(sk, msg_len))
-			break;
+			अवरोध;
 
 		/* Let another process have a go.  Since we are going
 		 * to sleep anyway.
 		 */
 		release_sock(sk);
-		current_timeo = schedule_timeout(current_timeo);
+		current_समयo = schedule_समयout(current_समयo);
 		lock_sock(sk);
-		if (sk != asoc->base.sk)
-			goto do_error;
+		अगर (sk != asoc->base.sk)
+			जाओ करो_error;
 
-		*timeo_p = current_timeo;
-	}
+		*समयo_p = current_समयo;
+	पूर्ण
 
 out:
-	finish_wait(&asoc->wait, &wait);
+	finish_रुको(&asoc->रुको, &रुको);
 
 	/* Release the association's refcnt.  */
 	sctp_association_put(asoc);
 
-	return err;
+	वापस err;
 
-do_dead:
+करो_dead:
 	err = -ESRCH;
-	goto out;
+	जाओ out;
 
-do_error:
+करो_error:
 	err = -EPIPE;
-	goto out;
+	जाओ out;
 
-do_interrupted:
-	err = sock_intr_errno(*timeo_p);
-	goto out;
+करो_पूर्णांकerrupted:
+	err = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
+	जाओ out;
 
-do_nonblock:
+करो_nonblock:
 	err = -EAGAIN;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-void sctp_data_ready(struct sock *sk)
-{
-	struct socket_wq *wq;
+व्योम sctp_data_पढ़ोy(काष्ठा sock *sk)
+अणु
+	काष्ठा socket_wq *wq;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	wq = rcu_dereference(sk->sk_wq);
-	if (skwq_has_sleeper(wq))
-		wake_up_interruptible_sync_poll(&wq->wait, EPOLLIN |
+	अगर (skwq_has_sleeper(wq))
+		wake_up_पूर्णांकerruptible_sync_poll(&wq->रुको, EPOLLIN |
 						EPOLLRDNORM | EPOLLRDBAND);
 	sk_wake_async(sk, SOCK_WAKE_WAITD, POLL_IN);
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-/* If socket sndbuf has changed, wake up all per association waiters.  */
-void sctp_write_space(struct sock *sk)
-{
-	struct sctp_association *asoc;
+/* If socket sndbuf has changed, wake up all per association रुकोers.  */
+व्योम sctp_ग_लिखो_space(काष्ठा sock *sk)
+अणु
+	काष्ठा sctp_association *asoc;
 
-	/* Wake up the tasks in each wait queue.  */
-	list_for_each_entry(asoc, &((sctp_sk(sk))->ep->asocs), asocs) {
-		__sctp_write_space(asoc);
-	}
-}
+	/* Wake up the tasks in each रुको queue.  */
+	list_क्रम_each_entry(asoc, &((sctp_sk(sk))->ep->asocs), asocs) अणु
+		__sctp_ग_लिखो_space(asoc);
+	पूर्ण
+पूर्ण
 
 /* Is there any sndbuf space available on the socket?
  *
  * Note that sk_wmem_alloc is the sum of the send buffers on all of the
  * associations on the same socket.  For a UDP-style socket with
- * multiple associations, it is possible for it to be "unwriteable"
+ * multiple associations, it is possible क्रम it to be "unwriteable"
  * prematurely.  I assume that this is acceptable because
  * a premature "unwriteable" is better than an accidental "writeable" which
  * would cause an unwanted block under certain circumstances.  For the 1-1
  * UDP-style sockets or TCP-style sockets, this code should work.
  *  - Daisy
  */
-static bool sctp_writeable(struct sock *sk)
-{
-	return sk->sk_sndbuf > sk->sk_wmem_queued;
-}
+अटल bool sctp_ग_लिखोable(काष्ठा sock *sk)
+अणु
+	वापस sk->sk_sndbuf > sk->sk_wmem_queued;
+पूर्ण
 
-/* Wait for an association to go into ESTABLISHED state. If timeout is 0,
- * returns immediately with EINPROGRESS.
+/* Wait क्रम an association to go पूर्णांकo ESTABLISHED state. If समयout is 0,
+ * वापसs immediately with EINPROGRESS.
  */
-static int sctp_wait_for_connect(struct sctp_association *asoc, long *timeo_p)
-{
-	struct sock *sk = asoc->base.sk;
-	int err = 0;
-	long current_timeo = *timeo_p;
-	DEFINE_WAIT(wait);
+अटल पूर्णांक sctp_रुको_क्रम_connect(काष्ठा sctp_association *asoc, दीर्घ *समयo_p)
+अणु
+	काष्ठा sock *sk = asoc->base.sk;
+	पूर्णांक err = 0;
+	दीर्घ current_समयo = *समयo_p;
+	DEFINE_WAIT(रुको);
 
-	pr_debug("%s: asoc:%p, timeo:%ld\n", __func__, asoc, *timeo_p);
+	pr_debug("%s: asoc:%p, timeo:%ld\n", __func__, asoc, *समयo_p);
 
 	/* Increment the association's refcnt.  */
 	sctp_association_hold(asoc);
 
-	for (;;) {
-		prepare_to_wait_exclusive(&asoc->wait, &wait,
+	क्रम (;;) अणु
+		prepare_to_रुको_exclusive(&asoc->रुको, &रुको,
 					  TASK_INTERRUPTIBLE);
-		if (!*timeo_p)
-			goto do_nonblock;
-		if (sk->sk_shutdown & RCV_SHUTDOWN)
-			break;
-		if (sk->sk_err || asoc->state >= SCTP_STATE_SHUTDOWN_PENDING ||
+		अगर (!*समयo_p)
+			जाओ करो_nonblock;
+		अगर (sk->sk_shutकरोwn & RCV_SHUTDOWN)
+			अवरोध;
+		अगर (sk->sk_err || asoc->state >= SCTP_STATE_SHUTDOWN_PENDING ||
 		    asoc->base.dead)
-			goto do_error;
-		if (signal_pending(current))
-			goto do_interrupted;
+			जाओ करो_error;
+		अगर (संकेत_pending(current))
+			जाओ करो_पूर्णांकerrupted;
 
-		if (sctp_state(asoc, ESTABLISHED))
-			break;
+		अगर (sctp_state(asoc, ESTABLISHED))
+			अवरोध;
 
 		/* Let another process have a go.  Since we are going
 		 * to sleep anyway.
 		 */
 		release_sock(sk);
-		current_timeo = schedule_timeout(current_timeo);
+		current_समयo = schedule_समयout(current_समयo);
 		lock_sock(sk);
 
-		*timeo_p = current_timeo;
-	}
+		*समयo_p = current_समयo;
+	पूर्ण
 
 out:
-	finish_wait(&asoc->wait, &wait);
+	finish_रुको(&asoc->रुको, &रुको);
 
 	/* Release the association's refcnt.  */
 	sctp_association_put(asoc);
 
-	return err;
+	वापस err;
 
-do_error:
-	if (asoc->init_err_counter + 1 > asoc->max_init_attempts)
+करो_error:
+	अगर (asoc->init_err_counter + 1 > asoc->max_init_attempts)
 		err = -ETIMEDOUT;
-	else
+	अन्यथा
 		err = -ECONNREFUSED;
-	goto out;
+	जाओ out;
 
-do_interrupted:
-	err = sock_intr_errno(*timeo_p);
-	goto out;
+करो_पूर्णांकerrupted:
+	err = sock_पूर्णांकr_त्रुटि_सं(*समयo_p);
+	जाओ out;
 
-do_nonblock:
+करो_nonblock:
 	err = -EINPROGRESS;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static int sctp_wait_for_accept(struct sock *sk, long timeo)
-{
-	struct sctp_endpoint *ep;
-	int err = 0;
-	DEFINE_WAIT(wait);
+अटल पूर्णांक sctp_रुको_क्रम_accept(काष्ठा sock *sk, दीर्घ समयo)
+अणु
+	काष्ठा sctp_endpoपूर्णांक *ep;
+	पूर्णांक err = 0;
+	DEFINE_WAIT(रुको);
 
 	ep = sctp_sk(sk)->ep;
 
 
-	for (;;) {
-		prepare_to_wait_exclusive(sk_sleep(sk), &wait,
+	क्रम (;;) अणु
+		prepare_to_रुको_exclusive(sk_sleep(sk), &रुको,
 					  TASK_INTERRUPTIBLE);
 
-		if (list_empty(&ep->asocs)) {
+		अगर (list_empty(&ep->asocs)) अणु
 			release_sock(sk);
-			timeo = schedule_timeout(timeo);
+			समयo = schedule_समयout(समयo);
 			lock_sock(sk);
-		}
+		पूर्ण
 
 		err = -EINVAL;
-		if (!sctp_sstate(sk, LISTENING))
-			break;
+		अगर (!sctp_sstate(sk, LISTENING))
+			अवरोध;
 
 		err = 0;
-		if (!list_empty(&ep->asocs))
-			break;
+		अगर (!list_empty(&ep->asocs))
+			अवरोध;
 
-		err = sock_intr_errno(timeo);
-		if (signal_pending(current))
-			break;
+		err = sock_पूर्णांकr_त्रुटि_सं(समयo);
+		अगर (संकेत_pending(current))
+			अवरोध;
 
 		err = -EAGAIN;
-		if (!timeo)
-			break;
-	}
+		अगर (!समयo)
+			अवरोध;
+	पूर्ण
 
-	finish_wait(sk_sleep(sk), &wait);
+	finish_रुको(sk_sleep(sk), &रुको);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sctp_wait_for_close(struct sock *sk, long timeout)
-{
-	DEFINE_WAIT(wait);
+अटल व्योम sctp_रुको_क्रम_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
+	DEFINE_WAIT(रुको);
 
-	do {
-		prepare_to_wait(sk_sleep(sk), &wait, TASK_INTERRUPTIBLE);
-		if (list_empty(&sctp_sk(sk)->ep->asocs))
-			break;
+	करो अणु
+		prepare_to_रुको(sk_sleep(sk), &रुको, TASK_INTERRUPTIBLE);
+		अगर (list_empty(&sctp_sk(sk)->ep->asocs))
+			अवरोध;
 		release_sock(sk);
-		timeout = schedule_timeout(timeout);
+		समयout = schedule_समयout(समयout);
 		lock_sock(sk);
-	} while (!signal_pending(current) && timeout);
+	पूर्ण जबतक (!संकेत_pending(current) && समयout);
 
-	finish_wait(sk_sleep(sk), &wait);
-}
+	finish_रुको(sk_sleep(sk), &रुको);
+पूर्ण
 
-static void sctp_skb_set_owner_r_frag(struct sk_buff *skb, struct sock *sk)
-{
-	struct sk_buff *frag;
+अटल व्योम sctp_skb_set_owner_r_frag(काष्ठा sk_buff *skb, काष्ठा sock *sk)
+अणु
+	काष्ठा sk_buff *frag;
 
-	if (!skb->data_len)
-		goto done;
+	अगर (!skb->data_len)
+		जाओ करोne;
 
-	/* Don't forget the fragments. */
+	/* Don't क्रमget the fragments. */
 	skb_walk_frags(skb, frag)
 		sctp_skb_set_owner_r_frag(frag, sk);
 
-done:
+करोne:
 	sctp_skb_set_owner_r(skb, sk);
-}
+पूर्ण
 
-void sctp_copy_sock(struct sock *newsk, struct sock *sk,
-		    struct sctp_association *asoc)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct inet_sock *newinet;
-	struct sctp_sock *sp = sctp_sk(sk);
-	struct sctp_endpoint *ep = sp->ep;
+व्योम sctp_copy_sock(काष्ठा sock *newsk, काष्ठा sock *sk,
+		    काष्ठा sctp_association *asoc)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा inet_sock *newinet;
+	काष्ठा sctp_sock *sp = sctp_sk(sk);
+	काष्ठा sctp_endpoपूर्णांक *ep = sp->ep;
 
 	newsk->sk_type = sk->sk_type;
-	newsk->sk_bound_dev_if = sk->sk_bound_dev_if;
+	newsk->sk_bound_dev_अगर = sk->sk_bound_dev_अगर;
 	newsk->sk_flags = sk->sk_flags;
 	newsk->sk_tsflags = sk->sk_tsflags;
 	newsk->sk_no_check_tx = sk->sk_no_check_tx;
@@ -9296,84 +9297,84 @@ void sctp_copy_sock(struct sock *newsk, struct sock *sk,
 	newsk->sk_reuse = sk->sk_reuse;
 	sctp_sk(newsk)->reuse = sp->reuse;
 
-	newsk->sk_shutdown = sk->sk_shutdown;
-	newsk->sk_destruct = sctp_destruct_sock;
+	newsk->sk_shutकरोwn = sk->sk_shutकरोwn;
+	newsk->sk_deकाष्ठा = sctp_deकाष्ठा_sock;
 	newsk->sk_family = sk->sk_family;
 	newsk->sk_protocol = IPPROTO_SCTP;
 	newsk->sk_backlog_rcv = sk->sk_prot->backlog_rcv;
 	newsk->sk_sndbuf = sk->sk_sndbuf;
 	newsk->sk_rcvbuf = sk->sk_rcvbuf;
-	newsk->sk_lingertime = sk->sk_lingertime;
-	newsk->sk_rcvtimeo = sk->sk_rcvtimeo;
-	newsk->sk_sndtimeo = sk->sk_sndtimeo;
+	newsk->sk_lingerसमय = sk->sk_lingerसमय;
+	newsk->sk_rcvसमयo = sk->sk_rcvसमयo;
+	newsk->sk_sndसमयo = sk->sk_sndसमयo;
 	newsk->sk_rxhash = sk->sk_rxhash;
 
 	newinet = inet_sk(newsk);
 
-	/* Initialize sk's sport, dport, rcv_saddr and daddr for
-	 * getsockname() and getpeername()
+	/* Initialize sk's sport, dport, rcv_saddr and daddr क्रम
+	 * माला_लोockname() and getpeername()
 	 */
 	newinet->inet_sport = inet->inet_sport;
 	newinet->inet_saddr = inet->inet_saddr;
 	newinet->inet_rcv_saddr = inet->inet_rcv_saddr;
 	newinet->inet_dport = htons(asoc->peer.port);
 	newinet->pmtudisc = inet->pmtudisc;
-	newinet->inet_id = prandom_u32();
+	newinet->inet_id = pअक्रमom_u32();
 
 	newinet->uc_ttl = inet->uc_ttl;
 	newinet->mc_loop = 1;
 	newinet->mc_ttl = 1;
 	newinet->mc_index = 0;
-	newinet->mc_list = NULL;
+	newinet->mc_list = शून्य;
 
-	if (newsk->sk_flags & SK_FLAGS_TIMESTAMP)
-		net_enable_timestamp();
+	अगर (newsk->sk_flags & SK_FLAGS_TIMESTAMP)
+		net_enable_बारtamp();
 
 	/* Set newsk security attributes from original sk and connection
 	 * security attribute from ep.
 	 */
 	security_sctp_sk_clone(ep, sk, newsk);
-}
+पूर्ण
 
-static inline void sctp_copy_descendant(struct sock *sk_to,
-					const struct sock *sk_from)
-{
-	size_t ancestor_size = sizeof(struct inet_sock);
+अटल अंतरभूत व्योम sctp_copy_descendant(काष्ठा sock *sk_to,
+					स्थिर काष्ठा sock *sk_from)
+अणु
+	माप_प्रकार ancestor_size = माप(काष्ठा inet_sock);
 
 	ancestor_size += sk_from->sk_prot->obj_size;
-	ancestor_size -= offsetof(struct sctp_sock, pd_lobby);
+	ancestor_size -= दुरत्व(काष्ठा sctp_sock, pd_lobby);
 	__inet_sk_copy_descendant(sk_to, sk_from, ancestor_size);
-}
+पूर्ण
 
 /* Populate the fields of the newsk from the oldsk and migrate the assoc
  * and its messages to the newsk.
  */
-static int sctp_sock_migrate(struct sock *oldsk, struct sock *newsk,
-			     struct sctp_association *assoc,
-			     enum sctp_socket_type type)
-{
-	struct sctp_sock *oldsp = sctp_sk(oldsk);
-	struct sctp_sock *newsp = sctp_sk(newsk);
-	struct sctp_bind_bucket *pp; /* hash list port iterator */
-	struct sctp_endpoint *newep = newsp->ep;
-	struct sk_buff *skb, *tmp;
-	struct sctp_ulpevent *event;
-	struct sctp_bind_hashbucket *head;
-	int err;
+अटल पूर्णांक sctp_sock_migrate(काष्ठा sock *oldsk, काष्ठा sock *newsk,
+			     काष्ठा sctp_association *assoc,
+			     क्रमागत sctp_socket_type type)
+अणु
+	काष्ठा sctp_sock *oldsp = sctp_sk(oldsk);
+	काष्ठा sctp_sock *newsp = sctp_sk(newsk);
+	काष्ठा sctp_bind_bucket *pp; /* hash list port iterator */
+	काष्ठा sctp_endpoपूर्णांक *newep = newsp->ep;
+	काष्ठा sk_buff *skb, *पंचांगp;
+	काष्ठा sctp_ulpevent *event;
+	काष्ठा sctp_bind_hashbucket *head;
+	पूर्णांक err;
 
 	/* Migrate socket buffer sizes and all the socket level options to the
 	 * new socket.
 	 */
 	newsk->sk_sndbuf = oldsk->sk_sndbuf;
 	newsk->sk_rcvbuf = oldsk->sk_rcvbuf;
-	/* Brute force copy old sctp opt. */
+	/* Brute क्रमce copy old sctp opt. */
 	sctp_copy_descendant(newsk, oldsk);
 
-	/* Restore the ep value that was overwritten with the above structure
+	/* Restore the ep value that was overwritten with the above काष्ठाure
 	 * copy.
 	 */
 	newsp->ep = newep;
-	newsp->hmac = NULL;
+	newsp->hmac = शून्य;
 
 	/* Hook this new socket in to the bind_hash list. */
 	head = &sctp_port_hashtable[sctp_phashfn(sock_net(oldsk),
@@ -9385,76 +9386,76 @@ static int sctp_sock_migrate(struct sock *oldsk, struct sock *newsk,
 	inet_sk(newsk)->inet_num = inet_sk(oldsk)->inet_num;
 	spin_unlock_bh(&head->lock);
 
-	/* Copy the bind_addr list from the original endpoint to the new
-	 * endpoint so that we can handle restarts properly
+	/* Copy the bind_addr list from the original endpoपूर्णांक to the new
+	 * endpoपूर्णांक so that we can handle restarts properly
 	 */
 	err = sctp_bind_addr_dup(&newsp->ep->base.bind_addr,
 				 &oldsp->ep->base.bind_addr, GFP_KERNEL);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* New ep's auth_hmacs should be set if old ep's is set, in case
+	/* New ep's auth_hmacs should be set if old ep's is set, in हाल
 	 * that net->sctp.auth_enable has been changed to 0 by users and
-	 * new ep's auth_hmacs couldn't be set in sctp_endpoint_init().
+	 * new ep's auth_hmacs couldn't be set in sctp_endpoपूर्णांक_init().
 	 */
-	if (oldsp->ep->auth_hmacs) {
+	अगर (oldsp->ep->auth_hmacs) अणु
 		err = sctp_auth_init_hmacs(newsp->ep, GFP_KERNEL);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	sctp_auto_asconf_init(newsp);
+	sctp_स्वतः_asconf_init(newsp);
 
-	/* Move any messages in the old socket's receive queue that are for the
+	/* Move any messages in the old socket's receive queue that are क्रम the
 	 * peeled off association to the new socket's receive queue.
 	 */
-	sctp_skb_for_each(skb, &oldsk->sk_receive_queue, tmp) {
+	sctp_skb_क्रम_each(skb, &oldsk->sk_receive_queue, पंचांगp) अणु
 		event = sctp_skb2event(skb);
-		if (event->asoc == assoc) {
+		अगर (event->asoc == assoc) अणु
 			__skb_unlink(skb, &oldsk->sk_receive_queue);
 			__skb_queue_tail(&newsk->sk_receive_queue, skb);
 			sctp_skb_set_owner_r_frag(skb, newsk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Clean up any messages pending delivery due to partial
-	 * delivery.   Three cases:
+	 * delivery.   Three हालs:
 	 * 1) No partial deliver;  no work.
 	 * 2) Peeling off partial delivery; keep pd_lobby in new pd_lobby.
 	 * 3) Peeling off non-partial delivery; move pd_lobby to receive_queue.
 	 */
 	atomic_set(&sctp_sk(newsk)->pd_mode, assoc->ulpq.pd_mode);
 
-	if (atomic_read(&sctp_sk(oldsk)->pd_mode)) {
-		struct sk_buff_head *queue;
+	अगर (atomic_पढ़ो(&sctp_sk(oldsk)->pd_mode)) अणु
+		काष्ठा sk_buff_head *queue;
 
 		/* Decide which queue to move pd_lobby skbs to. */
-		if (assoc->ulpq.pd_mode) {
+		अगर (assoc->ulpq.pd_mode) अणु
 			queue = &newsp->pd_lobby;
-		} else
+		पूर्ण अन्यथा
 			queue = &newsk->sk_receive_queue;
 
-		/* Walk through the pd_lobby, looking for skbs that
+		/* Walk through the pd_lobby, looking क्रम skbs that
 		 * need moved to the new socket.
 		 */
-		sctp_skb_for_each(skb, &oldsp->pd_lobby, tmp) {
+		sctp_skb_क्रम_each(skb, &oldsp->pd_lobby, पंचांगp) अणु
 			event = sctp_skb2event(skb);
-			if (event->asoc == assoc) {
+			अगर (event->asoc == assoc) अणु
 				__skb_unlink(skb, &oldsp->pd_lobby);
 				__skb_queue_tail(queue, skb);
 				sctp_skb_set_owner_r_frag(skb, newsk);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* Clear up any skbs waiting for the partial
+		/* Clear up any skbs रुकोing क्रम the partial
 		 * delivery to finish.
 		 */
-		if (assoc->ulpq.pd_mode)
-			sctp_clear_pd(oldsk, NULL);
+		अगर (assoc->ulpq.pd_mode)
+			sctp_clear_pd(oldsk, शून्य);
 
-	}
+	पूर्ण
 
-	sctp_for_each_rx_skb(assoc, newsk, sctp_skb_set_owner_r_frag);
+	sctp_क्रम_each_rx_skb(assoc, newsk, sctp_skb_set_owner_r_frag);
 
 	/* Set the type of socket to indicate that it is peeled off from the
 	 * original UDP-style socket or created with the accept() call on a
@@ -9472,39 +9473,39 @@ static int sctp_sock_migrate(struct sock *oldsk, struct sock *newsk,
 	 * paths won't try to lock it and then oldsk.
 	 */
 	lock_sock_nested(newsk, SINGLE_DEPTH_NESTING);
-	sctp_for_each_tx_datachunk(assoc, true, sctp_clear_owner_w);
+	sctp_क्रम_each_tx_datachunk(assoc, true, sctp_clear_owner_w);
 	sctp_assoc_migrate(assoc, newsk);
-	sctp_for_each_tx_datachunk(assoc, false, sctp_set_owner_w);
+	sctp_क्रम_each_tx_datachunk(assoc, false, sctp_set_owner_w);
 
-	/* If the association on the newsk is already closed before accept()
+	/* If the association on the newsk is alपढ़ोy बंदd beक्रमe accept()
 	 * is called, set RCV_SHUTDOWN flag.
 	 */
-	if (sctp_state(assoc, CLOSED) && sctp_style(newsk, TCP)) {
+	अगर (sctp_state(assoc, CLOSED) && sctp_style(newsk, TCP)) अणु
 		inet_sk_set_state(newsk, SCTP_SS_CLOSED);
-		newsk->sk_shutdown |= RCV_SHUTDOWN;
-	} else {
+		newsk->sk_shutकरोwn |= RCV_SHUTDOWN;
+	पूर्ण अन्यथा अणु
 		inet_sk_set_state(newsk, SCTP_SS_ESTABLISHED);
-	}
+	पूर्ण
 
 	release_sock(newsk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* This proto struct describes the ULP interface for SCTP.  */
-struct proto sctp_prot = {
+/* This proto काष्ठा describes the ULP पूर्णांकerface क्रम SCTP.  */
+काष्ठा proto sctp_prot = अणु
 	.name        =	"SCTP",
 	.owner       =	THIS_MODULE,
-	.close       =	sctp_close,
+	.बंद       =	sctp_बंद,
 	.disconnect  =	sctp_disconnect,
 	.accept      =	sctp_accept,
 	.ioctl       =	sctp_ioctl,
 	.init        =	sctp_init_sock,
 	.destroy     =	sctp_destroy_sock,
-	.shutdown    =	sctp_shutdown,
+	.shutकरोwn    =	sctp_shutकरोwn,
 	.setsockopt  =	sctp_setsockopt,
-	.getsockopt  =	sctp_getsockopt,
+	.माला_लोockopt  =	sctp_माला_लोockopt,
 	.sendmsg     =	sctp_sendmsg,
 	.recvmsg     =	sctp_recvmsg,
 	.bind        =	sctp_bind,
@@ -9512,12 +9513,12 @@ struct proto sctp_prot = {
 	.backlog_rcv =	sctp_backlog_rcv,
 	.hash        =	sctp_hash,
 	.unhash      =	sctp_unhash,
-	.no_autobind =	true,
-	.obj_size    =  sizeof(struct sctp_sock),
-	.useroffset  =  offsetof(struct sctp_sock, subscribe),
-	.usersize    =  offsetof(struct sctp_sock, initmsg) -
-				offsetof(struct sctp_sock, subscribe) +
-				sizeof_field(struct sctp_sock, initmsg),
+	.no_स्वतःbind =	true,
+	.obj_size    =  माप(काष्ठा sctp_sock),
+	.useroffset  =  दुरत्व(काष्ठा sctp_sock, subscribe),
+	.usersize    =  दुरत्व(काष्ठा sctp_sock, iniपंचांगsg) -
+				दुरत्व(काष्ठा sctp_sock, subscribe) +
+				माप_field(काष्ठा sctp_sock, iniपंचांगsg),
 	.sysctl_mem  =  sysctl_sctp_mem,
 	.sysctl_rmem =  sysctl_sctp_rmem,
 	.sysctl_wmem =  sysctl_sctp_wmem,
@@ -9525,29 +9526,29 @@ struct proto sctp_prot = {
 	.enter_memory_pressure = sctp_enter_memory_pressure,
 	.memory_allocated = &sctp_memory_allocated,
 	.sockets_allocated = &sctp_sockets_allocated,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 
-#include <net/transp_v6.h>
-static void sctp_v6_destroy_sock(struct sock *sk)
-{
+#समावेश <net/transp_v6.h>
+अटल व्योम sctp_v6_destroy_sock(काष्ठा sock *sk)
+अणु
 	sctp_destroy_sock(sk);
 	inet6_destroy_sock(sk);
-}
+पूर्ण
 
-struct proto sctpv6_prot = {
+काष्ठा proto sctpv6_prot = अणु
 	.name		= "SCTPv6",
 	.owner		= THIS_MODULE,
-	.close		= sctp_close,
+	.बंद		= sctp_बंद,
 	.disconnect	= sctp_disconnect,
 	.accept		= sctp_accept,
 	.ioctl		= sctp_ioctl,
 	.init		= sctp_init_sock,
 	.destroy	= sctp_v6_destroy_sock,
-	.shutdown	= sctp_shutdown,
+	.shutकरोwn	= sctp_shutकरोwn,
 	.setsockopt	= sctp_setsockopt,
-	.getsockopt	= sctp_getsockopt,
+	.माला_लोockopt	= sctp_माला_लोockopt,
 	.sendmsg	= sctp_sendmsg,
 	.recvmsg	= sctp_recvmsg,
 	.bind		= sctp_bind,
@@ -9555,12 +9556,12 @@ struct proto sctpv6_prot = {
 	.backlog_rcv	= sctp_backlog_rcv,
 	.hash		= sctp_hash,
 	.unhash		= sctp_unhash,
-	.no_autobind	= true,
-	.obj_size	= sizeof(struct sctp6_sock),
-	.useroffset	= offsetof(struct sctp6_sock, sctp.subscribe),
-	.usersize	= offsetof(struct sctp6_sock, sctp.initmsg) -
-				offsetof(struct sctp6_sock, sctp.subscribe) +
-				sizeof_field(struct sctp6_sock, sctp.initmsg),
+	.no_स्वतःbind	= true,
+	.obj_size	= माप(काष्ठा sctp6_sock),
+	.useroffset	= दुरत्व(काष्ठा sctp6_sock, sctp.subscribe),
+	.usersize	= दुरत्व(काष्ठा sctp6_sock, sctp.iniपंचांगsg) -
+				दुरत्व(काष्ठा sctp6_sock, sctp.subscribe) +
+				माप_field(काष्ठा sctp6_sock, sctp.iniपंचांगsg),
 	.sysctl_mem	= sysctl_sctp_mem,
 	.sysctl_rmem	= sysctl_sctp_rmem,
 	.sysctl_wmem	= sysctl_sctp_wmem,
@@ -9568,5 +9569,5 @@ struct proto sctpv6_prot = {
 	.enter_memory_pressure = sctp_enter_memory_pressure,
 	.memory_allocated = &sctp_memory_allocated,
 	.sockets_allocated = &sctp_sockets_allocated,
-};
-#endif /* IS_ENABLED(CONFIG_IPV6) */
+पूर्ण;
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */

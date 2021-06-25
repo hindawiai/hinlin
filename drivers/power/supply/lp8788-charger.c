@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * TI LP8788 MFD - battery charger driver
+ * TI LP8788 MFD - battery अक्षरger driver
  *
  * Copyright 2012 Texas Instruments
  *
  * Author: Milo(Woogyom) Kim <milo.kim@ti.com>
  */
 
-#include <linux/err.h>
-#include <linux/iio/consumer.h>
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
-#include <linux/mfd/lp8788.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/err.h>
+#समावेश <linux/iio/consumer.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/mfd/lp8788.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-/* register address */
-#define LP8788_CHG_STATUS		0x07
-#define LP8788_CHG_IDCIN		0x13
-#define LP8788_CHG_IBATT		0x14
-#define LP8788_CHG_VTERM		0x15
-#define LP8788_CHG_EOC			0x16
+/* रेजिस्टर address */
+#घोषणा LP8788_CHG_STATUS		0x07
+#घोषणा LP8788_CHG_IDCIN		0x13
+#घोषणा LP8788_CHG_IBATT		0x14
+#घोषणा LP8788_CHG_VTERM		0x15
+#घोषणा LP8788_CHG_EOC			0x16
 
-/* mask/shift bits */
-#define LP8788_CHG_INPUT_STATE_M	0x03	/* Addr 07h */
-#define LP8788_CHG_STATE_M		0x3C
-#define LP8788_CHG_STATE_S		2
-#define LP8788_NO_BATT_M		BIT(6)
-#define LP8788_BAD_BATT_M		BIT(7)
-#define LP8788_CHG_IBATT_M		0x1F	/* Addr 14h */
-#define LP8788_CHG_VTERM_M		0x0F	/* Addr 15h */
-#define LP8788_CHG_EOC_LEVEL_M		0x30	/* Addr 16h */
-#define LP8788_CHG_EOC_LEVEL_S		4
-#define LP8788_CHG_EOC_TIME_M		0x0E
-#define LP8788_CHG_EOC_TIME_S		1
-#define LP8788_CHG_EOC_MODE_M		BIT(0)
+/* mask/shअगरt bits */
+#घोषणा LP8788_CHG_INPUT_STATE_M	0x03	/* Addr 07h */
+#घोषणा LP8788_CHG_STATE_M		0x3C
+#घोषणा LP8788_CHG_STATE_S		2
+#घोषणा LP8788_NO_BATT_M		BIT(6)
+#घोषणा LP8788_BAD_BATT_M		BIT(7)
+#घोषणा LP8788_CHG_IBATT_M		0x1F	/* Addr 14h */
+#घोषणा LP8788_CHG_VTERM_M		0x0F	/* Addr 15h */
+#घोषणा LP8788_CHG_EOC_LEVEL_M		0x30	/* Addr 16h */
+#घोषणा LP8788_CHG_EOC_LEVEL_S		4
+#घोषणा LP8788_CHG_EOC_TIME_M		0x0E
+#घोषणा LP8788_CHG_EOC_TIME_S		1
+#घोषणा LP8788_CHG_EOC_MODE_M		BIT(0)
 
-#define LP8788_CHARGER_NAME		"charger"
-#define LP8788_BATTERY_NAME		"main_batt"
+#घोषणा LP8788_CHARGER_NAME		"charger"
+#घोषणा LP8788_BATTERY_NAME		"main_batt"
 
-#define LP8788_CHG_START		0x11
-#define LP8788_CHG_END			0x1C
+#घोषणा LP8788_CHG_START		0x11
+#घोषणा LP8788_CHG_END			0x1C
 
-#define LP8788_ISEL_MAX			23
-#define LP8788_ISEL_STEP		50
-#define LP8788_VTERM_MIN		4100
-#define LP8788_VTERM_STEP		25
-#define LP8788_MAX_BATT_CAPACITY	100
-#define LP8788_MAX_CHG_IRQS		11
+#घोषणा LP8788_ISEL_MAX			23
+#घोषणा LP8788_ISEL_STEP		50
+#घोषणा LP8788_VTERM_MIN		4100
+#घोषणा LP8788_VTERM_STEP		25
+#घोषणा LP8788_MAX_BATT_CAPACITY	100
+#घोषणा LP8788_MAX_CHG_IRQS		11
 
-enum lp8788_charging_state {
+क्रमागत lp8788_अक्षरging_state अणु
 	LP8788_OFF,
 	LP8788_WARM_UP,
 	LP8788_LOW_INPUT = 0x3,
 	LP8788_PRECHARGE,
 	LP8788_CC,
 	LP8788_CV,
-	LP8788_MAINTENANCE,
+	LP8788_MAINTEन_अंकCE,
 	LP8788_BATTERY_FAULT,
 	LP8788_SYSTEM_SUPPORT = 0xC,
 	LP8788_HIGH_CURRENT = 0xF,
 	LP8788_MAX_CHG_STATE,
-};
+पूर्ण;
 
-enum lp8788_charger_adc_sel {
+क्रमागत lp8788_अक्षरger_adc_sel अणु
 	LP8788_VBATT,
 	LP8788_BATT_TEMP,
 	LP8788_NUM_CHG_ADC,
-};
+पूर्ण;
 
-enum lp8788_charger_input_state {
+क्रमागत lp8788_अक्षरger_input_state अणु
 	LP8788_SYSTEM_SUPPLY = 1,
 	LP8788_FULL_FUNCTION,
-};
+पूर्ण;
 
 /*
- * struct lp8788_chg_irq
- * @which        : lp8788 interrupt id
- * @virq         : Linux IRQ number from irq_domain
+ * काष्ठा lp8788_chg_irq
+ * @which        : lp8788 पूर्णांकerrupt id
+ * @virq         : Linux IRQ number from irq_करोमुख्य
  */
-struct lp8788_chg_irq {
-	enum lp8788_int_id which;
-	int virq;
-};
+काष्ठा lp8788_chg_irq अणु
+	क्रमागत lp8788_पूर्णांक_id which;
+	पूर्णांक virq;
+पूर्ण;
 
 /*
- * struct lp8788_charger
- * @lp           : used for accessing the registers of mfd lp8788 device
- * @charger      : power supply driver for the battery charger
- * @battery      : power supply driver for the battery
- * @charger_work : work queue for charger input interrupts
- * @chan         : iio channels for getting adc values
+ * काष्ठा lp8788_अक्षरger
+ * @lp           : used क्रम accessing the रेजिस्टरs of mfd lp8788 device
+ * @अक्षरger      : घातer supply driver क्रम the battery अक्षरger
+ * @battery      : घातer supply driver क्रम the battery
+ * @अक्षरger_work : work queue क्रम अक्षरger input पूर्णांकerrupts
+ * @chan         : iio channels क्रम getting adc values
  *                 eg) battery voltage, capacity and temperature
- * @irqs         : charger dedicated interrupts
- * @num_irqs     : total numbers of charger interrupts
- * @pdata        : charger platform specific data
+ * @irqs         : अक्षरger dedicated पूर्णांकerrupts
+ * @num_irqs     : total numbers of अक्षरger पूर्णांकerrupts
+ * @pdata        : अक्षरger platक्रमm specअगरic data
  */
-struct lp8788_charger {
-	struct lp8788 *lp;
-	struct power_supply *charger;
-	struct power_supply *battery;
-	struct work_struct charger_work;
-	struct iio_channel *chan[LP8788_NUM_CHG_ADC];
-	struct lp8788_chg_irq irqs[LP8788_MAX_CHG_IRQS];
-	int num_irqs;
-	struct lp8788_charger_platform_data *pdata;
-};
+काष्ठा lp8788_अक्षरger अणु
+	काष्ठा lp8788 *lp;
+	काष्ठा घातer_supply *अक्षरger;
+	काष्ठा घातer_supply *battery;
+	काष्ठा work_काष्ठा अक्षरger_work;
+	काष्ठा iio_channel *chan[LP8788_NUM_CHG_ADC];
+	काष्ठा lp8788_chg_irq irqs[LP8788_MAX_CHG_IRQS];
+	पूर्णांक num_irqs;
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata;
+पूर्ण;
 
-static char *battery_supplied_to[] = {
+अटल अक्षर *battery_supplied_to[] = अणु
 	LP8788_BATTERY_NAME,
-};
+पूर्ण;
 
-static enum power_supply_property lp8788_charger_prop[] = {
+अटल क्रमागत घातer_supply_property lp8788_अक्षरger_prop[] = अणु
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CURRENT_MAX,
-};
+पूर्ण;
 
-static enum power_supply_property lp8788_battery_prop[] = {
+अटल क्रमागत घातer_supply_property lp8788_battery_prop[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
 	POWER_SUPPLY_PROP_PRESENT,
@@ -128,370 +129,370 @@ static enum power_supply_property lp8788_battery_prop[] = {
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT,
 	POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX,
 	POWER_SUPPLY_PROP_TEMP,
-};
+पूर्ण;
 
-static bool lp8788_is_charger_detected(struct lp8788_charger *pchg)
-{
+अटल bool lp8788_is_अक्षरger_detected(काष्ठा lp8788_अक्षरger *pchg)
+अणु
 	u8 data;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_STATUS, &data);
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_STATUS, &data);
 	data &= LP8788_CHG_INPUT_STATE_M;
 
-	return data == LP8788_SYSTEM_SUPPLY || data == LP8788_FULL_FUNCTION;
-}
+	वापस data == LP8788_SYSTEM_SUPPLY || data == LP8788_FULL_FUNCTION;
+पूर्ण
 
-static int lp8788_charger_get_property(struct power_supply *psy,
-					enum power_supply_property psp,
-					union power_supply_propval *val)
-{
-	struct lp8788_charger *pchg = dev_get_drvdata(psy->dev.parent);
-	u8 read;
+अटल पूर्णांक lp8788_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp,
+					जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = dev_get_drvdata(psy->dev.parent);
+	u8 पढ़ो;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = lp8788_is_charger_detected(pchg);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_MAX:
-		lp8788_read_byte(pchg->lp, LP8788_CHG_IDCIN, &read);
-		val->intval = LP8788_ISEL_STEP *
-				(min_t(int, read, LP8788_ISEL_MAX) + 1);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = lp8788_is_अक्षरger_detected(pchg);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_MAX:
+		lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_IDCIN, &पढ़ो);
+		val->पूर्णांकval = LP8788_ISEL_STEP *
+				(min_t(पूर्णांक, पढ़ो, LP8788_ISEL_MAX) + 1);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_battery_status(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	enum lp8788_charging_state state;
+अटल पूर्णांक lp8788_get_battery_status(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	क्रमागत lp8788_अक्षरging_state state;
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lp8788_read_byte(pchg->lp, LP8788_CHG_STATUS, &data);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_STATUS, &data);
+	अगर (ret)
+		वापस ret;
 
 	state = (data & LP8788_CHG_STATE_M) >> LP8788_CHG_STATE_S;
-	switch (state) {
-	case LP8788_OFF:
-		val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;
-	case LP8788_PRECHARGE:
-	case LP8788_CC:
-	case LP8788_CV:
-	case LP8788_HIGH_CURRENT:
-		val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		break;
-	case LP8788_MAINTENANCE:
-		val->intval = POWER_SUPPLY_STATUS_FULL;
-		break;
-	default:
-		val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-		break;
-	}
+	चयन (state) अणु
+	हाल LP8788_OFF:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+		अवरोध;
+	हाल LP8788_PRECHARGE:
+	हाल LP8788_CC:
+	हाल LP8788_CV:
+	हाल LP8788_HIGH_CURRENT:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अवरोध;
+	हाल LP8788_MAINTEन_अंकCE:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अवरोध;
+	शेष:
+		val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_battery_health(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
+अटल पूर्णांक lp8788_get_battery_health(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lp8788_read_byte(pchg->lp, LP8788_CHG_STATUS, &data);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_STATUS, &data);
+	अगर (ret)
+		वापस ret;
 
-	if (data & LP8788_NO_BATT_M)
-		val->intval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
-	else if (data & LP8788_BAD_BATT_M)
-		val->intval = POWER_SUPPLY_HEALTH_DEAD;
-	else
-		val->intval = POWER_SUPPLY_HEALTH_GOOD;
+	अगर (data & LP8788_NO_BATT_M)
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_UNSPEC_FAILURE;
+	अन्यथा अगर (data & LP8788_BAD_BATT_M)
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_DEAD;
+	अन्यथा
+		val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_battery_present(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
+अटल पूर्णांक lp8788_get_battery_present(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	ret = lp8788_read_byte(pchg->lp, LP8788_CHG_STATUS, &data);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_STATUS, &data);
+	अगर (ret)
+		वापस ret;
 
-	val->intval = !(data & LP8788_NO_BATT_M);
-	return 0;
-}
+	val->पूर्णांकval = !(data & LP8788_NO_BATT_M);
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_vbatt_adc(struct lp8788_charger *pchg, int *result)
-{
-	struct iio_channel *channel = pchg->chan[LP8788_VBATT];
+अटल पूर्णांक lp8788_get_vbatt_adc(काष्ठा lp8788_अक्षरger *pchg, पूर्णांक *result)
+अणु
+	काष्ठा iio_channel *channel = pchg->chan[LP8788_VBATT];
 
-	if (!channel)
-		return -EINVAL;
+	अगर (!channel)
+		वापस -EINVAL;
 
-	return iio_read_channel_processed(channel, result);
-}
+	वापस iio_पढ़ो_channel_processed(channel, result);
+पूर्ण
 
-static int lp8788_get_battery_voltage(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	return lp8788_get_vbatt_adc(pchg, &val->intval);
-}
+अटल पूर्णांक lp8788_get_battery_voltage(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	वापस lp8788_get_vbatt_adc(pchg, &val->पूर्णांकval);
+पूर्ण
 
-static int lp8788_get_battery_capacity(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	struct lp8788 *lp = pchg->lp;
-	struct lp8788_charger_platform_data *pdata = pchg->pdata;
-	unsigned int max_vbatt;
-	int vbatt;
-	enum lp8788_charging_state state;
+अटल पूर्णांक lp8788_get_battery_capacity(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा lp8788 *lp = pchg->lp;
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata = pchg->pdata;
+	अचिन्हित पूर्णांक max_vbatt;
+	पूर्णांक vbatt;
+	क्रमागत lp8788_अक्षरging_state state;
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	if (!pdata)
-		return -EINVAL;
+	अगर (!pdata)
+		वापस -EINVAL;
 
 	max_vbatt = pdata->max_vbatt_mv;
-	if (max_vbatt == 0)
-		return -EINVAL;
+	अगर (max_vbatt == 0)
+		वापस -EINVAL;
 
-	ret = lp8788_read_byte(lp, LP8788_CHG_STATUS, &data);
-	if (ret)
-		return ret;
+	ret = lp8788_पढ़ो_byte(lp, LP8788_CHG_STATUS, &data);
+	अगर (ret)
+		वापस ret;
 
 	state = (data & LP8788_CHG_STATE_M) >> LP8788_CHG_STATE_S;
 
-	if (state == LP8788_MAINTENANCE) {
-		val->intval = LP8788_MAX_BATT_CAPACITY;
-	} else {
+	अगर (state == LP8788_MAINTEन_अंकCE) अणु
+		val->पूर्णांकval = LP8788_MAX_BATT_CAPACITY;
+	पूर्ण अन्यथा अणु
 		ret = lp8788_get_vbatt_adc(pchg, &vbatt);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		val->intval = (vbatt * LP8788_MAX_BATT_CAPACITY) / max_vbatt;
-		val->intval = min(val->intval, LP8788_MAX_BATT_CAPACITY);
-	}
+		val->पूर्णांकval = (vbatt * LP8788_MAX_BATT_CAPACITY) / max_vbatt;
+		val->पूर्णांकval = min(val->पूर्णांकval, LP8788_MAX_BATT_CAPACITY);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_battery_temperature(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	struct iio_channel *channel = pchg->chan[LP8788_BATT_TEMP];
-	int result;
-	int ret;
+अटल पूर्णांक lp8788_get_battery_temperature(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा iio_channel *channel = pchg->chan[LP8788_BATT_TEMP];
+	पूर्णांक result;
+	पूर्णांक ret;
 
-	if (!channel)
-		return -EINVAL;
+	अगर (!channel)
+		वापस -EINVAL;
 
-	ret = iio_read_channel_processed(channel, &result);
-	if (ret < 0)
-		return -EINVAL;
+	ret = iio_पढ़ो_channel_processed(channel, &result);
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	/* unit: 0.1 'C */
-	val->intval = result * 10;
+	val->पूर्णांकval = result * 10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_battery_charging_current(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	u8 read;
+अटल पूर्णांक lp8788_get_battery_अक्षरging_current(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	u8 पढ़ो;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_IBATT, &read);
-	read &= LP8788_CHG_IBATT_M;
-	val->intval = LP8788_ISEL_STEP *
-			(min_t(int, read, LP8788_ISEL_MAX) + 1);
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_IBATT, &पढ़ो);
+	पढ़ो &= LP8788_CHG_IBATT_M;
+	val->पूर्णांकval = LP8788_ISEL_STEP *
+			(min_t(पूर्णांक, पढ़ो, LP8788_ISEL_MAX) + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_get_charging_termination_voltage(struct lp8788_charger *pchg,
-				union power_supply_propval *val)
-{
-	u8 read;
+अटल पूर्णांक lp8788_get_अक्षरging_termination_voltage(काष्ठा lp8788_अक्षरger *pchg,
+				जोड़ घातer_supply_propval *val)
+अणु
+	u8 पढ़ो;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_VTERM, &read);
-	read &= LP8788_CHG_VTERM_M;
-	val->intval = LP8788_VTERM_MIN + LP8788_VTERM_STEP * read;
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_VTERM, &पढ़ो);
+	पढ़ो &= LP8788_CHG_VTERM_M;
+	val->पूर्णांकval = LP8788_VTERM_MIN + LP8788_VTERM_STEP * पढ़ो;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_battery_get_property(struct power_supply *psy,
-					enum power_supply_property psp,
-					union power_supply_propval *val)
-{
-	struct lp8788_charger *pchg = dev_get_drvdata(psy->dev.parent);
+अटल पूर्णांक lp8788_battery_get_property(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp,
+					जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = dev_get_drvdata(psy->dev.parent);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		return lp8788_get_battery_status(pchg, val);
-	case POWER_SUPPLY_PROP_HEALTH:
-		return lp8788_get_battery_health(pchg, val);
-	case POWER_SUPPLY_PROP_PRESENT:
-		return lp8788_get_battery_present(pchg, val);
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		return lp8788_get_battery_voltage(pchg, val);
-	case POWER_SUPPLY_PROP_CAPACITY:
-		return lp8788_get_battery_capacity(pchg, val);
-	case POWER_SUPPLY_PROP_TEMP:
-		return lp8788_get_battery_temperature(pchg, val);
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
-		return lp8788_get_battery_charging_current(pchg, val);
-	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
-		return lp8788_get_charging_termination_voltage(pchg, val);
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		वापस lp8788_get_battery_status(pchg, val);
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		वापस lp8788_get_battery_health(pchg, val);
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		वापस lp8788_get_battery_present(pchg, val);
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		वापस lp8788_get_battery_voltage(pchg, val);
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		वापस lp8788_get_battery_capacity(pchg, val);
+	हाल POWER_SUPPLY_PROP_TEMP:
+		वापस lp8788_get_battery_temperature(pchg, val);
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT:
+		वापस lp8788_get_battery_अक्षरging_current(pchg, val);
+	हाल POWER_SUPPLY_PROP_CONSTANT_CHARGE_VOLTAGE_MAX:
+		वापस lp8788_get_अक्षरging_termination_voltage(pchg, val);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static inline bool lp8788_is_valid_charger_register(u8 addr)
-{
-	return addr >= LP8788_CHG_START && addr <= LP8788_CHG_END;
-}
+अटल अंतरभूत bool lp8788_is_valid_अक्षरger_रेजिस्टर(u8 addr)
+अणु
+	वापस addr >= LP8788_CHG_START && addr <= LP8788_CHG_END;
+पूर्ण
 
-static int lp8788_update_charger_params(struct platform_device *pdev,
-					struct lp8788_charger *pchg)
-{
-	struct lp8788 *lp = pchg->lp;
-	struct lp8788_charger_platform_data *pdata = pchg->pdata;
-	struct lp8788_chg_param *param;
-	int i;
-	int ret;
+अटल पूर्णांक lp8788_update_अक्षरger_params(काष्ठा platक्रमm_device *pdev,
+					काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	काष्ठा lp8788 *lp = pchg->lp;
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata = pchg->pdata;
+	काष्ठा lp8788_chg_param *param;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!pdata || !pdata->chg_params) {
+	अगर (!pdata || !pdata->chg_params) अणु
 		dev_info(&pdev->dev, "skip updating charger parameters\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* settting charging parameters */
-	for (i = 0; i < pdata->num_chg_params; i++) {
+	/* settting अक्षरging parameters */
+	क्रम (i = 0; i < pdata->num_chg_params; i++) अणु
 		param = pdata->chg_params + i;
 
-		if (lp8788_is_valid_charger_register(param->addr)) {
-			ret = lp8788_write_byte(lp, param->addr, param->val);
-			if (ret)
-				return ret;
-		}
-	}
+		अगर (lp8788_is_valid_अक्षरger_रेजिस्टर(param->addr)) अणु
+			ret = lp8788_ग_लिखो_byte(lp, param->addr, param->val);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct power_supply_desc lp8788_psy_charger_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc lp8788_psy_अक्षरger_desc = अणु
 	.name		= LP8788_CHARGER_NAME,
 	.type		= POWER_SUPPLY_TYPE_MAINS,
-	.properties	= lp8788_charger_prop,
-	.num_properties	= ARRAY_SIZE(lp8788_charger_prop),
-	.get_property	= lp8788_charger_get_property,
-};
+	.properties	= lp8788_अक्षरger_prop,
+	.num_properties	= ARRAY_SIZE(lp8788_अक्षरger_prop),
+	.get_property	= lp8788_अक्षरger_get_property,
+पूर्ण;
 
-static const struct power_supply_desc lp8788_psy_battery_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc lp8788_psy_battery_desc = अणु
 	.name		= LP8788_BATTERY_NAME,
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.properties	= lp8788_battery_prop,
 	.num_properties	= ARRAY_SIZE(lp8788_battery_prop),
 	.get_property	= lp8788_battery_get_property,
-};
+पूर्ण;
 
-static void lp8788_psy_unregister(struct lp8788_charger *pchg)
-{
-	power_supply_unregister(pchg->battery);
-	power_supply_unregister(pchg->charger);
-}
+अटल व्योम lp8788_psy_unरेजिस्टर(काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	घातer_supply_unरेजिस्टर(pchg->battery);
+	घातer_supply_unरेजिस्टर(pchg->अक्षरger);
+पूर्ण
 
-static void lp8788_charger_event(struct work_struct *work)
-{
-	struct lp8788_charger *pchg =
-		container_of(work, struct lp8788_charger, charger_work);
-	struct lp8788_charger_platform_data *pdata = pchg->pdata;
-	enum lp8788_charger_event event = lp8788_is_charger_detected(pchg);
+अटल व्योम lp8788_अक्षरger_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg =
+		container_of(work, काष्ठा lp8788_अक्षरger, अक्षरger_work);
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata = pchg->pdata;
+	क्रमागत lp8788_अक्षरger_event event = lp8788_is_अक्षरger_detected(pchg);
 
-	pdata->charger_event(pchg->lp, event);
-}
+	pdata->अक्षरger_event(pchg->lp, event);
+पूर्ण
 
-static bool lp8788_find_irq_id(struct lp8788_charger *pchg, int virq, int *id)
-{
+अटल bool lp8788_find_irq_id(काष्ठा lp8788_अक्षरger *pchg, पूर्णांक virq, पूर्णांक *id)
+अणु
 	bool found = false;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < pchg->num_irqs; i++) {
-		if (pchg->irqs[i].virq == virq) {
+	क्रम (i = 0; i < pchg->num_irqs; i++) अणु
+		अगर (pchg->irqs[i].virq == virq) अणु
 			*id = pchg->irqs[i].which;
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static irqreturn_t lp8788_charger_irq_thread(int virq, void *ptr)
-{
-	struct lp8788_charger *pchg = ptr;
-	struct lp8788_charger_platform_data *pdata = pchg->pdata;
-	int id = -1;
+अटल irqवापस_t lp8788_अक्षरger_irq_thपढ़ो(पूर्णांक virq, व्योम *ptr)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = ptr;
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata = pchg->pdata;
+	पूर्णांक id = -1;
 
-	if (!lp8788_find_irq_id(pchg, virq, &id))
-		return IRQ_NONE;
+	अगर (!lp8788_find_irq_id(pchg, virq, &id))
+		वापस IRQ_NONE;
 
-	switch (id) {
-	case LP8788_INT_CHG_INPUT_STATE:
-	case LP8788_INT_CHG_STATE:
-	case LP8788_INT_EOC:
-	case LP8788_INT_BATT_LOW:
-	case LP8788_INT_NO_BATT:
-		power_supply_changed(pchg->charger);
-		power_supply_changed(pchg->battery);
-		break;
-	default:
-		break;
-	}
+	चयन (id) अणु
+	हाल LP8788_INT_CHG_INPUT_STATE:
+	हाल LP8788_INT_CHG_STATE:
+	हाल LP8788_INT_EOC:
+	हाल LP8788_INT_BATT_LOW:
+	हाल LP8788_INT_NO_BATT:
+		घातer_supply_changed(pchg->अक्षरger);
+		घातer_supply_changed(pchg->battery);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* report charger dectection event if used */
-	if (!pdata)
-		goto irq_handled;
+	/* report अक्षरger dectection event अगर used */
+	अगर (!pdata)
+		जाओ irq_handled;
 
-	if (pdata->charger_event && id == LP8788_INT_CHG_INPUT_STATE)
-		schedule_work(&pchg->charger_work);
+	अगर (pdata->अक्षरger_event && id == LP8788_INT_CHG_INPUT_STATE)
+		schedule_work(&pchg->अक्षरger_work);
 
 irq_handled:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int lp8788_set_irqs(struct platform_device *pdev,
-			struct lp8788_charger *pchg, const char *name)
-{
-	struct resource *r;
-	struct irq_domain *irqdm = pchg->lp->irqdm;
-	int irq_start;
-	int irq_end;
-	int virq;
-	int nr_irq;
-	int i;
-	int ret;
+अटल पूर्णांक lp8788_set_irqs(काष्ठा platक्रमm_device *pdev,
+			काष्ठा lp8788_अक्षरger *pchg, स्थिर अक्षर *name)
+अणु
+	काष्ठा resource *r;
+	काष्ठा irq_करोमुख्य *irqdm = pchg->lp->irqdm;
+	पूर्णांक irq_start;
+	पूर्णांक irq_end;
+	पूर्णांक virq;
+	पूर्णांक nr_irq;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	/* no error even if no irq resource */
-	r = platform_get_resource_byname(pdev, IORESOURCE_IRQ, name);
-	if (!r)
-		return 0;
+	/* no error even अगर no irq resource */
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, name);
+	अगर (!r)
+		वापस 0;
 
 	irq_start = r->start;
 	irq_end = r->end;
 
-	for (i = irq_start; i <= irq_end; i++) {
+	क्रम (i = irq_start; i <= irq_end; i++) अणु
 		nr_irq = pchg->num_irqs;
 
 		virq = irq_create_mapping(irqdm, i);
@@ -499,241 +500,241 @@ static int lp8788_set_irqs(struct platform_device *pdev,
 		pchg->irqs[nr_irq].which = i;
 		pchg->num_irqs++;
 
-		ret = request_threaded_irq(virq, NULL,
-					lp8788_charger_irq_thread,
+		ret = request_thपढ़ोed_irq(virq, शून्य,
+					lp8788_अक्षरger_irq_thपढ़ो,
 					IRQF_ONESHOT, name, pchg);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	if (i <= irq_end)
-		goto err_free_irq;
+	अगर (i <= irq_end)
+		जाओ err_मुक्त_irq;
 
-	return 0;
+	वापस 0;
 
-err_free_irq:
-	for (i = 0; i < pchg->num_irqs; i++)
-		free_irq(pchg->irqs[i].virq, pchg);
-	return ret;
-}
+err_मुक्त_irq:
+	क्रम (i = 0; i < pchg->num_irqs; i++)
+		मुक्त_irq(pchg->irqs[i].virq, pchg);
+	वापस ret;
+पूर्ण
 
-static int lp8788_irq_register(struct platform_device *pdev,
-				struct lp8788_charger *pchg)
-{
-	const char *name[] = {
+अटल पूर्णांक lp8788_irq_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	स्थिर अक्षर *name[] = अणु
 		LP8788_CHG_IRQ, LP8788_PRSW_IRQ, LP8788_BATT_IRQ
-	};
-	int i;
-	int ret;
+	पूर्ण;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	INIT_WORK(&pchg->charger_work, lp8788_charger_event);
+	INIT_WORK(&pchg->अक्षरger_work, lp8788_अक्षरger_event);
 	pchg->num_irqs = 0;
 
-	for (i = 0; i < ARRAY_SIZE(name); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(name); i++) अणु
 		ret = lp8788_set_irqs(pdev, pchg, name[i]);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(&pdev->dev, "irq setup failed: %s\n", name[i]);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (pchg->num_irqs > LP8788_MAX_CHG_IRQS) {
+	अगर (pchg->num_irqs > LP8788_MAX_CHG_IRQS) अणु
 		dev_err(&pdev->dev, "invalid total number of irqs: %d\n",
 			pchg->num_irqs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lp8788_irq_unregister(struct platform_device *pdev,
-				  struct lp8788_charger *pchg)
-{
-	int i;
-	int irq;
+अटल व्योम lp8788_irq_unरेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				  काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	पूर्णांक i;
+	पूर्णांक irq;
 
-	for (i = 0; i < pchg->num_irqs; i++) {
+	क्रम (i = 0; i < pchg->num_irqs; i++) अणु
 		irq = pchg->irqs[i].virq;
-		if (!irq)
-			continue;
+		अगर (!irq)
+			जारी;
 
-		free_irq(irq, pchg);
-	}
-}
+		मुक्त_irq(irq, pchg);
+	पूर्ण
+पूर्ण
 
-static void lp8788_setup_adc_channel(struct device *dev,
-				struct lp8788_charger *pchg)
-{
-	struct lp8788_charger_platform_data *pdata = pchg->pdata;
-	struct iio_channel *chan;
+अटल व्योम lp8788_setup_adc_channel(काष्ठा device *dev,
+				काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	काष्ठा lp8788_अक्षरger_platक्रमm_data *pdata = pchg->pdata;
+	काष्ठा iio_channel *chan;
 
-	if (!pdata)
-		return;
+	अगर (!pdata)
+		वापस;
 
-	/* ADC channel for battery voltage */
+	/* ADC channel क्रम battery voltage */
 	chan = devm_iio_channel_get(dev, pdata->adc_vbatt);
-	pchg->chan[LP8788_VBATT] = IS_ERR(chan) ? NULL : chan;
+	pchg->chan[LP8788_VBATT] = IS_ERR(chan) ? शून्य : chan;
 
-	/* ADC channel for battery temperature */
+	/* ADC channel क्रम battery temperature */
 	chan = devm_iio_channel_get(dev, pdata->adc_batt_temp);
-	pchg->chan[LP8788_BATT_TEMP] = IS_ERR(chan) ? NULL : chan;
-}
+	pchg->chan[LP8788_BATT_TEMP] = IS_ERR(chan) ? शून्य : chan;
+पूर्ण
 
-static ssize_t lp8788_show_charger_status(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct lp8788_charger *pchg = dev_get_drvdata(dev);
-	enum lp8788_charging_state state;
-	static const char * const desc[LP8788_MAX_CHG_STATE] = {
+अटल sमाप_प्रकार lp8788_show_अक्षरger_status(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = dev_get_drvdata(dev);
+	क्रमागत lp8788_अक्षरging_state state;
+	अटल स्थिर अक्षर * स्थिर desc[LP8788_MAX_CHG_STATE] = अणु
 		[LP8788_OFF] = "CHARGER OFF",
 		[LP8788_WARM_UP] = "WARM UP",
 		[LP8788_LOW_INPUT] = "LOW INPUT STATE",
 		[LP8788_PRECHARGE] = "CHARGING - PRECHARGE",
 		[LP8788_CC] = "CHARGING - CC",
 		[LP8788_CV] = "CHARGING - CV",
-		[LP8788_MAINTENANCE] = "NO CHARGING - MAINTENANCE",
+		[LP8788_MAINTEन_अंकCE] = "NO CHARGING - MAINTENANCE",
 		[LP8788_BATTERY_FAULT] = "BATTERY FAULT",
 		[LP8788_SYSTEM_SUPPORT] = "SYSTEM SUPPORT",
 		[LP8788_HIGH_CURRENT] = "HIGH CURRENT",
-	};
+	पूर्ण;
 	u8 data;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_STATUS, &data);
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_STATUS, &data);
 	state = (data & LP8788_CHG_STATE_M) >> LP8788_CHG_STATE_S;
 
-	return scnprintf(buf, PAGE_SIZE, "%s\n", desc[state]);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%s\n", desc[state]);
+पूर्ण
 
-static ssize_t lp8788_show_eoc_time(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct lp8788_charger *pchg = dev_get_drvdata(dev);
-	static const char * const stime[] = {
+अटल sमाप_प्रकार lp8788_show_eoc_समय(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = dev_get_drvdata(dev);
+	अटल स्थिर अक्षर * स्थिर sसमय[] = अणु
 		"400ms", "5min", "10min", "15min",
 		"20min", "25min", "30min", "No timeout"
-	};
+	पूर्ण;
 	u8 val;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_EOC, &val);
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_EOC, &val);
 	val = (val & LP8788_CHG_EOC_TIME_M) >> LP8788_CHG_EOC_TIME_S;
 
-	return scnprintf(buf, PAGE_SIZE, "End Of Charge Time: %s\n",
-			stime[val]);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "End Of Charge Time: %s\n",
+			sसमय[val]);
+पूर्ण
 
-static ssize_t lp8788_show_eoc_level(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct lp8788_charger *pchg = dev_get_drvdata(dev);
-	static const char * const abs_level[] = {
+अटल sमाप_प्रकार lp8788_show_eoc_level(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = dev_get_drvdata(dev);
+	अटल स्थिर अक्षर * स्थिर असल_level[] = अणु
 			"25mA", "49mA", "75mA", "98mA"
-	};
-	static const char * const relative_level[] = {
+	पूर्ण;
+	अटल स्थिर अक्षर * स्थिर relative_level[] = अणु
 			"5%", "10%", "15%", "20%"
-	};
-	const char *level;
+	पूर्ण;
+	स्थिर अक्षर *level;
 	u8 val;
 	u8 mode;
 
-	lp8788_read_byte(pchg->lp, LP8788_CHG_EOC, &val);
+	lp8788_पढ़ो_byte(pchg->lp, LP8788_CHG_EOC, &val);
 
 	mode = val & LP8788_CHG_EOC_MODE_M;
 	val = (val & LP8788_CHG_EOC_LEVEL_M) >> LP8788_CHG_EOC_LEVEL_S;
-	level = mode ? abs_level[val] : relative_level[val];
+	level = mode ? असल_level[val] : relative_level[val];
 
-	return scnprintf(buf, PAGE_SIZE, "End Of Charge Level: %s\n", level);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "End Of Charge Level: %s\n", level);
+पूर्ण
 
-static DEVICE_ATTR(charger_status, S_IRUSR, lp8788_show_charger_status, NULL);
-static DEVICE_ATTR(eoc_time, S_IRUSR, lp8788_show_eoc_time, NULL);
-static DEVICE_ATTR(eoc_level, S_IRUSR, lp8788_show_eoc_level, NULL);
+अटल DEVICE_ATTR(अक्षरger_status, S_IRUSR, lp8788_show_अक्षरger_status, शून्य);
+अटल DEVICE_ATTR(eoc_समय, S_IRUSR, lp8788_show_eoc_समय, शून्य);
+अटल DEVICE_ATTR(eoc_level, S_IRUSR, lp8788_show_eoc_level, शून्य);
 
-static struct attribute *lp8788_charger_sysfs_attrs[] = {
-	&dev_attr_charger_status.attr,
-	&dev_attr_eoc_time.attr,
+अटल काष्ठा attribute *lp8788_अक्षरger_sysfs_attrs[] = अणु
+	&dev_attr_अक्षरger_status.attr,
+	&dev_attr_eoc_समय.attr,
 	&dev_attr_eoc_level.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-ATTRIBUTE_GROUPS(lp8788_charger_sysfs);
+ATTRIBUTE_GROUPS(lp8788_अक्षरger_sysfs);
 
-static int lp8788_psy_register(struct platform_device *pdev,
-				struct lp8788_charger *pchg)
-{
-	struct power_supply_config charger_cfg = {};
+अटल पूर्णांक lp8788_psy_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				काष्ठा lp8788_अक्षरger *pchg)
+अणु
+	काष्ठा घातer_supply_config अक्षरger_cfg = अणुपूर्ण;
 
-	charger_cfg.attr_grp = lp8788_charger_sysfs_groups;
-	charger_cfg.supplied_to = battery_supplied_to;
-	charger_cfg.num_supplicants = ARRAY_SIZE(battery_supplied_to);
+	अक्षरger_cfg.attr_grp = lp8788_अक्षरger_sysfs_groups;
+	अक्षरger_cfg.supplied_to = battery_supplied_to;
+	अक्षरger_cfg.num_supplicants = ARRAY_SIZE(battery_supplied_to);
 
-	pchg->charger = power_supply_register(&pdev->dev,
-					      &lp8788_psy_charger_desc,
-					      &charger_cfg);
-	if (IS_ERR(pchg->charger))
-		return -EPERM;
+	pchg->अक्षरger = घातer_supply_रेजिस्टर(&pdev->dev,
+					      &lp8788_psy_अक्षरger_desc,
+					      &अक्षरger_cfg);
+	अगर (IS_ERR(pchg->अक्षरger))
+		वापस -EPERM;
 
-	pchg->battery = power_supply_register(&pdev->dev,
-					      &lp8788_psy_battery_desc, NULL);
-	if (IS_ERR(pchg->battery)) {
-		power_supply_unregister(pchg->charger);
-		return -EPERM;
-	}
+	pchg->battery = घातer_supply_रेजिस्टर(&pdev->dev,
+					      &lp8788_psy_battery_desc, शून्य);
+	अगर (IS_ERR(pchg->battery)) अणु
+		घातer_supply_unरेजिस्टर(pchg->अक्षरger);
+		वापस -EPERM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_charger_probe(struct platform_device *pdev)
-{
-	struct lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
-	struct lp8788_charger *pchg;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक lp8788_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp8788 *lp = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा lp8788_अक्षरger *pchg;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
-	pchg = devm_kzalloc(dev, sizeof(struct lp8788_charger), GFP_KERNEL);
-	if (!pchg)
-		return -ENOMEM;
+	pchg = devm_kzalloc(dev, माप(काष्ठा lp8788_अक्षरger), GFP_KERNEL);
+	अगर (!pchg)
+		वापस -ENOMEM;
 
 	pchg->lp = lp;
-	pchg->pdata = lp->pdata ? lp->pdata->chg_pdata : NULL;
-	platform_set_drvdata(pdev, pchg);
+	pchg->pdata = lp->pdata ? lp->pdata->chg_pdata : शून्य;
+	platक्रमm_set_drvdata(pdev, pchg);
 
-	ret = lp8788_update_charger_params(pdev, pchg);
-	if (ret)
-		return ret;
+	ret = lp8788_update_अक्षरger_params(pdev, pchg);
+	अगर (ret)
+		वापस ret;
 
 	lp8788_setup_adc_channel(&pdev->dev, pchg);
 
-	ret = lp8788_psy_register(pdev, pchg);
-	if (ret)
-		return ret;
+	ret = lp8788_psy_रेजिस्टर(pdev, pchg);
+	अगर (ret)
+		वापस ret;
 
-	ret = lp8788_irq_register(pdev, pchg);
-	if (ret)
+	ret = lp8788_irq_रेजिस्टर(pdev, pchg);
+	अगर (ret)
 		dev_warn(dev, "failed to register charger irq: %d\n", ret);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lp8788_charger_remove(struct platform_device *pdev)
-{
-	struct lp8788_charger *pchg = platform_get_drvdata(pdev);
+अटल पूर्णांक lp8788_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lp8788_अक्षरger *pchg = platक्रमm_get_drvdata(pdev);
 
-	flush_work(&pchg->charger_work);
-	lp8788_irq_unregister(pdev, pchg);
-	lp8788_psy_unregister(pchg);
+	flush_work(&pchg->अक्षरger_work);
+	lp8788_irq_unरेजिस्टर(pdev, pchg);
+	lp8788_psy_unरेजिस्टर(pchg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver lp8788_charger_driver = {
-	.probe = lp8788_charger_probe,
-	.remove = lp8788_charger_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver lp8788_अक्षरger_driver = अणु
+	.probe = lp8788_अक्षरger_probe,
+	.हटाओ = lp8788_अक्षरger_हटाओ,
+	.driver = अणु
 		.name = LP8788_DEV_CHARGER,
-	},
-};
-module_platform_driver(lp8788_charger_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(lp8788_अक्षरger_driver);
 
 MODULE_DESCRIPTION("TI LP8788 Charger Driver");
 MODULE_AUTHOR("Milo Kim");

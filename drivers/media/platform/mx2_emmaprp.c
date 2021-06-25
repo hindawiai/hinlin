@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Support eMMa-PrP through mem2mem framework.
  *
  * eMMa-PrP is a piece of HW that allows fetching buffers
- * from one memory location and do several operations on
- * them such as scaling or format conversion giving, as a result
+ * from one memory location and करो several operations on
+ * them such as scaling or क्रमmat conversion giving, as a result
  * a new processed buffer in another memory location.
  *
  * Based on mem2mem_testdev.c by Pawel Osciak.
@@ -12,240 +13,240 @@
  * Copyright (c) 2011 Vista Silicon S.L.
  * Javier Martin <javier.martin@vista-silicon.com>
  */
-#include <linux/module.h>
-#include <linux/clk.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
 
-#include <linux/platform_device.h>
-#include <media/v4l2-mem2mem.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-dma-contig.h>
-#include <linux/sizes.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <media/v4l2-mem2स्मृति.स>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-dma-contig.h>
+#समावेश <linux/sizes.h>
 
-#define EMMAPRP_MODULE_NAME "mem2mem-emmaprp"
+#घोषणा EMMAPRP_MODULE_NAME "mem2mem-emmaprp"
 
 MODULE_DESCRIPTION("Mem-to-mem device which supports eMMa-PrP present in mx2 SoCs");
 MODULE_AUTHOR("Javier Martin <javier.martin@vista-silicon.com");
 MODULE_LICENSE("GPL");
 MODULE_VERSION("0.0.1");
 
-static bool debug;
+अटल bool debug;
 module_param(debug, bool, 0644);
 
-#define MIN_W 32
-#define MIN_H 32
-#define MAX_W 2040
-#define MAX_H 2046
+#घोषणा MIN_W 32
+#घोषणा MIN_H 32
+#घोषणा MAX_W 2040
+#घोषणा MAX_H 2046
 
-#define S_ALIGN		1 /* multiple of 2 */
-#define W_ALIGN_YUV420	3 /* multiple of 8 */
-#define W_ALIGN_OTHERS	2 /* multiple of 4 */
-#define H_ALIGN		1 /* multiple of 2 */
+#घोषणा S_ALIGN		1 /* multiple of 2 */
+#घोषणा W_ALIGN_YUV420	3 /* multiple of 8 */
+#घोषणा W_ALIGN_OTHERS	2 /* multiple of 4 */
+#घोषणा H_ALIGN		1 /* multiple of 2 */
 
-/* Flags that indicate a format can be used for capture/output */
-#define MEM2MEM_CAPTURE	(1 << 0)
-#define MEM2MEM_OUTPUT	(1 << 1)
+/* Flags that indicate a क्रमmat can be used क्रम capture/output */
+#घोषणा MEM2MEM_CAPTURE	(1 << 0)
+#घोषणा MEM2MEM_OUTPUT	(1 << 1)
 
-#define MEM2MEM_NAME		"m2m-emmaprp"
+#घोषणा MEM2MEM_NAME		"m2m-emmaprp"
 
 /* In bytes, per queue */
-#define MEM2MEM_VID_MEM_LIMIT	SZ_16M
+#घोषणा MEM2MEM_VID_MEM_LIMIT	SZ_16M
 
-#define dprintk(dev, fmt, arg...) \
+#घोषणा dprपूर्णांकk(dev, fmt, arg...) \
 	v4l2_dbg(1, debug, &dev->v4l2_dev, "%s: " fmt, __func__, ## arg)
 
 /* EMMA PrP */
-#define PRP_CNTL                        0x00
-#define PRP_INTR_CNTL                   0x04
-#define PRP_INTRSTATUS                  0x08
-#define PRP_SOURCE_Y_PTR                0x0c
-#define PRP_SOURCE_CB_PTR               0x10
-#define PRP_SOURCE_CR_PTR               0x14
-#define PRP_DEST_RGB1_PTR               0x18
-#define PRP_DEST_RGB2_PTR               0x1c
-#define PRP_DEST_Y_PTR                  0x20
-#define PRP_DEST_CB_PTR                 0x24
-#define PRP_DEST_CR_PTR                 0x28
-#define PRP_SRC_FRAME_SIZE              0x2c
-#define PRP_DEST_CH1_LINE_STRIDE        0x30
-#define PRP_SRC_PIXEL_FORMAT_CNTL       0x34
-#define PRP_CH1_PIXEL_FORMAT_CNTL       0x38
-#define PRP_CH1_OUT_IMAGE_SIZE          0x3c
-#define PRP_CH2_OUT_IMAGE_SIZE          0x40
-#define PRP_SRC_LINE_STRIDE             0x44
-#define PRP_CSC_COEF_012                0x48
-#define PRP_CSC_COEF_345                0x4c
-#define PRP_CSC_COEF_678                0x50
-#define PRP_CH1_RZ_HORI_COEF1           0x54
-#define PRP_CH1_RZ_HORI_COEF2           0x58
-#define PRP_CH1_RZ_HORI_VALID           0x5c
-#define PRP_CH1_RZ_VERT_COEF1           0x60
-#define PRP_CH1_RZ_VERT_COEF2           0x64
-#define PRP_CH1_RZ_VERT_VALID           0x68
-#define PRP_CH2_RZ_HORI_COEF1           0x6c
-#define PRP_CH2_RZ_HORI_COEF2           0x70
-#define PRP_CH2_RZ_HORI_VALID           0x74
-#define PRP_CH2_RZ_VERT_COEF1           0x78
-#define PRP_CH2_RZ_VERT_COEF2           0x7c
-#define PRP_CH2_RZ_VERT_VALID           0x80
+#घोषणा PRP_CNTL                        0x00
+#घोषणा PRP_INTR_CNTL                   0x04
+#घोषणा PRP_INTRSTATUS                  0x08
+#घोषणा PRP_SOURCE_Y_PTR                0x0c
+#घोषणा PRP_SOURCE_CB_PTR               0x10
+#घोषणा PRP_SOURCE_CR_PTR               0x14
+#घोषणा PRP_DEST_RGB1_PTR               0x18
+#घोषणा PRP_DEST_RGB2_PTR               0x1c
+#घोषणा PRP_DEST_Y_PTR                  0x20
+#घोषणा PRP_DEST_CB_PTR                 0x24
+#घोषणा PRP_DEST_CR_PTR                 0x28
+#घोषणा PRP_SRC_FRAME_SIZE              0x2c
+#घोषणा PRP_DEST_CH1_LINE_STRIDE        0x30
+#घोषणा PRP_SRC_PIXEL_FORMAT_CNTL       0x34
+#घोषणा PRP_CH1_PIXEL_FORMAT_CNTL       0x38
+#घोषणा PRP_CH1_OUT_IMAGE_SIZE          0x3c
+#घोषणा PRP_CH2_OUT_IMAGE_SIZE          0x40
+#घोषणा PRP_SRC_LINE_STRIDE             0x44
+#घोषणा PRP_CSC_COEF_012                0x48
+#घोषणा PRP_CSC_COEF_345                0x4c
+#घोषणा PRP_CSC_COEF_678                0x50
+#घोषणा PRP_CH1_RZ_HORI_COEF1           0x54
+#घोषणा PRP_CH1_RZ_HORI_COEF2           0x58
+#घोषणा PRP_CH1_RZ_HORI_VALID           0x5c
+#घोषणा PRP_CH1_RZ_VERT_COEF1           0x60
+#घोषणा PRP_CH1_RZ_VERT_COEF2           0x64
+#घोषणा PRP_CH1_RZ_VERT_VALID           0x68
+#घोषणा PRP_CH2_RZ_HORI_COEF1           0x6c
+#घोषणा PRP_CH2_RZ_HORI_COEF2           0x70
+#घोषणा PRP_CH2_RZ_HORI_VALID           0x74
+#घोषणा PRP_CH2_RZ_VERT_COEF1           0x78
+#घोषणा PRP_CH2_RZ_VERT_COEF2           0x7c
+#घोषणा PRP_CH2_RZ_VERT_VALID           0x80
 
-#define PRP_CNTL_CH1EN          (1 << 0)
-#define PRP_CNTL_CH2EN          (1 << 1)
-#define PRP_CNTL_CSIEN          (1 << 2)
-#define PRP_CNTL_DATA_IN_YUV420 (0 << 3)
-#define PRP_CNTL_DATA_IN_YUV422 (1 << 3)
-#define PRP_CNTL_DATA_IN_RGB16  (2 << 3)
-#define PRP_CNTL_DATA_IN_RGB32  (3 << 3)
-#define PRP_CNTL_CH1_OUT_RGB8   (0 << 5)
-#define PRP_CNTL_CH1_OUT_RGB16  (1 << 5)
-#define PRP_CNTL_CH1_OUT_RGB32  (2 << 5)
-#define PRP_CNTL_CH1_OUT_YUV422 (3 << 5)
-#define PRP_CNTL_CH2_OUT_YUV420 (0 << 7)
-#define PRP_CNTL_CH2_OUT_YUV422 (1 << 7)
-#define PRP_CNTL_CH2_OUT_YUV444 (2 << 7)
-#define PRP_CNTL_CH1_LEN        (1 << 9)
-#define PRP_CNTL_CH2_LEN        (1 << 10)
-#define PRP_CNTL_SKIP_FRAME     (1 << 11)
-#define PRP_CNTL_SWRST          (1 << 12)
-#define PRP_CNTL_CLKEN          (1 << 13)
-#define PRP_CNTL_WEN            (1 << 14)
-#define PRP_CNTL_CH1BYP         (1 << 15)
-#define PRP_CNTL_IN_TSKIP(x)    ((x) << 16)
-#define PRP_CNTL_CH1_TSKIP(x)   ((x) << 19)
-#define PRP_CNTL_CH2_TSKIP(x)   ((x) << 22)
-#define PRP_CNTL_INPUT_FIFO_LEVEL(x)    ((x) << 25)
-#define PRP_CNTL_RZ_FIFO_LEVEL(x)       ((x) << 27)
-#define PRP_CNTL_CH2B1EN        (1 << 29)
-#define PRP_CNTL_CH2B2EN        (1 << 30)
-#define PRP_CNTL_CH2FEN         (1UL << 31)
+#घोषणा PRP_CNTL_CH1EN          (1 << 0)
+#घोषणा PRP_CNTL_CH2EN          (1 << 1)
+#घोषणा PRP_CNTL_CSIEN          (1 << 2)
+#घोषणा PRP_CNTL_DATA_IN_YUV420 (0 << 3)
+#घोषणा PRP_CNTL_DATA_IN_YUV422 (1 << 3)
+#घोषणा PRP_CNTL_DATA_IN_RGB16  (2 << 3)
+#घोषणा PRP_CNTL_DATA_IN_RGB32  (3 << 3)
+#घोषणा PRP_CNTL_CH1_OUT_RGB8   (0 << 5)
+#घोषणा PRP_CNTL_CH1_OUT_RGB16  (1 << 5)
+#घोषणा PRP_CNTL_CH1_OUT_RGB32  (2 << 5)
+#घोषणा PRP_CNTL_CH1_OUT_YUV422 (3 << 5)
+#घोषणा PRP_CNTL_CH2_OUT_YUV420 (0 << 7)
+#घोषणा PRP_CNTL_CH2_OUT_YUV422 (1 << 7)
+#घोषणा PRP_CNTL_CH2_OUT_YUV444 (2 << 7)
+#घोषणा PRP_CNTL_CH1_LEN        (1 << 9)
+#घोषणा PRP_CNTL_CH2_LEN        (1 << 10)
+#घोषणा PRP_CNTL_SKIP_FRAME     (1 << 11)
+#घोषणा PRP_CNTL_SWRST          (1 << 12)
+#घोषणा PRP_CNTL_CLKEN          (1 << 13)
+#घोषणा PRP_CNTL_WEN            (1 << 14)
+#घोषणा PRP_CNTL_CH1BYP         (1 << 15)
+#घोषणा PRP_CNTL_IN_TSKIP(x)    ((x) << 16)
+#घोषणा PRP_CNTL_CH1_TSKIP(x)   ((x) << 19)
+#घोषणा PRP_CNTL_CH2_TSKIP(x)   ((x) << 22)
+#घोषणा PRP_CNTL_INPUT_FIFO_LEVEL(x)    ((x) << 25)
+#घोषणा PRP_CNTL_RZ_FIFO_LEVEL(x)       ((x) << 27)
+#घोषणा PRP_CNTL_CH2B1EN        (1 << 29)
+#घोषणा PRP_CNTL_CH2B2EN        (1 << 30)
+#घोषणा PRP_CNTL_CH2FEN         (1UL << 31)
 
-#define PRP_SIZE_HEIGHT(x)	(x)
-#define PRP_SIZE_WIDTH(x)	((x) << 16)
+#घोषणा PRP_SIZE_HEIGHT(x)	(x)
+#घोषणा PRP_SIZE_WIDTH(x)	((x) << 16)
 
-/* IRQ Enable and status register */
-#define PRP_INTR_RDERR          (1 << 0)
-#define PRP_INTR_CH1WERR        (1 << 1)
-#define PRP_INTR_CH2WERR        (1 << 2)
-#define PRP_INTR_CH1FC          (1 << 3)
-#define PRP_INTR_CH2FC          (1 << 5)
-#define PRP_INTR_LBOVF          (1 << 7)
-#define PRP_INTR_CH2OVF         (1 << 8)
+/* IRQ Enable and status रेजिस्टर */
+#घोषणा PRP_INTR_RDERR          (1 << 0)
+#घोषणा PRP_INTR_CH1WERR        (1 << 1)
+#घोषणा PRP_INTR_CH2WERR        (1 << 2)
+#घोषणा PRP_INTR_CH1FC          (1 << 3)
+#घोषणा PRP_INTR_CH2FC          (1 << 5)
+#घोषणा PRP_INTR_LBOVF          (1 << 7)
+#घोषणा PRP_INTR_CH2OVF         (1 << 8)
 
-#define PRP_INTR_ST_RDERR	(1 << 0)
-#define PRP_INTR_ST_CH1WERR	(1 << 1)
-#define PRP_INTR_ST_CH2WERR	(1 << 2)
-#define PRP_INTR_ST_CH2B2CI	(1 << 3)
-#define PRP_INTR_ST_CH2B1CI	(1 << 4)
-#define PRP_INTR_ST_CH1B2CI	(1 << 5)
-#define PRP_INTR_ST_CH1B1CI	(1 << 6)
-#define PRP_INTR_ST_LBOVF	(1 << 7)
-#define PRP_INTR_ST_CH2OVF	(1 << 8)
+#घोषणा PRP_INTR_ST_RDERR	(1 << 0)
+#घोषणा PRP_INTR_ST_CH1WERR	(1 << 1)
+#घोषणा PRP_INTR_ST_CH2WERR	(1 << 2)
+#घोषणा PRP_INTR_ST_CH2B2CI	(1 << 3)
+#घोषणा PRP_INTR_ST_CH2B1CI	(1 << 4)
+#घोषणा PRP_INTR_ST_CH1B2CI	(1 << 5)
+#घोषणा PRP_INTR_ST_CH1B1CI	(1 << 6)
+#घोषणा PRP_INTR_ST_LBOVF	(1 << 7)
+#घोषणा PRP_INTR_ST_CH2OVF	(1 << 8)
 
-struct emmaprp_fmt {
+काष्ठा emmaprp_fmt अणु
 	u32	fourcc;
-	/* Types the format can be used for */
+	/* Types the क्रमmat can be used क्रम */
 	u32	types;
-};
+पूर्ण;
 
-static struct emmaprp_fmt formats[] = {
-	{
+अटल काष्ठा emmaprp_fmt क्रमmats[] = अणु
+	अणु
 		.fourcc	= V4L2_PIX_FMT_YUV420,
 		.types	= MEM2MEM_CAPTURE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.fourcc	= V4L2_PIX_FMT_YUYV,
 		.types	= MEM2MEM_OUTPUT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Per-queue, driver-specific private data */
-struct emmaprp_q_data {
-	unsigned int		width;
-	unsigned int		height;
-	unsigned int		sizeimage;
-	struct emmaprp_fmt	*fmt;
-};
+/* Per-queue, driver-specअगरic निजी data */
+काष्ठा emmaprp_q_data अणु
+	अचिन्हित पूर्णांक		width;
+	अचिन्हित पूर्णांक		height;
+	अचिन्हित पूर्णांक		sizeimage;
+	काष्ठा emmaprp_fmt	*fmt;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	V4L2_M2M_SRC = 0,
 	V4L2_M2M_DST = 1,
-};
+पूर्ण;
 
-#define NUM_FORMATS ARRAY_SIZE(formats)
+#घोषणा NUM_FORMATS ARRAY_SIZE(क्रमmats)
 
-static struct emmaprp_fmt *find_format(struct v4l2_format *f)
-{
-	struct emmaprp_fmt *fmt;
-	unsigned int k;
+अटल काष्ठा emmaprp_fmt *find_क्रमmat(काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा emmaprp_fmt *fmt;
+	अचिन्हित पूर्णांक k;
 
-	for (k = 0; k < NUM_FORMATS; k++) {
-		fmt = &formats[k];
-		if (fmt->fourcc == f->fmt.pix.pixelformat)
-			break;
-	}
+	क्रम (k = 0; k < NUM_FORMATS; k++) अणु
+		fmt = &क्रमmats[k];
+		अगर (fmt->fourcc == f->fmt.pix.pixelक्रमmat)
+			अवरोध;
+	पूर्ण
 
-	if (k == NUM_FORMATS)
-		return NULL;
+	अगर (k == NUM_FORMATS)
+		वापस शून्य;
 
-	return &formats[k];
-}
+	वापस &क्रमmats[k];
+पूर्ण
 
-struct emmaprp_dev {
-	struct v4l2_device	v4l2_dev;
-	struct video_device	*vfd;
+काष्ठा emmaprp_dev अणु
+	काष्ठा v4l2_device	v4l2_dev;
+	काष्ठा video_device	*vfd;
 
-	struct mutex		dev_mutex;
+	काष्ठा mutex		dev_mutex;
 	spinlock_t		irqlock;
 
-	void __iomem		*base_emma;
-	struct clk		*clk_emma_ahb, *clk_emma_ipg;
+	व्योम __iomem		*base_emma;
+	काष्ठा clk		*clk_emma_ahb, *clk_emma_ipg;
 
-	struct v4l2_m2m_dev	*m2m_dev;
-};
+	काष्ठा v4l2_m2m_dev	*m2m_dev;
+पूर्ण;
 
-struct emmaprp_ctx {
-	struct v4l2_fh		fh;
-	struct emmaprp_dev	*dev;
+काष्ठा emmaprp_ctx अणु
+	काष्ठा v4l2_fh		fh;
+	काष्ठा emmaprp_dev	*dev;
 	/* Abort requested by m2m */
-	int			aborting;
-	struct emmaprp_q_data	q_data[2];
-};
+	पूर्णांक			पातing;
+	काष्ठा emmaprp_q_data	q_data[2];
+पूर्ण;
 
-static struct emmaprp_q_data *get_q_data(struct emmaprp_ctx *ctx,
-					 enum v4l2_buf_type type)
-{
-	switch (type) {
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		return &(ctx->q_data[V4L2_M2M_SRC]);
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		return &(ctx->q_data[V4L2_M2M_DST]);
-	default:
+अटल काष्ठा emmaprp_q_data *get_q_data(काष्ठा emmaprp_ctx *ctx,
+					 क्रमागत v4l2_buf_type type)
+अणु
+	चयन (type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_OUTPUT:
+		वापस &(ctx->q_data[V4L2_M2M_SRC]);
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		वापस &(ctx->q_data[V4L2_M2M_DST]);
+	शेष:
 		BUG();
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * mem2mem callbacks
  */
-static void emmaprp_job_abort(void *priv)
-{
-	struct emmaprp_ctx *ctx = priv;
-	struct emmaprp_dev *pcdev = ctx->dev;
+अटल व्योम emmaprp_job_पात(व्योम *priv)
+अणु
+	काष्ठा emmaprp_ctx *ctx = priv;
+	काष्ठा emmaprp_dev *pcdev = ctx->dev;
 
-	ctx->aborting = 1;
+	ctx->पातing = 1;
 
-	dprintk(pcdev, "Aborting task\n");
+	dprपूर्णांकk(pcdev, "Aborting task\n");
 
 	v4l2_m2m_job_finish(pcdev->m2m_dev, ctx->fh.m2m_ctx);
-}
+पूर्ण
 
-static inline void emmaprp_dump_regs(struct emmaprp_dev *pcdev)
-{
-	dprintk(pcdev,
+अटल अंतरभूत व्योम emmaprp_dump_regs(काष्ठा emmaprp_dev *pcdev)
+अणु
+	dprपूर्णांकk(pcdev,
 		"eMMa-PrP Registers:\n"
 		"  SOURCE_Y_PTR = 0x%08X\n"
 		"  SRC_FRAME_SIZE = 0x%08X\n"
@@ -254,26 +255,26 @@ static inline void emmaprp_dump_regs(struct emmaprp_dev *pcdev)
 		"  DEST_CB_PTR = 0x%08X\n"
 		"  CH2_OUT_IMAGE_SIZE = 0x%08X\n"
 		"  CNTL = 0x%08X\n",
-		readl(pcdev->base_emma + PRP_SOURCE_Y_PTR),
-		readl(pcdev->base_emma + PRP_SRC_FRAME_SIZE),
-		readl(pcdev->base_emma + PRP_DEST_Y_PTR),
-		readl(pcdev->base_emma + PRP_DEST_CR_PTR),
-		readl(pcdev->base_emma + PRP_DEST_CB_PTR),
-		readl(pcdev->base_emma + PRP_CH2_OUT_IMAGE_SIZE),
-		readl(pcdev->base_emma + PRP_CNTL));
-}
+		पढ़ोl(pcdev->base_emma + PRP_SOURCE_Y_PTR),
+		पढ़ोl(pcdev->base_emma + PRP_SRC_FRAME_SIZE),
+		पढ़ोl(pcdev->base_emma + PRP_DEST_Y_PTR),
+		पढ़ोl(pcdev->base_emma + PRP_DEST_CR_PTR),
+		पढ़ोl(pcdev->base_emma + PRP_DEST_CB_PTR),
+		पढ़ोl(pcdev->base_emma + PRP_CH2_OUT_IMAGE_SIZE),
+		पढ़ोl(pcdev->base_emma + PRP_CNTL));
+पूर्ण
 
-static void emmaprp_device_run(void *priv)
-{
-	struct emmaprp_ctx *ctx = priv;
-	struct emmaprp_q_data *s_q_data, *d_q_data;
-	struct vb2_v4l2_buffer *src_buf, *dst_buf;
-	struct emmaprp_dev *pcdev = ctx->dev;
-	unsigned int s_width, s_height;
-	unsigned int d_width, d_height;
-	unsigned int d_size;
+अटल व्योम emmaprp_device_run(व्योम *priv)
+अणु
+	काष्ठा emmaprp_ctx *ctx = priv;
+	काष्ठा emmaprp_q_data *s_q_data, *d_q_data;
+	काष्ठा vb2_v4l2_buffer *src_buf, *dst_buf;
+	काष्ठा emmaprp_dev *pcdev = ctx->dev;
+	अचिन्हित पूर्णांक s_width, s_height;
+	अचिन्हित पूर्णांक d_width, d_height;
+	अचिन्हित पूर्णांक d_size;
 	dma_addr_t p_in, p_out;
-	u32 tmp;
+	u32 पंचांगp;
 
 	src_buf = v4l2_m2m_next_src_buf(ctx->fh.m2m_ctx);
 	dst_buf = v4l2_m2m_next_dst_buf(ctx->fh.m2m_ctx);
@@ -289,28 +290,28 @@ static void emmaprp_device_run(void *priv)
 
 	p_in = vb2_dma_contig_plane_dma_addr(&src_buf->vb2_buf, 0);
 	p_out = vb2_dma_contig_plane_dma_addr(&dst_buf->vb2_buf, 0);
-	if (!p_in || !p_out) {
+	अगर (!p_in || !p_out) अणु
 		v4l2_err(&pcdev->v4l2_dev,
 			 "Acquiring kernel pointers to buffers failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Input frame parameters */
-	writel(p_in, pcdev->base_emma + PRP_SOURCE_Y_PTR);
-	writel(PRP_SIZE_WIDTH(s_width) | PRP_SIZE_HEIGHT(s_height),
+	ग_लिखोl(p_in, pcdev->base_emma + PRP_SOURCE_Y_PTR);
+	ग_लिखोl(PRP_SIZE_WIDTH(s_width) | PRP_SIZE_HEIGHT(s_height),
 	       pcdev->base_emma + PRP_SRC_FRAME_SIZE);
 
 	/* Output frame parameters */
-	writel(p_out, pcdev->base_emma + PRP_DEST_Y_PTR);
-	writel(p_out + d_size, pcdev->base_emma + PRP_DEST_CB_PTR);
-	writel(p_out + d_size + (d_size >> 2),
+	ग_लिखोl(p_out, pcdev->base_emma + PRP_DEST_Y_PTR);
+	ग_लिखोl(p_out + d_size, pcdev->base_emma + PRP_DEST_CB_PTR);
+	ग_लिखोl(p_out + d_size + (d_size >> 2),
 	       pcdev->base_emma + PRP_DEST_CR_PTR);
-	writel(PRP_SIZE_WIDTH(d_width) | PRP_SIZE_HEIGHT(d_height),
+	ग_लिखोl(PRP_SIZE_WIDTH(d_width) | PRP_SIZE_HEIGHT(d_height),
 	       pcdev->base_emma + PRP_CH2_OUT_IMAGE_SIZE);
 
 	/* IRQ configuration */
-	tmp = readl(pcdev->base_emma + PRP_INTR_CNTL);
-	writel(tmp | PRP_INTR_RDERR |
+	पंचांगp = पढ़ोl(pcdev->base_emma + PRP_INTR_CNTL);
+	ग_लिखोl(पंचांगp | PRP_INTR_RDERR |
 		PRP_INTR_CH2WERR |
 		PRP_INTR_CH2FC,
 		pcdev->base_emma + PRP_INTR_CNTL);
@@ -318,287 +319,287 @@ static void emmaprp_device_run(void *priv)
 	emmaprp_dump_regs(pcdev);
 
 	/* Enable transfer */
-	tmp = readl(pcdev->base_emma + PRP_CNTL);
-	writel(tmp | PRP_CNTL_CH2_OUT_YUV420 |
+	पंचांगp = पढ़ोl(pcdev->base_emma + PRP_CNTL);
+	ग_लिखोl(पंचांगp | PRP_CNTL_CH2_OUT_YUV420 |
 		PRP_CNTL_DATA_IN_YUV422 |
 		PRP_CNTL_CH2EN,
 		pcdev->base_emma + PRP_CNTL);
-}
+पूर्ण
 
-static irqreturn_t emmaprp_irq(int irq_emma, void *data)
-{
-	struct emmaprp_dev *pcdev = data;
-	struct emmaprp_ctx *curr_ctx;
-	struct vb2_v4l2_buffer *src_vb, *dst_vb;
-	unsigned long flags;
+अटल irqवापस_t emmaprp_irq(पूर्णांक irq_emma, व्योम *data)
+अणु
+	काष्ठा emmaprp_dev *pcdev = data;
+	काष्ठा emmaprp_ctx *curr_ctx;
+	काष्ठा vb2_v4l2_buffer *src_vb, *dst_vb;
+	अचिन्हित दीर्घ flags;
 	u32 irqst;
 
 	/* Check irq flags and clear irq */
-	irqst = readl(pcdev->base_emma + PRP_INTRSTATUS);
-	writel(irqst, pcdev->base_emma + PRP_INTRSTATUS);
-	dprintk(pcdev, "irqst = 0x%08x\n", irqst);
+	irqst = पढ़ोl(pcdev->base_emma + PRP_INTRSTATUS);
+	ग_लिखोl(irqst, pcdev->base_emma + PRP_INTRSTATUS);
+	dprपूर्णांकk(pcdev, "irqst = 0x%08x\n", irqst);
 
 	curr_ctx = v4l2_m2m_get_curr_priv(pcdev->m2m_dev);
-	if (curr_ctx == NULL) {
+	अगर (curr_ctx == शून्य) अणु
 		pr_err("Instance released before the end of transaction\n");
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (!curr_ctx->aborting) {
-		if ((irqst & PRP_INTR_ST_RDERR) ||
-		(irqst & PRP_INTR_ST_CH2WERR)) {
+	अगर (!curr_ctx->पातing) अणु
+		अगर ((irqst & PRP_INTR_ST_RDERR) ||
+		(irqst & PRP_INTR_ST_CH2WERR)) अणु
 			pr_err("PrP bus error occurred, this transfer is probably corrupted\n");
-			writel(PRP_CNTL_SWRST, pcdev->base_emma + PRP_CNTL);
-		} else if (irqst & PRP_INTR_ST_CH2B1CI) { /* buffer ready */
-			src_vb = v4l2_m2m_src_buf_remove(curr_ctx->fh.m2m_ctx);
-			dst_vb = v4l2_m2m_dst_buf_remove(curr_ctx->fh.m2m_ctx);
+			ग_लिखोl(PRP_CNTL_SWRST, pcdev->base_emma + PRP_CNTL);
+		पूर्ण अन्यथा अगर (irqst & PRP_INTR_ST_CH2B1CI) अणु /* buffer पढ़ोy */
+			src_vb = v4l2_m2m_src_buf_हटाओ(curr_ctx->fh.m2m_ctx);
+			dst_vb = v4l2_m2m_dst_buf_हटाओ(curr_ctx->fh.m2m_ctx);
 
-			dst_vb->vb2_buf.timestamp = src_vb->vb2_buf.timestamp;
+			dst_vb->vb2_buf.बारtamp = src_vb->vb2_buf.बारtamp;
 			dst_vb->flags &=
 				~V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
 			dst_vb->flags |=
 				src_vb->flags
 				& V4L2_BUF_FLAG_TSTAMP_SRC_MASK;
-			dst_vb->timecode = src_vb->timecode;
+			dst_vb->समयcode = src_vb->समयcode;
 
 			spin_lock_irqsave(&pcdev->irqlock, flags);
-			v4l2_m2m_buf_done(src_vb, VB2_BUF_STATE_DONE);
-			v4l2_m2m_buf_done(dst_vb, VB2_BUF_STATE_DONE);
+			v4l2_m2m_buf_करोne(src_vb, VB2_BUF_STATE_DONE);
+			v4l2_m2m_buf_करोne(dst_vb, VB2_BUF_STATE_DONE);
 			spin_unlock_irqrestore(&pcdev->irqlock, flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	v4l2_m2m_job_finish(pcdev->m2m_dev, curr_ctx->fh.m2m_ctx);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * video ioctls
  */
-static int vidioc_querycap(struct file *file, void *priv,
-			   struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, MEM2MEM_NAME, sizeof(cap->driver));
-	strscpy(cap->card, MEM2MEM_NAME, sizeof(cap->card));
-	return 0;
-}
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, MEM2MEM_NAME, माप(cap->driver));
+	strscpy(cap->card, MEM2MEM_NAME, माप(cap->card));
+	वापस 0;
+पूर्ण
 
-static int enum_fmt(struct v4l2_fmtdesc *f, u32 type)
-{
-	int i, num;
-	struct emmaprp_fmt *fmt;
+अटल पूर्णांक क्रमागत_fmt(काष्ठा v4l2_fmtdesc *f, u32 type)
+अणु
+	पूर्णांक i, num;
+	काष्ठा emmaprp_fmt *fmt;
 
 	num = 0;
 
-	for (i = 0; i < NUM_FORMATS; ++i) {
-		if (formats[i].types & type) {
-			/* index-th format of type type found ? */
-			if (num == f->index)
-				break;
+	क्रम (i = 0; i < NUM_FORMATS; ++i) अणु
+		अगर (क्रमmats[i].types & type) अणु
+			/* index-th क्रमmat of type type found ? */
+			अगर (num == f->index)
+				अवरोध;
 			/* Correct type but haven't reached our index yet,
 			 * just increment per-type index */
 			++num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (i < NUM_FORMATS) {
+	अगर (i < NUM_FORMATS) अणु
 		/* Format found */
-		fmt = &formats[i];
-		f->pixelformat = fmt->fourcc;
-		return 0;
-	}
+		fmt = &क्रमmats[i];
+		f->pixelक्रमmat = fmt->fourcc;
+		वापस 0;
+	पूर्ण
 
 	/* Format not found */
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int vidioc_enum_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return enum_fmt(f, MEM2MEM_CAPTURE);
-}
+अटल पूर्णांक vidioc_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस क्रमागत_fmt(f, MEM2MEM_CAPTURE);
+पूर्ण
 
-static int vidioc_enum_fmt_vid_out(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	return enum_fmt(f, MEM2MEM_OUTPUT);
-}
+अटल पूर्णांक vidioc_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	वापस क्रमागत_fmt(f, MEM2MEM_OUTPUT);
+पूर्ण
 
-static int vidioc_g_fmt(struct emmaprp_ctx *ctx, struct v4l2_format *f)
-{
-	struct vb2_queue *vq;
-	struct emmaprp_q_data *q_data;
+अटल पूर्णांक vidioc_g_fmt(काष्ठा emmaprp_ctx *ctx, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा vb2_queue *vq;
+	काष्ठा emmaprp_q_data *q_data;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	q_data = get_q_data(ctx, f->type);
 
 	f->fmt.pix.width	= q_data->width;
 	f->fmt.pix.height	= q_data->height;
 	f->fmt.pix.field	= V4L2_FIELD_NONE;
-	f->fmt.pix.pixelformat	= q_data->fmt->fourcc;
-	if (f->fmt.pix.pixelformat == V4L2_PIX_FMT_YUV420)
+	f->fmt.pix.pixelक्रमmat	= q_data->fmt->fourcc;
+	अगर (f->fmt.pix.pixelक्रमmat == V4L2_PIX_FMT_YUV420)
 		f->fmt.pix.bytesperline = q_data->width * 3 / 2;
-	else /* YUYV */
+	अन्यथा /* YUYV */
 		f->fmt.pix.bytesperline = q_data->width * 2;
 	f->fmt.pix.sizeimage	= q_data->sizeimage;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_g_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	return vidioc_g_fmt(priv, f);
-}
+अटल पूर्णांक vidioc_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	वापस vidioc_g_fmt(priv, f);
+पूर्ण
 
-static int vidioc_g_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	return vidioc_g_fmt(priv, f);
-}
+अटल पूर्णांक vidioc_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	वापस vidioc_g_fmt(priv, f);
+पूर्ण
 
-static int vidioc_try_fmt(struct v4l2_format *f)
-{
-	enum v4l2_field field;
+अटल पूर्णांक vidioc_try_fmt(काष्ठा v4l2_क्रमmat *f)
+अणु
+	क्रमागत v4l2_field field;
 
 
-	if (!find_format(f))
-		return -EINVAL;
+	अगर (!find_क्रमmat(f))
+		वापस -EINVAL;
 
 	field = f->fmt.pix.field;
-	if (field == V4L2_FIELD_ANY)
+	अगर (field == V4L2_FIELD_ANY)
 		field = V4L2_FIELD_NONE;
-	else if (V4L2_FIELD_NONE != field)
-		return -EINVAL;
+	अन्यथा अगर (V4L2_FIELD_NONE != field)
+		वापस -EINVAL;
 
-	/* V4L2 specification suggests the driver corrects the format struct
-	 * if any of the dimensions is unsupported */
+	/* V4L2 specअगरication suggests the driver corrects the क्रमmat काष्ठा
+	 * अगर any of the dimensions is unsupported */
 	f->fmt.pix.field = field;
 
-	if (f->fmt.pix.pixelformat == V4L2_PIX_FMT_YUV420) {
+	अगर (f->fmt.pix.pixelक्रमmat == V4L2_PIX_FMT_YUV420) अणु
 		v4l_bound_align_image(&f->fmt.pix.width, MIN_W, MAX_W,
 				      W_ALIGN_YUV420, &f->fmt.pix.height,
 				      MIN_H, MAX_H, H_ALIGN, S_ALIGN);
 		f->fmt.pix.bytesperline = f->fmt.pix.width * 3 / 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		v4l_bound_align_image(&f->fmt.pix.width, MIN_W, MAX_W,
 				      W_ALIGN_OTHERS, &f->fmt.pix.height,
 				      MIN_H, MAX_H, H_ALIGN, S_ALIGN);
 		f->fmt.pix.bytesperline = f->fmt.pix.width * 2;
-	}
+	पूर्ण
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_try_fmt_vid_cap(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct emmaprp_fmt *fmt;
-	struct emmaprp_ctx *ctx = priv;
+अटल पूर्णांक vidioc_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा emmaprp_fmt *fmt;
+	काष्ठा emmaprp_ctx *ctx = priv;
 
-	fmt = find_format(f);
-	if (!fmt || !(fmt->types & MEM2MEM_CAPTURE)) {
+	fmt = find_क्रमmat(f);
+	अगर (!fmt || !(fmt->types & MEM2MEM_CAPTURE)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	return vidioc_try_fmt(f);
-}
+	वापस vidioc_try_fmt(f);
+पूर्ण
 
-static int vidioc_try_fmt_vid_out(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct emmaprp_fmt *fmt;
-	struct emmaprp_ctx *ctx = priv;
+अटल पूर्णांक vidioc_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा emmaprp_fmt *fmt;
+	काष्ठा emmaprp_ctx *ctx = priv;
 
-	fmt = find_format(f);
-	if (!fmt || !(fmt->types & MEM2MEM_OUTPUT)) {
+	fmt = find_क्रमmat(f);
+	अगर (!fmt || !(fmt->types & MEM2MEM_OUTPUT)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev,
 			 "Fourcc format (0x%08x) invalid.\n",
-			 f->fmt.pix.pixelformat);
-		return -EINVAL;
-	}
+			 f->fmt.pix.pixelक्रमmat);
+		वापस -EINVAL;
+	पूर्ण
 
-	return vidioc_try_fmt(f);
-}
+	वापस vidioc_try_fmt(f);
+पूर्ण
 
-static int vidioc_s_fmt(struct emmaprp_ctx *ctx, struct v4l2_format *f)
-{
-	struct emmaprp_q_data *q_data;
-	struct vb2_queue *vq;
-	int ret;
+अटल पूर्णांक vidioc_s_fmt(काष्ठा emmaprp_ctx *ctx, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा emmaprp_q_data *q_data;
+	काष्ठा vb2_queue *vq;
+	पूर्णांक ret;
 
 	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
-	if (!vq)
-		return -EINVAL;
+	अगर (!vq)
+		वापस -EINVAL;
 
 	q_data = get_q_data(ctx, f->type);
-	if (!q_data)
-		return -EINVAL;
+	अगर (!q_data)
+		वापस -EINVAL;
 
-	if (vb2_is_busy(vq)) {
+	अगर (vb2_is_busy(vq)) अणु
 		v4l2_err(&ctx->dev->v4l2_dev, "%s queue busy\n", __func__);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ret = vidioc_try_fmt(f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	q_data->fmt		= find_format(f);
+	q_data->fmt		= find_क्रमmat(f);
 	q_data->width		= f->fmt.pix.width;
 	q_data->height		= f->fmt.pix.height;
-	if (q_data->fmt->fourcc == V4L2_PIX_FMT_YUV420)
+	अगर (q_data->fmt->fourcc == V4L2_PIX_FMT_YUV420)
 		q_data->sizeimage = q_data->width * q_data->height * 3 / 2;
-	else /* YUYV */
+	अन्यथा /* YUYV */
 		q_data->sizeimage = q_data->width * q_data->height * 2;
 
-	dprintk(ctx->dev,
+	dprपूर्णांकk(ctx->dev,
 		"Setting format for type %d, wxh: %dx%d, fmt: %d\n",
 		f->type, q_data->width, q_data->height, q_data->fmt->fourcc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int ret;
+अटल पूर्णांक vidioc_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret;
 
 	ret = vidioc_try_fmt_vid_cap(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return vidioc_s_fmt(priv, f);
-}
+	वापस vidioc_s_fmt(priv, f);
+पूर्ण
 
-static int vidioc_s_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int ret;
+अटल पूर्णांक vidioc_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक ret;
 
 	ret = vidioc_try_fmt_vid_out(file, priv, f);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return vidioc_s_fmt(priv, f);
-}
+	वापस vidioc_s_fmt(priv, f);
+पूर्ण
 
-static const struct v4l2_ioctl_ops emmaprp_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops emmaprp_ioctl_ops = अणु
 	.vidioc_querycap	= vidioc_querycap,
 
-	.vidioc_enum_fmt_vid_cap = vidioc_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap = vidioc_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap	= vidioc_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap	= vidioc_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap	= vidioc_s_fmt_vid_cap,
 
-	.vidioc_enum_fmt_vid_out = vidioc_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out = vidioc_क्रमागत_fmt_vid_out,
 	.vidioc_g_fmt_vid_out	= vidioc_g_fmt_vid_out,
 	.vidioc_try_fmt_vid_out	= vidioc_try_fmt_vid_out,
 	.vidioc_s_fmt_vid_out	= vidioc_s_fmt_vid_out,
@@ -611,234 +612,234 @@ static const struct v4l2_ioctl_ops emmaprp_ioctl_ops = {
 	.vidioc_expbuf		= v4l2_m2m_ioctl_expbuf,
 	.vidioc_streamon	= v4l2_m2m_ioctl_streamon,
 	.vidioc_streamoff	= v4l2_m2m_ioctl_streamoff,
-};
+पूर्ण;
 
 
 /*
  * Queue operations
  */
-static int emmaprp_queue_setup(struct vb2_queue *vq,
-				unsigned int *nbuffers, unsigned int *nplanes,
-				unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct emmaprp_ctx *ctx = vb2_get_drv_priv(vq);
-	struct emmaprp_q_data *q_data;
-	unsigned int size, count = *nbuffers;
+अटल पूर्णांक emmaprp_queue_setup(काष्ठा vb2_queue *vq,
+				अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+				अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा emmaprp_ctx *ctx = vb2_get_drv_priv(vq);
+	काष्ठा emmaprp_q_data *q_data;
+	अचिन्हित पूर्णांक size, count = *nbuffers;
 
 	q_data = get_q_data(ctx, vq->type);
 
-	if (q_data->fmt->fourcc == V4L2_PIX_FMT_YUV420)
+	अगर (q_data->fmt->fourcc == V4L2_PIX_FMT_YUV420)
 		size = q_data->width * q_data->height * 3 / 2;
-	else
+	अन्यथा
 		size = q_data->width * q_data->height * 2;
 
-	while (size * count > MEM2MEM_VID_MEM_LIMIT)
+	जबतक (size * count > MEM2MEM_VID_MEM_LIMIT)
 		(count)--;
 
 	*nplanes = 1;
 	*nbuffers = count;
 	sizes[0] = size;
 
-	dprintk(ctx->dev, "get %d buffer(s) of size %d each.\n", count, size);
+	dprपूर्णांकk(ctx->dev, "get %d buffer(s) of size %d each.\n", count, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emmaprp_buf_prepare(struct vb2_buffer *vb)
-{
-	struct emmaprp_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
-	struct emmaprp_q_data *q_data;
+अटल पूर्णांक emmaprp_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा emmaprp_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा emmaprp_q_data *q_data;
 
-	dprintk(ctx->dev, "type: %d\n", vb->vb2_queue->type);
+	dprपूर्णांकk(ctx->dev, "type: %d\n", vb->vb2_queue->type);
 
 	q_data = get_q_data(ctx, vb->vb2_queue->type);
 
-	if (vb2_plane_size(vb, 0) < q_data->sizeimage) {
-		dprintk(ctx->dev,
+	अगर (vb2_plane_size(vb, 0) < q_data->sizeimage) अणु
+		dprपूर्णांकk(ctx->dev,
 			"%s data will not fit into plane(%lu < %lu)\n",
 			__func__, vb2_plane_size(vb, 0),
-			(long)q_data->sizeimage);
-		return -EINVAL;
-	}
+			(दीर्घ)q_data->sizeimage);
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, q_data->sizeimage);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void emmaprp_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct emmaprp_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
+अटल व्योम emmaprp_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा emmaprp_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 	v4l2_m2m_buf_queue(ctx->fh.m2m_ctx, vbuf);
-}
+पूर्ण
 
-static const struct vb2_ops emmaprp_qops = {
+अटल स्थिर काष्ठा vb2_ops emmaprp_qops = अणु
 	.queue_setup	 = emmaprp_queue_setup,
 	.buf_prepare	 = emmaprp_buf_prepare,
 	.buf_queue	 = emmaprp_buf_queue,
-	.wait_prepare	 = vb2_ops_wait_prepare,
-	.wait_finish	 = vb2_ops_wait_finish,
-};
+	.रुको_prepare	 = vb2_ops_रुको_prepare,
+	.रुको_finish	 = vb2_ops_रुको_finish,
+पूर्ण;
 
-static int queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq)
-{
-	struct emmaprp_ctx *ctx = priv;
-	int ret;
+अटल पूर्णांक queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq)
+अणु
+	काष्ठा emmaprp_ctx *ctx = priv;
+	पूर्णांक ret;
 
 	src_vq->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	src_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	src_vq->drv_priv = ctx;
-	src_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	src_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	src_vq->ops = &emmaprp_qops;
 	src_vq->mem_ops = &vb2_dma_contig_memops;
-	src_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	src_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	src_vq->dev = ctx->dev->v4l2_dev.dev;
 	src_vq->lock = &ctx->dev->dev_mutex;
 
 	ret = vb2_queue_init(src_vq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dst_vq->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	dst_vq->io_modes = VB2_MMAP | VB2_USERPTR | VB2_DMABUF;
 	dst_vq->drv_priv = ctx;
-	dst_vq->buf_struct_size = sizeof(struct v4l2_m2m_buffer);
+	dst_vq->buf_काष्ठा_size = माप(काष्ठा v4l2_m2m_buffer);
 	dst_vq->ops = &emmaprp_qops;
 	dst_vq->mem_ops = &vb2_dma_contig_memops;
-	dst_vq->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
+	dst_vq->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_COPY;
 	dst_vq->dev = ctx->dev->v4l2_dev.dev;
 	dst_vq->lock = &ctx->dev->dev_mutex;
 
-	return vb2_queue_init(dst_vq);
-}
+	वापस vb2_queue_init(dst_vq);
+पूर्ण
 
 /*
  * File operations
  */
-static int emmaprp_open(struct file *file)
-{
-	struct emmaprp_dev *pcdev = video_drvdata(file);
-	struct emmaprp_ctx *ctx;
+अटल पूर्णांक emmaprp_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा emmaprp_dev *pcdev = video_drvdata(file);
+	काष्ठा emmaprp_ctx *ctx;
 
-	ctx = kzalloc(sizeof *ctx, GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप *ctx, GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	v4l2_fh_init(&ctx->fh, video_devdata(file));
-	file->private_data = &ctx->fh;
+	file->निजी_data = &ctx->fh;
 	ctx->dev = pcdev;
 
-	if (mutex_lock_interruptible(&pcdev->dev_mutex)) {
-		kfree(ctx);
-		return -ERESTARTSYS;
-	}
+	अगर (mutex_lock_पूर्णांकerruptible(&pcdev->dev_mutex)) अणु
+		kमुक्त(ctx);
+		वापस -ERESTARTSYS;
+	पूर्ण
 
 	ctx->fh.m2m_ctx = v4l2_m2m_ctx_init(pcdev->m2m_dev, ctx, &queue_init);
 
-	if (IS_ERR(ctx->fh.m2m_ctx)) {
-		int ret = PTR_ERR(ctx->fh.m2m_ctx);
+	अगर (IS_ERR(ctx->fh.m2m_ctx)) अणु
+		पूर्णांक ret = PTR_ERR(ctx->fh.m2m_ctx);
 
 		mutex_unlock(&pcdev->dev_mutex);
-		kfree(ctx);
-		return ret;
-	}
+		kमुक्त(ctx);
+		वापस ret;
+	पूर्ण
 
 	clk_prepare_enable(pcdev->clk_emma_ipg);
 	clk_prepare_enable(pcdev->clk_emma_ahb);
-	ctx->q_data[V4L2_M2M_SRC].fmt = &formats[1];
-	ctx->q_data[V4L2_M2M_DST].fmt = &formats[0];
+	ctx->q_data[V4L2_M2M_SRC].fmt = &क्रमmats[1];
+	ctx->q_data[V4L2_M2M_DST].fmt = &क्रमmats[0];
 	v4l2_fh_add(&ctx->fh);
 	mutex_unlock(&pcdev->dev_mutex);
 
-	dprintk(pcdev, "Created instance %p, m2m_ctx: %p\n", ctx, ctx->fh.m2m_ctx);
+	dprपूर्णांकk(pcdev, "Created instance %p, m2m_ctx: %p\n", ctx, ctx->fh.m2m_ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int emmaprp_release(struct file *file)
-{
-	struct emmaprp_dev *pcdev = video_drvdata(file);
-	struct emmaprp_ctx *ctx = file->private_data;
+अटल पूर्णांक emmaprp_release(काष्ठा file *file)
+अणु
+	काष्ठा emmaprp_dev *pcdev = video_drvdata(file);
+	काष्ठा emmaprp_ctx *ctx = file->निजी_data;
 
-	dprintk(pcdev, "Releasing instance %p\n", ctx);
+	dprपूर्णांकk(pcdev, "Releasing instance %p\n", ctx);
 
 	mutex_lock(&pcdev->dev_mutex);
 	clk_disable_unprepare(pcdev->clk_emma_ahb);
 	clk_disable_unprepare(pcdev->clk_emma_ipg);
 	v4l2_fh_del(&ctx->fh);
-	v4l2_fh_exit(&ctx->fh);
+	v4l2_fh_निकास(&ctx->fh);
 	v4l2_m2m_ctx_release(ctx->fh.m2m_ctx);
 	mutex_unlock(&pcdev->dev_mutex);
-	kfree(ctx);
+	kमुक्त(ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations emmaprp_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations emmaprp_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= emmaprp_open,
+	.खोलो		= emmaprp_खोलो,
 	.release	= emmaprp_release,
 	.poll		= v4l2_m2m_fop_poll,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= v4l2_m2m_fop_mmap,
-};
+पूर्ण;
 
-static const struct video_device emmaprp_videodev = {
+अटल स्थिर काष्ठा video_device emmaprp_videodev = अणु
 	.name		= MEM2MEM_NAME,
 	.fops		= &emmaprp_fops,
 	.ioctl_ops	= &emmaprp_ioctl_ops,
 	.minor		= -1,
 	.release	= video_device_release,
-	.vfl_dir	= VFL_DIR_M2M,
+	.vfl_dir	= VFL_सूची_M2M,
 	.device_caps	= V4L2_CAP_VIDEO_M2M | V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static const struct v4l2_m2m_ops m2m_ops = {
+अटल स्थिर काष्ठा v4l2_m2m_ops m2m_ops = अणु
 	.device_run	= emmaprp_device_run,
-	.job_abort	= emmaprp_job_abort,
-};
+	.job_पात	= emmaprp_job_पात,
+पूर्ण;
 
-static int emmaprp_probe(struct platform_device *pdev)
-{
-	struct emmaprp_dev *pcdev;
-	struct video_device *vfd;
-	struct resource *res;
-	int irq, ret;
+अटल पूर्णांक emmaprp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा emmaprp_dev *pcdev;
+	काष्ठा video_device *vfd;
+	काष्ठा resource *res;
+	पूर्णांक irq, ret;
 
-	pcdev = devm_kzalloc(&pdev->dev, sizeof(*pcdev), GFP_KERNEL);
-	if (!pcdev)
-		return -ENOMEM;
+	pcdev = devm_kzalloc(&pdev->dev, माप(*pcdev), GFP_KERNEL);
+	अगर (!pcdev)
+		वापस -ENOMEM;
 
 	spin_lock_init(&pcdev->irqlock);
 
 	pcdev->clk_emma_ipg = devm_clk_get(&pdev->dev, "ipg");
-	if (IS_ERR(pcdev->clk_emma_ipg)) {
-		return PTR_ERR(pcdev->clk_emma_ipg);
-	}
+	अगर (IS_ERR(pcdev->clk_emma_ipg)) अणु
+		वापस PTR_ERR(pcdev->clk_emma_ipg);
+	पूर्ण
 
 	pcdev->clk_emma_ahb = devm_clk_get(&pdev->dev, "ahb");
-	if (IS_ERR(pcdev->clk_emma_ahb))
-		return PTR_ERR(pcdev->clk_emma_ahb);
+	अगर (IS_ERR(pcdev->clk_emma_ahb))
+		वापस PTR_ERR(pcdev->clk_emma_ahb);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	pcdev->base_emma = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(pcdev->base_emma))
-		return PTR_ERR(pcdev->base_emma);
+	अगर (IS_ERR(pcdev->base_emma))
+		वापस PTR_ERR(pcdev->base_emma);
 
-	ret = v4l2_device_register(&pdev->dev, &pcdev->v4l2_dev);
-	if (ret)
-		return ret;
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &pcdev->v4l2_dev);
+	अगर (ret)
+		वापस ret;
 
 	mutex_init(&pcdev->dev_mutex);
 
 	vfd = video_device_alloc();
-	if (!vfd) {
+	अगर (!vfd) अणु
 		v4l2_err(&pcdev->v4l2_dev, "Failed to allocate video device\n");
 		ret = -ENOMEM;
-		goto unreg_dev;
-	}
+		जाओ unreg_dev;
+	पूर्ण
 
 	*vfd = emmaprp_videodev;
 	vfd->lock = &pcdev->dev_mutex;
@@ -849,33 +850,33 @@ static int emmaprp_probe(struct platform_device *pdev)
 	v4l2_info(&pcdev->v4l2_dev, EMMAPRP_MODULE_NAME
 		  " Device registered as /dev/video%d\n", vfd->num);
 
-	platform_set_drvdata(pdev, pcdev);
+	platक्रमm_set_drvdata(pdev, pcdev);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = irq;
-		goto rel_vdev;
-	}
+		जाओ rel_vdev;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq, emmaprp_irq, 0,
 			       dev_name(&pdev->dev), pcdev);
-	if (ret)
-		goto rel_vdev;
+	अगर (ret)
+		जाओ rel_vdev;
 
 	pcdev->m2m_dev = v4l2_m2m_init(&m2m_ops);
-	if (IS_ERR(pcdev->m2m_dev)) {
+	अगर (IS_ERR(pcdev->m2m_dev)) अणु
 		v4l2_err(&pcdev->v4l2_dev, "Failed to init mem2mem device\n");
 		ret = PTR_ERR(pcdev->m2m_dev);
-		goto rel_vdev;
-	}
+		जाओ rel_vdev;
+	पूर्ण
 
-	ret = video_register_device(vfd, VFL_TYPE_VIDEO, 0);
-	if (ret) {
+	ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, 0);
+	अगर (ret) अणु
 		v4l2_err(&pcdev->v4l2_dev, "Failed to register video device\n");
-		goto rel_m2m;
-	}
+		जाओ rel_m2m;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 
 rel_m2m:
@@ -883,32 +884,32 @@ rel_m2m:
 rel_vdev:
 	video_device_release(vfd);
 unreg_dev:
-	v4l2_device_unregister(&pcdev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&pcdev->v4l2_dev);
 
 	mutex_destroy(&pcdev->dev_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int emmaprp_remove(struct platform_device *pdev)
-{
-	struct emmaprp_dev *pcdev = platform_get_drvdata(pdev);
+अटल पूर्णांक emmaprp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा emmaprp_dev *pcdev = platक्रमm_get_drvdata(pdev);
 
 	v4l2_info(&pcdev->v4l2_dev, "Removing " EMMAPRP_MODULE_NAME);
 
-	video_unregister_device(pcdev->vfd);
+	video_unरेजिस्टर_device(pcdev->vfd);
 	v4l2_m2m_release(pcdev->m2m_dev);
-	v4l2_device_unregister(&pcdev->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&pcdev->v4l2_dev);
 	mutex_destroy(&pcdev->dev_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver emmaprp_pdrv = {
+अटल काष्ठा platक्रमm_driver emmaprp_pdrv = अणु
 	.probe		= emmaprp_probe,
-	.remove		= emmaprp_remove,
-	.driver		= {
+	.हटाओ		= emmaprp_हटाओ,
+	.driver		= अणु
 		.name	= MEM2MEM_NAME,
-	},
-};
-module_platform_driver(emmaprp_pdrv);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(emmaprp_pdrv);

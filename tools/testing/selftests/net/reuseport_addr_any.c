@@ -1,278 +1,279 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-/* Test that sockets listening on a specific address are preferred
+/* Test that sockets listening on a specअगरic address are preferred
  * over sockets listening on addr_any.
  */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <arpa/inet.h>
-#include <errno.h>
-#include <error.h>
-#include <linux/dccp.h>
-#include <linux/in.h>
-#include <linux/unistd.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/epoll.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#समावेश <arpa/inet.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <error.h>
+#समावेश <linux/dccp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/unistd.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/epoll.h>
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
+#समावेश <unistd.h>
 
-#ifndef SOL_DCCP
-#define SOL_DCCP 269
-#endif
+#अगर_अघोषित SOL_DCCP
+#घोषणा SOL_DCCP 269
+#पूर्ण_अगर
 
-static const char *IP4_ADDR = "127.0.0.1";
-static const char *IP6_ADDR = "::1";
-static const char *IP4_MAPPED6 = "::ffff:127.0.0.1";
+अटल स्थिर अक्षर *IP4_ADDR = "127.0.0.1";
+अटल स्थिर अक्षर *IP6_ADDR = "::1";
+अटल स्थिर अक्षर *IP4_MAPPED6 = "::ffff:127.0.0.1";
 
-static const int PORT = 8888;
+अटल स्थिर पूर्णांक PORT = 8888;
 
-static void build_rcv_fd(int family, int proto, int *rcv_fds, int count,
-			 const char *addr_str)
-{
-	struct sockaddr_in  addr4 = {0};
-	struct sockaddr_in6 addr6 = {0};
-	struct sockaddr *addr;
-	int opt, i, sz;
+अटल व्योम build_rcv_fd(पूर्णांक family, पूर्णांक proto, पूर्णांक *rcv_fds, पूर्णांक count,
+			 स्थिर अक्षर *addr_str)
+अणु
+	काष्ठा sockaddr_in  addr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 addr6 = अणु0पूर्ण;
+	काष्ठा sockaddr *addr;
+	पूर्णांक opt, i, sz;
 
-	memset(&addr, 0, sizeof(addr));
+	स_रखो(&addr, 0, माप(addr));
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		addr4.sin_family = family;
-		if (!addr_str)
+		अगर (!addr_str)
 			addr4.sin_addr.s_addr = htonl(INADDR_ANY);
-		else if (!inet_pton(family, addr_str, &addr4.sin_addr.s_addr))
-			error(1, errno, "inet_pton failed: %s", addr_str);
+		अन्यथा अगर (!inet_pton(family, addr_str, &addr4.sin_addr.s_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", addr_str);
 		addr4.sin_port = htons(PORT);
-		sz = sizeof(addr4);
-		addr = (struct sockaddr *)&addr4;
-		break;
-	case AF_INET6:
+		sz = माप(addr4);
+		addr = (काष्ठा sockaddr *)&addr4;
+		अवरोध;
+	हाल AF_INET6:
 		addr6.sin6_family = AF_INET6;
-		if (!addr_str)
+		अगर (!addr_str)
 			addr6.sin6_addr = in6addr_any;
-		else if (!inet_pton(family, addr_str, &addr6.sin6_addr))
-			error(1, errno, "inet_pton failed: %s", addr_str);
+		अन्यथा अगर (!inet_pton(family, addr_str, &addr6.sin6_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", addr_str);
 		addr6.sin6_port = htons(PORT);
-		sz = sizeof(addr6);
-		addr = (struct sockaddr *)&addr6;
-		break;
-	default:
+		sz = माप(addr6);
+		addr = (काष्ठा sockaddr *)&addr6;
+		अवरोध;
+	शेष:
 		error(1, 0, "Unsupported family %d", family);
-		/* clang does not recognize error() above as terminating
+		/* clang करोes not recognize error() above as terminating
 		 * the program, so it complains that saddr, sz are
 		 * not initialized when this code path is taken. Silence it.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < count; ++i) {
+	क्रम (i = 0; i < count; ++i) अणु
 		rcv_fds[i] = socket(family, proto, 0);
-		if (rcv_fds[i] < 0)
-			error(1, errno, "failed to create receive socket");
+		अगर (rcv_fds[i] < 0)
+			error(1, त्रुटि_सं, "failed to create receive socket");
 
 		opt = 1;
-		if (setsockopt(rcv_fds[i], SOL_SOCKET, SO_REUSEPORT, &opt,
-			       sizeof(opt)))
-			error(1, errno, "failed to set SO_REUSEPORT");
+		अगर (setsockopt(rcv_fds[i], SOL_SOCKET, SO_REUSEPORT, &opt,
+			       माप(opt)))
+			error(1, त्रुटि_सं, "failed to set SO_REUSEPORT");
 
-		if (bind(rcv_fds[i], addr, sz))
-			error(1, errno, "failed to bind receive socket");
+		अगर (bind(rcv_fds[i], addr, sz))
+			error(1, त्रुटि_सं, "failed to bind receive socket");
 
-		if (proto == SOCK_STREAM && listen(rcv_fds[i], 10))
-			error(1, errno, "tcp: failed to listen on receive port");
-		else if (proto == SOCK_DCCP) {
-			if (setsockopt(rcv_fds[i], SOL_DCCP,
+		अगर (proto == SOCK_STREAM && listen(rcv_fds[i], 10))
+			error(1, त्रुटि_सं, "tcp: failed to listen on receive port");
+		अन्यथा अगर (proto == SOCK_DCCP) अणु
+			अगर (setsockopt(rcv_fds[i], SOL_DCCP,
 					DCCP_SOCKOPT_SERVICE,
-					&(int) {htonl(42)}, sizeof(int)))
-				error(1, errno, "failed to setsockopt");
+					&(पूर्णांक) अणुhtonl(42)पूर्ण, माप(पूर्णांक)))
+				error(1, त्रुटि_सं, "failed to setsockopt");
 
-			if (listen(rcv_fds[i], 10))
-				error(1, errno, "dccp: failed to listen on receive port");
-		}
-	}
-}
+			अगर (listen(rcv_fds[i], 10))
+				error(1, त्रुटि_सं, "dccp: failed to listen on receive port");
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int connect_and_send(int family, int proto)
-{
-	struct sockaddr_in  saddr4 = {0};
-	struct sockaddr_in  daddr4 = {0};
-	struct sockaddr_in6 saddr6 = {0};
-	struct sockaddr_in6 daddr6 = {0};
-	struct sockaddr *saddr, *daddr;
-	int fd, sz;
+अटल पूर्णांक connect_and_send(पूर्णांक family, पूर्णांक proto)
+अणु
+	काष्ठा sockaddr_in  saddr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in  daddr4 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 saddr6 = अणु0पूर्ण;
+	काष्ठा sockaddr_in6 daddr6 = अणु0पूर्ण;
+	काष्ठा sockaddr *saddr, *daddr;
+	पूर्णांक fd, sz;
 
-	switch (family) {
-	case AF_INET:
+	चयन (family) अणु
+	हाल AF_INET:
 		saddr4.sin_family = AF_INET;
 		saddr4.sin_addr.s_addr = htonl(INADDR_ANY);
 		saddr4.sin_port = 0;
 
 		daddr4.sin_family = AF_INET;
-		if (!inet_pton(family, IP4_ADDR, &daddr4.sin_addr.s_addr))
-			error(1, errno, "inet_pton failed: %s", IP4_ADDR);
+		अगर (!inet_pton(family, IP4_ADDR, &daddr4.sin_addr.s_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", IP4_ADDR);
 		daddr4.sin_port = htons(PORT);
 
-		sz = sizeof(saddr4);
-		saddr = (struct sockaddr *)&saddr4;
-		daddr = (struct sockaddr *)&daddr4;
-	break;
-	case AF_INET6:
+		sz = माप(saddr4);
+		saddr = (काष्ठा sockaddr *)&saddr4;
+		daddr = (काष्ठा sockaddr *)&daddr4;
+	अवरोध;
+	हाल AF_INET6:
 		saddr6.sin6_family = AF_INET6;
 		saddr6.sin6_addr = in6addr_any;
 
 		daddr6.sin6_family = AF_INET6;
-		if (!inet_pton(family, IP6_ADDR, &daddr6.sin6_addr))
-			error(1, errno, "inet_pton failed: %s", IP6_ADDR);
+		अगर (!inet_pton(family, IP6_ADDR, &daddr6.sin6_addr))
+			error(1, त्रुटि_सं, "inet_pton failed: %s", IP6_ADDR);
 		daddr6.sin6_port = htons(PORT);
 
-		sz = sizeof(saddr6);
-		saddr = (struct sockaddr *)&saddr6;
-		daddr = (struct sockaddr *)&daddr6;
-	break;
-	default:
+		sz = माप(saddr6);
+		saddr = (काष्ठा sockaddr *)&saddr6;
+		daddr = (काष्ठा sockaddr *)&daddr6;
+	अवरोध;
+	शेष:
 		error(1, 0, "Unsupported family %d", family);
-		/* clang does not recognize error() above as terminating
+		/* clang करोes not recognize error() above as terminating
 		 * the program, so it complains that saddr, daddr, sz are
 		 * not initialized when this code path is taken. Silence it.
 		 */
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	fd = socket(family, proto, 0);
-	if (fd < 0)
-		error(1, errno, "failed to create send socket");
+	अगर (fd < 0)
+		error(1, त्रुटि_सं, "failed to create send socket");
 
-	if (proto == SOCK_DCCP &&
+	अगर (proto == SOCK_DCCP &&
 		setsockopt(fd, SOL_DCCP, DCCP_SOCKOPT_SERVICE,
-				&(int){htonl(42)}, sizeof(int)))
-		error(1, errno, "failed to setsockopt");
+				&(पूर्णांक)अणुhtonl(42)पूर्ण, माप(पूर्णांक)))
+		error(1, त्रुटि_सं, "failed to setsockopt");
 
-	if (bind(fd, saddr, sz))
-		error(1, errno, "failed to bind send socket");
+	अगर (bind(fd, saddr, sz))
+		error(1, त्रुटि_सं, "failed to bind send socket");
 
-	if (connect(fd, daddr, sz))
-		error(1, errno, "failed to connect send socket");
+	अगर (connect(fd, daddr, sz))
+		error(1, त्रुटि_सं, "failed to connect send socket");
 
-	if (send(fd, "a", 1, 0) < 0)
-		error(1, errno, "failed to send message");
+	अगर (send(fd, "a", 1, 0) < 0)
+		error(1, त्रुटि_सं, "failed to send message");
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int receive_once(int epfd, int proto)
-{
-	struct epoll_event ev;
-	int i, fd;
-	char buf[8];
+अटल पूर्णांक receive_once(पूर्णांक epfd, पूर्णांक proto)
+अणु
+	काष्ठा epoll_event ev;
+	पूर्णांक i, fd;
+	अक्षर buf[8];
 
-	i = epoll_wait(epfd, &ev, 1, 3);
-	if (i < 0)
-		error(1, errno, "epoll_wait failed");
+	i = epoll_रुको(epfd, &ev, 1, 3);
+	अगर (i < 0)
+		error(1, त्रुटि_सं, "epoll_wait failed");
 
-	if (proto == SOCK_STREAM || proto == SOCK_DCCP) {
-		fd = accept(ev.data.fd, NULL, NULL);
-		if (fd < 0)
-			error(1, errno, "failed to accept");
-		i = recv(fd, buf, sizeof(buf), 0);
-		close(fd);
-	} else {
-		i = recv(ev.data.fd, buf, sizeof(buf), 0);
-	}
+	अगर (proto == SOCK_STREAM || proto == SOCK_DCCP) अणु
+		fd = accept(ev.data.fd, शून्य, शून्य);
+		अगर (fd < 0)
+			error(1, त्रुटि_सं, "failed to accept");
+		i = recv(fd, buf, माप(buf), 0);
+		बंद(fd);
+	पूर्ण अन्यथा अणु
+		i = recv(ev.data.fd, buf, माप(buf), 0);
+	पूर्ण
 
-	if (i < 0)
-		error(1, errno, "failed to recv");
+	अगर (i < 0)
+		error(1, त्रुटि_सं, "failed to recv");
 
-	return ev.data.fd;
-}
+	वापस ev.data.fd;
+पूर्ण
 
-static void test(int *rcv_fds, int count, int family, int proto, int fd)
-{
-	struct epoll_event ev;
-	int epfd, i, send_fd, recv_fd;
+अटल व्योम test(पूर्णांक *rcv_fds, पूर्णांक count, पूर्णांक family, पूर्णांक proto, पूर्णांक fd)
+अणु
+	काष्ठा epoll_event ev;
+	पूर्णांक epfd, i, send_fd, recv_fd;
 
 	epfd = epoll_create(1);
-	if (epfd < 0)
-		error(1, errno, "failed to create epoll");
+	अगर (epfd < 0)
+		error(1, त्रुटि_सं, "failed to create epoll");
 
 	ev.events = EPOLLIN;
-	for (i = 0; i < count; ++i) {
+	क्रम (i = 0; i < count; ++i) अणु
 		ev.data.fd = rcv_fds[i];
-		if (epoll_ctl(epfd, EPOLL_CTL_ADD, rcv_fds[i], &ev))
-			error(1, errno, "failed to register sock epoll");
-	}
+		अगर (epoll_ctl(epfd, EPOLL_CTL_ADD, rcv_fds[i], &ev))
+			error(1, त्रुटि_सं, "failed to register sock epoll");
+	पूर्ण
 
 	send_fd = connect_and_send(family, proto);
 
 	recv_fd = receive_once(epfd, proto);
-	if (recv_fd != fd)
+	अगर (recv_fd != fd)
 		error(1, 0, "received on an unexpected socket");
 
-	close(send_fd);
-	close(epfd);
-}
+	बंद(send_fd);
+	बंद(epfd);
+पूर्ण
 
 
-static void run_one_test(int fam_send, int fam_rcv, int proto,
-			 const char *addr_str)
-{
-	/* Below we test that a socket listening on a specific address
+अटल व्योम run_one_test(पूर्णांक fam_send, पूर्णांक fam_rcv, पूर्णांक proto,
+			 स्थिर अक्षर *addr_str)
+अणु
+	/* Below we test that a socket listening on a specअगरic address
 	 * is always selected in preference over a socket listening
-	 * on addr_any. Bugs where this is not the case often result
+	 * on addr_any. Bugs where this is not the हाल often result
 	 * in sockets created first or last to get picked. So below
 	 * we make sure that there are always addr_any sockets created
-	 * before and after a specific socket is created.
+	 * beक्रमe and after a specअगरic socket is created.
 	 */
-	int rcv_fds[10], i;
+	पूर्णांक rcv_fds[10], i;
 
-	build_rcv_fd(AF_INET, proto, rcv_fds, 2, NULL);
-	build_rcv_fd(AF_INET6, proto, rcv_fds + 2, 2, NULL);
+	build_rcv_fd(AF_INET, proto, rcv_fds, 2, शून्य);
+	build_rcv_fd(AF_INET6, proto, rcv_fds + 2, 2, शून्य);
 	build_rcv_fd(fam_rcv, proto, rcv_fds + 4, 1, addr_str);
-	build_rcv_fd(AF_INET, proto, rcv_fds + 5, 2, NULL);
-	build_rcv_fd(AF_INET6, proto, rcv_fds + 7, 2, NULL);
+	build_rcv_fd(AF_INET, proto, rcv_fds + 5, 2, शून्य);
+	build_rcv_fd(AF_INET6, proto, rcv_fds + 7, 2, शून्य);
 	test(rcv_fds, 9, fam_send, proto, rcv_fds[4]);
-	for (i = 0; i < 9; ++i)
-		close(rcv_fds[i]);
-	fprintf(stderr, "pass\n");
-}
+	क्रम (i = 0; i < 9; ++i)
+		बंद(rcv_fds[i]);
+	ख_लिखो(मानक_त्रुटि, "pass\n");
+पूर्ण
 
-static void test_proto(int proto, const char *proto_str)
-{
-	if (proto == SOCK_DCCP) {
-		int test_fd;
+अटल व्योम test_proto(पूर्णांक proto, स्थिर अक्षर *proto_str)
+अणु
+	अगर (proto == SOCK_DCCP) अणु
+		पूर्णांक test_fd;
 
 		test_fd = socket(AF_INET, proto, 0);
-		if (test_fd < 0) {
-			if (errno == ESOCKTNOSUPPORT) {
-				fprintf(stderr, "DCCP not supported: skipping DCCP tests\n");
-				return;
-			} else
-				error(1, errno, "failed to create a DCCP socket");
-		}
-		close(test_fd);
-	}
+		अगर (test_fd < 0) अणु
+			अगर (त्रुटि_सं == ESOCKTNOSUPPORT) अणु
+				ख_लिखो(मानक_त्रुटि, "DCCP not supported: skipping DCCP tests\n");
+				वापस;
+			पूर्ण अन्यथा
+				error(1, त्रुटि_सं, "failed to create a DCCP socket");
+		पूर्ण
+		बंद(test_fd);
+	पूर्ण
 
-	fprintf(stderr, "%s IPv4 ... ", proto_str);
+	ख_लिखो(मानक_त्रुटि, "%s IPv4 ... ", proto_str);
 	run_one_test(AF_INET, AF_INET, proto, IP4_ADDR);
 
-	fprintf(stderr, "%s IPv6 ... ", proto_str);
+	ख_लिखो(मानक_त्रुटि, "%s IPv6 ... ", proto_str);
 	run_one_test(AF_INET6, AF_INET6, proto, IP6_ADDR);
 
-	fprintf(stderr, "%s IPv4 mapped to IPv6 ... ", proto_str);
+	ख_लिखो(मानक_त्रुटि, "%s IPv4 mapped to IPv6 ... ", proto_str);
 	run_one_test(AF_INET, AF_INET6, proto, IP4_MAPPED6);
-}
+पूर्ण
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	test_proto(SOCK_DGRAM, "UDP");
 	test_proto(SOCK_STREAM, "TCP");
 	test_proto(SOCK_DCCP, "DCCP");
 
-	fprintf(stderr, "SUCCESS\n");
-	return 0;
-}
+	ख_लिखो(मानक_त्रुटि, "SUCCESS\n");
+	वापस 0;
+पूर्ण

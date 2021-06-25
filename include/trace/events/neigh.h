@@ -1,37 +1,38 @@
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM neigh
+<शैली गुरु>
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM neigh
 
-#if !defined(_TRACE_NEIGH_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NEIGH_H
+#अगर !defined(_TRACE_NEIGH_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_NEIGH_H
 
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/tracepoint.h>
-#include <net/neighbour.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <net/neighbour.h>
 
-#define neigh_state_str(state)				\
-	__print_symbolic(state,				\
-		{ NUD_INCOMPLETE, "incomplete" },	\
-		{ NUD_REACHABLE, "reachable" },		\
-		{ NUD_STALE, "stale" },			\
-		{ NUD_DELAY, "delay" },			\
-		{ NUD_PROBE, "probe" },			\
-		{ NUD_FAILED, "failed" },		\
-		{ NUD_NOARP, "noarp" },			\
-		{ NUD_PERMANENT, "permanent"})
+#घोषणा neigh_state_str(state)				\
+	__prपूर्णांक_symbolic(state,				\
+		अणु NUD_INCOMPLETE, "incomplete" पूर्ण,	\
+		अणु NUD_REACHABLE, "reachable" पूर्ण,		\
+		अणु NUD_STALE, "stale" पूर्ण,			\
+		अणु NUD_DELAY, "delay" पूर्ण,			\
+		अणु NUD_PROBE, "probe" पूर्ण,			\
+		अणु NUD_FAILED, "failed" पूर्ण,		\
+		अणु NUD_NOARP, "noarp" पूर्ण,			\
+		अणु NUD_PERMANENT, "permanent"पूर्ण)
 
 TRACE_EVENT(neigh_create,
 
-	TP_PROTO(struct neigh_table *tbl, struct net_device *dev,
-		 const void *pkey, const struct neighbour *n,
+	TP_PROTO(काष्ठा neigh_table *tbl, काष्ठा net_device *dev,
+		 स्थिर व्योम *pkey, स्थिर काष्ठा neighbour *n,
 		 bool exempt_from_gc),
 
 	TP_ARGS(tbl, dev, pkey, n, exempt_from_gc),
 
 	TP_STRUCT__entry(
 		__field(u32, family)
-		__dynamic_array(char,  dev,   IFNAMSIZ )
-		__field(int, entries)
+		__dynamic_array(अक्षर,  dev,   IFNAMSIZ )
+		__field(पूर्णांक, entries)
 		__field(u8, created)
 		__field(u8, gc_exempt)
 		__array(u8, primary_key4, 4)
@@ -39,31 +40,31 @@ TRACE_EVENT(neigh_create,
 	),
 
 	TP_fast_assign(
-		struct in6_addr *pin6;
+		काष्ठा in6_addr *pin6;
 		__be32 *p32;
 
 		__entry->family = tbl->family;
 		__assign_str(dev, (dev ? dev->name : "NULL"));
-		__entry->entries = atomic_read(&tbl->gc_entries);
-		__entry->created = n != NULL;
+		__entry->entries = atomic_पढ़ो(&tbl->gc_entries);
+		__entry->created = n != शून्य;
 		__entry->gc_exempt = exempt_from_gc;
-		pin6 = (struct in6_addr *)__entry->primary_key6;
+		pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
 		p32 = (__be32 *)__entry->primary_key4;
 
-		if (tbl->family == AF_INET)
+		अगर (tbl->family == AF_INET)
 			*p32 = *(__be32 *)pkey;
-		else
+		अन्यथा
 			*p32 = 0;
 
-#if IS_ENABLED(CONFIG_IPV6)
-		if (tbl->family == AF_INET6) {
-			pin6 = (struct in6_addr *)__entry->primary_key6;
-			*pin6 = *(struct in6_addr *)pkey;
-		}
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (tbl->family == AF_INET6) अणु
+			pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
+			*pin6 = *(काष्ठा in6_addr *)pkey;
+		पूर्ण
+#पूर्ण_अगर
 	),
 
-	TP_printk("family %d dev %s entries %d primary_key4 %pI4 primary_key6 %pI6c created %d gc_exempt %d",
+	TP_prपूर्णांकk("family %d dev %s entries %d primary_key4 %pI4 primary_key6 %pI6c created %d gc_exempt %d",
 		  __entry->family, __get_str(dev), __entry->entries,
 		  __entry->primary_key4, __entry->primary_key6,
 		  __entry->created, __entry->gc_exempt)
@@ -71,7 +72,7 @@ TRACE_EVENT(neigh_create,
 
 TRACE_EVENT(neigh_update,
 
-	TP_PROTO(struct neighbour *n, const u8 *lladdr, u8 new,
+	TP_PROTO(काष्ठा neighbour *n, स्थिर u8 *lladdr, u8 new,
 		 u32 flags, u32 nlmsg_pid),
 
 	TP_ARGS(n, lladdr, new, flags, nlmsg_pid),
@@ -85,12 +86,12 @@ TRACE_EVENT(neigh_update,
 		__field(u8, nud_state)
 		__field(u8, type)
 		__field(u8, dead)
-		__field(int, refcnt)
+		__field(पूर्णांक, refcnt)
 		__array(__u8, primary_key4, 4)
 		__array(__u8, primary_key6, 16)
-		__field(unsigned long, confirmed)
-		__field(unsigned long, updated)
-		__field(unsigned long, used)
+		__field(अचिन्हित दीर्घ, confirmed)
+		__field(अचिन्हित दीर्घ, updated)
+		__field(अचिन्हित दीर्घ, used)
 		__array(u8, new_lladdr, MAX_ADDR_LEN)
 		__field(u8, new_state)
 		__field(u32, update_flags)
@@ -98,63 +99,63 @@ TRACE_EVENT(neigh_update,
 	),
 
 	TP_fast_assign(
-		int lladdr_len = (n->dev ? n->dev->addr_len : MAX_ADDR_LEN);
-		struct in6_addr *pin6;
+		पूर्णांक lladdr_len = (n->dev ? n->dev->addr_len : MAX_ADDR_LEN);
+		काष्ठा in6_addr *pin6;
 		__be32 *p32;
 
 		__entry->family = n->tbl->family;
 		__assign_str(dev, (n->dev ? n->dev->name : "NULL"));
 		__entry->lladdr_len = lladdr_len;
-		memcpy(__entry->lladdr, n->ha, lladdr_len);
+		स_नकल(__entry->lladdr, n->ha, lladdr_len);
 		__entry->flags = n->flags;
 		__entry->nud_state = n->nud_state;
 		__entry->type = n->type;
 		__entry->dead = n->dead;
-		__entry->refcnt = refcount_read(&n->refcnt);
-		pin6 = (struct in6_addr *)__entry->primary_key6;
+		__entry->refcnt = refcount_पढ़ो(&n->refcnt);
+		pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
 		p32 = (__be32 *)__entry->primary_key4;
 
-		if (n->tbl->family == AF_INET)
+		अगर (n->tbl->family == AF_INET)
 			*p32 = *(__be32 *)n->primary_key;
-		else
+		अन्यथा
 			*p32 = 0;
 
-#if IS_ENABLED(CONFIG_IPV6)
-		if (n->tbl->family == AF_INET6) {
-			pin6 = (struct in6_addr *)__entry->primary_key6;
-			*pin6 = *(struct in6_addr *)n->primary_key;
-		} else
-#endif
-		{
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (n->tbl->family == AF_INET6) अणु
+			pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
+			*pin6 = *(काष्ठा in6_addr *)n->primary_key;
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+		अणु
 			ipv6_addr_set_v4mapped(*p32, pin6);
-		}
+		पूर्ण
 		__entry->confirmed = n->confirmed;
 		__entry->updated = n->updated;
 		__entry->used = n->used;
-		if (lladdr)
-			memcpy(__entry->new_lladdr, lladdr, lladdr_len);
+		अगर (lladdr)
+			स_नकल(__entry->new_lladdr, lladdr, lladdr_len);
 		__entry->new_state = new;
 		__entry->update_flags = flags;
 		__entry->pid = nlmsg_pid;
 	),
 
-	TP_printk("family %d dev %s lladdr %s flags %02x nud_state %s type %02x "
+	TP_prपूर्णांकk("family %d dev %s lladdr %s flags %02x nud_state %s type %02x "
 		  "dead %d refcnt %d primary_key4 %pI4 primary_key6 %pI6c "
 		  "confirmed %lu updated %lu used %lu new_lladdr %s "
 		  "new_state %s update_flags %02x pid %d",
 		  __entry->family, __get_str(dev),
-		  __print_hex_str(__entry->lladdr, __entry->lladdr_len),
+		  __prपूर्णांक_hex_str(__entry->lladdr, __entry->lladdr_len),
 		  __entry->flags, neigh_state_str(__entry->nud_state),
 		  __entry->type, __entry->dead, __entry->refcnt,
 		  __entry->primary_key4, __entry->primary_key6,
 		  __entry->confirmed, __entry->updated, __entry->used,
-		  __print_hex_str(__entry->new_lladdr, __entry->lladdr_len),
+		  __prपूर्णांक_hex_str(__entry->new_lladdr, __entry->lladdr_len),
 		  neigh_state_str(__entry->new_state),
 		  __entry->update_flags, __entry->pid)
 );
 
 DECLARE_EVENT_CLASS(neigh__update,
-	TP_PROTO(struct neighbour *n, int err),
+	TP_PROTO(काष्ठा neighbour *n, पूर्णांक err),
 	TP_ARGS(n, err),
 	TP_STRUCT__entry(
 		__field(u32, family)
@@ -165,46 +166,46 @@ DECLARE_EVENT_CLASS(neigh__update,
 		__field(u8, nud_state)
 		__field(u8, type)
 		__field(u8, dead)
-		__field(int, refcnt)
+		__field(पूर्णांक, refcnt)
 		__array(__u8, primary_key4, 4)
 		__array(__u8, primary_key6, 16)
-		__field(unsigned long, confirmed)
-		__field(unsigned long, updated)
-		__field(unsigned long, used)
+		__field(अचिन्हित दीर्घ, confirmed)
+		__field(अचिन्हित दीर्घ, updated)
+		__field(अचिन्हित दीर्घ, used)
 		__field(u32, err)
 	),
 
 	TP_fast_assign(
-		int lladdr_len = (n->dev ? n->dev->addr_len : MAX_ADDR_LEN);
-		struct in6_addr *pin6;
+		पूर्णांक lladdr_len = (n->dev ? n->dev->addr_len : MAX_ADDR_LEN);
+		काष्ठा in6_addr *pin6;
 		__be32 *p32;
 
 		__entry->family = n->tbl->family;
 		__assign_str(dev, (n->dev ? n->dev->name : "NULL"));
 		__entry->lladdr_len = lladdr_len;
-		memcpy(__entry->lladdr, n->ha, lladdr_len);
+		स_नकल(__entry->lladdr, n->ha, lladdr_len);
 		__entry->flags = n->flags;
 		__entry->nud_state = n->nud_state;
 		__entry->type = n->type;
 		__entry->dead = n->dead;
-		__entry->refcnt = refcount_read(&n->refcnt);
-		pin6 = (struct in6_addr *)__entry->primary_key6;
+		__entry->refcnt = refcount_पढ़ो(&n->refcnt);
+		pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
 		p32 = (__be32 *)__entry->primary_key4;
 
-		if (n->tbl->family == AF_INET)
+		अगर (n->tbl->family == AF_INET)
 			*p32 = *(__be32 *)n->primary_key;
-		else
+		अन्यथा
 			*p32 = 0;
 
-#if IS_ENABLED(CONFIG_IPV6)
-		if (n->tbl->family == AF_INET6) {
-			pin6 = (struct in6_addr *)__entry->primary_key6;
-			*pin6 = *(struct in6_addr *)n->primary_key;
-		} else
-#endif
-		{
+#अगर IS_ENABLED(CONFIG_IPV6)
+		अगर (n->tbl->family == AF_INET6) अणु
+			pin6 = (काष्ठा in6_addr *)__entry->primary_key6;
+			*pin6 = *(काष्ठा in6_addr *)n->primary_key;
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+		अणु
 			ipv6_addr_set_v4mapped(*p32, pin6);
-		}
+		पूर्ण
 
 		__entry->confirmed = n->confirmed;
 		__entry->updated = n->updated;
@@ -212,11 +213,11 @@ DECLARE_EVENT_CLASS(neigh__update,
 		__entry->err = err;
 	),
 
-	TP_printk("family %d dev %s lladdr %s flags %02x nud_state %s type %02x "
+	TP_prपूर्णांकk("family %d dev %s lladdr %s flags %02x nud_state %s type %02x "
 		  "dead %d refcnt %d primary_key4 %pI4 primary_key6 %pI6c "
 		  "confirmed %lu updated %lu used %lu err %d",
 		  __entry->family, __get_str(dev),
-		  __print_hex_str(__entry->lladdr, __entry->lladdr_len),
+		  __prपूर्णांक_hex_str(__entry->lladdr, __entry->lladdr_len),
 		  __entry->flags, neigh_state_str(__entry->nud_state),
 		  __entry->type, __entry->dead, __entry->refcnt,
 		  __entry->primary_key4, __entry->primary_key6,
@@ -224,32 +225,32 @@ DECLARE_EVENT_CLASS(neigh__update,
 		  __entry->err)
 );
 
-DEFINE_EVENT(neigh__update, neigh_update_done,
-	TP_PROTO(struct neighbour *neigh, int err),
+DEFINE_EVENT(neigh__update, neigh_update_करोne,
+	TP_PROTO(काष्ठा neighbour *neigh, पूर्णांक err),
 	TP_ARGS(neigh, err)
 );
 
-DEFINE_EVENT(neigh__update, neigh_timer_handler,
-	TP_PROTO(struct neighbour *neigh, int err),
+DEFINE_EVENT(neigh__update, neigh_समयr_handler,
+	TP_PROTO(काष्ठा neighbour *neigh, पूर्णांक err),
 	TP_ARGS(neigh, err)
 );
 
-DEFINE_EVENT(neigh__update, neigh_event_send_done,
-	TP_PROTO(struct neighbour *neigh, int err),
+DEFINE_EVENT(neigh__update, neigh_event_send_करोne,
+	TP_PROTO(काष्ठा neighbour *neigh, पूर्णांक err),
 	TP_ARGS(neigh, err)
 );
 
 DEFINE_EVENT(neigh__update, neigh_event_send_dead,
-	TP_PROTO(struct neighbour *neigh, int err),
+	TP_PROTO(काष्ठा neighbour *neigh, पूर्णांक err),
 	TP_ARGS(neigh, err)
 );
 
 DEFINE_EVENT(neigh__update, neigh_cleanup_and_release,
-	TP_PROTO(struct neighbour *neigh, int rc),
+	TP_PROTO(काष्ठा neighbour *neigh, पूर्णांक rc),
 	TP_ARGS(neigh, rc)
 );
 
-#endif /* _TRACE_NEIGH_H */
+#पूर्ण_अगर /* _TRACE_NEIGH_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

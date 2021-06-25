@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DaVinci Voice Codec Core Interface for TI platforms
+ * DaVinci Voice Codec Core Interface क्रम TI platक्रमms
  *
  * Copyright (C) 2010 Texas Instruments, Inc
  *
  * Author: Miguel Aguilar <miguel.aguilar@ridgerun.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/regmap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/regmap.h>
 
-#include <sound/pcm.h>
+#समावेश <sound/pcm.h>
 
-#include <linux/mfd/davinci_voicecodec.h>
+#समावेश <linux/mfd/davinci_voicecodec.h>
 
-static const struct regmap_config davinci_vc_regmap = {
+अटल स्थिर काष्ठा regmap_config davinci_vc_regmap = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
-};
+पूर्ण;
 
-static int __init davinci_vc_probe(struct platform_device *pdev)
-{
-	struct davinci_vc *davinci_vc;
-	struct resource *res;
-	struct mfd_cell *cell = NULL;
-	dma_addr_t fifo_base;
-	int ret;
+अटल पूर्णांक __init davinci_vc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा davinci_vc *davinci_vc;
+	काष्ठा resource *res;
+	काष्ठा mfd_cell *cell = शून्य;
+	dma_addr_t fअगरo_base;
+	पूर्णांक ret;
 
 	davinci_vc = devm_kzalloc(&pdev->dev,
-				  sizeof(struct davinci_vc), GFP_KERNEL);
-	if (!davinci_vc)
-		return -ENOMEM;
+				  माप(काष्ठा davinci_vc), GFP_KERNEL);
+	अगर (!davinci_vc)
+		वापस -ENOMEM;
 
-	davinci_vc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(davinci_vc->clk)) {
+	davinci_vc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(davinci_vc->clk)) अणु
 		dev_dbg(&pdev->dev,
 			    "could not get the clock for voice codec\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	clk_enable(davinci_vc->clk);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 
-	fifo_base = (dma_addr_t)res->start;
+	fअगरo_base = (dma_addr_t)res->start;
 	davinci_vc->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(davinci_vc->base)) {
+	अगर (IS_ERR(davinci_vc->base)) अणु
 		ret = PTR_ERR(davinci_vc->base);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	davinci_vc->regmap = devm_regmap_init_mmio(&pdev->dev,
 						   davinci_vc->base,
 						   &davinci_vc_regmap);
-	if (IS_ERR(davinci_vc->regmap)) {
+	अगर (IS_ERR(davinci_vc->regmap)) अणु
 		ret = PTR_ERR(davinci_vc->regmap);
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_DMA, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "no DMA resource\n");
 		ret = -ENXIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	davinci_vc->davinci_vcif.dma_tx_channel = res->start;
-	davinci_vc->davinci_vcif.dma_tx_addr = fifo_base + DAVINCI_VC_WFIFO;
+	davinci_vc->davinci_vcअगर.dma_tx_channel = res->start;
+	davinci_vc->davinci_vcअगर.dma_tx_addr = fअगरo_base + DAVINCI_VC_WFIFO;
 
-	res = platform_get_resource(pdev, IORESOURCE_DMA, 1);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_DMA, 1);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "no DMA resource\n");
 		ret = -ENXIO;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	davinci_vc->davinci_vcif.dma_rx_channel = res->start;
-	davinci_vc->davinci_vcif.dma_rx_addr = fifo_base + DAVINCI_VC_RFIFO;
+	davinci_vc->davinci_vcअगर.dma_rx_channel = res->start;
+	davinci_vc->davinci_vcअगर.dma_rx_addr = fअगरo_base + DAVINCI_VC_RFIFO;
 
 	davinci_vc->dev = &pdev->dev;
 	davinci_vc->pdev = pdev;
 
-	/* Voice codec interface client */
+	/* Voice codec पूर्णांकerface client */
 	cell = &davinci_vc->cells[DAVINCI_VC_VCIF_CELL];
 	cell->name = "davinci-vcif";
-	cell->platform_data = davinci_vc;
-	cell->pdata_size = sizeof(*davinci_vc);
+	cell->platक्रमm_data = davinci_vc;
+	cell->pdata_size = माप(*davinci_vc);
 
 	/* Voice codec CQ93VC client */
 	cell = &davinci_vc->cells[DAVINCI_VC_CQ93VC_CELL];
 	cell->name = "cq93vc-codec";
-	cell->platform_data = davinci_vc;
-	cell->pdata_size = sizeof(*davinci_vc);
+	cell->platक्रमm_data = davinci_vc;
+	cell->pdata_size = माप(*davinci_vc);
 
 	ret = mfd_add_devices(&pdev->dev, pdev->id, davinci_vc->cells,
-			      DAVINCI_VC_CELLS, NULL, 0, NULL);
-	if (ret != 0) {
+			      DAVINCI_VC_CELLS, शून्य, 0, शून्य);
+	अगर (ret != 0) अणु
 		dev_err(&pdev->dev, "fail to register client devices\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail:
 	clk_disable(davinci_vc->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int davinci_vc_remove(struct platform_device *pdev)
-{
-	struct davinci_vc *davinci_vc = platform_get_drvdata(pdev);
+अटल पूर्णांक davinci_vc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा davinci_vc *davinci_vc = platक्रमm_get_drvdata(pdev);
 
-	mfd_remove_devices(&pdev->dev);
+	mfd_हटाओ_devices(&pdev->dev);
 
 	clk_disable(davinci_vc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver davinci_vc_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver davinci_vc_driver = अणु
+	.driver	= अणु
 		.name = "davinci_voicecodec",
-	},
-	.remove	= davinci_vc_remove,
-};
+	पूर्ण,
+	.हटाओ	= davinci_vc_हटाओ,
+पूर्ण;
 
-module_platform_driver_probe(davinci_vc_driver, davinci_vc_probe);
+module_platक्रमm_driver_probe(davinci_vc_driver, davinci_vc_probe);
 
 MODULE_AUTHOR("Miguel Aguilar");
 MODULE_DESCRIPTION("Texas Instruments DaVinci Voice Codec Core Interface");

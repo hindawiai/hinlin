@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#ifndef DEBUGFS_HUC_H
-#define DEBUGFS_HUC_H
+#अगर_अघोषित DEBUGFS_HUC_H
+#घोषणा DEBUGFS_HUC_H
 
-struct intel_huc;
-struct dentry;
+काष्ठा पूर्णांकel_huc;
+काष्ठा dentry;
 
-void intel_huc_debugfs_register(struct intel_huc *huc, struct dentry *root);
+व्योम पूर्णांकel_huc_debugfs_रेजिस्टर(काष्ठा पूर्णांकel_huc *huc, काष्ठा dentry *root);
 
-#endif /* DEBUGFS_HUC_H */
+#पूर्ण_अगर /* DEBUGFS_HUC_H */

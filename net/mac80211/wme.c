@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2004, Instant802 Networks, Inc.
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  */
 
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/module.h>
-#include <linux/if_arp.h>
-#include <linux/types.h>
-#include <net/ip.h>
-#include <net/pkt_sched.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/types.h>
+#समावेश <net/ip.h>
+#समावेश <net/pkt_sched.h>
 
-#include <net/mac80211.h>
-#include "ieee80211_i.h"
-#include "wme.h"
+#समावेश <net/mac80211.h>
+#समावेश "ieee80211_i.h"
+#समावेश "wme.h"
 
-/* Default mapping in classifier to work with default
+/* Default mapping in classअगरier to work with शेष
  * queue setup.
  */
-const int ieee802_1d_to_ac[8] = {
+स्थिर पूर्णांक ieee802_1d_to_ac[8] = अणु
 	IEEE80211_AC_BE,
 	IEEE80211_AC_BK,
 	IEEE80211_AC_BK,
@@ -28,264 +29,264 @@ const int ieee802_1d_to_ac[8] = {
 	IEEE80211_AC_VI,
 	IEEE80211_AC_VO,
 	IEEE80211_AC_VO
-};
+पूर्ण;
 
-static int wme_downgrade_ac(struct sk_buff *skb)
-{
-	switch (skb->priority) {
-	case 6:
-	case 7:
+अटल पूर्णांक wme_करोwngrade_ac(काष्ठा sk_buff *skb)
+अणु
+	चयन (skb->priority) अणु
+	हाल 6:
+	हाल 7:
 		skb->priority = 5; /* VO -> VI */
-		return 0;
-	case 4:
-	case 5:
+		वापस 0;
+	हाल 4:
+	हाल 5:
 		skb->priority = 3; /* VI -> BE */
-		return 0;
-	case 0:
-	case 3:
+		वापस 0;
+	हाल 0:
+	हाल 3:
 		skb->priority = 2; /* BE -> BK */
-		return 0;
-	default:
-		return -1;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -1;
+	पूर्ण
+पूर्ण
 
 /**
- * ieee80211_fix_reserved_tid - return the TID to use if this one is reserved
+ * ieee80211_fix_reserved_tid - वापस the TID to use अगर this one is reserved
  * @tid: the assumed-reserved TID
  *
  * Returns: the alternative TID to use, or 0 on error
  */
-static inline u8 ieee80211_fix_reserved_tid(u8 tid)
-{
-	switch (tid) {
-	case 0:
-		return 3;
-	case 1:
-		return 2;
-	case 2:
-		return 1;
-	case 3:
-		return 0;
-	case 4:
-		return 5;
-	case 5:
-		return 4;
-	case 6:
-		return 7;
-	case 7:
-		return 6;
-	}
+अटल अंतरभूत u8 ieee80211_fix_reserved_tid(u8 tid)
+अणु
+	चयन (tid) अणु
+	हाल 0:
+		वापस 3;
+	हाल 1:
+		वापस 2;
+	हाल 2:
+		वापस 1;
+	हाल 3:
+		वापस 0;
+	हाल 4:
+		वापस 5;
+	हाल 5:
+		वापस 4;
+	हाल 6:
+		वापस 7;
+	हाल 7:
+		वापस 6;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u16 ieee80211_downgrade_queue(struct ieee80211_sub_if_data *sdata,
-				     struct sta_info *sta, struct sk_buff *skb)
-{
-	struct ieee80211_if_managed *ifmgd = &sdata->u.mgd;
+अटल u16 ieee80211_करोwngrade_queue(काष्ठा ieee80211_sub_अगर_data *sdata,
+				     काष्ठा sta_info *sta, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_अगर_managed *अगरmgd = &sdata->u.mgd;
 
-	/* in case we are a client verify acm is not set for this ac */
-	while (sdata->wmm_acm & BIT(skb->priority)) {
-		int ac = ieee802_1d_to_ac[skb->priority];
+	/* in हाल we are a client verअगरy acm is not set क्रम this ac */
+	जबतक (sdata->wmm_acm & BIT(skb->priority)) अणु
+		पूर्णांक ac = ieee802_1d_to_ac[skb->priority];
 
-		if (ifmgd->tx_tspec[ac].admitted_time &&
-		    skb->priority == ifmgd->tx_tspec[ac].up)
-			return ac;
+		अगर (अगरmgd->tx_tspec[ac].admitted_समय &&
+		    skb->priority == अगरmgd->tx_tspec[ac].up)
+			वापस ac;
 
-		if (wme_downgrade_ac(skb)) {
+		अगर (wme_करोwngrade_ac(skb)) अणु
 			/*
 			 * This should not really happen. The AP has marked all
 			 * lower ACs to require admission control which is not
 			 * a reasonable configuration. Allow the frame to be
 			 * transmitted using AC_BK as a workaround.
 			 */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Check to see if this is a reserved TID */
-	if (sta && sta->reserved_tid == skb->priority)
+	/* Check to see अगर this is a reserved TID */
+	अगर (sta && sta->reserved_tid == skb->priority)
 		skb->priority = ieee80211_fix_reserved_tid(skb->priority);
 
-	/* look up which queue to use for frames with this 1d tag */
-	return ieee802_1d_to_ac[skb->priority];
-}
+	/* look up which queue to use क्रम frames with this 1d tag */
+	वापस ieee802_1d_to_ac[skb->priority];
+पूर्ण
 
-/* Indicate which queue to use for this fully formed 802.11 frame */
-u16 ieee80211_select_queue_80211(struct ieee80211_sub_if_data *sdata,
-				 struct sk_buff *skb,
-				 struct ieee80211_hdr *hdr)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+/* Indicate which queue to use क्रम this fully क्रमmed 802.11 frame */
+u16 ieee80211_select_queue_80211(काष्ठा ieee80211_sub_अगर_data *sdata,
+				 काष्ठा sk_buff *skb,
+				 काष्ठा ieee80211_hdr *hdr)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	u8 *p;
 
-	if ((info->control.flags & IEEE80211_TX_CTRL_DONT_REORDER) ||
+	अगर ((info->control.flags & IEEE80211_TX_CTRL_DONT_REORDER) ||
 	    local->hw.queues < IEEE80211_NUM_ACS)
-		return 0;
+		वापस 0;
 
-	if (!ieee80211_is_data(hdr->frame_control)) {
+	अगर (!ieee80211_is_data(hdr->frame_control)) अणु
 		skb->priority = 7;
-		return ieee802_1d_to_ac[skb->priority];
-	}
-	if (!ieee80211_is_data_qos(hdr->frame_control)) {
+		वापस ieee802_1d_to_ac[skb->priority];
+	पूर्ण
+	अगर (!ieee80211_is_data_qos(hdr->frame_control)) अणु
 		skb->priority = 0;
-		return ieee802_1d_to_ac[skb->priority];
-	}
+		वापस ieee802_1d_to_ac[skb->priority];
+	पूर्ण
 
 	p = ieee80211_get_qos_ctl(hdr);
 	skb->priority = *p & IEEE80211_QOS_CTL_TAG1D_MASK;
 
-	return ieee80211_downgrade_queue(sdata, NULL, skb);
-}
+	वापस ieee80211_करोwngrade_queue(sdata, शून्य, skb);
+पूर्ण
 
-u16 __ieee80211_select_queue(struct ieee80211_sub_if_data *sdata,
-			     struct sta_info *sta, struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct mac80211_qos_map *qos_map;
+u16 __ieee80211_select_queue(काष्ठा ieee80211_sub_अगर_data *sdata,
+			     काष्ठा sta_info *sta, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा mac80211_qos_map *qos_map;
 	bool qos;
 
 	/* all mesh/ocb stations are required to support WME */
-	if (sdata->vif.type == NL80211_IFTYPE_MESH_POINT ||
-	    sdata->vif.type == NL80211_IFTYPE_OCB)
+	अगर (sdata->vअगर.type == NL80211_IFTYPE_MESH_POINT ||
+	    sdata->vअगर.type == NL80211_IFTYPE_OCB)
 		qos = true;
-	else if (sta)
+	अन्यथा अगर (sta)
 		qos = sta->sta.wme;
-	else
+	अन्यथा
 		qos = false;
 
-	if (!qos || (info->control.flags & IEEE80211_TX_CTRL_DONT_REORDER)) {
-		skb->priority = 0; /* required for correct WPA/11i MIC */
-		return IEEE80211_AC_BE;
-	}
+	अगर (!qos || (info->control.flags & IEEE80211_TX_CTRL_DONT_REORDER)) अणु
+		skb->priority = 0; /* required क्रम correct WPA/11i MIC */
+		वापस IEEE80211_AC_BE;
+	पूर्ण
 
-	if (skb->protocol == sdata->control_port_protocol) {
+	अगर (skb->protocol == sdata->control_port_protocol) अणु
 		skb->priority = 7;
-		goto downgrade;
-	}
+		जाओ करोwngrade;
+	पूर्ण
 
-	/* use the data classifier to determine what 802.1d tag the
+	/* use the data classअगरier to determine what 802.1d tag the
 	 * data frame has */
 	qos_map = rcu_dereference(sdata->qos_map);
-	skb->priority = cfg80211_classify8021d(skb, qos_map ?
-					       &qos_map->qos_map : NULL);
+	skb->priority = cfg80211_classअगरy8021d(skb, qos_map ?
+					       &qos_map->qos_map : शून्य);
 
- downgrade:
-	return ieee80211_downgrade_queue(sdata, sta, skb);
-}
+ करोwngrade:
+	वापस ieee80211_करोwngrade_queue(sdata, sta, skb);
+पूर्ण
 
 
 /* Indicate which queue to use. */
-u16 ieee80211_select_queue(struct ieee80211_sub_if_data *sdata,
-			   struct sk_buff *skb)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta = NULL;
-	const u8 *ra = NULL;
+u16 ieee80211_select_queue(काष्ठा ieee80211_sub_अगर_data *sdata,
+			   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta = शून्य;
+	स्थिर u8 *ra = शून्य;
 	u16 ret;
 
-	/* when using iTXQ, we can do this later */
-	if (local->ops->wake_tx_queue)
-		return 0;
+	/* when using iTXQ, we can करो this later */
+	अगर (local->ops->wake_tx_queue)
+		वापस 0;
 
-	if (local->hw.queues < IEEE80211_NUM_ACS || skb->len < 6) {
-		skb->priority = 0; /* required for correct WPA/11i MIC */
-		return 0;
-	}
+	अगर (local->hw.queues < IEEE80211_NUM_ACS || skb->len < 6) अणु
+		skb->priority = 0; /* required क्रम correct WPA/11i MIC */
+		वापस 0;
+	पूर्ण
 
-	rcu_read_lock();
-	switch (sdata->vif.type) {
-	case NL80211_IFTYPE_AP_VLAN:
+	rcu_पढ़ो_lock();
+	चयन (sdata->vअगर.type) अणु
+	हाल NL80211_IFTYPE_AP_VLAN:
 		sta = rcu_dereference(sdata->u.vlan.sta);
-		if (sta)
-			break;
+		अगर (sta)
+			अवरोध;
 		fallthrough;
-	case NL80211_IFTYPE_AP:
+	हाल NL80211_IFTYPE_AP:
 		ra = skb->data;
-		break;
-	case NL80211_IFTYPE_STATION:
+		अवरोध;
+	हाल NL80211_IFTYPE_STATION:
 		/* might be a TDLS station */
 		sta = sta_info_get(sdata, skb->data);
-		if (sta)
-			break;
+		अगर (sta)
+			अवरोध;
 
 		ra = sdata->u.mgd.bssid;
-		break;
-	case NL80211_IFTYPE_ADHOC:
+		अवरोध;
+	हाल NL80211_IFTYPE_ADHOC:
 		ra = skb->data;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (!sta && ra && !is_multicast_ether_addr(ra))
+	अगर (!sta && ra && !is_multicast_ether_addr(ra))
 		sta = sta_info_get(sdata, ra);
 
 	ret = __ieee80211_select_queue(sdata, sta, skb);
 
-	rcu_read_unlock();
-	return ret;
-}
+	rcu_पढ़ो_unlock();
+	वापस ret;
+पूर्ण
 
 /**
- * ieee80211_set_qos_hdr - Fill in the QoS header if there is one.
+ * ieee80211_set_qos_hdr - Fill in the QoS header अगर there is one.
  *
- * @sdata: local subif
+ * @sdata: local subअगर
  * @skb: packet to be updated
  */
-void ieee80211_set_qos_hdr(struct ieee80211_sub_if_data *sdata,
-			   struct sk_buff *skb)
-{
-	struct ieee80211_hdr *hdr = (void *)skb->data;
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+व्योम ieee80211_set_qos_hdr(काष्ठा ieee80211_sub_अगर_data *sdata,
+			   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_hdr *hdr = (व्योम *)skb->data;
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
 	u8 tid = skb->priority & IEEE80211_QOS_CTL_TAG1D_MASK;
 	u8 flags;
 	u8 *p;
 
-	if (!ieee80211_is_data_qos(hdr->frame_control))
-		return;
+	अगर (!ieee80211_is_data_qos(hdr->frame_control))
+		वापस;
 
 	p = ieee80211_get_qos_ctl(hdr);
 
-	/* don't overwrite the QoS field of injected frames */
-	if (info->flags & IEEE80211_TX_CTL_INJECTED) {
-		/* do take into account Ack policy of injected frames */
-		if (*p & IEEE80211_QOS_CTL_ACK_POLICY_NOACK)
+	/* करोn't overग_लिखो the QoS field of injected frames */
+	अगर (info->flags & IEEE80211_TX_CTL_INJECTED) अणु
+		/* करो take पूर्णांकo account Ack policy of injected frames */
+		अगर (*p & IEEE80211_QOS_CTL_ACK_POLICY_NOACK)
 			info->flags |= IEEE80211_TX_CTL_NO_ACK;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* set up the first byte */
 
 	/*
 	 * preserve everything but the TID and ACK policy
-	 * (which we both write here)
+	 * (which we both ग_लिखो here)
 	 */
 	flags = *p & ~(IEEE80211_QOS_CTL_TID_MASK |
 		       IEEE80211_QOS_CTL_ACK_POLICY_MASK);
 
-	if (is_multicast_ether_addr(hdr->addr1) ||
-	    sdata->noack_map & BIT(tid)) {
+	अगर (is_multicast_ether_addr(hdr->addr1) ||
+	    sdata->noack_map & BIT(tid)) अणु
 		flags |= IEEE80211_QOS_CTL_ACK_POLICY_NOACK;
 		info->flags |= IEEE80211_TX_CTL_NO_ACK;
-	}
+	पूर्ण
 
 	*p = flags | tid;
 
 	/* set up the second byte */
 	p++;
 
-	if (ieee80211_vif_is_mesh(&sdata->vif)) {
+	अगर (ieee80211_vअगर_is_mesh(&sdata->vअगर)) अणु
 		/* preserve RSPI and Mesh PS Level bit */
 		*p &= ((IEEE80211_QOS_CTL_RSPI |
 			IEEE80211_QOS_CTL_MESH_PS_LEVEL) >> 8);
 
-		/* Nulls don't have a mesh header (frame body) */
-		if (!ieee80211_is_qos_nullfunc(hdr->frame_control))
+		/* Nulls करोn't have a mesh header (frame body) */
+		अगर (!ieee80211_is_qos_nullfunc(hdr->frame_control))
 			*p |= (IEEE80211_QOS_CTL_MESH_CONTROL_PRESENT >> 8);
-	} else {
+	पूर्ण अन्यथा अणु
 		*p = 0;
-	}
-}
+	पूर्ण
+पूर्ण

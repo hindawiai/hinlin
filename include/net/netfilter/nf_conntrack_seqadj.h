@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NF_CONNTRACK_SEQADJ_H
-#define _NF_CONNTRACK_SEQADJ_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NF_CONNTRACK_SEQADJ_H
+#घोषणा _NF_CONNTRACK_SEQADJ_H
 
-#include <net/netfilter/nf_conntrack_extend.h>
+#समावेश <net/netfilter/nf_conntrack_extend.h>
 
 /**
- * struct nf_ct_seqadj - sequence number adjustment information
+ * काष्ठा nf_ct_seqadj - sequence number adjusपंचांगent inक्रमmation
  *
- * @correction_pos: position of the last TCP sequence number modification
- * @offset_before: sequence number offset before last modification
- * @offset_after: sequence number offset after last modification
+ * @correction_pos: position of the last TCP sequence number modअगरication
+ * @offset_beक्रमe: sequence number offset beक्रमe last modअगरication
+ * @offset_after: sequence number offset after last modअगरication
  */
-struct nf_ct_seqadj {
+काष्ठा nf_ct_seqadj अणु
 	u32		correction_pos;
-	s32		offset_before;
+	s32		offset_beक्रमe;
 	s32		offset_after;
-};
+पूर्ण;
 
-struct nf_conn_seqadj {
-	struct nf_ct_seqadj	seq[IP_CT_DIR_MAX];
-};
+काष्ठा nf_conn_seqadj अणु
+	काष्ठा nf_ct_seqadj	seq[IP_CT_सूची_MAX];
+पूर्ण;
 
-static inline struct nf_conn_seqadj *nfct_seqadj(const struct nf_conn *ct)
-{
-	return nf_ct_ext_find(ct, NF_CT_EXT_SEQADJ);
-}
+अटल अंतरभूत काष्ठा nf_conn_seqadj *nfct_seqadj(स्थिर काष्ठा nf_conn *ct)
+अणु
+	वापस nf_ct_ext_find(ct, NF_CT_EXT_SEQADJ);
+पूर्ण
 
-static inline struct nf_conn_seqadj *nfct_seqadj_ext_add(struct nf_conn *ct)
-{
-	return nf_ct_ext_add(ct, NF_CT_EXT_SEQADJ, GFP_ATOMIC);
-}
+अटल अंतरभूत काष्ठा nf_conn_seqadj *nfct_seqadj_ext_add(काष्ठा nf_conn *ct)
+अणु
+	वापस nf_ct_ext_add(ct, NF_CT_EXT_SEQADJ, GFP_ATOMIC);
+पूर्ण
 
-int nf_ct_seqadj_init(struct nf_conn *ct, enum ip_conntrack_info ctinfo,
+पूर्णांक nf_ct_seqadj_init(काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo,
 		      s32 off);
-int nf_ct_seqadj_set(struct nf_conn *ct, enum ip_conntrack_info ctinfo,
+पूर्णांक nf_ct_seqadj_set(काष्ठा nf_conn *ct, क्रमागत ip_conntrack_info ctinfo,
 		     __be32 seq, s32 off);
-void nf_ct_tcp_seqadj_set(struct sk_buff *skb, struct nf_conn *ct,
-			  enum ip_conntrack_info ctinfo, s32 off);
+व्योम nf_ct_tcp_seqadj_set(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			  क्रमागत ip_conntrack_info ctinfo, s32 off);
 
-int nf_ct_seq_adjust(struct sk_buff *skb, struct nf_conn *ct,
-		     enum ip_conntrack_info ctinfo, unsigned int protoff);
-s32 nf_ct_seq_offset(const struct nf_conn *ct, enum ip_conntrack_dir, u32 seq);
+पूर्णांक nf_ct_seq_adjust(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		     क्रमागत ip_conntrack_info ctinfo, अचिन्हित पूर्णांक protoff);
+s32 nf_ct_seq_offset(स्थिर काष्ठा nf_conn *ct, क्रमागत ip_conntrack_dir, u32 seq);
 
-int nf_conntrack_seqadj_init(void);
-void nf_conntrack_seqadj_fini(void);
+पूर्णांक nf_conntrack_seqadj_init(व्योम);
+व्योम nf_conntrack_seqadj_fini(व्योम);
 
-#endif /* _NF_CONNTRACK_SEQADJ_H */
+#पूर्ण_अगर /* _NF_CONNTRACK_SEQADJ_H */

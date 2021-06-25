@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2020 Western Digital Corporation or its affiliates.
  */
 
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/of.h>
-#include <linux/string.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <asm/cpu_ops.h>
-#include <asm/sbi.h>
-#include <asm/smp.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <यंत्र/cpu_ops.h>
+#समावेश <यंत्र/sbi.h>
+#समावेश <यंत्र/smp.h>
 
-const struct cpu_operations *cpu_ops[NR_CPUS] __ro_after_init;
+स्थिर काष्ठा cpu_operations *cpu_ops[NR_CPUS] __ro_after_init;
 
-void *__cpu_up_stack_pointer[NR_CPUS] __section(".data");
-void *__cpu_up_task_pointer[NR_CPUS] __section(".data");
+व्योम *__cpu_up_stack_poपूर्णांकer[NR_CPUS] __section(".data");
+व्योम *__cpu_up_task_poपूर्णांकer[NR_CPUS] __section(".data");
 
-extern const struct cpu_operations cpu_ops_sbi;
-extern const struct cpu_operations cpu_ops_spinwait;
+बाह्य स्थिर काष्ठा cpu_operations cpu_ops_sbi;
+बाह्य स्थिर काष्ठा cpu_operations cpu_ops_spinरुको;
 
-void cpu_update_secondary_bootdata(unsigned int cpuid,
-				   struct task_struct *tidle)
-{
-	int hartid = cpuid_to_hartid_map(cpuid);
+व्योम cpu_update_secondary_bootdata(अचिन्हित पूर्णांक cpuid,
+				   काष्ठा task_काष्ठा *tidle)
+अणु
+	पूर्णांक hartid = cpuid_to_hartid_map(cpuid);
 
 	/* Make sure tidle is updated */
 	smp_mb();
-	WRITE_ONCE(__cpu_up_stack_pointer[hartid],
+	WRITE_ONCE(__cpu_up_stack_poपूर्णांकer[hartid],
 		   task_stack_page(tidle) + THREAD_SIZE);
-	WRITE_ONCE(__cpu_up_task_pointer[hartid], tidle);
-}
+	WRITE_ONCE(__cpu_up_task_poपूर्णांकer[hartid], tidle);
+पूर्ण
 
-void __init cpu_set_ops(int cpuid)
-{
-#if IS_ENABLED(CONFIG_RISCV_SBI)
-	if (sbi_probe_extension(SBI_EXT_HSM) > 0) {
-		if (!cpuid)
+व्योम __init cpu_set_ops(पूर्णांक cpuid)
+अणु
+#अगर IS_ENABLED(CONFIG_RISCV_SBI)
+	अगर (sbi_probe_extension(SBI_EXT_HSM) > 0) अणु
+		अगर (!cpuid)
 			pr_info("SBI v0.2 HSM extension detected\n");
 		cpu_ops[cpuid] = &cpu_ops_sbi;
-	} else
-#endif
-		cpu_ops[cpuid] = &cpu_ops_spinwait;
-}
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		cpu_ops[cpuid] = &cpu_ops_spinरुको;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,69 +20,69 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <nvif/fifo.h>
+#समावेश <nvअगर/fअगरo.h>
 
-static int
-nvif_fifo_runlists(struct nvif_device *device)
-{
-	struct nvif_object *object = &device->object;
-	struct {
-		struct nv_device_info_v1 m;
-		struct {
-			struct nv_device_info_v1_data runlists;
-			struct nv_device_info_v1_data runlist[64];
-		} v;
-	} *a;
-	int ret, i;
+अटल पूर्णांक
+nvअगर_fअगरo_runlists(काष्ठा nvअगर_device *device)
+अणु
+	काष्ठा nvअगर_object *object = &device->object;
+	काष्ठा अणु
+		काष्ठा nv_device_info_v1 m;
+		काष्ठा अणु
+			काष्ठा nv_device_info_v1_data runlists;
+			काष्ठा nv_device_info_v1_data runlist[64];
+		पूर्ण v;
+	पूर्ण *a;
+	पूर्णांक ret, i;
 
-	if (device->runlist)
-		return 0;
+	अगर (device->runlist)
+		वापस 0;
 
-	if (!(a = kmalloc(sizeof(*a), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(a = kदो_स्मृति(माप(*a), GFP_KERNEL)))
+		वापस -ENOMEM;
 	a->m.version = 1;
-	a->m.count = sizeof(a->v) / sizeof(a->v.runlists);
+	a->m.count = माप(a->v) / माप(a->v.runlists);
 	a->v.runlists.mthd = NV_DEVICE_HOST_RUNLISTS;
-	for (i = 0; i < ARRAY_SIZE(a->v.runlist); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(a->v.runlist); i++) अणु
 		a->v.runlist[i].mthd = NV_DEVICE_HOST_RUNLIST_ENGINES;
 		a->v.runlist[i].data = i;
-	}
+	पूर्ण
 
-	ret = nvif_object_mthd(object, NV_DEVICE_V0_INFO, a, sizeof(*a));
-	if (ret)
-		goto done;
+	ret = nvअगर_object_mthd(object, NV_DEVICE_V0_INFO, a, माप(*a));
+	अगर (ret)
+		जाओ करोne;
 
 	device->runlists = fls64(a->v.runlists.data);
-	device->runlist = kcalloc(device->runlists, sizeof(*device->runlist),
+	device->runlist = kसुस्मृति(device->runlists, माप(*device->runlist),
 				  GFP_KERNEL);
-	if (!device->runlist) {
+	अगर (!device->runlist) अणु
 		ret = -ENOMEM;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	for (i = 0; i < device->runlists; i++) {
-		if (a->v.runlist[i].mthd != NV_DEVICE_INFO_INVALID)
+	क्रम (i = 0; i < device->runlists; i++) अणु
+		अगर (a->v.runlist[i].mthd != NV_DEVICE_INFO_INVALID)
 			device->runlist[i].engines = a->v.runlist[i].data;
-	}
+	पूर्ण
 
-done:
-	kfree(a);
-	return ret;
-}
+करोne:
+	kमुक्त(a);
+	वापस ret;
+पूर्ण
 
 u64
-nvif_fifo_runlist(struct nvif_device *device, u64 engine)
-{
+nvअगर_fअगरo_runlist(काष्ठा nvअगर_device *device, u64 engine)
+अणु
 	u64 runm = 0;
-	int ret, i;
+	पूर्णांक ret, i;
 
-	if ((ret = nvif_fifo_runlists(device)))
-		return runm;
+	अगर ((ret = nvअगर_fअगरo_runlists(device)))
+		वापस runm;
 
-	for (i = 0; i < device->runlists; i++) {
-		if (device->runlist[i].engines & engine)
+	क्रम (i = 0; i < device->runlists; i++) अणु
+		अगर (device->runlist[i].engines & engine)
 			runm |= BIT_ULL(i);
-	}
+	पूर्ण
 
-	return runm;
-}
+	वापस runm;
+पूर्ण

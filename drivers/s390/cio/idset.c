@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *    Copyright IBM Corp. 2007, 2012
  *    Author(s): Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#include <linux/vmalloc.h>
-#include <linux/bitmap.h>
-#include <linux/bitops.h>
-#include "idset.h"
-#include "css.h"
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bitops.h>
+#समावेश "idset.h"
+#समावेश "css.h"
 
-struct idset {
-	int num_ssid;
-	int num_id;
-	unsigned long bitmap[];
-};
+काष्ठा idset अणु
+	पूर्णांक num_ssid;
+	पूर्णांक num_id;
+	अचिन्हित दीर्घ biपंचांगap[];
+पूर्ण;
 
-static inline unsigned long bitmap_size(int num_ssid, int num_id)
-{
-	return BITS_TO_LONGS(num_ssid * num_id) * sizeof(unsigned long);
-}
+अटल अंतरभूत अचिन्हित दीर्घ biपंचांगap_size(पूर्णांक num_ssid, पूर्णांक num_id)
+अणु
+	वापस BITS_TO_LONGS(num_ssid * num_id) * माप(अचिन्हित दीर्घ);
+पूर्ण
 
-static struct idset *idset_new(int num_ssid, int num_id)
-{
-	struct idset *set;
+अटल काष्ठा idset *idset_new(पूर्णांक num_ssid, पूर्णांक num_id)
+अणु
+	काष्ठा idset *set;
 
-	set = vmalloc(sizeof(struct idset) + bitmap_size(num_ssid, num_id));
-	if (set) {
+	set = vदो_स्मृति(माप(काष्ठा idset) + biपंचांगap_size(num_ssid, num_id));
+	अगर (set) अणु
 		set->num_ssid = num_ssid;
 		set->num_id = num_id;
-		memset(set->bitmap, 0, bitmap_size(num_ssid, num_id));
-	}
-	return set;
-}
+		स_रखो(set->biपंचांगap, 0, biपंचांगap_size(num_ssid, num_id));
+	पूर्ण
+	वापस set;
+पूर्ण
 
-void idset_free(struct idset *set)
-{
-	vfree(set);
-}
+व्योम idset_मुक्त(काष्ठा idset *set)
+अणु
+	vमुक्त(set);
+पूर्ण
 
-void idset_fill(struct idset *set)
-{
-	memset(set->bitmap, 0xff, bitmap_size(set->num_ssid, set->num_id));
-}
+व्योम idset_fill(काष्ठा idset *set)
+अणु
+	स_रखो(set->biपंचांगap, 0xff, biपंचांगap_size(set->num_ssid, set->num_id));
+पूर्ण
 
-static inline void idset_add(struct idset *set, int ssid, int id)
-{
-	set_bit(ssid * set->num_id + id, set->bitmap);
-}
+अटल अंतरभूत व्योम idset_add(काष्ठा idset *set, पूर्णांक ssid, पूर्णांक id)
+अणु
+	set_bit(ssid * set->num_id + id, set->biपंचांगap);
+पूर्ण
 
-static inline void idset_del(struct idset *set, int ssid, int id)
-{
-	clear_bit(ssid * set->num_id + id, set->bitmap);
-}
+अटल अंतरभूत व्योम idset_del(काष्ठा idset *set, पूर्णांक ssid, पूर्णांक id)
+अणु
+	clear_bit(ssid * set->num_id + id, set->biपंचांगap);
+पूर्ण
 
-static inline int idset_contains(struct idset *set, int ssid, int id)
-{
-	return test_bit(ssid * set->num_id + id, set->bitmap);
-}
+अटल अंतरभूत पूर्णांक idset_contains(काष्ठा idset *set, पूर्णांक ssid, पूर्णांक id)
+अणु
+	वापस test_bit(ssid * set->num_id + id, set->biपंचांगap);
+पूर्ण
 
-struct idset *idset_sch_new(void)
-{
-	return idset_new(max_ssid + 1, __MAX_SUBCHANNEL + 1);
-}
+काष्ठा idset *idset_sch_new(व्योम)
+अणु
+	वापस idset_new(max_ssid + 1, __MAX_SUBCHANNEL + 1);
+पूर्ण
 
-void idset_sch_add(struct idset *set, struct subchannel_id schid)
-{
+व्योम idset_sch_add(काष्ठा idset *set, काष्ठा subchannel_id schid)
+अणु
 	idset_add(set, schid.ssid, schid.sch_no);
-}
+पूर्ण
 
-void idset_sch_del(struct idset *set, struct subchannel_id schid)
-{
+व्योम idset_sch_del(काष्ठा idset *set, काष्ठा subchannel_id schid)
+अणु
 	idset_del(set, schid.ssid, schid.sch_no);
-}
+पूर्ण
 
 /* Clear ids starting from @schid up to end of subchannel set. */
-void idset_sch_del_subseq(struct idset *set, struct subchannel_id schid)
-{
-	int pos = schid.ssid * set->num_id + schid.sch_no;
+व्योम idset_sch_del_subseq(काष्ठा idset *set, काष्ठा subchannel_id schid)
+अणु
+	पूर्णांक pos = schid.ssid * set->num_id + schid.sch_no;
 
-	bitmap_clear(set->bitmap, pos, set->num_id - schid.sch_no);
-}
+	biपंचांगap_clear(set->biपंचांगap, pos, set->num_id - schid.sch_no);
+पूर्ण
 
-int idset_sch_contains(struct idset *set, struct subchannel_id schid)
-{
-	return idset_contains(set, schid.ssid, schid.sch_no);
-}
+पूर्णांक idset_sch_contains(काष्ठा idset *set, काष्ठा subchannel_id schid)
+अणु
+	वापस idset_contains(set, schid.ssid, schid.sch_no);
+पूर्ण
 
-int idset_is_empty(struct idset *set)
-{
-	return bitmap_empty(set->bitmap, set->num_ssid * set->num_id);
-}
+पूर्णांक idset_is_empty(काष्ठा idset *set)
+अणु
+	वापस biपंचांगap_empty(set->biपंचांगap, set->num_ssid * set->num_id);
+पूर्ण
 
-void idset_add_set(struct idset *to, struct idset *from)
-{
-	int len = min(to->num_ssid * to->num_id, from->num_ssid * from->num_id);
+व्योम idset_add_set(काष्ठा idset *to, काष्ठा idset *from)
+अणु
+	पूर्णांक len = min(to->num_ssid * to->num_id, from->num_ssid * from->num_id);
 
-	bitmap_or(to->bitmap, to->bitmap, from->bitmap, len);
-}
+	biपंचांगap_or(to->biपंचांगap, to->biपंचांगap, from->biपंचांगap, len);
+पूर्ण

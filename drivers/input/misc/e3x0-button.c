@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, National Instruments Corp. All rights reserved.
  *
- * Driver for NI Ettus Research USRP E3x0 Button Driver
+ * Driver क्रम NI Ettus Research USRP E3x0 Button Driver
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/of.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/of.h>
+#समावेश <linux/slab.h>
 
-static irqreturn_t e3x0_button_release_handler(int irq, void *data)
-{
-	struct input_dev *idev = data;
+अटल irqवापस_t e3x0_button_release_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा input_dev *idev = data;
 
 	input_report_key(idev, KEY_POWER, 0);
 	input_sync(idev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t e3x0_button_press_handler(int irq, void *data)
-{
-	struct input_dev *idev = data;
+अटल irqवापस_t e3x0_button_press_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा input_dev *idev = data;
 
 	input_report_key(idev, KEY_POWER, 1);
 	pm_wakeup_event(idev->dev.parent, 0);
 	input_sync(idev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int __maybe_unused e3x0_button_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक __maybe_unused e3x0_button_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	if (device_may_wakeup(dev))
-		enable_irq_wake(platform_get_irq_byname(pdev, "press"));
+	अगर (device_may_wakeup(dev))
+		enable_irq_wake(platक्रमm_get_irq_byname(pdev, "press"));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused e3x0_button_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक __maybe_unused e3x0_button_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	if (device_may_wakeup(dev))
-		disable_irq_wake(platform_get_irq_byname(pdev, "press"));
+	अगर (device_may_wakeup(dev))
+		disable_irq_wake(platक्रमm_get_irq_byname(pdev, "press"));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(e3x0_button_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(e3x0_button_pm_ops,
 			 e3x0_button_suspend, e3x0_button_resume);
 
-static int e3x0_button_probe(struct platform_device *pdev)
-{
-	struct input_dev *input;
-	int irq_press, irq_release;
-	int error;
+अटल पूर्णांक e3x0_button_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा input_dev *input;
+	पूर्णांक irq_press, irq_release;
+	पूर्णांक error;
 
-	irq_press = platform_get_irq_byname(pdev, "press");
-	if (irq_press < 0)
-		return irq_press;
+	irq_press = platक्रमm_get_irq_byname(pdev, "press");
+	अगर (irq_press < 0)
+		वापस irq_press;
 
-	irq_release = platform_get_irq_byname(pdev, "release");
-	if (irq_release < 0)
-		return irq_release;
+	irq_release = platक्रमm_get_irq_byname(pdev, "release");
+	अगर (irq_release < 0)
+		वापस irq_release;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "NI Ettus Research USRP E3x0 Button Driver";
 	input->phys = "e3x0_button/input0";
@@ -85,49 +86,49 @@ static int e3x0_button_probe(struct platform_device *pdev)
 	error = devm_request_irq(&pdev->dev, irq_press,
 				 e3x0_button_press_handler, 0,
 				 "e3x0-button", input);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "Failed to request 'press' IRQ#%d: %d\n",
 			irq_press, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = devm_request_irq(&pdev->dev, irq_release,
 				 e3x0_button_release_handler, 0,
 				 "e3x0-button", input);
-	if (error) {
+	अगर (error) अणु
 		dev_err(&pdev->dev, "Failed to request 'release' IRQ#%d: %d\n",
 			irq_release, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(input);
-	if (error) {
+	error = input_रेजिस्टर_device(input);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "Can't register input device: %d\n", error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	device_init_wakeup(&pdev->dev, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id e3x0_button_match[] = {
-	{ .compatible = "ettus,e3x0-button", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id e3x0_button_match[] = अणु
+	अणु .compatible = "ettus,e3x0-button", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, e3x0_button_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver e3x0_button_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver e3x0_button_driver = अणु
+	.driver		= अणु
 		.name	= "e3x0-button",
 		.of_match_table = of_match_ptr(e3x0_button_match),
 		.pm	= &e3x0_button_pm_ops,
-	},
+	पूर्ण,
 	.probe		= e3x0_button_probe,
-};
+पूर्ण;
 
-module_platform_driver(e3x0_button_driver);
+module_platक्रमm_driver(e3x0_button_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Moritz Fischer <moritz.fischer@ettus.com>");

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright © 2000-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2000-2010 David Woodhouse <dwmw2@infradead.org>
  *			 Steven J. Hill <sjhill@realitydiluted.com>
  *			 Thomas Gleixner <tglx@linutronix.de>
  *
  * Contains all JEDEC related definitions
  */
 
-#ifndef __LINUX_MTD_JEDEC_H
-#define __LINUX_MTD_JEDEC_H
+#अगर_अघोषित __LINUX_MTD_JEDEC_H
+#घोषणा __LINUX_MTD_JEDEC_H
 
-struct jedec_ecc_info {
+काष्ठा jedec_ecc_info अणु
 	u8 ecc_bits;
 	u8 codeword_size;
 	__le16 bb_per_lun;
 	__le16 block_endurance;
 	u8 reserved[2];
-} __packed;
+पूर्ण __packed;
 
 /* JEDEC features */
-#define JEDEC_FEATURE_16_BIT_BUS	(1 << 0)
+#घोषणा JEDEC_FEATURE_16_BIT_BUS	(1 << 0)
 
-struct nand_jedec_params {
+काष्ठा nand_jedec_params अणु
 	/* rev info and features block */
 	/* 'J' 'E' 'S' 'D'  */
 	u8 sig[4];
@@ -32,9 +33,9 @@ struct nand_jedec_params {
 	u8 num_of_param_pages;
 	u8 reserved0[18];
 
-	/* manufacturer information block */
-	char manufacturer[12];
-	char model[20];
+	/* manufacturer inक्रमmation block */
+	अक्षर manufacturer[12];
+	अक्षर model[20];
 	u8 jedec_id[6];
 	u8 reserved1[10];
 
@@ -74,18 +75,18 @@ struct nand_jedec_params {
 	/* ECC and endurance block */
 	u8 guaranteed_good_blocks;
 	__le16 guaranteed_block_endurance;
-	struct jedec_ecc_info ecc_info[4];
+	काष्ठा jedec_ecc_info ecc_info[4];
 	u8 reserved5[29];
 
 	/* reserved */
 	u8 reserved6[148];
 
-	/* vendor */
-	__le16 vendor_rev_num;
+	/* venकरोr */
+	__le16 venकरोr_rev_num;
 	u8 reserved7[88];
 
-	/* CRC for Parameter Page */
+	/* CRC क्रम Parameter Page */
 	__le16 crc;
-} __packed;
+पूर्ण __packed;
 
-#endif /* __LINUX_MTD_JEDEC_H */
+#पूर्ण_अगर /* __LINUX_MTD_JEDEC_H */

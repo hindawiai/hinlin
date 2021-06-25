@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Hardware exception handling
  *
@@ -6,173 +7,173 @@
  * Copyright (C) 2001 Vic Phillips
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the main directory of this
- * archive for more details.
+ * Public License.  See the file COPYING in the मुख्य directory of this
+ * archive क्रम more details.
  */
 
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/kernel.h>
-#include <linux/signal.h>
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/ptrace.h>
 
-#include <asm/traps.h>
-#include <asm/sections.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <linux/uaccess.h>
 
-static DEFINE_SPINLOCK(die_lock);
+अटल DEFINE_SPINLOCK(die_lock);
 
-static void _send_sig(int signo, int code, unsigned long addr)
-{
-	force_sig_fault(signo, code, (void __user *) addr);
-}
+अटल व्योम _send_sig(पूर्णांक signo, पूर्णांक code, अचिन्हित दीर्घ addr)
+अणु
+	क्रमce_sig_fault(signo, code, (व्योम __user *) addr);
+पूर्ण
 
-void die(const char *str, struct pt_regs *regs, long err)
-{
+व्योम die(स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
 	console_verbose();
 	spin_lock_irq(&die_lock);
 	pr_warn("Oops: %s, sig: %ld\n", str, err);
 	show_regs(regs);
 	spin_unlock_irq(&die_lock);
 	/*
-	 * do_exit() should take care of panic'ing from an interrupt
-	 * context so we don't handle it here
+	 * करो_निकास() should take care of panic'ing from an पूर्णांकerrupt
+	 * context so we करोn't handle it here
 	 */
-	do_exit(err);
-}
+	करो_निकास(err);
+पूर्ण
 
-void _exception(int signo, struct pt_regs *regs, int code, unsigned long addr)
-{
-	if (!user_mode(regs))
+व्योम _exception(पूर्णांक signo, काष्ठा pt_regs *regs, पूर्णांक code, अचिन्हित दीर्घ addr)
+अणु
+	अगर (!user_mode(regs))
 		die("Exception in kernel mode", regs, signo);
 
 	_send_sig(signo, code, addr);
-}
+पूर्ण
 
 /*
- * The show_stack() is external API which we do not use ourselves.
+ * The show_stack() is बाह्यal API which we करो not use ourselves.
  */
 
-int kstack_depth_to_print = 48;
+पूर्णांक kstack_depth_to_prपूर्णांक = 48;
 
-void show_stack(struct task_struct *task, unsigned long *stack,
-		const char *loglvl)
-{
-	unsigned long *endstack, addr;
-	int i;
+व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *stack,
+		स्थिर अक्षर *loglvl)
+अणु
+	अचिन्हित दीर्घ *endstack, addr;
+	पूर्णांक i;
 
-	if (!stack) {
-		if (task)
-			stack = (unsigned long *)task->thread.ksp;
-		else
-			stack = (unsigned long *)&stack;
-	}
+	अगर (!stack) अणु
+		अगर (task)
+			stack = (अचिन्हित दीर्घ *)task->thपढ़ो.ksp;
+		अन्यथा
+			stack = (अचिन्हित दीर्घ *)&stack;
+	पूर्ण
 
-	addr = (unsigned long) stack;
-	endstack = (unsigned long *) PAGE_ALIGN(addr);
+	addr = (अचिन्हित दीर्घ) stack;
+	endstack = (अचिन्हित दीर्घ *) PAGE_ALIGN(addr);
 
-	printk("%sStack from %08lx:", loglvl, (unsigned long)stack);
-	for (i = 0; i < kstack_depth_to_print; i++) {
-		if (stack + 1 > endstack)
-			break;
-		if (i % 8 == 0)
-			printk("%s\n       ", loglvl);
-		printk("%s %08lx", loglvl, *stack++);
-	}
+	prपूर्णांकk("%sStack from %08lx:", loglvl, (अचिन्हित दीर्घ)stack);
+	क्रम (i = 0; i < kstack_depth_to_prपूर्णांक; i++) अणु
+		अगर (stack + 1 > endstack)
+			अवरोध;
+		अगर (i % 8 == 0)
+			prपूर्णांकk("%s\n       ", loglvl);
+		prपूर्णांकk("%s %08lx", loglvl, *stack++);
+	पूर्ण
 
-	printk("%s\nCall Trace:", loglvl);
+	prपूर्णांकk("%s\nCall Trace:", loglvl);
 	i = 0;
-	while (stack + 1 <= endstack) {
+	जबतक (stack + 1 <= endstack) अणु
 		addr = *stack++;
 		/*
 		 * If the address is either in the text segment of the
-		 * kernel, or in the region which contains vmalloc'ed
+		 * kernel, or in the region which contains vदो_स्मृति'ed
 		 * memory, it *may* be the address of a calling
-		 * routine; if so, print it so that someone tracing
-		 * down the cause of the crash will be able to figure
+		 * routine; अगर so, prपूर्णांक it so that someone tracing
+		 * करोwn the cause of the crash will be able to figure
 		 * out the call path that was taken.
 		 */
-		if (((addr >= (unsigned long) _stext) &&
-		     (addr <= (unsigned long) _etext))) {
-			if (i % 4 == 0)
+		अगर (((addr >= (अचिन्हित दीर्घ) _stext) &&
+		     (addr <= (अचिन्हित दीर्घ) _etext))) अणु
+			अगर (i % 4 == 0)
 				pr_emerg("\n       ");
-			printk("%s [<%08lx>]", loglvl, addr);
+			prपूर्णांकk("%s [<%08lx>]", loglvl, addr);
 			i++;
-		}
-	}
-	printk("%s\n", loglvl);
-}
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk("%s\n", loglvl);
+पूर्ण
 
-void __init trap_init(void)
-{
-	/* Nothing to do here */
-}
+व्योम __init trap_init(व्योम)
+अणु
+	/* Nothing to करो here */
+पूर्ण
 
-/* Breakpoint handler */
-asmlinkage void breakpoint_c(struct pt_regs *fp)
-{
+/* Breakpoपूर्णांक handler */
+यंत्रlinkage व्योम अवरोधpoपूर्णांक_c(काष्ठा pt_regs *fp)
+अणु
 	/*
-	 * The breakpoint entry code has moved the PC on by 4 bytes, so we must
-	 * move it back. This could be done on the host but we do it here
-	 * because monitor.S of JTAG gdbserver does it too.
+	 * The अवरोधpoपूर्णांक entry code has moved the PC on by 4 bytes, so we must
+	 * move it back. This could be करोne on the host but we करो it here
+	 * because monitor.S of JTAG gdbserver करोes it too.
 	 */
 	fp->ea -= 4;
 	_exception(SIGTRAP, fp, TRAP_BRKPT, fp->ea);
-}
+पूर्ण
 
-#ifndef CONFIG_NIOS2_ALIGNMENT_TRAP
+#अगर_अघोषित CONFIG_NIOS2_ALIGNMENT_TRAP
 /* Alignment exception handler */
-asmlinkage void handle_unaligned_c(struct pt_regs *fp, int cause)
-{
-	unsigned long addr = RDCTL(CTL_BADADDR);
+यंत्रlinkage व्योम handle_unaligned_c(काष्ठा pt_regs *fp, पूर्णांक cause)
+अणु
+	अचिन्हित दीर्घ addr = RDCTL(CTL_BADADDR);
 
 	cause >>= 2;
 	fp->ea -= 4;
 
-	if (fixup_exception(fp))
-		return;
+	अगर (fixup_exception(fp))
+		वापस;
 
-	if (!user_mode(fp)) {
+	अगर (!user_mode(fp)) अणु
 		pr_alert("Unaligned access from kernel mode, this might be a hardware\n");
 		pr_alert("problem, dump registers and restart the instruction\n");
 		pr_alert("  BADADDR 0x%08lx\n", addr);
 		pr_alert("  cause   %d\n", cause);
-		pr_alert("  op-code 0x%08lx\n", *(unsigned long *)(fp->ea));
+		pr_alert("  op-code 0x%08lx\n", *(अचिन्हित दीर्घ *)(fp->ea));
 		show_regs(fp);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	_exception(SIGBUS, fp, BUS_ADRALN, addr);
-}
-#endif /* CONFIG_NIOS2_ALIGNMENT_TRAP */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NIOS2_ALIGNMENT_TRAP */
 
-/* Illegal instruction handler */
-asmlinkage void handle_illegal_c(struct pt_regs *fp)
-{
+/* Illegal inकाष्ठाion handler */
+यंत्रlinkage व्योम handle_illegal_c(काष्ठा pt_regs *fp)
+अणु
 	fp->ea -= 4;
-	_exception(SIGILL, fp, ILL_ILLOPC, fp->ea);
-}
+	_exception(संक_अवैध, fp, ILL_ILLOPC, fp->ea);
+पूर्ण
 
-/* Supervisor instruction handler */
-asmlinkage void handle_supervisor_instr(struct pt_regs *fp)
-{
+/* Supervisor inकाष्ठाion handler */
+यंत्रlinkage व्योम handle_supervisor_instr(काष्ठा pt_regs *fp)
+अणु
 	fp->ea -= 4;
-	_exception(SIGILL, fp, ILL_PRVOPC, fp->ea);
-}
+	_exception(संक_अवैध, fp, ILL_PRVOPC, fp->ea);
+पूर्ण
 
 /* Division error handler */
-asmlinkage void handle_diverror_c(struct pt_regs *fp)
-{
+यंत्रlinkage व्योम handle_भागerror_c(काष्ठा pt_regs *fp)
+अणु
 	fp->ea -= 4;
-	_exception(SIGFPE, fp, FPE_INTDIV, fp->ea);
-}
+	_exception(संक_भ_त्रुटि, fp, FPE_INTDIV, fp->ea);
+पूर्ण
 
 /* Unhandled exception handler */
-asmlinkage void unhandled_exception(struct pt_regs *regs, int cause)
-{
-	unsigned long addr = RDCTL(CTL_BADADDR);
+यंत्रlinkage व्योम unhandled_exception(काष्ठा pt_regs *regs, पूर्णांक cause)
+अणु
+	अचिन्हित दीर्घ addr = RDCTL(CTL_BADADDR);
 
 	cause /= 4;
 
@@ -182,20 +183,20 @@ asmlinkage void unhandled_exception(struct pt_regs *regs, int cause)
 	regs->ea -= 4;
 	show_regs(regs);
 
-	pr_emerg("opcode: 0x%08lx\n", *(unsigned long *)(regs->ea));
-}
+	pr_emerg("opcode: 0x%08lx\n", *(अचिन्हित दीर्घ *)(regs->ea));
+पूर्ण
 
-asmlinkage void handle_trap_1_c(struct pt_regs *fp)
-{
+यंत्रlinkage व्योम handle_trap_1_c(काष्ठा pt_regs *fp)
+अणु
 	_send_sig(SIGUSR1, 0, fp->ea);
-}
+पूर्ण
 
-asmlinkage void handle_trap_2_c(struct pt_regs *fp)
-{
+यंत्रlinkage व्योम handle_trap_2_c(काष्ठा pt_regs *fp)
+अणु
 	_send_sig(SIGUSR2, 0, fp->ea);
-}
+पूर्ण
 
-asmlinkage void handle_trap_3_c(struct pt_regs *fp)
-{
-	_send_sig(SIGILL, ILL_ILLTRP, fp->ea);
-}
+यंत्रlinkage व्योम handle_trap_3_c(काष्ठा pt_regs *fp)
+अणु
+	_send_sig(संक_अवैध, ILL_ILLTRP, fp->ea);
+पूर्ण

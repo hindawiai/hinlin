@@ -1,211 +1,212 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/cpumask.h>
-#include <linux/debugfs.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/percpu.h>
-#include <linux/types.h>
-#include <asm/debug.h>
-#include <asm/fpu_emulator.h>
-#include <asm/local.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/cpumask.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/fpu_emulator.h>
+#समावेश <यंत्र/local.h>
 
-DEFINE_PER_CPU(struct mips_fpu_emulator_stats, fpuemustats);
+DEFINE_PER_CPU(काष्ठा mips_fpu_emulator_stats, fpuemustats);
 
-static int fpuemu_stat_get(void *data, u64 *val)
-{
-	int cpu;
-	unsigned long sum = 0;
+अटल पूर्णांक fpuemu_stat_get(व्योम *data, u64 *val)
+अणु
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ sum = 0;
 
-	for_each_online_cpu(cpu) {
-		struct mips_fpu_emulator_stats *ps;
+	क्रम_each_online_cpu(cpu) अणु
+		काष्ठा mips_fpu_emulator_stats *ps;
 		local_t *pv;
 
 		ps = &per_cpu(fpuemustats, cpu);
-		pv = (void *)ps + (unsigned long)data;
-		sum += local_read(pv);
-	}
+		pv = (व्योम *)ps + (अचिन्हित दीर्घ)data;
+		sum += local_पढ़ो(pv);
+	पूर्ण
 	*val = sum;
-	return 0;
-}
-DEFINE_SIMPLE_ATTRIBUTE(fops_fpuemu_stat, fpuemu_stat_get, NULL, "%llu\n");
+	वापस 0;
+पूर्ण
+DEFINE_SIMPLE_ATTRIBUTE(fops_fpuemu_stat, fpuemu_stat_get, शून्य, "%llu\n");
 
 /*
- * Used to obtain names for a debugfs instruction counter, given field name
- * in fpuemustats structure. For example, for input "cmp_sueq_d", the output
- * would be "cmp.sueq.d". This is needed since dots are not allowed to be
- * used in structure field names, and are, on the other hand, desired to be
+ * Used to obtain names क्रम a debugfs inकाष्ठाion counter, given field name
+ * in fpuemustats काष्ठाure. For example, क्रम input "cmp_sueq_d", the output
+ * would be "cmp.sueq.d". This is needed since करोts are not allowed to be
+ * used in काष्ठाure field names, and are, on the other hand, desired to be
  * used in debugfs item names to be clearly associated to corresponding
- * MIPS FPU instructions.
+ * MIPS FPU inकाष्ठाions.
  */
-static void adjust_instruction_counter_name(char *out_name, char *in_name)
-{
-	int i = 0;
+अटल व्योम adjust_inकाष्ठाion_counter_name(अक्षर *out_name, अक्षर *in_name)
+अणु
+	पूर्णांक i = 0;
 
-	strcpy(out_name, in_name);
-	while (in_name[i] != '\0') {
-		if (out_name[i] == '_')
+	म_नकल(out_name, in_name);
+	जबतक (in_name[i] != '\0') अणु
+		अगर (out_name[i] == '_')
 			out_name[i] = '.';
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int fpuemustats_clear_show(struct seq_file *s, void *unused)
-{
-	__this_cpu_write((fpuemustats).emulated, 0);
-	__this_cpu_write((fpuemustats).loads, 0);
-	__this_cpu_write((fpuemustats).stores, 0);
-	__this_cpu_write((fpuemustats).branches, 0);
-	__this_cpu_write((fpuemustats).cp1ops, 0);
-	__this_cpu_write((fpuemustats).cp1xops, 0);
-	__this_cpu_write((fpuemustats).errors, 0);
-	__this_cpu_write((fpuemustats).ieee754_inexact, 0);
-	__this_cpu_write((fpuemustats).ieee754_underflow, 0);
-	__this_cpu_write((fpuemustats).ieee754_overflow, 0);
-	__this_cpu_write((fpuemustats).ieee754_zerodiv, 0);
-	__this_cpu_write((fpuemustats).ieee754_invalidop, 0);
-	__this_cpu_write((fpuemustats).ds_emul, 0);
+अटल पूर्णांक fpuemustats_clear_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	__this_cpu_ग_लिखो((fpuemustats).emulated, 0);
+	__this_cpu_ग_लिखो((fpuemustats).loads, 0);
+	__this_cpu_ग_लिखो((fpuemustats).stores, 0);
+	__this_cpu_ग_लिखो((fpuemustats).branches, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cp1ops, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cp1xops, 0);
+	__this_cpu_ग_लिखो((fpuemustats).errors, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ieee754_inexact, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ieee754_underflow, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ieee754_overflow, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ieee754_zeroभाग, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ieee754_invaliकरोp, 0);
+	__this_cpu_ग_लिखो((fpuemustats).ds_emul, 0);
 
-	__this_cpu_write((fpuemustats).abs_s, 0);
-	__this_cpu_write((fpuemustats).abs_d, 0);
-	__this_cpu_write((fpuemustats).add_s, 0);
-	__this_cpu_write((fpuemustats).add_d, 0);
-	__this_cpu_write((fpuemustats).bc1eqz, 0);
-	__this_cpu_write((fpuemustats).bc1nez, 0);
-	__this_cpu_write((fpuemustats).ceil_w_s, 0);
-	__this_cpu_write((fpuemustats).ceil_w_d, 0);
-	__this_cpu_write((fpuemustats).ceil_l_s, 0);
-	__this_cpu_write((fpuemustats).ceil_l_d, 0);
-	__this_cpu_write((fpuemustats).class_s, 0);
-	__this_cpu_write((fpuemustats).class_d, 0);
-	__this_cpu_write((fpuemustats).cmp_af_s, 0);
-	__this_cpu_write((fpuemustats).cmp_af_d, 0);
-	__this_cpu_write((fpuemustats).cmp_eq_s, 0);
-	__this_cpu_write((fpuemustats).cmp_eq_d, 0);
-	__this_cpu_write((fpuemustats).cmp_le_s, 0);
-	__this_cpu_write((fpuemustats).cmp_le_d, 0);
-	__this_cpu_write((fpuemustats).cmp_lt_s, 0);
-	__this_cpu_write((fpuemustats).cmp_lt_d, 0);
-	__this_cpu_write((fpuemustats).cmp_ne_s, 0);
-	__this_cpu_write((fpuemustats).cmp_ne_d, 0);
-	__this_cpu_write((fpuemustats).cmp_or_s, 0);
-	__this_cpu_write((fpuemustats).cmp_or_d, 0);
-	__this_cpu_write((fpuemustats).cmp_ueq_s, 0);
-	__this_cpu_write((fpuemustats).cmp_ueq_d, 0);
-	__this_cpu_write((fpuemustats).cmp_ule_s, 0);
-	__this_cpu_write((fpuemustats).cmp_ule_d, 0);
-	__this_cpu_write((fpuemustats).cmp_ult_s, 0);
-	__this_cpu_write((fpuemustats).cmp_ult_d, 0);
-	__this_cpu_write((fpuemustats).cmp_un_s, 0);
-	__this_cpu_write((fpuemustats).cmp_un_d, 0);
-	__this_cpu_write((fpuemustats).cmp_une_s, 0);
-	__this_cpu_write((fpuemustats).cmp_une_d, 0);
-	__this_cpu_write((fpuemustats).cmp_saf_s, 0);
-	__this_cpu_write((fpuemustats).cmp_saf_d, 0);
-	__this_cpu_write((fpuemustats).cmp_seq_s, 0);
-	__this_cpu_write((fpuemustats).cmp_seq_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sle_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sle_d, 0);
-	__this_cpu_write((fpuemustats).cmp_slt_s, 0);
-	__this_cpu_write((fpuemustats).cmp_slt_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sne_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sne_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sor_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sor_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sueq_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sueq_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sule_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sule_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sult_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sult_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sun_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sun_d, 0);
-	__this_cpu_write((fpuemustats).cmp_sune_s, 0);
-	__this_cpu_write((fpuemustats).cmp_sune_d, 0);
-	__this_cpu_write((fpuemustats).cvt_d_l, 0);
-	__this_cpu_write((fpuemustats).cvt_d_s, 0);
-	__this_cpu_write((fpuemustats).cvt_d_w, 0);
-	__this_cpu_write((fpuemustats).cvt_l_s, 0);
-	__this_cpu_write((fpuemustats).cvt_l_d, 0);
-	__this_cpu_write((fpuemustats).cvt_s_d, 0);
-	__this_cpu_write((fpuemustats).cvt_s_l, 0);
-	__this_cpu_write((fpuemustats).cvt_s_w, 0);
-	__this_cpu_write((fpuemustats).cvt_w_s, 0);
-	__this_cpu_write((fpuemustats).cvt_w_d, 0);
-	__this_cpu_write((fpuemustats).div_s, 0);
-	__this_cpu_write((fpuemustats).div_d, 0);
-	__this_cpu_write((fpuemustats).floor_w_s, 0);
-	__this_cpu_write((fpuemustats).floor_w_d, 0);
-	__this_cpu_write((fpuemustats).floor_l_s, 0);
-	__this_cpu_write((fpuemustats).floor_l_d, 0);
-	__this_cpu_write((fpuemustats).maddf_s, 0);
-	__this_cpu_write((fpuemustats).maddf_d, 0);
-	__this_cpu_write((fpuemustats).max_s, 0);
-	__this_cpu_write((fpuemustats).max_d, 0);
-	__this_cpu_write((fpuemustats).maxa_s, 0);
-	__this_cpu_write((fpuemustats).maxa_d, 0);
-	__this_cpu_write((fpuemustats).min_s, 0);
-	__this_cpu_write((fpuemustats).min_d, 0);
-	__this_cpu_write((fpuemustats).mina_s, 0);
-	__this_cpu_write((fpuemustats).mina_d, 0);
-	__this_cpu_write((fpuemustats).mov_s, 0);
-	__this_cpu_write((fpuemustats).mov_d, 0);
-	__this_cpu_write((fpuemustats).msubf_s, 0);
-	__this_cpu_write((fpuemustats).msubf_d, 0);
-	__this_cpu_write((fpuemustats).mul_s, 0);
-	__this_cpu_write((fpuemustats).mul_d, 0);
-	__this_cpu_write((fpuemustats).neg_s, 0);
-	__this_cpu_write((fpuemustats).neg_d, 0);
-	__this_cpu_write((fpuemustats).recip_s, 0);
-	__this_cpu_write((fpuemustats).recip_d, 0);
-	__this_cpu_write((fpuemustats).rint_s, 0);
-	__this_cpu_write((fpuemustats).rint_d, 0);
-	__this_cpu_write((fpuemustats).round_w_s, 0);
-	__this_cpu_write((fpuemustats).round_w_d, 0);
-	__this_cpu_write((fpuemustats).round_l_s, 0);
-	__this_cpu_write((fpuemustats).round_l_d, 0);
-	__this_cpu_write((fpuemustats).rsqrt_s, 0);
-	__this_cpu_write((fpuemustats).rsqrt_d, 0);
-	__this_cpu_write((fpuemustats).sel_s, 0);
-	__this_cpu_write((fpuemustats).sel_d, 0);
-	__this_cpu_write((fpuemustats).seleqz_s, 0);
-	__this_cpu_write((fpuemustats).seleqz_d, 0);
-	__this_cpu_write((fpuemustats).selnez_s, 0);
-	__this_cpu_write((fpuemustats).selnez_d, 0);
-	__this_cpu_write((fpuemustats).sqrt_s, 0);
-	__this_cpu_write((fpuemustats).sqrt_d, 0);
-	__this_cpu_write((fpuemustats).sub_s, 0);
-	__this_cpu_write((fpuemustats).sub_d, 0);
-	__this_cpu_write((fpuemustats).trunc_w_s, 0);
-	__this_cpu_write((fpuemustats).trunc_w_d, 0);
-	__this_cpu_write((fpuemustats).trunc_l_s, 0);
-	__this_cpu_write((fpuemustats).trunc_l_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).असल_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).असल_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).add_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).add_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).bc1eqz, 0);
+	__this_cpu_ग_लिखो((fpuemustats).bc1nez, 0);
+	__this_cpu_ग_लिखो((fpuemustats).उच्चमान_w_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).उच्चमान_w_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).उच्चमान_l_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).उच्चमान_l_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).class_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).class_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_af_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_af_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_eq_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_eq_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_le_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_le_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_lt_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_lt_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ne_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ne_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_or_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_or_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ueq_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ueq_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ule_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ule_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ult_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_ult_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_un_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_un_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_une_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_une_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_saf_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_saf_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_seq_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_seq_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sle_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sle_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_slt_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_slt_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sne_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sne_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sor_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sor_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sueq_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sueq_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sule_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sule_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sult_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sult_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sun_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sun_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sune_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cmp_sune_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_d_l, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_d_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_d_w, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_l_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_l_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_s_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_s_l, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_s_w, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_w_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).cvt_w_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).भाग_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).भाग_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).न्यूनमान_w_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).न्यूनमान_w_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).न्यूनमान_l_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).न्यूनमान_l_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).maddf_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).maddf_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).max_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).max_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).maxa_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).maxa_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).min_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).min_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mina_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mina_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mov_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mov_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).msubf_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).msubf_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mul_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).mul_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).neg_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).neg_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).recip_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).recip_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).rपूर्णांक_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).rपूर्णांक_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).round_w_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).round_w_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).round_l_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).round_l_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).rवर्ग_मूल_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).rवर्ग_मूल_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).sel_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).sel_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).seleqz_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).seleqz_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).selnez_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).selnez_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).वर्ग_मूल_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).वर्ग_मूल_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).sub_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).sub_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).trunc_w_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).trunc_w_d, 0);
+	__this_cpu_ग_लिखो((fpuemustats).trunc_l_s, 0);
+	__this_cpu_ग_लिखो((fpuemustats).trunc_l_d, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(fpuemustats_clear);
 
-static int __init debugfs_fpuemu(void)
-{
-	struct dentry *fpuemu_debugfs_base_dir;
-	struct dentry *fpuemu_debugfs_inst_dir;
-	char name[32];
+अटल पूर्णांक __init debugfs_fpuemu(व्योम)
+अणु
+	काष्ठा dentry *fpuemu_debugfs_base_dir;
+	काष्ठा dentry *fpuemu_debugfs_inst_dir;
+	अक्षर name[32];
 
 	fpuemu_debugfs_base_dir = debugfs_create_dir("fpuemustats",
 						     mips_debugfs_dir);
 
-	debugfs_create_file("fpuemustats_clear", 0444, mips_debugfs_dir, NULL,
+	debugfs_create_file("fpuemustats_clear", 0444, mips_debugfs_dir, शून्य,
 			    &fpuemustats_clear_fops);
 
-#define FPU_EMU_STAT_OFFSET(m)						\
-	offsetof(struct mips_fpu_emulator_stats, m)
+#घोषणा FPU_EMU_STAT_OFFSET(m)						\
+	दुरत्व(काष्ठा mips_fpu_emulator_stats, m)
 
-#define FPU_STAT_CREATE(m)						\
-do {									\
+#घोषणा FPU_STAT_CREATE(m)						\
+करो अणु									\
 	debugfs_create_file(#m, 0444, fpuemu_debugfs_base_dir,		\
-				(void *)FPU_EMU_STAT_OFFSET(m),		\
+				(व्योम *)FPU_EMU_STAT_OFFSET(m),		\
 				&fops_fpuemu_stat);			\
-} while (0)
+पूर्ण जबतक (0)
 
 	FPU_STAT_CREATE(emulated);
 	FPU_STAT_CREATE(loads);
@@ -217,32 +218,32 @@ do {									\
 	FPU_STAT_CREATE(ieee754_inexact);
 	FPU_STAT_CREATE(ieee754_underflow);
 	FPU_STAT_CREATE(ieee754_overflow);
-	FPU_STAT_CREATE(ieee754_zerodiv);
-	FPU_STAT_CREATE(ieee754_invalidop);
+	FPU_STAT_CREATE(ieee754_zeroभाग);
+	FPU_STAT_CREATE(ieee754_invaliकरोp);
 	FPU_STAT_CREATE(ds_emul);
 
 	fpuemu_debugfs_inst_dir = debugfs_create_dir("instructions",
 						     fpuemu_debugfs_base_dir);
 
-#define FPU_STAT_CREATE_EX(m)						\
-do {									\
-	adjust_instruction_counter_name(name, #m);			\
+#घोषणा FPU_STAT_CREATE_EX(m)						\
+करो अणु									\
+	adjust_inकाष्ठाion_counter_name(name, #m);			\
 									\
 	debugfs_create_file(name, 0444, fpuemu_debugfs_inst_dir,	\
-				(void *)FPU_EMU_STAT_OFFSET(m),		\
+				(व्योम *)FPU_EMU_STAT_OFFSET(m),		\
 				&fops_fpuemu_stat);			\
-} while (0)
+पूर्ण जबतक (0)
 
-	FPU_STAT_CREATE_EX(abs_s);
-	FPU_STAT_CREATE_EX(abs_d);
+	FPU_STAT_CREATE_EX(असल_s);
+	FPU_STAT_CREATE_EX(असल_d);
 	FPU_STAT_CREATE_EX(add_s);
 	FPU_STAT_CREATE_EX(add_d);
 	FPU_STAT_CREATE_EX(bc1eqz);
 	FPU_STAT_CREATE_EX(bc1nez);
-	FPU_STAT_CREATE_EX(ceil_w_s);
-	FPU_STAT_CREATE_EX(ceil_w_d);
-	FPU_STAT_CREATE_EX(ceil_l_s);
-	FPU_STAT_CREATE_EX(ceil_l_d);
+	FPU_STAT_CREATE_EX(उच्चमान_w_s);
+	FPU_STAT_CREATE_EX(उच्चमान_w_d);
+	FPU_STAT_CREATE_EX(उच्चमान_l_s);
+	FPU_STAT_CREATE_EX(उच्चमान_l_d);
 	FPU_STAT_CREATE_EX(class_s);
 	FPU_STAT_CREATE_EX(class_d);
 	FPU_STAT_CREATE_EX(cmp_af_s);
@@ -299,12 +300,12 @@ do {									\
 	FPU_STAT_CREATE_EX(cvt_s_w);
 	FPU_STAT_CREATE_EX(cvt_w_s);
 	FPU_STAT_CREATE_EX(cvt_w_d);
-	FPU_STAT_CREATE_EX(div_s);
-	FPU_STAT_CREATE_EX(div_d);
-	FPU_STAT_CREATE_EX(floor_w_s);
-	FPU_STAT_CREATE_EX(floor_w_d);
-	FPU_STAT_CREATE_EX(floor_l_s);
-	FPU_STAT_CREATE_EX(floor_l_d);
+	FPU_STAT_CREATE_EX(भाग_s);
+	FPU_STAT_CREATE_EX(भाग_d);
+	FPU_STAT_CREATE_EX(न्यूनमान_w_s);
+	FPU_STAT_CREATE_EX(न्यूनमान_w_d);
+	FPU_STAT_CREATE_EX(न्यूनमान_l_s);
+	FPU_STAT_CREATE_EX(न्यूनमान_l_d);
 	FPU_STAT_CREATE_EX(maddf_s);
 	FPU_STAT_CREATE_EX(maddf_d);
 	FPU_STAT_CREATE_EX(max_s);
@@ -325,22 +326,22 @@ do {									\
 	FPU_STAT_CREATE_EX(neg_d);
 	FPU_STAT_CREATE_EX(recip_s);
 	FPU_STAT_CREATE_EX(recip_d);
-	FPU_STAT_CREATE_EX(rint_s);
-	FPU_STAT_CREATE_EX(rint_d);
+	FPU_STAT_CREATE_EX(rपूर्णांक_s);
+	FPU_STAT_CREATE_EX(rपूर्णांक_d);
 	FPU_STAT_CREATE_EX(round_w_s);
 	FPU_STAT_CREATE_EX(round_w_d);
 	FPU_STAT_CREATE_EX(round_l_s);
 	FPU_STAT_CREATE_EX(round_l_d);
-	FPU_STAT_CREATE_EX(rsqrt_s);
-	FPU_STAT_CREATE_EX(rsqrt_d);
+	FPU_STAT_CREATE_EX(rवर्ग_मूल_s);
+	FPU_STAT_CREATE_EX(rवर्ग_मूल_d);
 	FPU_STAT_CREATE_EX(sel_s);
 	FPU_STAT_CREATE_EX(sel_d);
 	FPU_STAT_CREATE_EX(seleqz_s);
 	FPU_STAT_CREATE_EX(seleqz_d);
 	FPU_STAT_CREATE_EX(selnez_s);
 	FPU_STAT_CREATE_EX(selnez_d);
-	FPU_STAT_CREATE_EX(sqrt_s);
-	FPU_STAT_CREATE_EX(sqrt_d);
+	FPU_STAT_CREATE_EX(वर्ग_मूल_s);
+	FPU_STAT_CREATE_EX(वर्ग_मूल_d);
 	FPU_STAT_CREATE_EX(sub_s);
 	FPU_STAT_CREATE_EX(sub_d);
 	FPU_STAT_CREATE_EX(trunc_w_s);
@@ -348,6 +349,6 @@ do {									\
 	FPU_STAT_CREATE_EX(trunc_l_s);
 	FPU_STAT_CREATE_EX(trunc_l_d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 arch_initcall(debugfs_fpuemu);

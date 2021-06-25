@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/perf_event.h>
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/perf_event.h>
+#समावेश <linux/types.h>
 
-#include "../perf_event.h"
+#समावेश "../perf_event.h"
 
 /*
  * Not sure about some of these
  */
-static const u64 p6_perfmon_event_map[] =
-{
+अटल स्थिर u64 p6_perfmon_event_map[] =
+अणु
   [PERF_COUNT_HW_CPU_CYCLES]		= 0x0079,	/* CPU_CLK_UNHALTED */
   [PERF_COUNT_HW_INSTRUCTIONS]		= 0x00c0,	/* INST_RETIRED     */
   [PERF_COUNT_HW_CACHE_REFERENCES]	= 0x0f2e,	/* L2_RQSTS:M:E:S:I */
@@ -18,114 +19,114 @@ static const u64 p6_perfmon_event_map[] =
   [PERF_COUNT_HW_BUS_CYCLES]		= 0x0062,	/* BUS_DRDY_CLOCKS  */
   [PERF_COUNT_HW_STALLED_CYCLES_FRONTEND] = 0x00a2,	/* RESOURCE_STALLS  */
 
-};
+पूर्ण;
 
-static const u64 __initconst p6_hw_cache_event_ids
+अटल स्थिर u64 __initस्थिर p6_hw_cache_event_ids
 				[PERF_COUNT_HW_CACHE_MAX]
 				[PERF_COUNT_HW_CACHE_OP_MAX]
 				[PERF_COUNT_HW_CACHE_RESULT_MAX] =
-{
- [ C(L1D) ] = {
-	[ C(OP_READ) ] = {
+अणु
+ [ C(L1D) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0043,	/* DATA_MEM_REFS       */
                 [ C(RESULT_MISS)   ] = 0x0045,	/* DCU_LINES_IN        */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0x0f29,	/* L2_LD:M:E:S:I       */
-	},
-        [ C(OP_PREFETCH) ] = {
+	पूर्ण,
+        [ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-        },
- },
- [ C(L1I ) ] = {
-	[ C(OP_READ) ] = {
+        पूर्ण,
+ पूर्ण,
+ [ C(L1I ) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0080,	/* IFU_IFETCH         */
 		[ C(RESULT_MISS)   ] = 0x0f28,	/* L2_IFETCH:M:E:S:I  */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(LL  ) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(LL  ) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0x0025,	/* L2_M_LINES_INM     */
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(DTLB) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(DTLB) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0043,	/* DATA_MEM_REFS      */
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0,
 		[ C(RESULT_MISS)   ] = 0,
-	},
- },
- [ C(ITLB) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(ITLB) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x0080,	/* IFU_IFETCH         */
 		[ C(RESULT_MISS)   ] = 0x0085,	/* ITLB_MISS          */
-	},
-	[ C(OP_WRITE) ] = {
+	पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
- },
- [ C(BPU ) ] = {
-	[ C(OP_READ) ] = {
+	पूर्ण,
+ पूर्ण,
+ [ C(BPU ) ] = अणु
+	[ C(OP_READ) ] = अणु
 		[ C(RESULT_ACCESS) ] = 0x00c4,	/* BR_INST_RETIRED      */
 		[ C(RESULT_MISS)   ] = 0x00c5,	/* BR_MISS_PRED_RETIRED */
-        },
-	[ C(OP_WRITE) ] = {
+        पूर्ण,
+	[ C(OP_WRITE) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
-	[ C(OP_PREFETCH) ] = {
+	पूर्ण,
+	[ C(OP_PREFETCH) ] = अणु
 		[ C(RESULT_ACCESS) ] = -1,
 		[ C(RESULT_MISS)   ] = -1,
-	},
- },
-};
+	पूर्ण,
+ पूर्ण,
+पूर्ण;
 
-static u64 p6_pmu_event_map(int hw_event)
-{
-	return p6_perfmon_event_map[hw_event];
-}
+अटल u64 p6_pmu_event_map(पूर्णांक hw_event)
+अणु
+	वापस p6_perfmon_event_map[hw_event];
+पूर्ण
 
 /*
- * Event setting that is specified not to count anything.
+ * Event setting that is specअगरied not to count anything.
  * We use this to effectively disable a counter.
  *
  * L2_RQSTS with 0 MESI unit mask.
  */
-#define P6_NOP_EVENT			0x0000002EULL
+#घोषणा P6_NOP_EVENT			0x0000002EULL
 
-static struct event_constraint p6_event_constraints[] =
-{
+अटल काष्ठा event_स्थिरraपूर्णांक p6_event_स्थिरraपूर्णांकs[] =
+अणु
 	INTEL_EVENT_CONSTRAINT(0xc1, 0x1),	/* FLOPS */
 	INTEL_EVENT_CONSTRAINT(0x10, 0x1),	/* FP_COMP_OPS_EXE */
 	INTEL_EVENT_CONSTRAINT(0x11, 0x2),	/* FP_ASSIST */
@@ -133,40 +134,40 @@ static struct event_constraint p6_event_constraints[] =
 	INTEL_EVENT_CONSTRAINT(0x13, 0x2),	/* DIV */
 	INTEL_EVENT_CONSTRAINT(0x14, 0x1),	/* CYCLES_DIV_BUSY */
 	EVENT_CONSTRAINT_END
-};
+पूर्ण;
 
-static void p6_pmu_disable_all(void)
-{
+अटल व्योम p6_pmu_disable_all(व्योम)
+अणु
 	u64 val;
 
-	/* p6 only has one enable register */
+	/* p6 only has one enable रेजिस्टर */
 	rdmsrl(MSR_P6_EVNTSEL0, val);
 	val &= ~ARCH_PERFMON_EVENTSEL_ENABLE;
 	wrmsrl(MSR_P6_EVNTSEL0, val);
-}
+पूर्ण
 
-static void p6_pmu_enable_all(int added)
-{
-	unsigned long val;
+अटल व्योम p6_pmu_enable_all(पूर्णांक added)
+अणु
+	अचिन्हित दीर्घ val;
 
-	/* p6 only has one enable register */
+	/* p6 only has one enable रेजिस्टर */
 	rdmsrl(MSR_P6_EVNTSEL0, val);
 	val |= ARCH_PERFMON_EVENTSEL_ENABLE;
 	wrmsrl(MSR_P6_EVNTSEL0, val);
-}
+पूर्ण
 
-static inline void
-p6_pmu_disable_event(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल अंतरभूत व्योम
+p6_pmu_disable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 val = P6_NOP_EVENT;
 
-	(void)wrmsrl_safe(hwc->config_base, val);
-}
+	(व्योम)wrmsrl_safe(hwc->config_base, val);
+पूर्ण
 
-static void p6_pmu_enable_event(struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम p6_pmu_enable_event(काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 	u64 val;
 
 	val = hwc->config;
@@ -178,8 +179,8 @@ static void p6_pmu_enable_event(struct perf_event *event)
 	 * to actually enable the events.
 	 */
 
-	(void)wrmsrl_safe(hwc->config_base, val);
-}
+	(व्योम)wrmsrl_safe(hwc->config_base, val);
+पूर्ण
 
 PMU_FORMAT_ATTR(event,	"config:0-7"	);
 PMU_FORMAT_ATTR(umask,	"config:8-15"	);
@@ -188,17 +189,17 @@ PMU_FORMAT_ATTR(pc,	"config:19"	);
 PMU_FORMAT_ATTR(inv,	"config:23"	);
 PMU_FORMAT_ATTR(cmask,	"config:24-31"	);
 
-static struct attribute *intel_p6_formats_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_umask.attr,
-	&format_attr_edge.attr,
-	&format_attr_pc.attr,
-	&format_attr_inv.attr,
-	&format_attr_cmask.attr,
-	NULL,
-};
+अटल काष्ठा attribute *पूर्णांकel_p6_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_umask.attr,
+	&क्रमmat_attr_edge.attr,
+	&क्रमmat_attr_pc.attr,
+	&क्रमmat_attr_inv.attr,
+	&क्रमmat_attr_cmask.attr,
+	शून्य,
+पूर्ण;
 
-static __initconst const struct x86_pmu p6_pmu = {
+अटल __initस्थिर स्थिर काष्ठा x86_pmu p6_pmu = अणु
 	.name			= "p6",
 	.handle_irq		= x86_pmu_handle_irq,
 	.disable_all		= p6_pmu_disable_all,
@@ -216,65 +217,65 @@ static __initconst const struct x86_pmu p6_pmu = {
 	.version		= 0,
 	.num_counters		= 2,
 	/*
-	 * Events have 40 bits implemented. However they are designed such
+	 * Events have 40 bits implemented. However they are deचिन्हित such
 	 * that bits [32-39] are sign extensions of bit 31. As such the
-	 * effective width of a event for P6-like PMU is 32 bits only.
+	 * effective width of a event क्रम P6-like PMU is 32 bits only.
 	 *
 	 * See IA-32 Intel Architecture Software developer manual Vol 3B
 	 */
 	.cntval_bits		= 32,
 	.cntval_mask		= (1ULL << 32) - 1,
-	.get_event_constraints	= x86_get_event_constraints,
-	.event_constraints	= p6_event_constraints,
+	.get_event_स्थिरraपूर्णांकs	= x86_get_event_स्थिरraपूर्णांकs,
+	.event_स्थिरraपूर्णांकs	= p6_event_स्थिरraपूर्णांकs,
 
-	.format_attrs		= intel_p6_formats_attr,
-	.events_sysfs_show	= intel_event_sysfs_show,
+	.क्रमmat_attrs		= पूर्णांकel_p6_क्रमmats_attr,
+	.events_sysfs_show	= पूर्णांकel_event_sysfs_show,
 
-};
+पूर्ण;
 
-static __init void p6_pmu_rdpmc_quirk(void)
-{
-	if (boot_cpu_data.x86_stepping < 9) {
+अटल __init व्योम p6_pmu_rdpmc_quirk(व्योम)
+अणु
+	अगर (boot_cpu_data.x86_stepping < 9) अणु
 		/*
 		 * PPro erratum 26; fixed in stepping 9 and above.
 		 */
 		pr_warn("Userspace RDPMC support disabled due to a CPU erratum\n");
 		x86_pmu.attr_rdpmc_broken = 1;
 		x86_pmu.attr_rdpmc = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-__init int p6_pmu_init(void)
-{
+__init पूर्णांक p6_pmu_init(व्योम)
+अणु
 	x86_pmu = p6_pmu;
 
-	switch (boot_cpu_data.x86_model) {
-	case  1: /* Pentium Pro */
+	चयन (boot_cpu_data.x86_model) अणु
+	हाल  1: /* Pentium Pro */
 		x86_add_quirk(p6_pmu_rdpmc_quirk);
-		break;
+		अवरोध;
 
-	case  3: /* Pentium II - Klamath */
-	case  5: /* Pentium II - Deschutes */
-	case  6: /* Pentium II - Mendocino */
-		break;
+	हाल  3: /* Pentium II - Klamath */
+	हाल  5: /* Pentium II - Deschutes */
+	हाल  6: /* Pentium II - Menकरोcino */
+		अवरोध;
 
-	case  7: /* Pentium III - Katmai */
-	case  8: /* Pentium III - Coppermine */
-	case 10: /* Pentium III Xeon */
-	case 11: /* Pentium III - Tualatin */
-		break;
+	हाल  7: /* Pentium III - Kaपंचांगai */
+	हाल  8: /* Pentium III - Coppermine */
+	हाल 10: /* Pentium III Xeon */
+	हाल 11: /* Pentium III - Tualatin */
+		अवरोध;
 
-	case  9: /* Pentium M - Banias */
-	case 13: /* Pentium M - Dothan */
-		break;
+	हाल  9: /* Pentium M - Banias */
+	हाल 13: /* Pentium M - Dothan */
+		अवरोध;
 
-	default:
+	शेष:
 		pr_cont("unsupported p6 CPU model %d ", boot_cpu_data.x86_model);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	memcpy(hw_cache_event_ids, p6_hw_cache_event_ids,
-		sizeof(hw_cache_event_ids));
+	स_नकल(hw_cache_event_ids, p6_hw_cache_event_ids,
+		माप(hw_cache_event_ids));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

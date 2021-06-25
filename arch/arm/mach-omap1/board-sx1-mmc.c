@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-omap1/board-sx1-mmc.c
  *
  * Copyright (C) 2007 Instituto Nokia de Tecnologia - INdT
- * Author: Carlos Eduardo Aguiar <carlos.aguiar@indt.org.br>
+ * Author: Carlos Eduarकरो Aguiar <carlos.aguiar@indt.org.br>
  *
  * This code is based on linux/arch/arm/mach-omap1/board-h2-mmc.c, which is:
  * Copyright (C) 2007 Instituto Nokia de Tecnologia - INdT
  */
 
-#include <linux/gpio.h>
-#include <linux/platform_device.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <mach/hardware.h>
-#include "board-sx1.h"
+#समावेश <mach/hardware.h>
+#समावेश "board-sx1.h"
 
-#include "mmc.h"
+#समावेश "mmc.h"
 
-#if IS_ENABLED(CONFIG_MMC_OMAP)
+#अगर IS_ENABLED(CONFIG_MMC_OMAP)
 
-static int mmc_set_power(struct device *dev, int slot, int power_on,
-				int vdd)
-{
-	int err;
+अटल पूर्णांक mmc_set_घातer(काष्ठा device *dev, पूर्णांक slot, पूर्णांक घातer_on,
+				पूर्णांक vdd)
+अणु
+	पूर्णांक err;
 	u8 dat = 0;
 
-	err = sx1_i2c_read_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
-	if (err < 0)
-		return err;
+	err = sx1_i2c_पढ़ो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
+	अगर (err < 0)
+		वापस err;
 
-	if (power_on)
+	अगर (घातer_on)
 		dat |= SOFIA_MMC_POWER;
-	else
+	अन्यथा
 		dat &= ~SOFIA_MMC_POWER;
 
-	return sx1_i2c_write_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
-}
+	वापस sx1_i2c_ग_लिखो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
+पूर्ण
 
-/* Cover switch is at OMAP_MPUIO(3) */
-static struct omap_mmc_platform_data mmc1_data = {
+/* Cover चयन is at OMAP_MPUIO(3) */
+अटल काष्ठा omap_mmc_platक्रमm_data mmc1_data = अणु
 	.nr_slots                       = 1,
-	.slots[0]       = {
-		.set_power              = mmc_set_power,
+	.slots[0]       = अणु
+		.set_घातer              = mmc_set_घातer,
 		.ocr_mask               = MMC_VDD_32_33 | MMC_VDD_33_34,
 		.name                   = "mmcblk",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct omap_mmc_platform_data *mmc_data[OMAP15XX_NR_MMC];
+अटल काष्ठा omap_mmc_platक्रमm_data *mmc_data[OMAP15XX_NR_MMC];
 
-void __init sx1_mmc_init(void)
-{
+व्योम __init sx1_mmc_init(व्योम)
+अणु
 	mmc_data[0] = &mmc1_data;
 	omap1_init_mmc(mmc_data, OMAP15XX_NR_MMC);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-void __init sx1_mmc_init(void)
-{
-}
+व्योम __init sx1_mmc_init(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

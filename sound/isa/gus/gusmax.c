@@ -1,285 +1,286 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for Gravis UltraSound MAX soundcard
+ *  Driver क्रम Gravis UltraSound MAX soundcard
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/isa.h>
-#include <linux/delay.h>
-#include <linux/time.h>
-#include <linux/module.h>
-#include <asm/dma.h>
-#include <sound/core.h>
-#include <sound/gus.h>
-#include <sound/wss.h>
-#define SNDRV_LEGACY_FIND_FREE_IRQ
-#define SNDRV_LEGACY_FIND_FREE_DMA
-#include <sound/initval.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/isa.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <sound/core.h>
+#समावेश <sound/gus.h>
+#समावेश <sound/wss.h>
+#घोषणा SNDRV_LEGACY_FIND_FREE_IRQ
+#घोषणा SNDRV_LEGACY_FIND_FREE_DMA
+#समावेश <sound/initval.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Gravis UltraSound MAX");
 MODULE_LICENSE("GPL");
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
-static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x230,0x240,0x250,0x260 */
-static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 2,3,5,9,11,12,15 */
-static int dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 1,3,5,6,7 */
-static int dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 1,3,5,6,7 */
-static int joystick_dac[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 29};
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
+अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x230,0x240,0x250,0x260 */
+अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 2,3,5,9,11,12,15 */
+अटल पूर्णांक dma1[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 1,3,5,6,7 */
+अटल पूर्णांक dma2[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 1,3,5,6,7 */
+अटल पूर्णांक joystick_dac[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 29पूर्ण;
 				/* 0 to 31, (0.59V-4.52V or 0.389V-2.98V) */
-static int channels[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 24};
-static int pcm_channels[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = 2};
+अटल पूर्णांक channels[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 24पूर्ण;
+अटल पूर्णांक pcm_channels[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = 2पूर्ण;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for GUS MAX soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for GUS MAX soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable GUS MAX soundcard.");
-module_param_hw_array(port, long, ioport, NULL, 0444);
+module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
 MODULE_PARM_DESC(port, "Port # for GUS MAX driver.");
-module_param_hw_array(irq, int, irq, NULL, 0444);
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
 MODULE_PARM_DESC(irq, "IRQ # for GUS MAX driver.");
-module_param_hw_array(dma1, int, dma, NULL, 0444);
+module_param_hw_array(dma1, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma1, "DMA1 # for GUS MAX driver.");
-module_param_hw_array(dma2, int, dma, NULL, 0444);
+module_param_hw_array(dma2, पूर्णांक, dma, शून्य, 0444);
 MODULE_PARM_DESC(dma2, "DMA2 # for GUS MAX driver.");
-module_param_array(joystick_dac, int, NULL, 0444);
+module_param_array(joystick_dac, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(joystick_dac, "Joystick DAC level 0.59V-4.52V or 0.389V-2.98V for GUS MAX driver.");
-module_param_array(channels, int, NULL, 0444);
+module_param_array(channels, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(channels, "Used GF1 channels for GUS MAX driver.");
-module_param_array(pcm_channels, int, NULL, 0444);
+module_param_array(pcm_channels, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(pcm_channels, "Reserved PCM channels for GUS MAX driver.");
 
-struct snd_gusmax {
-	int irq;
-	struct snd_card *card;
-	struct snd_gus_card *gus;
-	struct snd_wss *wss;
-	unsigned short gus_status_reg;
-	unsigned short pcm_status_reg;
-};
+काष्ठा snd_gusmax अणु
+	पूर्णांक irq;
+	काष्ठा snd_card *card;
+	काष्ठा snd_gus_card *gus;
+	काष्ठा snd_wss *wss;
+	अचिन्हित लघु gus_status_reg;
+	अचिन्हित लघु pcm_status_reg;
+पूर्ण;
 
-#define PFX	"gusmax: "
+#घोषणा PFX	"gusmax: "
 
-static int snd_gusmax_detect(struct snd_gus_card *gus)
-{
-	unsigned char d;
+अटल पूर्णांक snd_gusmax_detect(काष्ठा snd_gus_card *gus)
+अणु
+	अचिन्हित अक्षर d;
 
-	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
-	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) {
-		snd_printdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
-	}
+	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_RESET, 0);	/* reset GF1 */
+	अगर (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 0) अणु
+		snd_prपूर्णांकdd("[0x%lx] check 1 failed - 0x%x\n", gus->gf1.port, d);
+		वापस -ENODEV;
+	पूर्ण
 	udelay(160);
-	snd_gf1_i_write8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
+	snd_gf1_i_ग_लिखो8(gus, SNDRV_GF1_GB_RESET, 1);	/* release reset */
 	udelay(160);
-	if (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) {
-		snd_printdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
-		return -ENODEV;
-	}
+	अगर (((d = snd_gf1_i_look8(gus, SNDRV_GF1_GB_RESET)) & 0x07) != 1) अणु
+		snd_prपूर्णांकdd("[0x%lx] check 2 failed - 0x%x\n", gus->gf1.port, d);
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t snd_gusmax_interrupt(int irq, void *dev_id)
-{
-	struct snd_gusmax *maxcard = dev_id;
-	int loop, max = 5;
-	int handled = 0;
+अटल irqवापस_t snd_gusmax_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा snd_gusmax *maxcard = dev_id;
+	पूर्णांक loop, max = 5;
+	पूर्णांक handled = 0;
 
-	do {
+	करो अणु
 		loop = 0;
-		if (inb(maxcard->gus_status_reg)) {
+		अगर (inb(maxcard->gus_status_reg)) अणु
 			handled = 1;
-			snd_gus_interrupt(irq, maxcard->gus);
+			snd_gus_पूर्णांकerrupt(irq, maxcard->gus);
 			loop++;
-		}
-		if (inb(maxcard->pcm_status_reg) & 0x01) { /* IRQ bit is set? */
+		पूर्ण
+		अगर (inb(maxcard->pcm_status_reg) & 0x01) अणु /* IRQ bit is set? */
 			handled = 1;
-			snd_wss_interrupt(irq, maxcard->wss);
+			snd_wss_पूर्णांकerrupt(irq, maxcard->wss);
 			loop++;
-		}
-	} while (loop && --max > 0);
-	return IRQ_RETVAL(handled);
-}
+		पूर्ण
+	पूर्ण जबतक (loop && --max > 0);
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static void snd_gusmax_init(int dev, struct snd_card *card,
-			    struct snd_gus_card *gus)
-{
+अटल व्योम snd_gusmax_init(पूर्णांक dev, काष्ठा snd_card *card,
+			    काष्ठा snd_gus_card *gus)
+अणु
 	gus->equal_irq = 1;
 	gus->codec_flag = 1;
 	gus->joystick_dac = joystick_dac[dev];
-	/* init control register */
+	/* init control रेजिस्टर */
 	gus->max_cntrl_val = (gus->gf1.port >> 4) & 0x0f;
-	if (gus->gf1.dma1 > 3)
+	अगर (gus->gf1.dma1 > 3)
 		gus->max_cntrl_val |= 0x10;
-	if (gus->gf1.dma2 > 3)
+	अगर (gus->gf1.dma2 > 3)
 		gus->max_cntrl_val |= 0x20;
 	gus->max_cntrl_val |= 0x40;
 	outb(gus->max_cntrl_val, GUSP(gus, MAXCNTRLPORT));
-}
+पूर्ण
 
-static int snd_gusmax_mixer(struct snd_wss *chip)
-{
-	struct snd_card *card = chip->card;
-	struct snd_ctl_elem_id id1, id2;
-	int err;
+अटल पूर्णांक snd_gusmax_mixer(काष्ठा snd_wss *chip)
+अणु
+	काष्ठा snd_card *card = chip->card;
+	काष्ठा snd_ctl_elem_id id1, id2;
+	पूर्णांक err;
 	
-	memset(&id1, 0, sizeof(id1));
-	memset(&id2, 0, sizeof(id2));
-	id1.iface = id2.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	स_रखो(&id1, 0, माप(id1));
+	स_रखो(&id2, 0, माप(id2));
+	id1.अगरace = id2.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
 	/* reassign AUXA to SYNTHESIZER */
-	strcpy(id1.name, "Aux Playback Switch");
-	strcpy(id2.name, "Synth Playback Switch");
-	if ((err = snd_ctl_rename_id(card, &id1, &id2)) < 0)
-		return err;
-	strcpy(id1.name, "Aux Playback Volume");
-	strcpy(id2.name, "Synth Playback Volume");
-	if ((err = snd_ctl_rename_id(card, &id1, &id2)) < 0)
-		return err;
+	म_नकल(id1.name, "Aux Playback Switch");
+	म_नकल(id2.name, "Synth Playback Switch");
+	अगर ((err = snd_ctl_नाम_id(card, &id1, &id2)) < 0)
+		वापस err;
+	म_नकल(id1.name, "Aux Playback Volume");
+	म_नकल(id2.name, "Synth Playback Volume");
+	अगर ((err = snd_ctl_नाम_id(card, &id1, &id2)) < 0)
+		वापस err;
 	/* reassign AUXB to CD */
-	strcpy(id1.name, "Aux Playback Switch"); id1.index = 1;
-	strcpy(id2.name, "CD Playback Switch");
-	if ((err = snd_ctl_rename_id(card, &id1, &id2)) < 0)
-		return err;
-	strcpy(id1.name, "Aux Playback Volume");
-	strcpy(id2.name, "CD Playback Volume");
-	if ((err = snd_ctl_rename_id(card, &id1, &id2)) < 0)
-		return err;
-#if 0
+	म_नकल(id1.name, "Aux Playback Switch"); id1.index = 1;
+	म_नकल(id2.name, "CD Playback Switch");
+	अगर ((err = snd_ctl_नाम_id(card, &id1, &id2)) < 0)
+		वापस err;
+	म_नकल(id1.name, "Aux Playback Volume");
+	म_नकल(id2.name, "CD Playback Volume");
+	अगर ((err = snd_ctl_नाम_id(card, &id1, &id2)) < 0)
+		वापस err;
+#अगर 0
 	/* reassign Mono Input to MIC */
-	if (snd_mixer_group_rename(mixer,
+	अगर (snd_mixer_group_नाम(mixer,
 				SNDRV_MIXER_IN_MONO, 0,
 				SNDRV_MIXER_IN_MIC, 0) < 0)
-		goto __error;
-	if (snd_mixer_elem_rename(mixer,
+		जाओ __error;
+	अगर (snd_mixer_elem_नाम(mixer,
 				SNDRV_MIXER_IN_MONO, 0, SNDRV_MIXER_ETYPE_INPUT,
 				SNDRV_MIXER_IN_MIC, 0) < 0)
-		goto __error;
-	if (snd_mixer_elem_rename(mixer,
+		जाओ __error;
+	अगर (snd_mixer_elem_नाम(mixer,
 				"Mono Capture Volume", 0, SNDRV_MIXER_ETYPE_VOLUME1,
 				"Mic Capture Volume", 0) < 0)
-		goto __error;
-	if (snd_mixer_elem_rename(mixer,
+		जाओ __error;
+	अगर (snd_mixer_elem_नाम(mixer,
 				"Mono Capture Switch", 0, SNDRV_MIXER_ETYPE_SWITCH1,
 				"Mic Capture Switch", 0) < 0)
-		goto __error;
-#endif
-	return 0;
-}
+		जाओ __error;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void snd_gusmax_free(struct snd_card *card)
-{
-	struct snd_gusmax *maxcard = card->private_data;
+अटल व्योम snd_gusmax_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_gusmax *maxcard = card->निजी_data;
 	
-	if (maxcard == NULL)
-		return;
-	if (maxcard->irq >= 0)
-		free_irq(maxcard->irq, (void *)maxcard);
-}
+	अगर (maxcard == शून्य)
+		वापस;
+	अगर (maxcard->irq >= 0)
+		मुक्त_irq(maxcard->irq, (व्योम *)maxcard);
+पूर्ण
 
-static int snd_gusmax_match(struct device *pdev, unsigned int dev)
-{
-	return enable[dev];
-}
+अटल पूर्णांक snd_gusmax_match(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
+	वापस enable[dev];
+पूर्ण
 
-static int snd_gusmax_probe(struct device *pdev, unsigned int dev)
-{
-	static const int possible_irqs[] = {5, 11, 12, 9, 7, 15, 3, -1};
-	static const int possible_dmas[] = {5, 6, 7, 1, 3, -1};
-	int xirq, xdma1, xdma2, err;
-	struct snd_card *card;
-	struct snd_gus_card *gus = NULL;
-	struct snd_wss *wss;
-	struct snd_gusmax *maxcard;
+अटल पूर्णांक snd_gusmax_probe(काष्ठा device *pdev, अचिन्हित पूर्णांक dev)
+अणु
+	अटल स्थिर पूर्णांक possible_irqs[] = अणु5, 11, 12, 9, 7, 15, 3, -1पूर्ण;
+	अटल स्थिर पूर्णांक possible_dmas[] = अणु5, 6, 7, 1, 3, -1पूर्ण;
+	पूर्णांक xirq, xdma1, xdma2, err;
+	काष्ठा snd_card *card;
+	काष्ठा snd_gus_card *gus = शून्य;
+	काष्ठा snd_wss *wss;
+	काष्ठा snd_gusmax *maxcard;
 
 	err = snd_card_new(pdev, index[dev], id[dev], THIS_MODULE,
-			   sizeof(struct snd_gusmax), &card);
-	if (err < 0)
-		return err;
-	card->private_free = snd_gusmax_free;
-	maxcard = card->private_data;
+			   माप(काष्ठा snd_gusmax), &card);
+	अगर (err < 0)
+		वापस err;
+	card->निजी_मुक्त = snd_gusmax_मुक्त;
+	maxcard = card->निजी_data;
 	maxcard->card = card;
 	maxcard->irq = -1;
 	
 	xirq = irq[dev];
-	if (xirq == SNDRV_AUTO_IRQ) {
-		if ((xirq = snd_legacy_find_free_irq(possible_irqs)) < 0) {
-			snd_printk(KERN_ERR PFX "unable to find a free IRQ\n");
+	अगर (xirq == SNDRV_AUTO_IRQ) अणु
+		अगर ((xirq = snd_legacy_find_मुक्त_irq(possible_irqs)) < 0) अणु
+			snd_prपूर्णांकk(KERN_ERR PFX "unable to find a free IRQ\n");
 			err = -EBUSY;
-			goto _err;
-		}
-	}
+			जाओ _err;
+		पूर्ण
+	पूर्ण
 	xdma1 = dma1[dev];
-	if (xdma1 == SNDRV_AUTO_DMA) {
-		if ((xdma1 = snd_legacy_find_free_dma(possible_dmas)) < 0) {
-			snd_printk(KERN_ERR PFX "unable to find a free DMA1\n");
+	अगर (xdma1 == SNDRV_AUTO_DMA) अणु
+		अगर ((xdma1 = snd_legacy_find_मुक्त_dma(possible_dmas)) < 0) अणु
+			snd_prपूर्णांकk(KERN_ERR PFX "unable to find a free DMA1\n");
 			err = -EBUSY;
-			goto _err;
-		}
-	}
+			जाओ _err;
+		पूर्ण
+	पूर्ण
 	xdma2 = dma2[dev];
-	if (xdma2 == SNDRV_AUTO_DMA) {
-		if ((xdma2 = snd_legacy_find_free_dma(possible_dmas)) < 0) {
-			snd_printk(KERN_ERR PFX "unable to find a free DMA2\n");
+	अगर (xdma2 == SNDRV_AUTO_DMA) अणु
+		अगर ((xdma2 = snd_legacy_find_मुक्त_dma(possible_dmas)) < 0) अणु
+			snd_prपूर्णांकk(KERN_ERR PFX "unable to find a free DMA2\n");
 			err = -EBUSY;
-			goto _err;
-		}
-	}
+			जाओ _err;
+		पूर्ण
+	पूर्ण
 
-	if (port[dev] != SNDRV_AUTO_PORT) {
+	अगर (port[dev] != SNDRV_AUTO_PORT) अणु
 		err = snd_gus_create(card,
 				     port[dev],
 				     -xirq, xdma1, xdma2,
 				     0, channels[dev],
 				     pcm_channels[dev],
 				     0, &gus);
-	} else {
-		static const unsigned long possible_ports[] = {
+	पूर्ण अन्यथा अणु
+		अटल स्थिर अचिन्हित दीर्घ possible_ports[] = अणु
 			0x220, 0x230, 0x240, 0x250, 0x260
-		};
-		int i;
-		for (i = 0; i < ARRAY_SIZE(possible_ports); i++) {
+		पूर्ण;
+		पूर्णांक i;
+		क्रम (i = 0; i < ARRAY_SIZE(possible_ports); i++) अणु
 			err = snd_gus_create(card,
 					     possible_ports[i],
 					     -xirq, xdma1, xdma2,
 					     0, channels[dev],
 					     pcm_channels[dev],
 					     0, &gus);
-			if (err >= 0) {
+			अगर (err >= 0) अणु
 				port[dev] = possible_ports[i];
-				break;
-			}
-		}
-	}
-	if (err < 0)
-		goto _err;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (err < 0)
+		जाओ _err;
 
-	if ((err = snd_gusmax_detect(gus)) < 0)
-		goto _err;
+	अगर ((err = snd_gusmax_detect(gus)) < 0)
+		जाओ _err;
 
 	maxcard->gus_status_reg = gus->gf1.reg_irqstat;
 	maxcard->pcm_status_reg = gus->gf1.port + 0x10c + 2;
 	snd_gusmax_init(dev, card, gus);
-	if ((err = snd_gus_initialize(gus)) < 0)
-		goto _err;
+	अगर ((err = snd_gus_initialize(gus)) < 0)
+		जाओ _err;
 
-	if (!gus->max_flag) {
-		snd_printk(KERN_ERR PFX "GUS MAX soundcard was not detected at 0x%lx\n", gus->gf1.port);
+	अगर (!gus->max_flag) अणु
+		snd_prपूर्णांकk(KERN_ERR PFX "GUS MAX soundcard was not detected at 0x%lx\n", gus->gf1.port);
 		err = -ENODEV;
-		goto _err;
-	}
+		जाओ _err;
+	पूर्ण
 
-	if (request_irq(xirq, snd_gusmax_interrupt, 0, "GUS MAX", (void *)maxcard)) {
-		snd_printk(KERN_ERR PFX "unable to grab IRQ %d\n", xirq);
+	अगर (request_irq(xirq, snd_gusmax_पूर्णांकerrupt, 0, "GUS MAX", (व्योम *)maxcard)) अणु
+		snd_prपूर्णांकk(KERN_ERR PFX "unable to grab IRQ %d\n", xirq);
 		err = -EBUSY;
-		goto _err;
-	}
+		जाओ _err;
+	पूर्ण
 	maxcard->irq = xirq;
 	card->sync_irq = maxcard->irq;
 
@@ -291,67 +292,67 @@ static int snd_gusmax_probe(struct device *pdev, unsigned int dev)
 			     WSS_HWSHARE_DMA1 |
 			     WSS_HWSHARE_DMA2,
 			     &wss);
-	if (err < 0)
-		goto _err;
+	अगर (err < 0)
+		जाओ _err;
 
 	err = snd_wss_pcm(wss, 0);
-	if (err < 0)
-		goto _err;
+	अगर (err < 0)
+		जाओ _err;
 
 	err = snd_wss_mixer(wss);
-	if (err < 0)
-		goto _err;
+	अगर (err < 0)
+		जाओ _err;
 
-	err = snd_wss_timer(wss, 2);
-	if (err < 0)
-		goto _err;
+	err = snd_wss_समयr(wss, 2);
+	अगर (err < 0)
+		जाओ _err;
 
-	if (pcm_channels[dev] > 0) {
-		if ((err = snd_gf1_pcm_new(gus, 1, 1)) < 0)
-			goto _err;
-	}
+	अगर (pcm_channels[dev] > 0) अणु
+		अगर ((err = snd_gf1_pcm_new(gus, 1, 1)) < 0)
+			जाओ _err;
+	पूर्ण
 	err = snd_gusmax_mixer(wss);
-	if (err < 0)
-		goto _err;
+	अगर (err < 0)
+		जाओ _err;
 
 	err = snd_gf1_rawmidi_new(gus, 0);
-	if (err < 0)
-		goto _err;
+	अगर (err < 0)
+		जाओ _err;
 
-	sprintf(card->longname + strlen(card->longname), " at 0x%lx, irq %i, dma %i", gus->gf1.port, xirq, xdma1);
-	if (xdma2 >= 0)
-		sprintf(card->longname + strlen(card->longname), "&%i", xdma2);
+	प्र_लिखो(card->दीर्घname + म_माप(card->दीर्घname), " at 0x%lx, irq %i, dma %i", gus->gf1.port, xirq, xdma1);
+	अगर (xdma2 >= 0)
+		प्र_लिखो(card->दीर्घname + म_माप(card->दीर्घname), "&%i", xdma2);
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto _err;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ _err;
 		
 	maxcard->gus = gus;
 	maxcard->wss = wss;
 
 	dev_set_drvdata(pdev, card);
-	return 0;
+	वापस 0;
 
  _err:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-static void snd_gusmax_remove(struct device *devptr, unsigned int dev)
-{
-	snd_card_free(dev_get_drvdata(devptr));
-}
+अटल व्योम snd_gusmax_हटाओ(काष्ठा device *devptr, अचिन्हित पूर्णांक dev)
+अणु
+	snd_card_मुक्त(dev_get_drvdata(devptr));
+पूर्ण
 
-#define DEV_NAME "gusmax"
+#घोषणा DEV_NAME "gusmax"
 
-static struct isa_driver snd_gusmax_driver = {
+अटल काष्ठा isa_driver snd_gusmax_driver = अणु
 	.match		= snd_gusmax_match,
 	.probe		= snd_gusmax_probe,
-	.remove		= snd_gusmax_remove,
+	.हटाओ		= snd_gusmax_हटाओ,
 	/* FIXME: suspend/resume */
-	.driver		= {
+	.driver		= अणु
 		.name	= DEV_NAME
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 module_isa_driver(snd_gusmax_driver, SNDRV_CARDS);

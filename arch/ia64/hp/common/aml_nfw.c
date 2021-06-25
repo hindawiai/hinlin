@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OpRegion handler to allow AML to call native firmware
  *
@@ -8,59 +9,59 @@
  * This driver implements HP Open Source Review Board proposal 1842,
  * which was approved on 9/20/2006.
  *
- * For technical documentation, see the HP SPPA Firmware EAS, Appendix F.
+ * For technical करोcumentation, see the HP SPPA Firmware EAS, Appendix F.
  *
- * ACPI does not define a mechanism for AML methods to call native firmware
- * interfaces such as PAL or SAL.  This OpRegion handler adds such a mechanism.
+ * ACPI करोes not define a mechanism क्रम AML methods to call native firmware
+ * पूर्णांकerfaces such as PAL or SAL.  This OpRegion handler adds such a mechanism.
  * After the handler is installed, an AML method can call native firmware by
- * storing the arguments and firmware entry point to specific offsets in the
- * OpRegion.  When AML reads the "return value" offset from the OpRegion, this
- * handler loads up the arguments, makes the firmware call, and returns the
+ * storing the arguments and firmware entry poपूर्णांक to specअगरic offsets in the
+ * OpRegion.  When AML पढ़ोs the "return value" offset from the OpRegion, this
+ * handler loads up the arguments, makes the firmware call, and वापसs the
  * result.
  */
 
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <asm/sal.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <यंत्र/sal.h>
 
 MODULE_AUTHOR("Bjorn Helgaas <bjorn.helgaas@hp.com>");
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("ACPI opregion handler for native firmware calls");
 
-static bool force_register;
-module_param_named(force, force_register, bool, 0);
-MODULE_PARM_DESC(force, "Install opregion handler even without HPQ5001 device");
+अटल bool क्रमce_रेजिस्टर;
+module_param_named(क्रमce, क्रमce_रेजिस्टर, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Install opregion handler even without HPQ5001 device");
 
-#define AML_NFW_SPACE		0xA1
+#घोषणा AML_NFW_SPACE		0xA1
 
-struct ia64_pdesc {
-	void *ip;
-	void *gp;
-};
+काष्ठा ia64_pdesc अणु
+	व्योम *ip;
+	व्योम *gp;
+पूर्ण;
 
 /*
- * N.B.  The layout of this structure is defined in the HP SPPA FW EAS, and
+ * N.B.  The layout of this काष्ठाure is defined in the HP SPPA FW EAS, and
  *	 the member offsets are embedded in AML methods.
  */
-struct ia64_nfw_context {
+काष्ठा ia64_nfw_context अणु
 	u64 arg[8];
-	struct ia64_sal_retval ret;
+	काष्ठा ia64_sal_retval ret;
 	u64 ip;
 	u64 gp;
 	u64 pad[2];
-};
+पूर्ण;
 
-static void *virt_map(u64 address)
-{
-	if (address & (1UL << 63))
-		return (void *) (__IA64_UNCACHED_OFFSET | address);
+अटल व्योम *virt_map(u64 address)
+अणु
+	अगर (address & (1UL << 63))
+		वापस (व्योम *) (__IA64_UNCACHED_OFFSET | address);
 
-	return __va(address);
-}
+	वापस __va(address);
+पूर्ण
 
-static void aml_nfw_execute(struct ia64_nfw_context *c)
-{
-	struct ia64_pdesc virt_entry;
+अटल व्योम aml_nfw_execute(काष्ठा ia64_nfw_context *c)
+अणु
+	काष्ठा ia64_pdesc virt_entry;
 	ia64_sal_handler entry;
 
 	virt_entry.ip = virt_map(c->ip);
@@ -71,162 +72,162 @@ static void aml_nfw_execute(struct ia64_nfw_context *c)
 	IA64_FW_CALL(entry, c->ret,
 		     c->arg[0], c->arg[1], c->arg[2], c->arg[3],
 		     c->arg[4], c->arg[5], c->arg[6], c->arg[7]);
-}
+पूर्ण
 
-static void aml_nfw_read_arg(u8 *offset, u32 bit_width, u64 *value)
-{
-	switch (bit_width) {
-	case 8:
+अटल व्योम aml_nfw_पढ़ो_arg(u8 *offset, u32 bit_width, u64 *value)
+अणु
+	चयन (bit_width) अणु
+	हाल 8:
 		*value = *(u8 *)offset;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		*value = *(u16 *)offset;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		*value = *(u32 *)offset;
-		break;
-	case 64:
+		अवरोध;
+	हाल 64:
 		*value = *(u64 *)offset;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void aml_nfw_write_arg(u8 *offset, u32 bit_width, u64 *value)
-{
-	switch (bit_width) {
-	case 8:
+अटल व्योम aml_nfw_ग_लिखो_arg(u8 *offset, u32 bit_width, u64 *value)
+अणु
+	चयन (bit_width) अणु
+	हाल 8:
 		*(u8 *) offset = *value;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		*(u16 *) offset = *value;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		*(u32 *) offset = *value;
-		break;
-	case 64:
+		अवरोध;
+	हाल 64:
 		*(u64 *) offset = *value;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static acpi_status aml_nfw_handler(u32 function, acpi_physical_address address,
-	u32 bit_width, u64 *value, void *handler_context,
-	void *region_context)
-{
-	struct ia64_nfw_context *context = handler_context;
+अटल acpi_status aml_nfw_handler(u32 function, acpi_physical_address address,
+	u32 bit_width, u64 *value, व्योम *handler_context,
+	व्योम *region_context)
+अणु
+	काष्ठा ia64_nfw_context *context = handler_context;
 	u8 *offset = (u8 *) context + address;
 
-	if (bit_width !=  8 && bit_width != 16 &&
+	अगर (bit_width !=  8 && bit_width != 16 &&
 	    bit_width != 32 && bit_width != 64)
-		return AE_BAD_PARAMETER;
+		वापस AE_BAD_PARAMETER;
 
-	if (address + (bit_width >> 3) > sizeof(struct ia64_nfw_context))
-		return AE_BAD_PARAMETER;
+	अगर (address + (bit_width >> 3) > माप(काष्ठा ia64_nfw_context))
+		वापस AE_BAD_PARAMETER;
 
-	switch (function) {
-	case ACPI_READ:
-		if (address == offsetof(struct ia64_nfw_context, ret))
+	चयन (function) अणु
+	हाल ACPI_READ:
+		अगर (address == दुरत्व(काष्ठा ia64_nfw_context, ret))
 			aml_nfw_execute(context);
-		aml_nfw_read_arg(offset, bit_width, value);
-		break;
-	case ACPI_WRITE:
-		aml_nfw_write_arg(offset, bit_width, value);
-		break;
-	}
+		aml_nfw_पढ़ो_arg(offset, bit_width, value);
+		अवरोध;
+	हाल ACPI_WRITE:
+		aml_nfw_ग_लिखो_arg(offset, bit_width, value);
+		अवरोध;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static struct ia64_nfw_context global_context;
-static int global_handler_registered;
+अटल काष्ठा ia64_nfw_context global_context;
+अटल पूर्णांक global_handler_रेजिस्टरed;
 
-static int aml_nfw_add_global_handler(void)
-{
+अटल पूर्णांक aml_nfw_add_global_handler(व्योम)
+अणु
 	acpi_status status;
 
-	if (global_handler_registered)
-		return 0;
+	अगर (global_handler_रेजिस्टरed)
+		वापस 0;
 
 	status = acpi_install_address_space_handler(ACPI_ROOT_OBJECT,
-		AML_NFW_SPACE, aml_nfw_handler, NULL, &global_context);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+		AML_NFW_SPACE, aml_nfw_handler, शून्य, &global_context);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	global_handler_registered = 1;
-	printk(KERN_INFO "Global 0x%02X opregion handler registered\n",
+	global_handler_रेजिस्टरed = 1;
+	prपूर्णांकk(KERN_INFO "Global 0x%02X opregion handler registered\n",
 		AML_NFW_SPACE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aml_nfw_remove_global_handler(void)
-{
+अटल पूर्णांक aml_nfw_हटाओ_global_handler(व्योम)
+अणु
 	acpi_status status;
 
-	if (!global_handler_registered)
-		return 0;
+	अगर (!global_handler_रेजिस्टरed)
+		वापस 0;
 
-	status = acpi_remove_address_space_handler(ACPI_ROOT_OBJECT,
+	status = acpi_हटाओ_address_space_handler(ACPI_ROOT_OBJECT,
 		AML_NFW_SPACE, aml_nfw_handler);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	global_handler_registered = 0;
-	printk(KERN_INFO "Global 0x%02X opregion handler removed\n",
+	global_handler_रेजिस्टरed = 0;
+	prपूर्णांकk(KERN_INFO "Global 0x%02X opregion handler removed\n",
 		AML_NFW_SPACE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int aml_nfw_add(struct acpi_device *device)
-{
+अटल पूर्णांक aml_nfw_add(काष्ठा acpi_device *device)
+अणु
 	/*
-	 * We would normally allocate a new context structure and install
-	 * the address space handler for the specific device we found.
+	 * We would normally allocate a new context काष्ठाure and install
+	 * the address space handler क्रम the specअगरic device we found.
 	 * But the HP-UX implementation shares a single global context
-	 * and always puts the handler at the root, so we'll do the same.
+	 * and always माला_दो the handler at the root, so we'll करो the same.
 	 */
-	return aml_nfw_add_global_handler();
-}
+	वापस aml_nfw_add_global_handler();
+पूर्ण
 
-static int aml_nfw_remove(struct acpi_device *device)
-{
-	return aml_nfw_remove_global_handler();
-}
+अटल पूर्णांक aml_nfw_हटाओ(काष्ठा acpi_device *device)
+अणु
+	वापस aml_nfw_हटाओ_global_handler();
+पूर्ण
 
-static const struct acpi_device_id aml_nfw_ids[] = {
-	{"HPQ5001", 0},
-	{"", 0}
-};
+अटल स्थिर काष्ठा acpi_device_id aml_nfw_ids[] = अणु
+	अणु"HPQ5001", 0पूर्ण,
+	अणु"", 0पूर्ण
+पूर्ण;
 
-static struct acpi_driver acpi_aml_nfw_driver = {
+अटल काष्ठा acpi_driver acpi_aml_nfw_driver = अणु
 	.name = "native firmware",
 	.ids = aml_nfw_ids,
-	.ops = {
+	.ops = अणु
 		.add = aml_nfw_add,
-		.remove = aml_nfw_remove,
-		},
-};
+		.हटाओ = aml_nfw_हटाओ,
+		पूर्ण,
+पूर्ण;
 
-static int __init aml_nfw_init(void)
-{
-	int result;
+अटल पूर्णांक __init aml_nfw_init(व्योम)
+अणु
+	पूर्णांक result;
 
-	if (force_register)
+	अगर (क्रमce_रेजिस्टर)
 		aml_nfw_add_global_handler();
 
-	result = acpi_bus_register_driver(&acpi_aml_nfw_driver);
-	if (result < 0) {
-		aml_nfw_remove_global_handler();
-		return result;
-	}
+	result = acpi_bus_रेजिस्टर_driver(&acpi_aml_nfw_driver);
+	अगर (result < 0) अणु
+		aml_nfw_हटाओ_global_handler();
+		वापस result;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit aml_nfw_exit(void)
-{
-	acpi_bus_unregister_driver(&acpi_aml_nfw_driver);
-	aml_nfw_remove_global_handler();
-}
+अटल व्योम __निकास aml_nfw_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&acpi_aml_nfw_driver);
+	aml_nfw_हटाओ_global_handler();
+पूर्ण
 
 module_init(aml_nfw_init);
-module_exit(aml_nfw_exit);
+module_निकास(aml_nfw_निकास);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
 * Filename: rsxx_priv.h
 *
@@ -8,174 +9,174 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#ifndef __RSXX_PRIV_H__
-#define __RSXX_PRIV_H__
+#अगर_अघोषित __RSXX_PRIV_H__
+#घोषणा __RSXX_PRIV_H__
 
-#include <linux/semaphore.h>
+#समावेश <linux/semaphore.h>
 
-#include <linux/fs.h>
-#include <linux/interrupt.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/spinlock.h>
-#include <linux/sysfs.h>
-#include <linux/workqueue.h>
-#include <linux/bio.h>
-#include <linux/vmalloc.h>
-#include <linux/timer.h>
-#include <linux/ioctl.h>
-#include <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/delay.h>
 
-#include "rsxx.h"
-#include "rsxx_cfg.h"
+#समावेश "rsxx.h"
+#समावेश "rsxx_cfg.h"
 
-struct proc_cmd;
+काष्ठा proc_cmd;
 
-#define PCI_DEVICE_ID_FS70_FLASH	0x04A9
-#define PCI_DEVICE_ID_FS80_FLASH	0x04AA
+#घोषणा PCI_DEVICE_ID_FS70_FLASH	0x04A9
+#घोषणा PCI_DEVICE_ID_FS80_FLASH	0x04AA
 
-#define RS70_PCI_REV_SUPPORTED	4
+#घोषणा RS70_PCI_REV_SUPPORTED	4
 
-#define DRIVER_NAME "rsxx"
-#define DRIVER_VERSION "4.0.3.2516"
+#घोषणा DRIVER_NAME "rsxx"
+#घोषणा DRIVER_VERSION "4.0.3.2516"
 
 /* Block size is 4096 */
-#define RSXX_HW_BLK_SHIFT		12
-#define RSXX_HW_BLK_SIZE		(1 << RSXX_HW_BLK_SHIFT)
-#define RSXX_HW_BLK_MASK		(RSXX_HW_BLK_SIZE - 1)
+#घोषणा RSXX_HW_BLK_SHIFT		12
+#घोषणा RSXX_HW_BLK_SIZE		(1 << RSXX_HW_BLK_SHIFT)
+#घोषणा RSXX_HW_BLK_MASK		(RSXX_HW_BLK_SIZE - 1)
 
-#define MAX_CREG_DATA8	32
-#define LOG_BUF_SIZE8	128
+#घोषणा MAX_CREG_DATA8	32
+#घोषणा LOG_BUF_SIZE8	128
 
-#define RSXX_MAX_OUTSTANDING_CMDS	255
-#define RSXX_CS_IDX_MASK		0xff
+#घोषणा RSXX_MAX_OUTSTANDING_CMDS	255
+#घोषणा RSXX_CS_IDX_MASK		0xff
 
-#define STATUS_BUFFER_SIZE8     4096
-#define COMMAND_BUFFER_SIZE8    4096
+#घोषणा STATUS_BUFFER_SIZE8     4096
+#घोषणा COMMAND_BUFFER_SIZE8    4096
 
-#define RSXX_MAX_TARGETS	8
+#घोषणा RSXX_MAX_TARGETS	8
 
-struct dma_tracker_list;
+काष्ठा dma_tracker_list;
 
-/* DMA Command/Status Buffer structure */
-struct rsxx_cs_buffer {
+/* DMA Command/Status Buffer काष्ठाure */
+काष्ठा rsxx_cs_buffer अणु
 	dma_addr_t	dma_addr;
-	void		*buf;
+	व्योम		*buf;
 	u32		idx;
-};
+पूर्ण;
 
-struct rsxx_dma_stats {
+काष्ठा rsxx_dma_stats अणु
 	u32 crc_errors;
 	u32 hard_errors;
 	u32 soft_errors;
-	u32 writes_issued;
-	u32 writes_failed;
-	u32 reads_issued;
-	u32 reads_failed;
-	u32 reads_retried;
+	u32 ग_लिखोs_issued;
+	u32 ग_लिखोs_failed;
+	u32 पढ़ोs_issued;
+	u32 पढ़ोs_failed;
+	u32 पढ़ोs_retried;
 	u32 discards_issued;
 	u32 discards_failed;
-	u32 done_rescheduled;
+	u32 करोne_rescheduled;
 	u32 issue_rescheduled;
 	u32 dma_sw_err;
 	u32 dma_hw_fault;
 	u32 dma_cancelled;
 	u32 sw_q_depth;		/* Number of DMAs on the SW queue. */
 	atomic_t hw_q_depth;	/* Number of DMAs queued to HW. */
-};
+पूर्ण;
 
-struct rsxx_dma_ctrl {
-	struct rsxx_cardinfo		*card;
-	int				id;
-	void				__iomem *regmap;
-	struct rsxx_cs_buffer		status;
-	struct rsxx_cs_buffer		cmd;
+काष्ठा rsxx_dma_ctrl अणु
+	काष्ठा rsxx_cardinfo		*card;
+	पूर्णांक				id;
+	व्योम				__iomem *regmap;
+	काष्ठा rsxx_cs_buffer		status;
+	काष्ठा rsxx_cs_buffer		cmd;
 	u16				e_cnt;
 	spinlock_t			queue_lock;
-	struct list_head		queue;
-	struct workqueue_struct		*issue_wq;
-	struct work_struct		issue_dma_work;
-	struct workqueue_struct		*done_wq;
-	struct work_struct		dma_done_work;
-	struct timer_list		activity_timer;
-	struct dma_tracker_list		*trackers;
-	struct rsxx_dma_stats		stats;
-	struct mutex			work_lock;
-};
+	काष्ठा list_head		queue;
+	काष्ठा workqueue_काष्ठा		*issue_wq;
+	काष्ठा work_काष्ठा		issue_dma_work;
+	काष्ठा workqueue_काष्ठा		*करोne_wq;
+	काष्ठा work_काष्ठा		dma_करोne_work;
+	काष्ठा समयr_list		activity_समयr;
+	काष्ठा dma_tracker_list		*trackers;
+	काष्ठा rsxx_dma_stats		stats;
+	काष्ठा mutex			work_lock;
+पूर्ण;
 
-struct rsxx_cardinfo {
-	struct pci_dev		*dev;
-	unsigned int		halt;
-	unsigned int		eeh_state;
+काष्ठा rsxx_cardinfo अणु
+	काष्ठा pci_dev		*dev;
+	अचिन्हित पूर्णांक		halt;
+	अचिन्हित पूर्णांक		eeh_state;
 
-	void			__iomem *regmap;
+	व्योम			__iomem *regmap;
 	spinlock_t		irq_lock;
-	unsigned int		isr_mask;
-	unsigned int		ier_mask;
+	अचिन्हित पूर्णांक		isr_mask;
+	अचिन्हित पूर्णांक		ier_mask;
 
-	struct rsxx_card_cfg	config;
-	int			config_valid;
+	काष्ठा rsxx_card_cfg	config;
+	पूर्णांक			config_valid;
 
 	/* Embedded CPU Communication */
-	struct {
+	काष्ठा अणु
 		spinlock_t		lock;
 		bool			active;
-		struct creg_cmd		*active_cmd;
-		struct workqueue_struct	*creg_wq;
-		struct work_struct	done_work;
-		struct list_head	queue;
-		unsigned int		q_depth;
-		/* Cache the creg status to prevent ioreads */
-		struct {
+		काष्ठा creg_cmd		*active_cmd;
+		काष्ठा workqueue_काष्ठा	*creg_wq;
+		काष्ठा work_काष्ठा	करोne_work;
+		काष्ठा list_head	queue;
+		अचिन्हित पूर्णांक		q_depth;
+		/* Cache the creg status to prevent ioपढ़ोs */
+		काष्ठा अणु
 			u32		stat;
-			u32		failed_cancel_timer;
-			u32		creg_timeout;
-		} creg_stats;
-		struct timer_list	cmd_timer;
-		struct mutex		reset_lock;
-		int			reset;
-	} creg_ctrl;
+			u32		failed_cancel_समयr;
+			u32		creg_समयout;
+		पूर्ण creg_stats;
+		काष्ठा समयr_list	cmd_समयr;
+		काष्ठा mutex		reset_lock;
+		पूर्णांक			reset;
+	पूर्ण creg_ctrl;
 
-	struct {
-		char tmp[MAX_CREG_DATA8];
-		char buf[LOG_BUF_SIZE8]; /* terminated */
-		int buf_len;
-	} log;
+	काष्ठा अणु
+		अक्षर पंचांगp[MAX_CREG_DATA8];
+		अक्षर buf[LOG_BUF_SIZE8]; /* terminated */
+		पूर्णांक buf_len;
+	पूर्ण log;
 
-	struct workqueue_struct	*event_wq;
-	struct work_struct	event_work;
-	unsigned int		state;
+	काष्ठा workqueue_काष्ठा	*event_wq;
+	काष्ठा work_काष्ठा	event_work;
+	अचिन्हित पूर्णांक		state;
 	u64			size8;
 
 	/* Lock the device attach/detach function */
-	struct mutex		dev_lock;
+	काष्ठा mutex		dev_lock;
 
 	/* Block Device Variables */
 	bool			bdev_attached;
-	int			disk_id;
-	int			major;
-	struct request_queue	*queue;
-	struct gendisk		*gendisk;
-	struct {
+	पूर्णांक			disk_id;
+	पूर्णांक			major;
+	काष्ठा request_queue	*queue;
+	काष्ठा gendisk		*gendisk;
+	काष्ठा अणु
 		/* Used to convert a byte address to a device address. */
 		u64 lower_mask;
-		u64 upper_shift;
+		u64 upper_shअगरt;
 		u64 upper_mask;
 		u64 target_mask;
-		u64 target_shift;
-	} _stripe;
-	unsigned int		dma_fault;
+		u64 target_shअगरt;
+	पूर्ण _stripe;
+	अचिन्हित पूर्णांक		dma_fault;
 
-	int			scrub_hard;
+	पूर्णांक			scrub_hard;
 
-	int			n_targets;
-	struct rsxx_dma_ctrl	*ctrl;
+	पूर्णांक			n_tarमाला_लो;
+	काष्ठा rsxx_dma_ctrl	*ctrl;
 
-	struct dentry		*debugfs_dir;
-};
+	काष्ठा dentry		*debugfs_dir;
+पूर्ण;
 
-enum rsxx_pci_regmap {
-	HWID		= 0x00,	/* Hardware Identification Register */
+क्रमागत rsxx_pci_regmap अणु
+	HWID		= 0x00,	/* Hardware Identअगरication Register */
 	SCRATCH		= 0x04, /* Scratch/Debug Register */
 	RESET		= 0x08, /* Reset Register */
 	ISR		= 0x10, /* Interrupt Status Register */
@@ -220,9 +221,9 @@ enum rsxx_pci_regmap {
 	PERF_WR512_LO	= 0xb0,
 	PERF_WR512_HI	= 0xb4,
 	PCI_RECONFIG	= 0xb8,
-};
+पूर्ण;
 
-enum rsxx_intr {
+क्रमागत rsxx_पूर्णांकr अणु
 	CR_INTR_DMA0	= 0x00000001,
 	CR_INTR_CREG	= 0x00000002,
 	CR_INTR_DMA1	= 0x00000004,
@@ -237,37 +238,37 @@ enum rsxx_intr {
 	CR_INTR_ALL_G	= 0x000003ff,
 	CR_INTR_DMA_ALL = 0x000003f5,
 	CR_INTR_ALL	= 0xffffffff,
-};
+पूर्ण;
 
-static inline int CR_INTR_DMA(int N)
-{
-	static const unsigned int _CR_INTR_DMA[] = {
+अटल अंतरभूत पूर्णांक CR_INTR_DMA(पूर्णांक N)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक _CR_INTR_DMA[] = अणु
 		CR_INTR_DMA0, CR_INTR_DMA1, CR_INTR_DMA2, CR_INTR_DMA3,
 		CR_INTR_DMA4, CR_INTR_DMA5, CR_INTR_DMA6, CR_INTR_DMA7
-	};
-	return _CR_INTR_DMA[N];
-}
-enum rsxx_pci_reset {
+	पूर्ण;
+	वापस _CR_INTR_DMA[N];
+पूर्ण
+क्रमागत rsxx_pci_reset अणु
 	DMA_QUEUE_RESET		= 0x00000001,
-};
+पूर्ण;
 
-enum rsxx_hw_fifo_flush {
+क्रमागत rsxx_hw_fअगरo_flush अणु
 	RSXX_FLUSH_BUSY		= 0x00000002,
 	RSXX_FLUSH_TIMEOUT	= 0x00000004,
-};
+पूर्ण;
 
-enum rsxx_pci_revision {
+क्रमागत rsxx_pci_revision अणु
 	RSXX_DISCARD_SUPPORT = 2,
 	RSXX_EEH_SUPPORT     = 3,
-};
+पूर्ण;
 
-enum rsxx_creg_cmd {
+क्रमागत rsxx_creg_cmd अणु
 	CREG_CMD_TAG_MASK	= 0x0000FF00,
 	CREG_OP_WRITE		= 0x000000C0,
 	CREG_OP_READ		= 0x000000E0,
-};
+पूर्ण;
 
-enum rsxx_creg_addr {
+क्रमागत rsxx_creg_addr अणु
 	CREG_ADD_CARD_CMD		= 0x80001000,
 	CREG_ADD_CARD_STATE		= 0x80001004,
 	CREG_ADD_CARD_SIZE		= 0x8000100c,
@@ -276,9 +277,9 @@ enum rsxx_creg_addr {
 	CREG_ADD_NUM_TARGETS		= 0x80003000,
 	CREG_ADD_CRAM			= 0xA0000000,
 	CREG_ADD_CONFIG			= 0xB0000000,
-};
+पूर्ण;
 
-enum rsxx_creg_card_cmd {
+क्रमागत rsxx_creg_card_cmd अणु
 	CARD_CMD_STARTUP		= 1,
 	CARD_CMD_SHUTDOWN		= 2,
 	CARD_CMD_LOW_LEVEL_FORMAT	= 3,
@@ -292,9 +293,9 @@ enum rsxx_creg_card_cmd {
 	CARD_CMD_DSTROY_NORMAL		= 11,
 	CARD_CMD_DSTROY_EXTENDED	= 12,
 	CARD_CMD_DSTROY_ABORT		= 13,
-};
+पूर्ण;
 
-enum rsxx_card_state {
+क्रमागत rsxx_card_state अणु
 	CARD_STATE_SHUTDOWN		= 0x00000001,
 	CARD_STATE_STARTING		= 0x00000002,
 	CARD_STATE_FORMATTING		= 0x00000004,
@@ -304,116 +305,116 @@ enum rsxx_card_state {
 	CARD_STATE_FAULT		= 0x00000040,
 	CARD_STATE_RD_ONLY_FAULT	= 0x00000080,
 	CARD_STATE_DSTROYING		= 0x00000100,
-};
+पूर्ण;
 
-enum rsxx_led {
+क्रमागत rsxx_led अणु
 	LED_DEFAULT	= 0x0,
 	LED_IDENTIFY	= 0x1,
 	LED_SOAK	= 0x2,
-};
+पूर्ण;
 
-enum rsxx_creg_flash_lock {
+क्रमागत rsxx_creg_flash_lock अणु
 	CREG_FLASH_LOCK		= 1,
 	CREG_FLASH_UNLOCK	= 2,
-};
+पूर्ण;
 
-enum rsxx_card_capabilities {
+क्रमागत rsxx_card_capabilities अणु
 	CARD_CAP_SUBPAGE_WRITES = 0x00000080,
-};
+पूर्ण;
 
-enum rsxx_creg_stat {
+क्रमागत rsxx_creg_stat अणु
 	CREG_STAT_STATUS_MASK	= 0x00000003,
 	CREG_STAT_SUCCESS	= 0x1,
 	CREG_STAT_ERROR		= 0x2,
 	CREG_STAT_CHAR_PENDING	= 0x00000004, /* Character I/O pending bit */
 	CREG_STAT_LOG_PENDING	= 0x00000008, /* HW log message pending bit */
 	CREG_STAT_TAG_MASK	= 0x0000ff00,
-};
+पूर्ण;
 
-enum rsxx_dma_finish {
+क्रमागत rsxx_dma_finish अणु
 	FREE_DMA	= 0x0,
 	COMPLETE_DMA	= 0x1,
-};
+पूर्ण;
 
-static inline unsigned int CREG_DATA(int N)
-{
-	return CREG_DATA0 + (N << 2);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक CREG_DATA(पूर्णांक N)
+अणु
+	वापस CREG_DATA0 + (N << 2);
+पूर्ण
 
 /*----------------- Convenient Log Wrappers -------------------*/
-#define CARD_TO_DEV(__CARD)	(&(__CARD)->dev->dev)
+#घोषणा CARD_TO_DEV(__CARD)	(&(__CARD)->dev->dev)
 
 /***** config.c *****/
-int rsxx_load_config(struct rsxx_cardinfo *card);
+पूर्णांक rsxx_load_config(काष्ठा rsxx_cardinfo *card);
 
 /***** core.c *****/
-void rsxx_enable_ier(struct rsxx_cardinfo *card, unsigned int intr);
-void rsxx_disable_ier(struct rsxx_cardinfo *card, unsigned int intr);
-void rsxx_enable_ier_and_isr(struct rsxx_cardinfo *card,
-				 unsigned int intr);
-void rsxx_disable_ier_and_isr(struct rsxx_cardinfo *card,
-				  unsigned int intr);
+व्योम rsxx_enable_ier(काष्ठा rsxx_cardinfo *card, अचिन्हित पूर्णांक पूर्णांकr);
+व्योम rsxx_disable_ier(काष्ठा rsxx_cardinfo *card, अचिन्हित पूर्णांक पूर्णांकr);
+व्योम rsxx_enable_ier_and_isr(काष्ठा rsxx_cardinfo *card,
+				 अचिन्हित पूर्णांक पूर्णांकr);
+व्योम rsxx_disable_ier_and_isr(काष्ठा rsxx_cardinfo *card,
+				  अचिन्हित पूर्णांक पूर्णांकr);
 
 /***** dev.c *****/
-int rsxx_attach_dev(struct rsxx_cardinfo *card);
-void rsxx_detach_dev(struct rsxx_cardinfo *card);
-int rsxx_setup_dev(struct rsxx_cardinfo *card);
-void rsxx_destroy_dev(struct rsxx_cardinfo *card);
-int rsxx_dev_init(void);
-void rsxx_dev_cleanup(void);
+पूर्णांक rsxx_attach_dev(काष्ठा rsxx_cardinfo *card);
+व्योम rsxx_detach_dev(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_setup_dev(काष्ठा rsxx_cardinfo *card);
+व्योम rsxx_destroy_dev(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_dev_init(व्योम);
+व्योम rsxx_dev_cleanup(व्योम);
 
 /***** dma.c ****/
-typedef void (*rsxx_dma_cb)(struct rsxx_cardinfo *card,
-				void *cb_data,
-				unsigned int status);
-int rsxx_dma_setup(struct rsxx_cardinfo *card);
-void rsxx_dma_destroy(struct rsxx_cardinfo *card);
-int rsxx_dma_init(void);
-int rsxx_cleanup_dma_queue(struct rsxx_dma_ctrl *ctrl,
-				struct list_head *q,
-				unsigned int done);
-int rsxx_dma_cancel(struct rsxx_dma_ctrl *ctrl);
-void rsxx_dma_cleanup(void);
-void rsxx_dma_queue_reset(struct rsxx_cardinfo *card);
-int rsxx_dma_configure(struct rsxx_cardinfo *card);
-blk_status_t rsxx_dma_queue_bio(struct rsxx_cardinfo *card,
-			   struct bio *bio,
+प्रकार व्योम (*rsxx_dma_cb)(काष्ठा rsxx_cardinfo *card,
+				व्योम *cb_data,
+				अचिन्हित पूर्णांक status);
+पूर्णांक rsxx_dma_setup(काष्ठा rsxx_cardinfo *card);
+व्योम rsxx_dma_destroy(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_dma_init(व्योम);
+पूर्णांक rsxx_cleanup_dma_queue(काष्ठा rsxx_dma_ctrl *ctrl,
+				काष्ठा list_head *q,
+				अचिन्हित पूर्णांक करोne);
+पूर्णांक rsxx_dma_cancel(काष्ठा rsxx_dma_ctrl *ctrl);
+व्योम rsxx_dma_cleanup(व्योम);
+व्योम rsxx_dma_queue_reset(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_dma_configure(काष्ठा rsxx_cardinfo *card);
+blk_status_t rsxx_dma_queue_bio(काष्ठा rsxx_cardinfo *card,
+			   काष्ठा bio *bio,
 			   atomic_t *n_dmas,
 			   rsxx_dma_cb cb,
-			   void *cb_data);
-int rsxx_hw_buffers_init(struct pci_dev *dev, struct rsxx_dma_ctrl *ctrl);
-int rsxx_eeh_save_issued_dmas(struct rsxx_cardinfo *card);
-int rsxx_eeh_remap_dmas(struct rsxx_cardinfo *card);
+			   व्योम *cb_data);
+पूर्णांक rsxx_hw_buffers_init(काष्ठा pci_dev *dev, काष्ठा rsxx_dma_ctrl *ctrl);
+पूर्णांक rsxx_eeh_save_issued_dmas(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_eeh_remap_dmas(काष्ठा rsxx_cardinfo *card);
 
 /***** cregs.c *****/
-int rsxx_creg_write(struct rsxx_cardinfo *card, u32 addr,
-			unsigned int size8,
-			void *data,
-			int byte_stream);
-int rsxx_creg_read(struct rsxx_cardinfo *card,
+पूर्णांक rsxx_creg_ग_लिखो(काष्ठा rsxx_cardinfo *card, u32 addr,
+			अचिन्हित पूर्णांक size8,
+			व्योम *data,
+			पूर्णांक byte_stream);
+पूर्णांक rsxx_creg_पढ़ो(काष्ठा rsxx_cardinfo *card,
 		       u32 addr,
-		       unsigned int size8,
-		       void *data,
-		       int byte_stream);
-int rsxx_read_hw_log(struct rsxx_cardinfo *card);
-int rsxx_get_card_state(struct rsxx_cardinfo *card,
-			    unsigned int *state);
-int rsxx_get_card_size8(struct rsxx_cardinfo *card, u64 *size8);
-int rsxx_get_num_targets(struct rsxx_cardinfo *card,
-			     unsigned int *n_targets);
-int rsxx_get_card_capabilities(struct rsxx_cardinfo *card,
+		       अचिन्हित पूर्णांक size8,
+		       व्योम *data,
+		       पूर्णांक byte_stream);
+पूर्णांक rsxx_पढ़ो_hw_log(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_get_card_state(काष्ठा rsxx_cardinfo *card,
+			    अचिन्हित पूर्णांक *state);
+पूर्णांक rsxx_get_card_size8(काष्ठा rsxx_cardinfo *card, u64 *size8);
+पूर्णांक rsxx_get_num_tarमाला_लो(काष्ठा rsxx_cardinfo *card,
+			     अचिन्हित पूर्णांक *n_tarमाला_लो);
+पूर्णांक rsxx_get_card_capabilities(काष्ठा rsxx_cardinfo *card,
 				   u32 *capabilities);
-int rsxx_issue_card_cmd(struct rsxx_cardinfo *card, u32 cmd);
-int rsxx_creg_setup(struct rsxx_cardinfo *card);
-void rsxx_creg_destroy(struct rsxx_cardinfo *card);
-int rsxx_creg_init(void);
-void rsxx_creg_cleanup(void);
-int rsxx_reg_access(struct rsxx_cardinfo *card,
-			struct rsxx_reg_access __user *ucmd,
-			int read);
-void rsxx_eeh_save_issued_creg(struct rsxx_cardinfo *card);
-void rsxx_kick_creg_queue(struct rsxx_cardinfo *card);
+पूर्णांक rsxx_issue_card_cmd(काष्ठा rsxx_cardinfo *card, u32 cmd);
+पूर्णांक rsxx_creg_setup(काष्ठा rsxx_cardinfo *card);
+व्योम rsxx_creg_destroy(काष्ठा rsxx_cardinfo *card);
+पूर्णांक rsxx_creg_init(व्योम);
+व्योम rsxx_creg_cleanup(व्योम);
+पूर्णांक rsxx_reg_access(काष्ठा rsxx_cardinfo *card,
+			काष्ठा rsxx_reg_access __user *ucmd,
+			पूर्णांक पढ़ो);
+व्योम rsxx_eeh_save_issued_creg(काष्ठा rsxx_cardinfo *card);
+व्योम rsxx_kick_creg_queue(काष्ठा rsxx_cardinfo *card);
 
 
 
-#endif /* __DRIVERS_BLOCK_RSXX_H__ */
+#पूर्ण_अगर /* __DRIVERS_BLOCK_RSXX_H__ */

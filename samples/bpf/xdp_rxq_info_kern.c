@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0
  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.
  *
  *  Example howto extract XDP RX-queue info
  */
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/if_ether.h>
-#include <uapi/linux/in.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/अगर_ether.h>
+#समावेश <uapi/linux/in.h>
+#समावेश <bpf/bpf_helpers.h>
 
 /* Config setup from with userspace
  *
- * User-side setup ifindex in config_map, to verify that
- * ctx->ingress_ifindex is correct (against configured ifindex)
+ * User-side setup अगरindex in config_map, to verअगरy that
+ * ctx->ingress_अगरindex is correct (against configured अगरindex)
  */
-struct config {
+काष्ठा config अणु
 	__u32 action;
-	int ifindex;
+	पूर्णांक अगरindex;
 	__u32 options;
-};
-enum cfg_options_flags {
+पूर्ण;
+क्रमागत cfg_options_flags अणु
 	NO_TOUCH = 0x0U,
 	READ_MEM = 0x1U,
 	SWAP_MAC = 0x2U,
-};
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__type(key, int);
-	__type(value, struct config);
-	__uint(max_entries, 1);
-} config_map SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__type(key, पूर्णांक);
+	__type(value, काष्ठा config);
+	__uपूर्णांक(max_entries, 1);
+पूर्ण config_map SEC(".maps");
 
 /* Common stats data record (shared with userspace) */
-struct datarec {
+काष्ठा datarec अणु
 	__u64 processed;
 	__u64 issue;
-};
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
-	__type(value, struct datarec);
-	__uint(max_entries, 1);
-} stats_global_map SEC(".maps");
+	__type(value, काष्ठा datarec);
+	__uपूर्णांक(max_entries, 1);
+पूर्ण stats_global_map SEC(".maps");
 
-#define MAX_RXQs 64
+#घोषणा MAX_RXQs 64
 
 /* Stats per rx_queue_index (per CPU) */
-struct {
-	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_PERCPU_ARRAY);
 	__type(key, u32);
-	__type(value, struct datarec);
-	__uint(max_entries, MAX_RXQs + 1);
-} rx_queue_index_map SEC(".maps");
+	__type(value, काष्ठा datarec);
+	__uपूर्णांक(max_entries, MAX_RXQs + 1);
+पूर्ण rx_queue_index_map SEC(".maps");
 
-static __always_inline
-void swap_src_dst_mac(void *data)
-{
-	unsigned short *p = data;
-	unsigned short dst[3];
+अटल __always_अंतरभूत
+व्योम swap_src_dst_mac(व्योम *data)
+अणु
+	अचिन्हित लघु *p = data;
+	अचिन्हित लघु dst[3];
 
 	dst[0] = p[0];
 	dst[1] = p[1];
@@ -69,72 +70,72 @@ void swap_src_dst_mac(void *data)
 	p[3] = dst[0];
 	p[4] = dst[1];
 	p[5] = dst[2];
-}
+पूर्ण
 
 SEC("xdp_prog0")
-int  xdp_prognum0(struct xdp_md *ctx)
-{
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data     = (void *)(long)ctx->data;
-	struct datarec *rec, *rxq_rec;
-	int ingress_ifindex;
-	struct config *config;
+पूर्णांक  xdp_prognum0(काष्ठा xdp_md *ctx)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data     = (व्योम *)(दीर्घ)ctx->data;
+	काष्ठा datarec *rec, *rxq_rec;
+	पूर्णांक ingress_अगरindex;
+	काष्ठा config *config;
 	u32 key = 0;
 
 	/* Global stats record */
 	rec = bpf_map_lookup_elem(&stats_global_map, &key);
-	if (!rec)
-		return XDP_ABORTED;
+	अगर (!rec)
+		वापस XDP_ABORTED;
 	rec->processed++;
 
-	/* Accessing ctx->ingress_ifindex, cause BPF to rewrite BPF
-	 * instructions inside kernel to access xdp_rxq->dev->ifindex
+	/* Accessing ctx->ingress_अगरindex, cause BPF to reग_लिखो BPF
+	 * inकाष्ठाions inside kernel to access xdp_rxq->dev->अगरindex
 	 */
-	ingress_ifindex = ctx->ingress_ifindex;
+	ingress_अगरindex = ctx->ingress_अगरindex;
 
 	config = bpf_map_lookup_elem(&config_map, &key);
-	if (!config)
-		return XDP_ABORTED;
+	अगर (!config)
+		वापस XDP_ABORTED;
 
-	/* Simple test: check ctx provided ifindex is as expected */
-	if (ingress_ifindex != config->ifindex) {
-		/* count this error case */
+	/* Simple test: check ctx provided अगरindex is as expected */
+	अगर (ingress_अगरindex != config->अगरindex) अणु
+		/* count this error हाल */
 		rec->issue++;
-		return XDP_ABORTED;
-	}
+		वापस XDP_ABORTED;
+	पूर्ण
 
-	/* Update stats per rx_queue_index. Handle if rx_queue_index
-	 * is larger than stats map can contain info for.
+	/* Update stats per rx_queue_index. Handle अगर rx_queue_index
+	 * is larger than stats map can contain info क्रम.
 	 */
 	key = ctx->rx_queue_index;
-	if (key >= MAX_RXQs)
+	अगर (key >= MAX_RXQs)
 		key = MAX_RXQs;
 	rxq_rec = bpf_map_lookup_elem(&rx_queue_index_map, &key);
-	if (!rxq_rec)
-		return XDP_ABORTED;
+	अगर (!rxq_rec)
+		वापस XDP_ABORTED;
 	rxq_rec->processed++;
-	if (key == MAX_RXQs)
+	अगर (key == MAX_RXQs)
 		rxq_rec->issue++;
 
 	/* Default: Don't touch packet data, only count packets */
-	if (unlikely(config->options & (READ_MEM|SWAP_MAC))) {
-		struct ethhdr *eth = data;
+	अगर (unlikely(config->options & (READ_MEM|SWAP_MAC))) अणु
+		काष्ठा ethhdr *eth = data;
 
-		if (eth + 1 > data_end)
-			return XDP_ABORTED;
+		अगर (eth + 1 > data_end)
+			वापस XDP_ABORTED;
 
-		/* Avoid compiler removing this: Drop non 802.3 Ethertypes */
-		if (ntohs(eth->h_proto) < ETH_P_802_3_MIN)
-			return XDP_ABORTED;
+		/* Aव्योम compiler removing this: Drop non 802.3 Ethertypes */
+		अगर (ntohs(eth->h_proto) < ETH_P_802_3_MIN)
+			वापस XDP_ABORTED;
 
-		/* XDP_TX requires changing MAC-addrs, else HW may drop.
-		 * Can also be enabled with --swapmac (for test purposes)
+		/* XDP_TX requires changing MAC-addrs, अन्यथा HW may drop.
+		 * Can also be enabled with --swapmac (क्रम test purposes)
 		 */
-		if (unlikely(config->options & SWAP_MAC))
+		अगर (unlikely(config->options & SWAP_MAC))
 			swap_src_dst_mac(data);
-	}
+	पूर्ण
 
-	return config->action;
-}
+	वापस config->action;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

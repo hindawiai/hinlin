@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * STK1160 driver
  *
@@ -10,182 +11,182 @@
  *	<rmthomas--a.t--sciolus.org>
  */
 
-#include <linux/i2c.h>
-#include <sound/core.h>
-#include <sound/ac97_codec.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <linux/i2c.h>
+#समावेश <sound/core.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#define STK1160_VERSION		"0.9.5"
-#define STK1160_VERSION_NUM	0x000905
+#घोषणा STK1160_VERSION		"0.9.5"
+#घोषणा STK1160_VERSION_NUM	0x000905
 
-/* Decide on number of packets for each buffer */
-#define STK1160_NUM_PACKETS 64
+/* Decide on number of packets क्रम each buffer */
+#घोषणा STK1160_NUM_PACKETS 64
 
-/* Number of buffers for isoc transfers */
-#define STK1160_NUM_BUFS 16
-#define STK1160_MIN_BUFS 1
+/* Number of buffers क्रम isoc transfers */
+#घोषणा STK1160_NUM_BUFS 16
+#घोषणा STK1160_MIN_BUFS 1
 
-/* TODO: This endpoint address should be retrieved */
-#define STK1160_EP_VIDEO 0x82
-#define STK1160_EP_AUDIO 0x81
+/* TODO: This endpoपूर्णांक address should be retrieved */
+#घोषणा STK1160_EP_VIDEO 0x82
+#घोषणा STK1160_EP_AUDIO 0x81
 
 /* Max and min video buffers */
-#define STK1160_MIN_VIDEO_BUFFERS 8
-#define STK1160_MAX_VIDEO_BUFFERS 32
+#घोषणा STK1160_MIN_VIDEO_BUFFERS 8
+#घोषणा STK1160_MAX_VIDEO_BUFFERS 32
 
-#define STK1160_MIN_PKT_SIZE 3072
+#घोषणा STK1160_MIN_PKT_SIZE 3072
 
-#define STK1160_MAX_INPUT 4
-#define STK1160_SVIDEO_INPUT 4
+#घोषणा STK1160_MAX_INPUT 4
+#घोषणा STK1160_SVIDEO_INPUT 4
 
-#define STK1160_AC97_TIMEOUT 50
+#घोषणा STK1160_AC97_TIMEOUT 50
 
-#define STK1160_I2C_TIMEOUT 100
+#घोषणा STK1160_I2C_TIMEOUT 100
 
-/* TODO: Print helpers
- * I could use dev_xxx, pr_xxx, v4l2_xxx or printk.
+/* TODO: Prपूर्णांक helpers
+ * I could use dev_xxx, pr_xxx, v4l2_xxx or prपूर्णांकk.
  * However, there isn't a solid consensus on which
  * new drivers should use.
  *
  */
-#ifdef DEBUG
-#define stk1160_dbg(fmt, args...) \
-	printk(KERN_DEBUG "stk1160: " fmt,  ## args)
-#else
-#define stk1160_dbg(fmt, args...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा stk1160_dbg(fmt, args...) \
+	prपूर्णांकk(KERN_DEBUG "stk1160: " fmt,  ## args)
+#अन्यथा
+#घोषणा stk1160_dbg(fmt, args...)
+#पूर्ण_अगर
 
-#define stk1160_info(fmt, args...) \
+#घोषणा stk1160_info(fmt, args...) \
 	pr_info("stk1160: " fmt, ## args)
 
-#define stk1160_warn(fmt, args...) \
+#घोषणा stk1160_warn(fmt, args...) \
 	pr_warn("stk1160: " fmt, ## args)
 
-#define stk1160_err(fmt, args...) \
+#घोषणा stk1160_err(fmt, args...) \
 	pr_err("stk1160: " fmt, ## args)
 
-/* Buffer for one video frame */
-struct stk1160_buffer {
+/* Buffer क्रम one video frame */
+काष्ठा stk1160_buffer अणु
 	/* common v4l buffer stuff -- must be first */
-	struct vb2_v4l2_buffer vb;
-	struct list_head list;
+	काष्ठा vb2_v4l2_buffer vb;
+	काष्ठा list_head list;
 
-	void *mem;
-	unsigned int length;		/* buffer length */
-	unsigned int bytesused;		/* bytes written */
-	int odd;			/* current oddity */
+	व्योम *mem;
+	अचिन्हित पूर्णांक length;		/* buffer length */
+	अचिन्हित पूर्णांक bytesused;		/* bytes written */
+	पूर्णांक odd;			/* current oddity */
 
 	/*
-	 * Since we interlace two fields per frame,
-	 * this is different from bytesused.
+	 * Since we पूर्णांकerlace two fields per frame,
+	 * this is dअगरferent from bytesused.
 	 */
-	unsigned int pos;		/* current pos inside buffer */
-};
+	अचिन्हित पूर्णांक pos;		/* current pos inside buffer */
+पूर्ण;
 
-struct stk1160_isoc_ctl {
+काष्ठा stk1160_isoc_ctl अणु
 	/* max packet size of isoc transaction */
-	int max_pkt_size;
+	पूर्णांक max_pkt_size;
 
 	/* number of allocated urbs */
-	int num_bufs;
+	पूर्णांक num_bufs;
 
-	/* urb for isoc transfers */
-	struct urb **urb;
+	/* urb क्रम isoc transfers */
+	काष्ठा urb **urb;
 
-	/* transfer buffers for isoc transfer */
-	char **transfer_buffer;
+	/* transfer buffers क्रम isoc transfer */
+	अक्षर **transfer_buffer;
 
 	/* current buffer */
-	struct stk1160_buffer *buf;
-};
+	काष्ठा stk1160_buffer *buf;
+पूर्ण;
 
-struct stk1160_fmt {
-	u32   fourcc;          /* v4l2 format id */
-	int   depth;
-};
+काष्ठा stk1160_fmt अणु
+	u32   fourcc;          /* v4l2 क्रमmat id */
+	पूर्णांक   depth;
+पूर्ण;
 
-struct stk1160 {
-	struct v4l2_device v4l2_dev;
-	struct video_device vdev;
-	struct v4l2_ctrl_handler ctrl_handler;
+काष्ठा stk1160 अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा video_device vdev;
+	काष्ठा v4l2_ctrl_handler ctrl_handler;
 
-	struct device *dev;
-	struct usb_device *udev;
+	काष्ठा device *dev;
+	काष्ठा usb_device *udev;
 
 	/* saa7115 subdev */
-	struct v4l2_subdev *sd_saa7115;
+	काष्ठा v4l2_subdev *sd_saa7115;
 
-	/* isoc control struct */
-	struct list_head avail_bufs;
+	/* isoc control काष्ठा */
+	काष्ठा list_head avail_bufs;
 
 	/* video capture */
-	struct vb2_queue vb_vidq;
+	काष्ठा vb2_queue vb_vidq;
 
 	/* max packet size of isoc transaction */
-	int max_pkt_size;
+	पूर्णांक max_pkt_size;
 	/* array of wMaxPacketSize */
-	unsigned int *alt_max_pkt_size;
+	अचिन्हित पूर्णांक *alt_max_pkt_size;
 	/* alternate */
-	int alt;
+	पूर्णांक alt;
 	/* Number of alternative settings */
-	int num_alt;
+	पूर्णांक num_alt;
 
-	struct stk1160_isoc_ctl isoc_ctl;
+	काष्ठा stk1160_isoc_ctl isoc_ctl;
 
 	/* frame properties */
-	int width;		  /* current frame width */
-	int height;		  /* current frame height */
-	unsigned int ctl_input;	  /* selected input */
+	पूर्णांक width;		  /* current frame width */
+	पूर्णांक height;		  /* current frame height */
+	अचिन्हित पूर्णांक ctl_input;	  /* selected input */
 	v4l2_std_id norm;	  /* current norm */
-	struct stk1160_fmt *fmt;  /* selected format */
+	काष्ठा stk1160_fmt *fmt;  /* selected क्रमmat */
 
-	unsigned int sequence;
+	अचिन्हित पूर्णांक sequence;
 
 	/* i2c i/o */
-	struct i2c_adapter i2c_adap;
-	struct i2c_client i2c_client;
+	काष्ठा i2c_adapter i2c_adap;
+	काष्ठा i2c_client i2c_client;
 
-	struct mutex v4l_lock;
-	struct mutex vb_queue_lock;
+	काष्ठा mutex v4l_lock;
+	काष्ठा mutex vb_queue_lock;
 	spinlock_t buf_lock;
 
-	struct file *fh_owner;	/* filehandle ownership */
+	काष्ठा file *fh_owner;	/* filehandle ownership */
 
 	/* EXPERIMENTAL */
-	struct snd_card *snd_card;
-};
+	काष्ठा snd_card *snd_card;
+पूर्ण;
 
-struct regval {
+काष्ठा regval अणु
 	u16 reg;
 	u16 val;
-};
+पूर्ण;
 
 /* Provided by stk1160-v4l.c */
-int stk1160_vb2_setup(struct stk1160 *dev);
-int stk1160_video_register(struct stk1160 *dev);
-void stk1160_video_unregister(struct stk1160 *dev);
-void stk1160_clear_queue(struct stk1160 *dev);
+पूर्णांक stk1160_vb2_setup(काष्ठा stk1160 *dev);
+पूर्णांक stk1160_video_रेजिस्टर(काष्ठा stk1160 *dev);
+व्योम stk1160_video_unरेजिस्टर(काष्ठा stk1160 *dev);
+व्योम stk1160_clear_queue(काष्ठा stk1160 *dev);
 
 /* Provided by stk1160-video.c */
-int stk1160_alloc_isoc(struct stk1160 *dev);
-void stk1160_free_isoc(struct stk1160 *dev);
-void stk1160_cancel_isoc(struct stk1160 *dev);
-void stk1160_uninit_isoc(struct stk1160 *dev);
+पूर्णांक stk1160_alloc_isoc(काष्ठा stk1160 *dev);
+व्योम stk1160_मुक्त_isoc(काष्ठा stk1160 *dev);
+व्योम stk1160_cancel_isoc(काष्ठा stk1160 *dev);
+व्योम stk1160_uninit_isoc(काष्ठा stk1160 *dev);
 
 /* Provided by stk1160-i2c.c */
-int stk1160_i2c_register(struct stk1160 *dev);
-int stk1160_i2c_unregister(struct stk1160 *dev);
+पूर्णांक stk1160_i2c_रेजिस्टर(काष्ठा stk1160 *dev);
+पूर्णांक stk1160_i2c_unरेजिस्टर(काष्ठा stk1160 *dev);
 
 /* Provided by stk1160-core.c */
-int stk1160_read_reg(struct stk1160 *dev, u16 reg, u8 *value);
-int stk1160_write_reg(struct stk1160 *dev, u16 reg, u16 value);
-int stk1160_write_regs_req(struct stk1160 *dev, u8 req, u16 reg,
-		char *buf, int len);
-int stk1160_read_reg_req_len(struct stk1160 *dev, u8 req, u16 reg,
-		char *buf, int len);
-void stk1160_select_input(struct stk1160 *dev);
+पूर्णांक stk1160_पढ़ो_reg(काष्ठा stk1160 *dev, u16 reg, u8 *value);
+पूर्णांक stk1160_ग_लिखो_reg(काष्ठा stk1160 *dev, u16 reg, u16 value);
+पूर्णांक stk1160_ग_लिखो_regs_req(काष्ठा stk1160 *dev, u8 req, u16 reg,
+		अक्षर *buf, पूर्णांक len);
+पूर्णांक stk1160_पढ़ो_reg_req_len(काष्ठा stk1160 *dev, u8 req, u16 reg,
+		अक्षर *buf, पूर्णांक len);
+व्योम stk1160_select_input(काष्ठा stk1160 *dev);
 
 /* Provided by stk1160-ac97.c */
-void stk1160_ac97_setup(struct stk1160 *dev);
+व्योम stk1160_ac97_setup(काष्ठा stk1160 *dev);

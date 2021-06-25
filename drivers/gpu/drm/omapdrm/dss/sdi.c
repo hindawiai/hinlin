@@ -1,307 +1,308 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2009 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#define DSS_SUBSYS_NAME "SDI"
+#घोषणा DSS_SUBSYS_NAME "SDI"
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/string.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/माला.स>
 
-#include <drm/drm_bridge.h>
+#समावेश <drm/drm_bridge.h>
 
-#include "dss.h"
-#include "omapdss.h"
+#समावेश "dss.h"
+#समावेश "omapdss.h"
 
-struct sdi_device {
-	struct platform_device *pdev;
-	struct dss_device *dss;
+काष्ठा sdi_device अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा dss_device *dss;
 
 	bool update_enabled;
-	struct regulator *vdds_sdi_reg;
+	काष्ठा regulator *vdds_sdi_reg;
 
-	struct dss_lcd_mgr_config mgr_config;
-	unsigned long pixelclock;
-	int datapairs;
+	काष्ठा dss_lcd_mgr_config mgr_config;
+	अचिन्हित दीर्घ pixelघड़ी;
+	पूर्णांक datapairs;
 
-	struct omap_dss_device output;
-	struct drm_bridge bridge;
-};
+	काष्ठा omap_dss_device output;
+	काष्ठा drm_bridge bridge;
+पूर्ण;
 
-#define drm_bridge_to_sdi(bridge) \
-	container_of(bridge, struct sdi_device, bridge)
+#घोषणा drm_bridge_to_sdi(bridge) \
+	container_of(bridge, काष्ठा sdi_device, bridge)
 
-struct sdi_clk_calc_ctx {
-	struct sdi_device *sdi;
-	unsigned long pck_min, pck_max;
+काष्ठा sdi_clk_calc_ctx अणु
+	काष्ठा sdi_device *sdi;
+	अचिन्हित दीर्घ pck_min, pck_max;
 
-	unsigned long fck;
-	struct dispc_clock_info dispc_cinfo;
-};
+	अचिन्हित दीर्घ fck;
+	काष्ठा dispc_घड़ी_info dispc_cinfo;
+पूर्ण;
 
-static bool dpi_calc_dispc_cb(int lckd, int pckd, unsigned long lck,
-		unsigned long pck, void *data)
-{
-	struct sdi_clk_calc_ctx *ctx = data;
+अटल bool dpi_calc_dispc_cb(पूर्णांक lckd, पूर्णांक pckd, अचिन्हित दीर्घ lck,
+		अचिन्हित दीर्घ pck, व्योम *data)
+अणु
+	काष्ठा sdi_clk_calc_ctx *ctx = data;
 
-	ctx->dispc_cinfo.lck_div = lckd;
-	ctx->dispc_cinfo.pck_div = pckd;
+	ctx->dispc_cinfo.lck_भाग = lckd;
+	ctx->dispc_cinfo.pck_भाग = pckd;
 	ctx->dispc_cinfo.lck = lck;
 	ctx->dispc_cinfo.pck = pck;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool dpi_calc_dss_cb(unsigned long fck, void *data)
-{
-	struct sdi_clk_calc_ctx *ctx = data;
+अटल bool dpi_calc_dss_cb(अचिन्हित दीर्घ fck, व्योम *data)
+अणु
+	काष्ठा sdi_clk_calc_ctx *ctx = data;
 
 	ctx->fck = fck;
 
-	return dispc_div_calc(ctx->sdi->dss->dispc, fck,
+	वापस dispc_भाग_calc(ctx->sdi->dss->dispc, fck,
 			      ctx->pck_min, ctx->pck_max,
 			      dpi_calc_dispc_cb, ctx);
-}
+पूर्ण
 
-static int sdi_calc_clock_div(struct sdi_device *sdi, unsigned long pclk,
-			      unsigned long *fck,
-			      struct dispc_clock_info *dispc_cinfo)
-{
-	int i;
-	struct sdi_clk_calc_ctx ctx;
+अटल पूर्णांक sdi_calc_घड़ी_भाग(काष्ठा sdi_device *sdi, अचिन्हित दीर्घ pclk,
+			      अचिन्हित दीर्घ *fck,
+			      काष्ठा dispc_घड़ी_info *dispc_cinfo)
+अणु
+	पूर्णांक i;
+	काष्ठा sdi_clk_calc_ctx ctx;
 
 	/*
 	 * DSS fclk gives us very few possibilities, so finding a good pixel
-	 * clock may not be possible. We try multiple times to find the clock,
-	 * each time widening the pixel clock range we look for, up to
+	 * घड़ी may not be possible. We try multiple बार to find the घड़ी,
+	 * each समय widening the pixel घड़ी range we look क्रम, up to
 	 * +/- 1MHz.
 	 */
 
-	for (i = 0; i < 10; ++i) {
+	क्रम (i = 0; i < 10; ++i) अणु
 		bool ok;
 
-		memset(&ctx, 0, sizeof(ctx));
+		स_रखो(&ctx, 0, माप(ctx));
 
 		ctx.sdi = sdi;
 
-		if (pclk > 1000 * i * i * i)
+		अगर (pclk > 1000 * i * i * i)
 			ctx.pck_min = max(pclk - 1000 * i * i * i, 0lu);
-		else
+		अन्यथा
 			ctx.pck_min = 0;
 		ctx.pck_max = pclk + 1000 * i * i * i;
 
-		ok = dss_div_calc(sdi->dss, pclk, ctx.pck_min,
+		ok = dss_भाग_calc(sdi->dss, pclk, ctx.pck_min,
 				  dpi_calc_dss_cb, &ctx);
-		if (ok) {
+		अगर (ok) अणु
 			*fck = ctx.fck;
 			*dispc_cinfo = ctx.dispc_cinfo;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void sdi_config_lcd_manager(struct sdi_device *sdi)
-{
+अटल व्योम sdi_config_lcd_manager(काष्ठा sdi_device *sdi)
+अणु
 	sdi->mgr_config.io_pad_mode = DSS_IO_PAD_MODE_BYPASS;
 
 	sdi->mgr_config.stallmode = false;
-	sdi->mgr_config.fifohandcheck = false;
+	sdi->mgr_config.fअगरohandcheck = false;
 
 	sdi->mgr_config.video_port_width = 24;
 	sdi->mgr_config.lcden_sig_polarity = 1;
 
 	dss_mgr_set_lcd_config(&sdi->output, &sdi->mgr_config);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * DRM Bridge Operations
  */
 
-static int sdi_bridge_attach(struct drm_bridge *bridge,
-			     enum drm_bridge_attach_flags flags)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
+अटल पूर्णांक sdi_bridge_attach(काष्ठा drm_bridge *bridge,
+			     क्रमागत drm_bridge_attach_flags flags)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
 
-	if (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
-		return -EINVAL;
+	अगर (!(flags & DRM_BRIDGE_ATTACH_NO_CONNECTOR))
+		वापस -EINVAL;
 
-	return drm_bridge_attach(bridge->encoder, sdi->output.next_bridge,
+	वापस drm_bridge_attach(bridge->encoder, sdi->output.next_bridge,
 				 bridge, flags);
-}
+पूर्ण
 
-static enum drm_mode_status
-sdi_bridge_mode_valid(struct drm_bridge *bridge,
-		      const struct drm_display_info *info,
-		      const struct drm_display_mode *mode)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
-	unsigned long pixelclock = mode->clock * 1000;
-	struct dispc_clock_info dispc_cinfo;
-	unsigned long fck;
-	int ret;
+अटल क्रमागत drm_mode_status
+sdi_bridge_mode_valid(काष्ठा drm_bridge *bridge,
+		      स्थिर काष्ठा drm_display_info *info,
+		      स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
+	अचिन्हित दीर्घ pixelघड़ी = mode->घड़ी * 1000;
+	काष्ठा dispc_घड़ी_info dispc_cinfo;
+	अचिन्हित दीर्घ fck;
+	पूर्णांक ret;
 
-	if (pixelclock == 0)
-		return MODE_NOCLOCK;
+	अगर (pixelघड़ी == 0)
+		वापस MODE_NOCLOCK;
 
-	ret = sdi_calc_clock_div(sdi, pixelclock, &fck, &dispc_cinfo);
-	if (ret < 0)
-		return MODE_CLOCK_RANGE;
+	ret = sdi_calc_घड़ी_भाग(sdi, pixelघड़ी, &fck, &dispc_cinfo);
+	अगर (ret < 0)
+		वापस MODE_CLOCK_RANGE;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static bool sdi_bridge_mode_fixup(struct drm_bridge *bridge,
-				  const struct drm_display_mode *mode,
-				  struct drm_display_mode *adjusted_mode)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
-	unsigned long pixelclock = mode->clock * 1000;
-	struct dispc_clock_info dispc_cinfo;
-	unsigned long fck;
-	unsigned long pck;
-	int ret;
+अटल bool sdi_bridge_mode_fixup(काष्ठा drm_bridge *bridge,
+				  स्थिर काष्ठा drm_display_mode *mode,
+				  काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
+	अचिन्हित दीर्घ pixelघड़ी = mode->घड़ी * 1000;
+	काष्ठा dispc_घड़ी_info dispc_cinfo;
+	अचिन्हित दीर्घ fck;
+	अचिन्हित दीर्घ pck;
+	पूर्णांक ret;
 
-	ret = sdi_calc_clock_div(sdi, pixelclock, &fck, &dispc_cinfo);
-	if (ret < 0)
-		return false;
+	ret = sdi_calc_घड़ी_भाग(sdi, pixelघड़ी, &fck, &dispc_cinfo);
+	अगर (ret < 0)
+		वापस false;
 
-	pck = fck / dispc_cinfo.lck_div / dispc_cinfo.pck_div;
+	pck = fck / dispc_cinfo.lck_भाग / dispc_cinfo.pck_भाग;
 
-	if (pck != pixelclock)
+	अगर (pck != pixelघड़ी)
 		dev_dbg(&sdi->pdev->dev,
 			"pixel clock adjusted from %lu Hz to %lu Hz\n",
-			pixelclock, pck);
+			pixelघड़ी, pck);
 
-	adjusted_mode->clock = pck / 1000;
+	adjusted_mode->घड़ी = pck / 1000;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void sdi_bridge_mode_set(struct drm_bridge *bridge,
-				const struct drm_display_mode *mode,
-				const struct drm_display_mode *adjusted_mode)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
+अटल व्योम sdi_bridge_mode_set(काष्ठा drm_bridge *bridge,
+				स्थिर काष्ठा drm_display_mode *mode,
+				स्थिर काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
 
-	sdi->pixelclock = adjusted_mode->clock * 1000;
-}
+	sdi->pixelघड़ी = adjusted_mode->घड़ी * 1000;
+पूर्ण
 
-static void sdi_bridge_enable(struct drm_bridge *bridge)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
-	struct dispc_clock_info dispc_cinfo;
-	unsigned long fck;
-	int r;
+अटल व्योम sdi_bridge_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
+	काष्ठा dispc_घड़ी_info dispc_cinfo;
+	अचिन्हित दीर्घ fck;
+	पूर्णांक r;
 
 	r = regulator_enable(sdi->vdds_sdi_reg);
-	if (r)
-		return;
+	अगर (r)
+		वापस;
 
-	r = dispc_runtime_get(sdi->dss->dispc);
-	if (r)
-		goto err_get_dispc;
+	r = dispc_runसमय_get(sdi->dss->dispc);
+	अगर (r)
+		जाओ err_get_dispc;
 
-	r = sdi_calc_clock_div(sdi, sdi->pixelclock, &fck, &dispc_cinfo);
-	if (r)
-		goto err_calc_clock_div;
+	r = sdi_calc_घड़ी_भाग(sdi, sdi->pixelघड़ी, &fck, &dispc_cinfo);
+	अगर (r)
+		जाओ err_calc_घड़ी_भाग;
 
-	sdi->mgr_config.clock_info = dispc_cinfo;
+	sdi->mgr_config.घड़ी_info = dispc_cinfo;
 
 	r = dss_set_fck_rate(sdi->dss, fck);
-	if (r)
-		goto err_set_dss_clock_div;
+	अगर (r)
+		जाओ err_set_dss_घड़ी_भाग;
 
 	sdi_config_lcd_manager(sdi);
 
 	/*
-	 * LCLK and PCLK divisors are located in shadow registers, and we
-	 * normally write them to DISPC registers when enabling the output.
-	 * However, SDI uses pck-free as source clock for its PLL, and pck-free
-	 * is affected by the divisors. And as we need the PLL before enabling
-	 * the output, we need to write the divisors early.
+	 * LCLK and PCLK भागisors are located in shaकरोw रेजिस्टरs, and we
+	 * normally ग_लिखो them to DISPC रेजिस्टरs when enabling the output.
+	 * However, SDI uses pck-मुक्त as source घड़ी क्रम its PLL, and pck-मुक्त
+	 * is affected by the भागisors. And as we need the PLL beक्रमe enabling
+	 * the output, we need to ग_लिखो the भागisors early.
 	 *
-	 * It seems just writing to the DISPC register is enough, and we don't
-	 * need to care about the shadow register mechanism for pck-free. The
-	 * exact reason for this is unknown.
+	 * It seems just writing to the DISPC रेजिस्टर is enough, and we करोn't
+	 * need to care about the shaकरोw रेजिस्टर mechanism क्रम pck-मुक्त. The
+	 * exact reason क्रम this is unknown.
 	 */
-	dispc_mgr_set_clock_div(sdi->dss->dispc, sdi->output.dispc_channel,
-				&sdi->mgr_config.clock_info);
+	dispc_mgr_set_घड़ी_भाग(sdi->dss->dispc, sdi->output.dispc_channel,
+				&sdi->mgr_config.घड़ी_info);
 
 	dss_sdi_init(sdi->dss, sdi->datapairs);
 	r = dss_sdi_enable(sdi->dss);
-	if (r)
-		goto err_sdi_enable;
+	अगर (r)
+		जाओ err_sdi_enable;
 	mdelay(2);
 
 	r = dss_mgr_enable(&sdi->output);
-	if (r)
-		goto err_mgr_enable;
+	अगर (r)
+		जाओ err_mgr_enable;
 
-	return;
+	वापस;
 
 err_mgr_enable:
 	dss_sdi_disable(sdi->dss);
 err_sdi_enable:
-err_set_dss_clock_div:
-err_calc_clock_div:
-	dispc_runtime_put(sdi->dss->dispc);
+err_set_dss_घड़ी_भाग:
+err_calc_घड़ी_भाग:
+	dispc_runसमय_put(sdi->dss->dispc);
 err_get_dispc:
 	regulator_disable(sdi->vdds_sdi_reg);
-}
+पूर्ण
 
-static void sdi_bridge_disable(struct drm_bridge *bridge)
-{
-	struct sdi_device *sdi = drm_bridge_to_sdi(bridge);
+अटल व्योम sdi_bridge_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा sdi_device *sdi = drm_bridge_to_sdi(bridge);
 
 	dss_mgr_disable(&sdi->output);
 
 	dss_sdi_disable(sdi->dss);
 
-	dispc_runtime_put(sdi->dss->dispc);
+	dispc_runसमय_put(sdi->dss->dispc);
 
 	regulator_disable(sdi->vdds_sdi_reg);
-}
+पूर्ण
 
-static const struct drm_bridge_funcs sdi_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs sdi_bridge_funcs = अणु
 	.attach = sdi_bridge_attach,
 	.mode_valid = sdi_bridge_mode_valid,
 	.mode_fixup = sdi_bridge_mode_fixup,
 	.mode_set = sdi_bridge_mode_set,
 	.enable = sdi_bridge_enable,
 	.disable = sdi_bridge_disable,
-};
+पूर्ण;
 
-static void sdi_bridge_init(struct sdi_device *sdi)
-{
+अटल व्योम sdi_bridge_init(काष्ठा sdi_device *sdi)
+अणु
 	sdi->bridge.funcs = &sdi_bridge_funcs;
 	sdi->bridge.of_node = sdi->pdev->dev.of_node;
 	sdi->bridge.type = DRM_MODE_CONNECTOR_LVDS;
 
 	drm_bridge_add(&sdi->bridge);
-}
+पूर्ण
 
-static void sdi_bridge_cleanup(struct sdi_device *sdi)
-{
-	drm_bridge_remove(&sdi->bridge);
-}
+अटल व्योम sdi_bridge_cleanup(काष्ठा sdi_device *sdi)
+अणु
+	drm_bridge_हटाओ(&sdi->bridge);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Initialisation and Cleanup
  */
 
-static int sdi_init_output(struct sdi_device *sdi)
-{
-	struct omap_dss_device *out = &sdi->output;
-	int r;
+अटल पूर्णांक sdi_init_output(काष्ठा sdi_device *sdi)
+अणु
+	काष्ठा omap_dss_device *out = &sdi->output;
+	पूर्णांक r;
 
 	sdi_bridge_init(sdi);
 
@@ -316,48 +317,48 @@ static int sdi_init_output(struct sdi_device *sdi)
 		       | DRM_BUS_FLAG_SYNC_DRIVE_POSEDGE;
 
 	r = omapdss_device_init_output(out, &sdi->bridge);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		sdi_bridge_cleanup(sdi);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	omapdss_device_register(out);
+	omapdss_device_रेजिस्टर(out);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sdi_uninit_output(struct sdi_device *sdi)
-{
-	omapdss_device_unregister(&sdi->output);
+अटल व्योम sdi_uninit_output(काष्ठा sdi_device *sdi)
+अणु
+	omapdss_device_unरेजिस्टर(&sdi->output);
 	omapdss_device_cleanup_output(&sdi->output);
 
 	sdi_bridge_cleanup(sdi);
-}
+पूर्ण
 
-int sdi_init_port(struct dss_device *dss, struct platform_device *pdev,
-		  struct device_node *port)
-{
-	struct sdi_device *sdi;
-	struct device_node *ep;
+पूर्णांक sdi_init_port(काष्ठा dss_device *dss, काष्ठा platक्रमm_device *pdev,
+		  काष्ठा device_node *port)
+अणु
+	काष्ठा sdi_device *sdi;
+	काष्ठा device_node *ep;
 	u32 datapairs;
-	int r;
+	पूर्णांक r;
 
-	sdi = kzalloc(sizeof(*sdi), GFP_KERNEL);
-	if (!sdi)
-		return -ENOMEM;
+	sdi = kzalloc(माप(*sdi), GFP_KERNEL);
+	अगर (!sdi)
+		वापस -ENOMEM;
 
-	ep = of_get_next_child(port, NULL);
-	if (!ep) {
+	ep = of_get_next_child(port, शून्य);
+	अगर (!ep) अणु
 		r = 0;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	r = of_property_read_u32(ep, "datapairs", &datapairs);
+	r = of_property_पढ़ो_u32(ep, "datapairs", &datapairs);
 	of_node_put(ep);
-	if (r) {
+	अगर (r) अणु
 		DSSERR("failed to parse datapairs\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	sdi->datapairs = datapairs;
 	sdi->dss = dss;
@@ -366,32 +367,32 @@ int sdi_init_port(struct dss_device *dss, struct platform_device *pdev,
 	port->data = sdi;
 
 	sdi->vdds_sdi_reg = devm_regulator_get(&pdev->dev, "vdds_sdi");
-	if (IS_ERR(sdi->vdds_sdi_reg)) {
+	अगर (IS_ERR(sdi->vdds_sdi_reg)) अणु
 		r = PTR_ERR(sdi->vdds_sdi_reg);
-		if (r != -EPROBE_DEFER)
+		अगर (r != -EPROBE_DEFER)
 			DSSERR("can't get VDDS_SDI regulator\n");
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
 	r = sdi_init_output(sdi);
-	if (r)
-		goto err_free;
+	अगर (r)
+		जाओ err_मुक्त;
 
-	return 0;
+	वापस 0;
 
-err_free:
-	kfree(sdi);
+err_मुक्त:
+	kमुक्त(sdi);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void sdi_uninit_port(struct device_node *port)
-{
-	struct sdi_device *sdi = port->data;
+व्योम sdi_uninit_port(काष्ठा device_node *port)
+अणु
+	काष्ठा sdi_device *sdi = port->data;
 
-	if (!sdi)
-		return;
+	अगर (!sdi)
+		वापस;
 
 	sdi_uninit_output(sdi);
-	kfree(sdi);
-}
+	kमुक्त(sdi);
+पूर्ण

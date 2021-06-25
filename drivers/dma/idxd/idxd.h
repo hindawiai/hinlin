@@ -1,247 +1,248 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright(c) 2019 Intel Corporation. All rights rsvd. */
-#ifndef _IDXD_H_
-#define _IDXD_H_
+#अगर_अघोषित _IDXD_H_
+#घोषणा _IDXD_H_
 
-#include <linux/sbitmap.h>
-#include <linux/dmaengine.h>
-#include <linux/percpu-rwsem.h>
-#include <linux/wait.h>
-#include <linux/cdev.h>
-#include <linux/idr.h>
-#include <linux/pci.h>
-#include <linux/perf_event.h>
-#include "registers.h"
+#समावेश <linux/sbiपंचांगap.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/percpu-rwsem.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/perf_event.h>
+#समावेश "registers.h"
 
-#define IDXD_DRIVER_VERSION	"1.00"
+#घोषणा IDXD_DRIVER_VERSION	"1.00"
 
-extern struct kmem_cache *idxd_desc_pool;
+बाह्य काष्ठा kmem_cache *idxd_desc_pool;
 
-struct idxd_device;
-struct idxd_wq;
+काष्ठा idxd_device;
+काष्ठा idxd_wq;
 
-#define IDXD_REG_TIMEOUT	50
-#define IDXD_DRAIN_TIMEOUT	5000
+#घोषणा IDXD_REG_TIMEOUT	50
+#घोषणा IDXD_DRAIN_TIMEOUT	5000
 
-enum idxd_type {
+क्रमागत idxd_type अणु
 	IDXD_TYPE_UNKNOWN = -1,
 	IDXD_TYPE_DSA = 0,
 	IDXD_TYPE_IAX,
 	IDXD_TYPE_MAX,
-};
+पूर्ण;
 
-#define IDXD_NAME_SIZE		128
-#define IDXD_PMU_EVENT_MAX	64
+#घोषणा IDXD_NAME_SIZE		128
+#घोषणा IDXD_PMU_EVENT_MAX	64
 
-struct idxd_device_driver {
-	struct device_driver drv;
-};
+काष्ठा idxd_device_driver अणु
+	काष्ठा device_driver drv;
+पूर्ण;
 
-struct idxd_irq_entry {
-	struct idxd_device *idxd;
-	int id;
-	int vector;
-	struct llist_head pending_llist;
-	struct list_head work_list;
+काष्ठा idxd_irq_entry अणु
+	काष्ठा idxd_device *idxd;
+	पूर्णांक id;
+	पूर्णांक vector;
+	काष्ठा llist_head pending_llist;
+	काष्ठा list_head work_list;
 	/*
-	 * Lock to protect access between irq thread process descriptor
-	 * and irq thread processing error descriptor.
+	 * Lock to protect access between irq thपढ़ो process descriptor
+	 * and irq thपढ़ो processing error descriptor.
 	 */
 	spinlock_t list_lock;
-};
+पूर्ण;
 
-struct idxd_group {
-	struct device conf_dev;
-	struct idxd_device *idxd;
-	struct grpcfg grpcfg;
-	int id;
-	int num_engines;
-	int num_wqs;
+काष्ठा idxd_group अणु
+	काष्ठा device conf_dev;
+	काष्ठा idxd_device *idxd;
+	काष्ठा grpcfg grpcfg;
+	पूर्णांक id;
+	पूर्णांक num_engines;
+	पूर्णांक num_wqs;
 	bool use_token_limit;
 	u8 tokens_allowed;
 	u8 tokens_reserved;
-	int tc_a;
-	int tc_b;
-};
+	पूर्णांक tc_a;
+	पूर्णांक tc_b;
+पूर्ण;
 
-struct idxd_pmu {
-	struct idxd_device *idxd;
+काष्ठा idxd_pmu अणु
+	काष्ठा idxd_device *idxd;
 
-	struct perf_event *event_list[IDXD_PMU_EVENT_MAX];
-	int n_events;
+	काष्ठा perf_event *event_list[IDXD_PMU_EVENT_MAX];
+	पूर्णांक n_events;
 
 	DECLARE_BITMAP(used_mask, IDXD_PMU_EVENT_MAX);
 
-	struct pmu pmu;
-	char name[IDXD_NAME_SIZE];
-	int cpu;
+	काष्ठा pmu pmu;
+	अक्षर name[IDXD_NAME_SIZE];
+	पूर्णांक cpu;
 
-	int n_counters;
-	int counter_width;
-	int n_event_categories;
+	पूर्णांक n_counters;
+	पूर्णांक counter_width;
+	पूर्णांक n_event_categories;
 
 	bool per_counter_caps_supported;
-	unsigned long supported_event_categories;
+	अचिन्हित दीर्घ supported_event_categories;
 
-	unsigned long supported_filters;
-	int n_filters;
+	अचिन्हित दीर्घ supported_filters;
+	पूर्णांक n_filters;
 
-	struct hlist_node cpuhp_node;
-};
+	काष्ठा hlist_node cpuhp_node;
+पूर्ण;
 
-#define IDXD_MAX_PRIORITY	0xf
+#घोषणा IDXD_MAX_PRIORITY	0xf
 
-enum idxd_wq_state {
+क्रमागत idxd_wq_state अणु
 	IDXD_WQ_DISABLED = 0,
 	IDXD_WQ_ENABLED,
-};
+पूर्ण;
 
-enum idxd_wq_flag {
+क्रमागत idxd_wq_flag अणु
 	WQ_FLAG_DEDICATED = 0,
 	WQ_FLAG_BLOCK_ON_FAULT,
-};
+पूर्ण;
 
-enum idxd_wq_type {
+क्रमागत idxd_wq_type अणु
 	IDXD_WQT_NONE = 0,
 	IDXD_WQT_KERNEL,
 	IDXD_WQT_USER,
-};
+पूर्ण;
 
-struct idxd_cdev {
-	struct idxd_wq *wq;
-	struct cdev cdev;
-	struct device dev;
-	int minor;
-};
+काष्ठा idxd_cdev अणु
+	काष्ठा idxd_wq *wq;
+	काष्ठा cdev cdev;
+	काष्ठा device dev;
+	पूर्णांक minor;
+पूर्ण;
 
-#define IDXD_ALLOCATED_BATCH_SIZE	128U
-#define WQ_NAME_SIZE   1024
-#define WQ_TYPE_SIZE   10
+#घोषणा IDXD_ALLOCATED_BATCH_SIZE	128U
+#घोषणा WQ_NAME_SIZE   1024
+#घोषणा WQ_TYPE_SIZE   10
 
-enum idxd_op_type {
+क्रमागत idxd_op_type अणु
 	IDXD_OP_BLOCK = 0,
 	IDXD_OP_NONBLOCK = 1,
-};
+पूर्ण;
 
-enum idxd_complete_type {
+क्रमागत idxd_complete_type अणु
 	IDXD_COMPLETE_NORMAL = 0,
 	IDXD_COMPLETE_ABORT,
 	IDXD_COMPLETE_DEV_FAIL,
-};
+पूर्ण;
 
-struct idxd_dma_chan {
-	struct dma_chan chan;
-	struct idxd_wq *wq;
-};
+काष्ठा idxd_dma_chan अणु
+	काष्ठा dma_chan chan;
+	काष्ठा idxd_wq *wq;
+पूर्ण;
 
-struct idxd_wq {
-	void __iomem *portal;
-	struct percpu_ref wq_active;
-	struct completion wq_dead;
-	struct device conf_dev;
-	struct idxd_cdev *idxd_cdev;
-	struct wait_queue_head err_queue;
-	struct idxd_device *idxd;
-	int id;
-	enum idxd_wq_type type;
-	struct idxd_group *group;
-	int client_count;
-	struct mutex wq_lock;	/* mutex for workqueue */
+काष्ठा idxd_wq अणु
+	व्योम __iomem *portal;
+	काष्ठा percpu_ref wq_active;
+	काष्ठा completion wq_dead;
+	काष्ठा device conf_dev;
+	काष्ठा idxd_cdev *idxd_cdev;
+	काष्ठा रुको_queue_head err_queue;
+	काष्ठा idxd_device *idxd;
+	पूर्णांक id;
+	क्रमागत idxd_wq_type type;
+	काष्ठा idxd_group *group;
+	पूर्णांक client_count;
+	काष्ठा mutex wq_lock;	/* mutex क्रम workqueue */
 	u32 size;
 	u32 threshold;
 	u32 priority;
-	enum idxd_wq_state state;
-	unsigned long flags;
-	union wqcfg *wqcfg;
-	u32 vec_ptr;		/* interrupt steering */
-	struct dsa_hw_desc **hw_descs;
-	int num_descs;
-	union {
-		struct dsa_completion_record *compls;
-		struct iax_completion_record *iax_compls;
-	};
-	void *compls_raw;
+	क्रमागत idxd_wq_state state;
+	अचिन्हित दीर्घ flags;
+	जोड़ wqcfg *wqcfg;
+	u32 vec_ptr;		/* पूर्णांकerrupt steering */
+	काष्ठा dsa_hw_desc **hw_descs;
+	पूर्णांक num_descs;
+	जोड़ अणु
+		काष्ठा dsa_completion_record *compls;
+		काष्ठा iax_completion_record *iax_compls;
+	पूर्ण;
+	व्योम *compls_raw;
 	dma_addr_t compls_addr;
 	dma_addr_t compls_addr_raw;
-	int compls_size;
-	struct idxd_desc **descs;
-	struct sbitmap_queue sbq;
-	struct idxd_dma_chan *idxd_chan;
-	char name[WQ_NAME_SIZE + 1];
+	पूर्णांक compls_size;
+	काष्ठा idxd_desc **descs;
+	काष्ठा sbiपंचांगap_queue sbq;
+	काष्ठा idxd_dma_chan *idxd_chan;
+	अक्षर name[WQ_NAME_SIZE + 1];
 	u64 max_xfer_bytes;
 	u32 max_batch_size;
 	bool ats_dis;
-};
+पूर्ण;
 
-struct idxd_engine {
-	struct device conf_dev;
-	int id;
-	struct idxd_group *group;
-	struct idxd_device *idxd;
-};
+काष्ठा idxd_engine अणु
+	काष्ठा device conf_dev;
+	पूर्णांक id;
+	काष्ठा idxd_group *group;
+	काष्ठा idxd_device *idxd;
+पूर्ण;
 
-/* shadow registers */
-struct idxd_hw {
+/* shaकरोw रेजिस्टरs */
+काष्ठा idxd_hw अणु
 	u32 version;
-	union gen_cap_reg gen_cap;
-	union wq_cap_reg wq_cap;
-	union group_cap_reg group_cap;
-	union engine_cap_reg engine_cap;
-	struct opcap opcap;
+	जोड़ gen_cap_reg gen_cap;
+	जोड़ wq_cap_reg wq_cap;
+	जोड़ group_cap_reg group_cap;
+	जोड़ engine_cap_reg engine_cap;
+	काष्ठा opcap opcap;
 	u32 cmd_cap;
-};
+पूर्ण;
 
-enum idxd_device_state {
+क्रमागत idxd_device_state अणु
 	IDXD_DEV_HALTED = -1,
 	IDXD_DEV_DISABLED = 0,
 	IDXD_DEV_CONF_READY,
 	IDXD_DEV_ENABLED,
-};
+पूर्ण;
 
-enum idxd_device_flag {
+क्रमागत idxd_device_flag अणु
 	IDXD_FLAG_CONFIGURABLE = 0,
 	IDXD_FLAG_CMD_RUNNING,
 	IDXD_FLAG_PASID_ENABLED,
-};
+पूर्ण;
 
-struct idxd_dma_dev {
-	struct idxd_device *idxd;
-	struct dma_device dma;
-};
+काष्ठा idxd_dma_dev अणु
+	काष्ठा idxd_device *idxd;
+	काष्ठा dma_device dma;
+पूर्ण;
 
-struct idxd_driver_data {
-	const char *name_prefix;
-	enum idxd_type type;
-	struct device_type *dev_type;
-	int compl_size;
-	int align;
-};
+काष्ठा idxd_driver_data अणु
+	स्थिर अक्षर *name_prefix;
+	क्रमागत idxd_type type;
+	काष्ठा device_type *dev_type;
+	पूर्णांक compl_size;
+	पूर्णांक align;
+पूर्ण;
 
-struct idxd_device {
-	struct device conf_dev;
-	struct idxd_driver_data *data;
-	struct list_head list;
-	struct idxd_hw hw;
-	enum idxd_device_state state;
-	unsigned long flags;
-	int id;
-	int major;
+काष्ठा idxd_device अणु
+	काष्ठा device conf_dev;
+	काष्ठा idxd_driver_data *data;
+	काष्ठा list_head list;
+	काष्ठा idxd_hw hw;
+	क्रमागत idxd_device_state state;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक id;
+	पूर्णांक major;
 	u8 cmd_status;
 
-	struct pci_dev *pdev;
-	void __iomem *reg_base;
+	काष्ठा pci_dev *pdev;
+	व्योम __iomem *reg_base;
 
-	spinlock_t dev_lock;	/* spinlock for device */
-	spinlock_t cmd_lock;	/* spinlock for device commands */
-	struct completion *cmd_done;
-	struct idxd_group **groups;
-	struct idxd_wq **wqs;
-	struct idxd_engine **engines;
+	spinlock_t dev_lock;	/* spinlock क्रम device */
+	spinlock_t cmd_lock;	/* spinlock क्रम device commands */
+	काष्ठा completion *cmd_करोne;
+	काष्ठा idxd_group **groups;
+	काष्ठा idxd_wq **wqs;
+	काष्ठा idxd_engine **engines;
 
-	struct iommu_sva *sva;
-	unsigned int pasid;
+	काष्ठा iommu_sva *sva;
+	अचिन्हित पूर्णांक pasid;
 
-	int num_groups;
+	पूर्णांक num_groups;
 
 	u32 msix_perm_offset;
 	u32 wqcfg_offset;
@@ -250,236 +251,236 @@ struct idxd_device {
 
 	u64 max_xfer_bytes;
 	u32 max_batch_size;
-	int max_groups;
-	int max_engines;
-	int max_tokens;
-	int max_wqs;
-	int max_wq_size;
-	int token_limit;
-	int nr_tokens;		/* non-reserved tokens */
-	unsigned int wqcfg_size;
+	पूर्णांक max_groups;
+	पूर्णांक max_engines;
+	पूर्णांक max_tokens;
+	पूर्णांक max_wqs;
+	पूर्णांक max_wq_size;
+	पूर्णांक token_limit;
+	पूर्णांक nr_tokens;		/* non-reserved tokens */
+	अचिन्हित पूर्णांक wqcfg_size;
 
-	union sw_err_reg sw_err;
-	wait_queue_head_t cmd_waitq;
-	int num_wq_irqs;
-	struct idxd_irq_entry *irq_entries;
+	जोड़ sw_err_reg sw_err;
+	रुको_queue_head_t cmd_रुकोq;
+	पूर्णांक num_wq_irqs;
+	काष्ठा idxd_irq_entry *irq_entries;
 
-	struct idxd_dma_dev *idxd_dma;
-	struct workqueue_struct *wq;
-	struct work_struct work;
+	काष्ठा idxd_dma_dev *idxd_dma;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा work_काष्ठा work;
 
-	int *int_handles;
+	पूर्णांक *पूर्णांक_handles;
 
-	struct idxd_pmu *idxd_pmu;
-};
+	काष्ठा idxd_pmu *idxd_pmu;
+पूर्ण;
 
 /* IDXD software descriptor */
-struct idxd_desc {
-	union {
-		struct dsa_hw_desc *hw;
-		struct iax_hw_desc *iax_hw;
-	};
+काष्ठा idxd_desc अणु
+	जोड़ अणु
+		काष्ठा dsa_hw_desc *hw;
+		काष्ठा iax_hw_desc *iax_hw;
+	पूर्ण;
 	dma_addr_t desc_dma;
-	union {
-		struct dsa_completion_record *completion;
-		struct iax_completion_record *iax_completion;
-	};
+	जोड़ अणु
+		काष्ठा dsa_completion_record *completion;
+		काष्ठा iax_completion_record *iax_completion;
+	पूर्ण;
 	dma_addr_t compl_dma;
-	struct dma_async_tx_descriptor txd;
-	struct llist_node llnode;
-	struct list_head list;
-	int id;
-	int cpu;
-	unsigned int vector;
-	struct idxd_wq *wq;
-};
+	काष्ठा dma_async_tx_descriptor txd;
+	काष्ठा llist_node llnode;
+	काष्ठा list_head list;
+	पूर्णांक id;
+	पूर्णांक cpu;
+	अचिन्हित पूर्णांक vector;
+	काष्ठा idxd_wq *wq;
+पूर्ण;
 
-#define confdev_to_idxd(dev) container_of(dev, struct idxd_device, conf_dev)
-#define confdev_to_wq(dev) container_of(dev, struct idxd_wq, conf_dev)
+#घोषणा confdev_to_idxd(dev) container_of(dev, काष्ठा idxd_device, conf_dev)
+#घोषणा confdev_to_wq(dev) container_of(dev, काष्ठा idxd_wq, conf_dev)
 
-extern struct bus_type dsa_bus_type;
-extern struct bus_type iax_bus_type;
+बाह्य काष्ठा bus_type dsa_bus_type;
+बाह्य काष्ठा bus_type iax_bus_type;
 
-extern bool support_enqcmd;
-extern struct ida idxd_ida;
-extern struct device_type dsa_device_type;
-extern struct device_type iax_device_type;
-extern struct device_type idxd_wq_device_type;
-extern struct device_type idxd_engine_device_type;
-extern struct device_type idxd_group_device_type;
+बाह्य bool support_enqcmd;
+बाह्य काष्ठा ida idxd_ida;
+बाह्य काष्ठा device_type dsa_device_type;
+बाह्य काष्ठा device_type iax_device_type;
+बाह्य काष्ठा device_type idxd_wq_device_type;
+बाह्य काष्ठा device_type idxd_engine_device_type;
+बाह्य काष्ठा device_type idxd_group_device_type;
 
-static inline bool is_dsa_dev(struct device *dev)
-{
-	return dev->type == &dsa_device_type;
-}
+अटल अंतरभूत bool is_dsa_dev(काष्ठा device *dev)
+अणु
+	वापस dev->type == &dsa_device_type;
+पूर्ण
 
-static inline bool is_iax_dev(struct device *dev)
-{
-	return dev->type == &iax_device_type;
-}
+अटल अंतरभूत bool is_iax_dev(काष्ठा device *dev)
+अणु
+	वापस dev->type == &iax_device_type;
+पूर्ण
 
-static inline bool is_idxd_dev(struct device *dev)
-{
-	return is_dsa_dev(dev) || is_iax_dev(dev);
-}
+अटल अंतरभूत bool is_idxd_dev(काष्ठा device *dev)
+अणु
+	वापस is_dsa_dev(dev) || is_iax_dev(dev);
+पूर्ण
 
-static inline bool is_idxd_wq_dev(struct device *dev)
-{
-	return dev->type == &idxd_wq_device_type;
-}
+अटल अंतरभूत bool is_idxd_wq_dev(काष्ठा device *dev)
+अणु
+	वापस dev->type == &idxd_wq_device_type;
+पूर्ण
 
-static inline bool is_idxd_wq_dmaengine(struct idxd_wq *wq)
-{
-	if (wq->type == IDXD_WQT_KERNEL && strcmp(wq->name, "dmaengine") == 0)
-		return true;
-	return false;
-}
+अटल अंतरभूत bool is_idxd_wq_dmaengine(काष्ठा idxd_wq *wq)
+अणु
+	अगर (wq->type == IDXD_WQT_KERNEL && म_भेद(wq->name, "dmaengine") == 0)
+		वापस true;
+	वापस false;
+पूर्ण
 
-static inline bool is_idxd_wq_cdev(struct idxd_wq *wq)
-{
-	return wq->type == IDXD_WQT_USER;
-}
+अटल अंतरभूत bool is_idxd_wq_cdev(काष्ठा idxd_wq *wq)
+अणु
+	वापस wq->type == IDXD_WQT_USER;
+पूर्ण
 
-static inline bool wq_dedicated(struct idxd_wq *wq)
-{
-	return test_bit(WQ_FLAG_DEDICATED, &wq->flags);
-}
+अटल अंतरभूत bool wq_dedicated(काष्ठा idxd_wq *wq)
+अणु
+	वापस test_bit(WQ_FLAG_DEDICATED, &wq->flags);
+पूर्ण
 
-static inline bool wq_shared(struct idxd_wq *wq)
-{
-	return !test_bit(WQ_FLAG_DEDICATED, &wq->flags);
-}
+अटल अंतरभूत bool wq_shared(काष्ठा idxd_wq *wq)
+अणु
+	वापस !test_bit(WQ_FLAG_DEDICATED, &wq->flags);
+पूर्ण
 
-static inline bool device_pasid_enabled(struct idxd_device *idxd)
-{
-	return test_bit(IDXD_FLAG_PASID_ENABLED, &idxd->flags);
-}
+अटल अंतरभूत bool device_pasid_enabled(काष्ठा idxd_device *idxd)
+अणु
+	वापस test_bit(IDXD_FLAG_PASID_ENABLED, &idxd->flags);
+पूर्ण
 
-static inline bool device_swq_supported(struct idxd_device *idxd)
-{
-	return (support_enqcmd && device_pasid_enabled(idxd));
-}
+अटल अंतरभूत bool device_swq_supported(काष्ठा idxd_device *idxd)
+अणु
+	वापस (support_enqcmd && device_pasid_enabled(idxd));
+पूर्ण
 
-enum idxd_portal_prot {
+क्रमागत idxd_portal_prot अणु
 	IDXD_PORTAL_UNLIMITED = 0,
 	IDXD_PORTAL_LIMITED,
-};
+पूर्ण;
 
-enum idxd_interrupt_type {
+क्रमागत idxd_पूर्णांकerrupt_type अणु
 	IDXD_IRQ_MSIX = 0,
 	IDXD_IRQ_IMS,
-};
+पूर्ण;
 
-static inline int idxd_get_wq_portal_offset(enum idxd_portal_prot prot)
-{
-	return prot * 0x1000;
-}
+अटल अंतरभूत पूर्णांक idxd_get_wq_portal_offset(क्रमागत idxd_portal_prot prot)
+अणु
+	वापस prot * 0x1000;
+पूर्ण
 
-static inline int idxd_get_wq_portal_full_offset(int wq_id,
-						 enum idxd_portal_prot prot)
-{
-	return ((wq_id * 4) << PAGE_SHIFT) + idxd_get_wq_portal_offset(prot);
-}
+अटल अंतरभूत पूर्णांक idxd_get_wq_portal_full_offset(पूर्णांक wq_id,
+						 क्रमागत idxd_portal_prot prot)
+अणु
+	वापस ((wq_id * 4) << PAGE_SHIFT) + idxd_get_wq_portal_offset(prot);
+पूर्ण
 
-static inline void idxd_wq_get(struct idxd_wq *wq)
-{
+अटल अंतरभूत व्योम idxd_wq_get(काष्ठा idxd_wq *wq)
+अणु
 	wq->client_count++;
-}
+पूर्ण
 
-static inline void idxd_wq_put(struct idxd_wq *wq)
-{
+अटल अंतरभूत व्योम idxd_wq_put(काष्ठा idxd_wq *wq)
+अणु
 	wq->client_count--;
-}
+पूर्ण
 
-static inline int idxd_wq_refcount(struct idxd_wq *wq)
-{
-	return wq->client_count;
-};
+अटल अंतरभूत पूर्णांक idxd_wq_refcount(काष्ठा idxd_wq *wq)
+अणु
+	वापस wq->client_count;
+पूर्ण;
 
-int idxd_register_bus_type(void);
-void idxd_unregister_bus_type(void);
-int idxd_register_devices(struct idxd_device *idxd);
-void idxd_unregister_devices(struct idxd_device *idxd);
-int idxd_register_driver(void);
-void idxd_unregister_driver(void);
-void idxd_wqs_quiesce(struct idxd_device *idxd);
+पूर्णांक idxd_रेजिस्टर_bus_type(व्योम);
+व्योम idxd_unरेजिस्टर_bus_type(व्योम);
+पूर्णांक idxd_रेजिस्टर_devices(काष्ठा idxd_device *idxd);
+व्योम idxd_unरेजिस्टर_devices(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_रेजिस्टर_driver(व्योम);
+व्योम idxd_unरेजिस्टर_driver(व्योम);
+व्योम idxd_wqs_quiesce(काष्ठा idxd_device *idxd);
 
-/* device interrupt control */
-void idxd_msix_perm_setup(struct idxd_device *idxd);
-void idxd_msix_perm_clear(struct idxd_device *idxd);
-irqreturn_t idxd_misc_thread(int vec, void *data);
-irqreturn_t idxd_wq_thread(int irq, void *data);
-void idxd_mask_error_interrupts(struct idxd_device *idxd);
-void idxd_unmask_error_interrupts(struct idxd_device *idxd);
-void idxd_mask_msix_vectors(struct idxd_device *idxd);
-void idxd_mask_msix_vector(struct idxd_device *idxd, int vec_id);
-void idxd_unmask_msix_vector(struct idxd_device *idxd, int vec_id);
+/* device पूर्णांकerrupt control */
+व्योम idxd_msix_perm_setup(काष्ठा idxd_device *idxd);
+व्योम idxd_msix_perm_clear(काष्ठा idxd_device *idxd);
+irqवापस_t idxd_misc_thपढ़ो(पूर्णांक vec, व्योम *data);
+irqवापस_t idxd_wq_thपढ़ो(पूर्णांक irq, व्योम *data);
+व्योम idxd_mask_error_पूर्णांकerrupts(काष्ठा idxd_device *idxd);
+व्योम idxd_unmask_error_पूर्णांकerrupts(काष्ठा idxd_device *idxd);
+व्योम idxd_mask_msix_vectors(काष्ठा idxd_device *idxd);
+व्योम idxd_mask_msix_vector(काष्ठा idxd_device *idxd, पूर्णांक vec_id);
+व्योम idxd_unmask_msix_vector(काष्ठा idxd_device *idxd, पूर्णांक vec_id);
 
 /* device control */
-int idxd_device_init_reset(struct idxd_device *idxd);
-int idxd_device_enable(struct idxd_device *idxd);
-int idxd_device_disable(struct idxd_device *idxd);
-void idxd_device_reset(struct idxd_device *idxd);
-void idxd_device_cleanup(struct idxd_device *idxd);
-int idxd_device_config(struct idxd_device *idxd);
-void idxd_device_wqs_clear_state(struct idxd_device *idxd);
-void idxd_device_drain_pasid(struct idxd_device *idxd, int pasid);
-int idxd_device_load_config(struct idxd_device *idxd);
-int idxd_device_request_int_handle(struct idxd_device *idxd, int idx, int *handle,
-				   enum idxd_interrupt_type irq_type);
-int idxd_device_release_int_handle(struct idxd_device *idxd, int handle,
-				   enum idxd_interrupt_type irq_type);
+पूर्णांक idxd_device_init_reset(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_device_enable(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_device_disable(काष्ठा idxd_device *idxd);
+व्योम idxd_device_reset(काष्ठा idxd_device *idxd);
+व्योम idxd_device_cleanup(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_device_config(काष्ठा idxd_device *idxd);
+व्योम idxd_device_wqs_clear_state(काष्ठा idxd_device *idxd);
+व्योम idxd_device_drain_pasid(काष्ठा idxd_device *idxd, पूर्णांक pasid);
+पूर्णांक idxd_device_load_config(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_device_request_पूर्णांक_handle(काष्ठा idxd_device *idxd, पूर्णांक idx, पूर्णांक *handle,
+				   क्रमागत idxd_पूर्णांकerrupt_type irq_type);
+पूर्णांक idxd_device_release_पूर्णांक_handle(काष्ठा idxd_device *idxd, पूर्णांक handle,
+				   क्रमागत idxd_पूर्णांकerrupt_type irq_type);
 
 /* work queue control */
-void idxd_wqs_unmap_portal(struct idxd_device *idxd);
-int idxd_wq_alloc_resources(struct idxd_wq *wq);
-void idxd_wq_free_resources(struct idxd_wq *wq);
-int idxd_wq_enable(struct idxd_wq *wq);
-int idxd_wq_disable(struct idxd_wq *wq);
-void idxd_wq_drain(struct idxd_wq *wq);
-void idxd_wq_reset(struct idxd_wq *wq);
-int idxd_wq_map_portal(struct idxd_wq *wq);
-void idxd_wq_unmap_portal(struct idxd_wq *wq);
-void idxd_wq_disable_cleanup(struct idxd_wq *wq);
-int idxd_wq_set_pasid(struct idxd_wq *wq, int pasid);
-int idxd_wq_disable_pasid(struct idxd_wq *wq);
-void idxd_wq_quiesce(struct idxd_wq *wq);
-int idxd_wq_init_percpu_ref(struct idxd_wq *wq);
+व्योम idxd_wqs_unmap_portal(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_wq_alloc_resources(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_मुक्त_resources(काष्ठा idxd_wq *wq);
+पूर्णांक idxd_wq_enable(काष्ठा idxd_wq *wq);
+पूर्णांक idxd_wq_disable(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_drain(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_reset(काष्ठा idxd_wq *wq);
+पूर्णांक idxd_wq_map_portal(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_unmap_portal(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_disable_cleanup(काष्ठा idxd_wq *wq);
+पूर्णांक idxd_wq_set_pasid(काष्ठा idxd_wq *wq, पूर्णांक pasid);
+पूर्णांक idxd_wq_disable_pasid(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_quiesce(काष्ठा idxd_wq *wq);
+पूर्णांक idxd_wq_init_percpu_ref(काष्ठा idxd_wq *wq);
 
 /* submission */
-int idxd_submit_desc(struct idxd_wq *wq, struct idxd_desc *desc);
-struct idxd_desc *idxd_alloc_desc(struct idxd_wq *wq, enum idxd_op_type optype);
-void idxd_free_desc(struct idxd_wq *wq, struct idxd_desc *desc);
+पूर्णांक idxd_submit_desc(काष्ठा idxd_wq *wq, काष्ठा idxd_desc *desc);
+काष्ठा idxd_desc *idxd_alloc_desc(काष्ठा idxd_wq *wq, क्रमागत idxd_op_type optype);
+व्योम idxd_मुक्त_desc(काष्ठा idxd_wq *wq, काष्ठा idxd_desc *desc);
 
 /* dmaengine */
-int idxd_register_dma_device(struct idxd_device *idxd);
-void idxd_unregister_dma_device(struct idxd_device *idxd);
-int idxd_register_dma_channel(struct idxd_wq *wq);
-void idxd_unregister_dma_channel(struct idxd_wq *wq);
-void idxd_parse_completion_status(u8 status, enum dmaengine_tx_result *res);
-void idxd_dma_complete_txd(struct idxd_desc *desc,
-			   enum idxd_complete_type comp_type);
+पूर्णांक idxd_रेजिस्टर_dma_device(काष्ठा idxd_device *idxd);
+व्योम idxd_unरेजिस्टर_dma_device(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_रेजिस्टर_dma_channel(काष्ठा idxd_wq *wq);
+व्योम idxd_unरेजिस्टर_dma_channel(काष्ठा idxd_wq *wq);
+व्योम idxd_parse_completion_status(u8 status, क्रमागत dmaengine_tx_result *res);
+व्योम idxd_dma_complete_txd(काष्ठा idxd_desc *desc,
+			   क्रमागत idxd_complete_type comp_type);
 
 /* cdev */
-int idxd_cdev_register(void);
-void idxd_cdev_remove(void);
-int idxd_cdev_get_major(struct idxd_device *idxd);
-int idxd_wq_add_cdev(struct idxd_wq *wq);
-void idxd_wq_del_cdev(struct idxd_wq *wq);
+पूर्णांक idxd_cdev_रेजिस्टर(व्योम);
+व्योम idxd_cdev_हटाओ(व्योम);
+पूर्णांक idxd_cdev_get_major(काष्ठा idxd_device *idxd);
+पूर्णांक idxd_wq_add_cdev(काष्ठा idxd_wq *wq);
+व्योम idxd_wq_del_cdev(काष्ठा idxd_wq *wq);
 
 /* perfmon */
-#if IS_ENABLED(CONFIG_INTEL_IDXD_PERFMON)
-int perfmon_pmu_init(struct idxd_device *idxd);
-void perfmon_pmu_remove(struct idxd_device *idxd);
-void perfmon_counter_overflow(struct idxd_device *idxd);
-void perfmon_init(void);
-void perfmon_exit(void);
-#else
-static inline int perfmon_pmu_init(struct idxd_device *idxd) { return 0; }
-static inline void perfmon_pmu_remove(struct idxd_device *idxd) {}
-static inline void perfmon_counter_overflow(struct idxd_device *idxd) {}
-static inline void perfmon_init(void) {}
-static inline void perfmon_exit(void) {}
-#endif
+#अगर IS_ENABLED(CONFIG_INTEL_IDXD_PERFMON)
+पूर्णांक perfmon_pmu_init(काष्ठा idxd_device *idxd);
+व्योम perfmon_pmu_हटाओ(काष्ठा idxd_device *idxd);
+व्योम perfmon_counter_overflow(काष्ठा idxd_device *idxd);
+व्योम perfmon_init(व्योम);
+व्योम perfmon_निकास(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक perfmon_pmu_init(काष्ठा idxd_device *idxd) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम perfmon_pmu_हटाओ(काष्ठा idxd_device *idxd) अणुपूर्ण
+अटल अंतरभूत व्योम perfmon_counter_overflow(काष्ठा idxd_device *idxd) अणुपूर्ण
+अटल अंतरभूत व्योम perfmon_init(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम perfmon_निकास(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

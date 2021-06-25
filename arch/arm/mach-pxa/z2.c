@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/z2.c
  *
- *  Support for the Zipit Z2 Handheld device.
+ *  Support क्रम the Zipit Z2 Handheld device.
  *
  *  Copyright (C) 2009-2010 Marek Vasut <marek.vasut@gmail.com>
  *
  *  Based on research and code by: Ken McGuire
- *  Based on mainstone.c as modified for the Zipit Z2.
+ *  Based on मुख्यstone.c as modअगरied क्रम the Zipit Z2.
  */
 
-#include <linux/platform_device.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/pwm.h>
-#include <linux/pwm_backlight.h>
-#include <linux/z2_battery.h>
-#include <linux/dma-mapping.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/spi/libertas_spi.h>
-#include <linux/power_supply.h>
-#include <linux/mtd/physmap.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio_keys.h>
-#include <linux/delay.h>
-#include <linux/regulator/machine.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/z2_battery.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/spi/libertas_spi.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa27x.h"
-#include "mfp-pxa27x.h"
-#include <mach/z2.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/keypad-pxa27x.h>
-#include "pm.h"
+#समावेश "pxa27x.h"
+#समावेश "mfp-pxa27x.h"
+#समावेश <mach/z2.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#समावेश "pm.h"
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
 /******************************************************************************
  * Pin configuration
  ******************************************************************************/
-static unsigned long z2_pin_config[] = {
+अटल अचिन्हित दीर्घ z2_pin_config[] = अणु
 
 	/* LCD - 16bpp Active TFT */
 	GPIO58_LCD_LDD_0,
@@ -133,123 +134,123 @@ static unsigned long z2_pin_config[] = {
 	GPIO113_I2S_SYSCLK,
 
 	/* MISC */
-	GPIO0_GPIO,		/* AC power detect */
+	GPIO0_GPIO,		/* AC घातer detect */
 	GPIO1_GPIO,		/* Power button */
 	GPIO37_GPIO,		/* Headphone detect */
-	GPIO98_GPIO,		/* Lid switch */
+	GPIO98_GPIO,		/* Lid चयन */
 	GPIO14_GPIO,		/* WiFi Power */
 	GPIO24_GPIO,		/* WiFi CS */
 	GPIO36_GPIO,		/* WiFi IRQ */
 	GPIO88_GPIO,		/* LCD CS */
-};
+पूर्ण;
 
 /******************************************************************************
  * NOR Flash
  ******************************************************************************/
-#if defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
-static struct resource z2_flash_resource = {
+#अगर defined(CONFIG_MTD_PHYSMAP) || defined(CONFIG_MTD_PHYSMAP_MODULE)
+अटल काष्ठा resource z2_flash_resource = अणु
 	.start	= PXA_CS0_PHYS,
 	.end	= PXA_CS0_PHYS + SZ_8M - 1,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct mtd_partition z2_flash_parts[] = {
-	{
+अटल काष्ठा mtd_partition z2_flash_parts[] = अणु
+	अणु
 		.name	= "U-Boot Bootloader",
 		.offset	= 0x0,
 		.size	= 0x40000,
-	}, {
+	पूर्ण, अणु
 		.name	= "U-Boot Environment",
 		.offset	= 0x40000,
 		.size	= 0x20000,
-	}, {
+	पूर्ण, अणु
 		.name	= "Flash",
 		.offset	= 0x60000,
 		.size	= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct physmap_flash_data z2_flash_data = {
+अटल काष्ठा physmap_flash_data z2_flash_data = अणु
 	.width		= 2,
 	.parts		= z2_flash_parts,
 	.nr_parts	= ARRAY_SIZE(z2_flash_parts),
-};
+पूर्ण;
 
-static struct platform_device z2_flash = {
+अटल काष्ठा platक्रमm_device z2_flash = अणु
 	.name		= "physmap-flash",
 	.id		= -1,
 	.resource	= &z2_flash_resource,
 	.num_resources	= 1,
-	.dev = {
-		.platform_data	= &z2_flash_data,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data	= &z2_flash_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init z2_nor_init(void)
-{
-	platform_device_register(&z2_flash);
-}
-#else
-static inline void z2_nor_init(void) {}
-#endif
+अटल व्योम __init z2_nor_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&z2_flash);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_nor_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Backlight
  ******************************************************************************/
-#if defined(CONFIG_BACKLIGHT_PWM) || defined(CONFIG_BACKLIGHT_PWM_MODULE)
-static struct pwm_lookup z2_pwm_lookup[] = {
-	PWM_LOOKUP("pxa27x-pwm.1", 0, "pwm-backlight.0", NULL, 1260320,
+#अगर defined(CONFIG_BACKLIGHT_PWM) || defined(CONFIG_BACKLIGHT_PWM_MODULE)
+अटल काष्ठा pwm_lookup z2_pwm_lookup[] = अणु
+	PWM_LOOKUP("pxa27x-pwm.1", 0, "pwm-backlight.0", शून्य, 1260320,
 		   PWM_POLARITY_NORMAL),
-	PWM_LOOKUP("pxa27x-pwm.0", 1, "pwm-backlight.1", NULL, 1260320,
+	PWM_LOOKUP("pxa27x-pwm.0", 1, "pwm-backlight.1", शून्य, 1260320,
 		   PWM_POLARITY_NORMAL),
-};
+पूर्ण;
 
-static struct platform_pwm_backlight_data z2_backlight_data[] = {
-	[0] = {
+अटल काष्ठा platक्रमm_pwm_backlight_data z2_backlight_data[] = अणु
+	[0] = अणु
 		/* Keypad Backlight */
 		.max_brightness	= 1023,
 		.dft_brightness	= 0,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		/* LCD Backlight */
 		.max_brightness	= 1023,
 		.dft_brightness	= 512,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device z2_backlight_devices[2] = {
-	{
+अटल काष्ठा platक्रमm_device z2_backlight_devices[2] = अणु
+	अणु
 		.name	= "pwm-backlight",
 		.id	= 0,
-		.dev	= {
-			.platform_data	= &z2_backlight_data[1],
-		},
-	},
-	{
+		.dev	= अणु
+			.platक्रमm_data	= &z2_backlight_data[1],
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.name	= "pwm-backlight",
 		.id	= 1,
-		.dev	= {
-			.platform_data	= &z2_backlight_data[0],
-		},
-	},
-};
-static void __init z2_pwm_init(void)
-{
+		.dev	= अणु
+			.platक्रमm_data	= &z2_backlight_data[0],
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
+अटल व्योम __init z2_pwm_init(व्योम)
+अणु
 	pwm_add_table(z2_pwm_lookup, ARRAY_SIZE(z2_pwm_lookup));
-	platform_device_register(&z2_backlight_devices[0]);
-	platform_device_register(&z2_backlight_devices[1]);
-}
-#else
-static inline void z2_pwm_init(void) {}
-#endif
+	platक्रमm_device_रेजिस्टर(&z2_backlight_devices[0]);
+	platक्रमm_device_रेजिस्टर(&z2_backlight_devices[1]);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_pwm_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Framebuffer
  ******************************************************************************/
-#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-static struct pxafb_mode_info z2_lcd_modes[] = {
-{
-	.pixclock	= 192000,
+#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+अटल काष्ठा pxafb_mode_info z2_lcd_modes[] = अणु
+अणु
+	.pixघड़ी	= 192000,
 	.xres		= 240,
 	.yres		= 320,
 	.bpp		= 16,
@@ -261,100 +262,100 @@ static struct pxafb_mode_info z2_lcd_modes[] = {
 
 	.hsync_len	= 4,
 	.vsync_len	= 4,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct pxafb_mach_info z2_lcd_screen = {
+अटल काष्ठा pxafb_mach_info z2_lcd_screen = अणु
 	.modes		= z2_lcd_modes,
 	.num_modes      = ARRAY_SIZE(z2_lcd_modes),
 	.lcd_conn	= LCD_COLOR_TFT_16BPP | LCD_BIAS_ACTIVE_LOW |
 			  LCD_ALTERNATE_MAPPING,
-};
+पूर्ण;
 
-static void __init z2_lcd_init(void)
-{
-	pxa_set_fb_info(NULL, &z2_lcd_screen);
-}
-#else
-static inline void z2_lcd_init(void) {}
-#endif
+अटल व्योम __init z2_lcd_init(व्योम)
+अणु
+	pxa_set_fb_info(शून्य, &z2_lcd_screen);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_lcd_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * SD/MMC card controller
  ******************************************************************************/
-#if defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
-static struct pxamci_platform_data z2_mci_platform_data = {
+#अगर defined(CONFIG_MMC_PXA) || defined(CONFIG_MMC_PXA_MODULE)
+अटल काष्ठा pxamci_platक्रमm_data z2_mci_platक्रमm_data = अणु
 	.ocr_mask		= MMC_VDD_32_33 | MMC_VDD_33_34,
 	.detect_delay_ms	= 200,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table z2_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table z2_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO96_ZIPITZ2_SD_DETECT,
 			    "cd", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static void __init z2_mmc_init(void)
-{
+अटल व्योम __init z2_mmc_init(व्योम)
+अणु
 	gpiod_add_lookup_table(&z2_mci_gpio_table);
-	pxa_set_mci_info(&z2_mci_platform_data);
-}
-#else
-static inline void z2_mmc_init(void) {}
-#endif
+	pxa_set_mci_info(&z2_mci_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_mmc_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * LEDs
  ******************************************************************************/
-#if defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
-struct gpio_led z2_gpio_leds[] = {
-{
+#अगर defined(CONFIG_LEDS_GPIO) || defined(CONFIG_LEDS_GPIO_MODULE)
+काष्ठा gpio_led z2_gpio_leds[] = अणु
+अणु
 	.name			= "z2:green:wifi",
-	.default_trigger	= "none",
+	.शेष_trigger	= "none",
 	.gpio			= GPIO10_ZIPITZ2_LED_WIFI,
 	.active_low		= 1,
-}, {
+पूर्ण, अणु
 	.name			= "z2:green:charged",
-	.default_trigger	= "mmc0",
+	.शेष_trigger	= "mmc0",
 	.gpio			= GPIO85_ZIPITZ2_LED_CHARGED,
 	.active_low		= 1,
-}, {
+पूर्ण, अणु
 	.name			= "z2:amber:charging",
-	.default_trigger	= "Z2-charging-or-full",
+	.शेष_trigger	= "Z2-charging-or-full",
 	.gpio			= GPIO83_ZIPITZ2_LED_CHARGING,
 	.active_low		= 1,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data z2_gpio_led_info = {
+अटल काष्ठा gpio_led_platक्रमm_data z2_gpio_led_info = अणु
 	.leds		= z2_gpio_leds,
 	.num_leds	= ARRAY_SIZE(z2_gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device z2_leds = {
+अटल काष्ठा platक्रमm_device z2_leds = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &z2_gpio_led_info,
-	}
-};
+	.dev	= अणु
+		.platक्रमm_data	= &z2_gpio_led_info,
+	पूर्ण
+पूर्ण;
 
-static void __init z2_leds_init(void)
-{
-	platform_device_register(&z2_leds);
-}
-#else
-static inline void z2_leds_init(void) {}
-#endif
+अटल व्योम __init z2_leds_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&z2_leds);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_leds_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keyboard
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
-static const unsigned int z2_matrix_keys[] = {
+#अगर defined(CONFIG_KEYBOARD_PXA27x) || defined(CONFIG_KEYBOARD_PXA27x_MODULE)
+अटल स्थिर अचिन्हित पूर्णांक z2_matrix_keys[] = अणु
 	KEY(0, 0, KEY_OPTION),
 	KEY(1, 0, KEY_UP),
 	KEY(2, 0, KEY_DOWN),
@@ -412,137 +413,137 @@ static const unsigned int z2_matrix_keys[] = {
 	KEY(3, 7, KEY_Z),
 	KEY(4, 7, KEY_SEMICOLON),
 	KEY(5, 7, KEY_DOT),
-};
+पूर्ण;
 
-static struct matrix_keymap_data z2_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data z2_matrix_keymap_data = अणु
 	.keymap			= z2_matrix_keys,
 	.keymap_size		= ARRAY_SIZE(z2_matrix_keys),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data z2_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data z2_keypad_platक्रमm_data = अणु
 	.matrix_key_rows	= 7,
 	.matrix_key_cols	= 8,
 	.matrix_keymap_data	= &z2_matrix_keymap_data,
 
-	.debounce_interval	= 30,
-};
+	.debounce_पूर्णांकerval	= 30,
+पूर्ण;
 
-static void __init z2_mkp_init(void)
-{
-	pxa_set_keypad_info(&z2_keypad_platform_data);
-}
-#else
-static inline void z2_mkp_init(void) {}
-#endif
+अटल व्योम __init z2_mkp_init(व्योम)
+अणु
+	pxa_set_keypad_info(&z2_keypad_platक्रमm_data);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_mkp_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * GPIO keys
  ******************************************************************************/
-#if defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
-static struct gpio_keys_button z2_pxa_buttons[] = {
-	{
+#अगर defined(CONFIG_KEYBOARD_GPIO) || defined(CONFIG_KEYBOARD_GPIO_MODULE)
+अटल काष्ठा gpio_keys_button z2_pxa_buttons[] = अणु
+	अणु
 		.code		= KEY_POWER,
 		.gpio		= GPIO1_ZIPITZ2_POWER_BUTTON,
 		.active_low	= 0,
 		.desc		= "Power Button",
 		.wakeup		= 1,
 		.type		= EV_KEY,
-	},
-	{
+	पूर्ण,
+	अणु
 		.code		= SW_LID,
 		.gpio		= GPIO98_ZIPITZ2_LID_BUTTON,
 		.active_low	= 1,
 		.desc		= "Lid Switch",
 		.wakeup		= 0,
 		.type		= EV_SW,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data z2_pxa_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data z2_pxa_keys_data = अणु
 	.buttons	= z2_pxa_buttons,
 	.nbuttons	= ARRAY_SIZE(z2_pxa_buttons),
-};
+पूर्ण;
 
-static struct platform_device z2_pxa_keys = {
+अटल काष्ठा platक्रमm_device z2_pxa_keys = अणु
 	.name	= "gpio-keys",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &z2_pxa_keys_data,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &z2_pxa_keys_data,
+	पूर्ण,
+पूर्ण;
 
-static void __init z2_keys_init(void)
-{
-	platform_device_register(&z2_pxa_keys);
-}
-#else
-static inline void z2_keys_init(void) {}
-#endif
+अटल व्योम __init z2_keys_init(व्योम)
+अणु
+	platक्रमm_device_रेजिस्टर(&z2_pxa_keys);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_keys_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * Battery
  ******************************************************************************/
-#if defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
-static struct z2_battery_info batt_chip_info = {
+#अगर defined(CONFIG_I2C_PXA) || defined(CONFIG_I2C_PXA_MODULE)
+अटल काष्ठा z2_battery_info batt_chip_info = अणु
 	.batt_I2C_bus	= 0,
 	.batt_I2C_addr	= 0x55,
 	.batt_I2C_reg	= 2,
 	.min_voltage	= 3475000,
 	.max_voltage	= 4190000,
-	.batt_div	= 59,
+	.batt_भाग	= 59,
 	.batt_mult	= 1000000,
 	.batt_tech	= POWER_SUPPLY_TECHNOLOGY_LION,
 	.batt_name	= "Z2",
-};
+पूर्ण;
 
-static struct gpiod_lookup_table z2_battery_gpio_table = {
+अटल काष्ठा gpiod_lookup_table z2_battery_gpio_table = अणु
 	.dev_id = "aer915",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO0_ZIPITZ2_AC_DETECT,
-			    NULL, GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+			    शून्य, GPIO_ACTIVE_HIGH),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata z2_i2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata z2_i2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("aer915", 0x55),
 		.dev_name = "aer915",
-		.platform_data	= &batt_chip_info,
-	}, {
+		.platक्रमm_data	= &batt_chip_info,
+	पूर्ण, अणु
 		I2C_BOARD_INFO("wm8750", 0x1b),
-	},
+	पूर्ण,
 
-};
+पूर्ण;
 
-static void __init z2_i2c_init(void)
-{
-	pxa_set_i2c_info(NULL);
+अटल व्योम __init z2_i2c_init(व्योम)
+अणु
+	pxa_set_i2c_info(शून्य);
 	gpiod_add_lookup_table(&z2_battery_gpio_table);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(z2_i2c_board_info));
-}
-#else
-static inline void z2_i2c_init(void) {}
-#endif
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(z2_i2c_board_info));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_i2c_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
  * SSP Devices - WiFi and LCD control
  ******************************************************************************/
-#if defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
+#अगर defined(CONFIG_SPI_PXA2XX) || defined(CONFIG_SPI_PXA2XX_MODULE)
 /* WiFi */
-static int z2_lbs_spi_setup(struct spi_device *spi)
-{
-	int ret = 0;
+अटल पूर्णांक z2_lbs_spi_setup(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक ret = 0;
 
 	ret = gpio_request(GPIO14_ZIPITZ2_WIFI_POWER, "WiFi Power");
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = gpio_direction_output(GPIO14_ZIPITZ2_WIFI_POWER, 1);
-	if (ret)
-		goto err2;
+	अगर (ret)
+		जाओ err2;
 
-	/* Wait until card is powered on */
+	/* Wait until card is घातered on */
 	mdelay(180);
 
 	spi->bits_per_word = 16;
@@ -550,183 +551,183 @@ static int z2_lbs_spi_setup(struct spi_device *spi)
 
 	spi_setup(spi);
 
-	return 0;
+	वापस 0;
 
 err2:
-	gpio_free(GPIO14_ZIPITZ2_WIFI_POWER);
+	gpio_मुक्त(GPIO14_ZIPITZ2_WIFI_POWER);
 err:
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 
-static int z2_lbs_spi_teardown(struct spi_device *spi)
-{
+अटल पूर्णांक z2_lbs_spi_tearकरोwn(काष्ठा spi_device *spi)
+अणु
 	gpio_set_value(GPIO14_ZIPITZ2_WIFI_POWER, 0);
-	gpio_free(GPIO14_ZIPITZ2_WIFI_POWER);
+	gpio_मुक्त(GPIO14_ZIPITZ2_WIFI_POWER);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static struct pxa2xx_spi_chip z2_lbs_chip_info = {
+अटल काष्ठा pxa2xx_spi_chip z2_lbs_chip_info = अणु
 	.rx_threshold	= 8,
 	.tx_threshold	= 8,
-	.timeout	= 1000,
+	.समयout	= 1000,
 	.gpio_cs	= GPIO24_ZIPITZ2_WIFI_CS,
-};
+पूर्ण;
 
-static struct libertas_spi_platform_data z2_lbs_pdata = {
-	.use_dummy_writes	= 1,
+अटल काष्ठा libertas_spi_platक्रमm_data z2_lbs_pdata = अणु
+	.use_dummy_ग_लिखोs	= 1,
 	.setup			= z2_lbs_spi_setup,
-	.teardown		= z2_lbs_spi_teardown,
-};
+	.tearकरोwn		= z2_lbs_spi_tearकरोwn,
+पूर्ण;
 
 /* LCD */
-static struct pxa2xx_spi_chip lms283_chip_info = {
+अटल काष्ठा pxa2xx_spi_chip lms283_chip_info = अणु
 	.rx_threshold	= 1,
 	.tx_threshold	= 1,
-	.timeout	= 64,
+	.समयout	= 64,
 	.gpio_cs	= GPIO88_ZIPITZ2_LCD_CS,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table lms283_gpio_table = {
+अटल काष्ठा gpiod_lookup_table lms283_gpio_table = अणु
 	.dev_id = "spi2.0", /* SPI bus 2 chip select 0 */
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO19_ZIPITZ2_LCD_RESET,
 			    "reset", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct spi_board_info spi_board_info[] __initdata = {
-{
+अटल काष्ठा spi_board_info spi_board_info[] __initdata = अणु
+अणु
 	.modalias		= "libertas_spi",
-	.platform_data		= &z2_lbs_pdata,
+	.platक्रमm_data		= &z2_lbs_pdata,
 	.controller_data	= &z2_lbs_chip_info,
 	.irq			= PXA_GPIO_TO_IRQ(GPIO36_ZIPITZ2_WIFI_IRQ),
 	.max_speed_hz		= 13000000,
 	.bus_num		= 1,
 	.chip_select		= 0,
-},
-{
+पूर्ण,
+अणु
 	.modalias		= "lms283gf05",
 	.controller_data	= &lms283_chip_info,
 	.max_speed_hz		= 400000,
 	.bus_num		= 2,
 	.chip_select		= 0,
-},
-};
+पूर्ण,
+पूर्ण;
 
-static struct pxa2xx_spi_controller pxa_ssp1_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp1_master_info = अणु
 	.num_chipselect	= 1,
 	.enable_dma	= 1,
-};
+पूर्ण;
 
-static struct pxa2xx_spi_controller pxa_ssp2_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp2_master_info = अणु
 	.num_chipselect	= 1,
-};
+पूर्ण;
 
-static void __init z2_spi_init(void)
-{
+अटल व्योम __init z2_spi_init(व्योम)
+अणु
 	pxa2xx_set_spi_info(1, &pxa_ssp1_master_info);
 	pxa2xx_set_spi_info(2, &pxa_ssp2_master_info);
 	gpiod_add_lookup_table(&lms283_gpio_table);
-	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-}
-#else
-static inline void z2_spi_init(void) {}
-#endif
+	spi_रेजिस्टर_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_spi_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
 /******************************************************************************
- * Core power regulator
+ * Core घातer regulator
  ******************************************************************************/
-#if defined(CONFIG_REGULATOR_TPS65023) || \
+#अगर defined(CONFIG_REGULATOR_TPS65023) || \
 	defined(CONFIG_REGULATOR_TPS65023_MODULE)
-static struct regulator_consumer_supply z2_tps65021_consumers[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply z2_tps65021_consumers[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data z2_tps65021_info[] = {
-	{
-		.constraints = {
+अटल काष्ठा regulator_init_data z2_tps65021_info[] = अणु
+	अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "vcc_core range",
 			.min_uV		= 800000,
 			.max_uV		= 1600000,
 			.always_on	= 1,
 			.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-		},
+		पूर्ण,
 		.consumer_supplies	= z2_tps65021_consumers,
 		.num_consumer_supplies	= ARRAY_SIZE(z2_tps65021_consumers),
-	}, {
-		.constraints = {
+	पूर्ण, अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "DCDC2",
 			.min_uV		= 3300000,
 			.max_uV		= 3300000,
 			.always_on	= 1,
-		},
-	}, {
-		.constraints = {
+		पूर्ण,
+	पूर्ण, अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "DCDC3",
 			.min_uV		= 1800000,
 			.max_uV		= 1800000,
 			.always_on	= 1,
-		},
-	}, {
-		.constraints = {
+		पूर्ण,
+	पूर्ण, अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "LDO1",
 			.min_uV		= 1000000,
 			.max_uV		= 3150000,
 			.always_on	= 1,
-		},
-	}, {
-		.constraints = {
+		पूर्ण,
+	पूर्ण, अणु
+		.स्थिरraपूर्णांकs = अणु
 			.name		= "LDO2",
 			.min_uV		= 1050000,
 			.max_uV		= 3300000,
 			.always_on	= 1,
-		},
-	}
-};
+		पूर्ण,
+	पूर्ण
+पूर्ण;
 
-static struct i2c_board_info __initdata z2_pi2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata z2_pi2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("tps65021", 0x48),
-		.platform_data	= &z2_tps65021_info,
-	},
-};
+		.platक्रमm_data	= &z2_tps65021_info,
+	पूर्ण,
+पूर्ण;
 
-static void __init z2_pmic_init(void)
-{
-	pxa27x_set_i2c_power_info(NULL);
-	i2c_register_board_info(1, ARRAY_AND_SIZE(z2_pi2c_board_info));
-}
-#else
-static inline void z2_pmic_init(void) {}
-#endif
+अटल व्योम __init z2_pmic_init(व्योम)
+अणु
+	pxa27x_set_i2c_घातer_info(शून्य);
+	i2c_रेजिस्टर_board_info(1, ARRAY_AND_SIZE(z2_pi2c_board_info));
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम z2_pmic_init(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static void z2_power_off(void)
-{
-	/* We're using deep sleep as poweroff, so clear PSPR to ensure that
-	 * bootloader will jump to its entry point in resume handler
+#अगर_घोषित CONFIG_PM
+अटल व्योम z2_घातer_off(व्योम)
+अणु
+	/* We're using deep sleep as घातeroff, so clear PSPR to ensure that
+	 * bootloader will jump to its entry poपूर्णांक in resume handler
 	 */
 	PSPR = 0x0;
 	local_irq_disable();
 	pxa27x_set_pwrmode(PWRMODE_DEEPSLEEP);
 	pxa27x_cpu_pm_enter(PM_SUSPEND_MEM);
-}
-#else
-#define z2_power_off   NULL
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा z2_घातer_off   शून्य
+#पूर्ण_अगर
 
 /******************************************************************************
  * Machine init
  ******************************************************************************/
-static void __init z2_init(void)
-{
+अटल व्योम __init z2_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(z2_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
 	z2_lcd_init();
 	z2_mmc_init();
@@ -739,8 +740,8 @@ static void __init z2_init(void)
 	z2_keys_init();
 	z2_pmic_init();
 
-	pm_power_off = z2_power_off;
-}
+	pm_घातer_off = z2_घातer_off;
+पूर्ण
 
 MACHINE_START(ZIPIT2, "Zipit Z2")
 	.atag_offset	= 0x100,
@@ -748,7 +749,7 @@ MACHINE_START(ZIPIT2, "Zipit Z2")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= z2_init,
 	.restart	= pxa_restart,
 MACHINE_END

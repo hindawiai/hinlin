@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
-#ifndef PL111_NOMADIK_H
-#define PL111_NOMADIK_H
-#endif
+#अगर_अघोषित PL111_NOMADIK_H
+#घोषणा PL111_NOMADIK_H
+#पूर्ण_अगर
 
-struct device;
+काष्ठा device;
 
-#ifdef CONFIG_ARCH_NOMADIK
+#अगर_घोषित CONFIG_ARCH_NOMADIK
 
-void pl111_nomadik_init(struct device *dev);
+व्योम pl111_nomadik_init(काष्ठा device *dev);
 
-#else
+#अन्यथा
 
-static inline void pl111_nomadik_init(struct device *dev)
-{
-}
+अटल अंतरभूत व्योम pl111_nomadik_init(काष्ठा device *dev)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Intel Platform Monitoring Technology Crashlog driver
+ * Intel Platक्रमm Monitoring Technology Crashlog driver
  *
  * Copyright (c) 2020, Intel Corporation.
  * All Rights Reserved.
  *
- * Author: "Alexander Duyck" <alexander.h.duyck@linux.intel.com>
+ * Author: "Alexander Duyck" <alexander.h.duyck@linux.पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/overflow.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/overflow.h>
 
-#include "intel_pmt_class.h"
+#समावेश "intel_pmt_class.h"
 
-#define DRV_NAME		"pmt_crashlog"
+#घोषणा DRV_NAME		"pmt_crashlog"
 
 /* Crashlog discovery header types */
-#define CRASH_TYPE_OOBMSM	1
+#घोषणा CRASH_TYPE_OOBMSM	1
 
 /* Control Flags */
-#define CRASHLOG_FLAG_DISABLE		BIT(28)
+#घोषणा CRASHLOG_FLAG_DISABLE		BIT(28)
 
 /*
  * Bits 29 and 30 control the state of bit 31.
  *
- * Bit 29 will clear bit 31, if set, allowing a new crashlog to be captured.
+ * Bit 29 will clear bit 31, अगर set, allowing a new crashlog to be captured.
  * Bit 30 will immediately trigger a crashlog to be generated, setting bit 31.
- * Bit 31 is the read-only status with a 1 indicating log is complete.
+ * Bit 31 is the पढ़ो-only status with a 1 indicating log is complete.
  */
-#define CRASHLOG_FLAG_TRIGGER_CLEAR	BIT(29)
-#define CRASHLOG_FLAG_TRIGGER_EXECUTE	BIT(30)
-#define CRASHLOG_FLAG_TRIGGER_COMPLETE	BIT(31)
-#define CRASHLOG_FLAG_TRIGGER_MASK	GENMASK(31, 28)
+#घोषणा CRASHLOG_FLAG_TRIGGER_CLEAR	BIT(29)
+#घोषणा CRASHLOG_FLAG_TRIGGER_EXECUTE	BIT(30)
+#घोषणा CRASHLOG_FLAG_TRIGGER_COMPLETE	BIT(31)
+#घोषणा CRASHLOG_FLAG_TRIGGER_MASK	GENMASK(31, 28)
 
 /* Crashlog Discovery Header */
-#define CONTROL_OFFSET		0x0
-#define GUID_OFFSET		0x4
-#define BASE_OFFSET		0x8
-#define SIZE_OFFSET		0xC
-#define GET_ACCESS(v)		((v) & GENMASK(3, 0))
-#define GET_TYPE(v)		(((v) & GENMASK(7, 4)) >> 4)
-#define GET_VERSION(v)		(((v) & GENMASK(19, 16)) >> 16)
+#घोषणा CONTROL_OFFSET		0x0
+#घोषणा GUID_OFFSET		0x4
+#घोषणा BASE_OFFSET		0x8
+#घोषणा SIZE_OFFSET		0xC
+#घोषणा GET_ACCESS(v)		((v) & GENMASK(3, 0))
+#घोषणा GET_TYPE(v)		(((v) & GENMASK(7, 4)) >> 4)
+#घोषणा GET_VERSION(v)		(((v) & GENMASK(19, 16)) >> 16)
 /* size is in bytes */
-#define GET_SIZE(v)		((v) * sizeof(u32))
+#घोषणा GET_SIZE(v)		((v) * माप(u32))
 
-struct crashlog_entry {
-	/* entry must be first member of struct */
-	struct intel_pmt_entry		entry;
-	struct mutex			control_mutex;
-};
+काष्ठा crashlog_entry अणु
+	/* entry must be first member of काष्ठा */
+	काष्ठा पूर्णांकel_pmt_entry		entry;
+	काष्ठा mutex			control_mutex;
+पूर्ण;
 
-struct pmt_crashlog_priv {
-	int			num_entries;
-	struct crashlog_entry	entry[];
-};
+काष्ठा pmt_crashlog_priv अणु
+	पूर्णांक			num_entries;
+	काष्ठा crashlog_entry	entry[];
+पूर्ण;
 
 /*
  * I/O
  */
-static bool pmt_crashlog_complete(struct intel_pmt_entry *entry)
-{
-	u32 control = readl(entry->disc_table + CONTROL_OFFSET);
+अटल bool pmt_crashlog_complete(काष्ठा पूर्णांकel_pmt_entry *entry)
+अणु
+	u32 control = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 
-	/* return current value of the crashlog complete flag */
-	return !!(control & CRASHLOG_FLAG_TRIGGER_COMPLETE);
-}
+	/* वापस current value of the crashlog complete flag */
+	वापस !!(control & CRASHLOG_FLAG_TRIGGER_COMPLETE);
+पूर्ण
 
-static bool pmt_crashlog_disabled(struct intel_pmt_entry *entry)
-{
-	u32 control = readl(entry->disc_table + CONTROL_OFFSET);
+अटल bool pmt_crashlog_disabled(काष्ठा पूर्णांकel_pmt_entry *entry)
+अणु
+	u32 control = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 
-	/* return current value of the crashlog disabled flag */
-	return !!(control & CRASHLOG_FLAG_DISABLE);
-}
+	/* वापस current value of the crashlog disabled flag */
+	वापस !!(control & CRASHLOG_FLAG_DISABLE);
+पूर्ण
 
-static bool pmt_crashlog_supported(struct intel_pmt_entry *entry)
-{
-	u32 discovery_header = readl(entry->disc_table + CONTROL_OFFSET);
+अटल bool pmt_crashlog_supported(काष्ठा पूर्णांकel_pmt_entry *entry)
+अणु
+	u32 discovery_header = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 	u32 crash_type, version;
 
 	crash_type = GET_TYPE(discovery_header);
@@ -88,238 +89,238 @@ static bool pmt_crashlog_supported(struct intel_pmt_entry *entry)
 
 	/*
 	 * Currently we only recognize OOBMSM version 0 devices.
-	 * We can ignore all other crashlog devices in the system.
+	 * We can ignore all other crashlog devices in the प्रणाली.
 	 */
-	return crash_type == CRASH_TYPE_OOBMSM && version == 0;
-}
+	वापस crash_type == CRASH_TYPE_OOBMSM && version == 0;
+पूर्ण
 
-static void pmt_crashlog_set_disable(struct intel_pmt_entry *entry,
+अटल व्योम pmt_crashlog_set_disable(काष्ठा पूर्णांकel_pmt_entry *entry,
 				     bool disable)
-{
-	u32 control = readl(entry->disc_table + CONTROL_OFFSET);
+अणु
+	u32 control = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 
-	/* clear trigger bits so we are only modifying disable flag */
+	/* clear trigger bits so we are only modअगरying disable flag */
 	control &= ~CRASHLOG_FLAG_TRIGGER_MASK;
 
-	if (disable)
+	अगर (disable)
 		control |= CRASHLOG_FLAG_DISABLE;
-	else
+	अन्यथा
 		control &= ~CRASHLOG_FLAG_DISABLE;
 
-	writel(control, entry->disc_table + CONTROL_OFFSET);
-}
+	ग_लिखोl(control, entry->disc_table + CONTROL_OFFSET);
+पूर्ण
 
-static void pmt_crashlog_set_clear(struct intel_pmt_entry *entry)
-{
-	u32 control = readl(entry->disc_table + CONTROL_OFFSET);
+अटल व्योम pmt_crashlog_set_clear(काष्ठा पूर्णांकel_pmt_entry *entry)
+अणु
+	u32 control = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 
 	control &= ~CRASHLOG_FLAG_TRIGGER_MASK;
 	control |= CRASHLOG_FLAG_TRIGGER_CLEAR;
 
-	writel(control, entry->disc_table + CONTROL_OFFSET);
-}
+	ग_लिखोl(control, entry->disc_table + CONTROL_OFFSET);
+पूर्ण
 
-static void pmt_crashlog_set_execute(struct intel_pmt_entry *entry)
-{
-	u32 control = readl(entry->disc_table + CONTROL_OFFSET);
+अटल व्योम pmt_crashlog_set_execute(काष्ठा पूर्णांकel_pmt_entry *entry)
+अणु
+	u32 control = पढ़ोl(entry->disc_table + CONTROL_OFFSET);
 
 	control &= ~CRASHLOG_FLAG_TRIGGER_MASK;
 	control |= CRASHLOG_FLAG_TRIGGER_EXECUTE;
 
-	writel(control, entry->disc_table + CONTROL_OFFSET);
-}
+	ग_लिखोl(control, entry->disc_table + CONTROL_OFFSET);
+पूर्ण
 
 /*
  * sysfs
  */
-static ssize_t
-enable_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct intel_pmt_entry *entry = dev_get_drvdata(dev);
-	int enabled = !pmt_crashlog_disabled(entry);
+अटल sमाप_प्रकार
+enable_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry = dev_get_drvdata(dev);
+	पूर्णांक enabled = !pmt_crashlog_disabled(entry);
 
-	return sprintf(buf, "%d\n", enabled);
-}
+	वापस प्र_लिखो(buf, "%d\n", enabled);
+पूर्ण
 
-static ssize_t
-enable_store(struct device *dev, struct device_attribute *attr,
-	    const char *buf, size_t count)
-{
-	struct crashlog_entry *entry;
+अटल sमाप_प्रकार
+enable_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा crashlog_entry *entry;
 	bool enabled;
-	int result;
+	पूर्णांक result;
 
 	entry = dev_get_drvdata(dev);
 
 	result = kstrtobool(buf, &enabled);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	mutex_lock(&entry->control_mutex);
 	pmt_crashlog_set_disable(&entry->entry, !enabled);
 	mutex_unlock(&entry->control_mutex);
 
-	return count;
-}
-static DEVICE_ATTR_RW(enable);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(enable);
 
-static ssize_t
-trigger_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct intel_pmt_entry *entry;
-	int trigger;
+अटल sमाप_प्रकार
+trigger_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा पूर्णांकel_pmt_entry *entry;
+	पूर्णांक trigger;
 
 	entry = dev_get_drvdata(dev);
 	trigger = pmt_crashlog_complete(entry);
 
-	return sprintf(buf, "%d\n", trigger);
-}
+	वापस प्र_लिखो(buf, "%d\n", trigger);
+पूर्ण
 
-static ssize_t
-trigger_store(struct device *dev, struct device_attribute *attr,
-	    const char *buf, size_t count)
-{
-	struct crashlog_entry *entry;
+अटल sमाप_प्रकार
+trigger_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा crashlog_entry *entry;
 	bool trigger;
-	int result;
+	पूर्णांक result;
 
 	entry = dev_get_drvdata(dev);
 
 	result = kstrtobool(buf, &trigger);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	mutex_lock(&entry->control_mutex);
 
-	if (!trigger) {
+	अगर (!trigger) अणु
 		pmt_crashlog_set_clear(&entry->entry);
-	} else if (pmt_crashlog_complete(&entry->entry)) {
-		/* we cannot trigger a new crash if one is still pending */
+	पूर्ण अन्यथा अगर (pmt_crashlog_complete(&entry->entry)) अणु
+		/* we cannot trigger a new crash अगर one is still pending */
 		result = -EEXIST;
-		goto err;
-	} else if (pmt_crashlog_disabled(&entry->entry)) {
-		/* if device is currently disabled, return busy */
+		जाओ err;
+	पूर्ण अन्यथा अगर (pmt_crashlog_disabled(&entry->entry)) अणु
+		/* अगर device is currently disabled, वापस busy */
 		result = -EBUSY;
-		goto err;
-	} else {
+		जाओ err;
+	पूर्ण अन्यथा अणु
 		pmt_crashlog_set_execute(&entry->entry);
-	}
+	पूर्ण
 
 	result = count;
 err:
 	mutex_unlock(&entry->control_mutex);
-	return result;
-}
-static DEVICE_ATTR_RW(trigger);
+	वापस result;
+पूर्ण
+अटल DEVICE_ATTR_RW(trigger);
 
-static struct attribute *pmt_crashlog_attrs[] = {
+अटल काष्ठा attribute *pmt_crashlog_attrs[] = अणु
 	&dev_attr_enable.attr,
 	&dev_attr_trigger.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group pmt_crashlog_group = {
+अटल काष्ठा attribute_group pmt_crashlog_group = अणु
 	.attrs	= pmt_crashlog_attrs,
-};
+पूर्ण;
 
-static int pmt_crashlog_header_decode(struct intel_pmt_entry *entry,
-				      struct intel_pmt_header *header,
-				      struct device *dev)
-{
-	void __iomem *disc_table = entry->disc_table;
-	struct crashlog_entry *crashlog;
+अटल पूर्णांक pmt_crashlog_header_decode(काष्ठा पूर्णांकel_pmt_entry *entry,
+				      काष्ठा पूर्णांकel_pmt_header *header,
+				      काष्ठा device *dev)
+अणु
+	व्योम __iomem *disc_table = entry->disc_table;
+	काष्ठा crashlog_entry *crashlog;
 
-	if (!pmt_crashlog_supported(entry))
-		return 1;
+	अगर (!pmt_crashlog_supported(entry))
+		वापस 1;
 
 	/* initialize control mutex */
-	crashlog = container_of(entry, struct crashlog_entry, entry);
+	crashlog = container_of(entry, काष्ठा crashlog_entry, entry);
 	mutex_init(&crashlog->control_mutex);
 
-	header->access_type = GET_ACCESS(readl(disc_table));
-	header->guid = readl(disc_table + GUID_OFFSET);
-	header->base_offset = readl(disc_table + BASE_OFFSET);
+	header->access_type = GET_ACCESS(पढ़ोl(disc_table));
+	header->guid = पढ़ोl(disc_table + GUID_OFFSET);
+	header->base_offset = पढ़ोl(disc_table + BASE_OFFSET);
 
-	/* Size is measured in DWORDS, but accessor returns bytes */
-	header->size = GET_SIZE(readl(disc_table + SIZE_OFFSET));
+	/* Size is measured in DWORDS, but accessor वापसs bytes */
+	header->size = GET_SIZE(पढ़ोl(disc_table + SIZE_OFFSET));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static DEFINE_XARRAY_ALLOC(crashlog_array);
-static struct intel_pmt_namespace pmt_crashlog_ns = {
+अटल DEFINE_XARRAY_ALLOC(crashlog_array);
+अटल काष्ठा पूर्णांकel_pmt_namespace pmt_crashlog_ns = अणु
 	.name = "crashlog",
 	.xa = &crashlog_array,
 	.attr_grp = &pmt_crashlog_group,
 	.pmt_header_decode = pmt_crashlog_header_decode,
-};
+पूर्ण;
 
 /*
  * initialization
  */
-static int pmt_crashlog_remove(struct platform_device *pdev)
-{
-	struct pmt_crashlog_priv *priv = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक pmt_crashlog_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pmt_crashlog_priv *priv = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	for (i = 0; i < priv->num_entries; i++)
-		intel_pmt_dev_destroy(&priv->entry[i].entry, &pmt_crashlog_ns);
+	क्रम (i = 0; i < priv->num_entries; i++)
+		पूर्णांकel_pmt_dev_destroy(&priv->entry[i].entry, &pmt_crashlog_ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pmt_crashlog_probe(struct platform_device *pdev)
-{
-	struct pmt_crashlog_priv *priv;
-	size_t size;
-	int i, ret;
+अटल पूर्णांक pmt_crashlog_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pmt_crashlog_priv *priv;
+	माप_प्रकार size;
+	पूर्णांक i, ret;
 
-	size = struct_size(priv, entry, pdev->num_resources);
+	size = काष्ठा_size(priv, entry, pdev->num_resources);
 	priv = devm_kzalloc(&pdev->dev, size, GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	for (i = 0; i < pdev->num_resources; i++) {
-		struct intel_pmt_entry *entry = &priv->entry[i].entry;
+	क्रम (i = 0; i < pdev->num_resources; i++) अणु
+		काष्ठा पूर्णांकel_pmt_entry *entry = &priv->entry[i].entry;
 
-		ret = intel_pmt_dev_create(entry, &pmt_crashlog_ns, pdev, i);
-		if (ret < 0)
-			goto abort_probe;
-		if (ret)
-			continue;
+		ret = पूर्णांकel_pmt_dev_create(entry, &pmt_crashlog_ns, pdev, i);
+		अगर (ret < 0)
+			जाओ पात_probe;
+		अगर (ret)
+			जारी;
 
 		priv->num_entries++;
-	}
+	पूर्ण
 
-	return 0;
-abort_probe:
-	pmt_crashlog_remove(pdev);
-	return ret;
-}
+	वापस 0;
+पात_probe:
+	pmt_crashlog_हटाओ(pdev);
+	वापस ret;
+पूर्ण
 
-static struct platform_driver pmt_crashlog_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pmt_crashlog_driver = अणु
+	.driver = अणु
 		.name   = DRV_NAME,
-	},
-	.remove = pmt_crashlog_remove,
+	पूर्ण,
+	.हटाओ = pmt_crashlog_हटाओ,
 	.probe  = pmt_crashlog_probe,
-};
+पूर्ण;
 
-static int __init pmt_crashlog_init(void)
-{
-	return platform_driver_register(&pmt_crashlog_driver);
-}
+अटल पूर्णांक __init pmt_crashlog_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pmt_crashlog_driver);
+पूर्ण
 
-static void __exit pmt_crashlog_exit(void)
-{
-	platform_driver_unregister(&pmt_crashlog_driver);
+अटल व्योम __निकास pmt_crashlog_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&pmt_crashlog_driver);
 	xa_destroy(&crashlog_array);
-}
+पूर्ण
 
 module_init(pmt_crashlog_init);
-module_exit(pmt_crashlog_exit);
+module_निकास(pmt_crashlog_निकास);
 
 MODULE_AUTHOR("Alexander Duyck <alexander.h.duyck@linux.intel.com>");
 MODULE_DESCRIPTION("Intel PMT Crashlog driver");

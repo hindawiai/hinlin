@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// Exynos specific support for Samsung pinctrl/gpiolib driver with eint support.
+// Exynos specअगरic support क्रम Samsung pinctrl/gpiolib driver with eपूर्णांक support.
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
@@ -9,206 +10,206 @@
 //
 // Author: Thomas Abraham <thomas.ab@samsung.com>
 //
-// This file contains the Samsung Exynos specific information required by the
+// This file contains the Samsung Exynos specअगरic inक्रमmation required by the
 // the Samsung pinctrl/gpiolib driver. It also includes the implementation of
-// external gpio and wakeup interrupt support.
+// बाह्यal gpio and wakeup पूर्णांकerrupt support.
 
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
-#include <linux/irq.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/regmap.h>
-#include <linux/err.h>
-#include <linux/soc/samsung/exynos-pmu.h>
-#include <linux/soc/samsung/exynos-regs-pmu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/err.h>
+#समावेश <linux/soc/samsung/exynos-pmu.h>
+#समावेश <linux/soc/samsung/exynos-regs-pmu.h>
 
-#include <dt-bindings/pinctrl/samsung.h>
+#समावेश <dt-bindings/pinctrl/samsung.h>
 
-#include "pinctrl-samsung.h"
-#include "pinctrl-exynos.h"
+#समावेश "pinctrl-samsung.h"
+#समावेश "pinctrl-exynos.h"
 
-struct exynos_irq_chip {
-	struct irq_chip chip;
+काष्ठा exynos_irq_chip अणु
+	काष्ठा irq_chip chip;
 
-	u32 eint_con;
-	u32 eint_mask;
-	u32 eint_pend;
-	u32 *eint_wake_mask_value;
-	u32 eint_wake_mask_reg;
-	void (*set_eint_wakeup_mask)(struct samsung_pinctrl_drv_data *drvdata,
-				     struct exynos_irq_chip *irq_chip);
-};
+	u32 eपूर्णांक_con;
+	u32 eपूर्णांक_mask;
+	u32 eपूर्णांक_pend;
+	u32 *eपूर्णांक_wake_mask_value;
+	u32 eपूर्णांक_wake_mask_reg;
+	व्योम (*set_eपूर्णांक_wakeup_mask)(काष्ठा samsung_pinctrl_drv_data *drvdata,
+				     काष्ठा exynos_irq_chip *irq_chip);
+पूर्ण;
 
-static inline struct exynos_irq_chip *to_exynos_irq_chip(struct irq_chip *chip)
-{
-	return container_of(chip, struct exynos_irq_chip, chip);
-}
+अटल अंतरभूत काष्ठा exynos_irq_chip *to_exynos_irq_chip(काष्ठा irq_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा exynos_irq_chip, chip);
+पूर्ण
 
-static void exynos_irq_mask(struct irq_data *irqd)
-{
-	struct irq_chip *chip = irq_data_get_irq_chip(irqd);
-	struct exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	unsigned long reg_mask = our_chip->eint_mask + bank->eint_offset;
-	unsigned int mask;
-	unsigned long flags;
+अटल व्योम exynos_irq_mask(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(irqd);
+	काष्ठा exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	अचिन्हित दीर्घ reg_mask = our_chip->eपूर्णांक_mask + bank->eपूर्णांक_offset;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	mask = readl(bank->eint_base + reg_mask);
+	mask = पढ़ोl(bank->eपूर्णांक_base + reg_mask);
 	mask |= 1 << irqd->hwirq;
-	writel(mask, bank->eint_base + reg_mask);
+	ग_लिखोl(mask, bank->eपूर्णांक_base + reg_mask);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-}
+पूर्ण
 
-static void exynos_irq_ack(struct irq_data *irqd)
-{
-	struct irq_chip *chip = irq_data_get_irq_chip(irqd);
-	struct exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	unsigned long reg_pend = our_chip->eint_pend + bank->eint_offset;
+अटल व्योम exynos_irq_ack(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(irqd);
+	काष्ठा exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	अचिन्हित दीर्घ reg_pend = our_chip->eपूर्णांक_pend + bank->eपूर्णांक_offset;
 
-	writel(1 << irqd->hwirq, bank->eint_base + reg_pend);
-}
+	ग_लिखोl(1 << irqd->hwirq, bank->eपूर्णांक_base + reg_pend);
+पूर्ण
 
-static void exynos_irq_unmask(struct irq_data *irqd)
-{
-	struct irq_chip *chip = irq_data_get_irq_chip(irqd);
-	struct exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	unsigned long reg_mask = our_chip->eint_mask + bank->eint_offset;
-	unsigned int mask;
-	unsigned long flags;
+अटल व्योम exynos_irq_unmask(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(irqd);
+	काष्ठा exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	अचिन्हित दीर्घ reg_mask = our_chip->eपूर्णांक_mask + bank->eपूर्णांक_offset;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित दीर्घ flags;
 
 	/*
-	 * Ack level interrupts right before unmask
+	 * Ack level पूर्णांकerrupts right beक्रमe unmask
 	 *
-	 * If we don't do this we'll get a double-interrupt.  Level triggered
-	 * interrupts must not fire an interrupt if the level is not
-	 * _currently_ active, even if it was active while the interrupt was
+	 * If we करोn't do this we'll get a द्विगुन-पूर्णांकerrupt.  Level triggered
+	 * पूर्णांकerrupts must not fire an पूर्णांकerrupt अगर the level is not
+	 * _currently_ active, even अगर it was active जबतक the पूर्णांकerrupt was
 	 * masked.
 	 */
-	if (irqd_get_trigger_type(irqd) & IRQ_TYPE_LEVEL_MASK)
+	अगर (irqd_get_trigger_type(irqd) & IRQ_TYPE_LEVEL_MASK)
 		exynos_irq_ack(irqd);
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	mask = readl(bank->eint_base + reg_mask);
+	mask = पढ़ोl(bank->eपूर्णांक_base + reg_mask);
 	mask &= ~(1 << irqd->hwirq);
-	writel(mask, bank->eint_base + reg_mask);
+	ग_लिखोl(mask, bank->eपूर्णांक_base + reg_mask);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-}
+पूर्ण
 
-static int exynos_irq_set_type(struct irq_data *irqd, unsigned int type)
-{
-	struct irq_chip *chip = irq_data_get_irq_chip(irqd);
-	struct exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	unsigned int shift = EXYNOS_EINT_CON_LEN * irqd->hwirq;
-	unsigned int con, trig_type;
-	unsigned long reg_con = our_chip->eint_con + bank->eint_offset;
+अटल पूर्णांक exynos_irq_set_type(काष्ठा irq_data *irqd, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(irqd);
+	काष्ठा exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	अचिन्हित पूर्णांक shअगरt = EXYNOS_EINT_CON_LEN * irqd->hwirq;
+	अचिन्हित पूर्णांक con, trig_type;
+	अचिन्हित दीर्घ reg_con = our_chip->eपूर्णांक_con + bank->eपूर्णांक_offset;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		trig_type = EXYNOS_EINT_EDGE_RISING;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		trig_type = EXYNOS_EINT_EDGE_FALLING;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		trig_type = EXYNOS_EINT_EDGE_BOTH;
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		trig_type = EXYNOS_EINT_LEVEL_HIGH;
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		trig_type = EXYNOS_EINT_LEVEL_LOW;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("unsupported external interrupt type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (type & IRQ_TYPE_EDGE_BOTH)
+	अगर (type & IRQ_TYPE_EDGE_BOTH)
 		irq_set_handler_locked(irqd, handle_edge_irq);
-	else
+	अन्यथा
 		irq_set_handler_locked(irqd, handle_level_irq);
 
-	con = readl(bank->eint_base + reg_con);
-	con &= ~(EXYNOS_EINT_CON_MASK << shift);
-	con |= trig_type << shift;
-	writel(con, bank->eint_base + reg_con);
+	con = पढ़ोl(bank->eपूर्णांक_base + reg_con);
+	con &= ~(EXYNOS_EINT_CON_MASK << shअगरt);
+	con |= trig_type << shअगरt;
+	ग_लिखोl(con, bank->eपूर्णांक_base + reg_con);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int exynos_irq_request_resources(struct irq_data *irqd)
-{
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	const struct samsung_pin_bank_type *bank_type = bank->type;
-	unsigned long reg_con, flags;
-	unsigned int shift, mask, con;
-	int ret;
+अटल पूर्णांक exynos_irq_request_resources(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	स्थिर काष्ठा samsung_pin_bank_type *bank_type = bank->type;
+	अचिन्हित दीर्घ reg_con, flags;
+	अचिन्हित पूर्णांक shअगरt, mask, con;
+	पूर्णांक ret;
 
 	ret = gpiochip_lock_as_irq(&bank->gpio_chip, irqd->hwirq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(bank->gpio_chip.parent,
 			"unable to lock pin %s-%lu IRQ\n",
 			bank->name, irqd->hwirq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	reg_con = bank->pctl_offset + bank_type->reg_offset[PINCFG_TYPE_FUNC];
-	shift = irqd->hwirq * bank_type->fld_width[PINCFG_TYPE_FUNC];
+	shअगरt = irqd->hwirq * bank_type->fld_width[PINCFG_TYPE_FUNC];
 	mask = (1 << bank_type->fld_width[PINCFG_TYPE_FUNC]) - 1;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	con = readl(bank->pctl_base + reg_con);
-	con &= ~(mask << shift);
-	con |= EXYNOS_PIN_FUNC_EINT << shift;
-	writel(con, bank->pctl_base + reg_con);
+	con = पढ़ोl(bank->pctl_base + reg_con);
+	con &= ~(mask << shअगरt);
+	con |= EXYNOS_PIN_FUNC_EINT << shअगरt;
+	ग_लिखोl(con, bank->pctl_base + reg_con);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_irq_release_resources(struct irq_data *irqd)
-{
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	const struct samsung_pin_bank_type *bank_type = bank->type;
-	unsigned long reg_con, flags;
-	unsigned int shift, mask, con;
+अटल व्योम exynos_irq_release_resources(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	स्थिर काष्ठा samsung_pin_bank_type *bank_type = bank->type;
+	अचिन्हित दीर्घ reg_con, flags;
+	अचिन्हित पूर्णांक shअगरt, mask, con;
 
 	reg_con = bank->pctl_offset + bank_type->reg_offset[PINCFG_TYPE_FUNC];
-	shift = irqd->hwirq * bank_type->fld_width[PINCFG_TYPE_FUNC];
+	shअगरt = irqd->hwirq * bank_type->fld_width[PINCFG_TYPE_FUNC];
 	mask = (1 << bank_type->fld_width[PINCFG_TYPE_FUNC]) - 1;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	con = readl(bank->pctl_base + reg_con);
-	con &= ~(mask << shift);
-	con |= EXYNOS_PIN_FUNC_INPUT << shift;
-	writel(con, bank->pctl_base + reg_con);
+	con = पढ़ोl(bank->pctl_base + reg_con);
+	con &= ~(mask << shअगरt);
+	con |= EXYNOS_PIN_FUNC_INPUT << shअगरt;
+	ग_लिखोl(con, bank->pctl_base + reg_con);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 
 	gpiochip_unlock_as_irq(&bank->gpio_chip, irqd->hwirq);
-}
+पूर्ण
 
 /*
- * irq_chip for gpio interrupts.
+ * irq_chip क्रम gpio पूर्णांकerrupts.
  */
-static const struct exynos_irq_chip exynos_gpio_irq_chip __initconst = {
-	.chip = {
+अटल स्थिर काष्ठा exynos_irq_chip exynos_gpio_irq_chip __initस्थिर = अणु
+	.chip = अणु
 		.name = "exynos_gpio_irq_chip",
 		.irq_unmask = exynos_irq_unmask,
 		.irq_mask = exynos_irq_mask,
@@ -216,190 +217,190 @@ static const struct exynos_irq_chip exynos_gpio_irq_chip __initconst = {
 		.irq_set_type = exynos_irq_set_type,
 		.irq_request_resources = exynos_irq_request_resources,
 		.irq_release_resources = exynos_irq_release_resources,
-	},
-	.eint_con = EXYNOS_GPIO_ECON_OFFSET,
-	.eint_mask = EXYNOS_GPIO_EMASK_OFFSET,
-	.eint_pend = EXYNOS_GPIO_EPEND_OFFSET,
-	/* eint_wake_mask_value not used */
-};
+	पूर्ण,
+	.eपूर्णांक_con = EXYNOS_GPIO_ECON_OFFSET,
+	.eपूर्णांक_mask = EXYNOS_GPIO_EMASK_OFFSET,
+	.eपूर्णांक_pend = EXYNOS_GPIO_EPEND_OFFSET,
+	/* eपूर्णांक_wake_mask_value not used */
+पूर्ण;
 
-static int exynos_eint_irq_map(struct irq_domain *h, unsigned int virq,
+अटल पूर्णांक exynos_eपूर्णांक_irq_map(काष्ठा irq_करोमुख्य *h, अचिन्हित पूर्णांक virq,
 					irq_hw_number_t hw)
-{
-	struct samsung_pin_bank *b = h->host_data;
+अणु
+	काष्ठा samsung_pin_bank *b = h->host_data;
 
 	irq_set_chip_data(virq, b);
 	irq_set_chip_and_handler(virq, &b->irq_chip->chip,
 					handle_level_irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * irq domain callbacks for external gpio and wakeup interrupt controllers.
+ * irq करोमुख्य callbacks क्रम बाह्यal gpio and wakeup पूर्णांकerrupt controllers.
  */
-static const struct irq_domain_ops exynos_eint_irqd_ops = {
-	.map	= exynos_eint_irq_map,
-	.xlate	= irq_domain_xlate_twocell,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops exynos_eपूर्णांक_irqd_ops = अणु
+	.map	= exynos_eपूर्णांक_irq_map,
+	.xlate	= irq_करोमुख्य_xlate_twocell,
+पूर्ण;
 
-static irqreturn_t exynos_eint_gpio_irq(int irq, void *data)
-{
-	struct samsung_pinctrl_drv_data *d = data;
-	struct samsung_pin_bank *bank = d->pin_banks;
-	unsigned int svc, group, pin, virq;
+अटल irqवापस_t exynos_eपूर्णांक_gpio_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *d = data;
+	काष्ठा samsung_pin_bank *bank = d->pin_banks;
+	अचिन्हित पूर्णांक svc, group, pin, virq;
 
-	svc = readl(bank->eint_base + EXYNOS_SVC_OFFSET);
+	svc = पढ़ोl(bank->eपूर्णांक_base + EXYNOS_SVC_OFFSET);
 	group = EXYNOS_SVC_GROUP(svc);
 	pin = svc & EXYNOS_SVC_NUM_MASK;
 
-	if (!group)
-		return IRQ_HANDLED;
+	अगर (!group)
+		वापस IRQ_HANDLED;
 	bank += (group - 1);
 
-	virq = irq_linear_revmap(bank->irq_domain, pin);
-	if (!virq)
-		return IRQ_NONE;
+	virq = irq_linear_revmap(bank->irq_करोमुख्य, pin);
+	अगर (!virq)
+		वापस IRQ_NONE;
 	generic_handle_irq(virq);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-struct exynos_eint_gpio_save {
-	u32 eint_con;
-	u32 eint_fltcon0;
-	u32 eint_fltcon1;
-	u32 eint_mask;
-};
+काष्ठा exynos_eपूर्णांक_gpio_save अणु
+	u32 eपूर्णांक_con;
+	u32 eपूर्णांक_fltcon0;
+	u32 eपूर्णांक_fltcon1;
+	u32 eपूर्णांक_mask;
+पूर्ण;
 
 /*
- * exynos_eint_gpio_init() - setup handling of external gpio interrupts.
+ * exynos_eपूर्णांक_gpio_init() - setup handling of बाह्यal gpio पूर्णांकerrupts.
  * @d: driver data of samsung pinctrl driver.
  */
-__init int exynos_eint_gpio_init(struct samsung_pinctrl_drv_data *d)
-{
-	struct samsung_pin_bank *bank;
-	struct device *dev = d->dev;
-	int ret;
-	int i;
+__init पूर्णांक exynos_eपूर्णांक_gpio_init(काष्ठा samsung_pinctrl_drv_data *d)
+अणु
+	काष्ठा samsung_pin_bank *bank;
+	काष्ठा device *dev = d->dev;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!d->irq) {
+	अगर (!d->irq) अणु
 		dev_err(dev, "irq number not available\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = devm_request_irq(dev, d->irq, exynos_eint_gpio_irq,
+	ret = devm_request_irq(dev, d->irq, exynos_eपूर्णांक_gpio_irq,
 					0, dev_name(dev), d);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "irq request failed\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	bank = d->pin_banks;
-	for (i = 0; i < d->nr_banks; ++i, ++bank) {
-		if (bank->eint_type != EINT_TYPE_GPIO)
-			continue;
+	क्रम (i = 0; i < d->nr_banks; ++i, ++bank) अणु
+		अगर (bank->eपूर्णांक_type != EINT_TYPE_GPIO)
+			जारी;
 
 		bank->irq_chip = devm_kmemdup(dev, &exynos_gpio_irq_chip,
-					   sizeof(*bank->irq_chip), GFP_KERNEL);
-		if (!bank->irq_chip) {
+					   माप(*bank->irq_chip), GFP_KERNEL);
+		अगर (!bank->irq_chip) अणु
 			ret = -ENOMEM;
-			goto err_domains;
-		}
+			जाओ err_करोमुख्यs;
+		पूर्ण
 		bank->irq_chip->chip.name = bank->name;
 
-		bank->irq_domain = irq_domain_add_linear(bank->of_node,
-				bank->nr_pins, &exynos_eint_irqd_ops, bank);
-		if (!bank->irq_domain) {
+		bank->irq_करोमुख्य = irq_करोमुख्य_add_linear(bank->of_node,
+				bank->nr_pins, &exynos_eपूर्णांक_irqd_ops, bank);
+		अगर (!bank->irq_करोमुख्य) अणु
 			dev_err(dev, "gpio irq domain add failed\n");
 			ret = -ENXIO;
-			goto err_domains;
-		}
+			जाओ err_करोमुख्यs;
+		पूर्ण
 
 		bank->soc_priv = devm_kzalloc(d->dev,
-			sizeof(struct exynos_eint_gpio_save), GFP_KERNEL);
-		if (!bank->soc_priv) {
-			irq_domain_remove(bank->irq_domain);
+			माप(काष्ठा exynos_eपूर्णांक_gpio_save), GFP_KERNEL);
+		अगर (!bank->soc_priv) अणु
+			irq_करोमुख्य_हटाओ(bank->irq_करोमुख्य);
 			ret = -ENOMEM;
-			goto err_domains;
-		}
+			जाओ err_करोमुख्यs;
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_domains:
-	for (--i, --bank; i >= 0; --i, --bank) {
-		if (bank->eint_type != EINT_TYPE_GPIO)
-			continue;
-		irq_domain_remove(bank->irq_domain);
-	}
+err_करोमुख्यs:
+	क्रम (--i, --bank; i >= 0; --i, --bank) अणु
+		अगर (bank->eपूर्णांक_type != EINT_TYPE_GPIO)
+			जारी;
+		irq_करोमुख्य_हटाओ(bank->irq_करोमुख्य);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int exynos_wkup_irq_set_wake(struct irq_data *irqd, unsigned int on)
-{
-	struct irq_chip *chip = irq_data_get_irq_chip(irqd);
-	struct exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
-	struct samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
-	unsigned long bit = 1UL << (2 * bank->eint_offset + irqd->hwirq);
+अटल पूर्णांक exynos_wkup_irq_set_wake(काष्ठा irq_data *irqd, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(irqd);
+	काष्ठा exynos_irq_chip *our_chip = to_exynos_irq_chip(chip);
+	काष्ठा samsung_pin_bank *bank = irq_data_get_irq_chip_data(irqd);
+	अचिन्हित दीर्घ bit = 1UL << (2 * bank->eपूर्णांक_offset + irqd->hwirq);
 
 	pr_info("wake %s for irq %d\n", on ? "enabled" : "disabled", irqd->irq);
 
-	if (!on)
-		*our_chip->eint_wake_mask_value |= bit;
-	else
-		*our_chip->eint_wake_mask_value &= ~bit;
+	अगर (!on)
+		*our_chip->eपूर्णांक_wake_mask_value |= bit;
+	अन्यथा
+		*our_chip->eपूर्णांक_wake_mask_value &= ~bit;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-exynos_pinctrl_set_eint_wakeup_mask(struct samsung_pinctrl_drv_data *drvdata,
-				    struct exynos_irq_chip *irq_chip)
-{
-	struct regmap *pmu_regs;
+अटल व्योम
+exynos_pinctrl_set_eपूर्णांक_wakeup_mask(काष्ठा samsung_pinctrl_drv_data *drvdata,
+				    काष्ठा exynos_irq_chip *irq_chip)
+अणु
+	काष्ठा regmap *pmu_regs;
 
-	if (!drvdata->retention_ctrl || !drvdata->retention_ctrl->priv) {
+	अगर (!drvdata->retention_ctrl || !drvdata->retention_ctrl->priv) अणु
 		dev_warn(drvdata->dev,
 			 "No retention data configured bank with external wakeup interrupt. Wake-up mask will not be set.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pmu_regs = drvdata->retention_ctrl->priv;
 	dev_info(drvdata->dev,
 		 "Setting external wakeup interrupt mask: 0x%x\n",
-		 *irq_chip->eint_wake_mask_value);
+		 *irq_chip->eपूर्णांक_wake_mask_value);
 
-	regmap_write(pmu_regs, irq_chip->eint_wake_mask_reg,
-		     *irq_chip->eint_wake_mask_value);
-}
+	regmap_ग_लिखो(pmu_regs, irq_chip->eपूर्णांक_wake_mask_reg,
+		     *irq_chip->eपूर्णांक_wake_mask_value);
+पूर्ण
 
-static void
-s5pv210_pinctrl_set_eint_wakeup_mask(struct samsung_pinctrl_drv_data *drvdata,
-				    struct exynos_irq_chip *irq_chip)
+अटल व्योम
+s5pv210_pinctrl_set_eपूर्णांक_wakeup_mask(काष्ठा samsung_pinctrl_drv_data *drvdata,
+				    काष्ठा exynos_irq_chip *irq_chip)
 
-{
-	void __iomem *clk_base;
+अणु
+	व्योम __iomem *clk_base;
 
-	if (!drvdata->retention_ctrl || !drvdata->retention_ctrl->priv) {
+	अगर (!drvdata->retention_ctrl || !drvdata->retention_ctrl->priv) अणु
 		dev_warn(drvdata->dev,
 			 "No retention data configured bank with external wakeup interrupt. Wake-up mask will not be set.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
-	clk_base = (void __iomem *) drvdata->retention_ctrl->priv;
+	clk_base = (व्योम __iomem *) drvdata->retention_ctrl->priv;
 
-	__raw_writel(*irq_chip->eint_wake_mask_value,
-		     clk_base + irq_chip->eint_wake_mask_reg);
-}
+	__raw_ग_लिखोl(*irq_chip->eपूर्णांक_wake_mask_value,
+		     clk_base + irq_chip->eपूर्णांक_wake_mask_reg);
+पूर्ण
 
-static u32 eint_wake_mask_value = EXYNOS_EINT_WAKEUP_MASK_DISABLED;
+अटल u32 eपूर्णांक_wake_mask_value = EXYNOS_EINT_WAKEUP_MASK_DISABLED;
 /*
- * irq_chip for wakeup interrupts
+ * irq_chip क्रम wakeup पूर्णांकerrupts
  */
-static const struct exynos_irq_chip s5pv210_wkup_irq_chip __initconst = {
-	.chip = {
+अटल स्थिर काष्ठा exynos_irq_chip s5pv210_wkup_irq_chip __initस्थिर = अणु
+	.chip = अणु
 		.name = "s5pv210_wkup_irq_chip",
 		.irq_unmask = exynos_irq_unmask,
 		.irq_mask = exynos_irq_mask,
@@ -408,18 +409,18 @@ static const struct exynos_irq_chip s5pv210_wkup_irq_chip __initconst = {
 		.irq_set_wake = exynos_wkup_irq_set_wake,
 		.irq_request_resources = exynos_irq_request_resources,
 		.irq_release_resources = exynos_irq_release_resources,
-	},
-	.eint_con = EXYNOS_WKUP_ECON_OFFSET,
-	.eint_mask = EXYNOS_WKUP_EMASK_OFFSET,
-	.eint_pend = EXYNOS_WKUP_EPEND_OFFSET,
-	.eint_wake_mask_value = &eint_wake_mask_value,
-	/* Only differences with exynos4210_wkup_irq_chip: */
-	.eint_wake_mask_reg = S5PV210_EINT_WAKEUP_MASK,
-	.set_eint_wakeup_mask = s5pv210_pinctrl_set_eint_wakeup_mask,
-};
+	पूर्ण,
+	.eपूर्णांक_con = EXYNOS_WKUP_ECON_OFFSET,
+	.eपूर्णांक_mask = EXYNOS_WKUP_EMASK_OFFSET,
+	.eपूर्णांक_pend = EXYNOS_WKUP_EPEND_OFFSET,
+	.eपूर्णांक_wake_mask_value = &eपूर्णांक_wake_mask_value,
+	/* Only dअगरferences with exynos4210_wkup_irq_chip: */
+	.eपूर्णांक_wake_mask_reg = S5PV210_EINT_WAKEUP_MASK,
+	.set_eपूर्णांक_wakeup_mask = s5pv210_pinctrl_set_eपूर्णांक_wakeup_mask,
+पूर्ण;
 
-static const struct exynos_irq_chip exynos4210_wkup_irq_chip __initconst = {
-	.chip = {
+अटल स्थिर काष्ठा exynos_irq_chip exynos4210_wkup_irq_chip __initस्थिर = अणु
+	.chip = अणु
 		.name = "exynos4210_wkup_irq_chip",
 		.irq_unmask = exynos_irq_unmask,
 		.irq_mask = exynos_irq_mask,
@@ -428,17 +429,17 @@ static const struct exynos_irq_chip exynos4210_wkup_irq_chip __initconst = {
 		.irq_set_wake = exynos_wkup_irq_set_wake,
 		.irq_request_resources = exynos_irq_request_resources,
 		.irq_release_resources = exynos_irq_release_resources,
-	},
-	.eint_con = EXYNOS_WKUP_ECON_OFFSET,
-	.eint_mask = EXYNOS_WKUP_EMASK_OFFSET,
-	.eint_pend = EXYNOS_WKUP_EPEND_OFFSET,
-	.eint_wake_mask_value = &eint_wake_mask_value,
-	.eint_wake_mask_reg = EXYNOS_EINT_WAKEUP_MASK,
-	.set_eint_wakeup_mask = exynos_pinctrl_set_eint_wakeup_mask,
-};
+	पूर्ण,
+	.eपूर्णांक_con = EXYNOS_WKUP_ECON_OFFSET,
+	.eपूर्णांक_mask = EXYNOS_WKUP_EMASK_OFFSET,
+	.eपूर्णांक_pend = EXYNOS_WKUP_EPEND_OFFSET,
+	.eपूर्णांक_wake_mask_value = &eपूर्णांक_wake_mask_value,
+	.eपूर्णांक_wake_mask_reg = EXYNOS_EINT_WAKEUP_MASK,
+	.set_eपूर्णांक_wakeup_mask = exynos_pinctrl_set_eपूर्णांक_wakeup_mask,
+पूर्ण;
 
-static const struct exynos_irq_chip exynos7_wkup_irq_chip __initconst = {
-	.chip = {
+अटल स्थिर काष्ठा exynos_irq_chip exynos7_wkup_irq_chip __initस्थिर = अणु
+	.chip = अणु
 		.name = "exynos7_wkup_irq_chip",
 		.irq_unmask = exynos_irq_unmask,
 		.irq_mask = exynos_irq_mask,
@@ -447,305 +448,305 @@ static const struct exynos_irq_chip exynos7_wkup_irq_chip __initconst = {
 		.irq_set_wake = exynos_wkup_irq_set_wake,
 		.irq_request_resources = exynos_irq_request_resources,
 		.irq_release_resources = exynos_irq_release_resources,
-	},
-	.eint_con = EXYNOS7_WKUP_ECON_OFFSET,
-	.eint_mask = EXYNOS7_WKUP_EMASK_OFFSET,
-	.eint_pend = EXYNOS7_WKUP_EPEND_OFFSET,
-	.eint_wake_mask_value = &eint_wake_mask_value,
-	.eint_wake_mask_reg = EXYNOS5433_EINT_WAKEUP_MASK,
-	.set_eint_wakeup_mask = exynos_pinctrl_set_eint_wakeup_mask,
-};
+	पूर्ण,
+	.eपूर्णांक_con = EXYNOS7_WKUP_ECON_OFFSET,
+	.eपूर्णांक_mask = EXYNOS7_WKUP_EMASK_OFFSET,
+	.eपूर्णांक_pend = EXYNOS7_WKUP_EPEND_OFFSET,
+	.eपूर्णांक_wake_mask_value = &eपूर्णांक_wake_mask_value,
+	.eपूर्णांक_wake_mask_reg = EXYNOS5433_EINT_WAKEUP_MASK,
+	.set_eपूर्णांक_wakeup_mask = exynos_pinctrl_set_eपूर्णांक_wakeup_mask,
+पूर्ण;
 
-/* list of external wakeup controllers supported */
-static const struct of_device_id exynos_wkup_irq_ids[] = {
-	{ .compatible = "samsung,s5pv210-wakeup-eint",
-			.data = &s5pv210_wkup_irq_chip },
-	{ .compatible = "samsung,exynos4210-wakeup-eint",
-			.data = &exynos4210_wkup_irq_chip },
-	{ .compatible = "samsung,exynos7-wakeup-eint",
-			.data = &exynos7_wkup_irq_chip },
-	{ }
-};
+/* list of बाह्यal wakeup controllers supported */
+अटल स्थिर काष्ठा of_device_id exynos_wkup_irq_ids[] = अणु
+	अणु .compatible = "samsung,s5pv210-wakeup-eint",
+			.data = &s5pv210_wkup_irq_chip पूर्ण,
+	अणु .compatible = "samsung,exynos4210-wakeup-eint",
+			.data = &exynos4210_wkup_irq_chip पूर्ण,
+	अणु .compatible = "samsung,exynos7-wakeup-eint",
+			.data = &exynos7_wkup_irq_chip पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-/* interrupt handler for wakeup interrupts 0..15 */
-static void exynos_irq_eint0_15(struct irq_desc *desc)
-{
-	struct exynos_weint_data *eintd = irq_desc_get_handler_data(desc);
-	struct samsung_pin_bank *bank = eintd->bank;
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	int eint_irq;
+/* पूर्णांकerrupt handler क्रम wakeup पूर्णांकerrupts 0..15 */
+अटल व्योम exynos_irq_eपूर्णांक0_15(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा exynos_weपूर्णांक_data *eपूर्णांकd = irq_desc_get_handler_data(desc);
+	काष्ठा samsung_pin_bank *bank = eपूर्णांकd->bank;
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	पूर्णांक eपूर्णांक_irq;
 
 	chained_irq_enter(chip, desc);
 
-	eint_irq = irq_linear_revmap(bank->irq_domain, eintd->irq);
-	generic_handle_irq(eint_irq);
+	eपूर्णांक_irq = irq_linear_revmap(bank->irq_करोमुख्य, eपूर्णांकd->irq);
+	generic_handle_irq(eपूर्णांक_irq);
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static inline void exynos_irq_demux_eint(unsigned int pend,
-						struct irq_domain *domain)
-{
-	unsigned int irq;
+अटल अंतरभूत व्योम exynos_irq_demux_eपूर्णांक(अचिन्हित पूर्णांक pend,
+						काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	अचिन्हित पूर्णांक irq;
 
-	while (pend) {
+	जबतक (pend) अणु
 		irq = fls(pend) - 1;
-		generic_handle_irq(irq_find_mapping(domain, irq));
+		generic_handle_irq(irq_find_mapping(करोमुख्य, irq));
 		pend &= ~(1 << irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* interrupt handler for wakeup interrupt 16 */
-static void exynos_irq_demux_eint16_31(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct exynos_muxed_weint_data *eintd = irq_desc_get_handler_data(desc);
-	unsigned int pend;
-	unsigned int mask;
-	int i;
+/* पूर्णांकerrupt handler क्रम wakeup पूर्णांकerrupt 16 */
+अटल व्योम exynos_irq_demux_eपूर्णांक16_31(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा exynos_muxed_weपूर्णांक_data *eपूर्णांकd = irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक pend;
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक i;
 
 	chained_irq_enter(chip, desc);
 
-	for (i = 0; i < eintd->nr_banks; ++i) {
-		struct samsung_pin_bank *b = eintd->banks[i];
-		pend = readl(b->eint_base + b->irq_chip->eint_pend
-				+ b->eint_offset);
-		mask = readl(b->eint_base + b->irq_chip->eint_mask
-				+ b->eint_offset);
-		exynos_irq_demux_eint(pend & ~mask, b->irq_domain);
-	}
+	क्रम (i = 0; i < eपूर्णांकd->nr_banks; ++i) अणु
+		काष्ठा samsung_pin_bank *b = eपूर्णांकd->banks[i];
+		pend = पढ़ोl(b->eपूर्णांक_base + b->irq_chip->eपूर्णांक_pend
+				+ b->eपूर्णांक_offset);
+		mask = पढ़ोl(b->eपूर्णांक_base + b->irq_chip->eपूर्णांक_mask
+				+ b->eपूर्णांक_offset);
+		exynos_irq_demux_eपूर्णांक(pend & ~mask, b->irq_करोमुख्य);
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
 /*
- * exynos_eint_wkup_init() - setup handling of external wakeup interrupts.
+ * exynos_eपूर्णांक_wkup_init() - setup handling of बाह्यal wakeup पूर्णांकerrupts.
  * @d: driver data of samsung pinctrl driver.
  */
-__init int exynos_eint_wkup_init(struct samsung_pinctrl_drv_data *d)
-{
-	struct device *dev = d->dev;
-	struct device_node *wkup_np = NULL;
-	struct device_node *np;
-	struct samsung_pin_bank *bank;
-	struct exynos_weint_data *weint_data;
-	struct exynos_muxed_weint_data *muxed_data;
-	const struct exynos_irq_chip *irq_chip;
-	unsigned int muxed_banks = 0;
-	unsigned int i;
-	int idx, irq;
+__init पूर्णांक exynos_eपूर्णांक_wkup_init(काष्ठा samsung_pinctrl_drv_data *d)
+अणु
+	काष्ठा device *dev = d->dev;
+	काष्ठा device_node *wkup_np = शून्य;
+	काष्ठा device_node *np;
+	काष्ठा samsung_pin_bank *bank;
+	काष्ठा exynos_weपूर्णांक_data *weपूर्णांक_data;
+	काष्ठा exynos_muxed_weपूर्णांक_data *muxed_data;
+	स्थिर काष्ठा exynos_irq_chip *irq_chip;
+	अचिन्हित पूर्णांक muxed_banks = 0;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक idx, irq;
 
-	for_each_child_of_node(dev->of_node, np) {
-		const struct of_device_id *match;
+	क्रम_each_child_of_node(dev->of_node, np) अणु
+		स्थिर काष्ठा of_device_id *match;
 
 		match = of_match_node(exynos_wkup_irq_ids, np);
-		if (match) {
+		अगर (match) अणु
 			irq_chip = match->data;
 			wkup_np = np;
-			break;
-		}
-	}
-	if (!wkup_np)
-		return -ENODEV;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!wkup_np)
+		वापस -ENODEV;
 
 	bank = d->pin_banks;
-	for (i = 0; i < d->nr_banks; ++i, ++bank) {
-		if (bank->eint_type != EINT_TYPE_WKUP)
-			continue;
+	क्रम (i = 0; i < d->nr_banks; ++i, ++bank) अणु
+		अगर (bank->eपूर्णांक_type != EINT_TYPE_WKUP)
+			जारी;
 
-		bank->irq_chip = devm_kmemdup(dev, irq_chip, sizeof(*irq_chip),
+		bank->irq_chip = devm_kmemdup(dev, irq_chip, माप(*irq_chip),
 					      GFP_KERNEL);
-		if (!bank->irq_chip) {
+		अगर (!bank->irq_chip) अणु
 			of_node_put(wkup_np);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		bank->irq_chip->chip.name = bank->name;
 
-		bank->irq_domain = irq_domain_add_linear(bank->of_node,
-				bank->nr_pins, &exynos_eint_irqd_ops, bank);
-		if (!bank->irq_domain) {
+		bank->irq_करोमुख्य = irq_करोमुख्य_add_linear(bank->of_node,
+				bank->nr_pins, &exynos_eपूर्णांक_irqd_ops, bank);
+		अगर (!bank->irq_करोमुख्य) अणु
 			dev_err(dev, "wkup irq domain add failed\n");
 			of_node_put(wkup_np);
-			return -ENXIO;
-		}
+			वापस -ENXIO;
+		पूर्ण
 
-		if (!of_find_property(bank->of_node, "interrupts", NULL)) {
-			bank->eint_type = EINT_TYPE_WKUP_MUX;
+		अगर (!of_find_property(bank->of_node, "interrupts", शून्य)) अणु
+			bank->eपूर्णांक_type = EINT_TYPE_WKUP_MUX;
 			++muxed_banks;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		weint_data = devm_kcalloc(dev,
-					  bank->nr_pins, sizeof(*weint_data),
+		weपूर्णांक_data = devm_kसुस्मृति(dev,
+					  bank->nr_pins, माप(*weपूर्णांक_data),
 					  GFP_KERNEL);
-		if (!weint_data) {
+		अगर (!weपूर्णांक_data) अणु
 			of_node_put(wkup_np);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		for (idx = 0; idx < bank->nr_pins; ++idx) {
+		क्रम (idx = 0; idx < bank->nr_pins; ++idx) अणु
 			irq = irq_of_parse_and_map(bank->of_node, idx);
-			if (!irq) {
+			अगर (!irq) अणु
 				dev_err(dev, "irq number for eint-%s-%d not found\n",
 							bank->name, idx);
-				continue;
-			}
-			weint_data[idx].irq = idx;
-			weint_data[idx].bank = bank;
+				जारी;
+			पूर्ण
+			weपूर्णांक_data[idx].irq = idx;
+			weपूर्णांक_data[idx].bank = bank;
 			irq_set_chained_handler_and_data(irq,
-							 exynos_irq_eint0_15,
-							 &weint_data[idx]);
-		}
-	}
+							 exynos_irq_eपूर्णांक0_15,
+							 &weपूर्णांक_data[idx]);
+		पूर्ण
+	पूर्ण
 
-	if (!muxed_banks) {
+	अगर (!muxed_banks) अणु
 		of_node_put(wkup_np);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	irq = irq_of_parse_and_map(wkup_np, 0);
 	of_node_put(wkup_np);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(dev, "irq number for muxed EINTs not found\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	muxed_data = devm_kzalloc(dev, sizeof(*muxed_data)
-		+ muxed_banks*sizeof(struct samsung_pin_bank *), GFP_KERNEL);
-	if (!muxed_data)
-		return -ENOMEM;
+	muxed_data = devm_kzalloc(dev, माप(*muxed_data)
+		+ muxed_banks*माप(काष्ठा samsung_pin_bank *), GFP_KERNEL);
+	अगर (!muxed_data)
+		वापस -ENOMEM;
 
-	irq_set_chained_handler_and_data(irq, exynos_irq_demux_eint16_31,
+	irq_set_chained_handler_and_data(irq, exynos_irq_demux_eपूर्णांक16_31,
 					 muxed_data);
 
 	bank = d->pin_banks;
 	idx = 0;
-	for (i = 0; i < d->nr_banks; ++i, ++bank) {
-		if (bank->eint_type != EINT_TYPE_WKUP_MUX)
-			continue;
+	क्रम (i = 0; i < d->nr_banks; ++i, ++bank) अणु
+		अगर (bank->eपूर्णांक_type != EINT_TYPE_WKUP_MUX)
+			जारी;
 
 		muxed_data->banks[idx++] = bank;
-	}
+	पूर्ण
 	muxed_data->nr_banks = muxed_banks;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void exynos_pinctrl_suspend_bank(
-				struct samsung_pinctrl_drv_data *drvdata,
-				struct samsung_pin_bank *bank)
-{
-	struct exynos_eint_gpio_save *save = bank->soc_priv;
-	void __iomem *regs = bank->eint_base;
+अटल व्योम exynos_pinctrl_suspend_bank(
+				काष्ठा samsung_pinctrl_drv_data *drvdata,
+				काष्ठा samsung_pin_bank *bank)
+अणु
+	काष्ठा exynos_eपूर्णांक_gpio_save *save = bank->soc_priv;
+	व्योम __iomem *regs = bank->eपूर्णांक_base;
 
-	save->eint_con = readl(regs + EXYNOS_GPIO_ECON_OFFSET
-						+ bank->eint_offset);
-	save->eint_fltcon0 = readl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
-						+ 2 * bank->eint_offset);
-	save->eint_fltcon1 = readl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
-						+ 2 * bank->eint_offset + 4);
-	save->eint_mask = readl(regs + bank->irq_chip->eint_mask
-						+ bank->eint_offset);
+	save->eपूर्णांक_con = पढ़ोl(regs + EXYNOS_GPIO_ECON_OFFSET
+						+ bank->eपूर्णांक_offset);
+	save->eपूर्णांक_fltcon0 = पढ़ोl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
+						+ 2 * bank->eपूर्णांक_offset);
+	save->eपूर्णांक_fltcon1 = पढ़ोl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
+						+ 2 * bank->eपूर्णांक_offset + 4);
+	save->eपूर्णांक_mask = पढ़ोl(regs + bank->irq_chip->eपूर्णांक_mask
+						+ bank->eपूर्णांक_offset);
 
-	pr_debug("%s: save     con %#010x\n", bank->name, save->eint_con);
-	pr_debug("%s: save fltcon0 %#010x\n", bank->name, save->eint_fltcon0);
-	pr_debug("%s: save fltcon1 %#010x\n", bank->name, save->eint_fltcon1);
-	pr_debug("%s: save    mask %#010x\n", bank->name, save->eint_mask);
-}
+	pr_debug("%s: save     con %#010x\n", bank->name, save->eपूर्णांक_con);
+	pr_debug("%s: save fltcon0 %#010x\n", bank->name, save->eपूर्णांक_fltcon0);
+	pr_debug("%s: save fltcon1 %#010x\n", bank->name, save->eपूर्णांक_fltcon1);
+	pr_debug("%s: save    mask %#010x\n", bank->name, save->eपूर्णांक_mask);
+पूर्ण
 
-void exynos_pinctrl_suspend(struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct samsung_pin_bank *bank = drvdata->pin_banks;
-	struct exynos_irq_chip *irq_chip = NULL;
-	int i;
+व्योम exynos_pinctrl_suspend(काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा samsung_pin_bank *bank = drvdata->pin_banks;
+	काष्ठा exynos_irq_chip *irq_chip = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < drvdata->nr_banks; ++i, ++bank) {
-		if (bank->eint_type == EINT_TYPE_GPIO)
+	क्रम (i = 0; i < drvdata->nr_banks; ++i, ++bank) अणु
+		अगर (bank->eपूर्णांक_type == EINT_TYPE_GPIO)
 			exynos_pinctrl_suspend_bank(drvdata, bank);
-		else if (bank->eint_type == EINT_TYPE_WKUP) {
-			if (!irq_chip) {
+		अन्यथा अगर (bank->eपूर्णांक_type == EINT_TYPE_WKUP) अणु
+			अगर (!irq_chip) अणु
 				irq_chip = bank->irq_chip;
-				irq_chip->set_eint_wakeup_mask(drvdata,
+				irq_chip->set_eपूर्णांक_wakeup_mask(drvdata,
 							       irq_chip);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void exynos_pinctrl_resume_bank(
-				struct samsung_pinctrl_drv_data *drvdata,
-				struct samsung_pin_bank *bank)
-{
-	struct exynos_eint_gpio_save *save = bank->soc_priv;
-	void __iomem *regs = bank->eint_base;
+अटल व्योम exynos_pinctrl_resume_bank(
+				काष्ठा samsung_pinctrl_drv_data *drvdata,
+				काष्ठा samsung_pin_bank *bank)
+अणु
+	काष्ठा exynos_eपूर्णांक_gpio_save *save = bank->soc_priv;
+	व्योम __iomem *regs = bank->eपूर्णांक_base;
 
 	pr_debug("%s:     con %#010x => %#010x\n", bank->name,
-			readl(regs + EXYNOS_GPIO_ECON_OFFSET
-			+ bank->eint_offset), save->eint_con);
+			पढ़ोl(regs + EXYNOS_GPIO_ECON_OFFSET
+			+ bank->eपूर्णांक_offset), save->eपूर्णांक_con);
 	pr_debug("%s: fltcon0 %#010x => %#010x\n", bank->name,
-			readl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
-			+ 2 * bank->eint_offset), save->eint_fltcon0);
+			पढ़ोl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
+			+ 2 * bank->eपूर्णांक_offset), save->eपूर्णांक_fltcon0);
 	pr_debug("%s: fltcon1 %#010x => %#010x\n", bank->name,
-			readl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
-			+ 2 * bank->eint_offset + 4), save->eint_fltcon1);
+			पढ़ोl(regs + EXYNOS_GPIO_EFLTCON_OFFSET
+			+ 2 * bank->eपूर्णांक_offset + 4), save->eपूर्णांक_fltcon1);
 	pr_debug("%s:    mask %#010x => %#010x\n", bank->name,
-			readl(regs + bank->irq_chip->eint_mask
-			+ bank->eint_offset), save->eint_mask);
+			पढ़ोl(regs + bank->irq_chip->eपूर्णांक_mask
+			+ bank->eपूर्णांक_offset), save->eपूर्णांक_mask);
 
-	writel(save->eint_con, regs + EXYNOS_GPIO_ECON_OFFSET
-						+ bank->eint_offset);
-	writel(save->eint_fltcon0, regs + EXYNOS_GPIO_EFLTCON_OFFSET
-						+ 2 * bank->eint_offset);
-	writel(save->eint_fltcon1, regs + EXYNOS_GPIO_EFLTCON_OFFSET
-						+ 2 * bank->eint_offset + 4);
-	writel(save->eint_mask, regs + bank->irq_chip->eint_mask
-						+ bank->eint_offset);
-}
+	ग_लिखोl(save->eपूर्णांक_con, regs + EXYNOS_GPIO_ECON_OFFSET
+						+ bank->eपूर्णांक_offset);
+	ग_लिखोl(save->eपूर्णांक_fltcon0, regs + EXYNOS_GPIO_EFLTCON_OFFSET
+						+ 2 * bank->eपूर्णांक_offset);
+	ग_लिखोl(save->eपूर्णांक_fltcon1, regs + EXYNOS_GPIO_EFLTCON_OFFSET
+						+ 2 * bank->eपूर्णांक_offset + 4);
+	ग_लिखोl(save->eपूर्णांक_mask, regs + bank->irq_chip->eपूर्णांक_mask
+						+ bank->eपूर्णांक_offset);
+पूर्ण
 
-void exynos_pinctrl_resume(struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct samsung_pin_bank *bank = drvdata->pin_banks;
-	int i;
+व्योम exynos_pinctrl_resume(काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा samsung_pin_bank *bank = drvdata->pin_banks;
+	पूर्णांक i;
 
-	for (i = 0; i < drvdata->nr_banks; ++i, ++bank)
-		if (bank->eint_type == EINT_TYPE_GPIO)
+	क्रम (i = 0; i < drvdata->nr_banks; ++i, ++bank)
+		अगर (bank->eपूर्णांक_type == EINT_TYPE_GPIO)
 			exynos_pinctrl_resume_bank(drvdata, bank);
-}
+पूर्ण
 
-static void exynos_retention_enable(struct samsung_pinctrl_drv_data *drvdata)
-{
-	if (drvdata->retention_ctrl->refcnt)
+अटल व्योम exynos_retention_enable(काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	अगर (drvdata->retention_ctrl->refcnt)
 		atomic_inc(drvdata->retention_ctrl->refcnt);
-}
+पूर्ण
 
-static void exynos_retention_disable(struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct samsung_retention_ctrl *ctrl = drvdata->retention_ctrl;
-	struct regmap *pmu_regs = ctrl->priv;
-	int i;
+अटल व्योम exynos_retention_disable(काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा samsung_retention_ctrl *ctrl = drvdata->retention_ctrl;
+	काष्ठा regmap *pmu_regs = ctrl->priv;
+	पूर्णांक i;
 
-	if (ctrl->refcnt && !atomic_dec_and_test(ctrl->refcnt))
-		return;
+	अगर (ctrl->refcnt && !atomic_dec_and_test(ctrl->refcnt))
+		वापस;
 
-	for (i = 0; i < ctrl->nr_regs; i++)
-		regmap_write(pmu_regs, ctrl->regs[i], ctrl->value);
-}
+	क्रम (i = 0; i < ctrl->nr_regs; i++)
+		regmap_ग_लिखो(pmu_regs, ctrl->regs[i], ctrl->value);
+पूर्ण
 
-struct samsung_retention_ctrl *
-exynos_retention_init(struct samsung_pinctrl_drv_data *drvdata,
-		      const struct samsung_retention_data *data)
-{
-	struct samsung_retention_ctrl *ctrl;
-	struct regmap *pmu_regs;
-	int i;
+काष्ठा samsung_retention_ctrl *
+exynos_retention_init(काष्ठा samsung_pinctrl_drv_data *drvdata,
+		      स्थिर काष्ठा samsung_retention_data *data)
+अणु
+	काष्ठा samsung_retention_ctrl *ctrl;
+	काष्ठा regmap *pmu_regs;
+	पूर्णांक i;
 
-	ctrl = devm_kzalloc(drvdata->dev, sizeof(*ctrl), GFP_KERNEL);
-	if (!ctrl)
-		return ERR_PTR(-ENOMEM);
+	ctrl = devm_kzalloc(drvdata->dev, माप(*ctrl), GFP_KERNEL);
+	अगर (!ctrl)
+		वापस ERR_PTR(-ENOMEM);
 
 	pmu_regs = exynos_get_pmu_regmap();
-	if (IS_ERR(pmu_regs))
-		return ERR_CAST(pmu_regs);
+	अगर (IS_ERR(pmu_regs))
+		वापस ERR_CAST(pmu_regs);
 
 	ctrl->priv = pmu_regs;
 	ctrl->regs = data->regs;
@@ -756,8 +757,8 @@ exynos_retention_init(struct samsung_pinctrl_drv_data *drvdata,
 	ctrl->disable = exynos_retention_disable;
 
 	/* Ensure that retention is disabled on driver init */
-	for (i = 0; i < ctrl->nr_regs; i++)
-		regmap_write(pmu_regs, ctrl->regs[i], ctrl->value);
+	क्रम (i = 0; i < ctrl->nr_regs; i++)
+		regmap_ग_लिखो(pmu_regs, ctrl->regs[i], ctrl->value);
 
-	return ctrl;
-}
+	वापस ctrl;
+पूर्ण

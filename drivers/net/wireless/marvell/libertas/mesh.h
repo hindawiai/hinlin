@@ -1,77 +1,78 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Contains all definitions needed for the Libertas' MESH implementation.
+ * Contains all definitions needed क्रम the Libertas' MESH implementation.
  */
-#ifndef _LBS_MESH_H_
-#define _LBS_MESH_H_
+#अगर_अघोषित _LBS_MESH_H_
+#घोषणा _LBS_MESH_H_
 
 
-#include <net/iw_handler.h>
-#include <net/lib80211.h>
+#समावेश <net/iw_handler.h>
+#समावेश <net/lib80211.h>
 
-#include "host.h"
-#include "dev.h"
+#समावेश "host.h"
+#समावेश "dev.h"
 
-#ifdef CONFIG_LIBERTAS_MESH
+#अगर_घोषित CONFIG_LIBERTAS_MESH
 
-struct net_device;
+काष्ठा net_device;
 
-void lbs_init_mesh(struct lbs_private *priv);
-void lbs_start_mesh(struct lbs_private *priv);
-int lbs_deinit_mesh(struct lbs_private *priv);
+व्योम lbs_init_mesh(काष्ठा lbs_निजी *priv);
+व्योम lbs_start_mesh(काष्ठा lbs_निजी *priv);
+पूर्णांक lbs_deinit_mesh(काष्ठा lbs_निजी *priv);
 
-void lbs_remove_mesh(struct lbs_private *priv);
+व्योम lbs_हटाओ_mesh(काष्ठा lbs_निजी *priv);
 
-static inline bool lbs_mesh_activated(struct lbs_private *priv)
-{
-	return !!priv->mesh_tlv;
-}
+अटल अंतरभूत bool lbs_mesh_activated(काष्ठा lbs_निजी *priv)
+अणु
+	वापस !!priv->mesh_tlv;
+पूर्ण
 
-int lbs_mesh_set_channel(struct lbs_private *priv, u8 channel);
+पूर्णांक lbs_mesh_set_channel(काष्ठा lbs_निजी *priv, u8 channel);
 
 /* Sending / Receiving */
 
-struct rxpd;
-struct txpd;
+काष्ठा rxpd;
+काष्ठा txpd;
 
-struct net_device *lbs_mesh_set_dev(struct lbs_private *priv,
-	struct net_device *dev, struct rxpd *rxpd);
-void lbs_mesh_set_txpd(struct lbs_private *priv,
-	struct net_device *dev, struct txpd *txpd);
+काष्ठा net_device *lbs_mesh_set_dev(काष्ठा lbs_निजी *priv,
+	काष्ठा net_device *dev, काष्ठा rxpd *rxpd);
+व्योम lbs_mesh_set_txpd(काष्ठा lbs_निजी *priv,
+	काष्ठा net_device *dev, काष्ठा txpd *txpd);
 
 
 /* Command handling */
 
-struct cmd_ds_command;
-struct cmd_ds_mesh_access;
-struct cmd_ds_mesh_config;
+काष्ठा cmd_ds_command;
+काष्ठा cmd_ds_mesh_access;
+काष्ठा cmd_ds_mesh_config;
 
 
 /* Ethtool statistics */
 
-struct ethtool_stats;
+काष्ठा ethtool_stats;
 
-void lbs_mesh_ethtool_get_stats(struct net_device *dev,
-	struct ethtool_stats *stats, uint64_t *data);
-int lbs_mesh_ethtool_get_sset_count(struct net_device *dev, int sset);
-void lbs_mesh_ethtool_get_strings(struct net_device *dev,
-	uint32_t stringset, uint8_t *s);
-
-
-#else
-
-#define lbs_init_mesh(priv)	do { } while (0)
-#define lbs_deinit_mesh(priv)	do { } while (0)
-#define lbs_start_mesh(priv)	do { } while (0)
-#define lbs_add_mesh(priv)	do { } while (0)
-#define lbs_remove_mesh(priv)	do { } while (0)
-#define lbs_mesh_set_dev(priv, dev, rxpd) (dev)
-#define lbs_mesh_set_txpd(priv, dev, txpd) do { } while (0)
-#define lbs_mesh_set_channel(priv, channel) (0)
-#define lbs_mesh_activated(priv) (false)
-
-#endif
+व्योम lbs_mesh_ethtool_get_stats(काष्ठा net_device *dev,
+	काष्ठा ethtool_stats *stats, uपूर्णांक64_t *data);
+पूर्णांक lbs_mesh_ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset);
+व्योम lbs_mesh_ethtool_get_strings(काष्ठा net_device *dev,
+	uपूर्णांक32_t stringset, uपूर्णांक8_t *s);
 
 
+#अन्यथा
 
-#endif
+#घोषणा lbs_init_mesh(priv)	करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_deinit_mesh(priv)	करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_start_mesh(priv)	करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_add_mesh(priv)	करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_हटाओ_mesh(priv)	करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_mesh_set_dev(priv, dev, rxpd) (dev)
+#घोषणा lbs_mesh_set_txpd(priv, dev, txpd) करो अणु पूर्ण जबतक (0)
+#घोषणा lbs_mesh_set_channel(priv, channel) (0)
+#घोषणा lbs_mesh_activated(priv) (false)
+
+#पूर्ण_अगर
+
+
+
+#पूर्ण_अगर

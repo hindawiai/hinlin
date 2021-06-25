@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2014-2018 MediaTek Inc.
 
 /*
- * Library for MediaTek External Interrupt Support
+ * Library क्रम MediaTek External Interrupt Support
  *
  * Author: Maoguang Meng <maoguang.meng@mediatek.com>
  *	   Sean Wang <sean.wang@mediatek.com>
  *
  */
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/module.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "mtk-eint.h"
+#समावेश "mtk-eint.h"
 
-#define MTK_EINT_EDGE_SENSITIVE           0
-#define MTK_EINT_LEVEL_SENSITIVE          1
-#define MTK_EINT_DBNC_SET_DBNC_BITS	  4
-#define MTK_EINT_DBNC_RST_BIT		  (0x1 << 1)
-#define MTK_EINT_DBNC_SET_EN		  (0x1 << 0)
+#घोषणा MTK_EINT_EDGE_SENSITIVE           0
+#घोषणा MTK_EINT_LEVEL_SENSITIVE          1
+#घोषणा MTK_EINT_DBNC_SET_DBNC_BITS	  4
+#घोषणा MTK_EINT_DBNC_RST_BIT		  (0x1 << 1)
+#घोषणा MTK_EINT_DBNC_SET_EN		  (0x1 << 0)
 
-static const struct mtk_eint_regs mtk_generic_eint_regs = {
+अटल स्थिर काष्ठा mtk_eपूर्णांक_regs mtk_generic_eपूर्णांक_regs = अणु
 	.stat      = 0x000,
 	.ack       = 0x040,
 	.mask      = 0x080,
@@ -42,474 +43,474 @@ static const struct mtk_eint_regs mtk_generic_eint_regs = {
 	.pol       = 0x300,
 	.pol_set   = 0x340,
 	.pol_clr   = 0x380,
-	.dom_en    = 0x400,
+	.करोm_en    = 0x400,
 	.dbnc_ctrl = 0x500,
 	.dbnc_set  = 0x600,
 	.dbnc_clr  = 0x700,
-};
+पूर्ण;
 
-static void __iomem *mtk_eint_get_offset(struct mtk_eint *eint,
-					 unsigned int eint_num,
-					 unsigned int offset)
-{
-	unsigned int eint_base = 0;
-	void __iomem *reg;
+अटल व्योम __iomem *mtk_eपूर्णांक_get_offset(काष्ठा mtk_eपूर्णांक *eपूर्णांक,
+					 अचिन्हित पूर्णांक eपूर्णांक_num,
+					 अचिन्हित पूर्णांक offset)
+अणु
+	अचिन्हित पूर्णांक eपूर्णांक_base = 0;
+	व्योम __iomem *reg;
 
-	if (eint_num >= eint->hw->ap_num)
-		eint_base = eint->hw->ap_num;
+	अगर (eपूर्णांक_num >= eपूर्णांक->hw->ap_num)
+		eपूर्णांक_base = eपूर्णांक->hw->ap_num;
 
-	reg = eint->base + offset + ((eint_num - eint_base) / 32) * 4;
+	reg = eपूर्णांक->base + offset + ((eपूर्णांक_num - eपूर्णांक_base) / 32) * 4;
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
-static unsigned int mtk_eint_can_en_debounce(struct mtk_eint *eint,
-					     unsigned int eint_num)
-{
-	unsigned int sens;
-	unsigned int bit = BIT(eint_num % 32);
-	void __iomem *reg = mtk_eint_get_offset(eint, eint_num,
-						eint->regs->sens);
+अटल अचिन्हित पूर्णांक mtk_eपूर्णांक_can_en_debounce(काष्ठा mtk_eपूर्णांक *eपूर्णांक,
+					     अचिन्हित पूर्णांक eपूर्णांक_num)
+अणु
+	अचिन्हित पूर्णांक sens;
+	अचिन्हित पूर्णांक bit = BIT(eपूर्णांक_num % 32);
+	व्योम __iomem *reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, eपूर्णांक_num,
+						eपूर्णांक->regs->sens);
 
-	if (readl(reg) & bit)
+	अगर (पढ़ोl(reg) & bit)
 		sens = MTK_EINT_LEVEL_SENSITIVE;
-	else
+	अन्यथा
 		sens = MTK_EINT_EDGE_SENSITIVE;
 
-	if (eint_num < eint->hw->db_cnt && sens != MTK_EINT_EDGE_SENSITIVE)
-		return 1;
-	else
-		return 0;
-}
+	अगर (eपूर्णांक_num < eपूर्णांक->hw->db_cnt && sens != MTK_EINT_EDGE_SENSITIVE)
+		वापस 1;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int mtk_eint_flip_edge(struct mtk_eint *eint, int hwirq)
-{
-	int start_level, curr_level;
-	unsigned int reg_offset;
+अटल पूर्णांक mtk_eपूर्णांक_flip_edge(काष्ठा mtk_eपूर्णांक *eपूर्णांक, पूर्णांक hwirq)
+अणु
+	पूर्णांक start_level, curr_level;
+	अचिन्हित पूर्णांक reg_offset;
 	u32 mask = BIT(hwirq & 0x1f);
-	u32 port = (hwirq >> 5) & eint->hw->port_mask;
-	void __iomem *reg = eint->base + (port << 2);
+	u32 port = (hwirq >> 5) & eपूर्णांक->hw->port_mask;
+	व्योम __iomem *reg = eपूर्णांक->base + (port << 2);
 
-	curr_level = eint->gpio_xlate->get_gpio_state(eint->pctl, hwirq);
+	curr_level = eपूर्णांक->gpio_xlate->get_gpio_state(eपूर्णांक->pctl, hwirq);
 
-	do {
+	करो अणु
 		start_level = curr_level;
-		if (start_level)
-			reg_offset = eint->regs->pol_clr;
-		else
-			reg_offset = eint->regs->pol_set;
-		writel(mask, reg + reg_offset);
+		अगर (start_level)
+			reg_offset = eपूर्णांक->regs->pol_clr;
+		अन्यथा
+			reg_offset = eपूर्णांक->regs->pol_set;
+		ग_लिखोl(mask, reg + reg_offset);
 
-		curr_level = eint->gpio_xlate->get_gpio_state(eint->pctl,
+		curr_level = eपूर्णांक->gpio_xlate->get_gpio_state(eपूर्णांक->pctl,
 							      hwirq);
-	} while (start_level != curr_level);
+	पूर्ण जबतक (start_level != curr_level);
 
-	return start_level;
-}
+	वापस start_level;
+पूर्ण
 
-static void mtk_eint_mask(struct irq_data *d)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
+अटल व्योम mtk_eपूर्णांक_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
 	u32 mask = BIT(d->hwirq & 0x1f);
-	void __iomem *reg = mtk_eint_get_offset(eint, d->hwirq,
-						eint->regs->mask_set);
+	व्योम __iomem *reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq,
+						eपूर्णांक->regs->mask_set);
 
-	eint->cur_mask[d->hwirq >> 5] &= ~mask;
+	eपूर्णांक->cur_mask[d->hwirq >> 5] &= ~mask;
 
-	writel(mask, reg);
-}
+	ग_लिखोl(mask, reg);
+पूर्ण
 
-static void mtk_eint_unmask(struct irq_data *d)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
+अटल व्योम mtk_eपूर्णांक_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
 	u32 mask = BIT(d->hwirq & 0x1f);
-	void __iomem *reg = mtk_eint_get_offset(eint, d->hwirq,
-						eint->regs->mask_clr);
+	व्योम __iomem *reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq,
+						eपूर्णांक->regs->mask_clr);
 
-	eint->cur_mask[d->hwirq >> 5] |= mask;
+	eपूर्णांक->cur_mask[d->hwirq >> 5] |= mask;
 
-	writel(mask, reg);
+	ग_लिखोl(mask, reg);
 
-	if (eint->dual_edge[d->hwirq])
-		mtk_eint_flip_edge(eint, d->hwirq);
-}
+	अगर (eपूर्णांक->dual_edge[d->hwirq])
+		mtk_eपूर्णांक_flip_edge(eपूर्णांक, d->hwirq);
+पूर्ण
 
-static unsigned int mtk_eint_get_mask(struct mtk_eint *eint,
-				      unsigned int eint_num)
-{
-	unsigned int bit = BIT(eint_num % 32);
-	void __iomem *reg = mtk_eint_get_offset(eint, eint_num,
-						eint->regs->mask);
+अटल अचिन्हित पूर्णांक mtk_eपूर्णांक_get_mask(काष्ठा mtk_eपूर्णांक *eपूर्णांक,
+				      अचिन्हित पूर्णांक eपूर्णांक_num)
+अणु
+	अचिन्हित पूर्णांक bit = BIT(eपूर्णांक_num % 32);
+	व्योम __iomem *reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, eपूर्णांक_num,
+						eपूर्णांक->regs->mask);
 
-	return !!(readl(reg) & bit);
-}
+	वापस !!(पढ़ोl(reg) & bit);
+पूर्ण
 
-static void mtk_eint_ack(struct irq_data *d)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
+अटल व्योम mtk_eपूर्णांक_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
 	u32 mask = BIT(d->hwirq & 0x1f);
-	void __iomem *reg = mtk_eint_get_offset(eint, d->hwirq,
-						eint->regs->ack);
+	व्योम __iomem *reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq,
+						eपूर्णांक->regs->ack);
 
-	writel(mask, reg);
-}
+	ग_लिखोl(mask, reg);
+पूर्ण
 
-static int mtk_eint_set_type(struct irq_data *d, unsigned int type)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
+अटल पूर्णांक mtk_eपूर्णांक_set_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
 	bool masked;
 	u32 mask = BIT(d->hwirq & 0x1f);
-	void __iomem *reg;
+	व्योम __iomem *reg;
 
-	if (((type & IRQ_TYPE_EDGE_BOTH) && (type & IRQ_TYPE_LEVEL_MASK)) ||
-	    ((type & IRQ_TYPE_LEVEL_MASK) == IRQ_TYPE_LEVEL_MASK)) {
-		dev_err(eint->dev,
+	अगर (((type & IRQ_TYPE_EDGE_BOTH) && (type & IRQ_TYPE_LEVEL_MASK)) ||
+	    ((type & IRQ_TYPE_LEVEL_MASK) == IRQ_TYPE_LEVEL_MASK)) अणु
+		dev_err(eपूर्णांक->dev,
 			"Can't configure IRQ%d (EINT%lu) for type 0x%X\n",
 			d->irq, d->hwirq, type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH)
-		eint->dual_edge[d->hwirq] = 1;
-	else
-		eint->dual_edge[d->hwirq] = 0;
+	अगर ((type & IRQ_TYPE_EDGE_BOTH) == IRQ_TYPE_EDGE_BOTH)
+		eपूर्णांक->dual_edge[d->hwirq] = 1;
+	अन्यथा
+		eपूर्णांक->dual_edge[d->hwirq] = 0;
 
-	if (!mtk_eint_get_mask(eint, d->hwirq)) {
-		mtk_eint_mask(d);
+	अगर (!mtk_eपूर्णांक_get_mask(eपूर्णांक, d->hwirq)) अणु
+		mtk_eपूर्णांक_mask(d);
 		masked = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		masked = true;
-	}
+	पूर्ण
 
-	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_EDGE_FALLING)) {
-		reg = mtk_eint_get_offset(eint, d->hwirq, eint->regs->pol_clr);
-		writel(mask, reg);
-	} else {
-		reg = mtk_eint_get_offset(eint, d->hwirq, eint->regs->pol_set);
-		writel(mask, reg);
-	}
+	अगर (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_EDGE_FALLING)) अणु
+		reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq, eपूर्णांक->regs->pol_clr);
+		ग_लिखोl(mask, reg);
+	पूर्ण अन्यथा अणु
+		reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq, eपूर्णांक->regs->pol_set);
+		ग_लिखोl(mask, reg);
+	पूर्ण
 
-	if (type & (IRQ_TYPE_EDGE_RISING | IRQ_TYPE_EDGE_FALLING)) {
-		reg = mtk_eint_get_offset(eint, d->hwirq, eint->regs->sens_clr);
-		writel(mask, reg);
-	} else {
-		reg = mtk_eint_get_offset(eint, d->hwirq, eint->regs->sens_set);
-		writel(mask, reg);
-	}
+	अगर (type & (IRQ_TYPE_EDGE_RISING | IRQ_TYPE_EDGE_FALLING)) अणु
+		reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq, eपूर्णांक->regs->sens_clr);
+		ग_लिखोl(mask, reg);
+	पूर्ण अन्यथा अणु
+		reg = mtk_eपूर्णांक_get_offset(eपूर्णांक, d->hwirq, eपूर्णांक->regs->sens_set);
+		ग_लिखोl(mask, reg);
+	पूर्ण
 
-	mtk_eint_ack(d);
-	if (!masked)
-		mtk_eint_unmask(d);
+	mtk_eपूर्णांक_ack(d);
+	अगर (!masked)
+		mtk_eपूर्णांक_unmask(d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_eint_irq_set_wake(struct irq_data *d, unsigned int on)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
-	int shift = d->hwirq & 0x1f;
-	int reg = d->hwirq >> 5;
+अटल पूर्णांक mtk_eपूर्णांक_irq_set_wake(काष्ठा irq_data *d, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
+	पूर्णांक shअगरt = d->hwirq & 0x1f;
+	पूर्णांक reg = d->hwirq >> 5;
 
-	if (on)
-		eint->wake_mask[reg] |= BIT(shift);
-	else
-		eint->wake_mask[reg] &= ~BIT(shift);
+	अगर (on)
+		eपूर्णांक->wake_mask[reg] |= BIT(shअगरt);
+	अन्यथा
+		eपूर्णांक->wake_mask[reg] &= ~BIT(shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_eint_chip_write_mask(const struct mtk_eint *eint,
-				     void __iomem *base, u32 *buf)
-{
-	int port;
-	void __iomem *reg;
+अटल व्योम mtk_eपूर्णांक_chip_ग_लिखो_mask(स्थिर काष्ठा mtk_eपूर्णांक *eपूर्णांक,
+				     व्योम __iomem *base, u32 *buf)
+अणु
+	पूर्णांक port;
+	व्योम __iomem *reg;
 
-	for (port = 0; port < eint->hw->ports; port++) {
+	क्रम (port = 0; port < eपूर्णांक->hw->ports; port++) अणु
 		reg = base + (port << 2);
-		writel_relaxed(~buf[port], reg + eint->regs->mask_set);
-		writel_relaxed(buf[port], reg + eint->regs->mask_clr);
-	}
-}
+		ग_लिखोl_relaxed(~buf[port], reg + eपूर्णांक->regs->mask_set);
+		ग_लिखोl_relaxed(buf[port], reg + eपूर्णांक->regs->mask_clr);
+	पूर्ण
+पूर्ण
 
-static int mtk_eint_irq_request_resources(struct irq_data *d)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
-	struct gpio_chip *gpio_c;
-	unsigned int gpio_n;
-	int err;
+अटल पूर्णांक mtk_eपूर्णांक_irq_request_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
+	काष्ठा gpio_chip *gpio_c;
+	अचिन्हित पूर्णांक gpio_n;
+	पूर्णांक err;
 
-	err = eint->gpio_xlate->get_gpio_n(eint->pctl, d->hwirq,
+	err = eपूर्णांक->gpio_xlate->get_gpio_n(eपूर्णांक->pctl, d->hwirq,
 					   &gpio_n, &gpio_c);
-	if (err < 0) {
-		dev_err(eint->dev, "Can not find pin\n");
-		return err;
-	}
+	अगर (err < 0) अणु
+		dev_err(eपूर्णांक->dev, "Can not find pin\n");
+		वापस err;
+	पूर्ण
 
 	err = gpiochip_lock_as_irq(gpio_c, gpio_n);
-	if (err < 0) {
-		dev_err(eint->dev, "unable to lock HW IRQ %lu for IRQ\n",
+	अगर (err < 0) अणु
+		dev_err(eपूर्णांक->dev, "unable to lock HW IRQ %lu for IRQ\n",
 			irqd_to_hwirq(d));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = eint->gpio_xlate->set_gpio_as_eint(eint->pctl, d->hwirq);
-	if (err < 0) {
-		dev_err(eint->dev, "Can not eint mode\n");
-		return err;
-	}
+	err = eपूर्णांक->gpio_xlate->set_gpio_as_eपूर्णांक(eपूर्णांक->pctl, d->hwirq);
+	अगर (err < 0) अणु
+		dev_err(eपूर्णांक->dev, "Can not eint mode\n");
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_eint_irq_release_resources(struct irq_data *d)
-{
-	struct mtk_eint *eint = irq_data_get_irq_chip_data(d);
-	struct gpio_chip *gpio_c;
-	unsigned int gpio_n;
+अटल व्योम mtk_eपूर्णांक_irq_release_resources(काष्ठा irq_data *d)
+अणु
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_data_get_irq_chip_data(d);
+	काष्ठा gpio_chip *gpio_c;
+	अचिन्हित पूर्णांक gpio_n;
 
-	eint->gpio_xlate->get_gpio_n(eint->pctl, d->hwirq, &gpio_n,
+	eपूर्णांक->gpio_xlate->get_gpio_n(eपूर्णांक->pctl, d->hwirq, &gpio_n,
 				     &gpio_c);
 
 	gpiochip_unlock_as_irq(gpio_c, gpio_n);
-}
+पूर्ण
 
-static struct irq_chip mtk_eint_irq_chip = {
+अटल काष्ठा irq_chip mtk_eपूर्णांक_irq_chip = अणु
 	.name = "mt-eint",
-	.irq_disable = mtk_eint_mask,
-	.irq_mask = mtk_eint_mask,
-	.irq_unmask = mtk_eint_unmask,
-	.irq_ack = mtk_eint_ack,
-	.irq_set_type = mtk_eint_set_type,
-	.irq_set_wake = mtk_eint_irq_set_wake,
-	.irq_request_resources = mtk_eint_irq_request_resources,
-	.irq_release_resources = mtk_eint_irq_release_resources,
-};
+	.irq_disable = mtk_eपूर्णांक_mask,
+	.irq_mask = mtk_eपूर्णांक_mask,
+	.irq_unmask = mtk_eपूर्णांक_unmask,
+	.irq_ack = mtk_eपूर्णांक_ack,
+	.irq_set_type = mtk_eपूर्णांक_set_type,
+	.irq_set_wake = mtk_eपूर्णांक_irq_set_wake,
+	.irq_request_resources = mtk_eपूर्णांक_irq_request_resources,
+	.irq_release_resources = mtk_eपूर्णांक_irq_release_resources,
+पूर्ण;
 
-static unsigned int mtk_eint_hw_init(struct mtk_eint *eint)
-{
-	void __iomem *reg = eint->base + eint->regs->dom_en;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक mtk_eपूर्णांक_hw_init(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
+अणु
+	व्योम __iomem *reg = eपूर्णांक->base + eपूर्णांक->regs->करोm_en;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < eint->hw->ap_num; i += 32) {
-		writel(0xffffffff, reg);
+	क्रम (i = 0; i < eपूर्णांक->hw->ap_num; i += 32) अणु
+		ग_लिखोl(0xffffffff, reg);
 		reg += 4;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-mtk_eint_debounce_process(struct mtk_eint *eint, int index)
-{
-	unsigned int rst, ctrl_offset;
-	unsigned int bit, dbnc;
+अटल अंतरभूत व्योम
+mtk_eपूर्णांक_debounce_process(काष्ठा mtk_eपूर्णांक *eपूर्णांक, पूर्णांक index)
+अणु
+	अचिन्हित पूर्णांक rst, ctrl_offset;
+	अचिन्हित पूर्णांक bit, dbnc;
 
-	ctrl_offset = (index / 4) * 4 + eint->regs->dbnc_ctrl;
-	dbnc = readl(eint->base + ctrl_offset);
+	ctrl_offset = (index / 4) * 4 + eपूर्णांक->regs->dbnc_ctrl;
+	dbnc = पढ़ोl(eपूर्णांक->base + ctrl_offset);
 	bit = MTK_EINT_DBNC_SET_EN << ((index % 4) * 8);
-	if ((bit & dbnc) > 0) {
-		ctrl_offset = (index / 4) * 4 + eint->regs->dbnc_set;
+	अगर ((bit & dbnc) > 0) अणु
+		ctrl_offset = (index / 4) * 4 + eपूर्णांक->regs->dbnc_set;
 		rst = MTK_EINT_DBNC_RST_BIT << ((index % 4) * 8);
-		writel(rst, eint->base + ctrl_offset);
-	}
-}
+		ग_लिखोl(rst, eपूर्णांक->base + ctrl_offset);
+	पूर्ण
+पूर्ण
 
-static void mtk_eint_irq_handler(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct mtk_eint *eint = irq_desc_get_handler_data(desc);
-	unsigned int status, eint_num;
-	int offset, mask_offset, index, virq;
-	void __iomem *reg =  mtk_eint_get_offset(eint, 0, eint->regs->stat);
-	int dual_edge, start_level, curr_level;
+अटल व्योम mtk_eपूर्णांक_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा mtk_eपूर्णांक *eपूर्णांक = irq_desc_get_handler_data(desc);
+	अचिन्हित पूर्णांक status, eपूर्णांक_num;
+	पूर्णांक offset, mask_offset, index, virq;
+	व्योम __iomem *reg =  mtk_eपूर्णांक_get_offset(eपूर्णांक, 0, eपूर्णांक->regs->stat);
+	पूर्णांक dual_edge, start_level, curr_level;
 
 	chained_irq_enter(chip, desc);
-	for (eint_num = 0; eint_num < eint->hw->ap_num; eint_num += 32,
-	     reg += 4) {
-		status = readl(reg);
-		while (status) {
+	क्रम (eपूर्णांक_num = 0; eपूर्णांक_num < eपूर्णांक->hw->ap_num; eपूर्णांक_num += 32,
+	     reg += 4) अणु
+		status = पढ़ोl(reg);
+		जबतक (status) अणु
 			offset = __ffs(status);
-			mask_offset = eint_num >> 5;
-			index = eint_num + offset;
-			virq = irq_find_mapping(eint->domain, index);
+			mask_offset = eपूर्णांक_num >> 5;
+			index = eपूर्णांक_num + offset;
+			virq = irq_find_mapping(eपूर्णांक->करोमुख्य, index);
 			status &= ~BIT(offset);
 
 			/*
-			 * If we get an interrupt on pin that was only required
-			 * for wake (but no real interrupt requested), mask the
-			 * interrupt (as would mtk_eint_resume do anyway later
+			 * If we get an पूर्णांकerrupt on pin that was only required
+			 * क्रम wake (but no real पूर्णांकerrupt requested), mask the
+			 * पूर्णांकerrupt (as would mtk_eपूर्णांक_resume करो anyway later
 			 * in the resume sequence).
 			 */
-			if (eint->wake_mask[mask_offset] & BIT(offset) &&
-			    !(eint->cur_mask[mask_offset] & BIT(offset))) {
-				writel_relaxed(BIT(offset), reg -
-					eint->regs->stat +
-					eint->regs->mask_set);
-			}
+			अगर (eपूर्णांक->wake_mask[mask_offset] & BIT(offset) &&
+			    !(eपूर्णांक->cur_mask[mask_offset] & BIT(offset))) अणु
+				ग_लिखोl_relaxed(BIT(offset), reg -
+					eपूर्णांक->regs->stat +
+					eपूर्णांक->regs->mask_set);
+			पूर्ण
 
-			dual_edge = eint->dual_edge[index];
-			if (dual_edge) {
+			dual_edge = eपूर्णांक->dual_edge[index];
+			अगर (dual_edge) अणु
 				/*
-				 * Clear soft-irq in case we raised it last
-				 * time.
+				 * Clear soft-irq in हाल we उठाओd it last
+				 * समय.
 				 */
-				writel(BIT(offset), reg - eint->regs->stat +
-				       eint->regs->soft_clr);
+				ग_लिखोl(BIT(offset), reg - eपूर्णांक->regs->stat +
+				       eपूर्णांक->regs->soft_clr);
 
 				start_level =
-				eint->gpio_xlate->get_gpio_state(eint->pctl,
+				eपूर्णांक->gpio_xlate->get_gpio_state(eपूर्णांक->pctl,
 								 index);
-			}
+			पूर्ण
 
 			generic_handle_irq(virq);
 
-			if (dual_edge) {
-				curr_level = mtk_eint_flip_edge(eint, index);
+			अगर (dual_edge) अणु
+				curr_level = mtk_eपूर्णांक_flip_edge(eपूर्णांक, index);
 
 				/*
 				 * If level changed, we might lost one edge
-				 * interrupt, raised it through soft-irq.
+				 * पूर्णांकerrupt, उठाओd it through soft-irq.
 				 */
-				if (start_level != curr_level)
-					writel(BIT(offset), reg -
-					       eint->regs->stat +
-					       eint->regs->soft_set);
-			}
+				अगर (start_level != curr_level)
+					ग_लिखोl(BIT(offset), reg -
+					       eपूर्णांक->regs->stat +
+					       eपूर्णांक->regs->soft_set);
+			पूर्ण
 
-			if (index < eint->hw->db_cnt)
-				mtk_eint_debounce_process(eint, index);
-		}
-	}
-	chained_irq_exit(chip, desc);
-}
+			अगर (index < eपूर्णांक->hw->db_cnt)
+				mtk_eपूर्णांक_debounce_process(eपूर्णांक, index);
+		पूर्ण
+	पूर्ण
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-int mtk_eint_do_suspend(struct mtk_eint *eint)
-{
-	mtk_eint_chip_write_mask(eint, eint->base, eint->wake_mask);
+पूर्णांक mtk_eपूर्णांक_करो_suspend(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
+अणु
+	mtk_eपूर्णांक_chip_ग_लिखो_mask(eपूर्णांक, eपूर्णांक->base, eपूर्णांक->wake_mask);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_eint_do_suspend);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_eपूर्णांक_करो_suspend);
 
-int mtk_eint_do_resume(struct mtk_eint *eint)
-{
-	mtk_eint_chip_write_mask(eint, eint->base, eint->cur_mask);
+पूर्णांक mtk_eपूर्णांक_करो_resume(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
+अणु
+	mtk_eपूर्णांक_chip_ग_लिखो_mask(eपूर्णांक, eपूर्णांक->base, eपूर्णांक->cur_mask);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_eint_do_resume);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_eपूर्णांक_करो_resume);
 
-int mtk_eint_set_debounce(struct mtk_eint *eint, unsigned long eint_num,
-			  unsigned int debounce)
-{
-	int virq, eint_offset;
-	unsigned int set_offset, bit, clr_bit, clr_offset, rst, i, unmask,
+पूर्णांक mtk_eपूर्णांक_set_debounce(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_num,
+			  अचिन्हित पूर्णांक debounce)
+अणु
+	पूर्णांक virq, eपूर्णांक_offset;
+	अचिन्हित पूर्णांक set_offset, bit, clr_bit, clr_offset, rst, i, unmask,
 		     dbnc;
-	static const unsigned int debounce_time[] = {500, 1000, 16000, 32000,
-						     64000, 128000, 256000};
-	struct irq_data *d;
+	अटल स्थिर अचिन्हित पूर्णांक debounce_समय[] = अणु500, 1000, 16000, 32000,
+						     64000, 128000, 256000पूर्ण;
+	काष्ठा irq_data *d;
 
-	virq = irq_find_mapping(eint->domain, eint_num);
-	eint_offset = (eint_num % 4) * 8;
+	virq = irq_find_mapping(eपूर्णांक->करोमुख्य, eपूर्णांक_num);
+	eपूर्णांक_offset = (eपूर्णांक_num % 4) * 8;
 	d = irq_get_irq_data(virq);
 
-	set_offset = (eint_num / 4) * 4 + eint->regs->dbnc_set;
-	clr_offset = (eint_num / 4) * 4 + eint->regs->dbnc_clr;
+	set_offset = (eपूर्णांक_num / 4) * 4 + eपूर्णांक->regs->dbnc_set;
+	clr_offset = (eपूर्णांक_num / 4) * 4 + eपूर्णांक->regs->dbnc_clr;
 
-	if (!mtk_eint_can_en_debounce(eint, eint_num))
-		return -EINVAL;
+	अगर (!mtk_eपूर्णांक_can_en_debounce(eपूर्णांक, eपूर्णांक_num))
+		वापस -EINVAL;
 
-	dbnc = ARRAY_SIZE(debounce_time);
-	for (i = 0; i < ARRAY_SIZE(debounce_time); i++) {
-		if (debounce <= debounce_time[i]) {
+	dbnc = ARRAY_SIZE(debounce_समय);
+	क्रम (i = 0; i < ARRAY_SIZE(debounce_समय); i++) अणु
+		अगर (debounce <= debounce_समय[i]) अणु
 			dbnc = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!mtk_eint_get_mask(eint, eint_num)) {
-		mtk_eint_mask(d);
+	अगर (!mtk_eपूर्णांक_get_mask(eपूर्णांक, eपूर्णांक_num)) अणु
+		mtk_eपूर्णांक_mask(d);
 		unmask = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		unmask = 0;
-	}
+	पूर्ण
 
-	clr_bit = 0xff << eint_offset;
-	writel(clr_bit, eint->base + clr_offset);
+	clr_bit = 0xff << eपूर्णांक_offset;
+	ग_लिखोl(clr_bit, eपूर्णांक->base + clr_offset);
 
 	bit = ((dbnc << MTK_EINT_DBNC_SET_DBNC_BITS) | MTK_EINT_DBNC_SET_EN) <<
-		eint_offset;
-	rst = MTK_EINT_DBNC_RST_BIT << eint_offset;
-	writel(rst | bit, eint->base + set_offset);
+		eपूर्णांक_offset;
+	rst = MTK_EINT_DBNC_RST_BIT << eपूर्णांक_offset;
+	ग_लिखोl(rst | bit, eपूर्णांक->base + set_offset);
 
 	/*
-	 * Delay a while (more than 2T) to wait for hw debounce counter reset
+	 * Delay a जबतक (more than 2T) to रुको क्रम hw debounce counter reset
 	 * work correctly.
 	 */
 	udelay(1);
-	if (unmask == 1)
-		mtk_eint_unmask(d);
+	अगर (unmask == 1)
+		mtk_eपूर्णांक_unmask(d);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_eint_set_debounce);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_eपूर्णांक_set_debounce);
 
-int mtk_eint_find_irq(struct mtk_eint *eint, unsigned long eint_n)
-{
-	int irq;
+पूर्णांक mtk_eपूर्णांक_find_irq(काष्ठा mtk_eपूर्णांक *eपूर्णांक, अचिन्हित दीर्घ eपूर्णांक_n)
+अणु
+	पूर्णांक irq;
 
-	irq = irq_find_mapping(eint->domain, eint_n);
-	if (!irq)
-		return -EINVAL;
+	irq = irq_find_mapping(eपूर्णांक->करोमुख्य, eपूर्णांक_n);
+	अगर (!irq)
+		वापस -EINVAL;
 
-	return irq;
-}
-EXPORT_SYMBOL_GPL(mtk_eint_find_irq);
+	वापस irq;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_eपूर्णांक_find_irq);
 
-int mtk_eint_do_init(struct mtk_eint *eint)
-{
-	int i;
+पूर्णांक mtk_eपूर्णांक_करो_init(काष्ठा mtk_eपूर्णांक *eपूर्णांक)
+अणु
+	पूर्णांक i;
 
-	/* If clients don't assign a specific regs, let's use generic one */
-	if (!eint->regs)
-		eint->regs = &mtk_generic_eint_regs;
+	/* If clients करोn't assign a specific regs, let's use generic one */
+	अगर (!eपूर्णांक->regs)
+		eपूर्णांक->regs = &mtk_generic_eपूर्णांक_regs;
 
-	eint->wake_mask = devm_kcalloc(eint->dev, eint->hw->ports,
-				       sizeof(*eint->wake_mask), GFP_KERNEL);
-	if (!eint->wake_mask)
-		return -ENOMEM;
+	eपूर्णांक->wake_mask = devm_kसुस्मृति(eपूर्णांक->dev, eपूर्णांक->hw->ports,
+				       माप(*eपूर्णांक->wake_mask), GFP_KERNEL);
+	अगर (!eपूर्णांक->wake_mask)
+		वापस -ENOMEM;
 
-	eint->cur_mask = devm_kcalloc(eint->dev, eint->hw->ports,
-				      sizeof(*eint->cur_mask), GFP_KERNEL);
-	if (!eint->cur_mask)
-		return -ENOMEM;
+	eपूर्णांक->cur_mask = devm_kसुस्मृति(eपूर्णांक->dev, eपूर्णांक->hw->ports,
+				      माप(*eपूर्णांक->cur_mask), GFP_KERNEL);
+	अगर (!eपूर्णांक->cur_mask)
+		वापस -ENOMEM;
 
-	eint->dual_edge = devm_kcalloc(eint->dev, eint->hw->ap_num,
-				       sizeof(int), GFP_KERNEL);
-	if (!eint->dual_edge)
-		return -ENOMEM;
+	eपूर्णांक->dual_edge = devm_kसुस्मृति(eपूर्णांक->dev, eपूर्णांक->hw->ap_num,
+				       माप(पूर्णांक), GFP_KERNEL);
+	अगर (!eपूर्णांक->dual_edge)
+		वापस -ENOMEM;
 
-	eint->domain = irq_domain_add_linear(eint->dev->of_node,
-					     eint->hw->ap_num,
-					     &irq_domain_simple_ops, NULL);
-	if (!eint->domain)
-		return -ENOMEM;
+	eपूर्णांक->करोमुख्य = irq_करोमुख्य_add_linear(eपूर्णांक->dev->of_node,
+					     eपूर्णांक->hw->ap_num,
+					     &irq_करोमुख्य_simple_ops, शून्य);
+	अगर (!eपूर्णांक->करोमुख्य)
+		वापस -ENOMEM;
 
-	mtk_eint_hw_init(eint);
-	for (i = 0; i < eint->hw->ap_num; i++) {
-		int virq = irq_create_mapping(eint->domain, i);
+	mtk_eपूर्णांक_hw_init(eपूर्णांक);
+	क्रम (i = 0; i < eपूर्णांक->hw->ap_num; i++) अणु
+		पूर्णांक virq = irq_create_mapping(eपूर्णांक->करोमुख्य, i);
 
-		irq_set_chip_and_handler(virq, &mtk_eint_irq_chip,
+		irq_set_chip_and_handler(virq, &mtk_eपूर्णांक_irq_chip,
 					 handle_level_irq);
-		irq_set_chip_data(virq, eint);
-	}
+		irq_set_chip_data(virq, eपूर्णांक);
+	पूर्ण
 
-	irq_set_chained_handler_and_data(eint->irq, mtk_eint_irq_handler,
-					 eint);
+	irq_set_chained_handler_and_data(eपूर्णांक->irq, mtk_eपूर्णांक_irq_handler,
+					 eपूर्णांक);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(mtk_eint_do_init);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(mtk_eपूर्णांक_करो_init);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek EINT Driver");

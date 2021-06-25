@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef BUG_H
-#define BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित BUG_H
+#घोषणा BUG_H
 
-#include <asm/bug.h>
+#समावेश <यंत्र/bug.h>
 
-#define BUG_ON(__BUG_ON_cond) assert(!(__BUG_ON_cond))
+#घोषणा BUG_ON(__BUG_ON_cond) निश्चित(!(__BUG_ON_cond))
 
-#define BUILD_BUG_ON(x)
+#घोषणा BUILD_BUG_ON(x)
 
-#define BUG() abort()
+#घोषणा BUG() पात()
 
-#endif /* BUG_H */
+#पूर्ण_अगर /* BUG_H */

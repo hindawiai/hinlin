@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*======================================================================
 
-    A PCMCIA ethernet driver for NS8390-based cards
+    A PCMCIA ethernet driver क्रम NS8390-based cards
 
     This driver supports the D-Link DE-650 and Linksys EthernetCard
     cards, the newer D-Link and Linksys combo cards, Accton EN2212
@@ -9,7 +10,7 @@
     Conrad ethernet card, and the Kingston KNE-PCM/x in shared-memory
     mode.  It will also handle the Socket EA card in either mode.
 
-    Copyright (C) 1999 David A. Hinds -- dahinds@users.sourceforge.net
+    Copyright (C) 1999 David A. Hinds -- dahinds@users.sourceक्रमge.net
 
     pcnet_cs.c 1.153 2003/11/09 18:53:09
 
@@ -22,50 +23,50 @@
     incorporated herein by reference.
     Donald Becker may be reached at becker@scyld.com
 
-    Based also on Keith Moore's changes to Don Becker's code, for IBM
+    Based also on Keith Moore's changes to Don Becker's code, क्रम IBM
     CCAE support.  Drivers merged back together, and shared-memory
     Socket EA support added, by Ken Raeburn, September 1995.
 
 ======================================================================*/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/log2.h>
-#include <linux/etherdevice.h>
-#include <linux/mii.h>
-#include "8390.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/mii.h>
+#समावेश "8390.h"
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/cisreg.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/cisreg.h>
 
-#include <asm/io.h>
-#include <asm/byteorder.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/uaccess.h>
 
-#define PCNET_CMD	0x00
-#define PCNET_DATAPORT	0x10	/* NatSemi-defined port window offset. */
-#define PCNET_RESET	0x1f	/* Issue a read to reset, a write to clear. */
-#define PCNET_MISC	0x18	/* For IBM CCAE and Socket EA cards */
+#घोषणा PCNET_CMD	0x00
+#घोषणा PCNET_DATAPORT	0x10	/* NatSemi-defined port winकरोw offset. */
+#घोषणा PCNET_RESET	0x1f	/* Issue a पढ़ो to reset, a ग_लिखो to clear. */
+#घोषणा PCNET_MISC	0x18	/* For IBM CCAE and Socket EA cards */
 
-#define PCNET_START_PG	0x40	/* First page of TX buffer */
-#define PCNET_STOP_PG	0x80	/* Last page +1 of RX ring */
+#घोषणा PCNET_START_PG	0x40	/* First page of TX buffer */
+#घोषणा PCNET_STOP_PG	0x80	/* Last page +1 of RX ring */
 
 /* Socket EA cards have a larger packet buffer */
-#define SOCKET_START_PG	0x01
-#define SOCKET_STOP_PG	0xff
+#घोषणा SOCKET_START_PG	0x01
+#घोषणा SOCKET_STOP_PG	0xff
 
-#define PCNET_RDC_TIMEOUT (2*HZ/100)	/* Max wait in jiffies for Tx RDC */
+#घोषणा PCNET_RDC_TIMEOUT (2*HZ/100)	/* Max रुको in jअगरfies क्रम Tx RDC */
 
-static const char *if_names[] = { "auto", "10baseT", "10base2"};
+अटल स्थिर अक्षर *अगर_names[] = अणु "auto", "10baseT", "10base2"पूर्ण;
 
 /*====================================================================*/
 
@@ -75,174 +76,174 @@ MODULE_AUTHOR("David Hinds <dahinds@users.sourceforge.net>");
 MODULE_DESCRIPTION("NE2000 compatible PCMCIA ethernet driver");
 MODULE_LICENSE("GPL");
 
-#define INT_MODULE_PARM(n, v) static int n = v; module_param(n, int, 0)
+#घोषणा INT_MODULE_PARM(n, v) अटल पूर्णांक n = v; module_param(n, पूर्णांक, 0)
 
-INT_MODULE_PARM(if_port,	1);	/* Transceiver type */
+INT_MODULE_PARM(अगर_port,	1);	/* Transceiver type */
 INT_MODULE_PARM(use_big_buf,	1);	/* use 64K packet buffer? */
 INT_MODULE_PARM(mem_speed,	0);	/* shared mem speed, in ns */
-INT_MODULE_PARM(delay_output,	0);	/* pause after xmit? */
-INT_MODULE_PARM(delay_time,	4);	/* in usec */
+INT_MODULE_PARM(delay_output,	0);	/* छोड़ो after xmit? */
+INT_MODULE_PARM(delay_समय,	4);	/* in usec */
 INT_MODULE_PARM(use_shmem,	-1);	/* use shared memory? */
 INT_MODULE_PARM(full_duplex,	0);	/* full duplex? */
 
-/* Ugh!  Let the user hardwire the hardware address for queer cards */
-static int hw_addr[6] = { 0, /* ... */ };
-module_param_array(hw_addr, int, NULL, 0);
+/* Ugh!  Let the user hardwire the hardware address क्रम queer cards */
+अटल पूर्णांक hw_addr[6] = अणु 0, /* ... */ पूर्ण;
+module_param_array(hw_addr, पूर्णांक, शून्य, 0);
 
 /*====================================================================*/
 
-static void mii_phy_probe(struct net_device *dev);
-static int pcnet_config(struct pcmcia_device *link);
-static void pcnet_release(struct pcmcia_device *link);
-static int pcnet_open(struct net_device *dev);
-static int pcnet_close(struct net_device *dev);
-static int ei_ioctl(struct net_device *dev, struct ifreq *rq, int cmd);
-static irqreturn_t ei_irq_wrapper(int irq, void *dev_id);
-static void ei_watchdog(struct timer_list *t);
-static void pcnet_reset_8390(struct net_device *dev);
-static int set_config(struct net_device *dev, struct ifmap *map);
-static int setup_shmem_window(struct pcmcia_device *link, int start_pg,
-			      int stop_pg, int cm_offset);
-static int setup_dma_config(struct pcmcia_device *link, int start_pg,
-			    int stop_pg);
+अटल व्योम mii_phy_probe(काष्ठा net_device *dev);
+अटल पूर्णांक pcnet_config(काष्ठा pcmcia_device *link);
+अटल व्योम pcnet_release(काष्ठा pcmcia_device *link);
+अटल पूर्णांक pcnet_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक pcnet_बंद(काष्ठा net_device *dev);
+अटल पूर्णांक ei_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd);
+अटल irqवापस_t ei_irq_wrapper(पूर्णांक irq, व्योम *dev_id);
+अटल व्योम ei_watchकरोg(काष्ठा समयr_list *t);
+अटल व्योम pcnet_reset_8390(काष्ठा net_device *dev);
+अटल पूर्णांक set_config(काष्ठा net_device *dev, काष्ठा अगरmap *map);
+अटल पूर्णांक setup_shmem_winकरोw(काष्ठा pcmcia_device *link, पूर्णांक start_pg,
+			      पूर्णांक stop_pg, पूर्णांक cm_offset);
+अटल पूर्णांक setup_dma_config(काष्ठा pcmcia_device *link, पूर्णांक start_pg,
+			    पूर्णांक stop_pg);
 
-static void pcnet_detach(struct pcmcia_device *p_dev);
+अटल व्योम pcnet_detach(काष्ठा pcmcia_device *p_dev);
 
 /*====================================================================*/
 
-struct hw_info {
-    u_int	offset;
-    u_char	a0, a1, a2;
-    u_int	flags;
-};
+काष्ठा hw_info अणु
+    u_पूर्णांक	offset;
+    u_अक्षर	a0, a1, a2;
+    u_पूर्णांक	flags;
+पूर्ण;
 
-#define DELAY_OUTPUT	0x01
-#define HAS_MISC_REG	0x02
-#define USE_BIG_BUF	0x04
-#define HAS_IBM_MISC	0x08
-#define IS_DL10019	0x10
-#define IS_DL10022	0x20
-#define HAS_MII		0x40
-#define USE_SHMEM	0x80	/* autodetected */
+#घोषणा DELAY_OUTPUT	0x01
+#घोषणा HAS_MISC_REG	0x02
+#घोषणा USE_BIG_BUF	0x04
+#घोषणा HAS_IBM_MISC	0x08
+#घोषणा IS_DL10019	0x10
+#घोषणा IS_DL10022	0x20
+#घोषणा HAS_MII		0x40
+#घोषणा USE_SHMEM	0x80	/* स्वतःdetected */
 
-#define AM79C9XX_HOME_PHY	0x00006B90  /* HomePNA PHY */
-#define AM79C9XX_ETH_PHY	0x00006B70  /* 10baseT PHY */
-#define MII_PHYID_REV_MASK	0xfffffff0
-#define MII_PHYID_REG1		0x02
-#define MII_PHYID_REG2		0x03
+#घोषणा AM79C9XX_HOME_PHY	0x00006B90  /* HomePNA PHY */
+#घोषणा AM79C9XX_ETH_PHY	0x00006B70  /* 10baseT PHY */
+#घोषणा MII_PHYID_REV_MASK	0xfffffff0
+#घोषणा MII_PHYID_REG1		0x02
+#घोषणा MII_PHYID_REG2		0x03
 
-static struct hw_info hw_info[] = {
-    { /* Accton EN2212 */ 0x0ff0, 0x00, 0x00, 0xe8, DELAY_OUTPUT },
-    { /* Allied Telesis LA-PCM */ 0x0ff0, 0x00, 0x00, 0xf4, 0 },
-    { /* APEX MultiCard */ 0x03f4, 0x00, 0x20, 0xe5, 0 },
-    { /* ASANTE FriendlyNet */ 0x4910, 0x00, 0x00, 0x94,
-      DELAY_OUTPUT | HAS_IBM_MISC },
-    { /* Danpex EN-6200P2 */ 0x0110, 0x00, 0x40, 0xc7, 0 },
-    { /* DataTrek NetCard */ 0x0ff0, 0x00, 0x20, 0xe8, 0 },
-    { /* Dayna CommuniCard E */ 0x0110, 0x00, 0x80, 0x19, 0 },
-    { /* D-Link DE-650 */ 0x0040, 0x00, 0x80, 0xc8, 0 },
-    { /* EP-210 Ethernet */ 0x0110, 0x00, 0x40, 0x33, 0 },
-    { /* EP4000 Ethernet */ 0x01c0, 0x00, 0x00, 0xb4, 0 },
-    { /* Epson EEN10B */ 0x0ff0, 0x00, 0x00, 0x48,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* ELECOM Laneed LD-CDWA */ 0xb8, 0x08, 0x00, 0x42, 0 },
-    { /* Hypertec Ethernet */ 0x01c0, 0x00, 0x40, 0x4c, 0 },
-    { /* IBM CCAE */ 0x0ff0, 0x08, 0x00, 0x5a,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* IBM CCAE */ 0x0ff0, 0x00, 0x04, 0xac,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* IBM CCAE */ 0x0ff0, 0x00, 0x06, 0x29,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* IBM FME */ 0x0374, 0x08, 0x00, 0x5a,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* IBM FME */ 0x0374, 0x00, 0x04, 0xac,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* Kansai KLA-PCM/T */ 0x0ff0, 0x00, 0x60, 0x87,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* NSC DP83903 */ 0x0374, 0x08, 0x00, 0x17,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* NSC DP83903 */ 0x0374, 0x00, 0xc0, 0xa8,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* NSC DP83903 */ 0x0374, 0x00, 0xa0, 0xb0,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* NSC DP83903 */ 0x0198, 0x00, 0x20, 0xe0,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* I-O DATA PCLA/T */ 0x0ff0, 0x00, 0xa0, 0xb0, 0 },
-    { /* Katron PE-520 */ 0x0110, 0x00, 0x40, 0xf6, 0 },
-    { /* Kingston KNE-PCM/x */ 0x0ff0, 0x00, 0xc0, 0xf0,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* Kingston KNE-PCM/x */ 0x0ff0, 0xe2, 0x0c, 0x0f,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* Kingston KNE-PC2 */ 0x0180, 0x00, 0xc0, 0xf0, 0 },
-    { /* Maxtech PCN2000 */ 0x5000, 0x00, 0x00, 0xe8, 0 },
-    { /* NDC Instant-Link */ 0x003a, 0x00, 0x80, 0xc6, 0 },
-    { /* NE2000 Compatible */ 0x0ff0, 0x00, 0xa0, 0x0c, 0 },
-    { /* Network General Sniffer */ 0x0ff0, 0x00, 0x00, 0x65,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* Panasonic VEL211 */ 0x0ff0, 0x00, 0x80, 0x45,
-      HAS_MISC_REG | HAS_IBM_MISC },
-    { /* PreMax PE-200 */ 0x07f0, 0x00, 0x20, 0xe0, 0 },
-    { /* RPTI EP400 */ 0x0110, 0x00, 0x40, 0x95, 0 },
-    { /* SCM Ethernet */ 0x0ff0, 0x00, 0x20, 0xcb, 0 },
-    { /* Socket EA */ 0x4000, 0x00, 0xc0, 0x1b,
-      DELAY_OUTPUT | HAS_MISC_REG | USE_BIG_BUF },
-    { /* Socket LP-E CF+ */ 0x01c0, 0x00, 0xc0, 0x1b, 0 },
-    { /* SuperSocket RE450T */ 0x0110, 0x00, 0xe0, 0x98, 0 },
-    { /* Volktek NPL-402CT */ 0x0060, 0x00, 0x40, 0x05, 0 },
-    { /* NEC PC-9801N-J12 */ 0x0ff0, 0x00, 0x00, 0x4c, 0 },
-    { /* PCMCIA Technology OEM */ 0x01c8, 0x00, 0xa0, 0x0c, 0 }
-};
+अटल काष्ठा hw_info hw_info[] = अणु
+    अणु /* Accton EN2212 */ 0x0ff0, 0x00, 0x00, 0xe8, DELAY_OUTPUT पूर्ण,
+    अणु /* Allied Telesis LA-PCM */ 0x0ff0, 0x00, 0x00, 0xf4, 0 पूर्ण,
+    अणु /* APEX MultiCard */ 0x03f4, 0x00, 0x20, 0xe5, 0 पूर्ण,
+    अणु /* ASANTE FriendlyNet */ 0x4910, 0x00, 0x00, 0x94,
+      DELAY_OUTPUT | HAS_IBM_MISC पूर्ण,
+    अणु /* Danpex EN-6200P2 */ 0x0110, 0x00, 0x40, 0xc7, 0 पूर्ण,
+    अणु /* DataTrek NetCard */ 0x0ff0, 0x00, 0x20, 0xe8, 0 पूर्ण,
+    अणु /* Dayna CommuniCard E */ 0x0110, 0x00, 0x80, 0x19, 0 पूर्ण,
+    अणु /* D-Link DE-650 */ 0x0040, 0x00, 0x80, 0xc8, 0 पूर्ण,
+    अणु /* EP-210 Ethernet */ 0x0110, 0x00, 0x40, 0x33, 0 पूर्ण,
+    अणु /* EP4000 Ethernet */ 0x01c0, 0x00, 0x00, 0xb4, 0 पूर्ण,
+    अणु /* Epson EEN10B */ 0x0ff0, 0x00, 0x00, 0x48,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* ELECOM Laneed LD-CDWA */ 0xb8, 0x08, 0x00, 0x42, 0 पूर्ण,
+    अणु /* Hypertec Ethernet */ 0x01c0, 0x00, 0x40, 0x4c, 0 पूर्ण,
+    अणु /* IBM CCAE */ 0x0ff0, 0x08, 0x00, 0x5a,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* IBM CCAE */ 0x0ff0, 0x00, 0x04, 0xac,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* IBM CCAE */ 0x0ff0, 0x00, 0x06, 0x29,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* IBM FME */ 0x0374, 0x08, 0x00, 0x5a,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* IBM FME */ 0x0374, 0x00, 0x04, 0xac,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* Kansai KLA-PCM/T */ 0x0ff0, 0x00, 0x60, 0x87,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* NSC DP83903 */ 0x0374, 0x08, 0x00, 0x17,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* NSC DP83903 */ 0x0374, 0x00, 0xc0, 0xa8,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* NSC DP83903 */ 0x0374, 0x00, 0xa0, 0xb0,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* NSC DP83903 */ 0x0198, 0x00, 0x20, 0xe0,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* I-O DATA PCLA/T */ 0x0ff0, 0x00, 0xa0, 0xb0, 0 पूर्ण,
+    अणु /* Katron PE-520 */ 0x0110, 0x00, 0x40, 0xf6, 0 पूर्ण,
+    अणु /* Kingston KNE-PCM/x */ 0x0ff0, 0x00, 0xc0, 0xf0,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* Kingston KNE-PCM/x */ 0x0ff0, 0xe2, 0x0c, 0x0f,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* Kingston KNE-PC2 */ 0x0180, 0x00, 0xc0, 0xf0, 0 पूर्ण,
+    अणु /* Maxtech PCN2000 */ 0x5000, 0x00, 0x00, 0xe8, 0 पूर्ण,
+    अणु /* NDC Instant-Link */ 0x003a, 0x00, 0x80, 0xc6, 0 पूर्ण,
+    अणु /* NE2000 Compatible */ 0x0ff0, 0x00, 0xa0, 0x0c, 0 पूर्ण,
+    अणु /* Network General Snअगरfer */ 0x0ff0, 0x00, 0x00, 0x65,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* Panasonic VEL211 */ 0x0ff0, 0x00, 0x80, 0x45,
+      HAS_MISC_REG | HAS_IBM_MISC पूर्ण,
+    अणु /* PreMax PE-200 */ 0x07f0, 0x00, 0x20, 0xe0, 0 पूर्ण,
+    अणु /* RPTI EP400 */ 0x0110, 0x00, 0x40, 0x95, 0 पूर्ण,
+    अणु /* SCM Ethernet */ 0x0ff0, 0x00, 0x20, 0xcb, 0 पूर्ण,
+    अणु /* Socket EA */ 0x4000, 0x00, 0xc0, 0x1b,
+      DELAY_OUTPUT | HAS_MISC_REG | USE_BIG_BUF पूर्ण,
+    अणु /* Socket LP-E CF+ */ 0x01c0, 0x00, 0xc0, 0x1b, 0 पूर्ण,
+    अणु /* SuperSocket RE450T */ 0x0110, 0x00, 0xe0, 0x98, 0 पूर्ण,
+    अणु /* Volktek NPL-402CT */ 0x0060, 0x00, 0x40, 0x05, 0 पूर्ण,
+    अणु /* NEC PC-9801N-J12 */ 0x0ff0, 0x00, 0x00, 0x4c, 0 पूर्ण,
+    अणु /* PCMCIA Technology OEM */ 0x01c8, 0x00, 0xa0, 0x0c, 0 पूर्ण
+पूर्ण;
 
-#define NR_INFO		ARRAY_SIZE(hw_info)
+#घोषणा NR_INFO		ARRAY_SIZE(hw_info)
 
-static struct hw_info default_info = { 0, 0, 0, 0, 0 };
-static struct hw_info dl10019_info = { 0, 0, 0, 0, IS_DL10019|HAS_MII };
-static struct hw_info dl10022_info = { 0, 0, 0, 0, IS_DL10022|HAS_MII };
+अटल काष्ठा hw_info शेष_info = अणु 0, 0, 0, 0, 0 पूर्ण;
+अटल काष्ठा hw_info dl10019_info = अणु 0, 0, 0, 0, IS_DL10019|HAS_MII पूर्ण;
+अटल काष्ठा hw_info dl10022_info = अणु 0, 0, 0, 0, IS_DL10022|HAS_MII पूर्ण;
 
-struct pcnet_dev {
-	struct pcmcia_device	*p_dev;
-    u_int		flags;
-    void		__iomem *base;
-    struct timer_list	watchdog;
-    int			stale, fast_poll;
-    u_char		phy_id;
-    u_char		eth_phy, pna_phy;
-    u_short		link_status;
-    u_long		mii_reset;
-};
+काष्ठा pcnet_dev अणु
+	काष्ठा pcmcia_device	*p_dev;
+    u_पूर्णांक		flags;
+    व्योम		__iomem *base;
+    काष्ठा समयr_list	watchकरोg;
+    पूर्णांक			stale, fast_poll;
+    u_अक्षर		phy_id;
+    u_अक्षर		eth_phy, pna_phy;
+    u_लघु		link_status;
+    u_दीर्घ		mii_reset;
+पूर्ण;
 
-static inline struct pcnet_dev *PRIV(struct net_device *dev)
-{
-	char *p = netdev_priv(dev);
-	return (struct pcnet_dev *)(p + sizeof(struct ei_device));
-}
+अटल अंतरभूत काष्ठा pcnet_dev *PRIV(काष्ठा net_device *dev)
+अणु
+	अक्षर *p = netdev_priv(dev);
+	वापस (काष्ठा pcnet_dev *)(p + माप(काष्ठा ei_device));
+पूर्ण
 
-static const struct net_device_ops pcnet_netdev_ops = {
-	.ndo_open		= pcnet_open,
-	.ndo_stop		= pcnet_close,
-	.ndo_set_config		= set_config,
-	.ndo_start_xmit 	= ei_start_xmit,
-	.ndo_get_stats		= ei_get_stats,
-	.ndo_do_ioctl 		= ei_ioctl,
-	.ndo_set_rx_mode	= ei_set_multicast_list,
-	.ndo_tx_timeout 	= ei_tx_timeout,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller 	= ei_poll,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops pcnet_netdev_ops = अणु
+	.nकरो_खोलो		= pcnet_खोलो,
+	.nकरो_stop		= pcnet_बंद,
+	.nकरो_set_config		= set_config,
+	.nकरो_start_xmit 	= ei_start_xmit,
+	.nकरो_get_stats		= ei_get_stats,
+	.nकरो_करो_ioctl 		= ei_ioctl,
+	.nकरो_set_rx_mode	= ei_set_multicast_list,
+	.nकरो_tx_समयout 	= ei_tx_समयout,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller 	= ei_poll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int pcnet_probe(struct pcmcia_device *link)
-{
-    struct pcnet_dev *info;
-    struct net_device *dev;
+अटल पूर्णांक pcnet_probe(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा pcnet_dev *info;
+    काष्ठा net_device *dev;
 
     dev_dbg(&link->dev, "pcnet_attach()\n");
 
     /* Create new ethernet device */
-    dev = __alloc_ei_netdev(sizeof(struct pcnet_dev));
-    if (!dev) return -ENOMEM;
+    dev = __alloc_ei_netdev(माप(काष्ठा pcnet_dev));
+    अगर (!dev) वापस -ENOMEM;
     info = PRIV(dev);
     info->p_dev = link;
     link->priv = dev;
@@ -251,122 +252,122 @@ static int pcnet_probe(struct pcmcia_device *link)
 
     dev->netdev_ops = &pcnet_netdev_ops;
 
-    return pcnet_config(link);
-} /* pcnet_attach */
+    वापस pcnet_config(link);
+पूर्ण /* pcnet_attach */
 
-static void pcnet_detach(struct pcmcia_device *link)
-{
-	struct net_device *dev = link->priv;
+अटल व्योम pcnet_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा net_device *dev = link->priv;
 
 	dev_dbg(&link->dev, "pcnet_detach\n");
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
 	pcnet_release(link);
 
-	free_netdev(dev);
-} /* pcnet_detach */
+	मुक्त_netdev(dev);
+पूर्ण /* pcnet_detach */
 
 /*======================================================================
 
-    This probes for a card's hardware address, for card types that
-    encode this information in their CIS.
+    This probes क्रम a card's hardware address, क्रम card types that
+    encode this inक्रमmation in their CIS.
 
 ======================================================================*/
 
-static struct hw_info *get_hwinfo(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    u_char __iomem *base, *virt;
-    int i, j;
+अटल काष्ठा hw_info *get_hwinfo(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    u_अक्षर __iomem *base, *virt;
+    पूर्णांक i, j;
 
-    /* Allocate a small memory window */
+    /* Allocate a small memory winकरोw */
     link->resource[2]->flags |= WIN_DATA_WIDTH_8|WIN_MEMORY_TYPE_AM|WIN_ENABLE;
     link->resource[2]->start = 0; link->resource[2]->end = 0;
-    i = pcmcia_request_window(link, link->resource[2], 0);
-    if (i != 0)
-	return NULL;
+    i = pcmcia_request_winकरोw(link, link->resource[2], 0);
+    अगर (i != 0)
+	वापस शून्य;
 
     virt = ioremap(link->resource[2]->start,
 	    resource_size(link->resource[2]));
-    if (unlikely(!virt)) {
-	    pcmcia_release_window(link, link->resource[2]);
-	    return NULL;
-    }
+    अगर (unlikely(!virt)) अणु
+	    pcmcia_release_winकरोw(link, link->resource[2]);
+	    वापस शून्य;
+    पूर्ण
 
-    for (i = 0; i < NR_INFO; i++) {
+    क्रम (i = 0; i < NR_INFO; i++) अणु
 	pcmcia_map_mem_page(link, link->resource[2],
 		hw_info[i].offset & ~(resource_size(link->resource[2])-1));
 	base = &virt[hw_info[i].offset & (resource_size(link->resource[2])-1)];
-	if ((readb(base+0) == hw_info[i].a0) &&
-	    (readb(base+2) == hw_info[i].a1) &&
-	    (readb(base+4) == hw_info[i].a2)) {
-		for (j = 0; j < 6; j++)
-		    dev->dev_addr[j] = readb(base + (j<<1));
-		break;
-	}
-    }
+	अगर ((पढ़ोb(base+0) == hw_info[i].a0) &&
+	    (पढ़ोb(base+2) == hw_info[i].a1) &&
+	    (पढ़ोb(base+4) == hw_info[i].a2)) अणु
+		क्रम (j = 0; j < 6; j++)
+		    dev->dev_addr[j] = पढ़ोb(base + (j<<1));
+		अवरोध;
+	पूर्ण
+    पूर्ण
 
     iounmap(virt);
-    j = pcmcia_release_window(link, link->resource[2]);
-    return (i < NR_INFO) ? hw_info+i : NULL;
-} /* get_hwinfo */
+    j = pcmcia_release_winकरोw(link, link->resource[2]);
+    वापस (i < NR_INFO) ? hw_info+i : शून्य;
+पूर्ण /* get_hwinfo */
 
 /*======================================================================
 
-    This probes for a card's hardware address by reading the PROM.
+    This probes क्रम a card's hardware address by पढ़ोing the PROM.
     It checks the address against a list of known types, then falls
     back to a simple NE2000 clone signature check.
 
 ======================================================================*/
 
-static struct hw_info *get_prom(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    unsigned int ioaddr = dev->base_addr;
-    u_char prom[32];
-    int i, j;
+अटल काष्ठा hw_info *get_prom(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    अचिन्हित पूर्णांक ioaddr = dev->base_addr;
+    u_अक्षर prom[32];
+    पूर्णांक i, j;
 
-    /* This is lifted straight from drivers/net/ethernet/8390/ne.c */
-    struct {
-	u_char value, offset;
-    } program_seq[] = {
-	{E8390_NODMA+E8390_PAGE0+E8390_STOP, E8390_CMD}, /* Select page 0*/
-	{0x48,	EN0_DCFG},	/* Set byte-wide (0x48) access. */
-	{0x00,	EN0_RCNTLO},	/* Clear the count regs. */
-	{0x00,	EN0_RCNTHI},
-	{0x00,	EN0_IMR},	/* Mask completion irq. */
-	{0xFF,	EN0_ISR},
-	{E8390_RXOFF, EN0_RXCR},	/* 0x20  Set to monitor */
-	{E8390_TXOFF, EN0_TXCR},	/* 0x02  and loopback mode. */
-	{32,	EN0_RCNTLO},
-	{0x00,	EN0_RCNTHI},
-	{0x00,	EN0_RSARLO},	/* DMA starting at 0x0000. */
-	{0x00,	EN0_RSARHI},
-	{E8390_RREAD+E8390_START, E8390_CMD},
-    };
+    /* This is lअगरted straight from drivers/net/ethernet/8390/ne.c */
+    काष्ठा अणु
+	u_अक्षर value, offset;
+    पूर्ण program_seq[] = अणु
+	अणुE8390_NODMA+E8390_PAGE0+E8390_STOP, E8390_CMDपूर्ण, /* Select page 0*/
+	अणु0x48,	EN0_DCFGपूर्ण,	/* Set byte-wide (0x48) access. */
+	अणु0x00,	EN0_RCNTLOपूर्ण,	/* Clear the count regs. */
+	अणु0x00,	EN0_RCNTHIपूर्ण,
+	अणु0x00,	EN0_IMRपूर्ण,	/* Mask completion irq. */
+	अणु0xFF,	EN0_ISRपूर्ण,
+	अणुE8390_RXOFF, EN0_RXCRपूर्ण,	/* 0x20  Set to monitor */
+	अणुE8390_TXOFF, EN0_TXCRपूर्ण,	/* 0x02  and loopback mode. */
+	अणु32,	EN0_RCNTLOपूर्ण,
+	अणु0x00,	EN0_RCNTHIपूर्ण,
+	अणु0x00,	EN0_RSARLOपूर्ण,	/* DMA starting at 0x0000. */
+	अणु0x00,	EN0_RSARHIपूर्ण,
+	अणुE8390_RREAD+E8390_START, E8390_CMDपूर्ण,
+    पूर्ण;
 
     pcnet_reset_8390(dev);
     mdelay(10);
 
-    for (i = 0; i < ARRAY_SIZE(program_seq); i++)
+    क्रम (i = 0; i < ARRAY_SIZE(program_seq); i++)
 	outb_p(program_seq[i].value, ioaddr + program_seq[i].offset);
 
-    for (i = 0; i < 32; i++)
+    क्रम (i = 0; i < 32; i++)
 	prom[i] = inb(ioaddr + PCNET_DATAPORT);
-    for (i = 0; i < NR_INFO; i++) {
-	if ((prom[0] == hw_info[i].a0) &&
+    क्रम (i = 0; i < NR_INFO; i++) अणु
+	अगर ((prom[0] == hw_info[i].a0) &&
 	    (prom[2] == hw_info[i].a1) &&
 	    (prom[4] == hw_info[i].a2))
-	    break;
-    }
-    if ((i < NR_INFO) || ((prom[28] == 0x57) && (prom[30] == 0x57))) {
-	for (j = 0; j < 6; j++)
+	    अवरोध;
+    पूर्ण
+    अगर ((i < NR_INFO) || ((prom[28] == 0x57) && (prom[30] == 0x57))) अणु
+	क्रम (j = 0; j < 6; j++)
 	    dev->dev_addr[j] = prom[j<<1];
-	return (i < NR_INFO) ? hw_info+i : &default_info;
-    }
-    return NULL;
-} /* get_prom */
+	वापस (i < NR_INFO) ? hw_info+i : &शेष_info;
+    पूर्ण
+    वापस शून्य;
+पूर्ण /* get_prom */
 
 /*======================================================================
 
@@ -374,21 +375,21 @@ static struct hw_info *get_prom(struct pcmcia_device *link)
 
 ======================================================================*/
 
-static struct hw_info *get_dl10019(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    int i;
-    u_char sum;
+अटल काष्ठा hw_info *get_dl10019(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    पूर्णांक i;
+    u_अक्षर sum;
 
-    for (sum = 0, i = 0x14; i < 0x1c; i++)
+    क्रम (sum = 0, i = 0x14; i < 0x1c; i++)
 	sum += inb_p(dev->base_addr + i);
-    if (sum != 0xff)
-	return NULL;
-    for (i = 0; i < 6; i++)
+    अगर (sum != 0xff)
+	वापस शून्य;
+    क्रम (i = 0; i < 6; i++)
 	dev->dev_addr[i] = inb_p(dev->base_addr + 0x14 + i);
     i = inb(dev->base_addr + 0x1f);
-    return ((i == 0x91)||(i == 0x99)) ? &dl10022_info : &dl10019_info;
-}
+    वापस ((i == 0x91)||(i == 0x99)) ? &dl10022_info : &dl10019_info;
+पूर्ण
 
 /*======================================================================
 
@@ -396,28 +397,28 @@ static struct hw_info *get_dl10019(struct pcmcia_device *link)
 
 ======================================================================*/
 
-static struct hw_info *get_ax88190(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    unsigned int ioaddr = dev->base_addr;
-    int i, j;
+अटल काष्ठा hw_info *get_ax88190(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    अचिन्हित पूर्णांक ioaddr = dev->base_addr;
+    पूर्णांक i, j;
 
     /* Not much of a test, but the alternatives are messy */
-    if (link->config_base != 0x03c0)
-	return NULL;
+    अगर (link->config_base != 0x03c0)
+	वापस शून्य;
 
     outb_p(0x01, ioaddr + EN0_DCFG);	/* Set word-wide access. */
     outb_p(0x00, ioaddr + EN0_RSARLO);	/* DMA starting at 0x0400. */
     outb_p(0x04, ioaddr + EN0_RSARHI);
     outb_p(E8390_RREAD+E8390_START, ioaddr + E8390_CMD);
 
-    for (i = 0; i < 6; i += 2) {
+    क्रम (i = 0; i < 6; i += 2) अणु
 	j = inw(ioaddr + PCNET_DATAPORT);
 	dev->dev_addr[i] = j & 0xff;
 	dev->dev_addr[i+1] = j >> 8;
-    }
-    return NULL;
-}
+    पूर्ण
+    वापस शून्य;
+पूर्ण
 
 /*======================================================================
 
@@ -427,401 +428,401 @@ static struct hw_info *get_ax88190(struct pcmcia_device *link)
 
 ======================================================================*/
 
-static struct hw_info *get_hwired(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    int i;
+अटल काष्ठा hw_info *get_hwired(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    पूर्णांक i;
 
-    for (i = 0; i < 6; i++)
-	if (hw_addr[i] != 0) break;
-    if (i == 6)
-	return NULL;
+    क्रम (i = 0; i < 6; i++)
+	अगर (hw_addr[i] != 0) अवरोध;
+    अगर (i == 6)
+	वापस शून्य;
 
-    for (i = 0; i < 6; i++)
+    क्रम (i = 0; i < 6; i++)
 	dev->dev_addr[i] = hw_addr[i];
 
-    return &default_info;
-} /* get_hwired */
+    वापस &शेष_info;
+पूर्ण /* get_hwired */
 
-static int try_io_port(struct pcmcia_device *link)
-{
-    int j, ret;
+अटल पूर्णांक try_io_port(काष्ठा pcmcia_device *link)
+अणु
+    पूर्णांक j, ret;
     link->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
     link->resource[1]->flags &= ~IO_DATA_PATH_WIDTH;
-    if (link->resource[0]->end == 32) {
+    अगर (link->resource[0]->end == 32) अणु
 	link->resource[0]->flags |= IO_DATA_PATH_WIDTH_AUTO;
-	if (link->resource[1]->end > 0) {
-	    /* for master/slave multifunction cards */
+	अगर (link->resource[1]->end > 0) अणु
+	    /* क्रम master/slave multअगरunction cards */
 	    link->resource[1]->flags |= IO_DATA_PATH_WIDTH_8;
-	}
-    } else {
-	/* This should be two 16-port windows */
+	पूर्ण
+    पूर्ण अन्यथा अणु
+	/* This should be two 16-port winकरोws */
 	link->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
 	link->resource[1]->flags |= IO_DATA_PATH_WIDTH_16;
-    }
-    if (link->resource[0]->start == 0) {
-	for (j = 0; j < 0x400; j += 0x20) {
+    पूर्ण
+    अगर (link->resource[0]->start == 0) अणु
+	क्रम (j = 0; j < 0x400; j += 0x20) अणु
 	    link->resource[0]->start = j ^ 0x300;
 	    link->resource[1]->start = (j ^ 0x300) + 0x10;
 	    link->io_lines = 16;
 	    ret = pcmcia_request_io(link);
-	    if (ret == 0)
-		    return ret;
-	}
-	return ret;
-    } else {
-	return pcmcia_request_io(link);
-    }
-}
+	    अगर (ret == 0)
+		    वापस ret;
+	पूर्ण
+	वापस ret;
+    पूर्ण अन्यथा अणु
+	वापस pcmcia_request_io(link);
+    पूर्ण
+पूर्ण
 
-static int pcnet_confcheck(struct pcmcia_device *p_dev, void *priv_data)
-{
-	int *priv = priv_data;
-	int try = (*priv & 0x1);
+अटल पूर्णांक pcnet_confcheck(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	पूर्णांक *priv = priv_data;
+	पूर्णांक try = (*priv & 0x1);
 
 	*priv &= (p_dev->resource[2]->end >= 0x4000) ? 0x10 : ~0x10;
 
-	if (p_dev->config_index == 0)
-		return -EINVAL;
+	अगर (p_dev->config_index == 0)
+		वापस -EINVAL;
 
-	if (p_dev->resource[0]->end + p_dev->resource[1]->end < 32)
-		return -EINVAL;
+	अगर (p_dev->resource[0]->end + p_dev->resource[1]->end < 32)
+		वापस -EINVAL;
 
-	if (try)
+	अगर (try)
 		p_dev->io_lines = 16;
-	return try_io_port(p_dev);
-}
+	वापस try_io_port(p_dev);
+पूर्ण
 
-static struct hw_info *pcnet_try_config(struct pcmcia_device *link,
-					int *has_shmem, int try)
-{
-	struct net_device *dev = link->priv;
-	struct hw_info *local_hw_info;
-	struct pcnet_dev *info = PRIV(dev);
-	int priv = try;
-	int ret;
+अटल काष्ठा hw_info *pcnet_try_config(काष्ठा pcmcia_device *link,
+					पूर्णांक *has_shmem, पूर्णांक try)
+अणु
+	काष्ठा net_device *dev = link->priv;
+	काष्ठा hw_info *local_hw_info;
+	काष्ठा pcnet_dev *info = PRIV(dev);
+	पूर्णांक priv = try;
+	पूर्णांक ret;
 
 	ret = pcmcia_loop_config(link, pcnet_confcheck, &priv);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&link->dev, "no useable port range found\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	*has_shmem = (priv & 0x10);
 
-	if (!link->irq)
-		return NULL;
+	अगर (!link->irq)
+		वापस शून्य;
 
-	if (resource_size(link->resource[1]) == 8)
+	अगर (resource_size(link->resource[1]) == 8)
 		link->config_flags |= CONF_ENABLE_SPKR;
 
-	if ((link->manf_id == MANFID_IBM) &&
+	अगर ((link->manf_id == MANFID_IBM) &&
 	    (link->card_id == PRODID_IBM_HOME_AND_AWAY))
 		link->config_index |= 0x10;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		return NULL;
+	अगर (ret)
+		वापस शून्य;
 
 	dev->irq = link->irq;
 	dev->base_addr = link->resource[0]->start;
 
-	if (info->flags & HAS_MISC_REG) {
-		if ((if_port == 1) || (if_port == 2))
-			dev->if_port = if_port;
-		else
+	अगर (info->flags & HAS_MISC_REG) अणु
+		अगर ((अगर_port == 1) || (अगर_port == 2))
+			dev->अगर_port = अगर_port;
+		अन्यथा
 			dev_notice(&link->dev, "invalid if_port requested\n");
-	} else
-		dev->if_port = 0;
+	पूर्ण अन्यथा
+		dev->अगर_port = 0;
 
-	if ((link->config_base == 0x03c0) &&
-	    (link->manf_id == 0x149) && (link->card_id == 0xc1ab)) {
+	अगर ((link->config_base == 0x03c0) &&
+	    (link->manf_id == 0x149) && (link->card_id == 0xc1ab)) अणु
 		dev_info(&link->dev,
 			"this is an AX88190 card - use axnet_cs instead.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	local_hw_info = get_hwinfo(link);
-	if (!local_hw_info)
+	अगर (!local_hw_info)
 		local_hw_info = get_prom(link);
-	if (!local_hw_info)
+	अगर (!local_hw_info)
 		local_hw_info = get_dl10019(link);
-	if (!local_hw_info)
+	अगर (!local_hw_info)
 		local_hw_info = get_ax88190(link);
-	if (!local_hw_info)
+	अगर (!local_hw_info)
 		local_hw_info = get_hwired(link);
 
-	return local_hw_info;
-}
+	वापस local_hw_info;
+पूर्ण
 
-static int pcnet_config(struct pcmcia_device *link)
-{
-    struct net_device *dev = link->priv;
-    struct pcnet_dev *info = PRIV(dev);
-    int start_pg, stop_pg, cm_offset;
-    int has_shmem = 0;
-    struct hw_info *local_hw_info;
+अटल पूर्णांक pcnet_config(काष्ठा pcmcia_device *link)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    पूर्णांक start_pg, stop_pg, cm_offset;
+    पूर्णांक has_shmem = 0;
+    काष्ठा hw_info *local_hw_info;
 
     dev_dbg(&link->dev, "pcnet_config\n");
 
     local_hw_info = pcnet_try_config(link, &has_shmem, 0);
-    if (!local_hw_info) {
-	    /* check whether forcing io_lines to 16 helps... */
+    अगर (!local_hw_info) अणु
+	    /* check whether क्रमcing io_lines to 16 helps... */
 	    pcmcia_disable_device(link);
 	    local_hw_info = pcnet_try_config(link, &has_shmem, 1);
-	    if (local_hw_info == NULL) {
+	    अगर (local_hw_info == शून्य) अणु
 		    dev_notice(&link->dev, "unable to read hardware net"
 			    " address for io base %#3lx\n", dev->base_addr);
-		    goto failed;
-	    }
-    }
+		    जाओ failed;
+	    पूर्ण
+    पूर्ण
 
     info->flags = local_hw_info->flags;
-    /* Check for user overrides */
+    /* Check क्रम user overrides */
     info->flags |= (delay_output) ? DELAY_OUTPUT : 0;
-    if ((link->manf_id == MANFID_SOCKET) &&
+    अगर ((link->manf_id == MANFID_SOCKET) &&
 	((link->card_id == PRODID_SOCKET_LPE) ||
 	 (link->card_id == PRODID_SOCKET_LPE_CF) ||
 	 (link->card_id == PRODID_SOCKET_EIO)))
 	info->flags &= ~USE_BIG_BUF;
-    if (!use_big_buf)
+    अगर (!use_big_buf)
 	info->flags &= ~USE_BIG_BUF;
 
-    if (info->flags & USE_BIG_BUF) {
+    अगर (info->flags & USE_BIG_BUF) अणु
 	start_pg = SOCKET_START_PG;
 	stop_pg = SOCKET_STOP_PG;
 	cm_offset = 0x10000;
-    } else {
+    पूर्ण अन्यथा अणु
 	start_pg = PCNET_START_PG;
 	stop_pg = PCNET_STOP_PG;
 	cm_offset = 0;
-    }
+    पूर्ण
 
-    /* has_shmem is ignored if use_shmem != -1 */
-    if ((use_shmem == 0) || (!has_shmem && (use_shmem == -1)) ||
-	(setup_shmem_window(link, start_pg, stop_pg, cm_offset) != 0))
+    /* has_shmem is ignored अगर use_shmem != -1 */
+    अगर ((use_shmem == 0) || (!has_shmem && (use_shmem == -1)) ||
+	(setup_shmem_winकरोw(link, start_pg, stop_pg, cm_offset) != 0))
 	setup_dma_config(link, start_pg, stop_pg);
 
     ei_status.name = "NE2000";
     ei_status.word16 = 1;
     ei_status.reset_8390 = pcnet_reset_8390;
 
-    if (info->flags & (IS_DL10019|IS_DL10022))
+    अगर (info->flags & (IS_DL10019|IS_DL10022))
 	mii_phy_probe(dev);
 
     SET_NETDEV_DEV(dev, &link->dev);
 
-    if (register_netdev(dev) != 0) {
+    अगर (रेजिस्टर_netdev(dev) != 0) अणु
 	pr_notice("register_netdev() failed\n");
-	goto failed;
-    }
+	जाओ failed;
+    पूर्ण
 
-    if (info->flags & (IS_DL10019|IS_DL10022)) {
-	u_char id = inb(dev->base_addr + 0x1a);
+    अगर (info->flags & (IS_DL10019|IS_DL10022)) अणु
+	u_अक्षर id = inb(dev->base_addr + 0x1a);
 	netdev_info(dev, "NE2000 (DL100%d rev %02x): ",
 		    (info->flags & IS_DL10022) ? 22 : 19, id);
-	if (info->pna_phy)
+	अगर (info->pna_phy)
 	    pr_cont("PNA, ");
-    } else {
+    पूर्ण अन्यथा अणु
 	netdev_info(dev, "NE2000 Compatible: ");
-    }
+    पूर्ण
     pr_cont("io %#3lx, irq %d,", dev->base_addr, dev->irq);
-    if (info->flags & USE_SHMEM)
+    अगर (info->flags & USE_SHMEM)
 	pr_cont(" mem %#5lx,", dev->mem_start);
-    if (info->flags & HAS_MISC_REG)
-	pr_cont(" %s xcvr,", if_names[dev->if_port]);
+    अगर (info->flags & HAS_MISC_REG)
+	pr_cont(" %s xcvr,", अगर_names[dev->अगर_port]);
     pr_cont(" hw_addr %pM\n", dev->dev_addr);
-    return 0;
+    वापस 0;
 
 failed:
     pcnet_release(link);
-    return -ENODEV;
-} /* pcnet_config */
+    वापस -ENODEV;
+पूर्ण /* pcnet_config */
 
-static void pcnet_release(struct pcmcia_device *link)
-{
-	struct pcnet_dev *info = PRIV(link->priv);
+अटल व्योम pcnet_release(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा pcnet_dev *info = PRIV(link->priv);
 
 	dev_dbg(&link->dev, "pcnet_release\n");
 
-	if (info->flags & USE_SHMEM)
+	अगर (info->flags & USE_SHMEM)
 		iounmap(info->base);
 
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int pcnet_suspend(struct pcmcia_device *link)
-{
-	struct net_device *dev = link->priv;
+अटल पूर्णांक pcnet_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा net_device *dev = link->priv;
 
-	if (link->open)
-		netif_device_detach(dev);
+	अगर (link->खोलो)
+		netअगर_device_detach(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcnet_resume(struct pcmcia_device *link)
-{
-	struct net_device *dev = link->priv;
+अटल पूर्णांक pcnet_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा net_device *dev = link->priv;
 
-	if (link->open) {
+	अगर (link->खोलो) अणु
 		pcnet_reset_8390(dev);
 		NS8390_init(dev, 1);
-		netif_device_attach(dev);
-	}
+		netअगर_device_attach(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*======================================================================
 
-    MII interface support for DL10019 and DL10022 based cards
+    MII पूर्णांकerface support क्रम DL10019 and DL10022 based cards
 
     On the DL10019, the MII IO direction bit is 0x10; on the DL10022
     it is 0x20.  Setting both bits seems to work on both card types.
 
 ======================================================================*/
 
-#define DLINK_GPIO		0x1c
-#define DLINK_DIAG		0x1d
-#define DLINK_EEPROM		0x1e
+#घोषणा DLINK_GPIO		0x1c
+#घोषणा DLINK_DIAG		0x1d
+#घोषणा DLINK_EEPROM		0x1e
 
-#define MDIO_SHIFT_CLK		0x80
-#define MDIO_DATA_OUT		0x40
-#define MDIO_DIR_WRITE		0x30
-#define MDIO_DATA_WRITE0	(MDIO_DIR_WRITE)
-#define MDIO_DATA_WRITE1	(MDIO_DIR_WRITE | MDIO_DATA_OUT)
-#define MDIO_DATA_READ		0x10
-#define MDIO_MASK		0x0f
+#घोषणा MDIO_SHIFT_CLK		0x80
+#घोषणा MDIO_DATA_OUT		0x40
+#घोषणा MDIO_सूची_WRITE		0x30
+#घोषणा MDIO_DATA_WRITE0	(MDIO_सूची_WRITE)
+#घोषणा MDIO_DATA_WRITE1	(MDIO_सूची_WRITE | MDIO_DATA_OUT)
+#घोषणा MDIO_DATA_READ		0x10
+#घोषणा MDIO_MASK		0x0f
 
-static void mdio_sync(unsigned int addr)
-{
-    int bits, mask = inb(addr) & MDIO_MASK;
-    for (bits = 0; bits < 32; bits++) {
+अटल व्योम mdio_sync(अचिन्हित पूर्णांक addr)
+अणु
+    पूर्णांक bits, mask = inb(addr) & MDIO_MASK;
+    क्रम (bits = 0; bits < 32; bits++) अणु
 	outb(mask | MDIO_DATA_WRITE1, addr);
 	outb(mask | MDIO_DATA_WRITE1 | MDIO_SHIFT_CLK, addr);
-    }
-}
+    पूर्ण
+पूर्ण
 
-static int mdio_read(unsigned int addr, int phy_id, int loc)
-{
-    u_int cmd = (0x06<<10)|(phy_id<<5)|loc;
-    int i, retval = 0, mask = inb(addr) & MDIO_MASK;
+अटल पूर्णांक mdio_पढ़ो(अचिन्हित पूर्णांक addr, पूर्णांक phy_id, पूर्णांक loc)
+अणु
+    u_पूर्णांक cmd = (0x06<<10)|(phy_id<<5)|loc;
+    पूर्णांक i, retval = 0, mask = inb(addr) & MDIO_MASK;
 
     mdio_sync(addr);
-    for (i = 13; i >= 0; i--) {
-	int dat = (cmd&(1<<i)) ? MDIO_DATA_WRITE1 : MDIO_DATA_WRITE0;
+    क्रम (i = 13; i >= 0; i--) अणु
+	पूर्णांक dat = (cmd&(1<<i)) ? MDIO_DATA_WRITE1 : MDIO_DATA_WRITE0;
 	outb(mask | dat, addr);
 	outb(mask | dat | MDIO_SHIFT_CLK, addr);
-    }
-    for (i = 19; i > 0; i--) {
+    पूर्ण
+    क्रम (i = 19; i > 0; i--) अणु
 	outb(mask, addr);
 	retval = (retval << 1) | ((inb(addr) & MDIO_DATA_READ) != 0);
 	outb(mask | MDIO_SHIFT_CLK, addr);
-    }
-    return (retval>>1) & 0xffff;
-}
+    पूर्ण
+    वापस (retval>>1) & 0xffff;
+पूर्ण
 
-static void mdio_write(unsigned int addr, int phy_id, int loc, int value)
-{
-    u_int cmd = (0x05<<28)|(phy_id<<23)|(loc<<18)|(1<<17)|value;
-    int i, mask = inb(addr) & MDIO_MASK;
+अटल व्योम mdio_ग_लिखो(अचिन्हित पूर्णांक addr, पूर्णांक phy_id, पूर्णांक loc, पूर्णांक value)
+अणु
+    u_पूर्णांक cmd = (0x05<<28)|(phy_id<<23)|(loc<<18)|(1<<17)|value;
+    पूर्णांक i, mask = inb(addr) & MDIO_MASK;
 
     mdio_sync(addr);
-    for (i = 31; i >= 0; i--) {
-	int dat = (cmd&(1<<i)) ? MDIO_DATA_WRITE1 : MDIO_DATA_WRITE0;
+    क्रम (i = 31; i >= 0; i--) अणु
+	पूर्णांक dat = (cmd&(1<<i)) ? MDIO_DATA_WRITE1 : MDIO_DATA_WRITE0;
 	outb(mask | dat, addr);
 	outb(mask | dat | MDIO_SHIFT_CLK, addr);
-    }
-    for (i = 1; i >= 0; i--) {
+    पूर्ण
+    क्रम (i = 1; i >= 0; i--) अणु
 	outb(mask, addr);
 	outb(mask | MDIO_SHIFT_CLK, addr);
-    }
-}
+    पूर्ण
+पूर्ण
 
 /*======================================================================
 
-    EEPROM access routines for DL10019 and DL10022 based cards
+    EEPROM access routines क्रम DL10019 and DL10022 based cards
 
 ======================================================================*/
 
-#define EE_EEP		0x40
-#define EE_ASIC		0x10
-#define EE_CS		0x08
-#define EE_CK		0x04
-#define EE_DO		0x02
-#define EE_DI		0x01
-#define EE_ADOT		0x01	/* DataOut for ASIC */
-#define EE_READ_CMD	0x06
+#घोषणा EE_EEP		0x40
+#घोषणा EE_ASIC		0x10
+#घोषणा EE_CS		0x08
+#घोषणा EE_CK		0x04
+#घोषणा EE_DO		0x02
+#घोषणा EE_DI		0x01
+#घोषणा EE_ADOT		0x01	/* DataOut क्रम ASIC */
+#घोषणा EE_READ_CMD	0x06
 
-#define DL19FDUPLX	0x0400	/* DL10019 Full duplex mode */
+#घोषणा DL19FDUPLX	0x0400	/* DL10019 Full duplex mode */
 
-static int read_eeprom(unsigned int ioaddr, int location)
-{
-    int i, retval = 0;
-    unsigned int ee_addr = ioaddr + DLINK_EEPROM;
-    int read_cmd = location | (EE_READ_CMD << 8);
+अटल पूर्णांक पढ़ो_eeprom(अचिन्हित पूर्णांक ioaddr, पूर्णांक location)
+अणु
+    पूर्णांक i, retval = 0;
+    अचिन्हित पूर्णांक ee_addr = ioaddr + DLINK_EEPROM;
+    पूर्णांक पढ़ो_cmd = location | (EE_READ_CMD << 8);
 
     outb(0, ee_addr);
     outb(EE_EEP|EE_CS, ee_addr);
 
-    /* Shift the read command bits out. */
-    for (i = 10; i >= 0; i--) {
-	short dataval = (read_cmd & (1 << i)) ? EE_DO : 0;
+    /* Shअगरt the पढ़ो command bits out. */
+    क्रम (i = 10; i >= 0; i--) अणु
+	लघु dataval = (पढ़ो_cmd & (1 << i)) ? EE_DO : 0;
 	outb_p(EE_EEP|EE_CS|dataval, ee_addr);
 	outb_p(EE_EEP|EE_CS|dataval|EE_CK, ee_addr);
-    }
+    पूर्ण
     outb(EE_EEP|EE_CS, ee_addr);
 
-    for (i = 16; i > 0; i--) {
+    क्रम (i = 16; i > 0; i--) अणु
 	outb_p(EE_EEP|EE_CS | EE_CK, ee_addr);
 	retval = (retval << 1) | ((inb(ee_addr) & EE_DI) ? 1 : 0);
 	outb_p(EE_EEP|EE_CS, ee_addr);
-    }
+    पूर्ण
 
     /* Terminate the EEPROM access. */
     outb(0, ee_addr);
-    return retval;
-}
+    वापस retval;
+पूर्ण
 
 /*
-    The internal ASIC registers can be changed by EEPROM READ access
+    The पूर्णांकernal ASIC रेजिस्टरs can be changed by EEPROM READ access
     with EE_ASIC bit set.
     In ASIC mode, EE_ADOT is used to output the data to the ASIC.
 */
 
-static void write_asic(unsigned int ioaddr, int location, short asic_data)
-{
-	int i;
-	unsigned int ee_addr = ioaddr + DLINK_EEPROM;
-	short dataval;
-	int read_cmd = location | (EE_READ_CMD << 8);
+अटल व्योम ग_लिखो_asic(अचिन्हित पूर्णांक ioaddr, पूर्णांक location, लघु asic_data)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक ee_addr = ioaddr + DLINK_EEPROM;
+	लघु dataval;
+	पूर्णांक पढ़ो_cmd = location | (EE_READ_CMD << 8);
 
-	asic_data |= read_eeprom(ioaddr, location);
+	asic_data |= पढ़ो_eeprom(ioaddr, location);
 
 	outb(0, ee_addr);
 	outb(EE_ASIC|EE_CS|EE_DI, ee_addr);
 
-	read_cmd = read_cmd >> 1;
+	पढ़ो_cmd = पढ़ो_cmd >> 1;
 
-	/* Shift the read command bits out. */
-	for (i = 9; i >= 0; i--) {
-		dataval = (read_cmd & (1 << i)) ? EE_DO : 0;
+	/* Shअगरt the पढ़ो command bits out. */
+	क्रम (i = 9; i >= 0; i--) अणु
+		dataval = (पढ़ो_cmd & (1 << i)) ? EE_DO : 0;
 		outb_p(EE_ASIC|EE_CS|EE_DI|dataval, ee_addr);
 		outb_p(EE_ASIC|EE_CS|EE_DI|dataval|EE_CK, ee_addr);
 		outb_p(EE_ASIC|EE_CS|EE_DI|dataval, ee_addr);
-	}
+	पूर्ण
 	// sync
 	outb(EE_ASIC|EE_CS, ee_addr);
 	outb(EE_ASIC|EE_CS|EE_CK, ee_addr);
 	outb(EE_ASIC|EE_CS, ee_addr);
 
-	for (i = 15; i >= 0; i--) {
+	क्रम (i = 15; i >= 0; i--) अणु
 		dataval = (asic_data & (1 << i)) ? EE_ADOT : 0;
 		outb_p(EE_ASIC|EE_CS|dataval, ee_addr);
 		outb_p(EE_ASIC|EE_CS|dataval|EE_CK, ee_addr);
 		outb_p(EE_ASIC|EE_CS|dataval, ee_addr);
-	}
+	पूर्ण
 
 	/* Terminate the ASIC access. */
 	outb(EE_ASIC|EE_DI, ee_addr);
@@ -829,347 +830,347 @@ static void write_asic(unsigned int ioaddr, int location, short asic_data)
 	outb(EE_ASIC|EE_DI, ee_addr);
 
 	outb(0, ee_addr);
-}
+पूर्ण
 
 /*====================================================================*/
 
-static void set_misc_reg(struct net_device *dev)
-{
-    unsigned int nic_base = dev->base_addr;
-    struct pcnet_dev *info = PRIV(dev);
-    u_char tmp;
+अटल व्योम set_misc_reg(काष्ठा net_device *dev)
+अणु
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    u_अक्षर पंचांगp;
 
-    if (info->flags & HAS_MISC_REG) {
-	tmp = inb_p(nic_base + PCNET_MISC) & ~3;
-	if (dev->if_port == 2)
-	    tmp |= 1;
-	if (info->flags & USE_BIG_BUF)
-	    tmp |= 2;
-	if (info->flags & HAS_IBM_MISC)
-	    tmp |= 8;
-	outb_p(tmp, nic_base + PCNET_MISC);
-    }
-    if (info->flags & IS_DL10022) {
-	if (info->flags & HAS_MII) {
+    अगर (info->flags & HAS_MISC_REG) अणु
+	पंचांगp = inb_p(nic_base + PCNET_MISC) & ~3;
+	अगर (dev->अगर_port == 2)
+	    पंचांगp |= 1;
+	अगर (info->flags & USE_BIG_BUF)
+	    पंचांगp |= 2;
+	अगर (info->flags & HAS_IBM_MISC)
+	    पंचांगp |= 8;
+	outb_p(पंचांगp, nic_base + PCNET_MISC);
+    पूर्ण
+    अगर (info->flags & IS_DL10022) अणु
+	अगर (info->flags & HAS_MII) अणु
 	    /* Advertise 100F, 100H, 10F, 10H */
-	    mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 4, 0x01e1);
-	    /* Restart MII autonegotiation */
-	    mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x0000);
-	    mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x1200);
-	    info->mii_reset = jiffies;
-	} else {
+	    mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 4, 0x01e1);
+	    /* Restart MII स्वतःnegotiation */
+	    mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x0000);
+	    mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x1200);
+	    info->mii_reset = jअगरfies;
+	पूर्ण अन्यथा अणु
 	    outb(full_duplex ? 4 : 0, nic_base + DLINK_DIAG);
-	}
-    } else if (info->flags & IS_DL10019) {
+	पूर्ण
+    पूर्ण अन्यथा अगर (info->flags & IS_DL10019) अणु
 	/* Advertise 100F, 100H, 10F, 10H */
-	mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 4, 0x01e1);
-	/* Restart MII autonegotiation */
-	mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x0000);
-	mdio_write(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x1200);
-    }
-}
+	mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 4, 0x01e1);
+	/* Restart MII स्वतःnegotiation */
+	mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x0000);
+	mdio_ग_लिखो(nic_base + DLINK_GPIO, info->eth_phy, 0, 0x1200);
+    पूर्ण
+पूर्ण
 
 /*====================================================================*/
 
-static void mii_phy_probe(struct net_device *dev)
-{
-    struct pcnet_dev *info = PRIV(dev);
-    unsigned int mii_addr = dev->base_addr + DLINK_GPIO;
-    int i;
-    u_int tmp, phyid;
+अटल व्योम mii_phy_probe(काष्ठा net_device *dev)
+अणु
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    अचिन्हित पूर्णांक mii_addr = dev->base_addr + DLINK_GPIO;
+    पूर्णांक i;
+    u_पूर्णांक पंचांगp, phyid;
 
-    for (i = 31; i >= 0; i--) {
-	tmp = mdio_read(mii_addr, i, 1);
-	if ((tmp == 0) || (tmp == 0xffff))
-	    continue;
-	tmp = mdio_read(mii_addr, i, MII_PHYID_REG1);
-	phyid = tmp << 16;
-	phyid |= mdio_read(mii_addr, i, MII_PHYID_REG2);
+    क्रम (i = 31; i >= 0; i--) अणु
+	पंचांगp = mdio_पढ़ो(mii_addr, i, 1);
+	अगर ((पंचांगp == 0) || (पंचांगp == 0xffff))
+	    जारी;
+	पंचांगp = mdio_पढ़ो(mii_addr, i, MII_PHYID_REG1);
+	phyid = पंचांगp << 16;
+	phyid |= mdio_पढ़ो(mii_addr, i, MII_PHYID_REG2);
 	phyid &= MII_PHYID_REV_MASK;
 	netdev_dbg(dev, "MII at %d is 0x%08x\n", i, phyid);
-	if (phyid == AM79C9XX_HOME_PHY) {
+	अगर (phyid == AM79C9XX_HOME_PHY) अणु
 	    info->pna_phy = i;
-	} else if (phyid != AM79C9XX_ETH_PHY) {
+	पूर्ण अन्यथा अगर (phyid != AM79C9XX_ETH_PHY) अणु
 	    info->eth_phy = i;
-	}
-    }
-}
+	पूर्ण
+    पूर्ण
+पूर्ण
 
-static int pcnet_open(struct net_device *dev)
-{
-    int ret;
-    struct pcnet_dev *info = PRIV(dev);
-    struct pcmcia_device *link = info->p_dev;
-    unsigned int nic_base = dev->base_addr;
+अटल पूर्णांक pcnet_खोलो(काष्ठा net_device *dev)
+अणु
+    पूर्णांक ret;
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    काष्ठा pcmcia_device *link = info->p_dev;
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
 
     dev_dbg(&link->dev, "pcnet_open('%s')\n", dev->name);
 
-    if (!pcmcia_dev_present(link))
-	return -ENODEV;
+    अगर (!pcmcia_dev_present(link))
+	वापस -ENODEV;
 
     set_misc_reg(dev);
 
-    outb_p(0xFF, nic_base + EN0_ISR); /* Clear bogus intr. */
+    outb_p(0xFF, nic_base + EN0_ISR); /* Clear bogus पूर्णांकr. */
     ret = request_irq(dev->irq, ei_irq_wrapper, IRQF_SHARED, dev->name, dev);
-    if (ret)
-	    return ret;
+    अगर (ret)
+	    वापस ret;
 
-    link->open++;
+    link->खोलो++;
 
     info->phy_id = info->eth_phy;
     info->link_status = 0x00;
-    timer_setup(&info->watchdog, ei_watchdog, 0);
-    mod_timer(&info->watchdog, jiffies + HZ);
+    समयr_setup(&info->watchकरोg, ei_watchकरोg, 0);
+    mod_समयr(&info->watchकरोg, jअगरfies + HZ);
 
-    return ei_open(dev);
-} /* pcnet_open */
+    वापस ei_खोलो(dev);
+पूर्ण /* pcnet_खोलो */
 
 /*====================================================================*/
 
-static int pcnet_close(struct net_device *dev)
-{
-    struct pcnet_dev *info = PRIV(dev);
-    struct pcmcia_device *link = info->p_dev;
+अटल पूर्णांक pcnet_बंद(काष्ठा net_device *dev)
+अणु
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    काष्ठा pcmcia_device *link = info->p_dev;
 
     dev_dbg(&link->dev, "pcnet_close('%s')\n", dev->name);
 
-    ei_close(dev);
-    free_irq(dev->irq, dev);
+    ei_बंद(dev);
+    मुक्त_irq(dev->irq, dev);
 
-    link->open--;
-    netif_stop_queue(dev);
-    del_timer_sync(&info->watchdog);
+    link->खोलो--;
+    netअगर_stop_queue(dev);
+    del_समयr_sync(&info->watchकरोg);
 
-    return 0;
-} /* pcnet_close */
+    वापस 0;
+पूर्ण /* pcnet_बंद */
 
 /*======================================================================
 
-    Hard reset the card.  This used to pause for the same period that
+    Hard reset the card.  This used to छोड़ो क्रम the same period that
     a 8390 reset command required, but that shouldn't be necessary.
 
 ======================================================================*/
 
-static void pcnet_reset_8390(struct net_device *dev)
-{
-    unsigned int nic_base = dev->base_addr;
-    int i;
+अटल व्योम pcnet_reset_8390(काष्ठा net_device *dev)
+अणु
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
+    पूर्णांक i;
 
-    ei_status.txing = ei_status.dmaing = 0;
+    ei_status.txing = ei_status.dमुख्यg = 0;
 
     outb_p(E8390_NODMA+E8390_PAGE0+E8390_STOP, nic_base + E8390_CMD);
 
     outb(inb(nic_base + PCNET_RESET), nic_base + PCNET_RESET);
 
-    for (i = 0; i < 100; i++) {
-	if ((inb_p(nic_base+EN0_ISR) & ENISR_RESET) != 0)
-	    break;
+    क्रम (i = 0; i < 100; i++) अणु
+	अगर ((inb_p(nic_base+EN0_ISR) & ENISR_RESET) != 0)
+	    अवरोध;
 	udelay(100);
-    }
-    outb_p(ENISR_RESET, nic_base + EN0_ISR); /* Ack intr. */
+    पूर्ण
+    outb_p(ENISR_RESET, nic_base + EN0_ISR); /* Ack पूर्णांकr. */
 
-    if (i == 100)
+    अगर (i == 100)
 	netdev_err(dev, "pcnet_reset_8390() did not complete.\n");
 
     set_misc_reg(dev);
 
-} /* pcnet_reset_8390 */
+पूर्ण /* pcnet_reset_8390 */
 
 /*====================================================================*/
 
-static int set_config(struct net_device *dev, struct ifmap *map)
-{
-    struct pcnet_dev *info = PRIV(dev);
-    if ((map->port != (u_char)(-1)) && (map->port != dev->if_port)) {
-	if (!(info->flags & HAS_MISC_REG))
-	    return -EOPNOTSUPP;
-	else if ((map->port < 1) || (map->port > 2))
-	    return -EINVAL;
-	dev->if_port = map->port;
-	netdev_info(dev, "switched to %s port\n", if_names[dev->if_port]);
+अटल पूर्णांक set_config(काष्ठा net_device *dev, काष्ठा अगरmap *map)
+अणु
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    अगर ((map->port != (u_अक्षर)(-1)) && (map->port != dev->अगर_port)) अणु
+	अगर (!(info->flags & HAS_MISC_REG))
+	    वापस -EOPNOTSUPP;
+	अन्यथा अगर ((map->port < 1) || (map->port > 2))
+	    वापस -EINVAL;
+	dev->अगर_port = map->port;
+	netdev_info(dev, "switched to %s port\n", अगर_names[dev->अगर_port]);
 	NS8390_init(dev, 1);
-    }
-    return 0;
-}
+    पूर्ण
+    वापस 0;
+पूर्ण
 
 /*====================================================================*/
 
-static irqreturn_t ei_irq_wrapper(int irq, void *dev_id)
-{
-    struct net_device *dev = dev_id;
-    struct pcnet_dev *info;
-    irqreturn_t ret = ei_interrupt(irq, dev_id);
+अटल irqवापस_t ei_irq_wrapper(पूर्णांक irq, व्योम *dev_id)
+अणु
+    काष्ठा net_device *dev = dev_id;
+    काष्ठा pcnet_dev *info;
+    irqवापस_t ret = ei_पूर्णांकerrupt(irq, dev_id);
 
-    if (ret == IRQ_HANDLED) {
+    अगर (ret == IRQ_HANDLED) अणु
 	    info = PRIV(dev);
 	    info->stale = 0;
-    }
-    return ret;
-}
+    पूर्ण
+    वापस ret;
+पूर्ण
 
-static void ei_watchdog(struct timer_list *t)
-{
-    struct pcnet_dev *info = from_timer(info, t, watchdog);
-    struct net_device *dev = info->p_dev->priv;
-    unsigned int nic_base = dev->base_addr;
-    unsigned int mii_addr = nic_base + DLINK_GPIO;
-    u_short link;
+अटल व्योम ei_watchकरोg(काष्ठा समयr_list *t)
+अणु
+    काष्ठा pcnet_dev *info = from_समयr(info, t, watchकरोg);
+    काष्ठा net_device *dev = info->p_dev->priv;
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
+    अचिन्हित पूर्णांक mii_addr = nic_base + DLINK_GPIO;
+    u_लघु link;
 
-    if (!netif_device_present(dev)) goto reschedule;
+    अगर (!netअगर_device_present(dev)) जाओ reschedule;
 
-    /* Check for pending interrupt with expired latency timer: with
-       this, we can limp along even if the interrupt is blocked */
-    if (info->stale++ && (inb_p(nic_base + EN0_ISR) & ENISR_ALL)) {
-	if (!info->fast_poll)
+    /* Check क्रम pending पूर्णांकerrupt with expired latency समयr: with
+       this, we can limp aदीर्घ even अगर the पूर्णांकerrupt is blocked */
+    अगर (info->stale++ && (inb_p(nic_base + EN0_ISR) & ENISR_ALL)) अणु
+	अगर (!info->fast_poll)
 	    netdev_info(dev, "interrupt(s) dropped!\n");
 	ei_irq_wrapper(dev->irq, dev);
 	info->fast_poll = HZ;
-    }
-    if (info->fast_poll) {
+    पूर्ण
+    अगर (info->fast_poll) अणु
 	info->fast_poll--;
-	info->watchdog.expires = jiffies + 1;
-	add_timer(&info->watchdog);
-	return;
-    }
+	info->watchकरोg.expires = jअगरfies + 1;
+	add_समयr(&info->watchकरोg);
+	वापस;
+    पूर्ण
 
-    if (!(info->flags & HAS_MII))
-	goto reschedule;
+    अगर (!(info->flags & HAS_MII))
+	जाओ reschedule;
 
-    mdio_read(mii_addr, info->phy_id, 1);
-    link = mdio_read(mii_addr, info->phy_id, 1);
-    if (!link || (link == 0xffff)) {
-	if (info->eth_phy) {
+    mdio_पढ़ो(mii_addr, info->phy_id, 1);
+    link = mdio_पढ़ो(mii_addr, info->phy_id, 1);
+    अगर (!link || (link == 0xffff)) अणु
+	अगर (info->eth_phy) अणु
 	    info->phy_id = info->eth_phy = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 	    netdev_info(dev, "MII is missing!\n");
 	    info->flags &= ~HAS_MII;
-	}
-	goto reschedule;
-    }
+	पूर्ण
+	जाओ reschedule;
+    पूर्ण
 
     link &= 0x0004;
-    if (link != info->link_status) {
-	u_short p = mdio_read(mii_addr, info->phy_id, 5);
+    अगर (link != info->link_status) अणु
+	u_लघु p = mdio_पढ़ो(mii_addr, info->phy_id, 5);
 	netdev_info(dev, "%s link beat\n", link ? "found" : "lost");
-	if (link && (info->flags & IS_DL10022)) {
+	अगर (link && (info->flags & IS_DL10022)) अणु
 	    /* Disable collision detection on full duplex links */
 	    outb((p & 0x0140) ? 4 : 0, nic_base + DLINK_DIAG);
-	} else if (link && (info->flags & IS_DL10019)) {
+	पूर्ण अन्यथा अगर (link && (info->flags & IS_DL10019)) अणु
 	    /* Disable collision detection on full duplex links */
-	    write_asic(dev->base_addr, 4, (p & 0x140) ? DL19FDUPLX : 0);
-	}
-	if (link) {
-	    if (info->phy_id == info->eth_phy) {
-		if (p)
+	    ग_लिखो_asic(dev->base_addr, 4, (p & 0x140) ? DL19FDUPLX : 0);
+	पूर्ण
+	अगर (link) अणु
+	    अगर (info->phy_id == info->eth_phy) अणु
+		अगर (p)
 		    netdev_info(dev, "autonegotiation complete: "
 				"%sbaseT-%cD selected\n",
 				((p & 0x0180) ? "100" : "10"),
 				((p & 0x0140) ? 'F' : 'H'));
-		else
+		अन्यथा
 		    netdev_info(dev, "link partner did not autonegotiate\n");
-	    }
+	    पूर्ण
 	    NS8390_init(dev, 1);
-	}
+	पूर्ण
 	info->link_status = link;
-    }
-    if (info->pna_phy && time_after(jiffies, info->mii_reset + 6*HZ)) {
-	link = mdio_read(mii_addr, info->eth_phy, 1) & 0x0004;
-	if (((info->phy_id == info->pna_phy) && link) ||
-	    ((info->phy_id != info->pna_phy) && !link)) {
+    पूर्ण
+    अगर (info->pna_phy && समय_after(jअगरfies, info->mii_reset + 6*HZ)) अणु
+	link = mdio_पढ़ो(mii_addr, info->eth_phy, 1) & 0x0004;
+	अगर (((info->phy_id == info->pna_phy) && link) ||
+	    ((info->phy_id != info->pna_phy) && !link)) अणु
 	    /* isolate this MII and try flipping to the other one */
-	    mdio_write(mii_addr, info->phy_id, 0, 0x0400);
+	    mdio_ग_लिखो(mii_addr, info->phy_id, 0, 0x0400);
 	    info->phy_id ^= info->pna_phy ^ info->eth_phy;
 	    netdev_info(dev, "switched to %s transceiver\n",
 			(info->phy_id == info->eth_phy) ? "ethernet" : "PNA");
-	    mdio_write(mii_addr, info->phy_id, 0,
+	    mdio_ग_लिखो(mii_addr, info->phy_id, 0,
 		       (info->phy_id == info->eth_phy) ? 0x1000 : 0);
 	    info->link_status = 0;
-	    info->mii_reset = jiffies;
-	}
-    }
+	    info->mii_reset = jअगरfies;
+	पूर्ण
+    पूर्ण
 
 reschedule:
-    info->watchdog.expires = jiffies + HZ;
-    add_timer(&info->watchdog);
-}
+    info->watchकरोg.expires = jअगरfies + HZ;
+    add_समयr(&info->watchकरोg);
+पूर्ण
 
 /*====================================================================*/
 
 
-static int ei_ioctl(struct net_device *dev, struct ifreq *rq, int cmd)
-{
-    struct pcnet_dev *info = PRIV(dev);
-    struct mii_ioctl_data *data = if_mii(rq);
-    unsigned int mii_addr = dev->base_addr + DLINK_GPIO;
+अटल पूर्णांक ei_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *rq, पूर्णांक cmd)
+अणु
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    काष्ठा mii_ioctl_data *data = अगर_mii(rq);
+    अचिन्हित पूर्णांक mii_addr = dev->base_addr + DLINK_GPIO;
 
-    if (!(info->flags & (IS_DL10019|IS_DL10022)))
-	return -EINVAL;
+    अगर (!(info->flags & (IS_DL10019|IS_DL10022)))
+	वापस -EINVAL;
 
-    switch (cmd) {
-    case SIOCGMIIPHY:
+    चयन (cmd) अणु
+    हाल SIOCGMIIPHY:
 	data->phy_id = info->phy_id;
 	fallthrough;
-    case SIOCGMIIREG:		/* Read MII PHY register. */
-	data->val_out = mdio_read(mii_addr, data->phy_id, data->reg_num & 0x1f);
-	return 0;
-    case SIOCSMIIREG:		/* Write MII PHY register. */
-	mdio_write(mii_addr, data->phy_id, data->reg_num & 0x1f, data->val_in);
-	return 0;
-    }
-    return -EOPNOTSUPP;
-}
+    हाल SIOCGMIIREG:		/* Read MII PHY रेजिस्टर. */
+	data->val_out = mdio_पढ़ो(mii_addr, data->phy_id, data->reg_num & 0x1f);
+	वापस 0;
+    हाल SIOCSMIIREG:		/* Write MII PHY रेजिस्टर. */
+	mdio_ग_लिखो(mii_addr, data->phy_id, data->reg_num & 0x1f, data->val_in);
+	वापस 0;
+    पूर्ण
+    वापस -EOPNOTSUPP;
+पूर्ण
 
 /*====================================================================*/
 
-static void dma_get_8390_hdr(struct net_device *dev,
-			     struct e8390_pkt_hdr *hdr,
-			     int ring_page)
-{
-    unsigned int nic_base = dev->base_addr;
+अटल व्योम dma_get_8390_hdr(काष्ठा net_device *dev,
+			     काष्ठा e8390_pkt_hdr *hdr,
+			     पूर्णांक ring_page)
+अणु
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
 
-    if (ei_status.dmaing) {
+    अगर (ei_status.dमुख्यg) अणु
 	netdev_err(dev, "DMAing conflict in dma_block_input."
 		   "[DMAstat:%1x][irqlock:%1x]\n",
-		   ei_status.dmaing, ei_status.irqlock);
-	return;
-    }
+		   ei_status.dमुख्यg, ei_status.irqlock);
+	वापस;
+    पूर्ण
 
-    ei_status.dmaing |= 0x01;
+    ei_status.dमुख्यg |= 0x01;
     outb_p(E8390_NODMA+E8390_PAGE0+E8390_START, nic_base + PCNET_CMD);
-    outb_p(sizeof(struct e8390_pkt_hdr), nic_base + EN0_RCNTLO);
+    outb_p(माप(काष्ठा e8390_pkt_hdr), nic_base + EN0_RCNTLO);
     outb_p(0, nic_base + EN0_RCNTHI);
     outb_p(0, nic_base + EN0_RSARLO);		/* On page boundary */
     outb_p(ring_page, nic_base + EN0_RSARHI);
     outb_p(E8390_RREAD+E8390_START, nic_base + PCNET_CMD);
 
     insw(nic_base + PCNET_DATAPORT, hdr,
-	    sizeof(struct e8390_pkt_hdr)>>1);
-    /* Fix for big endian systems */
+	    माप(काष्ठा e8390_pkt_hdr)>>1);
+    /* Fix क्रम big endian प्रणालीs */
     hdr->count = le16_to_cpu(hdr->count);
 
-    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack intr. */
-    ei_status.dmaing &= ~0x01;
-}
+    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack पूर्णांकr. */
+    ei_status.dमुख्यg &= ~0x01;
+पूर्ण
 
 /*====================================================================*/
 
-static void dma_block_input(struct net_device *dev, int count,
-			    struct sk_buff *skb, int ring_offset)
-{
-    unsigned int nic_base = dev->base_addr;
-    int xfer_count = count;
-    char *buf = skb->data;
-    struct ei_device *ei_local = netdev_priv(dev);
+अटल व्योम dma_block_input(काष्ठा net_device *dev, पूर्णांक count,
+			    काष्ठा sk_buff *skb, पूर्णांक ring_offset)
+अणु
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
+    पूर्णांक xfer_count = count;
+    अक्षर *buf = skb->data;
+    काष्ठा ei_device *ei_local = netdev_priv(dev);
 
-    if ((netif_msg_rx_status(ei_local)) && (count != 4))
+    अगर ((netअगर_msg_rx_status(ei_local)) && (count != 4))
 	netdev_dbg(dev, "[bi=%d]\n", count+4);
-    if (ei_status.dmaing) {
+    अगर (ei_status.dमुख्यg) अणु
 	netdev_err(dev, "DMAing conflict in dma_block_input."
 		   "[DMAstat:%1x][irqlock:%1x]\n",
-		   ei_status.dmaing, ei_status.irqlock);
-	return;
-    }
-    ei_status.dmaing |= 0x01;
+		   ei_status.dमुख्यg, ei_status.irqlock);
+	वापस;
+    पूर्ण
+    ei_status.dमुख्यg |= 0x01;
     outb_p(E8390_NODMA+E8390_PAGE0+E8390_START, nic_base + PCNET_CMD);
     outb_p(count & 0xff, nic_base + EN0_RCNTLO);
     outb_p(count >> 8, nic_base + EN0_RCNTHI);
@@ -1178,71 +1179,71 @@ static void dma_block_input(struct net_device *dev, int count,
     outb_p(E8390_RREAD+E8390_START, nic_base + PCNET_CMD);
 
     insw(nic_base + PCNET_DATAPORT,buf,count>>1);
-    if (count & 0x01) {
+    अगर (count & 0x01) अणु
 	buf[count-1] = inb(nic_base + PCNET_DATAPORT);
 	xfer_count++;
-    }
+    पूर्ण
 
-    /* This was for the ALPHA version only, but enough people have been
+    /* This was क्रम the ALPHA version only, but enough people have been
        encountering problems that it is still here. */
-#ifdef PCMCIA_DEBUG
+#अगर_घोषित PCMCIA_DEBUG
       /* DMA termination address check... */
-    if (netif_msg_rx_status(ei_local)) {
-	int addr, tries = 20;
-	do {
+    अगर (netअगर_msg_rx_status(ei_local)) अणु
+	पूर्णांक addr, tries = 20;
+	करो अणु
 	    /* DON'T check for 'inb_p(EN0_ISR) & ENISR_RDC' here
-	       -- it's broken for Rx on some cards! */
-	    int high = inb_p(nic_base + EN0_RSARHI);
-	    int low = inb_p(nic_base + EN0_RSARLO);
+	       -- it's broken क्रम Rx on some cards! */
+	    पूर्णांक high = inb_p(nic_base + EN0_RSARHI);
+	    पूर्णांक low = inb_p(nic_base + EN0_RSARLO);
 	    addr = (high << 8) + low;
-	    if (((ring_offset + xfer_count) & 0xff) == (addr & 0xff))
-		break;
-	} while (--tries > 0);
-	if (tries <= 0)
+	    अगर (((ring_offset + xfer_count) & 0xff) == (addr & 0xff))
+		अवरोध;
+	पूर्ण जबतक (--tries > 0);
+	अगर (tries <= 0)
 	    netdev_notice(dev, "RX transfer address mismatch,"
 			  "%#4.4x (expected) vs. %#4.4x (actual).\n",
 			  ring_offset + xfer_count, addr);
-    }
-#endif
-    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack intr. */
-    ei_status.dmaing &= ~0x01;
-} /* dma_block_input */
+    पूर्ण
+#पूर्ण_अगर
+    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack पूर्णांकr. */
+    ei_status.dमुख्यg &= ~0x01;
+पूर्ण /* dma_block_input */
 
 /*====================================================================*/
 
-static void dma_block_output(struct net_device *dev, int count,
-			     const u_char *buf, const int start_page)
-{
-    unsigned int nic_base = dev->base_addr;
-    struct pcnet_dev *info = PRIV(dev);
-#ifdef PCMCIA_DEBUG
-    int retries = 0;
-    struct ei_device *ei_local = netdev_priv(dev);
-#endif
-    u_long dma_start;
+अटल व्योम dma_block_output(काष्ठा net_device *dev, पूर्णांक count,
+			     स्थिर u_अक्षर *buf, स्थिर पूर्णांक start_page)
+अणु
+    अचिन्हित पूर्णांक nic_base = dev->base_addr;
+    काष्ठा pcnet_dev *info = PRIV(dev);
+#अगर_घोषित PCMCIA_DEBUG
+    पूर्णांक retries = 0;
+    काष्ठा ei_device *ei_local = netdev_priv(dev);
+#पूर्ण_अगर
+    u_दीर्घ dma_start;
 
-#ifdef PCMCIA_DEBUG
-    netif_dbg(ei_local, tx_queued, dev, "[bo=%d]\n", count);
-#endif
+#अगर_घोषित PCMCIA_DEBUG
+    netअगर_dbg(ei_local, tx_queued, dev, "[bo=%d]\n", count);
+#पूर्ण_अगर
 
-    /* Round the count up for word writes.  Do we need to do this?
+    /* Round the count up क्रम word ग_लिखोs.  Do we need to करो this?
        What effect will an odd byte count have on the 8390?
        I should check someday. */
-    if (count & 0x01)
+    अगर (count & 0x01)
 	count++;
-    if (ei_status.dmaing) {
+    अगर (ei_status.dमुख्यg) अणु
 	netdev_err(dev, "DMAing conflict in dma_block_output."
 		   "[DMAstat:%1x][irqlock:%1x]\n",
-		   ei_status.dmaing, ei_status.irqlock);
-	return;
-    }
-    ei_status.dmaing |= 0x01;
-    /* We should already be in page 0, but to be safe... */
+		   ei_status.dमुख्यg, ei_status.irqlock);
+	वापस;
+    पूर्ण
+    ei_status.dमुख्यg |= 0x01;
+    /* We should alपढ़ोy be in page 0, but to be safe... */
     outb_p(E8390_PAGE0+E8390_START+E8390_NODMA, nic_base+PCNET_CMD);
 
-#ifdef PCMCIA_DEBUG
+#अगर_घोषित PCMCIA_DEBUG
   retry:
-#endif
+#पूर्ण_अगर
 
     outb_p(ENISR_RDC, nic_base + EN0_ISR);
 
@@ -1255,51 +1256,51 @@ static void dma_block_output(struct net_device *dev, int count,
     outb_p(E8390_RWRITE+E8390_START, nic_base + PCNET_CMD);
     outsw(nic_base + PCNET_DATAPORT, buf, count>>1);
 
-    dma_start = jiffies;
+    dma_start = jअगरfies;
 
-#ifdef PCMCIA_DEBUG
-    /* This was for the ALPHA version only, but enough people have been
+#अगर_घोषित PCMCIA_DEBUG
+    /* This was क्रम the ALPHA version only, but enough people have been
        encountering problems that it is still here. */
     /* DMA termination address check... */
-    if (netif_msg_tx_queued(ei_local)) {
-	int addr, tries = 20;
-	do {
-	    int high = inb_p(nic_base + EN0_RSARHI);
-	    int low = inb_p(nic_base + EN0_RSARLO);
+    अगर (netअगर_msg_tx_queued(ei_local)) अणु
+	पूर्णांक addr, tries = 20;
+	करो अणु
+	    पूर्णांक high = inb_p(nic_base + EN0_RSARHI);
+	    पूर्णांक low = inb_p(nic_base + EN0_RSARLO);
 	    addr = (high << 8) + low;
-	    if ((start_page << 8) + count == addr)
-		break;
-	} while (--tries > 0);
-	if (tries <= 0) {
+	    अगर ((start_page << 8) + count == addr)
+		अवरोध;
+	पूर्ण जबतक (--tries > 0);
+	अगर (tries <= 0) अणु
 	    netdev_notice(dev, "Tx packet transfer address mismatch,"
 			  "%#4.4x (expected) vs. %#4.4x (actual).\n",
 			  (start_page << 8) + count, addr);
-	    if (retries++ == 0)
-		goto retry;
-	}
-    }
-#endif
+	    अगर (retries++ == 0)
+		जाओ retry;
+	पूर्ण
+    पूर्ण
+#पूर्ण_अगर
 
-    while ((inb_p(nic_base + EN0_ISR) & ENISR_RDC) == 0)
-	if (time_after(jiffies, dma_start + PCNET_RDC_TIMEOUT)) {
+    जबतक ((inb_p(nic_base + EN0_ISR) & ENISR_RDC) == 0)
+	अगर (समय_after(jअगरfies, dma_start + PCNET_RDC_TIMEOUT)) अणु
 		netdev_warn(dev, "timeout waiting for Tx RDC.\n");
 		pcnet_reset_8390(dev);
 		NS8390_init(dev, 1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack intr. */
-    if (info->flags & DELAY_OUTPUT)
-	udelay((long)delay_time);
-    ei_status.dmaing &= ~0x01;
-}
+    outb_p(ENISR_RDC, nic_base + EN0_ISR);	/* Ack पूर्णांकr. */
+    अगर (info->flags & DELAY_OUTPUT)
+	udelay((दीर्घ)delay_समय);
+    ei_status.dमुख्यg &= ~0x01;
+पूर्ण
 
 /*====================================================================*/
 
-static int setup_dma_config(struct pcmcia_device *link, int start_pg,
-			    int stop_pg)
-{
-    struct net_device *dev = link->priv;
+अटल पूर्णांक setup_dma_config(काष्ठा pcmcia_device *link, पूर्णांक start_pg,
+			    पूर्णांक stop_pg)
+अणु
+    काष्ठा net_device *dev = link->priv;
 
     ei_status.tx_start_page = start_pg;
     ei_status.rx_start_page = start_pg + TX_PAGES;
@@ -1310,147 +1311,147 @@ static int setup_dma_config(struct pcmcia_device *link, int start_pg,
     ei_status.block_input = dma_block_input;
     ei_status.block_output = dma_block_output;
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
 /*====================================================================*/
 
-static void copyin(void *dest, void __iomem *src, int c)
-{
-    u_short *d = dest;
-    u_short __iomem *s = src;
-    int odd;
+अटल व्योम copyin(व्योम *dest, व्योम __iomem *src, पूर्णांक c)
+अणु
+    u_लघु *d = dest;
+    u_लघु __iomem *s = src;
+    पूर्णांक odd;
 
-    if (c <= 0)
-	return;
+    अगर (c <= 0)
+	वापस;
     odd = (c & 1); c >>= 1;
 
-    if (c) {
-	do { *d++ = __raw_readw(s++); } while (--c);
-    }
+    अगर (c) अणु
+	करो अणु *d++ = __raw_पढ़ोw(s++); पूर्ण जबतक (--c);
+    पूर्ण
     /* get last byte by fetching a word and masking */
-    if (odd)
-	*((u_char *)d) = readw(s) & 0xff;
-}
+    अगर (odd)
+	*((u_अक्षर *)d) = पढ़ोw(s) & 0xff;
+पूर्ण
 
-static void copyout(void __iomem *dest, const void *src, int c)
-{
-    u_short __iomem *d = dest;
-    const u_short *s = src;
-    int odd;
+अटल व्योम copyout(व्योम __iomem *dest, स्थिर व्योम *src, पूर्णांक c)
+अणु
+    u_लघु __iomem *d = dest;
+    स्थिर u_लघु *s = src;
+    पूर्णांक odd;
 
-    if (c <= 0)
-	return;
+    अगर (c <= 0)
+	वापस;
     odd = (c & 1); c >>= 1;
 
-    if (c) {
-	do { __raw_writew(*s++, d++); } while (--c);
-    }
-    /* copy last byte doing a read-modify-write */
-    if (odd)
-	writew((readw(d) & 0xff00) | *(u_char *)s, d);
-}
+    अगर (c) अणु
+	करो अणु __raw_ग_लिखोw(*s++, d++); पूर्ण जबतक (--c);
+    पूर्ण
+    /* copy last byte करोing a पढ़ो-modअगरy-ग_लिखो */
+    अगर (odd)
+	ग_लिखोw((पढ़ोw(d) & 0xff00) | *(u_अक्षर *)s, d);
+पूर्ण
 
 /*====================================================================*/
 
-static void shmem_get_8390_hdr(struct net_device *dev,
-			       struct e8390_pkt_hdr *hdr,
-			       int ring_page)
-{
-    void __iomem *xfer_start = ei_status.mem + (TX_PAGES<<8)
+अटल व्योम shmem_get_8390_hdr(काष्ठा net_device *dev,
+			       काष्ठा e8390_pkt_hdr *hdr,
+			       पूर्णांक ring_page)
+अणु
+    व्योम __iomem *xfer_start = ei_status.mem + (TX_PAGES<<8)
 				+ (ring_page << 8)
 				- (ei_status.rx_start_page << 8);
 
-    copyin(hdr, xfer_start, sizeof(struct e8390_pkt_hdr));
-    /* Fix for big endian systems */
+    copyin(hdr, xfer_start, माप(काष्ठा e8390_pkt_hdr));
+    /* Fix क्रम big endian प्रणालीs */
     hdr->count = le16_to_cpu(hdr->count);
-}
+पूर्ण
 
 /*====================================================================*/
 
-static void shmem_block_input(struct net_device *dev, int count,
-			      struct sk_buff *skb, int ring_offset)
-{
-    void __iomem *base = ei_status.mem;
-    unsigned long offset = (TX_PAGES<<8) + ring_offset
+अटल व्योम shmem_block_input(काष्ठा net_device *dev, पूर्णांक count,
+			      काष्ठा sk_buff *skb, पूर्णांक ring_offset)
+अणु
+    व्योम __iomem *base = ei_status.mem;
+    अचिन्हित दीर्घ offset = (TX_PAGES<<8) + ring_offset
 				- (ei_status.rx_start_page << 8);
-    char *buf = skb->data;
+    अक्षर *buf = skb->data;
 
-    if (offset + count > ei_status.priv) {
+    अगर (offset + count > ei_status.priv) अणु
 	/* We must wrap the input move. */
-	int semi_count = ei_status.priv - offset;
+	पूर्णांक semi_count = ei_status.priv - offset;
 	copyin(buf, base + offset, semi_count);
 	buf += semi_count;
 	offset = TX_PAGES<<8;
 	count -= semi_count;
-    }
+    पूर्ण
     copyin(buf, base + offset, count);
-}
+पूर्ण
 
 /*====================================================================*/
 
-static void shmem_block_output(struct net_device *dev, int count,
-			       const u_char *buf, const int start_page)
-{
-    void __iomem *shmem = ei_status.mem + (start_page << 8);
+अटल व्योम shmem_block_output(काष्ठा net_device *dev, पूर्णांक count,
+			       स्थिर u_अक्षर *buf, स्थिर पूर्णांक start_page)
+अणु
+    व्योम __iomem *shmem = ei_status.mem + (start_page << 8);
     shmem -= ei_status.tx_start_page << 8;
     copyout(shmem, buf, count);
-}
+पूर्ण
 
 /*====================================================================*/
 
-static int setup_shmem_window(struct pcmcia_device *link, int start_pg,
-			      int stop_pg, int cm_offset)
-{
-    struct net_device *dev = link->priv;
-    struct pcnet_dev *info = PRIV(dev);
-    int i, window_size, offset, ret;
+अटल पूर्णांक setup_shmem_winकरोw(काष्ठा pcmcia_device *link, पूर्णांक start_pg,
+			      पूर्णांक stop_pg, पूर्णांक cm_offset)
+अणु
+    काष्ठा net_device *dev = link->priv;
+    काष्ठा pcnet_dev *info = PRIV(dev);
+    पूर्णांक i, winकरोw_size, offset, ret;
 
-    window_size = (stop_pg - start_pg) << 8;
-    if (window_size > 32 * 1024)
-	window_size = 32 * 1024;
+    winकरोw_size = (stop_pg - start_pg) << 8;
+    अगर (winकरोw_size > 32 * 1024)
+	winकरोw_size = 32 * 1024;
 
-    /* Make sure it's a power of two.  */
-    window_size = roundup_pow_of_two(window_size);
+    /* Make sure it's a घातer of two.  */
+    winकरोw_size = roundup_घात_of_two(winकरोw_size);
 
-    /* Allocate a memory window */
+    /* Allocate a memory winकरोw */
     link->resource[3]->flags |= WIN_DATA_WIDTH_16|WIN_MEMORY_TYPE_CM|WIN_ENABLE;
     link->resource[3]->flags |= WIN_USE_WAIT;
-    link->resource[3]->start = 0; link->resource[3]->end = window_size;
-    ret = pcmcia_request_window(link, link->resource[3], mem_speed);
-    if (ret)
-	    goto failed;
+    link->resource[3]->start = 0; link->resource[3]->end = winकरोw_size;
+    ret = pcmcia_request_winकरोw(link, link->resource[3], mem_speed);
+    अगर (ret)
+	    जाओ failed;
 
     offset = (start_pg << 8) + cm_offset;
-    offset -= offset % window_size;
+    offset -= offset % winकरोw_size;
     ret = pcmcia_map_mem_page(link, link->resource[3], offset);
-    if (ret)
-	    goto failed;
+    अगर (ret)
+	    जाओ failed;
 
     /* Try scribbling on the buffer */
     info->base = ioremap(link->resource[3]->start,
 			resource_size(link->resource[3]));
-    if (unlikely(!info->base)) {
+    अगर (unlikely(!info->base)) अणु
 	    ret = -ENOMEM;
-	    goto failed;
-    }
+	    जाओ failed;
+    पूर्ण
 
-    for (i = 0; i < (TX_PAGES<<8); i += 2)
-	__raw_writew((i>>1), info->base+offset+i);
+    क्रम (i = 0; i < (TX_PAGES<<8); i += 2)
+	__raw_ग_लिखोw((i>>1), info->base+offset+i);
     udelay(100);
-    for (i = 0; i < (TX_PAGES<<8); i += 2)
-	if (__raw_readw(info->base+offset+i) != (i>>1)) break;
+    क्रम (i = 0; i < (TX_PAGES<<8); i += 2)
+	अगर (__raw_पढ़ोw(info->base+offset+i) != (i>>1)) अवरोध;
     pcnet_reset_8390(dev);
-    if (i != (TX_PAGES<<8)) {
+    अगर (i != (TX_PAGES<<8)) अणु
 	iounmap(info->base);
-	pcmcia_release_window(link, link->resource[3]);
-	info->base = NULL;
-	goto failed;
-    }
+	pcmcia_release_winकरोw(link, link->resource[3]);
+	info->base = शून्य;
+	जाओ failed;
+    पूर्ण
 
     ei_status.mem = info->base + offset;
     ei_status.priv = resource_size(link->resource[3]);
-    dev->mem_start = (u_long)ei_status.mem;
+    dev->mem_start = (u_दीर्घ)ei_status.mem;
     dev->mem_end = dev->mem_start + resource_size(link->resource[3]);
 
     ei_status.tx_start_page = start_pg;
@@ -1464,15 +1465,15 @@ static int setup_shmem_window(struct pcmcia_device *link, int start_pg,
     ei_status.block_output = shmem_block_output;
 
     info->flags |= USE_SHMEM;
-    return 0;
+    वापस 0;
 
 failed:
-    return 1;
-}
+    वापस 1;
+पूर्ण
 
 /*====================================================================*/
 
-static const struct pcmcia_device_id pcnet_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id pcnet_ids[] = अणु
 	PCMCIA_PFC_DEVICE_MANF_CARD(0, 0x0057, 0x0021),
 	PCMCIA_PFC_DEVICE_MANF_CARD(0, 0x0104, 0x000a),
 	PCMCIA_PFC_DEVICE_MANF_CARD(0, 0x0105, 0xea15),
@@ -1685,8 +1686,8 @@ static const struct pcmcia_device_id pcnet_ids[] = {
 	PCMCIA_DEVICE_PROD_ID12("Ethernet", "CF Size PC Card", 0x00b2e941, 0x43ac239b),
 	PCMCIA_DEVICE_PROD_ID123("Fast Ethernet", "CF Size PC Card", "1.0",
 		0xb4be14e3, 0x43ac239b, 0x0877b627),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, pcnet_ids);
 MODULE_FIRMWARE("cis/PCMLM28.cis");
 MODULE_FIRMWARE("cis/DP83903.cis");
@@ -1696,13 +1697,13 @@ MODULE_FIRMWARE("cis/NE2K.cis");
 MODULE_FIRMWARE("cis/PE-200.cis");
 MODULE_FIRMWARE("cis/tamarack.cis");
 
-static struct pcmcia_driver pcnet_driver = {
+अटल काष्ठा pcmcia_driver pcnet_driver = अणु
 	.name		= "pcnet_cs",
 	.probe		= pcnet_probe,
-	.remove		= pcnet_detach,
+	.हटाओ		= pcnet_detach,
 	.owner		= THIS_MODULE,
 	.id_table	= pcnet_ids,
 	.suspend	= pcnet_suspend,
 	.resume		= pcnet_resume,
-};
+पूर्ण;
 module_pcmcia_driver(pcnet_driver);

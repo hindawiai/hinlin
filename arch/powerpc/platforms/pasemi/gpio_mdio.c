@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2007 PA Semi, Inc
  *
  * Author: Olof Johansson, PA Semi
  *
- * Maintained by: Olof Johansson <olof@lixom.net>
+ * Maपूर्णांकained by: Olof Johansson <olof@lixom.net>
  *
  * Based on drivers/net/fs_enet/mii-bitbang.c.
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/phy.h>
-#include <linux/of_address.h>
-#include <linux/of_mdio.h>
-#include <linux/of_platform.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_platक्रमm.h>
 
-#define DELAY 1
+#घोषणा DELAY 1
 
-static void __iomem *gpio_regs;
+अटल व्योम __iomem *gpio_regs;
 
-struct gpio_priv {
-	int mdc_pin;
-	int mdio_pin;
-};
+काष्ठा gpio_priv अणु
+	पूर्णांक mdc_pin;
+	पूर्णांक mdio_pin;
+पूर्ण;
 
-#define MDC_PIN(bus)	(((struct gpio_priv *)bus->priv)->mdc_pin)
-#define MDIO_PIN(bus)	(((struct gpio_priv *)bus->priv)->mdio_pin)
+#घोषणा MDC_PIN(bus)	(((काष्ठा gpio_priv *)bus->priv)->mdc_pin)
+#घोषणा MDIO_PIN(bus)	(((काष्ठा gpio_priv *)bus->priv)->mdio_pin)
 
-static inline void mdio_lo(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdio_lo(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs+0x10, 1 << MDIO_PIN(bus));
-}
+पूर्ण
 
-static inline void mdio_hi(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdio_hi(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs, 1 << MDIO_PIN(bus));
-}
+पूर्ण
 
-static inline void mdc_lo(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdc_lo(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs+0x10, 1 << MDC_PIN(bus));
-}
+पूर्ण
 
-static inline void mdc_hi(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdc_hi(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs, 1 << MDC_PIN(bus));
-}
+पूर्ण
 
-static inline void mdio_active(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdio_active(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs+0x20, (1 << MDC_PIN(bus)) | (1 << MDIO_PIN(bus)));
-}
+पूर्ण
 
-static inline void mdio_tristate(struct mii_bus *bus)
-{
+अटल अंतरभूत व्योम mdio_tristate(काष्ठा mii_bus *bus)
+अणु
 	out_le32(gpio_regs+0x30, (1 << MDIO_PIN(bus)));
-}
+पूर्ण
 
-static inline int mdio_read(struct mii_bus *bus)
-{
-	return !!(in_le32(gpio_regs+0x40) & (1 << MDIO_PIN(bus)));
-}
+अटल अंतरभूत पूर्णांक mdio_पढ़ो(काष्ठा mii_bus *bus)
+अणु
+	वापस !!(in_le32(gpio_regs+0x40) & (1 << MDIO_PIN(bus)));
+पूर्ण
 
-static void clock_out(struct mii_bus *bus, int bit)
-{
-	if (bit)
+अटल व्योम घड़ी_out(काष्ठा mii_bus *bus, पूर्णांक bit)
+अणु
+	अगर (bit)
 		mdio_hi(bus);
-	else
+	अन्यथा
 		mdio_lo(bus);
 	udelay(DELAY);
 	mdc_hi(bus);
 	udelay(DELAY);
 	mdc_lo(bus);
-}
+पूर्ण
 
-/* Utility to send the preamble, address, and register (common to read and write). */
-static void bitbang_pre(struct mii_bus *bus, int read, u8 addr, u8 reg)
-{
-	int i;
+/* Utility to send the preamble, address, and रेजिस्टर (common to पढ़ो and ग_लिखो). */
+अटल व्योम bitbang_pre(काष्ठा mii_bus *bus, पूर्णांक पढ़ो, u8 addr, u8 reg)
+अणु
+	पूर्णांक i;
 
-	/* CFE uses a really long preamble (40 bits). We'll do the same. */
+	/* CFE uses a really दीर्घ preamble (40 bits). We'll करो the same. */
 	mdio_active(bus);
-	for (i = 0; i < 40; i++) {
-		clock_out(bus, 1);
-	}
+	क्रम (i = 0; i < 40; i++) अणु
+		घड़ी_out(bus, 1);
+	पूर्ण
 
-	/* send the start bit (01) and the read opcode (10) or write (10) */
-	clock_out(bus, 0);
-	clock_out(bus, 1);
+	/* send the start bit (01) and the पढ़ो opcode (10) or ग_लिखो (10) */
+	घड़ी_out(bus, 0);
+	घड़ी_out(bus, 1);
 
-	clock_out(bus, read);
-	clock_out(bus, !read);
+	घड़ी_out(bus, पढ़ो);
+	घड़ी_out(bus, !पढ़ो);
 
 	/* send the PHY address */
-	for (i = 0; i < 5; i++) {
-		clock_out(bus, (addr & 0x10) != 0);
+	क्रम (i = 0; i < 5; i++) अणु
+		घड़ी_out(bus, (addr & 0x10) != 0);
 		addr <<= 1;
-	}
+	पूर्ण
 
-	/* send the register address */
-	for (i = 0; i < 5; i++) {
-		clock_out(bus, (reg & 0x10) != 0);
+	/* send the रेजिस्टर address */
+	क्रम (i = 0; i < 5; i++) अणु
+		घड़ी_out(bus, (reg & 0x10) != 0);
 		reg <<= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gpio_mdio_read(struct mii_bus *bus, int phy_id, int location)
-{
+अटल पूर्णांक gpio_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक location)
+अणु
 	u16 rdreg;
-	int ret, i;
+	पूर्णांक ret, i;
 	u8 addr = phy_id & 0xff;
 	u8 reg = location & 0xff;
 
 	bitbang_pre(bus, 1, addr, reg);
 
-	/* tri-state our MDIO I/O pin so we can read */
+	/* tri-state our MDIO I/O pin so we can पढ़ो */
 	mdio_tristate(bus);
 	udelay(DELAY);
 	mdc_hi(bus);
 	udelay(DELAY);
 	mdc_lo(bus);
 
-	/* read 16 bits of register data, MSB first */
+	/* पढ़ो 16 bits of रेजिस्टर data, MSB first */
 	rdreg = 0;
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		mdc_lo(bus);
 		udelay(DELAY);
 		mdc_hi(bus);
@@ -138,8 +139,8 @@ static int gpio_mdio_read(struct mii_bus *bus, int phy_id, int location)
 		mdc_lo(bus);
 		udelay(DELAY);
 		rdreg <<= 1;
-		rdreg |= mdio_read(bus);
-	}
+		rdreg |= mdio_पढ़ो(bus);
+	पूर्ण
 
 	mdc_hi(bus);
 	udelay(DELAY);
@@ -148,12 +149,12 @@ static int gpio_mdio_read(struct mii_bus *bus, int phy_id, int location)
 
 	ret = rdreg;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gpio_mdio_write(struct mii_bus *bus, int phy_id, int location, u16 val)
-{
-	int i;
+अटल पूर्णांक gpio_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक location, u16 val)
+अणु
+	पूर्णांक i;
 
 	u8 addr = phy_id & 0xff;
 	u8 reg = location & 0xff;
@@ -173,18 +174,18 @@ static int gpio_mdio_write(struct mii_bus *bus, int phy_id, int location, u16 va
 	mdc_hi(bus);
 	udelay(DELAY);
 
-	/* write 16 bits of register data, MSB first */
-	for (i = 0; i < 16; i++) {
+	/* ग_लिखो 16 bits of रेजिस्टर data, MSB first */
+	क्रम (i = 0; i < 16; i++) अणु
 		mdc_lo(bus);
-		if (value & 0x8000)
+		अगर (value & 0x8000)
 			mdio_hi(bus);
-		else
+		अन्यथा
 			mdio_lo(bus);
 		udelay(DELAY);
 		mdc_hi(bus);
 		udelay(DELAY);
 		value <<= 1;
-	}
+	पूर्ण
 
 	/*
 	 * Tri-state the MDIO line.
@@ -194,133 +195,133 @@ static int gpio_mdio_write(struct mii_bus *bus, int phy_id, int location, u16 va
 	udelay(DELAY);
 	mdc_hi(bus);
 	udelay(DELAY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gpio_mdio_reset(struct mii_bus *bus)
-{
+अटल पूर्णांक gpio_mdio_reset(काष्ठा mii_bus *bus)
+अणु
 	/*nothing here - dunno how to reset it*/
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int gpio_mdio_probe(struct platform_device *ofdev)
-{
-	struct device *dev = &ofdev->dev;
-	struct device_node *np = ofdev->dev.of_node;
-	struct mii_bus *new_bus;
-	struct gpio_priv *priv;
-	const unsigned int *prop;
-	int err;
+अटल पूर्णांक gpio_mdio_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device *dev = &ofdev->dev;
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा mii_bus *new_bus;
+	काष्ठा gpio_priv *priv;
+	स्थिर अचिन्हित पूर्णांक *prop;
+	पूर्णांक err;
 
 	err = -ENOMEM;
-	priv = kzalloc(sizeof(struct gpio_priv), GFP_KERNEL);
-	if (!priv)
-		goto out;
+	priv = kzalloc(माप(काष्ठा gpio_priv), GFP_KERNEL);
+	अगर (!priv)
+		जाओ out;
 
 	new_bus = mdiobus_alloc();
 
-	if (!new_bus)
-		goto out_free_priv;
+	अगर (!new_bus)
+		जाओ out_मुक्त_priv;
 
 	new_bus->name = "pasemi gpio mdio bus";
-	new_bus->read = &gpio_mdio_read;
-	new_bus->write = &gpio_mdio_write;
+	new_bus->पढ़ो = &gpio_mdio_पढ़ो;
+	new_bus->ग_लिखो = &gpio_mdio_ग_लिखो;
 	new_bus->reset = &gpio_mdio_reset;
 
-	prop = of_get_property(np, "reg", NULL);
-	snprintf(new_bus->id, MII_BUS_ID_SIZE, "%x", *prop);
+	prop = of_get_property(np, "reg", शून्य);
+	snम_लिखो(new_bus->id, MII_BUS_ID_SIZE, "%x", *prop);
 	new_bus->priv = priv;
 
-	prop = of_get_property(np, "mdc-pin", NULL);
+	prop = of_get_property(np, "mdc-pin", शून्य);
 	priv->mdc_pin = *prop;
 
-	prop = of_get_property(np, "mdio-pin", NULL);
+	prop = of_get_property(np, "mdio-pin", शून्य);
 	priv->mdio_pin = *prop;
 
 	new_bus->parent = dev;
 	dev_set_drvdata(dev, new_bus);
 
-	err = of_mdiobus_register(new_bus, np);
+	err = of_mdiobus_रेजिस्टर(new_bus, np);
 
-	if (err != 0) {
+	अगर (err != 0) अणु
 		pr_err("%s: Cannot register as MDIO bus, err %d\n",
 				new_bus->name, err);
-		goto out_free_irq;
-	}
+		जाओ out_मुक्त_irq;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_irq:
-	kfree(new_bus);
-out_free_priv:
-	kfree(priv);
+out_मुक्त_irq:
+	kमुक्त(new_bus);
+out_मुक्त_priv:
+	kमुक्त(priv);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int gpio_mdio_remove(struct platform_device *dev)
-{
-	struct mii_bus *bus = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक gpio_mdio_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा mii_bus *bus = dev_get_drvdata(&dev->dev);
 
-	mdiobus_unregister(bus);
+	mdiobus_unरेजिस्टर(bus);
 
-	dev_set_drvdata(&dev->dev, NULL);
+	dev_set_drvdata(&dev->dev, शून्य);
 
-	kfree(bus->priv);
-	bus->priv = NULL;
-	mdiobus_free(bus);
+	kमुक्त(bus->priv);
+	bus->priv = शून्य;
+	mdiobus_मुक्त(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gpio_mdio_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id gpio_mdio_match[] =
+अणु
+	अणु
 		.compatible      = "gpio-mdio",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gpio_mdio_match);
 
-static struct platform_driver gpio_mdio_driver =
-{
+अटल काष्ठा platक्रमm_driver gpio_mdio_driver =
+अणु
 	.probe		= gpio_mdio_probe,
-	.remove		= gpio_mdio_remove,
-	.driver = {
+	.हटाओ		= gpio_mdio_हटाओ,
+	.driver = अणु
 		.name = "gpio-mdio-bitbang",
 		.of_match_table = gpio_mdio_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int gpio_mdio_init(void)
-{
-	struct device_node *np;
+अटल पूर्णांक gpio_mdio_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "1682m-gpio");
-	if (!np)
-		np = of_find_compatible_node(NULL, NULL,
+	np = of_find_compatible_node(शून्य, शून्य, "1682m-gpio");
+	अगर (!np)
+		np = of_find_compatible_node(शून्य, शून्य,
 					     "pasemi,pwrficient-gpio");
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 	gpio_regs = of_iomap(np, 0);
 	of_node_put(np);
 
-	if (!gpio_regs)
-		return -ENODEV;
+	अगर (!gpio_regs)
+		वापस -ENODEV;
 
-	return platform_driver_register(&gpio_mdio_driver);
-}
+	वापस platक्रमm_driver_रेजिस्टर(&gpio_mdio_driver);
+पूर्ण
 module_init(gpio_mdio_init);
 
-static void gpio_mdio_exit(void)
-{
-	platform_driver_unregister(&gpio_mdio_driver);
-	if (gpio_regs)
+अटल व्योम gpio_mdio_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&gpio_mdio_driver);
+	अगर (gpio_regs)
 		iounmap(gpio_regs);
-}
-module_exit(gpio_mdio_exit);
+पूर्ण
+module_निकास(gpio_mdio_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Olof Johansson <olof@lixom.net>");

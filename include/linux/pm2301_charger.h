@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * PM2301 charger driver.
+ * PM2301 अक्षरger driver.
  *
  * Copyright (C) 2012 ST Ericsson Corporation
  *
  * Contact: Olivier LAUNAY (olivier.launay@stericsson.com
  */
 
-#ifndef __LINUX_PM2301_H
-#define __LINUX_PM2301_H
+#अगर_अघोषित __LINUX_PM2301_H
+#घोषणा __LINUX_PM2301_H
 
 /**
- * struct pm2xxx_bm_charger_parameters - Charger specific parameters
- * @ac_volt_max:	maximum allowed AC charger voltage in mV
- * @ac_curr_max:	maximum allowed AC charger current in mA
+ * काष्ठा pm2xxx_bm_अक्षरger_parameters - Charger specअगरic parameters
+ * @ac_volt_max:	maximum allowed AC अक्षरger voltage in mV
+ * @ac_curr_max:	maximum allowed AC अक्षरger current in mA
  */
-struct pm2xxx_bm_charger_parameters {
-	int ac_volt_max;
-	int ac_curr_max;
-};
+काष्ठा pm2xxx_bm_अक्षरger_parameters अणु
+	पूर्णांक ac_volt_max;
+	पूर्णांक ac_curr_max;
+पूर्ण;
 
 /**
- * struct pm2xxx_bm_data - pm2xxx battery management data
+ * काष्ठा pm2xxx_bm_data - pm2xxx battery management data
  * @enable_overshoot    flag to enable VBAT overshoot control
- * @chg_params	  charger parameters
+ * @chg_params	  अक्षरger parameters
  */
-struct pm2xxx_bm_data {
+काष्ठा pm2xxx_bm_data अणु
 	bool enable_overshoot;
-	const struct pm2xxx_bm_charger_parameters *chg_params;
-};
+	स्थिर काष्ठा pm2xxx_bm_अक्षरger_parameters *chg_params;
+पूर्ण;
 
-struct pm2xxx_charger_platform_data {
-	char **supplied_to;
-	size_t num_supplicants;
-	int i2c_bus;
-	const char *label;
-	int gpio_irq_number;
-	unsigned int lpn_gpio;
-	int irq_type;
-};
+काष्ठा pm2xxx_अक्षरger_platक्रमm_data अणु
+	अक्षर **supplied_to;
+	माप_प्रकार num_supplicants;
+	पूर्णांक i2c_bus;
+	स्थिर अक्षर *label;
+	पूर्णांक gpio_irq_number;
+	अचिन्हित पूर्णांक lpn_gpio;
+	पूर्णांक irq_type;
+पूर्ण;
 
-struct pm2xxx_platform_data {
-	struct pm2xxx_charger_platform_data *wall_charger;
-	struct pm2xxx_bm_data *battery;
-};
+काष्ठा pm2xxx_platक्रमm_data अणु
+	काष्ठा pm2xxx_अक्षरger_platक्रमm_data *wall_अक्षरger;
+	काष्ठा pm2xxx_bm_data *battery;
+पूर्ण;
 
-#endif /* __LINUX_PM2301_H */
+#पूर्ण_अगर /* __LINUX_PM2301_H */

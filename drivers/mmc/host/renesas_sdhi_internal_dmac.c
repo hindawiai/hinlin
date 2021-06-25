@@ -1,442 +1,443 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * DMA support for Internal DMAC with SDHI SD/SDIO controller
+ * DMA support क्रम Internal DMAC with SDHI SD/SDIO controller
  *
  * Copyright (C) 2016-19 Renesas Electronics Corporation
  * Copyright (C) 2016-17 Horms Solutions, Simon Horman
  * Copyright (C) 2018-19 Sang Engineering, Wolfram Sang
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/io-64-nonatomic-hi-lo.h>
-#include <linux/mfd/tmio.h>
-#include <linux/mmc/host.h>
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/pagemap.h>
-#include <linux/scatterlist.h>
-#include <linux/sys_soc.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/io-64-nonatomic-hi-lo.h>
+#समावेश <linux/mfd/पंचांगपन.स>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/sys_soc.h>
 
-#include "renesas_sdhi.h"
-#include "tmio_mmc.h"
+#समावेश "renesas_sdhi.h"
+#समावेश "tmio_mmc.h"
 
-#define DM_CM_DTRAN_MODE	0x820
-#define DM_CM_DTRAN_CTRL	0x828
-#define DM_CM_RST		0x830
-#define DM_CM_INFO1		0x840
-#define DM_CM_INFO1_MASK	0x848
-#define DM_CM_INFO2		0x850
-#define DM_CM_INFO2_MASK	0x858
-#define DM_DTRAN_ADDR		0x880
+#घोषणा DM_CM_DTRAN_MODE	0x820
+#घोषणा DM_CM_DTRAN_CTRL	0x828
+#घोषणा DM_CM_RST		0x830
+#घोषणा DM_CM_INFO1		0x840
+#घोषणा DM_CM_INFO1_MASK	0x848
+#घोषणा DM_CM_INFO2		0x850
+#घोषणा DM_CM_INFO2_MASK	0x858
+#घोषणा DM_DTRAN_ADDR		0x880
 
 /* DM_CM_DTRAN_MODE */
-#define DTRAN_MODE_CH_NUM_CH0	0	/* "downstream" = for write commands */
-#define DTRAN_MODE_CH_NUM_CH1	BIT(16)	/* "upstream" = for read commands */
-#define DTRAN_MODE_BUS_WIDTH	(BIT(5) | BIT(4))
-#define DTRAN_MODE_ADDR_MODE	BIT(0)	/* 1 = Increment address, 0 = Fixed */
+#घोषणा DTRAN_MODE_CH_NUM_CH0	0	/* "downstream" = क्रम ग_लिखो commands */
+#घोषणा DTRAN_MODE_CH_NUM_CH1	BIT(16)	/* "upstream" = क्रम पढ़ो commands */
+#घोषणा DTRAN_MODE_BUS_WIDTH	(BIT(5) | BIT(4))
+#घोषणा DTRAN_MODE_ADDR_MODE	BIT(0)	/* 1 = Increment address, 0 = Fixed */
 
 /* DM_CM_DTRAN_CTRL */
-#define DTRAN_CTRL_DM_START	BIT(0)
+#घोषणा DTRAN_CTRL_DM_START	BIT(0)
 
 /* DM_CM_RST */
-#define RST_DTRANRST1		BIT(9)
-#define RST_DTRANRST0		BIT(8)
-#define RST_RESERVED_BITS	GENMASK_ULL(31, 0)
+#घोषणा RST_DTRANRST1		BIT(9)
+#घोषणा RST_DTRANRST0		BIT(8)
+#घोषणा RST_RESERVED_BITS	GENMASK_ULL(31, 0)
 
 /* DM_CM_INFO1 and DM_CM_INFO1_MASK */
-#define INFO1_CLEAR		0
-#define INFO1_MASK_CLEAR	GENMASK_ULL(31, 0)
-#define INFO1_DTRANEND1		BIT(17)
-#define INFO1_DTRANEND0		BIT(16)
+#घोषणा INFO1_CLEAR		0
+#घोषणा INFO1_MASK_CLEAR	GENMASK_ULL(31, 0)
+#घोषणा INFO1_DTRANEND1		BIT(17)
+#घोषणा INFO1_DTRANEND0		BIT(16)
 
 /* DM_CM_INFO2 and DM_CM_INFO2_MASK */
-#define INFO2_MASK_CLEAR	GENMASK_ULL(31, 0)
-#define INFO2_DTRANERR1		BIT(17)
-#define INFO2_DTRANERR0		BIT(16)
+#घोषणा INFO2_MASK_CLEAR	GENMASK_ULL(31, 0)
+#घोषणा INFO2_DTRANERR1		BIT(17)
+#घोषणा INFO2_DTRANERR0		BIT(16)
 
-enum renesas_sdhi_dma_cookie {
+क्रमागत renesas_sdhi_dma_cookie अणु
 	COOKIE_UNMAPPED,
 	COOKIE_PRE_MAPPED,
 	COOKIE_MAPPED,
-};
+पूर्ण;
 
 /*
- * Specification of this driver:
- * - host->chan_{rx,tx} will be used as a flag of enabling/disabling the dma
- * - Since this SDHI DMAC register set has 16 but 32-bit width, we
+ * Specअगरication of this driver:
+ * - host->chan_अणुrx,txपूर्ण will be used as a flag of enabling/disabling the dma
+ * - Since this SDHI DMAC रेजिस्टर set has 16 but 32-bit width, we
  *   need a custom accessor.
  */
 
-static unsigned long global_flags;
+अटल अचिन्हित दीर्घ global_flags;
 /*
- * Workaround for avoiding to use RX DMAC by multiple channels.
+ * Workaround क्रम aव्योमing to use RX DMAC by multiple channels.
  * On R-Car H3 ES1.* and M3-W ES1.0, when multiple SDHI channels use
- * RX DMAC simultaneously, sometimes hundreds of bytes data are not
- * stored into the system memory even if the DMAC interrupt happened.
+ * RX DMAC simultaneously, someबार hundreds of bytes data are not
+ * stored पूर्णांकo the प्रणाली memory even अगर the DMAC पूर्णांकerrupt happened.
  * So, this driver then uses one RX DMAC channel only.
  */
-#define SDHI_INTERNAL_DMAC_ONE_RX_ONLY	0
-#define SDHI_INTERNAL_DMAC_RX_IN_USE	1
+#घोषणा SDHI_INTERNAL_DMAC_ONE_RX_ONLY	0
+#घोषणा SDHI_INTERNAL_DMAC_RX_IN_USE	1
 
-/* RZ/A2 does not have the ADRR_MODE bit */
-#define SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY 2
+/* RZ/A2 करोes not have the ADRR_MODE bit */
+#घोषणा SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY 2
 
-/* Definitions for sampling clocks */
-static struct renesas_sdhi_scc rcar_gen3_scc_taps[] = {
-	{
+/* Definitions क्रम sampling घड़ीs */
+अटल काष्ठा renesas_sdhi_scc rcar_gen3_scc_taps[] = अणु
+	अणु
 		.clk_rate = 0,
 		.tap = 0x00000300,
 		.tap_hs400_4tap = 0x00000100,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct renesas_sdhi_of_data of_rza2_compatible = {
-	.tmio_flags	= TMIO_MMC_HAS_IDLE_WAIT | TMIO_MMC_CLK_ACTUAL |
+अटल स्थिर काष्ठा renesas_sdhi_of_data of_rza2_compatible = अणु
+	.पंचांगio_flags	= TMIO_MMC_HAS_IDLE_WAIT | TMIO_MMC_CLK_ACTUAL |
 			  TMIO_MMC_HAVE_CBSY,
-	.tmio_ocr_mask	= MMC_VDD_32_33,
+	.पंचांगio_ocr_mask	= MMC_VDD_32_33,
 	.capabilities	= MMC_CAP_SD_HIGHSPEED | MMC_CAP_SDIO_IRQ |
 			  MMC_CAP_CMD23 | MMC_CAP_WAIT_WHILE_BUSY,
-	.bus_shift	= 2,
+	.bus_shअगरt	= 2,
 	.scc_offset	= 0 - 0x1000,
 	.taps		= rcar_gen3_scc_taps,
 	.taps_num	= ARRAY_SIZE(rcar_gen3_scc_taps),
 	/* DMAC can handle 32bit blk count but only 1 segment */
-	.max_blk_count	= UINT_MAX / TMIO_MAX_BLK_SIZE,
+	.max_blk_count	= अच_पूर्णांक_उच्च / TMIO_MAX_BLK_SIZE,
 	.max_segs	= 1,
-};
+पूर्ण;
 
-static const struct renesas_sdhi_of_data of_rcar_gen3_compatible = {
-	.tmio_flags	= TMIO_MMC_HAS_IDLE_WAIT | TMIO_MMC_CLK_ACTUAL |
+अटल स्थिर काष्ठा renesas_sdhi_of_data of_rcar_gen3_compatible = अणु
+	.पंचांगio_flags	= TMIO_MMC_HAS_IDLE_WAIT | TMIO_MMC_CLK_ACTUAL |
 			  TMIO_MMC_HAVE_CBSY | TMIO_MMC_MIN_RCAR2,
 	.capabilities	= MMC_CAP_SD_HIGHSPEED | MMC_CAP_SDIO_IRQ |
 			  MMC_CAP_CMD23 | MMC_CAP_WAIT_WHILE_BUSY,
 	.capabilities2	= MMC_CAP2_NO_WRITE_PROTECT | MMC_CAP2_MERGE_CAPABLE,
-	.bus_shift	= 2,
+	.bus_shअगरt	= 2,
 	.scc_offset	= 0x1000,
 	.taps		= rcar_gen3_scc_taps,
 	.taps_num	= ARRAY_SIZE(rcar_gen3_scc_taps),
 	/* DMAC can handle 32bit blk count but only 1 segment */
-	.max_blk_count	= UINT_MAX / TMIO_MAX_BLK_SIZE,
+	.max_blk_count	= अच_पूर्णांक_उच्च / TMIO_MAX_BLK_SIZE,
 	.max_segs	= 1,
-};
+पूर्ण;
 
-static const struct of_device_id renesas_sdhi_internal_dmac_of_match[] = {
-	{ .compatible = "renesas,sdhi-r7s9210", .data = &of_rza2_compatible, },
-	{ .compatible = "renesas,sdhi-mmc-r8a77470", .data = &of_rcar_gen3_compatible, },
-	{ .compatible = "renesas,sdhi-r8a7795", .data = &of_rcar_gen3_compatible, },
-	{ .compatible = "renesas,sdhi-r8a7796", .data = &of_rcar_gen3_compatible, },
-	{ .compatible = "renesas,rcar-gen3-sdhi", .data = &of_rcar_gen3_compatible, },
-	{},
-};
-MODULE_DEVICE_TABLE(of, renesas_sdhi_internal_dmac_of_match);
+अटल स्थिर काष्ठा of_device_id renesas_sdhi_पूर्णांकernal_dmac_of_match[] = अणु
+	अणु .compatible = "renesas,sdhi-r7s9210", .data = &of_rza2_compatible, पूर्ण,
+	अणु .compatible = "renesas,sdhi-mmc-r8a77470", .data = &of_rcar_gen3_compatible, पूर्ण,
+	अणु .compatible = "renesas,sdhi-r8a7795", .data = &of_rcar_gen3_compatible, पूर्ण,
+	अणु .compatible = "renesas,sdhi-r8a7796", .data = &of_rcar_gen3_compatible, पूर्ण,
+	अणु .compatible = "renesas,rcar-gen3-sdhi", .data = &of_rcar_gen3_compatible, पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, renesas_sdhi_पूर्णांकernal_dmac_of_match);
 
-static void
-renesas_sdhi_internal_dmac_dm_write(struct tmio_mmc_host *host,
-				    int addr, u64 val)
-{
-	writeq(val, host->ctl + addr);
-}
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(काष्ठा पंचांगio_mmc_host *host,
+				    पूर्णांक addr, u64 val)
+अणु
+	ग_लिखोq(val, host->ctl + addr);
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_enable_dma(struct tmio_mmc_host *host, bool enable)
-{
-	struct renesas_sdhi *priv = host_to_priv(host);
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_enable_dma(काष्ठा पंचांगio_mmc_host *host, bool enable)
+अणु
+	काष्ठा renesas_sdhi *priv = host_to_priv(host);
 
-	if (!host->chan_tx || !host->chan_rx)
-		return;
+	अगर (!host->chan_tx || !host->chan_rx)
+		वापस;
 
-	if (!enable)
-		renesas_sdhi_internal_dmac_dm_write(host, DM_CM_INFO1,
+	अगर (!enable)
+		renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_INFO1,
 						    INFO1_CLEAR);
 
-	if (priv->dma_priv.enable)
+	अगर (priv->dma_priv.enable)
 		priv->dma_priv.enable(host, enable);
-}
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_abort_dma(struct tmio_mmc_host *host) {
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_पात_dma(काष्ठा पंचांगio_mmc_host *host) अणु
 	u64 val = RST_DTRANRST1 | RST_DTRANRST0;
 
-	renesas_sdhi_internal_dmac_enable_dma(host, false);
+	renesas_sdhi_पूर्णांकernal_dmac_enable_dma(host, false);
 
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_RST,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_RST,
 					    RST_RESERVED_BITS & ~val);
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_RST,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_RST,
 					    RST_RESERVED_BITS | val);
 
 	clear_bit(SDHI_INTERNAL_DMAC_RX_IN_USE, &global_flags);
 
-	renesas_sdhi_internal_dmac_enable_dma(host, true);
-}
+	renesas_sdhi_पूर्णांकernal_dmac_enable_dma(host, true);
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_dataend_dma(struct tmio_mmc_host *host) {
-	struct renesas_sdhi *priv = host_to_priv(host);
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_dataend_dma(काष्ठा पंचांगio_mmc_host *host) अणु
+	काष्ठा renesas_sdhi *priv = host_to_priv(host);
 
 	tasklet_schedule(&priv->dma_priv.dma_complete);
-}
+पूर्ण
 
 /*
- * renesas_sdhi_internal_dmac_map() will be called with two difference
- * sg pointers in two mmc_data by .pre_req(), but tmio host can have a single
- * sg_ptr only. So, renesas_sdhi_internal_dmac_{un}map() should use a sg
- * pointer in a mmc_data instead of host->sg_ptr.
+ * renesas_sdhi_पूर्णांकernal_dmac_map() will be called with two dअगरference
+ * sg poपूर्णांकers in two mmc_data by .pre_req(), but पंचांगio host can have a single
+ * sg_ptr only. So, renesas_sdhi_पूर्णांकernal_dmac_अणुunपूर्णmap() should use a sg
+ * poपूर्णांकer in a mmc_data instead of host->sg_ptr.
  */
-static void
-renesas_sdhi_internal_dmac_unmap(struct tmio_mmc_host *host,
-				 struct mmc_data *data,
-				 enum renesas_sdhi_dma_cookie cookie)
-{
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_unmap(काष्ठा पंचांगio_mmc_host *host,
+				 काष्ठा mmc_data *data,
+				 क्रमागत renesas_sdhi_dma_cookie cookie)
+अणु
 	bool unmap = cookie == COOKIE_UNMAPPED ? (data->host_cookie != cookie) :
 						 (data->host_cookie == cookie);
 
-	if (unmap) {
+	अगर (unmap) अणु
 		dma_unmap_sg(&host->pdev->dev, data->sg, data->sg_len,
 			     mmc_get_dma_dir(data));
 		data->host_cookie = COOKIE_UNMAPPED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool
-renesas_sdhi_internal_dmac_map(struct tmio_mmc_host *host,
-			       struct mmc_data *data,
-			       enum renesas_sdhi_dma_cookie cookie)
-{
-	if (data->host_cookie == COOKIE_PRE_MAPPED)
-		return true;
+अटल bool
+renesas_sdhi_पूर्णांकernal_dmac_map(काष्ठा पंचांगio_mmc_host *host,
+			       काष्ठा mmc_data *data,
+			       क्रमागत renesas_sdhi_dma_cookie cookie)
+अणु
+	अगर (data->host_cookie == COOKIE_PRE_MAPPED)
+		वापस true;
 
-	if (!dma_map_sg(&host->pdev->dev, data->sg, data->sg_len,
+	अगर (!dma_map_sg(&host->pdev->dev, data->sg, data->sg_len,
 			    mmc_get_dma_dir(data)))
-		return false;
+		वापस false;
 
 	data->host_cookie = cookie;
 
-	/* This DMAC cannot handle if buffer is not 128-bytes alignment */
-	if (!IS_ALIGNED(sg_dma_address(data->sg), 128)) {
-		renesas_sdhi_internal_dmac_unmap(host, data, cookie);
-		return false;
-	}
+	/* This DMAC cannot handle अगर buffer is not 128-bytes alignment */
+	अगर (!IS_ALIGNED(sg_dma_address(data->sg), 128)) अणु
+		renesas_sdhi_पूर्णांकernal_dmac_unmap(host, data, cookie);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_start_dma(struct tmio_mmc_host *host,
-				     struct mmc_data *data)
-{
-	struct scatterlist *sg = host->sg_ptr;
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_start_dma(काष्ठा पंचांगio_mmc_host *host,
+				     काष्ठा mmc_data *data)
+अणु
+	काष्ठा scatterlist *sg = host->sg_ptr;
 	u32 dtran_mode = DTRAN_MODE_BUS_WIDTH;
 
-	if (!test_bit(SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY, &global_flags))
+	अगर (!test_bit(SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY, &global_flags))
 		dtran_mode |= DTRAN_MODE_ADDR_MODE;
 
-	if (!renesas_sdhi_internal_dmac_map(host, data, COOKIE_MAPPED))
-		goto force_pio;
+	अगर (!renesas_sdhi_पूर्णांकernal_dmac_map(host, data, COOKIE_MAPPED))
+		जाओ क्रमce_pio;
 
-	if (data->flags & MMC_DATA_READ) {
+	अगर (data->flags & MMC_DATA_READ) अणु
 		dtran_mode |= DTRAN_MODE_CH_NUM_CH1;
-		if (test_bit(SDHI_INTERNAL_DMAC_ONE_RX_ONLY, &global_flags) &&
+		अगर (test_bit(SDHI_INTERNAL_DMAC_ONE_RX_ONLY, &global_flags) &&
 		    test_and_set_bit(SDHI_INTERNAL_DMAC_RX_IN_USE, &global_flags))
-			goto force_pio_with_unmap;
-	} else {
+			जाओ क्रमce_pio_with_unmap;
+	पूर्ण अन्यथा अणु
 		dtran_mode |= DTRAN_MODE_CH_NUM_CH0;
-	}
+	पूर्ण
 
-	renesas_sdhi_internal_dmac_enable_dma(host, true);
+	renesas_sdhi_पूर्णांकernal_dmac_enable_dma(host, true);
 
 	/* set dma parameters */
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_DTRAN_MODE,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_DTRAN_MODE,
 					    dtran_mode);
-	renesas_sdhi_internal_dmac_dm_write(host, DM_DTRAN_ADDR,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_DTRAN_ADDR,
 					    sg_dma_address(sg));
 
 	host->dma_on = true;
 
-	return;
+	वापस;
 
-force_pio_with_unmap:
-	renesas_sdhi_internal_dmac_unmap(host, data, COOKIE_UNMAPPED);
+क्रमce_pio_with_unmap:
+	renesas_sdhi_पूर्णांकernal_dmac_unmap(host, data, COOKIE_UNMAPPED);
 
-force_pio:
-	renesas_sdhi_internal_dmac_enable_dma(host, false);
-}
+क्रमce_pio:
+	renesas_sdhi_पूर्णांकernal_dmac_enable_dma(host, false);
+पूर्ण
 
-static void renesas_sdhi_internal_dmac_issue_tasklet_fn(unsigned long arg)
-{
-	struct tmio_mmc_host *host = (struct tmio_mmc_host *)arg;
+अटल व्योम renesas_sdhi_पूर्णांकernal_dmac_issue_tasklet_fn(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा पंचांगio_mmc_host *host = (काष्ठा पंचांगio_mmc_host *)arg;
 
-	tmio_mmc_enable_mmc_irqs(host, TMIO_STAT_DATAEND);
+	पंचांगio_mmc_enable_mmc_irqs(host, TMIO_STAT_DATAEND);
 
 	/* start the DMAC */
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_DTRAN_CTRL,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_DTRAN_CTRL,
 					    DTRAN_CTRL_DM_START);
-}
+पूर्ण
 
-static bool renesas_sdhi_internal_dmac_complete(struct tmio_mmc_host *host)
-{
-	enum dma_data_direction dir;
+अटल bool renesas_sdhi_पूर्णांकernal_dmac_complete(काष्ठा पंचांगio_mmc_host *host)
+अणु
+	क्रमागत dma_data_direction dir;
 
-	if (!host->dma_on)
-		return false;
+	अगर (!host->dma_on)
+		वापस false;
 
-	if (!host->data)
-		return false;
+	अगर (!host->data)
+		वापस false;
 
-	if (host->data->flags & MMC_DATA_READ)
+	अगर (host->data->flags & MMC_DATA_READ)
 		dir = DMA_FROM_DEVICE;
-	else
+	अन्यथा
 		dir = DMA_TO_DEVICE;
 
-	renesas_sdhi_internal_dmac_enable_dma(host, false);
-	renesas_sdhi_internal_dmac_unmap(host, host->data, COOKIE_MAPPED);
+	renesas_sdhi_पूर्णांकernal_dmac_enable_dma(host, false);
+	renesas_sdhi_पूर्णांकernal_dmac_unmap(host, host->data, COOKIE_MAPPED);
 
-	if (dir == DMA_FROM_DEVICE)
+	अगर (dir == DMA_FROM_DEVICE)
 		clear_bit(SDHI_INTERNAL_DMAC_RX_IN_USE, &global_flags);
 
 	host->dma_on = false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void renesas_sdhi_internal_dmac_complete_tasklet_fn(unsigned long arg)
-{
-	struct tmio_mmc_host *host = (struct tmio_mmc_host *)arg;
+अटल व्योम renesas_sdhi_पूर्णांकernal_dmac_complete_tasklet_fn(अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा पंचांगio_mmc_host *host = (काष्ठा पंचांगio_mmc_host *)arg;
 
 	spin_lock_irq(&host->lock);
-	if (!renesas_sdhi_internal_dmac_complete(host))
-		goto out;
+	अगर (!renesas_sdhi_पूर्णांकernal_dmac_complete(host))
+		जाओ out;
 
-	tmio_mmc_do_data_irq(host);
+	पंचांगio_mmc_करो_data_irq(host);
 out:
 	spin_unlock_irq(&host->lock);
-}
+पूर्ण
 
-static void renesas_sdhi_internal_dmac_end_dma(struct tmio_mmc_host *host)
-{
-	if (host->data)
-		renesas_sdhi_internal_dmac_complete(host);
-}
+अटल व्योम renesas_sdhi_पूर्णांकernal_dmac_end_dma(काष्ठा पंचांगio_mmc_host *host)
+अणु
+	अगर (host->data)
+		renesas_sdhi_पूर्णांकernal_dmac_complete(host);
+पूर्ण
 
-static void renesas_sdhi_internal_dmac_post_req(struct mmc_host *mmc,
-						struct mmc_request *mrq,
-						int err)
-{
-	struct tmio_mmc_host *host = mmc_priv(mmc);
-	struct mmc_data *data = mrq->data;
+अटल व्योम renesas_sdhi_पूर्णांकernal_dmac_post_req(काष्ठा mmc_host *mmc,
+						काष्ठा mmc_request *mrq,
+						पूर्णांक err)
+अणु
+	काष्ठा पंचांगio_mmc_host *host = mmc_priv(mmc);
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	renesas_sdhi_internal_dmac_unmap(host, data, COOKIE_UNMAPPED);
-}
+	renesas_sdhi_पूर्णांकernal_dmac_unmap(host, data, COOKIE_UNMAPPED);
+पूर्ण
 
-static void renesas_sdhi_internal_dmac_pre_req(struct mmc_host *mmc,
-					       struct mmc_request *mrq)
-{
-	struct tmio_mmc_host *host = mmc_priv(mmc);
-	struct mmc_data *data = mrq->data;
+अटल व्योम renesas_sdhi_पूर्णांकernal_dmac_pre_req(काष्ठा mmc_host *mmc,
+					       काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा पंचांगio_mmc_host *host = mmc_priv(mmc);
+	काष्ठा mmc_data *data = mrq->data;
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
 	data->host_cookie = COOKIE_UNMAPPED;
-	renesas_sdhi_internal_dmac_map(host, data, COOKIE_PRE_MAPPED);
-}
+	renesas_sdhi_पूर्णांकernal_dmac_map(host, data, COOKIE_PRE_MAPPED);
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_request_dma(struct tmio_mmc_host *host,
-				       struct tmio_mmc_data *pdata)
-{
-	struct renesas_sdhi *priv = host_to_priv(host);
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_request_dma(काष्ठा पंचांगio_mmc_host *host,
+				       काष्ठा पंचांगio_mmc_data *pdata)
+अणु
+	काष्ठा renesas_sdhi *priv = host_to_priv(host);
 
-	/* Disable DMAC interrupts, we don't use them */
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_INFO1_MASK,
+	/* Disable DMAC पूर्णांकerrupts, we करोn't use them */
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_INFO1_MASK,
 					    INFO1_MASK_CLEAR);
-	renesas_sdhi_internal_dmac_dm_write(host, DM_CM_INFO2_MASK,
+	renesas_sdhi_पूर्णांकernal_dmac_dm_ग_लिखो(host, DM_CM_INFO2_MASK,
 					    INFO2_MASK_CLEAR);
 
 	/* Each value is set to non-zero to assume "enabling" each DMA */
-	host->chan_rx = host->chan_tx = (void *)0xdeadbeaf;
+	host->chan_rx = host->chan_tx = (व्योम *)0xdeadbeaf;
 
 	tasklet_init(&priv->dma_priv.dma_complete,
-		     renesas_sdhi_internal_dmac_complete_tasklet_fn,
-		     (unsigned long)host);
+		     renesas_sdhi_पूर्णांकernal_dmac_complete_tasklet_fn,
+		     (अचिन्हित दीर्घ)host);
 	tasklet_init(&host->dma_issue,
-		     renesas_sdhi_internal_dmac_issue_tasklet_fn,
-		     (unsigned long)host);
+		     renesas_sdhi_पूर्णांकernal_dmac_issue_tasklet_fn,
+		     (अचिन्हित दीर्घ)host);
 
 	/* Add pre_req and post_req */
-	host->ops.pre_req = renesas_sdhi_internal_dmac_pre_req;
-	host->ops.post_req = renesas_sdhi_internal_dmac_post_req;
-}
+	host->ops.pre_req = renesas_sdhi_पूर्णांकernal_dmac_pre_req;
+	host->ops.post_req = renesas_sdhi_पूर्णांकernal_dmac_post_req;
+पूर्ण
 
-static void
-renesas_sdhi_internal_dmac_release_dma(struct tmio_mmc_host *host)
-{
+अटल व्योम
+renesas_sdhi_पूर्णांकernal_dmac_release_dma(काष्ठा पंचांगio_mmc_host *host)
+अणु
 	/* Each value is set to zero to assume "disabling" each DMA */
-	host->chan_rx = host->chan_tx = NULL;
-}
+	host->chan_rx = host->chan_tx = शून्य;
+पूर्ण
 
-static const struct tmio_mmc_dma_ops renesas_sdhi_internal_dmac_dma_ops = {
-	.start = renesas_sdhi_internal_dmac_start_dma,
-	.enable = renesas_sdhi_internal_dmac_enable_dma,
-	.request = renesas_sdhi_internal_dmac_request_dma,
-	.release = renesas_sdhi_internal_dmac_release_dma,
-	.abort = renesas_sdhi_internal_dmac_abort_dma,
-	.dataend = renesas_sdhi_internal_dmac_dataend_dma,
-	.end = renesas_sdhi_internal_dmac_end_dma,
-};
+अटल स्थिर काष्ठा पंचांगio_mmc_dma_ops renesas_sdhi_पूर्णांकernal_dmac_dma_ops = अणु
+	.start = renesas_sdhi_पूर्णांकernal_dmac_start_dma,
+	.enable = renesas_sdhi_पूर्णांकernal_dmac_enable_dma,
+	.request = renesas_sdhi_पूर्णांकernal_dmac_request_dma,
+	.release = renesas_sdhi_पूर्णांकernal_dmac_release_dma,
+	.पात = renesas_sdhi_पूर्णांकernal_dmac_पात_dma,
+	.dataend = renesas_sdhi_पूर्णांकernal_dmac_dataend_dma,
+	.end = renesas_sdhi_पूर्णांकernal_dmac_end_dma,
+पूर्ण;
 
 /*
- * Whitelist of specific R-Car Gen3 SoC ES versions to use this DMAC
- * implementation as others may use a different implementation.
+ * Whitelist of specअगरic R-Car Gen3 SoC ES versions to use this DMAC
+ * implementation as others may use a dअगरferent implementation.
  */
-static const struct soc_device_attribute soc_dma_quirks[] = {
-	{ .soc_id = "r7s9210",
-	  .data = (void *)BIT(SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY) },
-	{ .soc_id = "r8a7795", .revision = "ES1.*",
-	  .data = (void *)BIT(SDHI_INTERNAL_DMAC_ONE_RX_ONLY) },
-	{ .soc_id = "r8a7796", .revision = "ES1.0",
-	  .data = (void *)BIT(SDHI_INTERNAL_DMAC_ONE_RX_ONLY) },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा soc_device_attribute soc_dma_quirks[] = अणु
+	अणु .soc_id = "r7s9210",
+	  .data = (व्योम *)BIT(SDHI_INTERNAL_DMAC_ADDR_MODE_FIXED_ONLY) पूर्ण,
+	अणु .soc_id = "r8a7795", .revision = "ES1.*",
+	  .data = (व्योम *)BIT(SDHI_INTERNAL_DMAC_ONE_RX_ONLY) पूर्ण,
+	अणु .soc_id = "r8a7796", .revision = "ES1.0",
+	  .data = (व्योम *)BIT(SDHI_INTERNAL_DMAC_ONE_RX_ONLY) पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int renesas_sdhi_internal_dmac_probe(struct platform_device *pdev)
-{
-	const struct soc_device_attribute *soc = soc_device_match(soc_dma_quirks);
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक renesas_sdhi_पूर्णांकernal_dmac_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा soc_device_attribute *soc = soc_device_match(soc_dma_quirks);
+	काष्ठा device *dev = &pdev->dev;
 
-	if (soc)
-		global_flags |= (unsigned long)soc->data;
+	अगर (soc)
+		global_flags |= (अचिन्हित दीर्घ)soc->data;
 
 	/* value is max of SD_SECCNT. Confirmed by HW engineers */
 	dma_set_max_seg_size(dev, 0xffffffff);
 
-	return renesas_sdhi_probe(pdev, &renesas_sdhi_internal_dmac_dma_ops);
-}
+	वापस renesas_sdhi_probe(pdev, &renesas_sdhi_पूर्णांकernal_dmac_dma_ops);
+पूर्ण
 
-static const struct dev_pm_ops renesas_sdhi_internal_dmac_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(tmio_mmc_host_runtime_suspend,
-			   tmio_mmc_host_runtime_resume,
-			   NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops renesas_sdhi_पूर्णांकernal_dmac_dev_pm_ops = अणु
+	SET_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(पंचांगio_mmc_host_runसमय_suspend,
+			   पंचांगio_mmc_host_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static struct platform_driver renesas_internal_dmac_sdhi_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver renesas_पूर्णांकernal_dmac_sdhi_driver = अणु
+	.driver		= अणु
 		.name	= "renesas_sdhi_internal_dmac",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-		.pm	= &renesas_sdhi_internal_dmac_dev_pm_ops,
-		.of_match_table = renesas_sdhi_internal_dmac_of_match,
-	},
-	.probe		= renesas_sdhi_internal_dmac_probe,
-	.remove		= renesas_sdhi_remove,
-};
+		.pm	= &renesas_sdhi_पूर्णांकernal_dmac_dev_pm_ops,
+		.of_match_table = renesas_sdhi_पूर्णांकernal_dmac_of_match,
+	पूर्ण,
+	.probe		= renesas_sdhi_पूर्णांकernal_dmac_probe,
+	.हटाओ		= renesas_sdhi_हटाओ,
+पूर्ण;
 
-module_platform_driver(renesas_internal_dmac_sdhi_driver);
+module_platक्रमm_driver(renesas_पूर्णांकernal_dmac_sdhi_driver);
 
 MODULE_DESCRIPTION("Renesas SDHI driver for internal DMAC");
 MODULE_AUTHOR("Yoshihiro Shimoda");

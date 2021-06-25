@@ -1,317 +1,318 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Support for dynamic clock devices
+ * Support क्रम dynamic घड़ी devices
  *
  * Copyright (C) 2010 OMICRON electronics GmbH
  */
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/file.h>
-#include <linux/posix-clock.h>
-#include <linux/slab.h>
-#include <linux/syscalls.h>
-#include <linux/uaccess.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/file.h>
+#समावेश <linux/posix-घड़ी.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/uaccess.h>
 
-#include "posix-timers.h"
+#समावेश "posix-timers.h"
 
 /*
- * Returns NULL if the posix_clock instance attached to 'fp' is old and stale.
+ * Returns शून्य अगर the posix_घड़ी instance attached to 'fp' is old and stale.
  */
-static struct posix_clock *get_posix_clock(struct file *fp)
-{
-	struct posix_clock *clk = fp->private_data;
+अटल काष्ठा posix_घड़ी *get_posix_घड़ी(काष्ठा file *fp)
+अणु
+	काष्ठा posix_घड़ी *clk = fp->निजी_data;
 
-	down_read(&clk->rwsem);
+	करोwn_पढ़ो(&clk->rwsem);
 
-	if (!clk->zombie)
-		return clk;
+	अगर (!clk->zombie)
+		वापस clk;
 
-	up_read(&clk->rwsem);
+	up_पढ़ो(&clk->rwsem);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void put_posix_clock(struct posix_clock *clk)
-{
-	up_read(&clk->rwsem);
-}
+अटल व्योम put_posix_घड़ी(काष्ठा posix_घड़ी *clk)
+अणु
+	up_पढ़ो(&clk->rwsem);
+पूर्ण
 
-static ssize_t posix_clock_read(struct file *fp, char __user *buf,
-				size_t count, loff_t *ppos)
-{
-	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -EINVAL;
+अटल sमाप_प्रकार posix_घड़ी_पढ़ो(काष्ठा file *fp, अक्षर __user *buf,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा posix_घड़ी *clk = get_posix_घड़ी(fp);
+	पूर्णांक err = -EINVAL;
 
-	if (!clk)
-		return -ENODEV;
+	अगर (!clk)
+		वापस -ENODEV;
 
-	if (clk->ops.read)
-		err = clk->ops.read(clk, fp->f_flags, buf, count);
+	अगर (clk->ops.पढ़ो)
+		err = clk->ops.पढ़ो(clk, fp->f_flags, buf, count);
 
-	put_posix_clock(clk);
+	put_posix_घड़ी(clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static __poll_t posix_clock_poll(struct file *fp, poll_table *wait)
-{
-	struct posix_clock *clk = get_posix_clock(fp);
+अटल __poll_t posix_घड़ी_poll(काष्ठा file *fp, poll_table *रुको)
+अणु
+	काष्ठा posix_घड़ी *clk = get_posix_घड़ी(fp);
 	__poll_t result = 0;
 
-	if (!clk)
-		return EPOLLERR;
+	अगर (!clk)
+		वापस EPOLLERR;
 
-	if (clk->ops.poll)
-		result = clk->ops.poll(clk, fp, wait);
+	अगर (clk->ops.poll)
+		result = clk->ops.poll(clk, fp, रुको);
 
-	put_posix_clock(clk);
+	put_posix_घड़ी(clk);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static long posix_clock_ioctl(struct file *fp,
-			      unsigned int cmd, unsigned long arg)
-{
-	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -ENOTTY;
+अटल दीर्घ posix_घड़ी_ioctl(काष्ठा file *fp,
+			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा posix_घड़ी *clk = get_posix_घड़ी(fp);
+	पूर्णांक err = -ENOTTY;
 
-	if (!clk)
-		return -ENODEV;
+	अगर (!clk)
+		वापस -ENODEV;
 
-	if (clk->ops.ioctl)
+	अगर (clk->ops.ioctl)
 		err = clk->ops.ioctl(clk, cmd, arg);
 
-	put_posix_clock(clk);
+	put_posix_घड़ी(clk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long posix_clock_compat_ioctl(struct file *fp,
-				     unsigned int cmd, unsigned long arg)
-{
-	struct posix_clock *clk = get_posix_clock(fp);
-	int err = -ENOTTY;
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ posix_घड़ी_compat_ioctl(काष्ठा file *fp,
+				     अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा posix_घड़ी *clk = get_posix_घड़ी(fp);
+	पूर्णांक err = -ENOTTY;
 
-	if (!clk)
-		return -ENODEV;
+	अगर (!clk)
+		वापस -ENODEV;
 
-	if (clk->ops.ioctl)
+	अगर (clk->ops.ioctl)
 		err = clk->ops.ioctl(clk, cmd, arg);
 
-	put_posix_clock(clk);
+	put_posix_घड़ी(clk);
 
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
-static int posix_clock_open(struct inode *inode, struct file *fp)
-{
-	int err;
-	struct posix_clock *clk =
-		container_of(inode->i_cdev, struct posix_clock, cdev);
+अटल पूर्णांक posix_घड़ी_खोलो(काष्ठा inode *inode, काष्ठा file *fp)
+अणु
+	पूर्णांक err;
+	काष्ठा posix_घड़ी *clk =
+		container_of(inode->i_cdev, काष्ठा posix_घड़ी, cdev);
 
-	down_read(&clk->rwsem);
+	करोwn_पढ़ो(&clk->rwsem);
 
-	if (clk->zombie) {
+	अगर (clk->zombie) अणु
 		err = -ENODEV;
-		goto out;
-	}
-	if (clk->ops.open)
-		err = clk->ops.open(clk, fp->f_mode);
-	else
+		जाओ out;
+	पूर्ण
+	अगर (clk->ops.खोलो)
+		err = clk->ops.खोलो(clk, fp->f_mode);
+	अन्यथा
 		err = 0;
 
-	if (!err) {
+	अगर (!err) अणु
 		get_device(clk->dev);
-		fp->private_data = clk;
-	}
+		fp->निजी_data = clk;
+	पूर्ण
 out:
-	up_read(&clk->rwsem);
-	return err;
-}
+	up_पढ़ो(&clk->rwsem);
+	वापस err;
+पूर्ण
 
-static int posix_clock_release(struct inode *inode, struct file *fp)
-{
-	struct posix_clock *clk = fp->private_data;
-	int err = 0;
+अटल पूर्णांक posix_घड़ी_release(काष्ठा inode *inode, काष्ठा file *fp)
+अणु
+	काष्ठा posix_घड़ी *clk = fp->निजी_data;
+	पूर्णांक err = 0;
 
-	if (clk->ops.release)
+	अगर (clk->ops.release)
 		err = clk->ops.release(clk);
 
 	put_device(clk->dev);
 
-	fp->private_data = NULL;
+	fp->निजी_data = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct file_operations posix_clock_file_operations = {
+अटल स्थिर काष्ठा file_operations posix_घड़ी_file_operations = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.read		= posix_clock_read,
-	.poll		= posix_clock_poll,
-	.unlocked_ioctl	= posix_clock_ioctl,
-	.open		= posix_clock_open,
-	.release	= posix_clock_release,
-#ifdef CONFIG_COMPAT
-	.compat_ioctl	= posix_clock_compat_ioctl,
-#endif
-};
+	.पढ़ो		= posix_घड़ी_पढ़ो,
+	.poll		= posix_घड़ी_poll,
+	.unlocked_ioctl	= posix_घड़ी_ioctl,
+	.खोलो		= posix_घड़ी_खोलो,
+	.release	= posix_घड़ी_release,
+#अगर_घोषित CONFIG_COMPAT
+	.compat_ioctl	= posix_घड़ी_compat_ioctl,
+#पूर्ण_अगर
+पूर्ण;
 
-int posix_clock_register(struct posix_clock *clk, struct device *dev)
-{
-	int err;
+पूर्णांक posix_घड़ी_रेजिस्टर(काष्ठा posix_घड़ी *clk, काष्ठा device *dev)
+अणु
+	पूर्णांक err;
 
 	init_rwsem(&clk->rwsem);
 
-	cdev_init(&clk->cdev, &posix_clock_file_operations);
+	cdev_init(&clk->cdev, &posix_घड़ी_file_operations);
 	err = cdev_device_add(&clk->cdev, dev);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s unable to add device %d:%d\n",
 			dev_name(dev), MAJOR(dev->devt), MINOR(dev->devt));
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	clk->cdev.owner = clk->ops.owner;
 	clk->dev = dev;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(posix_clock_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(posix_घड़ी_रेजिस्टर);
 
-void posix_clock_unregister(struct posix_clock *clk)
-{
+व्योम posix_घड़ी_unरेजिस्टर(काष्ठा posix_घड़ी *clk)
+अणु
 	cdev_device_del(&clk->cdev, clk->dev);
 
-	down_write(&clk->rwsem);
+	करोwn_ग_लिखो(&clk->rwsem);
 	clk->zombie = true;
-	up_write(&clk->rwsem);
+	up_ग_लिखो(&clk->rwsem);
 
 	put_device(clk->dev);
-}
-EXPORT_SYMBOL_GPL(posix_clock_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(posix_घड़ी_unरेजिस्टर);
 
-struct posix_clock_desc {
-	struct file *fp;
-	struct posix_clock *clk;
-};
+काष्ठा posix_घड़ी_desc अणु
+	काष्ठा file *fp;
+	काष्ठा posix_घड़ी *clk;
+पूर्ण;
 
-static int get_clock_desc(const clockid_t id, struct posix_clock_desc *cd)
-{
-	struct file *fp = fget(clockid_to_fd(id));
-	int err = -EINVAL;
+अटल पूर्णांक get_घड़ी_desc(स्थिर घड़ीid_t id, काष्ठा posix_घड़ी_desc *cd)
+अणु
+	काष्ठा file *fp = fget(घड़ीid_to_fd(id));
+	पूर्णांक err = -EINVAL;
 
-	if (!fp)
-		return err;
+	अगर (!fp)
+		वापस err;
 
-	if (fp->f_op->open != posix_clock_open || !fp->private_data)
-		goto out;
+	अगर (fp->f_op->खोलो != posix_घड़ी_खोलो || !fp->निजी_data)
+		जाओ out;
 
 	cd->fp = fp;
-	cd->clk = get_posix_clock(fp);
+	cd->clk = get_posix_घड़ी(fp);
 
 	err = cd->clk ? 0 : -ENODEV;
 out:
-	if (err)
+	अगर (err)
 		fput(fp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void put_clock_desc(struct posix_clock_desc *cd)
-{
-	put_posix_clock(cd->clk);
+अटल व्योम put_घड़ी_desc(काष्ठा posix_घड़ी_desc *cd)
+अणु
+	put_posix_घड़ी(cd->clk);
 	fput(cd->fp);
-}
+पूर्ण
 
-static int pc_clock_adjtime(clockid_t id, struct __kernel_timex *tx)
-{
-	struct posix_clock_desc cd;
-	int err;
+अटल पूर्णांक pc_घड़ी_adjसमय(घड़ीid_t id, काष्ठा __kernel_समयx *tx)
+अणु
+	काष्ठा posix_घड़ी_desc cd;
+	पूर्णांक err;
 
-	err = get_clock_desc(id, &cd);
-	if (err)
-		return err;
+	err = get_घड़ी_desc(id, &cd);
+	अगर (err)
+		वापस err;
 
-	if ((cd.fp->f_mode & FMODE_WRITE) == 0) {
+	अगर ((cd.fp->f_mode & FMODE_WRITE) == 0) अणु
 		err = -EACCES;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (cd.clk->ops.clock_adjtime)
-		err = cd.clk->ops.clock_adjtime(cd.clk, tx);
-	else
+	अगर (cd.clk->ops.घड़ी_adjसमय)
+		err = cd.clk->ops.घड़ी_adjसमय(cd.clk, tx);
+	अन्यथा
 		err = -EOPNOTSUPP;
 out:
-	put_clock_desc(&cd);
+	put_घड़ी_desc(&cd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pc_clock_gettime(clockid_t id, struct timespec64 *ts)
-{
-	struct posix_clock_desc cd;
-	int err;
+अटल पूर्णांक pc_घड़ी_समय_लो(घड़ीid_t id, काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा posix_घड़ी_desc cd;
+	पूर्णांक err;
 
-	err = get_clock_desc(id, &cd);
-	if (err)
-		return err;
+	err = get_घड़ी_desc(id, &cd);
+	अगर (err)
+		वापस err;
 
-	if (cd.clk->ops.clock_gettime)
-		err = cd.clk->ops.clock_gettime(cd.clk, ts);
-	else
+	अगर (cd.clk->ops.घड़ी_समय_लो)
+		err = cd.clk->ops.घड़ी_समय_लो(cd.clk, ts);
+	अन्यथा
 		err = -EOPNOTSUPP;
 
-	put_clock_desc(&cd);
+	put_घड़ी_desc(&cd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pc_clock_getres(clockid_t id, struct timespec64 *ts)
-{
-	struct posix_clock_desc cd;
-	int err;
+अटल पूर्णांक pc_घड़ी_getres(घड़ीid_t id, काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा posix_घड़ी_desc cd;
+	पूर्णांक err;
 
-	err = get_clock_desc(id, &cd);
-	if (err)
-		return err;
+	err = get_घड़ी_desc(id, &cd);
+	अगर (err)
+		वापस err;
 
-	if (cd.clk->ops.clock_getres)
-		err = cd.clk->ops.clock_getres(cd.clk, ts);
-	else
+	अगर (cd.clk->ops.घड़ी_getres)
+		err = cd.clk->ops.घड़ी_getres(cd.clk, ts);
+	अन्यथा
 		err = -EOPNOTSUPP;
 
-	put_clock_desc(&cd);
+	put_घड़ी_desc(&cd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pc_clock_settime(clockid_t id, const struct timespec64 *ts)
-{
-	struct posix_clock_desc cd;
-	int err;
+अटल पूर्णांक pc_घड़ी_समय_रखो(घड़ीid_t id, स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा posix_घड़ी_desc cd;
+	पूर्णांक err;
 
-	err = get_clock_desc(id, &cd);
-	if (err)
-		return err;
+	err = get_घड़ी_desc(id, &cd);
+	अगर (err)
+		वापस err;
 
-	if ((cd.fp->f_mode & FMODE_WRITE) == 0) {
+	अगर ((cd.fp->f_mode & FMODE_WRITE) == 0) अणु
 		err = -EACCES;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (cd.clk->ops.clock_settime)
-		err = cd.clk->ops.clock_settime(cd.clk, ts);
-	else
+	अगर (cd.clk->ops.घड़ी_समय_रखो)
+		err = cd.clk->ops.घड़ी_समय_रखो(cd.clk, ts);
+	अन्यथा
 		err = -EOPNOTSUPP;
 out:
-	put_clock_desc(&cd);
+	put_घड़ी_desc(&cd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct k_clock clock_posix_dynamic = {
-	.clock_getres		= pc_clock_getres,
-	.clock_set		= pc_clock_settime,
-	.clock_get_timespec	= pc_clock_gettime,
-	.clock_adj		= pc_clock_adjtime,
-};
+स्थिर काष्ठा k_घड़ी घड़ी_posix_dynamic = अणु
+	.घड़ी_getres		= pc_घड़ी_getres,
+	.घड़ी_set		= pc_घड़ी_समय_रखो,
+	.घड़ी_get_बारpec	= pc_घड़ी_समय_लो,
+	.घड़ी_adj		= pc_घड़ी_adjसमय,
+पूर्ण;

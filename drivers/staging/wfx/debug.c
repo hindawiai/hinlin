@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Debugfs interface.
+ * Debugfs पूर्णांकerface.
  *
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/crc32.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/crc32.h>
 
-#include "debug.h"
-#include "wfx.h"
-#include "sta.h"
-#include "main.h"
-#include "hif_tx.h"
-#include "hif_tx_mib.h"
+#समावेश "debug.h"
+#समावेश "wfx.h"
+#समावेश "sta.h"
+#समावेश "main.h"
+#समावेश "hif_tx.h"
+#समावेश "hif_tx_mib.h"
 
-#define CREATE_TRACE_POINTS
-#include "traces.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "traces.h"
 
-static const struct trace_print_flags hif_msg_print_map[] = {
-	hif_msg_list,
-};
+अटल स्थिर काष्ठा trace_prपूर्णांक_flags hअगर_msg_prपूर्णांक_map[] = अणु
+	hअगर_msg_list,
+पूर्ण;
 
-static const struct trace_print_flags hif_mib_print_map[] = {
-	hif_mib_list,
-};
+अटल स्थिर काष्ठा trace_prपूर्णांक_flags hअगर_mib_prपूर्णांक_map[] = अणु
+	hअगर_mib_list,
+पूर्ण;
 
-static const struct trace_print_flags wfx_reg_print_map[] = {
+अटल स्थिर काष्ठा trace_prपूर्णांक_flags wfx_reg_prपूर्णांक_map[] = अणु
 	wfx_reg_list,
-};
+पूर्ण;
 
-static const char *get_symbol(unsigned long val,
-			      const struct trace_print_flags *symbol_array)
-{
-	int i;
+अटल स्थिर अक्षर *get_symbol(अचिन्हित दीर्घ val,
+			      स्थिर काष्ठा trace_prपूर्णांक_flags *symbol_array)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; symbol_array[i].mask != -1; i++) {
-		if (val == symbol_array[i].mask)
-			return symbol_array[i].name;
-	}
+	क्रम (i = 0; symbol_array[i].mask != -1; i++) अणु
+		अगर (val == symbol_array[i].mask)
+			वापस symbol_array[i].name;
+	पूर्ण
 
-	return "unknown";
-}
+	वापस "unknown";
+पूर्ण
 
-const char *get_hif_name(unsigned long id)
-{
-	return get_symbol(id, hif_msg_print_map);
-}
+स्थिर अक्षर *get_hअगर_name(अचिन्हित दीर्घ id)
+अणु
+	वापस get_symbol(id, hअगर_msg_prपूर्णांक_map);
+पूर्ण
 
-const char *get_mib_name(unsigned long id)
-{
-	return get_symbol(id, hif_mib_print_map);
-}
+स्थिर अक्षर *get_mib_name(अचिन्हित दीर्घ id)
+अणु
+	वापस get_symbol(id, hअगर_mib_prपूर्णांक_map);
+पूर्ण
 
-const char *get_reg_name(unsigned long id)
-{
-	return get_symbol(id, wfx_reg_print_map);
-}
+स्थिर अक्षर *get_reg_name(अचिन्हित दीर्घ id)
+अणु
+	वापस get_symbol(id, wfx_reg_prपूर्णांक_map);
+पूर्ण
 
-static int wfx_counters_show(struct seq_file *seq, void *v)
-{
-	int ret, i;
-	struct wfx_dev *wdev = seq->private;
-	struct hif_mib_extended_count_table counters[3];
+अटल पूर्णांक wfx_counters_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	पूर्णांक ret, i;
+	काष्ठा wfx_dev *wdev = seq->निजी;
+	काष्ठा hअगर_mib_extended_count_table counters[3];
 
-	for (i = 0; i < ARRAY_SIZE(counters); i++) {
-		ret = hif_get_counters_table(wdev, i, counters + i);
-		if (ret < 0)
-			return ret;
-		if (ret > 0)
-			return -EIO;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(counters); i++) अणु
+		ret = hअगर_get_counters_table(wdev, i, counters + i);
+		अगर (ret < 0)
+			वापस ret;
+		अगर (ret > 0)
+			वापस -EIO;
+	पूर्ण
 
-	seq_printf(seq, "%-24s %12s %12s %12s\n",
+	seq_म_लिखो(seq, "%-24s %12s %12s %12s\n",
 		   "", "global", "iface 0", "iface 1");
 
-#define PUT_COUNTER(name) \
-	seq_printf(seq, "%-24s %12d %12d %12d\n", #name, \
+#घोषणा PUT_COUNTER(name) \
+	seq_म_लिखो(seq, "%-24s %12d %12d %12d\n", #name, \
 		   le32_to_cpu(counters[2].count_##name), \
 		   le32_to_cpu(counters[0].count_##name), \
 		   le32_to_cpu(counters[1].count_##name))
@@ -110,24 +111,24 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 	PUT_COUNTER(rx_beacon);
 	PUT_COUNTER(miss_beacon);
 
-#undef PUT_COUNTER
+#अघोषित PUT_COUNTER
 
-	for (i = 0; i < ARRAY_SIZE(counters[0].reserved); i++)
-		seq_printf(seq, "reserved[%02d]%12s %12d %12d %12d\n", i, "",
+	क्रम (i = 0; i < ARRAY_SIZE(counters[0].reserved); i++)
+		seq_म_लिखो(seq, "reserved[%02d]%12s %12d %12d %12d\n", i, "",
 			   le32_to_cpu(counters[2].reserved[i]),
 			   le32_to_cpu(counters[0].reserved[i]),
 			   le32_to_cpu(counters[1].reserved[i]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(wfx_counters);
 
-static const char * const channel_names[] = {
+अटल स्थिर अक्षर * स्थिर channel_names[] = अणु
 	[0] = "1M",
 	[1] = "2M",
 	[2] = "5.5M",
 	[3] = "11M",
-	/* Entries 4 and 5 does not exist */
+	/* Entries 4 and 5 करोes not exist */
 	[6] = "6M",
 	[7] = "9M",
 	[8] = "12M",
@@ -144,216 +145,216 @@ static const char * const channel_names[] = {
 	[19] = "MCS5",
 	[20] = "MCS6",
 	[21] = "MCS7",
-};
+पूर्ण;
 
-static int wfx_rx_stats_show(struct seq_file *seq, void *v)
-{
-	struct wfx_dev *wdev = seq->private;
-	struct hif_rx_stats *st = &wdev->rx_stats;
-	int i;
+अटल पूर्णांक wfx_rx_stats_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा wfx_dev *wdev = seq->निजी;
+	काष्ठा hअगर_rx_stats *st = &wdev->rx_stats;
+	पूर्णांक i;
 
 	mutex_lock(&wdev->rx_stats_lock);
-	seq_printf(seq, "Timestamp: %dus\n", st->date);
-	seq_printf(seq, "Low power clock: frequency %uHz, external %s\n",
+	seq_म_लिखो(seq, "Timestamp: %dus\n", st->date);
+	seq_म_लिखो(seq, "Low power clock: frequency %uHz, external %s\n",
 		   le32_to_cpu(st->pwr_clk_freq),
 		   st->is_ext_pwr_clk ? "yes" : "no");
-	seq_printf(seq,
+	seq_म_लिखो(seq,
 		   "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
 		   st->nb_rx_frame, st->per_total, st->throughput);
-	seq_puts(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
-	seq_puts(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
-	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
-		if (channel_names[i])
-			seq_printf(seq, "%5s %8d %8d %8d %8d %8d\n",
+	seq_माला_दो(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
+	seq_माला_दो(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
+	क्रम (i = 0; i < ARRAY_SIZE(channel_names); i++) अणु
+		अगर (channel_names[i])
+			seq_म_लिखो(seq, "%5s %8d %8d %8d %8d %8d\n",
 				   channel_names[i],
 				   le32_to_cpu(st->nb_rx_by_rate[i]),
 				   le16_to_cpu(st->per[i]),
 				   (s16)le16_to_cpu(st->rssi[i]) / 100,
 				   (s16)le16_to_cpu(st->snr[i]) / 100,
 				   (s16)le16_to_cpu(st->cfo[i]));
-	}
+	पूर्ण
 	mutex_unlock(&wdev->rx_stats_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(wfx_rx_stats);
 
-static int wfx_tx_power_loop_show(struct seq_file *seq, void *v)
-{
-	struct wfx_dev *wdev = seq->private;
-	struct hif_tx_power_loop_info *st = &wdev->tx_power_loop_info;
-	int tmp;
+अटल पूर्णांक wfx_tx_घातer_loop_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा wfx_dev *wdev = seq->निजी;
+	काष्ठा hअगर_tx_घातer_loop_info *st = &wdev->tx_घातer_loop_info;
+	पूर्णांक पंचांगp;
 
-	mutex_lock(&wdev->tx_power_loop_info_lock);
-	tmp = le16_to_cpu(st->tx_gain_dig);
-	seq_printf(seq, "Tx gain digital: %d\n", tmp);
-	tmp = le16_to_cpu(st->tx_gain_pa);
-	seq_printf(seq, "Tx gain PA: %d\n", tmp);
-	tmp = (s16)le16_to_cpu(st->target_pout);
-	seq_printf(seq, "Target Pout: %d.%02d dBm\n", tmp / 4, (tmp % 4) * 25);
-	tmp = (s16)le16_to_cpu(st->p_estimation);
-	seq_printf(seq, "FEM Pout: %d.%02d dBm\n", tmp / 4, (tmp % 4) * 25);
-	tmp = le16_to_cpu(st->vpdet);
-	seq_printf(seq, "Vpdet: %d mV\n", tmp);
-	seq_printf(seq, "Measure index: %d\n", st->measurement_index);
-	mutex_unlock(&wdev->tx_power_loop_info_lock);
+	mutex_lock(&wdev->tx_घातer_loop_info_lock);
+	पंचांगp = le16_to_cpu(st->tx_gain_dig);
+	seq_म_लिखो(seq, "Tx gain digital: %d\n", पंचांगp);
+	पंचांगp = le16_to_cpu(st->tx_gain_pa);
+	seq_म_लिखो(seq, "Tx gain PA: %d\n", पंचांगp);
+	पंचांगp = (s16)le16_to_cpu(st->target_pout);
+	seq_म_लिखो(seq, "Target Pout: %d.%02d dBm\n", पंचांगp / 4, (पंचांगp % 4) * 25);
+	पंचांगp = (s16)le16_to_cpu(st->p_estimation);
+	seq_म_लिखो(seq, "FEM Pout: %d.%02d dBm\n", पंचांगp / 4, (पंचांगp % 4) * 25);
+	पंचांगp = le16_to_cpu(st->vpdet);
+	seq_म_लिखो(seq, "Vpdet: %d mV\n", पंचांगp);
+	seq_म_लिखो(seq, "Measure index: %d\n", st->measurement_index);
+	mutex_unlock(&wdev->tx_घातer_loop_info_lock);
 
-	return 0;
-}
-DEFINE_SHOW_ATTRIBUTE(wfx_tx_power_loop);
+	वापस 0;
+पूर्ण
+DEFINE_SHOW_ATTRIBUTE(wfx_tx_घातer_loop);
 
-static ssize_t wfx_send_pds_write(struct file *file,
-				  const char __user *user_buf,
-				  size_t count, loff_t *ppos)
-{
-	struct wfx_dev *wdev = file->private_data;
-	char *buf;
-	int ret;
+अटल sमाप_प्रकार wfx_send_pds_ग_लिखो(काष्ठा file *file,
+				  स्थिर अक्षर __user *user_buf,
+				  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा wfx_dev *wdev = file->निजी_data;
+	अक्षर *buf;
+	पूर्णांक ret;
 
-	if (*ppos != 0) {
+	अगर (*ppos != 0) अणु
 		dev_dbg(wdev->dev, "PDS data must be written in one transaction");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	buf = memdup_user(user_buf, count);
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 	*ppos = *ppos + count;
 	ret = wfx_send_pds(wdev, buf, count);
-	kfree(buf);
-	if (ret < 0)
-		return ret;
-	return count;
-}
+	kमुक्त(buf);
+	अगर (ret < 0)
+		वापस ret;
+	वापस count;
+पूर्ण
 
-static const struct file_operations wfx_send_pds_fops = {
-	.open = simple_open,
-	.write = wfx_send_pds_write,
-};
+अटल स्थिर काष्ठा file_operations wfx_send_pds_fops = अणु
+	.खोलो = simple_खोलो,
+	.ग_लिखो = wfx_send_pds_ग_लिखो,
+पूर्ण;
 
-struct dbgfs_hif_msg {
-	struct wfx_dev *wdev;
-	struct completion complete;
+काष्ठा dbgfs_hअगर_msg अणु
+	काष्ठा wfx_dev *wdev;
+	काष्ठा completion complete;
 	u8 reply[1024];
-	int ret;
-};
+	पूर्णांक ret;
+पूर्ण;
 
-static ssize_t wfx_send_hif_msg_write(struct file *file,
-				      const char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct dbgfs_hif_msg *context = file->private_data;
-	struct wfx_dev *wdev = context->wdev;
-	struct hif_msg *request;
+अटल sमाप_प्रकार wfx_send_hअगर_msg_ग_लिखो(काष्ठा file *file,
+				      स्थिर अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dbgfs_hअगर_msg *context = file->निजी_data;
+	काष्ठा wfx_dev *wdev = context->wdev;
+	काष्ठा hअगर_msg *request;
 
-	if (completion_done(&context->complete)) {
+	अगर (completion_करोne(&context->complete)) अणु
 		dev_dbg(wdev->dev, "read previous result before start a new one\n");
-		return -EBUSY;
-	}
-	if (count < sizeof(struct hif_msg))
-		return -EINVAL;
+		वापस -EBUSY;
+	पूर्ण
+	अगर (count < माप(काष्ठा hअगर_msg))
+		वापस -EINVAL;
 
-	// wfx_cmd_send() checks that reply buffer is wide enough, but does not
-	// return precise length read. User have to know how many bytes should
-	// be read. Filling reply buffer with a memory pattern may help user.
-	memset(context->reply, 0xFF, sizeof(context->reply));
+	// wfx_cmd_send() checks that reply buffer is wide enough, but करोes not
+	// वापस precise length पढ़ो. User have to know how many bytes should
+	// be पढ़ो. Filling reply buffer with a memory pattern may help user.
+	स_रखो(context->reply, 0xFF, माप(context->reply));
 	request = memdup_user(user_buf, count);
-	if (IS_ERR(request))
-		return PTR_ERR(request);
-	if (le16_to_cpu(request->len) != count) {
-		kfree(request);
-		return -EINVAL;
-	}
+	अगर (IS_ERR(request))
+		वापस PTR_ERR(request);
+	अगर (le16_to_cpu(request->len) != count) अणु
+		kमुक्त(request);
+		वापस -EINVAL;
+	पूर्ण
 	context->ret = wfx_cmd_send(wdev, request, context->reply,
-				    sizeof(context->reply), false);
+				    माप(context->reply), false);
 
-	kfree(request);
+	kमुक्त(request);
 	complete(&context->complete);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t wfx_send_hif_msg_read(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct dbgfs_hif_msg *context = file->private_data;
-	int ret;
+अटल sमाप_प्रकार wfx_send_hअगर_msg_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dbgfs_hअगर_msg *context = file->निजी_data;
+	पूर्णांक ret;
 
-	if (count > sizeof(context->reply))
-		return -EINVAL;
-	ret = wait_for_completion_interruptible(&context->complete);
-	if (ret)
-		return ret;
-	if (context->ret < 0)
-		return context->ret;
-	// Be careful, write() is waiting for a full message while read()
-	// only returns a payload
-	if (copy_to_user(user_buf, context->reply, count))
-		return -EFAULT;
+	अगर (count > माप(context->reply))
+		वापस -EINVAL;
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&context->complete);
+	अगर (ret)
+		वापस ret;
+	अगर (context->ret < 0)
+		वापस context->ret;
+	// Be careful, ग_लिखो() is रुकोing क्रम a full message जबतक पढ़ो()
+	// only वापसs a payload
+	अगर (copy_to_user(user_buf, context->reply, count))
+		वापस -EFAULT;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int wfx_send_hif_msg_open(struct inode *inode, struct file *file)
-{
-	struct dbgfs_hif_msg *context = kzalloc(sizeof(*context), GFP_KERNEL);
+अटल पूर्णांक wfx_send_hअगर_msg_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dbgfs_hअगर_msg *context = kzalloc(माप(*context), GFP_KERNEL);
 
-	if (!context)
-		return -ENOMEM;
-	context->wdev = inode->i_private;
+	अगर (!context)
+		वापस -ENOMEM;
+	context->wdev = inode->i_निजी;
 	init_completion(&context->complete);
-	file->private_data = context;
-	return 0;
-}
+	file->निजी_data = context;
+	वापस 0;
+पूर्ण
 
-static int wfx_send_hif_msg_release(struct inode *inode, struct file *file)
-{
-	struct dbgfs_hif_msg *context = file->private_data;
+अटल पूर्णांक wfx_send_hअगर_msg_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dbgfs_hअगर_msg *context = file->निजी_data;
 
-	kfree(context);
-	return 0;
-}
+	kमुक्त(context);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations wfx_send_hif_msg_fops = {
-	.open = wfx_send_hif_msg_open,
-	.release = wfx_send_hif_msg_release,
-	.write = wfx_send_hif_msg_write,
-	.read = wfx_send_hif_msg_read,
-};
+अटल स्थिर काष्ठा file_operations wfx_send_hअगर_msg_fops = अणु
+	.खोलो = wfx_send_hअगर_msg_खोलो,
+	.release = wfx_send_hअगर_msg_release,
+	.ग_लिखो = wfx_send_hअगर_msg_ग_लिखो,
+	.पढ़ो = wfx_send_hअगर_msg_पढ़ो,
+पूर्ण;
 
-static int wfx_ps_timeout_set(void *data, u64 val)
-{
-	struct wfx_dev *wdev = (struct wfx_dev *)data;
-	struct wfx_vif *wvif;
+अटल पूर्णांक wfx_ps_समयout_set(व्योम *data, u64 val)
+अणु
+	काष्ठा wfx_dev *wdev = (काष्ठा wfx_dev *)data;
+	काष्ठा wfx_vअगर *wvअगर;
 
-	wdev->force_ps_timeout = val;
-	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
-		wfx_update_pm(wvif);
-	return 0;
-}
+	wdev->क्रमce_ps_समयout = val;
+	wvअगर = शून्य;
+	जबतक ((wvअगर = wvअगर_iterate(wdev, wvअगर)) != शून्य)
+		wfx_update_pm(wvअगर);
+	वापस 0;
+पूर्ण
 
-static int wfx_ps_timeout_get(void *data, u64 *val)
-{
-	struct wfx_dev *wdev = (struct wfx_dev *)data;
+अटल पूर्णांक wfx_ps_समयout_get(व्योम *data, u64 *val)
+अणु
+	काष्ठा wfx_dev *wdev = (काष्ठा wfx_dev *)data;
 
-	*val = wdev->force_ps_timeout;
-	return 0;
-}
+	*val = wdev->क्रमce_ps_समयout;
+	वापस 0;
+पूर्ण
 
-DEFINE_DEBUGFS_ATTRIBUTE(wfx_ps_timeout_fops, wfx_ps_timeout_get, wfx_ps_timeout_set, "%lld\n");
+DEFINE_DEBUGFS_ATTRIBUTE(wfx_ps_समयout_fops, wfx_ps_समयout_get, wfx_ps_समयout_set, "%lld\n");
 
-int wfx_debug_init(struct wfx_dev *wdev)
-{
-	struct dentry *d;
+पूर्णांक wfx_debug_init(काष्ठा wfx_dev *wdev)
+अणु
+	काष्ठा dentry *d;
 
 	d = debugfs_create_dir("wfx", wdev->hw->wiphy->debugfsdir);
 	debugfs_create_file("counters", 0444, d, wdev, &wfx_counters_fops);
 	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("tx_power_loop", 0444, d, wdev,
-			    &wfx_tx_power_loop_fops);
+			    &wfx_tx_घातer_loop_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
 	debugfs_create_file("send_hif_msg", 0600, d, wdev,
-			    &wfx_send_hif_msg_fops);
-	debugfs_create_file("ps_timeout", 0600, d, wdev, &wfx_ps_timeout_fops);
+			    &wfx_send_hअगर_msg_fops);
+	debugfs_create_file("ps_timeout", 0600, d, wdev, &wfx_ps_समयout_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

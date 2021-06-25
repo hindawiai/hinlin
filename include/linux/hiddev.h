@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (c) 1999-2000 Vojtech Pavlik
  *
@@ -6,51 +7,51 @@
  */
 /*
  * 
- * Should you need to contact me, the author, you can do so either by
+ * Should you need to contact me, the author, you can करो so either by
  * e-mail - mail your message to <vojtech@suse.cz>, or by paper mail:
- * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Republic
+ * Vojtech Pavlik, Ucitelska 1576, Prague 8, 182 00 Czech Reखुला
  */
-#ifndef _HIDDEV_H
-#define _HIDDEV_H
+#अगर_अघोषित _HIDDEV_H
+#घोषणा _HIDDEV_H
 
-#include <uapi/linux/hiddev.h>
+#समावेश <uapi/linux/hiddev.h>
 
 
 /*
  * In-kernel definitions.
  */
 
-struct hiddev {
-	int minor;
-	int exist;
-	int open;
-	struct mutex existancelock;
-	wait_queue_head_t wait;
-	struct hid_device *hid;
-	struct list_head list;
+काष्ठा hiddev अणु
+	पूर्णांक minor;
+	पूर्णांक exist;
+	पूर्णांक खोलो;
+	काष्ठा mutex existancelock;
+	रुको_queue_head_t रुको;
+	काष्ठा hid_device *hid;
+	काष्ठा list_head list;
 	spinlock_t list_lock;
 	bool initialized;
-};
+पूर्ण;
 
-struct hid_device;
-struct hid_usage;
-struct hid_field;
-struct hid_report;
+काष्ठा hid_device;
+काष्ठा hid_usage;
+काष्ठा hid_field;
+काष्ठा hid_report;
 
-#ifdef CONFIG_USB_HIDDEV
-int hiddev_connect(struct hid_device *hid, unsigned int force);
-void hiddev_disconnect(struct hid_device *);
-void hiddev_hid_event(struct hid_device *hid, struct hid_field *field,
-		      struct hid_usage *usage, __s32 value);
-void hiddev_report_event(struct hid_device *hid, struct hid_report *report);
-#else
-static inline int hiddev_connect(struct hid_device *hid,
-		unsigned int force)
-{ return -1; }
-static inline void hiddev_disconnect(struct hid_device *hid) { }
-static inline void hiddev_hid_event(struct hid_device *hid, struct hid_field *field,
-		      struct hid_usage *usage, __s32 value) { }
-static inline void hiddev_report_event(struct hid_device *hid, struct hid_report *report) { }
-#endif
+#अगर_घोषित CONFIG_USB_HIDDEV
+पूर्णांक hiddev_connect(काष्ठा hid_device *hid, अचिन्हित पूर्णांक क्रमce);
+व्योम hiddev_disconnect(काष्ठा hid_device *);
+व्योम hiddev_hid_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
+		      काष्ठा hid_usage *usage, __s32 value);
+व्योम hiddev_report_event(काष्ठा hid_device *hid, काष्ठा hid_report *report);
+#अन्यथा
+अटल अंतरभूत पूर्णांक hiddev_connect(काष्ठा hid_device *hid,
+		अचिन्हित पूर्णांक क्रमce)
+अणु वापस -1; पूर्ण
+अटल अंतरभूत व्योम hiddev_disconnect(काष्ठा hid_device *hid) अणु पूर्ण
+अटल अंतरभूत व्योम hiddev_hid_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
+		      काष्ठा hid_usage *usage, __s32 value) अणु पूर्ण
+अटल अंतरभूत व्योम hiddev_report_event(काष्ठा hid_device *hid, काष्ठा hid_report *report) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

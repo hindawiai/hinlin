@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * mmp AXI peripharal clock operation source file
+ * mmp AXI peripharal घड़ी operation source file
  *
  * Copyright (C) 2012 Marvell
  * Chao Xie <xiechao.mail@gmail.com>
@@ -9,77 +10,77 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-#define to_clk_apmu(clk) (container_of(clk, struct clk_apmu, clk))
-struct clk_apmu {
-	struct clk_hw   hw;
-	void __iomem    *base;
+#घोषणा to_clk_apmu(clk) (container_of(clk, काष्ठा clk_apmu, clk))
+काष्ठा clk_apmu अणु
+	काष्ठा clk_hw   hw;
+	व्योम __iomem    *base;
 	u32		rst_mask;
 	u32		enable_mask;
 	spinlock_t	*lock;
-};
+पूर्ण;
 
-static int clk_apmu_enable(struct clk_hw *hw)
-{
-	struct clk_apmu *apmu = to_clk_apmu(hw);
-	unsigned long data;
-	unsigned long flags = 0;
+अटल पूर्णांक clk_apmu_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_apmu *apmu = to_clk_apmu(hw);
+	अचिन्हित दीर्घ data;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (apmu->lock)
+	अगर (apmu->lock)
 		spin_lock_irqsave(apmu->lock, flags);
 
-	data = readl_relaxed(apmu->base) | apmu->enable_mask;
-	writel_relaxed(data, apmu->base);
+	data = पढ़ोl_relaxed(apmu->base) | apmu->enable_mask;
+	ग_लिखोl_relaxed(data, apmu->base);
 
-	if (apmu->lock)
+	अगर (apmu->lock)
 		spin_unlock_irqrestore(apmu->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clk_apmu_disable(struct clk_hw *hw)
-{
-	struct clk_apmu *apmu = to_clk_apmu(hw);
-	unsigned long data;
-	unsigned long flags = 0;
+अटल व्योम clk_apmu_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_apmu *apmu = to_clk_apmu(hw);
+	अचिन्हित दीर्घ data;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (apmu->lock)
+	अगर (apmu->lock)
 		spin_lock_irqsave(apmu->lock, flags);
 
-	data = readl_relaxed(apmu->base) & ~apmu->enable_mask;
-	writel_relaxed(data, apmu->base);
+	data = पढ़ोl_relaxed(apmu->base) & ~apmu->enable_mask;
+	ग_लिखोl_relaxed(data, apmu->base);
 
-	if (apmu->lock)
+	अगर (apmu->lock)
 		spin_unlock_irqrestore(apmu->lock, flags);
-}
+पूर्ण
 
-static const struct clk_ops clk_apmu_ops = {
+अटल स्थिर काष्ठा clk_ops clk_apmu_ops = अणु
 	.enable = clk_apmu_enable,
 	.disable = clk_apmu_disable,
-};
+पूर्ण;
 
-struct clk *mmp_clk_register_apmu(const char *name, const char *parent_name,
-		void __iomem *base, u32 enable_mask, spinlock_t *lock)
-{
-	struct clk_apmu *apmu;
-	struct clk *clk;
-	struct clk_init_data init;
+काष्ठा clk *mmp_clk_रेजिस्टर_apmu(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		व्योम __iomem *base, u32 enable_mask, spinlock_t *lock)
+अणु
+	काष्ठा clk_apmu *apmu;
+	काष्ठा clk *clk;
+	काष्ठा clk_init_data init;
 
-	apmu = kzalloc(sizeof(*apmu), GFP_KERNEL);
-	if (!apmu)
-		return NULL;
+	apmu = kzalloc(माप(*apmu), GFP_KERNEL);
+	अगर (!apmu)
+		वापस शून्य;
 
 	init.name = name;
 	init.ops = &clk_apmu_ops;
 	init.flags = CLK_SET_RATE_PARENT;
-	init.parent_names = (parent_name ? &parent_name : NULL);
+	init.parent_names = (parent_name ? &parent_name : शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 
 	apmu->base = base;
@@ -87,10 +88,10 @@ struct clk *mmp_clk_register_apmu(const char *name, const char *parent_name,
 	apmu->lock = lock;
 	apmu->hw.init = &init;
 
-	clk = clk_register(NULL, &apmu->hw);
+	clk = clk_रेजिस्टर(शून्य, &apmu->hw);
 
-	if (IS_ERR(clk))
-		kfree(apmu);
+	अगर (IS_ERR(clk))
+		kमुक्त(apmu);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण

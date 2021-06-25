@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/mm.h>
-#include <asm/mmu_context.h>
-#include <asm/cache_insns.h>
-#include <asm/cacheflush.h>
-#include <asm/traps.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/cache_insns.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/traps.h>
 
 /*
  * Write back the dirty D-caches, but not invalidate them.
@@ -11,17 +12,17 @@
  * START: Virtual Address (U0, P1, or P3)
  * SIZE: Size of the region.
  */
-static void sh4__flush_wback_region(void *start, int size)
-{
-	reg_size_t aligned_start, v, cnt, end;
+अटल व्योम sh4__flush_wback_region(व्योम *start, पूर्णांक size)
+अणु
+	reg_माप_प्रकार aligned_start, v, cnt, end;
 
-	aligned_start = register_align(start);
+	aligned_start = रेजिस्टर_align(start);
 	v = aligned_start & ~(L1_CACHE_BYTES-1);
 	end = (aligned_start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 	cnt = (end - v) / L1_CACHE_BYTES;
 
-	while (cnt >= 8) {
+	जबतक (cnt >= 8) अणु
 		__ocbwb(v); v += L1_CACHE_BYTES;
 		__ocbwb(v); v += L1_CACHE_BYTES;
 		__ocbwb(v); v += L1_CACHE_BYTES;
@@ -31,13 +32,13 @@ static void sh4__flush_wback_region(void *start, int size)
 		__ocbwb(v); v += L1_CACHE_BYTES;
 		__ocbwb(v); v += L1_CACHE_BYTES;
 		cnt -= 8;
-	}
+	पूर्ण
 
-	while (cnt) {
+	जबतक (cnt) अणु
 		__ocbwb(v); v += L1_CACHE_BYTES;
 		cnt--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Write back the dirty D-caches and invalidate them.
@@ -45,17 +46,17 @@ static void sh4__flush_wback_region(void *start, int size)
  * START: Virtual Address (U0, P1, or P3)
  * SIZE: Size of the region.
  */
-static void sh4__flush_purge_region(void *start, int size)
-{
-	reg_size_t aligned_start, v, cnt, end;
+अटल व्योम sh4__flush_purge_region(व्योम *start, पूर्णांक size)
+अणु
+	reg_माप_प्रकार aligned_start, v, cnt, end;
 
-	aligned_start = register_align(start);
+	aligned_start = रेजिस्टर_align(start);
 	v = aligned_start & ~(L1_CACHE_BYTES-1);
 	end = (aligned_start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 	cnt = (end - v) / L1_CACHE_BYTES;
 
-	while (cnt >= 8) {
+	जबतक (cnt >= 8) अणु
 		__ocbp(v); v += L1_CACHE_BYTES;
 		__ocbp(v); v += L1_CACHE_BYTES;
 		__ocbp(v); v += L1_CACHE_BYTES;
@@ -65,27 +66,27 @@ static void sh4__flush_purge_region(void *start, int size)
 		__ocbp(v); v += L1_CACHE_BYTES;
 		__ocbp(v); v += L1_CACHE_BYTES;
 		cnt -= 8;
-	}
-	while (cnt) {
+	पूर्ण
+	जबतक (cnt) अणु
 		__ocbp(v); v += L1_CACHE_BYTES;
 		cnt--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * No write back please
+ * No ग_लिखो back please
  */
-static void sh4__flush_invalidate_region(void *start, int size)
-{
-	reg_size_t aligned_start, v, cnt, end;
+अटल व्योम sh4__flush_invalidate_region(व्योम *start, पूर्णांक size)
+अणु
+	reg_माप_प्रकार aligned_start, v, cnt, end;
 
-	aligned_start = register_align(start);
+	aligned_start = रेजिस्टर_align(start);
 	v = aligned_start & ~(L1_CACHE_BYTES-1);
 	end = (aligned_start + size + L1_CACHE_BYTES-1)
 		& ~(L1_CACHE_BYTES-1);
 	cnt = (end - v) / L1_CACHE_BYTES;
 
-	while (cnt >= 8) {
+	जबतक (cnt >= 8) अणु
 		__ocbi(v); v += L1_CACHE_BYTES;
 		__ocbi(v); v += L1_CACHE_BYTES;
 		__ocbi(v); v += L1_CACHE_BYTES;
@@ -95,17 +96,17 @@ static void sh4__flush_invalidate_region(void *start, int size)
 		__ocbi(v); v += L1_CACHE_BYTES;
 		__ocbi(v); v += L1_CACHE_BYTES;
 		cnt -= 8;
-	}
+	पूर्ण
 
-	while (cnt) {
+	जबतक (cnt) अणु
 		__ocbi(v); v += L1_CACHE_BYTES;
 		cnt--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init sh4__flush_region_init(void)
-{
+व्योम __init sh4__flush_region_init(व्योम)
+अणु
 	__flush_wback_region		= sh4__flush_wback_region;
 	__flush_invalidate_region	= sh4__flush_invalidate_region;
 	__flush_purge_region		= sh4__flush_purge_region;
-}
+पूर्ण

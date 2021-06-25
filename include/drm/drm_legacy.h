@@ -1,24 +1,25 @@
-#ifndef __DRM_DRM_LEGACY_H__
-#define __DRM_DRM_LEGACY_H__
+<शैली गुरु>
+#अगर_अघोषित __DRM_DRM_LEGACY_H__
+#घोषणा __DRM_DRM_LEGACY_H__
 /*
- * Legacy driver interfaces for the Direct Rendering Manager
+ * Legacy driver पूर्णांकerfaces क्रम the Direct Rendering Manager
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
  * Copyright (c) 2009-2010, Code Aurora Forum.
  * All rights reserved.
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *   Daniel Vetter <daniel.vetter@ffwll.ch>
  *
  * Author: Rickard E. (Rik) Faith <faith@valinux.com>
  * Author: Gareth Hughes <gareth@valinux.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -33,205 +34,205 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <drm/drm.h>
-#include <drm/drm_auth.h>
-#include <drm/drm_hashtab.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_auth.h>
+#समावेश <drm/drm_hashtab.h>
 
-struct drm_device;
-struct drm_driver;
-struct file;
-struct pci_driver;
+काष्ठा drm_device;
+काष्ठा drm_driver;
+काष्ठा file;
+काष्ठा pci_driver;
 
 /*
- * Legacy Support for palateontologic DRM drivers
+ * Legacy Support क्रम palateontologic DRM drivers
  *
- * If you add a new driver and it uses any of these functions or structures,
- * you're doing it terribly wrong.
+ * If you add a new driver and it uses any of these functions or काष्ठाures,
+ * you're करोing it terribly wrong.
  */
 
 /**
  * DMA buffer.
  */
-struct drm_buf {
-	int idx;		       /**< Index into master buflist */
-	int total;		       /**< Buffer size */
-	int order;		       /**< log-base-2(total) */
-	int used;		       /**< Amount of buffer in use (for DMA) */
-	unsigned long offset;	       /**< Byte offset (used internally) */
-	void *address;		       /**< Address of buffer */
-	unsigned long bus_address;     /**< Bus address of buffer */
-	struct drm_buf *next;	       /**< Kernel-only: used for free list */
-	__volatile__ int waiting;      /**< On kernel DMA queue */
-	__volatile__ int pending;      /**< On hardware DMA queue */
-	struct drm_file *file_priv;    /**< Private of holding file descr */
-	int context;		       /**< Kernel queue for this buffer */
-	int while_locked;	       /**< Dispatch this buffer while locked */
-	enum {
+काष्ठा drm_buf अणु
+	पूर्णांक idx;		       /**< Index पूर्णांकo master buflist */
+	पूर्णांक total;		       /**< Buffer size */
+	पूर्णांक order;		       /**< log-base-2(total) */
+	पूर्णांक used;		       /**< Amount of buffer in use (क्रम DMA) */
+	अचिन्हित दीर्घ offset;	       /**< Byte offset (used पूर्णांकernally) */
+	व्योम *address;		       /**< Address of buffer */
+	अचिन्हित दीर्घ bus_address;     /**< Bus address of buffer */
+	काष्ठा drm_buf *next;	       /**< Kernel-only: used क्रम मुक्त list */
+	__अस्थिर__ पूर्णांक रुकोing;      /**< On kernel DMA queue */
+	__अस्थिर__ पूर्णांक pending;      /**< On hardware DMA queue */
+	काष्ठा drm_file *file_priv;    /**< Private of holding file descr */
+	पूर्णांक context;		       /**< Kernel queue क्रम this buffer */
+	पूर्णांक जबतक_locked;	       /**< Dispatch this buffer जबतक locked */
+	क्रमागत अणु
 		DRM_LIST_NONE = 0,
 		DRM_LIST_FREE = 1,
 		DRM_LIST_WAIT = 2,
 		DRM_LIST_PEND = 3,
 		DRM_LIST_PRIO = 4,
 		DRM_LIST_RECLAIM = 5
-	} list;			       /**< Which list we're on */
+	पूर्ण list;			       /**< Which list we're on */
 
-	int dev_priv_size;		 /**< Size of buffer private storage */
-	void *dev_private;		 /**< Per-buffer private storage */
-};
+	पूर्णांक dev_priv_size;		 /**< Size of buffer निजी storage */
+	व्योम *dev_निजी;		 /**< Per-buffer निजी storage */
+पूर्ण;
 
-typedef struct drm_dma_handle {
+प्रकार काष्ठा drm_dma_handle अणु
 	dma_addr_t busaddr;
-	void *vaddr;
-	size_t size;
-} drm_dma_handle_t;
+	व्योम *vaddr;
+	माप_प्रकार size;
+पूर्ण drm_dma_handle_t;
 
 /**
- * Buffer entry.  There is one of this for each buffer size order.
+ * Buffer entry.  There is one of this क्रम each buffer size order.
  */
-struct drm_buf_entry {
-	int buf_size;			/**< size */
-	int buf_count;			/**< number of buffers */
-	struct drm_buf *buflist;		/**< buffer list */
-	int seg_count;
-	int page_order;
-	struct drm_dma_handle **seglist;
+काष्ठा drm_buf_entry अणु
+	पूर्णांक buf_size;			/**< size */
+	पूर्णांक buf_count;			/**< number of buffers */
+	काष्ठा drm_buf *buflist;		/**< buffer list */
+	पूर्णांक seg_count;
+	पूर्णांक page_order;
+	काष्ठा drm_dma_handle **seglist;
 
-	int low_mark;			/**< Low water mark */
-	int high_mark;			/**< High water mark */
-};
+	पूर्णांक low_mark;			/**< Low water mark */
+	पूर्णांक high_mark;			/**< High water mark */
+पूर्ण;
 
 /**
  * DMA data.
  */
-struct drm_device_dma {
+काष्ठा drm_device_dma अणु
 
-	struct drm_buf_entry bufs[DRM_MAX_ORDER + 1];	/**< buffers, grouped by their size order */
-	int buf_count;			/**< total number of buffers */
-	struct drm_buf **buflist;		/**< Vector of pointers into drm_device_dma::bufs */
-	int seg_count;
-	int page_count;			/**< number of pages */
-	unsigned long *pagelist;	/**< page list */
-	unsigned long byte_count;
-	enum {
+	काष्ठा drm_buf_entry bufs[DRM_MAX_ORDER + 1];	/**< buffers, grouped by their size order */
+	पूर्णांक buf_count;			/**< total number of buffers */
+	काष्ठा drm_buf **buflist;		/**< Vector of poपूर्णांकers पूर्णांकo drm_device_dma::bufs */
+	पूर्णांक seg_count;
+	पूर्णांक page_count;			/**< number of pages */
+	अचिन्हित दीर्घ *pagelist;	/**< page list */
+	अचिन्हित दीर्घ byte_count;
+	क्रमागत अणु
 		_DRM_DMA_USE_AGP = 0x01,
 		_DRM_DMA_USE_SG = 0x02,
 		_DRM_DMA_USE_FB = 0x04,
 		_DRM_DMA_USE_PCI_RO = 0x08
-	} flags;
+	पूर्ण flags;
 
-};
+पूर्ण;
 
 /**
  * Scatter-gather memory.
  */
-struct drm_sg_mem {
-	unsigned long handle;
-	void *virtual;
-	int pages;
-	struct page **pagelist;
+काष्ठा drm_sg_mem अणु
+	अचिन्हित दीर्घ handle;
+	व्योम *भव;
+	पूर्णांक pages;
+	काष्ठा page **pagelist;
 	dma_addr_t *busaddr;
-};
+पूर्ण;
 
 /**
  * Kernel side of a mapping
  */
-struct drm_local_map {
-	dma_addr_t offset;	 /**< Requested physical address (0 for SAREA)*/
-	unsigned long size;	 /**< Requested physical size (bytes) */
-	enum drm_map_type type;	 /**< Type of memory to map */
-	enum drm_map_flags flags;	 /**< Flags */
-	void *handle;		 /**< User-space: "Handle" to pass to mmap() */
-				 /**< Kernel-space: kernel-virtual address */
-	int mtrr;		 /**< MTRR slot used */
-};
+काष्ठा drm_local_map अणु
+	dma_addr_t offset;	 /**< Requested physical address (0 क्रम SAREA)*/
+	अचिन्हित दीर्घ size;	 /**< Requested physical size (bytes) */
+	क्रमागत drm_map_type type;	 /**< Type of memory to map */
+	क्रमागत drm_map_flags flags;	 /**< Flags */
+	व्योम *handle;		 /**< User-space: "Handle" to pass to mmap() */
+				 /**< Kernel-space: kernel-भव address */
+	पूर्णांक mtrr;		 /**< MTRR slot used */
+पूर्ण;
 
-typedef struct drm_local_map drm_local_map_t;
+प्रकार काष्ठा drm_local_map drm_local_map_t;
 
 /**
  * Mappings list
  */
-struct drm_map_list {
-	struct list_head head;		/**< list head */
-	struct drm_hash_item hash;
-	struct drm_local_map *map;	/**< mapping */
-	uint64_t user_token;
-	struct drm_master *master;
-};
+काष्ठा drm_map_list अणु
+	काष्ठा list_head head;		/**< list head */
+	काष्ठा drm_hash_item hash;
+	काष्ठा drm_local_map *map;	/**< mapping */
+	uपूर्णांक64_t user_token;
+	काष्ठा drm_master *master;
+पूर्ण;
 
-int drm_legacy_addmap(struct drm_device *d, resource_size_t offset,
-		      unsigned int size, enum drm_map_type type,
-		      enum drm_map_flags flags, struct drm_local_map **map_p);
-struct drm_local_map *drm_legacy_findmap(struct drm_device *dev, unsigned int token);
-void drm_legacy_rmmap(struct drm_device *d, struct drm_local_map *map);
-int drm_legacy_rmmap_locked(struct drm_device *d, struct drm_local_map *map);
-struct drm_local_map *drm_legacy_getsarea(struct drm_device *dev);
-int drm_legacy_mmap(struct file *filp, struct vm_area_struct *vma);
+पूर्णांक drm_legacy_addmap(काष्ठा drm_device *d, resource_माप_प्रकार offset,
+		      अचिन्हित पूर्णांक size, क्रमागत drm_map_type type,
+		      क्रमागत drm_map_flags flags, काष्ठा drm_local_map **map_p);
+काष्ठा drm_local_map *drm_legacy_findmap(काष्ठा drm_device *dev, अचिन्हित पूर्णांक token);
+व्योम drm_legacy_rmmap(काष्ठा drm_device *d, काष्ठा drm_local_map *map);
+पूर्णांक drm_legacy_rmmap_locked(काष्ठा drm_device *d, काष्ठा drm_local_map *map);
+काष्ठा drm_local_map *drm_legacy_माला_लोarea(काष्ठा drm_device *dev);
+पूर्णांक drm_legacy_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma);
 
-int drm_legacy_addbufs_agp(struct drm_device *d, struct drm_buf_desc *req);
-int drm_legacy_addbufs_pci(struct drm_device *d, struct drm_buf_desc *req);
+पूर्णांक drm_legacy_addbufs_agp(काष्ठा drm_device *d, काष्ठा drm_buf_desc *req);
+पूर्णांक drm_legacy_addbufs_pci(काष्ठा drm_device *d, काष्ठा drm_buf_desc *req);
 
 /**
- * Test that the hardware lock is held by the caller, returning otherwise.
+ * Test that the hardware lock is held by the caller, वापसing otherwise.
  *
  * \param dev DRM device.
- * \param filp file pointer of the caller.
+ * \param filp file poपूर्णांकer of the caller.
  */
-#define LOCK_TEST_WITH_RETURN( dev, _file_priv )				\
-do {										\
-	if (!_DRM_LOCK_IS_HELD(_file_priv->master->lock.hw_lock->lock) ||	\
-	    _file_priv->master->lock.file_priv != _file_priv)	{		\
+#घोषणा LOCK_TEST_WITH_RETURN( dev, _file_priv )				\
+करो अणु										\
+	अगर (!_DRM_LOCK_IS_HELD(_file_priv->master->lock.hw_lock->lock) ||	\
+	    _file_priv->master->lock.file_priv != _file_priv)	अणु		\
 		DRM_ERROR( "%s called without lock held, held  %d owner %p %p\n",\
 			   __func__, _DRM_LOCK_IS_HELD(_file_priv->master->lock.hw_lock->lock),\
 			   _file_priv->master->lock.file_priv, _file_priv);	\
-		return -EINVAL;							\
-	}									\
-} while (0)
+		वापस -EINVAL;							\
+	पूर्ण									\
+पूर्ण जबतक (0)
 
-void drm_legacy_idlelock_take(struct drm_lock_data *lock);
-void drm_legacy_idlelock_release(struct drm_lock_data *lock);
+व्योम drm_legacy_idlelock_take(काष्ठा drm_lock_data *lock);
+व्योम drm_legacy_idlelock_release(काष्ठा drm_lock_data *lock);
 
 /* drm_pci.c */
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size,
-				     size_t align);
-void drm_pci_free(struct drm_device *dev, struct drm_dma_handle *dmah);
+काष्ठा drm_dma_handle *drm_pci_alloc(काष्ठा drm_device *dev, माप_प्रकार size,
+				     माप_प्रकार align);
+व्योम drm_pci_मुक्त(काष्ठा drm_device *dev, काष्ठा drm_dma_handle *dmah);
 
-int drm_legacy_pci_init(const struct drm_driver *driver,
-			struct pci_driver *pdriver);
-void drm_legacy_pci_exit(const struct drm_driver *driver,
-			 struct pci_driver *pdriver);
+पूर्णांक drm_legacy_pci_init(स्थिर काष्ठा drm_driver *driver,
+			काष्ठा pci_driver *pdriver);
+व्योम drm_legacy_pci_निकास(स्थिर काष्ठा drm_driver *driver,
+			 काष्ठा pci_driver *pdriver);
 
-#else
+#अन्यथा
 
-static inline struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev,
-						   size_t size, size_t align)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा drm_dma_handle *drm_pci_alloc(काष्ठा drm_device *dev,
+						   माप_प्रकार size, माप_प्रकार align)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void drm_pci_free(struct drm_device *dev,
-				struct drm_dma_handle *dmah)
-{
-}
+अटल अंतरभूत व्योम drm_pci_मुक्त(काष्ठा drm_device *dev,
+				काष्ठा drm_dma_handle *dmah)
+अणु
+पूर्ण
 
-static inline int drm_legacy_pci_init(const struct drm_driver *driver,
-				      struct pci_driver *pdriver)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक drm_legacy_pci_init(स्थिर काष्ठा drm_driver *driver,
+				      काष्ठा pci_driver *pdriver)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void drm_legacy_pci_exit(const struct drm_driver *driver,
-				       struct pci_driver *pdriver)
-{
-}
+अटल अंतरभूत व्योम drm_legacy_pci_निकास(स्थिर काष्ठा drm_driver *driver,
+				       काष्ठा pci_driver *pdriver)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /* drm_memory.c */
-void drm_legacy_ioremap(struct drm_local_map *map, struct drm_device *dev);
-void drm_legacy_ioremap_wc(struct drm_local_map *map, struct drm_device *dev);
-void drm_legacy_ioremapfree(struct drm_local_map *map, struct drm_device *dev);
+व्योम drm_legacy_ioremap(काष्ठा drm_local_map *map, काष्ठा drm_device *dev);
+व्योम drm_legacy_ioremap_wc(काष्ठा drm_local_map *map, काष्ठा drm_device *dev);
+व्योम drm_legacy_ioremapमुक्त(काष्ठा drm_local_map *map, काष्ठा drm_device *dev);
 
-#endif /* __DRM_DRM_LEGACY_H__ */
+#पूर्ण_अगर /* __DRM_DRM_LEGACY_H__ */

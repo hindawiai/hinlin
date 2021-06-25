@@ -1,120 +1,121 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Clovertrail PNW Camera Imaging ISP subsystem.
+ * Support क्रम Clovertrail PNW Camera Imaging ISP subप्रणाली.
  *
  * Copyright (c) 2012 Intel Corporation. All Rights Reserved.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  *
  */
 
-#ifndef __ATOMISP_ACC_H__
-#define __ATOMISP_ACC_H__
+#अगर_अघोषित __ATOMISP_ACC_H__
+#घोषणा __ATOMISP_ACC_H__
 
-#include "../../include/linux/atomisp.h"
-#include "atomisp_internal.h"
+#समावेश "../../include/linux/atomisp.h"
+#समावेश "atomisp_internal.h"
 
-#include "ia_css_types.h"
+#समावेश "ia_css_types.h"
 
 /*
- * Interface functions for AtomISP driver acceleration API implementation.
+ * Interface functions क्रम AtomISP driver acceleration API implementation.
  */
 
-struct atomisp_sub_device;
+काष्ठा atomisp_sub_device;
 
-void atomisp_acc_cleanup(struct atomisp_device *isp);
+व्योम atomisp_acc_cleanup(काष्ठा atomisp_device *isp);
 
 /*
  * Free up any allocated resources.
- * Must be called each time when the device is closed.
- * Note that there isn't corresponding open() call;
- * this function may be called sequentially multiple times.
- * Must be called to free up resources before driver is unloaded.
+ * Must be called each समय when the device is बंदd.
+ * Note that there isn't corresponding खोलो() call;
+ * this function may be called sequentially multiple बार.
+ * Must be called to मुक्त up resources beक्रमe driver is unloaded.
  */
-void atomisp_acc_release(struct atomisp_sub_device *asd);
+व्योम atomisp_acc_release(काष्ठा atomisp_sub_device *asd);
 
 /* Load acceleration binary. DEPRECATED. */
-int atomisp_acc_load(struct atomisp_sub_device *asd,
-		     struct atomisp_acc_fw_load *fw);
+पूर्णांक atomisp_acc_load(काष्ठा atomisp_sub_device *asd,
+		     काष्ठा atomisp_acc_fw_load *fw);
 
-/* Load acceleration binary with specified properties */
-int atomisp_acc_load_to_pipe(struct atomisp_sub_device *asd,
-			     struct atomisp_acc_fw_load_to_pipe *fw);
+/* Load acceleration binary with specअगरied properties */
+पूर्णांक atomisp_acc_load_to_pipe(काष्ठा atomisp_sub_device *asd,
+			     काष्ठा atomisp_acc_fw_load_to_pipe *fw);
 
-/* Unload specified acceleration binary */
-int atomisp_acc_unload(struct atomisp_sub_device *asd,
-		       unsigned int *handle);
+/* Unload specअगरied acceleration binary */
+पूर्णांक atomisp_acc_unload(काष्ठा atomisp_sub_device *asd,
+		       अचिन्हित पूर्णांक *handle);
 
 /*
- * Map a memory region into ISP memory space.
+ * Map a memory region पूर्णांकo ISP memory space.
  */
-int atomisp_acc_map(struct atomisp_sub_device *asd,
-		    struct atomisp_acc_map *map);
+पूर्णांक atomisp_acc_map(काष्ठा atomisp_sub_device *asd,
+		    काष्ठा atomisp_acc_map *map);
 
 /*
  * Unmap a mapped memory region.
  */
-int atomisp_acc_unmap(struct atomisp_sub_device *asd,
-		      struct atomisp_acc_map *map);
+पूर्णांक atomisp_acc_unmap(काष्ठा atomisp_sub_device *asd,
+		      काष्ठा atomisp_acc_map *map);
 
 /*
  * Set acceleration binary argument to a previously mapped memory region.
  */
-int atomisp_acc_s_mapped_arg(struct atomisp_sub_device *asd,
-			     struct atomisp_acc_s_mapped_arg *arg);
+पूर्णांक atomisp_acc_s_mapped_arg(काष्ठा atomisp_sub_device *asd,
+			     काष्ठा atomisp_acc_s_mapped_arg *arg);
 
 /*
  * Start acceleration.
  * Return immediately, acceleration is left running in background.
- * Specify either acceleration binary or pipeline which to start.
+ * Specअगरy either acceleration binary or pipeline which to start.
  */
-int atomisp_acc_start(struct atomisp_sub_device *asd,
-		      unsigned int *handle);
+पूर्णांक atomisp_acc_start(काष्ठा atomisp_sub_device *asd,
+		      अचिन्हित पूर्णांक *handle);
 
 /*
  * Wait until acceleration finishes.
  * This MUST be called after each acceleration has been started.
- * Specify either acceleration binary or pipeline handle.
+ * Specअगरy either acceleration binary or pipeline handle.
  */
-int atomisp_acc_wait(struct atomisp_sub_device *asd,
-		     unsigned int *handle);
+पूर्णांक atomisp_acc_रुको(काष्ठा atomisp_sub_device *asd,
+		     अचिन्हित पूर्णांक *handle);
 
 /*
- * Used by ISR to notify ACC stage finished.
- * This is internally used and does not export as IOCTL.
+ * Used by ISR to notअगरy ACC stage finished.
+ * This is पूर्णांकernally used and करोes not export as IOCTL.
  */
-void atomisp_acc_done(struct atomisp_sub_device *asd, unsigned int handle);
+व्योम atomisp_acc_करोne(काष्ठा atomisp_sub_device *asd, अचिन्हित पूर्णांक handle);
 
 /*
  * Appends the loaded acceleration binary extensions to the
- * current ISP mode. Must be called just before atomisp_css_start().
+ * current ISP mode. Must be called just beक्रमe atomisp_css_start().
  */
-int atomisp_acc_load_extensions(struct atomisp_sub_device *asd);
+पूर्णांक atomisp_acc_load_extensions(काष्ठा atomisp_sub_device *asd);
 
 /*
  * Must be called after streaming is stopped:
  * unloads any loaded acceleration extensions.
  */
-void atomisp_acc_unload_extensions(struct atomisp_sub_device *asd);
+व्योम atomisp_acc_unload_extensions(काष्ठा atomisp_sub_device *asd);
 
 /*
  * Set acceleration firmware flags.
  */
-int atomisp_acc_set_state(struct atomisp_sub_device *asd,
-			  struct atomisp_acc_state *arg);
+पूर्णांक atomisp_acc_set_state(काष्ठा atomisp_sub_device *asd,
+			  काष्ठा atomisp_acc_state *arg);
 
 /*
  * Get acceleration firmware flags.
  */
-int atomisp_acc_get_state(struct atomisp_sub_device *asd,
-			  struct atomisp_acc_state *arg);
+पूर्णांक atomisp_acc_get_state(काष्ठा atomisp_sub_device *asd,
+			  काष्ठा atomisp_acc_state *arg);
 
-#endif /* __ATOMISP_ACC_H__ */
+#पूर्ण_अगर /* __ATOMISP_ACC_H__ */

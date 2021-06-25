@@ -1,144 +1,145 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * (c) Copyright 2006 Benjamin Herrenschmidt, IBM Corp.
  *                    <benh@kernel.crashing.org>
  */
 
-#ifndef _ASM_POWERPC_DCR_NATIVE_H
-#define _ASM_POWERPC_DCR_NATIVE_H
-#ifdef __KERNEL__
-#ifndef __ASSEMBLY__
+#अगर_अघोषित _ASM_POWERPC_DCR_NATIVE_H
+#घोषणा _ASM_POWERPC_DCR_NATIVE_H
+#अगर_घोषित __KERNEL__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/spinlock.h>
-#include <asm/cputable.h>
-#include <asm/cpu_has_feature.h>
-#include <linux/stringify.h>
+#समावेश <linux/spinlock.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/cpu_has_feature.h>
+#समावेश <linux/stringअगरy.h>
 
-typedef struct {
-	unsigned int base;
-} dcr_host_native_t;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक base;
+पूर्ण dcr_host_native_t;
 
-static inline bool dcr_map_ok_native(dcr_host_native_t host)
-{
-	return true;
-}
+अटल अंतरभूत bool dcr_map_ok_native(dcr_host_native_t host)
+अणु
+	वापस true;
+पूर्ण
 
-#define dcr_map_native(dev, dcr_n, dcr_c) \
-	((dcr_host_native_t){ .base = (dcr_n) })
-#define dcr_unmap_native(host, dcr_c)		do {} while (0)
-#define dcr_read_native(host, dcr_n)		mfdcr(dcr_n + host.base)
-#define dcr_write_native(host, dcr_n, value)	mtdcr(dcr_n + host.base, value)
+#घोषणा dcr_map_native(dev, dcr_n, dcr_c) \
+	((dcr_host_native_t)अणु .base = (dcr_n) पूर्ण)
+#घोषणा dcr_unmap_native(host, dcr_c)		करो अणुपूर्ण जबतक (0)
+#घोषणा dcr_पढ़ो_native(host, dcr_n)		mfdcr(dcr_n + host.base)
+#घोषणा dcr_ग_लिखो_native(host, dcr_n, value)	mtdcr(dcr_n + host.base, value)
 
 /* Table based DCR accessors */
-extern void __mtdcr(unsigned int reg, unsigned int val);
-extern unsigned int __mfdcr(unsigned int reg);
+बाह्य व्योम __mtdcr(अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+बाह्य अचिन्हित पूर्णांक __mfdcr(अचिन्हित पूर्णांक reg);
 
-/* mfdcrx/mtdcrx instruction based accessors. We hand code
+/* mfdcrx/mtdcrx inकाष्ठाion based accessors. We hand code
  * the opcodes in order not to depend on newer binutils
  */
-static inline unsigned int mfdcrx(unsigned int reg)
-{
-	unsigned int ret;
-	asm volatile(".long 0x7c000206 | (%0 << 21) | (%1 << 16)"
+अटल अंतरभूत अचिन्हित पूर्णांक mfdcrx(अचिन्हित पूर्णांक reg)
+अणु
+	अचिन्हित पूर्णांक ret;
+	यंत्र अस्थिर(".long 0x7c000206 | (%0 << 21) | (%1 << 16)"
 		     : "=r" (ret) : "r" (reg));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void mtdcrx(unsigned int reg, unsigned int val)
-{
-	asm volatile(".long 0x7c000306 | (%0 << 21) | (%1 << 16)"
+अटल अंतरभूत व्योम mtdcrx(अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val)
+अणु
+	यंत्र अस्थिर(".long 0x7c000306 | (%0 << 21) | (%1 << 16)"
 		     : : "r" (val), "r" (reg));
-}
+पूर्ण
 
-#define mfdcr(rn)						\
-	({unsigned int rval;					\
-	if (__builtin_constant_p(rn) && rn < 1024)		\
-		asm volatile("mfdcr %0, %1" : "=r" (rval)	\
+#घोषणा mfdcr(rn)						\
+	(अणुअचिन्हित पूर्णांक rval;					\
+	अगर (__builtin_स्थिरant_p(rn) && rn < 1024)		\
+		यंत्र अस्थिर("mfdcr %0, %1" : "=r" (rval)	\
 			      : "n" (rn));			\
-	else if (likely(cpu_has_feature(CPU_FTR_INDEXED_DCR)))	\
+	अन्यथा अगर (likely(cpu_has_feature(CPU_FTR_INDEXED_DCR)))	\
 		rval = mfdcrx(rn);				\
-	else							\
+	अन्यथा							\
 		rval = __mfdcr(rn);				\
-	rval;})
+	rval;पूर्ण)
 
-#define mtdcr(rn, v)						\
-do {								\
-	if (__builtin_constant_p(rn) && rn < 1024)		\
-		asm volatile("mtdcr %0, %1"			\
+#घोषणा mtdcr(rn, v)						\
+करो अणु								\
+	अगर (__builtin_स्थिरant_p(rn) && rn < 1024)		\
+		यंत्र अस्थिर("mtdcr %0, %1"			\
 			      : : "n" (rn), "r" (v));		\
-	else if (likely(cpu_has_feature(CPU_FTR_INDEXED_DCR)))	\
+	अन्यथा अगर (likely(cpu_has_feature(CPU_FTR_INDEXED_DCR)))	\
 		mtdcrx(rn, v);					\
-	else							\
+	अन्यथा							\
 		__mtdcr(rn, v);					\
-} while (0)
+पूर्ण जबतक (0)
 
-/* R/W of indirect DCRs make use of standard naming conventions for DCRs */
-extern spinlock_t dcr_ind_lock;
+/* R/W of indirect DCRs make use of standard naming conventions क्रम DCRs */
+बाह्य spinlock_t dcr_ind_lock;
 
-static inline unsigned __mfdcri(int base_addr, int base_data, int reg)
-{
-	unsigned long flags;
-	unsigned int val;
+अटल अंतरभूत अचिन्हित __mfdcri(पूर्णांक base_addr, पूर्णांक base_data, पूर्णांक reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
 
 	spin_lock_irqsave(&dcr_ind_lock, flags);
-	if (cpu_has_feature(CPU_FTR_INDEXED_DCR)) {
+	अगर (cpu_has_feature(CPU_FTR_INDEXED_DCR)) अणु
 		mtdcrx(base_addr, reg);
 		val = mfdcrx(base_data);
-	} else {
+	पूर्ण अन्यथा अणु
 		__mtdcr(base_addr, reg);
 		val = __mfdcr(base_data);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dcr_ind_lock, flags);
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void __mtdcri(int base_addr, int base_data, int reg,
-			    unsigned val)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम __mtdcri(पूर्णांक base_addr, पूर्णांक base_data, पूर्णांक reg,
+			    अचिन्हित val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dcr_ind_lock, flags);
-	if (cpu_has_feature(CPU_FTR_INDEXED_DCR)) {
+	अगर (cpu_has_feature(CPU_FTR_INDEXED_DCR)) अणु
 		mtdcrx(base_addr, reg);
 		mtdcrx(base_data, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		__mtdcr(base_addr, reg);
 		__mtdcr(base_data, val);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dcr_ind_lock, flags);
-}
+पूर्ण
 
-static inline void __dcri_clrset(int base_addr, int base_data, int reg,
-				 unsigned clr, unsigned set)
-{
-	unsigned long flags;
-	unsigned int val;
+अटल अंतरभूत व्योम __dcri_clrset(पूर्णांक base_addr, पूर्णांक base_data, पूर्णांक reg,
+				 अचिन्हित clr, अचिन्हित set)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
 
 	spin_lock_irqsave(&dcr_ind_lock, flags);
-	if (cpu_has_feature(CPU_FTR_INDEXED_DCR)) {
+	अगर (cpu_has_feature(CPU_FTR_INDEXED_DCR)) अणु
 		mtdcrx(base_addr, reg);
 		val = (mfdcrx(base_data) & ~clr) | set;
 		mtdcrx(base_data, val);
-	} else {
+	पूर्ण अन्यथा अणु
 		__mtdcr(base_addr, reg);
 		val = (__mfdcr(base_data) & ~clr) | set;
 		__mtdcr(base_data, val);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&dcr_ind_lock, flags);
-}
+पूर्ण
 
-#define mfdcri(base, reg)	__mfdcri(DCRN_ ## base ## _CONFIG_ADDR,	\
+#घोषणा mfdcri(base, reg)	__mfdcri(DCRN_ ## base ## _CONFIG_ADDR,	\
 					 DCRN_ ## base ## _CONFIG_DATA,	\
 					 reg)
 
-#define mtdcri(base, reg, data)	__mtdcri(DCRN_ ## base ## _CONFIG_ADDR,	\
+#घोषणा mtdcri(base, reg, data)	__mtdcri(DCRN_ ## base ## _CONFIG_ADDR,	\
 					 DCRN_ ## base ## _CONFIG_DATA,	\
 					 reg, data)
 
-#define dcri_clrset(base, reg, clr, set)	__dcri_clrset(DCRN_ ## base ## _CONFIG_ADDR,	\
+#घोषणा dcri_clrset(base, reg, clr, set)	__dcri_clrset(DCRN_ ## base ## _CONFIG_ADDR,	\
 							      DCRN_ ## base ## _CONFIG_DATA,	\
 							      reg, clr, set)
 
-#endif /* __ASSEMBLY__ */
-#endif /* __KERNEL__ */
-#endif /* _ASM_POWERPC_DCR_NATIVE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_POWERPC_DCR_NATIVE_H */

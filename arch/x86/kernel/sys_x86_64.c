@@ -1,151 +1,152 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compat.h>
-#include <linux/errno.h>
-#include <linux/sched.h>
-#include <linux/sched/mm.h>
-#include <linux/syscalls.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include <linux/smp.h>
-#include <linux/sem.h>
-#include <linux/msg.h>
-#include <linux/shm.h>
-#include <linux/stat.h>
-#include <linux/mman.h>
-#include <linux/file.h>
-#include <linux/utsname.h>
-#include <linux/personality.h>
-#include <linux/random.h>
-#include <linux/uaccess.h>
-#include <linux/elf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compat.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/sem.h>
+#समावेश <linux/msg.h>
+#समावेश <linux/shm.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/mman.h>
+#समावेश <linux/file.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/elf.h>
 
-#include <asm/elf.h>
-#include <asm/ia32.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/ia32.h>
 
 /*
- * Align a virtual address to avoid aliasing in the I$ on AMD F15h.
+ * Align a भव address to aव्योम aliasing in the I$ on AMD F15h.
  */
-static unsigned long get_align_mask(void)
-{
-	/* handle 32- and 64-bit case with a single conditional */
-	if (va_align.flags < 0 || !(va_align.flags & (2 - mmap_is_ia32())))
-		return 0;
+अटल अचिन्हित दीर्घ get_align_mask(व्योम)
+अणु
+	/* handle 32- and 64-bit हाल with a single conditional */
+	अगर (va_align.flags < 0 || !(va_align.flags & (2 - mmap_is_ia32())))
+		वापस 0;
 
-	if (!(current->flags & PF_RANDOMIZE))
-		return 0;
+	अगर (!(current->flags & PF_RANDOMIZE))
+		वापस 0;
 
-	return va_align.mask;
-}
+	वापस va_align.mask;
+पूर्ण
 
 /*
- * To avoid aliasing in the I$ on AMD F15h, the bits defined by the
- * va_align.bits, [12:upper_bit), are set to a random value instead of
- * zeroing them. This random value is computed once per boot. This form
+ * To aव्योम aliasing in the I$ on AMD F15h, the bits defined by the
+ * va_align.bits, [12:upper_bit), are set to a अक्रमom value instead of
+ * zeroing them. This अक्रमom value is computed once per boot. This क्रमm
  * of ASLR is known as "per-boot ASLR".
  *
- * To achieve this, the random value is added to the info.align_offset
- * value before calling vm_unmapped_area() or ORed directly to the
+ * To achieve this, the अक्रमom value is added to the info.align_offset
+ * value beक्रमe calling vm_unmapped_area() or ORed directly to the
  * address.
  */
-static unsigned long get_align_bits(void)
-{
-	return va_align.bits & get_align_mask();
-}
+अटल अचिन्हित दीर्घ get_align_bits(व्योम)
+अणु
+	वापस va_align.bits & get_align_mask();
+पूर्ण
 
-unsigned long align_vdso_addr(unsigned long addr)
-{
-	unsigned long align_mask = get_align_mask();
+अचिन्हित दीर्घ align_vdso_addr(अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित दीर्घ align_mask = get_align_mask();
 	addr = (addr + align_mask) & ~align_mask;
-	return addr | get_align_bits();
-}
+	वापस addr | get_align_bits();
+पूर्ण
 
-static int __init control_va_addr_alignment(char *str)
-{
+अटल पूर्णांक __init control_va_addr_alignment(अक्षर *str)
+अणु
 	/* guard against enabling this on other CPU families */
-	if (va_align.flags < 0)
-		return 1;
+	अगर (va_align.flags < 0)
+		वापस 1;
 
-	if (*str == 0)
-		return 1;
+	अगर (*str == 0)
+		वापस 1;
 
-	if (*str == '=')
+	अगर (*str == '=')
 		str++;
 
-	if (!strcmp(str, "32"))
+	अगर (!म_भेद(str, "32"))
 		va_align.flags = ALIGN_VA_32;
-	else if (!strcmp(str, "64"))
+	अन्यथा अगर (!म_भेद(str, "64"))
 		va_align.flags = ALIGN_VA_64;
-	else if (!strcmp(str, "off"))
+	अन्यथा अगर (!म_भेद(str, "off"))
 		va_align.flags = 0;
-	else if (!strcmp(str, "on"))
+	अन्यथा अगर (!म_भेद(str, "on"))
 		va_align.flags = ALIGN_VA_32 | ALIGN_VA_64;
-	else
-		return 0;
+	अन्यथा
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("align_va_addr", control_va_addr_alignment);
 
-SYSCALL_DEFINE6(mmap, unsigned long, addr, unsigned long, len,
-		unsigned long, prot, unsigned long, flags,
-		unsigned long, fd, unsigned long, off)
-{
-	if (off & ~PAGE_MASK)
-		return -EINVAL;
+SYSCALL_DEFINE6(mmap, अचिन्हित दीर्घ, addr, अचिन्हित दीर्घ, len,
+		अचिन्हित दीर्घ, prot, अचिन्हित दीर्घ, flags,
+		अचिन्हित दीर्घ, fd, अचिन्हित दीर्घ, off)
+अणु
+	अगर (off & ~PAGE_MASK)
+		वापस -EINVAL;
 
-	return ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
-}
+	वापस ksys_mmap_pgoff(addr, len, prot, flags, fd, off >> PAGE_SHIFT);
+पूर्ण
 
-static void find_start_end(unsigned long addr, unsigned long flags,
-		unsigned long *begin, unsigned long *end)
-{
-	if (!in_32bit_syscall() && (flags & MAP_32BIT)) {
+अटल व्योम find_start_end(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ flags,
+		अचिन्हित दीर्घ *begin, अचिन्हित दीर्घ *end)
+अणु
+	अगर (!in_32bit_syscall() && (flags & MAP_32BIT)) अणु
 		/* This is usually used needed to map code in small
 		   model, so it needs to be in the first 31bit. Limit
 		   it to that.  This means we need to move the
-		   unmapped base down for this case. This can give
+		   unmapped base करोwn क्रम this हाल. This can give
 		   conflicts with the heap, but we assume that glibc
-		   malloc knows how to fall back to mmap. Give it 1GB
-		   of playground for now. -AK */
+		   दो_स्मृति knows how to fall back to mmap. Give it 1GB
+		   of playground क्रम now. -AK */
 		*begin = 0x40000000;
 		*end = 0x80000000;
-		if (current->flags & PF_RANDOMIZE) {
-			*begin = randomize_page(*begin, 0x02000000);
-		}
-		return;
-	}
+		अगर (current->flags & PF_RANDOMIZE) अणु
+			*begin = अक्रमomize_page(*begin, 0x02000000);
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	*begin	= get_mmap_base(1);
-	if (in_32bit_syscall())
+	अगर (in_32bit_syscall())
 		*end = task_size_32bit();
-	else
+	अन्यथा
 		*end = task_size_64bit(addr > DEFAULT_MAP_WINDOW);
-}
+पूर्ण
 
-unsigned long
-arch_get_unmapped_area(struct file *filp, unsigned long addr,
-		unsigned long len, unsigned long pgoff, unsigned long flags)
-{
-	struct mm_struct *mm = current->mm;
-	struct vm_area_struct *vma;
-	struct vm_unmapped_area_info info;
-	unsigned long begin, end;
+अचिन्हित दीर्घ
+arch_get_unmapped_area(काष्ठा file *filp, अचिन्हित दीर्घ addr,
+		अचिन्हित दीर्घ len, अचिन्हित दीर्घ pgoff, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा vm_unmapped_area_info info;
+	अचिन्हित दीर्घ begin, end;
 
-	if (flags & MAP_FIXED)
-		return addr;
+	अगर (flags & MAP_FIXED)
+		वापस addr;
 
 	find_start_end(addr, flags, &begin, &end);
 
-	if (len > end)
-		return -ENOMEM;
+	अगर (len > end)
+		वापस -ENOMEM;
 
-	if (addr) {
+	अगर (addr) अणु
 		addr = PAGE_ALIGN(addr);
 		vma = find_vma(mm, addr);
-		if (end - len >= addr &&
+		अगर (end - len >= addr &&
 		    (!vma || addr + len <= vm_start_gap(vma)))
-			return addr;
-	}
+			वापस addr;
+	पूर्ण
 
 	info.flags = 0;
 	info.length = len;
@@ -153,45 +154,45 @@ arch_get_unmapped_area(struct file *filp, unsigned long addr,
 	info.high_limit = end;
 	info.align_mask = 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
-	if (filp) {
+	अगर (filp) अणु
 		info.align_mask = get_align_mask();
 		info.align_offset += get_align_bits();
-	}
-	return vm_unmapped_area(&info);
-}
+	पूर्ण
+	वापस vm_unmapped_area(&info);
+पूर्ण
 
-unsigned long
-arch_get_unmapped_area_topdown(struct file *filp, const unsigned long addr0,
-			  const unsigned long len, const unsigned long pgoff,
-			  const unsigned long flags)
-{
-	struct vm_area_struct *vma;
-	struct mm_struct *mm = current->mm;
-	unsigned long addr = addr0;
-	struct vm_unmapped_area_info info;
+अचिन्हित दीर्घ
+arch_get_unmapped_area_topकरोwn(काष्ठा file *filp, स्थिर अचिन्हित दीर्घ addr0,
+			  स्थिर अचिन्हित दीर्घ len, स्थिर अचिन्हित दीर्घ pgoff,
+			  स्थिर अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	अचिन्हित दीर्घ addr = addr0;
+	काष्ठा vm_unmapped_area_info info;
 
-	/* requested length too big for entire address space */
-	if (len > TASK_SIZE)
-		return -ENOMEM;
+	/* requested length too big क्रम entire address space */
+	अगर (len > TASK_SIZE)
+		वापस -ENOMEM;
 
-	/* No address checking. See comment at mmap_address_hint_valid() */
-	if (flags & MAP_FIXED)
-		return addr;
+	/* No address checking. See comment at mmap_address_hपूर्णांक_valid() */
+	अगर (flags & MAP_FIXED)
+		वापस addr;
 
-	/* for MAP_32BIT mappings we force the legacy mmap base */
-	if (!in_32bit_syscall() && (flags & MAP_32BIT))
-		goto bottomup;
+	/* क्रम MAP_32BIT mappings we क्रमce the legacy mmap base */
+	अगर (!in_32bit_syscall() && (flags & MAP_32BIT))
+		जाओ bottomup;
 
-	/* requesting a specific address */
-	if (addr) {
+	/* requesting a specअगरic address */
+	अगर (addr) अणु
 		addr &= PAGE_MASK;
-		if (!mmap_address_hint_valid(addr, len))
-			goto get_unmapped_area;
+		अगर (!mmap_address_hपूर्णांक_valid(addr, len))
+			जाओ get_unmapped_area;
 
 		vma = find_vma(mm, addr);
-		if (!vma || addr + len <= vm_start_gap(vma))
-			return addr;
-	}
+		अगर (!vma || addr + len <= vm_start_gap(vma))
+			वापस addr;
+	पूर्ण
 get_unmapped_area:
 
 	info.flags = VM_UNMAPPED_AREA_TOPDOWN;
@@ -200,24 +201,24 @@ get_unmapped_area:
 	info.high_limit = get_mmap_base(0);
 
 	/*
-	 * If hint address is above DEFAULT_MAP_WINDOW, look for unmapped area
+	 * If hपूर्णांक address is above DEFAULT_MAP_WINDOW, look क्रम unmapped area
 	 * in the full address space.
 	 *
-	 * !in_32bit_syscall() check to avoid high addresses for x32
+	 * !in_32bit_syscall() check to aव्योम high addresses क्रम x32
 	 * (and make it no op on native i386).
 	 */
-	if (addr > DEFAULT_MAP_WINDOW && !in_32bit_syscall())
+	अगर (addr > DEFAULT_MAP_WINDOW && !in_32bit_syscall())
 		info.high_limit += TASK_SIZE_MAX - DEFAULT_MAP_WINDOW;
 
 	info.align_mask = 0;
 	info.align_offset = pgoff << PAGE_SHIFT;
-	if (filp) {
+	अगर (filp) अणु
 		info.align_mask = get_align_mask();
 		info.align_offset += get_align_bits();
-	}
+	पूर्ण
 	addr = vm_unmapped_area(&info);
-	if (!(addr & ~PAGE_MASK))
-		return addr;
+	अगर (!(addr & ~PAGE_MASK))
+		वापस addr;
 	VM_BUG_ON(addr != -ENOMEM);
 
 bottomup:
@@ -227,5 +228,5 @@ bottomup:
 	 * can happen with large stack limits and large mmap()
 	 * allocations.
 	 */
-	return arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
-}
+	वापस arch_get_unmapped_area(filp, addr0, len, pgoff, flags);
+पूर्ण

@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ACPI probing code for ARM performance counters.
+ * ACPI probing code क्रम ARM perक्रमmance counters.
  *
  * Copyright (C) 2017 ARM Ltd.
  */
 
-#include <linux/acpi.h>
-#include <linux/cpumask.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/irqdesc.h>
-#include <linux/percpu.h>
-#include <linux/perf/arm_pmu.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqdesc.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/perf/arm_pmu.h>
 
-#include <asm/cputype.h>
+#समावेश <यंत्र/cputype.h>
 
-static DEFINE_PER_CPU(struct arm_pmu *, probed_pmus);
-static DEFINE_PER_CPU(int, pmu_irqs);
+अटल DEFINE_PER_CPU(काष्ठा arm_pmu *, probed_pmus);
+अटल DEFINE_PER_CPU(पूर्णांक, pmu_irqs);
 
-static int arm_pmu_acpi_register_irq(int cpu)
-{
-	struct acpi_madt_generic_interrupt *gicc;
-	int gsi, trigger;
+अटल पूर्णांक arm_pmu_acpi_रेजिस्टर_irq(पूर्णांक cpu)
+अणु
+	काष्ठा acpi_madt_generic_पूर्णांकerrupt *gicc;
+	पूर्णांक gsi, trigger;
 
 	gicc = acpi_cpu_get_madt_gicc(cpu);
 
-	gsi = gicc->performance_interrupt;
+	gsi = gicc->perक्रमmance_पूर्णांकerrupt;
 
 	/*
-	 * Per the ACPI spec, the MADT cannot describe a PMU that doesn't
-	 * have an interrupt. QEMU advertises this by using a GSI of zero,
+	 * Per the ACPI spec, the MADT cannot describe a PMU that करोesn't
+	 * have an पूर्णांकerrupt. QEMU advertises this by using a GSI of zero,
 	 * which is not known to be valid on any hardware despite being
 	 * valid per the spec. Take the pragmatic approach and reject a
-	 * GSI of zero for now.
+	 * GSI of zero क्रम now.
 	 */
-	if (!gsi)
-		return 0;
+	अगर (!gsi)
+		वापस 0;
 
-	if (gicc->flags & ACPI_MADT_PERFORMANCE_IRQ_MODE)
+	अगर (gicc->flags & ACPI_MADT_PERFORMANCE_IRQ_MODE)
 		trigger = ACPI_EDGE_SENSITIVE;
-	else
+	अन्यथा
 		trigger = ACPI_LEVEL_SENSITIVE;
 
 	/*
-	 * Helpfully, the MADT GICC doesn't have a polarity flag for the
+	 * Helpfully, the MADT GICC करोesn't have a polarity flag क्रम the
 	 * "performance interrupt". Luckily, on compliant GICs the polarity is
-	 * a fixed value in HW (for both SPIs and PPIs) that we cannot change
+	 * a fixed value in HW (क्रम both SPIs and PPIs) that we cannot change
 	 * from SW.
 	 *
 	 * Here we pass in ACPI_ACTIVE_HIGH to keep the core code happy. This
 	 * may not match the real polarity, but that should not matter.
 	 *
-	 * Other interrupt controllers are not supported with ACPI.
+	 * Other पूर्णांकerrupt controllers are not supported with ACPI.
 	 */
-	return acpi_register_gsi(NULL, gsi, trigger, ACPI_ACTIVE_HIGH);
-}
+	वापस acpi_रेजिस्टर_gsi(शून्य, gsi, trigger, ACPI_ACTIVE_HIGH);
+पूर्ण
 
-static void arm_pmu_acpi_unregister_irq(int cpu)
-{
-	struct acpi_madt_generic_interrupt *gicc;
-	int gsi;
+अटल व्योम arm_pmu_acpi_unरेजिस्टर_irq(पूर्णांक cpu)
+अणु
+	काष्ठा acpi_madt_generic_पूर्णांकerrupt *gicc;
+	पूर्णांक gsi;
 
 	gicc = acpi_cpu_get_madt_gicc(cpu);
 
-	gsi = gicc->performance_interrupt;
-	if (gsi)
-		acpi_unregister_gsi(gsi);
-}
+	gsi = gicc->perक्रमmance_पूर्णांकerrupt;
+	अगर (gsi)
+		acpi_unरेजिस्टर_gsi(gsi);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_ARM_SPE_PMU)
-static struct resource spe_resources[] = {
-	{
+#अगर IS_ENABLED(CONFIG_ARM_SPE_PMU)
+अटल काष्ठा resource spe_resources[] = अणु
+	अणु
 		/* irq */
 		.flags          = IORESOURCE_IRQ,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device spe_dev = {
+अटल काष्ठा platक्रमm_device spe_dev = अणु
 	.name = ARMV8_SPE_PDEV_NAME,
 	.id = -1,
 	.resource = spe_resources,
 	.num_resources = ARRAY_SIZE(spe_resources)
-};
+पूर्ण;
 
 /*
  * For lack of a better place, hook the normal PMU MADT walk
- * and create a SPE device if we detect a recent MADT with
+ * and create a SPE device अगर we detect a recent MADT with
  * a homogeneous PPI mapping.
  */
-static void arm_spe_acpi_register_device(void)
-{
-	int cpu, hetid, irq, ret;
+अटल व्योम arm_spe_acpi_रेजिस्टर_device(व्योम)
+अणु
+	पूर्णांक cpu, hetid, irq, ret;
 	bool first = true;
 	u16 gsi = 0;
 
 	/*
-	 * Sanity check all the GICC tables for the same interrupt number.
+	 * Sanity check all the GICC tables क्रम the same पूर्णांकerrupt number.
 	 * For now, we only support homogeneous ACPI/SPE machines.
 	 */
-	for_each_possible_cpu(cpu) {
-		struct acpi_madt_generic_interrupt *gicc;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा acpi_madt_generic_पूर्णांकerrupt *gicc;
 
 		gicc = acpi_cpu_get_madt_gicc(cpu);
-		if (gicc->header.length < ACPI_MADT_GICC_SPE)
-			return;
+		अगर (gicc->header.length < ACPI_MADT_GICC_SPE)
+			वापस;
 
-		if (first) {
-			gsi = gicc->spe_interrupt;
-			if (!gsi)
-				return;
+		अगर (first) अणु
+			gsi = gicc->spe_पूर्णांकerrupt;
+			अगर (!gsi)
+				वापस;
 			hetid = find_acpi_cpu_topology_hetero_id(cpu);
 			first = false;
-		} else if ((gsi != gicc->spe_interrupt) ||
-			   (hetid != find_acpi_cpu_topology_hetero_id(cpu))) {
+		पूर्ण अन्यथा अगर ((gsi != gicc->spe_पूर्णांकerrupt) ||
+			   (hetid != find_acpi_cpu_topology_hetero_id(cpu))) अणु
 			pr_warn("ACPI: SPE must be homogeneous\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	irq = acpi_register_gsi(NULL, gsi, ACPI_LEVEL_SENSITIVE,
+	irq = acpi_रेजिस्टर_gsi(शून्य, gsi, ACPI_LEVEL_SENSITIVE,
 				ACPI_ACTIVE_HIGH);
-	if (irq < 0) {
+	अगर (irq < 0) अणु
 		pr_warn("ACPI: SPE Unable to register interrupt: %d\n", gsi);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spe_resources[0].start = irq;
-	ret = platform_device_register(&spe_dev);
-	if (ret < 0) {
+	ret = platक्रमm_device_रेजिस्टर(&spe_dev);
+	अगर (ret < 0) अणु
 		pr_warn("ACPI: SPE: Unable to register device\n");
-		acpi_unregister_gsi(gsi);
-	}
-}
-#else
-static inline void arm_spe_acpi_register_device(void)
-{
-}
-#endif /* CONFIG_ARM_SPE_PMU */
+		acpi_unरेजिस्टर_gsi(gsi);
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम arm_spe_acpi_रेजिस्टर_device(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ARM_SPE_PMU */
 
-static int arm_pmu_acpi_parse_irqs(void)
-{
-	int irq, cpu, irq_cpu, err;
+अटल पूर्णांक arm_pmu_acpi_parse_irqs(व्योम)
+अणु
+	पूर्णांक irq, cpu, irq_cpu, err;
 
-	for_each_possible_cpu(cpu) {
-		irq = arm_pmu_acpi_register_irq(cpu);
-		if (irq < 0) {
+	क्रम_each_possible_cpu(cpu) अणु
+		irq = arm_pmu_acpi_रेजिस्टर_irq(cpu);
+		अगर (irq < 0) अणु
 			err = irq;
 			pr_warn("Unable to parse ACPI PMU IRQ for CPU%d: %d\n",
 				cpu, err);
-			goto out_err;
-		} else if (irq == 0) {
+			जाओ out_err;
+		पूर्ण अन्यथा अगर (irq == 0) अणु
 			pr_warn("No ACPI PMU IRQ for CPU%d\n", cpu);
-		}
+		पूर्ण
 
 		/*
 		 * Log and request the IRQ so the core arm_pmu code can manage
@@ -160,199 +161,199 @@ static int arm_pmu_acpi_parse_irqs(void)
 		 */
 		per_cpu(pmu_irqs, cpu) = irq;
 		armpmu_request_irq(irq, cpu);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err:
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		irq = per_cpu(pmu_irqs, cpu);
-		if (!irq)
-			continue;
+		अगर (!irq)
+			जारी;
 
-		arm_pmu_acpi_unregister_irq(cpu);
+		arm_pmu_acpi_unरेजिस्टर_irq(cpu);
 
 		/*
-		 * Blat all copies of the IRQ so that we only unregister the
+		 * Blat all copies of the IRQ so that we only unरेजिस्टर the
 		 * corresponding GSI once (e.g. when we have PPIs).
 		 */
-		for_each_possible_cpu(irq_cpu) {
-			if (per_cpu(pmu_irqs, irq_cpu) == irq)
+		क्रम_each_possible_cpu(irq_cpu) अणु
+			अगर (per_cpu(pmu_irqs, irq_cpu) == irq)
 				per_cpu(pmu_irqs, irq_cpu) = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct arm_pmu *arm_pmu_acpi_find_alloc_pmu(void)
-{
-	unsigned long cpuid = read_cpuid_id();
-	struct arm_pmu *pmu;
-	int cpu;
+अटल काष्ठा arm_pmu *arm_pmu_acpi_find_alloc_pmu(व्योम)
+अणु
+	अचिन्हित दीर्घ cpuid = पढ़ो_cpuid_id();
+	काष्ठा arm_pmu *pmu;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		pmu = per_cpu(probed_pmus, cpu);
-		if (!pmu || pmu->acpi_cpuid != cpuid)
-			continue;
+		अगर (!pmu || pmu->acpi_cpuid != cpuid)
+			जारी;
 
-		return pmu;
-	}
+		वापस pmu;
+	पूर्ण
 
 	pmu = armpmu_alloc_atomic();
-	if (!pmu) {
+	अगर (!pmu) अणु
 		pr_warn("Unable to allocate PMU for CPU%d\n",
 			smp_processor_id());
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	pmu->acpi_cpuid = cpuid;
 
-	return pmu;
-}
+	वापस pmu;
+पूर्ण
 
 /*
- * Check whether the new IRQ is compatible with those already associated with
- * the PMU (e.g. we don't have mismatched PPIs).
+ * Check whether the new IRQ is compatible with those alपढ़ोy associated with
+ * the PMU (e.g. we करोn't have mismatched PPIs).
  */
-static bool pmu_irq_matches(struct arm_pmu *pmu, int irq)
-{
-	struct pmu_hw_events __percpu *hw_events = pmu->hw_events;
-	int cpu;
+अटल bool pmu_irq_matches(काष्ठा arm_pmu *pmu, पूर्णांक irq)
+अणु
+	काष्ठा pmu_hw_events __percpu *hw_events = pmu->hw_events;
+	पूर्णांक cpu;
 
-	if (!irq)
-		return true;
+	अगर (!irq)
+		वापस true;
 
-	for_each_cpu(cpu, &pmu->supported_cpus) {
-		int other_irq = per_cpu(hw_events->irq, cpu);
-		if (!other_irq)
-			continue;
+	क्रम_each_cpu(cpu, &pmu->supported_cpus) अणु
+		पूर्णांक other_irq = per_cpu(hw_events->irq, cpu);
+		अगर (!other_irq)
+			जारी;
 
-		if (irq == other_irq)
-			continue;
-		if (!irq_is_percpu_devid(irq) && !irq_is_percpu_devid(other_irq))
-			continue;
+		अगर (irq == other_irq)
+			जारी;
+		अगर (!irq_is_percpu_devid(irq) && !irq_is_percpu_devid(other_irq))
+			जारी;
 
 		pr_warn("mismatched PPIs detected\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * This must run before the common arm_pmu hotplug logic, so that we can
- * associate a CPU and its interrupt before the common code tries to manage the
+ * This must run beक्रमe the common arm_pmu hotplug logic, so that we can
+ * associate a CPU and its पूर्णांकerrupt beक्रमe the common code tries to manage the
  * affinity and so on.
  *
  * Note that hotplug events are serialized, so we cannot race with another CPU
- * coming up. The perf core won't open events while a hotplug event is in
+ * coming up. The perf core won't खोलो events जबतक a hotplug event is in
  * progress.
  */
-static int arm_pmu_acpi_cpu_starting(unsigned int cpu)
-{
-	struct arm_pmu *pmu;
-	struct pmu_hw_events __percpu *hw_events;
-	int irq;
+अटल पूर्णांक arm_pmu_acpi_cpu_starting(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा arm_pmu *pmu;
+	काष्ठा pmu_hw_events __percpu *hw_events;
+	पूर्णांक irq;
 
-	/* If we've already probed this CPU, we have nothing to do */
-	if (per_cpu(probed_pmus, cpu))
-		return 0;
+	/* If we've alपढ़ोy probed this CPU, we have nothing to करो */
+	अगर (per_cpu(probed_pmus, cpu))
+		वापस 0;
 
 	irq = per_cpu(pmu_irqs, cpu);
 
 	pmu = arm_pmu_acpi_find_alloc_pmu();
-	if (!pmu)
-		return -ENOMEM;
+	अगर (!pmu)
+		वापस -ENOMEM;
 
 	per_cpu(probed_pmus, cpu) = pmu;
 
-	if (pmu_irq_matches(pmu, irq)) {
+	अगर (pmu_irq_matches(pmu, irq)) अणु
 		hw_events = pmu->hw_events;
 		per_cpu(hw_events->irq, cpu) = irq;
-	}
+	पूर्ण
 
 	cpumask_set_cpu(cpu, &pmu->supported_cpus);
 
 	/*
 	 * Ideally, we'd probe the PMU here when we find the first matching
-	 * CPU. We can't do that for several reasons; see the comment in
+	 * CPU. We can't करो that क्रम several reasons; see the comment in
 	 * arm_pmu_acpi_init().
 	 *
-	 * So for the time being, we're done.
+	 * So क्रम the समय being, we're करोne.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int arm_pmu_acpi_probe(armpmu_init_fn init_fn)
-{
-	int pmu_idx = 0;
-	int cpu, ret;
+पूर्णांक arm_pmu_acpi_probe(armpmu_init_fn init_fn)
+अणु
+	पूर्णांक pmu_idx = 0;
+	पूर्णांक cpu, ret;
 
 	/*
-	 * Initialise and register the set of PMUs which we know about right
-	 * now. Ideally we'd do this in arm_pmu_acpi_cpu_starting() so that we
+	 * Initialise and रेजिस्टर the set of PMUs which we know about right
+	 * now. Ideally we'd करो this in arm_pmu_acpi_cpu_starting() so that we
 	 * could handle late hotplug, but this may lead to deadlock since we
-	 * might try to register a hotplug notifier instance from within a
-	 * hotplug notifier.
+	 * might try to रेजिस्टर a hotplug notअगरier instance from within a
+	 * hotplug notअगरier.
 	 *
 	 * There's also the problem of having access to the right init_fn,
-	 * without tying this too deeply into the "real" PMU driver.
+	 * without tying this too deeply पूर्णांकo the "real" PMU driver.
 	 *
-	 * For the moment, as with the platform/DT case, we need at least one
-	 * of a PMU's CPUs to be online at probe time.
+	 * For the moment, as with the platक्रमm/DT हाल, we need at least one
+	 * of a PMU's CPUs to be online at probe समय.
 	 */
-	for_each_possible_cpu(cpu) {
-		struct arm_pmu *pmu = per_cpu(probed_pmus, cpu);
-		char *base_name;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा arm_pmu *pmu = per_cpu(probed_pmus, cpu);
+		अक्षर *base_name;
 
-		if (!pmu || pmu->name)
-			continue;
+		अगर (!pmu || pmu->name)
+			जारी;
 
 		ret = init_fn(pmu);
-		if (ret == -ENODEV) {
+		अगर (ret == -ENODEV) अणु
 			/* PMU not handled by this driver, or not present */
-			continue;
-		} else if (ret) {
+			जारी;
+		पूर्ण अन्यथा अगर (ret) अणु
 			pr_warn("Unable to initialise PMU for CPU%d\n", cpu);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		base_name = pmu->name;
-		pmu->name = kasprintf(GFP_KERNEL, "%s_%d", base_name, pmu_idx++);
-		if (!pmu->name) {
+		pmu->name = kaप्र_लिखो(GFP_KERNEL, "%s_%d", base_name, pmu_idx++);
+		अगर (!pmu->name) अणु
 			pr_warn("Unable to allocate PMU name for CPU%d\n", cpu);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		ret = armpmu_register(pmu);
-		if (ret) {
+		ret = armpmu_रेजिस्टर(pmu);
+		अगर (ret) अणु
 			pr_warn("Failed to register PMU for CPU%d\n", cpu);
-			kfree(pmu->name);
-			return ret;
-		}
-	}
+			kमुक्त(pmu->name);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_pmu_acpi_init(void)
-{
-	int ret;
+अटल पूर्णांक arm_pmu_acpi_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (acpi_disabled)
-		return 0;
+	अगर (acpi_disabled)
+		वापस 0;
 
-	arm_spe_acpi_register_device();
+	arm_spe_acpi_रेजिस्टर_device();
 
 	ret = arm_pmu_acpi_parse_irqs();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cpuhp_setup_state(CPUHP_AP_PERF_ARM_ACPI_STARTING,
 				"perf/arm/pmu_acpi:starting",
-				arm_pmu_acpi_cpu_starting, NULL);
+				arm_pmu_acpi_cpu_starting, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 subsys_initcall(arm_pmu_acpi_init)

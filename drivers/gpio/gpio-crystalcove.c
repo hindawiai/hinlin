@@ -1,264 +1,265 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Crystal Cove GPIO Driver
  *
  * Copyright (C) 2012, 2014 Intel Corporation. All rights reserved.
  *
- * Author: Yang, Bin <bin.yang@intel.com>
+ * Author: Yang, Bin <bin.yang@पूर्णांकel.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/intel_soc_pmic.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/seq_file.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/seq_file.h>
 
-#define CRYSTALCOVE_GPIO_NUM	16
-#define CRYSTALCOVE_VGPIO_NUM	95
+#घोषणा CRYSTALCOVE_GPIO_NUM	16
+#घोषणा CRYSTALCOVE_VGPIO_NUM	95
 
-#define UPDATE_IRQ_TYPE		BIT(0)
-#define UPDATE_IRQ_MASK		BIT(1)
+#घोषणा UPDATE_IRQ_TYPE		BIT(0)
+#घोषणा UPDATE_IRQ_MASK		BIT(1)
 
-#define GPIO0IRQ		0x0b
-#define GPIO1IRQ		0x0c
-#define MGPIO0IRQS0		0x19
-#define MGPIO1IRQS0		0x1a
-#define MGPIO0IRQSX		0x1b
-#define MGPIO1IRQSX		0x1c
-#define GPIO0P0CTLO		0x2b
-#define GPIO0P0CTLI		0x33
-#define GPIO1P0CTLO		0x3b
-#define GPIO1P0CTLI		0x43
-#define GPIOPANELCTL		0x52
+#घोषणा GPIO0IRQ		0x0b
+#घोषणा GPIO1IRQ		0x0c
+#घोषणा MGPIO0IRQS0		0x19
+#घोषणा MGPIO1IRQS0		0x1a
+#घोषणा MGPIO0IRQSX		0x1b
+#घोषणा MGPIO1IRQSX		0x1c
+#घोषणा GPIO0P0CTLO		0x2b
+#घोषणा GPIO0P0CTLI		0x33
+#घोषणा GPIO1P0CTLO		0x3b
+#घोषणा GPIO1P0CTLI		0x43
+#घोषणा GPIOPANELCTL		0x52
 
-#define CTLI_INTCNT_DIS		(0)
-#define CTLI_INTCNT_NE		(1 << 1)
-#define CTLI_INTCNT_PE		(2 << 1)
-#define CTLI_INTCNT_BE		(3 << 1)
+#घोषणा CTLI_INTCNT_DIS		(0)
+#घोषणा CTLI_INTCNT_NE		(1 << 1)
+#घोषणा CTLI_INTCNT_PE		(2 << 1)
+#घोषणा CTLI_INTCNT_BE		(3 << 1)
 
-#define CTLO_DIR_IN		(0)
-#define CTLO_DIR_OUT		(1 << 5)
+#घोषणा CTLO_सूची_IN		(0)
+#घोषणा CTLO_सूची_OUT		(1 << 5)
 
-#define CTLO_DRV_CMOS		(0)
-#define CTLO_DRV_OD		(1 << 4)
+#घोषणा CTLO_DRV_CMOS		(0)
+#घोषणा CTLO_DRV_OD		(1 << 4)
 
-#define CTLO_DRV_REN		(1 << 3)
+#घोषणा CTLO_DRV_REN		(1 << 3)
 
-#define CTLO_RVAL_2KDW		(0)
-#define CTLO_RVAL_2KUP		(1 << 1)
-#define CTLO_RVAL_50KDW		(2 << 1)
-#define CTLO_RVAL_50KUP		(3 << 1)
+#घोषणा CTLO_RVAL_2KDW		(0)
+#घोषणा CTLO_RVAL_2KUP		(1 << 1)
+#घोषणा CTLO_RVAL_50KDW		(2 << 1)
+#घोषणा CTLO_RVAL_50KUP		(3 << 1)
 
-#define CTLO_INPUT_SET	(CTLO_DRV_CMOS | CTLO_DRV_REN | CTLO_RVAL_2KUP)
-#define CTLO_OUTPUT_SET	(CTLO_DIR_OUT | CTLO_INPUT_SET)
+#घोषणा CTLO_INPUT_SET	(CTLO_DRV_CMOS | CTLO_DRV_REN | CTLO_RVAL_2KUP)
+#घोषणा CTLO_OUTPUT_SET	(CTLO_सूची_OUT | CTLO_INPUT_SET)
 
-enum ctrl_register {
+क्रमागत ctrl_रेजिस्टर अणु
 	CTRL_IN,
 	CTRL_OUT,
-};
+पूर्ण;
 
 /**
- * struct crystalcove_gpio - Crystal Cove GPIO controller
- * @buslock: for bus lock/sync and unlock.
- * @chip: the abstract gpio_chip structure.
+ * काष्ठा crystalcove_gpio - Crystal Cove GPIO controller
+ * @buslock: क्रम bus lock/sync and unlock.
+ * @chip: the असलtract gpio_chip काष्ठाure.
  * @regmap: the regmap from the parent device.
  * @update: pending IRQ setting update, to be written to the chip upon unlock.
- * @intcnt_value: the Interrupt Detect value to be written.
- * @set_irq_mask: true if the IRQ mask needs to be set, false to clear.
+ * @पूर्णांकcnt_value: the Interrupt Detect value to be written.
+ * @set_irq_mask: true अगर the IRQ mask needs to be set, false to clear.
  */
-struct crystalcove_gpio {
-	struct mutex buslock; /* irq_bus_lock */
-	struct gpio_chip chip;
-	struct regmap *regmap;
-	int update;
-	int intcnt_value;
+काष्ठा crystalcove_gpio अणु
+	काष्ठा mutex buslock; /* irq_bus_lock */
+	काष्ठा gpio_chip chip;
+	काष्ठा regmap *regmap;
+	पूर्णांक update;
+	पूर्णांक पूर्णांकcnt_value;
 	bool set_irq_mask;
-};
+पूर्ण;
 
-static inline int to_reg(int gpio, enum ctrl_register reg_type)
-{
-	int reg;
+अटल अंतरभूत पूर्णांक to_reg(पूर्णांक gpio, क्रमागत ctrl_रेजिस्टर reg_type)
+अणु
+	पूर्णांक reg;
 
-	if (gpio >= CRYSTALCOVE_GPIO_NUM) {
+	अगर (gpio >= CRYSTALCOVE_GPIO_NUM) अणु
 		/*
-		 * Virtual GPIO called from ACPI, for now we only support
+		 * Virtual GPIO called from ACPI, क्रम now we only support
 		 * the panel ctl.
 		 */
-		switch (gpio) {
-		case 0x5e:
-			return GPIOPANELCTL;
-		default:
-			return -EOPNOTSUPP;
-		}
-	}
+		चयन (gpio) अणु
+		हाल 0x5e:
+			वापस GPIOPANELCTL;
+		शेष:
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	if (reg_type == CTRL_IN) {
-		if (gpio < 8)
+	अगर (reg_type == CTRL_IN) अणु
+		अगर (gpio < 8)
 			reg = GPIO0P0CTLI;
-		else
+		अन्यथा
 			reg = GPIO1P0CTLI;
-	} else {
-		if (gpio < 8)
+	पूर्ण अन्यथा अणु
+		अगर (gpio < 8)
 			reg = GPIO0P0CTLO;
-		else
+		अन्यथा
 			reg = GPIO1P0CTLO;
-	}
+	पूर्ण
 
-	return reg + gpio % 8;
-}
+	वापस reg + gpio % 8;
+पूर्ण
 
-static void crystalcove_update_irq_mask(struct crystalcove_gpio *cg,
-					int gpio)
-{
+अटल व्योम crystalcove_update_irq_mask(काष्ठा crystalcove_gpio *cg,
+					पूर्णांक gpio)
+अणु
 	u8 mirqs0 = gpio < 8 ? MGPIO0IRQS0 : MGPIO1IRQS0;
-	int mask = BIT(gpio % 8);
+	पूर्णांक mask = BIT(gpio % 8);
 
-	if (cg->set_irq_mask)
+	अगर (cg->set_irq_mask)
 		regmap_update_bits(cg->regmap, mirqs0, mask, mask);
-	else
+	अन्यथा
 		regmap_update_bits(cg->regmap, mirqs0, mask, 0);
-}
+पूर्ण
 
-static void crystalcove_update_irq_ctrl(struct crystalcove_gpio *cg, int gpio)
-{
-	int reg = to_reg(gpio, CTRL_IN);
+अटल व्योम crystalcove_update_irq_ctrl(काष्ठा crystalcove_gpio *cg, पूर्णांक gpio)
+अणु
+	पूर्णांक reg = to_reg(gpio, CTRL_IN);
 
-	regmap_update_bits(cg->regmap, reg, CTLI_INTCNT_BE, cg->intcnt_value);
-}
+	regmap_update_bits(cg->regmap, reg, CTLI_INTCNT_BE, cg->पूर्णांकcnt_value);
+पूर्ण
 
-static int crystalcove_gpio_dir_in(struct gpio_chip *chip, unsigned int gpio)
-{
-	struct crystalcove_gpio *cg = gpiochip_get_data(chip);
-	int reg = to_reg(gpio, CTRL_OUT);
+अटल पूर्णांक crystalcove_gpio_dir_in(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा crystalcove_gpio *cg = gpiochip_get_data(chip);
+	पूर्णांक reg = to_reg(gpio, CTRL_OUT);
 
-	if (reg < 0)
-		return 0;
+	अगर (reg < 0)
+		वापस 0;
 
-	return regmap_write(cg->regmap, reg, CTLO_INPUT_SET);
-}
+	वापस regmap_ग_लिखो(cg->regmap, reg, CTLO_INPUT_SET);
+पूर्ण
 
-static int crystalcove_gpio_dir_out(struct gpio_chip *chip, unsigned int gpio,
-				    int value)
-{
-	struct crystalcove_gpio *cg = gpiochip_get_data(chip);
-	int reg = to_reg(gpio, CTRL_OUT);
+अटल पूर्णांक crystalcove_gpio_dir_out(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio,
+				    पूर्णांक value)
+अणु
+	काष्ठा crystalcove_gpio *cg = gpiochip_get_data(chip);
+	पूर्णांक reg = to_reg(gpio, CTRL_OUT);
 
-	if (reg < 0)
-		return 0;
+	अगर (reg < 0)
+		वापस 0;
 
-	return regmap_write(cg->regmap, reg, CTLO_OUTPUT_SET | value);
-}
+	वापस regmap_ग_लिखो(cg->regmap, reg, CTLO_OUTPUT_SET | value);
+पूर्ण
 
-static int crystalcove_gpio_get(struct gpio_chip *chip, unsigned int gpio)
-{
-	struct crystalcove_gpio *cg = gpiochip_get_data(chip);
-	unsigned int val;
-	int ret, reg = to_reg(gpio, CTRL_IN);
+अटल पूर्णांक crystalcove_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा crystalcove_gpio *cg = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret, reg = to_reg(gpio, CTRL_IN);
 
-	if (reg < 0)
-		return 0;
+	अगर (reg < 0)
+		वापस 0;
 
-	ret = regmap_read(cg->regmap, reg, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(cg->regmap, reg, &val);
+	अगर (ret)
+		वापस ret;
 
-	return val & 0x1;
-}
+	वापस val & 0x1;
+पूर्ण
 
-static void crystalcove_gpio_set(struct gpio_chip *chip,
-				 unsigned int gpio, int value)
-{
-	struct crystalcove_gpio *cg = gpiochip_get_data(chip);
-	int reg = to_reg(gpio, CTRL_OUT);
+अटल व्योम crystalcove_gpio_set(काष्ठा gpio_chip *chip,
+				 अचिन्हित पूर्णांक gpio, पूर्णांक value)
+अणु
+	काष्ठा crystalcove_gpio *cg = gpiochip_get_data(chip);
+	पूर्णांक reg = to_reg(gpio, CTRL_OUT);
 
-	if (reg < 0)
-		return;
+	अगर (reg < 0)
+		वापस;
 
-	if (value)
+	अगर (value)
 		regmap_update_bits(cg->regmap, reg, 1, 1);
-	else
+	अन्यथा
 		regmap_update_bits(cg->regmap, reg, 1, 0);
-}
+पूर्ण
 
-static int crystalcove_irq_type(struct irq_data *data, unsigned int type)
-{
-	struct crystalcove_gpio *cg =
+अटल पूर्णांक crystalcove_irq_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा crystalcove_gpio *cg =
 		gpiochip_get_data(irq_data_get_irq_chip_data(data));
 
-	if (data->hwirq >= CRYSTALCOVE_GPIO_NUM)
-		return 0;
+	अगर (data->hwirq >= CRYSTALCOVE_GPIO_NUM)
+		वापस 0;
 
-	switch (type) {
-	case IRQ_TYPE_NONE:
-		cg->intcnt_value = CTLI_INTCNT_DIS;
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
-		cg->intcnt_value = CTLI_INTCNT_BE;
-		break;
-	case IRQ_TYPE_EDGE_RISING:
-		cg->intcnt_value = CTLI_INTCNT_PE;
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
-		cg->intcnt_value = CTLI_INTCNT_NE;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (type) अणु
+	हाल IRQ_TYPE_NONE:
+		cg->पूर्णांकcnt_value = CTLI_INTCNT_DIS;
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
+		cg->पूर्णांकcnt_value = CTLI_INTCNT_BE;
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_RISING:
+		cg->पूर्णांकcnt_value = CTLI_INTCNT_PE;
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
+		cg->पूर्णांकcnt_value = CTLI_INTCNT_NE;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	cg->update |= UPDATE_IRQ_TYPE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void crystalcove_bus_lock(struct irq_data *data)
-{
-	struct crystalcove_gpio *cg =
+अटल व्योम crystalcove_bus_lock(काष्ठा irq_data *data)
+अणु
+	काष्ठा crystalcove_gpio *cg =
 		gpiochip_get_data(irq_data_get_irq_chip_data(data));
 
 	mutex_lock(&cg->buslock);
-}
+पूर्ण
 
-static void crystalcove_bus_sync_unlock(struct irq_data *data)
-{
-	struct crystalcove_gpio *cg =
+अटल व्योम crystalcove_bus_sync_unlock(काष्ठा irq_data *data)
+अणु
+	काष्ठा crystalcove_gpio *cg =
 		gpiochip_get_data(irq_data_get_irq_chip_data(data));
-	int gpio = data->hwirq;
+	पूर्णांक gpio = data->hwirq;
 
-	if (cg->update & UPDATE_IRQ_TYPE)
+	अगर (cg->update & UPDATE_IRQ_TYPE)
 		crystalcove_update_irq_ctrl(cg, gpio);
-	if (cg->update & UPDATE_IRQ_MASK)
+	अगर (cg->update & UPDATE_IRQ_MASK)
 		crystalcove_update_irq_mask(cg, gpio);
 	cg->update = 0;
 
 	mutex_unlock(&cg->buslock);
-}
+पूर्ण
 
-static void crystalcove_irq_unmask(struct irq_data *data)
-{
-	struct crystalcove_gpio *cg =
+अटल व्योम crystalcove_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा crystalcove_gpio *cg =
 		gpiochip_get_data(irq_data_get_irq_chip_data(data));
 
-	if (data->hwirq < CRYSTALCOVE_GPIO_NUM) {
+	अगर (data->hwirq < CRYSTALCOVE_GPIO_NUM) अणु
 		cg->set_irq_mask = false;
 		cg->update |= UPDATE_IRQ_MASK;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void crystalcove_irq_mask(struct irq_data *data)
-{
-	struct crystalcove_gpio *cg =
+अटल व्योम crystalcove_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा crystalcove_gpio *cg =
 		gpiochip_get_data(irq_data_get_irq_chip_data(data));
 
-	if (data->hwirq < CRYSTALCOVE_GPIO_NUM) {
+	अगर (data->hwirq < CRYSTALCOVE_GPIO_NUM) अणु
 		cg->set_irq_mask = true;
 		cg->update |= UPDATE_IRQ_MASK;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct irq_chip crystalcove_irqchip = {
+अटल काष्ठा irq_chip crystalcove_irqchip = अणु
 	.name			= "Crystal Cove",
 	.irq_mask		= crystalcove_irq_mask,
 	.irq_unmask		= crystalcove_irq_unmask,
@@ -266,53 +267,53 @@ static struct irq_chip crystalcove_irqchip = {
 	.irq_bus_lock		= crystalcove_bus_lock,
 	.irq_bus_sync_unlock	= crystalcove_bus_sync_unlock,
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static irqreturn_t crystalcove_gpio_irq_handler(int irq, void *data)
-{
-	struct crystalcove_gpio *cg = data;
-	unsigned long pending;
-	unsigned int p0, p1;
-	int gpio;
-	unsigned int virq;
+अटल irqवापस_t crystalcove_gpio_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा crystalcove_gpio *cg = data;
+	अचिन्हित दीर्घ pending;
+	अचिन्हित पूर्णांक p0, p1;
+	पूर्णांक gpio;
+	अचिन्हित पूर्णांक virq;
 
-	if (regmap_read(cg->regmap, GPIO0IRQ, &p0) ||
-	    regmap_read(cg->regmap, GPIO1IRQ, &p1))
-		return IRQ_NONE;
+	अगर (regmap_पढ़ो(cg->regmap, GPIO0IRQ, &p0) ||
+	    regmap_पढ़ो(cg->regmap, GPIO1IRQ, &p1))
+		वापस IRQ_NONE;
 
-	regmap_write(cg->regmap, GPIO0IRQ, p0);
-	regmap_write(cg->regmap, GPIO1IRQ, p1);
+	regmap_ग_लिखो(cg->regmap, GPIO0IRQ, p0);
+	regmap_ग_लिखो(cg->regmap, GPIO1IRQ, p1);
 
 	pending = p0 | p1 << 8;
 
-	for_each_set_bit(gpio, &pending, CRYSTALCOVE_GPIO_NUM) {
-		virq = irq_find_mapping(cg->chip.irq.domain, gpio);
+	क्रम_each_set_bit(gpio, &pending, CRYSTALCOVE_GPIO_NUM) अणु
+		virq = irq_find_mapping(cg->chip.irq.करोमुख्य, gpio);
 		handle_nested_irq(virq);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void crystalcove_gpio_dbg_show(struct seq_file *s,
-				      struct gpio_chip *chip)
-{
-	struct crystalcove_gpio *cg = gpiochip_get_data(chip);
-	int gpio, offset;
-	unsigned int ctlo, ctli, mirqs0, mirqsx, irq;
+अटल व्योम crystalcove_gpio_dbg_show(काष्ठा seq_file *s,
+				      काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा crystalcove_gpio *cg = gpiochip_get_data(chip);
+	पूर्णांक gpio, offset;
+	अचिन्हित पूर्णांक ctlo, ctli, mirqs0, mirqsx, irq;
 
-	for (gpio = 0; gpio < CRYSTALCOVE_GPIO_NUM; gpio++) {
-		regmap_read(cg->regmap, to_reg(gpio, CTRL_OUT), &ctlo);
-		regmap_read(cg->regmap, to_reg(gpio, CTRL_IN), &ctli);
-		regmap_read(cg->regmap, gpio < 8 ? MGPIO0IRQS0 : MGPIO1IRQS0,
+	क्रम (gpio = 0; gpio < CRYSTALCOVE_GPIO_NUM; gpio++) अणु
+		regmap_पढ़ो(cg->regmap, to_reg(gpio, CTRL_OUT), &ctlo);
+		regmap_पढ़ो(cg->regmap, to_reg(gpio, CTRL_IN), &ctli);
+		regmap_पढ़ो(cg->regmap, gpio < 8 ? MGPIO0IRQS0 : MGPIO1IRQS0,
 			    &mirqs0);
-		regmap_read(cg->regmap, gpio < 8 ? MGPIO0IRQSX : MGPIO1IRQSX,
+		regmap_पढ़ो(cg->regmap, gpio < 8 ? MGPIO0IRQSX : MGPIO1IRQSX,
 			    &mirqsx);
-		regmap_read(cg->regmap, gpio < 8 ? GPIO0IRQ : GPIO1IRQ,
+		regmap_पढ़ो(cg->regmap, gpio < 8 ? GPIO0IRQ : GPIO1IRQ,
 			    &irq);
 
 		offset = gpio % 8;
-		seq_printf(s, " gpio-%-2d %s %s %s %s ctlo=%2x,%s %s %s\n",
-			   gpio, ctlo & CTLO_DIR_OUT ? "out" : "in ",
+		seq_म_लिखो(s, " gpio-%-2d %s %s %s %s ctlo=%2x,%s %s %s\n",
+			   gpio, ctlo & CTLO_सूची_OUT ? "out" : "in ",
 			   ctli & 0x1 ? "hi" : "lo",
 			   ctli & CTLI_INTCNT_NE ? "fall" : "    ",
 			   ctli & CTLI_INTCNT_PE ? "rise" : "    ",
@@ -320,26 +321,26 @@ static void crystalcove_gpio_dbg_show(struct seq_file *s,
 			   mirqs0 & BIT(offset) ? "s0 mask  " : "s0 unmask",
 			   mirqsx & BIT(offset) ? "sx mask  " : "sx unmask",
 			   irq & BIT(offset) ? "pending" : "       ");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int crystalcove_gpio_probe(struct platform_device *pdev)
-{
-	int irq = platform_get_irq(pdev, 0);
-	struct crystalcove_gpio *cg;
-	int retval;
-	struct device *dev = pdev->dev.parent;
-	struct intel_soc_pmic *pmic = dev_get_drvdata(dev);
-	struct gpio_irq_chip *girq;
+अटल पूर्णांक crystalcove_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक irq = platक्रमm_get_irq(pdev, 0);
+	काष्ठा crystalcove_gpio *cg;
+	पूर्णांक retval;
+	काष्ठा device *dev = pdev->dev.parent;
+	काष्ठा पूर्णांकel_soc_pmic *pmic = dev_get_drvdata(dev);
+	काष्ठा gpio_irq_chip *girq;
 
-	if (irq < 0)
-		return irq;
+	अगर (irq < 0)
+		वापस irq;
 
-	cg = devm_kzalloc(&pdev->dev, sizeof(*cg), GFP_KERNEL);
-	if (!cg)
-		return -ENOMEM;
+	cg = devm_kzalloc(&pdev->dev, माप(*cg), GFP_KERNEL);
+	अगर (!cg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, cg);
+	platक्रमm_set_drvdata(pdev, cg);
 
 	mutex_init(&cg->buslock);
 	cg->chip.label = KBUILD_MODNAME;
@@ -357,37 +358,37 @@ static int crystalcove_gpio_probe(struct platform_device *pdev)
 	girq = &cg->chip.irq;
 	girq->chip = &crystalcove_irqchip;
 	/* This will let us handle the parent IRQ in the driver */
-	girq->parent_handler = NULL;
+	girq->parent_handler = शून्य;
 	girq->num_parents = 0;
-	girq->parents = NULL;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->parents = शून्य;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_simple_irq;
-	girq->threaded = true;
+	girq->thपढ़ोed = true;
 
-	retval = devm_request_threaded_irq(&pdev->dev, irq, NULL,
+	retval = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
 					   crystalcove_gpio_irq_handler,
 					   IRQF_ONESHOT, KBUILD_MODNAME, cg);
-	if (retval) {
+	अगर (retval) अणु
 		dev_warn(&pdev->dev, "request irq failed: %d\n", retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
 	retval = devm_gpiochip_add_data(&pdev->dev, &cg->chip, cg);
-	if (retval) {
+	अगर (retval) अणु
 		dev_warn(&pdev->dev, "add gpio chip error: %d\n", retval);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver crystalcove_gpio_driver = {
+अटल काष्ठा platक्रमm_driver crystalcove_gpio_driver = अणु
 	.probe = crystalcove_gpio_probe,
-	.driver = {
+	.driver = अणु
 		.name = "crystal_cove_gpio",
-	},
-};
-module_platform_driver(crystalcove_gpio_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(crystalcove_gpio_driver);
 
 MODULE_AUTHOR("Yang, Bin <bin.yang@intel.com>");
 MODULE_DESCRIPTION("Intel Crystal Cove GPIO Driver");

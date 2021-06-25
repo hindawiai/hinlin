@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2018, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,176 +31,176 @@
  * SOFTWARE.
  */
 
-#include "mlx4.h"
+#समावेश "mlx4.h"
 
-#define BAD_ACCESS			0xBADACCE5
-#define HEALTH_BUFFER_SIZE		0x40
-#define CR_ENABLE_BIT			swab32(BIT(6))
-#define CR_ENABLE_BIT_OFFSET		0xF3F04
-#define MAX_NUM_OF_DUMPS_TO_STORE	(8)
+#घोषणा BAD_ACCESS			0xBADACCE5
+#घोषणा HEALTH_BUFFER_SIZE		0x40
+#घोषणा CR_ENABLE_BIT			swab32(BIT(6))
+#घोषणा CR_ENABLE_BIT_OFFSET		0xF3F04
+#घोषणा MAX_NUM_OF_DUMPS_TO_STORE	(8)
 
-#define REGION_CR_SPACE "cr-space"
-#define REGION_FW_HEALTH "fw-health"
+#घोषणा REGION_CR_SPACE "cr-space"
+#घोषणा REGION_FW_HEALTH "fw-health"
 
-static const char * const region_cr_space_str = REGION_CR_SPACE;
-static const char * const region_fw_health_str = REGION_FW_HEALTH;
+अटल स्थिर अक्षर * स्थिर region_cr_space_str = REGION_CR_SPACE;
+अटल स्थिर अक्षर * स्थिर region_fw_health_str = REGION_FW_HEALTH;
 
-static const struct devlink_region_ops region_cr_space_ops = {
+अटल स्थिर काष्ठा devlink_region_ops region_cr_space_ops = अणु
 	.name = REGION_CR_SPACE,
-	.destructor = &kvfree,
-};
+	.deकाष्ठाor = &kvमुक्त,
+पूर्ण;
 
-static const struct devlink_region_ops region_fw_health_ops = {
+अटल स्थिर काष्ठा devlink_region_ops region_fw_health_ops = अणु
 	.name = REGION_FW_HEALTH,
-	.destructor = &kvfree,
-};
+	.deकाष्ठाor = &kvमुक्त,
+पूर्ण;
 
-/* Set to true in case cr enable bit was set to true before crdump */
-static bool crdump_enbale_bit_set;
+/* Set to true in हाल cr enable bit was set to true beक्रमe crdump */
+अटल bool crdump_enbale_bit_set;
 
-static void crdump_enable_crspace_access(struct mlx4_dev *dev,
+अटल व्योम crdump_enable_crspace_access(काष्ठा mlx4_dev *dev,
 					 u8 __iomem *cr_space)
-{
+अणु
 	/* Get current enable bit value */
 	crdump_enbale_bit_set =
-		readl(cr_space + CR_ENABLE_BIT_OFFSET) & CR_ENABLE_BIT;
+		पढ़ोl(cr_space + CR_ENABLE_BIT_OFFSET) & CR_ENABLE_BIT;
 
 	/* Enable FW CR filter (set bit6 to 0) */
-	if (crdump_enbale_bit_set)
-		writel(readl(cr_space + CR_ENABLE_BIT_OFFSET) & ~CR_ENABLE_BIT,
+	अगर (crdump_enbale_bit_set)
+		ग_लिखोl(पढ़ोl(cr_space + CR_ENABLE_BIT_OFFSET) & ~CR_ENABLE_BIT,
 		       cr_space + CR_ENABLE_BIT_OFFSET);
 
-	/* Enable block volatile crspace accesses */
-	writel(swab32(1), cr_space + dev->caps.health_buffer_addrs +
+	/* Enable block अस्थिर crspace accesses */
+	ग_लिखोl(swab32(1), cr_space + dev->caps.health_buffer_addrs +
 	       HEALTH_BUFFER_SIZE);
-}
+पूर्ण
 
-static void crdump_disable_crspace_access(struct mlx4_dev *dev,
+अटल व्योम crdump_disable_crspace_access(काष्ठा mlx4_dev *dev,
 					  u8 __iomem *cr_space)
-{
-	/* Disable block volatile crspace accesses */
-	writel(0, cr_space + dev->caps.health_buffer_addrs +
+अणु
+	/* Disable block अस्थिर crspace accesses */
+	ग_लिखोl(0, cr_space + dev->caps.health_buffer_addrs +
 	       HEALTH_BUFFER_SIZE);
 
 	/* Restore FW CR filter value (set bit6 to original value) */
-	if (crdump_enbale_bit_set)
-		writel(readl(cr_space + CR_ENABLE_BIT_OFFSET) | CR_ENABLE_BIT,
+	अगर (crdump_enbale_bit_set)
+		ग_लिखोl(पढ़ोl(cr_space + CR_ENABLE_BIT_OFFSET) | CR_ENABLE_BIT,
 		       cr_space + CR_ENABLE_BIT_OFFSET);
-}
+पूर्ण
 
-static void mlx4_crdump_collect_crspace(struct mlx4_dev *dev,
+अटल व्योम mlx4_crdump_collect_crspace(काष्ठा mlx4_dev *dev,
 					u8 __iomem *cr_space,
 					u32 id)
-{
-	struct mlx4_fw_crdump *crdump = &dev->persist->crdump;
-	struct pci_dev *pdev = dev->persist->pdev;
-	unsigned long cr_res_size;
+अणु
+	काष्ठा mlx4_fw_crdump *crdump = &dev->persist->crdump;
+	काष्ठा pci_dev *pdev = dev->persist->pdev;
+	अचिन्हित दीर्घ cr_res_size;
 	u8 *crspace_data;
-	int offset;
-	int err;
+	पूर्णांक offset;
+	पूर्णांक err;
 
-	if (!crdump->region_crspace) {
+	अगर (!crdump->region_crspace) अणु
 		mlx4_err(dev, "crdump: cr-space region is NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Try to collect CR space */
 	cr_res_size = pci_resource_len(pdev, 0);
-	crspace_data = kvmalloc(cr_res_size, GFP_KERNEL);
-	if (crspace_data) {
-		for (offset = 0; offset < cr_res_size; offset += 4)
+	crspace_data = kvदो_स्मृति(cr_res_size, GFP_KERNEL);
+	अगर (crspace_data) अणु
+		क्रम (offset = 0; offset < cr_res_size; offset += 4)
 			*(u32 *)(crspace_data + offset) =
-					readl(cr_space + offset);
+					पढ़ोl(cr_space + offset);
 
 		err = devlink_region_snapshot_create(crdump->region_crspace,
 						     crspace_data, id);
-		if (err) {
-			kvfree(crspace_data);
+		अगर (err) अणु
+			kvमुक्त(crspace_data);
 			mlx4_warn(dev, "crdump: devlink create %s snapshot id %d err %d\n",
 				  region_cr_space_str, id, err);
-		} else {
+		पूर्ण अन्यथा अणु
 			mlx4_info(dev, "crdump: added snapshot %d to devlink region %s\n",
 				  id, region_cr_space_str);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mlx4_err(dev, "crdump: Failed to allocate crspace buffer\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mlx4_crdump_collect_fw_health(struct mlx4_dev *dev,
+अटल व्योम mlx4_crdump_collect_fw_health(काष्ठा mlx4_dev *dev,
 					  u8 __iomem *cr_space,
 					  u32 id)
-{
-	struct mlx4_fw_crdump *crdump = &dev->persist->crdump;
+अणु
+	काष्ठा mlx4_fw_crdump *crdump = &dev->persist->crdump;
 	u8 *health_data;
-	int offset;
-	int err;
+	पूर्णांक offset;
+	पूर्णांक err;
 
-	if (!crdump->region_fw_health) {
+	अगर (!crdump->region_fw_health) अणु
 		mlx4_err(dev, "crdump: fw-health region is NULL\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Try to collect health buffer */
-	health_data = kvmalloc(HEALTH_BUFFER_SIZE, GFP_KERNEL);
-	if (health_data) {
+	health_data = kvदो_स्मृति(HEALTH_BUFFER_SIZE, GFP_KERNEL);
+	अगर (health_data) अणु
 		u8 __iomem *health_buf_start =
 				cr_space + dev->caps.health_buffer_addrs;
 
-		for (offset = 0; offset < HEALTH_BUFFER_SIZE; offset += 4)
+		क्रम (offset = 0; offset < HEALTH_BUFFER_SIZE; offset += 4)
 			*(u32 *)(health_data + offset) =
-					readl(health_buf_start + offset);
+					पढ़ोl(health_buf_start + offset);
 
 		err = devlink_region_snapshot_create(crdump->region_fw_health,
 						     health_data, id);
-		if (err) {
-			kvfree(health_data);
+		अगर (err) अणु
+			kvमुक्त(health_data);
 			mlx4_warn(dev, "crdump: devlink create %s snapshot id %d err %d\n",
 				  region_fw_health_str, id, err);
-		} else {
+		पूर्ण अन्यथा अणु
 			mlx4_info(dev, "crdump: added snapshot %d to devlink region %s\n",
 				  id, region_fw_health_str);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mlx4_err(dev, "crdump: Failed to allocate health buffer\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mlx4_crdump_collect(struct mlx4_dev *dev)
-{
-	struct devlink *devlink = priv_to_devlink(mlx4_priv(dev));
-	struct mlx4_fw_crdump *crdump = &dev->persist->crdump;
-	struct pci_dev *pdev = dev->persist->pdev;
-	unsigned long cr_res_size;
+पूर्णांक mlx4_crdump_collect(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(mlx4_priv(dev));
+	काष्ठा mlx4_fw_crdump *crdump = &dev->persist->crdump;
+	काष्ठा pci_dev *pdev = dev->persist->pdev;
+	अचिन्हित दीर्घ cr_res_size;
 	u8 __iomem *cr_space;
-	int err;
+	पूर्णांक err;
 	u32 id;
 
-	if (!dev->caps.health_buffer_addrs) {
+	अगर (!dev->caps.health_buffer_addrs) अणु
 		mlx4_info(dev, "crdump: FW doesn't support health buffer access, skipping\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!crdump->snapshot_enable) {
+	अगर (!crdump->snapshot_enable) अणु
 		mlx4_info(dev, "crdump: devlink snapshot disabled, skipping\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cr_res_size = pci_resource_len(pdev, 0);
 
 	cr_space = ioremap(pci_resource_start(pdev, 0), cr_res_size);
-	if (!cr_space) {
+	अगर (!cr_space) अणु
 		mlx4_err(dev, "crdump: Failed to map pci cr region\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Get the available snapshot ID for the dumps */
+	/* Get the available snapshot ID क्रम the dumps */
 	err = devlink_region_snapshot_id_get(devlink, &id);
-	if (err) {
+	अगर (err) अणु
 		mlx4_err(dev, "crdump: devlink get snapshot id err %d\n", err);
 		iounmap(cr_space);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	crdump_enable_crspace_access(dev, cr_space);
 
@@ -213,14 +214,14 @@ int mlx4_crdump_collect(struct mlx4_dev *dev)
 	crdump_disable_crspace_access(dev, cr_space);
 
 	iounmap(cr_space);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx4_crdump_init(struct mlx4_dev *dev)
-{
-	struct devlink *devlink = priv_to_devlink(mlx4_priv(dev));
-	struct mlx4_fw_crdump *crdump = &dev->persist->crdump;
-	struct pci_dev *pdev = dev->persist->pdev;
+पूर्णांक mlx4_crdump_init(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(mlx4_priv(dev));
+	काष्ठा mlx4_fw_crdump *crdump = &dev->persist->crdump;
+	काष्ठा pci_dev *pdev = dev->persist->pdev;
 
 	crdump->snapshot_enable = false;
 
@@ -230,7 +231,7 @@ int mlx4_crdump_init(struct mlx4_dev *dev)
 				      &region_cr_space_ops,
 				      MAX_NUM_OF_DUMPS_TO_STORE,
 				      pci_resource_len(pdev, 0));
-	if (IS_ERR(crdump->region_crspace))
+	अगर (IS_ERR(crdump->region_crspace))
 		mlx4_warn(dev, "crdump: create devlink region %s err %ld\n",
 			  region_cr_space_str,
 			  PTR_ERR(crdump->region_crspace));
@@ -241,18 +242,18 @@ int mlx4_crdump_init(struct mlx4_dev *dev)
 				      &region_fw_health_ops,
 				      MAX_NUM_OF_DUMPS_TO_STORE,
 				      HEALTH_BUFFER_SIZE);
-	if (IS_ERR(crdump->region_fw_health))
+	अगर (IS_ERR(crdump->region_fw_health))
 		mlx4_warn(dev, "crdump: create devlink region %s err %ld\n",
 			  region_fw_health_str,
 			  PTR_ERR(crdump->region_fw_health));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx4_crdump_end(struct mlx4_dev *dev)
-{
-	struct mlx4_fw_crdump *crdump = &dev->persist->crdump;
+व्योम mlx4_crdump_end(काष्ठा mlx4_dev *dev)
+अणु
+	काष्ठा mlx4_fw_crdump *crdump = &dev->persist->crdump;
 
 	devlink_region_destroy(crdump->region_fw_health);
 	devlink_region_destroy(crdump->region_crspace);
-}
+पूर्ण

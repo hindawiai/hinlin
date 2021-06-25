@@ -1,111 +1,112 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/console/fbcon_rotate.c -- Software Rotation
  *
  *      Copyright (C) 2005 Antonino Daplas <adaplas @pol.net>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive for
+ *  License.  See the file COPYING in the मुख्य directory of this archive क्रम
  *  more details.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/fb.h>
-#include <linux/vt_kern.h>
-#include <linux/console.h>
-#include <asm/types.h>
-#include "fbcon.h"
-#include "fbcon_rotate.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fb.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/console.h>
+#समावेश <यंत्र/types.h>
+#समावेश "fbcon.h"
+#समावेश "fbcon_rotate.h"
 
-static int fbcon_rotate_font(struct fb_info *info, struct vc_data *vc)
-{
-	struct fbcon_ops *ops = info->fbcon_par;
-	int len, err = 0;
-	int s_cellsize, d_cellsize, i;
-	const u8 *src;
+अटल पूर्णांक fbcon_rotate_font(काष्ठा fb_info *info, काष्ठा vc_data *vc)
+अणु
+	काष्ठा fbcon_ops *ops = info->fbcon_par;
+	पूर्णांक len, err = 0;
+	पूर्णांक s_cellsize, d_cellsize, i;
+	स्थिर u8 *src;
 	u8 *dst;
 
-	if (vc->vc_font.data == ops->fontdata &&
+	अगर (vc->vc_font.data == ops->fontdata &&
 	    ops->p->con_rotate == ops->cur_rotate)
-		goto finished;
+		जाओ finished;
 
 	src = ops->fontdata = vc->vc_font.data;
 	ops->cur_rotate = ops->p->con_rotate;
-	len = vc->vc_font.charcount;
+	len = vc->vc_font.अक्षरcount;
 	s_cellsize = ((vc->vc_font.width + 7)/8) *
 		vc->vc_font.height;
 	d_cellsize = s_cellsize;
 
-	if (ops->rotate == FB_ROTATE_CW ||
+	अगर (ops->rotate == FB_ROTATE_CW ||
 	    ops->rotate == FB_ROTATE_CCW)
 		d_cellsize = ((vc->vc_font.height + 7)/8) *
 			vc->vc_font.width;
 
-	if (info->fbops->fb_sync)
+	अगर (info->fbops->fb_sync)
 		info->fbops->fb_sync(info);
 
-	if (ops->fd_size < d_cellsize * len) {
-		dst = kmalloc_array(len, d_cellsize, GFP_KERNEL);
+	अगर (ops->fd_size < d_cellsize * len) अणु
+		dst = kदो_स्मृति_array(len, d_cellsize, GFP_KERNEL);
 
-		if (dst == NULL) {
+		अगर (dst == शून्य) अणु
 			err = -ENOMEM;
-			goto finished;
-		}
+			जाओ finished;
+		पूर्ण
 
 		ops->fd_size = d_cellsize * len;
-		kfree(ops->fontbuffer);
+		kमुक्त(ops->fontbuffer);
 		ops->fontbuffer = dst;
-	}
+	पूर्ण
 
 	dst = ops->fontbuffer;
-	memset(dst, 0, ops->fd_size);
+	स_रखो(dst, 0, ops->fd_size);
 
-	switch (ops->rotate) {
-	case FB_ROTATE_UD:
-		for (i = len; i--; ) {
+	चयन (ops->rotate) अणु
+	हाल FB_ROTATE_UD:
+		क्रम (i = len; i--; ) अणु
 			rotate_ud(src, dst, vc->vc_font.width,
 				  vc->vc_font.height);
 
 			src += s_cellsize;
 			dst += d_cellsize;
-		}
-		break;
-	case FB_ROTATE_CW:
-		for (i = len; i--; ) {
+		पूर्ण
+		अवरोध;
+	हाल FB_ROTATE_CW:
+		क्रम (i = len; i--; ) अणु
 			rotate_cw(src, dst, vc->vc_font.width,
 				  vc->vc_font.height);
 			src += s_cellsize;
 			dst += d_cellsize;
-		}
-		break;
-	case FB_ROTATE_CCW:
-		for (i = len; i--; ) {
+		पूर्ण
+		अवरोध;
+	हाल FB_ROTATE_CCW:
+		क्रम (i = len; i--; ) अणु
 			rotate_ccw(src, dst, vc->vc_font.width,
 				   vc->vc_font.height);
 			src += s_cellsize;
 			dst += d_cellsize;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 finished:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void fbcon_set_rotate(struct fbcon_ops *ops)
-{
+व्योम fbcon_set_rotate(काष्ठा fbcon_ops *ops)
+अणु
 	ops->rotate_font = fbcon_rotate_font;
 
-	switch(ops->rotate) {
-	case FB_ROTATE_CW:
+	चयन(ops->rotate) अणु
+	हाल FB_ROTATE_CW:
 		fbcon_rotate_cw(ops);
-		break;
-	case FB_ROTATE_UD:
+		अवरोध;
+	हाल FB_ROTATE_UD:
 		fbcon_rotate_ud(ops);
-		break;
-	case FB_ROTATE_CCW:
+		अवरोध;
+	हाल FB_ROTATE_CCW:
 		fbcon_rotate_ccw(ops);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण

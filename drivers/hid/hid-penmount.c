@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  HID driver for PenMount touchscreens
+ *  HID driver क्रम PenMount touchscreens
  *
  *  Copyright (c) 2014 Christian Gmeiner <christian.gmeiner <at> gmail.com>
  *
@@ -11,37 +12,37 @@
 /*
  */
 
-#include <linux/module.h>
-#include <linux/hid.h>
-#include "hid-ids.h"
+#समावेश <linux/module.h>
+#समावेश <linux/hid.h>
+#समावेश "hid-ids.h"
 
-static int penmount_input_mapping(struct hid_device *hdev,
-		struct hid_input *hi, struct hid_field *field,
-		struct hid_usage *usage, unsigned long **bit, int *max)
-{
-	if ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) {
-		if (((usage->hid - 1) & HID_USAGE) == 0) {
+अटल पूर्णांक penmount_input_mapping(काष्ठा hid_device *hdev,
+		काष्ठा hid_input *hi, काष्ठा hid_field *field,
+		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	अगर ((usage->hid & HID_USAGE_PAGE) == HID_UP_BUTTON) अणु
+		अगर (((usage->hid - 1) & HID_USAGE) == 0) अणु
 			hid_map_usage(hi, usage, bit, max, EV_KEY, BTN_TOUCH);
-			return 1;
-		} else {
-			return -1;
-		}
-	}
+			वापस 1;
+		पूर्ण अन्यथा अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hid_device_id penmount_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_PENMOUNT, USB_DEVICE_ID_PENMOUNT_6000) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id penmount_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_PENMOUNT, USB_DEVICE_ID_PENMOUNT_6000) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, penmount_devices);
 
-static struct hid_driver penmount_driver = {
+अटल काष्ठा hid_driver penmount_driver = अणु
 	.name = "hid-penmount",
 	.id_table = penmount_devices,
 	.input_mapping = penmount_input_mapping,
-};
+पूर्ण;
 
 module_hid_driver(penmount_driver);
 

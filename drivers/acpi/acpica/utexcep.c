@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /*******************************************************************************
  *
  * Module Name: utexcep - Exception code support
  *
  ******************************************************************************/
 
-#define EXPORT_ACPI_INTERFACES
+#घोषणा EXPORT_ACPI_INTERFACES
 
-#define ACPI_DEFINE_EXCEPTION_TABLE
-#include <acpi/acpi.h>
-#include "accommon.h"
+#घोषणा ACPI_DEFINE_EXCEPTION_TABLE
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utexcep")
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_format_exception
+ * FUNCTION:    acpi_क्रमmat_exception
  *
- * PARAMETERS:  status              - The acpi_status code to be formatted
+ * PARAMETERS:  status              - The acpi_status code to be क्रमmatted
  *
- * RETURN:      A string containing the exception text. A valid pointer is
- *              always returned.
+ * RETURN:      A string containing the exception text. A valid poपूर्णांकer is
+ *              always वापसed.
  *
- * DESCRIPTION: This function translates an ACPI exception into an ASCII
- *              string. Returns "unknown status" string for invalid codes.
+ * DESCRIPTION: This function translates an ACPI exception पूर्णांकo an ASCII
+ *              string. Returns "unknown status" string क्रम invalid codes.
  *
  ******************************************************************************/
-const char *acpi_format_exception(acpi_status status)
-{
-	const struct acpi_exception_info *exception;
+स्थिर अक्षर *acpi_क्रमmat_exception(acpi_status status)
+अणु
+	स्थिर काष्ठा acpi_exception_info *exception;
 
 	ACPI_FUNCTION_ENTRY();
 
 	exception = acpi_ut_validate_exception(status);
-	if (!exception) {
+	अगर (!exception) अणु
 
 		/* Exception code was not recognized */
 
 		ACPI_ERROR((AE_INFO,
 			    "Unknown exception code: 0x%8.8X", status));
 
-		return ("UNKNOWN_STATUS_CODE");
-	}
+		वापस ("UNKNOWN_STATUS_CODE");
+	पूर्ण
 
-	return (exception->name);
-}
+	वापस (exception->name);
+पूर्ण
 
-ACPI_EXPORT_SYMBOL(acpi_format_exception)
+ACPI_EXPORT_SYMBOL(acpi_क्रमmat_exception)
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ut_validate_exception
  *
- * PARAMETERS:  status              - The acpi_status code to be formatted
+ * PARAMETERS:  status              - The acpi_status code to be क्रमmatted
  *
- * RETURN:      A string containing the exception text. NULL if exception is
+ * RETURN:      A string containing the exception text. शून्य अगर exception is
  *              not valid.
  *
- * DESCRIPTION: This function validates and translates an ACPI exception into
+ * DESCRIPTION: This function validates and translates an ACPI exception पूर्णांकo
  *              an ASCII string.
  *
  ******************************************************************************/
-const struct acpi_exception_info *acpi_ut_validate_exception(acpi_status status)
-{
+स्थिर काष्ठा acpi_exception_info *acpi_ut_validate_exception(acpi_status status)
+अणु
 	u32 sub_status;
-	const struct acpi_exception_info *exception = NULL;
+	स्थिर काष्ठा acpi_exception_info *exception = शून्य;
 
 	ACPI_FUNCTION_ENTRY();
 
@@ -74,50 +75,50 @@ const struct acpi_exception_info *acpi_ut_validate_exception(acpi_status status)
 	 */
 	sub_status = (status & ~AE_CODE_MASK);
 
-	switch (status & AE_CODE_MASK) {
-	case AE_CODE_ENVIRONMENTAL:
+	चयन (status & AE_CODE_MASK) अणु
+	हाल AE_CODE_ENVIRONMENTAL:
 
-		if (sub_status <= AE_CODE_ENV_MAX) {
+		अगर (sub_status <= AE_CODE_ENV_MAX) अणु
 			exception = &acpi_gbl_exception_names_env[sub_status];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AE_CODE_PROGRAMMER:
+	हाल AE_CODE_PROGRAMMER:
 
-		if (sub_status <= AE_CODE_PGM_MAX) {
+		अगर (sub_status <= AE_CODE_PGM_MAX) अणु
 			exception = &acpi_gbl_exception_names_pgm[sub_status];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AE_CODE_ACPI_TABLES:
+	हाल AE_CODE_ACPI_TABLES:
 
-		if (sub_status <= AE_CODE_TBL_MAX) {
+		अगर (sub_status <= AE_CODE_TBL_MAX) अणु
 			exception = &acpi_gbl_exception_names_tbl[sub_status];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AE_CODE_AML:
+	हाल AE_CODE_AML:
 
-		if (sub_status <= AE_CODE_AML_MAX) {
+		अगर (sub_status <= AE_CODE_AML_MAX) अणु
 			exception = &acpi_gbl_exception_names_aml[sub_status];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case AE_CODE_CONTROL:
+	हाल AE_CODE_CONTROL:
 
-		if (sub_status <= AE_CODE_CTRL_MAX) {
+		अगर (sub_status <= AE_CODE_CTRL_MAX) अणु
 			exception = &acpi_gbl_exception_names_ctrl[sub_status];
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!exception || !exception->name) {
-		return (NULL);
-	}
+	अगर (!exception || !exception->name) अणु
+		वापस (शून्य);
+	पूर्ण
 
-	return (exception);
-}
+	वापस (exception);
+पूर्ण

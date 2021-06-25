@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/sh/drivers/dma/dma-sh.c
  *
@@ -8,193 +9,193 @@
  * Copyright (C) 2003, 2004 Paul Mundt
  * Copyright (C) 2005 Andriy Skulysh
  */
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <mach-dreamcast/mach/dma.h>
-#include <asm/dma.h>
-#include <asm/dma-register.h>
-#include <cpu/dma-register.h>
-#include <cpu/dma.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <mach-dreamcast/mach/dma.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/dma-रेजिस्टर.h>
+#समावेश <cpu/dma-रेजिस्टर.h>
+#समावेश <cpu/dma.h>
 
 /*
- * Define the default configuration for dual address memory-memory transfer.
- * The 0x400 value represents auto-request, external->external.
+ * Define the शेष configuration क्रम dual address memory-memory transfer.
+ * The 0x400 value represents स्वतः-request, बाह्यal->बाह्यal.
  */
-#define RS_DUAL	(DM_INC | SM_INC | RS_AUTO | TS_INDEX2VAL(XMIT_SZ_32BIT))
+#घोषणा RS_DUAL	(DM_INC | SM_INC | RS_AUTO | TS_INDEX2VAL(XMIT_SZ_32BIT))
 
-static unsigned long dma_find_base(unsigned int chan)
-{
-	unsigned long base = SH_DMAC_BASE0;
+अटल अचिन्हित दीर्घ dma_find_base(अचिन्हित पूर्णांक chan)
+अणु
+	अचिन्हित दीर्घ base = SH_DMAC_BASE0;
 
-#ifdef SH_DMAC_BASE1
-	if (chan >= 6)
+#अगर_घोषित SH_DMAC_BASE1
+	अगर (chan >= 6)
 		base = SH_DMAC_BASE1;
-#endif
+#पूर्ण_अगर
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
-static unsigned long dma_base_addr(unsigned int chan)
-{
-	unsigned long base = dma_find_base(chan);
+अटल अचिन्हित दीर्घ dma_base_addr(अचिन्हित पूर्णांक chan)
+अणु
+	अचिन्हित दीर्घ base = dma_find_base(chan);
 
 	/* Normalize offset calculation */
-	if (chan >= 9)
+	अगर (chan >= 9)
 		chan -= 6;
-	if (chan >= 4)
+	अगर (chan >= 4)
 		base += 0x10;
 
-	return base + (chan * 0x10);
-}
+	वापस base + (chan * 0x10);
+पूर्ण
 
-#ifdef CONFIG_SH_DMA_IRQ_MULTI
-static inline unsigned int get_dmte_irq(unsigned int chan)
-{
-	return chan >= 6 ? DMTE6_IRQ : DMTE0_IRQ;
-}
-#else
+#अगर_घोषित CONFIG_SH_DMA_IRQ_MULTI
+अटल अंतरभूत अचिन्हित पूर्णांक get_dmte_irq(अचिन्हित पूर्णांक chan)
+अणु
+	वापस chan >= 6 ? DMTE6_IRQ : DMTE0_IRQ;
+पूर्ण
+#अन्यथा
 
-static unsigned int dmte_irq_map[] = {
+अटल अचिन्हित पूर्णांक dmte_irq_map[] = अणु
 	DMTE0_IRQ, DMTE0_IRQ + 1, DMTE0_IRQ + 2, DMTE0_IRQ + 3,
 
-#ifdef DMTE4_IRQ
+#अगर_घोषित DMTE4_IRQ
 	DMTE4_IRQ, DMTE4_IRQ + 1,
-#endif
+#पूर्ण_अगर
 
-#ifdef DMTE6_IRQ
+#अगर_घोषित DMTE6_IRQ
 	DMTE6_IRQ, DMTE6_IRQ + 1,
-#endif
+#पूर्ण_अगर
 
-#ifdef DMTE8_IRQ
+#अगर_घोषित DMTE8_IRQ
 	DMTE8_IRQ, DMTE9_IRQ, DMTE10_IRQ, DMTE11_IRQ,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static inline unsigned int get_dmte_irq(unsigned int chan)
-{
-	return dmte_irq_map[chan];
-}
-#endif
+अटल अंतरभूत अचिन्हित पूर्णांक get_dmte_irq(अचिन्हित पूर्णांक chan)
+अणु
+	वापस dmte_irq_map[chan];
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * We determine the correct shift size based off of the CHCR transmit size
- * for the given channel. Since we know that it will take:
+ * We determine the correct shअगरt size based off of the CHCR transmit size
+ * क्रम the given channel. Since we know that it will take:
  *
- *	info->count >> ts_shift[transmit_size]
+ *	info->count >> ts_shअगरt[transmit_size]
  *
  * iterations to complete the transfer.
  */
-static unsigned int ts_shift[] = TS_SHIFT;
+अटल अचिन्हित पूर्णांक ts_shअगरt[] = TS_SHIFT;
 
-static inline unsigned int calc_xmit_shift(struct dma_channel *chan)
-{
-	u32 chcr = __raw_readl(dma_base_addr(chan->chan) + CHCR);
-	int cnt = ((chcr & CHCR_TS_LOW_MASK) >> CHCR_TS_LOW_SHIFT) |
+अटल अंतरभूत अचिन्हित पूर्णांक calc_xmit_shअगरt(काष्ठा dma_channel *chan)
+अणु
+	u32 chcr = __raw_पढ़ोl(dma_base_addr(chan->chan) + CHCR);
+	पूर्णांक cnt = ((chcr & CHCR_TS_LOW_MASK) >> CHCR_TS_LOW_SHIFT) |
 		((chcr & CHCR_TS_HIGH_MASK) >> CHCR_TS_HIGH_SHIFT);
 
-	return ts_shift[cnt];
-}
+	वापस ts_shअगरt[cnt];
+पूर्ण
 
 /*
- * The transfer end interrupt must read the chcr register to end the
- * hardware interrupt active condition.
- * Besides that it needs to waken any waiting process, which should handle
+ * The transfer end पूर्णांकerrupt must पढ़ो the chcr रेजिस्टर to end the
+ * hardware पूर्णांकerrupt active condition.
+ * Besides that it needs to waken any रुकोing process, which should handle
  * setting up the next transfer.
  */
-static irqreturn_t dma_tei(int irq, void *dev_id)
-{
-	struct dma_channel *chan = dev_id;
+अटल irqवापस_t dma_tei(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dma_channel *chan = dev_id;
 	u32 chcr;
 
-	chcr = __raw_readl(dma_base_addr(chan->chan) + CHCR);
+	chcr = __raw_पढ़ोl(dma_base_addr(chan->chan) + CHCR);
 
-	if (!(chcr & CHCR_TE))
-		return IRQ_NONE;
+	अगर (!(chcr & CHCR_TE))
+		वापस IRQ_NONE;
 
 	chcr &= ~(CHCR_IE | CHCR_DE);
-	__raw_writel(chcr, (dma_base_addr(chan->chan) + CHCR));
+	__raw_ग_लिखोl(chcr, (dma_base_addr(chan->chan) + CHCR));
 
-	wake_up(&chan->wait_queue);
+	wake_up(&chan->रुको_queue);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sh_dmac_request_dma(struct dma_channel *chan)
-{
-	if (unlikely(!(chan->flags & DMA_TEI_CAPABLE)))
-		return 0;
+अटल पूर्णांक sh_dmac_request_dma(काष्ठा dma_channel *chan)
+अणु
+	अगर (unlikely(!(chan->flags & DMA_TEI_CAPABLE)))
+		वापस 0;
 
-	return request_irq(get_dmte_irq(chan->chan), dma_tei, IRQF_SHARED,
+	वापस request_irq(get_dmte_irq(chan->chan), dma_tei, IRQF_SHARED,
 			   chan->dev_id, chan);
-}
+पूर्ण
 
-static void sh_dmac_free_dma(struct dma_channel *chan)
-{
-	free_irq(get_dmte_irq(chan->chan), chan);
-}
+अटल व्योम sh_dmac_मुक्त_dma(काष्ठा dma_channel *chan)
+अणु
+	मुक्त_irq(get_dmte_irq(chan->chan), chan);
+पूर्ण
 
-static int
-sh_dmac_configure_channel(struct dma_channel *chan, unsigned long chcr)
-{
-	if (!chcr)
+अटल पूर्णांक
+sh_dmac_configure_channel(काष्ठा dma_channel *chan, अचिन्हित दीर्घ chcr)
+अणु
+	अगर (!chcr)
 		chcr = RS_DUAL | CHCR_IE;
 
-	if (chcr & CHCR_IE) {
+	अगर (chcr & CHCR_IE) अणु
 		chcr &= ~CHCR_IE;
 		chan->flags |= DMA_TEI_CAPABLE;
-	} else {
+	पूर्ण अन्यथा अणु
 		chan->flags &= ~DMA_TEI_CAPABLE;
-	}
+	पूर्ण
 
-	__raw_writel(chcr, (dma_base_addr(chan->chan) + CHCR));
+	__raw_ग_लिखोl(chcr, (dma_base_addr(chan->chan) + CHCR));
 
 	chan->flags |= DMA_CONFIGURED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sh_dmac_enable_dma(struct dma_channel *chan)
-{
-	int irq;
+अटल व्योम sh_dmac_enable_dma(काष्ठा dma_channel *chan)
+अणु
+	पूर्णांक irq;
 	u32 chcr;
 
-	chcr = __raw_readl(dma_base_addr(chan->chan) + CHCR);
+	chcr = __raw_पढ़ोl(dma_base_addr(chan->chan) + CHCR);
 	chcr |= CHCR_DE;
 
-	if (chan->flags & DMA_TEI_CAPABLE)
+	अगर (chan->flags & DMA_TEI_CAPABLE)
 		chcr |= CHCR_IE;
 
-	__raw_writel(chcr, (dma_base_addr(chan->chan) + CHCR));
+	__raw_ग_लिखोl(chcr, (dma_base_addr(chan->chan) + CHCR));
 
-	if (chan->flags & DMA_TEI_CAPABLE) {
+	अगर (chan->flags & DMA_TEI_CAPABLE) अणु
 		irq = get_dmte_irq(chan->chan);
 		enable_irq(irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sh_dmac_disable_dma(struct dma_channel *chan)
-{
-	int irq;
+अटल व्योम sh_dmac_disable_dma(काष्ठा dma_channel *chan)
+अणु
+	पूर्णांक irq;
 	u32 chcr;
 
-	if (chan->flags & DMA_TEI_CAPABLE) {
+	अगर (chan->flags & DMA_TEI_CAPABLE) अणु
 		irq = get_dmte_irq(chan->chan);
 		disable_irq(irq);
-	}
+	पूर्ण
 
-	chcr = __raw_readl(dma_base_addr(chan->chan) + CHCR);
+	chcr = __raw_पढ़ोl(dma_base_addr(chan->chan) + CHCR);
 	chcr &= ~(CHCR_DE | CHCR_TE | CHCR_IE);
-	__raw_writel(chcr, (dma_base_addr(chan->chan) + CHCR));
-}
+	__raw_ग_लिखोl(chcr, (dma_base_addr(chan->chan) + CHCR));
+पूर्ण
 
-static int sh_dmac_xfer_dma(struct dma_channel *chan)
-{
+अटल पूर्णांक sh_dmac_xfer_dma(काष्ठा dma_channel *chan)
+अणु
 	/*
 	 * If we haven't pre-configured the channel with special flags, use
-	 * the defaults.
+	 * the शेषs.
 	 */
-	if (unlikely(!(chan->flags & DMA_CONFIGURED)))
+	अगर (unlikely(!(chan->flags & DMA_CONFIGURED)))
 		sh_dmac_configure_channel(chan, 0);
 
 	sh_dmac_disable_dma(chan);
@@ -202,212 +203,212 @@ static int sh_dmac_xfer_dma(struct dma_channel *chan)
 	/*
 	 * Single-address mode usage note!
 	 *
-	 * It's important that we don't accidentally write any value to SAR/DAR
-	 * (this includes 0) that hasn't been directly specified by the user if
+	 * It's important that we don't accidentally ग_लिखो any value to SAR/DAR
+	 * (this includes 0) that hasn't been directly specअगरied by the user अगर
 	 * we're in single-address mode.
 	 *
-	 * In this case, only one address can be defined, anything else will
-	 * result in a DMA address error interrupt (at least on the SH-4),
+	 * In this हाल, only one address can be defined, anything अन्यथा will
+	 * result in a DMA address error पूर्णांकerrupt (at least on the SH-4),
 	 * which will subsequently halt the transfer.
 	 *
-	 * Channel 2 on the Dreamcast is a special case, as this is used for
-	 * cascading to the PVR2 DMAC. In this case, we still need to write
-	 * SAR and DAR, regardless of value, in order for cascading to work.
+	 * Channel 2 on the Dreamcast is a special हाल, as this is used क्रम
+	 * cascading to the PVR2 DMAC. In this हाल, we still need to ग_लिखो
+	 * SAR and DAR, regardless of value, in order क्रम cascading to work.
 	 */
-	if (chan->sar || (mach_is_dreamcast() &&
+	अगर (chan->sar || (mach_is_dreamcast() &&
 			  chan->chan == PVR2_CASCADE_CHAN))
-		__raw_writel(chan->sar, (dma_base_addr(chan->chan) + SAR));
-	if (chan->dar || (mach_is_dreamcast() &&
+		__raw_ग_लिखोl(chan->sar, (dma_base_addr(chan->chan) + SAR));
+	अगर (chan->dar || (mach_is_dreamcast() &&
 			  chan->chan == PVR2_CASCADE_CHAN))
-		__raw_writel(chan->dar, (dma_base_addr(chan->chan) + DAR));
+		__raw_ग_लिखोl(chan->dar, (dma_base_addr(chan->chan) + DAR));
 
-	__raw_writel(chan->count >> calc_xmit_shift(chan),
+	__raw_ग_लिखोl(chan->count >> calc_xmit_shअगरt(chan),
 		(dma_base_addr(chan->chan) + TCR));
 
 	sh_dmac_enable_dma(chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_dmac_get_dma_residue(struct dma_channel *chan)
-{
-	if (!(__raw_readl(dma_base_addr(chan->chan) + CHCR) & CHCR_DE))
-		return 0;
+अटल पूर्णांक sh_dmac_get_dma_residue(काष्ठा dma_channel *chan)
+अणु
+	अगर (!(__raw_पढ़ोl(dma_base_addr(chan->chan) + CHCR) & CHCR_DE))
+		वापस 0;
 
-	return __raw_readl(dma_base_addr(chan->chan) + TCR)
-		 << calc_xmit_shift(chan);
-}
+	वापस __raw_पढ़ोl(dma_base_addr(chan->chan) + TCR)
+		 << calc_xmit_shअगरt(chan);
+पूर्ण
 
 /*
  * DMAOR handling
  */
-#if defined(CONFIG_CPU_SUBTYPE_SH7723)	|| \
+#अगर defined(CONFIG_CPU_SUBTYPE_SH7723)	|| \
     defined(CONFIG_CPU_SUBTYPE_SH7724)	|| \
     defined(CONFIG_CPU_SUBTYPE_SH7780)	|| \
     defined(CONFIG_CPU_SUBTYPE_SH7785)
-#define NR_DMAOR	2
-#else
-#define NR_DMAOR	1
-#endif
+#घोषणा NR_DMAOR	2
+#अन्यथा
+#घोषणा NR_DMAOR	1
+#पूर्ण_अगर
 
 /*
  * DMAOR bases are broken out amongst channel groups. DMAOR0 manages
  * channels 0 - 5, DMAOR1 6 - 11 (optional).
  */
-#define dmaor_read_reg(n)		__raw_readw(dma_find_base((n)*6))
-#define dmaor_write_reg(n, data)	__raw_writew(data, dma_find_base(n)*6)
+#घोषणा dmaor_पढ़ो_reg(n)		__raw_पढ़ोw(dma_find_base((n)*6))
+#घोषणा dmaor_ग_लिखो_reg(n, data)	__raw_ग_लिखोw(data, dma_find_base(n)*6)
 
-static inline int dmaor_reset(int no)
-{
-	unsigned long dmaor = dmaor_read_reg(no);
+अटल अंतरभूत पूर्णांक dmaor_reset(पूर्णांक no)
+अणु
+	अचिन्हित दीर्घ dmaor = dmaor_पढ़ो_reg(no);
 
-	/* Try to clear the error flags first, incase they are set */
+	/* Try to clear the error flags first, inहाल they are set */
 	dmaor &= ~(DMAOR_NMIF | DMAOR_AE);
-	dmaor_write_reg(no, dmaor);
+	dmaor_ग_लिखो_reg(no, dmaor);
 
 	dmaor |= DMAOR_INIT;
-	dmaor_write_reg(no, dmaor);
+	dmaor_ग_लिखो_reg(no, dmaor);
 
-	/* See if we got an error again */
-	if ((dmaor_read_reg(no) & (DMAOR_AE | DMAOR_NMIF))) {
-		printk(KERN_ERR "dma-sh: Can't initialize DMAOR.\n");
-		return -EINVAL;
-	}
+	/* See अगर we got an error again */
+	अगर ((dmaor_पढ़ो_reg(no) & (DMAOR_AE | DMAOR_NMIF))) अणु
+		prपूर्णांकk(KERN_ERR "dma-sh: Can't initialize DMAOR.\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * DMAE handling
  */
-#ifdef CONFIG_CPU_SH4
+#अगर_घोषित CONFIG_CPU_SH4
 
-#if defined(DMAE1_IRQ)
-#define NR_DMAE		2
-#else
-#define NR_DMAE		1
-#endif
+#अगर defined(DMAE1_IRQ)
+#घोषणा NR_DMAE		2
+#अन्यथा
+#घोषणा NR_DMAE		1
+#पूर्ण_अगर
 
-static const char *dmae_name[] = {
+अटल स्थिर अक्षर *dmae_name[] = अणु
 	"DMAC Address Error0",
 	"DMAC Address Error1"
-};
+पूर्ण;
 
-#ifdef CONFIG_SH_DMA_IRQ_MULTI
-static inline unsigned int get_dma_error_irq(int n)
-{
-	return get_dmte_irq(n * 6);
-}
-#else
+#अगर_घोषित CONFIG_SH_DMA_IRQ_MULTI
+अटल अंतरभूत अचिन्हित पूर्णांक get_dma_error_irq(पूर्णांक n)
+अणु
+	वापस get_dmte_irq(n * 6);
+पूर्ण
+#अन्यथा
 
-static unsigned int dmae_irq_map[] = {
+अटल अचिन्हित पूर्णांक dmae_irq_map[] = अणु
 	DMAE0_IRQ,
 
-#ifdef DMAE1_IRQ
+#अगर_घोषित DMAE1_IRQ
 	DMAE1_IRQ,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static inline unsigned int get_dma_error_irq(int n)
-{
-	return dmae_irq_map[n];
-}
-#endif
+अटल अंतरभूत अचिन्हित पूर्णांक get_dma_error_irq(पूर्णांक n)
+अणु
+	वापस dmae_irq_map[n];
+पूर्ण
+#पूर्ण_अगर
 
-static irqreturn_t dma_err(int irq, void *dummy)
-{
-	int i;
+अटल irqवापस_t dma_err(पूर्णांक irq, व्योम *dummy)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < NR_DMAOR; i++)
+	क्रम (i = 0; i < NR_DMAOR; i++)
 		dmaor_reset(i);
 
 	disable_irq(irq);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dmae_irq_init(void)
-{
-	int n;
+अटल पूर्णांक dmae_irq_init(व्योम)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < NR_DMAE; n++) {
-		int i = request_irq(get_dma_error_irq(n), dma_err,
-				    IRQF_SHARED, dmae_name[n], (void *)dmae_name[n]);
-		if (unlikely(i < 0)) {
-			printk(KERN_ERR "%s request_irq fail\n", dmae_name[n]);
-			return i;
-		}
-	}
+	क्रम (n = 0; n < NR_DMAE; n++) अणु
+		पूर्णांक i = request_irq(get_dma_error_irq(n), dma_err,
+				    IRQF_SHARED, dmae_name[n], (व्योम *)dmae_name[n]);
+		अगर (unlikely(i < 0)) अणु
+			prपूर्णांकk(KERN_ERR "%s request_irq fail\n", dmae_name[n]);
+			वापस i;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dmae_irq_free(void)
-{
-	int n;
+अटल व्योम dmae_irq_मुक्त(व्योम)
+अणु
+	पूर्णांक n;
 
-	for (n = 0; n < NR_DMAE; n++)
-		free_irq(get_dma_error_irq(n), NULL);
-}
-#else
-static inline int dmae_irq_init(void)
-{
-	return 0;
-}
+	क्रम (n = 0; n < NR_DMAE; n++)
+		मुक्त_irq(get_dma_error_irq(n), शून्य);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक dmae_irq_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void dmae_irq_free(void)
-{
-}
-#endif
+अटल व्योम dmae_irq_मुक्त(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static struct dma_ops sh_dmac_ops = {
+अटल काष्ठा dma_ops sh_dmac_ops = अणु
 	.request	= sh_dmac_request_dma,
-	.free		= sh_dmac_free_dma,
+	.मुक्त		= sh_dmac_मुक्त_dma,
 	.get_residue	= sh_dmac_get_dma_residue,
 	.xfer		= sh_dmac_xfer_dma,
 	.configure	= sh_dmac_configure_channel,
-};
+पूर्ण;
 
-static struct dma_info sh_dmac_info = {
+अटल काष्ठा dma_info sh_dmac_info = अणु
 	.name		= "sh_dmac",
 	.nr_channels	= CONFIG_NR_ONCHIP_DMA_CHANNELS,
 	.ops		= &sh_dmac_ops,
 	.flags		= DMAC_CHANNELS_TEI_CAPABLE,
-};
+पूर्ण;
 
-static int __init sh_dmac_init(void)
-{
-	struct dma_info *info = &sh_dmac_info;
-	int i, rc;
+अटल पूर्णांक __init sh_dmac_init(व्योम)
+अणु
+	काष्ठा dma_info *info = &sh_dmac_info;
+	पूर्णांक i, rc;
 
 	/*
-	 * Initialize DMAE, for parts that support it.
+	 * Initialize DMAE, क्रम parts that support it.
 	 */
 	rc = dmae_irq_init();
-	if (unlikely(rc != 0))
-		return rc;
+	अगर (unlikely(rc != 0))
+		वापस rc;
 
 	/*
 	 * Initialize DMAOR, and clean up any error flags that may have
 	 * been set.
 	 */
-	for (i = 0; i < NR_DMAOR; i++) {
+	क्रम (i = 0; i < NR_DMAOR; i++) अणु
 		rc = dmaor_reset(i);
-		if (unlikely(rc != 0))
-			return rc;
-	}
+		अगर (unlikely(rc != 0))
+			वापस rc;
+	पूर्ण
 
-	return register_dmac(info);
-}
+	वापस रेजिस्टर_dmac(info);
+पूर्ण
 
-static void __exit sh_dmac_exit(void)
-{
-	dmae_irq_free();
-	unregister_dmac(&sh_dmac_info);
-}
+अटल व्योम __निकास sh_dmac_निकास(व्योम)
+अणु
+	dmae_irq_मुक्त();
+	unरेजिस्टर_dmac(&sh_dmac_info);
+पूर्ण
 
 subsys_initcall(sh_dmac_init);
-module_exit(sh_dmac_exit);
+module_निकास(sh_dmac_निकास);
 
 MODULE_AUTHOR("Takashi YOSHII, Paul Mundt, Andriy Skulysh");
 MODULE_DESCRIPTION("SuperH On-Chip DMAC Support");

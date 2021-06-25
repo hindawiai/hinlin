@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the Cirrus EP93xx matrix keypad controller.
+ * Driver क्रम the Cirrus EP93xx matrix keypad controller.
  *
  * Copyright (c) 2008 H Hartley Sweeten <hsweeten@visionengravers.com>
  *
- * Based on the pxa27x matrix keypad controller by Rodolfo Giometti.
+ * Based on the pxa27x matrix keypad controller by Roकरोlfo Giometti.
  *
  * NOTE:
  *
  * The 3-key reset is triggered by pressing the 3 keys in
- * Row 0, Columns 2, 4, and 7 at the same time.  This action can
+ * Row 0, Columns 2, 4, and 7 at the same समय.  This action can
  * be disabled by setting the EP93XX_KEYPAD_DISABLE_3_KEY flag.
  *
- * Normal operation for the matrix does not autorepeat the key press.
+ * Normal operation क्रम the matrix करोes not स्वतःrepeat the key press.
  * This action can be enabled by setting the EP93XX_KEYPAD_AUTOREPEAT
  * flag.
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/input/matrix_keypad.h>
-#include <linux/slab.h>
-#include <linux/soc/cirrus/ep93xx.h>
-#include <linux/platform_data/keypad-ep93xx.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/input/matrix_keypad.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soc/cirrus/ep93xx.h>
+#समावेश <linux/platक्रमm_data/keypad-ep93xx.h>
 
 /*
  * Keypad Interface Register offsets
  */
-#define KEY_INIT		0x00	/* Key Scan Initialization register */
-#define KEY_DIAG		0x04	/* Key Scan Diagnostic register */
-#define KEY_REG			0x08	/* Key Value Capture register */
+#घोषणा KEY_INIT		0x00	/* Key Scan Initialization रेजिस्टर */
+#घोषणा KEY_DIAG		0x04	/* Key Scan Diagnostic रेजिस्टर */
+#घोषणा KEY_REG			0x08	/* Key Value Capture रेजिस्टर */
 
 /* Key Scan Initialization Register bit defines */
-#define KEY_INIT_DBNC_MASK	(0x00ff0000)
-#define KEY_INIT_DBNC_SHIFT	(16)
-#define KEY_INIT_DIS3KY		(1<<15)
-#define KEY_INIT_DIAG		(1<<14)
-#define KEY_INIT_BACK		(1<<13)
-#define KEY_INIT_T2		(1<<12)
-#define KEY_INIT_PRSCL_MASK	(0x000003ff)
-#define KEY_INIT_PRSCL_SHIFT	(0)
+#घोषणा KEY_INIT_DBNC_MASK	(0x00ff0000)
+#घोषणा KEY_INIT_DBNC_SHIFT	(16)
+#घोषणा KEY_INIT_DIS3KY		(1<<15)
+#घोषणा KEY_INIT_DIAG		(1<<14)
+#घोषणा KEY_INIT_BACK		(1<<13)
+#घोषणा KEY_INIT_T2		(1<<12)
+#घोषणा KEY_INIT_PRSCL_MASK	(0x000003ff)
+#घोषणा KEY_INIT_PRSCL_SHIFT	(0)
 
 /* Key Scan Diagnostic Register bit defines */
-#define KEY_DIAG_MASK		(0x0000003f)
-#define KEY_DIAG_SHIFT		(0)
+#घोषणा KEY_DIAG_MASK		(0x0000003f)
+#घोषणा KEY_DIAG_SHIFT		(0)
 
 /* Key Value Capture Register bit defines */
-#define KEY_REG_K		(1<<15)
-#define KEY_REG_INT		(1<<14)
-#define KEY_REG_2KEYS		(1<<13)
-#define KEY_REG_1KEY		(1<<12)
-#define KEY_REG_KEY2_MASK	(0x00000fc0)
-#define KEY_REG_KEY2_SHIFT	(6)
-#define KEY_REG_KEY1_MASK	(0x0000003f)
-#define KEY_REG_KEY1_SHIFT	(0)
+#घोषणा KEY_REG_K		(1<<15)
+#घोषणा KEY_REG_INT		(1<<14)
+#घोषणा KEY_REG_2KEYS		(1<<13)
+#घोषणा KEY_REG_1KEY		(1<<12)
+#घोषणा KEY_REG_KEY2_MASK	(0x00000fc0)
+#घोषणा KEY_REG_KEY2_SHIFT	(6)
+#घोषणा KEY_REG_KEY1_MASK	(0x0000003f)
+#घोषणा KEY_REG_KEY1_SHIFT	(0)
 
-#define EP93XX_MATRIX_SIZE	(EP93XX_MATRIX_ROWS * EP93XX_MATRIX_COLS)
+#घोषणा EP93XX_MATRIX_SIZE	(EP93XX_MATRIX_ROWS * EP93XX_MATRIX_COLS)
 
-struct ep93xx_keypad {
-	struct ep93xx_keypad_platform_data *pdata;
-	struct input_dev *input_dev;
-	struct clk *clk;
+काष्ठा ep93xx_keypad अणु
+	काष्ठा ep93xx_keypad_platक्रमm_data *pdata;
+	काष्ठा input_dev *input_dev;
+	काष्ठा clk *clk;
 
-	void __iomem *mmio_base;
+	व्योम __iomem *mmio_base;
 
-	unsigned short keycodes[EP93XX_MATRIX_SIZE];
+	अचिन्हित लघु keycodes[EP93XX_MATRIX_SIZE];
 
-	int key1;
-	int key2;
+	पूर्णांक key1;
+	पूर्णांक key2;
 
-	int irq;
+	पूर्णांक irq;
 
 	bool enabled;
-};
+पूर्ण;
 
-static irqreturn_t ep93xx_keypad_irq_handler(int irq, void *dev_id)
-{
-	struct ep93xx_keypad *keypad = dev_id;
-	struct input_dev *input_dev = keypad->input_dev;
-	unsigned int status;
-	int keycode, key1, key2;
+अटल irqवापस_t ep93xx_keypad_irq_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा ep93xx_keypad *keypad = dev_id;
+	काष्ठा input_dev *input_dev = keypad->input_dev;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक keycode, key1, key2;
 
-	status = __raw_readl(keypad->mmio_base + KEY_REG);
+	status = __raw_पढ़ोl(keypad->mmio_base + KEY_REG);
 
 	keycode = (status & KEY_REG_KEY1_MASK) >> KEY_REG_KEY1_SHIFT;
 	key1 = keypad->keycodes[keycode];
@@ -92,11 +93,11 @@ static irqreturn_t ep93xx_keypad_irq_handler(int irq, void *dev_id)
 	keycode = (status & KEY_REG_KEY2_MASK) >> KEY_REG_KEY2_SHIFT;
 	key2 = keypad->keycodes[keycode];
 
-	if (status & KEY_REG_2KEYS) {
-		if (keypad->key1 && key1 != keypad->key1 && key2 != keypad->key1)
+	अगर (status & KEY_REG_2KEYS) अणु
+		अगर (keypad->key1 && key1 != keypad->key1 && key2 != keypad->key1)
 			input_report_key(input_dev, keypad->key1, 0);
 
-		if (keypad->key2 && key1 != keypad->key2 && key2 != keypad->key2)
+		अगर (keypad->key2 && key1 != keypad->key2 && key2 != keypad->key2)
 			input_report_key(input_dev, keypad->key2, 0);
 
 		input_report_key(input_dev, key1, 1);
@@ -105,11 +106,11 @@ static irqreturn_t ep93xx_keypad_irq_handler(int irq, void *dev_id)
 		keypad->key1 = key1;
 		keypad->key2 = key2;
 
-	} else if (status & KEY_REG_1KEY) {
-		if (keypad->key1 && key1 != keypad->key1)
+	पूर्ण अन्यथा अगर (status & KEY_REG_1KEY) अणु
+		अगर (keypad->key1 && key1 != keypad->key1)
 			input_report_key(input_dev, keypad->key1, 0);
 
-		if (keypad->key2 && key1 != keypad->key2)
+		अगर (keypad->key2 && key1 != keypad->key2)
 			input_report_key(input_dev, keypad->key2, 0);
 
 		input_report_key(input_dev, key1, 1);
@@ -117,261 +118,261 @@ static irqreturn_t ep93xx_keypad_irq_handler(int irq, void *dev_id)
 		keypad->key1 = key1;
 		keypad->key2 = 0;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		input_report_key(input_dev, keypad->key1, 0);
 		input_report_key(input_dev, keypad->key2, 0);
 
 		keypad->key1 = keypad->key2 = 0;
-	}
+	पूर्ण
 	input_sync(input_dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void ep93xx_keypad_config(struct ep93xx_keypad *keypad)
-{
-	struct ep93xx_keypad_platform_data *pdata = keypad->pdata;
-	unsigned int val = 0;
+अटल व्योम ep93xx_keypad_config(काष्ठा ep93xx_keypad *keypad)
+अणु
+	काष्ठा ep93xx_keypad_platक्रमm_data *pdata = keypad->pdata;
+	अचिन्हित पूर्णांक val = 0;
 
 	clk_set_rate(keypad->clk, pdata->clk_rate);
 
-	if (pdata->flags & EP93XX_KEYPAD_DISABLE_3_KEY)
+	अगर (pdata->flags & EP93XX_KEYPAD_DISABLE_3_KEY)
 		val |= KEY_INIT_DIS3KY;
-	if (pdata->flags & EP93XX_KEYPAD_DIAG_MODE)
+	अगर (pdata->flags & EP93XX_KEYPAD_DIAG_MODE)
 		val |= KEY_INIT_DIAG;
-	if (pdata->flags & EP93XX_KEYPAD_BACK_DRIVE)
+	अगर (pdata->flags & EP93XX_KEYPAD_BACK_DRIVE)
 		val |= KEY_INIT_BACK;
-	if (pdata->flags & EP93XX_KEYPAD_TEST_MODE)
+	अगर (pdata->flags & EP93XX_KEYPAD_TEST_MODE)
 		val |= KEY_INIT_T2;
 
 	val |= ((pdata->debounce << KEY_INIT_DBNC_SHIFT) & KEY_INIT_DBNC_MASK);
 
 	val |= ((pdata->prescale << KEY_INIT_PRSCL_SHIFT) & KEY_INIT_PRSCL_MASK);
 
-	__raw_writel(val, keypad->mmio_base + KEY_INIT);
-}
+	__raw_ग_लिखोl(val, keypad->mmio_base + KEY_INIT);
+पूर्ण
 
-static int ep93xx_keypad_open(struct input_dev *pdev)
-{
-	struct ep93xx_keypad *keypad = input_get_drvdata(pdev);
+अटल पूर्णांक ep93xx_keypad_खोलो(काष्ठा input_dev *pdev)
+अणु
+	काष्ठा ep93xx_keypad *keypad = input_get_drvdata(pdev);
 
-	if (!keypad->enabled) {
+	अगर (!keypad->enabled) अणु
 		ep93xx_keypad_config(keypad);
 		clk_enable(keypad->clk);
 		keypad->enabled = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ep93xx_keypad_close(struct input_dev *pdev)
-{
-	struct ep93xx_keypad *keypad = input_get_drvdata(pdev);
+अटल व्योम ep93xx_keypad_बंद(काष्ठा input_dev *pdev)
+अणु
+	काष्ठा ep93xx_keypad *keypad = input_get_drvdata(pdev);
 
-	if (keypad->enabled) {
+	अगर (keypad->enabled) अणु
 		clk_disable(keypad->clk);
 		keypad->enabled = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-#ifdef CONFIG_PM_SLEEP
-static int ep93xx_keypad_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct ep93xx_keypad *keypad = platform_get_drvdata(pdev);
-	struct input_dev *input_dev = keypad->input_dev;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ep93xx_keypad_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा ep93xx_keypad *keypad = platक्रमm_get_drvdata(pdev);
+	काष्ठा input_dev *input_dev = keypad->input_dev;
 
 	mutex_lock(&input_dev->mutex);
 
-	if (keypad->enabled) {
+	अगर (keypad->enabled) अणु
 		clk_disable(keypad->clk);
 		keypad->enabled = false;
-	}
+	पूर्ण
 
 	mutex_unlock(&input_dev->mutex);
 
-	if (device_may_wakeup(&pdev->dev))
+	अगर (device_may_wakeup(&pdev->dev))
 		enable_irq_wake(keypad->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep93xx_keypad_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct ep93xx_keypad *keypad = platform_get_drvdata(pdev);
-	struct input_dev *input_dev = keypad->input_dev;
+अटल पूर्णांक ep93xx_keypad_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा ep93xx_keypad *keypad = platक्रमm_get_drvdata(pdev);
+	काष्ठा input_dev *input_dev = keypad->input_dev;
 
-	if (device_may_wakeup(&pdev->dev))
+	अगर (device_may_wakeup(&pdev->dev))
 		disable_irq_wake(keypad->irq);
 
 	mutex_lock(&input_dev->mutex);
 
-	if (input_device_enabled(input_dev)) {
-		if (!keypad->enabled) {
+	अगर (input_device_enabled(input_dev)) अणु
+		अगर (!keypad->enabled) अणु
 			ep93xx_keypad_config(keypad);
 			clk_enable(keypad->clk);
 			keypad->enabled = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&input_dev->mutex);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(ep93xx_keypad_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(ep93xx_keypad_pm_ops,
 			 ep93xx_keypad_suspend, ep93xx_keypad_resume);
 
-static int ep93xx_keypad_probe(struct platform_device *pdev)
-{
-	struct ep93xx_keypad *keypad;
-	const struct matrix_keymap_data *keymap_data;
-	struct input_dev *input_dev;
-	struct resource *res;
-	int err;
+अटल पूर्णांक ep93xx_keypad_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ep93xx_keypad *keypad;
+	स्थिर काष्ठा matrix_keymap_data *keymap_data;
+	काष्ठा input_dev *input_dev;
+	काष्ठा resource *res;
+	पूर्णांक err;
 
-	keypad = kzalloc(sizeof(struct ep93xx_keypad), GFP_KERNEL);
-	if (!keypad)
-		return -ENOMEM;
+	keypad = kzalloc(माप(काष्ठा ep93xx_keypad), GFP_KERNEL);
+	अगर (!keypad)
+		वापस -ENOMEM;
 
 	keypad->pdata = dev_get_platdata(&pdev->dev);
-	if (!keypad->pdata) {
+	अगर (!keypad->pdata) अणु
 		err = -EINVAL;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
 	keymap_data = keypad->pdata->keymap_data;
-	if (!keymap_data) {
+	अगर (!keymap_data) अणु
 		err = -EINVAL;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
-	keypad->irq = platform_get_irq(pdev, 0);
-	if (keypad->irq < 0) {
+	keypad->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (keypad->irq < 0) अणु
 		err = keypad->irq;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		err = -ENXIO;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
 	res = request_mem_region(res->start, resource_size(res), pdev->name);
-	if (!res) {
+	अगर (!res) अणु
 		err = -EBUSY;
-		goto failed_free;
-	}
+		जाओ failed_मुक्त;
+	पूर्ण
 
 	keypad->mmio_base = ioremap(res->start, resource_size(res));
-	if (keypad->mmio_base == NULL) {
+	अगर (keypad->mmio_base == शून्य) अणु
 		err = -ENXIO;
-		goto failed_free_mem;
-	}
+		जाओ failed_मुक्त_mem;
+	पूर्ण
 
 	err = ep93xx_keypad_acquire_gpio(pdev);
-	if (err)
-		goto failed_free_io;
+	अगर (err)
+		जाओ failed_मुक्त_io;
 
-	keypad->clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(keypad->clk)) {
+	keypad->clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(keypad->clk)) अणु
 		err = PTR_ERR(keypad->clk);
-		goto failed_free_gpio;
-	}
+		जाओ failed_मुक्त_gpio;
+	पूर्ण
 
 	input_dev = input_allocate_device();
-	if (!input_dev) {
+	अगर (!input_dev) अणु
 		err = -ENOMEM;
-		goto failed_put_clk;
-	}
+		जाओ failed_put_clk;
+	पूर्ण
 
 	keypad->input_dev = input_dev;
 
 	input_dev->name = pdev->name;
 	input_dev->id.bustype = BUS_HOST;
-	input_dev->open = ep93xx_keypad_open;
-	input_dev->close = ep93xx_keypad_close;
+	input_dev->खोलो = ep93xx_keypad_खोलो;
+	input_dev->बंद = ep93xx_keypad_बंद;
 	input_dev->dev.parent = &pdev->dev;
 
-	err = matrix_keypad_build_keymap(keymap_data, NULL,
+	err = matrix_keypad_build_keymap(keymap_data, शून्य,
 					 EP93XX_MATRIX_ROWS, EP93XX_MATRIX_COLS,
 					 keypad->keycodes, input_dev);
-	if (err)
-		goto failed_free_dev;
+	अगर (err)
+		जाओ failed_मुक्त_dev;
 
-	if (keypad->pdata->flags & EP93XX_KEYPAD_AUTOREPEAT)
+	अगर (keypad->pdata->flags & EP93XX_KEYPAD_AUTOREPEAT)
 		__set_bit(EV_REP, input_dev->evbit);
 	input_set_drvdata(input_dev, keypad);
 
 	err = request_irq(keypad->irq, ep93xx_keypad_irq_handler,
 			  0, pdev->name, keypad);
-	if (err)
-		goto failed_free_dev;
+	अगर (err)
+		जाओ failed_मुक्त_dev;
 
-	err = input_register_device(input_dev);
-	if (err)
-		goto failed_free_irq;
+	err = input_रेजिस्टर_device(input_dev);
+	अगर (err)
+		जाओ failed_मुक्त_irq;
 
-	platform_set_drvdata(pdev, keypad);
+	platक्रमm_set_drvdata(pdev, keypad);
 	device_init_wakeup(&pdev->dev, 1);
 
-	return 0;
+	वापस 0;
 
-failed_free_irq:
-	free_irq(keypad->irq, keypad);
-failed_free_dev:
-	input_free_device(input_dev);
+failed_मुक्त_irq:
+	मुक्त_irq(keypad->irq, keypad);
+failed_मुक्त_dev:
+	input_मुक्त_device(input_dev);
 failed_put_clk:
 	clk_put(keypad->clk);
-failed_free_gpio:
+failed_मुक्त_gpio:
 	ep93xx_keypad_release_gpio(pdev);
-failed_free_io:
+failed_मुक्त_io:
 	iounmap(keypad->mmio_base);
-failed_free_mem:
+failed_मुक्त_mem:
 	release_mem_region(res->start, resource_size(res));
-failed_free:
-	kfree(keypad);
-	return err;
-}
+failed_मुक्त:
+	kमुक्त(keypad);
+	वापस err;
+पूर्ण
 
-static int ep93xx_keypad_remove(struct platform_device *pdev)
-{
-	struct ep93xx_keypad *keypad = platform_get_drvdata(pdev);
-	struct resource *res;
+अटल पूर्णांक ep93xx_keypad_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ep93xx_keypad *keypad = platक्रमm_get_drvdata(pdev);
+	काष्ठा resource *res;
 
-	free_irq(keypad->irq, keypad);
+	मुक्त_irq(keypad->irq, keypad);
 
-	if (keypad->enabled)
+	अगर (keypad->enabled)
 		clk_disable(keypad->clk);
 	clk_put(keypad->clk);
 
-	input_unregister_device(keypad->input_dev);
+	input_unरेजिस्टर_device(keypad->input_dev);
 
 	ep93xx_keypad_release_gpio(pdev);
 
 	iounmap(keypad->mmio_base);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	release_mem_region(res->start, resource_size(res));
 
-	kfree(keypad);
+	kमुक्त(keypad);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver ep93xx_keypad_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ep93xx_keypad_driver = अणु
+	.driver		= अणु
 		.name	= "ep93xx-keypad",
 		.pm	= &ep93xx_keypad_pm_ops,
-	},
+	पूर्ण,
 	.probe		= ep93xx_keypad_probe,
-	.remove		= ep93xx_keypad_remove,
-};
-module_platform_driver(ep93xx_keypad_driver);
+	.हटाओ		= ep93xx_keypad_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(ep93xx_keypad_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("H Hartley Sweeten <hsweeten@visionengravers.com>");

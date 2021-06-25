@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * (C) 2005, 2006 Linux Networx (http://lnxi.com)
  * This file may be distributed under the terms of the
@@ -6,518 +7,518 @@
  * Written Doug Thompson <norsk5@xmission.com>
  *
  */
-#include <linux/module.h>
-#include <linux/edac.h>
-#include <linux/slab.h>
-#include <linux/ctype.h>
+#समावेश <linux/module.h>
+#समावेश <linux/edac.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
 
-#include "edac_pci.h"
-#include "edac_module.h"
+#समावेश "edac_pci.h"
+#समावेश "edac_module.h"
 
-#define EDAC_PCI_SYMLINK	"device"
+#घोषणा EDAC_PCI_SYMLINK	"device"
 
 /* data variables exported via sysfs */
-static int check_pci_errors;		/* default NO check PCI parity */
-static int edac_pci_panic_on_pe;	/* default NO panic on PCI Parity */
-static int edac_pci_log_pe = 1;		/* log PCI parity errors */
-static int edac_pci_log_npe = 1;	/* log PCI non-parity error errors */
-static int edac_pci_poll_msec = 1000;	/* one second workq period */
+अटल पूर्णांक check_pci_errors;		/* शेष NO check PCI parity */
+अटल पूर्णांक edac_pci_panic_on_pe;	/* शेष NO panic on PCI Parity */
+अटल पूर्णांक edac_pci_log_pe = 1;		/* log PCI parity errors */
+अटल पूर्णांक edac_pci_log_npe = 1;	/* log PCI non-parity error errors */
+अटल पूर्णांक edac_pci_poll_msec = 1000;	/* one second workq period */
 
-static atomic_t pci_parity_count = ATOMIC_INIT(0);
-static atomic_t pci_nonparity_count = ATOMIC_INIT(0);
+अटल atomic_t pci_parity_count = ATOMIC_INIT(0);
+अटल atomic_t pci_nonparity_count = ATOMIC_INIT(0);
 
-static struct kobject *edac_pci_top_main_kobj;
-static atomic_t edac_pci_sysfs_refcount = ATOMIC_INIT(0);
+अटल काष्ठा kobject *edac_pci_top_मुख्य_kobj;
+अटल atomic_t edac_pci_sysfs_refcount = ATOMIC_INIT(0);
 
-/* getter functions for the data variables */
-int edac_pci_get_check_errors(void)
-{
-	return check_pci_errors;
-}
+/* getter functions क्रम the data variables */
+पूर्णांक edac_pci_get_check_errors(व्योम)
+अणु
+	वापस check_pci_errors;
+पूर्ण
 
-static int edac_pci_get_log_pe(void)
-{
-	return edac_pci_log_pe;
-}
+अटल पूर्णांक edac_pci_get_log_pe(व्योम)
+अणु
+	वापस edac_pci_log_pe;
+पूर्ण
 
-static int edac_pci_get_log_npe(void)
-{
-	return edac_pci_log_npe;
-}
+अटल पूर्णांक edac_pci_get_log_npe(व्योम)
+अणु
+	वापस edac_pci_log_npe;
+पूर्ण
 
-static int edac_pci_get_panic_on_pe(void)
-{
-	return edac_pci_panic_on_pe;
-}
+अटल पूर्णांक edac_pci_get_panic_on_pe(व्योम)
+अणु
+	वापस edac_pci_panic_on_pe;
+पूर्ण
 
-int edac_pci_get_poll_msec(void)
-{
-	return edac_pci_poll_msec;
-}
+पूर्णांक edac_pci_get_poll_msec(व्योम)
+अणु
+	वापस edac_pci_poll_msec;
+पूर्ण
 
 /**************************** EDAC PCI sysfs instance *******************/
-static ssize_t instance_pe_count_show(struct edac_pci_ctl_info *pci, char *data)
-{
-	return sprintf(data, "%u\n", atomic_read(&pci->counters.pe_count));
-}
+अटल sमाप_प्रकार instance_pe_count_show(काष्ठा edac_pci_ctl_info *pci, अक्षर *data)
+अणु
+	वापस प्र_लिखो(data, "%u\n", atomic_पढ़ो(&pci->counters.pe_count));
+पूर्ण
 
-static ssize_t instance_npe_count_show(struct edac_pci_ctl_info *pci,
-				char *data)
-{
-	return sprintf(data, "%u\n", atomic_read(&pci->counters.npe_count));
-}
+अटल sमाप_प्रकार instance_npe_count_show(काष्ठा edac_pci_ctl_info *pci,
+				अक्षर *data)
+अणु
+	वापस प्र_लिखो(data, "%u\n", atomic_पढ़ो(&pci->counters.npe_count));
+पूर्ण
 
-#define to_instance(k) container_of(k, struct edac_pci_ctl_info, kobj)
-#define to_instance_attr(a) container_of(a, struct instance_attribute, attr)
+#घोषणा to_instance(k) container_of(k, काष्ठा edac_pci_ctl_info, kobj)
+#घोषणा to_instance_attr(a) container_of(a, काष्ठा instance_attribute, attr)
 
 /* DEVICE instance kobject release() function */
-static void edac_pci_instance_release(struct kobject *kobj)
-{
-	struct edac_pci_ctl_info *pci;
+अटल व्योम edac_pci_instance_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा edac_pci_ctl_info *pci;
 
 	edac_dbg(0, "\n");
 
-	/* Form pointer to containing struct, the pci control struct */
+	/* Form poपूर्णांकer to containing काष्ठा, the pci control काष्ठा */
 	pci = to_instance(kobj);
 
-	/* decrement reference count on top main kobj */
-	kobject_put(edac_pci_top_main_kobj);
+	/* decrement reference count on top मुख्य kobj */
+	kobject_put(edac_pci_top_मुख्य_kobj);
 
-	kfree(pci);	/* Free the control struct */
-}
+	kमुक्त(pci);	/* Free the control काष्ठा */
+पूर्ण
 
-/* instance specific attribute structure */
-struct instance_attribute {
-	struct attribute attr;
-	ssize_t(*show) (struct edac_pci_ctl_info *, char *);
-	ssize_t(*store) (struct edac_pci_ctl_info *, const char *, size_t);
-};
+/* instance specअगरic attribute काष्ठाure */
+काष्ठा instance_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार(*show) (काष्ठा edac_pci_ctl_info *, अक्षर *);
+	sमाप_प्रकार(*store) (काष्ठा edac_pci_ctl_info *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-/* Function to 'show' fields from the edac_pci 'instance' structure */
-static ssize_t edac_pci_instance_show(struct kobject *kobj,
-				struct attribute *attr, char *buffer)
-{
-	struct edac_pci_ctl_info *pci = to_instance(kobj);
-	struct instance_attribute *instance_attr = to_instance_attr(attr);
+/* Function to 'show' fields from the edac_pci 'instance' काष्ठाure */
+अटल sमाप_प्रकार edac_pci_instance_show(काष्ठा kobject *kobj,
+				काष्ठा attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा edac_pci_ctl_info *pci = to_instance(kobj);
+	काष्ठा instance_attribute *instance_attr = to_instance_attr(attr);
 
-	if (instance_attr->show)
-		return instance_attr->show(pci, buffer);
-	return -EIO;
-}
+	अगर (instance_attr->show)
+		वापस instance_attr->show(pci, buffer);
+	वापस -EIO;
+पूर्ण
 
-/* Function to 'store' fields into the edac_pci 'instance' structure */
-static ssize_t edac_pci_instance_store(struct kobject *kobj,
-				struct attribute *attr,
-				const char *buffer, size_t count)
-{
-	struct edac_pci_ctl_info *pci = to_instance(kobj);
-	struct instance_attribute *instance_attr = to_instance_attr(attr);
+/* Function to 'store' fields into the edac_pci 'instance' काष्ठाure */
+अटल sमाप_प्रकार edac_pci_instance_store(काष्ठा kobject *kobj,
+				काष्ठा attribute *attr,
+				स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	काष्ठा edac_pci_ctl_info *pci = to_instance(kobj);
+	काष्ठा instance_attribute *instance_attr = to_instance_attr(attr);
 
-	if (instance_attr->store)
-		return instance_attr->store(pci, buffer, count);
-	return -EIO;
-}
+	अगर (instance_attr->store)
+		वापस instance_attr->store(pci, buffer, count);
+	वापस -EIO;
+पूर्ण
 
 /* fs_ops table */
-static const struct sysfs_ops pci_instance_ops = {
+अटल स्थिर काष्ठा sysfs_ops pci_instance_ops = अणु
 	.show = edac_pci_instance_show,
 	.store = edac_pci_instance_store
-};
+पूर्ण;
 
-#define INSTANCE_ATTR(_name, _mode, _show, _store)	\
-static struct instance_attribute attr_instance_##_name = {	\
-	.attr	= {.name = __stringify(_name), .mode = _mode },	\
+#घोषणा INSTANCE_ATTR(_name, _mode, _show, _store)	\
+अटल काष्ठा instance_attribute attr_instance_##_name = अणु	\
+	.attr	= अणु.name = __stringअगरy(_name), .mode = _mode पूर्ण,	\
 	.show	= _show,					\
 	.store	= _store,					\
-};
+पूर्ण;
 
-INSTANCE_ATTR(pe_count, S_IRUGO, instance_pe_count_show, NULL);
-INSTANCE_ATTR(npe_count, S_IRUGO, instance_npe_count_show, NULL);
+INSTANCE_ATTR(pe_count, S_IRUGO, instance_pe_count_show, शून्य);
+INSTANCE_ATTR(npe_count, S_IRUGO, instance_npe_count_show, शून्य);
 
 /* pci instance attributes */
-static struct instance_attribute *pci_instance_attr[] = {
+अटल काष्ठा instance_attribute *pci_instance_attr[] = अणु
 	&attr_instance_pe_count,
 	&attr_instance_npe_count,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-/* the ktype for a pci instance */
-static struct kobj_type ktype_pci_instance = {
+/* the ktype क्रम a pci instance */
+अटल काष्ठा kobj_type ktype_pci_instance = अणु
 	.release = edac_pci_instance_release,
 	.sysfs_ops = &pci_instance_ops,
-	.default_attrs = (struct attribute **)pci_instance_attr,
-};
+	.शेष_attrs = (काष्ठा attribute **)pci_instance_attr,
+पूर्ण;
 
 /*
  * edac_pci_create_instance_kobj
  *
- *	construct one EDAC PCI instance's kobject for use
+ *	स्थिरruct one EDAC PCI instance's kobject क्रम use
  */
-static int edac_pci_create_instance_kobj(struct edac_pci_ctl_info *pci, int idx)
-{
-	struct kobject *main_kobj;
-	int err;
+अटल पूर्णांक edac_pci_create_instance_kobj(काष्ठा edac_pci_ctl_info *pci, पूर्णांक idx)
+अणु
+	काष्ठा kobject *मुख्य_kobj;
+	पूर्णांक err;
 
 	edac_dbg(0, "\n");
 
-	/* First bump the ref count on the top main kobj, which will
+	/* First bump the ref count on the top मुख्य kobj, which will
 	 * track the number of PCI instances we have, and thus nest
 	 * properly on keeping the module loaded
 	 */
-	main_kobj = kobject_get(edac_pci_top_main_kobj);
-	if (!main_kobj) {
+	मुख्य_kobj = kobject_get(edac_pci_top_मुख्य_kobj);
+	अगर (!मुख्य_kobj) अणु
 		err = -ENODEV;
-		goto error_out;
-	}
+		जाओ error_out;
+	पूर्ण
 
-	/* And now register this new kobject under the main kobj */
+	/* And now रेजिस्टर this new kobject under the मुख्य kobj */
 	err = kobject_init_and_add(&pci->kobj, &ktype_pci_instance,
-				   edac_pci_top_main_kobj, "pci%d", idx);
-	if (err != 0) {
+				   edac_pci_top_मुख्य_kobj, "pci%d", idx);
+	अगर (err != 0) अणु
 		edac_dbg(2, "failed to register instance pci%d\n", idx);
-		kobject_put(edac_pci_top_main_kobj);
-		goto error_out;
-	}
+		kobject_put(edac_pci_top_मुख्य_kobj);
+		जाओ error_out;
+	पूर्ण
 
 	kobject_uevent(&pci->kobj, KOBJ_ADD);
 	edac_dbg(1, "Register instance 'pci%d' kobject\n", idx);
 
-	return 0;
+	वापस 0;
 
 	/* Error unwind statck */
 error_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * edac_pci_unregister_sysfs_instance_kobj
+ * edac_pci_unरेजिस्टर_sysfs_instance_kobj
  *
- *	unregister the kobj for the EDAC PCI instance
+ *	unरेजिस्टर the kobj क्रम the EDAC PCI instance
  */
-static void edac_pci_unregister_sysfs_instance_kobj(
-			struct edac_pci_ctl_info *pci)
-{
+अटल व्योम edac_pci_unरेजिस्टर_sysfs_instance_kobj(
+			काष्ठा edac_pci_ctl_info *pci)
+अणु
 	edac_dbg(0, "\n");
 
-	/* Unregister the instance kobject and allow its release
-	 * function release the main reference count and then
-	 * kfree the memory
+	/* Unरेजिस्टर the instance kobject and allow its release
+	 * function release the मुख्य reference count and then
+	 * kमुक्त the memory
 	 */
 	kobject_put(&pci->kobj);
-}
+पूर्ण
 
 /***************************** EDAC PCI sysfs root **********************/
-#define to_edacpci(k) container_of(k, struct edac_pci_ctl_info, kobj)
-#define to_edacpci_attr(a) container_of(a, struct edac_pci_attr, attr)
+#घोषणा to_edacpci(k) container_of(k, काष्ठा edac_pci_ctl_info, kobj)
+#घोषणा to_edacpci_attr(a) container_of(a, काष्ठा edac_pci_attr, attr)
 
-/* simple show/store functions for attributes */
-static ssize_t edac_pci_int_show(void *ptr, char *buffer)
-{
-	int *value = ptr;
-	return sprintf(buffer, "%d\n", *value);
-}
+/* simple show/store functions क्रम attributes */
+अटल sमाप_प्रकार edac_pci_पूर्णांक_show(व्योम *ptr, अक्षर *buffer)
+अणु
+	पूर्णांक *value = ptr;
+	वापस प्र_लिखो(buffer, "%d\n", *value);
+पूर्ण
 
-static ssize_t edac_pci_int_store(void *ptr, const char *buffer, size_t count)
-{
-	int *value = ptr;
+अटल sमाप_प्रकार edac_pci_पूर्णांक_store(व्योम *ptr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	पूर्णांक *value = ptr;
 
-	if (isdigit(*buffer))
-		*value = simple_strtoul(buffer, NULL, 0);
+	अगर (है_अंक(*buffer))
+		*value = simple_म_से_अदीर्घ(buffer, शून्य, 0);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-struct edac_pci_dev_attribute {
-	struct attribute attr;
-	void *value;
-	 ssize_t(*show) (void *, char *);
-	 ssize_t(*store) (void *, const char *, size_t);
-};
+काष्ठा edac_pci_dev_attribute अणु
+	काष्ठा attribute attr;
+	व्योम *value;
+	 sमाप_प्रकार(*show) (व्योम *, अक्षर *);
+	 sमाप_प्रकार(*store) (व्योम *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-/* Set of show/store abstract level functions for PCI Parity object */
-static ssize_t edac_pci_dev_show(struct kobject *kobj, struct attribute *attr,
-				 char *buffer)
-{
-	struct edac_pci_dev_attribute *edac_pci_dev;
-	edac_pci_dev = (struct edac_pci_dev_attribute *)attr;
+/* Set of show/store असलtract level functions क्रम PCI Parity object */
+अटल sमाप_प्रकार edac_pci_dev_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				 अक्षर *buffer)
+अणु
+	काष्ठा edac_pci_dev_attribute *edac_pci_dev;
+	edac_pci_dev = (काष्ठा edac_pci_dev_attribute *)attr;
 
-	if (edac_pci_dev->show)
-		return edac_pci_dev->show(edac_pci_dev->value, buffer);
-	return -EIO;
-}
+	अगर (edac_pci_dev->show)
+		वापस edac_pci_dev->show(edac_pci_dev->value, buffer);
+	वापस -EIO;
+पूर्ण
 
-static ssize_t edac_pci_dev_store(struct kobject *kobj,
-				struct attribute *attr, const char *buffer,
-				size_t count)
-{
-	struct edac_pci_dev_attribute *edac_pci_dev;
-	edac_pci_dev = (struct edac_pci_dev_attribute *)attr;
+अटल sमाप_प्रकार edac_pci_dev_store(काष्ठा kobject *kobj,
+				काष्ठा attribute *attr, स्थिर अक्षर *buffer,
+				माप_प्रकार count)
+अणु
+	काष्ठा edac_pci_dev_attribute *edac_pci_dev;
+	edac_pci_dev = (काष्ठा edac_pci_dev_attribute *)attr;
 
-	if (edac_pci_dev->store)
-		return edac_pci_dev->store(edac_pci_dev->value, buffer, count);
-	return -EIO;
-}
+	अगर (edac_pci_dev->store)
+		वापस edac_pci_dev->store(edac_pci_dev->value, buffer, count);
+	वापस -EIO;
+पूर्ण
 
-static const struct sysfs_ops edac_pci_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops edac_pci_sysfs_ops = अणु
 	.show = edac_pci_dev_show,
 	.store = edac_pci_dev_store
-};
+पूर्ण;
 
-#define EDAC_PCI_ATTR(_name,_mode,_show,_store)			\
-static struct edac_pci_dev_attribute edac_pci_attr_##_name = {		\
-	.attr = {.name = __stringify(_name), .mode = _mode },	\
+#घोषणा EDAC_PCI_ATTR(_name,_mode,_show,_store)			\
+अटल काष्ठा edac_pci_dev_attribute edac_pci_attr_##_name = अणु		\
+	.attr = अणु.name = __stringअगरy(_name), .mode = _mode पूर्ण,	\
 	.value  = &_name,					\
 	.show   = _show,					\
 	.store  = _store,					\
-};
+पूर्ण;
 
-#define EDAC_PCI_STRING_ATTR(_name,_data,_mode,_show,_store)	\
-static struct edac_pci_dev_attribute edac_pci_attr_##_name = {		\
-	.attr = {.name = __stringify(_name), .mode = _mode },	\
+#घोषणा EDAC_PCI_STRING_ATTR(_name,_data,_mode,_show,_store)	\
+अटल काष्ठा edac_pci_dev_attribute edac_pci_attr_##_name = अणु		\
+	.attr = अणु.name = __stringअगरy(_name), .mode = _mode पूर्ण,	\
 	.value  = _data,					\
 	.show   = _show,					\
 	.store  = _store,					\
-};
+पूर्ण;
 
 /* PCI Parity control files */
-EDAC_PCI_ATTR(check_pci_errors, S_IRUGO | S_IWUSR, edac_pci_int_show,
-	edac_pci_int_store);
-EDAC_PCI_ATTR(edac_pci_log_pe, S_IRUGO | S_IWUSR, edac_pci_int_show,
-	edac_pci_int_store);
-EDAC_PCI_ATTR(edac_pci_log_npe, S_IRUGO | S_IWUSR, edac_pci_int_show,
-	edac_pci_int_store);
-EDAC_PCI_ATTR(edac_pci_panic_on_pe, S_IRUGO | S_IWUSR, edac_pci_int_show,
-	edac_pci_int_store);
-EDAC_PCI_ATTR(pci_parity_count, S_IRUGO, edac_pci_int_show, NULL);
-EDAC_PCI_ATTR(pci_nonparity_count, S_IRUGO, edac_pci_int_show, NULL);
+EDAC_PCI_ATTR(check_pci_errors, S_IRUGO | S_IWUSR, edac_pci_पूर्णांक_show,
+	edac_pci_पूर्णांक_store);
+EDAC_PCI_ATTR(edac_pci_log_pe, S_IRUGO | S_IWUSR, edac_pci_पूर्णांक_show,
+	edac_pci_पूर्णांक_store);
+EDAC_PCI_ATTR(edac_pci_log_npe, S_IRUGO | S_IWUSR, edac_pci_पूर्णांक_show,
+	edac_pci_पूर्णांक_store);
+EDAC_PCI_ATTR(edac_pci_panic_on_pe, S_IRUGO | S_IWUSR, edac_pci_पूर्णांक_show,
+	edac_pci_पूर्णांक_store);
+EDAC_PCI_ATTR(pci_parity_count, S_IRUGO, edac_pci_पूर्णांक_show, शून्य);
+EDAC_PCI_ATTR(pci_nonparity_count, S_IRUGO, edac_pci_पूर्णांक_show, शून्य);
 
 /* Base Attributes of the memory ECC object */
-static struct edac_pci_dev_attribute *edac_pci_attr[] = {
+अटल काष्ठा edac_pci_dev_attribute *edac_pci_attr[] = अणु
 	&edac_pci_attr_check_pci_errors,
 	&edac_pci_attr_edac_pci_log_pe,
 	&edac_pci_attr_edac_pci_log_npe,
 	&edac_pci_attr_edac_pci_panic_on_pe,
 	&edac_pci_attr_pci_parity_count,
 	&edac_pci_attr_pci_nonparity_count,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*
- * edac_pci_release_main_kobj
+ * edac_pci_release_मुख्य_kobj
  *
  *	This release function is called when the reference count to the
  *	passed kobj goes to zero.
  *
  *	This kobj is the 'main' kobject that EDAC PCI instances
- *	link to, and thus provide for proper nesting counts
+ *	link to, and thus provide क्रम proper nesting counts
  */
-static void edac_pci_release_main_kobj(struct kobject *kobj)
-{
+अटल व्योम edac_pci_release_मुख्य_kobj(काष्ठा kobject *kobj)
+अणु
 	edac_dbg(0, "here to module_put(THIS_MODULE)\n");
 
-	kfree(kobj);
+	kमुक्त(kobj);
 
-	/* last reference to top EDAC PCI kobject has been removed,
+	/* last reference to top EDAC PCI kobject has been हटाओd,
 	 * NOW release our ref count on the core module
 	 */
 	module_put(THIS_MODULE);
-}
+पूर्ण
 
-/* ktype struct for the EDAC PCI main kobj */
-static struct kobj_type ktype_edac_pci_main_kobj = {
-	.release = edac_pci_release_main_kobj,
+/* ktype काष्ठा क्रम the EDAC PCI मुख्य kobj */
+अटल काष्ठा kobj_type ktype_edac_pci_मुख्य_kobj = अणु
+	.release = edac_pci_release_मुख्य_kobj,
 	.sysfs_ops = &edac_pci_sysfs_ops,
-	.default_attrs = (struct attribute **)edac_pci_attr,
-};
+	.शेष_attrs = (काष्ठा attribute **)edac_pci_attr,
+पूर्ण;
 
 /**
- * edac_pci_main_kobj_setup: Setup the sysfs for EDAC PCI attributes.
+ * edac_pci_मुख्य_kobj_setup: Setup the sysfs क्रम EDAC PCI attributes.
  */
-static int edac_pci_main_kobj_setup(void)
-{
-	int err;
-	struct bus_type *edac_subsys;
+अटल पूर्णांक edac_pci_मुख्य_kobj_setup(व्योम)
+अणु
+	पूर्णांक err;
+	काष्ठा bus_type *edac_subsys;
 
 	edac_dbg(0, "\n");
 
-	/* check and count if we have already created the main kobject */
-	if (atomic_inc_return(&edac_pci_sysfs_refcount) != 1)
-		return 0;
+	/* check and count अगर we have alपढ़ोy created the मुख्य kobject */
+	अगर (atomic_inc_वापस(&edac_pci_sysfs_refcount) != 1)
+		वापस 0;
 
-	/* First time, so create the main kobject and its
+	/* First समय, so create the मुख्य kobject and its
 	 * controls and attributes
 	 */
 	edac_subsys = edac_get_sysfs_subsys();
 
 	/* Bump the reference count on this module to ensure the
-	 * modules isn't unloaded until we deconstruct the top
-	 * level main kobj for EDAC PCI
+	 * modules isn't unloaded until we deस्थिरruct the top
+	 * level मुख्य kobj क्रम EDAC PCI
 	 */
-	if (!try_module_get(THIS_MODULE)) {
+	अगर (!try_module_get(THIS_MODULE)) अणु
 		edac_dbg(1, "try_module_get() failed\n");
 		err = -ENODEV;
-		goto decrement_count_fail;
-	}
+		जाओ decrement_count_fail;
+	पूर्ण
 
-	edac_pci_top_main_kobj = kzalloc(sizeof(struct kobject), GFP_KERNEL);
-	if (!edac_pci_top_main_kobj) {
+	edac_pci_top_मुख्य_kobj = kzalloc(माप(काष्ठा kobject), GFP_KERNEL);
+	अगर (!edac_pci_top_मुख्य_kobj) अणु
 		edac_dbg(1, "Failed to allocate\n");
 		err = -ENOMEM;
-		goto kzalloc_fail;
-	}
+		जाओ kzalloc_fail;
+	पूर्ण
 
 	/* Instanstiate the pci object */
-	err = kobject_init_and_add(edac_pci_top_main_kobj,
-				   &ktype_edac_pci_main_kobj,
+	err = kobject_init_and_add(edac_pci_top_मुख्य_kobj,
+				   &ktype_edac_pci_मुख्य_kobj,
 				   &edac_subsys->dev_root->kobj, "pci");
-	if (err) {
+	अगर (err) अणु
 		edac_dbg(1, "Failed to register '.../edac/pci'\n");
-		goto kobject_init_and_add_fail;
-	}
+		जाओ kobject_init_and_add_fail;
+	पूर्ण
 
-	/* At this point, to 'release' the top level kobject
-	 * for EDAC PCI, then edac_pci_main_kobj_teardown()
-	 * must be used, for resources to be cleaned up properly
+	/* At this poपूर्णांक, to 'release' the top level kobject
+	 * क्रम EDAC PCI, then edac_pci_मुख्य_kobj_tearकरोwn()
+	 * must be used, क्रम resources to be cleaned up properly
 	 */
-	kobject_uevent(edac_pci_top_main_kobj, KOBJ_ADD);
+	kobject_uevent(edac_pci_top_मुख्य_kobj, KOBJ_ADD);
 	edac_dbg(1, "Registered '.../edac/pci' kobject\n");
 
-	return 0;
+	वापस 0;
 
 	/* Error unwind statck */
 kobject_init_and_add_fail:
-	kobject_put(edac_pci_top_main_kobj);
+	kobject_put(edac_pci_top_मुख्य_kobj);
 
 kzalloc_fail:
 	module_put(THIS_MODULE);
 
 decrement_count_fail:
-	/* if are on this error exit, nothing to tear down */
+	/* अगर are on this error निकास, nothing to tear करोwn */
 	atomic_dec(&edac_pci_sysfs_refcount);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * edac_pci_main_kobj_teardown()
+ * edac_pci_मुख्य_kobj_tearकरोwn()
  *
- *	if no longer linked (needed) remove the top level EDAC PCI
+ *	अगर no दीर्घer linked (needed) हटाओ the top level EDAC PCI
  *	kobject with its controls and attributes
  */
-static void edac_pci_main_kobj_teardown(void)
-{
+अटल व्योम edac_pci_मुख्य_kobj_tearकरोwn(व्योम)
+अणु
 	edac_dbg(0, "\n");
 
-	/* Decrement the count and only if no more controller instances
-	 * are connected perform the unregisteration of the top level
-	 * main kobj
+	/* Decrement the count and only अगर no more controller instances
+	 * are connected perक्रमm the unरेजिस्टरation of the top level
+	 * मुख्य kobj
 	 */
-	if (atomic_dec_return(&edac_pci_sysfs_refcount) == 0) {
+	अगर (atomic_dec_वापस(&edac_pci_sysfs_refcount) == 0) अणु
 		edac_dbg(0, "called kobject_put on main kobj\n");
-		kobject_put(edac_pci_top_main_kobj);
-	}
-}
+		kobject_put(edac_pci_top_मुख्य_kobj);
+	पूर्ण
+पूर्ण
 
-int edac_pci_create_sysfs(struct edac_pci_ctl_info *pci)
-{
-	int err;
-	struct kobject *edac_kobj = &pci->kobj;
+पूर्णांक edac_pci_create_sysfs(काष्ठा edac_pci_ctl_info *pci)
+अणु
+	पूर्णांक err;
+	काष्ठा kobject *edac_kobj = &pci->kobj;
 
 	edac_dbg(0, "idx=%d\n", pci->pci_idx);
 
-	/* create the top main EDAC PCI kobject, IF needed */
-	err = edac_pci_main_kobj_setup();
-	if (err)
-		return err;
+	/* create the top मुख्य EDAC PCI kobject, IF needed */
+	err = edac_pci_मुख्य_kobj_setup();
+	अगर (err)
+		वापस err;
 
 	/* Create this instance's kobject under the MAIN kobject */
 	err = edac_pci_create_instance_kobj(pci, pci->pci_idx);
-	if (err)
-		goto unregister_cleanup;
+	अगर (err)
+		जाओ unरेजिस्टर_cleanup;
 
 	err = sysfs_create_link(edac_kobj, &pci->dev->kobj, EDAC_PCI_SYMLINK);
-	if (err) {
+	अगर (err) अणु
 		edac_dbg(0, "sysfs_create_link() returned err= %d\n", err);
-		goto symlink_fail;
-	}
+		जाओ symlink_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 	/* Error unwind stack */
 symlink_fail:
-	edac_pci_unregister_sysfs_instance_kobj(pci);
+	edac_pci_unरेजिस्टर_sysfs_instance_kobj(pci);
 
-unregister_cleanup:
-	edac_pci_main_kobj_teardown();
+unरेजिस्टर_cleanup:
+	edac_pci_मुख्य_kobj_tearकरोwn();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void edac_pci_remove_sysfs(struct edac_pci_ctl_info *pci)
-{
+व्योम edac_pci_हटाओ_sysfs(काष्ठा edac_pci_ctl_info *pci)
+अणु
 	edac_dbg(0, "index=%d\n", pci->pci_idx);
 
 	/* Remove the symlink */
-	sysfs_remove_link(&pci->kobj, EDAC_PCI_SYMLINK);
+	sysfs_हटाओ_link(&pci->kobj, EDAC_PCI_SYMLINK);
 
-	/* remove this PCI instance's sysfs entries */
-	edac_pci_unregister_sysfs_instance_kobj(pci);
+	/* हटाओ this PCI instance's sysfs entries */
+	edac_pci_unरेजिस्टर_sysfs_instance_kobj(pci);
 
-	/* Call the main unregister function, which will determine
-	 * if this 'pci' is the last instance.
-	 * If it is, the main kobject will be unregistered as a result
+	/* Call the मुख्य unरेजिस्टर function, which will determine
+	 * अगर this 'pci' is the last instance.
+	 * If it is, the मुख्य kobject will be unरेजिस्टरed as a result
 	 */
 	edac_dbg(0, "calling edac_pci_main_kobj_teardown()\n");
-	edac_pci_main_kobj_teardown();
-}
+	edac_pci_मुख्य_kobj_tearकरोwn();
+पूर्ण
 
 /************************ PCI error handling *************************/
-static u16 get_pci_parity_status(struct pci_dev *dev, int secondary)
-{
-	int where;
+अटल u16 get_pci_parity_status(काष्ठा pci_dev *dev, पूर्णांक secondary)
+अणु
+	पूर्णांक where;
 	u16 status;
 
 	where = secondary ? PCI_SEC_STATUS : PCI_STATUS;
-	pci_read_config_word(dev, where, &status);
+	pci_पढ़ो_config_word(dev, where, &status);
 
 	/* If we get back 0xFFFF then we must suspect that the card has been
 	 * pulled but the Linux PCI layer has not yet finished cleaning up.
-	 * We don't want to report on such devices
+	 * We करोn't want to report on such devices
 	 */
 
-	if (status == 0xFFFF) {
+	अगर (status == 0xFFFF) अणु
 		u32 sanity;
 
-		pci_read_config_dword(dev, 0, &sanity);
+		pci_पढ़ो_config_dword(dev, 0, &sanity);
 
-		if (sanity == 0xFFFFFFFF)
-			return 0;
-	}
+		अगर (sanity == 0xFFFFFFFF)
+			वापस 0;
+	पूर्ण
 
 	status &= PCI_STATUS_DETECTED_PARITY | PCI_STATUS_SIG_SYSTEM_ERROR |
 		PCI_STATUS_PARITY;
 
-	if (status)
-		/* reset only the bits we are interested in */
-		pci_write_config_word(dev, where, status);
+	अगर (status)
+		/* reset only the bits we are पूर्णांकerested in */
+		pci_ग_लिखो_config_word(dev, where, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
 /* Clear any PCI parity errors logged by this device. */
-static void edac_pci_dev_parity_clear(struct pci_dev *dev)
-{
+अटल व्योम edac_pci_dev_parity_clear(काष्ठा pci_dev *dev)
+अणु
 	u8 header_type;
 
 	get_pci_parity_status(dev, 0);
 
-	/* read the device TYPE, looking for bridges */
-	pci_read_config_byte(dev, PCI_HEADER_TYPE, &header_type);
+	/* पढ़ो the device TYPE, looking क्रम bridges */
+	pci_पढ़ो_config_byte(dev, PCI_HEADER_TYPE, &header_type);
 
-	if ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE)
+	अगर ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE)
 		get_pci_parity_status(dev, 1);
-}
+पूर्ण
 
 /*
  *  PCI Parity polling
@@ -526,179 +527,179 @@ static void edac_pci_dev_parity_clear(struct pci_dev *dev)
  *	and decode it
  *
  */
-static void edac_pci_dev_parity_test(struct pci_dev *dev)
-{
-	unsigned long flags;
+अटल व्योम edac_pci_dev_parity_test(काष्ठा pci_dev *dev)
+अणु
+	अचिन्हित दीर्घ flags;
 	u16 status;
 	u8 header_type;
 
-	/* stop any interrupts until we can acquire the status */
+	/* stop any पूर्णांकerrupts until we can acquire the status */
 	local_irq_save(flags);
 
-	/* read the STATUS register on this device */
+	/* पढ़ो the STATUS रेजिस्टर on this device */
 	status = get_pci_parity_status(dev, 0);
 
-	/* read the device TYPE, looking for bridges */
-	pci_read_config_byte(dev, PCI_HEADER_TYPE, &header_type);
+	/* पढ़ो the device TYPE, looking क्रम bridges */
+	pci_पढ़ो_config_byte(dev, PCI_HEADER_TYPE, &header_type);
 
 	local_irq_restore(flags);
 
 	edac_dbg(4, "PCI STATUS= 0x%04x %s\n", status, dev_name(&dev->dev));
 
-	/* check the status reg for errors on boards NOT marked as broken
-	 * if broken, we cannot trust any of the status bits
+	/* check the status reg क्रम errors on boards NOT marked as broken
+	 * अगर broken, we cannot trust any of the status bits
 	 */
-	if (status && !dev->broken_parity_status) {
-		if (status & (PCI_STATUS_SIG_SYSTEM_ERROR)) {
-			edac_printk(KERN_CRIT, EDAC_PCI,
+	अगर (status && !dev->broken_parity_status) अणु
+		अगर (status & (PCI_STATUS_SIG_SYSTEM_ERROR)) अणु
+			edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI,
 				"Signaled System Error on %s\n",
 				pci_name(dev));
 			atomic_inc(&pci_nonparity_count);
-		}
+		पूर्ण
 
-		if (status & (PCI_STATUS_PARITY)) {
-			edac_printk(KERN_CRIT, EDAC_PCI,
+		अगर (status & (PCI_STATUS_PARITY)) अणु
+			edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI,
 				"Master Data Parity Error on %s\n",
 				pci_name(dev));
 
 			atomic_inc(&pci_parity_count);
-		}
+		पूर्ण
 
-		if (status & (PCI_STATUS_DETECTED_PARITY)) {
-			edac_printk(KERN_CRIT, EDAC_PCI,
+		अगर (status & (PCI_STATUS_DETECTED_PARITY)) अणु
+			edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI,
 				"Detected Parity Error on %s\n",
 				pci_name(dev));
 
 			atomic_inc(&pci_parity_count);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 
 	edac_dbg(4, "PCI HEADER TYPE= 0x%02x %s\n",
 		 header_type, dev_name(&dev->dev));
 
-	if ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE) {
-		/* On bridges, need to examine secondary status register  */
+	अगर ((header_type & 0x7F) == PCI_HEADER_TYPE_BRIDGE) अणु
+		/* On bridges, need to examine secondary status रेजिस्टर  */
 		status = get_pci_parity_status(dev, 1);
 
 		edac_dbg(4, "PCI SEC_STATUS= 0x%04x %s\n",
 			 status, dev_name(&dev->dev));
 
-		/* check the secondary status reg for errors,
+		/* check the secondary status reg क्रम errors,
 		 * on NOT broken boards
 		 */
-		if (status && !dev->broken_parity_status) {
-			if (status & (PCI_STATUS_SIG_SYSTEM_ERROR)) {
-				edac_printk(KERN_CRIT, EDAC_PCI, "Bridge "
+		अगर (status && !dev->broken_parity_status) अणु
+			अगर (status & (PCI_STATUS_SIG_SYSTEM_ERROR)) अणु
+				edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI, "Bridge "
 					"Signaled System Error on %s\n",
 					pci_name(dev));
 				atomic_inc(&pci_nonparity_count);
-			}
+			पूर्ण
 
-			if (status & (PCI_STATUS_PARITY)) {
-				edac_printk(KERN_CRIT, EDAC_PCI, "Bridge "
+			अगर (status & (PCI_STATUS_PARITY)) अणु
+				edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI, "Bridge "
 					"Master Data Parity Error on "
 					"%s\n", pci_name(dev));
 
 				atomic_inc(&pci_parity_count);
-			}
+			पूर्ण
 
-			if (status & (PCI_STATUS_DETECTED_PARITY)) {
-				edac_printk(KERN_CRIT, EDAC_PCI, "Bridge "
+			अगर (status & (PCI_STATUS_DETECTED_PARITY)) अणु
+				edac_prपूर्णांकk(KERN_CRIT, EDAC_PCI, "Bridge "
 					"Detected Parity Error on %s\n",
 					pci_name(dev));
 
 				atomic_inc(&pci_parity_count);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* reduce some complexity in definition of the iterator */
-typedef void (*pci_parity_check_fn_t) (struct pci_dev *dev);
+/* reduce some complनिकासy in definition of the iterator */
+प्रकार व्योम (*pci_parity_check_fn_t) (काष्ठा pci_dev *dev);
 
 /*
  * pci_dev parity list iterator
  *
- *	Scan the PCI device list looking for SERRORs, Master Parity ERRORS or
+ *	Scan the PCI device list looking क्रम SERRORs, Master Parity ERRORS or
  *	Parity ERRORs on primary or secondary devices.
  */
-static inline void edac_pci_dev_parity_iterator(pci_parity_check_fn_t fn)
-{
-	struct pci_dev *dev = NULL;
+अटल अंतरभूत व्योम edac_pci_dev_parity_iterator(pci_parity_check_fn_t fn)
+अणु
+	काष्ठा pci_dev *dev = शून्य;
 
-	for_each_pci_dev(dev)
+	क्रम_each_pci_dev(dev)
 		fn(dev);
-}
+पूर्ण
 
 /*
- * edac_pci_do_parity_check
+ * edac_pci_करो_parity_check
  *
- *	performs the actual PCI parity check operation
+ *	perक्रमms the actual PCI parity check operation
  */
-void edac_pci_do_parity_check(void)
-{
-	int before_count;
+व्योम edac_pci_करो_parity_check(व्योम)
+अणु
+	पूर्णांक beक्रमe_count;
 
 	edac_dbg(3, "\n");
 
-	/* if policy has PCI check off, leave now */
-	if (!check_pci_errors)
-		return;
+	/* अगर policy has PCI check off, leave now */
+	अगर (!check_pci_errors)
+		वापस;
 
-	before_count = atomic_read(&pci_parity_count);
+	beक्रमe_count = atomic_पढ़ो(&pci_parity_count);
 
-	/* scan all PCI devices looking for a Parity Error on devices and
+	/* scan all PCI devices looking क्रम a Parity Error on devices and
 	 * bridges.
 	 * The iterator calls pci_get_device() which might sleep, thus
-	 * we cannot disable interrupts in this scan.
+	 * we cannot disable पूर्णांकerrupts in this scan.
 	 */
 	edac_pci_dev_parity_iterator(edac_pci_dev_parity_test);
 
-	/* Only if operator has selected panic on PCI Error */
-	if (edac_pci_get_panic_on_pe()) {
-		/* If the count is different 'after' from 'before' */
-		if (before_count != atomic_read(&pci_parity_count))
+	/* Only अगर चालक has selected panic on PCI Error */
+	अगर (edac_pci_get_panic_on_pe()) अणु
+		/* If the count is dअगरferent 'after' from 'before' */
+		अगर (beक्रमe_count != atomic_पढ़ो(&pci_parity_count))
 			panic("EDAC: PCI Parity Error");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * edac_pci_clear_parity_errors
  *
- *	function to perform an iteration over the PCI devices
+ *	function to perक्रमm an iteration over the PCI devices
  *	and clearn their current status
  */
-void edac_pci_clear_parity_errors(void)
-{
+व्योम edac_pci_clear_parity_errors(व्योम)
+अणु
 	/* Clear any PCI bus parity errors that devices initially have logged
-	 * in their registers.
+	 * in their रेजिस्टरs.
 	 */
 	edac_pci_dev_parity_iterator(edac_pci_dev_parity_clear);
-}
+पूर्ण
 
 /*
  * edac_pci_handle_pe
  *
  *	Called to handle a PARITY ERROR event
  */
-void edac_pci_handle_pe(struct edac_pci_ctl_info *pci, const char *msg)
-{
+व्योम edac_pci_handle_pe(काष्ठा edac_pci_ctl_info *pci, स्थिर अक्षर *msg)
+अणु
 
-	/* global PE counter incremented by edac_pci_do_parity_check() */
+	/* global PE counter incremented by edac_pci_करो_parity_check() */
 	atomic_inc(&pci->counters.pe_count);
 
-	if (edac_pci_get_log_pe())
-		edac_pci_printk(pci, KERN_WARNING,
+	अगर (edac_pci_get_log_pe())
+		edac_pci_prपूर्णांकk(pci, KERN_WARNING,
 				"Parity Error ctl: %s %d: %s\n",
 				pci->ctl_name, pci->pci_idx, msg);
 
 	/*
 	 * poke all PCI devices and see which one is the troublemaker
-	 * panic() is called if set
+	 * panic() is called अगर set
 	 */
-	edac_pci_do_parity_check();
-}
+	edac_pci_करो_parity_check();
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_pci_handle_pe);
 
 
@@ -707,31 +708,31 @@ EXPORT_SYMBOL_GPL(edac_pci_handle_pe);
  *
  *	Called to handle a NON-PARITY ERROR event
  */
-void edac_pci_handle_npe(struct edac_pci_ctl_info *pci, const char *msg)
-{
+व्योम edac_pci_handle_npe(काष्ठा edac_pci_ctl_info *pci, स्थिर अक्षर *msg)
+अणु
 
-	/* global NPE counter incremented by edac_pci_do_parity_check() */
+	/* global NPE counter incremented by edac_pci_करो_parity_check() */
 	atomic_inc(&pci->counters.npe_count);
 
-	if (edac_pci_get_log_npe())
-		edac_pci_printk(pci, KERN_WARNING,
+	अगर (edac_pci_get_log_npe())
+		edac_pci_prपूर्णांकk(pci, KERN_WARNING,
 				"Non-Parity Error ctl: %s %d: %s\n",
 				pci->ctl_name, pci->pci_idx, msg);
 
 	/*
 	 * poke all PCI devices and see which one is the troublemaker
-	 * panic() is called if set
+	 * panic() is called अगर set
 	 */
-	edac_pci_do_parity_check();
-}
+	edac_pci_करो_parity_check();
+पूर्ण
 EXPORT_SYMBOL_GPL(edac_pci_handle_npe);
 
 /*
  * Define the PCI parameter to the module
  */
-module_param(check_pci_errors, int, 0644);
+module_param(check_pci_errors, पूर्णांक, 0644);
 MODULE_PARM_DESC(check_pci_errors,
 		 "Check for PCI bus parity errors: 0=off 1=on");
-module_param(edac_pci_panic_on_pe, int, 0644);
+module_param(edac_pci_panic_on_pe, पूर्णांक, 0644);
 MODULE_PARM_DESC(edac_pci_panic_on_pe,
 		 "Panic on PCI Bus Parity error: 0=off 1=on");

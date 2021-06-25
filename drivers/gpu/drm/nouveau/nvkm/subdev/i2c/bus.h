@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_I2C_BUS_H__
-#define __NVKM_I2C_BUS_H__
-#include "pad.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_I2C_BUS_H__
+#घोषणा __NVKM_I2C_BUS_H__
+#समावेश "pad.h"
 
-struct nvkm_i2c_bus_func {
-	void (*init)(struct nvkm_i2c_bus *);
-	void (*drive_scl)(struct nvkm_i2c_bus *, int state);
-	void (*drive_sda)(struct nvkm_i2c_bus *, int state);
-	int (*sense_scl)(struct nvkm_i2c_bus *);
-	int (*sense_sda)(struct nvkm_i2c_bus *);
-	int (*xfer)(struct nvkm_i2c_bus *, struct i2c_msg *, int num);
-};
+काष्ठा nvkm_i2c_bus_func अणु
+	व्योम (*init)(काष्ठा nvkm_i2c_bus *);
+	व्योम (*drive_scl)(काष्ठा nvkm_i2c_bus *, पूर्णांक state);
+	व्योम (*drive_sda)(काष्ठा nvkm_i2c_bus *, पूर्णांक state);
+	पूर्णांक (*sense_scl)(काष्ठा nvkm_i2c_bus *);
+	पूर्णांक (*sense_sda)(काष्ठा nvkm_i2c_bus *);
+	पूर्णांक (*xfer)(काष्ठा nvkm_i2c_bus *, काष्ठा i2c_msg *, पूर्णांक num);
+पूर्ण;
 
-int nvkm_i2c_bus_ctor(const struct nvkm_i2c_bus_func *, struct nvkm_i2c_pad *,
-		      int id, struct nvkm_i2c_bus *);
-int nvkm_i2c_bus_new_(const struct nvkm_i2c_bus_func *, struct nvkm_i2c_pad *,
-		      int id, struct nvkm_i2c_bus **);
-void nvkm_i2c_bus_del(struct nvkm_i2c_bus **);
-void nvkm_i2c_bus_init(struct nvkm_i2c_bus *);
-void nvkm_i2c_bus_fini(struct nvkm_i2c_bus *);
+पूर्णांक nvkm_i2c_bus_ctor(स्थिर काष्ठा nvkm_i2c_bus_func *, काष्ठा nvkm_i2c_pad *,
+		      पूर्णांक id, काष्ठा nvkm_i2c_bus *);
+पूर्णांक nvkm_i2c_bus_new_(स्थिर काष्ठा nvkm_i2c_bus_func *, काष्ठा nvkm_i2c_pad *,
+		      पूर्णांक id, काष्ठा nvkm_i2c_bus **);
+व्योम nvkm_i2c_bus_del(काष्ठा nvkm_i2c_bus **);
+व्योम nvkm_i2c_bus_init(काष्ठा nvkm_i2c_bus *);
+व्योम nvkm_i2c_bus_fini(काष्ठा nvkm_i2c_bus *);
 
-int nvkm_i2c_bit_xfer(struct nvkm_i2c_bus *, struct i2c_msg *, int);
+पूर्णांक nvkm_i2c_bit_xfer(काष्ठा nvkm_i2c_bus *, काष्ठा i2c_msg *, पूर्णांक);
 
-int nv04_i2c_bus_new(struct nvkm_i2c_pad *, int, u8, u8,
-		     struct nvkm_i2c_bus **);
+पूर्णांक nv04_i2c_bus_new(काष्ठा nvkm_i2c_pad *, पूर्णांक, u8, u8,
+		     काष्ठा nvkm_i2c_bus **);
 
-int nv4e_i2c_bus_new(struct nvkm_i2c_pad *, int, u8, struct nvkm_i2c_bus **);
-int nv50_i2c_bus_new(struct nvkm_i2c_pad *, int, u8, struct nvkm_i2c_bus **);
-int gf119_i2c_bus_new(struct nvkm_i2c_pad *, int, u8, struct nvkm_i2c_bus **);
+पूर्णांक nv4e_i2c_bus_new(काष्ठा nvkm_i2c_pad *, पूर्णांक, u8, काष्ठा nvkm_i2c_bus **);
+पूर्णांक nv50_i2c_bus_new(काष्ठा nvkm_i2c_pad *, पूर्णांक, u8, काष्ठा nvkm_i2c_bus **);
+पूर्णांक gf119_i2c_bus_new(काष्ठा nvkm_i2c_pad *, पूर्णांक, u8, काष्ठा nvkm_i2c_bus **);
 
-#define BUS_MSG(b,l,f,a...) do {                                               \
-	struct nvkm_i2c_bus *_bus = (b);                                       \
+#घोषणा BUS_MSG(b,l,f,a...) करो अणु                                               \
+	काष्ठा nvkm_i2c_bus *_bus = (b);                                       \
 	nvkm_##l(&_bus->pad->i2c->subdev, "bus %04x: "f"\n", _bus->id, ##a);   \
-} while(0)
-#define BUS_ERR(b,f,a...) BUS_MSG((b), error, f, ##a)
-#define BUS_DBG(b,f,a...) BUS_MSG((b), debug, f, ##a)
-#define BUS_TRACE(b,f,a...) BUS_MSG((b), trace, f, ##a)
-#endif
+पूर्ण जबतक(0)
+#घोषणा BUS_ERR(b,f,a...) BUS_MSG((b), error, f, ##a)
+#घोषणा BUS_DBG(b,f,a...) BUS_MSG((b), debug, f, ##a)
+#घोषणा BUS_TRACE(b,f,a...) BUS_MSG((b), trace, f, ##a)
+#पूर्ण_अगर

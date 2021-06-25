@@ -1,10 +1,11 @@
+<शैली गुरु>
 /* Trivial program to check that compilation with certain flags is working. */
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-int
-main(void)
-{
-	puts("");
-	return 0;
-}
+पूर्णांक
+मुख्य(व्योम)
+अणु
+	माला_दो("");
+	वापस 0;
+पूर्ण

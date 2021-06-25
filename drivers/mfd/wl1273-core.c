@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * MFD driver for wl1273 FM radio and audio codec submodules.
+ * MFD driver क्रम wl1273 FM radio and audio codec submodules.
  *
  * Copyright (C) 2011 Nokia Corporation
  * Author: Matti Aaltonen <matti.j.aaltonen@nokia.com>
  */
 
-#include <linux/mfd/wl1273-core.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/mfd/wl1273-core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define DRIVER_DESC "WL1273 FM Radio Core"
+#घोषणा DRIVER_DESC "WL1273 FM Radio Core"
 
-static const struct i2c_device_id wl1273_driver_id_table[] = {
-	{ WL1273_FM_DRIVER_NAME, 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id wl1273_driver_id_table[] = अणु
+	अणु WL1273_FM_DRIVER_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, wl1273_driver_id_table);
 
-static int wl1273_fm_read_reg(struct wl1273_core *core, u8 reg, u16 *value)
-{
-	struct i2c_client *client = core->client;
+अटल पूर्णांक wl1273_fm_पढ़ो_reg(काष्ठा wl1273_core *core, u8 reg, u16 *value)
+अणु
+	काष्ठा i2c_client *client = core->client;
 	u8 b[2];
-	int r;
+	पूर्णांक r;
 
-	r = i2c_smbus_read_i2c_block_data(client, reg, sizeof(b), b);
-	if (r != 2) {
+	r = i2c_smbus_पढ़ो_i2c_block_data(client, reg, माप(b), b);
+	अगर (r != 2) अणु
 		dev_err(&client->dev, "%s: Read: %d fails.\n", __func__, reg);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	*value = (u16)b[0] << 8 | b[1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1273_fm_write_cmd(struct wl1273_core *core, u8 cmd, u16 param)
-{
-	struct i2c_client *client = core->client;
-	u8 buf[] = { (param >> 8) & 0xff, param & 0xff };
-	int r;
+अटल पूर्णांक wl1273_fm_ग_लिखो_cmd(काष्ठा wl1273_core *core, u8 cmd, u16 param)
+अणु
+	काष्ठा i2c_client *client = core->client;
+	u8 buf[] = अणु (param >> 8) & 0xff, param & 0xff पूर्ण;
+	पूर्णांक r;
 
-	r = i2c_smbus_write_i2c_block_data(client, cmd, sizeof(buf), buf);
-	if (r) {
+	r = i2c_smbus_ग_लिखो_i2c_block_data(client, cmd, माप(buf), buf);
+	अगर (r) अणु
 		dev_err(&client->dev, "%s: Cmd: %d fails.\n", __func__, cmd);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1273_fm_write_data(struct wl1273_core *core, u8 *data, u16 len)
-{
-	struct i2c_client *client = core->client;
-	struct i2c_msg msg;
-	int r;
+अटल पूर्णांक wl1273_fm_ग_लिखो_data(काष्ठा wl1273_core *core, u8 *data, u16 len)
+अणु
+	काष्ठा i2c_client *client = core->client;
+	काष्ठा i2c_msg msg;
+	पूर्णांक r;
 
 	msg.addr = client->addr;
 	msg.flags = 0;
@@ -62,124 +63,124 @@ static int wl1273_fm_write_data(struct wl1273_core *core, u8 *data, u16 len)
 	msg.len = len;
 
 	r = i2c_transfer(client->adapter, &msg, 1);
-	if (r != 1) {
+	अगर (r != 1) अणु
 		dev_err(&client->dev, "%s: write error.\n", __func__);
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * wl1273_fm_set_audio() -	Set audio mode.
- * @core:			A pointer to the device struct.
+ * @core:			A poपूर्णांकer to the device काष्ठा.
  * @new_mode:			The new audio mode.
  *
  * Audio modes are WL1273_AUDIO_DIGITAL and WL1273_AUDIO_ANALOG.
  */
-static int wl1273_fm_set_audio(struct wl1273_core *core, unsigned int new_mode)
-{
-	int r = 0;
+अटल पूर्णांक wl1273_fm_set_audio(काष्ठा wl1273_core *core, अचिन्हित पूर्णांक new_mode)
+अणु
+	पूर्णांक r = 0;
 
-	if (core->mode == WL1273_MODE_OFF ||
+	अगर (core->mode == WL1273_MODE_OFF ||
 	    core->mode == WL1273_MODE_SUSPENDED)
-		return -EPERM;
+		वापस -EPERM;
 
-	if (core->mode == WL1273_MODE_RX && new_mode == WL1273_AUDIO_DIGITAL) {
-		r = wl1273_fm_write_cmd(core, WL1273_PCM_MODE_SET,
+	अगर (core->mode == WL1273_MODE_RX && new_mode == WL1273_AUDIO_DIGITAL) अणु
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_PCM_MODE_SET,
 					WL1273_PCM_DEF_MODE);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-		r = wl1273_fm_write_cmd(core, WL1273_I2S_MODE_CONFIG_SET,
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_I2S_MODE_CONFIG_SET,
 					core->i2s_mode);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-		r = wl1273_fm_write_cmd(core, WL1273_AUDIO_ENABLE,
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_AUDIO_ENABLE,
 					WL1273_AUDIO_ENABLE_I2S);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-	} else if (core->mode == WL1273_MODE_RX &&
-		   new_mode == WL1273_AUDIO_ANALOG) {
-		r = wl1273_fm_write_cmd(core, WL1273_AUDIO_ENABLE,
+	पूर्ण अन्यथा अगर (core->mode == WL1273_MODE_RX &&
+		   new_mode == WL1273_AUDIO_ANALOG) अणु
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_AUDIO_ENABLE,
 					WL1273_AUDIO_ENABLE_ANALOG);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-	} else if (core->mode == WL1273_MODE_TX &&
-		   new_mode == WL1273_AUDIO_DIGITAL) {
-		r = wl1273_fm_write_cmd(core, WL1273_I2S_MODE_CONFIG_SET,
+	पूर्ण अन्यथा अगर (core->mode == WL1273_MODE_TX &&
+		   new_mode == WL1273_AUDIO_DIGITAL) अणु
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_I2S_MODE_CONFIG_SET,
 					core->i2s_mode);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-		r = wl1273_fm_write_cmd(core, WL1273_AUDIO_IO_SET,
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_AUDIO_IO_SET,
 					WL1273_AUDIO_IO_SET_I2S);
-		if (r)
-			goto out;
+		अगर (r)
+			जाओ out;
 
-	} else if (core->mode == WL1273_MODE_TX &&
-		   new_mode == WL1273_AUDIO_ANALOG) {
-		r = wl1273_fm_write_cmd(core, WL1273_AUDIO_IO_SET,
+	पूर्ण अन्यथा अगर (core->mode == WL1273_MODE_TX &&
+		   new_mode == WL1273_AUDIO_ANALOG) अणु
+		r = wl1273_fm_ग_लिखो_cmd(core, WL1273_AUDIO_IO_SET,
 					WL1273_AUDIO_IO_SET_ANALOG);
-		if (r)
-			goto out;
-	}
+		अगर (r)
+			जाओ out;
+	पूर्ण
 
 	core->audio_mode = new_mode;
 out:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
  * wl1273_fm_set_volume() -	Set volume.
- * @core:			A pointer to the device struct.
+ * @core:			A poपूर्णांकer to the device काष्ठा.
  * @volume:			The new volume value.
  */
-static int wl1273_fm_set_volume(struct wl1273_core *core, unsigned int volume)
-{
-	int r;
+अटल पूर्णांक wl1273_fm_set_volume(काष्ठा wl1273_core *core, अचिन्हित पूर्णांक volume)
+अणु
+	पूर्णांक r;
 
-	if (volume > WL1273_MAX_VOLUME)
-		return -EINVAL;
+	अगर (volume > WL1273_MAX_VOLUME)
+		वापस -EINVAL;
 
-	if (core->volume == volume)
-		return 0;
+	अगर (core->volume == volume)
+		वापस 0;
 
-	r = wl1273_fm_write_cmd(core, WL1273_VOLUME_SET, volume);
-	if (r)
-		return r;
+	r = wl1273_fm_ग_लिखो_cmd(core, WL1273_VOLUME_SET, volume);
+	अगर (r)
+		वापस r;
 
 	core->volume = volume;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int wl1273_core_probe(struct i2c_client *client,
-				       const struct i2c_device_id *id)
-{
-	struct wl1273_fm_platform_data *pdata = dev_get_platdata(&client->dev);
-	struct wl1273_core *core;
-	struct mfd_cell *cell;
-	int children = 0;
-	int r = 0;
+अटल पूर्णांक wl1273_core_probe(काष्ठा i2c_client *client,
+				       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा wl1273_fm_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
+	काष्ठा wl1273_core *core;
+	काष्ठा mfd_cell *cell;
+	पूर्णांक children = 0;
+	पूर्णांक r = 0;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&client->dev, "No platform data.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(pdata->children & WL1273_RADIO_CHILD)) {
+	अगर (!(pdata->children & WL1273_RADIO_CHILD)) अणु
 		dev_err(&client->dev, "Cannot function without radio child.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	core = devm_kzalloc(&client->dev, sizeof(*core), GFP_KERNEL);
-	if (!core)
-		return -ENOMEM;
+	core = devm_kzalloc(&client->dev, माप(*core), GFP_KERNEL);
+	अगर (!core)
+		वापस -ENOMEM;
 
 	core->pdata = pdata;
 	core->client = client;
@@ -191,72 +192,72 @@ static int wl1273_core_probe(struct i2c_client *client,
 
 	cell = &core->cells[children];
 	cell->name = "wl1273_fm_radio";
-	cell->platform_data = &core;
-	cell->pdata_size = sizeof(core);
+	cell->platक्रमm_data = &core;
+	cell->pdata_size = माप(core);
 	children++;
 
-	core->read = wl1273_fm_read_reg;
-	core->write = wl1273_fm_write_cmd;
-	core->write_data = wl1273_fm_write_data;
+	core->पढ़ो = wl1273_fm_पढ़ो_reg;
+	core->ग_लिखो = wl1273_fm_ग_लिखो_cmd;
+	core->ग_लिखो_data = wl1273_fm_ग_लिखो_data;
 	core->set_audio = wl1273_fm_set_audio;
 	core->set_volume = wl1273_fm_set_volume;
 
-	if (pdata->children & WL1273_CODEC_CHILD) {
+	अगर (pdata->children & WL1273_CODEC_CHILD) अणु
 		cell = &core->cells[children];
 
 		dev_dbg(&client->dev, "%s: Have codec.\n", __func__);
 		cell->name = "wl1273-codec";
-		cell->platform_data = &core;
-		cell->pdata_size = sizeof(core);
+		cell->platक्रमm_data = &core;
+		cell->pdata_size = माप(core);
 		children++;
-	}
+	पूर्ण
 
 	dev_dbg(&client->dev, "%s: number of children: %d.\n",
 		__func__, children);
 
 	r = devm_mfd_add_devices(&client->dev, -1, core->cells,
-				 children, NULL, 0, NULL);
-	if (r)
-		goto err;
+				 children, शून्य, 0, शून्य);
+	अगर (r)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	pdata->free_resources();
+	pdata->मुक्त_resources();
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static struct i2c_driver wl1273_core_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver wl1273_core_driver = अणु
+	.driver = अणु
 		.name = WL1273_FM_DRIVER_NAME,
-	},
+	पूर्ण,
 	.probe = wl1273_core_probe,
 	.id_table = wl1273_driver_id_table,
-};
+पूर्ण;
 
-static int __init wl1273_core_init(void)
-{
-	int r;
+अटल पूर्णांक __init wl1273_core_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	r = i2c_add_driver(&wl1273_core_driver);
-	if (r) {
+	अगर (r) अणु
 		pr_err(WL1273_FM_DRIVER_NAME
 		       ": driver registration failed\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit wl1273_core_exit(void)
-{
+अटल व्योम __निकास wl1273_core_निकास(व्योम)
+अणु
 	i2c_del_driver(&wl1273_core_driver);
-}
+पूर्ण
 late_initcall(wl1273_core_init);
-module_exit(wl1273_core_exit);
+module_निकास(wl1273_core_निकास);
 
 MODULE_AUTHOR("Matti Aaltonen <matti.j.aaltonen@nokia.com>");
 MODULE_DESCRIPTION(DRIVER_DESC);

@@ -1,668 +1,669 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2019 Facebook */
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/err.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <bpf/bpf.h>
-#include <bpf/libbpf.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/mman.h>
-#include <bpf/btf.h>
+#अगर_अघोषित _GNU_SOURCE
+#घोषणा _GNU_SOURCE
+#पूर्ण_अगर
+#समावेश <प्रकार.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <linux/err.h>
+#समावेश <stdbool.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <bpf/bpf.h>
+#समावेश <bpf/libbpf.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/mman.h>
+#समावेश <bpf/btf.h>
 
-#include "json_writer.h"
-#include "main.h"
+#समावेश "json_writer.h"
+#समावेश "main.h"
 
-#define MAX_OBJ_NAME_LEN 64
+#घोषणा MAX_OBJ_NAME_LEN 64
 
-static void sanitize_identifier(char *name)
-{
-	int i;
+अटल व्योम sanitize_identअगरier(अक्षर *name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; name[i]; i++)
-		if (!isalnum(name[i]) && name[i] != '_')
+	क्रम (i = 0; name[i]; i++)
+		अगर (!है_अक्षर_अंक(name[i]) && name[i] != '_')
 			name[i] = '_';
-}
+पूर्ण
 
-static bool str_has_suffix(const char *str, const char *suffix)
-{
-	size_t i, n1 = strlen(str), n2 = strlen(suffix);
+अटल bool str_has_suffix(स्थिर अक्षर *str, स्थिर अक्षर *suffix)
+अणु
+	माप_प्रकार i, n1 = म_माप(str), n2 = म_माप(suffix);
 
-	if (n1 < n2)
-		return false;
+	अगर (n1 < n2)
+		वापस false;
 
-	for (i = 0; i < n2; i++) {
-		if (str[n1 - i - 1] != suffix[n2 - i - 1])
-			return false;
-	}
+	क्रम (i = 0; i < n2; i++) अणु
+		अगर (str[n1 - i - 1] != suffix[n2 - i - 1])
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void get_obj_name(char *name, const char *file)
-{
-	/* Using basename() GNU version which doesn't modify arg. */
-	strncpy(name, basename(file), MAX_OBJ_NAME_LEN - 1);
+अटल व्योम get_obj_name(अक्षर *name, स्थिर अक्षर *file)
+अणु
+	/* Using basename() GNU version which करोesn't modअगरy arg. */
+	म_नकलन(name, basename(file), MAX_OBJ_NAME_LEN - 1);
 	name[MAX_OBJ_NAME_LEN - 1] = '\0';
-	if (str_has_suffix(name, ".o"))
-		name[strlen(name) - 2] = '\0';
-	sanitize_identifier(name);
-}
+	अगर (str_has_suffix(name, ".o"))
+		name[म_माप(name) - 2] = '\0';
+	sanitize_identअगरier(name);
+पूर्ण
 
-static void get_header_guard(char *guard, const char *obj_name)
-{
-	int i;
+अटल व्योम get_header_guard(अक्षर *guard, स्थिर अक्षर *obj_name)
+अणु
+	पूर्णांक i;
 
-	sprintf(guard, "__%s_SKEL_H__", obj_name);
-	for (i = 0; guard[i]; i++)
-		guard[i] = toupper(guard[i]);
-}
+	प्र_लिखो(guard, "__%s_SKEL_H__", obj_name);
+	क्रम (i = 0; guard[i]; i++)
+		guard[i] = बड़े(guard[i]);
+पूर्ण
 
-static const char *get_map_ident(const struct bpf_map *map)
-{
-	const char *name = bpf_map__name(map);
+अटल स्थिर अक्षर *get_map_ident(स्थिर काष्ठा bpf_map *map)
+अणु
+	स्थिर अक्षर *name = bpf_map__name(map);
 
-	if (!bpf_map__is_internal(map))
-		return name;
+	अगर (!bpf_map__is_पूर्णांकernal(map))
+		वापस name;
 
-	if (str_has_suffix(name, ".data"))
-		return "data";
-	else if (str_has_suffix(name, ".rodata"))
-		return "rodata";
-	else if (str_has_suffix(name, ".bss"))
-		return "bss";
-	else if (str_has_suffix(name, ".kconfig"))
-		return "kconfig";
-	else
-		return NULL;
-}
+	अगर (str_has_suffix(name, ".data"))
+		वापस "data";
+	अन्यथा अगर (str_has_suffix(name, ".rodata"))
+		वापस "rodata";
+	अन्यथा अगर (str_has_suffix(name, ".bss"))
+		वापस "bss";
+	अन्यथा अगर (str_has_suffix(name, ".kconfig"))
+		वापस "kconfig";
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-static void codegen_btf_dump_printf(void *ctx, const char *fmt, va_list args)
-{
-	vprintf(fmt, args);
-}
+अटल व्योम codegen_btf_dump_म_लिखो(व्योम *ctx, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	भ_लिखो(fmt, args);
+पूर्ण
 
-static int codegen_datasec_def(struct bpf_object *obj,
-			       struct btf *btf,
-			       struct btf_dump *d,
-			       const struct btf_type *sec,
-			       const char *obj_name)
-{
-	const char *sec_name = btf__name_by_offset(btf, sec->name_off);
-	const struct btf_var_secinfo *sec_var = btf_var_secinfos(sec);
-	int i, err, off = 0, pad_cnt = 0, vlen = btf_vlen(sec);
-	const char *sec_ident;
-	char var_ident[256];
+अटल पूर्णांक codegen_datasec_def(काष्ठा bpf_object *obj,
+			       काष्ठा btf *btf,
+			       काष्ठा btf_dump *d,
+			       स्थिर काष्ठा btf_type *sec,
+			       स्थिर अक्षर *obj_name)
+अणु
+	स्थिर अक्षर *sec_name = btf__name_by_offset(btf, sec->name_off);
+	स्थिर काष्ठा btf_var_secinfo *sec_var = btf_var_secinfos(sec);
+	पूर्णांक i, err, off = 0, pad_cnt = 0, vlen = btf_vlen(sec);
+	स्थिर अक्षर *sec_ident;
+	अक्षर var_ident[256];
 	bool strip_mods = false;
 
-	if (strcmp(sec_name, ".data") == 0) {
+	अगर (म_भेद(sec_name, ".data") == 0) अणु
 		sec_ident = "data";
-	} else if (strcmp(sec_name, ".bss") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(sec_name, ".bss") == 0) अणु
 		sec_ident = "bss";
-	} else if (strcmp(sec_name, ".rodata") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(sec_name, ".rodata") == 0) अणु
 		sec_ident = "rodata";
 		strip_mods = true;
-	} else if (strcmp(sec_name, ".kconfig") == 0) {
+	पूर्ण अन्यथा अगर (म_भेद(sec_name, ".kconfig") == 0) अणु
 		sec_ident = "kconfig";
-	} else {
-		return 0;
-	}
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
 
-	printf("	struct %s__%s {\n", obj_name, sec_ident);
-	for (i = 0; i < vlen; i++, sec_var++) {
-		const struct btf_type *var = btf__type_by_id(btf, sec_var->type);
-		const char *var_name = btf__name_by_offset(btf, var->name_off);
+	म_लिखो("	struct %s__%s {\n", obj_name, sec_ident);
+	क्रम (i = 0; i < vlen; i++, sec_var++) अणु
+		स्थिर काष्ठा btf_type *var = btf__type_by_id(btf, sec_var->type);
+		स्थिर अक्षर *var_name = btf__name_by_offset(btf, var->name_off);
 		DECLARE_LIBBPF_OPTS(btf_dump_emit_type_decl_opts, opts,
 			.field_name = var_ident,
 			.indent_level = 2,
 			.strip_mods = strip_mods,
 		);
-		int need_off = sec_var->offset, align_off, align;
+		पूर्णांक need_off = sec_var->offset, align_off, align;
 		__u32 var_type_id = var->type;
 
-		if (off > need_off) {
+		अगर (off > need_off) अणु
 			p_err("Something is wrong for %s's variable #%d: need offset %d, already at %d.\n",
 			      sec_name, i, need_off, off);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		align = btf__align_of(btf, var->type);
-		if (align <= 0) {
+		अगर (align <= 0) अणु
 			p_err("Failed to determine alignment of variable '%s': %d",
 			      var_name, align);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		/* Assume 32-bit architectures when generating data section
-		 * struct memory layout. Given bpftool can't know which target
-		 * host architecture it's emitting skeleton for, we need to be
+		 * काष्ठा memory layout. Given bpftool can't know which target
+		 * host architecture it's emitting skeleton क्रम, we need to be
 		 * conservative and assume 32-bit one to ensure enough padding
-		 * bytes are generated for pointer and long types. This will
-		 * still work correctly for 64-bit architectures, because in
-		 * the worst case we'll generate unnecessary padding field,
+		 * bytes are generated क्रम poपूर्णांकer and दीर्घ types. This will
+		 * still work correctly क्रम 64-bit architectures, because in
+		 * the worst हाल we'll generate unnecessary padding field,
 		 * which on 64-bit architectures is not strictly necessary and
 		 * would be handled by natural 8-byte alignment. But it still
 		 * will be a correct memory layout, based on recorded offsets
 		 * in BTF.
 		 */
-		if (align > 4)
+		अगर (align > 4)
 			align = 4;
 
 		align_off = (off + align - 1) / align * align;
-		if (align_off != need_off) {
-			printf("\t\tchar __pad%d[%d];\n",
+		अगर (align_off != need_off) अणु
+			म_लिखो("\t\tchar __pad%d[%d];\n",
 			       pad_cnt, need_off - off);
 			pad_cnt++;
-		}
+		पूर्ण
 
-		/* sanitize variable name, e.g., for static vars inside
+		/* sanitize variable name, e.g., क्रम अटल vars inside
 		 * a function, it's name is '<function name>.<variable name>',
 		 * which we'll turn into a '<function name>_<variable name>'
 		 */
 		var_ident[0] = '\0';
-		strncat(var_ident, var_name, sizeof(var_ident) - 1);
-		sanitize_identifier(var_ident);
+		म_जोड़न(var_ident, var_name, माप(var_ident) - 1);
+		sanitize_identअगरier(var_ident);
 
-		printf("\t\t");
+		म_लिखो("\t\t");
 		err = btf_dump__emit_type_decl(d, var_type_id, &opts);
-		if (err)
-			return err;
-		printf(";\n");
+		अगर (err)
+			वापस err;
+		म_लिखो(";\n");
 
 		off = sec_var->offset + sec_var->size;
-	}
-	printf("	} *%s;\n", sec_ident);
-	return 0;
-}
+	पूर्ण
+	म_लिखो("	} *%s;\n", sec_ident);
+	वापस 0;
+पूर्ण
 
-static int codegen_datasecs(struct bpf_object *obj, const char *obj_name)
-{
-	struct btf *btf = bpf_object__btf(obj);
-	int n = btf__get_nr_types(btf);
-	struct btf_dump *d;
-	int i, err = 0;
+अटल पूर्णांक codegen_datasecs(काष्ठा bpf_object *obj, स्थिर अक्षर *obj_name)
+अणु
+	काष्ठा btf *btf = bpf_object__btf(obj);
+	पूर्णांक n = btf__get_nr_types(btf);
+	काष्ठा btf_dump *d;
+	पूर्णांक i, err = 0;
 
-	d = btf_dump__new(btf, NULL, NULL, codegen_btf_dump_printf);
-	if (IS_ERR(d))
-		return PTR_ERR(d);
+	d = btf_dump__new(btf, शून्य, शून्य, codegen_btf_dump_म_लिखो);
+	अगर (IS_ERR(d))
+		वापस PTR_ERR(d);
 
-	for (i = 1; i <= n; i++) {
-		const struct btf_type *t = btf__type_by_id(btf, i);
+	क्रम (i = 1; i <= n; i++) अणु
+		स्थिर काष्ठा btf_type *t = btf__type_by_id(btf, i);
 
-		if (!btf_is_datasec(t))
-			continue;
+		अगर (!btf_is_datasec(t))
+			जारी;
 
 		err = codegen_datasec_def(obj, btf, d, t, obj_name);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 out:
-	btf_dump__free(d);
-	return err;
-}
+	btf_dump__मुक्त(d);
+	वापस err;
+पूर्ण
 
-static void codegen(const char *template, ...)
-{
-	const char *src, *end;
-	int skip_tabs = 0, n;
-	char *s, *dst;
-	va_list args;
-	char c;
+अटल व्योम codegen(स्थिर अक्षर *ढाँचा, ...)
+अणु
+	स्थिर अक्षर *src, *end;
+	पूर्णांक skip_tअसल = 0, n;
+	अक्षर *s, *dst;
+	बहु_सूची args;
+	अक्षर c;
 
-	n = strlen(template);
-	s = malloc(n + 1);
-	if (!s)
-		exit(-1);
-	src = template;
+	n = म_माप(ढाँचा);
+	s = दो_स्मृति(n + 1);
+	अगर (!s)
+		निकास(-1);
+	src = ढाँचा;
 	dst = s;
 
 	/* find out "baseline" indentation to skip */
-	while ((c = *src++)) {
-		if (c == '\t') {
-			skip_tabs++;
-		} else if (c == '\n') {
-			break;
-		} else {
+	जबतक ((c = *src++)) अणु
+		अगर (c == '\t') अणु
+			skip_tअसल++;
+		पूर्ण अन्यथा अगर (c == '\n') अणु
+			अवरोध;
+		पूर्ण अन्यथा अणु
 			p_err("unrecognized character at pos %td in template '%s'",
-			      src - template - 1, template);
-			free(s);
-			exit(-1);
-		}
-	}
+			      src - ढाँचा - 1, ढाँचा);
+			मुक्त(s);
+			निकास(-1);
+		पूर्ण
+	पूर्ण
 
-	while (*src) {
-		/* skip baseline indentation tabs */
-		for (n = skip_tabs; n > 0; n--, src++) {
-			if (*src != '\t') {
+	जबतक (*src) अणु
+		/* skip baseline indentation tअसल */
+		क्रम (n = skip_tअसल; n > 0; n--, src++) अणु
+			अगर (*src != '\t') अणु
 				p_err("not enough tabs at pos %td in template '%s'",
-				      src - template - 1, template);
-				free(s);
-				exit(-1);
-			}
-		}
+				      src - ढाँचा - 1, ढाँचा);
+				मुक्त(s);
+				निकास(-1);
+			पूर्ण
+		पूर्ण
 		/* trim trailing whitespace */
-		end = strchrnul(src, '\n');
-		for (n = end - src; n > 0 && isspace(src[n - 1]); n--)
+		end = म_अक्षरnul(src, '\n');
+		क्रम (n = end - src; n > 0 && है_खाली(src[n - 1]); n--)
 			;
-		memcpy(dst, src, n);
+		स_नकल(dst, src, n);
 		dst += n;
-		if (*end)
+		अगर (*end)
 			*dst++ = '\n';
 		src = *end ? end + 1 : end;
-	}
+	पूर्ण
 	*dst++ = '\0';
 
-	/* print out using adjusted template */
-	va_start(args, template);
-	n = vprintf(s, args);
-	va_end(args);
+	/* prपूर्णांक out using adjusted ढाँचा */
+	बहु_शुरू(args, ढाँचा);
+	n = भ_लिखो(s, args);
+	बहु_पूर्ण(args);
 
-	free(s);
-}
+	मुक्त(s);
+पूर्ण
 
-static int do_skeleton(int argc, char **argv)
-{
-	char header_guard[MAX_OBJ_NAME_LEN + sizeof("__SKEL_H__")];
-	size_t i, map_cnt = 0, prog_cnt = 0, file_sz, mmap_sz;
-	DECLARE_LIBBPF_OPTS(bpf_object_open_opts, opts);
-	char obj_name[MAX_OBJ_NAME_LEN] = "", *obj_data;
-	struct bpf_object *obj = NULL;
-	const char *file, *ident;
-	struct bpf_program *prog;
-	int fd, len, err = -1;
-	struct bpf_map *map;
-	struct btf *btf;
-	struct stat st;
+अटल पूर्णांक करो_skeleton(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर header_guard[MAX_OBJ_NAME_LEN + माप("__SKEL_H__")];
+	माप_प्रकार i, map_cnt = 0, prog_cnt = 0, file_sz, mmap_sz;
+	DECLARE_LIBBPF_OPTS(bpf_object_खोलो_opts, opts);
+	अक्षर obj_name[MAX_OBJ_NAME_LEN] = "", *obj_data;
+	काष्ठा bpf_object *obj = शून्य;
+	स्थिर अक्षर *file, *ident;
+	काष्ठा bpf_program *prog;
+	पूर्णांक fd, len, err = -1;
+	काष्ठा bpf_map *map;
+	काष्ठा btf *btf;
+	काष्ठा stat st;
 
-	if (!REQ_ARGS(1)) {
+	अगर (!REQ_ARGS(1)) अणु
 		usage();
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	file = GET_ARG();
 
-	while (argc) {
-		if (!REQ_ARGS(2))
-			return -1;
+	जबतक (argc) अणु
+		अगर (!REQ_ARGS(2))
+			वापस -1;
 
-		if (is_prefix(*argv, "name")) {
+		अगर (is_prefix(*argv, "name")) अणु
 			NEXT_ARG();
 
-			if (obj_name[0] != '\0') {
+			अगर (obj_name[0] != '\0') अणु
 				p_err("object name already specified");
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 
-			strncpy(obj_name, *argv, MAX_OBJ_NAME_LEN - 1);
+			म_नकलन(obj_name, *argv, MAX_OBJ_NAME_LEN - 1);
 			obj_name[MAX_OBJ_NAME_LEN - 1] = '\0';
-		} else {
+		पूर्ण अन्यथा अणु
 			p_err("unknown arg %s", *argv);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		NEXT_ARG();
-	}
+	पूर्ण
 
-	if (argc) {
+	अगर (argc) अणु
 		p_err("extra unknown arguments");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (stat(file, &st)) {
-		p_err("failed to stat() %s: %s", file, strerror(errno));
-		return -1;
-	}
+	अगर (stat(file, &st)) अणु
+		p_err("failed to stat() %s: %s", file, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 	file_sz = st.st_size;
 	mmap_sz = roundup(file_sz, sysconf(_SC_PAGE_SIZE));
-	fd = open(file, O_RDONLY);
-	if (fd < 0) {
-		p_err("failed to open() %s: %s", file, strerror(errno));
-		return -1;
-	}
-	obj_data = mmap(NULL, mmap_sz, PROT_READ, MAP_PRIVATE, fd, 0);
-	if (obj_data == MAP_FAILED) {
-		obj_data = NULL;
-		p_err("failed to mmap() %s: %s", file, strerror(errno));
-		goto out;
-	}
-	if (obj_name[0] == '\0')
+	fd = खोलो(file, O_RDONLY);
+	अगर (fd < 0) अणु
+		p_err("failed to open() %s: %s", file, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
+	obj_data = mmap(शून्य, mmap_sz, PROT_READ, MAP_PRIVATE, fd, 0);
+	अगर (obj_data == MAP_FAILED) अणु
+		obj_data = शून्य;
+		p_err("failed to mmap() %s: %s", file, म_त्रुटि(त्रुटि_सं));
+		जाओ out;
+	पूर्ण
+	अगर (obj_name[0] == '\0')
 		get_obj_name(obj_name, file);
 	opts.object_name = obj_name;
-	obj = bpf_object__open_mem(obj_data, file_sz, &opts);
-	if (IS_ERR(obj)) {
-		char err_buf[256];
+	obj = bpf_object__खोलो_mem(obj_data, file_sz, &opts);
+	अगर (IS_ERR(obj)) अणु
+		अक्षर err_buf[256];
 
-		libbpf_strerror(PTR_ERR(obj), err_buf, sizeof(err_buf));
+		libbpf_म_त्रुटि(PTR_ERR(obj), err_buf, माप(err_buf));
 		p_err("failed to open BPF object file: %s", err_buf);
-		obj = NULL;
-		goto out;
-	}
+		obj = शून्य;
+		जाओ out;
+	पूर्ण
 
-	bpf_object__for_each_map(map, obj) {
+	bpf_object__क्रम_each_map(map, obj) अणु
 		ident = get_map_ident(map);
-		if (!ident) {
+		अगर (!ident) अणु
 			p_err("ignoring unrecognized internal map '%s'...",
 			      bpf_map__name(map));
-			continue;
-		}
+			जारी;
+		पूर्ण
 		map_cnt++;
-	}
-	bpf_object__for_each_program(prog, obj) {
+	पूर्ण
+	bpf_object__क्रम_each_program(prog, obj) अणु
 		prog_cnt++;
-	}
+	पूर्ण
 
 	get_header_guard(header_guard, obj_name);
 	codegen("\
-		\n\
-		/* SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause) */   \n\
-									    \n\
-		/* THIS FILE IS AUTOGENERATED! */			    \n\
-		#ifndef %2$s						    \n\
-		#define %2$s						    \n\
-									    \n\
-		#include <stdlib.h>					    \n\
-		#include <bpf/libbpf.h>					    \n\
-									    \n\
-		struct %1$s {						    \n\
-			struct bpf_object_skeleton *skeleton;		    \n\
-			struct bpf_object *obj;				    \n\
+		\न\
+		/* SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause) */   \न\
+									    \न\
+		/* THIS खाता IS AUTOGENERATED! */			    \न\
+		#अगर_अघोषित %2$s						    \न\
+		#घोषणा %2$s						    \न\
+									    \न\
+		#समावेश <मानककोष.स>					    \न\
+		#समावेश <bpf/libbpf.h>					    \न\
+									    \न\
+		काष्ठा %1$s अणु						    \न\
+			काष्ठा bpf_object_skeleton *skeleton;		    \न\
+			काष्ठा bpf_object *obj;				    \न\
 		",
 		obj_name, header_guard
 	);
 
-	if (map_cnt) {
-		printf("\tstruct {\n");
-		bpf_object__for_each_map(map, obj) {
+	अगर (map_cnt) अणु
+		म_लिखो("\tstruct {\n");
+		bpf_object__क्रम_each_map(map, obj) अणु
 			ident = get_map_ident(map);
-			if (!ident)
-				continue;
-			printf("\t\tstruct bpf_map *%s;\n", ident);
-		}
-		printf("\t} maps;\n");
-	}
+			अगर (!ident)
+				जारी;
+			म_लिखो("\t\tstruct bpf_map *%s;\n", ident);
+		पूर्ण
+		म_लिखो("\t} maps;\n");
+	पूर्ण
 
-	if (prog_cnt) {
-		printf("\tstruct {\n");
-		bpf_object__for_each_program(prog, obj) {
-			printf("\t\tstruct bpf_program *%s;\n",
+	अगर (prog_cnt) अणु
+		म_लिखो("\tstruct {\n");
+		bpf_object__क्रम_each_program(prog, obj) अणु
+			म_लिखो("\t\tstruct bpf_program *%s;\n",
 			       bpf_program__name(prog));
-		}
-		printf("\t} progs;\n");
-		printf("\tstruct {\n");
-		bpf_object__for_each_program(prog, obj) {
-			printf("\t\tstruct bpf_link *%s;\n",
+		पूर्ण
+		म_लिखो("\t} progs;\n");
+		म_लिखो("\tstruct {\n");
+		bpf_object__क्रम_each_program(prog, obj) अणु
+			म_लिखो("\t\tstruct bpf_link *%s;\n",
 			       bpf_program__name(prog));
-		}
-		printf("\t} links;\n");
-	}
+		पूर्ण
+		म_लिखो("\t} links;\n");
+	पूर्ण
 
 	btf = bpf_object__btf(obj);
-	if (btf) {
+	अगर (btf) अणु
 		err = codegen_datasecs(obj, obj_name);
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 	codegen("\
-		\n\
-		};							    \n\
-									    \n\
-		static void						    \n\
-		%1$s__destroy(struct %1$s *obj)				    \n\
-		{							    \n\
-			if (!obj)					    \n\
-				return;					    \n\
-			if (obj->skeleton)				    \n\
-				bpf_object__destroy_skeleton(obj->skeleton);\n\
-			free(obj);					    \n\
-		}							    \n\
-									    \n\
-		static inline int					    \n\
-		%1$s__create_skeleton(struct %1$s *obj);		    \n\
-									    \n\
-		static inline struct %1$s *				    \n\
-		%1$s__open_opts(const struct bpf_object_open_opts *opts)    \n\
-		{							    \n\
-			struct %1$s *obj;				    \n\
-									    \n\
-			obj = (struct %1$s *)calloc(1, sizeof(*obj));	    \n\
-			if (!obj)					    \n\
-				return NULL;				    \n\
-			if (%1$s__create_skeleton(obj))			    \n\
-				goto err;				    \n\
-			if (bpf_object__open_skeleton(obj->skeleton, opts)) \n\
-				goto err;				    \n\
-									    \n\
-			return obj;					    \n\
-		err:							    \n\
-			%1$s__destroy(obj);				    \n\
-			return NULL;					    \n\
-		}							    \n\
-									    \n\
-		static inline struct %1$s *				    \n\
-		%1$s__open(void)					    \n\
-		{							    \n\
-			return %1$s__open_opts(NULL);			    \n\
-		}							    \n\
-									    \n\
-		static inline int					    \n\
-		%1$s__load(struct %1$s *obj)				    \n\
-		{							    \n\
-			return bpf_object__load_skeleton(obj->skeleton);    \n\
-		}							    \n\
-									    \n\
-		static inline struct %1$s *				    \n\
-		%1$s__open_and_load(void)				    \n\
-		{							    \n\
-			struct %1$s *obj;				    \n\
-									    \n\
-			obj = %1$s__open();				    \n\
-			if (!obj)					    \n\
-				return NULL;				    \n\
-			if (%1$s__load(obj)) {				    \n\
-				%1$s__destroy(obj);			    \n\
-				return NULL;				    \n\
-			}						    \n\
-			return obj;					    \n\
-		}							    \n\
-									    \n\
-		static inline int					    \n\
-		%1$s__attach(struct %1$s *obj)				    \n\
-		{							    \n\
-			return bpf_object__attach_skeleton(obj->skeleton);  \n\
-		}							    \n\
-									    \n\
-		static inline void					    \n\
-		%1$s__detach(struct %1$s *obj)				    \n\
-		{							    \n\
-			return bpf_object__detach_skeleton(obj->skeleton);  \n\
-		}							    \n\
+		\न\
+		पूर्ण;							    \न\
+									    \न\
+		अटल व्योम						    \न\
+		%1$s__destroy(काष्ठा %1$s *obj)				    \न\
+		अणु							    \न\
+			अगर (!obj)					    \न\
+				वापस;					    \न\
+			अगर (obj->skeleton)				    \न\
+				bpf_object__destroy_skeleton(obj->skeleton);\न\
+			मुक्त(obj);					    \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत पूर्णांक					    \न\
+		%1$s__create_skeleton(काष्ठा %1$s *obj);		    \न\
+									    \न\
+		अटल अंतरभूत काष्ठा %1$s *				    \न\
+		%1$s__खोलो_opts(स्थिर काष्ठा bpf_object_खोलो_opts *opts)    \न\
+		अणु							    \न\
+			काष्ठा %1$s *obj;				    \न\
+									    \न\
+			obj = (काष्ठा %1$s *)सुस्मृति(1, माप(*obj));	    \न\
+			अगर (!obj)					    \न\
+				वापस शून्य;				    \न\
+			अगर (%1$s__create_skeleton(obj))			    \न\
+				जाओ err;				    \न\
+			अगर (bpf_object__खोलो_skeleton(obj->skeleton, opts)) \न\
+				जाओ err;				    \न\
+									    \न\
+			वापस obj;					    \न\
+		err:							    \न\
+			%1$s__destroy(obj);				    \न\
+			वापस शून्य;					    \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत काष्ठा %1$s *				    \न\
+		%1$s__खोलो(व्योम)					    \न\
+		अणु							    \न\
+			वापस %1$s__खोलो_opts(शून्य);			    \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत पूर्णांक					    \न\
+		%1$s__load(काष्ठा %1$s *obj)				    \न\
+		अणु							    \न\
+			वापस bpf_object__load_skeleton(obj->skeleton);    \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत काष्ठा %1$s *				    \न\
+		%1$s__खोलो_and_load(व्योम)				    \न\
+		अणु							    \न\
+			काष्ठा %1$s *obj;				    \न\
+									    \न\
+			obj = %1$s__खोलो();				    \न\
+			अगर (!obj)					    \न\
+				वापस शून्य;				    \न\
+			अगर (%1$s__load(obj)) अणु				    \न\
+				%1$s__destroy(obj);			    \न\
+				वापस शून्य;				    \न\
+			पूर्ण						    \न\
+			वापस obj;					    \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत पूर्णांक					    \न\
+		%1$s__attach(काष्ठा %1$s *obj)				    \न\
+		अणु							    \न\
+			वापस bpf_object__attach_skeleton(obj->skeleton);  \न\
+		पूर्ण							    \न\
+									    \न\
+		अटल अंतरभूत व्योम					    \न\
+		%1$s__detach(काष्ठा %1$s *obj)				    \न\
+		अणु							    \न\
+			वापस bpf_object__detach_skeleton(obj->skeleton);  \न\
+		पूर्ण							    \न\
 		",
 		obj_name
 	);
 
 	codegen("\
-		\n\
-									    \n\
-		static inline int					    \n\
-		%1$s__create_skeleton(struct %1$s *obj)			    \n\
-		{							    \n\
-			struct bpf_object_skeleton *s;			    \n\
-									    \n\
-			s = (struct bpf_object_skeleton *)calloc(1, sizeof(*s));\n\
-			if (!s)						    \n\
-				return -1;				    \n\
-			obj->skeleton = s;				    \n\
-									    \n\
-			s->sz = sizeof(*s);				    \n\
-			s->name = \"%1$s\";				    \n\
-			s->obj = &obj->obj;				    \n\
+		\न\
+									    \न\
+		अटल अंतरभूत पूर्णांक					    \न\
+		%1$s__create_skeleton(काष्ठा %1$s *obj)			    \न\
+		अणु							    \न\
+			काष्ठा bpf_object_skeleton *s;			    \न\
+									    \न\
+			s = (काष्ठा bpf_object_skeleton *)सुस्मृति(1, माप(*s));\न\
+			अगर (!s)						    \न\
+				वापस -1;				    \न\
+			obj->skeleton = s;				    \न\
+									    \न\
+			s->sz = माप(*s);				    \न\
+			s->name = \"%1$s\";				    \न\
+			s->obj = &obj->obj;				    \न\
 		",
 		obj_name
 	);
-	if (map_cnt) {
+	अगर (map_cnt) अणु
 		codegen("\
-			\n\
-									    \n\
-				/* maps */				    \n\
-				s->map_cnt = %zu;			    \n\
-				s->map_skel_sz = sizeof(*s->maps);	    \n\
-				s->maps = (struct bpf_map_skeleton *)calloc(s->map_cnt, s->map_skel_sz);\n\
-				if (!s->maps)				    \n\
-					goto err;			    \n\
+			\न\
+									    \न\
+				/* maps */				    \न\
+				s->map_cnt = %zu;			    \न\
+				s->map_skel_sz = माप(*s->maps);	    \न\
+				s->maps = (काष्ठा bpf_map_skeleton *)सुस्मृति(s->map_cnt, s->map_skel_sz);\न\
+				अगर (!s->maps)				    \न\
+					जाओ err;			    \न\
 			",
 			map_cnt
 		);
 		i = 0;
-		bpf_object__for_each_map(map, obj) {
+		bpf_object__क्रम_each_map(map, obj) अणु
 			ident = get_map_ident(map);
 
-			if (!ident)
-				continue;
+			अगर (!ident)
+				जारी;
 
 			codegen("\
-				\n\
-									    \n\
-					s->maps[%zu].name = \"%s\";	    \n\
-					s->maps[%zu].map = &obj->maps.%s;   \n\
+				\न\
+									    \न\
+					s->maps[%zu].name = \"%s\";	    \न\
+					s->maps[%zu].map = &obj->maps.%s;   \न\
 				",
 				i, bpf_map__name(map), i, ident);
-			/* memory-mapped internal maps */
-			if (bpf_map__is_internal(map) &&
-			    (bpf_map__def(map)->map_flags & BPF_F_MMAPABLE)) {
-				printf("\ts->maps[%zu].mmaped = (void **)&obj->%s;\n",
+			/* memory-mapped पूर्णांकernal maps */
+			अगर (bpf_map__is_पूर्णांकernal(map) &&
+			    (bpf_map__def(map)->map_flags & BPF_F_MMAPABLE)) अणु
+				म_लिखो("\ts->maps[%zu].mmaped = (void **)&obj->%s;\n",
 				       i, ident);
-			}
+			पूर्ण
 			i++;
-		}
-	}
-	if (prog_cnt) {
+		पूर्ण
+	पूर्ण
+	अगर (prog_cnt) अणु
 		codegen("\
-			\n\
-									    \n\
-				/* programs */				    \n\
-				s->prog_cnt = %zu;			    \n\
-				s->prog_skel_sz = sizeof(*s->progs);	    \n\
-				s->progs = (struct bpf_prog_skeleton *)calloc(s->prog_cnt, s->prog_skel_sz);\n\
-				if (!s->progs)				    \n\
-					goto err;			    \n\
+			\न\
+									    \न\
+				/* programs */				    \न\
+				s->prog_cnt = %zu;			    \न\
+				s->prog_skel_sz = माप(*s->progs);	    \न\
+				s->progs = (काष्ठा bpf_prog_skeleton *)सुस्मृति(s->prog_cnt, s->prog_skel_sz);\न\
+				अगर (!s->progs)				    \न\
+					जाओ err;			    \न\
 			",
 			prog_cnt
 		);
 		i = 0;
-		bpf_object__for_each_program(prog, obj) {
+		bpf_object__क्रम_each_program(prog, obj) अणु
 			codegen("\
-				\n\
-									    \n\
-					s->progs[%1$zu].name = \"%2$s\";    \n\
-					s->progs[%1$zu].prog = &obj->progs.%2$s;\n\
-					s->progs[%1$zu].link = &obj->links.%2$s;\n\
+				\न\
+									    \न\
+					s->progs[%1$zu].name = \"%2$s\";    \न\
+					s->progs[%1$zu].prog = &obj->progs.%2$s;\न\
+					s->progs[%1$zu].link = &obj->links.%2$s;\न\
 				",
 				i, bpf_program__name(prog));
 			i++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	codegen("\
-		\n\
-									    \n\
-			s->data_sz = %d;				    \n\
-			s->data = (void *)\"\\				    \n\
+		\न\
+									    \न\
+			s->data_sz = %d;				    \न\
+			s->data = (व्योम *)\"\\				    \न\
 		",
 		file_sz);
 
 	/* embed contents of BPF object file */
-	for (i = 0, len = 0; i < file_sz; i++) {
-		int w = obj_data[i] ? 4 : 2;
+	क्रम (i = 0, len = 0; i < file_sz; i++) अणु
+		पूर्णांक w = obj_data[i] ? 4 : 2;
 
 		len += w;
-		if (len > 78) {
-			printf("\\\n");
+		अगर (len > 78) अणु
+			म_लिखो("\\\n");
 			len = w;
-		}
-		if (!obj_data[i])
-			printf("\\0");
-		else
-			printf("\\x%02x", (unsigned char)obj_data[i]);
-	}
+		पूर्ण
+		अगर (!obj_data[i])
+			म_लिखो("\\0");
+		अन्यथा
+			म_लिखो("\\x%02x", (अचिन्हित अक्षर)obj_data[i]);
+	पूर्ण
 
 	codegen("\
-		\n\
-		\";							    \n\
-									    \n\
-			return 0;					    \n\
-		err:							    \n\
-			bpf_object__destroy_skeleton(s);		    \n\
-			return -1;					    \n\
-		}							    \n\
-									    \n\
-		#endif /* %s */						    \n\
+		\न\
+		\";							    \न\
+									    \न\
+			वापस 0;					    \न\
+		err:							    \न\
+			bpf_object__destroy_skeleton(s);		    \न\
+			वापस -1;					    \न\
+		पूर्ण							    \न\
+									    \न\
+		#पूर्ण_अगर /* %s */						    \न\
 		",
 		header_guard);
 	err = 0;
 out:
-	bpf_object__close(obj);
-	if (obj_data)
+	bpf_object__बंद(obj);
+	अगर (obj_data)
 		munmap(obj_data, mmap_sz);
-	close(fd);
-	return err;
-}
+	बंद(fd);
+	वापस err;
+पूर्ण
 
-static int do_object(int argc, char **argv)
-{
-	struct bpf_linker *linker;
-	const char *output_file, *file;
-	int err = 0;
+अटल पूर्णांक करो_object(पूर्णांक argc, अक्षर **argv)
+अणु
+	काष्ठा bpf_linker *linker;
+	स्थिर अक्षर *output_file, *file;
+	पूर्णांक err = 0;
 
-	if (!REQ_ARGS(2)) {
+	अगर (!REQ_ARGS(2)) अणु
 		usage();
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	output_file = GET_ARG();
 
-	linker = bpf_linker__new(output_file, NULL);
-	if (!linker) {
+	linker = bpf_linker__new(output_file, शून्य);
+	अगर (!linker) अणु
 		p_err("failed to create BPF linker instance");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	while (argc) {
+	जबतक (argc) अणु
 		file = GET_ARG();
 
 		err = bpf_linker__add_file(linker, file);
-		if (err) {
-			p_err("failed to link '%s': %s (%d)", file, strerror(err), err);
-			goto out;
-		}
-	}
+		अगर (err) अणु
+			p_err("failed to link '%s': %s (%d)", file, म_त्रुटि(err), err);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	err = bpf_linker__finalize(linker);
-	if (err) {
-		p_err("failed to finalize ELF file: %s (%d)", strerror(err), err);
-		goto out;
-	}
+	अगर (err) अणु
+		p_err("failed to finalize ELF file: %s (%d)", म_त्रुटि(err), err);
+		जाओ out;
+	पूर्ण
 
 	err = 0;
 out:
-	bpf_linker__free(linker);
-	return err;
-}
+	bpf_linker__मुक्त(linker);
+	वापस err;
+पूर्ण
 
-static int do_help(int argc, char **argv)
-{
-	if (json_output) {
+अटल पूर्णांक करो_help(पूर्णांक argc, अक्षर **argv)
+अणु
+	अगर (json_output) अणु
 		jsonw_null(json_wtr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fprintf(stderr,
+	ख_लिखो(मानक_त्रुटि,
 		"Usage: %1$s %2$s object OUTPUT_FILE INPUT_FILE [INPUT_FILE...]\n"
 		"       %1$s %2$s skeleton FILE [name OBJECT_NAME]\n"
 		"       %1$s %2$s help\n"
@@ -671,17 +672,17 @@ static int do_help(int argc, char **argv)
 		"",
 		bin_name, "gen");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct cmd cmds[] = {
-	{ "object",	do_object },
-	{ "skeleton",	do_skeleton },
-	{ "help",	do_help },
-	{ 0 }
-};
+अटल स्थिर काष्ठा cmd cmds[] = अणु
+	अणु "object",	करो_object पूर्ण,
+	अणु "skeleton",	करो_skeleton पूर्ण,
+	अणु "help",	करो_help पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
-int do_gen(int argc, char **argv)
-{
-	return cmd_select(cmds, argc, argv, do_help);
-}
+पूर्णांक करो_gen(पूर्णांक argc, अक्षर **argv)
+अणु
+	वापस cmd_select(cmds, argc, argv, करो_help);
+पूर्ण

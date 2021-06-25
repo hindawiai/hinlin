@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_M68K_MMZONE_H_
-#define _ASM_M68K_MMZONE_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_M68K_MMZONE_H_
+#घोषणा _ASM_M68K_MMZONE_H_
 
-extern pg_data_t pg_data_map[];
+बाह्य pg_data_t pg_data_map[];
 
-#define NODE_DATA(nid)		(&pg_data_map[nid])
-#define NODE_MEM_MAP(nid)	(NODE_DATA(nid)->node_mem_map)
+#घोषणा NODE_DATA(nid)		(&pg_data_map[nid])
+#घोषणा NODE_MEM_MAP(nid)	(NODE_DATA(nid)->node_mem_map)
 
-#endif /* _ASM_M68K_MMZONE_H_ */
+#पूर्ण_अगर /* _ASM_M68K_MMZONE_H_ */

@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016 Maxime Ripard
  *
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/iopoll.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/slab.h>
 
-#include "ccu_common.h"
-#include "ccu_gate.h"
-#include "ccu_reset.h"
+#समावेश "ccu_common.h"
+#समावेश "ccu_gate.h"
+#समावेश "ccu_reset.h"
 
-static DEFINE_SPINLOCK(ccu_lock);
+अटल DEFINE_SPINLOCK(ccu_lock);
 
-void ccu_helper_wait_for_lock(struct ccu_common *common, u32 lock)
-{
-	void __iomem *addr;
+व्योम ccu_helper_रुको_क्रम_lock(काष्ठा ccu_common *common, u32 lock)
+अणु
+	व्योम __iomem *addr;
 	u32 reg;
 
-	if (!lock)
-		return;
+	अगर (!lock)
+		वापस;
 
-	if (common->features & CCU_FEATURE_LOCK_REG)
+	अगर (common->features & CCU_FEATURE_LOCK_REG)
 		addr = common->base + common->lock_reg;
-	else
+	अन्यथा
 		addr = common->base + common->reg;
 
-	WARN_ON(readl_relaxed_poll_timeout(addr, reg, reg & lock, 100, 70000));
-}
+	WARN_ON(पढ़ोl_relaxed_poll_समयout(addr, reg, reg & lock, 100, 70000));
+पूर्ण
 
 /*
- * This clock notifier is called when the frequency of a PLL clock is
- * changed. In common PLL designs, changes to the dividers take effect
- * almost immediately, while changes to the multipliers (implemented
- * as dividers in the feedback loop) take a few cycles to work into
- * the feedback loop for the PLL to stablize.
+ * This घड़ी notअगरier is called when the frequency of a PLL घड़ी is
+ * changed. In common PLL designs, changes to the भागiders take effect
+ * almost immediately, जबतक changes to the multipliers (implemented
+ * as भागiders in the feedback loop) take a few cycles to work पूर्णांकo
+ * the feedback loop क्रम the PLL to stablize.
  *
- * Sometimes when the PLL clock rate is changed, the decrease in the
- * divider is too much for the decrease in the multiplier to catch up.
- * The PLL clock rate will spike, and in some cases, might lock up
+ * Someबार when the PLL घड़ी rate is changed, the decrease in the
+ * भागider is too much क्रम the decrease in the multiplier to catch up.
+ * The PLL घड़ी rate will spike, and in some हालs, might lock up
  * completely.
  *
- * This notifier callback will gate and then ungate the clock,
+ * This notअगरier callback will gate and then ungate the घड़ी,
  * effectively resetting it, so it proceeds to work. Care must be
- * taken to reparent consumers to other temporary clocks during the
- * rate change, and that this notifier callback must be the first
- * to be registered.
+ * taken to reparent consumers to other temporary घड़ीs during the
+ * rate change, and that this notअगरier callback must be the first
+ * to be रेजिस्टरed.
  */
-static int ccu_pll_notifier_cb(struct notifier_block *nb,
-			       unsigned long event, void *data)
-{
-	struct ccu_pll_nb *pll = to_ccu_pll_nb(nb);
-	int ret = 0;
+अटल पूर्णांक ccu_pll_notअगरier_cb(काष्ठा notअगरier_block *nb,
+			       अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा ccu_pll_nb *pll = to_ccu_pll_nb(nb);
+	पूर्णांक ret = 0;
 
-	if (event != POST_RATE_CHANGE)
-		goto out;
+	अगर (event != POST_RATE_CHANGE)
+		जाओ out;
 
 	ccu_gate_helper_disable(pll->common, pll->enable);
 
 	ret = ccu_gate_helper_enable(pll->common, pll->enable);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ccu_helper_wait_for_lock(pll->common, pll->lock);
+	ccu_helper_रुको_क्रम_lock(pll->common, pll->lock);
 
 out:
-	return notifier_from_errno(ret);
-}
+	वापस notअगरier_from_त्रुटि_सं(ret);
+पूर्ण
 
-int ccu_pll_notifier_register(struct ccu_pll_nb *pll_nb)
-{
-	pll_nb->clk_nb.notifier_call = ccu_pll_notifier_cb;
+पूर्णांक ccu_pll_notअगरier_रेजिस्टर(काष्ठा ccu_pll_nb *pll_nb)
+अणु
+	pll_nb->clk_nb.notअगरier_call = ccu_pll_notअगरier_cb;
 
-	return clk_notifier_register(pll_nb->common->hw.clk,
+	वापस clk_notअगरier_रेजिस्टर(pll_nb->common->hw.clk,
 				     &pll_nb->clk_nb);
-}
+पूर्ण
 
-int sunxi_ccu_probe(struct device_node *node, void __iomem *reg,
-		    const struct sunxi_ccu_desc *desc)
-{
-	struct ccu_reset *reset;
-	int i, ret;
+पूर्णांक sunxi_ccu_probe(काष्ठा device_node *node, व्योम __iomem *reg,
+		    स्थिर काष्ठा sunxi_ccu_desc *desc)
+अणु
+	काष्ठा ccu_reset *reset;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < desc->num_ccu_clks; i++) {
-		struct ccu_common *cclk = desc->ccu_clks[i];
+	क्रम (i = 0; i < desc->num_ccu_clks; i++) अणु
+		काष्ठा ccu_common *cclk = desc->ccu_clks[i];
 
-		if (!cclk)
-			continue;
+		अगर (!cclk)
+			जारी;
 
 		cclk->base = reg;
 		cclk->lock = &ccu_lock;
-	}
+	पूर्ण
 
-	for (i = 0; i < desc->hw_clks->num ; i++) {
-		struct clk_hw *hw = desc->hw_clks->hws[i];
-		const char *name;
+	क्रम (i = 0; i < desc->hw_clks->num ; i++) अणु
+		काष्ठा clk_hw *hw = desc->hw_clks->hws[i];
+		स्थिर अक्षर *name;
 
-		if (!hw)
-			continue;
+		अगर (!hw)
+			जारी;
 
 		name = hw->init->name;
-		ret = of_clk_hw_register(node, hw);
-		if (ret) {
+		ret = of_clk_hw_रेजिस्टर(node, hw);
+		अगर (ret) अणु
 			pr_err("Couldn't register clock %d - %s\n", i, name);
-			goto err_clk_unreg;
-		}
-	}
+			जाओ err_clk_unreg;
+		पूर्ण
+	पूर्ण
 
 	ret = of_clk_add_hw_provider(node, of_clk_hw_onecell_get,
 				     desc->hw_clks);
-	if (ret)
-		goto err_clk_unreg;
+	अगर (ret)
+		जाओ err_clk_unreg;
 
-	reset = kzalloc(sizeof(*reset), GFP_KERNEL);
-	if (!reset) {
+	reset = kzalloc(माप(*reset), GFP_KERNEL);
+	अगर (!reset) अणु
 		ret = -ENOMEM;
-		goto err_alloc_reset;
-	}
+		जाओ err_alloc_reset;
+	पूर्ण
 
 	reset->rcdev.of_node = node;
 	reset->rcdev.ops = &ccu_reset_ops;
@@ -129,23 +130,23 @@ int sunxi_ccu_probe(struct device_node *node, void __iomem *reg,
 	reset->lock = &ccu_lock;
 	reset->reset_map = desc->resets;
 
-	ret = reset_controller_register(&reset->rcdev);
-	if (ret)
-		goto err_of_clk_unreg;
+	ret = reset_controller_रेजिस्टर(&reset->rcdev);
+	अगर (ret)
+		जाओ err_of_clk_unreg;
 
-	return 0;
+	वापस 0;
 
 err_of_clk_unreg:
-	kfree(reset);
+	kमुक्त(reset);
 err_alloc_reset:
 	of_clk_del_provider(node);
 err_clk_unreg:
-	while (--i >= 0) {
-		struct clk_hw *hw = desc->hw_clks->hws[i];
+	जबतक (--i >= 0) अणु
+		काष्ठा clk_hw *hw = desc->hw_clks->hws[i];
 
-		if (!hw)
-			continue;
-		clk_hw_unregister(hw);
-	}
-	return ret;
-}
+		अगर (!hw)
+			जारी;
+		clk_hw_unरेजिस्टर(hw);
+	पूर्ण
+	वापस ret;
+पूर्ण

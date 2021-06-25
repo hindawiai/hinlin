@@ -1,292 +1,293 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// max8997_charger.c - Power supply consumer driver for the Maxim 8997/8966
+// max8997_अक्षरger.c - Power supply consumer driver क्रम the Maxim 8997/8966
 //
 //  Copyright (C) 2011 Samsung Electronics
 //  MyungJoo Ham <myungjoo.ham@samsung.com>
 
-#include <linux/err.h>
-#include <linux/extcon.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/mfd/max8997.h>
-#include <linux/mfd/max8997-private.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/err.h>
+#समावेश <linux/extcon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/mfd/max8997.h>
+#समावेश <linux/mfd/max8997-निजी.h>
+#समावेश <linux/regulator/consumer.h>
 
 /* MAX8997_REG_STATUS4 */
-#define DCINOK_SHIFT		1
-#define DCINOK_MASK		(1 << DCINOK_SHIFT)
-#define DETBAT_SHIFT		2
-#define DETBAT_MASK		(1 << DETBAT_SHIFT)
+#घोषणा DCINOK_SHIFT		1
+#घोषणा DCINOK_MASK		(1 << DCINOK_SHIFT)
+#घोषणा DETBAT_SHIFT		2
+#घोषणा DETBAT_MASK		(1 << DETBAT_SHIFT)
 
 /* MAX8997_REG_MBCCTRL1 */
-#define TFCH_SHIFT		4
-#define TFCH_MASK		(7 << TFCH_SHIFT)
+#घोषणा TFCH_SHIFT		4
+#घोषणा TFCH_MASK		(7 << TFCH_SHIFT)
 
 /* MAX8997_REG_MBCCTRL5 */
-#define ITOPOFF_SHIFT		0
-#define ITOPOFF_MASK		(0xF << ITOPOFF_SHIFT)
+#घोषणा ITOPOFF_SHIFT		0
+#घोषणा ITOPOFF_MASK		(0xF << ITOPOFF_SHIFT)
 
-struct charger_data {
-	struct device *dev;
-	struct max8997_dev *iodev;
-	struct power_supply *battery;
-	struct regulator *reg;
-	struct extcon_dev *edev;
-	struct notifier_block extcon_nb;
-	struct work_struct extcon_work;
-};
+काष्ठा अक्षरger_data अणु
+	काष्ठा device *dev;
+	काष्ठा max8997_dev *iodev;
+	काष्ठा घातer_supply *battery;
+	काष्ठा regulator *reg;
+	काष्ठा extcon_dev *edev;
+	काष्ठा notअगरier_block extcon_nb;
+	काष्ठा work_काष्ठा extcon_work;
+पूर्ण;
 
-static enum power_supply_property max8997_battery_props[] = {
+अटल क्रमागत घातer_supply_property max8997_battery_props[] = अणु
 	POWER_SUPPLY_PROP_STATUS, /* "FULL", "CHARGING" or "DISCHARGING". */
 	POWER_SUPPLY_PROP_PRESENT, /* the presence of battery */
-	POWER_SUPPLY_PROP_ONLINE, /* charger is active or not */
-};
+	POWER_SUPPLY_PROP_ONLINE, /* अक्षरger is active or not */
+पूर्ण;
 
-/* Note that the charger control is done by a current regulator "CHARGER" */
-static int max8997_battery_get_property(struct power_supply *psy,
-		enum power_supply_property psp,
-		union power_supply_propval *val)
-{
-	struct charger_data *charger = power_supply_get_drvdata(psy);
-	struct i2c_client *i2c = charger->iodev->i2c;
-	int ret;
+/* Note that the अक्षरger control is करोne by a current regulator "CHARGER" */
+अटल पूर्णांक max8997_battery_get_property(काष्ठा घातer_supply *psy,
+		क्रमागत घातer_supply_property psp,
+		जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा अक्षरger_data *अक्षरger = घातer_supply_get_drvdata(psy);
+	काष्ठा i2c_client *i2c = अक्षरger->iodev->i2c;
+	पूर्णांक ret;
 	u8 reg;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = 0;
-		ret = max8997_read_reg(i2c, MAX8997_REG_STATUS4, &reg);
-		if (ret)
-			return ret;
-		if ((reg & (1 << 0)) == 0x1)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else if ((reg & DCINOK_MASK))
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-		else
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = 0;
+		ret = max8997_पढ़ो_reg(i2c, MAX8997_REG_STATUS4, &reg);
+		अगर (ret)
+			वापस ret;
+		अगर ((reg & (1 << 0)) == 0x1)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अन्यथा अगर ((reg & DCINOK_MASK))
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
 
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = 0;
-		ret = max8997_read_reg(i2c, MAX8997_REG_STATUS4, &reg);
-		if (ret)
-			return ret;
-		if ((reg & DETBAT_MASK) == 0x0)
-			val->intval = 1;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		val->पूर्णांकval = 0;
+		ret = max8997_पढ़ो_reg(i2c, MAX8997_REG_STATUS4, &reg);
+		अगर (ret)
+			वापस ret;
+		अगर ((reg & DETBAT_MASK) == 0x0)
+			val->पूर्णांकval = 1;
 
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = 0;
-		ret = max8997_read_reg(i2c, MAX8997_REG_STATUS4, &reg);
-		if (ret)
-			return ret;
-		if (reg & DCINOK_MASK)
-			val->intval = 1;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = 0;
+		ret = max8997_पढ़ो_reg(i2c, MAX8997_REG_STATUS4, &reg);
+		अगर (ret)
+			वापस ret;
+		अगर (reg & DCINOK_MASK)
+			val->पूर्णांकval = 1;
 
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void max8997_battery_extcon_evt_stop_work(void *data)
-{
-	struct charger_data *charger = data;
+अटल व्योम max8997_battery_extcon_evt_stop_work(व्योम *data)
+अणु
+	काष्ठा अक्षरger_data *अक्षरger = data;
 
-	cancel_work_sync(&charger->extcon_work);
-}
+	cancel_work_sync(&अक्षरger->extcon_work);
+पूर्ण
 
-static void max8997_battery_extcon_evt_worker(struct work_struct *work)
-{
-	struct charger_data *charger =
-	    container_of(work, struct charger_data, extcon_work);
-	struct extcon_dev *edev = charger->edev;
-	int current_limit;
+अटल व्योम max8997_battery_extcon_evt_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा अक्षरger_data *अक्षरger =
+	    container_of(work, काष्ठा अक्षरger_data, extcon_work);
+	काष्ठा extcon_dev *edev = अक्षरger->edev;
+	पूर्णांक current_limit;
 
-	if (extcon_get_state(edev, EXTCON_CHG_USB_SDP) > 0) {
-		dev_dbg(charger->dev, "USB SDP charger is connected\n");
+	अगर (extcon_get_state(edev, EXTCON_CHG_USB_SDP) > 0) अणु
+		dev_dbg(अक्षरger->dev, "USB SDP charger is connected\n");
 		current_limit = 450000;
-	} else if (extcon_get_state(edev, EXTCON_CHG_USB_DCP) > 0) {
-		dev_dbg(charger->dev, "USB DCP charger is connected\n");
+	पूर्ण अन्यथा अगर (extcon_get_state(edev, EXTCON_CHG_USB_DCP) > 0) अणु
+		dev_dbg(अक्षरger->dev, "USB DCP charger is connected\n");
 		current_limit = 650000;
-	} else if (extcon_get_state(edev, EXTCON_CHG_USB_FAST) > 0) {
-		dev_dbg(charger->dev, "USB FAST charger is connected\n");
+	पूर्ण अन्यथा अगर (extcon_get_state(edev, EXTCON_CHG_USB_FAST) > 0) अणु
+		dev_dbg(अक्षरger->dev, "USB FAST charger is connected\n");
 		current_limit = 650000;
-	} else if (extcon_get_state(edev, EXTCON_CHG_USB_SLOW) > 0) {
-		dev_dbg(charger->dev, "USB SLOW charger is connected\n");
+	पूर्ण अन्यथा अगर (extcon_get_state(edev, EXTCON_CHG_USB_SLOW) > 0) अणु
+		dev_dbg(अक्षरger->dev, "USB SLOW charger is connected\n");
 		current_limit = 650000;
-	} else if (extcon_get_state(edev, EXTCON_CHG_USB_CDP) > 0) {
-		dev_dbg(charger->dev, "USB CDP charger is connected\n");
+	पूर्ण अन्यथा अगर (extcon_get_state(edev, EXTCON_CHG_USB_CDP) > 0) अणु
+		dev_dbg(अक्षरger->dev, "USB CDP charger is connected\n");
 		current_limit = 650000;
-	} else {
-		dev_dbg(charger->dev, "USB charger is disconnected\n");
+	पूर्ण अन्यथा अणु
+		dev_dbg(अक्षरger->dev, "USB charger is disconnected\n");
 		current_limit = -1;
-	}
+	पूर्ण
 
-	if (current_limit > 0) {
-		int ret = regulator_set_current_limit(charger->reg, current_limit, current_limit);
+	अगर (current_limit > 0) अणु
+		पूर्णांक ret = regulator_set_current_limit(अक्षरger->reg, current_limit, current_limit);
 
-		if (ret) {
-			dev_err(charger->dev, "failed to set current limit: %d\n", ret);
-			return;
-		}
-		ret = regulator_enable(charger->reg);
-		if (ret)
-			dev_err(charger->dev, "failed to enable regulator: %d\n", ret);
-	} else {
-		int ret  = regulator_disable(charger->reg);
+		अगर (ret) अणु
+			dev_err(अक्षरger->dev, "failed to set current limit: %d\n", ret);
+			वापस;
+		पूर्ण
+		ret = regulator_enable(अक्षरger->reg);
+		अगर (ret)
+			dev_err(अक्षरger->dev, "failed to enable regulator: %d\n", ret);
+	पूर्ण अन्यथा अणु
+		पूर्णांक ret  = regulator_disable(अक्षरger->reg);
 
-		if (ret)
-			dev_err(charger->dev, "failed to disable regulator: %d\n", ret);
-	}
-}
+		अगर (ret)
+			dev_err(अक्षरger->dev, "failed to disable regulator: %d\n", ret);
+	पूर्ण
+पूर्ण
 
-static int max8997_battery_extcon_evt(struct notifier_block *nb,
-				unsigned long event, void *param)
-{
-	struct charger_data *charger =
-		container_of(nb, struct charger_data, extcon_nb);
-	schedule_work(&charger->extcon_work);
-	return NOTIFY_OK;
-}
+अटल पूर्णांक max8997_battery_extcon_evt(काष्ठा notअगरier_block *nb,
+				अचिन्हित दीर्घ event, व्योम *param)
+अणु
+	काष्ठा अक्षरger_data *अक्षरger =
+		container_of(nb, काष्ठा अक्षरger_data, extcon_nb);
+	schedule_work(&अक्षरger->extcon_work);
+	वापस NOTIFY_OK;
+पूर्ण
 
-static const struct power_supply_desc max8997_battery_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc max8997_battery_desc = अणु
 	.name		= "max8997_pmic",
 	.type		= POWER_SUPPLY_TYPE_BATTERY,
 	.get_property	= max8997_battery_get_property,
 	.properties	= max8997_battery_props,
 	.num_properties	= ARRAY_SIZE(max8997_battery_props),
-};
+पूर्ण;
 
-static int max8997_battery_probe(struct platform_device *pdev)
-{
-	int ret = 0;
-	struct charger_data *charger;
-	struct max8997_dev *iodev = dev_get_drvdata(pdev->dev.parent);
-	struct device_node *np = pdev->dev.of_node;
-	struct i2c_client *i2c = iodev->i2c;
-	struct max8997_platform_data *pdata = iodev->pdata;
-	struct power_supply_config psy_cfg = {};
+अटल पूर्णांक max8997_battery_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा अक्षरger_data *अक्षरger;
+	काष्ठा max8997_dev *iodev = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा i2c_client *i2c = iodev->i2c;
+	काष्ठा max8997_platक्रमm_data *pdata = iodev->pdata;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "No platform data supplied.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->eoc_mA) {
-		int val = (pdata->eoc_mA - 50) / 10;
-		if (val < 0)
+	अगर (pdata->eoc_mA) अणु
+		पूर्णांक val = (pdata->eoc_mA - 50) / 10;
+		अगर (val < 0)
 			val = 0;
-		if (val > 0xf)
+		अगर (val > 0xf)
 			val = 0xf;
 
 		ret = max8997_update_reg(i2c, MAX8997_REG_MBCCTRL5,
 				val << ITOPOFF_SHIFT, ITOPOFF_MASK);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&pdev->dev, "Cannot use i2c bus.\n");
-			return ret;
-		}
-	}
-	switch (pdata->timeout) {
-	case 5:
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	चयन (pdata->समयout) अणु
+	हाल 5:
 		ret = max8997_update_reg(i2c, MAX8997_REG_MBCCTRL1,
 				0x2 << TFCH_SHIFT, TFCH_MASK);
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		ret = max8997_update_reg(i2c, MAX8997_REG_MBCCTRL1,
 				0x3 << TFCH_SHIFT, TFCH_MASK);
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		ret = max8997_update_reg(i2c, MAX8997_REG_MBCCTRL1,
 				0x4 << TFCH_SHIFT, TFCH_MASK);
-		break;
-	case 0:
+		अवरोध;
+	हाल 0:
 		ret = max8997_update_reg(i2c, MAX8997_REG_MBCCTRL1,
 				0x7 << TFCH_SHIFT, TFCH_MASK);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&pdev->dev, "incorrect timeout value (%d)\n",
-				pdata->timeout);
-		return -EINVAL;
-	}
-	if (ret < 0) {
+				pdata->समयout);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Cannot use i2c bus.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	charger = devm_kzalloc(&pdev->dev, sizeof(*charger), GFP_KERNEL);
-	if (!charger)
-		return -ENOMEM;
+	अक्षरger = devm_kzalloc(&pdev->dev, माप(*अक्षरger), GFP_KERNEL);
+	अगर (!अक्षरger)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, charger);
+	platक्रमm_set_drvdata(pdev, अक्षरger);
 
-	charger->dev = &pdev->dev;
-	charger->iodev = iodev;
+	अक्षरger->dev = &pdev->dev;
+	अक्षरger->iodev = iodev;
 
-	psy_cfg.drv_data = charger;
+	psy_cfg.drv_data = अक्षरger;
 
-	charger->battery = devm_power_supply_register(&pdev->dev,
+	अक्षरger->battery = devm_घातer_supply_रेजिस्टर(&pdev->dev,
 						 &max8997_battery_desc,
 						 &psy_cfg);
-	if (IS_ERR(charger->battery)) {
+	अगर (IS_ERR(अक्षरger->battery)) अणु
 		dev_err(&pdev->dev, "failed: power supply register\n");
-		return PTR_ERR(charger->battery);
-	}
+		वापस PTR_ERR(अक्षरger->battery);
+	पूर्ण
 
 	// grab regulator from parent device's node
 	pdev->dev.of_node = iodev->dev->of_node;
-	charger->reg = devm_regulator_get_optional(&pdev->dev, "charger");
+	अक्षरger->reg = devm_regulator_get_optional(&pdev->dev, "charger");
 	pdev->dev.of_node = np;
-	if (IS_ERR(charger->reg)) {
-		if (PTR_ERR(charger->reg) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
+	अगर (IS_ERR(अक्षरger->reg)) अणु
+		अगर (PTR_ERR(अक्षरger->reg) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
 		dev_info(&pdev->dev, "couldn't get charger regulator\n");
-	}
-	charger->edev = extcon_get_extcon_dev("max8997-muic");
-	if (IS_ERR_OR_NULL(charger->edev)) {
-		if (!charger->edev)
-			return -EPROBE_DEFER;
-		dev_info(charger->dev, "couldn't get extcon device\n");
-	}
+	पूर्ण
+	अक्षरger->edev = extcon_get_extcon_dev("max8997-muic");
+	अगर (IS_ERR_OR_शून्य(अक्षरger->edev)) अणु
+		अगर (!अक्षरger->edev)
+			वापस -EPROBE_DEFER;
+		dev_info(अक्षरger->dev, "couldn't get extcon device\n");
+	पूर्ण
 
-	if (!IS_ERR(charger->reg) && !IS_ERR_OR_NULL(charger->edev)) {
-		INIT_WORK(&charger->extcon_work, max8997_battery_extcon_evt_worker);
-		ret = devm_add_action(&pdev->dev, max8997_battery_extcon_evt_stop_work, charger);
-		if (ret) {
+	अगर (!IS_ERR(अक्षरger->reg) && !IS_ERR_OR_शून्य(अक्षरger->edev)) अणु
+		INIT_WORK(&अक्षरger->extcon_work, max8997_battery_extcon_evt_worker);
+		ret = devm_add_action(&pdev->dev, max8997_battery_extcon_evt_stop_work, अक्षरger);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to add extcon evt stop action: %d\n", ret);
-			return ret;
-		}
-		charger->extcon_nb.notifier_call = max8997_battery_extcon_evt;
-		ret = devm_extcon_register_notifier_all(&pdev->dev, charger->edev,
-							&charger->extcon_nb);
-		if (ret) {
+			वापस ret;
+		पूर्ण
+		अक्षरger->extcon_nb.notअगरier_call = max8997_battery_extcon_evt;
+		ret = devm_extcon_रेजिस्टर_notअगरier_all(&pdev->dev, अक्षरger->edev,
+							&अक्षरger->extcon_nb);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to register extcon notifier\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id max8997_battery_id[] = {
-	{ "max8997-battery", 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, max8997_battery_id);
+अटल स्थिर काष्ठा platक्रमm_device_id max8997_battery_id[] = अणु
+	अणु "max8997-battery", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, max8997_battery_id);
 
-static struct platform_driver max8997_battery_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver max8997_battery_driver = अणु
+	.driver = अणु
 		.name = "max8997-battery",
-	},
+	पूर्ण,
 	.probe = max8997_battery_probe,
 	.id_table = max8997_battery_id,
-};
-module_platform_driver(max8997_battery_driver);
+पूर्ण;
+module_platक्रमm_driver(max8997_battery_driver);
 
 MODULE_DESCRIPTION("MAXIM 8997/8966 battery control driver");
 MODULE_AUTHOR("MyungJoo Ham <myungjoo.ham@samsung.com>");

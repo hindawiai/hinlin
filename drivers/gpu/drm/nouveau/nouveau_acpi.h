@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NOUVEAU_ACPI_H__
-#define __NOUVEAU_ACPI_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NOUVEAU_ACPI_H__
+#घोषणा __NOUVEAU_ACPI_H__
 
-#define ROM_BIOS_PAGE 4096
+#घोषणा ROM_BIOS_PAGE 4096
 
-#if defined(CONFIG_ACPI) && defined(CONFIG_X86)
-bool nouveau_is_optimus(void);
-bool nouveau_is_v1_dsm(void);
-void nouveau_register_dsm_handler(void);
-void nouveau_unregister_dsm_handler(void);
-void nouveau_switcheroo_optimus_dsm(void);
-void *nouveau_acpi_edid(struct drm_device *, struct drm_connector *);
-#else
-static inline bool nouveau_is_optimus(void) { return false; };
-static inline bool nouveau_is_v1_dsm(void) { return false; };
-static inline void nouveau_register_dsm_handler(void) {}
-static inline void nouveau_unregister_dsm_handler(void) {}
-static inline void nouveau_switcheroo_optimus_dsm(void) {}
-static inline void *nouveau_acpi_edid(struct drm_device *dev, struct drm_connector *connector) { return NULL; }
-#endif
+#अगर defined(CONFIG_ACPI) && defined(CONFIG_X86)
+bool nouveau_is_optimus(व्योम);
+bool nouveau_is_v1_dsm(व्योम);
+व्योम nouveau_रेजिस्टर_dsm_handler(व्योम);
+व्योम nouveau_unरेजिस्टर_dsm_handler(व्योम);
+व्योम nouveau_चयनeroo_optimus_dsm(व्योम);
+व्योम *nouveau_acpi_edid(काष्ठा drm_device *, काष्ठा drm_connector *);
+#अन्यथा
+अटल अंतरभूत bool nouveau_is_optimus(व्योम) अणु वापस false; पूर्ण;
+अटल अंतरभूत bool nouveau_is_v1_dsm(व्योम) अणु वापस false; पूर्ण;
+अटल अंतरभूत व्योम nouveau_रेजिस्टर_dsm_handler(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम nouveau_unरेजिस्टर_dsm_handler(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम nouveau_चयनeroo_optimus_dsm(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम *nouveau_acpi_edid(काष्ठा drm_device *dev, काष्ठा drm_connector *connector) अणु वापस शून्य; पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef S390_BLACKLIST_H
-#define S390_BLACKLIST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित S390_BLACKLIST_H
+#घोषणा S390_BLACKLIST_H
 
-extern int is_blacklisted (int ssid, int devno);
+बाह्य पूर्णांक is_blacklisted (पूर्णांक ssid, पूर्णांक devno);
 
-#endif
+#पूर्ण_अगर

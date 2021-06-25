@@ -1,180 +1,181 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 IBM Corporation.
  */
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/irq.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/cpu.h>
-#include <linux/of.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/of.h>
 
-#include <asm/smp.h>
-#include <asm/irq.h>
-#include <asm/errno.h>
-#include <asm/xics.h>
-#include <asm/io.h>
-#include <asm/hvcall.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <यंत्र/xics.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hvcall.h>
 
-static inline unsigned int icp_hv_get_xirr(unsigned char cppr)
-{
-	unsigned long retbuf[PLPAR_HCALL_BUFSIZE];
-	long rc;
-	unsigned int ret = XICS_IRQ_SPURIOUS;
+अटल अंतरभूत अचिन्हित पूर्णांक icp_hv_get_xirr(अचिन्हित अक्षर cppr)
+अणु
+	अचिन्हित दीर्घ retbuf[PLPAR_HCALL_बफ_मानE];
+	दीर्घ rc;
+	अचिन्हित पूर्णांक ret = XICS_IRQ_SPURIOUS;
 
 	rc = plpar_hcall(H_XIRR, retbuf, cppr);
-	if (rc == H_SUCCESS) {
-		ret = (unsigned int)retbuf[0];
-	} else {
+	अगर (rc == H_SUCCESS) अणु
+		ret = (अचिन्हित पूर्णांक)retbuf[0];
+	पूर्ण अन्यथा अणु
 		pr_err("%s: bad return code xirr cppr=0x%x returned %ld\n",
 			__func__, cppr, rc);
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void icp_hv_set_cppr(u8 value)
-{
-	long rc = plpar_hcall_norets(H_CPPR, value);
-	if (rc != H_SUCCESS) {
+अटल अंतरभूत व्योम icp_hv_set_cppr(u8 value)
+अणु
+	दीर्घ rc = plpar_hcall_norets(H_CPPR, value);
+	अगर (rc != H_SUCCESS) अणु
 		pr_err("%s: bad return code cppr cppr=0x%x returned %ld\n",
 			__func__, value, rc);
 		WARN_ON_ONCE(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void icp_hv_set_xirr(unsigned int value)
-{
-	long rc = plpar_hcall_norets(H_EOI, value);
-	if (rc != H_SUCCESS) {
+अटल अंतरभूत व्योम icp_hv_set_xirr(अचिन्हित पूर्णांक value)
+अणु
+	दीर्घ rc = plpar_hcall_norets(H_EOI, value);
+	अगर (rc != H_SUCCESS) अणु
 		pr_err("%s: bad return code eoi xirr=0x%x returned %ld\n",
 			__func__, value, rc);
 		WARN_ON_ONCE(1);
 		icp_hv_set_cppr(value >> 24);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void icp_hv_set_qirr(int n_cpu , u8 value)
-{
-	int hw_cpu = get_hard_smp_processor_id(n_cpu);
-	long rc;
+अटल अंतरभूत व्योम icp_hv_set_qirr(पूर्णांक n_cpu , u8 value)
+अणु
+	पूर्णांक hw_cpu = get_hard_smp_processor_id(n_cpu);
+	दीर्घ rc;
 
-	/* Make sure all previous accesses are ordered before IPI sending */
+	/* Make sure all previous accesses are ordered beक्रमe IPI sending */
 	mb();
 	rc = plpar_hcall_norets(H_IPI, hw_cpu, value);
-	if (rc != H_SUCCESS) {
+	अगर (rc != H_SUCCESS) अणु
 		pr_err("%s: bad return code qirr cpu=%d hw_cpu=%d mfrr=0x%x "
 			"returned %ld\n", __func__, n_cpu, hw_cpu, value, rc);
 		WARN_ON_ONCE(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void icp_hv_eoi(struct irq_data *d)
-{
-	unsigned int hw_irq = (unsigned int)irqd_to_hwirq(d);
+अटल व्योम icp_hv_eoi(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक hw_irq = (अचिन्हित पूर्णांक)irqd_to_hwirq(d);
 
 	iosync();
 	icp_hv_set_xirr((xics_pop_cppr() << 24) | hw_irq);
-}
+पूर्ण
 
-static void icp_hv_teardown_cpu(void)
-{
-	int cpu = smp_processor_id();
+अटल व्योम icp_hv_tearकरोwn_cpu(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
 	/* Clear any pending IPI */
 	icp_hv_set_qirr(cpu, 0xff);
-}
+पूर्ण
 
-static void icp_hv_flush_ipi(void)
-{
-	/* We take the ipi irq but and never return so we
+अटल व्योम icp_hv_flush_ipi(व्योम)
+अणु
+	/* We take the ipi irq but and never वापस so we
 	 * need to EOI the IPI, but want to leave our priority 0
 	 *
-	 * should we check all the other interrupts too?
+	 * should we check all the other पूर्णांकerrupts too?
 	 * should we be flagging idle loop instead?
 	 * or creating some task to be scheduled?
 	 */
 
 	icp_hv_set_xirr((0x00 << 24) | XICS_IPI);
-}
+पूर्ण
 
-static unsigned int icp_hv_get_irq(void)
-{
-	unsigned int xirr = icp_hv_get_xirr(xics_cppr_top());
-	unsigned int vec = xirr & 0x00ffffff;
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक icp_hv_get_irq(व्योम)
+अणु
+	अचिन्हित पूर्णांक xirr = icp_hv_get_xirr(xics_cppr_top());
+	अचिन्हित पूर्णांक vec = xirr & 0x00ffffff;
+	अचिन्हित पूर्णांक irq;
 
-	if (vec == XICS_IRQ_SPURIOUS)
-		return 0;
+	अगर (vec == XICS_IRQ_SPURIOUS)
+		वापस 0;
 
 	irq = irq_find_mapping(xics_host, vec);
-	if (likely(irq)) {
+	अगर (likely(irq)) अणु
 		xics_push_cppr(vec);
-		return irq;
-	}
+		वापस irq;
+	पूर्ण
 
-	/* We don't have a linux mapping, so have rtas mask it. */
+	/* We करोn't have a linux mapping, so have rtas mask it. */
 	xics_mask_unknown_vec(vec);
 
 	/* We might learn about it later, so EOI it */
 	icp_hv_set_xirr(xirr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void icp_hv_set_cpu_priority(unsigned char cppr)
-{
+अटल व्योम icp_hv_set_cpu_priority(अचिन्हित अक्षर cppr)
+अणु
 	xics_set_base_cppr(cppr);
 	icp_hv_set_cppr(cppr);
 	iosync();
-}
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static void icp_hv_cause_ipi(int cpu)
-{
+अटल व्योम icp_hv_cause_ipi(पूर्णांक cpu)
+अणु
 	icp_hv_set_qirr(cpu, IPI_PRIORITY);
-}
+पूर्ण
 
-static irqreturn_t icp_hv_ipi_action(int irq, void *dev_id)
-{
-	int cpu = smp_processor_id();
+अटल irqवापस_t icp_hv_ipi_action(पूर्णांक irq, व्योम *dev_id)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
 	icp_hv_set_qirr(cpu, 0xff);
 
-	return smp_ipi_demux();
-}
+	वापस smp_ipi_demux();
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static const struct icp_ops icp_hv_ops = {
+अटल स्थिर काष्ठा icp_ops icp_hv_ops = अणु
 	.get_irq	= icp_hv_get_irq,
 	.eoi		= icp_hv_eoi,
 	.set_priority	= icp_hv_set_cpu_priority,
-	.teardown_cpu	= icp_hv_teardown_cpu,
+	.tearकरोwn_cpu	= icp_hv_tearकरोwn_cpu,
 	.flush_ipi	= icp_hv_flush_ipi,
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.ipi_action	= icp_hv_ipi_action,
 	.cause_ipi	= icp_hv_cause_ipi,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-int icp_hv_init(void)
-{
-	struct device_node *np;
+पूर्णांक icp_hv_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	np = of_find_compatible_node(NULL, NULL, "ibm,ppc-xicp");
-	if (!np)
-		np = of_find_node_by_type(NULL,
+	np = of_find_compatible_node(शून्य, शून्य, "ibm,ppc-xicp");
+	अगर (!np)
+		np = of_find_node_by_type(शून्य,
 				    "PowerPC-External-Interrupt-Presentation");
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	icp_ops = &icp_hv_ops;
 
 	of_node_put(np);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

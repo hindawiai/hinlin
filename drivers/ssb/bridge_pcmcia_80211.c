@@ -1,39 +1,40 @@
+<शैली गुरु>
 /*
  * Broadcom 43xx PCMCIA-SSB bridge module
  *
  * Copyright (c) 2007 Michael Buesch <m@bues.ch>
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "ssb_private.h"
+#समावेश "ssb_private.h"
 
-#include <linux/ssb/ssb.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/ssb/ssb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ciscode.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/cisreg.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ciscode.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/cisreg.h>
 
-static const struct pcmcia_device_id ssb_host_pcmcia_tbl[] = {
+अटल स्थिर काष्ठा pcmcia_device_id ssb_host_pcmcia_tbl[] = अणु
 	PCMCIA_DEVICE_MANF_CARD(0x2D0, 0x448),
 	PCMCIA_DEVICE_MANF_CARD(0x2D0, 0x476),
-	PCMCIA_DEVICE_NULL,
-};
+	PCMCIA_DEVICE_शून्य,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pcmcia, ssb_host_pcmcia_tbl);
 
-static int ssb_host_pcmcia_probe(struct pcmcia_device *dev)
-{
-	struct ssb_bus *ssb;
-	int err = -ENOMEM;
-	int res = 0;
+अटल पूर्णांक ssb_host_pcmcia_probe(काष्ठा pcmcia_device *dev)
+अणु
+	काष्ठा ssb_bus *ssb;
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक res = 0;
 
-	ssb = kzalloc(sizeof(*ssb), GFP_KERNEL);
-	if (!ssb)
-		goto out_error;
+	ssb = kzalloc(माप(*ssb), GFP_KERNEL);
+	अगर (!ssb)
+		जाओ out_error;
 
 	err = -ENODEV;
 
@@ -43,91 +44,91 @@ static int ssb_host_pcmcia_probe(struct pcmcia_device *dev)
 			 WIN_USE_WAIT;
 	dev->resource[2]->start = 0;
 	dev->resource[2]->end = SSB_CORE_SIZE;
-	res = pcmcia_request_window(dev, dev->resource[2], 250);
-	if (res != 0)
-		goto err_kfree_ssb;
+	res = pcmcia_request_winकरोw(dev, dev->resource[2], 250);
+	अगर (res != 0)
+		जाओ err_kमुक्त_ssb;
 
 	res = pcmcia_map_mem_page(dev, dev->resource[2], 0);
-	if (res != 0)
-		goto err_disable;
+	अगर (res != 0)
+		जाओ err_disable;
 
-	if (!dev->irq)
-		goto err_disable;
+	अगर (!dev->irq)
+		जाओ err_disable;
 
 	res = pcmcia_enable_device(dev);
-	if (res != 0)
-		goto err_disable;
+	अगर (res != 0)
+		जाओ err_disable;
 
-	err = ssb_bus_pcmciabus_register(ssb, dev, dev->resource[2]->start);
-	if (err)
-		goto err_disable;
+	err = ssb_bus_pcmciabus_रेजिस्टर(ssb, dev, dev->resource[2]->start);
+	अगर (err)
+		जाओ err_disable;
 	dev->priv = ssb;
 
-	return 0;
+	वापस 0;
 
 err_disable:
 	pcmcia_disable_device(dev);
-err_kfree_ssb:
-	kfree(ssb);
+err_kमुक्त_ssb:
+	kमुक्त(ssb);
 out_error:
 	dev_err(&dev->dev, "Initialization failed (%d, %d)\n", res, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ssb_host_pcmcia_remove(struct pcmcia_device *dev)
-{
-	struct ssb_bus *ssb = dev->priv;
+अटल व्योम ssb_host_pcmcia_हटाओ(काष्ठा pcmcia_device *dev)
+अणु
+	काष्ठा ssb_bus *ssb = dev->priv;
 
-	ssb_bus_unregister(ssb);
+	ssb_bus_unरेजिस्टर(ssb);
 	pcmcia_disable_device(dev);
-	kfree(ssb);
-	dev->priv = NULL;
-}
+	kमुक्त(ssb);
+	dev->priv = शून्य;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int ssb_host_pcmcia_suspend(struct pcmcia_device *dev)
-{
-	struct ssb_bus *ssb = dev->priv;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक ssb_host_pcmcia_suspend(काष्ठा pcmcia_device *dev)
+अणु
+	काष्ठा ssb_bus *ssb = dev->priv;
 
-	return ssb_bus_suspend(ssb);
-}
+	वापस ssb_bus_suspend(ssb);
+पूर्ण
 
-static int ssb_host_pcmcia_resume(struct pcmcia_device *dev)
-{
-	struct ssb_bus *ssb = dev->priv;
+अटल पूर्णांक ssb_host_pcmcia_resume(काष्ठा pcmcia_device *dev)
+अणु
+	काष्ठा ssb_bus *ssb = dev->priv;
 
-	return ssb_bus_resume(ssb);
-}
-#else /* CONFIG_PM */
-# define ssb_host_pcmcia_suspend		NULL
-# define ssb_host_pcmcia_resume		NULL
-#endif /* CONFIG_PM */
+	वापस ssb_bus_resume(ssb);
+पूर्ण
+#अन्यथा /* CONFIG_PM */
+# define ssb_host_pcmcia_suspend		शून्य
+# define ssb_host_pcmcia_resume		शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct pcmcia_driver ssb_host_pcmcia_driver = {
+अटल काष्ठा pcmcia_driver ssb_host_pcmcia_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "ssb-pcmcia",
 	.id_table	= ssb_host_pcmcia_tbl,
 	.probe		= ssb_host_pcmcia_probe,
-	.remove		= ssb_host_pcmcia_remove,
+	.हटाओ		= ssb_host_pcmcia_हटाओ,
 	.suspend	= ssb_host_pcmcia_suspend,
 	.resume		= ssb_host_pcmcia_resume,
-};
+पूर्ण;
 
-static int pcmcia_init_failed;
+अटल पूर्णांक pcmcia_init_failed;
 
 /*
- * These are not module init/exit functions!
+ * These are not module init/निकास functions!
  * The module_pcmcia_driver() helper cannot be used here.
  */
-int ssb_host_pcmcia_init(void)
-{
-	pcmcia_init_failed = pcmcia_register_driver(&ssb_host_pcmcia_driver);
+पूर्णांक ssb_host_pcmcia_init(व्योम)
+अणु
+	pcmcia_init_failed = pcmcia_रेजिस्टर_driver(&ssb_host_pcmcia_driver);
 
-	return pcmcia_init_failed;
-}
+	वापस pcmcia_init_failed;
+पूर्ण
 
-void ssb_host_pcmcia_exit(void)
-{
-	if (!pcmcia_init_failed)
-		pcmcia_unregister_driver(&ssb_host_pcmcia_driver);
-}
+व्योम ssb_host_pcmcia_निकास(व्योम)
+अणु
+	अगर (!pcmcia_init_failed)
+		pcmcia_unरेजिस्टर_driver(&ssb_host_pcmcia_driver);
+पूर्ण

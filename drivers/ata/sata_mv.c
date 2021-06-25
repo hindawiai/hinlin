@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * sata_mv.c - Marvell SATA support
  *
@@ -15,15 +16,15 @@
 /*
  * sata_mv TODO list:
  *
- * --> Develop a low-power-consumption strategy, and implement it.
+ * --> Develop a low-घातer-consumption strategy, and implement it.
  *
- * --> Add sysfs attributes for per-chip / per-HC IRQ coalescing thresholds.
+ * --> Add sysfs attributes क्रम per-chip / per-HC IRQ coalescing thresholds.
  *
  * --> [Experiment, Marvell value added] Is it possible to use target
  *       mode to cross-connect two Linux boxes with Marvell cards?  If so,
- *       creating LibATA target mode support would be very interesting.
+ *       creating LibATA target mode support would be very पूर्णांकeresting.
  *
- *       Target mode, for those without docs, is the ability to directly
+ *       Target mode, क्रम those without करोcs, is the ability to directly
  *       connect two SATA ports.
  */
 
@@ -36,55 +37,55 @@
  * work correctly otherwise  (note: this is a pretty rare condition).
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/dmapool.h>
-#include <linux/dma-mapping.h>
-#include <linux/device.h>
-#include <linux/clk.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/mbus.h>
-#include <linux/bitops.h>
-#include <linux/gfp.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/mbus.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <linux/libata.h>
 
-#define DRV_NAME	"sata_mv"
-#define DRV_VERSION	"1.28"
+#घोषणा DRV_NAME	"sata_mv"
+#घोषणा DRV_VERSION	"1.28"
 
 /*
  * module options
  */
 
-#ifdef CONFIG_PCI
-static int msi;
-module_param(msi, int, S_IRUGO);
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक msi;
+module_param(msi, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(msi, "Enable use of PCI MSI (0=off, 1=on)");
-#endif
+#पूर्ण_अगर
 
-static int irq_coalescing_io_count;
-module_param(irq_coalescing_io_count, int, S_IRUGO);
+अटल पूर्णांक irq_coalescing_io_count;
+module_param(irq_coalescing_io_count, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(irq_coalescing_io_count,
 		 "IRQ coalescing I/O count threshold (0..255)");
 
-static int irq_coalescing_usecs;
-module_param(irq_coalescing_usecs, int, S_IRUGO);
+अटल पूर्णांक irq_coalescing_usecs;
+module_param(irq_coalescing_usecs, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(irq_coalescing_usecs,
 		 "IRQ coalescing time threshold in usecs");
 
-enum {
-	/* BAR's are enumerated in terms of pci_resource_start() terms */
+क्रमागत अणु
+	/* BAR's are क्रमागतerated in terms of pci_resource_start() terms */
 	MV_PRIMARY_BAR		= 0,	/* offset 0x10: memory space */
 	MV_IO_BAR		= 2,	/* offset 0x18: IO space */
 	MV_MISC_BAR		= 3,	/* offset 0x1c: FLASH, NVRAM, SRAM */
@@ -93,17 +94,17 @@ enum {
 	MV_MINOR_REG_AREA_SZ	= 0x2000,	/* 8KB */
 
 	/* For use with both IRQ coalescing methods ("all ports" or "per-HC" */
-	COAL_CLOCKS_PER_USEC	= 150,		/* for calculating COAL_TIMEs */
-	MAX_COAL_TIME_THRESHOLD	= ((1 << 24) - 1), /* internal clocks count */
+	COAL_CLOCKS_PER_USEC	= 150,		/* क्रम calculating COAL_TIMEs */
+	MAX_COAL_TIME_THRESHOLD	= ((1 << 24) - 1), /* पूर्णांकernal घड़ीs count */
 	MAX_COAL_IO_COUNT	= 255,		/* completed I/O count */
 
 	MV_PCI_REG_BASE		= 0,
 
 	/*
-	 * Per-chip ("all ports") interrupt coalescing feature.
-	 * This is only for GEN_II / GEN_IIE hardware.
+	 * Per-chip ("all ports") पूर्णांकerrupt coalescing feature.
+	 * This is only क्रम GEN_II / GEN_IIE hardware.
 	 *
-	 * Coalescing defers the interrupt until either the IO_THRESHOLD
+	 * Coalescing defers the पूर्णांकerrupt until either the IO_THRESHOLD
 	 * (count of completed I/Os) is met, or the TIME_THRESHOLD is met.
 	 */
 	COAL_REG_BASE		= 0x18000,
@@ -114,7 +115,7 @@ enum {
 	IRQ_COAL_TIME_THRESHOLD = (COAL_REG_BASE + 0xd0),
 
 	/*
-	 * Registers for the (unused here) transaction coalescing feature:
+	 * Registers क्रम the (unused here) transaction coalescing feature:
 	 */
 	TRAN_COAL_CAUSE_LO	= (COAL_REG_BASE + 0x88),
 	TRAN_COAL_CAUSE_HI	= (COAL_REG_BASE + 0x8c),
@@ -161,20 +162,20 @@ enum {
 
 	CRQB_FLAG_READ		= (1 << 0),
 	CRQB_TAG_SHIFT		= 1,
-	CRQB_IOID_SHIFT		= 6,	/* CRQB Gen-II/IIE IO Id shift */
-	CRQB_PMP_SHIFT		= 12,	/* CRQB Gen-II/IIE PMP shift */
-	CRQB_HOSTQ_SHIFT	= 17,	/* CRQB Gen-II/IIE HostQueTag shift */
+	CRQB_IOID_SHIFT		= 6,	/* CRQB Gen-II/IIE IO Id shअगरt */
+	CRQB_PMP_SHIFT		= 12,	/* CRQB Gen-II/IIE PMP shअगरt */
+	CRQB_HOSTQ_SHIFT	= 17,	/* CRQB Gen-II/IIE HostQueTag shअगरt */
 	CRQB_CMD_ADDR_SHIFT	= 8,
 	CRQB_CMD_CS		= (0x2 << 11),
 	CRQB_CMD_LAST		= (1 << 15),
 
 	CRPB_FLAG_STATUS_SHIFT	= 8,
-	CRPB_IOID_SHIFT_6	= 5,	/* CRPB Gen-II IO Id shift */
-	CRPB_IOID_SHIFT_7	= 7,	/* CRPB Gen-IIE IO Id shift */
+	CRPB_IOID_SHIFT_6	= 5,	/* CRPB Gen-II IO Id shअगरt */
+	CRPB_IOID_SHIFT_7	= 7,	/* CRPB Gen-IIE IO Id shअगरt */
 
 	EPRD_FLAG_END_OF_TBL	= (1 << 31),
 
-	/* PCI interface registers */
+	/* PCI पूर्णांकerface रेजिस्टरs */
 
 	MV_PCI_COMMAND		= 0xc00,
 	MV_PCI_COMMAND_MWRCOM	= (1 << 4),	/* PCI Master Write Combining */
@@ -206,13 +207,13 @@ enum {
 	PCIE_IRQ_MASK		= 0x1910,
 	PCIE_UNMASK_ALL_IRQS	= 0x40a,	/* assorted bits */
 
-	/* Host Controller Main Interrupt Cause/Mask registers (1 per-chip) */
+	/* Host Controller Main Interrupt Cause/Mask रेजिस्टरs (1 per-chip) */
 	PCI_HC_MAIN_IRQ_CAUSE	= 0x1d60,
 	PCI_HC_MAIN_IRQ_MASK	= 0x1d64,
 	SOC_HC_MAIN_IRQ_CAUSE	= 0x20020,
 	SOC_HC_MAIN_IRQ_MASK	= 0x20024,
-	ERR_IRQ			= (1 << 0),	/* shift by (2 * port #) */
-	DONE_IRQ		= (1 << 1),	/* shift by (2 * port #) */
+	ERR_IRQ			= (1 << 0),	/* shअगरt by (2 * port #) */
+	DONE_IRQ		= (1 << 1),	/* shअगरt by (2 * port #) */
 	HC0_IRQ_PEND		= 0x1ff,	/* bits 0-8 = HC0's ports */
 	HC_SHIFT		= 9,		/* bits 9-17 = HC1's ports */
 	DONE_IRQ_0_3		= 0x000000aa,	/* DONE_IRQ ports 0,1,2,3 */
@@ -230,19 +231,19 @@ enum {
 	HC_MAIN_RSVD_5		= (0x1fff << 19), /* bits 31-19 */
 	HC_MAIN_RSVD_SOC	= (0x3fffffb << 6),     /* bits 31-9, 7-6 */
 
-	/* SATAHC registers */
+	/* SATAHC रेजिस्टरs */
 	HC_CFG			= 0x00,
 
 	HC_IRQ_CAUSE		= 0x14,
-	DMA_IRQ			= (1 << 0),	/* shift by port # */
+	DMA_IRQ			= (1 << 0),	/* shअगरt by port # */
 	HC_COAL_IRQ		= (1 << 4),	/* IRQ coalescing */
-	DEV_IRQ			= (1 << 8),	/* shift by port # */
+	DEV_IRQ			= (1 << 8),	/* shअगरt by port # */
 
 	/*
-	 * Per-HC (Host-Controller) interrupt coalescing feature.
+	 * Per-HC (Host-Controller) पूर्णांकerrupt coalescing feature.
 	 * This is present on all chip generations.
 	 *
-	 * Coalescing defers the interrupt until either the IO_THRESHOLD
+	 * Coalescing defers the पूर्णांकerrupt until either the IO_THRESHOLD
 	 * (count of completed I/Os) is met, or the TIME_THRESHOLD is met.
 	 */
 	HC_IRQ_COAL_IO_THRESHOLD	= 0x000c,
@@ -253,27 +254,27 @@ enum {
 	SOC_LED_CTRL_ACT_PRESENCE = (1 << 2),	/* Multiplex dev presence */
 						/*  with dev activity LED */
 
-	/* Shadow block registers */
+	/* Shaकरोw block रेजिस्टरs */
 	SHD_BLK			= 0x100,
 	SHD_CTL_AST		= 0x20,		/* ofs from SHD_BLK */
 
-	/* SATA registers */
+	/* SATA रेजिस्टरs */
 	SATA_STATUS		= 0x300,  /* ctrl, err regs follow status */
 	SATA_ACTIVE		= 0x350,
 	FIS_IRQ_CAUSE		= 0x364,
-	FIS_IRQ_CAUSE_AN	= (1 << 9),	/* async notification */
+	FIS_IRQ_CAUSE_AN	= (1 << 9),	/* async notअगरication */
 
-	LTMODE			= 0x30c,	/* requires read-after-write */
+	LTMODE			= 0x30c,	/* requires पढ़ो-after-ग_लिखो */
 	LTMODE_BIT8		= (1 << 8),	/* unknown, but necessary */
 
 	PHY_MODE2		= 0x330,
 	PHY_MODE3		= 0x310,
 
-	PHY_MODE4		= 0x314,	/* requires read-after-write */
-	PHY_MODE4_CFG_MASK	= 0x00000003,	/* phy internal config field */
-	PHY_MODE4_CFG_VALUE	= 0x00000001,	/* phy internal config field */
-	PHY_MODE4_RSVD_ZEROS	= 0x5de3fffa,	/* Gen2e always write zeros */
-	PHY_MODE4_RSVD_ONES	= 0x00000005,	/* Gen2e always write ones */
+	PHY_MODE4		= 0x314,	/* requires पढ़ो-after-ग_लिखो */
+	PHY_MODE4_CFG_MASK	= 0x00000003,	/* phy पूर्णांकernal config field */
+	PHY_MODE4_CFG_VALUE	= 0x00000001,	/* phy पूर्णांकernal config field */
+	PHY_MODE4_RSVD_ZEROS	= 0x5de3fffa,	/* Gen2e always ग_लिखो zeros */
+	PHY_MODE4_RSVD_ONES	= 0x00000005,	/* Gen2e always ग_लिखो ones */
 
 	SATA_IFCTL		= 0x344,
 	SATA_TESTCTL		= 0x348,
@@ -281,7 +282,7 @@ enum {
 	VENDOR_UNIQUE_FIS	= 0x35c,
 
 	FISCFG			= 0x360,
-	FISCFG_WAIT_DEV_ERR	= (1 << 8),	/* wait for host on DevErr */
+	FISCFG_WAIT_DEV_ERR	= (1 << 8),	/* रुको क्रम host on DevErr */
 	FISCFG_SINGLE_SYNC	= (1 << 16),	/* SYNC on DMA activation */
 
 	PHY_MODE9_GEN2		= 0x398,
@@ -301,13 +302,13 @@ enum {
 
 	MV_M2_PREAMP_MASK	= 0x7e0,
 
-	/* Port registers */
+	/* Port रेजिस्टरs */
 	EDMA_CFG		= 0,
 	EDMA_CFG_Q_DEPTH	= 0x1f,		/* max device queue depth */
-	EDMA_CFG_NCQ		= (1 << 5),	/* for R/W FPDMA queued */
-	EDMA_CFG_NCQ_GO_ON_ERR	= (1 << 14),	/* continue on error */
-	EDMA_CFG_RD_BRST_EXT	= (1 << 11),	/* read burst 512B */
-	EDMA_CFG_WR_BUFF_LEN	= (1 << 13),	/* write buffer 512B */
+	EDMA_CFG_NCQ		= (1 << 5),	/* क्रम R/W FPDMA queued */
+	EDMA_CFG_NCQ_GO_ON_ERR	= (1 << 14),	/* जारी on error */
+	EDMA_CFG_RD_BRST_EXT	= (1 << 11),	/* पढ़ो burst 512B */
+	EDMA_CFG_WR_BUFF_LEN	= (1 << 13),	/* ग_लिखो buffer 512B */
 	EDMA_CFG_EDMA_FBS	= (1 << 16),	/* EDMA FIS-Based Switching */
 	EDMA_CFG_FBS		= (1 << 26),	/* FIS-Based Switching */
 
@@ -318,15 +319,15 @@ enum {
 	EDMA_ERR_DEV		= (1 << 2),	/* device error */
 	EDMA_ERR_DEV_DCON	= (1 << 3),	/* device disconnect */
 	EDMA_ERR_DEV_CON	= (1 << 4),	/* device connected */
-	EDMA_ERR_SERR		= (1 << 5),	/* SError bits [WBDST] raised */
+	EDMA_ERR_SERR		= (1 << 5),	/* SError bits [WBDST] उठाओd */
 	EDMA_ERR_SELF_DIS	= (1 << 7),	/* Gen II/IIE self-disable */
 	EDMA_ERR_SELF_DIS_5	= (1 << 8),	/* Gen I self-disable */
-	EDMA_ERR_BIST_ASYNC	= (1 << 8),	/* BIST FIS or Async Notify */
+	EDMA_ERR_BIST_ASYNC	= (1 << 8),	/* BIST FIS or Async Notअगरy */
 	EDMA_ERR_TRANS_IRQ_7	= (1 << 8),	/* Gen IIE transprt layer irq */
 	EDMA_ERR_CRQB_PAR	= (1 << 9),	/* CRQB parity error */
 	EDMA_ERR_CRPB_PAR	= (1 << 10),	/* CRPB parity error */
-	EDMA_ERR_INTRL_PAR	= (1 << 11),	/* internal parity error */
-	EDMA_ERR_IORDY		= (1 << 12),	/* IORdy timeout */
+	EDMA_ERR_INTRL_PAR	= (1 << 11),	/* पूर्णांकernal parity error */
+	EDMA_ERR_IORDY		= (1 << 12),	/* IORdy समयout */
 
 	EDMA_ERR_LNK_CTRL_RX	= (0xf << 13),	/* link ctrl rx error */
 	EDMA_ERR_LNK_CTRL_RX_0	= (1 << 13),	/* transient: CRC err */
@@ -392,7 +393,7 @@ enum {
 	EDMA_RSP_Q_OUT_PTR	= 0x24,		/* also contains BASE_LO */
 	EDMA_RSP_Q_PTR_SHIFT	= 3,
 
-	EDMA_CMD		= 0x28,		/* EDMA command register */
+	EDMA_CMD		= 0x28,		/* EDMA command रेजिस्टर */
 	EDMA_EN			= (1 << 0),	/* enable EDMA */
 	EDMA_DS			= (1 << 1),	/* disable EDMA; self-negated */
 	EDMA_RESET		= (1 << 2),	/* reset eng/trans/link/phy */
@@ -407,12 +408,12 @@ enum {
 	EDMA_HALTCOND		= 0x60,		/* GenIIe halt conditions */
 	EDMA_UNKNOWN_RSVD	= 0x6C,		/* GenIIe unknown/reserved */
 
-	BMDMA_CMD		= 0x224,	/* bmdma command register */
-	BMDMA_STATUS		= 0x228,	/* bmdma status register */
+	BMDMA_CMD		= 0x224,	/* bmdma command रेजिस्टर */
+	BMDMA_STATUS		= 0x228,	/* bmdma status रेजिस्टर */
 	BMDMA_PRD_LOW		= 0x22c,	/* bmdma PRD addr 31:0 */
 	BMDMA_PRD_HIGH		= 0x230,	/* bmdma PRD addr 63:32 */
 
-	/* Host private flags (hp_flags) */
+	/* Host निजी flags (hp_flags) */
 	MV_HP_FLAG_MSI		= (1 << 0),
 	MV_HP_ERRATA_50XXB0	= (1 << 1),
 	MV_HP_ERRATA_50XXB2	= (1 << 2),
@@ -427,39 +428,39 @@ enum {
 	MV_HP_QUIRK_LED_BLINK_EN = (1 << 12),	/* is led blinking enabled? */
 	MV_HP_FIX_LP_PHY_CTL	= (1 << 13),	/* fix speed in LP_PHY_CTL ? */
 
-	/* Port private flags (pp_flags) */
+	/* Port निजी flags (pp_flags) */
 	MV_PP_FLAG_EDMA_EN	= (1 << 0),	/* is EDMA engine enabled? */
-	MV_PP_FLAG_NCQ_EN	= (1 << 1),	/* is EDMA set up for NCQ? */
-	MV_PP_FLAG_FBS_EN	= (1 << 2),	/* is EDMA set up for FBS? */
+	MV_PP_FLAG_NCQ_EN	= (1 << 1),	/* is EDMA set up क्रम NCQ? */
+	MV_PP_FLAG_FBS_EN	= (1 << 2),	/* is EDMA set up क्रम FBS? */
 	MV_PP_FLAG_DELAYED_EH	= (1 << 3),	/* delayed dev err handling */
 	MV_PP_FLAG_FAKE_ATA_BUSY = (1 << 4),	/* ignore initial ATA_DRDY */
-};
+पूर्ण;
 
-#define IS_GEN_I(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_I)
-#define IS_GEN_II(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_II)
-#define IS_GEN_IIE(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_IIE)
-#define IS_PCIE(hpriv) ((hpriv)->hp_flags & MV_HP_PCIE)
-#define IS_SOC(hpriv) ((hpriv)->hp_flags & MV_HP_FLAG_SOC)
+#घोषणा IS_GEN_I(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_I)
+#घोषणा IS_GEN_II(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_II)
+#घोषणा IS_GEN_IIE(hpriv) ((hpriv)->hp_flags & MV_HP_GEN_IIE)
+#घोषणा IS_PCIE(hpriv) ((hpriv)->hp_flags & MV_HP_PCIE)
+#घोषणा IS_SOC(hpriv) ((hpriv)->hp_flags & MV_HP_FLAG_SOC)
 
-#define WINDOW_CTRL(i)		(0x20030 + ((i) << 4))
-#define WINDOW_BASE(i)		(0x20034 + ((i) << 4))
+#घोषणा WINDOW_CTRL(i)		(0x20030 + ((i) << 4))
+#घोषणा WINDOW_BASE(i)		(0x20034 + ((i) << 4))
 
-enum {
+क्रमागत अणु
 	/* DMA boundary 0xffff is required by the s/g splitting
 	 * we need on /length/ in mv_fill-sg().
 	 */
 	MV_DMA_BOUNDARY		= 0xffffU,
 
-	/* mask of register bits containing lower 32 bits
+	/* mask of रेजिस्टर bits containing lower 32 bits
 	 * of EDMA request queue DMA address
 	 */
 	EDMA_REQ_Q_BASE_LO_MASK	= 0xfffffc00U,
 
-	/* ditto, for response queue */
+	/* ditto, क्रम response queue */
 	EDMA_RSP_Q_BASE_LO_MASK	= 0xffffff00U,
-};
+पूर्ण;
 
-enum chip_type {
+क्रमागत chip_type अणु
 	chip_504x,
 	chip_508x,
 	chip_5080,
@@ -468,234 +469,234 @@ enum chip_type {
 	chip_6042,
 	chip_7042,
 	chip_soc,
-};
+पूर्ण;
 
 /* Command ReQuest Block: 32B */
-struct mv_crqb {
+काष्ठा mv_crqb अणु
 	__le32			sg_addr;
 	__le32			sg_addr_hi;
 	__le16			ctrl_flags;
 	__le16			ata_cmd[11];
-};
+पूर्ण;
 
-struct mv_crqb_iie {
+काष्ठा mv_crqb_iie अणु
 	__le32			addr;
 	__le32			addr_hi;
 	__le32			flags;
 	__le32			len;
 	__le32			ata_cmd[4];
-};
+पूर्ण;
 
 /* Command ResPonse Block: 8B */
-struct mv_crpb {
+काष्ठा mv_crpb अणु
 	__le16			id;
 	__le16			flags;
-	__le32			tmstmp;
-};
+	__le32			पंचांगsपंचांगp;
+पूर्ण;
 
 /* EDMA Physical Region Descriptor (ePRD); A.K.A. SG */
-struct mv_sg {
+काष्ठा mv_sg अणु
 	__le32			addr;
 	__le32			flags_size;
 	__le32			addr_hi;
 	__le32			reserved;
-};
+पूर्ण;
 
 /*
  * We keep a local cache of a few frequently accessed port
- * registers here, to avoid having to read them (very slow)
- * when switching between EDMA and non-EDMA modes.
+ * रेजिस्टरs here, to aव्योम having to पढ़ो them (very slow)
+ * when चयनing between EDMA and non-EDMA modes.
  */
-struct mv_cached_regs {
+काष्ठा mv_cached_regs अणु
 	u32			fiscfg;
-	u32			ltmode;
+	u32			lपंचांगode;
 	u32			haltcond;
 	u32			unknown_rsvd;
-};
+पूर्ण;
 
-struct mv_port_priv {
-	struct mv_crqb		*crqb;
+काष्ठा mv_port_priv अणु
+	काष्ठा mv_crqb		*crqb;
 	dma_addr_t		crqb_dma;
-	struct mv_crpb		*crpb;
+	काष्ठा mv_crpb		*crpb;
 	dma_addr_t		crpb_dma;
-	struct mv_sg		*sg_tbl[MV_MAX_Q_DEPTH];
+	काष्ठा mv_sg		*sg_tbl[MV_MAX_Q_DEPTH];
 	dma_addr_t		sg_tbl_dma[MV_MAX_Q_DEPTH];
 
-	unsigned int		req_idx;
-	unsigned int		resp_idx;
+	अचिन्हित पूर्णांक		req_idx;
+	अचिन्हित पूर्णांक		resp_idx;
 
 	u32			pp_flags;
-	struct mv_cached_regs	cached;
-	unsigned int		delayed_eh_pmp_map;
-};
+	काष्ठा mv_cached_regs	cached;
+	अचिन्हित पूर्णांक		delayed_eh_pmp_map;
+पूर्ण;
 
-struct mv_port_signal {
+काष्ठा mv_port_संकेत अणु
 	u32			amps;
 	u32			pre;
-};
+पूर्ण;
 
-struct mv_host_priv {
+काष्ठा mv_host_priv अणु
 	u32			hp_flags;
-	unsigned int 		board_idx;
-	u32			main_irq_mask;
-	struct mv_port_signal	signal[8];
-	const struct mv_hw_ops	*ops;
-	int			n_ports;
-	void __iomem		*base;
-	void __iomem		*main_irq_cause_addr;
-	void __iomem		*main_irq_mask_addr;
+	अचिन्हित पूर्णांक 		board_idx;
+	u32			मुख्य_irq_mask;
+	काष्ठा mv_port_संकेत	संकेत[8];
+	स्थिर काष्ठा mv_hw_ops	*ops;
+	पूर्णांक			n_ports;
+	व्योम __iomem		*base;
+	व्योम __iomem		*मुख्य_irq_cause_addr;
+	व्योम __iomem		*मुख्य_irq_mask_addr;
 	u32			irq_cause_offset;
 	u32			irq_mask_offset;
 	u32			unmask_all_irqs;
 
 	/*
-	 * Needed on some devices that require their clocks to be enabled.
-	 * These are optional: if the platform device does not have any
-	 * clocks, they won't be used.  Also, if the underlying hardware
-	 * does not support the common clock framework (CONFIG_HAVE_CLK=n),
-	 * all the clock operations become no-ops (see clk.h).
+	 * Needed on some devices that require their घड़ीs to be enabled.
+	 * These are optional: अगर the platक्रमm device करोes not have any
+	 * घड़ीs, they won't be used.  Also, अगर the underlying hardware
+	 * करोes not support the common घड़ी framework (CONFIG_HAVE_CLK=n),
+	 * all the घड़ी operations become no-ops (see clk.h).
 	 */
-	struct clk		*clk;
-	struct clk              **port_clks;
+	काष्ठा clk		*clk;
+	काष्ठा clk              **port_clks;
 	/*
 	 * Some devices have a SATA PHY which can be enabled/disabled
-	 * in order to save power. These are optional: if the platform
-	 * devices does not have any phy, they won't be used.
+	 * in order to save घातer. These are optional: अगर the platक्रमm
+	 * devices करोes not have any phy, they won't be used.
 	 */
-	struct phy		**port_phys;
+	काष्ठा phy		**port_phys;
 	/*
 	 * These consistent DMA memory pools give us guaranteed
-	 * alignment for hardware-accessed data structures,
+	 * alignment क्रम hardware-accessed data काष्ठाures,
 	 * and less memory waste in accomplishing the alignment.
 	 */
-	struct dma_pool		*crqb_pool;
-	struct dma_pool		*crpb_pool;
-	struct dma_pool		*sg_tbl_pool;
-};
+	काष्ठा dma_pool		*crqb_pool;
+	काष्ठा dma_pool		*crpb_pool;
+	काष्ठा dma_pool		*sg_tbl_pool;
+पूर्ण;
 
-struct mv_hw_ops {
-	void (*phy_errata)(struct mv_host_priv *hpriv, void __iomem *mmio,
-			   unsigned int port);
-	void (*enable_leds)(struct mv_host_priv *hpriv, void __iomem *mmio);
-	void (*read_preamp)(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio);
-	int (*reset_hc)(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int n_hc);
-	void (*reset_flash)(struct mv_host_priv *hpriv, void __iomem *mmio);
-	void (*reset_bus)(struct ata_host *host, void __iomem *mmio);
-};
+काष्ठा mv_hw_ops अणु
+	व्योम (*phy_errata)(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			   अचिन्हित पूर्णांक port);
+	व्योम (*enable_leds)(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+	व्योम (*पढ़ो_preamp)(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio);
+	पूर्णांक (*reset_hc)(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक n_hc);
+	व्योम (*reset_flash)(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+	व्योम (*reset_bus)(काष्ठा ata_host *host, व्योम __iomem *mmio);
+पूर्ण;
 
-static int mv_scr_read(struct ata_link *link, unsigned int sc_reg_in, u32 *val);
-static int mv_scr_write(struct ata_link *link, unsigned int sc_reg_in, u32 val);
-static int mv5_scr_read(struct ata_link *link, unsigned int sc_reg_in, u32 *val);
-static int mv5_scr_write(struct ata_link *link, unsigned int sc_reg_in, u32 val);
-static int mv_port_start(struct ata_port *ap);
-static void mv_port_stop(struct ata_port *ap);
-static int mv_qc_defer(struct ata_queued_cmd *qc);
-static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc);
-static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc);
-static unsigned int mv_qc_issue(struct ata_queued_cmd *qc);
-static int mv_hardreset(struct ata_link *link, unsigned int *class,
-			unsigned long deadline);
-static void mv_eh_freeze(struct ata_port *ap);
-static void mv_eh_thaw(struct ata_port *ap);
-static void mv6_dev_config(struct ata_device *dev);
+अटल पूर्णांक mv_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 *val);
+अटल पूर्णांक mv_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 val);
+अटल पूर्णांक mv5_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 *val);
+अटल पूर्णांक mv5_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 val);
+अटल पूर्णांक mv_port_start(काष्ठा ata_port *ap);
+अटल व्योम mv_port_stop(काष्ठा ata_port *ap);
+अटल पूर्णांक mv_qc_defer(काष्ठा ata_queued_cmd *qc);
+अटल क्रमागत ata_completion_errors mv_qc_prep(काष्ठा ata_queued_cmd *qc);
+अटल क्रमागत ata_completion_errors mv_qc_prep_iie(काष्ठा ata_queued_cmd *qc);
+अटल अचिन्हित पूर्णांक mv_qc_issue(काष्ठा ata_queued_cmd *qc);
+अटल पूर्णांक mv_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+			अचिन्हित दीर्घ deadline);
+अटल व्योम mv_eh_मुक्तze(काष्ठा ata_port *ap);
+अटल व्योम mv_eh_thaw(काष्ठा ata_port *ap);
+अटल व्योम mv6_dev_config(काष्ठा ata_device *dev);
 
-static void mv5_phy_errata(struct mv_host_priv *hpriv, void __iomem *mmio,
-			   unsigned int port);
-static void mv5_enable_leds(struct mv_host_priv *hpriv, void __iomem *mmio);
-static void mv5_read_preamp(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio);
-static int mv5_reset_hc(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int n_hc);
-static void mv5_reset_flash(struct mv_host_priv *hpriv, void __iomem *mmio);
-static void mv5_reset_bus(struct ata_host *host, void __iomem *mmio);
+अटल व्योम mv5_phy_errata(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			   अचिन्हित पूर्णांक port);
+अटल व्योम mv5_enable_leds(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+अटल व्योम mv5_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio);
+अटल पूर्णांक mv5_reset_hc(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक n_hc);
+अटल व्योम mv5_reset_flash(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+अटल व्योम mv5_reset_bus(काष्ठा ata_host *host, व्योम __iomem *mmio);
 
-static void mv6_phy_errata(struct mv_host_priv *hpriv, void __iomem *mmio,
-			   unsigned int port);
-static void mv6_enable_leds(struct mv_host_priv *hpriv, void __iomem *mmio);
-static void mv6_read_preamp(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio);
-static int mv6_reset_hc(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int n_hc);
-static void mv6_reset_flash(struct mv_host_priv *hpriv, void __iomem *mmio);
-static void mv_soc_enable_leds(struct mv_host_priv *hpriv,
-				      void __iomem *mmio);
-static void mv_soc_read_preamp(struct mv_host_priv *hpriv, int idx,
-				      void __iomem *mmio);
-static int mv_soc_reset_hc(struct mv_host_priv *hpriv,
-				  void __iomem *mmio, unsigned int n_hc);
-static void mv_soc_reset_flash(struct mv_host_priv *hpriv,
-				      void __iomem *mmio);
-static void mv_soc_reset_bus(struct ata_host *host, void __iomem *mmio);
-static void mv_soc_65n_phy_errata(struct mv_host_priv *hpriv,
-				  void __iomem *mmio, unsigned int port);
-static void mv_reset_pci_bus(struct ata_host *host, void __iomem *mmio);
-static void mv_reset_channel(struct mv_host_priv *hpriv, void __iomem *mmio,
-			     unsigned int port_no);
-static int mv_stop_edma(struct ata_port *ap);
-static int mv_stop_edma_engine(void __iomem *port_mmio);
-static void mv_edma_cfg(struct ata_port *ap, int want_ncq, int want_edma);
+अटल व्योम mv6_phy_errata(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			   अचिन्हित पूर्णांक port);
+अटल व्योम mv6_enable_leds(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+अटल व्योम mv6_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio);
+अटल पूर्णांक mv6_reset_hc(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक n_hc);
+अटल व्योम mv6_reset_flash(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio);
+अटल व्योम mv_soc_enable_leds(काष्ठा mv_host_priv *hpriv,
+				      व्योम __iomem *mmio);
+अटल व्योम mv_soc_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+				      व्योम __iomem *mmio);
+अटल पूर्णांक mv_soc_reset_hc(काष्ठा mv_host_priv *hpriv,
+				  व्योम __iomem *mmio, अचिन्हित पूर्णांक n_hc);
+अटल व्योम mv_soc_reset_flash(काष्ठा mv_host_priv *hpriv,
+				      व्योम __iomem *mmio);
+अटल व्योम mv_soc_reset_bus(काष्ठा ata_host *host, व्योम __iomem *mmio);
+अटल व्योम mv_soc_65n_phy_errata(काष्ठा mv_host_priv *hpriv,
+				  व्योम __iomem *mmio, अचिन्हित पूर्णांक port);
+अटल व्योम mv_reset_pci_bus(काष्ठा ata_host *host, व्योम __iomem *mmio);
+अटल व्योम mv_reset_channel(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			     अचिन्हित पूर्णांक port_no);
+अटल पूर्णांक mv_stop_edma(काष्ठा ata_port *ap);
+अटल पूर्णांक mv_stop_edma_engine(व्योम __iomem *port_mmio);
+अटल व्योम mv_edma_cfg(काष्ठा ata_port *ap, पूर्णांक want_ncq, पूर्णांक want_edma);
 
-static void mv_pmp_select(struct ata_port *ap, int pmp);
-static int mv_pmp_hardreset(struct ata_link *link, unsigned int *class,
-				unsigned long deadline);
-static int  mv_softreset(struct ata_link *link, unsigned int *class,
-				unsigned long deadline);
-static void mv_pmp_error_handler(struct ata_port *ap);
-static void mv_process_crpb_entries(struct ata_port *ap,
-					struct mv_port_priv *pp);
+अटल व्योम mv_pmp_select(काष्ठा ata_port *ap, पूर्णांक pmp);
+अटल पूर्णांक mv_pmp_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+				अचिन्हित दीर्घ deadline);
+अटल पूर्णांक  mv_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+				अचिन्हित दीर्घ deadline);
+अटल व्योम mv_pmp_error_handler(काष्ठा ata_port *ap);
+अटल व्योम mv_process_crpb_entries(काष्ठा ata_port *ap,
+					काष्ठा mv_port_priv *pp);
 
-static void mv_sff_irq_clear(struct ata_port *ap);
-static int mv_check_atapi_dma(struct ata_queued_cmd *qc);
-static void mv_bmdma_setup(struct ata_queued_cmd *qc);
-static void mv_bmdma_start(struct ata_queued_cmd *qc);
-static void mv_bmdma_stop(struct ata_queued_cmd *qc);
-static u8   mv_bmdma_status(struct ata_port *ap);
-static u8 mv_sff_check_status(struct ata_port *ap);
+अटल व्योम mv_sff_irq_clear(काष्ठा ata_port *ap);
+अटल पूर्णांक mv_check_atapi_dma(काष्ठा ata_queued_cmd *qc);
+अटल व्योम mv_bmdma_setup(काष्ठा ata_queued_cmd *qc);
+अटल व्योम mv_bmdma_start(काष्ठा ata_queued_cmd *qc);
+अटल व्योम mv_bmdma_stop(काष्ठा ata_queued_cmd *qc);
+अटल u8   mv_bmdma_status(काष्ठा ata_port *ap);
+अटल u8 mv_sff_check_status(काष्ठा ata_port *ap);
 
-/* .sg_tablesize is (MV_MAX_SG_CT / 2) in the structures below
- * because we have to allow room for worst case splitting of
- * PRDs for 64K boundaries in mv_fill_sg().
+/* .sg_tablesize is (MV_MAX_SG_CT / 2) in the काष्ठाures below
+ * because we have to allow room क्रम worst हाल splitting of
+ * PRDs क्रम 64K boundaries in mv_fill_sg().
  */
-#ifdef CONFIG_PCI
-static struct scsi_host_template mv5_sht = {
+#अगर_घोषित CONFIG_PCI
+अटल काष्ठा scsi_host_ढाँचा mv5_sht = अणु
 	ATA_BASE_SHT(DRV_NAME),
 	.sg_tablesize		= MV_MAX_SG_CT / 2,
 	.dma_boundary		= MV_DMA_BOUNDARY,
-};
-#endif
-static struct scsi_host_template mv6_sht = {
+पूर्ण;
+#पूर्ण_अगर
+अटल काष्ठा scsi_host_ढाँचा mv6_sht = अणु
 	ATA_NCQ_SHT(DRV_NAME),
 	.can_queue		= MV_MAX_Q_DEPTH - 1,
 	.sg_tablesize		= MV_MAX_SG_CT / 2,
 	.dma_boundary		= MV_DMA_BOUNDARY,
-};
+पूर्ण;
 
-static struct ata_port_operations mv5_ops = {
+अटल काष्ठा ata_port_operations mv5_ops = अणु
 	.inherits		= &ata_sff_port_ops,
 
-	.lost_interrupt		= ATA_OP_NULL,
+	.lost_पूर्णांकerrupt		= ATA_OP_शून्य,
 
 	.qc_defer		= mv_qc_defer,
 	.qc_prep		= mv_qc_prep,
 	.qc_issue		= mv_qc_issue,
 
-	.freeze			= mv_eh_freeze,
+	.मुक्तze			= mv_eh_मुक्तze,
 	.thaw			= mv_eh_thaw,
 	.hardreset		= mv_hardreset,
 
-	.scr_read		= mv5_scr_read,
-	.scr_write		= mv5_scr_write,
+	.scr_पढ़ो		= mv5_scr_पढ़ो,
+	.scr_ग_लिखो		= mv5_scr_ग_लिखो,
 
 	.port_start		= mv_port_start,
 	.port_stop		= mv_port_stop,
-};
+पूर्ण;
 
-static struct ata_port_operations mv6_ops = {
+अटल काष्ठा ata_port_operations mv6_ops = अणु
 	.inherits		= &ata_bmdma_port_ops,
 
-	.lost_interrupt		= ATA_OP_NULL,
+	.lost_पूर्णांकerrupt		= ATA_OP_शून्य,
 
 	.qc_defer		= mv_qc_defer,
 	.qc_prep		= mv_qc_prep,
@@ -703,7 +704,7 @@ static struct ata_port_operations mv6_ops = {
 
 	.dev_config             = mv6_dev_config,
 
-	.freeze			= mv_eh_freeze,
+	.मुक्तze			= mv_eh_मुक्तze,
 	.thaw			= mv_eh_thaw,
 	.hardreset		= mv_hardreset,
 	.softreset		= mv_softreset,
@@ -711,8 +712,8 @@ static struct ata_port_operations mv6_ops = {
 	.pmp_softreset		= mv_softreset,
 	.error_handler		= mv_pmp_error_handler,
 
-	.scr_read		= mv_scr_read,
-	.scr_write		= mv_scr_write,
+	.scr_पढ़ो		= mv_scr_पढ़ो,
+	.scr_ग_लिखो		= mv_scr_ग_लिखो,
 
 	.sff_check_status	= mv_sff_check_status,
 	.sff_irq_clear		= mv_sff_irq_clear,
@@ -724,271 +725,271 @@ static struct ata_port_operations mv6_ops = {
 
 	.port_start		= mv_port_start,
 	.port_stop		= mv_port_stop,
-};
+पूर्ण;
 
-static struct ata_port_operations mv_iie_ops = {
+अटल काष्ठा ata_port_operations mv_iie_ops = अणु
 	.inherits		= &mv6_ops,
-	.dev_config		= ATA_OP_NULL,
+	.dev_config		= ATA_OP_शून्य,
 	.qc_prep		= mv_qc_prep_iie,
-};
+पूर्ण;
 
-static const struct ata_port_info mv_port_info[] = {
-	{  /* chip_504x */
+अटल स्थिर काष्ठा ata_port_info mv_port_info[] = अणु
+	अणु  /* chip_504x */
 		.flags		= MV_GEN_I_FLAGS,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv5_ops,
-	},
-	{  /* chip_508x */
+	पूर्ण,
+	अणु  /* chip_508x */
 		.flags		= MV_GEN_I_FLAGS | MV_FLAG_DUAL_HC,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv5_ops,
-	},
-	{  /* chip_5080 */
+	पूर्ण,
+	अणु  /* chip_5080 */
 		.flags		= MV_GEN_I_FLAGS | MV_FLAG_DUAL_HC,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv5_ops,
-	},
-	{  /* chip_604x */
+	पूर्ण,
+	अणु  /* chip_604x */
 		.flags		= MV_GEN_II_FLAGS,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv6_ops,
-	},
-	{  /* chip_608x */
+	पूर्ण,
+	अणु  /* chip_608x */
 		.flags		= MV_GEN_II_FLAGS | MV_FLAG_DUAL_HC,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv6_ops,
-	},
-	{  /* chip_6042 */
+	पूर्ण,
+	अणु  /* chip_6042 */
 		.flags		= MV_GEN_IIE_FLAGS,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv_iie_ops,
-	},
-	{  /* chip_7042 */
+	पूर्ण,
+	अणु  /* chip_7042 */
 		.flags		= MV_GEN_IIE_FLAGS,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv_iie_ops,
-	},
-	{  /* chip_soc */
+	पूर्ण,
+	अणु  /* chip_soc */
 		.flags		= MV_GEN_IIE_FLAGS,
 		.pio_mask	= ATA_PIO4,
 		.udma_mask	= ATA_UDMA6,
 		.port_ops	= &mv_iie_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct pci_device_id mv_pci_tbl[] = {
-	{ PCI_VDEVICE(MARVELL, 0x5040), chip_504x },
-	{ PCI_VDEVICE(MARVELL, 0x5041), chip_504x },
-	{ PCI_VDEVICE(MARVELL, 0x5080), chip_5080 },
-	{ PCI_VDEVICE(MARVELL, 0x5081), chip_508x },
-	/* RocketRAID 1720/174x have different identifiers */
-	{ PCI_VDEVICE(TTI, 0x1720), chip_6042 },
-	{ PCI_VDEVICE(TTI, 0x1740), chip_6042 },
-	{ PCI_VDEVICE(TTI, 0x1742), chip_6042 },
+अटल स्थिर काष्ठा pci_device_id mv_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(MARVELL, 0x5040), chip_504x पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x5041), chip_504x पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x5080), chip_5080 पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x5081), chip_508x पूर्ण,
+	/* RocketRAID 1720/174x have dअगरferent identअगरiers */
+	अणु PCI_VDEVICE(TTI, 0x1720), chip_6042 पूर्ण,
+	अणु PCI_VDEVICE(TTI, 0x1740), chip_6042 पूर्ण,
+	अणु PCI_VDEVICE(TTI, 0x1742), chip_6042 पूर्ण,
 
-	{ PCI_VDEVICE(MARVELL, 0x6040), chip_604x },
-	{ PCI_VDEVICE(MARVELL, 0x6041), chip_604x },
-	{ PCI_VDEVICE(MARVELL, 0x6042), chip_6042 },
-	{ PCI_VDEVICE(MARVELL, 0x6080), chip_608x },
-	{ PCI_VDEVICE(MARVELL, 0x6081), chip_608x },
+	अणु PCI_VDEVICE(MARVELL, 0x6040), chip_604x पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x6041), chip_604x पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x6042), chip_6042 पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x6080), chip_608x पूर्ण,
+	अणु PCI_VDEVICE(MARVELL, 0x6081), chip_608x पूर्ण,
 
-	{ PCI_VDEVICE(ADAPTEC2, 0x0241), chip_604x },
+	अणु PCI_VDEVICE(ADAPTEC2, 0x0241), chip_604x पूर्ण,
 
 	/* Adaptec 1430SA */
-	{ PCI_VDEVICE(ADAPTEC2, 0x0243), chip_7042 },
+	अणु PCI_VDEVICE(ADAPTEC2, 0x0243), chip_7042 पूर्ण,
 
 	/* Marvell 7042 support */
-	{ PCI_VDEVICE(MARVELL, 0x7042), chip_7042 },
+	अणु PCI_VDEVICE(MARVELL, 0x7042), chip_7042 पूर्ण,
 
-	/* Highpoint RocketRAID PCIe series */
-	{ PCI_VDEVICE(TTI, 0x2300), chip_7042 },
-	{ PCI_VDEVICE(TTI, 0x2310), chip_7042 },
+	/* Highpoपूर्णांक RocketRAID PCIe series */
+	अणु PCI_VDEVICE(TTI, 0x2300), chip_7042 पूर्ण,
+	अणु PCI_VDEVICE(TTI, 0x2310), chip_7042 पूर्ण,
 
-	{ }			/* terminate list */
-};
+	अणु पूर्ण			/* terminate list */
+पूर्ण;
 
-static const struct mv_hw_ops mv5xxx_ops = {
+अटल स्थिर काष्ठा mv_hw_ops mv5xxx_ops = अणु
 	.phy_errata		= mv5_phy_errata,
 	.enable_leds		= mv5_enable_leds,
-	.read_preamp		= mv5_read_preamp,
+	.पढ़ो_preamp		= mv5_पढ़ो_preamp,
 	.reset_hc		= mv5_reset_hc,
 	.reset_flash		= mv5_reset_flash,
 	.reset_bus		= mv5_reset_bus,
-};
+पूर्ण;
 
-static const struct mv_hw_ops mv6xxx_ops = {
+अटल स्थिर काष्ठा mv_hw_ops mv6xxx_ops = अणु
 	.phy_errata		= mv6_phy_errata,
 	.enable_leds		= mv6_enable_leds,
-	.read_preamp		= mv6_read_preamp,
+	.पढ़ो_preamp		= mv6_पढ़ो_preamp,
 	.reset_hc		= mv6_reset_hc,
 	.reset_flash		= mv6_reset_flash,
 	.reset_bus		= mv_reset_pci_bus,
-};
+पूर्ण;
 
-static const struct mv_hw_ops mv_soc_ops = {
+अटल स्थिर काष्ठा mv_hw_ops mv_soc_ops = अणु
 	.phy_errata		= mv6_phy_errata,
 	.enable_leds		= mv_soc_enable_leds,
-	.read_preamp		= mv_soc_read_preamp,
+	.पढ़ो_preamp		= mv_soc_पढ़ो_preamp,
 	.reset_hc		= mv_soc_reset_hc,
 	.reset_flash		= mv_soc_reset_flash,
 	.reset_bus		= mv_soc_reset_bus,
-};
+पूर्ण;
 
-static const struct mv_hw_ops mv_soc_65n_ops = {
+अटल स्थिर काष्ठा mv_hw_ops mv_soc_65n_ops = अणु
 	.phy_errata		= mv_soc_65n_phy_errata,
 	.enable_leds		= mv_soc_enable_leds,
 	.reset_hc		= mv_soc_reset_hc,
 	.reset_flash		= mv_soc_reset_flash,
 	.reset_bus		= mv_soc_reset_bus,
-};
+पूर्ण;
 
 /*
  * Functions
  */
 
-static inline void writelfl(unsigned long data, void __iomem *addr)
-{
-	writel(data, addr);
-	(void) readl(addr);	/* flush to avoid PCI posted write */
-}
+अटल अंतरभूत व्योम ग_लिखोlfl(अचिन्हित दीर्घ data, व्योम __iomem *addr)
+अणु
+	ग_लिखोl(data, addr);
+	(व्योम) पढ़ोl(addr);	/* flush to aव्योम PCI posted ग_लिखो */
+पूर्ण
 
-static inline unsigned int mv_hc_from_port(unsigned int port)
-{
-	return port >> MV_PORT_HC_SHIFT;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mv_hc_from_port(अचिन्हित पूर्णांक port)
+अणु
+	वापस port >> MV_PORT_HC_SHIFT;
+पूर्ण
 
-static inline unsigned int mv_hardport_from_port(unsigned int port)
-{
-	return port & MV_PORT_MASK;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक mv_hardport_from_port(अचिन्हित पूर्णांक port)
+अणु
+	वापस port & MV_PORT_MASK;
+पूर्ण
 
 /*
- * Consolidate some rather tricky bit shift calculations.
+ * Consolidate some rather tricky bit shअगरt calculations.
  * This is hot-path stuff, so not a function.
- * Simple code, with two return values, so macro rather than inline.
+ * Simple code, with two वापस values, so macro rather than अंतरभूत.
  *
  * port is the sole input, in range 0..7.
- * shift is one output, for use with main_irq_cause / main_irq_mask registers.
+ * shअगरt is one output, क्रम use with मुख्य_irq_cause / मुख्य_irq_mask रेजिस्टरs.
  * hardport is the other output, in range 0..3.
  *
- * Note that port and hardport may be the same variable in some cases.
+ * Note that port and hardport may be the same variable in some हालs.
  */
-#define MV_PORT_TO_SHIFT_AND_HARDPORT(port, shift, hardport)	\
-{								\
-	shift    = mv_hc_from_port(port) * HC_SHIFT;		\
+#घोषणा MV_PORT_TO_SHIFT_AND_HARDPORT(port, shअगरt, hardport)	\
+अणु								\
+	shअगरt    = mv_hc_from_port(port) * HC_SHIFT;		\
 	hardport = mv_hardport_from_port(port);			\
-	shift   += hardport * 2;				\
-}
+	shअगरt   += hardport * 2;				\
+पूर्ण
 
-static inline void __iomem *mv_hc_base(void __iomem *base, unsigned int hc)
-{
-	return (base + SATAHC0_REG_BASE + (hc * MV_SATAHC_REG_SZ));
-}
+अटल अंतरभूत व्योम __iomem *mv_hc_base(व्योम __iomem *base, अचिन्हित पूर्णांक hc)
+अणु
+	वापस (base + SATAHC0_REG_BASE + (hc * MV_SATAHC_REG_SZ));
+पूर्ण
 
-static inline void __iomem *mv_hc_base_from_port(void __iomem *base,
-						 unsigned int port)
-{
-	return mv_hc_base(base, mv_hc_from_port(port));
-}
+अटल अंतरभूत व्योम __iomem *mv_hc_base_from_port(व्योम __iomem *base,
+						 अचिन्हित पूर्णांक port)
+अणु
+	वापस mv_hc_base(base, mv_hc_from_port(port));
+पूर्ण
 
-static inline void __iomem *mv_port_base(void __iomem *base, unsigned int port)
-{
-	return  mv_hc_base_from_port(base, port) +
+अटल अंतरभूत व्योम __iomem *mv_port_base(व्योम __iomem *base, अचिन्हित पूर्णांक port)
+अणु
+	वापस  mv_hc_base_from_port(base, port) +
 		MV_SATAHC_ARBTR_REG_SZ +
 		(mv_hardport_from_port(port) * MV_PORT_REG_SZ);
-}
+पूर्ण
 
-static void __iomem *mv5_phy_base(void __iomem *mmio, unsigned int port)
-{
-	void __iomem *hc_mmio = mv_hc_base_from_port(mmio, port);
-	unsigned long ofs = (mv_hardport_from_port(port) + 1) * 0x100UL;
+अटल व्योम __iomem *mv5_phy_base(व्योम __iomem *mmio, अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *hc_mmio = mv_hc_base_from_port(mmio, port);
+	अचिन्हित दीर्घ ofs = (mv_hardport_from_port(port) + 1) * 0x100UL;
 
-	return hc_mmio + ofs;
-}
+	वापस hc_mmio + ofs;
+पूर्ण
 
-static inline void __iomem *mv_host_base(struct ata_host *host)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	return hpriv->base;
-}
+अटल अंतरभूत व्योम __iomem *mv_host_base(काष्ठा ata_host *host)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	वापस hpriv->base;
+पूर्ण
 
-static inline void __iomem *mv_ap_base(struct ata_port *ap)
-{
-	return mv_port_base(mv_host_base(ap->host), ap->port_no);
-}
+अटल अंतरभूत व्योम __iomem *mv_ap_base(काष्ठा ata_port *ap)
+अणु
+	वापस mv_port_base(mv_host_base(ap->host), ap->port_no);
+पूर्ण
 
-static inline int mv_get_hc_count(unsigned long port_flags)
-{
-	return ((port_flags & MV_FLAG_DUAL_HC) ? 2 : 1);
-}
-
-/**
- *      mv_save_cached_regs - (re-)initialize cached port registers
- *      @ap: the port whose registers we are caching
- *
- *	Initialize the local cache of port registers,
- *	so that reading them over and over again can
- *	be avoided on the hotter paths of this driver.
- *	This saves a few microseconds each time we switch
- *	to/from EDMA mode to perform (eg.) a drive cache flush.
- */
-static void mv_save_cached_regs(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	struct mv_port_priv *pp = ap->private_data;
-
-	pp->cached.fiscfg = readl(port_mmio + FISCFG);
-	pp->cached.ltmode = readl(port_mmio + LTMODE);
-	pp->cached.haltcond = readl(port_mmio + EDMA_HALTCOND);
-	pp->cached.unknown_rsvd = readl(port_mmio + EDMA_UNKNOWN_RSVD);
-}
+अटल अंतरभूत पूर्णांक mv_get_hc_count(अचिन्हित दीर्घ port_flags)
+अणु
+	वापस ((port_flags & MV_FLAG_DUAL_HC) ? 2 : 1);
+पूर्ण
 
 /**
- *      mv_write_cached_reg - write to a cached port register
- *      @addr: hardware address of the register
- *      @old: pointer to cached value of the register
- *      @new: new value for the register
+ *      mv_save_cached_regs - (re-)initialize cached port रेजिस्टरs
+ *      @ap: the port whose रेजिस्टरs we are caching
  *
- *	Write a new value to a cached register,
- *	but only if the value is different from before.
+ *	Initialize the local cache of port रेजिस्टरs,
+ *	so that पढ़ोing them over and over again can
+ *	be aव्योमed on the hotter paths of this driver.
+ *	This saves a few microseconds each समय we चयन
+ *	to/from EDMA mode to perक्रमm (eg.) a drive cache flush.
  */
-static inline void mv_write_cached_reg(void __iomem *addr, u32 *old, u32 new)
-{
-	if (new != *old) {
-		unsigned long laddr;
+अटल व्योम mv_save_cached_regs(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+
+	pp->cached.fiscfg = पढ़ोl(port_mmio + FISCFG);
+	pp->cached.lपंचांगode = पढ़ोl(port_mmio + LTMODE);
+	pp->cached.haltcond = पढ़ोl(port_mmio + EDMA_HALTCOND);
+	pp->cached.unknown_rsvd = पढ़ोl(port_mmio + EDMA_UNKNOWN_RSVD);
+पूर्ण
+
+/**
+ *      mv_ग_लिखो_cached_reg - ग_लिखो to a cached port रेजिस्टर
+ *      @addr: hardware address of the रेजिस्टर
+ *      @old: poपूर्णांकer to cached value of the रेजिस्टर
+ *      @new: new value क्रम the रेजिस्टर
+ *
+ *	Write a new value to a cached रेजिस्टर,
+ *	but only अगर the value is dअगरferent from beक्रमe.
+ */
+अटल अंतरभूत व्योम mv_ग_लिखो_cached_reg(व्योम __iomem *addr, u32 *old, u32 new)
+अणु
+	अगर (new != *old) अणु
+		अचिन्हित दीर्घ laddr;
 		*old = new;
 		/*
-		 * Workaround for 88SX60x1-B2 FEr SATA#13:
-		 * Read-after-write is needed to prevent generating 64-bit
-		 * write cycles on the PCI bus for SATA interface registers
+		 * Workaround क्रम 88SX60x1-B2 FEr SATA#13:
+		 * Read-after-ग_लिखो is needed to prevent generating 64-bit
+		 * ग_लिखो cycles on the PCI bus क्रम SATA पूर्णांकerface रेजिस्टरs
 		 * at offsets ending in 0x4 or 0xc.
 		 *
-		 * Looks like a lot of fuss, but it avoids an unnecessary
-		 * +1 usec read-after-write delay for unaffected registers.
+		 * Looks like a lot of fuss, but it aव्योमs an unnecessary
+		 * +1 usec पढ़ो-after-ग_लिखो delay क्रम unaffected रेजिस्टरs.
 		 */
-		laddr = (unsigned long)addr & 0xffff;
-		if (laddr >= 0x300 && laddr <= 0x33c) {
+		laddr = (अचिन्हित दीर्घ)addr & 0xffff;
+		अगर (laddr >= 0x300 && laddr <= 0x33c) अणु
 			laddr &= 0x000f;
-			if (laddr == 0x4 || laddr == 0xc) {
-				writelfl(new, addr); /* read after write */
-				return;
-			}
-		}
-		writel(new, addr); /* unaffected by the errata */
-	}
-}
+			अगर (laddr == 0x4 || laddr == 0xc) अणु
+				ग_लिखोlfl(new, addr); /* पढ़ो after ग_लिखो */
+				वापस;
+			पूर्ण
+		पूर्ण
+		ग_लिखोl(new, addr); /* unaffected by the errata */
+	पूर्ण
+पूर्ण
 
-static void mv_set_edma_ptrs(void __iomem *port_mmio,
-			     struct mv_host_priv *hpriv,
-			     struct mv_port_priv *pp)
-{
+अटल व्योम mv_set_edma_ptrs(व्योम __iomem *port_mmio,
+			     काष्ठा mv_host_priv *hpriv,
+			     काष्ठा mv_port_priv *pp)
+अणु
 	u32 index;
 
 	/*
@@ -998,10 +999,10 @@ static void mv_set_edma_ptrs(void __iomem *port_mmio,
 	index = pp->req_idx << EDMA_REQ_Q_PTR_SHIFT;
 
 	WARN_ON(pp->crqb_dma & 0x3ff);
-	writel((pp->crqb_dma >> 16) >> 16, port_mmio + EDMA_REQ_Q_BASE_HI);
-	writelfl((pp->crqb_dma & EDMA_REQ_Q_BASE_LO_MASK) | index,
+	ग_लिखोl((pp->crqb_dma >> 16) >> 16, port_mmio + EDMA_REQ_Q_BASE_HI);
+	ग_लिखोlfl((pp->crqb_dma & EDMA_REQ_Q_BASE_LO_MASK) | index,
 		 port_mmio + EDMA_REQ_Q_IN_PTR);
-	writelfl(index, port_mmio + EDMA_REQ_Q_OUT_PTR);
+	ग_लिखोlfl(index, port_mmio + EDMA_REQ_Q_OUT_PTR);
 
 	/*
 	 * initialize response queue
@@ -1010,197 +1011,197 @@ static void mv_set_edma_ptrs(void __iomem *port_mmio,
 	index = pp->resp_idx << EDMA_RSP_Q_PTR_SHIFT;
 
 	WARN_ON(pp->crpb_dma & 0xff);
-	writel((pp->crpb_dma >> 16) >> 16, port_mmio + EDMA_RSP_Q_BASE_HI);
-	writelfl(index, port_mmio + EDMA_RSP_Q_IN_PTR);
-	writelfl((pp->crpb_dma & EDMA_RSP_Q_BASE_LO_MASK) | index,
+	ग_लिखोl((pp->crpb_dma >> 16) >> 16, port_mmio + EDMA_RSP_Q_BASE_HI);
+	ग_लिखोlfl(index, port_mmio + EDMA_RSP_Q_IN_PTR);
+	ग_लिखोlfl((pp->crpb_dma & EDMA_RSP_Q_BASE_LO_MASK) | index,
 		 port_mmio + EDMA_RSP_Q_OUT_PTR);
-}
+पूर्ण
 
-static void mv_write_main_irq_mask(u32 mask, struct mv_host_priv *hpriv)
-{
+अटल व्योम mv_ग_लिखो_मुख्य_irq_mask(u32 mask, काष्ठा mv_host_priv *hpriv)
+अणु
 	/*
-	 * When writing to the main_irq_mask in hardware,
-	 * we must ensure exclusivity between the interrupt coalescing bits
-	 * and the corresponding individual port DONE_IRQ bits.
+	 * When writing to the मुख्य_irq_mask in hardware,
+	 * we must ensure exclusivity between the पूर्णांकerrupt coalescing bits
+	 * and the corresponding inभागidual port DONE_IRQ bits.
 	 *
-	 * Note that this register is really an "IRQ enable" register,
-	 * not an "IRQ mask" register as Marvell's naming might suggest.
+	 * Note that this रेजिस्टर is really an "IRQ enable" रेजिस्टर,
+	 * not an "IRQ mask" रेजिस्टर as Marvell's naming might suggest.
 	 */
-	if (mask & (ALL_PORTS_COAL_DONE | PORTS_0_3_COAL_DONE))
+	अगर (mask & (ALL_PORTS_COAL_DONE | PORTS_0_3_COAL_DONE))
 		mask &= ~DONE_IRQ_0_3;
-	if (mask & (ALL_PORTS_COAL_DONE | PORTS_4_7_COAL_DONE))
+	अगर (mask & (ALL_PORTS_COAL_DONE | PORTS_4_7_COAL_DONE))
 		mask &= ~DONE_IRQ_4_7;
-	writelfl(mask, hpriv->main_irq_mask_addr);
-}
+	ग_लिखोlfl(mask, hpriv->मुख्य_irq_mask_addr);
+पूर्ण
 
-static void mv_set_main_irq_mask(struct ata_host *host,
+अटल व्योम mv_set_मुख्य_irq_mask(काष्ठा ata_host *host,
 				 u32 disable_bits, u32 enable_bits)
-{
-	struct mv_host_priv *hpriv = host->private_data;
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
 	u32 old_mask, new_mask;
 
-	old_mask = hpriv->main_irq_mask;
+	old_mask = hpriv->मुख्य_irq_mask;
 	new_mask = (old_mask & ~disable_bits) | enable_bits;
-	if (new_mask != old_mask) {
-		hpriv->main_irq_mask = new_mask;
-		mv_write_main_irq_mask(new_mask, hpriv);
-	}
-}
+	अगर (new_mask != old_mask) अणु
+		hpriv->मुख्य_irq_mask = new_mask;
+		mv_ग_लिखो_मुख्य_irq_mask(new_mask, hpriv);
+	पूर्ण
+पूर्ण
 
-static void mv_enable_port_irqs(struct ata_port *ap,
-				     unsigned int port_bits)
-{
-	unsigned int shift, hardport, port = ap->port_no;
+अटल व्योम mv_enable_port_irqs(काष्ठा ata_port *ap,
+				     अचिन्हित पूर्णांक port_bits)
+अणु
+	अचिन्हित पूर्णांक shअगरt, hardport, port = ap->port_no;
 	u32 disable_bits, enable_bits;
 
-	MV_PORT_TO_SHIFT_AND_HARDPORT(port, shift, hardport);
+	MV_PORT_TO_SHIFT_AND_HARDPORT(port, shअगरt, hardport);
 
-	disable_bits = (DONE_IRQ | ERR_IRQ) << shift;
-	enable_bits  = port_bits << shift;
-	mv_set_main_irq_mask(ap->host, disable_bits, enable_bits);
-}
+	disable_bits = (DONE_IRQ | ERR_IRQ) << shअगरt;
+	enable_bits  = port_bits << shअगरt;
+	mv_set_मुख्य_irq_mask(ap->host, disable_bits, enable_bits);
+पूर्ण
 
-static void mv_clear_and_enable_port_irqs(struct ata_port *ap,
-					  void __iomem *port_mmio,
-					  unsigned int port_irqs)
-{
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	int hardport = mv_hardport_from_port(ap->port_no);
-	void __iomem *hc_mmio = mv_hc_base_from_port(
+अटल व्योम mv_clear_and_enable_port_irqs(काष्ठा ata_port *ap,
+					  व्योम __iomem *port_mmio,
+					  अचिन्हित पूर्णांक port_irqs)
+अणु
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	पूर्णांक hardport = mv_hardport_from_port(ap->port_no);
+	व्योम __iomem *hc_mmio = mv_hc_base_from_port(
 				mv_host_base(ap->host), ap->port_no);
 	u32 hc_irq_cause;
 
-	/* clear EDMA event indicators, if any */
-	writelfl(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
+	/* clear EDMA event indicators, अगर any */
+	ग_लिखोlfl(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
 
 	/* clear pending irq events */
 	hc_irq_cause = ~((DEV_IRQ | DMA_IRQ) << hardport);
-	writelfl(hc_irq_cause, hc_mmio + HC_IRQ_CAUSE);
+	ग_लिखोlfl(hc_irq_cause, hc_mmio + HC_IRQ_CAUSE);
 
 	/* clear FIS IRQ Cause */
-	if (IS_GEN_IIE(hpriv))
-		writelfl(0, port_mmio + FIS_IRQ_CAUSE);
+	अगर (IS_GEN_IIE(hpriv))
+		ग_लिखोlfl(0, port_mmio + FIS_IRQ_CAUSE);
 
 	mv_enable_port_irqs(ap, port_irqs);
-}
+पूर्ण
 
-static void mv_set_irq_coalescing(struct ata_host *host,
-				  unsigned int count, unsigned int usecs)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base, *hc_mmio;
+अटल व्योम mv_set_irq_coalescing(काष्ठा ata_host *host,
+				  अचिन्हित पूर्णांक count, अचिन्हित पूर्णांक usecs)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base, *hc_mmio;
 	u32 coal_enable = 0;
-	unsigned long flags;
-	unsigned int clks, is_dual_hc = hpriv->n_ports > MV_PORTS_PER_HC;
-	const u32 coal_disable = PORTS_0_3_COAL_DONE | PORTS_4_7_COAL_DONE |
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक clks, is_dual_hc = hpriv->n_ports > MV_PORTS_PER_HC;
+	स्थिर u32 coal_disable = PORTS_0_3_COAL_DONE | PORTS_4_7_COAL_DONE |
 							ALL_PORTS_COAL_DONE;
 
-	/* Disable IRQ coalescing if either threshold is zero */
-	if (!usecs || !count) {
+	/* Disable IRQ coalescing अगर either threshold is zero */
+	अगर (!usecs || !count) अणु
 		clks = count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Respect maximum limits of the hardware */
 		clks = usecs * COAL_CLOCKS_PER_USEC;
-		if (clks > MAX_COAL_TIME_THRESHOLD)
+		अगर (clks > MAX_COAL_TIME_THRESHOLD)
 			clks = MAX_COAL_TIME_THRESHOLD;
-		if (count > MAX_COAL_IO_COUNT)
+		अगर (count > MAX_COAL_IO_COUNT)
 			count = MAX_COAL_IO_COUNT;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&host->lock, flags);
-	mv_set_main_irq_mask(host, coal_disable, 0);
+	mv_set_मुख्य_irq_mask(host, coal_disable, 0);
 
-	if (is_dual_hc && !IS_GEN_I(hpriv)) {
+	अगर (is_dual_hc && !IS_GEN_I(hpriv)) अणु
 		/*
 		 * GEN_II/GEN_IIE with dual host controllers:
-		 * one set of global thresholds for the entire chip.
+		 * one set of global thresholds क्रम the entire chip.
 		 */
-		writel(clks,  mmio + IRQ_COAL_TIME_THRESHOLD);
-		writel(count, mmio + IRQ_COAL_IO_THRESHOLD);
+		ग_लिखोl(clks,  mmio + IRQ_COAL_TIME_THRESHOLD);
+		ग_लिखोl(count, mmio + IRQ_COAL_IO_THRESHOLD);
 		/* clear leftover coal IRQ bit */
-		writel(~ALL_PORTS_COAL_IRQ, mmio + IRQ_COAL_CAUSE);
-		if (count)
+		ग_लिखोl(~ALL_PORTS_COAL_IRQ, mmio + IRQ_COAL_CAUSE);
+		अगर (count)
 			coal_enable = ALL_PORTS_COAL_DONE;
-		clks = count = 0; /* force clearing of regular regs below */
-	}
+		clks = count = 0; /* क्रमce clearing of regular regs below */
+	पूर्ण
 
 	/*
-	 * All chips: independent thresholds for each HC on the chip.
+	 * All chips: independent thresholds क्रम each HC on the chip.
 	 */
 	hc_mmio = mv_hc_base_from_port(mmio, 0);
-	writel(clks,  hc_mmio + HC_IRQ_COAL_TIME_THRESHOLD);
-	writel(count, hc_mmio + HC_IRQ_COAL_IO_THRESHOLD);
-	writel(~HC_COAL_IRQ, hc_mmio + HC_IRQ_CAUSE);
-	if (count)
+	ग_लिखोl(clks,  hc_mmio + HC_IRQ_COAL_TIME_THRESHOLD);
+	ग_लिखोl(count, hc_mmio + HC_IRQ_COAL_IO_THRESHOLD);
+	ग_लिखोl(~HC_COAL_IRQ, hc_mmio + HC_IRQ_CAUSE);
+	अगर (count)
 		coal_enable |= PORTS_0_3_COAL_DONE;
-	if (is_dual_hc) {
+	अगर (is_dual_hc) अणु
 		hc_mmio = mv_hc_base_from_port(mmio, MV_PORTS_PER_HC);
-		writel(clks,  hc_mmio + HC_IRQ_COAL_TIME_THRESHOLD);
-		writel(count, hc_mmio + HC_IRQ_COAL_IO_THRESHOLD);
-		writel(~HC_COAL_IRQ, hc_mmio + HC_IRQ_CAUSE);
-		if (count)
+		ग_लिखोl(clks,  hc_mmio + HC_IRQ_COAL_TIME_THRESHOLD);
+		ग_लिखोl(count, hc_mmio + HC_IRQ_COAL_IO_THRESHOLD);
+		ग_लिखोl(~HC_COAL_IRQ, hc_mmio + HC_IRQ_CAUSE);
+		अगर (count)
 			coal_enable |= PORTS_4_7_COAL_DONE;
-	}
+	पूर्ण
 
-	mv_set_main_irq_mask(host, 0, coal_enable);
+	mv_set_मुख्य_irq_mask(host, 0, coal_enable);
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
 /*
  *      mv_start_edma - Enable eDMA engine
- *      @pp: port private data
+ *      @pp: port निजी data
  *
- *      Verify the local cache of the eDMA state is accurate with a
+ *      Verअगरy the local cache of the eDMA state is accurate with a
  *      WARN_ON.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static void mv_start_edma(struct ata_port *ap, void __iomem *port_mmio,
-			 struct mv_port_priv *pp, u8 protocol)
-{
-	int want_ncq = (protocol == ATA_PROT_NCQ);
+अटल व्योम mv_start_edma(काष्ठा ata_port *ap, व्योम __iomem *port_mmio,
+			 काष्ठा mv_port_priv *pp, u8 protocol)
+अणु
+	पूर्णांक want_ncq = (protocol == ATA_PROT_NCQ);
 
-	if (pp->pp_flags & MV_PP_FLAG_EDMA_EN) {
-		int using_ncq = ((pp->pp_flags & MV_PP_FLAG_NCQ_EN) != 0);
-		if (want_ncq != using_ncq)
+	अगर (pp->pp_flags & MV_PP_FLAG_EDMA_EN) अणु
+		पूर्णांक using_ncq = ((pp->pp_flags & MV_PP_FLAG_NCQ_EN) != 0);
+		अगर (want_ncq != using_ncq)
 			mv_stop_edma(ap);
-	}
-	if (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN)) {
-		struct mv_host_priv *hpriv = ap->host->private_data;
+	पूर्ण
+	अगर (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN)) अणु
+		काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
 
 		mv_edma_cfg(ap, want_ncq, 1);
 
 		mv_set_edma_ptrs(port_mmio, hpriv, pp);
 		mv_clear_and_enable_port_irqs(ap, port_mmio, DONE_IRQ|ERR_IRQ);
 
-		writelfl(EDMA_EN, port_mmio + EDMA_CMD);
+		ग_लिखोlfl(EDMA_EN, port_mmio + EDMA_CMD);
 		pp->pp_flags |= MV_PP_FLAG_EDMA_EN;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mv_wait_for_edma_empty_idle(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	const u32 empty_idle = (EDMA_STATUS_CACHE_EMPTY | EDMA_STATUS_IDLE);
-	const int per_loop = 5, timeout = (15 * 1000 / per_loop);
-	int i;
+अटल व्योम mv_रुको_क्रम_edma_empty_idle(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	स्थिर u32 empty_idle = (EDMA_STATUS_CACHE_EMPTY | EDMA_STATUS_IDLE);
+	स्थिर पूर्णांक per_loop = 5, समयout = (15 * 1000 / per_loop);
+	पूर्णांक i;
 
 	/*
-	 * Wait for the EDMA engine to finish transactions in progress.
+	 * Wait क्रम the EDMA engine to finish transactions in progress.
 	 * No idea what a good "timeout" value might be, but measurements
 	 * indicate that it often requires hundreds of microseconds
 	 * with two drives in-use.  So we use the 15msec value above
 	 * as a rough guess at what even more drives might require.
 	 */
-	for (i = 0; i < timeout; ++i) {
-		u32 edma_stat = readl(port_mmio + EDMA_STATUS);
-		if ((edma_stat & empty_idle) == empty_idle)
-			break;
+	क्रम (i = 0; i < समयout; ++i) अणु
+		u32 edma_stat = पढ़ोl(port_mmio + EDMA_STATUS);
+		अगर ((edma_stat & empty_idle) == empty_idle)
+			अवरोध;
 		udelay(per_loop);
-	}
+	पूर्ण
 	/* ata_port_info(ap, "%s: %u+ usecs\n", __func__, i); */
-}
+पूर्ण
 
 /**
  *      mv_stop_edma_engine - Disable eDMA engine
@@ -1209,175 +1210,175 @@ static void mv_wait_for_edma_empty_idle(struct ata_port *ap)
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_stop_edma_engine(void __iomem *port_mmio)
-{
-	int i;
+अटल पूर्णांक mv_stop_edma_engine(व्योम __iomem *port_mmio)
+अणु
+	पूर्णांक i;
 
-	/* Disable eDMA.  The disable bit auto clears. */
-	writelfl(EDMA_DS, port_mmio + EDMA_CMD);
+	/* Disable eDMA.  The disable bit स्वतः clears. */
+	ग_लिखोlfl(EDMA_DS, port_mmio + EDMA_CMD);
 
-	/* Wait for the chip to confirm eDMA is off. */
-	for (i = 10000; i > 0; i--) {
-		u32 reg = readl(port_mmio + EDMA_CMD);
-		if (!(reg & EDMA_EN))
-			return 0;
+	/* Wait क्रम the chip to confirm eDMA is off. */
+	क्रम (i = 10000; i > 0; i--) अणु
+		u32 reg = पढ़ोl(port_mmio + EDMA_CMD);
+		अगर (!(reg & EDMA_EN))
+			वापस 0;
 		udelay(10);
-	}
-	return -EIO;
-}
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
-static int mv_stop_edma(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	struct mv_port_priv *pp = ap->private_data;
-	int err = 0;
+अटल पूर्णांक mv_stop_edma(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	पूर्णांक err = 0;
 
-	if (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN))
-		return 0;
+	अगर (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN))
+		वापस 0;
 	pp->pp_flags &= ~MV_PP_FLAG_EDMA_EN;
-	mv_wait_for_edma_empty_idle(ap);
-	if (mv_stop_edma_engine(port_mmio)) {
+	mv_रुको_क्रम_edma_empty_idle(ap);
+	अगर (mv_stop_edma_engine(port_mmio)) अणु
 		ata_port_err(ap, "Unable to stop eDMA\n");
 		err = -EIO;
-	}
+	पूर्ण
 	mv_edma_cfg(ap, 0, 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef ATA_DEBUG
-static void mv_dump_mem(void __iomem *start, unsigned bytes)
-{
-	int b, w;
-	for (b = 0; b < bytes; ) {
+#अगर_घोषित ATA_DEBUG
+अटल व्योम mv_dump_mem(व्योम __iomem *start, अचिन्हित bytes)
+अणु
+	पूर्णांक b, w;
+	क्रम (b = 0; b < bytes; ) अणु
 		DPRINTK("%p: ", start + b);
-		for (w = 0; b < bytes && w < 4; w++) {
-			printk("%08x ", readl(start + b));
-			b += sizeof(u32);
-		}
-		printk("\n");
-	}
-}
-#endif
-#if defined(ATA_DEBUG) || defined(CONFIG_PCI)
-static void mv_dump_pci_cfg(struct pci_dev *pdev, unsigned bytes)
-{
-#ifdef ATA_DEBUG
-	int b, w;
+		क्रम (w = 0; b < bytes && w < 4; w++) अणु
+			prपूर्णांकk("%08x ", पढ़ोl(start + b));
+			b += माप(u32);
+		पूर्ण
+		prपूर्णांकk("\n");
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
+#अगर defined(ATA_DEBUG) || defined(CONFIG_PCI)
+अटल व्योम mv_dump_pci_cfg(काष्ठा pci_dev *pdev, अचिन्हित bytes)
+अणु
+#अगर_घोषित ATA_DEBUG
+	पूर्णांक b, w;
 	u32 dw;
-	for (b = 0; b < bytes; ) {
+	क्रम (b = 0; b < bytes; ) अणु
 		DPRINTK("%02x: ", b);
-		for (w = 0; b < bytes && w < 4; w++) {
-			(void) pci_read_config_dword(pdev, b, &dw);
-			printk("%08x ", dw);
-			b += sizeof(u32);
-		}
-		printk("\n");
-	}
-#endif
-}
-#endif
-static void mv_dump_all_regs(void __iomem *mmio_base, int port,
-			     struct pci_dev *pdev)
-{
-#ifdef ATA_DEBUG
-	void __iomem *hc_base = mv_hc_base(mmio_base,
+		क्रम (w = 0; b < bytes && w < 4; w++) अणु
+			(व्योम) pci_पढ़ो_config_dword(pdev, b, &dw);
+			prपूर्णांकk("%08x ", dw);
+			b += माप(u32);
+		पूर्ण
+		prपूर्णांकk("\n");
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
+अटल व्योम mv_dump_all_regs(व्योम __iomem *mmio_base, पूर्णांक port,
+			     काष्ठा pci_dev *pdev)
+अणु
+#अगर_घोषित ATA_DEBUG
+	व्योम __iomem *hc_base = mv_hc_base(mmio_base,
 					   port >> MV_PORT_HC_SHIFT);
-	void __iomem *port_base;
-	int start_port, num_ports, p, start_hc, num_hcs, hc;
+	व्योम __iomem *port_base;
+	पूर्णांक start_port, num_ports, p, start_hc, num_hcs, hc;
 
-	if (0 > port) {
+	अगर (0 > port) अणु
 		start_hc = start_port = 0;
-		num_ports = 8;		/* shld be benign for 4 port devs */
+		num_ports = 8;		/* shld be benign क्रम 4 port devs */
 		num_hcs = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		start_hc = port >> MV_PORT_HC_SHIFT;
 		start_port = port;
 		num_ports = num_hcs = 1;
-	}
+	पूर्ण
 	DPRINTK("All registers for port(s) %u-%u:\n", start_port,
 		num_ports > 1 ? num_ports - 1 : start_port);
 
-	if (NULL != pdev) {
+	अगर (शून्य != pdev) अणु
 		DPRINTK("PCI config space regs:\n");
 		mv_dump_pci_cfg(pdev, 0x68);
-	}
+	पूर्ण
 	DPRINTK("PCI regs:\n");
 	mv_dump_mem(mmio_base+0xc00, 0x3c);
 	mv_dump_mem(mmio_base+0xd00, 0x34);
 	mv_dump_mem(mmio_base+0xf00, 0x4);
 	mv_dump_mem(mmio_base+0x1d00, 0x6c);
-	for (hc = start_hc; hc < start_hc + num_hcs; hc++) {
+	क्रम (hc = start_hc; hc < start_hc + num_hcs; hc++) अणु
 		hc_base = mv_hc_base(mmio_base, hc);
 		DPRINTK("HC regs (HC %i):\n", hc);
 		mv_dump_mem(hc_base, 0x1c);
-	}
-	for (p = start_port; p < start_port + num_ports; p++) {
+	पूर्ण
+	क्रम (p = start_port; p < start_port + num_ports; p++) अणु
 		port_base = mv_port_base(mmio_base, p);
 		DPRINTK("EDMA regs (port %i):\n", p);
 		mv_dump_mem(port_base, 0x54);
 		DPRINTK("SATA regs (port %i):\n", p);
 		mv_dump_mem(port_base+0x300, 0x60);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static unsigned int mv_scr_offset(unsigned int sc_reg_in)
-{
-	unsigned int ofs;
+अटल अचिन्हित पूर्णांक mv_scr_offset(अचिन्हित पूर्णांक sc_reg_in)
+अणु
+	अचिन्हित पूर्णांक ofs;
 
-	switch (sc_reg_in) {
-	case SCR_STATUS:
-	case SCR_CONTROL:
-	case SCR_ERROR:
-		ofs = SATA_STATUS + (sc_reg_in * sizeof(u32));
-		break;
-	case SCR_ACTIVE:
+	चयन (sc_reg_in) अणु
+	हाल SCR_STATUS:
+	हाल SCR_CONTROL:
+	हाल SCR_ERROR:
+		ofs = SATA_STATUS + (sc_reg_in * माप(u32));
+		अवरोध;
+	हाल SCR_ACTIVE:
 		ofs = SATA_ACTIVE;   /* active is not with the others */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ofs = 0xffffffffU;
-		break;
-	}
-	return ofs;
-}
+		अवरोध;
+	पूर्ण
+	वापस ofs;
+पूर्ण
 
-static int mv_scr_read(struct ata_link *link, unsigned int sc_reg_in, u32 *val)
-{
-	unsigned int ofs = mv_scr_offset(sc_reg_in);
+अटल पूर्णांक mv_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 *val)
+अणु
+	अचिन्हित पूर्णांक ofs = mv_scr_offset(sc_reg_in);
 
-	if (ofs != 0xffffffffU) {
-		*val = readl(mv_ap_base(link->ap) + ofs);
-		return 0;
-	} else
-		return -EINVAL;
-}
+	अगर (ofs != 0xffffffffU) अणु
+		*val = पढ़ोl(mv_ap_base(link->ap) + ofs);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int mv_scr_write(struct ata_link *link, unsigned int sc_reg_in, u32 val)
-{
-	unsigned int ofs = mv_scr_offset(sc_reg_in);
+अटल पूर्णांक mv_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 val)
+अणु
+	अचिन्हित पूर्णांक ofs = mv_scr_offset(sc_reg_in);
 
-	if (ofs != 0xffffffffU) {
-		void __iomem *addr = mv_ap_base(link->ap) + ofs;
-		struct mv_host_priv *hpriv = link->ap->host->private_data;
-		if (sc_reg_in == SCR_CONTROL) {
+	अगर (ofs != 0xffffffffU) अणु
+		व्योम __iomem *addr = mv_ap_base(link->ap) + ofs;
+		काष्ठा mv_host_priv *hpriv = link->ap->host->निजी_data;
+		अगर (sc_reg_in == SCR_CONTROL) अणु
 			/*
-			 * Workaround for 88SX60x1 FEr SATA#26:
+			 * Workaround क्रम 88SX60x1 FEr SATA#26:
 			 *
 			 * COMRESETs have to take care not to accidentally
 			 * put the drive to sleep when writing SCR_CONTROL.
 			 * Setting bits 12..15 prevents this problem.
 			 *
-			 * So if we see an outbound COMMRESET, set those bits.
-			 * Ditto for the followup write that clears the reset.
+			 * So अगर we see an outbound COMMRESET, set those bits.
+			 * Ditto क्रम the followup ग_लिखो that clears the reset.
 			 *
-			 * The proprietary driver does this for
-			 * all chip versions, and so do we.
+			 * The proprietary driver करोes this क्रम
+			 * all chip versions, and so करो we.
 			 */
-			if ((val & 0xf) == 1 || (readl(addr) & 0xf) == 1)
+			अगर ((val & 0xf) == 1 || (पढ़ोl(addr) & 0xf) == 1)
 				val |= 0xf000;
 
-			if (hpriv->hp_flags & MV_HP_FIX_LP_PHY_CTL) {
-				void __iomem *lp_phy_addr =
+			अगर (hpriv->hp_flags & MV_HP_FIX_LP_PHY_CTL) अणु
+				व्योम __iomem *lp_phy_addr =
 					mv_ap_base(link->ap) + LP_PHY_CTL;
 				/*
 				 * Set PHY speed according to SControl speed.
@@ -1387,49 +1388,49 @@ static int mv_scr_write(struct ata_link *link, unsigned int sc_reg_in, u32 val)
 					LP_PHY_CTL_PIN_PU_RX  |
 					LP_PHY_CTL_PIN_PU_TX;
 
-				if ((val & 0xf0) != 0x10)
+				अगर ((val & 0xf0) != 0x10)
 					lp_phy_val |=
 						LP_PHY_CTL_GEN_TX_3G |
 						LP_PHY_CTL_GEN_RX_3G;
 
-				writelfl(lp_phy_val, lp_phy_addr);
-			}
-		}
-		writelfl(val, addr);
-		return 0;
-	} else
-		return -EINVAL;
-}
+				ग_लिखोlfl(lp_phy_val, lp_phy_addr);
+			पूर्ण
+		पूर्ण
+		ग_लिखोlfl(val, addr);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static void mv6_dev_config(struct ata_device *adev)
-{
+अटल व्योम mv6_dev_config(काष्ठा ata_device *adev)
+अणु
 	/*
 	 * Deal with Gen-II ("mv6") hardware quirks/restrictions:
 	 *
-	 * Gen-II does not support NCQ over a port multiplier
-	 *  (no FIS-based switching).
+	 * Gen-II करोes not support NCQ over a port multiplier
+	 *  (no FIS-based चयनing).
 	 */
-	if (adev->flags & ATA_DFLAG_NCQ) {
-		if (sata_pmp_attached(adev->link->ap)) {
+	अगर (adev->flags & ATA_DFLAG_NCQ) अणु
+		अगर (sata_pmp_attached(adev->link->ap)) अणु
 			adev->flags &= ~ATA_DFLAG_NCQ;
 			ata_dev_info(adev,
 				"NCQ disabled for command-based switching\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int mv_qc_defer(struct ata_queued_cmd *qc)
-{
-	struct ata_link *link = qc->dev->link;
-	struct ata_port *ap = link->ap;
-	struct mv_port_priv *pp = ap->private_data;
+अटल पूर्णांक mv_qc_defer(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_link *link = qc->dev->link;
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 
 	/*
 	 * Don't allow new commands if we're in a delayed EH state
-	 * for NCQ and/or FIS-based switching.
+	 * क्रम NCQ and/or FIS-based चयनing.
 	 */
-	if (pp->pp_flags & MV_PP_FLAG_DELAYED_EH)
-		return ATA_DEFER_PORT;
+	अगर (pp->pp_flags & MV_PP_FLAG_DELAYED_EH)
+		वापस ATA_DEFER_PORT;
 
 	/* PIO commands need exclusive link: no other commands [DMA or PIO]
 	 * can run concurrently.
@@ -1439,84 +1440,84 @@ static int mv_qc_defer(struct ata_queued_cmd *qc)
 	 * outstanding commands, mark a flag to clear excl_link and let
 	 * the command go through.
 	 */
-	if (unlikely(ap->excl_link)) {
-		if (link == ap->excl_link) {
-			if (ap->nr_active_links)
-				return ATA_DEFER_PORT;
+	अगर (unlikely(ap->excl_link)) अणु
+		अगर (link == ap->excl_link) अणु
+			अगर (ap->nr_active_links)
+				वापस ATA_DEFER_PORT;
 			qc->flags |= ATA_QCFLAG_CLEAR_EXCL;
-			return 0;
-		} else
-			return ATA_DEFER_PORT;
-	}
+			वापस 0;
+		पूर्ण अन्यथा
+			वापस ATA_DEFER_PORT;
+	पूर्ण
 
 	/*
 	 * If the port is completely idle, then allow the new qc.
 	 */
-	if (ap->nr_active_links == 0)
-		return 0;
+	अगर (ap->nr_active_links == 0)
+		वापस 0;
 
 	/*
 	 * The port is operating in host queuing mode (EDMA) with NCQ
 	 * enabled, allow multiple NCQ commands.  EDMA also allows
 	 * queueing multiple DMA commands but libata core currently
-	 * doesn't allow it.
+	 * करोesn't allow it.
 	 */
-	if ((pp->pp_flags & MV_PP_FLAG_EDMA_EN) &&
-	    (pp->pp_flags & MV_PP_FLAG_NCQ_EN)) {
-		if (ata_is_ncq(qc->tf.protocol))
-			return 0;
-		else {
+	अगर ((pp->pp_flags & MV_PP_FLAG_EDMA_EN) &&
+	    (pp->pp_flags & MV_PP_FLAG_NCQ_EN)) अणु
+		अगर (ata_is_ncq(qc->tf.protocol))
+			वापस 0;
+		अन्यथा अणु
 			ap->excl_link = link;
-			return ATA_DEFER_PORT;
-		}
-	}
+			वापस ATA_DEFER_PORT;
+		पूर्ण
+	पूर्ण
 
-	return ATA_DEFER_PORT;
-}
+	वापस ATA_DEFER_PORT;
+पूर्ण
 
-static void mv_config_fbs(struct ata_port *ap, int want_ncq, int want_fbs)
-{
-	struct mv_port_priv *pp = ap->private_data;
-	void __iomem *port_mmio;
+अटल व्योम mv_config_fbs(काष्ठा ata_port *ap, पूर्णांक want_ncq, पूर्णांक want_fbs)
+अणु
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	व्योम __iomem *port_mmio;
 
 	u32 fiscfg,   *old_fiscfg   = &pp->cached.fiscfg;
-	u32 ltmode,   *old_ltmode   = &pp->cached.ltmode;
+	u32 lपंचांगode,   *old_lपंचांगode   = &pp->cached.lपंचांगode;
 	u32 haltcond, *old_haltcond = &pp->cached.haltcond;
 
-	ltmode   = *old_ltmode & ~LTMODE_BIT8;
+	lपंचांगode   = *old_lपंचांगode & ~LTMODE_BIT8;
 	haltcond = *old_haltcond | EDMA_ERR_DEV;
 
-	if (want_fbs) {
+	अगर (want_fbs) अणु
 		fiscfg = *old_fiscfg | FISCFG_SINGLE_SYNC;
-		ltmode = *old_ltmode | LTMODE_BIT8;
-		if (want_ncq)
+		lपंचांगode = *old_lपंचांगode | LTMODE_BIT8;
+		अगर (want_ncq)
 			haltcond &= ~EDMA_ERR_DEV;
-		else
+		अन्यथा
 			fiscfg |=  FISCFG_WAIT_DEV_ERR;
-	} else {
+	पूर्ण अन्यथा अणु
 		fiscfg = *old_fiscfg & ~(FISCFG_SINGLE_SYNC | FISCFG_WAIT_DEV_ERR);
-	}
+	पूर्ण
 
 	port_mmio = mv_ap_base(ap);
-	mv_write_cached_reg(port_mmio + FISCFG, old_fiscfg, fiscfg);
-	mv_write_cached_reg(port_mmio + LTMODE, old_ltmode, ltmode);
-	mv_write_cached_reg(port_mmio + EDMA_HALTCOND, old_haltcond, haltcond);
-}
+	mv_ग_लिखो_cached_reg(port_mmio + FISCFG, old_fiscfg, fiscfg);
+	mv_ग_लिखो_cached_reg(port_mmio + LTMODE, old_lपंचांगode, lपंचांगode);
+	mv_ग_लिखो_cached_reg(port_mmio + EDMA_HALTCOND, old_haltcond, haltcond);
+पूर्ण
 
-static void mv_60x1_errata_sata25(struct ata_port *ap, int want_ncq)
-{
-	struct mv_host_priv *hpriv = ap->host->private_data;
+अटल व्योम mv_60x1_errata_sata25(काष्ठा ata_port *ap, पूर्णांक want_ncq)
+अणु
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
 	u32 old, new;
 
-	/* workaround for 88SX60x1 FEr SATA#25 (part 1) */
-	old = readl(hpriv->base + GPIO_PORT_CTL);
-	if (want_ncq)
+	/* workaround क्रम 88SX60x1 FEr SATA#25 (part 1) */
+	old = पढ़ोl(hpriv->base + GPIO_PORT_CTL);
+	अगर (want_ncq)
 		new = old | (1 << 22);
-	else
+	अन्यथा
 		new = old & ~(1 << 22);
-	if (new != old)
-		writel(new, hpriv->base + GPIO_PORT_CTL);
-}
+	अगर (new != old)
+		ग_लिखोl(new, hpriv->base + GPIO_PORT_CTL);
+पूर्ण
 
 /*
  *	mv_bmdma_enable - set a magic bit on GEN_IIE to allow bmdma
@@ -1524,31 +1525,31 @@ static void mv_60x1_errata_sata25(struct ata_port *ap, int want_ncq)
  *
  *	There are two DMA modes on these chips:  basic DMA, and EDMA.
  *
- *	Bit-0 of the "EDMA RESERVED" register enables/disables use
+ *	Bit-0 of the "EDMA RESERVED" रेजिस्टर enables/disables use
  *	of basic DMA on the GEN_IIE versions of the chips.
  *
- *	This bit survives EDMA resets, and must be set for basic DMA
+ *	This bit survives EDMA resets, and must be set क्रम basic DMA
  *	to function, and should be cleared when EDMA is active.
  */
-static void mv_bmdma_enable_iie(struct ata_port *ap, int enable_bmdma)
-{
-	struct mv_port_priv *pp = ap->private_data;
+अटल व्योम mv_bmdma_enable_iie(काष्ठा ata_port *ap, पूर्णांक enable_bmdma)
+अणु
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 	u32 new, *old = &pp->cached.unknown_rsvd;
 
-	if (enable_bmdma)
+	अगर (enable_bmdma)
 		new = *old | 1;
-	else
+	अन्यथा
 		new = *old & ~1;
-	mv_write_cached_reg(mv_ap_base(ap) + EDMA_UNKNOWN_RSVD, old, new);
-}
+	mv_ग_लिखो_cached_reg(mv_ap_base(ap) + EDMA_UNKNOWN_RSVD, old, new);
+पूर्ण
 
 /*
- * SOC chips have an issue whereby the HDD LEDs don't always blink
+ * SOC chips have an issue whereby the HDD LEDs करोn't always blink
  * during I/O when NCQ is enabled. Enabling a special "LED blink" mode
  * of the SOC takes care of it, generating a steady blink rate when
  * any drive on the chip is active.
  *
- * Unfortunately, the blink mode is a global hardware setting for the SOC,
+ * Unक्रमtunately, the blink mode is a global hardware setting क्रम the SOC,
  * so we must use it whenever at least one port on the SOC has NCQ enabled.
  *
  * We turn "LED blink" off when NCQ is not in use anywhere, because the normal
@@ -1556,204 +1557,204 @@ static void mv_bmdma_enable_iie(struct ata_port *ap, int enable_bmdma)
  *
  * Note that this code assumes that an SOC never has more than one HC onboard.
  */
-static void mv_soc_led_blink_enable(struct ata_port *ap)
-{
-	struct ata_host *host = ap->host;
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *hc_mmio;
+अटल व्योम mv_soc_led_blink_enable(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_host *host = ap->host;
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *hc_mmio;
 	u32 led_ctrl;
 
-	if (hpriv->hp_flags & MV_HP_QUIRK_LED_BLINK_EN)
-		return;
+	अगर (hpriv->hp_flags & MV_HP_QUIRK_LED_BLINK_EN)
+		वापस;
 	hpriv->hp_flags |= MV_HP_QUIRK_LED_BLINK_EN;
 	hc_mmio = mv_hc_base_from_port(mv_host_base(host), ap->port_no);
-	led_ctrl = readl(hc_mmio + SOC_LED_CTRL);
-	writel(led_ctrl | SOC_LED_CTRL_BLINK, hc_mmio + SOC_LED_CTRL);
-}
+	led_ctrl = पढ़ोl(hc_mmio + SOC_LED_CTRL);
+	ग_लिखोl(led_ctrl | SOC_LED_CTRL_BLINK, hc_mmio + SOC_LED_CTRL);
+पूर्ण
 
-static void mv_soc_led_blink_disable(struct ata_port *ap)
-{
-	struct ata_host *host = ap->host;
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *hc_mmio;
+अटल व्योम mv_soc_led_blink_disable(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_host *host = ap->host;
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *hc_mmio;
 	u32 led_ctrl;
-	unsigned int port;
+	अचिन्हित पूर्णांक port;
 
-	if (!(hpriv->hp_flags & MV_HP_QUIRK_LED_BLINK_EN))
-		return;
+	अगर (!(hpriv->hp_flags & MV_HP_QUIRK_LED_BLINK_EN))
+		वापस;
 
-	/* disable led-blink only if no ports are using NCQ */
-	for (port = 0; port < hpriv->n_ports; port++) {
-		struct ata_port *this_ap = host->ports[port];
-		struct mv_port_priv *pp = this_ap->private_data;
+	/* disable led-blink only अगर no ports are using NCQ */
+	क्रम (port = 0; port < hpriv->n_ports; port++) अणु
+		काष्ठा ata_port *this_ap = host->ports[port];
+		काष्ठा mv_port_priv *pp = this_ap->निजी_data;
 
-		if (pp->pp_flags & MV_PP_FLAG_NCQ_EN)
-			return;
-	}
+		अगर (pp->pp_flags & MV_PP_FLAG_NCQ_EN)
+			वापस;
+	पूर्ण
 
 	hpriv->hp_flags &= ~MV_HP_QUIRK_LED_BLINK_EN;
 	hc_mmio = mv_hc_base_from_port(mv_host_base(host), ap->port_no);
-	led_ctrl = readl(hc_mmio + SOC_LED_CTRL);
-	writel(led_ctrl & ~SOC_LED_CTRL_BLINK, hc_mmio + SOC_LED_CTRL);
-}
+	led_ctrl = पढ़ोl(hc_mmio + SOC_LED_CTRL);
+	ग_लिखोl(led_ctrl & ~SOC_LED_CTRL_BLINK, hc_mmio + SOC_LED_CTRL);
+पूर्ण
 
-static void mv_edma_cfg(struct ata_port *ap, int want_ncq, int want_edma)
-{
+अटल व्योम mv_edma_cfg(काष्ठा ata_port *ap, पूर्णांक want_ncq, पूर्णांक want_edma)
+अणु
 	u32 cfg;
-	struct mv_port_priv *pp    = ap->private_data;
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	void __iomem *port_mmio    = mv_ap_base(ap);
+	काष्ठा mv_port_priv *pp    = ap->निजी_data;
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	व्योम __iomem *port_mmio    = mv_ap_base(ap);
 
 	/* set up non-NCQ EDMA configuration */
-	cfg = EDMA_CFG_Q_DEPTH;		/* always 0x1f for *all* chips */
+	cfg = EDMA_CFG_Q_DEPTH;		/* always 0x1f क्रम *all* chips */
 	pp->pp_flags &=
 	  ~(MV_PP_FLAG_FBS_EN | MV_PP_FLAG_NCQ_EN | MV_PP_FLAG_FAKE_ATA_BUSY);
 
-	if (IS_GEN_I(hpriv))
+	अगर (IS_GEN_I(hpriv))
 		cfg |= (1 << 8);	/* enab config burst size mask */
 
-	else if (IS_GEN_II(hpriv)) {
+	अन्यथा अगर (IS_GEN_II(hpriv)) अणु
 		cfg |= EDMA_CFG_RD_BRST_EXT | EDMA_CFG_WR_BUFF_LEN;
 		mv_60x1_errata_sata25(ap, want_ncq);
 
-	} else if (IS_GEN_IIE(hpriv)) {
-		int want_fbs = sata_pmp_attached(ap);
+	पूर्ण अन्यथा अगर (IS_GEN_IIE(hpriv)) अणु
+		पूर्णांक want_fbs = sata_pmp_attached(ap);
 		/*
 		 * Possible future enhancement:
 		 *
-		 * The chip can use FBS with non-NCQ, if we allow it,
+		 * The chip can use FBS with non-NCQ, अगर we allow it,
 		 * But first we need to have the error handling in place
-		 * for this mode (datasheet section 7.3.15.4.2.3).
-		 * So disallow non-NCQ FBS for now.
+		 * क्रम this mode (datasheet section 7.3.15.4.2.3).
+		 * So disallow non-NCQ FBS क्रम now.
 		 */
 		want_fbs &= want_ncq;
 
 		mv_config_fbs(ap, want_ncq, want_fbs);
 
-		if (want_fbs) {
+		अगर (want_fbs) अणु
 			pp->pp_flags |= MV_PP_FLAG_FBS_EN;
-			cfg |= EDMA_CFG_EDMA_FBS; /* FIS-based switching */
-		}
+			cfg |= EDMA_CFG_EDMA_FBS; /* FIS-based चयनing */
+		पूर्ण
 
-		cfg |= (1 << 23);	/* do not mask PM field in rx'd FIS */
-		if (want_edma) {
+		cfg |= (1 << 23);	/* करो not mask PM field in rx'd FIS */
+		अगर (want_edma) अणु
 			cfg |= (1 << 22); /* enab 4-entry host queue cache */
-			if (!IS_SOC(hpriv))
+			अगर (!IS_SOC(hpriv))
 				cfg |= (1 << 18); /* enab early completion */
-		}
-		if (hpriv->hp_flags & MV_HP_CUT_THROUGH)
-			cfg |= (1 << 17); /* enab cut-thru (dis stor&forwrd) */
+		पूर्ण
+		अगर (hpriv->hp_flags & MV_HP_CUT_THROUGH)
+			cfg |= (1 << 17); /* enab cut-thru (dis stor&क्रमwrd) */
 		mv_bmdma_enable_iie(ap, !want_edma);
 
-		if (IS_SOC(hpriv)) {
-			if (want_ncq)
+		अगर (IS_SOC(hpriv)) अणु
+			अगर (want_ncq)
 				mv_soc_led_blink_enable(ap);
-			else
+			अन्यथा
 				mv_soc_led_blink_disable(ap);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (want_ncq) {
+	अगर (want_ncq) अणु
 		cfg |= EDMA_CFG_NCQ;
 		pp->pp_flags |=  MV_PP_FLAG_NCQ_EN;
-	}
+	पूर्ण
 
-	writelfl(cfg, port_mmio + EDMA_CFG);
-}
+	ग_लिखोlfl(cfg, port_mmio + EDMA_CFG);
+पूर्ण
 
-static void mv_port_free_dma_mem(struct ata_port *ap)
-{
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	struct mv_port_priv *pp = ap->private_data;
-	int tag;
+अटल व्योम mv_port_मुक्त_dma_mem(काष्ठा ata_port *ap)
+अणु
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	पूर्णांक tag;
 
-	if (pp->crqb) {
-		dma_pool_free(hpriv->crqb_pool, pp->crqb, pp->crqb_dma);
-		pp->crqb = NULL;
-	}
-	if (pp->crpb) {
-		dma_pool_free(hpriv->crpb_pool, pp->crpb, pp->crpb_dma);
-		pp->crpb = NULL;
-	}
+	अगर (pp->crqb) अणु
+		dma_pool_मुक्त(hpriv->crqb_pool, pp->crqb, pp->crqb_dma);
+		pp->crqb = शून्य;
+	पूर्ण
+	अगर (pp->crpb) अणु
+		dma_pool_मुक्त(hpriv->crpb_pool, pp->crpb, pp->crpb_dma);
+		pp->crpb = शून्य;
+	पूर्ण
 	/*
 	 * For GEN_I, there's no NCQ, so we have only a single sg_tbl.
 	 * For later hardware, we have one unique sg_tbl per NCQ tag.
 	 */
-	for (tag = 0; tag < MV_MAX_Q_DEPTH; ++tag) {
-		if (pp->sg_tbl[tag]) {
-			if (tag == 0 || !IS_GEN_I(hpriv))
-				dma_pool_free(hpriv->sg_tbl_pool,
+	क्रम (tag = 0; tag < MV_MAX_Q_DEPTH; ++tag) अणु
+		अगर (pp->sg_tbl[tag]) अणु
+			अगर (tag == 0 || !IS_GEN_I(hpriv))
+				dma_pool_मुक्त(hpriv->sg_tbl_pool,
 					      pp->sg_tbl[tag],
 					      pp->sg_tbl_dma[tag]);
-			pp->sg_tbl[tag] = NULL;
-		}
-	}
-}
+			pp->sg_tbl[tag] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- *      mv_port_start - Port specific init/start routine.
+ *      mv_port_start - Port specअगरic init/start routine.
  *      @ap: ATA channel to manipulate
  *
- *      Allocate and point to DMA memory, init port private memory,
+ *      Allocate and poपूर्णांक to DMA memory, init port निजी memory,
  *      zero indices.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_port_start(struct ata_port *ap)
-{
-	struct device *dev = ap->host->dev;
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	struct mv_port_priv *pp;
-	unsigned long flags;
-	int tag;
+अटल पूर्णांक mv_port_start(काष्ठा ata_port *ap)
+अणु
+	काष्ठा device *dev = ap->host->dev;
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	काष्ठा mv_port_priv *pp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक tag;
 
-	pp = devm_kzalloc(dev, sizeof(*pp), GFP_KERNEL);
-	if (!pp)
-		return -ENOMEM;
-	ap->private_data = pp;
+	pp = devm_kzalloc(dev, माप(*pp), GFP_KERNEL);
+	अगर (!pp)
+		वापस -ENOMEM;
+	ap->निजी_data = pp;
 
 	pp->crqb = dma_pool_zalloc(hpriv->crqb_pool, GFP_KERNEL, &pp->crqb_dma);
-	if (!pp->crqb)
-		return -ENOMEM;
+	अगर (!pp->crqb)
+		वापस -ENOMEM;
 
 	pp->crpb = dma_pool_zalloc(hpriv->crpb_pool, GFP_KERNEL, &pp->crpb_dma);
-	if (!pp->crpb)
-		goto out_port_free_dma_mem;
+	अगर (!pp->crpb)
+		जाओ out_port_मुक्त_dma_mem;
 
-	/* 6041/6081 Rev. "C0" (and newer) are okay with async notify */
-	if (hpriv->hp_flags & MV_HP_ERRATA_60X1C0)
+	/* 6041/6081 Rev. "C0" (and newer) are okay with async notअगरy */
+	अगर (hpriv->hp_flags & MV_HP_ERRATA_60X1C0)
 		ap->flags |= ATA_FLAG_AN;
 	/*
 	 * For GEN_I, there's no NCQ, so we only allocate a single sg_tbl.
 	 * For later hardware, we need one unique sg_tbl per NCQ tag.
 	 */
-	for (tag = 0; tag < MV_MAX_Q_DEPTH; ++tag) {
-		if (tag == 0 || !IS_GEN_I(hpriv)) {
+	क्रम (tag = 0; tag < MV_MAX_Q_DEPTH; ++tag) अणु
+		अगर (tag == 0 || !IS_GEN_I(hpriv)) अणु
 			pp->sg_tbl[tag] = dma_pool_alloc(hpriv->sg_tbl_pool,
 					      GFP_KERNEL, &pp->sg_tbl_dma[tag]);
-			if (!pp->sg_tbl[tag])
-				goto out_port_free_dma_mem;
-		} else {
+			अगर (!pp->sg_tbl[tag])
+				जाओ out_port_मुक्त_dma_mem;
+		पूर्ण अन्यथा अणु
 			pp->sg_tbl[tag]     = pp->sg_tbl[0];
 			pp->sg_tbl_dma[tag] = pp->sg_tbl_dma[0];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(ap->lock, flags);
 	mv_save_cached_regs(ap);
 	mv_edma_cfg(ap, 0, 0);
 	spin_unlock_irqrestore(ap->lock, flags);
 
-	return 0;
+	वापस 0;
 
-out_port_free_dma_mem:
-	mv_port_free_dma_mem(ap);
-	return -ENOMEM;
-}
+out_port_मुक्त_dma_mem:
+	mv_port_मुक्त_dma_mem(ap);
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- *      mv_port_stop - Port specific cleanup/stop routine.
+ *      mv_port_stop - Port specअगरic cleanup/stop routine.
  *      @ap: ATA channel to manipulate
  *
  *      Stop DMA, cleanup port memory.
@@ -1761,16 +1762,16 @@ out_port_free_dma_mem:
  *      LOCKING:
  *      This routine uses the host lock to protect the DMA stop.
  */
-static void mv_port_stop(struct ata_port *ap)
-{
-	unsigned long flags;
+अटल व्योम mv_port_stop(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(ap->lock, flags);
 	mv_stop_edma(ap);
 	mv_enable_port_irqs(ap, 0);
 	spin_unlock_irqrestore(ap->lock, flags);
-	mv_port_free_dma_mem(ap);
-}
+	mv_port_मुक्त_dma_mem(ap);
+पूर्ण
 
 /**
  *      mv_fill_sg - Fill out the Marvell ePRD (scatter gather) entries
@@ -1781,23 +1782,23 @@ static void mv_port_stop(struct ata_port *ap)
  *      LOCKING:
  *      Inherited from caller.
  */
-static void mv_fill_sg(struct ata_queued_cmd *qc)
-{
-	struct mv_port_priv *pp = qc->ap->private_data;
-	struct scatterlist *sg;
-	struct mv_sg *mv_sg, *last_sg = NULL;
-	unsigned int si;
+अटल व्योम mv_fill_sg(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा mv_port_priv *pp = qc->ap->निजी_data;
+	काष्ठा scatterlist *sg;
+	काष्ठा mv_sg *mv_sg, *last_sg = शून्य;
+	अचिन्हित पूर्णांक si;
 
 	mv_sg = pp->sg_tbl[qc->hw_tag];
-	for_each_sg(qc->sg, sg, qc->n_elem, si) {
+	क्रम_each_sg(qc->sg, sg, qc->n_elem, si) अणु
 		dma_addr_t addr = sg_dma_address(sg);
 		u32 sg_len = sg_dma_len(sg);
 
-		while (sg_len) {
+		जबतक (sg_len) अणु
 			u32 offset = addr & 0xffff;
 			u32 len = sg_len;
 
-			if (offset + len > 0x10000)
+			अगर (offset + len > 0x10000)
 				len = 0x10000 - offset;
 
 			mv_sg->addr = cpu_to_le32(addr & 0xffffffff);
@@ -1810,93 +1811,93 @@ static void mv_fill_sg(struct ata_queued_cmd *qc)
 
 			last_sg = mv_sg;
 			mv_sg++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (likely(last_sg))
+	अगर (likely(last_sg))
 		last_sg->flags_size |= cpu_to_le32(EPRD_FLAG_END_OF_TBL);
-	mb(); /* ensure data structure is visible to the chipset */
-}
+	mb(); /* ensure data काष्ठाure is visible to the chipset */
+पूर्ण
 
-static void mv_crqb_pack_cmd(__le16 *cmdw, u8 data, u8 addr, unsigned last)
-{
-	u16 tmp = data | (addr << CRQB_CMD_ADDR_SHIFT) | CRQB_CMD_CS |
+अटल व्योम mv_crqb_pack_cmd(__le16 *cmdw, u8 data, u8 addr, अचिन्हित last)
+अणु
+	u16 पंचांगp = data | (addr << CRQB_CMD_ADDR_SHIFT) | CRQB_CMD_CS |
 		(last ? CRQB_CMD_LAST : 0);
-	*cmdw = cpu_to_le16(tmp);
-}
+	*cmdw = cpu_to_le16(पंचांगp);
+पूर्ण
 
 /**
- *	mv_sff_irq_clear - Clear hardware interrupt after DMA.
+ *	mv_sff_irq_clear - Clear hardware पूर्णांकerrupt after DMA.
  *	@ap: Port associated with this ATA transaction.
  *
- *	We need this only for ATAPI bmdma transactions,
- *	as otherwise we experience spurious interrupts
- *	after libata-sff handles the bmdma interrupts.
+ *	We need this only क्रम ATAPI bmdma transactions,
+ *	as otherwise we experience spurious पूर्णांकerrupts
+ *	after libata-sff handles the bmdma पूर्णांकerrupts.
  */
-static void mv_sff_irq_clear(struct ata_port *ap)
-{
+अटल व्योम mv_sff_irq_clear(काष्ठा ata_port *ap)
+अणु
 	mv_clear_and_enable_port_irqs(ap, mv_ap_base(ap), ERR_IRQ);
-}
+पूर्ण
 
 /**
- *	mv_check_atapi_dma - Filter ATAPI cmds which are unsuitable for DMA.
- *	@qc: queued command to check for chipset/DMA compatibility.
+ *	mv_check_atapi_dma - Filter ATAPI cmds which are unsuitable क्रम DMA.
+ *	@qc: queued command to check क्रम chipset/DMA compatibility.
  *
  *	The bmdma engines cannot handle speculative data sizes
- *	(bytecount under/over flow).  So only allow DMA for
+ *	(bytecount under/over flow).  So only allow DMA क्रम
  *	data transfer commands with known data sizes.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static int mv_check_atapi_dma(struct ata_queued_cmd *qc)
-{
-	struct scsi_cmnd *scmd = qc->scsicmd;
+अटल पूर्णांक mv_check_atapi_dma(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा scsi_cmnd *scmd = qc->scsicmd;
 
-	if (scmd) {
-		switch (scmd->cmnd[0]) {
-		case READ_6:
-		case READ_10:
-		case READ_12:
-		case WRITE_6:
-		case WRITE_10:
-		case WRITE_12:
-		case GPCMD_READ_CD:
-		case GPCMD_SEND_DVD_STRUCTURE:
-		case GPCMD_SEND_CUE_SHEET:
-			return 0; /* DMA is safe */
-		}
-	}
-	return -EOPNOTSUPP; /* use PIO instead */
-}
+	अगर (scmd) अणु
+		चयन (scmd->cmnd[0]) अणु
+		हाल READ_6:
+		हाल READ_10:
+		हाल READ_12:
+		हाल WRITE_6:
+		हाल WRITE_10:
+		हाल WRITE_12:
+		हाल GPCMD_READ_CD:
+		हाल GPCMD_SEND_DVD_STRUCTURE:
+		हाल GPCMD_SEND_CUE_SHEET:
+			वापस 0; /* DMA is safe */
+		पूर्ण
+	पूर्ण
+	वापस -EOPNOTSUPP; /* use PIO instead */
+पूर्ण
 
 /**
  *	mv_bmdma_setup - Set up BMDMA transaction
- *	@qc: queued command to prepare DMA for.
+ *	@qc: queued command to prepare DMA क्रम.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static void mv_bmdma_setup(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	void __iomem *port_mmio = mv_ap_base(ap);
-	struct mv_port_priv *pp = ap->private_data;
+अटल व्योम mv_bmdma_setup(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 
 	mv_fill_sg(qc);
 
 	/* clear all DMA cmd bits */
-	writel(0, port_mmio + BMDMA_CMD);
+	ग_लिखोl(0, port_mmio + BMDMA_CMD);
 
 	/* load PRD table addr. */
-	writel((pp->sg_tbl_dma[qc->hw_tag] >> 16) >> 16,
+	ग_लिखोl((pp->sg_tbl_dma[qc->hw_tag] >> 16) >> 16,
 		port_mmio + BMDMA_PRD_HIGH);
-	writelfl(pp->sg_tbl_dma[qc->hw_tag],
+	ग_लिखोlfl(pp->sg_tbl_dma[qc->hw_tag],
 		port_mmio + BMDMA_PRD_LOW);
 
 	/* issue r/w command */
 	ap->ops->sff_exec_command(ap, &qc->tf);
-}
+पूर्ण
 
 /**
  *	mv_bmdma_start - Start a BMDMA transaction
@@ -1905,157 +1906,157 @@ static void mv_bmdma_setup(struct ata_queued_cmd *qc)
  *	LOCKING:
  *	Inherited from caller.
  */
-static void mv_bmdma_start(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	void __iomem *port_mmio = mv_ap_base(ap);
-	unsigned int rw = (qc->tf.flags & ATA_TFLAG_WRITE);
+अटल व्योम mv_bmdma_start(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	अचिन्हित पूर्णांक rw = (qc->tf.flags & ATA_TFLAG_WRITE);
 	u32 cmd = (rw ? 0 : ATA_DMA_WR) | ATA_DMA_START;
 
 	/* start host DMA transaction */
-	writelfl(cmd, port_mmio + BMDMA_CMD);
-}
+	ग_लिखोlfl(cmd, port_mmio + BMDMA_CMD);
+पूर्ण
 
 /**
  *	mv_bmdma_stop_ap - Stop BMDMA transfer
  *	@ap: port to stop
  *
- *	Clears the ATA_DMA_START flag in the bmdma control register
+ *	Clears the ATA_DMA_START flag in the bmdma control रेजिस्टर
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static void mv_bmdma_stop_ap(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
+अटल व्योम mv_bmdma_stop_ap(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
 	u32 cmd;
 
 	/* clear start/stop bit */
-	cmd = readl(port_mmio + BMDMA_CMD);
-	if (cmd & ATA_DMA_START) {
+	cmd = पढ़ोl(port_mmio + BMDMA_CMD);
+	अगर (cmd & ATA_DMA_START) अणु
 		cmd &= ~ATA_DMA_START;
-		writelfl(cmd, port_mmio + BMDMA_CMD);
+		ग_लिखोlfl(cmd, port_mmio + BMDMA_CMD);
 
-		/* one-PIO-cycle guaranteed wait, per spec, for HDMA1:0 transition */
-		ata_sff_dma_pause(ap);
-	}
-}
+		/* one-PIO-cycle guaranteed रुको, per spec, क्रम HDMA1:0 transition */
+		ata_sff_dma_छोड़ो(ap);
+	पूर्ण
+पूर्ण
 
-static void mv_bmdma_stop(struct ata_queued_cmd *qc)
-{
+अटल व्योम mv_bmdma_stop(काष्ठा ata_queued_cmd *qc)
+अणु
 	mv_bmdma_stop_ap(qc->ap);
-}
+पूर्ण
 
 /**
  *	mv_bmdma_status - Read BMDMA status
- *	@ap: port for which to retrieve DMA status.
+ *	@ap: port क्रम which to retrieve DMA status.
  *
- *	Read and return equivalent of the sff BMDMA status register.
+ *	Read and वापस equivalent of the sff BMDMA status रेजिस्टर.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-static u8 mv_bmdma_status(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
+अटल u8 mv_bmdma_status(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
 	u32 reg, status;
 
 	/*
-	 * Other bits are valid only if ATA_DMA_ACTIVE==0,
-	 * and the ATA_DMA_INTR bit doesn't exist.
+	 * Other bits are valid only अगर ATA_DMA_ACTIVE==0,
+	 * and the ATA_DMA_INTR bit करोesn't exist.
 	 */
-	reg = readl(port_mmio + BMDMA_STATUS);
-	if (reg & ATA_DMA_ACTIVE)
+	reg = पढ़ोl(port_mmio + BMDMA_STATUS);
+	अगर (reg & ATA_DMA_ACTIVE)
 		status = ATA_DMA_ACTIVE;
-	else if (reg & ATA_DMA_ERR)
+	अन्यथा अगर (reg & ATA_DMA_ERR)
 		status = (reg & ATA_DMA_ERR) | ATA_DMA_INTR;
-	else {
+	अन्यथा अणु
 		/*
 		 * Just because DMA_ACTIVE is 0 (DMA completed),
-		 * this does _not_ mean the device is "done".
-		 * So we should not yet be signalling ATA_DMA_INTR
-		 * in some cases.  Eg. DSM/TRIM, and perhaps others.
+		 * this करोes _not_ mean the device is "done".
+		 * So we should not yet be संकेतling ATA_DMA_INTR
+		 * in some हालs.  Eg. DSM/TRIM, and perhaps others.
 		 */
 		mv_bmdma_stop_ap(ap);
-		if (ioread8(ap->ioaddr.altstatus_addr) & ATA_BUSY)
+		अगर (ioपढ़ो8(ap->ioaddr.altstatus_addr) & ATA_BUSY)
 			status = 0;
-		else
+		अन्यथा
 			status = ATA_DMA_INTR;
-	}
-	return status;
-}
+	पूर्ण
+	वापस status;
+पूर्ण
 
-static void mv_rw_multi_errata_sata24(struct ata_queued_cmd *qc)
-{
-	struct ata_taskfile *tf = &qc->tf;
+अटल व्योम mv_rw_multi_errata_sata24(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_taskfile *tf = &qc->tf;
 	/*
-	 * Workaround for 88SX60x1 FEr SATA#24.
+	 * Workaround क्रम 88SX60x1 FEr SATA#24.
 	 *
-	 * Chip may corrupt WRITEs if multi_count >= 4kB.
+	 * Chip may corrupt WRITEs अगर multi_count >= 4kB.
 	 * Note that READs are unaffected.
 	 *
-	 * It's not clear if this errata really means "4K bytes",
-	 * or if it always happens for multi_count > 7
+	 * It's not clear अगर this errata really means "4K bytes",
+	 * or अगर it always happens क्रम multi_count > 7
 	 * regardless of device sector_size.
 	 *
-	 * So, for safety, any write with multi_count > 7
-	 * gets converted here into a regular PIO write instead:
+	 * So, क्रम safety, any ग_लिखो with multi_count > 7
+	 * माला_लो converted here पूर्णांकo a regular PIO ग_लिखो instead:
 	 */
-	if ((tf->flags & ATA_TFLAG_WRITE) && is_multi_taskfile(tf)) {
-		if (qc->dev->multi_count > 7) {
-			switch (tf->command) {
-			case ATA_CMD_WRITE_MULTI:
+	अगर ((tf->flags & ATA_TFLAG_WRITE) && is_multi_taskfile(tf)) अणु
+		अगर (qc->dev->multi_count > 7) अणु
+			चयन (tf->command) अणु
+			हाल ATA_CMD_WRITE_MULTI:
 				tf->command = ATA_CMD_PIO_WRITE;
-				break;
-			case ATA_CMD_WRITE_MULTI_FUA_EXT:
+				अवरोध;
+			हाल ATA_CMD_WRITE_MULTI_FUA_EXT:
 				tf->flags &= ~ATA_TFLAG_FUA; /* ugh */
 				fallthrough;
-			case ATA_CMD_WRITE_MULTI_EXT:
+			हाल ATA_CMD_WRITE_MULTI_EXT:
 				tf->command = ATA_CMD_PIO_WRITE_EXT;
-				break;
-			}
-		}
-	}
-}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- *      mv_qc_prep - Host specific command preparation.
+ *      mv_qc_prep - Host specअगरic command preparation.
  *      @qc: queued command to prepare
  *
  *      This routine simply redirects to the general purpose routine
- *      if command is not DMA.  Else, it handles prep of the CRQB
- *      (command request block), does some sanity checking, and calls
+ *      अगर command is not DMA.  Else, it handles prep of the CRQB
+ *      (command request block), करोes some sanity checking, and calls
  *      the SG load routine.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct mv_port_priv *pp = ap->private_data;
+अटल क्रमागत ata_completion_errors mv_qc_prep(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 	__le16 *cw;
-	struct ata_taskfile *tf = &qc->tf;
+	काष्ठा ata_taskfile *tf = &qc->tf;
 	u16 flags = 0;
-	unsigned in_index;
+	अचिन्हित in_index;
 
-	switch (tf->protocol) {
-	case ATA_PROT_DMA:
-		if (tf->command == ATA_CMD_DSM)
-			return AC_ERR_OK;
+	चयन (tf->protocol) अणु
+	हाल ATA_PROT_DMA:
+		अगर (tf->command == ATA_CMD_DSM)
+			वापस AC_ERR_OK;
 		fallthrough;
-	case ATA_PROT_NCQ:
-		break;	/* continue below */
-	case ATA_PROT_PIO:
+	हाल ATA_PROT_NCQ:
+		अवरोध;	/* जारी below */
+	हाल ATA_PROT_PIO:
 		mv_rw_multi_errata_sata24(qc);
-		return AC_ERR_OK;
-	default:
-		return AC_ERR_OK;
-	}
+		वापस AC_ERR_OK;
+	शेष:
+		वापस AC_ERR_OK;
+	पूर्ण
 
 	/* Fill in command request block
 	 */
-	if (!(tf->flags & ATA_TFLAG_WRITE))
+	अगर (!(tf->flags & ATA_TFLAG_WRITE))
 		flags |= CRQB_FLAG_READ;
 	WARN_ON(MV_MAX_Q_DEPTH <= qc->hw_tag);
 	flags |= qc->hw_tag << CRQB_TAG_SHIFT;
@@ -2072,27 +2073,27 @@ static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
 
 	cw = &pp->crqb[in_index].ata_cmd[0];
 
-	/* Sadly, the CRQB cannot accommodate all registers--there are
+	/* Sadly, the CRQB cannot accommodate all रेजिस्टरs--there are
 	 * only 11 bytes...so we must pick and choose required
-	 * registers based on the command.  So, we drop feature and
-	 * hob_feature for [RW] DMA commands, but they are needed for
+	 * रेजिस्टरs based on the command.  So, we drop feature and
+	 * hob_feature क्रम [RW] DMA commands, but they are needed क्रम
 	 * NCQ.  NCQ will drop hob_nsect, which is not needed there
-	 * (nsect is used only for the tag; feat/hob_feat hold true nsect).
+	 * (nsect is used only क्रम the tag; feat/hob_feat hold true nsect).
 	 */
-	switch (tf->command) {
-	case ATA_CMD_READ:
-	case ATA_CMD_READ_EXT:
-	case ATA_CMD_WRITE:
-	case ATA_CMD_WRITE_EXT:
-	case ATA_CMD_WRITE_FUA_EXT:
+	चयन (tf->command) अणु
+	हाल ATA_CMD_READ:
+	हाल ATA_CMD_READ_EXT:
+	हाल ATA_CMD_WRITE:
+	हाल ATA_CMD_WRITE_EXT:
+	हाल ATA_CMD_WRITE_FUA_EXT:
 		mv_crqb_pack_cmd(cw++, tf->hob_nsect, ATA_REG_NSECT, 0);
-		break;
-	case ATA_CMD_FPDMA_READ:
-	case ATA_CMD_FPDMA_WRITE:
+		अवरोध;
+	हाल ATA_CMD_FPDMA_READ:
+	हाल ATA_CMD_FPDMA_WRITE:
 		mv_crqb_pack_cmd(cw++, tf->hob_feature, ATA_REG_FEATURE, 0);
 		mv_crqb_pack_cmd(cw++, tf->feature, ATA_REG_FEATURE, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* The only other commands EDMA supports in non-queued and
 		 * non-NCQ mode are: [RW] STREAM DMA and W DMA FUA EXT, none
 		 * of which are defined/used by Linux.  If we get here, this
@@ -2100,8 +2101,8 @@ static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
 		 */
 		ata_port_err(ap, "%s: unsupported command: %.2x\n", __func__,
 				tf->command);
-		return AC_ERR_INVALID;
-	}
+		वापस AC_ERR_INVALID;
+	पूर्ण
 	mv_crqb_pack_cmd(cw++, tf->nsect, ATA_REG_NSECT, 0);
 	mv_crqb_pack_cmd(cw++, tf->hob_lbal, ATA_REG_LBAL, 0);
 	mv_crqb_pack_cmd(cw++, tf->lbal, ATA_REG_LBAL, 0);
@@ -2112,42 +2113,42 @@ static enum ata_completion_errors mv_qc_prep(struct ata_queued_cmd *qc)
 	mv_crqb_pack_cmd(cw++, tf->device, ATA_REG_DEVICE, 0);
 	mv_crqb_pack_cmd(cw++, tf->command, ATA_REG_CMD, 1);	/* last */
 
-	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+	अगर (!(qc->flags & ATA_QCFLAG_DMAMAP))
+		वापस AC_ERR_OK;
 	mv_fill_sg(qc);
 
-	return AC_ERR_OK;
-}
+	वापस AC_ERR_OK;
+पूर्ण
 
 /**
- *      mv_qc_prep_iie - Host specific command preparation.
+ *      mv_qc_prep_iie - Host specअगरic command preparation.
  *      @qc: queued command to prepare
  *
  *      This routine simply redirects to the general purpose routine
- *      if command is not DMA.  Else, it handles prep of the CRQB
- *      (command request block), does some sanity checking, and calls
+ *      अगर command is not DMA.  Else, it handles prep of the CRQB
+ *      (command request block), करोes some sanity checking, and calls
  *      the SG load routine.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct mv_port_priv *pp = ap->private_data;
-	struct mv_crqb_iie *crqb;
-	struct ata_taskfile *tf = &qc->tf;
-	unsigned in_index;
+अटल क्रमागत ata_completion_errors mv_qc_prep_iie(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	काष्ठा mv_crqb_iie *crqb;
+	काष्ठा ata_taskfile *tf = &qc->tf;
+	अचिन्हित in_index;
 	u32 flags = 0;
 
-	if ((tf->protocol != ATA_PROT_DMA) &&
+	अगर ((tf->protocol != ATA_PROT_DMA) &&
 	    (tf->protocol != ATA_PROT_NCQ))
-		return AC_ERR_OK;
-	if (tf->command == ATA_CMD_DSM)
-		return AC_ERR_OK;  /* use bmdma for this */
+		वापस AC_ERR_OK;
+	अगर (tf->command == ATA_CMD_DSM)
+		वापस AC_ERR_OK;  /* use bmdma क्रम this */
 
 	/* Fill in Gen IIE command request block */
-	if (!(tf->flags & ATA_TFLAG_WRITE))
+	अगर (!(tf->flags & ATA_TFLAG_WRITE))
 		flags |= CRQB_FLAG_READ;
 
 	WARN_ON(MV_MAX_Q_DEPTH <= qc->hw_tag);
@@ -2158,7 +2159,7 @@ static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc)
 	/* get current queue index from software */
 	in_index = pp->req_idx;
 
-	crqb = (struct mv_crqb_iie *) &pp->crqb[in_index];
+	crqb = (काष्ठा mv_crqb_iie *) &pp->crqb[in_index];
 	crqb->addr = cpu_to_le32(pp->sg_tbl_dma[qc->hw_tag] & 0xffffffff);
 	crqb->addr_hi = cpu_to_le32((pp->sg_tbl_dma[qc->hw_tag] >> 16) >> 16);
 	crqb->flags = cpu_to_le32(flags);
@@ -2184,347 +2185,347 @@ static enum ata_completion_errors mv_qc_prep_iie(struct ata_queued_cmd *qc)
 			(tf->hob_nsect << 8)
 		);
 
-	if (!(qc->flags & ATA_QCFLAG_DMAMAP))
-		return AC_ERR_OK;
+	अगर (!(qc->flags & ATA_QCFLAG_DMAMAP))
+		वापस AC_ERR_OK;
 	mv_fill_sg(qc);
 
-	return AC_ERR_OK;
-}
+	वापस AC_ERR_OK;
+पूर्ण
 
 /**
- *	mv_sff_check_status - fetch device status, if valid
+ *	mv_sff_check_status - fetch device status, अगर valid
  *	@ap: ATA port to fetch status from
  *
  *	When using command issue via mv_qc_issue_fis(),
- *	the initial ATA_BUSY state does not show up in the
- *	ATA status (shadow) register.  This can confuse libata!
+ *	the initial ATA_BUSY state करोes not show up in the
+ *	ATA status (shaकरोw) रेजिस्टर.  This can confuse libata!
  *
- *	So we have a hook here to fake ATA_BUSY for that situation,
- *	until the first time a BUSY, DRQ, or ERR bit is seen.
+ *	So we have a hook here to fake ATA_BUSY क्रम that situation,
+ *	until the first समय a BUSY, DRQ, or ERR bit is seen.
  *
- *	The rest of the time, it simply returns the ATA status register.
+ *	The rest of the समय, it simply वापसs the ATA status रेजिस्टर.
  */
-static u8 mv_sff_check_status(struct ata_port *ap)
-{
-	u8 stat = ioread8(ap->ioaddr.status_addr);
-	struct mv_port_priv *pp = ap->private_data;
+अटल u8 mv_sff_check_status(काष्ठा ata_port *ap)
+अणु
+	u8 stat = ioपढ़ो8(ap->ioaddr.status_addr);
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 
-	if (pp->pp_flags & MV_PP_FLAG_FAKE_ATA_BUSY) {
-		if (stat & (ATA_BUSY | ATA_DRQ | ATA_ERR))
+	अगर (pp->pp_flags & MV_PP_FLAG_FAKE_ATA_BUSY) अणु
+		अगर (stat & (ATA_BUSY | ATA_DRQ | ATA_ERR))
 			pp->pp_flags &= ~MV_PP_FLAG_FAKE_ATA_BUSY;
-		else
+		अन्यथा
 			stat = ATA_BUSY;
-	}
-	return stat;
-}
+	पूर्ण
+	वापस stat;
+पूर्ण
 
 /**
- *	mv_send_fis - Send a FIS, using the "Vendor-Unique FIS" register
+ *	mv_send_fis - Send a FIS, using the "Vendor-Unique FIS" रेजिस्टर
  *	@ap: ATA port to send a FIS
  *	@fis: fis to be sent
  *	@nwords: number of 32-bit words in the fis
  */
-static unsigned int mv_send_fis(struct ata_port *ap, u32 *fis, int nwords)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	u32 ifctl, old_ifctl, ifstat;
-	int i, timeout = 200, final_word = nwords - 1;
+अटल अचिन्हित पूर्णांक mv_send_fis(काष्ठा ata_port *ap, u32 *fis, पूर्णांक nwords)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	u32 अगरctl, old_अगरctl, अगरstat;
+	पूर्णांक i, समयout = 200, final_word = nwords - 1;
 
 	/* Initiate FIS transmission mode */
-	old_ifctl = readl(port_mmio + SATA_IFCTL);
-	ifctl = 0x100 | (old_ifctl & 0xf);
-	writelfl(ifctl, port_mmio + SATA_IFCTL);
+	old_अगरctl = पढ़ोl(port_mmio + SATA_IFCTL);
+	अगरctl = 0x100 | (old_अगरctl & 0xf);
+	ग_लिखोlfl(अगरctl, port_mmio + SATA_IFCTL);
 
-	/* Send all words of the FIS except for the final word */
-	for (i = 0; i < final_word; ++i)
-		writel(fis[i], port_mmio + VENDOR_UNIQUE_FIS);
+	/* Send all words of the FIS except क्रम the final word */
+	क्रम (i = 0; i < final_word; ++i)
+		ग_लिखोl(fis[i], port_mmio + VENDOR_UNIQUE_FIS);
 
 	/* Flag end-of-transmission, and then send the final word */
-	writelfl(ifctl | 0x200, port_mmio + SATA_IFCTL);
-	writelfl(fis[final_word], port_mmio + VENDOR_UNIQUE_FIS);
+	ग_लिखोlfl(अगरctl | 0x200, port_mmio + SATA_IFCTL);
+	ग_लिखोlfl(fis[final_word], port_mmio + VENDOR_UNIQUE_FIS);
 
 	/*
-	 * Wait for FIS transmission to complete.
+	 * Wait क्रम FIS transmission to complete.
 	 * This typically takes just a single iteration.
 	 */
-	do {
-		ifstat = readl(port_mmio + SATA_IFSTAT);
-	} while (!(ifstat & 0x1000) && --timeout);
+	करो अणु
+		अगरstat = पढ़ोl(port_mmio + SATA_IFSTAT);
+	पूर्ण जबतक (!(अगरstat & 0x1000) && --समयout);
 
 	/* Restore original port configuration */
-	writelfl(old_ifctl, port_mmio + SATA_IFCTL);
+	ग_लिखोlfl(old_अगरctl, port_mmio + SATA_IFCTL);
 
-	/* See if it worked */
-	if ((ifstat & 0x3000) != 0x1000) {
+	/* See अगर it worked */
+	अगर ((अगरstat & 0x3000) != 0x1000) अणु
 		ata_port_warn(ap, "%s transmission error, ifstat=%08x\n",
-			      __func__, ifstat);
-		return AC_ERR_OTHER;
-	}
-	return 0;
-}
+			      __func__, अगरstat);
+		वापस AC_ERR_OTHER;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  *	mv_qc_issue_fis - Issue a command directly as a FIS
  *	@qc: queued command to start
  *
- *	Note that the ATA shadow registers are not updated
+ *	Note that the ATA shaकरोw रेजिस्टरs are not updated
  *	after command issue, so the device will appear "READY"
- *	if polled, even while it is BUSY processing the command.
+ *	अगर polled, even जबतक it is BUSY processing the command.
  *
  *	So we use a status hook to fake ATA_BUSY until the drive changes state.
  *
- *	Note: we don't get updated shadow regs on *completion*
- *	of non-data commands. So avoid sending them via this function,
+ *	Note: we करोn't get updated shaकरोw regs on *completion*
+ *	of non-data commands. So aव्योम sending them via this function,
  *	as they will appear to have completed immediately.
  *
- *	GEN_IIE has special registers that we could get the result tf from,
- *	but earlier chipsets do not.  For now, we ignore those registers.
+ *	GEN_IIE has special रेजिस्टरs that we could get the result tf from,
+ *	but earlier chipsets करो not.  For now, we ignore those रेजिस्टरs.
  */
-static unsigned int mv_qc_issue_fis(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct mv_port_priv *pp = ap->private_data;
-	struct ata_link *link = qc->dev->link;
+अटल अचिन्हित पूर्णांक mv_qc_issue_fis(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	काष्ठा ata_link *link = qc->dev->link;
 	u32 fis[5];
-	int err = 0;
+	पूर्णांक err = 0;
 
-	ata_tf_to_fis(&qc->tf, link->pmp, 1, (void *)fis);
+	ata_tf_to_fis(&qc->tf, link->pmp, 1, (व्योम *)fis);
 	err = mv_send_fis(ap, fis, ARRAY_SIZE(fis));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (qc->tf.protocol) {
-	case ATAPI_PROT_PIO:
+	चयन (qc->tf.protocol) अणु
+	हाल ATAPI_PROT_PIO:
 		pp->pp_flags |= MV_PP_FLAG_FAKE_ATA_BUSY;
 		fallthrough;
-	case ATAPI_PROT_NODATA:
+	हाल ATAPI_PROT_NODATA:
 		ap->hsm_task_state = HSM_ST_FIRST;
-		break;
-	case ATA_PROT_PIO:
+		अवरोध;
+	हाल ATA_PROT_PIO:
 		pp->pp_flags |= MV_PP_FLAG_FAKE_ATA_BUSY;
-		if (qc->tf.flags & ATA_TFLAG_WRITE)
+		अगर (qc->tf.flags & ATA_TFLAG_WRITE)
 			ap->hsm_task_state = HSM_ST_FIRST;
-		else
+		अन्यथा
 			ap->hsm_task_state = HSM_ST;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ap->hsm_task_state = HSM_ST_LAST;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (qc->tf.flags & ATA_TFLAG_POLLING)
+	अगर (qc->tf.flags & ATA_TFLAG_POLLING)
 		ata_sff_queue_pio_task(link, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *      mv_qc_issue - Initiate a command to the host
  *      @qc: queued command to start
  *
  *      This routine simply redirects to the general purpose routine
- *      if command is not DMA.  Else, it sanity checks our local
+ *      अगर command is not DMA.  Else, it sanity checks our local
  *      caches of the request producer/consumer indices then enables
  *      DMA and bumps the request producer index.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static unsigned int mv_qc_issue(struct ata_queued_cmd *qc)
-{
-	static int limit_warnings = 10;
-	struct ata_port *ap = qc->ap;
-	void __iomem *port_mmio = mv_ap_base(ap);
-	struct mv_port_priv *pp = ap->private_data;
+अटल अचिन्हित पूर्णांक mv_qc_issue(काष्ठा ata_queued_cmd *qc)
+अणु
+	अटल पूर्णांक limit_warnings = 10;
+	काष्ठा ata_port *ap = qc->ap;
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 	u32 in_index;
-	unsigned int port_irqs;
+	अचिन्हित पूर्णांक port_irqs;
 
 	pp->pp_flags &= ~MV_PP_FLAG_FAKE_ATA_BUSY; /* paranoia */
 
-	switch (qc->tf.protocol) {
-	case ATA_PROT_DMA:
-		if (qc->tf.command == ATA_CMD_DSM) {
-			if (!ap->ops->bmdma_setup)  /* no bmdma on GEN_I */
-				return AC_ERR_OTHER;
-			break;  /* use bmdma for this */
-		}
+	चयन (qc->tf.protocol) अणु
+	हाल ATA_PROT_DMA:
+		अगर (qc->tf.command == ATA_CMD_DSM) अणु
+			अगर (!ap->ops->bmdma_setup)  /* no bmdma on GEN_I */
+				वापस AC_ERR_OTHER;
+			अवरोध;  /* use bmdma क्रम this */
+		पूर्ण
 		fallthrough;
-	case ATA_PROT_NCQ:
+	हाल ATA_PROT_NCQ:
 		mv_start_edma(ap, port_mmio, pp, qc->tf.protocol);
 		pp->req_idx = (pp->req_idx + 1) & MV_MAX_Q_DEPTH_MASK;
 		in_index = pp->req_idx << EDMA_REQ_Q_PTR_SHIFT;
 
-		/* Write the request in pointer to kick the EDMA to life */
-		writelfl((pp->crqb_dma & EDMA_REQ_Q_BASE_LO_MASK) | in_index,
+		/* Write the request in poपूर्णांकer to kick the EDMA to lअगरe */
+		ग_लिखोlfl((pp->crqb_dma & EDMA_REQ_Q_BASE_LO_MASK) | in_index,
 					port_mmio + EDMA_REQ_Q_IN_PTR);
-		return 0;
+		वापस 0;
 
-	case ATA_PROT_PIO:
+	हाल ATA_PROT_PIO:
 		/*
-		 * Errata SATA#16, SATA#24: warn if multiple DRQs expected.
+		 * Errata SATA#16, SATA#24: warn अगर multiple DRQs expected.
 		 *
 		 * Someday, we might implement special polling workarounds
-		 * for these, but it all seems rather unnecessary since we
-		 * normally use only DMA for commands which transfer more
+		 * क्रम these, but it all seems rather unnecessary since we
+		 * normally use only DMA क्रम commands which transfer more
 		 * than a single block of data.
 		 *
-		 * Much of the time, this could just work regardless.
-		 * So for now, just log the incident, and allow the attempt.
+		 * Much of the समय, this could just work regardless.
+		 * So क्रम now, just log the incident, and allow the attempt.
 		 */
-		if (limit_warnings > 0 && (qc->nbytes / qc->sect_size) > 1) {
+		अगर (limit_warnings > 0 && (qc->nbytes / qc->sect_size) > 1) अणु
 			--limit_warnings;
 			ata_link_warn(qc->dev->link, DRV_NAME
 				      ": attempting PIO w/multiple DRQ: "
 				      "this may fail due to h/w errata\n");
-		}
+		पूर्ण
 		fallthrough;
-	case ATA_PROT_NODATA:
-	case ATAPI_PROT_PIO:
-	case ATAPI_PROT_NODATA:
-		if (ap->flags & ATA_FLAG_PIO_POLLING)
+	हाल ATA_PROT_NODATA:
+	हाल ATAPI_PROT_PIO:
+	हाल ATAPI_PROT_NODATA:
+		अगर (ap->flags & ATA_FLAG_PIO_POLLING)
 			qc->tf.flags |= ATA_TFLAG_POLLING;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (qc->tf.flags & ATA_TFLAG_POLLING)
-		port_irqs = ERR_IRQ;	/* mask device interrupt when polling */
-	else
-		port_irqs = ERR_IRQ | DONE_IRQ;	/* unmask all interrupts */
+	अगर (qc->tf.flags & ATA_TFLAG_POLLING)
+		port_irqs = ERR_IRQ;	/* mask device पूर्णांकerrupt when polling */
+	अन्यथा
+		port_irqs = ERR_IRQ | DONE_IRQ;	/* unmask all पूर्णांकerrupts */
 
 	/*
 	 * We're about to send a non-EDMA capable command to the
 	 * port.  Turn off EDMA so there won't be problems accessing
-	 * shadow block, etc registers.
+	 * shaकरोw block, etc रेजिस्टरs.
 	 */
 	mv_stop_edma(ap);
 	mv_clear_and_enable_port_irqs(ap, mv_ap_base(ap), port_irqs);
 	mv_pmp_select(ap, qc->dev->link->pmp);
 
-	if (qc->tf.command == ATA_CMD_READ_LOG_EXT) {
-		struct mv_host_priv *hpriv = ap->host->private_data;
+	अगर (qc->tf.command == ATA_CMD_READ_LOG_EXT) अणु
+		काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
 		/*
-		 * Workaround for 88SX60x1 FEr SATA#25 (part 2).
+		 * Workaround क्रम 88SX60x1 FEr SATA#25 (part 2).
 		 *
 		 * After any NCQ error, the READ_LOG_EXT command
 		 * from libata-eh *must* use mv_qc_issue_fis().
 		 * Otherwise it might fail, due to chip errata.
 		 *
-		 * Rather than special-case it, we'll just *always*
-		 * use this method here for READ_LOG_EXT, making for
+		 * Rather than special-हाल it, we'll just *always*
+		 * use this method here क्रम READ_LOG_EXT, making क्रम
 		 * easier testing.
 		 */
-		if (IS_GEN_II(hpriv))
-			return mv_qc_issue_fis(qc);
-	}
-	return ata_bmdma_qc_issue(qc);
-}
+		अगर (IS_GEN_II(hpriv))
+			वापस mv_qc_issue_fis(qc);
+	पूर्ण
+	वापस ata_bmdma_qc_issue(qc);
+पूर्ण
 
-static struct ata_queued_cmd *mv_get_active_qc(struct ata_port *ap)
-{
-	struct mv_port_priv *pp = ap->private_data;
-	struct ata_queued_cmd *qc;
+अटल काष्ठा ata_queued_cmd *mv_get_active_qc(काष्ठा ata_port *ap)
+अणु
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	काष्ठा ata_queued_cmd *qc;
 
-	if (pp->pp_flags & MV_PP_FLAG_NCQ_EN)
-		return NULL;
+	अगर (pp->pp_flags & MV_PP_FLAG_NCQ_EN)
+		वापस शून्य;
 	qc = ata_qc_from_tag(ap, ap->link.active_tag);
-	if (qc && !(qc->tf.flags & ATA_TFLAG_POLLING))
-		return qc;
-	return NULL;
-}
+	अगर (qc && !(qc->tf.flags & ATA_TFLAG_POLLING))
+		वापस qc;
+	वापस शून्य;
+पूर्ण
 
-static void mv_pmp_error_handler(struct ata_port *ap)
-{
-	unsigned int pmp, pmp_map;
-	struct mv_port_priv *pp = ap->private_data;
+अटल व्योम mv_pmp_error_handler(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित पूर्णांक pmp, pmp_map;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 
-	if (pp->pp_flags & MV_PP_FLAG_DELAYED_EH) {
+	अगर (pp->pp_flags & MV_PP_FLAG_DELAYED_EH) अणु
 		/*
-		 * Perform NCQ error analysis on failed PMPs
-		 * before we freeze the port entirely.
+		 * Perक्रमm NCQ error analysis on failed PMPs
+		 * beक्रमe we मुक्तze the port entirely.
 		 *
 		 * The failed PMPs are marked earlier by mv_pmp_eh_prep().
 		 */
 		pmp_map = pp->delayed_eh_pmp_map;
 		pp->pp_flags &= ~MV_PP_FLAG_DELAYED_EH;
-		for (pmp = 0; pmp_map != 0; pmp++) {
-			unsigned int this_pmp = (1 << pmp);
-			if (pmp_map & this_pmp) {
-				struct ata_link *link = &ap->pmp_link[pmp];
+		क्रम (pmp = 0; pmp_map != 0; pmp++) अणु
+			अचिन्हित पूर्णांक this_pmp = (1 << pmp);
+			अगर (pmp_map & this_pmp) अणु
+				काष्ठा ata_link *link = &ap->pmp_link[pmp];
 				pmp_map &= ~this_pmp;
 				ata_eh_analyze_ncq_error(link);
-			}
-		}
-		ata_port_freeze(ap);
-	}
+			पूर्ण
+		पूर्ण
+		ata_port_मुक्तze(ap);
+	पूर्ण
 	sata_pmp_error_handler(ap);
-}
+पूर्ण
 
-static unsigned int mv_get_err_pmp_map(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
+अटल अचिन्हित पूर्णांक mv_get_err_pmp_map(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
 
-	return readl(port_mmio + SATA_TESTCTL) >> 16;
-}
+	वापस पढ़ोl(port_mmio + SATA_TESTCTL) >> 16;
+पूर्ण
 
-static void mv_pmp_eh_prep(struct ata_port *ap, unsigned int pmp_map)
-{
-	unsigned int pmp;
+अटल व्योम mv_pmp_eh_prep(काष्ठा ata_port *ap, अचिन्हित पूर्णांक pmp_map)
+अणु
+	अचिन्हित पूर्णांक pmp;
 
 	/*
-	 * Initialize EH info for PMPs which saw device errors
+	 * Initialize EH info क्रम PMPs which saw device errors
 	 */
-	for (pmp = 0; pmp_map != 0; pmp++) {
-		unsigned int this_pmp = (1 << pmp);
-		if (pmp_map & this_pmp) {
-			struct ata_link *link = &ap->pmp_link[pmp];
-			struct ata_eh_info *ehi = &link->eh_info;
+	क्रम (pmp = 0; pmp_map != 0; pmp++) अणु
+		अचिन्हित पूर्णांक this_pmp = (1 << pmp);
+		अगर (pmp_map & this_pmp) अणु
+			काष्ठा ata_link *link = &ap->pmp_link[pmp];
+			काष्ठा ata_eh_info *ehi = &link->eh_info;
 
 			pmp_map &= ~this_pmp;
 			ata_ehi_clear_desc(ehi);
 			ata_ehi_push_desc(ehi, "dev err");
 			ehi->err_mask |= AC_ERR_DEV;
 			ehi->action |= ATA_EH_RESET;
-			ata_link_abort(link);
-		}
-	}
-}
+			ata_link_पात(link);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int mv_req_q_empty(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
+अटल पूर्णांक mv_req_q_empty(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
 	u32 in_ptr, out_ptr;
 
-	in_ptr  = (readl(port_mmio + EDMA_REQ_Q_IN_PTR)
+	in_ptr  = (पढ़ोl(port_mmio + EDMA_REQ_Q_IN_PTR)
 			>> EDMA_REQ_Q_PTR_SHIFT) & MV_MAX_Q_DEPTH_MASK;
-	out_ptr = (readl(port_mmio + EDMA_REQ_Q_OUT_PTR)
+	out_ptr = (पढ़ोl(port_mmio + EDMA_REQ_Q_OUT_PTR)
 			>> EDMA_REQ_Q_PTR_SHIFT) & MV_MAX_Q_DEPTH_MASK;
-	return (in_ptr == out_ptr);	/* 1 == queue_is_empty */
-}
+	वापस (in_ptr == out_ptr);	/* 1 == queue_is_empty */
+पूर्ण
 
-static int mv_handle_fbs_ncq_dev_err(struct ata_port *ap)
-{
-	struct mv_port_priv *pp = ap->private_data;
-	int failed_links;
-	unsigned int old_map, new_map;
+अटल पूर्णांक mv_handle_fbs_ncq_dev_err(काष्ठा ata_port *ap)
+अणु
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	पूर्णांक failed_links;
+	अचिन्हित पूर्णांक old_map, new_map;
 
 	/*
 	 * Device error during FBS+NCQ operation:
 	 *
 	 * Set a port flag to prevent further I/O being enqueued.
 	 * Leave the EDMA running to drain outstanding commands from this port.
-	 * Perform the post-mortem/EH only when all responses are complete.
+	 * Perक्रमm the post-mortem/EH only when all responses are complete.
 	 * Follow recovery sequence from 6042/7042 datasheet (7.3.15.4.2.2).
 	 */
-	if (!(pp->pp_flags & MV_PP_FLAG_DELAYED_EH)) {
+	अगर (!(pp->pp_flags & MV_PP_FLAG_DELAYED_EH)) अणु
 		pp->pp_flags |= MV_PP_FLAG_DELAYED_EH;
 		pp->delayed_eh_pmp_map = 0;
-	}
+	पूर्ण
 	old_map = pp->delayed_eh_pmp_map;
 	new_map = old_map | mv_get_err_pmp_map(ap);
 
-	if (old_map != new_map) {
+	अगर (old_map != new_map) अणु
 		pp->delayed_eh_pmp_map = new_map;
 		mv_pmp_eh_prep(ap, new_map & ~old_map);
-	}
+	पूर्ण
 	failed_links = hweight16(new_map);
 
 	ata_port_info(ap,
@@ -2533,19 +2534,19 @@ static int mv_handle_fbs_ncq_dev_err(struct ata_port *ap)
 		      ap->qc_active, failed_links,
 		      ap->nr_active_links);
 
-	if (ap->nr_active_links <= failed_links && mv_req_q_empty(ap)) {
+	अगर (ap->nr_active_links <= failed_links && mv_req_q_empty(ap)) अणु
 		mv_process_crpb_entries(ap, pp);
 		mv_stop_edma(ap);
-		mv_eh_freeze(ap);
+		mv_eh_मुक्तze(ap);
 		ata_port_info(ap, "%s: done\n", __func__);
-		return 1;	/* handled */
-	}
+		वापस 1;	/* handled */
+	पूर्ण
 	ata_port_info(ap, "%s: waiting\n", __func__);
-	return 1;	/* handled */
-}
+	वापस 1;	/* handled */
+पूर्ण
 
-static int mv_handle_fbs_non_ncq_dev_err(struct ata_port *ap)
-{
+अटल पूर्णांक mv_handle_fbs_non_ncq_dev_err(काष्ठा ata_port *ap)
+अणु
 	/*
 	 * Possible future enhancement:
 	 *
@@ -2554,223 +2555,223 @@ static int mv_handle_fbs_non_ncq_dev_err(struct ata_port *ap)
 	 *
 	 * Device error during FBS+non-NCQ operation:
 	 *
-	 * We need to snapshot the shadow registers for each failed command.
+	 * We need to snapshot the shaकरोw रेजिस्टरs क्रम each failed command.
 	 * Follow recovery sequence from 6042/7042 datasheet (7.3.15.4.2.3).
 	 */
-	return 0;	/* not handled */
-}
+	वापस 0;	/* not handled */
+पूर्ण
 
-static int mv_handle_dev_err(struct ata_port *ap, u32 edma_err_cause)
-{
-	struct mv_port_priv *pp = ap->private_data;
+अटल पूर्णांक mv_handle_dev_err(काष्ठा ata_port *ap, u32 edma_err_cause)
+अणु
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
 
-	if (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN))
-		return 0;	/* EDMA was not active: not handled */
-	if (!(pp->pp_flags & MV_PP_FLAG_FBS_EN))
-		return 0;	/* FBS was not active: not handled */
+	अगर (!(pp->pp_flags & MV_PP_FLAG_EDMA_EN))
+		वापस 0;	/* EDMA was not active: not handled */
+	अगर (!(pp->pp_flags & MV_PP_FLAG_FBS_EN))
+		वापस 0;	/* FBS was not active: not handled */
 
-	if (!(edma_err_cause & EDMA_ERR_DEV))
-		return 0;	/* non DEV error: not handled */
+	अगर (!(edma_err_cause & EDMA_ERR_DEV))
+		वापस 0;	/* non DEV error: not handled */
 	edma_err_cause &= ~EDMA_ERR_IRQ_TRANSIENT;
-	if (edma_err_cause & ~(EDMA_ERR_DEV | EDMA_ERR_SELF_DIS))
-		return 0;	/* other problems: not handled */
+	अगर (edma_err_cause & ~(EDMA_ERR_DEV | EDMA_ERR_SELF_DIS))
+		वापस 0;	/* other problems: not handled */
 
-	if (pp->pp_flags & MV_PP_FLAG_NCQ_EN) {
+	अगर (pp->pp_flags & MV_PP_FLAG_NCQ_EN) अणु
 		/*
-		 * EDMA should NOT have self-disabled for this case.
-		 * If it did, then something is wrong elsewhere,
+		 * EDMA should NOT have self-disabled क्रम this हाल.
+		 * If it did, then something is wrong अन्यथाwhere,
 		 * and we cannot handle it here.
 		 */
-		if (edma_err_cause & EDMA_ERR_SELF_DIS) {
+		अगर (edma_err_cause & EDMA_ERR_SELF_DIS) अणु
 			ata_port_warn(ap, "%s: err_cause=0x%x pp_flags=0x%x\n",
 				      __func__, edma_err_cause, pp->pp_flags);
-			return 0; /* not handled */
-		}
-		return mv_handle_fbs_ncq_dev_err(ap);
-	} else {
+			वापस 0; /* not handled */
+		पूर्ण
+		वापस mv_handle_fbs_ncq_dev_err(ap);
+	पूर्ण अन्यथा अणु
 		/*
-		 * EDMA should have self-disabled for this case.
-		 * If it did not, then something is wrong elsewhere,
+		 * EDMA should have self-disabled क्रम this हाल.
+		 * If it did not, then something is wrong अन्यथाwhere,
 		 * and we cannot handle it here.
 		 */
-		if (!(edma_err_cause & EDMA_ERR_SELF_DIS)) {
+		अगर (!(edma_err_cause & EDMA_ERR_SELF_DIS)) अणु
 			ata_port_warn(ap, "%s: err_cause=0x%x pp_flags=0x%x\n",
 				      __func__, edma_err_cause, pp->pp_flags);
-			return 0; /* not handled */
-		}
-		return mv_handle_fbs_non_ncq_dev_err(ap);
-	}
-	return 0;	/* not handled */
-}
+			वापस 0; /* not handled */
+		पूर्ण
+		वापस mv_handle_fbs_non_ncq_dev_err(ap);
+	पूर्ण
+	वापस 0;	/* not handled */
+पूर्ण
 
-static void mv_unexpected_intr(struct ata_port *ap, int edma_was_enabled)
-{
-	struct ata_eh_info *ehi = &ap->link.eh_info;
-	char *when = "idle";
+अटल व्योम mv_unexpected_पूर्णांकr(काष्ठा ata_port *ap, पूर्णांक edma_was_enabled)
+अणु
+	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
+	अक्षर *when = "idle";
 
 	ata_ehi_clear_desc(ehi);
-	if (edma_was_enabled) {
+	अगर (edma_was_enabled) अणु
 		when = "EDMA enabled";
-	} else {
-		struct ata_queued_cmd *qc = ata_qc_from_tag(ap, ap->link.active_tag);
-		if (qc && (qc->tf.flags & ATA_TFLAG_POLLING))
+	पूर्ण अन्यथा अणु
+		काष्ठा ata_queued_cmd *qc = ata_qc_from_tag(ap, ap->link.active_tag);
+		अगर (qc && (qc->tf.flags & ATA_TFLAG_POLLING))
 			when = "polling";
-	}
+	पूर्ण
 	ata_ehi_push_desc(ehi, "unexpected device interrupt while %s", when);
 	ehi->err_mask |= AC_ERR_OTHER;
 	ehi->action   |= ATA_EH_RESET;
-	ata_port_freeze(ap);
-}
+	ata_port_मुक्तze(ap);
+पूर्ण
 
 /**
- *      mv_err_intr - Handle error interrupts on the port
+ *      mv_err_पूर्णांकr - Handle error पूर्णांकerrupts on the port
  *      @ap: ATA channel to manipulate
  *
- *      Most cases require a full reset of the chip's state machine,
- *      which also performs a COMRESET.
- *      Also, if the port disabled DMA, update our cached copy to match.
+ *      Most हालs require a full reset of the chip's state machine,
+ *      which also perक्रमms a COMRESET.
+ *      Also, अगर the port disabled DMA, update our cached copy to match.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static void mv_err_intr(struct ata_port *ap)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	u32 edma_err_cause, eh_freeze_mask, serr = 0;
+अटल व्योम mv_err_पूर्णांकr(काष्ठा ata_port *ap)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	u32 edma_err_cause, eh_मुक्तze_mask, serr = 0;
 	u32 fis_cause = 0;
-	struct mv_port_priv *pp = ap->private_data;
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	unsigned int action = 0, err_mask = 0;
-	struct ata_eh_info *ehi = &ap->link.eh_info;
-	struct ata_queued_cmd *qc;
-	int abort = 0;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	अचिन्हित पूर्णांक action = 0, err_mask = 0;
+	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
+	काष्ठा ata_queued_cmd *qc;
+	पूर्णांक पात = 0;
 
 	/*
 	 * Read and clear the SError and err_cause bits.
-	 * For GenIIe, if EDMA_ERR_TRANS_IRQ_7 is set, we also must read/clear
-	 * the FIS_IRQ_CAUSE register before clearing edma_err_cause.
+	 * For GenIIe, अगर EDMA_ERR_TRANS_IRQ_7 is set, we also must पढ़ो/clear
+	 * the FIS_IRQ_CAUSE रेजिस्टर beक्रमe clearing edma_err_cause.
 	 */
-	sata_scr_read(&ap->link, SCR_ERROR, &serr);
-	sata_scr_write_flush(&ap->link, SCR_ERROR, serr);
+	sata_scr_पढ़ो(&ap->link, SCR_ERROR, &serr);
+	sata_scr_ग_लिखो_flush(&ap->link, SCR_ERROR, serr);
 
-	edma_err_cause = readl(port_mmio + EDMA_ERR_IRQ_CAUSE);
-	if (IS_GEN_IIE(hpriv) && (edma_err_cause & EDMA_ERR_TRANS_IRQ_7)) {
-		fis_cause = readl(port_mmio + FIS_IRQ_CAUSE);
-		writelfl(~fis_cause, port_mmio + FIS_IRQ_CAUSE);
-	}
-	writelfl(~edma_err_cause, port_mmio + EDMA_ERR_IRQ_CAUSE);
+	edma_err_cause = पढ़ोl(port_mmio + EDMA_ERR_IRQ_CAUSE);
+	अगर (IS_GEN_IIE(hpriv) && (edma_err_cause & EDMA_ERR_TRANS_IRQ_7)) अणु
+		fis_cause = पढ़ोl(port_mmio + FIS_IRQ_CAUSE);
+		ग_लिखोlfl(~fis_cause, port_mmio + FIS_IRQ_CAUSE);
+	पूर्ण
+	ग_लिखोlfl(~edma_err_cause, port_mmio + EDMA_ERR_IRQ_CAUSE);
 
-	if (edma_err_cause & EDMA_ERR_DEV) {
+	अगर (edma_err_cause & EDMA_ERR_DEV) अणु
 		/*
-		 * Device errors during FIS-based switching operation
+		 * Device errors during FIS-based चयनing operation
 		 * require special handling.
 		 */
-		if (mv_handle_dev_err(ap, edma_err_cause))
-			return;
-	}
+		अगर (mv_handle_dev_err(ap, edma_err_cause))
+			वापस;
+	पूर्ण
 
 	qc = mv_get_active_qc(ap);
 	ata_ehi_clear_desc(ehi);
 	ata_ehi_push_desc(ehi, "edma_err_cause=%08x pp_flags=%08x",
 			  edma_err_cause, pp->pp_flags);
 
-	if (IS_GEN_IIE(hpriv) && (edma_err_cause & EDMA_ERR_TRANS_IRQ_7)) {
+	अगर (IS_GEN_IIE(hpriv) && (edma_err_cause & EDMA_ERR_TRANS_IRQ_7)) अणु
 		ata_ehi_push_desc(ehi, "fis_cause=%08x", fis_cause);
-		if (fis_cause & FIS_IRQ_CAUSE_AN) {
+		अगर (fis_cause & FIS_IRQ_CAUSE_AN) अणु
 			u32 ec = edma_err_cause &
 			       ~(EDMA_ERR_TRANS_IRQ_7 | EDMA_ERR_IRQ_TRANSIENT);
-			sata_async_notification(ap);
-			if (!ec)
-				return; /* Just an AN; no need for the nukes */
+			sata_async_notअगरication(ap);
+			अगर (!ec)
+				वापस; /* Just an AN; no need क्रम the nukes */
 			ata_ehi_push_desc(ehi, "SDB notify");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * All generations share these EDMA error cause bits:
 	 */
-	if (edma_err_cause & EDMA_ERR_DEV) {
+	अगर (edma_err_cause & EDMA_ERR_DEV) अणु
 		err_mask |= AC_ERR_DEV;
 		action |= ATA_EH_RESET;
 		ata_ehi_push_desc(ehi, "dev error");
-	}
-	if (edma_err_cause & (EDMA_ERR_D_PAR | EDMA_ERR_PRD_PAR |
+	पूर्ण
+	अगर (edma_err_cause & (EDMA_ERR_D_PAR | EDMA_ERR_PRD_PAR |
 			EDMA_ERR_CRQB_PAR | EDMA_ERR_CRPB_PAR |
-			EDMA_ERR_INTRL_PAR)) {
+			EDMA_ERR_INTRL_PAR)) अणु
 		err_mask |= AC_ERR_ATA_BUS;
 		action |= ATA_EH_RESET;
 		ata_ehi_push_desc(ehi, "parity error");
-	}
-	if (edma_err_cause & (EDMA_ERR_DEV_DCON | EDMA_ERR_DEV_CON)) {
+	पूर्ण
+	अगर (edma_err_cause & (EDMA_ERR_DEV_DCON | EDMA_ERR_DEV_CON)) अणु
 		ata_ehi_hotplugged(ehi);
 		ata_ehi_push_desc(ehi, edma_err_cause & EDMA_ERR_DEV_DCON ?
 			"dev disconnect" : "dev connect");
 		action |= ATA_EH_RESET;
-	}
+	पूर्ण
 
 	/*
-	 * Gen-I has a different SELF_DIS bit,
-	 * different FREEZE bits, and no SERR bit:
+	 * Gen-I has a dअगरferent SELF_DIS bit,
+	 * dअगरferent FREEZE bits, and no SERR bit:
 	 */
-	if (IS_GEN_I(hpriv)) {
-		eh_freeze_mask = EDMA_EH_FREEZE_5;
-		if (edma_err_cause & EDMA_ERR_SELF_DIS_5) {
+	अगर (IS_GEN_I(hpriv)) अणु
+		eh_मुक्तze_mask = EDMA_EH_FREEZE_5;
+		अगर (edma_err_cause & EDMA_ERR_SELF_DIS_5) अणु
 			pp->pp_flags &= ~MV_PP_FLAG_EDMA_EN;
 			ata_ehi_push_desc(ehi, "EDMA self-disable");
-		}
-	} else {
-		eh_freeze_mask = EDMA_EH_FREEZE;
-		if (edma_err_cause & EDMA_ERR_SELF_DIS) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		eh_मुक्तze_mask = EDMA_EH_FREEZE;
+		अगर (edma_err_cause & EDMA_ERR_SELF_DIS) अणु
 			pp->pp_flags &= ~MV_PP_FLAG_EDMA_EN;
 			ata_ehi_push_desc(ehi, "EDMA self-disable");
-		}
-		if (edma_err_cause & EDMA_ERR_SERR) {
+		पूर्ण
+		अगर (edma_err_cause & EDMA_ERR_SERR) अणु
 			ata_ehi_push_desc(ehi, "SError=%08x", serr);
 			err_mask |= AC_ERR_ATA_BUS;
 			action |= ATA_EH_RESET;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!err_mask) {
+	अगर (!err_mask) अणु
 		err_mask = AC_ERR_OTHER;
 		action |= ATA_EH_RESET;
-	}
+	पूर्ण
 
 	ehi->serror |= serr;
 	ehi->action |= action;
 
-	if (qc)
+	अगर (qc)
 		qc->err_mask |= err_mask;
-	else
+	अन्यथा
 		ehi->err_mask |= err_mask;
 
-	if (err_mask == AC_ERR_DEV) {
+	अगर (err_mask == AC_ERR_DEV) अणु
 		/*
-		 * Cannot do ata_port_freeze() here,
-		 * because it would kill PIO access,
-		 * which is needed for further diagnosis.
+		 * Cannot करो ata_port_मुक्तze() here,
+		 * because it would समाप्त PIO access,
+		 * which is needed क्रम further diagnosis.
 		 */
-		mv_eh_freeze(ap);
-		abort = 1;
-	} else if (edma_err_cause & eh_freeze_mask) {
+		mv_eh_मुक्तze(ap);
+		पात = 1;
+	पूर्ण अन्यथा अगर (edma_err_cause & eh_मुक्तze_mask) अणु
 		/*
-		 * Note to self: ata_port_freeze() calls ata_port_abort()
+		 * Note to self: ata_port_मुक्तze() calls ata_port_पात()
 		 */
-		ata_port_freeze(ap);
-	} else {
-		abort = 1;
-	}
+		ata_port_मुक्तze(ap);
+	पूर्ण अन्यथा अणु
+		पात = 1;
+	पूर्ण
 
-	if (abort) {
-		if (qc)
-			ata_link_abort(qc->dev->link);
-		else
-			ata_port_abort(ap);
-	}
-}
+	अगर (पात) अणु
+		अगर (qc)
+			ata_link_पात(qc->dev->link);
+		अन्यथा
+			ata_port_पात(ap);
+	पूर्ण
+पूर्ण
 
-static bool mv_process_crpb_response(struct ata_port *ap,
-		struct mv_crpb *response, unsigned int tag, int ncq_enabled)
-{
+अटल bool mv_process_crpb_response(काष्ठा ata_port *ap,
+		काष्ठा mv_crpb *response, अचिन्हित पूर्णांक tag, पूर्णांक ncq_enabled)
+अणु
 	u8 ata_status;
 	u16 edma_status = le16_to_cpu(response->flags);
 
@@ -2779,392 +2780,392 @@ static bool mv_process_crpb_response(struct ata_port *ap,
 	 *   LSB is from EDMA_ERR_IRQ_CAUSE (non-NCQ only).
 	 *   MSB is saved ATA status from command completion.
 	 */
-	if (!ncq_enabled) {
+	अगर (!ncq_enabled) अणु
 		u8 err_cause = edma_status & 0xff & ~EDMA_ERR_DEV;
-		if (err_cause) {
+		अगर (err_cause) अणु
 			/*
 			 * Error will be seen/handled by
-			 * mv_err_intr().  So do nothing at all here.
+			 * mv_err_पूर्णांकr().  So करो nothing at all here.
 			 */
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 	ata_status = edma_status >> CRPB_FLAG_STATUS_SHIFT;
-	if (!ac_err_mask(ata_status))
-		return true;
-	/* else: leave it for mv_err_intr() */
-	return false;
-}
+	अगर (!ac_err_mask(ata_status))
+		वापस true;
+	/* अन्यथा: leave it क्रम mv_err_पूर्णांकr() */
+	वापस false;
+पूर्ण
 
-static void mv_process_crpb_entries(struct ata_port *ap, struct mv_port_priv *pp)
-{
-	void __iomem *port_mmio = mv_ap_base(ap);
-	struct mv_host_priv *hpriv = ap->host->private_data;
+अटल व्योम mv_process_crpb_entries(काष्ठा ata_port *ap, काष्ठा mv_port_priv *pp)
+अणु
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
 	u32 in_index;
-	bool work_done = false;
-	u32 done_mask = 0;
-	int ncq_enabled = (pp->pp_flags & MV_PP_FLAG_NCQ_EN);
+	bool work_करोne = false;
+	u32 करोne_mask = 0;
+	पूर्णांक ncq_enabled = (pp->pp_flags & MV_PP_FLAG_NCQ_EN);
 
 	/* Get the hardware queue position index */
-	in_index = (readl(port_mmio + EDMA_RSP_Q_IN_PTR)
+	in_index = (पढ़ोl(port_mmio + EDMA_RSP_Q_IN_PTR)
 			>> EDMA_RSP_Q_PTR_SHIFT) & MV_MAX_Q_DEPTH_MASK;
 
-	/* Process new responses from since the last time we looked */
-	while (in_index != pp->resp_idx) {
-		unsigned int tag;
-		struct mv_crpb *response = &pp->crpb[pp->resp_idx];
+	/* Process new responses from since the last समय we looked */
+	जबतक (in_index != pp->resp_idx) अणु
+		अचिन्हित पूर्णांक tag;
+		काष्ठा mv_crpb *response = &pp->crpb[pp->resp_idx];
 
 		pp->resp_idx = (pp->resp_idx + 1) & MV_MAX_Q_DEPTH_MASK;
 
-		if (IS_GEN_I(hpriv)) {
-			/* 50xx: no NCQ, only one command active at a time */
+		अगर (IS_GEN_I(hpriv)) अणु
+			/* 50xx: no NCQ, only one command active at a समय */
 			tag = ap->link.active_tag;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Gen II/IIE: get command tag from CRPB entry */
 			tag = le16_to_cpu(response->id) & 0x1f;
-		}
-		if (mv_process_crpb_response(ap, response, tag, ncq_enabled))
-			done_mask |= 1 << tag;
-		work_done = true;
-	}
+		पूर्ण
+		अगर (mv_process_crpb_response(ap, response, tag, ncq_enabled))
+			करोne_mask |= 1 << tag;
+		work_करोne = true;
+	पूर्ण
 
-	if (work_done) {
-		ata_qc_complete_multiple(ap, ata_qc_get_active(ap) ^ done_mask);
+	अगर (work_करोne) अणु
+		ata_qc_complete_multiple(ap, ata_qc_get_active(ap) ^ करोne_mask);
 
 		/* Update the software queue position index in hardware */
-		writelfl((pp->crpb_dma & EDMA_RSP_Q_BASE_LO_MASK) |
+		ग_लिखोlfl((pp->crpb_dma & EDMA_RSP_Q_BASE_LO_MASK) |
 			 (pp->resp_idx << EDMA_RSP_Q_PTR_SHIFT),
 			 port_mmio + EDMA_RSP_Q_OUT_PTR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mv_port_intr(struct ata_port *ap, u32 port_cause)
-{
-	struct mv_port_priv *pp;
-	int edma_was_enabled;
+अटल व्योम mv_port_पूर्णांकr(काष्ठा ata_port *ap, u32 port_cause)
+अणु
+	काष्ठा mv_port_priv *pp;
+	पूर्णांक edma_was_enabled;
 
 	/*
 	 * Grab a snapshot of the EDMA_EN flag setting,
-	 * so that we have a consistent view for this port,
-	 * even if something we call of our routines changes it.
+	 * so that we have a consistent view क्रम this port,
+	 * even अगर something we call of our routines changes it.
 	 */
-	pp = ap->private_data;
+	pp = ap->निजी_data;
 	edma_was_enabled = (pp->pp_flags & MV_PP_FLAG_EDMA_EN);
 	/*
-	 * Process completed CRPB response(s) before other events.
+	 * Process completed CRPB response(s) beक्रमe other events.
 	 */
-	if (edma_was_enabled && (port_cause & DONE_IRQ)) {
+	अगर (edma_was_enabled && (port_cause & DONE_IRQ)) अणु
 		mv_process_crpb_entries(ap, pp);
-		if (pp->pp_flags & MV_PP_FLAG_DELAYED_EH)
+		अगर (pp->pp_flags & MV_PP_FLAG_DELAYED_EH)
 			mv_handle_fbs_ncq_dev_err(ap);
-	}
+	पूर्ण
 	/*
-	 * Handle chip-reported errors, or continue on to handle PIO.
+	 * Handle chip-reported errors, or जारी on to handle PIO.
 	 */
-	if (unlikely(port_cause & ERR_IRQ)) {
-		mv_err_intr(ap);
-	} else if (!edma_was_enabled) {
-		struct ata_queued_cmd *qc = mv_get_active_qc(ap);
-		if (qc)
-			ata_bmdma_port_intr(ap, qc);
-		else
-			mv_unexpected_intr(ap, edma_was_enabled);
-	}
-}
+	अगर (unlikely(port_cause & ERR_IRQ)) अणु
+		mv_err_पूर्णांकr(ap);
+	पूर्ण अन्यथा अगर (!edma_was_enabled) अणु
+		काष्ठा ata_queued_cmd *qc = mv_get_active_qc(ap);
+		अगर (qc)
+			ata_bmdma_port_पूर्णांकr(ap, qc);
+		अन्यथा
+			mv_unexpected_पूर्णांकr(ap, edma_was_enabled);
+	पूर्ण
+पूर्ण
 
 /**
- *      mv_host_intr - Handle all interrupts on the given host controller
- *      @host: host specific structure
- *      @main_irq_cause: Main interrupt cause register for the chip.
+ *      mv_host_पूर्णांकr - Handle all पूर्णांकerrupts on the given host controller
+ *      @host: host specअगरic काष्ठाure
+ *      @मुख्य_irq_cause: Main पूर्णांकerrupt cause रेजिस्टर क्रम the chip.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_host_intr(struct ata_host *host, u32 main_irq_cause)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base, *hc_mmio;
-	unsigned int handled = 0, port;
+अटल पूर्णांक mv_host_पूर्णांकr(काष्ठा ata_host *host, u32 मुख्य_irq_cause)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base, *hc_mmio;
+	अचिन्हित पूर्णांक handled = 0, port;
 
-	/* If asserted, clear the "all ports" IRQ coalescing bit */
-	if (main_irq_cause & ALL_PORTS_COAL_DONE)
-		writel(~ALL_PORTS_COAL_IRQ, mmio + IRQ_COAL_CAUSE);
+	/* If निश्चितed, clear the "all ports" IRQ coalescing bit */
+	अगर (मुख्य_irq_cause & ALL_PORTS_COAL_DONE)
+		ग_लिखोl(~ALL_PORTS_COAL_IRQ, mmio + IRQ_COAL_CAUSE);
 
-	for (port = 0; port < hpriv->n_ports; port++) {
-		struct ata_port *ap = host->ports[port];
-		unsigned int p, shift, hardport, port_cause;
+	क्रम (port = 0; port < hpriv->n_ports; port++) अणु
+		काष्ठा ata_port *ap = host->ports[port];
+		अचिन्हित पूर्णांक p, shअगरt, hardport, port_cause;
 
-		MV_PORT_TO_SHIFT_AND_HARDPORT(port, shift, hardport);
+		MV_PORT_TO_SHIFT_AND_HARDPORT(port, shअगरt, hardport);
 		/*
-		 * Each hc within the host has its own hc_irq_cause register,
-		 * where the interrupting ports bits get ack'd.
+		 * Each hc within the host has its own hc_irq_cause रेजिस्टर,
+		 * where the पूर्णांकerrupting ports bits get ack'd.
 		 */
-		if (hardport == 0) {	/* first port on this hc ? */
-			u32 hc_cause = (main_irq_cause >> shift) & HC0_IRQ_PEND;
+		अगर (hardport == 0) अणु	/* first port on this hc ? */
+			u32 hc_cause = (मुख्य_irq_cause >> shअगरt) & HC0_IRQ_PEND;
 			u32 port_mask, ack_irqs;
 			/*
-			 * Skip this entire hc if nothing pending for any ports
+			 * Skip this entire hc अगर nothing pending क्रम any ports
 			 */
-			if (!hc_cause) {
+			अगर (!hc_cause) अणु
 				port += MV_PORTS_PER_HC - 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			/*
-			 * We don't need/want to read the hc_irq_cause register,
-			 * because doing so hurts performance, and
-			 * main_irq_cause already gives us everything we need.
+			 * We करोn't need/want to पढ़ो the hc_irq_cause रेजिस्टर,
+			 * because करोing so hurts perक्रमmance, and
+			 * मुख्य_irq_cause alपढ़ोy gives us everything we need.
 			 *
-			 * But we do have to *write* to the hc_irq_cause to ack
-			 * the ports that we are handling this time through.
+			 * But we करो have to *ग_लिखो* to the hc_irq_cause to ack
+			 * the ports that we are handling this समय through.
 			 *
-			 * This requires that we create a bitmap for those
-			 * ports which interrupted us, and use that bitmap
+			 * This requires that we create a biपंचांगap क्रम those
+			 * ports which पूर्णांकerrupted us, and use that biपंचांगap
 			 * to ack (only) those ports via hc_irq_cause.
 			 */
 			ack_irqs = 0;
-			if (hc_cause & PORTS_0_3_COAL_DONE)
+			अगर (hc_cause & PORTS_0_3_COAL_DONE)
 				ack_irqs = HC_COAL_IRQ;
-			for (p = 0; p < MV_PORTS_PER_HC; ++p) {
-				if ((port + p) >= hpriv->n_ports)
-					break;
+			क्रम (p = 0; p < MV_PORTS_PER_HC; ++p) अणु
+				अगर ((port + p) >= hpriv->n_ports)
+					अवरोध;
 				port_mask = (DONE_IRQ | ERR_IRQ) << (p * 2);
-				if (hc_cause & port_mask)
+				अगर (hc_cause & port_mask)
 					ack_irqs |= (DMA_IRQ | DEV_IRQ) << p;
-			}
+			पूर्ण
 			hc_mmio = mv_hc_base_from_port(mmio, port);
-			writelfl(~ack_irqs, hc_mmio + HC_IRQ_CAUSE);
+			ग_लिखोlfl(~ack_irqs, hc_mmio + HC_IRQ_CAUSE);
 			handled = 1;
-		}
+		पूर्ण
 		/*
-		 * Handle interrupts signalled for this port:
+		 * Handle पूर्णांकerrupts संकेतled क्रम this port:
 		 */
-		port_cause = (main_irq_cause >> shift) & (DONE_IRQ | ERR_IRQ);
-		if (port_cause)
-			mv_port_intr(ap, port_cause);
-	}
-	return handled;
-}
+		port_cause = (मुख्य_irq_cause >> shअगरt) & (DONE_IRQ | ERR_IRQ);
+		अगर (port_cause)
+			mv_port_पूर्णांकr(ap, port_cause);
+	पूर्ण
+	वापस handled;
+पूर्ण
 
-static int mv_pci_error(struct ata_host *host, void __iomem *mmio)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	struct ata_port *ap;
-	struct ata_queued_cmd *qc;
-	struct ata_eh_info *ehi;
-	unsigned int i, err_mask, printed = 0;
+अटल पूर्णांक mv_pci_error(काष्ठा ata_host *host, व्योम __iomem *mmio)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	काष्ठा ata_port *ap;
+	काष्ठा ata_queued_cmd *qc;
+	काष्ठा ata_eh_info *ehi;
+	अचिन्हित पूर्णांक i, err_mask, prपूर्णांकed = 0;
 	u32 err_cause;
 
-	err_cause = readl(mmio + hpriv->irq_cause_offset);
+	err_cause = पढ़ोl(mmio + hpriv->irq_cause_offset);
 
 	dev_err(host->dev, "PCI ERROR; PCI IRQ cause=0x%08x\n", err_cause);
 
 	DPRINTK("All regs @ PCI error\n");
 	mv_dump_all_regs(mmio, -1, to_pci_dev(host->dev));
 
-	writelfl(0, mmio + hpriv->irq_cause_offset);
+	ग_लिखोlfl(0, mmio + hpriv->irq_cause_offset);
 
-	for (i = 0; i < host->n_ports; i++) {
+	क्रम (i = 0; i < host->n_ports; i++) अणु
 		ap = host->ports[i];
-		if (!ata_link_offline(&ap->link)) {
+		अगर (!ata_link_offline(&ap->link)) अणु
 			ehi = &ap->link.eh_info;
 			ata_ehi_clear_desc(ehi);
-			if (!printed++)
+			अगर (!prपूर्णांकed++)
 				ata_ehi_push_desc(ehi,
 					"PCI err cause 0x%08x", err_cause);
 			err_mask = AC_ERR_HOST_BUS;
 			ehi->action = ATA_EH_RESET;
 			qc = ata_qc_from_tag(ap, ap->link.active_tag);
-			if (qc)
+			अगर (qc)
 				qc->err_mask |= err_mask;
-			else
+			अन्यथा
 				ehi->err_mask |= err_mask;
 
-			ata_port_freeze(ap);
-		}
-	}
-	return 1;	/* handled */
-}
+			ata_port_मुक्तze(ap);
+		पूर्ण
+	पूर्ण
+	वापस 1;	/* handled */
+पूर्ण
 
 /**
- *      mv_interrupt - Main interrupt event handler
+ *      mv_पूर्णांकerrupt - Main पूर्णांकerrupt event handler
  *      @irq: unused
- *      @dev_instance: private data; in this case the host structure
+ *      @dev_instance: निजी data; in this हाल the host काष्ठाure
  *
- *      Read the read only register to determine if any host
- *      controllers have pending interrupts.  If so, call lower level
- *      routine to handle.  Also check for PCI errors which are only
+ *      Read the पढ़ो only रेजिस्टर to determine अगर any host
+ *      controllers have pending पूर्णांकerrupts.  If so, call lower level
+ *      routine to handle.  Also check क्रम PCI errors which are only
  *      reported here.
  *
  *      LOCKING:
- *      This routine holds the host lock while processing pending
- *      interrupts.
+ *      This routine holds the host lock जबतक processing pending
+ *      पूर्णांकerrupts.
  */
-static irqreturn_t mv_interrupt(int irq, void *dev_instance)
-{
-	struct ata_host *host = dev_instance;
-	struct mv_host_priv *hpriv = host->private_data;
-	unsigned int handled = 0;
-	int using_msi = hpriv->hp_flags & MV_HP_FLAG_MSI;
-	u32 main_irq_cause, pending_irqs;
+अटल irqवापस_t mv_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा ata_host *host = dev_instance;
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	अचिन्हित पूर्णांक handled = 0;
+	पूर्णांक using_msi = hpriv->hp_flags & MV_HP_FLAG_MSI;
+	u32 मुख्य_irq_cause, pending_irqs;
 
 	spin_lock(&host->lock);
 
-	/* for MSI:  block new interrupts while in here */
-	if (using_msi)
-		mv_write_main_irq_mask(0, hpriv);
+	/* क्रम MSI:  block new पूर्णांकerrupts जबतक in here */
+	अगर (using_msi)
+		mv_ग_लिखो_मुख्य_irq_mask(0, hpriv);
 
-	main_irq_cause = readl(hpriv->main_irq_cause_addr);
-	pending_irqs   = main_irq_cause & hpriv->main_irq_mask;
+	मुख्य_irq_cause = पढ़ोl(hpriv->मुख्य_irq_cause_addr);
+	pending_irqs   = मुख्य_irq_cause & hpriv->मुख्य_irq_mask;
 	/*
-	 * Deal with cases where we either have nothing pending, or have read
-	 * a bogus register value which can indicate HW removal or PCI fault.
+	 * Deal with हालs where we either have nothing pending, or have पढ़ो
+	 * a bogus रेजिस्टर value which can indicate HW removal or PCI fault.
 	 */
-	if (pending_irqs && main_irq_cause != 0xffffffffU) {
-		if (unlikely((pending_irqs & PCI_ERR) && !IS_SOC(hpriv)))
+	अगर (pending_irqs && मुख्य_irq_cause != 0xffffffffU) अणु
+		अगर (unlikely((pending_irqs & PCI_ERR) && !IS_SOC(hpriv)))
 			handled = mv_pci_error(host, hpriv->base);
-		else
-			handled = mv_host_intr(host, pending_irqs);
-	}
+		अन्यथा
+			handled = mv_host_पूर्णांकr(host, pending_irqs);
+	पूर्ण
 
-	/* for MSI: unmask; interrupt cause bits will retrigger now */
-	if (using_msi)
-		mv_write_main_irq_mask(hpriv->main_irq_mask, hpriv);
+	/* क्रम MSI: unmask; पूर्णांकerrupt cause bits will retrigger now */
+	अगर (using_msi)
+		mv_ग_लिखो_मुख्य_irq_mask(hpriv->मुख्य_irq_mask, hpriv);
 
 	spin_unlock(&host->lock);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static unsigned int mv5_scr_offset(unsigned int sc_reg_in)
-{
-	unsigned int ofs;
+अटल अचिन्हित पूर्णांक mv5_scr_offset(अचिन्हित पूर्णांक sc_reg_in)
+अणु
+	अचिन्हित पूर्णांक ofs;
 
-	switch (sc_reg_in) {
-	case SCR_STATUS:
-	case SCR_ERROR:
-	case SCR_CONTROL:
-		ofs = sc_reg_in * sizeof(u32);
-		break;
-	default:
+	चयन (sc_reg_in) अणु
+	हाल SCR_STATUS:
+	हाल SCR_ERROR:
+	हाल SCR_CONTROL:
+		ofs = sc_reg_in * माप(u32);
+		अवरोध;
+	शेष:
 		ofs = 0xffffffffU;
-		break;
-	}
-	return ofs;
-}
+		अवरोध;
+	पूर्ण
+	वापस ofs;
+पूर्ण
 
-static int mv5_scr_read(struct ata_link *link, unsigned int sc_reg_in, u32 *val)
-{
-	struct mv_host_priv *hpriv = link->ap->host->private_data;
-	void __iomem *mmio = hpriv->base;
-	void __iomem *addr = mv5_phy_base(mmio, link->ap->port_no);
-	unsigned int ofs = mv5_scr_offset(sc_reg_in);
+अटल पूर्णांक mv5_scr_पढ़ो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 *val)
+अणु
+	काष्ठा mv_host_priv *hpriv = link->ap->host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
+	व्योम __iomem *addr = mv5_phy_base(mmio, link->ap->port_no);
+	अचिन्हित पूर्णांक ofs = mv5_scr_offset(sc_reg_in);
 
-	if (ofs != 0xffffffffU) {
-		*val = readl(addr + ofs);
-		return 0;
-	} else
-		return -EINVAL;
-}
+	अगर (ofs != 0xffffffffU) अणु
+		*val = पढ़ोl(addr + ofs);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static int mv5_scr_write(struct ata_link *link, unsigned int sc_reg_in, u32 val)
-{
-	struct mv_host_priv *hpriv = link->ap->host->private_data;
-	void __iomem *mmio = hpriv->base;
-	void __iomem *addr = mv5_phy_base(mmio, link->ap->port_no);
-	unsigned int ofs = mv5_scr_offset(sc_reg_in);
+अटल पूर्णांक mv5_scr_ग_लिखो(काष्ठा ata_link *link, अचिन्हित पूर्णांक sc_reg_in, u32 val)
+अणु
+	काष्ठा mv_host_priv *hpriv = link->ap->host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
+	व्योम __iomem *addr = mv5_phy_base(mmio, link->ap->port_no);
+	अचिन्हित पूर्णांक ofs = mv5_scr_offset(sc_reg_in);
 
-	if (ofs != 0xffffffffU) {
-		writelfl(val, addr + ofs);
-		return 0;
-	} else
-		return -EINVAL;
-}
+	अगर (ofs != 0xffffffffU) अणु
+		ग_लिखोlfl(val, addr + ofs);
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static void mv5_reset_bus(struct ata_host *host, void __iomem *mmio)
-{
-	struct pci_dev *pdev = to_pci_dev(host->dev);
-	int early_5080;
+अटल व्योम mv5_reset_bus(काष्ठा ata_host *host, व्योम __iomem *mmio)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(host->dev);
+	पूर्णांक early_5080;
 
 	early_5080 = (pdev->device == 0x5080) && (pdev->revision == 0);
 
-	if (!early_5080) {
-		u32 tmp = readl(mmio + MV_PCI_EXP_ROM_BAR_CTL);
-		tmp |= (1 << 0);
-		writel(tmp, mmio + MV_PCI_EXP_ROM_BAR_CTL);
-	}
+	अगर (!early_5080) अणु
+		u32 पंचांगp = पढ़ोl(mmio + MV_PCI_EXP_ROM_BAR_CTL);
+		पंचांगp |= (1 << 0);
+		ग_लिखोl(पंचांगp, mmio + MV_PCI_EXP_ROM_BAR_CTL);
+	पूर्ण
 
 	mv_reset_pci_bus(host, mmio);
-}
+पूर्ण
 
-static void mv5_reset_flash(struct mv_host_priv *hpriv, void __iomem *mmio)
-{
-	writel(0x0fcfffff, mmio + FLASH_CTL);
-}
+अटल व्योम mv5_reset_flash(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio)
+अणु
+	ग_लिखोl(0x0fcfffff, mmio + FLASH_CTL);
+पूर्ण
 
-static void mv5_read_preamp(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio)
-{
-	void __iomem *phy_mmio = mv5_phy_base(mmio, idx);
-	u32 tmp;
+अटल व्योम mv5_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio)
+अणु
+	व्योम __iomem *phy_mmio = mv5_phy_base(mmio, idx);
+	u32 पंचांगp;
 
-	tmp = readl(phy_mmio + MV5_PHY_MODE);
+	पंचांगp = पढ़ोl(phy_mmio + MV5_PHY_MODE);
 
-	hpriv->signal[idx].pre = tmp & 0x1800;	/* bits 12:11 */
-	hpriv->signal[idx].amps = tmp & 0xe0;	/* bits 7:5 */
-}
+	hpriv->संकेत[idx].pre = पंचांगp & 0x1800;	/* bits 12:11 */
+	hpriv->संकेत[idx].amps = पंचांगp & 0xe0;	/* bits 7:5 */
+पूर्ण
 
-static void mv5_enable_leds(struct mv_host_priv *hpriv, void __iomem *mmio)
-{
-	u32 tmp;
+अटल व्योम mv5_enable_leds(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio)
+अणु
+	u32 पंचांगp;
 
-	writel(0, mmio + GPIO_PORT_CTL);
+	ग_लिखोl(0, mmio + GPIO_PORT_CTL);
 
 	/* FIXME: handle MV_HP_ERRATA_50XXB2 errata */
 
-	tmp = readl(mmio + MV_PCI_EXP_ROM_BAR_CTL);
-	tmp |= ~(1 << 0);
-	writel(tmp, mmio + MV_PCI_EXP_ROM_BAR_CTL);
-}
+	पंचांगp = पढ़ोl(mmio + MV_PCI_EXP_ROM_BAR_CTL);
+	पंचांगp |= ~(1 << 0);
+	ग_लिखोl(पंचांगp, mmio + MV_PCI_EXP_ROM_BAR_CTL);
+पूर्ण
 
-static void mv5_phy_errata(struct mv_host_priv *hpriv, void __iomem *mmio,
-			   unsigned int port)
-{
-	void __iomem *phy_mmio = mv5_phy_base(mmio, port);
-	const u32 mask = (1<<12) | (1<<11) | (1<<7) | (1<<6) | (1<<5);
-	u32 tmp;
-	int fix_apm_sq = (hpriv->hp_flags & MV_HP_ERRATA_50XXB0);
+अटल व्योम mv5_phy_errata(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			   अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *phy_mmio = mv5_phy_base(mmio, port);
+	स्थिर u32 mask = (1<<12) | (1<<11) | (1<<7) | (1<<6) | (1<<5);
+	u32 पंचांगp;
+	पूर्णांक fix_apm_sq = (hpriv->hp_flags & MV_HP_ERRATA_50XXB0);
 
-	if (fix_apm_sq) {
-		tmp = readl(phy_mmio + MV5_LTMODE);
-		tmp |= (1 << 19);
-		writel(tmp, phy_mmio + MV5_LTMODE);
+	अगर (fix_apm_sq) अणु
+		पंचांगp = पढ़ोl(phy_mmio + MV5_LTMODE);
+		पंचांगp |= (1 << 19);
+		ग_लिखोl(पंचांगp, phy_mmio + MV5_LTMODE);
 
-		tmp = readl(phy_mmio + MV5_PHY_CTL);
-		tmp &= ~0x3;
-		tmp |= 0x1;
-		writel(tmp, phy_mmio + MV5_PHY_CTL);
-	}
+		पंचांगp = पढ़ोl(phy_mmio + MV5_PHY_CTL);
+		पंचांगp &= ~0x3;
+		पंचांगp |= 0x1;
+		ग_लिखोl(पंचांगp, phy_mmio + MV5_PHY_CTL);
+	पूर्ण
 
-	tmp = readl(phy_mmio + MV5_PHY_MODE);
-	tmp &= ~mask;
-	tmp |= hpriv->signal[port].pre;
-	tmp |= hpriv->signal[port].amps;
-	writel(tmp, phy_mmio + MV5_PHY_MODE);
-}
+	पंचांगp = पढ़ोl(phy_mmio + MV5_PHY_MODE);
+	पंचांगp &= ~mask;
+	पंचांगp |= hpriv->संकेत[port].pre;
+	पंचांगp |= hpriv->संकेत[port].amps;
+	ग_लिखोl(पंचांगp, phy_mmio + MV5_PHY_MODE);
+पूर्ण
 
 
-#undef ZERO
-#define ZERO(reg) writel(0, port_mmio + (reg))
-static void mv5_reset_hc_port(struct mv_host_priv *hpriv, void __iomem *mmio,
-			     unsigned int port)
-{
-	void __iomem *port_mmio = mv_port_base(mmio, port);
+#अघोषित ZERO
+#घोषणा ZERO(reg) ग_लिखोl(0, port_mmio + (reg))
+अटल व्योम mv5_reset_hc_port(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			     अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *port_mmio = mv_port_base(mmio, port);
 
 	mv_reset_channel(hpriv, mmio, port);
 
 	ZERO(0x028);	/* command */
-	writel(0x11f, port_mmio + EDMA_CFG);
-	ZERO(0x004);	/* timer */
+	ग_लिखोl(0x11f, port_mmio + EDMA_CFG);
+	ZERO(0x004);	/* समयr */
 	ZERO(0x008);	/* irq err cause */
 	ZERO(0x00c);	/* irq err mask */
 	ZERO(0x010);	/* rq bah */
@@ -3174,59 +3175,59 @@ static void mv5_reset_hc_port(struct mv_host_priv *hpriv, void __iomem *mmio,
 	ZERO(0x024);	/* respq outp */
 	ZERO(0x020);	/* respq inp */
 	ZERO(0x02c);	/* test control */
-	writel(0xbc, port_mmio + EDMA_IORDY_TMOUT);
-}
-#undef ZERO
+	ग_लिखोl(0xbc, port_mmio + EDMA_IORDY_TMOUT);
+पूर्ण
+#अघोषित ZERO
 
-#define ZERO(reg) writel(0, hc_mmio + (reg))
-static void mv5_reset_one_hc(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int hc)
-{
-	void __iomem *hc_mmio = mv_hc_base(mmio, hc);
-	u32 tmp;
+#घोषणा ZERO(reg) ग_लिखोl(0, hc_mmio + (reg))
+अटल व्योम mv5_reset_one_hc(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक hc)
+अणु
+	व्योम __iomem *hc_mmio = mv_hc_base(mmio, hc);
+	u32 पंचांगp;
 
 	ZERO(0x00c);
 	ZERO(0x010);
 	ZERO(0x014);
 	ZERO(0x018);
 
-	tmp = readl(hc_mmio + 0x20);
-	tmp &= 0x1c1c1c1c;
-	tmp |= 0x03030303;
-	writel(tmp, hc_mmio + 0x20);
-}
-#undef ZERO
+	पंचांगp = पढ़ोl(hc_mmio + 0x20);
+	पंचांगp &= 0x1c1c1c1c;
+	पंचांगp |= 0x03030303;
+	ग_लिखोl(पंचांगp, hc_mmio + 0x20);
+पूर्ण
+#अघोषित ZERO
 
-static int mv5_reset_hc(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int n_hc)
-{
-	unsigned int hc, port;
+अटल पूर्णांक mv5_reset_hc(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक n_hc)
+अणु
+	अचिन्हित पूर्णांक hc, port;
 
-	for (hc = 0; hc < n_hc; hc++) {
-		for (port = 0; port < MV_PORTS_PER_HC; port++)
+	क्रम (hc = 0; hc < n_hc; hc++) अणु
+		क्रम (port = 0; port < MV_PORTS_PER_HC; port++)
 			mv5_reset_hc_port(hpriv, mmio,
 					  (hc * MV_PORTS_PER_HC) + port);
 
 		mv5_reset_one_hc(hpriv, mmio, hc);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#undef ZERO
-#define ZERO(reg) writel(0, mmio + (reg))
-static void mv_reset_pci_bus(struct ata_host *host, void __iomem *mmio)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	u32 tmp;
+#अघोषित ZERO
+#घोषणा ZERO(reg) ग_लिखोl(0, mmio + (reg))
+अटल व्योम mv_reset_pci_bus(काष्ठा ata_host *host, व्योम __iomem *mmio)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	u32 पंचांगp;
 
-	tmp = readl(mmio + MV_PCI_MODE);
-	tmp &= 0xff00ffff;
-	writel(tmp, mmio + MV_PCI_MODE);
+	पंचांगp = पढ़ोl(mmio + MV_PCI_MODE);
+	पंचांगp &= 0xff00ffff;
+	ग_लिखोl(पंचांगp, mmio + MV_PCI_MODE);
 
 	ZERO(MV_PCI_DISC_TIMER);
 	ZERO(MV_PCI_MSI_TRIGGER);
-	writel(0x000100ff, mmio + MV_PCI_XBAR_TMOUT);
+	ग_लिखोl(0x000100ff, mmio + MV_PCI_XBAR_TMOUT);
 	ZERO(MV_PCI_SERR_MASK);
 	ZERO(hpriv->irq_cause_offset);
 	ZERO(hpriv->irq_mask_offset);
@@ -3234,23 +3235,23 @@ static void mv_reset_pci_bus(struct ata_host *host, void __iomem *mmio)
 	ZERO(MV_PCI_ERR_HIGH_ADDRESS);
 	ZERO(MV_PCI_ERR_ATTRIBUTE);
 	ZERO(MV_PCI_ERR_COMMAND);
-}
-#undef ZERO
+पूर्ण
+#अघोषित ZERO
 
-static void mv6_reset_flash(struct mv_host_priv *hpriv, void __iomem *mmio)
-{
-	u32 tmp;
+अटल व्योम mv6_reset_flash(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio)
+अणु
+	u32 पंचांगp;
 
 	mv5_reset_flash(hpriv, mmio);
 
-	tmp = readl(mmio + GPIO_PORT_CTL);
-	tmp &= 0x3;
-	tmp |= (1 << 5) | (1 << 6);
-	writel(tmp, mmio + GPIO_PORT_CTL);
-}
+	पंचांगp = पढ़ोl(mmio + GPIO_PORT_CTL);
+	पंचांगp &= 0x3;
+	पंचांगp |= (1 << 5) | (1 << 6);
+	ग_लिखोl(पंचांगp, mmio + GPIO_PORT_CTL);
+पूर्ण
 
 /*
- *      mv6_reset_hc - Perform the 6xxx global soft reset
+ *      mv6_reset_hc - Perक्रमm the 6xxx global soft reset
  *      @mmio: base address of the HBA
  *
  *      This routine only applies to 6xxx parts.
@@ -3258,195 +3259,195 @@ static void mv6_reset_flash(struct mv_host_priv *hpriv, void __iomem *mmio)
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv6_reset_hc(struct mv_host_priv *hpriv, void __iomem *mmio,
-			unsigned int n_hc)
-{
-	void __iomem *reg = mmio + PCI_MAIN_CMD_STS;
-	int i, rc = 0;
+अटल पूर्णांक mv6_reset_hc(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			अचिन्हित पूर्णांक n_hc)
+अणु
+	व्योम __iomem *reg = mmio + PCI_MAIN_CMD_STS;
+	पूर्णांक i, rc = 0;
 	u32 t;
 
-	/* Following procedure defined in PCI "main command and status
-	 * register" table.
+	/* Following procedure defined in PCI "मुख्य command and status
+	 * रेजिस्टर" table.
 	 */
-	t = readl(reg);
-	writel(t | STOP_PCI_MASTER, reg);
+	t = पढ़ोl(reg);
+	ग_लिखोl(t | STOP_PCI_MASTER, reg);
 
-	for (i = 0; i < 1000; i++) {
+	क्रम (i = 0; i < 1000; i++) अणु
 		udelay(1);
-		t = readl(reg);
-		if (PCI_MASTER_EMPTY & t)
-			break;
-	}
-	if (!(PCI_MASTER_EMPTY & t)) {
-		printk(KERN_ERR DRV_NAME ": PCI master won't flush\n");
+		t = पढ़ोl(reg);
+		अगर (PCI_MASTER_EMPTY & t)
+			अवरोध;
+	पूर्ण
+	अगर (!(PCI_MASTER_EMPTY & t)) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME ": PCI master won't flush\n");
 		rc = 1;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* set reset */
 	i = 5;
-	do {
-		writel(t | GLOB_SFT_RST, reg);
-		t = readl(reg);
+	करो अणु
+		ग_लिखोl(t | GLOB_SFT_RST, reg);
+		t = पढ़ोl(reg);
 		udelay(1);
-	} while (!(GLOB_SFT_RST & t) && (i-- > 0));
+	पूर्ण जबतक (!(GLOB_SFT_RST & t) && (i-- > 0));
 
-	if (!(GLOB_SFT_RST & t)) {
-		printk(KERN_ERR DRV_NAME ": can't set global reset\n");
+	अगर (!(GLOB_SFT_RST & t)) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME ": can't set global reset\n");
 		rc = 1;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* clear reset and *reenable the PCI master* (not mentioned in spec) */
 	i = 5;
-	do {
-		writel(t & ~(GLOB_SFT_RST | STOP_PCI_MASTER), reg);
-		t = readl(reg);
+	करो अणु
+		ग_लिखोl(t & ~(GLOB_SFT_RST | STOP_PCI_MASTER), reg);
+		t = पढ़ोl(reg);
 		udelay(1);
-	} while ((GLOB_SFT_RST & t) && (i-- > 0));
+	पूर्ण जबतक ((GLOB_SFT_RST & t) && (i-- > 0));
 
-	if (GLOB_SFT_RST & t) {
-		printk(KERN_ERR DRV_NAME ": can't clear global reset\n");
+	अगर (GLOB_SFT_RST & t) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME ": can't clear global reset\n");
 		rc = 1;
-	}
-done:
-	return rc;
-}
+	पूर्ण
+करोne:
+	वापस rc;
+पूर्ण
 
-static void mv6_read_preamp(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio)
-{
-	void __iomem *port_mmio;
-	u32 tmp;
+अटल व्योम mv6_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio)
+अणु
+	व्योम __iomem *port_mmio;
+	u32 पंचांगp;
 
-	tmp = readl(mmio + RESET_CFG);
-	if ((tmp & (1 << 0)) == 0) {
-		hpriv->signal[idx].amps = 0x7 << 8;
-		hpriv->signal[idx].pre = 0x1 << 5;
-		return;
-	}
+	पंचांगp = पढ़ोl(mmio + RESET_CFG);
+	अगर ((पंचांगp & (1 << 0)) == 0) अणु
+		hpriv->संकेत[idx].amps = 0x7 << 8;
+		hpriv->संकेत[idx].pre = 0x1 << 5;
+		वापस;
+	पूर्ण
 
 	port_mmio = mv_port_base(mmio, idx);
-	tmp = readl(port_mmio + PHY_MODE2);
+	पंचांगp = पढ़ोl(port_mmio + PHY_MODE2);
 
-	hpriv->signal[idx].amps = tmp & 0x700;	/* bits 10:8 */
-	hpriv->signal[idx].pre = tmp & 0xe0;	/* bits 7:5 */
-}
+	hpriv->संकेत[idx].amps = पंचांगp & 0x700;	/* bits 10:8 */
+	hpriv->संकेत[idx].pre = पंचांगp & 0xe0;	/* bits 7:5 */
+पूर्ण
 
-static void mv6_enable_leds(struct mv_host_priv *hpriv, void __iomem *mmio)
-{
-	writel(0x00000060, mmio + GPIO_PORT_CTL);
-}
+अटल व्योम mv6_enable_leds(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio)
+अणु
+	ग_लिखोl(0x00000060, mmio + GPIO_PORT_CTL);
+पूर्ण
 
-static void mv6_phy_errata(struct mv_host_priv *hpriv, void __iomem *mmio,
-			   unsigned int port)
-{
-	void __iomem *port_mmio = mv_port_base(mmio, port);
+अटल व्योम mv6_phy_errata(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			   अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *port_mmio = mv_port_base(mmio, port);
 
 	u32 hp_flags = hpriv->hp_flags;
-	int fix_phy_mode2 =
+	पूर्णांक fix_phy_mode2 =
 		hp_flags & (MV_HP_ERRATA_60X1B2 | MV_HP_ERRATA_60X1C0);
-	int fix_phy_mode4 =
+	पूर्णांक fix_phy_mode4 =
 		hp_flags & (MV_HP_ERRATA_60X1B2 | MV_HP_ERRATA_60X1C0);
 	u32 m2, m3;
 
-	if (fix_phy_mode2) {
-		m2 = readl(port_mmio + PHY_MODE2);
+	अगर (fix_phy_mode2) अणु
+		m2 = पढ़ोl(port_mmio + PHY_MODE2);
 		m2 &= ~(1 << 16);
 		m2 |= (1 << 31);
-		writel(m2, port_mmio + PHY_MODE2);
+		ग_लिखोl(m2, port_mmio + PHY_MODE2);
 
 		udelay(200);
 
-		m2 = readl(port_mmio + PHY_MODE2);
+		m2 = पढ़ोl(port_mmio + PHY_MODE2);
 		m2 &= ~((1 << 16) | (1 << 31));
-		writel(m2, port_mmio + PHY_MODE2);
+		ग_लिखोl(m2, port_mmio + PHY_MODE2);
 
 		udelay(200);
-	}
+	पूर्ण
 
 	/*
 	 * Gen-II/IIe PHY_MODE3 errata RM#2:
-	 * Achieves better receiver noise performance than the h/w default:
+	 * Achieves better receiver noise perक्रमmance than the h/w शेष:
 	 */
-	m3 = readl(port_mmio + PHY_MODE3);
+	m3 = पढ़ोl(port_mmio + PHY_MODE3);
 	m3 = (m3 & 0x1f) | (0x5555601 << 5);
 
 	/* Guideline 88F5182 (GL# SATA-S11) */
-	if (IS_SOC(hpriv))
+	अगर (IS_SOC(hpriv))
 		m3 &= ~0x1c;
 
-	if (fix_phy_mode4) {
-		u32 m4 = readl(port_mmio + PHY_MODE4);
+	अगर (fix_phy_mode4) अणु
+		u32 m4 = पढ़ोl(port_mmio + PHY_MODE4);
 		/*
-		 * Enforce reserved-bit restrictions on GenIIe devices only.
-		 * For earlier chipsets, force only the internal config field
-		 *  (workaround for errata FEr SATA#10 part 1).
+		 * Enक्रमce reserved-bit restrictions on GenIIe devices only.
+		 * For earlier chipsets, क्रमce only the पूर्णांकernal config field
+		 *  (workaround क्रम errata FEr SATA#10 part 1).
 		 */
-		if (IS_GEN_IIE(hpriv))
+		अगर (IS_GEN_IIE(hpriv))
 			m4 = (m4 & ~PHY_MODE4_RSVD_ZEROS) | PHY_MODE4_RSVD_ONES;
-		else
+		अन्यथा
 			m4 = (m4 & ~PHY_MODE4_CFG_MASK) | PHY_MODE4_CFG_VALUE;
-		writel(m4, port_mmio + PHY_MODE4);
-	}
+		ग_लिखोl(m4, port_mmio + PHY_MODE4);
+	पूर्ण
 	/*
-	 * Workaround for 60x1-B2 errata SATA#13:
-	 * Any write to PHY_MODE4 (above) may corrupt PHY_MODE3,
-	 * so we must always rewrite PHY_MODE3 after PHY_MODE4.
-	 * Or ensure we use writelfl() when writing PHY_MODE4.
+	 * Workaround क्रम 60x1-B2 errata SATA#13:
+	 * Any ग_लिखो to PHY_MODE4 (above) may corrupt PHY_MODE3,
+	 * so we must always reग_लिखो PHY_MODE3 after PHY_MODE4.
+	 * Or ensure we use ग_लिखोlfl() when writing PHY_MODE4.
 	 */
-	writel(m3, port_mmio + PHY_MODE3);
+	ग_लिखोl(m3, port_mmio + PHY_MODE3);
 
-	/* Revert values of pre-emphasis and signal amps to the saved ones */
-	m2 = readl(port_mmio + PHY_MODE2);
+	/* Revert values of pre-emphasis and संकेत amps to the saved ones */
+	m2 = पढ़ोl(port_mmio + PHY_MODE2);
 
 	m2 &= ~MV_M2_PREAMP_MASK;
-	m2 |= hpriv->signal[port].amps;
-	m2 |= hpriv->signal[port].pre;
+	m2 |= hpriv->संकेत[port].amps;
+	m2 |= hpriv->संकेत[port].pre;
 	m2 &= ~(1 << 16);
 
 	/* according to mvSata 3.6.1, some IIE values are fixed */
-	if (IS_GEN_IIE(hpriv)) {
+	अगर (IS_GEN_IIE(hpriv)) अणु
 		m2 &= ~0xC30FF01F;
 		m2 |= 0x0000900F;
-	}
+	पूर्ण
 
-	writel(m2, port_mmio + PHY_MODE2);
-}
+	ग_लिखोl(m2, port_mmio + PHY_MODE2);
+पूर्ण
 
-/* TODO: use the generic LED interface to configure the SATA Presence */
+/* TODO: use the generic LED पूर्णांकerface to configure the SATA Presence */
 /* & Acitivy LEDs on the board */
-static void mv_soc_enable_leds(struct mv_host_priv *hpriv,
-				      void __iomem *mmio)
-{
-	return;
-}
+अटल व्योम mv_soc_enable_leds(काष्ठा mv_host_priv *hpriv,
+				      व्योम __iomem *mmio)
+अणु
+	वापस;
+पूर्ण
 
-static void mv_soc_read_preamp(struct mv_host_priv *hpriv, int idx,
-			   void __iomem *mmio)
-{
-	void __iomem *port_mmio;
-	u32 tmp;
+अटल व्योम mv_soc_पढ़ो_preamp(काष्ठा mv_host_priv *hpriv, पूर्णांक idx,
+			   व्योम __iomem *mmio)
+अणु
+	व्योम __iomem *port_mmio;
+	u32 पंचांगp;
 
 	port_mmio = mv_port_base(mmio, idx);
-	tmp = readl(port_mmio + PHY_MODE2);
+	पंचांगp = पढ़ोl(port_mmio + PHY_MODE2);
 
-	hpriv->signal[idx].amps = tmp & 0x700;	/* bits 10:8 */
-	hpriv->signal[idx].pre = tmp & 0xe0;	/* bits 7:5 */
-}
+	hpriv->संकेत[idx].amps = पंचांगp & 0x700;	/* bits 10:8 */
+	hpriv->संकेत[idx].pre = पंचांगp & 0xe0;	/* bits 7:5 */
+पूर्ण
 
-#undef ZERO
-#define ZERO(reg) writel(0, port_mmio + (reg))
-static void mv_soc_reset_hc_port(struct mv_host_priv *hpriv,
-					void __iomem *mmio, unsigned int port)
-{
-	void __iomem *port_mmio = mv_port_base(mmio, port);
+#अघोषित ZERO
+#घोषणा ZERO(reg) ग_लिखोl(0, port_mmio + (reg))
+अटल व्योम mv_soc_reset_hc_port(काष्ठा mv_host_priv *hpriv,
+					व्योम __iomem *mmio, अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *port_mmio = mv_port_base(mmio, port);
 
 	mv_reset_channel(hpriv, mmio, port);
 
 	ZERO(0x028);		/* command */
-	writel(0x101f, port_mmio + EDMA_CFG);
-	ZERO(0x004);		/* timer */
+	ग_लिखोl(0x101f, port_mmio + EDMA_CFG);
+	ZERO(0x004);		/* समयr */
 	ZERO(0x008);		/* irq err cause */
 	ZERO(0x00c);		/* irq err mask */
 	ZERO(0x010);		/* rq bah */
@@ -3456,174 +3457,174 @@ static void mv_soc_reset_hc_port(struct mv_host_priv *hpriv,
 	ZERO(0x024);		/* respq outp */
 	ZERO(0x020);		/* respq inp */
 	ZERO(0x02c);		/* test control */
-	writel(0x800, port_mmio + EDMA_IORDY_TMOUT);
-}
+	ग_लिखोl(0x800, port_mmio + EDMA_IORDY_TMOUT);
+पूर्ण
 
-#undef ZERO
+#अघोषित ZERO
 
-#define ZERO(reg) writel(0, hc_mmio + (reg))
-static void mv_soc_reset_one_hc(struct mv_host_priv *hpriv,
-				       void __iomem *mmio)
-{
-	void __iomem *hc_mmio = mv_hc_base(mmio, 0);
+#घोषणा ZERO(reg) ग_लिखोl(0, hc_mmio + (reg))
+अटल व्योम mv_soc_reset_one_hc(काष्ठा mv_host_priv *hpriv,
+				       व्योम __iomem *mmio)
+अणु
+	व्योम __iomem *hc_mmio = mv_hc_base(mmio, 0);
 
 	ZERO(0x00c);
 	ZERO(0x010);
 	ZERO(0x014);
 
-}
+पूर्ण
 
-#undef ZERO
+#अघोषित ZERO
 
-static int mv_soc_reset_hc(struct mv_host_priv *hpriv,
-				  void __iomem *mmio, unsigned int n_hc)
-{
-	unsigned int port;
+अटल पूर्णांक mv_soc_reset_hc(काष्ठा mv_host_priv *hpriv,
+				  व्योम __iomem *mmio, अचिन्हित पूर्णांक n_hc)
+अणु
+	अचिन्हित पूर्णांक port;
 
-	for (port = 0; port < hpriv->n_ports; port++)
+	क्रम (port = 0; port < hpriv->n_ports; port++)
 		mv_soc_reset_hc_port(hpriv, mmio, port);
 
 	mv_soc_reset_one_hc(hpriv, mmio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv_soc_reset_flash(struct mv_host_priv *hpriv,
-				      void __iomem *mmio)
-{
-	return;
-}
+अटल व्योम mv_soc_reset_flash(काष्ठा mv_host_priv *hpriv,
+				      व्योम __iomem *mmio)
+अणु
+	वापस;
+पूर्ण
 
-static void mv_soc_reset_bus(struct ata_host *host, void __iomem *mmio)
-{
-	return;
-}
+अटल व्योम mv_soc_reset_bus(काष्ठा ata_host *host, व्योम __iomem *mmio)
+अणु
+	वापस;
+पूर्ण
 
-static void mv_soc_65n_phy_errata(struct mv_host_priv *hpriv,
-				  void __iomem *mmio, unsigned int port)
-{
-	void __iomem *port_mmio = mv_port_base(mmio, port);
+अटल व्योम mv_soc_65n_phy_errata(काष्ठा mv_host_priv *hpriv,
+				  व्योम __iomem *mmio, अचिन्हित पूर्णांक port)
+अणु
+	व्योम __iomem *port_mmio = mv_port_base(mmio, port);
 	u32	reg;
 
-	reg = readl(port_mmio + PHY_MODE3);
+	reg = पढ़ोl(port_mmio + PHY_MODE3);
 	reg &= ~(0x3 << 27);	/* SELMUPF (bits 28:27) to 1 */
 	reg |= (0x1 << 27);
 	reg &= ~(0x3 << 29);	/* SELMUPI (bits 30:29) to 1 */
 	reg |= (0x1 << 29);
-	writel(reg, port_mmio + PHY_MODE3);
+	ग_लिखोl(reg, port_mmio + PHY_MODE3);
 
-	reg = readl(port_mmio + PHY_MODE4);
+	reg = पढ़ोl(port_mmio + PHY_MODE4);
 	reg &= ~0x1;	/* SATU_OD8 (bit 0) to 0, reserved bit 16 must be set */
 	reg |= (0x1 << 16);
-	writel(reg, port_mmio + PHY_MODE4);
+	ग_लिखोl(reg, port_mmio + PHY_MODE4);
 
-	reg = readl(port_mmio + PHY_MODE9_GEN2);
+	reg = पढ़ोl(port_mmio + PHY_MODE9_GEN2);
 	reg &= ~0xf;	/* TXAMP[3:0] (bits 3:0) to 8 */
 	reg |= 0x8;
 	reg &= ~(0x1 << 14);	/* TXAMP[4] (bit 14) to 0 */
-	writel(reg, port_mmio + PHY_MODE9_GEN2);
+	ग_लिखोl(reg, port_mmio + PHY_MODE9_GEN2);
 
-	reg = readl(port_mmio + PHY_MODE9_GEN1);
+	reg = पढ़ोl(port_mmio + PHY_MODE9_GEN1);
 	reg &= ~0xf;	/* TXAMP[3:0] (bits 3:0) to 8 */
 	reg |= 0x8;
 	reg &= ~(0x1 << 14);	/* TXAMP[4] (bit 14) to 0 */
-	writel(reg, port_mmio + PHY_MODE9_GEN1);
-}
+	ग_लिखोl(reg, port_mmio + PHY_MODE9_GEN1);
+पूर्ण
 
 /*
- *	soc_is_65 - check if the soc is 65 nano device
+ *	soc_is_65 - check अगर the soc is 65 nano device
  *
- *	Detect the type of the SoC, this is done by reading the PHYCFG_OFS
- *	register, this register should contain non-zero value and it exists only
- *	in the 65 nano devices, when reading it from older devices we get 0.
+ *	Detect the type of the SoC, this is करोne by पढ़ोing the PHYCFG_OFS
+ *	रेजिस्टर, this रेजिस्टर should contain non-zero value and it exists only
+ *	in the 65 nano devices, when पढ़ोing it from older devices we get 0.
  */
-static bool soc_is_65n(struct mv_host_priv *hpriv)
-{
-	void __iomem *port0_mmio = mv_port_base(hpriv->base, 0);
+अटल bool soc_is_65n(काष्ठा mv_host_priv *hpriv)
+अणु
+	व्योम __iomem *port0_mmio = mv_port_base(hpriv->base, 0);
 
-	if (readl(port0_mmio + PHYCFG_OFS))
-		return true;
-	return false;
-}
+	अगर (पढ़ोl(port0_mmio + PHYCFG_OFS))
+		वापस true;
+	वापस false;
+पूर्ण
 
-static void mv_setup_ifcfg(void __iomem *port_mmio, int want_gen2i)
-{
-	u32 ifcfg = readl(port_mmio + SATA_IFCFG);
+अटल व्योम mv_setup_अगरcfg(व्योम __iomem *port_mmio, पूर्णांक want_gen2i)
+अणु
+	u32 अगरcfg = पढ़ोl(port_mmio + SATA_IFCFG);
 
-	ifcfg = (ifcfg & 0xf7f) | 0x9b1000;	/* from chip spec */
-	if (want_gen2i)
-		ifcfg |= (1 << 7);		/* enable gen2i speed */
-	writelfl(ifcfg, port_mmio + SATA_IFCFG);
-}
+	अगरcfg = (अगरcfg & 0xf7f) | 0x9b1000;	/* from chip spec */
+	अगर (want_gen2i)
+		अगरcfg |= (1 << 7);		/* enable gen2i speed */
+	ग_लिखोlfl(अगरcfg, port_mmio + SATA_IFCFG);
+पूर्ण
 
-static void mv_reset_channel(struct mv_host_priv *hpriv, void __iomem *mmio,
-			     unsigned int port_no)
-{
-	void __iomem *port_mmio = mv_port_base(mmio, port_no);
+अटल व्योम mv_reset_channel(काष्ठा mv_host_priv *hpriv, व्योम __iomem *mmio,
+			     अचिन्हित पूर्णांक port_no)
+अणु
+	व्योम __iomem *port_mmio = mv_port_base(mmio, port_no);
 
 	/*
 	 * The datasheet warns against setting EDMA_RESET when EDMA is active
-	 * (but doesn't say what the problem might be).  So we first try
-	 * to disable the EDMA engine before doing the EDMA_RESET operation.
+	 * (but करोesn't say what the problem might be).  So we first try
+	 * to disable the EDMA engine beक्रमe करोing the EDMA_RESET operation.
 	 */
 	mv_stop_edma_engine(port_mmio);
-	writelfl(EDMA_RESET, port_mmio + EDMA_CMD);
+	ग_लिखोlfl(EDMA_RESET, port_mmio + EDMA_CMD);
 
-	if (!IS_GEN_I(hpriv)) {
+	अगर (!IS_GEN_I(hpriv)) अणु
 		/* Enable 3.0gb/s link speed: this survives EDMA_RESET */
-		mv_setup_ifcfg(port_mmio, 1);
-	}
+		mv_setup_अगरcfg(port_mmio, 1);
+	पूर्ण
 	/*
 	 * Strobing EDMA_RESET here causes a hard reset of the SATA transport,
-	 * link, and physical layers.  It resets all SATA interface registers
-	 * (except for SATA_IFCFG), and issues a COMRESET to the dev.
+	 * link, and physical layers.  It resets all SATA पूर्णांकerface रेजिस्टरs
+	 * (except क्रम SATA_IFCFG), and issues a COMRESET to the dev.
 	 */
-	writelfl(EDMA_RESET, port_mmio + EDMA_CMD);
+	ग_लिखोlfl(EDMA_RESET, port_mmio + EDMA_CMD);
 	udelay(25);	/* allow reset propagation */
-	writelfl(0, port_mmio + EDMA_CMD);
+	ग_लिखोlfl(0, port_mmio + EDMA_CMD);
 
 	hpriv->ops->phy_errata(hpriv, mmio, port_no);
 
-	if (IS_GEN_I(hpriv))
+	अगर (IS_GEN_I(hpriv))
 		usleep_range(500, 1000);
-}
+पूर्ण
 
-static void mv_pmp_select(struct ata_port *ap, int pmp)
-{
-	if (sata_pmp_supported(ap)) {
-		void __iomem *port_mmio = mv_ap_base(ap);
-		u32 reg = readl(port_mmio + SATA_IFCTL);
-		int old = reg & 0xf;
+अटल व्योम mv_pmp_select(काष्ठा ata_port *ap, पूर्णांक pmp)
+अणु
+	अगर (sata_pmp_supported(ap)) अणु
+		व्योम __iomem *port_mmio = mv_ap_base(ap);
+		u32 reg = पढ़ोl(port_mmio + SATA_IFCTL);
+		पूर्णांक old = reg & 0xf;
 
-		if (old != pmp) {
+		अगर (old != pmp) अणु
 			reg = (reg & ~0xf) | pmp;
-			writelfl(reg, port_mmio + SATA_IFCTL);
-		}
-	}
-}
+			ग_लिखोlfl(reg, port_mmio + SATA_IFCTL);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int mv_pmp_hardreset(struct ata_link *link, unsigned int *class,
-				unsigned long deadline)
-{
+अटल पूर्णांक mv_pmp_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+				अचिन्हित दीर्घ deadline)
+अणु
 	mv_pmp_select(link->ap, sata_srst_pmp(link));
-	return sata_std_hardreset(link, class, deadline);
-}
+	वापस sata_std_hardreset(link, class, deadline);
+पूर्ण
 
-static int mv_softreset(struct ata_link *link, unsigned int *class,
-				unsigned long deadline)
-{
+अटल पूर्णांक mv_softreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+				अचिन्हित दीर्घ deadline)
+अणु
 	mv_pmp_select(link->ap, sata_srst_pmp(link));
-	return ata_sff_softreset(link, class, deadline);
-}
+	वापस ata_sff_softreset(link, class, deadline);
+पूर्ण
 
-static int mv_hardreset(struct ata_link *link, unsigned int *class,
-			unsigned long deadline)
-{
-	struct ata_port *ap = link->ap;
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	struct mv_port_priv *pp = ap->private_data;
-	void __iomem *mmio = hpriv->base;
-	int rc, attempts = 0, extra = 0;
+अटल पूर्णांक mv_hardreset(काष्ठा ata_link *link, अचिन्हित पूर्णांक *class,
+			अचिन्हित दीर्घ deadline)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	काष्ठा mv_port_priv *pp = ap->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
+	पूर्णांक rc, attempts = 0, extra = 0;
 	u32 sstatus;
 	bool online;
 
@@ -3632,222 +3633,222 @@ static int mv_hardreset(struct ata_link *link, unsigned int *class,
 	pp->pp_flags &=
 	  ~(MV_PP_FLAG_FBS_EN | MV_PP_FLAG_NCQ_EN | MV_PP_FLAG_FAKE_ATA_BUSY);
 
-	/* Workaround for errata FEr SATA#10 (part 2) */
-	do {
-		const unsigned long *timing =
+	/* Workaround क्रम errata FEr SATA#10 (part 2) */
+	करो अणु
+		स्थिर अचिन्हित दीर्घ *timing =
 				sata_ehc_deb_timing(&link->eh_context);
 
 		rc = sata_link_hardreset(link, timing, deadline + extra,
-					 &online, NULL);
+					 &online, शून्य);
 		rc = online ? -EAGAIN : rc;
-		if (rc)
-			return rc;
-		sata_scr_read(link, SCR_STATUS, &sstatus);
-		if (!IS_GEN_I(hpriv) && ++attempts >= 5 && sstatus == 0x121) {
+		अगर (rc)
+			वापस rc;
+		sata_scr_पढ़ो(link, SCR_STATUS, &sstatus);
+		अगर (!IS_GEN_I(hpriv) && ++attempts >= 5 && sstatus == 0x121) अणु
 			/* Force 1.5gb/s link speed and try again */
-			mv_setup_ifcfg(mv_ap_base(ap), 0);
-			if (time_after(jiffies + HZ, deadline))
+			mv_setup_अगरcfg(mv_ap_base(ap), 0);
+			अगर (समय_after(jअगरfies + HZ, deadline))
 				extra = HZ; /* only extend it once, max */
-		}
-	} while (sstatus != 0x0 && sstatus != 0x113 && sstatus != 0x123);
+		पूर्ण
+	पूर्ण जबतक (sstatus != 0x0 && sstatus != 0x113 && sstatus != 0x123);
 	mv_save_cached_regs(ap);
 	mv_edma_cfg(ap, 0, 0);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void mv_eh_freeze(struct ata_port *ap)
-{
+अटल व्योम mv_eh_मुक्तze(काष्ठा ata_port *ap)
+अणु
 	mv_stop_edma(ap);
 	mv_enable_port_irqs(ap, 0);
-}
+पूर्ण
 
-static void mv_eh_thaw(struct ata_port *ap)
-{
-	struct mv_host_priv *hpriv = ap->host->private_data;
-	unsigned int port = ap->port_no;
-	unsigned int hardport = mv_hardport_from_port(port);
-	void __iomem *hc_mmio = mv_hc_base_from_port(hpriv->base, port);
-	void __iomem *port_mmio = mv_ap_base(ap);
+अटल व्योम mv_eh_thaw(काष्ठा ata_port *ap)
+अणु
+	काष्ठा mv_host_priv *hpriv = ap->host->निजी_data;
+	अचिन्हित पूर्णांक port = ap->port_no;
+	अचिन्हित पूर्णांक hardport = mv_hardport_from_port(port);
+	व्योम __iomem *hc_mmio = mv_hc_base_from_port(hpriv->base, port);
+	व्योम __iomem *port_mmio = mv_ap_base(ap);
 	u32 hc_irq_cause;
 
 	/* clear EDMA errors on this port */
-	writel(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
+	ग_लिखोl(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
 
 	/* clear pending irq events */
 	hc_irq_cause = ~((DEV_IRQ | DMA_IRQ) << hardport);
-	writelfl(hc_irq_cause, hc_mmio + HC_IRQ_CAUSE);
+	ग_लिखोlfl(hc_irq_cause, hc_mmio + HC_IRQ_CAUSE);
 
 	mv_enable_port_irqs(ap, ERR_IRQ);
-}
+पूर्ण
 
 /**
- *      mv_port_init - Perform some early initialization on a single port.
- *      @port: libata data structure storing shadow register addresses
+ *      mv_port_init - Perक्रमm some early initialization on a single port.
+ *      @port: libata data काष्ठाure storing shaकरोw रेजिस्टर addresses
  *      @port_mmio: base address of the port
  *
- *      Initialize shadow register mmio addresses, clear outstanding
- *      interrupts on the port, and unmask interrupts for the future
+ *      Initialize shaकरोw रेजिस्टर mmio addresses, clear outstanding
+ *      पूर्णांकerrupts on the port, and unmask पूर्णांकerrupts क्रम the future
  *      start of the port.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static void mv_port_init(struct ata_ioports *port,  void __iomem *port_mmio)
-{
-	void __iomem *serr, *shd_base = port_mmio + SHD_BLK;
+अटल व्योम mv_port_init(काष्ठा ata_ioports *port,  व्योम __iomem *port_mmio)
+अणु
+	व्योम __iomem *serr, *shd_base = port_mmio + SHD_BLK;
 
 	/* PIO related setup
 	 */
-	port->data_addr = shd_base + (sizeof(u32) * ATA_REG_DATA);
+	port->data_addr = shd_base + (माप(u32) * ATA_REG_DATA);
 	port->error_addr =
-		port->feature_addr = shd_base + (sizeof(u32) * ATA_REG_ERR);
-	port->nsect_addr = shd_base + (sizeof(u32) * ATA_REG_NSECT);
-	port->lbal_addr = shd_base + (sizeof(u32) * ATA_REG_LBAL);
-	port->lbam_addr = shd_base + (sizeof(u32) * ATA_REG_LBAM);
-	port->lbah_addr = shd_base + (sizeof(u32) * ATA_REG_LBAH);
-	port->device_addr = shd_base + (sizeof(u32) * ATA_REG_DEVICE);
+		port->feature_addr = shd_base + (माप(u32) * ATA_REG_ERR);
+	port->nsect_addr = shd_base + (माप(u32) * ATA_REG_NSECT);
+	port->lbal_addr = shd_base + (माप(u32) * ATA_REG_LBAL);
+	port->lbam_addr = shd_base + (माप(u32) * ATA_REG_LBAM);
+	port->lbah_addr = shd_base + (माप(u32) * ATA_REG_LBAH);
+	port->device_addr = shd_base + (माप(u32) * ATA_REG_DEVICE);
 	port->status_addr =
-		port->command_addr = shd_base + (sizeof(u32) * ATA_REG_STATUS);
-	/* special case: control/altstatus doesn't have ATA_REG_ address */
+		port->command_addr = shd_base + (माप(u32) * ATA_REG_STATUS);
+	/* special हाल: control/altstatus करोesn't have ATA_REG_ address */
 	port->altstatus_addr = port->ctl_addr = shd_base + SHD_CTL_AST;
 
-	/* Clear any currently outstanding port interrupt conditions */
+	/* Clear any currently outstanding port पूर्णांकerrupt conditions */
 	serr = port_mmio + mv_scr_offset(SCR_ERROR);
-	writelfl(readl(serr), serr);
-	writelfl(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
+	ग_लिखोlfl(पढ़ोl(serr), serr);
+	ग_लिखोlfl(0, port_mmio + EDMA_ERR_IRQ_CAUSE);
 
-	/* unmask all non-transient EDMA error interrupts */
-	writelfl(~EDMA_ERR_IRQ_TRANSIENT, port_mmio + EDMA_ERR_IRQ_MASK);
+	/* unmask all non-transient EDMA error पूर्णांकerrupts */
+	ग_लिखोlfl(~EDMA_ERR_IRQ_TRANSIENT, port_mmio + EDMA_ERR_IRQ_MASK);
 
 	VPRINTK("EDMA cfg=0x%08x EDMA IRQ err cause/mask=0x%08x/0x%08x\n",
-		readl(port_mmio + EDMA_CFG),
-		readl(port_mmio + EDMA_ERR_IRQ_CAUSE),
-		readl(port_mmio + EDMA_ERR_IRQ_MASK));
-}
+		पढ़ोl(port_mmio + EDMA_CFG),
+		पढ़ोl(port_mmio + EDMA_ERR_IRQ_CAUSE),
+		पढ़ोl(port_mmio + EDMA_ERR_IRQ_MASK));
+पूर्ण
 
-static unsigned int mv_in_pcix_mode(struct ata_host *host)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base;
+अटल अचिन्हित पूर्णांक mv_in_pcix_mode(काष्ठा ata_host *host)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
 	u32 reg;
 
-	if (IS_SOC(hpriv) || !IS_PCIE(hpriv))
-		return 0;	/* not PCI-X capable */
-	reg = readl(mmio + MV_PCI_MODE);
-	if ((reg & MV_PCI_MODE_MASK) == 0)
-		return 0;	/* conventional PCI mode */
-	return 1;	/* chip is in PCI-X mode */
-}
+	अगर (IS_SOC(hpriv) || !IS_PCIE(hpriv))
+		वापस 0;	/* not PCI-X capable */
+	reg = पढ़ोl(mmio + MV_PCI_MODE);
+	अगर ((reg & MV_PCI_MODE_MASK) == 0)
+		वापस 0;	/* conventional PCI mode */
+	वापस 1;	/* chip is in PCI-X mode */
+पूर्ण
 
-static int mv_pci_cut_through_okay(struct ata_host *host)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base;
+अटल पूर्णांक mv_pci_cut_through_okay(काष्ठा ata_host *host)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
 	u32 reg;
 
-	if (!mv_in_pcix_mode(host)) {
-		reg = readl(mmio + MV_PCI_COMMAND);
-		if (reg & MV_PCI_COMMAND_MRDTRIG)
-			return 0; /* not okay */
-	}
-	return 1; /* okay */
-}
+	अगर (!mv_in_pcix_mode(host)) अणु
+		reg = पढ़ोl(mmio + MV_PCI_COMMAND);
+		अगर (reg & MV_PCI_COMMAND_MRDTRIG)
+			वापस 0; /* not okay */
+	पूर्ण
+	वापस 1; /* okay */
+पूर्ण
 
-static void mv_60x1b2_errata_pci7(struct ata_host *host)
-{
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base;
+अटल व्योम mv_60x1b2_errata_pci7(काष्ठा ata_host *host)
+अणु
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
 
-	/* workaround for 60x1-B2 errata PCI#7 */
-	if (mv_in_pcix_mode(host)) {
-		u32 reg = readl(mmio + MV_PCI_COMMAND);
-		writelfl(reg & ~MV_PCI_COMMAND_MWRCOM, mmio + MV_PCI_COMMAND);
-	}
-}
+	/* workaround क्रम 60x1-B2 errata PCI#7 */
+	अगर (mv_in_pcix_mode(host)) अणु
+		u32 reg = पढ़ोl(mmio + MV_PCI_COMMAND);
+		ग_लिखोlfl(reg & ~MV_PCI_COMMAND_MWRCOM, mmio + MV_PCI_COMMAND);
+	पूर्ण
+पूर्ण
 
-static int mv_chip_id(struct ata_host *host, unsigned int board_idx)
-{
-	struct pci_dev *pdev = to_pci_dev(host->dev);
-	struct mv_host_priv *hpriv = host->private_data;
+अटल पूर्णांक mv_chip_id(काष्ठा ata_host *host, अचिन्हित पूर्णांक board_idx)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(host->dev);
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
 	u32 hp_flags = hpriv->hp_flags;
 
-	switch (board_idx) {
-	case chip_5080:
+	चयन (board_idx) अणु
+	हाल chip_5080:
 		hpriv->ops = &mv5xxx_ops;
 		hp_flags |= MV_HP_GEN_I;
 
-		switch (pdev->revision) {
-		case 0x1:
+		चयन (pdev->revision) अणु
+		हाल 0x1:
 			hp_flags |= MV_HP_ERRATA_50XXB0;
-			break;
-		case 0x3:
+			अवरोध;
+		हाल 0x3:
 			hp_flags |= MV_HP_ERRATA_50XXB2;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(&pdev->dev,
 				 "Applying 50XXB2 workarounds to unknown rev\n");
 			hp_flags |= MV_HP_ERRATA_50XXB2;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case chip_504x:
-	case chip_508x:
+	हाल chip_504x:
+	हाल chip_508x:
 		hpriv->ops = &mv5xxx_ops;
 		hp_flags |= MV_HP_GEN_I;
 
-		switch (pdev->revision) {
-		case 0x0:
+		चयन (pdev->revision) अणु
+		हाल 0x0:
 			hp_flags |= MV_HP_ERRATA_50XXB0;
-			break;
-		case 0x3:
+			अवरोध;
+		हाल 0x3:
 			hp_flags |= MV_HP_ERRATA_50XXB2;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(&pdev->dev,
 				 "Applying B2 workarounds to unknown rev\n");
 			hp_flags |= MV_HP_ERRATA_50XXB2;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case chip_604x:
-	case chip_608x:
+	हाल chip_604x:
+	हाल chip_608x:
 		hpriv->ops = &mv6xxx_ops;
 		hp_flags |= MV_HP_GEN_II;
 
-		switch (pdev->revision) {
-		case 0x7:
+		चयन (pdev->revision) अणु
+		हाल 0x7:
 			mv_60x1b2_errata_pci7(host);
 			hp_flags |= MV_HP_ERRATA_60X1B2;
-			break;
-		case 0x9:
+			अवरोध;
+		हाल 0x9:
 			hp_flags |= MV_HP_ERRATA_60X1C0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(&pdev->dev,
 				 "Applying B2 workarounds to unknown rev\n");
 			hp_flags |= MV_HP_ERRATA_60X1B2;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case chip_7042:
+	हाल chip_7042:
 		hp_flags |= MV_HP_PCIE | MV_HP_CUT_THROUGH;
-		if (pdev->vendor == PCI_VENDOR_ID_TTI &&
+		अगर (pdev->venकरोr == PCI_VENDOR_ID_TTI &&
 		    (pdev->device == 0x2300 || pdev->device == 0x2310))
-		{
+		अणु
 			/*
-			 * Highpoint RocketRAID PCIe 23xx series cards:
+			 * Highpoपूर्णांक RocketRAID PCIe 23xx series cards:
 			 *
 			 * Unconfigured drives are treated as "Legacy"
-			 * by the BIOS, and it overwrites sector 8 with
+			 * by the BIOS, and it overग_लिखोs sector 8 with
 			 * a "Lgcy" metadata block prior to Linux boot.
 			 *
 			 * Configured drives (RAID or JBOD) leave sector 8
-			 * alone, but instead overwrite a high numbered
-			 * sector for the RAID metadata.  This sector can
+			 * alone, but instead overग_लिखो a high numbered
+			 * sector क्रम the RAID metadata.  This sector can
 			 * be determined exactly, by truncating the physical
 			 * drive capacity to a nice even GB value.
 			 *
@@ -3855,638 +3856,638 @@ static int mv_chip_id(struct ata_host *host, unsigned int board_idx)
 			 *
 			 * Warn the user, lest they think we're just buggy.
 			 */
-			printk(KERN_WARNING DRV_NAME ": Highpoint RocketRAID"
+			prपूर्णांकk(KERN_WARNING DRV_NAME ": Highpoint RocketRAID"
 				" BIOS CORRUPTS DATA on all attached drives,"
 				" regardless of if/how they are configured."
 				" BEWARE!\n");
-			printk(KERN_WARNING DRV_NAME ": For data safety, do not"
+			prपूर्णांकk(KERN_WARNING DRV_NAME ": For data safety, do not"
 				" use sectors 8-9 on \"Legacy\" drives,"
 				" and avoid the final two gigabytes on"
 				" all RocketRAID BIOS initialized drives.\n");
-		}
+		पूर्ण
 		fallthrough;
-	case chip_6042:
+	हाल chip_6042:
 		hpriv->ops = &mv6xxx_ops;
 		hp_flags |= MV_HP_GEN_IIE;
-		if (board_idx == chip_6042 && mv_pci_cut_through_okay(host))
+		अगर (board_idx == chip_6042 && mv_pci_cut_through_okay(host))
 			hp_flags |= MV_HP_CUT_THROUGH;
 
-		switch (pdev->revision) {
-		case 0x2: /* Rev.B0: the first/only public release */
+		चयन (pdev->revision) अणु
+		हाल 0x2: /* Rev.B0: the first/only खुला release */
 			hp_flags |= MV_HP_ERRATA_60X1C0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(&pdev->dev,
 				 "Applying 60X1C0 workarounds to unknown rev\n");
 			hp_flags |= MV_HP_ERRATA_60X1C0;
-			break;
-		}
-		break;
-	case chip_soc:
-		if (soc_is_65n(hpriv))
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल chip_soc:
+		अगर (soc_is_65n(hpriv))
 			hpriv->ops = &mv_soc_65n_ops;
-		else
+		अन्यथा
 			hpriv->ops = &mv_soc_ops;
 		hp_flags |= MV_HP_FLAG_SOC | MV_HP_GEN_IIE |
 			MV_HP_ERRATA_60X1C0;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(host->dev, "BUG: invalid board index %u\n", board_idx);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	hpriv->hp_flags = hp_flags;
-	if (hp_flags & MV_HP_PCIE) {
+	अगर (hp_flags & MV_HP_PCIE) अणु
 		hpriv->irq_cause_offset	= PCIE_IRQ_CAUSE;
 		hpriv->irq_mask_offset	= PCIE_IRQ_MASK;
 		hpriv->unmask_all_irqs	= PCIE_UNMASK_ALL_IRQS;
-	} else {
+	पूर्ण अन्यथा अणु
 		hpriv->irq_cause_offset	= PCI_IRQ_CAUSE;
 		hpriv->irq_mask_offset	= PCI_IRQ_MASK;
 		hpriv->unmask_all_irqs	= PCI_UNMASK_ALL_IRQS;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *      mv_init_host - Perform some early initialization of the host.
+ *      mv_init_host - Perक्रमm some early initialization of the host.
  *	@host: ATA host to initialize
  *
- *      If possible, do an early global reset of the host.  Then do
- *      our port init and clear/unmask all/relevant host interrupts.
+ *      If possible, करो an early global reset of the host.  Then करो
+ *      our port init and clear/unmask all/relevant host पूर्णांकerrupts.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_init_host(struct ata_host *host)
-{
-	int rc = 0, n_hc, port, hc;
-	struct mv_host_priv *hpriv = host->private_data;
-	void __iomem *mmio = hpriv->base;
+अटल पूर्णांक mv_init_host(काष्ठा ata_host *host)
+अणु
+	पूर्णांक rc = 0, n_hc, port, hc;
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	व्योम __iomem *mmio = hpriv->base;
 
 	rc = mv_chip_id(host, hpriv->board_idx);
-	if (rc)
-		goto done;
+	अगर (rc)
+		जाओ करोne;
 
-	if (IS_SOC(hpriv)) {
-		hpriv->main_irq_cause_addr = mmio + SOC_HC_MAIN_IRQ_CAUSE;
-		hpriv->main_irq_mask_addr  = mmio + SOC_HC_MAIN_IRQ_MASK;
-	} else {
-		hpriv->main_irq_cause_addr = mmio + PCI_HC_MAIN_IRQ_CAUSE;
-		hpriv->main_irq_mask_addr  = mmio + PCI_HC_MAIN_IRQ_MASK;
-	}
+	अगर (IS_SOC(hpriv)) अणु
+		hpriv->मुख्य_irq_cause_addr = mmio + SOC_HC_MAIN_IRQ_CAUSE;
+		hpriv->मुख्य_irq_mask_addr  = mmio + SOC_HC_MAIN_IRQ_MASK;
+	पूर्ण अन्यथा अणु
+		hpriv->मुख्य_irq_cause_addr = mmio + PCI_HC_MAIN_IRQ_CAUSE;
+		hpriv->मुख्य_irq_mask_addr  = mmio + PCI_HC_MAIN_IRQ_MASK;
+	पूर्ण
 
-	/* initialize shadow irq mask with register's value */
-	hpriv->main_irq_mask = readl(hpriv->main_irq_mask_addr);
+	/* initialize shaकरोw irq mask with रेजिस्टर's value */
+	hpriv->मुख्य_irq_mask = पढ़ोl(hpriv->मुख्य_irq_mask_addr);
 
-	/* global interrupt mask: 0 == mask everything */
-	mv_set_main_irq_mask(host, ~0, 0);
+	/* global पूर्णांकerrupt mask: 0 == mask everything */
+	mv_set_मुख्य_irq_mask(host, ~0, 0);
 
 	n_hc = mv_get_hc_count(host->ports[0]->flags);
 
-	for (port = 0; port < host->n_ports; port++)
-		if (hpriv->ops->read_preamp)
-			hpriv->ops->read_preamp(hpriv, port, mmio);
+	क्रम (port = 0; port < host->n_ports; port++)
+		अगर (hpriv->ops->पढ़ो_preamp)
+			hpriv->ops->पढ़ो_preamp(hpriv, port, mmio);
 
 	rc = hpriv->ops->reset_hc(hpriv, mmio, n_hc);
-	if (rc)
-		goto done;
+	अगर (rc)
+		जाओ करोne;
 
 	hpriv->ops->reset_flash(hpriv, mmio);
 	hpriv->ops->reset_bus(host, mmio);
 	hpriv->ops->enable_leds(hpriv, mmio);
 
-	for (port = 0; port < host->n_ports; port++) {
-		struct ata_port *ap = host->ports[port];
-		void __iomem *port_mmio = mv_port_base(mmio, port);
+	क्रम (port = 0; port < host->n_ports; port++) अणु
+		काष्ठा ata_port *ap = host->ports[port];
+		व्योम __iomem *port_mmio = mv_port_base(mmio, port);
 
 		mv_port_init(&ap->ioaddr, port_mmio);
-	}
+	पूर्ण
 
-	for (hc = 0; hc < n_hc; hc++) {
-		void __iomem *hc_mmio = mv_hc_base(mmio, hc);
+	क्रम (hc = 0; hc < n_hc; hc++) अणु
+		व्योम __iomem *hc_mmio = mv_hc_base(mmio, hc);
 
 		VPRINTK("HC%i: HC config=0x%08x HC IRQ cause "
 			"(before clear)=0x%08x\n", hc,
-			readl(hc_mmio + HC_CFG),
-			readl(hc_mmio + HC_IRQ_CAUSE));
+			पढ़ोl(hc_mmio + HC_CFG),
+			पढ़ोl(hc_mmio + HC_IRQ_CAUSE));
 
-		/* Clear any currently outstanding hc interrupt conditions */
-		writelfl(0, hc_mmio + HC_IRQ_CAUSE);
-	}
+		/* Clear any currently outstanding hc पूर्णांकerrupt conditions */
+		ग_लिखोlfl(0, hc_mmio + HC_IRQ_CAUSE);
+	पूर्ण
 
-	if (!IS_SOC(hpriv)) {
-		/* Clear any currently outstanding host interrupt conditions */
-		writelfl(0, mmio + hpriv->irq_cause_offset);
+	अगर (!IS_SOC(hpriv)) अणु
+		/* Clear any currently outstanding host पूर्णांकerrupt conditions */
+		ग_लिखोlfl(0, mmio + hpriv->irq_cause_offset);
 
-		/* and unmask interrupt generation for host regs */
-		writelfl(hpriv->unmask_all_irqs, mmio + hpriv->irq_mask_offset);
-	}
+		/* and unmask पूर्णांकerrupt generation क्रम host regs */
+		ग_लिखोlfl(hpriv->unmask_all_irqs, mmio + hpriv->irq_mask_offset);
+	पूर्ण
 
 	/*
-	 * enable only global host interrupts for now.
-	 * The per-port interrupts get done later as ports are set up.
+	 * enable only global host पूर्णांकerrupts क्रम now.
+	 * The per-port पूर्णांकerrupts get करोne later as ports are set up.
 	 */
-	mv_set_main_irq_mask(host, 0, PCI_ERR);
+	mv_set_मुख्य_irq_mask(host, 0, PCI_ERR);
 	mv_set_irq_coalescing(host, irq_coalescing_io_count,
 				    irq_coalescing_usecs);
-done:
-	return rc;
-}
+करोne:
+	वापस rc;
+पूर्ण
 
-static int mv_create_dma_pools(struct mv_host_priv *hpriv, struct device *dev)
-{
+अटल पूर्णांक mv_create_dma_pools(काष्ठा mv_host_priv *hpriv, काष्ठा device *dev)
+अणु
 	hpriv->crqb_pool   = dmam_pool_create("crqb_q", dev, MV_CRQB_Q_SZ,
 							     MV_CRQB_Q_SZ, 0);
-	if (!hpriv->crqb_pool)
-		return -ENOMEM;
+	अगर (!hpriv->crqb_pool)
+		वापस -ENOMEM;
 
 	hpriv->crpb_pool   = dmam_pool_create("crpb_q", dev, MV_CRPB_Q_SZ,
 							     MV_CRPB_Q_SZ, 0);
-	if (!hpriv->crpb_pool)
-		return -ENOMEM;
+	अगर (!hpriv->crpb_pool)
+		वापस -ENOMEM;
 
 	hpriv->sg_tbl_pool = dmam_pool_create("sg_tbl", dev, MV_SG_TBL_SZ,
 							     MV_SG_TBL_SZ, 0);
-	if (!hpriv->sg_tbl_pool)
-		return -ENOMEM;
+	अगर (!hpriv->sg_tbl_pool)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mv_conf_mbus_windows(struct mv_host_priv *hpriv,
-				 const struct mbus_dram_target_info *dram)
-{
-	int i;
+अटल व्योम mv_conf_mbus_winकरोws(काष्ठा mv_host_priv *hpriv,
+				 स्थिर काष्ठा mbus_dram_target_info *dram)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++) {
-		writel(0, hpriv->base + WINDOW_CTRL(i));
-		writel(0, hpriv->base + WINDOW_BASE(i));
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+		ग_लिखोl(0, hpriv->base + WINDOW_CTRL(i));
+		ग_लिखोl(0, hpriv->base + WINDOW_BASE(i));
+	पूर्ण
 
-	for (i = 0; i < dram->num_cs; i++) {
-		const struct mbus_dram_window *cs = dram->cs + i;
+	क्रम (i = 0; i < dram->num_cs; i++) अणु
+		स्थिर काष्ठा mbus_dram_winकरोw *cs = dram->cs + i;
 
-		writel(((cs->size - 1) & 0xffff0000) |
+		ग_लिखोl(((cs->size - 1) & 0xffff0000) |
 			(cs->mbus_attr << 8) |
 			(dram->mbus_dram_target_id << 4) | 1,
 			hpriv->base + WINDOW_CTRL(i));
-		writel(cs->base, hpriv->base + WINDOW_BASE(i));
-	}
-}
+		ग_लिखोl(cs->base, hpriv->base + WINDOW_BASE(i));
+	पूर्ण
+पूर्ण
 
 /**
- *      mv_platform_probe - handle a positive probe of an soc Marvell
+ *      mv_platक्रमm_probe - handle a positive probe of an soc Marvell
  *      host
- *      @pdev: platform device found
+ *      @pdev: platक्रमm device found
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_platform_probe(struct platform_device *pdev)
-{
-	const struct mv_sata_platform_data *mv_platform_data;
-	const struct mbus_dram_target_info *dram;
-	const struct ata_port_info *ppi[] =
-	    { &mv_port_info[chip_soc], NULL };
-	struct ata_host *host;
-	struct mv_host_priv *hpriv;
-	struct resource *res;
-	int n_ports = 0, irq = 0;
-	int rc;
-	int port;
+अटल पूर्णांक mv_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा mv_sata_platक्रमm_data *mv_platक्रमm_data;
+	स्थिर काष्ठा mbus_dram_target_info *dram;
+	स्थिर काष्ठा ata_port_info *ppi[] =
+	    अणु &mv_port_info[chip_soc], शून्य पूर्ण;
+	काष्ठा ata_host *host;
+	काष्ठा mv_host_priv *hpriv;
+	काष्ठा resource *res;
+	पूर्णांक n_ports = 0, irq = 0;
+	पूर्णांक rc;
+	पूर्णांक port;
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
 	/*
 	 * Simple resource validation ..
 	 */
-	if (unlikely(pdev->num_resources != 2)) {
+	अगर (unlikely(pdev->num_resources != 2)) अणु
 		dev_err(&pdev->dev, "invalid number of resources\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Get the register base first
+	 * Get the रेजिस्टर base first
 	 */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL)
-		return -EINVAL;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (res == शून्य)
+		वापस -EINVAL;
 
 	/* allocate host */
-	if (pdev->dev.of_node) {
-		rc = of_property_read_u32(pdev->dev.of_node, "nr-ports",
+	अगर (pdev->dev.of_node) अणु
+		rc = of_property_पढ़ो_u32(pdev->dev.of_node, "nr-ports",
 					   &n_ports);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&pdev->dev,
 				"error parsing nr-ports property: %d\n", rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
-		if (n_ports <= 0) {
+		अगर (n_ports <= 0) अणु
 			dev_err(&pdev->dev, "nr-ports must be positive: %d\n",
 				n_ports);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		irq = irq_of_parse_and_map(pdev->dev.of_node, 0);
-	} else {
-		mv_platform_data = dev_get_platdata(&pdev->dev);
-		n_ports = mv_platform_data->n_ports;
-		irq = platform_get_irq(pdev, 0);
-	}
-	if (irq < 0)
-		return irq;
-	if (!irq)
-		return -EINVAL;
+	पूर्ण अन्यथा अणु
+		mv_platक्रमm_data = dev_get_platdata(&pdev->dev);
+		n_ports = mv_platक्रमm_data->n_ports;
+		irq = platक्रमm_get_irq(pdev, 0);
+	पूर्ण
+	अगर (irq < 0)
+		वापस irq;
+	अगर (!irq)
+		वापस -EINVAL;
 
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi, n_ports);
-	hpriv = devm_kzalloc(&pdev->dev, sizeof(*hpriv), GFP_KERNEL);
+	hpriv = devm_kzalloc(&pdev->dev, माप(*hpriv), GFP_KERNEL);
 
-	if (!host || !hpriv)
-		return -ENOMEM;
-	hpriv->port_clks = devm_kcalloc(&pdev->dev,
-					n_ports, sizeof(struct clk *),
+	अगर (!host || !hpriv)
+		वापस -ENOMEM;
+	hpriv->port_clks = devm_kसुस्मृति(&pdev->dev,
+					n_ports, माप(काष्ठा clk *),
 					GFP_KERNEL);
-	if (!hpriv->port_clks)
-		return -ENOMEM;
-	hpriv->port_phys = devm_kcalloc(&pdev->dev,
-					n_ports, sizeof(struct phy *),
+	अगर (!hpriv->port_clks)
+		वापस -ENOMEM;
+	hpriv->port_phys = devm_kसुस्मृति(&pdev->dev,
+					n_ports, माप(काष्ठा phy *),
 					GFP_KERNEL);
-	if (!hpriv->port_phys)
-		return -ENOMEM;
-	host->private_data = hpriv;
+	अगर (!hpriv->port_phys)
+		वापस -ENOMEM;
+	host->निजी_data = hpriv;
 	hpriv->board_idx = chip_soc;
 
-	host->iomap = NULL;
+	host->iomap = शून्य;
 	hpriv->base = devm_ioremap(&pdev->dev, res->start,
 				   resource_size(res));
-	if (!hpriv->base)
-		return -ENOMEM;
+	अगर (!hpriv->base)
+		वापस -ENOMEM;
 
 	hpriv->base -= SATAHC0_REG_BASE;
 
-	hpriv->clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(hpriv->clk))
+	hpriv->clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(hpriv->clk))
 		dev_notice(&pdev->dev, "cannot get optional clkdev\n");
-	else
+	अन्यथा
 		clk_prepare_enable(hpriv->clk);
 
-	for (port = 0; port < n_ports; port++) {
-		char port_number[16];
-		sprintf(port_number, "%d", port);
+	क्रम (port = 0; port < n_ports; port++) अणु
+		अक्षर port_number[16];
+		प्र_लिखो(port_number, "%d", port);
 		hpriv->port_clks[port] = clk_get(&pdev->dev, port_number);
-		if (!IS_ERR(hpriv->port_clks[port]))
+		अगर (!IS_ERR(hpriv->port_clks[port]))
 			clk_prepare_enable(hpriv->port_clks[port]);
 
-		sprintf(port_number, "port%d", port);
+		प्र_लिखो(port_number, "port%d", port);
 		hpriv->port_phys[port] = devm_phy_optional_get(&pdev->dev,
 							       port_number);
-		if (IS_ERR(hpriv->port_phys[port])) {
+		अगर (IS_ERR(hpriv->port_phys[port])) अणु
 			rc = PTR_ERR(hpriv->port_phys[port]);
-			hpriv->port_phys[port] = NULL;
-			if (rc != -EPROBE_DEFER)
+			hpriv->port_phys[port] = शून्य;
+			अगर (rc != -EPROBE_DEFER)
 				dev_warn(&pdev->dev, "error getting phy %d", rc);
 
 			/* Cleanup only the initialized ports */
 			hpriv->n_ports = port;
-			goto err;
-		} else
-			phy_power_on(hpriv->port_phys[port]);
-	}
+			जाओ err;
+		पूर्ण अन्यथा
+			phy_घातer_on(hpriv->port_phys[port]);
+	पूर्ण
 
 	/* All the ports have been initialized */
 	hpriv->n_ports = n_ports;
 
 	/*
-	 * (Re-)program MBUS remapping windows if we are asked to.
+	 * (Re-)program MBUS remapping winकरोws अगर we are asked to.
 	 */
 	dram = mv_mbus_dram_info();
-	if (dram)
-		mv_conf_mbus_windows(hpriv, dram);
+	अगर (dram)
+		mv_conf_mbus_winकरोws(hpriv, dram);
 
 	rc = mv_create_dma_pools(hpriv, &pdev->dev);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	/*
 	 * To allow disk hotplug on Armada 370/XP SoCs, the PHY speed must be
-	 * updated in the LP_PHY_CTL register.
+	 * updated in the LP_PHY_CTL रेजिस्टर.
 	 */
-	if (pdev->dev.of_node &&
+	अगर (pdev->dev.of_node &&
 		of_device_is_compatible(pdev->dev.of_node,
 					"marvell,armada-370-sata"))
 		hpriv->hp_flags |= MV_HP_FIX_LP_PHY_CTL;
 
 	/* initialize adapter */
 	rc = mv_init_host(host);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
 	dev_info(&pdev->dev, "slots %u ports %d\n",
-		 (unsigned)MV_MAX_Q_DEPTH, host->n_ports);
+		 (अचिन्हित)MV_MAX_Q_DEPTH, host->n_ports);
 
-	rc = ata_host_activate(host, irq, mv_interrupt, IRQF_SHARED, &mv6_sht);
-	if (!rc)
-		return 0;
+	rc = ata_host_activate(host, irq, mv_पूर्णांकerrupt, IRQF_SHARED, &mv6_sht);
+	अगर (!rc)
+		वापस 0;
 
 err:
-	if (!IS_ERR(hpriv->clk)) {
+	अगर (!IS_ERR(hpriv->clk)) अणु
 		clk_disable_unprepare(hpriv->clk);
 		clk_put(hpriv->clk);
-	}
-	for (port = 0; port < hpriv->n_ports; port++) {
-		if (!IS_ERR(hpriv->port_clks[port])) {
+	पूर्ण
+	क्रम (port = 0; port < hpriv->n_ports; port++) अणु
+		अगर (!IS_ERR(hpriv->port_clks[port])) अणु
 			clk_disable_unprepare(hpriv->port_clks[port]);
 			clk_put(hpriv->port_clks[port]);
-		}
-		phy_power_off(hpriv->port_phys[port]);
-	}
+		पूर्ण
+		phy_घातer_off(hpriv->port_phys[port]);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  *
- *      mv_platform_remove    -       unplug a platform interface
- *      @pdev: platform device
+ *      mv_platक्रमm_हटाओ    -       unplug a platक्रमm पूर्णांकerface
+ *      @pdev: platक्रमm device
  *
- *      A platform bus SATA device has been unplugged. Perform the needed
- *      cleanup. Also called on module unload for any active devices.
+ *      A platक्रमm bus SATA device has been unplugged. Perक्रमm the needed
+ *      cleanup. Also called on module unload क्रम any active devices.
  */
-static int mv_platform_remove(struct platform_device *pdev)
-{
-	struct ata_host *host = platform_get_drvdata(pdev);
-	struct mv_host_priv *hpriv = host->private_data;
-	int port;
+अटल पूर्णांक mv_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
+	पूर्णांक port;
 	ata_host_detach(host);
 
-	if (!IS_ERR(hpriv->clk)) {
+	अगर (!IS_ERR(hpriv->clk)) अणु
 		clk_disable_unprepare(hpriv->clk);
 		clk_put(hpriv->clk);
-	}
-	for (port = 0; port < host->n_ports; port++) {
-		if (!IS_ERR(hpriv->port_clks[port])) {
+	पूर्ण
+	क्रम (port = 0; port < host->n_ports; port++) अणु
+		अगर (!IS_ERR(hpriv->port_clks[port])) अणु
 			clk_disable_unprepare(hpriv->port_clks[port]);
 			clk_put(hpriv->port_clks[port]);
-		}
-		phy_power_off(hpriv->port_phys[port]);
-	}
-	return 0;
-}
+		पूर्ण
+		phy_घातer_off(hpriv->port_phys[port]);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mv_platform_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct ata_host *host = platform_get_drvdata(pdev);
-	if (host)
-		return ata_host_suspend(host, state);
-	else
-		return 0;
-}
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mv_platक्रमm_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
+अणु
+	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
+	अगर (host)
+		वापस ata_host_suspend(host, state);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int mv_platform_resume(struct platform_device *pdev)
-{
-	struct ata_host *host = platform_get_drvdata(pdev);
-	const struct mbus_dram_target_info *dram;
-	int ret;
+अटल पूर्णांक mv_platक्रमm_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ata_host *host = platक्रमm_get_drvdata(pdev);
+	स्थिर काष्ठा mbus_dram_target_info *dram;
+	पूर्णांक ret;
 
-	if (host) {
-		struct mv_host_priv *hpriv = host->private_data;
+	अगर (host) अणु
+		काष्ठा mv_host_priv *hpriv = host->निजी_data;
 
 		/*
-		 * (Re-)program MBUS remapping windows if we are asked to.
+		 * (Re-)program MBUS remapping winकरोws अगर we are asked to.
 		 */
 		dram = mv_mbus_dram_info();
-		if (dram)
-			mv_conf_mbus_windows(hpriv, dram);
+		अगर (dram)
+			mv_conf_mbus_winकरोws(hpriv, dram);
 
 		/* initialize adapter */
 		ret = mv_init_host(host);
-		if (ret) {
-			printk(KERN_ERR DRV_NAME ": Error during HW init\n");
-			return ret;
-		}
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR DRV_NAME ": Error during HW init\n");
+			वापस ret;
+		पूर्ण
 		ata_host_resume(host);
-	}
+	पूर्ण
 
-	return 0;
-}
-#else
-#define mv_platform_suspend NULL
-#define mv_platform_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा mv_platक्रमm_suspend शून्य
+#घोषणा mv_platक्रमm_resume शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_OF
-static const struct of_device_id mv_sata_dt_ids[] = {
-	{ .compatible = "marvell,armada-370-sata", },
-	{ .compatible = "marvell,orion-sata", },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id mv_sata_dt_ids[] = अणु
+	अणु .compatible = "marvell,armada-370-sata", पूर्ण,
+	अणु .compatible = "marvell,orion-sata", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mv_sata_dt_ids);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver mv_platform_driver = {
-	.probe		= mv_platform_probe,
-	.remove		= mv_platform_remove,
-	.suspend	= mv_platform_suspend,
-	.resume		= mv_platform_resume,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver mv_platक्रमm_driver = अणु
+	.probe		= mv_platक्रमm_probe,
+	.हटाओ		= mv_platक्रमm_हटाओ,
+	.suspend	= mv_platक्रमm_suspend,
+	.resume		= mv_platक्रमm_resume,
+	.driver		= अणु
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(mv_sata_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-#ifdef CONFIG_PCI
-static int mv_pci_init_one(struct pci_dev *pdev,
-			   const struct pci_device_id *ent);
-#ifdef CONFIG_PM_SLEEP
-static int mv_pci_device_resume(struct pci_dev *pdev);
-#endif
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक mv_pci_init_one(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mv_pci_device_resume(काष्ठा pci_dev *pdev);
+#पूर्ण_अगर
 
 
-static struct pci_driver mv_pci_driver = {
+अटल काष्ठा pci_driver mv_pci_driver = अणु
 	.name			= DRV_NAME,
 	.id_table		= mv_pci_tbl,
 	.probe			= mv_pci_init_one,
-	.remove			= ata_pci_remove_one,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ			= ata_pci_हटाओ_one,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.suspend		= ata_pci_device_suspend,
 	.resume			= mv_pci_device_resume,
-#endif
+#पूर्ण_अगर
 
-};
+पूर्ण;
 
 /**
- *      mv_print_info - Dump key info to kernel log for perusal.
- *      @host: ATA host to print info about
+ *      mv_prपूर्णांक_info - Dump key info to kernel log क्रम perusal.
+ *      @host: ATA host to prपूर्णांक info about
  *
  *      FIXME: complete this.
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static void mv_print_info(struct ata_host *host)
-{
-	struct pci_dev *pdev = to_pci_dev(host->dev);
-	struct mv_host_priv *hpriv = host->private_data;
+अटल व्योम mv_prपूर्णांक_info(काष्ठा ata_host *host)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(host->dev);
+	काष्ठा mv_host_priv *hpriv = host->निजी_data;
 	u8 scc;
-	const char *scc_s, *gen;
+	स्थिर अक्षर *scc_s, *gen;
 
 	/* Use this to determine the HW stepping of the chip so we know
 	 * what errata to workaround
 	 */
-	pci_read_config_byte(pdev, PCI_CLASS_DEVICE, &scc);
-	if (scc == 0)
+	pci_पढ़ो_config_byte(pdev, PCI_CLASS_DEVICE, &scc);
+	अगर (scc == 0)
 		scc_s = "SCSI";
-	else if (scc == 0x01)
+	अन्यथा अगर (scc == 0x01)
 		scc_s = "RAID";
-	else
+	अन्यथा
 		scc_s = "?";
 
-	if (IS_GEN_I(hpriv))
+	अगर (IS_GEN_I(hpriv))
 		gen = "I";
-	else if (IS_GEN_II(hpriv))
+	अन्यथा अगर (IS_GEN_II(hpriv))
 		gen = "II";
-	else if (IS_GEN_IIE(hpriv))
+	अन्यथा अगर (IS_GEN_IIE(hpriv))
 		gen = "IIE";
-	else
+	अन्यथा
 		gen = "?";
 
 	dev_info(&pdev->dev, "Gen-%s %u slots %u ports %s mode IRQ via %s\n",
-		 gen, (unsigned)MV_MAX_Q_DEPTH, host->n_ports,
+		 gen, (अचिन्हित)MV_MAX_Q_DEPTH, host->n_ports,
 		 scc_s, (MV_HP_FLAG_MSI & hpriv->hp_flags) ? "MSI" : "INTx");
-}
+पूर्ण
 
 /**
  *      mv_pci_init_one - handle a positive probe of a PCI Marvell host
  *      @pdev: PCI device found
- *      @ent: PCI device ID entry for the matched host
+ *      @ent: PCI device ID entry क्रम the matched host
  *
  *      LOCKING:
  *      Inherited from caller.
  */
-static int mv_pci_init_one(struct pci_dev *pdev,
-			   const struct pci_device_id *ent)
-{
-	unsigned int board_idx = (unsigned int)ent->driver_data;
-	const struct ata_port_info *ppi[] = { &mv_port_info[board_idx], NULL };
-	struct ata_host *host;
-	struct mv_host_priv *hpriv;
-	int n_ports, port, rc;
+अटल पूर्णांक mv_pci_init_one(काष्ठा pci_dev *pdev,
+			   स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित पूर्णांक board_idx = (अचिन्हित पूर्णांक)ent->driver_data;
+	स्थिर काष्ठा ata_port_info *ppi[] = अणु &mv_port_info[board_idx], शून्य पूर्ण;
+	काष्ठा ata_host *host;
+	काष्ठा mv_host_priv *hpriv;
+	पूर्णांक n_ports, port, rc;
 
-	ata_print_version_once(&pdev->dev, DRV_VERSION);
+	ata_prपूर्णांक_version_once(&pdev->dev, DRV_VERSION);
 
 	/* allocate host */
 	n_ports = mv_get_hc_count(ppi[0]->flags) * MV_PORTS_PER_HC;
 
 	host = ata_host_alloc_pinfo(&pdev->dev, ppi, n_ports);
-	hpriv = devm_kzalloc(&pdev->dev, sizeof(*hpriv), GFP_KERNEL);
-	if (!host || !hpriv)
-		return -ENOMEM;
-	host->private_data = hpriv;
+	hpriv = devm_kzalloc(&pdev->dev, माप(*hpriv), GFP_KERNEL);
+	अगर (!host || !hpriv)
+		वापस -ENOMEM;
+	host->निजी_data = hpriv;
 	hpriv->n_ports = n_ports;
 	hpriv->board_idx = board_idx;
 
 	/* acquire resources */
 	rc = pcim_enable_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pcim_iomap_regions(pdev, 1 << MV_PRIMARY_BAR, DRV_NAME);
-	if (rc == -EBUSY)
+	अगर (rc == -EBUSY)
 		pcim_pin_device(pdev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	host->iomap = pcim_iomap_table(pdev);
 	hpriv->base = host->iomap[MV_PRIMARY_BAR];
 
 	rc = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&pdev->dev, "DMA enable failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = mv_create_dma_pools(hpriv, &pdev->dev);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	for (port = 0; port < host->n_ports; port++) {
-		struct ata_port *ap = host->ports[port];
-		void __iomem *port_mmio = mv_port_base(hpriv->base, port);
-		unsigned int offset = port_mmio - hpriv->base;
+	क्रम (port = 0; port < host->n_ports; port++) अणु
+		काष्ठा ata_port *ap = host->ports[port];
+		व्योम __iomem *port_mmio = mv_port_base(hpriv->base, port);
+		अचिन्हित पूर्णांक offset = port_mmio - hpriv->base;
 
 		ata_port_pbar_desc(ap, MV_PRIMARY_BAR, -1, "mmio");
 		ata_port_pbar_desc(ap, MV_PRIMARY_BAR, offset, "port");
-	}
+	पूर्ण
 
 	/* initialize adapter */
 	rc = mv_init_host(host);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* Enable message-switched interrupts, if requested */
-	if (msi && pci_enable_msi(pdev) == 0)
+	/* Enable message-चयनed पूर्णांकerrupts, अगर requested */
+	अगर (msi && pci_enable_msi(pdev) == 0)
 		hpriv->hp_flags |= MV_HP_FLAG_MSI;
 
 	mv_dump_pci_cfg(pdev, 0x68);
-	mv_print_info(host);
+	mv_prपूर्णांक_info(host);
 
 	pci_set_master(pdev);
 	pci_try_set_mwi(pdev);
-	return ata_host_activate(host, pdev->irq, mv_interrupt, IRQF_SHARED,
+	वापस ata_host_activate(host, pdev->irq, mv_पूर्णांकerrupt, IRQF_SHARED,
 				 IS_GEN_I(hpriv) ? &mv5_sht : &mv6_sht);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mv_pci_device_resume(struct pci_dev *pdev)
-{
-	struct ata_host *host = pci_get_drvdata(pdev);
-	int rc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mv_pci_device_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा ata_host *host = pci_get_drvdata(pdev);
+	पूर्णांक rc;
 
-	rc = ata_pci_device_do_resume(pdev);
-	if (rc)
-		return rc;
+	rc = ata_pci_device_करो_resume(pdev);
+	अगर (rc)
+		वापस rc;
 
 	/* initialize adapter */
 	rc = mv_init_host(host);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	ata_host_resume(host);
 
-	return 0;
-}
-#endif
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-static int __init mv_init(void)
-{
-	int rc = -ENODEV;
-#ifdef CONFIG_PCI
-	rc = pci_register_driver(&mv_pci_driver);
-	if (rc < 0)
-		return rc;
-#endif
-	rc = platform_driver_register(&mv_platform_driver);
+अटल पूर्णांक __init mv_init(व्योम)
+अणु
+	पूर्णांक rc = -ENODEV;
+#अगर_घोषित CONFIG_PCI
+	rc = pci_रेजिस्टर_driver(&mv_pci_driver);
+	अगर (rc < 0)
+		वापस rc;
+#पूर्ण_अगर
+	rc = platक्रमm_driver_रेजिस्टर(&mv_platक्रमm_driver);
 
-#ifdef CONFIG_PCI
-	if (rc < 0)
-		pci_unregister_driver(&mv_pci_driver);
-#endif
-	return rc;
-}
+#अगर_घोषित CONFIG_PCI
+	अगर (rc < 0)
+		pci_unरेजिस्टर_driver(&mv_pci_driver);
+#पूर्ण_अगर
+	वापस rc;
+पूर्ण
 
-static void __exit mv_exit(void)
-{
-#ifdef CONFIG_PCI
-	pci_unregister_driver(&mv_pci_driver);
-#endif
-	platform_driver_unregister(&mv_platform_driver);
-}
+अटल व्योम __निकास mv_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	pci_unरेजिस्टर_driver(&mv_pci_driver);
+#पूर्ण_अगर
+	platक्रमm_driver_unरेजिस्टर(&mv_platक्रमm_driver);
+पूर्ण
 
 MODULE_AUTHOR("Brett Russ");
 MODULE_DESCRIPTION("SCSI low-level driver for Marvell SATA controllers");
@@ -4496,4 +4497,4 @@ MODULE_VERSION(DRV_VERSION);
 MODULE_ALIAS("platform:" DRV_NAME);
 
 module_init(mv_init);
-module_exit(mv_exit);
+module_निकास(mv_निकास);

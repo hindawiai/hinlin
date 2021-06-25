@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (c) 2008 Ramax Lo <ramaxlo@gmail.com>
 //      Based on mach-anubis.c by Ben Dooks <ben@simtec.co.uk>
-//      and modifications by SBZ <sbz@spgui.org> and
+//      and modअगरications by SBZ <sbz@spgui.org> and
 //      Weibing <http://weibing.blogbus.com> and
 //      Michel Pollet <buserror@gmail.com>
 //
-// For product information, visit https://code.google.com/p/mini2440/
+// For product inक्रमmation, visit https://code.google.com/p/mini2440/
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/input.h>
-#include <linux/io.h>
-#include <linux/serial_core.h>
-#include <linux/serial_s3c.h>
-#include <linux/dm9000.h>
-#include <linux/property.h>
-#include <linux/platform_device.h>
-#include <linux/gpio_keys.h>
-#include <linux/i2c.h>
-#include <linux/mmc/host.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/serial_s3c.h>
+#समावेश <linux/dm9000.h>
+#समावेश <linux/property.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mmc/host.h>
 
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <linux/platform_data/fb-s3c2410.h>
-#include <asm/mach-types.h>
+#समावेश <linux/platक्रमm_data/fb-s3c2410.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "regs-gpio.h"
-#include <linux/platform_data/leds-s3c24xx.h>
-#include <mach/irqs.h>
-#include "gpio-samsung.h"
-#include <linux/platform_data/mtd-nand-s3c2410.h>
-#include <linux/platform_data/i2c-s3c2410.h>
-#include <linux/platform_data/mmc-s3cmci.h>
-#include <linux/platform_data/usb-s3c2410_udc.h>
+#समावेश "regs-gpio.h"
+#समावेश <linux/platक्रमm_data/leds-s3c24xx.h>
+#समावेश <mach/irqs.h>
+#समावेश "gpio-samsung.h"
+#समावेश <linux/platक्रमm_data/mtd-nand-s3c2410.h>
+#समावेश <linux/platक्रमm_data/i2c-s3c2410.h>
+#समावेश <linux/platक्रमm_data/mmc-s3cmci.h>
+#समावेश <linux/platक्रमm_data/usb-s3c2410_udc.h>
 
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/nand-ecc-sw-hamming.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
+#समावेश <linux/mtd/partitions.h>
 
-#include "gpio-cfg.h"
-#include "devs.h"
-#include "cpu.h"
+#समावेश "gpio-cfg.h"
+#समावेश "devs.h"
+#समावेश "cpu.h"
 
-#include <sound/s3c24xx_uda134x.h>
+#समावेश <sound/s3c24xx_uda134x.h>
 
-#include "s3c24xx.h"
+#समावेश "s3c24xx.h"
 
-#define MACH_MINI2440_DM9K_BASE (S3C2410_CS4 + 0x300)
+#घोषणा MACH_MINI2440_DM9K_BASE (S3C2410_CS4 + 0x300)
 
-static struct map_desc mini2440_iodesc[] __initdata = {
-	/* nothing to declare, move along */
-};
+अटल काष्ठा map_desc mini2440_iodesc[] __initdata = अणु
+	/* nothing to declare, move aदीर्घ */
+पूर्ण;
 
-#define UCON S3C2410_UCON_DEFAULT
-#define ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB)
-#define UFCON (S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE)
+#घोषणा UCON S3C2410_UCON_DEFAULT
+#घोषणा ULCON (S3C2410_LCON_CS8 | S3C2410_LCON_PNONE | S3C2410_LCON_STOPB)
+#घोषणा UFCON (S3C2410_UFCON_RXTRIG8 | S3C2410_UFCON_FIFOMODE)
 
 
-static struct s3c2410_uartcfg mini2440_uartcfgs[] __initdata = {
-	[0] = {
+अटल काष्ठा s3c2410_uartcfg mini2440_uartcfgs[] __initdata = अणु
+	[0] = अणु
 		.hwport		= 0,
 		.flags		= 0,
 		.ucon		= UCON,
 		.ulcon		= ULCON,
 		.ufcon		= UFCON,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.hwport		= 1,
 		.flags		= 0,
 		.ucon		= UCON,
 		.ulcon		= ULCON,
 		.ufcon		= UFCON,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.hwport		= 2,
 		.flags		= 0,
 		.ucon		= UCON,
 		.ulcon		= ULCON,
 		.ufcon		= UFCON,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /* USB device UDC support */
 
-static struct s3c2410_udc_mach_info mini2440_udc_cfg __initdata = {
+अटल काष्ठा s3c2410_udc_mach_info mini2440_udc_cfg __initdata = अणु
 	.pullup_pin = S3C2410_GPC(5),
-};
+पूर्ण;
 
 
 /* LCD timing and setup */
 
 /*
- * This macro simplifies the table bellow
+ * This macro simplअगरies the table bellow
  */
-#define _LCD_DECLARE(_clock, _xres, margin_left, margin_right, hsync, \
+#घोषणा _LCD_DECLARE(_घड़ी, _xres, margin_left, margin_right, hsync, \
 			_yres, margin_top, margin_bottom, vsync, refresh) \
 	.width = _xres, \
 	.xres = _xres, \
@@ -114,7 +115,7 @@ static struct s3c2410_udc_mach_info mini2440_udc_cfg __initdata = {
 	.lower_margin	= margin_bottom,	\
 	.hsync_len	= hsync,	\
 	.vsync_len	= vsync,	\
-	.pixclock	= ((_clock*100000000000LL) /	\
+	.pixघड़ी	= ((_घड़ी*100000000000LL) /	\
 			   ((refresh) * \
 			   (hsync + margin_left + _xres + margin_right) * \
 			   (vsync + margin_top + _yres + margin_bottom))), \
@@ -122,8 +123,8 @@ static struct s3c2410_udc_mach_info mini2440_udc_cfg __initdata = {
 	.type		= (S3C2410_LCDCON1_TFT16BPP |\
 			   S3C2410_LCDCON1_TFT)
 
-static struct s3c2410fb_display mini2440_lcd_cfg[] __initdata = {
-	[0] = {	/* mini2440 + 3.5" TFT + touchscreen */
+अटल काष्ठा s3c2410fb_display mini2440_lcd_cfg[] __initdata = अणु
+	[0] = अणु	/* mini2440 + 3.5" TFT + touchscreen */
 		_LCD_DECLARE(
 			7,			/* The 3.5 is quite fast */
 			240, 21, 38, 6,		/* x timing */
@@ -134,8 +135,8 @@ static struct s3c2410fb_display mini2440_lcd_cfg[] __initdata = {
 				   S3C2410_LCDCON5_INVVFRAME |
 				   S3C2410_LCDCON5_INVVDEN |
 				   S3C2410_LCDCON5_PWREN),
-	},
-	[1] = { /* mini2440 + 7" TFT + touchscreen */
+	पूर्ण,
+	[1] = अणु /* mini2440 + 7" TFT + touchscreen */
 		_LCD_DECLARE(
 			10,			/* the 7" runs slower */
 			800, 40, 40, 48,	/* x timing */
@@ -145,14 +146,14 @@ static struct s3c2410fb_display mini2440_lcd_cfg[] __initdata = {
 				   S3C2410_LCDCON5_INVVLINE |
 				   S3C2410_LCDCON5_INVVFRAME |
 				   S3C2410_LCDCON5_PWREN),
-	},
+	पूर्ण,
 	/* The VGA shield can outout at several resolutions. All share
 	 * the same timings, however, anything smaller than 1024x768
 	 * will only be displayed in the top left corner of a 1024x768
-	 * XGA output unless you add optional dip switches to the shield.
-	 * Therefore timings for other resolutions have been omitted here.
+	 * XGA output unless you add optional dip चयनes to the shield.
+	 * Thereक्रमe timings क्रम other resolutions have been omitted here.
 	 */
-	[2] = {
+	[2] = अणु
 		_LCD_DECLARE(
 			10,
 			1024, 1, 2, 2,		/* y timing */
@@ -162,11 +163,11 @@ static struct s3c2410fb_display mini2440_lcd_cfg[] __initdata = {
 				 */
 		.lcdcon5	= (S3C2410_LCDCON5_FRM565 |
 				   S3C2410_LCDCON5_HWSWP),
-	},
+	पूर्ण,
 	/* mini2440 + 3.5" TFT (LCD-W35i, LQ035Q1DG06 type) + touchscreen*/
-	[3] = {
+	[3] = अणु
 		_LCD_DECLARE(
-			/* clock */
+			/* घड़ी */
 			7,
 			/* xres, margin_right, margin_left, hsync */
 			320, 68, 66, 4,
@@ -180,21 +181,21 @@ static struct s3c2410fb_display mini2440_lcd_cfg[] __initdata = {
 				   S3C2410_LCDCON5_INVVLINE |
 				   S3C2410_LCDCON5_INVVCLK |
 				   S3C2410_LCDCON5_HWSWP),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* todo - put into gpio header */
+/* toकरो - put पूर्णांकo gpio header */
 
-#define S3C2410_GPCCON_MASK(x)	(3 << ((x) * 2))
-#define S3C2410_GPDCON_MASK(x)	(3 << ((x) * 2))
+#घोषणा S3C2410_GPCCON_MASK(x)	(3 << ((x) * 2))
+#घोषणा S3C2410_GPDCON_MASK(x)	(3 << ((x) * 2))
 
-static struct s3c2410fb_mach_info mini2440_fb_info __initdata = {
-	.displays	 = &mini2440_lcd_cfg[0], /* not constant! see init */
+अटल काष्ठा s3c2410fb_mach_info mini2440_fb_info __initdata = अणु
+	.displays	 = &mini2440_lcd_cfg[0], /* not स्थिरant! see init */
 	.num_displays	 = 1,
-	.default_display = 0,
+	.शेष_display = 0,
 
 	/* Enable VD[2..7], VD[10..15], VD[18..23] and VCLK, syncs, VDEN
-	 * and disable the pull down resistors on pins we are using for LCD
+	 * and disable the pull करोwn resistors on pins we are using क्रम LCD
 	 * data.
 	 */
 
@@ -233,19 +234,19 @@ static struct s3c2410fb_mach_info mini2440_fb_info __initdata = {
 
 	.gpdcon_reg	= S3C2410_GPDCON,
 	.gpdup_reg	= S3C2410_GPDUP,
-};
+पूर्ण;
 
 /* MMC/SD  */
 
-static struct s3c24xx_mci_pdata mini2440_mmc_cfg __initdata = {
+अटल काष्ठा s3c24xx_mci_pdata mini2440_mmc_cfg __initdata = अणु
 	.wprotect_invert	= 1,
-	.set_power		= s3c24xx_mci_def_set_power,
+	.set_घातer		= s3c24xx_mci_def_set_घातer,
 	.ocr_avail		= MMC_VDD_32_33|MMC_VDD_33_34,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table mini2440_mmc_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_mmc_gpio_table = अणु
 	.dev_id = "s3c2410-sdi",
-	.table = {
+	.table = अणु
 		/* Card detect S3C2410_GPG(8) */
 		GPIO_LOOKUP("GPIOG", 8, "cd", GPIO_ACTIVE_LOW),
 		/* Write protect S3C2410_GPH(8) */
@@ -257,84 +258,84 @@ static struct gpiod_lookup_table mini2440_mmc_gpio_table = {
 		GPIO_LOOKUP_IDX("GPIOE",  8, "bus", 3, GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP_IDX("GPIOE",  9, "bus", 4, GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP_IDX("GPIOE", 10, "bus", 5, GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-/* NAND Flash on MINI2440 board */
+/* न_अंकD Flash on MINI2440 board */
 
-static struct mtd_partition mini2440_default_nand_part[] __initdata = {
-	[0] = {
+अटल काष्ठा mtd_partition mini2440_शेष_nand_part[] __initdata = अणु
+	[0] = अणु
 		.name	= "u-boot",
 		.size	= SZ_256K,
 		.offset	= 0,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "u-boot-env",
 		.size	= SZ_128K,
 		.offset	= SZ_256K,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		.name	= "kernel",
-		/* 5 megabytes, for a kernel with no modules
+		/* 5 megabytes, क्रम a kernel with no modules
 		 * or a uImage with a ramdisk attached
 		 */
 		.size	= 0x00500000,
 		.offset	= SZ_256K + SZ_128K,
-	},
-	[3] = {
+	पूर्ण,
+	[3] = अणु
 		.name	= "root",
 		.offset	= SZ_256K + SZ_128K + 0x00500000,
 		.size	= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct s3c2410_nand_set mini2440_nand_sets[] __initdata = {
-	[0] = {
+अटल काष्ठा s3c2410_nand_set mini2440_nand_sets[] __initdata = अणु
+	[0] = अणु
 		.name		= "nand",
 		.nr_chips	= 1,
-		.nr_partitions	= ARRAY_SIZE(mini2440_default_nand_part),
-		.partitions	= mini2440_default_nand_part,
+		.nr_partitions	= ARRAY_SIZE(mini2440_शेष_nand_part),
+		.partitions	= mini2440_शेष_nand_part,
 		.flash_bbt	= 1, /* we use u-boot to create a BBT */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct s3c2410_platform_nand mini2440_nand_info __initdata = {
+अटल काष्ठा s3c2410_platक्रमm_nand mini2440_nand_info __initdata = अणु
 	.tacls		= 0,
 	.twrph0		= 25,
 	.twrph1		= 15,
 	.nr_sets	= ARRAY_SIZE(mini2440_nand_sets),
 	.sets		= mini2440_nand_sets,
 	.ignore_unset_ecc = 1,
-	.engine_type	= NAND_ECC_ENGINE_TYPE_ON_HOST,
-};
+	.engine_type	= न_अंकD_ECC_ENGINE_TYPE_ON_HOST,
+पूर्ण;
 
 /* DM9000AEP 10/100 ethernet controller */
 
-static struct resource mini2440_dm9k_resource[] = {
+अटल काष्ठा resource mini2440_dm9k_resource[] = अणु
 	[0] = DEFINE_RES_MEM(MACH_MINI2440_DM9K_BASE, 4),
 	[1] = DEFINE_RES_MEM(MACH_MINI2440_DM9K_BASE + 4, 4),
-	[2] = DEFINE_RES_NAMED(IRQ_EINT7, 1, NULL, IORESOURCE_IRQ
+	[2] = DEFINE_RES_NAMED(IRQ_EINT7, 1, शून्य, IORESOURCE_IRQ
 						| IORESOURCE_IRQ_HIGHEDGE),
-};
+पूर्ण;
 
 /*
  * The DM9000 has no eeprom, and it's MAC address is set by
- * the bootloader before starting the kernel.
+ * the bootloader beक्रमe starting the kernel.
  */
-static struct dm9000_plat_data mini2440_dm9k_pdata = {
+अटल काष्ठा dm9000_plat_data mini2440_dm9k_pdata = अणु
 	.flags		= (DM9000_PLATF_16BITONLY | DM9000_PLATF_NO_EEPROM),
-};
+पूर्ण;
 
-static struct platform_device mini2440_device_eth = {
+अटल काष्ठा platक्रमm_device mini2440_device_eth = अणु
 	.name		= "dm9000",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(mini2440_dm9k_resource),
 	.resource	= mini2440_dm9k_resource,
-	.dev		= {
-		.platform_data	= &mini2440_dm9k_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_dm9k_pdata,
+	पूर्ण,
+पूर्ण;
 
 /*  CON5
  *	+--+	 /-----\
@@ -353,231 +354,231 @@ static struct platform_device mini2440_device_eth = {
  *	|  |  +----+  +----+
  *	  .....
  */
-static struct gpio_keys_button mini2440_buttons[] = {
-	{
+अटल काष्ठा gpio_keys_button mini2440_buttons[] = अणु
+	अणु
 		.gpio		= S3C2410_GPG(0),		/* K1 */
 		.code		= KEY_F1,
 		.desc		= "Button 1",
 		.active_low	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.gpio		= S3C2410_GPG(3),		/* K2 */
 		.code		= KEY_F2,
 		.desc		= "Button 2",
 		.active_low	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.gpio		= S3C2410_GPG(5),		/* K3 */
 		.code		= KEY_F3,
 		.desc		= "Button 3",
 		.active_low	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.gpio		= S3C2410_GPG(6),		/* K4 */
 		.code		= KEY_POWER,
 		.desc		= "Power",
 		.active_low	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.gpio		= S3C2410_GPG(7),		/* K5 */
 		.code		= KEY_F5,
 		.desc		= "Button 5",
 		.active_low	= 1,
-	},
-#if 0
-	/* this pin is also known as TCLK1 and seems to already
+	पूर्ण,
+#अगर 0
+	/* this pin is also known as TCLK1 and seems to alपढ़ोy
 	 * marked as "in use" somehow in the kernel -- possibly wrongly
 	 */
-	{
+	अणु
 		.gpio		= S3C2410_GPG(11),	/* K6 */
 		.code		= KEY_F6,
 		.desc		= "Button 6",
 		.active_low	= 1,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct gpio_keys_platform_data mini2440_button_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data mini2440_button_data = अणु
 	.buttons	= mini2440_buttons,
 	.nbuttons	= ARRAY_SIZE(mini2440_buttons),
-};
+पूर्ण;
 
-static struct platform_device mini2440_button_device = {
+अटल काष्ठा platक्रमm_device mini2440_button_device = अणु
 	.name		= "gpio-keys",
 	.id		= -1,
-	.dev		= {
-		.platform_data	= &mini2440_button_data,
-	}
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_button_data,
+	पूर्ण
+पूर्ण;
 
 /* LEDS */
 
-static struct gpiod_lookup_table mini2440_led1_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_led1_gpio_table = अणु
 	.dev_id = "s3c24xx_led.1",
-	.table = {
-		GPIO_LOOKUP("GPB", 5, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		{ },
-	},
-};
+	.table = अणु
+		GPIO_LOOKUP("GPB", 5, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table mini2440_led2_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_led2_gpio_table = अणु
 	.dev_id = "s3c24xx_led.2",
-	.table = {
-		GPIO_LOOKUP("GPB", 6, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		{ },
-	},
-};
+	.table = अणु
+		GPIO_LOOKUP("GPB", 6, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table mini2440_led3_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_led3_gpio_table = अणु
 	.dev_id = "s3c24xx_led.3",
-	.table = {
-		GPIO_LOOKUP("GPB", 7, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		{ },
-	},
-};
+	.table = अणु
+		GPIO_LOOKUP("GPB", 7, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table mini2440_led4_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_led4_gpio_table = अणु
 	.dev_id = "s3c24xx_led.4",
-	.table = {
-		GPIO_LOOKUP("GPB", 8, NULL, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
-		{ },
-	},
-};
+	.table = अणु
+		GPIO_LOOKUP("GPB", 8, शून्य, GPIO_ACTIVE_LOW | GPIO_OPEN_DRAIN),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table mini2440_backlight_gpio_table = {
+अटल काष्ठा gpiod_lookup_table mini2440_backlight_gpio_table = अणु
 	.dev_id = "s3c24xx_led.5",
-	.table = {
-		GPIO_LOOKUP("GPG", 4, NULL, GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+	.table = अणु
+		GPIO_LOOKUP("GPG", 4, शून्य, GPIO_ACTIVE_HIGH),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct s3c24xx_led_platdata mini2440_led1_pdata = {
+अटल काष्ठा s3c24xx_led_platdata mini2440_led1_pdata = अणु
 	.name		= "led1",
 	.def_trigger	= "heartbeat",
-};
+पूर्ण;
 
-static struct s3c24xx_led_platdata mini2440_led2_pdata = {
+अटल काष्ठा s3c24xx_led_platdata mini2440_led2_pdata = अणु
 	.name		= "led2",
 	.def_trigger	= "nand-disk",
-};
+पूर्ण;
 
-static struct s3c24xx_led_platdata mini2440_led3_pdata = {
+अटल काष्ठा s3c24xx_led_platdata mini2440_led3_pdata = अणु
 	.name		= "led3",
 	.def_trigger	= "mmc0",
-};
+पूर्ण;
 
-static struct s3c24xx_led_platdata mini2440_led4_pdata = {
+अटल काष्ठा s3c24xx_led_platdata mini2440_led4_pdata = अणु
 	.name		= "led4",
 	.def_trigger	= "",
-};
+पूर्ण;
 
-static struct s3c24xx_led_platdata mini2440_led_backlight_pdata = {
+अटल काष्ठा s3c24xx_led_platdata mini2440_led_backlight_pdata = अणु
 	.name		= "backlight",
 	.def_trigger	= "backlight",
-};
+पूर्ण;
 
-static struct platform_device mini2440_led1 = {
+अटल काष्ठा platक्रमm_device mini2440_led1 = अणु
 	.name		= "s3c24xx_led",
 	.id		= 1,
-	.dev		= {
-		.platform_data	= &mini2440_led1_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_led1_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device mini2440_led2 = {
+अटल काष्ठा platक्रमm_device mini2440_led2 = अणु
 	.name		= "s3c24xx_led",
 	.id		= 2,
-	.dev		= {
-		.platform_data	= &mini2440_led2_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_led2_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device mini2440_led3 = {
+अटल काष्ठा platक्रमm_device mini2440_led3 = अणु
 	.name		= "s3c24xx_led",
 	.id		= 3,
-	.dev		= {
-		.platform_data	= &mini2440_led3_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_led3_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device mini2440_led4 = {
+अटल काष्ठा platक्रमm_device mini2440_led4 = अणु
 	.name		= "s3c24xx_led",
 	.id		= 4,
-	.dev		= {
-		.platform_data	= &mini2440_led4_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_led4_pdata,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device mini2440_led_backlight = {
+अटल काष्ठा platक्रमm_device mini2440_led_backlight = अणु
 	.name		= "s3c24xx_led",
 	.id		= 5,
-	.dev		= {
-		.platform_data	= &mini2440_led_backlight_pdata,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_led_backlight_pdata,
+	पूर्ण,
+पूर्ण;
 
 /* AUDIO */
 
-static struct s3c24xx_uda134x_platform_data mini2440_audio_pins = {
+अटल काष्ठा s3c24xx_uda134x_platक्रमm_data mini2440_audio_pins = अणु
 	.l3_clk = S3C2410_GPB(4),
 	.l3_mode = S3C2410_GPB(2),
 	.l3_data = S3C2410_GPB(3),
 	.model = UDA134X_UDA1341
-};
+पूर्ण;
 
-static struct platform_device mini2440_audio = {
+अटल काष्ठा platक्रमm_device mini2440_audio = अणु
 	.name		= "s3c24xx_uda134x",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &mini2440_audio_pins,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &mini2440_audio_pins,
+	पूर्ण,
+पूर्ण;
 
 /*
  * I2C devices
  */
-static const struct property_entry mini2440_at24_properties[] = {
+अटल स्थिर काष्ठा property_entry mini2440_at24_properties[] = अणु
 	PROPERTY_ENTRY_U32("pagesize", 16),
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-static const struct software_node mini2440_at24_node = {
+अटल स्थिर काष्ठा software_node mini2440_at24_node = अणु
 	.properties = mini2440_at24_properties,
-};
+पूर्ण;
 
-static struct i2c_board_info mini2440_i2c_devs[] __initdata = {
-	{
+अटल काष्ठा i2c_board_info mini2440_i2c_devs[] __initdata = अणु
+	अणु
 		I2C_BOARD_INFO("24c08", 0x50),
 		.swnode = &mini2440_at24_node,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct uda134x_platform_data s3c24xx_uda134x = {
-	.l3 = {
+अटल काष्ठा uda134x_platक्रमm_data s3c24xx_uda134x = अणु
+	.l3 = अणु
 		.gpio_clk = S3C2410_GPB(4),
 		.gpio_data = S3C2410_GPB(3),
 		.gpio_mode = S3C2410_GPB(2),
 		.use_gpios = 1,
 		.data_hold = 1,
 		.data_setup = 1,
-		.clock_high = 1,
+		.घड़ी_high = 1,
 		.mode_hold = 1,
 		.mode = 1,
 		.mode_setup = 1,
-	},
+	पूर्ण,
 	.model = UDA134X_UDA1341,
-};
+पूर्ण;
 
-static struct platform_device uda1340_codec = {
+अटल काष्ठा platक्रमm_device uda1340_codec = अणु
 		.name = "uda134x-codec",
 		.id = -1,
-		.dev = {
-			.platform_data	= &s3c24xx_uda134x,
-		},
-};
+		.dev = अणु
+			.platक्रमm_data	= &s3c24xx_uda134x,
+		पूर्ण,
+पूर्ण;
 
-static struct platform_device *mini2440_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *mini2440_devices[] __initdata = अणु
 	&s3c_device_ohci,
 	&s3c_device_wdt,
 	&s3c_device_i2c0,
@@ -595,20 +596,20 @@ static struct platform_device *mini2440_devices[] __initdata = {
 	&s3c_device_iis,
 	&uda1340_codec,
 	&mini2440_audio,
-};
+पूर्ण;
 
-static void __init mini2440_map_io(void)
-{
+अटल व्योम __init mini2440_map_io(व्योम)
+अणु
 	s3c24xx_init_io(mini2440_iodesc, ARRAY_SIZE(mini2440_iodesc));
 	s3c24xx_init_uarts(mini2440_uartcfgs, ARRAY_SIZE(mini2440_uartcfgs));
-	s3c24xx_set_timer_source(S3C24XX_PWM3, S3C24XX_PWM4);
-}
+	s3c24xx_set_समयr_source(S3C24XX_PWM3, S3C24XX_PWM4);
+पूर्ण
 
-static void __init mini2440_init_time(void)
-{
-	s3c2440_init_clocks(12000000);
-	s3c24xx_timer_init();
-}
+अटल व्योम __init mini2440_init_समय(व्योम)
+अणु
+	s3c2440_init_घड़ीs(12000000);
+	s3c24xx_समयr_init();
+पूर्ण
 
 /*
  * mini2440_features string
@@ -619,93 +620,93 @@ static void __init mini2440_init_time(void)
  * 0-9 LCD configuration
  *
  */
-static char mini2440_features_str[12] __initdata = "0tb";
+अटल अक्षर mini2440_features_str[12] __initdata = "0tb";
 
-static int __init mini2440_features_setup(char *str)
-{
-	if (str)
+अटल पूर्णांक __init mini2440_features_setup(अक्षर *str)
+अणु
+	अगर (str)
 		strlcpy(mini2440_features_str, str,
-			sizeof(mini2440_features_str));
-	return 1;
-}
+			माप(mini2440_features_str));
+	वापस 1;
+पूर्ण
 
 __setup("mini2440=", mini2440_features_setup);
 
-#define FEATURE_SCREEN (1 << 0)
-#define FEATURE_BACKLIGHT (1 << 1)
-#define FEATURE_TOUCH (1 << 2)
-#define FEATURE_CAMERA (1 << 3)
+#घोषणा FEATURE_SCREEN (1 << 0)
+#घोषणा FEATURE_BACKLIGHT (1 << 1)
+#घोषणा FEATURE_TOUCH (1 << 2)
+#घोषणा FEATURE_CAMERA (1 << 3)
 
-struct mini2440_features_t {
-	int count;
-	int done;
-	int lcd_index;
-	struct platform_device *optional[8];
-};
+काष्ठा mini2440_features_t अणु
+	पूर्णांक count;
+	पूर्णांक करोne;
+	पूर्णांक lcd_index;
+	काष्ठा platक्रमm_device *optional[8];
+पूर्ण;
 
-static void __init mini2440_parse_features(
-		struct mini2440_features_t *features,
-		const char *features_str)
-{
-	const char *fp = features_str;
+अटल व्योम __init mini2440_parse_features(
+		काष्ठा mini2440_features_t *features,
+		स्थिर अक्षर *features_str)
+अणु
+	स्थिर अक्षर *fp = features_str;
 
 	features->count = 0;
-	features->done = 0;
+	features->करोne = 0;
 	features->lcd_index = -1;
 
-	while (*fp) {
-		char f = *fp++;
+	जबतक (*fp) अणु
+		अक्षर f = *fp++;
 
-		switch (f) {
-		case '0'...'9':	/* tft screen */
-			if (features->done & FEATURE_SCREEN) {
+		चयन (f) अणु
+		हाल '0'...'9':	/* tft screen */
+			अगर (features->करोne & FEATURE_SCREEN) अणु
 				pr_info("MINI2440: '%c' ignored, screen type already set\n",
 					f);
-			} else {
-				int li = f - '0';
+			पूर्ण अन्यथा अणु
+				पूर्णांक li = f - '0';
 
-				if (li >= ARRAY_SIZE(mini2440_lcd_cfg))
+				अगर (li >= ARRAY_SIZE(mini2440_lcd_cfg))
 					pr_info("MINI2440: '%c' out of range LCD mode\n",
 						f);
-				else {
+				अन्यथा अणु
 					features->optional[features->count++] =
 							&s3c_device_lcd;
 					features->lcd_index = li;
-				}
-			}
-			features->done |= FEATURE_SCREEN;
-			break;
-		case 'b':
-			if (features->done & FEATURE_BACKLIGHT)
+				पूर्ण
+			पूर्ण
+			features->करोne |= FEATURE_SCREEN;
+			अवरोध;
+		हाल 'b':
+			अगर (features->करोne & FEATURE_BACKLIGHT)
 				pr_info("MINI2440: '%c' ignored, backlight already set\n",
 					f);
-			else {
+			अन्यथा अणु
 				features->optional[features->count++] =
 						&mini2440_led_backlight;
-			}
-			features->done |= FEATURE_BACKLIGHT;
-			break;
-		case 't':
+			पूर्ण
+			features->करोne |= FEATURE_BACKLIGHT;
+			अवरोध;
+		हाल 't':
 			pr_info("MINI2440: '%c' ignored, touchscreen not compiled in\n",
 				f);
-			break;
-		case 'c':
-			if (features->done & FEATURE_CAMERA)
+			अवरोध;
+		हाल 'c':
+			अगर (features->करोne & FEATURE_CAMERA)
 				pr_info("MINI2440: '%c' ignored, camera already registered\n",
 					f);
-			else
+			अन्यथा
 				features->optional[features->count++] =
-					&s3c_device_camif;
-			features->done |= FEATURE_CAMERA;
-			break;
-		}
-	}
-}
+					&s3c_device_camअगर;
+			features->करोne |= FEATURE_CAMERA;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init mini2440_init(void)
-{
-	struct mini2440_features_t features = { 0 };
-	int i;
+अटल व्योम __init mini2440_init(व्योम)
+अणु
+	काष्ठा mini2440_features_t features = अणु 0 पूर्ण;
+	पूर्णांक i;
 
 	pr_info("MINI2440: Option string mini2440=%s\n",
 			mini2440_features_str);
@@ -717,51 +718,51 @@ static void __init mini2440_init(void)
 	s3c_gpio_cfgpin(S3C2410_GPC(0), S3C2410_GPC0_LEND);
 
 	/* Turn the backlight early on */
-	WARN_ON(gpio_request_one(S3C2410_GPG(4), GPIOF_OUT_INIT_HIGH, NULL));
-	gpio_free(S3C2410_GPG(4));
+	WARN_ON(gpio_request_one(S3C2410_GPG(4), GPIOF_OUT_INIT_HIGH, शून्य));
+	gpio_मुक्त(S3C2410_GPG(4));
 
-	/* remove pullup on optional PWM backlight -- unused on 3.5 and 7"s */
-	gpio_request_one(S3C2410_GPB(1), GPIOF_IN, NULL);
+	/* हटाओ pullup on optional PWM backlight -- unused on 3.5 and 7"s */
+	gpio_request_one(S3C2410_GPB(1), GPIOF_IN, शून्य);
 	s3c_gpio_setpull(S3C2410_GPB(1), S3C_GPIO_PULL_UP);
-	gpio_free(S3C2410_GPB(1));
+	gpio_मुक्त(S3C2410_GPB(1));
 
 	/* mark the key as input, without pullups (there is one on the board) */
-	for (i = 0; i < ARRAY_SIZE(mini2440_buttons); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(mini2440_buttons); i++) अणु
 		s3c_gpio_setpull(mini2440_buttons[i].gpio, S3C_GPIO_PULL_UP);
 		s3c_gpio_cfgpin(mini2440_buttons[i].gpio, S3C2410_GPIO_INPUT);
-	}
+	पूर्ण
 
 	/* Configure the I2S pins (GPE0...GPE4) in correct mode */
 	s3c_gpio_cfgall_range(S3C2410_GPE(0), 5, S3C_GPIO_SFN(2),
 			      S3C_GPIO_PULL_NONE);
 
-	if (features.lcd_index != -1) {
-		int li;
+	अगर (features.lcd_index != -1) अणु
+		पूर्णांक li;
 
 		mini2440_fb_info.displays =
 			&mini2440_lcd_cfg[features.lcd_index];
 
 		pr_info("MINI2440: LCD");
-		for (li = 0; li < ARRAY_SIZE(mini2440_lcd_cfg); li++)
-			if (li == features.lcd_index)
+		क्रम (li = 0; li < ARRAY_SIZE(mini2440_lcd_cfg); li++)
+			अगर (li == features.lcd_index)
 				pr_cont(" [%d:%dx%d]", li,
 					mini2440_lcd_cfg[li].width,
 					mini2440_lcd_cfg[li].height);
-			else
+			अन्यथा
 				pr_cont(" %d:%dx%d", li,
 					mini2440_lcd_cfg[li].width,
 					mini2440_lcd_cfg[li].height);
 		pr_cont("\n");
 		s3c24xx_fb_set_platdata(&mini2440_fb_info);
-	}
+	पूर्ण
 
 	s3c24xx_udc_set_platdata(&mini2440_udc_cfg);
 	gpiod_add_lookup_table(&mini2440_mmc_gpio_table);
 	s3c24xx_mci_set_platdata(&mini2440_mmc_cfg);
 	s3c_nand_set_platdata(&mini2440_nand_info);
-	s3c_i2c0_set_platdata(NULL);
+	s3c_i2c0_set_platdata(शून्य);
 
-	i2c_register_board_info(0, mini2440_i2c_devs,
+	i2c_रेजिस्टर_board_info(0, mini2440_i2c_devs,
 				ARRAY_SIZE(mini2440_i2c_devs));
 
 	/* Disable pull-up on the LED lines */
@@ -771,26 +772,26 @@ static void __init mini2440_init(void)
 	s3c_gpio_setpull(S3C2410_GPB(8), S3C_GPIO_PULL_NONE);
 	s3c_gpio_setpull(S3C2410_GPG(4), S3C_GPIO_PULL_NONE);
 
-	/* Add lookups for the lines */
+	/* Add lookups क्रम the lines */
 	gpiod_add_lookup_table(&mini2440_led1_gpio_table);
 	gpiod_add_lookup_table(&mini2440_led2_gpio_table);
 	gpiod_add_lookup_table(&mini2440_led3_gpio_table);
 	gpiod_add_lookup_table(&mini2440_led4_gpio_table);
 	gpiod_add_lookup_table(&mini2440_backlight_gpio_table);
 
-	platform_add_devices(mini2440_devices, ARRAY_SIZE(mini2440_devices));
+	platक्रमm_add_devices(mini2440_devices, ARRAY_SIZE(mini2440_devices));
 
-	if (features.count)	/* the optional features */
-		platform_add_devices(features.optional, features.count);
+	अगर (features.count)	/* the optional features */
+		platक्रमm_add_devices(features.optional, features.count);
 
-}
+पूर्ण
 
 
 MACHINE_START(MINI2440, "MINI2440")
-	/* Maintainer: Michel Pollet <buserror@gmail.com> */
+	/* Maपूर्णांकainer: Michel Pollet <buserror@gmail.com> */
 	.atag_offset	= 0x100,
 	.map_io		= mini2440_map_io,
 	.init_machine	= mini2440_init,
 	.init_irq	= s3c2440_init_irq,
-	.init_time	= mini2440_init_time,
+	.init_समय	= mini2440_init_समय,
 MACHINE_END

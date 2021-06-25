@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/time.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/phy/phy.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy/phy.h>
 
-/* PHY registers */
-#define UNIPHY_PLL_REFCLK_CFG		0x000
-#define UNIPHY_PLL_PWRGEN_CFG		0x014
-#define UNIPHY_PLL_GLB_CFG		0x020
-#define UNIPHY_PLL_SDM_CFG0		0x038
-#define UNIPHY_PLL_SDM_CFG1		0x03C
-#define UNIPHY_PLL_SDM_CFG2		0x040
-#define UNIPHY_PLL_SDM_CFG3		0x044
-#define UNIPHY_PLL_SDM_CFG4		0x048
-#define UNIPHY_PLL_SSC_CFG0		0x04C
-#define UNIPHY_PLL_SSC_CFG1		0x050
-#define UNIPHY_PLL_SSC_CFG2		0x054
-#define UNIPHY_PLL_SSC_CFG3		0x058
-#define UNIPHY_PLL_LKDET_CFG0		0x05C
-#define UNIPHY_PLL_LKDET_CFG1		0x060
-#define UNIPHY_PLL_LKDET_CFG2		0x064
-#define UNIPHY_PLL_CAL_CFG0		0x06C
-#define UNIPHY_PLL_CAL_CFG8		0x08C
-#define UNIPHY_PLL_CAL_CFG9		0x090
-#define UNIPHY_PLL_CAL_CFG10		0x094
-#define UNIPHY_PLL_CAL_CFG11		0x098
-#define UNIPHY_PLL_STATUS		0x0C0
+/* PHY रेजिस्टरs */
+#घोषणा UNIPHY_PLL_REFCLK_CFG		0x000
+#घोषणा UNIPHY_PLL_PWRGEN_CFG		0x014
+#घोषणा UNIPHY_PLL_GLB_CFG		0x020
+#घोषणा UNIPHY_PLL_SDM_CFG0		0x038
+#घोषणा UNIPHY_PLL_SDM_CFG1		0x03C
+#घोषणा UNIPHY_PLL_SDM_CFG2		0x040
+#घोषणा UNIPHY_PLL_SDM_CFG3		0x044
+#घोषणा UNIPHY_PLL_SDM_CFG4		0x048
+#घोषणा UNIPHY_PLL_SSC_CFG0		0x04C
+#घोषणा UNIPHY_PLL_SSC_CFG1		0x050
+#घोषणा UNIPHY_PLL_SSC_CFG2		0x054
+#घोषणा UNIPHY_PLL_SSC_CFG3		0x058
+#घोषणा UNIPHY_PLL_LKDET_CFG0		0x05C
+#घोषणा UNIPHY_PLL_LKDET_CFG1		0x060
+#घोषणा UNIPHY_PLL_LKDET_CFG2		0x064
+#घोषणा UNIPHY_PLL_CAL_CFG0		0x06C
+#घोषणा UNIPHY_PLL_CAL_CFG8		0x08C
+#घोषणा UNIPHY_PLL_CAL_CFG9		0x090
+#घोषणा UNIPHY_PLL_CAL_CFG10		0x094
+#घोषणा UNIPHY_PLL_CAL_CFG11		0x098
+#घोषणा UNIPHY_PLL_STATUS		0x0C0
 
-#define SATA_PHY_SER_CTRL		0x100
-#define SATA_PHY_TX_DRIV_CTRL0		0x104
-#define SATA_PHY_TX_DRIV_CTRL1		0x108
-#define SATA_PHY_TX_IMCAL0		0x11C
-#define SATA_PHY_TX_IMCAL2		0x124
-#define SATA_PHY_RX_IMCAL0		0x128
-#define SATA_PHY_EQUAL			0x13C
-#define SATA_PHY_OOB_TERM		0x144
-#define SATA_PHY_CDR_CTRL0		0x148
-#define SATA_PHY_CDR_CTRL1		0x14C
-#define SATA_PHY_CDR_CTRL2		0x150
-#define SATA_PHY_CDR_CTRL3		0x154
-#define SATA_PHY_PI_CTRL0		0x168
-#define SATA_PHY_POW_DWN_CTRL0		0x180
-#define SATA_PHY_POW_DWN_CTRL1		0x184
-#define SATA_PHY_TX_DATA_CTRL		0x188
-#define SATA_PHY_ALIGNP			0x1A4
-#define SATA_PHY_TX_IMCAL_STAT		0x1E4
-#define SATA_PHY_RX_IMCAL_STAT		0x1E8
+#घोषणा SATA_PHY_SER_CTRL		0x100
+#घोषणा SATA_PHY_TX_DRIV_CTRL0		0x104
+#घोषणा SATA_PHY_TX_DRIV_CTRL1		0x108
+#घोषणा SATA_PHY_TX_IMCAL0		0x11C
+#घोषणा SATA_PHY_TX_IMCAL2		0x124
+#घोषणा SATA_PHY_RX_IMCAL0		0x128
+#घोषणा SATA_PHY_EQUAL			0x13C
+#घोषणा SATA_PHY_OOB_TERM		0x144
+#घोषणा SATA_PHY_CDR_CTRL0		0x148
+#घोषणा SATA_PHY_CDR_CTRL1		0x14C
+#घोषणा SATA_PHY_CDR_CTRL2		0x150
+#घोषणा SATA_PHY_CDR_CTRL3		0x154
+#घोषणा SATA_PHY_PI_CTRL0		0x168
+#घोषणा SATA_PHY_POW_DWN_CTRL0		0x180
+#घोषणा SATA_PHY_POW_DWN_CTRL1		0x184
+#घोषणा SATA_PHY_TX_DATA_CTRL		0x188
+#घोषणा SATA_PHY_ALIGNP			0x1A4
+#घोषणा SATA_PHY_TX_IMCAL_STAT		0x1E4
+#घोषणा SATA_PHY_RX_IMCAL_STAT		0x1E8
 
-#define UNIPHY_PLL_LOCK		BIT(0)
-#define SATA_PHY_TX_CAL		BIT(0)
-#define SATA_PHY_RX_CAL		BIT(0)
+#घोषणा UNIPHY_PLL_LOCK		BIT(0)
+#घोषणा SATA_PHY_TX_CAL		BIT(0)
+#घोषणा SATA_PHY_RX_CAL		BIT(0)
 
-/* default timeout set to 1 sec */
-#define TIMEOUT_MS		10000
-#define DELAY_INTERVAL_US	100
+/* शेष समयout set to 1 sec */
+#घोषणा TIMEOUT_MS		10000
+#घोषणा DELAY_INTERVAL_US	100
 
-struct qcom_apq8064_sata_phy {
-	void __iomem *mmio;
-	struct clk *cfg_clk;
-	struct device *dev;
-};
+काष्ठा qcom_apq8064_sata_phy अणु
+	व्योम __iomem *mmio;
+	काष्ठा clk *cfg_clk;
+	काष्ठा device *dev;
+पूर्ण;
 
-/* Helper function to do poll and timeout */
-static int poll_timeout(void __iomem *addr, u32 mask)
-{
+/* Helper function to करो poll and समयout */
+अटल पूर्णांक poll_समयout(व्योम __iomem *addr, u32 mask)
+अणु
 	u32 val;
 
-	return readl_relaxed_poll_timeout(addr, val, (val & mask),
+	वापस पढ़ोl_relaxed_poll_समयout(addr, val, (val & mask),
 					DELAY_INTERVAL_US, TIMEOUT_MS * 1000);
-}
+पूर्ण
 
-static int qcom_apq8064_sata_phy_init(struct phy *generic_phy)
-{
-	struct qcom_apq8064_sata_phy *phy = phy_get_drvdata(generic_phy);
-	void __iomem *base = phy->mmio;
-	int ret = 0;
+अटल पूर्णांक qcom_apq8064_sata_phy_init(काष्ठा phy *generic_phy)
+अणु
+	काष्ठा qcom_apq8064_sata_phy *phy = phy_get_drvdata(generic_phy);
+	व्योम __iomem *base = phy->mmio;
+	पूर्णांक ret = 0;
 
 	/* SATA phy initialization */
-	writel_relaxed(0x01, base + SATA_PHY_SER_CTRL);
-	writel_relaxed(0xB1, base + SATA_PHY_POW_DWN_CTRL0);
-	/* Make sure the power down happens before power up */
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_SER_CTRL);
+	ग_लिखोl_relaxed(0xB1, base + SATA_PHY_POW_DWN_CTRL0);
+	/* Make sure the घातer करोwn happens beक्रमe घातer up */
 	mb();
 	usleep_range(10, 60);
 
-	writel_relaxed(0x01, base + SATA_PHY_POW_DWN_CTRL0);
-	writel_relaxed(0x3E, base + SATA_PHY_POW_DWN_CTRL1);
-	writel_relaxed(0x01, base + SATA_PHY_RX_IMCAL0);
-	writel_relaxed(0x01, base + SATA_PHY_TX_IMCAL0);
-	writel_relaxed(0x02, base + SATA_PHY_TX_IMCAL2);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_POW_DWN_CTRL0);
+	ग_लिखोl_relaxed(0x3E, base + SATA_PHY_POW_DWN_CTRL1);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_RX_IMCAL0);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_TX_IMCAL0);
+	ग_लिखोl_relaxed(0x02, base + SATA_PHY_TX_IMCAL2);
 
-	/* Write UNIPHYPLL registers to configure PLL */
-	writel_relaxed(0x04, base + UNIPHY_PLL_REFCLK_CFG);
-	writel_relaxed(0x00, base + UNIPHY_PLL_PWRGEN_CFG);
+	/* Write UNIPHYPLL रेजिस्टरs to configure PLL */
+	ग_लिखोl_relaxed(0x04, base + UNIPHY_PLL_REFCLK_CFG);
+	ग_लिखोl_relaxed(0x00, base + UNIPHY_PLL_PWRGEN_CFG);
 
-	writel_relaxed(0x0A, base + UNIPHY_PLL_CAL_CFG0);
-	writel_relaxed(0xF3, base + UNIPHY_PLL_CAL_CFG8);
-	writel_relaxed(0x01, base + UNIPHY_PLL_CAL_CFG9);
-	writel_relaxed(0xED, base + UNIPHY_PLL_CAL_CFG10);
-	writel_relaxed(0x02, base + UNIPHY_PLL_CAL_CFG11);
+	ग_लिखोl_relaxed(0x0A, base + UNIPHY_PLL_CAL_CFG0);
+	ग_लिखोl_relaxed(0xF3, base + UNIPHY_PLL_CAL_CFG8);
+	ग_लिखोl_relaxed(0x01, base + UNIPHY_PLL_CAL_CFG9);
+	ग_लिखोl_relaxed(0xED, base + UNIPHY_PLL_CAL_CFG10);
+	ग_लिखोl_relaxed(0x02, base + UNIPHY_PLL_CAL_CFG11);
 
-	writel_relaxed(0x36, base + UNIPHY_PLL_SDM_CFG0);
-	writel_relaxed(0x0D, base + UNIPHY_PLL_SDM_CFG1);
-	writel_relaxed(0xA3, base + UNIPHY_PLL_SDM_CFG2);
-	writel_relaxed(0xF0, base + UNIPHY_PLL_SDM_CFG3);
-	writel_relaxed(0x00, base + UNIPHY_PLL_SDM_CFG4);
+	ग_लिखोl_relaxed(0x36, base + UNIPHY_PLL_SDM_CFG0);
+	ग_लिखोl_relaxed(0x0D, base + UNIPHY_PLL_SDM_CFG1);
+	ग_लिखोl_relaxed(0xA3, base + UNIPHY_PLL_SDM_CFG2);
+	ग_लिखोl_relaxed(0xF0, base + UNIPHY_PLL_SDM_CFG3);
+	ग_लिखोl_relaxed(0x00, base + UNIPHY_PLL_SDM_CFG4);
 
-	writel_relaxed(0x19, base + UNIPHY_PLL_SSC_CFG0);
-	writel_relaxed(0xE1, base + UNIPHY_PLL_SSC_CFG1);
-	writel_relaxed(0x00, base + UNIPHY_PLL_SSC_CFG2);
-	writel_relaxed(0x11, base + UNIPHY_PLL_SSC_CFG3);
+	ग_लिखोl_relaxed(0x19, base + UNIPHY_PLL_SSC_CFG0);
+	ग_लिखोl_relaxed(0xE1, base + UNIPHY_PLL_SSC_CFG1);
+	ग_लिखोl_relaxed(0x00, base + UNIPHY_PLL_SSC_CFG2);
+	ग_लिखोl_relaxed(0x11, base + UNIPHY_PLL_SSC_CFG3);
 
-	writel_relaxed(0x04, base + UNIPHY_PLL_LKDET_CFG0);
-	writel_relaxed(0xFF, base + UNIPHY_PLL_LKDET_CFG1);
+	ग_लिखोl_relaxed(0x04, base + UNIPHY_PLL_LKDET_CFG0);
+	ग_लिखोl_relaxed(0xFF, base + UNIPHY_PLL_LKDET_CFG1);
 
-	writel_relaxed(0x02, base + UNIPHY_PLL_GLB_CFG);
-	/* make sure global config LDO power down happens before power up */
+	ग_लिखोl_relaxed(0x02, base + UNIPHY_PLL_GLB_CFG);
+	/* make sure global config LDO घातer करोwn happens beक्रमe घातer up */
 	mb();
 
-	writel_relaxed(0x03, base + UNIPHY_PLL_GLB_CFG);
-	writel_relaxed(0x05, base + UNIPHY_PLL_LKDET_CFG2);
+	ग_लिखोl_relaxed(0x03, base + UNIPHY_PLL_GLB_CFG);
+	ग_लिखोl_relaxed(0x05, base + UNIPHY_PLL_LKDET_CFG2);
 
-	/* PLL Lock wait */
-	ret = poll_timeout(base + UNIPHY_PLL_STATUS, UNIPHY_PLL_LOCK);
-	if (ret) {
+	/* PLL Lock रुको */
+	ret = poll_समयout(base + UNIPHY_PLL_STATUS, UNIPHY_PLL_LOCK);
+	अगर (ret) अणु
 		dev_err(phy->dev, "poll timeout UNIPHY_PLL_STATUS\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* TX Calibration */
-	ret = poll_timeout(base + SATA_PHY_TX_IMCAL_STAT, SATA_PHY_TX_CAL);
-	if (ret) {
+	ret = poll_समयout(base + SATA_PHY_TX_IMCAL_STAT, SATA_PHY_TX_CAL);
+	अगर (ret) अणु
 		dev_err(phy->dev, "poll timeout SATA_PHY_TX_IMCAL_STAT\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* RX Calibration */
-	ret = poll_timeout(base + SATA_PHY_RX_IMCAL_STAT, SATA_PHY_RX_CAL);
-	if (ret) {
+	ret = poll_समयout(base + SATA_PHY_RX_IMCAL_STAT, SATA_PHY_RX_CAL);
+	अगर (ret) अणु
 		dev_err(phy->dev, "poll timeout SATA_PHY_RX_IMCAL_STAT\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* SATA phy calibrated succesfully, power up to functional mode */
-	writel_relaxed(0x3E, base + SATA_PHY_POW_DWN_CTRL1);
-	writel_relaxed(0x01, base + SATA_PHY_RX_IMCAL0);
-	writel_relaxed(0x01, base + SATA_PHY_TX_IMCAL0);
+	/* SATA phy calibrated succesfully, घातer up to functional mode */
+	ग_लिखोl_relaxed(0x3E, base + SATA_PHY_POW_DWN_CTRL1);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_RX_IMCAL0);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_TX_IMCAL0);
 
-	writel_relaxed(0x00, base + SATA_PHY_POW_DWN_CTRL1);
-	writel_relaxed(0x59, base + SATA_PHY_CDR_CTRL0);
-	writel_relaxed(0x04, base + SATA_PHY_CDR_CTRL1);
-	writel_relaxed(0x00, base + SATA_PHY_CDR_CTRL2);
-	writel_relaxed(0x00, base + SATA_PHY_PI_CTRL0);
-	writel_relaxed(0x00, base + SATA_PHY_CDR_CTRL3);
-	writel_relaxed(0x01, base + SATA_PHY_POW_DWN_CTRL0);
+	ग_लिखोl_relaxed(0x00, base + SATA_PHY_POW_DWN_CTRL1);
+	ग_लिखोl_relaxed(0x59, base + SATA_PHY_CDR_CTRL0);
+	ग_लिखोl_relaxed(0x04, base + SATA_PHY_CDR_CTRL1);
+	ग_लिखोl_relaxed(0x00, base + SATA_PHY_CDR_CTRL2);
+	ग_लिखोl_relaxed(0x00, base + SATA_PHY_PI_CTRL0);
+	ग_लिखोl_relaxed(0x00, base + SATA_PHY_CDR_CTRL3);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_POW_DWN_CTRL0);
 
-	writel_relaxed(0x11, base + SATA_PHY_TX_DATA_CTRL);
-	writel_relaxed(0x43, base + SATA_PHY_ALIGNP);
-	writel_relaxed(0x04, base + SATA_PHY_OOB_TERM);
+	ग_लिखोl_relaxed(0x11, base + SATA_PHY_TX_DATA_CTRL);
+	ग_लिखोl_relaxed(0x43, base + SATA_PHY_ALIGNP);
+	ग_लिखोl_relaxed(0x04, base + SATA_PHY_OOB_TERM);
 
-	writel_relaxed(0x01, base + SATA_PHY_EQUAL);
-	writel_relaxed(0x09, base + SATA_PHY_TX_DRIV_CTRL0);
-	writel_relaxed(0x09, base + SATA_PHY_TX_DRIV_CTRL1);
+	ग_लिखोl_relaxed(0x01, base + SATA_PHY_EQUAL);
+	ग_लिखोl_relaxed(0x09, base + SATA_PHY_TX_DRIV_CTRL0);
+	ग_लिखोl_relaxed(0x09, base + SATA_PHY_TX_DRIV_CTRL1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_apq8064_sata_phy_exit(struct phy *generic_phy)
-{
-	struct qcom_apq8064_sata_phy *phy = phy_get_drvdata(generic_phy);
-	void __iomem *base = phy->mmio;
+अटल पूर्णांक qcom_apq8064_sata_phy_निकास(काष्ठा phy *generic_phy)
+अणु
+	काष्ठा qcom_apq8064_sata_phy *phy = phy_get_drvdata(generic_phy);
+	व्योम __iomem *base = phy->mmio;
 
-	/* Power down PHY */
-	writel_relaxed(0xF8, base + SATA_PHY_POW_DWN_CTRL0);
-	writel_relaxed(0xFE, base + SATA_PHY_POW_DWN_CTRL1);
+	/* Power करोwn PHY */
+	ग_लिखोl_relaxed(0xF8, base + SATA_PHY_POW_DWN_CTRL0);
+	ग_लिखोl_relaxed(0xFE, base + SATA_PHY_POW_DWN_CTRL1);
 
-	/* Power down PLL block */
-	writel_relaxed(0x00, base + UNIPHY_PLL_GLB_CFG);
+	/* Power करोwn PLL block */
+	ग_लिखोl_relaxed(0x00, base + UNIPHY_PLL_GLB_CFG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct phy_ops qcom_apq8064_sata_phy_ops = {
+अटल स्थिर काष्ठा phy_ops qcom_apq8064_sata_phy_ops = अणु
 	.init		= qcom_apq8064_sata_phy_init,
-	.exit		= qcom_apq8064_sata_phy_exit,
+	.निकास		= qcom_apq8064_sata_phy_निकास,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int qcom_apq8064_sata_phy_probe(struct platform_device *pdev)
-{
-	struct qcom_apq8064_sata_phy *phy;
-	struct device *dev = &pdev->dev;
-	struct phy_provider *phy_provider;
-	struct phy *generic_phy;
-	int ret;
+अटल पूर्णांक qcom_apq8064_sata_phy_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_apq8064_sata_phy *phy;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा phy_provider *phy_provider;
+	काष्ठा phy *generic_phy;
+	पूर्णांक ret;
 
-	phy = devm_kzalloc(dev, sizeof(*phy), GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	phy = devm_kzalloc(dev, माप(*phy), GFP_KERNEL);
+	अगर (!phy)
+		वापस -ENOMEM;
 
-	phy->mmio = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(phy->mmio))
-		return PTR_ERR(phy->mmio);
+	phy->mmio = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(phy->mmio))
+		वापस PTR_ERR(phy->mmio);
 
-	generic_phy = devm_phy_create(dev, NULL, &qcom_apq8064_sata_phy_ops);
-	if (IS_ERR(generic_phy)) {
+	generic_phy = devm_phy_create(dev, शून्य, &qcom_apq8064_sata_phy_ops);
+	अगर (IS_ERR(generic_phy)) अणु
 		dev_err(dev, "%s: failed to create phy\n", __func__);
-		return PTR_ERR(generic_phy);
-	}
+		वापस PTR_ERR(generic_phy);
+	पूर्ण
 
 	phy->dev = dev;
 	phy_set_drvdata(generic_phy, phy);
-	platform_set_drvdata(pdev, phy);
+	platक्रमm_set_drvdata(pdev, phy);
 
 	phy->cfg_clk = devm_clk_get(dev, "cfg");
-	if (IS_ERR(phy->cfg_clk)) {
+	अगर (IS_ERR(phy->cfg_clk)) अणु
 		dev_err(dev, "Failed to get sata cfg clock\n");
-		return PTR_ERR(phy->cfg_clk);
-	}
+		वापस PTR_ERR(phy->cfg_clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(phy->cfg_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
-	if (IS_ERR(phy_provider)) {
+	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
+	अगर (IS_ERR(phy_provider)) अणु
 		clk_disable_unprepare(phy->cfg_clk);
 		dev_err(dev, "%s: failed to register phy\n", __func__);
-		return PTR_ERR(phy_provider);
-	}
+		वापस PTR_ERR(phy_provider);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qcom_apq8064_sata_phy_remove(struct platform_device *pdev)
-{
-	struct qcom_apq8064_sata_phy *phy = platform_get_drvdata(pdev);
+अटल पूर्णांक qcom_apq8064_sata_phy_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_apq8064_sata_phy *phy = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(phy->cfg_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id qcom_apq8064_sata_phy_of_match[] = {
-	{ .compatible = "qcom,apq8064-sata-phy" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id qcom_apq8064_sata_phy_of_match[] = अणु
+	अणु .compatible = "qcom,apq8064-sata-phy" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, qcom_apq8064_sata_phy_of_match);
 
-static struct platform_driver qcom_apq8064_sata_phy_driver = {
+अटल काष्ठा platक्रमm_driver qcom_apq8064_sata_phy_driver = अणु
 	.probe	= qcom_apq8064_sata_phy_probe,
-	.remove	= qcom_apq8064_sata_phy_remove,
-	.driver = {
+	.हटाओ	= qcom_apq8064_sata_phy_हटाओ,
+	.driver = अणु
 		.name	= "qcom-apq8064-sata-phy",
 		.of_match_table	= qcom_apq8064_sata_phy_of_match,
-	}
-};
-module_platform_driver(qcom_apq8064_sata_phy_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(qcom_apq8064_sata_phy_driver);
 
 MODULE_DESCRIPTION("QCOM apq8064 SATA PHY driver");
 MODULE_LICENSE("GPL v2");

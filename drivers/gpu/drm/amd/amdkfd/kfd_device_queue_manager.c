@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,214 +22,214 @@
  *
  */
 
-#include <linux/ratelimit.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/bitops.h>
-#include <linux/sched.h>
-#include "kfd_priv.h"
-#include "kfd_device_queue_manager.h"
-#include "kfd_mqd_manager.h"
-#include "cik_regs.h"
-#include "kfd_kernel_queue.h"
-#include "amdgpu_amdkfd.h"
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/sched.h>
+#समावेश "kfd_priv.h"
+#समावेश "kfd_device_queue_manager.h"
+#समावेश "kfd_mqd_manager.h"
+#समावेश "cik_regs.h"
+#समावेश "kfd_kernel_queue.h"
+#समावेश "amdgpu_amdkfd.h"
 
 /* Size of the per-pipe EOP queue */
-#define CIK_HPD_EOP_BYTES_LOG2 11
-#define CIK_HPD_EOP_BYTES (1U << CIK_HPD_EOP_BYTES_LOG2)
+#घोषणा CIK_HPD_EOP_BYTES_LOG2 11
+#घोषणा CIK_HPD_EOP_BYTES (1U << CIK_HPD_EOP_BYTES_LOG2)
 
-static int set_pasid_vmid_mapping(struct device_queue_manager *dqm,
-				  u32 pasid, unsigned int vmid);
+अटल पूर्णांक set_pasid_vmid_mapping(काष्ठा device_queue_manager *dqm,
+				  u32 pasid, अचिन्हित पूर्णांक vmid);
 
-static int execute_queues_cpsch(struct device_queue_manager *dqm,
-				enum kfd_unmap_queues_filter filter,
-				uint32_t filter_param);
-static int unmap_queues_cpsch(struct device_queue_manager *dqm,
-				enum kfd_unmap_queues_filter filter,
-				uint32_t filter_param);
+अटल पूर्णांक execute_queues_cpsch(काष्ठा device_queue_manager *dqm,
+				क्रमागत kfd_unmap_queues_filter filter,
+				uपूर्णांक32_t filter_param);
+अटल पूर्णांक unmap_queues_cpsch(काष्ठा device_queue_manager *dqm,
+				क्रमागत kfd_unmap_queues_filter filter,
+				uपूर्णांक32_t filter_param);
 
-static int map_queues_cpsch(struct device_queue_manager *dqm);
+अटल पूर्णांक map_queues_cpsch(काष्ठा device_queue_manager *dqm);
 
-static void deallocate_sdma_queue(struct device_queue_manager *dqm,
-				struct queue *q);
+अटल व्योम deallocate_sdma_queue(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q);
 
-static inline void deallocate_hqd(struct device_queue_manager *dqm,
-				struct queue *q);
-static int allocate_hqd(struct device_queue_manager *dqm, struct queue *q);
-static int allocate_sdma_queue(struct device_queue_manager *dqm,
-				struct queue *q);
-static void kfd_process_hw_exception(struct work_struct *work);
+अटल अंतरभूत व्योम deallocate_hqd(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q);
+अटल पूर्णांक allocate_hqd(काष्ठा device_queue_manager *dqm, काष्ठा queue *q);
+अटल पूर्णांक allocate_sdma_queue(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q);
+अटल व्योम kfd_process_hw_exception(काष्ठा work_काष्ठा *work);
 
-static inline
-enum KFD_MQD_TYPE get_mqd_type_from_queue_type(enum kfd_queue_type type)
-{
-	if (type == KFD_QUEUE_TYPE_SDMA || type == KFD_QUEUE_TYPE_SDMA_XGMI)
-		return KFD_MQD_TYPE_SDMA;
-	return KFD_MQD_TYPE_CP;
-}
+अटल अंतरभूत
+क्रमागत KFD_MQD_TYPE get_mqd_type_from_queue_type(क्रमागत kfd_queue_type type)
+अणु
+	अगर (type == KFD_QUEUE_TYPE_SDMA || type == KFD_QUEUE_TYPE_SDMA_XGMI)
+		वापस KFD_MQD_TYPE_SDMA;
+	वापस KFD_MQD_TYPE_CP;
+पूर्ण
 
-static bool is_pipe_enabled(struct device_queue_manager *dqm, int mec, int pipe)
-{
-	int i;
-	int pipe_offset = (mec * dqm->dev->shared_resources.num_pipe_per_mec
+अटल bool is_pipe_enabled(काष्ठा device_queue_manager *dqm, पूर्णांक mec, पूर्णांक pipe)
+अणु
+	पूर्णांक i;
+	पूर्णांक pipe_offset = (mec * dqm->dev->shared_resources.num_pipe_per_mec
 		+ pipe) * dqm->dev->shared_resources.num_queue_per_pipe;
 
-	/* queue is available for KFD usage if bit is 1 */
-	for (i = 0; i <  dqm->dev->shared_resources.num_queue_per_pipe; ++i)
-		if (test_bit(pipe_offset + i,
-			      dqm->dev->shared_resources.cp_queue_bitmap))
-			return true;
-	return false;
-}
+	/* queue is available क्रम KFD usage अगर bit is 1 */
+	क्रम (i = 0; i <  dqm->dev->shared_resources.num_queue_per_pipe; ++i)
+		अगर (test_bit(pipe_offset + i,
+			      dqm->dev->shared_resources.cp_queue_biपंचांगap))
+			वापस true;
+	वापस false;
+पूर्ण
 
-unsigned int get_cp_queues_num(struct device_queue_manager *dqm)
-{
-	return bitmap_weight(dqm->dev->shared_resources.cp_queue_bitmap,
+अचिन्हित पूर्णांक get_cp_queues_num(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस biपंचांगap_weight(dqm->dev->shared_resources.cp_queue_biपंचांगap,
 				KGD_MAX_QUEUES);
-}
+पूर्ण
 
-unsigned int get_queues_per_pipe(struct device_queue_manager *dqm)
-{
-	return dqm->dev->shared_resources.num_queue_per_pipe;
-}
+अचिन्हित पूर्णांक get_queues_per_pipe(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->shared_resources.num_queue_per_pipe;
+पूर्ण
 
-unsigned int get_pipes_per_mec(struct device_queue_manager *dqm)
-{
-	return dqm->dev->shared_resources.num_pipe_per_mec;
-}
+अचिन्हित पूर्णांक get_pipes_per_mec(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->shared_resources.num_pipe_per_mec;
+पूर्ण
 
-static unsigned int get_num_sdma_engines(struct device_queue_manager *dqm)
-{
-	return dqm->dev->device_info->num_sdma_engines;
-}
+अटल अचिन्हित पूर्णांक get_num_sdma_engines(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->device_info->num_sdma_engines;
+पूर्ण
 
-static unsigned int get_num_xgmi_sdma_engines(struct device_queue_manager *dqm)
-{
-	return dqm->dev->device_info->num_xgmi_sdma_engines;
-}
+अटल अचिन्हित पूर्णांक get_num_xgmi_sdma_engines(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->device_info->num_xgmi_sdma_engines;
+पूर्ण
 
-static unsigned int get_num_all_sdma_engines(struct device_queue_manager *dqm)
-{
-	return get_num_sdma_engines(dqm) + get_num_xgmi_sdma_engines(dqm);
-}
+अटल अचिन्हित पूर्णांक get_num_all_sdma_engines(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस get_num_sdma_engines(dqm) + get_num_xgmi_sdma_engines(dqm);
+पूर्ण
 
-unsigned int get_num_sdma_queues(struct device_queue_manager *dqm)
-{
-	return dqm->dev->device_info->num_sdma_engines
+अचिन्हित पूर्णांक get_num_sdma_queues(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->device_info->num_sdma_engines
 			* dqm->dev->device_info->num_sdma_queues_per_engine;
-}
+पूर्ण
 
-unsigned int get_num_xgmi_sdma_queues(struct device_queue_manager *dqm)
-{
-	return dqm->dev->device_info->num_xgmi_sdma_engines
+अचिन्हित पूर्णांक get_num_xgmi_sdma_queues(काष्ठा device_queue_manager *dqm)
+अणु
+	वापस dqm->dev->device_info->num_xgmi_sdma_engines
 			* dqm->dev->device_info->num_sdma_queues_per_engine;
-}
+पूर्ण
 
-void program_sh_mem_settings(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd)
-{
-	return dqm->dev->kfd2kgd->program_sh_mem_settings(
+व्योम program_sh_mem_settings(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd)
+अणु
+	वापस dqm->dev->kfd2kgd->program_sh_mem_settings(
 						dqm->dev->kgd, qpd->vmid,
 						qpd->sh_mem_config,
 						qpd->sh_mem_ape1_base,
 						qpd->sh_mem_ape1_limit,
 						qpd->sh_mem_bases);
-}
+पूर्ण
 
-static void increment_queue_count(struct device_queue_manager *dqm,
-			enum kfd_queue_type type)
-{
+अटल व्योम increment_queue_count(काष्ठा device_queue_manager *dqm,
+			क्रमागत kfd_queue_type type)
+अणु
 	dqm->active_queue_count++;
-	if (type == KFD_QUEUE_TYPE_COMPUTE || type == KFD_QUEUE_TYPE_DIQ)
+	अगर (type == KFD_QUEUE_TYPE_COMPUTE || type == KFD_QUEUE_TYPE_DIQ)
 		dqm->active_cp_queue_count++;
-}
+पूर्ण
 
-static void decrement_queue_count(struct device_queue_manager *dqm,
-			enum kfd_queue_type type)
-{
+अटल व्योम decrement_queue_count(काष्ठा device_queue_manager *dqm,
+			क्रमागत kfd_queue_type type)
+अणु
 	dqm->active_queue_count--;
-	if (type == KFD_QUEUE_TYPE_COMPUTE || type == KFD_QUEUE_TYPE_DIQ)
+	अगर (type == KFD_QUEUE_TYPE_COMPUTE || type == KFD_QUEUE_TYPE_DIQ)
 		dqm->active_cp_queue_count--;
-}
+पूर्ण
 
-static int allocate_doorbell(struct qcm_process_device *qpd, struct queue *q)
-{
-	struct kfd_dev *dev = qpd->dqm->dev;
+अटल पूर्णांक allocate_करोorbell(काष्ठा qcm_process_device *qpd, काष्ठा queue *q)
+अणु
+	काष्ठा kfd_dev *dev = qpd->dqm->dev;
 
-	if (!KFD_IS_SOC15(dev->device_info->asic_family)) {
+	अगर (!KFD_IS_SOC15(dev->device_info->asic_family)) अणु
 		/* On pre-SOC15 chips we need to use the queue ID to
 		 * preserve the user mode ABI.
 		 */
-		q->doorbell_id = q->properties.queue_id;
-	} else if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-			q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
-		/* For SDMA queues on SOC15 with 8-byte doorbell, use static
-		 * doorbell assignments based on the engine and queue id.
-		 * The doobell index distance between RLC (2*i) and (2*i+1)
-		 * for a SDMA engine is 512.
+		q->करोorbell_id = q->properties.queue_id;
+	पूर्ण अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+			q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
+		/* For SDMA queues on SOC15 with 8-byte करोorbell, use अटल
+		 * करोorbell assignments based on the engine and queue id.
+		 * The करोobell index distance between RLC (2*i) and (2*i+1)
+		 * क्रम a SDMA engine is 512.
 		 */
-		uint32_t *idx_offset =
-				dev->shared_resources.sdma_doorbell_idx;
+		uपूर्णांक32_t *idx_offset =
+				dev->shared_resources.sdma_करोorbell_idx;
 
-		q->doorbell_id = idx_offset[q->properties.sdma_engine_id]
+		q->करोorbell_id = idx_offset[q->properties.sdma_engine_id]
 			+ (q->properties.sdma_queue_id & 1)
 			* KFD_QUEUE_DOORBELL_MIRROR_OFFSET
 			+ (q->properties.sdma_queue_id >> 1);
-	} else {
-		/* For CP queues on SOC15 reserve a free doorbell ID */
-		unsigned int found;
+	पूर्ण अन्यथा अणु
+		/* For CP queues on SOC15 reserve a मुक्त करोorbell ID */
+		अचिन्हित पूर्णांक found;
 
-		found = find_first_zero_bit(qpd->doorbell_bitmap,
+		found = find_first_zero_bit(qpd->करोorbell_biपंचांगap,
 					    KFD_MAX_NUM_OF_QUEUES_PER_PROCESS);
-		if (found >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS) {
+		अगर (found >= KFD_MAX_NUM_OF_QUEUES_PER_PROCESS) अणु
 			pr_debug("No doorbells available");
-			return -EBUSY;
-		}
-		set_bit(found, qpd->doorbell_bitmap);
-		q->doorbell_id = found;
-	}
+			वापस -EBUSY;
+		पूर्ण
+		set_bit(found, qpd->करोorbell_biपंचांगap);
+		q->करोorbell_id = found;
+	पूर्ण
 
-	q->properties.doorbell_off =
-		kfd_get_doorbell_dw_offset_in_bar(dev, qpd_to_pdd(qpd),
-					  q->doorbell_id);
-	return 0;
-}
+	q->properties.करोorbell_off =
+		kfd_get_करोorbell_dw_offset_in_bar(dev, qpd_to_pdd(qpd),
+					  q->करोorbell_id);
+	वापस 0;
+पूर्ण
 
-static void deallocate_doorbell(struct qcm_process_device *qpd,
-				struct queue *q)
-{
-	unsigned int old;
-	struct kfd_dev *dev = qpd->dqm->dev;
+अटल व्योम deallocate_करोorbell(काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q)
+अणु
+	अचिन्हित पूर्णांक old;
+	काष्ठा kfd_dev *dev = qpd->dqm->dev;
 
-	if (!KFD_IS_SOC15(dev->device_info->asic_family) ||
+	अगर (!KFD_IS_SOC15(dev->device_info->asic_family) ||
 	    q->properties.type == KFD_QUEUE_TYPE_SDMA ||
 	    q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
-		return;
+		वापस;
 
-	old = test_and_clear_bit(q->doorbell_id, qpd->doorbell_bitmap);
+	old = test_and_clear_bit(q->करोorbell_id, qpd->करोorbell_biपंचांगap);
 	WARN_ON(!old);
-}
+पूर्ण
 
-static int allocate_vmid(struct device_queue_manager *dqm,
-			struct qcm_process_device *qpd,
-			struct queue *q)
-{
-	int allocated_vmid = -1, i;
+अटल पूर्णांक allocate_vmid(काष्ठा device_queue_manager *dqm,
+			काष्ठा qcm_process_device *qpd,
+			काष्ठा queue *q)
+अणु
+	पूर्णांक allocated_vmid = -1, i;
 
-	for (i = dqm->dev->vm_info.first_vmid_kfd;
-			i <= dqm->dev->vm_info.last_vmid_kfd; i++) {
-		if (!dqm->vmid_pasid[i]) {
+	क्रम (i = dqm->dev->vm_info.first_vmid_kfd;
+			i <= dqm->dev->vm_info.last_vmid_kfd; i++) अणु
+		अगर (!dqm->vmid_pasid[i]) अणु
 			allocated_vmid = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (allocated_vmid < 0) {
+	अगर (allocated_vmid < 0) अणु
 		pr_err("no more vmid to allocate\n");
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	pr_debug("vmid allocated: %d\n", allocated_vmid);
 
@@ -241,7 +242,7 @@ static int allocate_vmid(struct device_queue_manager *dqm,
 
 	program_sh_mem_settings(dqm, qpd);
 
-	/* qpd->page_table_base is set earlier when register_process()
+	/* qpd->page_table_base is set earlier when रेजिस्टर_process()
 	 * is called, i.e. when the first queue is created.
 	 */
 	dqm->dev->kfd2kgd->set_vm_context_page_table_base(dqm->dev->kgd,
@@ -250,38 +251,38 @@ static int allocate_vmid(struct device_queue_manager *dqm,
 	/* invalidate the VM context after pasid and vmid mapping is set up */
 	kfd_flush_tlb(qpd_to_pdd(qpd));
 
-	if (dqm->dev->kfd2kgd->set_scratch_backing_va)
+	अगर (dqm->dev->kfd2kgd->set_scratch_backing_va)
 		dqm->dev->kfd2kgd->set_scratch_backing_va(dqm->dev->kgd,
-				qpd->sh_hidden_private_base, qpd->vmid);
+				qpd->sh_hidden_निजी_base, qpd->vmid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int flush_texture_cache_nocpsch(struct kfd_dev *kdev,
-				struct qcm_process_device *qpd)
-{
-	const struct packet_manager_funcs *pmf = qpd->dqm->packets.pmf;
-	int ret;
+अटल पूर्णांक flush_texture_cache_nocpsch(काष्ठा kfd_dev *kdev,
+				काष्ठा qcm_process_device *qpd)
+अणु
+	स्थिर काष्ठा packet_manager_funcs *pmf = qpd->dqm->packets.pmf;
+	पूर्णांक ret;
 
-	if (!qpd->ib_kaddr)
-		return -ENOMEM;
+	अगर (!qpd->ib_kaddr)
+		वापस -ENOMEM;
 
-	ret = pmf->release_mem(qpd->ib_base, (uint32_t *)qpd->ib_kaddr);
-	if (ret)
-		return ret;
+	ret = pmf->release_mem(qpd->ib_base, (uपूर्णांक32_t *)qpd->ib_kaddr);
+	अगर (ret)
+		वापस ret;
 
-	return amdgpu_amdkfd_submit_ib(kdev->kgd, KGD_ENGINE_MEC1, qpd->vmid,
-				qpd->ib_base, (uint32_t *)qpd->ib_kaddr,
-				pmf->release_mem_size / sizeof(uint32_t));
-}
+	वापस amdgpu_amdkfd_submit_ib(kdev->kgd, KGD_ENGINE_MEC1, qpd->vmid,
+				qpd->ib_base, (uपूर्णांक32_t *)qpd->ib_kaddr,
+				pmf->release_mem_size / माप(uपूर्णांक32_t));
+पूर्ण
 
-static void deallocate_vmid(struct device_queue_manager *dqm,
-				struct qcm_process_device *qpd,
-				struct queue *q)
-{
-	/* On GFX v7, CP doesn't flush TC at dequeue */
-	if (q->device->device_info->asic_family == CHIP_HAWAII)
-		if (flush_texture_cache_nocpsch(q->device, qpd))
+अटल व्योम deallocate_vmid(काष्ठा device_queue_manager *dqm,
+				काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q)
+अणु
+	/* On GFX v7, CP करोesn't flush TC at dequeue */
+	अगर (q->device->device_info->asic_family == CHIP_HAWAII)
+		अगर (flush_texture_cache_nocpsch(q->device, qpd))
 			pr_err("Failed to flush TC\n");
 
 	kfd_flush_tlb(qpd_to_pdd(qpd));
@@ -292,29 +293,29 @@ static void deallocate_vmid(struct device_queue_manager *dqm,
 
 	qpd->vmid = 0;
 	q->properties.vmid = 0;
-}
+पूर्ण
 
-static int create_queue_nocpsch(struct device_queue_manager *dqm,
-				struct queue *q,
-				struct qcm_process_device *qpd)
-{
-	struct mqd_manager *mqd_mgr;
-	int retval;
+अटल पूर्णांक create_queue_nocpsch(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q,
+				काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा mqd_manager *mqd_mgr;
+	पूर्णांक retval;
 
 	dqm_lock(dqm);
 
-	if (dqm->total_queue_count >= max_num_of_queues_per_device) {
+	अगर (dqm->total_queue_count >= max_num_of_queues_per_device) अणु
 		pr_warn("Can't create new usermode queue because %d queues were already created\n",
 				dqm->total_queue_count);
 		retval = -EPERM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (list_empty(&qpd->queues_list)) {
+	अगर (list_empty(&qpd->queues_list)) अणु
 		retval = allocate_vmid(dqm, qpd, q);
-		if (retval)
-			goto out_unlock;
-	}
+		अगर (retval)
+			जाओ out_unlock;
+	पूर्ण
 	q->properties.vmid = qpd->vmid;
 	/*
 	 * Eviction state logic: mark all queues as evicted, even ones
@@ -324,59 +325,59 @@ static int create_queue_nocpsch(struct device_queue_manager *dqm,
 	q->properties.is_evicted = !!qpd->evicted;
 
 	q->properties.tba_addr = qpd->tba_addr;
-	q->properties.tma_addr = qpd->tma_addr;
+	q->properties.पंचांगa_addr = qpd->पंचांगa_addr;
 
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
-	if (q->properties.type == KFD_QUEUE_TYPE_COMPUTE) {
+	अगर (q->properties.type == KFD_QUEUE_TYPE_COMPUTE) अणु
 		retval = allocate_hqd(dqm, q);
-		if (retval)
-			goto deallocate_vmid;
+		अगर (retval)
+			जाओ deallocate_vmid;
 		pr_debug("Loading mqd to hqd on pipe %d, queue %d\n",
 			q->pipe, q->queue);
-	} else if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
+	पूर्ण अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
 		retval = allocate_sdma_queue(dqm, q);
-		if (retval)
-			goto deallocate_vmid;
+		अगर (retval)
+			जाओ deallocate_vmid;
 		dqm->asic_ops.init_sdma_vm(dqm, q, qpd);
-	}
+	पूर्ण
 
-	retval = allocate_doorbell(qpd, q);
-	if (retval)
-		goto out_deallocate_hqd;
+	retval = allocate_करोorbell(qpd, q);
+	अगर (retval)
+		जाओ out_deallocate_hqd;
 
-	/* Temporarily release dqm lock to avoid a circular lock dependency */
+	/* Temporarily release dqm lock to aव्योम a circular lock dependency */
 	dqm_unlock(dqm);
 	q->mqd_mem_obj = mqd_mgr->allocate_mqd(mqd_mgr->dev, &q->properties);
 	dqm_lock(dqm);
 
-	if (!q->mqd_mem_obj) {
+	अगर (!q->mqd_mem_obj) अणु
 		retval = -ENOMEM;
-		goto out_deallocate_doorbell;
-	}
+		जाओ out_deallocate_करोorbell;
+	पूर्ण
 	mqd_mgr->init_mqd(mqd_mgr, &q->mqd, q->mqd_mem_obj,
 				&q->gart_mqd_addr, &q->properties);
-	if (q->properties.is_active) {
-		if (!dqm->sched_running) {
+	अगर (q->properties.is_active) अणु
+		अगर (!dqm->sched_running) अणु
 			WARN_ONCE(1, "Load non-HWS mqd while stopped\n");
-			goto add_queue_to_list;
-		}
+			जाओ add_queue_to_list;
+		पूर्ण
 
-		if (WARN(q->process->mm != current->mm,
+		अगर (WARN(q->process->mm != current->mm,
 					"should only run in user thread"))
 			retval = -EFAULT;
-		else
+		अन्यथा
 			retval = mqd_mgr->load_mqd(mqd_mgr, q->mqd, q->pipe,
 					q->queue, &q->properties, current->mm);
-		if (retval)
-			goto out_free_mqd;
-	}
+		अगर (retval)
+			जाओ out_मुक्त_mqd;
+	पूर्ण
 
 add_queue_to_list:
 	list_add(&q->list, &qpd->queues_list);
 	qpd->queue_count++;
-	if (q->properties.is_active)
+	अगर (q->properties.is_active)
 		increment_queue_count(dqm, q->properties.type);
 
 	/*
@@ -386,318 +387,318 @@ add_queue_to_list:
 	dqm->total_queue_count++;
 	pr_debug("Total of %d queues are accountable so far\n",
 			dqm->total_queue_count);
-	goto out_unlock;
+	जाओ out_unlock;
 
-out_free_mqd:
-	mqd_mgr->free_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
-out_deallocate_doorbell:
-	deallocate_doorbell(qpd, q);
+out_मुक्त_mqd:
+	mqd_mgr->मुक्त_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
+out_deallocate_करोorbell:
+	deallocate_करोorbell(qpd, q);
 out_deallocate_hqd:
-	if (q->properties.type == KFD_QUEUE_TYPE_COMPUTE)
+	अगर (q->properties.type == KFD_QUEUE_TYPE_COMPUTE)
 		deallocate_hqd(dqm, q);
-	else if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+	अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
 		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
 		deallocate_sdma_queue(dqm, q);
 deallocate_vmid:
-	if (list_empty(&qpd->queues_list))
+	अगर (list_empty(&qpd->queues_list))
 		deallocate_vmid(dqm, qpd, q);
 out_unlock:
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int allocate_hqd(struct device_queue_manager *dqm, struct queue *q)
-{
+अटल पूर्णांक allocate_hqd(काष्ठा device_queue_manager *dqm, काष्ठा queue *q)
+अणु
 	bool set;
-	int pipe, bit, i;
+	पूर्णांक pipe, bit, i;
 
 	set = false;
 
-	for (pipe = dqm->next_pipe_to_allocate, i = 0;
+	क्रम (pipe = dqm->next_pipe_to_allocate, i = 0;
 			i < get_pipes_per_mec(dqm);
-			pipe = ((pipe + 1) % get_pipes_per_mec(dqm)), ++i) {
+			pipe = ((pipe + 1) % get_pipes_per_mec(dqm)), ++i) अणु
 
-		if (!is_pipe_enabled(dqm, 0, pipe))
-			continue;
+		अगर (!is_pipe_enabled(dqm, 0, pipe))
+			जारी;
 
-		if (dqm->allocated_queues[pipe] != 0) {
+		अगर (dqm->allocated_queues[pipe] != 0) अणु
 			bit = ffs(dqm->allocated_queues[pipe]) - 1;
 			dqm->allocated_queues[pipe] &= ~(1 << bit);
 			q->pipe = pipe;
 			q->queue = bit;
 			set = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!set)
-		return -EBUSY;
+	अगर (!set)
+		वापस -EBUSY;
 
 	pr_debug("hqd slot - pipe %d, queue %d\n", q->pipe, q->queue);
 	/* horizontal hqd allocation */
 	dqm->next_pipe_to_allocate = (pipe + 1) % get_pipes_per_mec(dqm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void deallocate_hqd(struct device_queue_manager *dqm,
-				struct queue *q)
-{
+अटल अंतरभूत व्योम deallocate_hqd(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q)
+अणु
 	dqm->allocated_queues[q->pipe] |= (1 << q->queue);
-}
+पूर्ण
 
-/* Access to DQM has to be locked before calling destroy_queue_nocpsch_locked
- * to avoid asynchronized access
+/* Access to DQM has to be locked beक्रमe calling destroy_queue_nocpsch_locked
+ * to aव्योम asynchronized access
  */
-static int destroy_queue_nocpsch_locked(struct device_queue_manager *dqm,
-				struct qcm_process_device *qpd,
-				struct queue *q)
-{
-	int retval;
-	struct mqd_manager *mqd_mgr;
+अटल पूर्णांक destroy_queue_nocpsch_locked(काष्ठा device_queue_manager *dqm,
+				काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q)
+अणु
+	पूर्णांक retval;
+	काष्ठा mqd_manager *mqd_mgr;
 
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
 
-	if (q->properties.type == KFD_QUEUE_TYPE_COMPUTE)
+	अगर (q->properties.type == KFD_QUEUE_TYPE_COMPUTE)
 		deallocate_hqd(dqm, q);
-	else if (q->properties.type == KFD_QUEUE_TYPE_SDMA)
+	अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA)
 		deallocate_sdma_queue(dqm, q);
-	else if (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
+	अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
 		deallocate_sdma_queue(dqm, q);
-	else {
+	अन्यथा अणु
 		pr_debug("q->properties.type %d is invalid\n",
 				q->properties.type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dqm->total_queue_count--;
 
-	deallocate_doorbell(qpd, q);
+	deallocate_करोorbell(qpd, q);
 
-	if (!dqm->sched_running) {
+	अगर (!dqm->sched_running) अणु
 		WARN_ONCE(1, "Destroy non-HWS queue while stopped\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	retval = mqd_mgr->destroy_mqd(mqd_mgr, q->mqd,
 				KFD_PREEMPT_TYPE_WAVEFRONT_RESET,
 				KFD_UNMAP_LATENCY_MS,
 				q->pipe, q->queue);
-	if (retval == -ETIME)
+	अगर (retval == -ETIME)
 		qpd->reset_wavefronts = true;
 
 
-	mqd_mgr->free_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
+	mqd_mgr->मुक्त_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
 
 	list_del(&q->list);
-	if (list_empty(&qpd->queues_list)) {
-		if (qpd->reset_wavefronts) {
+	अगर (list_empty(&qpd->queues_list)) अणु
+		अगर (qpd->reset_wavefronts) अणु
 			pr_warn("Resetting wave fronts (nocpsch) on dev %p\n",
 					dqm->dev);
-			/* dbgdev_wave_reset_wavefronts has to be called before
+			/* dbgdev_wave_reset_wavefronts has to be called beक्रमe
 			 * deallocate_vmid(), i.e. when vmid is still in use.
 			 */
 			dbgdev_wave_reset_wavefronts(dqm->dev,
 					qpd->pqm->process);
 			qpd->reset_wavefronts = false;
-		}
+		पूर्ण
 
 		deallocate_vmid(dqm, qpd, q);
-	}
+	पूर्ण
 	qpd->queue_count--;
-	if (q->properties.is_active) {
+	अगर (q->properties.is_active) अणु
 		decrement_queue_count(dqm, q->properties.type);
-		if (q->properties.is_gws) {
+		अगर (q->properties.is_gws) अणु
 			dqm->gws_queue_count--;
 			qpd->mapped_gws_queue = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int destroy_queue_nocpsch(struct device_queue_manager *dqm,
-				struct qcm_process_device *qpd,
-				struct queue *q)
-{
-	int retval;
-	uint64_t sdma_val = 0;
-	struct kfd_process_device *pdd = qpd_to_pdd(qpd);
+अटल पूर्णांक destroy_queue_nocpsch(काष्ठा device_queue_manager *dqm,
+				काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q)
+अणु
+	पूर्णांक retval;
+	uपूर्णांक64_t sdma_val = 0;
+	काष्ठा kfd_process_device *pdd = qpd_to_pdd(qpd);
 
 	/* Get the SDMA queue stats */
-	if ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
-	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) {
-		retval = read_sdma_queue_counter((uint64_t __user *)q->properties.read_ptr,
+	अगर ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
+	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) अणु
+		retval = पढ़ो_sdma_queue_counter((uपूर्णांक64_t __user *)q->properties.पढ़ो_ptr,
 							&sdma_val);
-		if (retval)
+		अगर (retval)
 			pr_err("Failed to read SDMA queue counter for queue: %d\n",
 				q->properties.queue_id);
-	}
+	पूर्ण
 
 	dqm_lock(dqm);
 	retval = destroy_queue_nocpsch_locked(dqm, qpd, q);
-	if (!retval)
+	अगर (!retval)
 		pdd->sdma_past_activity_counter += sdma_val;
 	dqm_unlock(dqm);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int update_queue(struct device_queue_manager *dqm, struct queue *q)
-{
-	int retval = 0;
-	struct mqd_manager *mqd_mgr;
-	struct kfd_process_device *pdd;
+अटल पूर्णांक update_queue(काष्ठा device_queue_manager *dqm, काष्ठा queue *q)
+अणु
+	पूर्णांक retval = 0;
+	काष्ठा mqd_manager *mqd_mgr;
+	काष्ठा kfd_process_device *pdd;
 	bool prev_active = false;
 
 	dqm_lock(dqm);
 	pdd = kfd_get_process_device_data(q->device, q->process);
-	if (!pdd) {
+	अगर (!pdd) अणु
 		retval = -ENODEV;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
 
-	/* Save previous activity state for counters */
+	/* Save previous activity state क्रम counters */
 	prev_active = q->properties.is_active;
 
-	/* Make sure the queue is unmapped before updating the MQD */
-	if (dqm->sched_policy != KFD_SCHED_POLICY_NO_HWS) {
+	/* Make sure the queue is unmapped beक्रमe updating the MQD */
+	अगर (dqm->sched_policy != KFD_SCHED_POLICY_NO_HWS) अणु
 		retval = unmap_queues_cpsch(dqm,
 				KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
-		if (retval) {
+		अगर (retval) अणु
 			pr_err("unmap queue failed\n");
-			goto out_unlock;
-		}
-	} else if (prev_active &&
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण अन्यथा अगर (prev_active &&
 		   (q->properties.type == KFD_QUEUE_TYPE_COMPUTE ||
 		    q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-		    q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) {
+		    q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) अणु
 
-		if (!dqm->sched_running) {
+		अगर (!dqm->sched_running) अणु
 			WARN_ONCE(1, "Update non-HWS queue while stopped\n");
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		retval = mqd_mgr->destroy_mqd(mqd_mgr, q->mqd,
 				KFD_PREEMPT_TYPE_WAVEFRONT_DRAIN,
 				KFD_UNMAP_LATENCY_MS, q->pipe, q->queue);
-		if (retval) {
+		अगर (retval) अणु
 			pr_err("destroy mqd failed\n");
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
 	mqd_mgr->update_mqd(mqd_mgr, q->mqd, &q->properties);
 
 	/*
-	 * check active state vs. the previous state and modify
+	 * check active state vs. the previous state and modअगरy
 	 * counter accordingly. map_queues_cpsch uses the
 	 * dqm->active_queue_count to determine whether a new runlist must be
 	 * uploaded.
 	 */
-	if (q->properties.is_active && !prev_active)
+	अगर (q->properties.is_active && !prev_active)
 		increment_queue_count(dqm, q->properties.type);
-	else if (!q->properties.is_active && prev_active)
+	अन्यथा अगर (!q->properties.is_active && prev_active)
 		decrement_queue_count(dqm, q->properties.type);
 
-	if (q->gws && !q->properties.is_gws) {
-		if (q->properties.is_active) {
+	अगर (q->gws && !q->properties.is_gws) अणु
+		अगर (q->properties.is_active) अणु
 			dqm->gws_queue_count++;
 			pdd->qpd.mapped_gws_queue = true;
-		}
+		पूर्ण
 		q->properties.is_gws = true;
-	} else if (!q->gws && q->properties.is_gws) {
-		if (q->properties.is_active) {
+	पूर्ण अन्यथा अगर (!q->gws && q->properties.is_gws) अणु
+		अगर (q->properties.is_active) अणु
 			dqm->gws_queue_count--;
 			pdd->qpd.mapped_gws_queue = false;
-		}
+		पूर्ण
 		q->properties.is_gws = false;
-	}
+	पूर्ण
 
-	if (dqm->sched_policy != KFD_SCHED_POLICY_NO_HWS)
+	अगर (dqm->sched_policy != KFD_SCHED_POLICY_NO_HWS)
 		retval = map_queues_cpsch(dqm);
-	else if (q->properties.is_active &&
+	अन्यथा अगर (q->properties.is_active &&
 		 (q->properties.type == KFD_QUEUE_TYPE_COMPUTE ||
 		  q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-		  q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) {
-		if (WARN(q->process->mm != current->mm,
+		  q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) अणु
+		अगर (WARN(q->process->mm != current->mm,
 			 "should only run in user thread"))
 			retval = -EFAULT;
-		else
+		अन्यथा
 			retval = mqd_mgr->load_mqd(mqd_mgr, q->mqd,
 						   q->pipe, q->queue,
 						   &q->properties, current->mm);
-	}
+	पूर्ण
 
 out_unlock:
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int evict_process_queues_nocpsch(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd)
-{
-	struct queue *q;
-	struct mqd_manager *mqd_mgr;
-	struct kfd_process_device *pdd;
-	int retval, ret = 0;
+अटल पूर्णांक evict_process_queues_nocpsch(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा queue *q;
+	काष्ठा mqd_manager *mqd_mgr;
+	काष्ठा kfd_process_device *pdd;
+	पूर्णांक retval, ret = 0;
 
 	dqm_lock(dqm);
-	if (qpd->evicted++ > 0) /* already evicted, do nothing */
-		goto out;
+	अगर (qpd->evicted++ > 0) /* alपढ़ोy evicted, करो nothing */
+		जाओ out;
 
 	pdd = qpd_to_pdd(qpd);
 	pr_debug_ratelimited("Evicting PASID 0x%x queues\n",
 			    pdd->process->pasid);
 
-	pdd->last_evict_timestamp = get_jiffies_64();
+	pdd->last_evict_बारtamp = get_jअगरfies_64();
 	/* Mark all queues as evicted. Deactivate all active queues on
 	 * the qpd.
 	 */
-	list_for_each_entry(q, &qpd->queues_list, list) {
+	list_क्रम_each_entry(q, &qpd->queues_list, list) अणु
 		q->properties.is_evicted = true;
-		if (!q->properties.is_active)
-			continue;
+		अगर (!q->properties.is_active)
+			जारी;
 
 		mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 				q->properties.type)];
 		q->properties.is_active = false;
 		decrement_queue_count(dqm, q->properties.type);
-		if (q->properties.is_gws) {
+		अगर (q->properties.is_gws) अणु
 			dqm->gws_queue_count--;
 			qpd->mapped_gws_queue = false;
-		}
+		पूर्ण
 
-		if (WARN_ONCE(!dqm->sched_running, "Evict when stopped\n"))
-			continue;
+		अगर (WARN_ONCE(!dqm->sched_running, "Evict when stopped\n"))
+			जारी;
 
 		retval = mqd_mgr->destroy_mqd(mqd_mgr, q->mqd,
 				KFD_PREEMPT_TYPE_WAVEFRONT_DRAIN,
 				KFD_UNMAP_LATENCY_MS, q->pipe, q->queue);
-		if (retval && !ret)
+		अगर (retval && !ret)
 			/* Return the first error, but keep going to
-			 * maintain a consistent eviction state
+			 * मुख्यtain a consistent eviction state
 			 */
 			ret = retval;
-	}
+	पूर्ण
 
 out:
 	dqm_unlock(dqm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int evict_process_queues_cpsch(struct device_queue_manager *dqm,
-				      struct qcm_process_device *qpd)
-{
-	struct queue *q;
-	struct kfd_process_device *pdd;
-	int retval = 0;
+अटल पूर्णांक evict_process_queues_cpsch(काष्ठा device_queue_manager *dqm,
+				      काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा queue *q;
+	काष्ठा kfd_process_device *pdd;
+	पूर्णांक retval = 0;
 
 	dqm_lock(dqm);
-	if (qpd->evicted++ > 0) /* already evicted, do nothing */
-		goto out;
+	अगर (qpd->evicted++ > 0) /* alपढ़ोy evicted, करो nothing */
+		जाओ out;
 
 	pdd = qpd_to_pdd(qpd);
 	pr_debug_ratelimited("Evicting PASID 0x%x queues\n",
@@ -706,15 +707,15 @@ static int evict_process_queues_cpsch(struct device_queue_manager *dqm,
 	/* Mark all queues as evicted. Deactivate all active queues on
 	 * the qpd.
 	 */
-	list_for_each_entry(q, &qpd->queues_list, list) {
+	list_क्रम_each_entry(q, &qpd->queues_list, list) अणु
 		q->properties.is_evicted = true;
-		if (!q->properties.is_active)
-			continue;
+		अगर (!q->properties.is_active)
+			जारी;
 
 		q->properties.is_active = false;
 		decrement_queue_count(dqm, q->properties.type);
-	}
-	pdd->last_evict_timestamp = get_jiffies_64();
+	पूर्ण
+	pdd->last_evict_बारtamp = get_jअगरfies_64();
 	retval = execute_queues_cpsch(dqm,
 				qpd->is_debug ?
 				KFD_UNMAP_QUEUES_FILTER_ALL_QUEUES :
@@ -722,31 +723,31 @@ static int evict_process_queues_cpsch(struct device_queue_manager *dqm,
 
 out:
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int restore_process_queues_nocpsch(struct device_queue_manager *dqm,
-					  struct qcm_process_device *qpd)
-{
-	struct mm_struct *mm = NULL;
-	struct queue *q;
-	struct mqd_manager *mqd_mgr;
-	struct kfd_process_device *pdd;
-	uint64_t pd_base;
-	uint64_t eviction_duration;
-	int retval, ret = 0;
+अटल पूर्णांक restore_process_queues_nocpsch(काष्ठा device_queue_manager *dqm,
+					  काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा mm_काष्ठा *mm = शून्य;
+	काष्ठा queue *q;
+	काष्ठा mqd_manager *mqd_mgr;
+	काष्ठा kfd_process_device *pdd;
+	uपूर्णांक64_t pd_base;
+	uपूर्णांक64_t eviction_duration;
+	पूर्णांक retval, ret = 0;
 
 	pdd = qpd_to_pdd(qpd);
 	/* Retrieve PD base */
 	pd_base = amdgpu_amdkfd_gpuvm_get_process_page_dir(pdd->vm);
 
 	dqm_lock(dqm);
-	if (WARN_ON_ONCE(!qpd->evicted)) /* already restored, do nothing */
-		goto out;
-	if (qpd->evicted > 1) { /* ref count still > 0, decrement & quit */
+	अगर (WARN_ON_ONCE(!qpd->evicted)) /* alपढ़ोy restored, करो nothing */
+		जाओ out;
+	अगर (qpd->evicted > 1) अणु /* ref count still > 0, decrement & quit */
 		qpd->evicted--;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_debug_ratelimited("Restoring PASID 0x%x queues\n",
 			    pdd->process->pasid);
@@ -755,81 +756,81 @@ static int restore_process_queues_nocpsch(struct device_queue_manager *dqm,
 	qpd->page_table_base = pd_base;
 	pr_debug("Updated PD address to 0x%llx\n", pd_base);
 
-	if (!list_empty(&qpd->queues_list)) {
+	अगर (!list_empty(&qpd->queues_list)) अणु
 		dqm->dev->kfd2kgd->set_vm_context_page_table_base(
 				dqm->dev->kgd,
 				qpd->vmid,
 				qpd->page_table_base);
 		kfd_flush_tlb(pdd);
-	}
+	पूर्ण
 
-	/* Take a safe reference to the mm_struct, which may otherwise
-	 * disappear even while the kfd_process is still referenced.
+	/* Take a safe reference to the mm_काष्ठा, which may otherwise
+	 * disappear even जबतक the kfd_process is still referenced.
 	 */
-	mm = get_task_mm(pdd->process->lead_thread);
-	if (!mm) {
+	mm = get_task_mm(pdd->process->lead_thपढ़ो);
+	अगर (!mm) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Remove the eviction flags. Activate queues that are not
-	 * inactive for other reasons.
+	 * inactive क्रम other reasons.
 	 */
-	list_for_each_entry(q, &qpd->queues_list, list) {
+	list_क्रम_each_entry(q, &qpd->queues_list, list) अणु
 		q->properties.is_evicted = false;
-		if (!QUEUE_IS_ACTIVE(q->properties))
-			continue;
+		अगर (!QUEUE_IS_ACTIVE(q->properties))
+			जारी;
 
 		mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 				q->properties.type)];
 		q->properties.is_active = true;
 		increment_queue_count(dqm, q->properties.type);
-		if (q->properties.is_gws) {
+		अगर (q->properties.is_gws) अणु
 			dqm->gws_queue_count++;
 			qpd->mapped_gws_queue = true;
-		}
+		पूर्ण
 
-		if (WARN_ONCE(!dqm->sched_running, "Restore when stopped\n"))
-			continue;
+		अगर (WARN_ONCE(!dqm->sched_running, "Restore when stopped\n"))
+			जारी;
 
 		retval = mqd_mgr->load_mqd(mqd_mgr, q->mqd, q->pipe,
 				       q->queue, &q->properties, mm);
-		if (retval && !ret)
+		अगर (retval && !ret)
 			/* Return the first error, but keep going to
-			 * maintain a consistent eviction state
+			 * मुख्यtain a consistent eviction state
 			 */
 			ret = retval;
-	}
+	पूर्ण
 	qpd->evicted = 0;
-	eviction_duration = get_jiffies_64() - pdd->last_evict_timestamp;
+	eviction_duration = get_jअगरfies_64() - pdd->last_evict_बारtamp;
 	atomic64_add(eviction_duration, &pdd->evict_duration_counter);
 out:
-	if (mm)
+	अगर (mm)
 		mmput(mm);
 	dqm_unlock(dqm);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int restore_process_queues_cpsch(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd)
-{
-	struct queue *q;
-	struct kfd_process_device *pdd;
-	uint64_t pd_base;
-	uint64_t eviction_duration;
-	int retval = 0;
+अटल पूर्णांक restore_process_queues_cpsch(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा queue *q;
+	काष्ठा kfd_process_device *pdd;
+	uपूर्णांक64_t pd_base;
+	uपूर्णांक64_t eviction_duration;
+	पूर्णांक retval = 0;
 
 	pdd = qpd_to_pdd(qpd);
 	/* Retrieve PD base */
 	pd_base = amdgpu_amdkfd_gpuvm_get_process_page_dir(pdd->vm);
 
 	dqm_lock(dqm);
-	if (WARN_ON_ONCE(!qpd->evicted)) /* already restored, do nothing */
-		goto out;
-	if (qpd->evicted > 1) { /* ref count still > 0, decrement & quit */
+	अगर (WARN_ON_ONCE(!qpd->evicted)) /* alपढ़ोy restored, करो nothing */
+		जाओ out;
+	अगर (qpd->evicted > 1) अणु /* ref count still > 0, decrement & quit */
 		qpd->evicted--;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_debug_ratelimited("Restoring PASID 0x%x queues\n",
 			    pdd->process->pasid);
@@ -839,35 +840,35 @@ static int restore_process_queues_cpsch(struct device_queue_manager *dqm,
 	pr_debug("Updated PD address to 0x%llx\n", pd_base);
 
 	/* activate all active queues on the qpd */
-	list_for_each_entry(q, &qpd->queues_list, list) {
+	list_क्रम_each_entry(q, &qpd->queues_list, list) अणु
 		q->properties.is_evicted = false;
-		if (!QUEUE_IS_ACTIVE(q->properties))
-			continue;
+		अगर (!QUEUE_IS_ACTIVE(q->properties))
+			जारी;
 
 		q->properties.is_active = true;
 		increment_queue_count(dqm, q->properties.type);
-	}
+	पूर्ण
 	retval = execute_queues_cpsch(dqm,
 				KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
 	qpd->evicted = 0;
-	eviction_duration = get_jiffies_64() - pdd->last_evict_timestamp;
+	eviction_duration = get_jअगरfies_64() - pdd->last_evict_बारtamp;
 	atomic64_add(eviction_duration, &pdd->evict_duration_counter);
 out:
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int register_process(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd)
-{
-	struct device_process_node *n;
-	struct kfd_process_device *pdd;
-	uint64_t pd_base;
-	int retval;
+अटल पूर्णांक रेजिस्टर_process(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा device_process_node *n;
+	काष्ठा kfd_process_device *pdd;
+	uपूर्णांक64_t pd_base;
+	पूर्णांक retval;
 
-	n = kzalloc(sizeof(*n), GFP_KERNEL);
-	if (!n)
-		return -ENOMEM;
+	n = kzalloc(माप(*n), GFP_KERNEL);
+	अगर (!n)
+		वापस -ENOMEM;
 
 	n->qpd = qpd;
 
@@ -888,19 +889,19 @@ static int register_process(struct device_queue_manager *dqm,
 
 	dqm_unlock(dqm);
 
-	/* Outside the DQM lock because under the DQM lock we can't do
-	 * reclaim or take other locks that others hold while reclaiming.
+	/* Outside the DQM lock because under the DQM lock we can't करो
+	 * reclaim or take other locks that others hold जबतक reclaiming.
 	 */
 	kfd_inc_compute_active(dqm->dev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int unregister_process(struct device_queue_manager *dqm,
-					struct qcm_process_device *qpd)
-{
-	int retval;
-	struct device_process_node *cur, *next;
+अटल पूर्णांक unरेजिस्टर_process(काष्ठा device_queue_manager *dqm,
+					काष्ठा qcm_process_device *qpd)
+अणु
+	पूर्णांक retval;
+	काष्ठा device_process_node *cur, *next;
 
 	pr_debug("qpd->queues_list is %s\n",
 			list_empty(&qpd->queues_list) ? "empty" : "not empty");
@@ -908,55 +909,55 @@ static int unregister_process(struct device_queue_manager *dqm,
 	retval = 0;
 	dqm_lock(dqm);
 
-	list_for_each_entry_safe(cur, next, &dqm->queues, list) {
-		if (qpd == cur->qpd) {
+	list_क्रम_each_entry_safe(cur, next, &dqm->queues, list) अणु
+		अगर (qpd == cur->qpd) अणु
 			list_del(&cur->list);
-			kfree(cur);
+			kमुक्त(cur);
 			dqm->processes_count--;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 	/* qpd not found in dqm list */
 	retval = 1;
 out:
 	dqm_unlock(dqm);
 
-	/* Outside the DQM lock because under the DQM lock we can't do
-	 * reclaim or take other locks that others hold while reclaiming.
+	/* Outside the DQM lock because under the DQM lock we can't करो
+	 * reclaim or take other locks that others hold जबतक reclaiming.
 	 */
-	if (!retval)
+	अगर (!retval)
 		kfd_dec_compute_active(dqm->dev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int
-set_pasid_vmid_mapping(struct device_queue_manager *dqm, u32 pasid,
-			unsigned int vmid)
-{
-	return dqm->dev->kfd2kgd->set_pasid_vmid_mapping(
+अटल पूर्णांक
+set_pasid_vmid_mapping(काष्ठा device_queue_manager *dqm, u32 pasid,
+			अचिन्हित पूर्णांक vmid)
+अणु
+	वापस dqm->dev->kfd2kgd->set_pasid_vmid_mapping(
 						dqm->dev->kgd, pasid, vmid);
-}
+पूर्ण
 
-static void init_interrupts(struct device_queue_manager *dqm)
-{
-	unsigned int i;
+अटल व्योम init_पूर्णांकerrupts(काष्ठा device_queue_manager *dqm)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0 ; i < get_pipes_per_mec(dqm) ; i++)
-		if (is_pipe_enabled(dqm, 0, i))
-			dqm->dev->kfd2kgd->init_interrupts(dqm->dev->kgd, i);
-}
+	क्रम (i = 0 ; i < get_pipes_per_mec(dqm) ; i++)
+		अगर (is_pipe_enabled(dqm, 0, i))
+			dqm->dev->kfd2kgd->init_पूर्णांकerrupts(dqm->dev->kgd, i);
+पूर्ण
 
-static int initialize_nocpsch(struct device_queue_manager *dqm)
-{
-	int pipe, queue;
+अटल पूर्णांक initialize_nocpsch(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक pipe, queue;
 
 	pr_debug("num of pipes: %d\n", get_pipes_per_mec(dqm));
 
-	dqm->allocated_queues = kcalloc(get_pipes_per_mec(dqm),
-					sizeof(unsigned int), GFP_KERNEL);
-	if (!dqm->allocated_queues)
-		return -ENOMEM;
+	dqm->allocated_queues = kसुस्मृति(get_pipes_per_mec(dqm),
+					माप(अचिन्हित पूर्णांक), GFP_KERNEL);
+	अगर (!dqm->allocated_queues)
+		वापस -ENOMEM;
 
 	mutex_init(&dqm->lock_hidden);
 	INIT_LIST_HEAD(&dqm->queues);
@@ -964,88 +965,88 @@ static int initialize_nocpsch(struct device_queue_manager *dqm)
 	dqm->active_cp_queue_count = 0;
 	dqm->gws_queue_count = 0;
 
-	for (pipe = 0; pipe < get_pipes_per_mec(dqm); pipe++) {
-		int pipe_offset = pipe * get_queues_per_pipe(dqm);
+	क्रम (pipe = 0; pipe < get_pipes_per_mec(dqm); pipe++) अणु
+		पूर्णांक pipe_offset = pipe * get_queues_per_pipe(dqm);
 
-		for (queue = 0; queue < get_queues_per_pipe(dqm); queue++)
-			if (test_bit(pipe_offset + queue,
-				     dqm->dev->shared_resources.cp_queue_bitmap))
+		क्रम (queue = 0; queue < get_queues_per_pipe(dqm); queue++)
+			अगर (test_bit(pipe_offset + queue,
+				     dqm->dev->shared_resources.cp_queue_biपंचांगap))
 				dqm->allocated_queues[pipe] |= 1 << queue;
-	}
+	पूर्ण
 
-	memset(dqm->vmid_pasid, 0, sizeof(dqm->vmid_pasid));
+	स_रखो(dqm->vmid_pasid, 0, माप(dqm->vmid_pasid));
 
-	dqm->sdma_bitmap = ~0ULL >> (64 - get_num_sdma_queues(dqm));
-	dqm->xgmi_sdma_bitmap = ~0ULL >> (64 - get_num_xgmi_sdma_queues(dqm));
+	dqm->sdma_biपंचांगap = ~0ULL >> (64 - get_num_sdma_queues(dqm));
+	dqm->xgmi_sdma_biपंचांगap = ~0ULL >> (64 - get_num_xgmi_sdma_queues(dqm));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void uninitialize(struct device_queue_manager *dqm)
-{
-	int i;
+अटल व्योम uninitialize(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक i;
 
 	WARN_ON(dqm->active_queue_count > 0 || dqm->processes_count > 0);
 
-	kfree(dqm->allocated_queues);
-	for (i = 0 ; i < KFD_MQD_TYPE_MAX ; i++)
-		kfree(dqm->mqd_mgrs[i]);
+	kमुक्त(dqm->allocated_queues);
+	क्रम (i = 0 ; i < KFD_MQD_TYPE_MAX ; i++)
+		kमुक्त(dqm->mqd_mgrs[i]);
 	mutex_destroy(&dqm->lock_hidden);
-}
+पूर्ण
 
-static int start_nocpsch(struct device_queue_manager *dqm)
-{
+अटल पूर्णांक start_nocpsch(काष्ठा device_queue_manager *dqm)
+अणु
 	pr_info("SW scheduler is used");
-	init_interrupts(dqm);
+	init_पूर्णांकerrupts(dqm);
 	
-	if (dqm->dev->device_info->asic_family == CHIP_HAWAII)
-		return pm_init(&dqm->packets, dqm);
+	अगर (dqm->dev->device_info->asic_family == CHIP_HAWAII)
+		वापस pm_init(&dqm->packets, dqm);
 	dqm->sched_running = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int stop_nocpsch(struct device_queue_manager *dqm)
-{
-	if (dqm->dev->device_info->asic_family == CHIP_HAWAII)
+अटल पूर्णांक stop_nocpsch(काष्ठा device_queue_manager *dqm)
+अणु
+	अगर (dqm->dev->device_info->asic_family == CHIP_HAWAII)
 		pm_uninit(&dqm->packets, false);
 	dqm->sched_running = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pre_reset(struct device_queue_manager *dqm)
-{
+अटल व्योम pre_reset(काष्ठा device_queue_manager *dqm)
+अणु
 	dqm_lock(dqm);
 	dqm->is_resetting = true;
 	dqm_unlock(dqm);
-}
+पूर्ण
 
-static int allocate_sdma_queue(struct device_queue_manager *dqm,
-				struct queue *q)
-{
-	int bit;
+अटल पूर्णांक allocate_sdma_queue(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q)
+अणु
+	पूर्णांक bit;
 
-	if (q->properties.type == KFD_QUEUE_TYPE_SDMA) {
-		if (dqm->sdma_bitmap == 0) {
+	अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA) अणु
+		अगर (dqm->sdma_biपंचांगap == 0) अणु
 			pr_err("No more SDMA queue to allocate\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
-		bit = __ffs64(dqm->sdma_bitmap);
-		dqm->sdma_bitmap &= ~(1ULL << bit);
+		bit = __ffs64(dqm->sdma_biपंचांगap);
+		dqm->sdma_biपंचांगap &= ~(1ULL << bit);
 		q->sdma_id = bit;
 		q->properties.sdma_engine_id = q->sdma_id %
 				get_num_sdma_engines(dqm);
 		q->properties.sdma_queue_id = q->sdma_id /
 				get_num_sdma_engines(dqm);
-	} else if (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
-		if (dqm->xgmi_sdma_bitmap == 0) {
+	पूर्ण अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
+		अगर (dqm->xgmi_sdma_biपंचांगap == 0) अणु
 			pr_err("No more XGMI SDMA queue to allocate\n");
-			return -ENOMEM;
-		}
-		bit = __ffs64(dqm->xgmi_sdma_bitmap);
-		dqm->xgmi_sdma_bitmap &= ~(1ULL << bit);
+			वापस -ENOMEM;
+		पूर्ण
+		bit = __ffs64(dqm->xgmi_sdma_biपंचांगap);
+		dqm->xgmi_sdma_biपंचांगap &= ~(1ULL << bit);
 		q->sdma_id = bit;
 		/* sdma_engine_id is sdma id including
 		 * both PCIe-optimized SDMAs and XGMI-
@@ -1057,64 +1058,64 @@ static int allocate_sdma_queue(struct device_queue_manager *dqm,
 				q->sdma_id % get_num_xgmi_sdma_engines(dqm);
 		q->properties.sdma_queue_id = q->sdma_id /
 				get_num_xgmi_sdma_engines(dqm);
-	}
+	पूर्ण
 
 	pr_debug("SDMA engine id: %d\n", q->properties.sdma_engine_id);
 	pr_debug("SDMA queue id: %d\n", q->properties.sdma_queue_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void deallocate_sdma_queue(struct device_queue_manager *dqm,
-				struct queue *q)
-{
-	if (q->properties.type == KFD_QUEUE_TYPE_SDMA) {
-		if (q->sdma_id >= get_num_sdma_queues(dqm))
-			return;
-		dqm->sdma_bitmap |= (1ULL << q->sdma_id);
-	} else if (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
-		if (q->sdma_id >= get_num_xgmi_sdma_queues(dqm))
-			return;
-		dqm->xgmi_sdma_bitmap |= (1ULL << q->sdma_id);
-	}
-}
+अटल व्योम deallocate_sdma_queue(काष्ठा device_queue_manager *dqm,
+				काष्ठा queue *q)
+अणु
+	अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA) अणु
+		अगर (q->sdma_id >= get_num_sdma_queues(dqm))
+			वापस;
+		dqm->sdma_biपंचांगap |= (1ULL << q->sdma_id);
+	पूर्ण अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
+		अगर (q->sdma_id >= get_num_xgmi_sdma_queues(dqm))
+			वापस;
+		dqm->xgmi_sdma_biपंचांगap |= (1ULL << q->sdma_id);
+	पूर्ण
+पूर्ण
 
 /*
- * Device Queue Manager implementation for cp scheduler
+ * Device Queue Manager implementation क्रम cp scheduler
  */
 
-static int set_sched_resources(struct device_queue_manager *dqm)
-{
-	int i, mec;
-	struct scheduling_resources res;
+अटल पूर्णांक set_sched_resources(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक i, mec;
+	काष्ठा scheduling_resources res;
 
-	res.vmid_mask = dqm->dev->shared_resources.compute_vmid_bitmap;
+	res.vmid_mask = dqm->dev->shared_resources.compute_vmid_biपंचांगap;
 
 	res.queue_mask = 0;
-	for (i = 0; i < KGD_MAX_QUEUES; ++i) {
+	क्रम (i = 0; i < KGD_MAX_QUEUES; ++i) अणु
 		mec = (i / dqm->dev->shared_resources.num_queue_per_pipe)
 			/ dqm->dev->shared_resources.num_pipe_per_mec;
 
-		if (!test_bit(i, dqm->dev->shared_resources.cp_queue_bitmap))
-			continue;
+		अगर (!test_bit(i, dqm->dev->shared_resources.cp_queue_biपंचांगap))
+			जारी;
 
 		/* only acquire queues from the first MEC */
-		if (mec > 0)
-			continue;
+		अगर (mec > 0)
+			जारी;
 
-		/* This situation may be hit in the future if a new HW
+		/* This situation may be hit in the future अगर a new HW
 		 * generation exposes more than 64 queues. If so, the
 		 * definition of res.queue_mask needs updating
 		 */
-		if (WARN_ON(i >= (sizeof(res.queue_mask)*8))) {
+		अगर (WARN_ON(i >= (माप(res.queue_mask)*8))) अणु
 			pr_err("Invalid queue enabled by amdgpu: %d\n", i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		res.queue_mask |= 1ull
 			<< amdgpu_queue_mask_bit_to_set_resource_bit(
-				(struct amdgpu_device *)dqm->dev->kgd, i);
-	}
+				(काष्ठा amdgpu_device *)dqm->dev->kgd, i);
+	पूर्ण
 	res.gws_mask = ~0ull;
 	res.oac_mask = res.gds_heap_base = res.gds_heap_size = 0;
 
@@ -1123,13 +1124,13 @@ static int set_sched_resources(struct device_queue_manager *dqm)
 			"queue mask: 0x%8llX\n",
 			res.vmid_mask, res.queue_mask);
 
-	return pm_send_set_resources(&dqm->packets, &res);
-}
+	वापस pm_send_set_resources(&dqm->packets, &res);
+पूर्ण
 
-static int initialize_cpsch(struct device_queue_manager *dqm)
-{
-	uint64_t num_sdma_queues;
-	uint64_t num_xgmi_sdma_queues;
+अटल पूर्णांक initialize_cpsch(काष्ठा device_queue_manager *dqm)
+अणु
+	uपूर्णांक64_t num_sdma_queues;
+	uपूर्णांक64_t num_xgmi_sdma_queues;
 
 	pr_debug("num of pipes: %d\n", get_pipes_per_mec(dqm));
 
@@ -1141,49 +1142,49 @@ static int initialize_cpsch(struct device_queue_manager *dqm)
 	dqm->active_runlist = false;
 
 	num_sdma_queues = get_num_sdma_queues(dqm);
-	if (num_sdma_queues >= BITS_PER_TYPE(dqm->sdma_bitmap))
-		dqm->sdma_bitmap = ULLONG_MAX;
-	else
-		dqm->sdma_bitmap = (BIT_ULL(num_sdma_queues) - 1);
+	अगर (num_sdma_queues >= BITS_PER_TYPE(dqm->sdma_biपंचांगap))
+		dqm->sdma_biपंचांगap = ULदीर्घ_उच्च;
+	अन्यथा
+		dqm->sdma_biपंचांगap = (BIT_ULL(num_sdma_queues) - 1);
 
 	num_xgmi_sdma_queues = get_num_xgmi_sdma_queues(dqm);
-	if (num_xgmi_sdma_queues >= BITS_PER_TYPE(dqm->xgmi_sdma_bitmap))
-		dqm->xgmi_sdma_bitmap = ULLONG_MAX;
-	else
-		dqm->xgmi_sdma_bitmap = (BIT_ULL(num_xgmi_sdma_queues) - 1);
+	अगर (num_xgmi_sdma_queues >= BITS_PER_TYPE(dqm->xgmi_sdma_biपंचांगap))
+		dqm->xgmi_sdma_biपंचांगap = ULदीर्घ_उच्च;
+	अन्यथा
+		dqm->xgmi_sdma_biपंचांगap = (BIT_ULL(num_xgmi_sdma_queues) - 1);
 
 	INIT_WORK(&dqm->hw_exception_work, kfd_process_hw_exception);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int start_cpsch(struct device_queue_manager *dqm)
-{
-	int retval;
+अटल पूर्णांक start_cpsch(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक retval;
 
 	retval = 0;
 
 	retval = pm_init(&dqm->packets, dqm);
-	if (retval)
-		goto fail_packet_manager_init;
+	अगर (retval)
+		जाओ fail_packet_manager_init;
 
 	retval = set_sched_resources(dqm);
-	if (retval)
-		goto fail_set_sched_resources;
+	अगर (retval)
+		जाओ fail_set_sched_resources;
 
 	pr_debug("Allocating fence memory\n");
 
 	/* allocate fence memory on the gart */
-	retval = kfd_gtt_sa_allocate(dqm->dev, sizeof(*dqm->fence_addr),
+	retval = kfd_gtt_sa_allocate(dqm->dev, माप(*dqm->fence_addr),
 					&dqm->fence_mem);
 
-	if (retval)
-		goto fail_allocate_vidmem;
+	अगर (retval)
+		जाओ fail_allocate_vidmem;
 
-	dqm->fence_addr = (uint64_t *)dqm->fence_mem->cpu_ptr;
+	dqm->fence_addr = (uपूर्णांक64_t *)dqm->fence_mem->cpu_ptr;
 	dqm->fence_gpu_addr = dqm->fence_mem->gpu_addr;
 
-	init_interrupts(dqm);
+	init_पूर्णांकerrupts(dqm);
 
 	dqm_lock(dqm);
 	/* clear hang status when driver try to start the hw scheduler */
@@ -1193,20 +1194,20 @@ static int start_cpsch(struct device_queue_manager *dqm)
 	execute_queues_cpsch(dqm, KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
 	dqm_unlock(dqm);
 
-	return 0;
+	वापस 0;
 fail_allocate_vidmem:
 fail_set_sched_resources:
 	pm_uninit(&dqm->packets, false);
 fail_packet_manager_init:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int stop_cpsch(struct device_queue_manager *dqm)
-{
+अटल पूर्णांक stop_cpsch(काष्ठा device_queue_manager *dqm)
+अणु
 	bool hanging;
 
 	dqm_lock(dqm);
-	if (!dqm->is_hws_hang)
+	अगर (!dqm->is_hws_hang)
 		unmap_queues_cpsch(dqm, KFD_UNMAP_QUEUES_FILTER_ALL_QUEUES, 0);
 	hanging = dqm->is_hws_hang || dqm->is_resetting;
 	dqm->sched_running = false;
@@ -1214,23 +1215,23 @@ static int stop_cpsch(struct device_queue_manager *dqm)
 
 	pm_release_ib(&dqm->packets);
 
-	kfd_gtt_sa_free(dqm->dev, dqm->fence_mem);
+	kfd_gtt_sa_मुक्त(dqm->dev, dqm->fence_mem);
 	pm_uninit(&dqm->packets, hanging);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int create_kernel_queue_cpsch(struct device_queue_manager *dqm,
-					struct kernel_queue *kq,
-					struct qcm_process_device *qpd)
-{
+अटल पूर्णांक create_kernel_queue_cpsch(काष्ठा device_queue_manager *dqm,
+					काष्ठा kernel_queue *kq,
+					काष्ठा qcm_process_device *qpd)
+अणु
 	dqm_lock(dqm);
-	if (dqm->total_queue_count >= max_num_of_queues_per_device) {
+	अगर (dqm->total_queue_count >= max_num_of_queues_per_device) अणु
 		pr_warn("Can't create new kernel queue because %d queues were already created\n",
 				dqm->total_queue_count);
 		dqm_unlock(dqm);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	/*
 	 * Unconditionally increment this counter, regardless of the queue's
@@ -1246,13 +1247,13 @@ static int create_kernel_queue_cpsch(struct device_queue_manager *dqm,
 	execute_queues_cpsch(dqm, KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
 	dqm_unlock(dqm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void destroy_kernel_queue_cpsch(struct device_queue_manager *dqm,
-					struct kernel_queue *kq,
-					struct qcm_process_device *qpd)
-{
+अटल व्योम destroy_kernel_queue_cpsch(काष्ठा device_queue_manager *dqm,
+					काष्ठा kernel_queue *kq,
+					काष्ठा qcm_process_device *qpd)
+अणु
 	dqm_lock(dqm);
 	list_del(&kq->list);
 	decrement_queue_count(dqm, kq->queue->properties.type);
@@ -1266,47 +1267,47 @@ static void destroy_kernel_queue_cpsch(struct device_queue_manager *dqm,
 	pr_debug("Total of %d queues are accountable so far\n",
 			dqm->total_queue_count);
 	dqm_unlock(dqm);
-}
+पूर्ण
 
-static int create_queue_cpsch(struct device_queue_manager *dqm, struct queue *q,
-			struct qcm_process_device *qpd)
-{
-	int retval;
-	struct mqd_manager *mqd_mgr;
+अटल पूर्णांक create_queue_cpsch(काष्ठा device_queue_manager *dqm, काष्ठा queue *q,
+			काष्ठा qcm_process_device *qpd)
+अणु
+	पूर्णांक retval;
+	काष्ठा mqd_manager *mqd_mgr;
 
-	if (dqm->total_queue_count >= max_num_of_queues_per_device) {
+	अगर (dqm->total_queue_count >= max_num_of_queues_per_device) अणु
 		pr_warn("Can't create new usermode queue because %d queues were already created\n",
 				dqm->total_queue_count);
 		retval = -EPERM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
+	अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
 		dqm_lock(dqm);
 		retval = allocate_sdma_queue(dqm, q);
 		dqm_unlock(dqm);
-		if (retval)
-			goto out;
-	}
+		अगर (retval)
+			जाओ out;
+	पूर्ण
 
-	retval = allocate_doorbell(qpd, q);
-	if (retval)
-		goto out_deallocate_sdma_queue;
+	retval = allocate_करोorbell(qpd, q);
+	अगर (retval)
+		जाओ out_deallocate_sdma_queue;
 
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
 
-	if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+	अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
 		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
 		dqm->asic_ops.init_sdma_vm(dqm, q, qpd);
 	q->properties.tba_addr = qpd->tba_addr;
-	q->properties.tma_addr = qpd->tma_addr;
+	q->properties.पंचांगa_addr = qpd->पंचांगa_addr;
 	q->mqd_mem_obj = mqd_mgr->allocate_mqd(mqd_mgr->dev, &q->properties);
-	if (!q->mqd_mem_obj) {
+	अगर (!q->mqd_mem_obj) अणु
 		retval = -ENOMEM;
-		goto out_deallocate_doorbell;
-	}
+		जाओ out_deallocate_करोorbell;
+	पूर्ण
 
 	dqm_lock(dqm);
 	/*
@@ -1321,12 +1322,12 @@ static int create_queue_cpsch(struct device_queue_manager *dqm, struct queue *q,
 	list_add(&q->list, &qpd->queues_list);
 	qpd->queue_count++;
 
-	if (q->properties.is_active) {
+	अगर (q->properties.is_active) अणु
 		increment_queue_count(dqm, q->properties.type);
 
 		execute_queues_cpsch(dqm,
 				KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
-	}
+	पूर्ण
 
 	/*
 	 * Unconditionally increment this counter, regardless of the queue's
@@ -1338,202 +1339,202 @@ static int create_queue_cpsch(struct device_queue_manager *dqm, struct queue *q,
 			dqm->total_queue_count);
 
 	dqm_unlock(dqm);
-	return retval;
+	वापस retval;
 
-out_deallocate_doorbell:
-	deallocate_doorbell(qpd, q);
+out_deallocate_करोorbell:
+	deallocate_करोorbell(qpd, q);
 out_deallocate_sdma_queue:
-	if (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
-		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) {
+	अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA ||
+		q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI) अणु
 		dqm_lock(dqm);
 		deallocate_sdma_queue(dqm, q);
 		dqm_unlock(dqm);
-	}
+	पूर्ण
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-int amdkfd_fence_wait_timeout(uint64_t *fence_addr,
-				uint64_t fence_value,
-				unsigned int timeout_ms)
-{
-	unsigned long end_jiffies = msecs_to_jiffies(timeout_ms) + jiffies;
+पूर्णांक amdkfd_fence_रुको_समयout(uपूर्णांक64_t *fence_addr,
+				uपूर्णांक64_t fence_value,
+				अचिन्हित पूर्णांक समयout_ms)
+अणु
+	अचिन्हित दीर्घ end_jअगरfies = msecs_to_jअगरfies(समयout_ms) + jअगरfies;
 
-	while (*fence_addr != fence_value) {
-		if (time_after(jiffies, end_jiffies)) {
+	जबतक (*fence_addr != fence_value) अणु
+		अगर (समय_after(jअगरfies, end_jअगरfies)) अणु
 			pr_err("qcm fence wait loop timeout expired\n");
-			/* In HWS case, this is used to halt the driver thread
-			 * in order not to mess up CP states before doing
-			 * scandumps for FW debugging.
+			/* In HWS हाल, this is used to halt the driver thपढ़ो
+			 * in order not to mess up CP states beक्रमe करोing
+			 * scandumps क्रम FW debugging.
 			 */
-			while (halt_if_hws_hang)
+			जबतक (halt_अगर_hws_hang)
 				schedule();
 
-			return -ETIME;
-		}
+			वापस -ETIME;
+		पूर्ण
 		schedule();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* dqm->lock mutex has to be locked before calling this function */
-static int map_queues_cpsch(struct device_queue_manager *dqm)
-{
-	int retval;
+/* dqm->lock mutex has to be locked beक्रमe calling this function */
+अटल पूर्णांक map_queues_cpsch(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक retval;
 
-	if (!dqm->sched_running)
-		return 0;
-	if (dqm->active_queue_count <= 0 || dqm->processes_count <= 0)
-		return 0;
-	if (dqm->active_runlist)
-		return 0;
+	अगर (!dqm->sched_running)
+		वापस 0;
+	अगर (dqm->active_queue_count <= 0 || dqm->processes_count <= 0)
+		वापस 0;
+	अगर (dqm->active_runlist)
+		वापस 0;
 
 	retval = pm_send_runlist(&dqm->packets, &dqm->queues);
 	pr_debug("%s sent runlist\n", __func__);
-	if (retval) {
+	अगर (retval) अणु
 		pr_err("failed to execute runlist\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 	dqm->active_runlist = true;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* dqm->lock mutex has to be locked before calling this function */
-static int unmap_queues_cpsch(struct device_queue_manager *dqm,
-				enum kfd_unmap_queues_filter filter,
-				uint32_t filter_param)
-{
-	int retval = 0;
-	struct mqd_manager *mqd_mgr;
+/* dqm->lock mutex has to be locked beक्रमe calling this function */
+अटल पूर्णांक unmap_queues_cpsch(काष्ठा device_queue_manager *dqm,
+				क्रमागत kfd_unmap_queues_filter filter,
+				uपूर्णांक32_t filter_param)
+अणु
+	पूर्णांक retval = 0;
+	काष्ठा mqd_manager *mqd_mgr;
 
-	if (!dqm->sched_running)
-		return 0;
-	if (dqm->is_hws_hang)
-		return -EIO;
-	if (!dqm->active_runlist)
-		return retval;
+	अगर (!dqm->sched_running)
+		वापस 0;
+	अगर (dqm->is_hws_hang)
+		वापस -EIO;
+	अगर (!dqm->active_runlist)
+		वापस retval;
 
 	retval = pm_send_unmap_queue(&dqm->packets, KFD_QUEUE_TYPE_COMPUTE,
 			filter, filter_param, false, 0);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	*dqm->fence_addr = KFD_FENCE_INIT;
 	pm_send_query_status(&dqm->packets, dqm->fence_gpu_addr,
 				KFD_FENCE_COMPLETED);
-	/* should be timed out */
-	retval = amdkfd_fence_wait_timeout(dqm->fence_addr, KFD_FENCE_COMPLETED,
-				queue_preemption_timeout_ms);
-	if (retval) {
+	/* should be समयd out */
+	retval = amdkfd_fence_रुको_समयout(dqm->fence_addr, KFD_FENCE_COMPLETED,
+				queue_preemption_समयout_ms);
+	अगर (retval) अणु
 		pr_err("The cp might be in an unrecoverable state due to an unsuccessful queues preemption\n");
 		dqm->is_hws_hang = true;
 		/* It's possible we're detecting a HWS hang in the
 		 * middle of a GPU reset. No need to schedule another
-		 * reset in this case.
+		 * reset in this हाल.
 		 */
-		if (!dqm->is_resetting)
+		अगर (!dqm->is_resetting)
 			schedule_work(&dqm->hw_exception_work);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	/* In the current MEC firmware implementation, if compute queue
-	 * doesn't response to the preemption request in time, HIQ will
-	 * abandon the unmap request without returning any timeout error
-	 * to driver. Instead, MEC firmware will log the doorbell of the
-	 * unresponding compute queue to HIQ.MQD.queue_doorbell_id fields.
+	/* In the current MEC firmware implementation, अगर compute queue
+	 * करोesn't response to the preemption request in समय, HIQ will
+	 * abanकरोn the unmap request without वापसing any समयout error
+	 * to driver. Instead, MEC firmware will log the करोorbell of the
+	 * unresponding compute queue to HIQ.MQD.queue_करोorbell_id fields.
 	 * To make sure the queue unmap was successful, driver need to
 	 * check those fields
 	 */
 	mqd_mgr = dqm->mqd_mgrs[KFD_MQD_TYPE_HIQ];
-	if (mqd_mgr->read_doorbell_id(dqm->packets.priv_queue->queue->mqd)) {
+	अगर (mqd_mgr->पढ़ो_करोorbell_id(dqm->packets.priv_queue->queue->mqd)) अणु
 		pr_err("HIQ MQD's queue_doorbell_id0 is not 0, Queue preemption time out\n");
-		while (halt_if_hws_hang)
+		जबतक (halt_अगर_hws_hang)
 			schedule();
-		return -ETIME;
-	}
+		वापस -ETIME;
+	पूर्ण
 
 	pm_release_ib(&dqm->packets);
 	dqm->active_runlist = false;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-/* dqm->lock mutex has to be locked before calling this function */
-static int execute_queues_cpsch(struct device_queue_manager *dqm,
-				enum kfd_unmap_queues_filter filter,
-				uint32_t filter_param)
-{
-	int retval;
+/* dqm->lock mutex has to be locked beक्रमe calling this function */
+अटल पूर्णांक execute_queues_cpsch(काष्ठा device_queue_manager *dqm,
+				क्रमागत kfd_unmap_queues_filter filter,
+				uपूर्णांक32_t filter_param)
+अणु
+	पूर्णांक retval;
 
-	if (dqm->is_hws_hang)
-		return -EIO;
+	अगर (dqm->is_hws_hang)
+		वापस -EIO;
 	retval = unmap_queues_cpsch(dqm, filter, filter_param);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return map_queues_cpsch(dqm);
-}
+	वापस map_queues_cpsch(dqm);
+पूर्ण
 
-static int destroy_queue_cpsch(struct device_queue_manager *dqm,
-				struct qcm_process_device *qpd,
-				struct queue *q)
-{
-	int retval;
-	struct mqd_manager *mqd_mgr;
-	uint64_t sdma_val = 0;
-	struct kfd_process_device *pdd = qpd_to_pdd(qpd);
+अटल पूर्णांक destroy_queue_cpsch(काष्ठा device_queue_manager *dqm,
+				काष्ठा qcm_process_device *qpd,
+				काष्ठा queue *q)
+अणु
+	पूर्णांक retval;
+	काष्ठा mqd_manager *mqd_mgr;
+	uपूर्णांक64_t sdma_val = 0;
+	काष्ठा kfd_process_device *pdd = qpd_to_pdd(qpd);
 
 	/* Get the SDMA queue stats */
-	if ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
-	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) {
-		retval = read_sdma_queue_counter((uint64_t __user *)q->properties.read_ptr,
+	अगर ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
+	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) अणु
+		retval = पढ़ो_sdma_queue_counter((uपूर्णांक64_t __user *)q->properties.पढ़ो_ptr,
 							&sdma_val);
-		if (retval)
+		अगर (retval)
 			pr_err("Failed to read SDMA queue counter for queue: %d\n",
 				q->properties.queue_id);
-	}
+	पूर्ण
 
 	retval = 0;
 
-	/* remove queue from list to prevent rescheduling after preemption */
+	/* हटाओ queue from list to prevent rescheduling after preemption */
 	dqm_lock(dqm);
 
-	if (qpd->is_debug) {
+	अगर (qpd->is_debug) अणु
 		/*
-		 * error, currently we do not allow to destroy a queue
+		 * error, currently we करो not allow to destroy a queue
 		 * of a currently debugged process
 		 */
 		retval = -EBUSY;
-		goto failed_try_destroy_debugged_queue;
+		जाओ failed_try_destroy_debugged_queue;
 
-	}
+	पूर्ण
 
 	mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 			q->properties.type)];
 
-	deallocate_doorbell(qpd, q);
+	deallocate_करोorbell(qpd, q);
 
-	if ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
-	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) {
+	अगर ((q->properties.type == KFD_QUEUE_TYPE_SDMA) ||
+	    (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)) अणु
 		deallocate_sdma_queue(dqm, q);
 		pdd->sdma_past_activity_counter += sdma_val;
-	}
+	पूर्ण
 
 	list_del(&q->list);
 	qpd->queue_count--;
-	if (q->properties.is_active) {
+	अगर (q->properties.is_active) अणु
 		decrement_queue_count(dqm, q->properties.type);
 		retval = execute_queues_cpsch(dqm,
 				KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES, 0);
-		if (retval == -ETIME)
+		अगर (retval == -ETIME)
 			qpd->reset_wavefronts = true;
-		if (q->properties.is_gws) {
+		अगर (q->properties.is_gws) अणु
 			dqm->gws_queue_count--;
 			qpd->mapped_gws_queue = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Unconditionally decrement this counter, regardless of the queue's
@@ -1545,76 +1546,76 @@ static int destroy_queue_cpsch(struct device_queue_manager *dqm,
 
 	dqm_unlock(dqm);
 
-	/* Do free_mqd after dqm_unlock(dqm) to avoid circular locking */
-	mqd_mgr->free_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
+	/* Do मुक्त_mqd after dqm_unlock(dqm) to aव्योम circular locking */
+	mqd_mgr->मुक्त_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
 
-	return retval;
+	वापस retval;
 
 failed_try_destroy_debugged_queue:
 
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * Low bits must be 0000/FFFF as required by HW, high bits must be 0 to
  * stay in user mode.
  */
-#define APE1_FIXED_BITS_MASK 0xFFFF80000000FFFFULL
+#घोषणा APE1_FIXED_BITS_MASK 0xFFFF80000000FFFFULL
 /* APE1 limit is inclusive and 64K aligned. */
-#define APE1_LIMIT_ALIGNMENT 0xFFFF
+#घोषणा APE1_LIMIT_ALIGNMENT 0xFFFF
 
-static bool set_cache_memory_policy(struct device_queue_manager *dqm,
-				   struct qcm_process_device *qpd,
-				   enum cache_policy default_policy,
-				   enum cache_policy alternate_policy,
-				   void __user *alternate_aperture_base,
-				   uint64_t alternate_aperture_size)
-{
+अटल bool set_cache_memory_policy(काष्ठा device_queue_manager *dqm,
+				   काष्ठा qcm_process_device *qpd,
+				   क्रमागत cache_policy शेष_policy,
+				   क्रमागत cache_policy alternate_policy,
+				   व्योम __user *alternate_aperture_base,
+				   uपूर्णांक64_t alternate_aperture_size)
+अणु
 	bool retval = true;
 
-	if (!dqm->asic_ops.set_cache_memory_policy)
-		return retval;
+	अगर (!dqm->asic_ops.set_cache_memory_policy)
+		वापस retval;
 
 	dqm_lock(dqm);
 
-	if (alternate_aperture_size == 0) {
+	अगर (alternate_aperture_size == 0) अणु
 		/* base > limit disables APE1 */
 		qpd->sh_mem_ape1_base = 1;
 		qpd->sh_mem_ape1_limit = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * In FSA64, APE1_Base[63:0] = { 16{SH_MEM_APE1_BASE[31]},
-		 *			SH_MEM_APE1_BASE[31:0], 0x0000 }
-		 * APE1_Limit[63:0] = { 16{SH_MEM_APE1_LIMIT[31]},
-		 *			SH_MEM_APE1_LIMIT[31:0], 0xFFFF }
-		 * Verify that the base and size parameters can be
-		 * represented in this format and convert them.
+		 * In FSA64, APE1_Base[63:0] = अणु 16अणुSH_MEM_APE1_BASE[31]पूर्ण,
+		 *			SH_MEM_APE1_BASE[31:0], 0x0000 पूर्ण
+		 * APE1_Limit[63:0] = अणु 16अणुSH_MEM_APE1_LIMIT[31]पूर्ण,
+		 *			SH_MEM_APE1_LIMIT[31:0], 0xFFFF पूर्ण
+		 * Verअगरy that the base and size parameters can be
+		 * represented in this क्रमmat and convert them.
 		 * Additionally restrict APE1 to user-mode addresses.
 		 */
 
-		uint64_t base = (uintptr_t)alternate_aperture_base;
-		uint64_t limit = base + alternate_aperture_size - 1;
+		uपूर्णांक64_t base = (uपूर्णांकptr_t)alternate_aperture_base;
+		uपूर्णांक64_t limit = base + alternate_aperture_size - 1;
 
-		if (limit <= base || (base & APE1_FIXED_BITS_MASK) != 0 ||
-		   (limit & APE1_FIXED_BITS_MASK) != APE1_LIMIT_ALIGNMENT) {
+		अगर (limit <= base || (base & APE1_FIXED_BITS_MASK) != 0 ||
+		   (limit & APE1_FIXED_BITS_MASK) != APE1_LIMIT_ALIGNMENT) अणु
 			retval = false;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		qpd->sh_mem_ape1_base = base >> 16;
 		qpd->sh_mem_ape1_limit = limit >> 16;
-	}
+	पूर्ण
 
 	retval = dqm->asic_ops.set_cache_memory_policy(
 			dqm,
 			qpd,
-			default_policy,
+			शेष_policy,
 			alternate_policy,
 			alternate_aperture_base,
 			alternate_aperture_size);
 
-	if ((dqm->sched_policy == KFD_SCHED_POLICY_NO_HWS) && (qpd->vmid != 0))
+	अगर ((dqm->sched_policy == KFD_SCHED_POLICY_NO_HWS) && (qpd->vmid != 0))
 		program_sh_mem_settings(dqm, qpd);
 
 	pr_debug("sh_mem_config: 0x%x, ape1_base: 0x%x, ape1_limit: 0x%x\n",
@@ -1623,91 +1624,91 @@ static bool set_cache_memory_policy(struct device_queue_manager *dqm,
 
 out:
 	dqm_unlock(dqm);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int process_termination_nocpsch(struct device_queue_manager *dqm,
-		struct qcm_process_device *qpd)
-{
-	struct queue *q, *next;
-	struct device_process_node *cur, *next_dpn;
-	int retval = 0;
+अटल पूर्णांक process_termination_nocpsch(काष्ठा device_queue_manager *dqm,
+		काष्ठा qcm_process_device *qpd)
+अणु
+	काष्ठा queue *q, *next;
+	काष्ठा device_process_node *cur, *next_dpn;
+	पूर्णांक retval = 0;
 	bool found = false;
 
 	dqm_lock(dqm);
 
 	/* Clear all user mode queues */
-	list_for_each_entry_safe(q, next, &qpd->queues_list, list) {
-		int ret;
+	list_क्रम_each_entry_safe(q, next, &qpd->queues_list, list) अणु
+		पूर्णांक ret;
 
 		ret = destroy_queue_nocpsch_locked(dqm, qpd, q);
-		if (ret)
+		अगर (ret)
 			retval = ret;
-	}
+	पूर्ण
 
-	/* Unregister process */
-	list_for_each_entry_safe(cur, next_dpn, &dqm->queues, list) {
-		if (qpd == cur->qpd) {
+	/* Unरेजिस्टर process */
+	list_क्रम_each_entry_safe(cur, next_dpn, &dqm->queues, list) अणु
+		अगर (qpd == cur->qpd) अणु
 			list_del(&cur->list);
-			kfree(cur);
+			kमुक्त(cur);
 			dqm->processes_count--;
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	dqm_unlock(dqm);
 
-	/* Outside the DQM lock because under the DQM lock we can't do
-	 * reclaim or take other locks that others hold while reclaiming.
+	/* Outside the DQM lock because under the DQM lock we can't करो
+	 * reclaim or take other locks that others hold जबतक reclaiming.
 	 */
-	if (found)
+	अगर (found)
 		kfd_dec_compute_active(dqm->dev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int get_wave_state(struct device_queue_manager *dqm,
-			  struct queue *q,
-			  void __user *ctl_stack,
+अटल पूर्णांक get_wave_state(काष्ठा device_queue_manager *dqm,
+			  काष्ठा queue *q,
+			  व्योम __user *ctl_stack,
 			  u32 *ctl_stack_used_size,
 			  u32 *save_area_used_size)
-{
-	struct mqd_manager *mqd_mgr;
-	int r;
+अणु
+	काष्ठा mqd_manager *mqd_mgr;
+	पूर्णांक r;
 
 	dqm_lock(dqm);
 
-	if (q->properties.type != KFD_QUEUE_TYPE_COMPUTE ||
-	    q->properties.is_active || !q->device->cwsr_enabled) {
+	अगर (q->properties.type != KFD_QUEUE_TYPE_COMPUTE ||
+	    q->properties.is_active || !q->device->cwsr_enabled) अणु
 		r = -EINVAL;
-		goto dqm_unlock;
-	}
+		जाओ dqm_unlock;
+	पूर्ण
 
 	mqd_mgr = dqm->mqd_mgrs[KFD_MQD_TYPE_CP];
 
-	if (!mqd_mgr->get_wave_state) {
+	अगर (!mqd_mgr->get_wave_state) अणु
 		r = -EINVAL;
-		goto dqm_unlock;
-	}
+		जाओ dqm_unlock;
+	पूर्ण
 
 	r = mqd_mgr->get_wave_state(mqd_mgr, q->mqd, ctl_stack,
 			ctl_stack_used_size, save_area_used_size);
 
 dqm_unlock:
 	dqm_unlock(dqm);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int process_termination_cpsch(struct device_queue_manager *dqm,
-		struct qcm_process_device *qpd)
-{
-	int retval;
-	struct queue *q, *next;
-	struct kernel_queue *kq, *kq_next;
-	struct mqd_manager *mqd_mgr;
-	struct device_process_node *cur, *next_dpn;
-	enum kfd_unmap_queues_filter filter =
+अटल पूर्णांक process_termination_cpsch(काष्ठा device_queue_manager *dqm,
+		काष्ठा qcm_process_device *qpd)
+अणु
+	पूर्णांक retval;
+	काष्ठा queue *q, *next;
+	काष्ठा kernel_queue *kq, *kq_next;
+	काष्ठा mqd_manager *mqd_mgr;
+	काष्ठा device_process_node *cur, *next_dpn;
+	क्रमागत kfd_unmap_queues_filter filter =
 		KFD_UNMAP_QUEUES_FILTER_DYNAMIC_QUEUES;
 	bool found = false;
 
@@ -1716,146 +1717,146 @@ static int process_termination_cpsch(struct device_queue_manager *dqm,
 	dqm_lock(dqm);
 
 	/* Clean all kernel queues */
-	list_for_each_entry_safe(kq, kq_next, &qpd->priv_queue_list, list) {
+	list_क्रम_each_entry_safe(kq, kq_next, &qpd->priv_queue_list, list) अणु
 		list_del(&kq->list);
 		decrement_queue_count(dqm, kq->queue->properties.type);
 		qpd->is_debug = false;
 		dqm->total_queue_count--;
 		filter = KFD_UNMAP_QUEUES_FILTER_ALL_QUEUES;
-	}
+	पूर्ण
 
 	/* Clear all user mode queues */
-	list_for_each_entry(q, &qpd->queues_list, list) {
-		if (q->properties.type == KFD_QUEUE_TYPE_SDMA)
+	list_क्रम_each_entry(q, &qpd->queues_list, list) अणु
+		अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA)
 			deallocate_sdma_queue(dqm, q);
-		else if (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
+		अन्यथा अगर (q->properties.type == KFD_QUEUE_TYPE_SDMA_XGMI)
 			deallocate_sdma_queue(dqm, q);
 
-		if (q->properties.is_active) {
+		अगर (q->properties.is_active) अणु
 			decrement_queue_count(dqm, q->properties.type);
-			if (q->properties.is_gws) {
+			अगर (q->properties.is_gws) अणु
 				dqm->gws_queue_count--;
 				qpd->mapped_gws_queue = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		dqm->total_queue_count--;
-	}
+	पूर्ण
 
-	/* Unregister process */
-	list_for_each_entry_safe(cur, next_dpn, &dqm->queues, list) {
-		if (qpd == cur->qpd) {
+	/* Unरेजिस्टर process */
+	list_क्रम_each_entry_safe(cur, next_dpn, &dqm->queues, list) अणु
+		अगर (qpd == cur->qpd) अणु
 			list_del(&cur->list);
-			kfree(cur);
+			kमुक्त(cur);
 			dqm->processes_count--;
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	retval = execute_queues_cpsch(dqm, filter, 0);
-	if ((!dqm->is_hws_hang) && (retval || qpd->reset_wavefronts)) {
+	अगर ((!dqm->is_hws_hang) && (retval || qpd->reset_wavefronts)) अणु
 		pr_warn("Resetting wave fronts (cpsch) on dev %p\n", dqm->dev);
 		dbgdev_wave_reset_wavefronts(dqm->dev, qpd->pqm->process);
 		qpd->reset_wavefronts = false;
-	}
+	पूर्ण
 
 	dqm_unlock(dqm);
 
-	/* Outside the DQM lock because under the DQM lock we can't do
-	 * reclaim or take other locks that others hold while reclaiming.
+	/* Outside the DQM lock because under the DQM lock we can't करो
+	 * reclaim or take other locks that others hold जबतक reclaiming.
 	 */
-	if (found)
+	अगर (found)
 		kfd_dec_compute_active(dqm->dev);
 
-	/* Lastly, free mqd resources.
-	 * Do free_mqd() after dqm_unlock to avoid circular locking.
+	/* Lastly, मुक्त mqd resources.
+	 * Do मुक्त_mqd() after dqm_unlock to aव्योम circular locking.
 	 */
-	list_for_each_entry_safe(q, next, &qpd->queues_list, list) {
+	list_क्रम_each_entry_safe(q, next, &qpd->queues_list, list) अणु
 		mqd_mgr = dqm->mqd_mgrs[get_mqd_type_from_queue_type(
 				q->properties.type)];
 		list_del(&q->list);
 		qpd->queue_count--;
-		mqd_mgr->free_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
-	}
+		mqd_mgr->मुक्त_mqd(mqd_mgr, q->mqd, q->mqd_mem_obj);
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int init_mqd_managers(struct device_queue_manager *dqm)
-{
-	int i, j;
-	struct mqd_manager *mqd_mgr;
+अटल पूर्णांक init_mqd_managers(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक i, j;
+	काष्ठा mqd_manager *mqd_mgr;
 
-	for (i = 0; i < KFD_MQD_TYPE_MAX; i++) {
+	क्रम (i = 0; i < KFD_MQD_TYPE_MAX; i++) अणु
 		mqd_mgr = dqm->asic_ops.mqd_manager_init(i, dqm->dev);
-		if (!mqd_mgr) {
+		अगर (!mqd_mgr) अणु
 			pr_err("mqd manager [%d] initialization failed\n", i);
-			goto out_free;
-		}
+			जाओ out_मुक्त;
+		पूर्ण
 		dqm->mqd_mgrs[i] = mqd_mgr;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free:
-	for (j = 0; j < i; j++) {
-		kfree(dqm->mqd_mgrs[j]);
-		dqm->mqd_mgrs[j] = NULL;
-	}
+out_मुक्त:
+	क्रम (j = 0; j < i; j++) अणु
+		kमुक्त(dqm->mqd_mgrs[j]);
+		dqm->mqd_mgrs[j] = शून्य;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* Allocate one hiq mqd (HWS) and all SDMA mqd in a continuous trunk*/
-static int allocate_hiq_sdma_mqd(struct device_queue_manager *dqm)
-{
-	int retval;
-	struct kfd_dev *dev = dqm->dev;
-	struct kfd_mem_obj *mem_obj = &dqm->hiq_sdma_mqd;
-	uint32_t size = dqm->mqd_mgrs[KFD_MQD_TYPE_SDMA]->mqd_size *
+अटल पूर्णांक allocate_hiq_sdma_mqd(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक retval;
+	काष्ठा kfd_dev *dev = dqm->dev;
+	काष्ठा kfd_mem_obj *mem_obj = &dqm->hiq_sdma_mqd;
+	uपूर्णांक32_t size = dqm->mqd_mgrs[KFD_MQD_TYPE_SDMA]->mqd_size *
 		get_num_all_sdma_engines(dqm) *
 		dev->device_info->num_sdma_queues_per_engine +
 		dqm->mqd_mgrs[KFD_MQD_TYPE_HIQ]->mqd_size;
 
 	retval = amdgpu_amdkfd_alloc_gtt_mem(dev->kgd, size,
 		&(mem_obj->gtt_mem), &(mem_obj->gpu_addr),
-		(void *)&(mem_obj->cpu_ptr), false);
+		(व्योम *)&(mem_obj->cpu_ptr), false);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-struct device_queue_manager *device_queue_manager_init(struct kfd_dev *dev)
-{
-	struct device_queue_manager *dqm;
+काष्ठा device_queue_manager *device_queue_manager_init(काष्ठा kfd_dev *dev)
+अणु
+	काष्ठा device_queue_manager *dqm;
 
 	pr_debug("Loading device queue manager\n");
 
-	dqm = kzalloc(sizeof(*dqm), GFP_KERNEL);
-	if (!dqm)
-		return NULL;
+	dqm = kzalloc(माप(*dqm), GFP_KERNEL);
+	अगर (!dqm)
+		वापस शून्य;
 
-	switch (dev->device_info->asic_family) {
+	चयन (dev->device_info->asic_family) अणु
 	/* HWS is not available on Hawaii. */
-	case CHIP_HAWAII:
-	/* HWS depends on CWSR for timely dequeue. CWSR is not
+	हाल CHIP_HAWAII:
+	/* HWS depends on CWSR क्रम समयly dequeue. CWSR is not
 	 * available on Tonga.
 	 *
 	 * FIXME: This argument also applies to Kaveri.
 	 */
-	case CHIP_TONGA:
+	हाल CHIP_TONGA:
 		dqm->sched_policy = KFD_SCHED_POLICY_NO_HWS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dqm->sched_policy = sched_policy;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dqm->dev = dev;
-	switch (dqm->sched_policy) {
-	case KFD_SCHED_POLICY_HWS:
-	case KFD_SCHED_POLICY_HWS_NO_OVERSUBSCRIPTION:
-		/* initialize dqm for cp scheduling */
+	चयन (dqm->sched_policy) अणु
+	हाल KFD_SCHED_POLICY_HWS:
+	हाल KFD_SCHED_POLICY_HWS_NO_OVERSUBSCRIPTION:
+		/* initialize dqm क्रम cp scheduling */
 		dqm->ops.create_queue = create_queue_cpsch;
 		dqm->ops.initialize = initialize_cpsch;
 		dqm->ops.start = start_cpsch;
@@ -1863,8 +1864,8 @@ struct device_queue_manager *device_queue_manager_init(struct kfd_dev *dev)
 		dqm->ops.pre_reset = pre_reset;
 		dqm->ops.destroy_queue = destroy_queue_cpsch;
 		dqm->ops.update_queue = update_queue;
-		dqm->ops.register_process = register_process;
-		dqm->ops.unregister_process = unregister_process;
+		dqm->ops.रेजिस्टर_process = रेजिस्टर_process;
+		dqm->ops.unरेजिस्टर_process = unरेजिस्टर_process;
 		dqm->ops.uninitialize = uninitialize;
 		dqm->ops.create_kernel_queue = create_kernel_queue_cpsch;
 		dqm->ops.destroy_kernel_queue = destroy_kernel_queue_cpsch;
@@ -1873,17 +1874,17 @@ struct device_queue_manager *device_queue_manager_init(struct kfd_dev *dev)
 		dqm->ops.evict_process_queues = evict_process_queues_cpsch;
 		dqm->ops.restore_process_queues = restore_process_queues_cpsch;
 		dqm->ops.get_wave_state = get_wave_state;
-		break;
-	case KFD_SCHED_POLICY_NO_HWS:
-		/* initialize dqm for no cp scheduling */
+		अवरोध;
+	हाल KFD_SCHED_POLICY_NO_HWS:
+		/* initialize dqm क्रम no cp scheduling */
 		dqm->ops.start = start_nocpsch;
 		dqm->ops.stop = stop_nocpsch;
 		dqm->ops.pre_reset = pre_reset;
 		dqm->ops.create_queue = create_queue_nocpsch;
 		dqm->ops.destroy_queue = destroy_queue_nocpsch;
 		dqm->ops.update_queue = update_queue;
-		dqm->ops.register_process = register_process;
-		dqm->ops.unregister_process = unregister_process;
+		dqm->ops.रेजिस्टर_process = रेजिस्टर_process;
+		dqm->ops.unरेजिस्टर_process = unरेजिस्टर_process;
 		dqm->ops.initialize = initialize_nocpsch;
 		dqm->ops.uninitialize = uninitialize;
 		dqm->ops.set_cache_memory_policy = set_cache_memory_policy;
@@ -1892,213 +1893,213 @@ struct device_queue_manager *device_queue_manager_init(struct kfd_dev *dev)
 		dqm->ops.restore_process_queues =
 			restore_process_queues_nocpsch;
 		dqm->ops.get_wave_state = get_wave_state;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Invalid scheduling policy %d\n", dqm->sched_policy);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	switch (dev->device_info->asic_family) {
-	case CHIP_CARRIZO:
+	चयन (dev->device_info->asic_family) अणु
+	हाल CHIP_CARRIZO:
 		device_queue_manager_init_vi(&dqm->asic_ops);
-		break;
+		अवरोध;
 
-	case CHIP_KAVERI:
+	हाल CHIP_KAVERI:
 		device_queue_manager_init_cik(&dqm->asic_ops);
-		break;
+		अवरोध;
 
-	case CHIP_HAWAII:
+	हाल CHIP_HAWAII:
 		device_queue_manager_init_cik_hawaii(&dqm->asic_ops);
-		break;
+		अवरोध;
 
-	case CHIP_TONGA:
-	case CHIP_FIJI:
-	case CHIP_POLARIS10:
-	case CHIP_POLARIS11:
-	case CHIP_POLARIS12:
-	case CHIP_VEGAM:
+	हाल CHIP_TONGA:
+	हाल CHIP_FIJI:
+	हाल CHIP_POLARIS10:
+	हाल CHIP_POLARIS11:
+	हाल CHIP_POLARIS12:
+	हाल CHIP_VEGAM:
 		device_queue_manager_init_vi_tonga(&dqm->asic_ops);
-		break;
+		अवरोध;
 
-	case CHIP_VEGA10:
-	case CHIP_VEGA12:
-	case CHIP_VEGA20:
-	case CHIP_RAVEN:
-	case CHIP_RENOIR:
-	case CHIP_ARCTURUS:
-	case CHIP_ALDEBARAN:
+	हाल CHIP_VEGA10:
+	हाल CHIP_VEGA12:
+	हाल CHIP_VEGA20:
+	हाल CHIP_RAVEN:
+	हाल CHIP_RENOIR:
+	हाल CHIP_ARCTURUS:
+	हाल CHIP_ALDEBARAN:
 		device_queue_manager_init_v9(&dqm->asic_ops);
-		break;
-	case CHIP_NAVI10:
-	case CHIP_NAVI12:
-	case CHIP_NAVI14:
-	case CHIP_SIENNA_CICHLID:
-	case CHIP_NAVY_FLOUNDER:
-	case CHIP_VANGOGH:
-	case CHIP_DIMGREY_CAVEFISH:
+		अवरोध;
+	हाल CHIP_NAVI10:
+	हाल CHIP_NAVI12:
+	हाल CHIP_NAVI14:
+	हाल CHIP_SIENNA_CICHLID:
+	हाल CHIP_NAVY_FLOUNDER:
+	हाल CHIP_VANGOGH:
+	हाल CHIP_DIMGREY_CAVEFISH:
 		device_queue_manager_init_v10_navi10(&dqm->asic_ops);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Unexpected ASIC family %u",
 		     dev->device_info->asic_family);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (init_mqd_managers(dqm))
-		goto out_free;
+	अगर (init_mqd_managers(dqm))
+		जाओ out_मुक्त;
 
-	if (allocate_hiq_sdma_mqd(dqm)) {
+	अगर (allocate_hiq_sdma_mqd(dqm)) अणु
 		pr_err("Failed to allocate hiq sdma mqd trunk buffer\n");
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (!dqm->ops.initialize(dqm))
-		return dqm;
+	अगर (!dqm->ops.initialize(dqm))
+		वापस dqm;
 
-out_free:
-	kfree(dqm);
-	return NULL;
-}
+out_मुक्त:
+	kमुक्त(dqm);
+	वापस शून्य;
+पूर्ण
 
-static void deallocate_hiq_sdma_mqd(struct kfd_dev *dev,
-				    struct kfd_mem_obj *mqd)
-{
+अटल व्योम deallocate_hiq_sdma_mqd(काष्ठा kfd_dev *dev,
+				    काष्ठा kfd_mem_obj *mqd)
+अणु
 	WARN(!mqd, "No hiq sdma mqd trunk to free");
 
-	amdgpu_amdkfd_free_gtt_mem(dev->kgd, mqd->gtt_mem);
-}
+	amdgpu_amdkfd_मुक्त_gtt_mem(dev->kgd, mqd->gtt_mem);
+पूर्ण
 
-void device_queue_manager_uninit(struct device_queue_manager *dqm)
-{
+व्योम device_queue_manager_uninit(काष्ठा device_queue_manager *dqm)
+अणु
 	dqm->ops.uninitialize(dqm);
 	deallocate_hiq_sdma_mqd(dqm->dev, &dqm->hiq_sdma_mqd);
-	kfree(dqm);
-}
+	kमुक्त(dqm);
+पूर्ण
 
-int kfd_process_vm_fault(struct device_queue_manager *dqm, u32 pasid)
-{
-	struct kfd_process_device *pdd;
-	struct kfd_process *p = kfd_lookup_process_by_pasid(pasid);
-	int ret = 0;
+पूर्णांक kfd_process_vm_fault(काष्ठा device_queue_manager *dqm, u32 pasid)
+अणु
+	काष्ठा kfd_process_device *pdd;
+	काष्ठा kfd_process *p = kfd_lookup_process_by_pasid(pasid);
+	पूर्णांक ret = 0;
 
-	if (!p)
-		return -EINVAL;
-	WARN(debug_evictions, "Evicting pid %d", p->lead_thread->pid);
+	अगर (!p)
+		वापस -EINVAL;
+	WARN(debug_evictions, "Evicting pid %d", p->lead_thपढ़ो->pid);
 	pdd = kfd_get_process_device_data(dqm->dev, p);
-	if (pdd)
+	अगर (pdd)
 		ret = dqm->ops.evict_process_queues(dqm, &pdd->qpd);
 	kfd_unref_process(p);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void kfd_process_hw_exception(struct work_struct *work)
-{
-	struct device_queue_manager *dqm = container_of(work,
-			struct device_queue_manager, hw_exception_work);
+अटल व्योम kfd_process_hw_exception(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा device_queue_manager *dqm = container_of(work,
+			काष्ठा device_queue_manager, hw_exception_work);
 	amdgpu_amdkfd_gpu_reset(dqm->dev->kgd);
-}
+पूर्ण
 
-#if defined(CONFIG_DEBUG_FS)
+#अगर defined(CONFIG_DEBUG_FS)
 
-static void seq_reg_dump(struct seq_file *m,
-			 uint32_t (*dump)[2], uint32_t n_regs)
-{
-	uint32_t i, count;
+अटल व्योम seq_reg_dump(काष्ठा seq_file *m,
+			 uपूर्णांक32_t (*dump)[2], uपूर्णांक32_t n_regs)
+अणु
+	uपूर्णांक32_t i, count;
 
-	for (i = 0, count = 0; i < n_regs; i++) {
-		if (count == 0 ||
-		    dump[i-1][0] + sizeof(uint32_t) != dump[i][0]) {
-			seq_printf(m, "%s    %08x: %08x",
+	क्रम (i = 0, count = 0; i < n_regs; i++) अणु
+		अगर (count == 0 ||
+		    dump[i-1][0] + माप(uपूर्णांक32_t) != dump[i][0]) अणु
+			seq_म_लिखो(m, "%s    %08x: %08x",
 				   i ? "\n" : "",
 				   dump[i][0], dump[i][1]);
 			count = 7;
-		} else {
-			seq_printf(m, " %08x", dump[i][1]);
+		पूर्ण अन्यथा अणु
+			seq_म_लिखो(m, " %08x", dump[i][1]);
 			count--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	seq_puts(m, "\n");
-}
+	seq_माला_दो(m, "\n");
+पूर्ण
 
-int dqm_debugfs_hqds(struct seq_file *m, void *data)
-{
-	struct device_queue_manager *dqm = data;
-	uint32_t (*dump)[2], n_regs;
-	int pipe, queue;
-	int r = 0;
+पूर्णांक dqm_debugfs_hqds(काष्ठा seq_file *m, व्योम *data)
+अणु
+	काष्ठा device_queue_manager *dqm = data;
+	uपूर्णांक32_t (*dump)[2], n_regs;
+	पूर्णांक pipe, queue;
+	पूर्णांक r = 0;
 
-	if (!dqm->sched_running) {
-		seq_printf(m, " Device is stopped\n");
+	अगर (!dqm->sched_running) अणु
+		seq_म_लिखो(m, " Device is stopped\n");
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	r = dqm->dev->kfd2kgd->hqd_dump(dqm->dev->kgd,
 					KFD_CIK_HIQ_PIPE, KFD_CIK_HIQ_QUEUE,
 					&dump, &n_regs);
-	if (!r) {
-		seq_printf(m, "  HIQ on MEC %d Pipe %d Queue %d\n",
+	अगर (!r) अणु
+		seq_म_लिखो(m, "  HIQ on MEC %d Pipe %d Queue %d\n",
 			   KFD_CIK_HIQ_PIPE/get_pipes_per_mec(dqm)+1,
 			   KFD_CIK_HIQ_PIPE%get_pipes_per_mec(dqm),
 			   KFD_CIK_HIQ_QUEUE);
 		seq_reg_dump(m, dump, n_regs);
 
-		kfree(dump);
-	}
+		kमुक्त(dump);
+	पूर्ण
 
-	for (pipe = 0; pipe < get_pipes_per_mec(dqm); pipe++) {
-		int pipe_offset = pipe * get_queues_per_pipe(dqm);
+	क्रम (pipe = 0; pipe < get_pipes_per_mec(dqm); pipe++) अणु
+		पूर्णांक pipe_offset = pipe * get_queues_per_pipe(dqm);
 
-		for (queue = 0; queue < get_queues_per_pipe(dqm); queue++) {
-			if (!test_bit(pipe_offset + queue,
-				      dqm->dev->shared_resources.cp_queue_bitmap))
-				continue;
+		क्रम (queue = 0; queue < get_queues_per_pipe(dqm); queue++) अणु
+			अगर (!test_bit(pipe_offset + queue,
+				      dqm->dev->shared_resources.cp_queue_biपंचांगap))
+				जारी;
 
 			r = dqm->dev->kfd2kgd->hqd_dump(
 				dqm->dev->kgd, pipe, queue, &dump, &n_regs);
-			if (r)
-				break;
+			अगर (r)
+				अवरोध;
 
-			seq_printf(m, "  CP Pipe %d, Queue %d\n",
+			seq_म_लिखो(m, "  CP Pipe %d, Queue %d\n",
 				  pipe, queue);
 			seq_reg_dump(m, dump, n_regs);
 
-			kfree(dump);
-		}
-	}
+			kमुक्त(dump);
+		पूर्ण
+	पूर्ण
 
-	for (pipe = 0; pipe < get_num_all_sdma_engines(dqm); pipe++) {
-		for (queue = 0;
+	क्रम (pipe = 0; pipe < get_num_all_sdma_engines(dqm); pipe++) अणु
+		क्रम (queue = 0;
 		     queue < dqm->dev->device_info->num_sdma_queues_per_engine;
-		     queue++) {
+		     queue++) अणु
 			r = dqm->dev->kfd2kgd->hqd_sdma_dump(
 				dqm->dev->kgd, pipe, queue, &dump, &n_regs);
-			if (r)
-				break;
+			अगर (r)
+				अवरोध;
 
-			seq_printf(m, "  SDMA Engine %d, RLC %d\n",
+			seq_म_लिखो(m, "  SDMA Engine %d, RLC %d\n",
 				  pipe, queue);
 			seq_reg_dump(m, dump, n_regs);
 
-			kfree(dump);
-		}
-	}
+			kमुक्त(dump);
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int dqm_debugfs_execute_queues(struct device_queue_manager *dqm)
-{
-	int r = 0;
+पूर्णांक dqm_debugfs_execute_queues(काष्ठा device_queue_manager *dqm)
+अणु
+	पूर्णांक r = 0;
 
 	dqm_lock(dqm);
 	dqm->active_runlist = true;
 	r = execute_queues_cpsch(dqm, KFD_UNMAP_QUEUES_FILTER_ALL_QUEUES, 0);
 	dqm_unlock(dqm);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * Copyright 2013-2016 Freescale Semiconductor Inc.
  * Copyright 2019 NXP
  */
 
-#include <linux/vfio.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/eventfd.h>
-#include <linux/msi.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/eventfd.h>
+#समावेश <linux/msi.h>
 
-#include "linux/fsl/mc.h"
-#include "vfio_fsl_mc_private.h"
+#समावेश "linux/fsl/mc.h"
+#समावेश "vfio_fsl_mc_private.h"
 
-static int vfio_fsl_mc_irqs_allocate(struct vfio_fsl_mc_device *vdev)
-{
-	struct fsl_mc_device *mc_dev = vdev->mc_dev;
-	struct vfio_fsl_mc_irq *mc_irq;
-	int irq_count;
-	int ret, i;
+अटल पूर्णांक vfio_fsl_mc_irqs_allocate(काष्ठा vfio_fsl_mc_device *vdev)
+अणु
+	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+	काष्ठा vfio_fsl_mc_irq *mc_irq;
+	पूर्णांक irq_count;
+	पूर्णांक ret, i;
 
-	/* Device does not support any interrupt */
-	if (mc_dev->obj_desc.irq_count == 0)
-		return 0;
+	/* Device करोes not support any पूर्णांकerrupt */
+	अगर (mc_dev->obj_desc.irq_count == 0)
+		वापस 0;
 
-	/* interrupts were already allocated for this device */
-	if (vdev->mc_irqs)
-		return 0;
+	/* पूर्णांकerrupts were alपढ़ोy allocated क्रम this device */
+	अगर (vdev->mc_irqs)
+		वापस 0;
 
 	irq_count = mc_dev->obj_desc.irq_count;
 
-	mc_irq = kcalloc(irq_count, sizeof(*mc_irq), GFP_KERNEL);
-	if (!mc_irq)
-		return -ENOMEM;
+	mc_irq = kसुस्मृति(irq_count, माप(*mc_irq), GFP_KERNEL);
+	अगर (!mc_irq)
+		वापस -ENOMEM;
 
 	/* Allocate IRQs */
 	ret = fsl_mc_allocate_irqs(mc_dev);
-	if (ret) {
-		kfree(mc_irq);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(mc_irq);
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < irq_count; i++) {
+	क्रम (i = 0; i < irq_count; i++) अणु
 		mc_irq[i].count = 1;
 		mc_irq[i].flags = VFIO_IRQ_INFO_EVENTFD;
-	}
+	पूर्ण
 
 	vdev->mc_irqs = mc_irq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t vfio_fsl_mc_irq_handler(int irq_num, void *arg)
-{
-	struct vfio_fsl_mc_irq *mc_irq = (struct vfio_fsl_mc_irq *)arg;
+अटल irqवापस_t vfio_fsl_mc_irq_handler(पूर्णांक irq_num, व्योम *arg)
+अणु
+	काष्ठा vfio_fsl_mc_irq *mc_irq = (काष्ठा vfio_fsl_mc_irq *)arg;
 
-	eventfd_signal(mc_irq->trigger, 1);
-	return IRQ_HANDLED;
-}
+	eventfd_संकेत(mc_irq->trigger, 1);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int vfio_set_trigger(struct vfio_fsl_mc_device *vdev,
-						   int index, int fd)
-{
-	struct vfio_fsl_mc_irq *irq = &vdev->mc_irqs[index];
-	struct eventfd_ctx *trigger;
-	int hwirq;
-	int ret;
+अटल पूर्णांक vfio_set_trigger(काष्ठा vfio_fsl_mc_device *vdev,
+						   पूर्णांक index, पूर्णांक fd)
+अणु
+	काष्ठा vfio_fsl_mc_irq *irq = &vdev->mc_irqs[index];
+	काष्ठा eventfd_ctx *trigger;
+	पूर्णांक hwirq;
+	पूर्णांक ret;
 
 	hwirq = vdev->mc_dev->irqs[index]->msi_desc->irq;
-	if (irq->trigger) {
-		free_irq(hwirq, irq);
-		kfree(irq->name);
+	अगर (irq->trigger) अणु
+		मुक्त_irq(hwirq, irq);
+		kमुक्त(irq->name);
 		eventfd_ctx_put(irq->trigger);
-		irq->trigger = NULL;
-	}
+		irq->trigger = शून्य;
+	पूर्ण
 
-	if (fd < 0) /* Disable only */
-		return 0;
+	अगर (fd < 0) /* Disable only */
+		वापस 0;
 
-	irq->name = kasprintf(GFP_KERNEL, "vfio-irq[%d](%s)",
+	irq->name = kaप्र_लिखो(GFP_KERNEL, "vfio-irq[%d](%s)",
 			    hwirq, dev_name(&vdev->mc_dev->dev));
-	if (!irq->name)
-		return -ENOMEM;
+	अगर (!irq->name)
+		वापस -ENOMEM;
 
 	trigger = eventfd_ctx_fdget(fd);
-	if (IS_ERR(trigger)) {
-		kfree(irq->name);
-		return PTR_ERR(trigger);
-	}
+	अगर (IS_ERR(trigger)) अणु
+		kमुक्त(irq->name);
+		वापस PTR_ERR(trigger);
+	पूर्ण
 
 	irq->trigger = trigger;
 
 	ret = request_irq(hwirq, vfio_fsl_mc_irq_handler, 0,
 		  irq->name, irq);
-	if (ret) {
-		kfree(irq->name);
+	अगर (ret) अणु
+		kमुक्त(irq->name);
 		eventfd_ctx_put(trigger);
-		irq->trigger = NULL;
-		return ret;
-	}
+		irq->trigger = शून्य;
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_fsl_mc_set_irq_trigger(struct vfio_fsl_mc_device *vdev,
-				       unsigned int index, unsigned int start,
-				       unsigned int count, u32 flags,
-				       void *data)
-{
-	struct fsl_mc_device *mc_dev = vdev->mc_dev;
-	int ret, hwirq;
-	struct vfio_fsl_mc_irq *irq;
-	struct device *cont_dev = fsl_mc_cont_dev(&mc_dev->dev);
-	struct fsl_mc_device *mc_cont = to_fsl_mc_device(cont_dev);
+अटल पूर्णांक vfio_fsl_mc_set_irq_trigger(काष्ठा vfio_fsl_mc_device *vdev,
+				       अचिन्हित पूर्णांक index, अचिन्हित पूर्णांक start,
+				       अचिन्हित पूर्णांक count, u32 flags,
+				       व्योम *data)
+अणु
+	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+	पूर्णांक ret, hwirq;
+	काष्ठा vfio_fsl_mc_irq *irq;
+	काष्ठा device *cont_dev = fsl_mc_cont_dev(&mc_dev->dev);
+	काष्ठा fsl_mc_device *mc_cont = to_fsl_mc_device(cont_dev);
 
-	if (!count && (flags & VFIO_IRQ_SET_DATA_NONE))
-		return vfio_set_trigger(vdev, index, -1);
+	अगर (!count && (flags & VFIO_IRQ_SET_DATA_NONE))
+		वापस vfio_set_trigger(vdev, index, -1);
 
-	if (start != 0 || count != 1)
-		return -EINVAL;
+	अगर (start != 0 || count != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&vdev->reflck->lock);
 	ret = fsl_mc_populate_irq_pool(mc_cont,
 			FSL_MC_IRQ_POOL_MAX_TOTAL_IRQS);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 
 	ret = vfio_fsl_mc_irqs_allocate(vdev);
-	if (ret)
-		goto unlock;
+	अगर (ret)
+		जाओ unlock;
 	mutex_unlock(&vdev->reflck->lock);
 
-	if (flags & VFIO_IRQ_SET_DATA_EVENTFD) {
+	अगर (flags & VFIO_IRQ_SET_DATA_EVENTFD) अणु
 		s32 fd = *(s32 *)data;
 
-		return vfio_set_trigger(vdev, index, fd);
-	}
+		वापस vfio_set_trigger(vdev, index, fd);
+	पूर्ण
 
 	hwirq = vdev->mc_dev->irqs[index]->msi_desc->irq;
 
 	irq = &vdev->mc_irqs[index];
 
-	if (flags & VFIO_IRQ_SET_DATA_NONE) {
+	अगर (flags & VFIO_IRQ_SET_DATA_NONE) अणु
 		vfio_fsl_mc_irq_handler(hwirq, irq);
 
-	} else if (flags & VFIO_IRQ_SET_DATA_BOOL) {
+	पूर्ण अन्यथा अगर (flags & VFIO_IRQ_SET_DATA_BOOL) अणु
 		u8 trigger = *(u8 *)data;
 
-		if (trigger)
+		अगर (trigger)
 			vfio_fsl_mc_irq_handler(hwirq, irq);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 unlock:
 	mutex_unlock(&vdev->reflck->lock);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 
-int vfio_fsl_mc_set_irqs_ioctl(struct vfio_fsl_mc_device *vdev,
-			       u32 flags, unsigned int index,
-			       unsigned int start, unsigned int count,
-			       void *data)
-{
-	if (flags & VFIO_IRQ_SET_ACTION_TRIGGER)
-		return  vfio_fsl_mc_set_irq_trigger(vdev, index, start,
+पूर्णांक vfio_fsl_mc_set_irqs_ioctl(काष्ठा vfio_fsl_mc_device *vdev,
+			       u32 flags, अचिन्हित पूर्णांक index,
+			       अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक count,
+			       व्योम *data)
+अणु
+	अगर (flags & VFIO_IRQ_SET_ACTION_TRIGGER)
+		वापस  vfio_fsl_mc_set_irq_trigger(vdev, index, start,
 			  count, flags, data);
-	else
-		return -EINVAL;
-}
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-/* Free All IRQs for the given MC object */
-void vfio_fsl_mc_irqs_cleanup(struct vfio_fsl_mc_device *vdev)
-{
-	struct fsl_mc_device *mc_dev = vdev->mc_dev;
-	int irq_count = mc_dev->obj_desc.irq_count;
-	int i;
+/* Free All IRQs क्रम the given MC object */
+व्योम vfio_fsl_mc_irqs_cleanup(काष्ठा vfio_fsl_mc_device *vdev)
+अणु
+	काष्ठा fsl_mc_device *mc_dev = vdev->mc_dev;
+	पूर्णांक irq_count = mc_dev->obj_desc.irq_count;
+	पूर्णांक i;
 
 	/*
-	 * Device does not support any interrupt or the interrupts
+	 * Device करोes not support any पूर्णांकerrupt or the पूर्णांकerrupts
 	 * were not configured
 	 */
-	if (!vdev->mc_irqs)
-		return;
+	अगर (!vdev->mc_irqs)
+		वापस;
 
-	for (i = 0; i < irq_count; i++)
+	क्रम (i = 0; i < irq_count; i++)
 		vfio_set_trigger(vdev, i, -1);
 
-	fsl_mc_free_irqs(mc_dev);
-	kfree(vdev->mc_irqs);
-	vdev->mc_irqs = NULL;
-}
+	fsl_mc_मुक्त_irqs(mc_dev);
+	kमुक्त(vdev->mc_irqs);
+	vdev->mc_irqs = शून्य;
+पूर्ण

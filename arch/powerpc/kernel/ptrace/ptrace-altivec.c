@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
-#include <linux/elf.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/elf.h>
 
-#include <asm/switch_to.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#include "ptrace-decl.h"
+#समावेश "ptrace-decl.h"
 
 /*
- * Get/set all the altivec registers vr0..vr31, vscr, vrsave, in one go.
+ * Get/set all the altivec रेजिस्टरs vr0..vr31, vscr, vrsave, in one go.
  * The transfer totals 34 quadword.  Quadwords 0-31 contain the
- * corresponding vector registers.  Quadword 32 contains the vscr as the
+ * corresponding vector रेजिस्टरs.  Quadword 32 contains the vscr as the
  * last word (offset 12) within that quadword.  Quadword 33 contains the
  * vrsave as the first word (offset 0) within the quadword.
  *
  * This definition of the VMX state is compatible with the current PPC32
- * ptrace interface.  This allows signal handling and ptrace to use the
- * same structures.  This also simplifies the implementation of a bi-arch
+ * ptrace पूर्णांकerface.  This allows संकेत handling and ptrace to use the
+ * same काष्ठाures.  This also simplअगरies the implementation of a bi-arch
  * (combined (32- and 64-bit) gdb.
  */
 
-int vr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	flush_altivec_to_thread(target);
-	return target->thread.used_vr ? regset->n : 0;
-}
+पूर्णांक vr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	flush_altivec_to_thपढ़ो(target);
+	वापस target->thपढ़ो.used_vr ? regset->n : 0;
+पूर्ण
 
 /*
  * Regardless of transactions, 'vr_state' holds the current running
- * value of all the VMX registers and 'ckvr_state' holds the last
- * checkpointed value of all the VMX registers for the current
- * transaction to fall back on in case it aborts.
+ * value of all the VMX रेजिस्टरs and 'ckvr_state' holds the last
+ * checkpoपूर्णांकed value of all the VMX रेजिस्टरs क्रम the current
+ * transaction to fall back on in हाल it पातs.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	vector128	vr[32];
  *	vector128	vscr;
  *	vector128	vrsave;
- * };
+ * पूर्ण;
  */
-int vr_get(struct task_struct *target, const struct user_regset *regset,
-	   struct membuf to)
-{
-	union {
+पूर्णांक vr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	   काष्ठा membuf to)
+अणु
+	जोड़ अणु
 		elf_vrreg_t reg;
 		u32 word;
-	} vrsave;
+	पूर्ण vrsave;
 
-	flush_altivec_to_thread(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	BUILD_BUG_ON(offsetof(struct thread_vr_state, vscr) !=
-		     offsetof(struct thread_vr_state, vr[32]));
+	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_vr_state, vscr) !=
+		     दुरत्व(काष्ठा thपढ़ो_vr_state, vr[32]));
 
-	membuf_write(&to, &target->thread.vr_state, 33 * sizeof(vector128));
+	membuf_ग_लिखो(&to, &target->thपढ़ो.vr_state, 33 * माप(vector128));
 	/*
 	 * Copy out only the low-order word of vrsave.
 	 */
-	memset(&vrsave, 0, sizeof(vrsave));
-	vrsave.word = target->thread.vrsave;
-	return membuf_write(&to, &vrsave, sizeof(vrsave));
-}
+	स_रखो(&vrsave, 0, माप(vrsave));
+	vrsave.word = target->thपढ़ो.vrsave;
+	वापस membuf_ग_लिखो(&to, &vrsave, माप(vrsave));
+पूर्ण
 
 /*
  * Regardless of transactions, 'vr_state' holds the current running
- * value of all the VMX registers and 'ckvr_state' holds the last
- * checkpointed value of all the VMX registers for the current
- * transaction to fall back on in case it aborts.
+ * value of all the VMX रेजिस्टरs and 'ckvr_state' holds the last
+ * checkpoपूर्णांकed value of all the VMX रेजिस्टरs क्रम the current
+ * transaction to fall back on in हाल it पातs.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	vector128	vr[32];
  *	vector128	vscr;
  *	vector128	vrsave;
- * };
+ * पूर्ण;
  */
-int vr_set(struct task_struct *target, const struct user_regset *regset,
-	   unsigned int pos, unsigned int count,
-	   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+पूर्णांक vr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
-	flush_altivec_to_thread(target);
+	flush_altivec_to_thपढ़ो(target);
 
-	BUILD_BUG_ON(offsetof(struct thread_vr_state, vscr) !=
-		     offsetof(struct thread_vr_state, vr[32]));
+	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_vr_state, vscr) !=
+		     दुरत्व(काष्ठा thपढ़ो_vr_state, vr[32]));
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.vr_state, 0,
-				 33 * sizeof(vector128));
-	if (!ret && count > 0) {
+				 &target->thपढ़ो.vr_state, 0,
+				 33 * माप(vector128));
+	अगर (!ret && count > 0) अणु
 		/*
 		 * We use only the first word of vrsave.
 		 */
-		int start, end;
-		union {
+		पूर्णांक start, end;
+		जोड़ अणु
 			elf_vrreg_t reg;
 			u32 word;
-		} vrsave;
-		memset(&vrsave, 0, sizeof(vrsave));
+		पूर्ण vrsave;
+		स_रखो(&vrsave, 0, माप(vrsave));
 
-		vrsave.word = target->thread.vrsave;
+		vrsave.word = target->thपढ़ो.vrsave;
 
-		start = 33 * sizeof(vector128);
-		end = start + sizeof(vrsave);
+		start = 33 * माप(vector128);
+		end = start + माप(vrsave);
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &vrsave,
 					 start, end);
-		if (!ret)
-			target->thread.vrsave = vrsave.word;
-	}
+		अगर (!ret)
+			target->thपढ़ो.vrsave = vrsave.word;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

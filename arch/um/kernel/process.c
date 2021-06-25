@@ -1,408 +1,409 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2015 Anton Ivanov (aivanov@{brocade.com,kot-begemot.co.uk})
+ * Copyright (C) 2015 Anton Ivanov (aivanov@अणुbrocade.com,kot-begemot.co.ukपूर्ण)
  * Copyright (C) 2015 Thomas Meyer (thomas@m3y3r.de)
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  * Copyright 2003 PathScale, Inc.
  */
 
-#include <linux/stddef.h>
-#include <linux/err.h>
-#include <linux/hardirq.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/personality.h>
-#include <linux/proc_fs.h>
-#include <linux/ptrace.h>
-#include <linux/random.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/seq_file.h>
-#include <linux/tick.h>
-#include <linux/threads.h>
-#include <linux/tracehook.h>
-#include <asm/current.h>
-#include <asm/mmu_context.h>
-#include <linux/uaccess.h>
-#include <as-layout.h>
-#include <kern_util.h>
-#include <os.h>
-#include <skas.h>
-#include <linux/time-internal.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/err.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/tick.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <linux/tracehook.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <linux/uaccess.h>
+#समावेश <as-layout.h>
+#समावेश <kern_util.h>
+#समावेश <os.h>
+#समावेश <skas.h>
+#समावेश <linux/समय-पूर्णांकernal.h>
 
 /*
- * This is a per-cpu array.  A processor only modifies its entry and it only
- * cares about its entry, so it's OK if another processor is modifying its
+ * This is a per-cpu array.  A processor only modअगरies its entry and it only
+ * cares about its entry, so it's OK अगर another processor is modअगरying its
  * entry.
  */
-struct cpu_task cpu_tasks[NR_CPUS] = { [0 ... NR_CPUS - 1] = { -1, NULL } };
+काष्ठा cpu_task cpu_tasks[NR_CPUS] = अणु [0 ... NR_CPUS - 1] = अणु -1, शून्य पूर्ण पूर्ण;
 
-static inline int external_pid(void)
-{
+अटल अंतरभूत पूर्णांक बाह्यal_pid(व्योम)
+अणु
 	/* FIXME: Need to look up userspace_pid by cpu */
-	return userspace_pid[0];
-}
+	वापस userspace_pid[0];
+पूर्ण
 
-int pid_to_processor_id(int pid)
-{
-	int i;
+पूर्णांक pid_to_processor_id(पूर्णांक pid)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ncpus; i++) {
-		if (cpu_tasks[i].pid == pid)
-			return i;
-	}
-	return -1;
-}
+	क्रम (i = 0; i < ncpus; i++) अणु
+		अगर (cpu_tasks[i].pid == pid)
+			वापस i;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-void free_stack(unsigned long stack, int order)
-{
-	free_pages(stack, order);
-}
+व्योम मुक्त_stack(अचिन्हित दीर्घ stack, पूर्णांक order)
+अणु
+	मुक्त_pages(stack, order);
+पूर्ण
 
-unsigned long alloc_stack(int order, int atomic)
-{
-	unsigned long page;
+अचिन्हित दीर्घ alloc_stack(पूर्णांक order, पूर्णांक atomic)
+अणु
+	अचिन्हित दीर्घ page;
 	gfp_t flags = GFP_KERNEL;
 
-	if (atomic)
+	अगर (atomic)
 		flags = GFP_ATOMIC;
-	page = __get_free_pages(flags, order);
+	page = __get_मुक्त_pages(flags, order);
 
-	return page;
-}
+	वापस page;
+पूर्ण
 
-static inline void set_current(struct task_struct *task)
-{
-	cpu_tasks[task_thread_info(task)->cpu] = ((struct cpu_task)
-		{ external_pid(), task });
-}
+अटल अंतरभूत व्योम set_current(काष्ठा task_काष्ठा *task)
+अणु
+	cpu_tasks[task_thपढ़ो_info(task)->cpu] = ((काष्ठा cpu_task)
+		अणु बाह्यal_pid(), task पूर्ण);
+पूर्ण
 
-extern void arch_switch_to(struct task_struct *to);
+बाह्य व्योम arch_चयन_to(काष्ठा task_काष्ठा *to);
 
-void *__switch_to(struct task_struct *from, struct task_struct *to)
-{
-	to->thread.prev_sched = from;
+व्योम *__चयन_to(काष्ठा task_काष्ठा *from, काष्ठा task_काष्ठा *to)
+अणु
+	to->thपढ़ो.prev_sched = from;
 	set_current(to);
 
-	switch_threads(&from->thread.switch_buf, &to->thread.switch_buf);
-	arch_switch_to(current);
+	चयन_thपढ़ोs(&from->thपढ़ो.चयन_buf, &to->thपढ़ो.चयन_buf);
+	arch_चयन_to(current);
 
-	return current->thread.prev_sched;
-}
+	वापस current->thपढ़ो.prev_sched;
+पूर्ण
 
-void interrupt_end(void)
-{
-	struct pt_regs *regs = &current->thread.regs;
+व्योम पूर्णांकerrupt_end(व्योम)
+अणु
+	काष्ठा pt_regs *regs = &current->thपढ़ो.regs;
 
-	if (need_resched())
+	अगर (need_resched())
 		schedule();
-	if (test_thread_flag(TIF_SIGPENDING) ||
-	    test_thread_flag(TIF_NOTIFY_SIGNAL))
-		do_signal(regs);
-	if (test_thread_flag(TIF_NOTIFY_RESUME))
-		tracehook_notify_resume(regs);
-}
+	अगर (test_thपढ़ो_flag(TIF_SIGPENDING) ||
+	    test_thपढ़ो_flag(TIF_NOTIFY_SIGNAL))
+		करो_संकेत(regs);
+	अगर (test_thपढ़ो_flag(TIF_NOTIFY_RESUME))
+		tracehook_notअगरy_resume(regs);
+पूर्ण
 
-int get_current_pid(void)
-{
-	return task_pid_nr(current);
-}
+पूर्णांक get_current_pid(व्योम)
+अणु
+	वापस task_pid_nr(current);
+पूर्ण
 
 /*
- * This is called magically, by its address being stuffed in a jmp_buf
- * and being longjmp-d to.
+ * This is called magically, by its address being stuffed in a लाँघ_बफ
+ * and being दीर्घ_लाँघ-d to.
  */
-void new_thread_handler(void)
-{
-	int (*fn)(void *), n;
-	void *arg;
+व्योम new_thपढ़ो_handler(व्योम)
+अणु
+	पूर्णांक (*fn)(व्योम *), n;
+	व्योम *arg;
 
-	if (current->thread.prev_sched != NULL)
-		schedule_tail(current->thread.prev_sched);
-	current->thread.prev_sched = NULL;
+	अगर (current->thपढ़ो.prev_sched != शून्य)
+		schedule_tail(current->thपढ़ो.prev_sched);
+	current->thपढ़ो.prev_sched = शून्य;
 
-	fn = current->thread.request.u.thread.proc;
-	arg = current->thread.request.u.thread.arg;
+	fn = current->thपढ़ो.request.u.thपढ़ो.proc;
+	arg = current->thपढ़ो.request.u.thपढ़ो.arg;
 
 	/*
-	 * callback returns only if the kernel thread execs a process
+	 * callback वापसs only अगर the kernel thपढ़ो execs a process
 	 */
 	n = fn(arg);
-	userspace(&current->thread.regs.regs, current_thread_info()->aux_fp_regs);
-}
+	userspace(&current->thपढ़ो.regs.regs, current_thपढ़ो_info()->aux_fp_regs);
+पूर्ण
 
-/* Called magically, see new_thread_handler above */
-void fork_handler(void)
-{
-	force_flush_all();
+/* Called magically, see new_thपढ़ो_handler above */
+व्योम विभाजन_handler(व्योम)
+अणु
+	क्रमce_flush_all();
 
-	schedule_tail(current->thread.prev_sched);
+	schedule_tail(current->thपढ़ो.prev_sched);
 
 	/*
-	 * XXX: if interrupt_end() calls schedule, this call to
-	 * arch_switch_to isn't needed. We could want to apply this to
-	 * improve performance. -bb
+	 * XXX: अगर पूर्णांकerrupt_end() calls schedule, this call to
+	 * arch_चयन_to isn't needed. We could want to apply this to
+	 * improve perक्रमmance. -bb
 	 */
-	arch_switch_to(current);
+	arch_चयन_to(current);
 
-	current->thread.prev_sched = NULL;
+	current->thपढ़ो.prev_sched = शून्य;
 
-	userspace(&current->thread.regs.regs, current_thread_info()->aux_fp_regs);
-}
+	userspace(&current->thपढ़ो.regs.regs, current_thपढ़ो_info()->aux_fp_regs);
+पूर्ण
 
-int copy_thread(unsigned long clone_flags, unsigned long sp,
-		unsigned long arg, struct task_struct * p, unsigned long tls)
-{
-	void (*handler)(void);
-	int kthread = current->flags & (PF_KTHREAD | PF_IO_WORKER);
-	int ret = 0;
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ sp,
+		अचिन्हित दीर्घ arg, काष्ठा task_काष्ठा * p, अचिन्हित दीर्घ tls)
+अणु
+	व्योम (*handler)(व्योम);
+	पूर्णांक kthपढ़ो = current->flags & (PF_KTHREAD | PF_IO_WORKER);
+	पूर्णांक ret = 0;
 
-	p->thread = (struct thread_struct) INIT_THREAD;
+	p->thपढ़ो = (काष्ठा thपढ़ो_काष्ठा) INIT_THREAD;
 
-	if (!kthread) {
-	  	memcpy(&p->thread.regs.regs, current_pt_regs(),
-		       sizeof(p->thread.regs.regs));
-		PT_REGS_SET_SYSCALL_RETURN(&p->thread.regs, 0);
-		if (sp != 0)
-			REGS_SP(p->thread.regs.regs.gp) = sp;
+	अगर (!kthपढ़ो) अणु
+	  	स_नकल(&p->thपढ़ो.regs.regs, current_pt_regs(),
+		       माप(p->thपढ़ो.regs.regs));
+		PT_REGS_SET_SYSCALL_RETURN(&p->thपढ़ो.regs, 0);
+		अगर (sp != 0)
+			REGS_SP(p->thपढ़ो.regs.regs.gp) = sp;
 
-		handler = fork_handler;
+		handler = विभाजन_handler;
 
-		arch_copy_thread(&current->thread.arch, &p->thread.arch);
-	} else {
-		get_safe_registers(p->thread.regs.regs.gp, p->thread.regs.regs.fp);
-		p->thread.request.u.thread.proc = (int (*)(void *))sp;
-		p->thread.request.u.thread.arg = (void *)arg;
-		handler = new_thread_handler;
-	}
+		arch_copy_thपढ़ो(&current->thपढ़ो.arch, &p->thपढ़ो.arch);
+	पूर्ण अन्यथा अणु
+		get_safe_रेजिस्टरs(p->thपढ़ो.regs.regs.gp, p->thपढ़ो.regs.regs.fp);
+		p->thपढ़ो.request.u.thपढ़ो.proc = (पूर्णांक (*)(व्योम *))sp;
+		p->thपढ़ो.request.u.thपढ़ो.arg = (व्योम *)arg;
+		handler = new_thपढ़ो_handler;
+	पूर्ण
 
-	new_thread(task_stack_page(p), &p->thread.switch_buf, handler);
+	new_thपढ़ो(task_stack_page(p), &p->thपढ़ो.चयन_buf, handler);
 
-	if (!kthread) {
+	अगर (!kthपढ़ो) अणु
 		clear_flushed_tls(p);
 
 		/*
-		 * Set a new TLS for the child thread?
+		 * Set a new TLS क्रम the child thपढ़ो?
 		 */
-		if (clone_flags & CLONE_SETTLS)
+		अगर (clone_flags & CLONE_SETTLS)
 			ret = arch_set_tls(p, tls);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void initial_thread_cb(void (*proc)(void *), void *arg)
-{
-	int save_kmalloc_ok = kmalloc_ok;
+व्योम initial_thपढ़ो_cb(व्योम (*proc)(व्योम *), व्योम *arg)
+अणु
+	पूर्णांक save_kदो_स्मृति_ok = kदो_स्मृति_ok;
 
-	kmalloc_ok = 0;
-	initial_thread_cb_skas(proc, arg);
-	kmalloc_ok = save_kmalloc_ok;
-}
+	kदो_स्मृति_ok = 0;
+	initial_thपढ़ो_cb_skas(proc, arg);
+	kदो_स्मृति_ok = save_kदो_स्मृति_ok;
+पूर्ण
 
-void um_idle_sleep(void)
-{
-	if (time_travel_mode != TT_MODE_OFF)
-		time_travel_sleep();
-	else
+व्योम um_idle_sleep(व्योम)
+अणु
+	अगर (समय_प्रकारravel_mode != TT_MODE_OFF)
+		समय_प्रकारravel_sleep();
+	अन्यथा
 		os_idle_sleep();
-}
+पूर्ण
 
-void arch_cpu_idle(void)
-{
-	cpu_tasks[current_thread_info()->cpu].pid = os_getpid();
+व्योम arch_cpu_idle(व्योम)
+अणु
+	cpu_tasks[current_thपढ़ो_info()->cpu].pid = os_getpid();
 	um_idle_sleep();
 	raw_local_irq_enable();
-}
+पूर्ण
 
-int __cant_sleep(void) {
-	return in_atomic() || irqs_disabled() || in_interrupt();
-	/* Is in_interrupt() really needed? */
-}
+पूर्णांक __cant_sleep(व्योम) अणु
+	वापस in_atomic() || irqs_disabled() || in_पूर्णांकerrupt();
+	/* Is in_पूर्णांकerrupt() really needed? */
+पूर्ण
 
-int user_context(unsigned long sp)
-{
-	unsigned long stack;
+पूर्णांक user_context(अचिन्हित दीर्घ sp)
+अणु
+	अचिन्हित दीर्घ stack;
 
 	stack = sp & (PAGE_MASK << CONFIG_KERNEL_STACK_ORDER);
-	return stack != (unsigned long) current_thread_info();
-}
+	वापस stack != (अचिन्हित दीर्घ) current_thपढ़ो_info();
+पूर्ण
 
-extern exitcall_t __uml_exitcall_begin, __uml_exitcall_end;
+बाह्य निकासcall_t __uml_निकासcall_begin, __uml_निकासcall_end;
 
-void do_uml_exitcalls(void)
-{
-	exitcall_t *call;
+व्योम करो_uml_निकासcalls(व्योम)
+अणु
+	निकासcall_t *call;
 
-	call = &__uml_exitcall_end;
-	while (--call >= &__uml_exitcall_begin)
+	call = &__uml_निकासcall_end;
+	जबतक (--call >= &__uml_निकासcall_begin)
 		(*call)();
-}
+पूर्ण
 
-char *uml_strdup(const char *string)
-{
-	return kstrdup(string, GFP_KERNEL);
-}
+अक्षर *uml_strdup(स्थिर अक्षर *string)
+अणु
+	वापस kstrdup(string, GFP_KERNEL);
+पूर्ण
 EXPORT_SYMBOL(uml_strdup);
 
-int copy_to_user_proc(void __user *to, void *from, int size)
-{
-	return copy_to_user(to, from, size);
-}
+पूर्णांक copy_to_user_proc(व्योम __user *to, व्योम *from, पूर्णांक size)
+अणु
+	वापस copy_to_user(to, from, size);
+पूर्ण
 
-int copy_from_user_proc(void *to, void __user *from, int size)
-{
-	return copy_from_user(to, from, size);
-}
+पूर्णांक copy_from_user_proc(व्योम *to, व्योम __user *from, पूर्णांक size)
+अणु
+	वापस copy_from_user(to, from, size);
+पूर्ण
 
-int clear_user_proc(void __user *buf, int size)
-{
-	return clear_user(buf, size);
-}
+पूर्णांक clear_user_proc(व्योम __user *buf, पूर्णांक size)
+अणु
+	वापस clear_user(buf, size);
+पूर्ण
 
-int cpu(void)
-{
-	return current_thread_info()->cpu;
-}
+पूर्णांक cpu(व्योम)
+अणु
+	वापस current_thपढ़ो_info()->cpu;
+पूर्ण
 
-static atomic_t using_sysemu = ATOMIC_INIT(0);
-int sysemu_supported;
+अटल atomic_t using_sysemu = ATOMIC_INIT(0);
+पूर्णांक sysemu_supported;
 
-void set_using_sysemu(int value)
-{
-	if (value > sysemu_supported)
-		return;
+व्योम set_using_sysemu(पूर्णांक value)
+अणु
+	अगर (value > sysemu_supported)
+		वापस;
 	atomic_set(&using_sysemu, value);
-}
+पूर्ण
 
-int get_using_sysemu(void)
-{
-	return atomic_read(&using_sysemu);
-}
+पूर्णांक get_using_sysemu(व्योम)
+अणु
+	वापस atomic_पढ़ो(&using_sysemu);
+पूर्ण
 
-static int sysemu_proc_show(struct seq_file *m, void *v)
-{
-	seq_printf(m, "%d\n", get_using_sysemu());
-	return 0;
-}
+अटल पूर्णांक sysemu_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m, "%d\n", get_using_sysemu());
+	वापस 0;
+पूर्ण
 
-static int sysemu_proc_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, sysemu_proc_show, NULL);
-}
+अटल पूर्णांक sysemu_proc_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	वापस single_खोलो(file, sysemu_proc_show, शून्य);
+पूर्ण
 
-static ssize_t sysemu_proc_write(struct file *file, const char __user *buf,
-				 size_t count, loff_t *pos)
-{
-	char tmp[2];
+अटल sमाप_प्रकार sysemu_proc_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *pos)
+अणु
+	अक्षर पंचांगp[2];
 
-	if (copy_from_user(tmp, buf, 1))
-		return -EFAULT;
+	अगर (copy_from_user(पंचांगp, buf, 1))
+		वापस -EFAULT;
 
-	if (tmp[0] >= '0' && tmp[0] <= '2')
-		set_using_sysemu(tmp[0] - '0');
-	/* We use the first char, but pretend to write everything */
-	return count;
-}
+	अगर (पंचांगp[0] >= '0' && tmp[0] <= '2')
+		set_using_sysemu(पंचांगp[0] - '0');
+	/* We use the first अक्षर, but pretend to ग_लिखो everything */
+	वापस count;
+पूर्ण
 
-static const struct proc_ops sysemu_proc_ops = {
-	.proc_open	= sysemu_proc_open,
-	.proc_read	= seq_read,
+अटल स्थिर काष्ठा proc_ops sysemu_proc_ops = अणु
+	.proc_खोलो	= sysemu_proc_खोलो,
+	.proc_पढ़ो	= seq_पढ़ो,
 	.proc_lseek	= seq_lseek,
 	.proc_release	= single_release,
-	.proc_write	= sysemu_proc_write,
-};
+	.proc_ग_लिखो	= sysemu_proc_ग_लिखो,
+पूर्ण;
 
-int __init make_proc_sysemu(void)
-{
-	struct proc_dir_entry *ent;
-	if (!sysemu_supported)
-		return 0;
+पूर्णांक __init make_proc_sysemu(व्योम)
+अणु
+	काष्ठा proc_dir_entry *ent;
+	अगर (!sysemu_supported)
+		वापस 0;
 
-	ent = proc_create("sysemu", 0600, NULL, &sysemu_proc_ops);
+	ent = proc_create("sysemu", 0600, शून्य, &sysemu_proc_ops);
 
-	if (ent == NULL)
-	{
-		printk(KERN_WARNING "Failed to register /proc/sysemu\n");
-		return 0;
-	}
+	अगर (ent == शून्य)
+	अणु
+		prपूर्णांकk(KERN_WARNING "Failed to register /proc/sysemu\n");
+		वापस 0;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(make_proc_sysemu);
 
-int singlestepping(void * t)
-{
-	struct task_struct *task = t ? t : current;
+पूर्णांक singlestepping(व्योम * t)
+अणु
+	काष्ठा task_काष्ठा *task = t ? t : current;
 
-	if (!(task->ptrace & PT_DTRACE))
-		return 0;
+	अगर (!(task->ptrace & PT_DTRACE))
+		वापस 0;
 
-	if (task->thread.singlestep_syscall)
-		return 1;
+	अगर (task->thपढ़ो.singlestep_syscall)
+		वापस 1;
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
 /*
  * Only x86 and x86_64 have an arch_align_stack().
  * All other arches have "#define arch_align_stack(x) (x)"
- * in their asm/exec.h
- * As this is included in UML from asm-um/system-generic.h,
- * we can use it to behave as the subarch does.
+ * in their यंत्र/exec.h
+ * As this is included in UML from यंत्र-um/प्रणाली-generic.h,
+ * we can use it to behave as the subarch करोes.
  */
-#ifndef arch_align_stack
-unsigned long arch_align_stack(unsigned long sp)
-{
-	if (!(current->personality & ADDR_NO_RANDOMIZE) && randomize_va_space)
-		sp -= get_random_int() % 8192;
-	return sp & ~0xf;
-}
-#endif
+#अगर_अघोषित arch_align_stack
+अचिन्हित दीर्घ arch_align_stack(अचिन्हित दीर्घ sp)
+अणु
+	अगर (!(current->personality & ADDR_NO_RANDOMIZE) && अक्रमomize_va_space)
+		sp -= get_अक्रमom_पूर्णांक() % 8192;
+	वापस sp & ~0xf;
+पूर्ण
+#पूर्ण_अगर
 
-unsigned long get_wchan(struct task_struct *p)
-{
-	unsigned long stack_page, sp, ip;
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ stack_page, sp, ip;
 	bool seen_sched = 0;
 
-	if ((p == NULL) || (p == current) || (p->state == TASK_RUNNING))
-		return 0;
+	अगर ((p == शून्य) || (p == current) || (p->state == TASK_RUNNING))
+		वापस 0;
 
-	stack_page = (unsigned long) task_stack_page(p);
-	/* Bail if the process has no kernel stack for some reason */
-	if (stack_page == 0)
-		return 0;
+	stack_page = (अचिन्हित दीर्घ) task_stack_page(p);
+	/* Bail अगर the process has no kernel stack क्रम some reason */
+	अगर (stack_page == 0)
+		वापस 0;
 
-	sp = p->thread.switch_buf->JB_SP;
+	sp = p->thपढ़ो.चयन_buf->JB_SP;
 	/*
-	 * Bail if the stack pointer is below the bottom of the kernel
-	 * stack for some reason
+	 * Bail अगर the stack poपूर्णांकer is below the bottom of the kernel
+	 * stack क्रम some reason
 	 */
-	if (sp < stack_page)
-		return 0;
+	अगर (sp < stack_page)
+		वापस 0;
 
-	while (sp < stack_page + THREAD_SIZE) {
-		ip = *((unsigned long *) sp);
-		if (in_sched_functions(ip))
+	जबतक (sp < stack_page + THREAD_SIZE) अणु
+		ip = *((अचिन्हित दीर्घ *) sp);
+		अगर (in_sched_functions(ip))
 			/* Ignore everything until we're above the scheduler */
 			seen_sched = 1;
-		else if (kernel_text_address(ip) && seen_sched)
-			return ip;
+		अन्यथा अगर (kernel_text_address(ip) && seen_sched)
+			वापस ip;
 
-		sp += sizeof(unsigned long);
-	}
+		sp += माप(अचिन्हित दीर्घ);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int elf_core_copy_fpregs(struct task_struct *t, elf_fpregset_t *fpu)
-{
-	int cpu = current_thread_info()->cpu;
+पूर्णांक elf_core_copy_fpregs(काष्ठा task_काष्ठा *t, elf_fpregset_t *fpu)
+अणु
+	पूर्णांक cpu = current_thपढ़ो_info()->cpu;
 
-	return save_i387_registers(userspace_pid[cpu], (unsigned long *) fpu);
-}
+	वापस save_i387_रेजिस्टरs(userspace_pid[cpu], (अचिन्हित दीर्घ *) fpu);
+पूर्ण
 

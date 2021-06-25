@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    NetWinder Floating Point Emulator
+    NetWinder Floating Poपूर्णांक Emulator
     (c) Rebel.com, 1998-1999
     (c) Philip Blundell, 1998, 2001
 
@@ -8,388 +9,388 @@
 
 */
 
-#include "fpa11.h"
-#include "softfloat.h"
-#include "fpopcode.h"
-#include "fpmodule.h"
-#include "fpmodule.inl"
+#समावेश "fpa11.h"
+#समावेश "softfloat.h"
+#समावेश "fpopcode.h"
+#समावेश "fpmodule.h"
+#समावेश "fpmodule.inl"
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static inline void loadSingle(const unsigned int Fn, const unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम loadSingle(स्थिर अचिन्हित पूर्णांक Fn, स्थिर अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
 	fpa11->fType[Fn] = typeSingle;
 	get_user(fpa11->fpreg[Fn].fSingle, pMem);
-}
+पूर्ण
 
-static inline void loadDouble(const unsigned int Fn, const unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम loadDouble(स्थिर अचिन्हित पूर्णांक Fn, स्थिर अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	unsigned int *p;
-	p = (unsigned int *) &fpa11->fpreg[Fn].fDouble;
+	अचिन्हित पूर्णांक *p;
+	p = (अचिन्हित पूर्णांक *) &fpa11->fpreg[Fn].fDouble;
 	fpa11->fType[Fn] = typeDouble;
-#ifdef __ARMEB__
+#अगर_घोषित __ARMEB__
 	get_user(p[0], &pMem[0]);	/* sign & exponent */
 	get_user(p[1], &pMem[1]);
-#else
+#अन्यथा
 	get_user(p[0], &pMem[1]);
 	get_user(p[1], &pMem[0]);	/* sign & exponent */
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_FPE_NWFPE_XP
-static inline void loadExtended(const unsigned int Fn, const unsigned int __user *pMem)
-{
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+अटल अंतरभूत व्योम loadExtended(स्थिर अचिन्हित पूर्णांक Fn, स्थिर अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	unsigned int *p;
-	p = (unsigned int *) &fpa11->fpreg[Fn].fExtended;
+	अचिन्हित पूर्णांक *p;
+	p = (अचिन्हित पूर्णांक *) &fpa11->fpreg[Fn].fExtended;
 	fpa11->fType[Fn] = typeExtended;
 	get_user(p[0], &pMem[0]);	/* sign & exponent */
-#ifdef __ARMEB__
+#अगर_घोषित __ARMEB__
 	get_user(p[1], &pMem[1]);	/* ms bits */
 	get_user(p[2], &pMem[2]);	/* ls bits */
-#else
+#अन्यथा
 	get_user(p[1], &pMem[2]);	/* ls bits */
 	get_user(p[2], &pMem[1]);	/* ms bits */
-#endif
-}
-#endif
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-static inline void loadMultiple(const unsigned int Fn, const unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम loadMultiple(स्थिर अचिन्हित पूर्णांक Fn, स्थिर अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	register unsigned int *p;
-	unsigned long x;
+	रेजिस्टर अचिन्हित पूर्णांक *p;
+	अचिन्हित दीर्घ x;
 
-	p = (unsigned int *) &(fpa11->fpreg[Fn]);
+	p = (अचिन्हित पूर्णांक *) &(fpa11->fpreg[Fn]);
 	get_user(x, &pMem[0]);
 	fpa11->fType[Fn] = (x >> 14) & 0x00000003;
 
-	switch (fpa11->fType[Fn]) {
-	case typeSingle:
-	case typeDouble:
-		{
+	चयन (fpa11->fType[Fn]) अणु
+	हाल typeSingle:
+	हाल typeDouble:
+		अणु
 			get_user(p[0], &pMem[2]);	/* Single */
-			get_user(p[1], &pMem[1]);	/* double msw */
+			get_user(p[1], &pMem[1]);	/* द्विगुन msw */
 			p[2] = 0;			/* empty */
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-#ifdef CONFIG_FPE_NWFPE_XP
-	case typeExtended:
-		{
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल typeExtended:
+		अणु
 			get_user(p[1], &pMem[2]);
 			get_user(p[2], &pMem[1]);	/* msw */
 			p[0] = (x & 0x80003fff);
-		}
-		break;
-#endif
-	}
-}
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-static inline void storeSingle(struct roundingData *roundData, const unsigned int Fn, unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम storeSingle(काष्ठा roundingData *roundData, स्थिर अचिन्हित पूर्णांक Fn, अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	union {
-		float32 f;
-		unsigned int i[1];
-	} val;
+	जोड़ अणु
+		भग्न32 f;
+		अचिन्हित पूर्णांक i[1];
+	पूर्ण val;
 
-	switch (fpa11->fType[Fn]) {
-	case typeDouble:
-		val.f = float64_to_float32(roundData, fpa11->fpreg[Fn].fDouble);
-		break;
+	चयन (fpa11->fType[Fn]) अणु
+	हाल typeDouble:
+		val.f = भग्न64_to_भग्न32(roundData, fpa11->fpreg[Fn].fDouble);
+		अवरोध;
 
-#ifdef CONFIG_FPE_NWFPE_XP
-	case typeExtended:
-		val.f = floatx80_to_float32(roundData, fpa11->fpreg[Fn].fExtended);
-		break;
-#endif
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल typeExtended:
+		val.f = भग्नx80_to_भग्न32(roundData, fpa11->fpreg[Fn].fExtended);
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		val.f = fpa11->fpreg[Fn].fSingle;
-	}
+	पूर्ण
 
 	put_user(val.i[0], pMem);
-}
+पूर्ण
 
-static inline void storeDouble(struct roundingData *roundData, const unsigned int Fn, unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम storeDouble(काष्ठा roundingData *roundData, स्थिर अचिन्हित पूर्णांक Fn, अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	union {
-		float64 f;
-		unsigned int i[2];
-	} val;
+	जोड़ अणु
+		भग्न64 f;
+		अचिन्हित पूर्णांक i[2];
+	पूर्ण val;
 
-	switch (fpa11->fType[Fn]) {
-	case typeSingle:
-		val.f = float32_to_float64(fpa11->fpreg[Fn].fSingle);
-		break;
+	चयन (fpa11->fType[Fn]) अणु
+	हाल typeSingle:
+		val.f = भग्न32_to_भग्न64(fpa11->fpreg[Fn].fSingle);
+		अवरोध;
 
-#ifdef CONFIG_FPE_NWFPE_XP
-	case typeExtended:
-		val.f = floatx80_to_float64(roundData, fpa11->fpreg[Fn].fExtended);
-		break;
-#endif
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल typeExtended:
+		val.f = भग्नx80_to_भग्न64(roundData, fpa11->fpreg[Fn].fExtended);
+		अवरोध;
+#पूर्ण_अगर
 
-	default:
+	शेष:
 		val.f = fpa11->fpreg[Fn].fDouble;
-	}
+	पूर्ण
 
-#ifdef __ARMEB__
+#अगर_घोषित __ARMEB__
 	put_user(val.i[0], &pMem[0]);	/* msw */
 	put_user(val.i[1], &pMem[1]);	/* lsw */
-#else
+#अन्यथा
 	put_user(val.i[1], &pMem[0]);	/* msw */
 	put_user(val.i[0], &pMem[1]);	/* lsw */
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_FPE_NWFPE_XP
-static inline void storeExtended(const unsigned int Fn, unsigned int __user *pMem)
-{
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+अटल अंतरभूत व्योम storeExtended(स्थिर अचिन्हित पूर्णांक Fn, अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	union {
-		floatx80 f;
-		unsigned int i[3];
-	} val;
+	जोड़ अणु
+		भग्नx80 f;
+		अचिन्हित पूर्णांक i[3];
+	पूर्ण val;
 
-	switch (fpa11->fType[Fn]) {
-	case typeSingle:
-		val.f = float32_to_floatx80(fpa11->fpreg[Fn].fSingle);
-		break;
+	चयन (fpa11->fType[Fn]) अणु
+	हाल typeSingle:
+		val.f = भग्न32_to_भग्नx80(fpa11->fpreg[Fn].fSingle);
+		अवरोध;
 
-	case typeDouble:
-		val.f = float64_to_floatx80(fpa11->fpreg[Fn].fDouble);
-		break;
+	हाल typeDouble:
+		val.f = भग्न64_to_भग्नx80(fpa11->fpreg[Fn].fDouble);
+		अवरोध;
 
-	default:
+	शेष:
 		val.f = fpa11->fpreg[Fn].fExtended;
-	}
+	पूर्ण
 
 	put_user(val.i[0], &pMem[0]);	/* sign & exp */
-#ifdef __ARMEB__
+#अगर_घोषित __ARMEB__
 	put_user(val.i[1], &pMem[1]);	/* msw */
 	put_user(val.i[2], &pMem[2]);
-#else
+#अन्यथा
 	put_user(val.i[1], &pMem[2]);
 	put_user(val.i[2], &pMem[1]);	/* msw */
-#endif
-}
-#endif
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-static inline void storeMultiple(const unsigned int Fn, unsigned int __user *pMem)
-{
+अटल अंतरभूत व्योम storeMultiple(स्थिर अचिन्हित पूर्णांक Fn, अचिन्हित पूर्णांक __user *pMem)
+अणु
 	FPA11 *fpa11 = GET_FPA11();
-	register unsigned int nType, *p;
+	रेजिस्टर अचिन्हित पूर्णांक nType, *p;
 
-	p = (unsigned int *) &(fpa11->fpreg[Fn]);
+	p = (अचिन्हित पूर्णांक *) &(fpa11->fpreg[Fn]);
 	nType = fpa11->fType[Fn];
 
-	switch (nType) {
-	case typeSingle:
-	case typeDouble:
-		{
+	चयन (nType) अणु
+	हाल typeSingle:
+	हाल typeDouble:
+		अणु
 			put_user(p[0], &pMem[2]);	/* single */
-			put_user(p[1], &pMem[1]);	/* double msw */
+			put_user(p[1], &pMem[1]);	/* द्विगुन msw */
 			put_user(nType << 14, &pMem[0]);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-#ifdef CONFIG_FPE_NWFPE_XP
-	case typeExtended:
-		{
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल typeExtended:
+		अणु
 			put_user(p[2], &pMem[1]);	/* msw */
 			put_user(p[1], &pMem[2]);
 			put_user((p[0] & 0x80003fff) | (nType << 14), &pMem[0]);
-		}
-		break;
-#endif
-	}
-}
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	पूर्ण
+पूर्ण
 
-unsigned int PerformLDF(const unsigned int opcode)
-{
-	unsigned int __user *pBase, *pAddress, *pFinal;
-	unsigned int nRc = 1, write_back = WRITE_BACK(opcode);
+अचिन्हित पूर्णांक Perक्रमmLDF(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक __user *pBase, *pAddress, *pFinal;
+	अचिन्हित पूर्णांक nRc = 1, ग_लिखो_back = WRITE_BACK(opcode);
 
-	pBase = (unsigned int __user *) readRegister(getRn(opcode));
-	if (REG_PC == getRn(opcode)) {
+	pBase = (अचिन्हित पूर्णांक __user *) पढ़ोRegister(getRn(opcode));
+	अगर (REG_PC == getRn(opcode)) अणु
 		pBase += 2;
-		write_back = 0;
-	}
+		ग_लिखो_back = 0;
+	पूर्ण
 
 	pFinal = pBase;
-	if (BIT_UP_SET(opcode))
+	अगर (BIT_UP_SET(opcode))
 		pFinal += getOffset(opcode);
-	else
+	अन्यथा
 		pFinal -= getOffset(opcode);
 
-	if (PREINDEXED(opcode))
+	अगर (PREINDEXED(opcode))
 		pAddress = pFinal;
-	else
+	अन्यथा
 		pAddress = pBase;
 
-	switch (opcode & MASK_TRANSFER_LENGTH) {
-	case TRANSFER_SINGLE:
+	चयन (opcode & MASK_TRANSFER_LENGTH) अणु
+	हाल TRANSFER_SINGLE:
 		loadSingle(getFd(opcode), pAddress);
-		break;
-	case TRANSFER_DOUBLE:
+		अवरोध;
+	हाल TRANSFER_DOUBLE:
 		loadDouble(getFd(opcode), pAddress);
-		break;
-#ifdef CONFIG_FPE_NWFPE_XP
-	case TRANSFER_EXTENDED:
+		अवरोध;
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल TRANSFER_EXTENDED:
 		loadExtended(getFd(opcode), pAddress);
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		nRc = 0;
-	}
+	पूर्ण
 
-	if (write_back)
-		writeRegister(getRn(opcode), (unsigned long) pFinal);
-	return nRc;
-}
+	अगर (ग_लिखो_back)
+		ग_लिखोRegister(getRn(opcode), (अचिन्हित दीर्घ) pFinal);
+	वापस nRc;
+पूर्ण
 
-unsigned int PerformSTF(const unsigned int opcode)
-{
-	unsigned int __user *pBase, *pAddress, *pFinal;
-	unsigned int nRc = 1, write_back = WRITE_BACK(opcode);
-	struct roundingData roundData;
+अचिन्हित पूर्णांक Perक्रमmSTF(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक __user *pBase, *pAddress, *pFinal;
+	अचिन्हित पूर्णांक nRc = 1, ग_लिखो_back = WRITE_BACK(opcode);
+	काष्ठा roundingData roundData;
 
 	roundData.mode = SetRoundingMode(opcode);
 	roundData.precision = SetRoundingPrecision(opcode);
 	roundData.exception = 0;
 
-	pBase = (unsigned int __user *) readRegister(getRn(opcode));
-	if (REG_PC == getRn(opcode)) {
+	pBase = (अचिन्हित पूर्णांक __user *) पढ़ोRegister(getRn(opcode));
+	अगर (REG_PC == getRn(opcode)) अणु
 		pBase += 2;
-		write_back = 0;
-	}
+		ग_लिखो_back = 0;
+	पूर्ण
 
 	pFinal = pBase;
-	if (BIT_UP_SET(opcode))
+	अगर (BIT_UP_SET(opcode))
 		pFinal += getOffset(opcode);
-	else
+	अन्यथा
 		pFinal -= getOffset(opcode);
 
-	if (PREINDEXED(opcode))
+	अगर (PREINDEXED(opcode))
 		pAddress = pFinal;
-	else
+	अन्यथा
 		pAddress = pBase;
 
-	switch (opcode & MASK_TRANSFER_LENGTH) {
-	case TRANSFER_SINGLE:
+	चयन (opcode & MASK_TRANSFER_LENGTH) अणु
+	हाल TRANSFER_SINGLE:
 		storeSingle(&roundData, getFd(opcode), pAddress);
-		break;
-	case TRANSFER_DOUBLE:
+		अवरोध;
+	हाल TRANSFER_DOUBLE:
 		storeDouble(&roundData, getFd(opcode), pAddress);
-		break;
-#ifdef CONFIG_FPE_NWFPE_XP
-	case TRANSFER_EXTENDED:
+		अवरोध;
+#अगर_घोषित CONFIG_FPE_NWFPE_XP
+	हाल TRANSFER_EXTENDED:
 		storeExtended(getFd(opcode), pAddress);
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		nRc = 0;
-	}
+	पूर्ण
 
-	if (roundData.exception)
-		float_raise(roundData.exception);
+	अगर (roundData.exception)
+		भग्न_उठाओ(roundData.exception);
 
-	if (write_back)
-		writeRegister(getRn(opcode), (unsigned long) pFinal);
-	return nRc;
-}
+	अगर (ग_लिखो_back)
+		ग_लिखोRegister(getRn(opcode), (अचिन्हित दीर्घ) pFinal);
+	वापस nRc;
+पूर्ण
 
-unsigned int PerformLFM(const unsigned int opcode)
-{
-	unsigned int __user *pBase, *pAddress, *pFinal;
-	unsigned int i, Fd, write_back = WRITE_BACK(opcode);
+अचिन्हित पूर्णांक Perक्रमmLFM(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक __user *pBase, *pAddress, *pFinal;
+	अचिन्हित पूर्णांक i, Fd, ग_लिखो_back = WRITE_BACK(opcode);
 
-	pBase = (unsigned int __user *) readRegister(getRn(opcode));
-	if (REG_PC == getRn(opcode)) {
+	pBase = (अचिन्हित पूर्णांक __user *) पढ़ोRegister(getRn(opcode));
+	अगर (REG_PC == getRn(opcode)) अणु
 		pBase += 2;
-		write_back = 0;
-	}
+		ग_लिखो_back = 0;
+	पूर्ण
 
 	pFinal = pBase;
-	if (BIT_UP_SET(opcode))
+	अगर (BIT_UP_SET(opcode))
 		pFinal += getOffset(opcode);
-	else
+	अन्यथा
 		pFinal -= getOffset(opcode);
 
-	if (PREINDEXED(opcode))
+	अगर (PREINDEXED(opcode))
 		pAddress = pFinal;
-	else
+	अन्यथा
 		pAddress = pBase;
 
 	Fd = getFd(opcode);
-	for (i = getRegisterCount(opcode); i > 0; i--) {
+	क्रम (i = getRegisterCount(opcode); i > 0; i--) अणु
 		loadMultiple(Fd, pAddress);
 		pAddress += 3;
 		Fd++;
-		if (Fd == 8)
+		अगर (Fd == 8)
 			Fd = 0;
-	}
+	पूर्ण
 
-	if (write_back)
-		writeRegister(getRn(opcode), (unsigned long) pFinal);
-	return 1;
-}
+	अगर (ग_लिखो_back)
+		ग_लिखोRegister(getRn(opcode), (अचिन्हित दीर्घ) pFinal);
+	वापस 1;
+पूर्ण
 
-unsigned int PerformSFM(const unsigned int opcode)
-{
-	unsigned int __user *pBase, *pAddress, *pFinal;
-	unsigned int i, Fd, write_back = WRITE_BACK(opcode);
+अचिन्हित पूर्णांक Perक्रमmSFM(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक __user *pBase, *pAddress, *pFinal;
+	अचिन्हित पूर्णांक i, Fd, ग_लिखो_back = WRITE_BACK(opcode);
 
-	pBase = (unsigned int __user *) readRegister(getRn(opcode));
-	if (REG_PC == getRn(opcode)) {
+	pBase = (अचिन्हित पूर्णांक __user *) पढ़ोRegister(getRn(opcode));
+	अगर (REG_PC == getRn(opcode)) अणु
 		pBase += 2;
-		write_back = 0;
-	}
+		ग_लिखो_back = 0;
+	पूर्ण
 
 	pFinal = pBase;
-	if (BIT_UP_SET(opcode))
+	अगर (BIT_UP_SET(opcode))
 		pFinal += getOffset(opcode);
-	else
+	अन्यथा
 		pFinal -= getOffset(opcode);
 
-	if (PREINDEXED(opcode))
+	अगर (PREINDEXED(opcode))
 		pAddress = pFinal;
-	else
+	अन्यथा
 		pAddress = pBase;
 
 	Fd = getFd(opcode);
-	for (i = getRegisterCount(opcode); i > 0; i--) {
+	क्रम (i = getRegisterCount(opcode); i > 0; i--) अणु
 		storeMultiple(Fd, pAddress);
 		pAddress += 3;
 		Fd++;
-		if (Fd == 8)
+		अगर (Fd == 8)
 			Fd = 0;
-	}
+	पूर्ण
 
-	if (write_back)
-		writeRegister(getRn(opcode), (unsigned long) pFinal);
-	return 1;
-}
+	अगर (ग_लिखो_back)
+		ग_लिखोRegister(getRn(opcode), (अचिन्हित दीर्घ) pFinal);
+	वापस 1;
+पूर्ण
 
-unsigned int EmulateCPDT(const unsigned int opcode)
-{
-	unsigned int nRc = 0;
+अचिन्हित पूर्णांक EmulateCPDT(स्थिर अचिन्हित पूर्णांक opcode)
+अणु
+	अचिन्हित पूर्णांक nRc = 0;
 
-	if (LDF_OP(opcode)) {
-		nRc = PerformLDF(opcode);
-	} else if (LFM_OP(opcode)) {
-		nRc = PerformLFM(opcode);
-	} else if (STF_OP(opcode)) {
-		nRc = PerformSTF(opcode);
-	} else if (SFM_OP(opcode)) {
-		nRc = PerformSFM(opcode);
-	} else {
+	अगर (LDF_OP(opcode)) अणु
+		nRc = Perक्रमmLDF(opcode);
+	पूर्ण अन्यथा अगर (LFM_OP(opcode)) अणु
+		nRc = Perक्रमmLFM(opcode);
+	पूर्ण अन्यथा अगर (STF_OP(opcode)) अणु
+		nRc = Perक्रमmSTF(opcode);
+	पूर्ण अन्यथा अगर (SFM_OP(opcode)) अणु
+		nRc = Perक्रमmSFM(opcode);
+	पूर्ण अन्यथा अणु
 		nRc = 0;
-	}
+	पूर्ण
 
-	return nRc;
-}
+	वापस nRc;
+पूर्ण

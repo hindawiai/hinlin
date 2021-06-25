@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _MM_PAGE_REPORTING_H
-#define _MM_PAGE_REPORTING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _MM_PAGE_REPORTING_H
+#घोषणा _MM_PAGE_REPORTING_H
 
-#include <linux/mmzone.h>
-#include <linux/pageblock-flags.h>
-#include <linux/page-isolation.h>
-#include <linux/jump_label.h>
-#include <linux/slab.h>
-#include <linux/pgtable.h>
-#include <linux/scatterlist.h>
+#समावेश <linux/mmzone.h>
+#समावेश <linux/pageblock-flags.h>
+#समावेश <linux/page-isolation.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/scatterlist.h>
 
-#define PAGE_REPORTING_MIN_ORDER	pageblock_order
+#घोषणा PAGE_REPORTING_MIN_ORDER	pageblock_order
 
-#ifdef CONFIG_PAGE_REPORTING
+#अगर_घोषित CONFIG_PAGE_REPORTING
 DECLARE_STATIC_KEY_FALSE(page_reporting_enabled);
-void __page_reporting_notify(void);
+व्योम __page_reporting_notअगरy(व्योम);
 
-static inline bool page_reported(struct page *page)
-{
-	return static_branch_unlikely(&page_reporting_enabled) &&
+अटल अंतरभूत bool page_reported(काष्ठा page *page)
+अणु
+	वापस अटल_branch_unlikely(&page_reporting_enabled) &&
 	       PageReported(page);
-}
+पूर्ण
 
 /**
- * page_reporting_notify_free - Free page notification to start page processing
+ * page_reporting_notअगरy_मुक्त - Free page notअगरication to start page processing
  *
- * This function is meant to act as a screener for __page_reporting_notify
- * which will determine if a give zone has crossed over the high-water mark
- * that will justify us beginning page treatment. If we have crossed that
+ * This function is meant to act as a screener क्रम __page_reporting_notअगरy
+ * which will determine अगर a give zone has crossed over the high-water mark
+ * that will justअगरy us beginning page treaपंचांगent. If we have crossed that
  * threshold then it will start the process of pulling some pages and
- * placing them in the batch list for treatment.
+ * placing them in the batch list क्रम treaपंचांगent.
  */
-static inline void page_reporting_notify_free(unsigned int order)
-{
-	/* Called from hot path in __free_one_page() */
-	if (!static_branch_unlikely(&page_reporting_enabled))
-		return;
+अटल अंतरभूत व्योम page_reporting_notअगरy_मुक्त(अचिन्हित पूर्णांक order)
+अणु
+	/* Called from hot path in __मुक्त_one_page() */
+	अगर (!अटल_branch_unlikely(&page_reporting_enabled))
+		वापस;
 
-	/* Determine if we have crossed reporting threshold */
-	if (order < PAGE_REPORTING_MIN_ORDER)
-		return;
+	/* Determine अगर we have crossed reporting threshold */
+	अगर (order < PAGE_REPORTING_MIN_ORDER)
+		वापस;
 
 	/* This will add a few cycles, but should be called infrequently */
-	__page_reporting_notify();
-}
-#else /* CONFIG_PAGE_REPORTING */
-#define page_reported(_page)	false
+	__page_reporting_notअगरy();
+पूर्ण
+#अन्यथा /* CONFIG_PAGE_REPORTING */
+#घोषणा page_reported(_page)	false
 
-static inline void page_reporting_notify_free(unsigned int order)
-{
-}
-#endif /* CONFIG_PAGE_REPORTING */
-#endif /*_MM_PAGE_REPORTING_H */
+अटल अंतरभूत व्योम page_reporting_notअगरy_मुक्त(अचिन्हित पूर्णांक order)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PAGE_REPORTING */
+#पूर्ण_अगर /*_MM_PAGE_REPORTING_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,84 +10,84 @@
 *******************************************************************************
 ******************************************************************************/
 
-#include "dlm_internal.h"
-#include "lock.h"
-#include "user.h"
-#include "ast.h"
+#समावेश "dlm_internal.h"
+#समावेश "lock.h"
+#समावेश "user.h"
+#समावेश "ast.h"
 
-static uint64_t dlm_cb_seq;
-static DEFINE_SPINLOCK(dlm_cb_seq_spin);
+अटल uपूर्णांक64_t dlm_cb_seq;
+अटल DEFINE_SPINLOCK(dlm_cb_seq_spin);
 
-static void dlm_dump_lkb_callbacks(struct dlm_lkb *lkb)
-{
-	int i;
+अटल व्योम dlm_dump_lkb_callbacks(काष्ठा dlm_lkb *lkb)
+अणु
+	पूर्णांक i;
 
-	log_print("last_bast %x %llu flags %x mode %d sb %d %x",
+	log_prपूर्णांक("last_bast %x %llu flags %x mode %d sb %d %x",
 		  lkb->lkb_id,
-		  (unsigned long long)lkb->lkb_last_bast.seq,
+		  (अचिन्हित दीर्घ दीर्घ)lkb->lkb_last_bast.seq,
 		  lkb->lkb_last_bast.flags,
 		  lkb->lkb_last_bast.mode,
 		  lkb->lkb_last_bast.sb_status,
 		  lkb->lkb_last_bast.sb_flags);
 
-	log_print("last_cast %x %llu flags %x mode %d sb %d %x",
+	log_prपूर्णांक("last_cast %x %llu flags %x mode %d sb %d %x",
 		  lkb->lkb_id,
-		  (unsigned long long)lkb->lkb_last_cast.seq,
+		  (अचिन्हित दीर्घ दीर्घ)lkb->lkb_last_cast.seq,
 		  lkb->lkb_last_cast.flags,
 		  lkb->lkb_last_cast.mode,
 		  lkb->lkb_last_cast.sb_status,
 		  lkb->lkb_last_cast.sb_flags);
 
-	for (i = 0; i < DLM_CALLBACKS_SIZE; i++) {
-		log_print("cb %x %llu flags %x mode %d sb %d %x",
+	क्रम (i = 0; i < DLM_CALLBACKS_SIZE; i++) अणु
+		log_prपूर्णांक("cb %x %llu flags %x mode %d sb %d %x",
 			  lkb->lkb_id,
-			  (unsigned long long)lkb->lkb_callbacks[i].seq,
+			  (अचिन्हित दीर्घ दीर्घ)lkb->lkb_callbacks[i].seq,
 			  lkb->lkb_callbacks[i].flags,
 			  lkb->lkb_callbacks[i].mode,
 			  lkb->lkb_callbacks[i].sb_status,
 			  lkb->lkb_callbacks[i].sb_flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int dlm_add_lkb_callback(struct dlm_lkb *lkb, uint32_t flags, int mode,
-			 int status, uint32_t sbflags, uint64_t seq)
-{
-	struct dlm_ls *ls = lkb->lkb_resource->res_ls;
-	uint64_t prev_seq;
-	int prev_mode;
-	int i, rv;
+पूर्णांक dlm_add_lkb_callback(काष्ठा dlm_lkb *lkb, uपूर्णांक32_t flags, पूर्णांक mode,
+			 पूर्णांक status, uपूर्णांक32_t sbflags, uपूर्णांक64_t seq)
+अणु
+	काष्ठा dlm_ls *ls = lkb->lkb_resource->res_ls;
+	uपूर्णांक64_t prev_seq;
+	पूर्णांक prev_mode;
+	पूर्णांक i, rv;
 
-	for (i = 0; i < DLM_CALLBACKS_SIZE; i++) {
-		if (lkb->lkb_callbacks[i].seq)
-			continue;
+	क्रम (i = 0; i < DLM_CALLBACKS_SIZE; i++) अणु
+		अगर (lkb->lkb_callbacks[i].seq)
+			जारी;
 
 		/*
-		 * Suppress some redundant basts here, do more on removal.
-		 * Don't even add a bast if the callback just before it
-		 * is a bast for the same mode or a more restrictive mode.
-		 * (the addional > PR check is needed for PR/CW inversion)
+		 * Suppress some redundant basts here, करो more on removal.
+		 * Don't even add a bast अगर the callback just beक्रमe it
+		 * is a bast क्रम the same mode or a more restrictive mode.
+		 * (the addional > PR check is needed क्रम PR/CW inversion)
 		 */
 
-		if ((i > 0) && (flags & DLM_CB_BAST) &&
-		    (lkb->lkb_callbacks[i-1].flags & DLM_CB_BAST)) {
+		अगर ((i > 0) && (flags & DLM_CB_BAST) &&
+		    (lkb->lkb_callbacks[i-1].flags & DLM_CB_BAST)) अणु
 
 			prev_seq = lkb->lkb_callbacks[i-1].seq;
 			prev_mode = lkb->lkb_callbacks[i-1].mode;
 
-			if ((prev_mode == mode) ||
-			    (prev_mode > mode && prev_mode > DLM_LOCK_PR)) {
+			अगर ((prev_mode == mode) ||
+			    (prev_mode > mode && prev_mode > DLM_LOCK_PR)) अणु
 
 				log_debug(ls, "skip %x add bast %llu mode %d "
 					  "for bast %llu mode %d",
 					  lkb->lkb_id,
-					  (unsigned long long)seq,
+					  (अचिन्हित दीर्घ दीर्घ)seq,
 					  mode,
-					  (unsigned long long)prev_seq,
+					  (अचिन्हित दीर्घ दीर्घ)prev_seq,
 					  prev_mode);
 				rv = 0;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		lkb->lkb_callbacks[i].seq = seq;
 		lkb->lkb_callbacks[i].flags = flags;
@@ -94,231 +95,231 @@ int dlm_add_lkb_callback(struct dlm_lkb *lkb, uint32_t flags, int mode,
 		lkb->lkb_callbacks[i].sb_status = status;
 		lkb->lkb_callbacks[i].sb_flags = (sbflags & 0x000000FF);
 		rv = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (i == DLM_CALLBACKS_SIZE) {
+	अगर (i == DLM_CALLBACKS_SIZE) अणु
 		log_error(ls, "no callbacks %x %llu flags %x mode %d sb %d %x",
-			  lkb->lkb_id, (unsigned long long)seq,
+			  lkb->lkb_id, (अचिन्हित दीर्घ दीर्घ)seq,
 			  flags, mode, status, sbflags);
 		dlm_dump_lkb_callbacks(lkb);
 		rv = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
  out:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-int dlm_rem_lkb_callback(struct dlm_ls *ls, struct dlm_lkb *lkb,
-			 struct dlm_callback *cb, int *resid)
-{
-	int i, rv;
+पूर्णांक dlm_rem_lkb_callback(काष्ठा dlm_ls *ls, काष्ठा dlm_lkb *lkb,
+			 काष्ठा dlm_callback *cb, पूर्णांक *resid)
+अणु
+	पूर्णांक i, rv;
 
 	*resid = 0;
 
-	if (!lkb->lkb_callbacks[0].seq) {
+	अगर (!lkb->lkb_callbacks[0].seq) अणु
 		rv = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* oldest undelivered cb is callbacks[0] */
 
-	memcpy(cb, &lkb->lkb_callbacks[0], sizeof(struct dlm_callback));
-	memset(&lkb->lkb_callbacks[0], 0, sizeof(struct dlm_callback));
+	स_नकल(cb, &lkb->lkb_callbacks[0], माप(काष्ठा dlm_callback));
+	स_रखो(&lkb->lkb_callbacks[0], 0, माप(काष्ठा dlm_callback));
 
-	/* shift others down */
+	/* shअगरt others करोwn */
 
-	for (i = 1; i < DLM_CALLBACKS_SIZE; i++) {
-		if (!lkb->lkb_callbacks[i].seq)
-			break;
-		memcpy(&lkb->lkb_callbacks[i-1], &lkb->lkb_callbacks[i],
-		       sizeof(struct dlm_callback));
-		memset(&lkb->lkb_callbacks[i], 0, sizeof(struct dlm_callback));
+	क्रम (i = 1; i < DLM_CALLBACKS_SIZE; i++) अणु
+		अगर (!lkb->lkb_callbacks[i].seq)
+			अवरोध;
+		स_नकल(&lkb->lkb_callbacks[i-1], &lkb->lkb_callbacks[i],
+		       माप(काष्ठा dlm_callback));
+		स_रखो(&lkb->lkb_callbacks[i], 0, माप(काष्ठा dlm_callback));
 		(*resid)++;
-	}
+	पूर्ण
 
-	/* if cb is a bast, it should be skipped if the blocking mode is
+	/* अगर cb is a bast, it should be skipped अगर the blocking mode is
 	   compatible with the last granted mode */
 
-	if ((cb->flags & DLM_CB_BAST) && lkb->lkb_last_cast.seq) {
-		if (dlm_modes_compat(cb->mode, lkb->lkb_last_cast.mode)) {
+	अगर ((cb->flags & DLM_CB_BAST) && lkb->lkb_last_cast.seq) अणु
+		अगर (dlm_modes_compat(cb->mode, lkb->lkb_last_cast.mode)) अणु
 			cb->flags |= DLM_CB_SKIP;
 
 			log_debug(ls, "skip %x bast %llu mode %d "
 				  "for cast %llu mode %d",
 				  lkb->lkb_id,
-				  (unsigned long long)cb->seq,
+				  (अचिन्हित दीर्घ दीर्घ)cb->seq,
 				  cb->mode,
-				  (unsigned long long)lkb->lkb_last_cast.seq,
+				  (अचिन्हित दीर्घ दीर्घ)lkb->lkb_last_cast.seq,
 				  lkb->lkb_last_cast.mode);
 			rv = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (cb->flags & DLM_CB_CAST) {
-		memcpy(&lkb->lkb_last_cast, cb, sizeof(struct dlm_callback));
-		lkb->lkb_last_cast_time = ktime_get();
-	}
+	अगर (cb->flags & DLM_CB_CAST) अणु
+		स_नकल(&lkb->lkb_last_cast, cb, माप(काष्ठा dlm_callback));
+		lkb->lkb_last_cast_समय = kसमय_get();
+	पूर्ण
 
-	if (cb->flags & DLM_CB_BAST) {
-		memcpy(&lkb->lkb_last_bast, cb, sizeof(struct dlm_callback));
-		lkb->lkb_last_bast_time = ktime_get();
-	}
+	अगर (cb->flags & DLM_CB_BAST) अणु
+		स_नकल(&lkb->lkb_last_bast, cb, माप(काष्ठा dlm_callback));
+		lkb->lkb_last_bast_समय = kसमय_get();
+	पूर्ण
 	rv = 0;
  out:
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-void dlm_add_cb(struct dlm_lkb *lkb, uint32_t flags, int mode, int status,
-		uint32_t sbflags)
-{
-	struct dlm_ls *ls = lkb->lkb_resource->res_ls;
-	uint64_t new_seq, prev_seq;
-	int rv;
+व्योम dlm_add_cb(काष्ठा dlm_lkb *lkb, uपूर्णांक32_t flags, पूर्णांक mode, पूर्णांक status,
+		uपूर्णांक32_t sbflags)
+अणु
+	काष्ठा dlm_ls *ls = lkb->lkb_resource->res_ls;
+	uपूर्णांक64_t new_seq, prev_seq;
+	पूर्णांक rv;
 
 	spin_lock(&dlm_cb_seq_spin);
 	new_seq = ++dlm_cb_seq;
-	if (!dlm_cb_seq)
+	अगर (!dlm_cb_seq)
 		new_seq = ++dlm_cb_seq;
 	spin_unlock(&dlm_cb_seq_spin);
 
-	if (lkb->lkb_flags & DLM_IFL_USER) {
+	अगर (lkb->lkb_flags & DLM_IFL_USER) अणु
 		dlm_user_add_ast(lkb, flags, mode, status, sbflags, new_seq);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&lkb->lkb_cb_mutex);
 	prev_seq = lkb->lkb_callbacks[0].seq;
 
 	rv = dlm_add_lkb_callback(lkb, flags, mode, status, sbflags, new_seq);
-	if (rv < 0)
-		goto out;
+	अगर (rv < 0)
+		जाओ out;
 
-	if (!prev_seq) {
+	अगर (!prev_seq) अणु
 		kref_get(&lkb->lkb_ref);
 
-		if (test_bit(LSFL_CB_DELAY, &ls->ls_flags)) {
+		अगर (test_bit(LSFL_CB_DELAY, &ls->ls_flags)) अणु
 			mutex_lock(&ls->ls_cb_mutex);
 			list_add(&lkb->lkb_cb_list, &ls->ls_cb_delay);
 			mutex_unlock(&ls->ls_cb_mutex);
-		} else {
+		पूर्ण अन्यथा अणु
 			queue_work(ls->ls_callback_wq, &lkb->lkb_cb_work);
-		}
-	}
+		पूर्ण
+	पूर्ण
  out:
 	mutex_unlock(&lkb->lkb_cb_mutex);
-}
+पूर्ण
 
-void dlm_callback_work(struct work_struct *work)
-{
-	struct dlm_lkb *lkb = container_of(work, struct dlm_lkb, lkb_cb_work);
-	struct dlm_ls *ls = lkb->lkb_resource->res_ls;
-	void (*castfn) (void *astparam);
-	void (*bastfn) (void *astparam, int mode);
-	struct dlm_callback callbacks[DLM_CALLBACKS_SIZE];
-	int i, rv, resid;
+व्योम dlm_callback_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dlm_lkb *lkb = container_of(work, काष्ठा dlm_lkb, lkb_cb_work);
+	काष्ठा dlm_ls *ls = lkb->lkb_resource->res_ls;
+	व्योम (*castfn) (व्योम *astparam);
+	व्योम (*bastfn) (व्योम *astparam, पूर्णांक mode);
+	काष्ठा dlm_callback callbacks[DLM_CALLBACKS_SIZE];
+	पूर्णांक i, rv, resid;
 
-	memset(&callbacks, 0, sizeof(callbacks));
+	स_रखो(&callbacks, 0, माप(callbacks));
 
 	mutex_lock(&lkb->lkb_cb_mutex);
-	if (!lkb->lkb_callbacks[0].seq) {
+	अगर (!lkb->lkb_callbacks[0].seq) अणु
 		/* no callback work exists, shouldn't happen */
 		log_error(ls, "dlm_callback_work %x no work", lkb->lkb_id);
-		dlm_print_lkb(lkb);
+		dlm_prपूर्णांक_lkb(lkb);
 		dlm_dump_lkb_callbacks(lkb);
-	}
+	पूर्ण
 
-	for (i = 0; i < DLM_CALLBACKS_SIZE; i++) {
+	क्रम (i = 0; i < DLM_CALLBACKS_SIZE; i++) अणु
 		rv = dlm_rem_lkb_callback(ls, lkb, &callbacks[i], &resid);
-		if (rv < 0)
-			break;
-	}
+		अगर (rv < 0)
+			अवरोध;
+	पूर्ण
 
-	if (resid) {
-		/* cbs remain, loop should have removed all, shouldn't happen */
+	अगर (resid) अणु
+		/* cbs reमुख्य, loop should have हटाओd all, shouldn't happen */
 		log_error(ls, "dlm_callback_work %x resid %d", lkb->lkb_id,
 			  resid);
-		dlm_print_lkb(lkb);
+		dlm_prपूर्णांक_lkb(lkb);
 		dlm_dump_lkb_callbacks(lkb);
-	}
+	पूर्ण
 	mutex_unlock(&lkb->lkb_cb_mutex);
 
 	castfn = lkb->lkb_astfn;
 	bastfn = lkb->lkb_bastfn;
 
-	for (i = 0; i < DLM_CALLBACKS_SIZE; i++) {
-		if (!callbacks[i].seq)
-			break;
-		if (callbacks[i].flags & DLM_CB_SKIP) {
-			continue;
-		} else if (callbacks[i].flags & DLM_CB_BAST) {
+	क्रम (i = 0; i < DLM_CALLBACKS_SIZE; i++) अणु
+		अगर (!callbacks[i].seq)
+			अवरोध;
+		अगर (callbacks[i].flags & DLM_CB_SKIP) अणु
+			जारी;
+		पूर्ण अन्यथा अगर (callbacks[i].flags & DLM_CB_BAST) अणु
 			bastfn(lkb->lkb_astparam, callbacks[i].mode);
-		} else if (callbacks[i].flags & DLM_CB_CAST) {
+		पूर्ण अन्यथा अगर (callbacks[i].flags & DLM_CB_CAST) अणु
 			lkb->lkb_lksb->sb_status = callbacks[i].sb_status;
 			lkb->lkb_lksb->sb_flags = callbacks[i].sb_flags;
 			castfn(lkb->lkb_astparam);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* undo kref_get from dlm_add_callback, may cause lkb to be freed */
+	/* unकरो kref_get from dlm_add_callback, may cause lkb to be मुक्तd */
 	dlm_put_lkb(lkb);
-}
+पूर्ण
 
-int dlm_callback_start(struct dlm_ls *ls)
-{
+पूर्णांक dlm_callback_start(काष्ठा dlm_ls *ls)
+अणु
 	ls->ls_callback_wq = alloc_workqueue("dlm_callback",
 					     WQ_HIGHPRI | WQ_MEM_RECLAIM, 0);
-	if (!ls->ls_callback_wq) {
-		log_print("can't start dlm_callback workqueue");
-		return -ENOMEM;
-	}
-	return 0;
-}
+	अगर (!ls->ls_callback_wq) अणु
+		log_prपूर्णांक("can't start dlm_callback workqueue");
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void dlm_callback_stop(struct dlm_ls *ls)
-{
-	if (ls->ls_callback_wq)
+व्योम dlm_callback_stop(काष्ठा dlm_ls *ls)
+अणु
+	अगर (ls->ls_callback_wq)
 		destroy_workqueue(ls->ls_callback_wq);
-}
+पूर्ण
 
-void dlm_callback_suspend(struct dlm_ls *ls)
-{
+व्योम dlm_callback_suspend(काष्ठा dlm_ls *ls)
+अणु
 	set_bit(LSFL_CB_DELAY, &ls->ls_flags);
 
-	if (ls->ls_callback_wq)
+	अगर (ls->ls_callback_wq)
 		flush_workqueue(ls->ls_callback_wq);
-}
+पूर्ण
 
-#define MAX_CB_QUEUE 25
+#घोषणा MAX_CB_QUEUE 25
 
-void dlm_callback_resume(struct dlm_ls *ls)
-{
-	struct dlm_lkb *lkb, *safe;
-	int count = 0;
+व्योम dlm_callback_resume(काष्ठा dlm_ls *ls)
+अणु
+	काष्ठा dlm_lkb *lkb, *safe;
+	पूर्णांक count = 0;
 
 	clear_bit(LSFL_CB_DELAY, &ls->ls_flags);
 
-	if (!ls->ls_callback_wq)
-		return;
+	अगर (!ls->ls_callback_wq)
+		वापस;
 
 more:
 	mutex_lock(&ls->ls_cb_mutex);
-	list_for_each_entry_safe(lkb, safe, &ls->ls_cb_delay, lkb_cb_list) {
+	list_क्रम_each_entry_safe(lkb, safe, &ls->ls_cb_delay, lkb_cb_list) अणु
 		list_del_init(&lkb->lkb_cb_list);
 		queue_work(ls->ls_callback_wq, &lkb->lkb_cb_work);
 		count++;
-		if (count == MAX_CB_QUEUE)
-			break;
-	}
+		अगर (count == MAX_CB_QUEUE)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&ls->ls_cb_mutex);
 
-	if (count)
+	अगर (count)
 		log_rinfo(ls, "dlm_callback_resume %d", count);
-	if (count == MAX_CB_QUEUE) {
+	अगर (count == MAX_CB_QUEUE) अणु
 		count = 0;
 		cond_resched();
-		goto more;
-	}
-}
+		जाओ more;
+	पूर्ण
+पूर्ण
 

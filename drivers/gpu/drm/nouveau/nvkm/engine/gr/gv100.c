@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,23 +20,23 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "gf100.h"
-#include "ctxgf100.h"
+#समावेश "gf100.h"
+#समावेश "ctxgf100.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static void
-gv100_gr_trap_sm(struct gf100_gr *gr, int gpc, int tpc, int sm)
-{
-	struct nvkm_subdev *subdev = &gr->base.engine.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल व्योम
+gv100_gr_trap_sm(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc, पूर्णांक sm)
+अणु
+	काष्ठा nvkm_subdev *subdev = &gr->base.engine.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 werr = nvkm_rd32(device, TPC_UNIT(gpc, tpc, 0x730 + (sm * 0x80)));
 	u32 gerr = nvkm_rd32(device, TPC_UNIT(gpc, tpc, 0x734 + (sm * 0x80)));
-	const struct nvkm_enum *warp;
-	char glob[128];
+	स्थिर काष्ठा nvkm_क्रमागत *warp;
+	अक्षर glob[128];
 
-	nvkm_snprintbf(glob, sizeof(glob), gf100_mp_global_error, gerr);
-	warp = nvkm_enum_find(gf100_mp_warp_error, werr & 0xffff);
+	nvkm_snprपूर्णांकbf(glob, माप(glob), gf100_mp_global_error, gerr);
+	warp = nvkm_क्रमागत_find(gf100_mp_warp_error, werr & 0xffff);
 
 	nvkm_error(subdev, "GPC%i/TPC%i/SM%d trap: "
 			   "global %08x [%s] warp %04x [%s]\n",
@@ -43,50 +44,50 @@ gv100_gr_trap_sm(struct gf100_gr *gr, int gpc, int tpc, int sm)
 
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x730 + sm * 0x80), 0x00000000);
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x734 + sm * 0x80), gerr);
-}
+पूर्ण
 
-void
-gv100_gr_trap_mp(struct gf100_gr *gr, int gpc, int tpc)
-{
+व्योम
+gv100_gr_trap_mp(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc)
+अणु
 	gv100_gr_trap_sm(gr, gpc, tpc, 0);
 	gv100_gr_trap_sm(gr, gpc, tpc, 1);
-}
+पूर्ण
 
-static void
-gv100_gr_init_4188a4(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+अटल व्योम
+gv100_gr_init_4188a4(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_mask(device, 0x4188a4, 0x03000000, 0x03000000);
-}
+पूर्ण
 
-void
-gv100_gr_init_shader_exceptions(struct gf100_gr *gr, int gpc, int tpc)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
-	int sm;
-	for (sm = 0; sm < 0x100; sm += 0x80) {
+व्योम
+gv100_gr_init_shader_exceptions(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
+	पूर्णांक sm;
+	क्रम (sm = 0; sm < 0x100; sm += 0x80) अणु
 		nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x728 + sm), 0x0085eb64);
 		nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x610), 0x00000001);
 		nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x72c + sm), 0x00000004);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-gv100_gr_init_504430(struct gf100_gr *gr, int gpc, int tpc)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+व्योम
+gv100_gr_init_504430(काष्ठा gf100_gr *gr, पूर्णांक gpc, पूर्णांक tpc)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_wr32(device, TPC_UNIT(gpc, tpc, 0x430), 0x403f0000);
-}
+पूर्ण
 
-void
-gv100_gr_init_419bd8(struct gf100_gr *gr)
-{
-	struct nvkm_device *device = gr->base.engine.subdev.device;
+व्योम
+gv100_gr_init_419bd8(काष्ठा gf100_gr *gr)
+अणु
+	काष्ठा nvkm_device *device = gr->base.engine.subdev.device;
 	nvkm_mask(device, 0x419bd8, 0x00000700, 0x00000000);
-}
+पूर्ण
 
-static const struct gf100_gr_func
-gv100_gr = {
+अटल स्थिर काष्ठा gf100_gr_func
+gv100_gr = अणु
 	.oneinit_tiles = gm200_gr_oneinit_tiles,
 	.oneinit_sm_id = gm200_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
@@ -111,14 +112,14 @@ gv100_gr = {
 	.ppc_nr = 3,
 	.grctx = &gv100_grctx,
 	.zbc = &gp102_gr_zbc,
-	.sclass = {
-		{ -1, -1, FERMI_TWOD_A },
-		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
-		{ -1, -1, VOLTA_A, &gf100_fermi },
-		{ -1, -1, VOLTA_COMPUTE_A },
-		{}
-	}
-};
+	.sclass = अणु
+		अणु -1, -1, FERMI_TWOD_A पूर्ण,
+		अणु -1, -1, KEPLER_INLINE_TO_MEMORY_B पूर्ण,
+		अणु -1, -1, VOLTA_A, &gf100_fermi पूर्ण,
+		अणु -1, -1, VOLTA_COMPUTE_A पूर्ण,
+		अणुपूर्ण
+	पूर्ण
+पूर्ण;
 
 MODULE_FIRMWARE("nvidia/gv100/gr/fecs_bl.bin");
 MODULE_FIRMWARE("nvidia/gv100/gr/fecs_inst.bin");
@@ -133,15 +134,15 @@ MODULE_FIRMWARE("nvidia/gv100/gr/sw_nonctx.bin");
 MODULE_FIRMWARE("nvidia/gv100/gr/sw_bundle_init.bin");
 MODULE_FIRMWARE("nvidia/gv100/gr/sw_method_init.bin");
 
-static const struct gf100_gr_fwif
-gv100_gr_fwif[] = {
-	{  0, gm200_gr_load, &gv100_gr, &gp108_gr_fecs_acr, &gp108_gr_gpccs_acr },
-	{ -1, gm200_gr_nofw },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_fwअगर
+gv100_gr_fwअगर[] = अणु
+	अणु  0, gm200_gr_load, &gv100_gr, &gp108_gr_fecs_acr, &gp108_gr_gpccs_acr पूर्ण,
+	अणु -1, gm200_gr_nofw पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gv100_gr_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst, struct nvkm_gr **pgr)
-{
-	return gf100_gr_new_(gv100_gr_fwif, device, type, inst, pgr);
-}
+पूर्णांक
+gv100_gr_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst, काष्ठा nvkm_gr **pgr)
+अणु
+	वापस gf100_gr_new_(gv100_gr_fwअगर, device, type, inst, pgr);
+पूर्ण

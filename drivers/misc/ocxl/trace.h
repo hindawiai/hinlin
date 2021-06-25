@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 // Copyright 2017 IBM Corp.
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM ocxl
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM ocxl
 
-#if !defined(_TRACE_OCXL_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_OCXL_H
+#अगर !defined(_TRACE_OCXL_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_OCXL_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 
-TRACE_EVENT(ocxl_mmu_notifier_range,
-	TP_PROTO(unsigned long start, unsigned long end, unsigned long pidr),
+TRACE_EVENT(ocxl_mmu_notअगरier_range,
+	TP_PROTO(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, अचिन्हित दीर्घ pidr),
 	TP_ARGS(start, end, pidr),
 
 	TP_STRUCT__entry(
-		__field(unsigned long, start)
-		__field(unsigned long, end)
-		__field(unsigned long, pidr)
+		__field(अचिन्हित दीर्घ, start)
+		__field(अचिन्हित दीर्घ, end)
+		__field(अचिन्हित दीर्घ, pidr)
 	),
 
 	TP_fast_assign(
@@ -25,20 +26,20 @@ TRACE_EVENT(ocxl_mmu_notifier_range,
 		__entry->pidr = pidr;
 	),
 
-	TP_printk("start=0x%lx end=0x%lx pidr=0x%lx",
+	TP_prपूर्णांकk("start=0x%lx end=0x%lx pidr=0x%lx",
 		__entry->start,
 		__entry->end,
 		__entry->pidr
 	)
 );
 
-TRACE_EVENT(ocxl_init_mmu_notifier,
-	TP_PROTO(int pasid, unsigned long pidr),
+TRACE_EVENT(ocxl_init_mmu_notअगरier,
+	TP_PROTO(पूर्णांक pasid, अचिन्हित दीर्घ pidr),
 	TP_ARGS(pasid, pidr),
 
 	TP_STRUCT__entry(
-		__field(int, pasid)
-		__field(unsigned long, pidr)
+		__field(पूर्णांक, pasid)
+		__field(अचिन्हित दीर्घ, pidr)
 	),
 
 	TP_fast_assign(
@@ -46,19 +47,19 @@ TRACE_EVENT(ocxl_init_mmu_notifier,
 		__entry->pidr = pidr;
 	),
 
-	TP_printk("pasid=%d, pidr=0x%lx",
+	TP_prपूर्णांकk("pasid=%d, pidr=0x%lx",
 		__entry->pasid,
 		__entry->pidr
 	)
 );
 
-TRACE_EVENT(ocxl_release_mmu_notifier,
-	TP_PROTO(int pasid, unsigned long pidr),
+TRACE_EVENT(ocxl_release_mmu_notअगरier,
+	TP_PROTO(पूर्णांक pasid, अचिन्हित दीर्घ pidr),
 	TP_ARGS(pasid, pidr),
 
 	TP_STRUCT__entry(
-		__field(int, pasid)
-		__field(unsigned long, pidr)
+		__field(पूर्णांक, pasid)
+		__field(अचिन्हित दीर्घ, pidr)
 	),
 
 	TP_fast_assign(
@@ -66,20 +67,20 @@ TRACE_EVENT(ocxl_release_mmu_notifier,
 		__entry->pidr = pidr;
 	),
 
-	TP_printk("pasid=%d, pidr=0x%lx",
+	TP_prपूर्णांकk("pasid=%d, pidr=0x%lx",
 		__entry->pasid,
 		__entry->pidr
 	)
 );
 
 DECLARE_EVENT_CLASS(ocxl_context,
-	TP_PROTO(pid_t pid, void *spa, int pasid, u32 pidr, u32 tidr),
+	TP_PROTO(pid_t pid, व्योम *spa, पूर्णांक pasid, u32 pidr, u32 tidr),
 	TP_ARGS(pid, spa, pasid, pidr, tidr),
 
 	TP_STRUCT__entry(
 		__field(pid_t, pid)
-		__field(void*, spa)
-		__field(int, pasid)
+		__field(व्योम*, spa)
+		__field(पूर्णांक, pasid)
 		__field(u32, pidr)
 		__field(u32, tidr)
 	),
@@ -92,7 +93,7 @@ DECLARE_EVENT_CLASS(ocxl_context,
 		__entry->tidr = tidr;
 	),
 
-	TP_printk("linux pid=%d spa=0x%p pasid=0x%x pidr=0x%x tidr=0x%x",
+	TP_prपूर्णांकk("linux pid=%d spa=0x%p pasid=0x%x pidr=0x%x tidr=0x%x",
 		__entry->pid,
 		__entry->spa,
 		__entry->pasid,
@@ -102,22 +103,22 @@ DECLARE_EVENT_CLASS(ocxl_context,
 );
 
 DEFINE_EVENT(ocxl_context, ocxl_context_add,
-	TP_PROTO(pid_t pid, void *spa, int pasid, u32 pidr, u32 tidr),
+	TP_PROTO(pid_t pid, व्योम *spa, पूर्णांक pasid, u32 pidr, u32 tidr),
 	TP_ARGS(pid, spa, pasid, pidr, tidr)
 );
 
-DEFINE_EVENT(ocxl_context, ocxl_context_remove,
-	TP_PROTO(pid_t pid, void *spa, int pasid, u32 pidr, u32 tidr),
+DEFINE_EVENT(ocxl_context, ocxl_context_हटाओ,
+	TP_PROTO(pid_t pid, व्योम *spa, पूर्णांक pasid, u32 pidr, u32 tidr),
 	TP_ARGS(pid, spa, pasid, pidr, tidr)
 );
 
 TRACE_EVENT(ocxl_terminate_pasid,
-	TP_PROTO(int pasid, int rc),
+	TP_PROTO(पूर्णांक pasid, पूर्णांक rc),
 	TP_ARGS(pasid, rc),
 
 	TP_STRUCT__entry(
-		__field(int, pasid)
-		__field(int, rc)
+		__field(पूर्णांक, pasid)
+		__field(पूर्णांक, rc)
 	),
 
 	TP_fast_assign(
@@ -125,18 +126,18 @@ TRACE_EVENT(ocxl_terminate_pasid,
 		__entry->rc = rc;
 	),
 
-	TP_printk("pasid=0x%x rc=%d",
+	TP_prपूर्णांकk("pasid=0x%x rc=%d",
 		__entry->pasid,
 		__entry->rc
 	)
 );
 
 DECLARE_EVENT_CLASS(ocxl_fault_handler,
-	TP_PROTO(void *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
+	TP_PROTO(व्योम *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
 	TP_ARGS(spa, pe, dsisr, dar, tfc),
 
 	TP_STRUCT__entry(
-		__field(void *, spa)
+		__field(व्योम *, spa)
 		__field(u64, pe)
 		__field(u64, dsisr)
 		__field(u64, dar)
@@ -151,7 +152,7 @@ DECLARE_EVENT_CLASS(ocxl_fault_handler,
 		__entry->tfc = tfc;
 	),
 
-	TP_printk("spa=%p pe=0x%llx dsisr=0x%llx dar=0x%llx tfc=0x%llx",
+	TP_prपूर्णांकk("spa=%p pe=0x%llx dsisr=0x%llx dar=0x%llx tfc=0x%llx",
 		__entry->spa,
 		__entry->pe,
 		__entry->dsisr,
@@ -161,24 +162,24 @@ DECLARE_EVENT_CLASS(ocxl_fault_handler,
 );
 
 DEFINE_EVENT(ocxl_fault_handler, ocxl_fault,
-	TP_PROTO(void *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
+	TP_PROTO(व्योम *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
 	TP_ARGS(spa, pe, dsisr, dar, tfc)
 );
 
 DEFINE_EVENT(ocxl_fault_handler, ocxl_fault_ack,
-	TP_PROTO(void *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
+	TP_PROTO(व्योम *spa, u64 pe, u64 dsisr, u64 dar, u64 tfc),
 	TP_ARGS(spa, pe, dsisr, dar, tfc)
 );
 
 TRACE_EVENT(ocxl_afu_irq_alloc,
-	TP_PROTO(int pasid, int irq_id, unsigned int virq, int hw_irq),
+	TP_PROTO(पूर्णांक pasid, पूर्णांक irq_id, अचिन्हित पूर्णांक virq, पूर्णांक hw_irq),
 	TP_ARGS(pasid, irq_id, virq, hw_irq),
 
 	TP_STRUCT__entry(
-		__field(int, pasid)
-		__field(int, irq_id)
-		__field(unsigned int, virq)
-		__field(int, hw_irq)
+		__field(पूर्णांक, pasid)
+		__field(पूर्णांक, irq_id)
+		__field(अचिन्हित पूर्णांक, virq)
+		__field(पूर्णांक, hw_irq)
 	),
 
 	TP_fast_assign(
@@ -188,7 +189,7 @@ TRACE_EVENT(ocxl_afu_irq_alloc,
 		__entry->hw_irq = hw_irq;
 	),
 
-	TP_printk("pasid=0x%x irq_id=%d virq=%u hw_irq=%d",
+	TP_prपूर्णांकk("pasid=0x%x irq_id=%d virq=%u hw_irq=%d",
 		__entry->pasid,
 		__entry->irq_id,
 		__entry->virq,
@@ -196,13 +197,13 @@ TRACE_EVENT(ocxl_afu_irq_alloc,
 	)
 );
 
-TRACE_EVENT(ocxl_afu_irq_free,
-	TP_PROTO(int pasid, int irq_id),
+TRACE_EVENT(ocxl_afu_irq_मुक्त,
+	TP_PROTO(पूर्णांक pasid, पूर्णांक irq_id),
 	TP_ARGS(pasid, irq_id),
 
 	TP_STRUCT__entry(
-		__field(int, pasid)
-		__field(int, irq_id)
+		__field(पूर्णांक, pasid)
+		__field(पूर्णांक, irq_id)
 	),
 
 	TP_fast_assign(
@@ -210,33 +211,33 @@ TRACE_EVENT(ocxl_afu_irq_free,
 		__entry->irq_id = irq_id;
 	),
 
-	TP_printk("pasid=0x%x irq_id=%d",
+	TP_prपूर्णांकk("pasid=0x%x irq_id=%d",
 		__entry->pasid,
 		__entry->irq_id
 	)
 );
 
 TRACE_EVENT(ocxl_afu_irq_receive,
-	TP_PROTO(int virq),
+	TP_PROTO(पूर्णांक virq),
 	TP_ARGS(virq),
 
 	TP_STRUCT__entry(
-		__field(int, virq)
+		__field(पूर्णांक, virq)
 	),
 
 	TP_fast_assign(
 		__entry->virq = virq;
 	),
 
-	TP_printk("virq=%d",
+	TP_prपूर्णांकk("virq=%d",
 		__entry->virq
 	)
 );
 
-#endif /* _TRACE_OCXL_H */
+#पूर्ण_अगर /* _TRACE_OCXL_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE trace
-#include <trace/define_trace.h>
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता trace
+#समावेश <trace/define_trace.h>

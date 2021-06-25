@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * bdc_dbg.h - header for the BDC debug functions
+ * bdc_dbg.h - header क्रम the BDC debug functions
  *
  * Copyright (C) 2014 Broadcom Corporation
  *
  * Author: Ashwini Pahuja
  */
-#ifndef __LINUX_BDC_DBG_H__
-#define __LINUX_BDC_DBG_H__
+#अगर_अघोषित __LINUX_BDC_DBG_H__
+#घोषणा __LINUX_BDC_DBG_H__
 
-#include "bdc.h"
+#समावेश "bdc.h"
 
-#ifdef CONFIG_USB_GADGET_VERBOSE
-void bdc_dbg_bd_list(struct bdc *bdc, struct bdc_ep *ep);
-void bdc_dbg_srr(struct bdc *bdc, u32 srr_num);
-void bdc_dbg_regs(struct bdc *bdc);
-void bdc_dump_epsts(struct bdc *bdc);
-#else
-static inline void bdc_dbg_regs(struct bdc *bdc)
-{ }
+#अगर_घोषित CONFIG_USB_GADGET_VERBOSE
+व्योम bdc_dbg_bd_list(काष्ठा bdc *bdc, काष्ठा bdc_ep *ep);
+व्योम bdc_dbg_srr(काष्ठा bdc *bdc, u32 srr_num);
+व्योम bdc_dbg_regs(काष्ठा bdc *bdc);
+व्योम bdc_dump_epsts(काष्ठा bdc *bdc);
+#अन्यथा
+अटल अंतरभूत व्योम bdc_dbg_regs(काष्ठा bdc *bdc)
+अणु पूर्ण
 
-static inline void bdc_dbg_srr(struct bdc *bdc, u32 srr_num)
-{ }
+अटल अंतरभूत व्योम bdc_dbg_srr(काष्ठा bdc *bdc, u32 srr_num)
+अणु पूर्ण
 
-static inline void bdc_dbg_bd_list(struct bdc *bdc, struct bdc_ep *ep)
-{ }
+अटल अंतरभूत व्योम bdc_dbg_bd_list(काष्ठा bdc *bdc, काष्ठा bdc_ep *ep)
+अणु पूर्ण
 
-static inline void bdc_dump_epsts(struct bdc *bdc)
-{ }
-#endif /* CONFIG_USB_GADGET_VERBOSE */
-#endif /* __LINUX_BDC_DBG_H__ */
+अटल अंतरभूत व्योम bdc_dump_epsts(काष्ठा bdc *bdc)
+अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_USB_GADGET_VERBOSE */
+#पूर्ण_अगर /* __LINUX_BDC_DBG_H__ */

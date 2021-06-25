@@ -1,473 +1,474 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/rhashtable.h>
-#include <linux/idr.h>
-#include <linux/list.h>
-#include <linux/sort.h>
-#include <linux/objagg.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sort.h>
+#समावेश <linux/objagg.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/objagg.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/objagg.h>
 
-struct objagg_hints {
-	struct rhashtable node_ht;
-	struct rhashtable_params ht_params;
-	struct list_head node_list;
-	unsigned int node_count;
-	unsigned int root_count;
-	unsigned int refcount;
-	const struct objagg_ops *ops;
-};
+काष्ठा objagg_hपूर्णांकs अणु
+	काष्ठा rhashtable node_ht;
+	काष्ठा rhashtable_params ht_params;
+	काष्ठा list_head node_list;
+	अचिन्हित पूर्णांक node_count;
+	अचिन्हित पूर्णांक root_count;
+	अचिन्हित पूर्णांक refcount;
+	स्थिर काष्ठा objagg_ops *ops;
+पूर्ण;
 
-struct objagg_hints_node {
-	struct rhash_head ht_node; /* member of objagg_hints->node_ht */
-	struct list_head list; /* member of objagg_hints->node_list */
-	struct objagg_hints_node *parent;
-	unsigned int root_id;
-	struct objagg_obj_stats_info stats_info;
-	unsigned long obj[];
-};
+काष्ठा objagg_hपूर्णांकs_node अणु
+	काष्ठा rhash_head ht_node; /* member of objagg_hपूर्णांकs->node_ht */
+	काष्ठा list_head list; /* member of objagg_hपूर्णांकs->node_list */
+	काष्ठा objagg_hपूर्णांकs_node *parent;
+	अचिन्हित पूर्णांक root_id;
+	काष्ठा objagg_obj_stats_info stats_info;
+	अचिन्हित दीर्घ obj[];
+पूर्ण;
 
-static struct objagg_hints_node *
-objagg_hints_lookup(struct objagg_hints *objagg_hints, void *obj)
-{
-	if (!objagg_hints)
-		return NULL;
-	return rhashtable_lookup_fast(&objagg_hints->node_ht, obj,
-				      objagg_hints->ht_params);
-}
+अटल काष्ठा objagg_hपूर्णांकs_node *
+objagg_hपूर्णांकs_lookup(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs, व्योम *obj)
+अणु
+	अगर (!objagg_hपूर्णांकs)
+		वापस शून्य;
+	वापस rhashtable_lookup_fast(&objagg_hपूर्णांकs->node_ht, obj,
+				      objagg_hपूर्णांकs->ht_params);
+पूर्ण
 
-struct objagg {
-	const struct objagg_ops *ops;
-	void *priv;
-	struct rhashtable obj_ht;
-	struct rhashtable_params ht_params;
-	struct list_head obj_list;
-	unsigned int obj_count;
-	struct ida root_ida;
-	struct objagg_hints *hints;
-};
+काष्ठा objagg अणु
+	स्थिर काष्ठा objagg_ops *ops;
+	व्योम *priv;
+	काष्ठा rhashtable obj_ht;
+	काष्ठा rhashtable_params ht_params;
+	काष्ठा list_head obj_list;
+	अचिन्हित पूर्णांक obj_count;
+	काष्ठा ida root_ida;
+	काष्ठा objagg_hपूर्णांकs *hपूर्णांकs;
+पूर्ण;
 
-struct objagg_obj {
-	struct rhash_head ht_node; /* member of objagg->obj_ht */
-	struct list_head list; /* member of objagg->obj_list */
-	struct objagg_obj *parent; /* if the object is nested, this
-				    * holds pointer to parent, otherwise NULL
+काष्ठा objagg_obj अणु
+	काष्ठा rhash_head ht_node; /* member of objagg->obj_ht */
+	काष्ठा list_head list; /* member of objagg->obj_list */
+	काष्ठा objagg_obj *parent; /* अगर the object is nested, this
+				    * holds poपूर्णांकer to parent, otherwise शून्य
 				    */
-	union {
-		void *delta_priv; /* user delta private */
-		void *root_priv; /* user root private */
-	};
-	unsigned int root_id;
-	unsigned int refcount; /* counts number of users of this object
+	जोड़ अणु
+		व्योम *delta_priv; /* user delta निजी */
+		व्योम *root_priv; /* user root निजी */
+	पूर्ण;
+	अचिन्हित पूर्णांक root_id;
+	अचिन्हित पूर्णांक refcount; /* counts number of users of this object
 				* including nested objects
 				*/
-	struct objagg_obj_stats stats;
-	unsigned long obj[];
-};
+	काष्ठा objagg_obj_stats stats;
+	अचिन्हित दीर्घ obj[];
+पूर्ण;
 
-static unsigned int objagg_obj_ref_inc(struct objagg_obj *objagg_obj)
-{
-	return ++objagg_obj->refcount;
-}
+अटल अचिन्हित पूर्णांक objagg_obj_ref_inc(काष्ठा objagg_obj *objagg_obj)
+अणु
+	वापस ++objagg_obj->refcount;
+पूर्ण
 
-static unsigned int objagg_obj_ref_dec(struct objagg_obj *objagg_obj)
-{
-	return --objagg_obj->refcount;
-}
+अटल अचिन्हित पूर्णांक objagg_obj_ref_dec(काष्ठा objagg_obj *objagg_obj)
+अणु
+	वापस --objagg_obj->refcount;
+पूर्ण
 
-static void objagg_obj_stats_inc(struct objagg_obj *objagg_obj)
-{
+अटल व्योम objagg_obj_stats_inc(काष्ठा objagg_obj *objagg_obj)
+अणु
 	objagg_obj->stats.user_count++;
 	objagg_obj->stats.delta_user_count++;
-	if (objagg_obj->parent)
+	अगर (objagg_obj->parent)
 		objagg_obj->parent->stats.delta_user_count++;
-}
+पूर्ण
 
-static void objagg_obj_stats_dec(struct objagg_obj *objagg_obj)
-{
+अटल व्योम objagg_obj_stats_dec(काष्ठा objagg_obj *objagg_obj)
+अणु
 	objagg_obj->stats.user_count--;
 	objagg_obj->stats.delta_user_count--;
-	if (objagg_obj->parent)
+	अगर (objagg_obj->parent)
 		objagg_obj->parent->stats.delta_user_count--;
-}
+पूर्ण
 
-static bool objagg_obj_is_root(const struct objagg_obj *objagg_obj)
-{
+अटल bool objagg_obj_is_root(स्थिर काष्ठा objagg_obj *objagg_obj)
+अणु
 	/* Nesting is not supported, so we can use ->parent
-	 * to figure out if the object is root.
+	 * to figure out अगर the object is root.
 	 */
-	return !objagg_obj->parent;
-}
+	वापस !objagg_obj->parent;
+पूर्ण
 
 /**
- * objagg_obj_root_priv - obtains root private for an object
+ * objagg_obj_root_priv - obtains root निजी क्रम an object
  * @objagg_obj:	objagg object instance
  *
  * Note: all locking must be provided by the caller.
  *
- * Either the object is root itself when the private is returned
- * directly, or the parent is root and its private is returned
+ * Either the object is root itself when the निजी is वापसed
+ * directly, or the parent is root and its निजी is वापसed
  * instead.
  *
- * Returns a user private root pointer.
+ * Returns a user निजी root poपूर्णांकer.
  */
-const void *objagg_obj_root_priv(const struct objagg_obj *objagg_obj)
-{
-	if (objagg_obj_is_root(objagg_obj))
-		return objagg_obj->root_priv;
+स्थिर व्योम *objagg_obj_root_priv(स्थिर काष्ठा objagg_obj *objagg_obj)
+अणु
+	अगर (objagg_obj_is_root(objagg_obj))
+		वापस objagg_obj->root_priv;
 	WARN_ON(!objagg_obj_is_root(objagg_obj->parent));
-	return objagg_obj->parent->root_priv;
-}
+	वापस objagg_obj->parent->root_priv;
+पूर्ण
 EXPORT_SYMBOL(objagg_obj_root_priv);
 
 /**
- * objagg_obj_delta_priv - obtains delta private for an object
+ * objagg_obj_delta_priv - obtains delta निजी क्रम an object
  * @objagg_obj:	objagg object instance
  *
  * Note: all locking must be provided by the caller.
  *
- * Returns user private delta pointer or NULL in case the passed
+ * Returns user निजी delta poपूर्णांकer or शून्य in हाल the passed
  * object is root.
  */
-const void *objagg_obj_delta_priv(const struct objagg_obj *objagg_obj)
-{
-	if (objagg_obj_is_root(objagg_obj))
-		return NULL;
-	return objagg_obj->delta_priv;
-}
+स्थिर व्योम *objagg_obj_delta_priv(स्थिर काष्ठा objagg_obj *objagg_obj)
+अणु
+	अगर (objagg_obj_is_root(objagg_obj))
+		वापस शून्य;
+	वापस objagg_obj->delta_priv;
+पूर्ण
 EXPORT_SYMBOL(objagg_obj_delta_priv);
 
 /**
- * objagg_obj_raw - obtains object user private pointer
+ * objagg_obj_raw - obtains object user निजी poपूर्णांकer
  * @objagg_obj:	objagg object instance
  *
  * Note: all locking must be provided by the caller.
  *
- * Returns user private pointer as was passed to objagg_obj_get() by "obj" arg.
+ * Returns user निजी poपूर्णांकer as was passed to objagg_obj_get() by "obj" arg.
  */
-const void *objagg_obj_raw(const struct objagg_obj *objagg_obj)
-{
-	return objagg_obj->obj;
-}
+स्थिर व्योम *objagg_obj_raw(स्थिर काष्ठा objagg_obj *objagg_obj)
+अणु
+	वापस objagg_obj->obj;
+पूर्ण
 EXPORT_SYMBOL(objagg_obj_raw);
 
-static struct objagg_obj *objagg_obj_lookup(struct objagg *objagg, void *obj)
-{
-	return rhashtable_lookup_fast(&objagg->obj_ht, obj, objagg->ht_params);
-}
+अटल काष्ठा objagg_obj *objagg_obj_lookup(काष्ठा objagg *objagg, व्योम *obj)
+अणु
+	वापस rhashtable_lookup_fast(&objagg->obj_ht, obj, objagg->ht_params);
+पूर्ण
 
-static int objagg_obj_parent_assign(struct objagg *objagg,
-				    struct objagg_obj *objagg_obj,
-				    struct objagg_obj *parent,
+अटल पूर्णांक objagg_obj_parent_assign(काष्ठा objagg *objagg,
+				    काष्ठा objagg_obj *objagg_obj,
+				    काष्ठा objagg_obj *parent,
 				    bool take_parent_ref)
-{
-	void *delta_priv;
+अणु
+	व्योम *delta_priv;
 
 	delta_priv = objagg->ops->delta_create(objagg->priv, parent->obj,
 					       objagg_obj->obj);
-	if (IS_ERR(delta_priv))
-		return PTR_ERR(delta_priv);
+	अगर (IS_ERR(delta_priv))
+		वापस PTR_ERR(delta_priv);
 
-	/* User returned a delta private, that means that
-	 * our object can be aggregated into the parent.
+	/* User वापसed a delta निजी, that means that
+	 * our object can be aggregated पूर्णांकo the parent.
 	 */
 	objagg_obj->parent = parent;
 	objagg_obj->delta_priv = delta_priv;
-	if (take_parent_ref)
+	अगर (take_parent_ref)
 		objagg_obj_ref_inc(objagg_obj->parent);
 	trace_objagg_obj_parent_assign(objagg, objagg_obj,
 				       parent,
 				       parent->refcount);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int objagg_obj_parent_lookup_assign(struct objagg *objagg,
-					   struct objagg_obj *objagg_obj)
-{
-	struct objagg_obj *objagg_obj_cur;
-	int err;
+अटल पूर्णांक objagg_obj_parent_lookup_assign(काष्ठा objagg *objagg,
+					   काष्ठा objagg_obj *objagg_obj)
+अणु
+	काष्ठा objagg_obj *objagg_obj_cur;
+	पूर्णांक err;
 
-	list_for_each_entry(objagg_obj_cur, &objagg->obj_list, list) {
-		/* Nesting is not supported. In case the object
-		 * is not root, it cannot be assigned as parent.
+	list_क्रम_each_entry(objagg_obj_cur, &objagg->obj_list, list) अणु
+		/* Nesting is not supported. In हाल the object
+		 * is not root, it cannot be asचिन्हित as parent.
 		 */
-		if (!objagg_obj_is_root(objagg_obj_cur))
-			continue;
+		अगर (!objagg_obj_is_root(objagg_obj_cur))
+			जारी;
 		err = objagg_obj_parent_assign(objagg, objagg_obj,
 					       objagg_obj_cur, true);
-		if (!err)
-			return 0;
-	}
-	return -ENOENT;
-}
+		अगर (!err)
+			वापस 0;
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static void __objagg_obj_put(struct objagg *objagg,
-			     struct objagg_obj *objagg_obj);
+अटल व्योम __objagg_obj_put(काष्ठा objagg *objagg,
+			     काष्ठा objagg_obj *objagg_obj);
 
-static void objagg_obj_parent_unassign(struct objagg *objagg,
-				       struct objagg_obj *objagg_obj)
-{
+अटल व्योम objagg_obj_parent_unassign(काष्ठा objagg *objagg,
+				       काष्ठा objagg_obj *objagg_obj)
+अणु
 	trace_objagg_obj_parent_unassign(objagg, objagg_obj,
 					 objagg_obj->parent,
 					 objagg_obj->parent->refcount);
 	objagg->ops->delta_destroy(objagg->priv, objagg_obj->delta_priv);
 	__objagg_obj_put(objagg, objagg_obj->parent);
-}
+पूर्ण
 
-static int objagg_obj_root_id_alloc(struct objagg *objagg,
-				    struct objagg_obj *objagg_obj,
-				    struct objagg_hints_node *hnode)
-{
-	unsigned int min, max;
-	int root_id;
+अटल पूर्णांक objagg_obj_root_id_alloc(काष्ठा objagg *objagg,
+				    काष्ठा objagg_obj *objagg_obj,
+				    काष्ठा objagg_hपूर्णांकs_node *hnode)
+अणु
+	अचिन्हित पूर्णांक min, max;
+	पूर्णांक root_id;
 
-	/* In case there are no hints available, the root id is invalid. */
-	if (!objagg->hints) {
+	/* In हाल there are no hपूर्णांकs available, the root id is invalid. */
+	अगर (!objagg->hपूर्णांकs) अणु
 		objagg_obj->root_id = OBJAGG_OBJ_ROOT_ID_INVALID;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (hnode) {
+	अगर (hnode) अणु
 		min = hnode->root_id;
 		max = hnode->root_id;
-	} else {
-		/* For objects with no hint, start after the last
-		 * hinted root_id.
+	पूर्ण अन्यथा अणु
+		/* For objects with no hपूर्णांक, start after the last
+		 * hपूर्णांकed root_id.
 		 */
-		min = objagg->hints->root_count;
+		min = objagg->hपूर्णांकs->root_count;
 		max = ~0;
-	}
+	पूर्ण
 
 	root_id = ida_alloc_range(&objagg->root_ida, min, max, GFP_KERNEL);
 
-	if (root_id < 0)
-		return root_id;
+	अगर (root_id < 0)
+		वापस root_id;
 	objagg_obj->root_id = root_id;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void objagg_obj_root_id_free(struct objagg *objagg,
-				    struct objagg_obj *objagg_obj)
-{
-	if (!objagg->hints)
-		return;
-	ida_free(&objagg->root_ida, objagg_obj->root_id);
-}
+अटल व्योम objagg_obj_root_id_मुक्त(काष्ठा objagg *objagg,
+				    काष्ठा objagg_obj *objagg_obj)
+अणु
+	अगर (!objagg->hपूर्णांकs)
+		वापस;
+	ida_मुक्त(&objagg->root_ida, objagg_obj->root_id);
+पूर्ण
 
-static int objagg_obj_root_create(struct objagg *objagg,
-				  struct objagg_obj *objagg_obj,
-				  struct objagg_hints_node *hnode)
-{
-	int err;
+अटल पूर्णांक objagg_obj_root_create(काष्ठा objagg *objagg,
+				  काष्ठा objagg_obj *objagg_obj,
+				  काष्ठा objagg_hपूर्णांकs_node *hnode)
+अणु
+	पूर्णांक err;
 
 	err = objagg_obj_root_id_alloc(objagg, objagg_obj, hnode);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	objagg_obj->root_priv = objagg->ops->root_create(objagg->priv,
 							 objagg_obj->obj,
 							 objagg_obj->root_id);
-	if (IS_ERR(objagg_obj->root_priv)) {
+	अगर (IS_ERR(objagg_obj->root_priv)) अणु
 		err = PTR_ERR(objagg_obj->root_priv);
-		goto err_root_create;
-	}
+		जाओ err_root_create;
+	पूर्ण
 	trace_objagg_obj_root_create(objagg, objagg_obj);
-	return 0;
+	वापस 0;
 
 err_root_create:
-	objagg_obj_root_id_free(objagg, objagg_obj);
-	return err;
-}
+	objagg_obj_root_id_मुक्त(objagg, objagg_obj);
+	वापस err;
+पूर्ण
 
-static void objagg_obj_root_destroy(struct objagg *objagg,
-				    struct objagg_obj *objagg_obj)
-{
+अटल व्योम objagg_obj_root_destroy(काष्ठा objagg *objagg,
+				    काष्ठा objagg_obj *objagg_obj)
+अणु
 	trace_objagg_obj_root_destroy(objagg, objagg_obj);
 	objagg->ops->root_destroy(objagg->priv, objagg_obj->root_priv);
-	objagg_obj_root_id_free(objagg, objagg_obj);
-}
+	objagg_obj_root_id_मुक्त(objagg, objagg_obj);
+पूर्ण
 
-static struct objagg_obj *__objagg_obj_get(struct objagg *objagg, void *obj);
+अटल काष्ठा objagg_obj *__objagg_obj_get(काष्ठा objagg *objagg, व्योम *obj);
 
-static int objagg_obj_init_with_hints(struct objagg *objagg,
-				      struct objagg_obj *objagg_obj,
-				      bool *hint_found)
-{
-	struct objagg_hints_node *hnode;
-	struct objagg_obj *parent;
-	int err;
+अटल पूर्णांक objagg_obj_init_with_hपूर्णांकs(काष्ठा objagg *objagg,
+				      काष्ठा objagg_obj *objagg_obj,
+				      bool *hपूर्णांक_found)
+अणु
+	काष्ठा objagg_hपूर्णांकs_node *hnode;
+	काष्ठा objagg_obj *parent;
+	पूर्णांक err;
 
-	hnode = objagg_hints_lookup(objagg->hints, objagg_obj->obj);
-	if (!hnode) {
-		*hint_found = false;
-		return 0;
-	}
-	*hint_found = true;
+	hnode = objagg_hपूर्णांकs_lookup(objagg->hपूर्णांकs, objagg_obj->obj);
+	अगर (!hnode) अणु
+		*hपूर्णांक_found = false;
+		वापस 0;
+	पूर्ण
+	*hपूर्णांक_found = true;
 
-	if (!hnode->parent)
-		return objagg_obj_root_create(objagg, objagg_obj, hnode);
+	अगर (!hnode->parent)
+		वापस objagg_obj_root_create(objagg, objagg_obj, hnode);
 
 	parent = __objagg_obj_get(objagg, hnode->parent->obj);
-	if (IS_ERR(parent))
-		return PTR_ERR(parent);
+	अगर (IS_ERR(parent))
+		वापस PTR_ERR(parent);
 
 	err = objagg_obj_parent_assign(objagg, objagg_obj, parent, false);
-	if (err) {
-		*hint_found = false;
+	अगर (err) अणु
+		*hपूर्णांक_found = false;
 		err = 0;
-		goto err_parent_assign;
-	}
+		जाओ err_parent_assign;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_parent_assign:
 	objagg_obj_put(objagg, parent);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int objagg_obj_init(struct objagg *objagg,
-			   struct objagg_obj *objagg_obj)
-{
-	bool hint_found;
-	int err;
+अटल पूर्णांक objagg_obj_init(काष्ठा objagg *objagg,
+			   काष्ठा objagg_obj *objagg_obj)
+अणु
+	bool hपूर्णांक_found;
+	पूर्णांक err;
 
-	/* First, try to use hints if they are available and
-	 * if they provide result.
+	/* First, try to use hपूर्णांकs अगर they are available and
+	 * अगर they provide result.
 	 */
-	err = objagg_obj_init_with_hints(objagg, objagg_obj, &hint_found);
-	if (err)
-		return err;
+	err = objagg_obj_init_with_hपूर्णांकs(objagg, objagg_obj, &hपूर्णांक_found);
+	अगर (err)
+		वापस err;
 
-	if (hint_found)
-		return 0;
+	अगर (hपूर्णांक_found)
+		वापस 0;
 
-	/* Try to find if the object can be aggregated under an existing one. */
+	/* Try to find अगर the object can be aggregated under an existing one. */
 	err = objagg_obj_parent_lookup_assign(objagg, objagg_obj);
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 	/* If aggregation is not possible, make the object a root. */
-	return objagg_obj_root_create(objagg, objagg_obj, NULL);
-}
+	वापस objagg_obj_root_create(objagg, objagg_obj, शून्य);
+पूर्ण
 
-static void objagg_obj_fini(struct objagg *objagg,
-			    struct objagg_obj *objagg_obj)
-{
-	if (!objagg_obj_is_root(objagg_obj))
+अटल व्योम objagg_obj_fini(काष्ठा objagg *objagg,
+			    काष्ठा objagg_obj *objagg_obj)
+अणु
+	अगर (!objagg_obj_is_root(objagg_obj))
 		objagg_obj_parent_unassign(objagg, objagg_obj);
-	else
+	अन्यथा
 		objagg_obj_root_destroy(objagg, objagg_obj);
-}
+पूर्ण
 
-static struct objagg_obj *objagg_obj_create(struct objagg *objagg, void *obj)
-{
-	struct objagg_obj *objagg_obj;
-	int err;
+अटल काष्ठा objagg_obj *objagg_obj_create(काष्ठा objagg *objagg, व्योम *obj)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
+	पूर्णांक err;
 
-	objagg_obj = kzalloc(sizeof(*objagg_obj) + objagg->ops->obj_size,
+	objagg_obj = kzalloc(माप(*objagg_obj) + objagg->ops->obj_size,
 			     GFP_KERNEL);
-	if (!objagg_obj)
-		return ERR_PTR(-ENOMEM);
+	अगर (!objagg_obj)
+		वापस ERR_PTR(-ENOMEM);
 	objagg_obj_ref_inc(objagg_obj);
-	memcpy(objagg_obj->obj, obj, objagg->ops->obj_size);
+	स_नकल(objagg_obj->obj, obj, objagg->ops->obj_size);
 
 	err = objagg_obj_init(objagg, objagg_obj);
-	if (err)
-		goto err_obj_init;
+	अगर (err)
+		जाओ err_obj_init;
 
 	err = rhashtable_insert_fast(&objagg->obj_ht, &objagg_obj->ht_node,
 				     objagg->ht_params);
-	if (err)
-		goto err_ht_insert;
+	अगर (err)
+		जाओ err_ht_insert;
 	list_add(&objagg_obj->list, &objagg->obj_list);
 	objagg->obj_count++;
 	trace_objagg_obj_create(objagg, objagg_obj);
 
-	return objagg_obj;
+	वापस objagg_obj;
 
 err_ht_insert:
 	objagg_obj_fini(objagg, objagg_obj);
 err_obj_init:
-	kfree(objagg_obj);
-	return ERR_PTR(err);
-}
+	kमुक्त(objagg_obj);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static struct objagg_obj *__objagg_obj_get(struct objagg *objagg, void *obj)
-{
-	struct objagg_obj *objagg_obj;
+अटल काष्ठा objagg_obj *__objagg_obj_get(काष्ठा objagg *objagg, व्योम *obj)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
 
 	/* First, try to find the object exactly as user passed it,
-	 * perhaps it is already in use.
+	 * perhaps it is alपढ़ोy in use.
 	 */
 	objagg_obj = objagg_obj_lookup(objagg, obj);
-	if (objagg_obj) {
+	अगर (objagg_obj) अणु
 		objagg_obj_ref_inc(objagg_obj);
-		return objagg_obj;
-	}
+		वापस objagg_obj;
+	पूर्ण
 
-	return objagg_obj_create(objagg, obj);
-}
+	वापस objagg_obj_create(objagg, obj);
+पूर्ण
 
 /**
- * objagg_obj_get - gets an object within objagg instance
+ * objagg_obj_get - माला_लो an object within objagg instance
  * @objagg:	objagg instance
- * @obj:	user-specific private object pointer
+ * @obj:	user-specअगरic निजी object poपूर्णांकer
  *
  * Note: all locking must be provided by the caller.
  *
- * Size of the "obj" memory is specified in "objagg->ops".
+ * Size of the "obj" memory is specअगरied in "objagg->ops".
  *
- * There are 3 main options this function wraps:
- * 1) The object according to "obj" already exist. In that case
- *    the reference counter is incrementes and the object is returned.
- * 2) The object does not exist, but it can be aggregated within
- *    another object. In that case, user ops->delta_create() is called
- *    to obtain delta data and a new object is created with returned
- *    user-delta private pointer.
- * 3) The object does not exist and cannot be aggregated into
- *    any of the existing objects. In that case, user ops->root_create()
+ * There are 3 मुख्य options this function wraps:
+ * 1) The object according to "obj" alपढ़ोy exist. In that हाल
+ *    the reference counter is incrementes and the object is वापसed.
+ * 2) The object करोes not exist, but it can be aggregated within
+ *    another object. In that हाल, user ops->delta_create() is called
+ *    to obtain delta data and a new object is created with वापसed
+ *    user-delta निजी poपूर्णांकer.
+ * 3) The object करोes not exist and cannot be aggregated पूर्णांकo
+ *    any of the existing objects. In that हाल, user ops->root_create()
  *    is called to create the root and a new object is created with
- *    returned user-root private pointer.
+ *    वापसed user-root निजी poपूर्णांकer.
  *
- * Returns a pointer to objagg object instance in case of success,
- * otherwise it returns pointer error using ERR_PTR macro.
+ * Returns a poपूर्णांकer to objagg object instance in हाल of success,
+ * otherwise it वापसs poपूर्णांकer error using ERR_PTR macro.
  */
-struct objagg_obj *objagg_obj_get(struct objagg *objagg, void *obj)
-{
-	struct objagg_obj *objagg_obj;
+काष्ठा objagg_obj *objagg_obj_get(काष्ठा objagg *objagg, व्योम *obj)
+अणु
+	काष्ठा objagg_obj *objagg_obj;
 
 	objagg_obj = __objagg_obj_get(objagg, obj);
-	if (IS_ERR(objagg_obj))
-		return objagg_obj;
+	अगर (IS_ERR(objagg_obj))
+		वापस objagg_obj;
 	objagg_obj_stats_inc(objagg_obj);
 	trace_objagg_obj_get(objagg, objagg_obj, objagg_obj->refcount);
-	return objagg_obj;
-}
+	वापस objagg_obj;
+पूर्ण
 EXPORT_SYMBOL(objagg_obj_get);
 
-static void objagg_obj_destroy(struct objagg *objagg,
-			       struct objagg_obj *objagg_obj)
-{
+अटल व्योम objagg_obj_destroy(काष्ठा objagg *objagg,
+			       काष्ठा objagg_obj *objagg_obj)
+अणु
 	trace_objagg_obj_destroy(objagg, objagg_obj);
 	--objagg->obj_count;
 	list_del(&objagg_obj->list);
-	rhashtable_remove_fast(&objagg->obj_ht, &objagg_obj->ht_node,
+	rhashtable_हटाओ_fast(&objagg->obj_ht, &objagg_obj->ht_node,
 			       objagg->ht_params);
 	objagg_obj_fini(objagg, objagg_obj);
-	kfree(objagg_obj);
-}
+	kमुक्त(objagg_obj);
+पूर्ण
 
-static void __objagg_obj_put(struct objagg *objagg,
-			     struct objagg_obj *objagg_obj)
-{
-	if (!objagg_obj_ref_dec(objagg_obj))
+अटल व्योम __objagg_obj_put(काष्ठा objagg *objagg,
+			     काष्ठा objagg_obj *objagg_obj)
+अणु
+	अगर (!objagg_obj_ref_dec(objagg_obj))
 		objagg_obj_destroy(objagg, objagg_obj);
-}
+पूर्ण
 
 /**
- * objagg_obj_put - puts an object within objagg instance
+ * objagg_obj_put - माला_दो an object within objagg instance
  * @objagg:	objagg instance
  * @objagg_obj:	objagg object instance
  *
@@ -475,28 +476,28 @@ static void __objagg_obj_put(struct objagg *objagg,
  *
  * Symmetric to objagg_obj_get().
  */
-void objagg_obj_put(struct objagg *objagg, struct objagg_obj *objagg_obj)
-{
+व्योम objagg_obj_put(काष्ठा objagg *objagg, काष्ठा objagg_obj *objagg_obj)
+अणु
 	trace_objagg_obj_put(objagg, objagg_obj, objagg_obj->refcount);
 	objagg_obj_stats_dec(objagg_obj);
 	__objagg_obj_put(objagg, objagg_obj);
-}
+पूर्ण
 EXPORT_SYMBOL(objagg_obj_put);
 
 /**
  * objagg_create - creates a new objagg instance
- * @ops:		user-specific callbacks
- * @objagg_hints:	hints, can be NULL
- * @priv:		pointer to a private data passed to the ops
+ * @ops:		user-specअगरic callbacks
+ * @objagg_hपूर्णांकs:	hपूर्णांकs, can be शून्य
+ * @priv:		poपूर्णांकer to a निजी data passed to the ops
  *
  * Note: all locking must be provided by the caller.
  *
- * The purpose of the library is to provide an infrastructure to
- * aggregate user-specified objects. Library does not care about the type
- * of the object. User fills-up ops which take care of the specific
+ * The purpose of the library is to provide an infraकाष्ठाure to
+ * aggregate user-specअगरied objects. Library करोes not care about the type
+ * of the object. User fills-up ops which take care of the specअगरic
  * user object manipulation.
  *
- * As a very stupid example, consider integer numbers. For example
+ * As a very stupid example, consider पूर्णांकeger numbers. For example
  * number 8 as a root object. That can aggregate number 9 with delta 1,
  * number 10 with delta 2, etc. This example is implemented as
  * a part of a testing module in test_objagg.c file.
@@ -504,52 +505,52 @@ EXPORT_SYMBOL(objagg_obj_put);
  * Each objagg instance contains multiple trees. Each tree node is
  * represented by "an object". In the current implementation there can be
  * only roots and leafs nodes. Leaf nodes are called deltas.
- * But in general, this can be easily extended for intermediate nodes.
+ * But in general, this can be easily extended क्रम पूर्णांकermediate nodes.
  * In that extension, a delta would be associated with all non-root
  * nodes.
  *
- * Returns a pointer to newly created objagg instance in case of success,
- * otherwise it returns pointer error using ERR_PTR macro.
+ * Returns a poपूर्णांकer to newly created objagg instance in हाल of success,
+ * otherwise it वापसs poपूर्णांकer error using ERR_PTR macro.
  */
-struct objagg *objagg_create(const struct objagg_ops *ops,
-			     struct objagg_hints *objagg_hints, void *priv)
-{
-	struct objagg *objagg;
-	int err;
+काष्ठा objagg *objagg_create(स्थिर काष्ठा objagg_ops *ops,
+			     काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs, व्योम *priv)
+अणु
+	काष्ठा objagg *objagg;
+	पूर्णांक err;
 
-	if (WARN_ON(!ops || !ops->root_create || !ops->root_destroy ||
+	अगर (WARN_ON(!ops || !ops->root_create || !ops->root_destroy ||
 		    !ops->delta_check || !ops->delta_create ||
 		    !ops->delta_destroy))
-		return ERR_PTR(-EINVAL);
+		वापस ERR_PTR(-EINVAL);
 
-	objagg = kzalloc(sizeof(*objagg), GFP_KERNEL);
-	if (!objagg)
-		return ERR_PTR(-ENOMEM);
+	objagg = kzalloc(माप(*objagg), GFP_KERNEL);
+	अगर (!objagg)
+		वापस ERR_PTR(-ENOMEM);
 	objagg->ops = ops;
-	if (objagg_hints) {
-		objagg->hints = objagg_hints;
-		objagg_hints->refcount++;
-	}
+	अगर (objagg_hपूर्णांकs) अणु
+		objagg->hपूर्णांकs = objagg_hपूर्णांकs;
+		objagg_hपूर्णांकs->refcount++;
+	पूर्ण
 	objagg->priv = priv;
 	INIT_LIST_HEAD(&objagg->obj_list);
 
 	objagg->ht_params.key_len = ops->obj_size;
-	objagg->ht_params.key_offset = offsetof(struct objagg_obj, obj);
-	objagg->ht_params.head_offset = offsetof(struct objagg_obj, ht_node);
+	objagg->ht_params.key_offset = दुरत्व(काष्ठा objagg_obj, obj);
+	objagg->ht_params.head_offset = दुरत्व(काष्ठा objagg_obj, ht_node);
 
 	err = rhashtable_init(&objagg->obj_ht, &objagg->ht_params);
-	if (err)
-		goto err_rhashtable_init;
+	अगर (err)
+		जाओ err_rhashtable_init;
 
 	ida_init(&objagg->root_ida);
 
 	trace_objagg_create(objagg);
-	return objagg;
+	वापस objagg;
 
 err_rhashtable_init:
-	kfree(objagg);
-	return ERR_PTR(err);
-}
+	kमुक्त(objagg);
+	वापस ERR_PTR(err);
+पूर्ण
 EXPORT_SYMBOL(objagg_create);
 
 /**
@@ -558,31 +559,31 @@ EXPORT_SYMBOL(objagg_create);
  *
  * Note: all locking must be provided by the caller.
  */
-void objagg_destroy(struct objagg *objagg)
-{
+व्योम objagg_destroy(काष्ठा objagg *objagg)
+अणु
 	trace_objagg_destroy(objagg);
 	ida_destroy(&objagg->root_ida);
 	WARN_ON(!list_empty(&objagg->obj_list));
 	rhashtable_destroy(&objagg->obj_ht);
-	if (objagg->hints)
-		objagg_hints_put(objagg->hints);
-	kfree(objagg);
-}
+	अगर (objagg->hपूर्णांकs)
+		objagg_hपूर्णांकs_put(objagg->hपूर्णांकs);
+	kमुक्त(objagg);
+पूर्ण
 EXPORT_SYMBOL(objagg_destroy);
 
-static int objagg_stats_info_sort_cmp_func(const void *a, const void *b)
-{
-	const struct objagg_obj_stats_info *stats_info1 = a;
-	const struct objagg_obj_stats_info *stats_info2 = b;
+अटल पूर्णांक objagg_stats_info_sort_cmp_func(स्थिर व्योम *a, स्थिर व्योम *b)
+अणु
+	स्थिर काष्ठा objagg_obj_stats_info *stats_info1 = a;
+	स्थिर काष्ठा objagg_obj_stats_info *stats_info2 = b;
 
-	if (stats_info1->is_root != stats_info2->is_root)
-		return stats_info2->is_root - stats_info1->is_root;
-	if (stats_info1->stats.delta_user_count !=
+	अगर (stats_info1->is_root != stats_info2->is_root)
+		वापस stats_info2->is_root - stats_info1->is_root;
+	अगर (stats_info1->stats.delta_user_count !=
 	    stats_info2->stats.delta_user_count)
-		return stats_info2->stats.delta_user_count -
+		वापस stats_info2->stats.delta_user_count -
 		       stats_info1->stats.delta_user_count;
-	return stats_info2->stats.user_count - stats_info1->stats.user_count;
-}
+	वापस stats_info2->stats.user_count - stats_info1->stats.user_count;
+पूर्ण
 
 /**
  * objagg_stats_get - obtains stats of the objagg instance
@@ -590,464 +591,464 @@ static int objagg_stats_info_sort_cmp_func(const void *a, const void *b)
  *
  * Note: all locking must be provided by the caller.
  *
- * The returned structure contains statistics of all object
+ * The वापसed काष्ठाure contains statistics of all object
  * currently in use, ordered by following rules:
  * 1) Root objects are always on lower indexes than the rest.
  * 2) Objects with higher delta user count are always on lower
  *    indexes.
- * 3) In case more objects have the same delta user count,
+ * 3) In हाल more objects have the same delta user count,
  *    the objects are ordered by user count.
  *
- * Returns a pointer to stats instance in case of success,
- * otherwise it returns pointer error using ERR_PTR macro.
+ * Returns a poपूर्णांकer to stats instance in हाल of success,
+ * otherwise it वापसs poपूर्णांकer error using ERR_PTR macro.
  */
-const struct objagg_stats *objagg_stats_get(struct objagg *objagg)
-{
-	struct objagg_stats *objagg_stats;
-	struct objagg_obj *objagg_obj;
-	int i;
+स्थिर काष्ठा objagg_stats *objagg_stats_get(काष्ठा objagg *objagg)
+अणु
+	काष्ठा objagg_stats *objagg_stats;
+	काष्ठा objagg_obj *objagg_obj;
+	पूर्णांक i;
 
-	objagg_stats = kzalloc(struct_size(objagg_stats, stats_info,
+	objagg_stats = kzalloc(काष्ठा_size(objagg_stats, stats_info,
 					   objagg->obj_count), GFP_KERNEL);
-	if (!objagg_stats)
-		return ERR_PTR(-ENOMEM);
+	अगर (!objagg_stats)
+		वापस ERR_PTR(-ENOMEM);
 
 	i = 0;
-	list_for_each_entry(objagg_obj, &objagg->obj_list, list) {
-		memcpy(&objagg_stats->stats_info[i].stats, &objagg_obj->stats,
-		       sizeof(objagg_stats->stats_info[0].stats));
+	list_क्रम_each_entry(objagg_obj, &objagg->obj_list, list) अणु
+		स_नकल(&objagg_stats->stats_info[i].stats, &objagg_obj->stats,
+		       माप(objagg_stats->stats_info[0].stats));
 		objagg_stats->stats_info[i].objagg_obj = objagg_obj;
 		objagg_stats->stats_info[i].is_root =
 					objagg_obj_is_root(objagg_obj);
-		if (objagg_stats->stats_info[i].is_root)
+		अगर (objagg_stats->stats_info[i].is_root)
 			objagg_stats->root_count++;
 		i++;
-	}
+	पूर्ण
 	objagg_stats->stats_info_count = i;
 
 	sort(objagg_stats->stats_info, objagg_stats->stats_info_count,
-	     sizeof(struct objagg_obj_stats_info),
-	     objagg_stats_info_sort_cmp_func, NULL);
+	     माप(काष्ठा objagg_obj_stats_info),
+	     objagg_stats_info_sort_cmp_func, शून्य);
 
-	return objagg_stats;
-}
+	वापस objagg_stats;
+पूर्ण
 EXPORT_SYMBOL(objagg_stats_get);
 
 /**
- * objagg_stats_put - puts stats of the objagg instance
+ * objagg_stats_put - माला_दो stats of the objagg instance
  * @objagg_stats:	objagg instance stats
  *
  * Note: all locking must be provided by the caller.
  */
-void objagg_stats_put(const struct objagg_stats *objagg_stats)
-{
-	kfree(objagg_stats);
-}
+व्योम objagg_stats_put(स्थिर काष्ठा objagg_stats *objagg_stats)
+अणु
+	kमुक्त(objagg_stats);
+पूर्ण
 EXPORT_SYMBOL(objagg_stats_put);
 
-static struct objagg_hints_node *
-objagg_hints_node_create(struct objagg_hints *objagg_hints,
-			 struct objagg_obj *objagg_obj, size_t obj_size,
-			 struct objagg_hints_node *parent_hnode)
-{
-	unsigned int user_count = objagg_obj->stats.user_count;
-	struct objagg_hints_node *hnode;
-	int err;
+अटल काष्ठा objagg_hपूर्णांकs_node *
+objagg_hपूर्णांकs_node_create(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs,
+			 काष्ठा objagg_obj *objagg_obj, माप_प्रकार obj_size,
+			 काष्ठा objagg_hपूर्णांकs_node *parent_hnode)
+अणु
+	अचिन्हित पूर्णांक user_count = objagg_obj->stats.user_count;
+	काष्ठा objagg_hपूर्णांकs_node *hnode;
+	पूर्णांक err;
 
-	hnode = kzalloc(sizeof(*hnode) + obj_size, GFP_KERNEL);
-	if (!hnode)
-		return ERR_PTR(-ENOMEM);
-	memcpy(hnode->obj, &objagg_obj->obj, obj_size);
+	hnode = kzalloc(माप(*hnode) + obj_size, GFP_KERNEL);
+	अगर (!hnode)
+		वापस ERR_PTR(-ENOMEM);
+	स_नकल(hnode->obj, &objagg_obj->obj, obj_size);
 	hnode->stats_info.stats.user_count = user_count;
 	hnode->stats_info.stats.delta_user_count = user_count;
-	if (parent_hnode) {
+	अगर (parent_hnode) अणु
 		parent_hnode->stats_info.stats.delta_user_count += user_count;
-	} else {
-		hnode->root_id = objagg_hints->root_count++;
+	पूर्ण अन्यथा अणु
+		hnode->root_id = objagg_hपूर्णांकs->root_count++;
 		hnode->stats_info.is_root = true;
-	}
+	पूर्ण
 	hnode->stats_info.objagg_obj = objagg_obj;
 
-	err = rhashtable_insert_fast(&objagg_hints->node_ht, &hnode->ht_node,
-				     objagg_hints->ht_params);
-	if (err)
-		goto err_ht_insert;
+	err = rhashtable_insert_fast(&objagg_hपूर्णांकs->node_ht, &hnode->ht_node,
+				     objagg_hपूर्णांकs->ht_params);
+	अगर (err)
+		जाओ err_ht_insert;
 
-	list_add(&hnode->list, &objagg_hints->node_list);
+	list_add(&hnode->list, &objagg_hपूर्णांकs->node_list);
 	hnode->parent = parent_hnode;
-	objagg_hints->node_count++;
+	objagg_hपूर्णांकs->node_count++;
 
-	return hnode;
+	वापस hnode;
 
 err_ht_insert:
-	kfree(hnode);
-	return ERR_PTR(err);
-}
+	kमुक्त(hnode);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void objagg_hints_flush(struct objagg_hints *objagg_hints)
-{
-	struct objagg_hints_node *hnode, *tmp;
+अटल व्योम objagg_hपूर्णांकs_flush(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs)
+अणु
+	काष्ठा objagg_hपूर्णांकs_node *hnode, *पंचांगp;
 
-	list_for_each_entry_safe(hnode, tmp, &objagg_hints->node_list, list) {
+	list_क्रम_each_entry_safe(hnode, पंचांगp, &objagg_hपूर्णांकs->node_list, list) अणु
 		list_del(&hnode->list);
-		rhashtable_remove_fast(&objagg_hints->node_ht, &hnode->ht_node,
-				       objagg_hints->ht_params);
-		kfree(hnode);
-	}
-}
+		rhashtable_हटाओ_fast(&objagg_hपूर्णांकs->node_ht, &hnode->ht_node,
+				       objagg_hपूर्णांकs->ht_params);
+		kमुक्त(hnode);
+	पूर्ण
+पूर्ण
 
-struct objagg_tmp_node {
-	struct objagg_obj *objagg_obj;
+काष्ठा objagg_पंचांगp_node अणु
+	काष्ठा objagg_obj *objagg_obj;
 	bool crossed_out;
-};
+पूर्ण;
 
-struct objagg_tmp_graph {
-	struct objagg_tmp_node *nodes;
-	unsigned long nodes_count;
-	unsigned long *edges;
-};
+काष्ठा objagg_पंचांगp_graph अणु
+	काष्ठा objagg_पंचांगp_node *nodes;
+	अचिन्हित दीर्घ nodes_count;
+	अचिन्हित दीर्घ *edges;
+पूर्ण;
 
-static int objagg_tmp_graph_edge_index(struct objagg_tmp_graph *graph,
-				       int parent_index, int index)
-{
-	return index * graph->nodes_count + parent_index;
-}
+अटल पूर्णांक objagg_पंचांगp_graph_edge_index(काष्ठा objagg_पंचांगp_graph *graph,
+				       पूर्णांक parent_index, पूर्णांक index)
+अणु
+	वापस index * graph->nodes_count + parent_index;
+पूर्ण
 
-static void objagg_tmp_graph_edge_set(struct objagg_tmp_graph *graph,
-				      int parent_index, int index)
-{
-	int edge_index = objagg_tmp_graph_edge_index(graph, index,
+अटल व्योम objagg_पंचांगp_graph_edge_set(काष्ठा objagg_पंचांगp_graph *graph,
+				      पूर्णांक parent_index, पूर्णांक index)
+अणु
+	पूर्णांक edge_index = objagg_पंचांगp_graph_edge_index(graph, index,
 						     parent_index);
 
 	__set_bit(edge_index, graph->edges);
-}
+पूर्ण
 
-static bool objagg_tmp_graph_is_edge(struct objagg_tmp_graph *graph,
-				     int parent_index, int index)
-{
-	int edge_index = objagg_tmp_graph_edge_index(graph, index,
+अटल bool objagg_पंचांगp_graph_is_edge(काष्ठा objagg_पंचांगp_graph *graph,
+				     पूर्णांक parent_index, पूर्णांक index)
+अणु
+	पूर्णांक edge_index = objagg_पंचांगp_graph_edge_index(graph, index,
 						     parent_index);
 
-	return test_bit(edge_index, graph->edges);
-}
+	वापस test_bit(edge_index, graph->edges);
+पूर्ण
 
-static unsigned int objagg_tmp_graph_node_weight(struct objagg_tmp_graph *graph,
-						 unsigned int index)
-{
-	struct objagg_tmp_node *node = &graph->nodes[index];
-	unsigned int weight = node->objagg_obj->stats.user_count;
-	int j;
+अटल अचिन्हित पूर्णांक objagg_पंचांगp_graph_node_weight(काष्ठा objagg_पंचांगp_graph *graph,
+						 अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा objagg_पंचांगp_node *node = &graph->nodes[index];
+	अचिन्हित पूर्णांक weight = node->objagg_obj->stats.user_count;
+	पूर्णांक j;
 
 	/* Node weight is sum of node users and all other nodes users
 	 * that this node can represent with delta.
 	 */
 
-	for (j = 0; j < graph->nodes_count; j++) {
-		if (!objagg_tmp_graph_is_edge(graph, index, j))
-			continue;
+	क्रम (j = 0; j < graph->nodes_count; j++) अणु
+		अगर (!objagg_पंचांगp_graph_is_edge(graph, index, j))
+			जारी;
 		node = &graph->nodes[j];
-		if (node->crossed_out)
-			continue;
+		अगर (node->crossed_out)
+			जारी;
 		weight += node->objagg_obj->stats.user_count;
-	}
-	return weight;
-}
+	पूर्ण
+	वापस weight;
+पूर्ण
 
-static int objagg_tmp_graph_node_max_weight(struct objagg_tmp_graph *graph)
-{
-	struct objagg_tmp_node *node;
-	unsigned int max_weight = 0;
-	unsigned int weight;
-	int max_index = -1;
-	int i;
+अटल पूर्णांक objagg_पंचांगp_graph_node_max_weight(काष्ठा objagg_पंचांगp_graph *graph)
+अणु
+	काष्ठा objagg_पंचांगp_node *node;
+	अचिन्हित पूर्णांक max_weight = 0;
+	अचिन्हित पूर्णांक weight;
+	पूर्णांक max_index = -1;
+	पूर्णांक i;
 
-	for (i = 0; i < graph->nodes_count; i++) {
+	क्रम (i = 0; i < graph->nodes_count; i++) अणु
 		node = &graph->nodes[i];
-		if (node->crossed_out)
-			continue;
-		weight = objagg_tmp_graph_node_weight(graph, i);
-		if (weight >= max_weight) {
+		अगर (node->crossed_out)
+			जारी;
+		weight = objagg_पंचांगp_graph_node_weight(graph, i);
+		अगर (weight >= max_weight) अणु
 			max_weight = weight;
 			max_index = i;
-		}
-	}
-	return max_index;
-}
+		पूर्ण
+	पूर्ण
+	वापस max_index;
+पूर्ण
 
-static struct objagg_tmp_graph *objagg_tmp_graph_create(struct objagg *objagg)
-{
-	unsigned int nodes_count = objagg->obj_count;
-	struct objagg_tmp_graph *graph;
-	struct objagg_tmp_node *node;
-	struct objagg_tmp_node *pnode;
-	struct objagg_obj *objagg_obj;
-	size_t alloc_size;
-	int i, j;
+अटल काष्ठा objagg_पंचांगp_graph *objagg_पंचांगp_graph_create(काष्ठा objagg *objagg)
+अणु
+	अचिन्हित पूर्णांक nodes_count = objagg->obj_count;
+	काष्ठा objagg_पंचांगp_graph *graph;
+	काष्ठा objagg_पंचांगp_node *node;
+	काष्ठा objagg_पंचांगp_node *pnode;
+	काष्ठा objagg_obj *objagg_obj;
+	माप_प्रकार alloc_size;
+	पूर्णांक i, j;
 
-	graph = kzalloc(sizeof(*graph), GFP_KERNEL);
-	if (!graph)
-		return NULL;
+	graph = kzalloc(माप(*graph), GFP_KERNEL);
+	अगर (!graph)
+		वापस शून्य;
 
-	graph->nodes = kcalloc(nodes_count, sizeof(*graph->nodes), GFP_KERNEL);
-	if (!graph->nodes)
-		goto err_nodes_alloc;
+	graph->nodes = kसुस्मृति(nodes_count, माप(*graph->nodes), GFP_KERNEL);
+	अगर (!graph->nodes)
+		जाओ err_nodes_alloc;
 	graph->nodes_count = nodes_count;
 
 	alloc_size = BITS_TO_LONGS(nodes_count * nodes_count) *
-		     sizeof(unsigned long);
+		     माप(अचिन्हित दीर्घ);
 	graph->edges = kzalloc(alloc_size, GFP_KERNEL);
-	if (!graph->edges)
-		goto err_edges_alloc;
+	अगर (!graph->edges)
+		जाओ err_edges_alloc;
 
 	i = 0;
-	list_for_each_entry(objagg_obj, &objagg->obj_list, list) {
+	list_क्रम_each_entry(objagg_obj, &objagg->obj_list, list) अणु
 		node = &graph->nodes[i++];
 		node->objagg_obj = objagg_obj;
-	}
+	पूर्ण
 
-	/* Assemble a temporary graph. Insert edge X->Y in case Y can be
+	/* Assemble a temporary graph. Insert edge X->Y in हाल Y can be
 	 * in delta of X.
 	 */
-	for (i = 0; i < nodes_count; i++) {
-		for (j = 0; j < nodes_count; j++) {
-			if (i == j)
-				continue;
+	क्रम (i = 0; i < nodes_count; i++) अणु
+		क्रम (j = 0; j < nodes_count; j++) अणु
+			अगर (i == j)
+				जारी;
 			pnode = &graph->nodes[i];
 			node = &graph->nodes[j];
-			if (objagg->ops->delta_check(objagg->priv,
+			अगर (objagg->ops->delta_check(objagg->priv,
 						     pnode->objagg_obj->obj,
-						     node->objagg_obj->obj)) {
-				objagg_tmp_graph_edge_set(graph, i, j);
+						     node->objagg_obj->obj)) अणु
+				objagg_पंचांगp_graph_edge_set(graph, i, j);
 
-			}
-		}
-	}
-	return graph;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस graph;
 
 err_edges_alloc:
-	kfree(graph->nodes);
+	kमुक्त(graph->nodes);
 err_nodes_alloc:
-	kfree(graph);
-	return NULL;
-}
+	kमुक्त(graph);
+	वापस शून्य;
+पूर्ण
 
-static void objagg_tmp_graph_destroy(struct objagg_tmp_graph *graph)
-{
-	kfree(graph->edges);
-	kfree(graph->nodes);
-	kfree(graph);
-}
+अटल व्योम objagg_पंचांगp_graph_destroy(काष्ठा objagg_पंचांगp_graph *graph)
+अणु
+	kमुक्त(graph->edges);
+	kमुक्त(graph->nodes);
+	kमुक्त(graph);
+पूर्ण
 
-static int
-objagg_opt_simple_greedy_fillup_hints(struct objagg_hints *objagg_hints,
-				      struct objagg *objagg)
-{
-	struct objagg_hints_node *hnode, *parent_hnode;
-	struct objagg_tmp_graph *graph;
-	struct objagg_tmp_node *node;
-	int index;
-	int j;
-	int err;
+अटल पूर्णांक
+objagg_opt_simple_greedy_fillup_hपूर्णांकs(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs,
+				      काष्ठा objagg *objagg)
+अणु
+	काष्ठा objagg_hपूर्णांकs_node *hnode, *parent_hnode;
+	काष्ठा objagg_पंचांगp_graph *graph;
+	काष्ठा objagg_पंचांगp_node *node;
+	पूर्णांक index;
+	पूर्णांक j;
+	पूर्णांक err;
 
-	graph = objagg_tmp_graph_create(objagg);
-	if (!graph)
-		return -ENOMEM;
+	graph = objagg_पंचांगp_graph_create(objagg);
+	अगर (!graph)
+		वापस -ENOMEM;
 
 	/* Find the nodes from the ones that can accommodate most users
-	 * and cross them out of the graph. Save them to the hint list.
+	 * and cross them out of the graph. Save them to the hपूर्णांक list.
 	 */
-	while ((index = objagg_tmp_graph_node_max_weight(graph)) != -1) {
+	जबतक ((index = objagg_पंचांगp_graph_node_max_weight(graph)) != -1) अणु
 		node = &graph->nodes[index];
 		node->crossed_out = true;
-		hnode = objagg_hints_node_create(objagg_hints,
+		hnode = objagg_hपूर्णांकs_node_create(objagg_hपूर्णांकs,
 						 node->objagg_obj,
 						 objagg->ops->obj_size,
-						 NULL);
-		if (IS_ERR(hnode)) {
+						 शून्य);
+		अगर (IS_ERR(hnode)) अणु
 			err = PTR_ERR(hnode);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		parent_hnode = hnode;
-		for (j = 0; j < graph->nodes_count; j++) {
-			if (!objagg_tmp_graph_is_edge(graph, index, j))
-				continue;
+		क्रम (j = 0; j < graph->nodes_count; j++) अणु
+			अगर (!objagg_पंचांगp_graph_is_edge(graph, index, j))
+				जारी;
 			node = &graph->nodes[j];
-			if (node->crossed_out)
-				continue;
+			अगर (node->crossed_out)
+				जारी;
 			node->crossed_out = true;
-			hnode = objagg_hints_node_create(objagg_hints,
+			hnode = objagg_hपूर्णांकs_node_create(objagg_hपूर्णांकs,
 							 node->objagg_obj,
 							 objagg->ops->obj_size,
 							 parent_hnode);
-			if (IS_ERR(hnode)) {
+			अगर (IS_ERR(hnode)) अणु
 				err = PTR_ERR(hnode);
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	err = 0;
 out:
-	objagg_tmp_graph_destroy(graph);
-	return err;
-}
+	objagg_पंचांगp_graph_destroy(graph);
+	वापस err;
+पूर्ण
 
-struct objagg_opt_algo {
-	int (*fillup_hints)(struct objagg_hints *objagg_hints,
-			    struct objagg *objagg);
-};
+काष्ठा objagg_opt_algo अणु
+	पूर्णांक (*fillup_hपूर्णांकs)(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs,
+			    काष्ठा objagg *objagg);
+पूर्ण;
 
-static const struct objagg_opt_algo objagg_opt_simple_greedy = {
-	.fillup_hints = objagg_opt_simple_greedy_fillup_hints,
-};
+अटल स्थिर काष्ठा objagg_opt_algo objagg_opt_simple_greedy = अणु
+	.fillup_hपूर्णांकs = objagg_opt_simple_greedy_fillup_hपूर्णांकs,
+पूर्ण;
 
 
-static const struct objagg_opt_algo *objagg_opt_algos[] = {
+अटल स्थिर काष्ठा objagg_opt_algo *objagg_opt_algos[] = अणु
 	[OBJAGG_OPT_ALGO_SIMPLE_GREEDY] = &objagg_opt_simple_greedy,
-};
+पूर्ण;
 
-static int objagg_hints_obj_cmp(struct rhashtable_compare_arg *arg,
-				const void *obj)
-{
-	struct rhashtable *ht = arg->ht;
-	struct objagg_hints *objagg_hints =
-			container_of(ht, struct objagg_hints, node_ht);
-	const struct objagg_ops *ops = objagg_hints->ops;
-	const char *ptr = obj;
+अटल पूर्णांक objagg_hपूर्णांकs_obj_cmp(काष्ठा rhashtable_compare_arg *arg,
+				स्थिर व्योम *obj)
+अणु
+	काष्ठा rhashtable *ht = arg->ht;
+	काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs =
+			container_of(ht, काष्ठा objagg_hपूर्णांकs, node_ht);
+	स्थिर काष्ठा objagg_ops *ops = objagg_hपूर्णांकs->ops;
+	स्थिर अक्षर *ptr = obj;
 
 	ptr += ht->p.key_offset;
-	return ops->hints_obj_cmp ? ops->hints_obj_cmp(ptr, arg->key) :
-				    memcmp(ptr, arg->key, ht->p.key_len);
-}
+	वापस ops->hपूर्णांकs_obj_cmp ? ops->hपूर्णांकs_obj_cmp(ptr, arg->key) :
+				    स_भेद(ptr, arg->key, ht->p.key_len);
+पूर्ण
 
 /**
- * objagg_hints_get - obtains hints instance
+ * objagg_hपूर्णांकs_get - obtains hपूर्णांकs instance
  * @objagg:		objagg instance
- * @opt_algo_type:	type of hints finding algorithm
+ * @opt_algo_type:	type of hपूर्णांकs finding algorithm
  *
  * Note: all locking must be provided by the caller.
  *
  * According to the algo type, the existing objects of objagg instance
  * are going to be went-through to assemble an optimal tree. We call this
- * tree hints. These hints can be later on used for creation of
+ * tree hपूर्णांकs. These hपूर्णांकs can be later on used क्रम creation of
  * a new objagg instance. There, the future object creations are going
- * to be consulted with these hints in order to find out, where exactly
+ * to be consulted with these hपूर्णांकs in order to find out, where exactly
  * the new object should be put as a root or delta.
  *
- * Returns a pointer to hints instance in case of success,
- * otherwise it returns pointer error using ERR_PTR macro.
+ * Returns a poपूर्णांकer to hपूर्णांकs instance in हाल of success,
+ * otherwise it वापसs poपूर्णांकer error using ERR_PTR macro.
  */
-struct objagg_hints *objagg_hints_get(struct objagg *objagg,
-				      enum objagg_opt_algo_type opt_algo_type)
-{
-	const struct objagg_opt_algo *algo = objagg_opt_algos[opt_algo_type];
-	struct objagg_hints *objagg_hints;
-	int err;
+काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs_get(काष्ठा objagg *objagg,
+				      क्रमागत objagg_opt_algo_type opt_algo_type)
+अणु
+	स्थिर काष्ठा objagg_opt_algo *algo = objagg_opt_algos[opt_algo_type];
+	काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs;
+	पूर्णांक err;
 
-	objagg_hints = kzalloc(sizeof(*objagg_hints), GFP_KERNEL);
-	if (!objagg_hints)
-		return ERR_PTR(-ENOMEM);
+	objagg_hपूर्णांकs = kzalloc(माप(*objagg_hपूर्णांकs), GFP_KERNEL);
+	अगर (!objagg_hपूर्णांकs)
+		वापस ERR_PTR(-ENOMEM);
 
-	objagg_hints->ops = objagg->ops;
-	objagg_hints->refcount = 1;
+	objagg_hपूर्णांकs->ops = objagg->ops;
+	objagg_hपूर्णांकs->refcount = 1;
 
-	INIT_LIST_HEAD(&objagg_hints->node_list);
+	INIT_LIST_HEAD(&objagg_hपूर्णांकs->node_list);
 
-	objagg_hints->ht_params.key_len = objagg->ops->obj_size;
-	objagg_hints->ht_params.key_offset =
-				offsetof(struct objagg_hints_node, obj);
-	objagg_hints->ht_params.head_offset =
-				offsetof(struct objagg_hints_node, ht_node);
-	objagg_hints->ht_params.obj_cmpfn = objagg_hints_obj_cmp;
+	objagg_hपूर्णांकs->ht_params.key_len = objagg->ops->obj_size;
+	objagg_hपूर्णांकs->ht_params.key_offset =
+				दुरत्व(काष्ठा objagg_hपूर्णांकs_node, obj);
+	objagg_hपूर्णांकs->ht_params.head_offset =
+				दुरत्व(काष्ठा objagg_hपूर्णांकs_node, ht_node);
+	objagg_hपूर्णांकs->ht_params.obj_cmpfn = objagg_hपूर्णांकs_obj_cmp;
 
-	err = rhashtable_init(&objagg_hints->node_ht, &objagg_hints->ht_params);
-	if (err)
-		goto err_rhashtable_init;
+	err = rhashtable_init(&objagg_hपूर्णांकs->node_ht, &objagg_hपूर्णांकs->ht_params);
+	अगर (err)
+		जाओ err_rhashtable_init;
 
-	err = algo->fillup_hints(objagg_hints, objagg);
-	if (err)
-		goto err_fillup_hints;
+	err = algo->fillup_hपूर्णांकs(objagg_hपूर्णांकs, objagg);
+	अगर (err)
+		जाओ err_fillup_hपूर्णांकs;
 
-	if (WARN_ON(objagg_hints->node_count != objagg->obj_count)) {
+	अगर (WARN_ON(objagg_hपूर्णांकs->node_count != objagg->obj_count)) अणु
 		err = -EINVAL;
-		goto err_node_count_check;
-	}
+		जाओ err_node_count_check;
+	पूर्ण
 
-	return objagg_hints;
+	वापस objagg_hपूर्णांकs;
 
 err_node_count_check:
-err_fillup_hints:
-	objagg_hints_flush(objagg_hints);
-	rhashtable_destroy(&objagg_hints->node_ht);
+err_fillup_hपूर्णांकs:
+	objagg_hपूर्णांकs_flush(objagg_hपूर्णांकs);
+	rhashtable_destroy(&objagg_hपूर्णांकs->node_ht);
 err_rhashtable_init:
-	kfree(objagg_hints);
-	return ERR_PTR(err);
-}
-EXPORT_SYMBOL(objagg_hints_get);
+	kमुक्त(objagg_hपूर्णांकs);
+	वापस ERR_PTR(err);
+पूर्ण
+EXPORT_SYMBOL(objagg_hपूर्णांकs_get);
 
 /**
- * objagg_hints_put - puts hints instance
- * @objagg_hints:	objagg hints instance
+ * objagg_hपूर्णांकs_put - माला_दो hपूर्णांकs instance
+ * @objagg_hपूर्णांकs:	objagg hपूर्णांकs instance
  *
  * Note: all locking must be provided by the caller.
  */
-void objagg_hints_put(struct objagg_hints *objagg_hints)
-{
-	if (--objagg_hints->refcount)
-		return;
-	objagg_hints_flush(objagg_hints);
-	rhashtable_destroy(&objagg_hints->node_ht);
-	kfree(objagg_hints);
-}
-EXPORT_SYMBOL(objagg_hints_put);
+व्योम objagg_hपूर्णांकs_put(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs)
+अणु
+	अगर (--objagg_hपूर्णांकs->refcount)
+		वापस;
+	objagg_hपूर्णांकs_flush(objagg_hपूर्णांकs);
+	rhashtable_destroy(&objagg_hपूर्णांकs->node_ht);
+	kमुक्त(objagg_hपूर्णांकs);
+पूर्ण
+EXPORT_SYMBOL(objagg_hपूर्णांकs_put);
 
 /**
- * objagg_hints_stats_get - obtains stats of the hints instance
- * @objagg_hints:	hints instance
+ * objagg_hपूर्णांकs_stats_get - obtains stats of the hपूर्णांकs instance
+ * @objagg_hपूर्णांकs:	hपूर्णांकs instance
  *
  * Note: all locking must be provided by the caller.
  *
- * The returned structure contains statistics of all objects
+ * The वापसed काष्ठाure contains statistics of all objects
  * currently in use, ordered by following rules:
  * 1) Root objects are always on lower indexes than the rest.
  * 2) Objects with higher delta user count are always on lower
  *    indexes.
- * 3) In case multiple objects have the same delta user count,
+ * 3) In हाल multiple objects have the same delta user count,
  *    the objects are ordered by user count.
  *
- * Returns a pointer to stats instance in case of success,
- * otherwise it returns pointer error using ERR_PTR macro.
+ * Returns a poपूर्णांकer to stats instance in हाल of success,
+ * otherwise it वापसs poपूर्णांकer error using ERR_PTR macro.
  */
-const struct objagg_stats *
-objagg_hints_stats_get(struct objagg_hints *objagg_hints)
-{
-	struct objagg_stats *objagg_stats;
-	struct objagg_hints_node *hnode;
-	int i;
+स्थिर काष्ठा objagg_stats *
+objagg_hपूर्णांकs_stats_get(काष्ठा objagg_hपूर्णांकs *objagg_hपूर्णांकs)
+अणु
+	काष्ठा objagg_stats *objagg_stats;
+	काष्ठा objagg_hपूर्णांकs_node *hnode;
+	पूर्णांक i;
 
-	objagg_stats = kzalloc(struct_size(objagg_stats, stats_info,
-					   objagg_hints->node_count),
+	objagg_stats = kzalloc(काष्ठा_size(objagg_stats, stats_info,
+					   objagg_hपूर्णांकs->node_count),
 			       GFP_KERNEL);
-	if (!objagg_stats)
-		return ERR_PTR(-ENOMEM);
+	अगर (!objagg_stats)
+		वापस ERR_PTR(-ENOMEM);
 
 	i = 0;
-	list_for_each_entry(hnode, &objagg_hints->node_list, list) {
-		memcpy(&objagg_stats->stats_info[i], &hnode->stats_info,
-		       sizeof(objagg_stats->stats_info[0]));
-		if (objagg_stats->stats_info[i].is_root)
+	list_क्रम_each_entry(hnode, &objagg_hपूर्णांकs->node_list, list) अणु
+		स_नकल(&objagg_stats->stats_info[i], &hnode->stats_info,
+		       माप(objagg_stats->stats_info[0]));
+		अगर (objagg_stats->stats_info[i].is_root)
 			objagg_stats->root_count++;
 		i++;
-	}
+	पूर्ण
 	objagg_stats->stats_info_count = i;
 
 	sort(objagg_stats->stats_info, objagg_stats->stats_info_count,
-	     sizeof(struct objagg_obj_stats_info),
-	     objagg_stats_info_sort_cmp_func, NULL);
+	     माप(काष्ठा objagg_obj_stats_info),
+	     objagg_stats_info_sort_cmp_func, शून्य);
 
-	return objagg_stats;
-}
-EXPORT_SYMBOL(objagg_hints_stats_get);
+	वापस objagg_stats;
+पूर्ण
+EXPORT_SYMBOL(objagg_hपूर्णांकs_stats_get);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Jiri Pirko <jiri@mellanox.com>");

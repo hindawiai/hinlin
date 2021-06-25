@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Common Flash Interface support:
  *   ST Advanced Architecture Command Set (ID 0x0020)
@@ -6,406 +7,406 @@
  *
  * 10/10/2000	Nicolas Pitre <nico@fluxnic.net>
  * 	- completely revamped method functions so they are aware and
- * 	  independent of the flash geometry (buswidth, interleave, etc.)
- * 	- scalability vs code size is completely set at compile-time
- * 	  (see include/linux/mtd/cfi.h for selection)
- *	- optimized write buffer method
+ * 	  independent of the flash geometry (buswidth, पूर्णांकerleave, etc.)
+ * 	- scalability vs code size is completely set at compile-समय
+ * 	  (see include/linux/mtd/cfi.h क्रम selection)
+ *	- optimized ग_लिखो buffer method
  * 06/21/2002	Joern Engel <joern@wh.fh-wedel.de> and others
- *	- modified Intel Command Set 0x0001 to support ST Advanced Architecture
+ *	- modअगरied Intel Command Set 0x0001 to support ST Advanced Architecture
  *	  (command set 0x0020)
- *	- added a writev function
+ *	- added a ग_लिखोv function
  * 07/13/2005	Joern Engel <joern@wh.fh-wedel.de>
- * 	- Plugged memory leak in cfi_staa_writev().
+ * 	- Plugged memory leak in cfi_staa_ग_लिखोv().
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <asm/io.h>
-#include <asm/byteorder.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
 
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/mtd/map.h>
-#include <linux/mtd/cfi.h>
-#include <linux/mtd/mtd.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mtd/map.h>
+#समावेश <linux/mtd/cfi.h>
+#समावेश <linux/mtd/mtd.h>
 
 
-static int cfi_staa_read(struct mtd_info *, loff_t, size_t, size_t *, u_char *);
-static int cfi_staa_write_buffers(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
-static int cfi_staa_writev(struct mtd_info *mtd, const struct kvec *vecs,
-		unsigned long count, loff_t to, size_t *retlen);
-static int cfi_staa_erase_varsize(struct mtd_info *, struct erase_info *);
-static void cfi_staa_sync (struct mtd_info *);
-static int cfi_staa_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
-static int cfi_staa_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
-static int cfi_staa_suspend (struct mtd_info *);
-static void cfi_staa_resume (struct mtd_info *);
+अटल पूर्णांक cfi_staa_पढ़ो(काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, u_अक्षर *);
+अटल पूर्णांक cfi_staa_ग_लिखो_buffers(काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, स्थिर u_अक्षर *);
+अटल पूर्णांक cfi_staa_ग_लिखोv(काष्ठा mtd_info *mtd, स्थिर काष्ठा kvec *vecs,
+		अचिन्हित दीर्घ count, loff_t to, माप_प्रकार *retlen);
+अटल पूर्णांक cfi_staa_erase_varsize(काष्ठा mtd_info *, काष्ठा erase_info *);
+अटल व्योम cfi_staa_sync (काष्ठा mtd_info *);
+अटल पूर्णांक cfi_staa_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len);
+अटल पूर्णांक cfi_staa_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len);
+अटल पूर्णांक cfi_staa_suspend (काष्ठा mtd_info *);
+अटल व्योम cfi_staa_resume (काष्ठा mtd_info *);
 
-static void cfi_staa_destroy(struct mtd_info *);
+अटल व्योम cfi_staa_destroy(काष्ठा mtd_info *);
 
-struct mtd_info *cfi_cmdset_0020(struct map_info *, int);
+काष्ठा mtd_info *cfi_cmdset_0020(काष्ठा map_info *, पूर्णांक);
 
-static struct mtd_info *cfi_staa_setup (struct map_info *);
+अटल काष्ठा mtd_info *cfi_staa_setup (काष्ठा map_info *);
 
-static struct mtd_chip_driver cfi_staa_chipdrv = {
-	.probe		= NULL, /* Not usable directly */
+अटल काष्ठा mtd_chip_driver cfi_staa_chipdrv = अणु
+	.probe		= शून्य, /* Not usable directly */
 	.destroy	= cfi_staa_destroy,
 	.name		= "cfi_cmdset_0020",
 	.module		= THIS_MODULE
-};
+पूर्ण;
 
-/* #define DEBUG_LOCK_BITS */
-//#define DEBUG_CFI_FEATURES
+/* #घोषणा DEBUG_LOCK_BITS */
+//#घोषणा DEBUG_CFI_FEATURES
 
-#ifdef DEBUG_CFI_FEATURES
-static void cfi_tell_features(struct cfi_pri_intelext *extp)
-{
-        int i;
-        printk("  Feature/Command Support: %4.4X\n", extp->FeatureSupport);
-	printk("     - Chip Erase:         %s\n", extp->FeatureSupport&1?"supported":"unsupported");
-	printk("     - Suspend Erase:      %s\n", extp->FeatureSupport&2?"supported":"unsupported");
-	printk("     - Suspend Program:    %s\n", extp->FeatureSupport&4?"supported":"unsupported");
-	printk("     - Legacy Lock/Unlock: %s\n", extp->FeatureSupport&8?"supported":"unsupported");
-	printk("     - Queued Erase:       %s\n", extp->FeatureSupport&16?"supported":"unsupported");
-	printk("     - Instant block lock: %s\n", extp->FeatureSupport&32?"supported":"unsupported");
-	printk("     - Protection Bits:    %s\n", extp->FeatureSupport&64?"supported":"unsupported");
-	printk("     - Page-mode read:     %s\n", extp->FeatureSupport&128?"supported":"unsupported");
-	printk("     - Synchronous read:   %s\n", extp->FeatureSupport&256?"supported":"unsupported");
-	for (i=9; i<32; i++) {
-		if (extp->FeatureSupport & (1<<i))
-			printk("     - Unknown Bit %X:      supported\n", i);
-	}
+#अगर_घोषित DEBUG_CFI_FEATURES
+अटल व्योम cfi_tell_features(काष्ठा cfi_pri_पूर्णांकelext *extp)
+अणु
+        पूर्णांक i;
+        prपूर्णांकk("  Feature/Command Support: %4.4X\n", extp->FeatureSupport);
+	prपूर्णांकk("     - Chip Erase:         %s\n", extp->FeatureSupport&1?"supported":"unsupported");
+	prपूर्णांकk("     - Suspend Erase:      %s\n", extp->FeatureSupport&2?"supported":"unsupported");
+	prपूर्णांकk("     - Suspend Program:    %s\n", extp->FeatureSupport&4?"supported":"unsupported");
+	prपूर्णांकk("     - Legacy Lock/Unlock: %s\n", extp->FeatureSupport&8?"supported":"unsupported");
+	prपूर्णांकk("     - Queued Erase:       %s\n", extp->FeatureSupport&16?"supported":"unsupported");
+	prपूर्णांकk("     - Instant block lock: %s\n", extp->FeatureSupport&32?"supported":"unsupported");
+	prपूर्णांकk("     - Protection Bits:    %s\n", extp->FeatureSupport&64?"supported":"unsupported");
+	prपूर्णांकk("     - Page-mode read:     %s\n", extp->FeatureSupport&128?"supported":"unsupported");
+	prपूर्णांकk("     - Synchronous read:   %s\n", extp->FeatureSupport&256?"supported":"unsupported");
+	क्रम (i=9; i<32; i++) अणु
+		अगर (extp->FeatureSupport & (1<<i))
+			prपूर्णांकk("     - Unknown Bit %X:      supported\n", i);
+	पूर्ण
 
-	printk("  Supported functions after Suspend: %2.2X\n", extp->SuspendCmdSupport);
-	printk("     - Program after Erase Suspend: %s\n", extp->SuspendCmdSupport&1?"supported":"unsupported");
-	for (i=1; i<8; i++) {
-		if (extp->SuspendCmdSupport & (1<<i))
-			printk("     - Unknown Bit %X:               supported\n", i);
-	}
+	prपूर्णांकk("  Supported functions after Suspend: %2.2X\n", extp->SuspendCmdSupport);
+	prपूर्णांकk("     - Program after Erase Suspend: %s\n", extp->SuspendCmdSupport&1?"supported":"unsupported");
+	क्रम (i=1; i<8; i++) अणु
+		अगर (extp->SuspendCmdSupport & (1<<i))
+			prपूर्णांकk("     - Unknown Bit %X:               supported\n", i);
+	पूर्ण
 
-	printk("  Block Status Register Mask: %4.4X\n", extp->BlkStatusRegMask);
-	printk("     - Lock Bit Active:      %s\n", extp->BlkStatusRegMask&1?"yes":"no");
-	printk("     - Valid Bit Active:     %s\n", extp->BlkStatusRegMask&2?"yes":"no");
-	for (i=2; i<16; i++) {
-		if (extp->BlkStatusRegMask & (1<<i))
-			printk("     - Unknown Bit %X Active: yes\n",i);
-	}
+	prपूर्णांकk("  Block Status Register Mask: %4.4X\n", extp->BlkStatusRegMask);
+	prपूर्णांकk("     - Lock Bit Active:      %s\n", extp->BlkStatusRegMask&1?"yes":"no");
+	prपूर्णांकk("     - Valid Bit Active:     %s\n", extp->BlkStatusRegMask&2?"yes":"no");
+	क्रम (i=2; i<16; i++) अणु
+		अगर (extp->BlkStatusRegMask & (1<<i))
+			prपूर्णांकk("     - Unknown Bit %X Active: yes\n",i);
+	पूर्ण
 
-	printk("  Vcc Logic Supply Optimum Program/Erase Voltage: %d.%d V\n",
+	prपूर्णांकk("  Vcc Logic Supply Optimum Program/Erase Voltage: %d.%d V\n",
 	       extp->VccOptimal >> 8, extp->VccOptimal & 0xf);
-	if (extp->VppOptimal)
-		printk("  Vpp Programming Supply Optimum Program/Erase Voltage: %d.%d V\n",
+	अगर (extp->VppOptimal)
+		prपूर्णांकk("  Vpp Programming Supply Optimum Program/Erase Voltage: %d.%d V\n",
 		       extp->VppOptimal >> 8, extp->VppOptimal & 0xf);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /* This routine is made available to other mtd code via
- * inter_module_register.  It must only be accessed through
- * inter_module_get which will bump the use count of this module.  The
- * addresses passed back in cfi are valid as long as the use count of
- * this module is non-zero, i.e. between inter_module_get and
- * inter_module_put.  Keith Owens <kaos@ocs.com.au> 29 Oct 2000.
+ * पूर्णांकer_module_रेजिस्टर.  It must only be accessed through
+ * पूर्णांकer_module_get which will bump the use count of this module.  The
+ * addresses passed back in cfi are valid as दीर्घ as the use count of
+ * this module is non-zero, i.e. between पूर्णांकer_module_get and
+ * पूर्णांकer_module_put.  Keith Owens <kaos@ocs.com.au> 29 Oct 2000.
  */
-struct mtd_info *cfi_cmdset_0020(struct map_info *map, int primary)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
-	int i;
+काष्ठा mtd_info *cfi_cmdset_0020(काष्ठा map_info *map, पूर्णांक primary)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	पूर्णांक i;
 
-	if (cfi->cfi_mode) {
+	अगर (cfi->cfi_mode) अणु
 		/*
-		 * It's a real CFI chip, not one for which the probe
-		 * routine faked a CFI structure. So we read the feature
+		 * It's a real CFI chip, not one क्रम which the probe
+		 * routine faked a CFI काष्ठाure. So we पढ़ो the feature
 		 * table from it.
 		 */
 		__u16 adr = primary?cfi->cfiq->P_ADR:cfi->cfiq->A_ADR;
-		struct cfi_pri_intelext *extp;
+		काष्ठा cfi_pri_पूर्णांकelext *extp;
 
-		extp = (struct cfi_pri_intelext*)cfi_read_pri(map, adr, sizeof(*extp), "ST Microelectronics");
-		if (!extp)
-			return NULL;
+		extp = (काष्ठा cfi_pri_पूर्णांकelext*)cfi_पढ़ो_pri(map, adr, माप(*extp), "ST Microelectronics");
+		अगर (!extp)
+			वापस शून्य;
 
-		if (extp->MajorVersion != '1' ||
-		    (extp->MinorVersion < '0' || extp->MinorVersion > '3')) {
-			printk(KERN_ERR "  Unknown ST Microelectronics"
+		अगर (extp->MajorVersion != '1' ||
+		    (extp->MinorVersion < '0' || extp->MinorVersion > '3')) अणु
+			prपूर्णांकk(KERN_ERR "  Unknown ST Microelectronics"
 			       " Extended Query version %c.%c.\n",
 			       extp->MajorVersion, extp->MinorVersion);
-			kfree(extp);
-			return NULL;
-		}
+			kमुक्त(extp);
+			वापस शून्य;
+		पूर्ण
 
-		/* Do some byteswapping if necessary */
+		/* Do some byteswapping अगर necessary */
 		extp->FeatureSupport = cfi32_to_cpu(map, extp->FeatureSupport);
 		extp->BlkStatusRegMask = cfi32_to_cpu(map,
 						extp->BlkStatusRegMask);
 
-#ifdef DEBUG_CFI_FEATURES
+#अगर_घोषित DEBUG_CFI_FEATURES
 		/* Tell the user about it in lots of lovely detail */
 		cfi_tell_features(extp);
-#endif
+#पूर्ण_अगर
 
-		/* Install our own private info structure */
+		/* Install our own निजी info काष्ठाure */
 		cfi->cmdset_priv = extp;
-	}
+	पूर्ण
 
-	for (i=0; i< cfi->numchips; i++) {
-		cfi->chips[i].word_write_time = 128;
-		cfi->chips[i].buffer_write_time = 128;
-		cfi->chips[i].erase_time = 1024;
-		cfi->chips[i].ref_point_counter = 0;
-		init_waitqueue_head(&(cfi->chips[i].wq));
-	}
+	क्रम (i=0; i< cfi->numchips; i++) अणु
+		cfi->chips[i].word_ग_लिखो_समय = 128;
+		cfi->chips[i].buffer_ग_लिखो_समय = 128;
+		cfi->chips[i].erase_समय = 1024;
+		cfi->chips[i].ref_poपूर्णांक_counter = 0;
+		init_रुकोqueue_head(&(cfi->chips[i].wq));
+	पूर्ण
 
-	return cfi_staa_setup(map);
-}
+	वापस cfi_staa_setup(map);
+पूर्ण
 EXPORT_SYMBOL_GPL(cfi_cmdset_0020);
 
-static struct mtd_info *cfi_staa_setup(struct map_info *map)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
-	struct mtd_info *mtd;
-	unsigned long offset = 0;
-	int i,j;
-	unsigned long devsize = (1<<cfi->cfiq->DevSize) * cfi->interleave;
+अटल काष्ठा mtd_info *cfi_staa_setup(काष्ठा map_info *map)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	काष्ठा mtd_info *mtd;
+	अचिन्हित दीर्घ offset = 0;
+	पूर्णांक i,j;
+	अचिन्हित दीर्घ devsize = (1<<cfi->cfiq->DevSize) * cfi->पूर्णांकerleave;
 
-	mtd = kzalloc(sizeof(*mtd), GFP_KERNEL);
-	//printk(KERN_DEBUG "number of CFI chips: %d\n", cfi->numchips);
+	mtd = kzalloc(माप(*mtd), GFP_KERNEL);
+	//prपूर्णांकk(KERN_DEBUG "number of CFI chips: %d\n", cfi->numchips);
 
-	if (!mtd) {
-		kfree(cfi->cmdset_priv);
-		return NULL;
-	}
+	अगर (!mtd) अणु
+		kमुक्त(cfi->cmdset_priv);
+		वापस शून्य;
+	पूर्ण
 
 	mtd->priv = map;
 	mtd->type = MTD_NORFLASH;
 	mtd->size = devsize * cfi->numchips;
 
 	mtd->numeraseregions = cfi->cfiq->NumEraseRegions * cfi->numchips;
-	mtd->eraseregions = kmalloc_array(mtd->numeraseregions,
-					  sizeof(struct mtd_erase_region_info),
+	mtd->eraseregions = kदो_स्मृति_array(mtd->numeraseregions,
+					  माप(काष्ठा mtd_erase_region_info),
 					  GFP_KERNEL);
-	if (!mtd->eraseregions) {
-		kfree(cfi->cmdset_priv);
-		kfree(mtd);
-		return NULL;
-	}
+	अगर (!mtd->eraseregions) अणु
+		kमुक्त(cfi->cmdset_priv);
+		kमुक्त(mtd);
+		वापस शून्य;
+	पूर्ण
 
-	for (i=0; i<cfi->cfiq->NumEraseRegions; i++) {
-		unsigned long ernum, ersize;
-		ersize = ((cfi->cfiq->EraseRegionInfo[i] >> 8) & ~0xff) * cfi->interleave;
+	क्रम (i=0; i<cfi->cfiq->NumEraseRegions; i++) अणु
+		अचिन्हित दीर्घ ernum, ersize;
+		ersize = ((cfi->cfiq->EraseRegionInfo[i] >> 8) & ~0xff) * cfi->पूर्णांकerleave;
 		ernum = (cfi->cfiq->EraseRegionInfo[i] & 0xffff) + 1;
 
-		if (mtd->erasesize < ersize) {
+		अगर (mtd->erasesize < ersize) अणु
 			mtd->erasesize = ersize;
-		}
-		for (j=0; j<cfi->numchips; j++) {
+		पूर्ण
+		क्रम (j=0; j<cfi->numchips; j++) अणु
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].offset = (j*devsize)+offset;
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].erasesize = ersize;
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].numblocks = ernum;
-		}
+		पूर्ण
 		offset += (ersize * ernum);
-	}
+	पूर्ण
 
-	if (offset != devsize) {
+	अगर (offset != devsize) अणु
 		/* Argh */
-		printk(KERN_WARNING "Sum of regions (%lx) != total size of set of interleaved chips (%lx)\n", offset, devsize);
-		kfree(mtd->eraseregions);
-		kfree(cfi->cmdset_priv);
-		kfree(mtd);
-		return NULL;
-	}
+		prपूर्णांकk(KERN_WARNING "Sum of regions (%lx) != total size of set of interleaved chips (%lx)\n", offset, devsize);
+		kमुक्त(mtd->eraseregions);
+		kमुक्त(cfi->cmdset_priv);
+		kमुक्त(mtd);
+		वापस शून्य;
+	पूर्ण
 
-	for (i=0; i<mtd->numeraseregions;i++){
-		printk(KERN_DEBUG "%d: offset=0x%llx,size=0x%x,blocks=%d\n",
-		       i, (unsigned long long)mtd->eraseregions[i].offset,
+	क्रम (i=0; i<mtd->numeraseregions;i++)अणु
+		prपूर्णांकk(KERN_DEBUG "%d: offset=0x%llx,size=0x%x,blocks=%d\n",
+		       i, (अचिन्हित दीर्घ दीर्घ)mtd->eraseregions[i].offset,
 		       mtd->eraseregions[i].erasesize,
 		       mtd->eraseregions[i].numblocks);
-	}
+	पूर्ण
 
 	/* Also select the correct geometry setup too */
 	mtd->_erase = cfi_staa_erase_varsize;
-	mtd->_read = cfi_staa_read;
-	mtd->_write = cfi_staa_write_buffers;
-	mtd->_writev = cfi_staa_writev;
+	mtd->_पढ़ो = cfi_staa_पढ़ो;
+	mtd->_ग_लिखो = cfi_staa_ग_लिखो_buffers;
+	mtd->_ग_लिखोv = cfi_staa_ग_लिखोv;
 	mtd->_sync = cfi_staa_sync;
 	mtd->_lock = cfi_staa_lock;
 	mtd->_unlock = cfi_staa_unlock;
 	mtd->_suspend = cfi_staa_suspend;
 	mtd->_resume = cfi_staa_resume;
 	mtd->flags = MTD_CAP_NORFLASH & ~MTD_BIT_WRITEABLE;
-	mtd->writesize = 8; /* FIXME: Should be 0 for STMicro flashes w/out ECC */
-	mtd->writebufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+	mtd->ग_लिखोsize = 8; /* FIXME: Should be 0 क्रम STMicro flashes w/out ECC */
+	mtd->ग_लिखोbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
 	map->fldrv = &cfi_staa_chipdrv;
 	__module_get(THIS_MODULE);
 	mtd->name = map->name;
-	return mtd;
-}
+	वापस mtd;
+पूर्ण
 
 
-static inline int do_read_onechip(struct map_info *map, struct flchip *chip, loff_t adr, size_t len, u_char *buf)
-{
+अटल अंतरभूत पूर्णांक करो_पढ़ो_onechip(काष्ठा map_info *map, काष्ठा flchip *chip, loff_t adr, माप_प्रकार len, u_अक्षर *buf)
+अणु
 	map_word status, status_OK;
-	unsigned long timeo;
-	DECLARE_WAITQUEUE(wait, current);
-	int suspended = 0;
-	unsigned long cmd_addr;
-	struct cfi_private *cfi = map->fldrv_priv;
+	अचिन्हित दीर्घ समयo;
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक suspended = 0;
+	अचिन्हित दीर्घ cmd_addr;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
 
 	adr += chip->start;
 
-	/* Ensure cmd read/writes are aligned. */
+	/* Ensure cmd पढ़ो/ग_लिखोs are aligned. */
 	cmd_addr = adr & ~(map_bankwidth(map)-1);
 
-	/* Let's determine this according to the interleave only once */
+	/* Let's determine this according to the पूर्णांकerleave only once */
 	status_OK = CMD(0x80);
 
-	timeo = jiffies + HZ;
+	समयo = jअगरfies + HZ;
  retry:
 	mutex_lock(&chip->mutex);
 
-	/* Check that the chip's ready to talk to us.
+	/* Check that the chip's पढ़ोy to talk to us.
 	 * If it's in FL_ERASING state, suspend it and make it talk now.
 	 */
-	switch (chip->state) {
-	case FL_ERASING:
-		if (!(((struct cfi_pri_intelext *)cfi->cmdset_priv)->FeatureSupport & 2))
-			goto sleep; /* We don't support erase suspend */
+	चयन (chip->state) अणु
+	हाल FL_ERASING:
+		अगर (!(((काष्ठा cfi_pri_पूर्णांकelext *)cfi->cmdset_priv)->FeatureSupport & 2))
+			जाओ sleep; /* We करोn't support erase suspend */
 
-		map_write (map, CMD(0xb0), cmd_addr);
+		map_ग_लिखो (map, CMD(0xb0), cmd_addr);
 		/* If the flash has finished erasing, then 'erase suspend'
-		 * appears to make some (28F320) flash devices switch to
+		 * appears to make some (28F320) flash devices चयन to
 		 * 'read' mode.  Make sure that we switch to 'read status'
 		 * mode so we get the right data. --rmk
 		 */
-		map_write(map, CMD(0x70), cmd_addr);
+		map_ग_लिखो(map, CMD(0x70), cmd_addr);
 		chip->oldstate = FL_ERASING;
 		chip->state = FL_ERASE_SUSPENDING;
-		//		printk("Erase suspending at 0x%lx\n", cmd_addr);
-		for (;;) {
-			status = map_read(map, cmd_addr);
-			if (map_word_andequal(map, status, status_OK, status_OK))
-				break;
+		//		prपूर्णांकk("Erase suspending at 0x%lx\n", cmd_addr);
+		क्रम (;;) अणु
+			status = map_पढ़ो(map, cmd_addr);
+			अगर (map_word_andequal(map, status, status_OK, status_OK))
+				अवरोध;
 
-			if (time_after(jiffies, timeo)) {
+			अगर (समय_after(jअगरfies, समयo)) अणु
 				/* Urgh */
-				map_write(map, CMD(0xd0), cmd_addr);
+				map_ग_लिखो(map, CMD(0xd0), cmd_addr);
 				/* make sure we're in 'read status' mode */
-				map_write(map, CMD(0x70), cmd_addr);
+				map_ग_लिखो(map, CMD(0x70), cmd_addr);
 				chip->state = FL_ERASING;
 				wake_up(&chip->wq);
 				mutex_unlock(&chip->mutex);
-				printk(KERN_ERR "Chip not ready after erase "
+				prपूर्णांकk(KERN_ERR "Chip not ready after erase "
 				       "suspended: status = 0x%lx\n", status.x[0]);
-				return -EIO;
-			}
+				वापस -EIO;
+			पूर्ण
 
 			mutex_unlock(&chip->mutex);
 			cfi_udelay(1);
 			mutex_lock(&chip->mutex);
-		}
+		पूर्ण
 
 		suspended = 1;
-		map_write(map, CMD(0xff), cmd_addr);
+		map_ग_लिखो(map, CMD(0xff), cmd_addr);
 		chip->state = FL_READY;
-		break;
+		अवरोध;
 
-#if 0
-	case FL_WRITING:
+#अगर 0
+	हाल FL_WRITING:
 		/* Not quite yet */
-#endif
+#पूर्ण_अगर
 
-	case FL_READY:
-		break;
+	हाल FL_READY:
+		अवरोध;
 
-	case FL_CFI_QUERY:
-	case FL_JEDEC_QUERY:
-		map_write(map, CMD(0x70), cmd_addr);
+	हाल FL_CFI_QUERY:
+	हाल FL_JEDEC_QUERY:
+		map_ग_लिखो(map, CMD(0x70), cmd_addr);
 		chip->state = FL_STATUS;
 		fallthrough;
-	case FL_STATUS:
-		status = map_read(map, cmd_addr);
-		if (map_word_andequal(map, status, status_OK, status_OK)) {
-			map_write(map, CMD(0xff), cmd_addr);
+	हाल FL_STATUS:
+		status = map_पढ़ो(map, cmd_addr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK)) अणु
+			map_ग_लिखो(map, CMD(0xff), cmd_addr);
 			chip->state = FL_READY;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Urgh. Chip not yet ready to talk to us. */
-		if (time_after(jiffies, timeo)) {
+		/* Urgh. Chip not yet पढ़ोy to talk to us. */
+		अगर (समय_after(jअगरfies, समयo)) अणु
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "waiting for chip to be ready timed out in read. WSM status = %lx\n", status.x[0]);
-			return -EIO;
-		}
+			prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in read. WSM status = %lx\n", status.x[0]);
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
-		goto retry;
+		जाओ retry;
 
-	default:
+	शेष:
 	sleep:
-		/* Stick ourselves on a wait queue to be woken when
+		/* Stick ourselves on a रुको queue to be woken when
 		   someone changes the status */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&chip->wq, &wait);
+		add_रुको_queue(&chip->wq, &रुको);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		remove_wait_queue(&chip->wq, &wait);
-		timeo = jiffies + HZ;
-		goto retry;
-	}
+		हटाओ_रुको_queue(&chip->wq, &रुको);
+		समयo = jअगरfies + HZ;
+		जाओ retry;
+	पूर्ण
 
 	map_copy_from(map, buf, adr, len);
 
-	if (suspended) {
+	अगर (suspended) अणु
 		chip->state = chip->oldstate;
-		/* What if one interleaved chip has finished and the
+		/* What अगर one पूर्णांकerleaved chip has finished and the
 		   other hasn't? The old code would leave the finished
 		   one in READY mode. That's bad, and caused -EROFS
-		   errors to be returned from do_erase_oneblock because
-		   that's the only bit it checked for at the time.
+		   errors to be वापसed from करो_erase_oneblock because
+		   that's the only bit it checked क्रम at the समय.
 		   As the state machine appears to explicitly allow
 		   sending the 0x70 (Read Status) command to an erasing
 		   chip and expecting it to be ignored, that's what we
-		   do. */
-		map_write(map, CMD(0xd0), cmd_addr);
-		map_write(map, CMD(0x70), cmd_addr);
-	}
+		   करो. */
+		map_ग_लिखो(map, CMD(0xd0), cmd_addr);
+		map_ग_लिखो(map, CMD(0x70), cmd_addr);
+	पूर्ण
 
 	wake_up(&chip->wq);
 	mutex_unlock(&chip->mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cfi_staa_read (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	unsigned long ofs;
-	int chipnum;
-	int ret = 0;
+अटल पूर्णांक cfi_staa_पढ़ो (काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	अचिन्हित दीर्घ ofs;
+	पूर्णांक chipnum;
+	पूर्णांक ret = 0;
 
-	/* ofs: offset within the first chip that the first read should start */
-	chipnum = (from >> cfi->chipshift);
-	ofs = from - (chipnum <<  cfi->chipshift);
+	/* ofs: offset within the first chip that the first पढ़ो should start */
+	chipnum = (from >> cfi->chipshअगरt);
+	ofs = from - (chipnum <<  cfi->chipshअगरt);
 
-	while (len) {
-		unsigned long thislen;
+	जबतक (len) अणु
+		अचिन्हित दीर्घ thislen;
 
-		if (chipnum >= cfi->numchips)
-			break;
+		अगर (chipnum >= cfi->numchips)
+			अवरोध;
 
-		if ((len + ofs -1) >> cfi->chipshift)
-			thislen = (1<<cfi->chipshift) - ofs;
-		else
+		अगर ((len + ofs -1) >> cfi->chipshअगरt)
+			thislen = (1<<cfi->chipshअगरt) - ofs;
+		अन्यथा
 			thislen = len;
 
-		ret = do_read_onechip(map, &cfi->chips[chipnum], ofs, thislen, buf);
-		if (ret)
-			break;
+		ret = करो_पढ़ो_onechip(map, &cfi->chips[chipnum], ofs, thislen, buf);
+		अगर (ret)
+			अवरोध;
 
 		*retlen += thislen;
 		len -= thislen;
@@ -413,488 +414,488 @@ static int cfi_staa_read (struct mtd_info *mtd, loff_t from, size_t len, size_t 
 
 		ofs = 0;
 		chipnum++;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int do_write_buffer(struct map_info *map, struct flchip *chip,
-				  unsigned long adr, const u_char *buf, int len)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
+अटल पूर्णांक करो_ग_लिखो_buffer(काष्ठा map_info *map, काष्ठा flchip *chip,
+				  अचिन्हित दीर्घ adr, स्थिर u_अक्षर *buf, पूर्णांक len)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
 	map_word status, status_OK;
-	unsigned long cmd_adr, timeo;
-	DECLARE_WAITQUEUE(wait, current);
-	int wbufsize, z;
+	अचिन्हित दीर्घ cmd_adr, समयo;
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक wbufsize, z;
 
-        /* M58LW064A requires bus alignment for buffer wriets -- saw */
-        if (adr & (map_bankwidth(map)-1))
-            return -EINVAL;
+        /* M58LW064A requires bus alignment क्रम buffer wriets -- saw */
+        अगर (adr & (map_bankwidth(map)-1))
+            वापस -EINVAL;
 
-        wbufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+        wbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
         adr += chip->start;
 	cmd_adr = adr & ~(wbufsize-1);
 
-	/* Let's determine this according to the interleave only once */
+	/* Let's determine this according to the पूर्णांकerleave only once */
         status_OK = CMD(0x80);
 
-	timeo = jiffies + HZ;
+	समयo = jअगरfies + HZ;
  retry:
 
-#ifdef DEBUG_CFI_FEATURES
-       printk("%s: chip->state[%d]\n", __func__, chip->state);
-#endif
+#अगर_घोषित DEBUG_CFI_FEATURES
+       prपूर्णांकk("%s: chip->state[%d]\n", __func__, chip->state);
+#पूर्ण_अगर
 	mutex_lock(&chip->mutex);
 
-	/* Check that the chip's ready to talk to us.
-	 * Later, we can actually think about interrupting it
-	 * if it's in FL_ERASING state.
+	/* Check that the chip's पढ़ोy to talk to us.
+	 * Later, we can actually think about पूर्णांकerrupting it
+	 * अगर it's in FL_ERASING state.
 	 * Not just yet, though.
 	 */
-	switch (chip->state) {
-	case FL_READY:
-		break;
+	चयन (chip->state) अणु
+	हाल FL_READY:
+		अवरोध;
 
-	case FL_CFI_QUERY:
-	case FL_JEDEC_QUERY:
-		map_write(map, CMD(0x70), cmd_adr);
+	हाल FL_CFI_QUERY:
+	हाल FL_JEDEC_QUERY:
+		map_ग_लिखो(map, CMD(0x70), cmd_adr);
                 chip->state = FL_STATUS;
-#ifdef DEBUG_CFI_FEATURES
-	printk("%s: 1 status[%x]\n", __func__, map_read(map, cmd_adr));
-#endif
+#अगर_घोषित DEBUG_CFI_FEATURES
+	prपूर्णांकk("%s: 1 status[%x]\n", __func__, map_पढ़ो(map, cmd_adr));
+#पूर्ण_अगर
 		fallthrough;
-	case FL_STATUS:
-		status = map_read(map, cmd_adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
-		/* Urgh. Chip not yet ready to talk to us. */
-		if (time_after(jiffies, timeo)) {
+	हाल FL_STATUS:
+		status = map_पढ़ो(map, cmd_adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
+		/* Urgh. Chip not yet पढ़ोy to talk to us. */
+		अगर (समय_after(jअगरfies, समयo)) अणु
 			mutex_unlock(&chip->mutex);
-                        printk(KERN_ERR "waiting for chip to be ready timed out in buffer write Xstatus = %lx, status = %lx\n",
-                               status.x[0], map_read(map, cmd_adr).x[0]);
-			return -EIO;
-		}
+                        prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in buffer write Xstatus = %lx, status = %lx\n",
+                               status.x[0], map_पढ़ो(map, cmd_adr).x[0]);
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
-		goto retry;
+		जाओ retry;
 
-	default:
-		/* Stick ourselves on a wait queue to be woken when
+	शेष:
+		/* Stick ourselves on a रुको queue to be woken when
 		   someone changes the status */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&chip->wq, &wait);
+		add_रुको_queue(&chip->wq, &रुको);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		remove_wait_queue(&chip->wq, &wait);
-		timeo = jiffies + HZ;
-		goto retry;
-	}
+		हटाओ_रुको_queue(&chip->wq, &रुको);
+		समयo = jअगरfies + HZ;
+		जाओ retry;
+	पूर्ण
 
 	ENABLE_VPP(map);
-	map_write(map, CMD(0xe8), cmd_adr);
+	map_ग_लिखो(map, CMD(0xe8), cmd_adr);
 	chip->state = FL_WRITING_TO_BUFFER;
 
 	z = 0;
-	for (;;) {
-		status = map_read(map, cmd_adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+	क्रम (;;) अणु
+		status = map_पढ़ो(map, cmd_adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
 		mutex_lock(&chip->mutex);
 
-		if (++z > 100) {
-			/* Argh. Not ready for write to buffer */
+		अगर (++z > 100) अणु
+			/* Argh. Not पढ़ोy क्रम ग_लिखो to buffer */
 			DISABLE_VPP(map);
-                        map_write(map, CMD(0x70), cmd_adr);
+                        map_ग_लिखो(map, CMD(0x70), cmd_adr);
 			chip->state = FL_STATUS;
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "Chip not ready for buffer write. Xstatus = %lx\n", status.x[0]);
-			return -EIO;
-		}
-	}
+			prपूर्णांकk(KERN_ERR "Chip not ready for buffer write. Xstatus = %lx\n", status.x[0]);
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
 	/* Write length of data to come */
-	map_write(map, CMD(len/map_bankwidth(map)-1), cmd_adr );
+	map_ग_लिखो(map, CMD(len/map_bankwidth(map)-1), cmd_adr );
 
 	/* Write data */
-	for (z = 0; z < len;
-	     z += map_bankwidth(map), buf += map_bankwidth(map)) {
+	क्रम (z = 0; z < len;
+	     z += map_bankwidth(map), buf += map_bankwidth(map)) अणु
 		map_word d;
 		d = map_word_load(map, buf);
-		map_write(map, d, adr+z);
-	}
+		map_ग_लिखो(map, d, adr+z);
+	पूर्ण
 	/* GO GO GO */
-	map_write(map, CMD(0xd0), cmd_adr);
+	map_ग_लिखो(map, CMD(0xd0), cmd_adr);
 	chip->state = FL_WRITING;
 
 	mutex_unlock(&chip->mutex);
-	cfi_udelay(chip->buffer_write_time);
+	cfi_udelay(chip->buffer_ग_लिखो_समय);
 	mutex_lock(&chip->mutex);
 
-	timeo = jiffies + (HZ/2);
+	समयo = jअगरfies + (HZ/2);
 	z = 0;
-	for (;;) {
-		if (chip->state != FL_WRITING) {
-			/* Someone's suspended the write. Sleep */
+	क्रम (;;) अणु
+		अगर (chip->state != FL_WRITING) अणु
+			/* Someone's suspended the ग_लिखो. Sleep */
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_wait_queue(&chip->wq, &wait);
+			add_रुको_queue(&chip->wq, &रुको);
 			mutex_unlock(&chip->mutex);
 			schedule();
-			remove_wait_queue(&chip->wq, &wait);
-			timeo = jiffies + (HZ / 2); /* FIXME */
+			हटाओ_रुको_queue(&chip->wq, &रुको);
+			समयo = jअगरfies + (HZ / 2); /* FIXME */
 			mutex_lock(&chip->mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		status = map_read(map, cmd_adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+		status = map_पढ़ो(map, cmd_adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* OK Still waiting */
-		if (time_after(jiffies, timeo)) {
+		/* OK Still रुकोing */
+		अगर (समय_after(jअगरfies, समयo)) अणु
                         /* clear status */
-                        map_write(map, CMD(0x50), cmd_adr);
-                        /* put back into read status register mode */
-                        map_write(map, CMD(0x70), adr);
+                        map_ग_लिखो(map, CMD(0x50), cmd_adr);
+                        /* put back पूर्णांकo पढ़ो status रेजिस्टर mode */
+                        map_ग_लिखो(map, CMD(0x70), adr);
 			chip->state = FL_STATUS;
 			DISABLE_VPP(map);
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "waiting for chip to be ready timed out in bufwrite\n");
-			return -EIO;
-		}
+			prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in bufwrite\n");
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
 		z++;
 		mutex_lock(&chip->mutex);
-	}
-	if (!z) {
-		chip->buffer_write_time--;
-		if (!chip->buffer_write_time)
-			chip->buffer_write_time++;
-	}
-	if (z > 1)
-		chip->buffer_write_time++;
+	पूर्ण
+	अगर (!z) अणु
+		chip->buffer_ग_लिखो_समय--;
+		अगर (!chip->buffer_ग_लिखो_समय)
+			chip->buffer_ग_लिखो_समय++;
+	पूर्ण
+	अगर (z > 1)
+		chip->buffer_ग_लिखो_समय++;
 
 	/* Done and happy. */
 	DISABLE_VPP(map);
 	chip->state = FL_STATUS;
 
-        /* check for errors: 'lock bit', 'VPP', 'dead cell'/'unerased cell' or 'incorrect cmd' -- saw */
-        if (map_word_bitsset(map, status, CMD(0x3a))) {
-#ifdef DEBUG_CFI_FEATURES
-		printk("%s: 2 status[%lx]\n", __func__, status.x[0]);
-#endif
+        /* check क्रम errors: 'lock bit', 'VPP', 'dead cell'/'unerased cell' or 'incorrect cmd' -- saw */
+        अगर (map_word_bitsset(map, status, CMD(0x3a))) अणु
+#अगर_घोषित DEBUG_CFI_FEATURES
+		prपूर्णांकk("%s: 2 status[%lx]\n", __func__, status.x[0]);
+#पूर्ण_अगर
 		/* clear status */
-		map_write(map, CMD(0x50), cmd_adr);
-		/* put back into read status register mode */
-		map_write(map, CMD(0x70), adr);
+		map_ग_लिखो(map, CMD(0x50), cmd_adr);
+		/* put back पूर्णांकo पढ़ो status रेजिस्टर mode */
+		map_ग_लिखो(map, CMD(0x70), adr);
 		wake_up(&chip->wq);
 		mutex_unlock(&chip->mutex);
-		return map_word_bitsset(map, status, CMD(0x02)) ? -EROFS : -EIO;
-	}
+		वापस map_word_bitsset(map, status, CMD(0x02)) ? -EROFS : -EIO;
+	पूर्ण
 	wake_up(&chip->wq);
 	mutex_unlock(&chip->mutex);
 
-        return 0;
-}
+        वापस 0;
+पूर्ण
 
-static int cfi_staa_write_buffers (struct mtd_info *mtd, loff_t to,
-				       size_t len, size_t *retlen, const u_char *buf)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	int wbufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
-	int ret;
-	int chipnum;
-	unsigned long ofs;
+अटल पूर्णांक cfi_staa_ग_लिखो_buffers (काष्ठा mtd_info *mtd, loff_t to,
+				       माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	पूर्णांक wbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+	पूर्णांक ret;
+	पूर्णांक chipnum;
+	अचिन्हित दीर्घ ofs;
 
-	chipnum = to >> cfi->chipshift;
-	ofs = to  - (chipnum << cfi->chipshift);
+	chipnum = to >> cfi->chipshअगरt;
+	ofs = to  - (chipnum << cfi->chipshअगरt);
 
-#ifdef DEBUG_CFI_FEATURES
-	printk("%s: map_bankwidth(map)[%x]\n", __func__, map_bankwidth(map));
-	printk("%s: chipnum[%x] wbufsize[%x]\n", __func__, chipnum, wbufsize);
-	printk("%s: ofs[%x] len[%x]\n", __func__, ofs, len);
-#endif
+#अगर_घोषित DEBUG_CFI_FEATURES
+	prपूर्णांकk("%s: map_bankwidth(map)[%x]\n", __func__, map_bankwidth(map));
+	prपूर्णांकk("%s: chipnum[%x] wbufsize[%x]\n", __func__, chipnum, wbufsize);
+	prपूर्णांकk("%s: ofs[%x] len[%x]\n", __func__, ofs, len);
+#पूर्ण_अगर
 
-        /* Write buffer is worth it only if more than one word to write... */
-        while (len > 0) {
-		/* We must not cross write block boundaries */
-		int size = wbufsize - (ofs & (wbufsize-1));
+        /* Write buffer is worth it only अगर more than one word to ग_लिखो... */
+        जबतक (len > 0) अणु
+		/* We must not cross ग_लिखो block boundaries */
+		पूर्णांक size = wbufsize - (ofs & (wbufsize-1));
 
-                if (size > len)
+                अगर (size > len)
                     size = len;
 
-                ret = do_write_buffer(map, &cfi->chips[chipnum],
+                ret = करो_ग_लिखो_buffer(map, &cfi->chips[chipnum],
 				      ofs, buf, size);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ofs += size;
 		buf += size;
 		(*retlen) += size;
 		len -= size;
 
-		if (ofs >> cfi->chipshift) {
+		अगर (ofs >> cfi->chipshअगरt) अणु
 			chipnum ++;
 			ofs = 0;
-			if (chipnum == cfi->numchips)
-				return 0;
-		}
-	}
+			अगर (chipnum == cfi->numchips)
+				वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Writev for ECC-Flashes is a little more complicated. We need to maintain
- * a small buffer for this.
- * XXX: If the buffer size is not a multiple of 2, this will break
+ * Writev क्रम ECC-Flashes is a little more complicated. We need to मुख्यtain
+ * a small buffer क्रम this.
+ * XXX: If the buffer size is not a multiple of 2, this will अवरोध
  */
-#define ECCBUF_SIZE (mtd->writesize)
-#define ECCBUF_DIV(x) ((x) & ~(ECCBUF_SIZE - 1))
-#define ECCBUF_MOD(x) ((x) &  (ECCBUF_SIZE - 1))
-static int
-cfi_staa_writev(struct mtd_info *mtd, const struct kvec *vecs,
-		unsigned long count, loff_t to, size_t *retlen)
-{
-	unsigned long i;
-	size_t	 totlen = 0, thislen;
-	int	 ret = 0;
-	size_t	 buflen = 0;
-	char *buffer;
+#घोषणा ECCBUF_SIZE (mtd->ग_लिखोsize)
+#घोषणा ECCBUF_DIV(x) ((x) & ~(ECCBUF_SIZE - 1))
+#घोषणा ECCBUF_MOD(x) ((x) &  (ECCBUF_SIZE - 1))
+अटल पूर्णांक
+cfi_staa_ग_लिखोv(काष्ठा mtd_info *mtd, स्थिर काष्ठा kvec *vecs,
+		अचिन्हित दीर्घ count, loff_t to, माप_प्रकार *retlen)
+अणु
+	अचिन्हित दीर्घ i;
+	माप_प्रकार	 totlen = 0, thislen;
+	पूर्णांक	 ret = 0;
+	माप_प्रकार	 buflen = 0;
+	अक्षर *buffer;
 
-	if (!ECCBUF_SIZE) {
-		/* We should fall back to a general writev implementation.
-		 * Until that is written, just break.
+	अगर (!ECCBUF_SIZE) अणु
+		/* We should fall back to a general ग_लिखोv implementation.
+		 * Until that is written, just अवरोध.
 		 */
-		return -EIO;
-	}
-	buffer = kmalloc(ECCBUF_SIZE, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+		वापस -EIO;
+	पूर्ण
+	buffer = kदो_स्मृति(ECCBUF_SIZE, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	for (i=0; i<count; i++) {
-		size_t elem_len = vecs[i].iov_len;
-		void *elem_base = vecs[i].iov_base;
-		if (!elem_len) /* FIXME: Might be unnecessary. Check that */
-			continue;
-		if (buflen) { /* cut off head */
-			if (buflen + elem_len < ECCBUF_SIZE) { /* just accumulate */
-				memcpy(buffer+buflen, elem_base, elem_len);
+	क्रम (i=0; i<count; i++) अणु
+		माप_प्रकार elem_len = vecs[i].iov_len;
+		व्योम *elem_base = vecs[i].iov_base;
+		अगर (!elem_len) /* FIXME: Might be unnecessary. Check that */
+			जारी;
+		अगर (buflen) अणु /* cut off head */
+			अगर (buflen + elem_len < ECCBUF_SIZE) अणु /* just accumulate */
+				स_नकल(buffer+buflen, elem_base, elem_len);
 				buflen += elem_len;
-				continue;
-			}
-			memcpy(buffer+buflen, elem_base, ECCBUF_SIZE-buflen);
-			ret = mtd_write(mtd, to, ECCBUF_SIZE, &thislen,
+				जारी;
+			पूर्ण
+			स_नकल(buffer+buflen, elem_base, ECCBUF_SIZE-buflen);
+			ret = mtd_ग_लिखो(mtd, to, ECCBUF_SIZE, &thislen,
 					buffer);
 			totlen += thislen;
-			if (ret || thislen != ECCBUF_SIZE)
-				goto write_error;
+			अगर (ret || thislen != ECCBUF_SIZE)
+				जाओ ग_लिखो_error;
 			elem_len -= thislen-buflen;
 			elem_base += thislen-buflen;
 			to += ECCBUF_SIZE;
-		}
-		if (ECCBUF_DIV(elem_len)) { /* write clean aligned data */
-			ret = mtd_write(mtd, to, ECCBUF_DIV(elem_len),
+		पूर्ण
+		अगर (ECCBUF_DIV(elem_len)) अणु /* ग_लिखो clean aligned data */
+			ret = mtd_ग_लिखो(mtd, to, ECCBUF_DIV(elem_len),
 					&thislen, elem_base);
 			totlen += thislen;
-			if (ret || thislen != ECCBUF_DIV(elem_len))
-				goto write_error;
+			अगर (ret || thislen != ECCBUF_DIV(elem_len))
+				जाओ ग_लिखो_error;
 			to += thislen;
-		}
+		पूर्ण
 		buflen = ECCBUF_MOD(elem_len); /* cut off tail */
-		if (buflen) {
-			memset(buffer, 0xff, ECCBUF_SIZE);
-			memcpy(buffer, elem_base + thislen, buflen);
-		}
-	}
-	if (buflen) { /* flush last page, even if not full */
-		/* This is sometimes intended behaviour, really */
-		ret = mtd_write(mtd, to, buflen, &thislen, buffer);
+		अगर (buflen) अणु
+			स_रखो(buffer, 0xff, ECCBUF_SIZE);
+			स_नकल(buffer, elem_base + thislen, buflen);
+		पूर्ण
+	पूर्ण
+	अगर (buflen) अणु /* flush last page, even अगर not full */
+		/* This is someबार पूर्णांकended behaviour, really */
+		ret = mtd_ग_लिखो(mtd, to, buflen, &thislen, buffer);
 		totlen += thislen;
-		if (ret || thislen != ECCBUF_SIZE)
-			goto write_error;
-	}
-write_error:
-	if (retlen)
+		अगर (ret || thislen != ECCBUF_SIZE)
+			जाओ ग_लिखो_error;
+	पूर्ण
+ग_लिखो_error:
+	अगर (retlen)
 		*retlen = totlen;
-	kfree(buffer);
-	return ret;
-}
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
 
 
-static inline int do_erase_oneblock(struct map_info *map, struct flchip *chip, unsigned long adr)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
+अटल अंतरभूत पूर्णांक करो_erase_oneblock(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
 	map_word status, status_OK;
-	unsigned long timeo;
-	int retries = 3;
-	DECLARE_WAITQUEUE(wait, current);
-	int ret = 0;
+	अचिन्हित दीर्घ समयo;
+	पूर्णांक retries = 3;
+	DECLARE_WAITQUEUE(रुको, current);
+	पूर्णांक ret = 0;
 
 	adr += chip->start;
 
-	/* Let's determine this according to the interleave only once */
+	/* Let's determine this according to the पूर्णांकerleave only once */
 	status_OK = CMD(0x80);
 
-	timeo = jiffies + HZ;
+	समयo = jअगरfies + HZ;
 retry:
 	mutex_lock(&chip->mutex);
 
-	/* Check that the chip's ready to talk to us. */
-	switch (chip->state) {
-	case FL_CFI_QUERY:
-	case FL_JEDEC_QUERY:
-	case FL_READY:
-		map_write(map, CMD(0x70), adr);
+	/* Check that the chip's पढ़ोy to talk to us. */
+	चयन (chip->state) अणु
+	हाल FL_CFI_QUERY:
+	हाल FL_JEDEC_QUERY:
+	हाल FL_READY:
+		map_ग_लिखो(map, CMD(0x70), adr);
 		chip->state = FL_STATUS;
 		fallthrough;
-	case FL_STATUS:
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+	हाल FL_STATUS:
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* Urgh. Chip not yet ready to talk to us. */
-		if (time_after(jiffies, timeo)) {
+		/* Urgh. Chip not yet पढ़ोy to talk to us. */
+		अगर (समय_after(jअगरfies, समयo)) अणु
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "waiting for chip to be ready timed out in erase\n");
-			return -EIO;
-		}
+			prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in erase\n");
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
-		goto retry;
+		जाओ retry;
 
-	default:
-		/* Stick ourselves on a wait queue to be woken when
+	शेष:
+		/* Stick ourselves on a रुको queue to be woken when
 		   someone changes the status */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&chip->wq, &wait);
+		add_रुको_queue(&chip->wq, &रुको);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		remove_wait_queue(&chip->wq, &wait);
-		timeo = jiffies + HZ;
-		goto retry;
-	}
+		हटाओ_रुको_queue(&chip->wq, &रुको);
+		समयo = jअगरfies + HZ;
+		जाओ retry;
+	पूर्ण
 
 	ENABLE_VPP(map);
-	/* Clear the status register first */
-	map_write(map, CMD(0x50), adr);
+	/* Clear the status रेजिस्टर first */
+	map_ग_लिखो(map, CMD(0x50), adr);
 
 	/* Now erase */
-	map_write(map, CMD(0x20), adr);
-	map_write(map, CMD(0xD0), adr);
+	map_ग_लिखो(map, CMD(0x20), adr);
+	map_ग_लिखो(map, CMD(0xD0), adr);
 	chip->state = FL_ERASING;
 
 	mutex_unlock(&chip->mutex);
 	msleep(1000);
 	mutex_lock(&chip->mutex);
 
-	/* FIXME. Use a timer to check this, and return immediately. */
-	/* Once the state machine's known to be working I'll do that */
+	/* FIXME. Use a समयr to check this, and वापस immediately. */
+	/* Once the state machine's known to be working I'll करो that */
 
-	timeo = jiffies + (HZ*20);
-	for (;;) {
-		if (chip->state != FL_ERASING) {
+	समयo = jअगरfies + (HZ*20);
+	क्रम (;;) अणु
+		अगर (chip->state != FL_ERASING) अणु
 			/* Someone's suspended the erase. Sleep */
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_wait_queue(&chip->wq, &wait);
+			add_रुको_queue(&chip->wq, &रुको);
 			mutex_unlock(&chip->mutex);
 			schedule();
-			remove_wait_queue(&chip->wq, &wait);
-			timeo = jiffies + (HZ*20); /* FIXME */
+			हटाओ_रुको_queue(&chip->wq, &रुको);
+			समयo = jअगरfies + (HZ*20); /* FIXME */
 			mutex_lock(&chip->mutex);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* OK Still waiting */
-		if (time_after(jiffies, timeo)) {
-			map_write(map, CMD(0x70), adr);
+		/* OK Still रुकोing */
+		अगर (समय_after(jअगरfies, समयo)) अणु
+			map_ग_लिखो(map, CMD(0x70), adr);
 			chip->state = FL_STATUS;
-			printk(KERN_ERR "waiting for erase to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_read(map, adr).x[0]);
+			prपूर्णांकk(KERN_ERR "waiting for erase to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_पढ़ो(map, adr).x[0]);
 			DISABLE_VPP(map);
 			mutex_unlock(&chip->mutex);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
 		mutex_lock(&chip->mutex);
-	}
+	पूर्ण
 
 	DISABLE_VPP(map);
 	ret = 0;
 
 	/* We've broken this before. It doesn't hurt to be safe */
-	map_write(map, CMD(0x70), adr);
+	map_ग_लिखो(map, CMD(0x70), adr);
 	chip->state = FL_STATUS;
-	status = map_read(map, adr);
+	status = map_पढ़ो(map, adr);
 
-	/* check for lock bit */
-	if (map_word_bitsset(map, status, CMD(0x3a))) {
-		unsigned char chipstatus = status.x[0];
-		if (!map_word_equal(map, status, CMD(chipstatus))) {
-			int i, w;
-			for (w=0; w<map_words(map); w++) {
-				for (i = 0; i<cfi_interleave(cfi); i++) {
+	/* check क्रम lock bit */
+	अगर (map_word_bitsset(map, status, CMD(0x3a))) अणु
+		अचिन्हित अक्षर chipstatus = status.x[0];
+		अगर (!map_word_equal(map, status, CMD(chipstatus))) अणु
+			पूर्णांक i, w;
+			क्रम (w=0; w<map_words(map); w++) अणु
+				क्रम (i = 0; i<cfi_पूर्णांकerleave(cfi); i++) अणु
 					chipstatus |= status.x[w] >> (cfi->device_type * 8);
-				}
-			}
-			printk(KERN_WARNING "Status is not identical for all chips: 0x%lx. Merging to give 0x%02x\n",
+				पूर्ण
+			पूर्ण
+			prपूर्णांकk(KERN_WARNING "Status is not identical for all chips: 0x%lx. Merging to give 0x%02x\n",
 			       status.x[0], chipstatus);
-		}
+		पूर्ण
 		/* Reset the error bits */
-		map_write(map, CMD(0x50), adr);
-		map_write(map, CMD(0x70), adr);
+		map_ग_लिखो(map, CMD(0x50), adr);
+		map_ग_लिखो(map, CMD(0x70), adr);
 
-		if ((chipstatus & 0x30) == 0x30) {
-			printk(KERN_NOTICE "Chip reports improper command sequence: status 0x%x\n", chipstatus);
+		अगर ((chipstatus & 0x30) == 0x30) अणु
+			prपूर्णांकk(KERN_NOTICE "Chip reports improper command sequence: status 0x%x\n", chipstatus);
 			ret = -EIO;
-		} else if (chipstatus & 0x02) {
+		पूर्ण अन्यथा अगर (chipstatus & 0x02) अणु
 			/* Protection bit set */
 			ret = -EROFS;
-		} else if (chipstatus & 0x8) {
+		पूर्ण अन्यथा अगर (chipstatus & 0x8) अणु
 			/* Voltage */
-			printk(KERN_WARNING "Chip reports voltage low on erase: status 0x%x\n", chipstatus);
+			prपूर्णांकk(KERN_WARNING "Chip reports voltage low on erase: status 0x%x\n", chipstatus);
 			ret = -EIO;
-		} else if (chipstatus & 0x20) {
-			if (retries--) {
-				printk(KERN_DEBUG "Chip erase failed at 0x%08lx: status 0x%x. Retrying...\n", adr, chipstatus);
-				timeo = jiffies + HZ;
+		पूर्ण अन्यथा अगर (chipstatus & 0x20) अणु
+			अगर (retries--) अणु
+				prपूर्णांकk(KERN_DEBUG "Chip erase failed at 0x%08lx: status 0x%x. Retrying...\n", adr, chipstatus);
+				समयo = jअगरfies + HZ;
 				chip->state = FL_STATUS;
 				mutex_unlock(&chip->mutex);
-				goto retry;
-			}
-			printk(KERN_DEBUG "Chip erase failed at 0x%08lx: status 0x%x\n", adr, chipstatus);
+				जाओ retry;
+			पूर्ण
+			prपूर्णांकk(KERN_DEBUG "Chip erase failed at 0x%08lx: status 0x%x\n", adr, chipstatus);
 			ret = -EIO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	wake_up(&chip->wq);
 	mutex_unlock(&chip->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cfi_staa_erase_varsize(struct mtd_info *mtd,
-				  struct erase_info *instr)
-{	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	unsigned long adr, len;
-	int chipnum, ret;
-	int i, first;
-	struct mtd_erase_region_info *regions = mtd->eraseregions;
+अटल पूर्णांक cfi_staa_erase_varsize(काष्ठा mtd_info *mtd,
+				  काष्ठा erase_info *instr)
+अणु	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	अचिन्हित दीर्घ adr, len;
+	पूर्णांक chipnum, ret;
+	पूर्णांक i, first;
+	काष्ठा mtd_erase_region_info *regions = mtd->eraseregions;
 
 	/* Check that both start and end of the requested erase are
 	 * aligned with the erasesize at the appropriate addresses.
@@ -902,24 +903,24 @@ static int cfi_staa_erase_varsize(struct mtd_info *mtd,
 
 	i = 0;
 
-	/* Skip all erase regions which are ended before the start of
+	/* Skip all erase regions which are ended beक्रमe the start of
 	   the requested erase. Actually, to save on the calculations,
 	   we skip to the first erase region which starts after the
 	   start of the requested erase, and then go back one.
 	*/
 
-	while (i < mtd->numeraseregions && instr->addr >= regions[i].offset)
+	जबतक (i < mtd->numeraseregions && instr->addr >= regions[i].offset)
 	       i++;
 	i--;
 
-	/* OK, now i is pointing at the erase region in which this
+	/* OK, now i is poपूर्णांकing at the erase region in which this
 	   erase request starts. Check the start of the requested
 	   erase range is aligned with the erase size which is in
 	   effect here.
 	*/
 
-	if (instr->addr & (regions[i].erasesize-1))
-		return -EINVAL;
+	अगर (instr->addr & (regions[i].erasesize-1))
+		वापस -EINVAL;
 
 	/* Remember the erase region we start on */
 	first = i;
@@ -928,474 +929,474 @@ static int cfi_staa_erase_varsize(struct mtd_info *mtd,
 	 * with the erase region at that address.
 	 */
 
-	while (i<mtd->numeraseregions && (instr->addr + instr->len) >= regions[i].offset)
+	जबतक (i<mtd->numeraseregions && (instr->addr + instr->len) >= regions[i].offset)
 		i++;
 
-	/* As before, drop back one to point at the region in which
+	/* As beक्रमe, drop back one to poपूर्णांक at the region in which
 	   the address actually falls
 	*/
 	i--;
 
-	if ((instr->addr + instr->len) & (regions[i].erasesize-1))
-		return -EINVAL;
+	अगर ((instr->addr + instr->len) & (regions[i].erasesize-1))
+		वापस -EINVAL;
 
-	chipnum = instr->addr >> cfi->chipshift;
-	adr = instr->addr - (chipnum << cfi->chipshift);
+	chipnum = instr->addr >> cfi->chipshअगरt;
+	adr = instr->addr - (chipnum << cfi->chipshअगरt);
 	len = instr->len;
 
 	i=first;
 
-	while(len) {
-		ret = do_erase_oneblock(map, &cfi->chips[chipnum], adr);
+	जबतक(len) अणु
+		ret = करो_erase_oneblock(map, &cfi->chips[chipnum], adr);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		adr += regions[i].erasesize;
 		len -= regions[i].erasesize;
 
-		if (adr % (1<< cfi->chipshift) == (((unsigned long)regions[i].offset + (regions[i].erasesize * regions[i].numblocks)) %( 1<< cfi->chipshift)))
+		अगर (adr % (1<< cfi->chipshअगरt) == (((अचिन्हित दीर्घ)regions[i].offset + (regions[i].erasesize * regions[i].numblocks)) %( 1<< cfi->chipshअगरt)))
 			i++;
 
-		if (adr >> cfi->chipshift) {
+		अगर (adr >> cfi->chipshअगरt) अणु
 			adr = 0;
 			chipnum++;
 
-			if (chipnum >= cfi->numchips)
-				break;
-		}
-	}
+			अगर (chipnum >= cfi->numchips)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cfi_staa_sync (struct mtd_info *mtd)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	int i;
-	struct flchip *chip;
-	int ret = 0;
-	DECLARE_WAITQUEUE(wait, current);
+अटल व्योम cfi_staa_sync (काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	पूर्णांक i;
+	काष्ठा flchip *chip;
+	पूर्णांक ret = 0;
+	DECLARE_WAITQUEUE(रुको, current);
 
-	for (i=0; !ret && i<cfi->numchips; i++) {
+	क्रम (i=0; !ret && i<cfi->numchips; i++) अणु
 		chip = &cfi->chips[i];
 
 	retry:
 		mutex_lock(&chip->mutex);
 
-		switch(chip->state) {
-		case FL_READY:
-		case FL_STATUS:
-		case FL_CFI_QUERY:
-		case FL_JEDEC_QUERY:
+		चयन(chip->state) अणु
+		हाल FL_READY:
+		हाल FL_STATUS:
+		हाल FL_CFI_QUERY:
+		हाल FL_JEDEC_QUERY:
 			chip->oldstate = chip->state;
 			chip->state = FL_SYNCING;
 			/* No need to wake_up() on this state change -
-			 * as the whole point is that nobody can do anything
+			 * as the whole poपूर्णांक is that nobody can करो anything
 			 * with the chip now anyway.
 			 */
 			fallthrough;
-		case FL_SYNCING:
+		हाल FL_SYNCING:
 			mutex_unlock(&chip->mutex);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			/* Not an idle state */
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_wait_queue(&chip->wq, &wait);
+			add_रुको_queue(&chip->wq, &रुको);
 
 			mutex_unlock(&chip->mutex);
 			schedule();
-		        remove_wait_queue(&chip->wq, &wait);
+		        हटाओ_रुको_queue(&chip->wq, &रुको);
 
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
 	/* Unlock the chips again */
 
-	for (i--; i >=0; i--) {
+	क्रम (i--; i >=0; i--) अणु
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		if (chip->state == FL_SYNCING) {
+		अगर (chip->state == FL_SYNCING) अणु
 			chip->state = chip->oldstate;
 			wake_up(&chip->wq);
-		}
+		पूर्ण
 		mutex_unlock(&chip->mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int do_lock_oneblock(struct map_info *map, struct flchip *chip, unsigned long adr)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
+अटल अंतरभूत पूर्णांक करो_lock_oneblock(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
 	map_word status, status_OK;
-	unsigned long timeo = jiffies + HZ;
-	DECLARE_WAITQUEUE(wait, current);
+	अचिन्हित दीर्घ समयo = jअगरfies + HZ;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	adr += chip->start;
 
-	/* Let's determine this according to the interleave only once */
+	/* Let's determine this according to the पूर्णांकerleave only once */
 	status_OK = CMD(0x80);
 
-	timeo = jiffies + HZ;
+	समयo = jअगरfies + HZ;
 retry:
 	mutex_lock(&chip->mutex);
 
-	/* Check that the chip's ready to talk to us. */
-	switch (chip->state) {
-	case FL_CFI_QUERY:
-	case FL_JEDEC_QUERY:
-	case FL_READY:
-		map_write(map, CMD(0x70), adr);
+	/* Check that the chip's पढ़ोy to talk to us. */
+	चयन (chip->state) अणु
+	हाल FL_CFI_QUERY:
+	हाल FL_JEDEC_QUERY:
+	हाल FL_READY:
+		map_ग_लिखो(map, CMD(0x70), adr);
 		chip->state = FL_STATUS;
 		fallthrough;
-	case FL_STATUS:
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+	हाल FL_STATUS:
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* Urgh. Chip not yet ready to talk to us. */
-		if (time_after(jiffies, timeo)) {
+		/* Urgh. Chip not yet पढ़ोy to talk to us. */
+		अगर (समय_after(jअगरfies, समयo)) अणु
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "waiting for chip to be ready timed out in lock\n");
-			return -EIO;
-		}
+			prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in lock\n");
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
-		goto retry;
+		जाओ retry;
 
-	default:
-		/* Stick ourselves on a wait queue to be woken when
+	शेष:
+		/* Stick ourselves on a रुको queue to be woken when
 		   someone changes the status */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&chip->wq, &wait);
+		add_रुको_queue(&chip->wq, &रुको);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		remove_wait_queue(&chip->wq, &wait);
-		timeo = jiffies + HZ;
-		goto retry;
-	}
+		हटाओ_रुको_queue(&chip->wq, &रुको);
+		समयo = jअगरfies + HZ;
+		जाओ retry;
+	पूर्ण
 
 	ENABLE_VPP(map);
-	map_write(map, CMD(0x60), adr);
-	map_write(map, CMD(0x01), adr);
+	map_ग_लिखो(map, CMD(0x60), adr);
+	map_ग_लिखो(map, CMD(0x01), adr);
 	chip->state = FL_LOCKING;
 
 	mutex_unlock(&chip->mutex);
 	msleep(1000);
 	mutex_lock(&chip->mutex);
 
-	/* FIXME. Use a timer to check this, and return immediately. */
-	/* Once the state machine's known to be working I'll do that */
+	/* FIXME. Use a समयr to check this, and वापस immediately. */
+	/* Once the state machine's known to be working I'll करो that */
 
-	timeo = jiffies + (HZ*2);
-	for (;;) {
+	समयo = jअगरfies + (HZ*2);
+	क्रम (;;) अणु
 
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* OK Still waiting */
-		if (time_after(jiffies, timeo)) {
-			map_write(map, CMD(0x70), adr);
+		/* OK Still रुकोing */
+		अगर (समय_after(jअगरfies, समयo)) अणु
+			map_ग_लिखो(map, CMD(0x70), adr);
 			chip->state = FL_STATUS;
-			printk(KERN_ERR "waiting for lock to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_read(map, adr).x[0]);
+			prपूर्णांकk(KERN_ERR "waiting for lock to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_पढ़ो(map, adr).x[0]);
 			DISABLE_VPP(map);
 			mutex_unlock(&chip->mutex);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
 		mutex_lock(&chip->mutex);
-	}
+	पूर्ण
 
 	/* Done and happy. */
 	chip->state = FL_STATUS;
 	DISABLE_VPP(map);
 	wake_up(&chip->wq);
 	mutex_unlock(&chip->mutex);
-	return 0;
-}
-static int cfi_staa_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	unsigned long adr;
-	int chipnum, ret;
-#ifdef DEBUG_LOCK_BITS
-	int ofs_factor = cfi->interleave * cfi->device_type;
-#endif
+	वापस 0;
+पूर्ण
+अटल पूर्णांक cfi_staa_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	अचिन्हित दीर्घ adr;
+	पूर्णांक chipnum, ret;
+#अगर_घोषित DEBUG_LOCK_BITS
+	पूर्णांक ofs_factor = cfi->पूर्णांकerleave * cfi->device_type;
+#पूर्ण_अगर
 
-	if (ofs & (mtd->erasesize - 1))
-		return -EINVAL;
+	अगर (ofs & (mtd->erasesize - 1))
+		वापस -EINVAL;
 
-	if (len & (mtd->erasesize -1))
-		return -EINVAL;
+	अगर (len & (mtd->erasesize -1))
+		वापस -EINVAL;
 
-	chipnum = ofs >> cfi->chipshift;
-	adr = ofs - (chipnum << cfi->chipshift);
+	chipnum = ofs >> cfi->chipshअगरt;
+	adr = ofs - (chipnum << cfi->chipshअगरt);
 
-	while(len) {
+	जबतक(len) अणु
 
-#ifdef DEBUG_LOCK_BITS
-		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, NULL);
-		printk("before lock: block status register is %x\n",cfi_read_query(map, adr+(2*ofs_factor)));
-		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, NULL);
-#endif
+#अगर_घोषित DEBUG_LOCK_BITS
+		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+		prपूर्णांकk("before lock: block status register is %x\n",cfi_पढ़ो_query(map, adr+(2*ofs_factor)));
+		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+#पूर्ण_अगर
 
-		ret = do_lock_oneblock(map, &cfi->chips[chipnum], adr);
+		ret = करो_lock_oneblock(map, &cfi->chips[chipnum], adr);
 
-#ifdef DEBUG_LOCK_BITS
-		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, NULL);
-		printk("after lock: block status register is %x\n",cfi_read_query(map, adr+(2*ofs_factor)));
-		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, NULL);
-#endif
+#अगर_घोषित DEBUG_LOCK_BITS
+		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+		prपूर्णांकk("after lock: block status register is %x\n",cfi_पढ़ो_query(map, adr+(2*ofs_factor)));
+		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+#पूर्ण_अगर
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		adr += mtd->erasesize;
 		len -= mtd->erasesize;
 
-		if (adr >> cfi->chipshift) {
+		अगर (adr >> cfi->chipshअगरt) अणु
 			adr = 0;
 			chipnum++;
 
-			if (chipnum >= cfi->numchips)
-				break;
-		}
-	}
-	return 0;
-}
-static inline int do_unlock_oneblock(struct map_info *map, struct flchip *chip, unsigned long adr)
-{
-	struct cfi_private *cfi = map->fldrv_priv;
+			अगर (chipnum >= cfi->numchips)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक करो_unlock_oneblock(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr)
+अणु
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
 	map_word status, status_OK;
-	unsigned long timeo = jiffies + HZ;
-	DECLARE_WAITQUEUE(wait, current);
+	अचिन्हित दीर्घ समयo = jअगरfies + HZ;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	adr += chip->start;
 
-	/* Let's determine this according to the interleave only once */
+	/* Let's determine this according to the पूर्णांकerleave only once */
 	status_OK = CMD(0x80);
 
-	timeo = jiffies + HZ;
+	समयo = jअगरfies + HZ;
 retry:
 	mutex_lock(&chip->mutex);
 
-	/* Check that the chip's ready to talk to us. */
-	switch (chip->state) {
-	case FL_CFI_QUERY:
-	case FL_JEDEC_QUERY:
-	case FL_READY:
-		map_write(map, CMD(0x70), adr);
+	/* Check that the chip's पढ़ोy to talk to us. */
+	चयन (chip->state) अणु
+	हाल FL_CFI_QUERY:
+	हाल FL_JEDEC_QUERY:
+	हाल FL_READY:
+		map_ग_लिखो(map, CMD(0x70), adr);
 		chip->state = FL_STATUS;
 		fallthrough;
-	case FL_STATUS:
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+	हाल FL_STATUS:
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* Urgh. Chip not yet ready to talk to us. */
-		if (time_after(jiffies, timeo)) {
+		/* Urgh. Chip not yet पढ़ोy to talk to us. */
+		अगर (समय_after(jअगरfies, समयo)) अणु
 			mutex_unlock(&chip->mutex);
-			printk(KERN_ERR "waiting for chip to be ready timed out in unlock\n");
-			return -EIO;
-		}
+			prपूर्णांकk(KERN_ERR "waiting for chip to be ready timed out in unlock\n");
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the lock, wait a while and retry */
+		/* Latency issues. Drop the lock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
-		goto retry;
+		जाओ retry;
 
-	default:
-		/* Stick ourselves on a wait queue to be woken when
+	शेष:
+		/* Stick ourselves on a रुको queue to be woken when
 		   someone changes the status */
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_wait_queue(&chip->wq, &wait);
+		add_रुको_queue(&chip->wq, &रुको);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		remove_wait_queue(&chip->wq, &wait);
-		timeo = jiffies + HZ;
-		goto retry;
-	}
+		हटाओ_रुको_queue(&chip->wq, &रुको);
+		समयo = jअगरfies + HZ;
+		जाओ retry;
+	पूर्ण
 
 	ENABLE_VPP(map);
-	map_write(map, CMD(0x60), adr);
-	map_write(map, CMD(0xD0), adr);
+	map_ग_लिखो(map, CMD(0x60), adr);
+	map_ग_लिखो(map, CMD(0xD0), adr);
 	chip->state = FL_UNLOCKING;
 
 	mutex_unlock(&chip->mutex);
 	msleep(1000);
 	mutex_lock(&chip->mutex);
 
-	/* FIXME. Use a timer to check this, and return immediately. */
-	/* Once the state machine's known to be working I'll do that */
+	/* FIXME. Use a समयr to check this, and वापस immediately. */
+	/* Once the state machine's known to be working I'll करो that */
 
-	timeo = jiffies + (HZ*2);
-	for (;;) {
+	समयo = jअगरfies + (HZ*2);
+	क्रम (;;) अणु
 
-		status = map_read(map, adr);
-		if (map_word_andequal(map, status, status_OK, status_OK))
-			break;
+		status = map_पढ़ो(map, adr);
+		अगर (map_word_andequal(map, status, status_OK, status_OK))
+			अवरोध;
 
-		/* OK Still waiting */
-		if (time_after(jiffies, timeo)) {
-			map_write(map, CMD(0x70), adr);
+		/* OK Still रुकोing */
+		अगर (समय_after(jअगरfies, समयo)) अणु
+			map_ग_लिखो(map, CMD(0x70), adr);
 			chip->state = FL_STATUS;
-			printk(KERN_ERR "waiting for unlock to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_read(map, adr).x[0]);
+			prपूर्णांकk(KERN_ERR "waiting for unlock to complete timed out. Xstatus = %lx, status = %lx.\n", status.x[0], map_पढ़ो(map, adr).x[0]);
 			DISABLE_VPP(map);
 			mutex_unlock(&chip->mutex);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		/* Latency issues. Drop the unlock, wait a while and retry */
+		/* Latency issues. Drop the unlock, रुको a जबतक and retry */
 		mutex_unlock(&chip->mutex);
 		cfi_udelay(1);
 		mutex_lock(&chip->mutex);
-	}
+	पूर्ण
 
 	/* Done and happy. */
 	chip->state = FL_STATUS;
 	DISABLE_VPP(map);
 	wake_up(&chip->wq);
 	mutex_unlock(&chip->mutex);
-	return 0;
-}
-static int cfi_staa_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	unsigned long adr;
-	int chipnum, ret;
-#ifdef DEBUG_LOCK_BITS
-	int ofs_factor = cfi->interleave * cfi->device_type;
-#endif
+	वापस 0;
+पूर्ण
+अटल पूर्णांक cfi_staa_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	अचिन्हित दीर्घ adr;
+	पूर्णांक chipnum, ret;
+#अगर_घोषित DEBUG_LOCK_BITS
+	पूर्णांक ofs_factor = cfi->पूर्णांकerleave * cfi->device_type;
+#पूर्ण_अगर
 
-	chipnum = ofs >> cfi->chipshift;
-	adr = ofs - (chipnum << cfi->chipshift);
+	chipnum = ofs >> cfi->chipshअगरt;
+	adr = ofs - (chipnum << cfi->chipshअगरt);
 
-#ifdef DEBUG_LOCK_BITS
-	{
-		unsigned long temp_adr = adr;
-		unsigned long temp_len = len;
+#अगर_घोषित DEBUG_LOCK_BITS
+	अणु
+		अचिन्हित दीर्घ temp_adr = adr;
+		अचिन्हित दीर्घ temp_len = len;
 
-		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, NULL);
-                while (temp_len) {
-			printk("before unlock %x: block status register is %x\n",temp_adr,cfi_read_query(map, temp_adr+(2*ofs_factor)));
+		cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+                जबतक (temp_len) अणु
+			prपूर्णांकk("before unlock %x: block status register is %x\n",temp_adr,cfi_पढ़ो_query(map, temp_adr+(2*ofs_factor)));
 			temp_adr += mtd->erasesize;
 			temp_len -= mtd->erasesize;
-		}
-		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, NULL);
-	}
-#endif
+		पूर्ण
+		cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+	पूर्ण
+#पूर्ण_अगर
 
-	ret = do_unlock_oneblock(map, &cfi->chips[chipnum], adr);
+	ret = करो_unlock_oneblock(map, &cfi->chips[chipnum], adr);
 
-#ifdef DEBUG_LOCK_BITS
-	cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, NULL);
-	printk("after unlock: block status register is %x\n",cfi_read_query(map, adr+(2*ofs_factor)));
-	cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, NULL);
-#endif
+#अगर_घोषित DEBUG_LOCK_BITS
+	cfi_send_gen_cmd(0x90, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+	prपूर्णांकk("after unlock: block status register is %x\n",cfi_पढ़ो_query(map, adr+(2*ofs_factor)));
+	cfi_send_gen_cmd(0xff, 0x55, 0, map, cfi, cfi->device_type, शून्य);
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cfi_staa_suspend(struct mtd_info *mtd)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	int i;
-	struct flchip *chip;
-	int ret = 0;
+अटल पूर्णांक cfi_staa_suspend(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	पूर्णांक i;
+	काष्ठा flchip *chip;
+	पूर्णांक ret = 0;
 
-	for (i=0; !ret && i<cfi->numchips; i++) {
+	क्रम (i=0; !ret && i<cfi->numchips; i++) अणु
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		switch(chip->state) {
-		case FL_READY:
-		case FL_STATUS:
-		case FL_CFI_QUERY:
-		case FL_JEDEC_QUERY:
+		चयन(chip->state) अणु
+		हाल FL_READY:
+		हाल FL_STATUS:
+		हाल FL_CFI_QUERY:
+		हाल FL_JEDEC_QUERY:
 			chip->oldstate = chip->state;
 			chip->state = FL_PM_SUSPENDED;
 			/* No need to wake_up() on this state change -
-			 * as the whole point is that nobody can do anything
+			 * as the whole poपूर्णांक is that nobody can करो anything
 			 * with the chip now anyway.
 			 */
-			break;
+			अवरोध;
 
-		case FL_PM_SUSPENDED:
-			break;
+		हाल FL_PM_SUSPENDED:
+			अवरोध;
 
-		default:
+		शेष:
 			ret = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&chip->mutex);
-	}
+	पूर्ण
 
 	/* Unlock the chips again */
 
-	if (ret) {
-		for (i--; i >=0; i--) {
+	अगर (ret) अणु
+		क्रम (i--; i >=0; i--) अणु
 			chip = &cfi->chips[i];
 
 			mutex_lock(&chip->mutex);
 
-			if (chip->state == FL_PM_SUSPENDED) {
-				/* No need to force it into a known state here,
+			अगर (chip->state == FL_PM_SUSPENDED) अणु
+				/* No need to क्रमce it पूर्णांकo a known state here,
 				   because we're returning failure, and it didn't
-				   get power cycled */
+				   get घातer cycled */
 				chip->state = chip->oldstate;
 				wake_up(&chip->wq);
-			}
+			पूर्ण
 			mutex_unlock(&chip->mutex);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cfi_staa_resume(struct mtd_info *mtd)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	int i;
-	struct flchip *chip;
+अटल व्योम cfi_staa_resume(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	पूर्णांक i;
+	काष्ठा flchip *chip;
 
-	for (i=0; i<cfi->numchips; i++) {
+	क्रम (i=0; i<cfi->numchips; i++) अणु
 
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		/* Go to known state. Chip may have been power cycled */
-		if (chip->state == FL_PM_SUSPENDED) {
-			map_write(map, CMD(0xFF), 0);
+		/* Go to known state. Chip may have been घातer cycled */
+		अगर (chip->state == FL_PM_SUSPENDED) अणु
+			map_ग_लिखो(map, CMD(0xFF), 0);
 			chip->state = FL_READY;
 			wake_up(&chip->wq);
-		}
+		पूर्ण
 
 		mutex_unlock(&chip->mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cfi_staa_destroy(struct mtd_info *mtd)
-{
-	struct map_info *map = mtd->priv;
-	struct cfi_private *cfi = map->fldrv_priv;
-	kfree(cfi->cmdset_priv);
-	kfree(cfi);
-}
+अटल व्योम cfi_staa_destroy(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा map_info *map = mtd->priv;
+	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+	kमुक्त(cfi->cmdset_priv);
+	kमुक्त(cfi);
+पूर्ण
 
 MODULE_LICENSE("GPL");

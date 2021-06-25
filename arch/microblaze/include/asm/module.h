@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_MODULE_H
-#define _ASM_MICROBLAZE_MODULE_H
+#अगर_अघोषित _ASM_MICROBLAZE_MODULE_H
+#घोषणा _ASM_MICROBLAZE_MODULE_H
 
-#include <asm-generic/module.h>
+#समावेश <यंत्र-generic/module.h>
 
 /* Microblaze Relocations */
-#define R_MICROBLAZE_NONE 0
-#define R_MICROBLAZE_32 1
-#define R_MICROBLAZE_32_PCREL 2
-#define R_MICROBLAZE_64_PCREL 3
-#define R_MICROBLAZE_32_PCREL_LO 4
-#define R_MICROBLAZE_64 5
-#define R_MICROBLAZE_32_LO 6
-#define R_MICROBLAZE_SRO32 7
-#define R_MICROBLAZE_SRW32 8
-#define R_MICROBLAZE_64_NONE 9
-#define R_MICROBLAZE_32_SYM_OP_SYM 10
+#घोषणा R_MICROBLAZE_NONE 0
+#घोषणा R_MICROBLAZE_32 1
+#घोषणा R_MICROBLAZE_32_PCREL 2
+#घोषणा R_MICROBLAZE_64_PCREL 3
+#घोषणा R_MICROBLAZE_32_PCREL_LO 4
+#घोषणा R_MICROBLAZE_64 5
+#घोषणा R_MICROBLAZE_32_LO 6
+#घोषणा R_MICROBLAZE_SRO32 7
+#घोषणा R_MICROBLAZE_SRW32 8
+#घोषणा R_MICROBLAZE_64_NONE 9
+#घोषणा R_MICROBLAZE_32_SYM_OP_SYM 10
 /* Keep this the last entry. */
-#define R_MICROBLAZE_NUM 11
+#घोषणा R_MICROBLAZE_NUM 11
 
-typedef struct { volatile int counter; } module_t;
+प्रकार काष्ठा अणु अस्थिर पूर्णांक counter; पूर्ण module_t;
 
-#endif /* _ASM_MICROBLAZE_MODULE_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_MODULE_H */

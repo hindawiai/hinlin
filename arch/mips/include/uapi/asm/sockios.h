@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Socket-level I/O control calls.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995 by Ralf Baechle
  */
-#ifndef _ASM_SOCKIOS_H
-#define _ASM_SOCKIOS_H
+#अगर_अघोषित _ASM_SOCKIOS_H
+#घोषणा _ASM_SOCKIOS_H
 
-#include <asm/ioctl.h>
+#समावेश <यंत्र/ioctl.h>
 
 /* Socket-level I/O control calls. */
-#define FIOGETOWN	_IOR('f', 123, int)
-#define FIOSETOWN	_IOW('f', 124, int)
+#घोषणा FIOGETOWN	_IOR('f', 123, पूर्णांक)
+#घोषणा FIOSETOWN	_IOW('f', 124, पूर्णांक)
 
-#define SIOCATMARK	_IOR('s', 7, int)
-#define SIOCSPGRP	_IOW('s', 8, pid_t)
-#define SIOCGPGRP	_IOR('s', 9, pid_t)
+#घोषणा SIOCATMARK	_IOR('s', 7, पूर्णांक)
+#घोषणा SIOCSPGRP	_IOW('s', 8, pid_t)
+#घोषणा SIOCGPGRP	_IOR('s', 9, pid_t)
 
-#define SIOCGSTAMP_OLD	0x8906		/* Get stamp (timeval) */
-#define SIOCGSTAMPNS_OLD 0x8907		/* Get stamp (timespec) */
+#घोषणा SIOCGSTAMP_OLD	0x8906		/* Get stamp (समयval) */
+#घोषणा SIOCGSTAMPNS_OLD 0x8907		/* Get stamp (बारpec) */
 
-#endif /* _ASM_SOCKIOS_H */
+#पूर्ण_अगर /* _ASM_SOCKIOS_H */

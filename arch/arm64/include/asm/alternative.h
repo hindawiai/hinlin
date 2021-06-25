@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_ALTERNATIVE_H
-#define __ASM_ALTERNATIVE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_ALTERNATIVE_H
+#घोषणा __ASM_ALTERNATIVE_H
 
-#include <asm/alternative-macros.h>
+#समावेश <यंत्र/alternative-macros.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/stddef.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
 
-struct alt_instr {
-	s32 orig_offset;	/* offset to original instruction */
-	s32 alt_offset;		/* offset to replacement instruction */
-	u16 cpufeature;		/* cpufeature bit set for replacement */
-	u8  orig_len;		/* size of original instruction(s) */
-	u8  alt_len;		/* size of new instruction(s), <= orig_len */
-};
+काष्ठा alt_instr अणु
+	s32 orig_offset;	/* offset to original inकाष्ठाion */
+	s32 alt_offset;		/* offset to replacement inकाष्ठाion */
+	u16 cpufeature;		/* cpufeature bit set क्रम replacement */
+	u8  orig_len;		/* size of original inकाष्ठाion(s) */
+	u8  alt_len;		/* size of new inकाष्ठाion(s), <= orig_len */
+पूर्ण;
 
-typedef void (*alternative_cb_t)(struct alt_instr *alt,
-				 __le32 *origptr, __le32 *updptr, int nr_inst);
+प्रकार व्योम (*alternative_cb_t)(काष्ठा alt_instr *alt,
+				 __le32 *origptr, __le32 *updptr, पूर्णांक nr_inst);
 
-void __init apply_boot_alternatives(void);
-void __init apply_alternatives_all(void);
+व्योम __init apply_boot_alternatives(व्योम);
+व्योम __init apply_alternatives_all(व्योम);
 bool alternative_is_applied(u16 cpufeature);
 
-#ifdef CONFIG_MODULES
-void apply_alternatives_module(void *start, size_t length);
-#else
-static inline void apply_alternatives_module(void *start, size_t length) { }
-#endif
+#अगर_घोषित CONFIG_MODULES
+व्योम apply_alternatives_module(व्योम *start, माप_प्रकार length);
+#अन्यथा
+अटल अंतरभूत व्योम apply_alternatives_module(व्योम *start, माप_प्रकार length) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif /* __ASSEMBLY__ */
-#endif /* __ASM_ALTERNATIVE_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASM_ALTERNATIVE_H */

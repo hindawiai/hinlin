@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_PM_NV40_H__
-#define __NVKM_PM_NV40_H__
-#define nv40_pm(p) container_of((p), struct nv40_pm, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_PM_NV40_H__
+#घोषणा __NVKM_PM_NV40_H__
+#घोषणा nv40_pm(p) container_of((p), काष्ठा nv40_pm, base)
+#समावेश "priv.h"
 
-struct nv40_pm {
-	struct nvkm_pm base;
+काष्ठा nv40_pm अणु
+	काष्ठा nvkm_pm base;
 	u32 sequence;
-};
+पूर्ण;
 
-int nv40_pm_new_(const struct nvkm_specdom *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		 struct nvkm_pm **);
-extern const struct nvkm_funcdom nv40_perfctr_func;
-#endif
+पूर्णांक nv40_pm_new_(स्थिर काष्ठा nvkm_specकरोm *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		 काष्ठा nvkm_pm **);
+बाह्य स्थिर काष्ठा nvkm_funcकरोm nv40_perfctr_func;
+#पूर्ण_अगर

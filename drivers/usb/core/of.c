@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * of.c		The helpers for hcd device tree support
+ * of.c		The helpers क्रम hcd device tree support
  *
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
- *	Author: Peter Chen <peter.chen@freescale.com>
+ *	Author: Peter Chen <peter.chen@मुक्तscale.com>
  * Copyright (C) 2017 Johan Hovold <johan@kernel.org>
  */
 
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/usb/of.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/usb/of.h>
 
 /**
  * usb_of_get_device_node() - get a USB device node
@@ -19,24 +20,24 @@
  * Look up the node of a USB device given its parent hub device and one-based
  * port number.
  *
- * Return: A pointer to the node with incremented refcount if found, or
- * %NULL otherwise.
+ * Return: A poपूर्णांकer to the node with incremented refcount अगर found, or
+ * %शून्य otherwise.
  */
-struct device_node *usb_of_get_device_node(struct usb_device *hub, int port1)
-{
-	struct device_node *node;
+काष्ठा device_node *usb_of_get_device_node(काष्ठा usb_device *hub, पूर्णांक port1)
+अणु
+	काष्ठा device_node *node;
 	u32 reg;
 
-	for_each_child_of_node(hub->dev.of_node, node) {
-		if (of_property_read_u32(node, "reg", &reg))
-			continue;
+	क्रम_each_child_of_node(hub->dev.of_node, node) अणु
+		अगर (of_property_पढ़ो_u32(node, "reg", &reg))
+			जारी;
 
-		if (reg == port1)
-			return node;
-	}
+		अगर (reg == port1)
+			वापस node;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_of_get_device_node);
 
 /**
@@ -44,64 +45,64 @@ EXPORT_SYMBOL_GPL(usb_of_get_device_node);
  * @udev: USB device
  *
  * Determine whether a USB device has a so called combined node which is
- * shared with its sole interface. This is the case if and only if the device
+ * shared with its sole पूर्णांकerface. This is the हाल अगर and only अगर the device
  * has a node and its descriptors report the following:
  *
  *	1) bDeviceClass is 0 or 9, and
  *	2) bNumConfigurations is 1, and
  *	3) bNumInterfaces is 1.
  *
- * Return: True iff the device has a device node and its descriptors match the
- * criteria for a combined node.
+ * Return: True अगरf the device has a device node and its descriptors match the
+ * criteria क्रम a combined node.
  */
-bool usb_of_has_combined_node(struct usb_device *udev)
-{
-	struct usb_device_descriptor *ddesc = &udev->descriptor;
-	struct usb_config_descriptor *cdesc;
+bool usb_of_has_combined_node(काष्ठा usb_device *udev)
+अणु
+	काष्ठा usb_device_descriptor *ddesc = &udev->descriptor;
+	काष्ठा usb_config_descriptor *cdesc;
 
-	if (!udev->dev.of_node)
-		return false;
+	अगर (!udev->dev.of_node)
+		वापस false;
 
-	switch (ddesc->bDeviceClass) {
-	case USB_CLASS_PER_INTERFACE:
-	case USB_CLASS_HUB:
-		if (ddesc->bNumConfigurations == 1) {
+	चयन (ddesc->bDeviceClass) अणु
+	हाल USB_CLASS_PER_INTERFACE:
+	हाल USB_CLASS_HUB:
+		अगर (ddesc->bNumConfigurations == 1) अणु
 			cdesc = &udev->config->desc;
-			if (cdesc->bNumInterfaces == 1)
-				return true;
-		}
-	}
+			अगर (cdesc->bNumInterfaces == 1)
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_of_has_combined_node);
 
 /**
- * usb_of_get_interface_node() - get a USB interface node
- * @udev: USB device of interface
+ * usb_of_get_पूर्णांकerface_node() - get a USB पूर्णांकerface node
+ * @udev: USB device of पूर्णांकerface
  * @config: configuration value
- * @ifnum: interface number
+ * @अगरnum: पूर्णांकerface number
  *
- * Look up the node of a USB interface given its USB device, configuration
- * value and interface number.
+ * Look up the node of a USB पूर्णांकerface given its USB device, configuration
+ * value and पूर्णांकerface number.
  *
- * Return: A pointer to the node with incremented refcount if found, or
- * %NULL otherwise.
+ * Return: A poपूर्णांकer to the node with incremented refcount अगर found, or
+ * %शून्य otherwise.
  */
-struct device_node *
-usb_of_get_interface_node(struct usb_device *udev, u8 config, u8 ifnum)
-{
-	struct device_node *node;
+काष्ठा device_node *
+usb_of_get_पूर्णांकerface_node(काष्ठा usb_device *udev, u8 config, u8 अगरnum)
+अणु
+	काष्ठा device_node *node;
 	u32 reg[2];
 
-	for_each_child_of_node(udev->dev.of_node, node) {
-		if (of_property_read_u32_array(node, "reg", reg, 2))
-			continue;
+	क्रम_each_child_of_node(udev->dev.of_node, node) अणु
+		अगर (of_property_पढ़ो_u32_array(node, "reg", reg, 2))
+			जारी;
 
-		if (reg[0] == ifnum && reg[1] == config)
-			return node;
-	}
+		अगर (reg[0] == अगरnum && reg[1] == config)
+			वापस node;
+	पूर्ण
 
-	return NULL;
-}
-EXPORT_SYMBOL_GPL(usb_of_get_interface_node);
+	वापस शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(usb_of_get_पूर्णांकerface_node);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2004 Simtec Electronics
  *	http://armlinux.simtec.co.uk/
@@ -7,103 +8,103 @@
 
 /* s3c_pm_init
  *
- * called from board at initialisation time to setup the power
+ * called from board at initialisation समय to setup the घातer
  * management
 */
 
-#include "pm-common.h"
+#समावेश "pm-common.h"
 
-struct device;
+काष्ठा device;
 
-#ifdef CONFIG_SAMSUNG_PM
+#अगर_घोषित CONFIG_SAMSUNG_PM
 
-extern __init int s3c_pm_init(void);
-extern __init int s3c64xx_pm_init(void);
+बाह्य __init पूर्णांक s3c_pm_init(व्योम);
+बाह्य __init पूर्णांक s3c64xx_pm_init(व्योम);
 
-#else
+#अन्यथा
 
-static inline int s3c_pm_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक s3c_pm_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int s3c64xx_pm_init(void)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक s3c64xx_pm_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-/* configuration for the IRQ mask over sleep */
-extern unsigned long s3c_irqwake_intmask;
-extern unsigned long s3c_irqwake_eintmask;
+/* configuration क्रम the IRQ mask over sleep */
+बाह्य अचिन्हित दीर्घ s3c_irqwake_पूर्णांकmask;
+बाह्य अचिन्हित दीर्घ s3c_irqwake_eपूर्णांकmask;
 
 /* per-cpu sleep functions */
 
-extern void (*pm_cpu_prep)(void);
-extern int (*pm_cpu_sleep)(unsigned long);
+बाह्य व्योम (*pm_cpu_prep)(व्योम);
+बाह्य पूर्णांक (*pm_cpu_sleep)(अचिन्हित दीर्घ);
 
-/* Flags for PM Control */
+/* Flags क्रम PM Control */
 
-extern unsigned long s3c_pm_flags;
+बाह्य अचिन्हित दीर्घ s3c_pm_flags;
 
 /* from sleep.S */
 
-extern int s3c2410_cpu_suspend(unsigned long);
+बाह्य पूर्णांक s3c2410_cpu_suspend(अचिन्हित दीर्घ);
 
-#ifdef CONFIG_PM_SLEEP
-extern int s3c_irq_wake(struct irq_data *data, unsigned int state);
-extern void s3c_cpu_resume(void);
-#else
-#define s3c_irq_wake NULL
-#define s3c_cpu_resume NULL
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+बाह्य पूर्णांक s3c_irq_wake(काष्ठा irq_data *data, अचिन्हित पूर्णांक state);
+बाह्य व्योम s3c_cpu_resume(व्योम);
+#अन्यथा
+#घोषणा s3c_irq_wake शून्य
+#घोषणा s3c_cpu_resume शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_SAMSUNG_PM
-extern int s3c_irqext_wake(struct irq_data *data, unsigned int state);
-#else
-#define s3c_irqext_wake NULL
-#endif
+#अगर_घोषित CONFIG_SAMSUNG_PM
+बाह्य पूर्णांक s3c_irqext_wake(काष्ठा irq_data *data, अचिन्हित पूर्णांक state);
+#अन्यथा
+#घोषणा s3c_irqext_wake शून्य
+#पूर्ण_अगर
 
-#ifdef CONFIG_S3C_PM_DEBUG_LED_SMDK
+#अगर_घोषित CONFIG_S3C_PM_DEBUG_LED_SMDK
 /**
  * s3c_pm_debug_smdkled() - Debug PM suspend/resume via SMDK Board LEDs
- * @set: set bits for the state of the LEDs
- * @clear: clear bits for the state of the LEDs.
+ * @set: set bits क्रम the state of the LEDs
+ * @clear: clear bits क्रम the state of the LEDs.
  */
-extern void s3c_pm_debug_smdkled(u32 set, u32 clear);
+बाह्य व्योम s3c_pm_debug_smdkled(u32 set, u32 clear);
 
-#else
-static inline void s3c_pm_debug_smdkled(u32 set, u32 clear) { }
-#endif /* CONFIG_S3C_PM_DEBUG_LED_SMDK */
+#अन्यथा
+अटल अंतरभूत व्योम s3c_pm_debug_smdkled(u32 set, u32 clear) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_S3C_PM_DEBUG_LED_SMDK */
 
 /**
- * s3c_pm_configure_extint() - ensure pins are correctly set for IRQ
+ * s3c_pm_configure_extपूर्णांक() - ensure pins are correctly set क्रम IRQ
  *
- * Setup all the necessary GPIO pins for waking the system on external
- * interrupt.
+ * Setup all the necessary GPIO pins क्रम waking the प्रणाली on बाह्यal
+ * पूर्णांकerrupt.
  */
-extern void s3c_pm_configure_extint(void);
+बाह्य व्योम s3c_pm_configure_extपूर्णांक(व्योम);
 
-#ifdef CONFIG_GPIO_SAMSUNG
+#अगर_घोषित CONFIG_GPIO_SAMSUNG
 /**
  * samsung_pm_restore_gpios() - restore the state of the gpios after sleep.
  *
  * Restore the state of the GPIO pins after sleep, which may involve ensuring
- * that we do not glitch the state of the pins from that the bootloader's
- * resume code has done.
+ * that we करो not glitch the state of the pins from that the bootloader's
+ * resume code has करोne.
 */
-extern void samsung_pm_restore_gpios(void);
+बाह्य व्योम samsung_pm_restore_gpios(व्योम);
 
 /**
- * samsung_pm_save_gpios() - save the state of the GPIOs for restoring after sleep.
+ * samsung_pm_save_gpios() - save the state of the GPIOs क्रम restoring after sleep.
  *
- * Save the GPIO states for resotration on resume. See samsung_pm_restore_gpios().
+ * Save the GPIO states क्रम resotration on resume. See samsung_pm_restore_gpios().
  */
-extern void samsung_pm_save_gpios(void);
-#else
-static inline void samsung_pm_restore_gpios(void) {}
-static inline void samsung_pm_save_gpios(void) {}
-#endif
+बाह्य व्योम samsung_pm_save_gpios(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम samsung_pm_restore_gpios(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम samsung_pm_save_gpios(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-extern void s3c_pm_save_core(void);
-extern void s3c_pm_restore_core(void);
+बाह्य व्योम s3c_pm_save_core(व्योम);
+बाह्य व्योम s3c_pm_restore_core(व्योम);

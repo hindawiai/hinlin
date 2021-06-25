@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  linux/drivers/video/fb_cmdline.c
  *
@@ -8,19 +9,19 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Authors:
  *    Vetter <danie.vetter@ffwll.ch>
  */
-#include <linux/init.h>
-#include <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fb.h>
 
-static char *video_options[FB_MAX] __read_mostly;
-static int ofonly __read_mostly;
+अटल अक्षर *video_options[FB_MAX] __पढ़ो_mostly;
+अटल पूर्णांक ofonly __पढ़ो_mostly;
 
-const char *fb_mode_option;
+स्थिर अक्षर *fb_mode_option;
 EXPORT_SYMBOL_GPL(fb_mode_option);
 
 /**
@@ -30,78 +31,78 @@ EXPORT_SYMBOL_GPL(fb_mode_option);
  *          (video=<name>:<options>)
  * @option: the option will be stored here
  *
- * NOTE: Needed to maintain backwards compatibility
+ * NOTE: Needed to मुख्यtain backwards compatibility
  */
-int fb_get_options(const char *name, char **option)
-{
-	char *opt, *options = NULL;
-	int retval = 0;
-	int name_len = strlen(name), i;
+पूर्णांक fb_get_options(स्थिर अक्षर *name, अक्षर **option)
+अणु
+	अक्षर *opt, *options = शून्य;
+	पूर्णांक retval = 0;
+	पूर्णांक name_len = म_माप(name), i;
 
-	if (name_len && ofonly && strncmp(name, "offb", 4))
+	अगर (name_len && ofonly && म_भेदन(name, "offb", 4))
 		retval = 1;
 
-	if (name_len && !retval) {
-		for (i = 0; i < FB_MAX; i++) {
-			if (video_options[i] == NULL)
-				continue;
-			if (!video_options[i][0])
-				continue;
+	अगर (name_len && !retval) अणु
+		क्रम (i = 0; i < FB_MAX; i++) अणु
+			अगर (video_options[i] == शून्य)
+				जारी;
+			अगर (!video_options[i][0])
+				जारी;
 			opt = video_options[i];
-			if (!strncmp(name, opt, name_len) &&
+			अगर (!म_भेदन(name, opt, name_len) &&
 			    opt[name_len] == ':')
 				options = opt + name_len + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* No match, pass global option */
-	if (!options && option && fb_mode_option)
+	अगर (!options && option && fb_mode_option)
 		options = kstrdup(fb_mode_option, GFP_KERNEL);
-	if (options && !strncmp(options, "off", 3))
+	अगर (options && !म_भेदन(options, "off", 3))
 		retval = 1;
 
-	if (option)
+	अगर (option)
 		*option = options;
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL(fb_get_options);
 
 /**
  *	video_setup - process command line options
  *	@options: string of options
  *
- *	Process command line options for frame buffer subsystem.
+ *	Process command line options क्रम frame buffer subप्रणाली.
  *
  *	NOTE: This function is a __setup and __init function.
  *            It only stores the options.  Drivers have to call
  *            fb_get_options() as necessary.
  */
-static int __init video_setup(char *options)
-{
-	if (!options || !*options)
-		goto out;
+अटल पूर्णांक __init video_setup(अक्षर *options)
+अणु
+	अगर (!options || !*options)
+		जाओ out;
 
-	if (!strncmp(options, "ofonly", 6)) {
+	अगर (!म_भेदन(options, "ofonly", 6)) अणु
 		ofonly = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (strchr(options, ':')) {
+	अगर (म_अक्षर(options, ':')) अणु
 		/* named */
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < FB_MAX; i++) {
-			if (video_options[i] == NULL) {
+		क्रम (i = 0; i < FB_MAX; i++) अणु
+			अगर (video_options[i] == शून्य) अणु
 				video_options[i] = options;
-				break;
-			}
-		}
-	} else {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* global */
 		fb_mode_option = options;
-	}
+	पूर्ण
 
 out:
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("video=", video_setup);

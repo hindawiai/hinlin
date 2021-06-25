@@ -1,460 +1,461 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2006-2008 Nokia Corporation
  *
- * Test page read and write on MTD device.
+ * Test page पढ़ो and ग_लिखो on MTD device.
  *
  * Author: Adrian Hunter <ext-adrian.hunter@nokia.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <asm/div64.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/err.h>
-#include <linux/mtd/mtd.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/random.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "mtd_test.h"
+#समावेश "mtd_test.h"
 
-static int dev = -EINVAL;
-module_param(dev, int, S_IRUGO);
+अटल पूर्णांक dev = -EINVAL;
+module_param(dev, पूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(dev, "MTD device number to use");
 
-static struct mtd_info *mtd;
-static unsigned char *twopages;
-static unsigned char *writebuf;
-static unsigned char *boundary;
-static unsigned char *bbt;
+अटल काष्ठा mtd_info *mtd;
+अटल अचिन्हित अक्षर *twopages;
+अटल अचिन्हित अक्षर *ग_लिखोbuf;
+अटल अचिन्हित अक्षर *boundary;
+अटल अचिन्हित अक्षर *bbt;
 
-static int pgsize;
-static int bufsize;
-static int ebcnt;
-static int pgcnt;
-static int errcnt;
-static struct rnd_state rnd_state;
+अटल पूर्णांक pgsize;
+अटल पूर्णांक bufsize;
+अटल पूर्णांक ebcnt;
+अटल पूर्णांक pgcnt;
+अटल पूर्णांक errcnt;
+अटल काष्ठा rnd_state rnd_state;
 
-static int write_eraseblock(int ebnum)
-{
+अटल पूर्णांक ग_लिखो_eraseblock(पूर्णांक ebnum)
+अणु
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
-	prandom_bytes_state(&rnd_state, writebuf, mtd->erasesize);
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, mtd->erasesize);
 	cond_resched();
-	return mtdtest_write(mtd, addr, mtd->erasesize, writebuf);
-}
+	वापस mtdtest_ग_लिखो(mtd, addr, mtd->erasesize, ग_लिखोbuf);
+पूर्ण
 
-static int verify_eraseblock(int ebnum)
-{
-	uint32_t j;
-	int err = 0, i;
+अटल पूर्णांक verअगरy_eraseblock(पूर्णांक ebnum)
+अणु
+	uपूर्णांक32_t j;
+	पूर्णांक err = 0, i;
 	loff_t addr0, addrn;
 	loff_t addr = (loff_t)ebnum * mtd->erasesize;
 
 	addr0 = 0;
-	for (i = 0; i < ebcnt && bbt[i]; ++i)
+	क्रम (i = 0; i < ebcnt && bbt[i]; ++i)
 		addr0 += mtd->erasesize;
 
 	addrn = mtd->size;
-	for (i = 0; i < ebcnt && bbt[ebcnt - i - 1]; ++i)
+	क्रम (i = 0; i < ebcnt && bbt[ebcnt - i - 1]; ++i)
 		addrn -= mtd->erasesize;
 
-	prandom_bytes_state(&rnd_state, writebuf, mtd->erasesize);
-	for (j = 0; j < pgcnt - 1; ++j, addr += pgsize) {
-		/* Do a read to set the internal dataRAMs to different data */
-		err = mtdtest_read(mtd, addr0, bufsize, twopages);
-		if (err)
-			return err;
-		err = mtdtest_read(mtd, addrn - bufsize, bufsize, twopages);
-		if (err)
-			return err;
-		memset(twopages, 0, bufsize);
-		err = mtdtest_read(mtd, addr, bufsize, twopages);
-		if (err)
-			break;
-		if (memcmp(twopages, writebuf + (j * pgsize), bufsize)) {
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, mtd->erasesize);
+	क्रम (j = 0; j < pgcnt - 1; ++j, addr += pgsize) अणु
+		/* Do a पढ़ो to set the पूर्णांकernal dataRAMs to dअगरferent data */
+		err = mtdtest_पढ़ो(mtd, addr0, bufsize, twopages);
+		अगर (err)
+			वापस err;
+		err = mtdtest_पढ़ो(mtd, addrn - bufsize, bufsize, twopages);
+		अगर (err)
+			वापस err;
+		स_रखो(twopages, 0, bufsize);
+		err = mtdtest_पढ़ो(mtd, addr, bufsize, twopages);
+		अगर (err)
+			अवरोध;
+		अगर (स_भेद(twopages, ग_लिखोbuf + (j * pgsize), bufsize)) अणु
 			pr_err("error: verify failed at %#llx\n",
-			       (long long)addr);
+			       (दीर्घ दीर्घ)addr);
 			errcnt += 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* Check boundary between eraseblocks */
-	if (addr <= addrn - pgsize - pgsize && !bbt[ebnum + 1]) {
-		struct rnd_state old_state = rnd_state;
+	अगर (addr <= addrn - pgsize - pgsize && !bbt[ebnum + 1]) अणु
+		काष्ठा rnd_state old_state = rnd_state;
 
-		/* Do a read to set the internal dataRAMs to different data */
-		err = mtdtest_read(mtd, addr0, bufsize, twopages);
-		if (err)
-			return err;
-		err = mtdtest_read(mtd, addrn - bufsize, bufsize, twopages);
-		if (err)
-			return err;
-		memset(twopages, 0, bufsize);
-		err = mtdtest_read(mtd, addr, bufsize, twopages);
-		if (err)
-			return err;
-		memcpy(boundary, writebuf + mtd->erasesize - pgsize, pgsize);
-		prandom_bytes_state(&rnd_state, boundary + pgsize, pgsize);
-		if (memcmp(twopages, boundary, bufsize)) {
+		/* Do a पढ़ो to set the पूर्णांकernal dataRAMs to dअगरferent data */
+		err = mtdtest_पढ़ो(mtd, addr0, bufsize, twopages);
+		अगर (err)
+			वापस err;
+		err = mtdtest_पढ़ो(mtd, addrn - bufsize, bufsize, twopages);
+		अगर (err)
+			वापस err;
+		स_रखो(twopages, 0, bufsize);
+		err = mtdtest_पढ़ो(mtd, addr, bufsize, twopages);
+		अगर (err)
+			वापस err;
+		स_नकल(boundary, ग_लिखोbuf + mtd->erasesize - pgsize, pgsize);
+		pअक्रमom_bytes_state(&rnd_state, boundary + pgsize, pgsize);
+		अगर (स_भेद(twopages, boundary, bufsize)) अणु
 			pr_err("error: verify failed at %#llx\n",
-			       (long long)addr);
+			       (दीर्घ दीर्घ)addr);
 			errcnt += 1;
-		}
+		पूर्ण
 		rnd_state = old_state;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int crosstest(void)
-{
-	int err = 0, i;
+अटल पूर्णांक crosstest(व्योम)
+अणु
+	पूर्णांक err = 0, i;
 	loff_t addr, addr0, addrn;
-	unsigned char *pp1, *pp2, *pp3, *pp4;
+	अचिन्हित अक्षर *pp1, *pp2, *pp3, *pp4;
 
 	pr_info("crosstest\n");
-	pp1 = kcalloc(pgsize, 4, GFP_KERNEL);
-	if (!pp1)
-		return -ENOMEM;
+	pp1 = kसुस्मृति(pgsize, 4, GFP_KERNEL);
+	अगर (!pp1)
+		वापस -ENOMEM;
 	pp2 = pp1 + pgsize;
 	pp3 = pp2 + pgsize;
 	pp4 = pp3 + pgsize;
 
 	addr0 = 0;
-	for (i = 0; i < ebcnt && bbt[i]; ++i)
+	क्रम (i = 0; i < ebcnt && bbt[i]; ++i)
 		addr0 += mtd->erasesize;
 
 	addrn = mtd->size;
-	for (i = 0; i < ebcnt && bbt[ebcnt - i - 1]; ++i)
+	क्रम (i = 0; i < ebcnt && bbt[ebcnt - i - 1]; ++i)
 		addrn -= mtd->erasesize;
 
 	/* Read 2nd-to-last page to pp1 */
 	addr = addrn - pgsize - pgsize;
-	err = mtdtest_read(mtd, addr, pgsize, pp1);
-	if (err) {
-		kfree(pp1);
-		return err;
-	}
+	err = mtdtest_पढ़ो(mtd, addr, pgsize, pp1);
+	अगर (err) अणु
+		kमुक्त(pp1);
+		वापस err;
+	पूर्ण
 
 	/* Read 3rd-to-last page to pp1 */
 	addr = addrn - pgsize - pgsize - pgsize;
-	err = mtdtest_read(mtd, addr, pgsize, pp1);
-	if (err) {
-		kfree(pp1);
-		return err;
-	}
+	err = mtdtest_पढ़ो(mtd, addr, pgsize, pp1);
+	अगर (err) अणु
+		kमुक्त(pp1);
+		वापस err;
+	पूर्ण
 
 	/* Read first page to pp2 */
 	addr = addr0;
-	pr_info("reading page at %#llx\n", (long long)addr);
-	err = mtdtest_read(mtd, addr, pgsize, pp2);
-	if (err) {
-		kfree(pp1);
-		return err;
-	}
+	pr_info("reading page at %#llx\n", (दीर्घ दीर्घ)addr);
+	err = mtdtest_पढ़ो(mtd, addr, pgsize, pp2);
+	अगर (err) अणु
+		kमुक्त(pp1);
+		वापस err;
+	पूर्ण
 
 	/* Read last page to pp3 */
 	addr = addrn - pgsize;
-	pr_info("reading page at %#llx\n", (long long)addr);
-	err = mtdtest_read(mtd, addr, pgsize, pp3);
-	if (err) {
-		kfree(pp1);
-		return err;
-	}
+	pr_info("reading page at %#llx\n", (दीर्घ दीर्घ)addr);
+	err = mtdtest_पढ़ो(mtd, addr, pgsize, pp3);
+	अगर (err) अणु
+		kमुक्त(pp1);
+		वापस err;
+	पूर्ण
 
 	/* Read first page again to pp4 */
 	addr = addr0;
-	pr_info("reading page at %#llx\n", (long long)addr);
-	err = mtdtest_read(mtd, addr, pgsize, pp4);
-	if (err) {
-		kfree(pp1);
-		return err;
-	}
+	pr_info("reading page at %#llx\n", (दीर्घ दीर्घ)addr);
+	err = mtdtest_पढ़ो(mtd, addr, pgsize, pp4);
+	अगर (err) अणु
+		kमुक्त(pp1);
+		वापस err;
+	पूर्ण
 
 	/* pp2 and pp4 should be the same */
 	pr_info("verifying pages read at %#llx match\n",
-	       (long long)addr0);
-	if (memcmp(pp2, pp4, pgsize)) {
+	       (दीर्घ दीर्घ)addr0);
+	अगर (स_भेद(pp2, pp4, pgsize)) अणु
 		pr_err("verify failed!\n");
 		errcnt += 1;
-	} else if (!err)
+	पूर्ण अन्यथा अगर (!err)
 		pr_info("crosstest ok\n");
-	kfree(pp1);
-	return err;
-}
+	kमुक्त(pp1);
+	वापस err;
+पूर्ण
 
-static int erasecrosstest(void)
-{
-	int err = 0, i, ebnum, ebnum2;
+अटल पूर्णांक erasecrosstest(व्योम)
+अणु
+	पूर्णांक err = 0, i, ebnum, ebnum2;
 	loff_t addr0;
-	char *readbuf = twopages;
+	अक्षर *पढ़ोbuf = twopages;
 
 	pr_info("erasecrosstest\n");
 
 	ebnum = 0;
 	addr0 = 0;
-	for (i = 0; i < ebcnt && bbt[i]; ++i) {
+	क्रम (i = 0; i < ebcnt && bbt[i]; ++i) अणु
 		addr0 += mtd->erasesize;
 		ebnum += 1;
-	}
+	पूर्ण
 
 	ebnum2 = ebcnt - 1;
-	while (ebnum2 && bbt[ebnum2])
+	जबतक (ebnum2 && bbt[ebnum2])
 		ebnum2 -= 1;
 
 	pr_info("erasing block %d\n", ebnum);
 	err = mtdtest_erase_eraseblock(mtd, ebnum);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("writing 1st page of block %d\n", ebnum);
-	prandom_bytes_state(&rnd_state, writebuf, pgsize);
-	strcpy(writebuf, "There is no data like this!");
-	err = mtdtest_write(mtd, addr0, pgsize, writebuf);
-	if (err)
-		return err;
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, pgsize);
+	म_नकल(ग_लिखोbuf, "There is no data like this!");
+	err = mtdtest_ग_लिखो(mtd, addr0, pgsize, ग_लिखोbuf);
+	अगर (err)
+		वापस err;
 
 	pr_info("reading 1st page of block %d\n", ebnum);
-	memset(readbuf, 0, pgsize);
-	err = mtdtest_read(mtd, addr0, pgsize, readbuf);
-	if (err)
-		return err;
+	स_रखो(पढ़ोbuf, 0, pgsize);
+	err = mtdtest_पढ़ो(mtd, addr0, pgsize, पढ़ोbuf);
+	अगर (err)
+		वापस err;
 
 	pr_info("verifying 1st page of block %d\n", ebnum);
-	if (memcmp(writebuf, readbuf, pgsize)) {
+	अगर (स_भेद(ग_लिखोbuf, पढ़ोbuf, pgsize)) अणु
 		pr_err("verify failed!\n");
 		errcnt += 1;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	pr_info("erasing block %d\n", ebnum);
 	err = mtdtest_erase_eraseblock(mtd, ebnum);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("writing 1st page of block %d\n", ebnum);
-	prandom_bytes_state(&rnd_state, writebuf, pgsize);
-	strcpy(writebuf, "There is no data like this!");
-	err = mtdtest_write(mtd, addr0, pgsize, writebuf);
-	if (err)
-		return err;
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, pgsize);
+	म_नकल(ग_लिखोbuf, "There is no data like this!");
+	err = mtdtest_ग_लिखो(mtd, addr0, pgsize, ग_लिखोbuf);
+	अगर (err)
+		वापस err;
 
 	pr_info("erasing block %d\n", ebnum2);
 	err = mtdtest_erase_eraseblock(mtd, ebnum2);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("reading 1st page of block %d\n", ebnum);
-	memset(readbuf, 0, pgsize);
-	err = mtdtest_read(mtd, addr0, pgsize, readbuf);
-	if (err)
-		return err;
+	स_रखो(पढ़ोbuf, 0, pgsize);
+	err = mtdtest_पढ़ो(mtd, addr0, pgsize, पढ़ोbuf);
+	अगर (err)
+		वापस err;
 
 	pr_info("verifying 1st page of block %d\n", ebnum);
-	if (memcmp(writebuf, readbuf, pgsize)) {
+	अगर (स_भेद(ग_लिखोbuf, पढ़ोbuf, pgsize)) अणु
 		pr_err("verify failed!\n");
 		errcnt += 1;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!err)
+	अगर (!err)
 		pr_info("erasecrosstest ok\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int erasetest(void)
-{
-	int err = 0, i, ebnum, ok = 1;
+अटल पूर्णांक erasetest(व्योम)
+अणु
+	पूर्णांक err = 0, i, ebnum, ok = 1;
 	loff_t addr0;
 
 	pr_info("erasetest\n");
 
 	ebnum = 0;
 	addr0 = 0;
-	for (i = 0; i < ebcnt && bbt[i]; ++i) {
+	क्रम (i = 0; i < ebcnt && bbt[i]; ++i) अणु
 		addr0 += mtd->erasesize;
 		ebnum += 1;
-	}
+	पूर्ण
 
 	pr_info("erasing block %d\n", ebnum);
 	err = mtdtest_erase_eraseblock(mtd, ebnum);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("writing 1st page of block %d\n", ebnum);
-	prandom_bytes_state(&rnd_state, writebuf, pgsize);
-	err = mtdtest_write(mtd, addr0, pgsize, writebuf);
-	if (err)
-		return err;
+	pअक्रमom_bytes_state(&rnd_state, ग_लिखोbuf, pgsize);
+	err = mtdtest_ग_लिखो(mtd, addr0, pgsize, ग_लिखोbuf);
+	अगर (err)
+		वापस err;
 
 	pr_info("erasing block %d\n", ebnum);
 	err = mtdtest_erase_eraseblock(mtd, ebnum);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pr_info("reading 1st page of block %d\n", ebnum);
-	err = mtdtest_read(mtd, addr0, pgsize, twopages);
-	if (err)
-		return err;
+	err = mtdtest_पढ़ो(mtd, addr0, pgsize, twopages);
+	अगर (err)
+		वापस err;
 
 	pr_info("verifying 1st page of block %d is all 0xff\n",
 	       ebnum);
-	for (i = 0; i < pgsize; ++i)
-		if (twopages[i] != 0xff) {
+	क्रम (i = 0; i < pgsize; ++i)
+		अगर (twopages[i] != 0xff) अणु
 			pr_err("verifying all 0xff failed at %d\n",
 			       i);
 			errcnt += 1;
 			ok = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	if (ok && !err)
+	अगर (ok && !err)
 		pr_info("erasetest ok\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __init mtd_pagetest_init(void)
-{
-	int err = 0;
-	uint64_t tmp;
-	uint32_t i;
+अटल पूर्णांक __init mtd_pagetest_init(व्योम)
+अणु
+	पूर्णांक err = 0;
+	uपूर्णांक64_t पंचांगp;
+	uपूर्णांक32_t i;
 
-	printk(KERN_INFO "\n");
-	printk(KERN_INFO "=================================================\n");
+	prपूर्णांकk(KERN_INFO "\n");
+	prपूर्णांकk(KERN_INFO "=================================================\n");
 
-	if (dev < 0) {
+	अगर (dev < 0) अणु
 		pr_info("Please specify a valid mtd-device via module parameter\n");
 		pr_crit("CAREFUL: This test wipes all data on the specified MTD device!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pr_info("MTD device: %d\n", dev);
 
-	mtd = get_mtd_device(NULL, dev);
-	if (IS_ERR(mtd)) {
+	mtd = get_mtd_device(शून्य, dev);
+	अगर (IS_ERR(mtd)) अणु
 		err = PTR_ERR(mtd);
 		pr_err("error: cannot get MTD device\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!mtd_type_is_nand(mtd)) {
+	अगर (!mtd_type_is_nand(mtd)) अणु
 		pr_info("this test requires NAND flash\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	tmp = mtd->size;
-	do_div(tmp, mtd->erasesize);
-	ebcnt = tmp;
-	pgcnt = mtd->erasesize / mtd->writesize;
-	pgsize = mtd->writesize;
+	पंचांगp = mtd->size;
+	करो_भाग(पंचांगp, mtd->erasesize);
+	ebcnt = पंचांगp;
+	pgcnt = mtd->erasesize / mtd->ग_लिखोsize;
+	pgsize = mtd->ग_लिखोsize;
 
 	pr_info("MTD device size %llu, eraseblock size %u, "
 	       "page size %u, count of eraseblocks %u, pages per "
 	       "eraseblock %u, OOB size %u\n",
-	       (unsigned long long)mtd->size, mtd->erasesize,
+	       (अचिन्हित दीर्घ दीर्घ)mtd->size, mtd->erasesize,
 	       pgsize, ebcnt, pgcnt, mtd->oobsize);
 
 	err = -ENOMEM;
 	bufsize = pgsize * 2;
-	writebuf = kmalloc(mtd->erasesize, GFP_KERNEL);
-	if (!writebuf)
-		goto out;
-	twopages = kmalloc(bufsize, GFP_KERNEL);
-	if (!twopages)
-		goto out;
-	boundary = kmalloc(bufsize, GFP_KERNEL);
-	if (!boundary)
-		goto out;
+	ग_लिखोbuf = kदो_स्मृति(mtd->erasesize, GFP_KERNEL);
+	अगर (!ग_लिखोbuf)
+		जाओ out;
+	twopages = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!twopages)
+		जाओ out;
+	boundary = kदो_स्मृति(bufsize, GFP_KERNEL);
+	अगर (!boundary)
+		जाओ out;
 
 	bbt = kzalloc(ebcnt, GFP_KERNEL);
-	if (!bbt)
-		goto out;
-	err = mtdtest_scan_for_bad_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (!bbt)
+		जाओ out;
+	err = mtdtest_scan_क्रम_bad_eraseblocks(mtd, bbt, 0, ebcnt);
+	अगर (err)
+		जाओ out;
 
 	/* Erase all eraseblocks */
 	pr_info("erasing whole device\n");
 	err = mtdtest_erase_good_eraseblocks(mtd, bbt, 0, ebcnt);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	pr_info("erased %u eraseblocks\n", ebcnt);
 
 	/* Write all eraseblocks */
-	prandom_seed_state(&rnd_state, 1);
+	pअक्रमom_seed_state(&rnd_state, 1);
 	pr_info("writing whole device\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = write_eraseblock(i);
-		if (err)
-			goto out;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = ग_लिखो_eraseblock(i);
+		अगर (err)
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("written up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("written %u eraseblocks\n", i);
 
 	/* Check all eraseblocks */
-	prandom_seed_state(&rnd_state, 1);
+	pअक्रमom_seed_state(&rnd_state, 1);
 	pr_info("verifying all eraseblocks\n");
-	for (i = 0; i < ebcnt; ++i) {
-		if (bbt[i])
-			continue;
-		err = verify_eraseblock(i);
-		if (err)
-			goto out;
-		if (i % 256 == 0)
+	क्रम (i = 0; i < ebcnt; ++i) अणु
+		अगर (bbt[i])
+			जारी;
+		err = verअगरy_eraseblock(i);
+		अगर (err)
+			जाओ out;
+		अगर (i % 256 == 0)
 			pr_info("verified up to eraseblock %u\n", i);
 
 		err = mtdtest_relax();
-		if (err)
-			goto out;
-	}
+		अगर (err)
+			जाओ out;
+	पूर्ण
 	pr_info("verified %u eraseblocks\n", i);
 
 	err = crosstest();
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	if (ebcnt > 1) {
+	अगर (ebcnt > 1) अणु
 		err = erasecrosstest();
-		if (err)
-			goto out;
-	} else {
+		अगर (err)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		pr_info("skipping erasecrosstest, 2 erase blocks needed\n");
-	}
+	पूर्ण
 
 	err = erasetest();
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	pr_info("finished with %d errors\n", errcnt);
 out:
 
-	kfree(bbt);
-	kfree(boundary);
-	kfree(twopages);
-	kfree(writebuf);
+	kमुक्त(bbt);
+	kमुक्त(boundary);
+	kमुक्त(twopages);
+	kमुक्त(ग_लिखोbuf);
 	put_mtd_device(mtd);
-	if (err)
+	अगर (err)
 		pr_info("error %d occurred\n", err);
-	printk(KERN_INFO "=================================================\n");
-	return err;
-}
+	prपूर्णांकk(KERN_INFO "=================================================\n");
+	वापस err;
+पूर्ण
 module_init(mtd_pagetest_init);
 
-static void __exit mtd_pagetest_exit(void)
-{
-	return;
-}
-module_exit(mtd_pagetest_exit);
+अटल व्योम __निकास mtd_pagetest_निकास(व्योम)
+अणु
+	वापस;
+पूर्ण
+module_निकास(mtd_pagetest_निकास);
 
 MODULE_DESCRIPTION("NAND page test");
 MODULE_AUTHOR("Adrian Hunter");

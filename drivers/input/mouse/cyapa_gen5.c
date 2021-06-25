@@ -1,142 +1,143 @@
+<शैली गुरु>
 /*
- * Cypress APA trackpad with I2C interface
+ * Cypress APA trackpad with I2C पूर्णांकerface
  *
  * Author: Dudley Du <dudl@cypress.com>
  *
  * Copyright (C) 2014-2015 Cypress Semiconductor, Inc.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive for
+ * License.  See the file COPYING in the मुख्य directory of this archive क्रम
  * more details.
  */
 
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/input.h>
-#include <linux/input/mt.h>
-#include <linux/mutex.h>
-#include <linux/completion.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
-#include <linux/crc-itu-t.h>
-#include <linux/pm_runtime.h>
-#include "cyapa.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/input.h>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/crc-itu-t.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश "cyapa.h"
 
 
 /* Macro of TSG firmware image */
-#define CYAPA_TSG_FLASH_MAP_BLOCK_SIZE      0x80
-#define CYAPA_TSG_IMG_FW_HDR_SIZE           13
-#define CYAPA_TSG_FW_ROW_SIZE               (CYAPA_TSG_FLASH_MAP_BLOCK_SIZE)
-#define CYAPA_TSG_IMG_START_ROW_NUM         0x002e
-#define CYAPA_TSG_IMG_END_ROW_NUM           0x01fe
-#define CYAPA_TSG_IMG_APP_INTEGRITY_ROW_NUM 0x01ff
-#define CYAPA_TSG_IMG_MAX_RECORDS           (CYAPA_TSG_IMG_END_ROW_NUM - \
+#घोषणा CYAPA_TSG_FLASH_MAP_BLOCK_SIZE      0x80
+#घोषणा CYAPA_TSG_IMG_FW_HDR_SIZE           13
+#घोषणा CYAPA_TSG_FW_ROW_SIZE               (CYAPA_TSG_FLASH_MAP_BLOCK_SIZE)
+#घोषणा CYAPA_TSG_IMG_START_ROW_NUM         0x002e
+#घोषणा CYAPA_TSG_IMG_END_ROW_NUM           0x01fe
+#घोषणा CYAPA_TSG_IMG_APP_INTEGRITY_ROW_NUM 0x01ff
+#घोषणा CYAPA_TSG_IMG_MAX_RECORDS           (CYAPA_TSG_IMG_END_ROW_NUM - \
 				CYAPA_TSG_IMG_START_ROW_NUM + 1 + 1)
-#define CYAPA_TSG_IMG_READ_SIZE             (CYAPA_TSG_FLASH_MAP_BLOCK_SIZE / 2)
-#define CYAPA_TSG_START_OF_APPLICATION      0x1700
-#define CYAPA_TSG_APP_INTEGRITY_SIZE        60
-#define CYAPA_TSG_FLASH_MAP_METADATA_SIZE   60
-#define CYAPA_TSG_BL_KEY_SIZE               8
+#घोषणा CYAPA_TSG_IMG_READ_SIZE             (CYAPA_TSG_FLASH_MAP_BLOCK_SIZE / 2)
+#घोषणा CYAPA_TSG_START_OF_APPLICATION      0x1700
+#घोषणा CYAPA_TSG_APP_INTEGRITY_SIZE        60
+#घोषणा CYAPA_TSG_FLASH_MAP_METADATA_SIZE   60
+#घोषणा CYAPA_TSG_BL_KEY_SIZE               8
 
-#define CYAPA_TSG_MAX_CMD_SIZE              256
+#घोषणा CYAPA_TSG_MAX_CMD_SIZE              256
 
-/* Macro of PIP interface */
-#define PIP_BL_INITIATE_RESP_LEN            11
-#define PIP_BL_FAIL_EXIT_RESP_LEN           11
-#define PIP_BL_FAIL_EXIT_STATUS_CODE        0x0c
-#define PIP_BL_VERIFY_INTEGRITY_RESP_LEN    12
-#define PIP_BL_INTEGRITY_CHEKC_PASS         0x00
-#define PIP_BL_BLOCK_WRITE_RESP_LEN         11
+/* Macro of PIP पूर्णांकerface */
+#घोषणा PIP_BL_INITIATE_RESP_LEN            11
+#घोषणा PIP_BL_FAIL_EXIT_RESP_LEN           11
+#घोषणा PIP_BL_FAIL_EXIT_STATUS_CODE        0x0c
+#घोषणा PIP_BL_VERIFY_INTEGRITY_RESP_LEN    12
+#घोषणा PIP_BL_INTEGRITY_CHEKC_PASS         0x00
+#घोषणा PIP_BL_BLOCK_WRITE_RESP_LEN         11
 
-#define PIP_TOUCH_REPORT_ID         0x01
-#define PIP_BTN_REPORT_ID           0x03
-#define PIP_WAKEUP_EVENT_REPORT_ID  0x04
-#define PIP_PUSH_BTN_REPORT_ID      0x06
-#define GEN5_OLD_PUSH_BTN_REPORT_ID 0x05  /* Special for old Gen5 TP. */
-#define PIP_PROXIMITY_REPORT_ID     0x07
+#घोषणा PIP_TOUCH_REPORT_ID         0x01
+#घोषणा PIP_BTN_REPORT_ID           0x03
+#घोषणा PIP_WAKEUP_EVENT_REPORT_ID  0x04
+#घोषणा PIP_PUSH_BTN_REPORT_ID      0x06
+#घोषणा GEN5_OLD_PUSH_BTN_REPORT_ID 0x05  /* Special क्रम old Gen5 TP. */
+#घोषणा PIP_PROXIMITY_REPORT_ID     0x07
 
-#define PIP_PROXIMITY_REPORT_SIZE	6
-#define PIP_PROXIMITY_DISTANCE_OFFSET	0x05
-#define PIP_PROXIMITY_DISTANCE_MASK	0x01
+#घोषणा PIP_PROXIMITY_REPORT_SIZE	6
+#घोषणा PIP_PROXIMITY_DISTANCE_OFFSET	0x05
+#घोषणा PIP_PROXIMITY_DISTANCE_MASK	0x01
 
-#define PIP_TOUCH_REPORT_HEAD_SIZE     7
-#define PIP_TOUCH_REPORT_MAX_SIZE      127
-#define PIP_BTN_REPORT_HEAD_SIZE       6
-#define PIP_BTN_REPORT_MAX_SIZE        14
-#define PIP_WAKEUP_EVENT_SIZE          4
+#घोषणा PIP_TOUCH_REPORT_HEAD_SIZE     7
+#घोषणा PIP_TOUCH_REPORT_MAX_SIZE      127
+#घोषणा PIP_BTN_REPORT_HEAD_SIZE       6
+#घोषणा PIP_BTN_REPORT_MAX_SIZE        14
+#घोषणा PIP_WAKEUP_EVENT_SIZE          4
 
-#define PIP_NUMBER_OF_TOUCH_OFFSET  5
-#define PIP_NUMBER_OF_TOUCH_MASK    0x1f
-#define PIP_BUTTONS_OFFSET          5
-#define PIP_BUTTONS_MASK            0x0f
-#define PIP_GET_EVENT_ID(reg)       (((reg) >> 5) & 0x03)
-#define PIP_GET_TOUCH_ID(reg)       ((reg) & 0x1f)
-#define PIP_TOUCH_TYPE_FINGER	    0x00
-#define PIP_TOUCH_TYPE_PROXIMITY    0x01
-#define PIP_TOUCH_TYPE_HOVER	    0x02
-#define PIP_GET_TOUCH_TYPE(reg)     ((reg) & 0x07)
+#घोषणा PIP_NUMBER_OF_TOUCH_OFFSET  5
+#घोषणा PIP_NUMBER_OF_TOUCH_MASK    0x1f
+#घोषणा PIP_BUTTONS_OFFSET          5
+#घोषणा PIP_BUTTONS_MASK            0x0f
+#घोषणा PIP_GET_EVENT_ID(reg)       (((reg) >> 5) & 0x03)
+#घोषणा PIP_GET_TOUCH_ID(reg)       ((reg) & 0x1f)
+#घोषणा PIP_TOUCH_TYPE_FINGER	    0x00
+#घोषणा PIP_TOUCH_TYPE_PROXIMITY    0x01
+#घोषणा PIP_TOUCH_TYPE_HOVER	    0x02
+#घोषणा PIP_GET_TOUCH_TYPE(reg)     ((reg) & 0x07)
 
-#define RECORD_EVENT_NONE        0
-#define RECORD_EVENT_TOUCHDOWN	 1
-#define RECORD_EVENT_DISPLACE    2
-#define RECORD_EVENT_LIFTOFF     3
+#घोषणा RECORD_EVENT_NONE        0
+#घोषणा RECORD_EVENT_TOUCHDOWN	 1
+#घोषणा RECORD_EVENT_DISPLACE    2
+#घोषणा RECORD_EVENT_LIFTOFF     3
 
-#define PIP_SENSING_MODE_MUTUAL_CAP_FINE   0x00
-#define PIP_SENSING_MODE_SELF_CAP          0x02
+#घोषणा PIP_SENSING_MODE_MUTUAL_CAP_FINE   0x00
+#घोषणा PIP_SENSING_MODE_SELF_CAP          0x02
 
-#define PIP_SET_PROXIMITY	0x49
+#घोषणा PIP_SET_PROXIMITY	0x49
 
 /* Macro of Gen5 */
-#define GEN5_BL_MAX_OUTPUT_LENGTH     0x0100
-#define GEN5_APP_MAX_OUTPUT_LENGTH    0x00fe
+#घोषणा GEN5_BL_MAX_OUTPUT_LENGTH     0x0100
+#घोषणा GEN5_APP_MAX_OUTPUT_LENGTH    0x00fe
 
-#define GEN5_POWER_STATE_ACTIVE              0x01
-#define GEN5_POWER_STATE_LOOK_FOR_TOUCH      0x02
-#define GEN5_POWER_STATE_READY               0x03
-#define GEN5_POWER_STATE_IDLE                0x04
-#define GEN5_POWER_STATE_BTN_ONLY            0x05
-#define GEN5_POWER_STATE_OFF                 0x06
+#घोषणा GEN5_POWER_STATE_ACTIVE              0x01
+#घोषणा GEN5_POWER_STATE_LOOK_FOR_TOUCH      0x02
+#घोषणा GEN5_POWER_STATE_READY               0x03
+#घोषणा GEN5_POWER_STATE_IDLE                0x04
+#घोषणा GEN5_POWER_STATE_BTN_ONLY            0x05
+#घोषणा GEN5_POWER_STATE_OFF                 0x06
 
-#define GEN5_POWER_READY_MAX_INTRVL_TIME  50   /* Unit: ms */
-#define GEN5_POWER_IDLE_MAX_INTRVL_TIME   250  /* Unit: ms */
+#घोषणा GEN5_POWER_READY_MAX_INTRVL_TIME  50   /* Unit: ms */
+#घोषणा GEN5_POWER_IDLE_MAX_INTRVL_TIME   250  /* Unit: ms */
 
-#define GEN5_CMD_GET_PARAMETER		     0x05
-#define GEN5_CMD_SET_PARAMETER		     0x06
-#define GEN5_PARAMETER_ACT_INTERVL_ID        0x4d
-#define GEN5_PARAMETER_ACT_INTERVL_SIZE      1
-#define GEN5_PARAMETER_ACT_LFT_INTERVL_ID    0x4f
-#define GEN5_PARAMETER_ACT_LFT_INTERVL_SIZE  2
-#define GEN5_PARAMETER_LP_INTRVL_ID          0x4c
-#define GEN5_PARAMETER_LP_INTRVL_SIZE        2
+#घोषणा GEN5_CMD_GET_PARAMETER		     0x05
+#घोषणा GEN5_CMD_SET_PARAMETER		     0x06
+#घोषणा GEN5_PARAMETER_ACT_INTERVL_ID        0x4d
+#घोषणा GEN5_PARAMETER_ACT_INTERVL_SIZE      1
+#घोषणा GEN5_PARAMETER_ACT_LFT_INTERVL_ID    0x4f
+#घोषणा GEN5_PARAMETER_ACT_LFT_INTERVL_SIZE  2
+#घोषणा GEN5_PARAMETER_LP_INTRVL_ID          0x4c
+#घोषणा GEN5_PARAMETER_LP_INTRVL_SIZE        2
 
-#define GEN5_PARAMETER_DISABLE_PIP_REPORT    0x08
+#घोषणा GEN5_PARAMETER_DISABLE_PIP_REPORT    0x08
 
-#define GEN5_BL_REPORT_DESCRIPTOR_SIZE            0x1d
-#define GEN5_BL_REPORT_DESCRIPTOR_ID              0xfe
-#define GEN5_APP_REPORT_DESCRIPTOR_SIZE           0xee
-#define GEN5_APP_CONTRACT_REPORT_DESCRIPTOR_SIZE  0xfa
-#define GEN5_APP_REPORT_DESCRIPTOR_ID             0xf6
+#घोषणा GEN5_BL_REPORT_DESCRIPTOR_SIZE            0x1d
+#घोषणा GEN5_BL_REPORT_DESCRIPTOR_ID              0xfe
+#घोषणा GEN5_APP_REPORT_DESCRIPTOR_SIZE           0xee
+#घोषणा GEN5_APP_CONTRACT_REPORT_DESCRIPTOR_SIZE  0xfa
+#घोषणा GEN5_APP_REPORT_DESCRIPTOR_ID             0xf6
 
-#define GEN5_RETRIEVE_MUTUAL_PWC_DATA        0x00
-#define GEN5_RETRIEVE_SELF_CAP_PWC_DATA      0x01
+#घोषणा GEN5_RETRIEVE_MUTUAL_PWC_DATA        0x00
+#घोषणा GEN5_RETRIEVE_SELF_CAP_PWC_DATA      0x01
 
-#define GEN5_RETRIEVE_DATA_ELEMENT_SIZE_MASK 0x07
+#घोषणा GEN5_RETRIEVE_DATA_ELEMENT_SIZE_MASK 0x07
 
-#define GEN5_CMD_EXECUTE_PANEL_SCAN          0x2a
-#define GEN5_CMD_RETRIEVE_PANEL_SCAN         0x2b
-#define GEN5_PANEL_SCAN_MUTUAL_RAW_DATA      0x00
-#define GEN5_PANEL_SCAN_MUTUAL_BASELINE      0x01
-#define GEN5_PANEL_SCAN_MUTUAL_DIFFCOUNT     0x02
-#define GEN5_PANEL_SCAN_SELF_RAW_DATA        0x03
-#define GEN5_PANEL_SCAN_SELF_BASELINE        0x04
-#define GEN5_PANEL_SCAN_SELF_DIFFCOUNT       0x05
+#घोषणा GEN5_CMD_EXECUTE_PANEL_SCAN          0x2a
+#घोषणा GEN5_CMD_RETRIEVE_PANEL_SCAN         0x2b
+#घोषणा GEN5_PANEL_SCAN_MUTUAL_RAW_DATA      0x00
+#घोषणा GEN5_PANEL_SCAN_MUTUAL_BASELINE      0x01
+#घोषणा GEN5_PANEL_SCAN_MUTUAL_DIFFCOUNT     0x02
+#घोषणा GEN5_PANEL_SCAN_SELF_RAW_DATA        0x03
+#घोषणा GEN5_PANEL_SCAN_SELF_BASELINE        0x04
+#घोषणा GEN5_PANEL_SCAN_SELF_DIFFCOUNT       0x05
 
-/* The offset only valid for retrieve PWC and panel scan commands */
-#define GEN5_RESP_DATA_STRUCTURE_OFFSET      10
-#define GEN5_PWC_DATA_ELEMENT_SIZE_MASK      0x07
+/* The offset only valid क्रम retrieve PWC and panel scan commands */
+#घोषणा GEN5_RESP_DATA_STRUCTURE_OFFSET      10
+#घोषणा GEN5_PWC_DATA_ELEMENT_SIZE_MASK      0x07
 
 
-struct cyapa_pip_touch_record {
+काष्ठा cyapa_pip_touch_record अणु
 	/*
 	 * Bit 7 - 3: reserved
 	 * Bit 2 - 0: touch type;
@@ -148,14 +149,14 @@ struct cyapa_pip_touch_record {
 	u8 touch_type;
 
 	/*
-	 * Bit 7: indicates touch liftoff status.
+	 * Bit 7: indicates touch lअगरtoff status.
 	 *		0 : touch is currently on the panel.
-	 *		1 : touch record indicates a liftoff.
+	 *		1 : touch record indicates a lअगरtoff.
 	 * Bit 6 - 5: indicates an event associated with this touch instance
 	 *		0 : no event
-	 *		1 : touchdown
-	 *		2 : significant displacement (> active distance)
-	 *		3 : liftoff (record reports last known coordinates)
+	 *		1 : touchकरोwn
+	 *		2 : signअगरicant displacement (> active distance)
+	 *		3 : lअगरtoff (record reports last known coordinates)
 	 * Bit 4 - 0: An arbitrary ID tag associated with a finger
 	 *		to allow tracking a touch as it moves around the panel.
 	 */
@@ -174,9 +175,9 @@ struct cyapa_pip_touch_record {
 	u8 y_hi;
 
 	/*
-	 * The meaning of this value is different when touch_type is different.
+	 * The meaning of this value is dअगरferent when touch_type is dअगरferent.
 	 * For standard finger type:
-	 *	Touch intensity in counts, pressure value.
+	 *	Touch पूर्णांकensity in counts, pressure value.
 	 * For proximity type (Start supported in Gen5 TP):
 	 *	The distance, in surface units, between the contact and
 	 *	the surface.
@@ -210,21 +211,21 @@ struct cyapa_pip_touch_record {
 	/*
 	 * The angle between the panel vertical axis and
 	 * the major axis of the contact ellipse. This value is an 8-bit
-	 * signed integer. The range is -127 to +127 (corresponding to
+	 * चिन्हित पूर्णांकeger. The range is -127 to +127 (corresponding to
 	 * -90 degree and +90 degree respectively).
-	 * The positive direction is clockwise from the vertical axis.
-	 * If the ellipse of contact degenerates into a circle,
+	 * The positive direction is घड़ीwise from the vertical axis.
+	 * If the ellipse of contact degenerates पूर्णांकo a circle,
 	 * orientation is reported as 0.
 	 */
 	u8 orientation;
-} __packed;
+पूर्ण __packed;
 
-struct cyapa_pip_report_data {
+काष्ठा cyapa_pip_report_data अणु
 	u8 report_head[PIP_TOUCH_REPORT_HEAD_SIZE];
-	struct cyapa_pip_touch_record touch_records[10];
-} __packed;
+	काष्ठा cyapa_pip_touch_record touch_records[10];
+पूर्ण __packed;
 
-struct cyapa_tsg_bin_image_head {
+काष्ठा cyapa_tsg_bin_image_head अणु
 	u8 head_size;  /* Unit: bytes, including itself. */
 	u8 ttda_driver_major_version;  /* Reserved as 0. */
 	u8 ttda_driver_minor_version;  /* Reserved as 0. */
@@ -237,52 +238,52 @@ struct cyapa_tsg_bin_image_head {
 	u8 family_id;
 	u8 bl_ver_maj;
 	u8 bl_ver_min;
-} __packed;
+पूर्ण __packed;
 
-struct cyapa_tsg_bin_image_data_record {
+काष्ठा cyapa_tsg_bin_image_data_record अणु
 	u8 flash_array_id;
 	__be16 row_number;
 	/* The number of bytes of flash data contained in this record. */
 	__be16 record_len;
 	/* The flash program data. */
 	u8 record_data[CYAPA_TSG_FW_ROW_SIZE];
-} __packed;
+पूर्ण __packed;
 
-struct cyapa_tsg_bin_image {
-	struct cyapa_tsg_bin_image_head image_head;
-	struct cyapa_tsg_bin_image_data_record records[];
-} __packed;
+काष्ठा cyapa_tsg_bin_image अणु
+	काष्ठा cyapa_tsg_bin_image_head image_head;
+	काष्ठा cyapa_tsg_bin_image_data_record records[];
+पूर्ण __packed;
 
-struct pip_bl_packet_start {
+काष्ठा pip_bl_packet_start अणु
 	u8 sop;  /* Start of packet, must be 01h */
 	u8 cmd_code;
 	__le16 data_length;  /* Size of data parameter start from data[0] */
-} __packed;
+पूर्ण __packed;
 
-struct pip_bl_packet_end {
+काष्ठा pip_bl_packet_end अणु
 	__le16 crc;
 	u8 eop;  /* End of packet, must be 17h */
-} __packed;
+पूर्ण __packed;
 
-struct pip_bl_cmd_head {
-	__le16 addr;   /* Output report register address, must be 0004h */
-	/* Size of packet not including output report register address */
+काष्ठा pip_bl_cmd_head अणु
+	__le16 addr;   /* Output report रेजिस्टर address, must be 0004h */
+	/* Size of packet not including output report रेजिस्टर address */
 	__le16 length;
 	u8 report_id;  /* Bootloader output report id, must be 40h */
 	u8 rsvd;  /* Reserved, must be 0 */
-	struct pip_bl_packet_start packet_start;
+	काष्ठा pip_bl_packet_start packet_start;
 	u8 data[];  /* Command data variable based on commands */
-} __packed;
+पूर्ण __packed;
 
-/* Initiate bootload command data structure. */
-struct pip_bl_initiate_cmd_data {
+/* Initiate bootload command data काष्ठाure. */
+काष्ठा pip_bl_initiate_cmd_data अणु
 	/* Key must be "A5h 01h 02h 03h FFh FEh FDh 5Ah" */
 	u8 key[CYAPA_TSG_BL_KEY_SIZE];
 	u8 metadata_raw_parameter[CYAPA_TSG_FLASH_MAP_METADATA_SIZE];
 	__le16 metadata_crc;
-} __packed;
+पूर्ण __packed;
 
-struct tsg_bl_metadata_row_params {
+काष्ठा tsg_bl_metadata_row_params अणु
 	__le16 size;
 	__le16 maximum_size;
 	__le32 app_start;
@@ -294,18 +295,18 @@ struct tsg_bl_metadata_row_params {
 	__le16 entry_row_crc;
 	u8 padding[36];  /* Padding data must be 0 */
 	__le16 metadata_crc;  /* CRC starts at offset of 60 */
-} __packed;
+पूर्ण __packed;
 
-/* Bootload program and verify row command data structure */
-struct tsg_bl_flash_row_head {
+/* Bootload program and verअगरy row command data काष्ठाure */
+काष्ठा tsg_bl_flash_row_head अणु
 	u8 flash_array_id;
 	__le16 flash_row_id;
 	u8 flash_data[];
-} __packed;
+पूर्ण __packed;
 
-struct pip_app_cmd_head {
-	__le16 addr;   /* Output report register address, must be 0004h */
-	/* Size of packet not including output report register address */
+काष्ठा pip_app_cmd_head अणु
+	__le16 addr;   /* Output report रेजिस्टर address, must be 0004h */
+	/* Size of packet not including output report रेजिस्टर address */
 	__le16 length;
 	u8 report_id;  /* Application output report id, must be 2Fh */
 	u8 rsvd;  /* Reserved, must be 0 */
@@ -315,482 +316,482 @@ struct pip_app_cmd_head {
 	 */
 	u8 cmd_code;
 	u8 parameter_data[];  /* Parameter data variable based on cmd_code */
-} __packed;
+पूर्ण __packed;
 
-/* Application get/set parameter command data structure */
-struct gen5_app_set_parameter_data {
+/* Application get/set parameter command data काष्ठाure */
+काष्ठा gen5_app_set_parameter_data अणु
 	u8 parameter_id;
 	u8 parameter_size;
 	__le32 value;
-} __packed;
+पूर्ण __packed;
 
-struct gen5_app_get_parameter_data {
+काष्ठा gen5_app_get_parameter_data अणु
 	u8 parameter_id;
-} __packed;
+पूर्ण __packed;
 
-struct gen5_retrieve_panel_scan_data {
-	__le16 read_offset;
-	__le16 read_elements;
+काष्ठा gen5_retrieve_panel_scan_data अणु
+	__le16 पढ़ो_offset;
+	__le16 पढ़ो_elements;
 	u8 data_id;
-} __packed;
+पूर्ण __packed;
 
-u8 pip_read_sys_info[] = { 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x02 };
-u8 pip_bl_read_app_info[] = { 0x04, 0x00, 0x0b, 0x00, 0x40, 0x00,
+u8 pip_पढ़ो_sys_info[] = अणु 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x02 पूर्ण;
+u8 pip_bl_पढ़ो_app_info[] = अणु 0x04, 0x00, 0x0b, 0x00, 0x40, 0x00,
 		0x01, 0x3c, 0x00, 0x00, 0xb0, 0x42, 0x17
-	};
+	पूर्ण;
 
-static u8 cyapa_pip_bl_cmd_key[] = { 0xa5, 0x01, 0x02, 0x03,
-	0xff, 0xfe, 0xfd, 0x5a };
+अटल u8 cyapa_pip_bl_cmd_key[] = अणु 0xa5, 0x01, 0x02, 0x03,
+	0xff, 0xfe, 0xfd, 0x5a पूर्ण;
 
-static int cyapa_pip_event_process(struct cyapa *cyapa,
-				   struct cyapa_pip_report_data *report_data);
+अटल पूर्णांक cyapa_pip_event_process(काष्ठा cyapa *cyapa,
+				   काष्ठा cyapa_pip_report_data *report_data);
 
-int cyapa_pip_cmd_state_initialize(struct cyapa *cyapa)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+पूर्णांक cyapa_pip_cmd_state_initialize(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
 
-	init_completion(&pip->cmd_ready);
+	init_completion(&pip->cmd_पढ़ोy);
 	atomic_set(&pip->cmd_issued, 0);
 	mutex_init(&pip->cmd_lock);
 
 	mutex_init(&pip->pm_stage_lock);
 	pip->pm_stage = CYAPA_PM_DEACTIVE;
 
-	pip->resp_sort_func = NULL;
+	pip->resp_sort_func = शून्य;
 	pip->in_progress_cmd = PIP_INVALID_CMD;
-	pip->resp_data = NULL;
-	pip->resp_len = NULL;
+	pip->resp_data = शून्य;
+	pip->resp_len = शून्य;
 
 	cyapa->dev_pwr_mode = UNINIT_PWR_MODE;
-	cyapa->dev_sleep_time = UNINIT_SLEEP_TIME;
+	cyapa->dev_sleep_समय = UNINIT_SLEEP_TIME;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return negative errno, or else the number of bytes read. */
-ssize_t cyapa_i2c_pip_read(struct cyapa *cyapa, u8 *buf, size_t size)
-{
-	int ret;
+/* Return negative त्रुटि_सं, or अन्यथा the number of bytes पढ़ो. */
+sमाप_प्रकार cyapa_i2c_pip_पढ़ो(काष्ठा cyapa *cyapa, u8 *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
 
-	if (size == 0)
-		return 0;
+	अगर (size == 0)
+		वापस 0;
 
-	if (!buf || size > CYAPA_REG_MAP_SIZE)
-		return -EINVAL;
+	अगर (!buf || size > CYAPA_REG_MAP_SIZE)
+		वापस -EINVAL;
 
 	ret = i2c_master_recv(cyapa->client, buf, size);
 
-	if (ret != size)
-		return (ret < 0) ? ret : -EIO;
-	return size;
-}
+	अगर (ret != size)
+		वापस (ret < 0) ? ret : -EIO;
+	वापस size;
+पूर्ण
 
 /*
- * Return a negative errno code else zero on success.
+ * Return a negative त्रुटि_सं code अन्यथा zero on success.
  */
-ssize_t cyapa_i2c_pip_write(struct cyapa *cyapa, u8 *buf, size_t size)
-{
-	int ret;
+sमाप_प्रकार cyapa_i2c_pip_ग_लिखो(काष्ठा cyapa *cyapa, u8 *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret;
 
-	if (!buf || !size)
-		return -EINVAL;
+	अगर (!buf || !size)
+		वापस -EINVAL;
 
 	ret = i2c_master_send(cyapa->client, buf, size);
 
-	if (ret != size)
-		return (ret < 0) ? ret : -EIO;
+	अगर (ret != size)
+		वापस (ret < 0) ? ret : -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cyapa_set_pip_pm_state(struct cyapa *cyapa,
-				   enum cyapa_pm_stage pm_stage)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+अटल व्योम cyapa_set_pip_pm_state(काष्ठा cyapa *cyapa,
+				   क्रमागत cyapa_pm_stage pm_stage)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
 
 	mutex_lock(&pip->pm_stage_lock);
 	pip->pm_stage = pm_stage;
 	mutex_unlock(&pip->pm_stage_lock);
-}
+पूर्ण
 
-static void cyapa_reset_pip_pm_state(struct cyapa *cyapa)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+अटल व्योम cyapa_reset_pip_pm_state(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
 
 	/* Indicates the pip->pm_stage is not valid. */
 	mutex_lock(&pip->pm_stage_lock);
 	pip->pm_stage = CYAPA_PM_DEACTIVE;
 	mutex_unlock(&pip->pm_stage_lock);
-}
+पूर्ण
 
-static enum cyapa_pm_stage cyapa_get_pip_pm_state(struct cyapa *cyapa)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	enum cyapa_pm_stage pm_stage;
+अटल क्रमागत cyapa_pm_stage cyapa_get_pip_pm_state(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	क्रमागत cyapa_pm_stage pm_stage;
 
 	mutex_lock(&pip->pm_stage_lock);
 	pm_stage = pip->pm_stage;
 	mutex_unlock(&pip->pm_stage_lock);
 
-	return pm_stage;
-}
+	वापस pm_stage;
+पूर्ण
 
 /*
- * This function is aimed to dump all not read data in Gen5 trackpad
- * before send any command, otherwise, the interrupt line will be blocked.
+ * This function is aimed to dump all not पढ़ो data in Gen5 trackpad
+ * beक्रमe send any command, otherwise, the पूर्णांकerrupt line will be blocked.
  */
-int cyapa_empty_pip_output_data(struct cyapa *cyapa,
-		u8 *buf, int *len, cb_sort func)
-{
-	struct input_dev *input = cyapa->input;
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	enum cyapa_pm_stage pm_stage = cyapa_get_pip_pm_state(cyapa);
-	int length;
-	int report_count;
-	int empty_count;
-	int buf_len;
-	int error;
+पूर्णांक cyapa_empty_pip_output_data(काष्ठा cyapa *cyapa,
+		u8 *buf, पूर्णांक *len, cb_sort func)
+अणु
+	काष्ठा input_dev *input = cyapa->input;
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	क्रमागत cyapa_pm_stage pm_stage = cyapa_get_pip_pm_state(cyapa);
+	पूर्णांक length;
+	पूर्णांक report_count;
+	पूर्णांक empty_count;
+	पूर्णांक buf_len;
+	पूर्णांक error;
 
 	buf_len = 0;
-	if (len) {
+	अगर (len) अणु
 		buf_len = (*len < CYAPA_REG_MAP_SIZE) ?
 				*len : CYAPA_REG_MAP_SIZE;
 		*len = 0;
-	}
+	पूर्ण
 
-	report_count = 8;  /* max 7 pending data before command response data */
+	report_count = 8;  /* max 7 pending data beक्रमe command response data */
 	empty_count = 0;
-	do {
+	करो अणु
 		/*
 		 * Depending on testing in cyapa driver, there are max 5 "02 00"
 		 * packets between two valid buffered data report in firmware.
 		 * So in order to dump all buffered data out and
-		 * make interrupt line release for reassert again,
+		 * make पूर्णांकerrupt line release क्रम reनिश्चित again,
 		 * we must set the empty_count check value bigger than 5 to
 		 * make it work. Otherwise, in some situation,
-		 * the interrupt line may unable to reactive again,
+		 * the पूर्णांकerrupt line may unable to reactive again,
 		 * which will cause trackpad device unable to
 		 * report data any more.
-		 * for example, it may happen in EFT and ESD testing.
+		 * क्रम example, it may happen in EFT and ESD testing.
 		 */
-		if (empty_count > 5)
-			return 0;
+		अगर (empty_count > 5)
+			वापस 0;
 
-		error = cyapa_i2c_pip_read(cyapa, pip->empty_buf,
+		error = cyapa_i2c_pip_पढ़ो(cyapa, pip->empty_buf,
 				PIP_RESP_LENGTH_SIZE);
-		if (error < 0)
-			return error;
+		अगर (error < 0)
+			वापस error;
 
 		length = get_unaligned_le16(pip->empty_buf);
-		if (length == PIP_RESP_LENGTH_SIZE) {
+		अगर (length == PIP_RESP_LENGTH_SIZE) अणु
 			empty_count++;
-			continue;
-		} else if (length > CYAPA_REG_MAP_SIZE) {
+			जारी;
+		पूर्ण अन्यथा अगर (length > CYAPA_REG_MAP_SIZE) अणु
 			/* Should not happen */
-			return -EINVAL;
-		} else if (length == 0) {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अगर (length == 0) अणु
 			/* Application or bootloader launch data polled out. */
 			length = PIP_RESP_LENGTH_SIZE;
-			if (buf && buf_len && func &&
-				func(cyapa, pip->empty_buf, length)) {
+			अगर (buf && buf_len && func &&
+				func(cyapa, pip->empty_buf, length)) अणु
 				length = min(buf_len, length);
-				memcpy(buf, pip->empty_buf, length);
+				स_नकल(buf, pip->empty_buf, length);
 				*len = length;
 				/* Response found, success. */
-				return 0;
-			}
-			continue;
-		}
+				वापस 0;
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		error = cyapa_i2c_pip_read(cyapa, pip->empty_buf, length);
-		if (error < 0)
-			return error;
+		error = cyapa_i2c_pip_पढ़ो(cyapa, pip->empty_buf, length);
+		अगर (error < 0)
+			वापस error;
 
 		report_count--;
 		empty_count = 0;
 		length = get_unaligned_le16(pip->empty_buf);
-		if (length <= PIP_RESP_LENGTH_SIZE) {
+		अगर (length <= PIP_RESP_LENGTH_SIZE) अणु
 			empty_count++;
-		} else if (buf && buf_len && func &&
-			func(cyapa, pip->empty_buf, length)) {
+		पूर्ण अन्यथा अगर (buf && buf_len && func &&
+			func(cyapa, pip->empty_buf, length)) अणु
 			length = min(buf_len, length);
-			memcpy(buf, pip->empty_buf, length);
+			स_नकल(buf, pip->empty_buf, length);
 			*len = length;
 			/* Response found, success. */
-			return 0;
-		} else if (cyapa->operational &&
+			वापस 0;
+		पूर्ण अन्यथा अगर (cyapa->operational &&
 			   input && input_device_enabled(input) &&
 			   (pm_stage == CYAPA_PM_RUNTIME_RESUME ||
-			    pm_stage == CYAPA_PM_RUNTIME_SUSPEND)) {
-			/* Parse the data and report it if it's valid. */
+			    pm_stage == CYAPA_PM_RUNTIME_SUSPEND)) अणु
+			/* Parse the data and report it अगर it's valid. */
 			cyapa_pip_event_process(cyapa,
-			       (struct cyapa_pip_report_data *)pip->empty_buf);
-		}
+			       (काष्ठा cyapa_pip_report_data *)pip->empty_buf);
+		पूर्ण
 
 		error = -EINVAL;
-	} while (report_count);
+	पूर्ण जबतक (report_count);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cyapa_do_i2c_pip_cmd_irq_sync(
-		struct cyapa *cyapa,
-		u8 *cmd, size_t cmd_len,
-		unsigned long timeout)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int error;
+अटल पूर्णांक cyapa_करो_i2c_pip_cmd_irq_sync(
+		काष्ठा cyapa *cyapa,
+		u8 *cmd, माप_प्रकार cmd_len,
+		अचिन्हित दीर्घ समयout)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक error;
 
-	/* Wait for interrupt to set ready completion */
-	init_completion(&pip->cmd_ready);
+	/* Wait क्रम पूर्णांकerrupt to set पढ़ोy completion */
+	init_completion(&pip->cmd_पढ़ोy);
 
 	atomic_inc(&pip->cmd_issued);
-	error = cyapa_i2c_pip_write(cyapa, cmd, cmd_len);
-	if (error) {
+	error = cyapa_i2c_pip_ग_लिखो(cyapa, cmd, cmd_len);
+	अगर (error) अणु
 		atomic_dec(&pip->cmd_issued);
-		return (error < 0) ? error : -EIO;
-	}
+		वापस (error < 0) ? error : -EIO;
+	पूर्ण
 
-	/* Wait for interrupt to indicate command is completed. */
-	timeout = wait_for_completion_timeout(&pip->cmd_ready,
-				msecs_to_jiffies(timeout));
-	if (timeout == 0) {
+	/* Wait क्रम पूर्णांकerrupt to indicate command is completed. */
+	समयout = रुको_क्रम_completion_समयout(&pip->cmd_पढ़ोy,
+				msecs_to_jअगरfies(समयout));
+	अगर (समयout == 0) अणु
 		atomic_dec(&pip->cmd_issued);
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_do_i2c_pip_cmd_polling(
-		struct cyapa *cyapa,
-		u8 *cmd, size_t cmd_len,
-		u8 *resp_data, int *resp_len,
-		unsigned long timeout,
+अटल पूर्णांक cyapa_करो_i2c_pip_cmd_polling(
+		काष्ठा cyapa *cyapa,
+		u8 *cmd, माप_प्रकार cmd_len,
+		u8 *resp_data, पूर्णांक *resp_len,
+		अचिन्हित दीर्घ समयout,
 		cb_sort func)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int tries;
-	int length;
-	int error;
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक tries;
+	पूर्णांक length;
+	पूर्णांक error;
 
 	atomic_inc(&pip->cmd_issued);
-	error = cyapa_i2c_pip_write(cyapa, cmd, cmd_len);
-	if (error) {
+	error = cyapa_i2c_pip_ग_लिखो(cyapa, cmd, cmd_len);
+	अगर (error) अणु
 		atomic_dec(&pip->cmd_issued);
-		return error < 0 ? error : -EIO;
-	}
+		वापस error < 0 ? error : -EIO;
+	पूर्ण
 
 	length = resp_len ? *resp_len : 0;
-	if (resp_data && resp_len && length != 0 && func) {
-		tries = timeout / 5;
-		do {
+	अगर (resp_data && resp_len && length != 0 && func) अणु
+		tries = समयout / 5;
+		करो अणु
 			usleep_range(3000, 5000);
 			*resp_len = length;
 			error = cyapa_empty_pip_output_data(cyapa,
 					resp_data, resp_len, func);
-			if (error || *resp_len == 0)
-				continue;
-			else
-				break;
-		} while (--tries > 0);
-		if ((error || *resp_len == 0) || tries <= 0)
+			अगर (error || *resp_len == 0)
+				जारी;
+			अन्यथा
+				अवरोध;
+		पूर्ण जबतक (--tries > 0);
+		अगर ((error || *resp_len == 0) || tries <= 0)
 			error = error ? error : -ETIMEDOUT;
-	}
+	पूर्ण
 
 	atomic_dec(&pip->cmd_issued);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int cyapa_i2c_pip_cmd_irq_sync(
-		struct cyapa *cyapa,
-		u8 *cmd, int cmd_len,
-		u8 *resp_data, int *resp_len,
-		unsigned long timeout,
+पूर्णांक cyapa_i2c_pip_cmd_irq_sync(
+		काष्ठा cyapa *cyapa,
+		u8 *cmd, पूर्णांक cmd_len,
+		u8 *resp_data, पूर्णांक *resp_len,
+		अचिन्हित दीर्घ समयout,
 		cb_sort func,
 		bool irq_mode)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int error;
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक error;
 
-	if (!cmd || !cmd_len)
-		return -EINVAL;
+	अगर (!cmd || !cmd_len)
+		वापस -EINVAL;
 
 	/* Commands must be serialized. */
-	error = mutex_lock_interruptible(&pip->cmd_lock);
-	if (error)
-		return error;
+	error = mutex_lock_पूर्णांकerruptible(&pip->cmd_lock);
+	अगर (error)
+		वापस error;
 
 	pip->resp_sort_func = func;
 	pip->resp_data = resp_data;
 	pip->resp_len = resp_len;
 
-	if (cmd_len >= PIP_MIN_APP_CMD_LENGTH &&
-			cmd[4] == PIP_APP_CMD_REPORT_ID) {
+	अगर (cmd_len >= PIP_MIN_APP_CMD_LENGTH &&
+			cmd[4] == PIP_APP_CMD_REPORT_ID) अणु
 		/* Application command */
 		pip->in_progress_cmd = cmd[6] & 0x7f;
-	} else if (cmd_len >= PIP_MIN_BL_CMD_LENGTH &&
-			cmd[4] == PIP_BL_CMD_REPORT_ID) {
+	पूर्ण अन्यथा अगर (cmd_len >= PIP_MIN_BL_CMD_LENGTH &&
+			cmd[4] == PIP_BL_CMD_REPORT_ID) अणु
 		/* Bootloader command */
 		pip->in_progress_cmd = cmd[7];
-	}
+	पूर्ण
 
-	/* Send command data, wait and read output response data's length. */
-	if (irq_mode) {
+	/* Send command data, रुको and पढ़ो output response data's length. */
+	अगर (irq_mode) अणु
 		pip->is_irq_mode = true;
-		error = cyapa_do_i2c_pip_cmd_irq_sync(cyapa, cmd, cmd_len,
-							timeout);
-		if (error == -ETIMEDOUT && resp_data &&
-				resp_len && *resp_len != 0 && func) {
+		error = cyapa_करो_i2c_pip_cmd_irq_sync(cyapa, cmd, cmd_len,
+							समयout);
+		अगर (error == -ETIMEDOUT && resp_data &&
+				resp_len && *resp_len != 0 && func) अणु
 			/*
-			 * For some old version, there was no interrupt for
+			 * For some old version, there was no पूर्णांकerrupt क्रम
 			 * the command response data, so need to poll here
 			 * to try to get the response data.
 			 */
 			error = cyapa_empty_pip_output_data(cyapa,
 					resp_data, resp_len, func);
-			if (error || *resp_len == 0)
+			अगर (error || *resp_len == 0)
 				error = error ? error : -ETIMEDOUT;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pip->is_irq_mode = false;
-		error = cyapa_do_i2c_pip_cmd_polling(cyapa, cmd, cmd_len,
-				resp_data, resp_len, timeout, func);
-	}
+		error = cyapa_करो_i2c_pip_cmd_polling(cyapa, cmd, cmd_len,
+				resp_data, resp_len, समयout, func);
+	पूर्ण
 
-	pip->resp_sort_func = NULL;
-	pip->resp_data = NULL;
-	pip->resp_len = NULL;
+	pip->resp_sort_func = शून्य;
+	pip->resp_data = शून्य;
+	pip->resp_len = शून्य;
 	pip->in_progress_cmd = PIP_INVALID_CMD;
 
 	mutex_unlock(&pip->cmd_lock);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-bool cyapa_sort_tsg_pip_bl_resp_data(struct cyapa *cyapa,
-		u8 *data, int len)
-{
-	if (!data || len < PIP_MIN_BL_RESP_LENGTH)
-		return false;
+bool cyapa_sort_tsg_pip_bl_resp_data(काष्ठा cyapa *cyapa,
+		u8 *data, पूर्णांक len)
+अणु
+	अगर (!data || len < PIP_MIN_BL_RESP_LENGTH)
+		वापस false;
 
 	/* Bootloader input report id 30h */
-	if (data[PIP_RESP_REPORT_ID_OFFSET] == PIP_BL_RESP_REPORT_ID &&
+	अगर (data[PIP_RESP_REPORT_ID_OFFSET] == PIP_BL_RESP_REPORT_ID &&
 			data[PIP_RESP_RSVD_OFFSET] == PIP_RESP_RSVD_KEY &&
 			data[PIP_RESP_BL_SOP_OFFSET] == PIP_SOP_KEY)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool cyapa_sort_tsg_pip_app_resp_data(struct cyapa *cyapa,
-		u8 *data, int len)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int resp_len;
+bool cyapa_sort_tsg_pip_app_resp_data(काष्ठा cyapa *cyapa,
+		u8 *data, पूर्णांक len)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक resp_len;
 
-	if (!data || len < PIP_MIN_APP_RESP_LENGTH)
-		return false;
+	अगर (!data || len < PIP_MIN_APP_RESP_LENGTH)
+		वापस false;
 
-	if (data[PIP_RESP_REPORT_ID_OFFSET] == PIP_APP_RESP_REPORT_ID &&
-			data[PIP_RESP_RSVD_OFFSET] == PIP_RESP_RSVD_KEY) {
+	अगर (data[PIP_RESP_REPORT_ID_OFFSET] == PIP_APP_RESP_REPORT_ID &&
+			data[PIP_RESP_RSVD_OFFSET] == PIP_RESP_RSVD_KEY) अणु
 		resp_len = get_unaligned_le16(&data[PIP_RESP_LENGTH_OFFSET]);
-		if (GET_PIP_CMD_CODE(data[PIP_RESP_APP_CMD_OFFSET]) == 0x00 &&
+		अगर (GET_PIP_CMD_CODE(data[PIP_RESP_APP_CMD_OFFSET]) == 0x00 &&
 			resp_len == PIP_UNSUPPORTED_CMD_RESP_LENGTH &&
-			data[5] == pip->in_progress_cmd) {
+			data[5] == pip->in_progress_cmd) अणु
 			/* Unsupported command code */
-			return false;
-		} else if (GET_PIP_CMD_CODE(data[PIP_RESP_APP_CMD_OFFSET]) ==
-				pip->in_progress_cmd) {
+			वापस false;
+		पूर्ण अन्यथा अगर (GET_PIP_CMD_CODE(data[PIP_RESP_APP_CMD_OFFSET]) ==
+				pip->in_progress_cmd) अणु
 			/* Correct command response received */
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool cyapa_sort_pip_application_launch_data(struct cyapa *cyapa,
-		u8 *buf, int len)
-{
-	if (buf == NULL || len < PIP_RESP_LENGTH_SIZE)
-		return false;
+अटल bool cyapa_sort_pip_application_launch_data(काष्ठा cyapa *cyapa,
+		u8 *buf, पूर्णांक len)
+अणु
+	अगर (buf == शून्य || len < PIP_RESP_LENGTH_SIZE)
+		वापस false;
 
 	/*
-	 * After reset or power on, trackpad device always sets to 0x00 0x00
-	 * to indicate a reset or power on event.
+	 * After reset or घातer on, trackpad device always sets to 0x00 0x00
+	 * to indicate a reset or घातer on event.
 	 */
-	if (buf[0] == 0 && buf[1] == 0)
-		return true;
+	अगर (buf[0] == 0 && buf[1] == 0)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool cyapa_sort_gen5_hid_descriptor_data(struct cyapa *cyapa,
-		u8 *buf, int len)
-{
-	int resp_len;
-	int max_output_len;
+अटल bool cyapa_sort_gen5_hid_descriptor_data(काष्ठा cyapa *cyapa,
+		u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक resp_len;
+	पूर्णांक max_output_len;
 
 	/* Check hid descriptor. */
-	if (len != PIP_HID_DESCRIPTOR_SIZE)
-		return false;
+	अगर (len != PIP_HID_DESCRIPTOR_SIZE)
+		वापस false;
 
 	resp_len = get_unaligned_le16(&buf[PIP_RESP_LENGTH_OFFSET]);
 	max_output_len = get_unaligned_le16(&buf[16]);
-	if (resp_len == PIP_HID_DESCRIPTOR_SIZE) {
-		if (buf[PIP_RESP_REPORT_ID_OFFSET] == PIP_HID_BL_REPORT_ID &&
-				max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) {
+	अगर (resp_len == PIP_HID_DESCRIPTOR_SIZE) अणु
+		अगर (buf[PIP_RESP_REPORT_ID_OFFSET] == PIP_HID_BL_REPORT_ID &&
+				max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) अणु
 			/* BL mode HID Descriptor */
-			return true;
-		} else if ((buf[PIP_RESP_REPORT_ID_OFFSET] ==
+			वापस true;
+		पूर्ण अन्यथा अगर ((buf[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_HID_APP_REPORT_ID) &&
-				max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) {
+				max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) अणु
 			/* APP mode HID Descriptor */
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static bool cyapa_sort_pip_deep_sleep_data(struct cyapa *cyapa,
-		u8 *buf, int len)
-{
-	if (len == PIP_DEEP_SLEEP_RESP_LENGTH &&
+अटल bool cyapa_sort_pip_deep_sleep_data(काष्ठा cyapa *cyapa,
+		u8 *buf, पूर्णांक len)
+अणु
+	अगर (len == PIP_DEEP_SLEEP_RESP_LENGTH &&
 		buf[PIP_RESP_REPORT_ID_OFFSET] ==
 			PIP_APP_DEEP_SLEEP_REPORT_ID &&
 		(buf[4] & PIP_DEEP_SLEEP_OPCODE_MASK) ==
 			PIP_DEEP_SLEEP_OPCODE)
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static int gen5_idle_state_parse(struct cyapa *cyapa)
-{
+अटल पूर्णांक gen5_idle_state_parse(काष्ठा cyapa *cyapa)
+अणु
 	u8 resp_data[PIP_HID_DESCRIPTOR_SIZE];
-	int max_output_len;
-	int length;
+	पूर्णांक max_output_len;
+	पूर्णांक length;
 	u8 cmd[2];
-	int ret;
-	int error;
+	पूर्णांक ret;
+	पूर्णांक error;
 
 	/*
-	 * Dump all buffered data firstly for the situation
-	 * when the trackpad is just power on the cyapa go here.
+	 * Dump all buffered data firstly क्रम the situation
+	 * when the trackpad is just घातer on the cyapa go here.
 	 */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	memset(resp_data, 0, sizeof(resp_data));
-	ret = cyapa_i2c_pip_read(cyapa, resp_data, 3);
-	if (ret != 3)
-		return ret < 0 ? ret : -EIO;
+	स_रखो(resp_data, 0, माप(resp_data));
+	ret = cyapa_i2c_pip_पढ़ो(cyapa, resp_data, 3);
+	अगर (ret != 3)
+		वापस ret < 0 ? ret : -EIO;
 
 	length = get_unaligned_le16(&resp_data[PIP_RESP_LENGTH_OFFSET]);
-	if (length == PIP_RESP_LENGTH_SIZE) {
+	अगर (length == PIP_RESP_LENGTH_SIZE) अणु
 		/* Normal state of Gen5 with no data to response */
 		cyapa->gen = CYAPA_GEN5;
 
-		cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+		cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
 		/* Read description from trackpad device */
 		cmd[0] = 0x01;
@@ -802,272 +803,272 @@ static int gen5_idle_state_parse(struct cyapa *cyapa)
 				300,
 				cyapa_sort_gen5_hid_descriptor_data,
 				false);
-		if (error)
-			return error;
+		अगर (error)
+			वापस error;
 
 		length = get_unaligned_le16(
 				&resp_data[PIP_RESP_LENGTH_OFFSET]);
 		max_output_len = get_unaligned_le16(&resp_data[16]);
-		if ((length == PIP_HID_DESCRIPTOR_SIZE ||
+		अगर ((length == PIP_HID_DESCRIPTOR_SIZE ||
 				length == PIP_RESP_LENGTH_SIZE) &&
 			(resp_data[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_HID_BL_REPORT_ID) &&
-			max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) {
-			/* BL mode HID Description read */
+			max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) अणु
+			/* BL mode HID Description पढ़ो */
 			cyapa->state = CYAPA_STATE_GEN5_BL;
-		} else if ((length == PIP_HID_DESCRIPTOR_SIZE ||
+		पूर्ण अन्यथा अगर ((length == PIP_HID_DESCRIPTOR_SIZE ||
 				length == PIP_RESP_LENGTH_SIZE) &&
 			(resp_data[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_HID_APP_REPORT_ID) &&
-			max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) {
-			/* APP mode HID Description read */
+			max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) अणु
+			/* APP mode HID Description पढ़ो */
 			cyapa->state = CYAPA_STATE_GEN5_APP;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Should not happen!!! */
 			cyapa->state = CYAPA_STATE_NO_DEVICE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gen5_hid_description_header_parse(struct cyapa *cyapa, u8 *reg_data)
-{
-	int length;
+अटल पूर्णांक gen5_hid_description_header_parse(काष्ठा cyapa *cyapa, u8 *reg_data)
+अणु
+	पूर्णांक length;
 	u8 resp_data[32];
-	int max_output_len;
-	int ret;
+	पूर्णांक max_output_len;
+	पूर्णांक ret;
 
 	/* 0x20 0x00 0xF7 is Gen5 Application HID Description Header;
 	 * 0x20 0x00 0xFF is Gen5 Bootloader HID Description Header.
 	 *
-	 * Must read HID Description content through out,
+	 * Must पढ़ो HID Description content through out,
 	 * otherwise Gen5 trackpad cannot response next command
 	 * or report any touch or button data.
 	 */
-	ret = cyapa_i2c_pip_read(cyapa, resp_data,
+	ret = cyapa_i2c_pip_पढ़ो(cyapa, resp_data,
 			PIP_HID_DESCRIPTOR_SIZE);
-	if (ret != PIP_HID_DESCRIPTOR_SIZE)
-		return ret < 0 ? ret : -EIO;
+	अगर (ret != PIP_HID_DESCRIPTOR_SIZE)
+		वापस ret < 0 ? ret : -EIO;
 	length = get_unaligned_le16(&resp_data[PIP_RESP_LENGTH_OFFSET]);
 	max_output_len = get_unaligned_le16(&resp_data[16]);
-	if (length == PIP_RESP_LENGTH_SIZE) {
-		if (reg_data[PIP_RESP_REPORT_ID_OFFSET] ==
-				PIP_HID_BL_REPORT_ID) {
+	अगर (length == PIP_RESP_LENGTH_SIZE) अणु
+		अगर (reg_data[PIP_RESP_REPORT_ID_OFFSET] ==
+				PIP_HID_BL_REPORT_ID) अणु
 			/*
 			 * BL mode HID Description has been previously
-			 * read out.
+			 * पढ़ो out.
 			 */
 			cyapa->gen = CYAPA_GEN5;
 			cyapa->state = CYAPA_STATE_GEN5_BL;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * APP mode HID Description has been previously
-			 * read out.
+			 * पढ़ो out.
 			 */
 			cyapa->gen = CYAPA_GEN5;
 			cyapa->state = CYAPA_STATE_GEN5_APP;
-		}
-	} else if (length == PIP_HID_DESCRIPTOR_SIZE &&
+		पूर्ण
+	पूर्ण अन्यथा अगर (length == PIP_HID_DESCRIPTOR_SIZE &&
 			resp_data[2] == PIP_HID_BL_REPORT_ID &&
-			max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) {
-		/* BL mode HID Description read. */
+			max_output_len == GEN5_BL_MAX_OUTPUT_LENGTH) अणु
+		/* BL mode HID Description पढ़ो. */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_BL;
-	} else if (length == PIP_HID_DESCRIPTOR_SIZE &&
+	पूर्ण अन्यथा अगर (length == PIP_HID_DESCRIPTOR_SIZE &&
 			(resp_data[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_HID_APP_REPORT_ID) &&
-			max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) {
-		/* APP mode HID Description read. */
+			max_output_len == GEN5_APP_MAX_OUTPUT_LENGTH) अणु
+		/* APP mode HID Description पढ़ो. */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_APP;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Should not happen!!! */
 		cyapa->state = CYAPA_STATE_NO_DEVICE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gen5_report_data_header_parse(struct cyapa *cyapa, u8 *reg_data)
-{
-	int length;
+अटल पूर्णांक gen5_report_data_header_parse(काष्ठा cyapa *cyapa, u8 *reg_data)
+अणु
+	पूर्णांक length;
 
 	length = get_unaligned_le16(&reg_data[PIP_RESP_LENGTH_OFFSET]);
-	switch (reg_data[PIP_RESP_REPORT_ID_OFFSET]) {
-	case PIP_TOUCH_REPORT_ID:
-		if (length < PIP_TOUCH_REPORT_HEAD_SIZE ||
+	चयन (reg_data[PIP_RESP_REPORT_ID_OFFSET]) अणु
+	हाल PIP_TOUCH_REPORT_ID:
+		अगर (length < PIP_TOUCH_REPORT_HEAD_SIZE ||
 			length > PIP_TOUCH_REPORT_MAX_SIZE)
-			return -EINVAL;
-		break;
-	case PIP_BTN_REPORT_ID:
-	case GEN5_OLD_PUSH_BTN_REPORT_ID:
-	case PIP_PUSH_BTN_REPORT_ID:
-		if (length < PIP_BTN_REPORT_HEAD_SIZE ||
+			वापस -EINVAL;
+		अवरोध;
+	हाल PIP_BTN_REPORT_ID:
+	हाल GEN5_OLD_PUSH_BTN_REPORT_ID:
+	हाल PIP_PUSH_BTN_REPORT_ID:
+		अगर (length < PIP_BTN_REPORT_HEAD_SIZE ||
 			length > PIP_BTN_REPORT_MAX_SIZE)
-			return -EINVAL;
-		break;
-	case PIP_WAKEUP_EVENT_REPORT_ID:
-		if (length != PIP_WAKEUP_EVENT_SIZE)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस -EINVAL;
+		अवरोध;
+	हाल PIP_WAKEUP_EVENT_REPORT_ID:
+		अगर (length != PIP_WAKEUP_EVENT_SIZE)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	cyapa->gen = CYAPA_GEN5;
 	cyapa->state = CYAPA_STATE_GEN5_APP;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gen5_cmd_resp_header_parse(struct cyapa *cyapa, u8 *reg_data)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int length;
-	int ret;
+अटल पूर्णांक gen5_cmd_resp_header_parse(काष्ठा cyapa *cyapa, u8 *reg_data)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक length;
+	पूर्णांक ret;
 
 	/*
-	 * Must read report data through out,
+	 * Must पढ़ो report data through out,
 	 * otherwise Gen5 trackpad cannot response next command
 	 * or report any touch or button data.
 	 */
 	length = get_unaligned_le16(&reg_data[PIP_RESP_LENGTH_OFFSET]);
-	ret = cyapa_i2c_pip_read(cyapa, pip->empty_buf, length);
-	if (ret != length)
-		return ret < 0 ? ret : -EIO;
+	ret = cyapa_i2c_pip_पढ़ो(cyapa, pip->empty_buf, length);
+	अगर (ret != length)
+		वापस ret < 0 ? ret : -EIO;
 
-	if (length == PIP_RESP_LENGTH_SIZE) {
-		/* Previous command has read the data through out. */
-		if (reg_data[PIP_RESP_REPORT_ID_OFFSET] ==
-				PIP_BL_RESP_REPORT_ID) {
+	अगर (length == PIP_RESP_LENGTH_SIZE) अणु
+		/* Previous command has पढ़ो the data through out. */
+		अगर (reg_data[PIP_RESP_REPORT_ID_OFFSET] ==
+				PIP_BL_RESP_REPORT_ID) अणु
 			/* Gen5 BL command response data detected */
 			cyapa->gen = CYAPA_GEN5;
 			cyapa->state = CYAPA_STATE_GEN5_BL;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Gen5 APP command response data detected */
 			cyapa->gen = CYAPA_GEN5;
 			cyapa->state = CYAPA_STATE_GEN5_APP;
-		}
-	} else if ((pip->empty_buf[PIP_RESP_REPORT_ID_OFFSET] ==
+		पूर्ण
+	पूर्ण अन्यथा अगर ((pip->empty_buf[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_BL_RESP_REPORT_ID) &&
 			(pip->empty_buf[PIP_RESP_RSVD_OFFSET] ==
 				PIP_RESP_RSVD_KEY) &&
 			(pip->empty_buf[PIP_RESP_BL_SOP_OFFSET] ==
 				PIP_SOP_KEY) &&
 			(pip->empty_buf[length - 1] ==
-				PIP_EOP_KEY)) {
+				PIP_EOP_KEY)) अणु
 		/* Gen5 BL command response data detected */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_BL;
-	} else if (pip->empty_buf[PIP_RESP_REPORT_ID_OFFSET] ==
+	पूर्ण अन्यथा अगर (pip->empty_buf[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_APP_RESP_REPORT_ID &&
 			pip->empty_buf[PIP_RESP_RSVD_OFFSET] ==
-				PIP_RESP_RSVD_KEY) {
+				PIP_RESP_RSVD_KEY) अणु
 		/* Gen5 APP command response data detected */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_APP;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Should not happen!!! */
 		cyapa->state = CYAPA_STATE_NO_DEVICE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_state_parse(struct cyapa *cyapa, u8 *reg_data, int len)
-{
-	int length;
+अटल पूर्णांक cyapa_gen5_state_parse(काष्ठा cyapa *cyapa, u8 *reg_data, पूर्णांक len)
+अणु
+	पूर्णांक length;
 
-	if (!reg_data || len < 3)
-		return -EINVAL;
+	अगर (!reg_data || len < 3)
+		वापस -EINVAL;
 
 	cyapa->state = CYAPA_STATE_NO_DEVICE;
 
-	/* Parse based on Gen5 characteristic registers and bits */
+	/* Parse based on Gen5 अक्षरacteristic रेजिस्टरs and bits */
 	length = get_unaligned_le16(&reg_data[PIP_RESP_LENGTH_OFFSET]);
-	if (length == 0 || length == PIP_RESP_LENGTH_SIZE) {
+	अगर (length == 0 || length == PIP_RESP_LENGTH_SIZE) अणु
 		gen5_idle_state_parse(cyapa);
-	} else if (length == PIP_HID_DESCRIPTOR_SIZE &&
+	पूर्ण अन्यथा अगर (length == PIP_HID_DESCRIPTOR_SIZE &&
 			(reg_data[2] == PIP_HID_BL_REPORT_ID ||
-				reg_data[2] == PIP_HID_APP_REPORT_ID)) {
+				reg_data[2] == PIP_HID_APP_REPORT_ID)) अणु
 		gen5_hid_description_header_parse(cyapa, reg_data);
-	} else if ((length == GEN5_APP_REPORT_DESCRIPTOR_SIZE ||
+	पूर्ण अन्यथा अगर ((length == GEN5_APP_REPORT_DESCRIPTOR_SIZE ||
 			length == GEN5_APP_CONTRACT_REPORT_DESCRIPTOR_SIZE) &&
-			reg_data[2] == GEN5_APP_REPORT_DESCRIPTOR_ID) {
+			reg_data[2] == GEN5_APP_REPORT_DESCRIPTOR_ID) अणु
 		/* 0xEE 0x00 0xF6 is Gen5 APP report description header. */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_APP;
-	} else if (length == GEN5_BL_REPORT_DESCRIPTOR_SIZE &&
-			reg_data[2] == GEN5_BL_REPORT_DESCRIPTOR_ID) {
+	पूर्ण अन्यथा अगर (length == GEN5_BL_REPORT_DESCRIPTOR_SIZE &&
+			reg_data[2] == GEN5_BL_REPORT_DESCRIPTOR_ID) अणु
 		/* 0x1D 0x00 0xFE is Gen5 BL report descriptor header. */
 		cyapa->gen = CYAPA_GEN5;
 		cyapa->state = CYAPA_STATE_GEN5_BL;
-	} else if (reg_data[2] == PIP_TOUCH_REPORT_ID ||
+	पूर्ण अन्यथा अगर (reg_data[2] == PIP_TOUCH_REPORT_ID ||
 			reg_data[2] == PIP_BTN_REPORT_ID ||
 			reg_data[2] == GEN5_OLD_PUSH_BTN_REPORT_ID ||
 			reg_data[2] == PIP_PUSH_BTN_REPORT_ID ||
-			reg_data[2] == PIP_WAKEUP_EVENT_REPORT_ID) {
+			reg_data[2] == PIP_WAKEUP_EVENT_REPORT_ID) अणु
 		gen5_report_data_header_parse(cyapa, reg_data);
-	} else if (reg_data[2] == PIP_BL_RESP_REPORT_ID ||
-			reg_data[2] == PIP_APP_RESP_REPORT_ID) {
+	पूर्ण अन्यथा अगर (reg_data[2] == PIP_BL_RESP_REPORT_ID ||
+			reg_data[2] == PIP_APP_RESP_REPORT_ID) अणु
 		gen5_cmd_resp_header_parse(cyapa, reg_data);
-	}
+	पूर्ण
 
-	if (cyapa->gen == CYAPA_GEN5) {
+	अगर (cyapa->gen == CYAPA_GEN5) अणु
 		/*
-		 * Must read the content (e.g.: report description and so on)
+		 * Must पढ़ो the content (e.g.: report description and so on)
 		 * from trackpad device throughout. Otherwise,
 		 * Gen5 trackpad cannot response to next command or
 		 * report any touch or button data later.
 		 */
-		cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+		cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-		if (cyapa->state == CYAPA_STATE_GEN5_APP ||
+		अगर (cyapa->state == CYAPA_STATE_GEN5_APP ||
 			cyapa->state == CYAPA_STATE_GEN5_BL)
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	return -EAGAIN;
-}
+	वापस -EAGAIN;
+पूर्ण
 
-static struct cyapa_tsg_bin_image_data_record *
-cyapa_get_image_record_data_num(const struct firmware *fw,
-		int *record_num)
-{
-	int head_size;
+अटल काष्ठा cyapa_tsg_bin_image_data_record *
+cyapa_get_image_record_data_num(स्थिर काष्ठा firmware *fw,
+		पूर्णांक *record_num)
+अणु
+	पूर्णांक head_size;
 
 	head_size = fw->data[0] + 1;
 	*record_num = (fw->size - head_size) /
-			sizeof(struct cyapa_tsg_bin_image_data_record);
-	return (struct cyapa_tsg_bin_image_data_record *)&fw->data[head_size];
-}
+			माप(काष्ठा cyapa_tsg_bin_image_data_record);
+	वापस (काष्ठा cyapa_tsg_bin_image_data_record *)&fw->data[head_size];
+पूर्ण
 
-int cyapa_pip_bl_initiate(struct cyapa *cyapa, const struct firmware *fw)
-{
-	struct cyapa_tsg_bin_image_data_record *image_records;
-	struct pip_bl_cmd_head *bl_cmd_head;
-	struct pip_bl_packet_start *bl_packet_start;
-	struct pip_bl_initiate_cmd_data *cmd_data;
-	struct pip_bl_packet_end *bl_packet_end;
+पूर्णांक cyapa_pip_bl_initiate(काष्ठा cyapa *cyapa, स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा cyapa_tsg_bin_image_data_record *image_records;
+	काष्ठा pip_bl_cmd_head *bl_cmd_head;
+	काष्ठा pip_bl_packet_start *bl_packet_start;
+	काष्ठा pip_bl_initiate_cmd_data *cmd_data;
+	काष्ठा pip_bl_packet_end *bl_packet_end;
 	u8 cmd[CYAPA_TSG_MAX_CMD_SIZE];
-	int cmd_len;
+	पूर्णांक cmd_len;
 	u16 cmd_data_len;
 	u16 cmd_crc = 0;
 	u16 meta_data_crc = 0;
 	u8 resp_data[11];
-	int resp_len;
-	int records_num;
+	पूर्णांक resp_len;
+	पूर्णांक records_num;
 	u8 *data;
-	int error;
+	पूर्णांक error;
 
-	/* Try to dump all buffered report data before any send command. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	/* Try to dump all buffered report data beक्रमe any send command. */
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	memset(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
-	bl_cmd_head = (struct pip_bl_cmd_head *)cmd;
+	स_रखो(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
+	bl_cmd_head = (काष्ठा pip_bl_cmd_head *)cmd;
 	cmd_data_len = CYAPA_TSG_BL_KEY_SIZE + CYAPA_TSG_FLASH_MAP_BLOCK_SIZE;
-	cmd_len = sizeof(struct pip_bl_cmd_head) + cmd_data_len +
-		  sizeof(struct pip_bl_packet_end);
+	cmd_len = माप(काष्ठा pip_bl_cmd_head) + cmd_data_len +
+		  माप(काष्ठा pip_bl_packet_end);
 
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &bl_cmd_head->addr);
 	put_unaligned_le16(cmd_len - 2, &bl_cmd_head->length);
@@ -1079,183 +1080,183 @@ int cyapa_pip_bl_initiate(struct cyapa *cyapa, const struct firmware *fw)
 	/* 8 key bytes and 128 bytes block size */
 	put_unaligned_le16(cmd_data_len, &bl_packet_start->data_length);
 
-	cmd_data = (struct pip_bl_initiate_cmd_data *)bl_cmd_head->data;
-	memcpy(cmd_data->key, cyapa_pip_bl_cmd_key, CYAPA_TSG_BL_KEY_SIZE);
+	cmd_data = (काष्ठा pip_bl_initiate_cmd_data *)bl_cmd_head->data;
+	स_नकल(cmd_data->key, cyapa_pip_bl_cmd_key, CYAPA_TSG_BL_KEY_SIZE);
 
 	image_records = cyapa_get_image_record_data_num(fw, &records_num);
 
 	/* APP_INTEGRITY row is always the last row block */
 	data = image_records[records_num - 1].record_data;
-	memcpy(cmd_data->metadata_raw_parameter, data,
+	स_नकल(cmd_data->metadata_raw_parameter, data,
 		CYAPA_TSG_FLASH_MAP_METADATA_SIZE);
 
 	meta_data_crc = crc_itu_t(0xffff, cmd_data->metadata_raw_parameter,
 				CYAPA_TSG_FLASH_MAP_METADATA_SIZE);
 	put_unaligned_le16(meta_data_crc, &cmd_data->metadata_crc);
 
-	bl_packet_end = (struct pip_bl_packet_end *)(bl_cmd_head->data +
+	bl_packet_end = (काष्ठा pip_bl_packet_end *)(bl_cmd_head->data +
 				cmd_data_len);
 	cmd_crc = crc_itu_t(0xffff, (u8 *)bl_packet_start,
-		sizeof(struct pip_bl_packet_start) + cmd_data_len);
+		माप(काष्ठा pip_bl_packet_start) + cmd_data_len);
 	put_unaligned_le16(cmd_crc, &bl_packet_end->crc);
 	bl_packet_end->eop = PIP_EOP_KEY;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
 			cmd, cmd_len,
 			resp_data, &resp_len, 12000,
 			cyapa_sort_tsg_pip_bl_resp_data, true);
-	if (error || resp_len != PIP_BL_INITIATE_RESP_LEN ||
+	अगर (error || resp_len != PIP_BL_INITIATE_RESP_LEN ||
 			resp_data[2] != PIP_BL_RESP_REPORT_ID ||
 			!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error ? error : -EAGAIN;
+		वापस error ? error : -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool cyapa_sort_pip_bl_exit_data(struct cyapa *cyapa, u8 *buf, int len)
-{
-	if (buf == NULL || len < PIP_RESP_LENGTH_SIZE)
-		return false;
+अटल bool cyapa_sort_pip_bl_निकास_data(काष्ठा cyapa *cyapa, u8 *buf, पूर्णांक len)
+अणु
+	अगर (buf == शून्य || len < PIP_RESP_LENGTH_SIZE)
+		वापस false;
 
-	if (buf[0] == 0 && buf[1] == 0)
-		return true;
+	अगर (buf[0] == 0 && buf[1] == 0)
+		वापस true;
 
-	/* Exit bootloader failed for some reason. */
-	if (len == PIP_BL_FAIL_EXIT_RESP_LEN &&
+	/* Exit bootloader failed क्रम some reason. */
+	अगर (len == PIP_BL_FAIL_EXIT_RESP_LEN &&
 			buf[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_BL_RESP_REPORT_ID &&
 			buf[PIP_RESP_RSVD_OFFSET] == PIP_RESP_RSVD_KEY &&
 			buf[PIP_RESP_BL_SOP_OFFSET] == PIP_SOP_KEY &&
 			buf[10] == PIP_EOP_KEY)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int cyapa_pip_bl_exit(struct cyapa *cyapa)
-{
+पूर्णांक cyapa_pip_bl_निकास(काष्ठा cyapa *cyapa)
+अणु
 
-	u8 bl_gen5_bl_exit[] = { 0x04, 0x00,
+	u8 bl_gen5_bl_निकास[] = अणु 0x04, 0x00,
 		0x0B, 0x00, 0x40, 0x00, 0x01, 0x3b, 0x00, 0x00,
 		0x20, 0xc7, 0x17
-	};
+	पूर्ण;
 	u8 resp_data[11];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			bl_gen5_bl_exit, sizeof(bl_gen5_bl_exit),
+			bl_gen5_bl_निकास, माप(bl_gen5_bl_निकास),
 			resp_data, &resp_len,
-			5000, cyapa_sort_pip_bl_exit_data, false);
-	if (error)
-		return error;
+			5000, cyapa_sort_pip_bl_निकास_data, false);
+	अगर (error)
+		वापस error;
 
-	if (resp_len == PIP_BL_FAIL_EXIT_RESP_LEN ||
+	अगर (resp_len == PIP_BL_FAIL_EXIT_RESP_LEN ||
 			resp_data[PIP_RESP_REPORT_ID_OFFSET] ==
 				PIP_BL_RESP_REPORT_ID)
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	if (resp_data[0] == 0x00 && resp_data[1] == 0x00)
-		return 0;
+	अगर (resp_data[0] == 0x00 && resp_data[1] == 0x00)
+		वापस 0;
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-int cyapa_pip_bl_enter(struct cyapa *cyapa)
-{
-	u8 cmd[] = { 0x04, 0x00, 0x05, 0x00, 0x2F, 0x00, 0x01 };
+पूर्णांक cyapa_pip_bl_enter(काष्ठा cyapa *cyapa)
+अणु
+	u8 cmd[] = अणु 0x04, 0x00, 0x05, 0x00, 0x2F, 0x00, 0x01 पूर्ण;
 	u8 resp_data[2];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
 	error = cyapa_poll_state(cyapa, 500);
-	if (error < 0)
-		return error;
+	अगर (error < 0)
+		वापस error;
 
-	/* Already in bootloader mode, Skipping exit. */
-	if (cyapa_is_pip_bl_mode(cyapa))
-		return 0;
-	else if (!cyapa_is_pip_app_mode(cyapa))
-		return -EINVAL;
+	/* Alपढ़ोy in bootloader mode, Skipping निकास. */
+	अगर (cyapa_is_pip_bl_mode(cyapa))
+		वापस 0;
+	अन्यथा अगर (!cyapa_is_pip_app_mode(cyapa))
+		वापस -EINVAL;
 
-	/* Try to dump all buffered report data before any send command. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	/* Try to dump all buffered report data beक्रमe any send command. */
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
 	/*
 	 * Send bootloader enter command to trackpad device,
 	 * after enter bootloader, the response data is two bytes of 0x00 0x00.
 	 */
-	resp_len = sizeof(resp_data);
-	memset(resp_data, 0, resp_len);
+	resp_len = माप(resp_data);
+	स_रखो(resp_data, 0, resp_len);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			5000, cyapa_sort_pip_application_launch_data,
 			true);
-	if (error || resp_data[0] != 0x00 || resp_data[1] != 0x00)
-		return error < 0 ? error : -EAGAIN;
+	अगर (error || resp_data[0] != 0x00 || resp_data[1] != 0x00)
+		वापस error < 0 ? error : -EAGAIN;
 
 	cyapa->operational = false;
-	if (cyapa->gen == CYAPA_GEN5)
+	अगर (cyapa->gen == CYAPA_GEN5)
 		cyapa->state = CYAPA_STATE_GEN5_BL;
-	else if (cyapa->gen == CYAPA_GEN6)
+	अन्यथा अगर (cyapa->gen == CYAPA_GEN6)
 		cyapa->state = CYAPA_STATE_GEN6_BL;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_pip_fw_head_check(struct cyapa *cyapa,
-		struct cyapa_tsg_bin_image_head *image_head)
-{
-	if (image_head->head_size != 0x0C && image_head->head_size != 0x12)
-		return -EINVAL;
+अटल पूर्णांक cyapa_pip_fw_head_check(काष्ठा cyapa *cyapa,
+		काष्ठा cyapa_tsg_bin_image_head *image_head)
+अणु
+	अगर (image_head->head_size != 0x0C && image_head->head_size != 0x12)
+		वापस -EINVAL;
 
-	switch (cyapa->gen) {
-	case CYAPA_GEN6:
-		if (image_head->family_id != 0x9B ||
+	चयन (cyapa->gen) अणु
+	हाल CYAPA_GEN6:
+		अगर (image_head->family_id != 0x9B ||
 		    image_head->silicon_id_hi != 0x0B)
-			return -EINVAL;
-		break;
-	case CYAPA_GEN5:
+			वापस -EINVAL;
+		अवरोध;
+	हाल CYAPA_GEN5:
 		/* Gen5 without proximity support. */
-		if (cyapa->platform_ver < 2) {
-			if (image_head->head_size == 0x0C)
-				break;
-			return -EINVAL;
-		}
+		अगर (cyapa->platक्रमm_ver < 2) अणु
+			अगर (image_head->head_size == 0x0C)
+				अवरोध;
+			वापस -EINVAL;
+		पूर्ण
 
-		if (image_head->family_id != 0x91 ||
+		अगर (image_head->family_id != 0x91 ||
 		    image_head->silicon_id_hi != 0x02)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_check_fw(struct cyapa *cyapa, const struct firmware *fw)
-{
-	struct device *dev = &cyapa->client->dev;
-	struct cyapa_tsg_bin_image_data_record *image_records;
-	const struct cyapa_tsg_bin_image_data_record *app_integrity;
-	const struct tsg_bl_metadata_row_params *metadata;
-	int flash_records_count;
+पूर्णांक cyapa_pip_check_fw(काष्ठा cyapa *cyapa, स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	काष्ठा cyapa_tsg_bin_image_data_record *image_records;
+	स्थिर काष्ठा cyapa_tsg_bin_image_data_record *app_पूर्णांकegrity;
+	स्थिर काष्ठा tsg_bl_metadata_row_params *metadata;
+	पूर्णांक flash_records_count;
 	u32 fw_app_start, fw_upgrade_start;
 	u16 fw_app_len, fw_upgrade_len;
 	u16 app_crc;
-	u16 app_integrity_crc;
-	int i;
+	u16 app_पूर्णांकegrity_crc;
+	पूर्णांक i;
 
-	/* Verify the firmware image not miss-used for Gen5 and Gen6. */
-	if (cyapa_pip_fw_head_check(cyapa,
-		(struct cyapa_tsg_bin_image_head *)fw->data)) {
+	/* Verअगरy the firmware image not miss-used क्रम Gen5 and Gen6. */
+	अगर (cyapa_pip_fw_head_check(cyapa,
+		(काष्ठा cyapa_tsg_bin_image_head *)fw->data)) अणु
 		dev_err(dev, "%s: firmware image not match TP device.\n",
 			     __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	image_records =
 		cyapa_get_image_record_data_num(fw, &flash_records_count);
@@ -1264,60 +1265,60 @@ int cyapa_pip_check_fw(struct cyapa *cyapa, const struct firmware *fw)
 	 * APP_INTEGRITY row is always the last row block,
 	 * and the row id must be 0x01ff.
 	 */
-	app_integrity = &image_records[flash_records_count - 1];
+	app_पूर्णांकegrity = &image_records[flash_records_count - 1];
 
-	if (app_integrity->flash_array_id != 0x00 ||
-	    get_unaligned_be16(&app_integrity->row_number) != 0x01ff) {
+	अगर (app_पूर्णांकegrity->flash_array_id != 0x00 ||
+	    get_unaligned_be16(&app_पूर्णांकegrity->row_number) != 0x01ff) अणु
 		dev_err(dev, "%s: invalid app_integrity data.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	metadata = (const void *)app_integrity->record_data;
+	metadata = (स्थिर व्योम *)app_पूर्णांकegrity->record_data;
 
-	/* Verify app_integrity crc */
-	app_integrity_crc = crc_itu_t(0xffff, app_integrity->record_data,
+	/* Verअगरy app_पूर्णांकegrity crc */
+	app_पूर्णांकegrity_crc = crc_itu_t(0xffff, app_पूर्णांकegrity->record_data,
 				      CYAPA_TSG_APP_INTEGRITY_SIZE);
-	if (app_integrity_crc != get_unaligned_le16(&metadata->metadata_crc)) {
+	अगर (app_पूर्णांकegrity_crc != get_unaligned_le16(&metadata->metadata_crc)) अणु
 		dev_err(dev, "%s: invalid app_integrity crc.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	fw_app_start = get_unaligned_le32(&metadata->app_start);
 	fw_app_len = get_unaligned_le16(&metadata->app_len);
 	fw_upgrade_start = get_unaligned_le32(&metadata->upgrade_start);
 	fw_upgrade_len = get_unaligned_le16(&metadata->upgrade_len);
 
-	if (fw_app_start % CYAPA_TSG_FW_ROW_SIZE ||
+	अगर (fw_app_start % CYAPA_TSG_FW_ROW_SIZE ||
 	    fw_app_len % CYAPA_TSG_FW_ROW_SIZE ||
 	    fw_upgrade_start % CYAPA_TSG_FW_ROW_SIZE ||
-	    fw_upgrade_len % CYAPA_TSG_FW_ROW_SIZE) {
+	    fw_upgrade_len % CYAPA_TSG_FW_ROW_SIZE) अणु
 		dev_err(dev, "%s: invalid image alignment.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Verify application image CRC. */
+	/* Verअगरy application image CRC. */
 	app_crc = 0xffffU;
-	for (i = 0; i < fw_app_len / CYAPA_TSG_FW_ROW_SIZE; i++) {
-		const u8 *data = image_records[i].record_data;
+	क्रम (i = 0; i < fw_app_len / CYAPA_TSG_FW_ROW_SIZE; i++) अणु
+		स्थिर u8 *data = image_records[i].record_data;
 
 		app_crc = crc_itu_t(app_crc, data, CYAPA_TSG_FW_ROW_SIZE);
-	}
+	पूर्ण
 
-	if (app_crc != get_unaligned_le16(&metadata->app_crc)) {
+	अगर (app_crc != get_unaligned_le16(&metadata->app_crc)) अणु
 		dev_err(dev, "%s: invalid firmware app crc check.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_pip_write_fw_block(struct cyapa *cyapa,
-		struct cyapa_tsg_bin_image_data_record *flash_record)
-{
-	struct pip_bl_cmd_head *bl_cmd_head;
-	struct pip_bl_packet_start *bl_packet_start;
-	struct tsg_bl_flash_row_head *flash_row_head;
-	struct pip_bl_packet_end *bl_packet_end;
+अटल पूर्णांक cyapa_pip_ग_लिखो_fw_block(काष्ठा cyapa *cyapa,
+		काष्ठा cyapa_tsg_bin_image_data_record *flash_record)
+अणु
+	काष्ठा pip_bl_cmd_head *bl_cmd_head;
+	काष्ठा pip_bl_packet_start *bl_packet_start;
+	काष्ठा tsg_bl_flash_row_head *flash_row_head;
+	काष्ठा pip_bl_packet_end *bl_packet_end;
 	u8 cmd[CYAPA_TSG_MAX_CMD_SIZE];
 	u16 cmd_len;
 	u8 flash_array_id;
@@ -1327,143 +1328,143 @@ static int cyapa_pip_write_fw_block(struct cyapa *cyapa,
 	u16 data_len;
 	u16 crc;
 	u8 resp_data[11];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
 	flash_array_id = flash_record->flash_array_id;
 	flash_row_id = get_unaligned_be16(&flash_record->row_number);
 	record_len = get_unaligned_be16(&flash_record->record_len);
 	record_data = flash_record->record_data;
 
-	memset(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
-	bl_cmd_head = (struct pip_bl_cmd_head *)cmd;
+	स_रखो(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
+	bl_cmd_head = (काष्ठा pip_bl_cmd_head *)cmd;
 	bl_packet_start = &bl_cmd_head->packet_start;
-	cmd_len = sizeof(struct pip_bl_cmd_head) +
-		  sizeof(struct tsg_bl_flash_row_head) +
+	cmd_len = माप(काष्ठा pip_bl_cmd_head) +
+		  माप(काष्ठा tsg_bl_flash_row_head) +
 		  CYAPA_TSG_FLASH_MAP_BLOCK_SIZE +
-		  sizeof(struct pip_bl_packet_end);
+		  माप(काष्ठा pip_bl_packet_end);
 
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &bl_cmd_head->addr);
-	/* Don't include 2 bytes register address */
+	/* Don't include 2 bytes रेजिस्टर address */
 	put_unaligned_le16(cmd_len - 2, &bl_cmd_head->length);
 	bl_cmd_head->report_id = PIP_BL_CMD_REPORT_ID;
 	bl_packet_start->sop = PIP_SOP_KEY;
 	bl_packet_start->cmd_code = PIP_BL_CMD_PROGRAM_VERIFY_ROW;
 
 	/* 1 (Flash Array ID) + 2 (Flash Row ID) + 128 (flash data) */
-	data_len = sizeof(struct tsg_bl_flash_row_head) + record_len;
+	data_len = माप(काष्ठा tsg_bl_flash_row_head) + record_len;
 	put_unaligned_le16(data_len, &bl_packet_start->data_length);
 
-	flash_row_head = (struct tsg_bl_flash_row_head *)bl_cmd_head->data;
+	flash_row_head = (काष्ठा tsg_bl_flash_row_head *)bl_cmd_head->data;
 	flash_row_head->flash_array_id = flash_array_id;
 	put_unaligned_le16(flash_row_id, &flash_row_head->flash_row_id);
-	memcpy(flash_row_head->flash_data, record_data, record_len);
+	स_नकल(flash_row_head->flash_data, record_data, record_len);
 
-	bl_packet_end = (struct pip_bl_packet_end *)(bl_cmd_head->data +
+	bl_packet_end = (काष्ठा pip_bl_packet_end *)(bl_cmd_head->data +
 						      data_len);
 	crc = crc_itu_t(0xffff, (u8 *)bl_packet_start,
-		sizeof(struct pip_bl_packet_start) + data_len);
+		माप(काष्ठा pip_bl_packet_start) + data_len);
 	put_unaligned_le16(crc, &bl_packet_end->crc);
 	bl_packet_end->eop = PIP_EOP_KEY;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, cmd_len,
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_bl_resp_data, true);
-	if (error || resp_len != PIP_BL_BLOCK_WRITE_RESP_LEN ||
+	अगर (error || resp_len != PIP_BL_BLOCK_WRITE_RESP_LEN ||
 			resp_data[2] != PIP_BL_RESP_REPORT_ID ||
 			!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error < 0 ? error : -EAGAIN;
+		वापस error < 0 ? error : -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_do_fw_update(struct cyapa *cyapa,
-		const struct firmware *fw)
-{
-	struct device *dev = &cyapa->client->dev;
-	struct cyapa_tsg_bin_image_data_record *image_records;
-	int flash_records_count;
-	int i;
-	int error;
+पूर्णांक cyapa_pip_करो_fw_update(काष्ठा cyapa *cyapa,
+		स्थिर काष्ठा firmware *fw)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	काष्ठा cyapa_tsg_bin_image_data_record *image_records;
+	पूर्णांक flash_records_count;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
 	image_records =
 		cyapa_get_image_record_data_num(fw, &flash_records_count);
 
 	/*
 	 * The last flash row 0x01ff has been written through bl_initiate
-	 * command, so DO NOT write flash 0x01ff to trackpad device.
+	 * command, so DO NOT ग_लिखो flash 0x01ff to trackpad device.
 	 */
-	for (i = 0; i < (flash_records_count - 1); i++) {
-		error = cyapa_pip_write_fw_block(cyapa, &image_records[i]);
-		if (error) {
+	क्रम (i = 0; i < (flash_records_count - 1); i++) अणु
+		error = cyapa_pip_ग_लिखो_fw_block(cyapa, &image_records[i]);
+		अगर (error) अणु
 			dev_err(dev, "%s: Gen5 FW update aborted: %d\n",
 				__func__, error);
-			return error;
-		}
-	}
+			वापस error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_change_power_state(struct cyapa *cyapa, u8 power_state)
-{
-	u8 cmd[8] = { 0x04, 0x00, 0x06, 0x00, 0x2f, 0x00, 0x08, 0x01 };
+अटल पूर्णांक cyapa_gen5_change_घातer_state(काष्ठा cyapa *cyapa, u8 घातer_state)
+अणु
+	u8 cmd[8] = अणु 0x04, 0x00, 0x06, 0x00, 0x2f, 0x00, 0x08, 0x01 पूर्ण;
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	cmd[7] = power_state;
-	resp_len = sizeof(resp_data);
-	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, sizeof(cmd),
+	cmd[7] = घातer_state;
+	resp_len = माप(resp_data);
+	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, false);
-	if (error || !VALID_CMD_RESP_HEADER(resp_data, 0x08) ||
+	अगर (error || !VALID_CMD_RESP_HEADER(resp_data, 0x08) ||
 			!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error < 0 ? error : -EINVAL;
+		वापस error < 0 ? error : -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_set_interval_time(struct cyapa *cyapa,
-		u8 parameter_id, u16 interval_time)
-{
-	struct pip_app_cmd_head *app_cmd_head;
-	struct gen5_app_set_parameter_data *parameter_data;
+अटल पूर्णांक cyapa_gen5_set_पूर्णांकerval_समय(काष्ठा cyapa *cyapa,
+		u8 parameter_id, u16 पूर्णांकerval_समय)
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
+	काष्ठा gen5_app_set_parameter_data *parameter_data;
 	u8 cmd[CYAPA_TSG_MAX_CMD_SIZE];
-	int cmd_len;
+	पूर्णांक cmd_len;
 	u8 resp_data[7];
-	int resp_len;
+	पूर्णांक resp_len;
 	u8 parameter_size;
-	int error;
+	पूर्णांक error;
 
-	memset(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
-	parameter_data = (struct gen5_app_set_parameter_data *)
+	स_रखो(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
+	parameter_data = (काष्ठा gen5_app_set_parameter_data *)
 			 app_cmd_head->parameter_data;
-	cmd_len = sizeof(struct pip_app_cmd_head) +
-		  sizeof(struct gen5_app_set_parameter_data);
+	cmd_len = माप(काष्ठा pip_app_cmd_head) +
+		  माप(काष्ठा gen5_app_set_parameter_data);
 
-	switch (parameter_id) {
-	case GEN5_PARAMETER_ACT_INTERVL_ID:
+	चयन (parameter_id) अणु
+	हाल GEN5_PARAMETER_ACT_INTERVL_ID:
 		parameter_size = GEN5_PARAMETER_ACT_INTERVL_SIZE;
-		break;
-	case GEN5_PARAMETER_ACT_LFT_INTERVL_ID:
+		अवरोध;
+	हाल GEN5_PARAMETER_ACT_LFT_INTERVL_ID:
 		parameter_size = GEN5_PARAMETER_ACT_LFT_INTERVL_SIZE;
-		break;
-	case GEN5_PARAMETER_LP_INTRVL_ID:
+		अवरोध;
+	हाल GEN5_PARAMETER_LP_INTRVL_ID:
 		parameter_size = GEN5_PARAMETER_LP_INTRVL_SIZE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
 	/*
 	 * Don't include unused parameter value bytes and
-	 * 2 bytes register address.
+	 * 2 bytes रेजिस्टर address.
 	 */
 	put_unaligned_le16(cmd_len - (4 - parameter_size) - 2,
 			   &app_cmd_head->length);
@@ -1471,1040 +1472,1040 @@ static int cyapa_gen5_set_interval_time(struct cyapa *cyapa,
 	app_cmd_head->cmd_code = GEN5_CMD_SET_PARAMETER;
 	parameter_data->parameter_id = parameter_id;
 	parameter_data->parameter_size = parameter_size;
-	put_unaligned_le32((u32)interval_time, &parameter_data->value);
-	resp_len = sizeof(resp_data);
+	put_unaligned_le32((u32)पूर्णांकerval_समय, &parameter_data->value);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, cmd_len,
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, false);
-	if (error || resp_data[5] != parameter_id ||
+	अगर (error || resp_data[5] != parameter_id ||
 		resp_data[6] != parameter_size ||
 		!VALID_CMD_RESP_HEADER(resp_data, GEN5_CMD_SET_PARAMETER))
-		return error < 0 ? error : -EINVAL;
+		वापस error < 0 ? error : -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_get_interval_time(struct cyapa *cyapa,
-		u8 parameter_id, u16 *interval_time)
-{
-	struct pip_app_cmd_head *app_cmd_head;
-	struct gen5_app_get_parameter_data *parameter_data;
+अटल पूर्णांक cyapa_gen5_get_पूर्णांकerval_समय(काष्ठा cyapa *cyapa,
+		u8 parameter_id, u16 *पूर्णांकerval_समय)
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
+	काष्ठा gen5_app_get_parameter_data *parameter_data;
 	u8 cmd[CYAPA_TSG_MAX_CMD_SIZE];
-	int cmd_len;
+	पूर्णांक cmd_len;
 	u8 resp_data[11];
-	int resp_len;
+	पूर्णांक resp_len;
 	u8 parameter_size;
 	u16 mask, i;
-	int error;
+	पूर्णांक error;
 
-	memset(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
-	parameter_data = (struct gen5_app_get_parameter_data *)
+	स_रखो(cmd, 0, CYAPA_TSG_MAX_CMD_SIZE);
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
+	parameter_data = (काष्ठा gen5_app_get_parameter_data *)
 			 app_cmd_head->parameter_data;
-	cmd_len = sizeof(struct pip_app_cmd_head) +
-		  sizeof(struct gen5_app_get_parameter_data);
+	cmd_len = माप(काष्ठा pip_app_cmd_head) +
+		  माप(काष्ठा gen5_app_get_parameter_data);
 
-	*interval_time = 0;
-	switch (parameter_id) {
-	case GEN5_PARAMETER_ACT_INTERVL_ID:
+	*पूर्णांकerval_समय = 0;
+	चयन (parameter_id) अणु
+	हाल GEN5_PARAMETER_ACT_INTERVL_ID:
 		parameter_size = GEN5_PARAMETER_ACT_INTERVL_SIZE;
-		break;
-	case GEN5_PARAMETER_ACT_LFT_INTERVL_ID:
+		अवरोध;
+	हाल GEN5_PARAMETER_ACT_LFT_INTERVL_ID:
 		parameter_size = GEN5_PARAMETER_ACT_LFT_INTERVL_SIZE;
-		break;
-	case GEN5_PARAMETER_LP_INTRVL_ID:
+		अवरोध;
+	हाल GEN5_PARAMETER_LP_INTRVL_ID:
 		parameter_size = GEN5_PARAMETER_LP_INTRVL_SIZE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
-	/* Don't include 2 bytes register address */
+	/* Don't include 2 bytes रेजिस्टर address */
 	put_unaligned_le16(cmd_len - 2, &app_cmd_head->length);
 	app_cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	app_cmd_head->cmd_code = GEN5_CMD_GET_PARAMETER;
 	parameter_data->parameter_id = parameter_id;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, cmd_len,
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, false);
-	if (error || resp_data[5] != parameter_id || resp_data[6] == 0 ||
+	अगर (error || resp_data[5] != parameter_id || resp_data[6] == 0 ||
 		!VALID_CMD_RESP_HEADER(resp_data, GEN5_CMD_GET_PARAMETER))
-		return error < 0 ? error : -EINVAL;
+		वापस error < 0 ? error : -EINVAL;
 
 	mask = 0;
-	for (i = 0; i < parameter_size; i++)
+	क्रम (i = 0; i < parameter_size; i++)
 		mask |= (0xff << (i * 8));
-	*interval_time = get_unaligned_le16(&resp_data[7]) & mask;
+	*पूर्णांकerval_समय = get_unaligned_le16(&resp_data[7]) & mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_disable_pip_report(struct cyapa *cyapa)
-{
-	struct pip_app_cmd_head *app_cmd_head;
+अटल पूर्णांक cyapa_gen5_disable_pip_report(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
 	u8 cmd[10];
 	u8 resp_data[7];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	memset(cmd, 0, sizeof(cmd));
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
+	स_रखो(cmd, 0, माप(cmd));
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
 
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
-	put_unaligned_le16(sizeof(cmd) - 2, &app_cmd_head->length);
+	put_unaligned_le16(माप(cmd) - 2, &app_cmd_head->length);
 	app_cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	app_cmd_head->cmd_code = GEN5_CMD_SET_PARAMETER;
 	app_cmd_head->parameter_data[0] = GEN5_PARAMETER_DISABLE_PIP_REPORT;
 	app_cmd_head->parameter_data[1] = 0x01;
 	app_cmd_head->parameter_data[2] = 0x01;
-	resp_len = sizeof(resp_data);
-	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, sizeof(cmd),
+	resp_len = माप(resp_data);
+	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, false);
-	if (error || resp_data[5] != GEN5_PARAMETER_DISABLE_PIP_REPORT ||
+	अगर (error || resp_data[5] != GEN5_PARAMETER_DISABLE_PIP_REPORT ||
 		!VALID_CMD_RESP_HEADER(resp_data, GEN5_CMD_SET_PARAMETER) ||
 		resp_data[6] != 0x01)
-		return error < 0 ? error : -EINVAL;
+		वापस error < 0 ? error : -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_set_proximity(struct cyapa *cyapa, bool enable)
-{
-	u8 cmd[] = { 0x04, 0x00, 0x06, 0x00, 0x2f, 0x00, PIP_SET_PROXIMITY,
+पूर्णांक cyapa_pip_set_proximity(काष्ठा cyapa *cyapa, bool enable)
+अणु
+	u8 cmd[] = अणु 0x04, 0x00, 0x06, 0x00, 0x2f, 0x00, PIP_SET_PROXIMITY,
 		     (u8)!!enable
-	};
+	पूर्ण;
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	resp_len = sizeof(resp_data);
-	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, sizeof(cmd),
+	resp_len = माप(resp_data);
+	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, false);
-	if (error || !VALID_CMD_RESP_HEADER(resp_data, PIP_SET_PROXIMITY) ||
-			!PIP_CMD_COMPLETE_SUCCESS(resp_data)) {
+	अगर (error || !VALID_CMD_RESP_HEADER(resp_data, PIP_SET_PROXIMITY) ||
+			!PIP_CMD_COMPLETE_SUCCESS(resp_data)) अणु
 		error = (error == -ETIMEDOUT) ? -EOPNOTSUPP : error;
-		return error < 0 ? error : -EINVAL;
-	}
+		वापस error < 0 ? error : -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_deep_sleep(struct cyapa *cyapa, u8 state)
-{
-	u8 cmd[] = { 0x05, 0x00, 0x00, 0x08};
+पूर्णांक cyapa_pip_deep_sleep(काष्ठा cyapa *cyapa, u8 state)
+अणु
+	u8 cmd[] = अणु 0x05, 0x00, 0x00, 0x08पूर्ण;
 	u8 resp_data[5];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
 	cmd[2] = state & PIP_DEEP_SLEEP_STATE_MASK;
-	resp_len = sizeof(resp_data);
-	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, sizeof(cmd),
+	resp_len = माप(resp_data);
+	error = cyapa_i2c_pip_cmd_irq_sync(cyapa, cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_pip_deep_sleep_data, false);
-	if (error || ((resp_data[3] & PIP_DEEP_SLEEP_STATE_MASK) != state))
-		return -EINVAL;
+	अगर (error || ((resp_data[3] & PIP_DEEP_SLEEP_STATE_MASK) != state))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_set_power_mode(struct cyapa *cyapa,
-		u8 power_mode, u16 sleep_time, enum cyapa_pm_stage pm_stage)
-{
-	struct device *dev = &cyapa->client->dev;
-	u8 power_state;
-	int error = 0;
+अटल पूर्णांक cyapa_gen5_set_घातer_mode(काष्ठा cyapa *cyapa,
+		u8 घातer_mode, u16 sleep_समय, क्रमागत cyapa_pm_stage pm_stage)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	u8 घातer_state;
+	पूर्णांक error = 0;
 
-	if (cyapa->state != CYAPA_STATE_GEN5_APP)
-		return 0;
+	अगर (cyapa->state != CYAPA_STATE_GEN5_APP)
+		वापस 0;
 
 	cyapa_set_pip_pm_state(cyapa, pm_stage);
 
-	if (PIP_DEV_GET_PWR_STATE(cyapa) == UNINIT_PWR_MODE) {
+	अगर (PIP_DEV_GET_PWR_STATE(cyapa) == UNINIT_PWR_MODE) अणु
 		/*
 		 * Assume TP in deep sleep mode when driver is loaded,
-		 * avoid driver unload and reload command IO issue caused by TP
-		 * has been set into deep sleep mode when unloading.
+		 * aव्योम driver unload and reload command IO issue caused by TP
+		 * has been set पूर्णांकo deep sleep mode when unloading.
 		 */
 		PIP_DEV_SET_PWR_STATE(cyapa, PWR_MODE_OFF);
-	}
+	पूर्ण
 
-	if (PIP_DEV_UNINIT_SLEEP_TIME(cyapa) &&
+	अगर (PIP_DEV_UNINIT_SLEEP_TIME(cyapa) &&
 			PIP_DEV_GET_PWR_STATE(cyapa) != PWR_MODE_OFF)
-		if (cyapa_gen5_get_interval_time(cyapa,
+		अगर (cyapa_gen5_get_पूर्णांकerval_समय(cyapa,
 				GEN5_PARAMETER_LP_INTRVL_ID,
-				&cyapa->dev_sleep_time) != 0)
+				&cyapa->dev_sleep_समय) != 0)
 			PIP_DEV_SET_SLEEP_TIME(cyapa, UNINIT_SLEEP_TIME);
 
-	if (PIP_DEV_GET_PWR_STATE(cyapa) == power_mode) {
-		if (power_mode == PWR_MODE_OFF ||
-			power_mode == PWR_MODE_FULL_ACTIVE ||
-			power_mode == PWR_MODE_BTN_ONLY ||
-			PIP_DEV_GET_SLEEP_TIME(cyapa) == sleep_time) {
-			/* Has in correct power mode state, early return. */
-			goto out;
-		}
-	}
+	अगर (PIP_DEV_GET_PWR_STATE(cyapa) == घातer_mode) अणु
+		अगर (घातer_mode == PWR_MODE_OFF ||
+			घातer_mode == PWR_MODE_FULL_ACTIVE ||
+			घातer_mode == PWR_MODE_BTN_ONLY ||
+			PIP_DEV_GET_SLEEP_TIME(cyapa) == sleep_समय) अणु
+			/* Has in correct घातer mode state, early वापस. */
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (power_mode == PWR_MODE_OFF) {
+	अगर (घातer_mode == PWR_MODE_OFF) अणु
 		error = cyapa_pip_deep_sleep(cyapa, PIP_DEEP_SLEEP_STATE_OFF);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "enter deep sleep fail: %d\n", error);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		PIP_DEV_SET_PWR_STATE(cyapa, PWR_MODE_OFF);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * When trackpad in power off mode, it cannot change to other power
+	 * When trackpad in घातer off mode, it cannot change to other घातer
 	 * state directly, must be wake up from sleep firstly, then
-	 * continue to do next power sate change.
+	 * जारी to करो next घातer sate change.
 	 */
-	if (PIP_DEV_GET_PWR_STATE(cyapa) == PWR_MODE_OFF) {
+	अगर (PIP_DEV_GET_PWR_STATE(cyapa) == PWR_MODE_OFF) अणु
 		error = cyapa_pip_deep_sleep(cyapa, PIP_DEEP_SLEEP_STATE_ON);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "deep sleep wake fail: %d\n", error);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (power_mode == PWR_MODE_FULL_ACTIVE) {
-		error = cyapa_gen5_change_power_state(cyapa,
+	अगर (घातer_mode == PWR_MODE_FULL_ACTIVE) अणु
+		error = cyapa_gen5_change_घातer_state(cyapa,
 				GEN5_POWER_STATE_ACTIVE);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "change to active fail: %d\n", error);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		PIP_DEV_SET_PWR_STATE(cyapa, PWR_MODE_FULL_ACTIVE);
-	} else if (power_mode == PWR_MODE_BTN_ONLY) {
-		error = cyapa_gen5_change_power_state(cyapa,
+	पूर्ण अन्यथा अगर (घातer_mode == PWR_MODE_BTN_ONLY) अणु
+		error = cyapa_gen5_change_घातer_state(cyapa,
 				GEN5_POWER_STATE_BTN_ONLY);
-		if (error) {
+		अगर (error) अणु
 			dev_err(dev, "fail to button only mode: %d\n", error);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		PIP_DEV_SET_PWR_STATE(cyapa, PWR_MODE_BTN_ONLY);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Continue to change power mode even failed to set
-		 * interval time, it won't affect the power mode change.
-		 * except the sleep interval time is not correct.
+		 * Continue to change घातer mode even failed to set
+		 * पूर्णांकerval समय, it won't affect the घातer mode change.
+		 * except the sleep पूर्णांकerval समय is not correct.
 		 */
-		if (PIP_DEV_UNINIT_SLEEP_TIME(cyapa) ||
-				sleep_time != PIP_DEV_GET_SLEEP_TIME(cyapa))
-			if (cyapa_gen5_set_interval_time(cyapa,
+		अगर (PIP_DEV_UNINIT_SLEEP_TIME(cyapa) ||
+				sleep_समय != PIP_DEV_GET_SLEEP_TIME(cyapa))
+			अगर (cyapa_gen5_set_पूर्णांकerval_समय(cyapa,
 					GEN5_PARAMETER_LP_INTRVL_ID,
-					sleep_time) == 0)
-				PIP_DEV_SET_SLEEP_TIME(cyapa, sleep_time);
+					sleep_समय) == 0)
+				PIP_DEV_SET_SLEEP_TIME(cyapa, sleep_समय);
 
-		if (sleep_time <= GEN5_POWER_READY_MAX_INTRVL_TIME)
-			power_state = GEN5_POWER_STATE_READY;
-		else
-			power_state = GEN5_POWER_STATE_IDLE;
-		error = cyapa_gen5_change_power_state(cyapa, power_state);
-		if (error) {
+		अगर (sleep_समय <= GEN5_POWER_READY_MAX_INTRVL_TIME)
+			घातer_state = GEN5_POWER_STATE_READY;
+		अन्यथा
+			घातer_state = GEN5_POWER_STATE_IDLE;
+		error = cyapa_gen5_change_घातer_state(cyapa, घातer_state);
+		अगर (error) अणु
 			dev_err(dev, "set power state to 0x%02x failed: %d\n",
-				power_state, error);
-			goto out;
-		}
+				घातer_state, error);
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * Disable pip report for a little time, firmware will
-		 * re-enable it automatically. It's used to fix the issue
-		 * that trackpad unable to report signal to wake system up
-		 * in the special situation that system is in suspending, and
-		 * at the same time, user touch trackpad to wake system up.
-		 * This function can avoid the data to be buffered when system
-		 * is suspending which may cause interrupt line unable to be
-		 * asserted again.
+		 * Disable pip report क्रम a little समय, firmware will
+		 * re-enable it स्वतःmatically. It's used to fix the issue
+		 * that trackpad unable to report संकेत to wake प्रणाली up
+		 * in the special situation that प्रणाली is in suspending, and
+		 * at the same समय, user touch trackpad to wake प्रणाली up.
+		 * This function can aव्योम the data to be buffered when प्रणाली
+		 * is suspending which may cause पूर्णांकerrupt line unable to be
+		 * निश्चितed again.
 		 */
-		if (pm_stage == CYAPA_PM_SUSPEND)
+		अगर (pm_stage == CYAPA_PM_SUSPEND)
 			cyapa_gen5_disable_pip_report(cyapa);
 
 		PIP_DEV_SET_PWR_STATE(cyapa,
-			cyapa_sleep_time_to_pwr_cmd(sleep_time));
-	}
+			cyapa_sleep_समय_प्रकारo_pwr_cmd(sleep_समय));
+	पूर्ण
 
 out:
 	cyapa_reset_pip_pm_state(cyapa);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int cyapa_pip_resume_scanning(struct cyapa *cyapa)
-{
-	u8 cmd[] = { 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x04 };
+पूर्णांक cyapa_pip_resume_scanning(काष्ठा cyapa *cyapa)
+अणु
+	u8 cmd[] = अणु 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x04 पूर्ण;
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	/* Try to dump all buffered data before doing command. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	/* Try to dump all buffered data beक्रमe करोing command. */
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, true);
-	if (error || !VALID_CMD_RESP_HEADER(resp_data, 0x04))
-		return -EINVAL;
+	अगर (error || !VALID_CMD_RESP_HEADER(resp_data, 0x04))
+		वापस -EINVAL;
 
 	/* Try to dump all buffered data when resuming scanning. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_suspend_scanning(struct cyapa *cyapa)
-{
-	u8 cmd[] = { 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x03 };
+पूर्णांक cyapa_pip_suspend_scanning(काष्ठा cyapa *cyapa)
+अणु
+	u8 cmd[] = अणु 0x04, 0x00, 0x05, 0x00, 0x2f, 0x00, 0x03 पूर्ण;
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	/* Try to dump all buffered data before doing command. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	/* Try to dump all buffered data beक्रमe करोing command. */
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, true);
-	if (error || !VALID_CMD_RESP_HEADER(resp_data, 0x03))
-		return -EINVAL;
+	अगर (error || !VALID_CMD_RESP_HEADER(resp_data, 0x03))
+		वापस -EINVAL;
 
 	/* Try to dump all buffered data when suspending scanning. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_pip_calibrate_pwcs(struct cyapa *cyapa,
+अटल पूर्णांक cyapa_pip_calibrate_pwcs(काष्ठा cyapa *cyapa,
 		u8 calibrate_sensing_mode_type)
-{
-	struct pip_app_cmd_head *app_cmd_head;
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
 	u8 cmd[8];
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	/* Try to dump all buffered data before doing command. */
-	cyapa_empty_pip_output_data(cyapa, NULL, NULL, NULL);
+	/* Try to dump all buffered data beक्रमe करोing command. */
+	cyapa_empty_pip_output_data(cyapa, शून्य, शून्य, शून्य);
 
-	memset(cmd, 0, sizeof(cmd));
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
+	स_रखो(cmd, 0, माप(cmd));
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
-	put_unaligned_le16(sizeof(cmd) - 2, &app_cmd_head->length);
+	put_unaligned_le16(माप(cmd) - 2, &app_cmd_head->length);
 	app_cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	app_cmd_head->cmd_code = PIP_CMD_CALIBRATE;
 	app_cmd_head->parameter_data[0] = calibrate_sensing_mode_type;
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			5000, cyapa_sort_tsg_pip_app_resp_data, true);
-	if (error || !VALID_CMD_RESP_HEADER(resp_data, PIP_CMD_CALIBRATE) ||
+	अगर (error || !VALID_CMD_RESP_HEADER(resp_data, PIP_CMD_CALIBRATE) ||
 			!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error < 0 ? error : -EAGAIN;
+		वापस error < 0 ? error : -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-ssize_t cyapa_pip_do_calibrate(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t count)
-{
-	struct cyapa *cyapa = dev_get_drvdata(dev);
-	int error, calibrate_error;
+sमाप_प्रकार cyapa_pip_करो_calibrate(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा cyapa *cyapa = dev_get_drvdata(dev);
+	पूर्णांक error, calibrate_error;
 
 	/* 1. Suspend Scanning*/
 	error = cyapa_pip_suspend_scanning(cyapa);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/* 2. Do mutual capacitance fine calibrate. */
 	calibrate_error = cyapa_pip_calibrate_pwcs(cyapa,
 				PIP_SENSING_MODE_MUTUAL_CAP_FINE);
-	if (calibrate_error)
-		goto resume_scanning;
+	अगर (calibrate_error)
+		जाओ resume_scanning;
 
 	/* 3. Do self capacitance calibrate. */
 	calibrate_error = cyapa_pip_calibrate_pwcs(cyapa,
 				PIP_SENSING_MODE_SELF_CAP);
-	if (calibrate_error)
-		goto resume_scanning;
+	अगर (calibrate_error)
+		जाओ resume_scanning;
 
 resume_scanning:
 	/* 4. Resume Scanning*/
 	error = cyapa_pip_resume_scanning(cyapa);
-	if (error || calibrate_error)
-		return error ? error : calibrate_error;
+	अगर (error || calibrate_error)
+		वापस error ? error : calibrate_error;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static s32 twos_complement_to_s32(s32 value, int num_bits)
-{
-	if (value >> (num_bits - 1))
+अटल s32 twos_complement_to_s32(s32 value, पूर्णांक num_bits)
+अणु
+	अगर (value >> (num_bits - 1))
 		value |=  -1 << num_bits;
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static s32 cyapa_parse_structure_data(u8 data_format, u8 *buf, int buf_len)
-{
-	int data_size;
+अटल s32 cyapa_parse_काष्ठाure_data(u8 data_क्रमmat, u8 *buf, पूर्णांक buf_len)
+अणु
+	पूर्णांक data_size;
 	bool big_endian;
-	bool unsigned_type;
+	bool अचिन्हित_type;
 	s32 value;
 
-	data_size = (data_format & 0x07);
-	big_endian = ((data_format & 0x10) == 0x00);
-	unsigned_type = ((data_format & 0x20) == 0x00);
+	data_size = (data_क्रमmat & 0x07);
+	big_endian = ((data_क्रमmat & 0x10) == 0x00);
+	अचिन्हित_type = ((data_क्रमmat & 0x20) == 0x00);
 
-	if (buf_len < data_size)
-		return 0;
+	अगर (buf_len < data_size)
+		वापस 0;
 
-	switch (data_size) {
-	case 1:
+	चयन (data_size) अणु
+	हाल 1:
 		value  = buf[0];
-		break;
-	case 2:
-		if (big_endian)
+		अवरोध;
+	हाल 2:
+		अगर (big_endian)
 			value = get_unaligned_be16(buf);
-		else
+		अन्यथा
 			value = get_unaligned_le16(buf);
-		break;
-	case 4:
-		if (big_endian)
+		अवरोध;
+	हाल 4:
+		अगर (big_endian)
 			value = get_unaligned_be32(buf);
-		else
+		अन्यथा
 			value = get_unaligned_le32(buf);
-		break;
-	default:
-		/* Should not happen, just as default case here. */
+		अवरोध;
+	शेष:
+		/* Should not happen, just as शेष हाल here. */
 		value = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!unsigned_type)
+	अगर (!अचिन्हित_type)
 		value = twos_complement_to_s32(value, data_size * 8);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static void cyapa_gen5_guess_electrodes(struct cyapa *cyapa,
-		int *electrodes_rx, int *electrodes_tx)
-{
-	if (cyapa->electrodes_rx != 0) {
+अटल व्योम cyapa_gen5_guess_electrodes(काष्ठा cyapa *cyapa,
+		पूर्णांक *electrodes_rx, पूर्णांक *electrodes_tx)
+अणु
+	अगर (cyapa->electrodes_rx != 0) अणु
 		*electrodes_rx = cyapa->electrodes_rx;
 		*electrodes_tx = (cyapa->electrodes_x == *electrodes_rx) ?
 				cyapa->electrodes_y : cyapa->electrodes_x;
-	} else {
+	पूर्ण अन्यथा अणु
 		*electrodes_tx = min(cyapa->electrodes_x, cyapa->electrodes_y);
 		*electrodes_rx = max(cyapa->electrodes_x, cyapa->electrodes_y);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Read all the global mutual or self idac data or mutual or self local PWC
  * data based on the @idac_data_type.
- * If the input value of @data_size is 0, then means read global mutual or
- * self idac data. For read global mutual idac data, @idac_max, @idac_min and
- * @idac_ave are in order used to return the max value of global mutual idac
+ * If the input value of @data_size is 0, then means पढ़ो global mutual or
+ * self idac data. For पढ़ो global mutual idac data, @idac_max, @idac_min and
+ * @idac_ave are in order used to वापस the max value of global mutual idac
  * data, the min value of global mutual idac and the average value of the
- * global mutual idac data. For read global self idac data, @idac_max is used
- * to return the global self cap idac data in Rx direction, @idac_min is used
- * to return the global self cap idac data in Tx direction. @idac_ave is not
+ * global mutual idac data. For पढ़ो global self idac data, @idac_max is used
+ * to वापस the global self cap idac data in Rx direction, @idac_min is used
+ * to वापस the global self cap idac data in Tx direction. @idac_ave is not
  * used.
- * If the input value of @data_size is not 0, than means read the mutual or
+ * If the input value of @data_size is not 0, than means पढ़ो the mutual or
  * self local PWC data. The @idac_max, @idac_min and @idac_ave are used to
- * return the max, min and average value of the mutual or self local PWC data.
- * Note, in order to read mutual local PWC data, must read invoke this function
- * to read the mutual global idac data firstly to set the correct Rx number
- * value, otherwise, the read mutual idac and PWC data may not correct.
+ * वापस the max, min and average value of the mutual or self local PWC data.
+ * Note, in order to पढ़ो mutual local PWC data, must पढ़ो invoke this function
+ * to पढ़ो the mutual global idac data firstly to set the correct Rx number
+ * value, otherwise, the पढ़ो mutual idac and PWC data may not correct.
  */
-static int cyapa_gen5_read_idac_data(struct cyapa *cyapa,
-		u8 cmd_code, u8 idac_data_type, int *data_size,
-		int *idac_max, int *idac_min, int *idac_ave)
-{
-	struct pip_app_cmd_head *cmd_head;
+अटल पूर्णांक cyapa_gen5_पढ़ो_idac_data(काष्ठा cyapa *cyapa,
+		u8 cmd_code, u8 idac_data_type, पूर्णांक *data_size,
+		पूर्णांक *idac_max, पूर्णांक *idac_min, पूर्णांक *idac_ave)
+अणु
+	काष्ठा pip_app_cmd_head *cmd_head;
 	u8 cmd[12];
 	u8 resp_data[256];
-	int resp_len;
-	int read_len;
-	int value;
+	पूर्णांक resp_len;
+	पूर्णांक पढ़ो_len;
+	पूर्णांक value;
 	u16 offset;
-	int read_elements;
-	bool read_global_idac;
-	int sum, count, max_element_cnt;
-	int tmp_max, tmp_min, tmp_ave, tmp_sum, tmp_count;
-	int electrodes_rx, electrodes_tx;
-	int i;
-	int error;
+	पूर्णांक पढ़ो_elements;
+	bool पढ़ो_global_idac;
+	पूर्णांक sum, count, max_element_cnt;
+	पूर्णांक पंचांगp_max, पंचांगp_min, पंचांगp_ave, पंचांगp_sum, पंचांगp_count;
+	पूर्णांक electrodes_rx, electrodes_tx;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	if (cmd_code != PIP_RETRIEVE_DATA_STRUCTURE ||
+	अगर (cmd_code != PIP_RETRIEVE_DATA_STRUCTURE ||
 		(idac_data_type != GEN5_RETRIEVE_MUTUAL_PWC_DATA &&
 		idac_data_type != GEN5_RETRIEVE_SELF_CAP_PWC_DATA) ||
 		!data_size || !idac_max || !idac_min || !idac_ave)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	*idac_max = INT_MIN;
-	*idac_min = INT_MAX;
-	sum = count = tmp_count = 0;
+	*idac_max = पूर्णांक_न्यून;
+	*idac_min = पूर्णांक_उच्च;
+	sum = count = पंचांगp_count = 0;
 	electrodes_rx = electrodes_tx = 0;
-	if (*data_size == 0) {
+	अगर (*data_size == 0) अणु
 		/*
 		 * Read global idac values firstly.
 		 * Currently, no idac data exceed 4 bytes.
 		 */
-		read_global_idac = true;
+		पढ़ो_global_idac = true;
 		offset = 0;
 		*data_size = 4;
-		tmp_max = INT_MIN;
-		tmp_min = INT_MAX;
-		tmp_ave = tmp_sum = tmp_count = 0;
+		पंचांगp_max = पूर्णांक_न्यून;
+		पंचांगp_min = पूर्णांक_उच्च;
+		पंचांगp_ave = पंचांगp_sum = पंचांगp_count = 0;
 
-		if (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) {
-			if (cyapa->aligned_electrodes_rx == 0) {
+		अगर (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) अणु
+			अगर (cyapa->aligned_electrodes_rx == 0) अणु
 				cyapa_gen5_guess_electrodes(cyapa,
 					&electrodes_rx, &electrodes_tx);
 				cyapa->aligned_electrodes_rx =
 					(electrodes_rx + 3) & ~3u;
-			}
+			पूर्ण
 			max_element_cnt =
 				(cyapa->aligned_electrodes_rx + 7) & ~7u;
-		} else {
+		पूर्ण अन्यथा अणु
 			max_element_cnt = 2;
-		}
-	} else {
-		read_global_idac = false;
-		if (*data_size > 4)
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पढ़ो_global_idac = false;
+		अगर (*data_size > 4)
 			*data_size = 4;
 		/* Calculate the start offset in bytes of local PWC data. */
-		if (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) {
+		अगर (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) अणु
 			offset = cyapa->aligned_electrodes_rx * (*data_size);
-			if (cyapa->electrodes_rx == cyapa->electrodes_x)
+			अगर (cyapa->electrodes_rx == cyapa->electrodes_x)
 				electrodes_tx = cyapa->electrodes_y;
-			else
+			अन्यथा
 				electrodes_tx = cyapa->electrodes_x;
 			max_element_cnt = ((cyapa->aligned_electrodes_rx + 7) &
 						~7u) * electrodes_tx;
-		} else {
+		पूर्ण अन्यथा अणु
 			offset = 2;
 			max_element_cnt = cyapa->electrodes_x +
 						cyapa->electrodes_y;
 			max_element_cnt = (max_element_cnt + 3) & ~3u;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	memset(cmd, 0, sizeof(cmd));
-	cmd_head = (struct pip_app_cmd_head *)cmd;
+	स_रखो(cmd, 0, माप(cmd));
+	cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &cmd_head->addr);
-	put_unaligned_le16(sizeof(cmd) - 2, &cmd_head->length);
+	put_unaligned_le16(माप(cmd) - 2, &cmd_head->length);
 	cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	cmd_head->cmd_code = cmd_code;
-	do {
-		read_elements = (256 - GEN5_RESP_DATA_STRUCTURE_OFFSET) /
+	करो अणु
+		पढ़ो_elements = (256 - GEN5_RESP_DATA_STRUCTURE_OFFSET) /
 				(*data_size);
-		read_elements = min(read_elements, max_element_cnt - count);
-		read_len = read_elements * (*data_size);
+		पढ़ो_elements = min(पढ़ो_elements, max_element_cnt - count);
+		पढ़ो_len = पढ़ो_elements * (*data_size);
 
 		put_unaligned_le16(offset, &cmd_head->parameter_data[0]);
-		put_unaligned_le16(read_len, &cmd_head->parameter_data[2]);
+		put_unaligned_le16(पढ़ो_len, &cmd_head->parameter_data[2]);
 		cmd_head->parameter_data[4] = idac_data_type;
-		resp_len = GEN5_RESP_DATA_STRUCTURE_OFFSET + read_len;
+		resp_len = GEN5_RESP_DATA_STRUCTURE_OFFSET + पढ़ो_len;
 		error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-				cmd, sizeof(cmd),
+				cmd, माप(cmd),
 				resp_data, &resp_len,
 				500, cyapa_sort_tsg_pip_app_resp_data,
 				true);
-		if (error || resp_len < GEN5_RESP_DATA_STRUCTURE_OFFSET ||
+		अगर (error || resp_len < GEN5_RESP_DATA_STRUCTURE_OFFSET ||
 				!VALID_CMD_RESP_HEADER(resp_data, cmd_code) ||
 				!PIP_CMD_COMPLETE_SUCCESS(resp_data) ||
 				resp_data[6] != idac_data_type)
-			return (error < 0) ? error : -EAGAIN;
-		read_len = get_unaligned_le16(&resp_data[7]);
-		if (read_len == 0)
-			break;
+			वापस (error < 0) ? error : -EAGAIN;
+		पढ़ो_len = get_unaligned_le16(&resp_data[7]);
+		अगर (पढ़ो_len == 0)
+			अवरोध;
 
 		*data_size = (resp_data[9] & GEN5_PWC_DATA_ELEMENT_SIZE_MASK);
-		if (read_len < *data_size)
-			return -EINVAL;
+		अगर (पढ़ो_len < *data_size)
+			वापस -EINVAL;
 
-		if (read_global_idac &&
-			idac_data_type == GEN5_RETRIEVE_SELF_CAP_PWC_DATA) {
+		अगर (पढ़ो_global_idac &&
+			idac_data_type == GEN5_RETRIEVE_SELF_CAP_PWC_DATA) अणु
 			/* Rx's self global idac data. */
-			*idac_max = cyapa_parse_structure_data(
+			*idac_max = cyapa_parse_काष्ठाure_data(
 				resp_data[9],
 				&resp_data[GEN5_RESP_DATA_STRUCTURE_OFFSET],
 				*data_size);
 			/* Tx's self global idac data. */
-			*idac_min = cyapa_parse_structure_data(
+			*idac_min = cyapa_parse_काष्ठाure_data(
 				resp_data[9],
 				&resp_data[GEN5_RESP_DATA_STRUCTURE_OFFSET +
 					   *data_size],
 				*data_size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Read mutual global idac or local mutual/self PWC data. */
-		offset += read_len;
-		for (i = 10; i < (read_len + GEN5_RESP_DATA_STRUCTURE_OFFSET);
-				i += *data_size) {
-			value = cyapa_parse_structure_data(resp_data[9],
+		offset += पढ़ो_len;
+		क्रम (i = 10; i < (पढ़ो_len + GEN5_RESP_DATA_STRUCTURE_OFFSET);
+				i += *data_size) अणु
+			value = cyapa_parse_काष्ठाure_data(resp_data[9],
 					&resp_data[i], *data_size);
 			*idac_min = min(value, *idac_min);
 			*idac_max = max(value, *idac_max);
 
-			if (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA &&
-				tmp_count < cyapa->aligned_electrodes_rx &&
-				read_global_idac) {
+			अगर (idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA &&
+				पंचांगp_count < cyapa->aligned_electrodes_rx &&
+				पढ़ो_global_idac) अणु
 				/*
 				 * The value gap between global and local mutual
 				 * idac data must bigger than 50%.
 				 * Normally, global value bigger than 50,
 				 * local values less than 10.
 				 */
-				if (!tmp_ave || value > tmp_ave / 2) {
-					tmp_min = min(value, tmp_min);
-					tmp_max = max(value, tmp_max);
-					tmp_sum += value;
-					tmp_count++;
+				अगर (!पंचांगp_ave || value > पंचांगp_ave / 2) अणु
+					पंचांगp_min = min(value, पंचांगp_min);
+					पंचांगp_max = max(value, पंचांगp_max);
+					पंचांगp_sum += value;
+					पंचांगp_count++;
 
-					tmp_ave = tmp_sum / tmp_count;
-				}
-			}
+					पंचांगp_ave = पंचांगp_sum / पंचांगp_count;
+				पूर्ण
+			पूर्ण
 
 			sum += value;
 			count++;
 
-			if (count >= max_element_cnt)
-				goto out;
-		}
-	} while (true);
+			अगर (count >= max_element_cnt)
+				जाओ out;
+		पूर्ण
+	पूर्ण जबतक (true);
 
 out:
 	*idac_ave = count ? (sum / count) : 0;
 
-	if (read_global_idac &&
-		idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) {
-		if (tmp_count == 0)
-			return 0;
+	अगर (पढ़ो_global_idac &&
+		idac_data_type == GEN5_RETRIEVE_MUTUAL_PWC_DATA) अणु
+		अगर (पंचांगp_count == 0)
+			वापस 0;
 
-		if (tmp_count == cyapa->aligned_electrodes_rx) {
+		अगर (पंचांगp_count == cyapa->aligned_electrodes_rx) अणु
 			cyapa->electrodes_rx = cyapa->electrodes_rx ?
 				cyapa->electrodes_rx : electrodes_rx;
-		} else if (tmp_count == electrodes_rx) {
+		पूर्ण अन्यथा अगर (पंचांगp_count == electrodes_rx) अणु
 			cyapa->electrodes_rx = cyapa->electrodes_rx ?
 				cyapa->electrodes_rx : electrodes_rx;
 			cyapa->aligned_electrodes_rx = electrodes_rx;
-		} else {
+		पूर्ण अन्यथा अणु
 			cyapa->electrodes_rx = cyapa->electrodes_rx ?
 				cyapa->electrodes_rx : electrodes_tx;
-			cyapa->aligned_electrodes_rx = tmp_count;
-		}
+			cyapa->aligned_electrodes_rx = पंचांगp_count;
+		पूर्ण
 
-		*idac_min = tmp_min;
-		*idac_max = tmp_max;
-		*idac_ave = tmp_ave;
-	}
+		*idac_min = पंचांगp_min;
+		*idac_max = पंचांगp_max;
+		*idac_ave = पंचांगp_ave;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_read_mutual_idac_data(struct cyapa *cyapa,
-	int *gidac_mutual_max, int *gidac_mutual_min, int *gidac_mutual_ave,
-	int *lidac_mutual_max, int *lidac_mutual_min, int *lidac_mutual_ave)
-{
-	int data_size;
-	int error;
+अटल पूर्णांक cyapa_gen5_पढ़ो_mutual_idac_data(काष्ठा cyapa *cyapa,
+	पूर्णांक *gidac_mutual_max, पूर्णांक *gidac_mutual_min, पूर्णांक *gidac_mutual_ave,
+	पूर्णांक *lidac_mutual_max, पूर्णांक *lidac_mutual_min, पूर्णांक *lidac_mutual_ave)
+अणु
+	पूर्णांक data_size;
+	पूर्णांक error;
 
 	*gidac_mutual_max = *gidac_mutual_min = *gidac_mutual_ave = 0;
 	*lidac_mutual_max = *lidac_mutual_min = *lidac_mutual_ave = 0;
 
 	data_size = 0;
-	error = cyapa_gen5_read_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_idac_data(cyapa,
 		PIP_RETRIEVE_DATA_STRUCTURE,
 		GEN5_RETRIEVE_MUTUAL_PWC_DATA,
 		&data_size,
 		gidac_mutual_max, gidac_mutual_min, gidac_mutual_ave);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	error = cyapa_gen5_read_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_idac_data(cyapa,
 		PIP_RETRIEVE_DATA_STRUCTURE,
 		GEN5_RETRIEVE_MUTUAL_PWC_DATA,
 		&data_size,
 		lidac_mutual_max, lidac_mutual_min, lidac_mutual_ave);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cyapa_gen5_read_self_idac_data(struct cyapa *cyapa,
-		int *gidac_self_rx, int *gidac_self_tx,
-		int *lidac_self_max, int *lidac_self_min, int *lidac_self_ave)
-{
-	int data_size;
-	int error;
+अटल पूर्णांक cyapa_gen5_पढ़ो_self_idac_data(काष्ठा cyapa *cyapa,
+		पूर्णांक *gidac_self_rx, पूर्णांक *gidac_self_tx,
+		पूर्णांक *lidac_self_max, पूर्णांक *lidac_self_min, पूर्णांक *lidac_self_ave)
+अणु
+	पूर्णांक data_size;
+	पूर्णांक error;
 
 	*gidac_self_rx = *gidac_self_tx = 0;
 	*lidac_self_max = *lidac_self_min = *lidac_self_ave = 0;
 
 	data_size = 0;
-	error = cyapa_gen5_read_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_idac_data(cyapa,
 		PIP_RETRIEVE_DATA_STRUCTURE,
 		GEN5_RETRIEVE_SELF_CAP_PWC_DATA,
 		&data_size,
 		lidac_self_max, lidac_self_min, lidac_self_ave);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	*gidac_self_rx = *lidac_self_max;
 	*gidac_self_tx = *lidac_self_min;
 
-	error = cyapa_gen5_read_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_idac_data(cyapa,
 		PIP_RETRIEVE_DATA_STRUCTURE,
 		GEN5_RETRIEVE_SELF_CAP_PWC_DATA,
 		&data_size,
 		lidac_self_max, lidac_self_min, lidac_self_ave);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static ssize_t cyapa_gen5_execute_panel_scan(struct cyapa *cyapa)
-{
-	struct pip_app_cmd_head *app_cmd_head;
+अटल sमाप_प्रकार cyapa_gen5_execute_panel_scan(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
 	u8 cmd[7];
 	u8 resp_data[6];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	memset(cmd, 0, sizeof(cmd));
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
+	स_रखो(cmd, 0, माप(cmd));
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
-	put_unaligned_le16(sizeof(cmd) - 2, &app_cmd_head->length);
+	put_unaligned_le16(माप(cmd) - 2, &app_cmd_head->length);
 	app_cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	app_cmd_head->cmd_code = GEN5_CMD_EXECUTE_PANEL_SCAN;
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, true);
-	if (error || resp_len != sizeof(resp_data) ||
+	अगर (error || resp_len != माप(resp_data) ||
 			!VALID_CMD_RESP_HEADER(resp_data,
 				GEN5_CMD_EXECUTE_PANEL_SCAN) ||
 			!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error ? error : -EAGAIN;
+		वापस error ? error : -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_read_panel_scan_raw_data(struct cyapa *cyapa,
-		u8 cmd_code, u8 raw_data_type, int raw_data_max_num,
-		int *raw_data_max, int *raw_data_min, int *raw_data_ave,
+अटल पूर्णांक cyapa_gen5_पढ़ो_panel_scan_raw_data(काष्ठा cyapa *cyapa,
+		u8 cmd_code, u8 raw_data_type, पूर्णांक raw_data_max_num,
+		पूर्णांक *raw_data_max, पूर्णांक *raw_data_min, पूर्णांक *raw_data_ave,
 		u8 *buffer)
-{
-	struct pip_app_cmd_head *app_cmd_head;
-	struct gen5_retrieve_panel_scan_data *panel_sacn_data;
+अणु
+	काष्ठा pip_app_cmd_head *app_cmd_head;
+	काष्ठा gen5_retrieve_panel_scan_data *panel_sacn_data;
 	u8 cmd[12];
-	u8 resp_data[256];  /* Max bytes can transfer one time. */
-	int resp_len;
-	int read_elements;
-	int read_len;
+	u8 resp_data[256];  /* Max bytes can transfer one समय. */
+	पूर्णांक resp_len;
+	पूर्णांक पढ़ो_elements;
+	पूर्णांक पढ़ो_len;
 	u16 offset;
 	s32 value;
-	int sum, count;
-	int data_size;
-	s32 *intp;
-	int i;
-	int error;
+	पूर्णांक sum, count;
+	पूर्णांक data_size;
+	s32 *पूर्णांकp;
+	पूर्णांक i;
+	पूर्णांक error;
 
-	if (cmd_code != GEN5_CMD_RETRIEVE_PANEL_SCAN ||
+	अगर (cmd_code != GEN5_CMD_RETRIEVE_PANEL_SCAN ||
 		(raw_data_type > GEN5_PANEL_SCAN_SELF_DIFFCOUNT) ||
 		!raw_data_max || !raw_data_min || !raw_data_ave)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	intp = (s32 *)buffer;
-	*raw_data_max = INT_MIN;
-	*raw_data_min = INT_MAX;
+	पूर्णांकp = (s32 *)buffer;
+	*raw_data_max = पूर्णांक_न्यून;
+	*raw_data_min = पूर्णांक_उच्च;
 	sum = count = 0;
 	offset = 0;
 	/* Assume max element size is 4 currently. */
-	read_elements = (256 - GEN5_RESP_DATA_STRUCTURE_OFFSET) / 4;
-	read_len = read_elements * 4;
-	app_cmd_head = (struct pip_app_cmd_head *)cmd;
+	पढ़ो_elements = (256 - GEN5_RESP_DATA_STRUCTURE_OFFSET) / 4;
+	पढ़ो_len = पढ़ो_elements * 4;
+	app_cmd_head = (काष्ठा pip_app_cmd_head *)cmd;
 	put_unaligned_le16(PIP_OUTPUT_REPORT_ADDR, &app_cmd_head->addr);
-	put_unaligned_le16(sizeof(cmd) - 2, &app_cmd_head->length);
+	put_unaligned_le16(माप(cmd) - 2, &app_cmd_head->length);
 	app_cmd_head->report_id = PIP_APP_CMD_REPORT_ID;
 	app_cmd_head->cmd_code = cmd_code;
-	panel_sacn_data = (struct gen5_retrieve_panel_scan_data *)
+	panel_sacn_data = (काष्ठा gen5_retrieve_panel_scan_data *)
 			app_cmd_head->parameter_data;
-	do {
-		put_unaligned_le16(offset, &panel_sacn_data->read_offset);
-		put_unaligned_le16(read_elements,
-			&panel_sacn_data->read_elements);
+	करो अणु
+		put_unaligned_le16(offset, &panel_sacn_data->पढ़ो_offset);
+		put_unaligned_le16(पढ़ो_elements,
+			&panel_sacn_data->पढ़ो_elements);
 		panel_sacn_data->data_id = raw_data_type;
 
-		resp_len = GEN5_RESP_DATA_STRUCTURE_OFFSET + read_len;
+		resp_len = GEN5_RESP_DATA_STRUCTURE_OFFSET + पढ़ो_len;
 		error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			cmd, sizeof(cmd),
+			cmd, माप(cmd),
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_app_resp_data, true);
-		if (error || resp_len < GEN5_RESP_DATA_STRUCTURE_OFFSET ||
+		अगर (error || resp_len < GEN5_RESP_DATA_STRUCTURE_OFFSET ||
 				!VALID_CMD_RESP_HEADER(resp_data, cmd_code) ||
 				!PIP_CMD_COMPLETE_SUCCESS(resp_data) ||
 				resp_data[6] != raw_data_type)
-			return error ? error : -EAGAIN;
+			वापस error ? error : -EAGAIN;
 
-		read_elements = get_unaligned_le16(&resp_data[7]);
-		if (read_elements == 0)
-			break;
+		पढ़ो_elements = get_unaligned_le16(&resp_data[7]);
+		अगर (पढ़ो_elements == 0)
+			अवरोध;
 
 		data_size = (resp_data[9] & GEN5_PWC_DATA_ELEMENT_SIZE_MASK);
-		offset += read_elements;
-		if (read_elements) {
-			for (i = GEN5_RESP_DATA_STRUCTURE_OFFSET;
-			     i < (read_elements * data_size +
+		offset += पढ़ो_elements;
+		अगर (पढ़ो_elements) अणु
+			क्रम (i = GEN5_RESP_DATA_STRUCTURE_OFFSET;
+			     i < (पढ़ो_elements * data_size +
 					GEN5_RESP_DATA_STRUCTURE_OFFSET);
-			     i += data_size) {
-				value = cyapa_parse_structure_data(resp_data[9],
+			     i += data_size) अणु
+				value = cyapa_parse_काष्ठाure_data(resp_data[9],
 						&resp_data[i], data_size);
 				*raw_data_min = min(value, *raw_data_min);
 				*raw_data_max = max(value, *raw_data_max);
 
-				if (intp)
-					put_unaligned_le32(value, &intp[count]);
+				अगर (पूर्णांकp)
+					put_unaligned_le32(value, &पूर्णांकp[count]);
 
 				sum += value;
 				count++;
 
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (count >= raw_data_max_num)
-			break;
+		अगर (count >= raw_data_max_num)
+			अवरोध;
 
-		read_elements = (sizeof(resp_data) -
+		पढ़ो_elements = (माप(resp_data) -
 				GEN5_RESP_DATA_STRUCTURE_OFFSET) / data_size;
-		read_len = read_elements * data_size;
-	} while (true);
+		पढ़ो_len = पढ़ो_elements * data_size;
+	पूर्ण जबतक (true);
 
 	*raw_data_ave = count ? (sum / count) : 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t cyapa_gen5_show_baseline(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct cyapa *cyapa = dev_get_drvdata(dev);
-	int gidac_mutual_max, gidac_mutual_min, gidac_mutual_ave;
-	int lidac_mutual_max, lidac_mutual_min, lidac_mutual_ave;
-	int gidac_self_rx, gidac_self_tx;
-	int lidac_self_max, lidac_self_min, lidac_self_ave;
-	int raw_cap_mutual_max, raw_cap_mutual_min, raw_cap_mutual_ave;
-	int raw_cap_self_max, raw_cap_self_min, raw_cap_self_ave;
-	int mutual_diffdata_max, mutual_diffdata_min, mutual_diffdata_ave;
-	int self_diffdata_max, self_diffdata_min, self_diffdata_ave;
-	int mutual_baseline_max, mutual_baseline_min, mutual_baseline_ave;
-	int self_baseline_max, self_baseline_min, self_baseline_ave;
-	int error, resume_error;
-	int size;
+अटल sमाप_प्रकार cyapa_gen5_show_baseline(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cyapa *cyapa = dev_get_drvdata(dev);
+	पूर्णांक gidac_mutual_max, gidac_mutual_min, gidac_mutual_ave;
+	पूर्णांक lidac_mutual_max, lidac_mutual_min, lidac_mutual_ave;
+	पूर्णांक gidac_self_rx, gidac_self_tx;
+	पूर्णांक lidac_self_max, lidac_self_min, lidac_self_ave;
+	पूर्णांक raw_cap_mutual_max, raw_cap_mutual_min, raw_cap_mutual_ave;
+	पूर्णांक raw_cap_self_max, raw_cap_self_min, raw_cap_self_ave;
+	पूर्णांक mutual_dअगरfdata_max, mutual_dअगरfdata_min, mutual_dअगरfdata_ave;
+	पूर्णांक self_dअगरfdata_max, self_dअगरfdata_min, self_dअगरfdata_ave;
+	पूर्णांक mutual_baseline_max, mutual_baseline_min, mutual_baseline_ave;
+	पूर्णांक self_baseline_max, self_baseline_min, self_baseline_ave;
+	पूर्णांक error, resume_error;
+	पूर्णांक size;
 
-	if (!cyapa_is_pip_app_mode(cyapa))
-		return -EBUSY;
+	अगर (!cyapa_is_pip_app_mode(cyapa))
+		वापस -EBUSY;
 
 	/* 1. Suspend Scanning*/
 	error = cyapa_pip_suspend_scanning(cyapa);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/* 2.  Read global and local mutual IDAC data. */
 	gidac_self_rx = gidac_self_tx = 0;
-	error = cyapa_gen5_read_mutual_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_mutual_idac_data(cyapa,
 				&gidac_mutual_max, &gidac_mutual_min,
 				&gidac_mutual_ave, &lidac_mutual_max,
 				&lidac_mutual_min, &lidac_mutual_ave);
-	if (error)
-		goto resume_scanning;
+	अगर (error)
+		जाओ resume_scanning;
 
 	/* 3.  Read global and local self IDAC data. */
-	error = cyapa_gen5_read_self_idac_data(cyapa,
+	error = cyapa_gen5_पढ़ो_self_idac_data(cyapa,
 				&gidac_self_rx, &gidac_self_tx,
 				&lidac_self_max, &lidac_self_min,
 				&lidac_self_ave);
-	if (error)
-		goto resume_scanning;
+	अगर (error)
+		जाओ resume_scanning;
 
-	/* 4. Execute panel scan. It must be executed before read data. */
+	/* 4. Execute panel scan. It must be executed beक्रमe पढ़ो data. */
 	error = cyapa_gen5_execute_panel_scan(cyapa);
-	if (error)
-		goto resume_scanning;
+	अगर (error)
+		जाओ resume_scanning;
 
 	/* 5. Retrieve panel scan, mutual cap raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_MUTUAL_RAW_DATA,
 				cyapa->electrodes_x * cyapa->electrodes_y,
 				&raw_cap_mutual_max, &raw_cap_mutual_min,
 				&raw_cap_mutual_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
 	/* 6. Retrieve panel scan, self cap raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_SELF_RAW_DATA,
 				cyapa->electrodes_x + cyapa->electrodes_y,
 				&raw_cap_self_max, &raw_cap_self_min,
 				&raw_cap_self_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
-	/* 7. Retrieve panel scan, mutual cap diffcount raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	/* 7. Retrieve panel scan, mutual cap dअगरfcount raw data. */
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_MUTUAL_DIFFCOUNT,
 				cyapa->electrodes_x * cyapa->electrodes_y,
-				&mutual_diffdata_max, &mutual_diffdata_min,
-				&mutual_diffdata_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				&mutual_dअगरfdata_max, &mutual_dअगरfdata_min,
+				&mutual_dअगरfdata_ave,
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
-	/* 8. Retrieve panel scan, self cap diffcount raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	/* 8. Retrieve panel scan, self cap dअगरfcount raw data. */
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_SELF_DIFFCOUNT,
 				cyapa->electrodes_x + cyapa->electrodes_y,
-				&self_diffdata_max, &self_diffdata_min,
-				&self_diffdata_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				&self_dअगरfdata_max, &self_dअगरfdata_min,
+				&self_dअगरfdata_ave,
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
 	/* 9. Retrieve panel scan, mutual cap baseline raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_MUTUAL_BASELINE,
 				cyapa->electrodes_x * cyapa->electrodes_y,
 				&mutual_baseline_max, &mutual_baseline_min,
 				&mutual_baseline_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
 	/* 10. Retrieve panel scan, self cap baseline raw data. */
-	error = cyapa_gen5_read_panel_scan_raw_data(cyapa,
+	error = cyapa_gen5_पढ़ो_panel_scan_raw_data(cyapa,
 				GEN5_CMD_RETRIEVE_PANEL_SCAN,
 				GEN5_PANEL_SCAN_SELF_BASELINE,
 				cyapa->electrodes_x + cyapa->electrodes_y,
 				&self_baseline_max, &self_baseline_min,
 				&self_baseline_ave,
-				NULL);
-	if (error)
-		goto resume_scanning;
+				शून्य);
+	अगर (error)
+		जाओ resume_scanning;
 
 resume_scanning:
 	/* 11. Resume Scanning*/
 	resume_error = cyapa_pip_resume_scanning(cyapa);
-	if (resume_error || error)
-		return resume_error ? resume_error : error;
+	अगर (resume_error || error)
+		वापस resume_error ? resume_error : error;
 
 	/* 12. Output data strings */
-	size = scnprintf(buf, PAGE_SIZE, "%d %d %d %d %d %d %d %d %d %d %d ",
+	size = scnम_लिखो(buf, PAGE_SIZE, "%d %d %d %d %d %d %d %d %d %d %d ",
 		gidac_mutual_min, gidac_mutual_max, gidac_mutual_ave,
 		lidac_mutual_min, lidac_mutual_max, lidac_mutual_ave,
 		gidac_self_rx, gidac_self_tx,
 		lidac_self_min, lidac_self_max, lidac_self_ave);
-	size += scnprintf(buf + size, PAGE_SIZE - size,
+	size += scnम_लिखो(buf + size, PAGE_SIZE - size,
 		"%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
 		raw_cap_mutual_min, raw_cap_mutual_max, raw_cap_mutual_ave,
 		raw_cap_self_min, raw_cap_self_max, raw_cap_self_ave,
-		mutual_diffdata_min, mutual_diffdata_max, mutual_diffdata_ave,
-		self_diffdata_min, self_diffdata_max, self_diffdata_ave,
+		mutual_dअगरfdata_min, mutual_dअगरfdata_max, mutual_dअगरfdata_ave,
+		self_dअगरfdata_min, self_dअगरfdata_max, self_dअगरfdata_ave,
 		mutual_baseline_min, mutual_baseline_max, mutual_baseline_ave,
 		self_baseline_min, self_baseline_max, self_baseline_ave);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-bool cyapa_pip_sort_system_info_data(struct cyapa *cyapa,
-		u8 *buf, int len)
-{
+bool cyapa_pip_sort_प्रणाली_info_data(काष्ठा cyapa *cyapa,
+		u8 *buf, पूर्णांक len)
+अणु
 	/* Check the report id and command code */
-	if (VALID_CMD_RESP_HEADER(buf, 0x02))
-		return true;
+	अगर (VALID_CMD_RESP_HEADER(buf, 0x02))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int cyapa_gen5_bl_query_data(struct cyapa *cyapa)
-{
+अटल पूर्णांक cyapa_gen5_bl_query_data(काष्ठा cyapa *cyapa)
+अणु
 	u8 resp_data[PIP_BL_APP_INFO_RESP_LENGTH];
-	int resp_len;
-	int error;
+	पूर्णांक resp_len;
+	पूर्णांक error;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			pip_bl_read_app_info, PIP_BL_READ_APP_INFO_CMD_LENGTH,
+			pip_bl_पढ़ो_app_info, PIP_BL_READ_APP_INFO_CMD_LENGTH,
 			resp_data, &resp_len,
 			500, cyapa_sort_tsg_pip_bl_resp_data, false);
-	if (error || resp_len < PIP_BL_APP_INFO_RESP_LENGTH ||
+	अगर (error || resp_len < PIP_BL_APP_INFO_RESP_LENGTH ||
 		!PIP_CMD_COMPLETE_SUCCESS(resp_data))
-		return error ? error : -EIO;
+		वापस error ? error : -EIO;
 
-	memcpy(&cyapa->product_id[0], &resp_data[8], 5);
+	स_नकल(&cyapa->product_id[0], &resp_data[8], 5);
 	cyapa->product_id[5] = '-';
-	memcpy(&cyapa->product_id[6], &resp_data[13], 6);
+	स_नकल(&cyapa->product_id[6], &resp_data[13], 6);
 	cyapa->product_id[12] = '-';
-	memcpy(&cyapa->product_id[13], &resp_data[19], 2);
+	स_नकल(&cyapa->product_id[13], &resp_data[19], 2);
 	cyapa->product_id[15] = '\0';
 
 	cyapa->fw_maj_ver = resp_data[22];
 	cyapa->fw_min_ver = resp_data[23];
 
-	cyapa->platform_ver = (resp_data[26] >> PIP_BL_PLATFORM_VER_SHIFT) &
+	cyapa->platक्रमm_ver = (resp_data[26] >> PIP_BL_PLATFORM_VER_SHIFT) &
 			      PIP_BL_PLATFORM_VER_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_get_query_data(struct cyapa *cyapa)
-{
+अटल पूर्णांक cyapa_gen5_get_query_data(काष्ठा cyapa *cyapa)
+अणु
 	u8 resp_data[PIP_READ_SYS_INFO_RESP_LENGTH];
-	int resp_len;
+	पूर्णांक resp_len;
 	u16 product_family;
-	int error;
+	पूर्णांक error;
 
-	resp_len = sizeof(resp_data);
+	resp_len = माप(resp_data);
 	error = cyapa_i2c_pip_cmd_irq_sync(cyapa,
-			pip_read_sys_info, PIP_READ_SYS_INFO_CMD_LENGTH,
+			pip_पढ़ो_sys_info, PIP_READ_SYS_INFO_CMD_LENGTH,
 			resp_data, &resp_len,
-			2000, cyapa_pip_sort_system_info_data, false);
-	if (error || resp_len < sizeof(resp_data))
-		return error ? error : -EIO;
+			2000, cyapa_pip_sort_प्रणाली_info_data, false);
+	अगर (error || resp_len < माप(resp_data))
+		वापस error ? error : -EIO;
 
 	product_family = get_unaligned_le16(&resp_data[7]);
-	if ((product_family & PIP_PRODUCT_FAMILY_MASK) !=
+	अगर ((product_family & PIP_PRODUCT_FAMILY_MASK) !=
 		PIP_PRODUCT_FAMILY_TRACKPAD)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	cyapa->platform_ver = (resp_data[49] >> PIP_BL_PLATFORM_VER_SHIFT) &
+	cyapa->platक्रमm_ver = (resp_data[49] >> PIP_BL_PLATFORM_VER_SHIFT) &
 			      PIP_BL_PLATFORM_VER_MASK;
-	if (cyapa->gen == CYAPA_GEN5 && cyapa->platform_ver < 2) {
-		/* Gen5 firmware that does not support proximity. */
+	अगर (cyapa->gen == CYAPA_GEN5 && cyapa->platक्रमm_ver < 2) अणु
+		/* Gen5 firmware that करोes not support proximity. */
 		cyapa->fw_maj_ver = resp_data[15];
 		cyapa->fw_min_ver = resp_data[16];
-	} else {
+	पूर्ण अन्यथा अणु
 		cyapa->fw_maj_ver = resp_data[9];
 		cyapa->fw_min_ver = resp_data[10];
-	}
+	पूर्ण
 
 	cyapa->electrodes_x = resp_data[52];
 	cyapa->electrodes_y = resp_data[53];
@@ -2512,8 +2513,8 @@ static int cyapa_gen5_get_query_data(struct cyapa *cyapa)
 	cyapa->physical_size_x =  get_unaligned_le16(&resp_data[54]) / 100;
 	cyapa->physical_size_y = get_unaligned_le16(&resp_data[56]) / 100;
 
-	cyapa->max_abs_x = get_unaligned_le16(&resp_data[58]);
-	cyapa->max_abs_y = get_unaligned_le16(&resp_data[60]);
+	cyapa->max_असल_x = get_unaligned_le16(&resp_data[58]);
+	cyapa->max_असल_y = get_unaligned_le16(&resp_data[60]);
 
 	cyapa->max_z = get_unaligned_le16(&resp_data[62]);
 
@@ -2522,389 +2523,389 @@ static int cyapa_gen5_get_query_data(struct cyapa *cyapa)
 
 	cyapa->btn_capability = (resp_data[70] << 3) & CAPABILITY_BTN_MASK;
 
-	memcpy(&cyapa->product_id[0], &resp_data[33], 5);
+	स_नकल(&cyapa->product_id[0], &resp_data[33], 5);
 	cyapa->product_id[5] = '-';
-	memcpy(&cyapa->product_id[6], &resp_data[38], 6);
+	स_नकल(&cyapa->product_id[6], &resp_data[38], 6);
 	cyapa->product_id[12] = '-';
-	memcpy(&cyapa->product_id[13], &resp_data[44], 2);
+	स_नकल(&cyapa->product_id[13], &resp_data[44], 2);
 	cyapa->product_id[15] = '\0';
 
-	if (!cyapa->electrodes_x || !cyapa->electrodes_y ||
+	अगर (!cyapa->electrodes_x || !cyapa->electrodes_y ||
 		!cyapa->physical_size_x || !cyapa->physical_size_y ||
-		!cyapa->max_abs_x || !cyapa->max_abs_y || !cyapa->max_z)
-		return -EINVAL;
+		!cyapa->max_असल_x || !cyapa->max_असल_y || !cyapa->max_z)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyapa_gen5_do_operational_check(struct cyapa *cyapa)
-{
-	struct device *dev = &cyapa->client->dev;
-	int error;
+अटल पूर्णांक cyapa_gen5_करो_operational_check(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	पूर्णांक error;
 
-	if (cyapa->gen != CYAPA_GEN5)
-		return -ENODEV;
+	अगर (cyapa->gen != CYAPA_GEN5)
+		वापस -ENODEV;
 
-	switch (cyapa->state) {
-	case CYAPA_STATE_GEN5_BL:
-		error = cyapa_pip_bl_exit(cyapa);
-		if (error) {
-			/* Try to update trackpad product information. */
+	चयन (cyapa->state) अणु
+	हाल CYAPA_STATE_GEN5_BL:
+		error = cyapa_pip_bl_निकास(cyapa);
+		अगर (error) अणु
+			/* Try to update trackpad product inक्रमmation. */
 			cyapa_gen5_bl_query_data(cyapa);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		cyapa->state = CYAPA_STATE_GEN5_APP;
 		fallthrough;
 
-	case CYAPA_STATE_GEN5_APP:
+	हाल CYAPA_STATE_GEN5_APP:
 		/*
 		 * If trackpad device in deep sleep mode,
 		 * the app command will fail.
 		 * So always try to reset trackpad device to full active when
 		 * the device state is required.
 		 */
-		error = cyapa_gen5_set_power_mode(cyapa,
+		error = cyapa_gen5_set_घातer_mode(cyapa,
 				PWR_MODE_FULL_ACTIVE, 0, CYAPA_PM_ACTIVE);
-		if (error)
+		अगर (error)
 			dev_warn(dev, "%s: failed to set power active mode.\n",
 				__func__);
 
-		/* By default, the trackpad proximity function is enabled. */
-		if (cyapa->platform_ver >= 2) {
+		/* By शेष, the trackpad proximity function is enabled. */
+		अगर (cyapa->platक्रमm_ver >= 2) अणु
 			error = cyapa_pip_set_proximity(cyapa, true);
-			if (error)
+			अगर (error)
 				dev_warn(dev,
 					"%s: failed to enable proximity.\n",
 					__func__);
-		}
+		पूर्ण
 
-		/* Get trackpad product information. */
+		/* Get trackpad product inक्रमmation. */
 		error = cyapa_gen5_get_query_data(cyapa);
-		if (error)
-			goto out;
+		अगर (error)
+			जाओ out;
 		/* Only support product ID starting with CYTRA */
-		if (memcmp(cyapa->product_id, product_id,
-				strlen(product_id)) != 0) {
+		अगर (स_भेद(cyapa->product_id, product_id,
+				म_माप(product_id)) != 0) अणु
 			dev_err(dev, "%s: unknown product ID (%s)\n",
 				__func__, cyapa->product_id);
 			error = -EINVAL;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		error = -EINVAL;
-	}
+	पूर्ण
 
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * Return false, do not continue process
- * Return true, continue process.
+ * Return false, करो not जारी process
+ * Return true, जारी process.
  */
-bool cyapa_pip_irq_cmd_handler(struct cyapa *cyapa)
-{
-	struct cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
-	int length;
+bool cyapa_pip_irq_cmd_handler(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा cyapa_pip_cmd_states *pip = &cyapa->cmd_states.pip;
+	पूर्णांक length;
 
-	if (atomic_read(&pip->cmd_issued)) {
+	अगर (atomic_पढ़ो(&pip->cmd_issued)) अणु
 		/* Polling command response data. */
-		if (pip->is_irq_mode == false)
-			return false;
+		अगर (pip->is_irq_mode == false)
+			वापस false;
 
 		/*
 		 * Read out all none command response data.
 		 * these output data may caused by user put finger on
-		 * trackpad when host waiting the command response.
+		 * trackpad when host रुकोing the command response.
 		 */
-		cyapa_i2c_pip_read(cyapa, pip->irq_cmd_buf,
+		cyapa_i2c_pip_पढ़ो(cyapa, pip->irq_cmd_buf,
 			PIP_RESP_LENGTH_SIZE);
 		length = get_unaligned_le16(pip->irq_cmd_buf);
 		length = (length <= PIP_RESP_LENGTH_SIZE) ?
 				PIP_RESP_LENGTH_SIZE : length;
-		if (length > PIP_RESP_LENGTH_SIZE)
-			cyapa_i2c_pip_read(cyapa,
+		अगर (length > PIP_RESP_LENGTH_SIZE)
+			cyapa_i2c_pip_पढ़ो(cyapa,
 				pip->irq_cmd_buf, length);
-		if (!(pip->resp_sort_func &&
+		अगर (!(pip->resp_sort_func &&
 			pip->resp_sort_func(cyapa,
-				pip->irq_cmd_buf, length))) {
+				pip->irq_cmd_buf, length))) अणु
 			/*
 			 * Cover the Gen5 V1 firmware issue.
-			 * The issue is no interrupt would be asserted from
-			 * trackpad device to host for the command response
-			 * ready event. Because when there was a finger touch
+			 * The issue is no पूर्णांकerrupt would be निश्चितed from
+			 * trackpad device to host क्रम the command response
+			 * पढ़ोy event. Because when there was a finger touch
 			 * on trackpad device, and the firmware output queue
 			 * won't be empty (always with touch report data), so
-			 * the interrupt signal won't be asserted again until
+			 * the पूर्णांकerrupt संकेत won't be निश्चितed again until
 			 * the output queue was previous emptied.
 			 * This issue would happen in the scenario that
 			 * user always has his/her fingers touched on the
-			 * trackpad device during system booting/rebooting.
+			 * trackpad device during प्रणाली booting/rebooting.
 			 */
 			length = 0;
-			if (pip->resp_len)
+			अगर (pip->resp_len)
 				length = *pip->resp_len;
 			cyapa_empty_pip_output_data(cyapa,
 					pip->resp_data,
 					&length,
 					pip->resp_sort_func);
-			if (pip->resp_len && length != 0) {
+			अगर (pip->resp_len && length != 0) अणु
 				*pip->resp_len = length;
 				atomic_dec(&pip->cmd_issued);
-				complete(&pip->cmd_ready);
-			}
-			return false;
-		}
+				complete(&pip->cmd_पढ़ोy);
+			पूर्ण
+			वापस false;
+		पूर्ण
 
-		if (pip->resp_data && pip->resp_len) {
+		अगर (pip->resp_data && pip->resp_len) अणु
 			*pip->resp_len = (*pip->resp_len < length) ?
 				*pip->resp_len : length;
-			memcpy(pip->resp_data, pip->irq_cmd_buf,
+			स_नकल(pip->resp_data, pip->irq_cmd_buf,
 				*pip->resp_len);
-		}
+		पूर्ण
 		atomic_dec(&pip->cmd_issued);
-		complete(&pip->cmd_ready);
-		return false;
-	}
+		complete(&pip->cmd_पढ़ोy);
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void cyapa_pip_report_buttons(struct cyapa *cyapa,
-		const struct cyapa_pip_report_data *report_data)
-{
-	struct input_dev *input = cyapa->input;
+अटल व्योम cyapa_pip_report_buttons(काष्ठा cyapa *cyapa,
+		स्थिर काष्ठा cyapa_pip_report_data *report_data)
+अणु
+	काष्ठा input_dev *input = cyapa->input;
 	u8 buttons = report_data->report_head[PIP_BUTTONS_OFFSET];
 
 	buttons = (buttons << CAPABILITY_BTN_SHIFT) & CAPABILITY_BTN_MASK;
 
-	if (cyapa->btn_capability & CAPABILITY_LEFT_BTN_MASK) {
+	अगर (cyapa->btn_capability & CAPABILITY_LEFT_BTN_MASK) अणु
 		input_report_key(input, BTN_LEFT,
 			!!(buttons & CAPABILITY_LEFT_BTN_MASK));
-	}
-	if (cyapa->btn_capability & CAPABILITY_MIDDLE_BTN_MASK) {
+	पूर्ण
+	अगर (cyapa->btn_capability & CAPABILITY_MIDDLE_BTN_MASK) अणु
 		input_report_key(input, BTN_MIDDLE,
 			!!(buttons & CAPABILITY_MIDDLE_BTN_MASK));
-	}
-	if (cyapa->btn_capability & CAPABILITY_RIGHT_BTN_MASK) {
+	पूर्ण
+	अगर (cyapa->btn_capability & CAPABILITY_RIGHT_BTN_MASK) अणु
 		input_report_key(input, BTN_RIGHT,
 			!!(buttons & CAPABILITY_RIGHT_BTN_MASK));
-	}
+	पूर्ण
 
 	input_sync(input);
-}
+पूर्ण
 
-static void cyapa_pip_report_proximity(struct cyapa *cyapa,
-		const struct cyapa_pip_report_data *report_data)
-{
-	struct input_dev *input = cyapa->input;
+अटल व्योम cyapa_pip_report_proximity(काष्ठा cyapa *cyapa,
+		स्थिर काष्ठा cyapa_pip_report_data *report_data)
+अणु
+	काष्ठा input_dev *input = cyapa->input;
 	u8 distance = report_data->report_head[PIP_PROXIMITY_DISTANCE_OFFSET] &
 			PIP_PROXIMITY_DISTANCE_MASK;
 
-	input_report_abs(input, ABS_DISTANCE, distance);
+	input_report_असल(input, ABS_DISTANCE, distance);
 	input_sync(input);
-}
+पूर्ण
 
-static void cyapa_pip_report_slot_data(struct cyapa *cyapa,
-		const struct cyapa_pip_touch_record *touch)
-{
-	struct input_dev *input = cyapa->input;
+अटल व्योम cyapa_pip_report_slot_data(काष्ठा cyapa *cyapa,
+		स्थिर काष्ठा cyapa_pip_touch_record *touch)
+अणु
+	काष्ठा input_dev *input = cyapa->input;
 	u8 event_id = PIP_GET_EVENT_ID(touch->touch_tip_event_id);
-	int slot = PIP_GET_TOUCH_ID(touch->touch_tip_event_id);
-	int x, y;
+	पूर्णांक slot = PIP_GET_TOUCH_ID(touch->touch_tip_event_id);
+	पूर्णांक x, y;
 
-	if (event_id == RECORD_EVENT_LIFTOFF)
-		return;
+	अगर (event_id == RECORD_EVENT_LIFTOFF)
+		वापस;
 
 	input_mt_slot(input, slot);
 	input_mt_report_slot_state(input, MT_TOOL_FINGER, true);
 	x = (touch->x_hi << 8) | touch->x_lo;
-	if (cyapa->x_origin)
-		x = cyapa->max_abs_x - x;
+	अगर (cyapa->x_origin)
+		x = cyapa->max_असल_x - x;
 	y = (touch->y_hi << 8) | touch->y_lo;
-	if (cyapa->y_origin)
-		y = cyapa->max_abs_y - y;
-	input_report_abs(input, ABS_MT_POSITION_X, x);
-	input_report_abs(input, ABS_MT_POSITION_Y, y);
-	input_report_abs(input, ABS_DISTANCE, 0);
-	input_report_abs(input, ABS_MT_PRESSURE,
+	अगर (cyapa->y_origin)
+		y = cyapa->max_असल_y - y;
+	input_report_असल(input, ABS_MT_POSITION_X, x);
+	input_report_असल(input, ABS_MT_POSITION_Y, y);
+	input_report_असल(input, ABS_DISTANCE, 0);
+	input_report_असल(input, ABS_MT_PRESSURE,
 		touch->z);
-	input_report_abs(input, ABS_MT_TOUCH_MAJOR,
+	input_report_असल(input, ABS_MT_TOUCH_MAJOR,
 		touch->major_axis_len);
-	input_report_abs(input, ABS_MT_TOUCH_MINOR,
+	input_report_असल(input, ABS_MT_TOUCH_MINOR,
 		touch->minor_axis_len);
 
-	input_report_abs(input, ABS_MT_WIDTH_MAJOR,
+	input_report_असल(input, ABS_MT_WIDTH_MAJOR,
 		touch->major_tool_len);
-	input_report_abs(input, ABS_MT_WIDTH_MINOR,
+	input_report_असल(input, ABS_MT_WIDTH_MINOR,
 		touch->minor_tool_len);
 
-	input_report_abs(input, ABS_MT_ORIENTATION,
+	input_report_असल(input, ABS_MT_ORIENTATION,
 		touch->orientation);
-}
+पूर्ण
 
-static void cyapa_pip_report_touches(struct cyapa *cyapa,
-		const struct cyapa_pip_report_data *report_data)
-{
-	struct input_dev *input = cyapa->input;
-	unsigned int touch_num;
-	int i;
+अटल व्योम cyapa_pip_report_touches(काष्ठा cyapa *cyapa,
+		स्थिर काष्ठा cyapa_pip_report_data *report_data)
+अणु
+	काष्ठा input_dev *input = cyapa->input;
+	अचिन्हित पूर्णांक touch_num;
+	पूर्णांक i;
 
 	touch_num = report_data->report_head[PIP_NUMBER_OF_TOUCH_OFFSET] &
 			PIP_NUMBER_OF_TOUCH_MASK;
 
-	for (i = 0; i < touch_num; i++)
+	क्रम (i = 0; i < touch_num; i++)
 		cyapa_pip_report_slot_data(cyapa,
 			&report_data->touch_records[i]);
 
 	input_mt_sync_frame(input);
 	input_sync(input);
-}
+पूर्ण
 
-int cyapa_pip_irq_handler(struct cyapa *cyapa)
-{
-	struct device *dev = &cyapa->client->dev;
-	struct cyapa_pip_report_data report_data;
-	unsigned int report_len;
-	int ret;
+पूर्णांक cyapa_pip_irq_handler(काष्ठा cyapa *cyapa)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	काष्ठा cyapa_pip_report_data report_data;
+	अचिन्हित पूर्णांक report_len;
+	पूर्णांक ret;
 
-	if (!cyapa_is_pip_app_mode(cyapa)) {
+	अगर (!cyapa_is_pip_app_mode(cyapa)) अणु
 		dev_err(dev, "invalid device state, gen=%d, state=0x%02x\n",
 			cyapa->gen, cyapa->state);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = cyapa_i2c_pip_read(cyapa, (u8 *)&report_data,
+	ret = cyapa_i2c_pip_पढ़ो(cyapa, (u8 *)&report_data,
 			PIP_RESP_LENGTH_SIZE);
-	if (ret != PIP_RESP_LENGTH_SIZE) {
+	अगर (ret != PIP_RESP_LENGTH_SIZE) अणु
 		dev_err(dev, "failed to read length bytes, (%d)\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	report_len = get_unaligned_le16(
 			&report_data.report_head[PIP_RESP_LENGTH_OFFSET]);
-	if (report_len < PIP_RESP_LENGTH_SIZE) {
-		/* Invalid length or internal reset happened. */
+	अगर (report_len < PIP_RESP_LENGTH_SIZE) अणु
+		/* Invalid length or पूर्णांकernal reset happened. */
 		dev_err(dev, "invalid report_len=%d. bytes: %02x %02x\n",
 			report_len, report_data.report_head[0],
 			report_data.report_head[1]);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Idle, no data for report. */
-	if (report_len == PIP_RESP_LENGTH_SIZE)
-		return 0;
+	/* Idle, no data क्रम report. */
+	अगर (report_len == PIP_RESP_LENGTH_SIZE)
+		वापस 0;
 
-	ret = cyapa_i2c_pip_read(cyapa, (u8 *)&report_data, report_len);
-	if (ret != report_len) {
+	ret = cyapa_i2c_pip_पढ़ो(cyapa, (u8 *)&report_data, report_len);
+	अगर (ret != report_len) अणु
 		dev_err(dev, "failed to read %d bytes report data, (%d)\n",
 			report_len, ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return cyapa_pip_event_process(cyapa, &report_data);
-}
+	वापस cyapa_pip_event_process(cyapa, &report_data);
+पूर्ण
 
-static int cyapa_pip_event_process(struct cyapa *cyapa,
-				   struct cyapa_pip_report_data *report_data)
-{
-	struct device *dev = &cyapa->client->dev;
-	unsigned int report_len;
+अटल पूर्णांक cyapa_pip_event_process(काष्ठा cyapa *cyapa,
+				   काष्ठा cyapa_pip_report_data *report_data)
+अणु
+	काष्ठा device *dev = &cyapa->client->dev;
+	अचिन्हित पूर्णांक report_len;
 	u8 report_id;
 
 	report_len = get_unaligned_le16(
 			&report_data->report_head[PIP_RESP_LENGTH_OFFSET]);
-	/* Idle, no data for report. */
-	if (report_len == PIP_RESP_LENGTH_SIZE)
-		return 0;
+	/* Idle, no data क्रम report. */
+	अगर (report_len == PIP_RESP_LENGTH_SIZE)
+		वापस 0;
 
 	report_id = report_data->report_head[PIP_RESP_REPORT_ID_OFFSET];
-	if (report_id == PIP_WAKEUP_EVENT_REPORT_ID &&
-			report_len == PIP_WAKEUP_EVENT_SIZE) {
+	अगर (report_id == PIP_WAKEUP_EVENT_REPORT_ID &&
+			report_len == PIP_WAKEUP_EVENT_SIZE) अणु
 		/*
-		 * Device wake event from deep sleep mode for touch.
-		 * This interrupt event is used to wake system up.
+		 * Device wake event from deep sleep mode क्रम touch.
+		 * This पूर्णांकerrupt event is used to wake प्रणाली up.
 		 *
 		 * Note:
-		 * It will introduce about 20~40 ms additional delay
-		 * time in receiving for first valid touch report data.
-		 * The time is used to execute device runtime resume
+		 * It will पूर्णांकroduce about 20~40 ms additional delay
+		 * समय in receiving क्रम first valid touch report data.
+		 * The समय is used to execute device runसमय resume
 		 * process.
 		 */
-		pm_runtime_get_sync(dev);
-		pm_runtime_mark_last_busy(dev);
-		pm_runtime_put_sync_autosuspend(dev);
-		return 0;
-	} else if (report_id != PIP_TOUCH_REPORT_ID &&
+		pm_runसमय_get_sync(dev);
+		pm_runसमय_mark_last_busy(dev);
+		pm_runसमय_put_sync_स्वतःsuspend(dev);
+		वापस 0;
+	पूर्ण अन्यथा अगर (report_id != PIP_TOUCH_REPORT_ID &&
 			report_id != PIP_BTN_REPORT_ID &&
 			report_id != GEN5_OLD_PUSH_BTN_REPORT_ID &&
 			report_id != PIP_PUSH_BTN_REPORT_ID &&
-			report_id != PIP_PROXIMITY_REPORT_ID) {
-		/* Running in BL mode or unknown response data read. */
+			report_id != PIP_PROXIMITY_REPORT_ID) अणु
+		/* Running in BL mode or unknown response data पढ़ो. */
 		dev_err(dev, "invalid report_id=0x%02x\n", report_id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (report_id == PIP_TOUCH_REPORT_ID &&
+	अगर (report_id == PIP_TOUCH_REPORT_ID &&
 		(report_len < PIP_TOUCH_REPORT_HEAD_SIZE ||
-			report_len > PIP_TOUCH_REPORT_MAX_SIZE)) {
-		/* Invalid report data length for finger packet. */
+			report_len > PIP_TOUCH_REPORT_MAX_SIZE)) अणु
+		/* Invalid report data length क्रम finger packet. */
 		dev_err(dev, "invalid touch packet length=%d\n", report_len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if ((report_id == PIP_BTN_REPORT_ID ||
+	अगर ((report_id == PIP_BTN_REPORT_ID ||
 			report_id == GEN5_OLD_PUSH_BTN_REPORT_ID ||
 			report_id == PIP_PUSH_BTN_REPORT_ID) &&
 		(report_len < PIP_BTN_REPORT_HEAD_SIZE ||
-			report_len > PIP_BTN_REPORT_MAX_SIZE)) {
+			report_len > PIP_BTN_REPORT_MAX_SIZE)) अणु
 		/* Invalid report data length of button packet. */
 		dev_err(dev, "invalid button packet length=%d\n", report_len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (report_id == PIP_PROXIMITY_REPORT_ID &&
-			report_len != PIP_PROXIMITY_REPORT_SIZE) {
+	अगर (report_id == PIP_PROXIMITY_REPORT_ID &&
+			report_len != PIP_PROXIMITY_REPORT_SIZE) अणु
 		/* Invalid report data length of proximity packet. */
 		dev_err(dev, "invalid proximity data, length=%d\n", report_len);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (report_id == PIP_TOUCH_REPORT_ID)
+	अगर (report_id == PIP_TOUCH_REPORT_ID)
 		cyapa_pip_report_touches(cyapa, report_data);
-	else if (report_id == PIP_PROXIMITY_REPORT_ID)
+	अन्यथा अगर (report_id == PIP_PROXIMITY_REPORT_ID)
 		cyapa_pip_report_proximity(cyapa, report_data);
-	else
+	अन्यथा
 		cyapa_pip_report_buttons(cyapa, report_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cyapa_pip_bl_activate(struct cyapa *cyapa) { return 0; }
-int cyapa_pip_bl_deactivate(struct cyapa *cyapa) { return 0; }
+पूर्णांक cyapa_pip_bl_activate(काष्ठा cyapa *cyapa) अणु वापस 0; पूर्ण
+पूर्णांक cyapa_pip_bl_deactivate(काष्ठा cyapa *cyapa) अणु वापस 0; पूर्ण
 
 
-const struct cyapa_dev_ops cyapa_gen5_ops = {
+स्थिर काष्ठा cyapa_dev_ops cyapa_gen5_ops = अणु
 	.check_fw = cyapa_pip_check_fw,
 	.bl_enter = cyapa_pip_bl_enter,
 	.bl_initiate = cyapa_pip_bl_initiate,
-	.update_fw = cyapa_pip_do_fw_update,
+	.update_fw = cyapa_pip_करो_fw_update,
 	.bl_activate = cyapa_pip_bl_activate,
 	.bl_deactivate = cyapa_pip_bl_deactivate,
 
 	.show_baseline = cyapa_gen5_show_baseline,
-	.calibrate_store = cyapa_pip_do_calibrate,
+	.calibrate_store = cyapa_pip_करो_calibrate,
 
 	.initialize = cyapa_pip_cmd_state_initialize,
 
 	.state_parse = cyapa_gen5_state_parse,
-	.operational_check = cyapa_gen5_do_operational_check,
+	.operational_check = cyapa_gen5_करो_operational_check,
 
 	.irq_handler = cyapa_pip_irq_handler,
 	.irq_cmd_handler = cyapa_pip_irq_cmd_handler,
 	.sort_empty_output_data = cyapa_empty_pip_output_data,
-	.set_power_mode = cyapa_gen5_set_power_mode,
+	.set_घातer_mode = cyapa_gen5_set_घातer_mode,
 
 	.set_proximity = cyapa_pip_set_proximity,
-};
+पूर्ण;

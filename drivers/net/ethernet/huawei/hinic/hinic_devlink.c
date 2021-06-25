@@ -1,217 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
  * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * for more details.
+ * क्रम more details.
  *
  */
-#include <linux/netlink.h>
-#include <net/devlink.h>
-#include <linux/firmware.h>
+#समावेश <linux/netlink.h>
+#समावेश <net/devlink.h>
+#समावेश <linux/firmware.h>
 
-#include "hinic_port.h"
-#include "hinic_devlink.h"
-#include "hinic_hw_dev.h"
+#समावेश "hinic_port.h"
+#समावेश "hinic_devlink.h"
+#समावेश "hinic_hw_dev.h"
 
-static bool check_image_valid(struct hinic_devlink_priv *priv, const u8 *buf,
-			      u32 image_size, struct host_image_st *host_image)
-{
-	struct fw_image_st *fw_image = NULL;
+अटल bool check_image_valid(काष्ठा hinic_devlink_priv *priv, स्थिर u8 *buf,
+			      u32 image_size, काष्ठा host_image_st *host_image)
+अणु
+	काष्ठा fw_image_st *fw_image = शून्य;
 	u32 len = 0;
 	u32 i;
 
-	fw_image = (struct fw_image_st *)buf;
+	fw_image = (काष्ठा fw_image_st *)buf;
 
-	if (fw_image->fw_magic != HINIC_MAGIC_NUM) {
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Wrong fw_magic read from file, fw_magic: 0x%x\n",
+	अगर (fw_image->fw_magic != HINIC_MAGIC_NUM) अणु
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Wrong fw_magic read from file, fw_magic: 0x%x\n",
 			fw_image->fw_magic);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (fw_image->fw_info.fw_section_cnt > MAX_FW_TYPE_NUM) {
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Wrong fw_type_num read from file, fw_type_num: 0x%x\n",
+	अगर (fw_image->fw_info.fw_section_cnt > MAX_FW_TYPE_NUM) अणु
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Wrong fw_type_num read from file, fw_type_num: 0x%x\n",
 			fw_image->fw_info.fw_section_cnt);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	for (i = 0; i < fw_image->fw_info.fw_section_cnt; i++) {
+	क्रम (i = 0; i < fw_image->fw_info.fw_section_cnt; i++) अणु
 		len += fw_image->fw_section_info[i].fw_section_len;
-		memcpy(&host_image->image_section_info[i],
+		स_नकल(&host_image->image_section_info[i],
 		       &fw_image->fw_section_info[i],
-		       sizeof(struct fw_section_info_st));
-	}
+		       माप(काष्ठा fw_section_info_st));
+	पूर्ण
 
-	if (len != fw_image->fw_len ||
-	    (fw_image->fw_len + UPDATEFW_IMAGE_HEAD_SIZE) != image_size) {
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Wrong data size read from file\n");
-		return false;
-	}
+	अगर (len != fw_image->fw_len ||
+	    (fw_image->fw_len + UPDATEFW_IMAGE_HEAD_SIZE) != image_size) अणु
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Wrong data size read from file\n");
+		वापस false;
+	पूर्ण
 
 	host_image->image_info.up_total_len = fw_image->fw_len;
 	host_image->image_info.fw_version = fw_image->fw_version;
 	host_image->section_type_num = fw_image->fw_info.fw_section_cnt;
 	host_image->device_id = fw_image->device_id;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool check_image_integrity(struct hinic_devlink_priv *priv,
-				  struct host_image_st *host_image,
+अटल bool check_image_पूर्णांकegrity(काष्ठा hinic_devlink_priv *priv,
+				  काष्ठा host_image_st *host_image,
 				  u32 update_type)
-{
+अणु
 	u32 collect_section_type = 0;
 	u32 i, type;
 
-	for (i = 0; i < host_image->section_type_num; i++) {
+	क्रम (i = 0; i < host_image->section_type_num; i++) अणु
 		type = host_image->image_section_info[i].fw_section_type;
-		if (collect_section_type & (1U << type)) {
-			dev_err(&priv->hwdev->hwif->pdev->dev, "Duplicate section type: %u\n",
+		अगर (collect_section_type & (1U << type)) अणु
+			dev_err(&priv->hwdev->hwअगर->pdev->dev, "Duplicate section type: %u\n",
 				type);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		collect_section_type |= (1U << type);
-	}
+	पूर्ण
 
-	if (update_type == FW_UPDATE_COLD &&
+	अगर (update_type == FW_UPDATE_COLD &&
 	    (((collect_section_type & _IMAGE_COLD_SUB_MODULES_MUST_IN) ==
 	       _IMAGE_COLD_SUB_MODULES_MUST_IN) ||
 	      collect_section_type == _IMAGE_CFG_SUB_MODULES_MUST_IN))
-		return true;
+		वापस true;
 
-	if (update_type == FW_UPDATE_HOT &&
+	अगर (update_type == FW_UPDATE_HOT &&
 	    (collect_section_type & _IMAGE_HOT_SUB_MODULES_MUST_IN) ==
 	    _IMAGE_HOT_SUB_MODULES_MUST_IN)
-		return true;
+		वापस true;
 
-	if (update_type == FW_UPDATE_COLD)
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Check file integrity failed, valid: 0x%x or 0x%lx, current: 0x%x\n",
+	अगर (update_type == FW_UPDATE_COLD)
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Check file integrity failed, valid: 0x%x or 0x%lx, current: 0x%x\n",
 			_IMAGE_COLD_SUB_MODULES_MUST_IN,
 			_IMAGE_CFG_SUB_MODULES_MUST_IN, collect_section_type);
-	else
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Check file integrity failed, valid:0x%x, current: 0x%x\n",
+	अन्यथा
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Check file integrity failed, valid:0x%x, current: 0x%x\n",
 			_IMAGE_HOT_SUB_MODULES_MUST_IN, collect_section_type);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int check_image_device_type(struct hinic_devlink_priv *priv,
+अटल पूर्णांक check_image_device_type(काष्ठा hinic_devlink_priv *priv,
 				   u32 image_device_type)
-{
-	struct hinic_comm_board_info board_info = {0};
+अणु
+	काष्ठा hinic_comm_board_info board_info = अणु0पूर्ण;
 
-	if (hinic_get_board_info(priv->hwdev, &board_info)) {
-		dev_err(&priv->hwdev->hwif->pdev->dev, "Get board info failed\n");
-		return false;
-	}
+	अगर (hinic_get_board_info(priv->hwdev, &board_info)) अणु
+		dev_err(&priv->hwdev->hwअगर->pdev->dev, "Get board info failed\n");
+		वापस false;
+	पूर्ण
 
-	if (image_device_type == board_info.info.board_type)
-		return true;
+	अगर (image_device_type == board_info.info.board_type)
+		वापस true;
 
-	dev_err(&priv->hwdev->hwif->pdev->dev, "The device type of upgrade file doesn't match the device type of current firmware, please check the upgrade file\n");
-	dev_err(&priv->hwdev->hwif->pdev->dev, "The image device type: 0x%x, firmware device type: 0x%x\n",
+	dev_err(&priv->hwdev->hwअगर->pdev->dev, "The device type of upgrade file doesn't match the device type of current firmware, please check the upgrade file\n");
+	dev_err(&priv->hwdev->hwअगर->pdev->dev, "The image device type: 0x%x, firmware device type: 0x%x\n",
 		image_device_type, board_info.info.board_type);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int hinic_flash_fw(struct hinic_devlink_priv *priv, const u8 *data,
-			  struct host_image_st *host_image)
-{
-	u32 section_remain_send_len, send_fragment_len, send_pos, up_total_len;
-	struct hinic_cmd_update_fw *fw_update_msg = NULL;
+अटल पूर्णांक hinic_flash_fw(काष्ठा hinic_devlink_priv *priv, स्थिर u8 *data,
+			  काष्ठा host_image_st *host_image)
+अणु
+	u32 section_reमुख्य_send_len, send_fragment_len, send_pos, up_total_len;
+	काष्ठा hinic_cmd_update_fw *fw_update_msg = शून्य;
 	u32 section_type, section_crc, section_version;
 	u32 i, len, section_len, section_offset;
-	u16 out_size = sizeof(*fw_update_msg);
-	int total_len_flag = 0;
-	int err;
+	u16 out_size = माप(*fw_update_msg);
+	पूर्णांक total_len_flag = 0;
+	पूर्णांक err;
 
-	fw_update_msg = kzalloc(sizeof(*fw_update_msg), GFP_KERNEL);
-	if (!fw_update_msg)
-		return -ENOMEM;
+	fw_update_msg = kzalloc(माप(*fw_update_msg), GFP_KERNEL);
+	अगर (!fw_update_msg)
+		वापस -ENOMEM;
 
 	up_total_len = host_image->image_info.up_total_len;
 
-	for (i = 0; i < host_image->section_type_num; i++) {
+	क्रम (i = 0; i < host_image->section_type_num; i++) अणु
 		len = host_image->image_section_info[i].fw_section_len;
-		if (host_image->image_section_info[i].fw_section_type ==
-		    UP_FW_UPDATE_BOOT) {
+		अगर (host_image->image_section_info[i].fw_section_type ==
+		    UP_FW_UPDATE_BOOT) अणु
 			up_total_len = up_total_len - len;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < host_image->section_type_num; i++) {
+	क्रम (i = 0; i < host_image->section_type_num; i++) अणु
 		section_len =
 			host_image->image_section_info[i].fw_section_len;
 		section_offset =
 			host_image->image_section_info[i].fw_section_offset;
-		section_remain_send_len = section_len;
+		section_reमुख्य_send_len = section_len;
 		section_type =
 			host_image->image_section_info[i].fw_section_type;
 		section_crc = host_image->image_section_info[i].fw_section_crc;
 		section_version =
 			host_image->image_section_info[i].fw_section_version;
 
-		if (section_type == UP_FW_UPDATE_BOOT)
-			continue;
+		अगर (section_type == UP_FW_UPDATE_BOOT)
+			जारी;
 
 		send_fragment_len = 0;
 		send_pos = 0;
 
-		while (section_remain_send_len > 0) {
-			if (!total_len_flag) {
+		जबतक (section_reमुख्य_send_len > 0) अणु
+			अगर (!total_len_flag) अणु
 				fw_update_msg->total_len = up_total_len;
 				total_len_flag = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				fw_update_msg->total_len = 0;
-			}
+			पूर्ण
 
-			memset(fw_update_msg->data, 0, MAX_FW_FRAGMENT_LEN);
+			स_रखो(fw_update_msg->data, 0, MAX_FW_FRAGMENT_LEN);
 
 			fw_update_msg->ctl_info.SF =
-				(section_remain_send_len == section_len) ?
+				(section_reमुख्य_send_len == section_len) ?
 				true : false;
 			fw_update_msg->section_info.FW_section_CRC = section_crc;
 			fw_update_msg->fw_section_version = section_version;
 			fw_update_msg->ctl_info.flag = UP_TYPE_A;
 
-			if (section_type <= UP_FW_UPDATE_UP_DATA_B) {
+			अगर (section_type <= UP_FW_UPDATE_UP_DATA_B) अणु
 				fw_update_msg->section_info.FW_section_type =
 					(section_type % 2) ?
 					UP_FW_UPDATE_UP_DATA :
 					UP_FW_UPDATE_UP_TEXT;
 
 				fw_update_msg->ctl_info.flag = UP_TYPE_B;
-				if (section_type <= UP_FW_UPDATE_UP_DATA_A)
+				अगर (section_type <= UP_FW_UPDATE_UP_DATA_A)
 					fw_update_msg->ctl_info.flag = UP_TYPE_A;
-			} else {
+			पूर्ण अन्यथा अणु
 				fw_update_msg->section_info.FW_section_type =
 					section_type - 0x2;
-			}
+			पूर्ण
 
 			fw_update_msg->setion_total_len = section_len;
 			fw_update_msg->section_offset = send_pos;
 
-			if (section_remain_send_len <= MAX_FW_FRAGMENT_LEN) {
+			अगर (section_reमुख्य_send_len <= MAX_FW_FRAGMENT_LEN) अणु
 				fw_update_msg->ctl_info.SL = true;
 				fw_update_msg->ctl_info.fragment_len =
-					section_remain_send_len;
-				send_fragment_len += section_remain_send_len;
-			} else {
+					section_reमुख्य_send_len;
+				send_fragment_len += section_reमुख्य_send_len;
+			पूर्ण अन्यथा अणु
 				fw_update_msg->ctl_info.SL = false;
 				fw_update_msg->ctl_info.fragment_len =
 					MAX_FW_FRAGMENT_LEN;
 				send_fragment_len += MAX_FW_FRAGMENT_LEN;
-			}
+			पूर्ण
 
-			memcpy(fw_update_msg->data,
+			स_नकल(fw_update_msg->data,
 			       data + UPDATEFW_IMAGE_HEAD_SIZE +
 			       section_offset + send_pos,
 			       fw_update_msg->ctl_info.fragment_len);
@@ -219,368 +220,368 @@ static int hinic_flash_fw(struct hinic_devlink_priv *priv, const u8 *data,
 			err = hinic_port_msg_cmd(priv->hwdev,
 						 HINIC_PORT_CMD_UPDATE_FW,
 						 fw_update_msg,
-						 sizeof(*fw_update_msg),
+						 माप(*fw_update_msg),
 						 fw_update_msg, &out_size);
-			if (err || !out_size || fw_update_msg->status) {
-				dev_err(&priv->hwdev->hwif->pdev->dev, "Failed to update firmware, err: %d, status: 0x%x, out size: 0x%x\n",
+			अगर (err || !out_size || fw_update_msg->status) अणु
+				dev_err(&priv->hwdev->hwअगर->pdev->dev, "Failed to update firmware, err: %d, status: 0x%x, out size: 0x%x\n",
 					err, fw_update_msg->status, out_size);
 				err = fw_update_msg->status ?
 					fw_update_msg->status : -EIO;
-				kfree(fw_update_msg);
-				return err;
-			}
+				kमुक्त(fw_update_msg);
+				वापस err;
+			पूर्ण
 
 			send_pos = send_fragment_len;
-			section_remain_send_len = section_len -
+			section_reमुख्य_send_len = section_len -
 						  send_fragment_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	kfree(fw_update_msg);
+	kमुक्त(fw_update_msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hinic_firmware_update(struct hinic_devlink_priv *priv,
-				 const struct firmware *fw,
-				 struct netlink_ext_ack *extack)
-{
-	struct host_image_st host_image;
-	int err;
+अटल पूर्णांक hinic_firmware_update(काष्ठा hinic_devlink_priv *priv,
+				 स्थिर काष्ठा firmware *fw,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा host_image_st host_image;
+	पूर्णांक err;
 
-	memset(&host_image, 0, sizeof(struct host_image_st));
+	स_रखो(&host_image, 0, माप(काष्ठा host_image_st));
 
-	if (!check_image_valid(priv, fw->data, fw->size, &host_image) ||
-	    !check_image_integrity(priv, &host_image, FW_UPDATE_COLD) ||
-	    !check_image_device_type(priv, host_image.device_id)) {
+	अगर (!check_image_valid(priv, fw->data, fw->size, &host_image) ||
+	    !check_image_पूर्णांकegrity(priv, &host_image, FW_UPDATE_COLD) ||
+	    !check_image_device_type(priv, host_image.device_id)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "Check image failed");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	dev_info(&priv->hwdev->hwif->pdev->dev, "Flash firmware begin\n");
+	dev_info(&priv->hwdev->hwअगर->pdev->dev, "Flash firmware begin\n");
 
 	err = hinic_flash_fw(priv, fw->data, &host_image);
-	if (err) {
-		if (err == HINIC_FW_DISMATCH_ERROR) {
-			dev_err(&priv->hwdev->hwif->pdev->dev, "Firmware image doesn't match this card, please use newer image, err: %d\n",
+	अगर (err) अणु
+		अगर (err == HINIC_FW_DISMATCH_ERROR) अणु
+			dev_err(&priv->hwdev->hwअगर->pdev->dev, "Firmware image doesn't match this card, please use newer image, err: %d\n",
 				err);
 			NL_SET_ERR_MSG_MOD(extack,
 					   "Firmware image doesn't match this card, please use newer image");
-		} else {
-			dev_err(&priv->hwdev->hwif->pdev->dev, "Send firmware image data failed, err: %d\n",
+		पूर्ण अन्यथा अणु
+			dev_err(&priv->hwdev->hwअगर->pdev->dev, "Send firmware image data failed, err: %d\n",
 				err);
 			NL_SET_ERR_MSG_MOD(extack, "Send firmware image data failed");
-		}
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	dev_info(&priv->hwdev->hwif->pdev->dev, "Flash firmware end\n");
+	dev_info(&priv->hwdev->hwअगर->pdev->dev, "Flash firmware end\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hinic_devlink_flash_update(struct devlink *devlink,
-				      struct devlink_flash_update_params *params,
-				      struct netlink_ext_ack *extack)
-{
-	struct hinic_devlink_priv *priv = devlink_priv(devlink);
+अटल पूर्णांक hinic_devlink_flash_update(काष्ठा devlink *devlink,
+				      काष्ठा devlink_flash_update_params *params,
+				      काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा hinic_devlink_priv *priv = devlink_priv(devlink);
 
-	return hinic_firmware_update(priv, params->fw, extack);
-}
+	वापस hinic_firmware_update(priv, params->fw, extack);
+पूर्ण
 
-static const struct devlink_ops hinic_devlink_ops = {
+अटल स्थिर काष्ठा devlink_ops hinic_devlink_ops = अणु
 	.flash_update = hinic_devlink_flash_update,
-};
+पूर्ण;
 
-struct devlink *hinic_devlink_alloc(void)
-{
-	return devlink_alloc(&hinic_devlink_ops, sizeof(struct hinic_dev));
-}
+काष्ठा devlink *hinic_devlink_alloc(व्योम)
+अणु
+	वापस devlink_alloc(&hinic_devlink_ops, माप(काष्ठा hinic_dev));
+पूर्ण
 
-void hinic_devlink_free(struct devlink *devlink)
-{
-	devlink_free(devlink);
-}
+व्योम hinic_devlink_मुक्त(काष्ठा devlink *devlink)
+अणु
+	devlink_मुक्त(devlink);
+पूर्ण
 
-int hinic_devlink_register(struct hinic_devlink_priv *priv, struct device *dev)
-{
-	struct devlink *devlink = priv_to_devlink(priv);
+पूर्णांक hinic_devlink_रेजिस्टर(काष्ठा hinic_devlink_priv *priv, काष्ठा device *dev)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(priv);
 
-	return devlink_register(devlink, dev);
-}
+	वापस devlink_रेजिस्टर(devlink, dev);
+पूर्ण
 
-void hinic_devlink_unregister(struct hinic_devlink_priv *priv)
-{
-	struct devlink *devlink = priv_to_devlink(priv);
+व्योम hinic_devlink_unरेजिस्टर(काष्ठा hinic_devlink_priv *priv)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(priv);
 
-	devlink_unregister(devlink);
-}
+	devlink_unरेजिस्टर(devlink);
+पूर्ण
 
-static int chip_fault_show(struct devlink_fmsg *fmsg,
-			   struct hinic_fault_event *event)
-{
-	const char * const level_str[FAULT_LEVEL_MAX + 1] = {
-		"fatal", "reset", "flr", "general", "suggestion", "Unknown"};
+अटल पूर्णांक chip_fault_show(काष्ठा devlink_fmsg *fmsg,
+			   काष्ठा hinic_fault_event *event)
+अणु
+	स्थिर अक्षर * स्थिर level_str[FAULT_LEVEL_MAX + 1] = अणु
+		"fatal", "reset", "flr", "general", "suggestion", "Unknown"पूर्ण;
 	u8 fault_level;
-	int err;
+	पूर्णांक err;
 
 	fault_level = (event->event.chip.err_level < FAULT_LEVEL_MAX) ?
 		event->event.chip.err_level : FAULT_LEVEL_MAX;
-	if (fault_level == FAULT_LEVEL_SERIOUS_FLR) {
+	अगर (fault_level == FAULT_LEVEL_SERIOUS_FLR) अणु
 		err = devlink_fmsg_u32_pair_put(fmsg, "Function level err func_id",
 						(u32)event->event.chip.func_id);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	err = devlink_fmsg_u8_pair_put(fmsg, "module_id", event->event.chip.node_id);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_u32_pair_put(fmsg, "err_type", (u32)event->event.chip.err_type);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_string_pair_put(fmsg, "err_level", level_str[fault_level]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_u32_pair_put(fmsg, "err_csr_addr",
 					event->event.chip.err_csr_addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_u32_pair_put(fmsg, "err_csr_value",
 					event->event.chip.err_csr_value);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fault_report_show(struct devlink_fmsg *fmsg,
-			     struct hinic_fault_event *event)
-{
-	const char * const type_str[FAULT_TYPE_MAX + 1] = {
+अटल पूर्णांक fault_report_show(काष्ठा devlink_fmsg *fmsg,
+			     काष्ठा hinic_fault_event *event)
+अणु
+	स्थिर अक्षर * स्थिर type_str[FAULT_TYPE_MAX + 1] = अणु
 		"chip", "ucode", "mem rd timeout", "mem wr timeout",
-		"reg rd timeout", "reg wr timeout", "phy fault", "Unknown"};
+		"reg rd timeout", "reg wr timeout", "phy fault", "Unknown"पूर्ण;
 	u8 fault_type;
-	int err;
+	पूर्णांक err;
 
 	fault_type = (event->type < FAULT_TYPE_MAX) ? event->type : FAULT_TYPE_MAX;
 
 	err = devlink_fmsg_string_pair_put(fmsg, "Fault type", type_str[fault_type]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_binary_pair_put(fmsg, "Fault raw data",
-					   event->event.val, sizeof(event->event.val));
-	if (err)
-		return err;
+					   event->event.val, माप(event->event.val));
+	अगर (err)
+		वापस err;
 
-	switch (event->type) {
-	case FAULT_TYPE_CHIP:
+	चयन (event->type) अणु
+	हाल FAULT_TYPE_CHIP:
 		err = chip_fault_show(fmsg, event);
-		if (err)
-			return err;
-		break;
-	case FAULT_TYPE_UCODE:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल FAULT_TYPE_UCODE:
 		err = devlink_fmsg_u8_pair_put(fmsg, "Cause_id", event->event.ucode.cause_id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg, "core_id", event->event.ucode.core_id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg, "c_id", event->event.ucode.c_id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg, "epc", event->event.ucode.epc);
-		if (err)
-			return err;
-		break;
-	case FAULT_TYPE_MEM_RD_TIMEOUT:
-	case FAULT_TYPE_MEM_WR_TIMEOUT:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल FAULT_TYPE_MEM_RD_TIMEOUT:
+	हाल FAULT_TYPE_MEM_WR_TIMEOUT:
 		err = devlink_fmsg_u32_pair_put(fmsg, "Err_csr_ctrl",
-						event->event.mem_timeout.err_csr_ctrl);
-		if (err)
-			return err;
+						event->event.mem_समयout.err_csr_ctrl);
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u32_pair_put(fmsg, "err_csr_data",
-						event->event.mem_timeout.err_csr_data);
-		if (err)
-			return err;
+						event->event.mem_समयout.err_csr_data);
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u32_pair_put(fmsg, "ctrl_tab",
-						event->event.mem_timeout.ctrl_tab);
-		if (err)
-			return err;
+						event->event.mem_समयout.ctrl_tab);
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u32_pair_put(fmsg, "mem_index",
-						event->event.mem_timeout.mem_index);
-		if (err)
-			return err;
-		break;
-	case FAULT_TYPE_REG_RD_TIMEOUT:
-	case FAULT_TYPE_REG_WR_TIMEOUT:
-		err = devlink_fmsg_u32_pair_put(fmsg, "Err_csr", event->event.reg_timeout.err_csr);
-		if (err)
-			return err;
-		break;
-	case FAULT_TYPE_PHY_FAULT:
+						event->event.mem_समयout.mem_index);
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल FAULT_TYPE_REG_RD_TIMEOUT:
+	हाल FAULT_TYPE_REG_WR_TIMEOUT:
+		err = devlink_fmsg_u32_pair_put(fmsg, "Err_csr", event->event.reg_समयout.err_csr);
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल FAULT_TYPE_PHY_FAULT:
 		err = devlink_fmsg_u8_pair_put(fmsg, "Op_type", event->event.phy_fault.op_type);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg, "port_id", event->event.phy_fault.port_id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg, "dev_ad", event->event.phy_fault.dev_ad);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = devlink_fmsg_u32_pair_put(fmsg, "csr_addr", event->event.phy_fault.csr_addr);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u32_pair_put(fmsg, "op_data", event->event.phy_fault.op_data);
-		if (err)
-			return err;
-		break;
-	default:
-		break;
-	}
+		अगर (err)
+			वापस err;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hinic_hw_reporter_dump(struct devlink_health_reporter *reporter,
-				  struct devlink_fmsg *fmsg, void *priv_ctx,
-				  struct netlink_ext_ack *extack)
-{
-	if (priv_ctx)
-		return fault_report_show(fmsg, priv_ctx);
+अटल पूर्णांक hinic_hw_reporter_dump(काष्ठा devlink_health_reporter *reporter,
+				  काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (priv_ctx)
+		वापस fault_report_show(fmsg, priv_ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mgmt_watchdog_report_show(struct devlink_fmsg *fmsg,
-				     struct hinic_mgmt_watchdog_info *watchdog_info)
-{
-	int err;
+अटल पूर्णांक mgmt_watchकरोg_report_show(काष्ठा devlink_fmsg *fmsg,
+				     काष्ठा hinic_mgmt_watchकरोg_info *watchकरोg_info)
+अणु
+	पूर्णांक err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "Mgmt deadloop time_h", watchdog_info->curr_time_h);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "Mgmt deadloop time_h", watchकरोg_info->curr_समय_h);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "time_l", watchdog_info->curr_time_l);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "time_l", watchकरोg_info->curr_समय_l);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "task_id", watchdog_info->task_id);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "task_id", watchकरोg_info->task_id);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "sp", watchdog_info->sp);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "sp", watchकरोg_info->sp);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "stack_current_used", watchdog_info->curr_used);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "stack_current_used", watchकरोg_info->curr_used);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "peak_used", watchdog_info->peak_used);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "peak_used", watchकरोg_info->peak_used);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "\n Overflow_flag", watchdog_info->is_overflow);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "\n Overflow_flag", watchकरोg_info->is_overflow);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "stack_top", watchdog_info->stack_top);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "stack_top", watchकरोg_info->stack_top);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "stack_bottom", watchdog_info->stack_bottom);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "stack_bottom", watchकरोg_info->stack_bottom);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "mgmt_pc", watchdog_info->pc);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "mgmt_pc", watchकरोg_info->pc);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "lr", watchdog_info->lr);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "lr", watchकरोg_info->lr);
+	अगर (err)
+		वापस err;
 
-	err = devlink_fmsg_u32_pair_put(fmsg, "cpsr", watchdog_info->cpsr);
-	if (err)
-		return err;
+	err = devlink_fmsg_u32_pair_put(fmsg, "cpsr", watchकरोg_info->cpsr);
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_binary_pair_put(fmsg, "Mgmt register info",
-					   watchdog_info->reg, sizeof(watchdog_info->reg));
-	if (err)
-		return err;
+					   watchकरोg_info->reg, माप(watchकरोg_info->reg));
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_binary_pair_put(fmsg, "Mgmt dump stack(start from sp)",
-					   watchdog_info->data, sizeof(watchdog_info->data));
-	if (err)
-		return err;
+					   watchकरोg_info->data, माप(watchकरोg_info->data));
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hinic_fw_reporter_dump(struct devlink_health_reporter *reporter,
-				  struct devlink_fmsg *fmsg, void *priv_ctx,
-				  struct netlink_ext_ack *extack)
-{
-	if (priv_ctx)
-		return mgmt_watchdog_report_show(fmsg, priv_ctx);
+अटल पूर्णांक hinic_fw_reporter_dump(काष्ठा devlink_health_reporter *reporter,
+				  काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (priv_ctx)
+		वापस mgmt_watchकरोg_report_show(fmsg, priv_ctx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct devlink_health_reporter_ops hinic_hw_fault_reporter_ops = {
+अटल स्थिर काष्ठा devlink_health_reporter_ops hinic_hw_fault_reporter_ops = अणु
 	.name = "hw",
 	.dump = hinic_hw_reporter_dump,
-};
+पूर्ण;
 
-static const struct devlink_health_reporter_ops hinic_fw_fault_reporter_ops = {
+अटल स्थिर काष्ठा devlink_health_reporter_ops hinic_fw_fault_reporter_ops = अणु
 	.name = "fw",
 	.dump = hinic_fw_reporter_dump,
-};
+पूर्ण;
 
-int hinic_health_reporters_create(struct hinic_devlink_priv *priv)
-{
-	struct devlink *devlink = priv_to_devlink(priv);
+पूर्णांक hinic_health_reporters_create(काष्ठा hinic_devlink_priv *priv)
+अणु
+	काष्ठा devlink *devlink = priv_to_devlink(priv);
 
 	priv->hw_fault_reporter =
 		devlink_health_reporter_create(devlink, &hinic_hw_fault_reporter_ops,
 					       0, priv);
-	if (IS_ERR(priv->hw_fault_reporter)) {
-		dev_warn(&priv->hwdev->hwif->pdev->dev, "Failed to create hw fault reporter, err: %ld\n",
+	अगर (IS_ERR(priv->hw_fault_reporter)) अणु
+		dev_warn(&priv->hwdev->hwअगर->pdev->dev, "Failed to create hw fault reporter, err: %ld\n",
 			 PTR_ERR(priv->hw_fault_reporter));
-		return PTR_ERR(priv->hw_fault_reporter);
-	}
+		वापस PTR_ERR(priv->hw_fault_reporter);
+	पूर्ण
 
 	priv->fw_fault_reporter =
 		devlink_health_reporter_create(devlink, &hinic_fw_fault_reporter_ops,
 					       0, priv);
-	if (IS_ERR(priv->fw_fault_reporter)) {
-		dev_warn(&priv->hwdev->hwif->pdev->dev, "Failed to create fw fault reporter, err: %ld\n",
+	अगर (IS_ERR(priv->fw_fault_reporter)) अणु
+		dev_warn(&priv->hwdev->hwअगर->pdev->dev, "Failed to create fw fault reporter, err: %ld\n",
 			 PTR_ERR(priv->fw_fault_reporter));
 		devlink_health_reporter_destroy(priv->hw_fault_reporter);
-		priv->hw_fault_reporter = NULL;
-		return PTR_ERR(priv->fw_fault_reporter);
-	}
+		priv->hw_fault_reporter = शून्य;
+		वापस PTR_ERR(priv->fw_fault_reporter);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hinic_health_reporters_destroy(struct hinic_devlink_priv *priv)
-{
-	if (!IS_ERR_OR_NULL(priv->fw_fault_reporter)) {
+व्योम hinic_health_reporters_destroy(काष्ठा hinic_devlink_priv *priv)
+अणु
+	अगर (!IS_ERR_OR_शून्य(priv->fw_fault_reporter)) अणु
 		devlink_health_reporter_destroy(priv->fw_fault_reporter);
-		priv->fw_fault_reporter = NULL;
-	}
+		priv->fw_fault_reporter = शून्य;
+	पूर्ण
 
-	if (!IS_ERR_OR_NULL(priv->hw_fault_reporter)) {
+	अगर (!IS_ERR_OR_शून्य(priv->hw_fault_reporter)) अणु
 		devlink_health_reporter_destroy(priv->hw_fault_reporter);
-		priv->hw_fault_reporter = NULL;
-	}
-}
+		priv->hw_fault_reporter = शून्य;
+	पूर्ण
+पूर्ण

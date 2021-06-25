@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sysctl_net_atalk.c: sysctl interface to net AppleTalk subsystem.
+ * sysctl_net_atalk.c: sysctl पूर्णांकerface to net AppleTalk subप्रणाली.
  *
  * Begun April 1, 1996, Mike Shaver.
  * Added /proc/sys/net/atalk directory entry (empty =) ). [MS]
  * Dynamic registration, added aarp entries. (5/30/97 Chris Horn)
  */
 
-#include <linux/sysctl.h>
-#include <net/sock.h>
-#include <linux/atalk.h>
+#समावेश <linux/sysctl.h>
+#समावेश <net/sock.h>
+#समावेश <linux/atalk.h>
 
-static struct ctl_table atalk_table[] = {
-	{
+अटल काष्ठा ctl_table atalk_table[] = अणु
+	अणु
 		.procname	= "aarp-expiry-time",
-		.data		= &sysctl_aarp_expiry_time,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_aarp_expiry_समय,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणु
 		.procname	= "aarp-tick-time",
-		.data		= &sysctl_aarp_tick_time,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_aarp_tick_समय,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणु
 		.procname	= "aarp-retransmit-limit",
 		.data		= &sysctl_aarp_retransmit_limit,
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	{
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname	= "aarp-resolve-time",
-		.data		= &sysctl_aarp_resolve_time,
-		.maxlen		= sizeof(int),
+		.data		= &sysctl_aarp_resolve_समय,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	{ },
-};
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct ctl_table_header *atalk_table_header;
+अटल काष्ठा ctl_table_header *atalk_table_header;
 
-int __init atalk_register_sysctl(void)
-{
-	atalk_table_header = register_net_sysctl(&init_net, "net/appletalk", atalk_table);
-	if (!atalk_table_header)
-		return -ENOMEM;
-	return 0;
-}
+पूर्णांक __init atalk_रेजिस्टर_sysctl(व्योम)
+अणु
+	atalk_table_header = रेजिस्टर_net_sysctl(&init_net, "net/appletalk", atalk_table);
+	अगर (!atalk_table_header)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void atalk_unregister_sysctl(void)
-{
-	unregister_net_sysctl_table(atalk_table_header);
-}
+व्योम atalk_unरेजिस्टर_sysctl(व्योम)
+अणु
+	unरेजिस्टर_net_sysctl_table(atalk_table_header);
+पूर्ण

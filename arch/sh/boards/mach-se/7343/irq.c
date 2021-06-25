@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Hitachi UL SolutionEngine 7343 FPGA IRQ Support.
  *
@@ -8,74 +9,74 @@
  * Based on linux/arch/sh/boards/se/7343/irq.c
  * Copyright (C) 2007  Nobuhiro Iwamatsu
  */
-#define DRV_NAME "SE7343-FPGA"
-#define pr_fmt(fmt) DRV_NAME ": " fmt
+#घोषणा DRV_NAME "SE7343-FPGA"
+#घोषणा pr_fmt(fmt) DRV_NAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/irqdomain.h>
-#include <linux/io.h>
-#include <linux/sizes.h>
-#include <mach-se/mach/se7343.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/sizes.h>
+#समावेश <mach-se/mach/se7343.h>
 
-#define PA_CPLD_BASE_ADDR	0x11400000
-#define PA_CPLD_ST_REG		0x08	/* CPLD Interrupt status register */
-#define PA_CPLD_IMSK_REG	0x0a	/* CPLD Interrupt mask register */
+#घोषणा PA_CPLD_BASE_ADDR	0x11400000
+#घोषणा PA_CPLD_ST_REG		0x08	/* CPLD Interrupt status रेजिस्टर */
+#घोषणा PA_CPLD_IMSK_REG	0x0a	/* CPLD Interrupt mask रेजिस्टर */
 
-static void __iomem *se7343_irq_regs;
-struct irq_domain *se7343_irq_domain;
+अटल व्योम __iomem *se7343_irq_regs;
+काष्ठा irq_करोमुख्य *se7343_irq_करोमुख्य;
 
-static void se7343_irq_demux(struct irq_desc *desc)
-{
-	struct irq_data *data = irq_desc_get_irq_data(desc);
-	struct irq_chip *chip = irq_data_get_irq_chip(data);
-	unsigned long mask;
-	int bit;
+अटल व्योम se7343_irq_demux(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_data *data = irq_desc_get_irq_data(desc);
+	काष्ठा irq_chip *chip = irq_data_get_irq_chip(data);
+	अचिन्हित दीर्घ mask;
+	पूर्णांक bit;
 
 	chip->irq_mask_ack(data);
 
-	mask = ioread16(se7343_irq_regs + PA_CPLD_ST_REG);
+	mask = ioपढ़ो16(se7343_irq_regs + PA_CPLD_ST_REG);
 
-	for_each_set_bit(bit, &mask, SE7343_FPGA_IRQ_NR)
-		generic_handle_irq(irq_linear_revmap(se7343_irq_domain, bit));
+	क्रम_each_set_bit(bit, &mask, SE7343_FPGA_IRQ_NR)
+		generic_handle_irq(irq_linear_revmap(se7343_irq_करोमुख्य, bit));
 
 	chip->irq_unmask(data);
-}
+पूर्ण
 
-static void __init se7343_domain_init(void)
-{
-	int i;
+अटल व्योम __init se7343_करोमुख्य_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	se7343_irq_domain = irq_domain_add_linear(NULL, SE7343_FPGA_IRQ_NR,
-						  &irq_domain_simple_ops, NULL);
-	if (unlikely(!se7343_irq_domain)) {
-		printk("Failed to get IRQ domain\n");
-		return;
-	}
+	se7343_irq_करोमुख्य = irq_करोमुख्य_add_linear(शून्य, SE7343_FPGA_IRQ_NR,
+						  &irq_करोमुख्य_simple_ops, शून्य);
+	अगर (unlikely(!se7343_irq_करोमुख्य)) अणु
+		prपूर्णांकk("Failed to get IRQ domain\n");
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < SE7343_FPGA_IRQ_NR; i++) {
-		int irq = irq_create_mapping(se7343_irq_domain, i);
+	क्रम (i = 0; i < SE7343_FPGA_IRQ_NR; i++) अणु
+		पूर्णांक irq = irq_create_mapping(se7343_irq_करोमुख्य, i);
 
-		if (unlikely(irq == 0)) {
-			printk("Failed to allocate IRQ %d\n", i);
-			return;
-		}
-	}
-}
+		अगर (unlikely(irq == 0)) अणु
+			prपूर्णांकk("Failed to allocate IRQ %d\n", i);
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init se7343_gc_init(void)
-{
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
-	unsigned int irq_base;
+अटल व्योम __init se7343_gc_init(व्योम)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
+	अचिन्हित पूर्णांक irq_base;
 
-	irq_base = irq_linear_revmap(se7343_irq_domain, 0);
+	irq_base = irq_linear_revmap(se7343_irq_करोमुख्य, 0);
 
 	gc = irq_alloc_generic_chip(DRV_NAME, 1, irq_base, se7343_irq_regs,
 				    handle_level_irq);
-	if (unlikely(!gc))
-		return;
+	अगर (unlikely(!gc))
+		वापस;
 
 	ct = gc->chip_types;
 	ct->chip.irq_mask = irq_gc_mask_set_bit;
@@ -98,26 +99,26 @@ static void __init se7343_gc_init(void)
 
 	irq_set_chained_handler(IRQ5_IRQ, se7343_irq_demux);
 	irq_set_irq_type(IRQ5_IRQ, IRQ_TYPE_LEVEL_LOW);
-}
+पूर्ण
 
 /*
  * Initialize IRQ setting
  */
-void __init init_7343se_IRQ(void)
-{
+व्योम __init init_7343se_IRQ(व्योम)
+अणु
 	se7343_irq_regs = ioremap(PA_CPLD_BASE_ADDR, SZ_16);
-	if (unlikely(!se7343_irq_regs)) {
+	अगर (unlikely(!se7343_irq_regs)) अणु
 		pr_err("Failed to remap CPLD\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * All FPGA IRQs disabled by default
+	 * All FPGA IRQs disabled by शेष
 	 */
-	iowrite16(0, se7343_irq_regs + PA_CPLD_IMSK_REG);
+	ioग_लिखो16(0, se7343_irq_regs + PA_CPLD_IMSK_REG);
 
-	__raw_writew(0x2000, 0xb03fffec);	/* mrshpc irq enable */
+	__raw_ग_लिखोw(0x2000, 0xb03fffec);	/* mrshpc irq enable */
 
-	se7343_domain_init();
+	se7343_करोमुख्य_init();
 	se7343_gc_init();
-}
+पूर्ण

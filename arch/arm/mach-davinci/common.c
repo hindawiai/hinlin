@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Code commons to all DaVinci SoCs.
  *
@@ -8,94 +9,94 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/etherdevice.h>
-#include <linux/davinci_emac.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/davinci_emac.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <asm/tlb.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include <mach/common.h>
-#include <mach/cputype.h>
+#समावेश <mach/common.h>
+#समावेश <mach/cputype.h>
 
-struct davinci_soc_info davinci_soc_info;
+काष्ठा davinci_soc_info davinci_soc_info;
 EXPORT_SYMBOL(davinci_soc_info);
 
-static int __init davinci_init_id(struct davinci_soc_info *soc_info)
-{
-	int			i;
-	struct davinci_id	*dip;
+अटल पूर्णांक __init davinci_init_id(काष्ठा davinci_soc_info *soc_info)
+अणु
+	पूर्णांक			i;
+	काष्ठा davinci_id	*dip;
 	u8			variant;
 	u16			part_no;
-	void __iomem		*base;
+	व्योम __iomem		*base;
 
 	base = ioremap(soc_info->jtag_id_reg, SZ_4K);
-	if (!base) {
+	अगर (!base) अणु
 		pr_err("Unable to map JTAG ID register\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	soc_info->jtag_id = __raw_readl(base);
+	soc_info->jtag_id = __raw_पढ़ोl(base);
 	iounmap(base);
 
 	variant = (soc_info->jtag_id & 0xf0000000) >> 28;
 	part_no = (soc_info->jtag_id & 0x0ffff000) >> 12;
 
-	for (i = 0, dip = soc_info->ids; i < soc_info->ids_num;
+	क्रम (i = 0, dip = soc_info->ids; i < soc_info->ids_num;
 			i++, dip++)
 		/* Don't care about the manufacturer right now */
-		if ((dip->part_no == part_no) && (dip->variant == variant)) {
+		अगर ((dip->part_no == part_no) && (dip->variant == variant)) अणु
 			soc_info->cpu_id = dip->cpu_id;
 			pr_info("DaVinci %s variant 0x%x\n", dip->name,
 					dip->variant);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 	pr_err("Unknown DaVinci JTAG ID 0x%x\n", soc_info->jtag_id);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void __init davinci_common_init(const struct davinci_soc_info *soc_info)
-{
-	int ret;
+व्योम __init davinci_common_init(स्थिर काष्ठा davinci_soc_info *soc_info)
+अणु
+	पूर्णांक ret;
 
-	if (!soc_info) {
+	अगर (!soc_info) अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	memcpy(&davinci_soc_info, soc_info, sizeof(struct davinci_soc_info));
+	स_नकल(&davinci_soc_info, soc_info, माप(काष्ठा davinci_soc_info));
 
-	if (davinci_soc_info.io_desc && (davinci_soc_info.io_desc_num > 0))
+	अगर (davinci_soc_info.io_desc && (davinci_soc_info.io_desc_num > 0))
 		iotable_init(davinci_soc_info.io_desc,
 				davinci_soc_info.io_desc_num);
 
 	/*
 	 * Normally devicemaps_init() would flush caches and tlb after
-	 * mdesc->map_io(), but we must also do it here because of the CPU
+	 * mdesc->map_io(), but we must also करो it here because of the CPU
 	 * revision check below.
 	 */
 	local_flush_tlb_all();
 	flush_cache_all();
 
 	/*
-	 * We want to check CPU revision early for cpu_is_xxxx() macros.
-	 * IO space mapping must be initialized before we can do that.
+	 * We want to check CPU revision early क्रम cpu_is_xxxx() macros.
+	 * IO space mapping must be initialized beक्रमe we can करो that.
 	 */
 	ret = davinci_init_id(&davinci_soc_info);
-	if (ret < 0)
-		goto err;
+	अगर (ret < 0)
+		जाओ err;
 
 
-	return;
+	वापस;
 
 err:
 	panic("davinci_common_init: SoC Initialization failed\n");
-}
+पूर्ण
 
-void __init davinci_init_late(void)
-{
+व्योम __init davinci_init_late(व्योम)
+अणु
 	davinci_cpufreq_init();
-}
+पूर्ण

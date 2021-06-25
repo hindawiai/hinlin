@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * QNAP TS-x09 Boards common functions
  *
- * Maintainers: Lennert Buytenhek <buytenh@marvell.com>
+ * Maपूर्णांकainers: Lennert Buytenhek <buytenh@marvell.com>
  *		Byron Bradley <byron.bbradley@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/timex.h>
-#include <linux/serial_reg.h>
-#include "orion5x.h"
-#include "tsx09-common.h"
-#include "common.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/serial_reg.h>
+#समावेश "orion5x.h"
+#समावेश "tsx09-common.h"
+#समावेश "common.h"
 
 /*****************************************************************************
- * QNAP TS-x09 specific power off method via UART1-attached PIC
+ * QNAP TS-x09 specअगरic घातer off method via UART1-attached PIC
  ****************************************************************************/
 
-#define UART1_REG(x)	(UART1_VIRT_BASE + ((UART_##x) << 2))
+#घोषणा UART1_REG(x)	(UART1_VIRT_BASE + ((UART_##x) << 2))
 
-void qnap_tsx09_power_off(void)
-{
-	/* 19200 baud divisor */
-	const unsigned divisor = ((orion5x_tclk + (8 * 19200)) / (16 * 19200));
+व्योम qnap_tsx09_घातer_off(व्योम)
+अणु
+	/* 19200 baud भागisor */
+	स्थिर अचिन्हित भागisor = ((orion5x_tclk + (8 * 19200)) / (16 * 19200));
 
 	pr_info("%s: triggering power-off...\n", __func__);
 
-	/* hijack uart1 and reset into sane state (19200,8n1) */
-	writel(0x83, UART1_REG(LCR));
-	writel(divisor & 0xff, UART1_REG(DLL));
-	writel((divisor >> 8) & 0xff, UART1_REG(DLM));
-	writel(0x03, UART1_REG(LCR));
-	writel(0x00, UART1_REG(IER));
-	writel(0x00, UART1_REG(FCR));
-	writel(0x00, UART1_REG(MCR));
+	/* hijack uart1 and reset पूर्णांकo sane state (19200,8n1) */
+	ग_लिखोl(0x83, UART1_REG(LCR));
+	ग_लिखोl(भागisor & 0xff, UART1_REG(DLL));
+	ग_लिखोl((भागisor >> 8) & 0xff, UART1_REG(DLM));
+	ग_लिखोl(0x03, UART1_REG(LCR));
+	ग_लिखोl(0x00, UART1_REG(IER));
+	ग_लिखोl(0x00, UART1_REG(FCR));
+	ग_लिखोl(0x00, UART1_REG(MCR));
 
-	/* send the power-off command 'A' to PIC */
-	writel('A', UART1_REG(TX));
-}
+	/* send the घातer-off command 'A' to PIC */
+	ग_लिखोl('A', UART1_REG(TX));
+पूर्ण
 
 /*****************************************************************************
  * Ethernet
  ****************************************************************************/
 
-struct mv643xx_eth_platform_data qnap_tsx09_eth_data = {
+काष्ठा mv643xx_eth_platक्रमm_data qnap_tsx09_eth_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR(8),
-};
+पूर्ण;
 
-static int __init qnap_tsx09_parse_hex_nibble(char n)
-{
-	if (n >= '0' && n <= '9')
-		return n - '0';
+अटल पूर्णांक __init qnap_tsx09_parse_hex_nibble(अक्षर n)
+अणु
+	अगर (n >= '0' && n <= '9')
+		वापस n - '0';
 
-	if (n >= 'A' && n <= 'F')
-		return n - 'A' + 10;
+	अगर (n >= 'A' && n <= 'F')
+		वापस n - 'A' + 10;
 
-	if (n >= 'a' && n <= 'f')
-		return n - 'a' + 10;
+	अगर (n >= 'a' && n <= 'f')
+		वापस n - 'a' + 10;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int __init qnap_tsx09_parse_hex_byte(const char *b)
-{
-	int hi;
-	int lo;
+अटल पूर्णांक __init qnap_tsx09_parse_hex_byte(स्थिर अक्षर *b)
+अणु
+	पूर्णांक hi;
+	पूर्णांक lo;
 
 	hi = qnap_tsx09_parse_hex_nibble(b[0]);
 	lo = qnap_tsx09_parse_hex_nibble(b[1]);
 
-	if (hi < 0 || lo < 0)
-		return -1;
+	अगर (hi < 0 || lo < 0)
+		वापस -1;
 
-	return (hi << 4) | lo;
-}
+	वापस (hi << 4) | lo;
+पूर्ण
 
-static int __init qnap_tsx09_check_mac_addr(const char *addr_str)
-{
-	u_int8_t addr[6];
-	int i;
+अटल पूर्णांक __init qnap_tsx09_check_mac_addr(स्थिर अक्षर *addr_str)
+अणु
+	u_पूर्णांक8_t addr[6];
+	पूर्णांक i;
 
-	for (i = 0; i < 6; i++) {
-		int byte;
+	क्रम (i = 0; i < 6; i++) अणु
+		पूर्णांक byte;
 
 		/*
-		 * Enforce "xx:xx:xx:xx:xx:xx\n" format.
+		 * Enक्रमce "xx:xx:xx:xx:xx:xx\n" क्रमmat.
 		 */
-		if (addr_str[(i * 3) + 2] != ((i < 5) ? ':' : '\n'))
-			return -1;
+		अगर (addr_str[(i * 3) + 2] != ((i < 5) ? ':' : '\n'))
+			वापस -1;
 
 		byte = qnap_tsx09_parse_hex_byte(addr_str + (i * 3));
-		if (byte < 0)
-			return -1;
+		अगर (byte < 0)
+			वापस -1;
 		addr[i] = byte;
-	}
+	पूर्ण
 
-	printk(KERN_INFO "tsx09: found ethernet mac address %pM\n", addr);
+	prपूर्णांकk(KERN_INFO "tsx09: found ethernet mac address %pM\n", addr);
 
-	memcpy(qnap_tsx09_eth_data.mac_addr, addr, 6);
+	स_नकल(qnap_tsx09_eth_data.mac_addr, addr, 6);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The 'NAS Config' flash partition has an ext2 filesystem which
+ * The 'NAS Config' flash partition has an ext2 fileप्रणाली which
  * contains a file that has the ethernet MAC address in plain text
- * (format "xx:xx:xx:xx:xx:xx\n").
+ * (क्रमmat "xx:xx:xx:xx:xx:xx\n").
  */
-void __init qnap_tsx09_find_mac_addr(u32 mem_base, u32 size)
-{
-	unsigned long addr;
+व्योम __init qnap_tsx09_find_mac_addr(u32 mem_base, u32 size)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	for (addr = mem_base; addr < (mem_base + size); addr += 1024) {
-		char *nor_page;
-		int ret = 0;
+	क्रम (addr = mem_base; addr < (mem_base + size); addr += 1024) अणु
+		अक्षर *nor_page;
+		पूर्णांक ret = 0;
 
 		nor_page = ioremap(addr, 1024);
-		if (nor_page != NULL) {
+		अगर (nor_page != शून्य) अणु
 			ret = qnap_tsx09_check_mac_addr(nor_page);
 			iounmap(nor_page);
-		}
+		पूर्ण
 
-		if (ret == 0)
-			break;
-	}
-}
+		अगर (ret == 0)
+			अवरोध;
+	पूर्ण
+पूर्ण

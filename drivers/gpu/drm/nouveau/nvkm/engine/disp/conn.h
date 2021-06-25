@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_DISP_CONN_H__
-#define __NVKM_DISP_CONN_H__
-#include <engine/disp.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_DISP_CONN_H__
+#घोषणा __NVKM_DISP_CONN_H__
+#समावेश <engine/disp.h>
 
-#include <core/notify.h>
-#include <subdev/bios.h>
-#include <subdev/bios/conn.h>
+#समावेश <core/notअगरy.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/conn.h>
 
-struct nvkm_conn {
-	struct nvkm_disp *disp;
-	int index;
-	struct nvbios_connE info;
+काष्ठा nvkm_conn अणु
+	काष्ठा nvkm_disp *disp;
+	पूर्णांक index;
+	काष्ठा nvbios_connE info;
 
-	struct nvkm_notify hpd;
+	काष्ठा nvkm_notअगरy hpd;
 
-	struct list_head head;
-};
+	काष्ठा list_head head;
+पूर्ण;
 
-int nvkm_conn_new(struct nvkm_disp *, int index, struct nvbios_connE *,
-		  struct nvkm_conn **);
-void nvkm_conn_del(struct nvkm_conn **);
-void nvkm_conn_init(struct nvkm_conn *);
-void nvkm_conn_fini(struct nvkm_conn *);
+पूर्णांक nvkm_conn_new(काष्ठा nvkm_disp *, पूर्णांक index, काष्ठा nvbios_connE *,
+		  काष्ठा nvkm_conn **);
+व्योम nvkm_conn_del(काष्ठा nvkm_conn **);
+व्योम nvkm_conn_init(काष्ठा nvkm_conn *);
+व्योम nvkm_conn_fini(काष्ठा nvkm_conn *);
 
-#define CONN_MSG(c,l,f,a...) do {                                              \
-	struct nvkm_conn *_conn = (c);                                    \
+#घोषणा CONN_MSG(c,l,f,a...) करो अणु                                              \
+	काष्ठा nvkm_conn *_conn = (c);                                    \
 	nvkm_##l(&_conn->disp->engine.subdev, "conn %02x:%02x%02x: "f"\n",     \
 		 _conn->index, _conn->info.location, _conn->info.type, ##a);   \
-} while(0)
-#define CONN_ERR(c,f,a...) CONN_MSG((c), error, f, ##a)
-#define CONN_DBG(c,f,a...) CONN_MSG((c), debug, f, ##a)
-#define CONN_TRACE(c,f,a...) CONN_MSG((c), trace, f, ##a)
-#endif
+पूर्ण जबतक(0)
+#घोषणा CONN_ERR(c,f,a...) CONN_MSG((c), error, f, ##a)
+#घोषणा CONN_DBG(c,f,a...) CONN_MSG((c), debug, f, ##a)
+#घोषणा CONN_TRACE(c,f,a...) CONN_MSG((c), trace, f, ##a)
+#पूर्ण_अगर

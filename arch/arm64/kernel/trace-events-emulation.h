@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM emulation
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM emulation
 
-#if !defined(_TRACE_EMULATION_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_EMULATION_H
+#अगर !defined(_TRACE_EMULATION_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_EMULATION_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-TRACE_EVENT(instruction_emulation,
+TRACE_EVENT(inकाष्ठाion_emulation,
 
-	TP_PROTO(const char *instr, u64 addr),
+	TP_PROTO(स्थिर अक्षर *instr, u64 addr),
 	TP_ARGS(instr, addr),
 
 	TP_STRUCT__entry(
@@ -22,15 +23,15 @@ TRACE_EVENT(instruction_emulation,
 		__entry->addr = addr;
 	),
 
-	TP_printk("instr=\"%s\" addr=0x%llx", __get_str(instr), __entry->addr)
+	TP_prपूर्णांकk("instr=\"%s\" addr=0x%llx", __get_str(instr), __entry->addr)
 );
 
-#endif /* _TRACE_EMULATION_H */
+#पूर्ण_अगर /* _TRACE_EMULATION_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_PATH
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_PATH .
 
-#define TRACE_INCLUDE_FILE trace-events-emulation
-#include <trace/define_trace.h>
+#घोषणा TRACE_INCLUDE_खाता trace-events-emulation
+#समावेश <trace/define_trace.h>

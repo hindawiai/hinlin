@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Nehalem-EX/Westmere-EX uncore support */
-#include "uncore.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Nehalem-EX/Wesपंचांगere-EX uncore support */
+#समावेश "uncore.h"
 
 /* NHM-EX event control */
-#define NHMEX_PMON_CTL_EV_SEL_MASK	0x000000ff
-#define NHMEX_PMON_CTL_UMASK_MASK	0x0000ff00
-#define NHMEX_PMON_CTL_EN_BIT0		(1 << 0)
-#define NHMEX_PMON_CTL_EDGE_DET		(1 << 18)
-#define NHMEX_PMON_CTL_PMI_EN		(1 << 20)
-#define NHMEX_PMON_CTL_EN_BIT22		(1 << 22)
-#define NHMEX_PMON_CTL_INVERT		(1 << 23)
-#define NHMEX_PMON_CTL_TRESH_MASK	0xff000000
-#define NHMEX_PMON_RAW_EVENT_MASK	(NHMEX_PMON_CTL_EV_SEL_MASK | \
+#घोषणा NHMEX_PMON_CTL_EV_SEL_MASK	0x000000ff
+#घोषणा NHMEX_PMON_CTL_UMASK_MASK	0x0000ff00
+#घोषणा NHMEX_PMON_CTL_EN_BIT0		(1 << 0)
+#घोषणा NHMEX_PMON_CTL_EDGE_DET		(1 << 18)
+#घोषणा NHMEX_PMON_CTL_PMI_EN		(1 << 20)
+#घोषणा NHMEX_PMON_CTL_EN_BIT22		(1 << 22)
+#घोषणा NHMEX_PMON_CTL_INVERT		(1 << 23)
+#घोषणा NHMEX_PMON_CTL_TRESH_MASK	0xff000000
+#घोषणा NHMEX_PMON_RAW_EVENT_MASK	(NHMEX_PMON_CTL_EV_SEL_MASK | \
 					 NHMEX_PMON_CTL_UMASK_MASK | \
 					 NHMEX_PMON_CTL_EDGE_DET | \
 					 NHMEX_PMON_CTL_INVERT | \
 					 NHMEX_PMON_CTL_TRESH_MASK)
 
 /* NHM-EX Ubox */
-#define NHMEX_U_MSR_PMON_GLOBAL_CTL		0xc00
-#define NHMEX_U_MSR_PMON_CTR			0xc11
-#define NHMEX_U_MSR_PMON_EV_SEL			0xc10
+#घोषणा NHMEX_U_MSR_PMON_GLOBAL_CTL		0xc00
+#घोषणा NHMEX_U_MSR_PMON_CTR			0xc11
+#घोषणा NHMEX_U_MSR_PMON_EV_SEL			0xc10
 
-#define NHMEX_U_PMON_GLOBAL_EN			(1 << 0)
-#define NHMEX_U_PMON_GLOBAL_PMI_CORE_SEL	0x0000001e
-#define NHMEX_U_PMON_GLOBAL_EN_ALL		(1 << 28)
-#define NHMEX_U_PMON_GLOBAL_RST_ALL		(1 << 29)
-#define NHMEX_U_PMON_GLOBAL_FRZ_ALL		(1 << 31)
+#घोषणा NHMEX_U_PMON_GLOBAL_EN			(1 << 0)
+#घोषणा NHMEX_U_PMON_GLOBAL_PMI_CORE_SEL	0x0000001e
+#घोषणा NHMEX_U_PMON_GLOBAL_EN_ALL		(1 << 28)
+#घोषणा NHMEX_U_PMON_GLOBAL_RST_ALL		(1 << 29)
+#घोषणा NHMEX_U_PMON_GLOBAL_FRZ_ALL		(1 << 31)
 
-#define NHMEX_U_PMON_RAW_EVENT_MASK		\
+#घोषणा NHMEX_U_PMON_RAW_EVENT_MASK		\
 		(NHMEX_PMON_CTL_EV_SEL_MASK |	\
 		 NHMEX_PMON_CTL_EDGE_DET)
 
 /* NHM-EX Cbox */
-#define NHMEX_C0_MSR_PMON_GLOBAL_CTL		0xd00
-#define NHMEX_C0_MSR_PMON_CTR0			0xd11
-#define NHMEX_C0_MSR_PMON_EV_SEL0		0xd10
-#define NHMEX_C_MSR_OFFSET			0x20
+#घोषणा NHMEX_C0_MSR_PMON_GLOBAL_CTL		0xd00
+#घोषणा NHMEX_C0_MSR_PMON_CTR0			0xd11
+#घोषणा NHMEX_C0_MSR_PMON_EV_SEL0		0xd10
+#घोषणा NHMEX_C_MSR_OFFSET			0x20
 
 /* NHM-EX Bbox */
-#define NHMEX_B0_MSR_PMON_GLOBAL_CTL		0xc20
-#define NHMEX_B0_MSR_PMON_CTR0			0xc31
-#define NHMEX_B0_MSR_PMON_CTL0			0xc30
-#define NHMEX_B_MSR_OFFSET			0x40
-#define NHMEX_B0_MSR_MATCH			0xe45
-#define NHMEX_B0_MSR_MASK			0xe46
-#define NHMEX_B1_MSR_MATCH			0xe4d
-#define NHMEX_B1_MSR_MASK			0xe4e
+#घोषणा NHMEX_B0_MSR_PMON_GLOBAL_CTL		0xc20
+#घोषणा NHMEX_B0_MSR_PMON_CTR0			0xc31
+#घोषणा NHMEX_B0_MSR_PMON_CTL0			0xc30
+#घोषणा NHMEX_B_MSR_OFFSET			0x40
+#घोषणा NHMEX_B0_MSR_MATCH			0xe45
+#घोषणा NHMEX_B0_MSR_MASK			0xe46
+#घोषणा NHMEX_B1_MSR_MATCH			0xe4d
+#घोषणा NHMEX_B1_MSR_MASK			0xe4e
 
-#define NHMEX_B_PMON_CTL_EN			(1 << 0)
-#define NHMEX_B_PMON_CTL_EV_SEL_SHIFT		1
-#define NHMEX_B_PMON_CTL_EV_SEL_MASK		\
+#घोषणा NHMEX_B_PMON_CTL_EN			(1 << 0)
+#घोषणा NHMEX_B_PMON_CTL_EV_SEL_SHIFT		1
+#घोषणा NHMEX_B_PMON_CTL_EV_SEL_MASK		\
 		(0x1f << NHMEX_B_PMON_CTL_EV_SEL_SHIFT)
-#define NHMEX_B_PMON_CTR_SHIFT		6
-#define NHMEX_B_PMON_CTR_MASK		\
+#घोषणा NHMEX_B_PMON_CTR_SHIFT		6
+#घोषणा NHMEX_B_PMON_CTR_MASK		\
 		(0x3 << NHMEX_B_PMON_CTR_SHIFT)
-#define NHMEX_B_PMON_RAW_EVENT_MASK		\
+#घोषणा NHMEX_B_PMON_RAW_EVENT_MASK		\
 		(NHMEX_B_PMON_CTL_EV_SEL_MASK | \
 		 NHMEX_B_PMON_CTR_MASK)
 
 /* NHM-EX Sbox */
-#define NHMEX_S0_MSR_PMON_GLOBAL_CTL		0xc40
-#define NHMEX_S0_MSR_PMON_CTR0			0xc51
-#define NHMEX_S0_MSR_PMON_CTL0			0xc50
-#define NHMEX_S_MSR_OFFSET			0x80
-#define NHMEX_S0_MSR_MM_CFG			0xe48
-#define NHMEX_S0_MSR_MATCH			0xe49
-#define NHMEX_S0_MSR_MASK			0xe4a
-#define NHMEX_S1_MSR_MM_CFG			0xe58
-#define NHMEX_S1_MSR_MATCH			0xe59
-#define NHMEX_S1_MSR_MASK			0xe5a
+#घोषणा NHMEX_S0_MSR_PMON_GLOBAL_CTL		0xc40
+#घोषणा NHMEX_S0_MSR_PMON_CTR0			0xc51
+#घोषणा NHMEX_S0_MSR_PMON_CTL0			0xc50
+#घोषणा NHMEX_S_MSR_OFFSET			0x80
+#घोषणा NHMEX_S0_MSR_MM_CFG			0xe48
+#घोषणा NHMEX_S0_MSR_MATCH			0xe49
+#घोषणा NHMEX_S0_MSR_MASK			0xe4a
+#घोषणा NHMEX_S1_MSR_MM_CFG			0xe58
+#घोषणा NHMEX_S1_MSR_MATCH			0xe59
+#घोषणा NHMEX_S1_MSR_MASK			0xe5a
 
-#define NHMEX_S_PMON_MM_CFG_EN			(0x1ULL << 63)
-#define NHMEX_S_EVENT_TO_R_PROG_EV		0
+#घोषणा NHMEX_S_PMON_MM_CFG_EN			(0x1ULL << 63)
+#घोषणा NHMEX_S_EVENT_TO_R_PROG_EV		0
 
 /* NHM-EX Mbox */
-#define NHMEX_M0_MSR_GLOBAL_CTL			0xca0
-#define NHMEX_M0_MSR_PMU_DSP			0xca5
-#define NHMEX_M0_MSR_PMU_ISS			0xca6
-#define NHMEX_M0_MSR_PMU_MAP			0xca7
-#define NHMEX_M0_MSR_PMU_MSC_THR		0xca8
-#define NHMEX_M0_MSR_PMU_PGT			0xca9
-#define NHMEX_M0_MSR_PMU_PLD			0xcaa
-#define NHMEX_M0_MSR_PMU_ZDP_CTL_FVC		0xcab
-#define NHMEX_M0_MSR_PMU_CTL0			0xcb0
-#define NHMEX_M0_MSR_PMU_CNT0			0xcb1
-#define NHMEX_M_MSR_OFFSET			0x40
-#define NHMEX_M0_MSR_PMU_MM_CFG			0xe54
-#define NHMEX_M1_MSR_PMU_MM_CFG			0xe5c
+#घोषणा NHMEX_M0_MSR_GLOBAL_CTL			0xca0
+#घोषणा NHMEX_M0_MSR_PMU_DSP			0xca5
+#घोषणा NHMEX_M0_MSR_PMU_ISS			0xca6
+#घोषणा NHMEX_M0_MSR_PMU_MAP			0xca7
+#घोषणा NHMEX_M0_MSR_PMU_MSC_THR		0xca8
+#घोषणा NHMEX_M0_MSR_PMU_PGT			0xca9
+#घोषणा NHMEX_M0_MSR_PMU_PLD			0xcaa
+#घोषणा NHMEX_M0_MSR_PMU_ZDP_CTL_FVC		0xcab
+#घोषणा NHMEX_M0_MSR_PMU_CTL0			0xcb0
+#घोषणा NHMEX_M0_MSR_PMU_CNT0			0xcb1
+#घोषणा NHMEX_M_MSR_OFFSET			0x40
+#घोषणा NHMEX_M0_MSR_PMU_MM_CFG			0xe54
+#घोषणा NHMEX_M1_MSR_PMU_MM_CFG			0xe5c
 
-#define NHMEX_M_PMON_MM_CFG_EN			(1ULL << 63)
-#define NHMEX_M_PMON_ADDR_MATCH_MASK		0x3ffffffffULL
-#define NHMEX_M_PMON_ADDR_MASK_MASK		0x7ffffffULL
-#define NHMEX_M_PMON_ADDR_MASK_SHIFT		34
+#घोषणा NHMEX_M_PMON_MM_CFG_EN			(1ULL << 63)
+#घोषणा NHMEX_M_PMON_ADDR_MATCH_MASK		0x3ffffffffULL
+#घोषणा NHMEX_M_PMON_ADDR_MASK_MASK		0x7ffffffULL
+#घोषणा NHMEX_M_PMON_ADDR_MASK_SHIFT		34
 
-#define NHMEX_M_PMON_CTL_EN			(1 << 0)
-#define NHMEX_M_PMON_CTL_PMI_EN			(1 << 1)
-#define NHMEX_M_PMON_CTL_COUNT_MODE_SHIFT	2
-#define NHMEX_M_PMON_CTL_COUNT_MODE_MASK	\
+#घोषणा NHMEX_M_PMON_CTL_EN			(1 << 0)
+#घोषणा NHMEX_M_PMON_CTL_PMI_EN			(1 << 1)
+#घोषणा NHMEX_M_PMON_CTL_COUNT_MODE_SHIFT	2
+#घोषणा NHMEX_M_PMON_CTL_COUNT_MODE_MASK	\
 	(0x3 << NHMEX_M_PMON_CTL_COUNT_MODE_SHIFT)
-#define NHMEX_M_PMON_CTL_STORAGE_MODE_SHIFT	4
-#define NHMEX_M_PMON_CTL_STORAGE_MODE_MASK	\
+#घोषणा NHMEX_M_PMON_CTL_STORAGE_MODE_SHIFT	4
+#घोषणा NHMEX_M_PMON_CTL_STORAGE_MODE_MASK	\
 	(0x3 << NHMEX_M_PMON_CTL_STORAGE_MODE_SHIFT)
-#define NHMEX_M_PMON_CTL_WRAP_MODE		(1 << 6)
-#define NHMEX_M_PMON_CTL_FLAG_MODE		(1 << 7)
-#define NHMEX_M_PMON_CTL_INC_SEL_SHIFT		9
-#define NHMEX_M_PMON_CTL_INC_SEL_MASK		\
+#घोषणा NHMEX_M_PMON_CTL_WRAP_MODE		(1 << 6)
+#घोषणा NHMEX_M_PMON_CTL_FLAG_MODE		(1 << 7)
+#घोषणा NHMEX_M_PMON_CTL_INC_SEL_SHIFT		9
+#घोषणा NHMEX_M_PMON_CTL_INC_SEL_MASK		\
 	(0x1f << NHMEX_M_PMON_CTL_INC_SEL_SHIFT)
-#define NHMEX_M_PMON_CTL_SET_FLAG_SEL_SHIFT	19
-#define NHMEX_M_PMON_CTL_SET_FLAG_SEL_MASK	\
+#घोषणा NHMEX_M_PMON_CTL_SET_FLAG_SEL_SHIFT	19
+#घोषणा NHMEX_M_PMON_CTL_SET_FLAG_SEL_MASK	\
 	(0x7 << NHMEX_M_PMON_CTL_SET_FLAG_SEL_SHIFT)
-#define NHMEX_M_PMON_RAW_EVENT_MASK			\
+#घोषणा NHMEX_M_PMON_RAW_EVENT_MASK			\
 		(NHMEX_M_PMON_CTL_COUNT_MODE_MASK |	\
 		 NHMEX_M_PMON_CTL_STORAGE_MODE_MASK |	\
 		 NHMEX_M_PMON_CTL_WRAP_MODE |		\
@@ -118,73 +119,73 @@
 		 NHMEX_M_PMON_CTL_INC_SEL_MASK |	\
 		 NHMEX_M_PMON_CTL_SET_FLAG_SEL_MASK)
 
-#define NHMEX_M_PMON_ZDP_CTL_FVC_MASK		(((1 << 11) - 1) | (1 << 23))
-#define NHMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(n)	(0x7ULL << (11 + 3 * (n)))
+#घोषणा NHMEX_M_PMON_ZDP_CTL_FVC_MASK		(((1 << 11) - 1) | (1 << 23))
+#घोषणा NHMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(n)	(0x7ULL << (11 + 3 * (n)))
 
-#define WSMEX_M_PMON_ZDP_CTL_FVC_MASK		(((1 << 12) - 1) | (1 << 24))
-#define WSMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(n)	(0x7ULL << (12 + 3 * (n)))
+#घोषणा WSMEX_M_PMON_ZDP_CTL_FVC_MASK		(((1 << 12) - 1) | (1 << 24))
+#घोषणा WSMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(n)	(0x7ULL << (12 + 3 * (n)))
 
 /*
  * use the 9~13 bits to select event If the 7th bit is not set,
  * otherwise use the 19~21 bits to select event.
  */
-#define MBOX_INC_SEL(x) ((x) << NHMEX_M_PMON_CTL_INC_SEL_SHIFT)
-#define MBOX_SET_FLAG_SEL(x) (((x) << NHMEX_M_PMON_CTL_SET_FLAG_SEL_SHIFT) | \
+#घोषणा MBOX_INC_SEL(x) ((x) << NHMEX_M_PMON_CTL_INC_SEL_SHIFT)
+#घोषणा MBOX_SET_FLAG_SEL(x) (((x) << NHMEX_M_PMON_CTL_SET_FLAG_SEL_SHIFT) | \
 				NHMEX_M_PMON_CTL_FLAG_MODE)
-#define MBOX_INC_SEL_MASK (NHMEX_M_PMON_CTL_INC_SEL_MASK | \
+#घोषणा MBOX_INC_SEL_MASK (NHMEX_M_PMON_CTL_INC_SEL_MASK | \
 			   NHMEX_M_PMON_CTL_FLAG_MODE)
-#define MBOX_SET_FLAG_SEL_MASK (NHMEX_M_PMON_CTL_SET_FLAG_SEL_MASK | \
+#घोषणा MBOX_SET_FLAG_SEL_MASK (NHMEX_M_PMON_CTL_SET_FLAG_SEL_MASK | \
 				NHMEX_M_PMON_CTL_FLAG_MODE)
-#define MBOX_INC_SEL_EXTAR_REG(c, r) \
+#घोषणा MBOX_INC_SEL_EXTAR_REG(c, r) \
 		EVENT_EXTRA_REG(MBOX_INC_SEL(c), NHMEX_M0_MSR_PMU_##r, \
 				MBOX_INC_SEL_MASK, (u64)-1, NHMEX_M_##r)
-#define MBOX_SET_FLAG_SEL_EXTRA_REG(c, r) \
+#घोषणा MBOX_SET_FLAG_SEL_EXTRA_REG(c, r) \
 		EVENT_EXTRA_REG(MBOX_SET_FLAG_SEL(c), NHMEX_M0_MSR_PMU_##r, \
 				MBOX_SET_FLAG_SEL_MASK, \
 				(u64)-1, NHMEX_M_##r)
 
 /* NHM-EX Rbox */
-#define NHMEX_R_MSR_GLOBAL_CTL			0xe00
-#define NHMEX_R_MSR_PMON_CTL0			0xe10
-#define NHMEX_R_MSR_PMON_CNT0			0xe11
-#define NHMEX_R_MSR_OFFSET			0x20
+#घोषणा NHMEX_R_MSR_GLOBAL_CTL			0xe00
+#घोषणा NHMEX_R_MSR_PMON_CTL0			0xe10
+#घोषणा NHMEX_R_MSR_PMON_CNT0			0xe11
+#घोषणा NHMEX_R_MSR_OFFSET			0x20
 
-#define NHMEX_R_MSR_PORTN_QLX_CFG(n)		\
+#घोषणा NHMEX_R_MSR_PORTN_QLX_CFG(n)		\
 		((n) < 4 ? (0xe0c + (n)) : (0xe2c + (n) - 4))
-#define NHMEX_R_MSR_PORTN_IPERF_CFG0(n)		(0xe04 + (n))
-#define NHMEX_R_MSR_PORTN_IPERF_CFG1(n)		(0xe24 + (n))
-#define NHMEX_R_MSR_PORTN_XBR_OFFSET(n)		\
+#घोषणा NHMEX_R_MSR_PORTN_IPERF_CFG0(n)		(0xe04 + (n))
+#घोषणा NHMEX_R_MSR_PORTN_IPERF_CFG1(n)		(0xe24 + (n))
+#घोषणा NHMEX_R_MSR_PORTN_XBR_OFFSET(n)		\
 		(((n) < 4 ? 0 : 0x10) + (n) * 4)
-#define NHMEX_R_MSR_PORTN_XBR_SET1_MM_CFG(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET1_MM_CFG(n)	\
 		(0xe60 + NHMEX_R_MSR_PORTN_XBR_OFFSET(n))
-#define NHMEX_R_MSR_PORTN_XBR_SET1_MATCH(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET1_MATCH(n)	\
 		(NHMEX_R_MSR_PORTN_XBR_SET1_MM_CFG(n) + 1)
-#define NHMEX_R_MSR_PORTN_XBR_SET1_MASK(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET1_MASK(n)	\
 		(NHMEX_R_MSR_PORTN_XBR_SET1_MM_CFG(n) + 2)
-#define NHMEX_R_MSR_PORTN_XBR_SET2_MM_CFG(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET2_MM_CFG(n)	\
 		(0xe70 + NHMEX_R_MSR_PORTN_XBR_OFFSET(n))
-#define NHMEX_R_MSR_PORTN_XBR_SET2_MATCH(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET2_MATCH(n)	\
 		(NHMEX_R_MSR_PORTN_XBR_SET2_MM_CFG(n) + 1)
-#define NHMEX_R_MSR_PORTN_XBR_SET2_MASK(n)	\
+#घोषणा NHMEX_R_MSR_PORTN_XBR_SET2_MASK(n)	\
 		(NHMEX_R_MSR_PORTN_XBR_SET2_MM_CFG(n) + 2)
 
-#define NHMEX_R_PMON_CTL_EN			(1 << 0)
-#define NHMEX_R_PMON_CTL_EV_SEL_SHIFT		1
-#define NHMEX_R_PMON_CTL_EV_SEL_MASK		\
+#घोषणा NHMEX_R_PMON_CTL_EN			(1 << 0)
+#घोषणा NHMEX_R_PMON_CTL_EV_SEL_SHIFT		1
+#घोषणा NHMEX_R_PMON_CTL_EV_SEL_MASK		\
 		(0x1f << NHMEX_R_PMON_CTL_EV_SEL_SHIFT)
-#define NHMEX_R_PMON_CTL_PMI_EN			(1 << 6)
-#define NHMEX_R_PMON_RAW_EVENT_MASK		NHMEX_R_PMON_CTL_EV_SEL_MASK
+#घोषणा NHMEX_R_PMON_CTL_PMI_EN			(1 << 6)
+#घोषणा NHMEX_R_PMON_RAW_EVENT_MASK		NHMEX_R_PMON_CTL_EV_SEL_MASK
 
 /* NHM-EX Wbox */
-#define NHMEX_W_MSR_GLOBAL_CTL			0xc80
-#define NHMEX_W_MSR_PMON_CNT0			0xc90
-#define NHMEX_W_MSR_PMON_EVT_SEL0		0xc91
-#define NHMEX_W_MSR_PMON_FIXED_CTR		0x394
-#define NHMEX_W_MSR_PMON_FIXED_CTL		0x395
+#घोषणा NHMEX_W_MSR_GLOBAL_CTL			0xc80
+#घोषणा NHMEX_W_MSR_PMON_CNT0			0xc90
+#घोषणा NHMEX_W_MSR_PMON_EVT_SEL0		0xc91
+#घोषणा NHMEX_W_MSR_PMON_FIXED_CTR		0x394
+#घोषणा NHMEX_W_MSR_PMON_FIXED_CTL		0x395
 
-#define NHMEX_W_PMON_GLOBAL_FIXED_EN		(1ULL << 31)
+#घोषणा NHMEX_W_PMON_GLOBAL_FIXED_EN		(1ULL << 31)
 
-#define __BITS_VALUE(x, i, n)  ((typeof(x))(((x) >> ((i) * (n))) & \
+#घोषणा __BITS_VALUE(x, i, n)  ((typeof(x))(((x) >> ((i) * (n))) & \
 				((1ULL << (n)) - 1)))
 
 DEFINE_UNCORE_FORMAT_ATTR(event, event, "config:0-7");
@@ -197,88 +198,88 @@ DEFINE_UNCORE_FORMAT_ATTR(counter, counter, "config:6-7");
 DEFINE_UNCORE_FORMAT_ATTR(match, match, "config1:0-63");
 DEFINE_UNCORE_FORMAT_ATTR(mask, mask, "config2:0-63");
 
-static void nhmex_uncore_msr_init_box(struct intel_uncore_box *box)
-{
+अटल व्योम nhmex_uncore_msr_init_box(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
 	wrmsrl(NHMEX_U_MSR_PMON_GLOBAL_CTL, NHMEX_U_PMON_GLOBAL_EN_ALL);
-}
+पूर्ण
 
-static void nhmex_uncore_msr_exit_box(struct intel_uncore_box *box)
-{
+अटल व्योम nhmex_uncore_msr_निकास_box(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
 	wrmsrl(NHMEX_U_MSR_PMON_GLOBAL_CTL, 0);
-}
+पूर्ण
 
-static void nhmex_uncore_msr_disable_box(struct intel_uncore_box *box)
-{
-	unsigned msr = uncore_msr_box_ctl(box);
+अटल व्योम nhmex_uncore_msr_disable_box(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अचिन्हित msr = uncore_msr_box_ctl(box);
 	u64 config;
 
-	if (msr) {
+	अगर (msr) अणु
 		rdmsrl(msr, config);
 		config &= ~((1ULL << uncore_num_counters(box)) - 1);
 		/* WBox has a fixed counter */
-		if (uncore_msr_fixed_ctl(box))
+		अगर (uncore_msr_fixed_ctl(box))
 			config &= ~NHMEX_W_PMON_GLOBAL_FIXED_EN;
 		wrmsrl(msr, config);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nhmex_uncore_msr_enable_box(struct intel_uncore_box *box)
-{
-	unsigned msr = uncore_msr_box_ctl(box);
+अटल व्योम nhmex_uncore_msr_enable_box(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अचिन्हित msr = uncore_msr_box_ctl(box);
 	u64 config;
 
-	if (msr) {
+	अगर (msr) अणु
 		rdmsrl(msr, config);
 		config |= (1ULL << uncore_num_counters(box)) - 1;
 		/* WBox has a fixed counter */
-		if (uncore_msr_fixed_ctl(box))
+		अगर (uncore_msr_fixed_ctl(box))
 			config |= NHMEX_W_PMON_GLOBAL_FIXED_EN;
 		wrmsrl(msr, config);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void nhmex_uncore_msr_disable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
+अटल व्योम nhmex_uncore_msr_disable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
 	wrmsrl(event->hw.config_base, 0);
-}
+पूर्ण
 
-static void nhmex_uncore_msr_enable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
+अटल व्योम nhmex_uncore_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (hwc->idx == UNCORE_PMC_IDX_FIXED)
+	अगर (hwc->idx == UNCORE_PMC_IDX_FIXED)
 		wrmsrl(hwc->config_base, NHMEX_PMON_CTL_EN_BIT0);
-	else if (box->pmu->type->event_mask & NHMEX_PMON_CTL_EN_BIT0)
+	अन्यथा अगर (box->pmu->type->event_mask & NHMEX_PMON_CTL_EN_BIT0)
 		wrmsrl(hwc->config_base, hwc->config | NHMEX_PMON_CTL_EN_BIT22);
-	else
+	अन्यथा
 		wrmsrl(hwc->config_base, hwc->config | NHMEX_PMON_CTL_EN_BIT0);
-}
+पूर्ण
 
-#define NHMEX_UNCORE_OPS_COMMON_INIT()				\
+#घोषणा NHMEX_UNCORE_OPS_COMMON_INIT()				\
 	.init_box	= nhmex_uncore_msr_init_box,		\
-	.exit_box	= nhmex_uncore_msr_exit_box,		\
+	.निकास_box	= nhmex_uncore_msr_निकास_box,		\
 	.disable_box	= nhmex_uncore_msr_disable_box,		\
 	.enable_box	= nhmex_uncore_msr_enable_box,		\
 	.disable_event	= nhmex_uncore_msr_disable_event,	\
-	.read_counter	= uncore_msr_read_counter
+	.पढ़ो_counter	= uncore_msr_पढ़ो_counter
 
-static struct intel_uncore_ops nhmex_uncore_ops = {
+अटल काष्ठा पूर्णांकel_uncore_ops nhmex_uncore_ops = अणु
 	NHMEX_UNCORE_OPS_COMMON_INIT(),
 	.enable_event	= nhmex_uncore_msr_enable_event,
-};
+पूर्ण;
 
-static struct attribute *nhmex_uncore_ubox_formats_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_edge.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_ubox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_edge.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_ubox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_ubox_क्रमmat_group = अणु
 	.name		= "format",
-	.attrs		= nhmex_uncore_ubox_formats_attr,
-};
+	.attrs		= nhmex_uncore_ubox_क्रमmats_attr,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_ubox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_ubox = अणु
 	.name		= "ubox",
 	.num_counters	= 1,
 	.num_boxes	= 1,
@@ -288,29 +289,29 @@ static struct intel_uncore_type nhmex_uncore_ubox = {
 	.event_mask	= NHMEX_U_PMON_RAW_EVENT_MASK,
 	.box_ctl	= NHMEX_U_MSR_PMON_GLOBAL_CTL,
 	.ops		= &nhmex_uncore_ops,
-	.format_group	= &nhmex_uncore_ubox_format_group
-};
+	.क्रमmat_group	= &nhmex_uncore_ubox_क्रमmat_group
+पूर्ण;
 
-static struct attribute *nhmex_uncore_cbox_formats_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_umask.attr,
-	&format_attr_edge.attr,
-	&format_attr_inv.attr,
-	&format_attr_thresh8.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_cbox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_umask.attr,
+	&क्रमmat_attr_edge.attr,
+	&क्रमmat_attr_inv.attr,
+	&क्रमmat_attr_thresh8.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_cbox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_cbox_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = nhmex_uncore_cbox_formats_attr,
-};
+	.attrs = nhmex_uncore_cbox_क्रमmats_attr,
+पूर्ण;
 
-/* msr offset for each instance of cbox */
-static unsigned nhmex_cbox_msr_offsets[] = {
+/* msr offset क्रम each instance of cbox */
+अटल अचिन्हित nhmex_cbox_msr_offsets[] = अणु
 	0x0, 0x80, 0x40, 0xc0, 0x20, 0xa0, 0x60, 0xe0, 0x240, 0x2c0,
-};
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_cbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_cbox = अणु
 	.name			= "cbox",
 	.num_counters		= 6,
 	.num_boxes		= 10,
@@ -322,15 +323,15 @@ static struct intel_uncore_type nhmex_uncore_cbox = {
 	.msr_offsets		= nhmex_cbox_msr_offsets,
 	.pair_ctr_ctl		= 1,
 	.ops			= &nhmex_uncore_ops,
-	.format_group		= &nhmex_uncore_cbox_format_group
-};
+	.क्रमmat_group		= &nhmex_uncore_cbox_क्रमmat_group
+पूर्ण;
 
-static struct uncore_event_desc nhmex_uncore_wbox_events[] = {
-	INTEL_UNCORE_EVENT_DESC(clockticks, "event=0xff,umask=0"),
-	{ /* end: all zeroes */ },
-};
+अटल काष्ठा uncore_event_desc nhmex_uncore_wbox_events[] = अणु
+	INTEL_UNCORE_EVENT_DESC(घड़ीticks, "event=0xff,umask=0"),
+	अणु /* end: all zeroes */ पूर्ण,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_wbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_wbox = अणु
 	.name			= "wbox",
 	.num_counters		= 4,
 	.num_boxes		= 1,
@@ -344,84 +345,84 @@ static struct intel_uncore_type nhmex_uncore_wbox = {
 	.pair_ctr_ctl		= 1,
 	.event_descs		= nhmex_uncore_wbox_events,
 	.ops			= &nhmex_uncore_ops,
-	.format_group		= &nhmex_uncore_cbox_format_group
-};
+	.क्रमmat_group		= &nhmex_uncore_cbox_क्रमmat_group
+पूर्ण;
 
-static int nhmex_bbox_hw_config(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
-	int ctr, ev_sel;
+अटल पूर्णांक nhmex_bbox_hw_config(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
+	पूर्णांक ctr, ev_sel;
 
 	ctr = (hwc->config & NHMEX_B_PMON_CTR_MASK) >>
 		NHMEX_B_PMON_CTR_SHIFT;
 	ev_sel = (hwc->config & NHMEX_B_PMON_CTL_EV_SEL_MASK) >>
 		  NHMEX_B_PMON_CTL_EV_SEL_SHIFT;
 
-	/* events that do not use the match/mask registers */
-	if ((ctr == 0 && ev_sel > 0x3) || (ctr == 1 && ev_sel > 0x6) ||
+	/* events that करो not use the match/mask रेजिस्टरs */
+	अगर ((ctr == 0 && ev_sel > 0x3) || (ctr == 1 && ev_sel > 0x6) ||
 	    (ctr == 2 && ev_sel != 0x4) || ctr == 3)
-		return 0;
+		वापस 0;
 
-	if (box->pmu->pmu_idx == 0)
+	अगर (box->pmu->pmu_idx == 0)
 		reg1->reg = NHMEX_B0_MSR_MATCH;
-	else
+	अन्यथा
 		reg1->reg = NHMEX_B1_MSR_MATCH;
 	reg1->idx = 0;
 	reg1->config = event->attr.config1;
 	reg2->config = event->attr.config2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nhmex_bbox_msr_enable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
+अटल व्योम nhmex_bbox_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
 
-	if (reg1->idx != EXTRA_REG_NONE) {
+	अगर (reg1->idx != EXTRA_REG_NONE) अणु
 		wrmsrl(reg1->reg, reg1->config);
 		wrmsrl(reg1->reg + 1, reg2->config);
-	}
+	पूर्ण
 	wrmsrl(hwc->config_base, NHMEX_PMON_CTL_EN_BIT0 |
 		(hwc->config & NHMEX_B_PMON_CTL_EV_SEL_MASK));
-}
+पूर्ण
 
 /*
- * The Bbox has 4 counters, but each counter monitors different events.
+ * The Bbox has 4 counters, but each counter monitors dअगरferent events.
  * Use bits 6-7 in the event config to select counter.
  */
-static struct event_constraint nhmex_uncore_bbox_constraints[] = {
+अटल काष्ठा event_स्थिरraपूर्णांक nhmex_uncore_bbox_स्थिरraपूर्णांकs[] = अणु
 	EVENT_CONSTRAINT(0 , 1, 0xc0),
 	EVENT_CONSTRAINT(0x40, 2, 0xc0),
 	EVENT_CONSTRAINT(0x80, 4, 0xc0),
 	EVENT_CONSTRAINT(0xc0, 8, 0xc0),
 	EVENT_CONSTRAINT_END,
-};
+पूर्ण;
 
-static struct attribute *nhmex_uncore_bbox_formats_attr[] = {
-	&format_attr_event5.attr,
-	&format_attr_counter.attr,
-	&format_attr_match.attr,
-	&format_attr_mask.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_bbox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event5.attr,
+	&क्रमmat_attr_counter.attr,
+	&क्रमmat_attr_match.attr,
+	&क्रमmat_attr_mask.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_bbox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_bbox_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = nhmex_uncore_bbox_formats_attr,
-};
+	.attrs = nhmex_uncore_bbox_क्रमmats_attr,
+पूर्ण;
 
-static struct intel_uncore_ops nhmex_uncore_bbox_ops = {
+अटल काष्ठा पूर्णांकel_uncore_ops nhmex_uncore_bbox_ops = अणु
 	NHMEX_UNCORE_OPS_COMMON_INIT(),
 	.enable_event		= nhmex_bbox_msr_enable_event,
 	.hw_config		= nhmex_bbox_hw_config,
-	.get_constraint		= uncore_get_constraint,
-	.put_constraint		= uncore_put_constraint,
-};
+	.get_स्थिरraपूर्णांक		= uncore_get_स्थिरraपूर्णांक,
+	.put_स्थिरraपूर्णांक		= uncore_put_स्थिरraपूर्णांक,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_bbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_bbox = अणु
 	.name			= "bbox",
 	.num_counters		= 4,
 	.num_boxes		= 2,
@@ -433,72 +434,72 @@ static struct intel_uncore_type nhmex_uncore_bbox = {
 	.msr_offset		= NHMEX_B_MSR_OFFSET,
 	.pair_ctr_ctl		= 1,
 	.num_shared_regs	= 1,
-	.constraints		= nhmex_uncore_bbox_constraints,
+	.स्थिरraपूर्णांकs		= nhmex_uncore_bbox_स्थिरraपूर्णांकs,
 	.ops			= &nhmex_uncore_bbox_ops,
-	.format_group		= &nhmex_uncore_bbox_format_group
-};
+	.क्रमmat_group		= &nhmex_uncore_bbox_क्रमmat_group
+पूर्ण;
 
-static int nhmex_sbox_hw_config(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
+अटल पूर्णांक nhmex_sbox_hw_config(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
 
-	/* only TO_R_PROG_EV event uses the match/mask register */
-	if ((hwc->config & NHMEX_PMON_CTL_EV_SEL_MASK) !=
+	/* only TO_R_PROG_EV event uses the match/mask रेजिस्टर */
+	अगर ((hwc->config & NHMEX_PMON_CTL_EV_SEL_MASK) !=
 	    NHMEX_S_EVENT_TO_R_PROG_EV)
-		return 0;
+		वापस 0;
 
-	if (box->pmu->pmu_idx == 0)
+	अगर (box->pmu->pmu_idx == 0)
 		reg1->reg = NHMEX_S0_MSR_MM_CFG;
-	else
+	अन्यथा
 		reg1->reg = NHMEX_S1_MSR_MM_CFG;
 	reg1->idx = 0;
 	reg1->config = event->attr.config1;
 	reg2->config = event->attr.config2;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void nhmex_sbox_msr_enable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
+अटल व्योम nhmex_sbox_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
 
-	if (reg1->idx != EXTRA_REG_NONE) {
+	अगर (reg1->idx != EXTRA_REG_NONE) अणु
 		wrmsrl(reg1->reg, 0);
 		wrmsrl(reg1->reg + 1, reg1->config);
 		wrmsrl(reg1->reg + 2, reg2->config);
 		wrmsrl(reg1->reg, NHMEX_S_PMON_MM_CFG_EN);
-	}
+	पूर्ण
 	wrmsrl(hwc->config_base, hwc->config | NHMEX_PMON_CTL_EN_BIT22);
-}
+पूर्ण
 
-static struct attribute *nhmex_uncore_sbox_formats_attr[] = {
-	&format_attr_event.attr,
-	&format_attr_umask.attr,
-	&format_attr_edge.attr,
-	&format_attr_inv.attr,
-	&format_attr_thresh8.attr,
-	&format_attr_match.attr,
-	&format_attr_mask.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_sbox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	&क्रमmat_attr_umask.attr,
+	&क्रमmat_attr_edge.attr,
+	&क्रमmat_attr_inv.attr,
+	&क्रमmat_attr_thresh8.attr,
+	&क्रमmat_attr_match.attr,
+	&क्रमmat_attr_mask.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_sbox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_sbox_क्रमmat_group = अणु
 	.name			= "format",
-	.attrs			= nhmex_uncore_sbox_formats_attr,
-};
+	.attrs			= nhmex_uncore_sbox_क्रमmats_attr,
+पूर्ण;
 
-static struct intel_uncore_ops nhmex_uncore_sbox_ops = {
+अटल काष्ठा पूर्णांकel_uncore_ops nhmex_uncore_sbox_ops = अणु
 	NHMEX_UNCORE_OPS_COMMON_INIT(),
 	.enable_event		= nhmex_sbox_msr_enable_event,
 	.hw_config		= nhmex_sbox_hw_config,
-	.get_constraint		= uncore_get_constraint,
-	.put_constraint		= uncore_put_constraint,
-};
+	.get_स्थिरraपूर्णांक		= uncore_get_स्थिरraपूर्णांक,
+	.put_स्थिरraपूर्णांक		= uncore_put_स्थिरraपूर्णांक,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_sbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_sbox = अणु
 	.name			= "sbox",
 	.num_counters		= 4,
 	.num_boxes		= 2,
@@ -511,10 +512,10 @@ static struct intel_uncore_type nhmex_uncore_sbox = {
 	.pair_ctr_ctl		= 1,
 	.num_shared_regs	= 1,
 	.ops			= &nhmex_uncore_sbox_ops,
-	.format_group		= &nhmex_uncore_sbox_format_group
-};
+	.क्रमmat_group		= &nhmex_uncore_sbox_क्रमmat_group
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	EXTRA_REG_NHMEX_M_FILTER,
 	EXTRA_REG_NHMEX_M_DSP,
 	EXTRA_REG_NHMEX_M_ISS,
@@ -523,18 +524,18 @@ enum {
 	EXTRA_REG_NHMEX_M_PGT,
 	EXTRA_REG_NHMEX_M_PLD,
 	EXTRA_REG_NHMEX_M_ZDP_CTL_FVC,
-};
+पूर्ण;
 
-static struct extra_reg nhmex_uncore_mbox_extra_regs[] = {
+अटल काष्ठा extra_reg nhmex_uncore_mbox_extra_regs[] = अणु
 	MBOX_INC_SEL_EXTAR_REG(0x0, DSP),
 	MBOX_INC_SEL_EXTAR_REG(0x4, MSC_THR),
 	MBOX_INC_SEL_EXTAR_REG(0x5, MSC_THR),
 	MBOX_INC_SEL_EXTAR_REG(0x9, ISS),
-	/* event 0xa uses two extra registers */
+	/* event 0xa uses two extra रेजिस्टरs */
 	MBOX_INC_SEL_EXTAR_REG(0xa, ISS),
 	MBOX_INC_SEL_EXTAR_REG(0xa, PLD),
 	MBOX_INC_SEL_EXTAR_REG(0xb, PLD),
-	/* events 0xd ~ 0x10 use the same extra register */
+	/* events 0xd ~ 0x10 use the same extra रेजिस्टर */
 	MBOX_INC_SEL_EXTAR_REG(0xd, ZDP_CTL_FVC),
 	MBOX_INC_SEL_EXTAR_REG(0xe, ZDP_CTL_FVC),
 	MBOX_INC_SEL_EXTAR_REG(0xf, ZDP_CTL_FVC),
@@ -545,251 +546,251 @@ static struct extra_reg nhmex_uncore_mbox_extra_regs[] = {
 	MBOX_SET_FLAG_SEL_EXTRA_REG(0x5, PGT),
 	MBOX_SET_FLAG_SEL_EXTRA_REG(0x6, MAP),
 	EVENT_EXTRA_END
-};
+पूर्ण;
 
-/* Nehalem-EX or Westmere-EX ? */
-static bool uncore_nhmex;
+/* Nehalem-EX or Wesपंचांगere-EX ? */
+अटल bool uncore_nhmex;
 
-static bool nhmex_mbox_get_shared_reg(struct intel_uncore_box *box, int idx, u64 config)
-{
-	struct intel_uncore_extra_reg *er;
-	unsigned long flags;
+अटल bool nhmex_mbox_get_shared_reg(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx, u64 config)
+अणु
+	काष्ठा पूर्णांकel_uncore_extra_reg *er;
+	अचिन्हित दीर्घ flags;
 	bool ret = false;
 	u64 mask;
 
-	if (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) {
+	अगर (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) अणु
 		er = &box->shared_regs[idx];
 		raw_spin_lock_irqsave(&er->lock, flags);
-		if (!atomic_read(&er->ref) || er->config == config) {
+		अगर (!atomic_पढ़ो(&er->ref) || er->config == config) अणु
 			atomic_inc(&er->ref);
 			er->config = config;
 			ret = true;
-		}
+		पूर्ण
 		raw_spin_unlock_irqrestore(&er->lock, flags);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/*
 	 * The ZDP_CTL_FVC MSR has 4 fields which are used to control
 	 * events 0xd ~ 0x10. Besides these 4 fields, there are additional
 	 * fields which are shared.
 	 */
 	idx -= EXTRA_REG_NHMEX_M_ZDP_CTL_FVC;
-	if (WARN_ON_ONCE(idx >= 4))
-		return false;
+	अगर (WARN_ON_ONCE(idx >= 4))
+		वापस false;
 
 	/* mask of the shared fields */
-	if (uncore_nhmex)
+	अगर (uncore_nhmex)
 		mask = NHMEX_M_PMON_ZDP_CTL_FVC_MASK;
-	else
+	अन्यथा
 		mask = WSMEX_M_PMON_ZDP_CTL_FVC_MASK;
 	er = &box->shared_regs[EXTRA_REG_NHMEX_M_ZDP_CTL_FVC];
 
 	raw_spin_lock_irqsave(&er->lock, flags);
-	/* add mask of the non-shared field if it's in use */
-	if (__BITS_VALUE(atomic_read(&er->ref), idx, 8)) {
-		if (uncore_nhmex)
+	/* add mask of the non-shared field अगर it's in use */
+	अगर (__BITS_VALUE(atomic_पढ़ो(&er->ref), idx, 8)) अणु
+		अगर (uncore_nhmex)
 			mask |= NHMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
-		else
+		अन्यथा
 			mask |= WSMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
-	}
+	पूर्ण
 
-	if (!atomic_read(&er->ref) || !((er->config ^ config) & mask)) {
+	अगर (!atomic_पढ़ो(&er->ref) || !((er->config ^ config) & mask)) अणु
 		atomic_add(1 << (idx * 8), &er->ref);
-		if (uncore_nhmex)
+		अगर (uncore_nhmex)
 			mask = NHMEX_M_PMON_ZDP_CTL_FVC_MASK |
 				NHMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
-		else
+		अन्यथा
 			mask = WSMEX_M_PMON_ZDP_CTL_FVC_MASK |
 				WSMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
 		er->config &= ~mask;
 		er->config |= (config & mask);
 		ret = true;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&er->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void nhmex_mbox_put_shared_reg(struct intel_uncore_box *box, int idx)
-{
-	struct intel_uncore_extra_reg *er;
+अटल व्योम nhmex_mbox_put_shared_reg(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांकel_uncore_extra_reg *er;
 
-	if (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) {
+	अगर (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) अणु
 		er = &box->shared_regs[idx];
 		atomic_dec(&er->ref);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	idx -= EXTRA_REG_NHMEX_M_ZDP_CTL_FVC;
 	er = &box->shared_regs[EXTRA_REG_NHMEX_M_ZDP_CTL_FVC];
 	atomic_sub(1 << (idx * 8), &er->ref);
-}
+पूर्ण
 
-static u64 nhmex_mbox_alter_er(struct perf_event *event, int new_idx, bool modify)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
+अटल u64 nhmex_mbox_alter_er(काष्ठा perf_event *event, पूर्णांक new_idx, bool modअगरy)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
 	u64 idx, orig_idx = __BITS_VALUE(reg1->idx, 0, 8);
 	u64 config = reg1->config;
 
-	/* get the non-shared control bits and shift them */
+	/* get the non-shared control bits and shअगरt them */
 	idx = orig_idx - EXTRA_REG_NHMEX_M_ZDP_CTL_FVC;
-	if (uncore_nhmex)
+	अगर (uncore_nhmex)
 		config &= NHMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
-	else
+	अन्यथा
 		config &= WSMEX_M_PMON_ZDP_CTL_FVC_EVENT_MASK(idx);
-	if (new_idx > orig_idx) {
+	अगर (new_idx > orig_idx) अणु
 		idx = new_idx - orig_idx;
 		config <<= 3 * idx;
-	} else {
+	पूर्ण अन्यथा अणु
 		idx = orig_idx - new_idx;
 		config >>= 3 * idx;
-	}
+	पूर्ण
 
 	/* add the shared control bits back */
-	if (uncore_nhmex)
+	अगर (uncore_nhmex)
 		config |= NHMEX_M_PMON_ZDP_CTL_FVC_MASK & reg1->config;
-	else
+	अन्यथा
 		config |= WSMEX_M_PMON_ZDP_CTL_FVC_MASK & reg1->config;
 	config |= NHMEX_M_PMON_ZDP_CTL_FVC_MASK & reg1->config;
-	if (modify) {
-		/* adjust the main event selector */
-		if (new_idx > orig_idx)
+	अगर (modअगरy) अणु
+		/* adjust the मुख्य event selector */
+		अगर (new_idx > orig_idx)
 			hwc->config += idx << NHMEX_M_PMON_CTL_INC_SEL_SHIFT;
-		else
+		अन्यथा
 			hwc->config -= idx << NHMEX_M_PMON_CTL_INC_SEL_SHIFT;
 		reg1->config = config;
 		reg1->idx = ~0xff | new_idx;
-	}
-	return config;
-}
+	पूर्ण
+	वापस config;
+पूर्ण
 
-static struct event_constraint *
-nhmex_mbox_get_constraint(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event_extra *reg1 = &event->hw.extra_reg;
-	struct hw_perf_event_extra *reg2 = &event->hw.branch_reg;
-	int i, idx[2], alloc = 0;
+अटल काष्ठा event_स्थिरraपूर्णांक *
+nhmex_mbox_get_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event_extra *reg1 = &event->hw.extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &event->hw.branch_reg;
+	पूर्णांक i, idx[2], alloc = 0;
 	u64 config1 = reg1->config;
 
 	idx[0] = __BITS_VALUE(reg1->idx, 0, 8);
 	idx[1] = __BITS_VALUE(reg1->idx, 1, 8);
 again:
-	for (i = 0; i < 2; i++) {
-		if (!uncore_box_is_fake(box) && (reg1->alloc & (0x1 << i)))
+	क्रम (i = 0; i < 2; i++) अणु
+		अगर (!uncore_box_is_fake(box) && (reg1->alloc & (0x1 << i)))
 			idx[i] = 0xff;
 
-		if (idx[i] == 0xff)
-			continue;
+		अगर (idx[i] == 0xff)
+			जारी;
 
-		if (!nhmex_mbox_get_shared_reg(box, idx[i],
+		अगर (!nhmex_mbox_get_shared_reg(box, idx[i],
 				__BITS_VALUE(config1, i, 32)))
-			goto fail;
+			जाओ fail;
 		alloc |= (0x1 << i);
-	}
+	पूर्ण
 
-	/* for the match/mask registers */
-	if (reg2->idx != EXTRA_REG_NONE &&
+	/* क्रम the match/mask रेजिस्टरs */
+	अगर (reg2->idx != EXTRA_REG_NONE &&
 	    (uncore_box_is_fake(box) || !reg2->alloc) &&
 	    !nhmex_mbox_get_shared_reg(box, reg2->idx, reg2->config))
-		goto fail;
+		जाओ fail;
 
 	/*
-	 * If it's a fake box -- as per validate_{group,event}() we
-	 * shouldn't touch event state and we can avoid doing so
-	 * since both will only call get_event_constraints() once
-	 * on each event, this avoids the need for reg->alloc.
+	 * If it's a fake box -- as per validate_अणुgroup,eventपूर्ण() we
+	 * shouldn't touch event state and we can aव्योम करोing so
+	 * since both will only call get_event_स्थिरraपूर्णांकs() once
+	 * on each event, this aव्योमs the need क्रम reg->alloc.
 	 */
-	if (!uncore_box_is_fake(box)) {
-		if (idx[0] != 0xff && idx[0] != __BITS_VALUE(reg1->idx, 0, 8))
+	अगर (!uncore_box_is_fake(box)) अणु
+		अगर (idx[0] != 0xff && idx[0] != __BITS_VALUE(reg1->idx, 0, 8))
 			nhmex_mbox_alter_er(event, idx[0], true);
 		reg1->alloc |= alloc;
-		if (reg2->idx != EXTRA_REG_NONE)
+		अगर (reg2->idx != EXTRA_REG_NONE)
 			reg2->alloc = 1;
-	}
-	return NULL;
+	पूर्ण
+	वापस शून्य;
 fail:
-	if (idx[0] != 0xff && !(alloc & 0x1) &&
-	    idx[0] >= EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) {
+	अगर (idx[0] != 0xff && !(alloc & 0x1) &&
+	    idx[0] >= EXTRA_REG_NHMEX_M_ZDP_CTL_FVC) अणु
 		/*
 		 * events 0xd ~ 0x10 are functional identical, but are
-		 * controlled by different fields in the ZDP_CTL_FVC
-		 * register. If we failed to take one field, try the
+		 * controlled by dअगरferent fields in the ZDP_CTL_FVC
+		 * रेजिस्टर. If we failed to take one field, try the
 		 * rest 3 choices.
 		 */
 		BUG_ON(__BITS_VALUE(reg1->idx, 1, 8) != 0xff);
 		idx[0] -= EXTRA_REG_NHMEX_M_ZDP_CTL_FVC;
 		idx[0] = (idx[0] + 1) % 4;
 		idx[0] += EXTRA_REG_NHMEX_M_ZDP_CTL_FVC;
-		if (idx[0] != __BITS_VALUE(reg1->idx, 0, 8)) {
+		अगर (idx[0] != __BITS_VALUE(reg1->idx, 0, 8)) अणु
 			config1 = nhmex_mbox_alter_er(event, idx[0], false);
-			goto again;
-		}
-	}
+			जाओ again;
+		पूर्ण
+	पूर्ण
 
-	if (alloc & 0x1)
+	अगर (alloc & 0x1)
 		nhmex_mbox_put_shared_reg(box, idx[0]);
-	if (alloc & 0x2)
+	अगर (alloc & 0x2)
 		nhmex_mbox_put_shared_reg(box, idx[1]);
-	return &uncore_constraint_empty;
-}
+	वापस &uncore_स्थिरraपूर्णांक_empty;
+पूर्ण
 
-static void nhmex_mbox_put_constraint(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event_extra *reg1 = &event->hw.extra_reg;
-	struct hw_perf_event_extra *reg2 = &event->hw.branch_reg;
+अटल व्योम nhmex_mbox_put_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event_extra *reg1 = &event->hw.extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &event->hw.branch_reg;
 
-	if (uncore_box_is_fake(box))
-		return;
+	अगर (uncore_box_is_fake(box))
+		वापस;
 
-	if (reg1->alloc & 0x1)
+	अगर (reg1->alloc & 0x1)
 		nhmex_mbox_put_shared_reg(box, __BITS_VALUE(reg1->idx, 0, 8));
-	if (reg1->alloc & 0x2)
+	अगर (reg1->alloc & 0x2)
 		nhmex_mbox_put_shared_reg(box, __BITS_VALUE(reg1->idx, 1, 8));
 	reg1->alloc = 0;
 
-	if (reg2->alloc) {
+	अगर (reg2->alloc) अणु
 		nhmex_mbox_put_shared_reg(box, reg2->idx);
 		reg2->alloc = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nhmex_mbox_extra_reg_idx(struct extra_reg *er)
-{
-	if (er->idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC)
-		return er->idx;
-	return er->idx + (er->event >> NHMEX_M_PMON_CTL_INC_SEL_SHIFT) - 0xd;
-}
+अटल पूर्णांक nhmex_mbox_extra_reg_idx(काष्ठा extra_reg *er)
+अणु
+	अगर (er->idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC)
+		वापस er->idx;
+	वापस er->idx + (er->event >> NHMEX_M_PMON_CTL_INC_SEL_SHIFT) - 0xd;
+पूर्ण
 
-static int nhmex_mbox_hw_config(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct intel_uncore_type *type = box->pmu->type;
-	struct hw_perf_event_extra *reg1 = &event->hw.extra_reg;
-	struct hw_perf_event_extra *reg2 = &event->hw.branch_reg;
-	struct extra_reg *er;
-	unsigned msr;
-	int reg_idx = 0;
+अटल पूर्णांक nhmex_mbox_hw_config(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा पूर्णांकel_uncore_type *type = box->pmu->type;
+	काष्ठा hw_perf_event_extra *reg1 = &event->hw.extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &event->hw.branch_reg;
+	काष्ठा extra_reg *er;
+	अचिन्हित msr;
+	पूर्णांक reg_idx = 0;
 	/*
 	 * The mbox events may require 2 extra MSRs at the most. But only
-	 * the lower 32 bits in these MSRs are significant, so we can use
+	 * the lower 32 bits in these MSRs are signअगरicant, so we can use
 	 * config1 to pass two MSRs' config.
 	 */
-	for (er = nhmex_uncore_mbox_extra_regs; er->msr; er++) {
-		if (er->event != (event->hw.config & er->config_mask))
-			continue;
-		if (event->attr.config1 & ~er->valid_mask)
-			return -EINVAL;
+	क्रम (er = nhmex_uncore_mbox_extra_regs; er->msr; er++) अणु
+		अगर (er->event != (event->hw.config & er->config_mask))
+			जारी;
+		अगर (event->attr.config1 & ~er->valid_mask)
+			वापस -EINVAL;
 
 		msr = er->msr + type->msr_offset * box->pmu->pmu_idx;
-		if (WARN_ON_ONCE(msr >= 0xffff || er->idx >= 0xff))
-			return -EINVAL;
+		अगर (WARN_ON_ONCE(msr >= 0xffff || er->idx >= 0xff))
+			वापस -EINVAL;
 
 		/* always use the 32~63 bits to pass the PLD config */
-		if (er->idx == EXTRA_REG_NHMEX_M_PLD)
+		अगर (er->idx == EXTRA_REG_NHMEX_M_PLD)
 			reg_idx = 1;
-		else if (WARN_ON_ONCE(reg_idx > 0))
-			return -EINVAL;
+		अन्यथा अगर (WARN_ON_ONCE(reg_idx > 0))
+			वापस -EINVAL;
 
 		reg1->idx &= ~(0xff << (reg_idx * 8));
 		reg1->reg &= ~(0xffff << (reg_idx * 16));
@@ -797,70 +798,70 @@ static int nhmex_mbox_hw_config(struct intel_uncore_box *box, struct perf_event 
 		reg1->reg |= msr << (reg_idx * 16);
 		reg1->config = event->attr.config1;
 		reg_idx++;
-	}
+	पूर्ण
 	/*
-	 * The mbox only provides ability to perform address matching
-	 * for the PLD events.
+	 * The mbox only provides ability to perक्रमm address matching
+	 * क्रम the PLD events.
 	 */
-	if (reg_idx == 2) {
+	अगर (reg_idx == 2) अणु
 		reg2->idx = EXTRA_REG_NHMEX_M_FILTER;
-		if (event->attr.config2 & NHMEX_M_PMON_MM_CFG_EN)
+		अगर (event->attr.config2 & NHMEX_M_PMON_MM_CFG_EN)
 			reg2->config = event->attr.config2;
-		else
+		अन्यथा
 			reg2->config = ~0ULL;
-		if (box->pmu->pmu_idx == 0)
+		अगर (box->pmu->pmu_idx == 0)
 			reg2->reg = NHMEX_M0_MSR_PMU_MM_CFG;
-		else
+		अन्यथा
 			reg2->reg = NHMEX_M1_MSR_PMU_MM_CFG;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static u64 nhmex_mbox_shared_reg_config(struct intel_uncore_box *box, int idx)
-{
-	struct intel_uncore_extra_reg *er;
-	unsigned long flags;
+अटल u64 nhmex_mbox_shared_reg_config(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांकel_uncore_extra_reg *er;
+	अचिन्हित दीर्घ flags;
 	u64 config;
 
-	if (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC)
-		return box->shared_regs[idx].config;
+	अगर (idx < EXTRA_REG_NHMEX_M_ZDP_CTL_FVC)
+		वापस box->shared_regs[idx].config;
 
 	er = &box->shared_regs[EXTRA_REG_NHMEX_M_ZDP_CTL_FVC];
 	raw_spin_lock_irqsave(&er->lock, flags);
 	config = er->config;
 	raw_spin_unlock_irqrestore(&er->lock, flags);
-	return config;
-}
+	वापस config;
+पूर्ण
 
-static void nhmex_mbox_msr_enable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
-	int idx;
+अटल व्योम nhmex_mbox_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
+	पूर्णांक idx;
 
 	idx = __BITS_VALUE(reg1->idx, 0, 8);
-	if (idx != 0xff)
+	अगर (idx != 0xff)
 		wrmsrl(__BITS_VALUE(reg1->reg, 0, 16),
 			nhmex_mbox_shared_reg_config(box, idx));
 	idx = __BITS_VALUE(reg1->idx, 1, 8);
-	if (idx != 0xff)
+	अगर (idx != 0xff)
 		wrmsrl(__BITS_VALUE(reg1->reg, 1, 16),
 			nhmex_mbox_shared_reg_config(box, idx));
 
-	if (reg2->idx != EXTRA_REG_NONE) {
+	अगर (reg2->idx != EXTRA_REG_NONE) अणु
 		wrmsrl(reg2->reg, 0);
-		if (reg2->config != ~0ULL) {
+		अगर (reg2->config != ~0ULL) अणु
 			wrmsrl(reg2->reg + 1,
 				reg2->config & NHMEX_M_PMON_ADDR_MATCH_MASK);
 			wrmsrl(reg2->reg + 2, NHMEX_M_PMON_ADDR_MASK_MASK &
 				(reg2->config >> NHMEX_M_PMON_ADDR_MASK_SHIFT));
 			wrmsrl(reg2->reg, NHMEX_M_PMON_MM_CFG_EN);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	wrmsrl(hwc->config_base, hwc->config | NHMEX_PMON_CTL_EN_BIT0);
-}
+पूर्ण
 
 DEFINE_UNCORE_FORMAT_ATTR(count_mode,		count_mode,	"config:2-3");
 DEFINE_UNCORE_FORMAT_ATTR(storage_mode,		storage_mode,	"config:4-5");
@@ -879,52 +880,52 @@ DEFINE_UNCORE_FORMAT_ATTR(map,			map,		"config1:0-31");
 DEFINE_UNCORE_FORMAT_ATTR(iss,			iss,		"config1:0-31");
 DEFINE_UNCORE_FORMAT_ATTR(pld,			pld,		"config1:32-63");
 
-static struct attribute *nhmex_uncore_mbox_formats_attr[] = {
-	&format_attr_count_mode.attr,
-	&format_attr_storage_mode.attr,
-	&format_attr_wrap_mode.attr,
-	&format_attr_flag_mode.attr,
-	&format_attr_inc_sel.attr,
-	&format_attr_set_flag_sel.attr,
-	&format_attr_filter_cfg_en.attr,
-	&format_attr_filter_match.attr,
-	&format_attr_filter_mask.attr,
-	&format_attr_dsp.attr,
-	&format_attr_thr.attr,
-	&format_attr_fvc.attr,
-	&format_attr_pgt.attr,
-	&format_attr_map.attr,
-	&format_attr_iss.attr,
-	&format_attr_pld.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_mbox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_count_mode.attr,
+	&क्रमmat_attr_storage_mode.attr,
+	&क्रमmat_attr_wrap_mode.attr,
+	&क्रमmat_attr_flag_mode.attr,
+	&क्रमmat_attr_inc_sel.attr,
+	&क्रमmat_attr_set_flag_sel.attr,
+	&क्रमmat_attr_filter_cfg_en.attr,
+	&क्रमmat_attr_filter_match.attr,
+	&क्रमmat_attr_filter_mask.attr,
+	&क्रमmat_attr_dsp.attr,
+	&क्रमmat_attr_thr.attr,
+	&क्रमmat_attr_fvc.attr,
+	&क्रमmat_attr_pgt.attr,
+	&क्रमmat_attr_map.attr,
+	&क्रमmat_attr_iss.attr,
+	&क्रमmat_attr_pld.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_mbox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_mbox_क्रमmat_group = अणु
 	.name		= "format",
-	.attrs		= nhmex_uncore_mbox_formats_attr,
-};
+	.attrs		= nhmex_uncore_mbox_क्रमmats_attr,
+पूर्ण;
 
-static struct uncore_event_desc nhmex_uncore_mbox_events[] = {
-	INTEL_UNCORE_EVENT_DESC(bbox_cmds_read, "inc_sel=0xd,fvc=0x2800"),
-	INTEL_UNCORE_EVENT_DESC(bbox_cmds_write, "inc_sel=0xd,fvc=0x2820"),
-	{ /* end: all zeroes */ },
-};
+अटल काष्ठा uncore_event_desc nhmex_uncore_mbox_events[] = अणु
+	INTEL_UNCORE_EVENT_DESC(bbox_cmds_पढ़ो, "inc_sel=0xd,fvc=0x2800"),
+	INTEL_UNCORE_EVENT_DESC(bbox_cmds_ग_लिखो, "inc_sel=0xd,fvc=0x2820"),
+	अणु /* end: all zeroes */ पूर्ण,
+पूर्ण;
 
-static struct uncore_event_desc wsmex_uncore_mbox_events[] = {
-	INTEL_UNCORE_EVENT_DESC(bbox_cmds_read, "inc_sel=0xd,fvc=0x5000"),
-	INTEL_UNCORE_EVENT_DESC(bbox_cmds_write, "inc_sel=0xd,fvc=0x5040"),
-	{ /* end: all zeroes */ },
-};
+अटल काष्ठा uncore_event_desc wsmex_uncore_mbox_events[] = अणु
+	INTEL_UNCORE_EVENT_DESC(bbox_cmds_पढ़ो, "inc_sel=0xd,fvc=0x5000"),
+	INTEL_UNCORE_EVENT_DESC(bbox_cmds_ग_लिखो, "inc_sel=0xd,fvc=0x5040"),
+	अणु /* end: all zeroes */ पूर्ण,
+पूर्ण;
 
-static struct intel_uncore_ops nhmex_uncore_mbox_ops = {
+अटल काष्ठा पूर्णांकel_uncore_ops nhmex_uncore_mbox_ops = अणु
 	NHMEX_UNCORE_OPS_COMMON_INIT(),
 	.enable_event	= nhmex_mbox_msr_enable_event,
 	.hw_config	= nhmex_mbox_hw_config,
-	.get_constraint	= nhmex_mbox_get_constraint,
-	.put_constraint	= nhmex_mbox_put_constraint,
-};
+	.get_स्थिरraपूर्णांक	= nhmex_mbox_get_स्थिरraपूर्णांक,
+	.put_स्थिरraपूर्णांक	= nhmex_mbox_put_स्थिरraपूर्णांक,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_mbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_mbox = अणु
 	.name			= "mbox",
 	.num_counters		= 6,
 	.num_boxes		= 2,
@@ -938,215 +939,215 @@ static struct intel_uncore_type nhmex_uncore_mbox = {
 	.num_shared_regs	= 8,
 	.event_descs		= nhmex_uncore_mbox_events,
 	.ops			= &nhmex_uncore_mbox_ops,
-	.format_group		= &nhmex_uncore_mbox_format_group,
-};
+	.क्रमmat_group		= &nhmex_uncore_mbox_क्रमmat_group,
+पूर्ण;
 
-static void nhmex_rbox_alter_er(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
+अटल व्योम nhmex_rbox_alter_er(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
 
-	/* adjust the main event selector and extra register index */
-	if (reg1->idx % 2) {
+	/* adjust the मुख्य event selector and extra रेजिस्टर index */
+	अगर (reg1->idx % 2) अणु
 		reg1->idx--;
 		hwc->config -= 1 << NHMEX_R_PMON_CTL_EV_SEL_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg1->idx++;
 		hwc->config += 1 << NHMEX_R_PMON_CTL_EV_SEL_SHIFT;
-	}
+	पूर्ण
 
-	/* adjust extra register config */
-	switch (reg1->idx % 6) {
-	case 2:
-		/* shift the 8~15 bits to the 0~7 bits */
+	/* adjust extra रेजिस्टर config */
+	चयन (reg1->idx % 6) अणु
+	हाल 2:
+		/* shअगरt the 8~15 bits to the 0~7 bits */
 		reg1->config >>= 8;
-		break;
-	case 3:
-		/* shift the 0~7 bits to the 8~15 bits */
+		अवरोध;
+	हाल 3:
+		/* shअगरt the 0~7 bits to the 8~15 bits */
 		reg1->config <<= 8;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  * Each rbox has 4 event set which monitor PQI port 0~3 or 4~7.
  * An event set consists of 6 events, the 3rd and 4th events in
- * an event set use the same extra register. So an event set uses
- * 5 extra registers.
+ * an event set use the same extra रेजिस्टर. So an event set uses
+ * 5 extra रेजिस्टरs.
  */
-static struct event_constraint *
-nhmex_rbox_get_constraint(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
-	struct intel_uncore_extra_reg *er;
-	unsigned long flags;
-	int idx, er_idx;
+अटल काष्ठा event_स्थिरraपूर्णांक *
+nhmex_rbox_get_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
+	काष्ठा पूर्णांकel_uncore_extra_reg *er;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक idx, er_idx;
 	u64 config1;
 	bool ok = false;
 
-	if (!uncore_box_is_fake(box) && reg1->alloc)
-		return NULL;
+	अगर (!uncore_box_is_fake(box) && reg1->alloc)
+		वापस शून्य;
 
 	idx = reg1->idx % 6;
 	config1 = reg1->config;
 again:
 	er_idx = idx;
-	/* the 3rd and 4th events use the same extra register */
-	if (er_idx > 2)
+	/* the 3rd and 4th events use the same extra रेजिस्टर */
+	अगर (er_idx > 2)
 		er_idx--;
 	er_idx += (reg1->idx / 6) * 5;
 
 	er = &box->shared_regs[er_idx];
 	raw_spin_lock_irqsave(&er->lock, flags);
-	if (idx < 2) {
-		if (!atomic_read(&er->ref) || er->config == reg1->config) {
+	अगर (idx < 2) अणु
+		अगर (!atomic_पढ़ो(&er->ref) || er->config == reg1->config) अणु
 			atomic_inc(&er->ref);
 			er->config = reg1->config;
 			ok = true;
-		}
-	} else if (idx == 2 || idx == 3) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (idx == 2 || idx == 3) अणु
 		/*
-		 * these two events use different fields in a extra register,
+		 * these two events use dअगरferent fields in a extra रेजिस्टर,
 		 * the 0~7 bits and the 8~15 bits respectively.
 		 */
 		u64 mask = 0xff << ((idx - 2) * 8);
-		if (!__BITS_VALUE(atomic_read(&er->ref), idx - 2, 8) ||
-				!((er->config ^ config1) & mask)) {
+		अगर (!__BITS_VALUE(atomic_पढ़ो(&er->ref), idx - 2, 8) ||
+				!((er->config ^ config1) & mask)) अणु
 			atomic_add(1 << ((idx - 2) * 8), &er->ref);
 			er->config &= ~mask;
 			er->config |= config1 & mask;
 			ok = true;
-		}
-	} else {
-		if (!atomic_read(&er->ref) ||
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!atomic_पढ़ो(&er->ref) ||
 				(er->config == (hwc->config >> 32) &&
 				 er->config1 == reg1->config &&
-				 er->config2 == reg2->config)) {
+				 er->config2 == reg2->config)) अणु
 			atomic_inc(&er->ref);
 			er->config = (hwc->config >> 32);
 			er->config1 = reg1->config;
 			er->config2 = reg2->config;
 			ok = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&er->lock, flags);
 
-	if (!ok) {
+	अगर (!ok) अणु
 		/*
 		 * The Rbox events are always in pairs. The paired
-		 * events are functional identical, but use different
-		 * extra registers. If we failed to take an extra
-		 * register, try the alternative.
+		 * events are functional identical, but use dअगरferent
+		 * extra रेजिस्टरs. If we failed to take an extra
+		 * रेजिस्टर, try the alternative.
 		 */
 		idx ^= 1;
-		if (idx != reg1->idx % 6) {
-			if (idx == 2)
+		अगर (idx != reg1->idx % 6) अणु
+			अगर (idx == 2)
 				config1 >>= 8;
-			else if (idx == 3)
+			अन्यथा अगर (idx == 3)
 				config1 <<= 8;
-			goto again;
-		}
-	} else {
-		if (!uncore_box_is_fake(box)) {
-			if (idx != reg1->idx % 6)
+			जाओ again;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!uncore_box_is_fake(box)) अणु
+			अगर (idx != reg1->idx % 6)
 				nhmex_rbox_alter_er(box, event);
 			reg1->alloc = 1;
-		}
-		return NULL;
-	}
-	return &uncore_constraint_empty;
-}
+		पूर्ण
+		वापस शून्य;
+	पूर्ण
+	वापस &uncore_स्थिरraपूर्णांक_empty;
+पूर्ण
 
-static void nhmex_rbox_put_constraint(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct intel_uncore_extra_reg *er;
-	struct hw_perf_event_extra *reg1 = &event->hw.extra_reg;
-	int idx, er_idx;
+अटल व्योम nhmex_rbox_put_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा पूर्णांकel_uncore_extra_reg *er;
+	काष्ठा hw_perf_event_extra *reg1 = &event->hw.extra_reg;
+	पूर्णांक idx, er_idx;
 
-	if (uncore_box_is_fake(box) || !reg1->alloc)
-		return;
+	अगर (uncore_box_is_fake(box) || !reg1->alloc)
+		वापस;
 
 	idx = reg1->idx % 6;
 	er_idx = idx;
-	if (er_idx > 2)
+	अगर (er_idx > 2)
 		er_idx--;
 	er_idx += (reg1->idx / 6) * 5;
 
 	er = &box->shared_regs[er_idx];
-	if (idx == 2 || idx == 3)
+	अगर (idx == 2 || idx == 3)
 		atomic_sub(1 << ((idx - 2) * 8), &er->ref);
-	else
+	अन्यथा
 		atomic_dec(&er->ref);
 
 	reg1->alloc = 0;
-}
+पूर्ण
 
-static int nhmex_rbox_hw_config(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &event->hw.extra_reg;
-	struct hw_perf_event_extra *reg2 = &event->hw.branch_reg;
-	int idx;
+अटल पूर्णांक nhmex_rbox_hw_config(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &event->hw.extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &event->hw.branch_reg;
+	पूर्णांक idx;
 
 	idx = (event->hw.config & NHMEX_R_PMON_CTL_EV_SEL_MASK) >>
 		NHMEX_R_PMON_CTL_EV_SEL_SHIFT;
-	if (idx >= 0x18)
-		return -EINVAL;
+	अगर (idx >= 0x18)
+		वापस -EINVAL;
 
 	reg1->idx = idx;
 	reg1->config = event->attr.config1;
 
-	switch (idx % 6) {
-	case 4:
-	case 5:
+	चयन (idx % 6) अणु
+	हाल 4:
+	हाल 5:
 		hwc->config |= event->attr.config & (~0ULL << 32);
 		reg2->config = event->attr.config2;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void nhmex_rbox_msr_enable_event(struct intel_uncore_box *box, struct perf_event *event)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hw_perf_event_extra *reg1 = &hwc->extra_reg;
-	struct hw_perf_event_extra *reg2 = &hwc->branch_reg;
-	int idx, port;
+अटल व्योम nhmex_rbox_msr_enable_event(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hw_perf_event_extra *reg1 = &hwc->extra_reg;
+	काष्ठा hw_perf_event_extra *reg2 = &hwc->branch_reg;
+	पूर्णांक idx, port;
 
 	idx = reg1->idx;
 	port = idx / 6 + box->pmu->pmu_idx * 4;
 
-	switch (idx % 6) {
-	case 0:
+	चयन (idx % 6) अणु
+	हाल 0:
 		wrmsrl(NHMEX_R_MSR_PORTN_IPERF_CFG0(port), reg1->config);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		wrmsrl(NHMEX_R_MSR_PORTN_IPERF_CFG1(port), reg1->config);
-		break;
-	case 2:
-	case 3:
+		अवरोध;
+	हाल 2:
+	हाल 3:
 		wrmsrl(NHMEX_R_MSR_PORTN_QLX_CFG(port),
 			uncore_shared_reg_config(box, 2 + (idx / 6) * 5));
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET1_MM_CFG(port),
 			hwc->config >> 32);
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET1_MATCH(port), reg1->config);
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET1_MASK(port), reg2->config);
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET2_MM_CFG(port),
 			hwc->config >> 32);
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET2_MATCH(port), reg1->config);
 		wrmsrl(NHMEX_R_MSR_PORTN_XBR_SET2_MASK(port), reg2->config);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	wrmsrl(hwc->config_base, NHMEX_PMON_CTL_EN_BIT0 |
 		(hwc->config & NHMEX_R_PMON_CTL_EV_SEL_MASK));
-}
+पूर्ण
 
 DEFINE_UNCORE_FORMAT_ATTR(xbr_mm_cfg, xbr_mm_cfg, "config:32-63");
 DEFINE_UNCORE_FORMAT_ATTR(xbr_match, xbr_match, "config1:0-63");
@@ -1154,40 +1155,40 @@ DEFINE_UNCORE_FORMAT_ATTR(xbr_mask, xbr_mask, "config2:0-63");
 DEFINE_UNCORE_FORMAT_ATTR(qlx_cfg, qlx_cfg, "config1:0-15");
 DEFINE_UNCORE_FORMAT_ATTR(iperf_cfg, iperf_cfg, "config1:0-31");
 
-static struct attribute *nhmex_uncore_rbox_formats_attr[] = {
-	&format_attr_event5.attr,
-	&format_attr_xbr_mm_cfg.attr,
-	&format_attr_xbr_match.attr,
-	&format_attr_xbr_mask.attr,
-	&format_attr_qlx_cfg.attr,
-	&format_attr_iperf_cfg.attr,
-	NULL,
-};
+अटल काष्ठा attribute *nhmex_uncore_rbox_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_event5.attr,
+	&क्रमmat_attr_xbr_mm_cfg.attr,
+	&क्रमmat_attr_xbr_match.attr,
+	&क्रमmat_attr_xbr_mask.attr,
+	&क्रमmat_attr_qlx_cfg.attr,
+	&क्रमmat_attr_iperf_cfg.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group nhmex_uncore_rbox_format_group = {
+अटल स्थिर काष्ठा attribute_group nhmex_uncore_rbox_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = nhmex_uncore_rbox_formats_attr,
-};
+	.attrs = nhmex_uncore_rbox_क्रमmats_attr,
+पूर्ण;
 
-static struct uncore_event_desc nhmex_uncore_rbox_events[] = {
+अटल काष्ठा uncore_event_desc nhmex_uncore_rbox_events[] = अणु
 	INTEL_UNCORE_EVENT_DESC(qpi0_flit_send,		"event=0x0,iperf_cfg=0x80000000"),
 	INTEL_UNCORE_EVENT_DESC(qpi1_filt_send,		"event=0x6,iperf_cfg=0x80000000"),
 	INTEL_UNCORE_EVENT_DESC(qpi0_idle_filt,		"event=0x0,iperf_cfg=0x40000000"),
 	INTEL_UNCORE_EVENT_DESC(qpi1_idle_filt,		"event=0x6,iperf_cfg=0x40000000"),
 	INTEL_UNCORE_EVENT_DESC(qpi0_date_response,	"event=0x0,iperf_cfg=0xc4"),
 	INTEL_UNCORE_EVENT_DESC(qpi1_date_response,	"event=0x6,iperf_cfg=0xc4"),
-	{ /* end: all zeroes */ },
-};
+	अणु /* end: all zeroes */ पूर्ण,
+पूर्ण;
 
-static struct intel_uncore_ops nhmex_uncore_rbox_ops = {
+अटल काष्ठा पूर्णांकel_uncore_ops nhmex_uncore_rbox_ops = अणु
 	NHMEX_UNCORE_OPS_COMMON_INIT(),
 	.enable_event		= nhmex_rbox_msr_enable_event,
 	.hw_config		= nhmex_rbox_hw_config,
-	.get_constraint		= nhmex_rbox_get_constraint,
-	.put_constraint		= nhmex_rbox_put_constraint,
-};
+	.get_स्थिरraपूर्णांक		= nhmex_rbox_get_स्थिरraपूर्णांक,
+	.put_स्थिरraपूर्णांक		= nhmex_rbox_put_स्थिरraपूर्णांक,
+पूर्ण;
 
-static struct intel_uncore_type nhmex_uncore_rbox = {
+अटल काष्ठा पूर्णांकel_uncore_type nhmex_uncore_rbox = अणु
 	.name			= "rbox",
 	.num_counters		= 8,
 	.num_boxes		= 2,
@@ -1201,10 +1202,10 @@ static struct intel_uncore_type nhmex_uncore_rbox = {
 	.num_shared_regs	= 20,
 	.event_descs		= nhmex_uncore_rbox_events,
 	.ops			= &nhmex_uncore_rbox_ops,
-	.format_group		= &nhmex_uncore_rbox_format_group
-};
+	.क्रमmat_group		= &nhmex_uncore_rbox_क्रमmat_group
+पूर्ण;
 
-static struct intel_uncore_type *nhmex_msr_uncores[] = {
+अटल काष्ठा पूर्णांकel_uncore_type *nhmex_msr_uncores[] = अणु
 	&nhmex_uncore_ubox,
 	&nhmex_uncore_cbox,
 	&nhmex_uncore_bbox,
@@ -1212,17 +1213,17 @@ static struct intel_uncore_type *nhmex_msr_uncores[] = {
 	&nhmex_uncore_mbox,
 	&nhmex_uncore_rbox,
 	&nhmex_uncore_wbox,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-void nhmex_uncore_cpu_init(void)
-{
-	if (boot_cpu_data.x86_model == 46)
+व्योम nhmex_uncore_cpu_init(व्योम)
+अणु
+	अगर (boot_cpu_data.x86_model == 46)
 		uncore_nhmex = true;
-	else
+	अन्यथा
 		nhmex_uncore_mbox.event_descs = wsmex_uncore_mbox_events;
-	if (nhmex_uncore_cbox.num_boxes > boot_cpu_data.x86_max_cores)
+	अगर (nhmex_uncore_cbox.num_boxes > boot_cpu_data.x86_max_cores)
 		nhmex_uncore_cbox.num_boxes = boot_cpu_data.x86_max_cores;
 	uncore_msr_uncores = nhmex_msr_uncores;
-}
+पूर्ण
 /* end of Nehalem-EX uncore support */

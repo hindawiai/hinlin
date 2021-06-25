@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2013-2020, Mellanox Technologies inc. All rights reserved.
  */
 
-#include <linux/gfp.h>
-#include <linux/mlx5/qp.h>
-#include <linux/mlx5/driver.h>
-#include "mlx5_ib.h"
-#include "qp.h"
+#समावेश <linux/gfp.h>
+#समावेश <linux/mlx5/qp.h>
+#समावेश <linux/mlx5/driver.h>
+#समावेश "mlx5_ib.h"
+#समावेश "qp.h"
 
-static int mlx5_core_drain_dct(struct mlx5_ib_dev *dev,
-			       struct mlx5_core_dct *dct);
+अटल पूर्णांक mlx5_core_drain_dct(काष्ठा mlx5_ib_dev *dev,
+			       काष्ठा mlx5_core_dct *dct);
 
-static struct mlx5_core_rsc_common *
-mlx5_get_rsc(struct mlx5_qp_table *table, u32 rsn)
-{
-	struct mlx5_core_rsc_common *common;
-	unsigned long flags;
+अटल काष्ठा mlx5_core_rsc_common *
+mlx5_get_rsc(काष्ठा mlx5_qp_table *table, u32 rsn)
+अणु
+	काष्ठा mlx5_core_rsc_common *common;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&table->lock, flags);
 
 	common = radix_tree_lookup(&table->tree, rsn);
-	if (common)
+	अगर (common)
 		refcount_inc(&common->refcount);
 
 	spin_unlock_irqrestore(&table->lock, flags);
 
-	return common;
-}
+	वापस common;
+पूर्ण
 
-void mlx5_core_put_rsc(struct mlx5_core_rsc_common *common)
-{
-	if (refcount_dec_and_test(&common->refcount))
-		complete(&common->free);
-}
+व्योम mlx5_core_put_rsc(काष्ठा mlx5_core_rsc_common *common)
+अणु
+	अगर (refcount_dec_and_test(&common->refcount))
+		complete(&common->मुक्त);
+पूर्ण
 
-static u64 qp_allowed_event_types(void)
-{
+अटल u64 qp_allowed_event_types(व्योम)
+अणु
 	u64 mask;
 
 	mask = BIT(MLX5_EVENT_TYPE_PATH_MIG) |
@@ -48,113 +49,113 @@ static u64 qp_allowed_event_types(void)
 	       BIT(MLX5_EVENT_TYPE_WQ_INVAL_REQ_ERROR) |
 	       BIT(MLX5_EVENT_TYPE_WQ_ACCESS_ERROR);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static u64 rq_allowed_event_types(void)
-{
+अटल u64 rq_allowed_event_types(व्योम)
+अणु
 	u64 mask;
 
 	mask = BIT(MLX5_EVENT_TYPE_SRQ_LAST_WQE) |
 	       BIT(MLX5_EVENT_TYPE_WQ_CATAS_ERROR);
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static u64 sq_allowed_event_types(void)
-{
-	return BIT(MLX5_EVENT_TYPE_WQ_CATAS_ERROR);
-}
+अटल u64 sq_allowed_event_types(व्योम)
+अणु
+	वापस BIT(MLX5_EVENT_TYPE_WQ_CATAS_ERROR);
+पूर्ण
 
-static u64 dct_allowed_event_types(void)
-{
-	return BIT(MLX5_EVENT_TYPE_DCT_DRAINED);
-}
+अटल u64 dct_allowed_event_types(व्योम)
+अणु
+	वापस BIT(MLX5_EVENT_TYPE_DCT_DRAINED);
+पूर्ण
 
-static bool is_event_type_allowed(int rsc_type, int event_type)
-{
-	switch (rsc_type) {
-	case MLX5_EVENT_QUEUE_TYPE_QP:
-		return BIT(event_type) & qp_allowed_event_types();
-	case MLX5_EVENT_QUEUE_TYPE_RQ:
-		return BIT(event_type) & rq_allowed_event_types();
-	case MLX5_EVENT_QUEUE_TYPE_SQ:
-		return BIT(event_type) & sq_allowed_event_types();
-	case MLX5_EVENT_QUEUE_TYPE_DCT:
-		return BIT(event_type) & dct_allowed_event_types();
-	default:
+अटल bool is_event_type_allowed(पूर्णांक rsc_type, पूर्णांक event_type)
+अणु
+	चयन (rsc_type) अणु
+	हाल MLX5_EVENT_QUEUE_TYPE_QP:
+		वापस BIT(event_type) & qp_allowed_event_types();
+	हाल MLX5_EVENT_QUEUE_TYPE_RQ:
+		वापस BIT(event_type) & rq_allowed_event_types();
+	हाल MLX5_EVENT_QUEUE_TYPE_SQ:
+		वापस BIT(event_type) & sq_allowed_event_types();
+	हाल MLX5_EVENT_QUEUE_TYPE_DCT:
+		वापस BIT(event_type) & dct_allowed_event_types();
+	शेष:
 		WARN(1, "Event arrived for unknown resource type");
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int rsc_event_notifier(struct notifier_block *nb,
-			      unsigned long type, void *data)
-{
-	struct mlx5_core_rsc_common *common;
-	struct mlx5_qp_table *table;
-	struct mlx5_core_dct *dct;
+अटल पूर्णांक rsc_event_notअगरier(काष्ठा notअगरier_block *nb,
+			      अचिन्हित दीर्घ type, व्योम *data)
+अणु
+	काष्ठा mlx5_core_rsc_common *common;
+	काष्ठा mlx5_qp_table *table;
+	काष्ठा mlx5_core_dct *dct;
 	u8 event_type = (u8)type;
-	struct mlx5_core_qp *qp;
-	struct mlx5_eqe *eqe;
+	काष्ठा mlx5_core_qp *qp;
+	काष्ठा mlx5_eqe *eqe;
 	u32 rsn;
 
-	switch (event_type) {
-	case MLX5_EVENT_TYPE_DCT_DRAINED:
+	चयन (event_type) अणु
+	हाल MLX5_EVENT_TYPE_DCT_DRAINED:
 		eqe = data;
 		rsn = be32_to_cpu(eqe->data.dct.dctn) & 0xffffff;
 		rsn |= (MLX5_RES_DCT << MLX5_USER_INDEX_LEN);
-		break;
-	case MLX5_EVENT_TYPE_PATH_MIG:
-	case MLX5_EVENT_TYPE_COMM_EST:
-	case MLX5_EVENT_TYPE_SQ_DRAINED:
-	case MLX5_EVENT_TYPE_SRQ_LAST_WQE:
-	case MLX5_EVENT_TYPE_WQ_CATAS_ERROR:
-	case MLX5_EVENT_TYPE_PATH_MIG_FAILED:
-	case MLX5_EVENT_TYPE_WQ_INVAL_REQ_ERROR:
-	case MLX5_EVENT_TYPE_WQ_ACCESS_ERROR:
+		अवरोध;
+	हाल MLX5_EVENT_TYPE_PATH_MIG:
+	हाल MLX5_EVENT_TYPE_COMM_EST:
+	हाल MLX5_EVENT_TYPE_SQ_DRAINED:
+	हाल MLX5_EVENT_TYPE_SRQ_LAST_WQE:
+	हाल MLX5_EVENT_TYPE_WQ_CATAS_ERROR:
+	हाल MLX5_EVENT_TYPE_PATH_MIG_FAILED:
+	हाल MLX5_EVENT_TYPE_WQ_INVAL_REQ_ERROR:
+	हाल MLX5_EVENT_TYPE_WQ_ACCESS_ERROR:
 		eqe = data;
 		rsn = be32_to_cpu(eqe->data.qp_srq.qp_srq_n) & 0xffffff;
 		rsn |= (eqe->data.qp_srq.type << MLX5_USER_INDEX_LEN);
-		break;
-	default:
-		return NOTIFY_DONE;
-	}
+		अवरोध;
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
 
-	table = container_of(nb, struct mlx5_qp_table, nb);
+	table = container_of(nb, काष्ठा mlx5_qp_table, nb);
 	common = mlx5_get_rsc(table, rsn);
-	if (!common)
-		return NOTIFY_OK;
+	अगर (!common)
+		वापस NOTIFY_OK;
 
-	if (!is_event_type_allowed((rsn >> MLX5_USER_INDEX_LEN), event_type))
-		goto out;
+	अगर (!is_event_type_allowed((rsn >> MLX5_USER_INDEX_LEN), event_type))
+		जाओ out;
 
-	switch (common->res) {
-	case MLX5_RES_QP:
-	case MLX5_RES_RQ:
-	case MLX5_RES_SQ:
-		qp = (struct mlx5_core_qp *)common;
+	चयन (common->res) अणु
+	हाल MLX5_RES_QP:
+	हाल MLX5_RES_RQ:
+	हाल MLX5_RES_SQ:
+		qp = (काष्ठा mlx5_core_qp *)common;
 		qp->event(qp, event_type);
-		break;
-	case MLX5_RES_DCT:
-		dct = (struct mlx5_core_dct *)common;
-		if (event_type == MLX5_EVENT_TYPE_DCT_DRAINED)
+		अवरोध;
+	हाल MLX5_RES_DCT:
+		dct = (काष्ठा mlx5_core_dct *)common;
+		अगर (event_type == MLX5_EVENT_TYPE_DCT_DRAINED)
 			complete(&dct->drained);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 out:
 	mlx5_core_put_rsc(common);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int create_resource_common(struct mlx5_ib_dev *dev,
-				  struct mlx5_core_qp *qp, int rsc_type)
-{
-	struct mlx5_qp_table *table = &dev->qp_table;
-	int err;
+अटल पूर्णांक create_resource_common(काष्ठा mlx5_ib_dev *dev,
+				  काष्ठा mlx5_core_qp *qp, पूर्णांक rsc_type)
+अणु
+	काष्ठा mlx5_qp_table *table = &dev->qp_table;
+	पूर्णांक err;
 
 	qp->common.res = rsc_type;
 	spin_lock_irq(&table->lock);
@@ -162,135 +163,135 @@ static int create_resource_common(struct mlx5_ib_dev *dev,
 				qp->qpn | (rsc_type << MLX5_USER_INDEX_LEN),
 				qp);
 	spin_unlock_irq(&table->lock);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	refcount_set(&qp->common.refcount, 1);
-	init_completion(&qp->common.free);
+	init_completion(&qp->common.मुक्त);
 	qp->pid = current->pid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void destroy_resource_common(struct mlx5_ib_dev *dev,
-				    struct mlx5_core_qp *qp)
-{
-	struct mlx5_qp_table *table = &dev->qp_table;
-	unsigned long flags;
+अटल व्योम destroy_resource_common(काष्ठा mlx5_ib_dev *dev,
+				    काष्ठा mlx5_core_qp *qp)
+अणु
+	काष्ठा mlx5_qp_table *table = &dev->qp_table;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&table->lock, flags);
 	radix_tree_delete(&table->tree,
 			  qp->qpn | (qp->common.res << MLX5_USER_INDEX_LEN));
 	spin_unlock_irqrestore(&table->lock, flags);
-	mlx5_core_put_rsc((struct mlx5_core_rsc_common *)qp);
-	wait_for_completion(&qp->common.free);
-}
+	mlx5_core_put_rsc((काष्ठा mlx5_core_rsc_common *)qp);
+	रुको_क्रम_completion(&qp->common.मुक्त);
+पूर्ण
 
-static int _mlx5_core_destroy_dct(struct mlx5_ib_dev *dev,
-				  struct mlx5_core_dct *dct, bool need_cleanup)
-{
-	u32 in[MLX5_ST_SZ_DW(destroy_dct_in)] = {};
-	struct mlx5_core_qp *qp = &dct->mqp;
-	int err;
+अटल पूर्णांक _mlx5_core_destroy_dct(काष्ठा mlx5_ib_dev *dev,
+				  काष्ठा mlx5_core_dct *dct, bool need_cleanup)
+अणु
+	u32 in[MLX5_ST_SZ_DW(destroy_dct_in)] = अणुपूर्ण;
+	काष्ठा mlx5_core_qp *qp = &dct->mqp;
+	पूर्णांक err;
 
 	err = mlx5_core_drain_dct(dev, dct);
-	if (err) {
-		if (dev->mdev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR)
-			goto destroy;
+	अगर (err) अणु
+		अगर (dev->mdev->state == MLX5_DEVICE_STATE_INTERNAL_ERROR)
+			जाओ destroy;
 
-		return err;
-	}
-	wait_for_completion(&dct->drained);
+		वापस err;
+	पूर्ण
+	रुको_क्रम_completion(&dct->drained);
 destroy:
-	if (need_cleanup)
+	अगर (need_cleanup)
 		destroy_resource_common(dev, &dct->mqp);
 	MLX5_SET(destroy_dct_in, in, opcode, MLX5_CMD_OP_DESTROY_DCT);
 	MLX5_SET(destroy_dct_in, in, dctn, qp->qpn);
 	MLX5_SET(destroy_dct_in, in, uid, qp->uid);
 	err = mlx5_cmd_exec_in(dev->mdev, destroy_dct, in);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_core_create_dct(struct mlx5_ib_dev *dev, struct mlx5_core_dct *dct,
-			 u32 *in, int inlen, u32 *out, int outlen)
-{
-	struct mlx5_core_qp *qp = &dct->mqp;
-	int err;
+पूर्णांक mlx5_core_create_dct(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_dct *dct,
+			 u32 *in, पूर्णांक inlen, u32 *out, पूर्णांक outlen)
+अणु
+	काष्ठा mlx5_core_qp *qp = &dct->mqp;
+	पूर्णांक err;
 
 	init_completion(&dct->drained);
 	MLX5_SET(create_dct_in, in, opcode, MLX5_CMD_OP_CREATE_DCT);
 
 	err = mlx5_cmd_exec(dev->mdev, in, inlen, out, outlen);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	qp->qpn = MLX5_GET(create_dct_out, out, dctn);
 	qp->uid = MLX5_GET(create_dct_in, in, uid);
 	err = create_resource_common(dev, qp, MLX5_RES_DCT);
-	if (err)
-		goto err_cmd;
+	अगर (err)
+		जाओ err_cmd;
 
-	return 0;
+	वापस 0;
 err_cmd:
 	_mlx5_core_destroy_dct(dev, dct, false);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_qpc_create_qp(struct mlx5_ib_dev *dev, struct mlx5_core_qp *qp,
-		       u32 *in, int inlen, u32 *out)
-{
-	u32 din[MLX5_ST_SZ_DW(destroy_qp_in)] = {};
-	int err;
+पूर्णांक mlx5_qpc_create_qp(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_qp *qp,
+		       u32 *in, पूर्णांक inlen, u32 *out)
+अणु
+	u32 din[MLX5_ST_SZ_DW(destroy_qp_in)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	MLX5_SET(create_qp_in, in, opcode, MLX5_CMD_OP_CREATE_QP);
 
 	err = mlx5_cmd_exec(dev->mdev, in, inlen, out,
 			    MLX5_ST_SZ_BYTES(create_qp_out));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	qp->uid = MLX5_GET(create_qp_in, in, uid);
 	qp->qpn = MLX5_GET(create_qp_out, out, qpn);
 
 	err = create_resource_common(dev, qp, MLX5_RES_QP);
-	if (err)
-		goto err_cmd;
+	अगर (err)
+		जाओ err_cmd;
 
 	mlx5_debug_qp_add(dev->mdev, qp);
 
-	return 0;
+	वापस 0;
 
 err_cmd:
 	MLX5_SET(destroy_qp_in, din, opcode, MLX5_CMD_OP_DESTROY_QP);
 	MLX5_SET(destroy_qp_in, din, qpn, qp->qpn);
 	MLX5_SET(destroy_qp_in, din, uid, qp->uid);
 	mlx5_cmd_exec_in(dev->mdev, destroy_qp, din);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mlx5_core_drain_dct(struct mlx5_ib_dev *dev,
-			       struct mlx5_core_dct *dct)
-{
-	u32 in[MLX5_ST_SZ_DW(drain_dct_in)] = {};
-	struct mlx5_core_qp *qp = &dct->mqp;
+अटल पूर्णांक mlx5_core_drain_dct(काष्ठा mlx5_ib_dev *dev,
+			       काष्ठा mlx5_core_dct *dct)
+अणु
+	u32 in[MLX5_ST_SZ_DW(drain_dct_in)] = अणुपूर्ण;
+	काष्ठा mlx5_core_qp *qp = &dct->mqp;
 
 	MLX5_SET(drain_dct_in, in, opcode, MLX5_CMD_OP_DRAIN_DCT);
 	MLX5_SET(drain_dct_in, in, dctn, qp->qpn);
 	MLX5_SET(drain_dct_in, in, uid, qp->uid);
-	return mlx5_cmd_exec_in(dev->mdev, drain_dct, in);
-}
+	वापस mlx5_cmd_exec_in(dev->mdev, drain_dct, in);
+पूर्ण
 
-int mlx5_core_destroy_dct(struct mlx5_ib_dev *dev,
-			  struct mlx5_core_dct *dct)
-{
-	return _mlx5_core_destroy_dct(dev, dct, true);
-}
+पूर्णांक mlx5_core_destroy_dct(काष्ठा mlx5_ib_dev *dev,
+			  काष्ठा mlx5_core_dct *dct)
+अणु
+	वापस _mlx5_core_destroy_dct(dev, dct, true);
+पूर्ण
 
-int mlx5_core_destroy_qp(struct mlx5_ib_dev *dev, struct mlx5_core_qp *qp)
-{
-	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = {};
+पूर्णांक mlx5_core_destroy_qp(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_qp *qp)
+अणु
+	u32 in[MLX5_ST_SZ_DW(destroy_qp_in)] = अणुपूर्ण;
 
-	mlx5_debug_qp_remove(dev->mdev, qp);
+	mlx5_debug_qp_हटाओ(dev->mdev, qp);
 
 	destroy_resource_common(dev, qp);
 
@@ -298,345 +299,345 @@ int mlx5_core_destroy_qp(struct mlx5_ib_dev *dev, struct mlx5_core_qp *qp)
 	MLX5_SET(destroy_qp_in, in, qpn, qp->qpn);
 	MLX5_SET(destroy_qp_in, in, uid, qp->uid);
 	mlx5_cmd_exec_in(dev->mdev, destroy_qp, in);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5_core_set_delay_drop(struct mlx5_ib_dev *dev,
-			     u32 timeout_usec)
-{
-	u32 in[MLX5_ST_SZ_DW(set_delay_drop_params_in)] = {};
+पूर्णांक mlx5_core_set_delay_drop(काष्ठा mlx5_ib_dev *dev,
+			     u32 समयout_usec)
+अणु
+	u32 in[MLX5_ST_SZ_DW(set_delay_drop_params_in)] = अणुपूर्ण;
 
 	MLX5_SET(set_delay_drop_params_in, in, opcode,
 		 MLX5_CMD_OP_SET_DELAY_DROP_PARAMS);
-	MLX5_SET(set_delay_drop_params_in, in, delay_drop_timeout,
-		 timeout_usec / 100);
-	return mlx5_cmd_exec_in(dev->mdev, set_delay_drop_params, in);
-}
+	MLX5_SET(set_delay_drop_params_in, in, delay_drop_समयout,
+		 समयout_usec / 100);
+	वापस mlx5_cmd_exec_in(dev->mdev, set_delay_drop_params, in);
+पूर्ण
 
-struct mbox_info {
+काष्ठा mbox_info अणु
 	u32 *in;
 	u32 *out;
-	int inlen;
-	int outlen;
-};
+	पूर्णांक inlen;
+	पूर्णांक outlen;
+पूर्ण;
 
-static int mbox_alloc(struct mbox_info *mbox, int inlen, int outlen)
-{
+अटल पूर्णांक mbox_alloc(काष्ठा mbox_info *mbox, पूर्णांक inlen, पूर्णांक outlen)
+अणु
 	mbox->inlen  = inlen;
 	mbox->outlen = outlen;
 	mbox->in = kzalloc(mbox->inlen, GFP_KERNEL);
 	mbox->out = kzalloc(mbox->outlen, GFP_KERNEL);
-	if (!mbox->in || !mbox->out) {
-		kfree(mbox->in);
-		kfree(mbox->out);
-		return -ENOMEM;
-	}
+	अगर (!mbox->in || !mbox->out) अणु
+		kमुक्त(mbox->in);
+		kमुक्त(mbox->out);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mbox_free(struct mbox_info *mbox)
-{
-	kfree(mbox->in);
-	kfree(mbox->out);
-}
+अटल व्योम mbox_मुक्त(काष्ठा mbox_info *mbox)
+अणु
+	kमुक्त(mbox->in);
+	kमुक्त(mbox->out);
+पूर्ण
 
-static int get_ece_from_mbox(void *out, u16 opcode)
-{
-	int ece = 0;
+अटल पूर्णांक get_ece_from_mbox(व्योम *out, u16 opcode)
+अणु
+	पूर्णांक ece = 0;
 
-	switch (opcode) {
-	case MLX5_CMD_OP_INIT2INIT_QP:
+	चयन (opcode) अणु
+	हाल MLX5_CMD_OP_INIT2INIT_QP:
 		ece = MLX5_GET(init2init_qp_out, out, ece);
-		break;
-	case MLX5_CMD_OP_INIT2RTR_QP:
+		अवरोध;
+	हाल MLX5_CMD_OP_INIT2RTR_QP:
 		ece = MLX5_GET(init2rtr_qp_out, out, ece);
-		break;
-	case MLX5_CMD_OP_RTR2RTS_QP:
+		अवरोध;
+	हाल MLX5_CMD_OP_RTR2RTS_QP:
 		ece = MLX5_GET(rtr2rts_qp_out, out, ece);
-		break;
-	case MLX5_CMD_OP_RTS2RTS_QP:
+		अवरोध;
+	हाल MLX5_CMD_OP_RTS2RTS_QP:
 		ece = MLX5_GET(rts2rts_qp_out, out, ece);
-		break;
-	case MLX5_CMD_OP_RST2INIT_QP:
+		अवरोध;
+	हाल MLX5_CMD_OP_RST2INIT_QP:
 		ece = MLX5_GET(rst2init_qp_out, out, ece);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ece;
-}
+	वापस ece;
+पूर्ण
 
-static int modify_qp_mbox_alloc(struct mlx5_core_dev *dev, u16 opcode, int qpn,
-				u32 opt_param_mask, void *qpc,
-				struct mbox_info *mbox, u16 uid, u32 ece)
-{
-	mbox->out = NULL;
-	mbox->in = NULL;
+अटल पूर्णांक modअगरy_qp_mbox_alloc(काष्ठा mlx5_core_dev *dev, u16 opcode, पूर्णांक qpn,
+				u32 opt_param_mask, व्योम *qpc,
+				काष्ठा mbox_info *mbox, u16 uid, u32 ece)
+अणु
+	mbox->out = शून्य;
+	mbox->in = शून्य;
 
-#define MBOX_ALLOC(mbox, typ)  \
+#घोषणा MBOX_ALLOC(mbox, typ)  \
 	mbox_alloc(mbox, MLX5_ST_SZ_BYTES(typ##_in), MLX5_ST_SZ_BYTES(typ##_out))
 
-#define MOD_QP_IN_SET(typ, in, _opcode, _qpn, _uid)                            \
-	do {                                                                   \
+#घोषणा MOD_QP_IN_SET(typ, in, _opcode, _qpn, _uid)                            \
+	करो अणु                                                                   \
 		MLX5_SET(typ##_in, in, opcode, _opcode);                       \
 		MLX5_SET(typ##_in, in, qpn, _qpn);                             \
 		MLX5_SET(typ##_in, in, uid, _uid);                             \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define MOD_QP_IN_SET_QPC(typ, in, _opcode, _qpn, _opt_p, _qpc, _uid)          \
-	do {                                                                   \
+#घोषणा MOD_QP_IN_SET_QPC(typ, in, _opcode, _qpn, _opt_p, _qpc, _uid)          \
+	करो अणु                                                                   \
 		MOD_QP_IN_SET(typ, in, _opcode, _qpn, _uid);                   \
 		MLX5_SET(typ##_in, in, opt_param_mask, _opt_p);                \
-		memcpy(MLX5_ADDR_OF(typ##_in, in, qpc), _qpc,                  \
+		स_नकल(MLX5_ADDR_OF(typ##_in, in, qpc), _qpc,                  \
 		       MLX5_ST_SZ_BYTES(qpc));                                 \
-	} while (0)
+	पूर्ण जबतक (0)
 
-	switch (opcode) {
+	चयन (opcode) अणु
 	/* 2RST & 2ERR */
-	case MLX5_CMD_OP_2RST_QP:
-		if (MBOX_ALLOC(mbox, qp_2rst))
-			return -ENOMEM;
+	हाल MLX5_CMD_OP_2RST_QP:
+		अगर (MBOX_ALLOC(mbox, qp_2rst))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET(qp_2rst, mbox->in, opcode, qpn, uid);
-		break;
-	case MLX5_CMD_OP_2ERR_QP:
-		if (MBOX_ALLOC(mbox, qp_2err))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_2ERR_QP:
+		अगर (MBOX_ALLOC(mbox, qp_2err))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET(qp_2err, mbox->in, opcode, qpn, uid);
-		break;
+		अवरोध;
 
 	/* MODIFY with QPC */
-	case MLX5_CMD_OP_RST2INIT_QP:
-		if (MBOX_ALLOC(mbox, rst2init_qp))
-			return -ENOMEM;
+	हाल MLX5_CMD_OP_RST2INIT_QP:
+		अगर (MBOX_ALLOC(mbox, rst2init_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(rst2init_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
 		MLX5_SET(rst2init_qp_in, mbox->in, ece, ece);
-		break;
-	case MLX5_CMD_OP_INIT2RTR_QP:
-		if (MBOX_ALLOC(mbox, init2rtr_qp))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_INIT2RTR_QP:
+		अगर (MBOX_ALLOC(mbox, init2rtr_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(init2rtr_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
 		MLX5_SET(init2rtr_qp_in, mbox->in, ece, ece);
-		break;
-	case MLX5_CMD_OP_RTR2RTS_QP:
-		if (MBOX_ALLOC(mbox, rtr2rts_qp))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_RTR2RTS_QP:
+		अगर (MBOX_ALLOC(mbox, rtr2rts_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(rtr2rts_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
 		MLX5_SET(rtr2rts_qp_in, mbox->in, ece, ece);
-		break;
-	case MLX5_CMD_OP_RTS2RTS_QP:
-		if (MBOX_ALLOC(mbox, rts2rts_qp))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_RTS2RTS_QP:
+		अगर (MBOX_ALLOC(mbox, rts2rts_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(rts2rts_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
 		MLX5_SET(rts2rts_qp_in, mbox->in, ece, ece);
-		break;
-	case MLX5_CMD_OP_SQERR2RTS_QP:
-		if (MBOX_ALLOC(mbox, sqerr2rts_qp))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_SQERR2RTS_QP:
+		अगर (MBOX_ALLOC(mbox, sqerr2rts_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(sqerr2rts_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
-		break;
-	case MLX5_CMD_OP_INIT2INIT_QP:
-		if (MBOX_ALLOC(mbox, init2init_qp))
-			return -ENOMEM;
+		अवरोध;
+	हाल MLX5_CMD_OP_INIT2INIT_QP:
+		अगर (MBOX_ALLOC(mbox, init2init_qp))
+			वापस -ENOMEM;
 		MOD_QP_IN_SET_QPC(init2init_qp, mbox->in, opcode, qpn,
 				  opt_param_mask, qpc, uid);
 		MLX5_SET(init2init_qp_in, mbox->in, ece, ece);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int mlx5_core_qp_modify(struct mlx5_ib_dev *dev, u16 opcode, u32 opt_param_mask,
-			void *qpc, struct mlx5_core_qp *qp, u32 *ece)
-{
-	struct mbox_info mbox;
-	int err;
+पूर्णांक mlx5_core_qp_modअगरy(काष्ठा mlx5_ib_dev *dev, u16 opcode, u32 opt_param_mask,
+			व्योम *qpc, काष्ठा mlx5_core_qp *qp, u32 *ece)
+अणु
+	काष्ठा mbox_info mbox;
+	पूर्णांक err;
 
-	err = modify_qp_mbox_alloc(dev->mdev, opcode, qp->qpn, opt_param_mask,
+	err = modअगरy_qp_mbox_alloc(dev->mdev, opcode, qp->qpn, opt_param_mask,
 				   qpc, &mbox, qp->uid, (ece) ? *ece : 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlx5_cmd_exec(dev->mdev, mbox.in, mbox.inlen, mbox.out,
 			    mbox.outlen);
 
-	if (ece)
+	अगर (ece)
 		*ece = get_ece_from_mbox(mbox.out, opcode);
 
-	mbox_free(&mbox);
-	return err;
-}
+	mbox_मुक्त(&mbox);
+	वापस err;
+पूर्ण
 
-int mlx5_init_qp_table(struct mlx5_ib_dev *dev)
-{
-	struct mlx5_qp_table *table = &dev->qp_table;
+पूर्णांक mlx5_init_qp_table(काष्ठा mlx5_ib_dev *dev)
+अणु
+	काष्ठा mlx5_qp_table *table = &dev->qp_table;
 
 	spin_lock_init(&table->lock);
 	INIT_RADIX_TREE(&table->tree, GFP_ATOMIC);
 	mlx5_qp_debugfs_init(dev->mdev);
 
-	table->nb.notifier_call = rsc_event_notifier;
-	mlx5_notifier_register(dev->mdev, &table->nb);
+	table->nb.notअगरier_call = rsc_event_notअगरier;
+	mlx5_notअगरier_रेजिस्टर(dev->mdev, &table->nb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx5_cleanup_qp_table(struct mlx5_ib_dev *dev)
-{
-	struct mlx5_qp_table *table = &dev->qp_table;
+व्योम mlx5_cleanup_qp_table(काष्ठा mlx5_ib_dev *dev)
+अणु
+	काष्ठा mlx5_qp_table *table = &dev->qp_table;
 
-	mlx5_notifier_unregister(dev->mdev, &table->nb);
+	mlx5_notअगरier_unरेजिस्टर(dev->mdev, &table->nb);
 	mlx5_qp_debugfs_cleanup(dev->mdev);
-}
+पूर्ण
 
-int mlx5_core_qp_query(struct mlx5_ib_dev *dev, struct mlx5_core_qp *qp,
-		       u32 *out, int outlen)
-{
-	u32 in[MLX5_ST_SZ_DW(query_qp_in)] = {};
+पूर्णांक mlx5_core_qp_query(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_qp *qp,
+		       u32 *out, पूर्णांक outlen)
+अणु
+	u32 in[MLX5_ST_SZ_DW(query_qp_in)] = अणुपूर्ण;
 
 	MLX5_SET(query_qp_in, in, opcode, MLX5_CMD_OP_QUERY_QP);
 	MLX5_SET(query_qp_in, in, qpn, qp->qpn);
-	return mlx5_cmd_exec(dev->mdev, in, sizeof(in), out, outlen);
-}
+	वापस mlx5_cmd_exec(dev->mdev, in, माप(in), out, outlen);
+पूर्ण
 
-int mlx5_core_dct_query(struct mlx5_ib_dev *dev, struct mlx5_core_dct *dct,
-			u32 *out, int outlen)
-{
-	u32 in[MLX5_ST_SZ_DW(query_dct_in)] = {};
-	struct mlx5_core_qp *qp = &dct->mqp;
+पूर्णांक mlx5_core_dct_query(काष्ठा mlx5_ib_dev *dev, काष्ठा mlx5_core_dct *dct,
+			u32 *out, पूर्णांक outlen)
+अणु
+	u32 in[MLX5_ST_SZ_DW(query_dct_in)] = अणुपूर्ण;
+	काष्ठा mlx5_core_qp *qp = &dct->mqp;
 
 	MLX5_SET(query_dct_in, in, opcode, MLX5_CMD_OP_QUERY_DCT);
 	MLX5_SET(query_dct_in, in, dctn, qp->qpn);
 
-	return mlx5_cmd_exec(dev->mdev, (void *)&in, sizeof(in), (void *)out,
+	वापस mlx5_cmd_exec(dev->mdev, (व्योम *)&in, माप(in), (व्योम *)out,
 			     outlen);
-}
+पूर्ण
 
-int mlx5_core_xrcd_alloc(struct mlx5_ib_dev *dev, u32 *xrcdn)
-{
-	u32 out[MLX5_ST_SZ_DW(alloc_xrcd_out)] = {};
-	u32 in[MLX5_ST_SZ_DW(alloc_xrcd_in)] = {};
-	int err;
+पूर्णांक mlx5_core_xrcd_alloc(काष्ठा mlx5_ib_dev *dev, u32 *xrcdn)
+अणु
+	u32 out[MLX5_ST_SZ_DW(alloc_xrcd_out)] = अणुपूर्ण;
+	u32 in[MLX5_ST_SZ_DW(alloc_xrcd_in)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	MLX5_SET(alloc_xrcd_in, in, opcode, MLX5_CMD_OP_ALLOC_XRCD);
 	err = mlx5_cmd_exec_inout(dev->mdev, alloc_xrcd, in, out);
-	if (!err)
+	अगर (!err)
 		*xrcdn = MLX5_GET(alloc_xrcd_out, out, xrcd);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_core_xrcd_dealloc(struct mlx5_ib_dev *dev, u32 xrcdn)
-{
-	u32 in[MLX5_ST_SZ_DW(dealloc_xrcd_in)] = {};
+पूर्णांक mlx5_core_xrcd_dealloc(काष्ठा mlx5_ib_dev *dev, u32 xrcdn)
+अणु
+	u32 in[MLX5_ST_SZ_DW(dealloc_xrcd_in)] = अणुपूर्ण;
 
 	MLX5_SET(dealloc_xrcd_in, in, opcode, MLX5_CMD_OP_DEALLOC_XRCD);
 	MLX5_SET(dealloc_xrcd_in, in, xrcd, xrcdn);
-	return mlx5_cmd_exec_in(dev->mdev, dealloc_xrcd, in);
-}
+	वापस mlx5_cmd_exec_in(dev->mdev, dealloc_xrcd, in);
+पूर्ण
 
-static void destroy_rq_tracked(struct mlx5_ib_dev *dev, u32 rqn, u16 uid)
-{
-	u32 in[MLX5_ST_SZ_DW(destroy_rq_in)] = {};
+अटल व्योम destroy_rq_tracked(काष्ठा mlx5_ib_dev *dev, u32 rqn, u16 uid)
+अणु
+	u32 in[MLX5_ST_SZ_DW(destroy_rq_in)] = अणुपूर्ण;
 
 	MLX5_SET(destroy_rq_in, in, opcode, MLX5_CMD_OP_DESTROY_RQ);
 	MLX5_SET(destroy_rq_in, in, rqn, rqn);
 	MLX5_SET(destroy_rq_in, in, uid, uid);
 	mlx5_cmd_exec_in(dev->mdev, destroy_rq, in);
-}
+पूर्ण
 
-int mlx5_core_create_rq_tracked(struct mlx5_ib_dev *dev, u32 *in, int inlen,
-				struct mlx5_core_qp *rq)
-{
-	int err;
+पूर्णांक mlx5_core_create_rq_tracked(काष्ठा mlx5_ib_dev *dev, u32 *in, पूर्णांक inlen,
+				काष्ठा mlx5_core_qp *rq)
+अणु
+	पूर्णांक err;
 	u32 rqn;
 
 	err = mlx5_core_create_rq(dev->mdev, in, inlen, &rqn);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	rq->uid = MLX5_GET(create_rq_in, in, uid);
 	rq->qpn = rqn;
 	err = create_resource_common(dev, rq, MLX5_RES_RQ);
-	if (err)
-		goto err_destroy_rq;
+	अगर (err)
+		जाओ err_destroy_rq;
 
-	return 0;
+	वापस 0;
 
 err_destroy_rq:
 	destroy_rq_tracked(dev, rq->qpn, rq->uid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int mlx5_core_destroy_rq_tracked(struct mlx5_ib_dev *dev,
-				 struct mlx5_core_qp *rq)
-{
+पूर्णांक mlx5_core_destroy_rq_tracked(काष्ठा mlx5_ib_dev *dev,
+				 काष्ठा mlx5_core_qp *rq)
+अणु
 	destroy_resource_common(dev, rq);
 	destroy_rq_tracked(dev, rq->qpn, rq->uid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void destroy_sq_tracked(struct mlx5_ib_dev *dev, u32 sqn, u16 uid)
-{
-	u32 in[MLX5_ST_SZ_DW(destroy_sq_in)] = {};
+अटल व्योम destroy_sq_tracked(काष्ठा mlx5_ib_dev *dev, u32 sqn, u16 uid)
+अणु
+	u32 in[MLX5_ST_SZ_DW(destroy_sq_in)] = अणुपूर्ण;
 
 	MLX5_SET(destroy_sq_in, in, opcode, MLX5_CMD_OP_DESTROY_SQ);
 	MLX5_SET(destroy_sq_in, in, sqn, sqn);
 	MLX5_SET(destroy_sq_in, in, uid, uid);
 	mlx5_cmd_exec_in(dev->mdev, destroy_sq, in);
-}
+पूर्ण
 
-int mlx5_core_create_sq_tracked(struct mlx5_ib_dev *dev, u32 *in, int inlen,
-				struct mlx5_core_qp *sq)
-{
-	u32 out[MLX5_ST_SZ_DW(create_sq_out)] = {};
-	int err;
+पूर्णांक mlx5_core_create_sq_tracked(काष्ठा mlx5_ib_dev *dev, u32 *in, पूर्णांक inlen,
+				काष्ठा mlx5_core_qp *sq)
+अणु
+	u32 out[MLX5_ST_SZ_DW(create_sq_out)] = अणुपूर्ण;
+	पूर्णांक err;
 
 	MLX5_SET(create_sq_in, in, opcode, MLX5_CMD_OP_CREATE_SQ);
-	err = mlx5_cmd_exec(dev->mdev, in, inlen, out, sizeof(out));
-	if (err)
-		return err;
+	err = mlx5_cmd_exec(dev->mdev, in, inlen, out, माप(out));
+	अगर (err)
+		वापस err;
 
 	sq->qpn = MLX5_GET(create_sq_out, out, sqn);
 	sq->uid = MLX5_GET(create_sq_in, in, uid);
 	err = create_resource_common(dev, sq, MLX5_RES_SQ);
-	if (err)
-		goto err_destroy_sq;
+	अगर (err)
+		जाओ err_destroy_sq;
 
-	return 0;
+	वापस 0;
 
 err_destroy_sq:
 	destroy_sq_tracked(dev, sq->qpn, sq->uid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx5_core_destroy_sq_tracked(struct mlx5_ib_dev *dev,
-				  struct mlx5_core_qp *sq)
-{
+व्योम mlx5_core_destroy_sq_tracked(काष्ठा mlx5_ib_dev *dev,
+				  काष्ठा mlx5_core_qp *sq)
+अणु
 	destroy_resource_common(dev, sq);
 	destroy_sq_tracked(dev, sq->qpn, sq->uid);
-}
+पूर्ण
 
-struct mlx5_core_rsc_common *mlx5_core_res_hold(struct mlx5_ib_dev *dev,
-						int res_num,
-						enum mlx5_res_type res_type)
-{
+काष्ठा mlx5_core_rsc_common *mlx5_core_res_hold(काष्ठा mlx5_ib_dev *dev,
+						पूर्णांक res_num,
+						क्रमागत mlx5_res_type res_type)
+अणु
 	u32 rsn = res_num | (res_type << MLX5_USER_INDEX_LEN);
-	struct mlx5_qp_table *table = &dev->qp_table;
+	काष्ठा mlx5_qp_table *table = &dev->qp_table;
 
-	return mlx5_get_rsc(table, rsn);
-}
+	वापस mlx5_get_rsc(table, rsn);
+पूर्ण
 
-void mlx5_core_res_put(struct mlx5_core_rsc_common *res)
-{
+व्योम mlx5_core_res_put(काष्ठा mlx5_core_rsc_common *res)
+अणु
 	mlx5_core_put_rsc(res);
-}
+पूर्ण

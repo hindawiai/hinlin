@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2012-2016, The Linux Foundation. All rights reserved.
  * Copyright (C) 2017 Linaro Ltd.
  */
-#ifndef __HFI_H__
-#define __HFI_H__
+#अगर_अघोषित __HFI_H__
+#घोषणा __HFI_H__
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "hfi_helper.h"
+#समावेश "hfi_helper.h"
 
-#define VIDC_SESSION_TYPE_VPE			0
-#define VIDC_SESSION_TYPE_ENC			1
-#define VIDC_SESSION_TYPE_DEC			2
+#घोषणा VIDC_SESSION_TYPE_VPE			0
+#घोषणा VIDC_SESSION_TYPE_ENC			1
+#घोषणा VIDC_SESSION_TYPE_DEC			2
 
-#define VIDC_RESOURCE_NONE			0
-#define VIDC_RESOURCE_OCMEM			1
-#define VIDC_RESOURCE_VMEM			2
+#घोषणा VIDC_RESOURCE_NONE			0
+#घोषणा VIDC_RESOURCE_OCMEM			1
+#घोषणा VIDC_RESOURCE_VMEM			2
 
-struct hfi_buffer_desc {
+काष्ठा hfi_buffer_desc अणु
 	u32 buffer_type;
 	u32 buffer_size;
 	u32 num_buffers;
@@ -26,13 +27,13 @@ struct hfi_buffer_desc {
 	u32 extradata_addr;
 	u32 extradata_size;
 	u32 response_required;
-};
+पूर्ण;
 
-struct hfi_frame_data {
+काष्ठा hfi_frame_data अणु
 	u32 buffer_type;
 	u32 device_addr;
 	u32 extradata_addr;
-	u64 timestamp;
+	u64 बारtamp;
 	u32 flags;
 	u32 offset;
 	u32 alloc_len;
@@ -41,21 +42,21 @@ struct hfi_frame_data {
 	u32 mark_data;
 	u32 clnt_data;
 	u32 extradata_size;
-};
+पूर्ण;
 
-union hfi_get_property {
-	struct hfi_profile_level profile_level;
-	struct hfi_buffer_requirements bufreq[HFI_BUFFER_TYPE_MAX];
-};
+जोड़ hfi_get_property अणु
+	काष्ठा hfi_profile_level profile_level;
+	काष्ठा hfi_buffer_requirements bufreq[HFI_BUFFER_TYPE_MAX];
+पूर्ण;
 
 /* HFI events */
-#define EVT_SYS_EVENT_CHANGE			1
-#define EVT_SYS_WATCHDOG_TIMEOUT		2
-#define EVT_SYS_ERROR				3
-#define EVT_SESSION_ERROR			4
+#घोषणा EVT_SYS_EVENT_CHANGE			1
+#घोषणा EVT_SYS_WATCHDOG_TIMEOUT		2
+#घोषणा EVT_SYS_ERROR				3
+#घोषणा EVT_SESSION_ERROR			4
 
-/* HFI event callback structure */
-struct hfi_event_data {
+/* HFI event callback काष्ठाure */
+काष्ठा hfi_event_data अणु
 	u32 error;
 	u32 height;
 	u32 width;
@@ -67,112 +68,112 @@ struct hfi_event_data {
 	u32 level;
 	/* the following properties start appear from v4 onwards */
 	u32 bit_depth;
-	u32 pic_struct;
+	u32 pic_काष्ठा;
 	u32 colour_space;
 	u32 entropy_mode;
 	u32 buf_count;
-	struct {
+	काष्ठा अणु
 		u32 left, top;
 		u32 width, height;
-	} input_crop;
-};
+	पूर्ण input_crop;
+पूर्ण;
 
 /* define core states */
-#define CORE_UNINIT				0
-#define CORE_INIT				1
+#घोषणा CORE_UNINIT				0
+#घोषणा CORE_INIT				1
 
 /* define instance states */
-#define INST_UNINIT				2
-#define INST_INIT				3
-#define INST_LOAD_RESOURCES			4
-#define INST_START				5
-#define INST_STOP				6
-#define INST_RELEASE_RESOURCES			7
+#घोषणा INST_UNINIT				2
+#घोषणा INST_INIT				3
+#घोषणा INST_LOAD_RESOURCES			4
+#घोषणा INST_START				5
+#घोषणा INST_STOP				6
+#घोषणा INST_RELEASE_RESOURCES			7
 
-struct venus_core;
-struct venus_inst;
+काष्ठा venus_core;
+काष्ठा venus_inst;
 
-struct hfi_core_ops {
-	void (*event_notify)(struct venus_core *core, u32 event);
-};
+काष्ठा hfi_core_ops अणु
+	व्योम (*event_notअगरy)(काष्ठा venus_core *core, u32 event);
+पूर्ण;
 
-struct hfi_inst_ops {
-	void (*buf_done)(struct venus_inst *inst, unsigned int buf_type,
+काष्ठा hfi_inst_ops अणु
+	व्योम (*buf_करोne)(काष्ठा venus_inst *inst, अचिन्हित पूर्णांक buf_type,
 			 u32 tag, u32 bytesused, u32 data_offset, u32 flags,
-			 u32 hfi_flags, u64 timestamp_us);
-	void (*event_notify)(struct venus_inst *inst, u32 event,
-			     struct hfi_event_data *data);
-	void (*flush_done)(struct venus_inst *inst);
-};
+			 u32 hfi_flags, u64 बारtamp_us);
+	व्योम (*event_notअगरy)(काष्ठा venus_inst *inst, u32 event,
+			     काष्ठा hfi_event_data *data);
+	व्योम (*flush_करोne)(काष्ठा venus_inst *inst);
+पूर्ण;
 
-struct hfi_ops {
-	int (*core_init)(struct venus_core *core);
-	int (*core_deinit)(struct venus_core *core);
-	int (*core_ping)(struct venus_core *core, u32 cookie);
-	int (*core_trigger_ssr)(struct venus_core *core, u32 trigger_type);
+काष्ठा hfi_ops अणु
+	पूर्णांक (*core_init)(काष्ठा venus_core *core);
+	पूर्णांक (*core_deinit)(काष्ठा venus_core *core);
+	पूर्णांक (*core_ping)(काष्ठा venus_core *core, u32 cookie);
+	पूर्णांक (*core_trigger_ssr)(काष्ठा venus_core *core, u32 trigger_type);
 
-	int (*session_init)(struct venus_inst *inst, u32 session_type,
+	पूर्णांक (*session_init)(काष्ठा venus_inst *inst, u32 session_type,
 			    u32 codec);
-	int (*session_end)(struct venus_inst *inst);
-	int (*session_abort)(struct venus_inst *inst);
-	int (*session_flush)(struct venus_inst *inst, u32 flush_mode);
-	int (*session_start)(struct venus_inst *inst);
-	int (*session_stop)(struct venus_inst *inst);
-	int (*session_continue)(struct venus_inst *inst);
-	int (*session_etb)(struct venus_inst *inst, struct hfi_frame_data *fd);
-	int (*session_ftb)(struct venus_inst *inst, struct hfi_frame_data *fd);
-	int (*session_set_buffers)(struct venus_inst *inst,
-				   struct hfi_buffer_desc *bd);
-	int (*session_unset_buffers)(struct venus_inst *inst,
-				     struct hfi_buffer_desc *bd);
-	int (*session_load_res)(struct venus_inst *inst);
-	int (*session_release_res)(struct venus_inst *inst);
-	int (*session_parse_seq_hdr)(struct venus_inst *inst, u32 seq_hdr,
+	पूर्णांक (*session_end)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_पात)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_flush)(काष्ठा venus_inst *inst, u32 flush_mode);
+	पूर्णांक (*session_start)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_stop)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_जारी)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_etb)(काष्ठा venus_inst *inst, काष्ठा hfi_frame_data *fd);
+	पूर्णांक (*session_ftb)(काष्ठा venus_inst *inst, काष्ठा hfi_frame_data *fd);
+	पूर्णांक (*session_set_buffers)(काष्ठा venus_inst *inst,
+				   काष्ठा hfi_buffer_desc *bd);
+	पूर्णांक (*session_unset_buffers)(काष्ठा venus_inst *inst,
+				     काष्ठा hfi_buffer_desc *bd);
+	पूर्णांक (*session_load_res)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_release_res)(काष्ठा venus_inst *inst);
+	पूर्णांक (*session_parse_seq_hdr)(काष्ठा venus_inst *inst, u32 seq_hdr,
 				     u32 seq_hdr_len);
-	int (*session_get_seq_hdr)(struct venus_inst *inst, u32 seq_hdr,
+	पूर्णांक (*session_get_seq_hdr)(काष्ठा venus_inst *inst, u32 seq_hdr,
 				   u32 seq_hdr_len);
-	int (*session_set_property)(struct venus_inst *inst, u32 ptype,
-				    void *pdata);
-	int (*session_get_property)(struct venus_inst *inst, u32 ptype);
+	पूर्णांक (*session_set_property)(काष्ठा venus_inst *inst, u32 ptype,
+				    व्योम *pdata);
+	पूर्णांक (*session_get_property)(काष्ठा venus_inst *inst, u32 ptype);
 
-	int (*resume)(struct venus_core *core);
-	int (*suspend)(struct venus_core *core);
+	पूर्णांक (*resume)(काष्ठा venus_core *core);
+	पूर्णांक (*suspend)(काष्ठा venus_core *core);
 
-	/* interrupt operations */
-	irqreturn_t (*isr)(struct venus_core *core);
-	irqreturn_t (*isr_thread)(struct venus_core *core);
-};
+	/* पूर्णांकerrupt operations */
+	irqवापस_t (*isr)(काष्ठा venus_core *core);
+	irqवापस_t (*isr_thपढ़ो)(काष्ठा venus_core *core);
+पूर्ण;
 
-int hfi_create(struct venus_core *core, const struct hfi_core_ops *ops);
-void hfi_destroy(struct venus_core *core);
-void hfi_reinit(struct venus_core *core);
+पूर्णांक hfi_create(काष्ठा venus_core *core, स्थिर काष्ठा hfi_core_ops *ops);
+व्योम hfi_destroy(काष्ठा venus_core *core);
+व्योम hfi_reinit(काष्ठा venus_core *core);
 
-int hfi_core_init(struct venus_core *core);
-int hfi_core_deinit(struct venus_core *core, bool blocking);
-int hfi_core_suspend(struct venus_core *core);
-int hfi_core_resume(struct venus_core *core, bool force);
-int hfi_core_trigger_ssr(struct venus_core *core, u32 type);
-int hfi_core_ping(struct venus_core *core);
-int hfi_session_create(struct venus_inst *inst, const struct hfi_inst_ops *ops);
-void hfi_session_destroy(struct venus_inst *inst);
-int hfi_session_init(struct venus_inst *inst, u32 pixfmt);
-int hfi_session_deinit(struct venus_inst *inst);
-int hfi_session_start(struct venus_inst *inst);
-int hfi_session_stop(struct venus_inst *inst);
-int hfi_session_continue(struct venus_inst *inst);
-int hfi_session_abort(struct venus_inst *inst);
-int hfi_session_load_res(struct venus_inst *inst);
-int hfi_session_unload_res(struct venus_inst *inst);
-int hfi_session_flush(struct venus_inst *inst, u32 type, bool block);
-int hfi_session_set_buffers(struct venus_inst *inst,
-			    struct hfi_buffer_desc *bd);
-int hfi_session_unset_buffers(struct venus_inst *inst,
-			      struct hfi_buffer_desc *bd);
-int hfi_session_get_property(struct venus_inst *inst, u32 ptype,
-			     union hfi_get_property *hprop);
-int hfi_session_set_property(struct venus_inst *inst, u32 ptype, void *pdata);
-int hfi_session_process_buf(struct venus_inst *inst, struct hfi_frame_data *f);
-irqreturn_t hfi_isr_thread(int irq, void *dev_id);
-irqreturn_t hfi_isr(int irq, void *dev);
+पूर्णांक hfi_core_init(काष्ठा venus_core *core);
+पूर्णांक hfi_core_deinit(काष्ठा venus_core *core, bool blocking);
+पूर्णांक hfi_core_suspend(काष्ठा venus_core *core);
+पूर्णांक hfi_core_resume(काष्ठा venus_core *core, bool क्रमce);
+पूर्णांक hfi_core_trigger_ssr(काष्ठा venus_core *core, u32 type);
+पूर्णांक hfi_core_ping(काष्ठा venus_core *core);
+पूर्णांक hfi_session_create(काष्ठा venus_inst *inst, स्थिर काष्ठा hfi_inst_ops *ops);
+व्योम hfi_session_destroy(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_init(काष्ठा venus_inst *inst, u32 pixfmt);
+पूर्णांक hfi_session_deinit(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_start(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_stop(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_जारी(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_पात(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_load_res(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_unload_res(काष्ठा venus_inst *inst);
+पूर्णांक hfi_session_flush(काष्ठा venus_inst *inst, u32 type, bool block);
+पूर्णांक hfi_session_set_buffers(काष्ठा venus_inst *inst,
+			    काष्ठा hfi_buffer_desc *bd);
+पूर्णांक hfi_session_unset_buffers(काष्ठा venus_inst *inst,
+			      काष्ठा hfi_buffer_desc *bd);
+पूर्णांक hfi_session_get_property(काष्ठा venus_inst *inst, u32 ptype,
+			     जोड़ hfi_get_property *hprop);
+पूर्णांक hfi_session_set_property(काष्ठा venus_inst *inst, u32 ptype, व्योम *pdata);
+पूर्णांक hfi_session_process_buf(काष्ठा venus_inst *inst, काष्ठा hfi_frame_data *f);
+irqवापस_t hfi_isr_thपढ़ो(पूर्णांक irq, व्योम *dev_id);
+irqवापस_t hfi_isr(पूर्णांक irq, व्योम *dev);
 
-#endif
+#पूर्ण_अगर

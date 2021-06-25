@@ -1,327 +1,328 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * max98090.c -- MAX98090 ALSA SoC Audio driver
  *
  * Copyright 2011-2012 Maxim Integrated Products
  */
 
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <sound/jack.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/tlv.h>
-#include <sound/max98090.h>
-#include "max98090.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/max98090.h>
+#समावेश "max98090.h"
 
-/* Allows for sparsely populated register maps */
-static const struct reg_default max98090_reg[] = {
-	{ 0x00, 0x00 }, /* 00 Software Reset */
-	{ 0x03, 0x04 }, /* 03 Interrupt Masks */
-	{ 0x04, 0x00 }, /* 04 System Clock Quick */
-	{ 0x05, 0x00 }, /* 05 Sample Rate Quick */
-	{ 0x06, 0x00 }, /* 06 DAI Interface Quick */
-	{ 0x07, 0x00 }, /* 07 DAC Path Quick */
-	{ 0x08, 0x00 }, /* 08 Mic/Direct to ADC Quick */
-	{ 0x09, 0x00 }, /* 09 Line to ADC Quick */
-	{ 0x0A, 0x00 }, /* 0A Analog Mic Loop Quick */
-	{ 0x0B, 0x00 }, /* 0B Analog Line Loop Quick */
-	{ 0x0C, 0x00 }, /* 0C Reserved */
-	{ 0x0D, 0x00 }, /* 0D Input Config */
-	{ 0x0E, 0x1B }, /* 0E Line Input Level */
-	{ 0x0F, 0x00 }, /* 0F Line Config */
+/* Allows क्रम sparsely populated रेजिस्टर maps */
+अटल स्थिर काष्ठा reg_शेष max98090_reg[] = अणु
+	अणु 0x00, 0x00 पूर्ण, /* 00 Software Reset */
+	अणु 0x03, 0x04 पूर्ण, /* 03 Interrupt Masks */
+	अणु 0x04, 0x00 पूर्ण, /* 04 System Clock Quick */
+	अणु 0x05, 0x00 पूर्ण, /* 05 Sample Rate Quick */
+	अणु 0x06, 0x00 पूर्ण, /* 06 DAI Interface Quick */
+	अणु 0x07, 0x00 पूर्ण, /* 07 DAC Path Quick */
+	अणु 0x08, 0x00 पूर्ण, /* 08 Mic/Direct to ADC Quick */
+	अणु 0x09, 0x00 पूर्ण, /* 09 Line to ADC Quick */
+	अणु 0x0A, 0x00 पूर्ण, /* 0A Analog Mic Loop Quick */
+	अणु 0x0B, 0x00 पूर्ण, /* 0B Analog Line Loop Quick */
+	अणु 0x0C, 0x00 पूर्ण, /* 0C Reserved */
+	अणु 0x0D, 0x00 पूर्ण, /* 0D Input Config */
+	अणु 0x0E, 0x1B पूर्ण, /* 0E Line Input Level */
+	अणु 0x0F, 0x00 पूर्ण, /* 0F Line Config */
 
-	{ 0x10, 0x14 }, /* 10 Mic1 Input Level */
-	{ 0x11, 0x14 }, /* 11 Mic2 Input Level */
-	{ 0x12, 0x00 }, /* 12 Mic Bias Voltage */
-	{ 0x13, 0x00 }, /* 13 Digital Mic Config */
-	{ 0x14, 0x00 }, /* 14 Digital Mic Mode */
-	{ 0x15, 0x00 }, /* 15 Left ADC Mixer */
-	{ 0x16, 0x00 }, /* 16 Right ADC Mixer */
-	{ 0x17, 0x03 }, /* 17 Left ADC Level */
-	{ 0x18, 0x03 }, /* 18 Right ADC Level */
-	{ 0x19, 0x00 }, /* 19 ADC Biquad Level */
-	{ 0x1A, 0x00 }, /* 1A ADC Sidetone */
-	{ 0x1B, 0x00 }, /* 1B System Clock */
-	{ 0x1C, 0x00 }, /* 1C Clock Mode */
-	{ 0x1D, 0x00 }, /* 1D Any Clock 1 */
-	{ 0x1E, 0x00 }, /* 1E Any Clock 2 */
-	{ 0x1F, 0x00 }, /* 1F Any Clock 3 */
+	अणु 0x10, 0x14 पूर्ण, /* 10 Mic1 Input Level */
+	अणु 0x11, 0x14 पूर्ण, /* 11 Mic2 Input Level */
+	अणु 0x12, 0x00 पूर्ण, /* 12 Mic Bias Voltage */
+	अणु 0x13, 0x00 पूर्ण, /* 13 Digital Mic Config */
+	अणु 0x14, 0x00 पूर्ण, /* 14 Digital Mic Mode */
+	अणु 0x15, 0x00 पूर्ण, /* 15 Left ADC Mixer */
+	अणु 0x16, 0x00 पूर्ण, /* 16 Right ADC Mixer */
+	अणु 0x17, 0x03 पूर्ण, /* 17 Left ADC Level */
+	अणु 0x18, 0x03 पूर्ण, /* 18 Right ADC Level */
+	अणु 0x19, 0x00 पूर्ण, /* 19 ADC Biquad Level */
+	अणु 0x1A, 0x00 पूर्ण, /* 1A ADC Sidetone */
+	अणु 0x1B, 0x00 पूर्ण, /* 1B System Clock */
+	अणु 0x1C, 0x00 पूर्ण, /* 1C Clock Mode */
+	अणु 0x1D, 0x00 पूर्ण, /* 1D Any Clock 1 */
+	अणु 0x1E, 0x00 पूर्ण, /* 1E Any Clock 2 */
+	अणु 0x1F, 0x00 पूर्ण, /* 1F Any Clock 3 */
 
-	{ 0x20, 0x00 }, /* 20 Any Clock 4 */
-	{ 0x21, 0x00 }, /* 21 Master Mode */
-	{ 0x22, 0x00 }, /* 22 Interface Format */
-	{ 0x23, 0x00 }, /* 23 TDM Format 1*/
-	{ 0x24, 0x00 }, /* 24 TDM Format 2*/
-	{ 0x25, 0x00 }, /* 25 I/O Configuration */
-	{ 0x26, 0x80 }, /* 26 Filter Config */
-	{ 0x27, 0x00 }, /* 27 DAI Playback Level */
-	{ 0x28, 0x00 }, /* 28 EQ Playback Level */
-	{ 0x29, 0x00 }, /* 29 Left HP Mixer */
-	{ 0x2A, 0x00 }, /* 2A Right HP Mixer */
-	{ 0x2B, 0x00 }, /* 2B HP Control */
-	{ 0x2C, 0x1A }, /* 2C Left HP Volume */
-	{ 0x2D, 0x1A }, /* 2D Right HP Volume */
-	{ 0x2E, 0x00 }, /* 2E Left Spk Mixer */
-	{ 0x2F, 0x00 }, /* 2F Right Spk Mixer */
+	अणु 0x20, 0x00 पूर्ण, /* 20 Any Clock 4 */
+	अणु 0x21, 0x00 पूर्ण, /* 21 Master Mode */
+	अणु 0x22, 0x00 पूर्ण, /* 22 Interface Format */
+	अणु 0x23, 0x00 पूर्ण, /* 23 TDM Format 1*/
+	अणु 0x24, 0x00 पूर्ण, /* 24 TDM Format 2*/
+	अणु 0x25, 0x00 पूर्ण, /* 25 I/O Configuration */
+	अणु 0x26, 0x80 पूर्ण, /* 26 Filter Config */
+	अणु 0x27, 0x00 पूर्ण, /* 27 DAI Playback Level */
+	अणु 0x28, 0x00 पूर्ण, /* 28 EQ Playback Level */
+	अणु 0x29, 0x00 पूर्ण, /* 29 Left HP Mixer */
+	अणु 0x2A, 0x00 पूर्ण, /* 2A Right HP Mixer */
+	अणु 0x2B, 0x00 पूर्ण, /* 2B HP Control */
+	अणु 0x2C, 0x1A पूर्ण, /* 2C Left HP Volume */
+	अणु 0x2D, 0x1A पूर्ण, /* 2D Right HP Volume */
+	अणु 0x2E, 0x00 पूर्ण, /* 2E Left Spk Mixer */
+	अणु 0x2F, 0x00 पूर्ण, /* 2F Right Spk Mixer */
 
-	{ 0x30, 0x00 }, /* 30 Spk Control */
-	{ 0x31, 0x2C }, /* 31 Left Spk Volume */
-	{ 0x32, 0x2C }, /* 32 Right Spk Volume */
-	{ 0x33, 0x00 }, /* 33 ALC Timing */
-	{ 0x34, 0x00 }, /* 34 ALC Compressor */
-	{ 0x35, 0x00 }, /* 35 ALC Expander */
-	{ 0x36, 0x00 }, /* 36 ALC Gain */
-	{ 0x37, 0x00 }, /* 37 Rcv/Line OutL Mixer */
-	{ 0x38, 0x00 }, /* 38 Rcv/Line OutL Control */
-	{ 0x39, 0x15 }, /* 39 Rcv/Line OutL Volume */
-	{ 0x3A, 0x00 }, /* 3A Line OutR Mixer */
-	{ 0x3B, 0x00 }, /* 3B Line OutR Control */
-	{ 0x3C, 0x15 }, /* 3C Line OutR Volume */
-	{ 0x3D, 0x00 }, /* 3D Jack Detect */
-	{ 0x3E, 0x00 }, /* 3E Input Enable */
-	{ 0x3F, 0x00 }, /* 3F Output Enable */
+	अणु 0x30, 0x00 पूर्ण, /* 30 Spk Control */
+	अणु 0x31, 0x2C पूर्ण, /* 31 Left Spk Volume */
+	अणु 0x32, 0x2C पूर्ण, /* 32 Right Spk Volume */
+	अणु 0x33, 0x00 पूर्ण, /* 33 ALC Timing */
+	अणु 0x34, 0x00 पूर्ण, /* 34 ALC Compressor */
+	अणु 0x35, 0x00 पूर्ण, /* 35 ALC Expander */
+	अणु 0x36, 0x00 पूर्ण, /* 36 ALC Gain */
+	अणु 0x37, 0x00 पूर्ण, /* 37 Rcv/Line OutL Mixer */
+	अणु 0x38, 0x00 पूर्ण, /* 38 Rcv/Line OutL Control */
+	अणु 0x39, 0x15 पूर्ण, /* 39 Rcv/Line OutL Volume */
+	अणु 0x3A, 0x00 पूर्ण, /* 3A Line OutR Mixer */
+	अणु 0x3B, 0x00 पूर्ण, /* 3B Line OutR Control */
+	अणु 0x3C, 0x15 पूर्ण, /* 3C Line OutR Volume */
+	अणु 0x3D, 0x00 पूर्ण, /* 3D Jack Detect */
+	अणु 0x3E, 0x00 पूर्ण, /* 3E Input Enable */
+	अणु 0x3F, 0x00 पूर्ण, /* 3F Output Enable */
 
-	{ 0x40, 0x00 }, /* 40 Level Control */
-	{ 0x41, 0x00 }, /* 41 DSP Filter Enable */
-	{ 0x42, 0x00 }, /* 42 Bias Control */
-	{ 0x43, 0x00 }, /* 43 DAC Control */
-	{ 0x44, 0x06 }, /* 44 ADC Control */
-	{ 0x45, 0x00 }, /* 45 Device Shutdown */
-	{ 0x46, 0x00 }, /* 46 Equalizer Band 1 Coefficient B0 */
-	{ 0x47, 0x00 }, /* 47 Equalizer Band 1 Coefficient B0 */
-	{ 0x48, 0x00 }, /* 48 Equalizer Band 1 Coefficient B0 */
-	{ 0x49, 0x00 }, /* 49 Equalizer Band 1 Coefficient B1 */
-	{ 0x4A, 0x00 }, /* 4A Equalizer Band 1 Coefficient B1 */
-	{ 0x4B, 0x00 }, /* 4B Equalizer Band 1 Coefficient B1 */
-	{ 0x4C, 0x00 }, /* 4C Equalizer Band 1 Coefficient B2 */
-	{ 0x4D, 0x00 }, /* 4D Equalizer Band 1 Coefficient B2 */
-	{ 0x4E, 0x00 }, /* 4E Equalizer Band 1 Coefficient B2 */
-	{ 0x4F, 0x00 }, /* 4F Equalizer Band 1 Coefficient A1 */
+	अणु 0x40, 0x00 पूर्ण, /* 40 Level Control */
+	अणु 0x41, 0x00 पूर्ण, /* 41 DSP Filter Enable */
+	अणु 0x42, 0x00 पूर्ण, /* 42 Bias Control */
+	अणु 0x43, 0x00 पूर्ण, /* 43 DAC Control */
+	अणु 0x44, 0x06 पूर्ण, /* 44 ADC Control */
+	अणु 0x45, 0x00 पूर्ण, /* 45 Device Shutकरोwn */
+	अणु 0x46, 0x00 पूर्ण, /* 46 Equalizer Band 1 Coefficient B0 */
+	अणु 0x47, 0x00 पूर्ण, /* 47 Equalizer Band 1 Coefficient B0 */
+	अणु 0x48, 0x00 पूर्ण, /* 48 Equalizer Band 1 Coefficient B0 */
+	अणु 0x49, 0x00 पूर्ण, /* 49 Equalizer Band 1 Coefficient B1 */
+	अणु 0x4A, 0x00 पूर्ण, /* 4A Equalizer Band 1 Coefficient B1 */
+	अणु 0x4B, 0x00 पूर्ण, /* 4B Equalizer Band 1 Coefficient B1 */
+	अणु 0x4C, 0x00 पूर्ण, /* 4C Equalizer Band 1 Coefficient B2 */
+	अणु 0x4D, 0x00 पूर्ण, /* 4D Equalizer Band 1 Coefficient B2 */
+	अणु 0x4E, 0x00 पूर्ण, /* 4E Equalizer Band 1 Coefficient B2 */
+	अणु 0x4F, 0x00 पूर्ण, /* 4F Equalizer Band 1 Coefficient A1 */
 
-	{ 0x50, 0x00 }, /* 50 Equalizer Band 1 Coefficient A1 */
-	{ 0x51, 0x00 }, /* 51 Equalizer Band 1 Coefficient A1 */
-	{ 0x52, 0x00 }, /* 52 Equalizer Band 1 Coefficient A2 */
-	{ 0x53, 0x00 }, /* 53 Equalizer Band 1 Coefficient A2 */
-	{ 0x54, 0x00 }, /* 54 Equalizer Band 1 Coefficient A2 */
-	{ 0x55, 0x00 }, /* 55 Equalizer Band 2 Coefficient B0 */
-	{ 0x56, 0x00 }, /* 56 Equalizer Band 2 Coefficient B0 */
-	{ 0x57, 0x00 }, /* 57 Equalizer Band 2 Coefficient B0 */
-	{ 0x58, 0x00 }, /* 58 Equalizer Band 2 Coefficient B1 */
-	{ 0x59, 0x00 }, /* 59 Equalizer Band 2 Coefficient B1 */
-	{ 0x5A, 0x00 }, /* 5A Equalizer Band 2 Coefficient B1 */
-	{ 0x5B, 0x00 }, /* 5B Equalizer Band 2 Coefficient B2 */
-	{ 0x5C, 0x00 }, /* 5C Equalizer Band 2 Coefficient B2 */
-	{ 0x5D, 0x00 }, /* 5D Equalizer Band 2 Coefficient B2 */
-	{ 0x5E, 0x00 }, /* 5E Equalizer Band 2 Coefficient A1 */
-	{ 0x5F, 0x00 }, /* 5F Equalizer Band 2 Coefficient A1 */
+	अणु 0x50, 0x00 पूर्ण, /* 50 Equalizer Band 1 Coefficient A1 */
+	अणु 0x51, 0x00 पूर्ण, /* 51 Equalizer Band 1 Coefficient A1 */
+	अणु 0x52, 0x00 पूर्ण, /* 52 Equalizer Band 1 Coefficient A2 */
+	अणु 0x53, 0x00 पूर्ण, /* 53 Equalizer Band 1 Coefficient A2 */
+	अणु 0x54, 0x00 पूर्ण, /* 54 Equalizer Band 1 Coefficient A2 */
+	अणु 0x55, 0x00 पूर्ण, /* 55 Equalizer Band 2 Coefficient B0 */
+	अणु 0x56, 0x00 पूर्ण, /* 56 Equalizer Band 2 Coefficient B0 */
+	अणु 0x57, 0x00 पूर्ण, /* 57 Equalizer Band 2 Coefficient B0 */
+	अणु 0x58, 0x00 पूर्ण, /* 58 Equalizer Band 2 Coefficient B1 */
+	अणु 0x59, 0x00 पूर्ण, /* 59 Equalizer Band 2 Coefficient B1 */
+	अणु 0x5A, 0x00 पूर्ण, /* 5A Equalizer Band 2 Coefficient B1 */
+	अणु 0x5B, 0x00 पूर्ण, /* 5B Equalizer Band 2 Coefficient B2 */
+	अणु 0x5C, 0x00 पूर्ण, /* 5C Equalizer Band 2 Coefficient B2 */
+	अणु 0x5D, 0x00 पूर्ण, /* 5D Equalizer Band 2 Coefficient B2 */
+	अणु 0x5E, 0x00 पूर्ण, /* 5E Equalizer Band 2 Coefficient A1 */
+	अणु 0x5F, 0x00 पूर्ण, /* 5F Equalizer Band 2 Coefficient A1 */
 
-	{ 0x60, 0x00 }, /* 60 Equalizer Band 2 Coefficient A1 */
-	{ 0x61, 0x00 }, /* 61 Equalizer Band 2 Coefficient A2 */
-	{ 0x62, 0x00 }, /* 62 Equalizer Band 2 Coefficient A2 */
-	{ 0x63, 0x00 }, /* 63 Equalizer Band 2 Coefficient A2 */
-	{ 0x64, 0x00 }, /* 64 Equalizer Band 3 Coefficient B0 */
-	{ 0x65, 0x00 }, /* 65 Equalizer Band 3 Coefficient B0 */
-	{ 0x66, 0x00 }, /* 66 Equalizer Band 3 Coefficient B0 */
-	{ 0x67, 0x00 }, /* 67 Equalizer Band 3 Coefficient B1 */
-	{ 0x68, 0x00 }, /* 68 Equalizer Band 3 Coefficient B1 */
-	{ 0x69, 0x00 }, /* 69 Equalizer Band 3 Coefficient B1 */
-	{ 0x6A, 0x00 }, /* 6A Equalizer Band 3 Coefficient B2 */
-	{ 0x6B, 0x00 }, /* 6B Equalizer Band 3 Coefficient B2 */
-	{ 0x6C, 0x00 }, /* 6C Equalizer Band 3 Coefficient B2 */
-	{ 0x6D, 0x00 }, /* 6D Equalizer Band 3 Coefficient A1 */
-	{ 0x6E, 0x00 }, /* 6E Equalizer Band 3 Coefficient A1 */
-	{ 0x6F, 0x00 }, /* 6F Equalizer Band 3 Coefficient A1 */
+	अणु 0x60, 0x00 पूर्ण, /* 60 Equalizer Band 2 Coefficient A1 */
+	अणु 0x61, 0x00 पूर्ण, /* 61 Equalizer Band 2 Coefficient A2 */
+	अणु 0x62, 0x00 पूर्ण, /* 62 Equalizer Band 2 Coefficient A2 */
+	अणु 0x63, 0x00 पूर्ण, /* 63 Equalizer Band 2 Coefficient A2 */
+	अणु 0x64, 0x00 पूर्ण, /* 64 Equalizer Band 3 Coefficient B0 */
+	अणु 0x65, 0x00 पूर्ण, /* 65 Equalizer Band 3 Coefficient B0 */
+	अणु 0x66, 0x00 पूर्ण, /* 66 Equalizer Band 3 Coefficient B0 */
+	अणु 0x67, 0x00 पूर्ण, /* 67 Equalizer Band 3 Coefficient B1 */
+	अणु 0x68, 0x00 पूर्ण, /* 68 Equalizer Band 3 Coefficient B1 */
+	अणु 0x69, 0x00 पूर्ण, /* 69 Equalizer Band 3 Coefficient B1 */
+	अणु 0x6A, 0x00 पूर्ण, /* 6A Equalizer Band 3 Coefficient B2 */
+	अणु 0x6B, 0x00 पूर्ण, /* 6B Equalizer Band 3 Coefficient B2 */
+	अणु 0x6C, 0x00 पूर्ण, /* 6C Equalizer Band 3 Coefficient B2 */
+	अणु 0x6D, 0x00 पूर्ण, /* 6D Equalizer Band 3 Coefficient A1 */
+	अणु 0x6E, 0x00 पूर्ण, /* 6E Equalizer Band 3 Coefficient A1 */
+	अणु 0x6F, 0x00 पूर्ण, /* 6F Equalizer Band 3 Coefficient A1 */
 
-	{ 0x70, 0x00 }, /* 70 Equalizer Band 3 Coefficient A2 */
-	{ 0x71, 0x00 }, /* 71 Equalizer Band 3 Coefficient A2 */
-	{ 0x72, 0x00 }, /* 72 Equalizer Band 3 Coefficient A2 */
-	{ 0x73, 0x00 }, /* 73 Equalizer Band 4 Coefficient B0 */
-	{ 0x74, 0x00 }, /* 74 Equalizer Band 4 Coefficient B0 */
-	{ 0x75, 0x00 }, /* 75 Equalizer Band 4 Coefficient B0 */
-	{ 0x76, 0x00 }, /* 76 Equalizer Band 4 Coefficient B1 */
-	{ 0x77, 0x00 }, /* 77 Equalizer Band 4 Coefficient B1 */
-	{ 0x78, 0x00 }, /* 78 Equalizer Band 4 Coefficient B1 */
-	{ 0x79, 0x00 }, /* 79 Equalizer Band 4 Coefficient B2 */
-	{ 0x7A, 0x00 }, /* 7A Equalizer Band 4 Coefficient B2 */
-	{ 0x7B, 0x00 }, /* 7B Equalizer Band 4 Coefficient B2 */
-	{ 0x7C, 0x00 }, /* 7C Equalizer Band 4 Coefficient A1 */
-	{ 0x7D, 0x00 }, /* 7D Equalizer Band 4 Coefficient A1 */
-	{ 0x7E, 0x00 }, /* 7E Equalizer Band 4 Coefficient A1 */
-	{ 0x7F, 0x00 }, /* 7F Equalizer Band 4 Coefficient A2 */
+	अणु 0x70, 0x00 पूर्ण, /* 70 Equalizer Band 3 Coefficient A2 */
+	अणु 0x71, 0x00 पूर्ण, /* 71 Equalizer Band 3 Coefficient A2 */
+	अणु 0x72, 0x00 पूर्ण, /* 72 Equalizer Band 3 Coefficient A2 */
+	अणु 0x73, 0x00 पूर्ण, /* 73 Equalizer Band 4 Coefficient B0 */
+	अणु 0x74, 0x00 पूर्ण, /* 74 Equalizer Band 4 Coefficient B0 */
+	अणु 0x75, 0x00 पूर्ण, /* 75 Equalizer Band 4 Coefficient B0 */
+	अणु 0x76, 0x00 पूर्ण, /* 76 Equalizer Band 4 Coefficient B1 */
+	अणु 0x77, 0x00 पूर्ण, /* 77 Equalizer Band 4 Coefficient B1 */
+	अणु 0x78, 0x00 पूर्ण, /* 78 Equalizer Band 4 Coefficient B1 */
+	अणु 0x79, 0x00 पूर्ण, /* 79 Equalizer Band 4 Coefficient B2 */
+	अणु 0x7A, 0x00 पूर्ण, /* 7A Equalizer Band 4 Coefficient B2 */
+	अणु 0x7B, 0x00 पूर्ण, /* 7B Equalizer Band 4 Coefficient B2 */
+	अणु 0x7C, 0x00 पूर्ण, /* 7C Equalizer Band 4 Coefficient A1 */
+	अणु 0x7D, 0x00 पूर्ण, /* 7D Equalizer Band 4 Coefficient A1 */
+	अणु 0x7E, 0x00 पूर्ण, /* 7E Equalizer Band 4 Coefficient A1 */
+	अणु 0x7F, 0x00 पूर्ण, /* 7F Equalizer Band 4 Coefficient A2 */
 
-	{ 0x80, 0x00 }, /* 80 Equalizer Band 4 Coefficient A2 */
-	{ 0x81, 0x00 }, /* 81 Equalizer Band 4 Coefficient A2 */
-	{ 0x82, 0x00 }, /* 82 Equalizer Band 5 Coefficient B0 */
-	{ 0x83, 0x00 }, /* 83 Equalizer Band 5 Coefficient B0 */
-	{ 0x84, 0x00 }, /* 84 Equalizer Band 5 Coefficient B0 */
-	{ 0x85, 0x00 }, /* 85 Equalizer Band 5 Coefficient B1 */
-	{ 0x86, 0x00 }, /* 86 Equalizer Band 5 Coefficient B1 */
-	{ 0x87, 0x00 }, /* 87 Equalizer Band 5 Coefficient B1 */
-	{ 0x88, 0x00 }, /* 88 Equalizer Band 5 Coefficient B2 */
-	{ 0x89, 0x00 }, /* 89 Equalizer Band 5 Coefficient B2 */
-	{ 0x8A, 0x00 }, /* 8A Equalizer Band 5 Coefficient B2 */
-	{ 0x8B, 0x00 }, /* 8B Equalizer Band 5 Coefficient A1 */
-	{ 0x8C, 0x00 }, /* 8C Equalizer Band 5 Coefficient A1 */
-	{ 0x8D, 0x00 }, /* 8D Equalizer Band 5 Coefficient A1 */
-	{ 0x8E, 0x00 }, /* 8E Equalizer Band 5 Coefficient A2 */
-	{ 0x8F, 0x00 }, /* 8F Equalizer Band 5 Coefficient A2 */
+	अणु 0x80, 0x00 पूर्ण, /* 80 Equalizer Band 4 Coefficient A2 */
+	अणु 0x81, 0x00 पूर्ण, /* 81 Equalizer Band 4 Coefficient A2 */
+	अणु 0x82, 0x00 पूर्ण, /* 82 Equalizer Band 5 Coefficient B0 */
+	अणु 0x83, 0x00 पूर्ण, /* 83 Equalizer Band 5 Coefficient B0 */
+	अणु 0x84, 0x00 पूर्ण, /* 84 Equalizer Band 5 Coefficient B0 */
+	अणु 0x85, 0x00 पूर्ण, /* 85 Equalizer Band 5 Coefficient B1 */
+	अणु 0x86, 0x00 पूर्ण, /* 86 Equalizer Band 5 Coefficient B1 */
+	अणु 0x87, 0x00 पूर्ण, /* 87 Equalizer Band 5 Coefficient B1 */
+	अणु 0x88, 0x00 पूर्ण, /* 88 Equalizer Band 5 Coefficient B2 */
+	अणु 0x89, 0x00 पूर्ण, /* 89 Equalizer Band 5 Coefficient B2 */
+	अणु 0x8A, 0x00 पूर्ण, /* 8A Equalizer Band 5 Coefficient B2 */
+	अणु 0x8B, 0x00 पूर्ण, /* 8B Equalizer Band 5 Coefficient A1 */
+	अणु 0x8C, 0x00 पूर्ण, /* 8C Equalizer Band 5 Coefficient A1 */
+	अणु 0x8D, 0x00 पूर्ण, /* 8D Equalizer Band 5 Coefficient A1 */
+	अणु 0x8E, 0x00 पूर्ण, /* 8E Equalizer Band 5 Coefficient A2 */
+	अणु 0x8F, 0x00 पूर्ण, /* 8F Equalizer Band 5 Coefficient A2 */
 
-	{ 0x90, 0x00 }, /* 90 Equalizer Band 5 Coefficient A2 */
-	{ 0x91, 0x00 }, /* 91 Equalizer Band 6 Coefficient B0 */
-	{ 0x92, 0x00 }, /* 92 Equalizer Band 6 Coefficient B0 */
-	{ 0x93, 0x00 }, /* 93 Equalizer Band 6 Coefficient B0 */
-	{ 0x94, 0x00 }, /* 94 Equalizer Band 6 Coefficient B1 */
-	{ 0x95, 0x00 }, /* 95 Equalizer Band 6 Coefficient B1 */
-	{ 0x96, 0x00 }, /* 96 Equalizer Band 6 Coefficient B1 */
-	{ 0x97, 0x00 }, /* 97 Equalizer Band 6 Coefficient B2 */
-	{ 0x98, 0x00 }, /* 98 Equalizer Band 6 Coefficient B2 */
-	{ 0x99, 0x00 }, /* 99 Equalizer Band 6 Coefficient B2 */
-	{ 0x9A, 0x00 }, /* 9A Equalizer Band 6 Coefficient A1 */
-	{ 0x9B, 0x00 }, /* 9B Equalizer Band 6 Coefficient A1 */
-	{ 0x9C, 0x00 }, /* 9C Equalizer Band 6 Coefficient A1 */
-	{ 0x9D, 0x00 }, /* 9D Equalizer Band 6 Coefficient A2 */
-	{ 0x9E, 0x00 }, /* 9E Equalizer Band 6 Coefficient A2 */
-	{ 0x9F, 0x00 }, /* 9F Equalizer Band 6 Coefficient A2 */
+	अणु 0x90, 0x00 पूर्ण, /* 90 Equalizer Band 5 Coefficient A2 */
+	अणु 0x91, 0x00 पूर्ण, /* 91 Equalizer Band 6 Coefficient B0 */
+	अणु 0x92, 0x00 पूर्ण, /* 92 Equalizer Band 6 Coefficient B0 */
+	अणु 0x93, 0x00 पूर्ण, /* 93 Equalizer Band 6 Coefficient B0 */
+	अणु 0x94, 0x00 पूर्ण, /* 94 Equalizer Band 6 Coefficient B1 */
+	अणु 0x95, 0x00 पूर्ण, /* 95 Equalizer Band 6 Coefficient B1 */
+	अणु 0x96, 0x00 पूर्ण, /* 96 Equalizer Band 6 Coefficient B1 */
+	अणु 0x97, 0x00 पूर्ण, /* 97 Equalizer Band 6 Coefficient B2 */
+	अणु 0x98, 0x00 पूर्ण, /* 98 Equalizer Band 6 Coefficient B2 */
+	अणु 0x99, 0x00 पूर्ण, /* 99 Equalizer Band 6 Coefficient B2 */
+	अणु 0x9A, 0x00 पूर्ण, /* 9A Equalizer Band 6 Coefficient A1 */
+	अणु 0x9B, 0x00 पूर्ण, /* 9B Equalizer Band 6 Coefficient A1 */
+	अणु 0x9C, 0x00 पूर्ण, /* 9C Equalizer Band 6 Coefficient A1 */
+	अणु 0x9D, 0x00 पूर्ण, /* 9D Equalizer Band 6 Coefficient A2 */
+	अणु 0x9E, 0x00 पूर्ण, /* 9E Equalizer Band 6 Coefficient A2 */
+	अणु 0x9F, 0x00 पूर्ण, /* 9F Equalizer Band 6 Coefficient A2 */
 
-	{ 0xA0, 0x00 }, /* A0 Equalizer Band 7 Coefficient B0 */
-	{ 0xA1, 0x00 }, /* A1 Equalizer Band 7 Coefficient B0 */
-	{ 0xA2, 0x00 }, /* A2 Equalizer Band 7 Coefficient B0 */
-	{ 0xA3, 0x00 }, /* A3 Equalizer Band 7 Coefficient B1 */
-	{ 0xA4, 0x00 }, /* A4 Equalizer Band 7 Coefficient B1 */
-	{ 0xA5, 0x00 }, /* A5 Equalizer Band 7 Coefficient B1 */
-	{ 0xA6, 0x00 }, /* A6 Equalizer Band 7 Coefficient B2 */
-	{ 0xA7, 0x00 }, /* A7 Equalizer Band 7 Coefficient B2 */
-	{ 0xA8, 0x00 }, /* A8 Equalizer Band 7 Coefficient B2 */
-	{ 0xA9, 0x00 }, /* A9 Equalizer Band 7 Coefficient A1 */
-	{ 0xAA, 0x00 }, /* AA Equalizer Band 7 Coefficient A1 */
-	{ 0xAB, 0x00 }, /* AB Equalizer Band 7 Coefficient A1 */
-	{ 0xAC, 0x00 }, /* AC Equalizer Band 7 Coefficient A2 */
-	{ 0xAD, 0x00 }, /* AD Equalizer Band 7 Coefficient A2 */
-	{ 0xAE, 0x00 }, /* AE Equalizer Band 7 Coefficient A2 */
-	{ 0xAF, 0x00 }, /* AF ADC Biquad Coefficient B0 */
+	अणु 0xA0, 0x00 पूर्ण, /* A0 Equalizer Band 7 Coefficient B0 */
+	अणु 0xA1, 0x00 पूर्ण, /* A1 Equalizer Band 7 Coefficient B0 */
+	अणु 0xA2, 0x00 पूर्ण, /* A2 Equalizer Band 7 Coefficient B0 */
+	अणु 0xA3, 0x00 पूर्ण, /* A3 Equalizer Band 7 Coefficient B1 */
+	अणु 0xA4, 0x00 पूर्ण, /* A4 Equalizer Band 7 Coefficient B1 */
+	अणु 0xA5, 0x00 पूर्ण, /* A5 Equalizer Band 7 Coefficient B1 */
+	अणु 0xA6, 0x00 पूर्ण, /* A6 Equalizer Band 7 Coefficient B2 */
+	अणु 0xA7, 0x00 पूर्ण, /* A7 Equalizer Band 7 Coefficient B2 */
+	अणु 0xA8, 0x00 पूर्ण, /* A8 Equalizer Band 7 Coefficient B2 */
+	अणु 0xA9, 0x00 पूर्ण, /* A9 Equalizer Band 7 Coefficient A1 */
+	अणु 0xAA, 0x00 पूर्ण, /* AA Equalizer Band 7 Coefficient A1 */
+	अणु 0xAB, 0x00 पूर्ण, /* AB Equalizer Band 7 Coefficient A1 */
+	अणु 0xAC, 0x00 पूर्ण, /* AC Equalizer Band 7 Coefficient A2 */
+	अणु 0xAD, 0x00 पूर्ण, /* AD Equalizer Band 7 Coefficient A2 */
+	अणु 0xAE, 0x00 पूर्ण, /* AE Equalizer Band 7 Coefficient A2 */
+	अणु 0xAF, 0x00 पूर्ण, /* AF ADC Biquad Coefficient B0 */
 
-	{ 0xB0, 0x00 }, /* B0 ADC Biquad Coefficient B0 */
-	{ 0xB1, 0x00 }, /* B1 ADC Biquad Coefficient B0 */
-	{ 0xB2, 0x00 }, /* B2 ADC Biquad Coefficient B1 */
-	{ 0xB3, 0x00 }, /* B3 ADC Biquad Coefficient B1 */
-	{ 0xB4, 0x00 }, /* B4 ADC Biquad Coefficient B1 */
-	{ 0xB5, 0x00 }, /* B5 ADC Biquad Coefficient B2 */
-	{ 0xB6, 0x00 }, /* B6 ADC Biquad Coefficient B2 */
-	{ 0xB7, 0x00 }, /* B7 ADC Biquad Coefficient B2 */
-	{ 0xB8, 0x00 }, /* B8 ADC Biquad Coefficient A1 */
-	{ 0xB9, 0x00 }, /* B9 ADC Biquad Coefficient A1 */
-	{ 0xBA, 0x00 }, /* BA ADC Biquad Coefficient A1 */
-	{ 0xBB, 0x00 }, /* BB ADC Biquad Coefficient A2 */
-	{ 0xBC, 0x00 }, /* BC ADC Biquad Coefficient A2 */
-	{ 0xBD, 0x00 }, /* BD ADC Biquad Coefficient A2 */
-	{ 0xBE, 0x00 }, /* BE Digital Mic 3 Volume */
-	{ 0xBF, 0x00 }, /* BF Digital Mic 4 Volume */
+	अणु 0xB0, 0x00 पूर्ण, /* B0 ADC Biquad Coefficient B0 */
+	अणु 0xB1, 0x00 पूर्ण, /* B1 ADC Biquad Coefficient B0 */
+	अणु 0xB2, 0x00 पूर्ण, /* B2 ADC Biquad Coefficient B1 */
+	अणु 0xB3, 0x00 पूर्ण, /* B3 ADC Biquad Coefficient B1 */
+	अणु 0xB4, 0x00 पूर्ण, /* B4 ADC Biquad Coefficient B1 */
+	अणु 0xB5, 0x00 पूर्ण, /* B5 ADC Biquad Coefficient B2 */
+	अणु 0xB6, 0x00 पूर्ण, /* B6 ADC Biquad Coefficient B2 */
+	अणु 0xB7, 0x00 पूर्ण, /* B7 ADC Biquad Coefficient B2 */
+	अणु 0xB8, 0x00 पूर्ण, /* B8 ADC Biquad Coefficient A1 */
+	अणु 0xB9, 0x00 पूर्ण, /* B9 ADC Biquad Coefficient A1 */
+	अणु 0xBA, 0x00 पूर्ण, /* BA ADC Biquad Coefficient A1 */
+	अणु 0xBB, 0x00 पूर्ण, /* BB ADC Biquad Coefficient A2 */
+	अणु 0xBC, 0x00 पूर्ण, /* BC ADC Biquad Coefficient A2 */
+	अणु 0xBD, 0x00 पूर्ण, /* BD ADC Biquad Coefficient A2 */
+	अणु 0xBE, 0x00 पूर्ण, /* BE Digital Mic 3 Volume */
+	अणु 0xBF, 0x00 पूर्ण, /* BF Digital Mic 4 Volume */
 
-	{ 0xC0, 0x00 }, /* C0 Digital Mic 34 Biquad Pre Atten */
-	{ 0xC1, 0x00 }, /* C1 Record TDM Slot */
-	{ 0xC2, 0x00 }, /* C2 Sample Rate */
-	{ 0xC3, 0x00 }, /* C3 Digital Mic 34 Biquad Coefficient C3 */
-	{ 0xC4, 0x00 }, /* C4 Digital Mic 34 Biquad Coefficient C4 */
-	{ 0xC5, 0x00 }, /* C5 Digital Mic 34 Biquad Coefficient C5 */
-	{ 0xC6, 0x00 }, /* C6 Digital Mic 34 Biquad Coefficient C6 */
-	{ 0xC7, 0x00 }, /* C7 Digital Mic 34 Biquad Coefficient C7 */
-	{ 0xC8, 0x00 }, /* C8 Digital Mic 34 Biquad Coefficient C8 */
-	{ 0xC9, 0x00 }, /* C9 Digital Mic 34 Biquad Coefficient C9 */
-	{ 0xCA, 0x00 }, /* CA Digital Mic 34 Biquad Coefficient CA */
-	{ 0xCB, 0x00 }, /* CB Digital Mic 34 Biquad Coefficient CB */
-	{ 0xCC, 0x00 }, /* CC Digital Mic 34 Biquad Coefficient CC */
-	{ 0xCD, 0x00 }, /* CD Digital Mic 34 Biquad Coefficient CD */
-	{ 0xCE, 0x00 }, /* CE Digital Mic 34 Biquad Coefficient CE */
-	{ 0xCF, 0x00 }, /* CF Digital Mic 34 Biquad Coefficient CF */
+	अणु 0xC0, 0x00 पूर्ण, /* C0 Digital Mic 34 Biquad Pre Atten */
+	अणु 0xC1, 0x00 पूर्ण, /* C1 Record TDM Slot */
+	अणु 0xC2, 0x00 पूर्ण, /* C2 Sample Rate */
+	अणु 0xC3, 0x00 पूर्ण, /* C3 Digital Mic 34 Biquad Coefficient C3 */
+	अणु 0xC4, 0x00 पूर्ण, /* C4 Digital Mic 34 Biquad Coefficient C4 */
+	अणु 0xC5, 0x00 पूर्ण, /* C5 Digital Mic 34 Biquad Coefficient C5 */
+	अणु 0xC6, 0x00 पूर्ण, /* C6 Digital Mic 34 Biquad Coefficient C6 */
+	अणु 0xC7, 0x00 पूर्ण, /* C7 Digital Mic 34 Biquad Coefficient C7 */
+	अणु 0xC8, 0x00 पूर्ण, /* C8 Digital Mic 34 Biquad Coefficient C8 */
+	अणु 0xC9, 0x00 पूर्ण, /* C9 Digital Mic 34 Biquad Coefficient C9 */
+	अणु 0xCA, 0x00 पूर्ण, /* CA Digital Mic 34 Biquad Coefficient CA */
+	अणु 0xCB, 0x00 पूर्ण, /* CB Digital Mic 34 Biquad Coefficient CB */
+	अणु 0xCC, 0x00 पूर्ण, /* CC Digital Mic 34 Biquad Coefficient CC */
+	अणु 0xCD, 0x00 पूर्ण, /* CD Digital Mic 34 Biquad Coefficient CD */
+	अणु 0xCE, 0x00 पूर्ण, /* CE Digital Mic 34 Biquad Coefficient CE */
+	अणु 0xCF, 0x00 पूर्ण, /* CF Digital Mic 34 Biquad Coefficient CF */
 
-	{ 0xD0, 0x00 }, /* D0 Digital Mic 34 Biquad Coefficient D0 */
-	{ 0xD1, 0x00 }, /* D1 Digital Mic 34 Biquad Coefficient D1 */
-};
+	अणु 0xD0, 0x00 पूर्ण, /* D0 Digital Mic 34 Biquad Coefficient D0 */
+	अणु 0xD1, 0x00 पूर्ण, /* D1 Digital Mic 34 Biquad Coefficient D1 */
+पूर्ण;
 
-static bool max98090_volatile_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case M98090_REG_SOFTWARE_RESET:
-	case M98090_REG_DEVICE_STATUS:
-	case M98090_REG_JACK_STATUS:
-	case M98090_REG_REVISION_ID:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max98090_अस्थिर_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल M98090_REG_SOFTWARE_RESET:
+	हाल M98090_REG_DEVICE_STATUS:
+	हाल M98090_REG_JACK_STATUS:
+	हाल M98090_REG_REVISION_ID:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool max98090_readable_register(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case M98090_REG_DEVICE_STATUS ... M98090_REG_INTERRUPT_S:
-	case M98090_REG_LINE_INPUT_CONFIG ... 0xD1:
-	case M98090_REG_REVISION_ID:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max98090_पढ़ोable_रेजिस्टर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल M98090_REG_DEVICE_STATUS ... M98090_REG_INTERRUPT_S:
+	हाल M98090_REG_LINE_INPUT_CONFIG ... 0xD1:
+	हाल M98090_REG_REVISION_ID:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static int max98090_reset(struct max98090_priv *max98090)
-{
-	int ret;
+अटल पूर्णांक max98090_reset(काष्ठा max98090_priv *max98090)
+अणु
+	पूर्णांक ret;
 
-	/* Reset the codec by writing to this write-only reset register */
-	ret = regmap_write(max98090->regmap, M98090_REG_SOFTWARE_RESET,
+	/* Reset the codec by writing to this ग_लिखो-only reset रेजिस्टर */
+	ret = regmap_ग_लिखो(max98090->regmap, M98090_REG_SOFTWARE_RESET,
 		M98090_SWRESET_MASK);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(max98090->component->dev,
 			"Failed to reset codec: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	msleep(20);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const DECLARE_TLV_DB_RANGE(max98090_micboost_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_micboost_tlv,
 	0, 1, TLV_DB_SCALE_ITEM(0, 2000, 0),
 	2, 2, TLV_DB_SCALE_ITEM(3000, 0, 0)
 );
 
-static const DECLARE_TLV_DB_SCALE(max98090_mic_tlv, 0, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_mic_tlv, 0, 100, 0);
 
-static const DECLARE_TLV_DB_SCALE(max98090_line_single_ended_tlv,
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_line_single_ended_tlv,
 	-600, 600, 0);
 
-static const DECLARE_TLV_DB_RANGE(max98090_line_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_line_tlv,
 	0, 3, TLV_DB_SCALE_ITEM(-600, 300, 0),
 	4, 5, TLV_DB_SCALE_ITEM(1400, 600, 0)
 );
 
-static const DECLARE_TLV_DB_SCALE(max98090_avg_tlv, 0, 600, 0);
-static const DECLARE_TLV_DB_SCALE(max98090_av_tlv, -1200, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_avg_tlv, 0, 600, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_av_tlv, -1200, 100, 0);
 
-static const DECLARE_TLV_DB_SCALE(max98090_dvg_tlv, 0, 600, 0);
-static const DECLARE_TLV_DB_SCALE(max98090_dv_tlv, -1500, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_dvg_tlv, 0, 600, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_dv_tlv, -1500, 100, 0);
 
-static const DECLARE_TLV_DB_SCALE(max98090_alcmakeup_tlv, 0, 100, 0);
-static const DECLARE_TLV_DB_SCALE(max98090_alccomp_tlv, -3100, 100, 0);
-static const DECLARE_TLV_DB_SCALE(max98090_drcexp_tlv, -6600, 100, 0);
-static const DECLARE_TLV_DB_SCALE(max98090_sdg_tlv, 50, 200, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_alcmakeup_tlv, 0, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_alccomp_tlv, -3100, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_drcexp_tlv, -6600, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(max98090_sdg_tlv, 50, 200, 0);
 
-static const DECLARE_TLV_DB_RANGE(max98090_mixout_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_mixout_tlv,
 	0, 1, TLV_DB_SCALE_ITEM(-1200, 250, 0),
 	2, 3, TLV_DB_SCALE_ITEM(-600, 600, 0)
 );
 
-static const DECLARE_TLV_DB_RANGE(max98090_hp_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_hp_tlv,
 	0, 6, TLV_DB_SCALE_ITEM(-6700, 400, 0),
 	7, 14, TLV_DB_SCALE_ITEM(-4000, 300, 0),
 	15, 21, TLV_DB_SCALE_ITEM(-1700, 200, 0),
@@ -329,7 +330,7 @@ static const DECLARE_TLV_DB_RANGE(max98090_hp_tlv,
 	28, 31, TLV_DB_SCALE_ITEM(150, 50, 0)
 );
 
-static const DECLARE_TLV_DB_RANGE(max98090_spk_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_spk_tlv,
 	0, 4, TLV_DB_SCALE_ITEM(-4800, 400, 0),
 	5, 10, TLV_DB_SCALE_ITEM(-2900, 300, 0),
 	11, 14, TLV_DB_SCALE_ITEM(-1200, 200, 0),
@@ -337,7 +338,7 @@ static const DECLARE_TLV_DB_RANGE(max98090_spk_tlv,
 	30, 39, TLV_DB_SCALE_ITEM(950, 50, 0)
 );
 
-static const DECLARE_TLV_DB_RANGE(max98090_rcv_lout_tlv,
+अटल स्थिर DECLARE_TLV_DB_RANGE(max98090_rcv_lout_tlv,
 	0, 6, TLV_DB_SCALE_ITEM(-6200, 400, 0),
 	7, 14, TLV_DB_SCALE_ITEM(-3500, 300, 0),
 	15, 21, TLV_DB_SCALE_ITEM(-1200, 200, 0),
@@ -345,168 +346,168 @@ static const DECLARE_TLV_DB_RANGE(max98090_rcv_lout_tlv,
 	28, 31, TLV_DB_SCALE_ITEM(650, 50, 0)
 );
 
-static int max98090_get_enab_tlv(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	unsigned int mask = (1 << fls(mc->max)) - 1;
-	unsigned int val = snd_soc_component_read(component, mc->reg);
-	unsigned int *select;
+अटल पूर्णांक max98090_get_enab_tlv(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक mask = (1 << fls(mc->max)) - 1;
+	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, mc->reg);
+	अचिन्हित पूर्णांक *select;
 
-	switch (mc->reg) {
-	case M98090_REG_MIC1_INPUT_LEVEL:
+	चयन (mc->reg) अणु
+	हाल M98090_REG_MIC1_INPUT_LEVEL:
 		select = &(max98090->pa1en);
-		break;
-	case M98090_REG_MIC2_INPUT_LEVEL:
+		अवरोध;
+	हाल M98090_REG_MIC2_INPUT_LEVEL:
 		select = &(max98090->pa2en);
-		break;
-	case M98090_REG_ADC_SIDETONE:
+		अवरोध;
+	हाल M98090_REG_ADC_SIDETONE:
 		select = &(max98090->sidetone);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	val = (val >> mc->shift) & mask;
+	val = (val >> mc->shअगरt) & mask;
 
-	if (val >= 1) {
-		/* If on, return the volume */
+	अगर (val >= 1) अणु
+		/* If on, वापस the volume */
 		val = val - 1;
 		*select = val;
-	} else {
-		/* If off, return last stored value */
+	पूर्ण अन्यथा अणु
+		/* If off, वापस last stored value */
 		val = *select;
-	}
+	पूर्ण
 
-	ucontrol->value.integer.value[0] = val;
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = val;
+	वापस 0;
+पूर्ण
 
-static int max98090_put_enab_tlv(struct snd_kcontrol *kcontrol,
-				struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	unsigned int mask = (1 << fls(mc->max)) - 1;
-	unsigned int sel = ucontrol->value.integer.value[0];
-	unsigned int val = snd_soc_component_read(component, mc->reg);
-	unsigned int *select;
+अटल पूर्णांक max98090_put_enab_tlv(काष्ठा snd_kcontrol *kcontrol,
+				काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_kcontrol_component(kcontrol);
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	अचिन्हित पूर्णांक mask = (1 << fls(mc->max)) - 1;
+	अचिन्हित पूर्णांक sel = ucontrol->value.पूर्णांकeger.value[0];
+	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, mc->reg);
+	अचिन्हित पूर्णांक *select;
 
-	switch (mc->reg) {
-	case M98090_REG_MIC1_INPUT_LEVEL:
+	चयन (mc->reg) अणु
+	हाल M98090_REG_MIC1_INPUT_LEVEL:
 		select = &(max98090->pa1en);
-		break;
-	case M98090_REG_MIC2_INPUT_LEVEL:
+		अवरोध;
+	हाल M98090_REG_MIC2_INPUT_LEVEL:
 		select = &(max98090->pa2en);
-		break;
-	case M98090_REG_ADC_SIDETONE:
+		अवरोध;
+	हाल M98090_REG_ADC_SIDETONE:
 		select = &(max98090->sidetone);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	val = (val >> mc->shift) & mask;
+	val = (val >> mc->shअगरt) & mask;
 
 	*select = sel;
 
-	/* Setting a volume is only valid if it is already On */
-	if (val >= 1) {
+	/* Setting a volume is only valid अगर it is alपढ़ोy On */
+	अगर (val >= 1) अणु
 		sel = sel + 1;
-	} else {
-		/* Write what was already there */
+	पूर्ण अन्यथा अणु
+		/* Write what was alपढ़ोy there */
 		sel = val;
-	}
+	पूर्ण
 
 	snd_soc_component_update_bits(component, mc->reg,
-		mask << mc->shift,
-		sel << mc->shift);
+		mask << mc->shअगरt,
+		sel << mc->shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char *max98090_perf_pwr_text[] =
-	{ "High Performance", "Low Power" };
-static const char *max98090_pwr_perf_text[] =
-	{ "Low Power", "High Performance" };
+अटल स्थिर अक्षर *max98090_perf_pwr_text[] =
+	अणु "High Performance", "Low Power" पूर्ण;
+अटल स्थिर अक्षर *max98090_pwr_perf_text[] =
+	अणु "Low Power", "High Performance" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_vcmbandgap_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_vcmbandgap_क्रमागत,
 			    M98090_REG_BIAS_CONTROL,
 			    M98090_VCM_MODE_SHIFT,
 			    max98090_pwr_perf_text);
 
-static const char *max98090_osr128_text[] = { "64*fs", "128*fs" };
+अटल स्थिर अक्षर *max98090_osr128_text[] = अणु "64*fs", "128*fs" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_osr128_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_osr128_क्रमागत,
 			    M98090_REG_ADC_CONTROL,
 			    M98090_OSR128_SHIFT,
 			    max98090_osr128_text);
 
-static const char *max98090_mode_text[] = { "Voice", "Music" };
+अटल स्थिर अक्षर *max98090_mode_text[] = अणु "Voice", "Music" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_mode_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_mode_क्रमागत,
 			    M98090_REG_FILTER_CONFIG,
 			    M98090_MODE_SHIFT,
 			    max98090_mode_text);
 
-static SOC_ENUM_SINGLE_DECL(max98090_filter_dmic34mode_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_filter_dmic34mode_क्रमागत,
 			    M98090_REG_FILTER_CONFIG,
 			    M98090_FLT_DMIC34MODE_SHIFT,
 			    max98090_mode_text);
 
-static const char *max98090_drcatk_text[] =
-	{ "0.5ms", "1ms", "5ms", "10ms", "25ms", "50ms", "100ms", "200ms" };
+अटल स्थिर अक्षर *max98090_drcatk_text[] =
+	अणु "0.5ms", "1ms", "5ms", "10ms", "25ms", "50ms", "100ms", "200ms" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_drcatk_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_drcatk_क्रमागत,
 			    M98090_REG_DRC_TIMING,
 			    M98090_DRCATK_SHIFT,
 			    max98090_drcatk_text);
 
-static const char *max98090_drcrls_text[] =
-	{ "8s", "4s", "2s", "1s", "0.5s", "0.25s", "0.125s", "0.0625s" };
+अटल स्थिर अक्षर *max98090_drcrls_text[] =
+	अणु "8s", "4s", "2s", "1s", "0.5s", "0.25s", "0.125s", "0.0625s" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_drcrls_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_drcrls_क्रमागत,
 			    M98090_REG_DRC_TIMING,
 			    M98090_DRCRLS_SHIFT,
 			    max98090_drcrls_text);
 
-static const char *max98090_alccmp_text[] =
-	{ "1:1", "1:1.5", "1:2", "1:4", "1:INF" };
+अटल स्थिर अक्षर *max98090_alccmp_text[] =
+	अणु "1:1", "1:1.5", "1:2", "1:4", "1:INF" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_alccmp_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_alccmp_क्रमागत,
 			    M98090_REG_DRC_COMPRESSOR,
 			    M98090_DRCCMP_SHIFT,
 			    max98090_alccmp_text);
 
-static const char *max98090_drcexp_text[] = { "1:1", "2:1", "3:1" };
+अटल स्थिर अक्षर *max98090_drcexp_text[] = अणु "1:1", "2:1", "3:1" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(max98090_drcexp_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_drcexp_क्रमागत,
 			    M98090_REG_DRC_EXPANDER,
 			    M98090_DRCEXP_SHIFT,
 			    max98090_drcexp_text);
 
-static SOC_ENUM_SINGLE_DECL(max98090_dac_perfmode_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_dac_perभ_शेषe_क्रमागत,
 			    M98090_REG_DAC_CONTROL,
 			    M98090_PERFMODE_SHIFT,
 			    max98090_perf_pwr_text);
 
-static SOC_ENUM_SINGLE_DECL(max98090_dachp_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_dachp_क्रमागत,
 			    M98090_REG_DAC_CONTROL,
 			    M98090_DACHP_SHIFT,
 			    max98090_pwr_perf_text);
 
-static SOC_ENUM_SINGLE_DECL(max98090_adchp_enum,
+अटल SOC_ENUM_SINGLE_DECL(max98090_adchp_क्रमागत,
 			    M98090_REG_ADC_CONTROL,
 			    M98090_ADCHP_SHIFT,
 			    max98090_pwr_perf_text);
 
-static const struct snd_kcontrol_new max98090_snd_controls[] = {
-	SOC_ENUM("MIC Bias VCM Bandgap", max98090_vcmbandgap_enum),
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_snd_controls[] = अणु
+	SOC_ENUM("MIC Bias VCM Bandgap", max98090_vcmbandgap_क्रमागत),
 
 	SOC_SINGLE("DMIC MIC Comp Filter Config", M98090_REG_DIGITAL_MIC_CONFIG,
 		M98090_DMIC_COMP_SHIFT, M98090_DMIC_COMP_NUM - 1, 0),
@@ -564,10 +565,10 @@ static const struct snd_kcontrol_new max98090_snd_controls[] = {
 		M98090_AVR_SHIFT, M98090_AVR_NUM - 1, 1,
 		max98090_av_tlv),
 
-	SOC_ENUM("ADC Oversampling Rate", max98090_osr128_enum),
+	SOC_ENUM("ADC Oversampling Rate", max98090_osr128_क्रमागत),
 	SOC_SINGLE("ADC Quantizer Dither", M98090_REG_ADC_CONTROL,
 		M98090_ADCDITHER_SHIFT, M98090_ADCDITHER_NUM - 1, 0),
-	SOC_ENUM("ADC High Performance Mode", max98090_adchp_enum),
+	SOC_ENUM("ADC High Performance Mode", max98090_adchp_क्रमागत),
 
 	SOC_SINGLE("DAC Mono Mode", M98090_REG_IO_CONFIGURATION,
 		M98090_DMONO_SHIFT, M98090_DMONO_NUM - 1, 0),
@@ -577,7 +578,7 @@ static const struct snd_kcontrol_new max98090_snd_controls[] = {
 		M98090_SDOEN_SHIFT, M98090_SDOEN_NUM - 1, 0),
 	SOC_SINGLE("SDOUT Hi-Z Mode", M98090_REG_IO_CONFIGURATION,
 		M98090_HIZOFF_SHIFT, M98090_HIZOFF_NUM - 1, 1),
-	SOC_ENUM("Filter Mode", max98090_mode_enum),
+	SOC_ENUM("Filter Mode", max98090_mode_क्रमागत),
 	SOC_SINGLE("Record Path DC Blocking", M98090_REG_FILTER_CONFIG,
 		M98090_AHPF_SHIFT, M98090_AHPF_NUM - 1, 0),
 	SOC_SINGLE("Playback Path DC Blocking", M98090_REG_FILTER_CONFIG,
@@ -610,13 +611,13 @@ static const struct snd_kcontrol_new max98090_snd_controls[] = {
 
 	SOC_SINGLE("ALC Enable", M98090_REG_DRC_TIMING,
 		M98090_DRCEN_SHIFT, M98090_DRCEN_NUM - 1, 0),
-	SOC_ENUM("ALC Attack Time", max98090_drcatk_enum),
-	SOC_ENUM("ALC Release Time", max98090_drcrls_enum),
+	SOC_ENUM("ALC Attack Time", max98090_drcatk_क्रमागत),
+	SOC_ENUM("ALC Release Time", max98090_drcrls_क्रमागत),
 	SOC_SINGLE_TLV("ALC Make Up Volume", M98090_REG_DRC_GAIN,
 		M98090_DRCG_SHIFT, M98090_DRCG_NUM - 1, 0,
 		max98090_alcmakeup_tlv),
-	SOC_ENUM("ALC Compression Ratio", max98090_alccmp_enum),
-	SOC_ENUM("ALC Expansion Ratio", max98090_drcexp_enum),
+	SOC_ENUM("ALC Compression Ratio", max98090_alccmp_क्रमागत),
+	SOC_ENUM("ALC Expansion Ratio", max98090_drcexp_क्रमागत),
 	SOC_SINGLE_TLV("ALC Compression Threshold Volume",
 		M98090_REG_DRC_COMPRESSOR, M98090_DRCTHC_SHIFT,
 		M98090_DRCTHC_NUM - 1, 1, max98090_alccomp_tlv),
@@ -625,8 +626,8 @@ static const struct snd_kcontrol_new max98090_snd_controls[] = {
 		M98090_DRCTHE_NUM - 1, 1, max98090_drcexp_tlv),
 
 	SOC_ENUM("DAC HP Playback Performance Mode",
-		max98090_dac_perfmode_enum),
-	SOC_ENUM("DAC High Performance Mode", max98090_dachp_enum),
+		max98090_dac_perभ_शेषe_क्रमागत),
+	SOC_ENUM("DAC High Performance Mode", max98090_dachp_क्रमागत),
 
 	SOC_SINGLE_TLV("Headphone Left Mixer Volume",
 		M98090_REG_HP_CONTROL, M98090_MIXHPLG_SHIFT,
@@ -687,15 +688,15 @@ static const struct snd_kcontrol_new max98090_snd_controls[] = {
 	SND_SOC_BYTES("Biquad Coefficients", M98090_REG_RECORD_BIQUAD_BASE, 15),
 	SOC_SINGLE("Biquad Switch", M98090_REG_DSP_FILTER_ENABLE,
 		M98090_ADCBQEN_SHIFT, M98090_ADCBQEN_NUM - 1, 0),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new max98091_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new max98091_snd_controls[] = अणु
 
 	SOC_SINGLE("DMIC34 Zeropad", M98090_REG_SAMPLE_RATE,
 		M98090_DMIC34_ZEROPAD_SHIFT,
 		M98090_DMIC34_ZEROPAD_NUM - 1, 0),
 
-	SOC_ENUM("Filter DMIC34 Mode", max98090_filter_dmic34mode_enum),
+	SOC_ENUM("Filter DMIC34 Mode", max98090_filter_dmic34mode_क्रमागत),
 	SOC_SINGLE("DMIC34 DC Blocking", M98090_REG_FILTER_CONFIG,
 		M98090_FLT_DMIC34HPF_SHIFT,
 		M98090_FLT_DMIC34HPF_NUM - 1, 0),
@@ -722,97 +723,97 @@ static const struct snd_kcontrol_new max98091_snd_controls[] = {
 	SOC_SINGLE_TLV("DMIC34 BQ PreAttenuation Volume",
 		M98090_REG_DMIC34_BQ_PREATTEN, M98090_AV34BQ_SHIFT,
 		M98090_AV34BQ_NUM - 1, 1, max98090_dv_tlv),
-};
+पूर्ण;
 
-static int max98090_micinput_event(struct snd_soc_dapm_widget *w,
-				 struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक max98090_micinput_event(काष्ठा snd_soc_dapm_widget *w,
+				 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
-	unsigned int val = snd_soc_component_read(component, w->reg);
+	अचिन्हित पूर्णांक val = snd_soc_component_पढ़ो(component, w->reg);
 
-	if (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
+	अगर (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
 		val = (val & M98090_MIC_PA1EN_MASK) >> M98090_MIC_PA1EN_SHIFT;
-	else
+	अन्यथा
 		val = (val & M98090_MIC_PA2EN_MASK) >> M98090_MIC_PA2EN_SHIFT;
 
-	if (val >= 1) {
-		if (w->reg == M98090_REG_MIC1_INPUT_LEVEL) {
-			max98090->pa1en = val - 1; /* Update for volatile */
-		} else {
-			max98090->pa2en = val - 1; /* Update for volatile */
-		}
-	}
+	अगर (val >= 1) अणु
+		अगर (w->reg == M98090_REG_MIC1_INPUT_LEVEL) अणु
+			max98090->pa1en = val - 1; /* Update क्रम अस्थिर */
+		पूर्ण अन्यथा अणु
+			max98090->pa2en = val - 1; /* Update क्रम अस्थिर */
+		पूर्ण
+	पूर्ण
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		/* If turning on, set to most recently selected volume */
-		if (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
+		अगर (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
 			val = max98090->pa1en + 1;
-		else
+		अन्यथा
 			val = max98090->pa2en + 1;
-		break;
-	case SND_SOC_DAPM_POST_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_POST_PMD:
 		/* If turning off, turn off */
 		val = 0;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
+	अगर (w->reg == M98090_REG_MIC1_INPUT_LEVEL)
 		snd_soc_component_update_bits(component, w->reg, M98090_MIC_PA1EN_MASK,
 			val << M98090_MIC_PA1EN_SHIFT);
-	else
+	अन्यथा
 		snd_soc_component_update_bits(component, w->reg, M98090_MIC_PA2EN_MASK,
 			val << M98090_MIC_PA2EN_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_shdn_event(struct snd_soc_dapm_widget *w,
-				 struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक max98090_shdn_event(काष्ठा snd_soc_dapm_widget *w,
+				 काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *component = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
-	if (event & SND_SOC_DAPM_POST_PMU)
+	अगर (event & SND_SOC_DAPM_POST_PMU)
 		max98090->shdn_pending = true;
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static const char *mic1_mux_text[] = { "IN12", "IN56" };
+अटल स्थिर अक्षर *mic1_mux_text[] = अणु "IN12", "IN56" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(mic1_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(mic1_mux_क्रमागत,
 			    M98090_REG_INPUT_MODE,
 			    M98090_EXTMIC1_SHIFT,
 			    mic1_mux_text);
 
-static const struct snd_kcontrol_new max98090_mic1_mux =
-	SOC_DAPM_ENUM("MIC1 Mux", mic1_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_mic1_mux =
+	SOC_DAPM_ENUM("MIC1 Mux", mic1_mux_क्रमागत);
 
-static const char *mic2_mux_text[] = { "IN34", "IN56" };
+अटल स्थिर अक्षर *mic2_mux_text[] = अणु "IN34", "IN56" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(mic2_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(mic2_mux_क्रमागत,
 			    M98090_REG_INPUT_MODE,
 			    M98090_EXTMIC2_SHIFT,
 			    mic2_mux_text);
 
-static const struct snd_kcontrol_new max98090_mic2_mux =
-	SOC_DAPM_ENUM("MIC2 Mux", mic2_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_mic2_mux =
+	SOC_DAPM_ENUM("MIC2 Mux", mic2_mux_क्रमागत);
 
-static const char *dmic_mux_text[] = { "ADC", "DMIC" };
+अटल स्थिर अक्षर *dmic_mux_text[] = अणु "ADC", "DMIC" पूर्ण;
 
-static SOC_ENUM_SINGLE_VIRT_DECL(dmic_mux_enum, dmic_mux_text);
+अटल SOC_ENUM_SINGLE_VIRT_DECL(dmic_mux_क्रमागत, dmic_mux_text);
 
-static const struct snd_kcontrol_new max98090_dmic_mux =
-	SOC_DAPM_ENUM("DMIC Mux", dmic_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_dmic_mux =
+	SOC_DAPM_ENUM("DMIC Mux", dmic_mux_क्रमागत);
 
-/* LINEA mixer switch */
-static const struct snd_kcontrol_new max98090_linea_mixer_controls[] = {
+/* LINEA mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_linea_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("IN1 Switch", M98090_REG_LINE_INPUT_CONFIG,
 		M98090_IN1SEEN_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN3 Switch", M98090_REG_LINE_INPUT_CONFIG,
@@ -821,10 +822,10 @@ static const struct snd_kcontrol_new max98090_linea_mixer_controls[] = {
 		M98090_IN5SEEN_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN34 Switch", M98090_REG_LINE_INPUT_CONFIG,
 		M98090_IN34DIFF_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* LINEB mixer switch */
-static const struct snd_kcontrol_new max98090_lineb_mixer_controls[] = {
+/* LINEB mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_lineb_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("IN2 Switch", M98090_REG_LINE_INPUT_CONFIG,
 		M98090_IN2SEEN_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN4 Switch", M98090_REG_LINE_INPUT_CONFIG,
@@ -833,10 +834,10 @@ static const struct snd_kcontrol_new max98090_lineb_mixer_controls[] = {
 		M98090_IN6SEEN_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN56 Switch", M98090_REG_LINE_INPUT_CONFIG,
 		M98090_IN56DIFF_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Left ADC mixer switch */
-static const struct snd_kcontrol_new max98090_left_adc_mixer_controls[] = {
+/* Left ADC mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_left_adc_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("IN12 Switch", M98090_REG_LEFT_ADC_MIXER,
 		M98090_MIXADL_IN12DIFF_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN34 Switch", M98090_REG_LEFT_ADC_MIXER,
@@ -851,10 +852,10 @@ static const struct snd_kcontrol_new max98090_left_adc_mixer_controls[] = {
 		M98090_MIXADL_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_LEFT_ADC_MIXER,
 		M98090_MIXADL_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Right ADC mixer switch */
-static const struct snd_kcontrol_new max98090_right_adc_mixer_controls[] = {
+/* Right ADC mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_right_adc_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("IN12 Switch", M98090_REG_RIGHT_ADC_MIXER,
 		M98090_MIXADR_IN12DIFF_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("IN34 Switch", M98090_REG_RIGHT_ADC_MIXER,
@@ -869,67 +870,67 @@ static const struct snd_kcontrol_new max98090_right_adc_mixer_controls[] = {
 		M98090_MIXADR_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_RIGHT_ADC_MIXER,
 		M98090_MIXADR_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-static const char *lten_mux_text[] = { "Normal", "Loopthrough" };
+अटल स्थिर अक्षर *lten_mux_text[] = अणु "Normal", "Loopthrough" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(ltenl_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(ltenl_mux_क्रमागत,
 			    M98090_REG_IO_CONFIGURATION,
 			    M98090_LTEN_SHIFT,
 			    lten_mux_text);
 
-static SOC_ENUM_SINGLE_DECL(ltenr_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(ltenr_mux_क्रमागत,
 			    M98090_REG_IO_CONFIGURATION,
 			    M98090_LTEN_SHIFT,
 			    lten_mux_text);
 
-static const struct snd_kcontrol_new max98090_ltenl_mux =
-	SOC_DAPM_ENUM("LTENL Mux", ltenl_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_ltenl_mux =
+	SOC_DAPM_ENUM("LTENL Mux", ltenl_mux_क्रमागत);
 
-static const struct snd_kcontrol_new max98090_ltenr_mux =
-	SOC_DAPM_ENUM("LTENR Mux", ltenr_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_ltenr_mux =
+	SOC_DAPM_ENUM("LTENR Mux", ltenr_mux_क्रमागत);
 
-static const char *lben_mux_text[] = { "Normal", "Loopback" };
+अटल स्थिर अक्षर *lben_mux_text[] = अणु "Normal", "Loopback" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(lbenl_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(lbenl_mux_क्रमागत,
 			    M98090_REG_IO_CONFIGURATION,
 			    M98090_LBEN_SHIFT,
 			    lben_mux_text);
 
-static SOC_ENUM_SINGLE_DECL(lbenr_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(lbenr_mux_क्रमागत,
 			    M98090_REG_IO_CONFIGURATION,
 			    M98090_LBEN_SHIFT,
 			    lben_mux_text);
 
-static const struct snd_kcontrol_new max98090_lbenl_mux =
-	SOC_DAPM_ENUM("LBENL Mux", lbenl_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_lbenl_mux =
+	SOC_DAPM_ENUM("LBENL Mux", lbenl_mux_क्रमागत);
 
-static const struct snd_kcontrol_new max98090_lbenr_mux =
-	SOC_DAPM_ENUM("LBENR Mux", lbenr_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_lbenr_mux =
+	SOC_DAPM_ENUM("LBENR Mux", lbenr_mux_क्रमागत);
 
-static const char *stenl_mux_text[] = { "Normal", "Sidetone Left" };
+अटल स्थिर अक्षर *stenl_mux_text[] = अणु "Normal", "Sidetone Left" पूर्ण;
 
-static const char *stenr_mux_text[] = { "Normal", "Sidetone Right" };
+अटल स्थिर अक्षर *stenr_mux_text[] = अणु "Normal", "Sidetone Right" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(stenl_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(stenl_mux_क्रमागत,
 			    M98090_REG_ADC_SIDETONE,
 			    M98090_DSTSL_SHIFT,
 			    stenl_mux_text);
 
-static SOC_ENUM_SINGLE_DECL(stenr_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(stenr_mux_क्रमागत,
 			    M98090_REG_ADC_SIDETONE,
 			    M98090_DSTSR_SHIFT,
 			    stenr_mux_text);
 
-static const struct snd_kcontrol_new max98090_stenl_mux =
-	SOC_DAPM_ENUM("STENL Mux", stenl_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_stenl_mux =
+	SOC_DAPM_ENUM("STENL Mux", stenl_mux_क्रमागत);
 
-static const struct snd_kcontrol_new max98090_stenr_mux =
-	SOC_DAPM_ENUM("STENR Mux", stenr_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_stenr_mux =
+	SOC_DAPM_ENUM("STENR Mux", stenr_mux_क्रमागत);
 
-/* Left speaker mixer switch */
-static const struct
-	snd_kcontrol_new max98090_left_speaker_mixer_controls[] = {
+/* Left speaker mixer चयन */
+अटल स्थिर काष्ठा
+	snd_kcontrol_new max98090_left_speaker_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_LEFT_SPK_MIXER,
 		M98090_MIXSPL_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_LEFT_SPK_MIXER,
@@ -942,11 +943,11 @@ static const struct
 		M98090_MIXSPL_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_LEFT_SPK_MIXER,
 		M98090_MIXSPL_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Right speaker mixer switch */
-static const struct
-	snd_kcontrol_new max98090_right_speaker_mixer_controls[] = {
+/* Right speaker mixer चयन */
+अटल स्थिर काष्ठा
+	snd_kcontrol_new max98090_right_speaker_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_RIGHT_SPK_MIXER,
 		M98090_MIXSPR_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_RIGHT_SPK_MIXER,
@@ -959,10 +960,10 @@ static const struct
 		M98090_MIXSPR_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_RIGHT_SPK_MIXER,
 		M98090_MIXSPR_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Left headphone mixer switch */
-static const struct snd_kcontrol_new max98090_left_hp_mixer_controls[] = {
+/* Left headphone mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_left_hp_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_LEFT_HP_MIXER,
 		M98090_MIXHPL_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_LEFT_HP_MIXER,
@@ -975,10 +976,10 @@ static const struct snd_kcontrol_new max98090_left_hp_mixer_controls[] = {
 		M98090_MIXHPL_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_LEFT_HP_MIXER,
 		M98090_MIXHPL_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Right headphone mixer switch */
-static const struct snd_kcontrol_new max98090_right_hp_mixer_controls[] = {
+/* Right headphone mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_right_hp_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_RIGHT_HP_MIXER,
 		M98090_MIXHPR_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_RIGHT_HP_MIXER,
@@ -991,10 +992,10 @@ static const struct snd_kcontrol_new max98090_right_hp_mixer_controls[] = {
 		M98090_MIXHPR_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_RIGHT_HP_MIXER,
 		M98090_MIXHPR_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Left receiver mixer switch */
-static const struct snd_kcontrol_new max98090_left_rcv_mixer_controls[] = {
+/* Left receiver mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_left_rcv_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_RCV_LOUTL_MIXER,
 		M98090_MIXRCVL_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_RCV_LOUTL_MIXER,
@@ -1007,10 +1008,10 @@ static const struct snd_kcontrol_new max98090_left_rcv_mixer_controls[] = {
 		M98090_MIXRCVL_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_RCV_LOUTL_MIXER,
 		M98090_MIXRCVL_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-/* Right receiver mixer switch */
-static const struct snd_kcontrol_new max98090_right_rcv_mixer_controls[] = {
+/* Right receiver mixer चयन */
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_right_rcv_mixer_controls[] = अणु
 	SOC_DAPM_SINGLE("Left DAC Switch", M98090_REG_LOUTR_MIXER,
 		M98090_MIXRCVR_DACL_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("Right DAC Switch", M98090_REG_LOUTR_MIXER,
@@ -1023,40 +1024,40 @@ static const struct snd_kcontrol_new max98090_right_rcv_mixer_controls[] = {
 		M98090_MIXRCVR_MIC1_SHIFT, 1, 0),
 	SOC_DAPM_SINGLE("MIC2 Switch", M98090_REG_LOUTR_MIXER,
 		M98090_MIXRCVR_MIC2_SHIFT, 1, 0),
-};
+पूर्ण;
 
-static const char *linmod_mux_text[] = { "Left Only", "Left and Right" };
+अटल स्थिर अक्षर *linmod_mux_text[] = अणु "Left Only", "Left and Right" पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(linmod_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(linmod_mux_क्रमागत,
 			    M98090_REG_LOUTR_MIXER,
 			    M98090_LINMOD_SHIFT,
 			    linmod_mux_text);
 
-static const struct snd_kcontrol_new max98090_linmod_mux =
-	SOC_DAPM_ENUM("LINMOD Mux", linmod_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_linmod_mux =
+	SOC_DAPM_ENUM("LINMOD Mux", linmod_mux_क्रमागत);
 
-static const char *mixhpsel_mux_text[] = { "DAC Only", "HP Mixer" };
+अटल स्थिर अक्षर *mixhpsel_mux_text[] = अणु "DAC Only", "HP Mixer" पूर्ण;
 
 /*
  * This is a mux as it selects the HP output, but to DAPM it is a Mixer enable
  */
-static SOC_ENUM_SINGLE_DECL(mixhplsel_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(mixhplsel_mux_क्रमागत,
 			    M98090_REG_HP_CONTROL,
 			    M98090_MIXHPLSEL_SHIFT,
 			    mixhpsel_mux_text);
 
-static const struct snd_kcontrol_new max98090_mixhplsel_mux =
-	SOC_DAPM_ENUM("MIXHPLSEL Mux", mixhplsel_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_mixhplsel_mux =
+	SOC_DAPM_ENUM("MIXHPLSEL Mux", mixhplsel_mux_क्रमागत);
 
-static SOC_ENUM_SINGLE_DECL(mixhprsel_mux_enum,
+अटल SOC_ENUM_SINGLE_DECL(mixhprsel_mux_क्रमागत,
 			    M98090_REG_HP_CONTROL,
 			    M98090_MIXHPRSEL_SHIFT,
 			    mixhpsel_mux_text);
 
-static const struct snd_kcontrol_new max98090_mixhprsel_mux =
-	SOC_DAPM_ENUM("MIXHPRSEL Mux", mixhprsel_mux_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new max98090_mixhprsel_mux =
+	SOC_DAPM_ENUM("MIXHPRSEL Mux", mixhprsel_mux_क्रमागत);
 
-static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget max98090_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_INPUT("MIC1"),
 	SND_SOC_DAPM_INPUT("MIC2"),
 	SND_SOC_DAPM_INPUT("DMICL"),
@@ -1072,13 +1073,13 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("IN56"),
 
 	SND_SOC_DAPM_SUPPLY("MICBIAS", M98090_REG_INPUT_ENABLE,
-		M98090_MBEN_SHIFT, 0, NULL, 0),
+		M98090_MBEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("SHDN", M98090_REG_DEVICE_SHUTDOWN,
-		M98090_SHDNN_SHIFT, 0, NULL, 0),
+		M98090_SHDNN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("SDIEN", M98090_REG_IO_CONFIGURATION,
-		M98090_SDIEN_SHIFT, 0, NULL, 0),
+		M98090_SDIEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("SDOEN", M98090_REG_IO_CONFIGURATION,
-		M98090_SDOEN_SHIFT, 0, NULL, 0),
+		M98090_SDOEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("DMICL_ENA", M98090_REG_DIGITAL_MIC_ENABLE,
 		 M98090_DIGMICL_SHIFT, 0, max98090_shdn_event,
 			SND_SOC_DAPM_POST_PMU),
@@ -1086,10 +1087,10 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 		 M98090_DIGMICR_SHIFT, 0, max98090_shdn_event,
 			 SND_SOC_DAPM_POST_PMU),
 	SND_SOC_DAPM_SUPPLY("AHPF", M98090_REG_FILTER_CONFIG,
-		M98090_AHPF_SHIFT, 0, NULL, 0),
+		M98090_AHPF_SHIFT, 0, शून्य, 0),
 
 /*
- * Note: Sysclk and misc power supplies are taken care of by SHDN
+ * Note: Sysclk and misc घातer supplies are taken care of by SHDN
  */
 
 	SND_SOC_DAPM_MUX("MIC1 Mux", SND_SOC_NOPM,
@@ -1101,11 +1102,11 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 	SND_SOC_DAPM_MUX("DMIC Mux", SND_SOC_NOPM, 0, 0, &max98090_dmic_mux),
 
 	SND_SOC_DAPM_PGA_E("MIC1 Input", M98090_REG_MIC1_INPUT_LEVEL,
-		M98090_MIC_PA1EN_SHIFT, 0, NULL, 0, max98090_micinput_event,
+		M98090_MIC_PA1EN_SHIFT, 0, शून्य, 0, max98090_micinput_event,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_PGA_E("MIC2 Input", M98090_REG_MIC2_INPUT_LEVEL,
-		M98090_MIC_PA2EN_SHIFT, 0, NULL, 0, max98090_micinput_event,
+		M98090_MIC_PA2EN_SHIFT, 0, शून्य, 0, max98090_micinput_event,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_MIXER("LINEA Mixer", SND_SOC_NOPM, 0, 0,
@@ -1117,9 +1118,9 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 		ARRAY_SIZE(max98090_lineb_mixer_controls)),
 
 	SND_SOC_DAPM_PGA("LINEA Input", M98090_REG_INPUT_ENABLE,
-		M98090_LINEAEN_SHIFT, 0, NULL, 0),
+		M98090_LINEAEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_PGA("LINEB Input", M98090_REG_INPUT_ENABLE,
-		M98090_LINEBEN_SHIFT, 0, NULL, 0),
+		M98090_LINEBEN_SHIFT, 0, शून्य, 0),
 
 	SND_SOC_DAPM_MIXER("Left ADC Mixer", SND_SOC_NOPM, 0, 0,
 		&max98090_left_adc_mixer_controls[0],
@@ -1129,10 +1130,10 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 		&max98090_right_adc_mixer_controls[0],
 		ARRAY_SIZE(max98090_right_adc_mixer_controls)),
 
-	SND_SOC_DAPM_ADC_E("ADCL", NULL, M98090_REG_INPUT_ENABLE,
+	SND_SOC_DAPM_ADC_E("ADCL", शून्य, M98090_REG_INPUT_ENABLE,
 		M98090_ADLEN_SHIFT, 0, max98090_shdn_event,
 		SND_SOC_DAPM_POST_PMU),
-	SND_SOC_DAPM_ADC_E("ADCR", NULL, M98090_REG_INPUT_ENABLE,
+	SND_SOC_DAPM_ADC_E("ADCR", शून्य, M98090_REG_INPUT_ENABLE,
 		M98090_ADREN_SHIFT, 0, max98090_shdn_event,
 		SND_SOC_DAPM_POST_PMU),
 
@@ -1162,9 +1163,9 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN("AIFINL", "HiFi Playback", 0, SND_SOC_NOPM, 0, 0),
 	SND_SOC_DAPM_AIF_IN("AIFINR", "HiFi Playback", 1, SND_SOC_NOPM, 0, 0),
 
-	SND_SOC_DAPM_DAC("DACL", NULL, M98090_REG_OUTPUT_ENABLE,
+	SND_SOC_DAPM_DAC("DACL", शून्य, M98090_REG_OUTPUT_ENABLE,
 		M98090_DALEN_SHIFT, 0),
-	SND_SOC_DAPM_DAC("DACR", NULL, M98090_REG_OUTPUT_ENABLE,
+	SND_SOC_DAPM_DAC("DACR", शून्य, M98090_REG_OUTPUT_ENABLE,
 		M98090_DAREN_SHIFT, 0),
 
 	SND_SOC_DAPM_MIXER("Left Headphone Mixer", SND_SOC_NOPM, 0, 0,
@@ -1201,19 +1202,19 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 		&max98090_mixhprsel_mux),
 
 	SND_SOC_DAPM_PGA("HP Left Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_HPLEN_SHIFT, 0, NULL, 0),
+		M98090_HPLEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_PGA("HP Right Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_HPREN_SHIFT, 0, NULL, 0),
+		M98090_HPREN_SHIFT, 0, शून्य, 0),
 
 	SND_SOC_DAPM_PGA("SPK Left Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_SPLEN_SHIFT, 0, NULL, 0),
+		M98090_SPLEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_PGA("SPK Right Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_SPREN_SHIFT, 0, NULL, 0),
+		M98090_SPREN_SHIFT, 0, शून्य, 0),
 
 	SND_SOC_DAPM_PGA("RCV Left Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_RCVLEN_SHIFT, 0, NULL, 0),
+		M98090_RCVLEN_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_PGA("RCV Right Out", M98090_REG_OUTPUT_ENABLE,
-		M98090_RCVREN_SHIFT, 0, NULL, 0),
+		M98090_RCVREN_SHIFT, 0, शून्य, 0),
 
 	SND_SOC_DAPM_OUTPUT("HPL"),
 	SND_SOC_DAPM_OUTPUT("HPR"),
@@ -1221,290 +1222,290 @@ static const struct snd_soc_dapm_widget max98090_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("SPKR"),
 	SND_SOC_DAPM_OUTPUT("RCVL"),
 	SND_SOC_DAPM_OUTPUT("RCVR"),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget max98091_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget max98091_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_INPUT("DMIC3"),
 	SND_SOC_DAPM_INPUT("DMIC4"),
 
 	SND_SOC_DAPM_SUPPLY("DMIC3_ENA", M98090_REG_DIGITAL_MIC_ENABLE,
-		 M98090_DIGMIC3_SHIFT, 0, NULL, 0),
+		 M98090_DIGMIC3_SHIFT, 0, शून्य, 0),
 	SND_SOC_DAPM_SUPPLY("DMIC4_ENA", M98090_REG_DIGITAL_MIC_ENABLE,
-		 M98090_DIGMIC4_SHIFT, 0, NULL, 0),
-};
+		 M98090_DIGMIC4_SHIFT, 0, शून्य, 0),
+पूर्ण;
 
-static const struct snd_soc_dapm_route max98090_dapm_routes[] = {
-	{"MIC1 Input", NULL, "MIC1"},
-	{"MIC2 Input", NULL, "MIC2"},
+अटल स्थिर काष्ठा snd_soc_dapm_route max98090_dapm_routes[] = अणु
+	अणु"MIC1 Input", शून्य, "MIC1"पूर्ण,
+	अणु"MIC2 Input", शून्य, "MIC2"पूर्ण,
 
-	{"DMICL", NULL, "DMICL_ENA"},
-	{"DMICL", NULL, "DMICR_ENA"},
-	{"DMICR", NULL, "DMICL_ENA"},
-	{"DMICR", NULL, "DMICR_ENA"},
-	{"DMICL", NULL, "AHPF"},
-	{"DMICR", NULL, "AHPF"},
+	अणु"DMICL", शून्य, "DMICL_ENA"पूर्ण,
+	अणु"DMICL", शून्य, "DMICR_ENA"पूर्ण,
+	अणु"DMICR", शून्य, "DMICL_ENA"पूर्ण,
+	अणु"DMICR", शून्य, "DMICR_ENA"पूर्ण,
+	अणु"DMICL", शून्य, "AHPF"पूर्ण,
+	अणु"DMICR", शून्य, "AHPF"पूर्ण,
 
 	/* MIC1 input mux */
-	{"MIC1 Mux", "IN12", "IN12"},
-	{"MIC1 Mux", "IN56", "IN56"},
+	अणु"MIC1 Mux", "IN12", "IN12"पूर्ण,
+	अणु"MIC1 Mux", "IN56", "IN56"पूर्ण,
 
 	/* MIC2 input mux */
-	{"MIC2 Mux", "IN34", "IN34"},
-	{"MIC2 Mux", "IN56", "IN56"},
+	अणु"MIC2 Mux", "IN34", "IN34"पूर्ण,
+	अणु"MIC2 Mux", "IN56", "IN56"पूर्ण,
 
-	{"MIC1 Input", NULL, "MIC1 Mux"},
-	{"MIC2 Input", NULL, "MIC2 Mux"},
+	अणु"MIC1 Input", शून्य, "MIC1 Mux"पूर्ण,
+	अणु"MIC2 Input", शून्य, "MIC2 Mux"पूर्ण,
 
 	/* Left ADC input mixer */
-	{"Left ADC Mixer", "IN12 Switch", "IN12"},
-	{"Left ADC Mixer", "IN34 Switch", "IN34"},
-	{"Left ADC Mixer", "IN56 Switch", "IN56"},
-	{"Left ADC Mixer", "LINEA Switch", "LINEA Input"},
-	{"Left ADC Mixer", "LINEB Switch", "LINEB Input"},
-	{"Left ADC Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Left ADC Mixer", "MIC2 Switch", "MIC2 Input"},
+	अणु"Left ADC Mixer", "IN12 Switch", "IN12"पूर्ण,
+	अणु"Left ADC Mixer", "IN34 Switch", "IN34"पूर्ण,
+	अणु"Left ADC Mixer", "IN56 Switch", "IN56"पूर्ण,
+	अणु"Left ADC Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Left ADC Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
+	अणु"Left ADC Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Left ADC Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
 
 	/* Right ADC input mixer */
-	{"Right ADC Mixer", "IN12 Switch", "IN12"},
-	{"Right ADC Mixer", "IN34 Switch", "IN34"},
-	{"Right ADC Mixer", "IN56 Switch", "IN56"},
-	{"Right ADC Mixer", "LINEA Switch", "LINEA Input"},
-	{"Right ADC Mixer", "LINEB Switch", "LINEB Input"},
-	{"Right ADC Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Right ADC Mixer", "MIC2 Switch", "MIC2 Input"},
+	अणु"Right ADC Mixer", "IN12 Switch", "IN12"पूर्ण,
+	अणु"Right ADC Mixer", "IN34 Switch", "IN34"पूर्ण,
+	अणु"Right ADC Mixer", "IN56 Switch", "IN56"पूर्ण,
+	अणु"Right ADC Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Right ADC Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
+	अणु"Right ADC Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Right ADC Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
 
 	/* Line A input mixer */
-	{"LINEA Mixer", "IN1 Switch", "IN1"},
-	{"LINEA Mixer", "IN3 Switch", "IN3"},
-	{"LINEA Mixer", "IN5 Switch", "IN5"},
-	{"LINEA Mixer", "IN34 Switch", "IN34"},
+	अणु"LINEA Mixer", "IN1 Switch", "IN1"पूर्ण,
+	अणु"LINEA Mixer", "IN3 Switch", "IN3"पूर्ण,
+	अणु"LINEA Mixer", "IN5 Switch", "IN5"पूर्ण,
+	अणु"LINEA Mixer", "IN34 Switch", "IN34"पूर्ण,
 
 	/* Line B input mixer */
-	{"LINEB Mixer", "IN2 Switch", "IN2"},
-	{"LINEB Mixer", "IN4 Switch", "IN4"},
-	{"LINEB Mixer", "IN6 Switch", "IN6"},
-	{"LINEB Mixer", "IN56 Switch", "IN56"},
+	अणु"LINEB Mixer", "IN2 Switch", "IN2"पूर्ण,
+	अणु"LINEB Mixer", "IN4 Switch", "IN4"पूर्ण,
+	अणु"LINEB Mixer", "IN6 Switch", "IN6"पूर्ण,
+	अणु"LINEB Mixer", "IN56 Switch", "IN56"पूर्ण,
 
-	{"LINEA Input", NULL, "LINEA Mixer"},
-	{"LINEB Input", NULL, "LINEB Mixer"},
+	अणु"LINEA Input", शून्य, "LINEA Mixer"पूर्ण,
+	अणु"LINEB Input", शून्य, "LINEB Mixer"पूर्ण,
 
-	/* Inputs */
-	{"ADCL", NULL, "Left ADC Mixer"},
-	{"ADCR", NULL, "Right ADC Mixer"},
-	{"ADCL", NULL, "SHDN"},
-	{"ADCR", NULL, "SHDN"},
+	/* Inमाला_दो */
+	अणु"ADCL", शून्य, "Left ADC Mixer"पूर्ण,
+	अणु"ADCR", शून्य, "Right ADC Mixer"पूर्ण,
+	अणु"ADCL", शून्य, "SHDN"पूर्ण,
+	अणु"ADCR", शून्य, "SHDN"पूर्ण,
 
-	{"DMIC Mux", "ADC", "ADCL"},
-	{"DMIC Mux", "ADC", "ADCR"},
-	{"DMIC Mux", "DMIC", "DMICL"},
-	{"DMIC Mux", "DMIC", "DMICR"},
+	अणु"DMIC Mux", "ADC", "ADCL"पूर्ण,
+	अणु"DMIC Mux", "ADC", "ADCR"पूर्ण,
+	अणु"DMIC Mux", "DMIC", "DMICL"पूर्ण,
+	अणु"DMIC Mux", "DMIC", "DMICR"पूर्ण,
 
-	{"LBENL Mux", "Normal", "DMIC Mux"},
-	{"LBENL Mux", "Loopback", "LTENL Mux"},
-	{"LBENR Mux", "Normal", "DMIC Mux"},
-	{"LBENR Mux", "Loopback", "LTENR Mux"},
+	अणु"LBENL Mux", "Normal", "DMIC Mux"पूर्ण,
+	अणु"LBENL Mux", "Loopback", "LTENL Mux"पूर्ण,
+	अणु"LBENR Mux", "Normal", "DMIC Mux"पूर्ण,
+	अणु"LBENR Mux", "Loopback", "LTENR Mux"पूर्ण,
 
-	{"AIFOUTL", NULL, "LBENL Mux"},
-	{"AIFOUTR", NULL, "LBENR Mux"},
-	{"AIFOUTL", NULL, "SHDN"},
-	{"AIFOUTR", NULL, "SHDN"},
-	{"AIFOUTL", NULL, "SDOEN"},
-	{"AIFOUTR", NULL, "SDOEN"},
+	अणु"AIFOUTL", शून्य, "LBENL Mux"पूर्ण,
+	अणु"AIFOUTR", शून्य, "LBENR Mux"पूर्ण,
+	अणु"AIFOUTL", शून्य, "SHDN"पूर्ण,
+	अणु"AIFOUTR", शून्य, "SHDN"पूर्ण,
+	अणु"AIFOUTL", शून्य, "SDOEN"पूर्ण,
+	अणु"AIFOUTR", शून्य, "SDOEN"पूर्ण,
 
-	{"LTENL Mux", "Normal", "AIFINL"},
-	{"LTENL Mux", "Loopthrough", "LBENL Mux"},
-	{"LTENR Mux", "Normal", "AIFINR"},
-	{"LTENR Mux", "Loopthrough", "LBENR Mux"},
+	अणु"LTENL Mux", "Normal", "AIFINL"पूर्ण,
+	अणु"LTENL Mux", "Loopthrough", "LBENL Mux"पूर्ण,
+	अणु"LTENR Mux", "Normal", "AIFINR"पूर्ण,
+	अणु"LTENR Mux", "Loopthrough", "LBENR Mux"पूर्ण,
 
-	{"DACL", NULL, "LTENL Mux"},
-	{"DACR", NULL, "LTENR Mux"},
+	अणु"DACL", शून्य, "LTENL Mux"पूर्ण,
+	अणु"DACR", शून्य, "LTENR Mux"पूर्ण,
 
-	{"STENL Mux", "Sidetone Left", "ADCL"},
-	{"STENL Mux", "Sidetone Left", "DMICL"},
-	{"STENR Mux", "Sidetone Right", "ADCR"},
-	{"STENR Mux", "Sidetone Right", "DMICR"},
-	{"DACL", NULL, "STENL Mux"},
-	{"DACR", NULL, "STENR Mux"},
+	अणु"STENL Mux", "Sidetone Left", "ADCL"पूर्ण,
+	अणु"STENL Mux", "Sidetone Left", "DMICL"पूर्ण,
+	अणु"STENR Mux", "Sidetone Right", "ADCR"पूर्ण,
+	अणु"STENR Mux", "Sidetone Right", "DMICR"पूर्ण,
+	अणु"DACL", शून्य, "STENL Mux"पूर्ण,
+	अणु"DACR", शून्य, "STENR Mux"पूर्ण,
 
-	{"AIFINL", NULL, "SHDN"},
-	{"AIFINR", NULL, "SHDN"},
-	{"AIFINL", NULL, "SDIEN"},
-	{"AIFINR", NULL, "SDIEN"},
-	{"DACL", NULL, "SHDN"},
-	{"DACR", NULL, "SHDN"},
+	अणु"AIFINL", शून्य, "SHDN"पूर्ण,
+	अणु"AIFINR", शून्य, "SHDN"पूर्ण,
+	अणु"AIFINL", शून्य, "SDIEN"पूर्ण,
+	अणु"AIFINR", शून्य, "SDIEN"पूर्ण,
+	अणु"DACL", शून्य, "SHDN"पूर्ण,
+	अणु"DACR", शून्य, "SHDN"पूर्ण,
 
 	/* Left headphone output mixer */
-	{"Left Headphone Mixer", "Left DAC Switch", "DACL"},
-	{"Left Headphone Mixer", "Right DAC Switch", "DACR"},
-	{"Left Headphone Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Left Headphone Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Left Headphone Mixer", "LINEA Switch", "LINEA Input"},
-	{"Left Headphone Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Left Headphone Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Left Headphone Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Left Headphone Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Left Headphone Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Left Headphone Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Left Headphone Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
 	/* Right headphone output mixer */
-	{"Right Headphone Mixer", "Left DAC Switch", "DACL"},
-	{"Right Headphone Mixer", "Right DAC Switch", "DACR"},
-	{"Right Headphone Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Right Headphone Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Right Headphone Mixer", "LINEA Switch", "LINEA Input"},
-	{"Right Headphone Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Right Headphone Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Right Headphone Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Right Headphone Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Right Headphone Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Right Headphone Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Right Headphone Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
 	/* Left speaker output mixer */
-	{"Left Speaker Mixer", "Left DAC Switch", "DACL"},
-	{"Left Speaker Mixer", "Right DAC Switch", "DACR"},
-	{"Left Speaker Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Left Speaker Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Left Speaker Mixer", "LINEA Switch", "LINEA Input"},
-	{"Left Speaker Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Left Speaker Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Left Speaker Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Left Speaker Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Left Speaker Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Left Speaker Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Left Speaker Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
 	/* Right speaker output mixer */
-	{"Right Speaker Mixer", "Left DAC Switch", "DACL"},
-	{"Right Speaker Mixer", "Right DAC Switch", "DACR"},
-	{"Right Speaker Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Right Speaker Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Right Speaker Mixer", "LINEA Switch", "LINEA Input"},
-	{"Right Speaker Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Right Speaker Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Right Speaker Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Right Speaker Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Right Speaker Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Right Speaker Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Right Speaker Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
 	/* Left Receiver output mixer */
-	{"Left Receiver Mixer", "Left DAC Switch", "DACL"},
-	{"Left Receiver Mixer", "Right DAC Switch", "DACR"},
-	{"Left Receiver Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Left Receiver Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Left Receiver Mixer", "LINEA Switch", "LINEA Input"},
-	{"Left Receiver Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Left Receiver Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Left Receiver Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Left Receiver Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Left Receiver Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Left Receiver Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Left Receiver Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
 	/* Right Receiver output mixer */
-	{"Right Receiver Mixer", "Left DAC Switch", "DACL"},
-	{"Right Receiver Mixer", "Right DAC Switch", "DACR"},
-	{"Right Receiver Mixer", "MIC1 Switch", "MIC1 Input"},
-	{"Right Receiver Mixer", "MIC2 Switch", "MIC2 Input"},
-	{"Right Receiver Mixer", "LINEA Switch", "LINEA Input"},
-	{"Right Receiver Mixer", "LINEB Switch", "LINEB Input"},
+	अणु"Right Receiver Mixer", "Left DAC Switch", "DACL"पूर्ण,
+	अणु"Right Receiver Mixer", "Right DAC Switch", "DACR"पूर्ण,
+	अणु"Right Receiver Mixer", "MIC1 Switch", "MIC1 Input"पूर्ण,
+	अणु"Right Receiver Mixer", "MIC2 Switch", "MIC2 Input"पूर्ण,
+	अणु"Right Receiver Mixer", "LINEA Switch", "LINEA Input"पूर्ण,
+	अणु"Right Receiver Mixer", "LINEB Switch", "LINEB Input"पूर्ण,
 
-	{"MIXHPLSEL Mux", "HP Mixer", "Left Headphone Mixer"},
-
-	/*
-	 * Disable this for lowest power if bypassing
-	 * the DAC with an analog signal
-	 */
-	{"HP Left Out", NULL, "DACL"},
-	{"HP Left Out", NULL, "MIXHPLSEL Mux"},
-
-	{"MIXHPRSEL Mux", "HP Mixer", "Right Headphone Mixer"},
+	अणु"MIXHPLSEL Mux", "HP Mixer", "Left Headphone Mixer"पूर्ण,
 
 	/*
-	 * Disable this for lowest power if bypassing
-	 * the DAC with an analog signal
+	 * Disable this क्रम lowest घातer अगर bypassing
+	 * the DAC with an analog संकेत
 	 */
-	{"HP Right Out", NULL, "DACR"},
-	{"HP Right Out", NULL, "MIXHPRSEL Mux"},
+	अणु"HP Left Out", शून्य, "DACL"पूर्ण,
+	अणु"HP Left Out", शून्य, "MIXHPLSEL Mux"पूर्ण,
 
-	{"SPK Left Out", NULL, "Left Speaker Mixer"},
-	{"SPK Right Out", NULL, "Right Speaker Mixer"},
-	{"RCV Left Out", NULL, "Left Receiver Mixer"},
+	अणु"MIXHPRSEL Mux", "HP Mixer", "Right Headphone Mixer"पूर्ण,
 
-	{"LINMOD Mux", "Left and Right", "Right Receiver Mixer"},
-	{"LINMOD Mux", "Left Only",  "Left Receiver Mixer"},
-	{"RCV Right Out", NULL, "LINMOD Mux"},
+	/*
+	 * Disable this क्रम lowest घातer अगर bypassing
+	 * the DAC with an analog संकेत
+	 */
+	अणु"HP Right Out", शून्य, "DACR"पूर्ण,
+	अणु"HP Right Out", शून्य, "MIXHPRSEL Mux"पूर्ण,
 
-	{"HPL", NULL, "HP Left Out"},
-	{"HPR", NULL, "HP Right Out"},
-	{"SPKL", NULL, "SPK Left Out"},
-	{"SPKR", NULL, "SPK Right Out"},
-	{"RCVL", NULL, "RCV Left Out"},
-	{"RCVR", NULL, "RCV Right Out"},
-};
+	अणु"SPK Left Out", शून्य, "Left Speaker Mixer"पूर्ण,
+	अणु"SPK Right Out", शून्य, "Right Speaker Mixer"पूर्ण,
+	अणु"RCV Left Out", शून्य, "Left Receiver Mixer"पूर्ण,
 
-static const struct snd_soc_dapm_route max98091_dapm_routes[] = {
-	/* DMIC inputs */
-	{"DMIC3", NULL, "DMIC3_ENA"},
-	{"DMIC4", NULL, "DMIC4_ENA"},
-	{"DMIC3", NULL, "AHPF"},
-	{"DMIC4", NULL, "AHPF"},
-};
+	अणु"LINMOD Mux", "Left and Right", "Right Receiver Mixer"पूर्ण,
+	अणु"LINMOD Mux", "Left Only",  "Left Receiver Mixer"पूर्ण,
+	अणु"RCV Right Out", शून्य, "LINMOD Mux"पूर्ण,
 
-static int max98090_add_widgets(struct snd_soc_component *component)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	अणु"HPL", शून्य, "HP Left Out"पूर्ण,
+	अणु"HPR", शून्य, "HP Right Out"पूर्ण,
+	अणु"SPKL", शून्य, "SPK Left Out"पूर्ण,
+	अणु"SPKR", शून्य, "SPK Right Out"पूर्ण,
+	अणु"RCVL", शून्य, "RCV Left Out"पूर्ण,
+	अणु"RCVR", शून्य, "RCV Right Out"पूर्ण,
+पूर्ण;
+
+अटल स्थिर काष्ठा snd_soc_dapm_route max98091_dapm_routes[] = अणु
+	/* DMIC inमाला_दो */
+	अणु"DMIC3", शून्य, "DMIC3_ENA"पूर्ण,
+	अणु"DMIC4", शून्य, "DMIC4_ENA"पूर्ण,
+	अणु"DMIC3", शून्य, "AHPF"पूर्ण,
+	अणु"DMIC4", शून्य, "AHPF"पूर्ण,
+पूर्ण;
+
+अटल पूर्णांक max98090_add_widमाला_लो(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 
 	snd_soc_add_component_controls(component, max98090_snd_controls,
 		ARRAY_SIZE(max98090_snd_controls));
 
-	if (max98090->devtype == MAX98091) {
+	अगर (max98090->devtype == MAX98091) अणु
 		snd_soc_add_component_controls(component, max98091_snd_controls,
 			ARRAY_SIZE(max98091_snd_controls));
-	}
+	पूर्ण
 
-	snd_soc_dapm_new_controls(dapm, max98090_dapm_widgets,
-		ARRAY_SIZE(max98090_dapm_widgets));
+	snd_soc_dapm_new_controls(dapm, max98090_dapm_widमाला_लो,
+		ARRAY_SIZE(max98090_dapm_widमाला_लो));
 
 	snd_soc_dapm_add_routes(dapm, max98090_dapm_routes,
 		ARRAY_SIZE(max98090_dapm_routes));
 
-	if (max98090->devtype == MAX98091) {
-		snd_soc_dapm_new_controls(dapm, max98091_dapm_widgets,
-			ARRAY_SIZE(max98091_dapm_widgets));
+	अगर (max98090->devtype == MAX98091) अणु
+		snd_soc_dapm_new_controls(dapm, max98091_dapm_widमाला_लो,
+			ARRAY_SIZE(max98091_dapm_widमाला_लो));
 
 		snd_soc_dapm_add_routes(dapm, max98091_dapm_routes,
 			ARRAY_SIZE(max98091_dapm_routes));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const int pclk_rates[] = {
+अटल स्थिर पूर्णांक pclk_rates[] = अणु
 	12000000, 12000000, 13000000, 13000000,
 	16000000, 16000000, 19200000, 19200000
-};
+पूर्ण;
 
-static const int lrclk_rates[] = {
+अटल स्थिर पूर्णांक lrclk_rates[] = अणु
 	8000, 16000, 8000, 16000,
 	8000, 16000, 8000, 16000
-};
+पूर्ण;
 
-static const int user_pclk_rates[] = {
+अटल स्थिर पूर्णांक user_pclk_rates[] = अणु
 	13000000, 13000000, 19200000, 19200000,
-};
+पूर्ण;
 
-static const int user_lrclk_rates[] = {
+अटल स्थिर पूर्णांक user_lrclk_rates[] = अणु
 	44100, 48000, 44100, 48000,
-};
+पूर्ण;
 
-static const unsigned long long ni_value[] = {
+अटल स्थिर अचिन्हित दीर्घ दीर्घ ni_value[] = अणु
 	3528, 768, 441, 8
-};
+पूर्ण;
 
-static const unsigned long long mi_value[] = {
+अटल स्थिर अचिन्हित दीर्घ दीर्घ mi_value[] = अणु
 	8125, 1625, 1500, 25
-};
+पूर्ण;
 
-static void max98090_configure_bclk(struct snd_soc_component *component)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	unsigned long long ni;
-	int i;
+अटल व्योम max98090_configure_bclk(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	अचिन्हित दीर्घ दीर्घ ni;
+	पूर्णांक i;
 
-	if (!max98090->sysclk) {
+	अगर (!max98090->sysclk) अणु
 		dev_err(component->dev, "No SYSCLK configured\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!max98090->bclk || !max98090->lrclk) {
+	अगर (!max98090->bclk || !max98090->lrclk) अणु
 		dev_err(component->dev, "No audio clocks configured\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Skip configuration when operating as slave */
-	if (!(snd_soc_component_read(component, M98090_REG_MASTER_MODE) &
-		M98090_MAS_MASK)) {
-		return;
-	}
+	अगर (!(snd_soc_component_पढ़ो(component, M98090_REG_MASTER_MODE) &
+		M98090_MAS_MASK)) अणु
+		वापस;
+	पूर्ण
 
-	/* Check for supported PCLK to LRCLK ratios */
-	for (i = 0; i < ARRAY_SIZE(pclk_rates); i++) {
-		if ((pclk_rates[i] == max98090->sysclk) &&
-			(lrclk_rates[i] == max98090->lrclk)) {
+	/* Check क्रम supported PCLK to LRCLK ratios */
+	क्रम (i = 0; i < ARRAY_SIZE(pclk_rates); i++) अणु
+		अगर ((pclk_rates[i] == max98090->sysclk) &&
+			(lrclk_rates[i] == max98090->lrclk)) अणु
 			dev_dbg(component->dev,
 				"Found supported PCLK to LRCLK rates 0x%x\n",
 				i + 0x8);
@@ -1514,14 +1515,14 @@ static void max98090_configure_bclk(struct snd_soc_component *component)
 				(i + 0x8) << M98090_FREQ_SHIFT);
 			snd_soc_component_update_bits(component, M98090_REG_CLOCK_MODE,
 				M98090_USE_M1_MASK, 0);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* Check for user calculated MI and NI ratios */
-	for (i = 0; i < ARRAY_SIZE(user_pclk_rates); i++) {
-		if ((user_pclk_rates[i] == max98090->sysclk) &&
-			(user_lrclk_rates[i] == max98090->lrclk)) {
+	/* Check क्रम user calculated MI and NI ratios */
+	क्रम (i = 0; i < ARRAY_SIZE(user_pclk_rates); i++) अणु
+		अगर ((user_pclk_rates[i] == max98090->sysclk) &&
+			(user_lrclk_rates[i] == max98090->lrclk)) अणु
 			dev_dbg(component->dev,
 				"Found user supported PCLK to LRCLK rates\n");
 			dev_dbg(component->dev, "i %d ni %lld mi %lld\n",
@@ -1533,18 +1534,18 @@ static void max98090_configure_bclk(struct snd_soc_component *component)
 				M98090_USE_M1_MASK,
 					1 << M98090_USE_M1_SHIFT);
 
-			snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_NI_MSB,
+			snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_NI_MSB,
 				(ni_value[i] >> 8) & 0x7F);
-			snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_NI_LSB,
+			snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_NI_LSB,
 				ni_value[i] & 0xFF);
-			snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_MI_MSB,
+			snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_MI_MSB,
 				(mi_value[i] >> 8) & 0x7F);
-			snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_MI_LSB,
+			snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_MI_LSB,
 				mi_value[i] & 0xFF);
 
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Calculate based on MI = 65536 (not as good as either method above)
@@ -1556,137 +1557,137 @@ static void max98090_configure_bclk(struct snd_soc_component *component)
 
 	/*
 	 * Configure NI when operating as master
-	 * Note: There is a small, but significant audio quality improvement
+	 * Note: There is a small, but signअगरicant audio quality improvement
 	 * by calculating ni and mi.
 	 */
 	ni = 65536ULL * (max98090->lrclk < 50000 ? 96ULL : 48ULL)
-			* (unsigned long long int)max98090->lrclk;
-	do_div(ni, (unsigned long long int)max98090->sysclk);
+			* (अचिन्हित दीर्घ दीर्घ पूर्णांक)max98090->lrclk;
+	करो_भाग(ni, (अचिन्हित दीर्घ दीर्घ पूर्णांक)max98090->sysclk);
 	dev_info(component->dev, "No better method found\n");
 	dev_info(component->dev, "Calculating ni %lld with mi 65536\n", ni);
-	snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_NI_MSB,
+	snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_NI_MSB,
 		(ni >> 8) & 0x7F);
-	snd_soc_component_write(component, M98090_REG_CLOCK_RATIO_NI_LSB, ni & 0xFF);
-}
+	snd_soc_component_ग_लिखो(component, M98090_REG_CLOCK_RATIO_NI_LSB, ni & 0xFF);
+पूर्ण
 
-static int max98090_dai_set_fmt(struct snd_soc_dai *codec_dai,
-				 unsigned int fmt)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct max98090_cdata *cdata;
+अटल पूर्णांक max98090_dai_set_fmt(काष्ठा snd_soc_dai *codec_dai,
+				 अचिन्हित पूर्णांक fmt)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा max98090_cdata *cdata;
 	u8 regval;
 
 	max98090->dai_fmt = fmt;
 	cdata = &max98090->dai[0];
 
-	if (fmt != cdata->fmt) {
+	अगर (fmt != cdata->fmt) अणु
 		cdata->fmt = fmt;
 
 		regval = 0;
-		switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
-		case SND_SOC_DAIFMT_CBS_CFS:
+		चयन (fmt & SND_SOC_DAIFMT_MASTER_MASK) अणु
+		हाल SND_SOC_DAIFMT_CBS_CFS:
 			/* Set to slave mode PLL - MAS mode off */
-			snd_soc_component_write(component,
+			snd_soc_component_ग_लिखो(component,
 				M98090_REG_CLOCK_RATIO_NI_MSB, 0x00);
-			snd_soc_component_write(component,
+			snd_soc_component_ग_लिखो(component,
 				M98090_REG_CLOCK_RATIO_NI_LSB, 0x00);
 			snd_soc_component_update_bits(component, M98090_REG_CLOCK_MODE,
 				M98090_USE_M1_MASK, 0);
 			max98090->master = false;
-			break;
-		case SND_SOC_DAIFMT_CBM_CFM:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_CBM_CFM:
 			/* Set to master mode */
-			if (max98090->tdm_slots == 4) {
+			अगर (max98090->tdm_slots == 4) अणु
 				/* TDM */
 				regval |= M98090_MAS_MASK |
 					M98090_BSEL_64;
-			} else if (max98090->tdm_slots == 3) {
+			पूर्ण अन्यथा अगर (max98090->tdm_slots == 3) अणु
 				/* TDM */
 				regval |= M98090_MAS_MASK |
 					M98090_BSEL_48;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* Few TDM slots, or No TDM */
 				regval |= M98090_MAS_MASK |
 					M98090_BSEL_32;
-			}
+			पूर्ण
 			max98090->master = true;
-			break;
-		case SND_SOC_DAIFMT_CBS_CFM:
-		case SND_SOC_DAIFMT_CBM_CFS:
-		default:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_CBS_CFM:
+		हाल SND_SOC_DAIFMT_CBM_CFS:
+		शेष:
 			dev_err(component->dev, "DAI clock mode unsupported");
-			return -EINVAL;
-		}
-		snd_soc_component_write(component, M98090_REG_MASTER_MODE, regval);
+			वापस -EINVAL;
+		पूर्ण
+		snd_soc_component_ग_लिखो(component, M98090_REG_MASTER_MODE, regval);
 
 		regval = 0;
-		switch (fmt & SND_SOC_DAIFMT_FORMAT_MASK) {
-		case SND_SOC_DAIFMT_I2S:
+		चयन (fmt & SND_SOC_DAIFMT_FORMAT_MASK) अणु
+		हाल SND_SOC_DAIFMT_I2S:
 			regval |= M98090_DLY_MASK;
-			break;
-		case SND_SOC_DAIFMT_LEFT_J:
-			break;
-		case SND_SOC_DAIFMT_RIGHT_J:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_LEFT_J:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_RIGHT_J:
 			regval |= M98090_RJ_MASK;
-			break;
-		case SND_SOC_DAIFMT_DSP_A:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_DSP_A:
 			/* Not supported mode */
-		default:
+		शेष:
 			dev_err(component->dev, "DAI format unsupported");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (fmt & SND_SOC_DAIFMT_INV_MASK) {
-		case SND_SOC_DAIFMT_NB_NF:
-			break;
-		case SND_SOC_DAIFMT_NB_IF:
+		चयन (fmt & SND_SOC_DAIFMT_INV_MASK) अणु
+		हाल SND_SOC_DAIFMT_NB_NF:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_NB_IF:
 			regval |= M98090_WCI_MASK;
-			break;
-		case SND_SOC_DAIFMT_IB_NF:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_IB_NF:
 			regval |= M98090_BCI_MASK;
-			break;
-		case SND_SOC_DAIFMT_IB_IF:
+			अवरोध;
+		हाल SND_SOC_DAIFMT_IB_IF:
 			regval |= M98090_BCI_MASK|M98090_WCI_MASK;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(component->dev, "DAI invert mode unsupported");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/*
 		 * This accommodates an inverted logic in the MAX98090 chip
-		 * for Bit Clock Invert (BCI). The inverted logic is only
-		 * seen for the case of TDM mode. The remaining cases have
+		 * क्रम Bit Clock Invert (BCI). The inverted logic is only
+		 * seen क्रम the हाल of TDM mode. The reमुख्यing हालs have
 		 * normal logic.
 		 */
-		if (max98090->tdm_slots > 1)
+		अगर (max98090->tdm_slots > 1)
 			regval ^= M98090_BCI_MASK;
 
-		snd_soc_component_write(component,
+		snd_soc_component_ग_लिखो(component,
 			M98090_REG_INTERFACE_FORMAT, regval);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_set_tdm_slot(struct snd_soc_dai *codec_dai,
-	unsigned int tx_mask, unsigned int rx_mask, int slots, int slot_width)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct max98090_cdata *cdata;
+अटल पूर्णांक max98090_set_tdm_slot(काष्ठा snd_soc_dai *codec_dai,
+	अचिन्हित पूर्णांक tx_mask, अचिन्हित पूर्णांक rx_mask, पूर्णांक slots, पूर्णांक slot_width)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा max98090_cdata *cdata;
 	cdata = &max98090->dai[0];
 
-	if (slots < 0 || slots > 4)
-		return -EINVAL;
+	अगर (slots < 0 || slots > 4)
+		वापस -EINVAL;
 
 	max98090->tdm_slots = slots;
 	max98090->tdm_width = slot_width;
 
-	if (max98090->tdm_slots > 1) {
+	अगर (max98090->tdm_slots > 1) अणु
 		/* SLOTL SLOTR SLOTDLY */
-		snd_soc_component_write(component, M98090_REG_TDM_FORMAT,
+		snd_soc_component_ग_लिखो(component, M98090_REG_TDM_FORMAT,
 			0 << M98090_TDM_SLOTL_SHIFT |
 			1 << M98090_TDM_SLOTR_SHIFT |
 			0 << M98090_TDM_SLOTDLY_SHIFT);
@@ -1695,7 +1696,7 @@ static int max98090_set_tdm_slot(struct snd_soc_dai *codec_dai,
 		snd_soc_component_update_bits(component, M98090_REG_TDM_CONTROL,
 			M98090_TDM_MASK,
 			M98090_TDM_MASK);
-	}
+	पूर्ण
 
 	/*
 	 * Normally advisable to set TDM first, but this permits either order
@@ -1703,193 +1704,193 @@ static int max98090_set_tdm_slot(struct snd_soc_dai *codec_dai,
 	cdata->fmt = 0;
 	max98090_dai_set_fmt(codec_dai, max98090->dai_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_set_bias_level(struct snd_soc_component *component,
-				   enum snd_soc_bias_level level)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	int ret;
+अटल पूर्णांक max98090_set_bias_level(काष्ठा snd_soc_component *component,
+				   क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	पूर्णांक ret;
 
-	switch (level) {
-	case SND_SOC_BIAS_ON:
-		break;
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_ON:
+		अवरोध;
 
-	case SND_SOC_BIAS_PREPARE:
+	हाल SND_SOC_BIAS_PREPARE:
 		/*
-		 * SND_SOC_BIAS_PREPARE is called while preparing for a
+		 * SND_SOC_BIAS_PREPARE is called जबतक preparing क्रम a
 		 * transition to ON or away from ON. If current bias_level
-		 * is SND_SOC_BIAS_ON, then it is preparing for a transition
-		 * away from ON. Disable the clock in that case, otherwise
+		 * is SND_SOC_BIAS_ON, then it is preparing क्रम a transition
+		 * away from ON. Disable the घड़ी in that हाल, otherwise
 		 * enable it.
 		 */
-		if (IS_ERR(max98090->mclk))
-			break;
+		अगर (IS_ERR(max98090->mclk))
+			अवरोध;
 
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_ON) {
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_ON) अणु
 			clk_disable_unprepare(max98090->mclk);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = clk_prepare_enable(max98090->mclk);
-			if (ret)
-				return ret;
-		}
-		break;
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+		अवरोध;
 
-	case SND_SOC_BIAS_STANDBY:
-		if (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) {
+	हाल SND_SOC_BIAS_STANDBY:
+		अगर (snd_soc_component_get_bias_level(component) == SND_SOC_BIAS_OFF) अणु
 			ret = regcache_sync(max98090->regmap);
-			if (ret != 0) {
+			अगर (ret != 0) अणु
 				dev_err(component->dev,
 					"Failed to sync cache: %d\n", ret);
-				return ret;
-			}
-		}
-		break;
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case SND_SOC_BIAS_OFF:
-		/* Set internal pull-up to lowest power mode */
+	हाल SND_SOC_BIAS_OFF:
+		/* Set पूर्णांकernal pull-up to lowest घातer mode */
 		snd_soc_component_update_bits(component, M98090_REG_JACK_DETECT,
 			M98090_JDWK_MASK, M98090_JDWK_MASK);
 		regcache_mark_dirty(max98090->regmap);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const int dmic_divisors[] = { 2, 3, 4, 5, 6, 8 };
+अटल स्थिर पूर्णांक dmic_भागisors[] = अणु 2, 3, 4, 5, 6, 8 पूर्ण;
 
-static const int comp_lrclk_rates[] = {
+अटल स्थिर पूर्णांक comp_lrclk_rates[] = अणु
 	8000, 16000, 32000, 44100, 48000, 96000
-};
+पूर्ण;
 
-struct dmic_table {
-	int pclk;
-	struct {
-		int freq;
-		int comp[6]; /* One each for 8, 16, 32, 44.1, 48, and 96 kHz */
-	} settings[6]; /* One for each dmic divisor. */
-};
+काष्ठा dmic_table अणु
+	पूर्णांक pclk;
+	काष्ठा अणु
+		पूर्णांक freq;
+		पूर्णांक comp[6]; /* One each क्रम 8, 16, 32, 44.1, 48, and 96 kHz */
+	पूर्ण settings[6]; /* One क्रम each dmic भागisor. */
+पूर्ण;
 
-static const struct dmic_table dmic_table[] = { /* One for each pclk freq. */
-	{
+अटल स्थिर काष्ठा dmic_table dmic_table[] = अणु /* One क्रम each pclk freq. */
+	अणु
 		.pclk = 11289600,
-		.settings = {
-			{ .freq = 2, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 1, .comp = { 7, 8, 2, 2, 2, 2 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 6, 6, 6, 6 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-		},
-	},
-	{
+		.settings = अणु
+			अणु .freq = 2, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 1, .comp = अणु 7, 8, 2, 2, 2, 2 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 6, 6, 6, 6 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.pclk = 12000000,
-		.settings = {
-			{ .freq = 2, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 1, .comp = { 7, 8, 2, 2, 2, 2 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 5, 5, 6, 6 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-		}
-	},
-	{
+		.settings = अणु
+			अणु .freq = 2, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 1, .comp = अणु 7, 8, 2, 2, 2, 2 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 5, 5, 6, 6 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.pclk = 12288000,
-		.settings = {
-			{ .freq = 2, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 1, .comp = { 7, 8, 2, 2, 2, 2 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 6, 6, 6, 6 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 3, 3, 3, 3 } },
-		}
-	},
-	{
+		.settings = अणु
+			अणु .freq = 2, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 1, .comp = अणु 7, 8, 2, 2, 2, 2 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 6, 6, 6, 6 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 3, 3, 3, 3 पूर्ण पूर्ण,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.pclk = 13000000,
-		.settings = {
-			{ .freq = 2, .comp = { 7, 8, 1, 1, 1, 1 } },
-			{ .freq = 1, .comp = { 7, 8, 0, 0, 0, 0 } },
-			{ .freq = 0, .comp = { 7, 8, 1, 1, 1, 1 } },
-			{ .freq = 0, .comp = { 7, 8, 4, 4, 5, 5 } },
-			{ .freq = 0, .comp = { 7, 8, 1, 1, 1, 1 } },
-			{ .freq = 0, .comp = { 7, 8, 1, 1, 1, 1 } },
-		}
-	},
-	{
+		.settings = अणु
+			अणु .freq = 2, .comp = अणु 7, 8, 1, 1, 1, 1 पूर्ण पूर्ण,
+			अणु .freq = 1, .comp = अणु 7, 8, 0, 0, 0, 0 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 1, 1, 1, 1 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 4, 4, 5, 5 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 1, 1, 1, 1 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 1, 1, 1, 1 पूर्ण पूर्ण,
+		पूर्ण
+	पूर्ण,
+	अणु
 		.pclk = 19200000,
-		.settings = {
-			{ .freq = 2, .comp = { 0, 0, 0, 0, 0, 0 } },
-			{ .freq = 1, .comp = { 7, 8, 1, 1, 1, 1 } },
-			{ .freq = 0, .comp = { 7, 8, 5, 5, 6, 6 } },
-			{ .freq = 0, .comp = { 7, 8, 2, 2, 3, 3 } },
-			{ .freq = 0, .comp = { 7, 8, 1, 1, 2, 2 } },
-			{ .freq = 0, .comp = { 7, 8, 5, 5, 6, 6 } },
-		}
-	},
-};
+		.settings = अणु
+			अणु .freq = 2, .comp = अणु 0, 0, 0, 0, 0, 0 पूर्ण पूर्ण,
+			अणु .freq = 1, .comp = अणु 7, 8, 1, 1, 1, 1 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 5, 5, 6, 6 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 2, 2, 3, 3 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 1, 1, 2, 2 पूर्ण पूर्ण,
+			अणु .freq = 0, .comp = अणु 7, 8, 5, 5, 6, 6 पूर्ण पूर्ण,
+		पूर्ण
+	पूर्ण,
+पूर्ण;
 
-static int max98090_find_divisor(int target_freq, int pclk)
-{
-	int current_diff = INT_MAX;
-	int test_diff;
-	int divisor_index = 0;
-	int i;
+अटल पूर्णांक max98090_find_भागisor(पूर्णांक target_freq, पूर्णांक pclk)
+अणु
+	पूर्णांक current_dअगरf = पूर्णांक_उच्च;
+	पूर्णांक test_dअगरf;
+	पूर्णांक भागisor_index = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dmic_divisors); i++) {
-		test_diff = abs(target_freq - (pclk / dmic_divisors[i]));
-		if (test_diff < current_diff) {
-			current_diff = test_diff;
-			divisor_index = i;
-		}
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(dmic_भागisors); i++) अणु
+		test_dअगरf = असल(target_freq - (pclk / dmic_भागisors[i]));
+		अगर (test_dअगरf < current_dअगरf) अणु
+			current_dअगरf = test_dअगरf;
+			भागisor_index = i;
+		पूर्ण
+	पूर्ण
 
-	return divisor_index;
-}
+	वापस भागisor_index;
+पूर्ण
 
-static int max98090_find_closest_pclk(int pclk)
-{
-	int m1;
-	int m2;
-	int i;
+अटल पूर्णांक max98090_find_बंदst_pclk(पूर्णांक pclk)
+अणु
+	पूर्णांक m1;
+	पूर्णांक m2;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(dmic_table); i++) {
-		if (pclk == dmic_table[i].pclk)
-			return i;
-		if (pclk < dmic_table[i].pclk) {
-			if (i == 0)
-				return i;
+	क्रम (i = 0; i < ARRAY_SIZE(dmic_table); i++) अणु
+		अगर (pclk == dmic_table[i].pclk)
+			वापस i;
+		अगर (pclk < dmic_table[i].pclk) अणु
+			अगर (i == 0)
+				वापस i;
 			m1 = pclk - dmic_table[i-1].pclk;
 			m2 = dmic_table[i].pclk - pclk;
-			if (m1 < m2)
-				return i - 1;
-			else
-				return i;
-		}
-	}
+			अगर (m1 < m2)
+				वापस i - 1;
+			अन्यथा
+				वापस i;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int max98090_configure_dmic(struct max98090_priv *max98090,
-				   int target_dmic_clk, int pclk, int fs)
-{
-	int micclk_index;
-	int pclk_index;
-	int dmic_freq;
-	int dmic_comp;
-	int i;
+अटल पूर्णांक max98090_configure_dmic(काष्ठा max98090_priv *max98090,
+				   पूर्णांक target_dmic_clk, पूर्णांक pclk, पूर्णांक fs)
+अणु
+	पूर्णांक micclk_index;
+	पूर्णांक pclk_index;
+	पूर्णांक dmic_freq;
+	पूर्णांक dmic_comp;
+	पूर्णांक i;
 
-	pclk_index = max98090_find_closest_pclk(pclk);
-	if (pclk_index < 0)
-		return pclk_index;
+	pclk_index = max98090_find_बंदst_pclk(pclk);
+	अगर (pclk_index < 0)
+		वापस pclk_index;
 
-	micclk_index = max98090_find_divisor(target_dmic_clk, pclk);
+	micclk_index = max98090_find_भागisor(target_dmic_clk, pclk);
 
-	for (i = 0; i < ARRAY_SIZE(comp_lrclk_rates) - 1; i++) {
-		if (fs <= (comp_lrclk_rates[i] + comp_lrclk_rates[i+1]) / 2)
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(comp_lrclk_rates) - 1; i++) अणु
+		अगर (fs <= (comp_lrclk_rates[i] + comp_lrclk_rates[i+1]) / 2)
+			अवरोध;
+	पूर्ण
 
 	dmic_freq = dmic_table[pclk_index].settings[micclk_index].freq;
 	dmic_comp = dmic_table[pclk_index].settings[micclk_index].comp[i];
@@ -1903,254 +1904,254 @@ static int max98090_configure_dmic(struct max98090_priv *max98090,
 			   dmic_comp << M98090_DMIC_COMP_SHIFT |
 			   dmic_freq << M98090_DMIC_FREQ_SHIFT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_dai_startup(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	unsigned int fmt = max98090->dai_fmt;
+अटल पूर्णांक max98090_dai_startup(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	अचिन्हित पूर्णांक fmt = max98090->dai_fmt;
 
-	/* Remove 24-bit format support if it is not in right justified mode. */
-	if ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_RIGHT_J) {
-		substream->runtime->hw.formats = SNDRV_PCM_FMTBIT_S16_LE;
-		snd_pcm_hw_constraint_msbits(substream->runtime, 0, 16, 16);
-	}
-	return 0;
-}
+	/* Remove 24-bit क्रमmat support अगर it is not in right justअगरied mode. */
+	अगर ((fmt & SND_SOC_DAIFMT_FORMAT_MASK) != SND_SOC_DAIFMT_RIGHT_J) अणु
+		substream->runसमय->hw.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE;
+		snd_pcm_hw_स्थिरraपूर्णांक_msbits(substream->runसमय, 0, 16, 16);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int max98090_dai_hw_params(struct snd_pcm_substream *substream,
-				   struct snd_pcm_hw_params *params,
-				   struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct max98090_cdata *cdata;
+अटल पूर्णांक max98090_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+				   काष्ठा snd_pcm_hw_params *params,
+				   काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा max98090_cdata *cdata;
 
 	cdata = &max98090->dai[0];
 	max98090->bclk = snd_soc_params_to_bclk(params);
-	if (params_channels(params) == 1)
+	अगर (params_channels(params) == 1)
 		max98090->bclk *= 2;
 
 	max98090->lrclk = params_rate(params);
 
-	switch (params_width(params)) {
-	case 16:
+	चयन (params_width(params)) अणु
+	हाल 16:
 		snd_soc_component_update_bits(component, M98090_REG_INTERFACE_FORMAT,
 			M98090_WS_MASK, 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (max98090->master)
+	अगर (max98090->master)
 		max98090_configure_bclk(component);
 
 	cdata->rate = max98090->lrclk;
 
 	/* Update filter mode */
-	if (max98090->lrclk < 24000)
+	अगर (max98090->lrclk < 24000)
 		snd_soc_component_update_bits(component, M98090_REG_FILTER_CONFIG,
 			M98090_MODE_MASK, 0);
-	else
+	अन्यथा
 		snd_soc_component_update_bits(component, M98090_REG_FILTER_CONFIG,
 			M98090_MODE_MASK, M98090_MODE_MASK);
 
 	/* Update sample rate mode */
-	if (max98090->lrclk < 50000)
+	अगर (max98090->lrclk < 50000)
 		snd_soc_component_update_bits(component, M98090_REG_FILTER_CONFIG,
 			M98090_DHF_MASK, 0);
-	else
+	अन्यथा
 		snd_soc_component_update_bits(component, M98090_REG_FILTER_CONFIG,
 			M98090_DHF_MASK, M98090_DHF_MASK);
 
 	max98090_configure_dmic(max98090, max98090->dmic_freq, max98090->pclk,
 				max98090->lrclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * PLL / Sysclk
  */
-static int max98090_dai_set_sysclk(struct snd_soc_dai *dai,
-				   int clk_id, unsigned int freq, int dir)
-{
-	struct snd_soc_component *component = dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक max98090_dai_set_sysclk(काष्ठा snd_soc_dai *dai,
+				   पूर्णांक clk_id, अचिन्हित पूर्णांक freq, पूर्णांक dir)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
-	/* Requested clock frequency is already setup */
-	if (freq == max98090->sysclk)
-		return 0;
+	/* Requested घड़ी frequency is alपढ़ोy setup */
+	अगर (freq == max98090->sysclk)
+		वापस 0;
 
-	if (!IS_ERR(max98090->mclk)) {
+	अगर (!IS_ERR(max98090->mclk)) अणु
 		freq = clk_round_rate(max98090->mclk, freq);
 		clk_set_rate(max98090->mclk, freq);
-	}
+	पूर्ण
 
-	/* Setup clocks for slave mode, and using the PLL
+	/* Setup घड़ीs क्रम slave mode, and using the PLL
 	 * PSCLK = 0x01 (when master clk is 10MHz to 20MHz)
 	 *		 0x02 (when master clk is 20MHz to 40MHz)..
 	 *		 0x03 (when master clk is 40MHz to 60MHz)..
 	 */
-	if ((freq >= 10000000) && (freq <= 20000000)) {
-		snd_soc_component_write(component, M98090_REG_SYSTEM_CLOCK,
+	अगर ((freq >= 10000000) && (freq <= 20000000)) अणु
+		snd_soc_component_ग_लिखो(component, M98090_REG_SYSTEM_CLOCK,
 			M98090_PSCLK_DIV1);
 		max98090->pclk = freq;
-	} else if ((freq > 20000000) && (freq <= 40000000)) {
-		snd_soc_component_write(component, M98090_REG_SYSTEM_CLOCK,
+	पूर्ण अन्यथा अगर ((freq > 20000000) && (freq <= 40000000)) अणु
+		snd_soc_component_ग_लिखो(component, M98090_REG_SYSTEM_CLOCK,
 			M98090_PSCLK_DIV2);
 		max98090->pclk = freq >> 1;
-	} else if ((freq > 40000000) && (freq <= 60000000)) {
-		snd_soc_component_write(component, M98090_REG_SYSTEM_CLOCK,
+	पूर्ण अन्यथा अगर ((freq > 40000000) && (freq <= 60000000)) अणु
+		snd_soc_component_ग_लिखो(component, M98090_REG_SYSTEM_CLOCK,
 			M98090_PSCLK_DIV4);
 		max98090->pclk = freq >> 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(component->dev, "Invalid master clock frequency\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	max98090->sysclk = freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_dai_mute(struct snd_soc_dai *codec_dai, int mute,
-			     int direction)
-{
-	struct snd_soc_component *component = codec_dai->component;
-	int regval;
+अटल पूर्णांक max98090_dai_mute(काष्ठा snd_soc_dai *codec_dai, पूर्णांक mute,
+			     पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = codec_dai->component;
+	पूर्णांक regval;
 
 	regval = mute ? M98090_DVM_MASK : 0;
 	snd_soc_component_update_bits(component, M98090_REG_DAI_PLAYBACK_LEVEL,
 		M98090_DVM_MASK, regval);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_dai_trigger(struct snd_pcm_substream *substream, int cmd,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *component = dai->component;
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल पूर्णांक max98090_dai_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *component = dai->component;
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (!max98090->master && snd_soc_dai_active(dai) == 1)
-			queue_delayed_work(system_power_efficient_wq,
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अगर (!max98090->master && snd_soc_dai_active(dai) == 1)
+			queue_delayed_work(प्रणाली_घातer_efficient_wq,
 					   &max98090->pll_det_enable_work,
-					   msecs_to_jiffies(10));
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		if (!max98090->master && snd_soc_dai_active(dai) == 1)
+					   msecs_to_jअगरfies(10));
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अगर (!max98090->master && snd_soc_dai_active(dai) == 1)
 			schedule_work(&max98090->pll_det_disable_work);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void max98090_pll_det_enable_work(struct work_struct *work)
-{
-	struct max98090_priv *max98090 =
-		container_of(work, struct max98090_priv,
+अटल व्योम max98090_pll_det_enable_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max98090_priv *max98090 =
+		container_of(work, काष्ठा max98090_priv,
 			     pll_det_enable_work.work);
-	struct snd_soc_component *component = max98090->component;
-	unsigned int status, mask;
+	काष्ठा snd_soc_component *component = max98090->component;
+	अचिन्हित पूर्णांक status, mask;
 
 	/*
-	 * Clear status register in order to clear possibly already occurred
+	 * Clear status रेजिस्टर in order to clear possibly alपढ़ोy occurred
 	 * PLL unlock. If PLL hasn't still locked, the status will be set
-	 * again and PLL unlock interrupt will occur.
+	 * again and PLL unlock पूर्णांकerrupt will occur.
 	 * Note this will clear all status bits
 	 */
-	regmap_read(max98090->regmap, M98090_REG_DEVICE_STATUS, &status);
+	regmap_पढ़ो(max98090->regmap, M98090_REG_DEVICE_STATUS, &status);
 
 	/*
-	 * Queue jack work in case jack state has just changed but handler
+	 * Queue jack work in हाल jack state has just changed but handler
 	 * hasn't run yet
 	 */
-	regmap_read(max98090->regmap, M98090_REG_INTERRUPT_S, &mask);
+	regmap_पढ़ो(max98090->regmap, M98090_REG_INTERRUPT_S, &mask);
 	status &= mask;
-	if (status & M98090_JDET_MASK)
-		queue_delayed_work(system_power_efficient_wq,
+	अगर (status & M98090_JDET_MASK)
+		queue_delayed_work(प्रणाली_घातer_efficient_wq,
 				   &max98090->jack_work,
-				   msecs_to_jiffies(100));
+				   msecs_to_jअगरfies(100));
 
-	/* Enable PLL unlock interrupt */
+	/* Enable PLL unlock पूर्णांकerrupt */
 	snd_soc_component_update_bits(component, M98090_REG_INTERRUPT_S,
 			    M98090_IULK_MASK,
 			    1 << M98090_IULK_SHIFT);
-}
+पूर्ण
 
-static void max98090_pll_det_disable_work(struct work_struct *work)
-{
-	struct max98090_priv *max98090 =
-		container_of(work, struct max98090_priv, pll_det_disable_work);
-	struct snd_soc_component *component = max98090->component;
+अटल व्योम max98090_pll_det_disable_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max98090_priv *max98090 =
+		container_of(work, काष्ठा max98090_priv, pll_det_disable_work);
+	काष्ठा snd_soc_component *component = max98090->component;
 
 	cancel_delayed_work_sync(&max98090->pll_det_enable_work);
 
-	/* Disable PLL unlock interrupt */
+	/* Disable PLL unlock पूर्णांकerrupt */
 	snd_soc_component_update_bits(component, M98090_REG_INTERRUPT_S,
 			    M98090_IULK_MASK, 0);
-}
+पूर्ण
 
-static void max98090_pll_work(struct max98090_priv *max98090)
-{
-	struct snd_soc_component *component = max98090->component;
-	unsigned int pll;
-	int i;
+अटल व्योम max98090_pll_work(काष्ठा max98090_priv *max98090)
+अणु
+	काष्ठा snd_soc_component *component = max98090->component;
+	अचिन्हित पूर्णांक pll;
+	पूर्णांक i;
 
-	if (!snd_soc_component_active(component))
-		return;
+	अगर (!snd_soc_component_active(component))
+		वापस;
 
 	dev_info_ratelimited(component->dev, "PLL unlocked\n");
 
 	/*
-	 * As the datasheet suggested, the maximum PLL lock time should be
+	 * As the datasheet suggested, the maximum PLL lock समय should be
 	 * 7 msec.  The workaround resets the codec softly by toggling SHDN
-	 * off and on if PLL failed to lock for 10 msec.  Notably, there is
-	 * no suggested hold time for SHDN off.
+	 * off and on अगर PLL failed to lock क्रम 10 msec.  Notably, there is
+	 * no suggested hold समय क्रम SHDN off.
 	 */
 
-	/* Toggle shutdown OFF then ON */
+	/* Toggle shutकरोwn OFF then ON */
 	snd_soc_component_update_bits(component, M98090_REG_DEVICE_SHUTDOWN,
 			    M98090_SHDNN_MASK, 0);
 	snd_soc_component_update_bits(component, M98090_REG_DEVICE_SHUTDOWN,
 			    M98090_SHDNN_MASK, M98090_SHDNN_MASK);
 
-	for (i = 0; i < 10; ++i) {
-		/* Give PLL time to lock */
+	क्रम (i = 0; i < 10; ++i) अणु
+		/* Give PLL समय to lock */
 		usleep_range(1000, 1200);
 
 		/* Check lock status */
-		pll = snd_soc_component_read(
+		pll = snd_soc_component_पढ़ो(
 				component, M98090_REG_DEVICE_STATUS);
-		if (!(pll & M98090_ULK_MASK))
-			break;
-	}
-}
+		अगर (!(pll & M98090_ULK_MASK))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void max98090_jack_work(struct work_struct *work)
-{
-	struct max98090_priv *max98090 = container_of(work,
-		struct max98090_priv,
+अटल व्योम max98090_jack_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max98090_priv *max98090 = container_of(work,
+		काष्ठा max98090_priv,
 		jack_work.work);
-	struct snd_soc_component *component = max98090->component;
-	int status = 0;
-	int reg;
+	काष्ठा snd_soc_component *component = max98090->component;
+	पूर्णांक status = 0;
+	पूर्णांक reg;
 
-	/* Read a second time */
-	if (max98090->jack_state == M98090_JACK_STATE_NO_HEADSET) {
+	/* Read a second समय */
+	अगर (max98090->jack_state == M98090_JACK_STATE_NO_HEADSET) अणु
 
 		/* Strong pull up allows mic detection */
 		snd_soc_component_update_bits(component, M98090_REG_JACK_DETECT,
@@ -2158,30 +2159,30 @@ static void max98090_jack_work(struct work_struct *work)
 
 		msleep(50);
 
-		reg = snd_soc_component_read(component, M98090_REG_JACK_STATUS);
+		reg = snd_soc_component_पढ़ो(component, M98090_REG_JACK_STATUS);
 
 		/* Weak pull up allows only insertion detection */
 		snd_soc_component_update_bits(component, M98090_REG_JACK_DETECT,
 			M98090_JDWK_MASK, M98090_JDWK_MASK);
-	} else {
-		reg = snd_soc_component_read(component, M98090_REG_JACK_STATUS);
-	}
+	पूर्ण अन्यथा अणु
+		reg = snd_soc_component_पढ़ो(component, M98090_REG_JACK_STATUS);
+	पूर्ण
 
-	reg = snd_soc_component_read(component, M98090_REG_JACK_STATUS);
+	reg = snd_soc_component_पढ़ो(component, M98090_REG_JACK_STATUS);
 
-	switch (reg & (M98090_LSNS_MASK | M98090_JKSNS_MASK)) {
-		case M98090_LSNS_MASK | M98090_JKSNS_MASK:
+	चयन (reg & (M98090_LSNS_MASK | M98090_JKSNS_MASK)) अणु
+		हाल M98090_LSNS_MASK | M98090_JKSNS_MASK:
 			dev_dbg(component->dev, "No Headset Detected\n");
 
 			max98090->jack_state = M98090_JACK_STATE_NO_HEADSET;
 
 			status |= 0;
 
-			break;
+			अवरोध;
 
-		case 0:
-			if (max98090->jack_state ==
-				M98090_JACK_STATE_HEADSET) {
+		हाल 0:
+			अगर (max98090->jack_state ==
+				M98090_JACK_STATE_HEADSET) अणु
 
 				dev_dbg(component->dev,
 					"Headset Button Down Detected\n");
@@ -2194,8 +2195,8 @@ static void max98090_jack_work(struct work_struct *work)
 				status |= SND_JACK_HEADSET;
 				status |= SND_JACK_BTN_0;
 
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			/* Line is reported as Headphone */
 			/* Nokia Headset is reported as Headphone */
@@ -2206,95 +2207,95 @@ static void max98090_jack_work(struct work_struct *work)
 
 			status |= SND_JACK_HEADPHONE;
 
-			break;
+			अवरोध;
 
-		case M98090_JKSNS_MASK:
+		हाल M98090_JKSNS_MASK:
 			dev_dbg(component->dev, "Headset Detected\n");
 
 			max98090->jack_state = M98090_JACK_STATE_HEADSET;
 
 			status |= SND_JACK_HEADSET;
 
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_dbg(component->dev, "Unrecognized Jack Status\n");
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
 	snd_soc_jack_report(max98090->jack, status,
 			    SND_JACK_HEADSET | SND_JACK_BTN_0);
-}
+पूर्ण
 
-static irqreturn_t max98090_interrupt(int irq, void *data)
-{
-	struct max98090_priv *max98090 = data;
-	struct snd_soc_component *component = max98090->component;
-	int ret;
-	unsigned int mask;
-	unsigned int active;
+अटल irqवापस_t max98090_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा max98090_priv *max98090 = data;
+	काष्ठा snd_soc_component *component = max98090->component;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित पूर्णांक active;
 
-	/* Treat interrupt before codec is initialized as spurious */
-	if (component == NULL)
-		return IRQ_NONE;
+	/* Treat पूर्णांकerrupt beक्रमe codec is initialized as spurious */
+	अगर (component == शून्य)
+		वापस IRQ_NONE;
 
 	dev_dbg(component->dev, "***** max98090_interrupt *****\n");
 
-	ret = regmap_read(max98090->regmap, M98090_REG_INTERRUPT_S, &mask);
+	ret = regmap_पढ़ो(max98090->regmap, M98090_REG_INTERRUPT_S, &mask);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(component->dev,
 			"failed to read M98090_REG_INTERRUPT_S: %d\n",
 			ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	ret = regmap_read(max98090->regmap, M98090_REG_DEVICE_STATUS, &active);
+	ret = regmap_पढ़ो(max98090->regmap, M98090_REG_DEVICE_STATUS, &active);
 
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(component->dev,
 			"failed to read M98090_REG_DEVICE_STATUS: %d\n",
 			ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	dev_dbg(component->dev, "active=0x%02x mask=0x%02x -> active=0x%02x\n",
 		active, mask, active & mask);
 
 	active &= mask;
 
-	if (!active)
-		return IRQ_NONE;
+	अगर (!active)
+		वापस IRQ_NONE;
 
-	if (active & M98090_CLD_MASK)
+	अगर (active & M98090_CLD_MASK)
 		dev_err(component->dev, "M98090_CLD_MASK\n");
 
-	if (active & M98090_SLD_MASK)
+	अगर (active & M98090_SLD_MASK)
 		dev_dbg(component->dev, "M98090_SLD_MASK\n");
 
-	if (active & M98090_ULK_MASK) {
+	अगर (active & M98090_ULK_MASK) अणु
 		dev_dbg(component->dev, "M98090_ULK_MASK\n");
 		max98090_pll_work(max98090);
-	}
+	पूर्ण
 
-	if (active & M98090_JDET_MASK) {
+	अगर (active & M98090_JDET_MASK) अणु
 		dev_dbg(component->dev, "M98090_JDET_MASK\n");
 
 		pm_wakeup_event(component->dev, 100);
 
-		queue_delayed_work(system_power_efficient_wq,
+		queue_delayed_work(प्रणाली_घातer_efficient_wq,
 				   &max98090->jack_work,
-				   msecs_to_jiffies(100));
-	}
+				   msecs_to_jअगरfies(100));
+	पूर्ण
 
-	if (active & M98090_DRCACT_MASK)
+	अगर (active & M98090_DRCACT_MASK)
 		dev_dbg(component->dev, "M98090_DRCACT_MASK\n");
 
-	if (active & M98090_DRCCLP_MASK)
+	अगर (active & M98090_DRCCLP_MASK)
 		dev_err(component->dev, "M98090_DRCCLP_MASK\n");
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * max98090_mic_detect - Enable microphone detection via the MAX98090 IRQ
@@ -2303,46 +2304,46 @@ static irqreturn_t max98090_interrupt(int irq, void *data)
  * @jack:   jack to report detection events on
  *
  * Enable microphone detection via IRQ on the MAX98090.  If GPIOs are
- * being used to bring out signals to the processor then only platform
- * data configuration is needed for MAX98090 and processor GPIOs should
+ * being used to bring out संकेतs to the processor then only platक्रमm
+ * data configuration is needed क्रम MAX98090 and processor GPIOs should
  * be configured using snd_soc_jack_add_gpios() instead.
  *
  * If no jack is supplied detection will be disabled.
  */
-int max98090_mic_detect(struct snd_soc_component *component,
-	struct snd_soc_jack *jack)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+पूर्णांक max98090_mic_detect(काष्ठा snd_soc_component *component,
+	काष्ठा snd_soc_jack *jack)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "max98090_mic_detect\n");
 
 	max98090->jack = jack;
-	if (jack) {
+	अगर (jack) अणु
 		snd_soc_component_update_bits(component, M98090_REG_INTERRUPT_S,
 			M98090_IJDET_MASK,
 			1 << M98090_IJDET_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		snd_soc_component_update_bits(component, M98090_REG_INTERRUPT_S,
 			M98090_IJDET_MASK,
 			0);
-	}
+	पूर्ण
 
 	/* Send an initial empty report */
 	snd_soc_jack_report(max98090->jack, 0,
 			    SND_JACK_HEADSET | SND_JACK_BTN_0);
 
-	queue_delayed_work(system_power_efficient_wq,
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
 			   &max98090->jack_work,
-			   msecs_to_jiffies(100));
+			   msecs_to_jअगरfies(100));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(max98090_mic_detect);
 
-#define MAX98090_RATES SNDRV_PCM_RATE_8000_96000
-#define MAX98090_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
+#घोषणा MAX98090_RATES SNDRV_PCM_RATE_8000_96000
+#घोषणा MAX98090_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
 
-static const struct snd_soc_dai_ops max98090_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops max98090_dai_ops = अणु
 	.startup = max98090_dai_startup,
 	.set_sysclk = max98090_dai_set_sysclk,
 	.set_fmt = max98090_dai_set_fmt,
@@ -2351,85 +2352,85 @@ static const struct snd_soc_dai_ops max98090_dai_ops = {
 	.mute_stream = max98090_dai_mute,
 	.trigger = max98090_dai_trigger,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver max98090_dai[] = {
-{
+अटल काष्ठा snd_soc_dai_driver max98090_dai[] = अणु
+अणु
 	.name = "HiFi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "HiFi Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = MAX98090_RATES,
-		.formats = MAX98090_FORMATS,
-	},
-	.capture = {
+		.क्रमmats = MAX98090_FORMATS,
+	पूर्ण,
+	.capture = अणु
 		.stream_name = "HiFi Capture",
 		.channels_min = 1,
 		.channels_max = 2,
 		.rates = MAX98090_RATES,
-		.formats = MAX98090_FORMATS,
-	},
+		.क्रमmats = MAX98090_FORMATS,
+	पूर्ण,
 	 .ops = &max98090_dai_ops,
-}
-};
+पूर्ण
+पूर्ण;
 
-static int max98090_probe(struct snd_soc_component *component)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
-	struct max98090_cdata *cdata;
-	enum max98090_type devtype;
-	int ret = 0;
-	int err;
-	unsigned int micbias;
+अटल पूर्णांक max98090_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+	काष्ठा max98090_cdata *cdata;
+	क्रमागत max98090_type devtype;
+	पूर्णांक ret = 0;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक micbias;
 
 	dev_dbg(component->dev, "max98090_probe\n");
 
 	max98090->mclk = devm_clk_get(component->dev, "mclk");
-	if (PTR_ERR(max98090->mclk) == -EPROBE_DEFER)
-		return -EPROBE_DEFER;
+	अगर (PTR_ERR(max98090->mclk) == -EPROBE_DEFER)
+		वापस -EPROBE_DEFER;
 
 	max98090->component = component;
 
-	/* Reset the codec, the DSP core, and disable all interrupts */
+	/* Reset the codec, the DSP core, and disable all पूर्णांकerrupts */
 	max98090_reset(max98090);
 
-	/* Initialize private data */
+	/* Initialize निजी data */
 
-	max98090->sysclk = (unsigned)-1;
-	max98090->pclk = (unsigned)-1;
+	max98090->sysclk = (अचिन्हित)-1;
+	max98090->pclk = (अचिन्हित)-1;
 	max98090->master = false;
 
 	cdata = &max98090->dai[0];
-	cdata->rate = (unsigned)-1;
-	cdata->fmt  = (unsigned)-1;
+	cdata->rate = (अचिन्हित)-1;
+	cdata->fmt  = (अचिन्हित)-1;
 
 	max98090->lin_state = 0;
 	max98090->pa1en = 0;
 	max98090->pa2en = 0;
 
-	ret = snd_soc_component_read(component, M98090_REG_REVISION_ID);
-	if (ret < 0) {
+	ret = snd_soc_component_पढ़ो(component, M98090_REG_REVISION_ID);
+	अगर (ret < 0) अणु
 		dev_err(component->dev, "Failed to read device revision: %d\n",
 			ret);
-		goto err_access;
-	}
+		जाओ err_access;
+	पूर्ण
 
-	if ((ret >= M98090_REVA) && (ret <= M98090_REVA + 0x0f)) {
+	अगर ((ret >= M98090_REVA) && (ret <= M98090_REVA + 0x0f)) अणु
 		devtype = MAX98090;
 		dev_info(component->dev, "MAX98090 REVID=0x%02x\n", ret);
-	} else if ((ret >= M98091_REVA) && (ret <= M98091_REVA + 0x0f)) {
+	पूर्ण अन्यथा अगर ((ret >= M98091_REVA) && (ret <= M98091_REVA + 0x0f)) अणु
 		devtype = MAX98091;
 		dev_info(component->dev, "MAX98091 REVID=0x%02x\n", ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		devtype = MAX98090;
 		dev_err(component->dev, "Unrecognized revision 0x%02x\n", ret);
-	}
+	पूर्ण
 
-	if (max98090->devtype != devtype) {
+	अगर (max98090->devtype != devtype) अणु
 		dev_warn(component->dev, "Mismatch in DT specified CODEC type.\n");
 		max98090->devtype = devtype;
-	}
+	पूर्ण
 
 	max98090->jack_state = M98090_JACK_STATE_NO_HEADSET;
 
@@ -2440,17 +2441,17 @@ static int max98090_probe(struct snd_soc_component *component)
 		  max98090_pll_det_disable_work);
 
 	/* Enable jack detection */
-	snd_soc_component_write(component, M98090_REG_JACK_DETECT,
+	snd_soc_component_ग_लिखो(component, M98090_REG_JACK_DETECT,
 		M98090_JDETEN_MASK | M98090_JDEB_25MS);
 
 	/*
-	 * Clear any old interrupts.
-	 * An old interrupt ocurring prior to installing the ISR
-	 * can keep a new interrupt from generating a trigger.
+	 * Clear any old पूर्णांकerrupts.
+	 * An old पूर्णांकerrupt ocurring prior to installing the ISR
+	 * can keep a new पूर्णांकerrupt from generating a trigger.
 	 */
-	snd_soc_component_read(component, M98090_REG_DEVICE_STATUS);
+	snd_soc_component_पढ़ो(component, M98090_REG_DEVICE_STATUS);
 
-	/* High Performance is default */
+	/* High Perक्रमmance is शेष */
 	snd_soc_component_update_bits(component, M98090_REG_DAC_CONTROL,
 		M98090_DACHP_MASK,
 		1 << M98090_DACHP_SHIFT);
@@ -2462,160 +2463,160 @@ static int max98090_probe(struct snd_soc_component *component)
 		1 << M98090_ADCHP_SHIFT);
 
 	/* Turn on VCM bandgap reference */
-	snd_soc_component_write(component, M98090_REG_BIAS_CONTROL,
+	snd_soc_component_ग_लिखो(component, M98090_REG_BIAS_CONTROL,
 		M98090_VCM_MODE_MASK);
 
-	err = device_property_read_u32(component->dev, "maxim,micbias", &micbias);
-	if (err) {
+	err = device_property_पढ़ो_u32(component->dev, "maxim,micbias", &micbias);
+	अगर (err) अणु
 		micbias = M98090_MBVSEL_2V8;
 		dev_info(component->dev, "use default 2.8v micbias\n");
-	} else if (micbias > M98090_MBVSEL_2V8) {
+	पूर्ण अन्यथा अगर (micbias > M98090_MBVSEL_2V8) अणु
 		dev_err(component->dev, "micbias out of range 0x%x\n", micbias);
 		micbias = M98090_MBVSEL_2V8;
-	}
+	पूर्ण
 
 	snd_soc_component_update_bits(component, M98090_REG_MIC_BIAS_VOLTAGE,
 		M98090_MBVSEL_MASK, micbias);
 
-	max98090_add_widgets(component);
+	max98090_add_widमाला_लो(component);
 
 err_access:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void max98090_remove(struct snd_soc_component *component)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल व्योम max98090_हटाओ(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
 	cancel_delayed_work_sync(&max98090->jack_work);
 	cancel_delayed_work_sync(&max98090->pll_det_enable_work);
 	cancel_work_sync(&max98090->pll_det_disable_work);
-	max98090->component = NULL;
-}
+	max98090->component = शून्य;
+पूर्ण
 
-static void max98090_seq_notifier(struct snd_soc_component *component,
-	enum snd_soc_dapm_type event, int subseq)
-{
-	struct max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
+अटल व्योम max98090_seq_notअगरier(काष्ठा snd_soc_component *component,
+	क्रमागत snd_soc_dapm_type event, पूर्णांक subseq)
+अणु
+	काष्ठा max98090_priv *max98090 = snd_soc_component_get_drvdata(component);
 
-	if (max98090->shdn_pending) {
+	अगर (max98090->shdn_pending) अणु
 		snd_soc_component_update_bits(component, M98090_REG_DEVICE_SHUTDOWN,
 				M98090_SHDNN_MASK, 0);
 		msleep(40);
 		snd_soc_component_update_bits(component, M98090_REG_DEVICE_SHUTDOWN,
 				M98090_SHDNN_MASK, M98090_SHDNN_MASK);
 		max98090->shdn_pending = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct snd_soc_component_driver soc_component_dev_max98090 = {
+अटल स्थिर काष्ठा snd_soc_component_driver soc_component_dev_max98090 = अणु
 	.probe			= max98090_probe,
-	.remove			= max98090_remove,
-	.seq_notifier		= max98090_seq_notifier,
+	.हटाओ			= max98090_हटाओ,
+	.seq_notअगरier		= max98090_seq_notअगरier,
 	.set_bias_level		= max98090_set_bias_level,
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
 	.non_legacy_dai_naming	= 1,
-};
+पूर्ण;
 
-static const struct regmap_config max98090_regmap = {
+अटल स्थिर काष्ठा regmap_config max98090_regmap = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = MAX98090_MAX_REGISTER,
-	.reg_defaults = max98090_reg,
-	.num_reg_defaults = ARRAY_SIZE(max98090_reg),
-	.volatile_reg = max98090_volatile_register,
-	.readable_reg = max98090_readable_register,
+	.max_रेजिस्टर = MAX98090_MAX_REGISTER,
+	.reg_शेषs = max98090_reg,
+	.num_reg_शेषs = ARRAY_SIZE(max98090_reg),
+	.अस्थिर_reg = max98090_अस्थिर_रेजिस्टर,
+	.पढ़ोable_reg = max98090_पढ़ोable_रेजिस्टर,
 	.cache_type = REGCACHE_RBTREE,
-};
+पूर्ण;
 
-static int max98090_i2c_probe(struct i2c_client *i2c,
-				 const struct i2c_device_id *i2c_id)
-{
-	struct max98090_priv *max98090;
-	const struct acpi_device_id *acpi_id;
-	kernel_ulong_t driver_data = 0;
-	int ret;
+अटल पूर्णांक max98090_i2c_probe(काष्ठा i2c_client *i2c,
+				 स्थिर काष्ठा i2c_device_id *i2c_id)
+अणु
+	काष्ठा max98090_priv *max98090;
+	स्थिर काष्ठा acpi_device_id *acpi_id;
+	kernel_uदीर्घ_t driver_data = 0;
+	पूर्णांक ret;
 
 	pr_debug("max98090_i2c_probe\n");
 
-	max98090 = devm_kzalloc(&i2c->dev, sizeof(struct max98090_priv),
+	max98090 = devm_kzalloc(&i2c->dev, माप(काष्ठा max98090_priv),
 		GFP_KERNEL);
-	if (max98090 == NULL)
-		return -ENOMEM;
+	अगर (max98090 == शून्य)
+		वापस -ENOMEM;
 
-	if (ACPI_HANDLE(&i2c->dev)) {
+	अगर (ACPI_HANDLE(&i2c->dev)) अणु
 		acpi_id = acpi_match_device(i2c->dev.driver->acpi_match_table,
 					    &i2c->dev);
-		if (!acpi_id) {
+		अगर (!acpi_id) अणु
 			dev_err(&i2c->dev, "No driver data\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		driver_data = acpi_id->driver_data;
-	} else if (i2c_id) {
+	पूर्ण अन्यथा अगर (i2c_id) अणु
 		driver_data = i2c_id->driver_data;
-	}
+	पूर्ण
 
 	max98090->devtype = driver_data;
 	i2c_set_clientdata(i2c, max98090);
-	max98090->pdata = i2c->dev.platform_data;
+	max98090->pdata = i2c->dev.platक्रमm_data;
 
-	ret = of_property_read_u32(i2c->dev.of_node, "maxim,dmic-freq",
+	ret = of_property_पढ़ो_u32(i2c->dev.of_node, "maxim,dmic-freq",
 				   &max98090->dmic_freq);
-	if (ret < 0)
+	अगर (ret < 0)
 		max98090->dmic_freq = MAX98090_DEFAULT_DMIC_FREQ;
 
 	max98090->regmap = devm_regmap_init_i2c(i2c, &max98090_regmap);
-	if (IS_ERR(max98090->regmap)) {
+	अगर (IS_ERR(max98090->regmap)) अणु
 		ret = PTR_ERR(max98090->regmap);
 		dev_err(&i2c->dev, "Failed to allocate regmap: %d\n", ret);
-		goto err_enable;
-	}
+		जाओ err_enable;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(&i2c->dev, i2c->irq, NULL,
-		max98090_interrupt, IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+	ret = devm_request_thपढ़ोed_irq(&i2c->dev, i2c->irq, शून्य,
+		max98090_पूर्णांकerrupt, IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 		"max98090_interrupt", max98090);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&i2c->dev, "request_irq failed: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_snd_soc_register_component(&i2c->dev,
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev,
 			&soc_component_dev_max98090, max98090_dai,
 			ARRAY_SIZE(max98090_dai));
 err_enable:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void max98090_i2c_shutdown(struct i2c_client *i2c)
-{
-	struct max98090_priv *max98090 = dev_get_drvdata(&i2c->dev);
+अटल व्योम max98090_i2c_shutकरोwn(काष्ठा i2c_client *i2c)
+अणु
+	काष्ठा max98090_priv *max98090 = dev_get_drvdata(&i2c->dev);
 
 	/*
 	 * Enable volume smoothing, disable zero cross.  This will cause
-	 * a quick 40ms ramp to mute on shutdown.
+	 * a quick 40ms ramp to mute on shutकरोwn.
 	 */
-	regmap_write(max98090->regmap,
+	regmap_ग_लिखो(max98090->regmap,
 		M98090_REG_LEVEL_CONTROL, M98090_VSENN_MASK);
-	regmap_write(max98090->regmap,
+	regmap_ग_लिखो(max98090->regmap,
 		M98090_REG_DEVICE_SHUTDOWN, 0x00);
 	msleep(40);
-}
+पूर्ण
 
-static int max98090_i2c_remove(struct i2c_client *client)
-{
-	max98090_i2c_shutdown(client);
+अटल पूर्णांक max98090_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	max98090_i2c_shutकरोwn(client);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int max98090_runtime_resume(struct device *dev)
-{
-	struct max98090_priv *max98090 = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक max98090_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा max98090_priv *max98090 = dev_get_drvdata(dev);
 
 	regcache_cache_only(max98090->regmap, false);
 
@@ -2623,80 +2624,80 @@ static int max98090_runtime_resume(struct device *dev)
 
 	regcache_sync(max98090->regmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max98090_runtime_suspend(struct device *dev)
-{
-	struct max98090_priv *max98090 = dev_get_drvdata(dev);
+अटल पूर्णांक max98090_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा max98090_priv *max98090 = dev_get_drvdata(dev);
 
 	regcache_cache_only(max98090->regmap, true);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-static int max98090_resume(struct device *dev)
-{
-	struct max98090_priv *max98090 = dev_get_drvdata(dev);
-	unsigned int status;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक max98090_resume(काष्ठा device *dev)
+अणु
+	काष्ठा max98090_priv *max98090 = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक status;
 
 	regcache_mark_dirty(max98090->regmap);
 
 	max98090_reset(max98090);
 
 	/* clear IRQ status */
-	regmap_read(max98090->regmap, M98090_REG_DEVICE_STATUS, &status);
+	regmap_पढ़ो(max98090->regmap, M98090_REG_DEVICE_STATUS, &status);
 
 	regcache_sync(max98090->regmap);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops max98090_pm = {
-	SET_RUNTIME_PM_OPS(max98090_runtime_suspend,
-		max98090_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(NULL, max98090_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops max98090_pm = अणु
+	SET_RUNTIME_PM_OPS(max98090_runसमय_suspend,
+		max98090_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(शून्य, max98090_resume)
+पूर्ण;
 
-static const struct i2c_device_id max98090_i2c_id[] = {
-	{ "max98090", MAX98090 },
-	{ "max98091", MAX98091 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max98090_i2c_id[] = अणु
+	अणु "max98090", MAX98090 पूर्ण,
+	अणु "max98091", MAX98091 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max98090_i2c_id);
 
-#ifdef CONFIG_OF
-static const struct of_device_id max98090_of_match[] = {
-	{ .compatible = "maxim,max98090", },
-	{ .compatible = "maxim,max98091", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id max98090_of_match[] = अणु
+	अणु .compatible = "maxim,max98090", पूर्ण,
+	अणु .compatible = "maxim,max98091", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max98090_of_match);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id max98090_acpi_match[] = {
-	{ "193C9890", MAX98090 },
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id max98090_acpi_match[] = अणु
+	अणु "193C9890", MAX98090 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, max98090_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver max98090_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max98090_i2c_driver = अणु
+	.driver = अणु
 		.name = "max98090",
 		.pm = &max98090_pm,
 		.of_match_table = of_match_ptr(max98090_of_match),
 		.acpi_match_table = ACPI_PTR(max98090_acpi_match),
-	},
+	पूर्ण,
 	.probe  = max98090_i2c_probe,
-	.shutdown = max98090_i2c_shutdown,
-	.remove = max98090_i2c_remove,
+	.shutकरोwn = max98090_i2c_shutकरोwn,
+	.हटाओ = max98090_i2c_हटाओ,
 	.id_table = max98090_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(max98090_i2c_driver);
 

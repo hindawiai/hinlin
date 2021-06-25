@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
- * Userspace driver support for the LED subsystem
+ * Userspace driver support क्रम the LED subप्रणाली
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -10,16 +11,16 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#ifndef _UAPI__ULEDS_H_
-#define _UAPI__ULEDS_H_
+#अगर_अघोषित _UAPI__ULEDS_H_
+#घोषणा _UAPI__ULEDS_H_
 
-#define LED_MAX_NAME_SIZE	64
+#घोषणा LED_MAX_NAME_SIZE	64
 
-struct uleds_user_dev {
-	char name[LED_MAX_NAME_SIZE];
-	int max_brightness;
-};
+काष्ठा uleds_user_dev अणु
+	अक्षर name[LED_MAX_NAME_SIZE];
+	पूर्णांक max_brightness;
+पूर्ण;
 
-#endif /* _UAPI__ULEDS_H_ */
+#पूर्ण_अगर /* _UAPI__ULEDS_H_ */

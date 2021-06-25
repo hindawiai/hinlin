@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Thunderbolt driver - path/tunnel functionality
  *
@@ -6,16 +7,16 @@
  * Copyright (C) 2019, Intel Corporation
  */
 
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/delay.h>
-#include <linux/ktime.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/kसमय.स>
 
-#include "tb.h"
+#समावेश "tb.h"
 
-static void tb_dump_hop(const struct tb_path_hop *hop, const struct tb_regs_hop *regs)
-{
-	const struct tb_port *port = hop->in_port;
+अटल व्योम tb_dump_hop(स्थिर काष्ठा tb_path_hop *hop, स्थिर काष्ठा tb_regs_hop *regs)
+अणु
+	स्थिर काष्ठा tb_port *port = hop->in_port;
 
 	tb_port_dbg(port, " In HopID: %d => Out port: %d Out HopID: %d\n",
 		    hop->in_hop_index, regs->out_port, regs->next_hop);
@@ -29,164 +30,164 @@ static void tb_dump_hop(const struct tb_path_hop *hop, const struct tb_regs_hop 
 		    regs->ingress_shared_buffer, regs->egress_shared_buffer);
 	tb_port_dbg(port, "  Unknown1: %#x Unknown2: %#x Unknown3: %#x\n",
 		    regs->unknown1, regs->unknown2, regs->unknown3);
-}
+पूर्ण
 
-static struct tb_port *tb_path_find_dst_port(struct tb_port *src, int src_hopid,
-					     int dst_hopid)
-{
-	struct tb_port *port, *out_port = NULL;
-	struct tb_regs_hop hop;
-	struct tb_switch *sw;
-	int i, ret, hopid;
+अटल काष्ठा tb_port *tb_path_find_dst_port(काष्ठा tb_port *src, पूर्णांक src_hopid,
+					     पूर्णांक dst_hopid)
+अणु
+	काष्ठा tb_port *port, *out_port = शून्य;
+	काष्ठा tb_regs_hop hop;
+	काष्ठा tb_चयन *sw;
+	पूर्णांक i, ret, hopid;
 
 	hopid = src_hopid;
 	port = src;
 
-	for (i = 0; port && i < TB_PATH_MAX_HOPS; i++) {
+	क्रम (i = 0; port && i < TB_PATH_MAX_HOPS; i++) अणु
 		sw = port->sw;
 
-		ret = tb_port_read(port, &hop, TB_CFG_HOPS, 2 * hopid, 2);
-		if (ret) {
+		ret = tb_port_पढ़ो(port, &hop, TB_CFG_HOPS, 2 * hopid, 2);
+		अगर (ret) अणु
 			tb_port_warn(port, "failed to read path at %d\n", hopid);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		if (!hop.enable)
-			return NULL;
+		अगर (!hop.enable)
+			वापस शून्य;
 
 		out_port = &sw->ports[hop.out_port];
 		hopid = hop.next_hop;
 		port = out_port->remote;
-	}
+	पूर्ण
 
-	return out_port && hopid == dst_hopid ? out_port : NULL;
-}
+	वापस out_port && hopid == dst_hopid ? out_port : शून्य;
+पूर्ण
 
-static int tb_path_find_src_hopid(struct tb_port *src,
-	const struct tb_port *dst, int dst_hopid)
-{
-	struct tb_port *out;
-	int i;
+अटल पूर्णांक tb_path_find_src_hopid(काष्ठा tb_port *src,
+	स्थिर काष्ठा tb_port *dst, पूर्णांक dst_hopid)
+अणु
+	काष्ठा tb_port *out;
+	पूर्णांक i;
 
-	for (i = TB_PATH_MIN_HOPID; i <= src->config.max_in_hop_id; i++) {
+	क्रम (i = TB_PATH_MIN_HOPID; i <= src->config.max_in_hop_id; i++) अणु
 		out = tb_path_find_dst_port(src, i, dst_hopid);
-		if (out == dst)
-			return i;
-	}
+		अगर (out == dst)
+			वापस i;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tb_path_discover() - Discover a path
  * @src: First input port of a path
- * @src_hopid: Starting HopID of a path (%-1 if don't care)
- * @dst: Expected destination port of the path (%NULL if don't care)
- * @dst_hopid: HopID to the @dst (%-1 if don't care)
- * @last: Last port is filled here if not %NULL
+ * @src_hopid: Starting HopID of a path (%-1 अगर करोn't care)
+ * @dst: Expected destination port of the path (%शून्य अगर करोn't care)
+ * @dst_hopid: HopID to the @dst (%-1 अगर करोn't care)
+ * @last: Last port is filled here अगर not %शून्य
  * @name: Name of the path
  *
  * Follows a path starting from @src and @src_hopid to the last output
- * port of the path. Allocates HopIDs for the visited ports. Call
- * tb_path_free() to release the path and allocated HopIDs when the path
+ * port of the path. Allocates HopIDs क्रम the visited ports. Call
+ * tb_path_मुक्त() to release the path and allocated HopIDs when the path
  * is not needed anymore.
  *
  * Note function discovers also incomplete paths so caller should check
  * that the @dst port is the expected one. If it is not, the path can be
- * cleaned up by calling tb_path_deactivate() before tb_path_free().
+ * cleaned up by calling tb_path_deactivate() beक्रमe tb_path_मुक्त().
  *
- * Return: Discovered path on success, %NULL in case of failure
+ * Return: Discovered path on success, %शून्य in हाल of failure
  */
-struct tb_path *tb_path_discover(struct tb_port *src, int src_hopid,
-				 struct tb_port *dst, int dst_hopid,
-				 struct tb_port **last, const char *name)
-{
-	struct tb_port *out_port;
-	struct tb_regs_hop hop;
-	struct tb_path *path;
-	struct tb_switch *sw;
-	struct tb_port *p;
-	size_t num_hops;
-	int ret, i, h;
+काष्ठा tb_path *tb_path_discover(काष्ठा tb_port *src, पूर्णांक src_hopid,
+				 काष्ठा tb_port *dst, पूर्णांक dst_hopid,
+				 काष्ठा tb_port **last, स्थिर अक्षर *name)
+अणु
+	काष्ठा tb_port *out_port;
+	काष्ठा tb_regs_hop hop;
+	काष्ठा tb_path *path;
+	काष्ठा tb_चयन *sw;
+	काष्ठा tb_port *p;
+	माप_प्रकार num_hops;
+	पूर्णांक ret, i, h;
 
-	if (src_hopid < 0 && dst) {
+	अगर (src_hopid < 0 && dst) अणु
 		/*
-		 * For incomplete paths the intermediate HopID can be
-		 * different from the one used by the protocol adapter
-		 * so in that case find a path that ends on @dst with
+		 * For incomplete paths the पूर्णांकermediate HopID can be
+		 * dअगरferent from the one used by the protocol adapter
+		 * so in that हाल find a path that ends on @dst with
 		 * matching @dst_hopid. That should give us the correct
-		 * HopID for the @src.
+		 * HopID क्रम the @src.
 		 */
 		src_hopid = tb_path_find_src_hopid(src, dst, dst_hopid);
-		if (!src_hopid)
-			return NULL;
-	}
+		अगर (!src_hopid)
+			वापस शून्य;
+	पूर्ण
 
 	p = src;
 	h = src_hopid;
 	num_hops = 0;
 
-	for (i = 0; p && i < TB_PATH_MAX_HOPS; i++) {
+	क्रम (i = 0; p && i < TB_PATH_MAX_HOPS; i++) अणु
 		sw = p->sw;
 
-		ret = tb_port_read(p, &hop, TB_CFG_HOPS, 2 * h, 2);
-		if (ret) {
+		ret = tb_port_पढ़ो(p, &hop, TB_CFG_HOPS, 2 * h, 2);
+		अगर (ret) अणु
 			tb_port_warn(p, "failed to read path at %d\n", h);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		/* If the hop is not enabled we got an incomplete path */
-		if (!hop.enable)
-			break;
+		अगर (!hop.enable)
+			अवरोध;
 
 		out_port = &sw->ports[hop.out_port];
-		if (last)
+		अगर (last)
 			*last = out_port;
 
 		h = hop.next_hop;
 		p = out_port->remote;
 		num_hops++;
-	}
+	पूर्ण
 
-	path = kzalloc(sizeof(*path), GFP_KERNEL);
-	if (!path)
-		return NULL;
+	path = kzalloc(माप(*path), GFP_KERNEL);
+	अगर (!path)
+		वापस शून्य;
 
 	path->name = name;
 	path->tb = src->sw->tb;
 	path->path_length = num_hops;
 	path->activated = true;
 
-	path->hops = kcalloc(num_hops, sizeof(*path->hops), GFP_KERNEL);
-	if (!path->hops) {
-		kfree(path);
-		return NULL;
-	}
+	path->hops = kसुस्मृति(num_hops, माप(*path->hops), GFP_KERNEL);
+	अगर (!path->hops) अणु
+		kमुक्त(path);
+		वापस शून्य;
+	पूर्ण
 
 	p = src;
 	h = src_hopid;
 
-	for (i = 0; i < num_hops; i++) {
-		int next_hop;
+	क्रम (i = 0; i < num_hops; i++) अणु
+		पूर्णांक next_hop;
 
 		sw = p->sw;
 
-		ret = tb_port_read(p, &hop, TB_CFG_HOPS, 2 * h, 2);
-		if (ret) {
+		ret = tb_port_पढ़ो(p, &hop, TB_CFG_HOPS, 2 * h, 2);
+		अगर (ret) अणु
 			tb_port_warn(p, "failed to read path at %d\n", h);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		if (tb_port_alloc_in_hopid(p, h, h) < 0)
-			goto err;
+		अगर (tb_port_alloc_in_hopid(p, h, h) < 0)
+			जाओ err;
 
 		out_port = &sw->ports[hop.out_port];
 		next_hop = hop.next_hop;
 
-		if (tb_port_alloc_out_hopid(out_port, next_hop, next_hop) < 0) {
+		अगर (tb_port_alloc_out_hopid(out_port, next_hop, next_hop) < 0) अणु
 			tb_port_release_in_hopid(p, h);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		path->hops[i].in_port = p;
 		path->hops[i].in_hop_index = h;
@@ -196,125 +197,125 @@ struct tb_path *tb_path_discover(struct tb_port *src, int src_hopid,
 
 		h = next_hop;
 		p = out_port->remote;
-	}
+	पूर्ण
 
-	return path;
+	वापस path;
 
 err:
 	tb_port_warn(src, "failed to discover path starting at HopID %d\n",
 		     src_hopid);
-	tb_path_free(path);
-	return NULL;
-}
+	tb_path_मुक्त(path);
+	वापस शून्य;
+पूर्ण
 
 /**
  * tb_path_alloc() - allocate a thunderbolt path between two ports
- * @tb: Domain pointer
+ * @tb: Doमुख्य poपूर्णांकer
  * @src: Source port of the path
- * @src_hopid: HopID used for the first ingress port in the path
+ * @src_hopid: HopID used क्रम the first ingress port in the path
  * @dst: Destination port of the path
- * @dst_hopid: HopID used for the last egress port in the path
- * @link_nr: Preferred link if there are dual links on the path
+ * @dst_hopid: HopID used क्रम the last egress port in the path
+ * @link_nr: Preferred link अगर there are dual links on the path
  * @name: Name of the path
  *
  * Creates path between two ports starting with given @src_hopid. Reserves
- * HopIDs for each port (they can be different from @src_hopid depending on
- * how many HopIDs each port already have reserved). If there are dual
- * links on the path, prioritizes using @link_nr but takes into account
+ * HopIDs क्रम each port (they can be dअगरferent from @src_hopid depending on
+ * how many HopIDs each port alपढ़ोy have reserved). If there are dual
+ * links on the path, prioritizes using @link_nr but takes पूर्णांकo account
  * that the lanes may be bonded.
  *
- * Return: Returns a tb_path on success or NULL on failure.
+ * Return: Returns a tb_path on success or शून्य on failure.
  */
-struct tb_path *tb_path_alloc(struct tb *tb, struct tb_port *src, int src_hopid,
-			      struct tb_port *dst, int dst_hopid, int link_nr,
-			      const char *name)
-{
-	struct tb_port *in_port, *out_port, *first_port, *last_port;
-	int in_hopid, out_hopid;
-	struct tb_path *path;
-	size_t num_hops;
-	int i, ret;
+काष्ठा tb_path *tb_path_alloc(काष्ठा tb *tb, काष्ठा tb_port *src, पूर्णांक src_hopid,
+			      काष्ठा tb_port *dst, पूर्णांक dst_hopid, पूर्णांक link_nr,
+			      स्थिर अक्षर *name)
+अणु
+	काष्ठा tb_port *in_port, *out_port, *first_port, *last_port;
+	पूर्णांक in_hopid, out_hopid;
+	काष्ठा tb_path *path;
+	माप_प्रकार num_hops;
+	पूर्णांक i, ret;
 
-	path = kzalloc(sizeof(*path), GFP_KERNEL);
-	if (!path)
-		return NULL;
+	path = kzalloc(माप(*path), GFP_KERNEL);
+	अगर (!path)
+		वापस शून्य;
 
-	first_port = last_port = NULL;
+	first_port = last_port = शून्य;
 	i = 0;
-	tb_for_each_port_on_path(src, dst, in_port) {
-		if (!first_port)
+	tb_क्रम_each_port_on_path(src, dst, in_port) अणु
+		अगर (!first_port)
 			first_port = in_port;
 		last_port = in_port;
 		i++;
-	}
+	पूर्ण
 
 	/* Check that src and dst are reachable */
-	if (first_port != src || last_port != dst) {
-		kfree(path);
-		return NULL;
-	}
+	अगर (first_port != src || last_port != dst) अणु
+		kमुक्त(path);
+		वापस शून्य;
+	पूर्ण
 
 	/* Each hop takes two ports */
 	num_hops = i / 2;
 
-	path->hops = kcalloc(num_hops, sizeof(*path->hops), GFP_KERNEL);
-	if (!path->hops) {
-		kfree(path);
-		return NULL;
-	}
+	path->hops = kसुस्मृति(num_hops, माप(*path->hops), GFP_KERNEL);
+	अगर (!path->hops) अणु
+		kमुक्त(path);
+		वापस शून्य;
+	पूर्ण
 
 	in_hopid = src_hopid;
-	out_port = NULL;
+	out_port = शून्य;
 
-	for (i = 0; i < num_hops; i++) {
+	क्रम (i = 0; i < num_hops; i++) अणु
 		in_port = tb_next_port_on_path(src, dst, out_port);
-		if (!in_port)
-			goto err;
+		अगर (!in_port)
+			जाओ err;
 
 		/* When lanes are bonded primary link must be used */
-		if (!in_port->bonded && in_port->dual_link_port &&
+		अगर (!in_port->bonded && in_port->dual_link_port &&
 		    in_port->link_nr != link_nr)
 			in_port = in_port->dual_link_port;
 
 		ret = tb_port_alloc_in_hopid(in_port, in_hopid, in_hopid);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		in_hopid = ret;
 
 		out_port = tb_next_port_on_path(src, dst, in_port);
-		if (!out_port)
-			goto err;
+		अगर (!out_port)
+			जाओ err;
 
 		/*
 		 * Pick up right port when going from non-bonded to
 		 * bonded or from bonded to non-bonded.
 		 */
-		if (out_port->dual_link_port) {
-			if (!in_port->bonded && out_port->bonded &&
-			    out_port->link_nr) {
+		अगर (out_port->dual_link_port) अणु
+			अगर (!in_port->bonded && out_port->bonded &&
+			    out_port->link_nr) अणु
 				/*
 				 * Use primary link when going from
 				 * non-bonded to bonded.
 				 */
 				out_port = out_port->dual_link_port;
-			} else if (!out_port->bonded &&
-				   out_port->link_nr != link_nr) {
+			पूर्ण अन्यथा अगर (!out_port->bonded &&
+				   out_port->link_nr != link_nr) अणु
 				/*
 				 * If out port is not bonded follow
 				 * link_nr.
 				 */
 				out_port = out_port->dual_link_port;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (i == num_hops - 1)
+		अगर (i == num_hops - 1)
 			ret = tb_port_alloc_out_hopid(out_port, dst_hopid,
 						      dst_hopid);
-		else
+		अन्यथा
 			ret = tb_port_alloc_out_hopid(out_port, -1, -1);
 
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		out_hopid = ret;
 
 		path->hops[i].in_hop_index = in_hopid;
@@ -324,135 +325,135 @@ struct tb_path *tb_path_alloc(struct tb *tb, struct tb_port *src, int src_hopid,
 		path->hops[i].next_hop_index = out_hopid;
 
 		in_hopid = out_hopid;
-	}
+	पूर्ण
 
 	path->tb = tb;
 	path->path_length = num_hops;
 	path->name = name;
 
-	return path;
+	वापस path;
 
 err:
-	tb_path_free(path);
-	return NULL;
-}
+	tb_path_मुक्त(path);
+	वापस शून्य;
+पूर्ण
 
 /**
- * tb_path_free() - free a path
- * @path: Path to free
+ * tb_path_मुक्त() - मुक्त a path
+ * @path: Path to मुक्त
  *
- * Frees a path. The path does not need to be deactivated.
+ * Frees a path. The path करोes not need to be deactivated.
  */
-void tb_path_free(struct tb_path *path)
-{
-	int i;
+व्योम tb_path_मुक्त(काष्ठा tb_path *path)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < path->path_length; i++) {
-		const struct tb_path_hop *hop = &path->hops[i];
+	क्रम (i = 0; i < path->path_length; i++) अणु
+		स्थिर काष्ठा tb_path_hop *hop = &path->hops[i];
 
-		if (hop->in_port)
+		अगर (hop->in_port)
 			tb_port_release_in_hopid(hop->in_port,
 						 hop->in_hop_index);
-		if (hop->out_port)
+		अगर (hop->out_port)
 			tb_port_release_out_hopid(hop->out_port,
 						  hop->next_hop_index);
-	}
+	पूर्ण
 
-	kfree(path->hops);
-	kfree(path);
-}
+	kमुक्त(path->hops);
+	kमुक्त(path);
+पूर्ण
 
-static void __tb_path_deallocate_nfc(struct tb_path *path, int first_hop)
-{
-	int i, res;
-	for (i = first_hop; i < path->path_length; i++) {
+अटल व्योम __tb_path_deallocate_nfc(काष्ठा tb_path *path, पूर्णांक first_hop)
+अणु
+	पूर्णांक i, res;
+	क्रम (i = first_hop; i < path->path_length; i++) अणु
 		res = tb_port_add_nfc_credits(path->hops[i].in_port,
 					      -path->nfc_credits);
-		if (res)
+		अगर (res)
 			tb_port_warn(path->hops[i].in_port,
 				     "nfc credits deallocation failed for hop %d\n",
 				     i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __tb_path_deactivate_hop(struct tb_port *port, int hop_index,
+अटल पूर्णांक __tb_path_deactivate_hop(काष्ठा tb_port *port, पूर्णांक hop_index,
 				    bool clear_fc)
-{
-	struct tb_regs_hop hop;
-	ktime_t timeout;
-	int ret;
+अणु
+	काष्ठा tb_regs_hop hop;
+	kसमय_प्रकार समयout;
+	पूर्णांक ret;
 
 	/* Disable the path */
-	ret = tb_port_read(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
-	if (ret)
-		return ret;
+	ret = tb_port_पढ़ो(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
+	अगर (ret)
+		वापस ret;
 
-	/* Already disabled */
-	if (!hop.enable)
-		return 0;
+	/* Alपढ़ोy disabled */
+	अगर (!hop.enable)
+		वापस 0;
 
 	hop.enable = 0;
 
-	ret = tb_port_write(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
-	if (ret)
-		return ret;
+	ret = tb_port_ग_लिखो(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
+	अगर (ret)
+		वापस ret;
 
 	/* Wait until it is drained */
-	timeout = ktime_add_ms(ktime_get(), 500);
-	do {
-		ret = tb_port_read(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
-		if (ret)
-			return ret;
+	समयout = kसमय_add_ms(kसमय_get(), 500);
+	करो अणु
+		ret = tb_port_पढ़ो(port, &hop, TB_CFG_HOPS, 2 * hop_index, 2);
+		अगर (ret)
+			वापस ret;
 
-		if (!hop.pending) {
-			if (clear_fc) {
+		अगर (!hop.pending) अणु
+			अगर (clear_fc) अणु
 				/*
 				 * Clear flow control. Protocol adapters
-				 * IFC and ISE bits are vendor defined
+				 * IFC and ISE bits are venकरोr defined
 				 * in the USB4 spec so we clear them
-				 * only for pre-USB4 adapters.
+				 * only क्रम pre-USB4 adapters.
 				 */
-				if (!tb_switch_is_usb4(port->sw)) {
+				अगर (!tb_चयन_is_usb4(port->sw)) अणु
 					hop.ingress_fc = 0;
 					hop.ingress_shared_buffer = 0;
-				}
+				पूर्ण
 				hop.egress_fc = 0;
 				hop.egress_shared_buffer = 0;
 
-				return tb_port_write(port, &hop, TB_CFG_HOPS,
+				वापस tb_port_ग_लिखो(port, &hop, TB_CFG_HOPS,
 						     2 * hop_index, 2);
-			}
+			पूर्ण
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		usleep_range(10, 20);
-	} while (ktime_before(ktime_get(), timeout));
+	पूर्ण जबतक (kसमय_beक्रमe(kसमय_get(), समयout));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void __tb_path_deactivate_hops(struct tb_path *path, int first_hop)
-{
-	int i, res;
+अटल व्योम __tb_path_deactivate_hops(काष्ठा tb_path *path, पूर्णांक first_hop)
+अणु
+	पूर्णांक i, res;
 
-	for (i = first_hop; i < path->path_length; i++) {
+	क्रम (i = first_hop; i < path->path_length; i++) अणु
 		res = __tb_path_deactivate_hop(path->hops[i].in_port,
 					       path->hops[i].in_hop_index,
 					       path->clear_fc);
-		if (res && res != -ENODEV)
+		अगर (res && res != -ENODEV)
 			tb_port_warn(path->hops[i].in_port,
 				     "hop deactivation failed for hop %d, index %d\n",
 				     i, path->hops[i].in_hop_index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void tb_path_deactivate(struct tb_path *path)
-{
-	if (!path->activated) {
+व्योम tb_path_deactivate(काष्ठा tb_path *path)
+अणु
+	अगर (!path->activated) अणु
 		tb_WARN(path->tb, "trying to deactivate an inactive path\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	tb_dbg(path->tb,
 	       "deactivating %s path from %llx:%u to %llx:%u\n",
 	       path->name, tb_route(path->hops[0].in_port->sw),
@@ -462,25 +463,25 @@ void tb_path_deactivate(struct tb_path *path)
 	__tb_path_deactivate_hops(path, 0);
 	__tb_path_deallocate_nfc(path, 0);
 	path->activated = false;
-}
+पूर्ण
 
 /**
  * tb_path_activate() - activate a path
  * @path: Path to activate
  *
  * Activate a path starting with the last hop and iterating backwards. The
- * caller must fill path->hops before calling tb_path_activate().
+ * caller must fill path->hops beक्रमe calling tb_path_activate().
  *
  * Return: Returns 0 on success or an error code on failure.
  */
-int tb_path_activate(struct tb_path *path)
-{
-	int i, res;
-	enum tb_path_port out_mask, in_mask;
-	if (path->activated) {
+पूर्णांक tb_path_activate(काष्ठा tb_path *path)
+अणु
+	पूर्णांक i, res;
+	क्रमागत tb_path_port out_mask, in_mask;
+	अगर (path->activated) अणु
 		tb_WARN(path->tb, "trying to activate already activated path\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	tb_dbg(path->tb,
 	       "activating %s path from %llx:%u to %llx:%u\n",
@@ -490,28 +491,28 @@ int tb_path_activate(struct tb_path *path)
 	       path->hops[path->path_length - 1].out_port->port);
 
 	/* Clear counters. */
-	for (i = path->path_length - 1; i >= 0; i--) {
-		if (path->hops[i].in_counter_index == -1)
-			continue;
+	क्रम (i = path->path_length - 1; i >= 0; i--) अणु
+		अगर (path->hops[i].in_counter_index == -1)
+			जारी;
 		res = tb_port_clear_counter(path->hops[i].in_port,
 					    path->hops[i].in_counter_index);
-		if (res)
-			goto err;
-	}
+		अगर (res)
+			जाओ err;
+	पूर्ण
 
 	/* Add non flow controlled credits. */
-	for (i = path->path_length - 1; i >= 0; i--) {
+	क्रम (i = path->path_length - 1; i >= 0; i--) अणु
 		res = tb_port_add_nfc_credits(path->hops[i].in_port,
 					      path->nfc_credits);
-		if (res) {
+		अगर (res) अणु
 			__tb_path_deallocate_nfc(path, i);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
 	/* Activate hops. */
-	for (i = path->path_length - 1; i >= 0; i--) {
-		struct tb_regs_hop hop = { 0 };
+	क्रम (i = path->path_length - 1; i >= 0; i--) अणु
+		काष्ठा tb_regs_hop hop = अणु 0 पूर्ण;
 
 		/* If it is left active deactivate it first */
 		__tb_path_deactivate_hop(path->hops[i].in_port,
@@ -544,57 +545,57 @@ int tb_path_activate(struct tb_path *path)
 
 		tb_port_dbg(path->hops[i].in_port, "Writing hop %d\n", i);
 		tb_dump_hop(&path->hops[i], &hop);
-		res = tb_port_write(path->hops[i].in_port, &hop, TB_CFG_HOPS,
+		res = tb_port_ग_लिखो(path->hops[i].in_port, &hop, TB_CFG_HOPS,
 				    2 * path->hops[i].in_hop_index, 2);
-		if (res) {
+		अगर (res) अणु
 			__tb_path_deactivate_hops(path, i);
 			__tb_path_deallocate_nfc(path, 0);
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 	path->activated = true;
 	tb_dbg(path->tb, "path activation complete\n");
-	return 0;
+	वापस 0;
 err:
 	tb_WARN(path->tb, "path activation failed\n");
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * tb_path_is_invalid() - check whether any ports on the path are invalid
  * @path: Path to check
  *
- * Return: Returns true if the path is invalid, false otherwise.
+ * Return: Returns true अगर the path is invalid, false otherwise.
  */
-bool tb_path_is_invalid(struct tb_path *path)
-{
-	int i = 0;
-	for (i = 0; i < path->path_length; i++) {
-		if (path->hops[i].in_port->sw->is_unplugged)
-			return true;
-		if (path->hops[i].out_port->sw->is_unplugged)
-			return true;
-	}
-	return false;
-}
+bool tb_path_is_invalid(काष्ठा tb_path *path)
+अणु
+	पूर्णांक i = 0;
+	क्रम (i = 0; i < path->path_length; i++) अणु
+		अगर (path->hops[i].in_port->sw->is_unplugged)
+			वापस true;
+		अगर (path->hops[i].out_port->sw->is_unplugged)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
  * tb_path_port_on_path() - Does the path go through certain port
  * @path: Path to check
  * @port: Switch to check
  *
- * Goes over all hops on path and checks if @port is any of them.
- * Direction does not matter.
+ * Goes over all hops on path and checks अगर @port is any of them.
+ * Direction करोes not matter.
  */
-bool tb_path_port_on_path(const struct tb_path *path, const struct tb_port *port)
-{
-	int i;
+bool tb_path_port_on_path(स्थिर काष्ठा tb_path *path, स्थिर काष्ठा tb_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < path->path_length; i++) {
-		if (path->hops[i].in_port == port ||
+	क्रम (i = 0; i < path->path_length; i++) अणु
+		अगर (path->hops[i].in_port == port ||
 		    path->hops[i].out_port == port)
-			return true;
-	}
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण

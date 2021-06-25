@@ -1,128 +1,129 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#define _GNU_SOURCE
-#include <errno.h>
-#include <sched.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <sys/syscall.h>
-#include <sys/wait.h>
+#घोषणा _GNU_SOURCE
+#समावेश <त्रुटिसं.स>
+#समावेश <sched.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/रुको.h>
 
-#include "../kselftest.h"
-#include "clone3_selftests.h"
+#समावेश "../kselftest.h"
+#समावेश "clone3_selftests.h"
 
-#ifndef CLONE_CLEAR_SIGHAND
-#define CLONE_CLEAR_SIGHAND 0x100000000ULL
-#endif
+#अगर_अघोषित CLONE_CLEAR_SIGHAND
+#घोषणा CLONE_CLEAR_SIGHAND 0x100000000ULL
+#पूर्ण_अगर
 
-static void nop_handler(int signo)
-{
-}
+अटल व्योम nop_handler(पूर्णांक signo)
+अणु
+पूर्ण
 
-static int wait_for_pid(pid_t pid)
-{
-	int status, ret;
+अटल पूर्णांक रुको_क्रम_pid(pid_t pid)
+अणु
+	पूर्णांक status, ret;
 
 again:
-	ret = waitpid(pid, &status, 0);
-	if (ret == -1) {
-		if (errno == EINTR)
-			goto again;
+	ret = रुकोpid(pid, &status, 0);
+	अगर (ret == -1) अणु
+		अगर (त्रुटि_सं == EINTR)
+			जाओ again;
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (!WIFEXITED(status))
-		return -1;
+	अगर (!WIFEXITED(status))
+		वापस -1;
 
-	return WEXITSTATUS(status);
-}
+	वापस WEXITSTATUS(status);
+पूर्ण
 
-static void test_clone3_clear_sighand(void)
-{
-	int ret;
+अटल व्योम test_clone3_clear_sighand(व्योम)
+अणु
+	पूर्णांक ret;
 	pid_t pid;
-	struct __clone_args args = {};
-	struct sigaction act;
+	काष्ठा __clone_args args = अणुपूर्ण;
+	काष्ठा sigaction act;
 
 	/*
 	 * Check that CLONE_CLEAR_SIGHAND and CLONE_SIGHAND are mutually
 	 * exclusive.
 	 */
 	args.flags |= CLONE_CLEAR_SIGHAND | CLONE_SIGHAND;
-	args.exit_signal = SIGCHLD;
-	pid = sys_clone3(&args, sizeof(args));
-	if (pid > 0)
-		ksft_exit_fail_msg(
+	args.निकास_संकेत = SIGCHLD;
+	pid = sys_clone3(&args, माप(args));
+	अगर (pid > 0)
+		ksft_निकास_fail_msg(
 			"clone3(CLONE_CLEAR_SIGHAND | CLONE_SIGHAND) succeeded\n");
 
 	act.sa_handler = nop_handler;
 	ret = sigemptyset(&act.sa_mask);
-	if (ret < 0)
-		ksft_exit_fail_msg("%s - sigemptyset() failed\n",
-				   strerror(errno));
+	अगर (ret < 0)
+		ksft_निकास_fail_msg("%s - sigemptyset() failed\n",
+				   म_त्रुटि(त्रुटि_सं));
 
 	act.sa_flags = 0;
 
-	/* Register signal handler for SIGUSR1 */
-	ret = sigaction(SIGUSR1, &act, NULL);
-	if (ret < 0)
-		ksft_exit_fail_msg(
+	/* Register संकेत handler क्रम SIGUSR1 */
+	ret = sigaction(SIGUSR1, &act, शून्य);
+	अगर (ret < 0)
+		ksft_निकास_fail_msg(
 			"%s - sigaction(SIGUSR1, &act, NULL) failed\n",
-			strerror(errno));
+			म_त्रुटि(त्रुटि_सं));
 
-	/* Register signal handler for SIGUSR2 */
-	ret = sigaction(SIGUSR2, &act, NULL);
-	if (ret < 0)
-		ksft_exit_fail_msg(
+	/* Register संकेत handler क्रम SIGUSR2 */
+	ret = sigaction(SIGUSR2, &act, शून्य);
+	अगर (ret < 0)
+		ksft_निकास_fail_msg(
 			"%s - sigaction(SIGUSR2, &act, NULL) failed\n",
-			strerror(errno));
+			म_त्रुटि(त्रुटि_सं));
 
 	/* Check that CLONE_CLEAR_SIGHAND works. */
 	args.flags = CLONE_CLEAR_SIGHAND;
-	pid = sys_clone3(&args, sizeof(args));
-	if (pid < 0)
-		ksft_exit_fail_msg("%s - clone3(CLONE_CLEAR_SIGHAND) failed\n",
-				   strerror(errno));
+	pid = sys_clone3(&args, माप(args));
+	अगर (pid < 0)
+		ksft_निकास_fail_msg("%s - clone3(CLONE_CLEAR_SIGHAND) failed\n",
+				   म_त्रुटि(त्रुटि_सं));
 
-	if (pid == 0) {
-		ret = sigaction(SIGUSR1, NULL, &act);
-		if (ret < 0)
-			exit(EXIT_FAILURE);
+	अगर (pid == 0) अणु
+		ret = sigaction(SIGUSR1, शून्य, &act);
+		अगर (ret < 0)
+			निकास(निकास_त्रुटि);
 
-		if (act.sa_handler != SIG_DFL)
-			exit(EXIT_FAILURE);
+		अगर (act.sa_handler != संक_पूर्व)
+			निकास(निकास_त्रुटि);
 
-		ret = sigaction(SIGUSR2, NULL, &act);
-		if (ret < 0)
-			exit(EXIT_FAILURE);
+		ret = sigaction(SIGUSR2, शून्य, &act);
+		अगर (ret < 0)
+			निकास(निकास_त्रुटि);
 
-		if (act.sa_handler != SIG_DFL)
-			exit(EXIT_FAILURE);
+		अगर (act.sa_handler != संक_पूर्व)
+			निकास(निकास_त्रुटि);
 
-		exit(EXIT_SUCCESS);
-	}
+		निकास(निकास_सफल);
+	पूर्ण
 
-	ret = wait_for_pid(pid);
-	if (ret)
-		ksft_exit_fail_msg(
+	ret = रुको_क्रम_pid(pid);
+	अगर (ret)
+		ksft_निकास_fail_msg(
 			"Failed to clear signal handler for child process\n");
 
 	ksft_test_result_pass("Cleared signal handlers for child process\n");
-}
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	ksft_print_header();
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	ksft_prपूर्णांक_header();
 	ksft_set_plan(1);
 	test_clone3_supported();
 
 	test_clone3_clear_sighand();
 
-	return ksft_exit_pass();
-}
+	वापस ksft_निकास_pass();
+पूर्ण

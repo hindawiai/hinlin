@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,54 +23,54 @@
  * * Author: Monk.liu@amd.com
  */
 
-#include "amdgpu.h"
+#समावेश "amdgpu.h"
 
-uint64_t amdgpu_csa_vaddr(struct amdgpu_device *adev)
-{
-	uint64_t addr = adev->vm_manager.max_pfn << AMDGPU_GPU_PAGE_SHIFT;
+uपूर्णांक64_t amdgpu_csa_vaddr(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक64_t addr = adev->vm_manager.max_pfn << AMDGPU_GPU_PAGE_SHIFT;
 
 	addr -= AMDGPU_VA_RESERVED_SIZE;
 	addr = amdgpu_gmc_sign_extend(addr);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-int amdgpu_allocate_static_csa(struct amdgpu_device *adev, struct amdgpu_bo **bo,
-				u32 domain, uint32_t size)
-{
-	void *ptr;
+पूर्णांक amdgpu_allocate_अटल_csa(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_bo **bo,
+				u32 करोमुख्य, uपूर्णांक32_t size)
+अणु
+	व्योम *ptr;
 
 	amdgpu_bo_create_kernel(adev, size, PAGE_SIZE,
-				domain, bo,
-				NULL, &ptr);
-	if (!*bo)
-		return -ENOMEM;
+				करोमुख्य, bo,
+				शून्य, &ptr);
+	अगर (!*bo)
+		वापस -ENOMEM;
 
-	memset(ptr, 0, size);
+	स_रखो(ptr, 0, size);
 	adev->virt.csa_cpu_addr = ptr;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void amdgpu_free_static_csa(struct amdgpu_bo **bo)
-{
-	amdgpu_bo_free_kernel(bo, NULL, NULL);
-}
+व्योम amdgpu_मुक्त_अटल_csa(काष्ठा amdgpu_bo **bo)
+अणु
+	amdgpu_bo_मुक्त_kernel(bo, शून्य, शून्य);
+पूर्ण
 
 /*
- * amdgpu_map_static_csa should be called during amdgpu_vm_init
- * it maps virtual address amdgpu_csa_vaddr() to this VM, and each command
- * submission of GFX should use this virtual address within META_DATA init
+ * amdgpu_map_अटल_csa should be called during amdgpu_vm_init
+ * it maps भव address amdgpu_csa_vaddr() to this VM, and each command
+ * submission of GFX should use this भव address within META_DATA init
  * package to support SRIOV gfx preemption.
  */
-int amdgpu_map_static_csa(struct amdgpu_device *adev, struct amdgpu_vm *vm,
-			  struct amdgpu_bo *bo, struct amdgpu_bo_va **bo_va,
-			  uint64_t csa_addr, uint32_t size)
-{
-	struct ww_acquire_ctx ticket;
-	struct list_head list;
-	struct amdgpu_bo_list_entry pd;
-	struct ttm_validate_buffer csa_tv;
-	int r;
+पूर्णांक amdgpu_map_अटल_csa(काष्ठा amdgpu_device *adev, काष्ठा amdgpu_vm *vm,
+			  काष्ठा amdgpu_bo *bo, काष्ठा amdgpu_bo_va **bo_va,
+			  uपूर्णांक64_t csa_addr, uपूर्णांक32_t size)
+अणु
+	काष्ठा ww_acquire_ctx ticket;
+	काष्ठा list_head list;
+	काष्ठा amdgpu_bo_list_entry pd;
+	काष्ठा tपंचांग_validate_buffer csa_tv;
+	पूर्णांक r;
 
 	INIT_LIST_HEAD(&list);
 	INIT_LIST_HEAD(&csa_tv.head);
@@ -79,30 +80,30 @@ int amdgpu_map_static_csa(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	list_add(&csa_tv.head, &list);
 	amdgpu_vm_get_pd_bo(vm, &list, &pd);
 
-	r = ttm_eu_reserve_buffers(&ticket, &list, true, NULL);
-	if (r) {
+	r = tपंचांग_eu_reserve_buffers(&ticket, &list, true, शून्य);
+	अगर (r) अणु
 		DRM_ERROR("failed to reserve CSA,PD BOs: err=%d\n", r);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	*bo_va = amdgpu_vm_bo_add(adev, vm, bo);
-	if (!*bo_va) {
-		ttm_eu_backoff_reservation(&ticket, &list);
+	अगर (!*bo_va) अणु
+		tपंचांग_eu_backoff_reservation(&ticket, &list);
 		DRM_ERROR("failed to create bo_va for static CSA\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	r = amdgpu_vm_bo_map(adev, *bo_va, csa_addr, 0, size,
 			     AMDGPU_PTE_READABLE | AMDGPU_PTE_WRITEABLE |
 			     AMDGPU_PTE_EXECUTABLE);
 
-	if (r) {
+	अगर (r) अणु
 		DRM_ERROR("failed to do bo_map on static CSA, err=%d\n", r);
 		amdgpu_vm_bo_rmv(adev, *bo_va);
-		ttm_eu_backoff_reservation(&ticket, &list);
-		return r;
-	}
+		tपंचांग_eu_backoff_reservation(&ticket, &list);
+		वापस r;
+	पूर्ण
 
-	ttm_eu_backoff_reservation(&ticket, &list);
-	return 0;
-}
+	tपंचांग_eu_backoff_reservation(&ticket, &list);
+	वापस 0;
+पूर्ण

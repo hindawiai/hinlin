@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2006 Netfilter Core Team <coreteam@netfilter.org>
  * Copyright (c) 2011 Patrick McHardy <kaber@trash.net>
  *
- * Based on Rusty Russell's IPv4 REDIRECT target. Development of IPv6
+ * Based on Rusty Russell's IPv4 REसूचीECT target. Development of IPv6
  * NAT funded by Astaro.
  */
 
-#include <linux/if.h>
-#include <linux/inetdevice.h>
-#include <linux/ip.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/netfilter.h>
-#include <linux/types.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter/x_tables.h>
-#include <net/addrconf.h>
-#include <net/checksum.h>
-#include <net/protocol.h>
-#include <net/netfilter/nf_nat.h>
-#include <net/netfilter/nf_nat_redirect.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <net/addrconf.h>
+#समावेश <net/checksum.h>
+#समावेश <net/protocol.h>
+#समावेश <net/netfilter/nf_nat.h>
+#समावेश <net/netfilter/nf_nat_redirect.h>
 
-unsigned int
-nf_nat_redirect_ipv4(struct sk_buff *skb,
-		     const struct nf_nat_ipv4_multi_range_compat *mr,
-		     unsigned int hooknum)
-{
-	struct nf_conn *ct;
-	enum ip_conntrack_info ctinfo;
+अचिन्हित पूर्णांक
+nf_nat_redirect_ipv4(काष्ठा sk_buff *skb,
+		     स्थिर काष्ठा nf_nat_ipv4_multi_range_compat *mr,
+		     अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
 	__be32 newdst;
-	struct nf_nat_range2 newrange;
+	काष्ठा nf_nat_range2 newrange;
 
 	WARN_ON(hooknum != NF_INET_PRE_ROUTING &&
 		hooknum != NF_INET_LOCAL_OUT);
@@ -41,73 +42,73 @@ nf_nat_redirect_ipv4(struct sk_buff *skb,
 	WARN_ON(!(ct && (ctinfo == IP_CT_NEW || ctinfo == IP_CT_RELATED)));
 
 	/* Local packets: make them go to loopback */
-	if (hooknum == NF_INET_LOCAL_OUT) {
+	अगर (hooknum == NF_INET_LOCAL_OUT) अणु
 		newdst = htonl(0x7F000001);
-	} else {
-		const struct in_device *indev;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा in_device *indev;
 
 		newdst = 0;
 
 		indev = __in_dev_get_rcu(skb->dev);
-		if (indev) {
-			const struct in_ifaddr *ifa;
+		अगर (indev) अणु
+			स्थिर काष्ठा in_अगरaddr *अगरa;
 
-			ifa = rcu_dereference(indev->ifa_list);
-			if (ifa)
-				newdst = ifa->ifa_local;
-		}
+			अगरa = rcu_dereference(indev->अगरa_list);
+			अगर (अगरa)
+				newdst = अगरa->अगरa_local;
+		पूर्ण
 
-		if (!newdst)
-			return NF_DROP;
-	}
+		अगर (!newdst)
+			वापस NF_DROP;
+	पूर्ण
 
 	/* Transfer from original range. */
-	memset(&newrange.min_addr, 0, sizeof(newrange.min_addr));
-	memset(&newrange.max_addr, 0, sizeof(newrange.max_addr));
+	स_रखो(&newrange.min_addr, 0, माप(newrange.min_addr));
+	स_रखो(&newrange.max_addr, 0, माप(newrange.max_addr));
 	newrange.flags	     = mr->range[0].flags | NF_NAT_RANGE_MAP_IPS;
 	newrange.min_addr.ip = newdst;
 	newrange.max_addr.ip = newdst;
 	newrange.min_proto   = mr->range[0].min;
 	newrange.max_proto   = mr->range[0].max;
 
-	/* Hand modified range to generic setup. */
-	return nf_nat_setup_info(ct, &newrange, NF_NAT_MANIP_DST);
-}
+	/* Hand modअगरied range to generic setup. */
+	वापस nf_nat_setup_info(ct, &newrange, NF_NAT_MANIP_DST);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_nat_redirect_ipv4);
 
-static const struct in6_addr loopback_addr = IN6ADDR_LOOPBACK_INIT;
+अटल स्थिर काष्ठा in6_addr loopback_addr = IN6ADDR_LOOPBACK_INIT;
 
-unsigned int
-nf_nat_redirect_ipv6(struct sk_buff *skb, const struct nf_nat_range2 *range,
-		     unsigned int hooknum)
-{
-	struct nf_nat_range2 newrange;
-	struct in6_addr newdst;
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+अचिन्हित पूर्णांक
+nf_nat_redirect_ipv6(काष्ठा sk_buff *skb, स्थिर काष्ठा nf_nat_range2 *range,
+		     अचिन्हित पूर्णांक hooknum)
+अणु
+	काष्ठा nf_nat_range2 newrange;
+	काष्ठा in6_addr newdst;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (hooknum == NF_INET_LOCAL_OUT) {
+	अगर (hooknum == NF_INET_LOCAL_OUT) अणु
 		newdst = loopback_addr;
-	} else {
-		struct inet6_dev *idev;
-		struct inet6_ifaddr *ifa;
+	पूर्ण अन्यथा अणु
+		काष्ठा inet6_dev *idev;
+		काष्ठा inet6_अगरaddr *अगरa;
 		bool addr = false;
 
 		idev = __in6_dev_get(skb->dev);
-		if (idev != NULL) {
-			read_lock_bh(&idev->lock);
-			list_for_each_entry(ifa, &idev->addr_list, if_list) {
-				newdst = ifa->addr;
+		अगर (idev != शून्य) अणु
+			पढ़ो_lock_bh(&idev->lock);
+			list_क्रम_each_entry(अगरa, &idev->addr_list, अगर_list) अणु
+				newdst = अगरa->addr;
 				addr = true;
-				break;
-			}
-			read_unlock_bh(&idev->lock);
-		}
+				अवरोध;
+			पूर्ण
+			पढ़ो_unlock_bh(&idev->lock);
+		पूर्ण
 
-		if (!addr)
-			return NF_DROP;
-	}
+		अगर (!addr)
+			वापस NF_DROP;
+	पूर्ण
 
 	newrange.flags		= range->flags | NF_NAT_RANGE_MAP_IPS;
 	newrange.min_addr.in6	= newdst;
@@ -115,6 +116,6 @@ nf_nat_redirect_ipv6(struct sk_buff *skb, const struct nf_nat_range2 *range,
 	newrange.min_proto	= range->min_proto;
 	newrange.max_proto	= range->max_proto;
 
-	return nf_nat_setup_info(ct, &newrange, NF_NAT_MANIP_DST);
-}
+	वापस nf_nat_setup_info(ct, &newrange, NF_NAT_MANIP_DST);
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_nat_redirect_ipv6);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  Cobalt CPLD functions
  *
@@ -6,12 +7,12 @@
  *  All rights reserved.
  */
 
-#ifndef COBALT_CPLD_H
-#define COBALT_CPLD_H
+#अगर_अघोषित COBALT_CPLD_H
+#घोषणा COBALT_CPLD_H
 
-#include "cobalt-driver.h"
+#समावेश "cobalt-driver.h"
 
-void cobalt_cpld_status(struct cobalt *cobalt);
-bool cobalt_cpld_set_freq(struct cobalt *cobalt, unsigned freq);
+व्योम cobalt_cpld_status(काष्ठा cobalt *cobalt);
+bool cobalt_cpld_set_freq(काष्ठा cobalt *cobalt, अचिन्हित freq);
 
-#endif
+#पूर्ण_अगर

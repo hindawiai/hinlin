@@ -1,139 +1,140 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 
-#include <linux/etherdevice.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include "mt7603.h"
-#include "mac.h"
-#include "eeprom.h"
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश "mt7603.h"
+#समावेश "mac.h"
+#समावेश "eeprom.h"
 
-static int
-mt7603_start(struct ieee80211_hw *hw)
-{
-	struct mt7603_dev *dev = hw->priv;
+अटल पूर्णांक
+mt7603_start(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
 
 	mt7603_mac_reset_counters(dev);
 	mt7603_mac_start(dev);
-	dev->mphy.survey_time = ktime_get_boottime();
+	dev->mphy.survey_समय = kसमय_get_bootसमय();
 	set_bit(MT76_STATE_RUNNING, &dev->mphy.state);
 	mt7603_mac_work(&dev->mphy.mac_work.work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mt7603_stop(struct ieee80211_hw *hw)
-{
-	struct mt7603_dev *dev = hw->priv;
+अटल व्योम
+mt7603_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
 
 	clear_bit(MT76_STATE_RUNNING, &dev->mphy.state);
 	cancel_delayed_work_sync(&dev->mphy.mac_work);
 	mt7603_mac_stop(dev);
-}
+पूर्ण
 
-static int
-mt7603_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
-	struct mt7603_dev *dev = hw->priv;
-	struct mt76_txq *mtxq;
+अटल पूर्णांक
+mt7603_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7603_vअगर *mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt76_txq *mtxq;
 	u8 bc_addr[ETH_ALEN];
-	int idx;
-	int ret = 0;
+	पूर्णांक idx;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&dev->mt76.mutex);
 
-	mvif->idx = ffs(~dev->mt76.vif_mask) - 1;
-	if (mvif->idx >= MT7603_MAX_INTERFACES) {
+	mvअगर->idx = ffs(~dev->mt76.vअगर_mask) - 1;
+	अगर (mvअगर->idx >= MT7603_MAX_INTERFACES) अणु
 		ret = -ENOSPC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	mt76_wr(dev, MT_MAC_ADDR0(mvif->idx),
-		get_unaligned_le32(vif->addr));
-	mt76_wr(dev, MT_MAC_ADDR1(mvif->idx),
-		(get_unaligned_le16(vif->addr + 4) |
+	mt76_wr(dev, MT_MAC_ADDR0(mvअगर->idx),
+		get_unaligned_le32(vअगर->addr));
+	mt76_wr(dev, MT_MAC_ADDR1(mvअगर->idx),
+		(get_unaligned_le16(vअगर->addr + 4) |
 		 MT_MAC_ADDR1_VALID));
 
-	if (vif->type == NL80211_IFTYPE_AP) {
-		mt76_wr(dev, MT_BSSID0(mvif->idx),
-			get_unaligned_le32(vif->addr));
-		mt76_wr(dev, MT_BSSID1(mvif->idx),
-			(get_unaligned_le16(vif->addr + 4) |
+	अगर (vअगर->type == NL80211_IFTYPE_AP) अणु
+		mt76_wr(dev, MT_BSSID0(mvअगर->idx),
+			get_unaligned_le32(vअगर->addr));
+		mt76_wr(dev, MT_BSSID1(mvअगर->idx),
+			(get_unaligned_le16(vअगर->addr + 4) |
 			 MT_BSSID1_VALID));
-	}
+	पूर्ण
 
-	idx = MT7603_WTBL_RESERVED - 1 - mvif->idx;
-	dev->mt76.vif_mask |= BIT(mvif->idx);
-	INIT_LIST_HEAD(&mvif->sta.poll_list);
-	mvif->sta.wcid.idx = idx;
-	mvif->sta.wcid.hw_key_idx = -1;
+	idx = MT7603_WTBL_RESERVED - 1 - mvअगर->idx;
+	dev->mt76.vअगर_mask |= BIT(mvअगर->idx);
+	INIT_LIST_HEAD(&mvअगर->sta.poll_list);
+	mvअगर->sta.wcid.idx = idx;
+	mvअगर->sta.wcid.hw_key_idx = -1;
 
 	eth_broadcast_addr(bc_addr);
-	mt7603_wtbl_init(dev, idx, mvif->idx, bc_addr);
+	mt7603_wtbl_init(dev, idx, mvअगर->idx, bc_addr);
 
-	mtxq = (struct mt76_txq *)vif->txq->drv_priv;
-	mtxq->wcid = &mvif->sta.wcid;
-	rcu_assign_pointer(dev->mt76.wcid[idx], &mvif->sta.wcid);
+	mtxq = (काष्ठा mt76_txq *)vअगर->txq->drv_priv;
+	mtxq->wcid = &mvअगर->sta.wcid;
+	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], &mvअगर->sta.wcid);
 
 out:
 	mutex_unlock(&dev->mt76.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-mt7603_remove_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
-	struct mt7603_sta *msta = &mvif->sta;
-	struct mt7603_dev *dev = hw->priv;
-	int idx = msta->wcid.idx;
+अटल व्योम
+mt7603_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा mt7603_vअगर *mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7603_sta *msta = &mvअगर->sta;
+	काष्ठा mt7603_dev *dev = hw->priv;
+	पूर्णांक idx = msta->wcid.idx;
 
-	mt76_wr(dev, MT_MAC_ADDR0(mvif->idx), 0);
-	mt76_wr(dev, MT_MAC_ADDR1(mvif->idx), 0);
-	mt76_wr(dev, MT_BSSID0(mvif->idx), 0);
-	mt76_wr(dev, MT_BSSID1(mvif->idx), 0);
-	mt7603_beacon_set_timer(dev, mvif->idx, 0);
+	mt76_wr(dev, MT_MAC_ADDR0(mvअगर->idx), 0);
+	mt76_wr(dev, MT_MAC_ADDR1(mvअगर->idx), 0);
+	mt76_wr(dev, MT_BSSID0(mvअगर->idx), 0);
+	mt76_wr(dev, MT_BSSID1(mvअगर->idx), 0);
+	mt7603_beacon_set_समयr(dev, mvअगर->idx, 0);
 
-	rcu_assign_pointer(dev->mt76.wcid[idx], NULL);
+	rcu_assign_poपूर्णांकer(dev->mt76.wcid[idx], शून्य);
 
 	spin_lock_bh(&dev->sta_poll_lock);
-	if (!list_empty(&msta->poll_list))
+	अगर (!list_empty(&msta->poll_list))
 		list_del_init(&msta->poll_list);
 	spin_unlock_bh(&dev->sta_poll_lock);
 
 	mutex_lock(&dev->mt76.mutex);
-	dev->mt76.vif_mask &= ~BIT(mvif->idx);
+	dev->mt76.vअगर_mask &= ~BIT(mvअगर->idx);
 	mutex_unlock(&dev->mt76.mutex);
-}
+पूर्ण
 
-void mt7603_init_edcca(struct mt7603_dev *dev)
-{
-	/* Set lower signal level to -65dBm */
+व्योम mt7603_init_edcca(काष्ठा mt7603_dev *dev)
+अणु
+	/* Set lower संकेत level to -65dBm */
 	mt76_rmw_field(dev, MT_RXTD(8), MT_RXTD_8_LOWER_SIGNAL, 0x23);
 
 	/* clear previous energy detect monitor results */
 	mt76_rr(dev, MT_MIB_STAT_ED);
 
-	if (dev->ed_monitor)
+	अगर (dev->ed_monitor)
 		mt76_set(dev, MT_MIB_CTL, MT_MIB_CTL_ED_TIME);
-	else
+	अन्यथा
 		mt76_clear(dev, MT_MIB_CTL, MT_MIB_CTL_ED_TIME);
 
 	dev->ed_strict_mode = 0xff;
-	dev->ed_strong_signal = 0;
-	dev->ed_time = ktime_get_boottime();
+	dev->ed_strong_संकेत = 0;
+	dev->ed_समय = kसमय_get_bootसमय();
 
 	mt7603_edcca_set_strict(dev, false);
-}
+पूर्ण
 
-static int
-mt7603_set_channel(struct mt7603_dev *dev, struct cfg80211_chan_def *def)
-{
+अटल पूर्णांक
+mt7603_set_channel(काष्ठा mt7603_dev *dev, काष्ठा cfg80211_chan_def *def)
+अणु
 	u8 *rssi_data = (u8 *)dev->mt76.eeprom.data;
-	int idx, ret;
+	पूर्णांक idx, ret;
 	u8 bw = MT_BW_20;
 	bool failed = false;
 
@@ -143,30 +144,30 @@ mt7603_set_channel(struct mt7603_dev *dev, struct cfg80211_chan_def *def)
 	mutex_lock(&dev->mt76.mutex);
 	set_bit(MT76_RESET, &dev->mphy.state);
 
-	mt7603_beacon_set_timer(dev, -1, 0);
+	mt7603_beacon_set_समयr(dev, -1, 0);
 	mt76_set_channel(&dev->mphy);
 	mt7603_mac_stop(dev);
 
-	if (def->width == NL80211_CHAN_WIDTH_40)
+	अगर (def->width == NL80211_CHAN_WIDTH_40)
 		bw = MT_BW_40;
 
 	dev->mphy.chandef = *def;
 	mt76_rmw_field(dev, MT_AGG_BWCR, MT_AGG_BWCR_BW, bw);
 	ret = mt7603_mcu_set_channel(dev);
-	if (ret) {
+	अगर (ret) अणु
 		failed = true;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (def->chan->band == NL80211_BAND_5GHZ) {
+	अगर (def->chan->band == NL80211_BAND_5GHZ) अणु
 		idx = 1;
 		rssi_data += MT_EE_RSSI_OFFSET_5G;
-	} else {
+	पूर्ण अन्यथा अणु
 		idx = 0;
 		rssi_data += MT_EE_RSSI_OFFSET_2G;
-	}
+	पूर्ण
 
-	memcpy(dev->rssi_offset, rssi_data, sizeof(dev->rssi_offset));
+	स_नकल(dev->rssi_offset, rssi_data, माप(dev->rssi_offset));
 
 	idx |= (def->chan -
 		mt76_hw(dev)->wiphy->bands[def->chan->band]->channels) << 1;
@@ -179,7 +180,7 @@ mt7603_set_channel(struct mt7603_dev *dev, struct cfg80211_chan_def *def)
 	mt76_txq_schedule_all(&dev->mphy);
 
 	ieee80211_queue_delayed_work(mt76_hw(dev), &dev->mphy.mac_work,
-				     msecs_to_jiffies(MT7603_WATCHDOG_TIME));
+				     msecs_to_jअगरfies(MT7603_WATCHDOG_TIME));
 
 	/* reset channel stats */
 	mt76_clear(dev, MT_MIB_CTL, MT_MIB_CTL_READ_CLR_DIS);
@@ -188,64 +189,64 @@ mt7603_set_channel(struct mt7603_dev *dev, struct cfg80211_chan_def *def)
 	mt76_rr(dev, MT_MIB_STAT_CCA);
 	mt7603_cca_stats_reset(dev);
 
-	dev->mphy.survey_time = ktime_get_boottime();
+	dev->mphy.survey_समय = kसमय_get_bootसमय();
 
 	mt7603_init_edcca(dev);
 
 out:
-	if (!(mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL))
-		mt7603_beacon_set_timer(dev, -1, dev->mt76.beacon_int);
+	अगर (!(mt76_hw(dev)->conf.flags & IEEE80211_CONF_OFFCHANNEL))
+		mt7603_beacon_set_समयr(dev, -1, dev->mt76.beacon_पूर्णांक);
 	mutex_unlock(&dev->mt76.mutex);
 
 	tasklet_enable(&dev->mt76.pre_tbtt_tasklet);
 
-	if (failed)
+	अगर (failed)
 		mt7603_mac_work(&dev->mphy.mac_work.work);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-mt7603_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct mt7603_dev *dev = hw->priv;
-	int ret = 0;
+अटल पूर्णांक
+mt7603_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
+	पूर्णांक ret = 0;
 
-	if (changed & (IEEE80211_CONF_CHANGE_CHANNEL |
-		       IEEE80211_CONF_CHANGE_POWER)) {
+	अगर (changed & (IEEE80211_CONF_CHANGE_CHANNEL |
+		       IEEE80211_CONF_CHANGE_POWER)) अणु
 		ieee80211_stop_queues(hw);
 		ret = mt7603_set_channel(dev, &hw->conf.chandef);
 		ieee80211_wake_queues(hw);
-	}
+	पूर्ण
 
-	if (changed & IEEE80211_CONF_CHANGE_MONITOR) {
+	अगर (changed & IEEE80211_CONF_CHANGE_MONITOR) अणु
 		mutex_lock(&dev->mt76.mutex);
 
-		if (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
+		अगर (!(hw->conf.flags & IEEE80211_CONF_MONITOR))
 			dev->rxfilter |= MT_WF_RFCR_DROP_OTHER_UC;
-		else
+		अन्यथा
 			dev->rxfilter &= ~MT_WF_RFCR_DROP_OTHER_UC;
 
 		mt76_wr(dev, MT_WF_RFCR, dev->rxfilter);
 
 		mutex_unlock(&dev->mt76.mutex);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-mt7603_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
-			unsigned int *total_flags, u64 multicast)
-{
-	struct mt7603_dev *dev = hw->priv;
+अटल व्योम
+mt7603_configure_filter(काष्ठा ieee80211_hw *hw, अचिन्हित पूर्णांक changed_flags,
+			अचिन्हित पूर्णांक *total_flags, u64 multicast)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
 	u32 flags = 0;
 
-#define MT76_FILTER(_flag, _hw) do { \
+#घोषणा MT76_FILTER(_flag, _hw) करो अणु \
 		flags |= *total_flags & FIF_##_flag;			\
 		dev->rxfilter &= ~(_hw);				\
 		dev->rxfilter |= !(flags & FIF_##_flag) * (_hw);	\
-	} while (0)
+	पूर्ण जबतक (0)
 
 	dev->rxfilter &= ~(MT_WF_RFCR_DROP_OTHER_BSS |
 			   MT_WF_RFCR_DROP_OTHER_BEACON |
@@ -272,63 +273,63 @@ mt7603_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
 
 	*total_flags = flags;
 	mt76_wr(dev, MT_WF_RFCR, dev->rxfilter);
-}
+पूर्ण
 
-static void
-mt7603_bss_info_changed(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-			struct ieee80211_bss_conf *info, u32 changed)
-{
-	struct mt7603_dev *dev = hw->priv;
-	struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
+अटल व्योम
+mt7603_bss_info_changed(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+			काष्ठा ieee80211_bss_conf *info, u32 changed)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt7603_vअगर *mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
 
 	mutex_lock(&dev->mt76.mutex);
 
-	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_BSSID)) {
-		if (info->assoc || info->ibss_joined) {
-			mt76_wr(dev, MT_BSSID0(mvif->idx),
+	अगर (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_BSSID)) अणु
+		अगर (info->assoc || info->ibss_joined) अणु
+			mt76_wr(dev, MT_BSSID0(mvअगर->idx),
 				get_unaligned_le32(info->bssid));
-			mt76_wr(dev, MT_BSSID1(mvif->idx),
+			mt76_wr(dev, MT_BSSID1(mvअगर->idx),
 				(get_unaligned_le16(info->bssid + 4) |
 				 MT_BSSID1_VALID));
-		} else {
-			mt76_wr(dev, MT_BSSID0(mvif->idx), 0);
-			mt76_wr(dev, MT_BSSID1(mvif->idx), 0);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			mt76_wr(dev, MT_BSSID0(mvअगर->idx), 0);
+			mt76_wr(dev, MT_BSSID1(mvअगर->idx), 0);
+		पूर्ण
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_SLOT) {
-		int slottime = info->use_short_slot ? 9 : 20;
+	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
+		पूर्णांक slotसमय = info->use_लघु_slot ? 9 : 20;
 
-		if (slottime != dev->slottime) {
-			dev->slottime = slottime;
+		अगर (slotसमय != dev->slotसमय) अणु
+			dev->slotसमय = slotसमय;
 			mt7603_mac_set_timing(dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON_INT)) {
-		int beacon_int = !!info->enable_beacon * info->beacon_int;
+	अगर (changed & (BSS_CHANGED_BEACON_ENABLED | BSS_CHANGED_BEACON_INT)) अणु
+		पूर्णांक beacon_पूर्णांक = !!info->enable_beacon * info->beacon_पूर्णांक;
 
 		tasklet_disable(&dev->mt76.pre_tbtt_tasklet);
-		mt7603_beacon_set_timer(dev, mvif->idx, beacon_int);
+		mt7603_beacon_set_समयr(dev, mvअगर->idx, beacon_पूर्णांक);
 		tasklet_enable(&dev->mt76.pre_tbtt_tasklet);
-	}
+	पूर्ण
 
 	mutex_unlock(&dev->mt76.mutex);
-}
+पूर्ण
 
-int
-mt7603_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
-	       struct ieee80211_sta *sta)
-{
-	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
-	struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
-	int idx;
-	int ret = 0;
+पूर्णांक
+mt7603_sta_add(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_vअगर *vअगर,
+	       काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
+	काष्ठा mt7603_vअगर *mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
+	पूर्णांक idx;
+	पूर्णांक ret = 0;
 
 	idx = mt76_wcid_alloc(dev->mt76.wcid_mask, MT7603_WTBL_STA - 1);
-	if (idx < 0)
-		return -ENOSPC;
+	अगर (idx < 0)
+		वापस -ENOSPC;
 
 	INIT_LIST_HEAD(&msta->poll_list);
 	__skb_queue_head_init(&msta->psq);
@@ -336,31 +337,31 @@ mt7603_sta_add(struct mt76_dev *mdev, struct ieee80211_vif *vif,
 	msta->smps = ~0;
 	msta->wcid.sta = 1;
 	msta->wcid.idx = idx;
-	mt7603_wtbl_init(dev, idx, mvif->idx, sta->addr);
+	mt7603_wtbl_init(dev, idx, mvअगर->idx, sta->addr);
 	mt7603_wtbl_set_ps(dev, msta, false);
 
-	if (vif->type == NL80211_IFTYPE_AP)
+	अगर (vअगर->type == NL80211_IFTYPE_AP)
 		set_bit(MT_WCID_FLAG_CHECK_PS, &msta->wcid.flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-mt7603_sta_assoc(struct mt76_dev *mdev, struct ieee80211_vif *vif,
-		 struct ieee80211_sta *sta)
-{
-	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
+व्योम
+mt7603_sta_assoc(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_vअगर *vअगर,
+		 काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
 
 	mt7603_wtbl_update_cap(dev, sta);
-}
+पूर्ण
 
-void
-mt7603_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
-		  struct ieee80211_sta *sta)
-{
-	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
-	struct mt76_wcid *wcid = (struct mt76_wcid *)sta->drv_priv;
+व्योम
+mt7603_sta_हटाओ(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_vअगर *vअगर,
+		  काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
+	काष्ठा mt76_wcid *wcid = (काष्ठा mt76_wcid *)sta->drv_priv;
 
 	spin_lock_bh(&dev->ps_lock);
 	__skb_queue_purge(&msta->psq);
@@ -368,36 +369,36 @@ mt7603_sta_remove(struct mt76_dev *mdev, struct ieee80211_vif *vif,
 	spin_unlock_bh(&dev->ps_lock);
 
 	spin_lock_bh(&dev->sta_poll_lock);
-	if (!list_empty(&msta->poll_list))
+	अगर (!list_empty(&msta->poll_list))
 		list_del_init(&msta->poll_list);
 	spin_unlock_bh(&dev->sta_poll_lock);
 
 	mt7603_wtbl_clear(dev, wcid->idx);
-}
+पूर्ण
 
-static void
-mt7603_ps_tx_list(struct mt7603_dev *dev, struct sk_buff_head *list)
-{
-	struct sk_buff *skb;
+अटल व्योम
+mt7603_ps_tx_list(काष्ठा mt7603_dev *dev, काष्ठा sk_buff_head *list)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = __skb_dequeue(list)) != NULL) {
-		int qid = skb_get_queue_mapping(skb);
+	जबतक ((skb = __skb_dequeue(list)) != शून्य) अणु
+		पूर्णांक qid = skb_get_queue_mapping(skb);
 
 		mt76_tx_queue_skb_raw(dev, dev->mphy.q_tx[qid], skb, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-mt7603_sta_ps(struct mt76_dev *mdev, struct ieee80211_sta *sta, bool ps)
-{
-	struct mt7603_dev *dev = container_of(mdev, struct mt7603_dev, mt76);
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
-	struct sk_buff_head list;
+व्योम
+mt7603_sta_ps(काष्ठा mt76_dev *mdev, काष्ठा ieee80211_sta *sta, bool ps)
+अणु
+	काष्ठा mt7603_dev *dev = container_of(mdev, काष्ठा mt7603_dev, mt76);
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
+	काष्ठा sk_buff_head list;
 
 	mt76_stop_tx_queues(&dev->mphy, sta, true);
 	mt7603_wtbl_set_ps(dev, msta, ps);
-	if (ps)
-		return;
+	अगर (ps)
+		वापस;
 
 	__skb_queue_head_init(&list);
 
@@ -406,119 +407,119 @@ mt7603_sta_ps(struct mt76_dev *mdev, struct ieee80211_sta *sta, bool ps)
 	spin_unlock_bh(&dev->ps_lock);
 
 	mt7603_ps_tx_list(dev, &list);
-}
+पूर्ण
 
-static void
-mt7603_ps_set_more_data(struct sk_buff *skb)
-{
-	struct ieee80211_hdr *hdr;
+अटल व्योम
+mt7603_ps_set_more_data(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_hdr *hdr;
 
-	hdr = (struct ieee80211_hdr *)&skb->data[MT_TXD_SIZE];
+	hdr = (काष्ठा ieee80211_hdr *)&skb->data[MT_TXD_SIZE];
 	hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-}
+पूर्ण
 
-static void
-mt7603_release_buffered_frames(struct ieee80211_hw *hw,
-			       struct ieee80211_sta *sta,
-			       u16 tids, int nframes,
-			       enum ieee80211_frame_release_type reason,
+अटल व्योम
+mt7603_release_buffered_frames(काष्ठा ieee80211_hw *hw,
+			       काष्ठा ieee80211_sta *sta,
+			       u16 tids, पूर्णांक nframes,
+			       क्रमागत ieee80211_frame_release_type reason,
 			       bool more_data)
-{
-	struct mt7603_dev *dev = hw->priv;
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
-	struct sk_buff_head list;
-	struct sk_buff *skb, *tmp;
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
+	काष्ठा sk_buff_head list;
+	काष्ठा sk_buff *skb, *पंचांगp;
 
 	__skb_queue_head_init(&list);
 
 	mt7603_wtbl_set_ps(dev, msta, false);
 
 	spin_lock_bh(&dev->ps_lock);
-	skb_queue_walk_safe(&msta->psq, skb, tmp) {
-		if (!nframes)
-			break;
+	skb_queue_walk_safe(&msta->psq, skb, पंचांगp) अणु
+		अगर (!nframes)
+			अवरोध;
 
-		if (!(tids & BIT(skb->priority)))
-			continue;
+		अगर (!(tids & BIT(skb->priority)))
+			जारी;
 
 		skb_set_queue_mapping(skb, MT_TXQ_PSD);
 		__skb_unlink(skb, &msta->psq);
 		mt7603_ps_set_more_data(skb);
 		__skb_queue_tail(&list, skb);
 		nframes--;
-	}
+	पूर्ण
 	spin_unlock_bh(&dev->ps_lock);
 
-	if (!skb_queue_empty(&list))
+	अगर (!skb_queue_empty(&list))
 		ieee80211_sta_eosp(sta);
 
 	mt7603_ps_tx_list(dev, &list);
 
-	if (nframes)
+	अगर (nframes)
 		mt76_release_buffered_frames(hw, sta, tids, nframes, reason,
 					     more_data);
-}
+पूर्ण
 
-static int
-mt7603_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-	       struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-	       struct ieee80211_key_conf *key)
-{
-	struct mt7603_dev *dev = hw->priv;
-	struct mt7603_vif *mvif = (struct mt7603_vif *)vif->drv_priv;
-	struct mt7603_sta *msta = sta ? (struct mt7603_sta *)sta->drv_priv :
-				  &mvif->sta;
-	struct mt76_wcid *wcid = &msta->wcid;
-	int idx = key->keyidx;
+अटल पूर्णांक
+mt7603_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+	       काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
+	       काष्ठा ieee80211_key_conf *key)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt7603_vअगर *mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
+	काष्ठा mt7603_sta *msta = sta ? (काष्ठा mt7603_sta *)sta->drv_priv :
+				  &mvअगर->sta;
+	काष्ठा mt76_wcid *wcid = &msta->wcid;
+	पूर्णांक idx = key->keyidx;
 
-	/* fall back to sw encryption for unsupported ciphers */
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_TKIP:
-	case WLAN_CIPHER_SUITE_CCMP:
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+	/* fall back to sw encryption क्रम unsupported ciphers */
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_TKIP:
+	हाल WLAN_CIPHER_SUITE_CCMP:
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/*
-	 * The hardware does not support per-STA RX GTK, fall back
-	 * to software mode for these.
+	 * The hardware करोes not support per-STA RX GTK, fall back
+	 * to software mode क्रम these.
 	 */
-	if ((vif->type == NL80211_IFTYPE_ADHOC ||
-	     vif->type == NL80211_IFTYPE_MESH_POINT) &&
+	अगर ((vअगर->type == NL80211_IFTYPE_ADHOC ||
+	     vअगर->type == NL80211_IFTYPE_MESH_POINT) &&
 	    (key->cipher == WLAN_CIPHER_SUITE_TKIP ||
 	     key->cipher == WLAN_CIPHER_SUITE_CCMP) &&
 	    !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (cmd == SET_KEY) {
+	अगर (cmd == SET_KEY) अणु
 		key->hw_key_idx = wcid->idx;
 		wcid->hw_key_idx = idx;
-	} else {
-		if (idx == wcid->hw_key_idx)
+	पूर्ण अन्यथा अणु
+		अगर (idx == wcid->hw_key_idx)
 			wcid->hw_key_idx = -1;
 
-		key = NULL;
-	}
+		key = शून्य;
+	पूर्ण
 	mt76_wcid_key_setup(&dev->mt76, wcid, key);
 
-	return mt7603_wtbl_set_key(dev, wcid->idx, key);
-}
+	वापस mt7603_wtbl_set_key(dev, wcid->idx, key);
+पूर्ण
 
-static int
-mt7603_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
-	       const struct ieee80211_tx_queue_params *params)
-{
-	struct mt7603_dev *dev = hw->priv;
+अटल पूर्णांक
+mt7603_conf_tx(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+	       स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
 	u16 cw_min = (1 << 5) - 1;
 	u16 cw_max = (1 << 10) - 1;
 	u32 val;
 
 	queue = dev->mphy.q_tx[queue]->hw_idx;
 
-	if (params->cw_min)
+	अगर (params->cw_min)
 		cw_min = params->cw_min;
-	if (params->cw_max)
+	अगर (params->cw_max)
 		cw_max = params->cw_max;
 
 	mutex_lock(&dev->mt76.mutex);
@@ -531,7 +532,7 @@ mt7603_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
 
 	val = mt76_rr(dev, MT_WMM_AIFSN);
 	val &= ~(MT_WMM_AIFSN_MASK << MT_WMM_AIFSN_SHIFT(queue));
-	val |= params->aifs << MT_WMM_AIFSN_SHIFT(queue);
+	val |= params->aअगरs << MT_WMM_AIFSN_SHIFT(queue);
 	mt76_wr(dev, MT_WMM_AIFSN, val);
 
 	val = mt76_rr(dev, MT_WMM_CWMIN);
@@ -547,149 +548,149 @@ mt7603_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif, u16 queue,
 	mt7603_mac_start(dev);
 	mutex_unlock(&dev->mt76.mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-mt7603_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+अटल व्योम
+mt7603_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
 	     u32 queues, bool drop)
-{
-}
+अणु
+पूर्ण
 
-static int
-mt7603_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		    struct ieee80211_ampdu_params *params)
-{
-	enum ieee80211_ampdu_mlme_action action = params->action;
-	struct mt7603_dev *dev = hw->priv;
-	struct ieee80211_sta *sta = params->sta;
-	struct ieee80211_txq *txq = sta->txq[params->tid];
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
+अटल पूर्णांक
+mt7603_ampdu_action(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		    काष्ठा ieee80211_ampdu_params *params)
+अणु
+	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा ieee80211_sta *sta = params->sta;
+	काष्ठा ieee80211_txq *txq = sta->txq[params->tid];
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
 	u16 tid = params->tid;
 	u16 ssn = params->ssn;
 	u8 ba_size = params->buf_size;
-	struct mt76_txq *mtxq;
-	int ret = 0;
+	काष्ठा mt76_txq *mtxq;
+	पूर्णांक ret = 0;
 
-	if (!txq)
-		return -EINVAL;
+	अगर (!txq)
+		वापस -EINVAL;
 
-	mtxq = (struct mt76_txq *)txq->drv_priv;
+	mtxq = (काष्ठा mt76_txq *)txq->drv_priv;
 
 	mutex_lock(&dev->mt76.mutex);
-	switch (action) {
-	case IEEE80211_AMPDU_RX_START:
+	चयन (action) अणु
+	हाल IEEE80211_AMPDU_RX_START:
 		mt76_rx_aggr_start(&dev->mt76, &msta->wcid, tid, ssn,
 				   params->buf_size);
 		mt7603_mac_rx_ba_reset(dev, sta->addr, tid);
-		break;
-	case IEEE80211_AMPDU_RX_STOP:
+		अवरोध;
+	हाल IEEE80211_AMPDU_RX_STOP:
 		mt76_rx_aggr_stop(&dev->mt76, &msta->wcid, tid);
-		break;
-	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
 		mtxq->aggr = true;
 		mtxq->send_bar = false;
 		mt7603_mac_tx_ba_reset(dev, msta->wcid.idx, tid, ba_size);
-		break;
-	case IEEE80211_AMPDU_TX_STOP_FLUSH:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
 		mtxq->aggr = false;
 		mt7603_mac_tx_ba_reset(dev, msta->wcid.idx, tid, -1);
-		break;
-	case IEEE80211_AMPDU_TX_START:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_START:
 		mtxq->agg_ssn = IEEE80211_SN_TO_SEQ(ssn);
 		ret = IEEE80211_AMPDU_TX_START_IMMEDIATE;
-		break;
-	case IEEE80211_AMPDU_TX_STOP_CONT:
+		अवरोध;
+	हाल IEEE80211_AMPDU_TX_STOP_CONT:
 		mtxq->aggr = false;
 		mt7603_mac_tx_ba_reset(dev, msta->wcid.idx, tid, -1);
-		ieee80211_stop_tx_ba_cb_irqsafe(vif, sta->addr, tid);
-		break;
-	}
+		ieee80211_stop_tx_ba_cb_irqsafe(vअगर, sta->addr, tid);
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&dev->mt76.mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-mt7603_sta_rate_tbl_update(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-			   struct ieee80211_sta *sta)
-{
-	struct mt7603_dev *dev = hw->priv;
-	struct mt7603_sta *msta = (struct mt7603_sta *)sta->drv_priv;
-	struct ieee80211_sta_rates *sta_rates = rcu_dereference(sta->rates);
-	int i;
+अटल व्योम
+mt7603_sta_rate_tbl_update(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+			   काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt7603_sta *msta = (काष्ठा mt7603_sta *)sta->drv_priv;
+	काष्ठा ieee80211_sta_rates *sta_rates = rcu_dereference(sta->rates);
+	पूर्णांक i;
 
 	spin_lock_bh(&dev->mt76.lock);
-	for (i = 0; i < ARRAY_SIZE(msta->rates); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(msta->rates); i++) अणु
 		msta->rates[i].idx = sta_rates->rate[i].idx;
 		msta->rates[i].count = sta_rates->rate[i].count;
 		msta->rates[i].flags = sta_rates->rate[i].flags;
 
-		if (msta->rates[i].idx < 0 || !msta->rates[i].count)
-			break;
-	}
+		अगर (msta->rates[i].idx < 0 || !msta->rates[i].count)
+			अवरोध;
+	पूर्ण
 	msta->n_rates = i;
-	mt7603_wtbl_set_rates(dev, msta, NULL, msta->rates);
+	mt7603_wtbl_set_rates(dev, msta, शून्य, msta->rates);
 	msta->rate_probe = false;
 	mt7603_wtbl_set_smps(dev, msta,
 			     sta->smps_mode == IEEE80211_SMPS_DYNAMIC);
 	spin_unlock_bh(&dev->mt76.lock);
-}
+पूर्ण
 
-static void
-mt7603_set_coverage_class(struct ieee80211_hw *hw, s16 coverage_class)
-{
-	struct mt7603_dev *dev = hw->priv;
+अटल व्योम
+mt7603_set_coverage_class(काष्ठा ieee80211_hw *hw, s16 coverage_class)
+अणु
+	काष्ठा mt7603_dev *dev = hw->priv;
 
 	mutex_lock(&dev->mt76.mutex);
 	dev->coverage_class = max_t(s16, coverage_class, 0);
 	mt7603_mac_set_timing(dev);
 	mutex_unlock(&dev->mt76.mutex);
-}
+पूर्ण
 
-static void mt7603_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_tx_control *control,
-		      struct sk_buff *skb)
-{
-	struct ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
-	struct ieee80211_vif *vif = info->control.vif;
-	struct mt7603_dev *dev = hw->priv;
-	struct mt76_wcid *wcid = &dev->global_sta.wcid;
+अटल व्योम mt7603_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_tx_control *control,
+		      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_tx_info *info = IEEE80211_SKB_CB(skb);
+	काष्ठा ieee80211_vअगर *vअगर = info->control.vअगर;
+	काष्ठा mt7603_dev *dev = hw->priv;
+	काष्ठा mt76_wcid *wcid = &dev->global_sta.wcid;
 
-	if (control->sta) {
-		struct mt7603_sta *msta;
+	अगर (control->sta) अणु
+		काष्ठा mt7603_sta *msta;
 
-		msta = (struct mt7603_sta *)control->sta->drv_priv;
+		msta = (काष्ठा mt7603_sta *)control->sta->drv_priv;
 		wcid = &msta->wcid;
-	} else if (vif) {
-		struct mt7603_vif *mvif;
+	पूर्ण अन्यथा अगर (vअगर) अणु
+		काष्ठा mt7603_vअगर *mvअगर;
 
-		mvif = (struct mt7603_vif *)vif->drv_priv;
-		wcid = &mvif->sta.wcid;
-	}
+		mvअगर = (काष्ठा mt7603_vअगर *)vअगर->drv_priv;
+		wcid = &mvअगर->sta.wcid;
+	पूर्ण
 
 	mt76_tx(&dev->mphy, control->sta, wcid, skb);
-}
+पूर्ण
 
-const struct ieee80211_ops mt7603_ops = {
+स्थिर काष्ठा ieee80211_ops mt7603_ops = अणु
 	.tx = mt7603_tx,
 	.start = mt7603_start,
 	.stop = mt7603_stop,
-	.add_interface = mt7603_add_interface,
-	.remove_interface = mt7603_remove_interface,
+	.add_पूर्णांकerface = mt7603_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface = mt7603_हटाओ_पूर्णांकerface,
 	.config = mt7603_config,
 	.configure_filter = mt7603_configure_filter,
 	.bss_info_changed = mt7603_bss_info_changed,
 	.sta_state = mt76_sta_state,
-	.sta_pre_rcu_remove = mt76_sta_pre_rcu_remove,
+	.sta_pre_rcu_हटाओ = mt76_sta_pre_rcu_हटाओ,
 	.set_key = mt7603_set_key,
 	.conf_tx = mt7603_conf_tx,
 	.sw_scan_start = mt76_sw_scan,
 	.sw_scan_complete = mt76_sw_scan_complete,
 	.flush = mt7603_flush,
 	.ampdu_action = mt7603_ampdu_action,
-	.get_txpower = mt76_get_txpower,
+	.get_txघातer = mt76_get_txघातer,
 	.wake_tx_queue = mt76_wake_tx_queue,
 	.sta_rate_tbl_update = mt7603_sta_rate_tbl_update,
 	.release_buffered_frames = mt7603_release_buffered_frames,
@@ -697,33 +698,33 @@ const struct ieee80211_ops mt7603_ops = {
 	.set_tim = mt76_set_tim,
 	.get_survey = mt76_get_survey,
 	.get_antenna = mt76_get_antenna,
-};
+पूर्ण;
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-static int __init mt7603_init(void)
-{
-	int ret;
+अटल पूर्णांक __init mt7603_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_driver_register(&mt76_wmac_driver);
-	if (ret)
-		return ret;
+	ret = platक्रमm_driver_रेजिस्टर(&mt76_wmac_driver);
+	अगर (ret)
+		वापस ret;
 
-#ifdef CONFIG_PCI
-	ret = pci_register_driver(&mt7603_pci_driver);
-	if (ret)
-		platform_driver_unregister(&mt76_wmac_driver);
-#endif
-	return ret;
-}
+#अगर_घोषित CONFIG_PCI
+	ret = pci_रेजिस्टर_driver(&mt7603_pci_driver);
+	अगर (ret)
+		platक्रमm_driver_unरेजिस्टर(&mt76_wmac_driver);
+#पूर्ण_अगर
+	वापस ret;
+पूर्ण
 
-static void __exit mt7603_exit(void)
-{
-#ifdef CONFIG_PCI
-	pci_unregister_driver(&mt7603_pci_driver);
-#endif
-	platform_driver_unregister(&mt76_wmac_driver);
-}
+अटल व्योम __निकास mt7603_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	pci_unरेजिस्टर_driver(&mt7603_pci_driver);
+#पूर्ण_अगर
+	platक्रमm_driver_unरेजिस्टर(&mt76_wmac_driver);
+पूर्ण
 
 module_init(mt7603_init);
-module_exit(mt7603_exit);
+module_निकास(mt7603_निकास);

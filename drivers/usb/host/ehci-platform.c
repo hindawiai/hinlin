@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Generic platform ehci driver
+ * Generic platक्रमm ehci driver
  *
  * Copyright 2007 Steven Brown <sbrown@cortland.com>
  * Copyright 2010-2012 Hauke Mehrtens <hauke@hauke-m.de>
@@ -18,521 +19,521 @@
  * Copyright 1999 Linus Torvalds
  * Copyright 1999 Gregory P. Smith
  */
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/hrtimer.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/reset.h>
-#include <linux/sys_soc.h>
-#include <linux/timer.h>
-#include <linux/usb.h>
-#include <linux/usb/hcd.h>
-#include <linux/usb/ehci_pdriver.h>
-#include <linux/usb/of.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/sys_soc.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/hcd.h>
+#समावेश <linux/usb/ehci_pdriver.h>
+#समावेश <linux/usb/of.h>
 
-#include "ehci.h"
+#समावेश "ehci.h"
 
-#define DRIVER_DESC "EHCI generic platform driver"
-#define EHCI_MAX_CLKS 4
-#define hcd_to_ehci_priv(h) ((struct ehci_platform_priv *)hcd_to_ehci(h)->priv)
+#घोषणा DRIVER_DESC "EHCI generic platform driver"
+#घोषणा EHCI_MAX_CLKS 4
+#घोषणा hcd_to_ehci_priv(h) ((काष्ठा ehci_platक्रमm_priv *)hcd_to_ehci(h)->priv)
 
-#define BCM_USB_FIFO_THRESHOLD	0x00800040
-#define bcm_iproc_insnreg01	hostpc[0]
+#घोषणा BCM_USB_FIFO_THRESHOLD	0x00800040
+#घोषणा bcm_iproc_insnreg01	hostpc[0]
 
-struct ehci_platform_priv {
-	struct clk *clks[EHCI_MAX_CLKS];
-	struct reset_control *rsts;
+काष्ठा ehci_platक्रमm_priv अणु
+	काष्ठा clk *clks[EHCI_MAX_CLKS];
+	काष्ठा reset_control *rsts;
 	bool reset_on_resume;
 	bool quirk_poll;
-	struct timer_list poll_timer;
-	struct delayed_work poll_work;
-};
+	काष्ठा समयr_list poll_समयr;
+	काष्ठा delayed_work poll_work;
+पूर्ण;
 
-static const char hcd_name[] = "ehci-platform";
+अटल स्थिर अक्षर hcd_name[] = "ehci-platform";
 
-static int ehci_platform_reset(struct usb_hcd *hcd)
-{
-	struct platform_device *pdev = to_platform_device(hcd->self.controller);
-	struct usb_ehci_pdata *pdata = dev_get_platdata(&pdev->dev);
-	struct ehci_hcd *ehci = hcd_to_ehci(hcd);
-	int retval;
+अटल पूर्णांक ehci_platक्रमm_reset(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(hcd->self.controller);
+	काष्ठा usb_ehci_pdata *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा ehci_hcd *ehci = hcd_to_ehci(hcd);
+	पूर्णांक retval;
 
 	ehci->has_synopsys_hc_bug = pdata->has_synopsys_hc_bug;
 
-	if (pdata->pre_setup) {
+	अगर (pdata->pre_setup) अणु
 		retval = pdata->pre_setup(hcd);
-		if (retval < 0)
-			return retval;
-	}
+		अगर (retval < 0)
+			वापस retval;
+	पूर्ण
 
 	ehci->caps = hcd->regs + pdata->caps_offset;
 	retval = ehci_setup(hcd);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (pdata->no_io_watchdog)
-		ehci->need_io_watchdog = 0;
+	अगर (pdata->no_io_watchकरोg)
+		ehci->need_io_watchकरोg = 0;
 
-	if (of_device_is_compatible(pdev->dev.of_node, "brcm,xgs-iproc-ehci"))
-		ehci_writel(ehci, BCM_USB_FIFO_THRESHOLD,
+	अगर (of_device_is_compatible(pdev->dev.of_node, "brcm,xgs-iproc-ehci"))
+		ehci_ग_लिखोl(ehci, BCM_USB_FIFO_THRESHOLD,
 			    &ehci->regs->bcm_iproc_insnreg01);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ehci_platform_power_on(struct platform_device *dev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(dev);
-	struct ehci_platform_priv *priv = hcd_to_ehci_priv(hcd);
-	int clk, ret;
+अटल पूर्णांक ehci_platक्रमm_घातer_on(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(dev);
+	काष्ठा ehci_platक्रमm_priv *priv = hcd_to_ehci_priv(hcd);
+	पूर्णांक clk, ret;
 
-	for (clk = 0; clk < EHCI_MAX_CLKS && priv->clks[clk]; clk++) {
+	क्रम (clk = 0; clk < EHCI_MAX_CLKS && priv->clks[clk]; clk++) अणु
 		ret = clk_prepare_enable(priv->clks[clk]);
-		if (ret)
-			goto err_disable_clks;
-	}
+		अगर (ret)
+			जाओ err_disable_clks;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_clks:
-	while (--clk >= 0)
+	जबतक (--clk >= 0)
 		clk_disable_unprepare(priv->clks[clk]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ehci_platform_power_off(struct platform_device *dev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(dev);
-	struct ehci_platform_priv *priv = hcd_to_ehci_priv(hcd);
-	int clk;
+अटल व्योम ehci_platक्रमm_घातer_off(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(dev);
+	काष्ठा ehci_platक्रमm_priv *priv = hcd_to_ehci_priv(hcd);
+	पूर्णांक clk;
 
-	for (clk = EHCI_MAX_CLKS - 1; clk >= 0; clk--)
-		if (priv->clks[clk])
+	क्रम (clk = EHCI_MAX_CLKS - 1; clk >= 0; clk--)
+		अगर (priv->clks[clk])
 			clk_disable_unprepare(priv->clks[clk]);
-}
+पूर्ण
 
-static struct hc_driver __read_mostly ehci_platform_hc_driver;
+अटल काष्ठा hc_driver __पढ़ो_mostly ehci_platक्रमm_hc_driver;
 
-static const struct ehci_driver_overrides platform_overrides __initconst = {
-	.reset =		ehci_platform_reset,
-	.extra_priv_size =	sizeof(struct ehci_platform_priv),
-};
+अटल स्थिर काष्ठा ehci_driver_overrides platक्रमm_overrides __initस्थिर = अणु
+	.reset =		ehci_platक्रमm_reset,
+	.extra_priv_size =	माप(काष्ठा ehci_platक्रमm_priv),
+पूर्ण;
 
-static struct usb_ehci_pdata ehci_platform_defaults = {
-	.power_on =		ehci_platform_power_on,
-	.power_suspend =	ehci_platform_power_off,
-	.power_off =		ehci_platform_power_off,
-};
+अटल काष्ठा usb_ehci_pdata ehci_platक्रमm_शेषs = अणु
+	.घातer_on =		ehci_platक्रमm_घातer_on,
+	.घातer_suspend =	ehci_platक्रमm_घातer_off,
+	.घातer_off =		ehci_platक्रमm_घातer_off,
+पूर्ण;
 
 /**
- * quirk_poll_check_port_status - Poll port_status if the device sticks
- * @ehci: the ehci hcd pointer
+ * quirk_poll_check_port_status - Poll port_status अगर the device sticks
+ * @ehci: the ehci hcd poपूर्णांकer
  *
  * Since EHCI/OHCI controllers on R-Car Gen3 SoCs are possible to be getting
  * stuck very rarely after a full/low usb device was disconnected. To
  * detect such a situation, the controllers require a special way which poll
- * the EHCI PORTSC register.
+ * the EHCI PORTSC रेजिस्टर.
  *
- * Return: true if the controller's port_status indicated getting stuck
+ * Return: true अगर the controller's port_status indicated getting stuck
  */
-static bool quirk_poll_check_port_status(struct ehci_hcd *ehci)
-{
-	u32 port_status = ehci_readl(ehci, &ehci->regs->port_status[0]);
+अटल bool quirk_poll_check_port_status(काष्ठा ehci_hcd *ehci)
+अणु
+	u32 port_status = ehci_पढ़ोl(ehci, &ehci->regs->port_status[0]);
 
-	if (!(port_status & PORT_OWNER) &&
+	अगर (!(port_status & PORT_OWNER) &&
 	     (port_status & PORT_POWER) &&
 	    !(port_status & PORT_CONNECT) &&
 	     (port_status & PORT_LS_MASK))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
  * quirk_poll_rebind_companion - rebind comanion device to recover
- * @ehci: the ehci hcd pointer
+ * @ehci: the ehci hcd poपूर्णांकer
  *
  * Since EHCI/OHCI controllers on R-Car Gen3 SoCs are possible to be getting
  * stuck very rarely after a full/low usb device was disconnected. To
  * recover from such a situation, the controllers require changing the OHCI
  * functional state.
  */
-static void quirk_poll_rebind_companion(struct ehci_hcd *ehci)
-{
-	struct device *companion_dev;
-	struct usb_hcd *hcd = ehci_to_hcd(ehci);
+अटल व्योम quirk_poll_rebind_companion(काष्ठा ehci_hcd *ehci)
+अणु
+	काष्ठा device *companion_dev;
+	काष्ठा usb_hcd *hcd = ehci_to_hcd(ehci);
 
 	companion_dev = usb_of_get_companion_dev(hcd->self.controller);
-	if (!companion_dev)
-		return;
+	अगर (!companion_dev)
+		वापस;
 
 	device_release_driver(companion_dev);
-	if (device_attach(companion_dev) < 0)
+	अगर (device_attach(companion_dev) < 0)
 		ehci_err(ehci, "%s: failed\n", __func__);
 
 	put_device(companion_dev);
-}
+पूर्ण
 
-static void quirk_poll_work(struct work_struct *work)
-{
-	struct ehci_platform_priv *priv =
-		container_of(to_delayed_work(work), struct ehci_platform_priv,
+अटल व्योम quirk_poll_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ehci_platक्रमm_priv *priv =
+		container_of(to_delayed_work(work), काष्ठा ehci_platक्रमm_priv,
 			     poll_work);
-	struct ehci_hcd *ehci = container_of((void *)priv, struct ehci_hcd,
+	काष्ठा ehci_hcd *ehci = container_of((व्योम *)priv, काष्ठा ehci_hcd,
 					     priv);
 
 	/* check the status twice to reduce misdetection rate */
-	if (!quirk_poll_check_port_status(ehci))
-		return;
+	अगर (!quirk_poll_check_port_status(ehci))
+		वापस;
 	udelay(10);
-	if (!quirk_poll_check_port_status(ehci))
-		return;
+	अगर (!quirk_poll_check_port_status(ehci))
+		वापस;
 
 	ehci_dbg(ehci, "%s: detected getting stuck. rebind now!\n", __func__);
 	quirk_poll_rebind_companion(ehci);
-}
+पूर्ण
 
-static void quirk_poll_timer(struct timer_list *t)
-{
-	struct ehci_platform_priv *priv = from_timer(priv, t, poll_timer);
-	struct ehci_hcd *ehci = container_of((void *)priv, struct ehci_hcd,
+अटल व्योम quirk_poll_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ehci_platक्रमm_priv *priv = from_समयr(priv, t, poll_समयr);
+	काष्ठा ehci_hcd *ehci = container_of((व्योम *)priv, काष्ठा ehci_hcd,
 					     priv);
 
-	if (quirk_poll_check_port_status(ehci)) {
+	अगर (quirk_poll_check_port_status(ehci)) अणु
 		/*
-		 * Now scheduling the work for testing the port more. Note that
+		 * Now scheduling the work क्रम testing the port more. Note that
 		 * updating the status is possible to be delayed when
 		 * reconnection. So, this uses delayed work with 5 ms delay
-		 * to avoid misdetection.
+		 * to aव्योम misdetection.
 		 */
-		schedule_delayed_work(&priv->poll_work, msecs_to_jiffies(5));
-	}
+		schedule_delayed_work(&priv->poll_work, msecs_to_jअगरfies(5));
+	पूर्ण
 
-	mod_timer(&priv->poll_timer, jiffies + HZ);
-}
+	mod_समयr(&priv->poll_समयr, jअगरfies + HZ);
+पूर्ण
 
-static void quirk_poll_init(struct ehci_platform_priv *priv)
-{
+अटल व्योम quirk_poll_init(काष्ठा ehci_platक्रमm_priv *priv)
+अणु
 	INIT_DELAYED_WORK(&priv->poll_work, quirk_poll_work);
-	timer_setup(&priv->poll_timer, quirk_poll_timer, 0);
-	mod_timer(&priv->poll_timer, jiffies + HZ);
-}
+	समयr_setup(&priv->poll_समयr, quirk_poll_समयr, 0);
+	mod_समयr(&priv->poll_समयr, jअगरfies + HZ);
+पूर्ण
 
-static void quirk_poll_end(struct ehci_platform_priv *priv)
-{
-	del_timer_sync(&priv->poll_timer);
+अटल व्योम quirk_poll_end(काष्ठा ehci_platक्रमm_priv *priv)
+अणु
+	del_समयr_sync(&priv->poll_समयr);
 	cancel_delayed_work(&priv->poll_work);
-}
+पूर्ण
 
-static const struct soc_device_attribute quirk_poll_match[] = {
-	{ .family = "R-Car Gen3" },
-	{ /* sentinel*/ }
-};
+अटल स्थिर काष्ठा soc_device_attribute quirk_poll_match[] = अणु
+	अणु .family = "R-Car Gen3" पूर्ण,
+	अणु /* sentinel*/ पूर्ण
+पूर्ण;
 
-static int ehci_platform_probe(struct platform_device *dev)
-{
-	struct usb_hcd *hcd;
-	struct resource *res_mem;
-	struct usb_ehci_pdata *pdata = dev_get_platdata(&dev->dev);
-	struct ehci_platform_priv *priv;
-	struct ehci_hcd *ehci;
-	int err, irq, clk = 0;
+अटल पूर्णांक ehci_platक्रमm_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd *hcd;
+	काष्ठा resource *res_mem;
+	काष्ठा usb_ehci_pdata *pdata = dev_get_platdata(&dev->dev);
+	काष्ठा ehci_platक्रमm_priv *priv;
+	काष्ठा ehci_hcd *ehci;
+	पूर्णांक err, irq, clk = 0;
 
-	if (usb_disabled())
-		return -ENODEV;
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	/*
-	 * Use reasonable defaults so platforms don't have to provide these
+	 * Use reasonable शेषs so platक्रमms करोn't have to provide these
 	 * with DT probing on ARM.
 	 */
-	if (!pdata)
-		pdata = &ehci_platform_defaults;
+	अगर (!pdata)
+		pdata = &ehci_platक्रमm_शेषs;
 
 	err = dma_coerce_mask_and_coherent(&dev->dev,
 		pdata->dma_mask_64 ? DMA_BIT_MASK(64) : DMA_BIT_MASK(32));
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->dev, "Error: DMA mask configuration failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	irq = platform_get_irq(dev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(dev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	hcd = usb_create_hcd(&ehci_platform_hc_driver, &dev->dev,
+	hcd = usb_create_hcd(&ehci_platक्रमm_hc_driver, &dev->dev,
 			     dev_name(&dev->dev));
-	if (!hcd)
-		return -ENOMEM;
+	अगर (!hcd)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(dev, hcd);
-	dev->dev.platform_data = pdata;
+	platक्रमm_set_drvdata(dev, hcd);
+	dev->dev.platक्रमm_data = pdata;
 	priv = hcd_to_ehci_priv(hcd);
 	ehci = hcd_to_ehci(hcd);
 
-	if (pdata == &ehci_platform_defaults && dev->dev.of_node) {
-		if (of_property_read_bool(dev->dev.of_node, "big-endian-regs"))
+	अगर (pdata == &ehci_platक्रमm_शेषs && dev->dev.of_node) अणु
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node, "big-endian-regs"))
 			ehci->big_endian_mmio = 1;
 
-		if (of_property_read_bool(dev->dev.of_node, "big-endian-desc"))
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node, "big-endian-desc"))
 			ehci->big_endian_desc = 1;
 
-		if (of_property_read_bool(dev->dev.of_node, "big-endian"))
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node, "big-endian"))
 			ehci->big_endian_mmio = ehci->big_endian_desc = 1;
 
-		if (of_property_read_bool(dev->dev.of_node, "spurious-oc"))
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node, "spurious-oc"))
 			ehci->spurious_oc = 1;
 
-		if (of_property_read_bool(dev->dev.of_node,
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node,
 					  "needs-reset-on-resume"))
 			priv->reset_on_resume = true;
 
-		if (of_property_read_bool(dev->dev.of_node,
+		अगर (of_property_पढ़ो_bool(dev->dev.of_node,
 					  "has-transaction-translator"))
 			hcd->has_tt = 1;
 
-		if (soc_device_match(quirk_poll_match))
+		अगर (soc_device_match(quirk_poll_match))
 			priv->quirk_poll = true;
 
-		for (clk = 0; clk < EHCI_MAX_CLKS; clk++) {
+		क्रम (clk = 0; clk < EHCI_MAX_CLKS; clk++) अणु
 			priv->clks[clk] = of_clk_get(dev->dev.of_node, clk);
-			if (IS_ERR(priv->clks[clk])) {
+			अगर (IS_ERR(priv->clks[clk])) अणु
 				err = PTR_ERR(priv->clks[clk]);
-				if (err == -EPROBE_DEFER)
-					goto err_put_clks;
-				priv->clks[clk] = NULL;
-				break;
-			}
-		}
-	}
+				अगर (err == -EPROBE_DEFER)
+					जाओ err_put_clks;
+				priv->clks[clk] = शून्य;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	priv->rsts = devm_reset_control_array_get_optional_shared(&dev->dev);
-	if (IS_ERR(priv->rsts)) {
+	अगर (IS_ERR(priv->rsts)) अणु
 		err = PTR_ERR(priv->rsts);
-		goto err_put_clks;
-	}
+		जाओ err_put_clks;
+	पूर्ण
 
-	err = reset_control_deassert(priv->rsts);
-	if (err)
-		goto err_put_clks;
+	err = reset_control_deनिश्चित(priv->rsts);
+	अगर (err)
+		जाओ err_put_clks;
 
-	if (pdata->big_endian_desc)
+	अगर (pdata->big_endian_desc)
 		ehci->big_endian_desc = 1;
-	if (pdata->big_endian_mmio)
+	अगर (pdata->big_endian_mmio)
 		ehci->big_endian_mmio = 1;
-	if (pdata->has_tt)
+	अगर (pdata->has_tt)
 		hcd->has_tt = 1;
-	if (pdata->reset_on_resume)
+	अगर (pdata->reset_on_resume)
 		priv->reset_on_resume = true;
-	if (pdata->spurious_oc)
+	अगर (pdata->spurious_oc)
 		ehci->spurious_oc = 1;
 
-#ifndef CONFIG_USB_EHCI_BIG_ENDIAN_MMIO
-	if (ehci->big_endian_mmio) {
+#अगर_अघोषित CONFIG_USB_EHCI_BIG_ENDIAN_MMIO
+	अगर (ehci->big_endian_mmio) अणु
 		dev_err(&dev->dev,
 			"Error: CONFIG_USB_EHCI_BIG_ENDIAN_MMIO not set\n");
 		err = -EINVAL;
-		goto err_reset;
-	}
-#endif
-#ifndef CONFIG_USB_EHCI_BIG_ENDIAN_DESC
-	if (ehci->big_endian_desc) {
+		जाओ err_reset;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_USB_EHCI_BIG_ENDIAN_DESC
+	अगर (ehci->big_endian_desc) अणु
 		dev_err(&dev->dev,
 			"Error: CONFIG_USB_EHCI_BIG_ENDIAN_DESC not set\n");
 		err = -EINVAL;
-		goto err_reset;
-	}
-#endif
+		जाओ err_reset;
+	पूर्ण
+#पूर्ण_अगर
 
-	if (pdata->power_on) {
-		err = pdata->power_on(dev);
-		if (err < 0)
-			goto err_reset;
-	}
+	अगर (pdata->घातer_on) अणु
+		err = pdata->घातer_on(dev);
+		अगर (err < 0)
+			जाओ err_reset;
+	पूर्ण
 
-	res_mem = platform_get_resource(dev, IORESOURCE_MEM, 0);
+	res_mem = platक्रमm_get_resource(dev, IORESOURCE_MEM, 0);
 	hcd->regs = devm_ioremap_resource(&dev->dev, res_mem);
-	if (IS_ERR(hcd->regs)) {
+	अगर (IS_ERR(hcd->regs)) अणु
 		err = PTR_ERR(hcd->regs);
-		goto err_power;
-	}
+		जाओ err_घातer;
+	पूर्ण
 	hcd->rsrc_start = res_mem->start;
 	hcd->rsrc_len = resource_size(res_mem);
 
 	err = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	if (err)
-		goto err_power;
+	अगर (err)
+		जाओ err_घातer;
 
 	device_wakeup_enable(hcd->self.controller);
 	device_enable_async_suspend(hcd->self.controller);
-	platform_set_drvdata(dev, hcd);
+	platक्रमm_set_drvdata(dev, hcd);
 
-	if (priv->quirk_poll)
+	अगर (priv->quirk_poll)
 		quirk_poll_init(priv);
 
-	return err;
+	वापस err;
 
-err_power:
-	if (pdata->power_off)
-		pdata->power_off(dev);
+err_घातer:
+	अगर (pdata->घातer_off)
+		pdata->घातer_off(dev);
 err_reset:
-	reset_control_assert(priv->rsts);
+	reset_control_निश्चित(priv->rsts);
 err_put_clks:
-	while (--clk >= 0)
+	जबतक (--clk >= 0)
 		clk_put(priv->clks[clk]);
 
-	if (pdata == &ehci_platform_defaults)
-		dev->dev.platform_data = NULL;
+	अगर (pdata == &ehci_platक्रमm_शेषs)
+		dev->dev.platक्रमm_data = शून्य;
 
 	usb_put_hcd(hcd);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ehci_platform_remove(struct platform_device *dev)
-{
-	struct usb_hcd *hcd = platform_get_drvdata(dev);
-	struct usb_ehci_pdata *pdata = dev_get_platdata(&dev->dev);
-	struct ehci_platform_priv *priv = hcd_to_ehci_priv(hcd);
-	int clk;
+अटल पूर्णांक ehci_platक्रमm_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = platक्रमm_get_drvdata(dev);
+	काष्ठा usb_ehci_pdata *pdata = dev_get_platdata(&dev->dev);
+	काष्ठा ehci_platक्रमm_priv *priv = hcd_to_ehci_priv(hcd);
+	पूर्णांक clk;
 
-	if (priv->quirk_poll)
+	अगर (priv->quirk_poll)
 		quirk_poll_end(priv);
 
-	usb_remove_hcd(hcd);
+	usb_हटाओ_hcd(hcd);
 
-	if (pdata->power_off)
-		pdata->power_off(dev);
+	अगर (pdata->घातer_off)
+		pdata->घातer_off(dev);
 
-	reset_control_assert(priv->rsts);
+	reset_control_निश्चित(priv->rsts);
 
-	for (clk = 0; clk < EHCI_MAX_CLKS && priv->clks[clk]; clk++)
+	क्रम (clk = 0; clk < EHCI_MAX_CLKS && priv->clks[clk]; clk++)
 		clk_put(priv->clks[clk]);
 
 	usb_put_hcd(hcd);
 
-	if (pdata == &ehci_platform_defaults)
-		dev->dev.platform_data = NULL;
+	अगर (pdata == &ehci_platक्रमm_शेषs)
+		dev->dev.platक्रमm_data = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ehci_platform_suspend(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct usb_ehci_pdata *pdata = dev_get_platdata(dev);
-	struct platform_device *pdev = to_platform_device(dev);
-	struct ehci_platform_priv *priv = hcd_to_ehci_priv(hcd);
-	bool do_wakeup = device_may_wakeup(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused ehci_platक्रमm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा usb_ehci_pdata *pdata = dev_get_platdata(dev);
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा ehci_platक्रमm_priv *priv = hcd_to_ehci_priv(hcd);
+	bool करो_wakeup = device_may_wakeup(dev);
+	पूर्णांक ret;
 
-	if (priv->quirk_poll)
+	अगर (priv->quirk_poll)
 		quirk_poll_end(priv);
 
-	ret = ehci_suspend(hcd, do_wakeup);
-	if (ret)
-		return ret;
+	ret = ehci_suspend(hcd, करो_wakeup);
+	अगर (ret)
+		वापस ret;
 
-	if (pdata->power_suspend)
-		pdata->power_suspend(pdev);
+	अगर (pdata->घातer_suspend)
+		pdata->घातer_suspend(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused ehci_platform_resume(struct device *dev)
-{
-	struct usb_hcd *hcd = dev_get_drvdata(dev);
-	struct usb_ehci_pdata *pdata = dev_get_platdata(dev);
-	struct platform_device *pdev = to_platform_device(dev);
-	struct ehci_platform_priv *priv = hcd_to_ehci_priv(hcd);
-	struct device *companion_dev;
+अटल पूर्णांक __maybe_unused ehci_platक्रमm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा usb_hcd *hcd = dev_get_drvdata(dev);
+	काष्ठा usb_ehci_pdata *pdata = dev_get_platdata(dev);
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा ehci_platक्रमm_priv *priv = hcd_to_ehci_priv(hcd);
+	काष्ठा device *companion_dev;
 
-	if (pdata->power_on) {
-		int err = pdata->power_on(pdev);
-		if (err < 0)
-			return err;
-	}
+	अगर (pdata->घातer_on) अणु
+		पूर्णांक err = pdata->घातer_on(pdev);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	companion_dev = usb_of_get_companion_dev(hcd->self.controller);
-	if (companion_dev) {
-		device_pm_wait_for_dev(hcd->self.controller, companion_dev);
+	अगर (companion_dev) अणु
+		device_pm_रुको_क्रम_dev(hcd->self.controller, companion_dev);
 		put_device(companion_dev);
-	}
+	पूर्ण
 
 	ehci_resume(hcd, priv->reset_on_resume);
 
-	pm_runtime_disable(dev);
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
 
-	if (priv->quirk_poll)
+	अगर (priv->quirk_poll)
 		quirk_poll_init(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id vt8500_ehci_ids[] = {
-	{ .compatible = "via,vt8500-ehci", },
-	{ .compatible = "wm,prizm-ehci", },
-	{ .compatible = "generic-ehci", },
-	{ .compatible = "cavium,octeon-6335-ehci", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id vt8500_ehci_ids[] = अणु
+	अणु .compatible = "via,vt8500-ehci", पूर्ण,
+	अणु .compatible = "wm,prizm-ehci", पूर्ण,
+	अणु .compatible = "generic-ehci", पूर्ण,
+	अणु .compatible = "cavium,octeon-6335-ehci", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, vt8500_ehci_ids);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id ehci_acpi_match[] = {
-	{ "PNP0D20", 0 }, /* EHCI controller without debug */
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id ehci_acpi_match[] = अणु
+	अणु "PNP0D20", 0 पूर्ण, /* EHCI controller without debug */
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ehci_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static const struct platform_device_id ehci_platform_table[] = {
-	{ "ehci-platform", 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, ehci_platform_table);
+अटल स्थिर काष्ठा platक्रमm_device_id ehci_platक्रमm_table[] = अणु
+	अणु "ehci-platform", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, ehci_platक्रमm_table);
 
-static SIMPLE_DEV_PM_OPS(ehci_platform_pm_ops, ehci_platform_suspend,
-	ehci_platform_resume);
+अटल SIMPLE_DEV_PM_OPS(ehci_platक्रमm_pm_ops, ehci_platक्रमm_suspend,
+	ehci_platक्रमm_resume);
 
-static struct platform_driver ehci_platform_driver = {
-	.id_table	= ehci_platform_table,
-	.probe		= ehci_platform_probe,
-	.remove		= ehci_platform_remove,
-	.shutdown	= usb_hcd_platform_shutdown,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver ehci_platक्रमm_driver = अणु
+	.id_table	= ehci_platक्रमm_table,
+	.probe		= ehci_platक्रमm_probe,
+	.हटाओ		= ehci_platक्रमm_हटाओ,
+	.shutकरोwn	= usb_hcd_platक्रमm_shutकरोwn,
+	.driver		= अणु
 		.name	= "ehci-platform",
-		.pm	= pm_ptr(&ehci_platform_pm_ops),
+		.pm	= pm_ptr(&ehci_platक्रमm_pm_ops),
 		.of_match_table = vt8500_ehci_ids,
 		.acpi_match_table = ACPI_PTR(ehci_acpi_match),
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init ehci_platform_init(void)
-{
-	if (usb_disabled())
-		return -ENODEV;
+अटल पूर्णांक __init ehci_platक्रमm_init(व्योम)
+अणु
+	अगर (usb_disabled())
+		वापस -ENODEV;
 
 	pr_info("%s: " DRIVER_DESC "\n", hcd_name);
 
-	ehci_init_driver(&ehci_platform_hc_driver, &platform_overrides);
-	return platform_driver_register(&ehci_platform_driver);
-}
-module_init(ehci_platform_init);
+	ehci_init_driver(&ehci_platक्रमm_hc_driver, &platक्रमm_overrides);
+	वापस platक्रमm_driver_रेजिस्टर(&ehci_platक्रमm_driver);
+पूर्ण
+module_init(ehci_platक्रमm_init);
 
-static void __exit ehci_platform_cleanup(void)
-{
-	platform_driver_unregister(&ehci_platform_driver);
-}
-module_exit(ehci_platform_cleanup);
+अटल व्योम __निकास ehci_platक्रमm_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ehci_platक्रमm_driver);
+पूर्ण
+module_निकास(ehci_platक्रमm_cleanup);
 
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_AUTHOR("Hauke Mehrtens");

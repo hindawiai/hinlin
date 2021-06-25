@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * PCI Backend - Data structures for special overlays for broken devices.
+ * PCI Backend - Data काष्ठाures क्रम special overlays क्रम broken devices.
  *
  * Ryan Wilson <hap9@epoch.ncsc.mil>
  * Chris Bookholt <hap10@epoch.ncsc.mil>
  */
 
-#ifndef __XEN_PCIBACK_CONF_SPACE_QUIRKS_H__
-#define __XEN_PCIBACK_CONF_SPACE_QUIRKS_H__
+#अगर_अघोषित __XEN_PCIBACK_CONF_SPACE_QUIRKS_H__
+#घोषणा __XEN_PCIBACK_CONF_SPACE_QUIRKS_H__
 
-#include <linux/pci.h>
-#include <linux/list.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/list.h>
 
-struct xen_pcibk_config_quirk {
-	struct list_head quirks_list;
-	struct pci_device_id devid;
-	struct pci_dev *pdev;
-};
+काष्ठा xen_pcibk_config_quirk अणु
+	काष्ठा list_head quirks_list;
+	काष्ठा pci_device_id devid;
+	काष्ठा pci_dev *pdev;
+पूर्ण;
 
-int xen_pcibk_config_quirks_add_field(struct pci_dev *dev, struct config_field
+पूर्णांक xen_pcibk_config_quirks_add_field(काष्ठा pci_dev *dev, काष्ठा config_field
 				    *field);
 
-int xen_pcibk_config_quirks_remove_field(struct pci_dev *dev, int reg);
+पूर्णांक xen_pcibk_config_quirks_हटाओ_field(काष्ठा pci_dev *dev, पूर्णांक reg);
 
-int xen_pcibk_config_quirks_init(struct pci_dev *dev);
+पूर्णांक xen_pcibk_config_quirks_init(काष्ठा pci_dev *dev);
 
-void xen_pcibk_config_field_free(struct config_field *field);
+व्योम xen_pcibk_config_field_मुक्त(काष्ठा config_field *field);
 
-int xen_pcibk_config_quirk_release(struct pci_dev *dev);
+पूर्णांक xen_pcibk_config_quirk_release(काष्ठा pci_dev *dev);
 
-int xen_pcibk_field_is_dup(struct pci_dev *dev, unsigned int reg);
+पूर्णांक xen_pcibk_field_is_dup(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक reg);
 
-#endif
+#पूर्ण_अगर

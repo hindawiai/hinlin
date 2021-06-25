@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  */
 
-#ifndef __MSM_GEM_H__
-#define __MSM_GEM_H__
+#अगर_अघोषित __MSM_GEM_H__
+#घोषणा __MSM_GEM_H__
 
-#include <linux/kref.h>
-#include <linux/dma-resv.h>
-#include "msm_drv.h"
+#समावेश <linux/kref.h>
+#समावेश <linux/dma-resv.h>
+#समावेश "msm_drv.h"
 
 /* Make all GEM related WARN_ON()s ratelimited.. when things go wrong they
- * tend to go wrong 1000s of times in a short timespan.
+ * tend to go wrong 1000s of बार in a लघु बारpan.
  */
-#define GEM_WARN_ON(x)  WARN_RATELIMIT(x, "%s", __stringify(x))
+#घोषणा GEM_WARN_ON(x)  WARN_RATELIMIT(x, "%s", __stringअगरy(x))
 
-/* Additional internal-use only BO flags: */
-#define MSM_BO_STOLEN        0x10000000    /* try to use stolen/splash memory */
-#define MSM_BO_MAP_PRIV      0x20000000    /* use IOMMU_PRIV when mapping */
+/* Additional पूर्णांकernal-use only BO flags: */
+#घोषणा MSM_BO_STOLEN        0x10000000    /* try to use stolen/splash memory */
+#घोषणा MSM_BO_MAP_PRIV      0x20000000    /* use IOMMU_PRIV when mapping */
 
-struct msm_gem_address_space {
-	const char *name;
+काष्ठा msm_gem_address_space अणु
+	स्थिर अक्षर *name;
 	/* NOTE: mm managed at the page level, size is in # of pages
 	 * and position mm_node->start is in # of pages:
 	 */
-	struct drm_mm mm;
+	काष्ठा drm_mm mm;
 	spinlock_t lock; /* Protects drm_mm node allocation/removal */
-	struct msm_mmu *mmu;
-	struct kref kref;
+	काष्ठा msm_mmu *mmu;
+	काष्ठा kref kref;
 
-	/* For address spaces associated with a specific process, this
-	 * will be non-NULL:
+	/* For address spaces associated with a specअगरic process, this
+	 * will be non-शून्य:
 	 */
-	struct pid *pid;
-};
+	काष्ठा pid *pid;
+पूर्ण;
 
-struct msm_gem_vma {
-	struct drm_mm_node node;
-	uint64_t iova;
-	struct msm_gem_address_space *aspace;
-	struct list_head list;    /* node in msm_gem_object::vmas */
+काष्ठा msm_gem_vma अणु
+	काष्ठा drm_mm_node node;
+	uपूर्णांक64_t iova;
+	काष्ठा msm_gem_address_space *aspace;
+	काष्ठा list_head list;    /* node in msm_gem_object::vmas */
 	bool mapped;
-	int inuse;
-};
+	पूर्णांक inuse;
+पूर्ण;
 
-struct msm_gem_object {
-	struct drm_gem_object base;
+काष्ठा msm_gem_object अणु
+	काष्ठा drm_gem_object base;
 
-	uint32_t flags;
+	uपूर्णांक32_t flags;
 
 	/**
 	 * Advice: are the backing pages purgeable?
 	 */
-	uint8_t madv;
+	uपूर्णांक8_t madv;
 
 	/**
-	 * Is object on inactive_dontneed list (ie. counted in priv->shrinkable_count)?
+	 * Is object on inactive_करोntneed list (ie. counted in priv->shrinkable_count)?
 	 */
-	bool dontneed : 1;
+	bool करोntneed : 1;
 
 	/**
 	 * Is object evictable (ie. counted in priv->evictable_count)?
@@ -68,312 +69,312 @@ struct msm_gem_object {
 	/**
 	 * count of active vmap'ing
 	 */
-	uint8_t vmap_count;
+	uपूर्णांक8_t vmap_count;
 
 	/**
-	 * Node in list of all objects (mainly for debugfs, protected by
+	 * Node in list of all objects (मुख्यly क्रम debugfs, रक्षित by
 	 * priv->obj_lock
 	 */
-	struct list_head node;
+	काष्ठा list_head node;
 
 	/**
 	 * An object is either:
-	 *  inactive - on priv->inactive_dontneed or priv->inactive_willneed
+	 *  inactive - on priv->inactive_करोntneed or priv->inactive_willneed
 	 *     (depending on purgeability status)
 	 *  active   - on one one of the gpu's active_list..  well, at
-	 *     least for now we don't have (I don't think) hw sync between
+	 *     least क्रम now we करोn't have (I don't think) hw sync between
 	 *     2d and 3d one devices which have both, meaning we need to
-	 *     block on submit if a bo is already on other ring
+	 *     block on submit अगर a bo is alपढ़ोy on other ring
 	 */
-	struct list_head mm_list;
+	काष्ठा list_head mm_list;
 
 	/* Transiently in the process of submit ioctl, objects associated
-	 * with the submit are on submit->bo_list.. this only lasts for
+	 * with the submit are on submit->bo_list.. this only lasts क्रम
 	 * the duration of the ioctl, so one bo can never be on multiple
 	 * submit lists.
 	 */
-	struct list_head submit_entry;
+	काष्ठा list_head submit_entry;
 
-	struct page **pages;
-	struct sg_table *sgt;
-	void *vaddr;
+	काष्ठा page **pages;
+	काष्ठा sg_table *sgt;
+	व्योम *vaddr;
 
-	struct list_head vmas;    /* list of msm_gem_vma */
+	काष्ठा list_head vmas;    /* list of msm_gem_vma */
 
-	/* For physically contiguous buffers.  Used when we don't have
-	 * an IOMMU.  Also used for stolen/splashscreen buffer.
+	/* For physically contiguous buffers.  Used when we करोn't have
+	 * an IOMMU.  Also used क्रम stolen/splashscreen buffer.
 	 */
-	struct drm_mm_node *vram_node;
+	काष्ठा drm_mm_node *vram_node;
 
-	char name[32]; /* Identifier to print for the debugfs files */
+	अक्षर name[32]; /* Identअगरier to prपूर्णांक क्रम the debugfs files */
 
-	int active_count;
-	int pin_count;
-};
-#define to_msm_bo(x) container_of(x, struct msm_gem_object, base)
+	पूर्णांक active_count;
+	पूर्णांक pin_count;
+पूर्ण;
+#घोषणा to_msm_bo(x) container_of(x, काष्ठा msm_gem_object, base)
 
-int msm_gem_mmap_obj(struct drm_gem_object *obj,
-			struct vm_area_struct *vma);
-int msm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
-uint64_t msm_gem_mmap_offset(struct drm_gem_object *obj);
-int msm_gem_get_iova(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace, uint64_t *iova);
-int msm_gem_get_and_pin_iova_range(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace, uint64_t *iova,
+पूर्णांक msm_gem_mmap_obj(काष्ठा drm_gem_object *obj,
+			काष्ठा vm_area_काष्ठा *vma);
+पूर्णांक msm_gem_mmap(काष्ठा file *filp, काष्ठा vm_area_काष्ठा *vma);
+uपूर्णांक64_t msm_gem_mmap_offset(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_get_iova(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace, uपूर्णांक64_t *iova);
+पूर्णांक msm_gem_get_and_pin_iova_range(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace, uपूर्णांक64_t *iova,
 		u64 range_start, u64 range_end);
-int msm_gem_get_and_pin_iova_locked(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace, uint64_t *iova);
-int msm_gem_get_and_pin_iova(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace, uint64_t *iova);
-uint64_t msm_gem_iova(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace);
-void msm_gem_unpin_iova_locked(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace);
-void msm_gem_unpin_iova(struct drm_gem_object *obj,
-		struct msm_gem_address_space *aspace);
-struct page **msm_gem_get_pages(struct drm_gem_object *obj);
-void msm_gem_put_pages(struct drm_gem_object *obj);
-int msm_gem_dumb_create(struct drm_file *file, struct drm_device *dev,
-		struct drm_mode_create_dumb *args);
-int msm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
-		uint32_t handle, uint64_t *offset);
-void *msm_gem_get_vaddr_locked(struct drm_gem_object *obj);
-void *msm_gem_get_vaddr(struct drm_gem_object *obj);
-void *msm_gem_get_vaddr_active(struct drm_gem_object *obj);
-void msm_gem_put_vaddr_locked(struct drm_gem_object *obj);
-void msm_gem_put_vaddr(struct drm_gem_object *obj);
-int msm_gem_madvise(struct drm_gem_object *obj, unsigned madv);
-int msm_gem_sync_object(struct drm_gem_object *obj,
-		struct msm_fence_context *fctx, bool exclusive);
-void msm_gem_active_get(struct drm_gem_object *obj, struct msm_gpu *gpu);
-void msm_gem_active_put(struct drm_gem_object *obj);
-int msm_gem_cpu_prep(struct drm_gem_object *obj, uint32_t op, ktime_t *timeout);
-int msm_gem_cpu_fini(struct drm_gem_object *obj);
-void msm_gem_free_object(struct drm_gem_object *obj);
-int msm_gem_new_handle(struct drm_device *dev, struct drm_file *file,
-		uint32_t size, uint32_t flags, uint32_t *handle, char *name);
-struct drm_gem_object *msm_gem_new(struct drm_device *dev,
-		uint32_t size, uint32_t flags);
-struct drm_gem_object *msm_gem_new_locked(struct drm_device *dev,
-		uint32_t size, uint32_t flags);
-void *msm_gem_kernel_new(struct drm_device *dev, uint32_t size,
-		uint32_t flags, struct msm_gem_address_space *aspace,
-		struct drm_gem_object **bo, uint64_t *iova);
-void *msm_gem_kernel_new_locked(struct drm_device *dev, uint32_t size,
-		uint32_t flags, struct msm_gem_address_space *aspace,
-		struct drm_gem_object **bo, uint64_t *iova);
-void msm_gem_kernel_put(struct drm_gem_object *bo,
-		struct msm_gem_address_space *aspace, bool locked);
-struct drm_gem_object *msm_gem_import(struct drm_device *dev,
-		struct dma_buf *dmabuf, struct sg_table *sgt);
-__printf(2, 3)
-void msm_gem_object_set_name(struct drm_gem_object *bo, const char *fmt, ...);
+पूर्णांक msm_gem_get_and_pin_iova_locked(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace, uपूर्णांक64_t *iova);
+पूर्णांक msm_gem_get_and_pin_iova(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace, uपूर्णांक64_t *iova);
+uपूर्णांक64_t msm_gem_iova(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace);
+व्योम msm_gem_unpin_iova_locked(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace);
+व्योम msm_gem_unpin_iova(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_gem_address_space *aspace);
+काष्ठा page **msm_gem_get_pages(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_put_pages(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_dumb_create(काष्ठा drm_file *file, काष्ठा drm_device *dev,
+		काष्ठा drm_mode_create_dumb *args);
+पूर्णांक msm_gem_dumb_map_offset(काष्ठा drm_file *file, काष्ठा drm_device *dev,
+		uपूर्णांक32_t handle, uपूर्णांक64_t *offset);
+व्योम *msm_gem_get_vaddr_locked(काष्ठा drm_gem_object *obj);
+व्योम *msm_gem_get_vaddr(काष्ठा drm_gem_object *obj);
+व्योम *msm_gem_get_vaddr_active(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_put_vaddr_locked(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_put_vaddr(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_madvise(काष्ठा drm_gem_object *obj, अचिन्हित madv);
+पूर्णांक msm_gem_sync_object(काष्ठा drm_gem_object *obj,
+		काष्ठा msm_fence_context *fctx, bool exclusive);
+व्योम msm_gem_active_get(काष्ठा drm_gem_object *obj, काष्ठा msm_gpu *gpu);
+व्योम msm_gem_active_put(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_cpu_prep(काष्ठा drm_gem_object *obj, uपूर्णांक32_t op, kसमय_प्रकार *समयout);
+पूर्णांक msm_gem_cpu_fini(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_मुक्त_object(काष्ठा drm_gem_object *obj);
+पूर्णांक msm_gem_new_handle(काष्ठा drm_device *dev, काष्ठा drm_file *file,
+		uपूर्णांक32_t size, uपूर्णांक32_t flags, uपूर्णांक32_t *handle, अक्षर *name);
+काष्ठा drm_gem_object *msm_gem_new(काष्ठा drm_device *dev,
+		uपूर्णांक32_t size, uपूर्णांक32_t flags);
+काष्ठा drm_gem_object *msm_gem_new_locked(काष्ठा drm_device *dev,
+		uपूर्णांक32_t size, uपूर्णांक32_t flags);
+व्योम *msm_gem_kernel_new(काष्ठा drm_device *dev, uपूर्णांक32_t size,
+		uपूर्णांक32_t flags, काष्ठा msm_gem_address_space *aspace,
+		काष्ठा drm_gem_object **bo, uपूर्णांक64_t *iova);
+व्योम *msm_gem_kernel_new_locked(काष्ठा drm_device *dev, uपूर्णांक32_t size,
+		uपूर्णांक32_t flags, काष्ठा msm_gem_address_space *aspace,
+		काष्ठा drm_gem_object **bo, uपूर्णांक64_t *iova);
+व्योम msm_gem_kernel_put(काष्ठा drm_gem_object *bo,
+		काष्ठा msm_gem_address_space *aspace, bool locked);
+काष्ठा drm_gem_object *msm_gem_import(काष्ठा drm_device *dev,
+		काष्ठा dma_buf *dmabuf, काष्ठा sg_table *sgt);
+__म_लिखो(2, 3)
+व्योम msm_gem_object_set_name(काष्ठा drm_gem_object *bo, स्थिर अक्षर *fmt, ...);
 
-#ifdef CONFIG_DEBUG_FS
-struct msm_gem_stats {
-	struct {
-		unsigned count;
-		size_t size;
-	} all, active, resident, purgeable, purged;
-};
+#अगर_घोषित CONFIG_DEBUG_FS
+काष्ठा msm_gem_stats अणु
+	काष्ठा अणु
+		अचिन्हित count;
+		माप_प्रकार size;
+	पूर्ण all, active, resident, purgeable, purged;
+पूर्ण;
 
-void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m,
-		struct msm_gem_stats *stats);
-void msm_gem_describe_objects(struct list_head *list, struct seq_file *m);
-#endif
+व्योम msm_gem_describe(काष्ठा drm_gem_object *obj, काष्ठा seq_file *m,
+		काष्ठा msm_gem_stats *stats);
+व्योम msm_gem_describe_objects(काष्ठा list_head *list, काष्ठा seq_file *m);
+#पूर्ण_अगर
 
-static inline void
-msm_gem_lock(struct drm_gem_object *obj)
-{
-	dma_resv_lock(obj->resv, NULL);
-}
+अटल अंतरभूत व्योम
+msm_gem_lock(काष्ठा drm_gem_object *obj)
+अणु
+	dma_resv_lock(obj->resv, शून्य);
+पूर्ण
 
-static inline bool __must_check
-msm_gem_trylock(struct drm_gem_object *obj)
-{
-	return dma_resv_trylock(obj->resv);
-}
+अटल अंतरभूत bool __must_check
+msm_gem_trylock(काष्ठा drm_gem_object *obj)
+अणु
+	वापस dma_resv_trylock(obj->resv);
+पूर्ण
 
-static inline int
-msm_gem_lock_interruptible(struct drm_gem_object *obj)
-{
-	return dma_resv_lock_interruptible(obj->resv, NULL);
-}
+अटल अंतरभूत पूर्णांक
+msm_gem_lock_पूर्णांकerruptible(काष्ठा drm_gem_object *obj)
+अणु
+	वापस dma_resv_lock_पूर्णांकerruptible(obj->resv, शून्य);
+पूर्ण
 
-static inline void
-msm_gem_unlock(struct drm_gem_object *obj)
-{
+अटल अंतरभूत व्योम
+msm_gem_unlock(काष्ठा drm_gem_object *obj)
+अणु
 	dma_resv_unlock(obj->resv);
-}
+पूर्ण
 
-static inline bool
-msm_gem_is_locked(struct drm_gem_object *obj)
-{
-	return dma_resv_is_locked(obj->resv);
-}
+अटल अंतरभूत bool
+msm_gem_is_locked(काष्ठा drm_gem_object *obj)
+अणु
+	वापस dma_resv_is_locked(obj->resv);
+पूर्ण
 
-static inline bool is_active(struct msm_gem_object *msm_obj)
-{
+अटल अंतरभूत bool is_active(काष्ठा msm_gem_object *msm_obj)
+अणु
 	GEM_WARN_ON(!msm_gem_is_locked(&msm_obj->base));
-	return msm_obj->active_count;
-}
+	वापस msm_obj->active_count;
+पूर्ण
 
 /* imported/exported objects are not purgeable: */
-static inline bool is_unpurgeable(struct msm_gem_object *msm_obj)
-{
-	return msm_obj->base.import_attach || msm_obj->pin_count;
-}
+अटल अंतरभूत bool is_unpurgeable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	वापस msm_obj->base.import_attach || msm_obj->pin_count;
+पूर्ण
 
-static inline bool is_purgeable(struct msm_gem_object *msm_obj)
-{
-	return (msm_obj->madv == MSM_MADV_DONTNEED) && msm_obj->sgt &&
+अटल अंतरभूत bool is_purgeable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	वापस (msm_obj->madv == MSM_MADV_DONTNEED) && msm_obj->sgt &&
 			!is_unpurgeable(msm_obj);
-}
+पूर्ण
 
-static inline bool is_vunmapable(struct msm_gem_object *msm_obj)
-{
+अटल अंतरभूत bool is_vunmapable(काष्ठा msm_gem_object *msm_obj)
+अणु
 	GEM_WARN_ON(!msm_gem_is_locked(&msm_obj->base));
-	return (msm_obj->vmap_count == 0) && msm_obj->vaddr;
-}
+	वापस (msm_obj->vmap_count == 0) && msm_obj->vaddr;
+पूर्ण
 
-static inline void mark_purgeable(struct msm_gem_object *msm_obj)
-{
-	struct msm_drm_private *priv = msm_obj->base.dev->dev_private;
+अटल अंतरभूत व्योम mark_purgeable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	काष्ठा msm_drm_निजी *priv = msm_obj->base.dev->dev_निजी;
 
 	GEM_WARN_ON(!mutex_is_locked(&priv->mm_lock));
 
-	if (is_unpurgeable(msm_obj))
-		return;
+	अगर (is_unpurgeable(msm_obj))
+		वापस;
 
-	if (GEM_WARN_ON(msm_obj->dontneed))
-		return;
+	अगर (GEM_WARN_ON(msm_obj->करोntneed))
+		वापस;
 
 	priv->shrinkable_count += msm_obj->base.size >> PAGE_SHIFT;
-	msm_obj->dontneed = true;
-}
+	msm_obj->करोntneed = true;
+पूर्ण
 
-static inline void mark_unpurgeable(struct msm_gem_object *msm_obj)
-{
-	struct msm_drm_private *priv = msm_obj->base.dev->dev_private;
+अटल अंतरभूत व्योम mark_unpurgeable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	काष्ठा msm_drm_निजी *priv = msm_obj->base.dev->dev_निजी;
 
 	GEM_WARN_ON(!mutex_is_locked(&priv->mm_lock));
 
-	if (is_unpurgeable(msm_obj))
-		return;
+	अगर (is_unpurgeable(msm_obj))
+		वापस;
 
-	if (GEM_WARN_ON(!msm_obj->dontneed))
-		return;
+	अगर (GEM_WARN_ON(!msm_obj->करोntneed))
+		वापस;
 
 	priv->shrinkable_count -= msm_obj->base.size >> PAGE_SHIFT;
 	GEM_WARN_ON(priv->shrinkable_count < 0);
-	msm_obj->dontneed = false;
-}
+	msm_obj->करोntneed = false;
+पूर्ण
 
-static inline bool is_unevictable(struct msm_gem_object *msm_obj)
-{
-	return is_unpurgeable(msm_obj) || msm_obj->vaddr;
-}
+अटल अंतरभूत bool is_unevictable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	वापस is_unpurgeable(msm_obj) || msm_obj->vaddr;
+पूर्ण
 
-static inline void mark_evictable(struct msm_gem_object *msm_obj)
-{
-	struct msm_drm_private *priv = msm_obj->base.dev->dev_private;
+अटल अंतरभूत व्योम mark_evictable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	काष्ठा msm_drm_निजी *priv = msm_obj->base.dev->dev_निजी;
 
 	WARN_ON(!mutex_is_locked(&priv->mm_lock));
 
-	if (is_unevictable(msm_obj))
-		return;
+	अगर (is_unevictable(msm_obj))
+		वापस;
 
-	if (WARN_ON(msm_obj->evictable))
-		return;
+	अगर (WARN_ON(msm_obj->evictable))
+		वापस;
 
 	priv->evictable_count += msm_obj->base.size >> PAGE_SHIFT;
 	msm_obj->evictable = true;
-}
+पूर्ण
 
-static inline void mark_unevictable(struct msm_gem_object *msm_obj)
-{
-	struct msm_drm_private *priv = msm_obj->base.dev->dev_private;
+अटल अंतरभूत व्योम mark_unevictable(काष्ठा msm_gem_object *msm_obj)
+अणु
+	काष्ठा msm_drm_निजी *priv = msm_obj->base.dev->dev_निजी;
 
 	WARN_ON(!mutex_is_locked(&priv->mm_lock));
 
-	if (is_unevictable(msm_obj))
-		return;
+	अगर (is_unevictable(msm_obj))
+		वापस;
 
-	if (WARN_ON(!msm_obj->evictable))
-		return;
+	अगर (WARN_ON(!msm_obj->evictable))
+		वापस;
 
 	priv->evictable_count -= msm_obj->base.size >> PAGE_SHIFT;
 	WARN_ON(priv->evictable_count < 0);
 	msm_obj->evictable = false;
-}
+पूर्ण
 
-void msm_gem_purge(struct drm_gem_object *obj);
-void msm_gem_evict(struct drm_gem_object *obj);
-void msm_gem_vunmap(struct drm_gem_object *obj);
+व्योम msm_gem_purge(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_evict(काष्ठा drm_gem_object *obj);
+व्योम msm_gem_vunmap(काष्ठा drm_gem_object *obj);
 
 /* Created per submit-ioctl, to track bo's and cmdstream bufs, etc,
- * associated with the cmdstream submission for synchronization (and
+ * associated with the cmdstream submission क्रम synchronization (and
  * make it easier to unwind when things go wrong, etc).  This only
- * lasts for the duration of the submit-ioctl.
+ * lasts क्रम the duration of the submit-ioctl.
  */
-struct msm_gem_submit {
-	struct kref ref;
-	struct drm_device *dev;
-	struct msm_gpu *gpu;
-	struct msm_gem_address_space *aspace;
-	struct list_head node;   /* node in ring submit list */
-	struct list_head bo_list;
-	struct ww_acquire_ctx ticket;
-	uint32_t seqno;		/* Sequence number of the submit on the ring */
-	struct dma_fence *fence;
-	struct msm_gpu_submitqueue *queue;
-	struct pid *pid;    /* submitting process */
-	bool valid;         /* true if no cmdstream patching needed */
-	bool in_rb;         /* "sudo" mode, copy cmds into RB */
-	struct msm_ringbuffer *ring;
-	struct msm_file_private *ctx;
-	unsigned int nr_cmds;
-	unsigned int nr_bos;
-	u32 ident;	   /* A "identifier" for the submit for logging */
-	struct {
-		uint32_t type;
-		uint32_t size;  /* in dwords */
-		uint64_t iova;
-		uint32_t offset;/* in dwords */
-		uint32_t idx;   /* cmdstream buffer idx in bos[] */
-		uint32_t nr_relocs;
-		struct drm_msm_gem_submit_reloc *relocs;
-	} *cmd;  /* array of size nr_cmds */
-	struct {
-		uint32_t flags;
-		union {
-			struct msm_gem_object *obj;
-			uint32_t handle;
-		};
-		uint64_t iova;
-	} bos[];
-};
+काष्ठा msm_gem_submit अणु
+	काष्ठा kref ref;
+	काष्ठा drm_device *dev;
+	काष्ठा msm_gpu *gpu;
+	काष्ठा msm_gem_address_space *aspace;
+	काष्ठा list_head node;   /* node in ring submit list */
+	काष्ठा list_head bo_list;
+	काष्ठा ww_acquire_ctx ticket;
+	uपूर्णांक32_t seqno;		/* Sequence number of the submit on the ring */
+	काष्ठा dma_fence *fence;
+	काष्ठा msm_gpu_submitqueue *queue;
+	काष्ठा pid *pid;    /* submitting process */
+	bool valid;         /* true अगर no cmdstream patching needed */
+	bool in_rb;         /* "sudo" mode, copy cmds पूर्णांकo RB */
+	काष्ठा msm_ringbuffer *ring;
+	काष्ठा msm_file_निजी *ctx;
+	अचिन्हित पूर्णांक nr_cmds;
+	अचिन्हित पूर्णांक nr_bos;
+	u32 ident;	   /* A "identifier" क्रम the submit क्रम logging */
+	काष्ठा अणु
+		uपूर्णांक32_t type;
+		uपूर्णांक32_t size;  /* in dwords */
+		uपूर्णांक64_t iova;
+		uपूर्णांक32_t offset;/* in dwords */
+		uपूर्णांक32_t idx;   /* cmdstream buffer idx in bos[] */
+		uपूर्णांक32_t nr_relocs;
+		काष्ठा drm_msm_gem_submit_reloc *relocs;
+	पूर्ण *cmd;  /* array of size nr_cmds */
+	काष्ठा अणु
+		uपूर्णांक32_t flags;
+		जोड़ अणु
+			काष्ठा msm_gem_object *obj;
+			uपूर्णांक32_t handle;
+		पूर्ण;
+		uपूर्णांक64_t iova;
+	पूर्ण bos[];
+पूर्ण;
 
-void __msm_gem_submit_destroy(struct kref *kref);
+व्योम __msm_gem_submit_destroy(काष्ठा kref *kref);
 
-static inline void msm_gem_submit_get(struct msm_gem_submit *submit)
-{
+अटल अंतरभूत व्योम msm_gem_submit_get(काष्ठा msm_gem_submit *submit)
+अणु
 	kref_get(&submit->ref);
-}
+पूर्ण
 
-static inline void msm_gem_submit_put(struct msm_gem_submit *submit)
-{
+अटल अंतरभूत व्योम msm_gem_submit_put(काष्ठा msm_gem_submit *submit)
+अणु
 	kref_put(&submit->ref, __msm_gem_submit_destroy);
-}
+पूर्ण
 
-/* helper to determine of a buffer in submit should be dumped, used for both
+/* helper to determine of a buffer in submit should be dumped, used क्रम both
  * devcoredump and debugfs cmdstream dumping:
  */
-static inline bool
-should_dump(struct msm_gem_submit *submit, int idx)
-{
-	extern bool rd_full;
-	return rd_full || (submit->bos[idx].flags & MSM_SUBMIT_BO_DUMP);
-}
+अटल अंतरभूत bool
+should_dump(काष्ठा msm_gem_submit *submit, पूर्णांक idx)
+अणु
+	बाह्य bool rd_full;
+	वापस rd_full || (submit->bos[idx].flags & MSM_SUBMIT_BO_DUMP);
+पूर्ण
 
-#endif /* __MSM_GEM_H__ */
+#पूर्ण_अगर /* __MSM_GEM_H__ */

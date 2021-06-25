@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * TI OMAP4 ISS V4L2 Driver
  *
@@ -7,32 +8,32 @@
  * Author: Sergio Aguirre <sergio.a.aguirre@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <media/v4l2-common.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
 
-#include "iss.h"
-#include "iss_regs.h"
+#समावेश "iss.h"
+#समावेश "iss_regs.h"
 
-#define ISS_PRINT_REGISTER(iss, name)\
+#घोषणा ISS_PRINT_REGISTER(iss, name)\
 	dev_dbg(iss->dev, "###ISS " #name "=0x%08x\n", \
-		iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_##name))
+		iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_##name))
 
-static void iss_print_status(struct iss_device *iss)
-{
+अटल व्योम iss_prपूर्णांक_status(काष्ठा iss_device *iss)
+अणु
 	dev_dbg(iss->dev, "-------------ISS HL Register dump-------------\n");
 
 	ISS_PRINT_REGISTER(iss, HL_REVISION);
@@ -45,166 +46,166 @@ static void iss_print_status(struct iss_device *iss)
 	ISS_PRINT_REGISTER(iss, CLKSTAT);
 
 	dev_dbg(iss->dev, "-----------------------------------------------\n");
-}
+पूर्ण
 
 /*
- * omap4iss_flush - Post pending L3 bus writes by doing a register readback
+ * omap4iss_flush - Post pending L3 bus ग_लिखोs by करोing a रेजिस्टर पढ़ोback
  * @iss: OMAP4 ISS device
  *
- * In order to force posting of pending writes, we need to write and
- * readback the same register, in this case the revision register.
+ * In order to क्रमce posting of pending ग_लिखोs, we need to ग_लिखो and
+ * पढ़ोback the same रेजिस्टर, in this हाल the revision रेजिस्टर.
  *
- * See this link for reference:
- *   https://www.mail-archive.com/linux-omap@vger.kernel.org/msg08149.html
+ * See this link क्रम reference:
+ *   https://www.mail-archive.com/linux-omap@vger.kernel.org/msg08149.hपंचांगl
  */
-static void omap4iss_flush(struct iss_device *iss)
-{
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION, 0);
-	iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION);
-}
+अटल व्योम omap4iss_flush(काष्ठा iss_device *iss)
+अणु
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION, 0);
+	iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION);
+पूर्ण
 
 /*
- * iss_isp_enable_interrupts - Enable ISS ISP interrupts.
+ * iss_isp_enable_पूर्णांकerrupts - Enable ISS ISP पूर्णांकerrupts.
  * @iss: OMAP4 ISS device
  */
-static void omap4iss_isp_enable_interrupts(struct iss_device *iss)
-{
-	static const u32 isp_irq = ISP5_IRQ_OCP_ERR |
+अटल व्योम omap4iss_isp_enable_पूर्णांकerrupts(काष्ठा iss_device *iss)
+अणु
+	अटल स्थिर u32 isp_irq = ISP5_IRQ_OCP_ERR |
 				   ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR |
 				   ISP5_IRQ_RSZ_FIFO_OVF |
 				   ISP5_IRQ_RSZ_INT_DMA |
 				   ISP5_IRQ_ISIF_INT(0);
 
-	/* Enable ISP interrupts */
-	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQSTATUS(0), isp_irq);
-	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQENABLE_SET(0),
+	/* Enable ISP पूर्णांकerrupts */
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQSTATUS(0), isp_irq);
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQENABLE_SET(0),
 		      isp_irq);
-}
+पूर्ण
 
 /*
- * iss_isp_disable_interrupts - Disable ISS interrupts.
+ * iss_isp_disable_पूर्णांकerrupts - Disable ISS पूर्णांकerrupts.
  * @iss: OMAP4 ISS device
  */
-static void omap4iss_isp_disable_interrupts(struct iss_device *iss)
-{
-	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQENABLE_CLR(0), ~0);
-}
+अटल व्योम omap4iss_isp_disable_पूर्णांकerrupts(काष्ठा iss_device *iss)
+अणु
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQENABLE_CLR(0), ~0);
+पूर्ण
 
 /*
- * iss_enable_interrupts - Enable ISS interrupts.
+ * iss_enable_पूर्णांकerrupts - Enable ISS पूर्णांकerrupts.
  * @iss: OMAP4 ISS device
  */
-static void iss_enable_interrupts(struct iss_device *iss)
-{
-	static const u32 hl_irq = ISS_HL_IRQ_CSIA | ISS_HL_IRQ_CSIB
+अटल व्योम iss_enable_पूर्णांकerrupts(काष्ठा iss_device *iss)
+अणु
+	अटल स्थिर u32 hl_irq = ISS_HL_IRQ_CSIA | ISS_HL_IRQ_CSIB
 				| ISS_HL_IRQ_ISP(0);
 
-	/* Enable HL interrupts */
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5), hl_irq);
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQENABLE_SET(5), hl_irq);
+	/* Enable HL पूर्णांकerrupts */
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5), hl_irq);
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQENABLE_SET(5), hl_irq);
 
-	if (iss->regs[OMAP4_ISS_MEM_ISP_SYS1])
-		omap4iss_isp_enable_interrupts(iss);
-}
+	अगर (iss->regs[OMAP4_ISS_MEM_ISP_SYS1])
+		omap4iss_isp_enable_पूर्णांकerrupts(iss);
+पूर्ण
 
 /*
- * iss_disable_interrupts - Disable ISS interrupts.
+ * iss_disable_पूर्णांकerrupts - Disable ISS पूर्णांकerrupts.
  * @iss: OMAP4 ISS device
  */
-static void iss_disable_interrupts(struct iss_device *iss)
-{
-	if (iss->regs[OMAP4_ISS_MEM_ISP_SYS1])
-		omap4iss_isp_disable_interrupts(iss);
+अटल व्योम iss_disable_पूर्णांकerrupts(काष्ठा iss_device *iss)
+अणु
+	अगर (iss->regs[OMAP4_ISS_MEM_ISP_SYS1])
+		omap4iss_isp_disable_पूर्णांकerrupts(iss);
 
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQENABLE_CLR(5), ~0);
-}
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQENABLE_CLR(5), ~0);
+पूर्ण
 
-int omap4iss_get_external_info(struct iss_pipeline *pipe,
-			       struct media_link *link)
-{
-	struct iss_device *iss =
-		container_of(pipe, struct iss_video, pipe)->iss;
-	struct v4l2_subdev_format fmt;
-	struct v4l2_ctrl *ctrl;
-	int ret;
+पूर्णांक omap4iss_get_बाह्यal_info(काष्ठा iss_pipeline *pipe,
+			       काष्ठा media_link *link)
+अणु
+	काष्ठा iss_device *iss =
+		container_of(pipe, काष्ठा iss_video, pipe)->iss;
+	काष्ठा v4l2_subdev_क्रमmat fmt;
+	काष्ठा v4l2_ctrl *ctrl;
+	पूर्णांक ret;
 
-	if (!pipe->external)
-		return 0;
+	अगर (!pipe->बाह्यal)
+		वापस 0;
 
-	if (pipe->external_rate)
-		return 0;
+	अगर (pipe->बाह्यal_rate)
+		वापस 0;
 
-	memset(&fmt, 0, sizeof(fmt));
+	स_रखो(&fmt, 0, माप(fmt));
 
 	fmt.pad = link->source->index;
 	fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
 	ret = v4l2_subdev_call(media_entity_to_v4l2_subdev(link->sink->entity),
-			       pad, get_fmt, NULL, &fmt);
-	if (ret < 0)
-		return -EPIPE;
+			       pad, get_fmt, शून्य, &fmt);
+	अगर (ret < 0)
+		वापस -EPIPE;
 
-	pipe->external_bpp = omap4iss_video_format_info(fmt.format.code)->bpp;
+	pipe->बाह्यal_bpp = omap4iss_video_क्रमmat_info(fmt.क्रमmat.code)->bpp;
 
-	ctrl = v4l2_ctrl_find(pipe->external->ctrl_handler,
+	ctrl = v4l2_ctrl_find(pipe->बाह्यal->ctrl_handler,
 			      V4L2_CID_PIXEL_RATE);
-	if (!ctrl) {
+	अगर (!ctrl) अणु
 		dev_warn(iss->dev, "no pixel rate control in subdev %s\n",
-			 pipe->external->name);
-		return -EPIPE;
-	}
+			 pipe->बाह्यal->name);
+		वापस -EPIPE;
+	पूर्ण
 
-	pipe->external_rate = v4l2_ctrl_g_ctrl_int64(ctrl);
+	pipe->बाह्यal_rate = v4l2_ctrl_g_ctrl_पूर्णांक64(ctrl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Configure the bridge. Valid inputs are
+ * Configure the bridge. Valid inमाला_दो are
  *
  * IPIPEIF_INPUT_CSI2A: CSI2a receiver
  * IPIPEIF_INPUT_CSI2B: CSI2b receiver
  *
- * The bridge and lane shifter are configured according to the selected input
- * and the ISP platform data.
+ * The bridge and lane shअगरter are configured according to the selected input
+ * and the ISP platक्रमm data.
  */
-void omap4iss_configure_bridge(struct iss_device *iss,
-			       enum ipipeif_input_entity input)
-{
+व्योम omap4iss_configure_bridge(काष्ठा iss_device *iss,
+			       क्रमागत ipipeअगर_input_entity input)
+अणु
 	u32 issctrl_val;
 	u32 isp5ctrl_val;
 
-	issctrl_val = iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_CTRL);
+	issctrl_val = iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_CTRL);
 	issctrl_val &= ~ISS_CTRL_INPUT_SEL_MASK;
 	issctrl_val &= ~ISS_CTRL_CLK_DIV_MASK;
 
-	isp5ctrl_val = iss_reg_read(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL);
+	isp5ctrl_val = iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL);
 
-	switch (input) {
-	case IPIPEIF_INPUT_CSI2A:
+	चयन (input) अणु
+	हाल IPIPEIF_INPUT_CSI2A:
 		issctrl_val |= ISS_CTRL_INPUT_SEL_CSI2A;
-		break;
+		अवरोध;
 
-	case IPIPEIF_INPUT_CSI2B:
+	हाल IPIPEIF_INPUT_CSI2B:
 		issctrl_val |= ISS_CTRL_INPUT_SEL_CSI2B;
-		break;
+		अवरोध;
 
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
 	issctrl_val |= ISS_CTRL_SYNC_DETECT_VS_RAISING;
 
 	isp5ctrl_val |= ISP5_CTRL_VD_PULSE_EXT | ISP5_CTRL_PSYNC_CLK_SEL |
 			ISP5_CTRL_SYNC_ENABLE;
 
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_CTRL, issctrl_val);
-	iss_reg_write(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL, isp5ctrl_val);
-}
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_CTRL, issctrl_val);
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL, isp5ctrl_val);
+पूर्ण
 
-#ifdef ISS_ISR_DEBUG
-static void iss_isr_dbg(struct iss_device *iss, u32 irqstatus)
-{
-	static const char * const name[] = {
+#अगर_घोषित ISS_ISR_DEBUG
+अटल व्योम iss_isr_dbg(काष्ठा iss_device *iss, u32 irqstatus)
+अणु
+	अटल स्थिर अक्षर * स्थिर name[] = अणु
 		"ISP_0",
 		"ISP_1",
 		"ISP_2",
@@ -237,21 +238,21 @@ static void iss_isr_dbg(struct iss_device *iss, u32 irqstatus)
 		"29",
 		"30",
 		"31",
-	};
-	unsigned int i;
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
 	dev_dbg(iss->dev, "ISS IRQ: ");
 
-	for (i = 0; i < ARRAY_SIZE(name); i++) {
-		if ((1 << i) & irqstatus)
+	क्रम (i = 0; i < ARRAY_SIZE(name); i++) अणु
+		अगर ((1 << i) & irqstatus)
 			pr_cont("%s ", name[i]);
-	}
+	पूर्ण
 	pr_cont("\n");
-}
+पूर्ण
 
-static void iss_isp_isr_dbg(struct iss_device *iss, u32 irqstatus)
-{
-	static const char * const name[] = {
+अटल व्योम iss_isp_isr_dbg(काष्ठा iss_device *iss, u32 irqstatus)
+अणु
+	अटल स्थिर अक्षर * स्थिर name[] = अणु
 		"ISIF_0",
 		"ISIF_1",
 		"ISIF_2",
@@ -284,83 +285,83 @@ static void iss_isp_isr_dbg(struct iss_device *iss, u32 irqstatus)
 		"IPIPE_DPC_RNEW1",
 		"30",
 		"OCP_ERR",
-	};
-	unsigned int i;
+	पूर्ण;
+	अचिन्हित पूर्णांक i;
 
 	dev_dbg(iss->dev, "ISP IRQ: ");
 
-	for (i = 0; i < ARRAY_SIZE(name); i++) {
-		if ((1 << i) & irqstatus)
+	क्रम (i = 0; i < ARRAY_SIZE(name); i++) अणु
+		अगर ((1 << i) & irqstatus)
 			pr_cont("%s ", name[i]);
-	}
+	पूर्ण
 	pr_cont("\n");
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * iss_isr - Interrupt Service Routine for ISS module.
+ * iss_isr - Interrupt Service Routine क्रम ISS module.
  * @irq: Not used currently.
- * @_iss: Pointer to the OMAP4 ISS device
+ * @_iss: Poपूर्णांकer to the OMAP4 ISS device
  *
- * Handles the corresponding callback if plugged in.
+ * Handles the corresponding callback अगर plugged in.
  *
  * Returns IRQ_HANDLED when IRQ was correctly handled, or IRQ_NONE when the
  * IRQ wasn't handled.
  */
-static irqreturn_t iss_isr(int irq, void *_iss)
-{
-	static const u32 ipipeif_events = ISP5_IRQ_IPIPEIF_IRQ |
+अटल irqवापस_t iss_isr(पूर्णांक irq, व्योम *_iss)
+अणु
+	अटल स्थिर u32 ipipeअगर_events = ISP5_IRQ_IPIPEIF_IRQ |
 					  ISP5_IRQ_ISIF_INT(0);
-	static const u32 resizer_events = ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR |
+	अटल स्थिर u32 resizer_events = ISP5_IRQ_RSZ_FIFO_IN_BLK_ERR |
 					  ISP5_IRQ_RSZ_FIFO_OVF |
 					  ISP5_IRQ_RSZ_INT_DMA;
-	struct iss_device *iss = _iss;
+	काष्ठा iss_device *iss = _iss;
 	u32 irqstatus;
 
-	irqstatus = iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5));
-	iss_reg_write(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5), irqstatus);
+	irqstatus = iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5));
+	iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_IRQSTATUS(5), irqstatus);
 
-	if (irqstatus & ISS_HL_IRQ_CSIA)
+	अगर (irqstatus & ISS_HL_IRQ_CSIA)
 		omap4iss_csi2_isr(&iss->csi2a);
 
-	if (irqstatus & ISS_HL_IRQ_CSIB)
+	अगर (irqstatus & ISS_HL_IRQ_CSIB)
 		omap4iss_csi2_isr(&iss->csi2b);
 
-	if (irqstatus & ISS_HL_IRQ_ISP(0)) {
-		u32 isp_irqstatus = iss_reg_read(iss, OMAP4_ISS_MEM_ISP_SYS1,
+	अगर (irqstatus & ISS_HL_IRQ_ISP(0)) अणु
+		u32 isp_irqstatus = iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_SYS1,
 						 ISP5_IRQSTATUS(0));
-		iss_reg_write(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQSTATUS(0),
+		iss_reg_ग_लिखो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_IRQSTATUS(0),
 			      isp_irqstatus);
 
-		if (isp_irqstatus & ISP5_IRQ_OCP_ERR)
+		अगर (isp_irqstatus & ISP5_IRQ_OCP_ERR)
 			dev_dbg(iss->dev, "ISP5 OCP Error!\n");
 
-		if (isp_irqstatus & ipipeif_events) {
-			omap4iss_ipipeif_isr(&iss->ipipeif,
-					     isp_irqstatus & ipipeif_events);
-		}
+		अगर (isp_irqstatus & ipipeअगर_events) अणु
+			omap4iss_ipipeअगर_isr(&iss->ipipeअगर,
+					     isp_irqstatus & ipipeअगर_events);
+		पूर्ण
 
-		if (isp_irqstatus & resizer_events)
+		अगर (isp_irqstatus & resizer_events)
 			omap4iss_resizer_isr(&iss->resizer,
 					     isp_irqstatus & resizer_events);
 
-#ifdef ISS_ISR_DEBUG
+#अगर_घोषित ISS_ISR_DEBUG
 		iss_isp_isr_dbg(iss, isp_irqstatus);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	omap4iss_flush(iss);
 
-#ifdef ISS_ISR_DEBUG
+#अगर_घोषित ISS_ISR_DEBUG
 	iss_isr_dbg(iss, irqstatus);
-#endif
+#पूर्ण_अगर
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct media_device_ops iss_media_ops = {
-	.link_notify = v4l2_pipeline_link_notify,
-};
+अटल स्थिर काष्ठा media_device_ops iss_media_ops = अणु
+	.link_notअगरy = v4l2_pipeline_link_notअगरy,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Pipeline stream management
@@ -372,53 +373,53 @@ static const struct media_device_ops iss_media_ops = {
  * @until: entity at which to stop pipeline walk
  *
  * Walk the entities chain starting at the pipeline output video node and stop
- * all modules in the chain. Wait synchronously for the modules to be stopped if
+ * all modules in the chain. Wait synchronously क्रम the modules to be stopped अगर
  * necessary.
  *
- * If the until argument isn't NULL, stop the pipeline walk when reaching the
+ * If the until argument isn't शून्य, stop the pipeline walk when reaching the
  * until entity. This is used to disable a partially started pipeline due to a
  * subdev start error.
  */
-static int iss_pipeline_disable(struct iss_pipeline *pipe,
-				struct media_entity *until)
-{
-	struct iss_device *iss = pipe->output->iss;
-	struct media_entity *entity;
-	struct media_pad *pad;
-	struct v4l2_subdev *subdev;
-	int failure = 0;
-	int ret;
+अटल पूर्णांक iss_pipeline_disable(काष्ठा iss_pipeline *pipe,
+				काष्ठा media_entity *until)
+अणु
+	काष्ठा iss_device *iss = pipe->output->iss;
+	काष्ठा media_entity *entity;
+	काष्ठा media_pad *pad;
+	काष्ठा v4l2_subdev *subdev;
+	पूर्णांक failure = 0;
+	पूर्णांक ret;
 
 	entity = &pipe->output->video.entity;
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
-		if (entity == until)
-			break;
+		अगर (entity == until)
+			अवरोध;
 
 		subdev = media_entity_to_v4l2_subdev(entity);
 		ret = v4l2_subdev_call(subdev, video, s_stream, 0);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_warn(iss->dev, "%s: module stop timeout.\n",
 				 subdev->name);
 			/* If the entity failed to stopped, assume it has
 			 * crashed. Mark it as such, the ISS will be reset when
 			 * applications will release it.
 			 */
-			media_entity_enum_set(&iss->crashed, &subdev->entity);
+			media_entity_क्रमागत_set(&iss->crashed, &subdev->entity);
 			failure = -ETIMEDOUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return failure;
-}
+	वापस failure;
+पूर्ण
 
 /*
  * iss_pipeline_enable - Enable streaming on a pipeline
@@ -428,66 +429,66 @@ static int iss_pipeline_disable(struct iss_pipeline *pipe,
  * Walk the entities chain starting at the pipeline output video node and start
  * all modules in the chain in the given mode.
  *
- * Return 0 if successful, or the return value of the failed video::s_stream
+ * Return 0 अगर successful, or the वापस value of the failed video::s_stream
  * operation otherwise.
  */
-static int iss_pipeline_enable(struct iss_pipeline *pipe,
-			       enum iss_pipeline_stream_state mode)
-{
-	struct iss_device *iss = pipe->output->iss;
-	struct media_entity *entity;
-	struct media_pad *pad;
-	struct v4l2_subdev *subdev;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक iss_pipeline_enable(काष्ठा iss_pipeline *pipe,
+			       क्रमागत iss_pipeline_stream_state mode)
+अणु
+	काष्ठा iss_device *iss = pipe->output->iss;
+	काष्ठा media_entity *entity;
+	काष्ठा media_pad *pad;
+	काष्ठा v4l2_subdev *subdev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	/* If one of the entities in the pipeline has crashed it will not work
-	 * properly. Refuse to start streaming in that case. This check must be
-	 * performed before the loop below to avoid starting entities if the
+	 * properly. Refuse to start streaming in that हाल. This check must be
+	 * perक्रमmed beक्रमe the loop below to aव्योम starting entities अगर the
 	 * pipeline won't start anyway (those entities would then likely fail to
 	 * stop, making the problem worse).
 	 */
-	if (media_entity_enum_intersects(&pipe->ent_enum, &iss->crashed))
-		return -EIO;
+	अगर (media_entity_क्रमागत_पूर्णांकersects(&pipe->ent_क्रमागत, &iss->crashed))
+		वापस -EIO;
 
 	spin_lock_irqsave(&pipe->lock, flags);
 	pipe->state &= ~(ISS_PIPELINE_IDLE_INPUT | ISS_PIPELINE_IDLE_OUTPUT);
 	spin_unlock_irqrestore(&pipe->lock, flags);
 
-	pipe->do_propagation = false;
+	pipe->करो_propagation = false;
 
 	mutex_lock(&iss->media_dev.graph_mutex);
 
 	entity = &pipe->output->video.entity;
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
 		subdev = media_entity_to_v4l2_subdev(entity);
 
 		ret = v4l2_subdev_call(subdev, video, s_stream, mode);
-		if (ret < 0 && ret != -ENOIOCTLCMD) {
+		अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
 			iss_pipeline_disable(pipe, entity);
 			mutex_unlock(&iss->media_dev.graph_mutex);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (subdev == &iss->csi2a.subdev ||
+		अगर (subdev == &iss->csi2a.subdev ||
 		    subdev == &iss->csi2b.subdev)
-			pipe->do_propagation = true;
-	}
+			pipe->करो_propagation = true;
+	पूर्ण
 
 	mutex_unlock(&iss->media_dev.graph_mutex);
-	iss_print_status(pipe->output->iss);
+	iss_prपूर्णांक_status(pipe->output->iss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * omap4iss_pipeline_set_stream - Enable/disable streaming on a pipeline
@@ -497,25 +498,25 @@ static int iss_pipeline_enable(struct iss_pipeline *pipe,
  * Set the pipeline to the given stream state. Pipelines can be started in
  * single-shot or continuous mode.
  *
- * Return 0 if successful, or the return value of the failed video::s_stream
+ * Return 0 अगर successful, or the वापस value of the failed video::s_stream
  * operation otherwise. The pipeline state is not updated when the operation
  * fails, except when stopping the pipeline.
  */
-int omap4iss_pipeline_set_stream(struct iss_pipeline *pipe,
-				 enum iss_pipeline_stream_state state)
-{
-	int ret;
+पूर्णांक omap4iss_pipeline_set_stream(काष्ठा iss_pipeline *pipe,
+				 क्रमागत iss_pipeline_stream_state state)
+अणु
+	पूर्णांक ret;
 
-	if (state == ISS_PIPELINE_STREAM_STOPPED)
-		ret = iss_pipeline_disable(pipe, NULL);
-	else
+	अगर (state == ISS_PIPELINE_STREAM_STOPPED)
+		ret = iss_pipeline_disable(pipe, शून्य);
+	अन्यथा
 		ret = iss_pipeline_enable(pipe, state);
 
-	if (ret == 0 || state == ISS_PIPELINE_STREAM_STOPPED)
+	अगर (ret == 0 || state == ISS_PIPELINE_STREAM_STOPPED)
 		pipe->stream_state = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * omap4iss_pipeline_cancel_stream - Cancel stream on a pipeline
@@ -526,60 +527,60 @@ int omap4iss_pipeline_set_stream(struct iss_pipeline *pipe,
  * when a fatal error that prevents any further operation on the pipeline
  * occurs.
  */
-void omap4iss_pipeline_cancel_stream(struct iss_pipeline *pipe)
-{
-	if (pipe->input)
+व्योम omap4iss_pipeline_cancel_stream(काष्ठा iss_pipeline *pipe)
+अणु
+	अगर (pipe->input)
 		omap4iss_video_cancel_stream(pipe->input);
-	if (pipe->output)
+	अगर (pipe->output)
 		omap4iss_video_cancel_stream(pipe->output);
-}
+पूर्ण
 
 /*
- * iss_pipeline_is_last - Verify if entity has an enabled link to the output
+ * iss_pipeline_is_last - Verअगरy अगर entity has an enabled link to the output
  *			  video node
  * @me: ISS module's media entity
  *
- * Returns 1 if the entity has an enabled link to the output video node or 0
- * otherwise. It's true only while pipeline can have no more than one output
+ * Returns 1 अगर the entity has an enabled link to the output video node or 0
+ * otherwise. It's true only जबतक pipeline can have no more than one output
  * node.
  */
-static int iss_pipeline_is_last(struct media_entity *me)
-{
-	struct iss_pipeline *pipe;
-	struct media_pad *pad;
+अटल पूर्णांक iss_pipeline_is_last(काष्ठा media_entity *me)
+अणु
+	काष्ठा iss_pipeline *pipe;
+	काष्ठा media_pad *pad;
 
-	if (!me->pipe)
-		return 0;
+	अगर (!me->pipe)
+		वापस 0;
 	pipe = to_iss_pipeline(me);
-	if (pipe->stream_state == ISS_PIPELINE_STREAM_STOPPED)
-		return 0;
+	अगर (pipe->stream_state == ISS_PIPELINE_STREAM_STOPPED)
+		वापस 0;
 	pad = media_entity_remote_pad(&pipe->output->pad);
-	return pad->entity == me;
-}
+	वापस pad->entity == me;
+पूर्ण
 
-static int iss_reset(struct iss_device *iss)
-{
-	unsigned int timeout;
+अटल पूर्णांक iss_reset(काष्ठा iss_device *iss)
+अणु
+	अचिन्हित पूर्णांक समयout;
 
 	iss_reg_set(iss, OMAP4_ISS_MEM_TOP, ISS_HL_SYSCONFIG,
 		    ISS_HL_SYSCONFIG_SOFTRESET);
 
-	timeout = iss_poll_condition_timeout(
-		!(iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_HL_SYSCONFIG) &
+	समयout = iss_poll_condition_समयout(
+		!(iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_SYSCONFIG) &
 		ISS_HL_SYSCONFIG_SOFTRESET), 1000, 10, 100);
-	if (timeout) {
+	अगर (समयout) अणु
 		dev_err(iss->dev, "ISS reset timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	media_entity_enum_zero(&iss->crashed);
+	media_entity_क्रमागत_zero(&iss->crashed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iss_isp_reset(struct iss_device *iss)
-{
-	unsigned int timeout;
+अटल पूर्णांक iss_isp_reset(काष्ठा iss_device *iss)
+अणु
+	अचिन्हित पूर्णांक समयout;
 
 	/* Fist, ensure that the ISP is IDLE (no transactions happening) */
 	iss_reg_update(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_SYSCONFIG,
@@ -588,628 +589,628 @@ static int iss_isp_reset(struct iss_device *iss)
 
 	iss_reg_set(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL, ISP5_CTRL_MSTANDBY);
 
-	timeout = iss_poll_condition_timeout(
-		iss_reg_read(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL) &
+	समयout = iss_poll_condition_समयout(
+		iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL) &
 		ISP5_CTRL_MSTANDBY_WAIT, 1000000, 1000, 1500);
-	if (timeout) {
+	अगर (समयout) अणु
 		dev_err(iss->dev, "ISP5 standby timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* Now finally, do the reset */
+	/* Now finally, करो the reset */
 	iss_reg_set(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_SYSCONFIG,
 		    ISP5_SYSCONFIG_SOFTRESET);
 
-	timeout = iss_poll_condition_timeout(
-		!(iss_reg_read(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_SYSCONFIG) &
+	समयout = iss_poll_condition_समयout(
+		!(iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_SYSCONFIG) &
 		ISP5_SYSCONFIG_SOFTRESET), 1000000, 1000, 1500);
-	if (timeout) {
+	अगर (समयout) अणु
 		dev_err(iss->dev, "ISP5 reset timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * iss_module_sync_idle - Helper to sync module with its idle state
  * @me: ISS submodule's media entity
- * @wait: ISS submodule's wait queue for streamoff/interrupt synchronization
+ * @रुको: ISS submodule's रुको queue क्रम streamoff/पूर्णांकerrupt synchronization
  * @stopping: flag which tells module wants to stop
  *
- * This function checks if ISS submodule needs to wait for next interrupt. If
- * yes, makes the caller to sleep while waiting for such event.
+ * This function checks अगर ISS submodule needs to रुको क्रम next पूर्णांकerrupt. If
+ * yes, makes the caller to sleep जबतक रुकोing क्रम such event.
  */
-int omap4iss_module_sync_idle(struct media_entity *me, wait_queue_head_t *wait,
+पूर्णांक omap4iss_module_sync_idle(काष्ठा media_entity *me, रुको_queue_head_t *रुको,
 			      atomic_t *stopping)
-{
-	struct iss_pipeline *pipe = to_iss_pipeline(me);
-	struct iss_video *video = pipe->output;
-	unsigned long flags;
+अणु
+	काष्ठा iss_pipeline *pipe = to_iss_pipeline(me);
+	काष्ठा iss_video *video = pipe->output;
+	अचिन्हित दीर्घ flags;
 
-	if (pipe->stream_state == ISS_PIPELINE_STREAM_STOPPED ||
+	अगर (pipe->stream_state == ISS_PIPELINE_STREAM_STOPPED ||
 	    (pipe->stream_state == ISS_PIPELINE_STREAM_SINGLESHOT &&
-	     !iss_pipeline_ready(pipe)))
-		return 0;
+	     !iss_pipeline_पढ़ोy(pipe)))
+		वापस 0;
 
 	/*
-	 * atomic_set() doesn't include memory barrier on ARM platform for SMP
-	 * scenario. We'll call it here to avoid race conditions.
+	 * atomic_set() करोesn't include memory barrier on ARM platक्रमm क्रम SMP
+	 * scenario. We'll call it here to aव्योम race conditions.
 	 */
 	atomic_set(stopping, 1);
 	smp_wmb();
 
 	/*
-	 * If module is the last one, it's writing to memory. In this case,
-	 * it's necessary to check if the module is already paused due to
-	 * DMA queue underrun or if it has to wait for next interrupt to be
+	 * If module is the last one, it's writing to memory. In this हाल,
+	 * it's necessary to check अगर the module is alपढ़ोy छोड़ोd due to
+	 * DMA queue underrun or अगर it has to रुको क्रम next पूर्णांकerrupt to be
 	 * idle.
 	 * If it isn't the last one, the function won't sleep but *stopping
-	 * will still be set to warn next submodule caller's interrupt the
+	 * will still be set to warn next submodule caller's पूर्णांकerrupt the
 	 * module wants to be idle.
 	 */
-	if (!iss_pipeline_is_last(me))
-		return 0;
+	अगर (!iss_pipeline_is_last(me))
+		वापस 0;
 
 	spin_lock_irqsave(&video->qlock, flags);
-	if (video->dmaqueue_flags & ISS_VIDEO_DMAQUEUE_UNDERRUN) {
+	अगर (video->dmaqueue_flags & ISS_VIDEO_DMAQUEUE_UNDERRUN) अणु
 		spin_unlock_irqrestore(&video->qlock, flags);
 		atomic_set(stopping, 0);
 		smp_wmb();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&video->qlock, flags);
-	if (!wait_event_timeout(*wait, !atomic_read(stopping),
-				msecs_to_jiffies(1000))) {
+	अगर (!रुको_event_समयout(*रुको, !atomic_पढ़ो(stopping),
+				msecs_to_jअगरfies(1000))) अणु
 		atomic_set(stopping, 0);
 		smp_wmb();
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * omap4iss_module_sync_is_stopped - Helper to verify if module was stopping
- * @wait: ISS submodule's wait queue for streamoff/interrupt synchronization
+ * omap4iss_module_sync_is_stopped - Helper to verअगरy अगर module was stopping
+ * @रुको: ISS submodule's रुको queue क्रम streamoff/पूर्णांकerrupt synchronization
  * @stopping: flag which tells module wants to stop
  *
- * This function checks if ISS submodule was stopping. In case of yes, it
- * notices the caller by setting stopping to 0 and waking up the wait queue.
- * Returns 1 if it was stopping or 0 otherwise.
+ * This function checks अगर ISS submodule was stopping. In हाल of yes, it
+ * notices the caller by setting stopping to 0 and waking up the रुको queue.
+ * Returns 1 अगर it was stopping or 0 otherwise.
  */
-int omap4iss_module_sync_is_stopping(wait_queue_head_t *wait,
+पूर्णांक omap4iss_module_sync_is_stopping(रुको_queue_head_t *रुको,
 				     atomic_t *stopping)
-{
-	if (atomic_cmpxchg(stopping, 1, 0)) {
-		wake_up(wait);
-		return 1;
-	}
+अणु
+	अगर (atomic_cmpxchg(stopping, 1, 0)) अणु
+		wake_up(रुको);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --------------------------------------------------------------------------
  * Clock management
  */
 
-#define ISS_CLKCTRL_MASK	(ISS_CLKCTRL_CSI2_A |\
+#घोषणा ISS_CLKCTRL_MASK	(ISS_CLKCTRL_CSI2_A |\
 				 ISS_CLKCTRL_CSI2_B |\
 				 ISS_CLKCTRL_ISP)
 
-static int __iss_subclk_update(struct iss_device *iss)
-{
+अटल पूर्णांक __iss_subclk_update(काष्ठा iss_device *iss)
+अणु
 	u32 clk = 0;
-	int ret = 0, timeout = 1000;
+	पूर्णांक ret = 0, समयout = 1000;
 
-	if (iss->subclk_resources & OMAP4_ISS_SUBCLK_CSI2_A)
+	अगर (iss->subclk_resources & OMAP4_ISS_SUBCLK_CSI2_A)
 		clk |= ISS_CLKCTRL_CSI2_A;
 
-	if (iss->subclk_resources & OMAP4_ISS_SUBCLK_CSI2_B)
+	अगर (iss->subclk_resources & OMAP4_ISS_SUBCLK_CSI2_B)
 		clk |= ISS_CLKCTRL_CSI2_B;
 
-	if (iss->subclk_resources & OMAP4_ISS_SUBCLK_ISP)
+	अगर (iss->subclk_resources & OMAP4_ISS_SUBCLK_ISP)
 		clk |= ISS_CLKCTRL_ISP;
 
 	iss_reg_update(iss, OMAP4_ISS_MEM_TOP, ISS_CLKCTRL,
 		       ISS_CLKCTRL_MASK, clk);
 
-	/* Wait for HW assertion */
-	while (--timeout > 0) {
+	/* Wait क्रम HW निश्चितion */
+	जबतक (--समयout > 0) अणु
 		udelay(1);
-		if ((iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_CLKSTAT) &
+		अगर ((iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_CLKSTAT) &
 		    ISS_CLKCTRL_MASK) == clk)
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (!timeout)
+	अगर (!समयout)
 		ret = -EBUSY;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int omap4iss_subclk_enable(struct iss_device *iss,
-			   enum iss_subclk_resource res)
-{
+पूर्णांक omap4iss_subclk_enable(काष्ठा iss_device *iss,
+			   क्रमागत iss_subclk_resource res)
+अणु
 	iss->subclk_resources |= res;
 
-	return __iss_subclk_update(iss);
-}
+	वापस __iss_subclk_update(iss);
+पूर्ण
 
-int omap4iss_subclk_disable(struct iss_device *iss,
-			    enum iss_subclk_resource res)
-{
+पूर्णांक omap4iss_subclk_disable(काष्ठा iss_device *iss,
+			    क्रमागत iss_subclk_resource res)
+अणु
 	iss->subclk_resources &= ~res;
 
-	return __iss_subclk_update(iss);
-}
+	वापस __iss_subclk_update(iss);
+पूर्ण
 
-#define ISS_ISP5_CLKCTRL_MASK	(ISP5_CTRL_BL_CLK_ENABLE |\
+#घोषणा ISS_ISP5_CLKCTRL_MASK	(ISP5_CTRL_BL_CLK_ENABLE |\
 				 ISP5_CTRL_ISIF_CLK_ENABLE |\
 				 ISP5_CTRL_H3A_CLK_ENABLE |\
 				 ISP5_CTRL_RSZ_CLK_ENABLE |\
 				 ISP5_CTRL_IPIPE_CLK_ENABLE |\
 				 ISP5_CTRL_IPIPEIF_CLK_ENABLE)
 
-static void __iss_isp_subclk_update(struct iss_device *iss)
-{
+अटल व्योम __iss_isp_subclk_update(काष्ठा iss_device *iss)
+अणु
 	u32 clk = 0;
 
-	if (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_ISIF)
+	अगर (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_ISIF)
 		clk |= ISP5_CTRL_ISIF_CLK_ENABLE;
 
-	if (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_H3A)
+	अगर (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_H3A)
 		clk |= ISP5_CTRL_H3A_CLK_ENABLE;
 
-	if (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_RSZ)
+	अगर (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_RSZ)
 		clk |= ISP5_CTRL_RSZ_CLK_ENABLE;
 
-	if (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_IPIPE)
+	अगर (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_IPIPE)
 		clk |= ISP5_CTRL_IPIPE_CLK_ENABLE;
 
-	if (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_IPIPEIF)
+	अगर (iss->isp_subclk_resources & OMAP4_ISS_ISP_SUBCLK_IPIPEIF)
 		clk |= ISP5_CTRL_IPIPEIF_CLK_ENABLE;
 
-	if (clk)
+	अगर (clk)
 		clk |= ISP5_CTRL_BL_CLK_ENABLE;
 
 	iss_reg_update(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_CTRL,
 		       ISS_ISP5_CLKCTRL_MASK, clk);
-}
+पूर्ण
 
-void omap4iss_isp_subclk_enable(struct iss_device *iss,
-				enum iss_isp_subclk_resource res)
-{
+व्योम omap4iss_isp_subclk_enable(काष्ठा iss_device *iss,
+				क्रमागत iss_isp_subclk_resource res)
+अणु
 	iss->isp_subclk_resources |= res;
 
 	__iss_isp_subclk_update(iss);
-}
+पूर्ण
 
-void omap4iss_isp_subclk_disable(struct iss_device *iss,
-				 enum iss_isp_subclk_resource res)
-{
+व्योम omap4iss_isp_subclk_disable(काष्ठा iss_device *iss,
+				 क्रमागत iss_isp_subclk_resource res)
+अणु
 	iss->isp_subclk_resources &= ~res;
 
 	__iss_isp_subclk_update(iss);
-}
+पूर्ण
 
 /*
- * iss_enable_clocks - Enable ISS clocks
+ * iss_enable_घड़ीs - Enable ISS घड़ीs
  * @iss: OMAP4 ISS device
  *
- * Return 0 if successful, or clk_enable return value if any of tthem fails.
+ * Return 0 अगर successful, or clk_enable वापस value अगर any of tthem fails.
  */
-static int iss_enable_clocks(struct iss_device *iss)
-{
-	int ret;
+अटल पूर्णांक iss_enable_घड़ीs(काष्ठा iss_device *iss)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_enable(iss->iss_fck);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(iss->dev, "clk_enable iss_fck failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_enable(iss->iss_ctrlclk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(iss->dev, "clk_enable iss_ctrlclk failed\n");
 		clk_disable(iss->iss_fck);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * iss_disable_clocks - Disable ISS clocks
+ * iss_disable_घड़ीs - Disable ISS घड़ीs
  * @iss: OMAP4 ISS device
  */
-static void iss_disable_clocks(struct iss_device *iss)
-{
+अटल व्योम iss_disable_घड़ीs(काष्ठा iss_device *iss)
+अणु
 	clk_disable(iss->iss_ctrlclk);
 	clk_disable(iss->iss_fck);
-}
+पूर्ण
 
-static int iss_get_clocks(struct iss_device *iss)
-{
+अटल पूर्णांक iss_get_घड़ीs(काष्ठा iss_device *iss)
+अणु
 	iss->iss_fck = devm_clk_get(iss->dev, "iss_fck");
-	if (IS_ERR(iss->iss_fck)) {
+	अगर (IS_ERR(iss->iss_fck)) अणु
 		dev_err(iss->dev, "Unable to get iss_fck clock info\n");
-		return PTR_ERR(iss->iss_fck);
-	}
+		वापस PTR_ERR(iss->iss_fck);
+	पूर्ण
 
 	iss->iss_ctrlclk = devm_clk_get(iss->dev, "iss_ctrlclk");
-	if (IS_ERR(iss->iss_ctrlclk)) {
+	अगर (IS_ERR(iss->iss_ctrlclk)) अणु
 		dev_err(iss->dev, "Unable to get iss_ctrlclk clock info\n");
-		return PTR_ERR(iss->iss_ctrlclk);
-	}
+		वापस PTR_ERR(iss->iss_ctrlclk);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * omap4iss_get - Acquire the ISS resource.
  *
- * Initializes the clocks for the first acquire.
+ * Initializes the घड़ीs क्रम the first acquire.
  *
  * Increment the reference count on the ISS. If the first reference is taken,
- * enable clocks and power-up all submodules.
+ * enable घड़ीs and घातer-up all submodules.
  *
- * Return a pointer to the ISS device structure, or NULL if an error occurred.
+ * Return a poपूर्णांकer to the ISS device काष्ठाure, or शून्य अगर an error occurred.
  */
-struct iss_device *omap4iss_get(struct iss_device *iss)
-{
-	struct iss_device *__iss = iss;
+काष्ठा iss_device *omap4iss_get(काष्ठा iss_device *iss)
+अणु
+	काष्ठा iss_device *__iss = iss;
 
-	if (!iss)
-		return NULL;
+	अगर (!iss)
+		वापस शून्य;
 
 	mutex_lock(&iss->iss_mutex);
-	if (iss->ref_count > 0)
-		goto out;
+	अगर (iss->ref_count > 0)
+		जाओ out;
 
-	if (iss_enable_clocks(iss) < 0) {
-		__iss = NULL;
-		goto out;
-	}
+	अगर (iss_enable_घड़ीs(iss) < 0) अणु
+		__iss = शून्य;
+		जाओ out;
+	पूर्ण
 
-	iss_enable_interrupts(iss);
+	iss_enable_पूर्णांकerrupts(iss);
 
 out:
-	if (__iss)
+	अगर (__iss)
 		iss->ref_count++;
 	mutex_unlock(&iss->iss_mutex);
 
-	return __iss;
-}
+	वापस __iss;
+पूर्ण
 
 /*
  * omap4iss_put - Release the ISS
  *
  * Decrement the reference count on the ISS. If the last reference is released,
- * power-down all submodules, disable clocks and free temporary buffers.
+ * घातer-करोwn all submodules, disable घड़ीs and मुक्त temporary buffers.
  */
-void omap4iss_put(struct iss_device *iss)
-{
-	if (!iss)
-		return;
+व्योम omap4iss_put(काष्ठा iss_device *iss)
+अणु
+	अगर (!iss)
+		वापस;
 
 	mutex_lock(&iss->iss_mutex);
 	WARN_ON(iss->ref_count == 0);
-	if (--iss->ref_count == 0) {
-		iss_disable_interrupts(iss);
-		/* Reset the ISS if an entity has failed to stop. This is the
+	अगर (--iss->ref_count == 0) अणु
+		iss_disable_पूर्णांकerrupts(iss);
+		/* Reset the ISS अगर an entity has failed to stop. This is the
 		 * only way to recover from such conditions, although it would
 		 * be worth investigating whether resetting the ISP only can't
-		 * fix the problem in some cases.
+		 * fix the problem in some हालs.
 		 */
-		if (!media_entity_enum_empty(&iss->crashed))
+		अगर (!media_entity_क्रमागत_empty(&iss->crashed))
 			iss_reset(iss);
-		iss_disable_clocks(iss);
-	}
+		iss_disable_घड़ीs(iss);
+	पूर्ण
 	mutex_unlock(&iss->iss_mutex);
-}
+पूर्ण
 
-static int iss_map_mem_resource(struct platform_device *pdev,
-				struct iss_device *iss,
-				enum iss_mem_resources res)
-{
-	iss->regs[res] = devm_platform_ioremap_resource(pdev, res);
+अटल पूर्णांक iss_map_mem_resource(काष्ठा platक्रमm_device *pdev,
+				काष्ठा iss_device *iss,
+				क्रमागत iss_mem_resources res)
+अणु
+	iss->regs[res] = devm_platक्रमm_ioremap_resource(pdev, res);
 
-	return PTR_ERR_OR_ZERO(iss->regs[res]);
-}
+	वापस PTR_ERR_OR_ZERO(iss->regs[res]);
+पूर्ण
 
-static void iss_unregister_entities(struct iss_device *iss)
-{
-	omap4iss_resizer_unregister_entities(&iss->resizer);
-	omap4iss_ipipe_unregister_entities(&iss->ipipe);
-	omap4iss_ipipeif_unregister_entities(&iss->ipipeif);
-	omap4iss_csi2_unregister_entities(&iss->csi2a);
-	omap4iss_csi2_unregister_entities(&iss->csi2b);
+अटल व्योम iss_unरेजिस्टर_entities(काष्ठा iss_device *iss)
+अणु
+	omap4iss_resizer_unरेजिस्टर_entities(&iss->resizer);
+	omap4iss_ipipe_unरेजिस्टर_entities(&iss->ipipe);
+	omap4iss_ipipeअगर_unरेजिस्टर_entities(&iss->ipipeअगर);
+	omap4iss_csi2_unरेजिस्टर_entities(&iss->csi2a);
+	omap4iss_csi2_unरेजिस्टर_entities(&iss->csi2b);
 
-	v4l2_device_unregister(&iss->v4l2_dev);
-	media_device_unregister(&iss->media_dev);
-}
+	v4l2_device_unरेजिस्टर(&iss->v4l2_dev);
+	media_device_unरेजिस्टर(&iss->media_dev);
+पूर्ण
 
 /*
- * iss_register_subdev_group - Register a group of subdevices
+ * iss_रेजिस्टर_subdev_group - Register a group of subdevices
  * @iss: OMAP4 ISS device
- * @board_info: I2C subdevs board information array
+ * @board_info: I2C subdevs board inक्रमmation array
  *
  * Register all I2C subdevices in the board_info array. The array must be
- * terminated by a NULL entry, and the first entry must be the sensor.
+ * terminated by a शून्य entry, and the first entry must be the sensor.
  *
- * Return a pointer to the sensor media entity if it has been successfully
- * registered, or NULL otherwise.
+ * Return a poपूर्णांकer to the sensor media entity अगर it has been successfully
+ * रेजिस्टरed, or शून्य otherwise.
  */
-static struct v4l2_subdev *
-iss_register_subdev_group(struct iss_device *iss,
-			  struct iss_subdev_i2c_board_info *board_info)
-{
-	struct v4l2_subdev *sensor = NULL;
-	unsigned int first;
+अटल काष्ठा v4l2_subdev *
+iss_रेजिस्टर_subdev_group(काष्ठा iss_device *iss,
+			  काष्ठा iss_subdev_i2c_board_info *board_info)
+अणु
+	काष्ठा v4l2_subdev *sensor = शून्य;
+	अचिन्हित पूर्णांक first;
 
-	if (!board_info->board_info)
-		return NULL;
+	अगर (!board_info->board_info)
+		वापस शून्य;
 
-	for (first = 1; board_info->board_info; ++board_info, first = 0) {
-		struct v4l2_subdev *subdev;
-		struct i2c_adapter *adapter;
+	क्रम (first = 1; board_info->board_info; ++board_info, first = 0) अणु
+		काष्ठा v4l2_subdev *subdev;
+		काष्ठा i2c_adapter *adapter;
 
 		adapter = i2c_get_adapter(board_info->i2c_adapter_id);
-		if (!adapter) {
+		अगर (!adapter) अणु
 			dev_err(iss->dev,
 				"%s: Unable to get I2C adapter %d for device %s\n",
 				__func__, board_info->i2c_adapter_id,
 				board_info->board_info->type);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		subdev = v4l2_i2c_new_subdev_board(&iss->v4l2_dev, adapter,
-						   board_info->board_info, NULL);
-		if (!subdev) {
+						   board_info->board_info, शून्य);
+		अगर (!subdev) अणु
 			dev_err(iss->dev, "Unable to register subdev %s\n",
 				board_info->board_info->type);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (first)
+		अगर (first)
 			sensor = subdev;
-	}
+	पूर्ण
 
-	return sensor;
-}
+	वापस sensor;
+पूर्ण
 
-static int iss_register_entities(struct iss_device *iss)
-{
-	struct iss_platform_data *pdata = iss->pdata;
-	struct iss_v4l2_subdevs_group *subdevs;
-	int ret;
+अटल पूर्णांक iss_रेजिस्टर_entities(काष्ठा iss_device *iss)
+अणु
+	काष्ठा iss_platक्रमm_data *pdata = iss->pdata;
+	काष्ठा iss_v4l2_subdevs_group *subdevs;
+	पूर्णांक ret;
 
 	iss->media_dev.dev = iss->dev;
 	strscpy(iss->media_dev.model, "TI OMAP4 ISS",
-		sizeof(iss->media_dev.model));
+		माप(iss->media_dev.model));
 	iss->media_dev.hw_revision = iss->revision;
 	iss->media_dev.ops = &iss_media_ops;
-	ret = media_device_register(&iss->media_dev);
-	if (ret < 0) {
+	ret = media_device_रेजिस्टर(&iss->media_dev);
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "Media device registration failed (%d)\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	iss->v4l2_dev.mdev = &iss->media_dev;
-	ret = v4l2_device_register(iss->dev, &iss->v4l2_dev);
-	if (ret < 0) {
+	ret = v4l2_device_रेजिस्टर(iss->dev, &iss->v4l2_dev);
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "V4L2 device registration failed (%d)\n",
 			ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Register internal entities */
-	ret = omap4iss_csi2_register_entities(&iss->csi2a, &iss->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	/* Register पूर्णांकernal entities */
+	ret = omap4iss_csi2_रेजिस्टर_entities(&iss->csi2a, &iss->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap4iss_csi2_register_entities(&iss->csi2b, &iss->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap4iss_csi2_रेजिस्टर_entities(&iss->csi2b, &iss->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap4iss_ipipeif_register_entities(&iss->ipipeif, &iss->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap4iss_ipipeअगर_रेजिस्टर_entities(&iss->ipipeअगर, &iss->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap4iss_ipipe_register_entities(&iss->ipipe, &iss->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap4iss_ipipe_रेजिस्टर_entities(&iss->ipipe, &iss->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap4iss_resizer_register_entities(&iss->resizer, &iss->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap4iss_resizer_रेजिस्टर_entities(&iss->resizer, &iss->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	/* Register external entities */
-	for (subdevs = pdata->subdevs; subdevs && subdevs->subdevs; ++subdevs) {
-		struct v4l2_subdev *sensor;
-		struct media_entity *input;
-		unsigned int flags;
-		unsigned int pad;
+	/* Register बाह्यal entities */
+	क्रम (subdevs = pdata->subdevs; subdevs && subdevs->subdevs; ++subdevs) अणु
+		काष्ठा v4l2_subdev *sensor;
+		काष्ठा media_entity *input;
+		अचिन्हित पूर्णांक flags;
+		अचिन्हित पूर्णांक pad;
 
-		sensor = iss_register_subdev_group(iss, subdevs->subdevs);
-		if (!sensor)
-			continue;
+		sensor = iss_रेजिस्टर_subdev_group(iss, subdevs->subdevs);
+		अगर (!sensor)
+			जारी;
 
 		sensor->host_priv = subdevs;
 
-		/* Connect the sensor to the correct interface module.
+		/* Connect the sensor to the correct पूर्णांकerface module.
 		 * CSI2a receiver through CSIPHY1, or
 		 * CSI2b receiver through CSIPHY2
 		 */
-		switch (subdevs->interface) {
-		case ISS_INTERFACE_CSI2A_PHY1:
+		चयन (subdevs->पूर्णांकerface) अणु
+		हाल ISS_INTERFACE_CSI2A_PHY1:
 			input = &iss->csi2a.subdev.entity;
 			pad = CSI2_PAD_SINK;
 			flags = MEDIA_LNK_FL_IMMUTABLE
 			      | MEDIA_LNK_FL_ENABLED;
-			break;
+			अवरोध;
 
-		case ISS_INTERFACE_CSI2B_PHY2:
+		हाल ISS_INTERFACE_CSI2B_PHY2:
 			input = &iss->csi2b.subdev.entity;
 			pad = CSI2_PAD_SINK;
 			flags = MEDIA_LNK_FL_IMMUTABLE
 			      | MEDIA_LNK_FL_ENABLED;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_err(iss->dev, "invalid interface type %u\n",
-				subdevs->interface);
+				subdevs->पूर्णांकerface);
 			ret = -EINVAL;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		ret = media_create_pad_link(&sensor->entity, 0, input, pad,
 					    flags);
-		if (ret < 0)
-			goto done;
-	}
+		अगर (ret < 0)
+			जाओ करोne;
+	पूर्ण
 
-	ret = v4l2_device_register_subdev_nodes(&iss->v4l2_dev);
+	ret = v4l2_device_रेजिस्टर_subdev_nodes(&iss->v4l2_dev);
 
-done:
-	if (ret < 0)
-		iss_unregister_entities(iss);
+करोne:
+	अगर (ret < 0)
+		iss_unरेजिस्टर_entities(iss);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * iss_create_links() - Pads links creation for the subdevices
- * @iss : Pointer to ISS device
+ * iss_create_links() - Pads links creation क्रम the subdevices
+ * @iss : Poपूर्णांकer to ISS device
  *
- * return negative error code or zero on success
+ * वापस negative error code or zero on success
  */
-static int iss_create_links(struct iss_device *iss)
-{
-	int ret;
+अटल पूर्णांक iss_create_links(काष्ठा iss_device *iss)
+अणु
+	पूर्णांक ret;
 
 	ret = omap4iss_csi2_create_links(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "CSI2 pads links creation failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = omap4iss_ipipeif_create_links(iss);
-	if (ret < 0) {
+	ret = omap4iss_ipipeअगर_create_links(iss);
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "ISP IPIPEIF pads links creation failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = omap4iss_resizer_create_links(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "ISP RESIZER pads links creation failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Connect the submodules. */
 	ret = media_create_pad_link(
 			&iss->csi2a.subdev.entity, CSI2_PAD_SOURCE,
-			&iss->ipipeif.subdev.entity, IPIPEIF_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+			&iss->ipipeअगर.subdev.entity, IPIPEIF_PAD_SINK, 0);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&iss->csi2b.subdev.entity, CSI2_PAD_SOURCE,
-			&iss->ipipeif.subdev.entity, IPIPEIF_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+			&iss->ipipeअगर.subdev.entity, IPIPEIF_PAD_SINK, 0);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
-			&iss->ipipeif.subdev.entity, IPIPEIF_PAD_SOURCE_VP,
+			&iss->ipipeअगर.subdev.entity, IPIPEIF_PAD_SOURCE_VP,
 			&iss->resizer.subdev.entity, RESIZER_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
-			&iss->ipipeif.subdev.entity, IPIPEIF_PAD_SOURCE_VP,
+			&iss->ipipeअगर.subdev.entity, IPIPEIF_PAD_SOURCE_VP,
 			&iss->ipipe.subdev.entity, IPIPE_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&iss->ipipe.subdev.entity, IPIPE_PAD_SOURCE_VP,
 			&iss->resizer.subdev.entity, RESIZER_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
-static void iss_cleanup_modules(struct iss_device *iss)
-{
+अटल व्योम iss_cleanup_modules(काष्ठा iss_device *iss)
+अणु
 	omap4iss_csi2_cleanup(iss);
-	omap4iss_ipipeif_cleanup(iss);
+	omap4iss_ipipeअगर_cleanup(iss);
 	omap4iss_ipipe_cleanup(iss);
 	omap4iss_resizer_cleanup(iss);
-}
+पूर्ण
 
-static int iss_initialize_modules(struct iss_device *iss)
-{
-	int ret;
+अटल पूर्णांक iss_initialize_modules(काष्ठा iss_device *iss)
+अणु
+	पूर्णांक ret;
 
 	ret = omap4iss_csiphy_init(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "CSI PHY initialization failed\n");
-		goto error_csiphy;
-	}
+		जाओ error_csiphy;
+	पूर्ण
 
 	ret = omap4iss_csi2_init(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "CSI2 initialization failed\n");
-		goto error_csi2;
-	}
+		जाओ error_csi2;
+	पूर्ण
 
-	ret = omap4iss_ipipeif_init(iss);
-	if (ret < 0) {
+	ret = omap4iss_ipipeअगर_init(iss);
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "ISP IPIPEIF initialization failed\n");
-		goto error_ipipeif;
-	}
+		जाओ error_ipipeअगर;
+	पूर्ण
 
 	ret = omap4iss_ipipe_init(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "ISP IPIPE initialization failed\n");
-		goto error_ipipe;
-	}
+		जाओ error_ipipe;
+	पूर्ण
 
 	ret = omap4iss_resizer_init(iss);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(iss->dev, "ISP RESIZER initialization failed\n");
-		goto error_resizer;
-	}
+		जाओ error_resizer;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_resizer:
 	omap4iss_ipipe_cleanup(iss);
 error_ipipe:
-	omap4iss_ipipeif_cleanup(iss);
-error_ipipeif:
+	omap4iss_ipipeअगर_cleanup(iss);
+error_ipipeअगर:
 	omap4iss_csi2_cleanup(iss);
 error_csi2:
 error_csiphy:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iss_probe(struct platform_device *pdev)
-{
-	struct iss_platform_data *pdata = pdev->dev.platform_data;
-	struct iss_device *iss;
-	unsigned int i;
-	int ret;
+अटल पूर्णांक iss_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iss_platक्रमm_data *pdata = pdev->dev.platक्रमm_data;
+	काष्ठा iss_device *iss;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!pdata)
-		return -EINVAL;
+	अगर (!pdata)
+		वापस -EINVAL;
 
-	iss = devm_kzalloc(&pdev->dev, sizeof(*iss), GFP_KERNEL);
-	if (!iss)
-		return -ENOMEM;
+	iss = devm_kzalloc(&pdev->dev, माप(*iss), GFP_KERNEL);
+	अगर (!iss)
+		वापस -ENOMEM;
 
 	mutex_init(&iss->iss_mutex);
 
@@ -1220,101 +1221,101 @@ static int iss_probe(struct platform_device *pdev)
 	iss->dev->dma_mask = &iss->raw_dmamask;
 	iss->dev->coherent_dma_mask = DMA_BIT_MASK(32);
 
-	platform_set_drvdata(pdev, iss);
+	platक्रमm_set_drvdata(pdev, iss);
 
 	/*
-	 * TODO: When implementing DT support switch to syscon regmap lookup by
+	 * TODO: When implementing DT support चयन to syscon regmap lookup by
 	 * phandle.
 	 */
 	iss->syscon = syscon_regmap_lookup_by_compatible("syscon");
-	if (IS_ERR(iss->syscon)) {
+	अगर (IS_ERR(iss->syscon)) अणु
 		ret = PTR_ERR(iss->syscon);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	/* Clocks */
 	ret = iss_map_mem_resource(pdev, iss, OMAP4_ISS_MEM_TOP);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	ret = iss_get_clocks(iss);
-	if (ret < 0)
-		goto error;
+	ret = iss_get_घड़ीs(iss);
+	अगर (ret < 0)
+		जाओ error;
 
-	if (!omap4iss_get(iss)) {
+	अगर (!omap4iss_get(iss)) अणु
 		ret = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = iss_reset(iss);
-	if (ret < 0)
-		goto error_iss;
+	अगर (ret < 0)
+		जाओ error_iss;
 
-	iss->revision = iss_reg_read(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION);
+	iss->revision = iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_TOP, ISS_HL_REVISION);
 	dev_info(iss->dev, "Revision %08x found\n", iss->revision);
 
-	for (i = 1; i < OMAP4_ISS_MEM_LAST; i++) {
+	क्रम (i = 1; i < OMAP4_ISS_MEM_LAST; i++) अणु
 		ret = iss_map_mem_resource(pdev, iss, i);
-		if (ret)
-			goto error_iss;
-	}
+		अगर (ret)
+			जाओ error_iss;
+	पूर्ण
 
 	/* Configure BTE BW_LIMITER field to max recommended value (1 GB) */
 	iss_reg_update(iss, OMAP4_ISS_MEM_BTE, BTE_CTRL,
 		       BTE_CTRL_BW_LIMITER_MASK,
 		       18 << BTE_CTRL_BW_LIMITER_SHIFT);
 
-	/* Perform ISP reset */
+	/* Perक्रमm ISP reset */
 	ret = omap4iss_subclk_enable(iss, OMAP4_ISS_SUBCLK_ISP);
-	if (ret < 0)
-		goto error_iss;
+	अगर (ret < 0)
+		जाओ error_iss;
 
 	ret = iss_isp_reset(iss);
-	if (ret < 0)
-		goto error_iss;
+	अगर (ret < 0)
+		जाओ error_iss;
 
 	dev_info(iss->dev, "ISP Revision %08x found\n",
-		 iss_reg_read(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_REVISION));
+		 iss_reg_पढ़ो(iss, OMAP4_ISS_MEM_ISP_SYS1, ISP5_REVISION));
 
 	/* Interrupt */
-	ret = platform_get_irq(pdev, 0);
-	if (ret <= 0) {
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret <= 0) अणु
 		ret = -ENODEV;
-		goto error_iss;
-	}
+		जाओ error_iss;
+	पूर्ण
 	iss->irq_num = ret;
 
-	if (devm_request_irq(iss->dev, iss->irq_num, iss_isr, IRQF_SHARED,
-			     "OMAP4 ISS", iss)) {
+	अगर (devm_request_irq(iss->dev, iss->irq_num, iss_isr, IRQF_SHARED,
+			     "OMAP4 ISS", iss)) अणु
 		dev_err(iss->dev, "Unable to request IRQ\n");
 		ret = -EINVAL;
-		goto error_iss;
-	}
+		जाओ error_iss;
+	पूर्ण
 
 	/* Entities */
 	ret = iss_initialize_modules(iss);
-	if (ret < 0)
-		goto error_iss;
+	अगर (ret < 0)
+		जाओ error_iss;
 
-	ret = iss_register_entities(iss);
-	if (ret < 0)
-		goto error_modules;
+	ret = iss_रेजिस्टर_entities(iss);
+	अगर (ret < 0)
+		जाओ error_modules;
 
-	ret = media_entity_enum_init(&iss->crashed, &iss->media_dev);
-	if (ret)
-		goto error_entities;
+	ret = media_entity_क्रमागत_init(&iss->crashed, &iss->media_dev);
+	अगर (ret)
+		जाओ error_entities;
 
 	ret = iss_create_links(iss);
-	if (ret < 0)
-		goto error_entities;
+	अगर (ret < 0)
+		जाओ error_entities;
 
 	omap4iss_put(iss);
 
-	return 0;
+	वापस 0;
 
 error_entities:
-	iss_unregister_entities(iss);
-	media_entity_enum_cleanup(&iss->crashed);
+	iss_unरेजिस्टर_entities(iss);
+	media_entity_क्रमागत_cleanup(&iss->crashed);
 error_modules:
 	iss_cleanup_modules(iss);
 error_iss:
@@ -1322,36 +1323,36 @@ error_iss:
 error:
 	mutex_destroy(&iss->iss_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iss_remove(struct platform_device *pdev)
-{
-	struct iss_device *iss = platform_get_drvdata(pdev);
+अटल पूर्णांक iss_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा iss_device *iss = platक्रमm_get_drvdata(pdev);
 
-	iss_unregister_entities(iss);
-	media_entity_enum_cleanup(&iss->crashed);
+	iss_unरेजिस्टर_entities(iss);
+	media_entity_क्रमागत_cleanup(&iss->crashed);
 	iss_cleanup_modules(iss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id omap4iss_id_table[] = {
-	{ "omap4iss", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, omap4iss_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id omap4iss_id_table[] = अणु
+	अणु "omap4iss", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, omap4iss_id_table);
 
-static struct platform_driver iss_driver = {
+अटल काष्ठा platक्रमm_driver iss_driver = अणु
 	.probe		= iss_probe,
-	.remove		= iss_remove,
+	.हटाओ		= iss_हटाओ,
 	.id_table	= omap4iss_id_table,
-	.driver = {
+	.driver = अणु
 		.name	= "omap4iss",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(iss_driver);
+module_platक्रमm_driver(iss_driver);
 
 MODULE_DESCRIPTION("TI OMAP4 ISS driver");
 MODULE_AUTHOR("Sergio Aguirre <sergio.a.aguirre@gmail.com>");

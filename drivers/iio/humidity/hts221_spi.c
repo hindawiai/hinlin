@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics hts221 spi driver
  *
@@ -7,60 +8,60 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
 
-#include "hts221.h"
+#समावेश "hts221.h"
 
-#define HTS221_SPI_READ			BIT(7)
-#define HTS221_SPI_AUTO_INCREMENT	BIT(6)
+#घोषणा HTS221_SPI_READ			BIT(7)
+#घोषणा HTS221_SPI_AUTO_INCREMENT	BIT(6)
 
-static const struct regmap_config hts221_spi_regmap_config = {
+अटल स्थिर काष्ठा regmap_config hts221_spi_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.write_flag_mask = HTS221_SPI_AUTO_INCREMENT,
-	.read_flag_mask = HTS221_SPI_READ | HTS221_SPI_AUTO_INCREMENT,
-};
+	.ग_लिखो_flag_mask = HTS221_SPI_AUTO_INCREMENT,
+	.पढ़ो_flag_mask = HTS221_SPI_READ | HTS221_SPI_AUTO_INCREMENT,
+पूर्ण;
 
-static int hts221_spi_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
+अटल पूर्णांक hts221_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
 
 	regmap = devm_regmap_init_spi(spi, &hts221_spi_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		dev_err(&spi->dev, "Failed to register spi regmap %ld\n",
 			PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	return hts221_probe(&spi->dev, spi->irq,
+	वापस hts221_probe(&spi->dev, spi->irq,
 			    spi->modalias, regmap);
-}
+पूर्ण
 
-static const struct of_device_id hts221_spi_of_match[] = {
-	{ .compatible = "st,hts221", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id hts221_spi_of_match[] = अणु
+	अणु .compatible = "st,hts221", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, hts221_spi_of_match);
 
-static const struct spi_device_id hts221_spi_id_table[] = {
-	{ HTS221_DEV_NAME },
-	{},
-};
+अटल स्थिर काष्ठा spi_device_id hts221_spi_id_table[] = अणु
+	अणु HTS221_DEV_NAME पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, hts221_spi_id_table);
 
-static struct spi_driver hts221_driver = {
-	.driver = {
+अटल काष्ठा spi_driver hts221_driver = अणु
+	.driver = अणु
 		.name = "hts221_spi",
 		.pm = &hts221_pm_ops,
 		.of_match_table = hts221_spi_of_match,
-	},
+	पूर्ण,
 	.probe = hts221_spi_probe,
 	.id_table = hts221_spi_id_table,
-};
+पूर्ण;
 module_spi_driver(hts221_driver);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");

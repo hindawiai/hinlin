@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * kernel/power/wakelock.c
+ * kernel/घातer/wakelock.c
  *
  * User space wakeup sources support.
  *
  * Copyright (C) 2012 Rafael J. Wysocki <rjw@sisk.pl>
  *
- * This code is based on the analogous interface allowing user space to
+ * This code is based on the analogous पूर्णांकerface allowing user space to
  * manipulate wakelocks on Android.
  */
 
-#include <linux/capability.h>
-#include <linux/ctype.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/hrtimer.h>
-#include <linux/list.h>
-#include <linux/rbtree.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
 
-#include "power.h"
+#समावेश "power.h"
 
-static DEFINE_MUTEX(wakelocks_lock);
+अटल DEFINE_MUTEX(wakelocks_lock);
 
-struct wakelock {
-	char			*name;
-	struct rb_node		node;
-	struct wakeup_source	*ws;
-#ifdef CONFIG_PM_WAKELOCKS_GC
-	struct list_head	lru;
-#endif
-};
+काष्ठा wakelock अणु
+	अक्षर			*name;
+	काष्ठा rb_node		node;
+	काष्ठा wakeup_source	*ws;
+#अगर_घोषित CONFIG_PM_WAKELOCKS_GC
+	काष्ठा list_head	lru;
+#पूर्ण_अगर
+पूर्ण;
 
-static struct rb_root wakelocks_tree = RB_ROOT;
+अटल काष्ठा rb_root wakelocks_tree = RB_ROOT;
 
-ssize_t pm_show_wakelocks(char *buf, bool show_active)
-{
-	struct rb_node *node;
-	struct wakelock *wl;
-	char *str = buf;
-	char *end = buf + PAGE_SIZE;
+sमाप_प्रकार pm_show_wakelocks(अक्षर *buf, bool show_active)
+अणु
+	काष्ठा rb_node *node;
+	काष्ठा wakelock *wl;
+	अक्षर *str = buf;
+	अक्षर *end = buf + PAGE_SIZE;
 
 	mutex_lock(&wakelocks_lock);
 
-	for (node = rb_first(&wakelocks_tree); node; node = rb_next(node)) {
-		wl = rb_entry(node, struct wakelock, node);
-		if (wl->ws->active == show_active)
-			str += scnprintf(str, end - str, "%s ", wl->name);
-	}
-	if (str > buf)
+	क्रम (node = rb_first(&wakelocks_tree); node; node = rb_next(node)) अणु
+		wl = rb_entry(node, काष्ठा wakelock, node);
+		अगर (wl->ws->active == show_active)
+			str += scnम_लिखो(str, end - str, "%s ", wl->name);
+	पूर्ण
+	अगर (str > buf)
 		str--;
 
-	str += scnprintf(str, end - str, "\n");
+	str += scnम_लिखो(str, end - str, "\n");
 
 	mutex_unlock(&wakelocks_lock);
-	return (str - buf);
-}
+	वापस (str - buf);
+पूर्ण
 
-#if CONFIG_PM_WAKELOCKS_LIMIT > 0
-static unsigned int number_of_wakelocks;
+#अगर CONFIG_PM_WAKELOCKS_LIMIT > 0
+अटल अचिन्हित पूर्णांक number_of_wakelocks;
 
-static inline bool wakelocks_limit_exceeded(void)
-{
-	return number_of_wakelocks > CONFIG_PM_WAKELOCKS_LIMIT;
-}
+अटल अंतरभूत bool wakelocks_limit_exceeded(व्योम)
+अणु
+	वापस number_of_wakelocks > CONFIG_PM_WAKELOCKS_LIMIT;
+पूर्ण
 
-static inline void increment_wakelocks_number(void)
-{
+अटल अंतरभूत व्योम increment_wakelocks_number(व्योम)
+अणु
 	number_of_wakelocks++;
-}
+पूर्ण
 
-static inline void decrement_wakelocks_number(void)
-{
+अटल अंतरभूत व्योम decrement_wakelocks_number(व्योम)
+अणु
 	number_of_wakelocks--;
-}
-#else /* CONFIG_PM_WAKELOCKS_LIMIT = 0 */
-static inline bool wakelocks_limit_exceeded(void) { return false; }
-static inline void increment_wakelocks_number(void) {}
-static inline void decrement_wakelocks_number(void) {}
-#endif /* CONFIG_PM_WAKELOCKS_LIMIT */
+पूर्ण
+#अन्यथा /* CONFIG_PM_WAKELOCKS_LIMIT = 0 */
+अटल अंतरभूत bool wakelocks_limit_exceeded(व्योम) अणु वापस false; पूर्ण
+अटल अंतरभूत व्योम increment_wakelocks_number(व्योम) अणुपूर्ण
+अटल अंतरभूत व्योम decrement_wakelocks_number(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_PM_WAKELOCKS_LIMIT */
 
-#ifdef CONFIG_PM_WAKELOCKS_GC
-#define WL_GC_COUNT_MAX	100
-#define WL_GC_TIME_SEC	300
+#अगर_घोषित CONFIG_PM_WAKELOCKS_GC
+#घोषणा WL_GC_COUNT_MAX	100
+#घोषणा WL_GC_TIME_SEC	300
 
-static void __wakelocks_gc(struct work_struct *work);
-static LIST_HEAD(wakelocks_lru_list);
-static DECLARE_WORK(wakelock_work, __wakelocks_gc);
-static unsigned int wakelocks_gc_count;
+अटल व्योम __wakelocks_gc(काष्ठा work_काष्ठा *work);
+अटल LIST_HEAD(wakelocks_lru_list);
+अटल DECLARE_WORK(wakelock_work, __wakelocks_gc);
+अटल अचिन्हित पूर्णांक wakelocks_gc_count;
 
-static inline void wakelocks_lru_add(struct wakelock *wl)
-{
+अटल अंतरभूत व्योम wakelocks_lru_add(काष्ठा wakelock *wl)
+अणु
 	list_add(&wl->lru, &wakelocks_lru_list);
-}
+पूर्ण
 
-static inline void wakelocks_lru_most_recent(struct wakelock *wl)
-{
+अटल अंतरभूत व्योम wakelocks_lru_most_recent(काष्ठा wakelock *wl)
+अणु
 	list_move(&wl->lru, &wakelocks_lru_list);
-}
+पूर्ण
 
-static void __wakelocks_gc(struct work_struct *work)
-{
-	struct wakelock *wl, *aux;
-	ktime_t now;
+अटल व्योम __wakelocks_gc(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा wakelock *wl, *aux;
+	kसमय_प्रकार now;
 
 	mutex_lock(&wakelocks_lock);
 
-	now = ktime_get();
-	list_for_each_entry_safe_reverse(wl, aux, &wakelocks_lru_list, lru) {
-		u64 idle_time_ns;
+	now = kसमय_get();
+	list_क्रम_each_entry_safe_reverse(wl, aux, &wakelocks_lru_list, lru) अणु
+		u64 idle_समय_ns;
 		bool active;
 
 		spin_lock_irq(&wl->ws->lock);
-		idle_time_ns = ktime_to_ns(ktime_sub(now, wl->ws->last_time));
+		idle_समय_ns = kसमय_प्रकारo_ns(kसमय_sub(now, wl->ws->last_समय));
 		active = wl->ws->active;
 		spin_unlock_irq(&wl->ws->lock);
 
-		if (idle_time_ns < ((u64)WL_GC_TIME_SEC * NSEC_PER_SEC))
-			break;
+		अगर (idle_समय_ns < ((u64)WL_GC_TIME_SEC * NSEC_PER_SEC))
+			अवरोध;
 
-		if (!active) {
-			wakeup_source_unregister(wl->ws);
+		अगर (!active) अणु
+			wakeup_source_unरेजिस्टर(wl->ws);
 			rb_erase(&wl->node, &wakelocks_tree);
 			list_del(&wl->lru);
-			kfree(wl->name);
-			kfree(wl);
+			kमुक्त(wl->name);
+			kमुक्त(wl);
 			decrement_wakelocks_number();
-		}
-	}
+		पूर्ण
+	पूर्ण
 	wakelocks_gc_count = 0;
 
 	mutex_unlock(&wakelocks_lock);
-}
+पूर्ण
 
-static void wakelocks_gc(void)
-{
-	if (++wakelocks_gc_count <= WL_GC_COUNT_MAX)
-		return;
+अटल व्योम wakelocks_gc(व्योम)
+अणु
+	अगर (++wakelocks_gc_count <= WL_GC_COUNT_MAX)
+		वापस;
 
 	schedule_work(&wakelock_work);
-}
-#else /* !CONFIG_PM_WAKELOCKS_GC */
-static inline void wakelocks_lru_add(struct wakelock *wl) {}
-static inline void wakelocks_lru_most_recent(struct wakelock *wl) {}
-static inline void wakelocks_gc(void) {}
-#endif /* !CONFIG_PM_WAKELOCKS_GC */
+पूर्ण
+#अन्यथा /* !CONFIG_PM_WAKELOCKS_GC */
+अटल अंतरभूत व्योम wakelocks_lru_add(काष्ठा wakelock *wl) अणुपूर्ण
+अटल अंतरभूत व्योम wakelocks_lru_most_recent(काष्ठा wakelock *wl) अणुपूर्ण
+अटल अंतरभूत व्योम wakelocks_gc(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* !CONFIG_PM_WAKELOCKS_GC */
 
-static struct wakelock *wakelock_lookup_add(const char *name, size_t len,
-					    bool add_if_not_found)
-{
-	struct rb_node **node = &wakelocks_tree.rb_node;
-	struct rb_node *parent = *node;
-	struct wakelock *wl;
+अटल काष्ठा wakelock *wakelock_lookup_add(स्थिर अक्षर *name, माप_प्रकार len,
+					    bool add_अगर_not_found)
+अणु
+	काष्ठा rb_node **node = &wakelocks_tree.rb_node;
+	काष्ठा rb_node *parent = *node;
+	काष्ठा wakelock *wl;
 
-	while (*node) {
-		int diff;
+	जबतक (*node) अणु
+		पूर्णांक dअगरf;
 
 		parent = *node;
-		wl = rb_entry(*node, struct wakelock, node);
-		diff = strncmp(name, wl->name, len);
-		if (diff == 0) {
-			if (wl->name[len])
-				diff = -1;
-			else
-				return wl;
-		}
-		if (diff < 0)
+		wl = rb_entry(*node, काष्ठा wakelock, node);
+		dअगरf = म_भेदन(name, wl->name, len);
+		अगर (dअगरf == 0) अणु
+			अगर (wl->name[len])
+				dअगरf = -1;
+			अन्यथा
+				वापस wl;
+		पूर्ण
+		अगर (dअगरf < 0)
 			node = &(*node)->rb_left;
-		else
+		अन्यथा
 			node = &(*node)->rb_right;
-	}
-	if (!add_if_not_found)
-		return ERR_PTR(-EINVAL);
+	पूर्ण
+	अगर (!add_अगर_not_found)
+		वापस ERR_PTR(-EINVAL);
 
-	if (wakelocks_limit_exceeded())
-		return ERR_PTR(-ENOSPC);
+	अगर (wakelocks_limit_exceeded())
+		वापस ERR_PTR(-ENOSPC);
 
 	/* Not found, we have to add a new one. */
-	wl = kzalloc(sizeof(*wl), GFP_KERNEL);
-	if (!wl)
-		return ERR_PTR(-ENOMEM);
+	wl = kzalloc(माप(*wl), GFP_KERNEL);
+	अगर (!wl)
+		वापस ERR_PTR(-ENOMEM);
 
 	wl->name = kstrndup(name, len, GFP_KERNEL);
-	if (!wl->name) {
-		kfree(wl);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!wl->name) अणु
+		kमुक्त(wl);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	wl->ws = wakeup_source_register(NULL, wl->name);
-	if (!wl->ws) {
-		kfree(wl->name);
-		kfree(wl);
-		return ERR_PTR(-ENOMEM);
-	}
-	wl->ws->last_time = ktime_get();
+	wl->ws = wakeup_source_रेजिस्टर(शून्य, wl->name);
+	अगर (!wl->ws) अणु
+		kमुक्त(wl->name);
+		kमुक्त(wl);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
+	wl->ws->last_समय = kसमय_get();
 
 	rb_link_node(&wl->node, parent, node);
 	rb_insert_color(&wl->node, &wakelocks_tree);
 	wakelocks_lru_add(wl);
 	increment_wakelocks_number();
-	return wl;
-}
+	वापस wl;
+पूर्ण
 
-int pm_wake_lock(const char *buf)
-{
-	const char *str = buf;
-	struct wakelock *wl;
-	u64 timeout_ns = 0;
-	size_t len;
-	int ret = 0;
+पूर्णांक pm_wake_lock(स्थिर अक्षर *buf)
+अणु
+	स्थिर अक्षर *str = buf;
+	काष्ठा wakelock *wl;
+	u64 समयout_ns = 0;
+	माप_प्रकार len;
+	पूर्णांक ret = 0;
 
-	if (!capable(CAP_BLOCK_SUSPEND))
-		return -EPERM;
+	अगर (!capable(CAP_BLOCK_SUSPEND))
+		वापस -EPERM;
 
-	while (*str && !isspace(*str))
+	जबतक (*str && !है_खाली(*str))
 		str++;
 
 	len = str - buf;
-	if (!len)
-		return -EINVAL;
+	अगर (!len)
+		वापस -EINVAL;
 
-	if (*str && *str != '\n') {
-		/* Find out if there's a valid timeout string appended. */
-		ret = kstrtou64(skip_spaces(str), 10, &timeout_ns);
-		if (ret)
-			return -EINVAL;
-	}
+	अगर (*str && *str != '\n') अणु
+		/* Find out अगर there's a valid समयout string appended. */
+		ret = kstrtou64(skip_spaces(str), 10, &समयout_ns);
+		अगर (ret)
+			वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&wakelocks_lock);
 
 	wl = wakelock_lookup_add(buf, len, true);
-	if (IS_ERR(wl)) {
+	अगर (IS_ERR(wl)) अणु
 		ret = PTR_ERR(wl);
-		goto out;
-	}
-	if (timeout_ns) {
-		u64 timeout_ms = timeout_ns + NSEC_PER_MSEC - 1;
+		जाओ out;
+	पूर्ण
+	अगर (समयout_ns) अणु
+		u64 समयout_ms = समयout_ns + NSEC_PER_MSEC - 1;
 
-		do_div(timeout_ms, NSEC_PER_MSEC);
-		__pm_wakeup_event(wl->ws, timeout_ms);
-	} else {
+		करो_भाग(समयout_ms, NSEC_PER_MSEC);
+		__pm_wakeup_event(wl->ws, समयout_ms);
+	पूर्ण अन्यथा अणु
 		__pm_stay_awake(wl->ws);
-	}
+	पूर्ण
 
 	wakelocks_lru_most_recent(wl);
 
  out:
 	mutex_unlock(&wakelocks_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pm_wake_unlock(const char *buf)
-{
-	struct wakelock *wl;
-	size_t len;
-	int ret = 0;
+पूर्णांक pm_wake_unlock(स्थिर अक्षर *buf)
+अणु
+	काष्ठा wakelock *wl;
+	माप_प्रकार len;
+	पूर्णांक ret = 0;
 
-	if (!capable(CAP_BLOCK_SUSPEND))
-		return -EPERM;
+	अगर (!capable(CAP_BLOCK_SUSPEND))
+		वापस -EPERM;
 
-	len = strlen(buf);
-	if (!len)
-		return -EINVAL;
+	len = म_माप(buf);
+	अगर (!len)
+		वापस -EINVAL;
 
-	if (buf[len-1] == '\n')
+	अगर (buf[len-1] == '\n')
 		len--;
 
-	if (!len)
-		return -EINVAL;
+	अगर (!len)
+		वापस -EINVAL;
 
 	mutex_lock(&wakelocks_lock);
 
 	wl = wakelock_lookup_add(buf, len, false);
-	if (IS_ERR(wl)) {
+	अगर (IS_ERR(wl)) अणु
 		ret = PTR_ERR(wl);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	__pm_relax(wl->ws);
 
 	wakelocks_lru_most_recent(wl);
@@ -284,5 +285,5 @@ int pm_wake_unlock(const char *buf)
 
  out:
 	mutex_unlock(&wakelocks_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _ASM_VERMAGIC_H
-#define _ASM_VERMAGIC_H
+#अगर_अघोषित _ASM_VERMAGIC_H
+#घोषणा _ASM_VERMAGIC_H
 
-#define MODULE_ARCH_VERMAGIC "ARC700"
+#घोषणा MODULE_ARCH_VERMAGIC "ARC700"
 
-#endif /* _ASM_VERMAGIC_H */
+#पूर्ण_अगर /* _ASM_VERMAGIC_H */

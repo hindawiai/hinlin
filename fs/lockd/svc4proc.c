@@ -1,724 +1,725 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/lockd/svc4proc.c
  *
- * Lockd server procedures. We don't implement the NLM_*_RES 
- * procedures because we don't use the async procedures.
+ * Lockd server procedures. We करोn't implement the NLM_*_RES 
+ * procedures because we करोn't use the async procedures.
  *
  * Copyright (C) 1996, Olaf Kirch <okir@monad.swb.de>
  */
 
-#include <linux/types.h>
-#include <linux/time.h>
-#include <linux/lockd/lockd.h>
-#include <linux/lockd/share.h>
-#include <linux/sunrpc/svc_xprt.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/lockd/lockd.h>
+#समावेश <linux/lockd/share.h>
+#समावेश <linux/sunrpc/svc_xprt.h>
 
-#define NLMDBG_FACILITY		NLMDBG_CLIENT
+#घोषणा NLMDBG_FACILITY		NLMDBG_CLIENT
 
 /*
  * Obtain client and file from arguments
  */
-static __be32
-nlm4svc_retrieve_args(struct svc_rqst *rqstp, struct nlm_args *argp,
-			struct nlm_host **hostp, struct nlm_file **filp)
-{
-	struct nlm_host		*host = NULL;
-	struct nlm_file		*file = NULL;
-	struct nlm_lock		*lock = &argp->lock;
+अटल __be32
+nlm4svc_retrieve_args(काष्ठा svc_rqst *rqstp, काष्ठा nlm_args *argp,
+			काष्ठा nlm_host **hostp, काष्ठा nlm_file **filp)
+अणु
+	काष्ठा nlm_host		*host = शून्य;
+	काष्ठा nlm_file		*file = शून्य;
+	काष्ठा nlm_lock		*lock = &argp->lock;
 	__be32			error = 0;
 
-	/* nfsd callbacks must have been installed for this procedure */
-	if (!nlmsvc_ops)
-		return nlm_lck_denied_nolocks;
+	/* nfsd callbacks must have been installed क्रम this procedure */
+	अगर (!nlmsvc_ops)
+		वापस nlm_lck_denied_nolocks;
 
 	/* Obtain host handle */
-	if (!(host = nlmsvc_lookup_host(rqstp, lock->caller, lock->len))
+	अगर (!(host = nlmsvc_lookup_host(rqstp, lock->caller, lock->len))
 	 || (argp->monitor && nsm_monitor(host) < 0))
-		goto no_locks;
+		जाओ no_locks;
 	*hostp = host;
 
-	/* Obtain file pointer. Not used by FREE_ALL call. */
-	if (filp != NULL) {
-		if ((error = nlm_lookup_file(rqstp, &file, &lock->fh)) != 0)
-			goto no_locks;
+	/* Obtain file poपूर्णांकer. Not used by FREE_ALL call. */
+	अगर (filp != शून्य) अणु
+		अगर ((error = nlm_lookup_file(rqstp, &file, &lock->fh)) != 0)
+			जाओ no_locks;
 		*filp = file;
 
-		/* Set up the missing parts of the file_lock structure */
+		/* Set up the missing parts of the file_lock काष्ठाure */
 		lock->fl.fl_file  = file->f_file;
 		lock->fl.fl_pid = current->tgid;
 		lock->fl.fl_lmops = &nlmsvc_lock_operations;
-		nlmsvc_locks_init_private(&lock->fl, host, (pid_t)lock->svid);
-		if (!lock->fl.fl_owner) {
+		nlmsvc_locks_init_निजी(&lock->fl, host, (pid_t)lock->svid);
+		अगर (!lock->fl.fl_owner) अणु
 			/* lockowner allocation has failed */
 			nlmsvc_release_host(host);
-			return nlm_lck_denied_nolocks;
-		}
-	}
+			वापस nlm_lck_denied_nolocks;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 no_locks:
 	nlmsvc_release_host(host);
- 	if (error)
-		return error;	
-	return nlm_lck_denied_nolocks;
-}
+ 	अगर (error)
+		वापस error;	
+	वापस nlm_lck_denied_nolocks;
+पूर्ण
 
 /*
- * NULL: Test for presence of service
+ * शून्य: Test क्रम presence of service
  */
-static __be32
-nlm4svc_proc_null(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: NULL          called\n");
-	return rpc_success;
-}
+अटल __be32
+nlm4svc_proc_null(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: NULL          called\n");
+	वापस rpc_success;
+पूर्ण
 
 /*
- * TEST: Check for conflicting lock
+ * TEST: Check क्रम conflicting lock
  */
-static __be32
-__nlm4svc_proc_test(struct svc_rqst *rqstp, struct nlm_res *resp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+__nlm4svc_proc_test(काष्ठा svc_rqst *rqstp, काष्ठा nlm_res *resp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 	__be32 rc = rpc_success;
 
-	dprintk("lockd: TEST4        called\n");
+	dprपूर्णांकk("lockd: TEST4        called\n");
 	resp->cookie = argp->cookie;
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
-	/* Now check for conflicting locks */
+	/* Now check क्रम conflicting locks */
 	resp->status = nlmsvc_testlock(rqstp, file, host, &argp->lock, &resp->lock, &resp->cookie);
-	if (resp->status == nlm_drop_reply)
+	अगर (resp->status == nlm_drop_reply)
 		rc = rpc_drop_reply;
-	else
-		dprintk("lockd: TEST4        status %d\n", ntohl(resp->status));
+	अन्यथा
+		dprपूर्णांकk("lockd: TEST4        status %d\n", ntohl(resp->status));
 
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static __be32
-nlm4svc_proc_test(struct svc_rqst *rqstp)
-{
-	return __nlm4svc_proc_test(rqstp, rqstp->rq_resp);
-}
+अटल __be32
+nlm4svc_proc_test(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस __nlm4svc_proc_test(rqstp, rqstp->rq_resp);
+पूर्ण
 
-static __be32
-__nlm4svc_proc_lock(struct svc_rqst *rqstp, struct nlm_res *resp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+__nlm4svc_proc_lock(काष्ठा svc_rqst *rqstp, काष्ठा nlm_res *resp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 	__be32 rc = rpc_success;
 
-	dprintk("lockd: LOCK          called\n");
+	dprपूर्णांकk("lockd: LOCK          called\n");
 
 	resp->cookie = argp->cookie;
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
-#if 0
-	/* If supplied state doesn't match current state, we assume it's
-	 * an old request that time-warped somehow. Any error return would
-	 * do in this case because it's irrelevant anyway.
+#अगर 0
+	/* If supplied state करोesn't match current state, we assume it's
+	 * an old request that समय-warped somehow. Any error वापस would
+	 * करो in this हाल because it's irrelevant anyway.
 	 *
-	 * NB: We don't retrieve the remote host's state yet.
+	 * NB: We करोn't retrieve the remote host's state yet.
 	 */
-	if (host->h_nsmstate && host->h_nsmstate != argp->state) {
+	अगर (host->h_nsmstate && host->h_nsmstate != argp->state) अणु
 		resp->status = nlm_lck_denied_nolocks;
-	} else
-#endif
+	पूर्ण अन्यथा
+#पूर्ण_अगर
 
 	/* Now try to lock the file */
 	resp->status = nlmsvc_lock(rqstp, file, host, &argp->lock,
 					argp->block, &argp->cookie,
 					argp->reclaim);
-	if (resp->status == nlm_drop_reply)
+	अगर (resp->status == nlm_drop_reply)
 		rc = rpc_drop_reply;
-	else
-		dprintk("lockd: LOCK         status %d\n", ntohl(resp->status));
+	अन्यथा
+		dprपूर्णांकk("lockd: LOCK         status %d\n", ntohl(resp->status));
 
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static __be32
-nlm4svc_proc_lock(struct svc_rqst *rqstp)
-{
-	return __nlm4svc_proc_lock(rqstp, rqstp->rq_resp);
-}
+अटल __be32
+nlm4svc_proc_lock(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस __nlm4svc_proc_lock(rqstp, rqstp->rq_resp);
+पूर्ण
 
-static __be32
-__nlm4svc_proc_cancel(struct svc_rqst *rqstp, struct nlm_res *resp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+__nlm4svc_proc_cancel(काष्ठा svc_rqst *rqstp, काष्ठा nlm_res *resp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 
-	dprintk("lockd: CANCEL        called\n");
+	dprपूर्णांकk("lockd: CANCEL        called\n");
 
 	resp->cookie = argp->cookie;
 
 	/* Don't accept requests during grace period */
-	if (locks_in_grace(SVC_NET(rqstp))) {
+	अगर (locks_in_grace(SVC_NET(rqstp))) अणु
 		resp->status = nlm_lck_denied_grace_period;
-		return rpc_success;
-	}
+		वापस rpc_success;
+	पूर्ण
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
 	/* Try to cancel request. */
 	resp->status = nlmsvc_cancel_blocked(SVC_NET(rqstp), file, &argp->lock);
 
-	dprintk("lockd: CANCEL        status %d\n", ntohl(resp->status));
+	dprपूर्णांकk("lockd: CANCEL        status %d\n", ntohl(resp->status));
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nlm4svc_proc_cancel(struct svc_rqst *rqstp)
-{
-	return __nlm4svc_proc_cancel(rqstp, rqstp->rq_resp);
-}
+अटल __be32
+nlm4svc_proc_cancel(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस __nlm4svc_proc_cancel(rqstp, rqstp->rq_resp);
+पूर्ण
 
 /*
  * UNLOCK: release a lock
  */
-static __be32
-__nlm4svc_proc_unlock(struct svc_rqst *rqstp, struct nlm_res *resp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+__nlm4svc_proc_unlock(काष्ठा svc_rqst *rqstp, काष्ठा nlm_res *resp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 
-	dprintk("lockd: UNLOCK        called\n");
+	dprपूर्णांकk("lockd: UNLOCK        called\n");
 
 	resp->cookie = argp->cookie;
 
 	/* Don't accept new lock requests during grace period */
-	if (locks_in_grace(SVC_NET(rqstp))) {
+	अगर (locks_in_grace(SVC_NET(rqstp))) अणु
 		resp->status = nlm_lck_denied_grace_period;
-		return rpc_success;
-	}
+		वापस rpc_success;
+	पूर्ण
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
-	/* Now try to remove the lock */
+	/* Now try to हटाओ the lock */
 	resp->status = nlmsvc_unlock(SVC_NET(rqstp), file, &argp->lock);
 
-	dprintk("lockd: UNLOCK        status %d\n", ntohl(resp->status));
+	dprपूर्णांकk("lockd: UNLOCK        status %d\n", ntohl(resp->status));
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nlm4svc_proc_unlock(struct svc_rqst *rqstp)
-{
-	return __nlm4svc_proc_unlock(rqstp, rqstp->rq_resp);
-}
+अटल __be32
+nlm4svc_proc_unlock(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस __nlm4svc_proc_unlock(rqstp, rqstp->rq_resp);
+पूर्ण
 
 /*
  * GRANTED: A server calls us to tell that a process' lock request
  * was granted
  */
-static __be32
-__nlm4svc_proc_granted(struct svc_rqst *rqstp, struct nlm_res *resp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
+अटल __be32
+__nlm4svc_proc_granted(काष्ठा svc_rqst *rqstp, काष्ठा nlm_res *resp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
 
 	resp->cookie = argp->cookie;
 
-	dprintk("lockd: GRANTED       called\n");
+	dprपूर्णांकk("lockd: GRANTED       called\n");
 	resp->status = nlmclnt_grant(svc_addr(rqstp), &argp->lock);
-	dprintk("lockd: GRANTED       status %d\n", ntohl(resp->status));
-	return rpc_success;
-}
+	dprपूर्णांकk("lockd: GRANTED       status %d\n", ntohl(resp->status));
+	वापस rpc_success;
+पूर्ण
 
-static __be32
-nlm4svc_proc_granted(struct svc_rqst *rqstp)
-{
-	return __nlm4svc_proc_granted(rqstp, rqstp->rq_resp);
-}
+अटल __be32
+nlm4svc_proc_granted(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस __nlm4svc_proc_granted(rqstp, rqstp->rq_resp);
+पूर्ण
 
 /*
- * This is the generic lockd callback for async RPC calls
+ * This is the generic lockd callback क्रम async RPC calls
  */
-static void nlm4svc_callback_exit(struct rpc_task *task, void *data)
-{
-	dprintk("lockd: %5u callback returned %d\n", task->tk_pid,
+अटल व्योम nlm4svc_callback_निकास(काष्ठा rpc_task *task, व्योम *data)
+अणु
+	dprपूर्णांकk("lockd: %5u callback returned %d\n", task->tk_pid,
 			-task->tk_status);
-}
+पूर्ण
 
-static void nlm4svc_callback_release(void *data)
-{
+अटल व्योम nlm4svc_callback_release(व्योम *data)
+अणु
 	nlmsvc_release_call(data);
-}
+पूर्ण
 
-static const struct rpc_call_ops nlm4svc_callback_ops = {
-	.rpc_call_done = nlm4svc_callback_exit,
+अटल स्थिर काष्ठा rpc_call_ops nlm4svc_callback_ops = अणु
+	.rpc_call_करोne = nlm4svc_callback_निकास,
 	.rpc_release = nlm4svc_callback_release,
-};
+पूर्ण;
 
 /*
  * `Async' versions of the above service routines. They aren't really,
- * because we send the callback before the reply proper. I hope this
- * doesn't break any clients.
+ * because we send the callback beक्रमe the reply proper. I hope this
+ * करोesn't अवरोध any clients.
  */
-static __be32 nlm4svc_callback(struct svc_rqst *rqstp, u32 proc,
-		__be32 (*func)(struct svc_rqst *,  struct nlm_res *))
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
-	struct nlm_rqst	*call;
+अटल __be32 nlm4svc_callback(काष्ठा svc_rqst *rqstp, u32 proc,
+		__be32 (*func)(काष्ठा svc_rqst *,  काष्ठा nlm_res *))
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_rqst	*call;
 	__be32 stat;
 
 	host = nlmsvc_lookup_host(rqstp,
 				  argp->lock.caller,
 				  argp->lock.len);
-	if (host == NULL)
-		return rpc_system_err;
+	अगर (host == शून्य)
+		वापस rpc_प्रणाली_err;
 
 	call = nlm_alloc_call(host);
 	nlmsvc_release_host(host);
-	if (call == NULL)
-		return rpc_system_err;
+	अगर (call == शून्य)
+		वापस rpc_प्रणाली_err;
 
 	stat = func(rqstp, &call->a_res);
-	if (stat != 0) {
+	अगर (stat != 0) अणु
 		nlmsvc_release_call(call);
-		return stat;
-	}
+		वापस stat;
+	पूर्ण
 
 	call->a_flags = RPC_TASK_ASYNC;
-	if (nlm_async_reply(call, proc, &nlm4svc_callback_ops) < 0)
-		return rpc_system_err;
-	return rpc_success;
-}
+	अगर (nlm_async_reply(call, proc, &nlm4svc_callback_ops) < 0)
+		वापस rpc_प्रणाली_err;
+	वापस rpc_success;
+पूर्ण
 
-static __be32 nlm4svc_proc_test_msg(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: TEST_MSG      called\n");
-	return nlm4svc_callback(rqstp, NLMPROC_TEST_RES, __nlm4svc_proc_test);
-}
+अटल __be32 nlm4svc_proc_test_msg(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: TEST_MSG      called\n");
+	वापस nlm4svc_callback(rqstp, NLMPROC_TEST_RES, __nlm4svc_proc_test);
+पूर्ण
 
-static __be32 nlm4svc_proc_lock_msg(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: LOCK_MSG      called\n");
-	return nlm4svc_callback(rqstp, NLMPROC_LOCK_RES, __nlm4svc_proc_lock);
-}
+अटल __be32 nlm4svc_proc_lock_msg(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: LOCK_MSG      called\n");
+	वापस nlm4svc_callback(rqstp, NLMPROC_LOCK_RES, __nlm4svc_proc_lock);
+पूर्ण
 
-static __be32 nlm4svc_proc_cancel_msg(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: CANCEL_MSG    called\n");
-	return nlm4svc_callback(rqstp, NLMPROC_CANCEL_RES, __nlm4svc_proc_cancel);
-}
+अटल __be32 nlm4svc_proc_cancel_msg(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: CANCEL_MSG    called\n");
+	वापस nlm4svc_callback(rqstp, NLMPROC_CANCEL_RES, __nlm4svc_proc_cancel);
+पूर्ण
 
-static __be32 nlm4svc_proc_unlock_msg(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: UNLOCK_MSG    called\n");
-	return nlm4svc_callback(rqstp, NLMPROC_UNLOCK_RES, __nlm4svc_proc_unlock);
-}
+अटल __be32 nlm4svc_proc_unlock_msg(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: UNLOCK_MSG    called\n");
+	वापस nlm4svc_callback(rqstp, NLMPROC_UNLOCK_RES, __nlm4svc_proc_unlock);
+पूर्ण
 
-static __be32 nlm4svc_proc_granted_msg(struct svc_rqst *rqstp)
-{
-	dprintk("lockd: GRANTED_MSG   called\n");
-	return nlm4svc_callback(rqstp, NLMPROC_GRANTED_RES, __nlm4svc_proc_granted);
-}
+अटल __be32 nlm4svc_proc_granted_msg(काष्ठा svc_rqst *rqstp)
+अणु
+	dprपूर्णांकk("lockd: GRANTED_MSG   called\n");
+	वापस nlm4svc_callback(rqstp, NLMPROC_GRANTED_RES, __nlm4svc_proc_granted);
+पूर्ण
 
 /*
  * SHARE: create a DOS share or alter existing share.
  */
-static __be32
-nlm4svc_proc_share(struct svc_rqst *rqstp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_res *resp = rqstp->rq_resp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+nlm4svc_proc_share(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_res *resp = rqstp->rq_resp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 
-	dprintk("lockd: SHARE         called\n");
+	dprपूर्णांकk("lockd: SHARE         called\n");
 
 	resp->cookie = argp->cookie;
 
 	/* Don't accept new lock requests during grace period */
-	if (locks_in_grace(SVC_NET(rqstp)) && !argp->reclaim) {
+	अगर (locks_in_grace(SVC_NET(rqstp)) && !argp->reclaim) अणु
 		resp->status = nlm_lck_denied_grace_period;
-		return rpc_success;
-	}
+		वापस rpc_success;
+	पूर्ण
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
 	/* Now try to create the share */
 	resp->status = nlmsvc_share_file(host, file, argp);
 
-	dprintk("lockd: SHARE         status %d\n", ntohl(resp->status));
+	dprपूर्णांकk("lockd: SHARE         status %d\n", ntohl(resp->status));
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * UNSHARE: Release a DOS share.
  */
-static __be32
-nlm4svc_proc_unshare(struct svc_rqst *rqstp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_res *resp = rqstp->rq_resp;
-	struct nlm_host	*host;
-	struct nlm_file	*file;
+अटल __be32
+nlm4svc_proc_unshare(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_res *resp = rqstp->rq_resp;
+	काष्ठा nlm_host	*host;
+	काष्ठा nlm_file	*file;
 
-	dprintk("lockd: UNSHARE       called\n");
+	dprपूर्णांकk("lockd: UNSHARE       called\n");
 
 	resp->cookie = argp->cookie;
 
 	/* Don't accept requests during grace period */
-	if (locks_in_grace(SVC_NET(rqstp))) {
+	अगर (locks_in_grace(SVC_NET(rqstp))) अणु
 		resp->status = nlm_lck_denied_grace_period;
-		return rpc_success;
-	}
+		वापस rpc_success;
+	पूर्ण
 
 	/* Obtain client and file */
-	if ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
-		return resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
+	अगर ((resp->status = nlm4svc_retrieve_args(rqstp, argp, &host, &file)))
+		वापस resp->status == nlm_drop_reply ? rpc_drop_reply :rpc_success;
 
 	/* Now try to lock the file */
 	resp->status = nlmsvc_unshare_file(host, file, argp);
 
-	dprintk("lockd: UNSHARE       status %d\n", ntohl(resp->status));
+	dprपूर्णांकk("lockd: UNSHARE       status %d\n", ntohl(resp->status));
 	nlmsvc_release_lockowner(&argp->lock);
 	nlmsvc_release_host(host);
 	nlm_release_file(file);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
  * NM_LOCK: Create an unmonitored lock
  */
-static __be32
-nlm4svc_proc_nm_lock(struct svc_rqst *rqstp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
+अटल __be32
+nlm4svc_proc_nm_lock(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
 
-	dprintk("lockd: NM_LOCK       called\n");
+	dprपूर्णांकk("lockd: NM_LOCK       called\n");
 
 	argp->monitor = 0;		/* just clean the monitor flag */
-	return nlm4svc_proc_lock(rqstp);
-}
+	वापस nlm4svc_proc_lock(rqstp);
+पूर्ण
 
 /*
  * FREE_ALL: Release all locks and shares held by client
  */
-static __be32
-nlm4svc_proc_free_all(struct svc_rqst *rqstp)
-{
-	struct nlm_args *argp = rqstp->rq_argp;
-	struct nlm_host	*host;
+अटल __be32
+nlm4svc_proc_मुक्त_all(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_args *argp = rqstp->rq_argp;
+	काष्ठा nlm_host	*host;
 
 	/* Obtain client */
-	if (nlm4svc_retrieve_args(rqstp, argp, &host, NULL))
-		return rpc_success;
+	अगर (nlm4svc_retrieve_args(rqstp, argp, &host, शून्य))
+		वापस rpc_success;
 
-	nlmsvc_free_host_resources(host);
+	nlmsvc_मुक्त_host_resources(host);
 	nlmsvc_release_host(host);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * SM_NOTIFY: private callback from statd (not part of official NLM proto)
+ * SM_NOTIFY: निजी callback from statd (not part of official NLM proto)
  */
-static __be32
-nlm4svc_proc_sm_notify(struct svc_rqst *rqstp)
-{
-	struct nlm_reboot *argp = rqstp->rq_argp;
+अटल __be32
+nlm4svc_proc_sm_notअगरy(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_reboot *argp = rqstp->rq_argp;
 
-	dprintk("lockd: SM_NOTIFY     called\n");
+	dprपूर्णांकk("lockd: SM_NOTIFY     called\n");
 
-	if (!nlm_privileged_requester(rqstp)) {
-		char buf[RPC_MAX_ADDRBUFLEN];
-		printk(KERN_WARNING "lockd: rejected NSM callback from %s\n",
-				svc_print_addr(rqstp, buf, sizeof(buf)));
-		return rpc_system_err;
-	}
+	अगर (!nlm_privileged_requester(rqstp)) अणु
+		अक्षर buf[RPC_MAX_ADDRBUFLEN];
+		prपूर्णांकk(KERN_WARNING "lockd: rejected NSM callback from %s\n",
+				svc_prपूर्णांक_addr(rqstp, buf, माप(buf)));
+		वापस rpc_प्रणाली_err;
+	पूर्ण
 
 	nlm_host_rebooted(SVC_NET(rqstp), argp);
-	return rpc_success;
-}
+	वापस rpc_success;
+पूर्ण
 
 /*
- * client sent a GRANTED_RES, let's remove the associated block
+ * client sent a GRANTED_RES, let's हटाओ the associated block
  */
-static __be32
-nlm4svc_proc_granted_res(struct svc_rqst *rqstp)
-{
-	struct nlm_res *argp = rqstp->rq_argp;
+अटल __be32
+nlm4svc_proc_granted_res(काष्ठा svc_rqst *rqstp)
+अणु
+	काष्ठा nlm_res *argp = rqstp->rq_argp;
 
-        if (!nlmsvc_ops)
-                return rpc_success;
+        अगर (!nlmsvc_ops)
+                वापस rpc_success;
 
-        dprintk("lockd: GRANTED_RES   called\n");
+        dprपूर्णांकk("lockd: GRANTED_RES   called\n");
 
         nlmsvc_grant_reply(&argp->cookie, argp->status);
-        return rpc_success;
-}
+        वापस rpc_success;
+पूर्ण
 
-static __be32
-nlm4svc_proc_unused(struct svc_rqst *rqstp)
-{
-	return rpc_proc_unavail;
-}
+अटल __be32
+nlm4svc_proc_unused(काष्ठा svc_rqst *rqstp)
+अणु
+	वापस rpc_proc_unavail;
+पूर्ण
 
 
 /*
  * NLM Server procedures.
  */
 
-struct nlm_void			{ int dummy; };
+काष्ठा nlm_व्योम			अणु पूर्णांक dummy; पूर्ण;
 
-#define	Ck	(1+XDR_QUADLEN(NLM_MAXCOOKIELEN))	/* cookie */
-#define	No	(1+1024/4)				/* netobj */
-#define	St	1					/* status */
-#define	Rg	4					/* range (offset + length) */
+#घोषणा	Ck	(1+XDR_QUADLEN(NLM_MAXCOOKIELEN))	/* cookie */
+#घोषणा	No	(1+1024/4)				/* netobj */
+#घोषणा	St	1					/* status */
+#घोषणा	Rg	4					/* range (offset + length) */
 
-const struct svc_procedure nlmsvc_procedures4[24] = {
-	[NLMPROC_NULL] = {
+स्थिर काष्ठा svc_procedure nlmsvc_procedures4[24] = अणु
+	[NLMPROC_शून्य] = अणु
 		.pc_func = nlm4svc_proc_null,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_void),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_व्योम),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "NULL",
-	},
-	[NLMPROC_TEST] = {
+	पूर्ण,
+	[NLMPROC_TEST] = अणु
 		.pc_func = nlm4svc_proc_test,
 		.pc_decode = nlm4svc_decode_testargs,
 		.pc_encode = nlm4svc_encode_testres,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St+2+No+Rg,
 		.pc_name = "TEST",
-	},
-	[NLMPROC_LOCK] = {
+	पूर्ण,
+	[NLMPROC_LOCK] = अणु
 		.pc_func = nlm4svc_proc_lock,
 		.pc_decode = nlm4svc_decode_lockargs,
 		.pc_encode = nlm4svc_encode_res,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St,
 		.pc_name = "LOCK",
-	},
-	[NLMPROC_CANCEL] = {
+	पूर्ण,
+	[NLMPROC_CANCEL] = अणु
 		.pc_func = nlm4svc_proc_cancel,
 		.pc_decode = nlm4svc_decode_cancargs,
 		.pc_encode = nlm4svc_encode_res,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St,
 		.pc_name = "CANCEL",
-	},
-	[NLMPROC_UNLOCK] = {
+	पूर्ण,
+	[NLMPROC_UNLOCK] = अणु
 		.pc_func = nlm4svc_proc_unlock,
 		.pc_decode = nlm4svc_decode_unlockargs,
 		.pc_encode = nlm4svc_encode_res,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St,
 		.pc_name = "UNLOCK",
-	},
-	[NLMPROC_GRANTED] = {
+	पूर्ण,
+	[NLMPROC_GRANTED] = अणु
 		.pc_func = nlm4svc_proc_granted,
 		.pc_decode = nlm4svc_decode_testargs,
 		.pc_encode = nlm4svc_encode_res,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St,
 		.pc_name = "GRANTED",
-	},
-	[NLMPROC_TEST_MSG] = {
+	पूर्ण,
+	[NLMPROC_TEST_MSG] = अणु
 		.pc_func = nlm4svc_proc_test_msg,
 		.pc_decode = nlm4svc_decode_testargs,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "TEST_MSG",
-	},
-	[NLMPROC_LOCK_MSG] = {
+	पूर्ण,
+	[NLMPROC_LOCK_MSG] = अणु
 		.pc_func = nlm4svc_proc_lock_msg,
 		.pc_decode = nlm4svc_decode_lockargs,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "LOCK_MSG",
-	},
-	[NLMPROC_CANCEL_MSG] = {
+	पूर्ण,
+	[NLMPROC_CANCEL_MSG] = अणु
 		.pc_func = nlm4svc_proc_cancel_msg,
 		.pc_decode = nlm4svc_decode_cancargs,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "CANCEL_MSG",
-	},
-	[NLMPROC_UNLOCK_MSG] = {
+	पूर्ण,
+	[NLMPROC_UNLOCK_MSG] = अणु
 		.pc_func = nlm4svc_proc_unlock_msg,
 		.pc_decode = nlm4svc_decode_unlockargs,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "UNLOCK_MSG",
-	},
-	[NLMPROC_GRANTED_MSG] = {
+	पूर्ण,
+	[NLMPROC_GRANTED_MSG] = अणु
 		.pc_func = nlm4svc_proc_granted_msg,
 		.pc_decode = nlm4svc_decode_testargs,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "GRANTED_MSG",
-	},
-	[NLMPROC_TEST_RES] = {
+	पूर्ण,
+	[NLMPROC_TEST_RES] = अणु
 		.pc_func = nlm4svc_proc_null,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_res),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_res),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "TEST_RES",
-	},
-	[NLMPROC_LOCK_RES] = {
+	पूर्ण,
+	[NLMPROC_LOCK_RES] = अणु
 		.pc_func = nlm4svc_proc_null,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_res),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_res),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "LOCK_RES",
-	},
-	[NLMPROC_CANCEL_RES] = {
+	पूर्ण,
+	[NLMPROC_CANCEL_RES] = अणु
 		.pc_func = nlm4svc_proc_null,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_res),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_res),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "CANCEL_RES",
-	},
-	[NLMPROC_UNLOCK_RES] = {
+	पूर्ण,
+	[NLMPROC_UNLOCK_RES] = अणु
 		.pc_func = nlm4svc_proc_null,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_res),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_res),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "UNLOCK_RES",
-	},
-	[NLMPROC_GRANTED_RES] = {
+	पूर्ण,
+	[NLMPROC_GRANTED_RES] = अणु
 		.pc_func = nlm4svc_proc_granted_res,
 		.pc_decode = nlm4svc_decode_res,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_res),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_res),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "GRANTED_RES",
-	},
-	[NLMPROC_NSM_NOTIFY] = {
-		.pc_func = nlm4svc_proc_sm_notify,
+	पूर्ण,
+	[NLMPROC_NSM_NOTIFY] = अणु
+		.pc_func = nlm4svc_proc_sm_notअगरy,
 		.pc_decode = nlm4svc_decode_reboot,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_reboot),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_reboot),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "SM_NOTIFY",
-	},
-	[17] = {
+	पूर्ण,
+	[17] = अणु
 		.pc_func = nlm4svc_proc_unused,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_void),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_व्योम),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = 0,
 		.pc_name = "UNUSED",
-	},
-	[18] = {
+	पूर्ण,
+	[18] = अणु
 		.pc_func = nlm4svc_proc_unused,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_void),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_व्योम),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = 0,
 		.pc_name = "UNUSED",
-	},
-	[19] = {
+	पूर्ण,
+	[19] = अणु
 		.pc_func = nlm4svc_proc_unused,
-		.pc_decode = nlm4svc_decode_void,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_void),
-		.pc_ressize = sizeof(struct nlm_void),
+		.pc_decode = nlm4svc_decode_व्योम,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_व्योम),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = 0,
 		.pc_name = "UNUSED",
-	},
-	[NLMPROC_SHARE] = {
+	पूर्ण,
+	[NLMPROC_SHARE] = अणु
 		.pc_func = nlm4svc_proc_share,
 		.pc_decode = nlm4svc_decode_shareargs,
 		.pc_encode = nlm4svc_encode_shareres,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St+1,
 		.pc_name = "SHARE",
-	},
-	[NLMPROC_UNSHARE] = {
+	पूर्ण,
+	[NLMPROC_UNSHARE] = अणु
 		.pc_func = nlm4svc_proc_unshare,
 		.pc_decode = nlm4svc_decode_shareargs,
 		.pc_encode = nlm4svc_encode_shareres,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St+1,
 		.pc_name = "UNSHARE",
-	},
-	[NLMPROC_NM_LOCK] = {
+	पूर्ण,
+	[NLMPROC_NM_LOCK] = अणु
 		.pc_func = nlm4svc_proc_nm_lock,
 		.pc_decode = nlm4svc_decode_lockargs,
 		.pc_encode = nlm4svc_encode_res,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_res),
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_res),
 		.pc_xdrressize = Ck+St,
 		.pc_name = "NM_LOCK",
-	},
-	[NLMPROC_FREE_ALL] = {
-		.pc_func = nlm4svc_proc_free_all,
-		.pc_decode = nlm4svc_decode_notify,
-		.pc_encode = nlm4svc_encode_void,
-		.pc_argsize = sizeof(struct nlm_args),
-		.pc_ressize = sizeof(struct nlm_void),
+	पूर्ण,
+	[NLMPROC_FREE_ALL] = अणु
+		.pc_func = nlm4svc_proc_मुक्त_all,
+		.pc_decode = nlm4svc_decode_notअगरy,
+		.pc_encode = nlm4svc_encode_व्योम,
+		.pc_argsize = माप(काष्ठा nlm_args),
+		.pc_ressize = माप(काष्ठा nlm_व्योम),
 		.pc_xdrressize = St,
 		.pc_name = "FREE_ALL",
-	},
-};
+	पूर्ण,
+पूर्ण;

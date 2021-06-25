@@ -1,865 +1,866 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/export.h>
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/phylink.h>
-#include <linux/property.h>
-#include <linux/rtnetlink.h>
-#include <linux/slab.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/export.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/phylink.h>
+#समावेश <linux/property.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/slab.h>
 
-#include "sfp.h"
+#समावेश "sfp.h"
 
-struct sfp_quirk {
-	const char *vendor;
-	const char *part;
-	void (*modes)(const struct sfp_eeprom_id *id, unsigned long *modes);
-};
+काष्ठा sfp_quirk अणु
+	स्थिर अक्षर *venकरोr;
+	स्थिर अक्षर *part;
+	व्योम (*modes)(स्थिर काष्ठा sfp_eeprom_id *id, अचिन्हित दीर्घ *modes);
+पूर्ण;
 
 /**
- * struct sfp_bus - internal representation of a sfp bus
+ * काष्ठा sfp_bus - पूर्णांकernal representation of a sfp bus
  */
-struct sfp_bus {
-	/* private: */
-	struct kref kref;
-	struct list_head node;
-	struct fwnode_handle *fwnode;
+काष्ठा sfp_bus अणु
+	/* निजी: */
+	काष्ठा kref kref;
+	काष्ठा list_head node;
+	काष्ठा fwnode_handle *fwnode;
 
-	const struct sfp_socket_ops *socket_ops;
-	struct device *sfp_dev;
-	struct sfp *sfp;
-	const struct sfp_quirk *sfp_quirk;
+	स्थिर काष्ठा sfp_socket_ops *socket_ops;
+	काष्ठा device *sfp_dev;
+	काष्ठा sfp *sfp;
+	स्थिर काष्ठा sfp_quirk *sfp_quirk;
 
-	const struct sfp_upstream_ops *upstream_ops;
-	void *upstream;
-	struct phy_device *phydev;
+	स्थिर काष्ठा sfp_upstream_ops *upstream_ops;
+	व्योम *upstream;
+	काष्ठा phy_device *phydev;
 
-	bool registered;
+	bool रेजिस्टरed;
 	bool started;
-};
+पूर्ण;
 
-static void sfp_quirk_2500basex(const struct sfp_eeprom_id *id,
-				unsigned long *modes)
-{
+अटल व्योम sfp_quirk_2500basex(स्थिर काष्ठा sfp_eeprom_id *id,
+				अचिन्हित दीर्घ *modes)
+अणु
 	phylink_set(modes, 2500baseX_Full);
-}
+पूर्ण
 
-static void sfp_quirk_ubnt_uf_instant(const struct sfp_eeprom_id *id,
-				      unsigned long *modes)
-{
+अटल व्योम sfp_quirk_ubnt_uf_instant(स्थिर काष्ठा sfp_eeprom_id *id,
+				      अचिन्हित दीर्घ *modes)
+अणु
 	/* Ubiquiti U-Fiber Instant module claims that support all transceiver
 	 * types including 10G Ethernet which is not truth. So clear all claimed
 	 * modes and set only one mode which module supports: 1000baseX_Full.
 	 */
 	phylink_zero(modes);
 	phylink_set(modes, 1000baseX_Full);
-}
+पूर्ण
 
-static const struct sfp_quirk sfp_quirks[] = {
-	{
+अटल स्थिर काष्ठा sfp_quirk sfp_quirks[] = अणु
+	अणु
 		// Alcatel Lucent G-010S-P can operate at 2500base-X, but
 		// incorrectly report 2500MBd NRZ in their EEPROM
-		.vendor = "ALCATELLUCENT",
+		.venकरोr = "ALCATELLUCENT",
 		.part = "G010SP",
 		.modes = sfp_quirk_2500basex,
-	}, {
+	पूर्ण, अणु
 		// Alcatel Lucent G-010S-A can operate at 2500base-X, but
 		// report 3.2GBd NRZ in their EEPROM
-		.vendor = "ALCATELLUCENT",
+		.venकरोr = "ALCATELLUCENT",
 		.part = "3FE46541AA",
 		.modes = sfp_quirk_2500basex,
-	}, {
+	पूर्ण, अणु
 		// Huawei MA5671A can operate at 2500base-X, but report 1.2GBd
 		// NRZ in their EEPROM
-		.vendor = "HUAWEI",
+		.venकरोr = "HUAWEI",
 		.part = "MA5671A",
 		.modes = sfp_quirk_2500basex,
-	}, {
-		.vendor = "UBNT",
+	पूर्ण, अणु
+		.venकरोr = "UBNT",
 		.part = "UF-INSTANT",
 		.modes = sfp_quirk_ubnt_uf_instant,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static size_t sfp_strlen(const char *str, size_t maxlen)
-{
-	size_t size, i;
+अटल माप_प्रकार sfp_म_माप(स्थिर अक्षर *str, माप_प्रकार maxlen)
+अणु
+	माप_प्रकार size, i;
 
-	/* Trailing characters should be filled with space chars */
-	for (i = 0, size = 0; i < maxlen; i++)
-		if (str[i] != ' ')
+	/* Trailing अक्षरacters should be filled with space अक्षरs */
+	क्रम (i = 0, size = 0; i < maxlen; i++)
+		अगर (str[i] != ' ')
 			size = i + 1;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static bool sfp_match(const char *qs, const char *str, size_t len)
-{
-	if (!qs)
-		return true;
-	if (strlen(qs) != len)
-		return false;
-	return !strncmp(qs, str, len);
-}
+अटल bool sfp_match(स्थिर अक्षर *qs, स्थिर अक्षर *str, माप_प्रकार len)
+अणु
+	अगर (!qs)
+		वापस true;
+	अगर (म_माप(qs) != len)
+		वापस false;
+	वापस !म_भेदन(qs, str, len);
+पूर्ण
 
-static const struct sfp_quirk *sfp_lookup_quirk(const struct sfp_eeprom_id *id)
-{
-	const struct sfp_quirk *q;
-	unsigned int i;
-	size_t vs, ps;
+अटल स्थिर काष्ठा sfp_quirk *sfp_lookup_quirk(स्थिर काष्ठा sfp_eeprom_id *id)
+अणु
+	स्थिर काष्ठा sfp_quirk *q;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार vs, ps;
 
-	vs = sfp_strlen(id->base.vendor_name, ARRAY_SIZE(id->base.vendor_name));
-	ps = sfp_strlen(id->base.vendor_pn, ARRAY_SIZE(id->base.vendor_pn));
+	vs = sfp_म_माप(id->base.venकरोr_name, ARRAY_SIZE(id->base.venकरोr_name));
+	ps = sfp_म_माप(id->base.venकरोr_pn, ARRAY_SIZE(id->base.venकरोr_pn));
 
-	for (i = 0, q = sfp_quirks; i < ARRAY_SIZE(sfp_quirks); i++, q++)
-		if (sfp_match(q->vendor, id->base.vendor_name, vs) &&
-		    sfp_match(q->part, id->base.vendor_pn, ps))
-			return q;
+	क्रम (i = 0, q = sfp_quirks; i < ARRAY_SIZE(sfp_quirks); i++, q++)
+		अगर (sfp_match(q->venकरोr, id->base.venकरोr_name, vs) &&
+		    sfp_match(q->part, id->base.venकरोr_pn, ps))
+			वापस q;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * sfp_parse_port() - Parse the EEPROM base ID, setting the port type
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @id: a pointer to the module's &struct sfp_eeprom_id
- * @support: optional pointer to an array of unsigned long for the
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @id: a poपूर्णांकer to the module's &काष्ठा sfp_eeprom_id
+ * @support: optional poपूर्णांकer to an array of अचिन्हित दीर्घ क्रम the
  *   ethtool support mask
  *
- * Parse the EEPROM identification given in @id, and return one of
- * %PORT_TP, %PORT_FIBRE or %PORT_OTHER. If @support is non-%NULL,
+ * Parse the EEPROM identअगरication given in @id, and वापस one of
+ * %PORT_TP, %PORT_FIBRE or %PORT_OTHER. If @support is non-%शून्य,
  * also set the ethtool %ETHTOOL_LINK_MODE_xxx_BIT corresponding with
  * the connector type.
  *
- * If the port type is not known, returns %PORT_OTHER.
+ * If the port type is not known, वापसs %PORT_OTHER.
  */
-int sfp_parse_port(struct sfp_bus *bus, const struct sfp_eeprom_id *id,
-		   unsigned long *support)
-{
-	int port;
+पूर्णांक sfp_parse_port(काष्ठा sfp_bus *bus, स्थिर काष्ठा sfp_eeprom_id *id,
+		   अचिन्हित दीर्घ *support)
+अणु
+	पूर्णांक port;
 
 	/* port is the physical connector, set this from the connector field. */
-	switch (id->base.connector) {
-	case SFF8024_CONNECTOR_SC:
-	case SFF8024_CONNECTOR_FIBERJACK:
-	case SFF8024_CONNECTOR_LC:
-	case SFF8024_CONNECTOR_MT_RJ:
-	case SFF8024_CONNECTOR_MU:
-	case SFF8024_CONNECTOR_OPTICAL_PIGTAIL:
-	case SFF8024_CONNECTOR_MPO_1X12:
-	case SFF8024_CONNECTOR_MPO_2X16:
+	चयन (id->base.connector) अणु
+	हाल SFF8024_CONNECTOR_SC:
+	हाल SFF8024_CONNECTOR_FIBERJACK:
+	हाल SFF8024_CONNECTOR_LC:
+	हाल SFF8024_CONNECTOR_MT_RJ:
+	हाल SFF8024_CONNECTOR_MU:
+	हाल SFF8024_CONNECTOR_OPTICAL_PIGTAIL:
+	हाल SFF8024_CONNECTOR_MPO_1X12:
+	हाल SFF8024_CONNECTOR_MPO_2X16:
 		port = PORT_FIBRE;
-		break;
+		अवरोध;
 
-	case SFF8024_CONNECTOR_RJ45:
+	हाल SFF8024_CONNECTOR_RJ45:
 		port = PORT_TP;
-		break;
+		अवरोध;
 
-	case SFF8024_CONNECTOR_COPPER_PIGTAIL:
+	हाल SFF8024_CONNECTOR_COPPER_PIGTAIL:
 		port = PORT_DA;
-		break;
+		अवरोध;
 
-	case SFF8024_CONNECTOR_UNSPEC:
-		if (id->base.e1000_base_t) {
+	हाल SFF8024_CONNECTOR_UNSPEC:
+		अगर (id->base.e1000_base_t) अणु
 			port = PORT_TP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case SFF8024_CONNECTOR_SG: /* guess */
-	case SFF8024_CONNECTOR_HSSDC_II:
-	case SFF8024_CONNECTOR_NOSEPARATE:
-	case SFF8024_CONNECTOR_MXC_2X16:
+	हाल SFF8024_CONNECTOR_SG: /* guess */
+	हाल SFF8024_CONNECTOR_HSSDC_II:
+	हाल SFF8024_CONNECTOR_NOSEPARATE:
+	हाल SFF8024_CONNECTOR_MXC_2X16:
 		port = PORT_OTHER;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(bus->sfp_dev, "SFP: unknown connector id 0x%02x\n",
 			 id->base.connector);
 		port = PORT_OTHER;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (support) {
-		switch (port) {
-		case PORT_FIBRE:
+	अगर (support) अणु
+		चयन (port) अणु
+		हाल PORT_FIBRE:
 			phylink_set(support, FIBRE);
-			break;
+			अवरोध;
 
-		case PORT_TP:
+		हाल PORT_TP:
 			phylink_set(support, TP);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return port;
-}
+	वापस port;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_parse_port);
 
 /**
  * sfp_may_have_phy() - indicate whether the module may have a PHY
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @id: a pointer to the module's &struct sfp_eeprom_id
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @id: a poपूर्णांकer to the module's &काष्ठा sfp_eeprom_id
  *
- * Parse the EEPROM identification given in @id, and return whether
+ * Parse the EEPROM identअगरication given in @id, and वापस whether
  * this module may have a PHY.
  */
-bool sfp_may_have_phy(struct sfp_bus *bus, const struct sfp_eeprom_id *id)
-{
-	if (id->base.e1000_base_t)
-		return true;
+bool sfp_may_have_phy(काष्ठा sfp_bus *bus, स्थिर काष्ठा sfp_eeprom_id *id)
+अणु
+	अगर (id->base.e1000_base_t)
+		वापस true;
 
-	if (id->base.phys_id != SFF8024_ID_DWDM_SFP) {
-		switch (id->base.extended_cc) {
-		case SFF8024_ECC_10GBASE_T_SFI:
-		case SFF8024_ECC_10GBASE_T_SR:
-		case SFF8024_ECC_5GBASE_T:
-		case SFF8024_ECC_2_5GBASE_T:
-			return true;
-		}
-	}
+	अगर (id->base.phys_id != SFF8024_ID_DWDM_SFP) अणु
+		चयन (id->base.extended_cc) अणु
+		हाल SFF8024_ECC_10GBASE_T_SFI:
+		हाल SFF8024_ECC_10GBASE_T_SR:
+		हाल SFF8024_ECC_5GBASE_T:
+		हाल SFF8024_ECC_2_5GBASE_T:
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_may_have_phy);
 
 /**
- * sfp_parse_support() - Parse the eeprom id for supported link modes
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @id: a pointer to the module's &struct sfp_eeprom_id
- * @support: pointer to an array of unsigned long for the ethtool support mask
+ * sfp_parse_support() - Parse the eeprom id क्रम supported link modes
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @id: a poपूर्णांकer to the module's &काष्ठा sfp_eeprom_id
+ * @support: poपूर्णांकer to an array of अचिन्हित दीर्घ क्रम the ethtool support mask
  *
- * Parse the EEPROM identification information and derive the supported
- * ethtool link modes for the module.
+ * Parse the EEPROM identअगरication inक्रमmation and derive the supported
+ * ethtool link modes क्रम the module.
  */
-void sfp_parse_support(struct sfp_bus *bus, const struct sfp_eeprom_id *id,
-		       unsigned long *support)
-{
-	unsigned int br_min, br_nom, br_max;
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(modes) = { 0, };
+व्योम sfp_parse_support(काष्ठा sfp_bus *bus, स्थिर काष्ठा sfp_eeprom_id *id,
+		       अचिन्हित दीर्घ *support)
+अणु
+	अचिन्हित पूर्णांक br_min, br_nom, br_max;
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(modes) = अणु 0, पूर्ण;
 
-	/* Decode the bitrate information to MBd */
+	/* Decode the bitrate inक्रमmation to MBd */
 	br_min = br_nom = br_max = 0;
-	if (id->base.br_nominal) {
-		if (id->base.br_nominal != 255) {
+	अगर (id->base.br_nominal) अणु
+		अगर (id->base.br_nominal != 255) अणु
 			br_nom = id->base.br_nominal * 100;
 			br_min = br_nom - id->base.br_nominal * id->ext.br_min;
 			br_max = br_nom + id->base.br_nominal * id->ext.br_max;
-		} else if (id->ext.br_max) {
+		पूर्ण अन्यथा अगर (id->ext.br_max) अणु
 			br_nom = 250 * id->ext.br_max;
 			br_max = br_nom + br_nom * id->ext.br_min / 100;
 			br_min = br_nom - br_nom * id->ext.br_min / 100;
-		}
+		पूर्ण
 
-		/* When using passive cables, in case neither BR,min nor BR,max
-		 * are specified, set br_min to 0 as the nominal value is then
+		/* When using passive cables, in हाल neither BR,min nor BR,max
+		 * are specअगरied, set br_min to 0 as the nominal value is then
 		 * used as the maximum.
 		 */
-		if (br_min == br_max && id->base.sfp_ct_passive)
+		अगर (br_min == br_max && id->base.sfp_ct_passive)
 			br_min = 0;
-	}
+	पूर्ण
 
 	/* Set ethtool support from the compliance fields. */
-	if (id->base.e10g_base_sr)
+	अगर (id->base.e10g_base_sr)
 		phylink_set(modes, 10000baseSR_Full);
-	if (id->base.e10g_base_lr)
+	अगर (id->base.e10g_base_lr)
 		phylink_set(modes, 10000baseLR_Full);
-	if (id->base.e10g_base_lrm)
+	अगर (id->base.e10g_base_lrm)
 		phylink_set(modes, 10000baseLRM_Full);
-	if (id->base.e10g_base_er)
+	अगर (id->base.e10g_base_er)
 		phylink_set(modes, 10000baseER_Full);
-	if (id->base.e1000_base_sx ||
+	अगर (id->base.e1000_base_sx ||
 	    id->base.e1000_base_lx ||
 	    id->base.e1000_base_cx)
 		phylink_set(modes, 1000baseX_Full);
-	if (id->base.e1000_base_t) {
+	अगर (id->base.e1000_base_t) अणु
 		phylink_set(modes, 1000baseT_Half);
 		phylink_set(modes, 1000baseT_Full);
-	}
+	पूर्ण
 
 	/* 1000Base-PX or 1000Base-BX10 */
-	if ((id->base.e_base_px || id->base.e_base_bx10) &&
+	अगर ((id->base.e_base_px || id->base.e_base_bx10) &&
 	    br_min <= 1300 && br_max >= 1200)
 		phylink_set(modes, 1000baseX_Full);
 
 	/* 100Base-FX, 100Base-LX, 100Base-PX, 100Base-BX10 */
-	if (id->base.e100_base_fx || id->base.e100_base_lx)
+	अगर (id->base.e100_base_fx || id->base.e100_base_lx)
 		phylink_set(modes, 100baseFX_Full);
-	if ((id->base.e_base_px || id->base.e_base_bx10) && br_nom == 100)
+	अगर ((id->base.e_base_px || id->base.e_base_bx10) && br_nom == 100)
 		phylink_set(modes, 100baseFX_Full);
 
 	/* For active or passive cables, select the link modes
 	 * based on the bit rates and the cable compliance bytes.
 	 */
-	if ((id->base.sfp_ct_passive || id->base.sfp_ct_active) && br_nom) {
+	अगर ((id->base.sfp_ct_passive || id->base.sfp_ct_active) && br_nom) अणु
 		/* This may look odd, but some manufacturers use 12000MBd */
-		if (br_min <= 12000 && br_max >= 10300)
+		अगर (br_min <= 12000 && br_max >= 10300)
 			phylink_set(modes, 10000baseCR_Full);
-		if (br_min <= 3200 && br_max >= 3100)
+		अगर (br_min <= 3200 && br_max >= 3100)
 			phylink_set(modes, 2500baseX_Full);
-		if (br_min <= 1300 && br_max >= 1200)
+		अगर (br_min <= 1300 && br_max >= 1200)
 			phylink_set(modes, 1000baseX_Full);
-	}
-	if (id->base.sfp_ct_passive) {
-		if (id->base.passive.sff8431_app_e)
+	पूर्ण
+	अगर (id->base.sfp_ct_passive) अणु
+		अगर (id->base.passive.sff8431_app_e)
 			phylink_set(modes, 10000baseCR_Full);
-	}
-	if (id->base.sfp_ct_active) {
-		if (id->base.active.sff8431_app_e ||
-		    id->base.active.sff8431_lim) {
+	पूर्ण
+	अगर (id->base.sfp_ct_active) अणु
+		अगर (id->base.active.sff8431_app_e ||
+		    id->base.active.sff8431_lim) अणु
 			phylink_set(modes, 10000baseCR_Full);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (id->base.extended_cc) {
-	case SFF8024_ECC_UNSPEC:
-		break;
-	case SFF8024_ECC_100GBASE_SR4_25GBASE_SR:
+	चयन (id->base.extended_cc) अणु
+	हाल SFF8024_ECC_UNSPEC:
+		अवरोध;
+	हाल SFF8024_ECC_100GBASE_SR4_25GBASE_SR:
 		phylink_set(modes, 100000baseSR4_Full);
 		phylink_set(modes, 25000baseSR_Full);
-		break;
-	case SFF8024_ECC_100GBASE_LR4_25GBASE_LR:
-	case SFF8024_ECC_100GBASE_ER4_25GBASE_ER:
+		अवरोध;
+	हाल SFF8024_ECC_100GBASE_LR4_25GBASE_LR:
+	हाल SFF8024_ECC_100GBASE_ER4_25GBASE_ER:
 		phylink_set(modes, 100000baseLR4_ER4_Full);
-		break;
-	case SFF8024_ECC_100GBASE_CR4:
+		अवरोध;
+	हाल SFF8024_ECC_100GBASE_CR4:
 		phylink_set(modes, 100000baseCR4_Full);
 		fallthrough;
-	case SFF8024_ECC_25GBASE_CR_S:
-	case SFF8024_ECC_25GBASE_CR_N:
+	हाल SFF8024_ECC_25GBASE_CR_S:
+	हाल SFF8024_ECC_25GBASE_CR_N:
 		phylink_set(modes, 25000baseCR_Full);
-		break;
-	case SFF8024_ECC_10GBASE_T_SFI:
-	case SFF8024_ECC_10GBASE_T_SR:
+		अवरोध;
+	हाल SFF8024_ECC_10GBASE_T_SFI:
+	हाल SFF8024_ECC_10GBASE_T_SR:
 		phylink_set(modes, 10000baseT_Full);
-		break;
-	case SFF8024_ECC_5GBASE_T:
+		अवरोध;
+	हाल SFF8024_ECC_5GBASE_T:
 		phylink_set(modes, 5000baseT_Full);
-		break;
-	case SFF8024_ECC_2_5GBASE_T:
+		अवरोध;
+	हाल SFF8024_ECC_2_5GBASE_T:
 		phylink_set(modes, 2500baseT_Full);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(bus->sfp_dev,
 			 "Unknown/unsupported extended compliance code: 0x%02x\n",
 			 id->base.extended_cc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* For fibre channel SFP, derive possible BaseX modes */
-	if (id->base.fc_speed_100 ||
+	अगर (id->base.fc_speed_100 ||
 	    id->base.fc_speed_200 ||
-	    id->base.fc_speed_400) {
-		if (id->base.br_nominal >= 31)
+	    id->base.fc_speed_400) अणु
+		अगर (id->base.br_nominal >= 31)
 			phylink_set(modes, 2500baseX_Full);
-		if (id->base.br_nominal >= 12)
+		अगर (id->base.br_nominal >= 12)
 			phylink_set(modes, 1000baseX_Full);
-	}
+	पूर्ण
 
 	/* If we haven't discovered any modes that this module supports, try
 	 * the bitrate to determine supported modes. Some BiDi modules (eg,
-	 * 1310nm/1550nm) are not 1000BASE-BX compliant due to the differing
-	 * wavelengths, so do not set any transceiver bits.
+	 * 1310nm/1550nm) are not 1000BASE-BX compliant due to the dअगरfering
+	 * wavelengths, so करो not set any transceiver bits.
 	 *
-	 * Do the same for modules supporting 2500BASE-X. Note that some
-	 * modules use 2500Mbaud rather than 3100 or 3200Mbaud for
+	 * Do the same क्रम modules supporting 2500BASE-X. Note that some
+	 * modules use 2500Mbaud rather than 3100 or 3200Mbaud क्रम
 	 * 2500BASE-X, so we allow some slack here.
 	 */
-	if (bitmap_empty(modes, __ETHTOOL_LINK_MODE_MASK_NBITS) && br_nom) {
-		if (br_min <= 1300 && br_max >= 1200)
+	अगर (biपंचांगap_empty(modes, __ETHTOOL_LINK_MODE_MASK_NBITS) && br_nom) अणु
+		अगर (br_min <= 1300 && br_max >= 1200)
 			phylink_set(modes, 1000baseX_Full);
-		if (br_min <= 3200 && br_max >= 2500)
+		अगर (br_min <= 3200 && br_max >= 2500)
 			phylink_set(modes, 2500baseX_Full);
-	}
+	पूर्ण
 
-	if (bus->sfp_quirk)
+	अगर (bus->sfp_quirk)
 		bus->sfp_quirk->modes(id, modes);
 
-	bitmap_or(support, support, modes, __ETHTOOL_LINK_MODE_MASK_NBITS);
+	biपंचांगap_or(support, support, modes, __ETHTOOL_LINK_MODE_MASK_NBITS);
 
 	phylink_set(support, Autoneg);
 	phylink_set(support, Pause);
 	phylink_set(support, Asym_Pause);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_parse_support);
 
 /**
- * sfp_select_interface() - Select appropriate phy_interface_t mode
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
+ * sfp_select_पूर्णांकerface() - Select appropriate phy_पूर्णांकerface_t mode
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
  * @link_modes: ethtool link modes mask
  *
- * Derive the phy_interface_t mode for the SFP module from the link
+ * Derive the phy_पूर्णांकerface_t mode क्रम the SFP module from the link
  * modes mask.
  */
-phy_interface_t sfp_select_interface(struct sfp_bus *bus,
-				     unsigned long *link_modes)
-{
-	if (phylink_test(link_modes, 10000baseCR_Full) ||
+phy_पूर्णांकerface_t sfp_select_पूर्णांकerface(काष्ठा sfp_bus *bus,
+				     अचिन्हित दीर्घ *link_modes)
+अणु
+	अगर (phylink_test(link_modes, 10000baseCR_Full) ||
 	    phylink_test(link_modes, 10000baseSR_Full) ||
 	    phylink_test(link_modes, 10000baseLR_Full) ||
 	    phylink_test(link_modes, 10000baseLRM_Full) ||
 	    phylink_test(link_modes, 10000baseER_Full) ||
 	    phylink_test(link_modes, 10000baseT_Full))
-		return PHY_INTERFACE_MODE_10GBASER;
+		वापस PHY_INTERFACE_MODE_10GBASER;
 
-	if (phylink_test(link_modes, 5000baseT_Full))
-		return PHY_INTERFACE_MODE_5GBASER;
+	अगर (phylink_test(link_modes, 5000baseT_Full))
+		वापस PHY_INTERFACE_MODE_5GBASER;
 
-	if (phylink_test(link_modes, 2500baseX_Full))
-		return PHY_INTERFACE_MODE_2500BASEX;
+	अगर (phylink_test(link_modes, 2500baseX_Full))
+		वापस PHY_INTERFACE_MODE_2500BASEX;
 
-	if (phylink_test(link_modes, 1000baseT_Half) ||
+	अगर (phylink_test(link_modes, 1000baseT_Half) ||
 	    phylink_test(link_modes, 1000baseT_Full))
-		return PHY_INTERFACE_MODE_SGMII;
+		वापस PHY_INTERFACE_MODE_SGMII;
 
-	if (phylink_test(link_modes, 1000baseX_Full))
-		return PHY_INTERFACE_MODE_1000BASEX;
+	अगर (phylink_test(link_modes, 1000baseX_Full))
+		वापस PHY_INTERFACE_MODE_1000BASEX;
 
-	if (phylink_test(link_modes, 100baseFX_Full))
-		return PHY_INTERFACE_MODE_100BASEX;
+	अगर (phylink_test(link_modes, 100baseFX_Full))
+		वापस PHY_INTERFACE_MODE_100BASEX;
 
 	dev_warn(bus->sfp_dev, "Unable to ascertain link mode\n");
 
-	return PHY_INTERFACE_MODE_NA;
-}
-EXPORT_SYMBOL_GPL(sfp_select_interface);
+	वापस PHY_INTERFACE_MODE_NA;
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_select_पूर्णांकerface);
 
-static LIST_HEAD(sfp_buses);
-static DEFINE_MUTEX(sfp_mutex);
+अटल LIST_HEAD(sfp_buses);
+अटल DEFINE_MUTEX(sfp_mutex);
 
-static const struct sfp_upstream_ops *sfp_get_upstream_ops(struct sfp_bus *bus)
-{
-	return bus->registered ? bus->upstream_ops : NULL;
-}
+अटल स्थिर काष्ठा sfp_upstream_ops *sfp_get_upstream_ops(काष्ठा sfp_bus *bus)
+अणु
+	वापस bus->रेजिस्टरed ? bus->upstream_ops : शून्य;
+पूर्ण
 
-static struct sfp_bus *sfp_bus_get(struct fwnode_handle *fwnode)
-{
-	struct sfp_bus *sfp, *new, *found = NULL;
+अटल काष्ठा sfp_bus *sfp_bus_get(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा sfp_bus *sfp, *new, *found = शून्य;
 
-	new = kzalloc(sizeof(*new), GFP_KERNEL);
+	new = kzalloc(माप(*new), GFP_KERNEL);
 
 	mutex_lock(&sfp_mutex);
 
-	list_for_each_entry(sfp, &sfp_buses, node) {
-		if (sfp->fwnode == fwnode) {
+	list_क्रम_each_entry(sfp, &sfp_buses, node) अणु
+		अगर (sfp->fwnode == fwnode) अणु
 			kref_get(&sfp->kref);
 			found = sfp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found && new) {
+	अगर (!found && new) अणु
 		kref_init(&new->kref);
 		new->fwnode = fwnode;
 		list_add(&new->node, &sfp_buses);
 		found = new;
-		new = NULL;
-	}
+		new = शून्य;
+	पूर्ण
 
 	mutex_unlock(&sfp_mutex);
 
-	kfree(new);
+	kमुक्त(new);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static void sfp_bus_release(struct kref *kref)
-{
-	struct sfp_bus *bus = container_of(kref, struct sfp_bus, kref);
+अटल व्योम sfp_bus_release(काष्ठा kref *kref)
+अणु
+	काष्ठा sfp_bus *bus = container_of(kref, काष्ठा sfp_bus, kref);
 
 	list_del(&bus->node);
 	mutex_unlock(&sfp_mutex);
-	kfree(bus);
-}
+	kमुक्त(bus);
+पूर्ण
 
 /**
- * sfp_bus_put() - put a reference on the &struct sfp_bus
- * @bus: the &struct sfp_bus found via sfp_bus_find_fwnode()
+ * sfp_bus_put() - put a reference on the &काष्ठा sfp_bus
+ * @bus: the &काष्ठा sfp_bus found via sfp_bus_find_fwnode()
  *
- * Put a reference on the &struct sfp_bus and free the underlying structure
- * if this was the last reference.
+ * Put a reference on the &काष्ठा sfp_bus and मुक्त the underlying काष्ठाure
+ * अगर this was the last reference.
  */
-void sfp_bus_put(struct sfp_bus *bus)
-{
-	if (bus)
+व्योम sfp_bus_put(काष्ठा sfp_bus *bus)
+अणु
+	अगर (bus)
 		kref_put_mutex(&bus->kref, sfp_bus_release, &sfp_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_bus_put);
 
-static int sfp_register_bus(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = bus->upstream_ops;
-	int ret;
+अटल पूर्णांक sfp_रेजिस्टर_bus(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = bus->upstream_ops;
+	पूर्णांक ret;
 
-	if (ops) {
-		if (ops->link_down)
-			ops->link_down(bus->upstream);
-		if (ops->connect_phy && bus->phydev) {
+	अगर (ops) अणु
+		अगर (ops->link_करोwn)
+			ops->link_करोwn(bus->upstream);
+		अगर (ops->connect_phy && bus->phydev) अणु
 			ret = ops->connect_phy(bus->upstream, bus->phydev);
-			if (ret)
-				return ret;
-		}
-	}
-	bus->registered = true;
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	bus->रेजिस्टरed = true;
 	bus->socket_ops->attach(bus->sfp);
-	if (bus->started)
+	अगर (bus->started)
 		bus->socket_ops->start(bus->sfp);
 	bus->upstream_ops->attach(bus->upstream, bus);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sfp_unregister_bus(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = bus->upstream_ops;
+अटल व्योम sfp_unरेजिस्टर_bus(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = bus->upstream_ops;
 
-	if (bus->registered) {
+	अगर (bus->रेजिस्टरed) अणु
 		bus->upstream_ops->detach(bus->upstream, bus);
-		if (bus->started)
+		अगर (bus->started)
 			bus->socket_ops->stop(bus->sfp);
 		bus->socket_ops->detach(bus->sfp);
-		if (bus->phydev && ops && ops->disconnect_phy)
+		अगर (bus->phydev && ops && ops->disconnect_phy)
 			ops->disconnect_phy(bus->upstream);
-	}
-	bus->registered = false;
-}
+	पूर्ण
+	bus->रेजिस्टरed = false;
+पूर्ण
 
 /**
- * sfp_get_module_info() - Get the ethtool_modinfo for a SFP module
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @modinfo: a &struct ethtool_modinfo
+ * sfp_get_module_info() - Get the ethtool_modinfo क्रम a SFP module
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @modinfo: a &काष्ठा ethtool_modinfo
  *
- * Fill in the type and eeprom_len parameters in @modinfo for a module on
- * the sfp bus specified by @bus.
+ * Fill in the type and eeprom_len parameters in @modinfo क्रम a module on
+ * the sfp bus specअगरied by @bus.
  *
- * Returns 0 on success or a negative errno number.
+ * Returns 0 on success or a negative त्रुटि_सं number.
  */
-int sfp_get_module_info(struct sfp_bus *bus, struct ethtool_modinfo *modinfo)
-{
-	return bus->socket_ops->module_info(bus->sfp, modinfo);
-}
+पूर्णांक sfp_get_module_info(काष्ठा sfp_bus *bus, काष्ठा ethtool_modinfo *modinfo)
+अणु
+	वापस bus->socket_ops->module_info(bus->sfp, modinfo);
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_get_module_info);
 
 /**
  * sfp_get_module_eeprom() - Read the SFP module EEPROM
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @ee: a &struct ethtool_eeprom
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @ee: a &काष्ठा ethtool_eeprom
  * @data: buffer to contain the EEPROM data (must be at least @ee->len bytes)
  *
- * Read the EEPROM as specified by the supplied @ee. See the documentation
- * for &struct ethtool_eeprom for the region to be read.
+ * Read the EEPROM as specअगरied by the supplied @ee. See the करोcumentation
+ * क्रम &काष्ठा ethtool_eeprom क्रम the region to be पढ़ो.
  *
- * Returns 0 on success or a negative errno number.
+ * Returns 0 on success or a negative त्रुटि_सं number.
  */
-int sfp_get_module_eeprom(struct sfp_bus *bus, struct ethtool_eeprom *ee,
+पूर्णांक sfp_get_module_eeprom(काष्ठा sfp_bus *bus, काष्ठा ethtool_eeprom *ee,
 			  u8 *data)
-{
-	return bus->socket_ops->module_eeprom(bus->sfp, ee, data);
-}
+अणु
+	वापस bus->socket_ops->module_eeprom(bus->sfp, ee, data);
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_get_module_eeprom);
 
 /**
  * sfp_get_module_eeprom_by_page() - Read a page from the SFP module EEPROM
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
- * @page: a &struct ethtool_module_eeprom
- * @extack: extack for reporting problems
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
+ * @page: a &काष्ठा ethtool_module_eeprom
+ * @extack: extack क्रम reporting problems
  *
- * Read an EEPROM page as specified by the supplied @page. See the
- * documentation for &struct ethtool_module_eeprom for the page to be read.
+ * Read an EEPROM page as specअगरied by the supplied @page. See the
+ * करोcumentation क्रम &काष्ठा ethtool_module_eeprom क्रम the page to be पढ़ो.
  *
- * Returns 0 on success or a negative errno number. More error
- * information might be provided via extack
+ * Returns 0 on success or a negative त्रुटि_सं number. More error
+ * inक्रमmation might be provided via extack
  */
-int sfp_get_module_eeprom_by_page(struct sfp_bus *bus,
-				  const struct ethtool_module_eeprom *page,
-				  struct netlink_ext_ack *extack)
-{
-	return bus->socket_ops->module_eeprom_by_page(bus->sfp, page, extack);
-}
+पूर्णांक sfp_get_module_eeprom_by_page(काष्ठा sfp_bus *bus,
+				  स्थिर काष्ठा ethtool_module_eeprom *page,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस bus->socket_ops->module_eeprom_by_page(bus->sfp, page, extack);
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_get_module_eeprom_by_page);
 
 /**
- * sfp_upstream_start() - Inform the SFP that the network device is up
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
+ * sfp_upstream_start() - Inक्रमm the SFP that the network device is up
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
  *
- * Inform the SFP socket that the network device is now up, so that the
- * module can be enabled by allowing TX_DISABLE to be deasserted. This
- * should be called from the network device driver's &struct net_device_ops
- * ndo_open() method.
+ * Inक्रमm the SFP socket that the network device is now up, so that the
+ * module can be enabled by allowing TX_DISABLE to be deनिश्चितed. This
+ * should be called from the network device driver's &काष्ठा net_device_ops
+ * nकरो_खोलो() method.
  */
-void sfp_upstream_start(struct sfp_bus *bus)
-{
-	if (bus->registered)
+व्योम sfp_upstream_start(काष्ठा sfp_bus *bus)
+अणु
+	अगर (bus->रेजिस्टरed)
 		bus->socket_ops->start(bus->sfp);
 	bus->started = true;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_upstream_start);
 
 /**
- * sfp_upstream_stop() - Inform the SFP that the network device is down
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
+ * sfp_upstream_stop() - Inक्रमm the SFP that the network device is करोwn
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
  *
- * Inform the SFP socket that the network device is now up, so that the
- * module can be disabled by asserting TX_DISABLE, disabling the laser
+ * Inक्रमm the SFP socket that the network device is now up, so that the
+ * module can be disabled by निश्चितing TX_DISABLE, disabling the laser
  * in optical modules. This should be called from the network device
- * driver's &struct net_device_ops ndo_stop() method.
+ * driver's &काष्ठा net_device_ops nकरो_stop() method.
  */
-void sfp_upstream_stop(struct sfp_bus *bus)
-{
-	if (bus->registered)
+व्योम sfp_upstream_stop(काष्ठा sfp_bus *bus)
+अणु
+	अगर (bus->रेजिस्टरed)
 		bus->socket_ops->stop(bus->sfp);
 	bus->started = false;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_upstream_stop);
 
-static void sfp_upstream_clear(struct sfp_bus *bus)
-{
-	bus->upstream_ops = NULL;
-	bus->upstream = NULL;
-}
+अटल व्योम sfp_upstream_clear(काष्ठा sfp_bus *bus)
+अणु
+	bus->upstream_ops = शून्य;
+	bus->upstream = शून्य;
+पूर्ण
 
 /**
  * sfp_bus_find_fwnode() - parse and locate the SFP bus from fwnode
- * @fwnode: firmware node for the parent device (MAC or PHY)
+ * @fwnode: firmware node क्रम the parent device (MAC or PHY)
  *
- * Parse the parent device's firmware node for a SFP bus, and locate
- * the sfp_bus structure, incrementing its reference count.  This must
- * be put via sfp_bus_put() when done.
+ * Parse the parent device's firmware node क्रम a SFP bus, and locate
+ * the sfp_bus काष्ठाure, incrementing its reference count.  This must
+ * be put via sfp_bus_put() when करोne.
  *
  * Returns:
- * 	    - on success, a pointer to the sfp_bus structure,
- *	    - %NULL if no SFP is specified,
- * 	    - on failure, an error pointer value:
+ * 	    - on success, a poपूर्णांकer to the sfp_bus काष्ठाure,
+ *	    - %शून्य अगर no SFP is specअगरied,
+ * 	    - on failure, an error poपूर्णांकer value:
  *
- * 	      - corresponding to the errors detailed for
+ * 	      - corresponding to the errors detailed क्रम
  * 	        fwnode_property_get_reference_args().
- * 	      - %-ENOMEM if we failed to allocate the bus.
+ * 	      - %-ENOMEM अगर we failed to allocate the bus.
  *	      - an error from the upstream's connect_phy() method.
  */
-struct sfp_bus *sfp_bus_find_fwnode(struct fwnode_handle *fwnode)
-{
-	struct fwnode_reference_args ref;
-	struct sfp_bus *bus;
-	int ret;
+काष्ठा sfp_bus *sfp_bus_find_fwnode(काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा fwnode_reference_args ref;
+	काष्ठा sfp_bus *bus;
+	पूर्णांक ret;
 
-	ret = fwnode_property_get_reference_args(fwnode, "sfp", NULL,
+	ret = fwnode_property_get_reference_args(fwnode, "sfp", शून्य,
 						 0, 0, &ref);
-	if (ret == -ENOENT)
-		return NULL;
-	else if (ret < 0)
-		return ERR_PTR(ret);
+	अगर (ret == -ENOENT)
+		वापस शून्य;
+	अन्यथा अगर (ret < 0)
+		वापस ERR_PTR(ret);
 
 	bus = sfp_bus_get(ref.fwnode);
 	fwnode_handle_put(ref.fwnode);
-	if (!bus)
-		return ERR_PTR(-ENOMEM);
+	अगर (!bus)
+		वापस ERR_PTR(-ENOMEM);
 
-	return bus;
-}
+	वापस bus;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_bus_find_fwnode);
 
 /**
- * sfp_bus_add_upstream() - parse and register the neighbouring device
- * @bus: the &struct sfp_bus found via sfp_bus_find_fwnode()
- * @upstream: the upstream private data
- * @ops: the upstream's &struct sfp_upstream_ops
+ * sfp_bus_add_upstream() - parse and रेजिस्टर the neighbouring device
+ * @bus: the &काष्ठा sfp_bus found via sfp_bus_find_fwnode()
+ * @upstream: the upstream निजी data
+ * @ops: the upstream's &काष्ठा sfp_upstream_ops
  *
- * Add upstream driver for the SFP bus, and if the bus is complete, register
- * the SFP bus using sfp_register_upstream().  This takes a reference on the
+ * Add upstream driver क्रम the SFP bus, and अगर the bus is complete, रेजिस्टर
+ * the SFP bus using sfp_रेजिस्टर_upstream().  This takes a reference on the
  * bus, so it is safe to put the bus after this call.
  *
  * Returns:
- * 	    - on success, a pointer to the sfp_bus structure,
- *	    - %NULL if no SFP is specified,
- * 	    - on failure, an error pointer value:
+ * 	    - on success, a poपूर्णांकer to the sfp_bus काष्ठाure,
+ *	    - %शून्य अगर no SFP is specअगरied,
+ * 	    - on failure, an error poपूर्णांकer value:
  *
- * 	      - corresponding to the errors detailed for
+ * 	      - corresponding to the errors detailed क्रम
  * 	        fwnode_property_get_reference_args().
- * 	      - %-ENOMEM if we failed to allocate the bus.
+ * 	      - %-ENOMEM अगर we failed to allocate the bus.
  *	      - an error from the upstream's connect_phy() method.
  */
-int sfp_bus_add_upstream(struct sfp_bus *bus, void *upstream,
-			 const struct sfp_upstream_ops *ops)
-{
-	int ret;
+पूर्णांक sfp_bus_add_upstream(काष्ठा sfp_bus *bus, व्योम *upstream,
+			 स्थिर काष्ठा sfp_upstream_ops *ops)
+अणु
+	पूर्णांक ret;
 
-	/* If no bus, return success */
-	if (!bus)
-		return 0;
+	/* If no bus, वापस success */
+	अगर (!bus)
+		वापस 0;
 
 	rtnl_lock();
 	kref_get(&bus->kref);
 	bus->upstream_ops = ops;
 	bus->upstream = upstream;
 
-	if (bus->sfp) {
-		ret = sfp_register_bus(bus);
-		if (ret)
+	अगर (bus->sfp) अणु
+		ret = sfp_रेजिस्टर_bus(bus);
+		अगर (ret)
 			sfp_upstream_clear(bus);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = 0;
-	}
+	पूर्ण
 	rtnl_unlock();
 
-	if (ret)
+	अगर (ret)
 		sfp_bus_put(bus);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_bus_add_upstream);
 
 /**
  * sfp_bus_del_upstream() - Delete a sfp bus
- * @bus: a pointer to the &struct sfp_bus structure for the sfp module
+ * @bus: a poपूर्णांकer to the &काष्ठा sfp_bus काष्ठाure क्रम the sfp module
  *
- * Delete a previously registered upstream connection for the SFP
+ * Delete a previously रेजिस्टरed upstream connection क्रम the SFP
  * module. @bus should have been added by sfp_bus_add_upstream().
  */
-void sfp_bus_del_upstream(struct sfp_bus *bus)
-{
-	if (bus) {
+व्योम sfp_bus_del_upstream(काष्ठा sfp_bus *bus)
+अणु
+	अगर (bus) अणु
 		rtnl_lock();
-		if (bus->sfp)
-			sfp_unregister_bus(bus);
+		अगर (bus->sfp)
+			sfp_unरेजिस्टर_bus(bus);
 		sfp_upstream_clear(bus);
 		rtnl_unlock();
 
 		sfp_bus_put(bus);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_bus_del_upstream);
 
-/* Socket driver entry points */
-int sfp_add_phy(struct sfp_bus *bus, struct phy_device *phydev)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
-	int ret = 0;
+/* Socket driver entry poपूर्णांकs */
+पूर्णांक sfp_add_phy(काष्ठा sfp_bus *bus, काष्ठा phy_device *phydev)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+	पूर्णांक ret = 0;
 
-	if (ops && ops->connect_phy)
+	अगर (ops && ops->connect_phy)
 		ret = ops->connect_phy(bus->upstream, phydev);
 
-	if (ret == 0)
+	अगर (ret == 0)
 		bus->phydev = phydev;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_add_phy);
 
-void sfp_remove_phy(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+व्योम sfp_हटाओ_phy(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
 
-	if (ops && ops->disconnect_phy)
+	अगर (ops && ops->disconnect_phy)
 		ops->disconnect_phy(bus->upstream);
-	bus->phydev = NULL;
-}
-EXPORT_SYMBOL_GPL(sfp_remove_phy);
+	bus->phydev = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_हटाओ_phy);
 
-void sfp_link_up(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+व्योम sfp_link_up(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
 
-	if (ops && ops->link_up)
+	अगर (ops && ops->link_up)
 		ops->link_up(bus->upstream);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_link_up);
 
-void sfp_link_down(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+व्योम sfp_link_करोwn(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
 
-	if (ops && ops->link_down)
-		ops->link_down(bus->upstream);
-}
-EXPORT_SYMBOL_GPL(sfp_link_down);
+	अगर (ops && ops->link_करोwn)
+		ops->link_करोwn(bus->upstream);
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_link_करोwn);
 
-int sfp_module_insert(struct sfp_bus *bus, const struct sfp_eeprom_id *id)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
-	int ret = 0;
+पूर्णांक sfp_module_insert(काष्ठा sfp_bus *bus, स्थिर काष्ठा sfp_eeprom_id *id)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+	पूर्णांक ret = 0;
 
 	bus->sfp_quirk = sfp_lookup_quirk(id);
 
-	if (ops && ops->module_insert)
+	अगर (ops && ops->module_insert)
 		ret = ops->module_insert(bus->upstream, id);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_module_insert);
 
-void sfp_module_remove(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+व्योम sfp_module_हटाओ(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
 
-	if (ops && ops->module_remove)
-		ops->module_remove(bus->upstream);
+	अगर (ops && ops->module_हटाओ)
+		ops->module_हटाओ(bus->upstream);
 
-	bus->sfp_quirk = NULL;
-}
-EXPORT_SYMBOL_GPL(sfp_module_remove);
+	bus->sfp_quirk = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_module_हटाओ);
 
-int sfp_module_start(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
-	int ret = 0;
+पूर्णांक sfp_module_start(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+	पूर्णांक ret = 0;
 
-	if (ops && ops->module_start)
+	अगर (ops && ops->module_start)
 		ret = ops->module_start(bus->upstream);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_module_start);
 
-void sfp_module_stop(struct sfp_bus *bus)
-{
-	const struct sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
+व्योम sfp_module_stop(काष्ठा sfp_bus *bus)
+अणु
+	स्थिर काष्ठा sfp_upstream_ops *ops = sfp_get_upstream_ops(bus);
 
-	if (ops && ops->module_stop)
+	अगर (ops && ops->module_stop)
 		ops->module_stop(bus->upstream);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(sfp_module_stop);
 
-static void sfp_socket_clear(struct sfp_bus *bus)
-{
-	bus->sfp_dev = NULL;
-	bus->sfp = NULL;
-	bus->socket_ops = NULL;
-}
+अटल व्योम sfp_socket_clear(काष्ठा sfp_bus *bus)
+अणु
+	bus->sfp_dev = शून्य;
+	bus->sfp = शून्य;
+	bus->socket_ops = शून्य;
+पूर्ण
 
-struct sfp_bus *sfp_register_socket(struct device *dev, struct sfp *sfp,
-				    const struct sfp_socket_ops *ops)
-{
-	struct sfp_bus *bus = sfp_bus_get(dev->fwnode);
-	int ret = 0;
+काष्ठा sfp_bus *sfp_रेजिस्टर_socket(काष्ठा device *dev, काष्ठा sfp *sfp,
+				    स्थिर काष्ठा sfp_socket_ops *ops)
+अणु
+	काष्ठा sfp_bus *bus = sfp_bus_get(dev->fwnode);
+	पूर्णांक ret = 0;
 
-	if (bus) {
+	अगर (bus) अणु
 		rtnl_lock();
 		bus->sfp_dev = dev;
 		bus->sfp = sfp;
 		bus->socket_ops = ops;
 
-		if (bus->upstream_ops) {
-			ret = sfp_register_bus(bus);
-			if (ret)
+		अगर (bus->upstream_ops) अणु
+			ret = sfp_रेजिस्टर_bus(bus);
+			अगर (ret)
 				sfp_socket_clear(bus);
-		}
+		पूर्ण
 		rtnl_unlock();
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		sfp_bus_put(bus);
-		bus = NULL;
-	}
+		bus = शून्य;
+	पूर्ण
 
-	return bus;
-}
-EXPORT_SYMBOL_GPL(sfp_register_socket);
+	वापस bus;
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_रेजिस्टर_socket);
 
-void sfp_unregister_socket(struct sfp_bus *bus)
-{
+व्योम sfp_unरेजिस्टर_socket(काष्ठा sfp_bus *bus)
+अणु
 	rtnl_lock();
-	if (bus->upstream_ops)
-		sfp_unregister_bus(bus);
+	अगर (bus->upstream_ops)
+		sfp_unरेजिस्टर_bus(bus);
 	sfp_socket_clear(bus);
 	rtnl_unlock();
 
 	sfp_bus_put(bus);
-}
-EXPORT_SYMBOL_GPL(sfp_unregister_socket);
+पूर्ण
+EXPORT_SYMBOL_GPL(sfp_unरेजिस्टर_socket);

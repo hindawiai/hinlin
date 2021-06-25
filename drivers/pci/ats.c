@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI Express I/O Virtualization (IOV) support
  *   Address Translation Service 1.0
  *   Page Request Interface added by Joerg Roedel <joerg.roedel@amd.com>
  *   PASID support added by Joerg Roedel <joerg.roedel@amd.com>
  *
- * Copyright (C) 2009 Intel Corporation, Yu Zhao <yu.zhao@intel.com>
+ * Copyright (C) 2009 Intel Corporation, Yu Zhao <yu.zhao@पूर्णांकel.com>
  * Copyright (C) 2011 Advanced Micro Devices,
  */
 
-#include <linux/export.h>
-#include <linux/pci-ats.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pci-ats.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include "pci.h"
+#समावेश "pci.h"
 
-void pci_ats_init(struct pci_dev *dev)
-{
-	int pos;
+व्योम pci_ats_init(काष्ठा pci_dev *dev)
+अणु
+	पूर्णांक pos;
 
-	if (pci_ats_disabled())
-		return;
+	अगर (pci_ats_disabled())
+		वापस;
 
 	pos = pci_find_ext_capability(dev, PCI_EXT_CAP_ID_ATS);
-	if (!pos)
-		return;
+	अगर (!pos)
+		वापस;
 
 	dev->ats_cap = pos;
-}
+पूर्ण
 
 /**
- * pci_ats_supported - check if the device can use ATS
+ * pci_ats_supported - check अगर the device can use ATS
  * @dev: the PCI device
  *
- * Returns true if the device supports ATS and is allowed to use it, false
+ * Returns true अगर the device supports ATS and is allowed to use it, false
  * otherwise.
  */
-bool pci_ats_supported(struct pci_dev *dev)
-{
-	if (!dev->ats_cap)
-		return false;
+bool pci_ats_supported(काष्ठा pci_dev *dev)
+अणु
+	अगर (!dev->ats_cap)
+		वापस false;
 
-	return (dev->untrusted == 0);
-}
+	वापस (dev->untrusted == 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_ats_supported);
 
 /**
  * pci_enable_ats - enable the ATS capability
  * @dev: the PCI device
- * @ps: the IOMMU page shift
+ * @ps: the IOMMU page shअगरt
  *
  * Returns 0 on success, or negative on failure.
  */
-int pci_enable_ats(struct pci_dev *dev, int ps)
-{
+पूर्णांक pci_enable_ats(काष्ठा pci_dev *dev, पूर्णांक ps)
+अणु
 	u16 ctrl;
-	struct pci_dev *pdev;
+	काष्ठा pci_dev *pdev;
 
-	if (!pci_ats_supported(dev))
-		return -EINVAL;
+	अगर (!pci_ats_supported(dev))
+		वापस -EINVAL;
 
-	if (WARN_ON(dev->ats_enabled))
-		return -EBUSY;
+	अगर (WARN_ON(dev->ats_enabled))
+		वापस -EBUSY;
 
-	if (ps < PCI_ATS_MIN_STU)
-		return -EINVAL;
+	अगर (ps < PCI_ATS_MIN_STU)
+		वापस -EINVAL;
 
 	/*
-	 * Note that enabling ATS on a VF fails unless it's already enabled
+	 * Note that enabling ATS on a VF fails unless it's alपढ़ोy enabled
 	 * with the same STU on the PF.
 	 */
 	ctrl = PCI_ATS_CTRL_ENABLE;
-	if (dev->is_virtfn) {
+	अगर (dev->is_virtfn) अणु
 		pdev = pci_physfn(dev);
-		if (pdev->ats_stu != ps)
-			return -EINVAL;
-	} else {
+		अगर (pdev->ats_stu != ps)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		dev->ats_stu = ps;
 		ctrl |= PCI_ATS_CTRL_STU(dev->ats_stu - PCI_ATS_MIN_STU);
-	}
-	pci_write_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
+	पूर्ण
+	pci_ग_लिखो_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
 
 	dev->ats_enabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_enable_ats);
 
 /**
  * pci_disable_ats - disable the ATS capability
  * @dev: the PCI device
  */
-void pci_disable_ats(struct pci_dev *dev)
-{
+व्योम pci_disable_ats(काष्ठा pci_dev *dev)
+अणु
 	u16 ctrl;
 
-	if (WARN_ON(!dev->ats_enabled))
-		return;
+	अगर (WARN_ON(!dev->ats_enabled))
+		वापस;
 
-	pci_read_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, &ctrl);
+	pci_पढ़ो_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, &ctrl);
 	ctrl &= ~PCI_ATS_CTRL_ENABLE;
-	pci_write_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
+	pci_ग_लिखो_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
 
 	dev->ats_enabled = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_disable_ats);
 
-void pci_restore_ats_state(struct pci_dev *dev)
-{
+व्योम pci_restore_ats_state(काष्ठा pci_dev *dev)
+अणु
 	u16 ctrl;
 
-	if (!dev->ats_enabled)
-		return;
+	अगर (!dev->ats_enabled)
+		वापस;
 
 	ctrl = PCI_ATS_CTRL_ENABLE;
-	if (!dev->is_virtfn)
+	अगर (!dev->is_virtfn)
 		ctrl |= PCI_ATS_CTRL_STU(dev->ats_stu - PCI_ATS_MIN_STU);
-	pci_write_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
-}
+	pci_ग_लिखो_config_word(dev, dev->ats_cap + PCI_ATS_CTRL, ctrl);
+पूर्ण
 
 /**
  * pci_ats_queue_depth - query the ATS Invalidate Queue Depth
@@ -127,382 +128,382 @@ void pci_restore_ats_state(struct pci_dev *dev)
  *
  * The ATS spec uses 0 in the Invalidate Queue Depth field to
  * indicate that the function can accept 32 Invalidate Request.
- * But here we use the `real' values (i.e. 1~32) for the Queue
+ * But here we use the `real' values (i.e. 1~32) क्रम the Queue
  * Depth; and 0 indicates the function shares the Queue with
- * other functions (doesn't exclusively own a Queue).
+ * other functions (करोesn't exclusively own a Queue).
  */
-int pci_ats_queue_depth(struct pci_dev *dev)
-{
+पूर्णांक pci_ats_queue_depth(काष्ठा pci_dev *dev)
+अणु
 	u16 cap;
 
-	if (!dev->ats_cap)
-		return -EINVAL;
+	अगर (!dev->ats_cap)
+		वापस -EINVAL;
 
-	if (dev->is_virtfn)
-		return 0;
+	अगर (dev->is_virtfn)
+		वापस 0;
 
-	pci_read_config_word(dev, dev->ats_cap + PCI_ATS_CAP, &cap);
-	return PCI_ATS_CAP_QDEP(cap) ? PCI_ATS_CAP_QDEP(cap) : PCI_ATS_MAX_QDEP;
-}
+	pci_पढ़ो_config_word(dev, dev->ats_cap + PCI_ATS_CAP, &cap);
+	वापस PCI_ATS_CAP_QDEP(cap) ? PCI_ATS_CAP_QDEP(cap) : PCI_ATS_MAX_QDEP;
+पूर्ण
 
 /**
  * pci_ats_page_aligned - Return Page Aligned Request bit status.
  * @pdev: the PCI device
  *
- * Returns 1, if the Untranslated Addresses generated by the device
+ * Returns 1, अगर the Untranslated Addresses generated by the device
  * are always aligned or 0 otherwise.
  *
- * Per PCIe spec r4.0, sec 10.5.1.2, if the Page Aligned Request bit
+ * Per PCIe spec r4.0, sec 10.5.1.2, अगर the Page Aligned Request bit
  * is set, it indicates the Untranslated Addresses generated by the
  * device are always aligned to a 4096 byte boundary.
  */
-int pci_ats_page_aligned(struct pci_dev *pdev)
-{
+पूर्णांक pci_ats_page_aligned(काष्ठा pci_dev *pdev)
+अणु
 	u16 cap;
 
-	if (!pdev->ats_cap)
-		return 0;
+	अगर (!pdev->ats_cap)
+		वापस 0;
 
-	pci_read_config_word(pdev, pdev->ats_cap + PCI_ATS_CAP, &cap);
+	pci_पढ़ो_config_word(pdev, pdev->ats_cap + PCI_ATS_CAP, &cap);
 
-	if (cap & PCI_ATS_CAP_PAGE_ALIGNED)
-		return 1;
+	अगर (cap & PCI_ATS_CAP_PAGE_ALIGNED)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PCI_PRI
-void pci_pri_init(struct pci_dev *pdev)
-{
+#अगर_घोषित CONFIG_PCI_PRI
+व्योम pci_pri_init(काष्ठा pci_dev *pdev)
+अणु
 	u16 status;
 
 	pdev->pri_cap = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_PRI);
 
-	if (!pdev->pri_cap)
-		return;
+	अगर (!pdev->pri_cap)
+		वापस;
 
-	pci_read_config_word(pdev, pdev->pri_cap + PCI_PRI_STATUS, &status);
-	if (status & PCI_PRI_STATUS_PASID)
+	pci_पढ़ो_config_word(pdev, pdev->pri_cap + PCI_PRI_STATUS, &status);
+	अगर (status & PCI_PRI_STATUS_PASID)
 		pdev->pasid_required = 1;
-}
+पूर्ण
 
 /**
  * pci_enable_pri - Enable PRI capability
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  * @reqs: outstanding requests
  *
  * Returns 0 on success, negative value on error
  */
-int pci_enable_pri(struct pci_dev *pdev, u32 reqs)
-{
+पूर्णांक pci_enable_pri(काष्ठा pci_dev *pdev, u32 reqs)
+अणु
 	u16 control, status;
 	u32 max_requests;
-	int pri = pdev->pri_cap;
+	पूर्णांक pri = pdev->pri_cap;
 
 	/*
 	 * VFs must not implement the PRI Capability.  If their PF
-	 * implements PRI, it is shared by the VFs, so if the PF PRI is
-	 * enabled, it is also enabled for the VF.
+	 * implements PRI, it is shared by the VFs, so अगर the PF PRI is
+	 * enabled, it is also enabled क्रम the VF.
 	 */
-	if (pdev->is_virtfn) {
-		if (pci_physfn(pdev)->pri_enabled)
-			return 0;
-		return -EINVAL;
-	}
+	अगर (pdev->is_virtfn) अणु
+		अगर (pci_physfn(pdev)->pri_enabled)
+			वापस 0;
+		वापस -EINVAL;
+	पूर्ण
 
-	if (WARN_ON(pdev->pri_enabled))
-		return -EBUSY;
+	अगर (WARN_ON(pdev->pri_enabled))
+		वापस -EBUSY;
 
-	if (!pri)
-		return -EINVAL;
+	अगर (!pri)
+		वापस -EINVAL;
 
-	pci_read_config_word(pdev, pri + PCI_PRI_STATUS, &status);
-	if (!(status & PCI_PRI_STATUS_STOPPED))
-		return -EBUSY;
+	pci_पढ़ो_config_word(pdev, pri + PCI_PRI_STATUS, &status);
+	अगर (!(status & PCI_PRI_STATUS_STOPPED))
+		वापस -EBUSY;
 
-	pci_read_config_dword(pdev, pri + PCI_PRI_MAX_REQ, &max_requests);
+	pci_पढ़ो_config_dword(pdev, pri + PCI_PRI_MAX_REQ, &max_requests);
 	reqs = min(max_requests, reqs);
 	pdev->pri_reqs_alloc = reqs;
-	pci_write_config_dword(pdev, pri + PCI_PRI_ALLOC_REQ, reqs);
+	pci_ग_लिखो_config_dword(pdev, pri + PCI_PRI_ALLOC_REQ, reqs);
 
 	control = PCI_PRI_CTRL_ENABLE;
-	pci_write_config_word(pdev, pri + PCI_PRI_CTRL, control);
+	pci_ग_लिखो_config_word(pdev, pri + PCI_PRI_CTRL, control);
 
 	pdev->pri_enabled = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pci_disable_pri - Disable PRI capability
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  *
- * Only clears the enabled-bit, regardless of its former value
+ * Only clears the enabled-bit, regardless of its क्रमmer value
  */
-void pci_disable_pri(struct pci_dev *pdev)
-{
+व्योम pci_disable_pri(काष्ठा pci_dev *pdev)
+अणु
 	u16 control;
-	int pri = pdev->pri_cap;
+	पूर्णांक pri = pdev->pri_cap;
 
 	/* VFs share the PF PRI */
-	if (pdev->is_virtfn)
-		return;
+	अगर (pdev->is_virtfn)
+		वापस;
 
-	if (WARN_ON(!pdev->pri_enabled))
-		return;
+	अगर (WARN_ON(!pdev->pri_enabled))
+		वापस;
 
-	if (!pri)
-		return;
+	अगर (!pri)
+		वापस;
 
-	pci_read_config_word(pdev, pri + PCI_PRI_CTRL, &control);
+	pci_पढ़ो_config_word(pdev, pri + PCI_PRI_CTRL, &control);
 	control &= ~PCI_PRI_CTRL_ENABLE;
-	pci_write_config_word(pdev, pri + PCI_PRI_CTRL, control);
+	pci_ग_लिखो_config_word(pdev, pri + PCI_PRI_CTRL, control);
 
 	pdev->pri_enabled = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_disable_pri);
 
 /**
  * pci_restore_pri_state - Restore PRI
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  */
-void pci_restore_pri_state(struct pci_dev *pdev)
-{
+व्योम pci_restore_pri_state(काष्ठा pci_dev *pdev)
+अणु
 	u16 control = PCI_PRI_CTRL_ENABLE;
 	u32 reqs = pdev->pri_reqs_alloc;
-	int pri = pdev->pri_cap;
+	पूर्णांक pri = pdev->pri_cap;
 
-	if (pdev->is_virtfn)
-		return;
+	अगर (pdev->is_virtfn)
+		वापस;
 
-	if (!pdev->pri_enabled)
-		return;
+	अगर (!pdev->pri_enabled)
+		वापस;
 
-	if (!pri)
-		return;
+	अगर (!pri)
+		वापस;
 
-	pci_write_config_dword(pdev, pri + PCI_PRI_ALLOC_REQ, reqs);
-	pci_write_config_word(pdev, pri + PCI_PRI_CTRL, control);
-}
+	pci_ग_लिखो_config_dword(pdev, pri + PCI_PRI_ALLOC_REQ, reqs);
+	pci_ग_लिखो_config_word(pdev, pri + PCI_PRI_CTRL, control);
+पूर्ण
 
 /**
  * pci_reset_pri - Resets device's PRI state
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  *
- * The PRI capability must be disabled before this function is called.
+ * The PRI capability must be disabled beक्रमe this function is called.
  * Returns 0 on success, negative value on error.
  */
-int pci_reset_pri(struct pci_dev *pdev)
-{
+पूर्णांक pci_reset_pri(काष्ठा pci_dev *pdev)
+अणु
 	u16 control;
-	int pri = pdev->pri_cap;
+	पूर्णांक pri = pdev->pri_cap;
 
-	if (pdev->is_virtfn)
-		return 0;
+	अगर (pdev->is_virtfn)
+		वापस 0;
 
-	if (WARN_ON(pdev->pri_enabled))
-		return -EBUSY;
+	अगर (WARN_ON(pdev->pri_enabled))
+		वापस -EBUSY;
 
-	if (!pri)
-		return -EINVAL;
+	अगर (!pri)
+		वापस -EINVAL;
 
 	control = PCI_PRI_CTRL_RESET;
-	pci_write_config_word(pdev, pri + PCI_PRI_CTRL, control);
+	pci_ग_लिखो_config_word(pdev, pri + PCI_PRI_CTRL, control);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * pci_prg_resp_pasid_required - Return PRG Response PASID Required bit
  *				 status.
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  *
- * Returns 1 if PASID is required in PRG Response Message, 0 otherwise.
+ * Returns 1 अगर PASID is required in PRG Response Message, 0 otherwise.
  */
-int pci_prg_resp_pasid_required(struct pci_dev *pdev)
-{
-	if (pdev->is_virtfn)
+पूर्णांक pci_prg_resp_pasid_required(काष्ठा pci_dev *pdev)
+अणु
+	अगर (pdev->is_virtfn)
 		pdev = pci_physfn(pdev);
 
-	return pdev->pasid_required;
-}
+	वापस pdev->pasid_required;
+पूर्ण
 
 /**
- * pci_pri_supported - Check if PRI is supported.
- * @pdev: PCI device structure
+ * pci_pri_supported - Check अगर PRI is supported.
+ * @pdev: PCI device काष्ठाure
  *
- * Returns true if PRI capability is present, false otherwise.
+ * Returns true अगर PRI capability is present, false otherwise.
  */
-bool pci_pri_supported(struct pci_dev *pdev)
-{
+bool pci_pri_supported(काष्ठा pci_dev *pdev)
+अणु
 	/* VFs share the PF PRI */
-	if (pci_physfn(pdev)->pri_cap)
-		return true;
-	return false;
-}
+	अगर (pci_physfn(pdev)->pri_cap)
+		वापस true;
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_pri_supported);
-#endif /* CONFIG_PCI_PRI */
+#पूर्ण_अगर /* CONFIG_PCI_PRI */
 
-#ifdef CONFIG_PCI_PASID
-void pci_pasid_init(struct pci_dev *pdev)
-{
+#अगर_घोषित CONFIG_PCI_PASID
+व्योम pci_pasid_init(काष्ठा pci_dev *pdev)
+अणु
 	pdev->pasid_cap = pci_find_ext_capability(pdev, PCI_EXT_CAP_ID_PASID);
-}
+पूर्ण
 
 /**
  * pci_enable_pasid - Enable the PASID capability
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  * @features: Features to enable
  *
  * Returns 0 on success, negative value on error. This function checks
- * whether the features are actually supported by the device and returns
- * an error if not.
+ * whether the features are actually supported by the device and वापसs
+ * an error अगर not.
  */
-int pci_enable_pasid(struct pci_dev *pdev, int features)
-{
+पूर्णांक pci_enable_pasid(काष्ठा pci_dev *pdev, पूर्णांक features)
+अणु
 	u16 control, supported;
-	int pasid = pdev->pasid_cap;
+	पूर्णांक pasid = pdev->pasid_cap;
 
 	/*
-	 * VFs must not implement the PASID Capability, but if a PF
+	 * VFs must not implement the PASID Capability, but अगर a PF
 	 * supports PASID, its VFs share the PF PASID configuration.
 	 */
-	if (pdev->is_virtfn) {
-		if (pci_physfn(pdev)->pasid_enabled)
-			return 0;
-		return -EINVAL;
-	}
+	अगर (pdev->is_virtfn) अणु
+		अगर (pci_physfn(pdev)->pasid_enabled)
+			वापस 0;
+		वापस -EINVAL;
+	पूर्ण
 
-	if (WARN_ON(pdev->pasid_enabled))
-		return -EBUSY;
+	अगर (WARN_ON(pdev->pasid_enabled))
+		वापस -EBUSY;
 
-	if (!pdev->eetlp_prefix_path)
-		return -EINVAL;
+	अगर (!pdev->eetlp_prefix_path)
+		वापस -EINVAL;
 
-	if (!pasid)
-		return -EINVAL;
+	अगर (!pasid)
+		वापस -EINVAL;
 
-	pci_read_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
+	pci_पढ़ो_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
 	supported &= PCI_PASID_CAP_EXEC | PCI_PASID_CAP_PRIV;
 
 	/* User wants to enable anything unsupported? */
-	if ((supported & features) != features)
-		return -EINVAL;
+	अगर ((supported & features) != features)
+		वापस -EINVAL;
 
 	control = PCI_PASID_CTRL_ENABLE | features;
 	pdev->pasid_features = features;
 
-	pci_write_config_word(pdev, pasid + PCI_PASID_CTRL, control);
+	pci_ग_लिखो_config_word(pdev, pasid + PCI_PASID_CTRL, control);
 
 	pdev->pasid_enabled = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_enable_pasid);
 
 /**
  * pci_disable_pasid - Disable the PASID capability
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  */
-void pci_disable_pasid(struct pci_dev *pdev)
-{
+व्योम pci_disable_pasid(काष्ठा pci_dev *pdev)
+अणु
 	u16 control = 0;
-	int pasid = pdev->pasid_cap;
+	पूर्णांक pasid = pdev->pasid_cap;
 
 	/* VFs share the PF PASID configuration */
-	if (pdev->is_virtfn)
-		return;
+	अगर (pdev->is_virtfn)
+		वापस;
 
-	if (WARN_ON(!pdev->pasid_enabled))
-		return;
+	अगर (WARN_ON(!pdev->pasid_enabled))
+		वापस;
 
-	if (!pasid)
-		return;
+	अगर (!pasid)
+		वापस;
 
-	pci_write_config_word(pdev, pasid + PCI_PASID_CTRL, control);
+	pci_ग_लिखो_config_word(pdev, pasid + PCI_PASID_CTRL, control);
 
 	pdev->pasid_enabled = 0;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_disable_pasid);
 
 /**
  * pci_restore_pasid_state - Restore PASID capabilities
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  */
-void pci_restore_pasid_state(struct pci_dev *pdev)
-{
+व्योम pci_restore_pasid_state(काष्ठा pci_dev *pdev)
+अणु
 	u16 control;
-	int pasid = pdev->pasid_cap;
+	पूर्णांक pasid = pdev->pasid_cap;
 
-	if (pdev->is_virtfn)
-		return;
+	अगर (pdev->is_virtfn)
+		वापस;
 
-	if (!pdev->pasid_enabled)
-		return;
+	अगर (!pdev->pasid_enabled)
+		वापस;
 
-	if (!pasid)
-		return;
+	अगर (!pasid)
+		वापस;
 
 	control = PCI_PASID_CTRL_ENABLE | pdev->pasid_features;
-	pci_write_config_word(pdev, pasid + PCI_PASID_CTRL, control);
-}
+	pci_ग_लिखो_config_word(pdev, pasid + PCI_PASID_CTRL, control);
+पूर्ण
 
 /**
  * pci_pasid_features - Check which PASID features are supported
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  *
  * Returns a negative value when no PASI capability is present.
- * Otherwise is returns a bitmask with supported features. Current
+ * Otherwise is वापसs a biपंचांगask with supported features. Current
  * features reported are:
  * PCI_PASID_CAP_EXEC - Execute permission supported
  * PCI_PASID_CAP_PRIV - Privileged mode supported
  */
-int pci_pasid_features(struct pci_dev *pdev)
-{
+पूर्णांक pci_pasid_features(काष्ठा pci_dev *pdev)
+अणु
 	u16 supported;
-	int pasid;
+	पूर्णांक pasid;
 
-	if (pdev->is_virtfn)
+	अगर (pdev->is_virtfn)
 		pdev = pci_physfn(pdev);
 
 	pasid = pdev->pasid_cap;
-	if (!pasid)
-		return -EINVAL;
+	अगर (!pasid)
+		वापस -EINVAL;
 
-	pci_read_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
+	pci_पढ़ो_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
 
 	supported &= PCI_PASID_CAP_EXEC | PCI_PASID_CAP_PRIV;
 
-	return supported;
-}
+	वापस supported;
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_pasid_features);
 
-#define PASID_NUMBER_SHIFT	8
-#define PASID_NUMBER_MASK	(0x1f << PASID_NUMBER_SHIFT)
+#घोषणा PASID_NUMBER_SHIFT	8
+#घोषणा PASID_NUMBER_MASK	(0x1f << PASID_NUMBER_SHIFT)
 /**
  * pci_max_pasids - Get maximum number of PASIDs supported by device
- * @pdev: PCI device structure
+ * @pdev: PCI device काष्ठाure
  *
  * Returns negative value when PASID capability is not present.
- * Otherwise it returns the number of supported PASIDs.
+ * Otherwise it वापसs the number of supported PASIDs.
  */
-int pci_max_pasids(struct pci_dev *pdev)
-{
+पूर्णांक pci_max_pasids(काष्ठा pci_dev *pdev)
+अणु
 	u16 supported;
-	int pasid;
+	पूर्णांक pasid;
 
-	if (pdev->is_virtfn)
+	अगर (pdev->is_virtfn)
 		pdev = pci_physfn(pdev);
 
 	pasid = pdev->pasid_cap;
-	if (!pasid)
-		return -EINVAL;
+	अगर (!pasid)
+		वापस -EINVAL;
 
-	pci_read_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
+	pci_पढ़ो_config_word(pdev, pasid + PCI_PASID_CAP, &supported);
 
 	supported = (supported & PASID_NUMBER_MASK) >> PASID_NUMBER_SHIFT;
 
-	return (1 << supported);
-}
+	वापस (1 << supported);
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_max_pasids);
-#endif /* CONFIG_PCI_PASID */
+#पूर्ण_अगर /* CONFIG_PCI_PASID */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Altera SPI driver
  *
@@ -10,139 +11,139 @@
  *	Ben Dooks <ben@simtec.co.uk>
  */
 
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/spi/altera.h>
-#include <linux/spi/spi.h>
-#include <linux/io.h>
-#include <linux/of.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spi/altera.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
 
-#define DRV_NAME "spi_altera"
+#घोषणा DRV_NAME "spi_altera"
 
-#define ALTERA_SPI_RXDATA	0
-#define ALTERA_SPI_TXDATA	4
-#define ALTERA_SPI_STATUS	8
-#define ALTERA_SPI_CONTROL	12
-#define ALTERA_SPI_SLAVE_SEL	20
+#घोषणा ALTERA_SPI_RXDATA	0
+#घोषणा ALTERA_SPI_TXDATA	4
+#घोषणा ALTERA_SPI_STATUS	8
+#घोषणा ALTERA_SPI_CONTROL	12
+#घोषणा ALTERA_SPI_SLAVE_SEL	20
 
-#define ALTERA_SPI_STATUS_ROE_MSK	0x8
-#define ALTERA_SPI_STATUS_TOE_MSK	0x10
-#define ALTERA_SPI_STATUS_TMT_MSK	0x20
-#define ALTERA_SPI_STATUS_TRDY_MSK	0x40
-#define ALTERA_SPI_STATUS_RRDY_MSK	0x80
-#define ALTERA_SPI_STATUS_E_MSK		0x100
+#घोषणा ALTERA_SPI_STATUS_ROE_MSK	0x8
+#घोषणा ALTERA_SPI_STATUS_TOE_MSK	0x10
+#घोषणा ALTERA_SPI_STATUS_TMT_MSK	0x20
+#घोषणा ALTERA_SPI_STATUS_TRDY_MSK	0x40
+#घोषणा ALTERA_SPI_STATUS_RRDY_MSK	0x80
+#घोषणा ALTERA_SPI_STATUS_E_MSK		0x100
 
-#define ALTERA_SPI_CONTROL_IROE_MSK	0x8
-#define ALTERA_SPI_CONTROL_ITOE_MSK	0x10
-#define ALTERA_SPI_CONTROL_ITRDY_MSK	0x40
-#define ALTERA_SPI_CONTROL_IRRDY_MSK	0x80
-#define ALTERA_SPI_CONTROL_IE_MSK	0x100
-#define ALTERA_SPI_CONTROL_SSO_MSK	0x400
+#घोषणा ALTERA_SPI_CONTROL_IROE_MSK	0x8
+#घोषणा ALTERA_SPI_CONTROL_ITOE_MSK	0x10
+#घोषणा ALTERA_SPI_CONTROL_ITRDY_MSK	0x40
+#घोषणा ALTERA_SPI_CONTROL_IRRDY_MSK	0x80
+#घोषणा ALTERA_SPI_CONTROL_IE_MSK	0x100
+#घोषणा ALTERA_SPI_CONTROL_SSO_MSK	0x400
 
-static int altr_spi_writel(struct altera_spi *hw, unsigned int reg,
-			   unsigned int val)
-{
-	int ret;
+अटल पूर्णांक altr_spi_ग_लिखोl(काष्ठा altera_spi *hw, अचिन्हित पूर्णांक reg,
+			   अचिन्हित पूर्णांक val)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(hw->regmap, hw->regoff + reg, val);
-	if (ret)
+	ret = regmap_ग_लिखो(hw->regmap, hw->regoff + reg, val);
+	अगर (ret)
 		dev_err(hw->dev, "fail to write reg 0x%x val 0x%x: %d\n",
 			reg, val, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int altr_spi_readl(struct altera_spi *hw, unsigned int reg,
-			  unsigned int *val)
-{
-	int ret;
+अटल पूर्णांक altr_spi_पढ़ोl(काष्ठा altera_spi *hw, अचिन्हित पूर्णांक reg,
+			  अचिन्हित पूर्णांक *val)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_read(hw->regmap, hw->regoff + reg, val);
-	if (ret)
+	ret = regmap_पढ़ो(hw->regmap, hw->regoff + reg, val);
+	अगर (ret)
 		dev_err(hw->dev, "fail to read reg 0x%x: %d\n", reg, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline struct altera_spi *altera_spi_to_hw(struct spi_device *sdev)
-{
-	return spi_master_get_devdata(sdev->master);
-}
+अटल अंतरभूत काष्ठा altera_spi *altera_spi_to_hw(काष्ठा spi_device *sdev)
+अणु
+	वापस spi_master_get_devdata(sdev->master);
+पूर्ण
 
-static void altera_spi_set_cs(struct spi_device *spi, bool is_high)
-{
-	struct altera_spi *hw = altera_spi_to_hw(spi);
+अटल व्योम altera_spi_set_cs(काष्ठा spi_device *spi, bool is_high)
+अणु
+	काष्ठा altera_spi *hw = altera_spi_to_hw(spi);
 
-	if (is_high) {
+	अगर (is_high) अणु
 		hw->imr &= ~ALTERA_SPI_CONTROL_SSO_MSK;
-		altr_spi_writel(hw, ALTERA_SPI_CONTROL, hw->imr);
-		altr_spi_writel(hw, ALTERA_SPI_SLAVE_SEL, 0);
-	} else {
-		altr_spi_writel(hw, ALTERA_SPI_SLAVE_SEL,
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_CONTROL, hw->imr);
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_SLAVE_SEL, 0);
+	पूर्ण अन्यथा अणु
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_SLAVE_SEL,
 				BIT(spi->chip_select));
 		hw->imr |= ALTERA_SPI_CONTROL_SSO_MSK;
-		altr_spi_writel(hw, ALTERA_SPI_CONTROL, hw->imr);
-	}
-}
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_CONTROL, hw->imr);
+	पूर्ण
+पूर्ण
 
-static void altera_spi_tx_word(struct altera_spi *hw)
-{
-	unsigned int txd = 0;
+अटल व्योम altera_spi_tx_word(काष्ठा altera_spi *hw)
+अणु
+	अचिन्हित पूर्णांक txd = 0;
 
-	if (hw->tx) {
-		switch (hw->bytes_per_word) {
-		case 1:
+	अगर (hw->tx) अणु
+		चयन (hw->bytes_per_word) अणु
+		हाल 1:
 			txd = hw->tx[hw->count];
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			txd = (hw->tx[hw->count * 2]
 				| (hw->tx[hw->count * 2 + 1] << 8));
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			txd = (hw->tx[hw->count * 4]
 				| (hw->tx[hw->count * 4 + 1] << 8)
 				| (hw->tx[hw->count * 4 + 2] << 16)
 				| (hw->tx[hw->count * 4 + 3] << 24));
-			break;
+			अवरोध;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	altr_spi_writel(hw, ALTERA_SPI_TXDATA, txd);
-}
+	altr_spi_ग_लिखोl(hw, ALTERA_SPI_TXDATA, txd);
+पूर्ण
 
-static void altera_spi_rx_word(struct altera_spi *hw)
-{
-	unsigned int rxd;
+अटल व्योम altera_spi_rx_word(काष्ठा altera_spi *hw)
+अणु
+	अचिन्हित पूर्णांक rxd;
 
-	altr_spi_readl(hw, ALTERA_SPI_RXDATA, &rxd);
-	if (hw->rx) {
-		switch (hw->bytes_per_word) {
-		case 1:
+	altr_spi_पढ़ोl(hw, ALTERA_SPI_RXDATA, &rxd);
+	अगर (hw->rx) अणु
+		चयन (hw->bytes_per_word) अणु
+		हाल 1:
 			hw->rx[hw->count] = rxd;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			hw->rx[hw->count * 2] = rxd;
 			hw->rx[hw->count * 2 + 1] = rxd >> 8;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			hw->rx[hw->count * 4] = rxd;
 			hw->rx[hw->count * 4 + 1] = rxd >> 8;
 			hw->rx[hw->count * 4 + 2] = rxd >> 16;
 			hw->rx[hw->count * 4 + 3] = rxd >> 24;
-			break;
+			अवरोध;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hw->count++;
-}
+पूर्ण
 
-static int altera_spi_txrx(struct spi_master *master,
-	struct spi_device *spi, struct spi_transfer *t)
-{
-	struct altera_spi *hw = spi_master_get_devdata(master);
+अटल पूर्णांक altera_spi_txrx(काष्ठा spi_master *master,
+	काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
+अणु
+	काष्ठा altera_spi *hw = spi_master_get_devdata(master);
 	u32 val;
 
 	hw->tx = t->tx_buf;
@@ -151,72 +152,72 @@ static int altera_spi_txrx(struct spi_master *master,
 	hw->bytes_per_word = DIV_ROUND_UP(t->bits_per_word, 8);
 	hw->len = t->len / hw->bytes_per_word;
 
-	if (hw->irq >= 0) {
-		/* enable receive interrupt */
+	अगर (hw->irq >= 0) अणु
+		/* enable receive पूर्णांकerrupt */
 		hw->imr |= ALTERA_SPI_CONTROL_IRRDY_MSK;
-		altr_spi_writel(hw, ALTERA_SPI_CONTROL, hw->imr);
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_CONTROL, hw->imr);
 
 		/* send the first byte */
 		altera_spi_tx_word(hw);
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	while (hw->count < hw->len) {
+	जबतक (hw->count < hw->len) अणु
 		altera_spi_tx_word(hw);
 
-		for (;;) {
-			altr_spi_readl(hw, ALTERA_SPI_STATUS, &val);
-			if (val & ALTERA_SPI_STATUS_RRDY_MSK)
-				break;
+		क्रम (;;) अणु
+			altr_spi_पढ़ोl(hw, ALTERA_SPI_STATUS, &val);
+			अगर (val & ALTERA_SPI_STATUS_RRDY_MSK)
+				अवरोध;
 
 			cpu_relax();
-		}
+		पूर्ण
 
 		altera_spi_rx_word(hw);
-	}
+	पूर्ण
 	spi_finalize_current_transfer(master);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-irqreturn_t altera_spi_irq(int irq, void *dev)
-{
-	struct spi_master *master = dev;
-	struct altera_spi *hw = spi_master_get_devdata(master);
+irqवापस_t altera_spi_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा spi_master *master = dev;
+	काष्ठा altera_spi *hw = spi_master_get_devdata(master);
 
 	altera_spi_rx_word(hw);
 
-	if (hw->count < hw->len) {
+	अगर (hw->count < hw->len) अणु
 		altera_spi_tx_word(hw);
-	} else {
-		/* disable receive interrupt */
+	पूर्ण अन्यथा अणु
+		/* disable receive पूर्णांकerrupt */
 		hw->imr &= ~ALTERA_SPI_CONTROL_IRRDY_MSK;
-		altr_spi_writel(hw, ALTERA_SPI_CONTROL, hw->imr);
+		altr_spi_ग_लिखोl(hw, ALTERA_SPI_CONTROL, hw->imr);
 
 		spi_finalize_current_transfer(master);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 EXPORT_SYMBOL_GPL(altera_spi_irq);
 
-void altera_spi_init_master(struct spi_master *master)
-{
-	struct altera_spi *hw = spi_master_get_devdata(master);
+व्योम altera_spi_init_master(काष्ठा spi_master *master)
+अणु
+	काष्ठा altera_spi *hw = spi_master_get_devdata(master);
 	u32 val;
 
 	master->transfer_one = altera_spi_txrx;
 	master->set_cs = altera_spi_set_cs;
 
-	/* program defaults into the registers */
-	hw->imr = 0;		/* disable spi interrupts */
-	altr_spi_writel(hw, ALTERA_SPI_CONTROL, hw->imr);
-	altr_spi_writel(hw, ALTERA_SPI_STATUS, 0);	/* clear status reg */
-	altr_spi_readl(hw, ALTERA_SPI_STATUS, &val);
-	if (val & ALTERA_SPI_STATUS_RRDY_MSK)
-		altr_spi_readl(hw, ALTERA_SPI_RXDATA, &val); /* flush rxdata */
-}
+	/* program शेषs पूर्णांकo the रेजिस्टरs */
+	hw->imr = 0;		/* disable spi पूर्णांकerrupts */
+	altr_spi_ग_लिखोl(hw, ALTERA_SPI_CONTROL, hw->imr);
+	altr_spi_ग_लिखोl(hw, ALTERA_SPI_STATUS, 0);	/* clear status reg */
+	altr_spi_पढ़ोl(hw, ALTERA_SPI_STATUS, &val);
+	अगर (val & ALTERA_SPI_STATUS_RRDY_MSK)
+		altr_spi_पढ़ोl(hw, ALTERA_SPI_RXDATA, &val); /* flush rxdata */
+पूर्ण
 EXPORT_SYMBOL_GPL(altera_spi_init_master);
 
 MODULE_LICENSE("GPL");

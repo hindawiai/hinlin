@@ -1,732 +1,733 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2012,2013 Infineon Technologies
  *
  * Authors:
  * Peter Huewe <peter.huewe@infineon.com>
  *
- * Device driver for TCG/TCPA TPM (trusted platform module).
- * Specifications at www.trustedcomputinggroup.org
+ * Device driver क्रम TCG/TCPA TPM (trusted platक्रमm module).
+ * Specअगरications at www.trustedcomputinggroup.org
  *
- * This device driver implements the TPM interface as defined in
+ * This device driver implements the TPM पूर्णांकerface as defined in
  * the TCG TPM Interface Spec version 1.2, revision 1.0 and the
- * Infineon I2C Protocol Stack Specification v0.20.
+ * Infineon I2C Protocol Stack Specअगरication v0.20.
  *
  * It is based on the original tpm_tis device driver from Leendert van
  * Dorn and Kyleen Hall.
  */
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/wait.h>
-#include "tpm.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/रुको.h>
+#समावेश "tpm.h"
 
-#define TPM_I2C_INFINEON_BUFSIZE 1260
+#घोषणा TPM_I2C_INFINEON_बफ_मानE 1260
 
 /* max. number of iterations after I2C NAK */
-#define MAX_COUNT 3
+#घोषणा MAX_COUNT 3
 
-#define SLEEP_DURATION_LOW 55
-#define SLEEP_DURATION_HI 65
+#घोषणा SLEEP_DURATION_LOW 55
+#घोषणा SLEEP_DURATION_HI 65
 
-/* max. number of iterations after I2C NAK for 'long' commands
- * we need this especially for sending TPM_READY, since the cleanup after the
- * transtion to the ready state may take some time, but it is unpredictable
- * how long it will take.
+/* max. number of iterations after I2C NAK क्रम 'long' commands
+ * we need this especially क्रम sending TPM_READY, since the cleanup after the
+ * transtion to the पढ़ोy state may take some समय, but it is unpredictable
+ * how दीर्घ it will take.
  */
-#define MAX_COUNT_LONG 50
+#घोषणा MAX_COUNT_LONG 50
 
-#define SLEEP_DURATION_LONG_LOW 200
-#define SLEEP_DURATION_LONG_HI 220
+#घोषणा SLEEP_DURATION_LONG_LOW 200
+#घोषणा SLEEP_DURATION_LONG_HI 220
 
-/* After sending TPM_READY to 'reset' the TPM we have to sleep even longer */
-#define SLEEP_DURATION_RESET_LOW 2400
-#define SLEEP_DURATION_RESET_HI 2600
+/* After sending TPM_READY to 'reset' the TPM we have to sleep even दीर्घer */
+#घोषणा SLEEP_DURATION_RESET_LOW 2400
+#घोषणा SLEEP_DURATION_RESET_HI 2600
 
-/* we want to use usleep_range instead of msleep for the 5ms TPM_TIMEOUT */
-#define TPM_TIMEOUT_US_LOW (TPM_TIMEOUT * 1000)
-#define TPM_TIMEOUT_US_HI  (TPM_TIMEOUT_US_LOW + 2000)
+/* we want to use usleep_range instead of msleep क्रम the 5ms TPM_TIMEOUT */
+#घोषणा TPM_TIMEOUT_US_LOW (TPM_TIMEOUT * 1000)
+#घोषणा TPM_TIMEOUT_US_HI  (TPM_TIMEOUT_US_LOW + 2000)
 
-/* expected value for DIDVID register */
-#define TPM_TIS_I2C_DID_VID_9635 0xd1150b00L
-#define TPM_TIS_I2C_DID_VID_9645 0x001a15d1L
+/* expected value क्रम DIDVID रेजिस्टर */
+#घोषणा TPM_TIS_I2C_DID_VID_9635 0xd1150b00L
+#घोषणा TPM_TIS_I2C_DID_VID_9645 0x001a15d1L
 
-enum i2c_chip_type {
+क्रमागत i2c_chip_type अणु
 	SLB9635,
 	SLB9645,
 	UNKNOWN,
-};
+पूर्ण;
 
-struct tpm_inf_dev {
-	struct i2c_client *client;
-	int locality;
+काष्ठा tpm_inf_dev अणु
+	काष्ठा i2c_client *client;
+	पूर्णांक locality;
 	/* In addition to the data itself, the buffer must fit the 7-bit I2C
 	 * address and the direction bit.
 	 */
-	u8 buf[TPM_I2C_INFINEON_BUFSIZE + 1];
-	struct tpm_chip *chip;
-	enum i2c_chip_type chip_type;
-	unsigned int adapterlimit;
-};
+	u8 buf[TPM_I2C_INFINEON_बफ_मानE + 1];
+	काष्ठा tpm_chip *chip;
+	क्रमागत i2c_chip_type chip_type;
+	अचिन्हित पूर्णांक adapterlimit;
+पूर्ण;
 
-static struct tpm_inf_dev tpm_dev;
+अटल काष्ठा tpm_inf_dev tpm_dev;
 
 /*
- * iic_tpm_read() - read from TPM register
- * @addr: register address to read from
+ * iic_tpm_पढ़ो() - पढ़ो from TPM रेजिस्टर
+ * @addr: रेजिस्टर address to पढ़ो from
  * @buffer: provided by caller
- * @len: number of bytes to read
+ * @len: number of bytes to पढ़ो
  *
- * Read len bytes from TPM register and put them into
- * buffer (little-endian format, i.e. first byte is put into buffer[0]).
+ * Read len bytes from TPM रेजिस्टर and put them पूर्णांकo
+ * buffer (little-endian क्रमmat, i.e. first byte is put पूर्णांकo buffer[0]).
  *
- * NOTE: TPM is big-endian for multi-byte values. Multi-byte
+ * NOTE: TPM is big-endian क्रम multi-byte values. Multi-byte
  * values have to be swapped.
  *
- * NOTE: We can't unfortunately use the combined read/write functions
- * provided by the i2c core as the TPM currently does not support the
+ * NOTE: We can't unक्रमtunately use the combined पढ़ो/ग_लिखो functions
+ * provided by the i2c core as the TPM currently करोes not support the
  * repeated start condition and due to it's special requirements.
- * The i2c_smbus* functions do not work for this chip.
+ * The i2c_smbus* functions करो not work क्रम this chip.
  *
  * Return -EIO on error, 0 on success.
  */
-static int iic_tpm_read(u8 addr, u8 *buffer, size_t len)
-{
+अटल पूर्णांक iic_tpm_पढ़ो(u8 addr, u8 *buffer, माप_प्रकार len)
+अणु
 
-	struct i2c_msg msg1 = {
+	काष्ठा i2c_msg msg1 = अणु
 		.addr = tpm_dev.client->addr,
 		.len = 1,
 		.buf = &addr
-	};
-	struct i2c_msg msg2 = {
+	पूर्ण;
+	काष्ठा i2c_msg msg2 = अणु
 		.addr = tpm_dev.client->addr,
 		.flags = I2C_M_RD,
 		.len = len,
 		.buf = buffer
-	};
-	struct i2c_msg msgs[] = {msg1, msg2};
+	पूर्ण;
+	काष्ठा i2c_msg msgs[] = अणुmsg1, msg2पूर्ण;
 
-	int rc = 0;
-	int count;
-	unsigned int msglen = len;
+	पूर्णांक rc = 0;
+	पूर्णांक count;
+	अचिन्हित पूर्णांक msglen = len;
 
-	/* Lock the adapter for the duration of the whole sequence. */
-	if (!tpm_dev.client->adapter->algo->master_xfer)
-		return -EOPNOTSUPP;
+	/* Lock the adapter क्रम the duration of the whole sequence. */
+	अगर (!tpm_dev.client->adapter->algo->master_xfer)
+		वापस -EOPNOTSUPP;
 	i2c_lock_bus(tpm_dev.client->adapter, I2C_LOCK_SEGMENT);
 
-	if (tpm_dev.chip_type == SLB9645) {
-		/* use a combined read for newer chips
-		 * unfortunately the smbus functions are not suitable due to
+	अगर (tpm_dev.chip_type == SLB9645) अणु
+		/* use a combined पढ़ो क्रम newer chips
+		 * unक्रमtunately the smbus functions are not suitable due to
 		 * the 32 byte limit of the smbus.
 		 * retries should usually not be needed, but are kept just to
 		 * be on the safe side.
 		 */
-		for (count = 0; count < MAX_COUNT; count++) {
+		क्रम (count = 0; count < MAX_COUNT; count++) अणु
 			rc = __i2c_transfer(tpm_dev.client->adapter, msgs, 2);
-			if (rc > 0)
-				break;	/* break here to skip sleep */
+			अगर (rc > 0)
+				अवरोध;	/* अवरोध here to skip sleep */
 			usleep_range(SLEEP_DURATION_LOW, SLEEP_DURATION_HI);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Expect to send one command message and one data message, but
-		 * support looping over each or both if necessary.
+		 * support looping over each or both अगर necessary.
 		 */
-		while (len > 0) {
-			/* slb9635 protocol should work in all cases */
-			for (count = 0; count < MAX_COUNT; count++) {
+		जबतक (len > 0) अणु
+			/* slb9635 protocol should work in all हालs */
+			क्रम (count = 0; count < MAX_COUNT; count++) अणु
 				rc = __i2c_transfer(tpm_dev.client->adapter,
 						    &msg1, 1);
-				if (rc > 0)
-					break;	/* break here to skip sleep */
+				अगर (rc > 0)
+					अवरोध;	/* अवरोध here to skip sleep */
 
 				usleep_range(SLEEP_DURATION_LOW,
 					     SLEEP_DURATION_HI);
-			}
+			पूर्ण
 
-			if (rc <= 0)
-				goto out;
+			अगर (rc <= 0)
+				जाओ out;
 
-			/* After the TPM has successfully received the register
-			 * address it needs some time, thus we're sleeping here
-			 * again, before retrieving the data
+			/* After the TPM has successfully received the रेजिस्टर
+			 * address it needs some समय, thus we're sleeping here
+			 * again, beक्रमe retrieving the data
 			 */
-			for (count = 0; count < MAX_COUNT; count++) {
-				if (tpm_dev.adapterlimit) {
-					msglen = min_t(unsigned int,
+			क्रम (count = 0; count < MAX_COUNT; count++) अणु
+				अगर (tpm_dev.adapterlimit) अणु
+					msglen = min_t(अचिन्हित पूर्णांक,
 						       tpm_dev.adapterlimit,
 						       len);
 					msg2.len = msglen;
-				}
+				पूर्ण
 				usleep_range(SLEEP_DURATION_LOW,
 					     SLEEP_DURATION_HI);
 				rc = __i2c_transfer(tpm_dev.client->adapter,
 						    &msg2, 1);
-				if (rc > 0) {
-					/* Since len is unsigned, make doubly
-					 * sure we do not underflow it.
+				अगर (rc > 0) अणु
+					/* Since len is अचिन्हित, make करोubly
+					 * sure we करो not underflow it.
 					 */
-					if (msglen > len)
+					अगर (msglen > len)
 						len = 0;
-					else
+					अन्यथा
 						len -= msglen;
 					msg2.buf += msglen;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 				/* If the I2C adapter rejected the request (e.g
-				 * when the quirk read_max_len < len) fall back
+				 * when the quirk पढ़ो_max_len < len) fall back
 				 * to a sane minimum value and try again.
 				 */
-				if (rc == -EOPNOTSUPP)
+				अगर (rc == -EOPNOTSUPP)
 					tpm_dev.adapterlimit =
 							I2C_SMBUS_BLOCK_MAX;
-			}
+			पूर्ण
 
-			if (rc <= 0)
-				goto out;
-		}
-	}
+			अगर (rc <= 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
 	i2c_unlock_bus(tpm_dev.client->adapter, I2C_LOCK_SEGMENT);
 	/* take care of 'guard time' */
 	usleep_range(SLEEP_DURATION_LOW, SLEEP_DURATION_HI);
 
-	/* __i2c_transfer returns the number of successfully transferred
+	/* __i2c_transfer वापसs the number of successfully transferred
 	 * messages.
 	 * So rc should be greater than 0 here otherwise we have an error.
 	 */
-	if (rc <= 0)
-		return -EIO;
+	अगर (rc <= 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iic_tpm_write_generic(u8 addr, u8 *buffer, size_t len,
-				 unsigned int sleep_low,
-				 unsigned int sleep_hi, u8 max_count)
-{
-	int rc = -EIO;
-	int count;
+अटल पूर्णांक iic_tpm_ग_लिखो_generic(u8 addr, u8 *buffer, माप_प्रकार len,
+				 अचिन्हित पूर्णांक sleep_low,
+				 अचिन्हित पूर्णांक sleep_hi, u8 max_count)
+अणु
+	पूर्णांक rc = -EIO;
+	पूर्णांक count;
 
-	struct i2c_msg msg1 = {
+	काष्ठा i2c_msg msg1 = अणु
 		.addr = tpm_dev.client->addr,
 		.len = len + 1,
 		.buf = tpm_dev.buf
-	};
+	पूर्ण;
 
-	if (len > TPM_I2C_INFINEON_BUFSIZE)
-		return -EINVAL;
+	अगर (len > TPM_I2C_INFINEON_बफ_मानE)
+		वापस -EINVAL;
 
-	if (!tpm_dev.client->adapter->algo->master_xfer)
-		return -EOPNOTSUPP;
+	अगर (!tpm_dev.client->adapter->algo->master_xfer)
+		वापस -EOPNOTSUPP;
 	i2c_lock_bus(tpm_dev.client->adapter, I2C_LOCK_SEGMENT);
 
 	/* prepend the 'register address' to the buffer */
 	tpm_dev.buf[0] = addr;
-	memcpy(&(tpm_dev.buf[1]), buffer, len);
+	स_नकल(&(tpm_dev.buf[1]), buffer, len);
 
 	/*
-	 * NOTE: We have to use these special mechanisms here and unfortunately
+	 * NOTE: We have to use these special mechanisms here and unक्रमtunately
 	 * cannot rely on the standard behavior of i2c_transfer.
-	 * Even for newer chips the smbus functions are not
+	 * Even क्रम newer chips the smbus functions are not
 	 * suitable due to the 32 byte limit of the smbus.
 	 */
-	for (count = 0; count < max_count; count++) {
+	क्रम (count = 0; count < max_count; count++) अणु
 		rc = __i2c_transfer(tpm_dev.client->adapter, &msg1, 1);
-		if (rc > 0)
-			break;
+		अगर (rc > 0)
+			अवरोध;
 		usleep_range(sleep_low, sleep_hi);
-	}
+	पूर्ण
 
 	i2c_unlock_bus(tpm_dev.client->adapter, I2C_LOCK_SEGMENT);
 	/* take care of 'guard time' */
 	usleep_range(SLEEP_DURATION_LOW, SLEEP_DURATION_HI);
 
-	/* __i2c_transfer returns the number of successfully transferred
+	/* __i2c_transfer वापसs the number of successfully transferred
 	 * messages.
 	 * So rc should be greater than 0 here otherwise we have an error.
 	 */
-	if (rc <= 0)
-		return -EIO;
+	अगर (rc <= 0)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * iic_tpm_write() - write to TPM register
- * @addr: register address to write to
+ * iic_tpm_ग_लिखो() - ग_लिखो to TPM रेजिस्टर
+ * @addr: रेजिस्टर address to ग_लिखो to
  * @buffer: containing data to be written
- * @len: number of bytes to write
+ * @len: number of bytes to ग_लिखो
  *
- * Write len bytes from provided buffer to TPM register (little
- * endian format, i.e. buffer[0] is written as first byte).
+ * Write len bytes from provided buffer to TPM रेजिस्टर (little
+ * endian क्रमmat, i.e. buffer[0] is written as first byte).
  *
- * NOTE: TPM is big-endian for multi-byte values. Multi-byte
+ * NOTE: TPM is big-endian क्रम multi-byte values. Multi-byte
  * values have to be swapped.
  *
- * NOTE: use this function instead of the iic_tpm_write_generic function.
+ * NOTE: use this function instead of the iic_tpm_ग_लिखो_generic function.
  *
  * Return -EIO on error, 0 on success
  */
-static int iic_tpm_write(u8 addr, u8 *buffer, size_t len)
-{
-	return iic_tpm_write_generic(addr, buffer, len, SLEEP_DURATION_LOW,
+अटल पूर्णांक iic_tpm_ग_लिखो(u8 addr, u8 *buffer, माप_प्रकार len)
+अणु
+	वापस iic_tpm_ग_लिखो_generic(addr, buffer, len, SLEEP_DURATION_LOW,
 				     SLEEP_DURATION_HI, MAX_COUNT);
-}
+पूर्ण
 
 /*
- * This function is needed especially for the cleanup situation after
+ * This function is needed especially क्रम the cleanup situation after
  * sending TPM_READY
  * */
-static int iic_tpm_write_long(u8 addr, u8 *buffer, size_t len)
-{
-	return iic_tpm_write_generic(addr, buffer, len, SLEEP_DURATION_LONG_LOW,
+अटल पूर्णांक iic_tpm_ग_लिखो_दीर्घ(u8 addr, u8 *buffer, माप_प्रकार len)
+अणु
+	वापस iic_tpm_ग_लिखो_generic(addr, buffer, len, SLEEP_DURATION_LONG_LOW,
 				     SLEEP_DURATION_LONG_HI, MAX_COUNT_LONG);
-}
+पूर्ण
 
-enum tis_access {
+क्रमागत tis_access अणु
 	TPM_ACCESS_VALID = 0x80,
 	TPM_ACCESS_ACTIVE_LOCALITY = 0x20,
 	TPM_ACCESS_REQUEST_PENDING = 0x04,
 	TPM_ACCESS_REQUEST_USE = 0x02,
-};
+पूर्ण;
 
-enum tis_status {
+क्रमागत tis_status अणु
 	TPM_STS_VALID = 0x80,
 	TPM_STS_COMMAND_READY = 0x40,
 	TPM_STS_GO = 0x20,
 	TPM_STS_DATA_AVAIL = 0x10,
 	TPM_STS_DATA_EXPECT = 0x08,
-};
+पूर्ण;
 
-enum tis_defaults {
+क्रमागत tis_शेषs अणु
 	TIS_SHORT_TIMEOUT = 750,	/* ms */
 	TIS_LONG_TIMEOUT = 2000,	/* 2 sec */
-};
+पूर्ण;
 
-#define	TPM_ACCESS(l)			(0x0000 | ((l) << 4))
-#define	TPM_STS(l)			(0x0001 | ((l) << 4))
-#define	TPM_DATA_FIFO(l)		(0x0005 | ((l) << 4))
-#define	TPM_DID_VID(l)			(0x0006 | ((l) << 4))
+#घोषणा	TPM_ACCESS(l)			(0x0000 | ((l) << 4))
+#घोषणा	TPM_STS(l)			(0x0001 | ((l) << 4))
+#घोषणा	TPM_DATA_FIFO(l)		(0x0005 | ((l) << 4))
+#घोषणा	TPM_DID_VID(l)			(0x0006 | ((l) << 4))
 
-static bool check_locality(struct tpm_chip *chip, int loc)
-{
+अटल bool check_locality(काष्ठा tpm_chip *chip, पूर्णांक loc)
+अणु
 	u8 buf;
-	int rc;
+	पूर्णांक rc;
 
-	rc = iic_tpm_read(TPM_ACCESS(loc), &buf, 1);
-	if (rc < 0)
-		return false;
+	rc = iic_tpm_पढ़ो(TPM_ACCESS(loc), &buf, 1);
+	अगर (rc < 0)
+		वापस false;
 
-	if ((buf & (TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID)) ==
-	    (TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID)) {
+	अगर ((buf & (TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID)) ==
+	    (TPM_ACCESS_ACTIVE_LOCALITY | TPM_ACCESS_VALID)) अणु
 		tpm_dev.locality = loc;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* implementation similar to tpm_tis */
-static void release_locality(struct tpm_chip *chip, int loc, int force)
-{
+अटल व्योम release_locality(काष्ठा tpm_chip *chip, पूर्णांक loc, पूर्णांक क्रमce)
+अणु
 	u8 buf;
-	if (iic_tpm_read(TPM_ACCESS(loc), &buf, 1) < 0)
-		return;
+	अगर (iic_tpm_पढ़ो(TPM_ACCESS(loc), &buf, 1) < 0)
+		वापस;
 
-	if (force || (buf & (TPM_ACCESS_REQUEST_PENDING | TPM_ACCESS_VALID)) ==
-	    (TPM_ACCESS_REQUEST_PENDING | TPM_ACCESS_VALID)) {
+	अगर (क्रमce || (buf & (TPM_ACCESS_REQUEST_PENDING | TPM_ACCESS_VALID)) ==
+	    (TPM_ACCESS_REQUEST_PENDING | TPM_ACCESS_VALID)) अणु
 		buf = TPM_ACCESS_ACTIVE_LOCALITY;
-		iic_tpm_write(TPM_ACCESS(loc), &buf, 1);
-	}
-}
+		iic_tpm_ग_लिखो(TPM_ACCESS(loc), &buf, 1);
+	पूर्ण
+पूर्ण
 
-static int request_locality(struct tpm_chip *chip, int loc)
-{
-	unsigned long stop;
+अटल पूर्णांक request_locality(काष्ठा tpm_chip *chip, पूर्णांक loc)
+अणु
+	अचिन्हित दीर्घ stop;
 	u8 buf = TPM_ACCESS_REQUEST_USE;
 
-	if (check_locality(chip, loc))
-		return loc;
+	अगर (check_locality(chip, loc))
+		वापस loc;
 
-	iic_tpm_write(TPM_ACCESS(loc), &buf, 1);
+	iic_tpm_ग_लिखो(TPM_ACCESS(loc), &buf, 1);
 
-	/* wait for burstcount */
-	stop = jiffies + chip->timeout_a;
-	do {
-		if (check_locality(chip, loc))
-			return loc;
+	/* रुको क्रम burstcount */
+	stop = jअगरfies + chip->समयout_a;
+	करो अणु
+		अगर (check_locality(chip, loc))
+			वापस loc;
 		usleep_range(TPM_TIMEOUT_US_LOW, TPM_TIMEOUT_US_HI);
-	} while (time_before(jiffies, stop));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
 
-	return -ETIME;
-}
+	वापस -ETIME;
+पूर्ण
 
-static u8 tpm_tis_i2c_status(struct tpm_chip *chip)
-{
-	/* NOTE: since I2C read may fail, return 0 in this case --> time-out */
+अटल u8 tpm_tis_i2c_status(काष्ठा tpm_chip *chip)
+अणु
+	/* NOTE: since I2C पढ़ो may fail, वापस 0 in this हाल --> समय-out */
 	u8 buf = 0xFF;
 	u8 i = 0;
 
-	do {
-		if (iic_tpm_read(TPM_STS(tpm_dev.locality), &buf, 1) < 0)
-			return 0;
+	करो अणु
+		अगर (iic_tpm_पढ़ो(TPM_STS(tpm_dev.locality), &buf, 1) < 0)
+			वापस 0;
 
 		i++;
-	/* if locallity is set STS should not be 0xFF */
-	} while ((buf == 0xFF) && i < 10);
+	/* अगर locallity is set STS should not be 0xFF */
+	पूर्ण जबतक ((buf == 0xFF) && i < 10);
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void tpm_tis_i2c_ready(struct tpm_chip *chip)
-{
-	/* this causes the current command to be aborted */
+अटल व्योम tpm_tis_i2c_पढ़ोy(काष्ठा tpm_chip *chip)
+अणु
+	/* this causes the current command to be पातed */
 	u8 buf = TPM_STS_COMMAND_READY;
-	iic_tpm_write_long(TPM_STS(tpm_dev.locality), &buf, 1);
-}
+	iic_tpm_ग_लिखो_दीर्घ(TPM_STS(tpm_dev.locality), &buf, 1);
+पूर्ण
 
-static ssize_t get_burstcount(struct tpm_chip *chip)
-{
-	unsigned long stop;
-	ssize_t burstcnt;
+अटल sमाप_प्रकार get_burstcount(काष्ठा tpm_chip *chip)
+अणु
+	अचिन्हित दीर्घ stop;
+	sमाप_प्रकार burstcnt;
 	u8 buf[3];
 
-	/* wait for burstcount */
-	/* which timeout value, spec has 2 answers (c & d) */
-	stop = jiffies + chip->timeout_d;
-	do {
+	/* रुको क्रम burstcount */
+	/* which समयout value, spec has 2 answers (c & d) */
+	stop = jअगरfies + chip->समयout_d;
+	करो अणु
 		/* Note: STS is little endian */
-		if (iic_tpm_read(TPM_STS(tpm_dev.locality)+1, buf, 3) < 0)
+		अगर (iic_tpm_पढ़ो(TPM_STS(tpm_dev.locality)+1, buf, 3) < 0)
 			burstcnt = 0;
-		else
+		अन्यथा
 			burstcnt = (buf[2] << 16) + (buf[1] << 8) + buf[0];
 
-		if (burstcnt)
-			return burstcnt;
+		अगर (burstcnt)
+			वापस burstcnt;
 
 		usleep_range(TPM_TIMEOUT_US_LOW, TPM_TIMEOUT_US_HI);
-	} while (time_before(jiffies, stop));
-	return -EBUSY;
-}
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
+	वापस -EBUSY;
+पूर्ण
 
-static int wait_for_stat(struct tpm_chip *chip, u8 mask, unsigned long timeout,
-			 int *status)
-{
-	unsigned long stop;
+अटल पूर्णांक रुको_क्रम_stat(काष्ठा tpm_chip *chip, u8 mask, अचिन्हित दीर्घ समयout,
+			 पूर्णांक *status)
+अणु
+	अचिन्हित दीर्घ stop;
 
 	/* check current status */
 	*status = tpm_tis_i2c_status(chip);
-	if ((*status != 0xFF) && (*status & mask) == mask)
-		return 0;
+	अगर ((*status != 0xFF) && (*status & mask) == mask)
+		वापस 0;
 
-	stop = jiffies + timeout;
-	do {
-		/* since we just checked the status, give the TPM some time */
+	stop = jअगरfies + समयout;
+	करो अणु
+		/* since we just checked the status, give the TPM some समय */
 		usleep_range(TPM_TIMEOUT_US_LOW, TPM_TIMEOUT_US_HI);
 		*status = tpm_tis_i2c_status(chip);
-		if ((*status & mask) == mask)
-			return 0;
+		अगर ((*status & mask) == mask)
+			वापस 0;
 
-	} while (time_before(jiffies, stop));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, stop));
 
-	return -ETIME;
-}
+	वापस -ETIME;
+पूर्ण
 
-static int recv_data(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	size_t size = 0;
-	ssize_t burstcnt;
+अटल पूर्णांक recv_data(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	माप_प्रकार size = 0;
+	sमाप_प्रकार burstcnt;
 	u8 retries = 0;
-	int rc;
+	पूर्णांक rc;
 
-	while (size < count) {
+	जबतक (size < count) अणु
 		burstcnt = get_burstcount(chip);
 
 		/* burstcnt < 0 = TPM is busy */
-		if (burstcnt < 0)
-			return burstcnt;
+		अगर (burstcnt < 0)
+			वापस burstcnt;
 
 		/* limit received data to max. left */
-		if (burstcnt > (count - size))
+		अगर (burstcnt > (count - size))
 			burstcnt = count - size;
 
-		rc = iic_tpm_read(TPM_DATA_FIFO(tpm_dev.locality),
+		rc = iic_tpm_पढ़ो(TPM_DATA_FIFO(tpm_dev.locality),
 				  &(buf[size]), burstcnt);
-		if (rc == 0)
+		अगर (rc == 0)
 			size += burstcnt;
-		else if (rc < 0)
+		अन्यथा अगर (rc < 0)
 			retries++;
 
-		/* avoid endless loop in case of broken HW */
-		if (retries > MAX_COUNT_LONG)
-			return -EIO;
-	}
-	return size;
-}
+		/* aव्योम endless loop in हाल of broken HW */
+		अगर (retries > MAX_COUNT_LONG)
+			वापस -EIO;
+	पूर्ण
+	वापस size;
+पूर्ण
 
-static int tpm_tis_i2c_recv(struct tpm_chip *chip, u8 *buf, size_t count)
-{
-	int size = 0;
-	int status;
+अटल पूर्णांक tpm_tis_i2c_recv(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार count)
+अणु
+	पूर्णांक size = 0;
+	पूर्णांक status;
 	u32 expected;
 
-	if (count < TPM_HEADER_SIZE) {
+	अगर (count < TPM_HEADER_SIZE) अणु
 		size = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* read first 10 bytes, including tag, paramsize, and result */
+	/* पढ़ो first 10 bytes, including tag, paramsize, and result */
 	size = recv_data(chip, buf, TPM_HEADER_SIZE);
-	if (size < TPM_HEADER_SIZE) {
+	अगर (size < TPM_HEADER_SIZE) अणु
 		dev_err(&chip->dev, "Unable to read header\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	expected = be32_to_cpu(*(__be32 *)(buf + 2));
-	if (((size_t) expected > count) || (expected < TPM_HEADER_SIZE)) {
+	अगर (((माप_प्रकार) expected > count) || (expected < TPM_HEADER_SIZE)) अणु
 		size = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	size += recv_data(chip, &buf[TPM_HEADER_SIZE],
 			  expected - TPM_HEADER_SIZE);
-	if (size < expected) {
+	अगर (size < expected) अणु
 		dev_err(&chip->dev, "Unable to read remainder of result\n");
 		size = -ETIME;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	wait_for_stat(chip, TPM_STS_VALID, chip->timeout_c, &status);
-	if (status & TPM_STS_DATA_AVAIL) {	/* retry? */
+	रुको_क्रम_stat(chip, TPM_STS_VALID, chip->समयout_c, &status);
+	अगर (status & TPM_STS_DATA_AVAIL) अणु	/* retry? */
 		dev_err(&chip->dev, "Error left over data\n");
 		size = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	tpm_tis_i2c_ready(chip);
-	/* The TPM needs some time to clean up here,
+	tpm_tis_i2c_पढ़ोy(chip);
+	/* The TPM needs some समय to clean up here,
 	 * so we sleep rather than keeping the bus busy
 	 */
 	usleep_range(SLEEP_DURATION_RESET_LOW, SLEEP_DURATION_RESET_HI);
 	release_locality(chip, tpm_dev.locality, 0);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static int tpm_tis_i2c_send(struct tpm_chip *chip, u8 *buf, size_t len)
-{
-	int rc, status;
-	ssize_t burstcnt;
-	size_t count = 0;
+अटल पूर्णांक tpm_tis_i2c_send(काष्ठा tpm_chip *chip, u8 *buf, माप_प्रकार len)
+अणु
+	पूर्णांक rc, status;
+	sमाप_प्रकार burstcnt;
+	माप_प्रकार count = 0;
 	u8 retries = 0;
 	u8 sts = TPM_STS_GO;
 
-	if (len > TPM_I2C_INFINEON_BUFSIZE)
-		return -E2BIG;
+	अगर (len > TPM_I2C_INFINEON_बफ_मानE)
+		वापस -E2BIG;
 
-	if (request_locality(chip, 0) < 0)
-		return -EBUSY;
+	अगर (request_locality(chip, 0) < 0)
+		वापस -EBUSY;
 
 	status = tpm_tis_i2c_status(chip);
-	if ((status & TPM_STS_COMMAND_READY) == 0) {
-		tpm_tis_i2c_ready(chip);
-		if (wait_for_stat
+	अगर ((status & TPM_STS_COMMAND_READY) == 0) अणु
+		tpm_tis_i2c_पढ़ोy(chip);
+		अगर (रुको_क्रम_stat
 		    (chip, TPM_STS_COMMAND_READY,
-		     chip->timeout_b, &status) < 0) {
+		     chip->समयout_b, &status) < 0) अणु
 			rc = -ETIME;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	while (count < len - 1) {
+	जबतक (count < len - 1) अणु
 		burstcnt = get_burstcount(chip);
 
 		/* burstcnt < 0 = TPM is busy */
-		if (burstcnt < 0)
-			return burstcnt;
+		अगर (burstcnt < 0)
+			वापस burstcnt;
 
-		if (burstcnt > (len - 1 - count))
+		अगर (burstcnt > (len - 1 - count))
 			burstcnt = len - 1 - count;
 
-		rc = iic_tpm_write(TPM_DATA_FIFO(tpm_dev.locality),
+		rc = iic_tpm_ग_लिखो(TPM_DATA_FIFO(tpm_dev.locality),
 				   &(buf[count]), burstcnt);
-		if (rc == 0)
+		अगर (rc == 0)
 			count += burstcnt;
-		else if (rc < 0)
+		अन्यथा अगर (rc < 0)
 			retries++;
 
-		/* avoid endless loop in case of broken HW */
-		if (retries > MAX_COUNT_LONG) {
+		/* aव्योम endless loop in हाल of broken HW */
+		अगर (retries > MAX_COUNT_LONG) अणु
 			rc = -EIO;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
-		wait_for_stat(chip, TPM_STS_VALID,
-			      chip->timeout_c, &status);
+		रुको_क्रम_stat(chip, TPM_STS_VALID,
+			      chip->समयout_c, &status);
 
-		if ((status & TPM_STS_DATA_EXPECT) == 0) {
+		अगर ((status & TPM_STS_DATA_EXPECT) == 0) अणु
 			rc = -EIO;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	/* write last byte */
-	iic_tpm_write(TPM_DATA_FIFO(tpm_dev.locality), &(buf[count]), 1);
-	wait_for_stat(chip, TPM_STS_VALID, chip->timeout_c, &status);
-	if ((status & TPM_STS_DATA_EXPECT) != 0) {
+	/* ग_लिखो last byte */
+	iic_tpm_ग_लिखो(TPM_DATA_FIFO(tpm_dev.locality), &(buf[count]), 1);
+	रुको_क्रम_stat(chip, TPM_STS_VALID, chip->समयout_c, &status);
+	अगर ((status & TPM_STS_DATA_EXPECT) != 0) अणु
 		rc = -EIO;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	/* go and do it */
-	iic_tpm_write(TPM_STS(tpm_dev.locality), &sts, 1);
+	/* go and करो it */
+	iic_tpm_ग_लिखो(TPM_STS(tpm_dev.locality), &sts, 1);
 
-	return 0;
+	वापस 0;
 out_err:
-	tpm_tis_i2c_ready(chip);
-	/* The TPM needs some time to clean up here,
+	tpm_tis_i2c_पढ़ोy(chip);
+	/* The TPM needs some समय to clean up here,
 	 * so we sleep rather than keeping the bus busy
 	 */
 	usleep_range(SLEEP_DURATION_RESET_LOW, SLEEP_DURATION_RESET_HI);
 	release_locality(chip, tpm_dev.locality, 0);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool tpm_tis_i2c_req_canceled(struct tpm_chip *chip, u8 status)
-{
-	return (status == TPM_STS_COMMAND_READY);
-}
+अटल bool tpm_tis_i2c_req_canceled(काष्ठा tpm_chip *chip, u8 status)
+अणु
+	वापस (status == TPM_STS_COMMAND_READY);
+पूर्ण
 
-static const struct tpm_class_ops tpm_tis_i2c = {
+अटल स्थिर काष्ठा tpm_class_ops tpm_tis_i2c = अणु
 	.flags = TPM_OPS_AUTO_STARTUP,
 	.status = tpm_tis_i2c_status,
 	.recv = tpm_tis_i2c_recv,
 	.send = tpm_tis_i2c_send,
-	.cancel = tpm_tis_i2c_ready,
+	.cancel = tpm_tis_i2c_पढ़ोy,
 	.req_complete_mask = TPM_STS_DATA_AVAIL | TPM_STS_VALID,
 	.req_complete_val = TPM_STS_DATA_AVAIL | TPM_STS_VALID,
 	.req_canceled = tpm_tis_i2c_req_canceled,
-};
+पूर्ण;
 
-static int tpm_tis_i2c_init(struct device *dev)
-{
-	u32 vendor;
-	int rc = 0;
-	struct tpm_chip *chip;
+अटल पूर्णांक tpm_tis_i2c_init(काष्ठा device *dev)
+अणु
+	u32 venकरोr;
+	पूर्णांक rc = 0;
+	काष्ठा tpm_chip *chip;
 
 	chip = tpmm_chip_alloc(dev, &tpm_tis_i2c);
-	if (IS_ERR(chip))
-		return PTR_ERR(chip);
+	अगर (IS_ERR(chip))
+		वापस PTR_ERR(chip);
 
-	/* Default timeouts */
-	chip->timeout_a = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-	chip->timeout_b = msecs_to_jiffies(TIS_LONG_TIMEOUT);
-	chip->timeout_c = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
-	chip->timeout_d = msecs_to_jiffies(TIS_SHORT_TIMEOUT);
+	/* Default समयouts */
+	chip->समयout_a = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
+	chip->समयout_b = msecs_to_jअगरfies(TIS_LONG_TIMEOUT);
+	chip->समयout_c = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
+	chip->समयout_d = msecs_to_jअगरfies(TIS_SHORT_TIMEOUT);
 
-	if (request_locality(chip, 0) != 0) {
+	अगर (request_locality(chip, 0) != 0) अणु
 		dev_err(dev, "could not request locality\n");
 		rc = -ENODEV;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	/* read four bytes from DID_VID register */
-	if (iic_tpm_read(TPM_DID_VID(0), (u8 *)&vendor, 4) < 0) {
+	/* पढ़ो four bytes from DID_VID रेजिस्टर */
+	अगर (iic_tpm_पढ़ो(TPM_DID_VID(0), (u8 *)&venकरोr, 4) < 0) अणु
 		dev_err(dev, "could not read vendor id\n");
 		rc = -EIO;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	if (vendor == TPM_TIS_I2C_DID_VID_9645) {
+	अगर (venकरोr == TPM_TIS_I2C_DID_VID_9645) अणु
 		tpm_dev.chip_type = SLB9645;
-	} else if (vendor == TPM_TIS_I2C_DID_VID_9635) {
+	पूर्ण अन्यथा अगर (venकरोr == TPM_TIS_I2C_DID_VID_9635) अणु
 		tpm_dev.chip_type = SLB9635;
-	} else {
-		dev_err(dev, "vendor id did not match! ID was %08x\n", vendor);
+	पूर्ण अन्यथा अणु
+		dev_err(dev, "vendor id did not match! ID was %08x\n", venकरोr);
 		rc = -ENODEV;
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	dev_info(dev, "1.2 TPM (device-id 0x%X)\n", vendor >> 16);
+	dev_info(dev, "1.2 TPM (device-id 0x%X)\n", venकरोr >> 16);
 
 	tpm_dev.chip = chip;
 
-	return tpm_chip_register(chip);
+	वापस tpm_chip_रेजिस्टर(chip);
 out_release:
 	release_locality(chip, tpm_dev.locality, 1);
-	tpm_dev.client = NULL;
+	tpm_dev.client = शून्य;
 out_err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct i2c_device_id tpm_tis_i2c_table[] = {
-	{"tpm_i2c_infineon"},
-	{"slb9635tt"},
-	{"slb9645tt"},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id tpm_tis_i2c_table[] = अणु
+	अणु"tpm_i2c_infineon"पूर्ण,
+	अणु"slb9635tt"पूर्ण,
+	अणु"slb9645tt"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, tpm_tis_i2c_table);
 
-#ifdef CONFIG_OF
-static const struct of_device_id tpm_tis_i2c_of_match[] = {
-	{.compatible = "infineon,tpm_i2c_infineon"},
-	{.compatible = "infineon,slb9635tt"},
-	{.compatible = "infineon,slb9645tt"},
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id tpm_tis_i2c_of_match[] = अणु
+	अणु.compatible = "infineon,tpm_i2c_infineon"पूर्ण,
+	अणु.compatible = "infineon,slb9635tt"पूर्ण,
+	अणु.compatible = "infineon,slb9645tt"पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, tpm_tis_i2c_of_match);
-#endif
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(tpm_tis_i2c_ops, tpm_pm_suspend, tpm_pm_resume);
+अटल SIMPLE_DEV_PM_OPS(tpm_tis_i2c_ops, tpm_pm_suspend, tpm_pm_resume);
 
-static int tpm_tis_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
-{
-	int rc;
-	struct device *dev = &(client->dev);
+अटल पूर्णांक tpm_tis_i2c_probe(काष्ठा i2c_client *client,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक rc;
+	काष्ठा device *dev = &(client->dev);
 
-	if (tpm_dev.client != NULL) {
+	अगर (tpm_dev.client != शून्य) अणु
 		dev_err(dev, "This driver only supports one client at a time\n");
-		return -EBUSY;	/* We only support one client */
-	}
+		वापस -EBUSY;	/* We only support one client */
+	पूर्ण
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		dev_err(dev, "no algorithms associated to the i2c bus\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	tpm_dev.client = client;
 	rc = tpm_tis_i2c_init(&client->dev);
-	if (rc != 0) {
-		tpm_dev.client = NULL;
+	अगर (rc != 0) अणु
+		tpm_dev.client = शून्य;
 		rc = -ENODEV;
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int tpm_tis_i2c_remove(struct i2c_client *client)
-{
-	struct tpm_chip *chip = tpm_dev.chip;
+अटल पूर्णांक tpm_tis_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा tpm_chip *chip = tpm_dev.chip;
 
-	tpm_chip_unregister(chip);
+	tpm_chip_unरेजिस्टर(chip);
 	release_locality(chip, tpm_dev.locality, 1);
-	tpm_dev.client = NULL;
+	tpm_dev.client = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct i2c_driver tpm_tis_i2c_driver = {
+अटल काष्ठा i2c_driver tpm_tis_i2c_driver = अणु
 	.id_table = tpm_tis_i2c_table,
 	.probe = tpm_tis_i2c_probe,
-	.remove = tpm_tis_i2c_remove,
-	.driver = {
+	.हटाओ = tpm_tis_i2c_हटाओ,
+	.driver = अणु
 		   .name = "tpm_i2c_infineon",
 		   .pm = &tpm_tis_i2c_ops,
 		   .of_match_table = of_match_ptr(tpm_tis_i2c_of_match),
-		   },
-};
+		   पूर्ण,
+पूर्ण;
 
 module_i2c_driver(tpm_tis_i2c_driver);
 MODULE_AUTHOR("Peter Huewe <peter.huewe@infineon.com>");

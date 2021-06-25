@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * This file implement the Wireless Extensions core API.
  *
@@ -7,21 +8,21 @@
  *
  * (As all part of the Linux kernel, this file is GPL)
  */
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/slab.h>
-#include <linux/wireless.h>
-#include <linux/uaccess.h>
-#include <linux/export.h>
-#include <net/cfg80211.h>
-#include <net/iw_handler.h>
-#include <net/netlink.h>
-#include <net/wext.h>
-#include <net/net_namespace.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/wireless.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/export.h>
+#समावेश <net/cfg80211.h>
+#समावेश <net/iw_handler.h>
+#समावेश <net/netlink.h>
+#समावेश <net/wext.h>
+#समावेश <net/net_namespace.h>
 
-typedef int (*wext_ioctl_func)(struct net_device *, struct iwreq *,
-			       unsigned int, struct iw_request_info *,
+प्रकार पूर्णांक (*wext_ioctl_func)(काष्ठा net_device *, काष्ठा iwreq *,
+			       अचिन्हित पूर्णांक, काष्ठा iw_request_info *,
 			       iw_handler);
 
 
@@ -29,288 +30,288 @@ typedef int (*wext_ioctl_func)(struct net_device *, struct iwreq *,
  * Meta-data about all the standard Wireless Extension request we
  * know about.
  */
-static const struct iw_ioctl_description standard_ioctl[] = {
-	[IW_IOCTL_IDX(SIOCSIWCOMMIT)] = {
-		.header_type	= IW_HEADER_TYPE_NULL,
-	},
-	[IW_IOCTL_IDX(SIOCGIWNAME)] = {
+अटल स्थिर काष्ठा iw_ioctl_description standard_ioctl[] = अणु
+	[IW_IOCTL_IDX(SIOCSIWCOMMIT)] = अणु
+		.header_type	= IW_HEADER_TYPE_शून्य,
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWNAME)] = अणु
 		.header_type	= IW_HEADER_TYPE_CHAR,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWNWID)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWNWID)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
 		.flags		= IW_DESCR_FLAG_EVENT,
-	},
-	[IW_IOCTL_IDX(SIOCGIWNWID)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWNWID)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWFREQ)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWFREQ)] = अणु
 		.header_type	= IW_HEADER_TYPE_FREQ,
 		.flags		= IW_DESCR_FLAG_EVENT,
-	},
-	[IW_IOCTL_IDX(SIOCGIWFREQ)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWFREQ)] = अणु
 		.header_type	= IW_HEADER_TYPE_FREQ,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWMODE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWMODE)] = अणु
 		.header_type	= IW_HEADER_TYPE_UINT,
 		.flags		= IW_DESCR_FLAG_EVENT,
-	},
-	[IW_IOCTL_IDX(SIOCGIWMODE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWMODE)] = अणु
 		.header_type	= IW_HEADER_TYPE_UINT,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWSENS)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWSENS)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWSENS)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWSENS)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWRANGE)] = {
-		.header_type	= IW_HEADER_TYPE_NULL,
-	},
-	[IW_IOCTL_IDX(SIOCGIWRANGE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWRANGE)] = अणु
+		.header_type	= IW_HEADER_TYPE_शून्य,
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWRANGE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.max_tokens	= sizeof(struct iw_range),
+		.max_tokens	= माप(काष्ठा iw_range),
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWPRIV)] = {
-		.header_type	= IW_HEADER_TYPE_NULL,
-	},
-	[IW_IOCTL_IDX(SIOCGIWPRIV)] = { /* (handled directly by us) */
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWPRIV)] = अणु
+		.header_type	= IW_HEADER_TYPE_शून्य,
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWPRIV)] = अणु /* (handled directly by us) */
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct iw_priv_args),
+		.token_size	= माप(काष्ठा iw_priv_args),
 		.max_tokens	= 16,
 		.flags		= IW_DESCR_FLAG_NOMAX,
-	},
-	[IW_IOCTL_IDX(SIOCSIWSTATS)] = {
-		.header_type	= IW_HEADER_TYPE_NULL,
-	},
-	[IW_IOCTL_IDX(SIOCGIWSTATS)] = { /* (handled directly by us) */
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWSTATS)] = अणु
+		.header_type	= IW_HEADER_TYPE_शून्य,
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWSTATS)] = अणु /* (handled directly by us) */
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.max_tokens	= sizeof(struct iw_statistics),
+		.max_tokens	= माप(काष्ठा iw_statistics),
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWSPY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWSPY)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct sockaddr),
+		.token_size	= माप(काष्ठा sockaddr),
 		.max_tokens	= IW_MAX_SPY,
-	},
-	[IW_IOCTL_IDX(SIOCGIWSPY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWSPY)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct sockaddr) +
-				  sizeof(struct iw_quality),
+		.token_size	= माप(काष्ठा sockaddr) +
+				  माप(काष्ठा iw_quality),
 		.max_tokens	= IW_MAX_SPY,
-	},
-	[IW_IOCTL_IDX(SIOCSIWTHRSPY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWTHRSPY)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct iw_thrspy),
+		.token_size	= माप(काष्ठा iw_thrspy),
 		.min_tokens	= 1,
 		.max_tokens	= 1,
-	},
-	[IW_IOCTL_IDX(SIOCGIWTHRSPY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWTHRSPY)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct iw_thrspy),
+		.token_size	= माप(काष्ठा iw_thrspy),
 		.min_tokens	= 1,
 		.max_tokens	= 1,
-	},
-	[IW_IOCTL_IDX(SIOCSIWAP)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWAP)] = अणु
 		.header_type	= IW_HEADER_TYPE_ADDR,
-	},
-	[IW_IOCTL_IDX(SIOCGIWAP)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWAP)] = अणु
 		.header_type	= IW_HEADER_TYPE_ADDR,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWMLME)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWMLME)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.min_tokens	= sizeof(struct iw_mlme),
-		.max_tokens	= sizeof(struct iw_mlme),
-	},
-	[IW_IOCTL_IDX(SIOCGIWAPLIST)] = {
+		.min_tokens	= माप(काष्ठा iw_mlme),
+		.max_tokens	= माप(काष्ठा iw_mlme),
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWAPLIST)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= sizeof(struct sockaddr) +
-				  sizeof(struct iw_quality),
+		.token_size	= माप(काष्ठा sockaddr) +
+				  माप(काष्ठा iw_quality),
 		.max_tokens	= IW_MAX_AP,
 		.flags		= IW_DESCR_FLAG_NOMAX,
-	},
-	[IW_IOCTL_IDX(SIOCSIWSCAN)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWSCAN)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.min_tokens	= 0,
-		.max_tokens	= sizeof(struct iw_scan_req),
-	},
-	[IW_IOCTL_IDX(SIOCGIWSCAN)] = {
+		.max_tokens	= माप(काष्ठा iw_scan_req),
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWSCAN)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_SCAN_MAX_DATA,
 		.flags		= IW_DESCR_FLAG_NOMAX,
-	},
-	[IW_IOCTL_IDX(SIOCSIWESSID)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWESSID)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ESSID_MAX_SIZE,
 		.flags		= IW_DESCR_FLAG_EVENT,
-	},
-	[IW_IOCTL_IDX(SIOCGIWESSID)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWESSID)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ESSID_MAX_SIZE,
 		.flags		= IW_DESCR_FLAG_DUMP,
-	},
-	[IW_IOCTL_IDX(SIOCSIWNICKN)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWNICKN)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ESSID_MAX_SIZE,
-	},
-	[IW_IOCTL_IDX(SIOCGIWNICKN)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWNICKN)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ESSID_MAX_SIZE,
-	},
-	[IW_IOCTL_IDX(SIOCSIWRATE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWRATE)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWRATE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWRATE)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWRTS)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWRTS)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWRTS)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWRTS)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWFRAG)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWFRAG)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWFRAG)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWFRAG)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWTXPOW)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWTXPOW)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWTXPOW)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWTXPOW)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWRETRY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWRETRY)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWRETRY)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWRETRY)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWENCODE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWENCODE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ENCODING_TOKEN_MAX,
 		.flags		= IW_DESCR_FLAG_EVENT | IW_DESCR_FLAG_RESTRICT,
-	},
-	[IW_IOCTL_IDX(SIOCGIWENCODE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWENCODE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_ENCODING_TOKEN_MAX,
 		.flags		= IW_DESCR_FLAG_DUMP | IW_DESCR_FLAG_RESTRICT,
-	},
-	[IW_IOCTL_IDX(SIOCSIWPOWER)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWPOWER)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWPOWER)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWPOWER)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWGENIE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWGENIE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_GENERIC_IE_MAX,
-	},
-	[IW_IOCTL_IDX(SIOCGIWGENIE)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWGENIE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_GENERIC_IE_MAX,
-	},
-	[IW_IOCTL_IDX(SIOCSIWAUTH)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWAUTH)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCGIWAUTH)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWAUTH)] = अणु
 		.header_type	= IW_HEADER_TYPE_PARAM,
-	},
-	[IW_IOCTL_IDX(SIOCSIWENCODEEXT)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWENCODEEXT)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.min_tokens	= sizeof(struct iw_encode_ext),
-		.max_tokens	= sizeof(struct iw_encode_ext) +
+		.min_tokens	= माप(काष्ठा iw_encode_ext),
+		.max_tokens	= माप(काष्ठा iw_encode_ext) +
 				  IW_ENCODING_TOKEN_MAX,
-	},
-	[IW_IOCTL_IDX(SIOCGIWENCODEEXT)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCGIWENCODEEXT)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.min_tokens	= sizeof(struct iw_encode_ext),
-		.max_tokens	= sizeof(struct iw_encode_ext) +
+		.min_tokens	= माप(काष्ठा iw_encode_ext),
+		.max_tokens	= माप(काष्ठा iw_encode_ext) +
 				  IW_ENCODING_TOKEN_MAX,
-	},
-	[IW_IOCTL_IDX(SIOCSIWPMKSA)] = {
+	पूर्ण,
+	[IW_IOCTL_IDX(SIOCSIWPMKSA)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.min_tokens	= sizeof(struct iw_pmksa),
-		.max_tokens	= sizeof(struct iw_pmksa),
-	},
-};
-static const unsigned int standard_ioctl_num = ARRAY_SIZE(standard_ioctl);
+		.min_tokens	= माप(काष्ठा iw_pmksa),
+		.max_tokens	= माप(काष्ठा iw_pmksa),
+	पूर्ण,
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक standard_ioctl_num = ARRAY_SIZE(standard_ioctl);
 
 /*
  * Meta-data about all the additional standard Wireless Extension events
  * we know about.
  */
-static const struct iw_ioctl_description standard_event[] = {
-	[IW_EVENT_IDX(IWEVTXDROP)] = {
+अटल स्थिर काष्ठा iw_ioctl_description standard_event[] = अणु
+	[IW_EVENT_IDX(IWEVTXDROP)] = अणु
 		.header_type	= IW_HEADER_TYPE_ADDR,
-	},
-	[IW_EVENT_IDX(IWEVQUAL)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVQUAL)] = अणु
 		.header_type	= IW_HEADER_TYPE_QUAL,
-	},
-	[IW_EVENT_IDX(IWEVCUSTOM)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVCUSTOM)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_CUSTOM_MAX,
-	},
-	[IW_EVENT_IDX(IWEVREGISTERED)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVREGISTERED)] = अणु
 		.header_type	= IW_HEADER_TYPE_ADDR,
-	},
-	[IW_EVENT_IDX(IWEVEXPIRED)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVEXPIRED)] = अणु
 		.header_type	= IW_HEADER_TYPE_ADDR,
-	},
-	[IW_EVENT_IDX(IWEVGENIE)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVGENIE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_GENERIC_IE_MAX,
-	},
-	[IW_EVENT_IDX(IWEVMICHAELMICFAILURE)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVMICHAELMICFAILURE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.max_tokens	= sizeof(struct iw_michaelmicfailure),
-	},
-	[IW_EVENT_IDX(IWEVASSOCREQIE)] = {
-		.header_type	= IW_HEADER_TYPE_POINT,
-		.token_size	= 1,
-		.max_tokens	= IW_GENERIC_IE_MAX,
-	},
-	[IW_EVENT_IDX(IWEVASSOCRESPIE)] = {
+		.max_tokens	= माप(काष्ठा iw_michaelmicfailure),
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVASSOCREQIE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
 		.max_tokens	= IW_GENERIC_IE_MAX,
-	},
-	[IW_EVENT_IDX(IWEVPMKIDCAND)] = {
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVASSOCRESPIE)] = अणु
 		.header_type	= IW_HEADER_TYPE_POINT,
 		.token_size	= 1,
-		.max_tokens	= sizeof(struct iw_pmkid_cand),
-	},
-};
-static const unsigned int standard_event_num = ARRAY_SIZE(standard_event);
+		.max_tokens	= IW_GENERIC_IE_MAX,
+	पूर्ण,
+	[IW_EVENT_IDX(IWEVPMKIDCAND)] = अणु
+		.header_type	= IW_HEADER_TYPE_POINT,
+		.token_size	= 1,
+		.max_tokens	= माप(काष्ठा iw_pmkid_cand),
+	पूर्ण,
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक standard_event_num = ARRAY_SIZE(standard_event);
 
 /* Size (in bytes) of various events */
-static const int event_type_size[] = {
-	IW_EV_LCP_LEN,			/* IW_HEADER_TYPE_NULL */
+अटल स्थिर पूर्णांक event_type_size[] = अणु
+	IW_EV_LCP_LEN,			/* IW_HEADER_TYPE_शून्य */
 	0,
 	IW_EV_CHAR_LEN,			/* IW_HEADER_TYPE_CHAR */
 	0,
@@ -321,11 +322,11 @@ static const int event_type_size[] = {
 	IW_EV_POINT_LEN,		/* Without variable payload */
 	IW_EV_PARAM_LEN,		/* IW_HEADER_TYPE_PARAM */
 	IW_EV_QUAL_LEN,			/* IW_HEADER_TYPE_QUAL */
-};
+पूर्ण;
 
-#ifdef CONFIG_COMPAT
-static const int compat_event_type_size[] = {
-	IW_EV_COMPAT_LCP_LEN,		/* IW_HEADER_TYPE_NULL */
+#अगर_घोषित CONFIG_COMPAT
+अटल स्थिर पूर्णांक compat_event_type_size[] = अणु
+	IW_EV_COMPAT_LCP_LEN,		/* IW_HEADER_TYPE_शून्य */
 	0,
 	IW_EV_COMPAT_CHAR_LEN,		/* IW_HEADER_TYPE_CHAR */
 	0,
@@ -336,201 +337,201 @@ static const int compat_event_type_size[] = {
 	IW_EV_COMPAT_POINT_LEN,		/* Without variable payload */
 	IW_EV_COMPAT_PARAM_LEN,		/* IW_HEADER_TYPE_PARAM */
 	IW_EV_COMPAT_QUAL_LEN,		/* IW_HEADER_TYPE_QUAL */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 
 /* IW event code */
 
-void wireless_nlevent_flush(void)
-{
-	struct sk_buff *skb;
-	struct net *net;
+व्योम wireless_nlevent_flush(व्योम)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा net *net;
 
-	down_read(&net_rwsem);
-	for_each_net(net) {
-		while ((skb = skb_dequeue(&net->wext_nlevents)))
-			rtnl_notify(skb, net, 0, RTNLGRP_LINK, NULL,
+	करोwn_पढ़ो(&net_rwsem);
+	क्रम_each_net(net) अणु
+		जबतक ((skb = skb_dequeue(&net->wext_nlevents)))
+			rtnl_notअगरy(skb, net, 0, RTNLGRP_LINK, शून्य,
 				    GFP_KERNEL);
-	}
-	up_read(&net_rwsem);
-}
+	पूर्ण
+	up_पढ़ो(&net_rwsem);
+पूर्ण
 EXPORT_SYMBOL_GPL(wireless_nlevent_flush);
 
-static int wext_netdev_notifier_call(struct notifier_block *nb,
-				     unsigned long state, void *ptr)
-{
+अटल पूर्णांक wext_netdev_notअगरier_call(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ state, व्योम *ptr)
+अणु
 	/*
 	 * When a netdev changes state in any way, flush all pending messages
-	 * to avoid them going out in a strange order, e.g. RTM_NEWLINK after
-	 * RTM_DELLINK, or with IFF_UP after without IFF_UP during dev_close()
+	 * to aव्योम them going out in a strange order, e.g. RTM_NEWLINK after
+	 * RTM_DELLINK, or with IFF_UP after without IFF_UP during dev_बंद()
 	 * or similar - all of which could otherwise happen due to delays from
 	 * schedule_work().
 	 */
 	wireless_nlevent_flush();
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block wext_netdev_notifier = {
-	.notifier_call = wext_netdev_notifier_call,
-};
+अटल काष्ठा notअगरier_block wext_netdev_notअगरier = अणु
+	.notअगरier_call = wext_netdev_notअगरier_call,
+पूर्ण;
 
-static int __net_init wext_pernet_init(struct net *net)
-{
+अटल पूर्णांक __net_init wext_pernet_init(काष्ठा net *net)
+अणु
 	skb_queue_head_init(&net->wext_nlevents);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit wext_pernet_exit(struct net *net)
-{
+अटल व्योम __net_निकास wext_pernet_निकास(काष्ठा net *net)
+अणु
 	skb_queue_purge(&net->wext_nlevents);
-}
+पूर्ण
 
-static struct pernet_operations wext_pernet_ops = {
+अटल काष्ठा pernet_operations wext_pernet_ops = अणु
 	.init = wext_pernet_init,
-	.exit = wext_pernet_exit,
-};
+	.निकास = wext_pernet_निकास,
+पूर्ण;
 
-static int __init wireless_nlevent_init(void)
-{
-	int err = register_pernet_subsys(&wext_pernet_ops);
+अटल पूर्णांक __init wireless_nlevent_init(व्योम)
+अणु
+	पूर्णांक err = रेजिस्टर_pernet_subsys(&wext_pernet_ops);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = register_netdevice_notifier(&wext_netdev_notifier);
-	if (err)
-		unregister_pernet_subsys(&wext_pernet_ops);
-	return err;
-}
+	err = रेजिस्टर_netdevice_notअगरier(&wext_netdev_notअगरier);
+	अगर (err)
+		unरेजिस्टर_pernet_subsys(&wext_pernet_ops);
+	वापस err;
+पूर्ण
 
 subsys_initcall(wireless_nlevent_init);
 
 /* Process events generated by the wireless layer or the driver. */
-static void wireless_nlevent_process(struct work_struct *work)
-{
+अटल व्योम wireless_nlevent_process(काष्ठा work_काष्ठा *work)
+अणु
 	wireless_nlevent_flush();
-}
+पूर्ण
 
-static DECLARE_WORK(wireless_nlevent_work, wireless_nlevent_process);
+अटल DECLARE_WORK(wireless_nlevent_work, wireless_nlevent_process);
 
-static struct nlmsghdr *rtnetlink_ifinfo_prep(struct net_device *dev,
-					      struct sk_buff *skb)
-{
-	struct ifinfomsg *r;
-	struct nlmsghdr  *nlh;
+अटल काष्ठा nlmsghdr *rtnetlink_अगरinfo_prep(काष्ठा net_device *dev,
+					      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा अगरinfomsg *r;
+	काष्ठा nlmsghdr  *nlh;
 
-	nlh = nlmsg_put(skb, 0, 0, RTM_NEWLINK, sizeof(*r), 0);
-	if (!nlh)
-		return NULL;
+	nlh = nlmsg_put(skb, 0, 0, RTM_NEWLINK, माप(*r), 0);
+	अगर (!nlh)
+		वापस शून्य;
 
 	r = nlmsg_data(nlh);
-	r->ifi_family = AF_UNSPEC;
-	r->__ifi_pad = 0;
-	r->ifi_type = dev->type;
-	r->ifi_index = dev->ifindex;
-	r->ifi_flags = dev_get_flags(dev);
-	r->ifi_change = 0;	/* Wireless changes don't affect those flags */
+	r->अगरi_family = AF_UNSPEC;
+	r->__अगरi_pad = 0;
+	r->अगरi_type = dev->type;
+	r->अगरi_index = dev->अगरindex;
+	r->अगरi_flags = dev_get_flags(dev);
+	r->अगरi_change = 0;	/* Wireless changes करोn't affect those flags */
 
-	if (nla_put_string(skb, IFLA_IFNAME, dev->name))
-		goto nla_put_failure;
+	अगर (nla_put_string(skb, IFLA_IFNAME, dev->name))
+		जाओ nla_put_failure;
 
-	return nlh;
+	वापस nlh;
  nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
 /*
  * Main event dispatcher. Called from other parts and drivers.
  * Send the event on the appropriate channels.
- * May be called from interrupt context.
+ * May be called from पूर्णांकerrupt context.
  */
-void wireless_send_event(struct net_device *	dev,
-			 unsigned int		cmd,
-			 union iwreq_data *	wrqu,
-			 const char *		extra)
-{
-	const struct iw_ioctl_description *	descr = NULL;
-	int extra_len = 0;
-	struct iw_event  *event;		/* Mallocated whole event */
-	int event_len;				/* Its size */
-	int hdr_len;				/* Size of the event header */
-	int wrqu_off = 0;			/* Offset in wrqu */
+व्योम wireless_send_event(काष्ठा net_device *	dev,
+			 अचिन्हित पूर्णांक		cmd,
+			 जोड़ iwreq_data *	wrqu,
+			 स्थिर अक्षर *		extra)
+अणु
+	स्थिर काष्ठा iw_ioctl_description *	descr = शून्य;
+	पूर्णांक extra_len = 0;
+	काष्ठा iw_event  *event;		/* Mallocated whole event */
+	पूर्णांक event_len;				/* Its size */
+	पूर्णांक hdr_len;				/* Size of the event header */
+	पूर्णांक wrqu_off = 0;			/* Offset in wrqu */
 	/* Don't "optimise" the following variable, it will crash */
-	unsigned int	cmd_index;		/* *MUST* be unsigned */
-	struct sk_buff *skb;
-	struct nlmsghdr *nlh;
-	struct nlattr *nla;
-#ifdef CONFIG_COMPAT
-	struct __compat_iw_event *compat_event;
-	struct compat_iw_point compat_wrqu;
-	struct sk_buff *compskb;
-#endif
+	अचिन्हित पूर्णांक	cmd_index;		/* *MUST* be अचिन्हित */
+	काष्ठा sk_buff *skb;
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा nlattr *nla;
+#अगर_घोषित CONFIG_COMPAT
+	काष्ठा __compat_iw_event *compat_event;
+	काष्ठा compat_iw_poपूर्णांक compat_wrqu;
+	काष्ठा sk_buff *compskb;
+#पूर्ण_अगर
 
 	/*
 	 * Nothing in the kernel sends scan events with data, be safe.
 	 * This is necessary because we cannot fix up scan event data
-	 * for compat, due to being contained in 'extra', but normally
+	 * क्रम compat, due to being contained in 'extra', but normally
 	 * applications are required to retrieve the scan data anyway
-	 * and no data is included in the event, this codifies that
+	 * and no data is included in the event, this codअगरies that
 	 * practice.
 	 */
-	if (WARN_ON(cmd == SIOCGIWSCAN && extra))
-		extra = NULL;
+	अगर (WARN_ON(cmd == SIOCGIWSCAN && extra))
+		extra = शून्य;
 
 	/* Get the description of the Event */
-	if (cmd <= SIOCIWLAST) {
+	अगर (cmd <= SIOCIWLAST) अणु
 		cmd_index = IW_IOCTL_IDX(cmd);
-		if (cmd_index < standard_ioctl_num)
+		अगर (cmd_index < standard_ioctl_num)
 			descr = &(standard_ioctl[cmd_index]);
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd_index = IW_EVENT_IDX(cmd);
-		if (cmd_index < standard_event_num)
+		अगर (cmd_index < standard_event_num)
 			descr = &(standard_event[cmd_index]);
-	}
+	पूर्ण
 	/* Don't accept unknown events */
-	if (descr == NULL) {
-		/* Note : we don't return an error to the driver, because
-		 * the driver would not know what to do about it. It can't
-		 * return an error to the user, because the event is not
+	अगर (descr == शून्य) अणु
+		/* Note : we करोn't वापस an error to the driver, because
+		 * the driver would not know what to करो about it. It can't
+		 * वापस an error to the user, because the event is not
 		 * initiated by a user request.
-		 * The best the driver could do is to log an error message.
-		 * We will do it ourselves instead...
+		 * The best the driver could करो is to log an error message.
+		 * We will करो it ourselves instead...
 		 */
 		netdev_err(dev, "(WE) : Invalid/Unknown Wireless Event (0x%04X)\n",
 			   cmd);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Check extra parameters and set extra_len */
-	if (descr->header_type == IW_HEADER_TYPE_POINT) {
-		/* Check if number of token fits within bounds */
-		if (wrqu->data.length > descr->max_tokens) {
+	अगर (descr->header_type == IW_HEADER_TYPE_POINT) अणु
+		/* Check अगर number of token fits within bounds */
+		अगर (wrqu->data.length > descr->max_tokens) अणु
 			netdev_err(dev, "(WE) : Wireless Event (cmd=0x%04X) too big (%d)\n",
 				   cmd, wrqu->data.length);
-			return;
-		}
-		if (wrqu->data.length < descr->min_tokens) {
+			वापस;
+		पूर्ण
+		अगर (wrqu->data.length < descr->min_tokens) अणु
 			netdev_err(dev, "(WE) : Wireless Event (cmd=0x%04X) too small (%d)\n",
 				   cmd, wrqu->data.length);
-			return;
-		}
-		/* Calculate extra_len - extra is NULL for restricted events */
-		if (extra != NULL)
+			वापस;
+		पूर्ण
+		/* Calculate extra_len - extra is शून्य क्रम restricted events */
+		अगर (extra != शून्य)
 			extra_len = wrqu->data.length * descr->token_size;
 		/* Always at an offset in wrqu */
 		wrqu_off = IW_EV_POINT_OFF;
-	}
+	पूर्ण
 
 	/* Total length of the event */
 	hdr_len = event_type_size[descr->header_type];
 	event_len = hdr_len + extra_len;
 
 	/*
-	 * The problem for 64/32 bit.
+	 * The problem क्रम 64/32 bit.
 	 *
 	 * On 64-bit, a regular event is laid out as follows:
 	 *      |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
@@ -540,248 +541,248 @@ void wireless_send_event(struct net_device *	dev,
 	 * This padding exists because we manipulate event->u,
 	 * and 'event' is not packed.
 	 *
-	 * An iw_point event is laid out like this instead:
+	 * An iw_poपूर्णांक event is laid out like this instead:
 	 *      |  0  |  1  |  2  |  3  |  4  |  5  |  6  |  7  |
 	 *      | event.len | event.cmd |     p a d d i n g     |
 	 *      | iwpnt.len | iwpnt.flg |     p a d d i n g     |
 	 *      | extra data  ...
 	 *
-	 * The second padding exists because struct iw_point is extended,
-	 * but this depends on the platform...
+	 * The second padding exists because काष्ठा iw_poपूर्णांक is extended,
+	 * but this depends on the platक्रमm...
 	 *
 	 * On 32-bit, all the padding shouldn't be there.
 	 */
 
 	skb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	/* Send via the RtNetlink event channel */
-	nlh = rtnetlink_ifinfo_prep(dev, skb);
-	if (WARN_ON(!nlh)) {
-		kfree_skb(skb);
-		return;
-	}
+	nlh = rtnetlink_अगरinfo_prep(dev, skb);
+	अगर (WARN_ON(!nlh)) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	/* Add the wireless events in the netlink packet */
 	nla = nla_reserve(skb, IFLA_WIRELESS, event_len);
-	if (!nla) {
-		kfree_skb(skb);
-		return;
-	}
+	अगर (!nla) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 	event = nla_data(nla);
 
-	/* Fill event - first clear to avoid data leaking */
-	memset(event, 0, hdr_len);
+	/* Fill event - first clear to aव्योम data leaking */
+	स_रखो(event, 0, hdr_len);
 	event->len = event_len;
 	event->cmd = cmd;
-	memcpy(&event->u, ((char *) wrqu) + wrqu_off, hdr_len - IW_EV_LCP_LEN);
-	if (extra_len)
-		memcpy(((char *) event) + hdr_len, extra, extra_len);
+	स_नकल(&event->u, ((अक्षर *) wrqu) + wrqu_off, hdr_len - IW_EV_LCP_LEN);
+	अगर (extra_len)
+		स_नकल(((अक्षर *) event) + hdr_len, extra, extra_len);
 
 	nlmsg_end(skb, nlh);
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 	hdr_len = compat_event_type_size[descr->header_type];
 	event_len = hdr_len + extra_len;
 
 	compskb = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!compskb) {
-		kfree_skb(skb);
-		return;
-	}
+	अगर (!compskb) अणु
+		kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	/* Send via the RtNetlink event channel */
-	nlh = rtnetlink_ifinfo_prep(dev, compskb);
-	if (WARN_ON(!nlh)) {
-		kfree_skb(skb);
-		kfree_skb(compskb);
-		return;
-	}
+	nlh = rtnetlink_अगरinfo_prep(dev, compskb);
+	अगर (WARN_ON(!nlh)) अणु
+		kमुक्त_skb(skb);
+		kमुक्त_skb(compskb);
+		वापस;
+	पूर्ण
 
 	/* Add the wireless events in the netlink packet */
 	nla = nla_reserve(compskb, IFLA_WIRELESS, event_len);
-	if (!nla) {
-		kfree_skb(skb);
-		kfree_skb(compskb);
-		return;
-	}
+	अगर (!nla) अणु
+		kमुक्त_skb(skb);
+		kमुक्त_skb(compskb);
+		वापस;
+	पूर्ण
 	compat_event = nla_data(nla);
 
 	compat_event->len = event_len;
 	compat_event->cmd = cmd;
-	if (descr->header_type == IW_HEADER_TYPE_POINT) {
+	अगर (descr->header_type == IW_HEADER_TYPE_POINT) अणु
 		compat_wrqu.length = wrqu->data.length;
 		compat_wrqu.flags = wrqu->data.flags;
-		memcpy(&compat_event->pointer,
-			((char *) &compat_wrqu) + IW_EV_COMPAT_POINT_OFF,
+		स_नकल(&compat_event->poपूर्णांकer,
+			((अक्षर *) &compat_wrqu) + IW_EV_COMPAT_POINT_OFF,
 			hdr_len - IW_EV_COMPAT_LCP_LEN);
-		if (extra_len)
-			memcpy(((char *) compat_event) + hdr_len,
+		अगर (extra_len)
+			स_नकल(((अक्षर *) compat_event) + hdr_len,
 				extra, extra_len);
-	} else {
-		/* extra_len must be zero, so no if (extra) needed */
-		memcpy(&compat_event->pointer, wrqu,
+	पूर्ण अन्यथा अणु
+		/* extra_len must be zero, so no अगर (extra) needed */
+		स_नकल(&compat_event->poपूर्णांकer, wrqu,
 			hdr_len - IW_EV_COMPAT_LCP_LEN);
-	}
+	पूर्ण
 
 	nlmsg_end(compskb, nlh);
 
 	skb_shinfo(skb)->frag_list = compskb;
-#endif
+#पूर्ण_अगर
 	skb_queue_tail(&dev_net(dev)->wext_nlevents, skb);
 	schedule_work(&wireless_nlevent_work);
-}
+पूर्ण
 EXPORT_SYMBOL(wireless_send_event);
 
 
 
 /* IW handlers */
 
-struct iw_statistics *get_wireless_stats(struct net_device *dev)
-{
-#ifdef CONFIG_WIRELESS_EXT
-	if ((dev->wireless_handlers != NULL) &&
-	   (dev->wireless_handlers->get_wireless_stats != NULL))
-		return dev->wireless_handlers->get_wireless_stats(dev);
-#endif
+काष्ठा iw_statistics *get_wireless_stats(काष्ठा net_device *dev)
+अणु
+#अगर_घोषित CONFIG_WIRELESS_EXT
+	अगर ((dev->wireless_handlers != शून्य) &&
+	   (dev->wireless_handlers->get_wireless_stats != शून्य))
+		वापस dev->wireless_handlers->get_wireless_stats(dev);
+#पूर्ण_अगर
 
-#ifdef CONFIG_CFG80211_WEXT
-	if (dev->ieee80211_ptr &&
+#अगर_घोषित CONFIG_CFG80211_WEXT
+	अगर (dev->ieee80211_ptr &&
 	    dev->ieee80211_ptr->wiphy &&
 	    dev->ieee80211_ptr->wiphy->wext &&
 	    dev->ieee80211_ptr->wiphy->wext->get_wireless_stats)
-		return dev->ieee80211_ptr->wiphy->wext->get_wireless_stats(dev);
-#endif
+		वापस dev->ieee80211_ptr->wiphy->wext->get_wireless_stats(dev);
+#पूर्ण_अगर
 
 	/* not found */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* noinline to avoid a bogus warning with -O3 */
-static noinline int iw_handler_get_iwstats(struct net_device *	dev,
-				  struct iw_request_info *	info,
-				  union iwreq_data *		wrqu,
-				  char *			extra)
-{
+/* noअंतरभूत to aव्योम a bogus warning with -O3 */
+अटल noअंतरभूत पूर्णांक iw_handler_get_iwstats(काष्ठा net_device *	dev,
+				  काष्ठा iw_request_info *	info,
+				  जोड़ iwreq_data *		wrqu,
+				  अक्षर *			extra)
+अणु
 	/* Get stats from the driver */
-	struct iw_statistics *stats;
+	काष्ठा iw_statistics *stats;
 
 	stats = get_wireless_stats(dev);
-	if (stats) {
+	अगर (stats) अणु
 		/* Copy statistics to extra */
-		memcpy(extra, stats, sizeof(struct iw_statistics));
-		wrqu->data.length = sizeof(struct iw_statistics);
+		स_नकल(extra, stats, माप(काष्ठा iw_statistics));
+		wrqu->data.length = माप(काष्ठा iw_statistics);
 
-		/* Check if we need to clear the updated flag */
-		if (wrqu->data.flags != 0)
+		/* Check अगर we need to clear the updated flag */
+		अगर (wrqu->data.flags != 0)
 			stats->qual.updated &= ~IW_QUAL_ALL_UPDATED;
-		return 0;
-	} else
-		return -EOPNOTSUPP;
-}
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EOPNOTSUPP;
+पूर्ण
 
-static iw_handler get_handler(struct net_device *dev, unsigned int cmd)
-{
+अटल iw_handler get_handler(काष्ठा net_device *dev, अचिन्हित पूर्णांक cmd)
+अणु
 	/* Don't "optimise" the following variable, it will crash */
-	unsigned int	index;		/* *MUST* be unsigned */
-	const struct iw_handler_def *handlers = NULL;
+	अचिन्हित पूर्णांक	index;		/* *MUST* be अचिन्हित */
+	स्थिर काष्ठा iw_handler_def *handlers = शून्य;
 
-#ifdef CONFIG_CFG80211_WEXT
-	if (dev->ieee80211_ptr && dev->ieee80211_ptr->wiphy)
+#अगर_घोषित CONFIG_CFG80211_WEXT
+	अगर (dev->ieee80211_ptr && dev->ieee80211_ptr->wiphy)
 		handlers = dev->ieee80211_ptr->wiphy->wext;
-#endif
-#ifdef CONFIG_WIRELESS_EXT
-	if (dev->wireless_handlers)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_WIRELESS_EXT
+	अगर (dev->wireless_handlers)
 		handlers = dev->wireless_handlers;
-#endif
+#पूर्ण_अगर
 
-	if (!handlers)
-		return NULL;
+	अगर (!handlers)
+		वापस शून्य;
 
 	/* Try as a standard command */
 	index = IW_IOCTL_IDX(cmd);
-	if (index < handlers->num_standard)
-		return handlers->standard[index];
+	अगर (index < handlers->num_standard)
+		वापस handlers->standard[index];
 
-#ifdef CONFIG_WEXT_PRIV
-	/* Try as a private command */
+#अगर_घोषित CONFIG_WEXT_PRIV
+	/* Try as a निजी command */
 	index = cmd - SIOCIWFIRSTPRIV;
-	if (index < handlers->num_private)
-		return handlers->private[index];
-#endif
+	अगर (index < handlers->num_निजी)
+		वापस handlers->निजी[index];
+#पूर्ण_अगर
 
 	/* Not found */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int ioctl_standard_iw_point(struct iw_point *iwp, unsigned int cmd,
-				   const struct iw_ioctl_description *descr,
-				   iw_handler handler, struct net_device *dev,
-				   struct iw_request_info *info)
-{
-	int err, extra_size, user_length = 0, essid_compat = 0;
-	char *extra;
+अटल पूर्णांक ioctl_standard_iw_poपूर्णांक(काष्ठा iw_poपूर्णांक *iwp, अचिन्हित पूर्णांक cmd,
+				   स्थिर काष्ठा iw_ioctl_description *descr,
+				   iw_handler handler, काष्ठा net_device *dev,
+				   काष्ठा iw_request_info *info)
+अणु
+	पूर्णांक err, extra_size, user_length = 0, essid_compat = 0;
+	अक्षर *extra;
 
 	/* Calculate space needed by arguments. Always allocate
-	 * for max space.
+	 * क्रम max space.
 	 */
 	extra_size = descr->max_tokens * descr->token_size;
 
-	/* Check need for ESSID compatibility for WE < 21 */
-	switch (cmd) {
-	case SIOCSIWESSID:
-	case SIOCGIWESSID:
-	case SIOCSIWNICKN:
-	case SIOCGIWNICKN:
-		if (iwp->length == descr->max_tokens + 1)
+	/* Check need क्रम ESSID compatibility क्रम WE < 21 */
+	चयन (cmd) अणु
+	हाल SIOCSIWESSID:
+	हाल SIOCGIWESSID:
+	हाल SIOCSIWNICKN:
+	हाल SIOCGIWNICKN:
+		अगर (iwp->length == descr->max_tokens + 1)
 			essid_compat = 1;
-		else if (IW_IS_SET(cmd) && (iwp->length != 0)) {
-			char essid[IW_ESSID_MAX_SIZE + 1];
-			unsigned int len;
+		अन्यथा अगर (IW_IS_SET(cmd) && (iwp->length != 0)) अणु
+			अक्षर essid[IW_ESSID_MAX_SIZE + 1];
+			अचिन्हित पूर्णांक len;
 			len = iwp->length * descr->token_size;
 
-			if (len > IW_ESSID_MAX_SIZE)
-				return -EFAULT;
+			अगर (len > IW_ESSID_MAX_SIZE)
+				वापस -EFAULT;
 
-			err = copy_from_user(essid, iwp->pointer, len);
-			if (err)
-				return -EFAULT;
+			err = copy_from_user(essid, iwp->poपूर्णांकer, len);
+			अगर (err)
+				वापस -EFAULT;
 
-			if (essid[iwp->length - 1] == '\0')
+			अगर (essid[iwp->length - 1] == '\0')
 				essid_compat = 1;
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	iwp->length -= essid_compat;
 
 	/* Check what user space is giving us */
-	if (IW_IS_SET(cmd)) {
-		/* Check NULL pointer */
-		if (!iwp->pointer && iwp->length != 0)
-			return -EFAULT;
-		/* Check if number of token fits within bounds */
-		if (iwp->length > descr->max_tokens)
-			return -E2BIG;
-		if (iwp->length < descr->min_tokens)
-			return -EINVAL;
-	} else {
-		/* Check NULL pointer */
-		if (!iwp->pointer)
-			return -EFAULT;
-		/* Save user space buffer size for checking */
+	अगर (IW_IS_SET(cmd)) अणु
+		/* Check शून्य poपूर्णांकer */
+		अगर (!iwp->poपूर्णांकer && iwp->length != 0)
+			वापस -EFAULT;
+		/* Check अगर number of token fits within bounds */
+		अगर (iwp->length > descr->max_tokens)
+			वापस -E2BIG;
+		अगर (iwp->length < descr->min_tokens)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		/* Check शून्य poपूर्णांकer */
+		अगर (!iwp->poपूर्णांकer)
+			वापस -EFAULT;
+		/* Save user space buffer size क्रम checking */
 		user_length = iwp->length;
 
-		/* Don't check if user_length > max to allow forward
+		/* Don't check अगर user_length > max to allow क्रमward
 		 * compatibility. The test user_length < min is
 		 * implied by the test at the end.
 		 */
 
-		/* Support for very large requests */
-		if ((descr->flags & IW_DESCR_FLAG_NOMAX) &&
-		    (user_length > descr->max_tokens)) {
+		/* Support क्रम very large requests */
+		अगर ((descr->flags & IW_DESCR_FLAG_NOMAX) &&
+		    (user_length > descr->max_tokens)) अणु
 			/* Allow userspace to GET more than max so
 			 * we can support any size GET requests.
 			 * There is still a limit : -ENOMEM.
@@ -793,34 +794,34 @@ static int ioctl_standard_iw_point(struct iw_point *iwp, unsigned int cmd,
 			 * so extra_size won't get negative and
 			 * won't overflow...
 			 */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* kzalloc() ensures NULL-termination for essid_compat. */
+	/* kzalloc() ensures शून्य-termination क्रम essid_compat. */
 	extra = kzalloc(extra_size, GFP_KERNEL);
-	if (!extra)
-		return -ENOMEM;
+	अगर (!extra)
+		वापस -ENOMEM;
 
 	/* If it is a SET, get all the extra data in here */
-	if (IW_IS_SET(cmd) && (iwp->length != 0)) {
-		if (copy_from_user(extra, iwp->pointer,
+	अगर (IW_IS_SET(cmd) && (iwp->length != 0)) अणु
+		अगर (copy_from_user(extra, iwp->poपूर्णांकer,
 				   iwp->length *
-				   descr->token_size)) {
+				   descr->token_size)) अणु
 			err = -EFAULT;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (cmd == SIOCSIWENCODEEXT) {
-			struct iw_encode_ext *ee = (void *) extra;
+		अगर (cmd == SIOCSIWENCODEEXT) अणु
+			काष्ठा iw_encode_ext *ee = (व्योम *) extra;
 
-			if (iwp->length < sizeof(*ee) + ee->key_len) {
+			अगर (iwp->length < माप(*ee) + ee->key_len) अणु
 				err = -EFAULT;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (IW_IS_GET(cmd) && !(descr->flags & IW_DESCR_FLAG_NOMAX)) {
+	अगर (IW_IS_GET(cmd) && !(descr->flags & IW_DESCR_FLAG_NOMAX)) अणु
 		/*
 		 * If this is a GET, but not NOMAX, it means that the extra
 		 * data is not bounded by userspace, but by max_tokens. Thus
@@ -828,281 +829,281 @@ static int ioctl_standard_iw_point(struct iw_point *iwp, unsigned int cmd,
 		 * allocation.
 		 * The driver should fill it with the number of tokens it
 		 * provided, and it may check iwp->length rather than having
-		 * knowledge of max_tokens. If the driver doesn't change the
+		 * knowledge of max_tokens. If the driver करोesn't change the
 		 * iwp->length, this ioctl just copies back max_token tokens
 		 * filled with zeroes. Hopefully the driver isn't claiming
 		 * them to be valid data.
 		 */
 		iwp->length = descr->max_tokens;
-	}
+	पूर्ण
 
-	err = handler(dev, info, (union iwreq_data *) iwp, extra);
+	err = handler(dev, info, (जोड़ iwreq_data *) iwp, extra);
 
 	iwp->length += essid_compat;
 
-	/* If we have something to return to the user */
-	if (!err && IW_IS_GET(cmd)) {
-		/* Check if there is enough buffer up there */
-		if (user_length < iwp->length) {
+	/* If we have something to वापस to the user */
+	अगर (!err && IW_IS_GET(cmd)) अणु
+		/* Check अगर there is enough buffer up there */
+		अगर (user_length < iwp->length) अणु
 			err = -E2BIG;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (copy_to_user(iwp->pointer, extra,
+		अगर (copy_to_user(iwp->poपूर्णांकer, extra,
 				 iwp->length *
-				 descr->token_size)) {
+				 descr->token_size)) अणु
 			err = -EFAULT;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Generate an event to notify listeners of the change */
-	if ((descr->flags & IW_DESCR_FLAG_EVENT) &&
-	    ((err == 0) || (err == -EIWCOMMIT))) {
-		union iwreq_data *data = (union iwreq_data *) iwp;
+	/* Generate an event to notअगरy listeners of the change */
+	अगर ((descr->flags & IW_DESCR_FLAG_EVENT) &&
+	    ((err == 0) || (err == -EIWCOMMIT))) अणु
+		जोड़ iwreq_data *data = (जोड़ iwreq_data *) iwp;
 
-		if (descr->flags & IW_DESCR_FLAG_RESTRICT)
-			/* If the event is restricted, don't
+		अगर (descr->flags & IW_DESCR_FLAG_RESTRICT)
+			/* If the event is restricted, करोn't
 			 * export the payload.
 			 */
-			wireless_send_event(dev, cmd, data, NULL);
-		else
+			wireless_send_event(dev, cmd, data, शून्य);
+		अन्यथा
 			wireless_send_event(dev, cmd, data, extra);
-	}
+	पूर्ण
 
 out:
-	kfree(extra);
-	return err;
-}
+	kमुक्त(extra);
+	वापस err;
+पूर्ण
 
 /*
  * Call the commit handler in the driver
- * (if exist and if conditions are right)
+ * (अगर exist and अगर conditions are right)
  *
  * Note : our current commit strategy is currently pretty dumb,
  * but we will be able to improve on that...
  * The goal is to try to agreagate as many changes as possible
- * before doing the commit. Drivers that will define a commit handler
+ * beक्रमe करोing the commit. Drivers that will define a commit handler
  * are usually those that need a reset after changing parameters, so
  * we want to minimise the number of reset.
- * A cool idea is to use a timer : at each "set" command, we re-set the
- * timer, when the timer eventually fires, we call the driver.
+ * A cool idea is to use a समयr : at each "set" command, we re-set the
+ * समयr, when the समयr eventually fires, we call the driver.
  * Hopefully, more on that later.
  *
- * Also, I'm waiting to see how many people will complain about the
- * netif_running(dev) test. I'm open on that one...
- * Hopefully, the driver will remember to do a commit in "open()" ;-)
+ * Also, I'm रुकोing to see how many people will complain about the
+ * netअगर_running(dev) test. I'm खोलो on that one...
+ * Hopefully, the driver will remember to करो a commit in "open()" ;-)
  */
-int call_commit_handler(struct net_device *dev)
-{
-#ifdef CONFIG_WIRELESS_EXT
-	if (netif_running(dev) &&
+पूर्णांक call_commit_handler(काष्ठा net_device *dev)
+अणु
+#अगर_घोषित CONFIG_WIRELESS_EXT
+	अगर (netअगर_running(dev) &&
 	    dev->wireless_handlers &&
 	    dev->wireless_handlers->standard[0])
 		/* Call the commit handler on the driver */
-		return dev->wireless_handlers->standard[0](dev, NULL,
-							   NULL, NULL);
-	else
-		return 0;		/* Command completed successfully */
-#else
+		वापस dev->wireless_handlers->standard[0](dev, शून्य,
+							   शून्य, शून्य);
+	अन्यथा
+		वापस 0;		/* Command completed successfully */
+#अन्यथा
 	/* cfg80211 has no commit */
-	return 0;
-#endif
-}
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * Main IOCTl dispatcher.
  * Check the type of IOCTL and call the appropriate wrapper...
  */
-static int wireless_process_ioctl(struct net *net, struct iwreq *iwr,
-				  unsigned int cmd,
-				  struct iw_request_info *info,
+अटल पूर्णांक wireless_process_ioctl(काष्ठा net *net, काष्ठा iwreq *iwr,
+				  अचिन्हित पूर्णांक cmd,
+				  काष्ठा iw_request_info *info,
 				  wext_ioctl_func standard,
-				  wext_ioctl_func private)
-{
-	struct net_device *dev;
+				  wext_ioctl_func निजी)
+अणु
+	काष्ठा net_device *dev;
 	iw_handler	handler;
 
-	/* Permissions are already checked in dev_ioctl() before calling us.
-	 * The copy_to/from_user() of ifr is also dealt with in there */
+	/* Permissions are alपढ़ोy checked in dev_ioctl() beक्रमe calling us.
+	 * The copy_to/from_user() of अगरr is also dealt with in there */
 
 	/* Make sure the device exist */
-	if ((dev = __dev_get_by_name(net, iwr->ifr_name)) == NULL)
-		return -ENODEV;
+	अगर ((dev = __dev_get_by_name(net, iwr->अगरr_name)) == शून्य)
+		वापस -ENODEV;
 
-	/* A bunch of special cases, then the generic case...
-	 * Note that 'cmd' is already filtered in dev_ioctl() with
+	/* A bunch of special हालs, then the generic हाल...
+	 * Note that 'cmd' is alपढ़ोy filtered in dev_ioctl() with
 	 * (cmd >= SIOCIWFIRST && cmd <= SIOCIWLAST) */
-	if (cmd == SIOCGIWSTATS)
-		return standard(dev, iwr, cmd, info,
+	अगर (cmd == SIOCGIWSTATS)
+		वापस standard(dev, iwr, cmd, info,
 				&iw_handler_get_iwstats);
 
-#ifdef CONFIG_WEXT_PRIV
-	if (cmd == SIOCGIWPRIV && dev->wireless_handlers)
-		return standard(dev, iwr, cmd, info,
-				iw_handler_get_private);
-#endif
+#अगर_घोषित CONFIG_WEXT_PRIV
+	अगर (cmd == SIOCGIWPRIV && dev->wireless_handlers)
+		वापस standard(dev, iwr, cmd, info,
+				iw_handler_get_निजी);
+#पूर्ण_अगर
 
 	/* Basic check */
-	if (!netif_device_present(dev))
-		return -ENODEV;
+	अगर (!netअगर_device_present(dev))
+		वापस -ENODEV;
 
 	/* New driver API : try to find the handler */
 	handler = get_handler(dev, cmd);
-	if (handler) {
-		/* Standard and private are not the same */
-		if (cmd < SIOCIWFIRSTPRIV)
-			return standard(dev, iwr, cmd, info, handler);
-		else if (private)
-			return private(dev, iwr, cmd, info, handler);
-	}
-	return -EOPNOTSUPP;
-}
+	अगर (handler) अणु
+		/* Standard and निजी are not the same */
+		अगर (cmd < SIOCIWFIRSTPRIV)
+			वापस standard(dev, iwr, cmd, info, handler);
+		अन्यथा अगर (निजी)
+			वापस निजी(dev, iwr, cmd, info, handler);
+	पूर्ण
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /* If command is `set a parameter', or `get the encoding parameters',
- * check if the user has the right to do it.
+ * check अगर the user has the right to करो it.
  */
-static int wext_permission_check(unsigned int cmd)
-{
-	if ((IW_IS_SET(cmd) || cmd == SIOCGIWENCODE ||
+अटल पूर्णांक wext_permission_check(अचिन्हित पूर्णांक cmd)
+अणु
+	अगर ((IW_IS_SET(cmd) || cmd == SIOCGIWENCODE ||
 	     cmd == SIOCGIWENCODEEXT) &&
 	    !capable(CAP_NET_ADMIN))
-		return -EPERM;
+		वापस -EPERM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* entry point from dev ioctl */
-static int wext_ioctl_dispatch(struct net *net, struct iwreq *iwr,
-			       unsigned int cmd, struct iw_request_info *info,
+/* entry poपूर्णांक from dev ioctl */
+अटल पूर्णांक wext_ioctl_dispatch(काष्ठा net *net, काष्ठा iwreq *iwr,
+			       अचिन्हित पूर्णांक cmd, काष्ठा iw_request_info *info,
 			       wext_ioctl_func standard,
-			       wext_ioctl_func private)
-{
-	int ret = wext_permission_check(cmd);
+			       wext_ioctl_func निजी)
+अणु
+	पूर्णांक ret = wext_permission_check(cmd);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dev_load(net, iwr->ifr_name);
+	dev_load(net, iwr->अगरr_name);
 	rtnl_lock();
-	ret = wireless_process_ioctl(net, iwr, cmd, info, standard, private);
+	ret = wireless_process_ioctl(net, iwr, cmd, info, standard, निजी);
 	rtnl_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Wrapper to call a standard Wireless Extension handler.
- * We do various checks and also take care of moving data between
+ * We करो various checks and also take care of moving data between
  * user space and kernel space.
  */
-static int ioctl_standard_call(struct net_device *	dev,
-			       struct iwreq		*iwr,
-			       unsigned int		cmd,
-			       struct iw_request_info	*info,
+अटल पूर्णांक ioctl_standard_call(काष्ठा net_device *	dev,
+			       काष्ठा iwreq		*iwr,
+			       अचिन्हित पूर्णांक		cmd,
+			       काष्ठा iw_request_info	*info,
 			       iw_handler		handler)
-{
-	const struct iw_ioctl_description *	descr;
-	int					ret = -EINVAL;
+अणु
+	स्थिर काष्ठा iw_ioctl_description *	descr;
+	पूर्णांक					ret = -EINVAL;
 
 	/* Get the description of the IOCTL */
-	if (IW_IOCTL_IDX(cmd) >= standard_ioctl_num)
-		return -EOPNOTSUPP;
+	अगर (IW_IOCTL_IDX(cmd) >= standard_ioctl_num)
+		वापस -EOPNOTSUPP;
 	descr = &(standard_ioctl[IW_IOCTL_IDX(cmd)]);
 
-	/* Check if we have a pointer to user space data or not */
-	if (descr->header_type != IW_HEADER_TYPE_POINT) {
+	/* Check अगर we have a poपूर्णांकer to user space data or not */
+	अगर (descr->header_type != IW_HEADER_TYPE_POINT) अणु
 
 		/* No extra arguments. Trivial to handle */
-		ret = handler(dev, info, &(iwr->u), NULL);
+		ret = handler(dev, info, &(iwr->u), शून्य);
 
-		/* Generate an event to notify listeners of the change */
-		if ((descr->flags & IW_DESCR_FLAG_EVENT) &&
+		/* Generate an event to notअगरy listeners of the change */
+		अगर ((descr->flags & IW_DESCR_FLAG_EVENT) &&
 		   ((ret == 0) || (ret == -EIWCOMMIT)))
-			wireless_send_event(dev, cmd, &(iwr->u), NULL);
-	} else {
-		ret = ioctl_standard_iw_point(&iwr->u.data, cmd, descr,
+			wireless_send_event(dev, cmd, &(iwr->u), शून्य);
+	पूर्ण अन्यथा अणु
+		ret = ioctl_standard_iw_poपूर्णांक(&iwr->u.data, cmd, descr,
 					      handler, dev, info);
-	}
+	पूर्ण
 
-	/* Call commit handler if needed and defined */
-	if (ret == -EIWCOMMIT)
+	/* Call commit handler अगर needed and defined */
+	अगर (ret == -EIWCOMMIT)
 		ret = call_commit_handler(dev);
 
-	/* Here, we will generate the appropriate event if needed */
+	/* Here, we will generate the appropriate event अगर needed */
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-int wext_handle_ioctl(struct net *net, unsigned int cmd, void __user *arg)
-{
-	struct iw_request_info info = { .cmd = cmd, .flags = 0 };
-	struct iwreq iwr;
-	int ret;
+पूर्णांक wext_handle_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा iw_request_info info = अणु .cmd = cmd, .flags = 0 पूर्ण;
+	काष्ठा iwreq iwr;
+	पूर्णांक ret;
 
-	if (copy_from_user(&iwr, arg, sizeof(iwr)))
-		return -EFAULT;
+	अगर (copy_from_user(&iwr, arg, माप(iwr)))
+		वापस -EFAULT;
 
-	iwr.ifr_name[sizeof(iwr.ifr_name) - 1] = 0;
+	iwr.अगरr_name[माप(iwr.अगरr_name) - 1] = 0;
 
 	ret = wext_ioctl_dispatch(net, &iwr, cmd, &info,
 				  ioctl_standard_call,
-				  ioctl_private_call);
-	if (ret >= 0 &&
+				  ioctl_निजी_call);
+	अगर (ret >= 0 &&
 	    IW_IS_GET(cmd) &&
-	    copy_to_user(arg, &iwr, sizeof(struct iwreq)))
-		return -EFAULT;
+	    copy_to_user(arg, &iwr, माप(काष्ठा iwreq)))
+		वापस -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static int compat_standard_call(struct net_device	*dev,
-				struct iwreq		*iwr,
-				unsigned int		cmd,
-				struct iw_request_info	*info,
+#अगर_घोषित CONFIG_COMPAT
+अटल पूर्णांक compat_standard_call(काष्ठा net_device	*dev,
+				काष्ठा iwreq		*iwr,
+				अचिन्हित पूर्णांक		cmd,
+				काष्ठा iw_request_info	*info,
 				iw_handler		handler)
-{
-	const struct iw_ioctl_description *descr;
-	struct compat_iw_point *iwp_compat;
-	struct iw_point iwp;
-	int err;
+अणु
+	स्थिर काष्ठा iw_ioctl_description *descr;
+	काष्ठा compat_iw_poपूर्णांक *iwp_compat;
+	काष्ठा iw_poपूर्णांक iwp;
+	पूर्णांक err;
 
 	descr = standard_ioctl + IW_IOCTL_IDX(cmd);
 
-	if (descr->header_type != IW_HEADER_TYPE_POINT)
-		return ioctl_standard_call(dev, iwr, cmd, info, handler);
+	अगर (descr->header_type != IW_HEADER_TYPE_POINT)
+		वापस ioctl_standard_call(dev, iwr, cmd, info, handler);
 
-	iwp_compat = (struct compat_iw_point *) &iwr->u.data;
-	iwp.pointer = compat_ptr(iwp_compat->pointer);
+	iwp_compat = (काष्ठा compat_iw_poपूर्णांक *) &iwr->u.data;
+	iwp.poपूर्णांकer = compat_ptr(iwp_compat->poपूर्णांकer);
 	iwp.length = iwp_compat->length;
 	iwp.flags = iwp_compat->flags;
 
-	err = ioctl_standard_iw_point(&iwp, cmd, descr, handler, dev, info);
+	err = ioctl_standard_iw_poपूर्णांक(&iwp, cmd, descr, handler, dev, info);
 
-	iwp_compat->pointer = ptr_to_compat(iwp.pointer);
+	iwp_compat->poपूर्णांकer = ptr_to_compat(iwp.poपूर्णांकer);
 	iwp_compat->length = iwp.length;
 	iwp_compat->flags = iwp.flags;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int compat_wext_handle_ioctl(struct net *net, unsigned int cmd,
-			     unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
-	struct iw_request_info info;
-	struct iwreq iwr;
-	char *colon;
-	int ret;
+पूर्णांक compat_wext_handle_ioctl(काष्ठा net *net, अचिन्हित पूर्णांक cmd,
+			     अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा iw_request_info info;
+	काष्ठा iwreq iwr;
+	अक्षर *colon;
+	पूर्णांक ret;
 
-	if (copy_from_user(&iwr, argp, sizeof(struct iwreq)))
-		return -EFAULT;
+	अगर (copy_from_user(&iwr, argp, माप(काष्ठा iwreq)))
+		वापस -EFAULT;
 
-	iwr.ifr_name[IFNAMSIZ-1] = 0;
-	colon = strchr(iwr.ifr_name, ':');
-	if (colon)
+	iwr.अगरr_name[IFNAMSIZ-1] = 0;
+	colon = म_अक्षर(iwr.अगरr_name, ':');
+	अगर (colon)
 		*colon = 0;
 
 	info.cmd = cmd;
@@ -1110,80 +1111,80 @@ int compat_wext_handle_ioctl(struct net *net, unsigned int cmd,
 
 	ret = wext_ioctl_dispatch(net, &iwr, cmd, &info,
 				  compat_standard_call,
-				  compat_private_call);
+				  compat_निजी_call);
 
-	if (ret >= 0 &&
+	अगर (ret >= 0 &&
 	    IW_IS_GET(cmd) &&
-	    copy_to_user(argp, &iwr, sizeof(struct iwreq)))
-		return -EFAULT;
+	    copy_to_user(argp, &iwr, माप(काष्ठा iwreq)))
+		वापस -EFAULT;
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-char *iwe_stream_add_event(struct iw_request_info *info, char *stream,
-			   char *ends, struct iw_event *iwe, int event_len)
-{
-	int lcp_len = iwe_stream_lcp_len(info);
+अक्षर *iwe_stream_add_event(काष्ठा iw_request_info *info, अक्षर *stream,
+			   अक्षर *ends, काष्ठा iw_event *iwe, पूर्णांक event_len)
+अणु
+	पूर्णांक lcp_len = iwe_stream_lcp_len(info);
 
 	event_len = iwe_stream_event_len_adjust(info, event_len);
 
-	/* Check if it's possible */
-	if (likely((stream + event_len) < ends)) {
+	/* Check अगर it's possible */
+	अगर (likely((stream + event_len) < ends)) अणु
 		iwe->len = event_len;
 		/* Beware of alignement issues on 64 bits */
-		memcpy(stream, (char *) iwe, IW_EV_LCP_PK_LEN);
-		memcpy(stream + lcp_len, &iwe->u,
+		स_नकल(stream, (अक्षर *) iwe, IW_EV_LCP_PK_LEN);
+		स_नकल(stream + lcp_len, &iwe->u,
 		       event_len - lcp_len);
 		stream += event_len;
-	}
+	पूर्ण
 
-	return stream;
-}
+	वापस stream;
+पूर्ण
 EXPORT_SYMBOL(iwe_stream_add_event);
 
-char *iwe_stream_add_point(struct iw_request_info *info, char *stream,
-			   char *ends, struct iw_event *iwe, char *extra)
-{
-	int event_len = iwe_stream_point_len(info) + iwe->u.data.length;
-	int point_len = iwe_stream_point_len(info);
-	int lcp_len   = iwe_stream_lcp_len(info);
+अक्षर *iwe_stream_add_poपूर्णांक(काष्ठा iw_request_info *info, अक्षर *stream,
+			   अक्षर *ends, काष्ठा iw_event *iwe, अक्षर *extra)
+अणु
+	पूर्णांक event_len = iwe_stream_poपूर्णांक_len(info) + iwe->u.data.length;
+	पूर्णांक poपूर्णांक_len = iwe_stream_poपूर्णांक_len(info);
+	पूर्णांक lcp_len   = iwe_stream_lcp_len(info);
 
-	/* Check if it's possible */
-	if (likely((stream + event_len) < ends)) {
+	/* Check अगर it's possible */
+	अगर (likely((stream + event_len) < ends)) अणु
 		iwe->len = event_len;
-		memcpy(stream, (char *) iwe, IW_EV_LCP_PK_LEN);
-		memcpy(stream + lcp_len,
-		       ((char *) &iwe->u) + IW_EV_POINT_OFF,
+		स_नकल(stream, (अक्षर *) iwe, IW_EV_LCP_PK_LEN);
+		स_नकल(stream + lcp_len,
+		       ((अक्षर *) &iwe->u) + IW_EV_POINT_OFF,
 		       IW_EV_POINT_PK_LEN - IW_EV_LCP_PK_LEN);
-		if (iwe->u.data.length && extra)
-			memcpy(stream + point_len, extra, iwe->u.data.length);
+		अगर (iwe->u.data.length && extra)
+			स_नकल(stream + poपूर्णांक_len, extra, iwe->u.data.length);
 		stream += event_len;
-	}
+	पूर्ण
 
-	return stream;
-}
-EXPORT_SYMBOL(iwe_stream_add_point);
+	वापस stream;
+पूर्ण
+EXPORT_SYMBOL(iwe_stream_add_poपूर्णांक);
 
-char *iwe_stream_add_value(struct iw_request_info *info, char *event,
-			   char *value, char *ends, struct iw_event *iwe,
-			   int event_len)
-{
-	int lcp_len = iwe_stream_lcp_len(info);
+अक्षर *iwe_stream_add_value(काष्ठा iw_request_info *info, अक्षर *event,
+			   अक्षर *value, अक्षर *ends, काष्ठा iw_event *iwe,
+			   पूर्णांक event_len)
+अणु
+	पूर्णांक lcp_len = iwe_stream_lcp_len(info);
 
 	/* Don't duplicate LCP */
 	event_len -= IW_EV_LCP_LEN;
 
-	/* Check if it's possible */
-	if (likely((value + event_len) < ends)) {
+	/* Check अगर it's possible */
+	अगर (likely((value + event_len) < ends)) अणु
 		/* Add new value */
-		memcpy(value, &iwe->u, event_len);
+		स_नकल(value, &iwe->u, event_len);
 		value += event_len;
 		/* Patch LCP */
 		iwe->len = value - event;
-		memcpy(event, (char *) iwe, lcp_len);
-	}
+		स_नकल(event, (अक्षर *) iwe, lcp_len);
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 EXPORT_SYMBOL(iwe_stream_add_value);

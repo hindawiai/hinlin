@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfsrvl.h>
-#include <net/caif/cfpkt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfsrvl.h>
+#समावेश <net/caअगर/cfpkt.h>
 
-#define container_obj(layr) ((struct cfsrvl *) layr)
-#define UTIL_PAYLOAD  0x00
-#define UTIL_CMD_BIT  0x80
-#define UTIL_REMOTE_SHUTDOWN 0x82
-#define UTIL_FLOW_OFF 0x81
-#define UTIL_FLOW_ON  0x80
+#घोषणा container_obj(layr) ((काष्ठा cfsrvl *) layr)
+#घोषणा UTIL_PAYLOAD  0x00
+#घोषणा UTIL_CMD_BIT  0x80
+#घोषणा UTIL_REMOTE_SHUTDOWN 0x82
+#घोषणा UTIL_FLOW_OFF 0x81
+#घोषणा UTIL_FLOW_ON  0x80
 
-static int cfutill_receive(struct cflayer *layr, struct cfpkt *pkt);
-static int cfutill_transmit(struct cflayer *layr, struct cfpkt *pkt);
+अटल पूर्णांक cfutill_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
+अटल पूर्णांक cfutill_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt);
 
-struct cflayer *cfutill_create(u8 channel_id, struct dev_info *dev_info)
-{
-	struct cfsrvl *util = kzalloc(sizeof(struct cfsrvl), GFP_ATOMIC);
-	if (!util)
-		return NULL;
-	caif_assert(offsetof(struct cfsrvl, layer) == 0);
+काष्ठा cflayer *cfutill_create(u8 channel_id, काष्ठा dev_info *dev_info)
+अणु
+	काष्ठा cfsrvl *util = kzalloc(माप(काष्ठा cfsrvl), GFP_ATOMIC);
+	अगर (!util)
+		वापस शून्य;
+	caअगर_निश्चित(दुरत्व(काष्ठा cfsrvl, layer) == 0);
 	cfsrvl_init(util, channel_id, dev_info, true);
 	util->layer.receive = cfutill_receive;
 	util->layer.transmit = cfutill_transmit;
-	snprintf(util->layer.name, CAIF_LAYER_NAME_SZ, "util1");
-	return &util->layer;
-}
+	snम_लिखो(util->layer.name, CAIF_LAYER_NAME_SZ, "util1");
+	वापस &util->layer;
+पूर्ण
 
-static int cfutill_receive(struct cflayer *layr, struct cfpkt *pkt)
-{
+अटल पूर्णांक cfutill_receive(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
 	u8 cmd = -1;
-	struct cfsrvl *service = container_obj(layr);
-	caif_assert(layr != NULL);
-	caif_assert(layr->up != NULL);
-	caif_assert(layr->up->receive != NULL);
-	caif_assert(layr->up->ctrlcmd != NULL);
-	if (cfpkt_extr_head(pkt, &cmd, 1) < 0) {
+	काष्ठा cfsrvl *service = container_obj(layr);
+	caअगर_निश्चित(layr != शून्य);
+	caअगर_निश्चित(layr->up != शून्य);
+	caअगर_निश्चित(layr->up->receive != शून्य);
+	caअगर_निश्चित(layr->up->ctrlcmd != शून्य);
+	अगर (cfpkt_extr_head(pkt, &cmd, 1) < 0) अणु
 		pr_err("Packet is erroneous!\n");
 		cfpkt_destroy(pkt);
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	switch (cmd) {
-	case UTIL_PAYLOAD:
-		return layr->up->receive(layr->up, pkt);
-	case UTIL_FLOW_OFF:
+	चयन (cmd) अणु
+	हाल UTIL_PAYLOAD:
+		वापस layr->up->receive(layr->up, pkt);
+	हाल UTIL_FLOW_OFF:
 		layr->ctrlcmd(layr, CAIF_CTRLCMD_FLOW_OFF_IND, 0);
 		cfpkt_destroy(pkt);
-		return 0;
-	case UTIL_FLOW_ON:
+		वापस 0;
+	हाल UTIL_FLOW_ON:
 		layr->ctrlcmd(layr, CAIF_CTRLCMD_FLOW_ON_IND, 0);
 		cfpkt_destroy(pkt);
-		return 0;
-	case UTIL_REMOTE_SHUTDOWN:	/* Remote Shutdown Request */
+		वापस 0;
+	हाल UTIL_REMOTE_SHUTDOWN:	/* Remote Shutकरोwn Request */
 		pr_err("REMOTE SHUTDOWN REQUEST RECEIVED\n");
 		layr->ctrlcmd(layr, CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND, 0);
-		service->open = false;
+		service->खोलो = false;
 		cfpkt_destroy(pkt);
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		cfpkt_destroy(pkt);
 		pr_warn("Unknown service control %d (0x%x)\n", cmd, cmd);
-		return -EPROTO;
-	}
-}
+		वापस -EPROTO;
+	पूर्ण
+पूर्ण
 
-static int cfutill_transmit(struct cflayer *layr, struct cfpkt *pkt)
-{
+अटल पूर्णांक cfutill_transmit(काष्ठा cflayer *layr, काष्ठा cfpkt *pkt)
+अणु
 	u8 zero = 0;
-	struct caif_payload_info *info;
-	int ret;
-	struct cfsrvl *service = container_obj(layr);
-	caif_assert(layr != NULL);
-	caif_assert(layr->dn != NULL);
-	caif_assert(layr->dn->transmit != NULL);
+	काष्ठा caअगर_payload_info *info;
+	पूर्णांक ret;
+	काष्ठा cfsrvl *service = container_obj(layr);
+	caअगर_निश्चित(layr != शून्य);
+	caअगर_निश्चित(layr->dn != शून्य);
+	caअगर_निश्चित(layr->dn->transmit != शून्य);
 
-	if (!cfsrvl_ready(service, &ret)) {
+	अगर (!cfsrvl_पढ़ोy(service, &ret)) अणु
 		cfpkt_destroy(pkt);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	cfpkt_add_head(pkt, &zero, 1);
-	/* Add info for MUX-layer to route the packet out. */
+	/* Add info क्रम MUX-layer to route the packet out. */
 	info = cfpkt_info(pkt);
 	info->channel_id = service->layer.id;
 	/*
-	 * To optimize alignment, we add up the size of CAIF header before
+	 * To optimize alignment, we add up the size of CAIF header beक्रमe
 	 * payload.
 	 */
 	info->hdr_len = 1;
 	info->dev_info = &service->dev_info;
-	return layr->dn->transmit(layr->dn, pkt);
-}
+	वापस layr->dn->transmit(layr->dn, pkt);
+पूर्ण

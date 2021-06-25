@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <lzma.h>
-#include <stdio.h>
-#include <linux/compiler.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include "compress.h"
-#include "debug.h"
-#include <string.h>
-#include <unistd.h>
-#include <internal/lib.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <lzma.h>
+#समावेश <मानकपन.स>
+#समावेश <linux/compiler.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश "compress.h"
+#समावेश "debug.h"
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <पूर्णांकernal/lib.h>
 
-#define BUFSIZE 8192
+#घोषणा बफ_मानE 8192
 
-static const char *lzma_strerror(lzma_ret ret)
-{
-	switch ((int) ret) {
-	case LZMA_MEM_ERROR:
-		return "Memory allocation failed";
-	case LZMA_OPTIONS_ERROR:
-		return "Unsupported decompressor flags";
-	case LZMA_FORMAT_ERROR:
-		return "The input is not in the .xz format";
-	case LZMA_DATA_ERROR:
-		return "Compressed file is corrupt";
-	case LZMA_BUF_ERROR:
-		return "Compressed file is truncated or otherwise corrupt";
-	default:
-		return "Unknown error, possibly a bug";
-	}
-}
+अटल स्थिर अक्षर *lzma_म_त्रुटि(lzma_ret ret)
+अणु
+	चयन ((पूर्णांक) ret) अणु
+	हाल LZMA_MEM_ERROR:
+		वापस "Memory allocation failed";
+	हाल LZMA_OPTIONS_ERROR:
+		वापस "Unsupported decompressor flags";
+	हाल LZMA_FORMAT_ERROR:
+		वापस "The input is not in the .xz format";
+	हाल LZMA_DATA_ERROR:
+		वापस "Compressed file is corrupt";
+	हाल LZMA_BUF_ERROR:
+		वापस "Compressed file is truncated or otherwise corrupt";
+	शेष:
+		वापस "Unknown error, possibly a bug";
+	पूर्ण
+पूर्ण
 
-int lzma_decompress_to_file(const char *input, int output_fd)
-{
+पूर्णांक lzma_decompress_to_file(स्थिर अक्षर *input, पूर्णांक output_fd)
+अणु
 	lzma_action action = LZMA_RUN;
 	lzma_stream strm   = LZMA_STREAM_INIT;
 	lzma_ret ret;
-	int err = -1;
+	पूर्णांक err = -1;
 
-	u8 buf_in[BUFSIZE];
-	u8 buf_out[BUFSIZE];
-	FILE *infile;
+	u8 buf_in[बफ_मानE];
+	u8 buf_out[बफ_मानE];
+	खाता *infile;
 
-	infile = fopen(input, "rb");
-	if (!infile) {
+	infile = ख_खोलो(input, "rb");
+	अगर (!infile) अणु
 		pr_err("lzma: fopen failed on %s: '%s'\n",
-		       input, strerror(errno));
-		return -1;
-	}
+		       input, म_त्रुटि(त्रुटि_सं));
+		वापस -1;
+	पूर्ण
 
 	ret = lzma_stream_decoder(&strm, UINT64_MAX, LZMA_CONCATENATED);
-	if (ret != LZMA_OK) {
+	अगर (ret != LZMA_OK) अणु
 		pr_err("lzma: lzma_stream_decoder failed %s (%d)\n",
-			lzma_strerror(ret), ret);
-		goto err_fclose;
-	}
+			lzma_म_त्रुटि(ret), ret);
+		जाओ err_ख_बंद;
+	पूर्ण
 
-	strm.next_in   = NULL;
+	strm.next_in   = शून्य;
 	strm.avail_in  = 0;
 	strm.next_out  = buf_out;
-	strm.avail_out = sizeof(buf_out);
+	strm.avail_out = माप(buf_out);
 
-	while (1) {
-		if (strm.avail_in == 0 && !feof(infile)) {
+	जबतक (1) अणु
+		अगर (strm.avail_in == 0 && !ख_पूर्ण(infile)) अणु
 			strm.next_in  = buf_in;
-			strm.avail_in = fread(buf_in, 1, sizeof(buf_in), infile);
+			strm.avail_in = ख_पढ़ो(buf_in, 1, माप(buf_in), infile);
 
-			if (ferror(infile)) {
-				pr_err("lzma: read error: %s\n", strerror(errno));
-				goto err_fclose;
-			}
+			अगर (ख_त्रुटि(infile)) अणु
+				pr_err("lzma: read error: %s\n", म_त्रुटि(त्रुटि_सं));
+				जाओ err_ख_बंद;
+			पूर्ण
 
-			if (feof(infile))
+			अगर (ख_पूर्ण(infile))
 				action = LZMA_FINISH;
-		}
+		पूर्ण
 
 		ret = lzma_code(&strm, action);
 
-		if (strm.avail_out == 0 || ret == LZMA_STREAM_END) {
-			ssize_t write_size = sizeof(buf_out) - strm.avail_out;
+		अगर (strm.avail_out == 0 || ret == LZMA_STREAM_END) अणु
+			sमाप_प्रकार ग_लिखो_size = माप(buf_out) - strm.avail_out;
 
-			if (writen(output_fd, buf_out, write_size) != write_size) {
-				pr_err("lzma: write error: %s\n", strerror(errno));
-				goto err_fclose;
-			}
+			अगर (ग_लिखोn(output_fd, buf_out, ग_लिखो_size) != ग_लिखो_size) अणु
+				pr_err("lzma: write error: %s\n", म_त्रुटि(त्रुटि_सं));
+				जाओ err_ख_बंद;
+			पूर्ण
 
 			strm.next_out  = buf_out;
-			strm.avail_out = sizeof(buf_out);
-		}
+			strm.avail_out = माप(buf_out);
+		पूर्ण
 
-		if (ret != LZMA_OK) {
-			if (ret == LZMA_STREAM_END)
-				break;
+		अगर (ret != LZMA_OK) अणु
+			अगर (ret == LZMA_STREAM_END)
+				अवरोध;
 
-			pr_err("lzma: failed %s\n", lzma_strerror(ret));
-			goto err_fclose;
-		}
-	}
+			pr_err("lzma: failed %s\n", lzma_म_त्रुटि(ret));
+			जाओ err_ख_बंद;
+		पूर्ण
+	पूर्ण
 
 	err = 0;
-err_fclose:
-	fclose(infile);
-	return err;
-}
+err_ख_बंद:
+	ख_बंद(infile);
+	वापस err;
+पूर्ण
 
-bool lzma_is_compressed(const char *input)
-{
-	int fd = open(input, O_RDONLY);
-	const uint8_t magic[6] = { 0xFD, '7', 'z', 'X', 'Z', 0x00 };
-	char buf[6] = { 0 };
-	ssize_t rc;
+bool lzma_is_compressed(स्थिर अक्षर *input)
+अणु
+	पूर्णांक fd = खोलो(input, O_RDONLY);
+	स्थिर uपूर्णांक8_t magic[6] = अणु 0xFD, '7', 'z', 'X', 'Z', 0x00 पूर्ण;
+	अक्षर buf[6] = अणु 0 पूर्ण;
+	sमाप_प्रकार rc;
 
-	if (fd < 0)
-		return -1;
+	अगर (fd < 0)
+		वापस -1;
 
-	rc = read(fd, buf, sizeof(buf));
-	close(fd);
-	return rc == sizeof(buf) ?
-	       memcmp(buf, magic, sizeof(buf)) == 0 : false;
-}
+	rc = पढ़ो(fd, buf, माप(buf));
+	बंद(fd);
+	वापस rc == माप(buf) ?
+	       स_भेद(buf, magic, माप(buf)) == 0 : false;
+पूर्ण

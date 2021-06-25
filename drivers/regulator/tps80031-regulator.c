@@ -1,443 +1,444 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // tps80031-regulator.c -- TI TPS80031 regulator driver.
 //
-// Regulator driver for TI TPS80031/TPS80032 Fully Integrated Power
+// Regulator driver क्रम TI TPS80031/TPS80032 Fully Integrated Power
 // Management with Power Path and Battery Charger.
 //
 // Copyright (c) 2012, NVIDIA Corporation.
 //
 // Author: Laxman Dewangan <ldewangan@nvidia.com>
 
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/mfd/tps80031.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/tps80031.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/slab.h>
 
-/* Flags for DCDC Voltage reading */
-#define DCDC_OFFSET_EN		BIT(0)
-#define DCDC_EXTENDED_EN	BIT(1)
-#define TRACK_MODE_ENABLE	BIT(2)
+/* Flags क्रम DCDC Voltage पढ़ोing */
+#घोषणा DCDC_OFFSET_EN		BIT(0)
+#घोषणा DCDC_EXTENDED_EN	BIT(1)
+#घोषणा TRACK_MODE_ENABLE	BIT(2)
 
-#define SMPS_MULTOFFSET_VIO	BIT(1)
-#define SMPS_MULTOFFSET_SMPS1	BIT(3)
-#define SMPS_MULTOFFSET_SMPS2	BIT(4)
-#define SMPS_MULTOFFSET_SMPS3	BIT(6)
-#define SMPS_MULTOFFSET_SMPS4	BIT(0)
+#घोषणा SMPS_MULTOFFSET_VIO	BIT(1)
+#घोषणा SMPS_MULTOFFSET_SMPS1	BIT(3)
+#घोषणा SMPS_MULTOFFSET_SMPS2	BIT(4)
+#घोषणा SMPS_MULTOFFSET_SMPS3	BIT(6)
+#घोषणा SMPS_MULTOFFSET_SMPS4	BIT(0)
 
-#define SMPS_CMD_MASK		0xC0
-#define SMPS_VSEL_MASK		0x3F
-#define LDO_VSEL_MASK		0x1F
-#define LDO_TRACK_VSEL_MASK	0x3F
+#घोषणा SMPS_CMD_MASK		0xC0
+#घोषणा SMPS_VSEL_MASK		0x3F
+#घोषणा LDO_VSEL_MASK		0x1F
+#घोषणा LDO_TRACK_VSEL_MASK	0x3F
 
-#define MISC2_LDOUSB_IN_VSYS	BIT(4)
-#define MISC2_LDOUSB_IN_PMID	BIT(3)
-#define MISC2_LDOUSB_IN_MASK	0x18
+#घोषणा MISC2_LDOUSB_IN_VSYS	BIT(4)
+#घोषणा MISC2_LDOUSB_IN_PMID	BIT(3)
+#घोषणा MISC2_LDOUSB_IN_MASK	0x18
 
-#define MISC2_LDO3_SEL_VIB_VAL	BIT(0)
-#define MISC2_LDO3_SEL_VIB_MASK	0x1
+#घोषणा MISC2_LDO3_SEL_VIB_VAL	BIT(0)
+#घोषणा MISC2_LDO3_SEL_VIB_MASK	0x1
 
-#define BOOST_HW_PWR_EN		BIT(5)
-#define BOOST_HW_PWR_EN_MASK	BIT(5)
+#घोषणा BOOST_HW_PWR_EN		BIT(5)
+#घोषणा BOOST_HW_PWR_EN_MASK	BIT(5)
 
-#define OPA_MODE_EN		BIT(6)
-#define OPA_MODE_EN_MASK	BIT(6)
+#घोषणा OPA_MODE_EN		BIT(6)
+#घोषणा OPA_MODE_EN_MASK	BIT(6)
 
-#define USB_VBUS_CTRL_SET	0x04
-#define USB_VBUS_CTRL_CLR	0x05
-#define VBUS_DISCHRG		0x20
+#घोषणा USB_VBUS_CTRL_SET	0x04
+#घोषणा USB_VBUS_CTRL_CLR	0x05
+#घोषणा VBUS_DISCHRG		0x20
 
-struct tps80031_regulator_info {
-	/* Regulator register address.*/
+काष्ठा tps80031_regulator_info अणु
+	/* Regulator रेजिस्टर address.*/
 	u8		trans_reg;
 	u8		state_reg;
-	u8		force_reg;
+	u8		क्रमce_reg;
 	u8		volt_reg;
 	u8		volt_id;
 
 	/*Power request bits */
-	int		preq_bit;
+	पूर्णांक		preq_bit;
 
 	/* used by regulator core */
-	struct regulator_desc	desc;
+	काष्ठा regulator_desc	desc;
 
-};
+पूर्ण;
 
-struct tps80031_regulator {
-	struct device			*dev;
-	struct tps80031_regulator_info	*rinfo;
+काष्ठा tps80031_regulator अणु
+	काष्ठा device			*dev;
+	काष्ठा tps80031_regulator_info	*rinfo;
 
 	u8				device_flags;
-	unsigned int			config_flags;
-	unsigned int			ext_ctrl_flag;
-};
+	अचिन्हित पूर्णांक			config_flags;
+	अचिन्हित पूर्णांक			ext_ctrl_flag;
+पूर्ण;
 
-static inline struct device *to_tps80031_dev(struct regulator_dev *rdev)
-{
-	return rdev_get_dev(rdev)->parent->parent;
-}
+अटल अंतरभूत काष्ठा device *to_tps80031_dev(काष्ठा regulator_dev *rdev)
+अणु
+	वापस rdev_get_dev(rdev)->parent->parent;
+पूर्ण
 
-static int tps80031_reg_is_enabled(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
+अटल पूर्णांक tps80031_reg_is_enabled(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
 	u8 reg_val;
-	int ret;
+	पूर्णांक ret;
 
-	if (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
-		return true;
+	अगर (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
+		वापस true;
 
-	ret = tps80031_read(parent, TPS80031_SLAVE_ID1, ri->rinfo->state_reg,
+	ret = tps80031_पढ़ो(parent, TPS80031_SLAVE_ID1, ri->rinfo->state_reg,
 				&reg_val);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&rdev->dev, "Reg 0x%02x read failed, err = %d\n",
 			ri->rinfo->state_reg, ret);
-		return ret;
-	}
-	return (reg_val & TPS80031_STATE_MASK) == TPS80031_STATE_ON;
-}
+		वापस ret;
+	पूर्ण
+	वापस (reg_val & TPS80031_STATE_MASK) == TPS80031_STATE_ON;
+पूर्ण
 
-static int tps80031_reg_enable(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
+अटल पूर्णांक tps80031_reg_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
 
-	if (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
-		return 0;
+	अगर (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
+		वापस 0;
 
 	ret = tps80031_update(parent, TPS80031_SLAVE_ID1, ri->rinfo->state_reg,
 			TPS80031_STATE_ON, TPS80031_STATE_MASK);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&rdev->dev, "Reg 0x%02x update failed, err = %d\n",
 			ri->rinfo->state_reg, ret);
-		return ret;
-	}
-	return ret;
-}
+		वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int tps80031_reg_disable(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
+अटल पूर्णांक tps80031_reg_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
 
-	if (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
-		return 0;
+	अगर (ri->ext_ctrl_flag & TPS80031_EXT_PWR_REQ)
+		वापस 0;
 
 	ret = tps80031_update(parent, TPS80031_SLAVE_ID1, ri->rinfo->state_reg,
 			TPS80031_STATE_OFF, TPS80031_STATE_MASK);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&rdev->dev, "Reg 0x%02x update failed, err = %d\n",
 			ri->rinfo->state_reg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* DCDC voltages for the selector of 58 to 63 */
-static const int tps80031_dcdc_voltages[4][5] = {
-	{ 1350, 1500, 1800, 1900, 2100},
-	{ 1350, 1500, 1800, 1900, 2100},
-	{ 2084, 2315, 2778, 2932, 3241},
-	{ 4167, 2315, 2778, 2932, 3241},
-};
+/* DCDC voltages क्रम the selector of 58 to 63 */
+अटल स्थिर पूर्णांक tps80031_dcdc_voltages[4][5] = अणु
+	अणु 1350, 1500, 1800, 1900, 2100पूर्ण,
+	अणु 1350, 1500, 1800, 1900, 2100पूर्ण,
+	अणु 2084, 2315, 2778, 2932, 3241पूर्ण,
+	अणु 4167, 2315, 2778, 2932, 3241पूर्ण,
+पूर्ण;
 
-static int tps80031_dcdc_list_voltage(struct regulator_dev *rdev, unsigned sel)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	int volt_index = ri->device_flags & 0x3;
+अटल पूर्णांक tps80031_dcdc_list_voltage(काष्ठा regulator_dev *rdev, अचिन्हित sel)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	पूर्णांक volt_index = ri->device_flags & 0x3;
 
-	if (sel == 0)
-		return 0;
-	else if (sel < 58)
-		return regulator_list_voltage_linear(rdev, sel - 1);
-	else
-		return tps80031_dcdc_voltages[volt_index][sel - 58] * 1000;
-}
+	अगर (sel == 0)
+		वापस 0;
+	अन्यथा अगर (sel < 58)
+		वापस regulator_list_voltage_linear(rdev, sel - 1);
+	अन्यथा
+		वापस tps80031_dcdc_voltages[volt_index][sel - 58] * 1000;
+पूर्ण
 
-static int tps80031_dcdc_set_voltage_sel(struct regulator_dev *rdev,
-		unsigned vsel)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
+अटल पूर्णांक tps80031_dcdc_set_voltage_sel(काष्ठा regulator_dev *rdev,
+		अचिन्हित vsel)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
 	u8 reg_val;
 
-	if (ri->rinfo->force_reg) {
-		ret = tps80031_read(parent, ri->rinfo->volt_id,
-						ri->rinfo->force_reg, &reg_val);
-		if (ret < 0) {
+	अगर (ri->rinfo->क्रमce_reg) अणु
+		ret = tps80031_पढ़ो(parent, ri->rinfo->volt_id,
+						ri->rinfo->क्रमce_reg, &reg_val);
+		अगर (ret < 0) अणु
 			dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
-				ri->rinfo->force_reg, ret);
-			return ret;
-		}
-		if (!(reg_val & SMPS_CMD_MASK)) {
+				ri->rinfo->क्रमce_reg, ret);
+			वापस ret;
+		पूर्ण
+		अगर (!(reg_val & SMPS_CMD_MASK)) अणु
 			ret = tps80031_update(parent, ri->rinfo->volt_id,
-				ri->rinfo->force_reg, vsel, SMPS_VSEL_MASK);
-			if (ret < 0)
+				ri->rinfo->क्रमce_reg, vsel, SMPS_VSEL_MASK);
+			अगर (ret < 0)
 				dev_err(ri->dev,
 					"reg 0x%02x update failed, e = %d\n",
-					ri->rinfo->force_reg, ret);
-			return ret;
-		}
-	}
+					ri->rinfo->क्रमce_reg, ret);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	ret = tps80031_update(parent, ri->rinfo->volt_id,
 			ri->rinfo->volt_reg, vsel, SMPS_VSEL_MASK);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(ri->dev, "reg 0x%02x update failed, e = %d\n",
 			ri->rinfo->volt_reg, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tps80031_dcdc_get_voltage_sel(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	uint8_t vsel = 0;
-	int ret;
+अटल पूर्णांक tps80031_dcdc_get_voltage_sel(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	uपूर्णांक8_t vsel = 0;
+	पूर्णांक ret;
 
-	if (ri->rinfo->force_reg) {
-		ret = tps80031_read(parent, ri->rinfo->volt_id,
-						ri->rinfo->force_reg, &vsel);
-		if (ret < 0) {
+	अगर (ri->rinfo->क्रमce_reg) अणु
+		ret = tps80031_पढ़ो(parent, ri->rinfo->volt_id,
+						ri->rinfo->क्रमce_reg, &vsel);
+		अगर (ret < 0) अणु
 			dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
-					ri->rinfo->force_reg, ret);
-			return ret;
-		}
+					ri->rinfo->क्रमce_reg, ret);
+			वापस ret;
+		पूर्ण
 
-		if (!(vsel & SMPS_CMD_MASK))
-			return vsel & SMPS_VSEL_MASK;
-	}
-	ret = tps80031_read(parent, ri->rinfo->volt_id,
+		अगर (!(vsel & SMPS_CMD_MASK))
+			वापस vsel & SMPS_VSEL_MASK;
+	पूर्ण
+	ret = tps80031_पढ़ो(parent, ri->rinfo->volt_id,
 				ri->rinfo->volt_reg, &vsel);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
 			ri->rinfo->volt_reg, ret);
-		return ret;
-	}
-	return vsel & SMPS_VSEL_MASK;
-}
+		वापस ret;
+	पूर्ण
+	वापस vsel & SMPS_VSEL_MASK;
+पूर्ण
 
-static int tps80031_ldo_list_voltage(struct regulator_dev *rdev,
-				     unsigned int sel)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
+अटल पूर्णांक tps80031_lकरो_list_voltage(काष्ठा regulator_dev *rdev,
+				     अचिन्हित पूर्णांक sel)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
 
-	/* Check for valid setting for TPS80031 or TPS80032-ES1.0 */
-	if ((ri->rinfo->desc.id == TPS80031_REGULATOR_LDO2) &&
-			(ri->device_flags & TRACK_MODE_ENABLE)) {
-		unsigned nvsel = (sel) & 0x1F;
-		if (((tps80031_get_chip_info(parent) == TPS80031) ||
+	/* Check क्रम valid setting क्रम TPS80031 or TPS80032-ES1.0 */
+	अगर ((ri->rinfo->desc.id == TPS80031_REGULATOR_LDO2) &&
+			(ri->device_flags & TRACK_MODE_ENABLE)) अणु
+		अचिन्हित nvsel = (sel) & 0x1F;
+		अगर (((tps80031_get_chip_info(parent) == TPS80031) ||
 			((tps80031_get_chip_info(parent) == TPS80032) &&
 			(tps80031_get_pmu_version(parent) == 0x0))) &&
-			((nvsel == 0x0) || (nvsel >= 0x19 && nvsel <= 0x1F))) {
+			((nvsel == 0x0) || (nvsel >= 0x19 && nvsel <= 0x1F))) अणु
 				dev_err(ri->dev,
 					"Invalid sel %d in track mode LDO2\n",
 					nvsel);
-				return -EINVAL;
-		}
-	}
+				वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return regulator_list_voltage_linear(rdev, sel);
-}
+	वापस regulator_list_voltage_linear(rdev, sel);
+पूर्ण
 
-static int tps80031_ldo_map_voltage(struct regulator_dev *rdev,
-				    int min_uV, int max_uV)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
+अटल पूर्णांक tps80031_lकरो_map_voltage(काष्ठा regulator_dev *rdev,
+				    पूर्णांक min_uV, पूर्णांक max_uV)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
 
-	/* Check for valid setting for TPS80031 or TPS80032-ES1.0 */
-	if ((ri->rinfo->desc.id == TPS80031_REGULATOR_LDO2) &&
-			(ri->device_flags & TRACK_MODE_ENABLE)) {
-		if (((tps80031_get_chip_info(parent) == TPS80031) ||
+	/* Check क्रम valid setting क्रम TPS80031 or TPS80032-ES1.0 */
+	अगर ((ri->rinfo->desc.id == TPS80031_REGULATOR_LDO2) &&
+			(ri->device_flags & TRACK_MODE_ENABLE)) अणु
+		अगर (((tps80031_get_chip_info(parent) == TPS80031) ||
 			((tps80031_get_chip_info(parent) == TPS80032) &&
-			(tps80031_get_pmu_version(parent) == 0x0)))) {
-			return regulator_map_voltage_iterate(rdev, min_uV,
+			(tps80031_get_pmu_version(parent) == 0x0)))) अणु
+			वापस regulator_map_voltage_iterate(rdev, min_uV,
 							     max_uV);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return regulator_map_voltage_linear(rdev, min_uV, max_uV);
-}
+	वापस regulator_map_voltage_linear(rdev, min_uV, max_uV);
+पूर्ण
 
-static int tps80031_vbus_is_enabled(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
-	uint8_t ctrl1 = 0;
-	uint8_t ctrl3 = 0;
+अटल पूर्णांक tps80031_vbus_is_enabled(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
+	uपूर्णांक8_t ctrl1 = 0;
+	uपूर्णांक8_t ctrl3 = 0;
 
-	ret = tps80031_read(parent, TPS80031_SLAVE_ID2,
+	ret = tps80031_पढ़ो(parent, TPS80031_SLAVE_ID2,
 			TPS80031_CHARGERUSB_CTRL1, &ctrl1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
 			TPS80031_CHARGERUSB_CTRL1, ret);
-		return ret;
-	}
-	ret = tps80031_read(parent, TPS80031_SLAVE_ID2,
+		वापस ret;
+	पूर्ण
+	ret = tps80031_पढ़ो(parent, TPS80031_SLAVE_ID2,
 				TPS80031_CHARGERUSB_CTRL3, &ctrl3);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
 			TPS80031_CHARGERUSB_CTRL3, ret);
-		return ret;
-	}
-	if ((ctrl1 & OPA_MODE_EN) && (ctrl3 & BOOST_HW_PWR_EN))
-		return 1;
-	return ret;
-}
+		वापस ret;
+	पूर्ण
+	अगर ((ctrl1 & OPA_MODE_EN) && (ctrl3 & BOOST_HW_PWR_EN))
+		वापस 1;
+	वापस ret;
+पूर्ण
 
-static int tps80031_vbus_enable(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
+अटल पूर्णांक tps80031_vbus_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
 
 	ret = tps80031_set_bits(parent, TPS80031_SLAVE_ID2,
 				TPS80031_CHARGERUSB_CTRL1, OPA_MODE_EN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
 					TPS80031_CHARGERUSB_CTRL1, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = tps80031_set_bits(parent, TPS80031_SLAVE_ID2,
 				TPS80031_CHARGERUSB_CTRL3, BOOST_HW_PWR_EN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x read failed, e = %d\n",
 			TPS80031_CHARGERUSB_CTRL3, ret);
-		return ret;
-	}
-	return ret;
-}
+		वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int tps80031_vbus_disable(struct regulator_dev *rdev)
-{
-	struct tps80031_regulator *ri = rdev_get_drvdata(rdev);
-	struct device *parent = to_tps80031_dev(rdev);
-	int ret;
+अटल पूर्णांक tps80031_vbus_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tps80031_regulator *ri = rdev_get_drvdata(rdev);
+	काष्ठा device *parent = to_tps80031_dev(rdev);
+	पूर्णांक ret;
 
-	if (ri->config_flags & TPS80031_VBUS_DISCHRG_EN_PDN) {
-		ret = tps80031_write(parent, TPS80031_SLAVE_ID2,
+	अगर (ri->config_flags & TPS80031_VBUS_DISCHRG_EN_PDN) अणु
+		ret = tps80031_ग_लिखो(parent, TPS80031_SLAVE_ID2,
 			USB_VBUS_CTRL_SET, VBUS_DISCHRG);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(ri->dev, "reg 0x%02x write failed, e = %d\n",
 				USB_VBUS_CTRL_SET, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = tps80031_clr_bits(parent, TPS80031_SLAVE_ID2,
 			TPS80031_CHARGERUSB_CTRL1,  OPA_MODE_EN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x clearbit failed, e = %d\n",
 				TPS80031_CHARGERUSB_CTRL1, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = tps80031_clr_bits(parent, TPS80031_SLAVE_ID2,
 				TPS80031_CHARGERUSB_CTRL3, BOOST_HW_PWR_EN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "reg 0x%02x clearbit failed, e = %d\n",
 				TPS80031_CHARGERUSB_CTRL3, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	mdelay(DIV_ROUND_UP(ri->rinfo->desc.enable_time, 1000));
-	if (ri->config_flags & TPS80031_VBUS_DISCHRG_EN_PDN) {
-		ret = tps80031_write(parent, TPS80031_SLAVE_ID2,
+	mdelay(DIV_ROUND_UP(ri->rinfo->desc.enable_समय, 1000));
+	अगर (ri->config_flags & TPS80031_VBUS_DISCHRG_EN_PDN) अणु
+		ret = tps80031_ग_लिखो(parent, TPS80031_SLAVE_ID2,
 			USB_VBUS_CTRL_CLR, VBUS_DISCHRG);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(ri->dev, "reg 0x%02x write failed, e = %d\n",
 					USB_VBUS_CTRL_CLR, ret);
-			return ret;
-		}
-	}
-	return ret;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct regulator_ops tps80031_dcdc_ops = {
+अटल स्थिर काष्ठा regulator_ops tps80031_dcdc_ops = अणु
 	.list_voltage		= tps80031_dcdc_list_voltage,
 	.set_voltage_sel	= tps80031_dcdc_set_voltage_sel,
 	.get_voltage_sel	= tps80031_dcdc_get_voltage_sel,
 	.enable		= tps80031_reg_enable,
 	.disable	= tps80031_reg_disable,
 	.is_enabled	= tps80031_reg_is_enabled,
-};
+पूर्ण;
 
-static const struct regulator_ops tps80031_ldo_ops = {
-	.list_voltage		= tps80031_ldo_list_voltage,
-	.map_voltage		= tps80031_ldo_map_voltage,
+अटल स्थिर काष्ठा regulator_ops tps80031_lकरो_ops = अणु
+	.list_voltage		= tps80031_lकरो_list_voltage,
+	.map_voltage		= tps80031_lकरो_map_voltage,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.enable			= tps80031_reg_enable,
 	.disable		= tps80031_reg_disable,
 	.is_enabled		= tps80031_reg_is_enabled,
-};
+पूर्ण;
 
-static const struct regulator_ops tps80031_vbus_sw_ops = {
+अटल स्थिर काष्ठा regulator_ops tps80031_vbus_sw_ops = अणु
 	.list_voltage	= regulator_list_voltage_linear,
 	.enable		= tps80031_vbus_enable,
 	.disable	= tps80031_vbus_disable,
 	.is_enabled	= tps80031_vbus_is_enabled,
-};
+पूर्ण;
 
-static const struct regulator_ops tps80031_vbus_hw_ops = {
+अटल स्थिर काष्ठा regulator_ops tps80031_vbus_hw_ops = अणु
 	.list_voltage	= regulator_list_voltage_linear,
-};
+पूर्ण;
 
-static const struct regulator_ops tps80031_ext_reg_ops = {
+अटल स्थिर काष्ठा regulator_ops tps80031_ext_reg_ops = अणु
 	.list_voltage	= regulator_list_voltage_linear,
 	.enable		= tps80031_reg_enable,
 	.disable	= tps80031_reg_disable,
 	.is_enabled	= tps80031_reg_is_enabled,
-};
+पूर्ण;
 
-/* Non-exiting default definition for some register */
-#define TPS80031_SMPS3_CFG_FORCE	0
-#define TPS80031_SMPS4_CFG_FORCE	0
+/* Non-निकासing शेष definition क्रम some रेजिस्टर */
+#घोषणा TPS80031_SMPS3_CFG_FORCE	0
+#घोषणा TPS80031_SMPS4_CFG_FORCE	0
 
-#define TPS80031_VBUS_CFG_TRANS		0
-#define TPS80031_VBUS_CFG_STATE		0
+#घोषणा TPS80031_VBUS_CFG_TRANS		0
+#घोषणा TPS80031_VBUS_CFG_STATE		0
 
-#define TPS80031_REG_SMPS(_id, _volt_id, _pbit)	\
-{								\
+#घोषणा TPS80031_REG_SMPS(_id, _volt_id, _pbit)	\
+अणु								\
 	.trans_reg = TPS80031_##_id##_CFG_TRANS,		\
 	.state_reg = TPS80031_##_id##_CFG_STATE,		\
-	.force_reg = TPS80031_##_id##_CFG_FORCE,		\
+	.क्रमce_reg = TPS80031_##_id##_CFG_FORCE,		\
 	.volt_reg = TPS80031_##_id##_CFG_VOLTAGE,		\
 	.volt_id = TPS80031_SLAVE_##_volt_id,			\
 	.preq_bit = _pbit,					\
-	.desc = {						\
+	.desc = अणु						\
 		.name = "tps80031_"#_id,			\
 		.id = TPS80031_REGULATOR_##_id,			\
 		.n_voltages = 63,				\
 		.ops = &tps80031_dcdc_ops,			\
 		.type = REGULATOR_VOLTAGE,			\
 		.owner = THIS_MODULE,				\
-		.enable_time = 500,				\
-	},							\
-}
+		.enable_समय = 500,				\
+	पूर्ण,							\
+पूर्ण
 
-#define TPS80031_REG_LDO(_id, _preq_bit)			\
-{								\
+#घोषणा TPS80031_REG_LDO(_id, _preq_bit)			\
+अणु								\
 	.trans_reg = TPS80031_##_id##_CFG_TRANS,		\
 	.state_reg = TPS80031_##_id##_CFG_STATE,		\
 	.volt_reg = TPS80031_##_id##_CFG_VOLTAGE,		\
 	.volt_id = TPS80031_SLAVE_ID1,				\
 	.preq_bit = _preq_bit,					\
-	.desc = {						\
+	.desc = अणु						\
 		.owner = THIS_MODULE,				\
 		.name = "tps80031_"#_id,			\
 		.id = TPS80031_REGULATOR_##_id,			\
-		.ops = &tps80031_ldo_ops,			\
+		.ops = &tps80031_lकरो_ops,			\
 		.type = REGULATOR_VOLTAGE,			\
 		.min_uV = 1000000,				\
 		.uV_step = 100000,				\
@@ -445,17 +446,17 @@ static const struct regulator_ops tps80031_ext_reg_ops = {
 		.n_voltages = 25,				\
 		.vsel_reg = TPS80031_##_id##_CFG_VOLTAGE,	\
 		.vsel_mask = LDO_VSEL_MASK,			\
-		.enable_time = 500,				\
-	},							\
-}
+		.enable_समय = 500,				\
+	पूर्ण,							\
+पूर्ण
 
-#define TPS80031_REG_FIXED(_id, max_mV, _ops, _delay, _pbit)	\
-{								\
+#घोषणा TPS80031_REG_FIXED(_id, max_mV, _ops, _delay, _pbit)	\
+अणु								\
 	.trans_reg = TPS80031_##_id##_CFG_TRANS,		\
 	.state_reg = TPS80031_##_id##_CFG_STATE,		\
 	.volt_id = TPS80031_SLAVE_ID1,				\
 	.preq_bit = _pbit,					\
-	.desc = {						\
+	.desc = अणु						\
 		.name = "tps80031_"#_id,			\
 		.id = TPS80031_REGULATOR_##_id,			\
 		.min_uV = max_mV * 1000,			\
@@ -463,11 +464,11 @@ static const struct regulator_ops tps80031_ext_reg_ops = {
 		.ops = &_ops,					\
 		.type = REGULATOR_VOLTAGE,			\
 		.owner = THIS_MODULE,				\
-		.enable_time = _delay,				\
-	},							\
-}
+		.enable_समय = _delay,				\
+	पूर्ण,							\
+पूर्ण
 
-static struct tps80031_regulator_info tps80031_rinfo[TPS80031_REGULATOR_MAX] = {
+अटल काष्ठा tps80031_regulator_info tps80031_rinfo[TPS80031_REGULATOR_MAX] = अणु
 	TPS80031_REG_SMPS(VIO,   ID0, 4),
 	TPS80031_REG_SMPS(SMPS1, ID0, 0),
 	TPS80031_REG_SMPS(SMPS2, ID0, 1),
@@ -487,202 +488,202 @@ static struct tps80031_regulator_info tps80031_rinfo[TPS80031_REGULATOR_MAX] = {
 	TPS80031_REG_FIXED(REGEN1, 3300, tps80031_ext_reg_ops, 0, 16),
 	TPS80031_REG_FIXED(REGEN2, 3300, tps80031_ext_reg_ops, 0, 17),
 	TPS80031_REG_FIXED(SYSEN,  3300, tps80031_ext_reg_ops, 0, 18),
-};
+पूर्ण;
 
-static int tps80031_power_req_config(struct device *parent,
-		struct tps80031_regulator *ri,
-		struct tps80031_regulator_platform_data *tps80031_pdata)
-{
-	int ret = 0;
+अटल पूर्णांक tps80031_घातer_req_config(काष्ठा device *parent,
+		काष्ठा tps80031_regulator *ri,
+		काष्ठा tps80031_regulator_platक्रमm_data *tps80031_pdata)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ri->rinfo->preq_bit < 0)
-		goto skip_pwr_req_config;
+	अगर (ri->rinfo->preq_bit < 0)
+		जाओ skip_pwr_req_config;
 
-	ret = tps80031_ext_power_req_config(parent, ri->ext_ctrl_flag,
+	ret = tps80031_ext_घातer_req_config(parent, ri->ext_ctrl_flag,
 			ri->rinfo->preq_bit, ri->rinfo->state_reg,
 			ri->rinfo->trans_reg);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "ext powerreq config failed, err = %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 skip_pwr_req_config:
-	if (tps80031_pdata->ext_ctrl_flag & TPS80031_PWR_ON_ON_SLEEP) {
+	अगर (tps80031_pdata->ext_ctrl_flag & TPS80031_PWR_ON_ON_SLEEP) अणु
 		ret = tps80031_update(parent, TPS80031_SLAVE_ID1,
 				ri->rinfo->trans_reg, TPS80031_TRANS_SLEEP_ON,
 				TPS80031_TRANS_SLEEP_MASK);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(ri->dev, "Reg 0x%02x update failed, e %d\n",
 					ri->rinfo->trans_reg, ret);
-			return ret;
-		}
-	}
-	return ret;
-}
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int tps80031_regulator_config(struct device *parent,
-		struct tps80031_regulator *ri,
-		struct tps80031_regulator_platform_data *tps80031_pdata)
-{
-	int ret = 0;
+अटल पूर्णांक tps80031_regulator_config(काष्ठा device *parent,
+		काष्ठा tps80031_regulator *ri,
+		काष्ठा tps80031_regulator_platक्रमm_data *tps80031_pdata)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (ri->rinfo->desc.id) {
-	case TPS80031_REGULATOR_LDOUSB:
-		if (ri->config_flags & (TPS80031_USBLDO_INPUT_VSYS |
-			TPS80031_USBLDO_INPUT_PMID)) {
-			unsigned val;
+	चयन (ri->rinfo->desc.id) अणु
+	हाल TPS80031_REGULATOR_LDOUSB:
+		अगर (ri->config_flags & (TPS80031_USBLDO_INPUT_VSYS |
+			TPS80031_USBLDO_INPUT_PMID)) अणु
+			अचिन्हित val;
 
-			if (ri->config_flags & TPS80031_USBLDO_INPUT_VSYS)
+			अगर (ri->config_flags & TPS80031_USBLDO_INPUT_VSYS)
 				val = MISC2_LDOUSB_IN_VSYS;
-			else
+			अन्यथा
 				val = MISC2_LDOUSB_IN_PMID;
 
 			ret = tps80031_update(parent, TPS80031_SLAVE_ID1,
 				TPS80031_MISC2, val,
 				MISC2_LDOUSB_IN_MASK);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(ri->dev,
 					"LDOUSB config failed, e= %d\n", ret);
-				return ret;
-			}
-		}
-		break;
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case TPS80031_REGULATOR_LDO3:
-		if (ri->config_flags & TPS80031_LDO3_OUTPUT_VIB) {
+	हाल TPS80031_REGULATOR_LDO3:
+		अगर (ri->config_flags & TPS80031_LDO3_OUTPUT_VIB) अणु
 			ret = tps80031_update(parent, TPS80031_SLAVE_ID1,
 				TPS80031_MISC2, MISC2_LDO3_SEL_VIB_VAL,
 				MISC2_LDO3_SEL_VIB_MASK);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(ri->dev,
 					"LDO3 config failed, e = %d\n", ret);
-				return ret;
-			}
-		}
-		break;
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case TPS80031_REGULATOR_VBUS:
-		/* Provide SW control Ops if VBUS is SW control */
-		if (!(ri->config_flags & TPS80031_VBUS_SW_ONLY))
+	हाल TPS80031_REGULATOR_VBUS:
+		/* Provide SW control Ops अगर VBUS is SW control */
+		अगर (!(ri->config_flags & TPS80031_VBUS_SW_ONLY))
 			ri->rinfo->desc.ops = &tps80031_vbus_sw_ops;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* Configure Active state to ON, SLEEP to OFF and OFF_state to OFF */
 	ret = tps80031_update(parent, TPS80031_SLAVE_ID1, ri->rinfo->trans_reg,
 		TPS80031_TRANS_ACTIVE_ON | TPS80031_TRANS_SLEEP_OFF |
 		TPS80031_TRANS_OFF_OFF, TPS80031_TRANS_ACTIVE_MASK |
 		TPS80031_TRANS_SLEEP_MASK | TPS80031_TRANS_OFF_MASK);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(ri->dev, "trans reg update failed, e %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int check_smps_mode_mult(struct device *parent,
-	struct tps80031_regulator *ri)
-{
-	int mult_offset;
-	int ret;
+अटल पूर्णांक check_smps_mode_mult(काष्ठा device *parent,
+	काष्ठा tps80031_regulator *ri)
+अणु
+	पूर्णांक mult_offset;
+	पूर्णांक ret;
 	u8 smps_offset;
 	u8 smps_mult;
 
-	ret = tps80031_read(parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_पढ़ो(parent, TPS80031_SLAVE_ID1,
 			TPS80031_SMPS_OFFSET, &smps_offset);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(parent, "Error in reading smps offset register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = tps80031_read(parent, TPS80031_SLAVE_ID1,
+	ret = tps80031_पढ़ो(parent, TPS80031_SLAVE_ID1,
 			TPS80031_SMPS_MULT, &smps_mult);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(parent, "Error in reading smps mult register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (ri->rinfo->desc.id) {
-	case TPS80031_REGULATOR_VIO:
+	चयन (ri->rinfo->desc.id) अणु
+	हाल TPS80031_REGULATOR_VIO:
 		mult_offset = SMPS_MULTOFFSET_VIO;
-		break;
-	case TPS80031_REGULATOR_SMPS1:
+		अवरोध;
+	हाल TPS80031_REGULATOR_SMPS1:
 		mult_offset = SMPS_MULTOFFSET_SMPS1;
-		break;
-	case TPS80031_REGULATOR_SMPS2:
+		अवरोध;
+	हाल TPS80031_REGULATOR_SMPS2:
 		mult_offset = SMPS_MULTOFFSET_SMPS2;
-		break;
-	case TPS80031_REGULATOR_SMPS3:
+		अवरोध;
+	हाल TPS80031_REGULATOR_SMPS3:
 		mult_offset = SMPS_MULTOFFSET_SMPS3;
-		break;
-	case TPS80031_REGULATOR_SMPS4:
+		अवरोध;
+	हाल TPS80031_REGULATOR_SMPS4:
 		mult_offset = SMPS_MULTOFFSET_SMPS4;
-		break;
-	case TPS80031_REGULATOR_LDO2:
+		अवरोध;
+	हाल TPS80031_REGULATOR_LDO2:
 		ri->device_flags = smps_mult & BIT(5) ? TRACK_MODE_ENABLE : 0;
-		/* TRACK mode the ldo2 varies from 600mV to 1300mV */
-		if (ri->device_flags & TRACK_MODE_ENABLE) {
+		/* TRACK mode the lकरो2 varies from 600mV to 1300mV */
+		अगर (ri->device_flags & TRACK_MODE_ENABLE) अणु
 			ri->rinfo->desc.min_uV = 600000;
 			ri->rinfo->desc.uV_step = 12500;
 			ri->rinfo->desc.n_voltages = 57;
 			ri->rinfo->desc.vsel_mask = LDO_TRACK_VSEL_MASK;
-		}
-		return 0;
-	default:
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	ri->device_flags = (smps_offset & mult_offset) ? DCDC_OFFSET_EN : 0;
 	ri->device_flags |= (smps_mult & mult_offset) ? DCDC_EXTENDED_EN : 0;
-	switch (ri->device_flags) {
-	case 0:
+	चयन (ri->device_flags) अणु
+	हाल 0:
 		ri->rinfo->desc.min_uV = 607700;
 		ri->rinfo->desc.uV_step = 12660;
-		break;
-	case DCDC_OFFSET_EN:
+		अवरोध;
+	हाल DCDC_OFFSET_EN:
 		ri->rinfo->desc.min_uV = 700000;
 		ri->rinfo->desc.uV_step = 12500;
-		break;
-	case DCDC_EXTENDED_EN:
+		अवरोध;
+	हाल DCDC_EXTENDED_EN:
 		ri->rinfo->desc.min_uV = 1852000;
 		ri->rinfo->desc.uV_step = 38600;
-		break;
-	case DCDC_OFFSET_EN | DCDC_EXTENDED_EN:
+		अवरोध;
+	हाल DCDC_OFFSET_EN | DCDC_EXTENDED_EN:
 		ri->rinfo->desc.min_uV = 2161000;
 		ri->rinfo->desc.uV_step = 38600;
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tps80031_regulator_probe(struct platform_device *pdev)
-{
-	struct tps80031_platform_data *pdata;
-	struct tps80031_regulator_platform_data *tps_pdata;
-	struct tps80031_regulator *ri;
-	struct tps80031_regulator *pmic;
-	struct regulator_dev *rdev;
-	struct regulator_config config = { };
-	struct tps80031 *tps80031_mfd = dev_get_drvdata(pdev->dev.parent);
-	int ret;
-	int num;
+अटल पूर्णांक tps80031_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps80031_platक्रमm_data *pdata;
+	काष्ठा tps80031_regulator_platक्रमm_data *tps_pdata;
+	काष्ठा tps80031_regulator *ri;
+	काष्ठा tps80031_regulator *pmic;
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा tps80031 *tps80031_mfd = dev_get_drvdata(pdev->dev.parent);
+	पूर्णांक ret;
+	पूर्णांक num;
 
 	pdata = dev_get_platdata(pdev->dev.parent);
 
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "No platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	pmic = devm_kcalloc(&pdev->dev,
-			TPS80031_REGULATOR_MAX, sizeof(*pmic), GFP_KERNEL);
-	if (!pmic)
-		return -ENOMEM;
+	pmic = devm_kसुस्मृति(&pdev->dev,
+			TPS80031_REGULATOR_MAX, माप(*pmic), GFP_KERNEL);
+	अगर (!pmic)
+		वापस -ENOMEM;
 
-	for (num = 0; num < TPS80031_REGULATOR_MAX; ++num) {
+	क्रम (num = 0; num < TPS80031_REGULATOR_MAX; ++num) अणु
 		tps_pdata = pdata->regulator_pdata[num];
 		ri = &pmic[num];
 		ri->rinfo = &tps80031_rinfo[num];
@@ -690,62 +691,62 @@ static int tps80031_regulator_probe(struct platform_device *pdev)
 
 		check_smps_mode_mult(pdev->dev.parent, ri);
 		config.dev = &pdev->dev;
-		config.init_data = NULL;
+		config.init_data = शून्य;
 		config.driver_data = ri;
 		config.regmap = tps80031_mfd->regmap[ri->rinfo->volt_id];
 
-		if (tps_pdata) {
+		अगर (tps_pdata) अणु
 			config.init_data = tps_pdata->reg_init_data;
 			ri->config_flags = tps_pdata->config_flags;
 			ri->ext_ctrl_flag = tps_pdata->ext_ctrl_flag;
 			ret = tps80031_regulator_config(pdev->dev.parent,
 					ri, tps_pdata);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(&pdev->dev,
 					"regulator config failed, e %d\n", ret);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
-			ret = tps80031_power_req_config(pdev->dev.parent,
+			ret = tps80031_घातer_req_config(pdev->dev.parent,
 					ri, tps_pdata);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(&pdev->dev,
 					"pwr_req config failed, err %d\n", ret);
-				return ret;
-			}
-		}
-		rdev = devm_regulator_register(&pdev->dev, &ri->rinfo->desc,
+				वापस ret;
+			पूर्ण
+		पूर्ण
+		rdev = devm_regulator_रेजिस्टर(&pdev->dev, &ri->rinfo->desc,
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(&pdev->dev,
 				"register regulator failed %s\n",
 					ri->rinfo->desc.name);
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, pmic);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, pmic);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver tps80031_regulator_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver tps80031_regulator_driver = अणु
+	.driver	= अणु
 		.name	= "tps80031-pmic",
-	},
+	पूर्ण,
 	.probe		= tps80031_regulator_probe,
-};
+पूर्ण;
 
-static int __init tps80031_regulator_init(void)
-{
-	return platform_driver_register(&tps80031_regulator_driver);
-}
+अटल पूर्णांक __init tps80031_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&tps80031_regulator_driver);
+पूर्ण
 subsys_initcall(tps80031_regulator_init);
 
-static void __exit tps80031_regulator_exit(void)
-{
-	platform_driver_unregister(&tps80031_regulator_driver);
-}
-module_exit(tps80031_regulator_exit);
+अटल व्योम __निकास tps80031_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&tps80031_regulator_driver);
+पूर्ण
+module_निकास(tps80031_regulator_निकास);
 
 MODULE_ALIAS("platform:tps80031-regulator");
 MODULE_DESCRIPTION("Regulator Driver for TI TPS80031/TPS80032 PMIC");

@@ -1,1 +1,2 @@
-#define DTC_VERSION "DTC 1.6.0-g183df9e9"
+<शैली गुरु>
+#घोषणा DTC_VERSION "DTC 1.6.0-g183df9e9"

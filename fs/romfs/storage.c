@@ -1,287 +1,288 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* RomFS storage access routines
  *
- * Copyright © 2007 Red Hat, Inc. All Rights Reserved.
+ * Copyright तऊ 2007 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/fs.h>
-#include <linux/mtd/super.h>
-#include <linux/buffer_head.h>
-#include "internal.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/mtd/super.h>
+#समावेश <linux/buffer_head.h>
+#समावेश "internal.h"
 
-#if !defined(CONFIG_ROMFS_ON_MTD) && !defined(CONFIG_ROMFS_ON_BLOCK)
-#error no ROMFS backing store interface configured
-#endif
+#अगर !defined(CONFIG_ROMFS_ON_MTD) && !defined(CONFIG_ROMFS_ON_BLOCK)
+#त्रुटि no ROMFS backing store पूर्णांकerface configured
+#पूर्ण_अगर
 
-#ifdef CONFIG_ROMFS_ON_MTD
-#define ROMFS_MTD_READ(sb, ...) mtd_read((sb)->s_mtd, ##__VA_ARGS__)
+#अगर_घोषित CONFIG_ROMFS_ON_MTD
+#घोषणा ROMFS_MTD_READ(sb, ...) mtd_पढ़ो((sb)->s_mtd, ##__VA_ARGS__)
 
 /*
- * read data from an romfs image on an MTD device
+ * पढ़ो data from an romfs image on an MTD device
  */
-static int romfs_mtd_read(struct super_block *sb, unsigned long pos,
-			  void *buf, size_t buflen)
-{
-	size_t rlen;
-	int ret;
+अटल पूर्णांक romfs_mtd_पढ़ो(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+			  व्योम *buf, माप_प्रकार buflen)
+अणु
+	माप_प्रकार rlen;
+	पूर्णांक ret;
 
 	ret = ROMFS_MTD_READ(sb, pos, buflen, &rlen, buf);
-	return (ret < 0 || rlen != buflen) ? -EIO : 0;
-}
+	वापस (ret < 0 || rlen != buflen) ? -EIO : 0;
+पूर्ण
 
 /*
  * determine the length of a string in a romfs image on an MTD device
  */
-static ssize_t romfs_mtd_strnlen(struct super_block *sb,
-				 unsigned long pos, size_t maxlen)
-{
-	ssize_t n = 0;
-	size_t segment;
-	u_char buf[16], *p;
-	size_t len;
-	int ret;
+अटल sमाप_प्रकार romfs_mtd_strnlen(काष्ठा super_block *sb,
+				 अचिन्हित दीर्घ pos, माप_प्रकार maxlen)
+अणु
+	sमाप_प्रकार n = 0;
+	माप_प्रकार segment;
+	u_अक्षर buf[16], *p;
+	माप_प्रकार len;
+	पूर्णांक ret;
 
-	/* scan the string up to 16 bytes at a time */
-	while (maxlen > 0) {
-		segment = min_t(size_t, maxlen, 16);
+	/* scan the string up to 16 bytes at a समय */
+	जबतक (maxlen > 0) अणु
+		segment = min_t(माप_प्रकार, maxlen, 16);
 		ret = ROMFS_MTD_READ(sb, pos, segment, &len, buf);
-		if (ret < 0)
-			return ret;
-		p = memchr(buf, 0, len);
-		if (p)
-			return n + (p - buf);
+		अगर (ret < 0)
+			वापस ret;
+		p = स_प्रथम(buf, 0, len);
+		अगर (p)
+			वापस n + (p - buf);
 		maxlen -= len;
 		pos += len;
 		n += len;
-	}
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /*
  * compare a string to one in a romfs image on MTD
- * - return 1 if matched, 0 if differ, -ve if error
+ * - वापस 1 अगर matched, 0 अगर dअगरfer, -ve अगर error
  */
-static int romfs_mtd_strcmp(struct super_block *sb, unsigned long pos,
-			    const char *str, size_t size)
-{
-	u_char buf[17];
-	size_t len, segment;
-	int ret;
+अटल पूर्णांक romfs_mtd_म_भेद(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+			    स्थिर अक्षर *str, माप_प्रकार size)
+अणु
+	u_अक्षर buf[17];
+	माप_प्रकार len, segment;
+	पूर्णांक ret;
 
-	/* scan the string up to 16 bytes at a time, and attempt to grab the
+	/* scan the string up to 16 bytes at a समय, and attempt to grab the
 	 * trailing NUL whilst we're at it */
 	buf[0] = 0xff;
 
-	while (size > 0) {
-		segment = min_t(size_t, size + 1, 17);
+	जबतक (size > 0) अणु
+		segment = min_t(माप_प्रकार, size + 1, 17);
 		ret = ROMFS_MTD_READ(sb, pos, segment, &len, buf);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		len--;
-		if (memcmp(buf, str, len) != 0)
-			return 0;
+		अगर (स_भेद(buf, str, len) != 0)
+			वापस 0;
 		buf[0] = buf[len];
 		size -= len;
 		pos += len;
 		str += len;
-	}
+	पूर्ण
 
 	/* check the trailing NUL was */
-	if (buf[0])
-		return 0;
+	अगर (buf[0])
+		वापस 0;
 
-	return 1;
-}
-#endif /* CONFIG_ROMFS_ON_MTD */
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ROMFS_ON_MTD */
 
-#ifdef CONFIG_ROMFS_ON_BLOCK
+#अगर_घोषित CONFIG_ROMFS_ON_BLOCK
 /*
- * read data from an romfs image on a block device
+ * पढ़ो data from an romfs image on a block device
  */
-static int romfs_blk_read(struct super_block *sb, unsigned long pos,
-			  void *buf, size_t buflen)
-{
-	struct buffer_head *bh;
-	unsigned long offset;
-	size_t segment;
+अटल पूर्णांक romfs_blk_पढ़ो(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+			  व्योम *buf, माप_प्रकार buflen)
+अणु
+	काष्ठा buffer_head *bh;
+	अचिन्हित दीर्घ offset;
+	माप_प्रकार segment;
 
-	/* copy the string up to blocksize bytes at a time */
-	while (buflen > 0) {
+	/* copy the string up to blocksize bytes at a समय */
+	जबतक (buflen > 0) अणु
 		offset = pos & (ROMBSIZE - 1);
-		segment = min_t(size_t, buflen, ROMBSIZE - offset);
-		bh = sb_bread(sb, pos >> ROMBSBITS);
-		if (!bh)
-			return -EIO;
-		memcpy(buf, bh->b_data + offset, segment);
-		brelse(bh);
+		segment = min_t(माप_प्रकार, buflen, ROMBSIZE - offset);
+		bh = sb_bपढ़ो(sb, pos >> ROMBSBITS);
+		अगर (!bh)
+			वापस -EIO;
+		स_नकल(buf, bh->b_data + offset, segment);
+		brअन्यथा(bh);
 		buf += segment;
 		buflen -= segment;
 		pos += segment;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * determine the length of a string in romfs on a block device
  */
-static ssize_t romfs_blk_strnlen(struct super_block *sb,
-				 unsigned long pos, size_t limit)
-{
-	struct buffer_head *bh;
-	unsigned long offset;
-	ssize_t n = 0;
-	size_t segment;
-	u_char *buf, *p;
+अटल sमाप_प्रकार romfs_blk_strnlen(काष्ठा super_block *sb,
+				 अचिन्हित दीर्घ pos, माप_प्रकार limit)
+अणु
+	काष्ठा buffer_head *bh;
+	अचिन्हित दीर्घ offset;
+	sमाप_प्रकार n = 0;
+	माप_प्रकार segment;
+	u_अक्षर *buf, *p;
 
-	/* scan the string up to blocksize bytes at a time */
-	while (limit > 0) {
+	/* scan the string up to blocksize bytes at a समय */
+	जबतक (limit > 0) अणु
 		offset = pos & (ROMBSIZE - 1);
-		segment = min_t(size_t, limit, ROMBSIZE - offset);
-		bh = sb_bread(sb, pos >> ROMBSBITS);
-		if (!bh)
-			return -EIO;
+		segment = min_t(माप_प्रकार, limit, ROMBSIZE - offset);
+		bh = sb_bपढ़ो(sb, pos >> ROMBSBITS);
+		अगर (!bh)
+			वापस -EIO;
 		buf = bh->b_data + offset;
-		p = memchr(buf, 0, segment);
-		brelse(bh);
-		if (p)
-			return n + (p - buf);
+		p = स_प्रथम(buf, 0, segment);
+		brअन्यथा(bh);
+		अगर (p)
+			वापस n + (p - buf);
 		limit -= segment;
 		pos += segment;
 		n += segment;
-	}
+	पूर्ण
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
 /*
  * compare a string to one in a romfs image on a block device
- * - return 1 if matched, 0 if differ, -ve if error
+ * - वापस 1 अगर matched, 0 अगर dअगरfer, -ve अगर error
  */
-static int romfs_blk_strcmp(struct super_block *sb, unsigned long pos,
-			    const char *str, size_t size)
-{
-	struct buffer_head *bh;
-	unsigned long offset;
-	size_t segment;
+अटल पूर्णांक romfs_blk_म_भेद(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+			    स्थिर अक्षर *str, माप_प्रकार size)
+अणु
+	काष्ठा buffer_head *bh;
+	अचिन्हित दीर्घ offset;
+	माप_प्रकार segment;
 	bool matched, terminated = false;
 
-	/* compare string up to a block at a time */
-	while (size > 0) {
+	/* compare string up to a block at a समय */
+	जबतक (size > 0) अणु
 		offset = pos & (ROMBSIZE - 1);
-		segment = min_t(size_t, size, ROMBSIZE - offset);
-		bh = sb_bread(sb, pos >> ROMBSBITS);
-		if (!bh)
-			return -EIO;
-		matched = (memcmp(bh->b_data + offset, str, segment) == 0);
+		segment = min_t(माप_प्रकार, size, ROMBSIZE - offset);
+		bh = sb_bपढ़ो(sb, pos >> ROMBSBITS);
+		अगर (!bh)
+			वापस -EIO;
+		matched = (स_भेद(bh->b_data + offset, str, segment) == 0);
 
 		size -= segment;
 		pos += segment;
 		str += segment;
-		if (matched && size == 0 && offset + segment < ROMBSIZE) {
-			if (!bh->b_data[offset + segment])
+		अगर (matched && size == 0 && offset + segment < ROMBSIZE) अणु
+			अगर (!bh->b_data[offset + segment])
 				terminated = true;
-			else
+			अन्यथा
 				matched = false;
-		}
-		brelse(bh);
-		if (!matched)
-			return 0;
-	}
+		पूर्ण
+		brअन्यथा(bh);
+		अगर (!matched)
+			वापस 0;
+	पूर्ण
 
-	if (!terminated) {
+	अगर (!terminated) अणु
 		/* the terminating NUL must be on the first byte of the next
 		 * block */
 		BUG_ON((pos & (ROMBSIZE - 1)) != 0);
-		bh = sb_bread(sb, pos >> ROMBSBITS);
-		if (!bh)
-			return -EIO;
+		bh = sb_bपढ़ो(sb, pos >> ROMBSBITS);
+		अगर (!bh)
+			वापस -EIO;
 		matched = !bh->b_data[0];
-		brelse(bh);
-		if (!matched)
-			return 0;
-	}
+		brअन्यथा(bh);
+		अगर (!matched)
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
-#endif /* CONFIG_ROMFS_ON_BLOCK */
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ROMFS_ON_BLOCK */
 
 /*
- * read data from the romfs image
+ * पढ़ो data from the romfs image
  */
-int romfs_dev_read(struct super_block *sb, unsigned long pos,
-		   void *buf, size_t buflen)
-{
-	size_t limit;
+पूर्णांक romfs_dev_पढ़ो(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+		   व्योम *buf, माप_प्रकार buflen)
+अणु
+	माप_प्रकार limit;
 
 	limit = romfs_maxsize(sb);
-	if (pos >= limit || buflen > limit - pos)
-		return -EIO;
+	अगर (pos >= limit || buflen > limit - pos)
+		वापस -EIO;
 
-#ifdef CONFIG_ROMFS_ON_MTD
-	if (sb->s_mtd)
-		return romfs_mtd_read(sb, pos, buf, buflen);
-#endif
-#ifdef CONFIG_ROMFS_ON_BLOCK
-	if (sb->s_bdev)
-		return romfs_blk_read(sb, pos, buf, buflen);
-#endif
-	return -EIO;
-}
+#अगर_घोषित CONFIG_ROMFS_ON_MTD
+	अगर (sb->s_mtd)
+		वापस romfs_mtd_पढ़ो(sb, pos, buf, buflen);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ROMFS_ON_BLOCK
+	अगर (sb->s_bdev)
+		वापस romfs_blk_पढ़ो(sb, pos, buf, buflen);
+#पूर्ण_अगर
+	वापस -EIO;
+पूर्ण
 
 /*
  * determine the length of a string in romfs
  */
-ssize_t romfs_dev_strnlen(struct super_block *sb,
-			  unsigned long pos, size_t maxlen)
-{
-	size_t limit;
+sमाप_प्रकार romfs_dev_strnlen(काष्ठा super_block *sb,
+			  अचिन्हित दीर्घ pos, माप_प्रकार maxlen)
+अणु
+	माप_प्रकार limit;
 
 	limit = romfs_maxsize(sb);
-	if (pos >= limit)
-		return -EIO;
-	if (maxlen > limit - pos)
+	अगर (pos >= limit)
+		वापस -EIO;
+	अगर (maxlen > limit - pos)
 		maxlen = limit - pos;
 
-#ifdef CONFIG_ROMFS_ON_MTD
-	if (sb->s_mtd)
-		return romfs_mtd_strnlen(sb, pos, maxlen);
-#endif
-#ifdef CONFIG_ROMFS_ON_BLOCK
-	if (sb->s_bdev)
-		return romfs_blk_strnlen(sb, pos, maxlen);
-#endif
-	return -EIO;
-}
+#अगर_घोषित CONFIG_ROMFS_ON_MTD
+	अगर (sb->s_mtd)
+		वापस romfs_mtd_strnlen(sb, pos, maxlen);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ROMFS_ON_BLOCK
+	अगर (sb->s_bdev)
+		वापस romfs_blk_strnlen(sb, pos, maxlen);
+#पूर्ण_अगर
+	वापस -EIO;
+पूर्ण
 
 /*
  * compare a string to one in romfs
  * - the string to be compared to, str, may not be NUL-terminated; instead the
- *   string is of the specified size
- * - return 1 if matched, 0 if differ, -ve if error
+ *   string is of the specअगरied size
+ * - वापस 1 अगर matched, 0 अगर dअगरfer, -ve अगर error
  */
-int romfs_dev_strcmp(struct super_block *sb, unsigned long pos,
-		     const char *str, size_t size)
-{
-	size_t limit;
+पूर्णांक romfs_dev_म_भेद(काष्ठा super_block *sb, अचिन्हित दीर्घ pos,
+		     स्थिर अक्षर *str, माप_प्रकार size)
+अणु
+	माप_प्रकार limit;
 
 	limit = romfs_maxsize(sb);
-	if (pos >= limit)
-		return -EIO;
-	if (size > ROMFS_MAXFN)
-		return -ENAMETOOLONG;
-	if (size + 1 > limit - pos)
-		return -EIO;
+	अगर (pos >= limit)
+		वापस -EIO;
+	अगर (size > ROMFS_MAXFN)
+		वापस -ENAMETOOLONG;
+	अगर (size + 1 > limit - pos)
+		वापस -EIO;
 
-#ifdef CONFIG_ROMFS_ON_MTD
-	if (sb->s_mtd)
-		return romfs_mtd_strcmp(sb, pos, str, size);
-#endif
-#ifdef CONFIG_ROMFS_ON_BLOCK
-	if (sb->s_bdev)
-		return romfs_blk_strcmp(sb, pos, str, size);
-#endif
-	return -EIO;
-}
+#अगर_घोषित CONFIG_ROMFS_ON_MTD
+	अगर (sb->s_mtd)
+		वापस romfs_mtd_म_भेद(sb, pos, str, size);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ROMFS_ON_BLOCK
+	अगर (sb->s_bdev)
+		वापस romfs_blk_म_भेद(sb, pos, str, size);
+#पूर्ण_अगर
+	वापस -EIO;
+पूर्ण

@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 NVIDIA CORPORATION. All rights reserved. */
 
-#ifndef	_DR_STE_
-#define	_DR_STE_
+#अगर_अघोषित	_DR_STE_
+#घोषणा	_DR_STE_
 
-#include "dr_types.h"
+#समावेश "dr_types.h"
 
-#define STE_IPV4 0x1
-#define STE_IPV6 0x2
-#define STE_TCP 0x1
-#define STE_UDP 0x2
-#define STE_SPI 0x3
-#define IP_VERSION_IPV4 0x4
-#define IP_VERSION_IPV6 0x6
-#define STE_SVLAN 0x1
-#define STE_CVLAN 0x2
-#define HDR_LEN_L2_MACS   0xC
-#define HDR_LEN_L2_VLAN   0x4
-#define HDR_LEN_L2_ETHER  0x2
-#define HDR_LEN_L2        (HDR_LEN_L2_MACS + HDR_LEN_L2_ETHER)
-#define HDR_LEN_L2_W_VLAN (HDR_LEN_L2 + HDR_LEN_L2_VLAN)
+#घोषणा STE_IPV4 0x1
+#घोषणा STE_IPV6 0x2
+#घोषणा STE_TCP 0x1
+#घोषणा STE_UDP 0x2
+#घोषणा STE_SPI 0x3
+#घोषणा IP_VERSION_IPV4 0x4
+#घोषणा IP_VERSION_IPV6 0x6
+#घोषणा STE_SVLAN 0x1
+#घोषणा STE_CVLAN 0x2
+#घोषणा HDR_LEN_L2_MACS   0xC
+#घोषणा HDR_LEN_L2_VLAN   0x4
+#घोषणा HDR_LEN_L2_ETHER  0x2
+#घोषणा HDR_LEN_L2        (HDR_LEN_L2_MACS + HDR_LEN_L2_ETHER)
+#घोषणा HDR_LEN_L2_W_VLAN (HDR_LEN_L2 + HDR_LEN_L2_VLAN)
 
-/* Set to STE a specific value using DR_STE_SET */
-#define DR_STE_SET_VAL(lookup_type, tag, t_fname, spec, s_fname, value) do { \
-	if ((spec)->s_fname) { \
+/* Set to STE a specअगरic value using DR_STE_SET */
+#घोषणा DR_STE_SET_VAL(lookup_type, tag, t_fname, spec, s_fname, value) करो अणु \
+	अगर ((spec)->s_fname) अणु \
 		MLX5_SET(ste_##lookup_type, tag, t_fname, value); \
 		(spec)->s_fname = 0; \
-	} \
-} while (0)
+	पूर्ण \
+पूर्ण जबतक (0)
 
 /* Set to STE spec->s_fname to tag->t_fname set spec->s_fname as used */
-#define DR_STE_SET_TAG(lookup_type, tag, t_fname, spec, s_fname) \
+#घोषणा DR_STE_SET_TAG(lookup_type, tag, t_fname, spec, s_fname) \
 	DR_STE_SET_VAL(lookup_type, tag, t_fname, spec, s_fname, spec->s_fname)
 
 /* Set to STE -1 to tag->t_fname and set spec->s_fname as used */
-#define DR_STE_SET_ONES(lookup_type, tag, t_fname, spec, s_fname) \
+#घोषणा DR_STE_SET_ONES(lookup_type, tag, t_fname, spec, s_fname) \
 	DR_STE_SET_VAL(lookup_type, tag, t_fname, spec, s_fname, -1)
 
-#define DR_STE_SET_TCP_FLAGS(lookup_type, tag, spec) do { \
+#घोषणा DR_STE_SET_TCP_FLAGS(lookup_type, tag, spec) करो अणु \
 	MLX5_SET(ste_##lookup_type, tag, tcp_ns, !!((spec)->tcp_flags & (1 << 8))); \
 	MLX5_SET(ste_##lookup_type, tag, tcp_cwr, !!((spec)->tcp_flags & (1 << 7))); \
 	MLX5_SET(ste_##lookup_type, tag, tcp_ece, !!((spec)->tcp_flags & (1 << 6))); \
@@ -47,10 +48,10 @@
 	MLX5_SET(ste_##lookup_type, tag, tcp_rst, !!((spec)->tcp_flags & (1 << 2))); \
 	MLX5_SET(ste_##lookup_type, tag, tcp_syn, !!((spec)->tcp_flags & (1 << 1))); \
 	MLX5_SET(ste_##lookup_type, tag, tcp_fin, !!((spec)->tcp_flags & (1 << 0))); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define DR_STE_SET_MPLS(lookup_type, mask, in_out, tag) do { \
-	struct mlx5dr_match_misc2 *_mask = mask; \
+#घोषणा DR_STE_SET_MPLS(lookup_type, mask, in_out, tag) करो अणु \
+	काष्ठा mlx5dr_match_misc2 *_mask = mask; \
 	u8 *_tag = tag; \
 	DR_STE_SET_TAG(lookup_type, _tag, mpls0_label, _mask, \
 		       in_out##_first_mpls_label);\
@@ -60,141 +61,141 @@
 		       in_out##_first_mpls_exp); \
 	DR_STE_SET_TAG(lookup_type, _tag, mpls0_ttl, _mask, \
 		       in_out##_first_mpls_ttl); \
-} while (0)
+पूर्ण जबतक (0)
 
-#define DR_STE_SET_FLEX_PARSER_FIELD(tag, fname, caps, spec) do { \
+#घोषणा DR_STE_SET_FLEX_PARSER_FIELD(tag, fname, caps, spec) करो अणु \
 	u8 parser_id = (caps)->flex_parser_id_##fname; \
 	u8 *parser_ptr = dr_ste_calc_flex_parser_offset(tag, parser_id); \
 	*(__be32 *)parser_ptr = cpu_to_be32((spec)->fname);\
 	(spec)->fname = 0;\
-} while (0)
+पूर्ण जबतक (0)
 
-#define DR_STE_IS_OUTER_MPLS_OVER_GRE_SET(_misc) (\
+#घोषणा DR_STE_IS_OUTER_MPLS_OVER_GRE_SET(_misc) (\
 	(_misc)->outer_first_mpls_over_gre_label || \
 	(_misc)->outer_first_mpls_over_gre_exp || \
 	(_misc)->outer_first_mpls_over_gre_s_bos || \
 	(_misc)->outer_first_mpls_over_gre_ttl)
 
-#define DR_STE_IS_OUTER_MPLS_OVER_UDP_SET(_misc) (\
+#घोषणा DR_STE_IS_OUTER_MPLS_OVER_UDP_SET(_misc) (\
 	(_misc)->outer_first_mpls_over_udp_label || \
 	(_misc)->outer_first_mpls_over_udp_exp || \
 	(_misc)->outer_first_mpls_over_udp_s_bos || \
 	(_misc)->outer_first_mpls_over_udp_ttl)
 
-enum dr_ste_action_modify_type_l3 {
+क्रमागत dr_ste_action_modअगरy_type_l3 अणु
 	DR_STE_ACTION_MDFY_TYPE_L3_NONE	= 0x0,
 	DR_STE_ACTION_MDFY_TYPE_L3_IPV4	= 0x1,
 	DR_STE_ACTION_MDFY_TYPE_L3_IPV6	= 0x2,
-};
+पूर्ण;
 
-enum dr_ste_action_modify_type_l4 {
+क्रमागत dr_ste_action_modअगरy_type_l4 अणु
 	DR_STE_ACTION_MDFY_TYPE_L4_NONE	= 0x0,
 	DR_STE_ACTION_MDFY_TYPE_L4_TCP	= 0x1,
 	DR_STE_ACTION_MDFY_TYPE_L4_UDP	= 0x2,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HDR_MPLS_OFFSET_LABEL	= 12,
 	HDR_MPLS_OFFSET_EXP	= 9,
 	HDR_MPLS_OFFSET_S_BOS	= 8,
 	HDR_MPLS_OFFSET_TTL	= 0,
-};
+पूर्ण;
 
 u16 mlx5dr_ste_conv_bit_to_byte_mask(u8 *bit_mask);
 
-static inline u8 *
+अटल अंतरभूत u8 *
 dr_ste_calc_flex_parser_offset(u8 *tag, u8 parser_id)
-{
+अणु
 	/* Calculate tag byte offset based on flex parser id */
-	return tag + 4 * (3 - (parser_id % 4));
-}
+	वापस tag + 4 * (3 - (parser_id % 4));
+पूर्ण
 
-#define DR_STE_CTX_BUILDER(fname) \
-	((*build_##fname##_init)(struct mlx5dr_ste_build *sb, \
-				 struct mlx5dr_match_param *mask))
+#घोषणा DR_STE_CTX_BUILDER(fname) \
+	((*build_##fname##_init)(काष्ठा mlx5dr_ste_build *sb, \
+				 काष्ठा mlx5dr_match_param *mask))
 
-struct mlx5dr_ste_ctx {
+काष्ठा mlx5dr_ste_ctx अणु
 	/* Builders */
-	void DR_STE_CTX_BUILDER(eth_l2_src_dst);
-	void DR_STE_CTX_BUILDER(eth_l3_ipv6_src);
-	void DR_STE_CTX_BUILDER(eth_l3_ipv6_dst);
-	void DR_STE_CTX_BUILDER(eth_l3_ipv4_5_tuple);
-	void DR_STE_CTX_BUILDER(eth_l2_src);
-	void DR_STE_CTX_BUILDER(eth_l2_dst);
-	void DR_STE_CTX_BUILDER(eth_l2_tnl);
-	void DR_STE_CTX_BUILDER(eth_l3_ipv4_misc);
-	void DR_STE_CTX_BUILDER(eth_ipv6_l3_l4);
-	void DR_STE_CTX_BUILDER(mpls);
-	void DR_STE_CTX_BUILDER(tnl_gre);
-	void DR_STE_CTX_BUILDER(tnl_mpls);
-	void DR_STE_CTX_BUILDER(tnl_mpls_over_gre);
-	void DR_STE_CTX_BUILDER(tnl_mpls_over_udp);
-	void DR_STE_CTX_BUILDER(icmp);
-	void DR_STE_CTX_BUILDER(general_purpose);
-	void DR_STE_CTX_BUILDER(eth_l4_misc);
-	void DR_STE_CTX_BUILDER(tnl_vxlan_gpe);
-	void DR_STE_CTX_BUILDER(tnl_geneve);
-	void DR_STE_CTX_BUILDER(tnl_geneve_tlv_opt);
-	void DR_STE_CTX_BUILDER(register_0);
-	void DR_STE_CTX_BUILDER(register_1);
-	void DR_STE_CTX_BUILDER(src_gvmi_qpn);
-	void DR_STE_CTX_BUILDER(flex_parser_0);
-	void DR_STE_CTX_BUILDER(flex_parser_1);
-	void DR_STE_CTX_BUILDER(tnl_gtpu);
-	void DR_STE_CTX_BUILDER(tnl_gtpu_flex_parser_0);
-	void DR_STE_CTX_BUILDER(tnl_gtpu_flex_parser_1);
+	व्योम DR_STE_CTX_BUILDER(eth_l2_src_dst);
+	व्योम DR_STE_CTX_BUILDER(eth_l3_ipv6_src);
+	व्योम DR_STE_CTX_BUILDER(eth_l3_ipv6_dst);
+	व्योम DR_STE_CTX_BUILDER(eth_l3_ipv4_5_tuple);
+	व्योम DR_STE_CTX_BUILDER(eth_l2_src);
+	व्योम DR_STE_CTX_BUILDER(eth_l2_dst);
+	व्योम DR_STE_CTX_BUILDER(eth_l2_tnl);
+	व्योम DR_STE_CTX_BUILDER(eth_l3_ipv4_misc);
+	व्योम DR_STE_CTX_BUILDER(eth_ipv6_l3_l4);
+	व्योम DR_STE_CTX_BUILDER(mpls);
+	व्योम DR_STE_CTX_BUILDER(tnl_gre);
+	व्योम DR_STE_CTX_BUILDER(tnl_mpls);
+	व्योम DR_STE_CTX_BUILDER(tnl_mpls_over_gre);
+	व्योम DR_STE_CTX_BUILDER(tnl_mpls_over_udp);
+	व्योम DR_STE_CTX_BUILDER(icmp);
+	व्योम DR_STE_CTX_BUILDER(general_purpose);
+	व्योम DR_STE_CTX_BUILDER(eth_l4_misc);
+	व्योम DR_STE_CTX_BUILDER(tnl_vxlan_gpe);
+	व्योम DR_STE_CTX_BUILDER(tnl_geneve);
+	व्योम DR_STE_CTX_BUILDER(tnl_geneve_tlv_opt);
+	व्योम DR_STE_CTX_BUILDER(रेजिस्टर_0);
+	व्योम DR_STE_CTX_BUILDER(रेजिस्टर_1);
+	व्योम DR_STE_CTX_BUILDER(src_gvmi_qpn);
+	व्योम DR_STE_CTX_BUILDER(flex_parser_0);
+	व्योम DR_STE_CTX_BUILDER(flex_parser_1);
+	व्योम DR_STE_CTX_BUILDER(tnl_gtpu);
+	व्योम DR_STE_CTX_BUILDER(tnl_gtpu_flex_parser_0);
+	व्योम DR_STE_CTX_BUILDER(tnl_gtpu_flex_parser_1);
 
 	/* Getters and Setters */
-	void (*ste_init)(u8 *hw_ste_p, u16 lu_type,
+	व्योम (*ste_init)(u8 *hw_ste_p, u16 lu_type,
 			 u8 entry_type, u16 gvmi);
-	void (*set_next_lu_type)(u8 *hw_ste_p, u16 lu_type);
+	व्योम (*set_next_lu_type)(u8 *hw_ste_p, u16 lu_type);
 	u16  (*get_next_lu_type)(u8 *hw_ste_p);
-	void (*set_miss_addr)(u8 *hw_ste_p, u64 miss_addr);
+	व्योम (*set_miss_addr)(u8 *hw_ste_p, u64 miss_addr);
 	u64  (*get_miss_addr)(u8 *hw_ste_p);
-	void (*set_hit_addr)(u8 *hw_ste_p, u64 icm_addr, u32 ht_size);
-	void (*set_byte_mask)(u8 *hw_ste_p, u16 byte_mask);
+	व्योम (*set_hit_addr)(u8 *hw_ste_p, u64 icm_addr, u32 ht_size);
+	व्योम (*set_byte_mask)(u8 *hw_ste_p, u16 byte_mask);
 	u16  (*get_byte_mask)(u8 *hw_ste_p);
 
 	/* Actions */
-	void (*set_actions_rx)(struct mlx5dr_domain *dmn,
+	व्योम (*set_actions_rx)(काष्ठा mlx5dr_करोमुख्य *dmn,
 			       u8 *action_type_set,
 			       u8 *hw_ste_arr,
-			       struct mlx5dr_ste_actions_attr *attr,
+			       काष्ठा mlx5dr_ste_actions_attr *attr,
 			       u32 *added_stes);
-	void (*set_actions_tx)(struct mlx5dr_domain *dmn,
+	व्योम (*set_actions_tx)(काष्ठा mlx5dr_करोमुख्य *dmn,
 			       u8 *action_type_set,
 			       u8 *hw_ste_arr,
-			       struct mlx5dr_ste_actions_attr *attr,
+			       काष्ठा mlx5dr_ste_actions_attr *attr,
 			       u32 *added_stes);
-	u32 modify_field_arr_sz;
-	const struct mlx5dr_ste_action_modify_field *modify_field_arr;
-	void (*set_action_set)(u8 *hw_action,
+	u32 modअगरy_field_arr_sz;
+	स्थिर काष्ठा mlx5dr_ste_action_modअगरy_field *modअगरy_field_arr;
+	व्योम (*set_action_set)(u8 *hw_action,
 			       u8 hw_field,
-			       u8 shifter,
+			       u8 shअगरter,
 			       u8 length,
 			       u32 data);
-	void (*set_action_add)(u8 *hw_action,
+	व्योम (*set_action_add)(u8 *hw_action,
 			       u8 hw_field,
-			       u8 shifter,
+			       u8 shअगरter,
 			       u8 length,
 			       u32 data);
-	void (*set_action_copy)(u8 *hw_action,
+	व्योम (*set_action_copy)(u8 *hw_action,
 				u8 dst_hw_field,
-				u8 dst_shifter,
+				u8 dst_shअगरter,
 				u8 dst_len,
 				u8 src_hw_field,
-				u8 src_shifter);
-	int (*set_action_decap_l3_list)(void *data,
+				u8 src_shअगरter);
+	पूर्णांक (*set_action_decap_l3_list)(व्योम *data,
 					u32 data_sz,
 					u8 *hw_action,
 					u32 hw_action_sz,
 					u16 *used_hw_action_num);
 
 	/* Send */
-	void (*prepare_for_postsend)(u8 *hw_ste_p, u32 ste_size);
-};
+	व्योम (*prepare_क्रम_postsend)(u8 *hw_ste_p, u32 ste_size);
+पूर्ण;
 
-extern struct mlx5dr_ste_ctx ste_ctx_v0;
-extern struct mlx5dr_ste_ctx ste_ctx_v1;
+बाह्य काष्ठा mlx5dr_ste_ctx ste_ctx_v0;
+बाह्य काष्ठा mlx5dr_ste_ctx ste_ctx_v1;
 
-#endif  /* _DR_STE_ */
+#पूर्ण_अगर  /* _DR_STE_ */

@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
 
-#include <xen/page.h>
-#include <xen/xenbus.h>
+#समावेश <xen/page.h>
+#समावेश <xen/xenbus.h>
 
-#include "xenfs.h"
+#समावेश "xenfs.h"
 
-static ssize_t xsd_read(struct file *file, char __user *buf,
-			    size_t size, loff_t *off)
-{
-	const char *str = (const char *)file->private_data;
-	return simple_read_from_buffer(buf, size, off, str, strlen(str));
-}
+अटल sमाप_प्रकार xsd_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			    माप_प्रकार size, loff_t *off)
+अणु
+	स्थिर अक्षर *str = (स्थिर अक्षर *)file->निजी_data;
+	वापस simple_पढ़ो_from_buffer(buf, size, off, str, म_माप(str));
+पूर्ण
 
-static int xsd_release(struct inode *inode, struct file *file)
-{
-	kfree(file->private_data);
-	return 0;
-}
+अटल पूर्णांक xsd_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	kमुक्त(file->निजी_data);
+	वापस 0;
+पूर्ण
 
-static int xsd_kva_open(struct inode *inode, struct file *file)
-{
-	file->private_data = (void *)kasprintf(GFP_KERNEL, "0x%p",
-					       xen_store_interface);
-	if (!file->private_data)
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक xsd_kva_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	file->निजी_data = (व्योम *)kaप्र_लिखो(GFP_KERNEL, "0x%p",
+					       xen_store_पूर्णांकerface);
+	अगर (!file->निजी_data)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int xsd_kva_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	size_t size = vma->vm_end - vma->vm_start;
+अटल पूर्णांक xsd_kva_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	माप_प्रकार size = vma->vm_end - vma->vm_start;
 
-	if ((size > PAGE_SIZE) || (vma->vm_pgoff != 0))
-		return -EINVAL;
+	अगर ((size > PAGE_SIZE) || (vma->vm_pgoff != 0))
+		वापस -EINVAL;
 
-	if (remap_pfn_range(vma, vma->vm_start,
-			    virt_to_pfn(xen_store_interface),
+	अगर (remap_pfn_range(vma, vma->vm_start,
+			    virt_to_pfn(xen_store_पूर्णांकerface),
 			    size, vma->vm_page_prot))
-		return -EAGAIN;
+		वापस -EAGAIN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct file_operations xsd_kva_file_ops = {
-	.open = xsd_kva_open,
+स्थिर काष्ठा file_operations xsd_kva_file_ops = अणु
+	.खोलो = xsd_kva_खोलो,
 	.mmap = xsd_kva_mmap,
-	.read = xsd_read,
+	.पढ़ो = xsd_पढ़ो,
 	.release = xsd_release,
-};
+पूर्ण;
 
-static int xsd_port_open(struct inode *inode, struct file *file)
-{
-	file->private_data = (void *)kasprintf(GFP_KERNEL, "%d",
+अटल पूर्णांक xsd_port_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	file->निजी_data = (व्योम *)kaप्र_लिखो(GFP_KERNEL, "%d",
 					       xen_store_evtchn);
-	if (!file->private_data)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!file->निजी_data)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-const struct file_operations xsd_port_file_ops = {
-	.open = xsd_port_open,
-	.read = xsd_read,
+स्थिर काष्ठा file_operations xsd_port_file_ops = अणु
+	.खोलो = xsd_port_खोलो,
+	.पढ़ो = xsd_पढ़ो,
 	.release = xsd_release,
-};
+पूर्ण;

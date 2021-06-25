@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_TLB_H
-#define _ASM_TLB_H
+#अगर_अघोषित _ASM_TLB_H
+#घोषणा _ASM_TLB_H
 
-#include <linux/pagemap.h>
-#include <asm/tlbflush.h>
+#समावेश <linux/pagemap.h>
+#समावेश <यंत्र/tlbflush.h>
 
-#include <asm-generic/tlb.h>
+#समावेश <यंत्र-generic/tlb.h>
 
-#endif
+#पूर्ण_अगर

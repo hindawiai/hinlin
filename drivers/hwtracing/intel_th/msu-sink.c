@@ -1,116 +1,117 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * An example software sink buffer for Intel TH MSU.
+ * An example software sink buffer क्रम Intel TH MSU.
  *
  * Copyright (C) 2019 Intel Corporation.
  */
 
-#include <linux/intel_th.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकel_th.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
 
-#define MAX_SGTS 16
+#घोषणा MAX_SGTS 16
 
-struct msu_sink_private {
-	struct device	*dev;
-	struct sg_table **sgts;
-	unsigned int	nr_sgts;
-};
+काष्ठा msu_sink_निजी अणु
+	काष्ठा device	*dev;
+	काष्ठा sg_table **sgts;
+	अचिन्हित पूर्णांक	nr_sgts;
+पूर्ण;
 
-static void *msu_sink_assign(struct device *dev, int *mode)
-{
-	struct msu_sink_private *priv;
+अटल व्योम *msu_sink_assign(काष्ठा device *dev, पूर्णांक *mode)
+अणु
+	काष्ठा msu_sink_निजी *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return NULL;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस शून्य;
 
-	priv->sgts = kcalloc(MAX_SGTS, sizeof(void *), GFP_KERNEL);
-	if (!priv->sgts) {
-		kfree(priv);
-		return NULL;
-	}
+	priv->sgts = kसुस्मृति(MAX_SGTS, माप(व्योम *), GFP_KERNEL);
+	अगर (!priv->sgts) अणु
+		kमुक्त(priv);
+		वापस शून्य;
+	पूर्ण
 
 	priv->dev = dev;
 	*mode = MSC_MODE_MULTI;
 
-	return priv;
-}
+	वापस priv;
+पूर्ण
 
-static void msu_sink_unassign(void *data)
-{
-	struct msu_sink_private *priv = data;
+अटल व्योम msu_sink_unassign(व्योम *data)
+अणु
+	काष्ठा msu_sink_निजी *priv = data;
 
-	kfree(priv->sgts);
-	kfree(priv);
-}
+	kमुक्त(priv->sgts);
+	kमुक्त(priv);
+पूर्ण
 
 /* See also: msc.c: __msc_buffer_win_alloc() */
-static int msu_sink_alloc_window(void *data, struct sg_table **sgt, size_t size)
-{
-	struct msu_sink_private *priv = data;
-	unsigned int nents;
-	struct scatterlist *sg_ptr;
-	void *block;
-	int ret, i;
+अटल पूर्णांक msu_sink_alloc_winकरोw(व्योम *data, काष्ठा sg_table **sgt, माप_प्रकार size)
+अणु
+	काष्ठा msu_sink_निजी *priv = data;
+	अचिन्हित पूर्णांक nents;
+	काष्ठा scatterlist *sg_ptr;
+	व्योम *block;
+	पूर्णांक ret, i;
 
-	if (priv->nr_sgts == MAX_SGTS)
-		return -ENOMEM;
+	अगर (priv->nr_sgts == MAX_SGTS)
+		वापस -ENOMEM;
 
 	nents = DIV_ROUND_UP(size, PAGE_SIZE);
 
 	ret = sg_alloc_table(*sgt, nents, GFP_KERNEL);
-	if (ret)
-		return -ENOMEM;
+	अगर (ret)
+		वापस -ENOMEM;
 
 	priv->sgts[priv->nr_sgts++] = *sgt;
 
-	for_each_sg((*sgt)->sgl, sg_ptr, nents, i) {
+	क्रम_each_sg((*sgt)->sgl, sg_ptr, nents, i) अणु
 		block = dma_alloc_coherent(priv->dev->parent->parent,
 					   PAGE_SIZE, &sg_dma_address(sg_ptr),
 					   GFP_KERNEL);
 		sg_set_buf(sg_ptr, block, PAGE_SIZE);
-	}
+	पूर्ण
 
-	return nents;
-}
+	वापस nents;
+पूर्ण
 
-/* See also: msc.c: __msc_buffer_win_free() */
-static void msu_sink_free_window(void *data, struct sg_table *sgt)
-{
-	struct msu_sink_private *priv = data;
-	struct scatterlist *sg_ptr;
-	int i;
+/* See also: msc.c: __msc_buffer_win_मुक्त() */
+अटल व्योम msu_sink_मुक्त_winकरोw(व्योम *data, काष्ठा sg_table *sgt)
+अणु
+	काष्ठा msu_sink_निजी *priv = data;
+	काष्ठा scatterlist *sg_ptr;
+	पूर्णांक i;
 
-	for_each_sg(sgt->sgl, sg_ptr, sgt->nents, i) {
-		dma_free_coherent(priv->dev->parent->parent, PAGE_SIZE,
+	क्रम_each_sg(sgt->sgl, sg_ptr, sgt->nents, i) अणु
+		dma_मुक्त_coherent(priv->dev->parent->parent, PAGE_SIZE,
 				  sg_virt(sg_ptr), sg_dma_address(sg_ptr));
-	}
+	पूर्ण
 
-	sg_free_table(sgt);
+	sg_मुक्त_table(sgt);
 	priv->nr_sgts--;
-}
+पूर्ण
 
-static int msu_sink_ready(void *data, struct sg_table *sgt, size_t bytes)
-{
-	struct msu_sink_private *priv = data;
+अटल पूर्णांक msu_sink_पढ़ोy(व्योम *data, काष्ठा sg_table *sgt, माप_प्रकार bytes)
+अणु
+	काष्ठा msu_sink_निजी *priv = data;
 
-	intel_th_msc_window_unlock(priv->dev, sgt);
+	पूर्णांकel_th_msc_winकरोw_unlock(priv->dev, sgt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct msu_buffer sink_mbuf = {
+अटल स्थिर काष्ठा msu_buffer sink_mbuf = अणु
 	.name		= "sink",
 	.assign		= msu_sink_assign,
 	.unassign	= msu_sink_unassign,
-	.alloc_window	= msu_sink_alloc_window,
-	.free_window	= msu_sink_free_window,
-	.ready		= msu_sink_ready,
-};
+	.alloc_winकरोw	= msu_sink_alloc_winकरोw,
+	.मुक्त_winकरोw	= msu_sink_मुक्त_winकरोw,
+	.पढ़ोy		= msu_sink_पढ़ोy,
+पूर्ण;
 
-module_intel_th_msu_buffer(sink_mbuf);
+module_पूर्णांकel_th_msu_buffer(sink_mbuf);
 
 MODULE_LICENSE("GPL v2");

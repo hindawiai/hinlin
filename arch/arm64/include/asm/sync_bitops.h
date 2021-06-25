@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SYNC_BITOPS_H__
-#define __ASM_SYNC_BITOPS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SYNC_BITOPS_H__
+#घोषणा __ASM_SYNC_BITOPS_H__
 
-#include <asm/bitops.h>
-#include <asm/cmpxchg.h>
+#समावेश <यंत्र/bitops.h>
+#समावेश <यंत्र/cmpxchg.h>
 
 /* sync_bitops functions are equivalent to the SMP implementation of the
  * original functions, independently from CONFIG_SMP being defined.
  *
- * We need them because _set_bit etc are not SMP safe if !CONFIG_SMP. But
- * under Xen you might be communicating with a completely external entity
+ * We need them because _set_bit etc are not SMP safe अगर !CONFIG_SMP. But
+ * under Xen you might be communicating with a completely बाह्यal entity
  * who might be on another CPU (e.g. two uniprocessor guests communicating
  * via event channels and grant tables). So we need a variant of the bit
  * ops which are SMP safe even on a UP kernel.
  */
 
-#define sync_set_bit(nr, p)			set_bit(nr, p)
-#define sync_clear_bit(nr, p)			clear_bit(nr, p)
-#define sync_change_bit(nr, p)			change_bit(nr, p)
-#define sync_test_and_set_bit(nr, p)		test_and_set_bit(nr, p)
-#define sync_test_and_clear_bit(nr, p)		test_and_clear_bit(nr, p)
-#define sync_test_and_change_bit(nr, p)		test_and_change_bit(nr, p)
-#define sync_test_bit(nr, addr)			test_bit(nr, addr)
-#define arch_sync_cmpxchg			arch_cmpxchg
+#घोषणा sync_set_bit(nr, p)			set_bit(nr, p)
+#घोषणा sync_clear_bit(nr, p)			clear_bit(nr, p)
+#घोषणा sync_change_bit(nr, p)			change_bit(nr, p)
+#घोषणा sync_test_and_set_bit(nr, p)		test_and_set_bit(nr, p)
+#घोषणा sync_test_and_clear_bit(nr, p)		test_and_clear_bit(nr, p)
+#घोषणा sync_test_and_change_bit(nr, p)		test_and_change_bit(nr, p)
+#घोषणा sync_test_bit(nr, addr)			test_bit(nr, addr)
+#घोषणा arch_sync_cmpxchg			arch_cmpxchg
 
-#endif
+#पूर्ण_अगर

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  arch/microblaze/mm/fault.c
  *
@@ -9,244 +10,244 @@
  *  Derived from "arch/i386/mm/fault.c"
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
- *  Modified by Cort Dougan and Paul Mackerras.
+ *  Modअगरied by Cort Dougan and Paul Mackerras.
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the main directory of this
- * archive for more details.
+ * Public License.  See the file COPYING in the मुख्य directory of this
+ * archive क्रम more details.
  *
  */
 
-#include <linux/extable.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/ptrace.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/perf_event.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/perf_event.h>
 
-#include <asm/page.h>
-#include <asm/mmu.h>
-#include <linux/mmu_context.h>
-#include <linux/uaccess.h>
-#include <asm/exceptions.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <linux/mmu_context.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/exceptions.h>
 
-static unsigned long pte_misses;	/* updated by do_page_fault() */
-static unsigned long pte_errors;	/* updated by do_page_fault() */
+अटल अचिन्हित दीर्घ pte_misses;	/* updated by करो_page_fault() */
+अटल अचिन्हित दीर्घ pte_errors;	/* updated by करो_page_fault() */
 
 /*
- * Check whether the instruction at regs->pc is a store using
- * an update addressing form which will update r1.
+ * Check whether the inकाष्ठाion at regs->pc is a store using
+ * an update addressing क्रमm which will update r1.
  */
-static int store_updates_sp(struct pt_regs *regs)
-{
-	unsigned int inst;
+अटल पूर्णांक store_updates_sp(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित पूर्णांक inst;
 
-	if (get_user(inst, (unsigned int __user *)regs->pc))
-		return 0;
-	/* check for 1 in the rD field */
-	if (((inst >> 21) & 0x1f) != 1)
-		return 0;
-	/* check for store opcodes */
-	if ((inst & 0xd0000000) == 0xd0000000)
-		return 1;
-	return 0;
-}
+	अगर (get_user(inst, (अचिन्हित पूर्णांक __user *)regs->pc))
+		वापस 0;
+	/* check क्रम 1 in the rD field */
+	अगर (((inst >> 21) & 0x1f) != 1)
+		वापस 0;
+	/* check क्रम store opcodes */
+	अगर ((inst & 0xd0000000) == 0xd0000000)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 
 /*
  * bad_page_fault is called when we have a bad access from the kernel.
- * It is called from do_page_fault above and from some of the procedures
+ * It is called from करो_page_fault above and from some of the procedures
  * in traps.c.
  */
-void bad_page_fault(struct pt_regs *regs, unsigned long address, int sig)
-{
-	const struct exception_table_entry *fixup;
+व्योम bad_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address, पूर्णांक sig)
+अणु
+	स्थिर काष्ठा exception_table_entry *fixup;
 /* MS: no context */
 	/* Are we prepared to handle this fault?  */
 	fixup = search_exception_tables(regs->pc);
-	if (fixup) {
+	अगर (fixup) अणु
 		regs->pc = fixup->fixup;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* kernel has accessed a bad area */
 	die("kernel access of bad area", regs, sig);
-}
+पूर्ण
 
 /*
- * The error_code parameter is ESR for a data fault,
- * 0 for an instruction fault.
+ * The error_code parameter is ESR क्रम a data fault,
+ * 0 क्रम an inकाष्ठाion fault.
  */
-void do_page_fault(struct pt_regs *regs, unsigned long address,
-		   unsigned long error_code)
-{
-	struct vm_area_struct *vma;
-	struct mm_struct *mm = current->mm;
-	int code = SEGV_MAPERR;
-	int is_write = error_code & ESR_S;
+व्योम करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ address,
+		   अचिन्हित दीर्घ error_code)
+अणु
+	काष्ठा vm_area_काष्ठा *vma;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	पूर्णांक code = SEGV_MAPERR;
+	पूर्णांक is_ग_लिखो = error_code & ESR_S;
 	vm_fault_t fault;
-	unsigned int flags = FAULT_FLAG_DEFAULT;
+	अचिन्हित पूर्णांक flags = FAULT_FLAG_DEFAULT;
 
 	regs->ear = address;
 	regs->esr = error_code;
 
-	/* On a kernel SLB miss we can only check for a valid exception entry */
-	if (unlikely(kernel_mode(regs) && (address >= TASK_SIZE))) {
+	/* On a kernel SLB miss we can only check क्रम a valid exception entry */
+	अगर (unlikely(kernel_mode(regs) && (address >= TASK_SIZE))) अणु
 		pr_warn("kernel task_size exceed");
-		_exception(SIGSEGV, regs, code, address);
-	}
+		_exception(संक_अंश, regs, code, address);
+	पूर्ण
 
-	/* for instr TLB miss and instr storage exception ESR_S is undefined */
-	if ((error_code & 0x13) == 0x13 || (error_code & 0x11) == 0x11)
-		is_write = 0;
+	/* क्रम instr TLB miss and instr storage exception ESR_S is undefined */
+	अगर ((error_code & 0x13) == 0x13 || (error_code & 0x11) == 0x11)
+		is_ग_लिखो = 0;
 
-	if (unlikely(faulthandler_disabled() || !mm)) {
-		if (kernel_mode(regs))
-			goto bad_area_nosemaphore;
+	अगर (unlikely(faulthandler_disabled() || !mm)) अणु
+		अगर (kernel_mode(regs))
+			जाओ bad_area_nosemaphore;
 
 		/* faulthandler_disabled() in user mode is really bad,
-		   as is current->mm == NULL. */
+		   as is current->mm == शून्य. */
 		pr_emerg("Page fault in user mode with faulthandler_disabled(), mm = %p\n",
 			 mm);
 		pr_emerg("r15 = %lx  MSR = %lx\n",
 		       regs->r15, regs->msr);
-		die("Weird page fault", regs, SIGSEGV);
-	}
+		die("Weird page fault", regs, संक_अंश);
+	पूर्ण
 
-	if (user_mode(regs))
+	अगर (user_mode(regs))
 		flags |= FAULT_FLAG_USER;
 
 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
 
 	/* When running in the kernel we expect faults to occur only to
 	 * addresses in user space.  All other faults represent errors in the
-	 * kernel and should generate an OOPS.  Unfortunately, in the case of an
-	 * erroneous fault occurring in a code path which already holds mmap_lock
+	 * kernel and should generate an OOPS.  Unक्रमtunately, in the हाल of an
+	 * erroneous fault occurring in a code path which alपढ़ोy holds mmap_lock
 	 * we will deadlock attempting to validate the fault against the
 	 * address space.  Luckily the kernel only validly references user
 	 * space from well defined areas of code, which are listed in the
 	 * exceptions table.
 	 *
-	 * As the vast majority of faults will be valid we will only perform
+	 * As the vast majority of faults will be valid we will only perक्रमm
 	 * the source reference check when there is a possibility of a deadlock.
-	 * Attempt to lock the address space, if we cannot we then validate the
+	 * Attempt to lock the address space, अगर we cannot we then validate the
 	 * source.  If this is invalid we can skip the address space check,
-	 * thus avoiding the deadlock.
+	 * thus aव्योमing the deadlock.
 	 */
-	if (unlikely(!mmap_read_trylock(mm))) {
-		if (kernel_mode(regs) && !search_exception_tables(regs->pc))
-			goto bad_area_nosemaphore;
+	अगर (unlikely(!mmap_पढ़ो_trylock(mm))) अणु
+		अगर (kernel_mode(regs) && !search_exception_tables(regs->pc))
+			जाओ bad_area_nosemaphore;
 
 retry:
-		mmap_read_lock(mm);
-	}
+		mmap_पढ़ो_lock(mm);
+	पूर्ण
 
 	vma = find_vma(mm, address);
-	if (unlikely(!vma))
-		goto bad_area;
+	अगर (unlikely(!vma))
+		जाओ bad_area;
 
-	if (vma->vm_start <= address)
-		goto good_area;
+	अगर (vma->vm_start <= address)
+		जाओ good_area;
 
-	if (unlikely(!(vma->vm_flags & VM_GROWSDOWN)))
-		goto bad_area;
+	अगर (unlikely(!(vma->vm_flags & VM_GROWSDOWN)))
+		जाओ bad_area;
 
-	if (unlikely(!is_write))
-		goto bad_area;
+	अगर (unlikely(!is_ग_लिखो))
+		जाओ bad_area;
 
 	/*
 	 * N.B. The ABI allows programs to access up to
-	 * a few hundred bytes below the stack pointer (TBD).
-	 * The kernel signal delivery code writes up to about 1.5kB
-	 * below the stack pointer (r1) before decrementing it.
-	 * The exec code can write slightly over 640kB to the stack
-	 * before setting the user r1.  Thus we allow the stack to
+	 * a few hundred bytes below the stack poपूर्णांकer (TBD).
+	 * The kernel संकेत delivery code ग_लिखोs up to about 1.5kB
+	 * below the stack poपूर्णांकer (r1) beक्रमe decrementing it.
+	 * The exec code can ग_लिखो slightly over 640kB to the stack
+	 * beक्रमe setting the user r1.  Thus we allow the stack to
 	 * expand to 1MB without further checks.
 	 */
-	if (unlikely(address + 0x100000 < vma->vm_end)) {
+	अगर (unlikely(address + 0x100000 < vma->vm_end)) अणु
 
-		/* get user regs even if this fault is in kernel mode */
-		struct pt_regs *uregs = current->thread.regs;
-		if (uregs == NULL)
-			goto bad_area;
+		/* get user regs even अगर this fault is in kernel mode */
+		काष्ठा pt_regs *uregs = current->thपढ़ो.regs;
+		अगर (uregs == शून्य)
+			जाओ bad_area;
 
 		/*
-		 * A user-mode access to an address a long way below
-		 * the stack pointer is only valid if the instruction
-		 * is one which would update the stack pointer to the
-		 * address accessed if the instruction completed,
+		 * A user-mode access to an address a दीर्घ way below
+		 * the stack poपूर्णांकer is only valid अगर the inकाष्ठाion
+		 * is one which would update the stack poपूर्णांकer to the
+		 * address accessed अगर the inकाष्ठाion completed,
 		 * i.e. either stwu rs,n(r1) or stwux rs,r1,rb
-		 * (or the byte, halfword, float or double forms).
+		 * (or the byte, halfword, भग्न or द्विगुन क्रमms).
 		 *
-		 * If we don't check this then any write to the area
+		 * If we करोn't check this then any ग_लिखो to the area
 		 * between the last mapped region and the stack will
 		 * expand the stack rather than segfaulting.
 		 */
-		if (address + 2048 < uregs->r1
+		अगर (address + 2048 < uregs->r1
 			&& (kernel_mode(regs) || !store_updates_sp(regs)))
-				goto bad_area;
-	}
-	if (expand_stack(vma, address))
-		goto bad_area;
+				जाओ bad_area;
+	पूर्ण
+	अगर (expand_stack(vma, address))
+		जाओ bad_area;
 
 good_area:
 	code = SEGV_ACCERR;
 
-	/* a write */
-	if (unlikely(is_write)) {
-		if (unlikely(!(vma->vm_flags & VM_WRITE)))
-			goto bad_area;
+	/* a ग_लिखो */
+	अगर (unlikely(is_ग_लिखो)) अणु
+		अगर (unlikely(!(vma->vm_flags & VM_WRITE)))
+			जाओ bad_area;
 		flags |= FAULT_FLAG_WRITE;
-	/* a read */
-	} else {
+	/* a पढ़ो */
+	पूर्ण अन्यथा अणु
 		/* protection fault */
-		if (unlikely(error_code & 0x08000000))
-			goto bad_area;
-		if (unlikely(!(vma->vm_flags & (VM_READ | VM_EXEC))))
-			goto bad_area;
-	}
+		अगर (unlikely(error_code & 0x08000000))
+			जाओ bad_area;
+		अगर (unlikely(!(vma->vm_flags & (VM_READ | VM_EXEC))))
+			जाओ bad_area;
+	पूर्ण
 
 	/*
-	 * If for any reason at all we couldn't handle the fault,
-	 * make sure we exit gracefully rather than endlessly redo
+	 * If क्रम any reason at all we couldn't handle the fault,
+	 * make sure we निकास gracefully rather than endlessly reकरो
 	 * the fault.
 	 */
 	fault = handle_mm_fault(vma, address, flags, regs);
 
-	if (fault_signal_pending(fault, regs))
-		return;
+	अगर (fault_संकेत_pending(fault, regs))
+		वापस;
 
-	if (unlikely(fault & VM_FAULT_ERROR)) {
-		if (fault & VM_FAULT_OOM)
-			goto out_of_memory;
-		else if (fault & VM_FAULT_SIGSEGV)
-			goto bad_area;
-		else if (fault & VM_FAULT_SIGBUS)
-			goto do_sigbus;
+	अगर (unlikely(fault & VM_FAULT_ERROR)) अणु
+		अगर (fault & VM_FAULT_OOM)
+			जाओ out_of_memory;
+		अन्यथा अगर (fault & VM_FAULT_संक_अंश)
+			जाओ bad_area;
+		अन्यथा अगर (fault & VM_FAULT_SIGBUS)
+			जाओ करो_sigbus;
 		BUG();
-	}
+	पूर्ण
 
-	if (flags & FAULT_FLAG_ALLOW_RETRY) {
-		if (fault & VM_FAULT_RETRY) {
+	अगर (flags & FAULT_FLAG_ALLOW_RETRY) अणु
+		अगर (fault & VM_FAULT_RETRY) अणु
 			flags |= FAULT_FLAG_TRIED;
 
 			/*
-			 * No need to mmap_read_unlock(mm) as we would
-			 * have already released it in __lock_page_or_retry
+			 * No need to mmap_पढ़ो_unlock(mm) as we would
+			 * have alपढ़ोy released it in __lock_page_or_retry
 			 * in mm/filemap.c.
 			 */
 
-			goto retry;
-		}
-	}
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
 	/*
 	 * keep track of tlb+htab misses that are good addrs but
@@ -254,40 +255,40 @@ good_area:
 	 * -- Cort
 	 */
 	pte_misses++;
-	return;
+	वापस;
 
 bad_area:
-	mmap_read_unlock(mm);
+	mmap_पढ़ो_unlock(mm);
 
 bad_area_nosemaphore:
 	pte_errors++;
 
-	/* User mode accesses cause a SIGSEGV */
-	if (user_mode(regs)) {
-		_exception(SIGSEGV, regs, code, address);
-		return;
-	}
+	/* User mode accesses cause a संक_अंश */
+	अगर (user_mode(regs)) अणु
+		_exception(संक_अंश, regs, code, address);
+		वापस;
+	पूर्ण
 
-	bad_page_fault(regs, address, SIGSEGV);
-	return;
+	bad_page_fault(regs, address, संक_अंश);
+	वापस;
 
 /*
  * We ran out of memory, or some other thing happened to us that made
  * us unable to handle the page fault gracefully.
  */
 out_of_memory:
-	mmap_read_unlock(mm);
-	if (!user_mode(regs))
+	mmap_पढ़ो_unlock(mm);
+	अगर (!user_mode(regs))
 		bad_page_fault(regs, address, SIGKILL);
-	else
+	अन्यथा
 		pagefault_out_of_memory();
-	return;
+	वापस;
 
-do_sigbus:
-	mmap_read_unlock(mm);
-	if (user_mode(regs)) {
-		force_sig_fault(SIGBUS, BUS_ADRERR, (void __user *)address);
-		return;
-	}
+करो_sigbus:
+	mmap_पढ़ो_unlock(mm);
+	अगर (user_mode(regs)) अणु
+		क्रमce_sig_fault(SIGBUS, BUS_ADRERR, (व्योम __user *)address);
+		वापस;
+	पूर्ण
 	bad_page_fault(regs, address, SIGBUS);
-}
+पूर्ण

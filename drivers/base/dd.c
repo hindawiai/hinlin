@@ -1,111 +1,112 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * drivers/base/dd.c - The core device/driver interactions.
+ * drivers/base/dd.c - The core device/driver पूर्णांकeractions.
  *
- * This file contains the (sometimes tricky) code that controls the
- * interactions between devices and drivers, which primarily includes
+ * This file contains the (someबार tricky) code that controls the
+ * पूर्णांकeractions between devices and drivers, which primarily includes
  * driver binding and unbinding.
  *
  * All of this code used to exist in drivers/base/bus.c, but was
- * relocated to here in the name of compartmentalization (since it wasn't
- * strictly code just for the 'struct bus_type'.
+ * relocated to here in the name of comparपंचांगentalization (since it wasn't
+ * strictly code just क्रम the 'struct bus_type'.
  *
  * Copyright (c) 2002-5 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Labs
- * Copyright (c) 2007-2009 Greg Kroah-Hartman <gregkh@suse.de>
+ * Copyright (c) 2002-3 Open Source Development Lअसल
+ * Copyright (c) 2007-2009 Greg Kroah-Harपंचांगan <gregkh@suse.de>
  * Copyright (c) 2007-2009 Novell Inc.
  */
 
-#include <linux/debugfs.h>
-#include <linux/device.h>
-#include <linux/delay.h>
-#include <linux/dma-map-ops.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/kthread.h>
-#include <linux/wait.h>
-#include <linux/async.h>
-#include <linux/pm_runtime.h>
-#include <linux/pinctrl/devinfo.h>
-#include <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/async.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pinctrl/devinfo.h>
+#समावेश <linux/slab.h>
 
-#include "base.h"
-#include "power/power.h"
+#समावेश "base.h"
+#समावेश "power/power.h"
 
 /*
- * Deferred Probe infrastructure.
+ * Deferred Probe infraकाष्ठाure.
  *
- * Sometimes driver probe order matters, but the kernel doesn't always have
- * dependency information which means some drivers will get probed before a
+ * Someबार driver probe order matters, but the kernel करोesn't always have
+ * dependency inक्रमmation which means some drivers will get probed beक्रमe a
  * resource it depends on is available.  For example, an SDHCI driver may
- * first need a GPIO line from an i2c GPIO controller before it can be
+ * first need a GPIO line from an i2c GPIO controller beक्रमe it can be
  * initialized.  If a required resource is not available yet, a driver can
- * request probing to be deferred by returning -EPROBE_DEFER from its probe hook
+ * request probing to be deferred by वापसing -EPROBE_DEFER from its probe hook
  *
- * Deferred probe maintains two lists of devices, a pending list and an active
- * list.  A driver returning -EPROBE_DEFER causes the device to be added to the
+ * Deferred probe मुख्यtains two lists of devices, a pending list and an active
+ * list.  A driver वापसing -EPROBE_DEFER causes the device to be added to the
  * pending list.  A successful driver probe will trigger moving all devices
  * from the pending to the active list so that the workqueue will eventually
  * retry them.
  *
- * The deferred_probe_mutex must be held any time the deferred_probe_*_list
- * of the (struct device*)->p->deferred_probe pointers are manipulated
+ * The deferred_probe_mutex must be held any समय the deferred_probe_*_list
+ * of the (काष्ठा device*)->p->deferred_probe poपूर्णांकers are manipulated
  */
-static DEFINE_MUTEX(deferred_probe_mutex);
-static LIST_HEAD(deferred_probe_pending_list);
-static LIST_HEAD(deferred_probe_active_list);
-static atomic_t deferred_trigger_count = ATOMIC_INIT(0);
-static bool initcalls_done;
+अटल DEFINE_MUTEX(deferred_probe_mutex);
+अटल LIST_HEAD(deferred_probe_pending_list);
+अटल LIST_HEAD(deferred_probe_active_list);
+अटल atomic_t deferred_trigger_count = ATOMIC_INIT(0);
+अटल bool initcalls_करोne;
 
 /* Save the async probe drivers' name from kernel cmdline */
-#define ASYNC_DRV_NAMES_MAX_LEN	256
-static char async_probe_drv_names[ASYNC_DRV_NAMES_MAX_LEN];
+#घोषणा ASYNC_DRV_NAMES_MAX_LEN	256
+अटल अक्षर async_probe_drv_names[ASYNC_DRV_NAMES_MAX_LEN];
 
 /*
- * In some cases, like suspend to RAM or hibernation, It might be reasonable
+ * In some हालs, like suspend to RAM or hibernation, It might be reasonable
  * to prohibit probing of devices as it could be unsafe.
- * Once defer_all_probes is true all drivers probes will be forcibly deferred.
+ * Once defer_all_probes is true all drivers probes will be क्रमcibly deferred.
  */
-static bool defer_all_probes;
+अटल bool defer_all_probes;
 
-static void __device_set_deferred_probe_reason(const struct device *dev, char *reason)
-{
-	kfree(dev->p->deferred_probe_reason);
+अटल व्योम __device_set_deferred_probe_reason(स्थिर काष्ठा device *dev, अक्षर *reason)
+अणु
+	kमुक्त(dev->p->deferred_probe_reason);
 	dev->p->deferred_probe_reason = reason;
-}
+पूर्ण
 
 /*
  * deferred_probe_work_func() - Retry probing devices in the active list.
  */
-static void deferred_probe_work_func(struct work_struct *work)
-{
-	struct device *dev;
-	struct device_private *private;
+अटल व्योम deferred_probe_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा device *dev;
+	काष्ठा device_निजी *निजी;
 	/*
 	 * This block processes every device in the deferred 'active' list.
-	 * Each device is removed from the active list and passed to
-	 * bus_probe_device() to re-attempt the probe.  The loop continues
-	 * until every device in the active list is removed and retried.
+	 * Each device is हटाओd from the active list and passed to
+	 * bus_probe_device() to re-attempt the probe.  The loop जारीs
+	 * until every device in the active list is हटाओd and retried.
 	 *
-	 * Note: Once the device is removed from the list and the mutex is
-	 * released, it is possible for the device get freed by another thread
-	 * and cause a illegal pointer dereference.  This code uses
-	 * get/put_device() to ensure the device structure cannot disappear
+	 * Note: Once the device is हटाओd from the list and the mutex is
+	 * released, it is possible क्रम the device get मुक्तd by another thपढ़ो
+	 * and cause a illegal poपूर्णांकer dereference.  This code uses
+	 * get/put_device() to ensure the device काष्ठाure cannot disappear
 	 * from under our feet.
 	 */
 	mutex_lock(&deferred_probe_mutex);
-	while (!list_empty(&deferred_probe_active_list)) {
-		private = list_first_entry(&deferred_probe_active_list,
+	जबतक (!list_empty(&deferred_probe_active_list)) अणु
+		निजी = list_first_entry(&deferred_probe_active_list,
 					typeof(*dev->p), deferred_probe);
-		dev = private->device;
-		list_del_init(&private->deferred_probe);
+		dev = निजी->device;
+		list_del_init(&निजी->deferred_probe);
 
 		get_device(dev);
 
-		__device_set_deferred_probe_reason(dev, NULL);
+		__device_set_deferred_probe_reason(dev, शून्य);
 
 		/*
-		 * Drop the mutex while probing each device; the probe path may
+		 * Drop the mutex जबतक probing each device; the probe path may
 		 * manipulate the deferred list
 		 */
 		mutex_unlock(&deferred_probe_mutex);
@@ -113,7 +114,7 @@ static void deferred_probe_work_func(struct work_struct *work)
 		/*
 		 * Force the device to the end of the dpm_list since
 		 * the PM code assumes that the order we add things to
-		 * the list is a good order for suspend but deferred
+		 * the list is a good order क्रम suspend but deferred
 		 * probe makes that very unsafe.
 		 */
 		device_pm_move_to_tail(dev);
@@ -123,63 +124,63 @@ static void deferred_probe_work_func(struct work_struct *work)
 		mutex_lock(&deferred_probe_mutex);
 
 		put_device(dev);
-	}
+	पूर्ण
 	mutex_unlock(&deferred_probe_mutex);
-}
-static DECLARE_WORK(deferred_probe_work, deferred_probe_work_func);
+पूर्ण
+अटल DECLARE_WORK(deferred_probe_work, deferred_probe_work_func);
 
-void driver_deferred_probe_add(struct device *dev)
-{
-	if (!dev->can_match)
-		return;
+व्योम driver_deferred_probe_add(काष्ठा device *dev)
+अणु
+	अगर (!dev->can_match)
+		वापस;
 
 	mutex_lock(&deferred_probe_mutex);
-	if (list_empty(&dev->p->deferred_probe)) {
+	अगर (list_empty(&dev->p->deferred_probe)) अणु
 		dev_dbg(dev, "Added to deferred list\n");
 		list_add_tail(&dev->p->deferred_probe, &deferred_probe_pending_list);
-	}
+	पूर्ण
 	mutex_unlock(&deferred_probe_mutex);
-}
+पूर्ण
 
-void driver_deferred_probe_del(struct device *dev)
-{
+व्योम driver_deferred_probe_del(काष्ठा device *dev)
+अणु
 	mutex_lock(&deferred_probe_mutex);
-	if (!list_empty(&dev->p->deferred_probe)) {
+	अगर (!list_empty(&dev->p->deferred_probe)) अणु
 		dev_dbg(dev, "Removed from deferred list\n");
 		list_del_init(&dev->p->deferred_probe);
-		__device_set_deferred_probe_reason(dev, NULL);
-	}
+		__device_set_deferred_probe_reason(dev, शून्य);
+	पूर्ण
 	mutex_unlock(&deferred_probe_mutex);
-}
+पूर्ण
 
-static bool driver_deferred_probe_enable = false;
+अटल bool driver_deferred_probe_enable = false;
 /**
  * driver_deferred_probe_trigger() - Kick off re-probing deferred devices
  *
  * This functions moves all devices from the pending list to the active
  * list and schedules the deferred probe workqueue to process them.  It
- * should be called anytime a driver is successfully bound to a device.
+ * should be called anyसमय a driver is successfully bound to a device.
  *
- * Note, there is a race condition in multi-threaded probe. In the case where
- * more than one device is probing at the same time, it is possible for one
- * probe to complete successfully while another is about to defer. If the second
+ * Note, there is a race condition in multi-thपढ़ोed probe. In the हाल where
+ * more than one device is probing at the same समय, it is possible क्रम one
+ * probe to complete successfully जबतक another is about to defer. If the second
  * depends on the first, then it will get put on the pending list after the
- * trigger event has already occurred and will be stuck there.
+ * trigger event has alपढ़ोy occurred and will be stuck there.
  *
- * The atomic 'deferred_trigger_count' is used to determine if a successful
+ * The atomic 'deferred_trigger_count' is used to determine अगर a successful
  * trigger has occurred in the midst of probing a driver. If the trigger count
  * changes in the midst of a probe, then deferred processing should be triggered
  * again.
  */
-static void driver_deferred_probe_trigger(void)
-{
-	if (!driver_deferred_probe_enable)
-		return;
+अटल व्योम driver_deferred_probe_trigger(व्योम)
+अणु
+	अगर (!driver_deferred_probe_enable)
+		वापस;
 
 	/*
 	 * A successful probe means that all the devices in the pending list
 	 * should be triggered to be reprobed.  Move all the deferred devices
-	 * into the active list so they can be retried by the workqueue
+	 * पूर्णांकo the active list so they can be retried by the workqueue
 	 */
 	mutex_lock(&deferred_probe_mutex);
 	atomic_inc(&deferred_trigger_count);
@@ -188,23 +189,23 @@ static void driver_deferred_probe_trigger(void)
 	mutex_unlock(&deferred_probe_mutex);
 
 	/*
-	 * Kick the re-probe thread.  It may already be scheduled, but it is
+	 * Kick the re-probe thपढ़ो.  It may alपढ़ोy be scheduled, but it is
 	 * safe to kick it again.
 	 */
-	queue_work(system_unbound_wq, &deferred_probe_work);
-}
+	queue_work(प्रणाली_unbound_wq, &deferred_probe_work);
+पूर्ण
 
 /**
  * device_block_probing() - Block/defer device's probes
  *
  *	It will disable probing of devices and defer their probes instead.
  */
-void device_block_probing(void)
-{
+व्योम device_block_probing(व्योम)
+अणु
 	defer_all_probes = true;
-	/* sync with probes to avoid races. */
-	wait_for_device_probe();
-}
+	/* sync with probes to aव्योम races. */
+	रुको_क्रम_device_probe();
+पूर्ण
 
 /**
  * device_unblock_probing() - Unblock/enable device's probes
@@ -212,172 +213,172 @@ void device_block_probing(void)
  *	It will restore normal behavior and trigger re-probing of deferred
  * devices.
  */
-void device_unblock_probing(void)
-{
+व्योम device_unblock_probing(व्योम)
+अणु
 	defer_all_probes = false;
 	driver_deferred_probe_trigger();
-}
+पूर्ण
 
 /**
- * device_set_deferred_probe_reason() - Set defer probe reason message for device
- * @dev: the pointer to the struct device
- * @vaf: the pointer to va_format structure with message
+ * device_set_deferred_probe_reason() - Set defer probe reason message क्रम device
+ * @dev: the poपूर्णांकer to the काष्ठा device
+ * @vaf: the poपूर्णांकer to va_क्रमmat काष्ठाure with message
  */
-void device_set_deferred_probe_reason(const struct device *dev, struct va_format *vaf)
-{
-	const char *drv = dev_driver_string(dev);
-	char *reason;
+व्योम device_set_deferred_probe_reason(स्थिर काष्ठा device *dev, काष्ठा va_क्रमmat *vaf)
+अणु
+	स्थिर अक्षर *drv = dev_driver_string(dev);
+	अक्षर *reason;
 
 	mutex_lock(&deferred_probe_mutex);
 
-	reason = kasprintf(GFP_KERNEL, "%s: %pV", drv, vaf);
+	reason = kaप्र_लिखो(GFP_KERNEL, "%s: %pV", drv, vaf);
 	__device_set_deferred_probe_reason(dev, reason);
 
 	mutex_unlock(&deferred_probe_mutex);
-}
+पूर्ण
 
 /*
  * deferred_devs_show() - Show the devices in the deferred probe pending list.
  */
-static int deferred_devs_show(struct seq_file *s, void *data)
-{
-	struct device_private *curr;
+अटल पूर्णांक deferred_devs_show(काष्ठा seq_file *s, व्योम *data)
+अणु
+	काष्ठा device_निजी *curr;
 
 	mutex_lock(&deferred_probe_mutex);
 
-	list_for_each_entry(curr, &deferred_probe_pending_list, deferred_probe)
-		seq_printf(s, "%s\t%s", dev_name(curr->device),
+	list_क्रम_each_entry(curr, &deferred_probe_pending_list, deferred_probe)
+		seq_म_लिखो(s, "%s\t%s", dev_name(curr->device),
 			   curr->device->p->deferred_probe_reason ?: "\n");
 
 	mutex_unlock(&deferred_probe_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 DEFINE_SHOW_ATTRIBUTE(deferred_devs);
 
-int driver_deferred_probe_timeout;
-EXPORT_SYMBOL_GPL(driver_deferred_probe_timeout);
-static DECLARE_WAIT_QUEUE_HEAD(probe_timeout_waitqueue);
+पूर्णांक driver_deferred_probe_समयout;
+EXPORT_SYMBOL_GPL(driver_deferred_probe_समयout);
+अटल DECLARE_WAIT_QUEUE_HEAD(probe_समयout_रुकोqueue);
 
-static int __init deferred_probe_timeout_setup(char *str)
-{
-	int timeout;
+अटल पूर्णांक __init deferred_probe_समयout_setup(अक्षर *str)
+अणु
+	पूर्णांक समयout;
 
-	if (!kstrtoint(str, 10, &timeout))
-		driver_deferred_probe_timeout = timeout;
-	return 1;
-}
-__setup("deferred_probe_timeout=", deferred_probe_timeout_setup);
+	अगर (!kstrtoपूर्णांक(str, 10, &समयout))
+		driver_deferred_probe_समयout = समयout;
+	वापस 1;
+पूर्ण
+__setup("deferred_probe_timeout=", deferred_probe_समयout_setup);
 
 /**
  * driver_deferred_probe_check_state() - Check deferred probe state
  * @dev: device to check
  *
  * Return:
- * -ENODEV if initcalls have completed and modules are disabled.
- * -ETIMEDOUT if the deferred probe timeout was set and has expired
+ * -ENODEV अगर initcalls have completed and modules are disabled.
+ * -ETIMEDOUT अगर the deferred probe समयout was set and has expired
  *  and modules are enabled.
- * -EPROBE_DEFER in other cases.
+ * -EPROBE_DEFER in other हालs.
  *
- * Drivers or subsystems can opt-in to calling this function instead of directly
- * returning -EPROBE_DEFER.
+ * Drivers or subप्रणालीs can opt-in to calling this function instead of directly
+ * वापसing -EPROBE_DEFER.
  */
-int driver_deferred_probe_check_state(struct device *dev)
-{
-	if (!IS_ENABLED(CONFIG_MODULES) && initcalls_done) {
+पूर्णांक driver_deferred_probe_check_state(काष्ठा device *dev)
+अणु
+	अगर (!IS_ENABLED(CONFIG_MODULES) && initcalls_करोne) अणु
 		dev_warn(dev, "ignoring dependency for device, assuming no driver\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!driver_deferred_probe_timeout && initcalls_done) {
+	अगर (!driver_deferred_probe_समयout && initcalls_करोne) अणु
 		dev_warn(dev, "deferred probe timeout, ignoring dependency\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return -EPROBE_DEFER;
-}
+	वापस -EPROBE_DEFER;
+पूर्ण
 
-static void deferred_probe_timeout_work_func(struct work_struct *work)
-{
-	struct device_private *p;
+अटल व्योम deferred_probe_समयout_work_func(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा device_निजी *p;
 
-	fw_devlink_drivers_done();
+	fw_devlink_drivers_करोne();
 
-	driver_deferred_probe_timeout = 0;
+	driver_deferred_probe_समयout = 0;
 	driver_deferred_probe_trigger();
 	flush_work(&deferred_probe_work);
 
 	mutex_lock(&deferred_probe_mutex);
-	list_for_each_entry(p, &deferred_probe_pending_list, deferred_probe)
+	list_क्रम_each_entry(p, &deferred_probe_pending_list, deferred_probe)
 		dev_info(p->device, "deferred probe pending\n");
 	mutex_unlock(&deferred_probe_mutex);
-	wake_up_all(&probe_timeout_waitqueue);
-}
-static DECLARE_DELAYED_WORK(deferred_probe_timeout_work, deferred_probe_timeout_work_func);
+	wake_up_all(&probe_समयout_रुकोqueue);
+पूर्ण
+अटल DECLARE_DELAYED_WORK(deferred_probe_समयout_work, deferred_probe_समयout_work_func);
 
 /**
  * deferred_probe_initcall() - Enable probing of deferred devices
  *
- * We don't want to get in the way when the bulk of drivers are getting probed.
+ * We करोn't want to get in the way when the bulk of drivers are getting probed.
  * Instead, this initcall makes sure that deferred probing is delayed until
- * late_initcall time.
+ * late_initcall समय.
  */
-static int deferred_probe_initcall(void)
-{
-	debugfs_create_file("devices_deferred", 0444, NULL, NULL,
+अटल पूर्णांक deferred_probe_initcall(व्योम)
+अणु
+	debugfs_create_file("devices_deferred", 0444, शून्य, शून्य,
 			    &deferred_devs_fops);
 
 	driver_deferred_probe_enable = true;
 	driver_deferred_probe_trigger();
-	/* Sort as many dependencies as possible before exiting initcalls */
+	/* Sort as many dependencies as possible beक्रमe निकासing initcalls */
 	flush_work(&deferred_probe_work);
-	initcalls_done = true;
+	initcalls_करोne = true;
 
-	if (!IS_ENABLED(CONFIG_MODULES))
-		fw_devlink_drivers_done();
+	अगर (!IS_ENABLED(CONFIG_MODULES))
+		fw_devlink_drivers_करोne();
 
 	/*
-	 * Trigger deferred probe again, this time we won't defer anything
+	 * Trigger deferred probe again, this समय we won't defer anything
 	 * that is optional
 	 */
 	driver_deferred_probe_trigger();
 	flush_work(&deferred_probe_work);
 
-	if (driver_deferred_probe_timeout > 0) {
-		schedule_delayed_work(&deferred_probe_timeout_work,
-			driver_deferred_probe_timeout * HZ);
-	}
-	return 0;
-}
+	अगर (driver_deferred_probe_समयout > 0) अणु
+		schedule_delayed_work(&deferred_probe_समयout_work,
+			driver_deferred_probe_समयout * HZ);
+	पूर्ण
+	वापस 0;
+पूर्ण
 late_initcall(deferred_probe_initcall);
 
-static void __exit deferred_probe_exit(void)
-{
-	debugfs_remove_recursive(debugfs_lookup("devices_deferred", NULL));
-}
-__exitcall(deferred_probe_exit);
+अटल व्योम __निकास deferred_probe_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(debugfs_lookup("devices_deferred", शून्य));
+पूर्ण
+__निकासcall(deferred_probe_निकास);
 
 /**
- * device_is_bound() - Check if device is bound to a driver
+ * device_is_bound() - Check अगर device is bound to a driver
  * @dev: device to check
  *
- * Returns true if passed device has already finished probing successfully
+ * Returns true अगर passed device has alपढ़ोy finished probing successfully
  * against a driver.
  *
  * This function must be called with the device lock held.
  */
-bool device_is_bound(struct device *dev)
-{
-	return dev->p && klist_node_attached(&dev->p->knode_driver);
-}
+bool device_is_bound(काष्ठा device *dev)
+अणु
+	वापस dev->p && klist_node_attached(&dev->p->knode_driver);
+पूर्ण
 
-static void driver_bound(struct device *dev)
-{
-	if (device_is_bound(dev)) {
+अटल व्योम driver_bound(काष्ठा device *dev)
+अणु
+	अगर (device_is_bound(dev)) अणु
 		pr_warn("%s: device %s already bound\n",
 			__func__, kobject_name(&dev->kobj));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	pr_debug("driver: '%s': %s: bound to device '%s'\n", dev->driver->name,
 		 __func__, dev_name(dev));
@@ -388,559 +389,559 @@ static void driver_bound(struct device *dev)
 	device_pm_check_callbacks(dev);
 
 	/*
-	 * Make sure the device is no longer in one of the deferred lists and
+	 * Make sure the device is no दीर्घer in one of the deferred lists and
 	 * kick off retrying all pending devices
 	 */
 	driver_deferred_probe_del(dev);
 	driver_deferred_probe_trigger();
 
-	if (dev->bus)
-		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+	अगर (dev->bus)
+		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 					     BUS_NOTIFY_BOUND_DRIVER, dev);
 
 	kobject_uevent(&dev->kobj, KOBJ_BIND);
-}
+पूर्ण
 
-static ssize_t coredump_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
+अटल sमाप_प्रकार coredump_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	device_lock(dev);
 	dev->driver->coredump(dev);
 	device_unlock(dev);
 
-	return count;
-}
-static DEVICE_ATTR_WO(coredump);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(coredump);
 
-static int driver_sysfs_add(struct device *dev)
-{
-	int ret;
+अटल पूर्णांक driver_sysfs_add(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (dev->bus)
-		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+	अगर (dev->bus)
+		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 					     BUS_NOTIFY_BIND_DRIVER, dev);
 
 	ret = sysfs_create_link(&dev->driver->p->kobj, &dev->kobj,
 				kobject_name(&dev->kobj));
-	if (ret)
-		goto fail;
+	अगर (ret)
+		जाओ fail;
 
 	ret = sysfs_create_link(&dev->kobj, &dev->driver->p->kobj,
 				"driver");
-	if (ret)
-		goto rm_dev;
+	अगर (ret)
+		जाओ rm_dev;
 
-	if (!IS_ENABLED(CONFIG_DEV_COREDUMP) || !dev->driver->coredump)
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_DEV_COREDUMP) || !dev->driver->coredump)
+		वापस 0;
 
 	ret = device_create_file(dev, &dev_attr_coredump);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-	sysfs_remove_link(&dev->kobj, "driver");
+	sysfs_हटाओ_link(&dev->kobj, "driver");
 
 rm_dev:
-	sysfs_remove_link(&dev->driver->p->kobj,
+	sysfs_हटाओ_link(&dev->driver->p->kobj,
 			  kobject_name(&dev->kobj));
 
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void driver_sysfs_remove(struct device *dev)
-{
-	struct device_driver *drv = dev->driver;
+अटल व्योम driver_sysfs_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा device_driver *drv = dev->driver;
 
-	if (drv) {
-		if (drv->coredump)
-			device_remove_file(dev, &dev_attr_coredump);
-		sysfs_remove_link(&drv->p->kobj, kobject_name(&dev->kobj));
-		sysfs_remove_link(&dev->kobj, "driver");
-	}
-}
+	अगर (drv) अणु
+		अगर (drv->coredump)
+			device_हटाओ_file(dev, &dev_attr_coredump);
+		sysfs_हटाओ_link(&drv->p->kobj, kobject_name(&dev->kobj));
+		sysfs_हटाओ_link(&dev->kobj, "driver");
+	पूर्ण
+पूर्ण
 
 /**
  * device_bind_driver - bind a driver to one device.
  * @dev: device.
  *
  * Allow manual attachment of a driver to a device.
- * Caller must have already set @dev->driver.
+ * Caller must have alपढ़ोy set @dev->driver.
  *
- * Note that this does not modify the bus reference count.
- * Please verify that is accounted for before calling this.
- * (It is ok to call with no other effort from a driver's probe() method.)
+ * Note that this करोes not modअगरy the bus reference count.
+ * Please verअगरy that is accounted क्रम beक्रमe calling this.
+ * (It is ok to call with no other efक्रमt from a driver's probe() method.)
  *
  * This function must be called with the device lock held.
  */
-int device_bind_driver(struct device *dev)
-{
-	int ret;
+पूर्णांक device_bind_driver(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = driver_sysfs_add(dev);
-	if (!ret) {
-		device_links_force_bind(dev);
+	अगर (!ret) अणु
+		device_links_क्रमce_bind(dev);
 		driver_bound(dev);
-	}
-	else if (dev->bus)
-		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+	पूर्ण
+	अन्यथा अगर (dev->bus)
+		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 					     BUS_NOTIFY_DRIVER_NOT_BOUND, dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(device_bind_driver);
 
-static atomic_t probe_count = ATOMIC_INIT(0);
-static DECLARE_WAIT_QUEUE_HEAD(probe_waitqueue);
+अटल atomic_t probe_count = ATOMIC_INIT(0);
+अटल DECLARE_WAIT_QUEUE_HEAD(probe_रुकोqueue);
 
-static void driver_deferred_probe_add_trigger(struct device *dev,
-					      int local_trigger_count)
-{
+अटल व्योम driver_deferred_probe_add_trigger(काष्ठा device *dev,
+					      पूर्णांक local_trigger_count)
+अणु
 	driver_deferred_probe_add(dev);
-	/* Did a trigger occur while probing? Need to re-trigger if yes */
-	if (local_trigger_count != atomic_read(&deferred_trigger_count))
+	/* Did a trigger occur जबतक probing? Need to re-trigger अगर yes */
+	अगर (local_trigger_count != atomic_पढ़ो(&deferred_trigger_count))
 		driver_deferred_probe_trigger();
-}
+पूर्ण
 
-static ssize_t state_synced_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार state_synced_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	bool val;
 
 	device_lock(dev);
 	val = dev->state_synced;
 	device_unlock(dev);
 
-	return sysfs_emit(buf, "%u\n", val);
-}
-static DEVICE_ATTR_RO(state_synced);
+	वापस sysfs_emit(buf, "%u\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RO(state_synced);
 
-static int really_probe(struct device *dev, struct device_driver *drv)
-{
-	int ret = -EPROBE_DEFER;
-	int local_trigger_count = atomic_read(&deferred_trigger_count);
-	bool test_remove = IS_ENABLED(CONFIG_DEBUG_TEST_DRIVER_REMOVE) &&
+अटल पूर्णांक really_probe(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	पूर्णांक ret = -EPROBE_DEFER;
+	पूर्णांक local_trigger_count = atomic_पढ़ो(&deferred_trigger_count);
+	bool test_हटाओ = IS_ENABLED(CONFIG_DEBUG_TEST_DRIVER_REMOVE) &&
 			   !drv->suppress_bind_attrs;
 
-	if (defer_all_probes) {
+	अगर (defer_all_probes) अणु
 		/*
 		 * Value of defer_all_probes can be set only by
 		 * device_block_probing() which, in turn, will call
-		 * wait_for_device_probe() right after that to avoid any races.
+		 * रुको_क्रम_device_probe() right after that to aव्योम any races.
 		 */
 		dev_dbg(dev, "Driver %s force probe deferral\n", drv->name);
 		driver_deferred_probe_add(dev);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = device_links_check_suppliers(dev);
-	if (ret == -EPROBE_DEFER)
+	अगर (ret == -EPROBE_DEFER)
 		driver_deferred_probe_add_trigger(dev, local_trigger_count);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	atomic_inc(&probe_count);
 	pr_debug("bus: '%s': %s: probing driver %s with device %s\n",
 		 drv->bus->name, __func__, drv->name, dev_name(dev));
-	if (!list_empty(&dev->devres_head)) {
+	अगर (!list_empty(&dev->devres_head)) अणु
 		dev_crit(dev, "Resources present before probing\n");
 		ret = -EBUSY;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 re_probe:
 	dev->driver = drv;
 
-	/* If using pinctrl, bind pins now before probing */
+	/* If using pinctrl, bind pins now beक्रमe probing */
 	ret = pinctrl_bind_pins(dev);
-	if (ret)
-		goto pinctrl_bind_failed;
+	अगर (ret)
+		जाओ pinctrl_bind_failed;
 
-	if (dev->bus->dma_configure) {
+	अगर (dev->bus->dma_configure) अणु
 		ret = dev->bus->dma_configure(dev);
-		if (ret)
-			goto probe_failed;
-	}
+		अगर (ret)
+			जाओ probe_failed;
+	पूर्ण
 
-	if (driver_sysfs_add(dev)) {
+	अगर (driver_sysfs_add(dev)) अणु
 		pr_err("%s: driver_sysfs_add(%s) failed\n",
 		       __func__, dev_name(dev));
-		goto probe_failed;
-	}
+		जाओ probe_failed;
+	पूर्ण
 
-	if (dev->pm_domain && dev->pm_domain->activate) {
-		ret = dev->pm_domain->activate(dev);
-		if (ret)
-			goto probe_failed;
-	}
+	अगर (dev->pm_करोमुख्य && dev->pm_करोमुख्य->activate) अणु
+		ret = dev->pm_करोमुख्य->activate(dev);
+		अगर (ret)
+			जाओ probe_failed;
+	पूर्ण
 
-	if (dev->bus->probe) {
+	अगर (dev->bus->probe) अणु
 		ret = dev->bus->probe(dev);
-		if (ret)
-			goto probe_failed;
-	} else if (drv->probe) {
+		अगर (ret)
+			जाओ probe_failed;
+	पूर्ण अन्यथा अगर (drv->probe) अणु
 		ret = drv->probe(dev);
-		if (ret)
-			goto probe_failed;
-	}
+		अगर (ret)
+			जाओ probe_failed;
+	पूर्ण
 
-	if (device_add_groups(dev, drv->dev_groups)) {
+	अगर (device_add_groups(dev, drv->dev_groups)) अणु
 		dev_err(dev, "device_add_groups() failed\n");
-		goto dev_groups_failed;
-	}
+		जाओ dev_groups_failed;
+	पूर्ण
 
-	if (dev_has_sync_state(dev) &&
-	    device_create_file(dev, &dev_attr_state_synced)) {
+	अगर (dev_has_sync_state(dev) &&
+	    device_create_file(dev, &dev_attr_state_synced)) अणु
 		dev_err(dev, "state_synced sysfs add failed\n");
-		goto dev_sysfs_state_synced_failed;
-	}
+		जाओ dev_sysfs_state_synced_failed;
+	पूर्ण
 
-	if (test_remove) {
-		test_remove = false;
+	अगर (test_हटाओ) अणु
+		test_हटाओ = false;
 
-		device_remove_file(dev, &dev_attr_state_synced);
-		device_remove_groups(dev, drv->dev_groups);
+		device_हटाओ_file(dev, &dev_attr_state_synced);
+		device_हटाओ_groups(dev, drv->dev_groups);
 
-		if (dev->bus->remove)
-			dev->bus->remove(dev);
-		else if (drv->remove)
-			drv->remove(dev);
+		अगर (dev->bus->हटाओ)
+			dev->bus->हटाओ(dev);
+		अन्यथा अगर (drv->हटाओ)
+			drv->हटाओ(dev);
 
 		devres_release_all(dev);
-		driver_sysfs_remove(dev);
-		dev->driver = NULL;
-		dev_set_drvdata(dev, NULL);
-		if (dev->pm_domain && dev->pm_domain->dismiss)
-			dev->pm_domain->dismiss(dev);
-		pm_runtime_reinit(dev);
+		driver_sysfs_हटाओ(dev);
+		dev->driver = शून्य;
+		dev_set_drvdata(dev, शून्य);
+		अगर (dev->pm_करोमुख्य && dev->pm_करोमुख्य->dismiss)
+			dev->pm_करोमुख्य->dismiss(dev);
+		pm_runसमय_reinit(dev);
 
-		goto re_probe;
-	}
+		जाओ re_probe;
+	पूर्ण
 
-	pinctrl_init_done(dev);
+	pinctrl_init_करोne(dev);
 
-	if (dev->pm_domain && dev->pm_domain->sync)
-		dev->pm_domain->sync(dev);
+	अगर (dev->pm_करोमुख्य && dev->pm_करोमुख्य->sync)
+		dev->pm_करोमुख्य->sync(dev);
 
 	driver_bound(dev);
 	ret = 1;
 	pr_debug("bus: '%s': %s: bound device %s to driver %s\n",
 		 drv->bus->name, __func__, dev_name(dev), drv->name);
-	goto done;
+	जाओ करोne;
 
 dev_sysfs_state_synced_failed:
-	device_remove_groups(dev, drv->dev_groups);
+	device_हटाओ_groups(dev, drv->dev_groups);
 dev_groups_failed:
-	if (dev->bus->remove)
-		dev->bus->remove(dev);
-	else if (drv->remove)
-		drv->remove(dev);
+	अगर (dev->bus->हटाओ)
+		dev->bus->हटाओ(dev);
+	अन्यथा अगर (drv->हटाओ)
+		drv->हटाओ(dev);
 probe_failed:
-	kfree(dev->dma_range_map);
-	dev->dma_range_map = NULL;
-	if (dev->bus)
-		blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+	kमुक्त(dev->dma_range_map);
+	dev->dma_range_map = शून्य;
+	अगर (dev->bus)
+		blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 					     BUS_NOTIFY_DRIVER_NOT_BOUND, dev);
 pinctrl_bind_failed:
 	device_links_no_driver(dev);
 	devres_release_all(dev);
-	arch_teardown_dma_ops(dev);
-	driver_sysfs_remove(dev);
-	dev->driver = NULL;
-	dev_set_drvdata(dev, NULL);
-	if (dev->pm_domain && dev->pm_domain->dismiss)
-		dev->pm_domain->dismiss(dev);
-	pm_runtime_reinit(dev);
+	arch_tearकरोwn_dma_ops(dev);
+	driver_sysfs_हटाओ(dev);
+	dev->driver = शून्य;
+	dev_set_drvdata(dev, शून्य);
+	अगर (dev->pm_करोमुख्य && dev->pm_करोमुख्य->dismiss)
+		dev->pm_करोमुख्य->dismiss(dev);
+	pm_runसमय_reinit(dev);
 	dev_pm_set_driver_flags(dev, 0);
 
-	switch (ret) {
-	case -EPROBE_DEFER:
+	चयन (ret) अणु
+	हाल -EPROBE_DEFER:
 		/* Driver requested deferred probing */
 		dev_dbg(dev, "Driver %s requests probe deferral\n", drv->name);
 		driver_deferred_probe_add_trigger(dev, local_trigger_count);
-		break;
-	case -ENODEV:
-	case -ENXIO:
+		अवरोध;
+	हाल -ENODEV:
+	हाल -ENXIO:
 		pr_debug("%s: probe of %s rejects match %d\n",
 			 drv->name, dev_name(dev), ret);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* driver matched but the probe failed */
 		pr_warn("%s: probe of %s failed with error %d\n",
 			drv->name, dev_name(dev), ret);
-	}
+	पूर्ण
 	/*
-	 * Ignore errors returned by ->probe so that the next driver can try
+	 * Ignore errors वापसed by ->probe so that the next driver can try
 	 * its luck.
 	 */
 	ret = 0;
-done:
+करोne:
 	atomic_dec(&probe_count);
-	wake_up_all(&probe_waitqueue);
-	return ret;
-}
+	wake_up_all(&probe_रुकोqueue);
+	वापस ret;
+पूर्ण
 
 /*
- * For initcall_debug, show the driver probe time.
+ * For initcall_debug, show the driver probe समय.
  */
-static int really_probe_debug(struct device *dev, struct device_driver *drv)
-{
-	ktime_t calltime, rettime;
-	int ret;
+अटल पूर्णांक really_probe_debug(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	kसमय_प्रकार callसमय, retसमय;
+	पूर्णांक ret;
 
-	calltime = ktime_get();
+	callसमय = kसमय_get();
 	ret = really_probe(dev, drv);
-	rettime = ktime_get();
+	retसमय = kसमय_get();
 	pr_debug("probe of %s returned %d after %lld usecs\n",
-		 dev_name(dev), ret, ktime_us_delta(rettime, calltime));
-	return ret;
-}
+		 dev_name(dev), ret, kसमय_us_delta(retसमय, callसमय));
+	वापस ret;
+पूर्ण
 
 /**
- * driver_probe_done
- * Determine if the probe sequence is finished or not.
+ * driver_probe_करोne
+ * Determine अगर the probe sequence is finished or not.
  *
  * Should somehow figure out how to use a semaphore, not an atomic variable...
  */
-int driver_probe_done(void)
-{
-	int local_probe_count = atomic_read(&probe_count);
+पूर्णांक driver_probe_करोne(व्योम)
+अणु
+	पूर्णांक local_probe_count = atomic_पढ़ो(&probe_count);
 
 	pr_debug("%s: probe_count = %d\n", __func__, local_probe_count);
-	if (local_probe_count)
-		return -EBUSY;
-	return 0;
-}
+	अगर (local_probe_count)
+		वापस -EBUSY;
+	वापस 0;
+पूर्ण
 
 /**
- * wait_for_device_probe
- * Wait for device probing to be completed.
+ * रुको_क्रम_device_probe
+ * Wait क्रम device probing to be completed.
  */
-void wait_for_device_probe(void)
-{
-	/* wait for probe timeout */
-	wait_event(probe_timeout_waitqueue, !driver_deferred_probe_timeout);
+व्योम रुको_क्रम_device_probe(व्योम)
+अणु
+	/* रुको क्रम probe समयout */
+	रुको_event(probe_समयout_रुकोqueue, !driver_deferred_probe_समयout);
 
-	/* wait for the deferred probe workqueue to finish */
+	/* रुको क्रम the deferred probe workqueue to finish */
 	flush_work(&deferred_probe_work);
 
-	/* wait for the known devices to complete their probing */
-	wait_event(probe_waitqueue, atomic_read(&probe_count) == 0);
+	/* रुको क्रम the known devices to complete their probing */
+	रुको_event(probe_रुकोqueue, atomic_पढ़ो(&probe_count) == 0);
 	async_synchronize_full();
-}
-EXPORT_SYMBOL_GPL(wait_for_device_probe);
+पूर्ण
+EXPORT_SYMBOL_GPL(रुको_क्रम_device_probe);
 
 /**
  * driver_probe_device - attempt to bind device & driver together
  * @drv: driver to bind a device to
  * @dev: device to try to bind to the driver
  *
- * This function returns -ENODEV if the device is not registered,
- * 1 if the device is bound successfully and 0 otherwise.
+ * This function वापसs -ENODEV अगर the device is not रेजिस्टरed,
+ * 1 अगर the device is bound successfully and 0 otherwise.
  *
- * This function must be called with @dev lock held.  When called for a
- * USB interface, @dev->parent lock must be held as well.
+ * This function must be called with @dev lock held.  When called क्रम a
+ * USB पूर्णांकerface, @dev->parent lock must be held as well.
  *
- * If the device has a parent, runtime-resume the parent before driver probing.
+ * If the device has a parent, runसमय-resume the parent beक्रमe driver probing.
  */
-static int driver_probe_device(struct device_driver *drv, struct device *dev)
-{
-	int ret = 0;
+अटल पूर्णांक driver_probe_device(काष्ठा device_driver *drv, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!device_is_registered(dev))
-		return -ENODEV;
+	अगर (!device_is_रेजिस्टरed(dev))
+		वापस -ENODEV;
 
 	dev->can_match = true;
 	pr_debug("bus: '%s': %s: matched device %s with driver %s\n",
 		 drv->bus->name, __func__, dev_name(dev), drv->name);
 
-	pm_runtime_get_suppliers(dev);
-	if (dev->parent)
-		pm_runtime_get_sync(dev->parent);
+	pm_runसमय_get_suppliers(dev);
+	अगर (dev->parent)
+		pm_runसमय_get_sync(dev->parent);
 
-	pm_runtime_barrier(dev);
-	if (initcall_debug)
+	pm_runसमय_barrier(dev);
+	अगर (initcall_debug)
 		ret = really_probe_debug(dev, drv);
-	else
+	अन्यथा
 		ret = really_probe(dev, drv);
 	pm_request_idle(dev);
 
-	if (dev->parent)
-		pm_runtime_put(dev->parent);
+	अगर (dev->parent)
+		pm_runसमय_put(dev->parent);
 
-	pm_runtime_put_suppliers(dev);
-	return ret;
-}
+	pm_runसमय_put_suppliers(dev);
+	वापस ret;
+पूर्ण
 
-static inline bool cmdline_requested_async_probing(const char *drv_name)
-{
-	return parse_option_str(async_probe_drv_names, drv_name);
-}
+अटल अंतरभूत bool cmdline_requested_async_probing(स्थिर अक्षर *drv_name)
+अणु
+	वापस parse_option_str(async_probe_drv_names, drv_name);
+पूर्ण
 
-/* The option format is "driver_async_probe=drv_name1,drv_name2,..." */
-static int __init save_async_options(char *buf)
-{
-	if (strlen(buf) >= ASYNC_DRV_NAMES_MAX_LEN)
+/* The option क्रमmat is "driver_async_probe=drv_name1,drv_name2,..." */
+अटल पूर्णांक __init save_async_options(अक्षर *buf)
+अणु
+	अगर (म_माप(buf) >= ASYNC_DRV_NAMES_MAX_LEN)
 		pr_warn("Too long list of driver names for 'driver_async_probe'!\n");
 
 	strlcpy(async_probe_drv_names, buf, ASYNC_DRV_NAMES_MAX_LEN);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 __setup("driver_async_probe=", save_async_options);
 
-bool driver_allows_async_probing(struct device_driver *drv)
-{
-	switch (drv->probe_type) {
-	case PROBE_PREFER_ASYNCHRONOUS:
-		return true;
+bool driver_allows_async_probing(काष्ठा device_driver *drv)
+अणु
+	चयन (drv->probe_type) अणु
+	हाल PROBE_PREFER_ASYNCHRONOUS:
+		वापस true;
 
-	case PROBE_FORCE_SYNCHRONOUS:
-		return false;
+	हाल PROBE_FORCE_SYNCHRONOUS:
+		वापस false;
 
-	default:
-		if (cmdline_requested_async_probing(drv->name))
-			return true;
+	शेष:
+		अगर (cmdline_requested_async_probing(drv->name))
+			वापस true;
 
-		if (module_requested_async_probing(drv->owner))
-			return true;
+		अगर (module_requested_async_probing(drv->owner))
+			वापस true;
 
-		return false;
-	}
-}
+		वापस false;
+	पूर्ण
+पूर्ण
 
-struct device_attach_data {
-	struct device *dev;
+काष्ठा device_attach_data अणु
+	काष्ठा device *dev;
 
 	/*
 	 * Indicates whether we are are considering asynchronous probing or
 	 * not. Only initial binding after device or driver registration
-	 * (including deferral processing) may be done asynchronously, the
-	 * rest is always synchronous, as we expect it is being done by
+	 * (including deferral processing) may be करोne asynchronously, the
+	 * rest is always synchronous, as we expect it is being करोne by
 	 * request from userspace.
 	 */
 	bool check_async;
 
 	/*
-	 * Indicates if we are binding synchronous or asynchronous drivers.
+	 * Indicates अगर we are binding synchronous or asynchronous drivers.
 	 * When asynchronous probing is enabled we'll execute 2 passes
-	 * over drivers: first pass doing synchronous probing and second
-	 * doing asynchronous probing (if synchronous did not succeed -
+	 * over drivers: first pass करोing synchronous probing and second
+	 * करोing asynchronous probing (अगर synchronous did not succeed -
 	 * most likely because there was no driver requiring synchronous
 	 * probing - and we found asynchronous driver during first pass).
-	 * The 2 passes are done because we can't shoot asynchronous
-	 * probe for given device and driver from bus_for_each_drv() since
-	 * driver pointer is not guaranteed to stay valid once
-	 * bus_for_each_drv() iterates to the next driver on the bus.
+	 * The 2 passes are करोne because we can't shoot asynchronous
+	 * probe क्रम given device and driver from bus_क्रम_each_drv() since
+	 * driver poपूर्णांकer is not guaranteed to stay valid once
+	 * bus_क्रम_each_drv() iterates to the next driver on the bus.
 	 */
 	bool want_async;
 
 	/*
-	 * We'll set have_async to 'true' if, while scanning for matching
+	 * We'll set have_async to 'true' अगर, जबतक scanning क्रम matching
 	 * driver, we'll encounter one that requests asynchronous probing.
 	 */
 	bool have_async;
-};
+पूर्ण;
 
-static int __device_attach_driver(struct device_driver *drv, void *_data)
-{
-	struct device_attach_data *data = _data;
-	struct device *dev = data->dev;
+अटल पूर्णांक __device_attach_driver(काष्ठा device_driver *drv, व्योम *_data)
+अणु
+	काष्ठा device_attach_data *data = _data;
+	काष्ठा device *dev = data->dev;
 	bool async_allowed;
-	int ret;
+	पूर्णांक ret;
 
 	ret = driver_match_device(drv, dev);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		/* no match */
-		return 0;
-	} else if (ret == -EPROBE_DEFER) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret == -EPROBE_DEFER) अणु
 		dev_dbg(dev, "Device match requests probe deferral\n");
 		dev->can_match = true;
 		driver_deferred_probe_add(dev);
-	} else if (ret < 0) {
+	पूर्ण अन्यथा अगर (ret < 0) अणु
 		dev_dbg(dev, "Bus failed to match device: %d\n", ret);
-		return ret;
-	} /* ret > 0 means positive match */
+		वापस ret;
+	पूर्ण /* ret > 0 means positive match */
 
 	async_allowed = driver_allows_async_probing(drv);
 
-	if (async_allowed)
+	अगर (async_allowed)
 		data->have_async = true;
 
-	if (data->check_async && async_allowed != data->want_async)
-		return 0;
+	अगर (data->check_async && async_allowed != data->want_async)
+		वापस 0;
 
-	return driver_probe_device(drv, dev);
-}
+	वापस driver_probe_device(drv, dev);
+पूर्ण
 
-static void __device_attach_async_helper(void *_dev, async_cookie_t cookie)
-{
-	struct device *dev = _dev;
-	struct device_attach_data data = {
+अटल व्योम __device_attach_async_helper(व्योम *_dev, async_cookie_t cookie)
+अणु
+	काष्ठा device *dev = _dev;
+	काष्ठा device_attach_data data = अणु
 		.dev		= dev,
 		.check_async	= true,
 		.want_async	= true,
-	};
+	पूर्ण;
 
 	device_lock(dev);
 
 	/*
-	 * Check if device has already been removed or claimed. This may
+	 * Check अगर device has alपढ़ोy been हटाओd or claimed. This may
 	 * happen with driver loading, device discovery/registration,
 	 * and deferred probe processing happens all at once with
-	 * multiple threads.
+	 * multiple thपढ़ोs.
 	 */
-	if (dev->p->dead || dev->driver)
-		goto out_unlock;
+	अगर (dev->p->dead || dev->driver)
+		जाओ out_unlock;
 
-	if (dev->parent)
-		pm_runtime_get_sync(dev->parent);
+	अगर (dev->parent)
+		pm_runसमय_get_sync(dev->parent);
 
-	bus_for_each_drv(dev->bus, NULL, &data, __device_attach_driver);
+	bus_क्रम_each_drv(dev->bus, शून्य, &data, __device_attach_driver);
 	dev_dbg(dev, "async probe completed\n");
 
 	pm_request_idle(dev);
 
-	if (dev->parent)
-		pm_runtime_put(dev->parent);
+	अगर (dev->parent)
+		pm_runसमय_put(dev->parent);
 out_unlock:
 	device_unlock(dev);
 
 	put_device(dev);
-}
+पूर्ण
 
-static int __device_attach(struct device *dev, bool allow_async)
-{
-	int ret = 0;
+अटल पूर्णांक __device_attach(काष्ठा device *dev, bool allow_async)
+अणु
+	पूर्णांक ret = 0;
 
 	device_lock(dev);
-	if (dev->p->dead) {
-		goto out_unlock;
-	} else if (dev->driver) {
-		if (device_is_bound(dev)) {
+	अगर (dev->p->dead) अणु
+		जाओ out_unlock;
+	पूर्ण अन्यथा अगर (dev->driver) अणु
+		अगर (device_is_bound(dev)) अणु
 			ret = 1;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 		ret = device_bind_driver(dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			ret = 1;
-		else {
-			dev->driver = NULL;
+		अन्यथा अणु
+			dev->driver = शून्य;
 			ret = 0;
-		}
-	} else {
-		struct device_attach_data data = {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा device_attach_data data = अणु
 			.dev = dev,
 			.check_async = allow_async,
 			.want_async = false,
-		};
+		पूर्ण;
 
-		if (dev->parent)
-			pm_runtime_get_sync(dev->parent);
+		अगर (dev->parent)
+			pm_runसमय_get_sync(dev->parent);
 
-		ret = bus_for_each_drv(dev->bus, NULL, &data,
+		ret = bus_क्रम_each_drv(dev->bus, शून्य, &data,
 					__device_attach_driver);
-		if (!ret && allow_async && data.have_async) {
+		अगर (!ret && allow_async && data.have_async) अणु
 			/*
 			 * If we could not find appropriate driver
-			 * synchronously and we are allowed to do
+			 * synchronously and we are allowed to करो
 			 * async probes and there are drivers that
 			 * want to probe asynchronously, we'll
 			 * try them.
@@ -948,116 +949,116 @@ static int __device_attach(struct device *dev, bool allow_async)
 			dev_dbg(dev, "scheduling asynchronous probe\n");
 			get_device(dev);
 			async_schedule_dev(__device_attach_async_helper, dev);
-		} else {
+		पूर्ण अन्यथा अणु
 			pm_request_idle(dev);
-		}
+		पूर्ण
 
-		if (dev->parent)
-			pm_runtime_put(dev->parent);
-	}
+		अगर (dev->parent)
+			pm_runसमय_put(dev->parent);
+	पूर्ण
 out_unlock:
 	device_unlock(dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * device_attach - try to attach device to a driver.
  * @dev: device.
  *
  * Walk the list of drivers that the bus has and call
- * driver_probe_device() for each pair. If a compatible
- * pair is found, break out and return.
+ * driver_probe_device() क्रम each pair. If a compatible
+ * pair is found, अवरोध out and वापस.
  *
- * Returns 1 if the device was bound to a driver;
- * 0 if no matching driver was found;
- * -ENODEV if the device is not registered.
+ * Returns 1 अगर the device was bound to a driver;
+ * 0 अगर no matching driver was found;
+ * -ENODEV अगर the device is not रेजिस्टरed.
  *
- * When called for a USB interface, @dev->parent lock must be held.
+ * When called क्रम a USB पूर्णांकerface, @dev->parent lock must be held.
  */
-int device_attach(struct device *dev)
-{
-	return __device_attach(dev, false);
-}
+पूर्णांक device_attach(काष्ठा device *dev)
+अणु
+	वापस __device_attach(dev, false);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_attach);
 
-void device_initial_probe(struct device *dev)
-{
+व्योम device_initial_probe(काष्ठा device *dev)
+अणु
 	__device_attach(dev, true);
-}
+पूर्ण
 
 /*
  * __device_driver_lock - acquire locks needed to manipulate dev->drv
- * @dev: Device we will update driver info for
- * @parent: Parent device. Needed if the bus requires parent lock
+ * @dev: Device we will update driver info क्रम
+ * @parent: Parent device. Needed अगर the bus requires parent lock
  *
- * This function will take the required locks for manipulating dev->drv.
- * Normally this will just be the @dev lock, but when called for a USB
- * interface, @parent lock will be held as well.
+ * This function will take the required locks क्रम manipulating dev->drv.
+ * Normally this will just be the @dev lock, but when called क्रम a USB
+ * पूर्णांकerface, @parent lock will be held as well.
  */
-static void __device_driver_lock(struct device *dev, struct device *parent)
-{
-	if (parent && dev->bus->need_parent_lock)
+अटल व्योम __device_driver_lock(काष्ठा device *dev, काष्ठा device *parent)
+अणु
+	अगर (parent && dev->bus->need_parent_lock)
 		device_lock(parent);
 	device_lock(dev);
-}
+पूर्ण
 
 /*
  * __device_driver_unlock - release locks needed to manipulate dev->drv
- * @dev: Device we will update driver info for
- * @parent: Parent device. Needed if the bus requires parent lock
+ * @dev: Device we will update driver info क्रम
+ * @parent: Parent device. Needed अगर the bus requires parent lock
  *
- * This function will release the required locks for manipulating dev->drv.
- * Normally this will just be the the @dev lock, but when called for a
- * USB interface, @parent lock will be released as well.
+ * This function will release the required locks क्रम manipulating dev->drv.
+ * Normally this will just be the the @dev lock, but when called क्रम a
+ * USB पूर्णांकerface, @parent lock will be released as well.
  */
-static void __device_driver_unlock(struct device *dev, struct device *parent)
-{
+अटल व्योम __device_driver_unlock(काष्ठा device *dev, काष्ठा device *parent)
+अणु
 	device_unlock(dev);
-	if (parent && dev->bus->need_parent_lock)
+	अगर (parent && dev->bus->need_parent_lock)
 		device_unlock(parent);
-}
+पूर्ण
 
 /**
- * device_driver_attach - attach a specific driver to a specific device
+ * device_driver_attach - attach a specअगरic driver to a specअगरic device
  * @drv: Driver to attach
  * @dev: Device to attach it to
  *
  * Manually attach driver to a device. Will acquire both @dev lock and
- * @dev->parent lock if needed.
+ * @dev->parent lock अगर needed.
  */
-int device_driver_attach(struct device_driver *drv, struct device *dev)
-{
-	int ret = 0;
+पूर्णांक device_driver_attach(काष्ठा device_driver *drv, काष्ठा device *dev)
+अणु
+	पूर्णांक ret = 0;
 
 	__device_driver_lock(dev, dev->parent);
 
 	/*
-	 * If device has been removed or someone has already successfully
-	 * bound a driver before us just skip the driver probe call.
+	 * If device has been हटाओd or someone has alपढ़ोy successfully
+	 * bound a driver beक्रमe us just skip the driver probe call.
 	 */
-	if (!dev->p->dead && !dev->driver)
+	अगर (!dev->p->dead && !dev->driver)
 		ret = driver_probe_device(drv, dev);
 
 	__device_driver_unlock(dev, dev->parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __driver_attach_async_helper(void *_dev, async_cookie_t cookie)
-{
-	struct device *dev = _dev;
-	struct device_driver *drv;
-	int ret = 0;
+अटल व्योम __driver_attach_async_helper(व्योम *_dev, async_cookie_t cookie)
+अणु
+	काष्ठा device *dev = _dev;
+	काष्ठा device_driver *drv;
+	पूर्णांक ret = 0;
 
 	__device_driver_lock(dev, dev->parent);
 
 	drv = dev->p->async_driver;
 
 	/*
-	 * If device has been removed or someone has already successfully
-	 * bound a driver before us just skip the driver probe call.
+	 * If device has been हटाओd or someone has alपढ़ोy successfully
+	 * bound a driver beक्रमe us just skip the driver probe call.
 	 */
-	if (!dev->p->dead && !dev->driver)
+	अगर (!dev->p->dead && !dev->driver)
 		ret = driver_probe_device(drv, dev);
 
 	__device_driver_unlock(dev, dev->parent);
@@ -1065,59 +1066,59 @@ static void __driver_attach_async_helper(void *_dev, async_cookie_t cookie)
 	dev_dbg(dev, "driver %s async attach completed: %d\n", drv->name, ret);
 
 	put_device(dev);
-}
+पूर्ण
 
-static int __driver_attach(struct device *dev, void *data)
-{
-	struct device_driver *drv = data;
-	int ret;
+अटल पूर्णांक __driver_attach(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा device_driver *drv = data;
+	पूर्णांक ret;
 
 	/*
 	 * Lock device and try to bind to it. We drop the error
-	 * here and always return 0, because we need to keep trying
-	 * to bind to devices and some drivers will return an error
-	 * simply if it didn't support the device.
+	 * here and always वापस 0, because we need to keep trying
+	 * to bind to devices and some drivers will वापस an error
+	 * simply अगर it didn't support the device.
 	 *
-	 * driver_probe_device() will spit a warning if there
+	 * driver_probe_device() will spit a warning अगर there
 	 * is an error.
 	 */
 
 	ret = driver_match_device(drv, dev);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		/* no match */
-		return 0;
-	} else if (ret == -EPROBE_DEFER) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (ret == -EPROBE_DEFER) अणु
 		dev_dbg(dev, "Device match requests probe deferral\n");
 		dev->can_match = true;
 		driver_deferred_probe_add(dev);
-	} else if (ret < 0) {
+	पूर्ण अन्यथा अगर (ret < 0) अणु
 		dev_dbg(dev, "Bus failed to match device: %d\n", ret);
-		return ret;
-	} /* ret > 0 means positive match */
+		वापस ret;
+	पूर्ण /* ret > 0 means positive match */
 
-	if (driver_allows_async_probing(drv)) {
+	अगर (driver_allows_async_probing(drv)) अणु
 		/*
 		 * Instead of probing the device synchronously we will
-		 * probe it asynchronously to allow for more parallelism.
+		 * probe it asynchronously to allow क्रम more parallelism.
 		 *
 		 * We only take the device lock here in order to guarantee
-		 * that the dev->driver and async_driver fields are protected
+		 * that the dev->driver and async_driver fields are रक्षित
 		 */
 		dev_dbg(dev, "probing driver %s asynchronously\n", drv->name);
 		device_lock(dev);
-		if (!dev->driver) {
+		अगर (!dev->driver) अणु
 			get_device(dev);
 			dev->p->async_driver = drv;
 			async_schedule_dev(__driver_attach_async_helper, dev);
-		}
+		पूर्ण
 		device_unlock(dev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	device_driver_attach(drv, dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * driver_attach - try to bind driver to devices.
@@ -1125,28 +1126,28 @@ static int __driver_attach(struct device *dev, void *data)
  *
  * Walk the list of devices that the bus has on it and try to
  * match the driver with each one.  If driver_probe_device()
- * returns 0 and the @dev->driver is set, we've found a
+ * वापसs 0 and the @dev->driver is set, we've found a
  * compatible pair.
  */
-int driver_attach(struct device_driver *drv)
-{
-	return bus_for_each_dev(drv->bus, NULL, drv, __driver_attach);
-}
+पूर्णांक driver_attach(काष्ठा device_driver *drv)
+अणु
+	वापस bus_क्रम_each_dev(drv->bus, शून्य, drv, __driver_attach);
+पूर्ण
 EXPORT_SYMBOL_GPL(driver_attach);
 
 /*
  * __device_release_driver() must be called with @dev lock held.
- * When called for a USB interface, @dev->parent lock must be held as well.
+ * When called क्रम a USB पूर्णांकerface, @dev->parent lock must be held as well.
  */
-static void __device_release_driver(struct device *dev, struct device *parent)
-{
-	struct device_driver *drv;
+अटल व्योम __device_release_driver(काष्ठा device *dev, काष्ठा device *parent)
+अणु
+	काष्ठा device_driver *drv;
 
 	drv = dev->driver;
-	if (drv) {
-		pm_runtime_get_sync(dev);
+	अगर (drv) अणु
+		pm_runसमय_get_sync(dev);
 
-		while (device_links_busy(dev)) {
+		जबतक (device_links_busy(dev)) अणु
 			__device_driver_unlock(dev, parent);
 
 			device_links_unbind_consumers(dev);
@@ -1154,125 +1155,125 @@ static void __device_release_driver(struct device *dev, struct device *parent)
 			__device_driver_lock(dev, parent);
 			/*
 			 * A concurrent invocation of the same function might
-			 * have released the driver successfully while this one
-			 * was waiting, so check for that.
+			 * have released the driver successfully जबतक this one
+			 * was रुकोing, so check क्रम that.
 			 */
-			if (dev->driver != drv) {
-				pm_runtime_put(dev);
-				return;
-			}
-		}
+			अगर (dev->driver != drv) अणु
+				pm_runसमय_put(dev);
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		driver_sysfs_remove(dev);
+		driver_sysfs_हटाओ(dev);
 
-		if (dev->bus)
-			blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+		अगर (dev->bus)
+			blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 						     BUS_NOTIFY_UNBIND_DRIVER,
 						     dev);
 
-		pm_runtime_put_sync(dev);
+		pm_runसमय_put_sync(dev);
 
-		device_remove_file(dev, &dev_attr_state_synced);
-		device_remove_groups(dev, drv->dev_groups);
+		device_हटाओ_file(dev, &dev_attr_state_synced);
+		device_हटाओ_groups(dev, drv->dev_groups);
 
-		if (dev->bus && dev->bus->remove)
-			dev->bus->remove(dev);
-		else if (drv->remove)
-			drv->remove(dev);
+		अगर (dev->bus && dev->bus->हटाओ)
+			dev->bus->हटाओ(dev);
+		अन्यथा अगर (drv->हटाओ)
+			drv->हटाओ(dev);
 
 		device_links_driver_cleanup(dev);
 
 		devres_release_all(dev);
-		arch_teardown_dma_ops(dev);
-		dev->driver = NULL;
-		dev_set_drvdata(dev, NULL);
-		if (dev->pm_domain && dev->pm_domain->dismiss)
-			dev->pm_domain->dismiss(dev);
-		pm_runtime_reinit(dev);
+		arch_tearकरोwn_dma_ops(dev);
+		dev->driver = शून्य;
+		dev_set_drvdata(dev, शून्य);
+		अगर (dev->pm_करोमुख्य && dev->pm_करोमुख्य->dismiss)
+			dev->pm_करोमुख्य->dismiss(dev);
+		pm_runसमय_reinit(dev);
 		dev_pm_set_driver_flags(dev, 0);
 
-		klist_remove(&dev->p->knode_driver);
+		klist_हटाओ(&dev->p->knode_driver);
 		device_pm_check_callbacks(dev);
-		if (dev->bus)
-			blocking_notifier_call_chain(&dev->bus->p->bus_notifier,
+		अगर (dev->bus)
+			blocking_notअगरier_call_chain(&dev->bus->p->bus_notअगरier,
 						     BUS_NOTIFY_UNBOUND_DRIVER,
 						     dev);
 
 		kobject_uevent(&dev->kobj, KOBJ_UNBIND);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void device_release_driver_internal(struct device *dev,
-				    struct device_driver *drv,
-				    struct device *parent)
-{
+व्योम device_release_driver_पूर्णांकernal(काष्ठा device *dev,
+				    काष्ठा device_driver *drv,
+				    काष्ठा device *parent)
+अणु
 	__device_driver_lock(dev, parent);
 
-	if (!drv || drv == dev->driver)
+	अगर (!drv || drv == dev->driver)
 		__device_release_driver(dev, parent);
 
 	__device_driver_unlock(dev, parent);
-}
+पूर्ण
 
 /**
  * device_release_driver - manually detach device from driver.
  * @dev: device.
  *
  * Manually detach device from driver.
- * When called for a USB interface, @dev->parent lock must be held.
+ * When called क्रम a USB पूर्णांकerface, @dev->parent lock must be held.
  *
  * If this function is to be called with @dev->parent lock held, ensure that
  * the device's consumers are unbound in advance or that their locks can be
  * acquired under the @dev->parent lock.
  */
-void device_release_driver(struct device *dev)
-{
+व्योम device_release_driver(काष्ठा device *dev)
+अणु
 	/*
 	 * If anyone calls device_release_driver() recursively from
-	 * within their ->remove callback for the same device, they
+	 * within their ->हटाओ callback क्रम the same device, they
 	 * will deadlock right here.
 	 */
-	device_release_driver_internal(dev, NULL, NULL);
-}
+	device_release_driver_पूर्णांकernal(dev, शून्य, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_release_driver);
 
 /**
- * device_driver_detach - detach driver from a specific device
+ * device_driver_detach - detach driver from a specअगरic device
  * @dev: device to detach driver from
  *
  * Detach driver from device. Will acquire both @dev lock and @dev->parent
- * lock if needed.
+ * lock अगर needed.
  */
-void device_driver_detach(struct device *dev)
-{
-	device_release_driver_internal(dev, NULL, dev->parent);
-}
+व्योम device_driver_detach(काष्ठा device *dev)
+अणु
+	device_release_driver_पूर्णांकernal(dev, शून्य, dev->parent);
+पूर्ण
 
 /**
  * driver_detach - detach driver from all devices it controls.
  * @drv: driver.
  */
-void driver_detach(struct device_driver *drv)
-{
-	struct device_private *dev_prv;
-	struct device *dev;
+व्योम driver_detach(काष्ठा device_driver *drv)
+अणु
+	काष्ठा device_निजी *dev_prv;
+	काष्ठा device *dev;
 
-	if (driver_allows_async_probing(drv))
+	अगर (driver_allows_async_probing(drv))
 		async_synchronize_full();
 
-	for (;;) {
+	क्रम (;;) अणु
 		spin_lock(&drv->p->klist_devices.k_lock);
-		if (list_empty(&drv->p->klist_devices.k_list)) {
+		अगर (list_empty(&drv->p->klist_devices.k_list)) अणु
 			spin_unlock(&drv->p->klist_devices.k_lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		dev_prv = list_last_entry(&drv->p->klist_devices.k_list,
-				     struct device_private,
+				     काष्ठा device_निजी,
 				     knode_driver.n_node);
 		dev = dev_prv->device;
 		get_device(dev);
 		spin_unlock(&drv->p->klist_devices.k_lock);
-		device_release_driver_internal(dev, drv, dev->parent);
+		device_release_driver_पूर्णांकernal(dev, drv, dev->parent);
 		put_device(dev);
-	}
-}
+	पूर्ण
+पूर्ण

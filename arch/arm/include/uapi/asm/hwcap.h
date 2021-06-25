@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _UAPI__ASMARM_HWCAP_H
-#define _UAPI__ASMARM_HWCAP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _UAPI__ASMARM_HWCAP_H
+#घोषणा _UAPI__ASMARM_HWCAP_H
 
 /*
- * HWCAP flags - for elf_hwcap (in kernel) and AT_HWCAP
+ * HWCAP flags - क्रम elf_hwcap (in kernel) and AT_HWCAP
  */
-#define HWCAP_SWP	(1 << 0)
-#define HWCAP_HALF	(1 << 1)
-#define HWCAP_THUMB	(1 << 2)
-#define HWCAP_26BIT	(1 << 3)	/* Play it safe */
-#define HWCAP_FAST_MULT	(1 << 4)
-#define HWCAP_FPA	(1 << 5)
-#define HWCAP_VFP	(1 << 6)
-#define HWCAP_EDSP	(1 << 7)
-#define HWCAP_JAVA	(1 << 8)
-#define HWCAP_IWMMXT	(1 << 9)
-#define HWCAP_CRUNCH	(1 << 10)
-#define HWCAP_THUMBEE	(1 << 11)
-#define HWCAP_NEON	(1 << 12)
-#define HWCAP_VFPv3	(1 << 13)
-#define HWCAP_VFPv3D16	(1 << 14)	/* also set for VFPv4-D16 */
-#define HWCAP_TLS	(1 << 15)
-#define HWCAP_VFPv4	(1 << 16)
-#define HWCAP_IDIVA	(1 << 17)
-#define HWCAP_IDIVT	(1 << 18)
-#define HWCAP_VFPD32	(1 << 19)	/* set if VFP has 32 regs (not 16) */
-#define HWCAP_IDIV	(HWCAP_IDIVA | HWCAP_IDIVT)
-#define HWCAP_LPAE	(1 << 20)
-#define HWCAP_EVTSTRM	(1 << 21)
+#घोषणा HWCAP_SWP	(1 << 0)
+#घोषणा HWCAP_HALF	(1 << 1)
+#घोषणा HWCAP_THUMB	(1 << 2)
+#घोषणा HWCAP_26BIT	(1 << 3)	/* Play it safe */
+#घोषणा HWCAP_FAST_MULT	(1 << 4)
+#घोषणा HWCAP_FPA	(1 << 5)
+#घोषणा HWCAP_VFP	(1 << 6)
+#घोषणा HWCAP_EDSP	(1 << 7)
+#घोषणा HWCAP_JAVA	(1 << 8)
+#घोषणा HWCAP_IWMMXT	(1 << 9)
+#घोषणा HWCAP_CRUNCH	(1 << 10)
+#घोषणा HWCAP_THUMBEE	(1 << 11)
+#घोषणा HWCAP_NEON	(1 << 12)
+#घोषणा HWCAP_VFPv3	(1 << 13)
+#घोषणा HWCAP_VFPv3D16	(1 << 14)	/* also set क्रम VFPv4-D16 */
+#घोषणा HWCAP_TLS	(1 << 15)
+#घोषणा HWCAP_VFPv4	(1 << 16)
+#घोषणा HWCAP_IDIVA	(1 << 17)
+#घोषणा HWCAP_IDIVT	(1 << 18)
+#घोषणा HWCAP_VFPD32	(1 << 19)	/* set अगर VFP has 32 regs (not 16) */
+#घोषणा HWCAP_IDIV	(HWCAP_IDIVA | HWCAP_IDIVT)
+#घोषणा HWCAP_LPAE	(1 << 20)
+#घोषणा HWCAP_EVTSTRM	(1 << 21)
 
 /*
- * HWCAP2 flags - for elf_hwcap2 (in kernel) and AT_HWCAP2
+ * HWCAP2 flags - क्रम elf_hwcap2 (in kernel) and AT_HWCAP2
  */
-#define HWCAP2_AES	(1 << 0)
-#define HWCAP2_PMULL	(1 << 1)
-#define HWCAP2_SHA1	(1 << 2)
-#define HWCAP2_SHA2	(1 << 3)
-#define HWCAP2_CRC32	(1 << 4)
+#घोषणा HWCAP2_AES	(1 << 0)
+#घोषणा HWCAP2_PMULL	(1 << 1)
+#घोषणा HWCAP2_SHA1	(1 << 2)
+#घोषणा HWCAP2_SHA2	(1 << 3)
+#घोषणा HWCAP2_CRC32	(1 << 4)
 
-#endif /* _UAPI__ASMARM_HWCAP_H */
+#पूर्ण_अगर /* _UAPI__ASMARM_HWCAP_H */

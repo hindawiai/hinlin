@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/gpio/consumer.h>
-#include <linux/gpio/driver.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/gpio/driver.h>
 
-#include <linux/gpio.h>
+#समावेश <linux/gpपन.स>
 
-#include "gpiolib.h"
+#समावेश "gpiolib.h"
 
-void gpio_free(unsigned gpio)
-{
-	gpiod_free(gpio_to_desc(gpio));
-}
-EXPORT_SYMBOL_GPL(gpio_free);
+व्योम gpio_मुक्त(अचिन्हित gpio)
+अणु
+	gpiod_मुक्त(gpio_to_desc(gpio));
+पूर्ण
+EXPORT_SYMBOL_GPL(gpio_मुक्त);
 
 /**
  * gpio_request_one - request a single GPIO with initial configuration
  * @gpio:	the GPIO number
- * @flags:	GPIO configuration as specified by GPIOF_*
+ * @flags:	GPIO configuration as specअगरied by GPIOF_*
  * @label:	a literal description string of this GPIO
  */
-int gpio_request_one(unsigned gpio, unsigned long flags, const char *label)
-{
-	struct gpio_desc *desc;
-	int err;
+पूर्णांक gpio_request_one(अचिन्हित gpio, अचिन्हित दीर्घ flags, स्थिर अक्षर *label)
+अणु
+	काष्ठा gpio_desc *desc;
+	पूर्णांक err;
 
 	desc = gpio_to_desc(gpio);
 
 	/* Compatibility: assume unavailable "valid" GPIOs will appear later */
-	if (!desc && gpio_is_valid(gpio))
-		return -EPROBE_DEFER;
+	अगर (!desc && gpio_is_valid(gpio))
+		वापस -EPROBE_DEFER;
 
 	err = gpiod_request(desc, label);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (flags & GPIOF_OPEN_DRAIN)
+	अगर (flags & GPIOF_OPEN_DRAIN)
 		set_bit(FLAG_OPEN_DRAIN, &desc->flags);
 
-	if (flags & GPIOF_OPEN_SOURCE)
+	अगर (flags & GPIOF_OPEN_SOURCE)
 		set_bit(FLAG_OPEN_SOURCE, &desc->flags);
 
-	if (flags & GPIOF_ACTIVE_LOW)
+	अगर (flags & GPIOF_ACTIVE_LOW)
 		set_bit(FLAG_ACTIVE_LOW, &desc->flags);
 
-	if (flags & GPIOF_DIR_IN)
+	अगर (flags & GPIOF_सूची_IN)
 		err = gpiod_direction_input(desc);
-	else
+	अन्यथा
 		err = gpiod_direction_output_raw(desc,
 				(flags & GPIOF_INIT_HIGH) ? 1 : 0);
 
-	if (err)
-		goto free_gpio;
+	अगर (err)
+		जाओ मुक्त_gpio;
 
-	if (flags & GPIOF_EXPORT) {
+	अगर (flags & GPIOF_EXPORT) अणु
 		err = gpiod_export(desc, flags & GPIOF_EXPORT_CHANGEABLE);
-		if (err)
-			goto free_gpio;
-	}
+		अगर (err)
+			जाओ मुक्त_gpio;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- free_gpio:
-	gpiod_free(desc);
-	return err;
-}
+ मुक्त_gpio:
+	gpiod_मुक्त(desc);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(gpio_request_one);
 
-int gpio_request(unsigned gpio, const char *label)
-{
-	struct gpio_desc *desc = gpio_to_desc(gpio);
+पूर्णांक gpio_request(अचिन्हित gpio, स्थिर अक्षर *label)
+अणु
+	काष्ठा gpio_desc *desc = gpio_to_desc(gpio);
 
 	/* Compatibility: assume unavailable "valid" GPIOs will appear later */
-	if (!desc && gpio_is_valid(gpio))
-		return -EPROBE_DEFER;
+	अगर (!desc && gpio_is_valid(gpio))
+		वापस -EPROBE_DEFER;
 
-	return gpiod_request(desc, label);
-}
+	वापस gpiod_request(desc, label);
+पूर्ण
 EXPORT_SYMBOL_GPL(gpio_request);
 
 /**
@@ -82,32 +83,32 @@ EXPORT_SYMBOL_GPL(gpio_request);
  * @array:	array of the 'struct gpio'
  * @num:	how many GPIOs in the array
  */
-int gpio_request_array(const struct gpio *array, size_t num)
-{
-	int i, err;
+पूर्णांक gpio_request_array(स्थिर काष्ठा gpio *array, माप_प्रकार num)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < num; i++, array++) {
+	क्रम (i = 0; i < num; i++, array++) अणु
 		err = gpio_request_one(array->gpio, array->flags, array->label);
-		if (err)
-			goto err_free;
-	}
-	return 0;
+		अगर (err)
+			जाओ err_मुक्त;
+	पूर्ण
+	वापस 0;
 
-err_free:
-	while (i--)
-		gpio_free((--array)->gpio);
-	return err;
-}
+err_मुक्त:
+	जबतक (i--)
+		gpio_मुक्त((--array)->gpio);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(gpio_request_array);
 
 /**
- * gpio_free_array - release multiple GPIOs in a single call
+ * gpio_मुक्त_array - release multiple GPIOs in a single call
  * @array:	array of the 'struct gpio'
  * @num:	how many GPIOs in the array
  */
-void gpio_free_array(const struct gpio *array, size_t num)
-{
-	while (num--)
-		gpio_free((array++)->gpio);
-}
-EXPORT_SYMBOL_GPL(gpio_free_array);
+व्योम gpio_मुक्त_array(स्थिर काष्ठा gpio *array, माप_प्रकार num)
+अणु
+	जबतक (num--)
+		gpio_मुक्त((array++)->gpio);
+पूर्ण
+EXPORT_SYMBOL_GPL(gpio_मुक्त_array);

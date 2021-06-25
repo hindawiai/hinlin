@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_VALUES_H
-#define __PERF_VALUES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_VALUES_H
+#घोषणा __PERF_VALUES_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct perf_read_values {
-	int threads;
-	int threads_max;
+काष्ठा perf_पढ़ो_values अणु
+	पूर्णांक thपढ़ोs;
+	पूर्णांक thपढ़ोs_max;
 	u32 *pid, *tid;
-	int counters;
-	int counters_max;
+	पूर्णांक counters;
+	पूर्णांक counters_max;
 	u64 *counterrawid;
-	char **countername;
+	अक्षर **countername;
 	u64 **value;
-};
+पूर्ण;
 
-int perf_read_values_init(struct perf_read_values *values);
-void perf_read_values_destroy(struct perf_read_values *values);
+पूर्णांक perf_पढ़ो_values_init(काष्ठा perf_पढ़ो_values *values);
+व्योम perf_पढ़ो_values_destroy(काष्ठा perf_पढ़ो_values *values);
 
-int perf_read_values_add_value(struct perf_read_values *values,
+पूर्णांक perf_पढ़ो_values_add_value(काष्ठा perf_पढ़ो_values *values,
 				u32 pid, u32 tid,
-				u64 rawid, const char *name, u64 value);
+				u64 rawid, स्थिर अक्षर *name, u64 value);
 
-void perf_read_values_display(FILE *fp, struct perf_read_values *values,
-			      int raw);
+व्योम perf_पढ़ो_values_display(खाता *fp, काष्ठा perf_पढ़ो_values *values,
+			      पूर्णांक raw);
 
-#endif /* __PERF_VALUES_H */
+#पूर्ण_अगर /* __PERF_VALUES_H */

@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * handle transition of Linux booting another kernel
  * Copyright (C) 2002-2005 Eric Biederman  <ebiederm@xmission.com>
  */
 
-#include <linux/mm.h>
-#include <linux/kexec.h>
-#include <linux/delay.h>
-#include <linux/numa.h>
-#include <linux/ftrace.h>
-#include <linux/suspend.h>
-#include <linux/gfp.h>
-#include <linux/io.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/numa.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/पन.स>
 
-#include <asm/pgalloc.h>
-#include <asm/tlbflush.h>
-#include <asm/mmu_context.h>
-#include <asm/apic.h>
-#include <asm/io_apic.h>
-#include <asm/cpufeature.h>
-#include <asm/desc.h>
-#include <asm/set_memory.h>
-#include <asm/debugreg.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/set_memory.h>
+#समावेश <यंत्र/debugreg.h>
 
-static void set_gdt(void *newgdt, __u16 limit)
-{
-	struct desc_ptr curgdt;
+अटल व्योम set_gdt(व्योम *newgdt, __u16 limit)
+अणु
+	काष्ठा desc_ptr curgdt;
 
 	/* ia32 supports unaligned loads & stores */
 	curgdt.size    = limit;
-	curgdt.address = (unsigned long)newgdt;
+	curgdt.address = (अचिन्हित दीर्घ)newgdt;
 
 	load_gdt(&curgdt);
-}
+पूर्ण
 
-static void load_segments(void)
-{
-#define __STR(X) #X
-#define STR(X) __STR(X)
+अटल व्योम load_segments(व्योम)
+अणु
+#घोषणा __STR(X) #X
+#घोषणा STR(X) __STR(X)
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"\tljmp $"STR(__KERNEL_CS)",$1f\n"
 		"\t1:\n"
 		"\tmovl $"STR(__KERNEL_DS)",%%eax\n"
@@ -47,185 +48,185 @@ static void load_segments(void)
 		"\tmovl %%eax,%%es\n"
 		"\tmovl %%eax,%%ss\n"
 		: : : "eax", "memory");
-#undef STR
-#undef __STR
-}
+#अघोषित STR
+#अघोषित __STR
+पूर्ण
 
-static void machine_kexec_free_page_tables(struct kimage *image)
-{
-	free_pages((unsigned long)image->arch.pgd, PGD_ALLOCATION_ORDER);
-	image->arch.pgd = NULL;
-#ifdef CONFIG_X86_PAE
-	free_page((unsigned long)image->arch.pmd0);
-	image->arch.pmd0 = NULL;
-	free_page((unsigned long)image->arch.pmd1);
-	image->arch.pmd1 = NULL;
-#endif
-	free_page((unsigned long)image->arch.pte0);
-	image->arch.pte0 = NULL;
-	free_page((unsigned long)image->arch.pte1);
-	image->arch.pte1 = NULL;
-}
+अटल व्योम machine_kexec_मुक्त_page_tables(काष्ठा kimage *image)
+अणु
+	मुक्त_pages((अचिन्हित दीर्घ)image->arch.pgd, PGD_ALLOCATION_ORDER);
+	image->arch.pgd = शून्य;
+#अगर_घोषित CONFIG_X86_PAE
+	मुक्त_page((अचिन्हित दीर्घ)image->arch.pmd0);
+	image->arch.pmd0 = शून्य;
+	मुक्त_page((अचिन्हित दीर्घ)image->arch.pmd1);
+	image->arch.pmd1 = शून्य;
+#पूर्ण_अगर
+	मुक्त_page((अचिन्हित दीर्घ)image->arch.pte0);
+	image->arch.pte0 = शून्य;
+	मुक्त_page((अचिन्हित दीर्घ)image->arch.pte1);
+	image->arch.pte1 = शून्य;
+पूर्ण
 
-static int machine_kexec_alloc_page_tables(struct kimage *image)
-{
-	image->arch.pgd = (pgd_t *)__get_free_pages(GFP_KERNEL | __GFP_ZERO,
+अटल पूर्णांक machine_kexec_alloc_page_tables(काष्ठा kimage *image)
+अणु
+	image->arch.pgd = (pgd_t *)__get_मुक्त_pages(GFP_KERNEL | __GFP_ZERO,
 						    PGD_ALLOCATION_ORDER);
-#ifdef CONFIG_X86_PAE
+#अगर_घोषित CONFIG_X86_PAE
 	image->arch.pmd0 = (pmd_t *)get_zeroed_page(GFP_KERNEL);
 	image->arch.pmd1 = (pmd_t *)get_zeroed_page(GFP_KERNEL);
-#endif
+#पूर्ण_अगर
 	image->arch.pte0 = (pte_t *)get_zeroed_page(GFP_KERNEL);
 	image->arch.pte1 = (pte_t *)get_zeroed_page(GFP_KERNEL);
-	if (!image->arch.pgd ||
-#ifdef CONFIG_X86_PAE
+	अगर (!image->arch.pgd ||
+#अगर_घोषित CONFIG_X86_PAE
 	    !image->arch.pmd0 || !image->arch.pmd1 ||
-#endif
-	    !image->arch.pte0 || !image->arch.pte1) {
-		return -ENOMEM;
-	}
-	return 0;
-}
+#पूर्ण_अगर
+	    !image->arch.pte0 || !image->arch.pte1) अणु
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void machine_kexec_page_table_set_one(
+अटल व्योम machine_kexec_page_table_set_one(
 	pgd_t *pgd, pmd_t *pmd, pte_t *pte,
-	unsigned long vaddr, unsigned long paddr)
-{
+	अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ paddr)
+अणु
 	p4d_t *p4d;
 	pud_t *pud;
 
 	pgd += pgd_index(vaddr);
-#ifdef CONFIG_X86_PAE
-	if (!(pgd_val(*pgd) & _PAGE_PRESENT))
+#अगर_घोषित CONFIG_X86_PAE
+	अगर (!(pgd_val(*pgd) & _PAGE_PRESENT))
 		set_pgd(pgd, __pgd(__pa(pmd) | _PAGE_PRESENT));
-#endif
+#पूर्ण_अगर
 	p4d = p4d_offset(pgd, vaddr);
 	pud = pud_offset(p4d, vaddr);
 	pmd = pmd_offset(pud, vaddr);
-	if (!(pmd_val(*pmd) & _PAGE_PRESENT))
+	अगर (!(pmd_val(*pmd) & _PAGE_PRESENT))
 		set_pmd(pmd, __pmd(__pa(pte) | _PAGE_TABLE));
 	pte = pte_offset_kernel(pmd, vaddr);
 	set_pte(pte, pfn_pte(paddr >> PAGE_SHIFT, PAGE_KERNEL_EXEC));
-}
+पूर्ण
 
-static void machine_kexec_prepare_page_tables(struct kimage *image)
-{
-	void *control_page;
-	pmd_t *pmd = NULL;
+अटल व्योम machine_kexec_prepare_page_tables(काष्ठा kimage *image)
+अणु
+	व्योम *control_page;
+	pmd_t *pmd = शून्य;
 
 	control_page = page_address(image->control_code_page);
-#ifdef CONFIG_X86_PAE
+#अगर_घोषित CONFIG_X86_PAE
 	pmd = image->arch.pmd0;
-#endif
+#पूर्ण_अगर
 	machine_kexec_page_table_set_one(
 		image->arch.pgd, pmd, image->arch.pte0,
-		(unsigned long)control_page, __pa(control_page));
-#ifdef CONFIG_X86_PAE
+		(अचिन्हित दीर्घ)control_page, __pa(control_page));
+#अगर_घोषित CONFIG_X86_PAE
 	pmd = image->arch.pmd1;
-#endif
+#पूर्ण_अगर
 	machine_kexec_page_table_set_one(
 		image->arch.pgd, pmd, image->arch.pte1,
 		__pa(control_page), __pa(control_page));
-}
+पूर्ण
 
 /*
  * A architecture hook called to validate the
  * proposed image and prepare the control pages
- * as needed.  The pages for KEXEC_CONTROL_PAGE_SIZE
+ * as needed.  The pages क्रम KEXEC_CONTROL_PAGE_SIZE
  * have been allocated, but the segments have yet
- * been copied into the kernel.
+ * been copied पूर्णांकo the kernel.
  *
  * Do what every setup is needed on image and the
- * reboot code buffer to allow us to avoid allocations
+ * reboot code buffer to allow us to aव्योम allocations
  * later.
  *
  * - Make control page executable.
  * - Allocate page tables
  * - Setup page tables
  */
-int machine_kexec_prepare(struct kimage *image)
-{
-	int error;
+पूर्णांक machine_kexec_prepare(काष्ठा kimage *image)
+अणु
+	पूर्णांक error;
 
-	set_memory_x((unsigned long)page_address(image->control_code_page), 1);
+	set_memory_x((अचिन्हित दीर्घ)page_address(image->control_code_page), 1);
 	error = machine_kexec_alloc_page_tables(image);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	machine_kexec_prepare_page_tables(image);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Undo anything leftover by machine_kexec_prepare
- * when an image is freed.
+ * Unकरो anything leftover by machine_kexec_prepare
+ * when an image is मुक्तd.
  */
-void machine_kexec_cleanup(struct kimage *image)
-{
-	set_memory_nx((unsigned long)page_address(image->control_code_page), 1);
-	machine_kexec_free_page_tables(image);
-}
+व्योम machine_kexec_cleanup(काष्ठा kimage *image)
+अणु
+	set_memory_nx((अचिन्हित दीर्घ)page_address(image->control_code_page), 1);
+	machine_kexec_मुक्त_page_tables(image);
+पूर्ण
 
 /*
  * Do not allocate memory (or fail in any way) in machine_kexec().
- * We are past the point of no return, committed to rebooting now.
+ * We are past the poपूर्णांक of no वापस, committed to rebooting now.
  */
-void machine_kexec(struct kimage *image)
-{
-	unsigned long page_list[PAGES_NR];
-	void *control_page;
-	int save_ftrace_enabled;
-	asmlinkage unsigned long
-		(*relocate_kernel_ptr)(unsigned long indirection_page,
-				       unsigned long control_page,
-				       unsigned long start_address,
-				       unsigned int has_pae,
-				       unsigned int preserve_context);
+व्योम machine_kexec(काष्ठा kimage *image)
+अणु
+	अचिन्हित दीर्घ page_list[PAGES_NR];
+	व्योम *control_page;
+	पूर्णांक save_ftrace_enabled;
+	यंत्रlinkage अचिन्हित दीर्घ
+		(*relocate_kernel_ptr)(अचिन्हित दीर्घ indirection_page,
+				       अचिन्हित दीर्घ control_page,
+				       अचिन्हित दीर्घ start_address,
+				       अचिन्हित पूर्णांक has_pae,
+				       अचिन्हित पूर्णांक preserve_context);
 
-#ifdef CONFIG_KEXEC_JUMP
-	if (image->preserve_context)
+#अगर_घोषित CONFIG_KEXEC_JUMP
+	अगर (image->preserve_context)
 		save_processor_state();
-#endif
+#पूर्ण_अगर
 
 	save_ftrace_enabled = __ftrace_enabled_save();
 
-	/* Interrupts aren't acceptable while we reboot */
+	/* Interrupts aren't acceptable जबतक we reboot */
 	local_irq_disable();
-	hw_breakpoint_disable();
+	hw_अवरोधpoपूर्णांक_disable();
 
-	if (image->preserve_context) {
-#ifdef CONFIG_X86_IO_APIC
+	अगर (image->preserve_context) अणु
+#अगर_घोषित CONFIG_X86_IO_APIC
 		/*
 		 * We need to put APICs in legacy mode so that we can
-		 * get timer interrupts in second kernel. kexec/kdump
-		 * paths already have calls to restore_boot_irq_mode()
-		 * in one form or other. kexec jump path also need one.
+		 * get समयr पूर्णांकerrupts in second kernel. kexec/kdump
+		 * paths alपढ़ोy have calls to restore_boot_irq_mode()
+		 * in one क्रमm or other. kexec jump path also need one.
 		 */
 		clear_IO_APIC();
 		restore_boot_irq_mode();
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	control_page = page_address(image->control_code_page);
-	memcpy(control_page, relocate_kernel, KEXEC_CONTROL_CODE_MAX_SIZE);
+	स_नकल(control_page, relocate_kernel, KEXEC_CONTROL_CODE_MAX_SIZE);
 
 	relocate_kernel_ptr = control_page;
 	page_list[PA_CONTROL_PAGE] = __pa(control_page);
-	page_list[VA_CONTROL_PAGE] = (unsigned long)control_page;
+	page_list[VA_CONTROL_PAGE] = (अचिन्हित दीर्घ)control_page;
 	page_list[PA_PGD] = __pa(image->arch.pgd);
 
-	if (image->type == KEXEC_TYPE_DEFAULT)
+	अगर (image->type == KEXEC_TYPE_DEFAULT)
 		page_list[PA_SWAP_PAGE] = (page_to_pfn(image->swap_page)
 						<< PAGE_SHIFT);
 
 	/*
-	 * The segment registers are funny things, they have both a
+	 * The segment रेजिस्टरs are funny things, they have both a
 	 * visible and an invisible part.  Whenever the visible part is
-	 * set to a specific selector, the invisible part is loaded
-	 * with from a table in memory.  At no other time is the
+	 * set to a specअगरic selector, the invisible part is loaded
+	 * with from a table in memory.  At no other समय is the
 	 * descriptor table in memory accessed.
 	 *
-	 * I take advantage of this here by force loading the
-	 * segments, before I zap the gdt with an invalid value.
+	 * I take advantage of this here by क्रमce loading the
+	 * segments, beक्रमe I zap the gdt with an invalid value.
 	 */
 	load_segments();
 	/*
@@ -236,16 +237,16 @@ void machine_kexec(struct kimage *image)
 	set_gdt(phys_to_virt(0), 0);
 
 	/* now call it */
-	image->start = relocate_kernel_ptr((unsigned long)image->head,
-					   (unsigned long)page_list,
+	image->start = relocate_kernel_ptr((अचिन्हित दीर्घ)image->head,
+					   (अचिन्हित दीर्घ)page_list,
 					   image->start,
 					   boot_cpu_has(X86_FEATURE_PAE),
 					   image->preserve_context);
 
-#ifdef CONFIG_KEXEC_JUMP
-	if (image->preserve_context)
+#अगर_घोषित CONFIG_KEXEC_JUMP
+	अगर (image->preserve_context)
 		restore_processor_state();
-#endif
+#पूर्ण_अगर
 
 	__ftrace_enabled_restore(save_ftrace_enabled);
-}
+पूर्ण

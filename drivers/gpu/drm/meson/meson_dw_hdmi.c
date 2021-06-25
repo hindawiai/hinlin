@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2016 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  * Copyright (C) 2015 Amlogic, Inc. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/component.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/regulator/consumer.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/component.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/reset.h>
 
-#include <drm/bridge/dw_hdmi.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_bridge.h>
-#include <drm/drm_device.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_print.h>
+#समावेश <drm/bridge/dw_hdmi.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_bridge.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include <linux/media-bus-format.h>
-#include <linux/videodev2.h>
+#समावेश <linux/media-bus-क्रमmat.h>
+#समावेश <linux/videodev2.h>
 
-#include "meson_drv.h"
-#include "meson_dw_hdmi.h"
-#include "meson_registers.h"
-#include "meson_vclk.h"
-#include "meson_venc.h"
+#समावेश "meson_drv.h"
+#समावेश "meson_dw_hdmi.h"
+#समावेश "meson_registers.h"
+#समावेश "meson_vclk.h"
+#समावेश "meson_venc.h"
 
-#define DRIVER_NAME "meson-dw-hdmi"
-#define DRIVER_DESC "Amlogic Meson HDMI-TX DRM driver"
+#घोषणा DRIVER_NAME "meson-dw-hdmi"
+#घोषणा DRIVER_DESC "Amlogic Meson HDMI-TX DRM driver"
 
 /**
  * DOC: HDMI Output
@@ -41,7 +42,7 @@
  *
  * - A Synopsys DesignWare HDMI Controller IP
  * - A TOP control block controlling the Clocks and PHY
- * - A custom HDMI PHY in order convert video to TMDS signal
+ * - A custom HDMI PHY in order convert video to TMDS संकेत
  *
  * .. code::
  *
@@ -55,313 +56,313 @@
  *
  *
  * The HDMI TOP block only supports HPD sensing.
- * The Synopsys HDMI Controller interrupt is routed
- * through the TOP Block interrupt.
+ * The Synopsys HDMI Controller पूर्णांकerrupt is routed
+ * through the TOP Block पूर्णांकerrupt.
  * Communication to the TOP Block and the Synopsys
- * HDMI Controller is done a pair of addr+read/write
- * registers.
- * The HDMI PHY is configured by registers in the
- * HHI register block.
+ * HDMI Controller is करोne a pair of addr+पढ़ो/ग_लिखो
+ * रेजिस्टरs.
+ * The HDMI PHY is configured by रेजिस्टरs in the
+ * HHI रेजिस्टर block.
  *
- * Pixel data arrives in 4:4:4 format from the VENC
+ * Pixel data arrives in 4:4:4 क्रमmat from the VENC
  * block and the VPU HDMI mux selects either the ENCI
- * encoder for the 576i or 480i formats or the ENCP
- * encoder for all the other formats including
- * interlaced HD formats.
+ * encoder क्रम the 576i or 480i क्रमmats or the ENCP
+ * encoder क्रम all the other क्रमmats including
+ * पूर्णांकerlaced HD क्रमmats.
  * The VENC uses a DVI encoder on top of the ENCI
- * or ENCP encoders to generate DVI timings for the
+ * or ENCP encoders to generate DVI timings क्रम the
  * HDMI controller.
  *
  * GXBB, GXL and GXM embeds the Synopsys DesignWare
  * HDMI TX IP version 2.01a with HDCP and I2C & S/PDIF
- * audio source interfaces.
+ * audio source पूर्णांकerfaces.
  *
  * We handle the following features :
  *
- * - HPD Rise & Fall interrupt
+ * - HPD Rise & Fall पूर्णांकerrupt
  * - HDMI Controller Interrupt
- * - HDMI PHY Init for 480i to 1080p60
- * - VENC & HDMI Clock setup for 480i to 1080p60
- * - VENC Mode setup for 480i to 1080p60
+ * - HDMI PHY Init क्रम 480i to 1080p60
+ * - VENC & HDMI Clock setup क्रम 480i to 1080p60
+ * - VENC Mode setup क्रम 480i to 1080p60
  *
  * What is missing :
  *
- * - PHY, Clock and Mode setup for 2k && 4k modes
- * - SDDC Scrambling mode for HDMI 2.0a
+ * - PHY, Clock and Mode setup क्रम 2k && 4k modes
+ * - SDDC Scrambling mode क्रम HDMI 2.0a
  * - HDCP Setup
  * - CEC Management
  */
 
 /* TOP Block Communication Channel */
-#define HDMITX_TOP_ADDR_REG	0x0
-#define HDMITX_TOP_DATA_REG	0x4
-#define HDMITX_TOP_CTRL_REG	0x8
-#define HDMITX_TOP_G12A_OFFSET	0x8000
+#घोषणा HDMITX_TOP_ADDR_REG	0x0
+#घोषणा HDMITX_TOP_DATA_REG	0x4
+#घोषणा HDMITX_TOP_CTRL_REG	0x8
+#घोषणा HDMITX_TOP_G12A_OFFSET	0x8000
 
 /* Controller Communication Channel */
-#define HDMITX_DWC_ADDR_REG	0x10
-#define HDMITX_DWC_DATA_REG	0x14
-#define HDMITX_DWC_CTRL_REG	0x18
+#घोषणा HDMITX_DWC_ADDR_REG	0x10
+#घोषणा HDMITX_DWC_DATA_REG	0x14
+#घोषणा HDMITX_DWC_CTRL_REG	0x18
 
 /* HHI Registers */
-#define HHI_MEM_PD_REG0		0x100 /* 0x40 */
-#define HHI_HDMI_CLK_CNTL	0x1cc /* 0x73 */
-#define HHI_HDMI_PHY_CNTL0	0x3a0 /* 0xe8 */
-#define HHI_HDMI_PHY_CNTL1	0x3a4 /* 0xe9 */
-#define HHI_HDMI_PHY_CNTL2	0x3a8 /* 0xea */
-#define HHI_HDMI_PHY_CNTL3	0x3ac /* 0xeb */
-#define HHI_HDMI_PHY_CNTL4	0x3b0 /* 0xec */
-#define HHI_HDMI_PHY_CNTL5	0x3b4 /* 0xed */
+#घोषणा HHI_MEM_PD_REG0		0x100 /* 0x40 */
+#घोषणा HHI_HDMI_CLK_CNTL	0x1cc /* 0x73 */
+#घोषणा HHI_HDMI_PHY_CNTL0	0x3a0 /* 0xe8 */
+#घोषणा HHI_HDMI_PHY_CNTL1	0x3a4 /* 0xe9 */
+#घोषणा HHI_HDMI_PHY_CNTL2	0x3a8 /* 0xea */
+#घोषणा HHI_HDMI_PHY_CNTL3	0x3ac /* 0xeb */
+#घोषणा HHI_HDMI_PHY_CNTL4	0x3b0 /* 0xec */
+#घोषणा HHI_HDMI_PHY_CNTL5	0x3b4 /* 0xed */
 
-static DEFINE_SPINLOCK(reg_lock);
+अटल DEFINE_SPINLOCK(reg_lock);
 
-enum meson_venc_source {
+क्रमागत meson_venc_source अणु
 	MESON_VENC_SOURCE_NONE = 0,
 	MESON_VENC_SOURCE_ENCI = 1,
 	MESON_VENC_SOURCE_ENCP = 2,
-};
+पूर्ण;
 
-struct meson_dw_hdmi;
+काष्ठा meson_dw_hdmi;
 
-struct meson_dw_hdmi_data {
-	unsigned int	(*top_read)(struct meson_dw_hdmi *dw_hdmi,
-				    unsigned int addr);
-	void		(*top_write)(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr, unsigned int data);
-	unsigned int	(*dwc_read)(struct meson_dw_hdmi *dw_hdmi,
-				    unsigned int addr);
-	void		(*dwc_write)(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr, unsigned int data);
-};
+काष्ठा meson_dw_hdmi_data अणु
+	अचिन्हित पूर्णांक	(*top_पढ़ो)(काष्ठा meson_dw_hdmi *dw_hdmi,
+				    अचिन्हित पूर्णांक addr);
+	व्योम		(*top_ग_लिखो)(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data);
+	अचिन्हित पूर्णांक	(*dwc_पढ़ो)(काष्ठा meson_dw_hdmi *dw_hdmi,
+				    अचिन्हित पूर्णांक addr);
+	व्योम		(*dwc_ग_लिखो)(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data);
+पूर्ण;
 
-struct meson_dw_hdmi {
-	struct drm_encoder encoder;
-	struct drm_bridge bridge;
-	struct dw_hdmi_plat_data dw_plat_data;
-	struct meson_drm *priv;
-	struct device *dev;
-	void __iomem *hdmitx;
-	const struct meson_dw_hdmi_data *data;
-	struct reset_control *hdmitx_apb;
-	struct reset_control *hdmitx_ctrl;
-	struct reset_control *hdmitx_phy;
-	struct regulator *hdmi_supply;
+काष्ठा meson_dw_hdmi अणु
+	काष्ठा drm_encoder encoder;
+	काष्ठा drm_bridge bridge;
+	काष्ठा dw_hdmi_plat_data dw_plat_data;
+	काष्ठा meson_drm *priv;
+	काष्ठा device *dev;
+	व्योम __iomem *hdmitx;
+	स्थिर काष्ठा meson_dw_hdmi_data *data;
+	काष्ठा reset_control *hdmitx_apb;
+	काष्ठा reset_control *hdmitx_ctrl;
+	काष्ठा reset_control *hdmitx_phy;
+	काष्ठा regulator *hdmi_supply;
 	u32 irq_stat;
-	struct dw_hdmi *hdmi;
-	unsigned long output_bus_fmt;
-};
-#define encoder_to_meson_dw_hdmi(x) \
-	container_of(x, struct meson_dw_hdmi, encoder)
-#define bridge_to_meson_dw_hdmi(x) \
-	container_of(x, struct meson_dw_hdmi, bridge)
+	काष्ठा dw_hdmi *hdmi;
+	अचिन्हित दीर्घ output_bus_fmt;
+पूर्ण;
+#घोषणा encoder_to_meson_dw_hdmi(x) \
+	container_of(x, काष्ठा meson_dw_hdmi, encoder)
+#घोषणा bridge_to_meson_dw_hdmi(x) \
+	container_of(x, काष्ठा meson_dw_hdmi, bridge)
 
-static inline int dw_hdmi_is_compatible(struct meson_dw_hdmi *dw_hdmi,
-					const char *compat)
-{
-	return of_device_is_compatible(dw_hdmi->dev->of_node, compat);
-}
+अटल अंतरभूत पूर्णांक dw_hdmi_is_compatible(काष्ठा meson_dw_hdmi *dw_hdmi,
+					स्थिर अक्षर *compat)
+अणु
+	वापस of_device_is_compatible(dw_hdmi->dev->of_node, compat);
+पूर्ण
 
-/* PHY (via TOP bridge) and Controller dedicated register interface */
+/* PHY (via TOP bridge) and Controller dedicated रेजिस्टर पूर्णांकerface */
 
-static unsigned int dw_hdmi_top_read(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr)
-{
-	unsigned long flags;
-	unsigned int data;
-
-	spin_lock_irqsave(&reg_lock, flags);
-
-	/* ADDR must be written twice */
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
-
-	/* Read needs a second DATA read */
-	data = readl(dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
-	data = readl(dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
-
-	spin_unlock_irqrestore(&reg_lock, flags);
-
-	return data;
-}
-
-static unsigned int dw_hdmi_g12a_top_read(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr)
-{
-	return readl(dw_hdmi->hdmitx + HDMITX_TOP_G12A_OFFSET + (addr << 2));
-}
-
-static inline void dw_hdmi_top_write(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr, unsigned int data)
-{
-	unsigned long flags;
+अटल अचिन्हित पूर्णांक dw_hdmi_top_पढ़ो(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक data;
 
 	spin_lock_irqsave(&reg_lock, flags);
 
 	/* ADDR must be written twice */
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
 
-	/* Write needs single DATA write */
-	writel(data, dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
+	/* Read needs a second DATA पढ़ो */
+	data = पढ़ोl(dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
+	data = पढ़ोl(dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
 
 	spin_unlock_irqrestore(&reg_lock, flags);
-}
 
-static inline void dw_hdmi_g12a_top_write(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr, unsigned int data)
-{
-	writel(data, dw_hdmi->hdmitx + HDMITX_TOP_G12A_OFFSET + (addr << 2));
-}
+	वापस data;
+पूर्ण
 
-/* Helper to change specific bits in PHY registers */
-static inline void dw_hdmi_top_write_bits(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr,
-					  unsigned int mask,
-					  unsigned int val)
-{
-	unsigned int data = dw_hdmi->data->top_read(dw_hdmi, addr);
+अटल अचिन्हित पूर्णांक dw_hdmi_g12a_top_पढ़ो(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr)
+अणु
+	वापस पढ़ोl(dw_hdmi->hdmitx + HDMITX_TOP_G12A_OFFSET + (addr << 2));
+पूर्ण
+
+अटल अंतरभूत व्योम dw_hdmi_top_ग_लिखो(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
+अणु
+	अचिन्हित दीर्घ flags;
+
+	spin_lock_irqsave(&reg_lock, flags);
+
+	/* ADDR must be written twice */
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_TOP_ADDR_REG);
+
+	/* Write needs single DATA ग_लिखो */
+	ग_लिखोl(data, dw_hdmi->hdmitx + HDMITX_TOP_DATA_REG);
+
+	spin_unlock_irqrestore(&reg_lock, flags);
+पूर्ण
+
+अटल अंतरभूत व्योम dw_hdmi_g12a_top_ग_लिखो(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
+अणु
+	ग_लिखोl(data, dw_hdmi->hdmitx + HDMITX_TOP_G12A_OFFSET + (addr << 2));
+पूर्ण
+
+/* Helper to change specअगरic bits in PHY रेजिस्टरs */
+अटल अंतरभूत व्योम dw_hdmi_top_ग_लिखो_bits(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr,
+					  अचिन्हित पूर्णांक mask,
+					  अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक data = dw_hdmi->data->top_पढ़ो(dw_hdmi, addr);
 
 	data &= ~mask;
 	data |= val;
 
-	dw_hdmi->data->top_write(dw_hdmi, addr, data);
-}
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, addr, data);
+पूर्ण
 
-static unsigned int dw_hdmi_dwc_read(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr)
-{
-	unsigned long flags;
-	unsigned int data;
-
-	spin_lock_irqsave(&reg_lock, flags);
-
-	/* ADDR must be written twice */
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
-
-	/* Read needs a second DATA read */
-	data = readl(dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
-	data = readl(dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
-
-	spin_unlock_irqrestore(&reg_lock, flags);
-
-	return data;
-}
-
-static unsigned int dw_hdmi_g12a_dwc_read(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr)
-{
-	return readb(dw_hdmi->hdmitx + addr);
-}
-
-static inline void dw_hdmi_dwc_write(struct meson_dw_hdmi *dw_hdmi,
-				     unsigned int addr, unsigned int data)
-{
-	unsigned long flags;
+अटल अचिन्हित पूर्णांक dw_hdmi_dwc_पढ़ो(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक data;
 
 	spin_lock_irqsave(&reg_lock, flags);
 
 	/* ADDR must be written twice */
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
-	writel(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
 
-	/* Write needs single DATA write */
-	writel(data, dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
+	/* Read needs a second DATA पढ़ो */
+	data = पढ़ोl(dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
+	data = पढ़ोl(dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
 
 	spin_unlock_irqrestore(&reg_lock, flags);
-}
 
-static inline void dw_hdmi_g12a_dwc_write(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr, unsigned int data)
-{
-	writeb(data, dw_hdmi->hdmitx + addr);
-}
+	वापस data;
+पूर्ण
 
-/* Helper to change specific bits in controller registers */
-static inline void dw_hdmi_dwc_write_bits(struct meson_dw_hdmi *dw_hdmi,
-					  unsigned int addr,
-					  unsigned int mask,
-					  unsigned int val)
-{
-	unsigned int data = dw_hdmi->data->dwc_read(dw_hdmi, addr);
+अटल अचिन्हित पूर्णांक dw_hdmi_g12a_dwc_पढ़ो(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr)
+अणु
+	वापस पढ़ोb(dw_hdmi->hdmitx + addr);
+पूर्ण
+
+अटल अंतरभूत व्योम dw_hdmi_dwc_ग_लिखो(काष्ठा meson_dw_hdmi *dw_hdmi,
+				     अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
+अणु
+	अचिन्हित दीर्घ flags;
+
+	spin_lock_irqsave(&reg_lock, flags);
+
+	/* ADDR must be written twice */
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
+	ग_लिखोl(addr & 0xffff, dw_hdmi->hdmitx + HDMITX_DWC_ADDR_REG);
+
+	/* Write needs single DATA ग_लिखो */
+	ग_लिखोl(data, dw_hdmi->hdmitx + HDMITX_DWC_DATA_REG);
+
+	spin_unlock_irqrestore(&reg_lock, flags);
+पूर्ण
+
+अटल अंतरभूत व्योम dw_hdmi_g12a_dwc_ग_लिखो(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr, अचिन्हित पूर्णांक data)
+अणु
+	ग_लिखोb(data, dw_hdmi->hdmitx + addr);
+पूर्ण
+
+/* Helper to change specअगरic bits in controller रेजिस्टरs */
+अटल अंतरभूत व्योम dw_hdmi_dwc_ग_लिखो_bits(काष्ठा meson_dw_hdmi *dw_hdmi,
+					  अचिन्हित पूर्णांक addr,
+					  अचिन्हित पूर्णांक mask,
+					  अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक data = dw_hdmi->data->dwc_पढ़ो(dw_hdmi, addr);
 
 	data &= ~mask;
 	data |= val;
 
-	dw_hdmi->data->dwc_write(dw_hdmi, addr, data);
-}
+	dw_hdmi->data->dwc_ग_लिखो(dw_hdmi, addr, data);
+पूर्ण
 
 /* Bridge */
 
 /* Setup PHY bandwidth modes */
-static void meson_hdmi_phy_setup_mode(struct meson_dw_hdmi *dw_hdmi,
-				      const struct drm_display_mode *mode)
-{
-	struct meson_drm *priv = dw_hdmi->priv;
-	unsigned int pixel_clock = mode->clock;
+अटल व्योम meson_hdmi_phy_setup_mode(काष्ठा meson_dw_hdmi *dw_hdmi,
+				      स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
+	अचिन्हित पूर्णांक pixel_घड़ी = mode->घड़ी;
 
-	/* For 420, pixel clock is half unlike venc clock */
-	if (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
-		pixel_clock /= 2;
+	/* For 420, pixel घड़ी is half unlike venc घड़ी */
+	अगर (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
+		pixel_घड़ी /= 2;
 
-	if (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
-	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi")) {
-		if (pixel_clock >= 371250) {
+	अगर (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi")) अणु
+		अगर (pixel_घड़ी >= 371250) अणु
 			/* 5.94Gbps, 3.7125Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x333d3282);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2136315b);
-		} else if (pixel_clock >= 297000) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x333d3282);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2136315b);
+		पूर्ण अन्यथा अगर (pixel_घड़ी >= 297000) अणु
 			/* 2.97Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33303382);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2036315b);
-		} else if (pixel_clock >= 148500) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33303382);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2036315b);
+		पूर्ण अन्यथा अगर (pixel_घड़ी >= 148500) अणु
 			/* 1.485Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33303362);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2016315b);
-		} else {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33303362);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2016315b);
+		पूर्ण अन्यथा अणु
 			/* 742.5Mbps, and below */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33604142);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x0016315b);
-		}
-	} else if (dw_hdmi_is_compatible(dw_hdmi,
-					 "amlogic,meson-gxbb-dw-hdmi")) {
-		if (pixel_clock >= 371250) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33604142);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x0016315b);
+		पूर्ण
+	पूर्ण अन्यथा अगर (dw_hdmi_is_compatible(dw_hdmi,
+					 "amlogic,meson-gxbb-dw-hdmi")) अणु
+		अगर (pixel_घड़ी >= 371250) अणु
 			/* 5.94Gbps, 3.7125Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33353245);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2100115b);
-		} else if (pixel_clock >= 297000) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33353245);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2100115b);
+		पूर्ण अन्यथा अगर (pixel_घड़ी >= 297000) अणु
 			/* 2.97Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33634283);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0xb000115b);
-		} else {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33634283);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0xb000115b);
+		पूर्ण अन्यथा अणु
 			/* 1.485Gbps, and below */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33632122);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2000115b);
-		}
-	} else if (dw_hdmi_is_compatible(dw_hdmi,
-					 "amlogic,meson-g12a-dw-hdmi")) {
-		if (pixel_clock >= 371250) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33632122);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2000115b);
+		पूर्ण
+	पूर्ण अन्यथा अगर (dw_hdmi_is_compatible(dw_hdmi,
+					 "amlogic,meson-g12a-dw-hdmi")) अणु
+		अगर (pixel_घड़ी >= 371250) अणु
 			/* 5.94Gbps, 3.7125Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x37eb65c4);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x0000080b);
-		} else if (pixel_clock >= 297000) {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x37eb65c4);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x0000080b);
+		पूर्ण अन्यथा अगर (pixel_घड़ी >= 297000) अणु
 			/* 2.97Gbps */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33eb6262);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x00000003);
-		} else {
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33eb6262);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x00000003);
+		पूर्ण अन्यथा अणु
 			/* 1.485Gbps, and below */
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33eb4242);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
-			regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x00000003);
-		}
-	}
-}
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0x33eb4242);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL3, 0x2ab0ff3b);
+			regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL5, 0x00000003);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline void meson_dw_hdmi_phy_reset(struct meson_dw_hdmi *dw_hdmi)
-{
-	struct meson_drm *priv = dw_hdmi->priv;
+अटल अंतरभूत व्योम meson_dw_hdmi_phy_reset(काष्ठा meson_dw_hdmi *dw_hdmi)
+अणु
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
 
 	/* Enable and software reset */
 	regmap_update_bits(priv->hhi, HHI_HDMI_PHY_CNTL1, 0xf, 0xf);
@@ -372,48 +373,48 @@ static inline void meson_dw_hdmi_phy_reset(struct meson_dw_hdmi *dw_hdmi)
 	regmap_update_bits(priv->hhi, HHI_HDMI_PHY_CNTL1, 0xf, 0xe);
 
 	mdelay(2);
-}
+पूर्ण
 
-static void dw_hdmi_set_vclk(struct meson_dw_hdmi *dw_hdmi,
-			     const struct drm_display_mode *mode)
-{
-	struct meson_drm *priv = dw_hdmi->priv;
-	int vic = drm_match_cea_mode(mode);
-	unsigned int phy_freq;
-	unsigned int vclk_freq;
-	unsigned int venc_freq;
-	unsigned int hdmi_freq;
+अटल व्योम dw_hdmi_set_vclk(काष्ठा meson_dw_hdmi *dw_hdmi,
+			     स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
+	पूर्णांक vic = drm_match_cea_mode(mode);
+	अचिन्हित पूर्णांक phy_freq;
+	अचिन्हित पूर्णांक vclk_freq;
+	अचिन्हित पूर्णांक venc_freq;
+	अचिन्हित पूर्णांक hdmi_freq;
 
-	vclk_freq = mode->clock;
+	vclk_freq = mode->घड़ी;
 
-	/* For 420, pixel clock is half unlike venc clock */
-	if (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
+	/* For 420, pixel घड़ी is half unlike venc घड़ी */
+	अगर (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
 		vclk_freq /= 2;
 
-	/* TMDS clock is pixel_clock * 10 */
+	/* TMDS घड़ी is pixel_घड़ी * 10 */
 	phy_freq = vclk_freq * 10;
 
-	if (!vic) {
+	अगर (!vic) अणु
 		meson_vclk_setup(priv, MESON_VCLK_TARGET_DMT, phy_freq,
 				 vclk_freq, vclk_freq, vclk_freq, false);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* 480i/576i needs global pixel doubling */
-	if (mode->flags & DRM_MODE_FLAG_DBLCLK)
+	/* 480i/576i needs global pixel करोubling */
+	अगर (mode->flags & DRM_MODE_FLAG_DBLCLK)
 		vclk_freq *= 2;
 
 	venc_freq = vclk_freq;
 	hdmi_freq = vclk_freq;
 
-	/* VENC double pixels for 1080i, 720p and YUV420 modes */
-	if (meson_venc_hdmi_venc_repeat(vic) ||
+	/* VENC द्विगुन pixels क्रम 1080i, 720p and YUV420 modes */
+	अगर (meson_venc_hdmi_venc_repeat(vic) ||
 	    dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
 		venc_freq *= 2;
 
 	vclk_freq = max(venc_freq, hdmi_freq);
 
-	if (mode->flags & DRM_MODE_FLAG_DBLCLK)
+	अगर (mode->flags & DRM_MODE_FLAG_DBLCLK)
 		venc_freq /= 2;
 
 	DRM_DEBUG_DRIVER("vclk:%d phy=%d venc=%d hdmi=%d enci=%d\n",
@@ -422,58 +423,58 @@ static void dw_hdmi_set_vclk(struct meson_dw_hdmi *dw_hdmi,
 
 	meson_vclk_setup(priv, MESON_VCLK_TARGET_HDMI, phy_freq, vclk_freq,
 			 venc_freq, hdmi_freq, priv->venc.hdmi_use_enci);
-}
+पूर्ण
 
-static int dw_hdmi_phy_init(struct dw_hdmi *hdmi, void *data,
-			    const struct drm_display_info *display,
-			    const struct drm_display_mode *mode)
-{
-	struct meson_dw_hdmi *dw_hdmi = (struct meson_dw_hdmi *)data;
-	struct meson_drm *priv = dw_hdmi->priv;
-	unsigned int wr_clk =
-		readl_relaxed(priv->io_base + _REG(VPU_HDMI_SETTING));
+अटल पूर्णांक dw_hdmi_phy_init(काष्ठा dw_hdmi *hdmi, व्योम *data,
+			    स्थिर काष्ठा drm_display_info *display,
+			    स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = (काष्ठा meson_dw_hdmi *)data;
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
+	अचिन्हित पूर्णांक wr_clk =
+		पढ़ोl_relaxed(priv->io_base + _REG(VPU_HDMI_SETTING));
 
 	DRM_DEBUG_DRIVER("\"%s\" div%d\n", mode->name,
-			 mode->clock > 340000 ? 40 : 10);
+			 mode->घड़ी > 340000 ? 40 : 10);
 
-	/* Enable clocks */
+	/* Enable घड़ीs */
 	regmap_update_bits(priv->hhi, HHI_HDMI_CLK_CNTL, 0xffff, 0x100);
 
-	/* Bring HDMITX MEM output of power down */
+	/* Bring HDMITX MEM output of घातer करोwn */
 	regmap_update_bits(priv->hhi, HHI_MEM_PD_REG0, 0xff << 8, 0);
 
 	/* Bring out of reset */
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_SW_RESET,  0);
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_SW_RESET,  0);
 
-	/* Enable internal pixclk, tmds_clk, spdif_clk, i2s_clk, cecclk */
-	dw_hdmi_top_write_bits(dw_hdmi, HDMITX_TOP_CLK_CNTL,
+	/* Enable पूर्णांकernal pixclk, पंचांगds_clk, spdअगर_clk, i2s_clk, cecclk */
+	dw_hdmi_top_ग_लिखो_bits(dw_hdmi, HDMITX_TOP_CLK_CNTL,
 			       0x3, 0x3);
 
-	/* Enable cec_clk and hdcp22_tmdsclk_en */
-	dw_hdmi_top_write_bits(dw_hdmi, HDMITX_TOP_CLK_CNTL,
+	/* Enable cec_clk and hdcp22_पंचांगdsclk_en */
+	dw_hdmi_top_ग_लिखो_bits(dw_hdmi, HDMITX_TOP_CLK_CNTL,
 			       0x3 << 4, 0x3 << 4);
 
 	/* Enable normal output to PHY */
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_BIST_CNTL, BIT(12));
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_BIST_CNTL, BIT(12));
 
 	/* TMDS pattern setup */
-	if (mode->clock > 340000 &&
-	    dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_YUV8_1X24) {
-		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
+	अगर (mode->घड़ी > 340000 &&
+	    dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_YUV8_1X24) अणु
+		dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
 				  0);
-		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
+		dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
 				  0x03ff03ff);
-	} else {
-		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
+	पूर्ण अन्यथा अणु
+		dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_01,
 				  0x001f001f);
-		dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
+		dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_23,
 				  0x001f001f);
-	}
+	पूर्ण
 
 	/* Load TMDS pattern */
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_CNTL, 0x1);
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_CNTL, 0x1);
 	msleep(20);
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_CNTL, 0x2);
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_TMDS_CLK_PTTN_CNTL, 0x2);
 
 	/* Setup PHY parameters */
 	meson_hdmi_phy_setup_mode(dw_hdmi, mode);
@@ -483,206 +484,206 @@ static int dw_hdmi_phy_init(struct dw_hdmi *hdmi, void *data,
 			   0xffff << 16, 0x0390 << 16);
 
 	/* BIT_INVERT */
-	if (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+	अगर (dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
 	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-gxm-dw-hdmi") ||
 	    dw_hdmi_is_compatible(dw_hdmi, "amlogic,meson-g12a-dw-hdmi"))
 		regmap_update_bits(priv->hhi, HHI_HDMI_PHY_CNTL1,
 				   BIT(17), 0);
-	else
+	अन्यथा
 		regmap_update_bits(priv->hhi, HHI_HDMI_PHY_CNTL1,
 				   BIT(17), BIT(17));
 
-	/* Disable clock, fifo, fifo_wr */
+	/* Disable घड़ी, fअगरo, fअगरo_wr */
 	regmap_update_bits(priv->hhi, HHI_HDMI_PHY_CNTL1, 0xf, 0);
 
-	dw_hdmi_set_high_tmds_clock_ratio(hdmi, display);
+	dw_hdmi_set_high_पंचांगds_घड़ी_ratio(hdmi, display);
 
 	msleep(100);
 
-	/* Reset PHY 3 times in a row */
+	/* Reset PHY 3 बार in a row */
 	meson_dw_hdmi_phy_reset(dw_hdmi);
 	meson_dw_hdmi_phy_reset(dw_hdmi);
 	meson_dw_hdmi_phy_reset(dw_hdmi);
 
 	/* Temporary Disable VENC video stream */
-	if (priv->venc.hdmi_use_enci)
-		writel_relaxed(0, priv->io_base + _REG(ENCI_VIDEO_EN));
-	else
-		writel_relaxed(0, priv->io_base + _REG(ENCP_VIDEO_EN));
+	अगर (priv->venc.hdmi_use_enci)
+		ग_लिखोl_relaxed(0, priv->io_base + _REG(ENCI_VIDEO_EN));
+	अन्यथा
+		ग_लिखोl_relaxed(0, priv->io_base + _REG(ENCP_VIDEO_EN));
 
 	/* Temporary Disable HDMI video stream to HDMI-TX */
-	writel_bits_relaxed(0x3, 0,
+	ग_लिखोl_bits_relaxed(0x3, 0,
 			    priv->io_base + _REG(VPU_HDMI_SETTING));
-	writel_bits_relaxed(0xf << 8, 0,
+	ग_लिखोl_bits_relaxed(0xf << 8, 0,
 			    priv->io_base + _REG(VPU_HDMI_SETTING));
 
 	/* Re-Enable VENC video stream */
-	if (priv->venc.hdmi_use_enci)
-		writel_relaxed(1, priv->io_base + _REG(ENCI_VIDEO_EN));
-	else
-		writel_relaxed(1, priv->io_base + _REG(ENCP_VIDEO_EN));
+	अगर (priv->venc.hdmi_use_enci)
+		ग_लिखोl_relaxed(1, priv->io_base + _REG(ENCI_VIDEO_EN));
+	अन्यथा
+		ग_लिखोl_relaxed(1, priv->io_base + _REG(ENCP_VIDEO_EN));
 
-	/* Push back HDMI clock settings */
-	writel_bits_relaxed(0xf << 8, wr_clk & (0xf << 8),
+	/* Push back HDMI घड़ी settings */
+	ग_लिखोl_bits_relaxed(0xf << 8, wr_clk & (0xf << 8),
 			    priv->io_base + _REG(VPU_HDMI_SETTING));
 
-	/* Enable and Select HDMI video source for HDMI-TX */
-	if (priv->venc.hdmi_use_enci)
-		writel_bits_relaxed(0x3, MESON_VENC_SOURCE_ENCI,
+	/* Enable and Select HDMI video source क्रम HDMI-TX */
+	अगर (priv->venc.hdmi_use_enci)
+		ग_लिखोl_bits_relaxed(0x3, MESON_VENC_SOURCE_ENCI,
 				    priv->io_base + _REG(VPU_HDMI_SETTING));
-	else
-		writel_bits_relaxed(0x3, MESON_VENC_SOURCE_ENCP,
+	अन्यथा
+		ग_लिखोl_bits_relaxed(0x3, MESON_VENC_SOURCE_ENCP,
 				    priv->io_base + _REG(VPU_HDMI_SETTING));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dw_hdmi_phy_disable(struct dw_hdmi *hdmi,
-				void *data)
-{
-	struct meson_dw_hdmi *dw_hdmi = (struct meson_dw_hdmi *)data;
-	struct meson_drm *priv = dw_hdmi->priv;
+अटल व्योम dw_hdmi_phy_disable(काष्ठा dw_hdmi *hdmi,
+				व्योम *data)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = (काष्ठा meson_dw_hdmi *)data;
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	regmap_write(priv->hhi, HHI_HDMI_PHY_CNTL0, 0);
-}
+	regmap_ग_लिखो(priv->hhi, HHI_HDMI_PHY_CNTL0, 0);
+पूर्ण
 
-static enum drm_connector_status dw_hdmi_read_hpd(struct dw_hdmi *hdmi,
-			     void *data)
-{
-	struct meson_dw_hdmi *dw_hdmi = (struct meson_dw_hdmi *)data;
+अटल क्रमागत drm_connector_status dw_hdmi_पढ़ो_hpd(काष्ठा dw_hdmi *hdmi,
+			     व्योम *data)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = (काष्ठा meson_dw_hdmi *)data;
 
-	return !!dw_hdmi->data->top_read(dw_hdmi, HDMITX_TOP_STAT0) ?
+	वापस !!dw_hdmi->data->top_पढ़ो(dw_hdmi, HDMITX_TOP_STAT0) ?
 		connector_status_connected : connector_status_disconnected;
-}
+पूर्ण
 
-static void dw_hdmi_setup_hpd(struct dw_hdmi *hdmi,
-			      void *data)
-{
-	struct meson_dw_hdmi *dw_hdmi = (struct meson_dw_hdmi *)data;
+अटल व्योम dw_hdmi_setup_hpd(काष्ठा dw_hdmi *hdmi,
+			      व्योम *data)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = (काष्ठा meson_dw_hdmi *)data;
 
 	/* Setup HPD Filter */
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_HPD_FILTER,
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_HPD_FILTER,
 			  (0xa << 12) | 0xa0);
 
-	/* Clear interrupts */
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_INTR_STAT_CLR,
+	/* Clear पूर्णांकerrupts */
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_INTR_STAT_CLR,
 			  HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL);
 
-	/* Unmask interrupts */
-	dw_hdmi_top_write_bits(dw_hdmi, HDMITX_TOP_INTR_MASKN,
+	/* Unmask पूर्णांकerrupts */
+	dw_hdmi_top_ग_लिखो_bits(dw_hdmi, HDMITX_TOP_INTR_MASKN,
 			HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL,
 			HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL);
-}
+पूर्ण
 
-static const struct dw_hdmi_phy_ops meson_dw_hdmi_phy_ops = {
+अटल स्थिर काष्ठा dw_hdmi_phy_ops meson_dw_hdmi_phy_ops = अणु
 	.init = dw_hdmi_phy_init,
 	.disable = dw_hdmi_phy_disable,
-	.read_hpd = dw_hdmi_read_hpd,
+	.पढ़ो_hpd = dw_hdmi_पढ़ो_hpd,
 	.setup_hpd = dw_hdmi_setup_hpd,
-};
+पूर्ण;
 
-static irqreturn_t dw_hdmi_top_irq(int irq, void *dev_id)
-{
-	struct meson_dw_hdmi *dw_hdmi = dev_id;
+अटल irqवापस_t dw_hdmi_top_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = dev_id;
 	u32 stat;
 
-	stat = dw_hdmi->data->top_read(dw_hdmi, HDMITX_TOP_INTR_STAT);
-	dw_hdmi->data->top_write(dw_hdmi, HDMITX_TOP_INTR_STAT_CLR, stat);
+	stat = dw_hdmi->data->top_पढ़ो(dw_hdmi, HDMITX_TOP_INTR_STAT);
+	dw_hdmi->data->top_ग_लिखो(dw_hdmi, HDMITX_TOP_INTR_STAT_CLR, stat);
 
-	/* HPD Events, handle in the threaded interrupt handler */
-	if (stat & (HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL)) {
+	/* HPD Events, handle in the thपढ़ोed पूर्णांकerrupt handler */
+	अगर (stat & (HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL)) अणु
 		dw_hdmi->irq_stat = stat;
-		return IRQ_WAKE_THREAD;
-	}
+		वापस IRQ_WAKE_THREAD;
+	पूर्ण
 
 	/* HDMI Controller Interrupt */
-	if (stat & 1)
-		return IRQ_NONE;
+	अगर (stat & 1)
+		वापस IRQ_NONE;
 
 	/* TOFIX Handle HDCP Interrupts */
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Threaded interrupt handler to manage HPD events */
-static irqreturn_t dw_hdmi_top_thread_irq(int irq, void *dev_id)
-{
-	struct meson_dw_hdmi *dw_hdmi = dev_id;
+/* Thपढ़ोed पूर्णांकerrupt handler to manage HPD events */
+अटल irqवापस_t dw_hdmi_top_thपढ़ो_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = dev_id;
 	u32 stat = dw_hdmi->irq_stat;
 
 	/* HPD Events */
-	if (stat & (HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL)) {
+	अगर (stat & (HDMITX_TOP_INTR_HPD_RISE | HDMITX_TOP_INTR_HPD_FALL)) अणु
 		bool hpd_connected = false;
 
-		if (stat & HDMITX_TOP_INTR_HPD_RISE)
+		अगर (stat & HDMITX_TOP_INTR_HPD_RISE)
 			hpd_connected = true;
 
 		dw_hdmi_setup_rx_sense(dw_hdmi->hdmi, hpd_connected,
 				       hpd_connected);
 
 		drm_helper_hpd_irq_event(dw_hdmi->encoder.dev);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static enum drm_mode_status
-dw_hdmi_mode_valid(struct dw_hdmi *hdmi, void *data,
-		   const struct drm_display_info *display_info,
-		   const struct drm_display_mode *mode)
-{
-	struct meson_dw_hdmi *dw_hdmi = data;
-	struct meson_drm *priv = dw_hdmi->priv;
+अटल क्रमागत drm_mode_status
+dw_hdmi_mode_valid(काष्ठा dw_hdmi *hdmi, व्योम *data,
+		   स्थिर काष्ठा drm_display_info *display_info,
+		   स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = data;
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
 	bool is_hdmi2_sink = display_info->hdmi.scdc.supported;
-	unsigned int phy_freq;
-	unsigned int vclk_freq;
-	unsigned int venc_freq;
-	unsigned int hdmi_freq;
-	int vic = drm_match_cea_mode(mode);
-	enum drm_mode_status status;
+	अचिन्हित पूर्णांक phy_freq;
+	अचिन्हित पूर्णांक vclk_freq;
+	अचिन्हित पूर्णांक venc_freq;
+	अचिन्हित पूर्णांक hdmi_freq;
+	पूर्णांक vic = drm_match_cea_mode(mode);
+	क्रमागत drm_mode_status status;
 
 	DRM_DEBUG_DRIVER("Modeline " DRM_MODE_FMT "\n", DRM_MODE_ARG(mode));
 
-	/* If sink does not support 540MHz, reject the non-420 HDMI2 modes */
-	if (display_info->max_tmds_clock &&
-	    mode->clock > display_info->max_tmds_clock &&
+	/* If sink करोes not support 540MHz, reject the non-420 HDMI2 modes */
+	अगर (display_info->max_पंचांगds_घड़ी &&
+	    mode->घड़ी > display_info->max_पंचांगds_घड़ी &&
 	    !drm_mode_is_420_only(display_info, mode) &&
 	    !drm_mode_is_420_also(display_info, mode))
-		return MODE_BAD;
+		वापस MODE_BAD;
 
 	/* Check against non-VIC supported modes */
-	if (!vic) {
+	अगर (!vic) अणु
 		status = meson_venc_hdmi_supported_mode(mode);
-		if (status != MODE_OK)
-			return status;
+		अगर (status != MODE_OK)
+			वापस status;
 
-		return meson_vclk_dmt_supported_freq(priv, mode->clock);
+		वापस meson_vclk_dmt_supported_freq(priv, mode->घड़ी);
 	/* Check against supported VIC modes */
-	} else if (!meson_venc_hdmi_supported_vic(vic))
-		return MODE_BAD;
+	पूर्ण अन्यथा अगर (!meson_venc_hdmi_supported_vic(vic))
+		वापस MODE_BAD;
 
-	vclk_freq = mode->clock;
+	vclk_freq = mode->घड़ी;
 
-	/* For 420, pixel clock is half unlike venc clock */
-	if (drm_mode_is_420_only(display_info, mode) ||
+	/* For 420, pixel घड़ी is half unlike venc घड़ी */
+	अगर (drm_mode_is_420_only(display_info, mode) ||
 	    (!is_hdmi2_sink &&
 	     drm_mode_is_420_also(display_info, mode)))
 		vclk_freq /= 2;
 
-	/* TMDS clock is pixel_clock * 10 */
+	/* TMDS घड़ी is pixel_घड़ी * 10 */
 	phy_freq = vclk_freq * 10;
 
-	/* 480i/576i needs global pixel doubling */
-	if (mode->flags & DRM_MODE_FLAG_DBLCLK)
+	/* 480i/576i needs global pixel करोubling */
+	अगर (mode->flags & DRM_MODE_FLAG_DBLCLK)
 		vclk_freq *= 2;
 
 	venc_freq = vclk_freq;
 	hdmi_freq = vclk_freq;
 
-	/* VENC double pixels for 1080i, 720p and YUV420 modes */
-	if (meson_venc_hdmi_venc_repeat(vic) ||
+	/* VENC द्विगुन pixels क्रम 1080i, 720p and YUV420 modes */
+	अगर (meson_venc_hdmi_venc_repeat(vic) ||
 	    drm_mode_is_420_only(display_info, mode) ||
 	    (!is_hdmi2_sink &&
 	     drm_mode_is_420_also(display_info, mode)))
@@ -690,136 +691,136 @@ dw_hdmi_mode_valid(struct dw_hdmi *hdmi, void *data,
 
 	vclk_freq = max(venc_freq, hdmi_freq);
 
-	if (mode->flags & DRM_MODE_FLAG_DBLCLK)
+	अगर (mode->flags & DRM_MODE_FLAG_DBLCLK)
 		venc_freq /= 2;
 
 	dev_dbg(dw_hdmi->dev, "%s: vclk:%d phy=%d venc=%d hdmi=%d\n",
 		__func__, phy_freq, vclk_freq, venc_freq, hdmi_freq);
 
-	return meson_vclk_vic_supported_freq(priv, phy_freq, vclk_freq);
-}
+	वापस meson_vclk_vic_supported_freq(priv, phy_freq, vclk_freq);
+पूर्ण
 
 /* Encoder */
 
-static const u32 meson_dw_hdmi_out_bus_fmts[] = {
+अटल स्थिर u32 meson_dw_hdmi_out_bus_fmts[] = अणु
 	MEDIA_BUS_FMT_YUV8_1X24,
 	MEDIA_BUS_FMT_UYYVYY8_0_5X24,
-};
+पूर्ण;
 
-static void meson_venc_hdmi_encoder_destroy(struct drm_encoder *encoder)
-{
+अटल व्योम meson_venc_hdmi_encoder_destroy(काष्ठा drm_encoder *encoder)
+अणु
 	drm_encoder_cleanup(encoder);
-}
+पूर्ण
 
-static const struct drm_encoder_funcs meson_venc_hdmi_encoder_funcs = {
+अटल स्थिर काष्ठा drm_encoder_funcs meson_venc_hdmi_encoder_funcs = अणु
 	.destroy        = meson_venc_hdmi_encoder_destroy,
-};
+पूर्ण;
 
-static u32 *
-meson_venc_hdmi_encoder_get_inp_bus_fmts(struct drm_bridge *bridge,
-					struct drm_bridge_state *bridge_state,
-					struct drm_crtc_state *crtc_state,
-					struct drm_connector_state *conn_state,
+अटल u32 *
+meson_venc_hdmi_encoder_get_inp_bus_fmts(काष्ठा drm_bridge *bridge,
+					काष्ठा drm_bridge_state *bridge_state,
+					काष्ठा drm_crtc_state *crtc_state,
+					काष्ठा drm_connector_state *conn_state,
 					u32 output_fmt,
-					unsigned int *num_input_fmts)
-{
-	u32 *input_fmts = NULL;
-	int i;
+					अचिन्हित पूर्णांक *num_input_fmts)
+अणु
+	u32 *input_fmts = शून्य;
+	पूर्णांक i;
 
 	*num_input_fmts = 0;
 
-	for (i = 0 ; i < ARRAY_SIZE(meson_dw_hdmi_out_bus_fmts) ; ++i) {
-		if (output_fmt == meson_dw_hdmi_out_bus_fmts[i]) {
+	क्रम (i = 0 ; i < ARRAY_SIZE(meson_dw_hdmi_out_bus_fmts) ; ++i) अणु
+		अगर (output_fmt == meson_dw_hdmi_out_bus_fmts[i]) अणु
 			*num_input_fmts = 1;
-			input_fmts = kcalloc(*num_input_fmts,
-					     sizeof(*input_fmts),
+			input_fmts = kसुस्मृति(*num_input_fmts,
+					     माप(*input_fmts),
 					     GFP_KERNEL);
-			if (!input_fmts)
-				return NULL;
+			अगर (!input_fmts)
+				वापस शून्य;
 
 			input_fmts[0] = output_fmt;
 
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return input_fmts;
-}
+	वापस input_fmts;
+पूर्ण
 
-static int meson_venc_hdmi_encoder_atomic_check(struct drm_bridge *bridge,
-					struct drm_bridge_state *bridge_state,
-					struct drm_crtc_state *crtc_state,
-					struct drm_connector_state *conn_state)
-{
-	struct meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
+अटल पूर्णांक meson_venc_hdmi_encoder_atomic_check(काष्ठा drm_bridge *bridge,
+					काष्ठा drm_bridge_state *bridge_state,
+					काष्ठा drm_crtc_state *crtc_state,
+					काष्ठा drm_connector_state *conn_state)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
 
-	dw_hdmi->output_bus_fmt = bridge_state->output_bus_cfg.format;
+	dw_hdmi->output_bus_fmt = bridge_state->output_bus_cfg.क्रमmat;
 
 	DRM_DEBUG_DRIVER("output_bus_fmt %lx\n", dw_hdmi->output_bus_fmt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void meson_venc_hdmi_encoder_disable(struct drm_bridge *bridge)
-{
-	struct meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
-	struct meson_drm *priv = dw_hdmi->priv;
+अटल व्योम meson_venc_hdmi_encoder_disable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	writel_bits_relaxed(0x3, 0,
+	ग_लिखोl_bits_relaxed(0x3, 0,
 			    priv->io_base + _REG(VPU_HDMI_SETTING));
 
-	writel_relaxed(0, priv->io_base + _REG(ENCI_VIDEO_EN));
-	writel_relaxed(0, priv->io_base + _REG(ENCP_VIDEO_EN));
-}
+	ग_लिखोl_relaxed(0, priv->io_base + _REG(ENCI_VIDEO_EN));
+	ग_लिखोl_relaxed(0, priv->io_base + _REG(ENCP_VIDEO_EN));
+पूर्ण
 
-static void meson_venc_hdmi_encoder_enable(struct drm_bridge *bridge)
-{
-	struct meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
-	struct meson_drm *priv = dw_hdmi->priv;
+अटल व्योम meson_venc_hdmi_encoder_enable(काष्ठा drm_bridge *bridge)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
 
 	DRM_DEBUG_DRIVER("%s\n", priv->venc.hdmi_use_enci ? "VENCI" : "VENCP");
 
-	if (priv->venc.hdmi_use_enci)
-		writel_relaxed(1, priv->io_base + _REG(ENCI_VIDEO_EN));
-	else
-		writel_relaxed(1, priv->io_base + _REG(ENCP_VIDEO_EN));
-}
+	अगर (priv->venc.hdmi_use_enci)
+		ग_लिखोl_relaxed(1, priv->io_base + _REG(ENCI_VIDEO_EN));
+	अन्यथा
+		ग_लिखोl_relaxed(1, priv->io_base + _REG(ENCP_VIDEO_EN));
+पूर्ण
 
-static void meson_venc_hdmi_encoder_mode_set(struct drm_bridge *bridge,
-				   const struct drm_display_mode *mode,
-				   const struct drm_display_mode *adjusted_mode)
-{
-	struct meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
-	struct meson_drm *priv = dw_hdmi->priv;
-	int vic = drm_match_cea_mode(mode);
-	unsigned int ycrcb_map = VPU_HDMI_OUTPUT_CBYCR;
+अटल व्योम meson_venc_hdmi_encoder_mode_set(काष्ठा drm_bridge *bridge,
+				   स्थिर काष्ठा drm_display_mode *mode,
+				   स्थिर काष्ठा drm_display_mode *adjusted_mode)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = bridge_to_meson_dw_hdmi(bridge);
+	काष्ठा meson_drm *priv = dw_hdmi->priv;
+	पूर्णांक vic = drm_match_cea_mode(mode);
+	अचिन्हित पूर्णांक ycrcb_map = VPU_HDMI_OUTPUT_CBYCR;
 	bool yuv420_mode = false;
 
 	DRM_DEBUG_DRIVER("\"%s\" vic %d\n", mode->name, vic);
 
-	if (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24) {
+	अगर (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24) अणु
 		ycrcb_map = VPU_HDMI_OUTPUT_CRYCB;
 		yuv420_mode = true;
-	}
+	पूर्ण
 
 	/* VENC + VENC-DVI Mode setup */
 	meson_venc_hdmi_mode_set(priv, vic, ycrcb_map, yuv420_mode, mode);
 
-	/* VCLK Set clock */
+	/* VCLK Set घड़ी */
 	dw_hdmi_set_vclk(dw_hdmi, mode);
 
-	if (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
+	अगर (dw_hdmi->output_bus_fmt == MEDIA_BUS_FMT_UYYVYY8_0_5X24)
 		/* Setup YUV420 to HDMI-TX, no 10bit diphering */
-		writel_relaxed(2 | (2 << 2),
+		ग_लिखोl_relaxed(2 | (2 << 2),
 			       priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
-	else
+	अन्यथा
 		/* Setup YUV444 to HDMI-TX, no 10bit diphering */
-		writel_relaxed(0, priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
-}
+		ग_लिखोl_relaxed(0, priv->io_base + _REG(VPU_HDMI_FMT_CTRL));
+पूर्ण
 
-static const struct drm_bridge_funcs meson_venc_hdmi_encoder_bridge_funcs = {
+अटल स्थिर काष्ठा drm_bridge_funcs meson_venc_hdmi_encoder_bridge_funcs = अणु
 	.atomic_duplicate_state = drm_atomic_helper_bridge_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_bridge_destroy_state,
 	.atomic_get_input_bus_fmts = meson_venc_hdmi_encoder_get_inp_bus_fmts,
@@ -828,84 +829,84 @@ static const struct drm_bridge_funcs meson_venc_hdmi_encoder_bridge_funcs = {
 	.enable	= meson_venc_hdmi_encoder_enable,
 	.disable = meson_venc_hdmi_encoder_disable,
 	.mode_set = meson_venc_hdmi_encoder_mode_set,
-};
+पूर्ण;
 
 /* DW HDMI Regmap */
 
-static int meson_dw_hdmi_reg_read(void *context, unsigned int reg,
-				  unsigned int *result)
-{
-	struct meson_dw_hdmi *dw_hdmi = context;
+अटल पूर्णांक meson_dw_hdmi_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक *result)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = context;
 
-	*result = dw_hdmi->data->dwc_read(dw_hdmi, reg);
+	*result = dw_hdmi->data->dwc_पढ़ो(dw_hdmi, reg);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int meson_dw_hdmi_reg_write(void *context, unsigned int reg,
-				   unsigned int val)
-{
-	struct meson_dw_hdmi *dw_hdmi = context;
+अटल पूर्णांक meson_dw_hdmi_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
+				   अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा meson_dw_hdmi *dw_hdmi = context;
 
-	dw_hdmi->data->dwc_write(dw_hdmi, reg, val);
+	dw_hdmi->data->dwc_ग_लिखो(dw_hdmi, reg, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config meson_dw_hdmi_regmap_config = {
+अटल स्थिर काष्ठा regmap_config meson_dw_hdmi_regmap_config = अणु
 	.reg_bits = 32,
 	.val_bits = 8,
-	.reg_read = meson_dw_hdmi_reg_read,
-	.reg_write = meson_dw_hdmi_reg_write,
-	.max_register = 0x10000,
+	.reg_पढ़ो = meson_dw_hdmi_reg_पढ़ो,
+	.reg_ग_लिखो = meson_dw_hdmi_reg_ग_लिखो,
+	.max_रेजिस्टर = 0x10000,
 	.fast_io = true,
-};
+पूर्ण;
 
-static const struct meson_dw_hdmi_data meson_dw_hdmi_gx_data = {
-	.top_read = dw_hdmi_top_read,
-	.top_write = dw_hdmi_top_write,
-	.dwc_read = dw_hdmi_dwc_read,
-	.dwc_write = dw_hdmi_dwc_write,
-};
+अटल स्थिर काष्ठा meson_dw_hdmi_data meson_dw_hdmi_gx_data = अणु
+	.top_पढ़ो = dw_hdmi_top_पढ़ो,
+	.top_ग_लिखो = dw_hdmi_top_ग_लिखो,
+	.dwc_पढ़ो = dw_hdmi_dwc_पढ़ो,
+	.dwc_ग_लिखो = dw_hdmi_dwc_ग_लिखो,
+पूर्ण;
 
-static const struct meson_dw_hdmi_data meson_dw_hdmi_g12a_data = {
-	.top_read = dw_hdmi_g12a_top_read,
-	.top_write = dw_hdmi_g12a_top_write,
-	.dwc_read = dw_hdmi_g12a_dwc_read,
-	.dwc_write = dw_hdmi_g12a_dwc_write,
-};
+अटल स्थिर काष्ठा meson_dw_hdmi_data meson_dw_hdmi_g12a_data = अणु
+	.top_पढ़ो = dw_hdmi_g12a_top_पढ़ो,
+	.top_ग_लिखो = dw_hdmi_g12a_top_ग_लिखो,
+	.dwc_पढ़ो = dw_hdmi_g12a_dwc_पढ़ो,
+	.dwc_ग_लिखो = dw_hdmi_g12a_dwc_ग_लिखो,
+पूर्ण;
 
-static bool meson_hdmi_connector_is_available(struct device *dev)
-{
-	struct device_node *ep, *remote;
+अटल bool meson_hdmi_connector_is_available(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *ep, *remote;
 
-	/* HDMI Connector is on the second port, first endpoint */
-	ep = of_graph_get_endpoint_by_regs(dev->of_node, 1, 0);
-	if (!ep)
-		return false;
+	/* HDMI Connector is on the second port, first endpoपूर्णांक */
+	ep = of_graph_get_endpoपूर्णांक_by_regs(dev->of_node, 1, 0);
+	अगर (!ep)
+		वापस false;
 
-	/* If the endpoint node exists, consider it enabled */
+	/* If the endpoपूर्णांक node exists, consider it enabled */
 	remote = of_graph_get_remote_port(ep);
-	if (remote) {
+	अगर (remote) अणु
 		of_node_put(ep);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	of_node_put(ep);
 	of_node_put(remote);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void meson_dw_hdmi_init(struct meson_dw_hdmi *meson_dw_hdmi)
-{
-	struct meson_drm *priv = meson_dw_hdmi->priv;
+अटल व्योम meson_dw_hdmi_init(काष्ठा meson_dw_hdmi *meson_dw_hdmi)
+अणु
+	काष्ठा meson_drm *priv = meson_dw_hdmi->priv;
 
-	/* Enable clocks */
+	/* Enable घड़ीs */
 	regmap_update_bits(priv->hhi, HHI_HDMI_CLK_CNTL, 0xffff, 0x100);
 
-	/* Bring HDMITX MEM output of power down */
+	/* Bring HDMITX MEM output of घातer करोwn */
 	regmap_update_bits(priv->hhi, HHI_MEM_PD_REG0, 0xff << 8, 0);
 
 	/* Reset HDMITX APB & TX & PHY */
@@ -914,91 +915,91 @@ static void meson_dw_hdmi_init(struct meson_dw_hdmi *meson_dw_hdmi)
 	reset_control_reset(meson_dw_hdmi->hdmitx_phy);
 
 	/* Enable APB3 fail on error */
-	if (!meson_vpu_is_compatible(priv, VPU_COMPATIBLE_G12A)) {
-		writel_bits_relaxed(BIT(15), BIT(15),
+	अगर (!meson_vpu_is_compatible(priv, VPU_COMPATIBLE_G12A)) अणु
+		ग_लिखोl_bits_relaxed(BIT(15), BIT(15),
 				    meson_dw_hdmi->hdmitx + HDMITX_TOP_CTRL_REG);
-		writel_bits_relaxed(BIT(15), BIT(15),
+		ग_लिखोl_bits_relaxed(BIT(15), BIT(15),
 				    meson_dw_hdmi->hdmitx + HDMITX_DWC_CTRL_REG);
-	}
+	पूर्ण
 
 	/* Bring out of reset */
-	meson_dw_hdmi->data->top_write(meson_dw_hdmi,
+	meson_dw_hdmi->data->top_ग_लिखो(meson_dw_hdmi,
 				       HDMITX_TOP_SW_RESET,  0);
 
 	msleep(20);
 
-	meson_dw_hdmi->data->top_write(meson_dw_hdmi,
+	meson_dw_hdmi->data->top_ग_लिखो(meson_dw_hdmi,
 				       HDMITX_TOP_CLK_CNTL, 0xff);
 
 	/* Enable HDMI-TX Interrupt */
-	meson_dw_hdmi->data->top_write(meson_dw_hdmi, HDMITX_TOP_INTR_STAT_CLR,
+	meson_dw_hdmi->data->top_ग_लिखो(meson_dw_hdmi, HDMITX_TOP_INTR_STAT_CLR,
 				       HDMITX_TOP_INTR_CORE);
 
-	meson_dw_hdmi->data->top_write(meson_dw_hdmi, HDMITX_TOP_INTR_MASKN,
+	meson_dw_hdmi->data->top_ग_लिखो(meson_dw_hdmi, HDMITX_TOP_INTR_MASKN,
 				       HDMITX_TOP_INTR_CORE);
 
-}
+पूर्ण
 
-static void meson_disable_regulator(void *data)
-{
+अटल व्योम meson_disable_regulator(व्योम *data)
+अणु
 	regulator_disable(data);
-}
+पूर्ण
 
-static void meson_disable_clk(void *data)
-{
+अटल व्योम meson_disable_clk(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int meson_enable_clk(struct device *dev, char *name)
-{
-	struct clk *clk;
-	int ret;
+अटल पूर्णांक meson_enable_clk(काष्ठा device *dev, अक्षर *name)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक ret;
 
 	clk = devm_clk_get(dev, name);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		dev_err(dev, "Unable to get %s pclk\n", name);
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (!ret)
+	अगर (!ret)
 		ret = devm_add_action_or_reset(dev, meson_disable_clk, clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
-				void *data)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	const struct meson_dw_hdmi_data *match;
-	struct meson_dw_hdmi *meson_dw_hdmi;
-	struct drm_device *drm = data;
-	struct meson_drm *priv = drm->dev_private;
-	struct dw_hdmi_plat_data *dw_plat_data;
-	struct drm_bridge *next_bridge;
-	struct drm_encoder *encoder;
-	struct resource *res;
-	int irq;
-	int ret;
+अटल पूर्णांक meson_dw_hdmi_bind(काष्ठा device *dev, काष्ठा device *master,
+				व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	स्थिर काष्ठा meson_dw_hdmi_data *match;
+	काष्ठा meson_dw_hdmi *meson_dw_hdmi;
+	काष्ठा drm_device *drm = data;
+	काष्ठा meson_drm *priv = drm->dev_निजी;
+	काष्ठा dw_hdmi_plat_data *dw_plat_data;
+	काष्ठा drm_bridge *next_bridge;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा resource *res;
+	पूर्णांक irq;
+	पूर्णांक ret;
 
 	DRM_DEBUG_DRIVER("\n");
 
-	if (!meson_hdmi_connector_is_available(dev)) {
+	अगर (!meson_hdmi_connector_is_available(dev)) अणु
 		dev_info(drm->dev, "HDMI Output connector not available\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	match = of_device_get_match_data(&pdev->dev);
-	if (!match) {
+	अगर (!match) अणु
 		dev_err(&pdev->dev, "failed to get match data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	meson_dw_hdmi = devm_kzalloc(dev, sizeof(*meson_dw_hdmi),
+	meson_dw_hdmi = devm_kzalloc(dev, माप(*meson_dw_hdmi),
 				     GFP_KERNEL);
-	if (!meson_dw_hdmi)
-		return -ENOMEM;
+	अगर (!meson_dw_hdmi)
+		वापस -ENOMEM;
 
 	meson_dw_hdmi->priv = priv;
 	meson_dw_hdmi->dev = dev;
@@ -1007,86 +1008,86 @@ static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
 	encoder = &meson_dw_hdmi->encoder;
 
 	meson_dw_hdmi->hdmi_supply = devm_regulator_get_optional(dev, "hdmi");
-	if (IS_ERR(meson_dw_hdmi->hdmi_supply)) {
-		if (PTR_ERR(meson_dw_hdmi->hdmi_supply) == -EPROBE_DEFER)
-			return -EPROBE_DEFER;
-		meson_dw_hdmi->hdmi_supply = NULL;
-	} else {
+	अगर (IS_ERR(meson_dw_hdmi->hdmi_supply)) अणु
+		अगर (PTR_ERR(meson_dw_hdmi->hdmi_supply) == -EPROBE_DEFER)
+			वापस -EPROBE_DEFER;
+		meson_dw_hdmi->hdmi_supply = शून्य;
+	पूर्ण अन्यथा अणु
 		ret = regulator_enable(meson_dw_hdmi->hdmi_supply);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = devm_add_action_or_reset(dev, meson_disable_regulator,
 					       meson_dw_hdmi->hdmi_supply);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	meson_dw_hdmi->hdmitx_apb = devm_reset_control_get_exclusive(dev,
 						"hdmitx_apb");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_apb)) {
+	अगर (IS_ERR(meson_dw_hdmi->hdmitx_apb)) अणु
 		dev_err(dev, "Failed to get hdmitx_apb reset\n");
-		return PTR_ERR(meson_dw_hdmi->hdmitx_apb);
-	}
+		वापस PTR_ERR(meson_dw_hdmi->hdmitx_apb);
+	पूर्ण
 
 	meson_dw_hdmi->hdmitx_ctrl = devm_reset_control_get_exclusive(dev,
 						"hdmitx");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_ctrl)) {
+	अगर (IS_ERR(meson_dw_hdmi->hdmitx_ctrl)) अणु
 		dev_err(dev, "Failed to get hdmitx reset\n");
-		return PTR_ERR(meson_dw_hdmi->hdmitx_ctrl);
-	}
+		वापस PTR_ERR(meson_dw_hdmi->hdmitx_ctrl);
+	पूर्ण
 
 	meson_dw_hdmi->hdmitx_phy = devm_reset_control_get_exclusive(dev,
 						"hdmitx_phy");
-	if (IS_ERR(meson_dw_hdmi->hdmitx_phy)) {
+	अगर (IS_ERR(meson_dw_hdmi->hdmitx_phy)) अणु
 		dev_err(dev, "Failed to get hdmitx_phy reset\n");
-		return PTR_ERR(meson_dw_hdmi->hdmitx_phy);
-	}
+		वापस PTR_ERR(meson_dw_hdmi->hdmitx_phy);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	meson_dw_hdmi->hdmitx = devm_ioremap_resource(dev, res);
-	if (IS_ERR(meson_dw_hdmi->hdmitx))
-		return PTR_ERR(meson_dw_hdmi->hdmitx);
+	अगर (IS_ERR(meson_dw_hdmi->hdmitx))
+		वापस PTR_ERR(meson_dw_hdmi->hdmitx);
 
 	ret = meson_enable_clk(dev, "isfr");
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = meson_enable_clk(dev, "iahb");
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = meson_enable_clk(dev, "venci");
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	dw_plat_data->regm = devm_regmap_init(dev, NULL, meson_dw_hdmi,
+	dw_plat_data->regm = devm_regmap_init(dev, शून्य, meson_dw_hdmi,
 					      &meson_dw_hdmi_regmap_config);
-	if (IS_ERR(dw_plat_data->regm))
-		return PTR_ERR(dw_plat_data->regm);
+	अगर (IS_ERR(dw_plat_data->regm))
+		वापस PTR_ERR(dw_plat_data->regm);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	ret = devm_request_threaded_irq(dev, irq, dw_hdmi_top_irq,
-					dw_hdmi_top_thread_irq, IRQF_SHARED,
+	ret = devm_request_thपढ़ोed_irq(dev, irq, dw_hdmi_top_irq,
+					dw_hdmi_top_thपढ़ो_irq, IRQF_SHARED,
 					"dw_hdmi_top_irq", meson_dw_hdmi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to request hdmi top irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Encoder */
 
 	ret = drm_encoder_init(drm, encoder, &meson_venc_hdmi_encoder_funcs,
 			       DRM_MODE_ENCODER_TMDS, "meson_hdmi");
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "Failed to init HDMI encoder\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	meson_dw_hdmi->bridge.funcs = &meson_venc_hdmi_encoder_bridge_funcs;
-	drm_bridge_attach(encoder, &meson_dw_hdmi->bridge, NULL, 0);
+	drm_bridge_attach(encoder, &meson_dw_hdmi->bridge, शून्य, 0);
 
 	encoder->possible_crtcs = BIT(0);
 
@@ -1104,109 +1105,109 @@ static int meson_dw_hdmi_bind(struct device *dev, struct device *master,
 	dw_plat_data->input_bus_encoding = V4L2_YCBCR_ENC_709;
 	dw_plat_data->ycbcr_420_allowed = true;
 
-	if (dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
+	अगर (dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxl-dw-hdmi") ||
 	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-gxm-dw-hdmi") ||
 	    dw_hdmi_is_compatible(meson_dw_hdmi, "amlogic,meson-g12a-dw-hdmi"))
 		dw_plat_data->use_drm_infoframe = true;
 
-	platform_set_drvdata(pdev, meson_dw_hdmi);
+	platक्रमm_set_drvdata(pdev, meson_dw_hdmi);
 
 	meson_dw_hdmi->hdmi = dw_hdmi_probe(pdev,
 					    &meson_dw_hdmi->dw_plat_data);
-	if (IS_ERR(meson_dw_hdmi->hdmi))
-		return PTR_ERR(meson_dw_hdmi->hdmi);
+	अगर (IS_ERR(meson_dw_hdmi->hdmi))
+		वापस PTR_ERR(meson_dw_hdmi->hdmi);
 
 	next_bridge = of_drm_find_bridge(pdev->dev.of_node);
-	if (next_bridge)
+	अगर (next_bridge)
 		drm_bridge_attach(encoder, next_bridge,
 				  &meson_dw_hdmi->bridge, 0);
 
 	DRM_DEBUG_DRIVER("HDMI controller initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void meson_dw_hdmi_unbind(struct device *dev, struct device *master,
-				   void *data)
-{
-	struct meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
+अटल व्योम meson_dw_hdmi_unbind(काष्ठा device *dev, काष्ठा device *master,
+				   व्योम *data)
+अणु
+	काष्ठा meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
 
 	dw_hdmi_unbind(meson_dw_hdmi->hdmi);
-}
+पूर्ण
 
-static const struct component_ops meson_dw_hdmi_ops = {
+अटल स्थिर काष्ठा component_ops meson_dw_hdmi_ops = अणु
 	.bind	= meson_dw_hdmi_bind,
 	.unbind	= meson_dw_hdmi_unbind,
-};
+पूर्ण;
 
-static int __maybe_unused meson_dw_hdmi_pm_suspend(struct device *dev)
-{
-	struct meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused meson_dw_hdmi_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
 
-	if (!meson_dw_hdmi)
-		return 0;
+	अगर (!meson_dw_hdmi)
+		वापस 0;
 
 	/* Reset TOP */
-	meson_dw_hdmi->data->top_write(meson_dw_hdmi,
+	meson_dw_hdmi->data->top_ग_लिखो(meson_dw_hdmi,
 				       HDMITX_TOP_SW_RESET, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused meson_dw_hdmi_pm_resume(struct device *dev)
-{
-	struct meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused meson_dw_hdmi_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा meson_dw_hdmi *meson_dw_hdmi = dev_get_drvdata(dev);
 
-	if (!meson_dw_hdmi)
-		return 0;
+	अगर (!meson_dw_hdmi)
+		वापस 0;
 
 	meson_dw_hdmi_init(meson_dw_hdmi);
 
 	dw_hdmi_resume(meson_dw_hdmi->hdmi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int meson_dw_hdmi_probe(struct platform_device *pdev)
-{
-	return component_add(&pdev->dev, &meson_dw_hdmi_ops);
-}
+अटल पूर्णांक meson_dw_hdmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस component_add(&pdev->dev, &meson_dw_hdmi_ops);
+पूर्ण
 
-static int meson_dw_hdmi_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक meson_dw_hdmi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	component_del(&pdev->dev, &meson_dw_hdmi_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops meson_dw_hdmi_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops meson_dw_hdmi_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(meson_dw_hdmi_pm_suspend,
 				meson_dw_hdmi_pm_resume)
-};
+पूर्ण;
 
-static const struct of_device_id meson_dw_hdmi_of_table[] = {
-	{ .compatible = "amlogic,meson-gxbb-dw-hdmi",
-	  .data = &meson_dw_hdmi_gx_data },
-	{ .compatible = "amlogic,meson-gxl-dw-hdmi",
-	  .data = &meson_dw_hdmi_gx_data },
-	{ .compatible = "amlogic,meson-gxm-dw-hdmi",
-	  .data = &meson_dw_hdmi_gx_data },
-	{ .compatible = "amlogic,meson-g12a-dw-hdmi",
-	  .data = &meson_dw_hdmi_g12a_data },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id meson_dw_hdmi_of_table[] = अणु
+	अणु .compatible = "amlogic,meson-gxbb-dw-hdmi",
+	  .data = &meson_dw_hdmi_gx_data पूर्ण,
+	अणु .compatible = "amlogic,meson-gxl-dw-hdmi",
+	  .data = &meson_dw_hdmi_gx_data पूर्ण,
+	अणु .compatible = "amlogic,meson-gxm-dw-hdmi",
+	  .data = &meson_dw_hdmi_gx_data पूर्ण,
+	अणु .compatible = "amlogic,meson-g12a-dw-hdmi",
+	  .data = &meson_dw_hdmi_g12a_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_dw_hdmi_of_table);
 
-static struct platform_driver meson_dw_hdmi_platform_driver = {
+अटल काष्ठा platक्रमm_driver meson_dw_hdmi_platक्रमm_driver = अणु
 	.probe		= meson_dw_hdmi_probe,
-	.remove		= meson_dw_hdmi_remove,
-	.driver		= {
+	.हटाओ		= meson_dw_hdmi_हटाओ,
+	.driver		= अणु
 		.name		= DRIVER_NAME,
 		.of_match_table	= meson_dw_hdmi_of_table,
 		.pm = &meson_dw_hdmi_pm_ops,
-	},
-};
-module_platform_driver(meson_dw_hdmi_platform_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(meson_dw_hdmi_platक्रमm_driver);
 
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");
 MODULE_DESCRIPTION(DRIVER_DESC);

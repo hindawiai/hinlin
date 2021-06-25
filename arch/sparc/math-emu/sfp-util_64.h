@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * arch/sparc64/math-emu/sfp-util.h
  *
@@ -7,13 +8,13 @@
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <asm/byteorder.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/byteorder.h>
 
-#define add_ssaaaa(sh, sl, ah, al, bh, bl) 	\
-  __asm__ ("addcc %4,%5,%1\n\t"			\
+#घोषणा add_ssaaaa(sh, sl, ah, al, bh, bl) 	\
+  __यंत्र__ ("addcc %4,%5,%1\n\t"			\
 	   "add %2,%3,%0\n\t"			\
   	   "bcs,a,pn %%xcc, 1f\n\t"		\
   	   "add %0, 1, %0\n"			\
@@ -26,8 +27,8 @@
 	     "r" ((UDItype)(bl))		\
 	   : "cc")
 	   
-#define sub_ddmmss(sh, sl, ah, al, bh, bl) 	\
-  __asm__ ("subcc %4,%5,%1\n\t"			\
+#घोषणा sub_ddmmss(sh, sl, ah, al, bh, bl) 	\
+  __यंत्र__ ("subcc %4,%5,%1\n\t"			\
   	   "sub %2,%3,%0\n\t"			\
   	   "bcs,a,pn %%xcc, 1f\n\t"		\
   	   "sub %0, 1, %0\n"			\
@@ -40,10 +41,10 @@
 	     "r" ((UDItype)(bl))		\
 	   : "cc")
 
-#define umul_ppmm(wh, wl, u, v)				\
-  do {							\
-	  UDItype tmp1, tmp2, tmp3, tmp4;		\
-	  __asm__ __volatile__ (			\
+#घोषणा umul_ppmm(wh, wl, u, v)				\
+  करो अणु							\
+	  UDItype पंचांगp1, पंचांगp2, पंचांगp3, पंचांगp4;		\
+	  __यंत्र__ __अस्थिर__ (			\
 		   "srl %7,0,%3\n\t"			\
 		   "mulx %3,%6,%1\n\t"			\
 		   "srlx %6,32,%2\n\t"			\
@@ -67,14 +68,14 @@
 		   "add %5,%2,%0"			\
 	   : "=r" (wh),					\
 	     "=&r" (wl),				\
-	     "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	     "=&r" (पंचांगp1), "=&r" (पंचांगp2), "=&r" (पंचांगp3), "=&r" (पंचांगp4) \
 	   : "r" ((UDItype)(u)),			\
 	     "r" ((UDItype)(v))				\
 	   : "cc");					\
-  } while (0)
+  पूर्ण जबतक (0)
   
-#define udiv_qrnnd(q, r, n1, n0, d) 			\
-  do {                                                  \
+#घोषणा uभाग_qrnnd(q, r, n1, n0, d) 			\
+  करो अणु                                                  \
     UWtype __d1, __d0, __q1, __q0, __r1, __r0, __m;     \
     __d1 = (d >> 32);                                   \
     __d0 = (USItype)d;                                  \
@@ -83,39 +84,39 @@
     __q1 = (n1) / __d1;                                 \
     __m = (UWtype) __q1 * __d0;                         \
     __r1 = (__r1 << 32) | (n0 >> 32);                   \
-    if (__r1 < __m)                                     \
-      {                                                 \
+    अगर (__r1 < __m)                                     \
+      अणु                                                 \
         __q1--, __r1 += (d);                            \
-        if (__r1 >= (d)) /* i.e. we didn't get carry when adding to __r1 */ \
-          if (__r1 < __m)                               \
+        अगर (__r1 >= (d)) /* i.e. we didn't get carry when adding to __r1 */ \
+          अगर (__r1 < __m)                               \
             __q1--, __r1 += (d);                        \
-      }                                                 \
+      पूर्ण                                                 \
     __r1 -= __m;                                        \
                                                         \
     __r0 = __r1 % __d1;                                 \
     __q0 = __r1 / __d1;                                 \
     __m = (UWtype) __q0 * __d0;                         \
     __r0 = (__r0 << 32) | ((USItype)n0);                \
-    if (__r0 < __m)                                     \
-      {                                                 \
+    अगर (__r0 < __m)                                     \
+      अणु                                                 \
         __q0--, __r0 += (d);                            \
-        if (__r0 >= (d))                                \
-          if (__r0 < __m)                               \
+        अगर (__r0 >= (d))                                \
+          अगर (__r0 < __m)                               \
             __q0--, __r0 += (d);                        \
-      }                                                 \
+      पूर्ण                                                 \
     __r0 -= __m;                                        \
                                                         \
     (q) = (UWtype) (__q1 << 32)  | __q0;                \
     (r) = __r0;                                         \
-  } while (0)
+  पूर्ण जबतक (0)
 
-#define UDIV_NEEDS_NORMALIZATION 1  
+#घोषणा UDIV_NEEDS_NORMALIZATION 1  
 
-#define abort() \
-	return 0
+#घोषणा पात() \
+	वापस 0
 
-#ifdef __BIG_ENDIAN
-#define __BYTE_ORDER __BIG_ENDIAN
-#else
-#define __BYTE_ORDER __LITTLE_ENDIAN
-#endif
+#अगर_घोषित __BIG_ENDIAN
+#घोषणा __BYTE_ORDER __BIG_ENDIAN
+#अन्यथा
+#घोषणा __BYTE_ORDER __LITTLE_ENDIAN
+#पूर्ण_अगर

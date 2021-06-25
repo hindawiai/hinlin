@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Free Electrons
- * Copyright (C) 2014 Atmel
+ * Copyright (C) 2014 Aपंचांगel
  *
- * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/mfd/atmel-hlcdc.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mfd/aपंचांगel-hlcdc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/regmap.h>
 
-#define ATMEL_HLCDC_PWMCVAL_MASK	GENMASK(15, 8)
-#define ATMEL_HLCDC_PWMCVAL(x)		(((x) << 8) & ATMEL_HLCDC_PWMCVAL_MASK)
-#define ATMEL_HLCDC_PWMPOL		BIT(4)
-#define ATMEL_HLCDC_PWMPS_MASK		GENMASK(2, 0)
-#define ATMEL_HLCDC_PWMPS_MAX		0x6
-#define ATMEL_HLCDC_PWMPS(x)		((x) & ATMEL_HLCDC_PWMPS_MASK)
+#घोषणा ATMEL_HLCDC_PWMCVAL_MASK	GENMASK(15, 8)
+#घोषणा ATMEL_HLCDC_PWMCVAL(x)		(((x) << 8) & ATMEL_HLCDC_PWMCVAL_MASK)
+#घोषणा ATMEL_HLCDC_PWMPOL		BIT(4)
+#घोषणा ATMEL_HLCDC_PWMPS_MASK		GENMASK(2, 0)
+#घोषणा ATMEL_HLCDC_PWMPS_MAX		0x6
+#घोषणा ATMEL_HLCDC_PWMPS(x)		((x) & ATMEL_HLCDC_PWMPS_MASK)
 
-struct atmel_hlcdc_pwm_errata {
+काष्ठा aपंचांगel_hlcdc_pwm_errata अणु
 	bool slow_clk_erratum;
-	bool div1_clk_erratum;
-};
+	bool भाग1_clk_erratum;
+पूर्ण;
 
-struct atmel_hlcdc_pwm {
-	struct pwm_chip chip;
-	struct atmel_hlcdc *hlcdc;
-	struct clk *cur_clk;
-	const struct atmel_hlcdc_pwm_errata *errata;
-};
+काष्ठा aपंचांगel_hlcdc_pwm अणु
+	काष्ठा pwm_chip chip;
+	काष्ठा aपंचांगel_hlcdc *hlcdc;
+	काष्ठा clk *cur_clk;
+	स्थिर काष्ठा aपंचांगel_hlcdc_pwm_errata *errata;
+पूर्ण;
 
-static inline struct atmel_hlcdc_pwm *to_atmel_hlcdc_pwm(struct pwm_chip *chip)
-{
-	return container_of(chip, struct atmel_hlcdc_pwm, chip);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_hlcdc_pwm *to_aपंचांगel_hlcdc_pwm(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा aपंचांगel_hlcdc_pwm, chip);
+पूर्ण
 
-static int atmel_hlcdc_pwm_apply(struct pwm_chip *c, struct pwm_device *pwm,
-				 const struct pwm_state *state)
-{
-	struct atmel_hlcdc_pwm *chip = to_atmel_hlcdc_pwm(c);
-	struct atmel_hlcdc *hlcdc = chip->hlcdc;
-	unsigned int status;
-	int ret;
+अटल पूर्णांक aपंचांगel_hlcdc_pwm_apply(काष्ठा pwm_chip *c, काष्ठा pwm_device *pwm,
+				 स्थिर काष्ठा pwm_state *state)
+अणु
+	काष्ठा aपंचांगel_hlcdc_pwm *chip = to_aपंचांगel_hlcdc_pwm(c);
+	काष्ठा aपंचांगel_hlcdc *hlcdc = chip->hlcdc;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक ret;
 
-	if (state->enabled) {
-		struct clk *new_clk = hlcdc->slow_clk;
+	अगर (state->enabled) अणु
+		काष्ठा clk *new_clk = hlcdc->slow_clk;
 		u64 pwmcval = state->duty_cycle * 256;
-		unsigned long clk_freq;
+		अचिन्हित दीर्घ clk_freq;
 		u64 clk_period_ns;
 		u32 pwmcfg;
-		int pres;
+		पूर्णांक pres;
 
-		if (!chip->errata || !chip->errata->slow_clk_erratum) {
+		अगर (!chip->errata || !chip->errata->slow_clk_erratum) अणु
 			clk_freq = clk_get_rate(new_clk);
-			if (!clk_freq)
-				return -EINVAL;
+			अगर (!clk_freq)
+				वापस -EINVAL;
 
 			clk_period_ns = (u64)NSEC_PER_SEC * 256;
-			do_div(clk_period_ns, clk_freq);
-		}
+			करो_भाग(clk_period_ns, clk_freq);
+		पूर्ण
 
 		/* Errata: cannot use slow clk on some IP revisions */
-		if ((chip->errata && chip->errata->slow_clk_erratum) ||
-		    clk_period_ns > state->period) {
+		अगर ((chip->errata && chip->errata->slow_clk_erratum) ||
+		    clk_period_ns > state->period) अणु
 			new_clk = hlcdc->sys_clk;
 			clk_freq = clk_get_rate(new_clk);
-			if (!clk_freq)
-				return -EINVAL;
+			अगर (!clk_freq)
+				वापस -EINVAL;
 
 			clk_period_ns = (u64)NSEC_PER_SEC * 256;
-			do_div(clk_period_ns, clk_freq);
-		}
+			करो_भाग(clk_period_ns, clk_freq);
+		पूर्ण
 
-		for (pres = 0; pres <= ATMEL_HLCDC_PWMPS_MAX; pres++) {
-		/* Errata: cannot divide by 1 on some IP revisions */
-			if (!pres && chip->errata &&
-			    chip->errata->div1_clk_erratum)
-				continue;
+		क्रम (pres = 0; pres <= ATMEL_HLCDC_PWMPS_MAX; pres++) अणु
+		/* Errata: cannot भागide by 1 on some IP revisions */
+			अगर (!pres && chip->errata &&
+			    chip->errata->भाग1_clk_erratum)
+				जारी;
 
-			if ((clk_period_ns << pres) >= state->period)
-				break;
-		}
+			अगर ((clk_period_ns << pres) >= state->period)
+				अवरोध;
+		पूर्ण
 
-		if (pres > ATMEL_HLCDC_PWMPS_MAX)
-			return -EINVAL;
+		अगर (pres > ATMEL_HLCDC_PWMPS_MAX)
+			वापस -EINVAL;
 
 		pwmcfg = ATMEL_HLCDC_PWMPS(pres);
 
-		if (new_clk != chip->cur_clk) {
+		अगर (new_clk != chip->cur_clk) अणु
 			u32 gencfg = 0;
-			int ret;
+			पूर्णांक ret;
 
 			ret = clk_prepare_enable(new_clk);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			clk_disable_unprepare(chip->cur_clk);
 			chip->cur_clk = new_clk;
 
-			if (new_clk == hlcdc->sys_clk)
+			अगर (new_clk == hlcdc->sys_clk)
 				gencfg = ATMEL_HLCDC_CLKPWMSEL;
 
 			ret = regmap_update_bits(hlcdc->regmap,
 						 ATMEL_HLCDC_CFG(0),
 						 ATMEL_HLCDC_CLKPWMSEL,
 						 gencfg);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		do_div(pwmcval, state->period);
+		करो_भाग(pwmcval, state->period);
 
 		/*
 		 * The PWM duty cycle is configurable from 0/256 to 255/256 of
 		 * the period cycle. Hence we can't set a duty cycle occupying
-		 * the whole period cycle if we're asked to.
-		 * Set it to 255 if pwmcval is greater than 256.
+		 * the whole period cycle अगर we're asked to.
+		 * Set it to 255 अगर pwmcval is greater than 256.
 		 */
-		if (pwmcval > 255)
+		अगर (pwmcval > 255)
 			pwmcval = 255;
 
 		pwmcfg |= ATMEL_HLCDC_PWMCVAL(pwmcval);
 
-		if (state->polarity == PWM_POLARITY_NORMAL)
+		अगर (state->polarity == PWM_POLARITY_NORMAL)
 			pwmcfg |= ATMEL_HLCDC_PWMPOL;
 
 		ret = regmap_update_bits(hlcdc->regmap, ATMEL_HLCDC_CFG(6),
@@ -133,182 +134,182 @@ static int atmel_hlcdc_pwm_apply(struct pwm_chip *c, struct pwm_device *pwm,
 					 ATMEL_HLCDC_PWMPS_MASK |
 					 ATMEL_HLCDC_PWMPOL,
 					 pwmcfg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = regmap_write(hlcdc->regmap, ATMEL_HLCDC_EN,
+		ret = regmap_ग_लिखो(hlcdc->regmap, ATMEL_HLCDC_EN,
 				   ATMEL_HLCDC_PWM);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = regmap_read_poll_timeout(hlcdc->regmap, ATMEL_HLCDC_SR,
+		ret = regmap_पढ़ो_poll_समयout(hlcdc->regmap, ATMEL_HLCDC_SR,
 					       status,
 					       status & ATMEL_HLCDC_PWM,
 					       10, 0);
-		if (ret)
-			return ret;
-	} else {
-		ret = regmap_write(hlcdc->regmap, ATMEL_HLCDC_DIS,
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		ret = regmap_ग_लिखो(hlcdc->regmap, ATMEL_HLCDC_DIS,
 				   ATMEL_HLCDC_PWM);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ret = regmap_read_poll_timeout(hlcdc->regmap, ATMEL_HLCDC_SR,
+		ret = regmap_पढ़ो_poll_समयout(hlcdc->regmap, ATMEL_HLCDC_SR,
 					       status,
 					       !(status & ATMEL_HLCDC_PWM),
 					       10, 0);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		clk_disable_unprepare(chip->cur_clk);
-		chip->cur_clk = NULL;
-	}
+		chip->cur_clk = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pwm_ops atmel_hlcdc_pwm_ops = {
-	.apply = atmel_hlcdc_pwm_apply,
+अटल स्थिर काष्ठा pwm_ops aपंचांगel_hlcdc_pwm_ops = अणु
+	.apply = aपंचांगel_hlcdc_pwm_apply,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct atmel_hlcdc_pwm_errata atmel_hlcdc_pwm_at91sam9x5_errata = {
+अटल स्थिर काष्ठा aपंचांगel_hlcdc_pwm_errata aपंचांगel_hlcdc_pwm_at91sam9x5_errata = अणु
 	.slow_clk_erratum = true,
-};
+पूर्ण;
 
-static const struct atmel_hlcdc_pwm_errata atmel_hlcdc_pwm_sama5d3_errata = {
-	.div1_clk_erratum = true,
-};
+अटल स्थिर काष्ठा aपंचांगel_hlcdc_pwm_errata aपंचांगel_hlcdc_pwm_sama5d3_errata = अणु
+	.भाग1_clk_erratum = true,
+पूर्ण;
 
-#ifdef CONFIG_PM_SLEEP
-static int atmel_hlcdc_pwm_suspend(struct device *dev)
-{
-	struct atmel_hlcdc_pwm *chip = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक aपंचांगel_hlcdc_pwm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_hlcdc_pwm *chip = dev_get_drvdata(dev);
 
-	/* Keep the periph clock enabled if the PWM is still running. */
-	if (pwm_is_enabled(&chip->chip.pwms[0]))
+	/* Keep the periph घड़ी enabled अगर the PWM is still running. */
+	अगर (pwm_is_enabled(&chip->chip.pwms[0]))
 		clk_disable_unprepare(chip->hlcdc->periph_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_hlcdc_pwm_resume(struct device *dev)
-{
-	struct atmel_hlcdc_pwm *chip = dev_get_drvdata(dev);
-	struct pwm_state state;
-	int ret;
+अटल पूर्णांक aपंचांगel_hlcdc_pwm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा aपंचांगel_hlcdc_pwm *chip = dev_get_drvdata(dev);
+	काष्ठा pwm_state state;
+	पूर्णांक ret;
 
 	pwm_get_state(&chip->chip.pwms[0], &state);
 
-	/* Re-enable the periph clock it was stopped during suspend. */
-	if (!state.enabled) {
+	/* Re-enable the periph घड़ी it was stopped during suspend. */
+	अगर (!state.enabled) अणु
 		ret = clk_prepare_enable(chip->hlcdc->periph_clk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return atmel_hlcdc_pwm_apply(&chip->chip, &chip->chip.pwms[0], &state);
-}
-#endif
+	वापस aपंचांगel_hlcdc_pwm_apply(&chip->chip, &chip->chip.pwms[0], &state);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(atmel_hlcdc_pwm_pm_ops,
-			 atmel_hlcdc_pwm_suspend, atmel_hlcdc_pwm_resume);
+अटल SIMPLE_DEV_PM_OPS(aपंचांगel_hlcdc_pwm_pm_ops,
+			 aपंचांगel_hlcdc_pwm_suspend, aपंचांगel_hlcdc_pwm_resume);
 
-static const struct of_device_id atmel_hlcdc_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id aपंचांगel_hlcdc_dt_ids[] = अणु
+	अणु
 		.compatible = "atmel,at91sam9n12-hlcdc",
 		/* 9n12 has same errata as 9x5 HLCDC PWM */
-		.data = &atmel_hlcdc_pwm_at91sam9x5_errata,
-	},
-	{
+		.data = &aपंचांगel_hlcdc_pwm_at91sam9x5_errata,
+	पूर्ण,
+	अणु
 		.compatible = "atmel,at91sam9x5-hlcdc",
-		.data = &atmel_hlcdc_pwm_at91sam9x5_errata,
-	},
-	{
+		.data = &aपंचांगel_hlcdc_pwm_at91sam9x5_errata,
+	पूर्ण,
+	अणु
 		.compatible = "atmel,sama5d2-hlcdc",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "atmel,sama5d3-hlcdc",
-		.data = &atmel_hlcdc_pwm_sama5d3_errata,
-	},
-	{
+		.data = &aपंचांगel_hlcdc_pwm_sama5d3_errata,
+	पूर्ण,
+	अणु
 		.compatible = "atmel,sama5d4-hlcdc",
-		.data = &atmel_hlcdc_pwm_sama5d3_errata,
-	},
-	{	.compatible = "microchip,sam9x60-hlcdc", },
-	{ /* sentinel */ },
-};
-MODULE_DEVICE_TABLE(of, atmel_hlcdc_dt_ids);
+		.data = &aपंचांगel_hlcdc_pwm_sama5d3_errata,
+	पूर्ण,
+	अणु	.compatible = "microchip,sam9x60-hlcdc", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_hlcdc_dt_ids);
 
-static int atmel_hlcdc_pwm_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct device *dev = &pdev->dev;
-	struct atmel_hlcdc_pwm *chip;
-	struct atmel_hlcdc *hlcdc;
-	int ret;
+अटल पूर्णांक aपंचांगel_hlcdc_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा aपंचांगel_hlcdc_pwm *chip;
+	काष्ठा aपंचांगel_hlcdc *hlcdc;
+	पूर्णांक ret;
 
 	hlcdc = dev_get_drvdata(dev->parent);
 
-	chip = devm_kzalloc(dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	ret = clk_prepare_enable(hlcdc->periph_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	match = of_match_node(atmel_hlcdc_dt_ids, dev->parent->of_node);
-	if (match)
+	match = of_match_node(aपंचांगel_hlcdc_dt_ids, dev->parent->of_node);
+	अगर (match)
 		chip->errata = match->data;
 
 	chip->hlcdc = hlcdc;
-	chip->chip.ops = &atmel_hlcdc_pwm_ops;
+	chip->chip.ops = &aपंचांगel_hlcdc_pwm_ops;
 	chip->chip.dev = dev;
 	chip->chip.npwm = 1;
 	chip->chip.of_xlate = of_pwm_xlate_with_flags;
 	chip->chip.of_pwm_n_cells = 3;
 
 	ret = pwmchip_add(&chip->chip);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(hlcdc->periph_clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, chip);
+	platक्रमm_set_drvdata(pdev, chip);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_hlcdc_pwm_remove(struct platform_device *pdev)
-{
-	struct atmel_hlcdc_pwm *chip = platform_get_drvdata(pdev);
-	int ret;
+अटल पूर्णांक aपंचांगel_hlcdc_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_hlcdc_pwm *chip = platक्रमm_get_drvdata(pdev);
+	पूर्णांक ret;
 
-	ret = pwmchip_remove(&chip->chip);
-	if (ret)
-		return ret;
+	ret = pwmchip_हटाओ(&chip->chip);
+	अगर (ret)
+		वापस ret;
 
 	clk_disable_unprepare(chip->hlcdc->periph_clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id atmel_hlcdc_pwm_dt_ids[] = {
-	{ .compatible = "atmel,hlcdc-pwm" },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id aपंचांगel_hlcdc_pwm_dt_ids[] = अणु
+	अणु .compatible = "atmel,hlcdc-pwm" पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver atmel_hlcdc_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver aपंचांगel_hlcdc_pwm_driver = अणु
+	.driver = अणु
 		.name = "atmel-hlcdc-pwm",
-		.of_match_table = atmel_hlcdc_pwm_dt_ids,
-		.pm = &atmel_hlcdc_pwm_pm_ops,
-	},
-	.probe = atmel_hlcdc_pwm_probe,
-	.remove = atmel_hlcdc_pwm_remove,
-};
-module_platform_driver(atmel_hlcdc_pwm_driver);
+		.of_match_table = aपंचांगel_hlcdc_pwm_dt_ids,
+		.pm = &aपंचांगel_hlcdc_pwm_pm_ops,
+	पूर्ण,
+	.probe = aपंचांगel_hlcdc_pwm_probe,
+	.हटाओ = aपंचांगel_hlcdc_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(aपंचांगel_hlcdc_pwm_driver);
 
 MODULE_ALIAS("platform:atmel-hlcdc-pwm");
 MODULE_AUTHOR("Boris Brezillon <boris.brezillon@free-electrons.com>");

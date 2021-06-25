@@ -1,46 +1,47 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <asm/bug.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#ifdef HAVE_LIBBPF_SUPPORT
-#include <bpf/libbpf.h>
-#include "bpf-event.h"
-#endif
-#include "compress.h"
-#include "env.h"
-#include "namespaces.h"
-#include "path.h"
-#include "map.h"
-#include "symbol.h"
-#include "srcline.h"
-#include "dso.h"
-#include "dsos.h"
-#include "machine.h"
-#include "auxtrace.h"
-#include "util.h" /* O_CLOEXEC for older systems */
-#include "debug.h"
-#include "string2.h"
-#include "vdso.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <यंत्र/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/resource.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <मानककोष.स>
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+#समावेश <bpf/libbpf.h>
+#समावेश "bpf-event.h"
+#पूर्ण_अगर
+#समावेश "compress.h"
+#समावेश "env.h"
+#समावेश "namespaces.h"
+#समावेश "path.h"
+#समावेश "map.h"
+#समावेश "symbol.h"
+#समावेश "srcline.h"
+#समावेश "dso.h"
+#समावेश "dsos.h"
+#समावेश "machine.h"
+#समावेश "auxtrace.h"
+#समावेश "util.h" /* O_CLOEXEC क्रम older प्रणालीs */
+#समावेश "debug.h"
+#समावेश "string2.h"
+#समावेश "vdso.h"
 
-static const char * const debuglink_paths[] = {
+अटल स्थिर अक्षर * स्थिर debuglink_paths[] = अणु
 	"%.0s%s",
 	"%s/%s",
 	"%s/.debug/%s",
 	"/usr/lib/debug%s/%s"
-};
+पूर्ण;
 
-char dso__symtab_origin(const struct dso *dso)
-{
-	static const char origin[] = {
+अक्षर dso__symtab_origin(स्थिर काष्ठा dso *dso)
+अणु
+	अटल स्थिर अक्षर origin[] = अणु
 		[DSO_BINARY_TYPE__KALLSYMS]			= 'k',
 		[DSO_BINARY_TYPE__VMLINUX]			= 'v',
 		[DSO_BINARY_TYPE__JAVA_JIT]			= 'j',
@@ -59,924 +60,924 @@ char dso__symtab_origin(const struct dso *dso)
 		[DSO_BINARY_TYPE__GUEST_KMODULE]		= 'G',
 		[DSO_BINARY_TYPE__GUEST_KMODULE_COMP]		= 'M',
 		[DSO_BINARY_TYPE__GUEST_VMLINUX]		= 'V',
-	};
+	पूर्ण;
 
-	if (dso == NULL || dso->symtab_type == DSO_BINARY_TYPE__NOT_FOUND)
-		return '!';
-	return origin[dso->symtab_type];
-}
+	अगर (dso == शून्य || dso->symtab_type == DSO_BINARY_TYPE__NOT_FOUND)
+		वापस '!';
+	वापस origin[dso->symtab_type];
+पूर्ण
 
-int dso__read_binary_type_filename(const struct dso *dso,
-				   enum dso_binary_type type,
-				   char *root_dir, char *filename, size_t size)
-{
-	char build_id_hex[SBUILD_ID_SIZE];
-	int ret = 0;
-	size_t len;
+पूर्णांक dso__पढ़ो_binary_type_filename(स्थिर काष्ठा dso *dso,
+				   क्रमागत dso_binary_type type,
+				   अक्षर *root_dir, अक्षर *filename, माप_प्रकार size)
+अणु
+	अक्षर build_id_hex[SBUILD_ID_SIZE];
+	पूर्णांक ret = 0;
+	माप_प्रकार len;
 
-	switch (type) {
-	case DSO_BINARY_TYPE__DEBUGLINK:
-	{
-		const char *last_slash;
-		char dso_dir[PATH_MAX];
-		char symfile[PATH_MAX];
-		unsigned int i;
+	चयन (type) अणु
+	हाल DSO_BINARY_TYPE__DEBUGLINK:
+	अणु
+		स्थिर अक्षर *last_slash;
+		अक्षर dso_dir[PATH_MAX];
+		अक्षर symfile[PATH_MAX];
+		अचिन्हित पूर्णांक i;
 
-		len = __symbol__join_symfs(filename, size, dso->long_name);
+		len = __symbol__join_symfs(filename, size, dso->दीर्घ_name);
 		last_slash = filename + len;
-		while (last_slash != filename && *last_slash != '/')
+		जबतक (last_slash != filename && *last_slash != '/')
 			last_slash--;
 
-		strncpy(dso_dir, filename, last_slash - filename);
+		म_नकलन(dso_dir, filename, last_slash - filename);
 		dso_dir[last_slash-filename] = '\0';
 
-		if (!is_regular_file(filename)) {
+		अगर (!is_regular_file(filename)) अणु
 			ret = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = filename__read_debuglink(filename, symfile, PATH_MAX);
-		if (ret)
-			break;
+		ret = filename__पढ़ो_debuglink(filename, symfile, PATH_MAX);
+		अगर (ret)
+			अवरोध;
 
 		/* Check predefined locations where debug file might reside */
 		ret = -1;
-		for (i = 0; i < ARRAY_SIZE(debuglink_paths); i++) {
-			snprintf(filename, size,
+		क्रम (i = 0; i < ARRAY_SIZE(debuglink_paths); i++) अणु
+			snम_लिखो(filename, size,
 					debuglink_paths[i], dso_dir, symfile);
-			if (is_regular_file(filename)) {
+			अगर (is_regular_file(filename)) अणु
 				ret = 0;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		break;
-	}
-	case DSO_BINARY_TYPE__BUILD_ID_CACHE:
-		if (dso__build_id_filename(dso, filename, size, false) == NULL)
+		अवरोध;
+	पूर्ण
+	हाल DSO_BINARY_TYPE__BUILD_ID_CACHE:
+		अगर (dso__build_id_filename(dso, filename, size, false) == शून्य)
 			ret = -1;
-		break;
+		अवरोध;
 
-	case DSO_BINARY_TYPE__BUILD_ID_CACHE_DEBUGINFO:
-		if (dso__build_id_filename(dso, filename, size, true) == NULL)
+	हाल DSO_BINARY_TYPE__BUILD_ID_CACHE_DEBUGINFO:
+		अगर (dso__build_id_filename(dso, filename, size, true) == शून्य)
 			ret = -1;
-		break;
+		अवरोध;
 
-	case DSO_BINARY_TYPE__FEDORA_DEBUGINFO:
+	हाल DSO_BINARY_TYPE__FEDORA_DEBUGINFO:
 		len = __symbol__join_symfs(filename, size, "/usr/lib/debug");
-		snprintf(filename + len, size - len, "%s.debug", dso->long_name);
-		break;
+		snम_लिखो(filename + len, size - len, "%s.debug", dso->दीर्घ_name);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__UBUNTU_DEBUGINFO:
+	हाल DSO_BINARY_TYPE__UBUNTU_DEBUGINFO:
 		len = __symbol__join_symfs(filename, size, "/usr/lib/debug");
-		snprintf(filename + len, size - len, "%s", dso->long_name);
-		break;
+		snम_लिखो(filename + len, size - len, "%s", dso->दीर्घ_name);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO:
+	हाल DSO_BINARY_TYPE__MIXEDUP_UBUNTU_DEBUGINFO:
 		/*
 		 * Ubuntu can mixup /usr/lib with /lib, putting debuginfo in
 		 * /usr/lib/debug/lib when it is expected to be in
 		 * /usr/lib/debug/usr/lib
 		 */
-		if (strlen(dso->long_name) < 9 ||
-		    strncmp(dso->long_name, "/usr/lib/", 9)) {
+		अगर (म_माप(dso->दीर्घ_name) < 9 ||
+		    म_भेदन(dso->दीर्घ_name, "/usr/lib/", 9)) अणु
 			ret = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		len = __symbol__join_symfs(filename, size, "/usr/lib/debug");
-		snprintf(filename + len, size - len, "%s", dso->long_name + 4);
-		break;
+		snम_लिखो(filename + len, size - len, "%s", dso->दीर्घ_name + 4);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO:
-	{
-		const char *last_slash;
-		size_t dir_size;
+	हाल DSO_BINARY_TYPE__OPENEMBEDDED_DEBUGINFO:
+	अणु
+		स्थिर अक्षर *last_slash;
+		माप_प्रकार dir_size;
 
-		last_slash = dso->long_name + dso->long_name_len;
-		while (last_slash != dso->long_name && *last_slash != '/')
+		last_slash = dso->दीर्घ_name + dso->दीर्घ_name_len;
+		जबतक (last_slash != dso->दीर्घ_name && *last_slash != '/')
 			last_slash--;
 
 		len = __symbol__join_symfs(filename, size, "");
-		dir_size = last_slash - dso->long_name + 2;
-		if (dir_size > (size - len)) {
+		dir_size = last_slash - dso->दीर्घ_name + 2;
+		अगर (dir_size > (size - len)) अणु
 			ret = -1;
-			break;
-		}
-		len += scnprintf(filename + len, dir_size, "%s",  dso->long_name);
-		len += scnprintf(filename + len , size - len, ".debug%s",
+			अवरोध;
+		पूर्ण
+		len += scnम_लिखो(filename + len, dir_size, "%s",  dso->दीर्घ_name);
+		len += scnम_लिखो(filename + len , size - len, ".debug%s",
 								last_slash);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case DSO_BINARY_TYPE__BUILDID_DEBUGINFO:
-		if (!dso->has_build_id) {
+	हाल DSO_BINARY_TYPE__BUILDID_DEBUGINFO:
+		अगर (!dso->has_build_id) अणु
 			ret = -1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		build_id__sprintf(&dso->bid, build_id_hex);
+		build_id__प्र_लिखो(&dso->bid, build_id_hex);
 		len = __symbol__join_symfs(filename, size, "/usr/lib/debug/.build-id/");
-		snprintf(filename + len, size - len, "%.2s/%s.debug",
+		snम_लिखो(filename + len, size - len, "%.2s/%s.debug",
 			 build_id_hex, build_id_hex + 2);
-		break;
+		अवरोध;
 
-	case DSO_BINARY_TYPE__VMLINUX:
-	case DSO_BINARY_TYPE__GUEST_VMLINUX:
-	case DSO_BINARY_TYPE__SYSTEM_PATH_DSO:
-		__symbol__join_symfs(filename, size, dso->long_name);
-		break;
+	हाल DSO_BINARY_TYPE__VMLINUX:
+	हाल DSO_BINARY_TYPE__GUEST_VMLINUX:
+	हाल DSO_BINARY_TYPE__SYSTEM_PATH_DSO:
+		__symbol__join_symfs(filename, size, dso->दीर्घ_name);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__GUEST_KMODULE:
-	case DSO_BINARY_TYPE__GUEST_KMODULE_COMP:
+	हाल DSO_BINARY_TYPE__GUEST_KMODULE:
+	हाल DSO_BINARY_TYPE__GUEST_KMODULE_COMP:
 		path__join3(filename, size, symbol_conf.symfs,
-			    root_dir, dso->long_name);
-		break;
+			    root_dir, dso->दीर्घ_name);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE:
-	case DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP:
-		__symbol__join_symfs(filename, size, dso->long_name);
-		break;
+	हाल DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE:
+	हाल DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP:
+		__symbol__join_symfs(filename, size, dso->दीर्घ_name);
+		अवरोध;
 
-	case DSO_BINARY_TYPE__KCORE:
-	case DSO_BINARY_TYPE__GUEST_KCORE:
-		snprintf(filename, size, "%s", dso->long_name);
-		break;
+	हाल DSO_BINARY_TYPE__KCORE:
+	हाल DSO_BINARY_TYPE__GUEST_KCORE:
+		snम_लिखो(filename, size, "%s", dso->दीर्घ_name);
+		अवरोध;
 
-	default:
-	case DSO_BINARY_TYPE__KALLSYMS:
-	case DSO_BINARY_TYPE__GUEST_KALLSYMS:
-	case DSO_BINARY_TYPE__JAVA_JIT:
-	case DSO_BINARY_TYPE__BPF_PROG_INFO:
-	case DSO_BINARY_TYPE__BPF_IMAGE:
-	case DSO_BINARY_TYPE__OOL:
-	case DSO_BINARY_TYPE__NOT_FOUND:
+	शेष:
+	हाल DSO_BINARY_TYPE__KALLSYMS:
+	हाल DSO_BINARY_TYPE__GUEST_KALLSYMS:
+	हाल DSO_BINARY_TYPE__JAVA_JIT:
+	हाल DSO_BINARY_TYPE__BPF_PROG_INFO:
+	हाल DSO_BINARY_TYPE__BPF_IMAGE:
+	हाल DSO_BINARY_TYPE__OOL:
+	हाल DSO_BINARY_TYPE__NOT_FOUND:
 		ret = -1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum {
+क्रमागत अणु
 	COMP_ID__NONE = 0,
-};
+पूर्ण;
 
-static const struct {
-	const char *fmt;
-	int (*decompress)(const char *input, int output);
-	bool (*is_compressed)(const char *input);
-} compressions[] = {
-	[COMP_ID__NONE] = { .fmt = NULL, },
-#ifdef HAVE_ZLIB_SUPPORT
-	{ "gz", gzip_decompress_to_file, gzip_is_compressed },
-#endif
-#ifdef HAVE_LZMA_SUPPORT
-	{ "xz", lzma_decompress_to_file, lzma_is_compressed },
-#endif
-	{ NULL, NULL, NULL },
-};
+अटल स्थिर काष्ठा अणु
+	स्थिर अक्षर *fmt;
+	पूर्णांक (*decompress)(स्थिर अक्षर *input, पूर्णांक output);
+	bool (*is_compressed)(स्थिर अक्षर *input);
+पूर्ण compressions[] = अणु
+	[COMP_ID__NONE] = अणु .fmt = शून्य, पूर्ण,
+#अगर_घोषित HAVE_ZLIB_SUPPORT
+	अणु "gz", gzip_decompress_to_file, gzip_is_compressed पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित HAVE_LZMA_SUPPORT
+	अणु "xz", lzma_decompress_to_file, lzma_is_compressed पूर्ण,
+#पूर्ण_अगर
+	अणु शून्य, शून्य, शून्य पूर्ण,
+पूर्ण;
 
-static int is_supported_compression(const char *ext)
-{
-	unsigned i;
+अटल पूर्णांक is_supported_compression(स्थिर अक्षर *ext)
+अणु
+	अचिन्हित i;
 
-	for (i = 1; compressions[i].fmt; i++) {
-		if (!strcmp(ext, compressions[i].fmt))
-			return i;
-	}
-	return COMP_ID__NONE;
-}
+	क्रम (i = 1; compressions[i].fmt; i++) अणु
+		अगर (!म_भेद(ext, compressions[i].fmt))
+			वापस i;
+	पूर्ण
+	वापस COMP_ID__NONE;
+पूर्ण
 
-bool is_kernel_module(const char *pathname, int cpumode)
-{
-	struct kmod_path m;
-	int mode = cpumode & PERF_RECORD_MISC_CPUMODE_MASK;
+bool is_kernel_module(स्थिर अक्षर *pathname, पूर्णांक cpumode)
+अणु
+	काष्ठा kmod_path m;
+	पूर्णांक mode = cpumode & PERF_RECORD_MISC_CPUMODE_MASK;
 
 	WARN_ONCE(mode != cpumode,
 		  "Internal error: passing unmasked cpumode (%x) to is_kernel_module",
 		  cpumode);
 
-	switch (mode) {
-	case PERF_RECORD_MISC_USER:
-	case PERF_RECORD_MISC_HYPERVISOR:
-	case PERF_RECORD_MISC_GUEST_USER:
-		return false;
+	चयन (mode) अणु
+	हाल PERF_RECORD_MISC_USER:
+	हाल PERF_RECORD_MISC_HYPERVISOR:
+	हाल PERF_RECORD_MISC_GUEST_USER:
+		वापस false;
 	/* Treat PERF_RECORD_MISC_CPUMODE_UNKNOWN as kernel */
-	default:
-		if (kmod_path__parse(&m, pathname)) {
+	शेष:
+		अगर (kmod_path__parse(&m, pathname)) अणु
 			pr_err("Failed to check whether %s is a kernel module or not. Assume it is.",
 					pathname);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	return m.kmod;
-}
+	वापस m.kmod;
+पूर्ण
 
-bool dso__needs_decompress(struct dso *dso)
-{
-	return dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP ||
+bool dso__needs_decompress(काष्ठा dso *dso)
+अणु
+	वापस dso->symtab_type == DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE_COMP ||
 		dso->symtab_type == DSO_BINARY_TYPE__GUEST_KMODULE_COMP;
-}
+पूर्ण
 
-int filename__decompress(const char *name, char *pathname,
-			 size_t len, int comp, int *err)
-{
-	char tmpbuf[] = KMOD_DECOMP_NAME;
-	int fd = -1;
+पूर्णांक filename__decompress(स्थिर अक्षर *name, अक्षर *pathname,
+			 माप_प्रकार len, पूर्णांक comp, पूर्णांक *err)
+अणु
+	अक्षर पंचांगpbuf[] = KMOD_DECOMP_NAME;
+	पूर्णांक fd = -1;
 
 	/*
-	 * We have proper compression id for DSO and yet the file
+	 * We have proper compression id क्रम DSO and yet the file
 	 * behind the 'name' can still be plain uncompressed object.
 	 *
-	 * The reason is behind the logic we open the DSO object files,
+	 * The reason is behind the logic we खोलो the DSO object files,
 	 * when we try all possible 'debug' objects until we find the
-	 * data. So even if the DSO is represented by 'krava.xz' module,
-	 * we can end up here opening ~/.debug/....23432432/debug' file
+	 * data. So even अगर the DSO is represented by 'krava.xz' module,
+	 * we can end up here खोलोing ~/.debug/....23432432/debug' file
 	 * which is not compressed.
 	 *
-	 * To keep this transparent, we detect this and return the file
+	 * To keep this transparent, we detect this and वापस the file
 	 * descriptor to the uncompressed file.
 	 */
-	if (!compressions[comp].is_compressed(name))
-		return open(name, O_RDONLY);
+	अगर (!compressions[comp].is_compressed(name))
+		वापस खोलो(name, O_RDONLY);
 
-	fd = mkstemp(tmpbuf);
-	if (fd < 0) {
-		*err = errno;
-		return -1;
-	}
+	fd = mkstemp(पंचांगpbuf);
+	अगर (fd < 0) अणु
+		*err = त्रुटि_सं;
+		वापस -1;
+	पूर्ण
 
-	if (compressions[comp].decompress(name, fd)) {
+	अगर (compressions[comp].decompress(name, fd)) अणु
 		*err = DSO_LOAD_ERRNO__DECOMPRESSION_FAILURE;
-		close(fd);
+		बंद(fd);
 		fd = -1;
-	}
+	पूर्ण
 
-	if (!pathname || (fd < 0))
-		unlink(tmpbuf);
+	अगर (!pathname || (fd < 0))
+		unlink(पंचांगpbuf);
 
-	if (pathname && (fd >= 0))
-		strlcpy(pathname, tmpbuf, len);
+	अगर (pathname && (fd >= 0))
+		strlcpy(pathname, पंचांगpbuf, len);
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static int decompress_kmodule(struct dso *dso, const char *name,
-			      char *pathname, size_t len)
-{
-	if (!dso__needs_decompress(dso))
-		return -1;
+अटल पूर्णांक decompress_kmodule(काष्ठा dso *dso, स्थिर अक्षर *name,
+			      अक्षर *pathname, माप_प्रकार len)
+अणु
+	अगर (!dso__needs_decompress(dso))
+		वापस -1;
 
-	if (dso->comp == COMP_ID__NONE)
-		return -1;
+	अगर (dso->comp == COMP_ID__NONE)
+		वापस -1;
 
-	return filename__decompress(name, pathname, len, dso->comp,
-				    &dso->load_errno);
-}
+	वापस filename__decompress(name, pathname, len, dso->comp,
+				    &dso->load_त्रुटि_सं);
+पूर्ण
 
-int dso__decompress_kmodule_fd(struct dso *dso, const char *name)
-{
-	return decompress_kmodule(dso, name, NULL, 0);
-}
+पूर्णांक dso__decompress_kmodule_fd(काष्ठा dso *dso, स्थिर अक्षर *name)
+अणु
+	वापस decompress_kmodule(dso, name, शून्य, 0);
+पूर्ण
 
-int dso__decompress_kmodule_path(struct dso *dso, const char *name,
-				 char *pathname, size_t len)
-{
-	int fd = decompress_kmodule(dso, name, pathname, len);
+पूर्णांक dso__decompress_kmodule_path(काष्ठा dso *dso, स्थिर अक्षर *name,
+				 अक्षर *pathname, माप_प्रकार len)
+अणु
+	पूर्णांक fd = decompress_kmodule(dso, name, pathname, len);
 
-	close(fd);
-	return fd >= 0 ? 0 : -1;
-}
+	बंद(fd);
+	वापस fd >= 0 ? 0 : -1;
+पूर्ण
 
 /*
- * Parses kernel module specified in @path and updates
+ * Parses kernel module specअगरied in @path and updates
  * @m argument like:
  *
- *    @comp - true if @path contains supported compression suffix,
+ *    @comp - true अगर @path contains supported compression suffix,
  *            false otherwise
- *    @kmod - true if @path contains '.ko' suffix in right position,
+ *    @kmod - true अगर @path contains '.ko' suffix in right position,
  *            false otherwise
- *    @name - if (@alloc_name && @kmod) is true, it contains strdup-ed base name
+ *    @name - अगर (@alloc_name && @kmod) is true, it contains strdup-ed base name
  *            of the kernel module without suffixes, otherwise strudup-ed
  *            base name of @path
- *    @ext  - if (@alloc_ext && @comp) is true, it contains strdup-ed string
+ *    @ext  - अगर (@alloc_ext && @comp) is true, it contains strdup-ed string
  *            the compression suffix
  *
- * Returns 0 if there's no strdup error, -ENOMEM otherwise.
+ * Returns 0 अगर there's no strdup error, -ENOMEM otherwise.
  */
-int __kmod_path__parse(struct kmod_path *m, const char *path,
+पूर्णांक __kmod_path__parse(काष्ठा kmod_path *m, स्थिर अक्षर *path,
 		       bool alloc_name)
-{
-	const char *name = strrchr(path, '/');
-	const char *ext  = strrchr(path, '.');
+अणु
+	स्थिर अक्षर *name = म_खोजप(path, '/');
+	स्थिर अक्षर *ext  = म_खोजप(path, '.');
 	bool is_simple_name = false;
 
-	memset(m, 0x0, sizeof(*m));
+	स_रखो(m, 0x0, माप(*m));
 	name = name ? name + 1 : path;
 
 	/*
-	 * '.' is also a valid character for module name. For example:
+	 * '.' is also a valid अक्षरacter क्रम module name. For example:
 	 * [aaa.bbb] is a valid module name. '[' should have higher
 	 * priority than '.ko' suffix.
 	 *
 	 * The kernel names are from machine__mmap_name. Such
-	 * name should belong to kernel itself, not kernel module.
+	 * name should beदीर्घ to kernel itself, not kernel module.
 	 */
-	if (name[0] == '[') {
+	अगर (name[0] == '[') अणु
 		is_simple_name = true;
-		if ((strncmp(name, "[kernel.kallsyms]", 17) == 0) ||
-		    (strncmp(name, "[guest.kernel.kallsyms", 22) == 0) ||
-		    (strncmp(name, "[vdso]", 6) == 0) ||
-		    (strncmp(name, "[vdso32]", 8) == 0) ||
-		    (strncmp(name, "[vdsox32]", 9) == 0) ||
-		    (strncmp(name, "[vsyscall]", 10) == 0)) {
+		अगर ((म_भेदन(name, "[kernel.kallsyms]", 17) == 0) ||
+		    (म_भेदन(name, "[guest.kernel.kallsyms", 22) == 0) ||
+		    (म_भेदन(name, "[vdso]", 6) == 0) ||
+		    (म_भेदन(name, "[vdso32]", 8) == 0) ||
+		    (म_भेदन(name, "[vdsox32]", 9) == 0) ||
+		    (म_भेदन(name, "[vsyscall]", 10) == 0)) अणु
 			m->kmod = false;
 
-		} else
+		पूर्ण अन्यथा
 			m->kmod = true;
-	}
+	पूर्ण
 
-	/* No extension, just return name. */
-	if ((ext == NULL) || is_simple_name) {
-		if (alloc_name) {
+	/* No extension, just वापस name. */
+	अगर ((ext == शून्य) || is_simple_name) अणु
+		अगर (alloc_name) अणु
 			m->name = strdup(name);
-			return m->name ? 0 : -ENOMEM;
-		}
-		return 0;
-	}
+			वापस m->name ? 0 : -ENOMEM;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	m->comp = is_supported_compression(ext + 1);
-	if (m->comp > COMP_ID__NONE)
+	अगर (m->comp > COMP_ID__NONE)
 		ext -= 3;
 
-	/* Check .ko extension only if there's enough name left. */
-	if (ext > name)
-		m->kmod = !strncmp(ext, ".ko", 3);
+	/* Check .ko extension only अगर there's enough name left. */
+	अगर (ext > name)
+		m->kmod = !म_भेदन(ext, ".ko", 3);
 
-	if (alloc_name) {
-		if (m->kmod) {
-			if (asprintf(&m->name, "[%.*s]", (int) (ext - name), name) == -1)
-				return -ENOMEM;
-		} else {
-			if (asprintf(&m->name, "%s", name) == -1)
-				return -ENOMEM;
-		}
+	अगर (alloc_name) अणु
+		अगर (m->kmod) अणु
+			अगर (aप्र_लिखो(&m->name, "[%.*s]", (पूर्णांक) (ext - name), name) == -1)
+				वापस -ENOMEM;
+		पूर्ण अन्यथा अणु
+			अगर (aप्र_लिखो(&m->name, "%s", name) == -1)
+				वापस -ENOMEM;
+		पूर्ण
 
 		strreplace(m->name, '-', '_');
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dso__set_module_info(struct dso *dso, struct kmod_path *m,
-			  struct machine *machine)
-{
-	if (machine__is_host(machine))
+व्योम dso__set_module_info(काष्ठा dso *dso, काष्ठा kmod_path *m,
+			  काष्ठा machine *machine)
+अणु
+	अगर (machine__is_host(machine))
 		dso->symtab_type = DSO_BINARY_TYPE__SYSTEM_PATH_KMODULE;
-	else
+	अन्यथा
 		dso->symtab_type = DSO_BINARY_TYPE__GUEST_KMODULE;
 
 	/* _KMODULE_COMP should be next to _KMODULE */
-	if (m->kmod && m->comp) {
+	अगर (m->kmod && m->comp) अणु
 		dso->symtab_type++;
 		dso->comp = m->comp;
-	}
+	पूर्ण
 
-	dso__set_short_name(dso, strdup(m->name), true);
-}
+	dso__set_लघु_name(dso, strdup(m->name), true);
+पूर्ण
 
 /*
- * Global list of open DSOs and the counter.
+ * Global list of खोलो DSOs and the counter.
  */
-static LIST_HEAD(dso__data_open);
-static long dso__data_open_cnt;
-static pthread_mutex_t dso__data_open_lock = PTHREAD_MUTEX_INITIALIZER;
+अटल LIST_HEAD(dso__data_खोलो);
+अटल दीर्घ dso__data_खोलो_cnt;
+अटल pthपढ़ो_mutex_t dso__data_खोलो_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static void dso__list_add(struct dso *dso)
-{
-	list_add_tail(&dso->data.open_entry, &dso__data_open);
-	dso__data_open_cnt++;
-}
+अटल व्योम dso__list_add(काष्ठा dso *dso)
+अणु
+	list_add_tail(&dso->data.खोलो_entry, &dso__data_खोलो);
+	dso__data_खोलो_cnt++;
+पूर्ण
 
-static void dso__list_del(struct dso *dso)
-{
-	list_del_init(&dso->data.open_entry);
-	WARN_ONCE(dso__data_open_cnt <= 0,
+अटल व्योम dso__list_del(काष्ठा dso *dso)
+अणु
+	list_del_init(&dso->data.खोलो_entry);
+	WARN_ONCE(dso__data_खोलो_cnt <= 0,
 		  "DSO data fd counter out of bounds.");
-	dso__data_open_cnt--;
-}
+	dso__data_खोलो_cnt--;
+पूर्ण
 
-static void close_first_dso(void);
+अटल व्योम बंद_first_dso(व्योम);
 
-static int do_open(char *name)
-{
-	int fd;
-	char sbuf[STRERR_BUFSIZE];
+अटल पूर्णांक करो_खोलो(अक्षर *name)
+अणु
+	पूर्णांक fd;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	do {
-		fd = open(name, O_RDONLY|O_CLOEXEC);
-		if (fd >= 0)
-			return fd;
+	करो अणु
+		fd = खोलो(name, O_RDONLY|O_CLOEXEC);
+		अगर (fd >= 0)
+			वापस fd;
 
 		pr_debug("dso open failed: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		if (!dso__data_open_cnt || errno != EMFILE)
-			break;
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		अगर (!dso__data_खोलो_cnt || त्रुटि_सं != EMखाता)
+			अवरोध;
 
-		close_first_dso();
-	} while (1);
+		बंद_first_dso();
+	पूर्ण जबतक (1);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int __open_dso(struct dso *dso, struct machine *machine)
-{
-	int fd = -EINVAL;
-	char *root_dir = (char *)"";
-	char *name = malloc(PATH_MAX);
+अटल पूर्णांक __खोलो_dso(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	पूर्णांक fd = -EINVAL;
+	अक्षर *root_dir = (अक्षर *)"";
+	अक्षर *name = दो_स्मृति(PATH_MAX);
 	bool decomp = false;
 
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
-	if (machine)
+	अगर (machine)
 		root_dir = machine->root_dir;
 
-	if (dso__read_binary_type_filename(dso, dso->binary_type,
+	अगर (dso__पढ़ो_binary_type_filename(dso, dso->binary_type,
 					    root_dir, name, PATH_MAX))
-		goto out;
+		जाओ out;
 
-	if (!is_regular_file(name))
-		goto out;
+	अगर (!is_regular_file(name))
+		जाओ out;
 
-	if (dso__needs_decompress(dso)) {
-		char newpath[KMOD_DECOMP_LEN];
-		size_t len = sizeof(newpath);
+	अगर (dso__needs_decompress(dso)) अणु
+		अक्षर newpath[KMOD_DECOMP_LEN];
+		माप_प्रकार len = माप(newpath);
 
-		if (dso__decompress_kmodule_path(dso, name, newpath, len) < 0) {
-			fd = -dso->load_errno;
-			goto out;
-		}
+		अगर (dso__decompress_kmodule_path(dso, name, newpath, len) < 0) अणु
+			fd = -dso->load_त्रुटि_सं;
+			जाओ out;
+		पूर्ण
 
 		decomp = true;
-		strcpy(name, newpath);
-	}
+		म_नकल(name, newpath);
+	पूर्ण
 
-	fd = do_open(name);
+	fd = करो_खोलो(name);
 
-	if (decomp)
+	अगर (decomp)
 		unlink(name);
 
 out:
-	free(name);
-	return fd;
-}
+	मुक्त(name);
+	वापस fd;
+पूर्ण
 
-static void check_data_close(void);
+अटल व्योम check_data_बंद(व्योम);
 
 /**
- * dso_close - Open DSO data file
+ * dso_बंद - Open DSO data file
  * @dso: dso object
  *
  * Open @dso's data file descriptor and updates
- * list/count of open DSO objects.
+ * list/count of खोलो DSO objects.
  */
-static int open_dso(struct dso *dso, struct machine *machine)
-{
-	int fd;
-	struct nscookie nsc;
+अटल पूर्णांक खोलो_dso(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	पूर्णांक fd;
+	काष्ठा nscookie nsc;
 
-	if (dso->binary_type != DSO_BINARY_TYPE__BUILD_ID_CACHE)
+	अगर (dso->binary_type != DSO_BINARY_TYPE__BUILD_ID_CACHE)
 		nsinfo__mountns_enter(dso->nsinfo, &nsc);
-	fd = __open_dso(dso, machine);
-	if (dso->binary_type != DSO_BINARY_TYPE__BUILD_ID_CACHE)
-		nsinfo__mountns_exit(&nsc);
+	fd = __खोलो_dso(dso, machine);
+	अगर (dso->binary_type != DSO_BINARY_TYPE__BUILD_ID_CACHE)
+		nsinfo__mountns_निकास(&nsc);
 
-	if (fd >= 0) {
+	अगर (fd >= 0) अणु
 		dso__list_add(dso);
 		/*
-		 * Check if we crossed the allowed number
-		 * of opened DSOs and close one if needed.
+		 * Check अगर we crossed the allowed number
+		 * of खोलोed DSOs and बंद one अगर needed.
 		 */
-		check_data_close();
-	}
+		check_data_बंद();
+	पूर्ण
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static void close_data_fd(struct dso *dso)
-{
-	if (dso->data.fd >= 0) {
-		close(dso->data.fd);
+अटल व्योम बंद_data_fd(काष्ठा dso *dso)
+अणु
+	अगर (dso->data.fd >= 0) अणु
+		बंद(dso->data.fd);
 		dso->data.fd = -1;
 		dso->data.file_size = 0;
 		dso__list_del(dso);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * dso_close - Close DSO data file
+ * dso_बंद - Close DSO data file
  * @dso: dso object
  *
  * Close @dso's data file descriptor and updates
- * list/count of open DSO objects.
+ * list/count of खोलो DSO objects.
  */
-static void close_dso(struct dso *dso)
-{
-	close_data_fd(dso);
-}
+अटल व्योम बंद_dso(काष्ठा dso *dso)
+अणु
+	बंद_data_fd(dso);
+पूर्ण
 
-static void close_first_dso(void)
-{
-	struct dso *dso;
+अटल व्योम बंद_first_dso(व्योम)
+अणु
+	काष्ठा dso *dso;
 
-	dso = list_first_entry(&dso__data_open, struct dso, data.open_entry);
-	close_dso(dso);
-}
+	dso = list_first_entry(&dso__data_खोलो, काष्ठा dso, data.खोलो_entry);
+	बंद_dso(dso);
+पूर्ण
 
-static rlim_t get_fd_limit(void)
-{
-	struct rlimit l;
+अटल rlim_t get_fd_limit(व्योम)
+अणु
+	काष्ठा rlimit l;
 	rlim_t limit = 0;
 
-	/* Allow half of the current open fd limit. */
-	if (getrlimit(RLIMIT_NOFILE, &l) == 0) {
-		if (l.rlim_cur == RLIM_INFINITY)
+	/* Allow half of the current खोलो fd limit. */
+	अगर (getrlimit(RLIMIT_NOखाता, &l) == 0) अणु
+		अगर (l.rlim_cur == RLIM_अनन्त)
 			limit = l.rlim_cur;
-		else
+		अन्यथा
 			limit = l.rlim_cur / 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("failed to get fd limit\n");
 		limit = 1;
-	}
+	पूर्ण
 
-	return limit;
-}
+	वापस limit;
+पूर्ण
 
-static rlim_t fd_limit;
+अटल rlim_t fd_limit;
 
 /*
  * Used only by tests/dso-data.c to reset the environment
- * for tests. I dont expect we should change this during
- * standard runtime.
+ * क्रम tests. I करोnt expect we should change this during
+ * standard runसमय.
  */
-void reset_fd_limit(void)
-{
+व्योम reset_fd_limit(व्योम)
+अणु
 	fd_limit = 0;
-}
+पूर्ण
 
-static bool may_cache_fd(void)
-{
-	if (!fd_limit)
+अटल bool may_cache_fd(व्योम)
+अणु
+	अगर (!fd_limit)
 		fd_limit = get_fd_limit();
 
-	if (fd_limit == RLIM_INFINITY)
-		return true;
+	अगर (fd_limit == RLIM_अनन्त)
+		वापस true;
 
-	return fd_limit > (rlim_t) dso__data_open_cnt;
-}
+	वापस fd_limit > (rlim_t) dso__data_खोलो_cnt;
+पूर्ण
 
 /*
- * Check and close LRU dso if we crossed allowed limit
- * for opened dso file descriptors. The limit is half
- * of the RLIMIT_NOFILE files opened.
+ * Check and बंद LRU dso अगर we crossed allowed limit
+ * क्रम खोलोed dso file descriptors. The limit is half
+ * of the RLIMIT_NOखाता files खोलोed.
 */
-static void check_data_close(void)
-{
+अटल व्योम check_data_बंद(व्योम)
+अणु
 	bool cache_fd = may_cache_fd();
 
-	if (!cache_fd)
-		close_first_dso();
-}
+	अगर (!cache_fd)
+		बंद_first_dso();
+पूर्ण
 
 /**
- * dso__data_close - Close DSO data file
+ * dso__data_बंद - Close DSO data file
  * @dso: dso object
  *
- * External interface to close @dso's data file descriptor.
+ * External पूर्णांकerface to बंद @dso's data file descriptor.
  */
-void dso__data_close(struct dso *dso)
-{
-	pthread_mutex_lock(&dso__data_open_lock);
-	close_dso(dso);
-	pthread_mutex_unlock(&dso__data_open_lock);
-}
+व्योम dso__data_बंद(काष्ठा dso *dso)
+अणु
+	pthपढ़ो_mutex_lock(&dso__data_खोलो_lock);
+	बंद_dso(dso);
+	pthपढ़ो_mutex_unlock(&dso__data_खोलो_lock);
+पूर्ण
 
-static void try_to_open_dso(struct dso *dso, struct machine *machine)
-{
-	enum dso_binary_type binary_type_data[] = {
+अटल व्योम try_to_खोलो_dso(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	क्रमागत dso_binary_type binary_type_data[] = अणु
 		DSO_BINARY_TYPE__BUILD_ID_CACHE,
 		DSO_BINARY_TYPE__SYSTEM_PATH_DSO,
 		DSO_BINARY_TYPE__NOT_FOUND,
-	};
-	int i = 0;
+	पूर्ण;
+	पूर्णांक i = 0;
 
-	if (dso->data.fd >= 0)
-		return;
+	अगर (dso->data.fd >= 0)
+		वापस;
 
-	if (dso->binary_type != DSO_BINARY_TYPE__NOT_FOUND) {
-		dso->data.fd = open_dso(dso, machine);
-		goto out;
-	}
+	अगर (dso->binary_type != DSO_BINARY_TYPE__NOT_FOUND) अणु
+		dso->data.fd = खोलो_dso(dso, machine);
+		जाओ out;
+	पूर्ण
 
-	do {
+	करो अणु
 		dso->binary_type = binary_type_data[i++];
 
-		dso->data.fd = open_dso(dso, machine);
-		if (dso->data.fd >= 0)
-			goto out;
+		dso->data.fd = खोलो_dso(dso, machine);
+		अगर (dso->data.fd >= 0)
+			जाओ out;
 
-	} while (dso->binary_type != DSO_BINARY_TYPE__NOT_FOUND);
+	पूर्ण जबतक (dso->binary_type != DSO_BINARY_TYPE__NOT_FOUND);
 out:
-	if (dso->data.fd >= 0)
+	अगर (dso->data.fd >= 0)
 		dso->data.status = DSO_DATA_STATUS_OK;
-	else
+	अन्यथा
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-}
+पूर्ण
 
 /**
  * dso__data_get_fd - Get dso's data file descriptor
  * @dso: dso object
  * @machine: machine object
  *
- * External interface to find dso's file, open it and
- * returns file descriptor.  It should be paired with
- * dso__data_put_fd() if it returns non-negative value.
+ * External पूर्णांकerface to find dso's file, खोलो it and
+ * वापसs file descriptor.  It should be paired with
+ * dso__data_put_fd() अगर it वापसs non-negative value.
  */
-int dso__data_get_fd(struct dso *dso, struct machine *machine)
-{
-	if (dso->data.status == DSO_DATA_STATUS_ERROR)
-		return -1;
+पूर्णांक dso__data_get_fd(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	अगर (dso->data.status == DSO_DATA_STATUS_ERROR)
+		वापस -1;
 
-	if (pthread_mutex_lock(&dso__data_open_lock) < 0)
-		return -1;
+	अगर (pthपढ़ो_mutex_lock(&dso__data_खोलो_lock) < 0)
+		वापस -1;
 
-	try_to_open_dso(dso, machine);
+	try_to_खोलो_dso(dso, machine);
 
-	if (dso->data.fd < 0)
-		pthread_mutex_unlock(&dso__data_open_lock);
+	अगर (dso->data.fd < 0)
+		pthपढ़ो_mutex_unlock(&dso__data_खोलो_lock);
 
-	return dso->data.fd;
-}
+	वापस dso->data.fd;
+पूर्ण
 
-void dso__data_put_fd(struct dso *dso __maybe_unused)
-{
-	pthread_mutex_unlock(&dso__data_open_lock);
-}
+व्योम dso__data_put_fd(काष्ठा dso *dso __maybe_unused)
+अणु
+	pthपढ़ो_mutex_unlock(&dso__data_खोलो_lock);
+पूर्ण
 
-bool dso__data_status_seen(struct dso *dso, enum dso_data_status_seen by)
-{
+bool dso__data_status_seen(काष्ठा dso *dso, क्रमागत dso_data_status_seen by)
+अणु
 	u32 flag = 1 << by;
 
-	if (dso->data.status_seen & flag)
-		return true;
+	अगर (dso->data.status_seen & flag)
+		वापस true;
 
 	dso->data.status_seen |= flag;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#ifdef HAVE_LIBBPF_SUPPORT
-static ssize_t bpf_read(struct dso *dso, u64 offset, char *data)
-{
-	struct bpf_prog_info_node *node;
-	ssize_t size = DSO__DATA_CACHE_SIZE;
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+अटल sमाप_प्रकार bpf_पढ़ो(काष्ठा dso *dso, u64 offset, अक्षर *data)
+अणु
+	काष्ठा bpf_prog_info_node *node;
+	sमाप_प्रकार size = DSO__DATA_CACHE_SIZE;
 	u64 len;
 	u8 *buf;
 
 	node = perf_env__find_bpf_prog_info(dso->bpf_prog.env, dso->bpf_prog.id);
-	if (!node || !node->info_linear) {
+	अगर (!node || !node->info_linear) अणु
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	len = node->info_linear->info.jited_prog_len;
-	buf = (u8 *)(uintptr_t)node->info_linear->info.jited_prog_insns;
+	buf = (u8 *)(uपूर्णांकptr_t)node->info_linear->info.jited_prog_insns;
 
-	if (offset >= len)
-		return -1;
+	अगर (offset >= len)
+		वापस -1;
 
-	size = (ssize_t)min(len - offset, (u64)size);
-	memcpy(data, buf + offset, size);
-	return size;
-}
+	size = (sमाप_प्रकार)min(len - offset, (u64)size);
+	स_नकल(data, buf + offset, size);
+	वापस size;
+पूर्ण
 
-static int bpf_size(struct dso *dso)
-{
-	struct bpf_prog_info_node *node;
+अटल पूर्णांक bpf_size(काष्ठा dso *dso)
+अणु
+	काष्ठा bpf_prog_info_node *node;
 
 	node = perf_env__find_bpf_prog_info(dso->bpf_prog.env, dso->bpf_prog.id);
-	if (!node || !node->info_linear) {
+	अगर (!node || !node->info_linear) अणु
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	dso->data.file_size = node->info_linear->info.jited_prog_len;
-	return 0;
-}
-#endif // HAVE_LIBBPF_SUPPORT
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT
 
-static void
-dso_cache__free(struct dso *dso)
-{
-	struct rb_root *root = &dso->data.cache;
-	struct rb_node *next = rb_first(root);
+अटल व्योम
+dso_cache__मुक्त(काष्ठा dso *dso)
+अणु
+	काष्ठा rb_root *root = &dso->data.cache;
+	काष्ठा rb_node *next = rb_first(root);
 
-	pthread_mutex_lock(&dso->lock);
-	while (next) {
-		struct dso_cache *cache;
+	pthपढ़ो_mutex_lock(&dso->lock);
+	जबतक (next) अणु
+		काष्ठा dso_cache *cache;
 
-		cache = rb_entry(next, struct dso_cache, rb_node);
+		cache = rb_entry(next, काष्ठा dso_cache, rb_node);
 		next = rb_next(&cache->rb_node);
 		rb_erase(&cache->rb_node, root);
-		free(cache);
-	}
-	pthread_mutex_unlock(&dso->lock);
-}
+		मुक्त(cache);
+	पूर्ण
+	pthपढ़ो_mutex_unlock(&dso->lock);
+पूर्ण
 
-static struct dso_cache *__dso_cache__find(struct dso *dso, u64 offset)
-{
-	const struct rb_root *root = &dso->data.cache;
-	struct rb_node * const *p = &root->rb_node;
-	const struct rb_node *parent = NULL;
-	struct dso_cache *cache;
+अटल काष्ठा dso_cache *__dso_cache__find(काष्ठा dso *dso, u64 offset)
+अणु
+	स्थिर काष्ठा rb_root *root = &dso->data.cache;
+	काष्ठा rb_node * स्थिर *p = &root->rb_node;
+	स्थिर काष्ठा rb_node *parent = शून्य;
+	काष्ठा dso_cache *cache;
 
-	while (*p != NULL) {
+	जबतक (*p != शून्य) अणु
 		u64 end;
 
 		parent = *p;
-		cache = rb_entry(parent, struct dso_cache, rb_node);
+		cache = rb_entry(parent, काष्ठा dso_cache, rb_node);
 		end = cache->offset + DSO__DATA_CACHE_SIZE;
 
-		if (offset < cache->offset)
+		अगर (offset < cache->offset)
 			p = &(*p)->rb_left;
-		else if (offset >= end)
+		अन्यथा अगर (offset >= end)
 			p = &(*p)->rb_right;
-		else
-			return cache;
-	}
+		अन्यथा
+			वापस cache;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dso_cache *
-dso_cache__insert(struct dso *dso, struct dso_cache *new)
-{
-	struct rb_root *root = &dso->data.cache;
-	struct rb_node **p = &root->rb_node;
-	struct rb_node *parent = NULL;
-	struct dso_cache *cache;
+अटल काष्ठा dso_cache *
+dso_cache__insert(काष्ठा dso *dso, काष्ठा dso_cache *new)
+अणु
+	काष्ठा rb_root *root = &dso->data.cache;
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node *parent = शून्य;
+	काष्ठा dso_cache *cache;
 	u64 offset = new->offset;
 
-	pthread_mutex_lock(&dso->lock);
-	while (*p != NULL) {
+	pthपढ़ो_mutex_lock(&dso->lock);
+	जबतक (*p != शून्य) अणु
 		u64 end;
 
 		parent = *p;
-		cache = rb_entry(parent, struct dso_cache, rb_node);
+		cache = rb_entry(parent, काष्ठा dso_cache, rb_node);
 		end = cache->offset + DSO__DATA_CACHE_SIZE;
 
-		if (offset < cache->offset)
+		अगर (offset < cache->offset)
 			p = &(*p)->rb_left;
-		else if (offset >= end)
+		अन्यथा अगर (offset >= end)
 			p = &(*p)->rb_right;
-		else
-			goto out;
-	}
+		अन्यथा
+			जाओ out;
+	पूर्ण
 
 	rb_link_node(&new->rb_node, parent, p);
 	rb_insert_color(&new->rb_node, root);
 
-	cache = NULL;
+	cache = शून्य;
 out:
-	pthread_mutex_unlock(&dso->lock);
-	return cache;
-}
+	pthपढ़ो_mutex_unlock(&dso->lock);
+	वापस cache;
+पूर्ण
 
-static ssize_t dso_cache__memcpy(struct dso_cache *cache, u64 offset, u8 *data,
+अटल sमाप_प्रकार dso_cache__स_नकल(काष्ठा dso_cache *cache, u64 offset, u8 *data,
 				 u64 size, bool out)
-{
+अणु
 	u64 cache_offset = offset - cache->offset;
 	u64 cache_size   = min(cache->size - cache_offset, size);
 
-	if (out)
-		memcpy(data, cache->data + cache_offset, cache_size);
-	else
-		memcpy(cache->data + cache_offset, data, cache_size);
-	return cache_size;
-}
+	अगर (out)
+		स_नकल(data, cache->data + cache_offset, cache_size);
+	अन्यथा
+		स_नकल(cache->data + cache_offset, data, cache_size);
+	वापस cache_size;
+पूर्ण
 
-static ssize_t file_read(struct dso *dso, struct machine *machine,
-			 u64 offset, char *data)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार file_पढ़ो(काष्ठा dso *dso, काष्ठा machine *machine,
+			 u64 offset, अक्षर *data)
+अणु
+	sमाप_प्रकार ret;
 
-	pthread_mutex_lock(&dso__data_open_lock);
+	pthपढ़ो_mutex_lock(&dso__data_खोलो_lock);
 
 	/*
-	 * dso->data.fd might be closed if other thread opened another
-	 * file (dso) due to open file limit (RLIMIT_NOFILE).
+	 * dso->data.fd might be बंदd अगर other thपढ़ो खोलोed another
+	 * file (dso) due to खोलो file limit (RLIMIT_NOखाता).
 	 */
-	try_to_open_dso(dso, machine);
+	try_to_खोलो_dso(dso, machine);
 
-	if (dso->data.fd < 0) {
+	अगर (dso->data.fd < 0) अणु
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-		ret = -errno;
-		goto out;
-	}
+		ret = -त्रुटि_सं;
+		जाओ out;
+	पूर्ण
 
-	ret = pread(dso->data.fd, data, DSO__DATA_CACHE_SIZE, offset);
+	ret = pपढ़ो(dso->data.fd, data, DSO__DATA_CACHE_SIZE, offset);
 out:
-	pthread_mutex_unlock(&dso__data_open_lock);
-	return ret;
-}
+	pthपढ़ो_mutex_unlock(&dso__data_खोलो_lock);
+	वापस ret;
+पूर्ण
 
-static struct dso_cache *dso_cache__populate(struct dso *dso,
-					     struct machine *machine,
-					     u64 offset, ssize_t *ret)
-{
+अटल काष्ठा dso_cache *dso_cache__populate(काष्ठा dso *dso,
+					     काष्ठा machine *machine,
+					     u64 offset, sमाप_प्रकार *ret)
+अणु
 	u64 cache_offset = offset & DSO__DATA_CACHE_MASK;
-	struct dso_cache *cache;
-	struct dso_cache *old;
+	काष्ठा dso_cache *cache;
+	काष्ठा dso_cache *old;
 
-	cache = zalloc(sizeof(*cache) + DSO__DATA_CACHE_SIZE);
-	if (!cache) {
+	cache = zalloc(माप(*cache) + DSO__DATA_CACHE_SIZE);
+	अगर (!cache) अणु
 		*ret = -ENOMEM;
-		return NULL;
-	}
-#ifdef HAVE_LIBBPF_SUPPORT
-	if (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
-		*ret = bpf_read(dso, cache_offset, cache->data);
-	else
-#endif
-	if (dso->binary_type == DSO_BINARY_TYPE__OOL)
+		वापस शून्य;
+	पूर्ण
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+	अगर (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
+		*ret = bpf_पढ़ो(dso, cache_offset, cache->data);
+	अन्यथा
+#पूर्ण_अगर
+	अगर (dso->binary_type == DSO_BINARY_TYPE__OOL)
 		*ret = DSO__DATA_CACHE_SIZE;
-	else
-		*ret = file_read(dso, machine, cache_offset, cache->data);
+	अन्यथा
+		*ret = file_पढ़ो(dso, machine, cache_offset, cache->data);
 
-	if (*ret <= 0) {
-		free(cache);
-		return NULL;
-	}
+	अगर (*ret <= 0) अणु
+		मुक्त(cache);
+		वापस शून्य;
+	पूर्ण
 
 	cache->offset = cache_offset;
 	cache->size   = *ret;
 
 	old = dso_cache__insert(dso, cache);
-	if (old) {
+	अगर (old) अणु
 		/* we lose the race */
-		free(cache);
+		मुक्त(cache);
 		cache = old;
-	}
+	पूर्ण
 
-	return cache;
-}
+	वापस cache;
+पूर्ण
 
-static struct dso_cache *dso_cache__find(struct dso *dso,
-					 struct machine *machine,
+अटल काष्ठा dso_cache *dso_cache__find(काष्ठा dso *dso,
+					 काष्ठा machine *machine,
 					 u64 offset,
-					 ssize_t *ret)
-{
-	struct dso_cache *cache = __dso_cache__find(dso, offset);
+					 sमाप_प्रकार *ret)
+अणु
+	काष्ठा dso_cache *cache = __dso_cache__find(dso, offset);
 
-	return cache ? cache : dso_cache__populate(dso, machine, offset, ret);
-}
+	वापस cache ? cache : dso_cache__populate(dso, machine, offset, ret);
+पूर्ण
 
-static ssize_t dso_cache_io(struct dso *dso, struct machine *machine,
-			    u64 offset, u8 *data, ssize_t size, bool out)
-{
-	struct dso_cache *cache;
-	ssize_t ret = 0;
+अटल sमाप_प्रकार dso_cache_io(काष्ठा dso *dso, काष्ठा machine *machine,
+			    u64 offset, u8 *data, sमाप_प्रकार size, bool out)
+अणु
+	काष्ठा dso_cache *cache;
+	sमाप_प्रकार ret = 0;
 
 	cache = dso_cache__find(dso, machine, offset, &ret);
-	if (!cache)
-		return ret;
+	अगर (!cache)
+		वापस ret;
 
-	return dso_cache__memcpy(cache, offset, data, size, out);
-}
+	वापस dso_cache__स_नकल(cache, offset, data, size, out);
+पूर्ण
 
 /*
  * Reads and caches dso data DSO__DATA_CACHE_SIZE size chunks
- * in the rb_tree. Any read to already cached data is served
+ * in the rb_tree. Any पढ़ो to alपढ़ोy cached data is served
  * by cached data. Writes update the cache only, not the backing file.
  */
-static ssize_t cached_io(struct dso *dso, struct machine *machine,
-			 u64 offset, u8 *data, ssize_t size, bool out)
-{
-	ssize_t r = 0;
+अटल sमाप_प्रकार cached_io(काष्ठा dso *dso, काष्ठा machine *machine,
+			 u64 offset, u8 *data, sमाप_प्रकार size, bool out)
+अणु
+	sमाप_प्रकार r = 0;
 	u8 *p = data;
 
-	do {
-		ssize_t ret;
+	करो अणु
+		sमाप_प्रकार ret;
 
 		ret = dso_cache_io(dso, machine, offset, p, size, out);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		/* Reached EOF, return what we have. */
-		if (!ret)
-			break;
+		/* Reached खातापूर्ण, वापस what we have. */
+		अगर (!ret)
+			अवरोध;
 
 		BUG_ON(ret > size);
 
@@ -985,58 +986,58 @@ static ssize_t cached_io(struct dso *dso, struct machine *machine,
 		offset += ret;
 		size   -= ret;
 
-	} while (size);
+	पूर्ण जबतक (size);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int file_size(struct dso *dso, struct machine *machine)
-{
-	int ret = 0;
-	struct stat st;
-	char sbuf[STRERR_BUFSIZE];
+अटल पूर्णांक file_size(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा stat st;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	pthread_mutex_lock(&dso__data_open_lock);
+	pthपढ़ो_mutex_lock(&dso__data_खोलो_lock);
 
 	/*
-	 * dso->data.fd might be closed if other thread opened another
-	 * file (dso) due to open file limit (RLIMIT_NOFILE).
+	 * dso->data.fd might be बंदd अगर other thपढ़ो खोलोed another
+	 * file (dso) due to खोलो file limit (RLIMIT_NOखाता).
 	 */
-	try_to_open_dso(dso, machine);
+	try_to_खोलो_dso(dso, machine);
 
-	if (dso->data.fd < 0) {
-		ret = -errno;
+	अगर (dso->data.fd < 0) अणु
+		ret = -त्रुटि_सं;
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (fstat(dso->data.fd, &st) < 0) {
-		ret = -errno;
+	अगर (ख_स्थिति(dso->data.fd, &st) < 0) अणु
+		ret = -त्रुटि_सं;
 		pr_err("dso cache fstat failed: %s\n",
-		       str_error_r(errno, sbuf, sizeof(sbuf)));
+		       str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
 		dso->data.status = DSO_DATA_STATUS_ERROR;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	dso->data.file_size = st.st_size;
 
 out:
-	pthread_mutex_unlock(&dso__data_open_lock);
-	return ret;
-}
+	pthपढ़ो_mutex_unlock(&dso__data_खोलो_lock);
+	वापस ret;
+पूर्ण
 
-int dso__data_file_size(struct dso *dso, struct machine *machine)
-{
-	if (dso->data.file_size)
-		return 0;
+पूर्णांक dso__data_file_size(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	अगर (dso->data.file_size)
+		वापस 0;
 
-	if (dso->data.status == DSO_DATA_STATUS_ERROR)
-		return -1;
-#ifdef HAVE_LIBBPF_SUPPORT
-	if (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
-		return bpf_size(dso);
-#endif
-	return file_size(dso, machine);
-}
+	अगर (dso->data.status == DSO_DATA_STATUS_ERROR)
+		वापस -1;
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+	अगर (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO)
+		वापस bpf_size(dso);
+#पूर्ण_अगर
+	वापस file_size(dso, machine);
+पूर्ण
 
 /**
  * dso__data_size - Return dso data size
@@ -1045,231 +1046,231 @@ int dso__data_file_size(struct dso *dso, struct machine *machine)
  *
  * Return: dso data size
  */
-off_t dso__data_size(struct dso *dso, struct machine *machine)
-{
-	if (dso__data_file_size(dso, machine))
-		return -1;
+off_t dso__data_size(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	अगर (dso__data_file_size(dso, machine))
+		वापस -1;
 
-	/* For now just estimate dso data size is close to file size */
-	return dso->data.file_size;
-}
+	/* For now just estimate dso data size is बंद to file size */
+	वापस dso->data.file_size;
+पूर्ण
 
-static ssize_t data_read_write_offset(struct dso *dso, struct machine *machine,
-				      u64 offset, u8 *data, ssize_t size,
+अटल sमाप_प्रकार data_पढ़ो_ग_लिखो_offset(काष्ठा dso *dso, काष्ठा machine *machine,
+				      u64 offset, u8 *data, sमाप_प्रकार size,
 				      bool out)
-{
-	if (dso__data_file_size(dso, machine))
-		return -1;
+अणु
+	अगर (dso__data_file_size(dso, machine))
+		वापस -1;
 
 	/* Check the offset sanity. */
-	if (offset > dso->data.file_size)
-		return -1;
+	अगर (offset > dso->data.file_size)
+		वापस -1;
 
-	if (offset + size < offset)
-		return -1;
+	अगर (offset + size < offset)
+		वापस -1;
 
-	return cached_io(dso, machine, offset, data, size, out);
-}
+	वापस cached_io(dso, machine, offset, data, size, out);
+पूर्ण
 
 /**
- * dso__data_read_offset - Read data from dso file offset
+ * dso__data_पढ़ो_offset - Read data from dso file offset
  * @dso: dso object
  * @machine: machine object
  * @offset: file offset
  * @data: buffer to store data
  * @size: size of the @data buffer
  *
- * External interface to read data from dso file offset. Open
- * dso data file and use cached_read to get the data.
+ * External पूर्णांकerface to पढ़ो data from dso file offset. Open
+ * dso data file and use cached_पढ़ो to get the data.
  */
-ssize_t dso__data_read_offset(struct dso *dso, struct machine *machine,
-			      u64 offset, u8 *data, ssize_t size)
-{
-	if (dso->data.status == DSO_DATA_STATUS_ERROR)
-		return -1;
+sमाप_प्रकार dso__data_पढ़ो_offset(काष्ठा dso *dso, काष्ठा machine *machine,
+			      u64 offset, u8 *data, sमाप_प्रकार size)
+अणु
+	अगर (dso->data.status == DSO_DATA_STATUS_ERROR)
+		वापस -1;
 
-	return data_read_write_offset(dso, machine, offset, data, size, true);
-}
+	वापस data_पढ़ो_ग_लिखो_offset(dso, machine, offset, data, size, true);
+पूर्ण
 
 /**
- * dso__data_read_addr - Read data from dso address
+ * dso__data_पढ़ो_addr - Read data from dso address
  * @dso: dso object
  * @machine: machine object
- * @add: virtual memory address
+ * @add: भव memory address
  * @data: buffer to store data
  * @size: size of the @data buffer
  *
- * External interface to read data from dso address.
+ * External पूर्णांकerface to पढ़ो data from dso address.
  */
-ssize_t dso__data_read_addr(struct dso *dso, struct map *map,
-			    struct machine *machine, u64 addr,
-			    u8 *data, ssize_t size)
-{
+sमाप_प्रकार dso__data_पढ़ो_addr(काष्ठा dso *dso, काष्ठा map *map,
+			    काष्ठा machine *machine, u64 addr,
+			    u8 *data, sमाप_प्रकार size)
+अणु
 	u64 offset = map->map_ip(map, addr);
-	return dso__data_read_offset(dso, machine, offset, data, size);
-}
+	वापस dso__data_पढ़ो_offset(dso, machine, offset, data, size);
+पूर्ण
 
 /**
- * dso__data_write_cache_offs - Write data to dso data cache at file offset
+ * dso__data_ग_लिखो_cache_offs - Write data to dso data cache at file offset
  * @dso: dso object
  * @machine: machine object
  * @offset: file offset
- * @data: buffer to write
+ * @data: buffer to ग_लिखो
  * @size: size of the @data buffer
  *
- * Write into the dso file data cache, but do not change the file itself.
+ * Write पूर्णांकo the dso file data cache, but करो not change the file itself.
  */
-ssize_t dso__data_write_cache_offs(struct dso *dso, struct machine *machine,
-				   u64 offset, const u8 *data_in, ssize_t size)
-{
-	u8 *data = (u8 *)data_in; /* cast away const to use same fns for r/w */
+sमाप_प्रकार dso__data_ग_लिखो_cache_offs(काष्ठा dso *dso, काष्ठा machine *machine,
+				   u64 offset, स्थिर u8 *data_in, sमाप_प्रकार size)
+अणु
+	u8 *data = (u8 *)data_in; /* cast away स्थिर to use same fns क्रम r/w */
 
-	if (dso->data.status == DSO_DATA_STATUS_ERROR)
-		return -1;
+	अगर (dso->data.status == DSO_DATA_STATUS_ERROR)
+		वापस -1;
 
-	return data_read_write_offset(dso, machine, offset, data, size, false);
-}
+	वापस data_पढ़ो_ग_लिखो_offset(dso, machine, offset, data, size, false);
+पूर्ण
 
 /**
- * dso__data_write_cache_addr - Write data to dso data cache at dso address
+ * dso__data_ग_लिखो_cache_addr - Write data to dso data cache at dso address
  * @dso: dso object
  * @machine: machine object
- * @add: virtual memory address
- * @data: buffer to write
+ * @add: भव memory address
+ * @data: buffer to ग_लिखो
  * @size: size of the @data buffer
  *
- * External interface to write into the dso file data cache, but do not change
+ * External पूर्णांकerface to ग_लिखो पूर्णांकo the dso file data cache, but करो not change
  * the file itself.
  */
-ssize_t dso__data_write_cache_addr(struct dso *dso, struct map *map,
-				   struct machine *machine, u64 addr,
-				   const u8 *data, ssize_t size)
-{
+sमाप_प्रकार dso__data_ग_लिखो_cache_addr(काष्ठा dso *dso, काष्ठा map *map,
+				   काष्ठा machine *machine, u64 addr,
+				   स्थिर u8 *data, sमाप_प्रकार size)
+अणु
 	u64 offset = map->map_ip(map, addr);
-	return dso__data_write_cache_offs(dso, machine, offset, data, size);
-}
+	वापस dso__data_ग_लिखो_cache_offs(dso, machine, offset, data, size);
+पूर्ण
 
-struct map *dso__new_map(const char *name)
-{
-	struct map *map = NULL;
-	struct dso *dso = dso__new(name);
+काष्ठा map *dso__new_map(स्थिर अक्षर *name)
+अणु
+	काष्ठा map *map = शून्य;
+	काष्ठा dso *dso = dso__new(name);
 
-	if (dso)
+	अगर (dso)
 		map = map__new2(0, dso);
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-struct dso *machine__findnew_kernel(struct machine *machine, const char *name,
-				    const char *short_name, int dso_type)
-{
+काष्ठा dso *machine__findnew_kernel(काष्ठा machine *machine, स्थिर अक्षर *name,
+				    स्थिर अक्षर *लघु_name, पूर्णांक dso_type)
+अणु
 	/*
 	 * The kernel dso could be created by build_id processing.
 	 */
-	struct dso *dso = machine__findnew_dso(machine, name);
+	काष्ठा dso *dso = machine__findnew_dso(machine, name);
 
 	/*
-	 * We need to run this in all cases, since during the build_id
+	 * We need to run this in all हालs, since during the build_id
 	 * processing we had no idea this was the kernel dso.
 	 */
-	if (dso != NULL) {
-		dso__set_short_name(dso, short_name, false);
+	अगर (dso != शून्य) अणु
+		dso__set_लघु_name(dso, लघु_name, false);
 		dso->kernel = dso_type;
-	}
+	पूर्ण
 
-	return dso;
-}
+	वापस dso;
+पूर्ण
 
-static void dso__set_long_name_id(struct dso *dso, const char *name, struct dso_id *id, bool name_allocated)
-{
-	struct rb_root *root = dso->root;
+अटल व्योम dso__set_दीर्घ_name_id(काष्ठा dso *dso, स्थिर अक्षर *name, काष्ठा dso_id *id, bool name_allocated)
+अणु
+	काष्ठा rb_root *root = dso->root;
 
-	if (name == NULL)
-		return;
+	अगर (name == शून्य)
+		वापस;
 
-	if (dso->long_name_allocated)
-		free((char *)dso->long_name);
+	अगर (dso->दीर्घ_name_allocated)
+		मुक्त((अक्षर *)dso->दीर्घ_name);
 
-	if (root) {
+	अगर (root) अणु
 		rb_erase(&dso->rb_node, root);
 		/*
-		 * __dsos__findnew_link_by_longname_id() isn't guaranteed to
+		 * __dsos__findnew_link_by_दीर्घname_id() isn't guaranteed to
 		 * add it back, so a clean removal is required here.
 		 */
 		RB_CLEAR_NODE(&dso->rb_node);
-		dso->root = NULL;
-	}
+		dso->root = शून्य;
+	पूर्ण
 
-	dso->long_name		 = name;
-	dso->long_name_len	 = strlen(name);
-	dso->long_name_allocated = name_allocated;
+	dso->दीर्घ_name		 = name;
+	dso->दीर्घ_name_len	 = म_माप(name);
+	dso->दीर्घ_name_allocated = name_allocated;
 
-	if (root)
-		__dsos__findnew_link_by_longname_id(root, dso, NULL, id);
-}
+	अगर (root)
+		__dsos__findnew_link_by_दीर्घname_id(root, dso, शून्य, id);
+पूर्ण
 
-void dso__set_long_name(struct dso *dso, const char *name, bool name_allocated)
-{
-	dso__set_long_name_id(dso, name, NULL, name_allocated);
-}
+व्योम dso__set_दीर्घ_name(काष्ठा dso *dso, स्थिर अक्षर *name, bool name_allocated)
+अणु
+	dso__set_दीर्घ_name_id(dso, name, शून्य, name_allocated);
+पूर्ण
 
-void dso__set_short_name(struct dso *dso, const char *name, bool name_allocated)
-{
-	if (name == NULL)
-		return;
+व्योम dso__set_लघु_name(काष्ठा dso *dso, स्थिर अक्षर *name, bool name_allocated)
+अणु
+	अगर (name == शून्य)
+		वापस;
 
-	if (dso->short_name_allocated)
-		free((char *)dso->short_name);
+	अगर (dso->लघु_name_allocated)
+		मुक्त((अक्षर *)dso->लघु_name);
 
-	dso->short_name		  = name;
-	dso->short_name_len	  = strlen(name);
-	dso->short_name_allocated = name_allocated;
-}
+	dso->लघु_name		  = name;
+	dso->लघु_name_len	  = म_माप(name);
+	dso->लघु_name_allocated = name_allocated;
+पूर्ण
 
-int dso__name_len(const struct dso *dso)
-{
-	if (!dso)
-		return strlen("[unknown]");
-	if (verbose > 0)
-		return dso->long_name_len;
+पूर्णांक dso__name_len(स्थिर काष्ठा dso *dso)
+अणु
+	अगर (!dso)
+		वापस म_माप("[unknown]");
+	अगर (verbose > 0)
+		वापस dso->दीर्घ_name_len;
 
-	return dso->short_name_len;
-}
+	वापस dso->लघु_name_len;
+पूर्ण
 
-bool dso__loaded(const struct dso *dso)
-{
-	return dso->loaded;
-}
+bool dso__loaded(स्थिर काष्ठा dso *dso)
+अणु
+	वापस dso->loaded;
+पूर्ण
 
-bool dso__sorted_by_name(const struct dso *dso)
-{
-	return dso->sorted_by_name;
-}
+bool dso__sorted_by_name(स्थिर काष्ठा dso *dso)
+अणु
+	वापस dso->sorted_by_name;
+पूर्ण
 
-void dso__set_sorted_by_name(struct dso *dso)
-{
+व्योम dso__set_sorted_by_name(काष्ठा dso *dso)
+अणु
 	dso->sorted_by_name = true;
-}
+पूर्ण
 
-struct dso *dso__new_id(const char *name, struct dso_id *id)
-{
-	struct dso *dso = calloc(1, sizeof(*dso) + strlen(name) + 1);
+काष्ठा dso *dso__new_id(स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	काष्ठा dso *dso = सुस्मृति(1, माप(*dso) + म_माप(name) + 1);
 
-	if (dso != NULL) {
-		strcpy(dso->name, name);
-		if (id)
+	अगर (dso != शून्य) अणु
+		म_नकल(dso->name, name);
+		अगर (id)
 			dso->id = *id;
-		dso__set_long_name_id(dso, dso->name, id, false);
-		dso__set_short_name(dso, dso->name, false);
+		dso__set_दीर्घ_name_id(dso, dso->name, id, false);
+		dso__set_लघु_name(dso, dso->name, false);
 		dso->symbols = dso->symbol_names = RB_ROOT_CACHED;
 		dso->data.cache = RB_ROOT;
-		dso->inlined_nodes = RB_ROOT_CACHED;
+		dso->अंतरभूतd_nodes = RB_ROOT_CACHED;
 		dso->srclines = RB_ROOT_CACHED;
 		dso->data.fd = -1;
 		dso->data.status = DSO_DATA_STATUS_UNKNOWN;
 		dso->symtab_type = DSO_BINARY_TYPE__NOT_FOUND;
 		dso->binary_type = DSO_BINARY_TYPE__NOT_FOUND;
-		dso->is_64_bit = (sizeof(void *) == 8);
+		dso->is_64_bit = (माप(व्योम *) == 8);
 		dso->loaded = 0;
 		dso->rel = 0;
 		dso->sorted_by_name = 0;
@@ -1280,177 +1281,177 @@ struct dso *dso__new_id(const char *name, struct dso_id *id)
 		dso->needs_swap = DSO_SWAP__UNSET;
 		dso->comp = COMP_ID__NONE;
 		RB_CLEAR_NODE(&dso->rb_node);
-		dso->root = NULL;
+		dso->root = शून्य;
 		INIT_LIST_HEAD(&dso->node);
-		INIT_LIST_HEAD(&dso->data.open_entry);
-		pthread_mutex_init(&dso->lock, NULL);
+		INIT_LIST_HEAD(&dso->data.खोलो_entry);
+		pthपढ़ो_mutex_init(&dso->lock, शून्य);
 		refcount_set(&dso->refcnt, 1);
-	}
+	पूर्ण
 
-	return dso;
-}
+	वापस dso;
+पूर्ण
 
-struct dso *dso__new(const char *name)
-{
-	return dso__new_id(name, NULL);
-}
+काष्ठा dso *dso__new(स्थिर अक्षर *name)
+अणु
+	वापस dso__new_id(name, शून्य);
+पूर्ण
 
-void dso__delete(struct dso *dso)
-{
-	if (!RB_EMPTY_NODE(&dso->rb_node))
+व्योम dso__delete(काष्ठा dso *dso)
+अणु
+	अगर (!RB_EMPTY_NODE(&dso->rb_node))
 		pr_err("DSO %s is still in rbtree when being deleted!\n",
-		       dso->long_name);
+		       dso->दीर्घ_name);
 
-	/* free inlines first, as they reference symbols */
-	inlines__tree_delete(&dso->inlined_nodes);
+	/* मुक्त अंतरभूतs first, as they reference symbols */
+	अंतरभूतs__tree_delete(&dso->अंतरभूतd_nodes);
 	srcline__tree_delete(&dso->srclines);
 	symbols__delete(&dso->symbols);
 
-	if (dso->short_name_allocated) {
-		zfree((char **)&dso->short_name);
-		dso->short_name_allocated = false;
-	}
+	अगर (dso->लघु_name_allocated) अणु
+		zमुक्त((अक्षर **)&dso->लघु_name);
+		dso->लघु_name_allocated = false;
+	पूर्ण
 
-	if (dso->long_name_allocated) {
-		zfree((char **)&dso->long_name);
-		dso->long_name_allocated = false;
-	}
+	अगर (dso->दीर्घ_name_allocated) अणु
+		zमुक्त((अक्षर **)&dso->दीर्घ_name);
+		dso->दीर्घ_name_allocated = false;
+	पूर्ण
 
-	dso__data_close(dso);
-	auxtrace_cache__free(dso->auxtrace_cache);
-	dso_cache__free(dso);
-	dso__free_a2l(dso);
-	zfree(&dso->symsrc_filename);
+	dso__data_बंद(dso);
+	auxtrace_cache__मुक्त(dso->auxtrace_cache);
+	dso_cache__मुक्त(dso);
+	dso__मुक्त_a2l(dso);
+	zमुक्त(&dso->symsrc_filename);
 	nsinfo__zput(dso->nsinfo);
-	pthread_mutex_destroy(&dso->lock);
-	free(dso);
-}
+	pthपढ़ो_mutex_destroy(&dso->lock);
+	मुक्त(dso);
+पूर्ण
 
-struct dso *dso__get(struct dso *dso)
-{
-	if (dso)
+काष्ठा dso *dso__get(काष्ठा dso *dso)
+अणु
+	अगर (dso)
 		refcount_inc(&dso->refcnt);
-	return dso;
-}
+	वापस dso;
+पूर्ण
 
-void dso__put(struct dso *dso)
-{
-	if (dso && refcount_dec_and_test(&dso->refcnt))
+व्योम dso__put(काष्ठा dso *dso)
+अणु
+	अगर (dso && refcount_dec_and_test(&dso->refcnt))
 		dso__delete(dso);
-}
+पूर्ण
 
-void dso__set_build_id(struct dso *dso, struct build_id *bid)
-{
+व्योम dso__set_build_id(काष्ठा dso *dso, काष्ठा build_id *bid)
+अणु
 	dso->bid = *bid;
 	dso->has_build_id = 1;
-}
+पूर्ण
 
-bool dso__build_id_equal(const struct dso *dso, struct build_id *bid)
-{
-	return dso->bid.size == bid->size &&
-	       memcmp(dso->bid.data, bid->data, dso->bid.size) == 0;
-}
+bool dso__build_id_equal(स्थिर काष्ठा dso *dso, काष्ठा build_id *bid)
+अणु
+	वापस dso->bid.size == bid->size &&
+	       स_भेद(dso->bid.data, bid->data, dso->bid.size) == 0;
+पूर्ण
 
-void dso__read_running_kernel_build_id(struct dso *dso, struct machine *machine)
-{
-	char path[PATH_MAX];
+व्योम dso__पढ़ो_running_kernel_build_id(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	अक्षर path[PATH_MAX];
 
-	if (machine__is_default_guest(machine))
-		return;
-	sprintf(path, "%s/sys/kernel/notes", machine->root_dir);
-	if (sysfs__read_build_id(path, &dso->bid) == 0)
+	अगर (machine__is_शेष_guest(machine))
+		वापस;
+	प्र_लिखो(path, "%s/sys/kernel/notes", machine->root_dir);
+	अगर (sysfs__पढ़ो_build_id(path, &dso->bid) == 0)
 		dso->has_build_id = true;
-}
+पूर्ण
 
-int dso__kernel_module_get_build_id(struct dso *dso,
-				    const char *root_dir)
-{
-	char filename[PATH_MAX];
+पूर्णांक dso__kernel_module_get_build_id(काष्ठा dso *dso,
+				    स्थिर अक्षर *root_dir)
+अणु
+	अक्षर filename[PATH_MAX];
 	/*
-	 * kernel module short names are of the form "[module]" and
+	 * kernel module लघु names are of the क्रमm "[module]" and
 	 * we need just "module" here.
 	 */
-	const char *name = dso->short_name + 1;
+	स्थिर अक्षर *name = dso->लघु_name + 1;
 
-	snprintf(filename, sizeof(filename),
+	snम_लिखो(filename, माप(filename),
 		 "%s/sys/module/%.*s/notes/.note.gnu.build-id",
-		 root_dir, (int)strlen(name) - 1, name);
+		 root_dir, (पूर्णांक)म_माप(name) - 1, name);
 
-	if (sysfs__read_build_id(filename, &dso->bid) == 0)
+	अगर (sysfs__पढ़ो_build_id(filename, &dso->bid) == 0)
 		dso->has_build_id = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t dso__fprintf_buildid(struct dso *dso, FILE *fp)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
+अटल माप_प्रकार dso__ख_लिखो_buildid(काष्ठा dso *dso, खाता *fp)
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
 
-	build_id__sprintf(&dso->bid, sbuild_id);
-	return fprintf(fp, "%s", sbuild_id);
-}
+	build_id__प्र_लिखो(&dso->bid, sbuild_id);
+	वापस ख_लिखो(fp, "%s", sbuild_id);
+पूर्ण
 
-size_t dso__fprintf(struct dso *dso, FILE *fp)
-{
-	struct rb_node *nd;
-	size_t ret = fprintf(fp, "dso: %s (", dso->short_name);
+माप_प्रकार dso__ख_लिखो(काष्ठा dso *dso, खाता *fp)
+अणु
+	काष्ठा rb_node *nd;
+	माप_प्रकार ret = ख_लिखो(fp, "dso: %s (", dso->लघु_name);
 
-	if (dso->short_name != dso->long_name)
-		ret += fprintf(fp, "%s, ", dso->long_name);
-	ret += fprintf(fp, "%sloaded, ", dso__loaded(dso) ? "" : "NOT ");
-	ret += dso__fprintf_buildid(dso, fp);
-	ret += fprintf(fp, ")\n");
-	for (nd = rb_first_cached(&dso->symbols); nd; nd = rb_next(nd)) {
-		struct symbol *pos = rb_entry(nd, struct symbol, rb_node);
-		ret += symbol__fprintf(pos, fp);
-	}
+	अगर (dso->लघु_name != dso->दीर्घ_name)
+		ret += ख_लिखो(fp, "%s, ", dso->दीर्घ_name);
+	ret += ख_लिखो(fp, "%sloaded, ", dso__loaded(dso) ? "" : "NOT ");
+	ret += dso__ख_लिखो_buildid(dso, fp);
+	ret += ख_लिखो(fp, ")\n");
+	क्रम (nd = rb_first_cached(&dso->symbols); nd; nd = rb_next(nd)) अणु
+		काष्ठा symbol *pos = rb_entry(nd, काष्ठा symbol, rb_node);
+		ret += symbol__ख_लिखो(pos, fp);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum dso_type dso__type(struct dso *dso, struct machine *machine)
-{
-	int fd;
-	enum dso_type type = DSO__TYPE_UNKNOWN;
+क्रमागत dso_type dso__type(काष्ठा dso *dso, काष्ठा machine *machine)
+अणु
+	पूर्णांक fd;
+	क्रमागत dso_type type = DSO__TYPE_UNKNOWN;
 
 	fd = dso__data_get_fd(dso, machine);
-	if (fd >= 0) {
+	अगर (fd >= 0) अणु
 		type = dso__type_fd(fd);
 		dso__data_put_fd(dso);
-	}
+	पूर्ण
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-int dso__strerror_load(struct dso *dso, char *buf, size_t buflen)
-{
-	int idx, errnum = dso->load_errno;
+पूर्णांक dso__म_त्रुटि_load(काष्ठा dso *dso, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	पूर्णांक idx, errnum = dso->load_त्रुटि_सं;
 	/*
-	 * This must have a same ordering as the enum dso_load_errno.
+	 * This must have a same ordering as the क्रमागत dso_load_त्रुटि_सं.
 	 */
-	static const char *dso_load__error_str[] = {
+	अटल स्थिर अक्षर *dso_load__error_str[] = अणु
 	"Internal tools/perf/ library error",
 	"Invalid ELF file",
 	"Can not read build id",
 	"Mismatching build id",
 	"Decompression failure",
-	};
+	पूर्ण;
 
 	BUG_ON(buflen == 0);
 
-	if (errnum >= 0) {
-		const char *err = str_error_r(errnum, buf, buflen);
+	अगर (errnum >= 0) अणु
+		स्थिर अक्षर *err = str_error_r(errnum, buf, buflen);
 
-		if (err != buf)
-			scnprintf(buf, buflen, "%s", err);
+		अगर (err != buf)
+			scnम_लिखो(buf, buflen, "%s", err);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (errnum <  __DSO_LOAD_ERRNO__START || errnum >= __DSO_LOAD_ERRNO__END)
-		return -1;
+	अगर (errnum <  __DSO_LOAD_ERRNO__START || errnum >= __DSO_LOAD_ERRNO__END)
+		वापस -1;
 
 	idx = errnum - __DSO_LOAD_ERRNO__START;
-	scnprintf(buf, buflen, "%s", dso_load__error_str[idx]);
-	return 0;
-}
+	scnम_लिखो(buf, buflen, "%s", dso_load__error_str[idx]);
+	वापस 0;
+पूर्ण

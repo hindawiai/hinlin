@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * LEDs driver for the "User LED" on Routerboard532
+ * LEDs driver क्रम the "User LED" on Routerboard532
  *
- * Copyright (C) 2009 Phil Sutter <n0-1@freewrt.org>
+ * Copyright (C) 2009 Phil Sutter <n0-1@मुक्तwrt.org>
  *
  * Based on leds-cobalt-qube.c by Florian Fainelly and
- * rb-diag.c (my own standalone driver for both LED and
+ * rb-diag.c (my own standalone driver क्रम both LED and
  * button of Routerboard532).
  */
 
-#include <linux/leds.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/mach-rc32434/gpio.h>
-#include <asm/mach-rc32434/rb.h>
+#समावेश <यंत्र/mach-rc32434/gpपन.स>
+#समावेश <यंत्र/mach-rc32434/rb.h>
 
-static void rb532_led_set(struct led_classdev *cdev,
-			  enum led_brightness brightness)
-{
-	if (brightness)
+अटल व्योम rb532_led_set(काष्ठा led_classdev *cdev,
+			  क्रमागत led_brightness brightness)
+अणु
+	अगर (brightness)
 		set_latch_u5(LO_ULED, 0);
-	else
+	अन्यथा
 		set_latch_u5(0, LO_ULED);
-}
+पूर्ण
 
-static enum led_brightness rb532_led_get(struct led_classdev *cdev)
-{
-	return (get_latch_u5() & LO_ULED) ? LED_FULL : LED_OFF;
-}
+अटल क्रमागत led_brightness rb532_led_get(काष्ठा led_classdev *cdev)
+अणु
+	वापस (get_latch_u5() & LO_ULED) ? LED_FULL : LED_OFF;
+पूर्ण
 
-static struct led_classdev rb532_uled = {
+अटल काष्ठा led_classdev rb532_uled = अणु
 	.name = "uled",
 	.brightness_set = rb532_led_set,
 	.brightness_get = rb532_led_get,
-	.default_trigger = "nand-disk",
-};
+	.शेष_trigger = "nand-disk",
+पूर्ण;
 
-static int rb532_led_probe(struct platform_device *pdev)
-{
-	return led_classdev_register(&pdev->dev, &rb532_uled);
-}
+अटल पूर्णांक rb532_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस led_classdev_रेजिस्टर(&pdev->dev, &rb532_uled);
+पूर्ण
 
-static int rb532_led_remove(struct platform_device *pdev)
-{
-	led_classdev_unregister(&rb532_uled);
-	return 0;
-}
+अटल पूर्णांक rb532_led_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	led_classdev_unरेजिस्टर(&rb532_uled);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rb532_led_driver = {
+अटल काष्ठा platक्रमm_driver rb532_led_driver = अणु
 	.probe = rb532_led_probe,
-	.remove = rb532_led_remove,
-	.driver = {
+	.हटाओ = rb532_led_हटाओ,
+	.driver = अणु
 		.name = "rb532-led",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rb532_led_driver);
+module_platक्रमm_driver(rb532_led_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("User LED support for Routerboard532");

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,19 +24,19 @@
  *
  */
 
-#ifndef __RN_CLK_MGR_H__
-#define __RN_CLK_MGR_H__
+#अगर_अघोषित __RN_CLK_MGR_H__
+#घोषणा __RN_CLK_MGR_H__
 
-#include "clk_mgr.h"
-#include "dm_pp_smu.h"
+#समावेश "clk_mgr.h"
+#समावेश "dm_pp_smu.h"
 
-struct rn_clk_registers {
-	uint32_t CLK1_CLK0_CURRENT_CNT; /* DPREFCLK */
-};
+काष्ठा rn_clk_रेजिस्टरs अणु
+	uपूर्णांक32_t CLK1_CLK0_CURRENT_CNT; /* DPREFCLK */
+पूर्ण;
 
-void rn_clk_mgr_construct(struct dc_context *ctx,
-		struct clk_mgr_internal *clk_mgr,
-		struct pp_smu_funcs *pp_smu,
-		struct dccg *dccg);
+व्योम rn_clk_mgr_स्थिरruct(काष्ठा dc_context *ctx,
+		काष्ठा clk_mgr_पूर्णांकernal *clk_mgr,
+		काष्ठा pp_smu_funcs *pp_smu,
+		काष्ठा dccg *dccg);
 
-#endif //__RN_CLK_MGR_H__
+#पूर्ण_अगर //__RN_CLK_MGR_H__

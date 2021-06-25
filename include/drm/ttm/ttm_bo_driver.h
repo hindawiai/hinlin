@@ -1,14 +1,15 @@
+<शैली गुरु>
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 Vmware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,240 +26,240 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
-#ifndef _TTM_BO_DRIVER_H_
-#define _TTM_BO_DRIVER_H_
+#अगर_अघोषित _TTM_BO_DRIVER_H_
+#घोषणा _TTM_BO_DRIVER_H_
 
-#include <drm/drm_mm.h>
-#include <drm/drm_vma_manager.h>
-#include <linux/workqueue.h>
-#include <linux/fs.h>
-#include <linux/spinlock.h>
-#include <linux/dma-resv.h>
+#समावेश <drm/drm_mm.h>
+#समावेश <drm/drm_vma_manager.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/dma-resv.h>
 
-#include <drm/ttm/ttm_device.h>
+#समावेश <drm/tपंचांग/tपंचांग_device.h>
 
-#include "ttm_bo_api.h"
-#include "ttm_placement.h"
-#include "ttm_tt.h"
-#include "ttm_pool.h"
+#समावेश "ttm_bo_api.h"
+#समावेश "ttm_placement.h"
+#समावेश "ttm_tt.h"
+#समावेश "ttm_pool.h"
 
 /**
- * struct ttm_lru_bulk_move_pos
+ * काष्ठा tपंचांग_lru_bulk_move_pos
  *
  * @first: first BO in the bulk move range
  * @last: last BO in the bulk move range
  *
- * Positions for a lru bulk move.
+ * Positions क्रम a lru bulk move.
  */
-struct ttm_lru_bulk_move_pos {
-	struct ttm_buffer_object *first;
-	struct ttm_buffer_object *last;
-};
+काष्ठा tपंचांग_lru_bulk_move_pos अणु
+	काष्ठा tपंचांग_buffer_object *first;
+	काष्ठा tपंचांग_buffer_object *last;
+पूर्ण;
 
 /**
- * struct ttm_lru_bulk_move
+ * काष्ठा tपंचांग_lru_bulk_move
  *
- * @tt: first/last lru entry for BOs in the TT domain
- * @vram: first/last lru entry for BOs in the VRAM domain
- * @swap: first/last lru entry for BOs on the swap list
+ * @tt: first/last lru entry क्रम BOs in the TT करोमुख्य
+ * @vram: first/last lru entry क्रम BOs in the VRAM करोमुख्य
+ * @swap: first/last lru entry क्रम BOs on the swap list
  *
- * Helper structure for bulk moves on the LRU list.
+ * Helper काष्ठाure क्रम bulk moves on the LRU list.
  */
-struct ttm_lru_bulk_move {
-	struct ttm_lru_bulk_move_pos tt[TTM_MAX_BO_PRIORITY];
-	struct ttm_lru_bulk_move_pos vram[TTM_MAX_BO_PRIORITY];
-};
+काष्ठा tपंचांग_lru_bulk_move अणु
+	काष्ठा tपंचांग_lru_bulk_move_pos tt[TTM_MAX_BO_PRIORITY];
+	काष्ठा tपंचांग_lru_bulk_move_pos vram[TTM_MAX_BO_PRIORITY];
+पूर्ण;
 
 /*
- * ttm_bo.c
+ * tपंचांग_bo.c
  */
 
 /**
- * ttm_bo_mem_space
+ * tपंचांग_bo_mem_space
  *
- * @bo: Pointer to a struct ttm_buffer_object. the data of which
- * we want to allocate space for.
- * @proposed_placement: Proposed new placement for the buffer object.
- * @mem: A struct ttm_resource.
- * @interruptible: Sleep interruptible when sliping.
- * @no_wait_gpu: Return immediately if the GPU is busy.
+ * @bo: Poपूर्णांकer to a काष्ठा tपंचांग_buffer_object. the data of which
+ * we want to allocate space क्रम.
+ * @proposed_placement: Proposed new placement क्रम the buffer object.
+ * @mem: A काष्ठा tपंचांग_resource.
+ * @पूर्णांकerruptible: Sleep पूर्णांकerruptible when sliping.
+ * @no_रुको_gpu: Return immediately अगर the GPU is busy.
  *
- * Allocate memory space for the buffer object pointed to by @bo, using
+ * Allocate memory space क्रम the buffer object poपूर्णांकed to by @bo, using
  * the placement flags in @mem, potentially evicting other idle buffer objects.
- * This function may sleep while waiting for space to become available.
+ * This function may sleep जबतक रुकोing क्रम space to become available.
  * Returns:
- * -EBUSY: No space available (only if no_wait == 1).
- * -ENOMEM: Could not allocate memory for the buffer object, either due to
+ * -EBUSY: No space available (only अगर no_रुको == 1).
+ * -ENOMEM: Could not allocate memory क्रम the buffer object, either due to
  * fragmentation or concurrent allocators.
- * -ERESTARTSYS: An interruptible sleep was interrupted by a signal.
+ * -ERESTARTSYS: An पूर्णांकerruptible sleep was पूर्णांकerrupted by a संकेत.
  */
-int ttm_bo_mem_space(struct ttm_buffer_object *bo,
-		     struct ttm_placement *placement,
-		     struct ttm_resource *mem,
-		     struct ttm_operation_ctx *ctx);
+पूर्णांक tपंचांग_bo_mem_space(काष्ठा tपंचांग_buffer_object *bo,
+		     काष्ठा tपंचांग_placement *placement,
+		     काष्ठा tपंचांग_resource *mem,
+		     काष्ठा tपंचांग_operation_ctx *ctx);
 
 /**
- * ttm_bo_unmap_virtual
+ * tपंचांग_bo_unmap_भव
  *
- * @bo: tear down the virtual mappings for this BO
+ * @bo: tear करोwn the भव mappings क्रम this BO
  */
-void ttm_bo_unmap_virtual(struct ttm_buffer_object *bo);
+व्योम tपंचांग_bo_unmap_भव(काष्ठा tपंचांग_buffer_object *bo);
 
 /**
- * ttm_bo_reserve:
+ * tपंचांग_bo_reserve:
  *
- * @bo: A pointer to a struct ttm_buffer_object.
- * @interruptible: Sleep interruptible if waiting.
- * @no_wait: Don't sleep while trying to reserve, rather return -EBUSY.
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
+ * @पूर्णांकerruptible: Sleep पूर्णांकerruptible अगर रुकोing.
+ * @no_रुको: Don't sleep जबतक trying to reserve, rather वापस -EBUSY.
  * @ticket: ticket used to acquire the ww_mutex.
  *
- * Locks a buffer object for validation. (Or prevents other processes from
- * locking it for validation), while taking a number of measures to prevent
+ * Locks a buffer object क्रम validation. (Or prevents other processes from
+ * locking it क्रम validation), जबतक taking a number of measures to prevent
  * deadlocks.
  *
  * Returns:
  * -EDEADLK: The reservation may cause a deadlock.
- * Release all buffer reservations, wait for @bo to become unreserved and
+ * Release all buffer reservations, रुको क्रम @bo to become unreserved and
  * try again.
- * -ERESTARTSYS: A wait for the buffer to become unreserved was interrupted by
- * a signal. Release all buffer reservations and return to user-space.
- * -EBUSY: The function needed to sleep, but @no_wait was true
- * -EALREADY: Bo already reserved using @ticket. This error code will only
- * be returned if @use_ticket is set to true.
+ * -ERESTARTSYS: A रुको क्रम the buffer to become unreserved was पूर्णांकerrupted by
+ * a संकेत. Release all buffer reservations and वापस to user-space.
+ * -EBUSY: The function needed to sleep, but @no_रुको was true
+ * -EALREADY: Bo alपढ़ोy reserved using @ticket. This error code will only
+ * be वापसed अगर @use_ticket is set to true.
  */
-static inline int ttm_bo_reserve(struct ttm_buffer_object *bo,
-				 bool interruptible, bool no_wait,
-				 struct ww_acquire_ctx *ticket)
-{
-	int ret = 0;
+अटल अंतरभूत पूर्णांक tपंचांग_bo_reserve(काष्ठा tपंचांग_buffer_object *bo,
+				 bool पूर्णांकerruptible, bool no_रुको,
+				 काष्ठा ww_acquire_ctx *ticket)
+अणु
+	पूर्णांक ret = 0;
 
-	if (no_wait) {
+	अगर (no_रुको) अणु
 		bool success;
-		if (WARN_ON(ticket))
-			return -EBUSY;
+		अगर (WARN_ON(ticket))
+			वापस -EBUSY;
 
 		success = dma_resv_trylock(bo->base.resv);
-		return success ? 0 : -EBUSY;
-	}
+		वापस success ? 0 : -EBUSY;
+	पूर्ण
 
-	if (interruptible)
-		ret = dma_resv_lock_interruptible(bo->base.resv, ticket);
-	else
+	अगर (पूर्णांकerruptible)
+		ret = dma_resv_lock_पूर्णांकerruptible(bo->base.resv, ticket);
+	अन्यथा
 		ret = dma_resv_lock(bo->base.resv, ticket);
-	if (ret == -EINTR)
-		return -ERESTARTSYS;
-	return ret;
-}
+	अगर (ret == -EINTR)
+		वापस -ERESTARTSYS;
+	वापस ret;
+पूर्ण
 
 /**
- * ttm_bo_reserve_slowpath:
- * @bo: A pointer to a struct ttm_buffer_object.
- * @interruptible: Sleep interruptible if waiting.
+ * tपंचांग_bo_reserve_slowpath:
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
+ * @पूर्णांकerruptible: Sleep पूर्णांकerruptible अगर रुकोing.
  * @sequence: Set (@bo)->sequence to this value after lock
  *
- * This is called after ttm_bo_reserve returns -EAGAIN and we backed off
+ * This is called after tपंचांग_bo_reserve वापसs -EAGAIN and we backed off
  * from all our other reservations. Because there are no other reservations
  * held by us, this function cannot deadlock any more.
  */
-static inline int ttm_bo_reserve_slowpath(struct ttm_buffer_object *bo,
-					  bool interruptible,
-					  struct ww_acquire_ctx *ticket)
-{
-	if (interruptible) {
-		int ret = dma_resv_lock_slow_interruptible(bo->base.resv,
+अटल अंतरभूत पूर्णांक tपंचांग_bo_reserve_slowpath(काष्ठा tपंचांग_buffer_object *bo,
+					  bool पूर्णांकerruptible,
+					  काष्ठा ww_acquire_ctx *ticket)
+अणु
+	अगर (पूर्णांकerruptible) अणु
+		पूर्णांक ret = dma_resv_lock_slow_पूर्णांकerruptible(bo->base.resv,
 							   ticket);
-		if (ret == -EINTR)
+		अगर (ret == -EINTR)
 			ret = -ERESTARTSYS;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dma_resv_lock_slow(bo->base.resv, ticket);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-ttm_bo_move_to_lru_tail_unlocked(struct ttm_buffer_object *bo)
-{
+अटल अंतरभूत व्योम
+tपंचांग_bo_move_to_lru_tail_unlocked(काष्ठा tपंचांग_buffer_object *bo)
+अणु
 	spin_lock(&bo->bdev->lru_lock);
-	ttm_bo_move_to_lru_tail(bo, &bo->mem, NULL);
+	tपंचांग_bo_move_to_lru_tail(bo, &bo->mem, शून्य);
 	spin_unlock(&bo->bdev->lru_lock);
-}
+पूर्ण
 
-static inline void ttm_bo_assign_mem(struct ttm_buffer_object *bo,
-				     struct ttm_resource *new_mem)
-{
+अटल अंतरभूत व्योम tपंचांग_bo_assign_mem(काष्ठा tपंचांग_buffer_object *bo,
+				     काष्ठा tपंचांग_resource *new_mem)
+अणु
 	bo->mem = *new_mem;
-	new_mem->mm_node = NULL;
-}
+	new_mem->mm_node = शून्य;
+पूर्ण
 
 /**
- * ttm_bo_move_null = assign memory for a buffer object.
+ * tपंचांग_bo_move_null = assign memory क्रम a buffer object.
  * @bo: The bo to assign the memory to
- * @new_mem: The memory to be assigned.
+ * @new_mem: The memory to be asचिन्हित.
  *
  * Assign the memory from new_mem to the memory of the buffer object bo.
  */
-static inline void ttm_bo_move_null(struct ttm_buffer_object *bo,
-				    struct ttm_resource *new_mem)
-{
-	struct ttm_resource *old_mem = &bo->mem;
+अटल अंतरभूत व्योम tपंचांग_bo_move_null(काष्ठा tपंचांग_buffer_object *bo,
+				    काष्ठा tपंचांग_resource *new_mem)
+अणु
+	काष्ठा tपंचांग_resource *old_mem = &bo->mem;
 
-	WARN_ON(old_mem->mm_node != NULL);
-	ttm_bo_assign_mem(bo, new_mem);
-}
+	WARN_ON(old_mem->mm_node != शून्य);
+	tपंचांग_bo_assign_mem(bo, new_mem);
+पूर्ण
 
 /**
- * ttm_bo_unreserve
+ * tपंचांग_bo_unreserve
  *
- * @bo: A pointer to a struct ttm_buffer_object.
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
  *
  * Unreserve a previous reservation of @bo.
  */
-static inline void ttm_bo_unreserve(struct ttm_buffer_object *bo)
-{
-	ttm_bo_move_to_lru_tail_unlocked(bo);
+अटल अंतरभूत व्योम tपंचांग_bo_unreserve(काष्ठा tपंचांग_buffer_object *bo)
+अणु
+	tपंचांग_bo_move_to_lru_tail_unlocked(bo);
 	dma_resv_unlock(bo->base.resv);
-}
+पूर्ण
 
 /*
- * ttm_bo_util.c
+ * tपंचांग_bo_util.c
  */
-int ttm_mem_io_reserve(struct ttm_device *bdev,
-		       struct ttm_resource *mem);
-void ttm_mem_io_free(struct ttm_device *bdev,
-		     struct ttm_resource *mem);
+पूर्णांक tपंचांग_mem_io_reserve(काष्ठा tपंचांग_device *bdev,
+		       काष्ठा tपंचांग_resource *mem);
+व्योम tपंचांग_mem_io_मुक्त(काष्ठा tपंचांग_device *bdev,
+		     काष्ठा tपंचांग_resource *mem);
 
 /**
- * ttm_bo_move_memcpy
+ * tपंचांग_bo_move_स_नकल
  *
- * @bo: A pointer to a struct ttm_buffer_object.
- * @interruptible: Sleep interruptible if waiting.
- * @no_wait_gpu: Return immediately if the GPU is busy.
- * @new_mem: struct ttm_resource indicating where to move.
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
+ * @पूर्णांकerruptible: Sleep पूर्णांकerruptible अगर रुकोing.
+ * @no_रुको_gpu: Return immediately अगर the GPU is busy.
+ * @new_mem: काष्ठा tपंचांग_resource indicating where to move.
  *
- * Fallback move function for a mappable buffer object in mappable memory.
- * The function will, if successful,
- * free any old aperture space, and set (@new_mem)->mm_node to NULL,
+ * Fallback move function क्रम a mappable buffer object in mappable memory.
+ * The function will, अगर successful,
+ * मुक्त any old aperture space, and set (@new_mem)->mm_node to शून्य,
  * and update the (@bo)->mem placement flags. If unsuccessful, the old
- * data remains untouched, and it's up to the caller to free the
+ * data reमुख्यs untouched, and it's up to the caller to मुक्त the
  * memory space indicated by @new_mem.
  * Returns:
  * !0: Failure.
  */
 
-int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
-		       struct ttm_operation_ctx *ctx,
-		       struct ttm_resource *new_mem);
+पूर्णांक tपंचांग_bo_move_स_नकल(काष्ठा tपंचांग_buffer_object *bo,
+		       काष्ठा tपंचांग_operation_ctx *ctx,
+		       काष्ठा tपंचांग_resource *new_mem);
 
 /**
- * ttm_bo_move_accel_cleanup.
+ * tपंचांग_bo_move_accel_cleanup.
  *
- * @bo: A pointer to a struct ttm_buffer_object.
- * @fence: A fence object that signals when moving is complete.
- * @evict: This is an evict move. Don't return until the buffer is idle.
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
+ * @fence: A fence object that संकेतs when moving is complete.
+ * @evict: This is an evict move. Don't वापस until the buffer is idle.
  * @pipeline: evictions are to be pipelined.
- * @new_mem: struct ttm_resource indicating where to move.
+ * @new_mem: काष्ठा tपंचांग_resource indicating where to move.
  *
  * Accelerated move function to be called when an accelerated move
  * has been scheduled. The function will create a new temporary buffer object
@@ -267,69 +268,69 @@ int ttm_bo_move_memcpy(struct ttm_buffer_object *bo,
  * destroyed when the move is complete. This will help pipeline
  * buffer moves.
  */
-int ttm_bo_move_accel_cleanup(struct ttm_buffer_object *bo,
-			      struct dma_fence *fence, bool evict,
+पूर्णांक tपंचांग_bo_move_accel_cleanup(काष्ठा tपंचांग_buffer_object *bo,
+			      काष्ठा dma_fence *fence, bool evict,
 			      bool pipeline,
-			      struct ttm_resource *new_mem);
+			      काष्ठा tपंचांग_resource *new_mem);
 
 /**
- * ttm_bo_pipeline_gutting.
+ * tपंचांग_bo_pipeline_gutting.
  *
- * @bo: A pointer to a struct ttm_buffer_object.
+ * @bo: A poपूर्णांकer to a काष्ठा tपंचांग_buffer_object.
  *
  * Pipelined gutting a BO of its backing store.
  */
-int ttm_bo_pipeline_gutting(struct ttm_buffer_object *bo);
+पूर्णांक tपंचांग_bo_pipeline_gutting(काष्ठा tपंचांग_buffer_object *bo);
 
 /**
- * ttm_io_prot
+ * tपंचांग_io_prot
  *
- * bo: ttm buffer object
- * res: ttm resource object
- * @tmp: Page protection flag for a normal, cached mapping.
+ * bo: tपंचांग buffer object
+ * res: tपंचांग resource object
+ * @पंचांगp: Page protection flag क्रम a normal, cached mapping.
  *
- * Utility function that returns the pgprot_t that should be used for
+ * Utility function that वापसs the pgprot_t that should be used क्रम
  * setting up a PTE with the caching model indicated by @c_state.
  */
-pgprot_t ttm_io_prot(struct ttm_buffer_object *bo, struct ttm_resource *res,
-		     pgprot_t tmp);
+pgprot_t tपंचांग_io_prot(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_resource *res,
+		     pgprot_t पंचांगp);
 
 /**
- * ttm_bo_tt_bind
+ * tपंचांग_bo_tt_bind
  *
  * Bind the object tt to a memory resource.
  */
-int ttm_bo_tt_bind(struct ttm_buffer_object *bo, struct ttm_resource *mem);
+पूर्णांक tपंचांग_bo_tt_bind(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_resource *mem);
 
 /**
- * ttm_bo_tt_destroy.
+ * tपंचांग_bo_tt_destroy.
  */
-void ttm_bo_tt_destroy(struct ttm_buffer_object *bo);
+व्योम tपंचांग_bo_tt_destroy(काष्ठा tपंचांग_buffer_object *bo);
 
 /**
- * ttm_range_man_init
+ * tपंचांग_range_man_init
  *
- * @bdev: ttm device
+ * @bdev: tपंचांग device
  * @type: memory manager type
- * @use_tt: if the memory manager uses tt
+ * @use_tt: अगर the memory manager uses tt
  * @p_size: size of area to be managed in pages.
  *
- * Initialise a generic range manager for the selected memory type.
- * The range manager is installed for this device in the type slot.
+ * Initialise a generic range manager क्रम the selected memory type.
+ * The range manager is installed क्रम this device in the type slot.
  */
-int ttm_range_man_init(struct ttm_device *bdev,
-		       unsigned type, bool use_tt,
-		       unsigned long p_size);
+पूर्णांक tपंचांग_range_man_init(काष्ठा tपंचांग_device *bdev,
+		       अचिन्हित type, bool use_tt,
+		       अचिन्हित दीर्घ p_size);
 
 /**
- * ttm_range_man_fini
+ * tपंचांग_range_man_fini
  *
- * @bdev: ttm device
+ * @bdev: tपंचांग device
  * @type: memory manager type
  *
- * Remove the generic range manager from a slot and tear it down.
+ * Remove the generic range manager from a slot and tear it करोwn.
  */
-int ttm_range_man_fini(struct ttm_device *bdev,
-		       unsigned type);
+पूर्णांक tपंचांग_range_man_fini(काष्ठा tपंचांग_device *bdev,
+		       अचिन्हित type);
 
-#endif
+#पूर्ण_अगर

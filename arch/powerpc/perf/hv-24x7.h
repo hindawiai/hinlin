@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef LINUX_POWERPC_PERF_HV_24X7_H_
-#define LINUX_POWERPC_PERF_HV_24X7_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित LINUX_POWERPC_PERF_HV_24X7_H_
+#घोषणा LINUX_POWERPC_PERF_HV_24X7_H_
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum hv_perf_domains {
-#define DOMAIN(n, v, x, c) HV_PERF_DOMAIN_##n = v,
-#include "hv-24x7-domains.h"
-#undef DOMAIN
+क्रमागत hv_perf_करोमुख्यs अणु
+#घोषणा DOMAIN(n, v, x, c) HV_PERF_DOMAIN_##n = v,
+#समावेश "hv-24x7-domains.h"
+#अघोषित DOMAIN
 	HV_PERF_DOMAIN_MAX,
-};
+पूर्ण;
 
-#define H24x7_REQUEST_SIZE(iface_version)	(iface_version == 1 ? 16 : 32)
+#घोषणा H24x7_REQUEST_SIZE(अगरace_version)	(अगरace_version == 1 ? 16 : 32)
 
-struct hv_24x7_request {
-	/* PHYSICAL domains require enabling via phyp/hmc. */
-	__u8 performance_domain;
+काष्ठा hv_24x7_request अणु
+	/* PHYSICAL करोमुख्यs require enabling via phyp/hmc. */
+	__u8 perक्रमmance_करोमुख्य;
 	__u8 reserved[0x1];
 
-	/* bytes to read starting at @data_offset. must be a multiple of 8 */
+	/* bytes to पढ़ो starting at @data_offset. must be a multiple of 8 */
 	__be16 data_size;
 
 	/*
-	 * byte offset within the perf domain to read from. must be 8 byte
+	 * byte offset within the perf करोमुख्य to पढ़ो from. must be 8 byte
 	 * aligned
 	 */
 	__be32 data_offset;
 
 	/*
-	 * only valid for VIRTUAL_PROCESSOR domains, ignored for others.
+	 * only valid क्रम VIRTUAL_PROCESSOR करोमुख्यs, ignored क्रम others.
 	 * -1 means "current partition only"
-	 *  Enabling via phyp/hmc required for non-"-1" values. 0 forbidden
+	 *  Enabling via phyp/hmc required क्रम non-"-1" values. 0 क्रमbidden
 	 *  unless requestor is 0.
 	 */
 	__be16 starting_lpar_ix;
 
 	/*
 	 * Ignored when @starting_lpar_ix == -1
-	 * Ignored when @performance_domain is not VIRTUAL_PROCESSOR_*
+	 * Ignored when @perक्रमmance_करोमुख्य is not VIRTUAL_PROCESSOR_*
 	 * -1 means "infinite" or all
 	 */
 	__be16 max_num_lpars;
 
-	/* chip, core, or virtual processor based on @performance_domain */
+	/* chip, core, or भव processor based on @perक्रमmance_करोमुख्य */
 	__be16 starting_ix;
 	__be16 max_ix;
 
-	/* The following fields were added in v2 of the 24x7 interface. */
+	/* The following fields were added in v2 of the 24x7 पूर्णांकerface. */
 
-	__u8 starting_thread_group_ix;
+	__u8 starting_thपढ़ो_group_ix;
 
-	/* -1 means all thread groups starting at @starting_thread_group_ix */
-	__u8 max_num_thread_groups;
+	/* -1 means all thपढ़ो groups starting at @starting_thपढ़ो_group_ix */
+	__u8 max_num_thपढ़ो_groups;
 
 	__u8 reserved2[0xE];
-} __packed;
+पूर्ण __packed;
 
-struct hv_24x7_request_buffer {
+काष्ठा hv_24x7_request_buffer अणु
 	/* 0 - ? */
 	/* 1 - ? */
-	__u8 interface_version;
+	__u8 पूर्णांकerface_version;
 	__u8 num_requests;
 	__u8 reserved[0xE];
-	struct hv_24x7_request requests[];
-} __packed;
+	काष्ठा hv_24x7_request requests[];
+पूर्ण __packed;
 
-struct hv_24x7_result_element_v1 {
+काष्ठा hv_24x7_result_element_v1 अणु
 	__be16 lpar_ix;
 
 	/*
-	 * represents the core, chip, or virtual processor based on the
-	 * request's @performance_domain
+	 * represents the core, chip, or भव processor based on the
+	 * request's @perक्रमmance_करोमुख्य
 	 */
-	__be16 domain_ix;
+	__be16 करोमुख्य_ix;
 
-	/* -1 if @performance_domain does not refer to a virtual processor */
+	/* -1 अगर @perक्रमmance_करोमुख्य करोes not refer to a भव processor */
 	__be32 lpar_cfg_instance_id;
 
 	/* size = @result_element_data_size of containing result. */
 	__u64 element_data[];
-} __packed;
+पूर्ण __packed;
 
 /*
- * We need a separate struct for v2 because the offset of @element_data changed
+ * We need a separate काष्ठा क्रम v2 because the offset of @element_data changed
  * between versions.
  */
-struct hv_24x7_result_element_v2 {
+काष्ठा hv_24x7_result_element_v2 अणु
 	__be16 lpar_ix;
 
 	/*
-	 * represents the core, chip, or virtual processor based on the
-	 * request's @performance_domain
+	 * represents the core, chip, or भव processor based on the
+	 * request's @perक्रमmance_करोमुख्य
 	 */
-	__be16 domain_ix;
+	__be16 करोमुख्य_ix;
 
-	/* -1 if @performance_domain does not refer to a virtual processor */
+	/* -1 अगर @perक्रमmance_करोमुख्य करोes not refer to a भव processor */
 	__be32 lpar_cfg_instance_id;
 
-	__u8 thread_group_ix;
+	__u8 thपढ़ो_group_ix;
 
 	__u8 reserved[7];
 
 	/* size = @result_element_data_size of containing result. */
 	__u64 element_data[];
-} __packed;
+पूर्ण __packed;
 
-struct hv_24x7_result {
+काष्ठा hv_24x7_result अणु
 	/*
 	 * The index of the 24x7 Request Structure in the 24x7 Request Buffer
 	 * used to request this result.
@@ -113,37 +114,37 @@ struct hv_24x7_result {
 	__u8 result_ix;
 
 	/*
-	 * 0 = not all result elements fit into the buffer, additional requests
+	 * 0 = not all result elements fit पूर्णांकo the buffer, additional requests
 	 *     required
-	 * 1 = all result elements were returned
+	 * 1 = all result elements were वापसed
 	 */
 	__u8 results_complete;
-	__be16 num_elements_returned;
+	__be16 num_elements_वापसed;
 
 	/*
 	 * This is a copy of @data_size from the corresponding hv_24x7_request
 	 *
 	 * Warning: to obtain the size of each element in @elements you have
-	 * to add the size of the other members of the result_element struct.
+	 * to add the size of the other members of the result_element काष्ठा.
 	 */
 	__be16 result_element_data_size;
 	__u8 reserved[0x2];
 
 	/*
 	 * Either
-	 *	struct hv_24x7_result_element_v1[@num_elements_returned]
+	 *	काष्ठा hv_24x7_result_element_v1[@num_elements_वापसed]
 	 * or
-	 *	struct hv_24x7_result_element_v2[@num_elements_returned]
+	 *	काष्ठा hv_24x7_result_element_v2[@num_elements_वापसed]
 	 *
-	 * depending on the interface_version field of the
-	 * struct hv_24x7_data_result_buffer containing this result.
+	 * depending on the पूर्णांकerface_version field of the
+	 * काष्ठा hv_24x7_data_result_buffer containing this result.
 	 */
-	char elements[];
-} __packed;
+	अक्षर elements[];
+पूर्ण __packed;
 
-struct hv_24x7_data_result_buffer {
-	/* See versioning for request buffer */
-	__u8 interface_version;
+काष्ठा hv_24x7_data_result_buffer अणु
+	/* See versioning क्रम request buffer */
+	__u8 पूर्णांकerface_version;
 
 	__u8 num_results;
 	__u8 reserved[0x1];
@@ -152,9 +153,9 @@ struct hv_24x7_data_result_buffer {
 	__be64 cec_cfg_instance_id;
 	__be64 catalog_version_num;
 	__u8 reserved2[0x8];
-	/* WARNING: only valid for the first result due to variable sizes of
+	/* WARNING: only valid क्रम the first result due to variable sizes of
 	 *	    results */
-	struct hv_24x7_result results[]; /* [@num_results] */
-} __packed;
+	काष्ठा hv_24x7_result results[]; /* [@num_results] */
+पूर्ण __packed;
 
-#endif
+#पूर्ण_अगर

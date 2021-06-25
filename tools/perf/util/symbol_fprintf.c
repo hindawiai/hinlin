@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <elf.h>
-#include <inttypes.h>
-#include <stdio.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <elf.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकपन.स>
 
-#include "dso.h"
-#include "map.h"
-#include "symbol.h"
+#समावेश "dso.h"
+#समावेश "map.h"
+#समावेश "symbol.h"
 
-size_t symbol__fprintf(struct symbol *sym, FILE *fp)
-{
-	return fprintf(fp, " %" PRIx64 "-%" PRIx64 " %c %s\n",
+माप_प्रकार symbol__ख_लिखो(काष्ठा symbol *sym, खाता *fp)
+अणु
+	वापस ख_लिखो(fp, " %" PRIx64 "-%" PRIx64 " %c %s\n",
 		       sym->start, sym->end,
 		       sym->binding == STB_GLOBAL ? 'g' :
 		       sym->binding == STB_LOCAL  ? 'l' : 'w',
 		       sym->name);
-}
+पूर्ण
 
-size_t __symbol__fprintf_symname_offs(const struct symbol *sym,
-				      const struct addr_location *al,
+माप_प्रकार __symbol__ख_लिखो_symname_offs(स्थिर काष्ठा symbol *sym,
+				      स्थिर काष्ठा addr_location *al,
 				      bool unknown_as_addr,
-				      bool print_offsets, FILE *fp)
-{
-	unsigned long offset;
-	size_t length;
+				      bool prपूर्णांक_offsets, खाता *fp)
+अणु
+	अचिन्हित दीर्घ offset;
+	माप_प्रकार length;
 
-	if (sym) {
-		length = fprintf(fp, "%s", sym->name);
-		if (al && print_offsets) {
-			if (al->addr < sym->end)
+	अगर (sym) अणु
+		length = ख_लिखो(fp, "%s", sym->name);
+		अगर (al && prपूर्णांक_offsets) अणु
+			अगर (al->addr < sym->end)
 				offset = al->addr - sym->start;
-			else
+			अन्यथा
 				offset = al->addr - al->map->start - sym->start;
-			length += fprintf(fp, "+0x%lx", offset);
-		}
-		return length;
-	} else if (al && unknown_as_addr)
-		return fprintf(fp, "[%#" PRIx64 "]", al->addr);
-	else
-		return fprintf(fp, "[unknown]");
-}
+			length += ख_लिखो(fp, "+0x%lx", offset);
+		पूर्ण
+		वापस length;
+	पूर्ण अन्यथा अगर (al && unknown_as_addr)
+		वापस ख_लिखो(fp, "[%#" PRIx64 "]", al->addr);
+	अन्यथा
+		वापस ख_लिखो(fp, "[unknown]");
+पूर्ण
 
-size_t symbol__fprintf_symname_offs(const struct symbol *sym,
-				    const struct addr_location *al,
-				    FILE *fp)
-{
-	return __symbol__fprintf_symname_offs(sym, al, false, true, fp);
-}
+माप_प्रकार symbol__ख_लिखो_symname_offs(स्थिर काष्ठा symbol *sym,
+				    स्थिर काष्ठा addr_location *al,
+				    खाता *fp)
+अणु
+	वापस __symbol__ख_लिखो_symname_offs(sym, al, false, true, fp);
+पूर्ण
 
-size_t __symbol__fprintf_symname(const struct symbol *sym,
-				 const struct addr_location *al,
-				 bool unknown_as_addr, FILE *fp)
-{
-	return __symbol__fprintf_symname_offs(sym, al, unknown_as_addr, false, fp);
-}
+माप_प्रकार __symbol__ख_लिखो_symname(स्थिर काष्ठा symbol *sym,
+				 स्थिर काष्ठा addr_location *al,
+				 bool unknown_as_addr, खाता *fp)
+अणु
+	वापस __symbol__ख_लिखो_symname_offs(sym, al, unknown_as_addr, false, fp);
+पूर्ण
 
-size_t symbol__fprintf_symname(const struct symbol *sym, FILE *fp)
-{
-	return __symbol__fprintf_symname_offs(sym, NULL, false, false, fp);
-}
+माप_प्रकार symbol__ख_लिखो_symname(स्थिर काष्ठा symbol *sym, खाता *fp)
+अणु
+	वापस __symbol__ख_लिखो_symname_offs(sym, शून्य, false, false, fp);
+पूर्ण
 
-size_t dso__fprintf_symbols_by_name(struct dso *dso,
-				    FILE *fp)
-{
-	size_t ret = 0;
-	struct rb_node *nd;
-	struct symbol_name_rb_node *pos;
+माप_प्रकार dso__ख_लिखो_symbols_by_name(काष्ठा dso *dso,
+				    खाता *fp)
+अणु
+	माप_प्रकार ret = 0;
+	काष्ठा rb_node *nd;
+	काष्ठा symbol_name_rb_node *pos;
 
-	for (nd = rb_first_cached(&dso->symbol_names); nd; nd = rb_next(nd)) {
-		pos = rb_entry(nd, struct symbol_name_rb_node, rb_node);
-		ret += fprintf(fp, "%s\n", pos->sym.name);
-	}
+	क्रम (nd = rb_first_cached(&dso->symbol_names); nd; nd = rb_next(nd)) अणु
+		pos = rb_entry(nd, काष्ठा symbol_name_rb_node, rb_node);
+		ret += ख_लिखो(fp, "%s\n", pos->sym.name);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

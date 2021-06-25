@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (C) 2016 Freescale Semiconductor, Inc.
 // Copyright (C) 2017 NXP
 //
-// Author: Dong Aisheng <aisheng.dong@nxp.com>
+// Author: Dong Aisheng <aisheng.करोng@nxp.com>
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-imx.h"
+#समावेश "pinctrl-imx.h"
 
-enum imx7ulp_pads {
+क्रमागत imx7ulp_pads अणु
 	IMX7ULP_PAD_PTC0 = 0,
 	IMX7ULP_PAD_PTC1,
 	IMX7ULP_PAD_PTC2,
@@ -132,10 +133,10 @@ enum imx7ulp_pads {
 	IMX7ULP_PAD_PTF17,
 	IMX7ULP_PAD_PTF18,
 	IMX7ULP_PAD_PTF19,
-};
+पूर्ण;
 
-/* Pad names for the pinmux subsystem */
-static const struct pinctrl_pin_desc imx7ulp_pinctrl_pads[] = {
+/* Pad names क्रम the pinmux subप्रणाली */
+अटल स्थिर काष्ठा pinctrl_pin_desc imx7ulp_pinctrl_pads[] = अणु
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTC0),
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTC1),
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTC2),
@@ -252,65 +253,65 @@ static const struct pinctrl_pin_desc imx7ulp_pinctrl_pads[] = {
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTF17),
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTF18),
 	IMX_PINCTRL_PIN(IMX7ULP_PAD_PTF19),
-};
+पूर्ण;
 
-#define BM_OBE_ENABLED		BIT(17)
-#define BM_IBE_ENABLED		BIT(16)
-#define BM_MUX_MODE		0xf00
-#define BP_MUX_MODE		8
+#घोषणा BM_OBE_ENABLED		BIT(17)
+#घोषणा BM_IBE_ENABLED		BIT(16)
+#घोषणा BM_MUX_MODE		0xf00
+#घोषणा BP_MUX_MODE		8
 
-static int imx7ulp_pmx_gpio_set_direction(struct pinctrl_dev *pctldev,
-					  struct pinctrl_gpio_range *range,
-					  unsigned offset, bool input)
-{
-	struct imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	const struct imx_pin_reg *pin_reg;
+अटल पूर्णांक imx7ulp_pmx_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+					  काष्ठा pinctrl_gpio_range *range,
+					  अचिन्हित offset, bool input)
+अणु
+	काष्ठा imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा imx_pin_reg *pin_reg;
 	u32 reg;
 
 	pin_reg = &ipctl->pin_regs[offset];
-	if (pin_reg->mux_reg == -1)
-		return -EINVAL;
+	अगर (pin_reg->mux_reg == -1)
+		वापस -EINVAL;
 
-	reg = readl(ipctl->base + pin_reg->mux_reg);
-	if (input)
+	reg = पढ़ोl(ipctl->base + pin_reg->mux_reg);
+	अगर (input)
 		reg = (reg & ~BM_OBE_ENABLED) | BM_IBE_ENABLED;
-	else
+	अन्यथा
 		reg = (reg & ~BM_IBE_ENABLED) | BM_OBE_ENABLED;
-	writel(reg, ipctl->base + pin_reg->mux_reg);
+	ग_लिखोl(reg, ipctl->base + pin_reg->mux_reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct imx_pinctrl_soc_info imx7ulp_pinctrl_info = {
+अटल स्थिर काष्ठा imx_pinctrl_soc_info imx7ulp_pinctrl_info = अणु
 	.pins = imx7ulp_pinctrl_pads,
 	.npins = ARRAY_SIZE(imx7ulp_pinctrl_pads),
 	.flags = ZERO_OFFSET_VALID | SHARE_MUX_CONF_REG,
 	.gpio_set_direction = imx7ulp_pmx_gpio_set_direction,
 	.mux_mask = BM_MUX_MODE,
-	.mux_shift = BP_MUX_MODE,
-};
+	.mux_shअगरt = BP_MUX_MODE,
+पूर्ण;
 
-static const struct of_device_id imx7ulp_pinctrl_of_match[] = {
-	{ .compatible = "fsl,imx7ulp-iomuxc1", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx7ulp_pinctrl_of_match[] = अणु
+	अणु .compatible = "fsl,imx7ulp-iomuxc1", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int imx7ulp_pinctrl_probe(struct platform_device *pdev)
-{
-	return imx_pinctrl_probe(pdev, &imx7ulp_pinctrl_info);
-}
+अटल पूर्णांक imx7ulp_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_pinctrl_probe(pdev, &imx7ulp_pinctrl_info);
+पूर्ण
 
-static struct platform_driver imx7ulp_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx7ulp_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "imx7ulp-pinctrl",
 		.of_match_table = imx7ulp_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = imx7ulp_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init imx7ulp_pinctrl_init(void)
-{
-	return platform_driver_register(&imx7ulp_pinctrl_driver);
-}
+अटल पूर्णांक __init imx7ulp_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&imx7ulp_pinctrl_driver);
+पूर्ण
 arch_initcall(imx7ulp_pinctrl_init);

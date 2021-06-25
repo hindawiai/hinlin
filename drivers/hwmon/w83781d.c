@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * w83781d.c - Part of lm_sensors, Linux kernel modules for hardware
+ * w83781d.c - Part of lm_sensors, Linux kernel modules क्रम hardware
  *	       monitoring
- * Copyright (c) 1998 - 2001  Frodo Looijaard <frodol@dds.nl>,
+ * Copyright (c) 1998 - 2001  Froकरो Looijaard <froकरोl@dds.nl>,
  *			      Philip Edelbrock <phil@netroedge.com>,
  *			      and Mark Studebaker <mdsxyz123@yahoo.com>
  * Copyright (c) 2007 - 2008  Jean Delvare <jdelvare@suse.de>
@@ -20,198 +21,198 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-vid.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/sysfs.h>
-#include <linux/err.h>
-#include <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-vid.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mutex.h>
 
-#ifdef CONFIG_ISA
-#include <linux/platform_device.h>
-#include <linux/ioport.h>
-#include <linux/io.h>
-#endif
+#अगर_घोषित CONFIG_ISA
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पन.स>
+#पूर्ण_अगर
 
-#include "lm75.h"
+#समावेश "lm75.h"
 
 /* Addresses to scan */
-static const unsigned short normal_i2c[] = { 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
-						0x2e, 0x2f, I2C_CLIENT_END };
+अटल स्थिर अचिन्हित लघु normal_i2c[] = अणु 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d,
+						0x2e, 0x2f, I2C_CLIENT_END पूर्ण;
 
-enum chips { w83781d, w83782d, w83783s, as99127f };
+क्रमागत chips अणु w83781d, w83782d, w83783s, as99127f पूर्ण;
 
 /* Insmod parameters */
-static unsigned short force_subclients[4];
-module_param_array(force_subclients, short, NULL, 0);
-MODULE_PARM_DESC(force_subclients,
+अटल अचिन्हित लघु क्रमce_subclients[4];
+module_param_array(क्रमce_subclients, लघु, शून्य, 0);
+MODULE_PARM_DESC(क्रमce_subclients,
 		 "List of subclient addresses: {bus, clientaddr, subclientaddr1, subclientaddr2}");
 
-static bool reset;
+अटल bool reset;
 module_param(reset, bool, 0);
 MODULE_PARM_DESC(reset, "Set to one to reset chip on load");
 
-static bool init = 1;
+अटल bool init = 1;
 module_param(init, bool, 0);
 MODULE_PARM_DESC(init, "Set to zero to bypass chip initialization");
 
-/* Constants specified below */
+/* Constants specअगरied below */
 
 /* Length of ISA address segment */
-#define W83781D_EXTENT			8
+#घोषणा W83781D_EXTENT			8
 
-/* Where are the ISA address/data registers relative to the base address */
-#define W83781D_ADDR_REG_OFFSET		5
-#define W83781D_DATA_REG_OFFSET		6
+/* Where are the ISA address/data रेजिस्टरs relative to the base address */
+#घोषणा W83781D_ADDR_REG_OFFSET		5
+#घोषणा W83781D_DATA_REG_OFFSET		6
 
-/* The device registers */
+/* The device रेजिस्टरs */
 /* in nr from 0 to 8 */
-#define W83781D_REG_IN_MAX(nr)		((nr < 7) ? (0x2b + (nr) * 2) : \
+#घोषणा W83781D_REG_IN_MAX(nr)		((nr < 7) ? (0x2b + (nr) * 2) : \
 						    (0x554 + (((nr) - 7) * 2)))
-#define W83781D_REG_IN_MIN(nr)		((nr < 7) ? (0x2c + (nr) * 2) : \
+#घोषणा W83781D_REG_IN_MIN(nr)		((nr < 7) ? (0x2c + (nr) * 2) : \
 						    (0x555 + (((nr) - 7) * 2)))
-#define W83781D_REG_IN(nr)		((nr < 7) ? (0x20 + (nr)) : \
+#घोषणा W83781D_REG_IN(nr)		((nr < 7) ? (0x20 + (nr)) : \
 						    (0x550 + (nr) - 7))
 
 /* fan nr from 0 to 2 */
-#define W83781D_REG_FAN_MIN(nr)		(0x3b + (nr))
-#define W83781D_REG_FAN(nr)		(0x28 + (nr))
+#घोषणा W83781D_REG_FAN_MIN(nr)		(0x3b + (nr))
+#घोषणा W83781D_REG_FAN(nr)		(0x28 + (nr))
 
-#define W83781D_REG_BANK		0x4E
-#define W83781D_REG_TEMP2_CONFIG	0x152
-#define W83781D_REG_TEMP3_CONFIG	0x252
+#घोषणा W83781D_REG_BANK		0x4E
+#घोषणा W83781D_REG_TEMP2_CONFIG	0x152
+#घोषणा W83781D_REG_TEMP3_CONFIG	0x252
 /* temp nr from 1 to 3 */
-#define W83781D_REG_TEMP(nr)		((nr == 3) ? (0x0250) : \
+#घोषणा W83781D_REG_TEMP(nr)		((nr == 3) ? (0x0250) : \
 					((nr == 2) ? (0x0150) : \
 						     (0x27)))
-#define W83781D_REG_TEMP_HYST(nr)	((nr == 3) ? (0x253) : \
+#घोषणा W83781D_REG_TEMP_HYST(nr)	((nr == 3) ? (0x253) : \
 					((nr == 2) ? (0x153) : \
 						     (0x3A)))
-#define W83781D_REG_TEMP_OVER(nr)	((nr == 3) ? (0x255) : \
+#घोषणा W83781D_REG_TEMP_OVER(nr)	((nr == 3) ? (0x255) : \
 					((nr == 2) ? (0x155) : \
 						     (0x39)))
 
-#define W83781D_REG_CONFIG		0x40
+#घोषणा W83781D_REG_CONFIG		0x40
 
 /* Interrupt status (W83781D, AS99127F) */
-#define W83781D_REG_ALARM1		0x41
-#define W83781D_REG_ALARM2		0x42
+#घोषणा W83781D_REG_ALARM1		0x41
+#घोषणा W83781D_REG_ALARM2		0x42
 
-/* Real-time status (W83782D, W83783S) */
-#define W83782D_REG_ALARM1		0x459
-#define W83782D_REG_ALARM2		0x45A
-#define W83782D_REG_ALARM3		0x45B
+/* Real-समय status (W83782D, W83783S) */
+#घोषणा W83782D_REG_ALARM1		0x459
+#घोषणा W83782D_REG_ALARM2		0x45A
+#घोषणा W83782D_REG_ALARM3		0x45B
 
-#define W83781D_REG_BEEP_CONFIG		0x4D
-#define W83781D_REG_BEEP_INTS1		0x56
-#define W83781D_REG_BEEP_INTS2		0x57
-#define W83781D_REG_BEEP_INTS3		0x453	/* not on W83781D */
+#घोषणा W83781D_REG_BEEP_CONFIG		0x4D
+#घोषणा W83781D_REG_BEEP_INTS1		0x56
+#घोषणा W83781D_REG_BEEP_INTS2		0x57
+#घोषणा W83781D_REG_BEEP_INTS3		0x453	/* not on W83781D */
 
-#define W83781D_REG_VID_FANDIV		0x47
+#घोषणा W83781D_REG_VID_FANDIV		0x47
 
-#define W83781D_REG_CHIPID		0x49
-#define W83781D_REG_WCHIPID		0x58
-#define W83781D_REG_CHIPMAN		0x4F
-#define W83781D_REG_PIN			0x4B
+#घोषणा W83781D_REG_CHIPID		0x49
+#घोषणा W83781D_REG_WCHIPID		0x58
+#घोषणा W83781D_REG_CHIPMAN		0x4F
+#घोषणा W83781D_REG_PIN			0x4B
 
 /* 782D/783S only */
-#define W83781D_REG_VBAT		0x5D
+#घोषणा W83781D_REG_VBAT		0x5D
 
 /* PWM 782D (1-4) and 783S (1-2) only */
-static const u8 W83781D_REG_PWM[] = { 0x5B, 0x5A, 0x5E, 0x5F };
-#define W83781D_REG_PWMCLK12		0x5C
-#define W83781D_REG_PWMCLK34		0x45C
+अटल स्थिर u8 W83781D_REG_PWM[] = अणु 0x5B, 0x5A, 0x5E, 0x5F पूर्ण;
+#घोषणा W83781D_REG_PWMCLK12		0x5C
+#घोषणा W83781D_REG_PWMCLK34		0x45C
 
-#define W83781D_REG_I2C_ADDR		0x48
-#define W83781D_REG_I2C_SUBADDR		0x4A
+#घोषणा W83781D_REG_I2C_ADDR		0x48
+#घोषणा W83781D_REG_I2C_SUBADDR		0x4A
 
 /*
- * The following are undocumented in the data sheets however we
- * received the information in an email from Winbond tech support
+ * The following are unकरोcumented in the data sheets however we
+ * received the inक्रमmation in an email from Winbond tech support
  */
 /* Sensor selection - not on 781d */
-#define W83781D_REG_SCFG1		0x5D
-static const u8 BIT_SCFG1[] = { 0x02, 0x04, 0x08 };
+#घोषणा W83781D_REG_SCFG1		0x5D
+अटल स्थिर u8 BIT_SCFG1[] = अणु 0x02, 0x04, 0x08 पूर्ण;
 
-#define W83781D_REG_SCFG2		0x59
-static const u8 BIT_SCFG2[] = { 0x10, 0x20, 0x40 };
+#घोषणा W83781D_REG_SCFG2		0x59
+अटल स्थिर u8 BIT_SCFG2[] = अणु 0x10, 0x20, 0x40 पूर्ण;
 
-#define W83781D_DEFAULT_BETA		3435
+#घोषणा W83781D_DEFAULT_BETA		3435
 
 /* Conversions */
-#define IN_TO_REG(val)			clamp_val(((val) + 8) / 16, 0, 255)
-#define IN_FROM_REG(val)		((val) * 16)
+#घोषणा IN_TO_REG(val)			clamp_val(((val) + 8) / 16, 0, 255)
+#घोषणा IN_FROM_REG(val)		((val) * 16)
 
-static inline u8
-FAN_TO_REG(long rpm, int div)
-{
-	if (rpm == 0)
-		return 255;
+अटल अंतरभूत u8
+FAN_TO_REG(दीर्घ rpm, पूर्णांक भाग)
+अणु
+	अगर (rpm == 0)
+		वापस 255;
 	rpm = clamp_val(rpm, 1, 1000000);
-	return clamp_val((1350000 + rpm * div / 2) / (rpm * div), 1, 254);
-}
+	वापस clamp_val((1350000 + rpm * भाग / 2) / (rpm * भाग), 1, 254);
+पूर्ण
 
-static inline long
-FAN_FROM_REG(u8 val, int div)
-{
-	if (val == 0)
-		return -1;
-	if (val == 255)
-		return 0;
-	return 1350000 / (val * div);
-}
+अटल अंतरभूत दीर्घ
+FAN_FROM_REG(u8 val, पूर्णांक भाग)
+अणु
+	अगर (val == 0)
+		वापस -1;
+	अगर (val == 255)
+		वापस 0;
+	वापस 1350000 / (val * भाग);
+पूर्ण
 
-#define TEMP_TO_REG(val)		clamp_val((val) / 1000, -127, 128)
-#define TEMP_FROM_REG(val)		((val) * 1000)
+#घोषणा TEMP_TO_REG(val)		clamp_val((val) / 1000, -127, 128)
+#घोषणा TEMP_FROM_REG(val)		((val) * 1000)
 
-#define BEEP_MASK_FROM_REG(val, type)	((type) == as99127f ? \
+#घोषणा BEEP_MASK_FROM_REG(val, type)	((type) == as99127f ? \
 					 (~(val)) & 0x7fff : (val) & 0xff7fff)
-#define BEEP_MASK_TO_REG(val, type)	((type) == as99127f ? \
+#घोषणा BEEP_MASK_TO_REG(val, type)	((type) == as99127f ? \
 					 (~(val)) & 0x7fff : (val) & 0xff7fff)
 
-#define DIV_FROM_REG(val)		(1 << (val))
+#घोषणा DIV_FROM_REG(val)		(1 << (val))
 
-static inline u8
-DIV_TO_REG(long val, enum chips type)
-{
-	int i;
+अटल अंतरभूत u8
+DIV_TO_REG(दीर्घ val, क्रमागत chips type)
+अणु
+	पूर्णांक i;
 	val = clamp_val(val, 1,
 			((type == w83781d || type == as99127f) ? 8 : 128)) >> 1;
-	for (i = 0; i < 7; i++) {
-		if (val == 0)
-			break;
+	क्रम (i = 0; i < 7; i++) अणु
+		अगर (val == 0)
+			अवरोध;
 		val >>= 1;
-	}
-	return i;
-}
+	पूर्ण
+	वापस i;
+पूर्ण
 
-struct w83781d_data {
-	struct i2c_client *client;
-	struct device *hwmon_dev;
-	struct mutex lock;
-	enum chips type;
+काष्ठा w83781d_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा device *hwmon_dev;
+	काष्ठा mutex lock;
+	क्रमागत chips type;
 
 	/* For ISA device only */
-	const char *name;
-	int isa_addr;
+	स्थिर अक्षर *name;
+	पूर्णांक isa_addr;
 
-	struct mutex update_lock;
-	char valid;		/* !=0 if following fields are valid */
-	unsigned long last_updated;	/* In jiffies */
+	काष्ठा mutex update_lock;
+	अक्षर valid;		/* !=0 अगर following fields are valid */
+	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
 
-	struct i2c_client *lm75[2];	/* for secondary I2C addresses */
-	/* array of 2 pointers to subclients */
+	काष्ठा i2c_client *lm75[2];	/* क्रम secondary I2C addresses */
+	/* array of 2 poपूर्णांकers to subclients */
 
-	u8 in[9];		/* Register value - 8 & 9 for 782D only */
-	u8 in_max[9];		/* Register value - 8 & 9 for 782D only */
-	u8 in_min[9];		/* Register value - 8 & 9 for 782D only */
+	u8 in[9];		/* Register value - 8 & 9 क्रम 782D only */
+	u8 in_max[9];		/* Register value - 8 & 9 क्रम 782D only */
+	u8 in_min[9];		/* Register value - 8 & 9 क्रम 782D only */
 	u8 fan[3];		/* Register value */
 	u8 fan_min[3];		/* Register value */
 	s8 temp;		/* Register value */
@@ -220,7 +221,7 @@ struct w83781d_data {
 	u16 temp_add[2];	/* Register value */
 	u16 temp_max_add[2];	/* Register value */
 	u16 temp_max_hyst_add[2];	/* Register value */
-	u8 fan_div[3];		/* Register encoding, shifted right */
+	u8 fan_भाग[3];		/* Register encoding, shअगरted right */
 	u8 vid;			/* Register encoding, combined */
 	u32 alarms;		/* Register encoding, combined */
 	u32 beep_mask;		/* Register encoding, combined */
@@ -232,58 +233,58 @@ struct w83781d_data {
 				 * 4 = thermistor
 				 */
 	u8 vrm;
-};
+पूर्ण;
 
-static struct w83781d_data *w83781d_data_if_isa(void);
-static int w83781d_alias_detect(struct i2c_client *client, u8 chipid);
+अटल काष्ठा w83781d_data *w83781d_data_अगर_isa(व्योम);
+अटल पूर्णांक w83781d_alias_detect(काष्ठा i2c_client *client, u8 chipid);
 
-static int w83781d_read_value(struct w83781d_data *data, u16 reg);
-static int w83781d_write_value(struct w83781d_data *data, u16 reg, u16 value);
-static struct w83781d_data *w83781d_update_device(struct device *dev);
-static void w83781d_init_device(struct device *dev);
+अटल पूर्णांक w83781d_पढ़ो_value(काष्ठा w83781d_data *data, u16 reg);
+अटल पूर्णांक w83781d_ग_लिखो_value(काष्ठा w83781d_data *data, u16 reg, u16 value);
+अटल काष्ठा w83781d_data *w83781d_update_device(काष्ठा device *dev);
+अटल व्योम w83781d_init_device(काष्ठा device *dev);
 
 /* following are the sysfs callback functions */
-#define show_in_reg(reg) \
-static ssize_t show_##reg(struct device *dev, struct device_attribute *da, \
-		char *buf) \
-{ \
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da); \
-	struct w83781d_data *data = w83781d_update_device(dev); \
-	return sprintf(buf, "%ld\n", \
-		       (long)IN_FROM_REG(data->reg[attr->index])); \
-}
+#घोषणा show_in_reg(reg) \
+अटल sमाप_प्रकार show_##reg(काष्ठा device *dev, काष्ठा device_attribute *da, \
+		अक्षर *buf) \
+अणु \
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da); \
+	काष्ठा w83781d_data *data = w83781d_update_device(dev); \
+	वापस प्र_लिखो(buf, "%ld\n", \
+		       (दीर्घ)IN_FROM_REG(data->reg[attr->index])); \
+पूर्ण
 show_in_reg(in);
 show_in_reg(in_min);
 show_in_reg(in_max);
 
-#define store_in_reg(REG, reg) \
-static ssize_t store_in_##reg(struct device *dev, struct device_attribute \
-		*da, const char *buf, size_t count) \
-{ \
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da); \
-	struct w83781d_data *data = dev_get_drvdata(dev); \
-	int nr = attr->index; \
-	unsigned long val; \
-	int err = kstrtoul(buf, 10, &val); \
-	if (err) \
-		return err; \
+#घोषणा store_in_reg(REG, reg) \
+अटल sमाप_प्रकार store_in_##reg(काष्ठा device *dev, काष्ठा device_attribute \
+		*da, स्थिर अक्षर *buf, माप_प्रकार count) \
+अणु \
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da); \
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev); \
+	पूर्णांक nr = attr->index; \
+	अचिन्हित दीर्घ val; \
+	पूर्णांक err = kम_से_अदीर्घ(buf, 10, &val); \
+	अगर (err) \
+		वापस err; \
 	mutex_lock(&data->update_lock); \
 	data->in_##reg[nr] = IN_TO_REG(val); \
-	w83781d_write_value(data, W83781D_REG_IN_##REG(nr), \
+	w83781d_ग_लिखो_value(data, W83781D_REG_IN_##REG(nr), \
 			    data->in_##reg[nr]); \
 	\
 	mutex_unlock(&data->update_lock); \
-	return count; \
-}
+	वापस count; \
+पूर्ण
 store_in_reg(MIN, min);
 store_in_reg(MAX, max);
 
-#define sysfs_in_offsets(offset) \
-static SENSOR_DEVICE_ATTR(in##offset##_input, S_IRUGO, \
-		show_in, NULL, offset); \
-static SENSOR_DEVICE_ATTR(in##offset##_min, S_IRUGO | S_IWUSR, \
+#घोषणा sysfs_in_offsets(offset) \
+अटल SENSOR_DEVICE_ATTR(in##offset##_input, S_IRUGO, \
+		show_in, शून्य, offset); \
+अटल SENSOR_DEVICE_ATTR(in##offset##_min, S_IRUGO | S_IWUSR, \
 		show_in_min, store_in_min, offset); \
-static SENSOR_DEVICE_ATTR(in##offset##_max, S_IRUGO | S_IWUSR, \
+अटल SENSOR_DEVICE_ATTR(in##offset##_max, S_IRUGO | S_IWUSR, \
 		show_in_max, store_in_max, offset)
 
 sysfs_in_offsets(0);
@@ -296,648 +297,648 @@ sysfs_in_offsets(6);
 sysfs_in_offsets(7);
 sysfs_in_offsets(8);
 
-#define show_fan_reg(reg) \
-static ssize_t show_##reg(struct device *dev, struct device_attribute *da, \
-		char *buf) \
-{ \
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da); \
-	struct w83781d_data *data = w83781d_update_device(dev); \
-	return sprintf(buf, "%ld\n", \
+#घोषणा show_fan_reg(reg) \
+अटल sमाप_प्रकार show_##reg(काष्ठा device *dev, काष्ठा device_attribute *da, \
+		अक्षर *buf) \
+अणु \
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da); \
+	काष्ठा w83781d_data *data = w83781d_update_device(dev); \
+	वापस प्र_लिखो(buf, "%ld\n", \
 		FAN_FROM_REG(data->reg[attr->index], \
-			DIV_FROM_REG(data->fan_div[attr->index]))); \
-}
+			DIV_FROM_REG(data->fan_भाग[attr->index]))); \
+पूर्ण
 show_fan_reg(fan);
 show_fan_reg(fan_min);
 
-static ssize_t
-store_fan_min(struct device *dev, struct device_attribute *da,
-		const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	int nr = attr->index;
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार
+store_fan_min(काष्ठा device *dev, काष्ठा device_attribute *da,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->fan_min[nr] =
-	    FAN_TO_REG(val, DIV_FROM_REG(data->fan_div[nr]));
-	w83781d_write_value(data, W83781D_REG_FAN_MIN(nr),
+	    FAN_TO_REG(val, DIV_FROM_REG(data->fan_भाग[nr]));
+	w83781d_ग_लिखो_value(data, W83781D_REG_FAN_MIN(nr),
 			    data->fan_min[nr]);
 
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO, show_fan, NULL, 0);
-static SENSOR_DEVICE_ATTR(fan1_min, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan1_input, S_IRUGO, show_fan, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(fan1_min, S_IRUGO | S_IWUSR,
 		show_fan_min, store_fan_min, 0);
-static SENSOR_DEVICE_ATTR(fan2_input, S_IRUGO, show_fan, NULL, 1);
-static SENSOR_DEVICE_ATTR(fan2_min, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan2_input, S_IRUGO, show_fan, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(fan2_min, S_IRUGO | S_IWUSR,
 		show_fan_min, store_fan_min, 1);
-static SENSOR_DEVICE_ATTR(fan3_input, S_IRUGO, show_fan, NULL, 2);
-static SENSOR_DEVICE_ATTR(fan3_min, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan3_input, S_IRUGO, show_fan, शून्य, 2);
+अटल SENSOR_DEVICE_ATTR(fan3_min, S_IRUGO | S_IWUSR,
 		show_fan_min, store_fan_min, 2);
 
-#define show_temp_reg(reg) \
-static ssize_t show_##reg(struct device *dev, struct device_attribute *da, \
-		char *buf) \
-{ \
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da); \
-	struct w83781d_data *data = w83781d_update_device(dev); \
-	int nr = attr->index; \
-	if (nr >= 2) {	/* TEMP2 and TEMP3 */ \
-		return sprintf(buf, "%d\n", \
+#घोषणा show_temp_reg(reg) \
+अटल sमाप_प्रकार show_##reg(काष्ठा device *dev, काष्ठा device_attribute *da, \
+		अक्षर *buf) \
+अणु \
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da); \
+	काष्ठा w83781d_data *data = w83781d_update_device(dev); \
+	पूर्णांक nr = attr->index; \
+	अगर (nr >= 2) अणु	/* TEMP2 and TEMP3 */ \
+		वापस प्र_लिखो(buf, "%d\n", \
 			LM75_TEMP_FROM_REG(data->reg##_add[nr-2])); \
-	} else {	/* TEMP1 */ \
-		return sprintf(buf, "%ld\n", (long)TEMP_FROM_REG(data->reg)); \
-	} \
-}
+	पूर्ण अन्यथा अणु	/* TEMP1 */ \
+		वापस प्र_लिखो(buf, "%ld\n", (दीर्घ)TEMP_FROM_REG(data->reg)); \
+	पूर्ण \
+पूर्ण
 show_temp_reg(temp);
 show_temp_reg(temp_max);
 show_temp_reg(temp_max_hyst);
 
-#define store_temp_reg(REG, reg) \
-static ssize_t store_temp_##reg(struct device *dev, \
-		struct device_attribute *da, const char *buf, size_t count) \
-{ \
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da); \
-	struct w83781d_data *data = dev_get_drvdata(dev); \
-	int nr = attr->index; \
-	long val; \
-	int err = kstrtol(buf, 10, &val); \
-	if (err) \
-		return err; \
+#घोषणा store_temp_reg(REG, reg) \
+अटल sमाप_प्रकार store_temp_##reg(काष्ठा device *dev, \
+		काष्ठा device_attribute *da, स्थिर अक्षर *buf, माप_प्रकार count) \
+अणु \
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da); \
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev); \
+	पूर्णांक nr = attr->index; \
+	दीर्घ val; \
+	पूर्णांक err = kम_से_दीर्घ(buf, 10, &val); \
+	अगर (err) \
+		वापस err; \
 	mutex_lock(&data->update_lock); \
 	 \
-	if (nr >= 2) {	/* TEMP2 and TEMP3 */ \
+	अगर (nr >= 2) अणु	/* TEMP2 and TEMP3 */ \
 		data->temp_##reg##_add[nr-2] = LM75_TEMP_TO_REG(val); \
-		w83781d_write_value(data, W83781D_REG_TEMP_##REG(nr), \
+		w83781d_ग_लिखो_value(data, W83781D_REG_TEMP_##REG(nr), \
 				data->temp_##reg##_add[nr-2]); \
-	} else {	/* TEMP1 */ \
+	पूर्ण अन्यथा अणु	/* TEMP1 */ \
 		data->temp_##reg = TEMP_TO_REG(val); \
-		w83781d_write_value(data, W83781D_REG_TEMP_##REG(nr), \
+		w83781d_ग_लिखो_value(data, W83781D_REG_TEMP_##REG(nr), \
 			data->temp_##reg); \
-	} \
+	पूर्ण \
 	 \
 	mutex_unlock(&data->update_lock); \
-	return count; \
-}
+	वापस count; \
+पूर्ण
 store_temp_reg(OVER, max);
 store_temp_reg(HYST, max_hyst);
 
-#define sysfs_temp_offsets(offset) \
-static SENSOR_DEVICE_ATTR(temp##offset##_input, S_IRUGO, \
-		show_temp, NULL, offset); \
-static SENSOR_DEVICE_ATTR(temp##offset##_max, S_IRUGO | S_IWUSR, \
+#घोषणा sysfs_temp_offsets(offset) \
+अटल SENSOR_DEVICE_ATTR(temp##offset##_input, S_IRUGO, \
+		show_temp, शून्य, offset); \
+अटल SENSOR_DEVICE_ATTR(temp##offset##_max, S_IRUGO | S_IWUSR, \
 		show_temp_max, store_temp_max, offset); \
-static SENSOR_DEVICE_ATTR(temp##offset##_max_hyst, S_IRUGO | S_IWUSR, \
+अटल SENSOR_DEVICE_ATTR(temp##offset##_max_hyst, S_IRUGO | S_IWUSR, \
 		show_temp_max_hyst, store_temp_max_hyst, offset);
 
 sysfs_temp_offsets(1);
 sysfs_temp_offsets(2);
 sysfs_temp_offsets(3);
 
-static ssize_t
-cpu0_vid_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%ld\n", (long) vid_from_reg(data->vid, data->vrm));
-}
+अटल sमाप_प्रकार
+cpu0_vid_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%ld\n", (दीर्घ) vid_from_reg(data->vid, data->vrm));
+पूर्ण
 
-static DEVICE_ATTR_RO(cpu0_vid);
+अटल DEVICE_ATTR_RO(cpu0_vid);
 
-static ssize_t
-vrm_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	return sprintf(buf, "%ld\n", (long) data->vrm);
-}
+अटल sमाप_प्रकार
+vrm_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%ld\n", (दीर्घ) data->vrm);
+पूर्ण
 
-static ssize_t
-vrm_store(struct device *dev, struct device_attribute *attr, const char *buf,
-	  size_t count)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार
+vrm_store(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+	  माप_प्रकार count)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 	data->vrm = clamp_val(val, 0, 255);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(vrm);
+अटल DEVICE_ATTR_RW(vrm);
 
-static ssize_t
-alarms_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%u\n", data->alarms);
-}
+अटल sमाप_प्रकार
+alarms_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%u\n", data->alarms);
+पूर्ण
 
-static DEVICE_ATTR_RO(alarms);
+अटल DEVICE_ATTR_RO(alarms);
 
-static ssize_t show_alarm(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	int bitnr = to_sensor_dev_attr(attr)->index;
-	return sprintf(buf, "%u\n", (data->alarms >> bitnr) & 1);
-}
+अटल sमाप_प्रकार show_alarm(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
+	वापस प्र_लिखो(buf, "%u\n", (data->alarms >> bitnr) & 1);
+पूर्ण
 
-/* The W83781D has a single alarm bit for temp2 and temp3 */
-static ssize_t show_temp3_alarm(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	int bitnr = (data->type == w83781d) ? 5 : 13;
-	return sprintf(buf, "%u\n", (data->alarms >> bitnr) & 1);
-}
+/* The W83781D has a single alarm bit क्रम temp2 and temp3 */
+अटल sमाप_प्रकार show_temp3_alarm(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	पूर्णांक bitnr = (data->type == w83781d) ? 5 : 13;
+	वापस प्र_लिखो(buf, "%u\n", (data->alarms >> bitnr) & 1);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(in0_alarm, S_IRUGO, show_alarm, NULL, 0);
-static SENSOR_DEVICE_ATTR(in1_alarm, S_IRUGO, show_alarm, NULL, 1);
-static SENSOR_DEVICE_ATTR(in2_alarm, S_IRUGO, show_alarm, NULL, 2);
-static SENSOR_DEVICE_ATTR(in3_alarm, S_IRUGO, show_alarm, NULL, 3);
-static SENSOR_DEVICE_ATTR(in4_alarm, S_IRUGO, show_alarm, NULL, 8);
-static SENSOR_DEVICE_ATTR(in5_alarm, S_IRUGO, show_alarm, NULL, 9);
-static SENSOR_DEVICE_ATTR(in6_alarm, S_IRUGO, show_alarm, NULL, 10);
-static SENSOR_DEVICE_ATTR(in7_alarm, S_IRUGO, show_alarm, NULL, 16);
-static SENSOR_DEVICE_ATTR(in8_alarm, S_IRUGO, show_alarm, NULL, 17);
-static SENSOR_DEVICE_ATTR(fan1_alarm, S_IRUGO, show_alarm, NULL, 6);
-static SENSOR_DEVICE_ATTR(fan2_alarm, S_IRUGO, show_alarm, NULL, 7);
-static SENSOR_DEVICE_ATTR(fan3_alarm, S_IRUGO, show_alarm, NULL, 11);
-static SENSOR_DEVICE_ATTR(temp1_alarm, S_IRUGO, show_alarm, NULL, 4);
-static SENSOR_DEVICE_ATTR(temp2_alarm, S_IRUGO, show_alarm, NULL, 5);
-static SENSOR_DEVICE_ATTR(temp3_alarm, S_IRUGO, show_temp3_alarm, NULL, 0);
+अटल SENSOR_DEVICE_ATTR(in0_alarm, S_IRUGO, show_alarm, शून्य, 0);
+अटल SENSOR_DEVICE_ATTR(in1_alarm, S_IRUGO, show_alarm, शून्य, 1);
+अटल SENSOR_DEVICE_ATTR(in2_alarm, S_IRUGO, show_alarm, शून्य, 2);
+अटल SENSOR_DEVICE_ATTR(in3_alarm, S_IRUGO, show_alarm, शून्य, 3);
+अटल SENSOR_DEVICE_ATTR(in4_alarm, S_IRUGO, show_alarm, शून्य, 8);
+अटल SENSOR_DEVICE_ATTR(in5_alarm, S_IRUGO, show_alarm, शून्य, 9);
+अटल SENSOR_DEVICE_ATTR(in6_alarm, S_IRUGO, show_alarm, शून्य, 10);
+अटल SENSOR_DEVICE_ATTR(in7_alarm, S_IRUGO, show_alarm, शून्य, 16);
+अटल SENSOR_DEVICE_ATTR(in8_alarm, S_IRUGO, show_alarm, शून्य, 17);
+अटल SENSOR_DEVICE_ATTR(fan1_alarm, S_IRUGO, show_alarm, शून्य, 6);
+अटल SENSOR_DEVICE_ATTR(fan2_alarm, S_IRUGO, show_alarm, शून्य, 7);
+अटल SENSOR_DEVICE_ATTR(fan3_alarm, S_IRUGO, show_alarm, शून्य, 11);
+अटल SENSOR_DEVICE_ATTR(temp1_alarm, S_IRUGO, show_alarm, शून्य, 4);
+अटल SENSOR_DEVICE_ATTR(temp2_alarm, S_IRUGO, show_alarm, शून्य, 5);
+अटल SENSOR_DEVICE_ATTR(temp3_alarm, S_IRUGO, show_temp3_alarm, शून्य, 0);
 
-static ssize_t beep_mask_show(struct device *dev,
-			       struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%ld\n",
-		       (long)BEEP_MASK_FROM_REG(data->beep_mask, data->type));
-}
+अटल sमाप_प्रकार beep_mask_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%ld\n",
+		       (दीर्घ)BEEP_MASK_FROM_REG(data->beep_mask, data->type));
+पूर्ण
 
-static ssize_t
-beep_mask_store(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार
+beep_mask_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->beep_mask &= 0x8000; /* preserve beep enable */
 	data->beep_mask |= BEEP_MASK_TO_REG(val, data->type);
-	w83781d_write_value(data, W83781D_REG_BEEP_INTS1,
+	w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS1,
 			    data->beep_mask & 0xff);
-	w83781d_write_value(data, W83781D_REG_BEEP_INTS2,
+	w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS2,
 			    (data->beep_mask >> 8) & 0xff);
-	if (data->type != w83781d && data->type != as99127f) {
-		w83781d_write_value(data, W83781D_REG_BEEP_INTS3,
+	अगर (data->type != w83781d && data->type != as99127f) अणु
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS3,
 				    ((data->beep_mask) >> 16) & 0xff);
-	}
+	पूर्ण
 	mutex_unlock(&data->update_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR_RW(beep_mask);
+अटल DEVICE_ATTR_RW(beep_mask);
 
-static ssize_t show_beep(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	int bitnr = to_sensor_dev_attr(attr)->index;
-	return sprintf(buf, "%u\n", (data->beep_mask >> bitnr) & 1);
-}
+अटल sमाप_प्रकार show_beep(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
+	वापस प्र_लिखो(buf, "%u\n", (data->beep_mask >> bitnr) & 1);
+पूर्ण
 
-static ssize_t
-store_beep(struct device *dev, struct device_attribute *attr,
-		const char *buf, size_t count)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	int bitnr = to_sensor_dev_attr(attr)->index;
+अटल sमाप_प्रकार
+store_beep(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	पूर्णांक bitnr = to_sensor_dev_attr(attr)->index;
 	u8 reg;
-	unsigned long bit;
-	int err;
+	अचिन्हित दीर्घ bit;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &bit);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &bit);
+	अगर (err)
+		वापस err;
 
-	if (bit & ~1)
-		return -EINVAL;
+	अगर (bit & ~1)
+		वापस -EINVAL;
 
 	mutex_lock(&data->update_lock);
-	if (bit)
+	अगर (bit)
 		data->beep_mask |= (1 << bitnr);
-	else
+	अन्यथा
 		data->beep_mask &= ~(1 << bitnr);
 
-	if (bitnr < 8) {
-		reg = w83781d_read_value(data, W83781D_REG_BEEP_INTS1);
-		if (bit)
+	अगर (bitnr < 8) अणु
+		reg = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_INTS1);
+		अगर (bit)
 			reg |= (1 << bitnr);
-		else
+		अन्यथा
 			reg &= ~(1 << bitnr);
-		w83781d_write_value(data, W83781D_REG_BEEP_INTS1, reg);
-	} else if (bitnr < 16) {
-		reg = w83781d_read_value(data, W83781D_REG_BEEP_INTS2);
-		if (bit)
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS1, reg);
+	पूर्ण अन्यथा अगर (bitnr < 16) अणु
+		reg = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_INTS2);
+		अगर (bit)
 			reg |= (1 << (bitnr - 8));
-		else
+		अन्यथा
 			reg &= ~(1 << (bitnr - 8));
-		w83781d_write_value(data, W83781D_REG_BEEP_INTS2, reg);
-	} else {
-		reg = w83781d_read_value(data, W83781D_REG_BEEP_INTS3);
-		if (bit)
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS2, reg);
+	पूर्ण अन्यथा अणु
+		reg = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_INTS3);
+		अगर (bit)
 			reg |= (1 << (bitnr - 16));
-		else
+		अन्यथा
 			reg &= ~(1 << (bitnr - 16));
-		w83781d_write_value(data, W83781D_REG_BEEP_INTS3, reg);
-	}
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS3, reg);
+	पूर्ण
 	mutex_unlock(&data->update_lock);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* The W83781D has a single beep bit for temp2 and temp3 */
-static ssize_t show_temp3_beep(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	int bitnr = (data->type == w83781d) ? 5 : 13;
-	return sprintf(buf, "%u\n", (data->beep_mask >> bitnr) & 1);
-}
+/* The W83781D has a single beep bit क्रम temp2 and temp3 */
+अटल sमाप_प्रकार show_temp3_beep(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	पूर्णांक bitnr = (data->type == w83781d) ? 5 : 13;
+	वापस प्र_लिखो(buf, "%u\n", (data->beep_mask >> bitnr) & 1);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(in0_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in0_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 0);
-static SENSOR_DEVICE_ATTR(in1_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in1_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 1);
-static SENSOR_DEVICE_ATTR(in2_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in2_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 2);
-static SENSOR_DEVICE_ATTR(in3_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in3_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 3);
-static SENSOR_DEVICE_ATTR(in4_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in4_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 8);
-static SENSOR_DEVICE_ATTR(in5_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in5_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 9);
-static SENSOR_DEVICE_ATTR(in6_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in6_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 10);
-static SENSOR_DEVICE_ATTR(in7_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in7_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 16);
-static SENSOR_DEVICE_ATTR(in8_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(in8_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 17);
-static SENSOR_DEVICE_ATTR(fan1_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan1_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 6);
-static SENSOR_DEVICE_ATTR(fan2_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan2_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 7);
-static SENSOR_DEVICE_ATTR(fan3_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(fan3_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 11);
-static SENSOR_DEVICE_ATTR(temp1_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(temp1_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 4);
-static SENSOR_DEVICE_ATTR(temp2_beep, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(temp2_beep, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 5);
-static SENSOR_DEVICE_ATTR(temp3_beep, S_IRUGO,
+अटल SENSOR_DEVICE_ATTR(temp3_beep, S_IRUGO,
 			show_temp3_beep, store_beep, 13);
-static SENSOR_DEVICE_ATTR(beep_enable, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(beep_enable, S_IRUGO | S_IWUSR,
 			show_beep, store_beep, 15);
 
-static ssize_t
-show_fan_div(struct device *dev, struct device_attribute *da, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%ld\n",
-		       (long) DIV_FROM_REG(data->fan_div[attr->index]));
-}
+अटल sमाप_प्रकार
+show_fan_भाग(काष्ठा device *dev, काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%ld\n",
+		       (दीर्घ) DIV_FROM_REG(data->fan_भाग[attr->index]));
+पूर्ण
 
 /*
  * Note: we save and restore the fan minimum here, because its value is
- * determined in part by the fan divisor.  This follows the principle of
- * least surprise; the user doesn't expect the fan minimum to change just
- * because the divisor changed.
+ * determined in part by the fan भागisor.  This follows the principle of
+ * least surprise; the user करोesn't expect the fan minimum to change just
+ * because the भागisor changed.
  */
-static ssize_t
-store_fan_div(struct device *dev, struct device_attribute *da,
-		const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	unsigned long min;
-	int nr = attr->index;
+अटल sमाप_प्रकार
+store_fan_भाग(काष्ठा device *dev, काष्ठा device_attribute *da,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ min;
+	पूर्णांक nr = attr->index;
 	u8 reg;
-	unsigned long val;
-	int err;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 
 	/* Save fan_min */
 	min = FAN_FROM_REG(data->fan_min[nr],
-			   DIV_FROM_REG(data->fan_div[nr]));
+			   DIV_FROM_REG(data->fan_भाग[nr]));
 
-	data->fan_div[nr] = DIV_TO_REG(val, data->type);
+	data->fan_भाग[nr] = DIV_TO_REG(val, data->type);
 
-	reg = (w83781d_read_value(data, nr == 2 ?
+	reg = (w83781d_पढ़ो_value(data, nr == 2 ?
 				  W83781D_REG_PIN : W83781D_REG_VID_FANDIV)
 		& (nr == 0 ? 0xcf : 0x3f))
-	      | ((data->fan_div[nr] & 0x03) << (nr == 0 ? 4 : 6));
-	w83781d_write_value(data, nr == 2 ?
+	      | ((data->fan_भाग[nr] & 0x03) << (nr == 0 ? 4 : 6));
+	w83781d_ग_लिखो_value(data, nr == 2 ?
 			    W83781D_REG_PIN : W83781D_REG_VID_FANDIV, reg);
 
-	/* w83781d and as99127f don't have extended divisor bits */
-	if (data->type != w83781d && data->type != as99127f) {
-		reg = (w83781d_read_value(data, W83781D_REG_VBAT)
+	/* w83781d and as99127f करोn't have extended भागisor bits */
+	अगर (data->type != w83781d && data->type != as99127f) अणु
+		reg = (w83781d_पढ़ो_value(data, W83781D_REG_VBAT)
 		       & ~(1 << (5 + nr)))
-		    | ((data->fan_div[nr] & 0x04) << (3 + nr));
-		w83781d_write_value(data, W83781D_REG_VBAT, reg);
-	}
+		    | ((data->fan_भाग[nr] & 0x04) << (3 + nr));
+		w83781d_ग_लिखो_value(data, W83781D_REG_VBAT, reg);
+	पूर्ण
 
 	/* Restore fan_min */
-	data->fan_min[nr] = FAN_TO_REG(min, DIV_FROM_REG(data->fan_div[nr]));
-	w83781d_write_value(data, W83781D_REG_FAN_MIN(nr), data->fan_min[nr]);
+	data->fan_min[nr] = FAN_TO_REG(min, DIV_FROM_REG(data->fan_भाग[nr]));
+	w83781d_ग_लिखो_value(data, W83781D_REG_FAN_MIN(nr), data->fan_min[nr]);
 
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(fan1_div, S_IRUGO | S_IWUSR,
-		show_fan_div, store_fan_div, 0);
-static SENSOR_DEVICE_ATTR(fan2_div, S_IRUGO | S_IWUSR,
-		show_fan_div, store_fan_div, 1);
-static SENSOR_DEVICE_ATTR(fan3_div, S_IRUGO | S_IWUSR,
-		show_fan_div, store_fan_div, 2);
+अटल SENSOR_DEVICE_ATTR(fan1_भाग, S_IRUGO | S_IWUSR,
+		show_fan_भाग, store_fan_भाग, 0);
+अटल SENSOR_DEVICE_ATTR(fan2_भाग, S_IRUGO | S_IWUSR,
+		show_fan_भाग, store_fan_भाग, 1);
+अटल SENSOR_DEVICE_ATTR(fan3_भाग, S_IRUGO | S_IWUSR,
+		show_fan_भाग, store_fan_भाग, 2);
 
-static ssize_t
-show_pwm(struct device *dev, struct device_attribute *da, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%d\n", (int)data->pwm[attr->index]);
-}
+अटल sमाप_प्रकार
+show_pwm(काष्ठा device *dev, काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)data->pwm[attr->index]);
+पूर्ण
 
-static ssize_t
-pwm2_enable_show(struct device *dev, struct device_attribute *da, char *buf)
-{
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%d\n", (int)data->pwm2_enable);
-}
+अटल sमाप_प्रकार
+pwm2_enable_show(काष्ठा device *dev, काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)data->pwm2_enable);
+पूर्ण
 
-static ssize_t
-store_pwm(struct device *dev, struct device_attribute *da, const char *buf,
-		size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	int nr = attr->index;
-	unsigned long val;
-	int err;
+अटल sमाप_प्रकार
+store_pwm(काष्ठा device *dev, काष्ठा device_attribute *da, स्थिर अक्षर *buf,
+		माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 	data->pwm[nr] = clamp_val(val, 0, 255);
-	w83781d_write_value(data, W83781D_REG_PWM[nr], data->pwm[nr]);
+	w83781d_ग_लिखो_value(data, W83781D_REG_PWM[nr], data->pwm[nr]);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t
-pwm2_enable_store(struct device *dev, struct device_attribute *da,
-		const char *buf, size_t count)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	unsigned long val;
+अटल sमाप_प्रकार
+pwm2_enable_store(काष्ठा device *dev, काष्ठा device_attribute *da,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ val;
 	u32 reg;
-	int err;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 
-	switch (val) {
-	case 0:
-	case 1:
-		reg = w83781d_read_value(data, W83781D_REG_PWMCLK12);
-		w83781d_write_value(data, W83781D_REG_PWMCLK12,
+	चयन (val) अणु
+	हाल 0:
+	हाल 1:
+		reg = w83781d_पढ़ो_value(data, W83781D_REG_PWMCLK12);
+		w83781d_ग_लिखो_value(data, W83781D_REG_PWMCLK12,
 				    (reg & 0xf7) | (val << 3));
 
-		reg = w83781d_read_value(data, W83781D_REG_BEEP_CONFIG);
-		w83781d_write_value(data, W83781D_REG_BEEP_CONFIG,
+		reg = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_CONFIG);
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_CONFIG,
 				    (reg & 0xef) | (!val << 4));
 
 		data->pwm2_enable = val;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		mutex_unlock(&data->update_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 0);
-static SENSOR_DEVICE_ATTR(pwm2, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 1);
-static SENSOR_DEVICE_ATTR(pwm3, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 2);
-static SENSOR_DEVICE_ATTR(pwm4, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 3);
+अटल SENSOR_DEVICE_ATTR(pwm1, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 0);
+अटल SENSOR_DEVICE_ATTR(pwm2, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 1);
+अटल SENSOR_DEVICE_ATTR(pwm3, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 2);
+अटल SENSOR_DEVICE_ATTR(pwm4, S_IRUGO | S_IWUSR, show_pwm, store_pwm, 3);
 /* only PWM2 can be enabled/disabled */
-static DEVICE_ATTR_RW(pwm2_enable);
+अटल DEVICE_ATTR_RW(pwm2_enable);
 
-static ssize_t
-show_sensor(struct device *dev, struct device_attribute *da, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = w83781d_update_device(dev);
-	return sprintf(buf, "%d\n", (int)data->sens[attr->index]);
-}
+अटल sमाप_प्रकार
+show_sensor(काष्ठा device *dev, काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = w83781d_update_device(dev);
+	वापस प्र_लिखो(buf, "%d\n", (पूर्णांक)data->sens[attr->index]);
+पूर्ण
 
-static ssize_t
-store_sensor(struct device *dev, struct device_attribute *da,
-		const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	int nr = attr->index;
-	unsigned long val;
-	u32 tmp;
-	int err;
+अटल sमाप_प्रकार
+store_sensor(काष्ठा device *dev, काष्ठा device_attribute *da,
+		स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	पूर्णांक nr = attr->index;
+	अचिन्हित दीर्घ val;
+	u32 पंचांगp;
+	पूर्णांक err;
 
-	err = kstrtoul(buf, 10, &val);
-	if (err)
-		return err;
+	err = kम_से_अदीर्घ(buf, 10, &val);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&data->update_lock);
 
-	switch (val) {
-	case 1:		/* PII/Celeron diode */
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG1);
-		w83781d_write_value(data, W83781D_REG_SCFG1,
-				    tmp | BIT_SCFG1[nr]);
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG2);
-		w83781d_write_value(data, W83781D_REG_SCFG2,
-				    tmp | BIT_SCFG2[nr]);
+	चयन (val) अणु
+	हाल 1:		/* PII/Celeron diode */
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG1);
+		w83781d_ग_लिखो_value(data, W83781D_REG_SCFG1,
+				    पंचांगp | BIT_SCFG1[nr]);
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG2);
+		w83781d_ग_लिखो_value(data, W83781D_REG_SCFG2,
+				    पंचांगp | BIT_SCFG2[nr]);
 		data->sens[nr] = val;
-		break;
-	case 2:		/* 3904 */
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG1);
-		w83781d_write_value(data, W83781D_REG_SCFG1,
-				    tmp | BIT_SCFG1[nr]);
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG2);
-		w83781d_write_value(data, W83781D_REG_SCFG2,
-				    tmp & ~BIT_SCFG2[nr]);
+		अवरोध;
+	हाल 2:		/* 3904 */
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG1);
+		w83781d_ग_लिखो_value(data, W83781D_REG_SCFG1,
+				    पंचांगp | BIT_SCFG1[nr]);
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG2);
+		w83781d_ग_लिखो_value(data, W83781D_REG_SCFG2,
+				    पंचांगp & ~BIT_SCFG2[nr]);
 		data->sens[nr] = val;
-		break;
-	case W83781D_DEFAULT_BETA:
+		अवरोध;
+	हाल W83781D_DEFAULT_BETA:
 		dev_warn(dev,
 			 "Sensor type %d is deprecated, please use 4 instead\n",
 			 W83781D_DEFAULT_BETA);
 		fallthrough;
-	case 4:		/* thermistor */
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG1);
-		w83781d_write_value(data, W83781D_REG_SCFG1,
-				    tmp & ~BIT_SCFG1[nr]);
+	हाल 4:		/* thermistor */
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG1);
+		w83781d_ग_लिखो_value(data, W83781D_REG_SCFG1,
+				    पंचांगp & ~BIT_SCFG1[nr]);
 		data->sens[nr] = val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "Invalid sensor type %ld; must be 1, 2, or 4\n",
-		       (long) val);
-		break;
-	}
+		       (दीर्घ) val);
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static SENSOR_DEVICE_ATTR(temp1_type, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(temp1_type, S_IRUGO | S_IWUSR,
 	show_sensor, store_sensor, 0);
-static SENSOR_DEVICE_ATTR(temp2_type, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(temp2_type, S_IRUGO | S_IWUSR,
 	show_sensor, store_sensor, 1);
-static SENSOR_DEVICE_ATTR(temp3_type, S_IRUGO | S_IWUSR,
+अटल SENSOR_DEVICE_ATTR(temp3_type, S_IRUGO | S_IWUSR,
 	show_sensor, store_sensor, 2);
 
 /*
  * Assumes that adapter is of I2C, not ISA variety.
  * OTHERWISE DON'T CALL THIS
  */
-static int
-w83781d_detect_subclients(struct i2c_client *new_client)
-{
-	int i, val1 = 0, id;
-	int err;
-	int address = new_client->addr;
-	unsigned short sc_addr[2];
-	struct i2c_adapter *adapter = new_client->adapter;
-	struct w83781d_data *data = i2c_get_clientdata(new_client);
-	enum chips kind = data->type;
-	int num_sc = 1;
+अटल पूर्णांक
+w83781d_detect_subclients(काष्ठा i2c_client *new_client)
+अणु
+	पूर्णांक i, val1 = 0, id;
+	पूर्णांक err;
+	पूर्णांक address = new_client->addr;
+	अचिन्हित लघु sc_addr[2];
+	काष्ठा i2c_adapter *adapter = new_client->adapter;
+	काष्ठा w83781d_data *data = i2c_get_clientdata(new_client);
+	क्रमागत chips kind = data->type;
+	पूर्णांक num_sc = 1;
 
 	id = i2c_adapter_id(adapter);
 
-	if (force_subclients[0] == id && force_subclients[1] == address) {
-		for (i = 2; i <= 3; i++) {
-			if (force_subclients[i] < 0x48 ||
-			    force_subclients[i] > 0x4f) {
+	अगर (क्रमce_subclients[0] == id && क्रमce_subclients[1] == address) अणु
+		क्रम (i = 2; i <= 3; i++) अणु
+			अगर (क्रमce_subclients[i] < 0x48 ||
+			    क्रमce_subclients[i] > 0x4f) अणु
 				dev_err(&new_client->dev,
 					"Invalid subclient address %d; must be 0x48-0x4f\n",
-					force_subclients[i]);
+					क्रमce_subclients[i]);
 				err = -EINVAL;
-				goto ERROR_SC_1;
-			}
-		}
-		w83781d_write_value(data, W83781D_REG_I2C_SUBADDR,
-				(force_subclients[2] & 0x07) |
-				((force_subclients[3] & 0x07) << 4));
-		sc_addr[0] = force_subclients[2];
-	} else {
-		val1 = w83781d_read_value(data, W83781D_REG_I2C_SUBADDR);
+				जाओ ERROR_SC_1;
+			पूर्ण
+		पूर्ण
+		w83781d_ग_लिखो_value(data, W83781D_REG_I2C_SUBADDR,
+				(क्रमce_subclients[2] & 0x07) |
+				((क्रमce_subclients[3] & 0x07) << 4));
+		sc_addr[0] = क्रमce_subclients[2];
+	पूर्ण अन्यथा अणु
+		val1 = w83781d_पढ़ो_value(data, W83781D_REG_I2C_SUBADDR);
 		sc_addr[0] = 0x48 + (val1 & 0x07);
-	}
+	पूर्ण
 
-	if (kind != w83783s) {
+	अगर (kind != w83783s) अणु
 		num_sc = 2;
-		if (force_subclients[0] == id &&
-		    force_subclients[1] == address) {
-			sc_addr[1] = force_subclients[3];
-		} else {
+		अगर (क्रमce_subclients[0] == id &&
+		    क्रमce_subclients[1] == address) अणु
+			sc_addr[1] = क्रमce_subclients[3];
+		पूर्ण अन्यथा अणु
 			sc_addr[1] = 0x48 + ((val1 >> 4) & 0x07);
-		}
-		if (sc_addr[0] == sc_addr[1]) {
+		पूर्ण
+		अगर (sc_addr[0] == sc_addr[1]) अणु
 			dev_err(&new_client->dev,
 			       "Duplicate addresses 0x%x for subclients.\n",
 			       sc_addr[0]);
 			err = -EBUSY;
-			goto ERROR_SC_2;
-		}
-	}
+			जाओ ERROR_SC_2;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < num_sc; i++) {
+	क्रम (i = 0; i < num_sc; i++) अणु
 		data->lm75[i] = i2c_new_dummy_device(adapter, sc_addr[i]);
-		if (IS_ERR(data->lm75[i])) {
+		अगर (IS_ERR(data->lm75[i])) अणु
 			dev_err(&new_client->dev,
 				"Subclient %d registration at address 0x%x failed.\n",
 				i, sc_addr[i]);
 			err = PTR_ERR(data->lm75[i]);
-			if (i == 1)
-				goto ERROR_SC_3;
-			goto ERROR_SC_2;
-		}
-	}
+			अगर (i == 1)
+				जाओ ERROR_SC_3;
+			जाओ ERROR_SC_2;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-/* Undo inits in case of errors */
+/* Unकरो inits in हाल of errors */
 ERROR_SC_3:
-	i2c_unregister_device(data->lm75[0]);
+	i2c_unरेजिस्टर_device(data->lm75[0]);
 ERROR_SC_2:
 ERROR_SC_1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define IN_UNIT_ATTRS(X)					\
+#घोषणा IN_UNIT_ATTRS(X)					\
 	&sensor_dev_attr_in##X##_input.dev_attr.attr,		\
 	&sensor_dev_attr_in##X##_min.dev_attr.attr,		\
 	&sensor_dev_attr_in##X##_max.dev_attr.attr,		\
 	&sensor_dev_attr_in##X##_alarm.dev_attr.attr,		\
 	&sensor_dev_attr_in##X##_beep.dev_attr.attr
 
-#define FAN_UNIT_ATTRS(X)					\
+#घोषणा FAN_UNIT_ATTRS(X)					\
 	&sensor_dev_attr_fan##X##_input.dev_attr.attr,		\
 	&sensor_dev_attr_fan##X##_min.dev_attr.attr,		\
-	&sensor_dev_attr_fan##X##_div.dev_attr.attr,		\
+	&sensor_dev_attr_fan##X##_भाग.dev_attr.attr,		\
 	&sensor_dev_attr_fan##X##_alarm.dev_attr.attr,		\
 	&sensor_dev_attr_fan##X##_beep.dev_attr.attr
 
-#define TEMP_UNIT_ATTRS(X)					\
+#घोषणा TEMP_UNIT_ATTRS(X)					\
 	&sensor_dev_attr_temp##X##_input.dev_attr.attr,		\
 	&sensor_dev_attr_temp##X##_max.dev_attr.attr,		\
 	&sensor_dev_attr_temp##X##_max_hyst.dev_attr.attr,	\
 	&sensor_dev_attr_temp##X##_alarm.dev_attr.attr,		\
 	&sensor_dev_attr_temp##X##_beep.dev_attr.attr
 
-static struct attribute *w83781d_attributes[] = {
+अटल काष्ठा attribute *w83781d_attributes[] = अणु
 	IN_UNIT_ATTRS(0),
 	IN_UNIT_ATTRS(2),
 	IN_UNIT_ATTRS(3),
@@ -954,255 +955,255 @@ static struct attribute *w83781d_attributes[] = {
 	&dev_attr_alarms.attr,
 	&dev_attr_beep_mask.attr,
 	&sensor_dev_attr_beep_enable.dev_attr.attr,
-	NULL
-};
-static const struct attribute_group w83781d_group = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group = अणु
 	.attrs = w83781d_attributes,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_in1[] = {
+अटल काष्ठा attribute *w83781d_attributes_in1[] = अणु
 	IN_UNIT_ATTRS(1),
-	NULL
-};
-static const struct attribute_group w83781d_group_in1 = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_in1 = अणु
 	.attrs = w83781d_attributes_in1,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_in78[] = {
+अटल काष्ठा attribute *w83781d_attributes_in78[] = अणु
 	IN_UNIT_ATTRS(7),
 	IN_UNIT_ATTRS(8),
-	NULL
-};
-static const struct attribute_group w83781d_group_in78 = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_in78 = अणु
 	.attrs = w83781d_attributes_in78,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_temp3[] = {
+अटल काष्ठा attribute *w83781d_attributes_temp3[] = अणु
 	TEMP_UNIT_ATTRS(3),
-	NULL
-};
-static const struct attribute_group w83781d_group_temp3 = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_temp3 = अणु
 	.attrs = w83781d_attributes_temp3,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_pwm12[] = {
+अटल काष्ठा attribute *w83781d_attributes_pwm12[] = अणु
 	&sensor_dev_attr_pwm1.dev_attr.attr,
 	&sensor_dev_attr_pwm2.dev_attr.attr,
 	&dev_attr_pwm2_enable.attr,
-	NULL
-};
-static const struct attribute_group w83781d_group_pwm12 = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_pwm12 = अणु
 	.attrs = w83781d_attributes_pwm12,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_pwm34[] = {
+अटल काष्ठा attribute *w83781d_attributes_pwm34[] = अणु
 	&sensor_dev_attr_pwm3.dev_attr.attr,
 	&sensor_dev_attr_pwm4.dev_attr.attr,
-	NULL
-};
-static const struct attribute_group w83781d_group_pwm34 = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_pwm34 = अणु
 	.attrs = w83781d_attributes_pwm34,
-};
+पूर्ण;
 
-static struct attribute *w83781d_attributes_other[] = {
+अटल काष्ठा attribute *w83781d_attributes_other[] = अणु
 	&sensor_dev_attr_temp1_type.dev_attr.attr,
 	&sensor_dev_attr_temp2_type.dev_attr.attr,
 	&sensor_dev_attr_temp3_type.dev_attr.attr,
-	NULL
-};
-static const struct attribute_group w83781d_group_other = {
+	शून्य
+पूर्ण;
+अटल स्थिर काष्ठा attribute_group w83781d_group_other = अणु
 	.attrs = w83781d_attributes_other,
-};
+पूर्ण;
 
-/* No clean up is done on error, it's up to the caller */
-static int
-w83781d_create_files(struct device *dev, int kind, int is_isa)
-{
-	int err;
+/* No clean up is करोne on error, it's up to the caller */
+अटल पूर्णांक
+w83781d_create_files(काष्ठा device *dev, पूर्णांक kind, पूर्णांक is_isa)
+अणु
+	पूर्णांक err;
 
 	err = sysfs_create_group(&dev->kobj, &w83781d_group);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (kind != w83783s) {
+	अगर (kind != w83783s) अणु
 		err = sysfs_create_group(&dev->kobj, &w83781d_group_in1);
-		if (err)
-			return err;
-	}
-	if (kind != as99127f && kind != w83781d && kind != w83783s) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (kind != as99127f && kind != w83781d && kind != w83783s) अणु
 		err = sysfs_create_group(&dev->kobj, &w83781d_group_in78);
-		if (err)
-			return err;
-	}
-	if (kind != w83783s) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (kind != w83783s) अणु
 		err = sysfs_create_group(&dev->kobj, &w83781d_group_temp3);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (kind != w83781d) {
+		अगर (kind != w83781d) अणु
 			err = sysfs_chmod_file(&dev->kobj,
 				&sensor_dev_attr_temp3_alarm.dev_attr.attr,
 				S_IRUGO | S_IWUSR);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (kind != w83781d && kind != as99127f) {
+	अगर (kind != w83781d && kind != as99127f) अणु
 		err = sysfs_create_group(&dev->kobj, &w83781d_group_pwm12);
-		if (err)
-			return err;
-	}
-	if (kind == w83782d && !is_isa) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (kind == w83782d && !is_isa) अणु
 		err = sysfs_create_group(&dev->kobj, &w83781d_group_pwm34);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (kind != as99127f && kind != w83781d) {
+	अगर (kind != as99127f && kind != w83781d) अणु
 		err = device_create_file(dev,
 					 &sensor_dev_attr_temp1_type.dev_attr);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = device_create_file(dev,
 					 &sensor_dev_attr_temp2_type.dev_attr);
-		if (err)
-			return err;
-		if (kind != w83783s) {
+		अगर (err)
+			वापस err;
+		अगर (kind != w83783s) अणु
 			err = device_create_file(dev,
 					&sensor_dev_attr_temp3_type.dev_attr);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return 0 if detection is successful, -ENODEV otherwise */
-static int
-w83781d_detect(struct i2c_client *client, struct i2c_board_info *info)
-{
-	int val1, val2;
-	struct w83781d_data *isa = w83781d_data_if_isa();
-	struct i2c_adapter *adapter = client->adapter;
-	int address = client->addr;
-	const char *client_name;
-	enum vendor { winbond, asus } vendid;
+/* Return 0 अगर detection is successful, -ENODEV otherwise */
+अटल पूर्णांक
+w83781d_detect(काष्ठा i2c_client *client, काष्ठा i2c_board_info *info)
+अणु
+	पूर्णांक val1, val2;
+	काष्ठा w83781d_data *isa = w83781d_data_अगर_isa();
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	पूर्णांक address = client->addr;
+	स्थिर अक्षर *client_name;
+	क्रमागत venकरोr अणु winbond, asus पूर्ण vendid;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
 	/*
 	 * We block updates of the ISA device to minimize the risk of
-	 * concurrent access to the same W83781D chip through different
-	 * interfaces.
+	 * concurrent access to the same W83781D chip through dअगरferent
+	 * पूर्णांकerfaces.
 	 */
-	if (isa)
+	अगर (isa)
 		mutex_lock(&isa->update_lock);
 
-	if (i2c_smbus_read_byte_data(client, W83781D_REG_CONFIG) & 0x80) {
+	अगर (i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_CONFIG) & 0x80) अणु
 		dev_dbg(&adapter->dev,
 			"Detection of w83781d chip failed at step 3\n");
-		goto err_nodev;
-	}
+		जाओ err_nodev;
+	पूर्ण
 
-	val1 = i2c_smbus_read_byte_data(client, W83781D_REG_BANK);
-	val2 = i2c_smbus_read_byte_data(client, W83781D_REG_CHIPMAN);
-	/* Check for Winbond or Asus ID if in bank 0 */
-	if (!(val1 & 0x07) &&
+	val1 = i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_BANK);
+	val2 = i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_CHIPMAN);
+	/* Check क्रम Winbond or Asus ID अगर in bank 0 */
+	अगर (!(val1 & 0x07) &&
 	    ((!(val1 & 0x80) && val2 != 0xa3 && val2 != 0xc3) ||
-	     ((val1 & 0x80) && val2 != 0x5c && val2 != 0x12))) {
+	     ((val1 & 0x80) && val2 != 0x5c && val2 != 0x12))) अणु
 		dev_dbg(&adapter->dev,
 			"Detection of w83781d chip failed at step 4\n");
-		goto err_nodev;
-	}
+		जाओ err_nodev;
+	पूर्ण
 	/*
 	 * If Winbond SMBus, check address at 0x48.
-	 * Asus doesn't support, except for as99127f rev.2
+	 * Asus करोesn't support, except क्रम as99127f rev.2
 	 */
-	if ((!(val1 & 0x80) && val2 == 0xa3) ||
-	    ((val1 & 0x80) && val2 == 0x5c)) {
-		if (i2c_smbus_read_byte_data(client, W83781D_REG_I2C_ADDR)
-		    != address) {
+	अगर ((!(val1 & 0x80) && val2 == 0xa3) ||
+	    ((val1 & 0x80) && val2 == 0x5c)) अणु
+		अगर (i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_I2C_ADDR)
+		    != address) अणु
 			dev_dbg(&adapter->dev,
 				"Detection of w83781d chip failed at step 5\n");
-			goto err_nodev;
-		}
-	}
+			जाओ err_nodev;
+		पूर्ण
+	पूर्ण
 
-	/* Put it now into bank 0 and Vendor ID High Byte */
-	i2c_smbus_write_byte_data(client, W83781D_REG_BANK,
-		(i2c_smbus_read_byte_data(client, W83781D_REG_BANK)
+	/* Put it now पूर्णांकo bank 0 and Venकरोr ID High Byte */
+	i2c_smbus_ग_लिखो_byte_data(client, W83781D_REG_BANK,
+		(i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_BANK)
 		 & 0x78) | 0x80);
 
-	/* Get the vendor ID */
-	val2 = i2c_smbus_read_byte_data(client, W83781D_REG_CHIPMAN);
-	if (val2 == 0x5c)
+	/* Get the venकरोr ID */
+	val2 = i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_CHIPMAN);
+	अगर (val2 == 0x5c)
 		vendid = winbond;
-	else if (val2 == 0x12)
+	अन्यथा अगर (val2 == 0x12)
 		vendid = asus;
-	else {
+	अन्यथा अणु
 		dev_dbg(&adapter->dev,
 			"w83781d chip vendor is neither Winbond nor Asus\n");
-		goto err_nodev;
-	}
+		जाओ err_nodev;
+	पूर्ण
 
 	/* Determine the chip type. */
-	val1 = i2c_smbus_read_byte_data(client, W83781D_REG_WCHIPID);
-	if ((val1 == 0x10 || val1 == 0x11) && vendid == winbond)
+	val1 = i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_WCHIPID);
+	अगर ((val1 == 0x10 || val1 == 0x11) && vendid == winbond)
 		client_name = "w83781d";
-	else if (val1 == 0x30 && vendid == winbond)
+	अन्यथा अगर (val1 == 0x30 && vendid == winbond)
 		client_name = "w83782d";
-	else if (val1 == 0x40 && vendid == winbond && address == 0x2d)
+	अन्यथा अगर (val1 == 0x40 && vendid == winbond && address == 0x2d)
 		client_name = "w83783s";
-	else if (val1 == 0x31)
+	अन्यथा अगर (val1 == 0x31)
 		client_name = "as99127f";
-	else
-		goto err_nodev;
+	अन्यथा
+		जाओ err_nodev;
 
-	if (val1 <= 0x30 && w83781d_alias_detect(client, val1)) {
+	अगर (val1 <= 0x30 && w83781d_alias_detect(client, val1)) अणु
 		dev_dbg(&adapter->dev,
 			"Device at 0x%02x appears to be the same as ISA device\n",
 			address);
-		goto err_nodev;
-	}
+		जाओ err_nodev;
+	पूर्ण
 
-	if (isa)
+	अगर (isa)
 		mutex_unlock(&isa->update_lock);
 
 	strlcpy(info->type, client_name, I2C_NAME_SIZE);
 
-	return 0;
+	वापस 0;
 
  err_nodev:
-	if (isa)
+	अगर (isa)
 		mutex_unlock(&isa->update_lock);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void w83781d_remove_files(struct device *dev)
-{
-	sysfs_remove_group(&dev->kobj, &w83781d_group);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_in1);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_in78);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_temp3);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_pwm12);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_pwm34);
-	sysfs_remove_group(&dev->kobj, &w83781d_group_other);
-}
+अटल व्योम w83781d_हटाओ_files(काष्ठा device *dev)
+अणु
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_in1);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_in78);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_temp3);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_pwm12);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_pwm34);
+	sysfs_हटाओ_group(&dev->kobj, &w83781d_group_other);
+पूर्ण
 
-static const struct i2c_device_id w83781d_ids[];
+अटल स्थिर काष्ठा i2c_device_id w83781d_ids[];
 
-static int w83781d_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct w83781d_data *data;
-	int err;
+अटल पूर्णांक w83781d_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा w83781d_data *data;
+	पूर्णांक err;
 
-	data = devm_kzalloc(dev, sizeof(struct w83781d_data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(काष्ठा w83781d_data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	mutex_init(&data->lock);
@@ -1213,698 +1214,698 @@ static int w83781d_probe(struct i2c_client *client)
 
 	/* attach secondary i2c lm75-like clients */
 	err = w83781d_detect_subclients(client);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Initialize the chip */
 	w83781d_init_device(dev);
 
 	/* Register sysfs hooks */
 	err = w83781d_create_files(dev, data->type, 0);
-	if (err)
-		goto exit_remove_files;
+	अगर (err)
+		जाओ निकास_हटाओ_files;
 
-	data->hwmon_dev = hwmon_device_register(dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		err = PTR_ERR(data->hwmon_dev);
-		goto exit_remove_files;
-	}
+		जाओ निकास_हटाओ_files;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- exit_remove_files:
-	w83781d_remove_files(dev);
-	i2c_unregister_device(data->lm75[0]);
-	i2c_unregister_device(data->lm75[1]);
-	return err;
-}
+ निकास_हटाओ_files:
+	w83781d_हटाओ_files(dev);
+	i2c_unरेजिस्टर_device(data->lm75[0]);
+	i2c_unरेजिस्टर_device(data->lm75[1]);
+	वापस err;
+पूर्ण
 
-static int
-w83781d_remove(struct i2c_client *client)
-{
-	struct w83781d_data *data = i2c_get_clientdata(client);
-	struct device *dev = &client->dev;
+अटल पूर्णांक
+w83781d_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा w83781d_data *data = i2c_get_clientdata(client);
+	काष्ठा device *dev = &client->dev;
 
-	hwmon_device_unregister(data->hwmon_dev);
-	w83781d_remove_files(dev);
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	w83781d_हटाओ_files(dev);
 
-	i2c_unregister_device(data->lm75[0]);
-	i2c_unregister_device(data->lm75[1]);
+	i2c_unरेजिस्टर_device(data->lm75[0]);
+	i2c_unरेजिस्टर_device(data->lm75[1]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-w83781d_read_value_i2c(struct w83781d_data *data, u16 reg)
-{
-	struct i2c_client *client = data->client;
-	int res, bank;
-	struct i2c_client *cl;
+अटल पूर्णांक
+w83781d_पढ़ो_value_i2c(काष्ठा w83781d_data *data, u16 reg)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक res, bank;
+	काष्ठा i2c_client *cl;
 
 	bank = (reg >> 8) & 0x0f;
-	if (bank > 2)
-		/* switch banks */
-		i2c_smbus_write_byte_data(client, W83781D_REG_BANK,
+	अगर (bank > 2)
+		/* चयन banks */
+		i2c_smbus_ग_लिखो_byte_data(client, W83781D_REG_BANK,
 					  bank);
-	if (bank == 0 || bank > 2) {
-		res = i2c_smbus_read_byte_data(client, reg & 0xff);
-	} else {
-		/* switch to subclient */
+	अगर (bank == 0 || bank > 2) अणु
+		res = i2c_smbus_पढ़ो_byte_data(client, reg & 0xff);
+	पूर्ण अन्यथा अणु
+		/* चयन to subclient */
 		cl = data->lm75[bank - 1];
 		/* convert from ISA to LM75 I2C addresses */
-		switch (reg & 0xff) {
-		case 0x50:	/* TEMP */
-			res = i2c_smbus_read_word_swapped(cl, 0);
-			break;
-		case 0x52:	/* CONFIG */
-			res = i2c_smbus_read_byte_data(cl, 1);
-			break;
-		case 0x53:	/* HYST */
-			res = i2c_smbus_read_word_swapped(cl, 2);
-			break;
-		case 0x55:	/* OVER */
-		default:
-			res = i2c_smbus_read_word_swapped(cl, 3);
-			break;
-		}
-	}
-	if (bank > 2)
-		i2c_smbus_write_byte_data(client, W83781D_REG_BANK, 0);
+		चयन (reg & 0xff) अणु
+		हाल 0x50:	/* TEMP */
+			res = i2c_smbus_पढ़ो_word_swapped(cl, 0);
+			अवरोध;
+		हाल 0x52:	/* CONFIG */
+			res = i2c_smbus_पढ़ो_byte_data(cl, 1);
+			अवरोध;
+		हाल 0x53:	/* HYST */
+			res = i2c_smbus_पढ़ो_word_swapped(cl, 2);
+			अवरोध;
+		हाल 0x55:	/* OVER */
+		शेष:
+			res = i2c_smbus_पढ़ो_word_swapped(cl, 3);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (bank > 2)
+		i2c_smbus_ग_लिखो_byte_data(client, W83781D_REG_BANK, 0);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-w83781d_write_value_i2c(struct w83781d_data *data, u16 reg, u16 value)
-{
-	struct i2c_client *client = data->client;
-	int bank;
-	struct i2c_client *cl;
+अटल पूर्णांक
+w83781d_ग_लिखो_value_i2c(काष्ठा w83781d_data *data, u16 reg, u16 value)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक bank;
+	काष्ठा i2c_client *cl;
 
 	bank = (reg >> 8) & 0x0f;
-	if (bank > 2)
-		/* switch banks */
-		i2c_smbus_write_byte_data(client, W83781D_REG_BANK,
+	अगर (bank > 2)
+		/* चयन banks */
+		i2c_smbus_ग_लिखो_byte_data(client, W83781D_REG_BANK,
 					  bank);
-	if (bank == 0 || bank > 2) {
-		i2c_smbus_write_byte_data(client, reg & 0xff,
+	अगर (bank == 0 || bank > 2) अणु
+		i2c_smbus_ग_लिखो_byte_data(client, reg & 0xff,
 					  value & 0xff);
-	} else {
-		/* switch to subclient */
+	पूर्ण अन्यथा अणु
+		/* चयन to subclient */
 		cl = data->lm75[bank - 1];
 		/* convert from ISA to LM75 I2C addresses */
-		switch (reg & 0xff) {
-		case 0x52:	/* CONFIG */
-			i2c_smbus_write_byte_data(cl, 1, value & 0xff);
-			break;
-		case 0x53:	/* HYST */
-			i2c_smbus_write_word_swapped(cl, 2, value);
-			break;
-		case 0x55:	/* OVER */
-			i2c_smbus_write_word_swapped(cl, 3, value);
-			break;
-		}
-	}
-	if (bank > 2)
-		i2c_smbus_write_byte_data(client, W83781D_REG_BANK, 0);
+		चयन (reg & 0xff) अणु
+		हाल 0x52:	/* CONFIG */
+			i2c_smbus_ग_लिखो_byte_data(cl, 1, value & 0xff);
+			अवरोध;
+		हाल 0x53:	/* HYST */
+			i2c_smbus_ग_लिखो_word_swapped(cl, 2, value);
+			अवरोध;
+		हाल 0x55:	/* OVER */
+			i2c_smbus_ग_लिखो_word_swapped(cl, 3, value);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (bank > 2)
+		i2c_smbus_ग_लिखो_byte_data(client, W83781D_REG_BANK, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-w83781d_init_device(struct device *dev)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	int i, p;
-	int type = data->type;
-	u8 tmp;
+अटल व्योम
+w83781d_init_device(काष्ठा device *dev)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	पूर्णांक i, p;
+	पूर्णांक type = data->type;
+	u8 पंचांगp;
 
-	if (reset && type != as99127f) { /*
-					  * this resets registers we don't have
-					  * documentation for on the as99127f
+	अगर (reset && type != as99127f) अणु /*
+					  * this resets रेजिस्टरs we करोn't have
+					  * करोcumentation क्रम on the as99127f
 					  */
 		/*
-		 * Resetting the chip has been the default for a long time,
-		 * but it causes the BIOS initializations (fan clock dividers,
+		 * Resetting the chip has been the शेष क्रम a दीर्घ समय,
+		 * but it causes the BIOS initializations (fan घड़ी भागiders,
 		 * thermal sensor types...) to be lost, so it is now optional.
-		 * It might even go away if nobody reports it as being useful,
+		 * It might even go away अगर nobody reports it as being useful,
 		 * as I see very little reason why this would be needed at
 		 * all.
 		 */
 		dev_info(dev,
 			 "If reset=1 solved a problem you were having, please report!\n");
 
-		/* save these registers */
-		i = w83781d_read_value(data, W83781D_REG_BEEP_CONFIG);
-		p = w83781d_read_value(data, W83781D_REG_PWMCLK12);
+		/* save these रेजिस्टरs */
+		i = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_CONFIG);
+		p = w83781d_पढ़ो_value(data, W83781D_REG_PWMCLK12);
 		/*
-		 * Reset all except Watchdog values and last conversion values
-		 * This sets fan-divs to 2, among others
+		 * Reset all except Watchकरोg values and last conversion values
+		 * This sets fan-भागs to 2, among others
 		 */
-		w83781d_write_value(data, W83781D_REG_CONFIG, 0x80);
+		w83781d_ग_लिखो_value(data, W83781D_REG_CONFIG, 0x80);
 		/*
-		 * Restore the registers and disable power-on abnormal beep.
+		 * Restore the रेजिस्टरs and disable घातer-on abnormal beep.
 		 * This saves FAN 1/2/3 input/output values set by BIOS.
 		 */
-		w83781d_write_value(data, W83781D_REG_BEEP_CONFIG, i | 0x80);
-		w83781d_write_value(data, W83781D_REG_PWMCLK12, p);
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_CONFIG, i | 0x80);
+		w83781d_ग_लिखो_value(data, W83781D_REG_PWMCLK12, p);
 		/*
 		 * Disable master beep-enable (reset turns it on).
-		 * Individual beep_mask should be reset to off but for some
+		 * Inभागidual beep_mask should be reset to off but क्रम some
 		 * reason disabling this bit helps some people not get beeped
 		 */
-		w83781d_write_value(data, W83781D_REG_BEEP_INTS2, 0);
-	}
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_INTS2, 0);
+	पूर्ण
 
 	/*
-	 * Disable power-on abnormal beep, as advised by the datasheet.
-	 * Already done if reset=1.
+	 * Disable घातer-on abnormal beep, as advised by the datasheet.
+	 * Alपढ़ोy करोne अगर reset=1.
 	 */
-	if (init && !reset && type != as99127f) {
-		i = w83781d_read_value(data, W83781D_REG_BEEP_CONFIG);
-		w83781d_write_value(data, W83781D_REG_BEEP_CONFIG, i | 0x80);
-	}
+	अगर (init && !reset && type != as99127f) अणु
+		i = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_CONFIG);
+		w83781d_ग_लिखो_value(data, W83781D_REG_BEEP_CONFIG, i | 0x80);
+	पूर्ण
 
 	data->vrm = vid_which_vrm();
 
-	if ((type != w83781d) && (type != as99127f)) {
-		tmp = w83781d_read_value(data, W83781D_REG_SCFG1);
-		for (i = 1; i <= 3; i++) {
-			if (!(tmp & BIT_SCFG1[i - 1])) {
+	अगर ((type != w83781d) && (type != as99127f)) अणु
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_SCFG1);
+		क्रम (i = 1; i <= 3; i++) अणु
+			अगर (!(पंचांगp & BIT_SCFG1[i - 1])) अणु
 				data->sens[i - 1] = 4;
-			} else {
-				if (w83781d_read_value
+			पूर्ण अन्यथा अणु
+				अगर (w83781d_पढ़ो_value
 				    (data,
 				     W83781D_REG_SCFG2) & BIT_SCFG2[i - 1])
 					data->sens[i - 1] = 1;
-				else
+				अन्यथा
 					data->sens[i - 1] = 2;
-			}
-			if (type == w83783s && i == 2)
-				break;
-		}
-	}
+			पूर्ण
+			अगर (type == w83783s && i == 2)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (init && type != as99127f) {
+	अगर (init && type != as99127f) अणु
 		/* Enable temp2 */
-		tmp = w83781d_read_value(data, W83781D_REG_TEMP2_CONFIG);
-		if (tmp & 0x01) {
+		पंचांगp = w83781d_पढ़ो_value(data, W83781D_REG_TEMP2_CONFIG);
+		अगर (पंचांगp & 0x01) अणु
 			dev_warn(dev,
 				 "Enabling temp2, readings might not make sense\n");
-			w83781d_write_value(data, W83781D_REG_TEMP2_CONFIG,
-				tmp & 0xfe);
-		}
+			w83781d_ग_लिखो_value(data, W83781D_REG_TEMP2_CONFIG,
+				पंचांगp & 0xfe);
+		पूर्ण
 
 		/* Enable temp3 */
-		if (type != w83783s) {
-			tmp = w83781d_read_value(data,
+		अगर (type != w83783s) अणु
+			पंचांगp = w83781d_पढ़ो_value(data,
 				W83781D_REG_TEMP3_CONFIG);
-			if (tmp & 0x01) {
+			अगर (पंचांगp & 0x01) अणु
 				dev_warn(dev,
 					 "Enabling temp3, readings might not make sense\n");
-				w83781d_write_value(data,
-					W83781D_REG_TEMP3_CONFIG, tmp & 0xfe);
-			}
-		}
-	}
+				w83781d_ग_लिखो_value(data,
+					W83781D_REG_TEMP3_CONFIG, पंचांगp & 0xfe);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Start monitoring */
-	w83781d_write_value(data, W83781D_REG_CONFIG,
-			    (w83781d_read_value(data,
+	w83781d_ग_लिखो_value(data, W83781D_REG_CONFIG,
+			    (w83781d_पढ़ो_value(data,
 						W83781D_REG_CONFIG) & 0xf7)
 			    | 0x01);
 
 	/* A few vars need to be filled upon startup */
-	for (i = 0; i < 3; i++) {
-		data->fan_min[i] = w83781d_read_value(data,
+	क्रम (i = 0; i < 3; i++) अणु
+		data->fan_min[i] = w83781d_पढ़ो_value(data,
 					W83781D_REG_FAN_MIN(i));
-	}
+	पूर्ण
 
 	mutex_init(&data->update_lock);
-}
+पूर्ण
 
-static struct w83781d_data *w83781d_update_device(struct device *dev)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	int i;
+अटल काष्ठा w83781d_data *w83781d_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक i;
 
 	mutex_lock(&data->update_lock);
 
-	if (time_after(jiffies, data->last_updated + HZ + HZ / 2)
-	    || !data->valid) {
+	अगर (समय_after(jअगरfies, data->last_updated + HZ + HZ / 2)
+	    || !data->valid) अणु
 		dev_dbg(dev, "Starting device update\n");
 
-		for (i = 0; i <= 8; i++) {
-			if (data->type == w83783s && i == 1)
-				continue;	/* 783S has no in1 */
+		क्रम (i = 0; i <= 8; i++) अणु
+			अगर (data->type == w83783s && i == 1)
+				जारी;	/* 783S has no in1 */
 			data->in[i] =
-			    w83781d_read_value(data, W83781D_REG_IN(i));
+			    w83781d_पढ़ो_value(data, W83781D_REG_IN(i));
 			data->in_min[i] =
-			    w83781d_read_value(data, W83781D_REG_IN_MIN(i));
+			    w83781d_पढ़ो_value(data, W83781D_REG_IN_MIN(i));
 			data->in_max[i] =
-			    w83781d_read_value(data, W83781D_REG_IN_MAX(i));
-			if ((data->type != w83782d) && (i == 6))
-				break;
-		}
-		for (i = 0; i < 3; i++) {
+			    w83781d_पढ़ो_value(data, W83781D_REG_IN_MAX(i));
+			अगर ((data->type != w83782d) && (i == 6))
+				अवरोध;
+		पूर्ण
+		क्रम (i = 0; i < 3; i++) अणु
 			data->fan[i] =
-			    w83781d_read_value(data, W83781D_REG_FAN(i));
+			    w83781d_पढ़ो_value(data, W83781D_REG_FAN(i));
 			data->fan_min[i] =
-			    w83781d_read_value(data, W83781D_REG_FAN_MIN(i));
-		}
-		if (data->type != w83781d && data->type != as99127f) {
-			for (i = 0; i < 4; i++) {
+			    w83781d_पढ़ो_value(data, W83781D_REG_FAN_MIN(i));
+		पूर्ण
+		अगर (data->type != w83781d && data->type != as99127f) अणु
+			क्रम (i = 0; i < 4; i++) अणु
 				data->pwm[i] =
-				    w83781d_read_value(data,
+				    w83781d_पढ़ो_value(data,
 						       W83781D_REG_PWM[i]);
 				/* Only W83782D on SMBus has PWM3 and PWM4 */
-				if ((data->type != w83782d || !client)
+				अगर ((data->type != w83782d || !client)
 				    && i == 1)
-					break;
-			}
+					अवरोध;
+			पूर्ण
 			/* Only PWM2 can be disabled */
-			data->pwm2_enable = (w83781d_read_value(data,
+			data->pwm2_enable = (w83781d_पढ़ो_value(data,
 					     W83781D_REG_PWMCLK12) & 0x08) >> 3;
-		}
+		पूर्ण
 
-		data->temp = w83781d_read_value(data, W83781D_REG_TEMP(1));
+		data->temp = w83781d_पढ़ो_value(data, W83781D_REG_TEMP(1));
 		data->temp_max =
-		    w83781d_read_value(data, W83781D_REG_TEMP_OVER(1));
+		    w83781d_पढ़ो_value(data, W83781D_REG_TEMP_OVER(1));
 		data->temp_max_hyst =
-		    w83781d_read_value(data, W83781D_REG_TEMP_HYST(1));
+		    w83781d_पढ़ो_value(data, W83781D_REG_TEMP_HYST(1));
 		data->temp_add[0] =
-		    w83781d_read_value(data, W83781D_REG_TEMP(2));
+		    w83781d_पढ़ो_value(data, W83781D_REG_TEMP(2));
 		data->temp_max_add[0] =
-		    w83781d_read_value(data, W83781D_REG_TEMP_OVER(2));
+		    w83781d_पढ़ो_value(data, W83781D_REG_TEMP_OVER(2));
 		data->temp_max_hyst_add[0] =
-		    w83781d_read_value(data, W83781D_REG_TEMP_HYST(2));
-		if (data->type != w83783s) {
+		    w83781d_पढ़ो_value(data, W83781D_REG_TEMP_HYST(2));
+		अगर (data->type != w83783s) अणु
 			data->temp_add[1] =
-			    w83781d_read_value(data, W83781D_REG_TEMP(3));
+			    w83781d_पढ़ो_value(data, W83781D_REG_TEMP(3));
 			data->temp_max_add[1] =
-			    w83781d_read_value(data,
+			    w83781d_पढ़ो_value(data,
 					       W83781D_REG_TEMP_OVER(3));
 			data->temp_max_hyst_add[1] =
-			    w83781d_read_value(data,
+			    w83781d_पढ़ो_value(data,
 					       W83781D_REG_TEMP_HYST(3));
-		}
-		i = w83781d_read_value(data, W83781D_REG_VID_FANDIV);
+		पूर्ण
+		i = w83781d_पढ़ो_value(data, W83781D_REG_VID_FANDIV);
 		data->vid = i & 0x0f;
-		data->vid |= (w83781d_read_value(data,
+		data->vid |= (w83781d_पढ़ो_value(data,
 					W83781D_REG_CHIPID) & 0x01) << 4;
-		data->fan_div[0] = (i >> 4) & 0x03;
-		data->fan_div[1] = (i >> 6) & 0x03;
-		data->fan_div[2] = (w83781d_read_value(data,
+		data->fan_भाग[0] = (i >> 4) & 0x03;
+		data->fan_भाग[1] = (i >> 6) & 0x03;
+		data->fan_भाग[2] = (w83781d_पढ़ो_value(data,
 					W83781D_REG_PIN) >> 6) & 0x03;
-		if ((data->type != w83781d) && (data->type != as99127f)) {
-			i = w83781d_read_value(data, W83781D_REG_VBAT);
-			data->fan_div[0] |= (i >> 3) & 0x04;
-			data->fan_div[1] |= (i >> 4) & 0x04;
-			data->fan_div[2] |= (i >> 5) & 0x04;
-		}
-		if (data->type == w83782d) {
-			data->alarms = w83781d_read_value(data,
+		अगर ((data->type != w83781d) && (data->type != as99127f)) अणु
+			i = w83781d_पढ़ो_value(data, W83781D_REG_VBAT);
+			data->fan_भाग[0] |= (i >> 3) & 0x04;
+			data->fan_भाग[1] |= (i >> 4) & 0x04;
+			data->fan_भाग[2] |= (i >> 5) & 0x04;
+		पूर्ण
+		अगर (data->type == w83782d) अणु
+			data->alarms = w83781d_पढ़ो_value(data,
 						W83782D_REG_ALARM1)
-				     | (w83781d_read_value(data,
+				     | (w83781d_पढ़ो_value(data,
 						W83782D_REG_ALARM2) << 8)
-				     | (w83781d_read_value(data,
+				     | (w83781d_पढ़ो_value(data,
 						W83782D_REG_ALARM3) << 16);
-		} else if (data->type == w83783s) {
-			data->alarms = w83781d_read_value(data,
+		पूर्ण अन्यथा अगर (data->type == w83783s) अणु
+			data->alarms = w83781d_पढ़ो_value(data,
 						W83782D_REG_ALARM1)
-				     | (w83781d_read_value(data,
+				     | (w83781d_पढ़ो_value(data,
 						W83782D_REG_ALARM2) << 8);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * No real-time status registers, fall back to
-			 * interrupt status registers
+			 * No real-समय status रेजिस्टरs, fall back to
+			 * पूर्णांकerrupt status रेजिस्टरs
 			 */
-			data->alarms = w83781d_read_value(data,
+			data->alarms = w83781d_पढ़ो_value(data,
 						W83781D_REG_ALARM1)
-				     | (w83781d_read_value(data,
+				     | (w83781d_पढ़ो_value(data,
 						W83781D_REG_ALARM2) << 8);
-		}
-		i = w83781d_read_value(data, W83781D_REG_BEEP_INTS2);
+		पूर्ण
+		i = w83781d_पढ़ो_value(data, W83781D_REG_BEEP_INTS2);
 		data->beep_mask = (i << 8) +
-		    w83781d_read_value(data, W83781D_REG_BEEP_INTS1);
-		if ((data->type != w83781d) && (data->type != as99127f)) {
+		    w83781d_पढ़ो_value(data, W83781D_REG_BEEP_INTS1);
+		अगर ((data->type != w83781d) && (data->type != as99127f)) अणु
 			data->beep_mask |=
-			    w83781d_read_value(data,
+			    w83781d_पढ़ो_value(data,
 					       W83781D_REG_BEEP_INTS3) << 16;
-		}
-		data->last_updated = jiffies;
+		पूर्ण
+		data->last_updated = jअगरfies;
 		data->valid = 1;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->update_lock);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static const struct i2c_device_id w83781d_ids[] = {
-	{ "w83781d", w83781d, },
-	{ "w83782d", w83782d, },
-	{ "w83783s", w83783s, },
-	{ "as99127f", as99127f },
-	{ /* LIST END */ }
-};
+अटल स्थिर काष्ठा i2c_device_id w83781d_ids[] = अणु
+	अणु "w83781d", w83781d, पूर्ण,
+	अणु "w83782d", w83782d, पूर्ण,
+	अणु "w83783s", w83783s, पूर्ण,
+	अणु "as99127f", as99127f पूर्ण,
+	अणु /* LIST END */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, w83781d_ids);
 
-static struct i2c_driver w83781d_driver = {
+अटल काष्ठा i2c_driver w83781d_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name = "w83781d",
-	},
+	पूर्ण,
 	.probe_new	= w83781d_probe,
-	.remove		= w83781d_remove,
+	.हटाओ		= w83781d_हटाओ,
 	.id_table	= w83781d_ids,
 	.detect		= w83781d_detect,
 	.address_list	= normal_i2c,
-};
+पूर्ण;
 
 /*
  * ISA related code
  */
-#ifdef CONFIG_ISA
+#अगर_घोषित CONFIG_ISA
 
-/* ISA device, if found */
-static struct platform_device *pdev;
+/* ISA device, अगर found */
+अटल काष्ठा platक्रमm_device *pdev;
 
-static unsigned short isa_address = 0x290;
+अटल अचिन्हित लघु isa_address = 0x290;
 
 /*
- * I2C devices get this name attribute automatically, but for ISA devices
+ * I2C devices get this name attribute स्वतःmatically, but क्रम ISA devices
  * we must create it by ourselves.
  */
-static ssize_t
-name_show(struct device *dev, struct device_attribute *devattr, char *buf)
-{
-	struct w83781d_data *data = dev_get_drvdata(dev);
-	return sprintf(buf, "%s\n", data->name);
-}
-static DEVICE_ATTR_RO(name);
+अटल sमाप_प्रकार
+name_show(काष्ठा device *dev, काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा w83781d_data *data = dev_get_drvdata(dev);
+	वापस प्र_लिखो(buf, "%s\n", data->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static struct w83781d_data *w83781d_data_if_isa(void)
-{
-	return pdev ? platform_get_drvdata(pdev) : NULL;
-}
+अटल काष्ठा w83781d_data *w83781d_data_अगर_isa(व्योम)
+अणु
+	वापस pdev ? platक्रमm_get_drvdata(pdev) : शून्य;
+पूर्ण
 
-/* Returns 1 if the I2C chip appears to be an alias of the ISA chip */
-static int w83781d_alias_detect(struct i2c_client *client, u8 chipid)
-{
-	struct w83781d_data *isa;
-	int i;
+/* Returns 1 अगर the I2C chip appears to be an alias of the ISA chip */
+अटल पूर्णांक w83781d_alias_detect(काष्ठा i2c_client *client, u8 chipid)
+अणु
+	काष्ठा w83781d_data *isa;
+	पूर्णांक i;
 
-	if (!pdev)	/* No ISA chip */
-		return 0;
+	अगर (!pdev)	/* No ISA chip */
+		वापस 0;
 
-	isa = platform_get_drvdata(pdev);
+	isa = platक्रमm_get_drvdata(pdev);
 
-	if (w83781d_read_value(isa, W83781D_REG_I2C_ADDR) != client->addr)
-		return 0;	/* Address doesn't match */
-	if (w83781d_read_value(isa, W83781D_REG_WCHIPID) != chipid)
-		return 0;	/* Chip type doesn't match */
+	अगर (w83781d_पढ़ो_value(isa, W83781D_REG_I2C_ADDR) != client->addr)
+		वापस 0;	/* Address करोesn't match */
+	अगर (w83781d_पढ़ो_value(isa, W83781D_REG_WCHIPID) != chipid)
+		वापस 0;	/* Chip type करोesn't match */
 
 	/*
-	 * We compare all the limit registers, the config register and the
-	 * interrupt mask registers
+	 * We compare all the limit रेजिस्टरs, the config रेजिस्टर and the
+	 * पूर्णांकerrupt mask रेजिस्टरs
 	 */
-	for (i = 0x2b; i <= 0x3d; i++) {
-		if (w83781d_read_value(isa, i) !=
-		    i2c_smbus_read_byte_data(client, i))
-			return 0;
-	}
-	if (w83781d_read_value(isa, W83781D_REG_CONFIG) !=
-	    i2c_smbus_read_byte_data(client, W83781D_REG_CONFIG))
-		return 0;
-	for (i = 0x43; i <= 0x46; i++) {
-		if (w83781d_read_value(isa, i) !=
-		    i2c_smbus_read_byte_data(client, i))
-			return 0;
-	}
+	क्रम (i = 0x2b; i <= 0x3d; i++) अणु
+		अगर (w83781d_पढ़ो_value(isa, i) !=
+		    i2c_smbus_पढ़ो_byte_data(client, i))
+			वापस 0;
+	पूर्ण
+	अगर (w83781d_पढ़ो_value(isa, W83781D_REG_CONFIG) !=
+	    i2c_smbus_पढ़ो_byte_data(client, W83781D_REG_CONFIG))
+		वापस 0;
+	क्रम (i = 0x43; i <= 0x46; i++) अणु
+		अगर (w83781d_पढ़ो_value(isa, i) !=
+		    i2c_smbus_पढ़ो_byte_data(client, i))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int
-w83781d_read_value_isa(struct w83781d_data *data, u16 reg)
-{
-	int word_sized, res;
+अटल पूर्णांक
+w83781d_पढ़ो_value_isa(काष्ठा w83781d_data *data, u16 reg)
+अणु
+	पूर्णांक word_sized, res;
 
 	word_sized = (((reg & 0xff00) == 0x100)
 		      || ((reg & 0xff00) == 0x200))
 	    && (((reg & 0x00ff) == 0x50)
 		|| ((reg & 0x00ff) == 0x53)
 		|| ((reg & 0x00ff) == 0x55));
-	if (reg & 0xff00) {
+	अगर (reg & 0xff00) अणु
 		outb_p(W83781D_REG_BANK,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
 		outb_p(reg >> 8,
 		       data->isa_addr + W83781D_DATA_REG_OFFSET);
-	}
+	पूर्ण
 	outb_p(reg & 0xff, data->isa_addr + W83781D_ADDR_REG_OFFSET);
 	res = inb_p(data->isa_addr + W83781D_DATA_REG_OFFSET);
-	if (word_sized) {
+	अगर (word_sized) अणु
 		outb_p((reg & 0xff) + 1,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
 		res =
 		    (res << 8) + inb_p(data->isa_addr +
 				       W83781D_DATA_REG_OFFSET);
-	}
-	if (reg & 0xff00) {
+	पूर्ण
+	अगर (reg & 0xff00) अणु
 		outb_p(W83781D_REG_BANK,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
 		outb_p(0, data->isa_addr + W83781D_DATA_REG_OFFSET);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static void
-w83781d_write_value_isa(struct w83781d_data *data, u16 reg, u16 value)
-{
-	int word_sized;
+अटल व्योम
+w83781d_ग_लिखो_value_isa(काष्ठा w83781d_data *data, u16 reg, u16 value)
+अणु
+	पूर्णांक word_sized;
 
 	word_sized = (((reg & 0xff00) == 0x100)
 		      || ((reg & 0xff00) == 0x200))
 	    && (((reg & 0x00ff) == 0x53)
 		|| ((reg & 0x00ff) == 0x55));
-	if (reg & 0xff00) {
+	अगर (reg & 0xff00) अणु
 		outb_p(W83781D_REG_BANK,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
 		outb_p(reg >> 8,
 		       data->isa_addr + W83781D_DATA_REG_OFFSET);
-	}
+	पूर्ण
 	outb_p(reg & 0xff, data->isa_addr + W83781D_ADDR_REG_OFFSET);
-	if (word_sized) {
+	अगर (word_sized) अणु
 		outb_p(value >> 8,
 		       data->isa_addr + W83781D_DATA_REG_OFFSET);
 		outb_p((reg & 0xff) + 1,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
-	}
+	पूर्ण
 	outb_p(value & 0xff, data->isa_addr + W83781D_DATA_REG_OFFSET);
-	if (reg & 0xff00) {
+	अगर (reg & 0xff00) अणु
 		outb_p(W83781D_REG_BANK,
 		       data->isa_addr + W83781D_ADDR_REG_OFFSET);
 		outb_p(0, data->isa_addr + W83781D_DATA_REG_OFFSET);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * The SMBus locks itself, usually, but nothing may access the Winbond between
- * bank switches. ISA access must always be locked explicitly!
+ * bank चयनes. ISA access must always be locked explicitly!
  * We ignore the W83781D BUSY flag at this moment - it could lead to deadlocks,
- * would slow down the W83781D access and should not be necessary.
+ * would slow करोwn the W83781D access and should not be necessary.
  * There are some ugly typecasts here, but the good news is - they should
- * nowhere else be necessary!
+ * nowhere अन्यथा be necessary!
  */
-static int
-w83781d_read_value(struct w83781d_data *data, u16 reg)
-{
-	struct i2c_client *client = data->client;
-	int res;
+अटल पूर्णांक
+w83781d_पढ़ो_value(काष्ठा w83781d_data *data, u16 reg)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक res;
 
 	mutex_lock(&data->lock);
-	if (client)
-		res = w83781d_read_value_i2c(data, reg);
-	else
-		res = w83781d_read_value_isa(data, reg);
+	अगर (client)
+		res = w83781d_पढ़ो_value_i2c(data, reg);
+	अन्यथा
+		res = w83781d_पढ़ो_value_isa(data, reg);
 	mutex_unlock(&data->lock);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-w83781d_write_value(struct w83781d_data *data, u16 reg, u16 value)
-{
-	struct i2c_client *client = data->client;
+अटल पूर्णांक
+w83781d_ग_लिखो_value(काष्ठा w83781d_data *data, u16 reg, u16 value)
+अणु
+	काष्ठा i2c_client *client = data->client;
 
 	mutex_lock(&data->lock);
-	if (client)
-		w83781d_write_value_i2c(data, reg, value);
-	else
-		w83781d_write_value_isa(data, reg, value);
+	अगर (client)
+		w83781d_ग_लिखो_value_i2c(data, reg, value);
+	अन्यथा
+		w83781d_ग_लिखो_value_isa(data, reg, value);
 	mutex_unlock(&data->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-w83781d_isa_probe(struct platform_device *pdev)
-{
-	int err, reg;
-	struct w83781d_data *data;
-	struct resource *res;
+अटल पूर्णांक
+w83781d_isa_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err, reg;
+	काष्ठा w83781d_data *data;
+	काष्ठा resource *res;
 
 	/* Reserve the ISA region */
-	res = platform_get_resource(pdev, IORESOURCE_IO, 0);
-	if (!devm_request_region(&pdev->dev,
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0);
+	अगर (!devm_request_region(&pdev->dev,
 				 res->start + W83781D_ADDR_REG_OFFSET, 2,
 				 "w83781d"))
-		return -EBUSY;
+		वापस -EBUSY;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct w83781d_data),
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा w83781d_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	mutex_init(&data->lock);
 	data->isa_addr = res->start;
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	reg = w83781d_read_value(data, W83781D_REG_WCHIPID);
-	switch (reg) {
-	case 0x30:
+	reg = w83781d_पढ़ो_value(data, W83781D_REG_WCHIPID);
+	चयन (reg) अणु
+	हाल 0x30:
 		data->type = w83782d;
 		data->name = "w83782d";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data->type = w83781d;
 		data->name = "w83781d";
-	}
+	पूर्ण
 
 	/* Initialize the W83781D chip */
 	w83781d_init_device(&pdev->dev);
 
 	/* Register sysfs hooks */
 	err = w83781d_create_files(&pdev->dev, data->type, 1);
-	if (err)
-		goto exit_remove_files;
+	अगर (err)
+		जाओ निकास_हटाओ_files;
 
 	err = device_create_file(&pdev->dev, &dev_attr_name);
-	if (err)
-		goto exit_remove_files;
+	अगर (err)
+		जाओ निकास_हटाओ_files;
 
-	data->hwmon_dev = hwmon_device_register(&pdev->dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		err = PTR_ERR(data->hwmon_dev);
-		goto exit_remove_files;
-	}
+		जाओ निकास_हटाओ_files;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- exit_remove_files:
-	w83781d_remove_files(&pdev->dev);
-	device_remove_file(&pdev->dev, &dev_attr_name);
-	return err;
-}
+ निकास_हटाओ_files:
+	w83781d_हटाओ_files(&pdev->dev);
+	device_हटाओ_file(&pdev->dev, &dev_attr_name);
+	वापस err;
+पूर्ण
 
-static int
-w83781d_isa_remove(struct platform_device *pdev)
-{
-	struct w83781d_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक
+w83781d_isa_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा w83781d_data *data = platक्रमm_get_drvdata(pdev);
 
-	hwmon_device_unregister(data->hwmon_dev);
-	w83781d_remove_files(&pdev->dev);
-	device_remove_file(&pdev->dev, &dev_attr_name);
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	w83781d_हटाओ_files(&pdev->dev);
+	device_हटाओ_file(&pdev->dev, &dev_attr_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver w83781d_isa_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver w83781d_isa_driver = अणु
+	.driver = अणु
 		.name = "w83781d",
-	},
+	पूर्ण,
 	.probe = w83781d_isa_probe,
-	.remove = w83781d_isa_remove,
-};
+	.हटाओ = w83781d_isa_हटाओ,
+पूर्ण;
 
-/* return 1 if a supported chip is found, 0 otherwise */
-static int __init
-w83781d_isa_found(unsigned short address)
-{
-	int val, save, found = 0;
-	int port;
+/* वापस 1 अगर a supported chip is found, 0 otherwise */
+अटल पूर्णांक __init
+w83781d_isa_found(अचिन्हित लघु address)
+अणु
+	पूर्णांक val, save, found = 0;
+	पूर्णांक port;
 
 	/*
 	 * Some boards declare base+0 to base+7 as a PNP device, some base+4
 	 * to base+7 and some base+5 to base+6. So we better request each port
-	 * individually for the probing phase.
+	 * inभागidually क्रम the probing phase.
 	 */
-	for (port = address; port < address + W83781D_EXTENT; port++) {
-		if (!request_region(port, 1, "w83781d")) {
+	क्रम (port = address; port < address + W83781D_EXTENT; port++) अणु
+		अगर (!request_region(port, 1, "w83781d")) अणु
 			pr_debug("Failed to request port 0x%x\n", port);
-			goto release;
-		}
-	}
+			जाओ release;
+		पूर्ण
+	पूर्ण
 
-#define REALLY_SLOW_IO
+#घोषणा REALLY_SLOW_IO
 	/*
-	 * We need the timeouts for at least some W83781D-like
-	 * chips. But only if we read 'undefined' registers.
+	 * We need the समयouts क्रम at least some W83781D-like
+	 * chips. But only अगर we पढ़ो 'undefined' रेजिस्टरs.
 	 */
 	val = inb_p(address + 1);
-	if (inb_p(address + 2) != val
+	अगर (inb_p(address + 2) != val
 	 || inb_p(address + 3) != val
-	 || inb_p(address + 7) != val) {
+	 || inb_p(address + 7) != val) अणु
 		pr_debug("Detection failed at step %d\n", 1);
-		goto release;
-	}
-#undef REALLY_SLOW_IO
+		जाओ release;
+	पूर्ण
+#अघोषित REALLY_SLOW_IO
 
 	/*
 	 * We should be able to change the 7 LSB of the address port. The
-	 * MSB (busy flag) should be clear initially, set after the write.
+	 * MSB (busy flag) should be clear initially, set after the ग_लिखो.
 	 */
 	save = inb_p(address + W83781D_ADDR_REG_OFFSET);
-	if (save & 0x80) {
+	अगर (save & 0x80) अणु
 		pr_debug("Detection failed at step %d\n", 2);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 	val = ~save & 0x7f;
 	outb_p(val, address + W83781D_ADDR_REG_OFFSET);
-	if (inb_p(address + W83781D_ADDR_REG_OFFSET) != (val | 0x80)) {
+	अगर (inb_p(address + W83781D_ADDR_REG_OFFSET) != (val | 0x80)) अणु
 		outb_p(save, address + W83781D_ADDR_REG_OFFSET);
 		pr_debug("Detection failed at step %d\n", 3);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
-	/* We found a device, now see if it could be a W83781D */
+	/* We found a device, now see अगर it could be a W83781D */
 	outb_p(W83781D_REG_CONFIG, address + W83781D_ADDR_REG_OFFSET);
 	val = inb_p(address + W83781D_DATA_REG_OFFSET);
-	if (val & 0x80) {
+	अगर (val & 0x80) अणु
 		pr_debug("Detection failed at step %d\n", 4);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 	outb_p(W83781D_REG_BANK, address + W83781D_ADDR_REG_OFFSET);
 	save = inb_p(address + W83781D_DATA_REG_OFFSET);
 	outb_p(W83781D_REG_CHIPMAN, address + W83781D_ADDR_REG_OFFSET);
 	val = inb_p(address + W83781D_DATA_REG_OFFSET);
-	if ((!(save & 0x80) && (val != 0xa3))
-	 || ((save & 0x80) && (val != 0x5c))) {
+	अगर ((!(save & 0x80) && (val != 0xa3))
+	 || ((save & 0x80) && (val != 0x5c))) अणु
 		pr_debug("Detection failed at step %d\n", 5);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 	outb_p(W83781D_REG_I2C_ADDR, address + W83781D_ADDR_REG_OFFSET);
 	val = inb_p(address + W83781D_DATA_REG_OFFSET);
-	if (val < 0x03 || val > 0x77) {	/* Not a valid I2C address */
+	अगर (val < 0x03 || val > 0x77) अणु	/* Not a valid I2C address */
 		pr_debug("Detection failed at step %d\n", 6);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	/* The busy flag should be clear again */
-	if (inb_p(address + W83781D_ADDR_REG_OFFSET) & 0x80) {
+	अगर (inb_p(address + W83781D_ADDR_REG_OFFSET) & 0x80) अणु
 		pr_debug("Detection failed at step %d\n", 7);
-		goto release;
-	}
+		जाओ release;
+	पूर्ण
 
 	/* Determine the chip type */
 	outb_p(W83781D_REG_BANK, address + W83781D_ADDR_REG_OFFSET);
@@ -1912,169 +1913,169 @@ w83781d_isa_found(unsigned short address)
 	outb_p(save & 0xf8, address + W83781D_DATA_REG_OFFSET);
 	outb_p(W83781D_REG_WCHIPID, address + W83781D_ADDR_REG_OFFSET);
 	val = inb_p(address + W83781D_DATA_REG_OFFSET);
-	if ((val & 0xfe) == 0x10	/* W83781D */
+	अगर ((val & 0xfe) == 0x10	/* W83781D */
 	 || val == 0x30)		/* W83782D */
 		found = 1;
 
-	if (found)
+	अगर (found)
 		pr_info("Found a %s chip at %#x\n",
-			val == 0x30 ? "W83782D" : "W83781D", (int)address);
+			val == 0x30 ? "W83782D" : "W83781D", (पूर्णांक)address);
 
  release:
-	for (port--; port >= address; port--)
+	क्रम (port--; port >= address; port--)
 		release_region(port, 1);
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static int __init
-w83781d_isa_device_add(unsigned short address)
-{
-	struct resource res = {
+अटल पूर्णांक __init
+w83781d_isa_device_add(अचिन्हित लघु address)
+अणु
+	काष्ठा resource res = अणु
 		.start	= address,
 		.end	= address + W83781D_EXTENT - 1,
 		.name	= "w83781d",
 		.flags	= IORESOURCE_IO,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
-	pdev = platform_device_alloc("w83781d", address);
-	if (!pdev) {
+	pdev = platक्रमm_device_alloc("w83781d", address);
+	अगर (!pdev) अणु
 		err = -ENOMEM;
 		pr_err("Device allocation failed\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	err = platform_device_add_resources(pdev, &res, 1);
-	if (err) {
+	err = platक्रमm_device_add_resources(pdev, &res, 1);
+	अगर (err) अणु
 		pr_err("Device resource addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	err = platform_device_add(pdev);
-	if (err) {
+	err = platक्रमm_device_add(pdev);
+	अगर (err) अणु
 		pr_err("Device addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- exit_device_put:
-	platform_device_put(pdev);
- exit:
-	pdev = NULL;
-	return err;
-}
+ निकास_device_put:
+	platक्रमm_device_put(pdev);
+ निकास:
+	pdev = शून्य;
+	वापस err;
+पूर्ण
 
-static int __init
-w83781d_isa_register(void)
-{
-	int res;
+अटल पूर्णांक __init
+w83781d_isa_रेजिस्टर(व्योम)
+अणु
+	पूर्णांक res;
 
-	if (w83781d_isa_found(isa_address)) {
-		res = platform_driver_register(&w83781d_isa_driver);
-		if (res)
-			goto exit;
+	अगर (w83781d_isa_found(isa_address)) अणु
+		res = platक्रमm_driver_रेजिस्टर(&w83781d_isa_driver);
+		अगर (res)
+			जाओ निकास;
 
 		/* Sets global pdev as a side effect */
 		res = w83781d_isa_device_add(isa_address);
-		if (res)
-			goto exit_unreg_isa_driver;
-	}
+		अगर (res)
+			जाओ निकास_unreg_isa_driver;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_unreg_isa_driver:
-	platform_driver_unregister(&w83781d_isa_driver);
-exit:
-	return res;
-}
+निकास_unreg_isa_driver:
+	platक्रमm_driver_unरेजिस्टर(&w83781d_isa_driver);
+निकास:
+	वापस res;
+पूर्ण
 
-static void
-w83781d_isa_unregister(void)
-{
-	if (pdev) {
-		platform_device_unregister(pdev);
-		platform_driver_unregister(&w83781d_isa_driver);
-	}
-}
-#else /* !CONFIG_ISA */
+अटल व्योम
+w83781d_isa_unरेजिस्टर(व्योम)
+अणु
+	अगर (pdev) अणु
+		platक्रमm_device_unरेजिस्टर(pdev);
+		platक्रमm_driver_unरेजिस्टर(&w83781d_isa_driver);
+	पूर्ण
+पूर्ण
+#अन्यथा /* !CONFIG_ISA */
 
-static struct w83781d_data *w83781d_data_if_isa(void)
-{
-	return NULL;
-}
+अटल काष्ठा w83781d_data *w83781d_data_अगर_isa(व्योम)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static int
-w83781d_alias_detect(struct i2c_client *client, u8 chipid)
-{
-	return 0;
-}
+अटल पूर्णांक
+w83781d_alias_detect(काष्ठा i2c_client *client, u8 chipid)
+अणु
+	वापस 0;
+पूर्ण
 
-static int
-w83781d_read_value(struct w83781d_data *data, u16 reg)
-{
-	int res;
+अटल पूर्णांक
+w83781d_पढ़ो_value(काष्ठा w83781d_data *data, u16 reg)
+अणु
+	पूर्णांक res;
 
 	mutex_lock(&data->lock);
-	res = w83781d_read_value_i2c(data, reg);
+	res = w83781d_पढ़ो_value_i2c(data, reg);
 	mutex_unlock(&data->lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-w83781d_write_value(struct w83781d_data *data, u16 reg, u16 value)
-{
+अटल पूर्णांक
+w83781d_ग_लिखो_value(काष्ठा w83781d_data *data, u16 reg, u16 value)
+अणु
 	mutex_lock(&data->lock);
-	w83781d_write_value_i2c(data, reg, value);
+	w83781d_ग_लिखो_value_i2c(data, reg, value);
 	mutex_unlock(&data->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init
-w83781d_isa_register(void)
-{
-	return 0;
-}
+अटल पूर्णांक __init
+w83781d_isa_रेजिस्टर(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static void
-w83781d_isa_unregister(void)
-{
-}
-#endif /* CONFIG_ISA */
+अटल व्योम
+w83781d_isa_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ISA */
 
-static int __init
-sensors_w83781d_init(void)
-{
-	int res;
+अटल पूर्णांक __init
+sensors_w83781d_init(व्योम)
+अणु
+	पूर्णांक res;
 
 	/*
-	 * We register the ISA device first, so that we can skip the
-	 * registration of an I2C interface to the same device.
+	 * We रेजिस्टर the ISA device first, so that we can skip the
+	 * registration of an I2C पूर्णांकerface to the same device.
 	 */
-	res = w83781d_isa_register();
-	if (res)
-		goto exit;
+	res = w83781d_isa_रेजिस्टर();
+	अगर (res)
+		जाओ निकास;
 
 	res = i2c_add_driver(&w83781d_driver);
-	if (res)
-		goto exit_unreg_isa;
+	अगर (res)
+		जाओ निकास_unreg_isa;
 
-	return 0;
+	वापस 0;
 
- exit_unreg_isa:
-	w83781d_isa_unregister();
- exit:
-	return res;
-}
+ निकास_unreg_isa:
+	w83781d_isa_unरेजिस्टर();
+ निकास:
+	वापस res;
+पूर्ण
 
-static void __exit
-sensors_w83781d_exit(void)
-{
-	w83781d_isa_unregister();
+अटल व्योम __निकास
+sensors_w83781d_निकास(व्योम)
+अणु
+	w83781d_isa_unरेजिस्टर();
 	i2c_del_driver(&w83781d_driver);
-}
+पूर्ण
 
 MODULE_AUTHOR("Frodo Looijaard <frodol@dds.nl>, "
 	      "Philip Edelbrock <phil@netroedge.com>, "
@@ -2083,4 +2084,4 @@ MODULE_DESCRIPTION("W83781D driver");
 MODULE_LICENSE("GPL");
 
 module_init(sensors_w83781d_init);
-module_exit(sensors_w83781d_exit);
+module_निकास(sensors_w83781d_निकास);

@@ -1,95 +1,96 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   ALSA sequencer Queue handling
  *   Copyright (c) 1998-1999 by Frank van de Pol <fvdpol@coil.demon.nl>
  */
-#ifndef __SND_SEQ_QUEUE_H
-#define __SND_SEQ_QUEUE_H
+#अगर_अघोषित __SND_SEQ_QUEUE_H
+#घोषणा __SND_SEQ_QUEUE_H
 
-#include "seq_memory.h"
-#include "seq_prioq.h"
-#include "seq_timer.h"
-#include "seq_lock.h"
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/bitops.h>
+#समावेश "seq_memory.h"
+#समावेश "seq_prioq.h"
+#समावेश "seq_timer.h"
+#समावेश "seq_lock.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/bitops.h>
 
-#define SEQ_QUEUE_NO_OWNER (-1)
+#घोषणा SEQ_QUEUE_NO_OWNER (-1)
 
-struct snd_seq_queue {
-	int queue;		/* queue number */
+काष्ठा snd_seq_queue अणु
+	पूर्णांक queue;		/* queue number */
 
-	char name[64];		/* name of this queue */
+	अक्षर name[64];		/* name of this queue */
 
-	struct snd_seq_prioq	*tickq;		/* midi tick event queue */
-	struct snd_seq_prioq	*timeq;		/* real-time event queue */	
+	काष्ठा snd_seq_prioq	*tickq;		/* midi tick event queue */
+	काष्ठा snd_seq_prioq	*समयq;		/* real-समय event queue */	
 	
-	struct snd_seq_timer *timer;	/* time keeper for this queue */
-	int	owner;		/* client that 'owns' the timer */
-	bool	locked;		/* timer is only accesibble by owner if set */
+	काष्ठा snd_seq_समयr *समयr;	/* समय keeper क्रम this queue */
+	पूर्णांक	owner;		/* client that 'owns' the समयr */
+	bool	locked;		/* समयr is only accesibble by owner अगर set */
 	bool	klocked;	/* kernel lock (after START) */
 	bool	check_again;	/* concurrent access happened during check */
 	bool	check_blocked;	/* queue being checked */
 
-	unsigned int flags;		/* status flags */
-	unsigned int info_flags;	/* info for sync */
+	अचिन्हित पूर्णांक flags;		/* status flags */
+	अचिन्हित पूर्णांक info_flags;	/* info क्रम sync */
 
 	spinlock_t owner_lock;
 	spinlock_t check_lock;
 
-	/* clients which uses this queue (bitmap) */
-	DECLARE_BITMAP(clients_bitmap, SNDRV_SEQ_MAX_CLIENTS);
-	unsigned int clients;	/* users of this queue */
-	struct mutex timer_mutex;
+	/* clients which uses this queue (biपंचांगap) */
+	DECLARE_BITMAP(clients_biपंचांगap, SNDRV_SEQ_MAX_CLIENTS);
+	अचिन्हित पूर्णांक clients;	/* users of this queue */
+	काष्ठा mutex समयr_mutex;
 
 	snd_use_lock_t use_lock;
-};
+पूर्ण;
 
 
 /* get the number of current queues */
-int snd_seq_queue_get_cur_queues(void);
+पूर्णांक snd_seq_queue_get_cur_queues(व्योम);
 
 /* delete queues */ 
-void snd_seq_queues_delete(void);
+व्योम snd_seq_queues_delete(व्योम);
 
 
-/* create new queue (constructor) */
-struct snd_seq_queue *snd_seq_queue_alloc(int client, int locked, unsigned int flags);
+/* create new queue (स्थिरructor) */
+काष्ठा snd_seq_queue *snd_seq_queue_alloc(पूर्णांक client, पूर्णांक locked, अचिन्हित पूर्णांक flags);
 
-/* delete queue (destructor) */
-int snd_seq_queue_delete(int client, int queueid);
+/* delete queue (deकाष्ठाor) */
+पूर्णांक snd_seq_queue_delete(पूर्णांक client, पूर्णांक queueid);
 
 /* final stage */
-void snd_seq_queue_client_leave(int client);
+व्योम snd_seq_queue_client_leave(पूर्णांक client);
 
 /* enqueue a event received from one the clients */
-int snd_seq_enqueue_event(struct snd_seq_event_cell *cell, int atomic, int hop);
+पूर्णांक snd_seq_enqueue_event(काष्ठा snd_seq_event_cell *cell, पूर्णांक atomic, पूर्णांक hop);
 
 /* Remove events */
-void snd_seq_queue_client_leave_cells(int client);
-void snd_seq_queue_remove_cells(int client, struct snd_seq_remove_events *info);
+व्योम snd_seq_queue_client_leave_cells(पूर्णांक client);
+व्योम snd_seq_queue_हटाओ_cells(पूर्णांक client, काष्ठा snd_seq_हटाओ_events *info);
 
-/* return pointer to queue structure for specified id */
-struct snd_seq_queue *queueptr(int queueid);
+/* वापस poपूर्णांकer to queue काष्ठाure क्रम specअगरied id */
+काष्ठा snd_seq_queue *queueptr(पूर्णांक queueid);
 /* unlock */
-#define queuefree(q) snd_use_lock_free(&(q)->use_lock)
+#घोषणा queueमुक्त(q) snd_use_lock_मुक्त(&(q)->use_lock)
 
-/* return the (first) queue matching with the specified name */
-struct snd_seq_queue *snd_seq_queue_find_name(char *name);
+/* वापस the (first) queue matching with the specअगरied name */
+काष्ठा snd_seq_queue *snd_seq_queue_find_name(अक्षर *name);
 
 /* check single queue and dispatch events */
-void snd_seq_check_queue(struct snd_seq_queue *q, int atomic, int hop);
+व्योम snd_seq_check_queue(काष्ठा snd_seq_queue *q, पूर्णांक atomic, पूर्णांक hop);
 
 /* access to queue's parameters */
-int snd_seq_queue_check_access(int queueid, int client);
-int snd_seq_queue_timer_set_tempo(int queueid, int client, struct snd_seq_queue_tempo *info);
-int snd_seq_queue_set_owner(int queueid, int client, int locked);
-int snd_seq_queue_set_locked(int queueid, int client, int locked);
-int snd_seq_queue_timer_open(int queueid);
-int snd_seq_queue_timer_close(int queueid);
-int snd_seq_queue_use(int queueid, int client, int use);
-int snd_seq_queue_is_used(int queueid, int client);
+पूर्णांक snd_seq_queue_check_access(पूर्णांक queueid, पूर्णांक client);
+पूर्णांक snd_seq_queue_समयr_set_tempo(पूर्णांक queueid, पूर्णांक client, काष्ठा snd_seq_queue_tempo *info);
+पूर्णांक snd_seq_queue_set_owner(पूर्णांक queueid, पूर्णांक client, पूर्णांक locked);
+पूर्णांक snd_seq_queue_set_locked(पूर्णांक queueid, पूर्णांक client, पूर्णांक locked);
+पूर्णांक snd_seq_queue_समयr_खोलो(पूर्णांक queueid);
+पूर्णांक snd_seq_queue_समयr_बंद(पूर्णांक queueid);
+पूर्णांक snd_seq_queue_use(पूर्णांक queueid, पूर्णांक client, पूर्णांक use);
+पूर्णांक snd_seq_queue_is_used(पूर्णांक queueid, पूर्णांक client);
 
-int snd_seq_control_queue(struct snd_seq_event *ev, int atomic, int hop);
+पूर्णांक snd_seq_control_queue(काष्ठा snd_seq_event *ev, पूर्णांक atomic, पूर्णांक hop);
 
-#endif
+#पूर्ण_अगर

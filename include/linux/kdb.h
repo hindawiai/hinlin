@@ -1,26 +1,27 @@
-#ifndef _KDB_H
-#define _KDB_H
+<शैली गुरु>
+#अगर_अघोषित _KDB_H
+#घोषणा _KDB_H
 
 /*
  * Kernel Debugger Architecture Independent Global Headers
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 2000-2007 Silicon Graphics, Inc.  All Rights Reserved.
  * Copyright (C) 2000 Stephane Eranian <eranian@hpl.hp.com>
  * Copyright (C) 2009 Jason Wessel <jason.wessel@windriver.com>
  */
 
-/* Shifted versions of the command enable bits are be used if the command
+/* Shअगरted versions of the command enable bits are be used अगर the command
  * has no arguments (see kdb_check_flags). This allows commands, such as
- * go, to have different permissions depending upon whether it is called
+ * go, to have dअगरferent permissions depending upon whether it is called
  * with an argument.
  */
-#define KDB_ENABLE_NO_ARGS_SHIFT 10
+#घोषणा KDB_ENABLE_NO_ARGS_SHIFT 10
 
-typedef enum {
+प्रकार क्रमागत अणु
 	KDB_ENABLE_ALL = (1 << 0), /* Enable everything */
 	KDB_ENABLE_MEM_READ = (1 << 1),
 	KDB_ENABLE_MEM_WRITE = (1 << 2),
@@ -30,7 +31,7 @@ typedef enum {
 	KDB_ENABLE_FLOW_CTRL = (1 << 6),
 	KDB_ENABLE_SIGNAL = (1 << 7),
 	KDB_ENABLE_REBOOT = (1 << 8),
-	/* User exposed values stop here, all remaining flags are
+	/* User exposed values stop here, all reमुख्यing flags are
 	 * exclusively used to describe a commands behaviour.
 	 */
 
@@ -60,160 +61,160 @@ typedef enum {
 
 	KDB_REPEAT_NO_ARGS = 0x40000000, /* Repeat the command w/o arguments */
 	KDB_REPEAT_WITH_ARGS = 0x80000000, /* Repeat the command with args */
-} kdb_cmdflags_t;
+पूर्ण kdb_cmdflags_t;
 
-typedef int (*kdb_func_t)(int, const char **);
+प्रकार पूर्णांक (*kdb_func_t)(पूर्णांक, स्थिर अक्षर **);
 
-#ifdef	CONFIG_KGDB_KDB
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/atomic.h>
+#अगर_घोषित	CONFIG_KGDB_KDB
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/atomic.h>
 
-#define KDB_POLL_FUNC_MAX	5
-extern int kdb_poll_idx;
+#घोषणा KDB_POLL_FUNC_MAX	5
+बाह्य पूर्णांक kdb_poll_idx;
 
 /*
  * kdb_initial_cpu is initialized to -1, and is set to the cpu
  * number whenever the kernel debugger is entered.
  */
-extern int kdb_initial_cpu;
+बाह्य पूर्णांक kdb_initial_cpu;
 
-/* Types and messages used for dynamically added kdb shell commands */
+/* Types and messages used क्रम dynamically added kdb shell commands */
 
-#define KDB_MAXARGS    16 /* Maximum number of arguments to a function  */
+#घोषणा KDB_MAXARGS    16 /* Maximum number of arguments to a function  */
 
-/* KDB return codes from a command or internal kdb function */
-#define KDB_NOTFOUND	(-1)
-#define KDB_ARGCOUNT	(-2)
-#define KDB_BADWIDTH	(-3)
-#define KDB_BADRADIX	(-4)
-#define KDB_NOTENV	(-5)
-#define KDB_NOENVVALUE	(-6)
-#define KDB_NOTIMP	(-7)
-#define KDB_ENVFULL	(-8)
-#define KDB_ENVBUFFULL	(-9)
-#define KDB_TOOMANYBPT	(-10)
-#define KDB_TOOMANYDBREGS (-11)
-#define KDB_DUPBPT	(-12)
-#define KDB_BPTNOTFOUND	(-13)
-#define KDB_BADMODE	(-14)
-#define KDB_BADINT	(-15)
-#define KDB_INVADDRFMT  (-16)
-#define KDB_BADREG      (-17)
-#define KDB_BADCPUNUM   (-18)
-#define KDB_BADLENGTH	(-19)
-#define KDB_NOBP	(-20)
-#define KDB_BADADDR	(-21)
-#define KDB_NOPERM	(-22)
+/* KDB वापस codes from a command or पूर्णांकernal kdb function */
+#घोषणा KDB_NOTFOUND	(-1)
+#घोषणा KDB_ARGCOUNT	(-2)
+#घोषणा KDB_BADWIDTH	(-3)
+#घोषणा KDB_BADRADIX	(-4)
+#घोषणा KDB_NOTENV	(-5)
+#घोषणा KDB_NOENVVALUE	(-6)
+#घोषणा KDB_NOTIMP	(-7)
+#घोषणा KDB_ENVFULL	(-8)
+#घोषणा KDB_ENVBUFFULL	(-9)
+#घोषणा KDB_TOOMANYBPT	(-10)
+#घोषणा KDB_TOOMANYDBREGS (-11)
+#घोषणा KDB_DUPBPT	(-12)
+#घोषणा KDB_BPTNOTFOUND	(-13)
+#घोषणा KDB_BADMODE	(-14)
+#घोषणा KDB_BADINT	(-15)
+#घोषणा KDB_INVADDRFMT  (-16)
+#घोषणा KDB_BADREG      (-17)
+#घोषणा KDB_BADCPUNUM   (-18)
+#घोषणा KDB_BADLENGTH	(-19)
+#घोषणा KDB_NOBP	(-20)
+#घोषणा KDB_BADADDR	(-21)
+#घोषणा KDB_NOPERM	(-22)
 
 /*
  * kdb_diemsg
  *
- *	Contains a pointer to the last string supplied to the
+ *	Contains a poपूर्णांकer to the last string supplied to the
  *	kernel 'die' panic function.
  */
-extern const char *kdb_diemsg;
+बाह्य स्थिर अक्षर *kdb_diemsg;
 
-#define KDB_FLAG_EARLYKDB	(1 << 0) /* set from boot parameter kdb=early */
-#define KDB_FLAG_CATASTROPHIC	(1 << 1) /* A catastrophic event has occurred */
-#define KDB_FLAG_CMD_INTERRUPT	(1 << 2) /* Previous command was interrupted */
-#define KDB_FLAG_NOIPI		(1 << 3) /* Do not send IPIs */
-#define KDB_FLAG_NO_CONSOLE	(1 << 5) /* No console is available,
+#घोषणा KDB_FLAG_EARLYKDB	(1 << 0) /* set from boot parameter kdb=early */
+#घोषणा KDB_FLAG_CATASTROPHIC	(1 << 1) /* A catastrophic event has occurred */
+#घोषणा KDB_FLAG_CMD_INTERRUPT	(1 << 2) /* Previous command was पूर्णांकerrupted */
+#घोषणा KDB_FLAG_NOIPI		(1 << 3) /* Do not send IPIs */
+#घोषणा KDB_FLAG_NO_CONSOLE	(1 << 5) /* No console is available,
 					  * kdb is disabled */
-#define KDB_FLAG_NO_VT_CONSOLE	(1 << 6) /* No VT console is available, do
+#घोषणा KDB_FLAG_NO_VT_CONSOLE	(1 << 6) /* No VT console is available, करो
 					  * not use keyboard */
-#define KDB_FLAG_NO_I8042	(1 << 7) /* No i8042 chip is available, do
+#घोषणा KDB_FLAG_NO_I8042	(1 << 7) /* No i8042 chip is available, करो
 					  * not use keyboard */
 
-extern unsigned int kdb_flags;	/* Global flags, see kdb_state for per cpu state */
+बाह्य अचिन्हित पूर्णांक kdb_flags;	/* Global flags, see kdb_state क्रम per cpu state */
 
-extern void kdb_save_flags(void);
-extern void kdb_restore_flags(void);
+बाह्य व्योम kdb_save_flags(व्योम);
+बाह्य व्योम kdb_restore_flags(व्योम);
 
-#define KDB_FLAG(flag)		(kdb_flags & KDB_FLAG_##flag)
-#define KDB_FLAG_SET(flag)	((void)(kdb_flags |= KDB_FLAG_##flag))
-#define KDB_FLAG_CLEAR(flag)	((void)(kdb_flags &= ~KDB_FLAG_##flag))
+#घोषणा KDB_FLAG(flag)		(kdb_flags & KDB_FLAG_##flag)
+#घोषणा KDB_FLAG_SET(flag)	((व्योम)(kdb_flags |= KDB_FLAG_##flag))
+#घोषणा KDB_FLAG_CLEAR(flag)	((व्योम)(kdb_flags &= ~KDB_FLAG_##flag))
 
 /*
- * External entry point for the kernel debugger.  The pt_regs
- * at the time of entry are supplied along with the reason for
+ * External entry poपूर्णांक क्रम the kernel debugger.  The pt_regs
+ * at the समय of entry are supplied aदीर्घ with the reason क्रम
  * entry to the kernel debugger.
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
 	KDB_REASON_ENTER = 1,	/* KDB_ENTER() trap/fault - regs valid */
 	KDB_REASON_ENTER_SLAVE,	/* KDB_ENTER_SLAVE() trap/fault - regs valid */
-	KDB_REASON_BREAK,	/* Breakpoint inst. - regs valid */
+	KDB_REASON_BREAK,	/* Breakpoपूर्णांक inst. - regs valid */
 	KDB_REASON_DEBUG,	/* Debug Fault - regs valid */
 	KDB_REASON_OOPS,	/* Kernel Oops - regs valid */
-	KDB_REASON_SWITCH,	/* CPU switch - regs valid*/
+	KDB_REASON_SWITCH,	/* CPU चयन - regs valid*/
 	KDB_REASON_KEYBOARD,	/* Keyboard entry - regs valid */
-	KDB_REASON_NMI,		/* Non-maskable interrupt; regs valid */
+	KDB_REASON_NMI,		/* Non-maskable पूर्णांकerrupt; regs valid */
 	KDB_REASON_RECURSE,	/* Recursive entry to kdb;
 				 * regs probably valid */
 	KDB_REASON_SSTEP,	/* Single Step trap. - regs valid */
 	KDB_REASON_SYSTEM_NMI,	/* In NMI due to SYSTEM cmd; regs valid */
-} kdb_reason_t;
+पूर्ण kdb_reason_t;
 
-enum kdb_msgsrc {
-	KDB_MSGSRC_INTERNAL, /* direct call to kdb_printf() */
-	KDB_MSGSRC_PRINTK, /* trapped from printk() */
-};
+क्रमागत kdb_msgsrc अणु
+	KDB_MSGSRC_INTERNAL, /* direct call to kdb_म_लिखो() */
+	KDB_MSGSRC_PRINTK, /* trapped from prपूर्णांकk() */
+पूर्ण;
 
-extern int kdb_trap_printk;
-extern int kdb_printf_cpu;
-extern __printf(2, 0) int vkdb_printf(enum kdb_msgsrc src, const char *fmt,
-				      va_list args);
-extern __printf(1, 2) int kdb_printf(const char *, ...);
-typedef __printf(1, 2) int (*kdb_printf_t)(const char *, ...);
+बाह्य पूर्णांक kdb_trap_prपूर्णांकk;
+बाह्य पूर्णांक kdb_म_लिखो_cpu;
+बाह्य __म_लिखो(2, 0) पूर्णांक vkdb_म_लिखो(क्रमागत kdb_msgsrc src, स्थिर अक्षर *fmt,
+				      बहु_सूची args);
+बाह्य __म_लिखो(1, 2) पूर्णांक kdb_म_लिखो(स्थिर अक्षर *, ...);
+प्रकार __म_लिखो(1, 2) पूर्णांक (*kdb_म_लिखो_t)(स्थिर अक्षर *, ...);
 
-extern void kdb_init(int level);
+बाह्य व्योम kdb_init(पूर्णांक level);
 
-/* Access to kdb specific polling devices */
-typedef int (*get_char_func)(void);
-extern get_char_func kdb_poll_funcs[];
-extern int kdb_get_kbd_char(void);
+/* Access to kdb specअगरic polling devices */
+प्रकार पूर्णांक (*get_अक्षर_func)(व्योम);
+बाह्य get_अक्षर_func kdb_poll_funcs[];
+बाह्य पूर्णांक kdb_get_kbd_अक्षर(व्योम);
 
-static inline
-int kdb_process_cpu(const struct task_struct *p)
-{
-	unsigned int cpu = task_cpu(p);
-	if (cpu > num_possible_cpus())
+अटल अंतरभूत
+पूर्णांक kdb_process_cpu(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित पूर्णांक cpu = task_cpu(p);
+	अगर (cpu > num_possible_cpus())
 		cpu = 0;
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-#ifdef CONFIG_KALLSYMS
-extern const char *kdb_walk_kallsyms(loff_t *pos);
-#else /* ! CONFIG_KALLSYMS */
-static inline const char *kdb_walk_kallsyms(loff_t *pos)
-{
-	return NULL;
-}
-#endif /* ! CONFIG_KALLSYMS */
+#अगर_घोषित CONFIG_KALLSYMS
+बाह्य स्थिर अक्षर *kdb_walk_kallsyms(loff_t *pos);
+#अन्यथा /* ! CONFIG_KALLSYMS */
+अटल अंतरभूत स्थिर अक्षर *kdb_walk_kallsyms(loff_t *pos)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* ! CONFIG_KALLSYMS */
 
 /* Dynamic kdb shell command registration */
-extern int kdb_register(char *, kdb_func_t, char *, char *, short);
-extern int kdb_register_flags(char *, kdb_func_t, char *, char *,
-			      short, kdb_cmdflags_t);
-extern int kdb_unregister(char *);
-#else /* ! CONFIG_KGDB_KDB */
-static inline __printf(1, 2) int kdb_printf(const char *fmt, ...) { return 0; }
-static inline void kdb_init(int level) {}
-static inline int kdb_register(char *cmd, kdb_func_t func, char *usage,
-			       char *help, short minlen) { return 0; }
-static inline int kdb_register_flags(char *cmd, kdb_func_t func, char *usage,
-				     char *help, short minlen,
-				     kdb_cmdflags_t flags) { return 0; }
-static inline int kdb_unregister(char *cmd) { return 0; }
-#endif	/* CONFIG_KGDB_KDB */
-enum {
+बाह्य पूर्णांक kdb_रेजिस्टर(अक्षर *, kdb_func_t, अक्षर *, अक्षर *, लघु);
+बाह्य पूर्णांक kdb_रेजिस्टर_flags(अक्षर *, kdb_func_t, अक्षर *, अक्षर *,
+			      लघु, kdb_cmdflags_t);
+बाह्य पूर्णांक kdb_unरेजिस्टर(अक्षर *);
+#अन्यथा /* ! CONFIG_KGDB_KDB */
+अटल अंतरभूत __म_लिखो(1, 2) पूर्णांक kdb_म_लिखो(स्थिर अक्षर *fmt, ...) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम kdb_init(पूर्णांक level) अणुपूर्ण
+अटल अंतरभूत पूर्णांक kdb_रेजिस्टर(अक्षर *cmd, kdb_func_t func, अक्षर *usage,
+			       अक्षर *help, लघु minlen) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक kdb_रेजिस्टर_flags(अक्षर *cmd, kdb_func_t func, अक्षर *usage,
+				     अक्षर *help, लघु minlen,
+				     kdb_cmdflags_t flags) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक kdb_unरेजिस्टर(अक्षर *cmd) अणु वापस 0; पूर्ण
+#पूर्ण_अगर	/* CONFIG_KGDB_KDB */
+क्रमागत अणु
 	KDB_NOT_INITIALIZED,
 	KDB_INIT_EARLY,
 	KDB_INIT_FULL,
-};
+पूर्ण;
 
-extern int kdbgetintenv(const char *, int *);
-extern int kdb_set(int, const char **);
+बाह्य पूर्णांक kdbgetपूर्णांकenv(स्थिर अक्षर *, पूर्णांक *);
+बाह्य पूर्णांक kdb_set(पूर्णांक, स्थिर अक्षर **);
 
-#endif	/* !_KDB_H */
+#पूर्ण_अगर	/* !_KDB_H */

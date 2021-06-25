@@ -1,260 +1,261 @@
+<शैली गुरु>
 /*
  * sysfs.c - sysfs support
  *
- * (C) 2006-2007 Shaohua Li <shaohua.li@intel.com>
+ * (C) 2006-2007 Shaohua Li <shaohua.li@पूर्णांकel.com>
  *
  * This code is licenced under the GPL.
  */
 
-#include <linux/kernel.h>
-#include <linux/cpuidle.h>
-#include <linux/sysfs.h>
-#include <linux/slab.h>
-#include <linux/cpu.h>
-#include <linux/completion.h>
-#include <linux/capability.h>
-#include <linux/device.h>
-#include <linux/kobject.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kobject.h>
 
-#include "cpuidle.h"
+#समावेश "cpuidle.h"
 
-static ssize_t show_available_governors(struct device *dev,
-					struct device_attribute *attr,
-					char *buf)
-{
-	ssize_t i = 0;
-	struct cpuidle_governor *tmp;
+अटल sमाप_प्रकार show_available_governors(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	sमाप_प्रकार i = 0;
+	काष्ठा cpuidle_governor *पंचांगp;
 
 	mutex_lock(&cpuidle_lock);
-	list_for_each_entry(tmp, &cpuidle_governors, governor_list) {
-		if (i >= (ssize_t) (PAGE_SIZE - (CPUIDLE_NAME_LEN + 2)))
-			goto out;
+	list_क्रम_each_entry(पंचांगp, &cpuidle_governors, governor_list) अणु
+		अगर (i >= (sमाप_प्रकार) (PAGE_SIZE - (CPUIDLE_NAME_LEN + 2)))
+			जाओ out;
 
-		i += scnprintf(&buf[i], CPUIDLE_NAME_LEN + 1, "%s ", tmp->name);
-	}
+		i += scnम_लिखो(&buf[i], CPUIDLE_NAME_LEN + 1, "%s ", पंचांगp->name);
+	पूर्ण
 
 out:
-	i+= sprintf(&buf[i], "\n");
+	i+= प्र_लिखो(&buf[i], "\n");
 	mutex_unlock(&cpuidle_lock);
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static ssize_t show_current_driver(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	ssize_t ret;
-	struct cpuidle_driver *drv;
+अटल sमाप_प्रकार show_current_driver(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	sमाप_प्रकार ret;
+	काष्ठा cpuidle_driver *drv;
 
 	spin_lock(&cpuidle_driver_lock);
 	drv = cpuidle_get_driver();
-	if (drv)
-		ret = sprintf(buf, "%s\n", drv->name);
-	else
-		ret = sprintf(buf, "none\n");
+	अगर (drv)
+		ret = प्र_लिखो(buf, "%s\n", drv->name);
+	अन्यथा
+		ret = प्र_लिखो(buf, "none\n");
 	spin_unlock(&cpuidle_driver_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t show_current_governor(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार show_current_governor(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	sमाप_प्रकार ret;
 
 	mutex_lock(&cpuidle_lock);
-	if (cpuidle_curr_governor)
-		ret = sprintf(buf, "%s\n", cpuidle_curr_governor->name);
-	else
-		ret = sprintf(buf, "none\n");
+	अगर (cpuidle_curr_governor)
+		ret = प्र_लिखो(buf, "%s\n", cpuidle_curr_governor->name);
+	अन्यथा
+		ret = प्र_लिखो(buf, "none\n");
 	mutex_unlock(&cpuidle_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t store_current_governor(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t count)
-{
-	char gov_name[CPUIDLE_NAME_LEN + 1];
-	int ret;
-	struct cpuidle_governor *gov;
+अटल sमाप_प्रकार store_current_governor(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अक्षर gov_name[CPUIDLE_NAME_LEN + 1];
+	पूर्णांक ret;
+	काष्ठा cpuidle_governor *gov;
 
-	ret = sscanf(buf, "%" __stringify(CPUIDLE_NAME_LEN) "s", gov_name);
-	if (ret != 1)
-		return -EINVAL;
+	ret = माला_पूछो(buf, "%" __stringअगरy(CPUIDLE_NAME_LEN) "s", gov_name);
+	अगर (ret != 1)
+		वापस -EINVAL;
 
 	mutex_lock(&cpuidle_lock);
 	ret = -EINVAL;
-	list_for_each_entry(gov, &cpuidle_governors, governor_list) {
-		if (!strncmp(gov->name, gov_name, CPUIDLE_NAME_LEN)) {
-			ret = cpuidle_switch_governor(gov);
-			break;
-		}
-	}
+	list_क्रम_each_entry(gov, &cpuidle_governors, governor_list) अणु
+		अगर (!म_भेदन(gov->name, gov_name, CPUIDLE_NAME_LEN)) अणु
+			ret = cpuidle_चयन_governor(gov);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&cpuidle_lock);
 
-	return ret ? ret : count;
-}
+	वापस ret ? ret : count;
+पूर्ण
 
-static DEVICE_ATTR(available_governors, 0444, show_available_governors, NULL);
-static DEVICE_ATTR(current_driver, 0444, show_current_driver, NULL);
-static DEVICE_ATTR(current_governor, 0644, show_current_governor,
+अटल DEVICE_ATTR(available_governors, 0444, show_available_governors, शून्य);
+अटल DEVICE_ATTR(current_driver, 0444, show_current_driver, शून्य);
+अटल DEVICE_ATTR(current_governor, 0644, show_current_governor,
 				   store_current_governor);
-static DEVICE_ATTR(current_governor_ro, 0444, show_current_governor, NULL);
+अटल DEVICE_ATTR(current_governor_ro, 0444, show_current_governor, शून्य);
 
-static struct attribute *cpuidle_attrs[] = {
+अटल काष्ठा attribute *cpuidle_attrs[] = अणु
 	&dev_attr_available_governors.attr,
 	&dev_attr_current_driver.attr,
 	&dev_attr_current_governor.attr,
 	&dev_attr_current_governor_ro.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group cpuidle_attr_group = {
+अटल काष्ठा attribute_group cpuidle_attr_group = अणु
 	.attrs = cpuidle_attrs,
 	.name = "cpuidle",
-};
+पूर्ण;
 
 /**
- * cpuidle_add_interface - add CPU global sysfs attributes
+ * cpuidle_add_पूर्णांकerface - add CPU global sysfs attributes
  * @dev: the target device
  */
-int cpuidle_add_interface(struct device *dev)
-{
-	return sysfs_create_group(&dev->kobj, &cpuidle_attr_group);
-}
+पूर्णांक cpuidle_add_पूर्णांकerface(काष्ठा device *dev)
+अणु
+	वापस sysfs_create_group(&dev->kobj, &cpuidle_attr_group);
+पूर्ण
 
 /**
- * cpuidle_remove_interface - remove CPU global sysfs attributes
+ * cpuidle_हटाओ_पूर्णांकerface - हटाओ CPU global sysfs attributes
  * @dev: the target device
  */
-void cpuidle_remove_interface(struct device *dev)
-{
-	sysfs_remove_group(&dev->kobj, &cpuidle_attr_group);
-}
+व्योम cpuidle_हटाओ_पूर्णांकerface(काष्ठा device *dev)
+अणु
+	sysfs_हटाओ_group(&dev->kobj, &cpuidle_attr_group);
+पूर्ण
 
-struct cpuidle_attr {
-	struct attribute attr;
-	ssize_t (*show)(struct cpuidle_device *, char *);
-	ssize_t (*store)(struct cpuidle_device *, const char *, size_t count);
-};
+काष्ठा cpuidle_attr अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा cpuidle_device *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा cpuidle_device *, स्थिर अक्षर *, माप_प्रकार count);
+पूर्ण;
 
-#define attr_to_cpuidleattr(a) container_of(a, struct cpuidle_attr, attr)
+#घोषणा attr_to_cpuidleattr(a) container_of(a, काष्ठा cpuidle_attr, attr)
 
-struct cpuidle_device_kobj {
-	struct cpuidle_device *dev;
-	struct completion kobj_unregister;
-	struct kobject kobj;
-};
+काष्ठा cpuidle_device_kobj अणु
+	काष्ठा cpuidle_device *dev;
+	काष्ठा completion kobj_unरेजिस्टर;
+	काष्ठा kobject kobj;
+पूर्ण;
 
-static inline struct cpuidle_device *to_cpuidle_device(struct kobject *kobj)
-{
-	struct cpuidle_device_kobj *kdev =
-		container_of(kobj, struct cpuidle_device_kobj, kobj);
+अटल अंतरभूत काष्ठा cpuidle_device *to_cpuidle_device(काष्ठा kobject *kobj)
+अणु
+	काष्ठा cpuidle_device_kobj *kdev =
+		container_of(kobj, काष्ठा cpuidle_device_kobj, kobj);
 
-	return kdev->dev;
-}
+	वापस kdev->dev;
+पूर्ण
 
-static ssize_t cpuidle_show(struct kobject *kobj, struct attribute *attr,
-			    char *buf)
-{
-	int ret = -EIO;
-	struct cpuidle_device *dev = to_cpuidle_device(kobj);
-	struct cpuidle_attr *cattr = attr_to_cpuidleattr(attr);
+अटल sमाप_प्रकार cpuidle_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			    अक्षर *buf)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_device *dev = to_cpuidle_device(kobj);
+	काष्ठा cpuidle_attr *cattr = attr_to_cpuidleattr(attr);
 
-	if (cattr->show) {
+	अगर (cattr->show) अणु
 		mutex_lock(&cpuidle_lock);
 		ret = cattr->show(dev, buf);
 		mutex_unlock(&cpuidle_lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static ssize_t cpuidle_store(struct kobject *kobj, struct attribute *attr,
-			     const char *buf, size_t count)
-{
-	int ret = -EIO;
-	struct cpuidle_device *dev = to_cpuidle_device(kobj);
-	struct cpuidle_attr *cattr = attr_to_cpuidleattr(attr);
+अटल sमाप_प्रकार cpuidle_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_device *dev = to_cpuidle_device(kobj);
+	काष्ठा cpuidle_attr *cattr = attr_to_cpuidleattr(attr);
 
-	if (cattr->store) {
+	अगर (cattr->store) अणु
 		mutex_lock(&cpuidle_lock);
 		ret = cattr->store(dev, buf, count);
 		mutex_unlock(&cpuidle_lock);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops cpuidle_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops cpuidle_sysfs_ops = अणु
 	.show = cpuidle_show,
 	.store = cpuidle_store,
-};
+पूर्ण;
 
-static void cpuidle_sysfs_release(struct kobject *kobj)
-{
-	struct cpuidle_device_kobj *kdev =
-		container_of(kobj, struct cpuidle_device_kobj, kobj);
+अटल व्योम cpuidle_sysfs_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा cpuidle_device_kobj *kdev =
+		container_of(kobj, काष्ठा cpuidle_device_kobj, kobj);
 
-	complete(&kdev->kobj_unregister);
-}
+	complete(&kdev->kobj_unरेजिस्टर);
+पूर्ण
 
-static struct kobj_type ktype_cpuidle = {
+अटल काष्ठा kobj_type ktype_cpuidle = अणु
 	.sysfs_ops = &cpuidle_sysfs_ops,
 	.release = cpuidle_sysfs_release,
-};
+पूर्ण;
 
-struct cpuidle_state_attr {
-	struct attribute attr;
-	ssize_t (*show)(struct cpuidle_state *, \
-					struct cpuidle_state_usage *, char *);
-	ssize_t (*store)(struct cpuidle_state *, \
-			struct cpuidle_state_usage *, const char *, size_t);
-};
+काष्ठा cpuidle_state_attr अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा cpuidle_state *, \
+					काष्ठा cpuidle_state_usage *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा cpuidle_state *, \
+			काष्ठा cpuidle_state_usage *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-#define define_one_state_ro(_name, show) \
-static struct cpuidle_state_attr attr_##_name = __ATTR(_name, 0444, show, NULL)
+#घोषणा define_one_state_ro(_name, show) \
+अटल काष्ठा cpuidle_state_attr attr_##_name = __ATTR(_name, 0444, show, शून्य)
 
-#define define_one_state_rw(_name, show, store) \
-static struct cpuidle_state_attr attr_##_name = __ATTR(_name, 0644, show, store)
+#घोषणा define_one_state_rw(_name, show, store) \
+अटल काष्ठा cpuidle_state_attr attr_##_name = __ATTR(_name, 0644, show, store)
 
-#define define_show_state_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-			 struct cpuidle_state_usage *state_usage, char *buf) \
-{ \
-	return sprintf(buf, "%u\n", state->_name);\
-}
+#घोषणा define_show_state_function(_name) \
+अटल sमाप_प्रकार show_state_##_name(काष्ठा cpuidle_state *state, \
+			 काष्ठा cpuidle_state_usage *state_usage, अक्षर *buf) \
+अणु \
+	वापस प्र_लिखो(buf, "%u\n", state->_name);\
+पूर्ण
 
-#define define_show_state_ull_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-				  struct cpuidle_state_usage *state_usage, \
-				  char *buf)				\
-{ \
-	return sprintf(buf, "%llu\n", state_usage->_name);\
-}
+#घोषणा define_show_state_ull_function(_name) \
+अटल sमाप_प्रकार show_state_##_name(काष्ठा cpuidle_state *state, \
+				  काष्ठा cpuidle_state_usage *state_usage, \
+				  अक्षर *buf)				\
+अणु \
+	वापस प्र_लिखो(buf, "%llu\n", state_usage->_name);\
+पूर्ण
 
-#define define_show_state_str_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-				  struct cpuidle_state_usage *state_usage, \
-				  char *buf)				\
-{ \
-	if (state->_name[0] == '\0')\
-		return sprintf(buf, "<null>\n");\
-	return sprintf(buf, "%s\n", state->_name);\
-}
+#घोषणा define_show_state_str_function(_name) \
+अटल sमाप_प्रकार show_state_##_name(काष्ठा cpuidle_state *state, \
+				  काष्ठा cpuidle_state_usage *state_usage, \
+				  अक्षर *buf)				\
+अणु \
+	अगर (state->_name[0] == '\0')\
+		वापस प्र_लिखो(buf, "<null>\n");\
+	वापस प्र_लिखो(buf, "%s\n", state->_name);\
+पूर्ण
 
-#define define_show_state_time_function(_name) \
-static ssize_t show_state_##_name(struct cpuidle_state *state, \
-				  struct cpuidle_state_usage *state_usage, \
-				  char *buf) \
-{ \
-	return sprintf(buf, "%llu\n", ktime_to_us(state->_name##_ns)); \
-}
+#घोषणा define_show_state_समय_function(_name) \
+अटल sमाप_प्रकार show_state_##_name(काष्ठा cpuidle_state *state, \
+				  काष्ठा cpuidle_state_usage *state_usage, \
+				  अक्षर *buf) \
+अणु \
+	वापस प्र_लिखो(buf, "%llu\n", kसमय_प्रकारo_us(state->_name##_ns)); \
+पूर्ण
 
-define_show_state_time_function(exit_latency)
-define_show_state_time_function(target_residency)
-define_show_state_function(power_usage)
+define_show_state_समय_function(निकास_latency)
+define_show_state_समय_function(target_residency)
+define_show_state_function(घातer_usage)
 define_show_state_ull_function(usage)
 define_show_state_ull_function(rejected)
 define_show_state_str_function(name)
@@ -262,474 +263,474 @@ define_show_state_str_function(desc)
 define_show_state_ull_function(above)
 define_show_state_ull_function(below)
 
-static ssize_t show_state_time(struct cpuidle_state *state,
-			       struct cpuidle_state_usage *state_usage,
-			       char *buf)
-{
-	return sprintf(buf, "%llu\n", ktime_to_us(state_usage->time_ns));
-}
+अटल sमाप_प्रकार show_state_समय(काष्ठा cpuidle_state *state,
+			       काष्ठा cpuidle_state_usage *state_usage,
+			       अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n", kसमय_प्रकारo_us(state_usage->समय_ns));
+पूर्ण
 
-static ssize_t show_state_disable(struct cpuidle_state *state,
-				  struct cpuidle_state_usage *state_usage,
-				  char *buf)
-{
-	return sprintf(buf, "%llu\n",
+अटल sमाप_प्रकार show_state_disable(काष्ठा cpuidle_state *state,
+				  काष्ठा cpuidle_state_usage *state_usage,
+				  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%llu\n",
 		       state_usage->disable & CPUIDLE_STATE_DISABLED_BY_USER);
-}
+पूर्ण
 
-static ssize_t store_state_disable(struct cpuidle_state *state,
-				   struct cpuidle_state_usage *state_usage,
-				   const char *buf, size_t size)
-{
-	unsigned int value;
-	int err;
+अटल sमाप_प्रकार store_state_disable(काष्ठा cpuidle_state *state,
+				   काष्ठा cpuidle_state_usage *state_usage,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित पूर्णांक value;
+	पूर्णांक err;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	err = kstrtouint(buf, 0, &value);
-	if (err)
-		return err;
+	err = kstrtouपूर्णांक(buf, 0, &value);
+	अगर (err)
+		वापस err;
 
-	if (value)
+	अगर (value)
 		state_usage->disable |= CPUIDLE_STATE_DISABLED_BY_USER;
-	else
+	अन्यथा
 		state_usage->disable &= ~CPUIDLE_STATE_DISABLED_BY_USER;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t show_state_default_status(struct cpuidle_state *state,
-					  struct cpuidle_state_usage *state_usage,
-					  char *buf)
-{
-	return sprintf(buf, "%s\n",
+अटल sमाप_प्रकार show_state_शेष_status(काष्ठा cpuidle_state *state,
+					  काष्ठा cpuidle_state_usage *state_usage,
+					  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n",
 		       state->flags & CPUIDLE_FLAG_OFF ? "disabled" : "enabled");
-}
+पूर्ण
 
 define_one_state_ro(name, show_state_name);
 define_one_state_ro(desc, show_state_desc);
-define_one_state_ro(latency, show_state_exit_latency);
+define_one_state_ro(latency, show_state_निकास_latency);
 define_one_state_ro(residency, show_state_target_residency);
-define_one_state_ro(power, show_state_power_usage);
+define_one_state_ro(घातer, show_state_घातer_usage);
 define_one_state_ro(usage, show_state_usage);
 define_one_state_ro(rejected, show_state_rejected);
-define_one_state_ro(time, show_state_time);
+define_one_state_ro(समय, show_state_समय);
 define_one_state_rw(disable, show_state_disable, store_state_disable);
 define_one_state_ro(above, show_state_above);
 define_one_state_ro(below, show_state_below);
-define_one_state_ro(default_status, show_state_default_status);
+define_one_state_ro(शेष_status, show_state_शेष_status);
 
-static struct attribute *cpuidle_state_default_attrs[] = {
+अटल काष्ठा attribute *cpuidle_state_शेष_attrs[] = अणु
 	&attr_name.attr,
 	&attr_desc.attr,
 	&attr_latency.attr,
 	&attr_residency.attr,
-	&attr_power.attr,
+	&attr_घातer.attr,
 	&attr_usage.attr,
 	&attr_rejected.attr,
-	&attr_time.attr,
+	&attr_समय.attr,
 	&attr_disable.attr,
 	&attr_above.attr,
 	&attr_below.attr,
-	&attr_default_status.attr,
-	NULL
-};
+	&attr_शेष_status.attr,
+	शून्य
+पूर्ण;
 
-struct cpuidle_state_kobj {
-	struct cpuidle_state *state;
-	struct cpuidle_state_usage *state_usage;
-	struct completion kobj_unregister;
-	struct kobject kobj;
-	struct cpuidle_device *device;
-};
+काष्ठा cpuidle_state_kobj अणु
+	काष्ठा cpuidle_state *state;
+	काष्ठा cpuidle_state_usage *state_usage;
+	काष्ठा completion kobj_unरेजिस्टर;
+	काष्ठा kobject kobj;
+	काष्ठा cpuidle_device *device;
+पूर्ण;
 
-#ifdef CONFIG_SUSPEND
-#define define_show_state_s2idle_ull_function(_name) \
-static ssize_t show_state_s2idle_##_name(struct cpuidle_state *state, \
-					 struct cpuidle_state_usage *state_usage, \
-					 char *buf)				\
-{ \
-	return sprintf(buf, "%llu\n", state_usage->s2idle_##_name);\
-}
+#अगर_घोषित CONFIG_SUSPEND
+#घोषणा define_show_state_s2idle_ull_function(_name) \
+अटल sमाप_प्रकार show_state_s2idle_##_name(काष्ठा cpuidle_state *state, \
+					 काष्ठा cpuidle_state_usage *state_usage, \
+					 अक्षर *buf)				\
+अणु \
+	वापस प्र_लिखो(buf, "%llu\n", state_usage->s2idle_##_name);\
+पूर्ण
 
 define_show_state_s2idle_ull_function(usage);
-define_show_state_s2idle_ull_function(time);
+define_show_state_s2idle_ull_function(समय);
 
-#define define_one_state_s2idle_ro(_name, show) \
-static struct cpuidle_state_attr attr_s2idle_##_name = \
-	__ATTR(_name, 0444, show, NULL)
+#घोषणा define_one_state_s2idle_ro(_name, show) \
+अटल काष्ठा cpuidle_state_attr attr_s2idle_##_name = \
+	__ATTR(_name, 0444, show, शून्य)
 
 define_one_state_s2idle_ro(usage, show_state_s2idle_usage);
-define_one_state_s2idle_ro(time, show_state_s2idle_time);
+define_one_state_s2idle_ro(समय, show_state_s2idle_समय);
 
-static struct attribute *cpuidle_state_s2idle_attrs[] = {
+अटल काष्ठा attribute *cpuidle_state_s2idle_attrs[] = अणु
 	&attr_s2idle_usage.attr,
-	&attr_s2idle_time.attr,
-	NULL
-};
+	&attr_s2idle_समय.attr,
+	शून्य
+पूर्ण;
 
-static const struct attribute_group cpuidle_state_s2idle_group = {
+अटल स्थिर काष्ठा attribute_group cpuidle_state_s2idle_group = अणु
 	.name	= "s2idle",
 	.attrs	= cpuidle_state_s2idle_attrs,
-};
+पूर्ण;
 
-static void cpuidle_add_s2idle_attr_group(struct cpuidle_state_kobj *kobj)
-{
-	int ret;
+अटल व्योम cpuidle_add_s2idle_attr_group(काष्ठा cpuidle_state_kobj *kobj)
+अणु
+	पूर्णांक ret;
 
-	if (!kobj->state->enter_s2idle)
-		return;
+	अगर (!kobj->state->enter_s2idle)
+		वापस;
 
 	ret = sysfs_create_group(&kobj->kobj, &cpuidle_state_s2idle_group);
-	if (ret)
+	अगर (ret)
 		pr_debug("%s: sysfs attribute group not created\n", __func__);
-}
+पूर्ण
 
-static void cpuidle_remove_s2idle_attr_group(struct cpuidle_state_kobj *kobj)
-{
-	if (kobj->state->enter_s2idle)
-		sysfs_remove_group(&kobj->kobj, &cpuidle_state_s2idle_group);
-}
-#else
-static inline void cpuidle_add_s2idle_attr_group(struct cpuidle_state_kobj *kobj) { }
-static inline void cpuidle_remove_s2idle_attr_group(struct cpuidle_state_kobj *kobj) { }
-#endif /* CONFIG_SUSPEND */
+अटल व्योम cpuidle_हटाओ_s2idle_attr_group(काष्ठा cpuidle_state_kobj *kobj)
+अणु
+	अगर (kobj->state->enter_s2idle)
+		sysfs_हटाओ_group(&kobj->kobj, &cpuidle_state_s2idle_group);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम cpuidle_add_s2idle_attr_group(काष्ठा cpuidle_state_kobj *kobj) अणु पूर्ण
+अटल अंतरभूत व्योम cpuidle_हटाओ_s2idle_attr_group(काष्ठा cpuidle_state_kobj *kobj) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_SUSPEND */
 
-#define kobj_to_state_obj(k) container_of(k, struct cpuidle_state_kobj, kobj)
-#define kobj_to_state(k) (kobj_to_state_obj(k)->state)
-#define kobj_to_state_usage(k) (kobj_to_state_obj(k)->state_usage)
-#define kobj_to_device(k) (kobj_to_state_obj(k)->device)
-#define attr_to_stateattr(a) container_of(a, struct cpuidle_state_attr, attr)
+#घोषणा kobj_to_state_obj(k) container_of(k, काष्ठा cpuidle_state_kobj, kobj)
+#घोषणा kobj_to_state(k) (kobj_to_state_obj(k)->state)
+#घोषणा kobj_to_state_usage(k) (kobj_to_state_obj(k)->state_usage)
+#घोषणा kobj_to_device(k) (kobj_to_state_obj(k)->device)
+#घोषणा attr_to_stateattr(a) container_of(a, काष्ठा cpuidle_state_attr, attr)
 
-static ssize_t cpuidle_state_show(struct kobject *kobj, struct attribute *attr,
-				  char *buf)
-{
-	int ret = -EIO;
-	struct cpuidle_state *state = kobj_to_state(kobj);
-	struct cpuidle_state_usage *state_usage = kobj_to_state_usage(kobj);
-	struct cpuidle_state_attr *cattr = attr_to_stateattr(attr);
+अटल sमाप_प्रकार cpuidle_state_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				  अक्षर *buf)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_state *state = kobj_to_state(kobj);
+	काष्ठा cpuidle_state_usage *state_usage = kobj_to_state_usage(kobj);
+	काष्ठा cpuidle_state_attr *cattr = attr_to_stateattr(attr);
 
-	if (cattr->show)
+	अगर (cattr->show)
 		ret = cattr->show(state, state_usage, buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t cpuidle_state_store(struct kobject *kobj, struct attribute *attr,
-				   const char *buf, size_t size)
-{
-	int ret = -EIO;
-	struct cpuidle_state *state = kobj_to_state(kobj);
-	struct cpuidle_state_usage *state_usage = kobj_to_state_usage(kobj);
-	struct cpuidle_state_attr *cattr = attr_to_stateattr(attr);
-	struct cpuidle_device *dev = kobj_to_device(kobj);
+अटल sमाप_प्रकार cpuidle_state_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_state *state = kobj_to_state(kobj);
+	काष्ठा cpuidle_state_usage *state_usage = kobj_to_state_usage(kobj);
+	काष्ठा cpuidle_state_attr *cattr = attr_to_stateattr(attr);
+	काष्ठा cpuidle_device *dev = kobj_to_device(kobj);
 
-	if (cattr->store)
+	अगर (cattr->store)
 		ret = cattr->store(state, state_usage, buf, size);
 
-	/* reset poll time cache */
+	/* reset poll समय cache */
 	dev->poll_limit_ns = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops cpuidle_state_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops cpuidle_state_sysfs_ops = अणु
 	.show = cpuidle_state_show,
 	.store = cpuidle_state_store,
-};
+पूर्ण;
 
-static void cpuidle_state_sysfs_release(struct kobject *kobj)
-{
-	struct cpuidle_state_kobj *state_obj = kobj_to_state_obj(kobj);
+अटल व्योम cpuidle_state_sysfs_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा cpuidle_state_kobj *state_obj = kobj_to_state_obj(kobj);
 
-	complete(&state_obj->kobj_unregister);
-}
+	complete(&state_obj->kobj_unरेजिस्टर);
+पूर्ण
 
-static struct kobj_type ktype_state_cpuidle = {
+अटल काष्ठा kobj_type ktype_state_cpuidle = अणु
 	.sysfs_ops = &cpuidle_state_sysfs_ops,
-	.default_attrs = cpuidle_state_default_attrs,
+	.शेष_attrs = cpuidle_state_शेष_attrs,
 	.release = cpuidle_state_sysfs_release,
-};
+पूर्ण;
 
-static inline void cpuidle_free_state_kobj(struct cpuidle_device *device, int i)
-{
-	cpuidle_remove_s2idle_attr_group(device->kobjs[i]);
+अटल अंतरभूत व्योम cpuidle_मुक्त_state_kobj(काष्ठा cpuidle_device *device, पूर्णांक i)
+अणु
+	cpuidle_हटाओ_s2idle_attr_group(device->kobjs[i]);
 	kobject_put(&device->kobjs[i]->kobj);
-	wait_for_completion(&device->kobjs[i]->kobj_unregister);
-	kfree(device->kobjs[i]);
-	device->kobjs[i] = NULL;
-}
+	रुको_क्रम_completion(&device->kobjs[i]->kobj_unरेजिस्टर);
+	kमुक्त(device->kobjs[i]);
+	device->kobjs[i] = शून्य;
+पूर्ण
 
 /**
  * cpuidle_add_state_sysfs - adds cpuidle states sysfs attributes
  * @device: the target device
  */
-static int cpuidle_add_state_sysfs(struct cpuidle_device *device)
-{
-	int i, ret = -ENOMEM;
-	struct cpuidle_state_kobj *kobj;
-	struct cpuidle_device_kobj *kdev = device->kobj_dev;
-	struct cpuidle_driver *drv = cpuidle_get_cpu_driver(device);
+अटल पूर्णांक cpuidle_add_state_sysfs(काष्ठा cpuidle_device *device)
+अणु
+	पूर्णांक i, ret = -ENOMEM;
+	काष्ठा cpuidle_state_kobj *kobj;
+	काष्ठा cpuidle_device_kobj *kdev = device->kobj_dev;
+	काष्ठा cpuidle_driver *drv = cpuidle_get_cpu_driver(device);
 
 	/* state statistics */
-	for (i = 0; i < drv->state_count; i++) {
-		kobj = kzalloc(sizeof(struct cpuidle_state_kobj), GFP_KERNEL);
-		if (!kobj) {
+	क्रम (i = 0; i < drv->state_count; i++) अणु
+		kobj = kzalloc(माप(काष्ठा cpuidle_state_kobj), GFP_KERNEL);
+		अगर (!kobj) अणु
 			ret = -ENOMEM;
-			goto error_state;
-		}
+			जाओ error_state;
+		पूर्ण
 		kobj->state = &drv->states[i];
 		kobj->state_usage = &device->states_usage[i];
 		kobj->device = device;
-		init_completion(&kobj->kobj_unregister);
+		init_completion(&kobj->kobj_unरेजिस्टर);
 
 		ret = kobject_init_and_add(&kobj->kobj, &ktype_state_cpuidle,
 					   &kdev->kobj, "state%d", i);
-		if (ret) {
+		अगर (ret) अणु
 			kobject_put(&kobj->kobj);
-			goto error_state;
-		}
+			जाओ error_state;
+		पूर्ण
 		cpuidle_add_s2idle_attr_group(kobj);
 		kobject_uevent(&kobj->kobj, KOBJ_ADD);
 		device->kobjs[i] = kobj;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_state:
-	for (i = i - 1; i >= 0; i--)
-		cpuidle_free_state_kobj(device, i);
-	return ret;
-}
+	क्रम (i = i - 1; i >= 0; i--)
+		cpuidle_मुक्त_state_kobj(device, i);
+	वापस ret;
+पूर्ण
 
 /**
- * cpuidle_remove_driver_sysfs - removes the cpuidle states sysfs attributes
+ * cpuidle_हटाओ_driver_sysfs - हटाओs the cpuidle states sysfs attributes
  * @device: the target device
  */
-static void cpuidle_remove_state_sysfs(struct cpuidle_device *device)
-{
-	struct cpuidle_driver *drv = cpuidle_get_cpu_driver(device);
-	int i;
+अटल व्योम cpuidle_हटाओ_state_sysfs(काष्ठा cpuidle_device *device)
+अणु
+	काष्ठा cpuidle_driver *drv = cpuidle_get_cpu_driver(device);
+	पूर्णांक i;
 
-	for (i = 0; i < drv->state_count; i++)
-		cpuidle_free_state_kobj(device, i);
-}
+	क्रम (i = 0; i < drv->state_count; i++)
+		cpuidle_मुक्त_state_kobj(device, i);
+पूर्ण
 
-#ifdef CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
-#define kobj_to_driver_kobj(k) container_of(k, struct cpuidle_driver_kobj, kobj)
-#define attr_to_driver_attr(a) container_of(a, struct cpuidle_driver_attr, attr)
+#अगर_घोषित CONFIG_CPU_IDLE_MULTIPLE_DRIVERS
+#घोषणा kobj_to_driver_kobj(k) container_of(k, काष्ठा cpuidle_driver_kobj, kobj)
+#घोषणा attr_to_driver_attr(a) container_of(a, काष्ठा cpuidle_driver_attr, attr)
 
-#define define_one_driver_ro(_name, show)                       \
-	static struct cpuidle_driver_attr attr_driver_##_name = \
-		__ATTR(_name, 0444, show, NULL)
+#घोषणा define_one_driver_ro(_name, show)                       \
+	अटल काष्ठा cpuidle_driver_attr attr_driver_##_name = \
+		__ATTR(_name, 0444, show, शून्य)
 
-struct cpuidle_driver_kobj {
-	struct cpuidle_driver *drv;
-	struct completion kobj_unregister;
-	struct kobject kobj;
-};
+काष्ठा cpuidle_driver_kobj अणु
+	काष्ठा cpuidle_driver *drv;
+	काष्ठा completion kobj_unरेजिस्टर;
+	काष्ठा kobject kobj;
+पूर्ण;
 
-struct cpuidle_driver_attr {
-	struct attribute attr;
-	ssize_t (*show)(struct cpuidle_driver *, char *);
-	ssize_t (*store)(struct cpuidle_driver *, const char *, size_t);
-};
+काष्ठा cpuidle_driver_attr अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा cpuidle_driver *, अक्षर *);
+	sमाप_प्रकार (*store)(काष्ठा cpuidle_driver *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-static ssize_t show_driver_name(struct cpuidle_driver *drv, char *buf)
-{
-	ssize_t ret;
+अटल sमाप_प्रकार show_driver_name(काष्ठा cpuidle_driver *drv, अक्षर *buf)
+अणु
+	sमाप_प्रकार ret;
 
 	spin_lock(&cpuidle_driver_lock);
-	ret = sprintf(buf, "%s\n", drv ? drv->name : "none");
+	ret = प्र_लिखो(buf, "%s\n", drv ? drv->name : "none");
 	spin_unlock(&cpuidle_driver_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cpuidle_driver_sysfs_release(struct kobject *kobj)
-{
-	struct cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
-	complete(&driver_kobj->kobj_unregister);
-}
+अटल व्योम cpuidle_driver_sysfs_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
+	complete(&driver_kobj->kobj_unरेजिस्टर);
+पूर्ण
 
-static ssize_t cpuidle_driver_show(struct kobject *kobj, struct attribute *attr,
-				   char *buf)
-{
-	int ret = -EIO;
-	struct cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
-	struct cpuidle_driver_attr *dattr = attr_to_driver_attr(attr);
+अटल sमाप_प्रकार cpuidle_driver_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				   अक्षर *buf)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
+	काष्ठा cpuidle_driver_attr *dattr = attr_to_driver_attr(attr);
 
-	if (dattr->show)
+	अगर (dattr->show)
 		ret = dattr->show(driver_kobj->drv, buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t cpuidle_driver_store(struct kobject *kobj, struct attribute *attr,
-				    const char *buf, size_t size)
-{
-	int ret = -EIO;
-	struct cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
-	struct cpuidle_driver_attr *dattr = attr_to_driver_attr(attr);
+अटल sमाप_प्रकार cpuidle_driver_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret = -EIO;
+	काष्ठा cpuidle_driver_kobj *driver_kobj = kobj_to_driver_kobj(kobj);
+	काष्ठा cpuidle_driver_attr *dattr = attr_to_driver_attr(attr);
 
-	if (dattr->store)
+	अगर (dattr->store)
 		ret = dattr->store(driver_kobj->drv, buf, size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 define_one_driver_ro(name, show_driver_name);
 
-static const struct sysfs_ops cpuidle_driver_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops cpuidle_driver_sysfs_ops = अणु
 	.show = cpuidle_driver_show,
 	.store = cpuidle_driver_store,
-};
+पूर्ण;
 
-static struct attribute *cpuidle_driver_default_attrs[] = {
+अटल काष्ठा attribute *cpuidle_driver_शेष_attrs[] = अणु
 	&attr_driver_name.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct kobj_type ktype_driver_cpuidle = {
+अटल काष्ठा kobj_type ktype_driver_cpuidle = अणु
 	.sysfs_ops = &cpuidle_driver_sysfs_ops,
-	.default_attrs = cpuidle_driver_default_attrs,
+	.शेष_attrs = cpuidle_driver_शेष_attrs,
 	.release = cpuidle_driver_sysfs_release,
-};
+पूर्ण;
 
 /**
  * cpuidle_add_driver_sysfs - adds the driver name sysfs attribute
  * @dev: the target device
  */
-static int cpuidle_add_driver_sysfs(struct cpuidle_device *dev)
-{
-	struct cpuidle_driver_kobj *kdrv;
-	struct cpuidle_device_kobj *kdev = dev->kobj_dev;
-	struct cpuidle_driver *drv = cpuidle_get_cpu_driver(dev);
-	int ret;
+अटल पूर्णांक cpuidle_add_driver_sysfs(काष्ठा cpuidle_device *dev)
+अणु
+	काष्ठा cpuidle_driver_kobj *kdrv;
+	काष्ठा cpuidle_device_kobj *kdev = dev->kobj_dev;
+	काष्ठा cpuidle_driver *drv = cpuidle_get_cpu_driver(dev);
+	पूर्णांक ret;
 
-	kdrv = kzalloc(sizeof(*kdrv), GFP_KERNEL);
-	if (!kdrv)
-		return -ENOMEM;
+	kdrv = kzalloc(माप(*kdrv), GFP_KERNEL);
+	अगर (!kdrv)
+		वापस -ENOMEM;
 
 	kdrv->drv = drv;
-	init_completion(&kdrv->kobj_unregister);
+	init_completion(&kdrv->kobj_unरेजिस्टर);
 
 	ret = kobject_init_and_add(&kdrv->kobj, &ktype_driver_cpuidle,
 				   &kdev->kobj, "driver");
-	if (ret) {
+	अगर (ret) अणु
 		kobject_put(&kdrv->kobj);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	kobject_uevent(&kdrv->kobj, KOBJ_ADD);
 	dev->kobj_driver = kdrv;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cpuidle_remove_driver_sysfs - removes the driver name sysfs attribute
+ * cpuidle_हटाओ_driver_sysfs - हटाओs the driver name sysfs attribute
  * @dev: the target device
  */
-static void cpuidle_remove_driver_sysfs(struct cpuidle_device *dev)
-{
-	struct cpuidle_driver_kobj *kdrv = dev->kobj_driver;
+अटल व्योम cpuidle_हटाओ_driver_sysfs(काष्ठा cpuidle_device *dev)
+अणु
+	काष्ठा cpuidle_driver_kobj *kdrv = dev->kobj_driver;
 	kobject_put(&kdrv->kobj);
-	wait_for_completion(&kdrv->kobj_unregister);
-	kfree(kdrv);
-}
-#else
-static inline int cpuidle_add_driver_sysfs(struct cpuidle_device *dev)
-{
-	return 0;
-}
+	रुको_क्रम_completion(&kdrv->kobj_unरेजिस्टर);
+	kमुक्त(kdrv);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक cpuidle_add_driver_sysfs(काष्ठा cpuidle_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void cpuidle_remove_driver_sysfs(struct cpuidle_device *dev)
-{
+अटल अंतरभूत व्योम cpuidle_हटाओ_driver_sysfs(काष्ठा cpuidle_device *dev)
+अणु
 	;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * cpuidle_add_device_sysfs - adds device specific sysfs attributes
+ * cpuidle_add_device_sysfs - adds device specअगरic sysfs attributes
  * @device: the target device
  */
-int cpuidle_add_device_sysfs(struct cpuidle_device *device)
-{
-	int ret;
+पूर्णांक cpuidle_add_device_sysfs(काष्ठा cpuidle_device *device)
+अणु
+	पूर्णांक ret;
 
 	ret = cpuidle_add_state_sysfs(device);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cpuidle_add_driver_sysfs(device);
-	if (ret)
-		cpuidle_remove_state_sysfs(device);
-	return ret;
-}
+	अगर (ret)
+		cpuidle_हटाओ_state_sysfs(device);
+	वापस ret;
+पूर्ण
 
 /**
- * cpuidle_remove_device_sysfs : removes device specific sysfs attributes
+ * cpuidle_हटाओ_device_sysfs : हटाओs device specअगरic sysfs attributes
  * @device : the target device
  */
-void cpuidle_remove_device_sysfs(struct cpuidle_device *device)
-{
-	cpuidle_remove_driver_sysfs(device);
-	cpuidle_remove_state_sysfs(device);
-}
+व्योम cpuidle_हटाओ_device_sysfs(काष्ठा cpuidle_device *device)
+अणु
+	cpuidle_हटाओ_driver_sysfs(device);
+	cpuidle_हटाओ_state_sysfs(device);
+पूर्ण
 
 /**
- * cpuidle_add_sysfs - creates a sysfs instance for the target device
+ * cpuidle_add_sysfs - creates a sysfs instance क्रम the target device
  * @dev: the target device
  */
-int cpuidle_add_sysfs(struct cpuidle_device *dev)
-{
-	struct cpuidle_device_kobj *kdev;
-	struct device *cpu_dev = get_cpu_device((unsigned long)dev->cpu);
-	int error;
+पूर्णांक cpuidle_add_sysfs(काष्ठा cpuidle_device *dev)
+अणु
+	काष्ठा cpuidle_device_kobj *kdev;
+	काष्ठा device *cpu_dev = get_cpu_device((अचिन्हित दीर्घ)dev->cpu);
+	पूर्णांक error;
 
 	/*
-	 * Return if cpu_device is not setup for this CPU.
+	 * Return अगर cpu_device is not setup क्रम this CPU.
 	 *
-	 * This could happen if the arch did not set up cpu_device
+	 * This could happen अगर the arch did not set up cpu_device
 	 * since this CPU is not in cpu_present mask and the
 	 * driver did not send a correct CPU mask during registration.
 	 * Without this check we would end up passing bogus
-	 * value for &cpu_dev->kobj in kobject_init_and_add()
+	 * value क्रम &cpu_dev->kobj in kobject_init_and_add()
 	 */
-	if (!cpu_dev)
-		return -ENODEV;
+	अगर (!cpu_dev)
+		वापस -ENODEV;
 
-	kdev = kzalloc(sizeof(*kdev), GFP_KERNEL);
-	if (!kdev)
-		return -ENOMEM;
+	kdev = kzalloc(माप(*kdev), GFP_KERNEL);
+	अगर (!kdev)
+		वापस -ENOMEM;
 	kdev->dev = dev;
 	dev->kobj_dev = kdev;
 
-	init_completion(&kdev->kobj_unregister);
+	init_completion(&kdev->kobj_unरेजिस्टर);
 
 	error = kobject_init_and_add(&kdev->kobj, &ktype_cpuidle, &cpu_dev->kobj,
 				   "cpuidle");
-	if (error) {
+	अगर (error) अणु
 		kobject_put(&kdev->kobj);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	kobject_uevent(&kdev->kobj, KOBJ_ADD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cpuidle_remove_sysfs - deletes a sysfs instance on the target device
+ * cpuidle_हटाओ_sysfs - deletes a sysfs instance on the target device
  * @dev: the target device
  */
-void cpuidle_remove_sysfs(struct cpuidle_device *dev)
-{
-	struct cpuidle_device_kobj *kdev = dev->kobj_dev;
+व्योम cpuidle_हटाओ_sysfs(काष्ठा cpuidle_device *dev)
+अणु
+	काष्ठा cpuidle_device_kobj *kdev = dev->kobj_dev;
 
 	kobject_put(&kdev->kobj);
-	wait_for_completion(&kdev->kobj_unregister);
-	kfree(kdev);
-}
+	रुको_क्रम_completion(&kdev->kobj_unरेजिस्टर);
+	kमुक्त(kdev);
+पूर्ण

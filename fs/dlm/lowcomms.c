@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 *******************************************************************************
 **
@@ -14,570 +15,570 @@
  *
  * This is the "low-level" comms layer.
  *
- * It is responsible for sending/receiving messages
+ * It is responsible क्रम sending/receiving messages
  * from other nodes in the cluster.
  *
  * Cluster nodes are referred to by their nodeids. nodeids are
- * simply 32 bit numbers to the locking module - if they need to
- * be expanded for the cluster infrastructure then that is its
+ * simply 32 bit numbers to the locking module - अगर they need to
+ * be expanded क्रम the cluster infraकाष्ठाure then that is its
  * responsibility. It is this layer's
- * responsibility to resolve these into IP address or
- * whatever it needs for inter-node communication.
+ * responsibility to resolve these पूर्णांकo IP address or
+ * whatever it needs क्रम पूर्णांकer-node communication.
  *
- * The comms level is two kernel threads that deal mainly with
+ * The comms level is two kernel thपढ़ोs that deal मुख्यly with
  * the receiving of messages from other nodes and passing them
  * up to the mid-level comms layer (which understands the
- * message format) for execution by the locking core, and
- * a send thread which does all the setting up of connections
- * to remote nodes and the sending of data. Threads are not allowed
- * to send their own data because it may cause them to wait in times
- * of high load. Also, this way, the sending thread can collect together
- * messages bound for one node and send them in one block.
+ * message क्रमmat) क्रम execution by the locking core, and
+ * a send thपढ़ो which करोes all the setting up of connections
+ * to remote nodes and the sending of data. Thपढ़ोs are not allowed
+ * to send their own data because it may cause them to रुको in बार
+ * of high load. Also, this way, the sending thपढ़ो can collect together
+ * messages bound क्रम one node and send them in one block.
  *
  * lowcomms will choose to use either TCP or SCTP as its transport layer
  * depending on the configuration variable 'protocol'. This should be set
- * to 0 (default) for TCP or 1 for SCTP. It should be configured using a
+ * to 0 (शेष) क्रम TCP or 1 क्रम SCTP. It should be configured using a
  * cluster-wide mechanism as it must be the same on all nodes of the cluster
- * for the DLM to function.
+ * क्रम the DLM to function.
  *
  */
 
-#include <asm/ioctls.h>
-#include <net/sock.h>
-#include <net/tcp.h>
-#include <linux/pagemap.h>
-#include <linux/file.h>
-#include <linux/mutex.h>
-#include <linux/sctp.h>
-#include <linux/slab.h>
-#include <net/sctp/sctp.h>
-#include <net/ipv6.h>
+#समावेश <यंत्र/ioctls.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/slab.h>
+#समावेश <net/sctp/sctp.h>
+#समावेश <net/ipv6.h>
 
-#include "dlm_internal.h"
-#include "lowcomms.h"
-#include "midcomms.h"
-#include "config.h"
+#समावेश "dlm_internal.h"
+#समावेश "lowcomms.h"
+#समावेश "midcomms.h"
+#समावेश "config.h"
 
-#define NEEDED_RMEM (4*1024*1024)
-#define CONN_HASH_SIZE 32
+#घोषणा NEEDED_RMEM (4*1024*1024)
+#घोषणा CONN_HASH_SIZE 32
 
-/* Number of messages to send before rescheduling */
-#define MAX_SEND_MSG_COUNT 25
-#define DLM_SHUTDOWN_WAIT_TIMEOUT msecs_to_jiffies(10000)
+/* Number of messages to send beक्रमe rescheduling */
+#घोषणा MAX_SEND_MSG_COUNT 25
+#घोषणा DLM_SHUTDOWN_WAIT_TIMEOUT msecs_to_jअगरfies(10000)
 
-struct connection {
-	struct socket *sock;	/* NULL if not connected */
-	uint32_t nodeid;	/* So we know who we are in the list */
-	struct mutex sock_mutex;
-	unsigned long flags;
-#define CF_READ_PENDING 1
-#define CF_WRITE_PENDING 2
-#define CF_INIT_PENDING 4
-#define CF_IS_OTHERCON 5
-#define CF_CLOSE 6
-#define CF_APP_LIMITED 7
-#define CF_CLOSING 8
-#define CF_SHUTDOWN 9
-#define CF_CONNECTED 10
-	struct list_head writequeue;  /* List of outgoing writequeue_entries */
-	spinlock_t writequeue_lock;
-	void (*connect_action) (struct connection *);	/* What to do to connect */
-	void (*shutdown_action)(struct connection *con); /* What to do to shutdown */
-	int retries;
-#define MAX_CONNECT_RETRIES 3
-	struct hlist_node list;
-	struct connection *othercon;
-	struct work_struct rwork; /* Receive workqueue */
-	struct work_struct swork; /* Send workqueue */
-	wait_queue_head_t shutdown_wait; /* wait for graceful shutdown */
-	unsigned char *rx_buf;
-	int rx_buflen;
-	int rx_leftover;
-	struct rcu_head rcu;
-};
-#define sock2con(x) ((struct connection *)(x)->sk_user_data)
+काष्ठा connection अणु
+	काष्ठा socket *sock;	/* शून्य अगर not connected */
+	uपूर्णांक32_t nodeid;	/* So we know who we are in the list */
+	काष्ठा mutex sock_mutex;
+	अचिन्हित दीर्घ flags;
+#घोषणा CF_READ_PENDING 1
+#घोषणा CF_WRITE_PENDING 2
+#घोषणा CF_INIT_PENDING 4
+#घोषणा CF_IS_OTHERCON 5
+#घोषणा CF_CLOSE 6
+#घोषणा CF_APP_LIMITED 7
+#घोषणा CF_CLOSING 8
+#घोषणा CF_SHUTDOWN 9
+#घोषणा CF_CONNECTED 10
+	काष्ठा list_head ग_लिखोqueue;  /* List of outgoing ग_लिखोqueue_entries */
+	spinlock_t ग_लिखोqueue_lock;
+	व्योम (*connect_action) (काष्ठा connection *);	/* What to करो to connect */
+	व्योम (*shutकरोwn_action)(काष्ठा connection *con); /* What to करो to shutकरोwn */
+	पूर्णांक retries;
+#घोषणा MAX_CONNECT_RETRIES 3
+	काष्ठा hlist_node list;
+	काष्ठा connection *othercon;
+	काष्ठा work_काष्ठा rwork; /* Receive workqueue */
+	काष्ठा work_काष्ठा swork; /* Send workqueue */
+	रुको_queue_head_t shutकरोwn_रुको; /* रुको क्रम graceful shutकरोwn */
+	अचिन्हित अक्षर *rx_buf;
+	पूर्णांक rx_buflen;
+	पूर्णांक rx_leftover;
+	काष्ठा rcu_head rcu;
+पूर्ण;
+#घोषणा sock2con(x) ((काष्ठा connection *)(x)->sk_user_data)
 
-struct listen_connection {
-	struct socket *sock;
-	struct work_struct rwork;
-};
+काष्ठा listen_connection अणु
+	काष्ठा socket *sock;
+	काष्ठा work_काष्ठा rwork;
+पूर्ण;
 
-#define DLM_WQ_REMAIN_BYTES(e) (PAGE_SIZE - e->end)
-#define DLM_WQ_LENGTH_BYTES(e) (e->end - e->offset)
+#घोषणा DLM_WQ_REMAIN_BYTES(e) (PAGE_SIZE - e->end)
+#घोषणा DLM_WQ_LENGTH_BYTES(e) (e->end - e->offset)
 
-/* An entry waiting to be sent */
-struct writequeue_entry {
-	struct list_head list;
-	struct page *page;
-	int offset;
-	int len;
-	int end;
-	int users;
-	struct connection *con;
-};
+/* An entry रुकोing to be sent */
+काष्ठा ग_लिखोqueue_entry अणु
+	काष्ठा list_head list;
+	काष्ठा page *page;
+	पूर्णांक offset;
+	पूर्णांक len;
+	पूर्णांक end;
+	पूर्णांक users;
+	काष्ठा connection *con;
+पूर्ण;
 
-struct dlm_node_addr {
-	struct list_head list;
-	int nodeid;
-	int mark;
-	int addr_count;
-	int curr_addr_index;
-	struct sockaddr_storage *addr[DLM_MAX_ADDR_COUNT];
-};
+काष्ठा dlm_node_addr अणु
+	काष्ठा list_head list;
+	पूर्णांक nodeid;
+	पूर्णांक mark;
+	पूर्णांक addr_count;
+	पूर्णांक curr_addr_index;
+	काष्ठा sockaddr_storage *addr[DLM_MAX_ADDR_COUNT];
+पूर्ण;
 
-static struct listen_sock_callbacks {
-	void (*sk_error_report)(struct sock *);
-	void (*sk_data_ready)(struct sock *);
-	void (*sk_state_change)(struct sock *);
-	void (*sk_write_space)(struct sock *);
-} listen_sock;
+अटल काष्ठा listen_sock_callbacks अणु
+	व्योम (*sk_error_report)(काष्ठा sock *);
+	व्योम (*sk_data_पढ़ोy)(काष्ठा sock *);
+	व्योम (*sk_state_change)(काष्ठा sock *);
+	व्योम (*sk_ग_लिखो_space)(काष्ठा sock *);
+पूर्ण listen_sock;
 
-static LIST_HEAD(dlm_node_addrs);
-static DEFINE_SPINLOCK(dlm_node_addrs_spin);
+अटल LIST_HEAD(dlm_node_addrs);
+अटल DEFINE_SPINLOCK(dlm_node_addrs_spin);
 
-static struct listen_connection listen_con;
-static struct sockaddr_storage *dlm_local_addr[DLM_MAX_ADDR_COUNT];
-static int dlm_local_count;
-int dlm_allow_conn;
+अटल काष्ठा listen_connection listen_con;
+अटल काष्ठा sockaddr_storage *dlm_local_addr[DLM_MAX_ADDR_COUNT];
+अटल पूर्णांक dlm_local_count;
+पूर्णांक dlm_allow_conn;
 
 /* Work queues */
-static struct workqueue_struct *recv_workqueue;
-static struct workqueue_struct *send_workqueue;
+अटल काष्ठा workqueue_काष्ठा *recv_workqueue;
+अटल काष्ठा workqueue_काष्ठा *send_workqueue;
 
-static struct hlist_head connection_hash[CONN_HASH_SIZE];
-static DEFINE_SPINLOCK(connections_lock);
+अटल काष्ठा hlist_head connection_hash[CONN_HASH_SIZE];
+अटल DEFINE_SPINLOCK(connections_lock);
 DEFINE_STATIC_SRCU(connections_srcu);
 
-static void process_recv_sockets(struct work_struct *work);
-static void process_send_sockets(struct work_struct *work);
+अटल व्योम process_recv_sockets(काष्ठा work_काष्ठा *work);
+अटल व्योम process_send_sockets(काष्ठा work_काष्ठा *work);
 
-static void sctp_connect_to_sock(struct connection *con);
-static void tcp_connect_to_sock(struct connection *con);
-static void dlm_tcp_shutdown(struct connection *con);
+अटल व्योम sctp_connect_to_sock(काष्ठा connection *con);
+अटल व्योम tcp_connect_to_sock(काष्ठा connection *con);
+अटल व्योम dlm_tcp_shutकरोwn(काष्ठा connection *con);
 
 /* This is deliberately very simple because most clusters have simple
    sequential nodeids, so we should be able to go straight to a connection
-   struct in the array */
-static inline int nodeid_hash(int nodeid)
-{
-	return nodeid & (CONN_HASH_SIZE-1);
-}
+   काष्ठा in the array */
+अटल अंतरभूत पूर्णांक nodeid_hash(पूर्णांक nodeid)
+अणु
+	वापस nodeid & (CONN_HASH_SIZE-1);
+पूर्ण
 
-static struct connection *__find_con(int nodeid)
-{
-	int r, idx;
-	struct connection *con;
+अटल काष्ठा connection *__find_con(पूर्णांक nodeid)
+अणु
+	पूर्णांक r, idx;
+	काष्ठा connection *con;
 
 	r = nodeid_hash(nodeid);
 
-	idx = srcu_read_lock(&connections_srcu);
-	hlist_for_each_entry_rcu(con, &connection_hash[r], list) {
-		if (con->nodeid == nodeid) {
-			srcu_read_unlock(&connections_srcu, idx);
-			return con;
-		}
-	}
-	srcu_read_unlock(&connections_srcu, idx);
+	idx = srcu_पढ़ो_lock(&connections_srcu);
+	hlist_क्रम_each_entry_rcu(con, &connection_hash[r], list) अणु
+		अगर (con->nodeid == nodeid) अणु
+			srcu_पढ़ो_unlock(&connections_srcu, idx);
+			वापस con;
+		पूर्ण
+	पूर्ण
+	srcu_पढ़ो_unlock(&connections_srcu, idx);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int dlm_con_init(struct connection *con, int nodeid)
-{
+अटल पूर्णांक dlm_con_init(काष्ठा connection *con, पूर्णांक nodeid)
+अणु
 	con->rx_buflen = dlm_config.ci_buffer_size;
-	con->rx_buf = kmalloc(con->rx_buflen, GFP_NOFS);
-	if (!con->rx_buf)
-		return -ENOMEM;
+	con->rx_buf = kदो_स्मृति(con->rx_buflen, GFP_NOFS);
+	अगर (!con->rx_buf)
+		वापस -ENOMEM;
 
 	con->nodeid = nodeid;
 	mutex_init(&con->sock_mutex);
-	INIT_LIST_HEAD(&con->writequeue);
-	spin_lock_init(&con->writequeue_lock);
+	INIT_LIST_HEAD(&con->ग_लिखोqueue);
+	spin_lock_init(&con->ग_लिखोqueue_lock);
 	INIT_WORK(&con->swork, process_send_sockets);
 	INIT_WORK(&con->rwork, process_recv_sockets);
-	init_waitqueue_head(&con->shutdown_wait);
+	init_रुकोqueue_head(&con->shutकरोwn_रुको);
 
-	if (dlm_config.ci_protocol == 0) {
+	अगर (dlm_config.ci_protocol == 0) अणु
 		con->connect_action = tcp_connect_to_sock;
-		con->shutdown_action = dlm_tcp_shutdown;
-	} else {
+		con->shutकरोwn_action = dlm_tcp_shutकरोwn;
+	पूर्ण अन्यथा अणु
 		con->connect_action = sctp_connect_to_sock;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * If 'allocation' is zero then we don't attempt to create a new
- * connection structure for this node.
+ * connection काष्ठाure क्रम this node.
  */
-static struct connection *nodeid2con(int nodeid, gfp_t alloc)
-{
-	struct connection *con, *tmp;
-	int r, ret;
+अटल काष्ठा connection *nodeid2con(पूर्णांक nodeid, gfp_t alloc)
+अणु
+	काष्ठा connection *con, *पंचांगp;
+	पूर्णांक r, ret;
 
 	con = __find_con(nodeid);
-	if (con || !alloc)
-		return con;
+	अगर (con || !alloc)
+		वापस con;
 
-	con = kzalloc(sizeof(*con), alloc);
-	if (!con)
-		return NULL;
+	con = kzalloc(माप(*con), alloc);
+	अगर (!con)
+		वापस शून्य;
 
 	ret = dlm_con_init(con, nodeid);
-	if (ret) {
-		kfree(con);
-		return NULL;
-	}
+	अगर (ret) अणु
+		kमुक्त(con);
+		वापस शून्य;
+	पूर्ण
 
 	r = nodeid_hash(nodeid);
 
 	spin_lock(&connections_lock);
-	/* Because multiple workqueues/threads calls this function it can
+	/* Because multiple workqueues/thपढ़ोs calls this function it can
 	 * race on multiple cpu's. Instead of locking hot path __find_con()
-	 * we just check in rare cases of recently added nodes again
-	 * under protection of connections_lock. If this is the case we
-	 * abort our connection creation and return the existing connection.
+	 * we just check in rare हालs of recently added nodes again
+	 * under protection of connections_lock. If this is the हाल we
+	 * पात our connection creation and वापस the existing connection.
 	 */
-	tmp = __find_con(nodeid);
-	if (tmp) {
+	पंचांगp = __find_con(nodeid);
+	अगर (पंचांगp) अणु
 		spin_unlock(&connections_lock);
-		kfree(con->rx_buf);
-		kfree(con);
-		return tmp;
-	}
+		kमुक्त(con->rx_buf);
+		kमुक्त(con);
+		वापस पंचांगp;
+	पूर्ण
 
 	hlist_add_head_rcu(&con->list, &connection_hash[r]);
 	spin_unlock(&connections_lock);
 
-	return con;
-}
+	वापस con;
+पूर्ण
 
 /* Loop round all connections */
-static void foreach_conn(void (*conn_func)(struct connection *c))
-{
-	int i, idx;
-	struct connection *con;
+अटल व्योम क्रमeach_conn(व्योम (*conn_func)(काष्ठा connection *c))
+अणु
+	पूर्णांक i, idx;
+	काष्ठा connection *con;
 
-	idx = srcu_read_lock(&connections_srcu);
-	for (i = 0; i < CONN_HASH_SIZE; i++) {
-		hlist_for_each_entry_rcu(con, &connection_hash[i], list)
+	idx = srcu_पढ़ो_lock(&connections_srcu);
+	क्रम (i = 0; i < CONN_HASH_SIZE; i++) अणु
+		hlist_क्रम_each_entry_rcu(con, &connection_hash[i], list)
 			conn_func(con);
-	}
-	srcu_read_unlock(&connections_srcu, idx);
-}
+	पूर्ण
+	srcu_पढ़ो_unlock(&connections_srcu, idx);
+पूर्ण
 
-static struct dlm_node_addr *find_node_addr(int nodeid)
-{
-	struct dlm_node_addr *na;
+अटल काष्ठा dlm_node_addr *find_node_addr(पूर्णांक nodeid)
+अणु
+	काष्ठा dlm_node_addr *na;
 
-	list_for_each_entry(na, &dlm_node_addrs, list) {
-		if (na->nodeid == nodeid)
-			return na;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(na, &dlm_node_addrs, list) अणु
+		अगर (na->nodeid == nodeid)
+			वापस na;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int addr_compare(const struct sockaddr_storage *x,
-			const struct sockaddr_storage *y)
-{
-	switch (x->ss_family) {
-	case AF_INET: {
-		struct sockaddr_in *sinx = (struct sockaddr_in *)x;
-		struct sockaddr_in *siny = (struct sockaddr_in *)y;
-		if (sinx->sin_addr.s_addr != siny->sin_addr.s_addr)
-			return 0;
-		if (sinx->sin_port != siny->sin_port)
-			return 0;
-		break;
-	}
-	case AF_INET6: {
-		struct sockaddr_in6 *sinx = (struct sockaddr_in6 *)x;
-		struct sockaddr_in6 *siny = (struct sockaddr_in6 *)y;
-		if (!ipv6_addr_equal(&sinx->sin6_addr, &siny->sin6_addr))
-			return 0;
-		if (sinx->sin6_port != siny->sin6_port)
-			return 0;
-		break;
-	}
-	default:
-		return 0;
-	}
-	return 1;
-}
+अटल पूर्णांक addr_compare(स्थिर काष्ठा sockaddr_storage *x,
+			स्थिर काष्ठा sockaddr_storage *y)
+अणु
+	चयन (x->ss_family) अणु
+	हाल AF_INET: अणु
+		काष्ठा sockaddr_in *sinx = (काष्ठा sockaddr_in *)x;
+		काष्ठा sockaddr_in *siny = (काष्ठा sockaddr_in *)y;
+		अगर (sinx->sin_addr.s_addr != siny->sin_addr.s_addr)
+			वापस 0;
+		अगर (sinx->sin_port != siny->sin_port)
+			वापस 0;
+		अवरोध;
+	पूर्ण
+	हाल AF_INET6: अणु
+		काष्ठा sockaddr_in6 *sinx = (काष्ठा sockaddr_in6 *)x;
+		काष्ठा sockaddr_in6 *siny = (काष्ठा sockaddr_in6 *)y;
+		अगर (!ipv6_addr_equal(&sinx->sin6_addr, &siny->sin6_addr))
+			वापस 0;
+		अगर (sinx->sin6_port != siny->sin6_port)
+			वापस 0;
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int nodeid_to_addr(int nodeid, struct sockaddr_storage *sas_out,
-			  struct sockaddr *sa_out, bool try_new_addr,
-			  unsigned int *mark)
-{
-	struct sockaddr_storage sas;
-	struct dlm_node_addr *na;
+अटल पूर्णांक nodeid_to_addr(पूर्णांक nodeid, काष्ठा sockaddr_storage *sas_out,
+			  काष्ठा sockaddr *sa_out, bool try_new_addr,
+			  अचिन्हित पूर्णांक *mark)
+अणु
+	काष्ठा sockaddr_storage sas;
+	काष्ठा dlm_node_addr *na;
 
-	if (!dlm_local_count)
-		return -1;
+	अगर (!dlm_local_count)
+		वापस -1;
 
 	spin_lock(&dlm_node_addrs_spin);
 	na = find_node_addr(nodeid);
-	if (na && na->addr_count) {
-		memcpy(&sas, na->addr[na->curr_addr_index],
-		       sizeof(struct sockaddr_storage));
+	अगर (na && na->addr_count) अणु
+		स_नकल(&sas, na->addr[na->curr_addr_index],
+		       माप(काष्ठा sockaddr_storage));
 
-		if (try_new_addr) {
+		अगर (try_new_addr) अणु
 			na->curr_addr_index++;
-			if (na->curr_addr_index == na->addr_count)
+			अगर (na->curr_addr_index == na->addr_count)
 				na->curr_addr_index = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&dlm_node_addrs_spin);
 
-	if (!na)
-		return -EEXIST;
+	अगर (!na)
+		वापस -EEXIST;
 
-	if (!na->addr_count)
-		return -ENOENT;
+	अगर (!na->addr_count)
+		वापस -ENOENT;
 
 	*mark = na->mark;
 
-	if (sas_out)
-		memcpy(sas_out, &sas, sizeof(struct sockaddr_storage));
+	अगर (sas_out)
+		स_नकल(sas_out, &sas, माप(काष्ठा sockaddr_storage));
 
-	if (!sa_out)
-		return 0;
+	अगर (!sa_out)
+		वापस 0;
 
-	if (dlm_local_addr[0]->ss_family == AF_INET) {
-		struct sockaddr_in *in4  = (struct sockaddr_in *) &sas;
-		struct sockaddr_in *ret4 = (struct sockaddr_in *) sa_out;
+	अगर (dlm_local_addr[0]->ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *in4  = (काष्ठा sockaddr_in *) &sas;
+		काष्ठा sockaddr_in *ret4 = (काष्ठा sockaddr_in *) sa_out;
 		ret4->sin_addr.s_addr = in4->sin_addr.s_addr;
-	} else {
-		struct sockaddr_in6 *in6  = (struct sockaddr_in6 *) &sas;
-		struct sockaddr_in6 *ret6 = (struct sockaddr_in6 *) sa_out;
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *in6  = (काष्ठा sockaddr_in6 *) &sas;
+		काष्ठा sockaddr_in6 *ret6 = (काष्ठा sockaddr_in6 *) sa_out;
 		ret6->sin6_addr = in6->sin6_addr;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int addr_to_nodeid(struct sockaddr_storage *addr, int *nodeid,
-			  unsigned int *mark)
-{
-	struct dlm_node_addr *na;
-	int rv = -EEXIST;
-	int addr_i;
+अटल पूर्णांक addr_to_nodeid(काष्ठा sockaddr_storage *addr, पूर्णांक *nodeid,
+			  अचिन्हित पूर्णांक *mark)
+अणु
+	काष्ठा dlm_node_addr *na;
+	पूर्णांक rv = -EEXIST;
+	पूर्णांक addr_i;
 
 	spin_lock(&dlm_node_addrs_spin);
-	list_for_each_entry(na, &dlm_node_addrs, list) {
-		if (!na->addr_count)
-			continue;
+	list_क्रम_each_entry(na, &dlm_node_addrs, list) अणु
+		अगर (!na->addr_count)
+			जारी;
 
-		for (addr_i = 0; addr_i < na->addr_count; addr_i++) {
-			if (addr_compare(na->addr[addr_i], addr)) {
+		क्रम (addr_i = 0; addr_i < na->addr_count; addr_i++) अणु
+			अगर (addr_compare(na->addr[addr_i], addr)) अणु
 				*nodeid = na->nodeid;
 				*mark = na->mark;
 				rv = 0;
-				goto unlock;
-			}
-		}
-	}
+				जाओ unlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 unlock:
 	spin_unlock(&dlm_node_addrs_spin);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
 /* caller need to held dlm_node_addrs_spin lock */
-static bool dlm_lowcomms_na_has_addr(const struct dlm_node_addr *na,
-				     const struct sockaddr_storage *addr)
-{
-	int i;
+अटल bool dlm_lowcomms_na_has_addr(स्थिर काष्ठा dlm_node_addr *na,
+				     स्थिर काष्ठा sockaddr_storage *addr)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < na->addr_count; i++) {
-		if (addr_compare(na->addr[i], addr))
-			return true;
-	}
+	क्रम (i = 0; i < na->addr_count; i++) अणु
+		अगर (addr_compare(na->addr[i], addr))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int dlm_lowcomms_addr(int nodeid, struct sockaddr_storage *addr, int len)
-{
-	struct sockaddr_storage *new_addr;
-	struct dlm_node_addr *new_node, *na;
+पूर्णांक dlm_lowcomms_addr(पूर्णांक nodeid, काष्ठा sockaddr_storage *addr, पूर्णांक len)
+अणु
+	काष्ठा sockaddr_storage *new_addr;
+	काष्ठा dlm_node_addr *new_node, *na;
 	bool ret;
 
-	new_node = kzalloc(sizeof(struct dlm_node_addr), GFP_NOFS);
-	if (!new_node)
-		return -ENOMEM;
+	new_node = kzalloc(माप(काष्ठा dlm_node_addr), GFP_NOFS);
+	अगर (!new_node)
+		वापस -ENOMEM;
 
-	new_addr = kzalloc(sizeof(struct sockaddr_storage), GFP_NOFS);
-	if (!new_addr) {
-		kfree(new_node);
-		return -ENOMEM;
-	}
+	new_addr = kzalloc(माप(काष्ठा sockaddr_storage), GFP_NOFS);
+	अगर (!new_addr) अणु
+		kमुक्त(new_node);
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(new_addr, addr, len);
+	स_नकल(new_addr, addr, len);
 
 	spin_lock(&dlm_node_addrs_spin);
 	na = find_node_addr(nodeid);
-	if (!na) {
+	अगर (!na) अणु
 		new_node->nodeid = nodeid;
 		new_node->addr[0] = new_addr;
 		new_node->addr_count = 1;
 		new_node->mark = dlm_config.ci_mark;
 		list_add(&new_node->list, &dlm_node_addrs);
 		spin_unlock(&dlm_node_addrs_spin);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	ret = dlm_lowcomms_na_has_addr(na, addr);
-	if (ret) {
+	अगर (ret) अणु
 		spin_unlock(&dlm_node_addrs_spin);
-		kfree(new_addr);
-		kfree(new_node);
-		return -EEXIST;
-	}
+		kमुक्त(new_addr);
+		kमुक्त(new_node);
+		वापस -EEXIST;
+	पूर्ण
 
-	if (na->addr_count >= DLM_MAX_ADDR_COUNT) {
+	अगर (na->addr_count >= DLM_MAX_ADDR_COUNT) अणु
 		spin_unlock(&dlm_node_addrs_spin);
-		kfree(new_addr);
-		kfree(new_node);
-		return -ENOSPC;
-	}
+		kमुक्त(new_addr);
+		kमुक्त(new_node);
+		वापस -ENOSPC;
+	पूर्ण
 
 	na->addr[na->addr_count++] = new_addr;
 	spin_unlock(&dlm_node_addrs_spin);
-	kfree(new_node);
-	return 0;
-}
+	kमुक्त(new_node);
+	वापस 0;
+पूर्ण
 
 /* Data available on socket or listen socket received a connect */
-static void lowcomms_data_ready(struct sock *sk)
-{
-	struct connection *con;
+अटल व्योम lowcomms_data_पढ़ोy(काष्ठा sock *sk)
+अणु
+	काष्ठा connection *con;
 
-	read_lock_bh(&sk->sk_callback_lock);
+	पढ़ो_lock_bh(&sk->sk_callback_lock);
 	con = sock2con(sk);
-	if (con && !test_and_set_bit(CF_READ_PENDING, &con->flags))
+	अगर (con && !test_and_set_bit(CF_READ_PENDING, &con->flags))
 		queue_work(recv_workqueue, &con->rwork);
-	read_unlock_bh(&sk->sk_callback_lock);
-}
+	पढ़ो_unlock_bh(&sk->sk_callback_lock);
+पूर्ण
 
-static void lowcomms_listen_data_ready(struct sock *sk)
-{
+अटल व्योम lowcomms_listen_data_पढ़ोy(काष्ठा sock *sk)
+अणु
 	queue_work(recv_workqueue, &listen_con.rwork);
-}
+पूर्ण
 
-static void lowcomms_write_space(struct sock *sk)
-{
-	struct connection *con;
+अटल व्योम lowcomms_ग_लिखो_space(काष्ठा sock *sk)
+अणु
+	काष्ठा connection *con;
 
-	read_lock_bh(&sk->sk_callback_lock);
+	पढ़ो_lock_bh(&sk->sk_callback_lock);
 	con = sock2con(sk);
-	if (!con)
-		goto out;
+	अगर (!con)
+		जाओ out;
 
-	if (!test_and_set_bit(CF_CONNECTED, &con->flags)) {
-		log_print("successful connected to node %d", con->nodeid);
+	अगर (!test_and_set_bit(CF_CONNECTED, &con->flags)) अणु
+		log_prपूर्णांक("successful connected to node %d", con->nodeid);
 		queue_work(send_workqueue, &con->swork);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	clear_bit(SOCK_NOSPACE, &con->sock->flags);
 
-	if (test_and_clear_bit(CF_APP_LIMITED, &con->flags)) {
-		con->sock->sk->sk_write_pending--;
+	अगर (test_and_clear_bit(CF_APP_LIMITED, &con->flags)) अणु
+		con->sock->sk->sk_ग_लिखो_pending--;
 		clear_bit(SOCKWQ_ASYNC_NOSPACE, &con->sock->flags);
-	}
+	पूर्ण
 
 	queue_work(send_workqueue, &con->swork);
 out:
-	read_unlock_bh(&sk->sk_callback_lock);
-}
+	पढ़ो_unlock_bh(&sk->sk_callback_lock);
+पूर्ण
 
-static inline void lowcomms_connect_sock(struct connection *con)
-{
-	if (test_bit(CF_CLOSE, &con->flags))
-		return;
+अटल अंतरभूत व्योम lowcomms_connect_sock(काष्ठा connection *con)
+अणु
+	अगर (test_bit(CF_CLOSE, &con->flags))
+		वापस;
 	queue_work(send_workqueue, &con->swork);
 	cond_resched();
-}
+पूर्ण
 
-static void lowcomms_state_change(struct sock *sk)
-{
-	/* SCTP layer is not calling sk_data_ready when the connection
-	 * is done, so we catch the signal through here. Also, it
-	 * doesn't switch socket state when entering shutdown, so we
-	 * skip the write in that case.
+अटल व्योम lowcomms_state_change(काष्ठा sock *sk)
+अणु
+	/* SCTP layer is not calling sk_data_पढ़ोy when the connection
+	 * is करोne, so we catch the संकेत through here. Also, it
+	 * करोesn't चयन socket state when entering shutकरोwn, so we
+	 * skip the ग_लिखो in that हाल.
 	 */
-	if (sk->sk_shutdown) {
-		if (sk->sk_shutdown == RCV_SHUTDOWN)
-			lowcomms_data_ready(sk);
-	} else if (sk->sk_state == TCP_ESTABLISHED) {
-		lowcomms_write_space(sk);
-	}
-}
+	अगर (sk->sk_shutकरोwn) अणु
+		अगर (sk->sk_shutकरोwn == RCV_SHUTDOWN)
+			lowcomms_data_पढ़ोy(sk);
+	पूर्ण अन्यथा अगर (sk->sk_state == TCP_ESTABLISHED) अणु
+		lowcomms_ग_लिखो_space(sk);
+	पूर्ण
+पूर्ण
 
-int dlm_lowcomms_connect_node(int nodeid)
-{
-	struct connection *con;
+पूर्णांक dlm_lowcomms_connect_node(पूर्णांक nodeid)
+अणु
+	काष्ठा connection *con;
 
-	if (nodeid == dlm_our_nodeid())
-		return 0;
+	अगर (nodeid == dlm_our_nodeid())
+		वापस 0;
 
 	con = nodeid2con(nodeid, GFP_NOFS);
-	if (!con)
-		return -ENOMEM;
+	अगर (!con)
+		वापस -ENOMEM;
 	lowcomms_connect_sock(con);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dlm_lowcomms_nodes_set_mark(int nodeid, unsigned int mark)
-{
-	struct dlm_node_addr *na;
+पूर्णांक dlm_lowcomms_nodes_set_mark(पूर्णांक nodeid, अचिन्हित पूर्णांक mark)
+अणु
+	काष्ठा dlm_node_addr *na;
 
 	spin_lock(&dlm_node_addrs_spin);
 	na = find_node_addr(nodeid);
-	if (!na) {
+	अगर (!na) अणु
 		spin_unlock(&dlm_node_addrs_spin);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	na->mark = mark;
 	spin_unlock(&dlm_node_addrs_spin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lowcomms_error_report(struct sock *sk)
-{
-	struct connection *con;
-	struct sockaddr_storage saddr;
-	void (*orig_report)(struct sock *) = NULL;
+अटल व्योम lowcomms_error_report(काष्ठा sock *sk)
+अणु
+	काष्ठा connection *con;
+	काष्ठा sockaddr_storage saddr;
+	व्योम (*orig_report)(काष्ठा sock *) = शून्य;
 
-	read_lock_bh(&sk->sk_callback_lock);
+	पढ़ो_lock_bh(&sk->sk_callback_lock);
 	con = sock2con(sk);
-	if (con == NULL)
-		goto out;
+	अगर (con == शून्य)
+		जाओ out;
 
 	orig_report = listen_sock.sk_error_report;
-	if (con->sock == NULL ||
-	    kernel_getpeername(con->sock, (struct sockaddr *)&saddr) < 0) {
-		printk_ratelimited(KERN_ERR "dlm: node %d: socket error "
+	अगर (con->sock == शून्य ||
+	    kernel_getpeername(con->sock, (काष्ठा sockaddr *)&saddr) < 0) अणु
+		prपूर्णांकk_ratelimited(KERN_ERR "dlm: node %d: socket error "
 				   "sending to node %d, port %d, "
 				   "sk_err=%d/%d\n", dlm_our_nodeid(),
 				   con->nodeid, dlm_config.ci_tcp_port,
 				   sk->sk_err, sk->sk_err_soft);
-	} else if (saddr.ss_family == AF_INET) {
-		struct sockaddr_in *sin4 = (struct sockaddr_in *)&saddr;
+	पूर्ण अन्यथा अगर (saddr.ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *sin4 = (काष्ठा sockaddr_in *)&saddr;
 
-		printk_ratelimited(KERN_ERR "dlm: node %d: socket error "
+		prपूर्णांकk_ratelimited(KERN_ERR "dlm: node %d: socket error "
 				   "sending to node %d at %pI4, port %d, "
 				   "sk_err=%d/%d\n", dlm_our_nodeid(),
 				   con->nodeid, &sin4->sin_addr.s_addr,
 				   dlm_config.ci_tcp_port, sk->sk_err,
 				   sk->sk_err_soft);
-	} else {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&saddr;
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)&saddr;
 
-		printk_ratelimited(KERN_ERR "dlm: node %d: socket error "
+		prपूर्णांकk_ratelimited(KERN_ERR "dlm: node %d: socket error "
 				   "sending to node %d at %u.%u.%u.%u, "
 				   "port %d, sk_err=%d/%d\n", dlm_our_nodeid(),
 				   con->nodeid, sin6->sin6_addr.s6_addr32[0],
@@ -586,215 +587,215 @@ static void lowcomms_error_report(struct sock *sk)
 				   sin6->sin6_addr.s6_addr32[3],
 				   dlm_config.ci_tcp_port, sk->sk_err,
 				   sk->sk_err_soft);
-	}
+	पूर्ण
 out:
-	read_unlock_bh(&sk->sk_callback_lock);
-	if (orig_report)
+	पढ़ो_unlock_bh(&sk->sk_callback_lock);
+	अगर (orig_report)
 		orig_report(sk);
-}
+पूर्ण
 
-/* Note: sk_callback_lock must be locked before calling this function. */
-static void save_listen_callbacks(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+/* Note: sk_callback_lock must be locked beक्रमe calling this function. */
+अटल व्योम save_listen_callbacks(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	listen_sock.sk_data_ready = sk->sk_data_ready;
+	listen_sock.sk_data_पढ़ोy = sk->sk_data_पढ़ोy;
 	listen_sock.sk_state_change = sk->sk_state_change;
-	listen_sock.sk_write_space = sk->sk_write_space;
+	listen_sock.sk_ग_लिखो_space = sk->sk_ग_लिखो_space;
 	listen_sock.sk_error_report = sk->sk_error_report;
-}
+पूर्ण
 
-static void restore_callbacks(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+अटल व्योम restore_callbacks(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	write_lock_bh(&sk->sk_callback_lock);
-	sk->sk_user_data = NULL;
-	sk->sk_data_ready = listen_sock.sk_data_ready;
+	ग_लिखो_lock_bh(&sk->sk_callback_lock);
+	sk->sk_user_data = शून्य;
+	sk->sk_data_पढ़ोy = listen_sock.sk_data_पढ़ोy;
 	sk->sk_state_change = listen_sock.sk_state_change;
-	sk->sk_write_space = listen_sock.sk_write_space;
+	sk->sk_ग_लिखो_space = listen_sock.sk_ग_लिखो_space;
 	sk->sk_error_report = listen_sock.sk_error_report;
-	write_unlock_bh(&sk->sk_callback_lock);
-}
+	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+पूर्ण
 
-static void add_listen_sock(struct socket *sock, struct listen_connection *con)
-{
-	struct sock *sk = sock->sk;
+अटल व्योम add_listen_sock(काष्ठा socket *sock, काष्ठा listen_connection *con)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	write_lock_bh(&sk->sk_callback_lock);
+	ग_लिखो_lock_bh(&sk->sk_callback_lock);
 	save_listen_callbacks(sock);
 	con->sock = sock;
 
 	sk->sk_user_data = con;
 	sk->sk_allocation = GFP_NOFS;
-	/* Install a data_ready callback */
-	sk->sk_data_ready = lowcomms_listen_data_ready;
-	write_unlock_bh(&sk->sk_callback_lock);
-}
+	/* Install a data_पढ़ोy callback */
+	sk->sk_data_पढ़ोy = lowcomms_listen_data_पढ़ोy;
+	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+पूर्ण
 
 /* Make a socket active */
-static void add_sock(struct socket *sock, struct connection *con)
-{
-	struct sock *sk = sock->sk;
+अटल व्योम add_sock(काष्ठा socket *sock, काष्ठा connection *con)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	write_lock_bh(&sk->sk_callback_lock);
+	ग_लिखो_lock_bh(&sk->sk_callback_lock);
 	con->sock = sock;
 
 	sk->sk_user_data = con;
-	/* Install a data_ready callback */
-	sk->sk_data_ready = lowcomms_data_ready;
-	sk->sk_write_space = lowcomms_write_space;
+	/* Install a data_पढ़ोy callback */
+	sk->sk_data_पढ़ोy = lowcomms_data_पढ़ोy;
+	sk->sk_ग_लिखो_space = lowcomms_ग_लिखो_space;
 	sk->sk_state_change = lowcomms_state_change;
 	sk->sk_allocation = GFP_NOFS;
 	sk->sk_error_report = lowcomms_error_report;
-	write_unlock_bh(&sk->sk_callback_lock);
-}
+	ग_लिखो_unlock_bh(&sk->sk_callback_lock);
+पूर्ण
 
-/* Add the port number to an IPv6 or 4 sockaddr and return the address
+/* Add the port number to an IPv6 or 4 sockaddr and वापस the address
    length */
-static void make_sockaddr(struct sockaddr_storage *saddr, uint16_t port,
-			  int *addr_len)
-{
+अटल व्योम make_sockaddr(काष्ठा sockaddr_storage *saddr, uपूर्णांक16_t port,
+			  पूर्णांक *addr_len)
+अणु
 	saddr->ss_family =  dlm_local_addr[0]->ss_family;
-	if (saddr->ss_family == AF_INET) {
-		struct sockaddr_in *in4_addr = (struct sockaddr_in *)saddr;
+	अगर (saddr->ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *in4_addr = (काष्ठा sockaddr_in *)saddr;
 		in4_addr->sin_port = cpu_to_be16(port);
-		*addr_len = sizeof(struct sockaddr_in);
-		memset(&in4_addr->sin_zero, 0, sizeof(in4_addr->sin_zero));
-	} else {
-		struct sockaddr_in6 *in6_addr = (struct sockaddr_in6 *)saddr;
+		*addr_len = माप(काष्ठा sockaddr_in);
+		स_रखो(&in4_addr->sin_zero, 0, माप(in4_addr->sin_zero));
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *in6_addr = (काष्ठा sockaddr_in6 *)saddr;
 		in6_addr->sin6_port = cpu_to_be16(port);
-		*addr_len = sizeof(struct sockaddr_in6);
-	}
-	memset((char *)saddr + *addr_len, 0, sizeof(struct sockaddr_storage) - *addr_len);
-}
+		*addr_len = माप(काष्ठा sockaddr_in6);
+	पूर्ण
+	स_रखो((अक्षर *)saddr + *addr_len, 0, माप(काष्ठा sockaddr_storage) - *addr_len);
+पूर्ण
 
-static void dlm_close_sock(struct socket **sock)
-{
-	if (*sock) {
+अटल व्योम dlm_बंद_sock(काष्ठा socket **sock)
+अणु
+	अगर (*sock) अणु
 		restore_callbacks(*sock);
 		sock_release(*sock);
-		*sock = NULL;
-	}
-}
+		*sock = शून्य;
+	पूर्ण
+पूर्ण
 
 /* Close a remote connection and tidy up */
-static void close_connection(struct connection *con, bool and_other,
+अटल व्योम बंद_connection(काष्ठा connection *con, bool and_other,
 			     bool tx, bool rx)
-{
+अणु
 	bool closing = test_and_set_bit(CF_CLOSING, &con->flags);
 
-	if (tx && !closing && cancel_work_sync(&con->swork)) {
-		log_print("canceled swork for node %d", con->nodeid);
+	अगर (tx && !closing && cancel_work_sync(&con->swork)) अणु
+		log_prपूर्णांक("canceled swork for node %d", con->nodeid);
 		clear_bit(CF_WRITE_PENDING, &con->flags);
-	}
-	if (rx && !closing && cancel_work_sync(&con->rwork)) {
-		log_print("canceled rwork for node %d", con->nodeid);
+	पूर्ण
+	अगर (rx && !closing && cancel_work_sync(&con->rwork)) अणु
+		log_prपूर्णांक("canceled rwork for node %d", con->nodeid);
 		clear_bit(CF_READ_PENDING, &con->flags);
-	}
+	पूर्ण
 
 	mutex_lock(&con->sock_mutex);
-	dlm_close_sock(&con->sock);
+	dlm_बंद_sock(&con->sock);
 
-	if (con->othercon && and_other) {
+	अगर (con->othercon && and_other) अणु
 		/* Will only re-enter once. */
-		close_connection(con->othercon, false, true, true);
-	}
+		बंद_connection(con->othercon, false, true, true);
+	पूर्ण
 
 	con->rx_leftover = 0;
 	con->retries = 0;
 	clear_bit(CF_CONNECTED, &con->flags);
 	mutex_unlock(&con->sock_mutex);
 	clear_bit(CF_CLOSING, &con->flags);
-}
+पूर्ण
 
-static void shutdown_connection(struct connection *con)
-{
-	int ret;
+अटल व्योम shutकरोwn_connection(काष्ठा connection *con)
+अणु
+	पूर्णांक ret;
 
 	flush_work(&con->swork);
 
 	mutex_lock(&con->sock_mutex);
-	/* nothing to shutdown */
-	if (!con->sock) {
+	/* nothing to shutकरोwn */
+	अगर (!con->sock) अणु
 		mutex_unlock(&con->sock_mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	set_bit(CF_SHUTDOWN, &con->flags);
-	ret = kernel_sock_shutdown(con->sock, SHUT_WR);
+	ret = kernel_sock_shutकरोwn(con->sock, SHUT_WR);
 	mutex_unlock(&con->sock_mutex);
-	if (ret) {
-		log_print("Connection %p failed to shutdown: %d will force close",
+	अगर (ret) अणु
+		log_prपूर्णांक("Connection %p failed to shutdown: %d will force close",
 			  con, ret);
-		goto force_close;
-	} else {
-		ret = wait_event_timeout(con->shutdown_wait,
+		जाओ क्रमce_बंद;
+	पूर्ण अन्यथा अणु
+		ret = रुको_event_समयout(con->shutकरोwn_रुको,
 					 !test_bit(CF_SHUTDOWN, &con->flags),
 					 DLM_SHUTDOWN_WAIT_TIMEOUT);
-		if (ret == 0) {
-			log_print("Connection %p shutdown timed out, will force close",
+		अगर (ret == 0) अणु
+			log_prपूर्णांक("Connection %p shutdown timed out, will force close",
 				  con);
-			goto force_close;
-		}
-	}
+			जाओ क्रमce_बंद;
+		पूर्ण
+	पूर्ण
 
-	return;
+	वापस;
 
-force_close:
+क्रमce_बंद:
 	clear_bit(CF_SHUTDOWN, &con->flags);
-	close_connection(con, false, true, true);
-}
+	बंद_connection(con, false, true, true);
+पूर्ण
 
-static void dlm_tcp_shutdown(struct connection *con)
-{
-	if (con->othercon)
-		shutdown_connection(con->othercon);
-	shutdown_connection(con);
-}
+अटल व्योम dlm_tcp_shutकरोwn(काष्ठा connection *con)
+अणु
+	अगर (con->othercon)
+		shutकरोwn_connection(con->othercon);
+	shutकरोwn_connection(con);
+पूर्ण
 
-static int con_realloc_receive_buf(struct connection *con, int newlen)
-{
-	unsigned char *newbuf;
+अटल पूर्णांक con_पुनः_स्मृति_receive_buf(काष्ठा connection *con, पूर्णांक newlen)
+अणु
+	अचिन्हित अक्षर *newbuf;
 
-	newbuf = kmalloc(newlen, GFP_NOFS);
-	if (!newbuf)
-		return -ENOMEM;
+	newbuf = kदो_स्मृति(newlen, GFP_NOFS);
+	अगर (!newbuf)
+		वापस -ENOMEM;
 
 	/* copy any leftover from last receive */
-	if (con->rx_leftover)
-		memmove(newbuf, con->rx_buf, con->rx_leftover);
+	अगर (con->rx_leftover)
+		स_हटाओ(newbuf, con->rx_buf, con->rx_leftover);
 
 	/* swap to new buffer space */
-	kfree(con->rx_buf);
+	kमुक्त(con->rx_buf);
 	con->rx_buflen = newlen;
 	con->rx_buf = newbuf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Data received from remote end */
-static int receive_from_sock(struct connection *con)
-{
-	int call_again_soon = 0;
-	struct msghdr msg;
-	struct kvec iov;
-	int ret, buflen;
+अटल पूर्णांक receive_from_sock(काष्ठा connection *con)
+अणु
+	पूर्णांक call_again_soon = 0;
+	काष्ठा msghdr msg;
+	काष्ठा kvec iov;
+	पूर्णांक ret, buflen;
 
 	mutex_lock(&con->sock_mutex);
 
-	if (con->sock == NULL) {
+	अगर (con->sock == शून्य) अणु
 		ret = -EAGAIN;
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	/* realloc if we get new buffer size to read out */
+	/* पुनः_स्मृति अगर we get new buffer size to पढ़ो out */
 	buflen = dlm_config.ci_buffer_size;
-	if (con->rx_buflen != buflen && con->rx_leftover <= buflen) {
-		ret = con_realloc_receive_buf(con, buflen);
-		if (ret < 0)
-			goto out_resched;
-	}
+	अगर (con->rx_buflen != buflen && con->rx_leftover <= buflen) अणु
+		ret = con_पुनः_स्मृति_receive_buf(con, buflen);
+		अगर (ret < 0)
+			जाओ out_resched;
+	पूर्ण
 
 	/* calculate new buffer parameter regarding last receive and
 	 * possible leftover bytes
@@ -802,304 +803,304 @@ static int receive_from_sock(struct connection *con)
 	iov.iov_base = con->rx_buf + con->rx_leftover;
 	iov.iov_len = con->rx_buflen - con->rx_leftover;
 
-	memset(&msg, 0, sizeof(msg));
+	स_रखो(&msg, 0, माप(msg));
 	msg.msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
 	ret = kernel_recvmsg(con->sock, &msg, &iov, 1, iov.iov_len,
 			     msg.msg_flags);
-	if (ret <= 0)
-		goto out_close;
-	else if (ret == iov.iov_len)
+	अगर (ret <= 0)
+		जाओ out_बंद;
+	अन्यथा अगर (ret == iov.iov_len)
 		call_again_soon = 1;
 
-	/* new buflen according readed bytes and leftover from last receive */
+	/* new buflen according पढ़ोed bytes and leftover from last receive */
 	buflen = ret + con->rx_leftover;
 	ret = dlm_process_incoming_buffer(con->nodeid, con->rx_buf, buflen);
-	if (ret < 0)
-		goto out_close;
+	अगर (ret < 0)
+		जाओ out_बंद;
 
-	/* calculate leftover bytes from process and put it into begin of
+	/* calculate leftover bytes from process and put it पूर्णांकo begin of
 	 * the receive buffer, so next receive we have the full message
 	 * at the start address of the receive buffer.
 	 */
 	con->rx_leftover = buflen - ret;
-	if (con->rx_leftover) {
-		memmove(con->rx_buf, con->rx_buf + ret,
+	अगर (con->rx_leftover) अणु
+		स_हटाओ(con->rx_buf, con->rx_buf + ret,
 			con->rx_leftover);
 		call_again_soon = true;
-	}
+	पूर्ण
 
-	if (call_again_soon)
-		goto out_resched;
+	अगर (call_again_soon)
+		जाओ out_resched;
 
 	mutex_unlock(&con->sock_mutex);
-	return 0;
+	वापस 0;
 
 out_resched:
-	if (!test_and_set_bit(CF_READ_PENDING, &con->flags))
+	अगर (!test_and_set_bit(CF_READ_PENDING, &con->flags))
 		queue_work(recv_workqueue, &con->rwork);
 	mutex_unlock(&con->sock_mutex);
-	return -EAGAIN;
+	वापस -EAGAIN;
 
-out_close:
+out_बंद:
 	mutex_unlock(&con->sock_mutex);
-	if (ret != -EAGAIN) {
+	अगर (ret != -EAGAIN) अणु
 		/* Reconnect when there is something to send */
-		close_connection(con, false, true, false);
-		if (ret == 0) {
-			log_print("connection %p got EOF from %d",
+		बंद_connection(con, false, true, false);
+		अगर (ret == 0) अणु
+			log_prपूर्णांक("connection %p got EOF from %d",
 				  con, con->nodeid);
-			/* handling for tcp shutdown */
+			/* handling क्रम tcp shutकरोwn */
 			clear_bit(CF_SHUTDOWN, &con->flags);
-			wake_up(&con->shutdown_wait);
-			/* signal to breaking receive worker */
+			wake_up(&con->shutकरोwn_रुको);
+			/* संकेत to अवरोधing receive worker */
 			ret = -1;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* Listening socket is busy, accept a connection */
-static int accept_from_sock(struct listen_connection *con)
-{
-	int result;
-	struct sockaddr_storage peeraddr;
-	struct socket *newsock;
-	int len;
-	int nodeid;
-	struct connection *newcon;
-	struct connection *addcon;
-	unsigned int mark;
+अटल पूर्णांक accept_from_sock(काष्ठा listen_connection *con)
+अणु
+	पूर्णांक result;
+	काष्ठा sockaddr_storage peeraddr;
+	काष्ठा socket *newsock;
+	पूर्णांक len;
+	पूर्णांक nodeid;
+	काष्ठा connection *newcon;
+	काष्ठा connection *addcon;
+	अचिन्हित पूर्णांक mark;
 
-	if (!dlm_allow_conn) {
-		return -1;
-	}
+	अगर (!dlm_allow_conn) अणु
+		वापस -1;
+	पूर्ण
 
-	if (!con->sock)
-		return -ENOTCONN;
+	अगर (!con->sock)
+		वापस -ENOTCONN;
 
 	result = kernel_accept(con->sock, &newsock, O_NONBLOCK);
-	if (result < 0)
-		goto accept_err;
+	अगर (result < 0)
+		जाओ accept_err;
 
 	/* Get the connected socket's peer */
-	memset(&peeraddr, 0, sizeof(peeraddr));
-	len = newsock->ops->getname(newsock, (struct sockaddr *)&peeraddr, 2);
-	if (len < 0) {
+	स_रखो(&peeraddr, 0, माप(peeraddr));
+	len = newsock->ops->getname(newsock, (काष्ठा sockaddr *)&peeraddr, 2);
+	अगर (len < 0) अणु
 		result = -ECONNABORTED;
-		goto accept_err;
-	}
+		जाओ accept_err;
+	पूर्ण
 
 	/* Get the new node's NODEID */
 	make_sockaddr(&peeraddr, 0, &len);
-	if (addr_to_nodeid(&peeraddr, &nodeid, &mark)) {
-		unsigned char *b=(unsigned char *)&peeraddr;
-		log_print("connect from non cluster node");
-		print_hex_dump_bytes("ss: ", DUMP_PREFIX_NONE, 
-				     b, sizeof(struct sockaddr_storage));
+	अगर (addr_to_nodeid(&peeraddr, &nodeid, &mark)) अणु
+		अचिन्हित अक्षर *b=(अचिन्हित अक्षर *)&peeraddr;
+		log_prपूर्णांक("connect from non cluster node");
+		prपूर्णांक_hex_dump_bytes("ss: ", DUMP_PREFIX_NONE, 
+				     b, माप(काष्ठा sockaddr_storage));
 		sock_release(newsock);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	log_print("got connection from %d", nodeid);
+	log_prपूर्णांक("got connection from %d", nodeid);
 
-	/*  Check to see if we already have a connection to this node. This
-	 *  could happen if the two nodes initiate a connection at roughly
-	 *  the same time and the connections cross on the wire.
-	 *  In this case we store the incoming one in "othercon"
+	/*  Check to see अगर we alपढ़ोy have a connection to this node. This
+	 *  could happen अगर the two nodes initiate a connection at roughly
+	 *  the same समय and the connections cross on the wire.
+	 *  In this हाल we store the incoming one in "othercon"
 	 */
 	newcon = nodeid2con(nodeid, GFP_NOFS);
-	if (!newcon) {
+	अगर (!newcon) अणु
 		result = -ENOMEM;
-		goto accept_err;
-	}
+		जाओ accept_err;
+	पूर्ण
 
 	sock_set_mark(newsock->sk, mark);
 
 	mutex_lock(&newcon->sock_mutex);
-	if (newcon->sock) {
-		struct connection *othercon = newcon->othercon;
+	अगर (newcon->sock) अणु
+		काष्ठा connection *othercon = newcon->othercon;
 
-		if (!othercon) {
-			othercon = kzalloc(sizeof(*othercon), GFP_NOFS);
-			if (!othercon) {
-				log_print("failed to allocate incoming socket");
+		अगर (!othercon) अणु
+			othercon = kzalloc(माप(*othercon), GFP_NOFS);
+			अगर (!othercon) अणु
+				log_prपूर्णांक("failed to allocate incoming socket");
 				mutex_unlock(&newcon->sock_mutex);
 				result = -ENOMEM;
-				goto accept_err;
-			}
+				जाओ accept_err;
+			पूर्ण
 
 			result = dlm_con_init(othercon, nodeid);
-			if (result < 0) {
-				kfree(othercon);
+			अगर (result < 0) अणु
+				kमुक्त(othercon);
 				mutex_unlock(&newcon->sock_mutex);
-				goto accept_err;
-			}
+				जाओ accept_err;
+			पूर्ण
 
 			lockdep_set_subclass(&othercon->sock_mutex, 1);
 			newcon->othercon = othercon;
-		} else {
-			/* close other sock con if we have something new */
-			close_connection(othercon, false, true, false);
-		}
+		पूर्ण अन्यथा अणु
+			/* बंद other sock con अगर we have something new */
+			बंद_connection(othercon, false, true, false);
+		पूर्ण
 
 		mutex_lock(&othercon->sock_mutex);
 		add_sock(newsock, othercon);
 		addcon = othercon;
 		mutex_unlock(&othercon->sock_mutex);
-	}
-	else {
+	पूर्ण
+	अन्यथा अणु
 		/* accept copies the sk after we've saved the callbacks, so we
-		   don't want to save them a second time or comm errors will
+		   करोn't want to save them a second समय or comm errors will
 		   result in calling sk_error_report recursively. */
 		add_sock(newsock, newcon);
 		addcon = newcon;
-	}
+	पूर्ण
 
 	set_bit(CF_CONNECTED, &addcon->flags);
 	mutex_unlock(&newcon->sock_mutex);
 
 	/*
-	 * Add it to the active queue in case we got data
+	 * Add it to the active queue in हाल we got data
 	 * between processing the accept adding the socket
-	 * to the read_sockets list
+	 * to the पढ़ो_sockets list
 	 */
-	if (!test_and_set_bit(CF_READ_PENDING, &addcon->flags))
+	अगर (!test_and_set_bit(CF_READ_PENDING, &addcon->flags))
 		queue_work(recv_workqueue, &addcon->rwork);
 
-	return 0;
+	वापस 0;
 
 accept_err:
-	if (newsock)
+	अगर (newsock)
 		sock_release(newsock);
 
-	if (result != -EAGAIN)
-		log_print("error accepting connection from node: %d", result);
-	return result;
-}
+	अगर (result != -EAGAIN)
+		log_prपूर्णांक("error accepting connection from node: %d", result);
+	वापस result;
+पूर्ण
 
-static void free_entry(struct writequeue_entry *e)
-{
-	__free_page(e->page);
-	kfree(e);
-}
+अटल व्योम मुक्त_entry(काष्ठा ग_लिखोqueue_entry *e)
+अणु
+	__मुक्त_page(e->page);
+	kमुक्त(e);
+पूर्ण
 
 /*
- * writequeue_entry_complete - try to delete and free write queue entry
- * @e: write queue entry to try to delete
+ * ग_लिखोqueue_entry_complete - try to delete and मुक्त ग_लिखो queue entry
+ * @e: ग_लिखो queue entry to try to delete
  * @completed: bytes completed
  *
- * writequeue_lock must be held.
+ * ग_लिखोqueue_lock must be held.
  */
-static void writequeue_entry_complete(struct writequeue_entry *e, int completed)
-{
+अटल व्योम ग_लिखोqueue_entry_complete(काष्ठा ग_लिखोqueue_entry *e, पूर्णांक completed)
+अणु
 	e->offset += completed;
 	e->len -= completed;
 
-	if (e->len == 0 && e->users == 0) {
+	अगर (e->len == 0 && e->users == 0) अणु
 		list_del(&e->list);
-		free_entry(e);
-	}
-}
+		मुक्त_entry(e);
+	पूर्ण
+पूर्ण
 
 /*
  * sctp_bind_addrs - bind a SCTP socket to all our addresses
  */
-static int sctp_bind_addrs(struct socket *sock, uint16_t port)
-{
-	struct sockaddr_storage localaddr;
-	struct sockaddr *addr = (struct sockaddr *)&localaddr;
-	int i, addr_len, result = 0;
+अटल पूर्णांक sctp_bind_addrs(काष्ठा socket *sock, uपूर्णांक16_t port)
+अणु
+	काष्ठा sockaddr_storage localaddr;
+	काष्ठा sockaddr *addr = (काष्ठा sockaddr *)&localaddr;
+	पूर्णांक i, addr_len, result = 0;
 
-	for (i = 0; i < dlm_local_count; i++) {
-		memcpy(&localaddr, dlm_local_addr[i], sizeof(localaddr));
+	क्रम (i = 0; i < dlm_local_count; i++) अणु
+		स_नकल(&localaddr, dlm_local_addr[i], माप(localaddr));
 		make_sockaddr(&localaddr, port, &addr_len);
 
-		if (!i)
+		अगर (!i)
 			result = kernel_bind(sock, addr, addr_len);
-		else
+		अन्यथा
 			result = sock_bind_add(sock->sk, addr, addr_len);
 
-		if (result < 0) {
-			log_print("Can't bind to %d addr number %d, %d.\n",
+		अगर (result < 0) अणु
+			log_prपूर्णांक("Can't bind to %d addr number %d, %d.\n",
 				  port, i + 1, result);
-			break;
-		}
-	}
-	return result;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /* Initiate an SCTP association.
-   This is a special case of send_to_sock() in that we don't yet have a
-   peeled-off socket for this association, so we use the listening socket
+   This is a special हाल of send_to_sock() in that we करोn't yet have a
+   peeled-off socket क्रम this association, so we use the listening socket
    and add the primary IP address of the remote node.
  */
-static void sctp_connect_to_sock(struct connection *con)
-{
-	struct sockaddr_storage daddr;
-	int result;
-	int addr_len;
-	struct socket *sock;
-	unsigned int mark;
+अटल व्योम sctp_connect_to_sock(काष्ठा connection *con)
+अणु
+	काष्ठा sockaddr_storage daddr;
+	पूर्णांक result;
+	पूर्णांक addr_len;
+	काष्ठा socket *sock;
+	अचिन्हित पूर्णांक mark;
 
 	mutex_lock(&con->sock_mutex);
 
-	/* Some odd races can cause double-connects, ignore them */
-	if (con->retries++ > MAX_CONNECT_RETRIES)
-		goto out;
+	/* Some odd races can cause द्विगुन-connects, ignore them */
+	अगर (con->retries++ > MAX_CONNECT_RETRIES)
+		जाओ out;
 
-	if (con->sock) {
-		log_print("node %d already connected.", con->nodeid);
-		goto out;
-	}
+	अगर (con->sock) अणु
+		log_prपूर्णांक("node %d already connected.", con->nodeid);
+		जाओ out;
+	पूर्ण
 
-	memset(&daddr, 0, sizeof(daddr));
-	result = nodeid_to_addr(con->nodeid, &daddr, NULL, true, &mark);
-	if (result < 0) {
-		log_print("no address for nodeid %d", con->nodeid);
-		goto out;
-	}
+	स_रखो(&daddr, 0, माप(daddr));
+	result = nodeid_to_addr(con->nodeid, &daddr, शून्य, true, &mark);
+	अगर (result < 0) अणु
+		log_prपूर्णांक("no address for nodeid %d", con->nodeid);
+		जाओ out;
+	पूर्ण
 
 	/* Create a socket to communicate with */
 	result = sock_create_kern(&init_net, dlm_local_addr[0]->ss_family,
 				  SOCK_STREAM, IPPROTO_SCTP, &sock);
-	if (result < 0)
-		goto socket_err;
+	अगर (result < 0)
+		जाओ socket_err;
 
 	sock_set_mark(sock->sk, mark);
 
 	add_sock(sock, con);
 
 	/* Bind to all addresses. */
-	if (sctp_bind_addrs(con->sock, 0))
-		goto bind_err;
+	अगर (sctp_bind_addrs(con->sock, 0))
+		जाओ bind_err;
 
 	make_sockaddr(&daddr, dlm_config.ci_tcp_port, &addr_len);
 
-	log_print("connecting to %d", con->nodeid);
+	log_prपूर्णांक("connecting to %d", con->nodeid);
 
 	/* Turn off Nagle's algorithm */
 	sctp_sock_set_nodelay(sock->sk);
 
 	/*
-	 * Make sock->ops->connect() function return in specified time,
-	 * since O_NONBLOCK argument in connect() function does not work here,
-	 * then, we should restore the default value of this attribute.
+	 * Make sock->ops->connect() function वापस in specअगरied समय,
+	 * since O_NONBLOCK argument in connect() function करोes not work here,
+	 * then, we should restore the शेष value of this attribute.
 	 */
-	sock_set_sndtimeo(sock->sk, 5);
-	result = sock->ops->connect(sock, (struct sockaddr *)&daddr, addr_len,
+	sock_set_sndसमयo(sock->sk, 5);
+	result = sock->ops->connect(sock, (काष्ठा sockaddr *)&daddr, addr_len,
 				   0);
-	sock_set_sndtimeo(sock->sk, 0);
+	sock_set_sndसमयo(sock->sk, 0);
 
-	if (result == -EINPROGRESS)
+	अगर (result == -EINPROGRESS)
 		result = 0;
-	if (result == 0) {
-		if (!test_and_set_bit(CF_CONNECTED, &con->flags))
-			log_print("successful connected to node %d", con->nodeid);
-		goto out;
-	}
+	अगर (result == 0) अणु
+		अगर (!test_and_set_bit(CF_CONNECTED, &con->flags))
+			log_prपूर्णांक("successful connected to node %d", con->nodeid);
+		जाओ out;
+	पूर्ण
 
 bind_err:
-	con->sock = NULL;
+	con->sock = शून्य;
 	sock_release(sock);
 
 socket_err:
@@ -1107,132 +1108,132 @@ socket_err:
 	 * Some errors are fatal and this list might need adjusting. For other
 	 * errors we try again until the max number of retries is reached.
 	 */
-	if (result != -EHOSTUNREACH &&
+	अगर (result != -EHOSTUNREACH &&
 	    result != -ENETUNREACH &&
 	    result != -ENETDOWN &&
 	    result != -EINVAL &&
-	    result != -EPROTONOSUPPORT) {
-		log_print("connect %d try %d error %d", con->nodeid,
+	    result != -EPROTONOSUPPORT) अणु
+		log_prपूर्णांक("connect %d try %d error %d", con->nodeid,
 			  con->retries, result);
 		mutex_unlock(&con->sock_mutex);
 		msleep(1000);
 		lowcomms_connect_sock(con);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 out:
 	mutex_unlock(&con->sock_mutex);
-}
+पूर्ण
 
 /* Connect a new socket to its peer */
-static void tcp_connect_to_sock(struct connection *con)
-{
-	struct sockaddr_storage saddr, src_addr;
-	unsigned int mark;
-	int addr_len;
-	struct socket *sock = NULL;
-	int result;
+अटल व्योम tcp_connect_to_sock(काष्ठा connection *con)
+अणु
+	काष्ठा sockaddr_storage saddr, src_addr;
+	अचिन्हित पूर्णांक mark;
+	पूर्णांक addr_len;
+	काष्ठा socket *sock = शून्य;
+	पूर्णांक result;
 
 	mutex_lock(&con->sock_mutex);
-	if (con->retries++ > MAX_CONNECT_RETRIES)
-		goto out;
+	अगर (con->retries++ > MAX_CONNECT_RETRIES)
+		जाओ out;
 
-	/* Some odd races can cause double-connects, ignore them */
-	if (con->sock)
-		goto out;
+	/* Some odd races can cause द्विगुन-connects, ignore them */
+	अगर (con->sock)
+		जाओ out;
 
 	/* Create a socket to communicate with */
 	result = sock_create_kern(&init_net, dlm_local_addr[0]->ss_family,
 				  SOCK_STREAM, IPPROTO_TCP, &sock);
-	if (result < 0)
-		goto out_err;
+	अगर (result < 0)
+		जाओ out_err;
 
-	memset(&saddr, 0, sizeof(saddr));
-	result = nodeid_to_addr(con->nodeid, &saddr, NULL, false, &mark);
-	if (result < 0) {
-		log_print("no address for nodeid %d", con->nodeid);
-		goto out_err;
-	}
+	स_रखो(&saddr, 0, माप(saddr));
+	result = nodeid_to_addr(con->nodeid, &saddr, शून्य, false, &mark);
+	अगर (result < 0) अणु
+		log_prपूर्णांक("no address for nodeid %d", con->nodeid);
+		जाओ out_err;
+	पूर्ण
 
 	sock_set_mark(sock->sk, mark);
 
 	add_sock(sock, con);
 
-	/* Bind to our cluster-known address connecting to avoid
+	/* Bind to our cluster-known address connecting to aव्योम
 	   routing problems */
-	memcpy(&src_addr, dlm_local_addr[0], sizeof(src_addr));
+	स_नकल(&src_addr, dlm_local_addr[0], माप(src_addr));
 	make_sockaddr(&src_addr, 0, &addr_len);
-	result = sock->ops->bind(sock, (struct sockaddr *) &src_addr,
+	result = sock->ops->bind(sock, (काष्ठा sockaddr *) &src_addr,
 				 addr_len);
-	if (result < 0) {
-		log_print("could not bind for connect: %d", result);
+	अगर (result < 0) अणु
+		log_prपूर्णांक("could not bind for connect: %d", result);
 		/* This *may* not indicate a critical error */
-	}
+	पूर्ण
 
 	make_sockaddr(&saddr, dlm_config.ci_tcp_port, &addr_len);
 
-	log_print("connecting to %d", con->nodeid);
+	log_prपूर्णांक("connecting to %d", con->nodeid);
 
 	/* Turn off Nagle's algorithm */
 	tcp_sock_set_nodelay(sock->sk);
 
-	result = sock->ops->connect(sock, (struct sockaddr *)&saddr, addr_len,
+	result = sock->ops->connect(sock, (काष्ठा sockaddr *)&saddr, addr_len,
 				   O_NONBLOCK);
-	if (result == -EINPROGRESS)
+	अगर (result == -EINPROGRESS)
 		result = 0;
-	if (result == 0)
-		goto out;
+	अगर (result == 0)
+		जाओ out;
 
 out_err:
-	if (con->sock) {
+	अगर (con->sock) अणु
 		sock_release(con->sock);
-		con->sock = NULL;
-	} else if (sock) {
+		con->sock = शून्य;
+	पूर्ण अन्यथा अगर (sock) अणु
 		sock_release(sock);
-	}
+	पूर्ण
 	/*
 	 * Some errors are fatal and this list might need adjusting. For other
 	 * errors we try again until the max number of retries is reached.
 	 */
-	if (result != -EHOSTUNREACH &&
+	अगर (result != -EHOSTUNREACH &&
 	    result != -ENETUNREACH &&
 	    result != -ENETDOWN && 
 	    result != -EINVAL &&
-	    result != -EPROTONOSUPPORT) {
-		log_print("connect %d try %d error %d", con->nodeid,
+	    result != -EPROTONOSUPPORT) अणु
+		log_prपूर्णांक("connect %d try %d error %d", con->nodeid,
 			  con->retries, result);
 		mutex_unlock(&con->sock_mutex);
 		msleep(1000);
 		lowcomms_connect_sock(con);
-		return;
-	}
+		वापस;
+	पूर्ण
 out:
 	mutex_unlock(&con->sock_mutex);
-	return;
-}
+	वापस;
+पूर्ण
 
-/* On error caller must run dlm_close_sock() for the
+/* On error caller must run dlm_बंद_sock() क्रम the
  * listen connection socket.
  */
-static int tcp_create_listen_sock(struct listen_connection *con,
-				  struct sockaddr_storage *saddr)
-{
-	struct socket *sock = NULL;
-	int result = 0;
-	int addr_len;
+अटल पूर्णांक tcp_create_listen_sock(काष्ठा listen_connection *con,
+				  काष्ठा sockaddr_storage *saddr)
+अणु
+	काष्ठा socket *sock = शून्य;
+	पूर्णांक result = 0;
+	पूर्णांक addr_len;
 
-	if (dlm_local_addr[0]->ss_family == AF_INET)
-		addr_len = sizeof(struct sockaddr_in);
-	else
-		addr_len = sizeof(struct sockaddr_in6);
+	अगर (dlm_local_addr[0]->ss_family == AF_INET)
+		addr_len = माप(काष्ठा sockaddr_in);
+	अन्यथा
+		addr_len = माप(काष्ठा sockaddr_in6);
 
 	/* Create a socket to communicate with */
 	result = sock_create_kern(&init_net, dlm_local_addr[0]->ss_family,
 				  SOCK_STREAM, IPPROTO_TCP, &sock);
-	if (result < 0) {
-		log_print("Can't create listening comms socket");
-		goto create_out;
-	}
+	अगर (result < 0) अणु
+		log_prपूर्णांक("Can't create listening comms socket");
+		जाओ create_out;
+	पूर्ण
 
 	sock_set_mark(sock->sk, dlm_config.ci_mark);
 
@@ -1245,68 +1246,68 @@ static int tcp_create_listen_sock(struct listen_connection *con,
 
 	/* Bind to our port */
 	make_sockaddr(saddr, dlm_config.ci_tcp_port, &addr_len);
-	result = sock->ops->bind(sock, (struct sockaddr *) saddr, addr_len);
-	if (result < 0) {
-		log_print("Can't bind to port %d", dlm_config.ci_tcp_port);
-		goto create_out;
-	}
+	result = sock->ops->bind(sock, (काष्ठा sockaddr *) saddr, addr_len);
+	अगर (result < 0) अणु
+		log_prपूर्णांक("Can't bind to port %d", dlm_config.ci_tcp_port);
+		जाओ create_out;
+	पूर्ण
 	sock_set_keepalive(sock->sk);
 
 	result = sock->ops->listen(sock, 5);
-	if (result < 0) {
-		log_print("Can't listen on port %d", dlm_config.ci_tcp_port);
-		goto create_out;
-	}
+	अगर (result < 0) अणु
+		log_prपूर्णांक("Can't listen on port %d", dlm_config.ci_tcp_port);
+		जाओ create_out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 create_out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /* Get local addresses */
-static void init_local(void)
-{
-	struct sockaddr_storage sas, *addr;
-	int i;
+अटल व्योम init_local(व्योम)
+अणु
+	काष्ठा sockaddr_storage sas, *addr;
+	पूर्णांक i;
 
 	dlm_local_count = 0;
-	for (i = 0; i < DLM_MAX_ADDR_COUNT; i++) {
-		if (dlm_our_addr(&sas, i))
-			break;
+	क्रम (i = 0; i < DLM_MAX_ADDR_COUNT; i++) अणु
+		अगर (dlm_our_addr(&sas, i))
+			अवरोध;
 
-		addr = kmemdup(&sas, sizeof(*addr), GFP_NOFS);
-		if (!addr)
-			break;
+		addr = kmemdup(&sas, माप(*addr), GFP_NOFS);
+		अगर (!addr)
+			अवरोध;
 		dlm_local_addr[dlm_local_count++] = addr;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void deinit_local(void)
-{
-	int i;
+अटल व्योम deinit_local(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < dlm_local_count; i++)
-		kfree(dlm_local_addr[i]);
-}
+	क्रम (i = 0; i < dlm_local_count; i++)
+		kमुक्त(dlm_local_addr[i]);
+पूर्ण
 
-/* Initialise SCTP socket and bind to all interfaces
- * On error caller must run dlm_close_sock() for the
+/* Initialise SCTP socket and bind to all पूर्णांकerfaces
+ * On error caller must run dlm_बंद_sock() क्रम the
  * listen connection socket.
  */
-static int sctp_listen_for_all(struct listen_connection *con)
-{
-	struct socket *sock = NULL;
-	int result = -EINVAL;
+अटल पूर्णांक sctp_listen_क्रम_all(काष्ठा listen_connection *con)
+अणु
+	काष्ठा socket *sock = शून्य;
+	पूर्णांक result = -EINVAL;
 
-	log_print("Using SCTP for communications");
+	log_prपूर्णांक("Using SCTP for communications");
 
 	result = sock_create_kern(&init_net, dlm_local_addr[0]->ss_family,
 				  SOCK_STREAM, IPPROTO_SCTP, &sock);
-	if (result < 0) {
-		log_print("Can't create comms socket, check SCTP is loaded");
-		goto out;
-	}
+	अगर (result < 0) अणु
+		log_prपूर्णांक("Can't create comms socket, check SCTP is loaded");
+		जाओ out;
+	पूर्ण
 
 	sock_set_rcvbuf(sock->sk, NEEDED_RMEM);
 	sock_set_mark(sock->sk, dlm_config.ci_mark);
@@ -1316,459 +1317,459 @@ static int sctp_listen_for_all(struct listen_connection *con)
 
 	/* Bind to all addresses. */
 	result = sctp_bind_addrs(con->sock, dlm_config.ci_tcp_port);
-	if (result < 0)
-		goto out;
+	अगर (result < 0)
+		जाओ out;
 
 	result = sock->ops->listen(sock, 5);
-	if (result < 0) {
-		log_print("Can't set socket listening");
-		goto out;
-	}
+	अगर (result < 0) अणु
+		log_prपूर्णांक("Can't set socket listening");
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int tcp_listen_for_all(void)
-{
-	/* We don't support multi-homed hosts */
-	if (dlm_local_count > 1) {
-		log_print("TCP protocol can't handle multi-homed hosts, "
+अटल पूर्णांक tcp_listen_क्रम_all(व्योम)
+अणु
+	/* We करोn't support multi-homed hosts */
+	अगर (dlm_local_count > 1) अणु
+		log_prपूर्णांक("TCP protocol can't handle multi-homed hosts, "
 			  "try SCTP");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	log_print("Using TCP for communications");
+	log_prपूर्णांक("Using TCP for communications");
 
-	return tcp_create_listen_sock(&listen_con, dlm_local_addr[0]);
-}
+	वापस tcp_create_listen_sock(&listen_con, dlm_local_addr[0]);
+पूर्ण
 
 
 
-static struct writequeue_entry *new_writequeue_entry(struct connection *con,
+अटल काष्ठा ग_लिखोqueue_entry *new_ग_लिखोqueue_entry(काष्ठा connection *con,
 						     gfp_t allocation)
-{
-	struct writequeue_entry *entry;
+अणु
+	काष्ठा ग_लिखोqueue_entry *entry;
 
-	entry = kzalloc(sizeof(*entry), allocation);
-	if (!entry)
-		return NULL;
+	entry = kzalloc(माप(*entry), allocation);
+	अगर (!entry)
+		वापस शून्य;
 
 	entry->page = alloc_page(allocation | __GFP_ZERO);
-	if (!entry->page) {
-		kfree(entry);
-		return NULL;
-	}
+	अगर (!entry->page) अणु
+		kमुक्त(entry);
+		वापस शून्य;
+	पूर्ण
 
 	entry->con = con;
 	entry->users = 1;
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static struct writequeue_entry *new_wq_entry(struct connection *con, int len,
-					     gfp_t allocation, char **ppc)
-{
-	struct writequeue_entry *e;
+अटल काष्ठा ग_लिखोqueue_entry *new_wq_entry(काष्ठा connection *con, पूर्णांक len,
+					     gfp_t allocation, अक्षर **ppc)
+अणु
+	काष्ठा ग_लिखोqueue_entry *e;
 
-	spin_lock(&con->writequeue_lock);
-	if (!list_empty(&con->writequeue)) {
-		e = list_last_entry(&con->writequeue, struct writequeue_entry, list);
-		if (DLM_WQ_REMAIN_BYTES(e) >= len) {
+	spin_lock(&con->ग_लिखोqueue_lock);
+	अगर (!list_empty(&con->ग_लिखोqueue)) अणु
+		e = list_last_entry(&con->ग_लिखोqueue, काष्ठा ग_लिखोqueue_entry, list);
+		अगर (DLM_WQ_REMAIN_BYTES(e) >= len) अणु
 			*ppc = page_address(e->page) + e->end;
 			e->end += len;
 			e->users++;
-			spin_unlock(&con->writequeue_lock);
+			spin_unlock(&con->ग_लिखोqueue_lock);
 
-			return e;
-		}
-	}
-	spin_unlock(&con->writequeue_lock);
+			वापस e;
+		पूर्ण
+	पूर्ण
+	spin_unlock(&con->ग_लिखोqueue_lock);
 
-	e = new_writequeue_entry(con, allocation);
-	if (!e)
-		return NULL;
+	e = new_ग_लिखोqueue_entry(con, allocation);
+	अगर (!e)
+		वापस शून्य;
 
 	*ppc = page_address(e->page);
 	e->end += len;
 
-	spin_lock(&con->writequeue_lock);
-	list_add_tail(&e->list, &con->writequeue);
-	spin_unlock(&con->writequeue_lock);
+	spin_lock(&con->ग_लिखोqueue_lock);
+	list_add_tail(&e->list, &con->ग_लिखोqueue);
+	spin_unlock(&con->ग_लिखोqueue_lock);
 
-	return e;
-};
+	वापस e;
+पूर्ण;
 
-void *dlm_lowcomms_get_buffer(int nodeid, int len, gfp_t allocation, char **ppc)
-{
-	struct connection *con;
+व्योम *dlm_lowcomms_get_buffer(पूर्णांक nodeid, पूर्णांक len, gfp_t allocation, अक्षर **ppc)
+अणु
+	काष्ठा connection *con;
 
-	if (len > DEFAULT_BUFFER_SIZE ||
-	    len < sizeof(struct dlm_header)) {
+	अगर (len > DEFAULT_BUFFER_SIZE ||
+	    len < माप(काष्ठा dlm_header)) अणु
 		BUILD_BUG_ON(PAGE_SIZE < DEFAULT_BUFFER_SIZE);
-		log_print("failed to allocate a buffer of size %d", len);
+		log_prपूर्णांक("failed to allocate a buffer of size %d", len);
 		WARN_ON(1);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	con = nodeid2con(nodeid, allocation);
-	if (!con)
-		return NULL;
+	अगर (!con)
+		वापस शून्य;
 
-	return new_wq_entry(con, len, allocation, ppc);
-}
+	वापस new_wq_entry(con, len, allocation, ppc);
+पूर्ण
 
-void dlm_lowcomms_commit_buffer(void *mh)
-{
-	struct writequeue_entry *e = (struct writequeue_entry *)mh;
-	struct connection *con = e->con;
-	int users;
+व्योम dlm_lowcomms_commit_buffer(व्योम *mh)
+अणु
+	काष्ठा ग_लिखोqueue_entry *e = (काष्ठा ग_लिखोqueue_entry *)mh;
+	काष्ठा connection *con = e->con;
+	पूर्णांक users;
 
-	spin_lock(&con->writequeue_lock);
+	spin_lock(&con->ग_लिखोqueue_lock);
 	users = --e->users;
-	if (users)
-		goto out;
+	अगर (users)
+		जाओ out;
 
 	e->len = DLM_WQ_LENGTH_BYTES(e);
-	spin_unlock(&con->writequeue_lock);
+	spin_unlock(&con->ग_लिखोqueue_lock);
 
 	queue_work(send_workqueue, &con->swork);
-	return;
+	वापस;
 
 out:
-	spin_unlock(&con->writequeue_lock);
-	return;
-}
+	spin_unlock(&con->ग_लिखोqueue_lock);
+	वापस;
+पूर्ण
 
 /* Send a message */
-static void send_to_sock(struct connection *con)
-{
-	int ret = 0;
-	const int msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
-	struct writequeue_entry *e;
-	int len, offset;
-	int count = 0;
+अटल व्योम send_to_sock(काष्ठा connection *con)
+अणु
+	पूर्णांक ret = 0;
+	स्थिर पूर्णांक msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
+	काष्ठा ग_लिखोqueue_entry *e;
+	पूर्णांक len, offset;
+	पूर्णांक count = 0;
 
 	mutex_lock(&con->sock_mutex);
-	if (con->sock == NULL)
-		goto out_connect;
+	अगर (con->sock == शून्य)
+		जाओ out_connect;
 
-	spin_lock(&con->writequeue_lock);
-	for (;;) {
-		if (list_empty(&con->writequeue))
-			break;
+	spin_lock(&con->ग_लिखोqueue_lock);
+	क्रम (;;) अणु
+		अगर (list_empty(&con->ग_लिखोqueue))
+			अवरोध;
 
-		e = list_first_entry(&con->writequeue, struct writequeue_entry, list);
+		e = list_first_entry(&con->ग_लिखोqueue, काष्ठा ग_लिखोqueue_entry, list);
 		len = e->len;
 		offset = e->offset;
 		BUG_ON(len == 0 && e->users == 0);
-		spin_unlock(&con->writequeue_lock);
+		spin_unlock(&con->ग_लिखोqueue_lock);
 
 		ret = 0;
-		if (len) {
+		अगर (len) अणु
 			ret = kernel_sendpage(con->sock, e->page, offset, len,
 					      msg_flags);
-			if (ret == -EAGAIN || ret == 0) {
-				if (ret == -EAGAIN &&
+			अगर (ret == -EAGAIN || ret == 0) अणु
+				अगर (ret == -EAGAIN &&
 				    test_bit(SOCKWQ_ASYNC_NOSPACE, &con->sock->flags) &&
-				    !test_and_set_bit(CF_APP_LIMITED, &con->flags)) {
-					/* Notify TCP that we're limited by the
-					 * application window size.
+				    !test_and_set_bit(CF_APP_LIMITED, &con->flags)) अणु
+					/* Notअगरy TCP that we're limited by the
+					 * application winकरोw size.
 					 */
 					set_bit(SOCK_NOSPACE, &con->sock->flags);
-					con->sock->sk->sk_write_pending++;
-				}
+					con->sock->sk->sk_ग_लिखो_pending++;
+				पूर्ण
 				cond_resched();
-				goto out;
-			} else if (ret < 0)
-				goto send_error;
-		}
+				जाओ out;
+			पूर्ण अन्यथा अगर (ret < 0)
+				जाओ send_error;
+		पूर्ण
 
 		/* Don't starve people filling buffers */
-		if (++count >= MAX_SEND_MSG_COUNT) {
+		अगर (++count >= MAX_SEND_MSG_COUNT) अणु
 			cond_resched();
 			count = 0;
-		}
+		पूर्ण
 
-		spin_lock(&con->writequeue_lock);
-		writequeue_entry_complete(e, ret);
-	}
-	spin_unlock(&con->writequeue_lock);
+		spin_lock(&con->ग_लिखोqueue_lock);
+		ग_लिखोqueue_entry_complete(e, ret);
+	पूर्ण
+	spin_unlock(&con->ग_लिखोqueue_lock);
 out:
 	mutex_unlock(&con->sock_mutex);
-	return;
+	वापस;
 
 send_error:
 	mutex_unlock(&con->sock_mutex);
-	close_connection(con, false, false, true);
+	बंद_connection(con, false, false, true);
 	/* Requeue the send work. When the work daemon runs again, it will try
 	   a new connection, then call this function again. */
 	queue_work(send_workqueue, &con->swork);
-	return;
+	वापस;
 
 out_connect:
 	mutex_unlock(&con->sock_mutex);
 	queue_work(send_workqueue, &con->swork);
 	cond_resched();
-}
+पूर्ण
 
-static void clean_one_writequeue(struct connection *con)
-{
-	struct writequeue_entry *e, *safe;
+अटल व्योम clean_one_ग_लिखोqueue(काष्ठा connection *con)
+अणु
+	काष्ठा ग_लिखोqueue_entry *e, *safe;
 
-	spin_lock(&con->writequeue_lock);
-	list_for_each_entry_safe(e, safe, &con->writequeue, list) {
+	spin_lock(&con->ग_लिखोqueue_lock);
+	list_क्रम_each_entry_safe(e, safe, &con->ग_लिखोqueue, list) अणु
 		list_del(&e->list);
-		free_entry(e);
-	}
-	spin_unlock(&con->writequeue_lock);
-}
+		मुक्त_entry(e);
+	पूर्ण
+	spin_unlock(&con->ग_लिखोqueue_lock);
+पूर्ण
 
 /* Called from recovery when it knows that a node has
    left the cluster */
-int dlm_lowcomms_close(int nodeid)
-{
-	struct connection *con;
-	struct dlm_node_addr *na;
+पूर्णांक dlm_lowcomms_बंद(पूर्णांक nodeid)
+अणु
+	काष्ठा connection *con;
+	काष्ठा dlm_node_addr *na;
 
-	log_print("closing connection to node %d", nodeid);
+	log_prपूर्णांक("closing connection to node %d", nodeid);
 	con = nodeid2con(nodeid, 0);
-	if (con) {
+	अगर (con) अणु
 		set_bit(CF_CLOSE, &con->flags);
-		close_connection(con, true, true, true);
-		clean_one_writequeue(con);
-		if (con->othercon)
-			clean_one_writequeue(con->othercon);
-	}
+		बंद_connection(con, true, true, true);
+		clean_one_ग_लिखोqueue(con);
+		अगर (con->othercon)
+			clean_one_ग_लिखोqueue(con->othercon);
+	पूर्ण
 
 	spin_lock(&dlm_node_addrs_spin);
 	na = find_node_addr(nodeid);
-	if (na) {
+	अगर (na) अणु
 		list_del(&na->list);
-		while (na->addr_count--)
-			kfree(na->addr[na->addr_count]);
-		kfree(na);
-	}
+		जबतक (na->addr_count--)
+			kमुक्त(na->addr[na->addr_count]);
+		kमुक्त(na);
+	पूर्ण
 	spin_unlock(&dlm_node_addrs_spin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Receive workqueue function */
-static void process_recv_sockets(struct work_struct *work)
-{
-	struct connection *con = container_of(work, struct connection, rwork);
-	int err;
+अटल व्योम process_recv_sockets(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा connection *con = container_of(work, काष्ठा connection, rwork);
+	पूर्णांक err;
 
 	clear_bit(CF_READ_PENDING, &con->flags);
-	do {
+	करो अणु
 		err = receive_from_sock(con);
-	} while (!err);
-}
+	पूर्ण जबतक (!err);
+पूर्ण
 
-static void process_listen_recv_socket(struct work_struct *work)
-{
+अटल व्योम process_listen_recv_socket(काष्ठा work_काष्ठा *work)
+अणु
 	accept_from_sock(&listen_con);
-}
+पूर्ण
 
 /* Send workqueue function */
-static void process_send_sockets(struct work_struct *work)
-{
-	struct connection *con = container_of(work, struct connection, swork);
+अटल व्योम process_send_sockets(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा connection *con = container_of(work, काष्ठा connection, swork);
 
 	clear_bit(CF_WRITE_PENDING, &con->flags);
-	if (con->sock == NULL) /* not mutex protected so check it inside too */
+	अगर (con->sock == शून्य) /* not mutex रक्षित so check it inside too */
 		con->connect_action(con);
-	if (!list_empty(&con->writequeue))
+	अगर (!list_empty(&con->ग_लिखोqueue))
 		send_to_sock(con);
-}
+पूर्ण
 
-static void work_stop(void)
-{
-	if (recv_workqueue)
+अटल व्योम work_stop(व्योम)
+अणु
+	अगर (recv_workqueue)
 		destroy_workqueue(recv_workqueue);
-	if (send_workqueue)
+	अगर (send_workqueue)
 		destroy_workqueue(send_workqueue);
-}
+पूर्ण
 
-static int work_start(void)
-{
+अटल पूर्णांक work_start(व्योम)
+अणु
 	recv_workqueue = alloc_workqueue("dlm_recv",
 					 WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
-	if (!recv_workqueue) {
-		log_print("can't start dlm_recv");
-		return -ENOMEM;
-	}
+	अगर (!recv_workqueue) अणु
+		log_prपूर्णांक("can't start dlm_recv");
+		वापस -ENOMEM;
+	पूर्ण
 
 	send_workqueue = alloc_workqueue("dlm_send",
 					 WQ_UNBOUND | WQ_MEM_RECLAIM, 1);
-	if (!send_workqueue) {
-		log_print("can't start dlm_send");
+	अगर (!send_workqueue) अणु
+		log_prपूर्णांक("can't start dlm_send");
 		destroy_workqueue(recv_workqueue);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void shutdown_conn(struct connection *con)
-{
-	if (con->shutdown_action)
-		con->shutdown_action(con);
-}
+अटल व्योम shutकरोwn_conn(काष्ठा connection *con)
+अणु
+	अगर (con->shutकरोwn_action)
+		con->shutकरोwn_action(con);
+पूर्ण
 
-void dlm_lowcomms_shutdown(void)
-{
+व्योम dlm_lowcomms_shutकरोwn(व्योम)
+अणु
 	/* Set all the flags to prevent any
 	 * socket activity.
 	 */
 	dlm_allow_conn = 0;
 
-	if (recv_workqueue)
+	अगर (recv_workqueue)
 		flush_workqueue(recv_workqueue);
-	if (send_workqueue)
+	अगर (send_workqueue)
 		flush_workqueue(send_workqueue);
 
-	dlm_close_sock(&listen_con.sock);
+	dlm_बंद_sock(&listen_con.sock);
 
-	foreach_conn(shutdown_conn);
-}
+	क्रमeach_conn(shutकरोwn_conn);
+पूर्ण
 
-static void _stop_conn(struct connection *con, bool and_other)
-{
+अटल व्योम _stop_conn(काष्ठा connection *con, bool and_other)
+अणु
 	mutex_lock(&con->sock_mutex);
 	set_bit(CF_CLOSE, &con->flags);
 	set_bit(CF_READ_PENDING, &con->flags);
 	set_bit(CF_WRITE_PENDING, &con->flags);
-	if (con->sock && con->sock->sk) {
-		write_lock_bh(&con->sock->sk->sk_callback_lock);
-		con->sock->sk->sk_user_data = NULL;
-		write_unlock_bh(&con->sock->sk->sk_callback_lock);
-	}
-	if (con->othercon && and_other)
+	अगर (con->sock && con->sock->sk) अणु
+		ग_लिखो_lock_bh(&con->sock->sk->sk_callback_lock);
+		con->sock->sk->sk_user_data = शून्य;
+		ग_लिखो_unlock_bh(&con->sock->sk->sk_callback_lock);
+	पूर्ण
+	अगर (con->othercon && and_other)
 		_stop_conn(con->othercon, false);
 	mutex_unlock(&con->sock_mutex);
-}
+पूर्ण
 
-static void stop_conn(struct connection *con)
-{
+अटल व्योम stop_conn(काष्ठा connection *con)
+अणु
 	_stop_conn(con, true);
-}
+पूर्ण
 
-static void connection_release(struct rcu_head *rcu)
-{
-	struct connection *con = container_of(rcu, struct connection, rcu);
+अटल व्योम connection_release(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा connection *con = container_of(rcu, काष्ठा connection, rcu);
 
-	kfree(con->rx_buf);
-	kfree(con);
-}
+	kमुक्त(con->rx_buf);
+	kमुक्त(con);
+पूर्ण
 
-static void free_conn(struct connection *con)
-{
-	close_connection(con, true, true, true);
+अटल व्योम मुक्त_conn(काष्ठा connection *con)
+अणु
+	बंद_connection(con, true, true, true);
 	spin_lock(&connections_lock);
 	hlist_del_rcu(&con->list);
 	spin_unlock(&connections_lock);
-	if (con->othercon) {
-		clean_one_writequeue(con->othercon);
+	अगर (con->othercon) अणु
+		clean_one_ग_लिखोqueue(con->othercon);
 		call_srcu(&connections_srcu, &con->othercon->rcu,
 			  connection_release);
-	}
-	clean_one_writequeue(con);
+	पूर्ण
+	clean_one_ग_लिखोqueue(con);
 	call_srcu(&connections_srcu, &con->rcu, connection_release);
-}
+पूर्ण
 
-static void work_flush(void)
-{
-	int ok, idx;
-	int i;
-	struct connection *con;
+अटल व्योम work_flush(व्योम)
+अणु
+	पूर्णांक ok, idx;
+	पूर्णांक i;
+	काष्ठा connection *con;
 
-	do {
+	करो अणु
 		ok = 1;
-		foreach_conn(stop_conn);
-		if (recv_workqueue)
+		क्रमeach_conn(stop_conn);
+		अगर (recv_workqueue)
 			flush_workqueue(recv_workqueue);
-		if (send_workqueue)
+		अगर (send_workqueue)
 			flush_workqueue(send_workqueue);
-		idx = srcu_read_lock(&connections_srcu);
-		for (i = 0; i < CONN_HASH_SIZE && ok; i++) {
-			hlist_for_each_entry_rcu(con, &connection_hash[i],
-						 list) {
+		idx = srcu_पढ़ो_lock(&connections_srcu);
+		क्रम (i = 0; i < CONN_HASH_SIZE && ok; i++) अणु
+			hlist_क्रम_each_entry_rcu(con, &connection_hash[i],
+						 list) अणु
 				ok &= test_bit(CF_READ_PENDING, &con->flags);
 				ok &= test_bit(CF_WRITE_PENDING, &con->flags);
-				if (con->othercon) {
+				अगर (con->othercon) अणु
 					ok &= test_bit(CF_READ_PENDING,
 						       &con->othercon->flags);
 					ok &= test_bit(CF_WRITE_PENDING,
 						       &con->othercon->flags);
-				}
-			}
-		}
-		srcu_read_unlock(&connections_srcu, idx);
-	} while (!ok);
-}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+		srcu_पढ़ो_unlock(&connections_srcu, idx);
+	पूर्ण जबतक (!ok);
+पूर्ण
 
-void dlm_lowcomms_stop(void)
-{
+व्योम dlm_lowcomms_stop(व्योम)
+अणु
 	work_flush();
-	foreach_conn(free_conn);
+	क्रमeach_conn(मुक्त_conn);
 	work_stop();
 	deinit_local();
-}
+पूर्ण
 
-int dlm_lowcomms_start(void)
-{
-	int error = -EINVAL;
-	int i;
+पूर्णांक dlm_lowcomms_start(व्योम)
+अणु
+	पूर्णांक error = -EINVAL;
+	पूर्णांक i;
 
-	for (i = 0; i < CONN_HASH_SIZE; i++)
+	क्रम (i = 0; i < CONN_HASH_SIZE; i++)
 		INIT_HLIST_HEAD(&connection_hash[i]);
 
 	init_local();
-	if (!dlm_local_count) {
+	अगर (!dlm_local_count) अणु
 		error = -ENOTCONN;
-		log_print("no local IP address has been set");
-		goto fail;
-	}
+		log_prपूर्णांक("no local IP address has been set");
+		जाओ fail;
+	पूर्ण
 
 	INIT_WORK(&listen_con.rwork, process_listen_recv_socket);
 
 	error = work_start();
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	dlm_allow_conn = 1;
 
 	/* Start listening */
-	if (dlm_config.ci_protocol == 0)
-		error = tcp_listen_for_all();
-	else
-		error = sctp_listen_for_all(&listen_con);
-	if (error)
-		goto fail_unlisten;
+	अगर (dlm_config.ci_protocol == 0)
+		error = tcp_listen_क्रम_all();
+	अन्यथा
+		error = sctp_listen_क्रम_all(&listen_con);
+	अगर (error)
+		जाओ fail_unlisten;
 
-	return 0;
+	वापस 0;
 
 fail_unlisten:
 	dlm_allow_conn = 0;
-	dlm_close_sock(&listen_con.sock);
+	dlm_बंद_sock(&listen_con.sock);
 fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void dlm_lowcomms_exit(void)
-{
-	struct dlm_node_addr *na, *safe;
+व्योम dlm_lowcomms_निकास(व्योम)
+अणु
+	काष्ठा dlm_node_addr *na, *safe;
 
 	spin_lock(&dlm_node_addrs_spin);
-	list_for_each_entry_safe(na, safe, &dlm_node_addrs, list) {
+	list_क्रम_each_entry_safe(na, safe, &dlm_node_addrs, list) अणु
 		list_del(&na->list);
-		while (na->addr_count--)
-			kfree(na->addr[na->addr_count]);
-		kfree(na);
-	}
+		जबतक (na->addr_count--)
+			kमुक्त(na->addr[na->addr_count]);
+		kमुक्त(na);
+	पूर्ण
 	spin_unlock(&dlm_node_addrs_spin);
-}
+पूर्ण

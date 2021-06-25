@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
- *                   Creative Labs, Inc.
+ *                   Creative Lअसल, Inc.
  *                   Lee Revell <rlrevell@joe-job.com>
- *  Routines for control of EMU10K1 chips - voice manager
+ *  Routines क्रम control of EMU10K1 chips - voice manager
  *
- *  Rewrote voice allocator for multichannel support - rlrevell 12/2004
+ *  Rewrote voice allocator क्रम multichannel support - rlrevell 12/2004
  * 
  *  BUGS:
  *    --
@@ -14,141 +15,141 @@
  *    --
  */
 
-#include <linux/time.h>
-#include <linux/export.h>
-#include <sound/core.h>
-#include <sound/emu10k1.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/export.h>
+#समावेश <sound/core.h>
+#समावेश <sound/emu10k1.h>
 
-/* Previously the voice allocator started at 0 every time.  The new voice 
- * allocator uses a round robin scheme.  The next free voice is tracked in 
+/* Previously the voice allocator started at 0 every समय.  The new voice 
+ * allocator uses a round robin scheme.  The next मुक्त voice is tracked in 
  * the card record and each allocation begins where the last left off.  The 
- * hardware requires stereo interleaved voices be aligned to an even/odd 
+ * hardware requires stereo पूर्णांकerleaved voices be aligned to an even/odd 
  * boundary.  For multichannel voice allocation we ensure than the block of 
- * voices does not cross the 32 voice boundary.  This simplifies the 
- * multichannel support and ensures we can use a single write to the 
- * (set|clear)_loop_stop registers.  Otherwise (for example) the voices would 
+ * voices करोes not cross the 32 voice boundary.  This simplअगरies the 
+ * multichannel support and ensures we can use a single ग_लिखो to the 
+ * (set|clear)_loop_stop रेजिस्टरs.  Otherwise (क्रम example) the voices would 
  * get out of sync when pausing/resuming a stream.
  *							--rlrevell
  */
 
-static int voice_alloc(struct snd_emu10k1 *emu, int type, int number,
-		       struct snd_emu10k1_voice **rvoice)
-{
-	struct snd_emu10k1_voice *voice;
-	int i, j, k, first_voice, last_voice, skip;
+अटल पूर्णांक voice_alloc(काष्ठा snd_emu10k1 *emu, पूर्णांक type, पूर्णांक number,
+		       काष्ठा snd_emu10k1_voice **rvoice)
+अणु
+	काष्ठा snd_emu10k1_voice *voice;
+	पूर्णांक i, j, k, first_voice, last_voice, skip;
 
-	*rvoice = NULL;
+	*rvoice = शून्य;
 	first_voice = last_voice = 0;
-	for (i = emu->next_free_voice, j = 0; j < NUM_G ; i += number, j += number) {
+	क्रम (i = emu->next_मुक्त_voice, j = 0; j < NUM_G ; i += number, j += number) अणु
 		/*
 		dev_dbg(emu->card->dev, "i %d j %d next free %d!\n",
-		       i, j, emu->next_free_voice);
+		       i, j, emu->next_मुक्त_voice);
 		*/
 		i %= NUM_G;
 
 		/* stereo voices must be even/odd */
-		if ((number == 2) && (i % 2)) {
+		अगर ((number == 2) && (i % 2)) अणु
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 			
 		skip = 0;
-		for (k = 0; k < number; k++) {
+		क्रम (k = 0; k < number; k++) अणु
 			voice = &emu->voices[(i+k) % NUM_G];
-			if (voice->use) {
+			अगर (voice->use) अणु
 				skip = 1;
-				break;
-			}
-		}
-		if (!skip) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!skip) अणु
 			/* dev_dbg(emu->card->dev, "allocated voice %d\n", i); */
 			first_voice = i;
 			last_voice = (i + number) % NUM_G;
-			emu->next_free_voice = last_voice;
-			break;
-		}
-	}
+			emu->next_मुक्त_voice = last_voice;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	
-	if (first_voice == last_voice)
-		return -ENOMEM;
+	अगर (first_voice == last_voice)
+		वापस -ENOMEM;
 	
-	for (i = 0; i < number; i++) {
+	क्रम (i = 0; i < number; i++) अणु
 		voice = &emu->voices[(first_voice + i) % NUM_G];
 		/*
 		dev_dbg(emu->card->dev, "voice alloc - %i, %i of %i\n",
 		       voice->number, idx-first_voice+1, number);
 		*/
 		voice->use = 1;
-		switch (type) {
-		case EMU10K1_PCM:
+		चयन (type) अणु
+		हाल EMU10K1_PCM:
 			voice->pcm = 1;
-			break;
-		case EMU10K1_SYNTH:
+			अवरोध;
+		हाल EMU10K1_SYNTH:
 			voice->synth = 1;
-			break;
-		case EMU10K1_MIDI:
+			अवरोध;
+		हाल EMU10K1_MIDI:
 			voice->midi = 1;
-			break;
-		case EMU10K1_EFX:
+			अवरोध;
+		हाल EMU10K1_EFX:
 			voice->efx = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	*rvoice = &emu->voices[first_voice];
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_emu10k1_voice_alloc(struct snd_emu10k1 *emu, int type, int number,
-			    struct snd_emu10k1_voice **rvoice)
-{
-	unsigned long flags;
-	int result;
+पूर्णांक snd_emu10k1_voice_alloc(काष्ठा snd_emu10k1 *emu, पूर्णांक type, पूर्णांक number,
+			    काष्ठा snd_emu10k1_voice **rvoice)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result;
 
-	if (snd_BUG_ON(!rvoice))
-		return -EINVAL;
-	if (snd_BUG_ON(!number))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!rvoice))
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!number))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	for (;;) {
+	क्रम (;;) अणु
 		result = voice_alloc(emu, type, number, rvoice);
-		if (result == 0 || type == EMU10K1_SYNTH || type == EMU10K1_MIDI)
-			break;
+		अगर (result == 0 || type == EMU10K1_SYNTH || type == EMU10K1_MIDI)
+			अवरोध;
 
-		/* free a voice from synth */
-		if (emu->get_synth_voice) {
+		/* मुक्त a voice from synth */
+		अगर (emu->get_synth_voice) अणु
 			result = emu->get_synth_voice(emu);
-			if (result >= 0) {
-				struct snd_emu10k1_voice *pvoice = &emu->voices[result];
-				pvoice->interrupt = NULL;
+			अगर (result >= 0) अणु
+				काष्ठा snd_emu10k1_voice *pvoice = &emu->voices[result];
+				pvoice->पूर्णांकerrupt = शून्य;
 				pvoice->use = pvoice->pcm = pvoice->synth = pvoice->midi = pvoice->efx = 0;
-				pvoice->epcm = NULL;
-			}
-		}
-		if (result < 0)
-			break;
-	}
+				pvoice->epcm = शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (result < 0)
+			अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 EXPORT_SYMBOL(snd_emu10k1_voice_alloc);
 
-int snd_emu10k1_voice_free(struct snd_emu10k1 *emu,
-			   struct snd_emu10k1_voice *pvoice)
-{
-	unsigned long flags;
+पूर्णांक snd_emu10k1_voice_मुक्त(काष्ठा snd_emu10k1 *emu,
+			   काष्ठा snd_emu10k1_voice *pvoice)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (snd_BUG_ON(!pvoice))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!pvoice))
+		वापस -EINVAL;
 	spin_lock_irqsave(&emu->voice_lock, flags);
-	pvoice->interrupt = NULL;
+	pvoice->पूर्णांकerrupt = शून्य;
 	pvoice->use = pvoice->pcm = pvoice->synth = pvoice->midi = pvoice->efx = 0;
-	pvoice->epcm = NULL;
+	pvoice->epcm = शून्य;
 	snd_emu10k1_voice_init(emu, pvoice->number);
 	spin_unlock_irqrestore(&emu->voice_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-EXPORT_SYMBOL(snd_emu10k1_voice_free);
+EXPORT_SYMBOL(snd_emu10k1_voice_मुक्त);

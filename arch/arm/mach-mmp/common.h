@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/reboot.h>
-#define ARRAY_AND_SIZE(x)	(x), ARRAY_SIZE(x)
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/reboot.h>
+#घोषणा ARRAY_AND_SIZE(x)	(x), ARRAY_SIZE(x)
 
-extern void mmp_timer_init(int irq, unsigned long rate);
+बाह्य व्योम mmp_समयr_init(पूर्णांक irq, अचिन्हित दीर्घ rate);
 
-extern void __init mmp_map_io(void);
-extern void __init mmp2_map_io(void);
-extern void mmp_restart(enum reboot_mode, const char *);
+बाह्य व्योम __init mmp_map_io(व्योम);
+बाह्य व्योम __init mmp2_map_io(व्योम);
+बाह्य व्योम mmp_restart(क्रमागत reboot_mode, स्थिर अक्षर *);

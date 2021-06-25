@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/clk.h>
-#include <linux/platform_device.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/jack.h>
-#include <sound/soc.h>
-#include <uapi/linux/input-event-codes.h>
-#include <dt-bindings/sound/apq8016-lpass.h>
-#include "common.h"
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/soc.h>
+#समावेश <uapi/linux/input-event-codes.h>
+#समावेश <dt-bindings/sound/apq8016-lpass.h>
+#समावेश "common.h"
 
-struct apq8016_sbc_data {
-	struct snd_soc_card card;
-	void __iomem *mic_iomux;
-	void __iomem *spkr_iomux;
-	struct snd_soc_jack jack;
+काष्ठा apq8016_sbc_data अणु
+	काष्ठा snd_soc_card card;
+	व्योम __iomem *mic_iomux;
+	व्योम __iomem *spkr_iomux;
+	काष्ठा snd_soc_jack jack;
 	bool jack_setup;
-};
+पूर्ण;
 
-#define MIC_CTRL_TER_WS_SLAVE_SEL	BIT(21)
-#define MIC_CTRL_QUA_WS_SLAVE_SEL_10	BIT(17)
-#define MIC_CTRL_TLMM_SCLK_EN		BIT(1)
-#define	SPKR_CTL_PRI_WS_SLAVE_SEL_11	(BIT(17) | BIT(16))
-#define DEFAULT_MCLK_RATE		9600000
+#घोषणा MIC_CTRL_TER_WS_SLAVE_SEL	BIT(21)
+#घोषणा MIC_CTRL_QUA_WS_SLAVE_SEL_10	BIT(17)
+#घोषणा MIC_CTRL_TLMM_SCLK_EN		BIT(1)
+#घोषणा	SPKR_CTL_PRI_WS_SLAVE_SEL_11	(BIT(17) | BIT(16))
+#घोषणा DEFAULT_MCLK_RATE		9600000
 
-static int apq8016_sbc_dai_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	struct snd_soc_dai *codec_dai;
-	struct snd_soc_component *component;
-	struct snd_soc_card *card = rtd->card;
-	struct apq8016_sbc_data *pdata = snd_soc_card_get_drvdata(card);
-	int i, rval;
+अटल पूर्णांक apq8016_sbc_dai_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	काष्ठा snd_soc_dai *codec_dai;
+	काष्ठा snd_soc_component *component;
+	काष्ठा snd_soc_card *card = rtd->card;
+	काष्ठा apq8016_sbc_data *pdata = snd_soc_card_get_drvdata(card);
+	पूर्णांक i, rval;
 
-	switch (cpu_dai->id) {
-	case MI2S_PRIMARY:
-		writel(readl(pdata->spkr_iomux) | SPKR_CTL_PRI_WS_SLAVE_SEL_11,
+	चयन (cpu_dai->id) अणु
+	हाल MI2S_PRIMARY:
+		ग_लिखोl(पढ़ोl(pdata->spkr_iomux) | SPKR_CTL_PRI_WS_SLAVE_SEL_11,
 			pdata->spkr_iomux);
-		break;
+		अवरोध;
 
-	case MI2S_QUATERNARY:
+	हाल MI2S_QUATERNARY:
 		/* Configure the Quat MI2S to TLMM */
-		writel(readl(pdata->mic_iomux) | MIC_CTRL_QUA_WS_SLAVE_SEL_10 |
+		ग_लिखोl(पढ़ोl(pdata->mic_iomux) | MIC_CTRL_QUA_WS_SLAVE_SEL_10 |
 			MIC_CTRL_TLMM_SCLK_EN,
 			pdata->mic_iomux);
-		break;
-	case MI2S_TERTIARY:
-		writel(readl(pdata->mic_iomux) | MIC_CTRL_TER_WS_SLAVE_SEL |
+		अवरोध;
+	हाल MI2S_TERTIARY:
+		ग_लिखोl(पढ़ोl(pdata->mic_iomux) | MIC_CTRL_TER_WS_SLAVE_SEL |
 			MIC_CTRL_TLMM_SCLK_EN,
 			pdata->mic_iomux);
 
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(card->dev, "unsupported cpu dai configuration\n");
-		return -EINVAL;
+		वापस -EINVAL;
 
-	}
+	पूर्ण
 
-	if (!pdata->jack_setup) {
-		struct snd_jack *jack;
+	अगर (!pdata->jack_setup) अणु
+		काष्ठा snd_jack *jack;
 
 		rval = snd_soc_card_jack_new(card, "Headset Jack",
 					     SND_JACK_HEADSET |
@@ -75,12 +76,12 @@ static int apq8016_sbc_dai_init(struct snd_soc_pcm_runtime *rtd)
 					     SND_JACK_BTN_0 | SND_JACK_BTN_1 |
 					     SND_JACK_BTN_2 | SND_JACK_BTN_3 |
 					     SND_JACK_BTN_4,
-					     &pdata->jack, NULL, 0);
+					     &pdata->jack, शून्य, 0);
 
-		if (rval < 0) {
+		अगर (rval < 0) अणु
 			dev_err(card->dev, "Unable to add Headphone Jack\n");
-			return rval;
-		}
+			वापस rval;
+		पूर्ण
 
 		jack = pdata->jack.jack;
 
@@ -89,98 +90,98 @@ static int apq8016_sbc_dai_init(struct snd_soc_pcm_runtime *rtd)
 		snd_jack_set_key(jack, SND_JACK_BTN_2, KEY_VOLUMEUP);
 		snd_jack_set_key(jack, SND_JACK_BTN_3, KEY_VOLUMEDOWN);
 		pdata->jack_setup = true;
-	}
+	पूर्ण
 
-	for_each_rtd_codec_dais(rtd, i, codec_dai) {
+	क्रम_each_rtd_codec_dais(rtd, i, codec_dai) अणु
 
 		component = codec_dai->component;
-		/* Set default mclk for internal codec */
+		/* Set शेष mclk क्रम पूर्णांकernal codec */
 		rval = snd_soc_component_set_sysclk(component, 0, 0, DEFAULT_MCLK_RATE,
 				       SND_SOC_CLOCK_IN);
-		if (rval != 0 && rval != -ENOTSUPP) {
+		अगर (rval != 0 && rval != -ENOTSUPP) अणु
 			dev_warn(card->dev, "Failed to set mclk: %d\n", rval);
-			return rval;
-		}
-		rval = snd_soc_component_set_jack(component, &pdata->jack, NULL);
-		if (rval != 0 && rval != -ENOTSUPP) {
+			वापस rval;
+		पूर्ण
+		rval = snd_soc_component_set_jack(component, &pdata->jack, शून्य);
+		अगर (rval != 0 && rval != -ENOTSUPP) अणु
 			dev_warn(card->dev, "Failed to set jack: %d\n", rval);
-			return rval;
-		}
-	}
+			वापस rval;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apq8016_sbc_add_ops(struct snd_soc_card *card)
-{
-	struct snd_soc_dai_link *link;
-	int i;
+अटल व्योम apq8016_sbc_add_ops(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_dai_link *link;
+	पूर्णांक i;
 
-	for_each_card_prelinks(card, i, link)
+	क्रम_each_card_prelinks(card, i, link)
 		link->init = apq8016_sbc_dai_init;
-}
+पूर्ण
 
-static const struct snd_soc_dapm_widget apq8016_sbc_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget apq8016_sbc_dapm_widमाला_लो[] = अणु
 
-	SND_SOC_DAPM_MIC("Handset Mic", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Secondary Mic", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic1", NULL),
-	SND_SOC_DAPM_MIC("Digital Mic2", NULL),
-};
+	SND_SOC_DAPM_MIC("Handset Mic", शून्य),
+	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
+	SND_SOC_DAPM_MIC("Secondary Mic", शून्य),
+	SND_SOC_DAPM_MIC("Digital Mic1", शून्य),
+	SND_SOC_DAPM_MIC("Digital Mic2", शून्य),
+पूर्ण;
 
-static int apq8016_sbc_platform_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct snd_soc_card *card;
-	struct apq8016_sbc_data *data;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक apq8016_sbc_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा snd_soc_card *card;
+	काष्ठा apq8016_sbc_data *data;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	card = &data->card;
 	card->dev = dev;
 	card->owner = THIS_MODULE;
-	card->dapm_widgets = apq8016_sbc_dapm_widgets;
-	card->num_dapm_widgets = ARRAY_SIZE(apq8016_sbc_dapm_widgets);
+	card->dapm_widमाला_लो = apq8016_sbc_dapm_widमाला_लो;
+	card->num_dapm_widमाला_लो = ARRAY_SIZE(apq8016_sbc_dapm_widमाला_लो);
 
 	ret = qcom_snd_parse_of(card);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mic-iomux");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "mic-iomux");
 	data->mic_iomux = devm_ioremap_resource(dev, res);
-	if (IS_ERR(data->mic_iomux))
-		return PTR_ERR(data->mic_iomux);
+	अगर (IS_ERR(data->mic_iomux))
+		वापस PTR_ERR(data->mic_iomux);
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "spkr-iomux");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "spkr-iomux");
 	data->spkr_iomux = devm_ioremap_resource(dev, res);
-	if (IS_ERR(data->spkr_iomux))
-		return PTR_ERR(data->spkr_iomux);
+	अगर (IS_ERR(data->spkr_iomux))
+		वापस PTR_ERR(data->spkr_iomux);
 
 	snd_soc_card_set_drvdata(card, data);
 
 	apq8016_sbc_add_ops(card);
-	return devm_snd_soc_register_card(&pdev->dev, card);
-}
+	वापस devm_snd_soc_रेजिस्टर_card(&pdev->dev, card);
+पूर्ण
 
-static const struct of_device_id apq8016_sbc_device_id[] __maybe_unused = {
-	{ .compatible = "qcom,apq8016-sbc-sndcard" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id apq8016_sbc_device_id[] __maybe_unused = अणु
+	अणु .compatible = "qcom,apq8016-sbc-sndcard" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, apq8016_sbc_device_id);
 
-static struct platform_driver apq8016_sbc_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver apq8016_sbc_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = "qcom-apq8016-sbc",
 		.of_match_table = of_match_ptr(apq8016_sbc_device_id),
-	},
-	.probe = apq8016_sbc_platform_probe,
-};
-module_platform_driver(apq8016_sbc_platform_driver);
+	पूर्ण,
+	.probe = apq8016_sbc_platक्रमm_probe,
+पूर्ण;
+module_platक्रमm_driver(apq8016_sbc_platक्रमm_driver);
 
 MODULE_AUTHOR("Srinivas Kandagatla <srinivas.kandagatla@linaro.org");
 MODULE_DESCRIPTION("APQ8016 ASoC Machine Driver");

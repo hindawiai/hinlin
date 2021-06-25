@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Surface System Aggregator Module bus and device integration.
+ * Surface System Aggregator Module bus and device पूर्णांकegration.
  *
  * Copyright (C) 2019-2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#ifndef _SURFACE_AGGREGATOR_BUS_H
-#define _SURFACE_AGGREGATOR_BUS_H
+#अगर_अघोषित _SURFACE_AGGREGATOR_BUS_H
+#घोषणा _SURFACE_AGGREGATOR_BUS_H
 
-#include <linux/surface_aggregator/controller.h>
+#समावेश <linux/surface_aggregator/controller.h>
 
-#ifdef CONFIG_SURFACE_AGGREGATOR_BUS
+#अगर_घोषित CONFIG_SURFACE_AGGREGATOR_BUS
 
-void ssam_controller_remove_clients(struct ssam_controller *ctrl);
+व्योम ssam_controller_हटाओ_clients(काष्ठा ssam_controller *ctrl);
 
-int ssam_bus_register(void);
-void ssam_bus_unregister(void);
+पूर्णांक ssam_bus_रेजिस्टर(व्योम);
+व्योम ssam_bus_unरेजिस्टर(व्योम);
 
-#else /* CONFIG_SURFACE_AGGREGATOR_BUS */
+#अन्यथा /* CONFIG_SURFACE_AGGREGATOR_BUS */
 
-static inline void ssam_controller_remove_clients(struct ssam_controller *ctrl) {}
-static inline int ssam_bus_register(void) { return 0; }
-static inline void ssam_bus_unregister(void) {}
+अटल अंतरभूत व्योम ssam_controller_हटाओ_clients(काष्ठा ssam_controller *ctrl) अणुपूर्ण
+अटल अंतरभूत पूर्णांक ssam_bus_रेजिस्टर(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम ssam_bus_unरेजिस्टर(व्योम) अणुपूर्ण
 
-#endif /* CONFIG_SURFACE_AGGREGATOR_BUS */
-#endif /* _SURFACE_AGGREGATOR_BUS_H */
+#पूर्ण_अगर /* CONFIG_SURFACE_AGGREGATOR_BUS */
+#पूर्ण_अगर /* _SURFACE_AGGREGATOR_BUS_H */

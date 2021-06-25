@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * drivers/net/ethernet/ibm/emac/zmii.c
  *
- * Driver for PowerPC 4xx on-chip ethernet controller, ZMII bridge support.
+ * Driver क्रम PowerPC 4xx on-chip ethernet controller, ZMII bridge support.
  *
  * Copyright 2007 Benjamin Herrenschmidt, IBM Corp.
  *                <benh@kernel.crashing.org>
@@ -16,120 +17,120 @@
  *      Armin Kuster <akuster@mvista.com>
  * 	Copyright 2001 MontaVista Softare Inc.
  */
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/ethtool.h>
-#include <linux/of_address.h>
-#include <asm/io.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/of_address.h>
+#समावेश <यंत्र/पन.स>
 
-#include "emac.h"
-#include "core.h"
+#समावेश "emac.h"
+#समावेश "core.h"
 
 /* ZMIIx_FER */
-#define ZMII_FER_MDI(idx)	(0x80000000 >> ((idx) * 4))
-#define ZMII_FER_MDI_ALL	(ZMII_FER_MDI(0) | ZMII_FER_MDI(1) | \
+#घोषणा ZMII_FER_MDI(idx)	(0x80000000 >> ((idx) * 4))
+#घोषणा ZMII_FER_MDI_ALL	(ZMII_FER_MDI(0) | ZMII_FER_MDI(1) | \
 				 ZMII_FER_MDI(2) | ZMII_FER_MDI(3))
 
-#define ZMII_FER_SMII(idx)	(0x40000000 >> ((idx) * 4))
-#define ZMII_FER_RMII(idx)	(0x20000000 >> ((idx) * 4))
-#define ZMII_FER_MII(idx)	(0x10000000 >> ((idx) * 4))
+#घोषणा ZMII_FER_SMII(idx)	(0x40000000 >> ((idx) * 4))
+#घोषणा ZMII_FER_RMII(idx)	(0x20000000 >> ((idx) * 4))
+#घोषणा ZMII_FER_MII(idx)	(0x10000000 >> ((idx) * 4))
 
 /* ZMIIx_SSR */
-#define ZMII_SSR_SCI(idx)	(0x40000000 >> ((idx) * 4))
-#define ZMII_SSR_FSS(idx)	(0x20000000 >> ((idx) * 4))
-#define ZMII_SSR_SP(idx)	(0x10000000 >> ((idx) * 4))
+#घोषणा ZMII_SSR_SCI(idx)	(0x40000000 >> ((idx) * 4))
+#घोषणा ZMII_SSR_FSS(idx)	(0x20000000 >> ((idx) * 4))
+#घोषणा ZMII_SSR_SP(idx)	(0x10000000 >> ((idx) * 4))
 
 /* ZMII only supports MII, RMII and SMII
- * we also support autodetection for backward compatibility
+ * we also support स्वतःdetection क्रम backward compatibility
  */
-static inline int zmii_valid_mode(int mode)
-{
-	return  mode == PHY_INTERFACE_MODE_MII ||
+अटल अंतरभूत पूर्णांक zmii_valid_mode(पूर्णांक mode)
+अणु
+	वापस  mode == PHY_INTERFACE_MODE_MII ||
 		mode == PHY_INTERFACE_MODE_RMII ||
 		mode == PHY_INTERFACE_MODE_SMII ||
 		mode == PHY_INTERFACE_MODE_NA;
-}
+पूर्ण
 
-static inline const char *zmii_mode_name(int mode)
-{
-	switch (mode) {
-	case PHY_INTERFACE_MODE_MII:
-		return "MII";
-	case PHY_INTERFACE_MODE_RMII:
-		return "RMII";
-	case PHY_INTERFACE_MODE_SMII:
-		return "SMII";
-	default:
+अटल अंतरभूत स्थिर अक्षर *zmii_mode_name(पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+		वापस "MII";
+	हाल PHY_INTERFACE_MODE_RMII:
+		वापस "RMII";
+	हाल PHY_INTERFACE_MODE_SMII:
+		वापस "SMII";
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline u32 zmii_mode_mask(int mode, int input)
-{
-	switch (mode) {
-	case PHY_INTERFACE_MODE_MII:
-		return ZMII_FER_MII(input);
-	case PHY_INTERFACE_MODE_RMII:
-		return ZMII_FER_RMII(input);
-	case PHY_INTERFACE_MODE_SMII:
-		return ZMII_FER_SMII(input);
-	default:
-		return 0;
-	}
-}
+अटल अंतरभूत u32 zmii_mode_mask(पूर्णांक mode, पूर्णांक input)
+अणु
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_MII:
+		वापस ZMII_FER_MII(input);
+	हाल PHY_INTERFACE_MODE_RMII:
+		वापस ZMII_FER_RMII(input);
+	हाल PHY_INTERFACE_MODE_SMII:
+		वापस ZMII_FER_SMII(input);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-int zmii_attach(struct platform_device *ofdev, int input,
-		phy_interface_t *mode)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
-	struct zmii_regs __iomem *p = dev->base;
+पूर्णांक zmii_attach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input,
+		phy_पूर्णांकerface_t *mode)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा zmii_regs __iomem *p = dev->base;
 
 	ZMII_DBG(dev, "init(%d, %d)" NL, input, *mode);
 
-	if (!zmii_valid_mode(*mode)) {
+	अगर (!zmii_valid_mode(*mode)) अणु
 		/* Probably an EMAC connected to RGMII,
-		 * but it still may need ZMII for MDIO so
-		 * we don't fail here.
+		 * but it still may need ZMII क्रम MDIO so
+		 * we करोn't fail here.
 		 */
 		dev->users++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	mutex_lock(&dev->lock);
 
-	/* Autodetect ZMII mode if not specified.
-	 * This is only for backward compatibility with the old driver.
-	 * Please, always specify PHY mode in your board port to avoid
+	/* Autodetect ZMII mode अगर not specअगरied.
+	 * This is only क्रम backward compatibility with the old driver.
+	 * Please, always specअगरy PHY mode in your board port to aव्योम
 	 * any surprises.
 	 */
-	if (dev->mode == PHY_INTERFACE_MODE_NA) {
-		if (*mode == PHY_INTERFACE_MODE_NA) {
+	अगर (dev->mode == PHY_INTERFACE_MODE_NA) अणु
+		अगर (*mode == PHY_INTERFACE_MODE_NA) अणु
 			u32 r = dev->fer_save;
 
 			ZMII_DBG(dev, "autodetecting mode, FER = 0x%08x" NL, r);
 
-			if (r & (ZMII_FER_MII(0) | ZMII_FER_MII(1)))
+			अगर (r & (ZMII_FER_MII(0) | ZMII_FER_MII(1)))
 				dev->mode = PHY_INTERFACE_MODE_MII;
-			else if (r & (ZMII_FER_RMII(0) | ZMII_FER_RMII(1)))
+			अन्यथा अगर (r & (ZMII_FER_RMII(0) | ZMII_FER_RMII(1)))
 				dev->mode = PHY_INTERFACE_MODE_RMII;
-			else
+			अन्यथा
 				dev->mode = PHY_INTERFACE_MODE_SMII;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev->mode = *mode;
-		}
-		printk(KERN_NOTICE "%pOF: bridge in %s mode\n",
+		पूर्ण
+		prपूर्णांकk(KERN_NOTICE "%pOF: bridge in %s mode\n",
 		       ofdev->dev.of_node,
 		       zmii_mode_name(dev->mode));
-	} else {
-		/* All inputs must use the same mode */
-		if (*mode != PHY_INTERFACE_MODE_NA && *mode != dev->mode) {
-			printk(KERN_ERR
+	पूर्ण अन्यथा अणु
+		/* All inमाला_दो must use the same mode */
+		अगर (*mode != PHY_INTERFACE_MODE_NA && *mode != dev->mode) अणु
+			prपूर्णांकk(KERN_ERR
 			       "%pOF: invalid mode %d specified for input %d\n",
 			       ofdev->dev.of_node, *mode, input);
 			mutex_unlock(&dev->lock);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* Report back correct PHY mode,
 	 * it may be used during PHY initialization.
@@ -142,12 +143,12 @@ int zmii_attach(struct platform_device *ofdev, int input,
 
 	mutex_unlock(&dev->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void zmii_get_mdio(struct platform_device *ofdev, int input)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
+व्योम zmii_get_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 	u32 fer;
 
 	ZMII_DBG2(dev, "get_mdio(%d)" NL, input);
@@ -156,20 +157,20 @@ void zmii_get_mdio(struct platform_device *ofdev, int input)
 
 	fer = in_be32(&dev->base->fer) & ~ZMII_FER_MDI_ALL;
 	out_be32(&dev->base->fer, fer | ZMII_FER_MDI(input));
-}
+पूर्ण
 
-void zmii_put_mdio(struct platform_device *ofdev, int input)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
+व्योम zmii_put_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 
 	ZMII_DBG2(dev, "put_mdio(%d)" NL, input);
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
 
-void zmii_set_speed(struct platform_device *ofdev, int input, int speed)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
+व्योम zmii_set_speed(काष्ठा platक्रमm_device *ofdev, पूर्णांक input, पूर्णांक speed)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 	u32 ssr;
 
 	mutex_lock(&dev->lock);
@@ -178,19 +179,19 @@ void zmii_set_speed(struct platform_device *ofdev, int input, int speed)
 
 	ZMII_DBG(dev, "speed(%d, %d)" NL, input, speed);
 
-	if (speed == SPEED_100)
+	अगर (speed == SPEED_100)
 		ssr |= ZMII_SSR_SP(input);
-	else
+	अन्यथा
 		ssr &= ~ZMII_SSR_SP(input);
 
 	out_be32(&dev->base->ssr, ssr);
 
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
-void zmii_detach(struct platform_device *ofdev, int input)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
+व्योम zmii_detach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 
 	BUG_ON(!dev || dev->users == 0);
 
@@ -205,116 +206,116 @@ void zmii_detach(struct platform_device *ofdev, int input)
 	--dev->users;
 
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
-int zmii_get_regs_len(struct platform_device *ofdev)
-{
-	return sizeof(struct emac_ethtool_regs_subhdr) +
-		sizeof(struct zmii_regs);
-}
+पूर्णांक zmii_get_regs_len(काष्ठा platक्रमm_device *ofdev)
+अणु
+	वापस माप(काष्ठा emac_ethtool_regs_subhdr) +
+		माप(काष्ठा zmii_regs);
+पूर्ण
 
-void *zmii_dump_regs(struct platform_device *ofdev, void *buf)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
-	struct emac_ethtool_regs_subhdr *hdr = buf;
-	struct zmii_regs *regs = (struct zmii_regs *)(hdr + 1);
+व्योम *zmii_dump_regs(काष्ठा platक्रमm_device *ofdev, व्योम *buf)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा emac_ethtool_regs_subhdr *hdr = buf;
+	काष्ठा zmii_regs *regs = (काष्ठा zmii_regs *)(hdr + 1);
 
 	hdr->version = 0;
-	hdr->index = 0; /* for now, are there chips with more than one
-			 * zmii ? if yes, then we'll add a cell_index
-			 * like we do for emac
+	hdr->index = 0; /* क्रम now, are there chips with more than one
+			 * zmii ? अगर yes, then we'll add a cell_index
+			 * like we करो क्रम emac
 			 */
-	memcpy_fromio(regs, dev->base, sizeof(struct zmii_regs));
-	return regs + 1;
-}
+	स_नकल_fromio(regs, dev->base, माप(काष्ठा zmii_regs));
+	वापस regs + 1;
+पूर्ण
 
-static int zmii_probe(struct platform_device *ofdev)
-{
-	struct device_node *np = ofdev->dev.of_node;
-	struct zmii_instance *dev;
-	struct resource regs;
-	int rc;
+अटल पूर्णांक zmii_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा zmii_instance *dev;
+	काष्ठा resource regs;
+	पूर्णांक rc;
 
 	rc = -ENOMEM;
-	dev = kzalloc(sizeof(struct zmii_instance), GFP_KERNEL);
-	if (dev == NULL)
-		goto err_gone;
+	dev = kzalloc(माप(काष्ठा zmii_instance), GFP_KERNEL);
+	अगर (dev == शून्य)
+		जाओ err_gone;
 
 	mutex_init(&dev->lock);
 	dev->ofdev = ofdev;
 	dev->mode = PHY_INTERFACE_MODE_NA;
 
 	rc = -ENXIO;
-	if (of_address_to_resource(np, 0, &regs)) {
-		printk(KERN_ERR "%pOF: Can't get registers address\n", np);
-		goto err_free;
-	}
+	अगर (of_address_to_resource(np, 0, &regs)) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't get registers address\n", np);
+		जाओ err_मुक्त;
+	पूर्ण
 
 	rc = -ENOMEM;
-	dev->base = (struct zmii_regs __iomem *)ioremap(regs.start,
-						sizeof(struct zmii_regs));
-	if (dev->base == NULL) {
-		printk(KERN_ERR "%pOF: Can't map device registers!\n", np);
-		goto err_free;
-	}
+	dev->base = (काष्ठा zmii_regs __iomem *)ioremap(regs.start,
+						माप(काष्ठा zmii_regs));
+	अगर (dev->base == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't map device registers!\n", np);
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* We may need FER value for autodetection later */
+	/* We may need FER value क्रम स्वतःdetection later */
 	dev->fer_save = in_be32(&dev->base->fer);
 
-	/* Disable all inputs by default */
+	/* Disable all inमाला_दो by शेष */
 	out_be32(&dev->base->fer, 0);
 
-	printk(KERN_INFO "ZMII %pOF initialized\n", ofdev->dev.of_node);
+	prपूर्णांकk(KERN_INFO "ZMII %pOF initialized\n", ofdev->dev.of_node);
 	wmb();
-	platform_set_drvdata(ofdev, dev);
+	platक्रमm_set_drvdata(ofdev, dev);
 
-	return 0;
+	वापस 0;
 
- err_free:
-	kfree(dev);
+ err_मुक्त:
+	kमुक्त(dev);
  err_gone:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int zmii_remove(struct platform_device *ofdev)
-{
-	struct zmii_instance *dev = platform_get_drvdata(ofdev);
+अटल पूर्णांक zmii_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा zmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 
 	WARN_ON(dev->users != 0);
 
 	iounmap(dev->base);
-	kfree(dev);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id zmii_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id zmii_match[] =
+अणु
+	अणु
 		.compatible	= "ibm,zmii",
-	},
+	पूर्ण,
 	/* For backward compat with old DT */
-	{
+	अणु
 		.type		= "emac-zmii",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver zmii_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver zmii_driver = अणु
+	.driver = अणु
 		.name = "emac-zmii",
 		.of_match_table = zmii_match,
-	},
+	पूर्ण,
 	.probe = zmii_probe,
-	.remove = zmii_remove,
-};
+	.हटाओ = zmii_हटाओ,
+पूर्ण;
 
-int __init zmii_init(void)
-{
-	return platform_driver_register(&zmii_driver);
-}
+पूर्णांक __init zmii_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&zmii_driver);
+पूर्ण
 
-void zmii_exit(void)
-{
-	platform_driver_unregister(&zmii_driver);
-}
+व्योम zmii_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&zmii_driver);
+पूर्ण

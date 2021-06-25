@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2000 Jens Axboe <axboe@suse.de>
  * Copyright (C) 2001-2004 Peter Osterlund <petero2@telia.com>
  *
- * May be copied or modified under the terms of the GNU General Public
- * License.  See linux/COPYING for more information.
+ * May be copied or modअगरied under the terms of the GNU General Public
+ * License.  See linux/COPYING क्रम more inक्रमmation.
  *
- * Packet writing layer for ATAPI and SCSI CD-R, CD-RW, DVD-R, and
+ * Packet writing layer क्रम ATAPI and SCSI CD-R, CD-RW, DVD-R, and
  * DVD-RW devices.
  *
  */
-#ifndef _UAPI__PKTCDVD_H
-#define _UAPI__PKTCDVD_H
+#अगर_अघोषित _UAPI__PKTCDVD_H
+#घोषणा _UAPI__PKTCDVD_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
- * 1 for normal debug messages, 2 is very verbose. 0 to turn it off.
+ * 1 क्रम normal debug messages, 2 is very verbose. 0 to turn it off.
  */
-#define PACKET_DEBUG		1
+#घोषणा PACKET_DEBUG		1
 
-#define	MAX_WRITERS		8
+#घोषणा	MAX_WRITERS		8
 
-#define PKT_RB_POOL_SIZE	512
+#घोषणा PKT_RB_POOL_SIZE	512
 
 /*
- * How long we should hold a non-full packet before starting data gathering.
+ * How दीर्घ we should hold a non-full packet beक्रमe starting data gathering.
  */
-#define PACKET_WAIT_TIME	(HZ * 5 / 1000)
+#घोषणा PACKET_WAIT_TIME	(HZ * 5 / 1000)
 
 /*
- * use drive write caching -- we need deferred error handling to be
- * able to successfully recover with this option (drive will return good
+ * use drive ग_लिखो caching -- we need deferred error handling to be
+ * able to successfully recover with this option (drive will वापस good
  * status as soon as the cdb is validated).
  */
-#if defined(CONFIG_CDROM_PKTCDVD_WCACHE)
-#define USE_WCACHING		1
-#else
-#define USE_WCACHING		0
-#endif
+#अगर defined(CONFIG_CDROM_PKTCDVD_WCACHE)
+#घोषणा USE_WCACHING		1
+#अन्यथा
+#घोषणा USE_WCACHING		0
+#पूर्ण_अगर
 
 /*
- * No user-servicable parts beyond this point ->
+ * No user-servicable parts beyond this poपूर्णांक ->
  */
 
 /*
  * device types
  */
-#define PACKET_CDR		1
-#define	PACKET_CDRW		2
-#define PACKET_DVDR		3
-#define PACKET_DVDRW		4
+#घोषणा PACKET_CDR		1
+#घोषणा	PACKET_CDRW		2
+#घोषणा PACKET_DVDR		3
+#घोषणा PACKET_DVDRW		4
 
 /*
  * flags
  */
-#define PACKET_WRITABLE		1	/* pd is writable */
-#define PACKET_NWA_VALID	2	/* next writable address valid */
-#define PACKET_LRA_VALID	3	/* last recorded address valid */
-#define PACKET_MERGE_SEGS	4	/* perform segment merging to keep */
+#घोषणा PACKET_WRITABLE		1	/* pd is writable */
+#घोषणा PACKET_NWA_VALID	2	/* next writable address valid */
+#घोषणा PACKET_LRA_VALID	3	/* last recorded address valid */
+#घोषणा PACKET_MERGE_SEGS	4	/* perक्रमm segment merging to keep */
 					/* underlying cdrom device happy */
 
 /*
  * Disc status -- from READ_DISC_INFO
  */
-#define PACKET_DISC_EMPTY	0
-#define PACKET_DISC_INCOMPLETE	1
-#define PACKET_DISC_COMPLETE	2
-#define PACKET_DISC_OTHER	3
+#घोषणा PACKET_DISC_EMPTY	0
+#घोषणा PACKET_DISC_INCOMPLETE	1
+#घोषणा PACKET_DISC_COMPLETE	2
+#घोषणा PACKET_DISC_OTHER	3
 
 /*
- * write type, and corresponding data block type
+ * ग_लिखो type, and corresponding data block type
  */
-#define PACKET_MODE1		1
-#define PACKET_MODE2		2
-#define PACKET_BLOCK_MODE1	8
-#define PACKET_BLOCK_MODE2	10
+#घोषणा PACKET_MODE1		1
+#घोषणा PACKET_MODE2		2
+#घोषणा PACKET_BLOCK_MODE1	8
+#घोषणा PACKET_BLOCK_MODE2	10
 
 /*
  * Last session/border status
  */
-#define PACKET_SESSION_EMPTY		0
-#define PACKET_SESSION_INCOMPLETE	1
-#define PACKET_SESSION_RESERVED		2
-#define PACKET_SESSION_COMPLETE		3
+#घोषणा PACKET_SESSION_EMPTY		0
+#घोषणा PACKET_SESSION_INCOMPLETE	1
+#घोषणा PACKET_SESSION_RESERVED		2
+#घोषणा PACKET_SESSION_COMPLETE		3
 
-#define PACKET_MCN			"4a656e734178626f65323030300000"
+#घोषणा PACKET_MCN			"4a656e734178626f65323030300000"
 
-#undef PACKET_USE_LS
+#अघोषित PACKET_USE_LS
 
-#define PKT_CTRL_CMD_SETUP	0
-#define PKT_CTRL_CMD_TEARDOWN	1
-#define PKT_CTRL_CMD_STATUS	2
+#घोषणा PKT_CTRL_CMD_SETUP	0
+#घोषणा PKT_CTRL_CMD_TEARDOWN	1
+#घोषणा PKT_CTRL_CMD_STATUS	2
 
-struct pkt_ctrl_command {
-	__u32 command;				/* in: Setup, teardown, status */
+काष्ठा pkt_ctrl_command अणु
+	__u32 command;				/* in: Setup, tearकरोwn, status */
 	__u32 dev_index;			/* in/out: Device index */
-	__u32 dev;				/* in/out: Device nr for cdrw device */
-	__u32 pkt_dev;				/* in/out: Device nr for packet device */
+	__u32 dev;				/* in/out: Device nr क्रम cdrw device */
+	__u32 pkt_dev;				/* in/out: Device nr क्रम packet device */
 	__u32 num_devices;			/* out: Largest device index + 1 */
 	__u32 padding;				/* Not used */
-};
+पूर्ण;
 
 /*
  * packet ioctls
  */
-#define PACKET_IOCTL_MAGIC	('X')
-#define PACKET_CTRL_CMD		_IOWR(PACKET_IOCTL_MAGIC, 1, struct pkt_ctrl_command)
+#घोषणा PACKET_IOCTL_MAGIC	('X')
+#घोषणा PACKET_CTRL_CMD		_IOWR(PACKET_IOCTL_MAGIC, 1, काष्ठा pkt_ctrl_command)
 
 
-#endif /* _UAPI__PKTCDVD_H */
+#पूर्ण_अगर /* _UAPI__PKTCDVD_H */

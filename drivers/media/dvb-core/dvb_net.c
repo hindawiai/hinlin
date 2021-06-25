@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * dvb_net.c
  *
- * Copyright (C) 2001 Convergence integrated media GmbH
+ * Copyright (C) 2001 Convergence पूर्णांकegrated media GmbH
  *                    Ralph Metzler <ralph@convergence.de>
  * Copyright (C) 2002 Ralph Metzler <rjkm@metzlerbros.de>
  *
  * ULE Decapsulation code:
  * Copyright (C) 2003, 2004 gcs - Global Communication & Services GmbH.
- *                      and Department of Scientific Computing
+ *                      and Deparपंचांगent of Scientअगरic Computing
  *                          Paris Lodron University of Salzburg.
  *                          Hilmar Linder <hlinder@cosy.sbg.ac.at>
  *                      and Wolfram Stering <wstering@cosy.sbg.ac.at>
@@ -23,11 +24,11 @@
  * Dec 2004: hl/ws v2: Implementing draft-ietf-ipdvb-ule-03.txt:
  *                       ULE Extension header handling.
  *                     Bugreports by Moritz Vieth and Hanno Tersteegen,
- *                       Fraunhofer Institute for Open Communication Systems
- *                       Competence Center for Advanced Satellite Communications.
+ *                       Fraunhofer Institute क्रम Open Communication Systems
+ *                       Competence Center क्रम Advanced Satellite Communications.
  *                     Bugfixes and robustness improvements.
- *                     Filtering on dest MAC addresses, if present (D-Bit = 0)
- *                     DVB_ULE_DEBUG compile-time option.
+ *                     Filtering on dest MAC addresses, अगर present (D-Bit = 0)
+ *                     DVB_ULE_DEBUG compile-समय option.
  * Apr 2006: cp v3:    Bugfixes and compliency with RFC 4326 (ULE) by
  *                       Christian Praehauser <cpraehaus@cosy.sbg.ac.at>,
  *                       Paris Lodron University of Salzburg.
@@ -36,393 +37,393 @@
 /*
  * FIXME / TODO (dvb_net.c):
  *
- * Unloading does not work for 2.6.9 kernels: a refcount doesn't go to zero.
+ * Unloading करोes not work क्रम 2.6.9 kernels: a refcount करोesn't go to zero.
  *
  */
 
-#define pr_fmt(fmt) "dvb_net: " fmt
+#घोषणा pr_fmt(fmt) "dvb_net: " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/dvb/net.h>
-#include <linux/uio.h>
-#include <linux/uaccess.h>
-#include <linux/crc32.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/dvb/net.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
 
-#include <media/dvb_demux.h>
-#include <media/dvb_net.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_net.h>
 
-static inline __u32 iov_crc32( __u32 c, struct kvec *iov, unsigned int cnt )
-{
-	unsigned int j;
-	for (j = 0; j < cnt; j++)
+अटल अंतरभूत __u32 iov_crc32( __u32 c, काष्ठा kvec *iov, अचिन्हित पूर्णांक cnt )
+अणु
+	अचिन्हित पूर्णांक j;
+	क्रम (j = 0; j < cnt; j++)
 		c = crc32_be( c, iov[j].iov_base, iov[j].iov_len );
-	return c;
-}
+	वापस c;
+पूर्ण
 
 
-#define DVB_NET_MULTICAST_MAX 10
+#घोषणा DVB_NET_MULTICAST_MAX 10
 
-#ifdef DVB_ULE_DEBUG
+#अगर_घोषित DVB_ULE_DEBUG
 /*
  * The code inside DVB_ULE_DEBUG keeps a history of the
  * last 100 TS cells processed.
  */
-static unsigned char ule_hist[100*TS_SZ] = { 0 };
-static unsigned char *ule_where = ule_hist, ule_dump;
+अटल अचिन्हित अक्षर ule_hist[100*TS_SZ] = अणु 0 पूर्ण;
+अटल अचिन्हित अक्षर *ule_where = ule_hist, ule_dump;
 
-static void hexdump(const unsigned char *buf, unsigned short len)
-{
-	print_hex_dump_debug("", DUMP_PREFIX_OFFSET, 16, 1, buf, len, true);
-}
-#endif
+अटल व्योम hexdump(स्थिर अचिन्हित अक्षर *buf, अचिन्हित लघु len)
+अणु
+	prपूर्णांक_hex_dump_debug("", DUMP_PREFIX_OFFSET, 16, 1, buf, len, true);
+पूर्ण
+#पूर्ण_अगर
 
-struct dvb_net_priv {
-	int in_use;
+काष्ठा dvb_net_priv अणु
+	पूर्णांक in_use;
 	u16 pid;
-	struct net_device *net;
-	struct dvb_net *host;
-	struct dmx_demux *demux;
-	struct dmx_section_feed *secfeed;
-	struct dmx_section_filter *secfilter;
-	struct dmx_ts_feed *tsfeed;
-	int multi_num;
-	struct dmx_section_filter *multi_secfilter[DVB_NET_MULTICAST_MAX];
-	unsigned char multi_macs[DVB_NET_MULTICAST_MAX][6];
-	int rx_mode;
-#define RX_MODE_UNI 0
-#define RX_MODE_MULTI 1
-#define RX_MODE_ALL_MULTI 2
-#define RX_MODE_PROMISC 3
-	struct work_struct set_multicast_list_wq;
-	struct work_struct restart_net_feed_wq;
-	unsigned char feedtype;			/* Either FEED_TYPE_ or FEED_TYPE_ULE */
-	int need_pusi;				/* Set to 1, if synchronization on PUSI required. */
-	unsigned char tscc;			/* TS continuity counter after sync on PUSI. */
-	struct sk_buff *ule_skb;		/* ULE SNDU decodes into this buffer. */
-	unsigned char *ule_next_hdr;		/* Pointer into skb to next ULE extension header. */
-	unsigned short ule_sndu_len;		/* ULE SNDU length in bytes, w/o D-Bit. */
-	unsigned short ule_sndu_type;		/* ULE SNDU type field, complete. */
-	unsigned char ule_sndu_type_1;		/* ULE SNDU type field, if split across 2 TS cells. */
-	unsigned char ule_dbit;			/* Whether the DestMAC address present
+	काष्ठा net_device *net;
+	काष्ठा dvb_net *host;
+	काष्ठा dmx_demux *demux;
+	काष्ठा dmx_section_feed *secfeed;
+	काष्ठा dmx_section_filter *secfilter;
+	काष्ठा dmx_ts_feed *tsfeed;
+	पूर्णांक multi_num;
+	काष्ठा dmx_section_filter *multi_secfilter[DVB_NET_MULTICAST_MAX];
+	अचिन्हित अक्षर multi_macs[DVB_NET_MULTICAST_MAX][6];
+	पूर्णांक rx_mode;
+#घोषणा RX_MODE_UNI 0
+#घोषणा RX_MODE_MULTI 1
+#घोषणा RX_MODE_ALL_MULTI 2
+#घोषणा RX_MODE_PROMISC 3
+	काष्ठा work_काष्ठा set_multicast_list_wq;
+	काष्ठा work_काष्ठा restart_net_feed_wq;
+	अचिन्हित अक्षर feedtype;			/* Either FEED_TYPE_ or FEED_TYPE_ULE */
+	पूर्णांक need_pusi;				/* Set to 1, अगर synchronization on PUSI required. */
+	अचिन्हित अक्षर tscc;			/* TS continuity counter after sync on PUSI. */
+	काष्ठा sk_buff *ule_skb;		/* ULE SNDU decodes पूर्णांकo this buffer. */
+	अचिन्हित अक्षर *ule_next_hdr;		/* Poपूर्णांकer पूर्णांकo skb to next ULE extension header. */
+	अचिन्हित लघु ule_sndu_len;		/* ULE SNDU length in bytes, w/o D-Bit. */
+	अचिन्हित लघु ule_sndu_type;		/* ULE SNDU type field, complete. */
+	अचिन्हित अक्षर ule_sndu_type_1;		/* ULE SNDU type field, अगर split across 2 TS cells. */
+	अचिन्हित अक्षर ule_dbit;			/* Whether the DestMAC address present
 						 * or not (bit is set). */
-	unsigned char ule_bridged;		/* Whether the ULE_BRIDGED extension header was found. */
-	int ule_sndu_remain;			/* Nr. of bytes still required for current ULE SNDU. */
-	unsigned long ts_count;			/* Current ts cell counter. */
-	struct mutex mutex;
-};
+	अचिन्हित अक्षर ule_bridged;		/* Whether the ULE_BRIDGED extension header was found. */
+	पूर्णांक ule_sndu_reमुख्य;			/* Nr. of bytes still required क्रम current ULE SNDU. */
+	अचिन्हित दीर्घ ts_count;			/* Current ts cell counter. */
+	काष्ठा mutex mutex;
+पूर्ण;
 
 
 /*
  *	Determine the packet's protocol ID. The rule here is that we
- *	assume 802.3 if the type field is short enough to be a length.
- *	This is normal practice and works for any 'now in use' protocol.
+ *	assume 802.3 अगर the type field is लघु enough to be a length.
+ *	This is normal practice and works क्रम any 'now in use' protocol.
  *
- *  stolen from eth.c out of the linux kernel, hacked for dvb-device
+ *  stolen from eth.c out of the linux kernel, hacked क्रम dvb-device
  *  by Michael Holzt <kju@debian.org>
  */
-static __be16 dvb_net_eth_type_trans(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct ethhdr *eth;
-	unsigned char *rawp;
+अटल __be16 dvb_net_eth_type_trans(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा ethhdr *eth;
+	अचिन्हित अक्षर *rawp;
 
 	skb_reset_mac_header(skb);
 	skb_pull(skb,dev->hard_header_len);
 	eth = eth_hdr(skb);
 
-	if (*eth->h_dest & 1) {
-		if(ether_addr_equal(eth->h_dest,dev->broadcast))
+	अगर (*eth->h_dest & 1) अणु
+		अगर(ether_addr_equal(eth->h_dest,dev->broadcast))
 			skb->pkt_type=PACKET_BROADCAST;
-		else
+		अन्यथा
 			skb->pkt_type=PACKET_MULTICAST;
-	}
+	पूर्ण
 
-	if (ntohs(eth->h_proto) >= ETH_P_802_3_MIN)
-		return eth->h_proto;
+	अगर (ntohs(eth->h_proto) >= ETH_P_802_3_MIN)
+		वापस eth->h_proto;
 
 	rawp = skb->data;
 
 	/*
-	 *	This is a magic hack to spot IPX packets. Older Novell breaks
+	 *	This is a magic hack to spot IPX packets. Older Novell अवरोधs
 	 *	the protocol design and runs IPX over 802.3 without an 802.2 LLC
-	 *	layer. We look for FFFF which isn't a used 802.2 SSAP/DSAP. This
-	 *	won't work for fault tolerant netware but does for the rest.
+	 *	layer. We look क्रम FFFF which isn't a used 802.2 SSAP/DSAP. This
+	 *	won't work क्रम fault tolerant netware but करोes क्रम the rest.
 	 */
-	if (*(unsigned short *)rawp == 0xFFFF)
-		return htons(ETH_P_802_3);
+	अगर (*(अचिन्हित लघु *)rawp == 0xFFFF)
+		वापस htons(ETH_P_802_3);
 
 	/*
 	 *	Real 802.2 LLC
 	 */
-	return htons(ETH_P_802_2);
-}
+	वापस htons(ETH_P_802_2);
+पूर्ण
 
-#define TS_SZ	188
-#define TS_SYNC	0x47
-#define TS_TEI	0x80
-#define TS_SC	0xC0
-#define TS_PUSI	0x40
-#define TS_AF_A	0x20
-#define TS_AF_D	0x10
+#घोषणा TS_SZ	188
+#घोषणा TS_SYNC	0x47
+#घोषणा TS_TEI	0x80
+#घोषणा TS_SC	0xC0
+#घोषणा TS_PUSI	0x40
+#घोषणा TS_AF_A	0x20
+#घोषणा TS_AF_D	0x10
 
 /* ULE Extension Header handlers. */
 
-#define ULE_TEST	0
-#define ULE_BRIDGED	1
+#घोषणा ULE_TEST	0
+#घोषणा ULE_BRIDGED	1
 
-#define ULE_OPTEXTHDR_PADDING 0
+#घोषणा ULE_OPTEXTHDR_PADDING 0
 
-static int ule_test_sndu( struct dvb_net_priv *p )
-{
-	return -1;
-}
+अटल पूर्णांक ule_test_sndu( काष्ठा dvb_net_priv *p )
+अणु
+	वापस -1;
+पूर्ण
 
-static int ule_bridged_sndu( struct dvb_net_priv *p )
-{
-	struct ethhdr *hdr = (struct ethhdr*) p->ule_next_hdr;
-	if(ntohs(hdr->h_proto) < ETH_P_802_3_MIN) {
-		int framelen = p->ule_sndu_len - ((p->ule_next_hdr+sizeof(struct ethhdr)) - p->ule_skb->data);
-		/* A frame Type < ETH_P_802_3_MIN for a bridged frame, introduces a LLC Length field. */
-		if(framelen != ntohs(hdr->h_proto)) {
-			return -1;
-		}
-	}
+अटल पूर्णांक ule_bridged_sndu( काष्ठा dvb_net_priv *p )
+अणु
+	काष्ठा ethhdr *hdr = (काष्ठा ethhdr*) p->ule_next_hdr;
+	अगर(ntohs(hdr->h_proto) < ETH_P_802_3_MIN) अणु
+		पूर्णांक framelen = p->ule_sndu_len - ((p->ule_next_hdr+माप(काष्ठा ethhdr)) - p->ule_skb->data);
+		/* A frame Type < ETH_P_802_3_MIN क्रम a bridged frame, पूर्णांकroduces a LLC Length field. */
+		अगर(framelen != ntohs(hdr->h_proto)) अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण
 	/* Note:
 	 * From RFC4326:
 	 *  "A bridged SNDU is a Mandatory Extension Header of Type 1.
-	 *   It must be the final (or only) extension header specified in the header chain of a SNDU."
+	 *   It must be the final (or only) extension header specअगरied in the header chain of a SNDU."
 	 * The 'ule_bridged' flag will cause the extension header processing loop to terminate.
 	 */
 	p->ule_bridged = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ule_exthdr_padding(struct dvb_net_priv *p)
-{
-	return 0;
-}
+अटल पूर्णांक ule_exthdr_padding(काष्ठा dvb_net_priv *p)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * Handle ULE extension headers.
- *  Function is called after a successful CRC32 verification of an ULE SNDU to complete its decoding.
+ *  Function is called after a successful CRC32 verअगरication of an ULE SNDU to complete its decoding.
  *  Returns: >= 0: nr. of bytes consumed by next extension header
  *	     -1:   Mandatory extension header that is not recognized or TEST SNDU; discard.
  */
-static int handle_one_ule_extension( struct dvb_net_priv *p )
-{
+अटल पूर्णांक handle_one_ule_extension( काष्ठा dvb_net_priv *p )
+अणु
 	/* Table of mandatory extension header handlers.  The header type is the index. */
-	static int (*ule_mandatory_ext_handlers[255])( struct dvb_net_priv *p ) =
-		{ [0] = ule_test_sndu, [1] = ule_bridged_sndu, [2] = NULL,  };
+	अटल पूर्णांक (*ule_mandatory_ext_handlers[255])( काष्ठा dvb_net_priv *p ) =
+		अणु [0] = ule_test_sndu, [1] = ule_bridged_sndu, [2] = शून्य,  पूर्ण;
 
 	/* Table of optional extension header handlers.  The header type is the index. */
-	static int (*ule_optional_ext_handlers[255])( struct dvb_net_priv *p ) =
-		{ [0] = ule_exthdr_padding, [1] = NULL, };
+	अटल पूर्णांक (*ule_optional_ext_handlers[255])( काष्ठा dvb_net_priv *p ) =
+		अणु [0] = ule_exthdr_padding, [1] = शून्य, पूर्ण;
 
-	int ext_len = 0;
-	unsigned char hlen = (p->ule_sndu_type & 0x0700) >> 8;
-	unsigned char htype = p->ule_sndu_type & 0x00FF;
+	पूर्णांक ext_len = 0;
+	अचिन्हित अक्षर hlen = (p->ule_sndu_type & 0x0700) >> 8;
+	अचिन्हित अक्षर htype = p->ule_sndu_type & 0x00FF;
 
 	/* Discriminate mandatory and optional extension headers. */
-	if (hlen == 0) {
+	अगर (hlen == 0) अणु
 		/* Mandatory extension header */
-		if (ule_mandatory_ext_handlers[htype]) {
+		अगर (ule_mandatory_ext_handlers[htype]) अणु
 			ext_len = ule_mandatory_ext_handlers[htype]( p );
-			if(ext_len >= 0) {
+			अगर(ext_len >= 0) अणु
 				p->ule_next_hdr += ext_len;
-				if (!p->ule_bridged) {
+				अगर (!p->ule_bridged) अणु
 					p->ule_sndu_type = ntohs(*(__be16 *)p->ule_next_hdr);
 					p->ule_next_hdr += 2;
-				} else {
+				पूर्ण अन्यथा अणु
 					p->ule_sndu_type = ntohs(*(__be16 *)(p->ule_next_hdr + ((p->ule_dbit ? 2 : 3) * ETH_ALEN)));
 					/* This assures the extension handling loop will terminate. */
-				}
-			}
-			// else: extension handler failed or SNDU should be discarded
-		} else
+				पूर्ण
+			पूर्ण
+			// अन्यथा: extension handler failed or SNDU should be discarded
+		पूर्ण अन्यथा
 			ext_len = -1;	/* SNDU has to be discarded. */
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Optional extension header.  Calculate the length. */
 		ext_len = hlen << 1;
 		/* Process the optional extension header according to its type. */
-		if (ule_optional_ext_handlers[htype])
-			(void)ule_optional_ext_handlers[htype]( p );
+		अगर (ule_optional_ext_handlers[htype])
+			(व्योम)ule_optional_ext_handlers[htype]( p );
 		p->ule_next_hdr += ext_len;
 		p->ule_sndu_type = ntohs( *(__be16 *)(p->ule_next_hdr-2) );
 		/*
 		 * note: the length of the next header type is included in the
 		 * length of THIS optional extension header
 		 */
-	}
+	पूर्ण
 
-	return ext_len;
-}
+	वापस ext_len;
+पूर्ण
 
-static int handle_ule_extensions( struct dvb_net_priv *p )
-{
-	int total_ext_len = 0, l;
+अटल पूर्णांक handle_ule_extensions( काष्ठा dvb_net_priv *p )
+अणु
+	पूर्णांक total_ext_len = 0, l;
 
 	p->ule_next_hdr = p->ule_skb->data;
-	do {
+	करो अणु
 		l = handle_one_ule_extension( p );
-		if (l < 0)
-			return l;	/* Stop extension header processing and discard SNDU. */
+		अगर (l < 0)
+			वापस l;	/* Stop extension header processing and discard SNDU. */
 		total_ext_len += l;
 		pr_debug("ule_next_hdr=%p, ule_sndu_type=%i, l=%i, total_ext_len=%i\n",
-			 p->ule_next_hdr, (int)p->ule_sndu_type,
+			 p->ule_next_hdr, (पूर्णांक)p->ule_sndu_type,
 			 l, total_ext_len);
 
-	} while (p->ule_sndu_type < ETH_P_802_3_MIN);
+	पूर्ण जबतक (p->ule_sndu_type < ETH_P_802_3_MIN);
 
-	return total_ext_len;
-}
+	वापस total_ext_len;
+पूर्ण
 
 
-/* Prepare for a new ULE SNDU: reset the decoder state. */
-static inline void reset_ule( struct dvb_net_priv *p )
-{
-	p->ule_skb = NULL;
-	p->ule_next_hdr = NULL;
+/* Prepare क्रम a new ULE SNDU: reset the decoder state. */
+अटल अंतरभूत व्योम reset_ule( काष्ठा dvb_net_priv *p )
+अणु
+	p->ule_skb = शून्य;
+	p->ule_next_hdr = शून्य;
 	p->ule_sndu_len = 0;
 	p->ule_sndu_type = 0;
 	p->ule_sndu_type_1 = 0;
-	p->ule_sndu_remain = 0;
+	p->ule_sndu_reमुख्य = 0;
 	p->ule_dbit = 0xFF;
 	p->ule_bridged = 0;
-}
+पूर्ण
 
 /*
  * Decode ULE SNDUs according to draft-ietf-ipdvb-ule-03.txt from a sequence of
  * TS cells of a single PID.
  */
 
-struct dvb_net_ule_handle {
-	struct net_device *dev;
-	struct dvb_net_priv *priv;
-	struct ethhdr *ethh;
-	const u8 *buf;
-	size_t buf_len;
-	unsigned long skipped;
-	const u8 *ts, *ts_end, *from_where;
-	u8 ts_remain, how_much, new_ts;
+काष्ठा dvb_net_ule_handle अणु
+	काष्ठा net_device *dev;
+	काष्ठा dvb_net_priv *priv;
+	काष्ठा ethhdr *ethh;
+	स्थिर u8 *buf;
+	माप_प्रकार buf_len;
+	अचिन्हित दीर्घ skipped;
+	स्थिर u8 *ts, *ts_end, *from_where;
+	u8 ts_reमुख्य, how_much, new_ts;
 	bool error;
-};
+पूर्ण;
 
-static int dvb_net_ule_new_ts_cell(struct dvb_net_ule_handle *h)
-{
+अटल पूर्णांक dvb_net_ule_new_ts_cell(काष्ठा dvb_net_ule_handle *h)
+अणु
 	/* We are about to process a new TS cell. */
 
-#ifdef DVB_ULE_DEBUG
-	if (ule_where >= &ule_hist[100*TS_SZ])
+#अगर_घोषित DVB_ULE_DEBUG
+	अगर (ule_where >= &ule_hist[100*TS_SZ])
 		ule_where = ule_hist;
-	memcpy(ule_where, h->ts, TS_SZ);
-	if (ule_dump) {
+	स_नकल(ule_where, h->ts, TS_SZ);
+	अगर (ule_dump) अणु
 		hexdump(ule_where, TS_SZ);
 		ule_dump = 0;
-	}
+	पूर्ण
 	ule_where += TS_SZ;
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Check TS h->error conditions: sync_byte, transport_error_indicator,
 	 * scrambling_control .
 	 */
-	if ((h->ts[0] != TS_SYNC) || (h->ts[1] & TS_TEI) ||
-	    ((h->ts[3] & TS_SC) != 0)) {
+	अगर ((h->ts[0] != TS_SYNC) || (h->ts[1] & TS_TEI) ||
+	    ((h->ts[3] & TS_SC) != 0)) अणु
 		pr_warn("%lu: Invalid TS cell: SYNC %#x, TEI %u, SC %#x.\n",
 			h->priv->ts_count, h->ts[0],
 			(h->ts[1] & TS_TEI) >> 7,
 			(h->ts[3] & TS_SC) >> 6);
 
 		/* Drop partly decoded SNDU, reset state, resync on PUSI. */
-		if (h->priv->ule_skb) {
-			dev_kfree_skb(h->priv->ule_skb);
-			/* Prepare for next SNDU. */
+		अगर (h->priv->ule_skb) अणु
+			dev_kमुक्त_skb(h->priv->ule_skb);
+			/* Prepare क्रम next SNDU. */
 			h->dev->stats.rx_errors++;
 			h->dev->stats.rx_frame_errors++;
-		}
+		पूर्ण
 		reset_ule(h->priv);
 		h->priv->need_pusi = 1;
 
 		/* Continue with next TS cell. */
 		h->ts += TS_SZ;
 		h->priv->ts_count++;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	h->ts_remain = 184;
+	h->ts_reमुख्य = 184;
 	h->from_where = h->ts + 4;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_net_ule_ts_pusi(struct dvb_net_ule_handle *h)
-{
-	if (h->ts[1] & TS_PUSI) {
+अटल पूर्णांक dvb_net_ule_ts_pusi(काष्ठा dvb_net_ule_handle *h)
+अणु
+	अगर (h->ts[1] & TS_PUSI) अणु
 		/* Find beginning of first ULE SNDU in current TS cell. */
 		/* Synchronize continuity counter. */
 		h->priv->tscc = h->ts[3] & 0x0F;
-		/* There is a pointer field here. */
-		if (h->ts[4] > h->ts_remain) {
+		/* There is a poपूर्णांकer field here. */
+		अगर (h->ts[4] > h->ts_reमुख्य) अणु
 			pr_err("%lu: Invalid ULE packet (pointer field %d)\n",
 				h->priv->ts_count, h->ts[4]);
 			h->ts += TS_SZ;
 			h->priv->ts_count++;
-			return 1;
-		}
-		/* Skip to destination of pointer field. */
+			वापस 1;
+		पूर्ण
+		/* Skip to destination of poपूर्णांकer field. */
 		h->from_where = &h->ts[5] + h->ts[4];
-		h->ts_remain -= 1 + h->ts[4];
+		h->ts_reमुख्य -= 1 + h->ts[4];
 		h->skipped = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		h->skipped++;
 		h->ts += TS_SZ;
 		h->priv->ts_count++;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_net_ule_new_ts(struct dvb_net_ule_handle *h)
-{
+अटल पूर्णांक dvb_net_ule_new_ts(काष्ठा dvb_net_ule_handle *h)
+अणु
 	/* Check continuity counter. */
-	if ((h->ts[3] & 0x0F) == h->priv->tscc)
+	अगर ((h->ts[3] & 0x0F) == h->priv->tscc)
 		h->priv->tscc = (h->priv->tscc + 1) & 0x0F;
-	else {
+	अन्यथा अणु
 		/* TS discontinuity handling: */
 		pr_warn("%lu: TS discontinuity: got %#x, expected %#x.\n",
 			h->priv->ts_count, h->ts[3] & 0x0F,
 			h->priv->tscc);
 		/* Drop partly decoded SNDU, reset state, resync on PUSI. */
-		if (h->priv->ule_skb) {
-			dev_kfree_skb(h->priv->ule_skb);
-			/* Prepare for next SNDU. */
+		अगर (h->priv->ule_skb) अणु
+			dev_kमुक्त_skb(h->priv->ule_skb);
+			/* Prepare क्रम next SNDU. */
 			// reset_ule(h->priv);  moved to below.
 			h->dev->stats.rx_errors++;
 			h->dev->stats.rx_frame_errors++;
-		}
+		पूर्ण
 		reset_ule(h->priv);
 		/* skip to next PUSI. */
 		h->priv->need_pusi = 1;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	/*
 	 * If we still have an incomplete payload, but PUSI is
 	 * set; some TS cells are missing.
-	 * This is only possible here, if we missed exactly 16 TS
+	 * This is only possible here, अगर we missed exactly 16 TS
 	 * cells (continuity counter wrap).
 	 */
-	if (h->ts[1] & TS_PUSI) {
-		if (!h->priv->need_pusi) {
-			if (!(*h->from_where < (h->ts_remain-1)) ||
-			    *h->from_where != h->priv->ule_sndu_remain) {
+	अगर (h->ts[1] & TS_PUSI) अणु
+		अगर (!h->priv->need_pusi) अणु
+			अगर (!(*h->from_where < (h->ts_reमुख्य-1)) ||
+			    *h->from_where != h->priv->ule_sndu_reमुख्य) अणु
 				/*
-				 * Pointer field is invalid.
+				 * Poपूर्णांकer field is invalid.
 				 * Drop this TS cell and any started ULE SNDU.
 				 */
 				pr_warn("%lu: Invalid pointer field: %u.\n",
@@ -433,31 +434,31 @@ static int dvb_net_ule_new_ts(struct dvb_net_ule_handle *h)
 				 * Drop partly decoded SNDU, reset state,
 				 * resync on PUSI.
 				 */
-				if (h->priv->ule_skb) {
+				अगर (h->priv->ule_skb) अणु
 					h->error = true;
-					dev_kfree_skb(h->priv->ule_skb);
-				}
+					dev_kमुक्त_skb(h->priv->ule_skb);
+				पूर्ण
 
-				if (h->error || h->priv->ule_sndu_remain) {
+				अगर (h->error || h->priv->ule_sndu_reमुख्य) अणु
 					h->dev->stats.rx_errors++;
 					h->dev->stats.rx_frame_errors++;
 					h->error = false;
-				}
+				पूर्ण
 
 				reset_ule(h->priv);
 				h->priv->need_pusi = 1;
-				return 1;
-			}
+				वापस 1;
+			पूर्ण
 			/*
-			 * Skip pointer field (we're processing a
+			 * Skip poपूर्णांकer field (we're processing a
 			 * packed payload).
 			 */
 			h->from_where += 1;
-			h->ts_remain -= 1;
-		} else
+			h->ts_reमुख्य -= 1;
+		पूर्ण अन्यथा
 			h->priv->need_pusi = 0;
 
-		if (h->priv->ule_sndu_remain > 183) {
+		अगर (h->priv->ule_sndu_reमुख्य > 183) अणु
 			/*
 			 * Current SNDU lacks more data than there
 			 * could be available in the current TS cell.
@@ -466,21 +467,21 @@ static int dvb_net_ule_new_ts(struct dvb_net_ule_handle *h)
 			h->dev->stats.rx_length_errors++;
 			pr_warn("%lu: Expected %d more SNDU bytes, but got PUSI (pf %d, h->ts_remain %d).  Flushing incomplete payload.\n",
 				h->priv->ts_count,
-				h->priv->ule_sndu_remain,
-				h->ts[4], h->ts_remain);
-			dev_kfree_skb(h->priv->ule_skb);
-			/* Prepare for next SNDU. */
+				h->priv->ule_sndu_reमुख्य,
+				h->ts[4], h->ts_reमुख्य);
+			dev_kमुक्त_skb(h->priv->ule_skb);
+			/* Prepare क्रम next SNDU. */
 			reset_ule(h->priv);
 			/*
-			 * Resync: go to where pointer field points to:
+			 * Resync: go to where poपूर्णांकer field poपूर्णांकs to:
 			 * start of next ULE SNDU.
 			 */
 			h->from_where += h->ts[4];
-			h->ts_remain -= h->ts[4];
-		}
-	}
-	return 0;
-}
+			h->ts_reमुख्य -= h->ts[4];
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -488,31 +489,31 @@ static int dvb_net_ule_new_ts(struct dvb_net_ule_handle *h)
  * Find ULE header.  It is only guaranteed that the
  * length field (2 bytes) is contained in the current
  * TS.
- * Check h.ts_remain has to be >= 2 here.
+ * Check h.ts_reमुख्य has to be >= 2 here.
  */
-static int dvb_net_ule_new_payload(struct dvb_net_ule_handle *h)
-{
-	if (h->ts_remain < 2) {
+अटल पूर्णांक dvb_net_ule_new_payload(काष्ठा dvb_net_ule_handle *h)
+अणु
+	अगर (h->ts_reमुख्य < 2) अणु
 		pr_warn("Invalid payload packing: only %d bytes left in TS.  Resyncing.\n",
-			h->ts_remain);
+			h->ts_reमुख्य);
 		h->priv->ule_sndu_len = 0;
 		h->priv->need_pusi = 1;
 		h->ts += TS_SZ;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!h->priv->ule_sndu_len) {
+	अगर (!h->priv->ule_sndu_len) अणु
 		/* Got at least two bytes, thus extrace the SNDU length. */
 		h->priv->ule_sndu_len = h->from_where[0] << 8 |
 					h->from_where[1];
-		if (h->priv->ule_sndu_len & 0x8000) {
+		अगर (h->priv->ule_sndu_len & 0x8000) अणु
 			/* D-Bit is set: no dest mac present. */
 			h->priv->ule_sndu_len &= 0x7FFF;
 			h->priv->ule_dbit = 1;
-		} else
+		पूर्ण अन्यथा
 			h->priv->ule_dbit = 0;
 
-		if (h->priv->ule_sndu_len < 5) {
+		अगर (h->priv->ule_sndu_len < 5) अणु
 			pr_warn("%lu: Invalid ULE SNDU length %u. Resyncing.\n",
 				h->priv->ts_count,
 				h->priv->ule_sndu_len);
@@ -523,317 +524,317 @@ static int dvb_net_ule_new_payload(struct dvb_net_ule_handle *h)
 			h->new_ts = 1;
 			h->ts += TS_SZ;
 			h->priv->ts_count++;
-			return 1;
-		}
-		h->ts_remain -= 2;	/* consume the 2 bytes SNDU length. */
+			वापस 1;
+		पूर्ण
+		h->ts_reमुख्य -= 2;	/* consume the 2 bytes SNDU length. */
 		h->from_where += 2;
-	}
+	पूर्ण
 
-	h->priv->ule_sndu_remain = h->priv->ule_sndu_len + 2;
+	h->priv->ule_sndu_reमुख्य = h->priv->ule_sndu_len + 2;
 	/*
 	 * State of current TS:
-	 *   h->ts_remain (remaining bytes in the current TS cell)
+	 *   h->ts_reमुख्य (reमुख्यing bytes in the current TS cell)
 	 *   0	ule_type is not available now, we need the next TS cell
 	 *   1	the first byte of the ule_type is present
 	 * >=2	full ULE header present, maybe some payload data as well.
 	 */
-	switch (h->ts_remain) {
-	case 1:
-		h->priv->ule_sndu_remain--;
+	चयन (h->ts_reमुख्य) अणु
+	हाल 1:
+		h->priv->ule_sndu_reमुख्य--;
 		h->priv->ule_sndu_type = h->from_where[0] << 8;
 
 		/* first byte of ule_type is set. */
 		h->priv->ule_sndu_type_1 = 1;
-		h->ts_remain -= 1;
+		h->ts_reमुख्य -= 1;
 		h->from_where += 1;
 		fallthrough;
-	case 0:
+	हाल 0:
 		h->new_ts = 1;
 		h->ts += TS_SZ;
 		h->priv->ts_count++;
-		return 1;
+		वापस 1;
 
-	default: /* complete ULE header is present in current TS. */
+	शेष: /* complete ULE header is present in current TS. */
 		/* Extract ULE type field. */
-		if (h->priv->ule_sndu_type_1) {
+		अगर (h->priv->ule_sndu_type_1) अणु
 			h->priv->ule_sndu_type_1 = 0;
 			h->priv->ule_sndu_type |= h->from_where[0];
-			h->from_where += 1; /* points to payload start. */
-			h->ts_remain -= 1;
-		} else {
+			h->from_where += 1; /* poपूर्णांकs to payload start. */
+			h->ts_reमुख्य -= 1;
+		पूर्ण अन्यथा अणु
 			/* Complete type is present in new TS. */
 			h->priv->ule_sndu_type = h->from_where[0] << 8 |
 						 h->from_where[1];
-			h->from_where += 2; /* points to payload start. */
-			h->ts_remain -= 2;
-		}
-		break;
-	}
+			h->from_where += 2; /* poपूर्णांकs to payload start. */
+			h->ts_reमुख्य -= 2;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * Allocate the skb (decoder target buffer) with the correct size,
 	 * as follows:
 	 *
-	 * prepare for the largest case: bridged SNDU with MAC address
+	 * prepare क्रम the largest हाल: bridged SNDU with MAC address
 	 * (dbit = 0).
 	 */
 	h->priv->ule_skb = dev_alloc_skb(h->priv->ule_sndu_len +
 					 ETH_HLEN + ETH_ALEN);
-	if (!h->priv->ule_skb) {
+	अगर (!h->priv->ule_skb) अणु
 		pr_notice("%s: Memory squeeze, dropping packet.\n",
 			  h->dev->name);
 		h->dev->stats.rx_dropped++;
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	/* This includes the CRC32 _and_ dest mac, if !dbit. */
-	h->priv->ule_sndu_remain = h->priv->ule_sndu_len;
+	/* This includes the CRC32 _and_ dest mac, अगर !dbit. */
+	h->priv->ule_sndu_reमुख्य = h->priv->ule_sndu_len;
 	h->priv->ule_skb->dev = h->dev;
 	/*
-	 * Leave space for Ethernet or bridged SNDU header
+	 * Leave space क्रम Ethernet or bridged SNDU header
 	 * (eth hdr plus one MAC addr).
 	 */
 	skb_reserve(h->priv->ule_skb, ETH_HLEN + ETH_ALEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dvb_net_ule_should_drop(struct dvb_net_ule_handle *h)
-{
-	static const u8 bc_addr[ETH_ALEN] = { [0 ... ETH_ALEN - 1] = 0xff };
+अटल पूर्णांक dvb_net_ule_should_drop(काष्ठा dvb_net_ule_handle *h)
+अणु
+	अटल स्थिर u8 bc_addr[ETH_ALEN] = अणु [0 ... ETH_ALEN - 1] = 0xff पूर्ण;
 
 	/*
 	 * The destination MAC address is the next data in the skb.  It comes
-	 * before any extension headers.
+	 * beक्रमe any extension headers.
 	 *
-	 * Check if the payload of this SNDU should be passed up the stack.
+	 * Check अगर the payload of this SNDU should be passed up the stack.
 	 */
-	if (h->priv->rx_mode == RX_MODE_PROMISC)
-		return 0;
+	अगर (h->priv->rx_mode == RX_MODE_PROMISC)
+		वापस 0;
 
-	if (h->priv->ule_skb->data[0] & 0x01) {
+	अगर (h->priv->ule_skb->data[0] & 0x01) अणु
 		/* multicast or broadcast */
-		if (!ether_addr_equal(h->priv->ule_skb->data, bc_addr)) {
+		अगर (!ether_addr_equal(h->priv->ule_skb->data, bc_addr)) अणु
 			/* multicast */
-			if (h->priv->rx_mode == RX_MODE_MULTI) {
-				int i;
+			अगर (h->priv->rx_mode == RX_MODE_MULTI) अणु
+				पूर्णांक i;
 
-				for (i = 0; i < h->priv->multi_num &&
+				क्रम (i = 0; i < h->priv->multi_num &&
 				     !ether_addr_equal(h->priv->ule_skb->data,
 						       h->priv->multi_macs[i]);
 				     i++)
 					;
-				if (i == h->priv->multi_num)
-					return 1;
-			} else if (h->priv->rx_mode != RX_MODE_ALL_MULTI)
-				return 1; /* no broadcast; */
+				अगर (i == h->priv->multi_num)
+					वापस 1;
+			पूर्ण अन्यथा अगर (h->priv->rx_mode != RX_MODE_ALL_MULTI)
+				वापस 1; /* no broadcast; */
 			/*
-			 * else:
+			 * अन्यथा:
 			 * all multicast mode: accept all multicast packets
 			 */
-		}
-		/* else: broadcast */
-	} else if (!ether_addr_equal(h->priv->ule_skb->data, h->dev->dev_addr))
-		return 1;
+		पूर्ण
+		/* अन्यथा: broadcast */
+	पूर्ण अन्यथा अगर (!ether_addr_equal(h->priv->ule_skb->data, h->dev->dev_addr))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void dvb_net_ule_check_crc(struct dvb_net_ule_handle *h,
-				  struct kvec iov[3],
+अटल व्योम dvb_net_ule_check_crc(काष्ठा dvb_net_ule_handle *h,
+				  काष्ठा kvec iov[3],
 				  u32 ule_crc, u32 expected_crc)
-{
+अणु
 	u8 dest_addr[ETH_ALEN];
 
-	if (ule_crc != expected_crc) {
+	अगर (ule_crc != expected_crc) अणु
 		pr_warn("%lu: CRC32 check FAILED: %08x / %08x, SNDU len %d type %#x, ts_remain %d, next 2: %x.\n",
 			h->priv->ts_count, ule_crc, expected_crc,
 			h->priv->ule_sndu_len, h->priv->ule_sndu_type,
-			h->ts_remain,
-			h->ts_remain > 2 ?
-				*(unsigned short *)h->from_where : 0);
+			h->ts_reमुख्य,
+			h->ts_reमुख्य > 2 ?
+				*(अचिन्हित लघु *)h->from_where : 0);
 
-	#ifdef DVB_ULE_DEBUG
+	#अगर_घोषित DVB_ULE_DEBUG
 		hexdump(iov[0].iov_base, iov[0].iov_len);
 		hexdump(iov[1].iov_base, iov[1].iov_len);
 		hexdump(iov[2].iov_base, iov[2].iov_len);
 
-		if (ule_where == ule_hist) {
+		अगर (ule_where == ule_hist) अणु
 			hexdump(&ule_hist[98*TS_SZ], TS_SZ);
 			hexdump(&ule_hist[99*TS_SZ], TS_SZ);
-		} else if (ule_where == &ule_hist[TS_SZ]) {
+		पूर्ण अन्यथा अगर (ule_where == &ule_hist[TS_SZ]) अणु
 			hexdump(&ule_hist[99*TS_SZ], TS_SZ);
 			hexdump(ule_hist, TS_SZ);
-		} else {
+		पूर्ण अन्यथा अणु
 			hexdump(ule_where - TS_SZ - TS_SZ, TS_SZ);
 			hexdump(ule_where - TS_SZ, TS_SZ);
-		}
+		पूर्ण
 		ule_dump = 1;
-	#endif
+	#पूर्ण_अगर
 
 		h->dev->stats.rx_errors++;
 		h->dev->stats.rx_crc_errors++;
-		dev_kfree_skb(h->priv->ule_skb);
+		dev_kमुक्त_skb(h->priv->ule_skb);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* CRC32 verified OK. */
+	/* CRC32 verअगरied OK. */
 
-	/* CRC32 was OK, so remove it from skb. */
+	/* CRC32 was OK, so हटाओ it from skb. */
 	h->priv->ule_skb->tail -= 4;
 	h->priv->ule_skb->len -= 4;
 
-	if (!h->priv->ule_dbit) {
-		if (dvb_net_ule_should_drop(h)) {
+	अगर (!h->priv->ule_dbit) अणु
+		अगर (dvb_net_ule_should_drop(h)) अणु
 			netdev_dbg(h->dev,
 				   "Dropping SNDU: MAC destination address does not match: dest addr: %pM, h->dev addr: %pM\n",
 				   h->priv->ule_skb->data, h->dev->dev_addr);
-			dev_kfree_skb(h->priv->ule_skb);
-			return;
-		}
+			dev_kमुक्त_skb(h->priv->ule_skb);
+			वापस;
+		पूर्ण
 
 		skb_copy_from_linear_data(h->priv->ule_skb, dest_addr,
 					  ETH_ALEN);
 		skb_pull(h->priv->ule_skb, ETH_ALEN);
-	} else {
-		/* dest_addr buffer is only valid if h->priv->ule_dbit == 0 */
+	पूर्ण अन्यथा अणु
+		/* dest_addr buffer is only valid अगर h->priv->ule_dbit == 0 */
 		eth_zero_addr(dest_addr);
-	}
+	पूर्ण
 
 	/* Handle ULE Extension Headers. */
-	if (h->priv->ule_sndu_type < ETH_P_802_3_MIN) {
+	अगर (h->priv->ule_sndu_type < ETH_P_802_3_MIN) अणु
 		/* There is an extension header.  Handle it accordingly. */
-		int l = handle_ule_extensions(h->priv);
+		पूर्णांक l = handle_ule_extensions(h->priv);
 
-		if (l < 0) {
+		अगर (l < 0) अणु
 			/*
 			 * Mandatory extension header unknown or TEST SNDU.
 			 * Drop it.
 			 */
 
 			// pr_warn("Dropping SNDU, extension headers.\n" );
-			dev_kfree_skb(h->priv->ule_skb);
-			return;
-		}
+			dev_kमुक्त_skb(h->priv->ule_skb);
+			वापस;
+		पूर्ण
 		skb_pull(h->priv->ule_skb, l);
-	}
+	पूर्ण
 
 	/*
-	 * Construct/assure correct ethernet header.
+	 * Conकाष्ठा/assure correct ethernet header.
 	 * Note: in bridged mode (h->priv->ule_bridged != 0)
-	 * we already have the (original) ethernet
+	 * we alपढ़ोy have the (original) ethernet
 	 * header at the start of the payload (after
 	 * optional dest. address and any extension
 	 * headers).
 	 */
-	if (!h->priv->ule_bridged) {
+	अगर (!h->priv->ule_bridged) अणु
 		skb_push(h->priv->ule_skb, ETH_HLEN);
-		h->ethh = (struct ethhdr *)h->priv->ule_skb->data;
-		memcpy(h->ethh->h_dest, dest_addr, ETH_ALEN);
+		h->ethh = (काष्ठा ethhdr *)h->priv->ule_skb->data;
+		स_नकल(h->ethh->h_dest, dest_addr, ETH_ALEN);
 		eth_zero_addr(h->ethh->h_source);
 		h->ethh->h_proto = htons(h->priv->ule_sndu_type);
-	}
-	/* else:  skb is in correct state; nothing to do. */
+	पूर्ण
+	/* अन्यथा:  skb is in correct state; nothing to करो. */
 	h->priv->ule_bridged = 0;
 
-	/* Stuff into kernel's protocol stack. */
+	/* Stuff पूर्णांकo kernel's protocol stack. */
 	h->priv->ule_skb->protocol = dvb_net_eth_type_trans(h->priv->ule_skb,
 							   h->dev);
 	/*
 	 * If D-bit is set (i.e. destination MAC address not present),
 	 * receive the packet anyhow.
 	 */
-#if 0
-	if (h->priv->ule_dbit && skb->pkt_type == PACKET_OTHERHOST)
+#अगर 0
+	अगर (h->priv->ule_dbit && skb->pkt_type == PACKET_OTHERHOST)
 		h->priv->ule_skb->pkt_type = PACKET_HOST;
-#endif
+#पूर्ण_अगर
 	h->dev->stats.rx_packets++;
 	h->dev->stats.rx_bytes += h->priv->ule_skb->len;
-	netif_rx(h->priv->ule_skb);
-}
+	netअगर_rx(h->priv->ule_skb);
+पूर्ण
 
-static void dvb_net_ule(struct net_device *dev, const u8 *buf, size_t buf_len)
-{
-	int ret;
-	struct dvb_net_ule_handle h = {
+अटल व्योम dvb_net_ule(काष्ठा net_device *dev, स्थिर u8 *buf, माप_प्रकार buf_len)
+अणु
+	पूर्णांक ret;
+	काष्ठा dvb_net_ule_handle h = अणु
 		.dev = dev,
 		.priv = netdev_priv(dev),
-		.ethh = NULL,
+		.ethh = शून्य,
 		.buf = buf,
 		.buf_len = buf_len,
 		.skipped = 0L,
-		.ts = NULL,
-		.ts_end = NULL,
-		.from_where = NULL,
-		.ts_remain = 0,
+		.ts = शून्य,
+		.ts_end = शून्य,
+		.from_where = शून्य,
+		.ts_reमुख्य = 0,
 		.how_much = 0,
 		.new_ts = 1,
 		.error = false,
-	};
+	पूर्ण;
 
 	/*
 	 * For all TS cells in current buffer.
-	 * Appearently, we are called for every single TS cell.
+	 * Appearently, we are called क्रम every single TS cell.
 	 */
-	for (h.ts = h.buf, h.ts_end = h.buf + h.buf_len;
-	     h.ts < h.ts_end; /* no incr. */) {
-		if (h.new_ts) {
+	क्रम (h.ts = h.buf, h.ts_end = h.buf + h.buf_len;
+	     h.ts < h.ts_end; /* no incr. */) अणु
+		अगर (h.new_ts) अणु
 			/* We are about to process a new TS cell. */
-			if (dvb_net_ule_new_ts_cell(&h))
-				continue;
-		}
+			अगर (dvb_net_ule_new_ts_cell(&h))
+				जारी;
+		पूर्ण
 
-		/* Synchronize on PUSI, if required. */
-		if (h.priv->need_pusi) {
-			if (dvb_net_ule_ts_pusi(&h))
-				continue;
-		}
+		/* Synchronize on PUSI, अगर required. */
+		अगर (h.priv->need_pusi) अणु
+			अगर (dvb_net_ule_ts_pusi(&h))
+				जारी;
+		पूर्ण
 
-		if (h.new_ts) {
-			if (dvb_net_ule_new_ts(&h))
-				continue;
-		}
+		अगर (h.new_ts) अणु
+			अगर (dvb_net_ule_new_ts(&h))
+				जारी;
+		पूर्ण
 
-		/* Check if new payload needs to be started. */
-		if (h.priv->ule_skb == NULL) {
+		/* Check अगर new payload needs to be started. */
+		अगर (h.priv->ule_skb == शून्य) अणु
 			ret = dvb_net_ule_new_payload(&h);
-			if (ret < 0)
-				return;
-			if (ret)
-				continue;
-		}
+			अगर (ret < 0)
+				वापस;
+			अगर (ret)
+				जारी;
+		पूर्ण
 
-		/* Copy data into our current skb. */
-		h.how_much = min(h.priv->ule_sndu_remain, (int)h.ts_remain);
+		/* Copy data पूर्णांकo our current skb. */
+		h.how_much = min(h.priv->ule_sndu_reमुख्य, (पूर्णांक)h.ts_reमुख्य);
 		skb_put_data(h.priv->ule_skb, h.from_where, h.how_much);
-		h.priv->ule_sndu_remain -= h.how_much;
-		h.ts_remain -= h.how_much;
+		h.priv->ule_sndu_reमुख्य -= h.how_much;
+		h.ts_reमुख्य -= h.how_much;
 		h.from_where += h.how_much;
 
-		/* Check for complete payload. */
-		if (h.priv->ule_sndu_remain <= 0) {
-			/* Check CRC32, we've got it in our skb already. */
+		/* Check क्रम complete payload. */
+		अगर (h.priv->ule_sndu_reमुख्य <= 0) अणु
+			/* Check CRC32, we've got it in our skb alपढ़ोy. */
 			__be16 ulen = htons(h.priv->ule_sndu_len);
 			__be16 utype = htons(h.priv->ule_sndu_type);
-			const u8 *tail;
-			struct kvec iov[3] = {
-				{ &ulen, sizeof ulen },
-				{ &utype, sizeof utype },
-				{ h.priv->ule_skb->data,
-				  h.priv->ule_skb->len - 4 }
-			};
+			स्थिर u8 *tail;
+			काष्ठा kvec iov[3] = अणु
+				अणु &ulen, माप ulen पूर्ण,
+				अणु &utype, माप utype पूर्ण,
+				अणु h.priv->ule_skb->data,
+				  h.priv->ule_skb->len - 4 पूर्ण
+			पूर्ण;
 			u32 ule_crc = ~0L, expected_crc;
-			if (h.priv->ule_dbit) {
-				/* Set D-bit for CRC32 verification,
-				 * if it was set originally. */
+			अगर (h.priv->ule_dbit) अणु
+				/* Set D-bit क्रम CRC32 verअगरication,
+				 * अगर it was set originally. */
 				ulen |= htons(0x8000);
-			}
+			पूर्ण
 
 			ule_crc = iov_crc32(ule_crc, iov, 3);
-			tail = skb_tail_pointer(h.priv->ule_skb);
+			tail = skb_tail_poपूर्णांकer(h.priv->ule_skb);
 			expected_crc = *(tail - 4) << 24 |
 				       *(tail - 3) << 16 |
 				       *(tail - 2) << 8 |
@@ -841,15 +842,15 @@ static void dvb_net_ule(struct net_device *dev, const u8 *buf, size_t buf_len)
 
 			dvb_net_ule_check_crc(&h, iov, ule_crc, expected_crc);
 
-			/* Prepare for next SNDU. */
+			/* Prepare क्रम next SNDU. */
 			reset_ule(h.priv);
-		}
+		पूर्ण
 
 		/* More data in current TS (look at the bytes following the CRC32)? */
-		if (h.ts_remain >= 2 && *((unsigned short *)h.from_where) != 0xFFFF) {
+		अगर (h.ts_reमुख्य >= 2 && *((अचिन्हित लघु *)h.from_where) != 0xFFFF) अणु
 			/* Next ULE SNDU starts right there. */
 			h.new_ts = 0;
-			h.priv->ule_skb = NULL;
+			h.priv->ule_skb = शून्य;
 			h.priv->ule_sndu_type_1 = 0;
 			h.priv->ule_sndu_len = 0;
 			// pr_warn("More data in current TS: [%#x %#x %#x %#x]\n",
@@ -857,95 +858,95 @@ static void dvb_net_ule(struct net_device *dev, const u8 *buf, size_t buf_len)
 			//	*(h.from_where + 2), *(h.from_where + 3));
 			// pr_warn("h.ts @ %p, stopped @ %p:\n", h.ts, h.from_where + 0);
 			// hexdump(h.ts, 188);
-		} else {
+		पूर्ण अन्यथा अणु
 			h.new_ts = 1;
 			h.ts += TS_SZ;
 			h.priv->ts_count++;
-			if (h.priv->ule_skb == NULL) {
+			अगर (h.priv->ule_skb == शून्य) अणु
 				h.priv->need_pusi = 1;
 				h.priv->ule_sndu_type_1 = 0;
 				h.priv->ule_sndu_len = 0;
-			}
-		}
-	}	/* for all available TS cells */
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण	/* क्रम all available TS cells */
+पूर्ण
 
-static int dvb_net_ts_callback(const u8 *buffer1, size_t buffer1_len,
-			       const u8 *buffer2, size_t buffer2_len,
-			       struct dmx_ts_feed *feed,
+अटल पूर्णांक dvb_net_ts_callback(स्थिर u8 *buffer1, माप_प्रकार buffer1_len,
+			       स्थिर u8 *buffer2, माप_प्रकार buffer2_len,
+			       काष्ठा dmx_ts_feed *feed,
 			       u32 *buffer_flags)
-{
-	struct net_device *dev = feed->priv;
+अणु
+	काष्ठा net_device *dev = feed->priv;
 
-	if (buffer2)
+	अगर (buffer2)
 		pr_warn("buffer2 not NULL: %p.\n", buffer2);
-	if (buffer1_len > 32768)
+	अगर (buffer1_len > 32768)
 		pr_warn("length > 32k: %zu.\n", buffer1_len);
 	/* pr_info("TS callback: %u bytes, %u TS cells @ %p.\n",
 		  buffer1_len, buffer1_len / TS_SZ, buffer1); */
 	dvb_net_ule(dev, buffer1, buffer1_len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void dvb_net_sec(struct net_device *dev,
-			const u8 *pkt, int pkt_len)
-{
+अटल व्योम dvb_net_sec(काष्ठा net_device *dev,
+			स्थिर u8 *pkt, पूर्णांक pkt_len)
+अणु
 	u8 *eth;
-	struct sk_buff *skb;
-	struct net_device_stats *stats = &dev->stats;
-	int snap = 0;
+	काष्ठा sk_buff *skb;
+	काष्ठा net_device_stats *stats = &dev->stats;
+	पूर्णांक snap = 0;
 
 	/* note: pkt_len includes a 32bit checksum */
-	if (pkt_len < 16) {
+	अगर (pkt_len < 16) अणु
 		pr_warn("%s: IP/MPE packet length = %d too small.\n",
 			dev->name, pkt_len);
 		stats->rx_errors++;
 		stats->rx_length_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 /* it seems some ISPs manage to screw up here, so we have to
  * relax the error checks... */
-#if 0
-	if ((pkt[5] & 0xfd) != 0xc1) {
+#अगर 0
+	अगर ((pkt[5] & 0xfd) != 0xc1) अणु
 		/* drop scrambled or broken packets */
-#else
-	if ((pkt[5] & 0x3c) != 0x00) {
+#अन्यथा
+	अगर ((pkt[5] & 0x3c) != 0x00) अणु
 		/* drop scrambled */
-#endif
+#पूर्ण_अगर
 		stats->rx_errors++;
 		stats->rx_crc_errors++;
-		return;
-	}
-	if (pkt[5] & 0x02) {
+		वापस;
+	पूर्ण
+	अगर (pkt[5] & 0x02) अणु
 		/* handle LLC/SNAP, see rfc-1042 */
-		if (pkt_len < 24 || memcmp(&pkt[12], "\xaa\xaa\x03\0\0\0", 6)) {
+		अगर (pkt_len < 24 || स_भेद(&pkt[12], "\xaa\xaa\x03\0\0\0", 6)) अणु
 			stats->rx_dropped++;
-			return;
-		}
+			वापस;
+		पूर्ण
 		snap = 8;
-	}
-	if (pkt[7]) {
+	पूर्ण
+	अगर (pkt[7]) अणु
 		/* FIXME: assemble datagram from multiple sections */
 		stats->rx_errors++;
 		stats->rx_frame_errors++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* we have 14 byte ethernet header (ip header follows);
 	 * 12 byte MPE header; 4 byte checksum; + 2 byte alignment, 8 byte LLC/SNAP
 	 */
-	if (!(skb = dev_alloc_skb(pkt_len - 4 - 12 + 14 + 2 - snap))) {
+	अगर (!(skb = dev_alloc_skb(pkt_len - 4 - 12 + 14 + 2 - snap))) अणु
 		//pr_notice("%s: Memory squeeze, dropping packet.\n", dev->name);
 		stats->rx_dropped++;
-		return;
-	}
-	skb_reserve(skb, 2);    /* longword align L3 header */
+		वापस;
+	पूर्ण
+	skb_reserve(skb, 2);    /* दीर्घword align L3 header */
 	skb->dev = dev;
 
 	/* copy L3 payload */
 	eth = skb_put(skb, pkt_len - 12 - 4 + 14 - snap);
-	memcpy(eth + 14, pkt + 12 + snap, pkt_len - 12 - 4 - snap);
+	स_नकल(eth + 14, pkt + 12 + snap, pkt_len - 12 - 4 - snap);
 
 	/* create ethernet header: */
 	eth[0]=pkt[0x0b];
@@ -957,73 +958,73 @@ static void dvb_net_sec(struct net_device *dev,
 
 	eth[6]=eth[7]=eth[8]=eth[9]=eth[10]=eth[11]=0;
 
-	if (snap) {
+	अगर (snap) अणु
 		eth[12] = pkt[18];
 		eth[13] = pkt[19];
-	} else {
+	पूर्ण अन्यथा अणु
 		/* protocol numbers are from rfc-1700 or
 		 * http://www.iana.org/assignments/ethernet-numbers
 		 */
-		if (pkt[12] >> 4 == 6) { /* version field from IP header */
+		अगर (pkt[12] >> 4 == 6) अणु /* version field from IP header */
 			eth[12] = 0x86;	/* IPv6 */
 			eth[13] = 0xdd;
-		} else {
+		पूर्ण अन्यथा अणु
 			eth[12] = 0x08;	/* IPv4 */
 			eth[13] = 0x00;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	skb->protocol = dvb_net_eth_type_trans(skb, dev);
 
 	stats->rx_packets++;
 	stats->rx_bytes+=skb->len;
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-static int dvb_net_sec_callback(const u8 *buffer1, size_t buffer1_len,
-		 const u8 *buffer2, size_t buffer2_len,
-		 struct dmx_section_filter *filter, u32 *buffer_flags)
-{
-	struct net_device *dev = filter->priv;
+अटल पूर्णांक dvb_net_sec_callback(स्थिर u8 *buffer1, माप_प्रकार buffer1_len,
+		 स्थिर u8 *buffer2, माप_प्रकार buffer2_len,
+		 काष्ठा dmx_section_filter *filter, u32 *buffer_flags)
+अणु
+	काष्ठा net_device *dev = filter->priv;
 
 	/*
 	 * we rely on the DVB API definition where exactly one complete
 	 * section is delivered in buffer1
 	 */
 	dvb_net_sec (dev, buffer1, buffer1_len);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t dvb_net_tx(struct sk_buff *skb, struct net_device *dev)
-{
-	dev_kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+अटल netdev_tx_t dvb_net_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	dev_kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static u8 mask_normal[6]={0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-static u8 mask_allmulti[6]={0xff, 0xff, 0xff, 0x00, 0x00, 0x00};
-static u8 mac_allmulti[6]={0x01, 0x00, 0x5e, 0x00, 0x00, 0x00};
-static u8 mask_promisc[6]={0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+अटल u8 mask_normal[6]=अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+अटल u8 mask_allmulti[6]=अणु0xff, 0xff, 0xff, 0x00, 0x00, 0x00पूर्ण;
+अटल u8 mac_allmulti[6]=अणु0x01, 0x00, 0x5e, 0x00, 0x00, 0x00पूर्ण;
+अटल u8 mask_promisc[6]=अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण;
 
-static int dvb_net_filter_sec_set(struct net_device *dev,
-		   struct dmx_section_filter **secfilter,
+अटल पूर्णांक dvb_net_filter_sec_set(काष्ठा net_device *dev,
+		   काष्ठा dmx_section_filter **secfilter,
 		   u8 *mac, u8 *mac_mask)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
-	int ret;
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
+	पूर्णांक ret;
 
-	*secfilter=NULL;
+	*secfilter=शून्य;
 	ret = priv->secfeed->allocate_filter(priv->secfeed, secfilter);
-	if (ret<0) {
+	अगर (ret<0) अणु
 		pr_err("%s: could not get filter\n", dev->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	(*secfilter)->priv=(void *) dev;
+	(*secfilter)->priv=(व्योम *) dev;
 
-	memset((*secfilter)->filter_value, 0x00, DMX_MAX_FILTER_SIZE);
-	memset((*secfilter)->filter_mask,  0x00, DMX_MAX_FILTER_SIZE);
-	memset((*secfilter)->filter_mode,  0xff, DMX_MAX_FILTER_SIZE);
+	स_रखो((*secfilter)->filter_value, 0x00, DMX_MAX_FILTER_SIZE);
+	स_रखो((*secfilter)->filter_mask,  0x00, DMX_MAX_FILTER_SIZE);
+	स_रखो((*secfilter)->filter_mode,  0xff, DMX_MAX_FILTER_SIZE);
 
 	(*secfilter)->filter_value[0]=0x3e;
 	(*secfilter)->filter_value[3]=mac[5];
@@ -1043,193 +1044,193 @@ static int dvb_net_filter_sec_set(struct net_device *dev,
 
 	netdev_dbg(dev, "filter mac=%pM mask=%pM\n", mac, mac_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_net_feed_start(struct net_device *dev)
-{
-	int ret = 0, i;
-	struct dvb_net_priv *priv = netdev_priv(dev);
-	struct dmx_demux *demux = priv->demux;
-	unsigned char *mac = (unsigned char *) dev->dev_addr;
+अटल पूर्णांक dvb_net_feed_start(काष्ठा net_device *dev)
+अणु
+	पूर्णांक ret = 0, i;
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
+	काष्ठा dmx_demux *demux = priv->demux;
+	अचिन्हित अक्षर *mac = (अचिन्हित अक्षर *) dev->dev_addr;
 
 	netdev_dbg(dev, "rx_mode %i\n", priv->rx_mode);
 	mutex_lock(&priv->mutex);
-	if (priv->tsfeed || priv->secfeed || priv->secfilter || priv->multi_secfilter[0])
+	अगर (priv->tsfeed || priv->secfeed || priv->secfilter || priv->multi_secfilter[0])
 		pr_err("%s: BUG %d\n", __func__, __LINE__);
 
-	priv->secfeed=NULL;
-	priv->secfilter=NULL;
-	priv->tsfeed = NULL;
+	priv->secfeed=शून्य;
+	priv->secfilter=शून्य;
+	priv->tsfeed = शून्य;
 
-	if (priv->feedtype == DVB_NET_FEEDTYPE_MPE) {
+	अगर (priv->feedtype == DVB_NET_FEEDTYPE_MPE) अणु
 		netdev_dbg(dev, "alloc secfeed\n");
 		ret=demux->allocate_section_feed(demux, &priv->secfeed,
 					 dvb_net_sec_callback);
-		if (ret<0) {
+		अगर (ret<0) अणु
 			pr_err("%s: could not allocate section feed\n",
 			       dev->name);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		ret = priv->secfeed->set(priv->secfeed, priv->pid, 1);
 
-		if (ret<0) {
+		अगर (ret<0) अणु
 			pr_err("%s: could not set section feed\n", dev->name);
 			priv->demux->release_section_feed(priv->demux, priv->secfeed);
-			priv->secfeed=NULL;
-			goto error;
-		}
+			priv->secfeed=शून्य;
+			जाओ error;
+		पूर्ण
 
-		if (priv->rx_mode != RX_MODE_PROMISC) {
+		अगर (priv->rx_mode != RX_MODE_PROMISC) अणु
 			netdev_dbg(dev, "set secfilter\n");
 			dvb_net_filter_sec_set(dev, &priv->secfilter, mac, mask_normal);
-		}
+		पूर्ण
 
-		switch (priv->rx_mode) {
-		case RX_MODE_MULTI:
-			for (i = 0; i < priv->multi_num; i++) {
+		चयन (priv->rx_mode) अणु
+		हाल RX_MODE_MULTI:
+			क्रम (i = 0; i < priv->multi_num; i++) अणु
 				netdev_dbg(dev, "set multi_secfilter[%d]\n", i);
 				dvb_net_filter_sec_set(dev, &priv->multi_secfilter[i],
 						       priv->multi_macs[i], mask_normal);
-			}
-			break;
-		case RX_MODE_ALL_MULTI:
+			पूर्ण
+			अवरोध;
+		हाल RX_MODE_ALL_MULTI:
 			priv->multi_num=1;
 			netdev_dbg(dev, "set multi_secfilter[0]\n");
 			dvb_net_filter_sec_set(dev, &priv->multi_secfilter[0],
 					       mac_allmulti, mask_allmulti);
-			break;
-		case RX_MODE_PROMISC:
+			अवरोध;
+		हाल RX_MODE_PROMISC:
 			priv->multi_num=0;
 			netdev_dbg(dev, "set secfilter\n");
 			dvb_net_filter_sec_set(dev, &priv->secfilter, mac, mask_promisc);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		netdev_dbg(dev, "start filtering\n");
 		priv->secfeed->start_filtering(priv->secfeed);
-	} else if (priv->feedtype == DVB_NET_FEEDTYPE_ULE) {
-		ktime_t timeout = ns_to_ktime(10 * NSEC_PER_MSEC);
+	पूर्ण अन्यथा अगर (priv->feedtype == DVB_NET_FEEDTYPE_ULE) अणु
+		kसमय_प्रकार समयout = ns_to_kसमय(10 * NSEC_PER_MSEC);
 
 		/* we have payloads encapsulated in TS */
 		netdev_dbg(dev, "alloc tsfeed\n");
 		ret = demux->allocate_ts_feed(demux, &priv->tsfeed, dvb_net_ts_callback);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("%s: could not allocate ts feed\n", dev->name);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		/* Set netdevice pointer for ts decaps callback. */
-		priv->tsfeed->priv = (void *)dev;
+		/* Set netdevice poपूर्णांकer क्रम ts decaps callback. */
+		priv->tsfeed->priv = (व्योम *)dev;
 		ret = priv->tsfeed->set(priv->tsfeed,
 					priv->pid, /* pid */
 					TS_PACKET, /* type */
 					DMX_PES_OTHER, /* pes type */
-					timeout    /* timeout */
+					समयout    /* समयout */
 					);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("%s: could not set ts feed\n", dev->name);
 			priv->demux->release_ts_feed(priv->demux, priv->tsfeed);
-			priv->tsfeed = NULL;
-			goto error;
-		}
+			priv->tsfeed = शून्य;
+			जाओ error;
+		पूर्ण
 
 		netdev_dbg(dev, "start filtering\n");
 		priv->tsfeed->start_filtering(priv->tsfeed);
-	} else
+	पूर्ण अन्यथा
 		ret = -EINVAL;
 
 error:
 	mutex_unlock(&priv->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dvb_net_feed_stop(struct net_device *dev)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
-	int i, ret = 0;
+अटल पूर्णांक dvb_net_feed_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
+	पूर्णांक i, ret = 0;
 
 	mutex_lock(&priv->mutex);
-	if (priv->feedtype == DVB_NET_FEEDTYPE_MPE) {
-		if (priv->secfeed) {
-			if (priv->secfeed->is_filtering) {
+	अगर (priv->feedtype == DVB_NET_FEEDTYPE_MPE) अणु
+		अगर (priv->secfeed) अणु
+			अगर (priv->secfeed->is_filtering) अणु
 				netdev_dbg(dev, "stop secfeed\n");
 				priv->secfeed->stop_filtering(priv->secfeed);
-			}
+			पूर्ण
 
-			if (priv->secfilter) {
+			अगर (priv->secfilter) अणु
 				netdev_dbg(dev, "release secfilter\n");
 				priv->secfeed->release_filter(priv->secfeed,
 							      priv->secfilter);
-				priv->secfilter=NULL;
-			}
+				priv->secfilter=शून्य;
+			पूर्ण
 
-			for (i=0; i<priv->multi_num; i++) {
-				if (priv->multi_secfilter[i]) {
+			क्रम (i=0; i<priv->multi_num; i++) अणु
+				अगर (priv->multi_secfilter[i]) अणु
 					netdev_dbg(dev, "release multi_filter[%d]\n",
 						   i);
 					priv->secfeed->release_filter(priv->secfeed,
 								      priv->multi_secfilter[i]);
-					priv->multi_secfilter[i] = NULL;
-				}
-			}
+					priv->multi_secfilter[i] = शून्य;
+				पूर्ण
+			पूर्ण
 
 			priv->demux->release_section_feed(priv->demux, priv->secfeed);
-			priv->secfeed = NULL;
-		} else
+			priv->secfeed = शून्य;
+		पूर्ण अन्यथा
 			pr_err("%s: no feed to stop\n", dev->name);
-	} else if (priv->feedtype == DVB_NET_FEEDTYPE_ULE) {
-		if (priv->tsfeed) {
-			if (priv->tsfeed->is_filtering) {
+	पूर्ण अन्यथा अगर (priv->feedtype == DVB_NET_FEEDTYPE_ULE) अणु
+		अगर (priv->tsfeed) अणु
+			अगर (priv->tsfeed->is_filtering) अणु
 				netdev_dbg(dev, "stop tsfeed\n");
 				priv->tsfeed->stop_filtering(priv->tsfeed);
-			}
+			पूर्ण
 			priv->demux->release_ts_feed(priv->demux, priv->tsfeed);
-			priv->tsfeed = NULL;
-		}
-		else
+			priv->tsfeed = शून्य;
+		पूर्ण
+		अन्यथा
 			pr_err("%s: no ts feed to stop\n", dev->name);
-	} else
+	पूर्ण अन्यथा
 		ret = -EINVAL;
 	mutex_unlock(&priv->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int dvb_set_mc_filter(struct net_device *dev, unsigned char *addr)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
+अटल पूर्णांक dvb_set_mc_filter(काष्ठा net_device *dev, अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
 
-	if (priv->multi_num == DVB_NET_MULTICAST_MAX)
-		return -ENOMEM;
+	अगर (priv->multi_num == DVB_NET_MULTICAST_MAX)
+		वापस -ENOMEM;
 
-	memcpy(priv->multi_macs[priv->multi_num], addr, ETH_ALEN);
+	स_नकल(priv->multi_macs[priv->multi_num], addr, ETH_ALEN);
 
 	priv->multi_num++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void wq_set_multicast_list (struct work_struct *work)
-{
-	struct dvb_net_priv *priv =
-		container_of(work, struct dvb_net_priv, set_multicast_list_wq);
-	struct net_device *dev = priv->net;
+अटल व्योम wq_set_multicast_list (काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dvb_net_priv *priv =
+		container_of(work, काष्ठा dvb_net_priv, set_multicast_list_wq);
+	काष्ठा net_device *dev = priv->net;
 
 	dvb_net_feed_stop(dev);
 	priv->rx_mode = RX_MODE_UNI;
-	netif_addr_lock_bh(dev);
+	netअगर_addr_lock_bh(dev);
 
-	if (dev->flags & IFF_PROMISC) {
+	अगर (dev->flags & IFF_PROMISC) अणु
 		netdev_dbg(dev, "promiscuous mode\n");
 		priv->rx_mode = RX_MODE_PROMISC;
-	} else if ((dev->flags & IFF_ALLMULTI)) {
+	पूर्ण अन्यथा अगर ((dev->flags & IFF_ALLMULTI)) अणु
 		netdev_dbg(dev, "allmulti mode\n");
 		priv->rx_mode = RX_MODE_ALL_MULTI;
-	} else if (!netdev_mc_empty(dev)) {
-		struct netdev_hw_addr *ha;
+	पूर्ण अन्यथा अगर (!netdev_mc_empty(dev)) अणु
+		काष्ठा netdev_hw_addr *ha;
 
 		netdev_dbg(dev, "set_mc_list, %d entries\n",
 			   netdev_mc_count(dev));
@@ -1237,84 +1238,84 @@ static void wq_set_multicast_list (struct work_struct *work)
 		priv->rx_mode = RX_MODE_MULTI;
 		priv->multi_num = 0;
 
-		netdev_for_each_mc_addr(ha, dev)
+		netdev_क्रम_each_mc_addr(ha, dev)
 			dvb_set_mc_filter(dev, ha->addr);
-	}
+	पूर्ण
 
-	netif_addr_unlock_bh(dev);
+	netअगर_addr_unlock_bh(dev);
 	dvb_net_feed_start(dev);
-}
+पूर्ण
 
 
-static void dvb_net_set_multicast_list (struct net_device *dev)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
+अटल व्योम dvb_net_set_multicast_list (काष्ठा net_device *dev)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
 	schedule_work(&priv->set_multicast_list_wq);
-}
+पूर्ण
 
 
-static void wq_restart_net_feed (struct work_struct *work)
-{
-	struct dvb_net_priv *priv =
-		container_of(work, struct dvb_net_priv, restart_net_feed_wq);
-	struct net_device *dev = priv->net;
+अटल व्योम wq_restart_net_feed (काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dvb_net_priv *priv =
+		container_of(work, काष्ठा dvb_net_priv, restart_net_feed_wq);
+	काष्ठा net_device *dev = priv->net;
 
-	if (netif_running(dev)) {
+	अगर (netअगर_running(dev)) अणु
 		dvb_net_feed_stop(dev);
 		dvb_net_feed_start(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static int dvb_net_set_mac (struct net_device *dev, void *p)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
-	struct sockaddr *addr=p;
+अटल पूर्णांक dvb_net_set_mac (काष्ठा net_device *dev, व्योम *p)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
+	काष्ठा sockaddr *addr=p;
 
-	memcpy(dev->dev_addr, addr->sa_data, dev->addr_len);
+	स_नकल(dev->dev_addr, addr->sa_data, dev->addr_len);
 
-	if (netif_running(dev))
+	अगर (netअगर_running(dev))
 		schedule_work(&priv->restart_net_feed_wq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dvb_net_open(struct net_device *dev)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
+अटल पूर्णांक dvb_net_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
 
 	priv->in_use++;
 	dvb_net_feed_start(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int dvb_net_stop(struct net_device *dev)
-{
-	struct dvb_net_priv *priv = netdev_priv(dev);
+अटल पूर्णांक dvb_net_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा dvb_net_priv *priv = netdev_priv(dev);
 
 	priv->in_use--;
-	return dvb_net_feed_stop(dev);
-}
+	वापस dvb_net_feed_stop(dev);
+पूर्ण
 
-static const struct header_ops dvb_header_ops = {
+अटल स्थिर काष्ठा header_ops dvb_header_ops = अणु
 	.create		= eth_header,
 	.parse		= eth_header_parse,
-};
+पूर्ण;
 
 
-static const struct net_device_ops dvb_netdev_ops = {
-	.ndo_open		= dvb_net_open,
-	.ndo_stop		= dvb_net_stop,
-	.ndo_start_xmit		= dvb_net_tx,
-	.ndo_set_rx_mode	= dvb_net_set_multicast_list,
-	.ndo_set_mac_address    = dvb_net_set_mac,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops dvb_netdev_ops = अणु
+	.nकरो_खोलो		= dvb_net_खोलो,
+	.nकरो_stop		= dvb_net_stop,
+	.nकरो_start_xmit		= dvb_net_tx,
+	.nकरो_set_rx_mode	= dvb_net_set_multicast_list,
+	.nकरो_set_mac_address    = dvb_net_set_mac,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static void dvb_net_setup(struct net_device *dev)
-{
+अटल व्योम dvb_net_setup(काष्ठा net_device *dev)
+अणु
 	ether_setup(dev);
 
 	dev->header_ops		= &dvb_header_ops;
@@ -1323,52 +1324,52 @@ static void dvb_net_setup(struct net_device *dev)
 	dev->max_mtu		= 4096;
 
 	dev->flags |= IFF_NOARP;
-}
+पूर्ण
 
-static int get_if(struct dvb_net *dvbnet)
-{
-	int i;
+अटल पूर्णांक get_अगर(काष्ठा dvb_net *dvbnet)
+अणु
+	पूर्णांक i;
 
-	for (i=0; i<DVB_NET_DEVICES_MAX; i++)
-		if (!dvbnet->state[i])
-			break;
+	क्रम (i=0; i<DVB_NET_DEVICES_MAX; i++)
+		अगर (!dvbnet->state[i])
+			अवरोध;
 
-	if (i == DVB_NET_DEVICES_MAX)
-		return -1;
+	अगर (i == DVB_NET_DEVICES_MAX)
+		वापस -1;
 
 	dvbnet->state[i]=1;
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int dvb_net_add_if(struct dvb_net *dvbnet, u16 pid, u8 feedtype)
-{
-	struct net_device *net;
-	struct dvb_net_priv *priv;
-	int result;
-	int if_num;
+अटल पूर्णांक dvb_net_add_अगर(काष्ठा dvb_net *dvbnet, u16 pid, u8 feedtype)
+अणु
+	काष्ठा net_device *net;
+	काष्ठा dvb_net_priv *priv;
+	पूर्णांक result;
+	पूर्णांक अगर_num;
 
-	if (feedtype != DVB_NET_FEEDTYPE_MPE && feedtype != DVB_NET_FEEDTYPE_ULE)
-		return -EINVAL;
-	if ((if_num = get_if(dvbnet)) < 0)
-		return -EINVAL;
+	अगर (feedtype != DVB_NET_FEEDTYPE_MPE && feedtype != DVB_NET_FEEDTYPE_ULE)
+		वापस -EINVAL;
+	अगर ((अगर_num = get_अगर(dvbnet)) < 0)
+		वापस -EINVAL;
 
-	net = alloc_netdev(sizeof(struct dvb_net_priv), "dvb",
+	net = alloc_netdev(माप(काष्ठा dvb_net_priv), "dvb",
 			   NET_NAME_UNKNOWN, dvb_net_setup);
-	if (!net)
-		return -ENOMEM;
+	अगर (!net)
+		वापस -ENOMEM;
 
-	if (dvbnet->dvbdev->id)
-		snprintf(net->name, IFNAMSIZ, "dvb%d%u%d",
-			 dvbnet->dvbdev->adapter->num, dvbnet->dvbdev->id, if_num);
-	else
-		/* compatibility fix to keep dvb0_0 format */
-		snprintf(net->name, IFNAMSIZ, "dvb%d_%d",
-			 dvbnet->dvbdev->adapter->num, if_num);
+	अगर (dvbnet->dvbdev->id)
+		snम_लिखो(net->name, IFNAMSIZ, "dvb%d%u%d",
+			 dvbnet->dvbdev->adapter->num, dvbnet->dvbdev->id, अगर_num);
+	अन्यथा
+		/* compatibility fix to keep dvb0_0 क्रमmat */
+		snम_लिखो(net->name, IFNAMSIZ, "dvb%d_%d",
+			 dvbnet->dvbdev->adapter->num, अगर_num);
 
 	net->addr_len = 6;
-	memcpy(net->dev_addr, dvbnet->dvbdev->adapter->proposed_mac, 6);
+	स_नकल(net->dev_addr, dvbnet->dvbdev->adapter->proposed_mac, 6);
 
-	dvbnet->device[if_num] = net;
+	dvbnet->device[अगर_num] = net;
 
 	priv = netdev_priv(net);
 	priv->net = net;
@@ -1386,234 +1387,234 @@ static int dvb_net_add_if(struct dvb_net *dvbnet, u16 pid, u8 feedtype)
 
 	net->base_addr = pid;
 
-	if ((result = register_netdev(net)) < 0) {
-		dvbnet->device[if_num] = NULL;
-		free_netdev(net);
-		return result;
-	}
+	अगर ((result = रेजिस्टर_netdev(net)) < 0) अणु
+		dvbnet->device[अगर_num] = शून्य;
+		मुक्त_netdev(net);
+		वापस result;
+	पूर्ण
 	pr_info("created network interface %s\n", net->name);
 
-	return if_num;
-}
+	वापस अगर_num;
+पूर्ण
 
-static int dvb_net_remove_if(struct dvb_net *dvbnet, unsigned long num)
-{
-	struct net_device *net = dvbnet->device[num];
-	struct dvb_net_priv *priv;
+अटल पूर्णांक dvb_net_हटाओ_अगर(काष्ठा dvb_net *dvbnet, अचिन्हित दीर्घ num)
+अणु
+	काष्ठा net_device *net = dvbnet->device[num];
+	काष्ठा dvb_net_priv *priv;
 
-	if (!dvbnet->state[num])
-		return -EINVAL;
+	अगर (!dvbnet->state[num])
+		वापस -EINVAL;
 	priv = netdev_priv(net);
-	if (priv->in_use)
-		return -EBUSY;
+	अगर (priv->in_use)
+		वापस -EBUSY;
 
 	dvb_net_stop(net);
 	flush_work(&priv->set_multicast_list_wq);
 	flush_work(&priv->restart_net_feed_wq);
 	pr_info("removed network interface %s\n", net->name);
-	unregister_netdev(net);
+	unरेजिस्टर_netdev(net);
 	dvbnet->state[num]=0;
-	dvbnet->device[num] = NULL;
-	free_netdev(net);
+	dvbnet->device[num] = शून्य;
+	मुक्त_netdev(net);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dvb_net_do_ioctl(struct file *file,
-		  unsigned int cmd, void *parg)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_net *dvbnet = dvbdev->priv;
-	int ret = 0;
+अटल पूर्णांक dvb_net_करो_ioctl(काष्ठा file *file,
+		  अचिन्हित पूर्णांक cmd, व्योम *parg)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_net *dvbnet = dvbdev->priv;
+	पूर्णांक ret = 0;
 
-	if (((file->f_flags&O_ACCMODE)==O_RDONLY))
-		return -EPERM;
+	अगर (((file->f_flags&O_ACCMODE)==O_RDONLY))
+		वापस -EPERM;
 
-	if (mutex_lock_interruptible(&dvbnet->ioctl_mutex))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&dvbnet->ioctl_mutex))
+		वापस -ERESTARTSYS;
 
-	switch (cmd) {
-	case NET_ADD_IF:
-	{
-		struct dvb_net_if *dvbnetif = parg;
-		int result;
+	चयन (cmd) अणु
+	हाल NET_ADD_IF:
+	अणु
+		काष्ठा dvb_net_अगर *dvbnetअगर = parg;
+		पूर्णांक result;
 
-		if (!capable(CAP_SYS_ADMIN)) {
+		अगर (!capable(CAP_SYS_ADMIN)) अणु
 			ret = -EPERM;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		if (!try_module_get(dvbdev->adapter->module)) {
+		अगर (!try_module_get(dvbdev->adapter->module)) अणु
 			ret = -EPERM;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		result=dvb_net_add_if(dvbnet, dvbnetif->pid, dvbnetif->feedtype);
-		if (result<0) {
+		result=dvb_net_add_अगर(dvbnet, dvbnetअगर->pid, dvbnetअगर->feedtype);
+		अगर (result<0) अणु
 			module_put(dvbdev->adapter->module);
 			ret = result;
-			goto ioctl_error;
-		}
-		dvbnetif->if_num=result;
-		break;
-	}
-	case NET_GET_IF:
-	{
-		struct net_device *netdev;
-		struct dvb_net_priv *priv_data;
-		struct dvb_net_if *dvbnetif = parg;
+			जाओ ioctl_error;
+		पूर्ण
+		dvbnetअगर->अगर_num=result;
+		अवरोध;
+	पूर्ण
+	हाल NET_GET_IF:
+	अणु
+		काष्ठा net_device *netdev;
+		काष्ठा dvb_net_priv *priv_data;
+		काष्ठा dvb_net_अगर *dvbnetअगर = parg;
 
-		if (dvbnetif->if_num >= DVB_NET_DEVICES_MAX ||
-		    !dvbnet->state[dvbnetif->if_num]) {
+		अगर (dvbnetअगर->अगर_num >= DVB_NET_DEVICES_MAX ||
+		    !dvbnet->state[dvbnetअगर->अगर_num]) अणु
 			ret = -EINVAL;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		netdev = dvbnet->device[dvbnetif->if_num];
+		netdev = dvbnet->device[dvbnetअगर->अगर_num];
 
 		priv_data = netdev_priv(netdev);
-		dvbnetif->pid=priv_data->pid;
-		dvbnetif->feedtype=priv_data->feedtype;
-		break;
-	}
-	case NET_REMOVE_IF:
-	{
-		if (!capable(CAP_SYS_ADMIN)) {
+		dvbnetअगर->pid=priv_data->pid;
+		dvbnetअगर->feedtype=priv_data->feedtype;
+		अवरोध;
+	पूर्ण
+	हाल NET_REMOVE_IF:
+	अणु
+		अगर (!capable(CAP_SYS_ADMIN)) अणु
 			ret = -EPERM;
-			goto ioctl_error;
-		}
-		if ((unsigned long) parg >= DVB_NET_DEVICES_MAX) {
+			जाओ ioctl_error;
+		पूर्ण
+		अगर ((अचिन्हित दीर्घ) parg >= DVB_NET_DEVICES_MAX) अणु
 			ret = -EINVAL;
-			goto ioctl_error;
-		}
-		ret = dvb_net_remove_if(dvbnet, (unsigned long) parg);
-		if (!ret)
+			जाओ ioctl_error;
+		पूर्ण
+		ret = dvb_net_हटाओ_अगर(dvbnet, (अचिन्हित दीर्घ) parg);
+		अगर (!ret)
 			module_put(dvbdev->adapter->module);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* binary compatibility cruft */
-	case __NET_ADD_IF_OLD:
-	{
-		struct __dvb_net_if_old *dvbnetif = parg;
-		int result;
+	हाल __NET_ADD_IF_OLD:
+	अणु
+		काष्ठा __dvb_net_अगर_old *dvbnetअगर = parg;
+		पूर्णांक result;
 
-		if (!capable(CAP_SYS_ADMIN)) {
+		अगर (!capable(CAP_SYS_ADMIN)) अणु
 			ret = -EPERM;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		if (!try_module_get(dvbdev->adapter->module)) {
+		अगर (!try_module_get(dvbdev->adapter->module)) अणु
 			ret = -EPERM;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		result=dvb_net_add_if(dvbnet, dvbnetif->pid, DVB_NET_FEEDTYPE_MPE);
-		if (result<0) {
+		result=dvb_net_add_अगर(dvbnet, dvbnetअगर->pid, DVB_NET_FEEDTYPE_MPE);
+		अगर (result<0) अणु
 			module_put(dvbdev->adapter->module);
 			ret = result;
-			goto ioctl_error;
-		}
-		dvbnetif->if_num=result;
-		break;
-	}
-	case __NET_GET_IF_OLD:
-	{
-		struct net_device *netdev;
-		struct dvb_net_priv *priv_data;
-		struct __dvb_net_if_old *dvbnetif = parg;
+			जाओ ioctl_error;
+		पूर्ण
+		dvbnetअगर->अगर_num=result;
+		अवरोध;
+	पूर्ण
+	हाल __NET_GET_IF_OLD:
+	अणु
+		काष्ठा net_device *netdev;
+		काष्ठा dvb_net_priv *priv_data;
+		काष्ठा __dvb_net_अगर_old *dvbnetअगर = parg;
 
-		if (dvbnetif->if_num >= DVB_NET_DEVICES_MAX ||
-		    !dvbnet->state[dvbnetif->if_num]) {
+		अगर (dvbnetअगर->अगर_num >= DVB_NET_DEVICES_MAX ||
+		    !dvbnet->state[dvbnetअगर->अगर_num]) अणु
 			ret = -EINVAL;
-			goto ioctl_error;
-		}
+			जाओ ioctl_error;
+		पूर्ण
 
-		netdev = dvbnet->device[dvbnetif->if_num];
+		netdev = dvbnet->device[dvbnetअगर->अगर_num];
 
 		priv_data = netdev_priv(netdev);
-		dvbnetif->pid=priv_data->pid;
-		break;
-	}
-	default:
+		dvbnetअगर->pid=priv_data->pid;
+		अवरोध;
+	पूर्ण
+	शेष:
 		ret = -ENOTTY;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 ioctl_error:
 	mutex_unlock(&dvbnet->ioctl_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long dvb_net_ioctl(struct file *file,
-	      unsigned int cmd, unsigned long arg)
-{
-	return dvb_usercopy(file, cmd, arg, dvb_net_do_ioctl);
-}
+अटल दीर्घ dvb_net_ioctl(काष्ठा file *file,
+	      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	वापस dvb_usercopy(file, cmd, arg, dvb_net_करो_ioctl);
+पूर्ण
 
-static int dvb_net_close(struct inode *inode, struct file *file)
-{
-	struct dvb_device *dvbdev = file->private_data;
-	struct dvb_net *dvbnet = dvbdev->priv;
+अटल पूर्णांक dvb_net_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा dvb_device *dvbdev = file->निजी_data;
+	काष्ठा dvb_net *dvbnet = dvbdev->priv;
 
 	dvb_generic_release(inode, file);
 
-	if(dvbdev->users == 1 && dvbnet->exit == 1)
-		wake_up(&dvbdev->wait_queue);
-	return 0;
-}
+	अगर(dvbdev->users == 1 && dvbnet->निकास == 1)
+		wake_up(&dvbdev->रुको_queue);
+	वापस 0;
+पूर्ण
 
 
-static const struct file_operations dvb_net_fops = {
+अटल स्थिर काष्ठा file_operations dvb_net_fops = अणु
 	.owner = THIS_MODULE,
 	.unlocked_ioctl = dvb_net_ioctl,
-	.open =	dvb_generic_open,
-	.release = dvb_net_close,
+	.खोलो =	dvb_generic_खोलो,
+	.release = dvb_net_बंद,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static const struct dvb_device dvbdev_net = {
-	.priv = NULL,
+अटल स्थिर काष्ठा dvb_device dvbdev_net = अणु
+	.priv = शून्य,
 	.users = 1,
-	.writers = 1,
-#if defined(CONFIG_MEDIA_CONTROLLER_DVB)
+	.ग_लिखोrs = 1,
+#अगर defined(CONFIG_MEDIA_CONTROLLER_DVB)
 	.name = "dvb-net",
-#endif
+#पूर्ण_अगर
 	.fops = &dvb_net_fops,
-};
+पूर्ण;
 
-void dvb_net_release (struct dvb_net *dvbnet)
-{
-	int i;
+व्योम dvb_net_release (काष्ठा dvb_net *dvbnet)
+अणु
+	पूर्णांक i;
 
-	dvbnet->exit = 1;
-	if (dvbnet->dvbdev->users < 1)
-		wait_event(dvbnet->dvbdev->wait_queue,
+	dvbnet->निकास = 1;
+	अगर (dvbnet->dvbdev->users < 1)
+		रुको_event(dvbnet->dvbdev->रुको_queue,
 				dvbnet->dvbdev->users==1);
 
-	dvb_unregister_device(dvbnet->dvbdev);
+	dvb_unरेजिस्टर_device(dvbnet->dvbdev);
 
-	for (i=0; i<DVB_NET_DEVICES_MAX; i++) {
-		if (!dvbnet->state[i])
-			continue;
-		dvb_net_remove_if(dvbnet, i);
-	}
-}
+	क्रम (i=0; i<DVB_NET_DEVICES_MAX; i++) अणु
+		अगर (!dvbnet->state[i])
+			जारी;
+		dvb_net_हटाओ_अगर(dvbnet, i);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(dvb_net_release);
 
 
-int dvb_net_init (struct dvb_adapter *adap, struct dvb_net *dvbnet,
-		  struct dmx_demux *dmx)
-{
-	int i;
+पूर्णांक dvb_net_init (काष्ठा dvb_adapter *adap, काष्ठा dvb_net *dvbnet,
+		  काष्ठा dmx_demux *dmx)
+अणु
+	पूर्णांक i;
 
 	mutex_init(&dvbnet->ioctl_mutex);
 	dvbnet->demux = dmx;
 
-	for (i=0; i<DVB_NET_DEVICES_MAX; i++)
+	क्रम (i=0; i<DVB_NET_DEVICES_MAX; i++)
 		dvbnet->state[i] = 0;
 
-	return dvb_register_device(adap, &dvbnet->dvbdev, &dvbdev_net,
+	वापस dvb_रेजिस्टर_device(adap, &dvbnet->dvbdev, &dvbdev_net,
 			     dvbnet, DVB_DEVICE_NET, 0);
-}
+पूर्ण
 EXPORT_SYMBOL(dvb_net_init);

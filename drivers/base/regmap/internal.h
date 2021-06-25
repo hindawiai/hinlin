@@ -1,300 +1,301 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Register map access API internal header
+ * Register map access API पूर्णांकernal header
  *
  * Copyright 2011 Wolfson Microelectronics plc
  *
- * Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+ * Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
  */
 
-#ifndef _REGMAP_INTERNAL_H
-#define _REGMAP_INTERNAL_H
+#अगर_अघोषित _REGMAP_INTERNAL_H
+#घोषणा _REGMAP_INTERNAL_H
 
-#include <linux/device.h>
-#include <linux/regmap.h>
-#include <linux/fs.h>
-#include <linux/list.h>
-#include <linux/wait.h>
+#समावेश <linux/device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/list.h>
+#समावेश <linux/रुको.h>
 
-struct regmap;
-struct regcache_ops;
+काष्ठा regmap;
+काष्ठा regcache_ops;
 
-struct regmap_debugfs_off_cache {
-	struct list_head list;
+काष्ठा regmap_debugfs_off_cache अणु
+	काष्ठा list_head list;
 	off_t min;
 	off_t max;
-	unsigned int base_reg;
-	unsigned int max_reg;
-};
+	अचिन्हित पूर्णांक base_reg;
+	अचिन्हित पूर्णांक max_reg;
+पूर्ण;
 
-struct regmap_format {
-	size_t buf_size;
-	size_t reg_bytes;
-	size_t pad_bytes;
-	size_t val_bytes;
-	void (*format_write)(struct regmap *map,
-			     unsigned int reg, unsigned int val);
-	void (*format_reg)(void *buf, unsigned int reg, unsigned int shift);
-	void (*format_val)(void *buf, unsigned int val, unsigned int shift);
-	unsigned int (*parse_val)(const void *buf);
-	void (*parse_inplace)(void *buf);
-};
+काष्ठा regmap_क्रमmat अणु
+	माप_प्रकार buf_size;
+	माप_प्रकार reg_bytes;
+	माप_प्रकार pad_bytes;
+	माप_प्रकार val_bytes;
+	व्योम (*क्रमmat_ग_लिखो)(काष्ठा regmap *map,
+			     अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+	व्योम (*क्रमmat_reg)(व्योम *buf, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक shअगरt);
+	व्योम (*क्रमmat_val)(व्योम *buf, अचिन्हित पूर्णांक val, अचिन्हित पूर्णांक shअगरt);
+	अचिन्हित पूर्णांक (*parse_val)(स्थिर व्योम *buf);
+	व्योम (*parse_inplace)(व्योम *buf);
+पूर्ण;
 
-struct regmap_async {
-	struct list_head list;
-	struct regmap *map;
-	void *work_buf;
-};
+काष्ठा regmap_async अणु
+	काष्ठा list_head list;
+	काष्ठा regmap *map;
+	व्योम *work_buf;
+पूर्ण;
 
-struct regmap {
-	union {
-		struct mutex mutex;
-		struct {
+काष्ठा regmap अणु
+	जोड़ अणु
+		काष्ठा mutex mutex;
+		काष्ठा अणु
 			spinlock_t spinlock;
-			unsigned long spinlock_flags;
-		};
-	};
+			अचिन्हित दीर्घ spinlock_flags;
+		पूर्ण;
+	पूर्ण;
 	regmap_lock lock;
 	regmap_unlock unlock;
-	void *lock_arg; /* This is passed to lock/unlock functions */
+	व्योम *lock_arg; /* This is passed to lock/unlock functions */
 	gfp_t alloc_flags;
 
-	struct device *dev; /* Device we do I/O on */
-	void *work_buf;     /* Scratch buffer used to format I/O */
-	struct regmap_format format;  /* Buffer format */
-	const struct regmap_bus *bus;
-	void *bus_context;
-	const char *name;
+	काष्ठा device *dev; /* Device we करो I/O on */
+	व्योम *work_buf;     /* Scratch buffer used to क्रमmat I/O */
+	काष्ठा regmap_क्रमmat क्रमmat;  /* Buffer क्रमmat */
+	स्थिर काष्ठा regmap_bus *bus;
+	व्योम *bus_context;
+	स्थिर अक्षर *name;
 
 	bool async;
 	spinlock_t async_lock;
-	wait_queue_head_t async_waitq;
-	struct list_head async_list;
-	struct list_head async_free;
-	int async_ret;
+	रुको_queue_head_t async_रुकोq;
+	काष्ठा list_head async_list;
+	काष्ठा list_head async_मुक्त;
+	पूर्णांक async_ret;
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	bool debugfs_disable;
-	struct dentry *debugfs;
-	const char *debugfs_name;
+	काष्ठा dentry *debugfs;
+	स्थिर अक्षर *debugfs_name;
 
-	unsigned int debugfs_reg_len;
-	unsigned int debugfs_val_len;
-	unsigned int debugfs_tot_len;
+	अचिन्हित पूर्णांक debugfs_reg_len;
+	अचिन्हित पूर्णांक debugfs_val_len;
+	अचिन्हित पूर्णांक debugfs_tot_len;
 
-	struct list_head debugfs_off_cache;
-	struct mutex cache_lock;
-#endif
+	काष्ठा list_head debugfs_off_cache;
+	काष्ठा mutex cache_lock;
+#पूर्ण_अगर
 
-	unsigned int max_register;
-	bool (*writeable_reg)(struct device *dev, unsigned int reg);
-	bool (*readable_reg)(struct device *dev, unsigned int reg);
-	bool (*volatile_reg)(struct device *dev, unsigned int reg);
-	bool (*precious_reg)(struct device *dev, unsigned int reg);
-	bool (*writeable_noinc_reg)(struct device *dev, unsigned int reg);
-	bool (*readable_noinc_reg)(struct device *dev, unsigned int reg);
-	const struct regmap_access_table *wr_table;
-	const struct regmap_access_table *rd_table;
-	const struct regmap_access_table *volatile_table;
-	const struct regmap_access_table *precious_table;
-	const struct regmap_access_table *wr_noinc_table;
-	const struct regmap_access_table *rd_noinc_table;
+	अचिन्हित पूर्णांक max_रेजिस्टर;
+	bool (*ग_लिखोable_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*पढ़ोable_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*अस्थिर_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*precious_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*ग_लिखोable_noinc_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	bool (*पढ़ोable_noinc_reg)(काष्ठा device *dev, अचिन्हित पूर्णांक reg);
+	स्थिर काष्ठा regmap_access_table *wr_table;
+	स्थिर काष्ठा regmap_access_table *rd_table;
+	स्थिर काष्ठा regmap_access_table *अस्थिर_table;
+	स्थिर काष्ठा regmap_access_table *precious_table;
+	स्थिर काष्ठा regmap_access_table *wr_noinc_table;
+	स्थिर काष्ठा regmap_access_table *rd_noinc_table;
 
-	int (*reg_read)(void *context, unsigned int reg, unsigned int *val);
-	int (*reg_write)(void *context, unsigned int reg, unsigned int val);
-	int (*reg_update_bits)(void *context, unsigned int reg,
-			       unsigned int mask, unsigned int val);
+	पूर्णांक (*reg_पढ़ो)(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *val);
+	पूर्णांक (*reg_ग_लिखो)(व्योम *context, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक val);
+	पूर्णांक (*reg_update_bits)(व्योम *context, अचिन्हित पूर्णांक reg,
+			       अचिन्हित पूर्णांक mask, अचिन्हित पूर्णांक val);
 
 	bool defer_caching;
 
-	unsigned long read_flag_mask;
-	unsigned long write_flag_mask;
+	अचिन्हित दीर्घ पढ़ो_flag_mask;
+	अचिन्हित दीर्घ ग_लिखो_flag_mask;
 
-	/* number of bits to (left) shift the reg value when formatting*/
-	int reg_shift;
-	int reg_stride;
-	int reg_stride_order;
+	/* number of bits to (left) shअगरt the reg value when क्रमmatting*/
+	पूर्णांक reg_shअगरt;
+	पूर्णांक reg_stride;
+	पूर्णांक reg_stride_order;
 
-	/* regcache specific members */
-	const struct regcache_ops *cache_ops;
-	enum regcache_type cache_type;
+	/* regcache specअगरic members */
+	स्थिर काष्ठा regcache_ops *cache_ops;
+	क्रमागत regcache_type cache_type;
 
-	/* number of bytes in reg_defaults_raw */
-	unsigned int cache_size_raw;
-	/* number of bytes per word in reg_defaults_raw */
-	unsigned int cache_word_size;
-	/* number of entries in reg_defaults */
-	unsigned int num_reg_defaults;
-	/* number of entries in reg_defaults_raw */
-	unsigned int num_reg_defaults_raw;
+	/* number of bytes in reg_शेषs_raw */
+	अचिन्हित पूर्णांक cache_size_raw;
+	/* number of bytes per word in reg_शेषs_raw */
+	अचिन्हित पूर्णांक cache_word_size;
+	/* number of entries in reg_शेषs */
+	अचिन्हित पूर्णांक num_reg_शेषs;
+	/* number of entries in reg_शेषs_raw */
+	अचिन्हित पूर्णांक num_reg_शेषs_raw;
 
-	/* if set, only the cache is modified not the HW */
+	/* अगर set, only the cache is modअगरied not the HW */
 	bool cache_only;
-	/* if set, only the HW is modified not the cache */
+	/* अगर set, only the HW is modअगरied not the cache */
 	bool cache_bypass;
-	/* if set, remember to free reg_defaults_raw */
-	bool cache_free;
+	/* अगर set, remember to मुक्त reg_शेषs_raw */
+	bool cache_मुक्त;
 
-	struct reg_default *reg_defaults;
-	const void *reg_defaults_raw;
-	void *cache;
-	/* if set, the cache contains newer data than the HW */
+	काष्ठा reg_शेष *reg_शेषs;
+	स्थिर व्योम *reg_शेषs_raw;
+	व्योम *cache;
+	/* अगर set, the cache contains newer data than the HW */
 	bool cache_dirty;
-	/* if set, the HW registers are known to match map->reg_defaults */
-	bool no_sync_defaults;
+	/* अगर set, the HW रेजिस्टरs are known to match map->reg_शेषs */
+	bool no_sync_शेषs;
 
-	struct reg_sequence *patch;
-	int patch_regs;
+	काष्ठा reg_sequence *patch;
+	पूर्णांक patch_regs;
 
-	/* if set, converts bulk read to single read */
-	bool use_single_read;
-	/* if set, converts bulk write to single write */
-	bool use_single_write;
-	/* if set, the device supports multi write mode */
-	bool can_multi_write;
+	/* अगर set, converts bulk पढ़ो to single पढ़ो */
+	bool use_single_पढ़ो;
+	/* अगर set, converts bulk ग_लिखो to single ग_लिखो */
+	bool use_single_ग_लिखो;
+	/* अगर set, the device supports multi ग_लिखो mode */
+	bool can_multi_ग_लिखो;
 
-	/* if set, raw reads/writes are limited to this size */
-	size_t max_raw_read;
-	size_t max_raw_write;
+	/* अगर set, raw पढ़ोs/ग_लिखोs are limited to this size */
+	माप_प्रकार max_raw_पढ़ो;
+	माप_प्रकार max_raw_ग_लिखो;
 
-	struct rb_root range_tree;
-	void *selector_work_buf;	/* Scratch buffer used for selector */
+	काष्ठा rb_root range_tree;
+	व्योम *selector_work_buf;	/* Scratch buffer used क्रम selector */
 
-	struct hwspinlock *hwlock;
+	काष्ठा hwspinlock *hwlock;
 
-	/* if set, the regmap core can sleep */
+	/* अगर set, the regmap core can sleep */
 	bool can_sleep;
-};
+पूर्ण;
 
-struct regcache_ops {
-	const char *name;
-	enum regcache_type type;
-	int (*init)(struct regmap *map);
-	int (*exit)(struct regmap *map);
-#ifdef CONFIG_DEBUG_FS
-	void (*debugfs_init)(struct regmap *map);
-#endif
-	int (*read)(struct regmap *map, unsigned int reg, unsigned int *value);
-	int (*write)(struct regmap *map, unsigned int reg, unsigned int value);
-	int (*sync)(struct regmap *map, unsigned int min, unsigned int max);
-	int (*drop)(struct regmap *map, unsigned int min, unsigned int max);
-};
+काष्ठा regcache_ops अणु
+	स्थिर अक्षर *name;
+	क्रमागत regcache_type type;
+	पूर्णांक (*init)(काष्ठा regmap *map);
+	पूर्णांक (*निकास)(काष्ठा regmap *map);
+#अगर_घोषित CONFIG_DEBUG_FS
+	व्योम (*debugfs_init)(काष्ठा regmap *map);
+#पूर्ण_अगर
+	पूर्णांक (*पढ़ो)(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value);
+	पूर्णांक (*ग_लिखो)(काष्ठा regmap *map, अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value);
+	पूर्णांक (*sync)(काष्ठा regmap *map, अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max);
+	पूर्णांक (*drop)(काष्ठा regmap *map, अचिन्हित पूर्णांक min, अचिन्हित पूर्णांक max);
+पूर्ण;
 
-bool regmap_cached(struct regmap *map, unsigned int reg);
-bool regmap_writeable(struct regmap *map, unsigned int reg);
-bool regmap_readable(struct regmap *map, unsigned int reg);
-bool regmap_volatile(struct regmap *map, unsigned int reg);
-bool regmap_precious(struct regmap *map, unsigned int reg);
-bool regmap_writeable_noinc(struct regmap *map, unsigned int reg);
-bool regmap_readable_noinc(struct regmap *map, unsigned int reg);
+bool regmap_cached(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_ग_लिखोable(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_पढ़ोable(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_अस्थिर(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_precious(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_ग_लिखोable_noinc(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
+bool regmap_पढ़ोable_noinc(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
 
-int _regmap_write(struct regmap *map, unsigned int reg,
-		  unsigned int val);
+पूर्णांक _regmap_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
+		  अचिन्हित पूर्णांक val);
 
-struct regmap_range_node {
-	struct rb_node node;
-	const char *name;
-	struct regmap *map;
+काष्ठा regmap_range_node अणु
+	काष्ठा rb_node node;
+	स्थिर अक्षर *name;
+	काष्ठा regmap *map;
 
-	unsigned int range_min;
-	unsigned int range_max;
+	अचिन्हित पूर्णांक range_min;
+	अचिन्हित पूर्णांक range_max;
 
-	unsigned int selector_reg;
-	unsigned int selector_mask;
-	int selector_shift;
+	अचिन्हित पूर्णांक selector_reg;
+	अचिन्हित पूर्णांक selector_mask;
+	पूर्णांक selector_shअगरt;
 
-	unsigned int window_start;
-	unsigned int window_len;
-};
+	अचिन्हित पूर्णांक winकरोw_start;
+	अचिन्हित पूर्णांक winकरोw_len;
+पूर्ण;
 
-struct regmap_field {
-	struct regmap *regmap;
-	unsigned int mask;
+काष्ठा regmap_field अणु
+	काष्ठा regmap *regmap;
+	अचिन्हित पूर्णांक mask;
 	/* lsb */
-	unsigned int shift;
-	unsigned int reg;
+	अचिन्हित पूर्णांक shअगरt;
+	अचिन्हित पूर्णांक reg;
 
-	unsigned int id_size;
-	unsigned int id_offset;
-};
+	अचिन्हित पूर्णांक id_size;
+	अचिन्हित पूर्णांक id_offset;
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-extern void regmap_debugfs_initcall(void);
-extern void regmap_debugfs_init(struct regmap *map);
-extern void regmap_debugfs_exit(struct regmap *map);
+#अगर_घोषित CONFIG_DEBUG_FS
+बाह्य व्योम regmap_debugfs_initcall(व्योम);
+बाह्य व्योम regmap_debugfs_init(काष्ठा regmap *map);
+बाह्य व्योम regmap_debugfs_निकास(काष्ठा regmap *map);
 
-static inline void regmap_debugfs_disable(struct regmap *map)
-{
+अटल अंतरभूत व्योम regmap_debugfs_disable(काष्ठा regmap *map)
+अणु
 	map->debugfs_disable = true;
-}
+पूर्ण
 
-#else
-static inline void regmap_debugfs_initcall(void) { }
-static inline void regmap_debugfs_init(struct regmap *map) { }
-static inline void regmap_debugfs_exit(struct regmap *map) { }
-static inline void regmap_debugfs_disable(struct regmap *map) { }
-#endif
+#अन्यथा
+अटल अंतरभूत व्योम regmap_debugfs_initcall(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम regmap_debugfs_init(काष्ठा regmap *map) अणु पूर्ण
+अटल अंतरभूत व्योम regmap_debugfs_निकास(काष्ठा regmap *map) अणु पूर्ण
+अटल अंतरभूत व्योम regmap_debugfs_disable(काष्ठा regmap *map) अणु पूर्ण
+#पूर्ण_अगर
 
 /* regcache core declarations */
-int regcache_init(struct regmap *map, const struct regmap_config *config);
-void regcache_exit(struct regmap *map);
-int regcache_read(struct regmap *map,
-		       unsigned int reg, unsigned int *value);
-int regcache_write(struct regmap *map,
-			unsigned int reg, unsigned int value);
-int regcache_sync(struct regmap *map);
-int regcache_sync_block(struct regmap *map, void *block,
-			unsigned long *cache_present,
-			unsigned int block_base, unsigned int start,
-			unsigned int end);
+पूर्णांक regcache_init(काष्ठा regmap *map, स्थिर काष्ठा regmap_config *config);
+व्योम regcache_निकास(काष्ठा regmap *map);
+पूर्णांक regcache_पढ़ो(काष्ठा regmap *map,
+		       अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक *value);
+पूर्णांक regcache_ग_लिखो(काष्ठा regmap *map,
+			अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक value);
+पूर्णांक regcache_sync(काष्ठा regmap *map);
+पूर्णांक regcache_sync_block(काष्ठा regmap *map, व्योम *block,
+			अचिन्हित दीर्घ *cache_present,
+			अचिन्हित पूर्णांक block_base, अचिन्हित पूर्णांक start,
+			अचिन्हित पूर्णांक end);
 
-static inline const void *regcache_get_val_addr(struct regmap *map,
-						const void *base,
-						unsigned int idx)
-{
-	return base + (map->cache_word_size * idx);
-}
+अटल अंतरभूत स्थिर व्योम *regcache_get_val_addr(काष्ठा regmap *map,
+						स्थिर व्योम *base,
+						अचिन्हित पूर्णांक idx)
+अणु
+	वापस base + (map->cache_word_size * idx);
+पूर्ण
 
-unsigned int regcache_get_val(struct regmap *map, const void *base,
-			      unsigned int idx);
-bool regcache_set_val(struct regmap *map, void *base, unsigned int idx,
-		      unsigned int val);
-int regcache_lookup_reg(struct regmap *map, unsigned int reg);
+अचिन्हित पूर्णांक regcache_get_val(काष्ठा regmap *map, स्थिर व्योम *base,
+			      अचिन्हित पूर्णांक idx);
+bool regcache_set_val(काष्ठा regmap *map, व्योम *base, अचिन्हित पूर्णांक idx,
+		      अचिन्हित पूर्णांक val);
+पूर्णांक regcache_lookup_reg(काष्ठा regmap *map, अचिन्हित पूर्णांक reg);
 
-int _regmap_raw_write(struct regmap *map, unsigned int reg,
-		      const void *val, size_t val_len, bool noinc);
+पूर्णांक _regmap_raw_ग_लिखो(काष्ठा regmap *map, अचिन्हित पूर्णांक reg,
+		      स्थिर व्योम *val, माप_प्रकार val_len, bool noinc);
 
-void regmap_async_complete_cb(struct regmap_async *async, int ret);
+व्योम regmap_async_complete_cb(काष्ठा regmap_async *async, पूर्णांक ret);
 
-enum regmap_endian regmap_get_val_endian(struct device *dev,
-					 const struct regmap_bus *bus,
-					 const struct regmap_config *config);
+क्रमागत regmap_endian regmap_get_val_endian(काष्ठा device *dev,
+					 स्थिर काष्ठा regmap_bus *bus,
+					 स्थिर काष्ठा regmap_config *config);
 
-extern struct regcache_ops regcache_rbtree_ops;
-extern struct regcache_ops regcache_lzo_ops;
-extern struct regcache_ops regcache_flat_ops;
+बाह्य काष्ठा regcache_ops regcache_rbtree_ops;
+बाह्य काष्ठा regcache_ops regcache_lzo_ops;
+बाह्य काष्ठा regcache_ops regcache_flat_ops;
 
-static inline const char *regmap_name(const struct regmap *map)
-{
-	if (map->dev)
-		return dev_name(map->dev);
+अटल अंतरभूत स्थिर अक्षर *regmap_name(स्थिर काष्ठा regmap *map)
+अणु
+	अगर (map->dev)
+		वापस dev_name(map->dev);
 
-	return map->name;
-}
+	वापस map->name;
+पूर्ण
 
-static inline unsigned int regmap_get_offset(const struct regmap *map,
-					     unsigned int index)
-{
-	if (map->reg_stride_order >= 0)
-		return index << map->reg_stride_order;
-	else
-		return index * map->reg_stride;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक regmap_get_offset(स्थिर काष्ठा regmap *map,
+					     अचिन्हित पूर्णांक index)
+अणु
+	अगर (map->reg_stride_order >= 0)
+		वापस index << map->reg_stride_order;
+	अन्यथा
+		वापस index * map->reg_stride;
+पूर्ण
 
-static inline unsigned int regcache_get_index_by_order(const struct regmap *map,
-						       unsigned int reg)
-{
-	return reg >> map->reg_stride_order;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक regcache_get_index_by_order(स्थिर काष्ठा regmap *map,
+						       अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg >> map->reg_stride_order;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

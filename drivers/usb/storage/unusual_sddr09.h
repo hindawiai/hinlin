@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
- * Unusual Devices File for SanDisk SDDR-09 SmartMedia reader
+ * Unusual Devices File क्रम SanDisk SDDR-09 SmartMedia पढ़ोer
  */
 
-#if defined(CONFIG_USB_STORAGE_SDDR09) || \
+#अगर defined(CONFIG_USB_STORAGE_SDDR09) || \
 		defined(CONFIG_USB_STORAGE_SDDR09_MODULE)
 
 UNUSUAL_DEV(  0x0436, 0x0005, 0x0100, 0x0100,
 		"Microtech",
 		"CameraMate (DPCM_USB)",
-		USB_SC_SCSI, USB_PR_DPCM_USB, NULL, 0),
+		USB_SC_SCSI, USB_PR_DPCM_USB, शून्य, 0),
 
 UNUSUAL_DEV(  0x04e6, 0x0003, 0x0000, 0x9999,
 		"Sandisk",
@@ -39,6 +40,6 @@ UNUSUAL_DEV(  0x0781, 0x0200, 0x0000, 0x9999,
 UNUSUAL_DEV(  0x07af, 0x0006, 0x0100, 0x0100,
 		"Microtech",
 		"CameraMate (DPCM_USB)",
-		USB_SC_SCSI, USB_PR_DPCM_USB, NULL, 0),
+		USB_SC_SCSI, USB_PR_DPCM_USB, शून्य, 0),
 
-#endif /* defined(CONFIG_USB_STORAGE_SDDR09) || ... */
+#पूर्ण_अगर /* defined(CONFIG_USB_STORAGE_SDDR09) || ... */

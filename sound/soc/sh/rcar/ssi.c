@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Renesas R-Car SSIU/SSI support
 //
@@ -9,75 +10,75 @@
 // Kuninori Morimoto <morimoto.kuninori@renesas.com>
 
 /*
- * you can enable below define if you don't need
- * SSI interrupt status debug message when debugging
+ * you can enable below define अगर you करोn't need
+ * SSI पूर्णांकerrupt status debug message when debugging
  * see rsnd_dbg_irq_status()
  *
- * #define RSND_DEBUG_NO_IRQ_STATUS 1
+ * #घोषणा RSND_DEBUG_NO_IRQ_STATUS 1
  */
 
-#include <sound/simple_card_utils.h>
-#include <linux/delay.h>
-#include "rsnd.h"
-#define RSND_SSI_NAME_SIZE 16
+#समावेश <sound/simple_card_utils.h>
+#समावेश <linux/delay.h>
+#समावेश "rsnd.h"
+#घोषणा RSND_SSI_NAME_SIZE 16
 
 /*
  * SSICR
  */
-#define	FORCE		(1u << 31)	/* Fixed */
-#define	DMEN		(1u << 28)	/* DMA Enable */
-#define	UIEN		(1u << 27)	/* Underflow Interrupt Enable */
-#define	OIEN		(1u << 26)	/* Overflow Interrupt Enable */
-#define	IIEN		(1u << 25)	/* Idle Mode Interrupt Enable */
-#define	DIEN		(1u << 24)	/* Data Interrupt Enable */
-#define	CHNL_4		(1u << 22)	/* Channels */
-#define	CHNL_6		(2u << 22)	/* Channels */
-#define	CHNL_8		(3u << 22)	/* Channels */
-#define DWL_MASK	(7u << 19)	/* Data Word Length mask */
-#define	DWL_8		(0u << 19)	/* Data Word Length */
-#define	DWL_16		(1u << 19)	/* Data Word Length */
-#define	DWL_18		(2u << 19)	/* Data Word Length */
-#define	DWL_20		(3u << 19)	/* Data Word Length */
-#define	DWL_22		(4u << 19)	/* Data Word Length */
-#define	DWL_24		(5u << 19)	/* Data Word Length */
-#define	DWL_32		(6u << 19)	/* Data Word Length */
+#घोषणा	FORCE		(1u << 31)	/* Fixed */
+#घोषणा	DMEN		(1u << 28)	/* DMA Enable */
+#घोषणा	UIEN		(1u << 27)	/* Underflow Interrupt Enable */
+#घोषणा	OIEN		(1u << 26)	/* Overflow Interrupt Enable */
+#घोषणा	IIEN		(1u << 25)	/* Idle Mode Interrupt Enable */
+#घोषणा	DIEN		(1u << 24)	/* Data Interrupt Enable */
+#घोषणा	CHNL_4		(1u << 22)	/* Channels */
+#घोषणा	CHNL_6		(2u << 22)	/* Channels */
+#घोषणा	CHNL_8		(3u << 22)	/* Channels */
+#घोषणा DWL_MASK	(7u << 19)	/* Data Word Length mask */
+#घोषणा	DWL_8		(0u << 19)	/* Data Word Length */
+#घोषणा	DWL_16		(1u << 19)	/* Data Word Length */
+#घोषणा	DWL_18		(2u << 19)	/* Data Word Length */
+#घोषणा	DWL_20		(3u << 19)	/* Data Word Length */
+#घोषणा	DWL_22		(4u << 19)	/* Data Word Length */
+#घोषणा	DWL_24		(5u << 19)	/* Data Word Length */
+#घोषणा	DWL_32		(6u << 19)	/* Data Word Length */
 
 /*
  * System word length
  */
-#define	SWL_16		(1 << 16)	/* R/W System Word Length */
-#define	SWL_24		(2 << 16)	/* R/W System Word Length */
-#define	SWL_32		(3 << 16)	/* R/W System Word Length */
+#घोषणा	SWL_16		(1 << 16)	/* R/W System Word Length */
+#घोषणा	SWL_24		(2 << 16)	/* R/W System Word Length */
+#घोषणा	SWL_32		(3 << 16)	/* R/W System Word Length */
 
-#define	SCKD		(1 << 15)	/* Serial Bit Clock Direction */
-#define	SWSD		(1 << 14)	/* Serial WS Direction */
-#define	SCKP		(1 << 13)	/* Serial Bit Clock Polarity */
-#define	SWSP		(1 << 12)	/* Serial WS Polarity */
-#define	SDTA		(1 << 10)	/* Serial Data Alignment */
-#define	PDTA		(1 <<  9)	/* Parallel Data Alignment */
-#define	DEL		(1 <<  8)	/* Serial Data Delay */
-#define	CKDV(v)		(v <<  4)	/* Serial Clock Division Ratio */
-#define	TRMD		(1 <<  1)	/* Transmit/Receive Mode Select */
-#define	EN		(1 <<  0)	/* SSI Module Enable */
+#घोषणा	SCKD		(1 << 15)	/* Serial Bit Clock Direction */
+#घोषणा	SWSD		(1 << 14)	/* Serial WS Direction */
+#घोषणा	SCKP		(1 << 13)	/* Serial Bit Clock Polarity */
+#घोषणा	SWSP		(1 << 12)	/* Serial WS Polarity */
+#घोषणा	SDTA		(1 << 10)	/* Serial Data Alignment */
+#घोषणा	PDTA		(1 <<  9)	/* Parallel Data Alignment */
+#घोषणा	DEL		(1 <<  8)	/* Serial Data Delay */
+#घोषणा	CKDV(v)		(v <<  4)	/* Serial Clock Division Ratio */
+#घोषणा	TRMD		(1 <<  1)	/* Transmit/Receive Mode Select */
+#घोषणा	EN		(1 <<  0)	/* SSI Module Enable */
 
 /*
  * SSISR
  */
-#define	UIRQ		(1 << 27)	/* Underflow Error Interrupt Status */
-#define	OIRQ		(1 << 26)	/* Overflow Error Interrupt Status */
-#define	IIRQ		(1 << 25)	/* Idle Mode Interrupt Status */
-#define	DIRQ		(1 << 24)	/* Data Interrupt Status Flag */
+#घोषणा	UIRQ		(1 << 27)	/* Underflow Error Interrupt Status */
+#घोषणा	OIRQ		(1 << 26)	/* Overflow Error Interrupt Status */
+#घोषणा	IIRQ		(1 << 25)	/* Idle Mode Interrupt Status */
+#घोषणा	सूचीQ		(1 << 24)	/* Data Interrupt Status Flag */
 
 /*
  * SSIWSR
  */
-#define CONT		(1 << 8)	/* WS Continue Function */
-#define WS_MODE		(1 << 0)	/* WS Mode */
+#घोषणा CONT		(1 << 8)	/* WS Continue Function */
+#घोषणा WS_MODE		(1 << 0)	/* WS Mode */
 
-#define SSI_NAME "ssi"
+#घोषणा SSI_NAME "ssi"
 
-struct rsnd_ssi {
-	struct rsnd_mod mod;
+काष्ठा rsnd_ssi अणु
+	काष्ठा rsnd_mod mod;
 
 	u32 flags;
 	u32 cr_own;
@@ -85,159 +86,159 @@ struct rsnd_ssi {
 	u32 cr_mode;
 	u32 cr_en;
 	u32 wsr;
-	int chan;
-	int rate;
-	int irq;
-	unsigned int usrcnt;
+	पूर्णांक chan;
+	पूर्णांक rate;
+	पूर्णांक irq;
+	अचिन्हित पूर्णांक usrcnt;
 
-	/* for PIO */
-	int byte_pos;
-	int byte_per_period;
-	int next_period_byte;
-};
+	/* क्रम PIO */
+	पूर्णांक byte_pos;
+	पूर्णांक byte_per_period;
+	पूर्णांक next_period_byte;
+पूर्ण;
 
 /* flags */
-#define RSND_SSI_CLK_PIN_SHARE		(1 << 0)
-#define RSND_SSI_NO_BUSIF		(1 << 1) /* SSI+DMA without BUSIF */
-#define RSND_SSI_PROBED			(1 << 2)
+#घोषणा RSND_SSI_CLK_PIN_SHARE		(1 << 0)
+#घोषणा RSND_SSI_NO_BUSIF		(1 << 1) /* SSI+DMA without BUSIF */
+#घोषणा RSND_SSI_PROBED			(1 << 2)
 
-#define for_each_rsnd_ssi(pos, priv, i)					\
-	for (i = 0;							\
+#घोषणा क्रम_each_rsnd_ssi(pos, priv, i)					\
+	क्रम (i = 0;							\
 	     (i < rsnd_ssi_nr(priv)) &&					\
-		((pos) = ((struct rsnd_ssi *)(priv)->ssi + i));		\
+		((pos) = ((काष्ठा rsnd_ssi *)(priv)->ssi + i));		\
 	     i++)
 
-#define rsnd_ssi_get(priv, id) ((struct rsnd_ssi *)(priv->ssi) + id)
-#define rsnd_ssi_nr(priv) ((priv)->ssi_nr)
-#define rsnd_mod_to_ssi(_mod) container_of((_mod), struct rsnd_ssi, mod)
-#define rsnd_ssi_is_parent(ssi, io) ((ssi) == rsnd_io_to_mod_ssip(io))
-#define rsnd_ssi_is_multi_secondary(mod, io)				\
+#घोषणा rsnd_ssi_get(priv, id) ((काष्ठा rsnd_ssi *)(priv->ssi) + id)
+#घोषणा rsnd_ssi_nr(priv) ((priv)->ssi_nr)
+#घोषणा rsnd_mod_to_ssi(_mod) container_of((_mod), काष्ठा rsnd_ssi, mod)
+#घोषणा rsnd_ssi_is_parent(ssi, io) ((ssi) == rsnd_io_to_mod_ssip(io))
+#घोषणा rsnd_ssi_is_multi_secondary(mod, io)				\
 	(rsnd_ssi_multi_secondaries(io) & (1 << rsnd_mod_id(mod)))
-#define rsnd_ssi_is_run_mods(mod, io) \
+#घोषणा rsnd_ssi_is_run_mods(mod, io) \
 	(rsnd_ssi_run_mods(io) & (1 << rsnd_mod_id(mod)))
-#define rsnd_ssi_can_output_clk(mod) (!__rsnd_ssi_is_pin_sharing(mod))
+#घोषणा rsnd_ssi_can_output_clk(mod) (!__rsnd_ssi_is_pin_sharing(mod))
 
-static int rsnd_ssi_is_dma_mode(struct rsnd_mod *mod);
+अटल पूर्णांक rsnd_ssi_is_dma_mode(काष्ठा rsnd_mod *mod);
 
-int rsnd_ssi_use_busif(struct rsnd_dai_stream *io)
-{
-	struct rsnd_mod *mod = rsnd_io_to_mod_ssi(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	int use_busif = 0;
+पूर्णांक rsnd_ssi_use_busअगर(काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_mod *mod = rsnd_io_to_mod_ssi(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	पूर्णांक use_busअगर = 0;
 
-	if (!rsnd_ssi_is_dma_mode(mod))
-		return 0;
+	अगर (!rsnd_ssi_is_dma_mode(mod))
+		वापस 0;
 
-	if (!(rsnd_flags_has(ssi, RSND_SSI_NO_BUSIF)))
-		use_busif = 1;
-	if (rsnd_io_to_mod_src(io))
-		use_busif = 1;
+	अगर (!(rsnd_flags_has(ssi, RSND_SSI_NO_BUSIF)))
+		use_busअगर = 1;
+	अगर (rsnd_io_to_mod_src(io))
+		use_busअगर = 1;
 
-	return use_busif;
-}
+	वापस use_busअगर;
+पूर्ण
 
-static void rsnd_ssi_status_clear(struct rsnd_mod *mod)
-{
-	rsnd_mod_write(mod, SSISR, 0);
-}
+अटल व्योम rsnd_ssi_status_clear(काष्ठा rsnd_mod *mod)
+अणु
+	rsnd_mod_ग_लिखो(mod, SSISR, 0);
+पूर्ण
 
-static u32 rsnd_ssi_status_get(struct rsnd_mod *mod)
-{
-	return rsnd_mod_read(mod, SSISR);
-}
+अटल u32 rsnd_ssi_status_get(काष्ठा rsnd_mod *mod)
+अणु
+	वापस rsnd_mod_पढ़ो(mod, SSISR);
+पूर्ण
 
-static void rsnd_ssi_status_check(struct rsnd_mod *mod,
+अटल व्योम rsnd_ssi_status_check(काष्ठा rsnd_mod *mod,
 				  u32 bit)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
 	u32 status;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < 1024; i++) {
+	क्रम (i = 0; i < 1024; i++) अणु
 		status = rsnd_ssi_status_get(mod);
-		if (status & bit)
-			return;
+		अगर (status & bit)
+			वापस;
 
 		udelay(5);
-	}
+	पूर्ण
 
 	dev_warn(dev, "%s status check failed\n", rsnd_mod_name(mod));
-}
+पूर्ण
 
-static u32 rsnd_ssi_multi_secondaries(struct rsnd_dai_stream *io)
-{
-	enum rsnd_mod_type types[] = {
+अटल u32 rsnd_ssi_multi_secondaries(काष्ठा rsnd_dai_stream *io)
+अणु
+	क्रमागत rsnd_mod_type types[] = अणु
 		RSND_MOD_SSIM1,
 		RSND_MOD_SSIM2,
 		RSND_MOD_SSIM3,
-	};
-	int i, mask;
+	पूर्ण;
+	पूर्णांक i, mask;
 
 	mask = 0;
-	for (i = 0; i < ARRAY_SIZE(types); i++) {
-		struct rsnd_mod *mod = rsnd_io_to_mod(io, types[i]);
+	क्रम (i = 0; i < ARRAY_SIZE(types); i++) अणु
+		काष्ठा rsnd_mod *mod = rsnd_io_to_mod(io, types[i]);
 
-		if (!mod)
-			continue;
+		अगर (!mod)
+			जारी;
 
 		mask |= 1 << rsnd_mod_id(mod);
-	}
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static u32 rsnd_ssi_run_mods(struct rsnd_dai_stream *io)
-{
-	struct rsnd_mod *ssi_mod = rsnd_io_to_mod_ssi(io);
-	struct rsnd_mod *ssi_parent_mod = rsnd_io_to_mod_ssip(io);
+अटल u32 rsnd_ssi_run_mods(काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_mod *ssi_mod = rsnd_io_to_mod_ssi(io);
+	काष्ठा rsnd_mod *ssi_parent_mod = rsnd_io_to_mod_ssip(io);
 	u32 mods;
 
-	mods = rsnd_ssi_multi_secondaries_runtime(io) |
+	mods = rsnd_ssi_multi_secondaries_runसमय(io) |
 		1 << rsnd_mod_id(ssi_mod);
 
-	if (ssi_parent_mod)
+	अगर (ssi_parent_mod)
 		mods |= 1 << rsnd_mod_id(ssi_parent_mod);
 
-	return mods;
-}
+	वापस mods;
+पूर्ण
 
-u32 rsnd_ssi_multi_secondaries_runtime(struct rsnd_dai_stream *io)
-{
-	if (rsnd_runtime_is_multi_ssi(io))
-		return rsnd_ssi_multi_secondaries(io);
+u32 rsnd_ssi_multi_secondaries_runसमय(काष्ठा rsnd_dai_stream *io)
+अणु
+	अगर (rsnd_runसमय_is_multi_ssi(io))
+		वापस rsnd_ssi_multi_secondaries(io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 rsnd_rdai_width_to_swl(struct rsnd_dai *rdai)
-{
-	struct rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	int width = rsnd_rdai_width_get(rdai);
+अटल u32 rsnd_rdai_width_to_swl(काष्ठा rsnd_dai *rdai)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	पूर्णांक width = rsnd_rdai_width_get(rdai);
 
-	switch (width) {
-	case 32: return SWL_32;
-	case 24: return SWL_24;
-	case 16: return SWL_16;
-	}
+	चयन (width) अणु
+	हाल 32: वापस SWL_32;
+	हाल 24: वापस SWL_24;
+	हाल 16: वापस SWL_16;
+	पूर्ण
 
 	dev_err(dev, "unsupported slot width value: %d\n", width);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned int rsnd_ssi_clk_query(struct rsnd_dai *rdai,
-		       int param1, int param2, int *idx)
-{
-	struct rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
-	int ssi_clk_mul_table[] = {
+अचिन्हित पूर्णांक rsnd_ssi_clk_query(काष्ठा rsnd_dai *rdai,
+		       पूर्णांक param1, पूर्णांक param2, पूर्णांक *idx)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
+	पूर्णांक ssi_clk_mul_table[] = अणु
 		1, 2, 4, 8, 16, 6, 12,
-	};
-	int j, ret;
-	unsigned int main_rate;
-	int width = rsnd_rdai_width_get(rdai);
+	पूर्ण;
+	पूर्णांक j, ret;
+	अचिन्हित पूर्णांक मुख्य_rate;
+	पूर्णांक width = rsnd_rdai_width_get(rdai);
 
-	for (j = 0; j < ARRAY_SIZE(ssi_clk_mul_table); j++) {
+	क्रम (j = 0; j < ARRAY_SIZE(ssi_clk_mul_table); j++) अणु
 
 		/*
 		 * It will set SSIWSR.CONT here, but SSICR.CKDV = 000
@@ -245,82 +246,82 @@ unsigned int rsnd_ssi_clk_query(struct rsnd_dai *rdai,
 		 * SSICR.CKDV = 000 is not allowed either).
 		 * Skip it. See SSICR.CKDV
 		 */
-		if (j == 0)
-			continue;
+		अगर (j == 0)
+			जारी;
 
-		main_rate = width * param1 * param2 * ssi_clk_mul_table[j];
+		मुख्य_rate = width * param1 * param2 * ssi_clk_mul_table[j];
 
-		ret = rsnd_adg_clk_query(priv, main_rate);
-		if (ret < 0)
-			continue;
+		ret = rsnd_adg_clk_query(priv, मुख्य_rate);
+		अगर (ret < 0)
+			जारी;
 
-		if (idx)
+		अगर (idx)
 			*idx = j;
 
-		return main_rate;
-	}
+		वापस मुख्य_rate;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_master_clk_start(struct rsnd_mod *mod,
-				     struct rsnd_dai_stream *io)
-{
-	struct rsnd_priv *priv = rsnd_io_to_priv(io);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	int chan = rsnd_runtime_channel_for_ssi(io);
-	int idx, ret;
-	unsigned int main_rate;
-	unsigned int rate = rsnd_io_is_play(io) ?
+अटल पूर्णांक rsnd_ssi_master_clk_start(काष्ठा rsnd_mod *mod,
+				     काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_io_to_priv(io);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	पूर्णांक chan = rsnd_runसमय_channel_क्रम_ssi(io);
+	पूर्णांक idx, ret;
+	अचिन्हित पूर्णांक मुख्य_rate;
+	अचिन्हित पूर्णांक rate = rsnd_io_is_play(io) ?
 		rsnd_src_get_out_rate(priv, io) :
 		rsnd_src_get_in_rate(priv, io);
 
-	if (!rsnd_rdai_is_clk_master(rdai))
-		return 0;
+	अगर (!rsnd_rdai_is_clk_master(rdai))
+		वापस 0;
 
-	if (!rsnd_ssi_can_output_clk(mod))
-		return 0;
+	अगर (!rsnd_ssi_can_output_clk(mod))
+		वापस 0;
 
-	if (rsnd_ssi_is_multi_secondary(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_multi_secondary(mod, io))
+		वापस 0;
 
-	if (rsnd_runtime_is_tdm_split(io))
+	अगर (rsnd_runसमय_is_tdm_split(io))
 		chan = rsnd_io_converted_chan(io);
 
 	chan = rsnd_channel_normalization(chan);
 
-	if (ssi->usrcnt > 0) {
-		if (ssi->rate != rate) {
+	अगर (ssi->usrcnt > 0) अणु
+		अगर (ssi->rate != rate) अणु
 			dev_err(dev, "SSI parent/child should use same rate\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (ssi->chan != chan) {
+		अगर (ssi->chan != chan) अणु
 			dev_err(dev, "SSI parent/child should use same chan\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	main_rate = rsnd_ssi_clk_query(rdai, rate, chan, &idx);
-	if (!main_rate) {
+	मुख्य_rate = rsnd_ssi_clk_query(rdai, rate, chan, &idx);
+	अगर (!मुख्य_rate) अणु
 		dev_err(dev, "unsupported clock rate\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	ret = rsnd_adg_ssi_clk_try_start(mod, main_rate);
-	if (ret < 0)
-		return ret;
+	ret = rsnd_adg_ssi_clk_try_start(mod, मुख्य_rate);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * SSI clock will be output contiguously
+	 * SSI घड़ी will be output contiguously
 	 * by below settings.
 	 * This means, rsnd_ssi_master_clk_start()
-	 * and rsnd_ssi_register_setup() are necessary
-	 * for SSI parent
+	 * and rsnd_ssi_रेजिस्टर_setup() are necessary
+	 * क्रम SSI parent
 	 *
 	 * SSICR  : FORCE, SCKD, SWSD
 	 * SSIWSR : CONT
@@ -334,152 +335,152 @@ static int rsnd_ssi_master_clk_start(struct rsnd_mod *mod,
 	dev_dbg(dev, "%s outputs %d chan %u Hz\n",
 		rsnd_mod_name(mod), chan, rate);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rsnd_ssi_master_clk_stop(struct rsnd_mod *mod,
-				     struct rsnd_dai_stream *io)
-{
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल व्योम rsnd_ssi_master_clk_stop(काष्ठा rsnd_mod *mod,
+				     काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 
-	if (!rsnd_rdai_is_clk_master(rdai))
-		return;
+	अगर (!rsnd_rdai_is_clk_master(rdai))
+		वापस;
 
-	if (!rsnd_ssi_can_output_clk(mod))
-		return;
+	अगर (!rsnd_ssi_can_output_clk(mod))
+		वापस;
 
-	if (ssi->usrcnt > 1)
-		return;
+	अगर (ssi->usrcnt > 1)
+		वापस;
 
 	ssi->cr_clk	= 0;
 	ssi->rate	= 0;
 	ssi->chan	= 0;
 
 	rsnd_adg_ssi_clk_stop(mod);
-}
+पूर्ण
 
-/* enable busif buffer over/under run interrupt. */
-#define rsnd_ssi_busif_err_irq_enable(mod)  rsnd_ssi_busif_err_irq_ctrl(mod, 1)
-#define rsnd_ssi_busif_err_irq_disable(mod) rsnd_ssi_busif_err_irq_ctrl(mod, 0)
-static void rsnd_ssi_busif_err_irq_ctrl(struct rsnd_mod *mod, int enable)
-{
-	u32 sys_int_enable = 0;
-	int id = rsnd_mod_id(mod);
-	int i;
+/* enable busअगर buffer over/under run पूर्णांकerrupt. */
+#घोषणा rsnd_ssi_busअगर_err_irq_enable(mod)  rsnd_ssi_busअगर_err_irq_ctrl(mod, 1)
+#घोषणा rsnd_ssi_busअगर_err_irq_disable(mod) rsnd_ssi_busअगर_err_irq_ctrl(mod, 0)
+अटल व्योम rsnd_ssi_busअगर_err_irq_ctrl(काष्ठा rsnd_mod *mod, पूर्णांक enable)
+अणु
+	u32 sys_पूर्णांक_enable = 0;
+	पूर्णांक id = rsnd_mod_id(mod);
+	पूर्णांक i;
 
-	switch (id) {
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		for (i = 0; i < 4; i++) {
-			sys_int_enable = rsnd_mod_read(mod, SSI_SYS_INT_ENABLE(i * 2));
-			if (enable)
-				sys_int_enable |= 0xf << (id * 4);
-			else
-				sys_int_enable &= ~(0xf << (id * 4));
-			rsnd_mod_write(mod,
+	चयन (id) अणु
+	हाल 0:
+	हाल 1:
+	हाल 2:
+	हाल 3:
+	हाल 4:
+		क्रम (i = 0; i < 4; i++) अणु
+			sys_पूर्णांक_enable = rsnd_mod_पढ़ो(mod, SSI_SYS_INT_ENABLE(i * 2));
+			अगर (enable)
+				sys_पूर्णांक_enable |= 0xf << (id * 4);
+			अन्यथा
+				sys_पूर्णांक_enable &= ~(0xf << (id * 4));
+			rsnd_mod_ग_लिखो(mod,
 				       SSI_SYS_INT_ENABLE(i * 2),
-				       sys_int_enable);
-		}
-		break;
-	case 9:
-		for (i = 0; i < 4; i++) {
-			sys_int_enable = rsnd_mod_read(mod, SSI_SYS_INT_ENABLE((i * 2) + 1));
-			if (enable)
-				sys_int_enable |= 0xf << 4;
-			else
-				sys_int_enable &= ~(0xf << 4);
-			rsnd_mod_write(mod,
+				       sys_पूर्णांक_enable);
+		पूर्ण
+		अवरोध;
+	हाल 9:
+		क्रम (i = 0; i < 4; i++) अणु
+			sys_पूर्णांक_enable = rsnd_mod_पढ़ो(mod, SSI_SYS_INT_ENABLE((i * 2) + 1));
+			अगर (enable)
+				sys_पूर्णांक_enable |= 0xf << 4;
+			अन्यथा
+				sys_पूर्णांक_enable &= ~(0xf << 4);
+			rsnd_mod_ग_लिखो(mod,
 				       SSI_SYS_INT_ENABLE((i * 2) + 1),
-				       sys_int_enable);
-		}
-		break;
-	}
-}
+				       sys_पूर्णांक_enable);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool rsnd_ssi_busif_err_status_clear(struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
+अटल bool rsnd_ssi_busअगर_err_status_clear(काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
 	u32 status;
 	bool stop = false;
-	int id = rsnd_mod_id(mod);
-	int i;
+	पूर्णांक id = rsnd_mod_id(mod);
+	पूर्णांक i;
 
-	switch (id) {
-	case 0:
-	case 1:
-	case 2:
-	case 3:
-	case 4:
-		for (i = 0; i < 4; i++) {
-			status = rsnd_mod_read(mod, SSI_SYS_STATUS(i * 2));
+	चयन (id) अणु
+	हाल 0:
+	हाल 1:
+	हाल 2:
+	हाल 3:
+	हाल 4:
+		क्रम (i = 0; i < 4; i++) अणु
+			status = rsnd_mod_पढ़ो(mod, SSI_SYS_STATUS(i * 2));
 			status &= 0xf << (id * 4);
 
-			if (status) {
+			अगर (status) अणु
 				rsnd_dbg_irq_status(dev, "%s err status : 0x%08x\n",
 						    rsnd_mod_name(mod), status);
-				rsnd_mod_write(mod,
+				rsnd_mod_ग_लिखो(mod,
 					       SSI_SYS_STATUS(i * 2),
 					       0xf << (id * 4));
 				stop = true;
-			}
-		}
-		break;
-	case 9:
-		for (i = 0; i < 4; i++) {
-			status = rsnd_mod_read(mod, SSI_SYS_STATUS((i * 2) + 1));
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल 9:
+		क्रम (i = 0; i < 4; i++) अणु
+			status = rsnd_mod_पढ़ो(mod, SSI_SYS_STATUS((i * 2) + 1));
 			status &= 0xf << 4;
 
-			if (status) {
+			अगर (status) अणु
 				rsnd_dbg_irq_status(dev, "%s err status : 0x%08x\n",
 						    rsnd_mod_name(mod), status);
-				rsnd_mod_write(mod,
+				rsnd_mod_ग_लिखो(mod,
 					       SSI_SYS_STATUS((i * 2) + 1),
 					       0xf << 4);
 				stop = true;
-			}
-		}
-		break;
-	}
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return stop;
-}
+	वापस stop;
+पूर्ण
 
-static void rsnd_ssi_config_init(struct rsnd_mod *mod,
-				struct rsnd_dai_stream *io)
-{
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	struct rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल व्योम rsnd_ssi_config_init(काष्ठा rsnd_mod *mod,
+				काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	काष्ठा rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 	u32 cr_own	= ssi->cr_own;
 	u32 cr_mode	= ssi->cr_mode;
 	u32 wsr		= ssi->wsr;
-	int width;
-	int is_tdm, is_tdm_split;
+	पूर्णांक width;
+	पूर्णांक is_tdm, is_tdm_split;
 
-	is_tdm		= rsnd_runtime_is_tdm(io);
-	is_tdm_split	= rsnd_runtime_is_tdm_split(io);
+	is_tdm		= rsnd_runसमय_is_tdm(io);
+	is_tdm_split	= rsnd_runसमय_is_tdm_split(io);
 
-	if (is_tdm)
+	अगर (is_tdm)
 		dev_dbg(dev, "TDM mode\n");
-	if (is_tdm_split)
+	अगर (is_tdm_split)
 		dev_dbg(dev, "TDM Split mode\n");
 
 	cr_own |= FORCE | rsnd_rdai_width_to_swl(rdai);
 
-	if (rdai->bit_clk_inv)
+	अगर (rdai->bit_clk_inv)
 		cr_own |= SCKP;
-	if (rdai->frm_clk_inv && !is_tdm)
+	अगर (rdai->frm_clk_inv && !is_tdm)
 		cr_own |= SWSP;
-	if (rdai->data_alignment)
+	अगर (rdai->data_alignment)
 		cr_own |= SDTA;
-	if (rdai->sys_delay)
+	अगर (rdai->sys_delay)
 		cr_own |= DEL;
 
 	/*
@@ -487,24 +488,24 @@ static void rsnd_ssi_config_init(struct rsnd_mod *mod,
 	 * see
 	 *	rsnd_ssiu_init_gen2()
 	 */
-	if (is_tdm || is_tdm_split) {
+	अगर (is_tdm || is_tdm_split) अणु
 		wsr	|= WS_MODE;
 		cr_own	|= CHNL_8;
-	}
+	पूर्ण
 
 	/*
 	 * We shouldn't exchange SWSP after running.
 	 * This means, parent needs to care it.
 	 */
-	if (rsnd_ssi_is_parent(mod, io))
-		goto init_end;
+	अगर (rsnd_ssi_is_parent(mod, io))
+		जाओ init_end;
 
-	if (rsnd_io_is_play(io))
+	अगर (rsnd_io_is_play(io))
 		cr_own |= TRMD;
 
 	cr_own &= ~DWL_MASK;
-	width = snd_pcm_format_width(runtime->format);
-	if (is_tdm_split) {
+	width = snd_pcm_क्रमmat_width(runसमय->क्रमmat);
+	अगर (is_tdm_split) अणु
 		/*
 		 * The SWL and DWL bits in SSICR should be fixed at 32-bit
 		 * setting when TDM split mode.
@@ -512,184 +513,184 @@ static void rsnd_ssi_config_init(struct rsnd_mod *mod,
 		 *	Operation :: TDM Format Split Function (TDM Split Mode)
 		 */
 		width = 32;
-	}
+	पूर्ण
 
-	switch (width) {
-	case 8:
+	चयन (width) अणु
+	हाल 8:
 		cr_own |= DWL_8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		cr_own |= DWL_16;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		cr_own |= DWL_24;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		cr_own |= DWL_32;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (rsnd_ssi_is_dma_mode(mod)) {
+	अगर (rsnd_ssi_is_dma_mode(mod)) अणु
 		cr_mode = UIEN | OIEN |	/* over/under run */
 			  DMEN;		/* DMA : enable DMA */
-	} else {
-		cr_mode = DIEN;		/* PIO : enable Data interrupt */
-	}
+	पूर्ण अन्यथा अणु
+		cr_mode = DIEN;		/* PIO : enable Data पूर्णांकerrupt */
+	पूर्ण
 
-	/* enable busif buffer over/under run interrupt. */
-	if (is_tdm || is_tdm_split)
-		rsnd_ssi_busif_err_irq_enable(mod);
+	/* enable busअगर buffer over/under run पूर्णांकerrupt. */
+	अगर (is_tdm || is_tdm_split)
+		rsnd_ssi_busअगर_err_irq_enable(mod);
 
 init_end:
 	ssi->cr_own	= cr_own;
 	ssi->cr_mode	= cr_mode;
 	ssi->wsr	= wsr;
-}
+पूर्ण
 
-static void rsnd_ssi_register_setup(struct rsnd_mod *mod)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल व्योम rsnd_ssi_रेजिस्टर_setup(काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 
-	rsnd_mod_write(mod, SSIWSR,	ssi->wsr);
-	rsnd_mod_write(mod, SSICR,	ssi->cr_own	|
+	rsnd_mod_ग_लिखो(mod, SSIWSR,	ssi->wsr);
+	rsnd_mod_ग_लिखो(mod, SSICR,	ssi->cr_own	|
 					ssi->cr_clk	|
 					ssi->cr_mode	|
 					ssi->cr_en);
-}
+पूर्ण
 
 /*
  *	SSI mod common functions
  */
-static int rsnd_ssi_init(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	int ret;
+अटल पूर्णांक rsnd_ssi_init(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	पूर्णांक ret;
 
-	if (!rsnd_ssi_is_run_mods(mod, io))
-		return 0;
+	अगर (!rsnd_ssi_is_run_mods(mod, io))
+		वापस 0;
 
 	ret = rsnd_ssi_master_clk_start(mod, io);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ssi->usrcnt++;
 
-	rsnd_mod_power_on(mod);
+	rsnd_mod_घातer_on(mod);
 
 	rsnd_ssi_config_init(mod, io);
 
-	rsnd_ssi_register_setup(mod);
+	rsnd_ssi_रेजिस्टर_setup(mod);
 
 	/* clear error status */
 	rsnd_ssi_status_clear(mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_quit(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	int is_tdm, is_tdm_split;
+अटल पूर्णांक rsnd_ssi_quit(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	पूर्णांक is_tdm, is_tdm_split;
 
-	is_tdm		= rsnd_runtime_is_tdm(io);
-	is_tdm_split	= rsnd_runtime_is_tdm_split(io);
+	is_tdm		= rsnd_runसमय_is_tdm(io);
+	is_tdm_split	= rsnd_runसमय_is_tdm_split(io);
 
-	if (!rsnd_ssi_is_run_mods(mod, io))
-		return 0;
+	अगर (!rsnd_ssi_is_run_mods(mod, io))
+		वापस 0;
 
-	if (!ssi->usrcnt) {
+	अगर (!ssi->usrcnt) अणु
 		dev_err(dev, "%s usrcnt error\n", rsnd_mod_name(mod));
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	rsnd_ssi_master_clk_stop(mod, io);
 
-	rsnd_mod_power_off(mod);
+	rsnd_mod_घातer_off(mod);
 
 	ssi->usrcnt--;
 
-	if (!ssi->usrcnt) {
+	अगर (!ssi->usrcnt) अणु
 		ssi->cr_own	= 0;
 		ssi->cr_mode	= 0;
 		ssi->wsr	= 0;
-	}
+	पूर्ण
 
-	/* disable busif buffer over/under run interrupt. */
-	if (is_tdm || is_tdm_split)
-		rsnd_ssi_busif_err_irq_disable(mod);
+	/* disable busअगर buffer over/under run पूर्णांकerrupt. */
+	अगर (is_tdm || is_tdm_split)
+		rsnd_ssi_busअगर_err_irq_disable(mod);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_hw_params(struct rsnd_mod *mod,
-			      struct rsnd_dai_stream *io,
-			      struct snd_pcm_substream *substream,
-			      struct snd_pcm_hw_params *params)
-{
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	unsigned int fmt_width = snd_pcm_format_width(params_format(params));
+अटल पूर्णांक rsnd_ssi_hw_params(काष्ठा rsnd_mod *mod,
+			      काष्ठा rsnd_dai_stream *io,
+			      काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	अचिन्हित पूर्णांक fmt_width = snd_pcm_क्रमmat_width(params_क्रमmat(params));
 
-	if (fmt_width > rdai->chan_width) {
-		struct rsnd_priv *priv = rsnd_io_to_priv(io);
-		struct device *dev = rsnd_priv_to_dev(priv);
+	अगर (fmt_width > rdai->chan_width) अणु
+		काष्ठा rsnd_priv *priv = rsnd_io_to_priv(io);
+		काष्ठा device *dev = rsnd_priv_to_dev(priv);
 
 		dev_err(dev, "invalid combination of slot-width and format-data-width\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_start(struct rsnd_mod *mod,
-			  struct rsnd_dai_stream *io,
-			  struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल पूर्णांक rsnd_ssi_start(काष्ठा rsnd_mod *mod,
+			  काष्ठा rsnd_dai_stream *io,
+			  काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 
-	if (!rsnd_ssi_is_run_mods(mod, io))
-		return 0;
+	अगर (!rsnd_ssi_is_run_mods(mod, io))
+		वापस 0;
 
 	/*
 	 * EN will be set via SSIU :: SSI_CONTROL
-	 * if Multi channel mode
+	 * अगर Multi channel mode
 	 */
-	if (rsnd_ssi_multi_secondaries_runtime(io))
-		return 0;
+	अगर (rsnd_ssi_multi_secondaries_runसमय(io))
+		वापस 0;
 
 	/*
-	 * EN is for data output.
+	 * EN is क्रम data output.
 	 * SSI parent EN is not needed.
 	 */
-	if (rsnd_ssi_is_parent(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_parent(mod, io))
+		वापस 0;
 
 	ssi->cr_en = EN;
 
-	rsnd_mod_write(mod, SSICR,	ssi->cr_own	|
+	rsnd_mod_ग_लिखो(mod, SSICR,	ssi->cr_own	|
 					ssi->cr_clk	|
 					ssi->cr_mode	|
 					ssi->cr_en);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_stop(struct rsnd_mod *mod,
-			 struct rsnd_dai_stream *io,
-			 struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल पूर्णांक rsnd_ssi_stop(काष्ठा rsnd_mod *mod,
+			 काष्ठा rsnd_dai_stream *io,
+			 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 	u32 cr;
 
-	if (!rsnd_ssi_is_run_mods(mod, io))
-		return 0;
+	अगर (!rsnd_ssi_is_run_mods(mod, io))
+		वापस 0;
 
-	if (rsnd_ssi_is_parent(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_parent(mod, io))
+		वापस 0;
 
 	cr  =	ssi->cr_own	|
 		ssi->cr_clk;
@@ -699,396 +700,396 @@ static int rsnd_ssi_stop(struct rsnd_mod *mod,
 	 * Playback: Wait all data was sent
 	 * Capture:  It might not receave data. Do nothing
 	 */
-	if (rsnd_io_is_play(io)) {
-		rsnd_mod_write(mod, SSICR, cr | ssi->cr_en);
-		rsnd_ssi_status_check(mod, DIRQ);
-	}
+	अगर (rsnd_io_is_play(io)) अणु
+		rsnd_mod_ग_लिखो(mod, SSICR, cr | ssi->cr_en);
+		rsnd_ssi_status_check(mod, सूचीQ);
+	पूर्ण
 
-	/* In multi-SSI mode, stop is performed by setting ssi0129 in
+	/* In multi-SSI mode, stop is perक्रमmed by setting ssi0129 in
 	 * SSI_CONTROL to 0 (in rsnd_ssio_stop_gen2). Do nothing here.
 	 */
-	if (rsnd_ssi_multi_secondaries_runtime(io))
-		return 0;
+	अगर (rsnd_ssi_multi_secondaries_runसमय(io))
+		वापस 0;
 
 	/*
 	 * disable SSI,
-	 * and, wait idle state
+	 * and, रुको idle state
 	 */
-	rsnd_mod_write(mod, SSICR, cr);	/* disabled all */
+	rsnd_mod_ग_लिखो(mod, SSICR, cr);	/* disabled all */
 	rsnd_ssi_status_check(mod, IIRQ);
 
 	ssi->cr_en = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_irq(struct rsnd_mod *mod,
-			struct rsnd_dai_stream *io,
-			struct rsnd_priv *priv,
-			int enable)
-{
+अटल पूर्णांक rsnd_ssi_irq(काष्ठा rsnd_mod *mod,
+			काष्ठा rsnd_dai_stream *io,
+			काष्ठा rsnd_priv *priv,
+			पूर्णांक enable)
+अणु
 	u32 val = 0;
-	int is_tdm, is_tdm_split;
-	int id = rsnd_mod_id(mod);
+	पूर्णांक is_tdm, is_tdm_split;
+	पूर्णांक id = rsnd_mod_id(mod);
 
-	is_tdm		= rsnd_runtime_is_tdm(io);
-	is_tdm_split	= rsnd_runtime_is_tdm_split(io);
+	is_tdm		= rsnd_runसमय_is_tdm(io);
+	is_tdm_split	= rsnd_runसमय_is_tdm_split(io);
 
-	if (rsnd_is_gen1(priv))
-		return 0;
+	अगर (rsnd_is_gen1(priv))
+		वापस 0;
 
-	if (rsnd_ssi_is_parent(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_parent(mod, io))
+		वापस 0;
 
-	if (!rsnd_ssi_is_run_mods(mod, io))
-		return 0;
+	अगर (!rsnd_ssi_is_run_mods(mod, io))
+		वापस 0;
 
-	if (enable)
+	अगर (enable)
 		val = rsnd_ssi_is_dma_mode(mod) ? 0x0e000000 : 0x0f000000;
 
-	if (is_tdm || is_tdm_split) {
-		switch (id) {
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 9:
+	अगर (is_tdm || is_tdm_split) अणु
+		चयन (id) अणु
+		हाल 0:
+		हाल 1:
+		हाल 2:
+		हाल 3:
+		हाल 4:
+		हाल 9:
 			val |= 0x0000ff00;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rsnd_mod_write(mod, SSI_INT_ENABLE, val);
+	rsnd_mod_ग_लिखो(mod, SSI_INT_ENABLE, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool rsnd_ssi_pio_interrupt(struct rsnd_mod *mod,
-				   struct rsnd_dai_stream *io);
-static void __rsnd_ssi_interrupt(struct rsnd_mod *mod,
-				 struct rsnd_dai_stream *io)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	struct device *dev = rsnd_priv_to_dev(priv);
-	int is_dma = rsnd_ssi_is_dma_mode(mod);
+अटल bool rsnd_ssi_pio_पूर्णांकerrupt(काष्ठा rsnd_mod *mod,
+				   काष्ठा rsnd_dai_stream *io);
+अटल व्योम __rsnd_ssi_पूर्णांकerrupt(काष्ठा rsnd_mod *mod,
+				 काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	पूर्णांक is_dma = rsnd_ssi_is_dma_mode(mod);
 	u32 status;
 	bool elapsed = false;
 	bool stop = false;
-	int is_tdm, is_tdm_split;
+	पूर्णांक is_tdm, is_tdm_split;
 
-	is_tdm		= rsnd_runtime_is_tdm(io);
-	is_tdm_split	= rsnd_runtime_is_tdm_split(io);
+	is_tdm		= rsnd_runसमय_is_tdm(io);
+	is_tdm_split	= rsnd_runसमय_is_tdm_split(io);
 
 	spin_lock(&priv->lock);
 
-	/* ignore all cases if not working */
-	if (!rsnd_io_is_working(io))
-		goto rsnd_ssi_interrupt_out;
+	/* ignore all हालs अगर not working */
+	अगर (!rsnd_io_is_working(io))
+		जाओ rsnd_ssi_पूर्णांकerrupt_out;
 
 	status = rsnd_ssi_status_get(mod);
 
 	/* PIO only */
-	if (!is_dma && (status & DIRQ))
-		elapsed = rsnd_ssi_pio_interrupt(mod, io);
+	अगर (!is_dma && (status & सूचीQ))
+		elapsed = rsnd_ssi_pio_पूर्णांकerrupt(mod, io);
 
 	/* DMA only */
-	if (is_dma && (status & (UIRQ | OIRQ))) {
+	अगर (is_dma && (status & (UIRQ | OIRQ))) अणु
 		rsnd_dbg_irq_status(dev, "%s err status : 0x%08x\n",
 			rsnd_mod_name(mod), status);
 
 		stop = true;
-	}
+	पूर्ण
 
-	if (is_tdm || is_tdm_split)
-		stop |= rsnd_ssi_busif_err_status_clear(mod);
+	अगर (is_tdm || is_tdm_split)
+		stop |= rsnd_ssi_busअगर_err_status_clear(mod);
 
 	rsnd_ssi_status_clear(mod);
-rsnd_ssi_interrupt_out:
+rsnd_ssi_पूर्णांकerrupt_out:
 	spin_unlock(&priv->lock);
 
-	if (elapsed)
+	अगर (elapsed)
 		rsnd_dai_period_elapsed(io);
 
-	if (stop)
+	अगर (stop)
 		snd_pcm_stop_xrun(io->substream);
 
-}
+पूर्ण
 
-static irqreturn_t rsnd_ssi_interrupt(int irq, void *data)
-{
-	struct rsnd_mod *mod = data;
+अटल irqवापस_t rsnd_ssi_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा rsnd_mod *mod = data;
 
-	rsnd_mod_interrupt(mod, __rsnd_ssi_interrupt);
+	rsnd_mod_पूर्णांकerrupt(mod, __rsnd_ssi_पूर्णांकerrupt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static u32 *rsnd_ssi_get_status(struct rsnd_mod *mod,
-				struct rsnd_dai_stream *io,
-				enum rsnd_mod_type type)
-{
+अटल u32 *rsnd_ssi_get_status(काष्ठा rsnd_mod *mod,
+				काष्ठा rsnd_dai_stream *io,
+				क्रमागत rsnd_mod_type type)
+अणु
 	/*
 	 * SSIP (= SSI parent) needs to be special, otherwise,
-	 * 2nd SSI might doesn't start. see also rsnd_mod_call()
+	 * 2nd SSI might करोesn't start. see also rsnd_mod_call()
 	 *
 	 * We can't include parent SSI status on SSI, because we don't know
 	 * how many SSI requests parent SSI. Thus, it is localed on "io" now.
-	 * ex) trouble case
+	 * ex) trouble हाल
 	 *	Playback: SSI0
 	 *	Capture : SSI1 (needs SSI0)
 	 *
 	 * 1) start Capture  ->	SSI0/SSI1 are started.
-	 * 2) start Playback ->	SSI0 doesn't work, because it is already
+	 * 2) start Playback ->	SSI0 करोesn't work, because it is alपढ़ोy
 	 *			marked as "started" on 1)
 	 *
-	 * OTOH, using each mod's status is good for MUX case.
-	 * It doesn't need to start in 2nd start
+	 * OTOH, using each mod's status is good क्रम MUX हाल.
+	 * It करोesn't need to start in 2nd start
 	 * ex)
 	 *	IO-0: SRC0 -> CTU1 -+-> MUX -> DVC -> SSIU -> SSI0
 	 *			    |
 	 *	IO-1: SRC1 -> CTU2 -+
 	 *
 	 * 1) start IO-0 ->	start SSI0
-	 * 2) start IO-1 ->	SSI0 doesn't need to start, because it is
-	 *			already started on 1)
+	 * 2) start IO-1 ->	SSI0 करोesn't need to start, because it is
+	 *			alपढ़ोy started on 1)
 	 */
-	if (type == RSND_MOD_SSIP)
-		return &io->parent_ssi_status;
+	अगर (type == RSND_MOD_SSIP)
+		वापस &io->parent_ssi_status;
 
-	return rsnd_mod_get_status(mod, io, type);
-}
+	वापस rsnd_mod_get_status(mod, io, type);
+पूर्ण
 
 /*
  *		SSI PIO
  */
-static void rsnd_ssi_parent_attach(struct rsnd_mod *mod,
-				   struct rsnd_dai_stream *io)
-{
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
+अटल व्योम rsnd_ssi_parent_attach(काष्ठा rsnd_mod *mod,
+				   काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
 
-	if (!__rsnd_ssi_is_pin_sharing(mod))
-		return;
+	अगर (!__rsnd_ssi_is_pin_sharing(mod))
+		वापस;
 
-	if (!rsnd_rdai_is_clk_master(rdai))
-		return;
+	अगर (!rsnd_rdai_is_clk_master(rdai))
+		वापस;
 
-	if (rsnd_ssi_is_multi_secondary(mod, io))
-		return;
+	अगर (rsnd_ssi_is_multi_secondary(mod, io))
+		वापस;
 
-	switch (rsnd_mod_id(mod)) {
-	case 1:
-	case 2:
-	case 9:
+	चयन (rsnd_mod_id(mod)) अणु
+	हाल 1:
+	हाल 2:
+	हाल 9:
 		rsnd_dai_connect(rsnd_ssi_mod_get(priv, 0), io, RSND_MOD_SSIP);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		rsnd_dai_connect(rsnd_ssi_mod_get(priv, 3), io, RSND_MOD_SSIP);
-		break;
-	case 8:
+		अवरोध;
+	हाल 8:
 		rsnd_dai_connect(rsnd_ssi_mod_get(priv, 7), io, RSND_MOD_SSIP);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int rsnd_ssi_pcm_new(struct rsnd_mod *mod,
-			    struct rsnd_dai_stream *io,
-			    struct snd_soc_pcm_runtime *rtd)
-{
+अटल पूर्णांक rsnd_ssi_pcm_new(काष्ठा rsnd_mod *mod,
+			    काष्ठा rsnd_dai_stream *io,
+			    काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
 	/*
 	 * rsnd_rdai_is_clk_master() will be enabled after set_fmt,
 	 * and, pcm_new will be called after it.
-	 * This function reuse pcm_new at this point.
+	 * This function reuse pcm_new at this poपूर्णांक.
 	 */
 	rsnd_ssi_parent_attach(mod, io);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rsnd_ssi_common_probe(struct rsnd_mod *mod,
-				 struct rsnd_dai_stream *io,
-				 struct rsnd_priv *priv)
-{
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	int ret = 0;
+अटल पूर्णांक rsnd_ssi_common_probe(काष्ठा rsnd_mod *mod,
+				 काष्ठा rsnd_dai_stream *io,
+				 काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	पूर्णांक ret = 0;
 
 	/*
 	 * SSIP/SSIU/IRQ are not needed on
 	 * SSI Multi secondaries
 	 */
-	if (rsnd_ssi_is_multi_secondary(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_multi_secondary(mod, io))
+		वापस 0;
 
 	/*
-	 * It can't judge ssi parent at this point
+	 * It can't judge ssi parent at this poपूर्णांक
 	 * see rsnd_ssi_pcm_new()
 	 */
 
 	/*
 	 * SSI might be called again as PIO fallback
-	 * It is easy to manual handling for IRQ request/free
+	 * It is easy to manual handling क्रम IRQ request/मुक्त
 	 *
-	 * OTOH, this function might be called many times if platform is
-	 * using MIX. It needs xxx_attach() many times on xxx_probe().
-	 * Because of it, we can't control .probe/.remove calling count by
+	 * OTOH, this function might be called many बार अगर platक्रमm is
+	 * using MIX. It needs xxx_attach() many बार on xxx_probe().
+	 * Because of it, we can't control .probe/.हटाओ calling count by
 	 * mod->status.
-	 * But it don't need to call request_irq() many times.
+	 * But it करोn't need to call request_irq() many बार.
 	 * Let's control it by RSND_SSI_PROBED flag.
 	 */
-	if (!rsnd_flags_has(ssi, RSND_SSI_PROBED)) {
+	अगर (!rsnd_flags_has(ssi, RSND_SSI_PROBED)) अणु
 		ret = request_irq(ssi->irq,
-				  rsnd_ssi_interrupt,
+				  rsnd_ssi_पूर्णांकerrupt,
 				  IRQF_SHARED,
 				  dev_name(dev), mod);
 
 		rsnd_flags_set(ssi, RSND_SSI_PROBED);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsnd_ssi_common_remove(struct rsnd_mod *mod,
-				  struct rsnd_dai_stream *io,
-				  struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	struct rsnd_mod *pure_ssi_mod = rsnd_io_to_mod_ssi(io);
+अटल पूर्णांक rsnd_ssi_common_हटाओ(काष्ठा rsnd_mod *mod,
+				  काष्ठा rsnd_dai_stream *io,
+				  काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	काष्ठा rsnd_mod *pure_ssi_mod = rsnd_io_to_mod_ssi(io);
 
-	/* Do nothing if non SSI (= SSI parent, multi SSI) mod */
-	if (pure_ssi_mod != mod)
-		return 0;
+	/* Do nothing अगर non SSI (= SSI parent, multi SSI) mod */
+	अगर (pure_ssi_mod != mod)
+		वापस 0;
 
 	/* PIO will request IRQ again */
-	if (rsnd_flags_has(ssi, RSND_SSI_PROBED)) {
-		free_irq(ssi->irq, mod);
+	अगर (rsnd_flags_has(ssi, RSND_SSI_PROBED)) अणु
+		मुक्त_irq(ssi->irq, mod);
 
 		rsnd_flags_del(ssi, RSND_SSI_PROBED);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	SSI PIO functions
  */
-static bool rsnd_ssi_pio_interrupt(struct rsnd_mod *mod,
-				   struct rsnd_dai_stream *io)
-{
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	u32 *buf = (u32 *)(runtime->dma_area + ssi->byte_pos);
-	int shift = 0;
-	int byte_pos;
+अटल bool rsnd_ssi_pio_पूर्णांकerrupt(काष्ठा rsnd_mod *mod,
+				   काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	u32 *buf = (u32 *)(runसमय->dma_area + ssi->byte_pos);
+	पूर्णांक shअगरt = 0;
+	पूर्णांक byte_pos;
 	bool elapsed = false;
 
-	if (snd_pcm_format_width(runtime->format) == 24)
-		shift = 8;
+	अगर (snd_pcm_क्रमmat_width(runसमय->क्रमmat) == 24)
+		shअगरt = 8;
 
 	/*
-	 * 8/16/32 data can be assesse to TDR/RDR register
+	 * 8/16/32 data can be assesse to TDR/RDR रेजिस्टर
 	 * directly as 32bit data
 	 * see rsnd_ssi_init()
 	 */
-	if (rsnd_io_is_play(io))
-		rsnd_mod_write(mod, SSITDR, (*buf) << shift);
-	else
-		*buf = (rsnd_mod_read(mod, SSIRDR) >> shift);
+	अगर (rsnd_io_is_play(io))
+		rsnd_mod_ग_लिखो(mod, SSITDR, (*buf) << shअगरt);
+	अन्यथा
+		*buf = (rsnd_mod_पढ़ो(mod, SSIRDR) >> shअगरt);
 
-	byte_pos = ssi->byte_pos + sizeof(*buf);
+	byte_pos = ssi->byte_pos + माप(*buf);
 
-	if (byte_pos >= ssi->next_period_byte) {
-		int period_pos = byte_pos / ssi->byte_per_period;
+	अगर (byte_pos >= ssi->next_period_byte) अणु
+		पूर्णांक period_pos = byte_pos / ssi->byte_per_period;
 
-		if (period_pos >= runtime->periods) {
+		अगर (period_pos >= runसमय->periods) अणु
 			byte_pos = 0;
 			period_pos = 0;
-		}
+		पूर्ण
 
 		ssi->next_period_byte = (period_pos + 1) * ssi->byte_per_period;
 
 		elapsed = true;
-	}
+	पूर्ण
 
 	WRITE_ONCE(ssi->byte_pos, byte_pos);
 
-	return elapsed;
-}
+	वापस elapsed;
+पूर्ण
 
-static int rsnd_ssi_pio_init(struct rsnd_mod *mod,
-			     struct rsnd_dai_stream *io,
-			     struct rsnd_priv *priv)
-{
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+अटल पूर्णांक rsnd_ssi_pio_init(काष्ठा rsnd_mod *mod,
+			     काष्ठा rsnd_dai_stream *io,
+			     काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
 
-	if (!rsnd_ssi_is_parent(mod, io)) {
+	अगर (!rsnd_ssi_is_parent(mod, io)) अणु
 		ssi->byte_pos		= 0;
-		ssi->byte_per_period	= runtime->period_size *
-					  runtime->channels *
-					  samples_to_bytes(runtime, 1);
+		ssi->byte_per_period	= runसमय->period_size *
+					  runसमय->channels *
+					  samples_to_bytes(runसमय, 1);
 		ssi->next_period_byte	= ssi->byte_per_period;
-	}
+	पूर्ण
 
-	return rsnd_ssi_init(mod, io, priv);
-}
+	वापस rsnd_ssi_init(mod, io, priv);
+पूर्ण
 
-static int rsnd_ssi_pio_pointer(struct rsnd_mod *mod,
-			    struct rsnd_dai_stream *io,
-			    snd_pcm_uframes_t *pointer)
-{
-	struct rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
-	struct snd_pcm_runtime *runtime = rsnd_io_to_runtime(io);
+अटल पूर्णांक rsnd_ssi_pio_poपूर्णांकer(काष्ठा rsnd_mod *mod,
+			    काष्ठा rsnd_dai_stream *io,
+			    snd_pcm_uframes_t *poपूर्णांकer)
+अणु
+	काष्ठा rsnd_ssi *ssi = rsnd_mod_to_ssi(mod);
+	काष्ठा snd_pcm_runसमय *runसमय = rsnd_io_to_runसमय(io);
 
-	*pointer = bytes_to_frames(runtime, READ_ONCE(ssi->byte_pos));
+	*poपूर्णांकer = bytes_to_frames(runसमय, READ_ONCE(ssi->byte_pos));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct rsnd_mod_ops rsnd_ssi_pio_ops = {
+अटल काष्ठा rsnd_mod_ops rsnd_ssi_pio_ops = अणु
 	.name		= SSI_NAME,
 	.probe		= rsnd_ssi_common_probe,
-	.remove		= rsnd_ssi_common_remove,
+	.हटाओ		= rsnd_ssi_common_हटाओ,
 	.init		= rsnd_ssi_pio_init,
 	.quit		= rsnd_ssi_quit,
 	.start		= rsnd_ssi_start,
 	.stop		= rsnd_ssi_stop,
 	.irq		= rsnd_ssi_irq,
-	.pointer	= rsnd_ssi_pio_pointer,
+	.poपूर्णांकer	= rsnd_ssi_pio_poपूर्णांकer,
 	.pcm_new	= rsnd_ssi_pcm_new,
 	.hw_params	= rsnd_ssi_hw_params,
 	.get_status	= rsnd_ssi_get_status,
-};
+पूर्ण;
 
-static int rsnd_ssi_dma_probe(struct rsnd_mod *mod,
-			      struct rsnd_dai_stream *io,
-			      struct rsnd_priv *priv)
-{
-	int ret;
+अटल पूर्णांक rsnd_ssi_dma_probe(काष्ठा rsnd_mod *mod,
+			      काष्ठा rsnd_dai_stream *io,
+			      काष्ठा rsnd_priv *priv)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * SSIP/SSIU/IRQ/DMA are not needed on
 	 * SSI Multi secondaries
 	 */
-	if (rsnd_ssi_is_multi_secondary(mod, io))
-		return 0;
+	अगर (rsnd_ssi_is_multi_secondary(mod, io))
+		वापस 0;
 
 	ret = rsnd_ssi_common_probe(mod, io, priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* SSI probe might be called many times in MUX multi path */
+	/* SSI probe might be called many बार in MUX multi path */
 	ret = rsnd_dma_attach(io, mod, &io->dma);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rsnd_ssi_fallback(struct rsnd_mod *mod,
-			     struct rsnd_dai_stream *io,
-			     struct rsnd_priv *priv)
-{
-	struct device *dev = rsnd_priv_to_dev(priv);
+अटल पूर्णांक rsnd_ssi_fallback(काष्ठा rsnd_mod *mod,
+			     काष्ठा rsnd_dai_stream *io,
+			     काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
 
 	/*
 	 * fallback to PIO
@@ -1101,19 +1102,19 @@ static int rsnd_ssi_fallback(struct rsnd_mod *mod,
 
 	dev_info(dev, "%s fallback to PIO mode\n", rsnd_mod_name(mod));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dma_chan *rsnd_ssi_dma_req(struct rsnd_dai_stream *io,
-					 struct rsnd_mod *mod)
-{
-	struct rsnd_priv *priv = rsnd_mod_to_priv(mod);
-	int is_play = rsnd_io_is_play(io);
-	char *name;
+अटल काष्ठा dma_chan *rsnd_ssi_dma_req(काष्ठा rsnd_dai_stream *io,
+					 काष्ठा rsnd_mod *mod)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_mod_to_priv(mod);
+	पूर्णांक is_play = rsnd_io_is_play(io);
+	अक्षर *name;
 
 	/*
 	 * It should use "rcar_sound,ssiu" on DT.
-	 * But, we need to keep compatibility for old version.
+	 * But, we need to keep compatibility क्रम old version.
 	 *
 	 * If it has "rcar_sound.ssiu", it will be used.
 	 * If not, "rcar_sound.ssi" will be used.
@@ -1122,20 +1123,20 @@ static struct dma_chan *rsnd_ssi_dma_req(struct rsnd_dai_stream *io,
 	 *	rsnd_dma_of_path()
 	 */
 
-	if (rsnd_ssi_use_busif(io))
+	अगर (rsnd_ssi_use_busअगर(io))
 		name = is_play ? "rxu" : "txu";
-	else
+	अन्यथा
 		name = is_play ? "rx" : "tx";
 
-	return rsnd_dma_request_channel(rsnd_ssi_of_node(priv),
+	वापस rsnd_dma_request_channel(rsnd_ssi_of_node(priv),
 					mod, name);
-}
+पूर्ण
 
-static struct rsnd_mod_ops rsnd_ssi_dma_ops = {
+अटल काष्ठा rsnd_mod_ops rsnd_ssi_dma_ops = अणु
 	.name		= SSI_NAME,
 	.dma_req	= rsnd_ssi_dma_req,
 	.probe		= rsnd_ssi_dma_probe,
-	.remove		= rsnd_ssi_common_remove,
+	.हटाओ		= rsnd_ssi_common_हटाओ,
 	.init		= rsnd_ssi_init,
 	.quit		= rsnd_ssi_quit,
 	.start		= rsnd_ssi_start,
@@ -1145,173 +1146,173 @@ static struct rsnd_mod_ops rsnd_ssi_dma_ops = {
 	.fallback	= rsnd_ssi_fallback,
 	.hw_params	= rsnd_ssi_hw_params,
 	.get_status	= rsnd_ssi_get_status,
-};
+पूर्ण;
 
-static int rsnd_ssi_is_dma_mode(struct rsnd_mod *mod)
-{
-	return mod->ops == &rsnd_ssi_dma_ops;
-}
+अटल पूर्णांक rsnd_ssi_is_dma_mode(काष्ठा rsnd_mod *mod)
+अणु
+	वापस mod->ops == &rsnd_ssi_dma_ops;
+पूर्ण
 
 /*
  *		ssi mod function
  */
-static void rsnd_ssi_connect(struct rsnd_mod *mod,
-			     struct rsnd_dai_stream *io)
-{
-	struct rsnd_dai *rdai = rsnd_io_to_rdai(io);
-	enum rsnd_mod_type types[] = {
+अटल व्योम rsnd_ssi_connect(काष्ठा rsnd_mod *mod,
+			     काष्ठा rsnd_dai_stream *io)
+अणु
+	काष्ठा rsnd_dai *rdai = rsnd_io_to_rdai(io);
+	क्रमागत rsnd_mod_type types[] = अणु
 		RSND_MOD_SSI,
 		RSND_MOD_SSIM1,
 		RSND_MOD_SSIM2,
 		RSND_MOD_SSIM3,
-	};
-	enum rsnd_mod_type type;
-	int i;
+	पूर्ण;
+	क्रमागत rsnd_mod_type type;
+	पूर्णांक i;
 
 	/* try SSI -> SSIM1 -> SSIM2 -> SSIM3 */
-	for (i = 0; i < ARRAY_SIZE(types); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(types); i++) अणु
 		type = types[i];
-		if (!rsnd_io_to_mod(io, type)) {
+		अगर (!rsnd_io_to_mod(io, type)) अणु
 			rsnd_dai_connect(mod, io, type);
 			rsnd_rdai_channels_set(rdai, (i + 1) * 2);
 			rsnd_rdai_ssi_lane_set(rdai, (i + 1));
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void rsnd_parse_connect_ssi(struct rsnd_dai *rdai,
-			    struct device_node *playback,
-			    struct device_node *capture)
-{
-	struct rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
-	struct device_node *node;
-	struct device_node *np;
-	int i;
+व्योम rsnd_parse_connect_ssi(काष्ठा rsnd_dai *rdai,
+			    काष्ठा device_node *playback,
+			    काष्ठा device_node *capture)
+अणु
+	काष्ठा rsnd_priv *priv = rsnd_rdai_to_priv(rdai);
+	काष्ठा device_node *node;
+	काष्ठा device_node *np;
+	पूर्णांक i;
 
 	node = rsnd_ssi_of_node(priv);
-	if (!node)
-		return;
+	अगर (!node)
+		वापस;
 
 	i = 0;
-	for_each_child_of_node(node, np) {
-		struct rsnd_mod *mod = rsnd_ssi_mod_get(priv, i);
+	क्रम_each_child_of_node(node, np) अणु
+		काष्ठा rsnd_mod *mod = rsnd_ssi_mod_get(priv, i);
 
-		if (np == playback)
+		अगर (np == playback)
 			rsnd_ssi_connect(mod, &rdai->playback);
-		if (np == capture)
+		अगर (np == capture)
 			rsnd_ssi_connect(mod, &rdai->capture);
 		i++;
-	}
+	पूर्ण
 
 	of_node_put(node);
-}
+पूर्ण
 
-struct rsnd_mod *rsnd_ssi_mod_get(struct rsnd_priv *priv, int id)
-{
-	if (WARN_ON(id < 0 || id >= rsnd_ssi_nr(priv)))
+काष्ठा rsnd_mod *rsnd_ssi_mod_get(काष्ठा rsnd_priv *priv, पूर्णांक id)
+अणु
+	अगर (WARN_ON(id < 0 || id >= rsnd_ssi_nr(priv)))
 		id = 0;
 
-	return rsnd_mod_get(rsnd_ssi_get(priv, id));
-}
+	वापस rsnd_mod_get(rsnd_ssi_get(priv, id));
+पूर्ण
 
-int __rsnd_ssi_is_pin_sharing(struct rsnd_mod *mod)
-{
-	if (!mod)
-		return 0;
+पूर्णांक __rsnd_ssi_is_pin_sharing(काष्ठा rsnd_mod *mod)
+अणु
+	अगर (!mod)
+		वापस 0;
 
-	return !!(rsnd_flags_has(rsnd_mod_to_ssi(mod), RSND_SSI_CLK_PIN_SHARE));
-}
+	वापस !!(rsnd_flags_has(rsnd_mod_to_ssi(mod), RSND_SSI_CLK_PIN_SHARE));
+पूर्ण
 
-int rsnd_ssi_probe(struct rsnd_priv *priv)
-{
-	struct device_node *node;
-	struct device_node *np;
-	struct device *dev = rsnd_priv_to_dev(priv);
-	struct rsnd_mod_ops *ops;
-	struct clk *clk;
-	struct rsnd_ssi *ssi;
-	char name[RSND_SSI_NAME_SIZE];
-	int i, nr, ret;
+पूर्णांक rsnd_ssi_probe(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा device_node *np;
+	काष्ठा device *dev = rsnd_priv_to_dev(priv);
+	काष्ठा rsnd_mod_ops *ops;
+	काष्ठा clk *clk;
+	काष्ठा rsnd_ssi *ssi;
+	अक्षर name[RSND_SSI_NAME_SIZE];
+	पूर्णांक i, nr, ret;
 
 	node = rsnd_ssi_of_node(priv);
-	if (!node)
-		return -EINVAL;
+	अगर (!node)
+		वापस -EINVAL;
 
 	nr = of_get_child_count(node);
-	if (!nr) {
+	अगर (!nr) अणु
 		ret = -EINVAL;
-		goto rsnd_ssi_probe_done;
-	}
+		जाओ rsnd_ssi_probe_करोne;
+	पूर्ण
 
-	ssi	= devm_kcalloc(dev, nr, sizeof(*ssi), GFP_KERNEL);
-	if (!ssi) {
+	ssi	= devm_kसुस्मृति(dev, nr, माप(*ssi), GFP_KERNEL);
+	अगर (!ssi) अणु
 		ret = -ENOMEM;
-		goto rsnd_ssi_probe_done;
-	}
+		जाओ rsnd_ssi_probe_करोne;
+	पूर्ण
 
 	priv->ssi	= ssi;
 	priv->ssi_nr	= nr;
 
 	i = 0;
-	for_each_child_of_node(node, np) {
-		if (!of_device_is_available(np))
-			goto skip;
+	क्रम_each_child_of_node(node, np) अणु
+		अगर (!of_device_is_available(np))
+			जाओ skip;
 
 		ssi = rsnd_ssi_get(priv, i);
 
-		snprintf(name, RSND_SSI_NAME_SIZE, "%s.%d",
+		snम_लिखो(name, RSND_SSI_NAME_SIZE, "%s.%d",
 			 SSI_NAME, i);
 
 		clk = devm_clk_get(dev, name);
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			ret = PTR_ERR(clk);
 			of_node_put(np);
-			goto rsnd_ssi_probe_done;
-		}
+			जाओ rsnd_ssi_probe_करोne;
+		पूर्ण
 
-		if (of_get_property(np, "shared-pin", NULL))
+		अगर (of_get_property(np, "shared-pin", शून्य))
 			rsnd_flags_set(ssi, RSND_SSI_CLK_PIN_SHARE);
 
-		if (of_get_property(np, "no-busif", NULL))
+		अगर (of_get_property(np, "no-busif", शून्य))
 			rsnd_flags_set(ssi, RSND_SSI_NO_BUSIF);
 
 		ssi->irq = irq_of_parse_and_map(np, 0);
-		if (!ssi->irq) {
+		अगर (!ssi->irq) अणु
 			ret = -EINVAL;
 			of_node_put(np);
-			goto rsnd_ssi_probe_done;
-		}
+			जाओ rsnd_ssi_probe_करोne;
+		पूर्ण
 
-		if (of_property_read_bool(np, "pio-transfer"))
+		अगर (of_property_पढ़ो_bool(np, "pio-transfer"))
 			ops = &rsnd_ssi_pio_ops;
-		else
+		अन्यथा
 			ops = &rsnd_ssi_dma_ops;
 
 		ret = rsnd_mod_init(priv, rsnd_mod_get(ssi), ops, clk,
 				    RSND_MOD_SSI, i);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(np);
-			goto rsnd_ssi_probe_done;
-		}
+			जाओ rsnd_ssi_probe_करोne;
+		पूर्ण
 skip:
 		i++;
-	}
+	पूर्ण
 
 	ret = 0;
 
-rsnd_ssi_probe_done:
+rsnd_ssi_probe_करोne:
 	of_node_put(node);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void rsnd_ssi_remove(struct rsnd_priv *priv)
-{
-	struct rsnd_ssi *ssi;
-	int i;
+व्योम rsnd_ssi_हटाओ(काष्ठा rsnd_priv *priv)
+अणु
+	काष्ठा rsnd_ssi *ssi;
+	पूर्णांक i;
 
-	for_each_rsnd_ssi(ssi, priv, i) {
+	क्रम_each_rsnd_ssi(ssi, priv, i) अणु
 		rsnd_mod_quit(rsnd_mod_get(ssi));
-	}
-}
+	पूर्ण
+पूर्ण

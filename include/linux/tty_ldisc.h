@@ -1,225 +1,226 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TTY_LDISC_H
-#define _LINUX_TTY_LDISC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TTY_LDISC_H
+#घोषणा _LINUX_TTY_LDISC_H
 
 /*
- * This structure defines the interface between the tty line discipline
+ * This काष्ठाure defines the पूर्णांकerface between the tty line discipline
  * implementation and the tty routines.  The following routines can be
  * defined; unless noted otherwise, they are optional, and can be
- * filled in with a null pointer.
+ * filled in with a null poपूर्णांकer.
  *
- * int	(*open)(struct tty_struct *);
+ * पूर्णांक	(*खोलो)(काष्ठा tty_काष्ठा *);
  *
  *	This function is called when the line discipline is associated
  *	with the tty.  The line discipline can use this as an
  *	opportunity to initialize any state needed by the ldisc routines.
  *
- * void	(*close)(struct tty_struct *);
+ * व्योम	(*बंद)(काष्ठा tty_काष्ठा *);
  *
  *	This function is called when the line discipline is being
- *	shutdown, either because the tty is being closed or because
+ *	shutकरोwn, either because the tty is being बंदd or because
  *	the tty is being changed to use a new line discipline
  *
- * void	(*flush_buffer)(struct tty_struct *tty);
+ * व्योम	(*flush_buffer)(काष्ठा tty_काष्ठा *tty);
  *
- *	This function instructs the line discipline to clear its
- *	buffers of any input characters it may have queued to be
+ *	This function inकाष्ठाs the line discipline to clear its
+ *	buffers of any input अक्षरacters it may have queued to be
  *	delivered to the user mode process.
  *
- * ssize_t (*read)(struct tty_struct * tty, struct file * file,
- *		   unsigned char * buf, size_t nr);
+ * sमाप_प्रकार (*पढ़ो)(काष्ठा tty_काष्ठा * tty, काष्ठा file * file,
+ *		   अचिन्हित अक्षर * buf, माप_प्रकार nr);
  *
- *	This function is called when the user requests to read from
- *	the tty.  The line discipline will return whatever characters
- *	it has buffered up for the user.  If this function is not
+ *	This function is called when the user requests to पढ़ो from
+ *	the tty.  The line discipline will वापस whatever अक्षरacters
+ *	it has buffered up क्रम the user.  If this function is not
  *	defined, the user will receive an EIO error.
  *
- * ssize_t (*write)(struct tty_struct * tty, struct file * file,
- *		    const unsigned char * buf, size_t nr);
+ * sमाप_प्रकार (*ग_लिखो)(काष्ठा tty_काष्ठा * tty, काष्ठा file * file,
+ *		    स्थिर अचिन्हित अक्षर * buf, माप_प्रकार nr);
  *
- *	This function is called when the user requests to write to the
- *	tty.  The line discipline will deliver the characters to the
- *	low-level tty device for transmission, optionally performing
- *	some processing on the characters first.  If this function is
+ *	This function is called when the user requests to ग_लिखो to the
+ *	tty.  The line discipline will deliver the अक्षरacters to the
+ *	low-level tty device क्रम transmission, optionally perक्रमming
+ *	some processing on the अक्षरacters first.  If this function is
  *	not defined, the user will receive an EIO error.
  *
- * int	(*ioctl)(struct tty_struct * tty, struct file * file,
- *		 unsigned int cmd, unsigned long arg);
+ * पूर्णांक	(*ioctl)(काष्ठा tty_काष्ठा * tty, काष्ठा file * file,
+ *		 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
  *
  *	This function is called when the user requests an ioctl which
  *	is not handled by the tty layer or the low-level tty driver.
- *	It is intended for ioctls which affect line discpline
- *	operation.  Note that the search order for ioctls is (1) tty
+ *	It is पूर्णांकended क्रम ioctls which affect line discpline
+ *	operation.  Note that the search order क्रम ioctls is (1) tty
  *	layer, (2) tty low-level driver, (3) line discpline.  So a
- *	low-level driver can "grab" an ioctl request before the line
+ *	low-level driver can "grab" an ioctl request beक्रमe the line
  *	discpline has a chance to see it.
  *
- * int	(*compat_ioctl)(struct tty_struct * tty, struct file * file,
- *		        unsigned int cmd, unsigned long arg);
+ * पूर्णांक	(*compat_ioctl)(काष्ठा tty_काष्ठा * tty, काष्ठा file * file,
+ *		        अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
  *
- *	Process ioctl calls from 32-bit process on 64-bit system
+ *	Process ioctl calls from 32-bit process on 64-bit प्रणाली
  *
- *	NOTE: only ioctls that are neither "pointer to compatible
- *	structure" nor tty-generic.  Something private that takes
- *	an integer or a pointer to wordsize-sensitive structure
- *	belongs here, but most of ldiscs will happily leave
- *	it NULL.
+ *	NOTE: only ioctls that are neither "poपूर्णांकer to compatible
+ *	काष्ठाure" nor tty-generic.  Something निजी that takes
+ *	an पूर्णांकeger or a poपूर्णांकer to wordsize-sensitive काष्ठाure
+ *	beदीर्घs here, but most of ldiscs will happily leave
+ *	it शून्य.
  *
- * void	(*set_termios)(struct tty_struct *tty, struct ktermios * old);
+ * व्योम	(*set_termios)(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios * old);
  *
- *	This function notifies the line discpline that a change has
- *	been made to the termios structure.
+ *	This function notअगरies the line discpline that a change has
+ *	been made to the termios काष्ठाure.
  *
- * int	(*poll)(struct tty_struct * tty, struct file * file,
- *		  poll_table *wait);
+ * पूर्णांक	(*poll)(काष्ठा tty_काष्ठा * tty, काष्ठा file * file,
+ *		  poll_table *रुको);
  *
  *	This function is called when a user attempts to select/poll on a
  *	tty device.  It is solely the responsibility of the line
  *	discipline to handle poll requests.
  *
- * void	(*receive_buf)(struct tty_struct *, const unsigned char *cp,
- *		       char *fp, int count);
+ * व्योम	(*receive_buf)(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *cp,
+ *		       अक्षर *fp, पूर्णांक count);
  *
  *	This function is called by the low-level tty driver to send
- *	characters received by the hardware to the line discpline for
- *	processing.  <cp> is a pointer to the buffer of input
- *	character received by the device.  <fp> is a pointer to a
- *	pointer of flag bytes which indicate whether a character was
- *	received with a parity error, etc. <fp> may be NULL to indicate
+ *	अक्षरacters received by the hardware to the line discpline क्रम
+ *	processing.  <cp> is a poपूर्णांकer to the buffer of input
+ *	अक्षरacter received by the device.  <fp> is a poपूर्णांकer to a
+ *	poपूर्णांकer of flag bytes which indicate whether a अक्षरacter was
+ *	received with a parity error, etc. <fp> may be शून्य to indicate
  *	all data received is TTY_NORMAL.
  *
- * void	(*write_wakeup)(struct tty_struct *);
+ * व्योम	(*ग_लिखो_wakeup)(काष्ठा tty_काष्ठा *);
  *
- *	This function is called by the low-level tty driver to signal
- *	that line discpline should try to send more characters to the
- *	low-level driver for transmission.  If the line discpline does
- *	not have any more data to send, it can just return. If the line
- *	discipline does have some data to send, please arise a tasklet
- *	or workqueue to do the real data transfer. Do not send data in
+ *	This function is called by the low-level tty driver to संकेत
+ *	that line discpline should try to send more अक्षरacters to the
+ *	low-level driver क्रम transmission.  If the line discpline करोes
+ *	not have any more data to send, it can just वापस. If the line
+ *	discipline करोes have some data to send, please arise a tasklet
+ *	or workqueue to करो the real data transfer. Do not send data in
  *	this hook, it may leads to a deadlock.
  *
- * int (*hangup)(struct tty_struct *)
+ * पूर्णांक (*hangup)(काष्ठा tty_काष्ठा *)
  *
  *	Called on a hangup. Tells the discipline that it should
  *	cease I/O to the tty driver. Can sleep. The driver should
- *	seek to perform this action quickly but should wait until
+ *	seek to perक्रमm this action quickly but should रुको until
  *	any pending driver I/O is completed.
  *
- * void (*dcd_change)(struct tty_struct *tty, unsigned int status)
+ * व्योम (*dcd_change)(काष्ठा tty_काष्ठा *tty, अचिन्हित पूर्णांक status)
  *
  *	Tells the discipline that the DCD pin has changed its status.
  *	Used exclusively by the N_PPS (Pulse-Per-Second) line discipline.
  *
- * int	(*receive_buf2)(struct tty_struct *, const unsigned char *cp,
- *			char *fp, int count);
+ * पूर्णांक	(*receive_buf2)(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *cp,
+ *			अक्षर *fp, पूर्णांक count);
  *
  *	This function is called by the low-level tty driver to send
- *	characters received by the hardware to the line discpline for
- *	processing.  <cp> is a pointer to the buffer of input
- *	character received by the device.  <fp> is a pointer to a
- *	pointer of flag bytes which indicate whether a character was
- *	received with a parity error, etc. <fp> may be NULL to indicate
+ *	अक्षरacters received by the hardware to the line discpline क्रम
+ *	processing.  <cp> is a poपूर्णांकer to the buffer of input
+ *	अक्षरacter received by the device.  <fp> is a poपूर्णांकer to a
+ *	poपूर्णांकer of flag bytes which indicate whether a अक्षरacter was
+ *	received with a parity error, etc. <fp> may be शून्य to indicate
  *	all data received is TTY_NORMAL.
- *	If assigned, prefer this function for automatic flow control.
+ *	If asचिन्हित, prefer this function क्रम स्वतःmatic flow control.
  */
 
-#include <linux/fs.h>
-#include <linux/wait.h>
-#include <linux/atomic.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/atomic.h>
 
 /*
  * the semaphore definition
  */
-struct ld_semaphore {
-	atomic_long_t		count;
-	raw_spinlock_t		wait_lock;
-	unsigned int		wait_readers;
-	struct list_head	read_wait;
-	struct list_head	write_wait;
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	struct lockdep_map	dep_map;
-#endif
-};
+काष्ठा ld_semaphore अणु
+	atomic_दीर्घ_t		count;
+	raw_spinlock_t		रुको_lock;
+	अचिन्हित पूर्णांक		रुको_पढ़ोers;
+	काष्ठा list_head	पढ़ो_रुको;
+	काष्ठा list_head	ग_लिखो_रुको;
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	काष्ठा lockdep_map	dep_map;
+#पूर्ण_अगर
+पूर्ण;
 
-extern void __init_ldsem(struct ld_semaphore *sem, const char *name,
-			 struct lock_class_key *key);
+बाह्य व्योम __init_ldsem(काष्ठा ld_semaphore *sem, स्थिर अक्षर *name,
+			 काष्ठा lock_class_key *key);
 
-#define init_ldsem(sem)						\
-do {								\
-	static struct lock_class_key __key;			\
+#घोषणा init_ldsem(sem)						\
+करो अणु								\
+	अटल काष्ठा lock_class_key __key;			\
 								\
 	__init_ldsem((sem), #sem, &__key);			\
-} while (0)
+पूर्ण जबतक (0)
 
 
-extern int ldsem_down_read(struct ld_semaphore *sem, long timeout);
-extern int ldsem_down_read_trylock(struct ld_semaphore *sem);
-extern int ldsem_down_write(struct ld_semaphore *sem, long timeout);
-extern int ldsem_down_write_trylock(struct ld_semaphore *sem);
-extern void ldsem_up_read(struct ld_semaphore *sem);
-extern void ldsem_up_write(struct ld_semaphore *sem);
+बाह्य पूर्णांक ldsem_करोwn_पढ़ो(काष्ठा ld_semaphore *sem, दीर्घ समयout);
+बाह्य पूर्णांक ldsem_करोwn_पढ़ो_trylock(काष्ठा ld_semaphore *sem);
+बाह्य पूर्णांक ldsem_करोwn_ग_लिखो(काष्ठा ld_semaphore *sem, दीर्घ समयout);
+बाह्य पूर्णांक ldsem_करोwn_ग_लिखो_trylock(काष्ठा ld_semaphore *sem);
+बाह्य व्योम ldsem_up_पढ़ो(काष्ठा ld_semaphore *sem);
+बाह्य व्योम ldsem_up_ग_लिखो(काष्ठा ld_semaphore *sem);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-extern int ldsem_down_read_nested(struct ld_semaphore *sem, int subclass,
-				  long timeout);
-extern int ldsem_down_write_nested(struct ld_semaphore *sem, int subclass,
-				   long timeout);
-#else
-# define ldsem_down_read_nested(sem, subclass, timeout)		\
-		ldsem_down_read(sem, timeout)
-# define ldsem_down_write_nested(sem, subclass, timeout)	\
-		ldsem_down_write(sem, timeout)
-#endif
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+बाह्य पूर्णांक ldsem_करोwn_पढ़ो_nested(काष्ठा ld_semaphore *sem, पूर्णांक subclass,
+				  दीर्घ समयout);
+बाह्य पूर्णांक ldsem_करोwn_ग_लिखो_nested(काष्ठा ld_semaphore *sem, पूर्णांक subclass,
+				   दीर्घ समयout);
+#अन्यथा
+# define ldsem_करोwn_पढ़ो_nested(sem, subclass, समयout)		\
+		ldsem_करोwn_पढ़ो(sem, समयout)
+# define ldsem_करोwn_ग_लिखो_nested(sem, subclass, समयout)	\
+		ldsem_करोwn_ग_लिखो(sem, समयout)
+#पूर्ण_अगर
 
 
-struct tty_ldisc_ops {
-	char	*name;
-	int	num;
-	int	flags;
+काष्ठा tty_ldisc_ops अणु
+	अक्षर	*name;
+	पूर्णांक	num;
+	पूर्णांक	flags;
 
 	/*
 	 * The following routines are called from above.
 	 */
-	int	(*open)(struct tty_struct *);
-	void	(*close)(struct tty_struct *);
-	void	(*flush_buffer)(struct tty_struct *tty);
-	ssize_t	(*read)(struct tty_struct *tty, struct file *file,
-			unsigned char *buf, size_t nr,
-			void **cookie, unsigned long offset);
-	ssize_t	(*write)(struct tty_struct *tty, struct file *file,
-			 const unsigned char *buf, size_t nr);
-	int	(*ioctl)(struct tty_struct *tty, struct file *file,
-			 unsigned int cmd, unsigned long arg);
-	int	(*compat_ioctl)(struct tty_struct *tty, struct file *file,
-				unsigned int cmd, unsigned long arg);
-	void	(*set_termios)(struct tty_struct *tty, struct ktermios *old);
-	__poll_t (*poll)(struct tty_struct *, struct file *,
-			     struct poll_table_struct *);
-	int	(*hangup)(struct tty_struct *tty);
+	पूर्णांक	(*खोलो)(काष्ठा tty_काष्ठा *);
+	व्योम	(*बंद)(काष्ठा tty_काष्ठा *);
+	व्योम	(*flush_buffer)(काष्ठा tty_काष्ठा *tty);
+	sमाप_प्रकार	(*पढ़ो)(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			अचिन्हित अक्षर *buf, माप_प्रकार nr,
+			व्योम **cookie, अचिन्हित दीर्घ offset);
+	sमाप_प्रकार	(*ग_लिखो)(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			 स्थिर अचिन्हित अक्षर *buf, माप_प्रकार nr);
+	पूर्णांक	(*ioctl)(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+			 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	पूर्णांक	(*compat_ioctl)(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+				अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg);
+	व्योम	(*set_termios)(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old);
+	__poll_t (*poll)(काष्ठा tty_काष्ठा *, काष्ठा file *,
+			     काष्ठा poll_table_काष्ठा *);
+	पूर्णांक	(*hangup)(काष्ठा tty_काष्ठा *tty);
 
 	/*
 	 * The following routines are called from below.
 	 */
-	void	(*receive_buf)(struct tty_struct *, const unsigned char *cp,
-			       char *fp, int count);
-	void	(*write_wakeup)(struct tty_struct *);
-	void	(*dcd_change)(struct tty_struct *, unsigned int);
-	int	(*receive_buf2)(struct tty_struct *, const unsigned char *cp,
-				char *fp, int count);
+	व्योम	(*receive_buf)(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *cp,
+			       अक्षर *fp, पूर्णांक count);
+	व्योम	(*ग_लिखो_wakeup)(काष्ठा tty_काष्ठा *);
+	व्योम	(*dcd_change)(काष्ठा tty_काष्ठा *, अचिन्हित पूर्णांक);
+	पूर्णांक	(*receive_buf2)(काष्ठा tty_काष्ठा *, स्थिर अचिन्हित अक्षर *cp,
+				अक्षर *fp, पूर्णांक count);
 
-	struct  module *owner;
+	काष्ठा  module *owner;
 
-	int refcount;
-};
+	पूर्णांक refcount;
+पूर्ण;
 
-struct tty_ldisc {
-	struct tty_ldisc_ops *ops;
-	struct tty_struct *tty;
-};
+काष्ठा tty_ldisc अणु
+	काष्ठा tty_ldisc_ops *ops;
+	काष्ठा tty_काष्ठा *tty;
+पूर्ण;
 
-#define LDISC_FLAG_DEFINED	0x00000001
+#घोषणा LDISC_FLAG_DEFINED	0x00000001
 
-#define MODULE_ALIAS_LDISC(ldisc) \
-	MODULE_ALIAS("tty-ldisc-" __stringify(ldisc))
+#घोषणा MODULE_ALIAS_LDISC(ldisc) \
+	MODULE_ALIAS("tty-ldisc-" __stringअगरy(ldisc))
 
-#endif /* _LINUX_TTY_LDISC_H */
+#पूर्ण_अगर /* _LINUX_TTY_LDISC_H */

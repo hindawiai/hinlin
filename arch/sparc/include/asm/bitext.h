@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * bitext.h: Bit string operations on the sparc, specific to architecture.
+ * bitext.h: Bit string operations on the sparc, specअगरic to architecture.
  *
  * Copyright 2002 Pete Zaitcev <zaitcev@yahoo.com>
  */
 
-#ifndef _SPARC_BITEXT_H
-#define _SPARC_BITEXT_H
+#अगर_अघोषित _SPARC_BITEXT_H
+#घोषणा _SPARC_BITEXT_H
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-struct bit_map {
+काष्ठा bit_map अणु
 	spinlock_t lock;
-	unsigned long *map;
-	int size;
-	int used;
-	int last_off;
-	int last_size;
-	int first_free;
-	int num_colors;
-};
+	अचिन्हित दीर्घ *map;
+	पूर्णांक size;
+	पूर्णांक used;
+	पूर्णांक last_off;
+	पूर्णांक last_size;
+	पूर्णांक first_मुक्त;
+	पूर्णांक num_colors;
+पूर्ण;
 
-int bit_map_string_get(struct bit_map *t, int len, int align);
-void bit_map_clear(struct bit_map *t, int offset, int len);
-void bit_map_init(struct bit_map *t, unsigned long *map, int size);
+पूर्णांक bit_map_string_get(काष्ठा bit_map *t, पूर्णांक len, पूर्णांक align);
+व्योम bit_map_clear(काष्ठा bit_map *t, पूर्णांक offset, पूर्णांक len);
+व्योम bit_map_init(काष्ठा bit_map *t, अचिन्हित दीर्घ *map, पूर्णांक size);
 
-#endif /* defined(_SPARC_BITEXT_H) */
+#पूर्ण_अगर /* defined(_SPARC_BITEXT_H) */

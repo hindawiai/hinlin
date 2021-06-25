@@ -1,109 +1,110 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * SharpSL Battery/PM Driver
  *
- * Copyright (c) 2004-2005 Richard Purdie
+ * Copyright (c) 2004-2005 Riअक्षरd Purdie
  */
-#ifndef _MACH_SHARPSL_PM
-#define _MACH_SHARPSL_PM
+#अगर_अघोषित _MACH_SHARPSL_PM
+#घोषणा _MACH_SHARPSL_PM
 
-struct sharpsl_charger_machinfo {
-	void (*init)(void);
-	void (*exit)(void);
-	int gpio_acin;
-	int gpio_batfull;
-	int batfull_irq;
-	int gpio_batlock;
-	int gpio_fatal;
-	void (*discharge)(int);
-	void (*discharge1)(int);
-	void (*charge)(int);
-	void (*measure_temp)(int);
-	void (*presuspend)(void);
-	void (*postsuspend)(void);
-	void (*earlyresume)(void);
-	unsigned long (*read_devdata)(int);
-#define SHARPSL_BATT_VOLT       1
-#define SHARPSL_BATT_TEMP       2
-#define SHARPSL_ACIN_VOLT       3
-#define SHARPSL_STATUS_ACIN     4
-#define SHARPSL_STATUS_LOCK     5
-#define SHARPSL_STATUS_CHRGFULL 6
-#define SHARPSL_STATUS_FATAL    7
-	bool (*charger_wakeup)(void);
-	int (*should_wakeup)(unsigned int resume_on_alarm);
-	void (*backlight_limit)(int);
-	int (*backlight_get_status) (void);
-	int charge_on_volt;
-	int charge_on_temp;
-	int charge_acin_high;
-	int charge_acin_low;
-	int fatal_acin_volt;
-	int fatal_noacin_volt;
-	int bat_levels;
-	struct battery_thresh *bat_levels_noac;
-	struct battery_thresh *bat_levels_acin;
-	struct battery_thresh *bat_levels_noac_bl;
-	struct battery_thresh *bat_levels_acin_bl;
-	int status_high_acin;
-	int status_low_acin;
-	int status_high_noac;
-	int status_low_noac;
-};
+काष्ठा sharpsl_अक्षरger_machinfo अणु
+	व्योम (*init)(व्योम);
+	व्योम (*निकास)(व्योम);
+	पूर्णांक gpio_acin;
+	पूर्णांक gpio_batfull;
+	पूर्णांक batfull_irq;
+	पूर्णांक gpio_batlock;
+	पूर्णांक gpio_fatal;
+	व्योम (*disअक्षरge)(पूर्णांक);
+	व्योम (*disअक्षरge1)(पूर्णांक);
+	व्योम (*अक्षरge)(पूर्णांक);
+	व्योम (*measure_temp)(पूर्णांक);
+	व्योम (*presuspend)(व्योम);
+	व्योम (*postsuspend)(व्योम);
+	व्योम (*earlyresume)(व्योम);
+	अचिन्हित दीर्घ (*पढ़ो_devdata)(पूर्णांक);
+#घोषणा SHARPSL_BATT_VOLT       1
+#घोषणा SHARPSL_BATT_TEMP       2
+#घोषणा SHARPSL_ACIN_VOLT       3
+#घोषणा SHARPSL_STATUS_ACIN     4
+#घोषणा SHARPSL_STATUS_LOCK     5
+#घोषणा SHARPSL_STATUS_CHRGFULL 6
+#घोषणा SHARPSL_STATUS_FATAL    7
+	bool (*अक्षरger_wakeup)(व्योम);
+	पूर्णांक (*should_wakeup)(अचिन्हित पूर्णांक resume_on_alarm);
+	व्योम (*backlight_limit)(पूर्णांक);
+	पूर्णांक (*backlight_get_status) (व्योम);
+	पूर्णांक अक्षरge_on_volt;
+	पूर्णांक अक्षरge_on_temp;
+	पूर्णांक अक्षरge_acin_high;
+	पूर्णांक अक्षरge_acin_low;
+	पूर्णांक fatal_acin_volt;
+	पूर्णांक fatal_noacin_volt;
+	पूर्णांक bat_levels;
+	काष्ठा battery_thresh *bat_levels_noac;
+	काष्ठा battery_thresh *bat_levels_acin;
+	काष्ठा battery_thresh *bat_levels_noac_bl;
+	काष्ठा battery_thresh *bat_levels_acin_bl;
+	पूर्णांक status_high_acin;
+	पूर्णांक status_low_acin;
+	पूर्णांक status_high_noac;
+	पूर्णांक status_low_noac;
+पूर्ण;
 
-struct battery_thresh {
-	int voltage;
-	int percentage;
-};
+काष्ठा battery_thresh अणु
+	पूर्णांक voltage;
+	पूर्णांक percentage;
+पूर्ण;
 
-struct battery_stat {
-	int ac_status;         /* APM AC Present/Not Present */
-	int mainbat_status;    /* APM Main Battery Status */
-	int mainbat_percent;   /* Main Battery Percentage Charge */
-	int mainbat_voltage;   /* Main Battery Voltage */
-};
+काष्ठा battery_stat अणु
+	पूर्णांक ac_status;         /* APM AC Present/Not Present */
+	पूर्णांक मुख्यbat_status;    /* APM Main Battery Status */
+	पूर्णांक मुख्यbat_percent;   /* Main Battery Percentage Charge */
+	पूर्णांक मुख्यbat_voltage;   /* Main Battery Voltage */
+पूर्ण;
 
-struct sharpsl_pm_status {
-	struct device *dev;
-	struct timer_list ac_timer;
-	struct timer_list chrg_full_timer;
+काष्ठा sharpsl_pm_status अणु
+	काष्ठा device *dev;
+	काष्ठा समयr_list ac_समयr;
+	काष्ठा समयr_list chrg_full_समयr;
 
-	int charge_mode;
-#define CHRG_ERROR    (-1)
-#define CHRG_OFF      (0)
-#define CHRG_ON       (1)
-#define CHRG_DONE     (2)
+	पूर्णांक अक्षरge_mode;
+#घोषणा CHRG_ERROR    (-1)
+#घोषणा CHRG_OFF      (0)
+#घोषणा CHRG_ON       (1)
+#घोषणा CHRG_DONE     (2)
 
-	unsigned int flags;
-#define SHARPSL_SUSPENDED       (1 << 0)  /* Device is Suspended */
-#define SHARPSL_ALARM_ACTIVE    (1 << 1)  /* Alarm is for charging event (not user) */
-#define SHARPSL_BL_LIMIT        (1 << 2)  /* Backlight Intensity Limited */
-#define SHARPSL_APM_QUEUED      (1 << 3)  /* APM Event Queued */
-#define SHARPSL_DO_OFFLINE_CHRG (1 << 4)  /* Trigger the offline charger */
+	अचिन्हित पूर्णांक flags;
+#घोषणा SHARPSL_SUSPENDED       (1 << 0)  /* Device is Suspended */
+#घोषणा SHARPSL_ALARM_ACTIVE    (1 << 1)  /* Alarm is क्रम अक्षरging event (not user) */
+#घोषणा SHARPSL_BL_LIMIT        (1 << 2)  /* Backlight Intensity Limited */
+#घोषणा SHARPSL_APM_QUEUED      (1 << 3)  /* APM Event Queued */
+#घोषणा SHARPSL_DO_OFFLINE_CHRG (1 << 4)  /* Trigger the offline अक्षरger */
 
-	int full_count;
-	unsigned long charge_start_time;
-	struct sharpsl_charger_machinfo *machinfo;
-	struct battery_stat battstat;
-};
+	पूर्णांक full_count;
+	अचिन्हित दीर्घ अक्षरge_start_समय;
+	काष्ठा sharpsl_अक्षरger_machinfo *machinfo;
+	काष्ठा battery_stat battstat;
+पूर्ण;
 
-extern struct sharpsl_pm_status sharpsl_pm;
+बाह्य काष्ठा sharpsl_pm_status sharpsl_pm;
 
-extern struct battery_thresh sharpsl_battery_levels_acin[];
-extern struct battery_thresh sharpsl_battery_levels_noac[];
+बाह्य काष्ठा battery_thresh sharpsl_battery_levels_acin[];
+बाह्य काष्ठा battery_thresh sharpsl_battery_levels_noac[];
 
-#define SHARPSL_LED_ERROR  2
-#define SHARPSL_LED_ON     1
-#define SHARPSL_LED_OFF    0
+#घोषणा SHARPSL_LED_ERROR  2
+#घोषणा SHARPSL_LED_ON     1
+#घोषणा SHARPSL_LED_OFF    0
 
-void sharpsl_battery_kick(void);
-void sharpsl_pm_led(int val);
+व्योम sharpsl_battery_kick(व्योम);
+व्योम sharpsl_pm_led(पूर्णांक val);
 
 /* MAX1111 Channel Definitions */
-#define MAX1111_BATT_VOLT   4u
-#define MAX1111_BATT_TEMP   2u
-#define MAX1111_ACIN_VOLT   6u
-int sharpsl_pm_pxa_read_max1111(int channel);
+#घोषणा MAX1111_BATT_VOLT   4u
+#घोषणा MAX1111_BATT_TEMP   2u
+#घोषणा MAX1111_ACIN_VOLT   6u
+पूर्णांक sharpsl_pm_pxa_पढ़ो_max1111(पूर्णांक channel);
 
-void corgi_lcd_limit_intensity(int limit);
-#endif
+व्योम corgi_lcd_limit_पूर्णांकensity(पूर्णांक limit);
+#पूर्ण_अगर

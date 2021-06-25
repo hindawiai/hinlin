@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(C) 2015 Linaro Limited. All rights reserved.
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#include <linux/coresight.h>
-#include <linux/coresight-pmu.h>
-#include <linux/cpumask.h>
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/mm.h>
-#include <linux/init.h>
-#include <linux/perf_event.h>
-#include <linux/percpu-defs.h>
-#include <linux/slab.h>
-#include <linux/stringhash.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/coresight-pmu.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/percpu-defs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/stringhash.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-#include "coresight-etm-perf.h"
-#include "coresight-priv.h"
+#समावेश "coresight-etm-perf.h"
+#समावेश "coresight-priv.h"
 
-static struct pmu etm_pmu;
-static bool etm_perf_up;
+अटल काष्ठा pmu eपंचांग_pmu;
+अटल bool eपंचांग_perf_up;
 
 /*
- * An ETM context for a running event includes the perf aux handle
- * and aux_data. For ETM, the aux_data (etm_event_data), consists of
+ * An ETM context क्रम a running event includes the perf aux handle
+ * and aux_data. For ETM, the aux_data (eपंचांग_event_data), consists of
  * the trace path and the sink configuration. The event data is accessible
  * via perf_get_aux(handle). However, a sink could "end" a perf output
- * handle via the IRQ handler. And if the "sink" encounters a failure
+ * handle via the IRQ handler. And अगर the "sink" encounters a failure
  * to "begin" another session (e.g due to lack of space in the buffer),
  * the handle will be cleared. Thus, the event_data may not be accessible
- * from the handle when we get to the etm_event_stop(), which is required
- * for stopping the trace path. The event_data is guaranteed to stay alive
- * until "free_aux()", which cannot happen as long as the event is active on
- * the ETM. Thus the event_data for the session must be part of the ETM context
+ * from the handle when we get to the eपंचांग_event_stop(), which is required
+ * क्रम stopping the trace path. The event_data is guaranteed to stay alive
+ * until "free_aux()", which cannot happen as दीर्घ as the event is active on
+ * the ETM. Thus the event_data क्रम the session must be part of the ETM context
  * to make sure we can disable the trace path.
  */
-struct etm_ctxt {
-	struct perf_output_handle handle;
-	struct etm_event_data *event_data;
-};
+काष्ठा eपंचांग_ctxt अणु
+	काष्ठा perf_output_handle handle;
+	काष्ठा eपंचांग_event_data *event_data;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct etm_ctxt, etm_ctxt);
-static DEFINE_PER_CPU(struct coresight_device *, csdev_src);
+अटल DEFINE_PER_CPU(काष्ठा eपंचांग_ctxt, eपंचांग_ctxt);
+अटल DEFINE_PER_CPU(काष्ठा coresight_device *, csdev_src);
 
 /*
- * The PMU formats were orignally for ETMv3.5/PTM's ETMCR 'config';
- * now take them as general formats and apply on all ETMs.
+ * The PMU क्रमmats were orignally क्रम ETMv3.5/PTM's ETMCR 'config';
+ * now take them as general क्रमmats and apply on all ETMs.
  */
-PMU_FORMAT_ATTR(cycacc,		"config:" __stringify(ETM_OPT_CYCACC));
-/* contextid1 enables tracing CONTEXTIDR_EL1 for ETMv4 */
-PMU_FORMAT_ATTR(contextid1,	"config:" __stringify(ETM_OPT_CTXTID));
-/* contextid2 enables tracing CONTEXTIDR_EL2 for ETMv4 */
-PMU_FORMAT_ATTR(contextid2,	"config:" __stringify(ETM_OPT_CTXTID2));
-PMU_FORMAT_ATTR(timestamp,	"config:" __stringify(ETM_OPT_TS));
-PMU_FORMAT_ATTR(retstack,	"config:" __stringify(ETM_OPT_RETSTK));
-/* Sink ID - same for all ETMs */
+PMU_FORMAT_ATTR(cycacc,		"config:" __stringअगरy(ETM_OPT_CYCACC));
+/* contextid1 enables tracing CONTEXTIDR_EL1 क्रम ETMv4 */
+PMU_FORMAT_ATTR(contextid1,	"config:" __stringअगरy(ETM_OPT_CTXTID));
+/* contextid2 enables tracing CONTEXTIDR_EL2 क्रम ETMv4 */
+PMU_FORMAT_ATTR(contextid2,	"config:" __stringअगरy(ETM_OPT_CTXTID2));
+PMU_FORMAT_ATTR(बारtamp,	"config:" __stringअगरy(ETM_OPT_TS));
+PMU_FORMAT_ATTR(retstack,	"config:" __stringअगरy(ETM_OPT_RETSTK));
+/* Sink ID - same क्रम all ETMs */
 PMU_FORMAT_ATTR(sinkid,		"config2:0-31");
 
 /*
@@ -65,387 +66,387 @@ PMU_FORMAT_ATTR(sinkid,		"config2:0-31");
  * when the kernel is running at EL1; when the kernel is at EL2,
  * the PID is in CONTEXTIDR_EL2.
  */
-static ssize_t format_attr_contextid_show(struct device *dev,
-					  struct device_attribute *attr,
-					  char *page)
-{
-	int pid_fmt = ETM_OPT_CTXTID;
+अटल sमाप_प्रकार क्रमmat_attr_contextid_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *page)
+अणु
+	पूर्णांक pid_fmt = ETM_OPT_CTXTID;
 
-#if IS_ENABLED(CONFIG_CORESIGHT_SOURCE_ETM4X)
+#अगर IS_ENABLED(CONFIG_CORESIGHT_SOURCE_ETM4X)
 	pid_fmt = is_kernel_in_hyp_mode() ? ETM_OPT_CTXTID2 : ETM_OPT_CTXTID;
-#endif
-	return sprintf(page, "config:%d\n", pid_fmt);
-}
+#पूर्ण_अगर
+	वापस प्र_लिखो(page, "config:%d\n", pid_fmt);
+पूर्ण
 
-static struct device_attribute format_attr_contextid =
-	__ATTR(contextid, 0444, format_attr_contextid_show, NULL);
+अटल काष्ठा device_attribute क्रमmat_attr_contextid =
+	__ATTR(contextid, 0444, क्रमmat_attr_contextid_show, शून्य);
 
-static struct attribute *etm_config_formats_attr[] = {
-	&format_attr_cycacc.attr,
-	&format_attr_contextid.attr,
-	&format_attr_contextid1.attr,
-	&format_attr_contextid2.attr,
-	&format_attr_timestamp.attr,
-	&format_attr_retstack.attr,
-	&format_attr_sinkid.attr,
-	NULL,
-};
+अटल काष्ठा attribute *eपंचांग_config_क्रमmats_attr[] = अणु
+	&क्रमmat_attr_cycacc.attr,
+	&क्रमmat_attr_contextid.attr,
+	&क्रमmat_attr_contextid1.attr,
+	&क्रमmat_attr_contextid2.attr,
+	&क्रमmat_attr_बारtamp.attr,
+	&क्रमmat_attr_retstack.attr,
+	&क्रमmat_attr_sinkid.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group etm_pmu_format_group = {
+अटल स्थिर काष्ठा attribute_group eपंचांग_pmu_क्रमmat_group = अणु
 	.name   = "format",
-	.attrs  = etm_config_formats_attr,
-};
+	.attrs  = eपंचांग_config_क्रमmats_attr,
+पूर्ण;
 
-static struct attribute *etm_config_sinks_attr[] = {
-	NULL,
-};
+अटल काष्ठा attribute *eपंचांग_config_sinks_attr[] = अणु
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group etm_pmu_sinks_group = {
+अटल स्थिर काष्ठा attribute_group eपंचांग_pmu_sinks_group = अणु
 	.name   = "sinks",
-	.attrs  = etm_config_sinks_attr,
-};
+	.attrs  = eपंचांग_config_sinks_attr,
+पूर्ण;
 
-static const struct attribute_group *etm_pmu_attr_groups[] = {
-	&etm_pmu_format_group,
-	&etm_pmu_sinks_group,
-	NULL,
-};
+अटल स्थिर काष्ठा attribute_group *eपंचांग_pmu_attr_groups[] = अणु
+	&eपंचांग_pmu_क्रमmat_group,
+	&eपंचांग_pmu_sinks_group,
+	शून्य,
+पूर्ण;
 
-static inline struct list_head **
-etm_event_cpu_path_ptr(struct etm_event_data *data, int cpu)
-{
-	return per_cpu_ptr(data->path, cpu);
-}
+अटल अंतरभूत काष्ठा list_head **
+eपंचांग_event_cpu_path_ptr(काष्ठा eपंचांग_event_data *data, पूर्णांक cpu)
+अणु
+	वापस per_cpu_ptr(data->path, cpu);
+पूर्ण
 
-static inline struct list_head *
-etm_event_cpu_path(struct etm_event_data *data, int cpu)
-{
-	return *etm_event_cpu_path_ptr(data, cpu);
-}
+अटल अंतरभूत काष्ठा list_head *
+eपंचांग_event_cpu_path(काष्ठा eपंचांग_event_data *data, पूर्णांक cpu)
+अणु
+	वापस *eपंचांग_event_cpu_path_ptr(data, cpu);
+पूर्ण
 
-static void etm_event_read(struct perf_event *event) {}
+अटल व्योम eपंचांग_event_पढ़ो(काष्ठा perf_event *event) अणुपूर्ण
 
-static int etm_addr_filters_alloc(struct perf_event *event)
-{
-	struct etm_filters *filters;
-	int node = event->cpu == -1 ? -1 : cpu_to_node(event->cpu);
+अटल पूर्णांक eपंचांग_addr_filters_alloc(काष्ठा perf_event *event)
+अणु
+	काष्ठा eपंचांग_filters *filters;
+	पूर्णांक node = event->cpu == -1 ? -1 : cpu_to_node(event->cpu);
 
-	filters = kzalloc_node(sizeof(struct etm_filters), GFP_KERNEL, node);
-	if (!filters)
-		return -ENOMEM;
+	filters = kzalloc_node(माप(काष्ठा eपंचांग_filters), GFP_KERNEL, node);
+	अगर (!filters)
+		वापस -ENOMEM;
 
-	if (event->parent)
-		memcpy(filters, event->parent->hw.addr_filters,
-		       sizeof(*filters));
+	अगर (event->parent)
+		स_नकल(filters, event->parent->hw.addr_filters,
+		       माप(*filters));
 
 	event->hw.addr_filters = filters;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void etm_event_destroy(struct perf_event *event)
-{
-	kfree(event->hw.addr_filters);
-	event->hw.addr_filters = NULL;
-}
+अटल व्योम eपंचांग_event_destroy(काष्ठा perf_event *event)
+अणु
+	kमुक्त(event->hw.addr_filters);
+	event->hw.addr_filters = शून्य;
+पूर्ण
 
-static int etm_event_init(struct perf_event *event)
-{
-	int ret = 0;
+अटल पूर्णांक eपंचांग_event_init(काष्ठा perf_event *event)
+अणु
+	पूर्णांक ret = 0;
 
-	if (event->attr.type != etm_pmu.type) {
+	अगर (event->attr.type != eपंचांग_pmu.type) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = etm_addr_filters_alloc(event);
-	if (ret)
-		goto out;
+	ret = eपंचांग_addr_filters_alloc(event);
+	अगर (ret)
+		जाओ out;
 
-	event->destroy = etm_event_destroy;
+	event->destroy = eपंचांग_event_destroy;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void free_sink_buffer(struct etm_event_data *event_data)
-{
-	int cpu;
+अटल व्योम मुक्त_sink_buffer(काष्ठा eपंचांग_event_data *event_data)
+अणु
+	पूर्णांक cpu;
 	cpumask_t *mask = &event_data->mask;
-	struct coresight_device *sink;
+	काष्ठा coresight_device *sink;
 
-	if (!event_data->snk_config)
-		return;
+	अगर (!event_data->snk_config)
+		वापस;
 
-	if (WARN_ON(cpumask_empty(mask)))
-		return;
+	अगर (WARN_ON(cpumask_empty(mask)))
+		वापस;
 
 	cpu = cpumask_first(mask);
-	sink = coresight_get_sink(etm_event_cpu_path(event_data, cpu));
-	sink_ops(sink)->free_buffer(event_data->snk_config);
-}
+	sink = coresight_get_sink(eपंचांग_event_cpu_path(event_data, cpu));
+	sink_ops(sink)->मुक्त_buffer(event_data->snk_config);
+पूर्ण
 
-static void free_event_data(struct work_struct *work)
-{
-	int cpu;
+अटल व्योम मुक्त_event_data(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक cpu;
 	cpumask_t *mask;
-	struct etm_event_data *event_data;
+	काष्ठा eपंचांग_event_data *event_data;
 
-	event_data = container_of(work, struct etm_event_data, work);
+	event_data = container_of(work, काष्ठा eपंचांग_event_data, work);
 	mask = &event_data->mask;
 
-	/* Free the sink buffers, if there are any */
-	free_sink_buffer(event_data);
+	/* Free the sink buffers, अगर there are any */
+	मुक्त_sink_buffer(event_data);
 
-	for_each_cpu(cpu, mask) {
-		struct list_head **ppath;
+	क्रम_each_cpu(cpu, mask) अणु
+		काष्ठा list_head **ppath;
 
-		ppath = etm_event_cpu_path_ptr(event_data, cpu);
-		if (!(IS_ERR_OR_NULL(*ppath)))
+		ppath = eपंचांग_event_cpu_path_ptr(event_data, cpu);
+		अगर (!(IS_ERR_OR_शून्य(*ppath)))
 			coresight_release_path(*ppath);
-		*ppath = NULL;
-	}
+		*ppath = शून्य;
+	पूर्ण
 
-	free_percpu(event_data->path);
-	kfree(event_data);
-}
+	मुक्त_percpu(event_data->path);
+	kमुक्त(event_data);
+पूर्ण
 
-static void *alloc_event_data(int cpu)
-{
+अटल व्योम *alloc_event_data(पूर्णांक cpu)
+अणु
 	cpumask_t *mask;
-	struct etm_event_data *event_data;
+	काष्ठा eपंचांग_event_data *event_data;
 
-	/* First get memory for the session's data */
-	event_data = kzalloc(sizeof(struct etm_event_data), GFP_KERNEL);
-	if (!event_data)
-		return NULL;
+	/* First get memory क्रम the session's data */
+	event_data = kzalloc(माप(काष्ठा eपंचांग_event_data), GFP_KERNEL);
+	अगर (!event_data)
+		वापस शून्य;
 
 
 	mask = &event_data->mask;
-	if (cpu != -1)
+	अगर (cpu != -1)
 		cpumask_set_cpu(cpu, mask);
-	else
+	अन्यथा
 		cpumask_copy(mask, cpu_present_mask);
 
 	/*
 	 * Each CPU has a single path between source and destination.  As such
 	 * allocate an array using CPU numbers as indexes.  That way a path
-	 * for any CPU can easily be accessed at any given time.  We proceed
-	 * the same way for sessions involving a single CPU.  The cost of
+	 * क्रम any CPU can easily be accessed at any given समय.  We proceed
+	 * the same way क्रम sessions involving a single CPU.  The cost of
 	 * unused memory when dealing with single CPU trace scenarios is small
 	 * compared to the cost of searching through an optimized array.
 	 */
-	event_data->path = alloc_percpu(struct list_head *);
+	event_data->path = alloc_percpu(काष्ठा list_head *);
 
-	if (!event_data->path) {
-		kfree(event_data);
-		return NULL;
-	}
+	अगर (!event_data->path) अणु
+		kमुक्त(event_data);
+		वापस शून्य;
+	पूर्ण
 
-	return event_data;
-}
+	वापस event_data;
+पूर्ण
 
-static void etm_free_aux(void *data)
-{
-	struct etm_event_data *event_data = data;
+अटल व्योम eपंचांग_मुक्त_aux(व्योम *data)
+अणु
+	काष्ठा eपंचांग_event_data *event_data = data;
 
 	schedule_work(&event_data->work);
-}
+पूर्ण
 
 /*
- * Check if two given sinks are compatible with each other,
+ * Check अगर two given sinks are compatible with each other,
  * so that they can use the same sink buffers, when an event
  * moves around.
  */
-static bool sinks_compatible(struct coresight_device *a,
-			     struct coresight_device *b)
-{
-	if (!a || !b)
-		return false;
+अटल bool sinks_compatible(काष्ठा coresight_device *a,
+			     काष्ठा coresight_device *b)
+अणु
+	अगर (!a || !b)
+		वापस false;
 	/*
 	 * If the sinks are of the same subtype and driven
 	 * by the same driver, we can use the same buffer
 	 * on these sinks.
 	 */
-	return (a->subtype.sink_subtype == b->subtype.sink_subtype) &&
+	वापस (a->subtype.sink_subtype == b->subtype.sink_subtype) &&
 	       (sink_ops(a) == sink_ops(b));
-}
+पूर्ण
 
-static void *etm_setup_aux(struct perf_event *event, void **pages,
-			   int nr_pages, bool overwrite)
-{
+अटल व्योम *eपंचांग_setup_aux(काष्ठा perf_event *event, व्योम **pages,
+			   पूर्णांक nr_pages, bool overग_लिखो)
+अणु
 	u32 id;
-	int cpu = event->cpu;
+	पूर्णांक cpu = event->cpu;
 	cpumask_t *mask;
-	struct coresight_device *sink = NULL;
-	struct coresight_device *user_sink = NULL, *last_sink = NULL;
-	struct etm_event_data *event_data = NULL;
+	काष्ठा coresight_device *sink = शून्य;
+	काष्ठा coresight_device *user_sink = शून्य, *last_sink = शून्य;
+	काष्ठा eपंचांग_event_data *event_data = शून्य;
 
 	event_data = alloc_event_data(cpu);
-	if (!event_data)
-		return NULL;
-	INIT_WORK(&event_data->work, free_event_data);
+	अगर (!event_data)
+		वापस शून्य;
+	INIT_WORK(&event_data->work, मुक्त_event_data);
 
 	/* First get the selected sink from user space. */
-	if (event->attr.config2) {
+	अगर (event->attr.config2) अणु
 		id = (u32)event->attr.config2;
 		sink = user_sink = coresight_get_sink_by_id(id);
-	}
+	पूर्ण
 
 	mask = &event_data->mask;
 
 	/*
-	 * Setup the path for each CPU in a trace session. We try to build
-	 * trace path for each CPU in the mask. If we don't find an ETM
-	 * for the CPU or fail to build a path, we clear the CPU from the
-	 * mask and continue with the rest. If ever we try to trace on those
+	 * Setup the path क्रम each CPU in a trace session. We try to build
+	 * trace path क्रम each CPU in the mask. If we करोn't find an ETM
+	 * क्रम the CPU or fail to build a path, we clear the CPU from the
+	 * mask and जारी with the rest. If ever we try to trace on those
 	 * CPUs, we can handle it and fail the session.
 	 */
-	for_each_cpu(cpu, mask) {
-		struct list_head *path;
-		struct coresight_device *csdev;
+	क्रम_each_cpu(cpu, mask) अणु
+		काष्ठा list_head *path;
+		काष्ठा coresight_device *csdev;
 
 		csdev = per_cpu(csdev_src, cpu);
 		/*
 		 * If there is no ETM associated with this CPU clear it from
-		 * the mask and continue with the rest. If ever we try to trace
+		 * the mask and जारी with the rest. If ever we try to trace
 		 * on this CPU, we handle it accordingly.
 		 */
-		if (!csdev) {
+		अगर (!csdev) अणु
 			cpumask_clear_cpu(cpu, mask);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * No sink provided - look for a default sink for all the ETMs,
+		 * No sink provided - look क्रम a शेष sink क्रम all the ETMs,
 		 * where this event can be scheduled.
-		 * We allocate the sink specific buffers only once for this
-		 * event. If the ETMs have different default sink devices, we
+		 * We allocate the sink specअगरic buffers only once क्रम this
+		 * event. If the ETMs have dअगरferent शेष sink devices, we
 		 * can only use a single "type" of sink as the event can carry
-		 * only one sink specific buffer. Thus we have to make sure
+		 * only one sink specअगरic buffer. Thus we have to make sure
 		 * that the sinks are of the same type and driven by the same
-		 * driver, as the one we allocate the buffer for. As such
-		 * we choose the first sink and check if the remaining ETMs
-		 * have a compatible default sink. We don't trace on a CPU
-		 * if the sink is not compatible.
+		 * driver, as the one we allocate the buffer क्रम. As such
+		 * we choose the first sink and check अगर the reमुख्यing ETMs
+		 * have a compatible शेष sink. We करोn't trace on a CPU
+		 * अगर the sink is not compatible.
 		 */
-		if (!user_sink) {
-			/* Find the default sink for this ETM */
-			sink = coresight_find_default_sink(csdev);
-			if (!sink) {
+		अगर (!user_sink) अणु
+			/* Find the शेष sink क्रम this ETM */
+			sink = coresight_find_शेष_sink(csdev);
+			अगर (!sink) अणु
 				cpumask_clear_cpu(cpu, mask);
-				continue;
-			}
+				जारी;
+			पूर्ण
 
-			/* Check if this sink compatible with the last sink */
-			if (last_sink && !sinks_compatible(last_sink, sink)) {
+			/* Check अगर this sink compatible with the last sink */
+			अगर (last_sink && !sinks_compatible(last_sink, sink)) अणु
 				cpumask_clear_cpu(cpu, mask);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			last_sink = sink;
-		}
+		पूर्ण
 
 		/*
-		 * Building a path doesn't enable it, it simply builds a
+		 * Building a path करोesn't enable it, it simply builds a
 		 * list of devices from source to sink that can be
 		 * referenced later when the path is actually needed.
 		 */
 		path = coresight_build_path(csdev, sink);
-		if (IS_ERR(path)) {
+		अगर (IS_ERR(path)) अणु
 			cpumask_clear_cpu(cpu, mask);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		*etm_event_cpu_path_ptr(event_data, cpu) = path;
-	}
+		*eपंचांग_event_cpu_path_ptr(event_data, cpu) = path;
+	पूर्ण
 
-	/* no sink found for any CPU - cannot trace */
-	if (!sink)
-		goto err;
+	/* no sink found क्रम any CPU - cannot trace */
+	अगर (!sink)
+		जाओ err;
 
-	/* If we don't have any CPUs ready for tracing, abort */
+	/* If we करोn't have any CPUs पढ़ोy क्रम tracing, पात */
 	cpu = cpumask_first(mask);
-	if (cpu >= nr_cpu_ids)
-		goto err;
+	अगर (cpu >= nr_cpu_ids)
+		जाओ err;
 
-	if (!sink_ops(sink)->alloc_buffer || !sink_ops(sink)->free_buffer)
-		goto err;
+	अगर (!sink_ops(sink)->alloc_buffer || !sink_ops(sink)->मुक्त_buffer)
+		जाओ err;
 
 	/*
-	 * Allocate the sink buffer for this session. All the sinks
+	 * Allocate the sink buffer क्रम this session. All the sinks
 	 * where this event can be scheduled are ensured to be of the
 	 * same type. Thus the same sink configuration is used by the
 	 * sinks.
 	 */
 	event_data->snk_config =
 			sink_ops(sink)->alloc_buffer(sink, event, pages,
-						     nr_pages, overwrite);
-	if (!event_data->snk_config)
-		goto err;
+						     nr_pages, overग_लिखो);
+	अगर (!event_data->snk_config)
+		जाओ err;
 
 out:
-	return event_data;
+	वापस event_data;
 
 err:
-	etm_free_aux(event_data);
-	event_data = NULL;
-	goto out;
-}
+	eपंचांग_मुक्त_aux(event_data);
+	event_data = शून्य;
+	जाओ out;
+पूर्ण
 
-static void etm_event_start(struct perf_event *event, int flags)
-{
-	int cpu = smp_processor_id();
-	struct etm_event_data *event_data;
-	struct etm_ctxt *ctxt = this_cpu_ptr(&etm_ctxt);
-	struct perf_output_handle *handle = &ctxt->handle;
-	struct coresight_device *sink, *csdev = per_cpu(csdev_src, cpu);
-	struct list_head *path;
+अटल व्योम eपंचांग_event_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा eपंचांग_event_data *event_data;
+	काष्ठा eपंचांग_ctxt *ctxt = this_cpu_ptr(&eपंचांग_ctxt);
+	काष्ठा perf_output_handle *handle = &ctxt->handle;
+	काष्ठा coresight_device *sink, *csdev = per_cpu(csdev_src, cpu);
+	काष्ठा list_head *path;
 
-	if (!csdev)
-		goto fail;
+	अगर (!csdev)
+		जाओ fail;
 
 	/* Have we messed up our tracking ? */
-	if (WARN_ON(ctxt->event_data))
-		goto fail;
+	अगर (WARN_ON(ctxt->event_data))
+		जाओ fail;
 
 	/*
 	 * Deal with the ring buffer API and get a handle on the
-	 * session's information.
+	 * session's inक्रमmation.
 	 */
 	event_data = perf_aux_output_begin(handle, event);
-	if (!event_data)
-		goto fail;
+	अगर (!event_data)
+		जाओ fail;
 
 	/*
-	 * Check if this ETM is allowed to trace, as decided
-	 * at etm_setup_aux(). This could be due to an unreachable
-	 * sink from this ETM. We can't do much in this case if
-	 * the sink was specified or hinted to the driver. For
-	 * now, simply don't record anything on this ETM.
+	 * Check अगर this ETM is allowed to trace, as decided
+	 * at eपंचांग_setup_aux(). This could be due to an unreachable
+	 * sink from this ETM. We can't करो much in this हाल अगर
+	 * the sink was specअगरied or hपूर्णांकed to the driver. For
+	 * now, simply करोn't record anything on this ETM.
 	 */
-	if (!cpumask_test_cpu(cpu, &event_data->mask))
-		goto fail_end_stop;
+	अगर (!cpumask_test_cpu(cpu, &event_data->mask))
+		जाओ fail_end_stop;
 
-	path = etm_event_cpu_path(event_data, cpu);
-	/* We need a sink, no need to continue without one */
+	path = eपंचांग_event_cpu_path(event_data, cpu);
+	/* We need a sink, no need to जारी without one */
 	sink = coresight_get_sink(path);
-	if (WARN_ON_ONCE(!sink))
-		goto fail_end_stop;
+	अगर (WARN_ON_ONCE(!sink))
+		जाओ fail_end_stop;
 
 	/* Nothing will happen without a path */
-	if (coresight_enable_path(path, CS_MODE_PERF, handle))
-		goto fail_end_stop;
+	अगर (coresight_enable_path(path, CS_MODE_PERF, handle))
+		जाओ fail_end_stop;
 
 	/* Tell the perf core the event is alive */
 	event->hw.state = 0;
 
 	/* Finally enable the tracer */
-	if (source_ops(csdev)->enable(csdev, event, CS_MODE_PERF))
-		goto fail_disable_path;
+	अगर (source_ops(csdev)->enable(csdev, event, CS_MODE_PERF))
+		जाओ fail_disable_path;
 
-	/* Save the event_data for this ETM */
+	/* Save the event_data क्रम this ETM */
 	ctxt->event_data = event_data;
 out:
-	return;
+	वापस;
 
 fail_disable_path:
 	coresight_disable_path(path);
@@ -454,48 +455,48 @@ fail_end_stop:
 	perf_aux_output_end(handle, 0);
 fail:
 	event->hw.state = PERF_HES_STOPPED;
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-static void etm_event_stop(struct perf_event *event, int mode)
-{
-	int cpu = smp_processor_id();
-	unsigned long size;
-	struct coresight_device *sink, *csdev = per_cpu(csdev_src, cpu);
-	struct etm_ctxt *ctxt = this_cpu_ptr(&etm_ctxt);
-	struct perf_output_handle *handle = &ctxt->handle;
-	struct etm_event_data *event_data;
-	struct list_head *path;
+अटल व्योम eपंचांग_event_stop(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	अचिन्हित दीर्घ size;
+	काष्ठा coresight_device *sink, *csdev = per_cpu(csdev_src, cpu);
+	काष्ठा eपंचांग_ctxt *ctxt = this_cpu_ptr(&eपंचांग_ctxt);
+	काष्ठा perf_output_handle *handle = &ctxt->handle;
+	काष्ठा eपंचांग_event_data *event_data;
+	काष्ठा list_head *path;
 
 	/*
 	 * If we still have access to the event_data via handle,
 	 * confirm that we haven't messed up the tracking.
 	 */
-	if (handle->event &&
+	अगर (handle->event &&
 	    WARN_ON(perf_get_aux(handle) != ctxt->event_data))
-		return;
+		वापस;
 
 	event_data = ctxt->event_data;
 	/* Clear the event_data as this ETM is stopping the trace. */
-	ctxt->event_data = NULL;
+	ctxt->event_data = शून्य;
 
-	if (event->hw.state == PERF_HES_STOPPED)
-		return;
+	अगर (event->hw.state == PERF_HES_STOPPED)
+		वापस;
 
-	/* We must have a valid event_data for a running event */
-	if (WARN_ON(!event_data))
-		return;
+	/* We must have a valid event_data क्रम a running event */
+	अगर (WARN_ON(!event_data))
+		वापस;
 
-	if (!csdev)
-		return;
+	अगर (!csdev)
+		वापस;
 
-	path = etm_event_cpu_path(event_data, cpu);
-	if (!path)
-		return;
+	path = eपंचांग_event_cpu_path(event_data, cpu);
+	अगर (!path)
+		वापस;
 
 	sink = coresight_get_sink(path);
-	if (!sink)
-		return;
+	अगर (!sink)
+		वापस;
 
 	/* stop tracer */
 	source_ops(csdev)->disable(csdev, event);
@@ -506,249 +507,249 @@ static void etm_event_stop(struct perf_event *event, int mode)
 	/*
 	 * If the handle is not bound to an event anymore
 	 * (e.g, the sink driver was unable to restart the
-	 * handle due to lack of buffer space), we don't
-	 * have to do anything here.
+	 * handle due to lack of buffer space), we करोn't
+	 * have to करो anything here.
 	 */
-	if (handle->event && (mode & PERF_EF_UPDATE)) {
-		if (WARN_ON_ONCE(handle->event != event))
-			return;
+	अगर (handle->event && (mode & PERF_EF_UPDATE)) अणु
+		अगर (WARN_ON_ONCE(handle->event != event))
+			वापस;
 
-		/* update trace information */
-		if (!sink_ops(sink)->update_buffer)
-			return;
+		/* update trace inक्रमmation */
+		अगर (!sink_ops(sink)->update_buffer)
+			वापस;
 
 		size = sink_ops(sink)->update_buffer(sink, handle,
 					      event_data->snk_config);
 		perf_aux_output_end(handle, size);
-	}
+	पूर्ण
 
 	/* Disabling the path make its elements available to other sessions */
 	coresight_disable_path(path);
-}
+पूर्ण
 
-static int etm_event_add(struct perf_event *event, int mode)
-{
-	int ret = 0;
-	struct hw_perf_event *hwc = &event->hw;
+अटल पूर्णांक eपंचांग_event_add(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा hw_perf_event *hwc = &event->hw;
 
-	if (mode & PERF_EF_START) {
-		etm_event_start(event, 0);
-		if (hwc->state & PERF_HES_STOPPED)
+	अगर (mode & PERF_EF_START) अणु
+		eपंचांग_event_start(event, 0);
+		अगर (hwc->state & PERF_HES_STOPPED)
 			ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		hwc->state = PERF_HES_STOPPED;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void etm_event_del(struct perf_event *event, int mode)
-{
-	etm_event_stop(event, PERF_EF_UPDATE);
-}
+अटल व्योम eपंचांग_event_del(काष्ठा perf_event *event, पूर्णांक mode)
+अणु
+	eपंचांग_event_stop(event, PERF_EF_UPDATE);
+पूर्ण
 
-static int etm_addr_filters_validate(struct list_head *filters)
-{
+अटल पूर्णांक eपंचांग_addr_filters_validate(काष्ठा list_head *filters)
+अणु
 	bool range = false, address = false;
-	int index = 0;
-	struct perf_addr_filter *filter;
+	पूर्णांक index = 0;
+	काष्ठा perf_addr_filter *filter;
 
-	list_for_each_entry(filter, filters, entry) {
+	list_क्रम_each_entry(filter, filters, entry) अणु
 		/*
-		 * No need to go further if there's no more
-		 * room for filters.
+		 * No need to go further अगर there's no more
+		 * room क्रम filters.
 		 */
-		if (++index > ETM_ADDR_CMP_MAX)
-			return -EOPNOTSUPP;
+		अगर (++index > ETM_ADDR_CMP_MAX)
+			वापस -EOPNOTSUPP;
 
 		/* filter::size==0 means single address trigger */
-		if (filter->size) {
+		अगर (filter->size) अणु
 			/*
 			 * The existing code relies on START/STOP filters
 			 * being address filters.
 			 */
-			if (filter->action == PERF_ADDR_FILTER_ACTION_START ||
+			अगर (filter->action == PERF_ADDR_FILTER_ACTION_START ||
 			    filter->action == PERF_ADDR_FILTER_ACTION_STOP)
-				return -EOPNOTSUPP;
+				वापस -EOPNOTSUPP;
 
 			range = true;
-		} else
+		पूर्ण अन्यथा
 			address = true;
 
 		/*
-		 * At this time we don't allow range and start/stop filtering
+		 * At this समय we करोn't allow range and start/stop filtering
 		 * to cohabitate, they have to be mutually exclusive.
 		 */
-		if (range && address)
-			return -EOPNOTSUPP;
-	}
+		अगर (range && address)
+			वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void etm_addr_filters_sync(struct perf_event *event)
-{
-	struct perf_addr_filters_head *head = perf_event_addr_filters(event);
-	unsigned long start, stop;
-	struct perf_addr_filter_range *fr = event->addr_filter_ranges;
-	struct etm_filters *filters = event->hw.addr_filters;
-	struct etm_filter *etm_filter;
-	struct perf_addr_filter *filter;
-	int i = 0;
+अटल व्योम eपंचांग_addr_filters_sync(काष्ठा perf_event *event)
+अणु
+	काष्ठा perf_addr_filters_head *head = perf_event_addr_filters(event);
+	अचिन्हित दीर्घ start, stop;
+	काष्ठा perf_addr_filter_range *fr = event->addr_filter_ranges;
+	काष्ठा eपंचांग_filters *filters = event->hw.addr_filters;
+	काष्ठा eपंचांग_filter *eपंचांग_filter;
+	काष्ठा perf_addr_filter *filter;
+	पूर्णांक i = 0;
 
-	list_for_each_entry(filter, &head->list, entry) {
+	list_क्रम_each_entry(filter, &head->list, entry) अणु
 		start = fr[i].start;
 		stop = start + fr[i].size;
-		etm_filter = &filters->etm_filter[i];
+		eपंचांग_filter = &filters->eपंचांग_filter[i];
 
-		switch (filter->action) {
-		case PERF_ADDR_FILTER_ACTION_FILTER:
-			etm_filter->start_addr = start;
-			etm_filter->stop_addr = stop;
-			etm_filter->type = ETM_ADDR_TYPE_RANGE;
-			break;
-		case PERF_ADDR_FILTER_ACTION_START:
-			etm_filter->start_addr = start;
-			etm_filter->type = ETM_ADDR_TYPE_START;
-			break;
-		case PERF_ADDR_FILTER_ACTION_STOP:
-			etm_filter->stop_addr = stop;
-			etm_filter->type = ETM_ADDR_TYPE_STOP;
-			break;
-		}
+		चयन (filter->action) अणु
+		हाल PERF_ADDR_FILTER_ACTION_FILTER:
+			eपंचांग_filter->start_addr = start;
+			eपंचांग_filter->stop_addr = stop;
+			eपंचांग_filter->type = ETM_ADDR_TYPE_RANGE;
+			अवरोध;
+		हाल PERF_ADDR_FILTER_ACTION_START:
+			eपंचांग_filter->start_addr = start;
+			eपंचांग_filter->type = ETM_ADDR_TYPE_START;
+			अवरोध;
+		हाल PERF_ADDR_FILTER_ACTION_STOP:
+			eपंचांग_filter->stop_addr = stop;
+			eपंचांग_filter->type = ETM_ADDR_TYPE_STOP;
+			अवरोध;
+		पूर्ण
 		i++;
-	}
+	पूर्ण
 
 	filters->nr_filters = i;
-}
+पूर्ण
 
-int etm_perf_symlink(struct coresight_device *csdev, bool link)
-{
-	char entry[sizeof("cpu9999999")];
-	int ret = 0, cpu = source_ops(csdev)->cpu_id(csdev);
-	struct device *pmu_dev = etm_pmu.dev;
-	struct device *cs_dev = &csdev->dev;
+पूर्णांक eपंचांग_perf_symlink(काष्ठा coresight_device *csdev, bool link)
+अणु
+	अक्षर entry[माप("cpu9999999")];
+	पूर्णांक ret = 0, cpu = source_ops(csdev)->cpu_id(csdev);
+	काष्ठा device *pmu_dev = eपंचांग_pmu.dev;
+	काष्ठा device *cs_dev = &csdev->dev;
 
-	sprintf(entry, "cpu%d", cpu);
+	प्र_लिखो(entry, "cpu%d", cpu);
 
-	if (!etm_perf_up)
-		return -EPROBE_DEFER;
+	अगर (!eपंचांग_perf_up)
+		वापस -EPROBE_DEFER;
 
-	if (link) {
+	अगर (link) अणु
 		ret = sysfs_create_link(&pmu_dev->kobj, &cs_dev->kobj, entry);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		per_cpu(csdev_src, cpu) = csdev;
-	} else {
-		sysfs_remove_link(&pmu_dev->kobj, entry);
-		per_cpu(csdev_src, cpu) = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		sysfs_हटाओ_link(&pmu_dev->kobj, entry);
+		per_cpu(csdev_src, cpu) = शून्य;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(etm_perf_symlink);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(eपंचांग_perf_symlink);
 
-static ssize_t etm_perf_sink_name_show(struct device *dev,
-				       struct device_attribute *dattr,
-				       char *buf)
-{
-	struct dev_ext_attribute *ea;
+अटल sमाप_प्रकार eपंचांग_perf_sink_name_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *dattr,
+				       अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ea;
 
-	ea = container_of(dattr, struct dev_ext_attribute, attr);
-	return scnprintf(buf, PAGE_SIZE, "0x%lx\n", (unsigned long)(ea->var));
-}
+	ea = container_of(dattr, काष्ठा dev_ext_attribute, attr);
+	वापस scnम_लिखो(buf, PAGE_SIZE, "0x%lx\n", (अचिन्हित दीर्घ)(ea->var));
+पूर्ण
 
-int etm_perf_add_symlink_sink(struct coresight_device *csdev)
-{
-	int ret;
-	unsigned long hash;
-	const char *name;
-	struct device *pmu_dev = etm_pmu.dev;
-	struct device *dev = &csdev->dev;
-	struct dev_ext_attribute *ea;
+पूर्णांक eपंचांग_perf_add_symlink_sink(काष्ठा coresight_device *csdev)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ hash;
+	स्थिर अक्षर *name;
+	काष्ठा device *pmu_dev = eपंचांग_pmu.dev;
+	काष्ठा device *dev = &csdev->dev;
+	काष्ठा dev_ext_attribute *ea;
 
-	if (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
+	अगर (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
 	    csdev->type != CORESIGHT_DEV_TYPE_LINKSINK)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (csdev->ea != NULL)
-		return -EINVAL;
+	अगर (csdev->ea != शून्य)
+		वापस -EINVAL;
 
-	if (!etm_perf_up)
-		return -EPROBE_DEFER;
+	अगर (!eपंचांग_perf_up)
+		वापस -EPROBE_DEFER;
 
-	ea = devm_kzalloc(dev, sizeof(*ea), GFP_KERNEL);
-	if (!ea)
-		return -ENOMEM;
+	ea = devm_kzalloc(dev, माप(*ea), GFP_KERNEL);
+	अगर (!ea)
+		वापस -ENOMEM;
 
 	name = dev_name(dev);
 	/* See function coresight_get_sink_by_id() to know where this is used */
-	hash = hashlen_hash(hashlen_string(NULL, name));
+	hash = hashlen_hash(hashlen_string(शून्य, name));
 
 	sysfs_attr_init(&ea->attr.attr);
 	ea->attr.attr.name = devm_kstrdup(dev, name, GFP_KERNEL);
-	if (!ea->attr.attr.name)
-		return -ENOMEM;
+	अगर (!ea->attr.attr.name)
+		वापस -ENOMEM;
 
 	ea->attr.attr.mode = 0444;
-	ea->attr.show = etm_perf_sink_name_show;
-	ea->var = (unsigned long *)hash;
+	ea->attr.show = eपंचांग_perf_sink_name_show;
+	ea->var = (अचिन्हित दीर्घ *)hash;
 
 	ret = sysfs_add_file_to_group(&pmu_dev->kobj,
 				      &ea->attr.attr, "sinks");
 
-	if (!ret)
+	अगर (!ret)
 		csdev->ea = ea;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void etm_perf_del_symlink_sink(struct coresight_device *csdev)
-{
-	struct device *pmu_dev = etm_pmu.dev;
-	struct dev_ext_attribute *ea = csdev->ea;
+व्योम eपंचांग_perf_del_symlink_sink(काष्ठा coresight_device *csdev)
+अणु
+	काष्ठा device *pmu_dev = eपंचांग_pmu.dev;
+	काष्ठा dev_ext_attribute *ea = csdev->ea;
 
-	if (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
+	अगर (csdev->type != CORESIGHT_DEV_TYPE_SINK &&
 	    csdev->type != CORESIGHT_DEV_TYPE_LINKSINK)
-		return;
+		वापस;
 
-	if (!ea)
-		return;
+	अगर (!ea)
+		वापस;
 
-	sysfs_remove_file_from_group(&pmu_dev->kobj,
+	sysfs_हटाओ_file_from_group(&pmu_dev->kobj,
 				     &ea->attr.attr, "sinks");
-	csdev->ea = NULL;
-}
+	csdev->ea = शून्य;
+पूर्ण
 
-int __init etm_perf_init(void)
-{
-	int ret;
+पूर्णांक __init eपंचांग_perf_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	etm_pmu.capabilities		= (PERF_PMU_CAP_EXCLUSIVE |
+	eपंचांग_pmu.capabilities		= (PERF_PMU_CAP_EXCLUSIVE |
 					   PERF_PMU_CAP_ITRACE);
 
-	etm_pmu.attr_groups		= etm_pmu_attr_groups;
-	etm_pmu.task_ctx_nr		= perf_sw_context;
-	etm_pmu.read			= etm_event_read;
-	etm_pmu.event_init		= etm_event_init;
-	etm_pmu.setup_aux		= etm_setup_aux;
-	etm_pmu.free_aux		= etm_free_aux;
-	etm_pmu.start			= etm_event_start;
-	etm_pmu.stop			= etm_event_stop;
-	etm_pmu.add			= etm_event_add;
-	etm_pmu.del			= etm_event_del;
-	etm_pmu.addr_filters_sync	= etm_addr_filters_sync;
-	etm_pmu.addr_filters_validate	= etm_addr_filters_validate;
-	etm_pmu.nr_addr_filters		= ETM_ADDR_CMP_MAX;
+	eपंचांग_pmu.attr_groups		= eपंचांग_pmu_attr_groups;
+	eपंचांग_pmu.task_ctx_nr		= perf_sw_context;
+	eपंचांग_pmu.पढ़ो			= eपंचांग_event_पढ़ो;
+	eपंचांग_pmu.event_init		= eपंचांग_event_init;
+	eपंचांग_pmu.setup_aux		= eपंचांग_setup_aux;
+	eपंचांग_pmu.मुक्त_aux		= eपंचांग_मुक्त_aux;
+	eपंचांग_pmu.start			= eपंचांग_event_start;
+	eपंचांग_pmu.stop			= eपंचांग_event_stop;
+	eपंचांग_pmu.add			= eपंचांग_event_add;
+	eपंचांग_pmu.del			= eपंचांग_event_del;
+	eपंचांग_pmu.addr_filters_sync	= eपंचांग_addr_filters_sync;
+	eपंचांग_pmu.addr_filters_validate	= eपंचांग_addr_filters_validate;
+	eपंचांग_pmu.nr_addr_filters		= ETM_ADDR_CMP_MAX;
 
-	ret = perf_pmu_register(&etm_pmu, CORESIGHT_ETM_PMU_NAME, -1);
-	if (ret == 0)
-		etm_perf_up = true;
+	ret = perf_pmu_रेजिस्टर(&eपंचांग_pmu, CORESIGHT_ETM_PMU_NAME, -1);
+	अगर (ret == 0)
+		eपंचांग_perf_up = true;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void __exit etm_perf_exit(void)
-{
-	perf_pmu_unregister(&etm_pmu);
-}
+व्योम __निकास eपंचांग_perf_निकास(व्योम)
+अणु
+	perf_pmu_unरेजिस्टर(&eपंचांग_pmu);
+पूर्ण

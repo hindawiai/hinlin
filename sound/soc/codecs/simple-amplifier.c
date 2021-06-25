@@ -1,113 +1,114 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2017 BayLibre, SAS.
  * Author: Jerome Brunet <jbrunet@baylibre.com>
  */
 
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/regulator/consumer.h>
-#include <sound/soc.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <sound/soc.h>
 
-#define DRV_NAME "simple-amplifier"
+#घोषणा DRV_NAME "simple-amplifier"
 
-struct simple_amp {
-	struct gpio_desc *gpiod_enable;
-};
+काष्ठा simple_amp अणु
+	काष्ठा gpio_desc *gpiod_enable;
+पूर्ण;
 
-static int drv_event(struct snd_soc_dapm_widget *w,
-		     struct snd_kcontrol *control, int event)
-{
-	struct snd_soc_component *c = snd_soc_dapm_to_component(w->dapm);
-	struct simple_amp *priv = snd_soc_component_get_drvdata(c);
-	int val;
+अटल पूर्णांक drv_event(काष्ठा snd_soc_dapm_widget *w,
+		     काष्ठा snd_kcontrol *control, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *c = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा simple_amp *priv = snd_soc_component_get_drvdata(c);
+	पूर्णांक val;
 
-	switch (event) {
-	case SND_SOC_DAPM_POST_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_POST_PMU:
 		val = 1;
-		break;
-	case SND_SOC_DAPM_PRE_PMD:
+		अवरोध;
+	हाल SND_SOC_DAPM_PRE_PMD:
 		val = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN(1, "Unexpected event");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	gpiod_set_value_cansleep(priv->gpiod_enable, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget simple_amp_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget simple_amp_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_INPUT("INL"),
 	SND_SOC_DAPM_INPUT("INR"),
-	SND_SOC_DAPM_OUT_DRV_E("DRV", SND_SOC_NOPM, 0, 0, NULL, 0, drv_event,
+	SND_SOC_DAPM_OUT_DRV_E("DRV", SND_SOC_NOPM, 0, 0, शून्य, 0, drv_event,
 			       (SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD)),
 	SND_SOC_DAPM_OUTPUT("OUTL"),
 	SND_SOC_DAPM_OUTPUT("OUTR"),
 	SND_SOC_DAPM_REGULATOR_SUPPLY("VCC", 20, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route simple_amp_dapm_routes[] = {
-	{ "DRV", NULL, "INL" },
-	{ "DRV", NULL, "INR" },
-	{ "OUTL", NULL, "VCC" },
-	{ "OUTR", NULL, "VCC" },
-	{ "OUTL", NULL, "DRV" },
-	{ "OUTR", NULL, "DRV" },
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route simple_amp_dapm_routes[] = अणु
+	अणु "DRV", शून्य, "INL" पूर्ण,
+	अणु "DRV", शून्य, "INR" पूर्ण,
+	अणु "OUTL", शून्य, "VCC" पूर्ण,
+	अणु "OUTR", शून्य, "VCC" पूर्ण,
+	अणु "OUTL", शून्य, "DRV" पूर्ण,
+	अणु "OUTR", शून्य, "DRV" पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_component_driver simple_amp_component_driver = {
-	.dapm_widgets		= simple_amp_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(simple_amp_dapm_widgets),
+अटल स्थिर काष्ठा snd_soc_component_driver simple_amp_component_driver = अणु
+	.dapm_widमाला_लो		= simple_amp_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(simple_amp_dapm_widमाला_लो),
 	.dapm_routes		= simple_amp_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(simple_amp_dapm_routes),
-};
+पूर्ण;
 
-static int simple_amp_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct simple_amp *priv;
-	int err;
+अटल पूर्णांक simple_amp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा simple_amp *priv;
+	पूर्णांक err;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (priv == NULL)
-		return -ENOMEM;
-	platform_set_drvdata(pdev, priv);
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (priv == शून्य)
+		वापस -ENOMEM;
+	platक्रमm_set_drvdata(pdev, priv);
 
 	priv->gpiod_enable = devm_gpiod_get_optional(dev, "enable",
 						     GPIOD_OUT_LOW);
-	if (IS_ERR(priv->gpiod_enable)) {
+	अगर (IS_ERR(priv->gpiod_enable)) अणु
 		err = PTR_ERR(priv->gpiod_enable);
-		if (err != -EPROBE_DEFER)
+		अगर (err != -EPROBE_DEFER)
 			dev_err(dev, "Failed to get 'enable' gpio: %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return devm_snd_soc_register_component(dev,
+	वापस devm_snd_soc_रेजिस्टर_component(dev,
 					       &simple_amp_component_driver,
-					       NULL, 0);
-}
+					       शून्य, 0);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id simple_amp_ids[] = {
-	{ .compatible = "dioo,dio2125", },
-	{ .compatible = "simple-audio-amplifier", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id simple_amp_ids[] = अणु
+	अणु .compatible = "dioo,dio2125", पूर्ण,
+	अणु .compatible = "simple-audio-amplifier", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, simple_amp_ids);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver simple_amp_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver simple_amp_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.of_match_table = of_match_ptr(simple_amp_ids),
-	},
+	पूर्ण,
 	.probe = simple_amp_probe,
-};
+पूर्ण;
 
-module_platform_driver(simple_amp_driver);
+module_platक्रमm_driver(simple_amp_driver);
 
 MODULE_DESCRIPTION("ASoC Simple Audio Amplifier driver");
 MODULE_AUTHOR("Jerome Brunet <jbrunet@baylibre.com>");

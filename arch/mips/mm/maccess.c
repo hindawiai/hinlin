@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/uaccess.h>
-#include <linux/kernel.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/kernel.h>
 
-bool copy_from_kernel_nofault_allowed(const void *unsafe_src, size_t size)
-{
+bool copy_from_kernel_nofault_allowed(स्थिर व्योम *unsafe_src, माप_प्रकार size)
+अणु
 	/* highest bit set means kernel space */
-	return (unsigned long)unsafe_src >> (BITS_PER_LONG - 1);
-}
+	वापस (अचिन्हित दीर्घ)unsafe_src >> (BITS_PER_LONG - 1);
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,481 +23,481 @@
  * Authors: Ben Skeggs
  *          Roy Spliet
  */
-#define gt215_clk(p) container_of((p), struct gt215_clk, base)
-#include "gt215.h"
-#include "pll.h"
+#घोषणा gt215_clk(p) container_of((p), काष्ठा gt215_clk, base)
+#समावेश "gt215.h"
+#समावेश "pll.h"
 
-#include <engine/fifo.h>
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
-#include <subdev/timer.h>
+#समावेश <engine/fअगरo.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
+#समावेश <subdev/समयr.h>
 
-struct gt215_clk {
-	struct nvkm_clk base;
-	struct gt215_clk_info eng[nv_clk_src_max];
-};
+काष्ठा gt215_clk अणु
+	काष्ठा nvkm_clk base;
+	काष्ठा gt215_clk_info eng[nv_clk_src_max];
+पूर्ण;
 
-static u32 read_clk(struct gt215_clk *, int, bool);
-static u32 read_pll(struct gt215_clk *, int, u32);
+अटल u32 पढ़ो_clk(काष्ठा gt215_clk *, पूर्णांक, bool);
+अटल u32 पढ़ो_pll(काष्ठा gt215_clk *, पूर्णांक, u32);
 
-static u32
-read_vco(struct gt215_clk *clk, int idx)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल u32
+पढ़ो_vco(काष्ठा gt215_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 sctl = nvkm_rd32(device, 0x4120 + (idx * 4));
 
-	switch (sctl & 0x00000030) {
-	case 0x00000000:
-		return device->crystal;
-	case 0x00000020:
-		return read_pll(clk, 0x41, 0x00e820);
-	case 0x00000030:
-		return read_pll(clk, 0x42, 0x00e8a0);
-	default:
-		return 0;
-	}
-}
+	चयन (sctl & 0x00000030) अणु
+	हाल 0x00000000:
+		वापस device->crystal;
+	हाल 0x00000020:
+		वापस पढ़ो_pll(clk, 0x41, 0x00e820);
+	हाल 0x00000030:
+		वापस पढ़ो_pll(clk, 0x42, 0x00e8a0);
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static u32
-read_clk(struct gt215_clk *clk, int idx, bool ignore_en)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
-	u32 sctl, sdiv, sclk;
+अटल u32
+पढ़ो_clk(काष्ठा gt215_clk *clk, पूर्णांक idx, bool ignore_en)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	u32 sctl, sभाग, sclk;
 
-	/* refclk for the 0xe8xx plls is a fixed frequency */
-	if (idx >= 0x40) {
-		if (device->chipset == 0xaf) {
+	/* refclk क्रम the 0xe8xx plls is a fixed frequency */
+	अगर (idx >= 0x40) अणु
+		अगर (device->chipset == 0xaf) अणु
 			/* no joke.. seriously.. sigh.. */
-			return nvkm_rd32(device, 0x00471c) * 1000;
-		}
+			वापस nvkm_rd32(device, 0x00471c) * 1000;
+		पूर्ण
 
-		return device->crystal;
-	}
+		वापस device->crystal;
+	पूर्ण
 
 	sctl = nvkm_rd32(device, 0x4120 + (idx * 4));
-	if (!ignore_en && !(sctl & 0x00000100))
-		return 0;
+	अगर (!ignore_en && !(sctl & 0x00000100))
+		वापस 0;
 
 	/* out_alt */
-	if (sctl & 0x00000400)
-		return 108000;
+	अगर (sctl & 0x00000400)
+		वापस 108000;
 
 	/* vco_out */
-	switch (sctl & 0x00003000) {
-	case 0x00000000:
-		if (!(sctl & 0x00000200))
-			return device->crystal;
-		return 0;
-	case 0x00002000:
-		if (sctl & 0x00000040)
-			return 108000;
-		return 100000;
-	case 0x00003000:
+	चयन (sctl & 0x00003000) अणु
+	हाल 0x00000000:
+		अगर (!(sctl & 0x00000200))
+			वापस device->crystal;
+		वापस 0;
+	हाल 0x00002000:
+		अगर (sctl & 0x00000040)
+			वापस 108000;
+		वापस 100000;
+	हाल 0x00003000:
 		/* vco_enable */
-		if (!(sctl & 0x00000001))
-			return 0;
+		अगर (!(sctl & 0x00000001))
+			वापस 0;
 
-		sclk = read_vco(clk, idx);
-		sdiv = ((sctl & 0x003f0000) >> 16) + 2;
-		return (sclk * 2) / sdiv;
-	default:
-		return 0;
-	}
-}
+		sclk = पढ़ो_vco(clk, idx);
+		sभाग = ((sctl & 0x003f0000) >> 16) + 2;
+		वापस (sclk * 2) / sभाग;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static u32
-read_pll(struct gt215_clk *clk, int idx, u32 pll)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल u32
+पढ़ो_pll(काष्ठा gt215_clk *clk, पूर्णांक idx, u32 pll)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 ctrl = nvkm_rd32(device, pll + 0);
 	u32 sclk = 0, P = 1, N = 1, M = 1;
 	u32 MP;
 
-	if (!(ctrl & 0x00000008)) {
-		if (ctrl & 0x00000001) {
+	अगर (!(ctrl & 0x00000008)) अणु
+		अगर (ctrl & 0x00000001) अणु
 			u32 coef = nvkm_rd32(device, pll + 4);
 			M = (coef & 0x000000ff) >> 0;
 			N = (coef & 0x0000ff00) >> 8;
 			P = (coef & 0x003f0000) >> 16;
 
-			/* no post-divider on these..
+			/* no post-भागider on these..
 			 * XXX: it looks more like two post-"dividers" that
-			 * cross each other out in the default RPLL config */
-			if ((pll & 0x00ff00) == 0x00e800)
+			 * cross each other out in the शेष RPLL config */
+			अगर ((pll & 0x00ff00) == 0x00e800)
 				P = 1;
 
-			sclk = read_clk(clk, 0x00 + idx, false);
-		}
-	} else {
-		sclk = read_clk(clk, 0x10 + idx, false);
-	}
+			sclk = पढ़ो_clk(clk, 0x00 + idx, false);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		sclk = पढ़ो_clk(clk, 0x10 + idx, false);
+	पूर्ण
 
 	MP = M * P;
 
-	if (!MP)
-		return 0;
+	अगर (!MP)
+		वापस 0;
 
-	return sclk * N / MP;
-}
+	वापस sclk * N / MP;
+पूर्ण
 
-static int
-gt215_clk_read(struct nvkm_clk *base, enum nv_clk_src src)
-{
-	struct gt215_clk *clk = gt215_clk(base);
-	struct nvkm_subdev *subdev = &clk->base.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल पूर्णांक
+gt215_clk_पढ़ो(काष्ठा nvkm_clk *base, क्रमागत nv_clk_src src)
+अणु
+	काष्ठा gt215_clk *clk = gt215_clk(base);
+	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u32 hsrc;
 
-	switch (src) {
-	case nv_clk_src_crystal:
-		return device->crystal;
-	case nv_clk_src_core:
-	case nv_clk_src_core_intm:
-		return read_pll(clk, 0x00, 0x4200);
-	case nv_clk_src_shader:
-		return read_pll(clk, 0x01, 0x4220);
-	case nv_clk_src_mem:
-		return read_pll(clk, 0x02, 0x4000);
-	case nv_clk_src_disp:
-		return read_clk(clk, 0x20, false);
-	case nv_clk_src_vdec:
-		return read_clk(clk, 0x21, false);
-	case nv_clk_src_pmu:
-		return read_clk(clk, 0x25, false);
-	case nv_clk_src_host:
+	चयन (src) अणु
+	हाल nv_clk_src_crystal:
+		वापस device->crystal;
+	हाल nv_clk_src_core:
+	हाल nv_clk_src_core_पूर्णांकm:
+		वापस पढ़ो_pll(clk, 0x00, 0x4200);
+	हाल nv_clk_src_shader:
+		वापस पढ़ो_pll(clk, 0x01, 0x4220);
+	हाल nv_clk_src_mem:
+		वापस पढ़ो_pll(clk, 0x02, 0x4000);
+	हाल nv_clk_src_disp:
+		वापस पढ़ो_clk(clk, 0x20, false);
+	हाल nv_clk_src_vdec:
+		वापस पढ़ो_clk(clk, 0x21, false);
+	हाल nv_clk_src_pmu:
+		वापस पढ़ो_clk(clk, 0x25, false);
+	हाल nv_clk_src_host:
 		hsrc = (nvkm_rd32(device, 0xc040) & 0x30000000) >> 28;
-		switch (hsrc) {
-		case 0:
-			return read_clk(clk, 0x1d, false);
-		case 2:
-		case 3:
-			return 277000;
-		default:
+		चयन (hsrc) अणु
+		हाल 0:
+			वापस पढ़ो_clk(clk, 0x1d, false);
+		हाल 2:
+		हाल 3:
+			वापस 277000;
+		शेष:
 			nvkm_error(subdev, "unknown HOST clock source %d\n", hsrc);
-			return -EINVAL;
-		}
-	default:
+			वापस -EINVAL;
+		पूर्ण
+	शेष:
 		nvkm_error(subdev, "invalid clock source %d\n", src);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gt215_clk_info(struct nvkm_clk *base, int idx, u32 khz,
-	       struct gt215_clk_info *info)
-{
-	struct gt215_clk *clk = gt215_clk(base);
-	u32 oclk, sclk, sdiv;
-	s32 diff;
+अटल पूर्णांक
+gt215_clk_info(काष्ठा nvkm_clk *base, पूर्णांक idx, u32 khz,
+	       काष्ठा gt215_clk_info *info)
+अणु
+	काष्ठा gt215_clk *clk = gt215_clk(base);
+	u32 oclk, sclk, sभाग;
+	s32 dअगरf;
 
 	info->clk = 0;
 
-	switch (khz) {
-	case 27000:
+	चयन (khz) अणु
+	हाल 27000:
 		info->clk = 0x00000100;
-		return khz;
-	case 100000:
+		वापस khz;
+	हाल 100000:
 		info->clk = 0x00002100;
-		return khz;
-	case 108000:
+		वापस khz;
+	हाल 108000:
 		info->clk = 0x00002140;
-		return khz;
-	default:
-		sclk = read_vco(clk, idx);
-		sdiv = min((sclk * 2) / khz, (u32)65);
-		oclk = (sclk * 2) / sdiv;
-		diff = ((khz + 3000) - oclk);
+		वापस khz;
+	शेष:
+		sclk = पढ़ो_vco(clk, idx);
+		sभाग = min((sclk * 2) / khz, (u32)65);
+		oclk = (sclk * 2) / sभाग;
+		dअगरf = ((khz + 3000) - oclk);
 
-		/* When imprecise, play it safe and aim for a clock lower than
+		/* When imprecise, play it safe and aim क्रम a घड़ी lower than
 		 * desired rather than higher */
-		if (diff < 0) {
-			sdiv++;
-			oclk = (sclk * 2) / sdiv;
-		}
+		अगर (dअगरf < 0) अणु
+			sभाग++;
+			oclk = (sclk * 2) / sभाग;
+		पूर्ण
 
-		/* divider can go as low as 2, limited here because NVIDIA
+		/* भागider can go as low as 2, limited here because NVIDIA
 		 * and the VBIOS on my NVA8 seem to prefer using the PLL
-		 * for 810MHz - is there a good reason?
+		 * क्रम 810MHz - is there a good reason?
 		 * XXX: PLLs with refclk 810MHz?  */
-		if (sdiv > 4) {
-			info->clk = (((sdiv - 2) << 16) | 0x00003100);
-			return oclk;
-		}
+		अगर (sभाग > 4) अणु
+			info->clk = (((sभाग - 2) << 16) | 0x00003100);
+			वापस oclk;
+		पूर्ण
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -ERANGE;
-}
+	वापस -दुस्फल;
+पूर्ण
 
-int
-gt215_pll_info(struct nvkm_clk *base, int idx, u32 pll, u32 khz,
-	       struct gt215_clk_info *info)
-{
-	struct gt215_clk *clk = gt215_clk(base);
-	struct nvkm_subdev *subdev = &clk->base.subdev;
-	struct nvbios_pll limits;
-	int P, N, M, diff;
-	int ret;
+पूर्णांक
+gt215_pll_info(काष्ठा nvkm_clk *base, पूर्णांक idx, u32 pll, u32 khz,
+	       काष्ठा gt215_clk_info *info)
+अणु
+	काष्ठा gt215_clk *clk = gt215_clk(base);
+	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
+	काष्ठा nvbios_pll limits;
+	पूर्णांक P, N, M, dअगरf;
+	पूर्णांक ret;
 
 	info->pll = 0;
 
-	/* If we can get a within [-2, 3) MHz of a divider, we'll disable the
-	 * PLL and use the divider instead. */
+	/* If we can get a within [-2, 3) MHz of a भागider, we'll disable the
+	 * PLL and use the भागider instead. */
 	ret = gt215_clk_info(&clk->base, idx, khz, info);
-	diff = khz - ret;
-	if (!pll || (diff >= -2000 && diff < 3000)) {
-		goto out;
-	}
+	dअगरf = khz - ret;
+	अगर (!pll || (dअगरf >= -2000 && dअगरf < 3000)) अणु
+		जाओ out;
+	पूर्ण
 
 	/* Try with PLL */
 	ret = nvbios_pll_parse(subdev->device->bios, pll, &limits);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = gt215_clk_info(&clk->base, idx - 0x10, limits.refclk, info);
-	if (ret != limits.refclk)
-		return -EINVAL;
+	अगर (ret != limits.refclk)
+		वापस -EINVAL;
 
-	ret = gt215_pll_calc(subdev, &limits, khz, &N, NULL, &M, &P);
-	if (ret >= 0) {
+	ret = gt215_pll_calc(subdev, &limits, khz, &N, शून्य, &M, &P);
+	अगर (ret >= 0) अणु
 		info->pll = (P << 16) | (N << 8) | M;
-	}
+	पूर्ण
 
 out:
 	info->fb_delay = max(((khz + 7566) / 15133), (u32) 18);
-	return ret ? ret : -ERANGE;
-}
+	वापस ret ? ret : -दुस्फल;
+पूर्ण
 
-static int
-calc_clk(struct gt215_clk *clk, struct nvkm_cstate *cstate,
-	 int idx, u32 pll, int dom)
-{
-	int ret = gt215_pll_info(&clk->base, idx, pll, cstate->domain[dom],
-				 &clk->eng[dom]);
-	if (ret >= 0)
-		return 0;
-	return ret;
-}
+अटल पूर्णांक
+calc_clk(काष्ठा gt215_clk *clk, काष्ठा nvkm_cstate *cstate,
+	 पूर्णांक idx, u32 pll, पूर्णांक करोm)
+अणु
+	पूर्णांक ret = gt215_pll_info(&clk->base, idx, pll, cstate->करोमुख्य[करोm],
+				 &clk->eng[करोm]);
+	अगर (ret >= 0)
+		वापस 0;
+	वापस ret;
+पूर्ण
 
-static int
-calc_host(struct gt215_clk *clk, struct nvkm_cstate *cstate)
-{
-	int ret = 0;
-	u32 kHz = cstate->domain[nv_clk_src_host];
-	struct gt215_clk_info *info = &clk->eng[nv_clk_src_host];
+अटल पूर्णांक
+calc_host(काष्ठा gt215_clk *clk, काष्ठा nvkm_cstate *cstate)
+अणु
+	पूर्णांक ret = 0;
+	u32 kHz = cstate->करोमुख्य[nv_clk_src_host];
+	काष्ठा gt215_clk_info *info = &clk->eng[nv_clk_src_host];
 
-	if (kHz == 277000) {
+	अगर (kHz == 277000) अणु
 		info->clk = 0;
 		info->host_out = NVA3_HOST_277;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	info->host_out = NVA3_HOST_CLK;
 
 	ret = gt215_clk_info(&clk->base, 0x1d, kHz, info);
-	if (ret >= 0)
-		return 0;
+	अगर (ret >= 0)
+		वापस 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int
-gt215_clk_pre(struct nvkm_clk *clk, unsigned long *flags)
-{
-	struct nvkm_device *device = clk->subdev.device;
-	struct nvkm_fifo *fifo = device->fifo;
+पूर्णांक
+gt215_clk_pre(काष्ठा nvkm_clk *clk, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा nvkm_device *device = clk->subdev.device;
+	काष्ठा nvkm_fअगरo *fअगरo = device->fअगरo;
 
 	/* halt and idle execution engines */
 	nvkm_mask(device, 0x020060, 0x00070000, 0x00000000);
 	nvkm_mask(device, 0x002504, 0x00000001, 0x00000001);
-	/* Wait until the interrupt handler is finished */
-	if (nvkm_msec(device, 2000,
-		if (!nvkm_rd32(device, 0x000100))
-			break;
+	/* Wait until the पूर्णांकerrupt handler is finished */
+	अगर (nvkm_msec(device, 2000,
+		अगर (!nvkm_rd32(device, 0x000100))
+			अवरोध;
 	) < 0)
-		return -EBUSY;
+		वापस -EBUSY;
 
-	if (fifo)
-		nvkm_fifo_pause(fifo, flags);
+	अगर (fअगरo)
+		nvkm_fअगरo_छोड़ो(fअगरo, flags);
 
-	if (nvkm_msec(device, 2000,
-		if (nvkm_rd32(device, 0x002504) & 0x00000010)
-			break;
+	अगर (nvkm_msec(device, 2000,
+		अगर (nvkm_rd32(device, 0x002504) & 0x00000010)
+			अवरोध;
 	) < 0)
-		return -EIO;
+		वापस -EIO;
 
-	if (nvkm_msec(device, 2000,
-		u32 tmp = nvkm_rd32(device, 0x00251c) & 0x0000003f;
-		if (tmp == 0x0000003f)
-			break;
+	अगर (nvkm_msec(device, 2000,
+		u32 पंचांगp = nvkm_rd32(device, 0x00251c) & 0x0000003f;
+		अगर (पंचांगp == 0x0000003f)
+			अवरोध;
 	) < 0)
-		return -EIO;
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-gt215_clk_post(struct nvkm_clk *clk, unsigned long *flags)
-{
-	struct nvkm_device *device = clk->subdev.device;
-	struct nvkm_fifo *fifo = device->fifo;
+व्योम
+gt215_clk_post(काष्ठा nvkm_clk *clk, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा nvkm_device *device = clk->subdev.device;
+	काष्ठा nvkm_fअगरo *fअगरo = device->fअगरo;
 
-	if (fifo && flags)
-		nvkm_fifo_start(fifo, flags);
+	अगर (fअगरo && flags)
+		nvkm_fअगरo_start(fअगरo, flags);
 
 	nvkm_mask(device, 0x002504, 0x00000001, 0x00000000);
 	nvkm_mask(device, 0x020060, 0x00070000, 0x00040000);
-}
+पूर्ण
 
-static void
-disable_clk_src(struct gt215_clk *clk, u32 src)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल व्योम
+disable_clk_src(काष्ठा gt215_clk *clk, u32 src)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	nvkm_mask(device, src, 0x00000100, 0x00000000);
 	nvkm_mask(device, src, 0x00000001, 0x00000000);
-}
+पूर्ण
 
-static void
-prog_pll(struct gt215_clk *clk, int idx, u32 pll, int dom)
-{
-	struct gt215_clk_info *info = &clk->eng[dom];
-	struct nvkm_device *device = clk->base.subdev.device;
-	const u32 src0 = 0x004120 + (idx * 4);
-	const u32 src1 = 0x004160 + (idx * 4);
-	const u32 ctrl = pll + 0;
-	const u32 coef = pll + 4;
+अटल व्योम
+prog_pll(काष्ठा gt215_clk *clk, पूर्णांक idx, u32 pll, पूर्णांक करोm)
+अणु
+	काष्ठा gt215_clk_info *info = &clk->eng[करोm];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	स्थिर u32 src0 = 0x004120 + (idx * 4);
+	स्थिर u32 src1 = 0x004160 + (idx * 4);
+	स्थिर u32 ctrl = pll + 0;
+	स्थिर u32 coef = pll + 4;
 	u32 bypass;
 
-	if (info->pll) {
-		/* Always start from a non-PLL clock */
+	अगर (info->pll) अणु
+		/* Always start from a non-PLL घड़ी */
 		bypass = nvkm_rd32(device, ctrl)  & 0x00000008;
-		if (!bypass) {
+		अगर (!bypass) अणु
 			nvkm_mask(device, src1, 0x00000101, 0x00000101);
 			nvkm_mask(device, ctrl, 0x00000008, 0x00000008);
 			udelay(20);
-		}
+		पूर्ण
 
 		nvkm_mask(device, src0, 0x003f3141, 0x00000101 | info->clk);
 		nvkm_wr32(device, coef, info->pll);
 		nvkm_mask(device, ctrl, 0x00000015, 0x00000015);
 		nvkm_mask(device, ctrl, 0x00000010, 0x00000000);
-		if (nvkm_msec(device, 2000,
-			if (nvkm_rd32(device, ctrl) & 0x00020000)
-				break;
-		) < 0) {
+		अगर (nvkm_msec(device, 2000,
+			अगर (nvkm_rd32(device, ctrl) & 0x00020000)
+				अवरोध;
+		) < 0) अणु
 			nvkm_mask(device, ctrl, 0x00000010, 0x00000010);
 			nvkm_mask(device, src0, 0x00000101, 0x00000000);
-			return;
-		}
+			वापस;
+		पूर्ण
 		nvkm_mask(device, ctrl, 0x00000010, 0x00000010);
 		nvkm_mask(device, ctrl, 0x00000008, 0x00000000);
 		disable_clk_src(clk, src1);
-	} else {
+	पूर्ण अन्यथा अणु
 		nvkm_mask(device, src1, 0x003f3141, 0x00000101 | info->clk);
 		nvkm_mask(device, ctrl, 0x00000018, 0x00000018);
 		udelay(20);
 		nvkm_mask(device, ctrl, 0x00000001, 0x00000000);
 		disable_clk_src(clk, src0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-prog_clk(struct gt215_clk *clk, int idx, int dom)
-{
-	struct gt215_clk_info *info = &clk->eng[dom];
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल व्योम
+prog_clk(काष्ठा gt215_clk *clk, पूर्णांक idx, पूर्णांक करोm)
+अणु
+	काष्ठा gt215_clk_info *info = &clk->eng[करोm];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	nvkm_mask(device, 0x004120 + (idx * 4), 0x003f3141, 0x00000101 | info->clk);
-}
+पूर्ण
 
-static void
-prog_host(struct gt215_clk *clk)
-{
-	struct gt215_clk_info *info = &clk->eng[nv_clk_src_host];
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल व्योम
+prog_host(काष्ठा gt215_clk *clk)
+अणु
+	काष्ठा gt215_clk_info *info = &clk->eng[nv_clk_src_host];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 hsrc = (nvkm_rd32(device, 0xc040));
 
-	switch (info->host_out) {
-	case NVA3_HOST_277:
-		if ((hsrc & 0x30000000) == 0) {
+	चयन (info->host_out) अणु
+	हाल NVA3_HOST_277:
+		अगर ((hsrc & 0x30000000) == 0) अणु
 			nvkm_wr32(device, 0xc040, hsrc | 0x20000000);
 			disable_clk_src(clk, 0x4194);
-		}
-		break;
-	case NVA3_HOST_CLK:
+		पूर्ण
+		अवरोध;
+	हाल NVA3_HOST_CLK:
 		prog_clk(clk, 0x1d, nv_clk_src_host);
-		if ((hsrc & 0x30000000) >= 0x20000000) {
+		अगर ((hsrc & 0x30000000) >= 0x20000000) अणु
 			nvkm_wr32(device, 0xc040, hsrc & ~0x30000000);
-		}
-		break;
-	default:
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* This seems to be a clock gating factor on idle, always set to 64 */
+	/* This seems to be a घड़ी gating factor on idle, always set to 64 */
 	nvkm_wr32(device, 0xc044, 0x3e);
-}
+पूर्ण
 
-static void
-prog_core(struct gt215_clk *clk, int dom)
-{
-	struct gt215_clk_info *info = &clk->eng[dom];
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल व्योम
+prog_core(काष्ठा gt215_clk *clk, पूर्णांक करोm)
+अणु
+	काष्ठा gt215_clk_info *info = &clk->eng[करोm];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 fb_delay = nvkm_rd32(device, 0x10002c);
 
-	if (fb_delay < info->fb_delay)
+	अगर (fb_delay < info->fb_delay)
 		nvkm_wr32(device, 0x10002c, info->fb_delay);
 
-	prog_pll(clk, 0x00, 0x004200, dom);
+	prog_pll(clk, 0x00, 0x004200, करोm);
 
-	if (fb_delay > info->fb_delay)
+	अगर (fb_delay > info->fb_delay)
 		nvkm_wr32(device, 0x10002c, info->fb_delay);
-}
+पूर्ण
 
-static int
-gt215_clk_calc(struct nvkm_clk *base, struct nvkm_cstate *cstate)
-{
-	struct gt215_clk *clk = gt215_clk(base);
-	struct gt215_clk_info *core = &clk->eng[nv_clk_src_core];
-	int ret;
+अटल पूर्णांक
+gt215_clk_calc(काष्ठा nvkm_clk *base, काष्ठा nvkm_cstate *cstate)
+अणु
+	काष्ठा gt215_clk *clk = gt215_clk(base);
+	काष्ठा gt215_clk_info *core = &clk->eng[nv_clk_src_core];
+	पूर्णांक ret;
 
-	if ((ret = calc_clk(clk, cstate, 0x10, 0x4200, nv_clk_src_core)) ||
+	अगर ((ret = calc_clk(clk, cstate, 0x10, 0x4200, nv_clk_src_core)) ||
 	    (ret = calc_clk(clk, cstate, 0x11, 0x4220, nv_clk_src_shader)) ||
 	    (ret = calc_clk(clk, cstate, 0x20, 0x0000, nv_clk_src_disp)) ||
 	    (ret = calc_clk(clk, cstate, 0x21, 0x0000, nv_clk_src_vdec)) ||
 	    (ret = calc_host(clk, cstate)))
-		return ret;
+		वापस ret;
 
-	/* XXX: Should be reading the highest bit in the VBIOS clock to decide
+	/* XXX: Should be पढ़ोing the highest bit in the VBIOS घड़ी to decide
 	 * whether to use a PLL or not... but using a PLL defeats the purpose */
-	if (core->pll) {
+	अगर (core->pll) अणु
 		ret = gt215_clk_info(&clk->base, 0x10,
-				     cstate->domain[nv_clk_src_core_intm],
-				     &clk->eng[nv_clk_src_core_intm]);
-		if (ret < 0)
-			return ret;
-	}
+				     cstate->करोमुख्य[nv_clk_src_core_पूर्णांकm],
+				     &clk->eng[nv_clk_src_core_पूर्णांकm]);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gt215_clk_prog(struct nvkm_clk *base)
-{
-	struct gt215_clk *clk = gt215_clk(base);
-	struct gt215_clk_info *core = &clk->eng[nv_clk_src_core];
-	int ret = 0;
-	unsigned long flags;
-	unsigned long *f = &flags;
+अटल पूर्णांक
+gt215_clk_prog(काष्ठा nvkm_clk *base)
+अणु
+	काष्ठा gt215_clk *clk = gt215_clk(base);
+	काष्ठा gt215_clk_info *core = &clk->eng[nv_clk_src_core];
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ *f = &flags;
 
 	ret = gt215_clk_pre(&clk->base, f);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (core->pll)
-		prog_core(clk, nv_clk_src_core_intm);
+	अगर (core->pll)
+		prog_core(clk, nv_clk_src_core_पूर्णांकm);
 
 	prog_core(clk,  nv_clk_src_core);
 	prog_pll(clk, 0x01, 0x004220, nv_clk_src_shader);
@@ -505,46 +506,46 @@ gt215_clk_prog(struct nvkm_clk *base)
 	prog_host(clk);
 
 out:
-	if (ret == -EBUSY)
-		f = NULL;
+	अगर (ret == -EBUSY)
+		f = शून्य;
 
 	gt215_clk_post(&clk->base, f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-gt215_clk_tidy(struct nvkm_clk *base)
-{
-}
+अटल व्योम
+gt215_clk_tidy(काष्ठा nvkm_clk *base)
+अणु
+पूर्ण
 
-static const struct nvkm_clk_func
-gt215_clk = {
-	.read = gt215_clk_read,
+अटल स्थिर काष्ठा nvkm_clk_func
+gt215_clk = अणु
+	.पढ़ो = gt215_clk_पढ़ो,
 	.calc = gt215_clk_calc,
 	.prog = gt215_clk_prog,
 	.tidy = gt215_clk_tidy,
-	.domains = {
-		{ nv_clk_src_crystal  , 0xff },
-		{ nv_clk_src_core     , 0x00, 0, "core", 1000 },
-		{ nv_clk_src_shader   , 0x01, 0, "shader", 1000 },
-		{ nv_clk_src_mem      , 0x02, 0, "memory", 1000 },
-		{ nv_clk_src_vdec     , 0x03 },
-		{ nv_clk_src_disp     , 0x04 },
-		{ nv_clk_src_host     , 0x05 },
-		{ nv_clk_src_core_intm, 0x06 },
-		{ nv_clk_src_max }
-	}
-};
+	.करोमुख्यs = अणु
+		अणु nv_clk_src_crystal  , 0xff पूर्ण,
+		अणु nv_clk_src_core     , 0x00, 0, "core", 1000 पूर्ण,
+		अणु nv_clk_src_shader   , 0x01, 0, "shader", 1000 पूर्ण,
+		अणु nv_clk_src_mem      , 0x02, 0, "memory", 1000 पूर्ण,
+		अणु nv_clk_src_vdec     , 0x03 पूर्ण,
+		अणु nv_clk_src_disp     , 0x04 पूर्ण,
+		अणु nv_clk_src_host     , 0x05 पूर्ण,
+		अणु nv_clk_src_core_पूर्णांकm, 0x06 पूर्ण,
+		अणु nv_clk_src_max पूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gt215_clk_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_clk **pclk)
-{
-	struct gt215_clk *clk;
+पूर्णांक
+gt215_clk_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_clk **pclk)
+अणु
+	काष्ठा gt215_clk *clk;
 
-	if (!(clk = kzalloc(sizeof(*clk), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(clk = kzalloc(माप(*clk), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pclk = &clk->base;
 
-	return nvkm_clk_ctor(&gt215_clk, device, type, inst, true, &clk->base);
-}
+	वापस nvkm_clk_ctor(&gt215_clk, device, type, inst, true, &clk->base);
+पूर्ण

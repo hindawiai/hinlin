@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DRM_RANDOM_H__
-#define __DRM_RANDOM_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __DRM_RANDOM_H__
+#घोषणा __DRM_RANDOM_H__
 
-/* This is a temporary home for a couple of utility functions that should
+/* This is a temporary home क्रम a couple of utility functions that should
  * be transposed to lib/ at the earliest convenience.
  */
 
-#include <linux/random.h>
+#समावेश <linux/अक्रमom.h>
 
-#define DRM_RND_STATE_INITIALIZER(seed__) ({				\
-	struct rnd_state state__;					\
-	prandom_seed_state(&state__, (seed__));				\
+#घोषणा DRM_RND_STATE_INITIALIZER(seed__) (अणु				\
+	काष्ठा rnd_state state__;					\
+	pअक्रमom_seed_state(&state__, (seed__));				\
 	state__;							\
-})
+पूर्ण)
 
-#define DRM_RND_STATE(name__, seed__) \
-	struct rnd_state name__ = DRM_RND_STATE_INITIALIZER(seed__)
+#घोषणा DRM_RND_STATE(name__, seed__) \
+	काष्ठा rnd_state name__ = DRM_RND_STATE_INITIALIZER(seed__)
 
-unsigned int *drm_random_order(unsigned int count,
-			       struct rnd_state *state);
-void drm_random_reorder(unsigned int *order,
-			unsigned int count,
-			struct rnd_state *state);
+अचिन्हित पूर्णांक *drm_अक्रमom_order(अचिन्हित पूर्णांक count,
+			       काष्ठा rnd_state *state);
+व्योम drm_अक्रमom_reorder(अचिन्हित पूर्णांक *order,
+			अचिन्हित पूर्णांक count,
+			काष्ठा rnd_state *state);
 
-#endif /* !__DRM_RANDOM_H__ */
+#पूर्ण_अगर /* !__DRM_RANDOM_H__ */

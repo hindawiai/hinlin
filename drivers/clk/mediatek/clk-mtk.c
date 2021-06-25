@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 MediaTek Inc.
  * Author: James Liao <jamesjj.liao@mediatek.com>
  */
 
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/clkdev.h>
-#include <linux/mfd/syscon.h>
-#include <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/device.h>
 
-#include "clk-mtk.h"
-#include "clk-gate.h"
+#समावेश "clk-mtk.h"
+#समावेश "clk-gate.h"
 
-struct clk_onecell_data *mtk_alloc_clk_data(unsigned int clk_num)
-{
-	int i;
-	struct clk_onecell_data *clk_data;
+काष्ठा clk_onecell_data *mtk_alloc_clk_data(अचिन्हित पूर्णांक clk_num)
+अणु
+	पूर्णांक i;
+	काष्ठा clk_onecell_data *clk_data;
 
-	clk_data = kzalloc(sizeof(*clk_data), GFP_KERNEL);
-	if (!clk_data)
-		return NULL;
+	clk_data = kzalloc(माप(*clk_data), GFP_KERNEL);
+	अगर (!clk_data)
+		वापस शून्य;
 
-	clk_data->clks = kcalloc(clk_num, sizeof(*clk_data->clks), GFP_KERNEL);
-	if (!clk_data->clks)
-		goto err_out;
+	clk_data->clks = kसुस्मृति(clk_num, माप(*clk_data->clks), GFP_KERNEL);
+	अगर (!clk_data->clks)
+		जाओ err_out;
 
 	clk_data->clk_num = clk_num;
 
-	for (i = 0; i < clk_num; i++)
+	क्रम (i = 0; i < clk_num; i++)
 		clk_data->clks[i] = ERR_PTR(-ENOENT);
 
-	return clk_data;
+	वापस clk_data;
 err_out:
-	kfree(clk_data);
+	kमुक्त(clk_data);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void mtk_clk_register_fixed_clks(const struct mtk_fixed_clk *clks,
-		int num, struct clk_onecell_data *clk_data)
-{
-	int i;
-	struct clk *clk;
+व्योम mtk_clk_रेजिस्टर_fixed_clks(स्थिर काष्ठा mtk_fixed_clk *clks,
+		पूर्णांक num, काष्ठा clk_onecell_data *clk_data)
+अणु
+	पूर्णांक i;
+	काष्ठा clk *clk;
 
-	for (i = 0; i < num; i++) {
-		const struct mtk_fixed_clk *rc = &clks[i];
+	क्रम (i = 0; i < num; i++) अणु
+		स्थिर काष्ठा mtk_fixed_clk *rc = &clks[i];
 
-		if (clk_data && !IS_ERR_OR_NULL(clk_data->clks[rc->id]))
-			continue;
+		अगर (clk_data && !IS_ERR_OR_शून्य(clk_data->clks[rc->id]))
+			जारी;
 
-		clk = clk_register_fixed_rate(NULL, rc->name, rc->parent, 0,
+		clk = clk_रेजिस्टर_fixed_rate(शून्य, rc->name, rc->parent, 0,
 					      rc->rate);
 
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to register clk %s: %ld\n",
 					rc->name, PTR_ERR(clk));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (clk_data)
+		अगर (clk_data)
 			clk_data->clks[rc->id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mtk_clk_register_factors(const struct mtk_fixed_factor *clks,
-		int num, struct clk_onecell_data *clk_data)
-{
-	int i;
-	struct clk *clk;
+व्योम mtk_clk_रेजिस्टर_factors(स्थिर काष्ठा mtk_fixed_factor *clks,
+		पूर्णांक num, काष्ठा clk_onecell_data *clk_data)
+अणु
+	पूर्णांक i;
+	काष्ठा clk *clk;
 
-	for (i = 0; i < num; i++) {
-		const struct mtk_fixed_factor *ff = &clks[i];
+	क्रम (i = 0; i < num; i++) अणु
+		स्थिर काष्ठा mtk_fixed_factor *ff = &clks[i];
 
-		if (clk_data && !IS_ERR_OR_NULL(clk_data->clks[ff->id]))
-			continue;
+		अगर (clk_data && !IS_ERR_OR_शून्य(clk_data->clks[ff->id]))
+			जारी;
 
-		clk = clk_register_fixed_factor(NULL, ff->name, ff->parent_name,
-				CLK_SET_RATE_PARENT, ff->mult, ff->div);
+		clk = clk_रेजिस्टर_fixed_factor(शून्य, ff->name, ff->parent_name,
+				CLK_SET_RATE_PARENT, ff->mult, ff->भाग);
 
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to register clk %s: %ld\n",
 					ff->name, PTR_ERR(clk));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (clk_data)
+		अगर (clk_data)
 			clk_data->clks[ff->id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mtk_clk_register_gates_with_dev(struct device_node *node,
-		const struct mtk_gate *clks,
-		int num, struct clk_onecell_data *clk_data,
-		struct device *dev)
-{
-	int i;
-	struct clk *clk;
-	struct regmap *regmap;
+पूर्णांक mtk_clk_रेजिस्टर_gates_with_dev(काष्ठा device_node *node,
+		स्थिर काष्ठा mtk_gate *clks,
+		पूर्णांक num, काष्ठा clk_onecell_data *clk_data,
+		काष्ठा device *dev)
+अणु
+	पूर्णांक i;
+	काष्ठा clk *clk;
+	काष्ठा regmap *regmap;
 
-	if (!clk_data)
-		return -ENOMEM;
+	अगर (!clk_data)
+		वापस -ENOMEM;
 
 	regmap = syscon_node_to_regmap(node);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		pr_err("Cannot find regmap for %pOF: %ld\n", node,
 				PTR_ERR(regmap));
-		return PTR_ERR(regmap);
-	}
+		वापस PTR_ERR(regmap);
+	पूर्ण
 
-	for (i = 0; i < num; i++) {
-		const struct mtk_gate *gate = &clks[i];
+	क्रम (i = 0; i < num; i++) अणु
+		स्थिर काष्ठा mtk_gate *gate = &clks[i];
 
-		if (!IS_ERR_OR_NULL(clk_data->clks[gate->id]))
-			continue;
+		अगर (!IS_ERR_OR_शून्य(clk_data->clks[gate->id]))
+			जारी;
 
-		clk = mtk_clk_register_gate(gate->name, gate->parent_name,
+		clk = mtk_clk_रेजिस्टर_gate(gate->name, gate->parent_name,
 				regmap,
 				gate->regs->set_ofs,
 				gate->regs->clr_ofs,
 				gate->regs->sta_ofs,
-				gate->shift, gate->ops, gate->flags, dev);
+				gate->shअगरt, gate->ops, gate->flags, dev);
 
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to register clk %s: %ld\n",
 					gate->name, PTR_ERR(clk));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		clk_data->clks[gate->id] = clk;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mtk_clk_register_gates(struct device_node *node,
-		const struct mtk_gate *clks,
-		int num, struct clk_onecell_data *clk_data)
-{
-	return mtk_clk_register_gates_with_dev(node,
-		clks, num, clk_data, NULL);
-}
+पूर्णांक mtk_clk_रेजिस्टर_gates(काष्ठा device_node *node,
+		स्थिर काष्ठा mtk_gate *clks,
+		पूर्णांक num, काष्ठा clk_onecell_data *clk_data)
+अणु
+	वापस mtk_clk_रेजिस्टर_gates_with_dev(node,
+		clks, num, clk_data, शून्य);
+पूर्ण
 
-struct clk *mtk_clk_register_composite(const struct mtk_composite *mc,
-		void __iomem *base, spinlock_t *lock)
-{
-	struct clk *clk;
-	struct clk_mux *mux = NULL;
-	struct clk_gate *gate = NULL;
-	struct clk_divider *div = NULL;
-	struct clk_hw *mux_hw = NULL, *gate_hw = NULL, *div_hw = NULL;
-	const struct clk_ops *mux_ops = NULL, *gate_ops = NULL, *div_ops = NULL;
-	const char * const *parent_names;
-	const char *parent;
-	int num_parents;
-	int ret;
+काष्ठा clk *mtk_clk_रेजिस्टर_composite(स्थिर काष्ठा mtk_composite *mc,
+		व्योम __iomem *base, spinlock_t *lock)
+अणु
+	काष्ठा clk *clk;
+	काष्ठा clk_mux *mux = शून्य;
+	काष्ठा clk_gate *gate = शून्य;
+	काष्ठा clk_भागider *भाग = शून्य;
+	काष्ठा clk_hw *mux_hw = शून्य, *gate_hw = शून्य, *भाग_hw = शून्य;
+	स्थिर काष्ठा clk_ops *mux_ops = शून्य, *gate_ops = शून्य, *भाग_ops = शून्य;
+	स्थिर अक्षर * स्थिर *parent_names;
+	स्थिर अक्षर *parent;
+	पूर्णांक num_parents;
+	पूर्णांक ret;
 
-	if (mc->mux_shift >= 0) {
-		mux = kzalloc(sizeof(*mux), GFP_KERNEL);
-		if (!mux)
-			return ERR_PTR(-ENOMEM);
+	अगर (mc->mux_shअगरt >= 0) अणु
+		mux = kzalloc(माप(*mux), GFP_KERNEL);
+		अगर (!mux)
+			वापस ERR_PTR(-ENOMEM);
 
 		mux->reg = base + mc->mux_reg;
 		mux->mask = BIT(mc->mux_width) - 1;
-		mux->shift = mc->mux_shift;
+		mux->shअगरt = mc->mux_shअगरt;
 		mux->lock = lock;
 		mux->flags = mc->mux_flags;
 		mux_hw = &mux->hw;
@@ -175,114 +176,114 @@ struct clk *mtk_clk_register_composite(const struct mtk_composite *mc,
 
 		parent_names = mc->parent_names;
 		num_parents = mc->num_parents;
-	} else {
+	पूर्ण अन्यथा अणु
 		parent = mc->parent;
 		parent_names = &parent;
 		num_parents = 1;
-	}
+	पूर्ण
 
-	if (mc->gate_shift >= 0) {
-		gate = kzalloc(sizeof(*gate), GFP_KERNEL);
-		if (!gate) {
+	अगर (mc->gate_shअगरt >= 0) अणु
+		gate = kzalloc(माप(*gate), GFP_KERNEL);
+		अगर (!gate) अणु
 			ret = -ENOMEM;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
 		gate->reg = base + mc->gate_reg;
-		gate->bit_idx = mc->gate_shift;
+		gate->bit_idx = mc->gate_shअगरt;
 		gate->flags = CLK_GATE_SET_TO_DISABLE;
 		gate->lock = lock;
 
 		gate_hw = &gate->hw;
 		gate_ops = &clk_gate_ops;
-	}
+	पूर्ण
 
-	if (mc->divider_shift >= 0) {
-		div = kzalloc(sizeof(*div), GFP_KERNEL);
-		if (!div) {
+	अगर (mc->भागider_shअगरt >= 0) अणु
+		भाग = kzalloc(माप(*भाग), GFP_KERNEL);
+		अगर (!भाग) अणु
 			ret = -ENOMEM;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		div->reg = base + mc->divider_reg;
-		div->shift = mc->divider_shift;
-		div->width = mc->divider_width;
-		div->lock = lock;
+		भाग->reg = base + mc->भागider_reg;
+		भाग->shअगरt = mc->भागider_shअगरt;
+		भाग->width = mc->भागider_width;
+		भाग->lock = lock;
 
-		div_hw = &div->hw;
-		div_ops = &clk_divider_ops;
-	}
+		भाग_hw = &भाग->hw;
+		भाग_ops = &clk_भागider_ops;
+	पूर्ण
 
-	clk = clk_register_composite(NULL, mc->name, parent_names, num_parents,
+	clk = clk_रेजिस्टर_composite(शून्य, mc->name, parent_names, num_parents,
 		mux_hw, mux_ops,
-		div_hw, div_ops,
+		भाग_hw, भाग_ops,
 		gate_hw, gate_ops,
 		mc->flags);
 
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		ret = PTR_ERR(clk);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	return clk;
+	वापस clk;
 err_out:
-	kfree(div);
-	kfree(gate);
-	kfree(mux);
+	kमुक्त(भाग);
+	kमुक्त(gate);
+	kमुक्त(mux);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-void mtk_clk_register_composites(const struct mtk_composite *mcs,
-		int num, void __iomem *base, spinlock_t *lock,
-		struct clk_onecell_data *clk_data)
-{
-	struct clk *clk;
-	int i;
+व्योम mtk_clk_रेजिस्टर_composites(स्थिर काष्ठा mtk_composite *mcs,
+		पूर्णांक num, व्योम __iomem *base, spinlock_t *lock,
+		काष्ठा clk_onecell_data *clk_data)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक i;
 
-	for (i = 0; i < num; i++) {
-		const struct mtk_composite *mc = &mcs[i];
+	क्रम (i = 0; i < num; i++) अणु
+		स्थिर काष्ठा mtk_composite *mc = &mcs[i];
 
-		if (clk_data && !IS_ERR_OR_NULL(clk_data->clks[mc->id]))
-			continue;
+		अगर (clk_data && !IS_ERR_OR_शून्य(clk_data->clks[mc->id]))
+			जारी;
 
-		clk = mtk_clk_register_composite(mc, base, lock);
+		clk = mtk_clk_रेजिस्टर_composite(mc, base, lock);
 
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to register clk %s: %ld\n",
 					mc->name, PTR_ERR(clk));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (clk_data)
+		अगर (clk_data)
 			clk_data->clks[mc->id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mtk_clk_register_dividers(const struct mtk_clk_divider *mcds,
-			int num, void __iomem *base, spinlock_t *lock,
-				struct clk_onecell_data *clk_data)
-{
-	struct clk *clk;
-	int i;
+व्योम mtk_clk_रेजिस्टर_भागiders(स्थिर काष्ठा mtk_clk_भागider *mcds,
+			पूर्णांक num, व्योम __iomem *base, spinlock_t *lock,
+				काष्ठा clk_onecell_data *clk_data)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक i;
 
-	for (i = 0; i <  num; i++) {
-		const struct mtk_clk_divider *mcd = &mcds[i];
+	क्रम (i = 0; i <  num; i++) अणु
+		स्थिर काष्ठा mtk_clk_भागider *mcd = &mcds[i];
 
-		if (clk_data && !IS_ERR_OR_NULL(clk_data->clks[mcd->id]))
-			continue;
+		अगर (clk_data && !IS_ERR_OR_शून्य(clk_data->clks[mcd->id]))
+			जारी;
 
-		clk = clk_register_divider(NULL, mcd->name, mcd->parent_name,
-			mcd->flags, base +  mcd->div_reg, mcd->div_shift,
-			mcd->div_width, mcd->clk_divider_flags, lock);
+		clk = clk_रेजिस्टर_भागider(शून्य, mcd->name, mcd->parent_name,
+			mcd->flags, base +  mcd->भाग_reg, mcd->भाग_shअगरt,
+			mcd->भाग_width, mcd->clk_भागider_flags, lock);
 
-		if (IS_ERR(clk)) {
+		अगर (IS_ERR(clk)) अणु
 			pr_err("Failed to register clk %s: %ld\n",
 				mcd->name, PTR_ERR(clk));
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (clk_data)
+		अगर (clk_data)
 			clk_data->clks[mcd->id] = clk;
-	}
-}
+	पूर्ण
+पूर्ण

@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __I915_GEM_STOLEN_H__
-#define __I915_GEM_STOLEN_H__
+#अगर_अघोषित __I915_GEM_STOLEN_H__
+#घोषणा __I915_GEM_STOLEN_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct drm_mm_node;
-struct drm_i915_gem_object;
+काष्ठा drm_i915_निजी;
+काष्ठा drm_mm_node;
+काष्ठा drm_i915_gem_object;
 
-int i915_gem_stolen_insert_node(struct drm_i915_private *dev_priv,
-				struct drm_mm_node *node, u64 size,
-				unsigned alignment);
-int i915_gem_stolen_insert_node_in_range(struct drm_i915_private *dev_priv,
-					 struct drm_mm_node *node, u64 size,
-					 unsigned alignment, u64 start,
+पूर्णांक i915_gem_stolen_insert_node(काष्ठा drm_i915_निजी *dev_priv,
+				काष्ठा drm_mm_node *node, u64 size,
+				अचिन्हित alignment);
+पूर्णांक i915_gem_stolen_insert_node_in_range(काष्ठा drm_i915_निजी *dev_priv,
+					 काष्ठा drm_mm_node *node, u64 size,
+					 अचिन्हित alignment, u64 start,
 					 u64 end);
-void i915_gem_stolen_remove_node(struct drm_i915_private *dev_priv,
-				 struct drm_mm_node *node);
-struct intel_memory_region *i915_gem_stolen_setup(struct drm_i915_private *i915);
-struct drm_i915_gem_object *
-i915_gem_object_create_stolen(struct drm_i915_private *dev_priv,
-			      resource_size_t size);
-struct drm_i915_gem_object *
-i915_gem_object_create_stolen_for_preallocated(struct drm_i915_private *dev_priv,
-					       resource_size_t stolen_offset,
-					       resource_size_t size);
+व्योम i915_gem_stolen_हटाओ_node(काष्ठा drm_i915_निजी *dev_priv,
+				 काष्ठा drm_mm_node *node);
+काष्ठा पूर्णांकel_memory_region *i915_gem_stolen_setup(काष्ठा drm_i915_निजी *i915);
+काष्ठा drm_i915_gem_object *
+i915_gem_object_create_stolen(काष्ठा drm_i915_निजी *dev_priv,
+			      resource_माप_प्रकार size);
+काष्ठा drm_i915_gem_object *
+i915_gem_object_create_stolen_क्रम_pपुनः_स्मृतिated(काष्ठा drm_i915_निजी *dev_priv,
+					       resource_माप_प्रकार stolen_offset,
+					       resource_माप_प्रकार size);
 
-bool i915_gem_object_is_stolen(const struct drm_i915_gem_object *obj);
+bool i915_gem_object_is_stolen(स्थिर काष्ठा drm_i915_gem_object *obj);
 
-#define I915_GEM_STOLEN_BIAS SZ_128K
+#घोषणा I915_GEM_STOLEN_BIAS SZ_128K
 
-#endif /* __I915_GEM_STOLEN_H__ */
+#पूर्ण_अगर /* __I915_GEM_STOLEN_H__ */

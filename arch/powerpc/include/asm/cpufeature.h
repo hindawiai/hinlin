@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * CPU feature definitions for module loading, used by
- * module_cpu_feature_match(), see asm/cputable.h for powerpc CPU features.
+ * CPU feature definitions क्रम module loading, used by
+ * module_cpu_feature_match(), see यंत्र/cputable.h क्रम घातerpc CPU features.
  *
  * Copyright 2016 Alastair D'Silva, IBM Corporation.
  */
 
-#ifndef __ASM_POWERPC_CPUFEATURE_H
-#define __ASM_POWERPC_CPUFEATURE_H
+#अगर_अघोषित __ASM_POWERPC_CPUFEATURE_H
+#घोषणा __ASM_POWERPC_CPUFEATURE_H
 
-#include <asm/cputable.h>
+#समावेश <यंत्र/cputable.h>
 
-/* Keep these in step with powerpc/include/asm/cputable.h */
-#define MAX_CPU_FEATURES (2 * 32)
+/* Keep these in step with घातerpc/include/यंत्र/cputable.h */
+#घोषणा MAX_CPU_FEATURES (2 * 32)
 
 /*
- * Currently we don't have a need for any of the feature bits defined in
- * cpu_user_features. When we do, they should be defined such as:
+ * Currently we करोn't have a need क्रम any of the feature bits defined in
+ * cpu_user_features. When we करो, they should be defined such as:
  *
- * #define PPC_MODULE_FEATURE_32 (ilog2(PPC_FEATURE_32))
+ * #घोषणा PPC_MODULE_FEATURE_32 (ilog2(PPC_FEATURE_32))
  */
 
-#define PPC_MODULE_FEATURE_VEC_CRYPTO			(32 + ilog2(PPC_FEATURE2_VEC_CRYPTO))
+#घोषणा PPC_MODULE_FEATURE_VEC_CRYPTO			(32 + ilog2(PPC_FEATURE2_VEC_CRYPTO))
 
-#define cpu_feature(x)		(x)
+#घोषणा cpu_feature(x)		(x)
 
-static inline bool cpu_have_feature(unsigned int num)
-{
-	if (num < 32)
-		return !!(cur_cpu_spec->cpu_user_features & 1UL << num);
-	else
-		return !!(cur_cpu_spec->cpu_user_features2 & 1UL << (num - 32));
-}
+अटल अंतरभूत bool cpu_have_feature(अचिन्हित पूर्णांक num)
+अणु
+	अगर (num < 32)
+		वापस !!(cur_cpu_spec->cpu_user_features & 1UL << num);
+	अन्यथा
+		वापस !!(cur_cpu_spec->cpu_user_features2 & 1UL << (num - 32));
+पूर्ण
 
-#endif /* __ASM_POWERPC_CPUFEATURE_H */
+#पूर्ण_अगर /* __ASM_POWERPC_CPUFEATURE_H */

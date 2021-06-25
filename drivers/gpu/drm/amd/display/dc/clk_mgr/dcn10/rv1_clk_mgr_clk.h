@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,7 +24,7 @@
  *
  */
 
-#ifndef DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_
-#define DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_
+#अगर_अघोषित DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_
+#घोषणा DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_
 
-#endif /* DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_ */
+#पूर्ण_अगर /* DAL_DC_DCN10_RV1_CLK_MGR_CLK_H_ */

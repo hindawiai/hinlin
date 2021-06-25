@@ -1,597 +1,598 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for dynamic reconfiguration for PCI, Memory, and CPU
- * Hotplug and Dynamic Logical Partitioning on RPA platforms.
+ * Support क्रम dynamic reconfiguration क्रम PCI, Memory, and CPU
+ * Hotplug and Dynamic Logical Partitioning on RPA platक्रमms.
  *
  * Copyright (C) 2009 Nathan Fontenot
  * Copyright (C) 2009 IBM Corporation
  */
 
-#define pr_fmt(fmt)	"dlpar: " fmt
+#घोषणा pr_fmt(fmt)	"dlpar: " fmt
 
-#include <linux/kernel.h>
-#include <linux/notifier.h>
-#include <linux/spinlock.h>
-#include <linux/cpu.h>
-#include <linux/slab.h>
-#include <linux/of.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
 
-#include "of_helpers.h"
-#include "pseries.h"
+#समावेश "of_helpers.h"
+#समावेश "pseries.h"
 
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <linux/uaccess.h>
-#include <asm/rtas.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/rtas.h>
 
-static struct workqueue_struct *pseries_hp_wq;
+अटल काष्ठा workqueue_काष्ठा *pseries_hp_wq;
 
-struct pseries_hp_work {
-	struct work_struct work;
-	struct pseries_hp_errorlog *errlog;
-};
+काष्ठा pseries_hp_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा pseries_hp_errorlog *errlog;
+पूर्ण;
 
-struct cc_workarea {
+काष्ठा cc_workarea अणु
 	__be32	drc_index;
 	__be32	zero;
 	__be32	name_offset;
 	__be32	prop_length;
 	__be32	prop_offset;
-};
+पूर्ण;
 
-void dlpar_free_cc_property(struct property *prop)
-{
-	kfree(prop->name);
-	kfree(prop->value);
-	kfree(prop);
-}
+व्योम dlpar_मुक्त_cc_property(काष्ठा property *prop)
+अणु
+	kमुक्त(prop->name);
+	kमुक्त(prop->value);
+	kमुक्त(prop);
+पूर्ण
 
-static struct property *dlpar_parse_cc_property(struct cc_workarea *ccwa)
-{
-	struct property *prop;
-	char *name;
-	char *value;
+अटल काष्ठा property *dlpar_parse_cc_property(काष्ठा cc_workarea *ccwa)
+अणु
+	काष्ठा property *prop;
+	अक्षर *name;
+	अक्षर *value;
 
-	prop = kzalloc(sizeof(*prop), GFP_KERNEL);
-	if (!prop)
-		return NULL;
+	prop = kzalloc(माप(*prop), GFP_KERNEL);
+	अगर (!prop)
+		वापस शून्य;
 
-	name = (char *)ccwa + be32_to_cpu(ccwa->name_offset);
+	name = (अक्षर *)ccwa + be32_to_cpu(ccwa->name_offset);
 	prop->name = kstrdup(name, GFP_KERNEL);
-	if (!prop->name) {
-		dlpar_free_cc_property(prop);
-		return NULL;
-	}
+	अगर (!prop->name) अणु
+		dlpar_मुक्त_cc_property(prop);
+		वापस शून्य;
+	पूर्ण
 
 	prop->length = be32_to_cpu(ccwa->prop_length);
-	value = (char *)ccwa + be32_to_cpu(ccwa->prop_offset);
+	value = (अक्षर *)ccwa + be32_to_cpu(ccwa->prop_offset);
 	prop->value = kmemdup(value, prop->length, GFP_KERNEL);
-	if (!prop->value) {
-		dlpar_free_cc_property(prop);
-		return NULL;
-	}
+	अगर (!prop->value) अणु
+		dlpar_मुक्त_cc_property(prop);
+		वापस शून्य;
+	पूर्ण
 
-	return prop;
-}
+	वापस prop;
+पूर्ण
 
-static struct device_node *dlpar_parse_cc_node(struct cc_workarea *ccwa)
-{
-	struct device_node *dn;
-	const char *name;
+अटल काष्ठा device_node *dlpar_parse_cc_node(काष्ठा cc_workarea *ccwa)
+अणु
+	काष्ठा device_node *dn;
+	स्थिर अक्षर *name;
 
-	dn = kzalloc(sizeof(*dn), GFP_KERNEL);
-	if (!dn)
-		return NULL;
+	dn = kzalloc(माप(*dn), GFP_KERNEL);
+	अगर (!dn)
+		वापस शून्य;
 
-	name = (const char *)ccwa + be32_to_cpu(ccwa->name_offset);
+	name = (स्थिर अक्षर *)ccwa + be32_to_cpu(ccwa->name_offset);
 	dn->full_name = kstrdup(name, GFP_KERNEL);
-	if (!dn->full_name) {
-		kfree(dn);
-		return NULL;
-	}
+	अगर (!dn->full_name) अणु
+		kमुक्त(dn);
+		वापस शून्य;
+	पूर्ण
 
 	of_node_set_flag(dn, OF_DYNAMIC);
 	of_node_init(dn);
 
-	return dn;
-}
+	वापस dn;
+पूर्ण
 
-static void dlpar_free_one_cc_node(struct device_node *dn)
-{
-	struct property *prop;
+अटल व्योम dlpar_मुक्त_one_cc_node(काष्ठा device_node *dn)
+अणु
+	काष्ठा property *prop;
 
-	while (dn->properties) {
+	जबतक (dn->properties) अणु
 		prop = dn->properties;
 		dn->properties = prop->next;
-		dlpar_free_cc_property(prop);
-	}
+		dlpar_मुक्त_cc_property(prop);
+	पूर्ण
 
-	kfree(dn->full_name);
-	kfree(dn);
-}
+	kमुक्त(dn->full_name);
+	kमुक्त(dn);
+पूर्ण
 
-void dlpar_free_cc_nodes(struct device_node *dn)
-{
-	if (dn->child)
-		dlpar_free_cc_nodes(dn->child);
+व्योम dlpar_मुक्त_cc_nodes(काष्ठा device_node *dn)
+अणु
+	अगर (dn->child)
+		dlpar_मुक्त_cc_nodes(dn->child);
 
-	if (dn->sibling)
-		dlpar_free_cc_nodes(dn->sibling);
+	अगर (dn->sibling)
+		dlpar_मुक्त_cc_nodes(dn->sibling);
 
-	dlpar_free_one_cc_node(dn);
-}
+	dlpar_मुक्त_one_cc_node(dn);
+पूर्ण
 
-#define COMPLETE	0
-#define NEXT_SIBLING    1
-#define NEXT_CHILD      2
-#define NEXT_PROPERTY   3
-#define PREV_PARENT     4
-#define MORE_MEMORY     5
-#define ERR_CFG_USE     -9003
+#घोषणा COMPLETE	0
+#घोषणा NEXT_SIBLING    1
+#घोषणा NEXT_CHILD      2
+#घोषणा NEXT_PROPERTY   3
+#घोषणा PREV_PARENT     4
+#घोषणा MORE_MEMORY     5
+#घोषणा ERR_CFG_USE     -9003
 
-struct device_node *dlpar_configure_connector(__be32 drc_index,
-					      struct device_node *parent)
-{
-	struct device_node *dn;
-	struct device_node *first_dn = NULL;
-	struct device_node *last_dn = NULL;
-	struct property *property;
-	struct property *last_property = NULL;
-	struct cc_workarea *ccwa;
-	char *data_buf;
-	int cc_token;
-	int rc = -1;
+काष्ठा device_node *dlpar_configure_connector(__be32 drc_index,
+					      काष्ठा device_node *parent)
+अणु
+	काष्ठा device_node *dn;
+	काष्ठा device_node *first_dn = शून्य;
+	काष्ठा device_node *last_dn = शून्य;
+	काष्ठा property *property;
+	काष्ठा property *last_property = शून्य;
+	काष्ठा cc_workarea *ccwa;
+	अक्षर *data_buf;
+	पूर्णांक cc_token;
+	पूर्णांक rc = -1;
 
 	cc_token = rtas_token("ibm,configure-connector");
-	if (cc_token == RTAS_UNKNOWN_SERVICE)
-		return NULL;
+	अगर (cc_token == RTAS_UNKNOWN_SERVICE)
+		वापस शून्य;
 
 	data_buf = kzalloc(RTAS_DATA_BUF_SIZE, GFP_KERNEL);
-	if (!data_buf)
-		return NULL;
+	अगर (!data_buf)
+		वापस शून्य;
 
-	ccwa = (struct cc_workarea *)&data_buf[0];
+	ccwa = (काष्ठा cc_workarea *)&data_buf[0];
 	ccwa->drc_index = drc_index;
 	ccwa->zero = 0;
 
-	do {
+	करो अणु
 		/* Since we release the rtas_data_buf lock between configure
 		 * connector calls we want to re-populate the rtas_data_buffer
 		 * with the contents of the previous call.
 		 */
 		spin_lock(&rtas_data_buf_lock);
 
-		memcpy(rtas_data_buf, data_buf, RTAS_DATA_BUF_SIZE);
-		rc = rtas_call(cc_token, 2, 1, NULL, rtas_data_buf, NULL);
-		memcpy(data_buf, rtas_data_buf, RTAS_DATA_BUF_SIZE);
+		स_नकल(rtas_data_buf, data_buf, RTAS_DATA_BUF_SIZE);
+		rc = rtas_call(cc_token, 2, 1, शून्य, rtas_data_buf, शून्य);
+		स_नकल(data_buf, rtas_data_buf, RTAS_DATA_BUF_SIZE);
 
 		spin_unlock(&rtas_data_buf_lock);
 
-		if (rtas_busy_delay(rc))
-			continue;
+		अगर (rtas_busy_delay(rc))
+			जारी;
 
-		switch (rc) {
-		case COMPLETE:
-			break;
+		चयन (rc) अणु
+		हाल COMPLETE:
+			अवरोध;
 
-		case NEXT_SIBLING:
+		हाल NEXT_SIBLING:
 			dn = dlpar_parse_cc_node(ccwa);
-			if (!dn)
-				goto cc_error;
+			अगर (!dn)
+				जाओ cc_error;
 
 			dn->parent = last_dn->parent;
 			last_dn->sibling = dn;
 			last_dn = dn;
-			break;
+			अवरोध;
 
-		case NEXT_CHILD:
+		हाल NEXT_CHILD:
 			dn = dlpar_parse_cc_node(ccwa);
-			if (!dn)
-				goto cc_error;
+			अगर (!dn)
+				जाओ cc_error;
 
-			if (!first_dn) {
+			अगर (!first_dn) अणु
 				dn->parent = parent;
 				first_dn = dn;
-			} else {
+			पूर्ण अन्यथा अणु
 				dn->parent = last_dn;
-				if (last_dn)
+				अगर (last_dn)
 					last_dn->child = dn;
-			}
+			पूर्ण
 
 			last_dn = dn;
-			break;
+			अवरोध;
 
-		case NEXT_PROPERTY:
+		हाल NEXT_PROPERTY:
 			property = dlpar_parse_cc_property(ccwa);
-			if (!property)
-				goto cc_error;
+			अगर (!property)
+				जाओ cc_error;
 
-			if (!last_dn->properties)
+			अगर (!last_dn->properties)
 				last_dn->properties = property;
-			else
+			अन्यथा
 				last_property->next = property;
 
 			last_property = property;
-			break;
+			अवरोध;
 
-		case PREV_PARENT:
+		हाल PREV_PARENT:
 			last_dn = last_dn->parent;
-			break;
+			अवरोध;
 
-		case MORE_MEMORY:
-		case ERR_CFG_USE:
-		default:
-			printk(KERN_ERR "Unexpected Error (%d) "
+		हाल MORE_MEMORY:
+		हाल ERR_CFG_USE:
+		शेष:
+			prपूर्णांकk(KERN_ERR "Unexpected Error (%d) "
 			       "returned from configure-connector\n", rc);
-			goto cc_error;
-		}
-	} while (rc);
+			जाओ cc_error;
+		पूर्ण
+	पूर्ण जबतक (rc);
 
 cc_error:
-	kfree(data_buf);
+	kमुक्त(data_buf);
 
-	if (rc) {
-		if (first_dn)
-			dlpar_free_cc_nodes(first_dn);
+	अगर (rc) अणु
+		अगर (first_dn)
+			dlpar_मुक्त_cc_nodes(first_dn);
 
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return first_dn;
-}
+	वापस first_dn;
+पूर्ण
 
-int dlpar_attach_node(struct device_node *dn, struct device_node *parent)
-{
-	int rc;
+पूर्णांक dlpar_attach_node(काष्ठा device_node *dn, काष्ठा device_node *parent)
+अणु
+	पूर्णांक rc;
 
 	dn->parent = parent;
 
 	rc = of_attach_node(dn);
-	if (rc) {
-		printk(KERN_ERR "Failed to add device node %pOF\n", dn);
-		return rc;
-	}
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "Failed to add device node %pOF\n", dn);
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dlpar_detach_node(struct device_node *dn)
-{
-	struct device_node *child;
-	int rc;
+पूर्णांक dlpar_detach_node(काष्ठा device_node *dn)
+अणु
+	काष्ठा device_node *child;
+	पूर्णांक rc;
 
-	child = of_get_next_child(dn, NULL);
-	while (child) {
+	child = of_get_next_child(dn, शून्य);
+	जबतक (child) अणु
 		dlpar_detach_node(child);
 		child = of_get_next_child(dn, child);
-	}
+	पूर्ण
 
 	rc = of_detach_node(dn);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	of_node_put(dn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DR_ENTITY_SENSE		9003
-#define DR_ENTITY_PRESENT	1
-#define DR_ENTITY_UNUSABLE	2
-#define ALLOCATION_STATE	9003
-#define ALLOC_UNUSABLE		0
-#define ALLOC_USABLE		1
-#define ISOLATION_STATE		9001
-#define ISOLATE			0
-#define UNISOLATE		1
+#घोषणा DR_ENTITY_SENSE		9003
+#घोषणा DR_ENTITY_PRESENT	1
+#घोषणा DR_ENTITY_UNUSABLE	2
+#घोषणा ALLOCATION_STATE	9003
+#घोषणा ALLOC_UNUSABLE		0
+#घोषणा ALLOC_USABLE		1
+#घोषणा ISOLATION_STATE		9001
+#घोषणा ISOLATE			0
+#घोषणा UNISOLATE		1
 
-int dlpar_acquire_drc(u32 drc_index)
-{
-	int dr_status, rc;
+पूर्णांक dlpar_acquire_drc(u32 drc_index)
+अणु
+	पूर्णांक dr_status, rc;
 
 	rc = rtas_call(rtas_token("get-sensor-state"), 2, 2, &dr_status,
 		       DR_ENTITY_SENSE, drc_index);
-	if (rc || dr_status != DR_ENTITY_UNUSABLE)
-		return -1;
+	अगर (rc || dr_status != DR_ENTITY_UNUSABLE)
+		वापस -1;
 
 	rc = rtas_set_indicator(ALLOCATION_STATE, drc_index, ALLOC_USABLE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = rtas_set_indicator(ISOLATION_STATE, drc_index, UNISOLATE);
-	if (rc) {
+	अगर (rc) अणु
 		rtas_set_indicator(ALLOCATION_STATE, drc_index, ALLOC_UNUSABLE);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dlpar_release_drc(u32 drc_index)
-{
-	int dr_status, rc;
+पूर्णांक dlpar_release_drc(u32 drc_index)
+अणु
+	पूर्णांक dr_status, rc;
 
 	rc = rtas_call(rtas_token("get-sensor-state"), 2, 2, &dr_status,
 		       DR_ENTITY_SENSE, drc_index);
-	if (rc || dr_status != DR_ENTITY_PRESENT)
-		return -1;
+	अगर (rc || dr_status != DR_ENTITY_PRESENT)
+		वापस -1;
 
 	rc = rtas_set_indicator(ISOLATION_STATE, drc_index, ISOLATE);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = rtas_set_indicator(ALLOCATION_STATE, drc_index, ALLOC_UNUSABLE);
-	if (rc) {
+	अगर (rc) अणु
 		rtas_set_indicator(ISOLATION_STATE, drc_index, UNISOLATE);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dlpar_unisolate_drc(u32 drc_index)
-{
-	int dr_status, rc;
+पूर्णांक dlpar_unisolate_drc(u32 drc_index)
+अणु
+	पूर्णांक dr_status, rc;
 
 	rc = rtas_call(rtas_token("get-sensor-state"), 2, 2, &dr_status,
 				DR_ENTITY_SENSE, drc_index);
-	if (rc || dr_status != DR_ENTITY_PRESENT)
-		return -1;
+	अगर (rc || dr_status != DR_ENTITY_PRESENT)
+		वापस -1;
 
 	rtas_set_indicator(ISOLATION_STATE, drc_index, UNISOLATE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int handle_dlpar_errorlog(struct pseries_hp_errorlog *hp_elog)
-{
-	int rc;
+पूर्णांक handle_dlpar_errorlog(काष्ठा pseries_hp_errorlog *hp_elog)
+अणु
+	पूर्णांक rc;
 
-	/* pseries error logs are in BE format, convert to cpu type */
-	switch (hp_elog->id_type) {
-	case PSERIES_HP_ELOG_ID_DRC_COUNT:
+	/* pseries error logs are in BE क्रमmat, convert to cpu type */
+	चयन (hp_elog->id_type) अणु
+	हाल PSERIES_HP_ELOG_ID_DRC_COUNT:
 		hp_elog->_drc_u.drc_count =
 				be32_to_cpu(hp_elog->_drc_u.drc_count);
-		break;
-	case PSERIES_HP_ELOG_ID_DRC_INDEX:
+		अवरोध;
+	हाल PSERIES_HP_ELOG_ID_DRC_INDEX:
 		hp_elog->_drc_u.drc_index =
 				be32_to_cpu(hp_elog->_drc_u.drc_index);
-		break;
-	case PSERIES_HP_ELOG_ID_DRC_IC:
+		अवरोध;
+	हाल PSERIES_HP_ELOG_ID_DRC_IC:
 		hp_elog->_drc_u.ic.count =
 				be32_to_cpu(hp_elog->_drc_u.ic.count);
 		hp_elog->_drc_u.ic.index =
 				be32_to_cpu(hp_elog->_drc_u.ic.index);
-	}
+	पूर्ण
 
-	switch (hp_elog->resource) {
-	case PSERIES_HP_ELOG_RESOURCE_MEM:
+	चयन (hp_elog->resource) अणु
+	हाल PSERIES_HP_ELOG_RESOURCE_MEM:
 		rc = dlpar_memory(hp_elog);
-		break;
-	case PSERIES_HP_ELOG_RESOURCE_CPU:
+		अवरोध;
+	हाल PSERIES_HP_ELOG_RESOURCE_CPU:
 		rc = dlpar_cpu(hp_elog);
-		break;
-	case PSERIES_HP_ELOG_RESOURCE_PMEM:
+		अवरोध;
+	हाल PSERIES_HP_ELOG_RESOURCE_PMEM:
 		rc = dlpar_hp_pmem(hp_elog);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_warn_ratelimited("Invalid resource (%d) specified\n",
 				    hp_elog->resource);
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pseries_hp_work_fn(struct work_struct *work)
-{
-	struct pseries_hp_work *hp_work =
-			container_of(work, struct pseries_hp_work, work);
+अटल व्योम pseries_hp_work_fn(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pseries_hp_work *hp_work =
+			container_of(work, काष्ठा pseries_hp_work, work);
 
 	handle_dlpar_errorlog(hp_work->errlog);
 
-	kfree(hp_work->errlog);
-	kfree((void *)work);
-}
+	kमुक्त(hp_work->errlog);
+	kमुक्त((व्योम *)work);
+पूर्ण
 
-void queue_hotplug_event(struct pseries_hp_errorlog *hp_errlog)
-{
-	struct pseries_hp_work *work;
-	struct pseries_hp_errorlog *hp_errlog_copy;
+व्योम queue_hotplug_event(काष्ठा pseries_hp_errorlog *hp_errlog)
+अणु
+	काष्ठा pseries_hp_work *work;
+	काष्ठा pseries_hp_errorlog *hp_errlog_copy;
 
-	hp_errlog_copy = kmemdup(hp_errlog, sizeof(*hp_errlog), GFP_ATOMIC);
-	if (!hp_errlog_copy)
-		return;
+	hp_errlog_copy = kmemdup(hp_errlog, माप(*hp_errlog), GFP_ATOMIC);
+	अगर (!hp_errlog_copy)
+		वापस;
 
-	work = kmalloc(sizeof(struct pseries_hp_work), GFP_ATOMIC);
-	if (work) {
-		INIT_WORK((struct work_struct *)work, pseries_hp_work_fn);
+	work = kदो_स्मृति(माप(काष्ठा pseries_hp_work), GFP_ATOMIC);
+	अगर (work) अणु
+		INIT_WORK((काष्ठा work_काष्ठा *)work, pseries_hp_work_fn);
 		work->errlog = hp_errlog_copy;
-		queue_work(pseries_hp_wq, (struct work_struct *)work);
-	} else {
-		kfree(hp_errlog_copy);
-	}
-}
+		queue_work(pseries_hp_wq, (काष्ठा work_काष्ठा *)work);
+	पूर्ण अन्यथा अणु
+		kमुक्त(hp_errlog_copy);
+	पूर्ण
+पूर्ण
 
-static int dlpar_parse_resource(char **cmd, struct pseries_hp_errorlog *hp_elog)
-{
-	char *arg;
+अटल पूर्णांक dlpar_parse_resource(अक्षर **cmd, काष्ठा pseries_hp_errorlog *hp_elog)
+अणु
+	अक्षर *arg;
 
 	arg = strsep(cmd, " ");
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	if (sysfs_streq(arg, "memory")) {
+	अगर (sysfs_streq(arg, "memory")) अणु
 		hp_elog->resource = PSERIES_HP_ELOG_RESOURCE_MEM;
-	} else if (sysfs_streq(arg, "cpu")) {
+	पूर्ण अन्यथा अगर (sysfs_streq(arg, "cpu")) अणु
 		hp_elog->resource = PSERIES_HP_ELOG_RESOURCE_CPU;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Invalid resource specified.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlpar_parse_action(char **cmd, struct pseries_hp_errorlog *hp_elog)
-{
-	char *arg;
+अटल पूर्णांक dlpar_parse_action(अक्षर **cmd, काष्ठा pseries_hp_errorlog *hp_elog)
+अणु
+	अक्षर *arg;
 
 	arg = strsep(cmd, " ");
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	if (sysfs_streq(arg, "add")) {
+	अगर (sysfs_streq(arg, "add")) अणु
 		hp_elog->action = PSERIES_HP_ELOG_ACTION_ADD;
-	} else if (sysfs_streq(arg, "remove")) {
+	पूर्ण अन्यथा अगर (sysfs_streq(arg, "remove")) अणु
 		hp_elog->action = PSERIES_HP_ELOG_ACTION_REMOVE;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Invalid action specified.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dlpar_parse_id_type(char **cmd, struct pseries_hp_errorlog *hp_elog)
-{
-	char *arg;
+अटल पूर्णांक dlpar_parse_id_type(अक्षर **cmd, काष्ठा pseries_hp_errorlog *hp_elog)
+अणु
+	अक्षर *arg;
 	u32 count, index;
 
 	arg = strsep(cmd, " ");
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
-	if (sysfs_streq(arg, "indexed-count")) {
+	अगर (sysfs_streq(arg, "indexed-count")) अणु
 		hp_elog->id_type = PSERIES_HP_ELOG_ID_DRC_IC;
 		arg = strsep(cmd, " ");
-		if (!arg) {
+		अगर (!arg) अणु
 			pr_err("No DRC count specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (kstrtou32(arg, 0, &count)) {
+		अगर (kstrtou32(arg, 0, &count)) अणु
 			pr_err("Invalid DRC count specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		arg = strsep(cmd, " ");
-		if (!arg) {
+		अगर (!arg) अणु
 			pr_err("No DRC Index specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (kstrtou32(arg, 0, &index)) {
+		अगर (kstrtou32(arg, 0, &index)) अणु
 			pr_err("Invalid DRC Index specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		hp_elog->_drc_u.ic.count = cpu_to_be32(count);
 		hp_elog->_drc_u.ic.index = cpu_to_be32(index);
-	} else if (sysfs_streq(arg, "index")) {
+	पूर्ण अन्यथा अगर (sysfs_streq(arg, "index")) अणु
 		hp_elog->id_type = PSERIES_HP_ELOG_ID_DRC_INDEX;
 		arg = strsep(cmd, " ");
-		if (!arg) {
+		अगर (!arg) अणु
 			pr_err("No DRC Index specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (kstrtou32(arg, 0, &index)) {
+		अगर (kstrtou32(arg, 0, &index)) अणु
 			pr_err("Invalid DRC Index specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		hp_elog->_drc_u.drc_index = cpu_to_be32(index);
-	} else if (sysfs_streq(arg, "count")) {
+	पूर्ण अन्यथा अगर (sysfs_streq(arg, "count")) अणु
 		hp_elog->id_type = PSERIES_HP_ELOG_ID_DRC_COUNT;
 		arg = strsep(cmd, " ");
-		if (!arg) {
+		अगर (!arg) अणु
 			pr_err("No DRC count specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (kstrtou32(arg, 0, &count)) {
+		अगर (kstrtou32(arg, 0, &count)) अणु
 			pr_err("Invalid DRC count specified.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		hp_elog->_drc_u.drc_count = cpu_to_be32(count);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Invalid id_type specified.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t dlpar_store(struct class *class, struct class_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct pseries_hp_errorlog hp_elog;
-	char *argbuf;
-	char *args;
-	int rc;
+अटल sमाप_प्रकार dlpar_store(काष्ठा class *class, काष्ठा class_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा pseries_hp_errorlog hp_elog;
+	अक्षर *argbuf;
+	अक्षर *args;
+	पूर्णांक rc;
 
 	args = argbuf = kstrdup(buf, GFP_KERNEL);
-	if (!argbuf)
-		return -ENOMEM;
+	अगर (!argbuf)
+		वापस -ENOMEM;
 
 	/*
-	 * Parse out the request from the user, this will be in the form:
+	 * Parse out the request from the user, this will be in the क्रमm:
 	 * <resource> <action> <id_type> <id>
 	 */
 	rc = dlpar_parse_resource(&args, &hp_elog);
-	if (rc)
-		goto dlpar_store_out;
+	अगर (rc)
+		जाओ dlpar_store_out;
 
 	rc = dlpar_parse_action(&args, &hp_elog);
-	if (rc)
-		goto dlpar_store_out;
+	अगर (rc)
+		जाओ dlpar_store_out;
 
 	rc = dlpar_parse_id_type(&args, &hp_elog);
-	if (rc)
-		goto dlpar_store_out;
+	अगर (rc)
+		जाओ dlpar_store_out;
 
 	rc = handle_dlpar_errorlog(&hp_elog);
 
 dlpar_store_out:
-	kfree(argbuf);
+	kमुक्त(argbuf);
 
-	if (rc)
+	अगर (rc)
 		pr_err("Could not handle DLPAR request \"%s\"\n", buf);
 
-	return rc ? rc : count;
-}
+	वापस rc ? rc : count;
+पूर्ण
 
-static ssize_t dlpar_show(struct class *class, struct class_attribute *attr,
-			  char *buf)
-{
-	return sprintf(buf, "%s\n", "memory,cpu");
-}
+अटल sमाप_प्रकार dlpar_show(काष्ठा class *class, काष्ठा class_attribute *attr,
+			  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", "memory,cpu");
+पूर्ण
 
-static CLASS_ATTR_RW(dlpar);
+अटल CLASS_ATTR_RW(dlpar);
 
-int __init dlpar_workqueue_init(void)
-{
-	if (pseries_hp_wq)
-		return 0;
+पूर्णांक __init dlpar_workqueue_init(व्योम)
+अणु
+	अगर (pseries_hp_wq)
+		वापस 0;
 
 	pseries_hp_wq = alloc_workqueue("pseries hotplug workqueue",
 			WQ_UNBOUND, 1);
 
-	return pseries_hp_wq ? 0 : -ENOMEM;
-}
+	वापस pseries_hp_wq ? 0 : -ENOMEM;
+पूर्ण
 
-static int __init dlpar_sysfs_init(void)
-{
-	int rc;
+अटल पूर्णांक __init dlpar_sysfs_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	rc = dlpar_workqueue_init();
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	return sysfs_create_file(kernel_kobj, &class_attr_dlpar.attr);
-}
+	वापस sysfs_create_file(kernel_kobj, &class_attr_dlpar.attr);
+पूर्ण
 machine_device_initcall(pseries, dlpar_sysfs_init);
 

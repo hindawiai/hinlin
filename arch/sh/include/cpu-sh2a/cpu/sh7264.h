@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH7264_H__
-#define __ASM_SH7264_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH7264_H__
+#घोषणा __ASM_SH7264_H__
 
-enum {
+क्रमागत अणु
 	/* Port A */
 	GPIO_PA3, GPIO_PA2, GPIO_PA1, GPIO_PA0,
 
@@ -44,7 +45,7 @@ enum {
 	GPIO_PG7, GPIO_PG6, GPIO_PG5, GPIO_PG4,
 	GPIO_PG3, GPIO_PG2, GPIO_PG1, GPIO_PG0,
 
-	/* Port H - Port H does not have a Data Register */
+	/* Port H - Port H करोes not have a Data Register */
 
 	/* Port I - not on device */
 
@@ -145,7 +146,7 @@ enum {
 	GPIO_FN_SPDIF_IN,
 	GPIO_FN_SPDIF_OUT,
 
-	/* NANDFMC */ /* NOTE Controller is not available in boot mode 0 */
+	/* न_अंकDFMC */ /* NOTE Controller is not available in boot mode 0 */
 	GPIO_FN_FCE,
 	GPIO_FN_FRB,
 
@@ -164,6 +165,6 @@ enum {
 	GPIO_FN_LCD_DATA3, GPIO_FN_LCD_DATA2,
 	GPIO_FN_LCD_DATA1, GPIO_FN_LCD_DATA0,
 	GPIO_FN_LCD_M_DISP,
-};
+पूर्ण;
 
-#endif /* __ASM_SH7264_H__ */
+#पूर्ण_अगर /* __ASM_SH7264_H__ */

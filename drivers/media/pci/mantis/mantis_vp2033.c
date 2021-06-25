@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Mantis VP-2033 driver
 
@@ -6,162 +7,162 @@
 
 */
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <media/dmxdev.h>
-#include <media/dvbdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvbdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
 
-#include "tda1002x.h"
-#include "mantis_common.h"
-#include "mantis_ioc.h"
-#include "mantis_dvb.h"
-#include "mantis_vp2033.h"
+#समावेश "tda1002x.h"
+#समावेश "mantis_common.h"
+#समावेश "mantis_ioc.h"
+#समावेश "mantis_dvb.h"
+#समावेश "mantis_vp2033.h"
 
-#define MANTIS_MODEL_NAME	"VP-2033"
-#define MANTIS_DEV_TYPE		"DVB-C"
+#घोषणा MANTIS_MODEL_NAME	"VP-2033"
+#घोषणा MANTIS_DEV_TYPE		"DVB-C"
 
-static struct tda1002x_config vp2033_tda1002x_cu1216_config = {
+अटल काष्ठा tda1002x_config vp2033_tda1002x_cu1216_config = अणु
 	.demod_address = 0x18 >> 1,
 	.invert = 1,
-};
+पूर्ण;
 
-static struct tda10023_config vp2033_tda10023_cu1216_config = {
+अटल काष्ठा tda10023_config vp2033_tda10023_cu1216_config = अणु
 	.demod_address = 0x18 >> 1,
 	.invert = 1,
-};
+पूर्ण;
 
-static u8 read_pwm(struct mantis_pci *mantis)
-{
-	struct i2c_adapter *adapter = &mantis->adapter;
+अटल u8 पढ़ो_pwm(काष्ठा mantis_pci *mantis)
+अणु
+	काष्ठा i2c_adapter *adapter = &mantis->adapter;
 
 	u8 b = 0xff;
 	u8 pwm;
-	struct i2c_msg msg[] = {
-		{.addr = 0x50, .flags = 0, .buf = &b, .len = 1},
-		{.addr = 0x50, .flags = I2C_M_RD, .buf = &pwm, .len = 1}
-	};
+	काष्ठा i2c_msg msg[] = अणु
+		अणु.addr = 0x50, .flags = 0, .buf = &b, .len = 1पूर्ण,
+		अणु.addr = 0x50, .flags = I2C_M_RD, .buf = &pwm, .len = 1पूर्ण
+	पूर्ण;
 
-	if ((i2c_transfer(adapter, msg, 2) != 2)
+	अगर ((i2c_transfer(adapter, msg, 2) != 2)
 	    || (pwm == 0xff))
 		pwm = 0x48;
 
-	return pwm;
-}
+	वापस pwm;
+पूर्ण
 
-static int tda1002x_cu1216_tuner_set(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct mantis_pci *mantis = fe->dvb->priv;
-	struct i2c_adapter *adapter = &mantis->adapter;
+अटल पूर्णांक tda1002x_cu1216_tuner_set(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा mantis_pci *mantis = fe->dvb->priv;
+	काष्ठा i2c_adapter *adapter = &mantis->adapter;
 
 	u8 buf[6];
-	struct i2c_msg msg = {.addr = 0x60, .flags = 0, .buf = buf, .len = sizeof(buf)};
-	int i;
+	काष्ठा i2c_msg msg = अणु.addr = 0x60, .flags = 0, .buf = buf, .len = माप(buf)पूर्ण;
+	पूर्णांक i;
 
-#define CU1216_IF 36125000
-#define TUNER_MUL 62500
+#घोषणा CU1216_IF 36125000
+#घोषणा TUNER_MUL 62500
 
-	u32 div = (p->frequency + CU1216_IF + TUNER_MUL / 2) / TUNER_MUL;
+	u32 भाग = (p->frequency + CU1216_IF + TUNER_MUL / 2) / TUNER_MUL;
 
-	buf[0] = (div >> 8) & 0x7f;
-	buf[1] = div & 0xff;
+	buf[0] = (भाग >> 8) & 0x7f;
+	buf[1] = भाग & 0xff;
 	buf[2] = 0xce;
 	buf[3] = (p->frequency < 150000000 ? 0x01 :
 		  p->frequency < 445000000 ? 0x02 : 0x04);
 	buf[4] = 0xde;
 	buf[5] = 0x20;
 
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (i2c_transfer(adapter, &msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(adapter, &msg, 1) != 1)
+		वापस -EIO;
 
-	/* wait for the pll lock */
+	/* रुको क्रम the pll lock */
 	msg.flags = I2C_M_RD;
 	msg.len = 1;
-	for (i = 0; i < 20; i++) {
-		if (fe->ops.i2c_gate_ctrl)
+	क्रम (i = 0; i < 20; i++) अणु
+		अगर (fe->ops.i2c_gate_ctrl)
 			fe->ops.i2c_gate_ctrl(fe, 1);
 
-		if (i2c_transfer(adapter, &msg, 1) == 1 && (buf[0] & 0x40))
-			break;
+		अगर (i2c_transfer(adapter, &msg, 1) == 1 && (buf[0] & 0x40))
+			अवरोध;
 
 		msleep(10);
-	}
+	पूर्ण
 
-	/* switch the charge pump to the lower current */
+	/* चयन the अक्षरge pump to the lower current */
 	msg.flags = 0;
 	msg.len = 2;
 	msg.buf = &buf[2];
 	buf[2] &= ~0x40;
-	if (fe->ops.i2c_gate_ctrl)
+	अगर (fe->ops.i2c_gate_ctrl)
 		fe->ops.i2c_gate_ctrl(fe, 1);
 
-	if (i2c_transfer(adapter, &msg, 1) != 1)
-		return -EIO;
+	अगर (i2c_transfer(adapter, &msg, 1) != 1)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vp2033_frontend_init(struct mantis_pci *mantis, struct dvb_frontend *fe)
-{
-	struct i2c_adapter *adapter = &mantis->adapter;
+अटल पूर्णांक vp2033_frontend_init(काष्ठा mantis_pci *mantis, काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा i2c_adapter *adapter = &mantis->adapter;
 
-	int err = 0;
+	पूर्णांक err = 0;
 
-	err = mantis_frontend_power(mantis, POWER_ON);
-	if (err == 0) {
+	err = mantis_frontend_घातer(mantis, POWER_ON);
+	अगर (err == 0) अणु
 		mantis_frontend_soft_reset(mantis);
 		msleep(250);
 
-		dprintk(MANTIS_ERROR, 1, "Probing for CU1216 (DVB-C)");
+		dprपूर्णांकk(MANTIS_ERROR, 1, "Probing for CU1216 (DVB-C)");
 		fe = dvb_attach(tda10021_attach, &vp2033_tda1002x_cu1216_config,
 				     adapter,
-				     read_pwm(mantis));
+				     पढ़ो_pwm(mantis));
 
-		if (fe) {
-			dprintk(MANTIS_ERROR, 1,
+		अगर (fe) अणु
+			dprपूर्णांकk(MANTIS_ERROR, 1,
 				"found Philips CU1216 DVB-C frontend (TDA10021) @ 0x%02x",
 				vp2033_tda1002x_cu1216_config.demod_address);
-		} else {
+		पूर्ण अन्यथा अणु
 			fe = dvb_attach(tda10023_attach, &vp2033_tda10023_cu1216_config,
 					     adapter,
-					     read_pwm(mantis));
+					     पढ़ो_pwm(mantis));
 
-			if (fe) {
-				dprintk(MANTIS_ERROR, 1,
+			अगर (fe) अणु
+				dprपूर्णांकk(MANTIS_ERROR, 1,
 					"found Philips CU1216 DVB-C frontend (TDA10023) @ 0x%02x",
 					vp2033_tda1002x_cu1216_config.demod_address);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (fe) {
+		अगर (fe) अणु
 			fe->ops.tuner_ops.set_params = tda1002x_cu1216_tuner_set;
-			dprintk(MANTIS_ERROR, 1, "Mantis DVB-C Philips CU1216 frontend attach success");
-		} else {
-			return -1;
-		}
-	} else {
-		dprintk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
+			dprपूर्णांकk(MANTIS_ERROR, 1, "Mantis DVB-C Philips CU1216 frontend attach success");
+		पूर्ण अन्यथा अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk(MANTIS_ERROR, 1, "Frontend on <%s> POWER ON failed! <%d>",
 			adapter->name,
 			err);
 
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	mantis->fe = fe;
-	dprintk(MANTIS_DEBUG, 1, "Done!");
+	dprपूर्णांकk(MANTIS_DEBUG, 1, "Done!");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mantis_hwconfig vp2033_config = {
+काष्ठा mantis_hwconfig vp2033_config = अणु
 	.model_name	= MANTIS_MODEL_NAME,
 	.dev_type	= MANTIS_DEV_TYPE,
 	.ts_size	= MANTIS_TS_204,
@@ -171,6 +172,6 @@ struct mantis_hwconfig vp2033_config = {
 	.bytes		= 0,
 
 	.frontend_init	= vp2033_frontend_init,
-	.power		= GPIF_A12,
+	.घातer		= GPIF_A12,
 	.reset		= GPIF_A13,
-};
+पूर्ण;

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: exfldio - Aml Field I/O
@@ -7,50 +8,50 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acinterp.h"
-#include "amlcode.h"
-#include "acevents.h"
-#include "acdispat.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acinterp.h"
+#समावेश "amlcode.h"
+#समावेश "acevents.h"
+#समावेश "acdispat.h"
 
-#define _COMPONENT          ACPI_EXECUTER
+#घोषणा _COMPONENT          ACPI_EXECUTER
 ACPI_MODULE_NAME("exfldio")
 
 /* Local prototypes */
-static acpi_status
-acpi_ex_field_datum_io(union acpi_operand_object *obj_desc,
-		       u32 field_datum_byte_offset, u64 *value, u32 read_write);
+अटल acpi_status
+acpi_ex_field_datum_io(जोड़ acpi_opeअक्रम_object *obj_desc,
+		       u32 field_datum_byte_offset, u64 *value, u32 पढ़ो_ग_लिखो);
 
-static u8
-acpi_ex_register_overflow(union acpi_operand_object *obj_desc, u64 value);
+अटल u8
+acpi_ex_रेजिस्टर_overflow(जोड़ acpi_opeअक्रम_object *obj_desc, u64 value);
 
-static acpi_status
-acpi_ex_setup_region(union acpi_operand_object *obj_desc,
+अटल acpi_status
+acpi_ex_setup_region(जोड़ acpi_opeअक्रम_object *obj_desc,
 		     u32 field_datum_byte_offset);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_setup_region
  *
- * PARAMETERS:  obj_desc                - Field to be read or written
+ * PARAMETERS:  obj_desc                - Field to be पढ़ो or written
  *              field_datum_byte_offset - Byte offset of this datum within the
  *                                        parent field
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Common processing for acpi_ex_extract_from_field and
- *              acpi_ex_insert_into_field. Initialize the Region if necessary and
+ * DESCRIPTION: Common processing क्रम acpi_ex_extract_from_field and
+ *              acpi_ex_insert_पूर्णांकo_field. Initialize the Region अगर necessary and
  *              validate the request.
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ex_setup_region(union acpi_operand_object *obj_desc,
+अटल acpi_status
+acpi_ex_setup_region(जोड़ acpi_opeअक्रम_object *obj_desc,
 		     u32 field_datum_byte_offset)
-{
+अणु
 	acpi_status status = AE_OK;
-	union acpi_operand_object *rgn_desc;
+	जोड़ acpi_opeअक्रम_object *rgn_desc;
 	u8 space_id;
 
 	ACPI_FUNCTION_TRACE_U32(ex_setup_region, field_datum_byte_offset);
@@ -59,91 +60,91 @@ acpi_ex_setup_region(union acpi_operand_object *obj_desc,
 
 	/* We must have a valid region */
 
-	if (rgn_desc->common.type != ACPI_TYPE_REGION) {
+	अगर (rgn_desc->common.type != ACPI_TYPE_REGION) अणु
 		ACPI_ERROR((AE_INFO, "Needed Region, found type 0x%X (%s)",
 			    rgn_desc->common.type,
 			    acpi_ut_get_object_type_name(rgn_desc)));
 
-		return_ACPI_STATUS(AE_AML_OPERAND_TYPE);
-	}
+		वापस_ACPI_STATUS(AE_AML_OPERAND_TYPE);
+	पूर्ण
 
 	space_id = rgn_desc->region.space_id;
 
 	/* Validate the Space ID */
 
-	if (!acpi_is_valid_space_id(space_id)) {
+	अगर (!acpi_is_valid_space_id(space_id)) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Invalid/unknown Address Space ID: 0x%2.2X",
 			    space_id));
-		return_ACPI_STATUS(AE_AML_INVALID_SPACE_ID);
-	}
+		वापस_ACPI_STATUS(AE_AML_INVALID_SPACE_ID);
+	पूर्ण
 
 	/*
 	 * If the Region Address and Length have not been previously evaluated,
 	 * evaluate them now and save the results.
 	 */
-	if (!(rgn_desc->common.flags & AOPOBJ_DATA_VALID)) {
+	अगर (!(rgn_desc->common.flags & AOPOBJ_DATA_VALID)) अणु
 		status = acpi_ds_get_region_arguments(rgn_desc);
-		if (ACPI_FAILURE(status)) {
-			return_ACPI_STATUS(status);
-		}
-	}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_ACPI_STATUS(status);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Exit now for SMBus, GSBus or IPMI address space, it has a non-linear
+	 * Exit now क्रम SMBus, GSBus or IPMI address space, it has a non-linear
 	 * address space and the request cannot be directly validated
 	 */
-	if (space_id == ACPI_ADR_SPACE_SMBUS ||
+	अगर (space_id == ACPI_ADR_SPACE_SMBUS ||
 	    space_id == ACPI_ADR_SPACE_GSBUS ||
-	    space_id == ACPI_ADR_SPACE_IPMI) {
+	    space_id == ACPI_ADR_SPACE_IPMI) अणु
 
 		/* SMBus or IPMI has a non-linear address space */
 
-		return_ACPI_STATUS(AE_OK);
-	}
-#ifdef ACPI_UNDER_DEVELOPMENT
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
+#अगर_घोषित ACPI_UNDER_DEVELOPMENT
 	/*
 	 * If the Field access is any_acc, we can now compute the optimal
 	 * access (because we know know the length of the parent region)
 	 */
-	if (!(obj_desc->common.flags & AOPOBJ_DATA_VALID)) {
-		if (ACPI_FAILURE(status)) {
-			return_ACPI_STATUS(status);
-		}
-	}
-#endif
+	अगर (!(obj_desc->common.flags & AOPOBJ_DATA_VALID)) अणु
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_ACPI_STATUS(status);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	/*
-	 * Validate the request. The entire request from the byte offset for a
+	 * Validate the request. The entire request from the byte offset क्रम a
 	 * length of one field datum (access width) must fit within the region.
-	 * (Region length is specified in bytes)
+	 * (Region length is specअगरied in bytes)
 	 */
-	if (rgn_desc->region.length <
+	अगर (rgn_desc->region.length <
 	    (obj_desc->common_field.base_byte_offset + field_datum_byte_offset +
-	     obj_desc->common_field.access_byte_width)) {
-		if (acpi_gbl_enable_interpreter_slack) {
+	     obj_desc->common_field.access_byte_width)) अणु
+		अगर (acpi_gbl_enable_पूर्णांकerpreter_slack) अणु
 			/*
 			 * Slack mode only:  We will go ahead and allow access to this
-			 * field if it is within the region length rounded up to the next
-			 * access width boundary. acpi_size cast for 64-bit compile.
+			 * field अगर it is within the region length rounded up to the next
+			 * access width boundary. acpi_size cast क्रम 64-bit compile.
 			 */
-			if (ACPI_ROUND_UP(rgn_desc->region.length,
+			अगर (ACPI_ROUND_UP(rgn_desc->region.length,
 					  obj_desc->common_field.
 					  access_byte_width) >=
 			    ((acpi_size)obj_desc->common_field.
 			     base_byte_offset +
 			     obj_desc->common_field.access_byte_width +
-			     field_datum_byte_offset)) {
-				return_ACPI_STATUS(AE_OK);
-			}
-		}
+			     field_datum_byte_offset)) अणु
+				वापस_ACPI_STATUS(AE_OK);
+			पूर्ण
+		पूर्ण
 
-		if (rgn_desc->region.length <
-		    obj_desc->common_field.access_byte_width) {
+		अगर (rgn_desc->region.length <
+		    obj_desc->common_field.access_byte_width) अणु
 			/*
-			 * This is the case where the access_type (acc_word, etc.) is wider
+			 * This is the हाल where the access_type (acc_word, etc.) is wider
 			 * than the region itself. For example, a region of length one
-			 * byte, and a field with Dword access specified.
+			 * byte, and a field with Dword access specअगरied.
 			 */
 			ACPI_ERROR((AE_INFO,
 				    "Field [%4.4s] access width (%u bytes) "
@@ -154,7 +155,7 @@ acpi_ex_setup_region(union acpi_operand_object *obj_desc,
 				    acpi_ut_get_node_name(rgn_desc->region.
 							  node),
 				    rgn_desc->region.length));
-		}
+		पूर्ण
 
 		/*
 		 * Offset rounded up to next multiple of field width
@@ -170,17 +171,17 @@ acpi_ex_setup_region(union acpi_operand_object *obj_desc,
 			    acpi_ut_get_node_name(rgn_desc->region.node),
 			    rgn_desc->region.length));
 
-		return_ACPI_STATUS(AE_AML_REGION_LIMIT);
-	}
+		वापस_ACPI_STATUS(AE_AML_REGION_LIMIT);
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_access_region
  *
- * PARAMETERS:  obj_desc                - Field to be read
+ * PARAMETERS:  obj_desc                - Field to be पढ़ो
  *              field_datum_byte_offset - Byte offset of this datum within the
  *                                        parent field
  *              value                   - Where to store value (must at least
@@ -195,40 +196,40 @@ acpi_ex_setup_region(union acpi_operand_object *obj_desc,
  ******************************************************************************/
 
 acpi_status
-acpi_ex_access_region(union acpi_operand_object *obj_desc,
+acpi_ex_access_region(जोड़ acpi_opeअक्रम_object *obj_desc,
 		      u32 field_datum_byte_offset, u64 *value, u32 function)
-{
+अणु
 	acpi_status status;
-	union acpi_operand_object *rgn_desc;
+	जोड़ acpi_opeअक्रम_object *rgn_desc;
 	u32 region_offset;
 
 	ACPI_FUNCTION_TRACE(ex_access_region);
 
 	/*
-	 * Ensure that the region operands are fully evaluated and verify
+	 * Ensure that the region opeअक्रमs are fully evaluated and verअगरy
 	 * the validity of the request
 	 */
 	status = acpi_ex_setup_region(obj_desc, field_datum_byte_offset);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
 	 * The physical address of this field datum is:
 	 *
 	 * 1) The base of the region, plus
 	 * 2) The base offset of the field, plus
-	 * 3) The current offset into the field
+	 * 3) The current offset पूर्णांकo the field
 	 */
 	rgn_desc = obj_desc->common_field.region_obj;
 	region_offset =
 	    obj_desc->common_field.base_byte_offset + field_datum_byte_offset;
 
-	if ((function & ACPI_IO_MASK) == ACPI_READ) {
+	अगर ((function & ACPI_IO_MASK) == ACPI_READ) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_BFIELD, "[READ]"));
-	} else {
+	पूर्ण अन्यथा अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_BFIELD, "[WRITE]"));
-	}
+	पूर्ण
 
 	ACPI_DEBUG_PRINT_RAW((ACPI_DB_BFIELD,
 			      " Region [%s:%X], Width %X, ByteBase %X, Offset %X at %8.8X%8.8X\n",
@@ -250,214 +251,214 @@ acpi_ex_access_region(union acpi_operand_object *obj_desc,
 							   access_byte_width),
 						value);
 
-	if (ACPI_FAILURE(status)) {
-		if (status == AE_NOT_IMPLEMENTED) {
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (status == AE_NOT_IMPLEMENTED) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Region %s (ID=%u) not implemented",
 				    acpi_ut_get_region_name(rgn_desc->region.
 							    space_id),
 				    rgn_desc->region.space_id));
-		} else if (status == AE_NOT_EXIST) {
+		पूर्ण अन्यथा अगर (status == AE_NOT_EXIST) अणु
 			ACPI_ERROR((AE_INFO,
 				    "Region %s (ID=%u) has no handler",
 				    acpi_ut_get_region_name(rgn_desc->region.
 							    space_id),
 				    rgn_desc->region.space_id));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_register_overflow
+ * FUNCTION:    acpi_ex_रेजिस्टर_overflow
  *
  * PARAMETERS:  obj_desc                - Register(Field) to be written
  *              value                   - Value to be stored
  *
- * RETURN:      TRUE if value overflows the field, FALSE otherwise
+ * RETURN:      TRUE अगर value overflows the field, FALSE otherwise
  *
- * DESCRIPTION: Check if a value is out of range of the field being written.
- *              Used to check if the values written to Index and Bank registers
+ * DESCRIPTION: Check अगर a value is out of range of the field being written.
+ *              Used to check अगर the values written to Index and Bank रेजिस्टरs
  *              are out of range. Normally, the value is simply truncated
- *              to fit the field, but this case is most likely a serious
+ *              to fit the field, but this हाल is most likely a serious
  *              coding error in the ASL.
  *
  ******************************************************************************/
 
-static u8
-acpi_ex_register_overflow(union acpi_operand_object *obj_desc, u64 value)
-{
+अटल u8
+acpi_ex_रेजिस्टर_overflow(जोड़ acpi_opeअक्रम_object *obj_desc, u64 value)
+अणु
 
-	if (obj_desc->common_field.bit_length >= ACPI_INTEGER_BIT_SIZE) {
+	अगर (obj_desc->common_field.bit_length >= ACPI_INTEGER_BIT_SIZE) अणु
 		/*
-		 * The field is large enough to hold the maximum integer, so we can
+		 * The field is large enough to hold the maximum पूर्णांकeger, so we can
 		 * never overflow it.
 		 */
-		return (FALSE);
-	}
+		वापस (FALSE);
+	पूर्ण
 
-	if (value >= ((u64) 1 << obj_desc->common_field.bit_length)) {
+	अगर (value >= ((u64) 1 << obj_desc->common_field.bit_length)) अणु
 		/*
-		 * The Value is larger than the maximum value that can fit into
-		 * the register.
+		 * The Value is larger than the maximum value that can fit पूर्णांकo
+		 * the रेजिस्टर.
 		 */
 		ACPI_ERROR((AE_INFO,
 			    "Index value 0x%8.8X%8.8X overflows field width 0x%X",
 			    ACPI_FORMAT_UINT64(value),
 			    obj_desc->common_field.bit_length));
 
-		return (TRUE);
-	}
+		वापस (TRUE);
+	पूर्ण
 
-	/* The Value will fit into the field with no truncation */
+	/* The Value will fit पूर्णांकo the field with no truncation */
 
-	return (FALSE);
-}
+	वापस (FALSE);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_field_datum_io
  *
- * PARAMETERS:  obj_desc                - Field to be read
+ * PARAMETERS:  obj_desc                - Field to be पढ़ो
  *              field_datum_byte_offset - Byte offset of this datum within the
  *                                        parent field
  *              value                   - Where to store value (must be 64 bits)
- *              read_write              - Read or Write flag
+ *              पढ़ो_ग_लिखो              - Read or Write flag
  *
  * RETURN:      Status
  *
  * DESCRIPTION: Read or Write a single datum of a field. The field_type is
- *              demultiplexed here to handle the different types of fields
+ *              demultiplexed here to handle the dअगरferent types of fields
  *              (buffer_field, region_field, index_field, bank_field)
  *
  ******************************************************************************/
 
-static acpi_status
-acpi_ex_field_datum_io(union acpi_operand_object *obj_desc,
-		       u32 field_datum_byte_offset, u64 *value, u32 read_write)
-{
+अटल acpi_status
+acpi_ex_field_datum_io(जोड़ acpi_opeअक्रम_object *obj_desc,
+		       u32 field_datum_byte_offset, u64 *value, u32 पढ़ो_ग_लिखो)
+अणु
 	acpi_status status;
 	u64 local_value;
 
 	ACPI_FUNCTION_TRACE_U32(ex_field_datum_io, field_datum_byte_offset);
 
-	if (read_write == ACPI_READ) {
-		if (!value) {
+	अगर (पढ़ो_ग_लिखो == ACPI_READ) अणु
+		अगर (!value) अणु
 			local_value = 0;
 
-			/* To support reads without saving return value */
+			/* To support पढ़ोs without saving वापस value */
 			value = &local_value;
-		}
+		पूर्ण
 
-		/* Clear the entire return buffer first, [Very Important!] */
+		/* Clear the entire वापस buffer first, [Very Important!] */
 
 		*value = 0;
-	}
+	पूर्ण
 
 	/*
 	 * The four types of fields are:
 	 *
-	 * buffer_field - Read/write from/to a Buffer
-	 * region_field - Read/write from/to a Operation Region.
-	 * bank_field  - Write to a Bank Register, then read/write from/to an
+	 * buffer_field - Read/ग_लिखो from/to a Buffer
+	 * region_field - Read/ग_लिखो from/to a Operation Region.
+	 * bank_field  - Write to a Bank Register, then पढ़ो/ग_लिखो from/to an
 	 *               operation_region
-	 * index_field - Write to an Index Register, then read/write from/to a
+	 * index_field - Write to an Index Register, then पढ़ो/ग_लिखो from/to a
 	 *               Data Register
 	 */
-	switch (obj_desc->common.type) {
-	case ACPI_TYPE_BUFFER_FIELD:
+	चयन (obj_desc->common.type) अणु
+	हाल ACPI_TYPE_BUFFER_FIELD:
 		/*
 		 * If the buffer_field arguments have not been previously evaluated,
 		 * evaluate them now and save the results.
 		 */
-		if (!(obj_desc->common.flags & AOPOBJ_DATA_VALID)) {
+		अगर (!(obj_desc->common.flags & AOPOBJ_DATA_VALID)) अणु
 			status = acpi_ds_get_buffer_field_arguments(obj_desc);
-			if (ACPI_FAILURE(status)) {
-				return_ACPI_STATUS(status);
-			}
-		}
+			अगर (ACPI_FAILURE(status)) अणु
+				वापस_ACPI_STATUS(status);
+			पूर्ण
+		पूर्ण
 
-		if (read_write == ACPI_READ) {
+		अगर (पढ़ो_ग_लिखो == ACPI_READ) अणु
 			/*
 			 * Copy the data from the source buffer.
 			 * Length is the field width in bytes.
 			 */
-			memcpy(value,
+			स_नकल(value,
 			       (obj_desc->buffer_field.buffer_obj)->buffer.
-			       pointer +
+			       poपूर्णांकer +
 			       obj_desc->buffer_field.base_byte_offset +
 			       field_datum_byte_offset,
 			       obj_desc->common_field.access_byte_width);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Copy the data to the target buffer.
 			 * Length is the field width in bytes.
 			 */
-			memcpy((obj_desc->buffer_field.buffer_obj)->buffer.
-			       pointer +
+			स_नकल((obj_desc->buffer_field.buffer_obj)->buffer.
+			       poपूर्णांकer +
 			       obj_desc->buffer_field.base_byte_offset +
 			       field_datum_byte_offset, value,
 			       obj_desc->common_field.access_byte_width);
-		}
+		पूर्ण
 
 		status = AE_OK;
-		break;
+		अवरोध;
 
-	case ACPI_TYPE_LOCAL_BANK_FIELD:
+	हाल ACPI_TYPE_LOCAL_BANK_FIELD:
 		/*
 		 * Ensure that the bank_value is not beyond the capacity of
-		 * the register
+		 * the रेजिस्टर
 		 */
-		if (acpi_ex_register_overflow(obj_desc->bank_field.bank_obj,
+		अगर (acpi_ex_रेजिस्टर_overflow(obj_desc->bank_field.bank_obj,
 					      (u64) obj_desc->bank_field.
-					      value)) {
-			return_ACPI_STATUS(AE_AML_REGISTER_LIMIT);
-		}
+					      value)) अणु
+			वापस_ACPI_STATUS(AE_AML_REGISTER_LIMIT);
+		पूर्ण
 
 		/*
-		 * For bank_fields, we must write the bank_value to the bank_register
-		 * (itself a region_field) before we can access the data.
+		 * For bank_fields, we must ग_लिखो the bank_value to the bank_रेजिस्टर
+		 * (itself a region_field) beक्रमe we can access the data.
 		 */
 		status =
-		    acpi_ex_insert_into_field(obj_desc->bank_field.bank_obj,
+		    acpi_ex_insert_पूर्णांकo_field(obj_desc->bank_field.bank_obj,
 					      &obj_desc->bank_field.value,
-					      sizeof(obj_desc->bank_field.
+					      माप(obj_desc->bank_field.
 						     value));
-		if (ACPI_FAILURE(status)) {
-			return_ACPI_STATUS(status);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
 		/*
 		 * Now that the Bank has been selected, fall through to the
-		 * region_field case and write the datum to the Operation Region
+		 * region_field हाल and ग_लिखो the datum to the Operation Region
 		 */
 
 		ACPI_FALLTHROUGH;
 
-	case ACPI_TYPE_LOCAL_REGION_FIELD:
+	हाल ACPI_TYPE_LOCAL_REGION_FIELD:
 		/*
 		 * For simple region_fields, we just directly access the owning
 		 * Operation Region.
 		 */
 		status =
 		    acpi_ex_access_region(obj_desc, field_datum_byte_offset,
-					  value, read_write);
-		break;
+					  value, पढ़ो_ग_लिखो);
+		अवरोध;
 
-	case ACPI_TYPE_LOCAL_INDEX_FIELD:
+	हाल ACPI_TYPE_LOCAL_INDEX_FIELD:
 		/*
 		 * Ensure that the index_value is not beyond the capacity of
-		 * the register
+		 * the रेजिस्टर
 		 */
-		if (acpi_ex_register_overflow(obj_desc->index_field.index_obj,
+		अगर (acpi_ex_रेजिस्टर_overflow(obj_desc->index_field.index_obj,
 					      (u64) obj_desc->index_field.
-					      value)) {
-			return_ACPI_STATUS(AE_AML_REGISTER_LIMIT);
-		}
+					      value)) अणु
+			वापस_ACPI_STATUS(AE_AML_REGISTER_LIMIT);
+		पूर्ण
 
-		/* Write the index value to the index_register (itself a region_field) */
+		/* Write the index value to the index_रेजिस्टर (itself a region_field) */
 
 		field_datum_byte_offset += obj_desc->index_field.value;
 
@@ -466,16 +467,16 @@ acpi_ex_field_datum_io(union acpi_operand_object *obj_desc,
 				  field_datum_byte_offset));
 
 		status =
-		    acpi_ex_insert_into_field(obj_desc->index_field.index_obj,
+		    acpi_ex_insert_पूर्णांकo_field(obj_desc->index_field.index_obj,
 					      &field_datum_byte_offset,
-					      sizeof(field_datum_byte_offset));
-		if (ACPI_FAILURE(status)) {
-			return_ACPI_STATUS(status);
-		}
+					      माप(field_datum_byte_offset));
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
-		if (read_write == ACPI_READ) {
+		अगर (पढ़ो_ग_लिखो == ACPI_READ) अणु
 
-			/* Read the datum from the data_register */
+			/* Read the datum from the data_रेजिस्टर */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "Read from Data Register\n"));
@@ -483,94 +484,94 @@ acpi_ex_field_datum_io(union acpi_operand_object *obj_desc,
 			status =
 			    acpi_ex_extract_from_field(obj_desc->index_field.
 						       data_obj, value,
-						       sizeof(u64));
-		} else {
-			/* Write the datum to the data_register */
+						       माप(u64));
+		पूर्ण अन्यथा अणु
+			/* Write the datum to the data_रेजिस्टर */
 
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "Write to Data Register: Value %8.8X%8.8X\n",
 					  ACPI_FORMAT_UINT64(*value)));
 
 			status =
-			    acpi_ex_insert_into_field(obj_desc->index_field.
+			    acpi_ex_insert_पूर्णांकo_field(obj_desc->index_field.
 						      data_obj, value,
-						      sizeof(u64));
-		}
-		break;
+						      माप(u64));
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 
 		ACPI_ERROR((AE_INFO, "Wrong object type in field I/O %u",
 			    obj_desc->common.type));
 		status = AE_AML_INTERNAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ACPI_SUCCESS(status)) {
-		if (read_write == ACPI_READ) {
+	अगर (ACPI_SUCCESS(status)) अणु
+		अगर (पढ़ो_ग_लिखो == ACPI_READ) अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "Value Read %8.8X%8.8X, Width %u\n",
 					  ACPI_FORMAT_UINT64(*value),
 					  obj_desc->common_field.
 					  access_byte_width));
-		} else {
+		पूर्ण अन्यथा अणु
 			ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 					  "Value Written %8.8X%8.8X, Width %u\n",
 					  ACPI_FORMAT_UINT64(*value),
 					  obj_desc->common_field.
 					  access_byte_width));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_write_with_update_rule
+ * FUNCTION:    acpi_ex_ग_लिखो_with_update_rule
  *
  * PARAMETERS:  obj_desc                - Field to be written
- *              mask                    - bitmask within field datum
- *              field_value             - Value to write
+ *              mask                    - biपंचांगask within field datum
+ *              field_value             - Value to ग_लिखो
  *              field_datum_byte_offset - Offset of datum within field
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Apply the field update rule to a field write
+ * DESCRIPTION: Apply the field update rule to a field ग_लिखो
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_write_with_update_rule(union acpi_operand_object *obj_desc,
+acpi_ex_ग_लिखो_with_update_rule(जोड़ acpi_opeअक्रम_object *obj_desc,
 			       u64 mask,
 			       u64 field_value, u32 field_datum_byte_offset)
-{
+अणु
 	acpi_status status = AE_OK;
 	u64 merged_value;
 	u64 current_value;
 
-	ACPI_FUNCTION_TRACE_U32(ex_write_with_update_rule, mask);
+	ACPI_FUNCTION_TRACE_U32(ex_ग_लिखो_with_update_rule, mask);
 
 	/* Start with the new bits  */
 
 	merged_value = field_value;
 
-	/* If the mask is all ones, we don't need to worry about the update rule */
+	/* If the mask is all ones, we करोn't need to worry about the update rule */
 
-	if (mask != ACPI_UINT64_MAX) {
+	अगर (mask != ACPI_UINT64_MAX) अणु
 
 		/* Decode the update rule */
 
-		switch (obj_desc->common_field.
-			field_flags & AML_FIELD_UPDATE_RULE_MASK) {
-		case AML_FIELD_UPDATE_PRESERVE:
+		चयन (obj_desc->common_field.
+			field_flags & AML_FIELD_UPDATE_RULE_MASK) अणु
+		हाल AML_FIELD_UPDATE_PRESERVE:
 			/*
-			 * Check if update rule needs to be applied (not if mask is all
-			 * ones)  The left shift drops the bits we want to ignore.
+			 * Check अगर update rule needs to be applied (not अगर mask is all
+			 * ones)  The left shअगरt drops the bits we want to ignore.
 			 */
-			if ((~mask << (ACPI_MUL_8(sizeof(mask)) -
+			अगर ((~mask << (ACPI_MUL_8(माप(mask)) -
 				       ACPI_MUL_8(obj_desc->common_field.
-						  access_byte_width))) != 0) {
+						  access_byte_width))) != 0) अणु
 				/*
 				 * Read the current contents of the byte/word/dword containing
 				 * the field, and merge with the new field value.
@@ -580,37 +581,37 @@ acpi_ex_write_with_update_rule(union acpi_operand_object *obj_desc,
 							   field_datum_byte_offset,
 							   &current_value,
 							   ACPI_READ);
-				if (ACPI_FAILURE(status)) {
-					return_ACPI_STATUS(status);
-				}
+				अगर (ACPI_FAILURE(status)) अणु
+					वापस_ACPI_STATUS(status);
+				पूर्ण
 
 				merged_value |= (current_value & ~mask);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case AML_FIELD_UPDATE_WRITE_AS_ONES:
+		हाल AML_FIELD_UPDATE_WRITE_AS_ONES:
 
 			/* Set positions outside the field to all ones */
 
 			merged_value |= ~mask;
-			break;
+			अवरोध;
 
-		case AML_FIELD_UPDATE_WRITE_AS_ZEROS:
+		हाल AML_FIELD_UPDATE_WRITE_AS_ZEROS:
 
 			/* Set positions outside the field to all zeros */
 
 			merged_value &= mask;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 
 			ACPI_ERROR((AE_INFO,
 				    "Unknown UpdateRule value: 0x%X",
 				    (obj_desc->common_field.field_flags &
 				     AML_FIELD_UPDATE_RULE_MASK)));
-			return_ACPI_STATUS(AE_AML_OPERAND_VALUE);
-		}
-	}
+			वापस_ACPI_STATUS(AE_AML_OPERAND_VALUE);
+		पूर्ण
+	पूर्ण
 
 	ACPI_DEBUG_PRINT((ACPI_DB_BFIELD,
 			  "Mask %8.8X%8.8X, DatumOffset %X, Width %X, "
@@ -627,14 +628,14 @@ acpi_ex_write_with_update_rule(union acpi_operand_object *obj_desc,
 	    acpi_ex_field_datum_io(obj_desc, field_datum_byte_offset,
 				   &merged_value, ACPI_WRITE);
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ex_extract_from_field
  *
- * PARAMETERS:  obj_desc            - Field to be read
+ * PARAMETERS:  obj_desc            - Field to be पढ़ो
  *              buffer              - Where to store the field data
  *              buffer_length       - Length of Buffer
  *
@@ -645,9 +646,9 @@ acpi_ex_write_with_update_rule(union acpi_operand_object *obj_desc,
  ******************************************************************************/
 
 acpi_status
-acpi_ex_extract_from_field(union acpi_operand_object *obj_desc,
-			   void *buffer, u32 buffer_length)
-{
+acpi_ex_extract_from_field(जोड़ acpi_opeअक्रम_object *obj_desc,
+			   व्योम *buffer, u32 buffer_length)
+अणु
 	acpi_status status;
 	u64 raw_datum;
 	u64 merged_datum;
@@ -663,46 +664,46 @@ acpi_ex_extract_from_field(union acpi_operand_object *obj_desc,
 
 	/* Validate target buffer and clear it */
 
-	if (buffer_length <
-	    ACPI_ROUND_BITS_UP_TO_BYTES(obj_desc->common_field.bit_length)) {
+	अगर (buffer_length <
+	    ACPI_ROUND_BITS_UP_TO_BYTES(obj_desc->common_field.bit_length)) अणु
 		ACPI_ERROR((AE_INFO,
 			    "Field size %u (bits) is too large for buffer (%u)",
 			    obj_desc->common_field.bit_length, buffer_length));
 
-		return_ACPI_STATUS(AE_BUFFER_OVERFLOW);
-	}
+		वापस_ACPI_STATUS(AE_BUFFER_OVERFLOW);
+	पूर्ण
 
-	memset(buffer, 0, buffer_length);
+	स_रखो(buffer, 0, buffer_length);
 	access_bit_width = ACPI_MUL_8(obj_desc->common_field.access_byte_width);
 
-	/* Handle the simple case here */
+	/* Handle the simple हाल here */
 
-	if ((obj_desc->common_field.start_field_bit_offset == 0) &&
-	    (obj_desc->common_field.bit_length == access_bit_width)) {
-		if (buffer_length >= sizeof(u64)) {
+	अगर ((obj_desc->common_field.start_field_bit_offset == 0) &&
+	    (obj_desc->common_field.bit_length == access_bit_width)) अणु
+		अगर (buffer_length >= माप(u64)) अणु
 			status =
 			    acpi_ex_field_datum_io(obj_desc, 0, buffer,
 						   ACPI_READ);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Use raw_datum (u64) to handle buffers < 64 bits */
 
 			status =
 			    acpi_ex_field_datum_io(obj_desc, 0, &raw_datum,
 						   ACPI_READ);
-			memcpy(buffer, &raw_datum, buffer_length);
-		}
+			स_नकल(buffer, &raw_datum, buffer_length);
+		पूर्ण
 
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 /* TBD: Move to common setup code */
 
-	/* Field algorithm is limited to sizeof(u64), truncate if needed */
+	/* Field algorithm is limited to माप(u64), truncate अगर needed */
 
-	if (obj_desc->common_field.access_byte_width > sizeof(u64)) {
-		obj_desc->common_field.access_byte_width = sizeof(u64);
-		access_bit_width = sizeof(u64) * 8;
-	}
+	अगर (obj_desc->common_field.access_byte_width > माप(u64)) अणु
+		obj_desc->common_field.access_byte_width = माप(u64);
+		access_bit_width = माप(u64) * 8;
+	पूर्ण
 
 	/* Compute the number of datums (access width data items) */
 
@@ -715,20 +716,20 @@ acpi_ex_extract_from_field(union acpi_operand_object *obj_desc,
 					     start_field_bit_offset,
 					     access_bit_width);
 
-	/* Priming read from the field */
+	/* Priming पढ़ो from the field */
 
 	status =
 	    acpi_ex_field_datum_io(obj_desc, field_offset, &raw_datum,
 				   ACPI_READ);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 	merged_datum =
 	    raw_datum >> obj_desc->common_field.start_field_bit_offset;
 
 	/* Read the rest of the field */
 
-	for (i = 1; i < field_datum_count; i++) {
+	क्रम (i = 1; i < field_datum_count; i++) अणु
 
 		/* Get next input datum from the field */
 
@@ -736,61 +737,61 @@ acpi_ex_extract_from_field(union acpi_operand_object *obj_desc,
 		status =
 		    acpi_ex_field_datum_io(obj_desc, field_offset, &raw_datum,
 					   ACPI_READ);
-		if (ACPI_FAILURE(status)) {
-			return_ACPI_STATUS(status);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_ACPI_STATUS(status);
+		पूर्ण
 
 		/*
-		 * Merge with previous datum if necessary.
+		 * Merge with previous datum अगर necessary.
 		 *
-		 * Note: Before the shift, check if the shift value will be larger than
-		 * the integer size. If so, there is no need to perform the operation.
-		 * This avoids the differences in behavior between different compilers
-		 * concerning shift values larger than the target data width.
+		 * Note: Beक्रमe the shअगरt, check अगर the shअगरt value will be larger than
+		 * the पूर्णांकeger size. If so, there is no need to perक्रमm the operation.
+		 * This aव्योमs the dअगरferences in behavior between dअगरferent compilers
+		 * concerning shअगरt values larger than the target data width.
 		 */
-		if (access_bit_width -
+		अगर (access_bit_width -
 		    obj_desc->common_field.start_field_bit_offset <
-		    ACPI_INTEGER_BIT_SIZE) {
+		    ACPI_INTEGER_BIT_SIZE) अणु
 			merged_datum |=
 			    raw_datum << (access_bit_width -
 					  obj_desc->common_field.
 					  start_field_bit_offset);
-		}
+		पूर्ण
 
-		if (i == datum_count) {
-			break;
-		}
+		अगर (i == datum_count) अणु
+			अवरोध;
+		पूर्ण
 
 		/* Write merged datum to target buffer */
 
-		memcpy(((char *)buffer) + buffer_offset, &merged_datum,
+		स_नकल(((अक्षर *)buffer) + buffer_offset, &merged_datum,
 		       ACPI_MIN(obj_desc->common_field.access_byte_width,
 				buffer_length - buffer_offset));
 
 		buffer_offset += obj_desc->common_field.access_byte_width;
 		merged_datum =
 		    raw_datum >> obj_desc->common_field.start_field_bit_offset;
-	}
+	पूर्ण
 
 	/* Mask off any extra bits in the last datum */
 
 	buffer_tail_bits = obj_desc->common_field.bit_length % access_bit_width;
-	if (buffer_tail_bits) {
+	अगर (buffer_tail_bits) अणु
 		merged_datum &= ACPI_MASK_BITS_ABOVE(buffer_tail_bits);
-	}
+	पूर्ण
 
 	/* Write the last datum to the buffer */
 
-	memcpy(((char *)buffer) + buffer_offset, &merged_datum,
+	स_नकल(((अक्षर *)buffer) + buffer_offset, &merged_datum,
 	       ACPI_MIN(obj_desc->common_field.access_byte_width,
 			buffer_length - buffer_offset));
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
- * FUNCTION:    acpi_ex_insert_into_field
+ * FUNCTION:    acpi_ex_insert_पूर्णांकo_field
  *
  * PARAMETERS:  obj_desc            - Field to be written
  *              buffer              - Data to be written
@@ -798,15 +799,15 @@ acpi_ex_extract_from_field(union acpi_operand_object *obj_desc,
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Store the Buffer contents into the given field
+ * DESCRIPTION: Store the Buffer contents पूर्णांकo the given field
  *
  ******************************************************************************/
 
 acpi_status
-acpi_ex_insert_into_field(union acpi_operand_object *obj_desc,
-			  void *buffer, u32 buffer_length)
-{
-	void *new_buffer;
+acpi_ex_insert_पूर्णांकo_field(जोड़ acpi_opeअक्रम_object *obj_desc,
+			  व्योम *buffer, u32 buffer_length)
+अणु
+	व्योम *new_buffer;
 	acpi_status status;
 	u64 mask;
 	u64 width_mask;
@@ -821,49 +822,49 @@ acpi_ex_insert_into_field(union acpi_operand_object *obj_desc,
 	u32 required_length;
 	u32 i;
 
-	ACPI_FUNCTION_TRACE(ex_insert_into_field);
+	ACPI_FUNCTION_TRACE(ex_insert_पूर्णांकo_field);
 
 	/* Validate input buffer */
 
-	new_buffer = NULL;
+	new_buffer = शून्य;
 	required_length =
 	    ACPI_ROUND_BITS_UP_TO_BYTES(obj_desc->common_field.bit_length);
 
 	/*
-	 * We must have a buffer that is at least as long as the field
-	 * we are writing to. This is because individual fields are
-	 * indivisible and partial writes are not supported -- as per
-	 * the ACPI specification.
+	 * We must have a buffer that is at least as दीर्घ as the field
+	 * we are writing to. This is because inभागidual fields are
+	 * inभागisible and partial ग_लिखोs are not supported -- as per
+	 * the ACPI specअगरication.
 	 */
-	if (buffer_length < required_length) {
+	अगर (buffer_length < required_length) अणु
 
 		/* We need to create a new buffer */
 
 		new_buffer = ACPI_ALLOCATE_ZEROED(required_length);
-		if (!new_buffer) {
-			return_ACPI_STATUS(AE_NO_MEMORY);
-		}
+		अगर (!new_buffer) अणु
+			वापस_ACPI_STATUS(AE_NO_MEMORY);
+		पूर्ण
 
 		/*
 		 * Copy the original data to the new buffer, starting
 		 * at Byte zero. All unused (upper) bytes of the
 		 * buffer will be 0.
 		 */
-		memcpy((char *)new_buffer, (char *)buffer, buffer_length);
+		स_नकल((अक्षर *)new_buffer, (अक्षर *)buffer, buffer_length);
 		buffer = new_buffer;
 		buffer_length = required_length;
-	}
+	पूर्ण
 
 /* TBD: Move to common setup code */
 
-	/* Algo is limited to sizeof(u64), so cut the access_byte_width */
-	if (obj_desc->common_field.access_byte_width > sizeof(u64)) {
-		obj_desc->common_field.access_byte_width = sizeof(u64);
-	}
+	/* Algo is limited to माप(u64), so cut the access_byte_width */
+	अगर (obj_desc->common_field.access_byte_width > माप(u64)) अणु
+		obj_desc->common_field.access_byte_width = माप(u64);
+	पूर्ण
 
 	access_bit_width = ACPI_MUL_8(obj_desc->common_field.access_byte_width);
 
-	/* Create the bitmasks used for bit insertion */
+	/* Create the biपंचांगasks used क्रम bit insertion */
 
 	width_mask = ACPI_MASK_BITS_ABOVE_64(access_bit_width);
 	mask = width_mask &
@@ -881,7 +882,7 @@ acpi_ex_insert_into_field(union acpi_operand_object *obj_desc,
 
 	/* Get initial Datum from the input buffer */
 
-	memcpy(&raw_datum, buffer,
+	स_नकल(&raw_datum, buffer,
 	       ACPI_MIN(obj_desc->common_field.access_byte_width,
 			buffer_length - buffer_offset));
 
@@ -890,78 +891,78 @@ acpi_ex_insert_into_field(union acpi_operand_object *obj_desc,
 
 	/* Write the entire field */
 
-	for (i = 1; i < field_datum_count; i++) {
+	क्रम (i = 1; i < field_datum_count; i++) अणु
 
 		/* Write merged datum to the target field */
 
 		merged_datum &= mask;
 		status =
-		    acpi_ex_write_with_update_rule(obj_desc, mask, merged_datum,
+		    acpi_ex_ग_लिखो_with_update_rule(obj_desc, mask, merged_datum,
 						   field_offset);
-		if (ACPI_FAILURE(status)) {
-			goto exit;
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ निकास;
+		पूर्ण
 
 		field_offset += obj_desc->common_field.access_byte_width;
 
 		/*
 		 * Start new output datum by merging with previous input datum
-		 * if necessary.
+		 * अगर necessary.
 		 *
-		 * Note: Before the shift, check if the shift value will be larger than
-		 * the integer size. If so, there is no need to perform the operation.
-		 * This avoids the differences in behavior between different compilers
-		 * concerning shift values larger than the target data width.
+		 * Note: Beक्रमe the shअगरt, check अगर the shअगरt value will be larger than
+		 * the पूर्णांकeger size. If so, there is no need to perक्रमm the operation.
+		 * This aव्योमs the dअगरferences in behavior between dअगरferent compilers
+		 * concerning shअगरt values larger than the target data width.
 		 */
-		if ((access_bit_width -
+		अगर ((access_bit_width -
 		     obj_desc->common_field.start_field_bit_offset) <
-		    ACPI_INTEGER_BIT_SIZE) {
+		    ACPI_INTEGER_BIT_SIZE) अणु
 			merged_datum =
 			    raw_datum >> (access_bit_width -
 					  obj_desc->common_field.
 					  start_field_bit_offset);
-		} else {
+		पूर्ण अन्यथा अणु
 			merged_datum = 0;
-		}
+		पूर्ण
 
 		mask = width_mask;
 
-		if (i == datum_count) {
-			break;
-		}
+		अगर (i == datum_count) अणु
+			अवरोध;
+		पूर्ण
 
 		/* Get the next input datum from the buffer */
 
 		buffer_offset += obj_desc->common_field.access_byte_width;
-		memcpy(&raw_datum, ((char *)buffer) + buffer_offset,
+		स_नकल(&raw_datum, ((अक्षर *)buffer) + buffer_offset,
 		       ACPI_MIN(obj_desc->common_field.access_byte_width,
 				buffer_length - buffer_offset));
 
 		merged_datum |=
 		    raw_datum << obj_desc->common_field.start_field_bit_offset;
-	}
+	पूर्ण
 
 	/* Mask off any extra bits in the last datum */
 
 	buffer_tail_bits = (obj_desc->common_field.bit_length +
 			    obj_desc->common_field.start_field_bit_offset) %
 	    access_bit_width;
-	if (buffer_tail_bits) {
+	अगर (buffer_tail_bits) अणु
 		mask &= ACPI_MASK_BITS_ABOVE(buffer_tail_bits);
-	}
+	पूर्ण
 
 	/* Write the last datum to the field */
 
 	merged_datum &= mask;
 	status =
-	    acpi_ex_write_with_update_rule(obj_desc, mask, merged_datum,
+	    acpi_ex_ग_लिखो_with_update_rule(obj_desc, mask, merged_datum,
 					   field_offset);
 
-exit:
-	/* Free temporary buffer if we used one */
+निकास:
+	/* Free temporary buffer अगर we used one */
 
-	if (new_buffer) {
+	अगर (new_buffer) अणु
 		ACPI_FREE(new_buffer);
-	}
-	return_ACPI_STATUS(status);
-}
+	पूर्ण
+	वापस_ACPI_STATUS(status);
+पूर्ण

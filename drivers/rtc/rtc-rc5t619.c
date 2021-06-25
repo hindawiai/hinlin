@@ -1,442 +1,443 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * drivers/rtc/rtc-rc5t619.c
  *
- * Real time clock driver for RICOH RC5T619 power management chip.
+ * Real समय घड़ी driver क्रम RICOH RC5T619 घातer management chip.
  *
  * Copyright (C) 2019 Andreas Kemnade
  */
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mfd/rn5t618.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/bcd.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
-#include <linux/irqdomain.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mfd/rn5t618.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irqकरोमुख्य.h>
 
-struct rc5t619_rtc {
-	int			irq;
-	struct rtc_device	*rtc;
-	struct rn5t618 *rn5t618;
-};
+काष्ठा rc5t619_rtc अणु
+	पूर्णांक			irq;
+	काष्ठा rtc_device	*rtc;
+	काष्ठा rn5t618 *rn5t618;
+पूर्ण;
 
-#define CTRL1_ALARM_ENABLED 0x40
-#define CTRL1_24HR 0x20
-#define CTRL1_PERIODIC_MASK 0xf
+#घोषणा CTRL1_ALARM_ENABLED 0x40
+#घोषणा CTRL1_24HR 0x20
+#घोषणा CTRL1_PERIODIC_MASK 0xf
 
-#define CTRL2_PON 0x10
-#define CTRL2_ALARM_STATUS 0x80
-#define CTRL2_CTFG 0x4
-#define CTRL2_CTC 0x1
+#घोषणा CTRL2_PON 0x10
+#घोषणा CTRL2_ALARM_STATUS 0x80
+#घोषणा CTRL2_CTFG 0x4
+#घोषणा CTRL2_CTC 0x1
 
-#define MONTH_CENTFLAG 0x80
-#define HOUR_PMFLAG 0x20
-#define MDAY_DAL_EXT 0x80
+#घोषणा MONTH_CENTFLAG 0x80
+#घोषणा HOUR_PMFLAG 0x20
+#घोषणा MDAY_DAL_EXT 0x80
 
-static uint8_t rtc5t619_12hour_bcd2bin(uint8_t hour)
-{
-	if (hour & HOUR_PMFLAG) {
+अटल uपूर्णांक8_t rtc5t619_12hour_bcd2bin(uपूर्णांक8_t hour)
+अणु
+	अगर (hour & HOUR_PMFLAG) अणु
 		hour = bcd2bin(hour & ~HOUR_PMFLAG);
-		return hour == 12 ? 12 : 12 + hour;
-	}
+		वापस hour == 12 ? 12 : 12 + hour;
+	पूर्ण
 
 	hour = bcd2bin(hour);
-	return hour == 12 ? 0 : hour;
-}
+	वापस hour == 12 ? 0 : hour;
+पूर्ण
 
-static uint8_t rtc5t619_12hour_bin2bcd(uint8_t hour)
-{
-	if (!hour)
-		return 0x12;
+अटल uपूर्णांक8_t rtc5t619_12hour_bin2bcd(uपूर्णांक8_t hour)
+अणु
+	अगर (!hour)
+		वापस 0x12;
 
-	if (hour < 12)
-		return bin2bcd(hour);
+	अगर (hour < 12)
+		वापस bin2bcd(hour);
 
-	if (hour == 12)
-		return 0x12 | HOUR_PMFLAG;
+	अगर (hour == 12)
+		वापस 0x12 | HOUR_PMFLAG;
 
-	return bin2bcd(hour - 12) | HOUR_PMFLAG;
-}
+	वापस bin2bcd(hour - 12) | HOUR_PMFLAG;
+पूर्ण
 
-static int rc5t619_rtc_periodic_disable(struct device *dev)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक rc5t619_rtc_periodic_disable(काष्ठा device *dev)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	/* disable function */
 	err = regmap_update_bits(rtc->rn5t618->regmap,
 				 RN5T618_RTC_CTRL1, CTRL1_PERIODIC_MASK, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* clear alarm flag and CTFG */
 	err = regmap_update_bits(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2,
 				 CTRL2_ALARM_STATUS | CTRL2_CTFG | CTRL2_CTC,
 				 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* things to be done once after power on */
-static int rc5t619_rtc_pon_setup(struct device *dev)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
-	int err;
-	unsigned int reg_data;
+/* things to be करोne once after घातer on */
+अटल पूर्णांक rc5t619_rtc_pon_setup(काष्ठा device *dev)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
+	पूर्णांक err;
+	अचिन्हित पूर्णांक reg_data;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &reg_data);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &reg_data);
+	अगर (err < 0)
+		वापस err;
 
 	/* clear VDET PON */
 	reg_data &= ~(CTRL2_PON | CTRL2_CTC | 0x4a);	/* 0101-1011 */
 	reg_data |= 0x20;	/* 0010-0000 */
-	err = regmap_write(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, reg_data);
-	if (err < 0)
-		return err;
+	err = regmap_ग_लिखो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, reg_data);
+	अगर (err < 0)
+		वापस err;
 
-	/* clearing RTC Adjust register */
-	err = regmap_write(rtc->rn5t618->regmap, RN5T618_RTC_ADJUST, 0);
-	if (err)
-		return err;
+	/* clearing RTC Adjust रेजिस्टर */
+	err = regmap_ग_लिखो(rtc->rn5t618->regmap, RN5T618_RTC_ADJUST, 0);
+	अगर (err)
+		वापस err;
 
-	return regmap_update_bits(rtc->rn5t618->regmap,
+	वापस regmap_update_bits(rtc->rn5t618->regmap,
 					RN5T618_RTC_CTRL1,
 					CTRL1_24HR, CTRL1_24HR);
-}
+पूर्ण
 
-static int rc5t619_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 	u8 buff[7];
-	int err;
-	int cent_flag;
-	unsigned int ctrl1;
-	unsigned int ctrl2;
+	पूर्णांक err;
+	पूर्णांक cent_flag;
+	अचिन्हित पूर्णांक ctrl1;
+	अचिन्हित पूर्णांक ctrl2;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
+	अगर (err < 0)
+		वापस err;
 
-	if (ctrl2 & CTRL2_PON)
-		return -EINVAL;
+	अगर (ctrl2 & CTRL2_PON)
+		वापस -EINVAL;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
+	अगर (err < 0)
+		वापस err;
 
-	err = regmap_bulk_read(rtc->rn5t618->regmap, RN5T618_RTC_SECONDS,
-			       buff, sizeof(buff));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_SECONDS,
+			       buff, माप(buff));
+	अगर (err < 0)
+		वापस err;
 
-	if (buff[5] & MONTH_CENTFLAG)
+	अगर (buff[5] & MONTH_CENTFLAG)
 		cent_flag = 1;
-	else
+	अन्यथा
 		cent_flag = 0;
 
-	tm->tm_sec  = bcd2bin(buff[0]);
-	tm->tm_min  = bcd2bin(buff[1]);
+	पंचांग->पंचांग_sec  = bcd2bin(buff[0]);
+	पंचांग->पंचांग_min  = bcd2bin(buff[1]);
 
-	if (ctrl1 & CTRL1_24HR)
-		tm->tm_hour = bcd2bin(buff[2]);
-	else
-		tm->tm_hour = rtc5t619_12hour_bcd2bin(buff[2]);
+	अगर (ctrl1 & CTRL1_24HR)
+		पंचांग->पंचांग_hour = bcd2bin(buff[2]);
+	अन्यथा
+		पंचांग->पंचांग_hour = rtc5t619_12hour_bcd2bin(buff[2]);
 
-	tm->tm_wday = bcd2bin(buff[3]);
-	tm->tm_mday = bcd2bin(buff[4]);
-	tm->tm_mon  = bcd2bin(buff[5] & 0x1f) - 1; /* back to system 0-11 */
-	tm->tm_year = bcd2bin(buff[6]) + 100 * cent_flag;
+	पंचांग->पंचांग_wday = bcd2bin(buff[3]);
+	पंचांग->पंचांग_mday = bcd2bin(buff[4]);
+	पंचांग->पंचांग_mon  = bcd2bin(buff[5] & 0x1f) - 1; /* back to प्रणाली 0-11 */
+	पंचांग->पंचांग_year = bcd2bin(buff[6]) + 100 * cent_flag;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rc5t619_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 	u8 buff[7];
-	int err;
-	int cent_flag;
-	unsigned int ctrl1;
-	unsigned int ctrl2;
+	पूर्णांक err;
+	पूर्णांक cent_flag;
+	अचिन्हित पूर्णांक ctrl1;
+	अचिन्हित पूर्णांक ctrl2;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
+	अगर (err < 0)
+		वापस err;
 
-	if (ctrl2 & CTRL2_PON)
+	अगर (ctrl2 & CTRL2_PON)
 		rc5t619_rtc_pon_setup(dev);
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
+	अगर (err < 0)
+		वापस err;
 
-	if (tm->tm_year >= 100)
+	अगर (पंचांग->पंचांग_year >= 100)
 		cent_flag = 1;
-	else
+	अन्यथा
 		cent_flag = 0;
 
-	buff[0] = bin2bcd(tm->tm_sec);
-	buff[1] = bin2bcd(tm->tm_min);
+	buff[0] = bin2bcd(पंचांग->पंचांग_sec);
+	buff[1] = bin2bcd(पंचांग->पंचांग_min);
 
-	if (ctrl1 & CTRL1_24HR)
-		buff[2] = bin2bcd(tm->tm_hour);
-	else
-		buff[2] = rtc5t619_12hour_bin2bcd(tm->tm_hour);
+	अगर (ctrl1 & CTRL1_24HR)
+		buff[2] = bin2bcd(पंचांग->पंचांग_hour);
+	अन्यथा
+		buff[2] = rtc5t619_12hour_bin2bcd(पंचांग->पंचांग_hour);
 
-	buff[3] = bin2bcd(tm->tm_wday);
-	buff[4] = bin2bcd(tm->tm_mday);
-	buff[5] = bin2bcd(tm->tm_mon + 1);	/* system set 0-11 */
-	buff[6] = bin2bcd(tm->tm_year - cent_flag * 100);
+	buff[3] = bin2bcd(पंचांग->पंचांग_wday);
+	buff[4] = bin2bcd(पंचांग->पंचांग_mday);
+	buff[5] = bin2bcd(पंचांग->पंचांग_mon + 1);	/* प्रणाली set 0-11 */
+	buff[6] = bin2bcd(पंचांग->पंचांग_year - cent_flag * 100);
 
-	if (cent_flag)
+	अगर (cent_flag)
 		buff[5] |= MONTH_CENTFLAG;
 
-	err = regmap_bulk_write(rtc->rn5t618->regmap, RN5T618_RTC_SECONDS,
-				buff, sizeof(buff));
-	if (err < 0) {
+	err = regmap_bulk_ग_लिखो(rtc->rn5t618->regmap, RN5T618_RTC_SECONDS,
+				buff, माप(buff));
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to program new time: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* 0-disable, 1-enable */
-static int rc5t619_rtc_alarm_enable(struct device *dev, unsigned int enabled)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_alarm_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 
-	return regmap_update_bits(rtc->rn5t618->regmap,
+	वापस regmap_update_bits(rtc->rn5t618->regmap,
 			RN5T618_RTC_CTRL1,
 			CTRL1_ALARM_ENABLED,
 			enabled ? CTRL1_ALARM_ENABLED : 0);
-}
+पूर्ण
 
-static int rc5t619_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 	u8 buff[6];
-	unsigned int buff_cent;
-	int err;
-	int cent_flag;
-	unsigned int ctrl1;
+	अचिन्हित पूर्णांक buff_cent;
+	पूर्णांक err;
+	पूर्णांक cent_flag;
+	अचिन्हित पूर्णांक ctrl1;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
-	if (err)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
+	अगर (err)
+		वापस err;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_MONTH, &buff_cent);
-	if (err < 0) {
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_MONTH, &buff_cent);
+	अगर (err < 0) अणु
 		dev_err(dev, "failed to read time: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (buff_cent & MONTH_CENTFLAG)
+	अगर (buff_cent & MONTH_CENTFLAG)
 		cent_flag = 1;
-	else
+	अन्यथा
 		cent_flag = 0;
 
-	err = regmap_bulk_read(rtc->rn5t618->regmap, RN5T618_RTC_ALARM_Y_SEC,
-			       buff, sizeof(buff));
-	if (err)
-		return err;
+	err = regmap_bulk_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_ALARM_Y_SEC,
+			       buff, माप(buff));
+	अगर (err)
+		वापस err;
 
 	buff[3] = buff[3] & 0x3f;
 
-	alrm->time.tm_sec  = bcd2bin(buff[0]);
-	alrm->time.tm_min  = bcd2bin(buff[1]);
+	alrm->समय.पंचांग_sec  = bcd2bin(buff[0]);
+	alrm->समय.पंचांग_min  = bcd2bin(buff[1]);
 
-	if (ctrl1 & CTRL1_24HR)
-		alrm->time.tm_hour = bcd2bin(buff[2]);
-	else
-		alrm->time.tm_hour = rtc5t619_12hour_bcd2bin(buff[2]);
+	अगर (ctrl1 & CTRL1_24HR)
+		alrm->समय.पंचांग_hour = bcd2bin(buff[2]);
+	अन्यथा
+		alrm->समय.पंचांग_hour = rtc5t619_12hour_bcd2bin(buff[2]);
 
-	alrm->time.tm_mday = bcd2bin(buff[3]);
-	alrm->time.tm_mon  = bcd2bin(buff[4]) - 1;
-	alrm->time.tm_year = bcd2bin(buff[5]) + 100 * cent_flag;
+	alrm->समय.पंचांग_mday = bcd2bin(buff[3]);
+	alrm->समय.पंचांग_mon  = bcd2bin(buff[4]) - 1;
+	alrm->समय.पंचांग_year = bcd2bin(buff[5]) + 100 * cent_flag;
 	alrm->enabled = !!(ctrl1 & CTRL1_ALARM_ENABLED);
-	dev_dbg(dev, "read alarm: %ptR\n", &alrm->time);
+	dev_dbg(dev, "read alarm: %ptR\n", &alrm->समय);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rc5t619_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *alrm)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *alrm)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 	u8 buff[6];
-	int err;
-	int cent_flag;
-	unsigned int ctrl1;
+	पूर्णांक err;
+	पूर्णांक cent_flag;
+	अचिन्हित पूर्णांक ctrl1;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
-	if (err)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL1, &ctrl1);
+	अगर (err)
+		वापस err;
 
 	err = rc5t619_rtc_alarm_enable(dev, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (rtc->irq == -1)
-		return -EINVAL;
+	अगर (rtc->irq == -1)
+		वापस -EINVAL;
 
-	if (alrm->enabled == 0)
-		return 0;
+	अगर (alrm->enabled == 0)
+		वापस 0;
 
-	if (alrm->time.tm_year >= 100)
+	अगर (alrm->समय.पंचांग_year >= 100)
 		cent_flag = 1;
-	else
+	अन्यथा
 		cent_flag = 0;
 
-	alrm->time.tm_mon += 1;
-	buff[0] = bin2bcd(alrm->time.tm_sec);
-	buff[1] = bin2bcd(alrm->time.tm_min);
+	alrm->समय.पंचांग_mon += 1;
+	buff[0] = bin2bcd(alrm->समय.पंचांग_sec);
+	buff[1] = bin2bcd(alrm->समय.पंचांग_min);
 
-	if (ctrl1 & CTRL1_24HR)
-		buff[2] = bin2bcd(alrm->time.tm_hour);
-	else
-		buff[2] = rtc5t619_12hour_bin2bcd(alrm->time.tm_hour);
+	अगर (ctrl1 & CTRL1_24HR)
+		buff[2] = bin2bcd(alrm->समय.पंचांग_hour);
+	अन्यथा
+		buff[2] = rtc5t619_12hour_bin2bcd(alrm->समय.पंचांग_hour);
 
-	buff[3] = bin2bcd(alrm->time.tm_mday);
-	buff[4] = bin2bcd(alrm->time.tm_mon);
-	buff[5] = bin2bcd(alrm->time.tm_year - 100 * cent_flag);
+	buff[3] = bin2bcd(alrm->समय.पंचांग_mday);
+	buff[4] = bin2bcd(alrm->समय.पंचांग_mon);
+	buff[5] = bin2bcd(alrm->समय.पंचांग_year - 100 * cent_flag);
 	buff[3] |= MDAY_DAL_EXT;
 
-	err = regmap_bulk_write(rtc->rn5t618->regmap, RN5T618_RTC_ALARM_Y_SEC,
-				buff, sizeof(buff));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_ग_लिखो(rtc->rn5t618->regmap, RN5T618_RTC_ALARM_Y_SEC,
+				buff, माप(buff));
+	अगर (err < 0)
+		वापस err;
 
-	return rc5t619_rtc_alarm_enable(dev, alrm->enabled);
-}
+	वापस rc5t619_rtc_alarm_enable(dev, alrm->enabled);
+पूर्ण
 
-static const struct rtc_class_ops rc5t619_rtc_ops = {
-	.read_time	= rc5t619_rtc_read_time,
-	.set_time	= rc5t619_rtc_set_time,
+अटल स्थिर काष्ठा rtc_class_ops rc5t619_rtc_ops = अणु
+	.पढ़ो_समय	= rc5t619_rtc_पढ़ो_समय,
+	.set_समय	= rc5t619_rtc_set_समय,
 	.set_alarm	= rc5t619_rtc_set_alarm,
-	.read_alarm	= rc5t619_rtc_read_alarm,
+	.पढ़ो_alarm	= rc5t619_rtc_पढ़ो_alarm,
 	.alarm_irq_enable = rc5t619_rtc_alarm_enable,
-};
+पूर्ण;
 
-static int rc5t619_rtc_alarm_flag_clr(struct device *dev)
-{
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक rc5t619_rtc_alarm_flag_clr(काष्ठा device *dev)
+अणु
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 
 	/* clear alarm-D status bits.*/
-	return regmap_update_bits(rtc->rn5t618->regmap,
+	वापस regmap_update_bits(rtc->rn5t618->regmap,
 				RN5T618_RTC_CTRL2,
 				CTRL2_ALARM_STATUS | CTRL2_CTC, 0);
-}
+पूर्ण
 
-static irqreturn_t rc5t619_rtc_irq(int irq, void *data)
-{
-	struct device *dev = data;
-	struct rc5t619_rtc *rtc = dev_get_drvdata(dev);
+अटल irqवापस_t rc5t619_rtc_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा device *dev = data;
+	काष्ठा rc5t619_rtc *rtc = dev_get_drvdata(dev);
 
 	rc5t619_rtc_alarm_flag_clr(dev);
 
 	rtc_update_irq(rtc->rtc, 1, RTC_IRQF | RTC_AF);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rc5t619_rtc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
-	struct rc5t619_rtc *rtc;
-	unsigned int ctrl2;
-	int err;
+अटल पूर्णांक rc5t619_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा rc5t619_rtc *rtc;
+	अचिन्हित पूर्णांक ctrl2;
+	पूर्णांक err;
 
-	rtc = devm_kzalloc(dev, sizeof(*rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(dev, माप(*rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
 	rtc->rn5t618 = rn5t618;
 
 	dev_set_drvdata(dev, rtc);
 	rtc->irq = -1;
 
-	if (rn5t618->irq_data)
+	अगर (rn5t618->irq_data)
 		rtc->irq = regmap_irq_get_virq(rn5t618->irq_data,
 					       RN5T618_IRQ_RTC);
 
-	if (rtc->irq  < 0)
+	अगर (rtc->irq  < 0)
 		rtc->irq = -1;
 
-	err = regmap_read(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(rtc->rn5t618->regmap, RN5T618_RTC_CTRL2, &ctrl2);
+	अगर (err < 0)
+		वापस err;
 
 	/* disable rtc periodic function */
 	err = rc5t619_rtc_periodic_disable(&pdev->dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (ctrl2 & CTRL2_PON) {
+	अगर (ctrl2 & CTRL2_PON) अणु
 		err = rc5t619_rtc_alarm_flag_clr(&pdev->dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	rtc->rtc = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc->rtc)) {
+	अगर (IS_ERR(rtc->rtc)) अणु
 		err = PTR_ERR(rtc->rtc);
 		dev_err(dev, "RTC device register: err %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	rtc->rtc->ops = &rc5t619_rtc_ops;
 	rtc->rtc->range_min = RTC_TIMESTAMP_BEGIN_1900;
 	rtc->rtc->range_max = RTC_TIMESTAMP_END_2099;
 
-	/* set interrupt and enable it */
-	if (rtc->irq != -1) {
-		err = devm_request_threaded_irq(&pdev->dev, rtc->irq, NULL,
+	/* set पूर्णांकerrupt and enable it */
+	अगर (rtc->irq != -1) अणु
+		err = devm_request_thपढ़ोed_irq(&pdev->dev, rtc->irq, शून्य,
 						rc5t619_rtc_irq,
 						IRQF_ONESHOT,
 						"rtc-rc5t619",
 						&pdev->dev);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&pdev->dev, "request IRQ:%d fail\n", rtc->irq);
 			rtc->irq = -1;
 
 			err = rc5t619_rtc_alarm_enable(&pdev->dev, 0);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			/* enable wake */
 			device_init_wakeup(&pdev->dev, 1);
 			enable_irq_wake(rtc->irq);
-		}
-	} else {
-		/* system don't want to using alarm interrupt, so close it */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* प्रणाली करोn't want to using alarm पूर्णांकerrupt, so बंद it */
 		err = rc5t619_rtc_alarm_enable(&pdev->dev, 0);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		dev_warn(&pdev->dev, "rc5t619 interrupt is disabled\n");
-	}
+	पूर्ण
 
-	return devm_rtc_register_device(rtc->rtc);
-}
+	वापस devm_rtc_रेजिस्टर_device(rtc->rtc);
+पूर्ण
 
-static struct platform_driver rc5t619_rtc_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver rc5t619_rtc_driver = अणु
+	.driver	= अणु
 		.name	= "rc5t619-rtc",
-	},
+	पूर्ण,
 	.probe	= rc5t619_rtc_probe,
-};
+पूर्ण;
 
-module_platform_driver(rc5t619_rtc_driver);
+module_platक्रमm_driver(rc5t619_rtc_driver);
 MODULE_ALIAS("platform:rc5t619-rtc");
 MODULE_DESCRIPTION("RICOH RC5T619 RTC driver");
 MODULE_LICENSE("GPL");

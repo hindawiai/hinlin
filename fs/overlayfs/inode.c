@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2011 Novell Inc.
  */
 
-#include <linux/fs.h>
-#include <linux/slab.h>
-#include <linux/cred.h>
-#include <linux/xattr.h>
-#include <linux/posix_acl.h>
-#include <linux/ratelimit.h>
-#include <linux/fiemap.h>
-#include <linux/fileattr.h>
-#include <linux/security.h>
-#include "overlayfs.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/ratelimit.h>
+#समावेश <linux/fiemap.h>
+#समावेश <linux/fileattr.h>
+#समावेश <linux/security.h>
+#समावेश "overlayfs.h"
 
 
-int ovl_setattr(struct user_namespace *mnt_userns, struct dentry *dentry,
-		struct iattr *attr)
-{
-	int err;
+पूर्णांक ovl_setattr(काष्ठा user_namespace *mnt_userns, काष्ठा dentry *dentry,
+		काष्ठा iattr *attr)
+अणु
+	पूर्णांक err;
 	bool full_copy_up = false;
-	struct dentry *upperdentry;
-	const struct cred *old_cred;
+	काष्ठा dentry *upperdentry;
+	स्थिर काष्ठा cred *old_cred;
 
 	err = setattr_prepare(&init_user_ns, dentry, attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = ovl_want_write(dentry);
-	if (err)
-		goto out;
+	err = ovl_want_ग_लिखो(dentry);
+	अगर (err)
+		जाओ out;
 
-	if (attr->ia_valid & ATTR_SIZE) {
-		struct inode *realinode = d_inode(ovl_dentry_real(dentry));
+	अगर (attr->ia_valid & ATTR_SIZE) अणु
+		काष्ठा inode *realinode = d_inode(ovl_dentry_real(dentry));
 
 		err = -ETXTBSY;
-		if (atomic_read(&realinode->i_writecount) < 0)
-			goto out_drop_write;
+		अगर (atomic_पढ़ो(&realinode->i_ग_लिखोcount) < 0)
+			जाओ out_drop_ग_लिखो;
 
 		/* Truncate should trigger data copy up as well */
 		full_copy_up = true;
-	}
+	पूर्ण
 
-	if (!full_copy_up)
+	अगर (!full_copy_up)
 		err = ovl_copy_up(dentry);
-	else
+	अन्यथा
 		err = ovl_copy_up_with_data(dentry);
-	if (!err) {
-		struct inode *winode = NULL;
+	अगर (!err) अणु
+		काष्ठा inode *winode = शून्य;
 
 		upperdentry = ovl_dentry_upper(dentry);
 
-		if (attr->ia_valid & ATTR_SIZE) {
+		अगर (attr->ia_valid & ATTR_SIZE) अणु
 			winode = d_inode(upperdentry);
-			err = get_write_access(winode);
-			if (err)
-				goto out_drop_write;
-		}
+			err = get_ग_लिखो_access(winode);
+			अगर (err)
+				जाओ out_drop_ग_लिखो;
+		पूर्ण
 
-		if (attr->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
+		अगर (attr->ia_valid & (ATTR_KILL_SUID|ATTR_KILL_SGID))
 			attr->ia_valid &= ~ATTR_MODE;
 
 		/*
-		 * We might have to translate ovl file into real file object
-		 * once use cases emerge.  For now, simply don't let underlying
-		 * filesystem rely on attr->ia_file
+		 * We might have to translate ovl file पूर्णांकo real file object
+		 * once use हालs emerge.  For now, simply करोn't let underlying
+		 * fileप्रणाली rely on attr->ia_file
 		 */
-		attr->ia_valid &= ~ATTR_FILE;
+		attr->ia_valid &= ~ATTR_खाता;
 
 		/*
-		 * If open(O_TRUNC) is done, VFS calls ->setattr with ATTR_OPEN
-		 * set.  Overlayfs does not pass O_TRUNC flag to underlying
-		 * filesystem during open -> do not pass ATTR_OPEN.  This
-		 * disables optimization in fuse which assumes open(O_TRUNC)
-		 * already set file size to 0.  But we never passed O_TRUNC to
-		 * fuse.  So by clearing ATTR_OPEN, fuse will be forced to send
+		 * If खोलो(O_TRUNC) is करोne, VFS calls ->setattr with ATTR_OPEN
+		 * set.  Overlayfs करोes not pass O_TRUNC flag to underlying
+		 * fileप्रणाली during खोलो -> करो not pass ATTR_OPEN.  This
+		 * disables optimization in fuse which assumes खोलो(O_TRUNC)
+		 * alपढ़ोy set file size to 0.  But we never passed O_TRUNC to
+		 * fuse.  So by clearing ATTR_OPEN, fuse will be क्रमced to send
 		 * setattr request to server.
 		 */
 		attr->ia_valid &= ~ATTR_OPEN;
 
 		inode_lock(upperdentry->d_inode);
 		old_cred = ovl_override_creds(dentry->d_sb);
-		err = notify_change(&init_user_ns, upperdentry, attr, NULL);
+		err = notअगरy_change(&init_user_ns, upperdentry, attr, शून्य);
 		revert_creds(old_cred);
-		if (!err)
+		अगर (!err)
 			ovl_copyattr(upperdentry->d_inode, dentry->d_inode);
 		inode_unlock(upperdentry->d_inode);
 
-		if (winode)
-			put_write_access(winode);
-	}
-out_drop_write:
-	ovl_drop_write(dentry);
+		अगर (winode)
+			put_ग_लिखो_access(winode);
+	पूर्ण
+out_drop_ग_लिखो:
+	ovl_drop_ग_लिखो(dentry);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ovl_map_dev_ino(struct dentry *dentry, struct kstat *stat, int fsid)
-{
+अटल व्योम ovl_map_dev_ino(काष्ठा dentry *dentry, काष्ठा kstat *stat, पूर्णांक fsid)
+अणु
 	bool samefs = ovl_same_fs(dentry->d_sb);
-	unsigned int xinobits = ovl_xino_bits(dentry->d_sb);
-	unsigned int xinoshift = 64 - xinobits;
+	अचिन्हित पूर्णांक xinobits = ovl_xino_bits(dentry->d_sb);
+	अचिन्हित पूर्णांक xinoshअगरt = 64 - xinobits;
 
-	if (samefs) {
+	अगर (samefs) अणु
 		/*
 		 * When all layers are on the same fs, all real inode
 		 * number are unique, so we use the overlay st_dev,
-		 * which is friendly to du -x.
+		 * which is मित्रly to du -x.
 		 */
 		stat->dev = dentry->d_sb->s_dev;
-		return;
-	} else if (xinobits) {
+		वापस;
+	पूर्ण अन्यथा अगर (xinobits) अणु
 		/*
 		 * All inode numbers of underlying fs should not be using the
 		 * high xinobits, so we use high xinobits to partition the
 		 * overlay st_ino address space. The high bits holds the fsid
-		 * (upper fsid is 0). The lowest xinobit is reserved for mapping
-		 * the non-persistent inode numbers range in case of overflow.
+		 * (upper fsid is 0). The lowest xinobit is reserved क्रम mapping
+		 * the non-persistent inode numbers range in हाल of overflow.
 		 * This way all overlay inode numbers are unique and use the
 		 * overlay st_dev.
 		 */
-		if (likely(!(stat->ino >> xinoshift))) {
-			stat->ino |= ((u64)fsid) << (xinoshift + 1);
+		अगर (likely(!(stat->ino >> xinoshअगरt))) अणु
+			stat->ino |= ((u64)fsid) << (xinoshअगरt + 1);
 			stat->dev = dentry->d_sb->s_dev;
-			return;
-		} else if (ovl_xino_warn(dentry->d_sb)) {
+			वापस;
+		पूर्ण अन्यथा अगर (ovl_xino_warn(dentry->d_sb)) अणु
 			pr_warn_ratelimited("inode number too big (%pd2, ino=%llu, xinobits=%d)\n",
 					    dentry, stat->ino, xinobits);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* The inode could not be mapped to a unified st_ino address space */
-	if (S_ISDIR(dentry->d_inode->i_mode)) {
+	/* The inode could not be mapped to a unअगरied st_ino address space */
+	अगर (S_ISसूची(dentry->d_inode->i_mode)) अणु
 		/*
-		 * Always use the overlay st_dev for directories, so 'find
+		 * Always use the overlay st_dev क्रम directories, so 'find
 		 * -xdev' will scan the entire overlay mount and won't cross the
 		 * overlay mount boundaries.
 		 *
-		 * If not all layers are on the same fs the pair {real st_ino;
-		 * overlay st_dev} is not unique, so use the non persistent
-		 * overlay st_ino for directories.
+		 * If not all layers are on the same fs the pair अणुreal st_ino;
+		 * overlay st_devपूर्ण is not unique, so use the non persistent
+		 * overlay st_ino क्रम directories.
 		 */
 		stat->dev = dentry->d_sb->s_dev;
 		stat->ino = dentry->d_inode->i_ino;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * For non-samefs setup, if we cannot map all layers st_ino
-		 * to a unified address space, we need to make sure that st_dev
+		 * For non-samefs setup, अगर we cannot map all layers st_ino
+		 * to a unअगरied address space, we need to make sure that st_dev
 		 * is unique per underlying fs, so we use the unique anonymous
-		 * bdev assigned to the underlying fs.
+		 * bdev asचिन्हित to the underlying fs.
 		 */
-		stat->dev = OVL_FS(dentry->d_sb)->fs[fsid].pseudo_dev;
-	}
-}
+		stat->dev = OVL_FS(dentry->d_sb)->fs[fsid].pseuकरो_dev;
+	पूर्ण
+पूर्ण
 
-int ovl_getattr(struct user_namespace *mnt_userns, const struct path *path,
-		struct kstat *stat, u32 request_mask, unsigned int flags)
-{
-	struct dentry *dentry = path->dentry;
-	enum ovl_path_type type;
-	struct path realpath;
-	const struct cred *old_cred;
-	bool is_dir = S_ISDIR(dentry->d_inode->i_mode);
-	int fsid = 0;
-	int err;
+पूर्णांक ovl_getattr(काष्ठा user_namespace *mnt_userns, स्थिर काष्ठा path *path,
+		काष्ठा kstat *stat, u32 request_mask, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा dentry *dentry = path->dentry;
+	क्रमागत ovl_path_type type;
+	काष्ठा path realpath;
+	स्थिर काष्ठा cred *old_cred;
+	bool is_dir = S_ISसूची(dentry->d_inode->i_mode);
+	पूर्णांक fsid = 0;
+	पूर्णांक err;
 	bool metacopy_blocks = false;
 
 	metacopy_blocks = ovl_is_metacopy_dentry(dentry);
@@ -172,438 +173,438 @@ int ovl_getattr(struct user_namespace *mnt_userns, const struct path *path,
 	type = ovl_path_real(dentry, &realpath);
 	old_cred = ovl_override_creds(dentry->d_sb);
 	err = vfs_getattr(&realpath, stat, request_mask, flags);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/*
 	 * For non-dir or same fs, we use st_ino of the copy up origin.
-	 * This guaranties constant st_dev/st_ino across copy up.
+	 * This guaranties स्थिरant st_dev/st_ino across copy up.
 	 * With xino feature and non-samefs, we use st_ino of the copy up
 	 * origin masked with high bits that represent the layer id.
 	 *
-	 * If lower filesystem supports NFS file handles, this also guaranties
+	 * If lower fileप्रणाली supports NFS file handles, this also guaranties
 	 * persistent st_ino across mount cycle.
 	 */
-	if (!is_dir || ovl_same_dev(dentry->d_sb)) {
-		if (!OVL_TYPE_UPPER(type)) {
+	अगर (!is_dir || ovl_same_dev(dentry->d_sb)) अणु
+		अगर (!OVL_TYPE_UPPER(type)) अणु
 			fsid = ovl_layer_lower(dentry)->fsid;
-		} else if (OVL_TYPE_ORIGIN(type)) {
-			struct kstat lowerstat;
+		पूर्ण अन्यथा अगर (OVL_TYPE_ORIGIN(type)) अणु
+			काष्ठा kstat lowerstat;
 			u32 lowermask = STATX_INO | STATX_BLOCKS |
 					(!is_dir ? STATX_NLINK : 0);
 
 			ovl_path_lower(dentry, &realpath);
 			err = vfs_getattr(&realpath, &lowerstat,
 					  lowermask, flags);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
 			/*
-			 * Lower hardlinks may be broken on copy up to different
+			 * Lower hardlinks may be broken on copy up to dअगरferent
 			 * upper files, so we cannot use the lower origin st_ino
-			 * for those different files, even for the same fs case.
+			 * क्रम those dअगरferent files, even क्रम the same fs हाल.
 			 *
-			 * Similarly, several redirected dirs can point to the
+			 * Similarly, several redirected dirs can poपूर्णांक to the
 			 * same dir on a lower layer. With the "verify_lower"
-			 * feature, we do not use the lower origin st_ino, if
-			 * we haven't verified that this redirect is unique.
+			 * feature, we करो not use the lower origin st_ino, अगर
+			 * we haven't verअगरied that this redirect is unique.
 			 *
 			 * With inodes index enabled, it is safe to use st_ino
 			 * of an indexed origin. The index validates that the
 			 * upper hardlink is not broken and that a redirected
 			 * dir is the only redirect to that origin.
 			 */
-			if (ovl_test_flag(OVL_INDEX, d_inode(dentry)) ||
-			    (!ovl_verify_lower(dentry->d_sb) &&
-			     (is_dir || lowerstat.nlink == 1))) {
+			अगर (ovl_test_flag(OVL_INDEX, d_inode(dentry)) ||
+			    (!ovl_verअगरy_lower(dentry->d_sb) &&
+			     (is_dir || lowerstat.nlink == 1))) अणु
 				fsid = ovl_layer_lower(dentry)->fsid;
 				stat->ino = lowerstat.ino;
-			}
+			पूर्ण
 
 			/*
 			 * If we are querying a metacopy dentry and lower
 			 * dentry is data dentry, then use the blocks we
-			 * queried just now. We don't have to do additional
+			 * queried just now. We करोn't have to करो additional
 			 * vfs_getattr(). If lower itself is metacopy, then
-			 * additional vfs_getattr() is unavoidable.
+			 * additional vfs_getattr() is unaव्योमable.
 			 */
-			if (metacopy_blocks &&
-			    realpath.dentry == ovl_dentry_lowerdata(dentry)) {
+			अगर (metacopy_blocks &&
+			    realpath.dentry == ovl_dentry_lowerdata(dentry)) अणु
 				stat->blocks = lowerstat.blocks;
 				metacopy_blocks = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (metacopy_blocks) {
+		अगर (metacopy_blocks) अणु
 			/*
-			 * If lower is not same as lowerdata or if there was
+			 * If lower is not same as lowerdata or अगर there was
 			 * no origin on upper, we can end up here.
 			 */
-			struct kstat lowerdatastat;
+			काष्ठा kstat lowerdatastat;
 			u32 lowermask = STATX_BLOCKS;
 
 			ovl_path_lowerdata(dentry, &realpath);
 			err = vfs_getattr(&realpath, &lowerdatastat,
 					  lowermask, flags);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 			stat->blocks = lowerdatastat.blocks;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ovl_map_dev_ino(dentry, stat, fsid);
 
 	/*
 	 * It's probably not worth it to count subdirs to get the
-	 * correct link count.  nlink=1 seems to pacify 'find' and
+	 * correct link count.  nlink=1 seems to pacअगरy 'find' and
 	 * other utilities.
 	 */
-	if (is_dir && OVL_TYPE_MERGE(type))
+	अगर (is_dir && OVL_TYPE_MERGE(type))
 		stat->nlink = 1;
 
 	/*
-	 * Return the overlay inode nlinks for indexed upper inodes.
-	 * Overlay inode nlink counts the union of the upper hardlinks
-	 * and non-covered lower hardlinks. It does not include the upper
+	 * Return the overlay inode nlinks क्रम indexed upper inodes.
+	 * Overlay inode nlink counts the जोड़ of the upper hardlinks
+	 * and non-covered lower hardlinks. It करोes not include the upper
 	 * index hardlink.
 	 */
-	if (!is_dir && ovl_test_flag(OVL_INDEX, d_inode(dentry)))
+	अगर (!is_dir && ovl_test_flag(OVL_INDEX, d_inode(dentry)))
 		stat->nlink = dentry->d_inode->i_nlink;
 
 out:
 	revert_creds(old_cred);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ovl_permission(struct user_namespace *mnt_userns,
-		   struct inode *inode, int mask)
-{
-	struct inode *upperinode = ovl_inode_upper(inode);
-	struct inode *realinode = upperinode ?: ovl_inode_lower(inode);
-	const struct cred *old_cred;
-	int err;
+पूर्णांक ovl_permission(काष्ठा user_namespace *mnt_userns,
+		   काष्ठा inode *inode, पूर्णांक mask)
+अणु
+	काष्ठा inode *upperinode = ovl_inode_upper(inode);
+	काष्ठा inode *realinode = upperinode ?: ovl_inode_lower(inode);
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक err;
 
 	/* Careful in RCU walk mode */
-	if (!realinode) {
+	अगर (!realinode) अणु
 		WARN_ON(!(mask & MAY_NOT_BLOCK));
-		return -ECHILD;
-	}
+		वापस -ECHILD;
+	पूर्ण
 
 	/*
 	 * Check overlay inode with the creds of task and underlying inode
 	 * with creds of mounter
 	 */
 	err = generic_permission(&init_user_ns, inode, mask);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	old_cred = ovl_override_creds(inode->i_sb);
-	if (!upperinode &&
-	    !special_file(realinode->i_mode) && mask & MAY_WRITE) {
+	अगर (!upperinode &&
+	    !special_file(realinode->i_mode) && mask & MAY_WRITE) अणु
 		mask &= ~(MAY_WRITE | MAY_APPEND);
-		/* Make sure mounter can read file for copy up later */
+		/* Make sure mounter can पढ़ो file क्रम copy up later */
 		mask |= MAY_READ;
-	}
+	पूर्ण
 	err = inode_permission(&init_user_ns, realinode, mask);
 	revert_creds(old_cred);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const char *ovl_get_link(struct dentry *dentry,
-				struct inode *inode,
-				struct delayed_call *done)
-{
-	const struct cred *old_cred;
-	const char *p;
+अटल स्थिर अक्षर *ovl_get_link(काष्ठा dentry *dentry,
+				काष्ठा inode *inode,
+				काष्ठा delayed_call *करोne)
+अणु
+	स्थिर काष्ठा cred *old_cred;
+	स्थिर अक्षर *p;
 
-	if (!dentry)
-		return ERR_PTR(-ECHILD);
+	अगर (!dentry)
+		वापस ERR_PTR(-ECHILD);
 
 	old_cred = ovl_override_creds(dentry->d_sb);
-	p = vfs_get_link(ovl_dentry_real(dentry), done);
+	p = vfs_get_link(ovl_dentry_real(dentry), करोne);
 	revert_creds(old_cred);
-	return p;
-}
+	वापस p;
+पूर्ण
 
-bool ovl_is_private_xattr(struct super_block *sb, const char *name)
-{
-	struct ovl_fs *ofs = sb->s_fs_info;
+bool ovl_is_निजी_xattr(काष्ठा super_block *sb, स्थिर अक्षर *name)
+अणु
+	काष्ठा ovl_fs *ofs = sb->s_fs_info;
 
-	if (ofs->config.userxattr)
-		return strncmp(name, OVL_XATTR_USER_PREFIX,
-			       sizeof(OVL_XATTR_USER_PREFIX) - 1) == 0;
-	else
-		return strncmp(name, OVL_XATTR_TRUSTED_PREFIX,
-			       sizeof(OVL_XATTR_TRUSTED_PREFIX) - 1) == 0;
-}
+	अगर (ofs->config.userxattr)
+		वापस म_भेदन(name, OVL_XATTR_USER_PREFIX,
+			       माप(OVL_XATTR_USER_PREFIX) - 1) == 0;
+	अन्यथा
+		वापस म_भेदन(name, OVL_XATTR_TRUSTED_PREFIX,
+			       माप(OVL_XATTR_TRUSTED_PREFIX) - 1) == 0;
+पूर्ण
 
-int ovl_xattr_set(struct dentry *dentry, struct inode *inode, const char *name,
-		  const void *value, size_t size, int flags)
-{
-	int err;
-	struct dentry *upperdentry = ovl_i_dentry_upper(inode);
-	struct dentry *realdentry = upperdentry ?: ovl_dentry_lower(dentry);
-	const struct cred *old_cred;
+पूर्णांक ovl_xattr_set(काष्ठा dentry *dentry, काष्ठा inode *inode, स्थिर अक्षर *name,
+		  स्थिर व्योम *value, माप_प्रकार size, पूर्णांक flags)
+अणु
+	पूर्णांक err;
+	काष्ठा dentry *upperdentry = ovl_i_dentry_upper(inode);
+	काष्ठा dentry *realdentry = upperdentry ?: ovl_dentry_lower(dentry);
+	स्थिर काष्ठा cred *old_cred;
 
-	err = ovl_want_write(dentry);
-	if (err)
-		goto out;
+	err = ovl_want_ग_लिखो(dentry);
+	अगर (err)
+		जाओ out;
 
-	if (!value && !upperdentry) {
+	अगर (!value && !upperdentry) अणु
 		old_cred = ovl_override_creds(dentry->d_sb);
-		err = vfs_getxattr(&init_user_ns, realdentry, name, NULL, 0);
+		err = vfs_getxattr(&init_user_ns, realdentry, name, शून्य, 0);
 		revert_creds(old_cred);
-		if (err < 0)
-			goto out_drop_write;
-	}
+		अगर (err < 0)
+			जाओ out_drop_ग_लिखो;
+	पूर्ण
 
-	if (!upperdentry) {
+	अगर (!upperdentry) अणु
 		err = ovl_copy_up(dentry);
-		if (err)
-			goto out_drop_write;
+		अगर (err)
+			जाओ out_drop_ग_लिखो;
 
 		realdentry = ovl_dentry_upper(dentry);
-	}
+	पूर्ण
 
 	old_cred = ovl_override_creds(dentry->d_sb);
-	if (value)
+	अगर (value)
 		err = vfs_setxattr(&init_user_ns, realdentry, name, value, size,
 				   flags);
-	else {
+	अन्यथा अणु
 		WARN_ON(flags != XATTR_REPLACE);
-		err = vfs_removexattr(&init_user_ns, realdentry, name);
-	}
+		err = vfs_हटाओxattr(&init_user_ns, realdentry, name);
+	पूर्ण
 	revert_creds(old_cred);
 
-	/* copy c/mtime */
+	/* copy c/mसमय */
 	ovl_copyattr(d_inode(realdentry), inode);
 
-out_drop_write:
-	ovl_drop_write(dentry);
+out_drop_ग_लिखो:
+	ovl_drop_ग_लिखो(dentry);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ovl_xattr_get(struct dentry *dentry, struct inode *inode, const char *name,
-		  void *value, size_t size)
-{
-	ssize_t res;
-	const struct cred *old_cred;
-	struct dentry *realdentry =
+पूर्णांक ovl_xattr_get(काष्ठा dentry *dentry, काष्ठा inode *inode, स्थिर अक्षर *name,
+		  व्योम *value, माप_प्रकार size)
+अणु
+	sमाप_प्रकार res;
+	स्थिर काष्ठा cred *old_cred;
+	काष्ठा dentry *realdentry =
 		ovl_i_dentry_upper(inode) ?: ovl_dentry_lower(dentry);
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	res = vfs_getxattr(&init_user_ns, realdentry, name, value, size);
 	revert_creds(old_cred);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static bool ovl_can_list(struct super_block *sb, const char *s)
-{
-	/* Never list private (.overlay) */
-	if (ovl_is_private_xattr(sb, s))
-		return false;
+अटल bool ovl_can_list(काष्ठा super_block *sb, स्थिर अक्षर *s)
+अणु
+	/* Never list निजी (.overlay) */
+	अगर (ovl_is_निजी_xattr(sb, s))
+		वापस false;
 
 	/* List all non-trusted xattrs */
-	if (strncmp(s, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN) != 0)
-		return true;
+	अगर (म_भेदन(s, XATTR_TRUSTED_PREFIX, XATTR_TRUSTED_PREFIX_LEN) != 0)
+		वापस true;
 
-	/* list other trusted for superuser only */
-	return ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN);
-}
+	/* list other trusted क्रम superuser only */
+	वापस ns_capable_noaudit(&init_user_ns, CAP_SYS_ADMIN);
+पूर्ण
 
-ssize_t ovl_listxattr(struct dentry *dentry, char *list, size_t size)
-{
-	struct dentry *realdentry = ovl_dentry_real(dentry);
-	ssize_t res;
-	size_t len;
-	char *s;
-	const struct cred *old_cred;
+sमाप_प्रकार ovl_listxattr(काष्ठा dentry *dentry, अक्षर *list, माप_प्रकार size)
+अणु
+	काष्ठा dentry *realdentry = ovl_dentry_real(dentry);
+	sमाप_प्रकार res;
+	माप_प्रकार len;
+	अक्षर *s;
+	स्थिर काष्ठा cred *old_cred;
 
 	old_cred = ovl_override_creds(dentry->d_sb);
 	res = vfs_listxattr(realdentry, list, size);
 	revert_creds(old_cred);
-	if (res <= 0 || size == 0)
-		return res;
+	अगर (res <= 0 || size == 0)
+		वापस res;
 
-	/* filter out private xattrs */
-	for (s = list, len = res; len;) {
-		size_t slen = strnlen(s, len) + 1;
+	/* filter out निजी xattrs */
+	क्रम (s = list, len = res; len;) अणु
+		माप_प्रकार slen = strnlen(s, len) + 1;
 
 		/* underlying fs providing us with an broken xattr list? */
-		if (WARN_ON(slen > len))
-			return -EIO;
+		अगर (WARN_ON(slen > len))
+			वापस -EIO;
 
 		len -= slen;
-		if (!ovl_can_list(dentry->d_sb, s)) {
+		अगर (!ovl_can_list(dentry->d_sb, s)) अणु
 			res -= slen;
-			memmove(s, s + slen, len);
-		} else {
+			स_हटाओ(s, s + slen, len);
+		पूर्ण अन्यथा अणु
 			s += slen;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-struct posix_acl *ovl_get_acl(struct inode *inode, int type)
-{
-	struct inode *realinode = ovl_inode_real(inode);
-	const struct cred *old_cred;
-	struct posix_acl *acl;
+काष्ठा posix_acl *ovl_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	काष्ठा inode *realinode = ovl_inode_real(inode);
+	स्थिर काष्ठा cred *old_cred;
+	काष्ठा posix_acl *acl;
 
-	if (!IS_ENABLED(CONFIG_FS_POSIX_ACL) || !IS_POSIXACL(realinode))
-		return NULL;
+	अगर (!IS_ENABLED(CONFIG_FS_POSIX_ACL) || !IS_POSIXACL(realinode))
+		वापस शून्य;
 
 	old_cred = ovl_override_creds(inode->i_sb);
 	acl = get_acl(realinode, type);
 	revert_creds(old_cred);
 
-	return acl;
-}
+	वापस acl;
+पूर्ण
 
-int ovl_update_time(struct inode *inode, struct timespec64 *ts, int flags)
-{
-	if (flags & S_ATIME) {
-		struct ovl_fs *ofs = inode->i_sb->s_fs_info;
-		struct path upperpath = {
+पूर्णांक ovl_update_समय(काष्ठा inode *inode, काष्ठा बारpec64 *ts, पूर्णांक flags)
+अणु
+	अगर (flags & S_ATIME) अणु
+		काष्ठा ovl_fs *ofs = inode->i_sb->s_fs_info;
+		काष्ठा path upperpath = अणु
 			.mnt = ovl_upper_mnt(ofs),
 			.dentry = ovl_upperdentry_dereference(OVL_I(inode)),
-		};
+		पूर्ण;
 
-		if (upperpath.dentry) {
-			touch_atime(&upperpath);
-			inode->i_atime = d_inode(upperpath.dentry)->i_atime;
-		}
-	}
-	return 0;
-}
+		अगर (upperpath.dentry) अणु
+			touch_aसमय(&upperpath);
+			inode->i_aसमय = d_inode(upperpath.dentry)->i_aसमय;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ovl_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
+अटल पूर्णांक ovl_fiemap(काष्ठा inode *inode, काष्ठा fiemap_extent_info *fieinfo,
 		      u64 start, u64 len)
-{
-	int err;
-	struct inode *realinode = ovl_inode_realdata(inode);
-	const struct cred *old_cred;
+अणु
+	पूर्णांक err;
+	काष्ठा inode *realinode = ovl_inode_realdata(inode);
+	स्थिर काष्ठा cred *old_cred;
 
-	if (!realinode->i_op->fiemap)
-		return -EOPNOTSUPP;
+	अगर (!realinode->i_op->fiemap)
+		वापस -EOPNOTSUPP;
 
 	old_cred = ovl_override_creds(inode->i_sb);
 	err = realinode->i_op->fiemap(realinode, fieinfo, start, len);
 	revert_creds(old_cred);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Work around the fact that security_file_ioctl() takes a file argument.
  * Introducing security_inode_fileattr_get/set() hooks would solve this issue
  * properly.
  */
-static int ovl_security_fileattr(struct dentry *dentry, struct fileattr *fa,
+अटल पूर्णांक ovl_security_fileattr(काष्ठा dentry *dentry, काष्ठा fileattr *fa,
 				 bool set)
-{
-	struct path realpath;
-	struct file *file;
-	unsigned int cmd;
-	int err;
+अणु
+	काष्ठा path realpath;
+	काष्ठा file *file;
+	अचिन्हित पूर्णांक cmd;
+	पूर्णांक err;
 
 	ovl_path_real(dentry, &realpath);
-	file = dentry_open(&realpath, O_RDONLY, current_cred());
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	file = dentry_खोलो(&realpath, O_RDONLY, current_cred());
+	अगर (IS_ERR(file))
+		वापस PTR_ERR(file);
 
-	if (set)
+	अगर (set)
 		cmd = fa->fsx_valid ? FS_IOC_FSSETXATTR : FS_IOC_SETFLAGS;
-	else
+	अन्यथा
 		cmd = fa->fsx_valid ? FS_IOC_FSGETXATTR : FS_IOC_GETFLAGS;
 
 	err = security_file_ioctl(file, cmd, 0);
 	fput(file);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ovl_fileattr_set(struct user_namespace *mnt_userns,
-		     struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	struct dentry *upperdentry;
-	const struct cred *old_cred;
-	int err;
+पूर्णांक ovl_fileattr_set(काष्ठा user_namespace *mnt_userns,
+		     काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा dentry *upperdentry;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक err;
 
-	err = ovl_want_write(dentry);
-	if (err)
-		goto out;
+	err = ovl_want_ग_लिखो(dentry);
+	अगर (err)
+		जाओ out;
 
 	err = ovl_copy_up(dentry);
-	if (!err) {
+	अगर (!err) अणु
 		upperdentry = ovl_dentry_upper(dentry);
 
 		old_cred = ovl_override_creds(inode->i_sb);
 		err = ovl_security_fileattr(dentry, fa, true);
-		if (!err)
+		अगर (!err)
 			err = vfs_fileattr_set(&init_user_ns, upperdentry, fa);
 		revert_creds(old_cred);
 		ovl_copyflags(ovl_inode_real(inode), inode);
-	}
-	ovl_drop_write(dentry);
+	पूर्ण
+	ovl_drop_ग_लिखो(dentry);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ovl_fileattr_get(struct dentry *dentry, struct fileattr *fa)
-{
-	struct inode *inode = d_inode(dentry);
-	struct dentry *realdentry = ovl_dentry_real(dentry);
-	const struct cred *old_cred;
-	int err;
+पूर्णांक ovl_fileattr_get(काष्ठा dentry *dentry, काष्ठा fileattr *fa)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा dentry *realdentry = ovl_dentry_real(dentry);
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक err;
 
 	old_cred = ovl_override_creds(inode->i_sb);
 	err = ovl_security_fileattr(dentry, fa, false);
-	if (!err)
+	अगर (!err)
 		err = vfs_fileattr_get(realdentry, fa);
 	revert_creds(old_cred);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct inode_operations ovl_file_inode_operations = {
+अटल स्थिर काष्ठा inode_operations ovl_file_inode_operations = अणु
 	.setattr	= ovl_setattr,
 	.permission	= ovl_permission,
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
 	.get_acl	= ovl_get_acl,
-	.update_time	= ovl_update_time,
+	.update_समय	= ovl_update_समय,
 	.fiemap		= ovl_fiemap,
 	.fileattr_get	= ovl_fileattr_get,
 	.fileattr_set	= ovl_fileattr_set,
-};
+पूर्ण;
 
-static const struct inode_operations ovl_symlink_inode_operations = {
+अटल स्थिर काष्ठा inode_operations ovl_symlink_inode_operations = अणु
 	.setattr	= ovl_setattr,
 	.get_link	= ovl_get_link,
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
-	.update_time	= ovl_update_time,
-};
+	.update_समय	= ovl_update_समय,
+पूर्ण;
 
-static const struct inode_operations ovl_special_inode_operations = {
+अटल स्थिर काष्ठा inode_operations ovl_special_inode_operations = अणु
 	.setattr	= ovl_setattr,
 	.permission	= ovl_permission,
 	.getattr	= ovl_getattr,
 	.listxattr	= ovl_listxattr,
 	.get_acl	= ovl_get_acl,
-	.update_time	= ovl_update_time,
-};
+	.update_समय	= ovl_update_समय,
+पूर्ण;
 
-static const struct address_space_operations ovl_aops = {
-	/* For O_DIRECT dentry_open() checks f_mapping->a_ops->direct_IO */
+अटल स्थिर काष्ठा address_space_operations ovl_aops = अणु
+	/* For O_सूचीECT dentry_खोलो() checks f_mapping->a_ops->direct_IO */
 	.direct_IO		= noop_direct_IO,
-};
+पूर्ण;
 
 /*
  * It is possible to stack overlayfs instance on top of another
@@ -620,11 +621,11 @@ static const struct address_space_operations ovl_aops = {
  * [...] &ovl_i_mutex_dir_key[depth]#2 (stack_depth=1)
  * [...] &type->i_mutex_dir_key        (stack_depth=0)
  *
- * Locking order w.r.t ovl_want_write() is important for nested overlayfs.
+ * Locking order w.r.t ovl_want_ग_लिखो() is important क्रम nested overlayfs.
  *
  * This chain is valid:
  * - inode->i_rwsem			(inode_lock[2])
- * - upper_mnt->mnt_sb->s_writers	(ovl_want_write[0])
+ * - upper_mnt->mnt_sb->s_ग_लिखोrs	(ovl_want_ग_लिखो[0])
  * - OVL_I(inode)->lock			(ovl_inode_lock[2])
  * - OVL_I(lowerinode)->lock		(ovl_inode_lock[1])
  *
@@ -634,497 +635,497 @@ static const struct address_space_operations ovl_aops = {
  * - lowerinode->i_rwsem		(inode_lock[1])
  * - OVL_I(lowerinode)->lock		(ovl_inode_lock[1])
  *
- * But lowerinode->i_rwsem SHOULD NOT be acquired while ovl_want_write() is
- * held, because it is in reverse order of the non-nested case using the same
+ * But lowerinode->i_rwsem SHOULD NOT be acquired जबतक ovl_want_ग_लिखो() is
+ * held, because it is in reverse order of the non-nested हाल using the same
  * upper fs:
  * - inode->i_rwsem			(inode_lock[1])
- * - upper_mnt->mnt_sb->s_writers	(ovl_want_write[0])
+ * - upper_mnt->mnt_sb->s_ग_लिखोrs	(ovl_want_ग_लिखो[0])
  * - OVL_I(inode)->lock			(ovl_inode_lock[1])
  */
-#define OVL_MAX_NESTING FILESYSTEM_MAX_STACK_DEPTH
+#घोषणा OVL_MAX_NESTING खाताSYSTEM_MAX_STACK_DEPTH
 
-static inline void ovl_lockdep_annotate_inode_mutex_key(struct inode *inode)
-{
-#ifdef CONFIG_LOCKDEP
-	static struct lock_class_key ovl_i_mutex_key[OVL_MAX_NESTING];
-	static struct lock_class_key ovl_i_mutex_dir_key[OVL_MAX_NESTING];
-	static struct lock_class_key ovl_i_lock_key[OVL_MAX_NESTING];
+अटल अंतरभूत व्योम ovl_lockdep_annotate_inode_mutex_key(काष्ठा inode *inode)
+अणु
+#अगर_घोषित CONFIG_LOCKDEP
+	अटल काष्ठा lock_class_key ovl_i_mutex_key[OVL_MAX_NESTING];
+	अटल काष्ठा lock_class_key ovl_i_mutex_dir_key[OVL_MAX_NESTING];
+	अटल काष्ठा lock_class_key ovl_i_lock_key[OVL_MAX_NESTING];
 
-	int depth = inode->i_sb->s_stack_depth - 1;
+	पूर्णांक depth = inode->i_sb->s_stack_depth - 1;
 
-	if (WARN_ON_ONCE(depth < 0 || depth >= OVL_MAX_NESTING))
+	अगर (WARN_ON_ONCE(depth < 0 || depth >= OVL_MAX_NESTING))
 		depth = 0;
 
-	if (S_ISDIR(inode->i_mode))
+	अगर (S_ISसूची(inode->i_mode))
 		lockdep_set_class(&inode->i_rwsem, &ovl_i_mutex_dir_key[depth]);
-	else
+	अन्यथा
 		lockdep_set_class(&inode->i_rwsem, &ovl_i_mutex_key[depth]);
 
 	lockdep_set_class(&OVL_I(inode)->lock, &ovl_i_lock_key[depth]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void ovl_next_ino(struct inode *inode)
-{
-	struct ovl_fs *ofs = inode->i_sb->s_fs_info;
+अटल व्योम ovl_next_ino(काष्ठा inode *inode)
+अणु
+	काष्ठा ovl_fs *ofs = inode->i_sb->s_fs_info;
 
-	inode->i_ino = atomic_long_inc_return(&ofs->last_ino);
-	if (unlikely(!inode->i_ino))
-		inode->i_ino = atomic_long_inc_return(&ofs->last_ino);
-}
+	inode->i_ino = atomic_दीर्घ_inc_वापस(&ofs->last_ino);
+	अगर (unlikely(!inode->i_ino))
+		inode->i_ino = atomic_दीर्घ_inc_वापस(&ofs->last_ino);
+पूर्ण
 
-static void ovl_map_ino(struct inode *inode, unsigned long ino, int fsid)
-{
-	int xinobits = ovl_xino_bits(inode->i_sb);
-	unsigned int xinoshift = 64 - xinobits;
+अटल व्योम ovl_map_ino(काष्ठा inode *inode, अचिन्हित दीर्घ ino, पूर्णांक fsid)
+अणु
+	पूर्णांक xinobits = ovl_xino_bits(inode->i_sb);
+	अचिन्हित पूर्णांक xinoshअगरt = 64 - xinobits;
 
 	/*
 	 * When d_ino is consistent with st_ino (samefs or i_ino has enough
-	 * bits to encode layer), set the same value used for st_ino to i_ino,
+	 * bits to encode layer), set the same value used क्रम st_ino to i_ino,
 	 * so inode number exposed via /proc/locks and a like will be
 	 * consistent with d_ino and st_ino values. An i_ino value inconsistent
-	 * with d_ino also causes nfsd readdirplus to fail.
+	 * with d_ino also causes nfsd सूची_पढ़ोplus to fail.
 	 */
 	inode->i_ino = ino;
-	if (ovl_same_fs(inode->i_sb)) {
-		return;
-	} else if (xinobits && likely(!(ino >> xinoshift))) {
-		inode->i_ino |= (unsigned long)fsid << (xinoshift + 1);
-		return;
-	}
+	अगर (ovl_same_fs(inode->i_sb)) अणु
+		वापस;
+	पूर्ण अन्यथा अगर (xinobits && likely(!(ino >> xinoshअगरt))) अणु
+		inode->i_ino |= (अचिन्हित दीर्घ)fsid << (xinoshअगरt + 1);
+		वापस;
+	पूर्ण
 
 	/*
 	 * For directory inodes on non-samefs with xino disabled or xino
-	 * overflow, we allocate a non-persistent inode number, to be used for
+	 * overflow, we allocate a non-persistent inode number, to be used क्रम
 	 * resolving st_ino collisions in ovl_map_dev_ino().
 	 *
-	 * To avoid ino collision with legitimate xino values from upper
+	 * To aव्योम ino collision with legitimate xino values from upper
 	 * layer (fsid 0), use the lowest xinobit to map the non
-	 * persistent inode numbers to the unified st_ino address space.
+	 * persistent inode numbers to the unअगरied st_ino address space.
 	 */
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		ovl_next_ino(inode);
-		if (xinobits) {
+		अगर (xinobits) अणु
 			inode->i_ino &= ~0UL >> xinobits;
-			inode->i_ino |= 1UL << xinoshift;
-		}
-	}
-}
+			inode->i_ino |= 1UL << xinoshअगरt;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ovl_inode_init(struct inode *inode, struct ovl_inode_params *oip,
-		    unsigned long ino, int fsid)
-{
-	struct inode *realinode;
+व्योम ovl_inode_init(काष्ठा inode *inode, काष्ठा ovl_inode_params *oip,
+		    अचिन्हित दीर्घ ino, पूर्णांक fsid)
+अणु
+	काष्ठा inode *realinode;
 
-	if (oip->upperdentry)
+	अगर (oip->upperdentry)
 		OVL_I(inode)->__upperdentry = oip->upperdentry;
-	if (oip->lowerpath && oip->lowerpath->dentry)
+	अगर (oip->lowerpath && oip->lowerpath->dentry)
 		OVL_I(inode)->lower = igrab(d_inode(oip->lowerpath->dentry));
-	if (oip->lowerdata)
+	अगर (oip->lowerdata)
 		OVL_I(inode)->lowerdata = igrab(d_inode(oip->lowerdata));
 
 	realinode = ovl_inode_real(inode);
 	ovl_copyattr(realinode, inode);
 	ovl_copyflags(realinode, inode);
 	ovl_map_ino(inode, ino, fsid);
-}
+पूर्ण
 
-static void ovl_fill_inode(struct inode *inode, umode_t mode, dev_t rdev)
-{
+अटल व्योम ovl_fill_inode(काष्ठा inode *inode, umode_t mode, dev_t rdev)
+अणु
 	inode->i_mode = mode;
 	inode->i_flags |= S_NOCMTIME;
-#ifdef CONFIG_FS_POSIX_ACL
-	inode->i_acl = inode->i_default_acl = ACL_DONT_CACHE;
-#endif
+#अगर_घोषित CONFIG_FS_POSIX_ACL
+	inode->i_acl = inode->i_शेष_acl = ACL_DONT_CACHE;
+#पूर्ण_अगर
 
 	ovl_lockdep_annotate_inode_mutex_key(inode);
 
-	switch (mode & S_IFMT) {
-	case S_IFREG:
+	चयन (mode & S_IFMT) अणु
+	हाल S_IFREG:
 		inode->i_op = &ovl_file_inode_operations;
 		inode->i_fop = &ovl_file_operations;
 		inode->i_mapping->a_ops = &ovl_aops;
-		break;
+		अवरोध;
 
-	case S_IFDIR:
+	हाल S_IFसूची:
 		inode->i_op = &ovl_dir_inode_operations;
 		inode->i_fop = &ovl_dir_operations;
-		break;
+		अवरोध;
 
-	case S_IFLNK:
+	हाल S_IFLNK:
 		inode->i_op = &ovl_symlink_inode_operations;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		inode->i_op = &ovl_special_inode_operations;
 		init_special_inode(inode, mode, rdev);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * With inodes index enabled, an overlay inode nlink counts the union of upper
- * hardlinks and non-covered lower hardlinks. During the lifetime of a non-pure
- * upper inode, the following nlink modifying operations can happen:
+ * With inodes index enabled, an overlay inode nlink counts the जोड़ of upper
+ * hardlinks and non-covered lower hardlinks. During the lअगरeसमय of a non-pure
+ * upper inode, the following nlink modअगरying operations can happen:
  *
  * 1. Lower hardlink copy up
- * 2. Upper hardlink created, unlinked or renamed over
- * 3. Lower hardlink whiteout or renamed over
+ * 2. Upper hardlink created, unlinked or नामd over
+ * 3. Lower hardlink whiteout or नामd over
  *
- * For the first, copy up case, the union nlink does not change, whether the
+ * For the first, copy up हाल, the जोड़ nlink करोes not change, whether the
  * operation succeeds or fails, but the upper inode nlink may change.
- * Therefore, before copy up, we store the union nlink value relative to the
+ * Thereक्रमe, beक्रमe copy up, we store the जोड़ nlink value relative to the
  * lower inode nlink in the index inode xattr .overlay.nlink.
  *
- * For the second, upper hardlink case, the union nlink should be incremented
+ * For the second, upper hardlink हाल, the जोड़ nlink should be incremented
  * or decremented IFF the operation succeeds, aligned with nlink change of the
- * upper inode. Therefore, before link/unlink/rename, we store the union nlink
+ * upper inode. Thereक्रमe, beक्रमe link/unlink/नाम, we store the जोड़ nlink
  * value relative to the upper inode nlink in the index inode.
  *
- * For the last, lower cover up case, we simplify things by preceding the
+ * For the last, lower cover up हाल, we simplअगरy things by preceding the
  * whiteout or cover up with copy up. This makes sure that there is an index
- * upper inode where the nlink xattr can be stored before the copied up upper
+ * upper inode where the nlink xattr can be stored beक्रमe the copied up upper
  * entry is unlink.
  */
-#define OVL_NLINK_ADD_UPPER	(1 << 0)
+#घोषणा OVL_NLINK_ADD_UPPER	(1 << 0)
 
 /*
- * On-disk format for indexed nlink:
+ * On-disk क्रमmat क्रम indexed nlink:
  *
  * nlink relative to the upper inode - "U[+-]NUM"
  * nlink relative to the lower inode - "L[+-]NUM"
  */
 
-static int ovl_set_nlink_common(struct dentry *dentry,
-				struct dentry *realdentry, const char *format)
-{
-	struct inode *inode = d_inode(dentry);
-	struct inode *realinode = d_inode(realdentry);
-	char buf[13];
-	int len;
+अटल पूर्णांक ovl_set_nlink_common(काष्ठा dentry *dentry,
+				काष्ठा dentry *realdentry, स्थिर अक्षर *क्रमmat)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	काष्ठा inode *realinode = d_inode(realdentry);
+	अक्षर buf[13];
+	पूर्णांक len;
 
-	len = snprintf(buf, sizeof(buf), format,
-		       (int) (inode->i_nlink - realinode->i_nlink));
+	len = snम_लिखो(buf, माप(buf), क्रमmat,
+		       (पूर्णांक) (inode->i_nlink - realinode->i_nlink));
 
-	if (WARN_ON(len >= sizeof(buf)))
-		return -EIO;
+	अगर (WARN_ON(len >= माप(buf)))
+		वापस -EIO;
 
-	return ovl_do_setxattr(OVL_FS(inode->i_sb), ovl_dentry_upper(dentry),
+	वापस ovl_करो_setxattr(OVL_FS(inode->i_sb), ovl_dentry_upper(dentry),
 			       OVL_XATTR_NLINK, buf, len);
-}
+पूर्ण
 
-int ovl_set_nlink_upper(struct dentry *dentry)
-{
-	return ovl_set_nlink_common(dentry, ovl_dentry_upper(dentry), "U%+i");
-}
+पूर्णांक ovl_set_nlink_upper(काष्ठा dentry *dentry)
+अणु
+	वापस ovl_set_nlink_common(dentry, ovl_dentry_upper(dentry), "U%+i");
+पूर्ण
 
-int ovl_set_nlink_lower(struct dentry *dentry)
-{
-	return ovl_set_nlink_common(dentry, ovl_dentry_lower(dentry), "L%+i");
-}
+पूर्णांक ovl_set_nlink_lower(काष्ठा dentry *dentry)
+अणु
+	वापस ovl_set_nlink_common(dentry, ovl_dentry_lower(dentry), "L%+i");
+पूर्ण
 
-unsigned int ovl_get_nlink(struct ovl_fs *ofs, struct dentry *lowerdentry,
-			   struct dentry *upperdentry,
-			   unsigned int fallback)
-{
-	int nlink_diff;
-	int nlink;
-	char buf[13];
-	int err;
+अचिन्हित पूर्णांक ovl_get_nlink(काष्ठा ovl_fs *ofs, काष्ठा dentry *lowerdentry,
+			   काष्ठा dentry *upperdentry,
+			   अचिन्हित पूर्णांक fallback)
+अणु
+	पूर्णांक nlink_dअगरf;
+	पूर्णांक nlink;
+	अक्षर buf[13];
+	पूर्णांक err;
 
-	if (!lowerdentry || !upperdentry || d_inode(lowerdentry)->i_nlink == 1)
-		return fallback;
+	अगर (!lowerdentry || !upperdentry || d_inode(lowerdentry)->i_nlink == 1)
+		वापस fallback;
 
-	err = ovl_do_getxattr(ofs, upperdentry, OVL_XATTR_NLINK,
-			      &buf, sizeof(buf) - 1);
-	if (err < 0)
-		goto fail;
+	err = ovl_करो_getxattr(ofs, upperdentry, OVL_XATTR_NLINK,
+			      &buf, माप(buf) - 1);
+	अगर (err < 0)
+		जाओ fail;
 
 	buf[err] = '\0';
-	if ((buf[0] != 'L' && buf[0] != 'U') ||
+	अगर ((buf[0] != 'L' && buf[0] != 'U') ||
 	    (buf[1] != '+' && buf[1] != '-'))
-		goto fail;
+		जाओ fail;
 
-	err = kstrtoint(buf + 1, 10, &nlink_diff);
-	if (err < 0)
-		goto fail;
+	err = kstrtoपूर्णांक(buf + 1, 10, &nlink_dअगरf);
+	अगर (err < 0)
+		जाओ fail;
 
 	nlink = d_inode(buf[0] == 'L' ? lowerdentry : upperdentry)->i_nlink;
-	nlink += nlink_diff;
+	nlink += nlink_dअगरf;
 
-	if (nlink <= 0)
-		goto fail;
+	अगर (nlink <= 0)
+		जाओ fail;
 
-	return nlink;
+	वापस nlink;
 
 fail:
 	pr_warn_ratelimited("failed to get index nlink (%pd2, err=%i)\n",
 			    upperdentry, err);
-	return fallback;
-}
+	वापस fallback;
+पूर्ण
 
-struct inode *ovl_new_inode(struct super_block *sb, umode_t mode, dev_t rdev)
-{
-	struct inode *inode;
+काष्ठा inode *ovl_new_inode(काष्ठा super_block *sb, umode_t mode, dev_t rdev)
+अणु
+	काष्ठा inode *inode;
 
 	inode = new_inode(sb);
-	if (inode)
+	अगर (inode)
 		ovl_fill_inode(inode, mode, rdev);
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-static int ovl_inode_test(struct inode *inode, void *data)
-{
-	return inode->i_private == data;
-}
+अटल पूर्णांक ovl_inode_test(काष्ठा inode *inode, व्योम *data)
+अणु
+	वापस inode->i_निजी == data;
+पूर्ण
 
-static int ovl_inode_set(struct inode *inode, void *data)
-{
-	inode->i_private = data;
-	return 0;
-}
+अटल पूर्णांक ovl_inode_set(काष्ठा inode *inode, व्योम *data)
+अणु
+	inode->i_निजी = data;
+	वापस 0;
+पूर्ण
 
-static bool ovl_verify_inode(struct inode *inode, struct dentry *lowerdentry,
-			     struct dentry *upperdentry, bool strict)
-{
+अटल bool ovl_verअगरy_inode(काष्ठा inode *inode, काष्ठा dentry *lowerdentry,
+			     काष्ठा dentry *upperdentry, bool strict)
+अणु
 	/*
-	 * For directories, @strict verify from lookup path performs consistency
-	 * checks, so NULL lower/upper in dentry must match NULL lower/upper in
-	 * inode. Non @strict verify from NFS handle decode path passes NULL for
+	 * For directories, @strict verअगरy from lookup path perक्रमms consistency
+	 * checks, so शून्य lower/upper in dentry must match शून्य lower/upper in
+	 * inode. Non @strict verअगरy from NFS handle decode path passes शून्य क्रम
 	 * 'unknown' lower/upper.
 	 */
-	if (S_ISDIR(inode->i_mode) && strict) {
+	अगर (S_ISसूची(inode->i_mode) && strict) अणु
 		/* Real lower dir moved to upper layer under us? */
-		if (!lowerdentry && ovl_inode_lower(inode))
-			return false;
+		अगर (!lowerdentry && ovl_inode_lower(inode))
+			वापस false;
 
 		/* Lookup of an uncovered redirect origin? */
-		if (!upperdentry && ovl_inode_upper(inode))
-			return false;
-	}
+		अगर (!upperdentry && ovl_inode_upper(inode))
+			वापस false;
+	पूर्ण
 
 	/*
-	 * Allow non-NULL lower inode in ovl_inode even if lowerdentry is NULL.
-	 * This happens when finding a copied up overlay inode for a renamed
+	 * Allow non-शून्य lower inode in ovl_inode even अगर lowerdentry is शून्य.
+	 * This happens when finding a copied up overlay inode क्रम a नामd
 	 * or hardlinked overlay dentry and lower dentry cannot be followed
-	 * by origin because lower fs does not support file handles.
+	 * by origin because lower fs करोes not support file handles.
 	 */
-	if (lowerdentry && ovl_inode_lower(inode) != d_inode(lowerdentry))
-		return false;
+	अगर (lowerdentry && ovl_inode_lower(inode) != d_inode(lowerdentry))
+		वापस false;
 
 	/*
-	 * Allow non-NULL __upperdentry in inode even if upperdentry is NULL.
-	 * This happens when finding a lower alias for a copied up hard link.
+	 * Allow non-शून्य __upperdentry in inode even अगर upperdentry is शून्य.
+	 * This happens when finding a lower alias क्रम a copied up hard link.
 	 */
-	if (upperdentry && ovl_inode_upper(inode) != d_inode(upperdentry))
-		return false;
+	अगर (upperdentry && ovl_inode_upper(inode) != d_inode(upperdentry))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-struct inode *ovl_lookup_inode(struct super_block *sb, struct dentry *real,
+काष्ठा inode *ovl_lookup_inode(काष्ठा super_block *sb, काष्ठा dentry *real,
 			       bool is_upper)
-{
-	struct inode *inode, *key = d_inode(real);
+अणु
+	काष्ठा inode *inode, *key = d_inode(real);
 
-	inode = ilookup5(sb, (unsigned long) key, ovl_inode_test, key);
-	if (!inode)
-		return NULL;
+	inode = ilookup5(sb, (अचिन्हित दीर्घ) key, ovl_inode_test, key);
+	अगर (!inode)
+		वापस शून्य;
 
-	if (!ovl_verify_inode(inode, is_upper ? NULL : real,
-			      is_upper ? real : NULL, false)) {
+	अगर (!ovl_verअगरy_inode(inode, is_upper ? शून्य : real,
+			      is_upper ? real : शून्य, false)) अणु
 		iput(inode);
-		return ERR_PTR(-ESTALE);
-	}
+		वापस ERR_PTR(-ESTALE);
+	पूर्ण
 
-	return inode;
-}
+	वापस inode;
+पूर्ण
 
-bool ovl_lookup_trap_inode(struct super_block *sb, struct dentry *dir)
-{
-	struct inode *key = d_inode(dir);
-	struct inode *trap;
+bool ovl_lookup_trap_inode(काष्ठा super_block *sb, काष्ठा dentry *dir)
+अणु
+	काष्ठा inode *key = d_inode(dir);
+	काष्ठा inode *trap;
 	bool res;
 
-	trap = ilookup5(sb, (unsigned long) key, ovl_inode_test, key);
-	if (!trap)
-		return false;
+	trap = ilookup5(sb, (अचिन्हित दीर्घ) key, ovl_inode_test, key);
+	अगर (!trap)
+		वापस false;
 
-	res = IS_DEADDIR(trap) && !ovl_inode_upper(trap) &&
+	res = IS_DEADसूची(trap) && !ovl_inode_upper(trap) &&
 				  !ovl_inode_lower(trap);
 
 	iput(trap);
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
- * Create an inode cache entry for layer root dir, that will intentionally
- * fail ovl_verify_inode(), so any lookup that will find some layer root
+ * Create an inode cache entry क्रम layer root dir, that will पूर्णांकentionally
+ * fail ovl_verअगरy_inode(), so any lookup that will find some layer root
  * will fail.
  */
-struct inode *ovl_get_trap_inode(struct super_block *sb, struct dentry *dir)
-{
-	struct inode *key = d_inode(dir);
-	struct inode *trap;
+काष्ठा inode *ovl_get_trap_inode(काष्ठा super_block *sb, काष्ठा dentry *dir)
+अणु
+	काष्ठा inode *key = d_inode(dir);
+	काष्ठा inode *trap;
 
-	if (!d_is_dir(dir))
-		return ERR_PTR(-ENOTDIR);
+	अगर (!d_is_dir(dir))
+		वापस ERR_PTR(-ENOTसूची);
 
-	trap = iget5_locked(sb, (unsigned long) key, ovl_inode_test,
+	trap = iget5_locked(sb, (अचिन्हित दीर्घ) key, ovl_inode_test,
 			    ovl_inode_set, key);
-	if (!trap)
-		return ERR_PTR(-ENOMEM);
+	अगर (!trap)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (!(trap->i_state & I_NEW)) {
+	अगर (!(trap->i_state & I_NEW)) अणु
 		/* Conflicting layer roots? */
 		iput(trap);
-		return ERR_PTR(-ELOOP);
-	}
+		वापस ERR_PTR(-ELOOP);
+	पूर्ण
 
-	trap->i_mode = S_IFDIR;
+	trap->i_mode = S_IFसूची;
 	trap->i_flags = S_DEAD;
 	unlock_new_inode(trap);
 
-	return trap;
-}
+	वापस trap;
+पूर्ण
 
 /*
  * Does overlay inode need to be hashed by lower inode?
  */
-static bool ovl_hash_bylower(struct super_block *sb, struct dentry *upper,
-			     struct dentry *lower, bool index)
-{
-	struct ovl_fs *ofs = sb->s_fs_info;
+अटल bool ovl_hash_bylower(काष्ठा super_block *sb, काष्ठा dentry *upper,
+			     काष्ठा dentry *lower, bool index)
+अणु
+	काष्ठा ovl_fs *ofs = sb->s_fs_info;
 
-	/* No, if pure upper */
-	if (!lower)
-		return false;
+	/* No, अगर pure upper */
+	अगर (!lower)
+		वापस false;
 
-	/* Yes, if already indexed */
-	if (index)
-		return true;
+	/* Yes, अगर alपढ़ोy indexed */
+	अगर (index)
+		वापस true;
 
-	/* Yes, if won't be copied up */
-	if (!ovl_upper_mnt(ofs))
-		return true;
+	/* Yes, अगर won't be copied up */
+	अगर (!ovl_upper_mnt(ofs))
+		वापस true;
 
-	/* No, if lower hardlink is or will be broken on copy up */
-	if ((upper || !ovl_indexdir(sb)) &&
+	/* No, अगर lower hardlink is or will be broken on copy up */
+	अगर ((upper || !ovl_indexdir(sb)) &&
 	    !d_is_dir(lower) && d_inode(lower)->i_nlink > 1)
-		return false;
+		वापस false;
 
-	/* No, if non-indexed upper with NFS export */
-	if (sb->s_export_op && upper)
-		return false;
+	/* No, अगर non-indexed upper with NFS export */
+	अगर (sb->s_export_op && upper)
+		वापस false;
 
-	/* Otherwise, hash by lower inode for fsnotify */
-	return true;
-}
+	/* Otherwise, hash by lower inode क्रम fsnotअगरy */
+	वापस true;
+पूर्ण
 
-static struct inode *ovl_iget5(struct super_block *sb, struct inode *newinode,
-			       struct inode *key)
-{
-	return newinode ? inode_insert5(newinode, (unsigned long) key,
+अटल काष्ठा inode *ovl_iget5(काष्ठा super_block *sb, काष्ठा inode *newinode,
+			       काष्ठा inode *key)
+अणु
+	वापस newinode ? inode_insert5(newinode, (अचिन्हित दीर्घ) key,
 					 ovl_inode_test, ovl_inode_set, key) :
-			  iget5_locked(sb, (unsigned long) key,
+			  iget5_locked(sb, (अचिन्हित दीर्घ) key,
 				       ovl_inode_test, ovl_inode_set, key);
-}
+पूर्ण
 
-struct inode *ovl_get_inode(struct super_block *sb,
-			    struct ovl_inode_params *oip)
-{
-	struct ovl_fs *ofs = OVL_FS(sb);
-	struct dentry *upperdentry = oip->upperdentry;
-	struct ovl_path *lowerpath = oip->lowerpath;
-	struct inode *realinode = upperdentry ? d_inode(upperdentry) : NULL;
-	struct inode *inode;
-	struct dentry *lowerdentry = lowerpath ? lowerpath->dentry : NULL;
+काष्ठा inode *ovl_get_inode(काष्ठा super_block *sb,
+			    काष्ठा ovl_inode_params *oip)
+अणु
+	काष्ठा ovl_fs *ofs = OVL_FS(sb);
+	काष्ठा dentry *upperdentry = oip->upperdentry;
+	काष्ठा ovl_path *lowerpath = oip->lowerpath;
+	काष्ठा inode *realinode = upperdentry ? d_inode(upperdentry) : शून्य;
+	काष्ठा inode *inode;
+	काष्ठा dentry *lowerdentry = lowerpath ? lowerpath->dentry : शून्य;
 	bool bylower = ovl_hash_bylower(sb, upperdentry, lowerdentry,
 					oip->index);
-	int fsid = bylower ? lowerpath->layer->fsid : 0;
+	पूर्णांक fsid = bylower ? lowerpath->layer->fsid : 0;
 	bool is_dir;
-	unsigned long ino = 0;
-	int err = oip->newinode ? -EEXIST : -ENOMEM;
+	अचिन्हित दीर्घ ino = 0;
+	पूर्णांक err = oip->newinode ? -EEXIST : -ENOMEM;
 
-	if (!realinode)
+	अगर (!realinode)
 		realinode = d_inode(lowerdentry);
 
 	/*
-	 * Copy up origin (lower) may exist for non-indexed upper, but we must
-	 * not use lower as hash key if this is a broken hardlink.
+	 * Copy up origin (lower) may exist क्रम non-indexed upper, but we must
+	 * not use lower as hash key अगर this is a broken hardlink.
 	 */
-	is_dir = S_ISDIR(realinode->i_mode);
-	if (upperdentry || bylower) {
-		struct inode *key = d_inode(bylower ? lowerdentry :
+	is_dir = S_ISसूची(realinode->i_mode);
+	अगर (upperdentry || bylower) अणु
+		काष्ठा inode *key = d_inode(bylower ? lowerdentry :
 						      upperdentry);
-		unsigned int nlink = is_dir ? 1 : realinode->i_nlink;
+		अचिन्हित पूर्णांक nlink = is_dir ? 1 : realinode->i_nlink;
 
 		inode = ovl_iget5(sb, oip->newinode, key);
-		if (!inode)
-			goto out_err;
-		if (!(inode->i_state & I_NEW)) {
+		अगर (!inode)
+			जाओ out_err;
+		अगर (!(inode->i_state & I_NEW)) अणु
 			/*
-			 * Verify that the underlying files stored in the inode
+			 * Verअगरy that the underlying files stored in the inode
 			 * match those in the dentry.
 			 */
-			if (!ovl_verify_inode(inode, lowerdentry, upperdentry,
-					      true)) {
+			अगर (!ovl_verअगरy_inode(inode, lowerdentry, upperdentry,
+					      true)) अणु
 				iput(inode);
 				err = -ESTALE;
-				goto out_err;
-			}
+				जाओ out_err;
+			पूर्ण
 
 			dput(upperdentry);
-			kfree(oip->redirect);
-			goto out;
-		}
+			kमुक्त(oip->redirect);
+			जाओ out;
+		पूर्ण
 
-		/* Recalculate nlink for non-dir due to indexing */
-		if (!is_dir)
+		/* Recalculate nlink क्रम non-dir due to indexing */
+		अगर (!is_dir)
 			nlink = ovl_get_nlink(ofs, lowerdentry, upperdentry,
 					      nlink);
 		set_nlink(inode, nlink);
 		ino = key->i_ino;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Lower hardlink that will be broken on copy up */
 		inode = new_inode(sb);
-		if (!inode) {
+		अगर (!inode) अणु
 			err = -ENOMEM;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		ino = realinode->i_ino;
 		fsid = lowerpath->layer->fsid;
-	}
+	पूर्ण
 	ovl_fill_inode(inode, realinode->i_mode, realinode->i_rdev);
 	ovl_inode_init(inode, oip, ino, fsid);
 
-	if (upperdentry && ovl_is_impuredir(sb, upperdentry))
+	अगर (upperdentry && ovl_is_impuredir(sb, upperdentry))
 		ovl_set_flag(OVL_IMPURE, inode);
 
-	if (oip->index)
+	अगर (oip->index)
 		ovl_set_flag(OVL_INDEX, inode);
 
 	OVL_I(inode)->redirect = oip->redirect;
 
-	if (bylower)
+	अगर (bylower)
 		ovl_set_flag(OVL_CONST_INO, inode);
 
-	/* Check for non-merge dir that may have whiteouts */
-	if (is_dir) {
-		if (((upperdentry && lowerdentry) || oip->numlower > 1) ||
-		    ovl_check_origin_xattr(ofs, upperdentry ?: lowerdentry)) {
+	/* Check क्रम non-merge dir that may have whiteouts */
+	अगर (is_dir) अणु
+		अगर (((upperdentry && lowerdentry) || oip->numlower > 1) ||
+		    ovl_check_origin_xattr(ofs, upperdentry ?: lowerdentry)) अणु
 			ovl_set_flag(OVL_WHITEOUTS, inode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (inode->i_state & I_NEW)
+	अगर (inode->i_state & I_NEW)
 		unlock_new_inode(inode);
 out:
-	return inode;
+	वापस inode;
 
 out_err:
 	pr_warn_ratelimited("failed to get inode (%i)\n", err);
 	inode = ERR_PTR(err);
-	goto out;
-}
+	जाओ out;
+पूर्ण

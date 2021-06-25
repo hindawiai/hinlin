@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  FUJITSU Extended Socket Network Device driver
  *  Copyright (c) 2015-2016 FUJITSU LIMITED
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#ifndef __CHECKER__
-#include "fjes_hw.h"
+#अगर_अघोषित __CHECKER__
+#समावेश "fjes_hw.h"
 
-#define CREATE_TRACE_POINTS
-#include "fjes_trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "fjes_trace.h"
 
-#endif /* __CHECKER__ */
+#पूर्ण_अगर /* __CHECKER__ */

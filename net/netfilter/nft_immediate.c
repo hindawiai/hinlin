@@ -1,221 +1,222 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008-2009 Patrick McHardy <kaber@trash.net>
  *
  * Development of this code funded by Astaro AG (http://www.astaro.com/)
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/netlink.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_core.h>
-#include <net/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables_offload.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_core.h>
+#समावेश <net/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables_offload.h>
 
-void nft_immediate_eval(const struct nft_expr *expr,
-			struct nft_regs *regs,
-			const struct nft_pktinfo *pkt)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
+व्योम nft_immediate_eval(स्थिर काष्ठा nft_expr *expr,
+			काष्ठा nft_regs *regs,
+			स्थिर काष्ठा nft_pktinfo *pkt)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
 
 	nft_data_copy(&regs->data[priv->dreg], &priv->data, priv->dlen);
-}
+पूर्ण
 
-static const struct nla_policy nft_immediate_policy[NFTA_IMMEDIATE_MAX + 1] = {
-	[NFTA_IMMEDIATE_DREG]	= { .type = NLA_U32 },
-	[NFTA_IMMEDIATE_DATA]	= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy nft_immediate_policy[NFTA_IMMEDIATE_MAX + 1] = अणु
+	[NFTA_IMMEDIATE_DREG]	= अणु .type = NLA_U32 पूर्ण,
+	[NFTA_IMMEDIATE_DATA]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
-static int nft_immediate_init(const struct nft_ctx *ctx,
-			      const struct nft_expr *expr,
-			      const struct nlattr * const tb[])
-{
-	struct nft_immediate_expr *priv = nft_expr_priv(expr);
-	struct nft_data_desc desc;
-	int err;
+अटल पूर्णांक nft_immediate_init(स्थिर काष्ठा nft_ctx *ctx,
+			      स्थिर काष्ठा nft_expr *expr,
+			      स्थिर काष्ठा nlattr * स्थिर tb[])
+अणु
+	काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
+	काष्ठा nft_data_desc desc;
+	पूर्णांक err;
 
-	if (tb[NFTA_IMMEDIATE_DREG] == NULL ||
-	    tb[NFTA_IMMEDIATE_DATA] == NULL)
-		return -EINVAL;
+	अगर (tb[NFTA_IMMEDIATE_DREG] == शून्य ||
+	    tb[NFTA_IMMEDIATE_DATA] == शून्य)
+		वापस -EINVAL;
 
-	err = nft_data_init(ctx, &priv->data, sizeof(priv->data), &desc,
+	err = nft_data_init(ctx, &priv->data, माप(priv->data), &desc,
 			    tb[NFTA_IMMEDIATE_DATA]);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	priv->dlen = desc.len;
 
-	err = nft_parse_register_store(ctx, tb[NFTA_IMMEDIATE_DREG],
+	err = nft_parse_रेजिस्टर_store(ctx, tb[NFTA_IMMEDIATE_DREG],
 				       &priv->dreg, &priv->data, desc.type,
 				       desc.len);
-	if (err < 0)
-		goto err1;
+	अगर (err < 0)
+		जाओ err1;
 
-	if (priv->dreg == NFT_REG_VERDICT) {
-		struct nft_chain *chain = priv->data.verdict.chain;
+	अगर (priv->dreg == NFT_REG_VERDICT) अणु
+		काष्ठा nft_chain *chain = priv->data.verdict.chain;
 
-		switch (priv->data.verdict.code) {
-		case NFT_JUMP:
-		case NFT_GOTO:
-			if (nft_chain_is_bound(chain)) {
+		चयन (priv->data.verdict.code) अणु
+		हाल NFT_JUMP:
+		हाल NFT_GOTO:
+			अगर (nft_chain_is_bound(chain)) अणु
 				err = -EBUSY;
-				goto err1;
-			}
+				जाओ err1;
+			पूर्ण
 			chain->bound = true;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err1:
 	nft_data_release(&priv->data, desc.type);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nft_immediate_activate(const struct nft_ctx *ctx,
-				   const struct nft_expr *expr)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
+अटल व्योम nft_immediate_activate(स्थिर काष्ठा nft_ctx *ctx,
+				   स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
 
-	return nft_data_hold(&priv->data, nft_dreg_to_type(priv->dreg));
-}
+	वापस nft_data_hold(&priv->data, nft_dreg_to_type(priv->dreg));
+पूर्ण
 
-static void nft_immediate_deactivate(const struct nft_ctx *ctx,
-				     const struct nft_expr *expr,
-				     enum nft_trans_phase phase)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
+अटल व्योम nft_immediate_deactivate(स्थिर काष्ठा nft_ctx *ctx,
+				     स्थिर काष्ठा nft_expr *expr,
+				     क्रमागत nft_trans_phase phase)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
 
-	if (phase == NFT_TRANS_COMMIT)
-		return;
+	अगर (phase == NFT_TRANS_COMMIT)
+		वापस;
 
-	return nft_data_release(&priv->data, nft_dreg_to_type(priv->dreg));
-}
+	वापस nft_data_release(&priv->data, nft_dreg_to_type(priv->dreg));
+पूर्ण
 
-static void nft_immediate_destroy(const struct nft_ctx *ctx,
-				  const struct nft_expr *expr)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
-	const struct nft_data *data = &priv->data;
-	struct nft_rule *rule, *n;
-	struct nft_ctx chain_ctx;
-	struct nft_chain *chain;
+अटल व्योम nft_immediate_destroy(स्थिर काष्ठा nft_ctx *ctx,
+				  स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
+	स्थिर काष्ठा nft_data *data = &priv->data;
+	काष्ठा nft_rule *rule, *n;
+	काष्ठा nft_ctx chain_ctx;
+	काष्ठा nft_chain *chain;
 
-	if (priv->dreg != NFT_REG_VERDICT)
-		return;
+	अगर (priv->dreg != NFT_REG_VERDICT)
+		वापस;
 
-	switch (data->verdict.code) {
-	case NFT_JUMP:
-	case NFT_GOTO:
+	चयन (data->verdict.code) अणु
+	हाल NFT_JUMP:
+	हाल NFT_GOTO:
 		chain = data->verdict.chain;
 
-		if (!nft_chain_is_bound(chain))
-			break;
+		अगर (!nft_chain_is_bound(chain))
+			अवरोध;
 
 		chain_ctx = *ctx;
 		chain_ctx.chain = chain;
 
-		list_for_each_entry_safe(rule, n, &chain->rules, list)
+		list_क्रम_each_entry_safe(rule, n, &chain->rules, list)
 			nf_tables_rule_release(&chain_ctx, rule);
 
 		nf_tables_chain_destroy(&chain_ctx);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int nft_immediate_dump(struct sk_buff *skb, const struct nft_expr *expr)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_immediate_dump(काष्ठा sk_buff *skb, स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
 
-	if (nft_dump_register(skb, NFTA_IMMEDIATE_DREG, priv->dreg))
-		goto nla_put_failure;
+	अगर (nft_dump_रेजिस्टर(skb, NFTA_IMMEDIATE_DREG, priv->dreg))
+		जाओ nla_put_failure;
 
-	return nft_data_dump(skb, NFTA_IMMEDIATE_DATA, &priv->data,
+	वापस nft_data_dump(skb, NFTA_IMMEDIATE_DATA, &priv->data,
 			     nft_dreg_to_type(priv->dreg), priv->dlen);
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int nft_immediate_validate(const struct nft_ctx *ctx,
-				  const struct nft_expr *expr,
-				  const struct nft_data **d)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
-	struct nft_ctx *pctx = (struct nft_ctx *)ctx;
-	const struct nft_data *data;
-	int err;
+अटल पूर्णांक nft_immediate_validate(स्थिर काष्ठा nft_ctx *ctx,
+				  स्थिर काष्ठा nft_expr *expr,
+				  स्थिर काष्ठा nft_data **d)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
+	काष्ठा nft_ctx *pctx = (काष्ठा nft_ctx *)ctx;
+	स्थिर काष्ठा nft_data *data;
+	पूर्णांक err;
 
-	if (priv->dreg != NFT_REG_VERDICT)
-		return 0;
+	अगर (priv->dreg != NFT_REG_VERDICT)
+		वापस 0;
 
 	data = &priv->data;
 
-	switch (data->verdict.code) {
-	case NFT_JUMP:
-	case NFT_GOTO:
+	चयन (data->verdict.code) अणु
+	हाल NFT_JUMP:
+	हाल NFT_GOTO:
 		pctx->level++;
 		err = nft_chain_validate(ctx, data->verdict.chain);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 		pctx->level--;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_immediate_offload_verdict(struct nft_offload_ctx *ctx,
-					 struct nft_flow_rule *flow,
-					 const struct nft_immediate_expr *priv)
-{
-	struct flow_action_entry *entry;
-	const struct nft_data *data;
+अटल पूर्णांक nft_immediate_offload_verdict(काष्ठा nft_offload_ctx *ctx,
+					 काष्ठा nft_flow_rule *flow,
+					 स्थिर काष्ठा nft_immediate_expr *priv)
+अणु
+	काष्ठा flow_action_entry *entry;
+	स्थिर काष्ठा nft_data *data;
 
 	entry = &flow->rule->action.entries[ctx->num_actions++];
 
 	data = &priv->data;
-	switch (data->verdict.code) {
-	case NF_ACCEPT:
+	चयन (data->verdict.code) अणु
+	हाल NF_ACCEPT:
 		entry->id = FLOW_ACTION_ACCEPT;
-		break;
-	case NF_DROP:
+		अवरोध;
+	हाल NF_DROP:
 		entry->id = FLOW_ACTION_DROP;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nft_immediate_offload(struct nft_offload_ctx *ctx,
-				 struct nft_flow_rule *flow,
-				 const struct nft_expr *expr)
-{
-	const struct nft_immediate_expr *priv = nft_expr_priv(expr);
+अटल पूर्णांक nft_immediate_offload(काष्ठा nft_offload_ctx *ctx,
+				 काष्ठा nft_flow_rule *flow,
+				 स्थिर काष्ठा nft_expr *expr)
+अणु
+	स्थिर काष्ठा nft_immediate_expr *priv = nft_expr_priv(expr);
 
-	if (priv->dreg == NFT_REG_VERDICT)
-		return nft_immediate_offload_verdict(ctx, flow, priv);
+	अगर (priv->dreg == NFT_REG_VERDICT)
+		वापस nft_immediate_offload_verdict(ctx, flow, priv);
 
-	memcpy(&ctx->regs[priv->dreg].data, &priv->data, sizeof(priv->data));
+	स_नकल(&ctx->regs[priv->dreg].data, &priv->data, माप(priv->data));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nft_expr_ops nft_imm_ops = {
+अटल स्थिर काष्ठा nft_expr_ops nft_imm_ops = अणु
 	.type		= &nft_imm_type,
-	.size		= NFT_EXPR_SIZE(sizeof(struct nft_immediate_expr)),
+	.size		= NFT_EXPR_SIZE(माप(काष्ठा nft_immediate_expr)),
 	.eval		= nft_immediate_eval,
 	.init		= nft_immediate_init,
 	.activate	= nft_immediate_activate,
@@ -225,12 +226,12 @@ static const struct nft_expr_ops nft_imm_ops = {
 	.validate	= nft_immediate_validate,
 	.offload	= nft_immediate_offload,
 	.offload_flags	= NFT_OFFLOAD_F_ACTION,
-};
+पूर्ण;
 
-struct nft_expr_type nft_imm_type __read_mostly = {
+काष्ठा nft_expr_type nft_imm_type __पढ़ो_mostly = अणु
 	.name		= "immediate",
 	.ops		= &nft_imm_ops,
 	.policy		= nft_immediate_policy,
 	.maxattr	= NFTA_IMMEDIATE_MAX,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;

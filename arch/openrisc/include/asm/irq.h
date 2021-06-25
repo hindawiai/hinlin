@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,12 +13,12 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_IRQ_H__
-#define __ASM_OPENRISC_IRQ_H__
+#अगर_अघोषित __ASM_OPENRISC_IRQ_H__
+#घोषणा __ASM_OPENRISC_IRQ_H__
 
-#define	NR_IRQS		32
-#include <asm-generic/irq.h>
+#घोषणा	NR_IRQS		32
+#समावेश <यंत्र-generic/irq.h>
 
-#define NO_IRQ		(-1)
+#घोषणा NO_IRQ		(-1)
 
-#endif /* __ASM_OPENRISC_IRQ_H__ */
+#पूर्ण_अगर /* __ASM_OPENRISC_IRQ_H__ */

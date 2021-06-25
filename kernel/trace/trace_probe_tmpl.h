@@ -1,242 +1,243 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Traceprobe fetch helper inlines
+ * Traceprobe fetch helper अंतरभूतs
  */
 
-static nokprobe_inline void
-fetch_store_raw(unsigned long val, struct fetch_insn *code, void *buf)
-{
-	switch (code->size) {
-	case 1:
+अटल nokprobe_अंतरभूत व्योम
+fetch_store_raw(अचिन्हित दीर्घ val, काष्ठा fetch_insn *code, व्योम *buf)
+अणु
+	चयन (code->size) अणु
+	हाल 1:
 		*(u8 *)buf = (u8)val;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		*(u16 *)buf = (u16)val;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		*(u32 *)buf = (u32)val;
-		break;
-	case 8:
-		//TBD: 32bit signed
+		अवरोध;
+	हाल 8:
+		//TBD: 32bit चिन्हित
 		*(u64 *)buf = (u64)val;
-		break;
-	default:
-		*(unsigned long *)buf = val;
-	}
-}
+		अवरोध;
+	शेष:
+		*(अचिन्हित दीर्घ *)buf = val;
+	पूर्ण
+पूर्ण
 
-static nokprobe_inline void
-fetch_apply_bitfield(struct fetch_insn *code, void *buf)
-{
-	switch (code->basesize) {
-	case 1:
-		*(u8 *)buf <<= code->lshift;
-		*(u8 *)buf >>= code->rshift;
-		break;
-	case 2:
-		*(u16 *)buf <<= code->lshift;
-		*(u16 *)buf >>= code->rshift;
-		break;
-	case 4:
-		*(u32 *)buf <<= code->lshift;
-		*(u32 *)buf >>= code->rshift;
-		break;
-	case 8:
-		*(u64 *)buf <<= code->lshift;
-		*(u64 *)buf >>= code->rshift;
-		break;
-	}
-}
+अटल nokprobe_अंतरभूत व्योम
+fetch_apply_bitfield(काष्ठा fetch_insn *code, व्योम *buf)
+अणु
+	चयन (code->basesize) अणु
+	हाल 1:
+		*(u8 *)buf <<= code->lshअगरt;
+		*(u8 *)buf >>= code->rshअगरt;
+		अवरोध;
+	हाल 2:
+		*(u16 *)buf <<= code->lshअगरt;
+		*(u16 *)buf >>= code->rshअगरt;
+		अवरोध;
+	हाल 4:
+		*(u32 *)buf <<= code->lshअगरt;
+		*(u32 *)buf >>= code->rshअगरt;
+		अवरोध;
+	हाल 8:
+		*(u64 *)buf <<= code->lshअगरt;
+		*(u64 *)buf >>= code->rshअगरt;
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
- * These functions must be defined for each callsite.
+ * These functions must be defined क्रम each callsite.
  * Return consumed dynamic data size (>= 0), or error (< 0).
- * If dest is NULL, don't store result and return required dynamic data size.
+ * If dest is शून्य, करोn't store result and वापस required dynamic data size.
  */
-static int
-process_fetch_insn(struct fetch_insn *code, struct pt_regs *regs,
-		   void *dest, void *base);
-static nokprobe_inline int fetch_store_strlen(unsigned long addr);
-static nokprobe_inline int
-fetch_store_string(unsigned long addr, void *dest, void *base);
-static nokprobe_inline int fetch_store_strlen_user(unsigned long addr);
-static nokprobe_inline int
-fetch_store_string_user(unsigned long addr, void *dest, void *base);
-static nokprobe_inline int
-probe_mem_read(void *dest, void *src, size_t size);
-static nokprobe_inline int
-probe_mem_read_user(void *dest, void *src, size_t size);
+अटल पूर्णांक
+process_fetch_insn(काष्ठा fetch_insn *code, काष्ठा pt_regs *regs,
+		   व्योम *dest, व्योम *base);
+अटल nokprobe_अंतरभूत पूर्णांक fetch_store_म_माप(अचिन्हित दीर्घ addr);
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_string(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base);
+अटल nokprobe_अंतरभूत पूर्णांक fetch_store_म_माप_user(अचिन्हित दीर्घ addr);
+अटल nokprobe_अंतरभूत पूर्णांक
+fetch_store_string_user(अचिन्हित दीर्घ addr, व्योम *dest, व्योम *base);
+अटल nokprobe_अंतरभूत पूर्णांक
+probe_mem_पढ़ो(व्योम *dest, व्योम *src, माप_प्रकार size);
+अटल nokprobe_अंतरभूत पूर्णांक
+probe_mem_पढ़ो_user(व्योम *dest, व्योम *src, माप_प्रकार size);
 
 /* From the 2nd stage, routine is same */
-static nokprobe_inline int
-process_fetch_insn_bottom(struct fetch_insn *code, unsigned long val,
-			   void *dest, void *base)
-{
-	struct fetch_insn *s3 = NULL;
-	int total = 0, ret = 0, i = 0;
+अटल nokprobe_अंतरभूत पूर्णांक
+process_fetch_insn_bottom(काष्ठा fetch_insn *code, अचिन्हित दीर्घ val,
+			   व्योम *dest, व्योम *base)
+अणु
+	काष्ठा fetch_insn *s3 = शून्य;
+	पूर्णांक total = 0, ret = 0, i = 0;
 	u32 loc = 0;
-	unsigned long lval = val;
+	अचिन्हित दीर्घ lval = val;
 
 stage2:
-	/* 2nd stage: dereference memory if needed */
-	do {
-		if (code->op == FETCH_OP_DEREF) {
+	/* 2nd stage: dereference memory अगर needed */
+	करो अणु
+		अगर (code->op == FETCH_OP_DEREF) अणु
 			lval = val;
-			ret = probe_mem_read(&val, (void *)val + code->offset,
-					     sizeof(val));
-		} else if (code->op == FETCH_OP_UDEREF) {
+			ret = probe_mem_पढ़ो(&val, (व्योम *)val + code->offset,
+					     माप(val));
+		पूर्ण अन्यथा अगर (code->op == FETCH_OP_UDEREF) अणु
 			lval = val;
-			ret = probe_mem_read_user(&val,
-				 (void *)val + code->offset, sizeof(val));
-		} else
-			break;
-		if (ret)
-			return ret;
+			ret = probe_mem_पढ़ो_user(&val,
+				 (व्योम *)val + code->offset, माप(val));
+		पूर्ण अन्यथा
+			अवरोध;
+		अगर (ret)
+			वापस ret;
 		code++;
-	} while (1);
+	पूर्ण जबतक (1);
 
 	s3 = code;
 stage3:
 	/* 3rd stage: store value to buffer */
-	if (unlikely(!dest)) {
-		if (code->op == FETCH_OP_ST_STRING) {
-			ret = fetch_store_strlen(val + code->offset);
+	अगर (unlikely(!dest)) अणु
+		अगर (code->op == FETCH_OP_ST_STRING) अणु
+			ret = fetch_store_म_माप(val + code->offset);
 			code++;
-			goto array;
-		} else if (code->op == FETCH_OP_ST_USTRING) {
-			ret += fetch_store_strlen_user(val + code->offset);
+			जाओ array;
+		पूर्ण अन्यथा अगर (code->op == FETCH_OP_ST_USTRING) अणु
+			ret += fetch_store_म_माप_user(val + code->offset);
 			code++;
-			goto array;
-		} else
-			return -EILSEQ;
-	}
+			जाओ array;
+		पूर्ण अन्यथा
+			वापस -EILSEQ;
+	पूर्ण
 
-	switch (code->op) {
-	case FETCH_OP_ST_RAW:
+	चयन (code->op) अणु
+	हाल FETCH_OP_ST_RAW:
 		fetch_store_raw(val, code, dest);
-		break;
-	case FETCH_OP_ST_MEM:
-		probe_mem_read(dest, (void *)val + code->offset, code->size);
-		break;
-	case FETCH_OP_ST_UMEM:
-		probe_mem_read_user(dest, (void *)val + code->offset, code->size);
-		break;
-	case FETCH_OP_ST_STRING:
+		अवरोध;
+	हाल FETCH_OP_ST_MEM:
+		probe_mem_पढ़ो(dest, (व्योम *)val + code->offset, code->size);
+		अवरोध;
+	हाल FETCH_OP_ST_UMEM:
+		probe_mem_पढ़ो_user(dest, (व्योम *)val + code->offset, code->size);
+		अवरोध;
+	हाल FETCH_OP_ST_STRING:
 		loc = *(u32 *)dest;
 		ret = fetch_store_string(val + code->offset, dest, base);
-		break;
-	case FETCH_OP_ST_USTRING:
+		अवरोध;
+	हाल FETCH_OP_ST_USTRING:
 		loc = *(u32 *)dest;
 		ret = fetch_store_string_user(val + code->offset, dest, base);
-		break;
-	default:
-		return -EILSEQ;
-	}
+		अवरोध;
+	शेष:
+		वापस -EILSEQ;
+	पूर्ण
 	code++;
 
-	/* 4th stage: modify stored value if needed */
-	if (code->op == FETCH_OP_MOD_BF) {
+	/* 4th stage: modअगरy stored value अगर needed */
+	अगर (code->op == FETCH_OP_MOD_BF) अणु
 		fetch_apply_bitfield(code, dest);
 		code++;
-	}
+	पूर्ण
 
 array:
 	/* the last stage: Loop on array */
-	if (code->op == FETCH_OP_LP_ARRAY) {
+	अगर (code->op == FETCH_OP_LP_ARRAY) अणु
 		total += ret;
-		if (++i < code->param) {
+		अगर (++i < code->param) अणु
 			code = s3;
-			if (s3->op != FETCH_OP_ST_STRING &&
-			    s3->op != FETCH_OP_ST_USTRING) {
+			अगर (s3->op != FETCH_OP_ST_STRING &&
+			    s3->op != FETCH_OP_ST_USTRING) अणु
 				dest += s3->size;
 				val += s3->size;
-				goto stage3;
-			}
+				जाओ stage3;
+			पूर्ण
 			code--;
-			val = lval + sizeof(char *);
-			if (dest) {
-				dest += sizeof(u32);
+			val = lval + माप(अक्षर *);
+			अगर (dest) अणु
+				dest += माप(u32);
 				*(u32 *)dest = update_data_loc(loc, ret);
-			}
-			goto stage2;
-		}
+			पूर्ण
+			जाओ stage2;
+		पूर्ण
 		code++;
 		ret = total;
-	}
+	पूर्ण
 
-	return code->op == FETCH_OP_END ? ret : -EILSEQ;
-}
+	वापस code->op == FETCH_OP_END ? ret : -EILSEQ;
+पूर्ण
 
-/* Sum up total data length for dynamic arrays (strings) */
-static nokprobe_inline int
-__get_data_size(struct trace_probe *tp, struct pt_regs *regs)
-{
-	struct probe_arg *arg;
-	int i, len, ret = 0;
+/* Sum up total data length क्रम dynamic arrays (strings) */
+अटल nokprobe_अंतरभूत पूर्णांक
+__get_data_size(काष्ठा trace_probe *tp, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा probe_arg *arg;
+	पूर्णांक i, len, ret = 0;
 
-	for (i = 0; i < tp->nr_args; i++) {
+	क्रम (i = 0; i < tp->nr_args; i++) अणु
 		arg = tp->args + i;
-		if (unlikely(arg->dynamic)) {
-			len = process_fetch_insn(arg->code, regs, NULL, NULL);
-			if (len > 0)
+		अगर (unlikely(arg->dynamic)) अणु
+			len = process_fetch_insn(arg->code, regs, शून्य, शून्य);
+			अगर (len > 0)
 				ret += len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Store the value of each argument */
-static nokprobe_inline void
-store_trace_args(void *data, struct trace_probe *tp, struct pt_regs *regs,
-		 int header_size, int maxlen)
-{
-	struct probe_arg *arg;
-	void *base = data - header_size;
-	void *dyndata = data + tp->size;
+अटल nokprobe_अंतरभूत व्योम
+store_trace_args(व्योम *data, काष्ठा trace_probe *tp, काष्ठा pt_regs *regs,
+		 पूर्णांक header_size, पूर्णांक maxlen)
+अणु
+	काष्ठा probe_arg *arg;
+	व्योम *base = data - header_size;
+	व्योम *dyndata = data + tp->size;
 	u32 *dl;	/* Data location */
-	int ret, i;
+	पूर्णांक ret, i;
 
-	for (i = 0; i < tp->nr_args; i++) {
+	क्रम (i = 0; i < tp->nr_args; i++) अणु
 		arg = tp->args + i;
 		dl = data + arg->offset;
-		/* Point the dynamic data area if needed */
-		if (unlikely(arg->dynamic))
+		/* Poपूर्णांक the dynamic data area अगर needed */
+		अगर (unlikely(arg->dynamic))
 			*dl = make_data_loc(maxlen, dyndata - base);
 		ret = process_fetch_insn(arg->code, regs, dl, base);
-		if (unlikely(ret < 0 && arg->dynamic)) {
+		अगर (unlikely(ret < 0 && arg->dynamic)) अणु
 			*dl = make_data_loc(0, dyndata - base);
-		} else {
+		पूर्ण अन्यथा अणु
 			dyndata += ret;
 			maxlen -= ret;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline int
-print_probe_args(struct trace_seq *s, struct probe_arg *args, int nr_args,
-		 u8 *data, void *field)
-{
-	void *p;
-	int i, j;
+अटल अंतरभूत पूर्णांक
+prपूर्णांक_probe_args(काष्ठा trace_seq *s, काष्ठा probe_arg *args, पूर्णांक nr_args,
+		 u8 *data, व्योम *field)
+अणु
+	व्योम *p;
+	पूर्णांक i, j;
 
-	for (i = 0; i < nr_args; i++) {
-		struct probe_arg *a = args + i;
+	क्रम (i = 0; i < nr_args; i++) अणु
+		काष्ठा probe_arg *a = args + i;
 
-		trace_seq_printf(s, " %s=", a->name);
-		if (likely(!a->count)) {
-			if (!a->type->print(s, data + a->offset, field))
-				return -ENOMEM;
-			continue;
-		}
-		trace_seq_putc(s, '{');
+		trace_seq_म_लिखो(s, " %s=", a->name);
+		अगर (likely(!a->count)) अणु
+			अगर (!a->type->prपूर्णांक(s, data + a->offset, field))
+				वापस -ENOMEM;
+			जारी;
+		पूर्ण
+		trace_seq_अ_दो(s, '{');
 		p = data + a->offset;
-		for (j = 0; j < a->count; j++) {
-			if (!a->type->print(s, p, field))
-				return -ENOMEM;
-			trace_seq_putc(s, j == a->count - 1 ? '}' : ',');
+		क्रम (j = 0; j < a->count; j++) अणु
+			अगर (!a->type->prपूर्णांक(s, p, field))
+				वापस -ENOMEM;
+			trace_seq_अ_दो(s, j == a->count - 1 ? '}' : ',');
 			p += a->type->size;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

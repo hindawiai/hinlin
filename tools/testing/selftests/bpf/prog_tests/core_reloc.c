@@ -1,182 +1,183 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "progs/core_reloc_types.h"
-#include "bpf_testmod/bpf_testmod.h"
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <bpf/btf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "progs/core_reloc_types.h"
+#समावेश "bpf_testmod/bpf_testmod.h"
+#समावेश <sys/mman.h>
+#समावेश <sys/syscall.h>
+#समावेश <bpf/btf.h>
 
-static int duration = 0;
+अटल पूर्णांक duration = 0;
 
-#define STRUCT_TO_CHAR_PTR(struct_name) (const char *)&(struct struct_name)
+#घोषणा STRUCT_TO_CHAR_PTR(काष्ठा_name) (स्थिर अक्षर *)&(काष्ठा काष्ठा_name)
 
-#define MODULES_CASE(name, sec_name, tp_name) {				\
-	.case_name = name,						\
+#घोषणा MODULES_CASE(name, sec_name, tp_name) अणु				\
+	.हाल_name = name,						\
 	.bpf_obj_file = "test_core_reloc_module.o",			\
-	.btf_src_file = NULL, /* find in kernel module BTFs */		\
+	.btf_src_file = शून्य, /* find in kernel module BTFs */		\
 	.input = "",							\
 	.input_len = 0,							\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_module_output) {	\
-		.read_ctx_sz = sizeof(struct bpf_testmod_test_read_ctx),\
-		.read_ctx_exists = true,				\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_module_output) अणु	\
+		.पढ़ो_ctx_sz = माप(काष्ठा bpf_tesपंचांगod_test_पढ़ो_ctx),\
+		.पढ़ो_ctx_exists = true,				\
 		.buf_exists = true,					\
 		.len_exists = true,					\
 		.off_exists = true,					\
 		.len = 123,						\
 		.off = 0,						\
 		.comm = "test_progs",					\
-		.comm_len = sizeof("test_progs"),			\
-	},								\
-	.output_len = sizeof(struct core_reloc_module_output),		\
+		.comm_len = माप("test_progs"),			\
+	पूर्ण,								\
+	.output_len = माप(काष्ठा core_reloc_module_output),		\
 	.prog_sec_name = sec_name,					\
 	.raw_tp_name = tp_name,						\
-	.trigger = trigger_module_test_read,				\
-	.needs_testmod = true,						\
-}
+	.trigger = trigger_module_test_पढ़ो,				\
+	.needs_tesपंचांगod = true,						\
+पूर्ण
 
-#define FLAVORS_DATA(struct_name) STRUCT_TO_CHAR_PTR(struct_name) {	\
+#घोषणा FLAVORS_DATA(काष्ठा_name) STRUCT_TO_CHAR_PTR(काष्ठा_name) अणु	\
 	.a = 42,							\
 	.b = 0xc001,							\
 	.c = 0xbeef,							\
-}
+पूर्ण
 
-#define FLAVORS_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा FLAVORS_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_flavors.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"			\
 
-#define FLAVORS_CASE(name) {						\
+#घोषणा FLAVORS_CASE(name) अणु						\
 	FLAVORS_CASE_COMMON(name),					\
 	.input = FLAVORS_DATA(core_reloc_##name),			\
-	.input_len = sizeof(struct core_reloc_##name),			\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
 	.output = FLAVORS_DATA(core_reloc_flavors),			\
-	.output_len = sizeof(struct core_reloc_flavors),		\
-}
+	.output_len = माप(काष्ठा core_reloc_flavors),		\
+पूर्ण
 
-#define FLAVORS_ERR_CASE(name) {					\
+#घोषणा FLAVORS_ERR_CASE(name) अणु					\
 	FLAVORS_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define NESTING_DATA(struct_name) STRUCT_TO_CHAR_PTR(struct_name) {	\
-	.a = { .a = { .a = 42 } },					\
-	.b = { .b = { .b = 0xc001 } },					\
-}
+#घोषणा NESTING_DATA(काष्ठा_name) STRUCT_TO_CHAR_PTR(काष्ठा_name) अणु	\
+	.a = अणु .a = अणु .a = 42 पूर्ण पूर्ण,					\
+	.b = अणु .b = अणु .b = 0xc001 पूर्ण पूर्ण,					\
+पूर्ण
 
-#define NESTING_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा NESTING_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_nesting.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"
 
-#define NESTING_CASE(name) {						\
+#घोषणा NESTING_CASE(name) अणु						\
 	NESTING_CASE_COMMON(name),					\
 	.input = NESTING_DATA(core_reloc_##name),			\
-	.input_len = sizeof(struct core_reloc_##name),			\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
 	.output = NESTING_DATA(core_reloc_nesting),			\
-	.output_len = sizeof(struct core_reloc_nesting)			\
-}
+	.output_len = माप(काष्ठा core_reloc_nesting)			\
+पूर्ण
 
-#define NESTING_ERR_CASE(name) {					\
+#घोषणा NESTING_ERR_CASE(name) अणु					\
 	NESTING_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define ARRAYS_DATA(struct_name) STRUCT_TO_CHAR_PTR(struct_name) {	\
-	.a = { [2] = 1 },						\
-	.b = { [1] = { [2] = { [3] = 2 } } },				\
-	.c = { [1] = { .c =  3 } },					\
-	.d = { [0] = { [0] = { .d = 4 } } },				\
-}
+#घोषणा ARRAYS_DATA(काष्ठा_name) STRUCT_TO_CHAR_PTR(काष्ठा_name) अणु	\
+	.a = अणु [2] = 1 पूर्ण,						\
+	.b = अणु [1] = अणु [2] = अणु [3] = 2 पूर्ण पूर्ण पूर्ण,				\
+	.c = अणु [1] = अणु .c =  3 पूर्ण पूर्ण,					\
+	.d = अणु [0] = अणु [0] = अणु .d = 4 पूर्ण पूर्ण पूर्ण,				\
+पूर्ण
 
-#define ARRAYS_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा ARRAYS_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_arrays.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"
 
-#define ARRAYS_CASE(name) {						\
+#घोषणा ARRAYS_CASE(name) अणु						\
 	ARRAYS_CASE_COMMON(name),					\
 	.input = ARRAYS_DATA(core_reloc_##name),			\
-	.input_len = sizeof(struct core_reloc_##name),			\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_arrays_output) {	\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_arrays_output) अणु	\
 		.a2   = 1,						\
 		.b123 = 2,						\
 		.c1c  = 3,						\
 		.d00d = 4,						\
 		.f10c = 0,						\
-	},								\
-	.output_len = sizeof(struct core_reloc_arrays_output)		\
-}
+	पूर्ण,								\
+	.output_len = माप(काष्ठा core_reloc_arrays_output)		\
+पूर्ण
 
-#define ARRAYS_ERR_CASE(name) {						\
+#घोषणा ARRAYS_ERR_CASE(name) अणु						\
 	ARRAYS_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define PRIMITIVES_DATA(struct_name) STRUCT_TO_CHAR_PTR(struct_name) {	\
+#घोषणा PRIMITIVES_DATA(काष्ठा_name) STRUCT_TO_CHAR_PTR(काष्ठा_name) अणु	\
 	.a = 1,								\
 	.b = 2,								\
 	.c = 3,								\
-	.d = (void *)4,							\
-	.f = (void *)5,							\
-}
+	.d = (व्योम *)4,							\
+	.f = (व्योम *)5,							\
+पूर्ण
 
-#define PRIMITIVES_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा PRIMITIVES_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_primitives.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"
 
-#define PRIMITIVES_CASE(name) {						\
+#घोषणा PRIMITIVES_CASE(name) अणु						\
 	PRIMITIVES_CASE_COMMON(name),					\
 	.input = PRIMITIVES_DATA(core_reloc_##name),			\
-	.input_len = sizeof(struct core_reloc_##name),			\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
 	.output = PRIMITIVES_DATA(core_reloc_primitives),		\
-	.output_len = sizeof(struct core_reloc_primitives),		\
-}
+	.output_len = माप(काष्ठा core_reloc_primitives),		\
+पूर्ण
 
-#define PRIMITIVES_ERR_CASE(name) {					\
+#घोषणा PRIMITIVES_ERR_CASE(name) अणु					\
 	PRIMITIVES_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define MODS_CASE(name) {						\
-	.case_name = #name,						\
+#घोषणा MODS_CASE(name) अणु						\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_mods.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o",			\
-	.input = STRUCT_TO_CHAR_PTR(core_reloc_##name) {		\
+	.input = STRUCT_TO_CHAR_PTR(core_reloc_##name) अणु		\
 		.a = 1,							\
 		.b = 2,							\
-		.c = (void *)3,						\
-		.d = (void *)4,						\
-		.e = { [2] = 5 },					\
-		.f = { [1] = 6 },					\
-		.g = { .x = 7 },					\
-		.h = { .y = 8 },					\
-	},								\
-	.input_len = sizeof(struct core_reloc_##name),			\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_mods_output) {		\
+		.c = (व्योम *)3,						\
+		.d = (व्योम *)4,						\
+		.e = अणु [2] = 5 पूर्ण,					\
+		.f = अणु [1] = 6 पूर्ण,					\
+		.g = अणु .x = 7 पूर्ण,					\
+		.h = अणु .y = 8 पूर्ण,					\
+	पूर्ण,								\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_mods_output) अणु		\
 		.a = 1, .b = 2, .c = 3, .d = 4,				\
 		.e = 5, .f = 6, .g = 7, .h = 8,				\
-	},								\
-	.output_len = sizeof(struct core_reloc_mods_output),		\
-}
+	पूर्ण,								\
+	.output_len = माप(काष्ठा core_reloc_mods_output),		\
+पूर्ण
 
-#define PTR_AS_ARR_CASE(name) {						\
-	.case_name = #name,						\
+#घोषणा PTR_AS_ARR_CASE(name) अणु						\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_ptr_as_arr.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o",			\
-	.input = (const char *)&(struct core_reloc_##name []){		\
-		{ .a = 1 },						\
-		{ .a = 2 },						\
-		{ .a = 3 },						\
-	},								\
-	.input_len = 3 * sizeof(struct core_reloc_##name),		\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_ptr_as_arr) {		\
+	.input = (स्थिर अक्षर *)&(काष्ठा core_reloc_##name [])अणु		\
+		अणु .a = 1 पूर्ण,						\
+		अणु .a = 2 पूर्ण,						\
+		अणु .a = 3 पूर्ण,						\
+	पूर्ण,								\
+	.input_len = 3 * माप(काष्ठा core_reloc_##name),		\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_ptr_as_arr) अणु		\
 		.a = 3,							\
-	},								\
-	.output_len = sizeof(struct core_reloc_ptr_as_arr),		\
-}
+	पूर्ण,								\
+	.output_len = माप(काष्ठा core_reloc_ptr_as_arr),		\
+पूर्ण
 
-#define INTS_DATA(struct_name) STRUCT_TO_CHAR_PTR(struct_name) {	\
+#घोषणा INTS_DATA(काष्ठा_name) STRUCT_TO_CHAR_PTR(काष्ठा_name) अणु	\
 	.u8_field = 1,							\
 	.s8_field = 2,							\
 	.u16_field = 3,							\
@@ -185,333 +186,333 @@ static int duration = 0;
 	.s32_field = 6,							\
 	.u64_field = 7,							\
 	.s64_field = 8,							\
-}
+पूर्ण
 
-#define INTS_CASE_COMMON(name)						\
-	.case_name = #name,						\
+#घोषणा INTS_CASE_COMMON(name)						\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_ints.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"
 
-#define INTS_CASE(name) {						\
+#घोषणा INTS_CASE(name) अणु						\
 	INTS_CASE_COMMON(name),						\
 	.input = INTS_DATA(core_reloc_##name),				\
-	.input_len = sizeof(struct core_reloc_##name),			\
-	.output = INTS_DATA(core_reloc_ints),				\
-	.output_len = sizeof(struct core_reloc_ints),			\
-}
+	.input_len = माप(काष्ठा core_reloc_##name),			\
+	.output = INTS_DATA(core_reloc_पूर्णांकs),				\
+	.output_len = माप(काष्ठा core_reloc_पूर्णांकs),			\
+पूर्ण
 
-#define INTS_ERR_CASE(name) {						\
+#घोषणा INTS_ERR_CASE(name) अणु						\
 	INTS_CASE_COMMON(name),						\
 	.fails = true,							\
-}
+पूर्ण
 
-#define FIELD_EXISTS_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा FIELD_EXISTS_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_existence.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"			\
 
-#define BITFIELDS_CASE_COMMON(objfile, test_name_prefix,  name)		\
-	.case_name = test_name_prefix#name,				\
+#घोषणा BITFIELDS_CASE_COMMON(objfile, test_name_prefix,  name)		\
+	.हाल_name = test_name_prefix#name,				\
 	.bpf_obj_file = objfile,					\
 	.btf_src_file = "btf__core_reloc_" #name ".o"
 
-#define BITFIELDS_CASE(name, ...) {					\
+#घोषणा BITFIELDS_CASE(name, ...) अणु					\
 	BITFIELDS_CASE_COMMON("test_core_reloc_bitfields_probed.o",	\
 			      "probed:", name),				\
 	.input = STRUCT_TO_CHAR_PTR(core_reloc_##name) __VA_ARGS__,	\
-	.input_len = sizeof(struct core_reloc_##name),			\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
 	.output = STRUCT_TO_CHAR_PTR(core_reloc_bitfields_output)	\
 		__VA_ARGS__,						\
-	.output_len = sizeof(struct core_reloc_bitfields_output),	\
-}, {									\
+	.output_len = माप(काष्ठा core_reloc_bitfields_output),	\
+पूर्ण, अणु									\
 	BITFIELDS_CASE_COMMON("test_core_reloc_bitfields_direct.o",	\
 			      "direct:", name),				\
 	.input = STRUCT_TO_CHAR_PTR(core_reloc_##name) __VA_ARGS__,	\
-	.input_len = sizeof(struct core_reloc_##name),			\
+	.input_len = माप(काष्ठा core_reloc_##name),			\
 	.output = STRUCT_TO_CHAR_PTR(core_reloc_bitfields_output)	\
 		__VA_ARGS__,						\
-	.output_len = sizeof(struct core_reloc_bitfields_output),	\
+	.output_len = माप(काष्ठा core_reloc_bitfields_output),	\
 	.prog_sec_name = "tp_btf/sys_enter",				\
-}
+पूर्ण
 
 
-#define BITFIELDS_ERR_CASE(name) {					\
+#घोषणा BITFIELDS_ERR_CASE(name) अणु					\
 	BITFIELDS_CASE_COMMON("test_core_reloc_bitfields_probed.o",	\
 			      "probed:", name),				\
 	.fails = true,							\
-}, {									\
+पूर्ण, अणु									\
 	BITFIELDS_CASE_COMMON("test_core_reloc_bitfields_direct.o",	\
 			      "direct:", name),				\
 	.prog_sec_name = "tp_btf/sys_enter",				\
 	.fails = true,							\
-}
+पूर्ण
 
-#define SIZE_CASE_COMMON(name)						\
-	.case_name = #name,						\
+#घोषणा SIZE_CASE_COMMON(name)						\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_size.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o",			\
 	.relaxed_core_relocs = true
 
-#define SIZE_OUTPUT_DATA(type)						\
-	STRUCT_TO_CHAR_PTR(core_reloc_size_output) {			\
-		.int_sz = sizeof(((type *)0)->int_field),		\
-		.struct_sz = sizeof(((type *)0)->struct_field),		\
-		.union_sz = sizeof(((type *)0)->union_field),		\
-		.arr_sz = sizeof(((type *)0)->arr_field),		\
-		.arr_elem_sz = sizeof(((type *)0)->arr_field[0]),	\
-		.ptr_sz = 8, /* always 8-byte pointer for BPF */	\
-		.enum_sz = sizeof(((type *)0)->enum_field),		\
-		.float_sz = sizeof(((type *)0)->float_field),		\
-	}
+#घोषणा SIZE_OUTPUT_DATA(type)						\
+	STRUCT_TO_CHAR_PTR(core_reloc_size_output) अणु			\
+		.पूर्णांक_sz = माप(((type *)0)->पूर्णांक_field),		\
+		.काष्ठा_sz = माप(((type *)0)->काष्ठा_field),		\
+		.जोड़_sz = माप(((type *)0)->जोड़_field),		\
+		.arr_sz = माप(((type *)0)->arr_field),		\
+		.arr_elem_sz = माप(((type *)0)->arr_field[0]),	\
+		.ptr_sz = 8, /* always 8-byte poपूर्णांकer क्रम BPF */	\
+		.क्रमागत_sz = माप(((type *)0)->क्रमागत_field),		\
+		.भग्न_sz = माप(((type *)0)->भग्न_field),		\
+	पूर्ण
 
-#define SIZE_CASE(name) {						\
+#घोषणा SIZE_CASE(name) अणु						\
 	SIZE_CASE_COMMON(name),						\
 	.input_len = 0,							\
-	.output = SIZE_OUTPUT_DATA(struct core_reloc_##name),		\
-	.output_len = sizeof(struct core_reloc_size_output),		\
-}
+	.output = SIZE_OUTPUT_DATA(काष्ठा core_reloc_##name),		\
+	.output_len = माप(काष्ठा core_reloc_size_output),		\
+पूर्ण
 
-#define SIZE_ERR_CASE(name) {						\
+#घोषणा SIZE_ERR_CASE(name) अणु						\
 	SIZE_CASE_COMMON(name),						\
 	.fails = true,							\
-}
+पूर्ण
 
-#define TYPE_BASED_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा TYPE_BASED_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_type_based.o",		\
 	.btf_src_file = "btf__core_reloc_" #name ".o"			\
 
-#define TYPE_BASED_CASE(name, ...) {					\
+#घोषणा TYPE_BASED_CASE(name, ...) अणु					\
 	TYPE_BASED_CASE_COMMON(name),					\
 	.output = STRUCT_TO_CHAR_PTR(core_reloc_type_based_output)	\
 			__VA_ARGS__,					\
-	.output_len = sizeof(struct core_reloc_type_based_output),	\
-}
+	.output_len = माप(काष्ठा core_reloc_type_based_output),	\
+पूर्ण
 
-#define TYPE_BASED_ERR_CASE(name) {					\
+#घोषणा TYPE_BASED_ERR_CASE(name) अणु					\
 	TYPE_BASED_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define TYPE_ID_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा TYPE_ID_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_type_id.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"			\
 
-#define TYPE_ID_CASE(name, setup_fn) {					\
+#घोषणा TYPE_ID_CASE(name, setup_fn) अणु					\
 	TYPE_ID_CASE_COMMON(name),					\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_type_id_output) {},	\
-	.output_len = sizeof(struct core_reloc_type_id_output),		\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_type_id_output) अणुपूर्ण,	\
+	.output_len = माप(काष्ठा core_reloc_type_id_output),		\
 	.setup = setup_fn,						\
-}
+पूर्ण
 
-#define TYPE_ID_ERR_CASE(name) {					\
+#घोषणा TYPE_ID_ERR_CASE(name) अणु					\
 	TYPE_ID_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-#define ENUMVAL_CASE_COMMON(name)					\
-	.case_name = #name,						\
+#घोषणा ENUMVAL_CASE_COMMON(name)					\
+	.हाल_name = #name,						\
 	.bpf_obj_file = "test_core_reloc_enumval.o",			\
 	.btf_src_file = "btf__core_reloc_" #name ".o"			\
 
-#define ENUMVAL_CASE(name, ...) {					\
+#घोषणा ENUMVAL_CASE(name, ...) अणु					\
 	ENUMVAL_CASE_COMMON(name),					\
-	.output = STRUCT_TO_CHAR_PTR(core_reloc_enumval_output)		\
+	.output = STRUCT_TO_CHAR_PTR(core_reloc_क्रमागतval_output)		\
 			__VA_ARGS__,					\
-	.output_len = sizeof(struct core_reloc_enumval_output),		\
-}
+	.output_len = माप(काष्ठा core_reloc_क्रमागतval_output),		\
+पूर्ण
 
-#define ENUMVAL_ERR_CASE(name) {					\
+#घोषणा ENUMVAL_ERR_CASE(name) अणु					\
 	ENUMVAL_CASE_COMMON(name),					\
 	.fails = true,							\
-}
+पूर्ण
 
-struct core_reloc_test_case;
+काष्ठा core_reloc_test_हाल;
 
-typedef int (*setup_test_fn)(struct core_reloc_test_case *test);
-typedef int (*trigger_test_fn)(const struct core_reloc_test_case *test);
+प्रकार पूर्णांक (*setup_test_fn)(काष्ठा core_reloc_test_हाल *test);
+प्रकार पूर्णांक (*trigger_test_fn)(स्थिर काष्ठा core_reloc_test_हाल *test);
 
-struct core_reloc_test_case {
-	const char *case_name;
-	const char *bpf_obj_file;
-	const char *btf_src_file;
-	const char *input;
-	int input_len;
-	const char *output;
-	int output_len;
+काष्ठा core_reloc_test_हाल अणु
+	स्थिर अक्षर *हाल_name;
+	स्थिर अक्षर *bpf_obj_file;
+	स्थिर अक्षर *btf_src_file;
+	स्थिर अक्षर *input;
+	पूर्णांक input_len;
+	स्थिर अक्षर *output;
+	पूर्णांक output_len;
 	bool fails;
-	bool needs_testmod;
+	bool needs_tesपंचांगod;
 	bool relaxed_core_relocs;
-	const char *prog_sec_name;
-	const char *raw_tp_name;
+	स्थिर अक्षर *prog_sec_name;
+	स्थिर अक्षर *raw_tp_name;
 	setup_test_fn setup;
 	trigger_test_fn trigger;
-};
+पूर्ण;
 
-static int find_btf_type(const struct btf *btf, const char *name, __u32 kind)
-{
-	int id;
+अटल पूर्णांक find_btf_type(स्थिर काष्ठा btf *btf, स्थिर अक्षर *name, __u32 kind)
+अणु
+	पूर्णांक id;
 
 	id = btf__find_by_name_kind(btf, name, kind);
-	if (CHECK(id <= 0, "find_type_id", "failed to find '%s', kind %d: %d\n", name, kind, id))
-		return -1;
+	अगर (CHECK(id <= 0, "find_type_id", "failed to find '%s', kind %d: %d\n", name, kind, id))
+		वापस -1;
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static int setup_type_id_case_local(struct core_reloc_test_case *test)
-{
-	struct core_reloc_type_id_output *exp = (void *)test->output;
-	struct btf *local_btf = btf__parse(test->bpf_obj_file, NULL);
-	struct btf *targ_btf = btf__parse(test->btf_src_file, NULL);
-	const struct btf_type *t;
-	const char *name;
-	int i;
+अटल पूर्णांक setup_type_id_हाल_local(काष्ठा core_reloc_test_हाल *test)
+अणु
+	काष्ठा core_reloc_type_id_output *exp = (व्योम *)test->output;
+	काष्ठा btf *local_btf = btf__parse(test->bpf_obj_file, शून्य);
+	काष्ठा btf *targ_btf = btf__parse(test->btf_src_file, शून्य);
+	स्थिर काष्ठा btf_type *t;
+	स्थिर अक्षर *name;
+	पूर्णांक i;
 
-	if (CHECK(IS_ERR(local_btf), "local_btf", "failed: %ld\n", PTR_ERR(local_btf)) ||
-	    CHECK(IS_ERR(targ_btf), "targ_btf", "failed: %ld\n", PTR_ERR(targ_btf))) {
-		btf__free(local_btf);
-		btf__free(targ_btf);
-		return -EINVAL;
-	}
+	अगर (CHECK(IS_ERR(local_btf), "local_btf", "failed: %ld\n", PTR_ERR(local_btf)) ||
+	    CHECK(IS_ERR(targ_btf), "targ_btf", "failed: %ld\n", PTR_ERR(targ_btf))) अणु
+		btf__मुक्त(local_btf);
+		btf__मुक्त(targ_btf);
+		वापस -EINVAL;
+	पूर्ण
 
-	exp->local_anon_struct = -1;
-	exp->local_anon_union = -1;
-	exp->local_anon_enum = -1;
+	exp->local_anon_काष्ठा = -1;
+	exp->local_anon_जोड़ = -1;
+	exp->local_anon_क्रमागत = -1;
 	exp->local_anon_func_proto_ptr = -1;
-	exp->local_anon_void_ptr = -1;
+	exp->local_anon_व्योम_ptr = -1;
 	exp->local_anon_arr = -1;
 
-	for (i = 1; i <= btf__get_nr_types(local_btf); i++)
-	{
+	क्रम (i = 1; i <= btf__get_nr_types(local_btf); i++)
+	अणु
 		t = btf__type_by_id(local_btf, i);
-		/* we are interested only in anonymous types */
-		if (t->name_off)
-			continue;
+		/* we are पूर्णांकerested only in anonymous types */
+		अगर (t->name_off)
+			जारी;
 
-		if (btf_is_struct(t) && btf_vlen(t) &&
+		अगर (btf_is_काष्ठा(t) && btf_vlen(t) &&
 		    (name = btf__name_by_offset(local_btf, btf_members(t)[0].name_off)) &&
-		    strcmp(name, "marker_field") == 0) {
-			exp->local_anon_struct = i;
-		} else if (btf_is_union(t) && btf_vlen(t) &&
+		    म_भेद(name, "marker_field") == 0) अणु
+			exp->local_anon_काष्ठा = i;
+		पूर्ण अन्यथा अगर (btf_is_जोड़(t) && btf_vlen(t) &&
 			 (name = btf__name_by_offset(local_btf, btf_members(t)[0].name_off)) &&
-			 strcmp(name, "marker_field") == 0) {
-			exp->local_anon_union = i;
-		} else if (btf_is_enum(t) && btf_vlen(t) &&
-			 (name = btf__name_by_offset(local_btf, btf_enum(t)[0].name_off)) &&
-			 strcmp(name, "MARKER_ENUM_VAL") == 0) {
-			exp->local_anon_enum = i;
-		} else if (btf_is_ptr(t) && (t = btf__type_by_id(local_btf, t->type))) {
-			if (btf_is_func_proto(t) && (t = btf__type_by_id(local_btf, t->type)) &&
-			    btf_is_int(t) && (name = btf__name_by_offset(local_btf, t->name_off)) &&
-			    strcmp(name, "_Bool") == 0) {
+			 म_भेद(name, "marker_field") == 0) अणु
+			exp->local_anon_जोड़ = i;
+		पूर्ण अन्यथा अगर (btf_is_क्रमागत(t) && btf_vlen(t) &&
+			 (name = btf__name_by_offset(local_btf, btf_क्रमागत(t)[0].name_off)) &&
+			 म_भेद(name, "MARKER_ENUM_VAL") == 0) अणु
+			exp->local_anon_क्रमागत = i;
+		पूर्ण अन्यथा अगर (btf_is_ptr(t) && (t = btf__type_by_id(local_btf, t->type))) अणु
+			अगर (btf_is_func_proto(t) && (t = btf__type_by_id(local_btf, t->type)) &&
+			    btf_is_पूर्णांक(t) && (name = btf__name_by_offset(local_btf, t->name_off)) &&
+			    म_भेद(name, "_Bool") == 0) अणु
 				/* ptr -> func_proto -> _Bool */
 				exp->local_anon_func_proto_ptr = i;
-			} else if (btf_is_void(t)) {
-				/* ptr -> void */
-				exp->local_anon_void_ptr = i;
-			}
-		} else if (btf_is_array(t) && (t = btf__type_by_id(local_btf, btf_array(t)->type)) &&
-			   btf_is_int(t) && (name = btf__name_by_offset(local_btf, t->name_off)) &&
-			   strcmp(name, "_Bool") == 0) {
+			पूर्ण अन्यथा अगर (btf_is_व्योम(t)) अणु
+				/* ptr -> व्योम */
+				exp->local_anon_व्योम_ptr = i;
+			पूर्ण
+		पूर्ण अन्यथा अगर (btf_is_array(t) && (t = btf__type_by_id(local_btf, btf_array(t)->type)) &&
+			   btf_is_पूर्णांक(t) && (name = btf__name_by_offset(local_btf, t->name_off)) &&
+			   म_भेद(name, "_Bool") == 0) अणु
 			/* _Bool[] */
 			exp->local_anon_arr = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	exp->local_struct = find_btf_type(local_btf, "a_struct", BTF_KIND_STRUCT);
-	exp->local_union = find_btf_type(local_btf, "a_union", BTF_KIND_UNION);
-	exp->local_enum = find_btf_type(local_btf, "an_enum", BTF_KIND_ENUM);
-	exp->local_int = find_btf_type(local_btf, "int", BTF_KIND_INT);
-	exp->local_struct_typedef = find_btf_type(local_btf, "named_struct_typedef", BTF_KIND_TYPEDEF);
-	exp->local_func_proto_typedef = find_btf_type(local_btf, "func_proto_typedef", BTF_KIND_TYPEDEF);
-	exp->local_arr_typedef = find_btf_type(local_btf, "arr_typedef", BTF_KIND_TYPEDEF);
+	exp->local_काष्ठा = find_btf_type(local_btf, "a_struct", BTF_KIND_STRUCT);
+	exp->local_जोड़ = find_btf_type(local_btf, "a_union", BTF_KIND_UNION);
+	exp->local_क्रमागत = find_btf_type(local_btf, "an_enum", BTF_KIND_ENUM);
+	exp->local_पूर्णांक = find_btf_type(local_btf, "int", BTF_KIND_INT);
+	exp->local_काष्ठा_प्रकार = find_btf_type(local_btf, "named_struct_typedef", BTF_KIND_TYPEDEF);
+	exp->local_func_proto_प्रकार = find_btf_type(local_btf, "func_proto_typedef", BTF_KIND_TYPEDEF);
+	exp->local_arr_प्रकार = find_btf_type(local_btf, "arr_typedef", BTF_KIND_TYPEDEF);
 
-	btf__free(local_btf);
-	btf__free(targ_btf);
-	return 0;
-}
+	btf__मुक्त(local_btf);
+	btf__मुक्त(targ_btf);
+	वापस 0;
+पूर्ण
 
-static int setup_type_id_case_success(struct core_reloc_test_case *test) {
-	struct core_reloc_type_id_output *exp = (void *)test->output;
-	struct btf *targ_btf = btf__parse(test->btf_src_file, NULL);
-	int err;
+अटल पूर्णांक setup_type_id_हाल_success(काष्ठा core_reloc_test_हाल *test) अणु
+	काष्ठा core_reloc_type_id_output *exp = (व्योम *)test->output;
+	काष्ठा btf *targ_btf = btf__parse(test->btf_src_file, शून्य);
+	पूर्णांक err;
 
-	err = setup_type_id_case_local(test);
-	if (err)
-		return err;
+	err = setup_type_id_हाल_local(test);
+	अगर (err)
+		वापस err;
 
-	targ_btf = btf__parse(test->btf_src_file, NULL);
+	targ_btf = btf__parse(test->btf_src_file, शून्य);
 
-	exp->targ_struct = find_btf_type(targ_btf, "a_struct", BTF_KIND_STRUCT);
-	exp->targ_union = find_btf_type(targ_btf, "a_union", BTF_KIND_UNION);
-	exp->targ_enum = find_btf_type(targ_btf, "an_enum", BTF_KIND_ENUM);
-	exp->targ_int = find_btf_type(targ_btf, "int", BTF_KIND_INT);
-	exp->targ_struct_typedef = find_btf_type(targ_btf, "named_struct_typedef", BTF_KIND_TYPEDEF);
-	exp->targ_func_proto_typedef = find_btf_type(targ_btf, "func_proto_typedef", BTF_KIND_TYPEDEF);
-	exp->targ_arr_typedef = find_btf_type(targ_btf, "arr_typedef", BTF_KIND_TYPEDEF);
+	exp->targ_काष्ठा = find_btf_type(targ_btf, "a_struct", BTF_KIND_STRUCT);
+	exp->targ_जोड़ = find_btf_type(targ_btf, "a_union", BTF_KIND_UNION);
+	exp->targ_क्रमागत = find_btf_type(targ_btf, "an_enum", BTF_KIND_ENUM);
+	exp->targ_पूर्णांक = find_btf_type(targ_btf, "int", BTF_KIND_INT);
+	exp->targ_काष्ठा_प्रकार = find_btf_type(targ_btf, "named_struct_typedef", BTF_KIND_TYPEDEF);
+	exp->targ_func_proto_प्रकार = find_btf_type(targ_btf, "func_proto_typedef", BTF_KIND_TYPEDEF);
+	exp->targ_arr_प्रकार = find_btf_type(targ_btf, "arr_typedef", BTF_KIND_TYPEDEF);
 
-	btf__free(targ_btf);
-	return 0;
-}
+	btf__मुक्त(targ_btf);
+	वापस 0;
+पूर्ण
 
-static int setup_type_id_case_failure(struct core_reloc_test_case *test)
-{
-	struct core_reloc_type_id_output *exp = (void *)test->output;
-	int err;
+अटल पूर्णांक setup_type_id_हाल_failure(काष्ठा core_reloc_test_हाल *test)
+अणु
+	काष्ठा core_reloc_type_id_output *exp = (व्योम *)test->output;
+	पूर्णांक err;
 
-	err = setup_type_id_case_local(test);
-	if (err)
-		return err;
+	err = setup_type_id_हाल_local(test);
+	अगर (err)
+		वापस err;
 
-	exp->targ_struct = 0;
-	exp->targ_union = 0;
-	exp->targ_enum = 0;
-	exp->targ_int = 0;
-	exp->targ_struct_typedef = 0;
-	exp->targ_func_proto_typedef = 0;
-	exp->targ_arr_typedef = 0;
+	exp->targ_काष्ठा = 0;
+	exp->targ_जोड़ = 0;
+	exp->targ_क्रमागत = 0;
+	exp->targ_पूर्णांक = 0;
+	exp->targ_काष्ठा_प्रकार = 0;
+	exp->targ_func_proto_प्रकार = 0;
+	exp->targ_arr_प्रकार = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int trigger_module_test_read(const struct core_reloc_test_case *test)
-{
-	struct core_reloc_module_output *exp = (void *)test->output;
-	int fd, err;
+अटल पूर्णांक trigger_module_test_पढ़ो(स्थिर काष्ठा core_reloc_test_हाल *test)
+अणु
+	काष्ठा core_reloc_module_output *exp = (व्योम *)test->output;
+	पूर्णांक fd, err;
 
-	fd = open("/sys/kernel/bpf_testmod", O_RDONLY);
-	err = -errno;
-	if (CHECK(fd < 0, "testmod_file_open", "failed: %d\n", err))
-		return err;
+	fd = खोलो("/sys/kernel/bpf_testmod", O_RDONLY);
+	err = -त्रुटि_सं;
+	अगर (CHECK(fd < 0, "testmod_file_open", "failed: %d\n", err))
+		वापस err;
 
-	read(fd, NULL, exp->len); /* request expected number of bytes */
-	close(fd);
+	पढ़ो(fd, शून्य, exp->len); /* request expected number of bytes */
+	बंद(fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static struct core_reloc_test_case test_cases[] = {
-	/* validate we can find kernel image and use its BTF for relocs */
-	{
-		.case_name = "kernel",
+अटल काष्ठा core_reloc_test_हाल test_हालs[] = अणु
+	/* validate we can find kernel image and use its BTF क्रम relocs */
+	अणु
+		.हाल_name = "kernel",
 		.bpf_obj_file = "test_core_reloc_kernel.o",
-		.btf_src_file = NULL, /* load from /lib/modules/$(uname -r) */
+		.btf_src_file = शून्य, /* load from /lib/modules/$(uname -r) */
 		.input = "",
 		.input_len = 0,
-		.output = STRUCT_TO_CHAR_PTR(core_reloc_kernel_output) {
-			.valid = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, },
+		.output = STRUCT_TO_CHAR_PTR(core_reloc_kernel_output) अणु
+			.valid = अणु 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, पूर्ण,
 			.comm = "test_progs",
-			.comm_len = sizeof("test_progs"),
-		},
-		.output_len = sizeof(struct core_reloc_kernel_output),
-	},
+			.comm_len = माप("test_progs"),
+		पूर्ण,
+		.output_len = माप(काष्ठा core_reloc_kernel_output),
+	पूर्ण,
 
-	/* validate we can find kernel module BTF types for relocs/attach */
+	/* validate we can find kernel module BTF types क्रम relocs/attach */
 	MODULES_CASE("module_probed", "raw_tp/bpf_testmod_test_read", "bpf_testmod_test_read"),
-	MODULES_CASE("module_direct", "tp_btf/bpf_testmod_test_read", NULL),
+	MODULES_CASE("module_direct", "tp_btf/bpf_testmod_test_read", शून्य),
 
 	/* validate BPF program can use multiple flavors to match against
 	 * single target BTF type
@@ -520,17 +521,17 @@ static struct core_reloc_test_case test_cases[] = {
 
 	FLAVORS_ERR_CASE(flavors__err_wrong_name),
 
-	/* various struct/enum nesting and resolution scenarios */
+	/* various काष्ठा/क्रमागत nesting and resolution scenarios */
 	NESTING_CASE(nesting),
 	NESTING_CASE(nesting___anon_embed),
-	NESTING_CASE(nesting___struct_union_mixup),
+	NESTING_CASE(nesting___काष्ठा_जोड़_mixup),
 	NESTING_CASE(nesting___extra_nesting),
 	NESTING_CASE(nesting___dup_compat_types),
 
 	NESTING_ERR_CASE(nesting___err_missing_field),
 	NESTING_ERR_CASE(nesting___err_array_field),
 	NESTING_ERR_CASE(nesting___err_missing_container),
-	NESTING_ERR_CASE(nesting___err_nonstruct_container),
+	NESTING_ERR_CASE(nesting___err_nonकाष्ठा_container),
 	NESTING_ERR_CASE(nesting___err_array_container),
 	NESTING_ERR_CASE(nesting___err_dup_incompat_types),
 	NESTING_ERR_CASE(nesting___err_partial_match_dups),
@@ -538,8 +539,8 @@ static struct core_reloc_test_case test_cases[] = {
 
 	/* various array access relocation scenarios */
 	ARRAYS_CASE(arrays),
-	ARRAYS_CASE(arrays___diff_arr_dim),
-	ARRAYS_CASE(arrays___diff_arr_val_sz),
+	ARRAYS_CASE(arrays___dअगरf_arr_dim),
+	ARRAYS_CASE(arrays___dअगरf_arr_val_sz),
 	ARRAYS_CASE(arrays___equiv_zero_sz_arr),
 	ARRAYS_CASE(arrays___fixed_arr),
 
@@ -549,61 +550,61 @@ static struct core_reloc_test_case test_cases[] = {
 	ARRAYS_ERR_CASE(arrays___err_wrong_val_type),
 	ARRAYS_ERR_CASE(arrays___err_bad_zero_sz_arr),
 
-	/* enum/ptr/int handling scenarios */
+	/* क्रमागत/ptr/पूर्णांक handling scenarios */
 	PRIMITIVES_CASE(primitives),
-	PRIMITIVES_CASE(primitives___diff_enum_def),
-	PRIMITIVES_CASE(primitives___diff_func_proto),
-	PRIMITIVES_CASE(primitives___diff_ptr_type),
+	PRIMITIVES_CASE(primitives___dअगरf_क्रमागत_def),
+	PRIMITIVES_CASE(primitives___dअगरf_func_proto),
+	PRIMITIVES_CASE(primitives___dअगरf_ptr_type),
 
-	PRIMITIVES_ERR_CASE(primitives___err_non_enum),
-	PRIMITIVES_ERR_CASE(primitives___err_non_int),
+	PRIMITIVES_ERR_CASE(primitives___err_non_क्रमागत),
+	PRIMITIVES_ERR_CASE(primitives___err_non_पूर्णांक),
 	PRIMITIVES_ERR_CASE(primitives___err_non_ptr),
 
-	/* const/volatile/restrict and typedefs scenarios */
+	/* स्थिर/अस्थिर/restrict and प्रकारs scenarios */
 	MODS_CASE(mods),
 	MODS_CASE(mods___mod_swap),
-	MODS_CASE(mods___typedefs),
+	MODS_CASE(mods___प्रकारs),
 
 	/* handling "ptr is an array" semantics */
 	PTR_AS_ARR_CASE(ptr_as_arr),
-	PTR_AS_ARR_CASE(ptr_as_arr___diff_sz),
+	PTR_AS_ARR_CASE(ptr_as_arr___dअगरf_sz),
 
-	/* int signedness/sizing/bitfield handling */
-	INTS_CASE(ints),
-	INTS_CASE(ints___bool),
-	INTS_CASE(ints___reverse_sign),
+	/* पूर्णांक चिन्हितness/sizing/bitfield handling */
+	INTS_CASE(पूर्णांकs),
+	INTS_CASE(पूर्णांकs___bool),
+	INTS_CASE(पूर्णांकs___reverse_sign),
 
-	/* validate edge cases of capturing relocations */
-	{
-		.case_name = "misc",
+	/* validate edge हालs of capturing relocations */
+	अणु
+		.हाल_name = "misc",
 		.bpf_obj_file = "test_core_reloc_misc.o",
 		.btf_src_file = "btf__core_reloc_misc.o",
-		.input = (const char *)&(struct core_reloc_misc_extensible[]){
-			{ .a = 1 },
-			{ .a = 2 }, /* not read */
-			{ .a = 3 },
-		},
-		.input_len = 4 * sizeof(int),
-		.output = STRUCT_TO_CHAR_PTR(core_reloc_misc_output) {
+		.input = (स्थिर अक्षर *)&(काष्ठा core_reloc_misc_extensible[])अणु
+			अणु .a = 1 पूर्ण,
+			अणु .a = 2 पूर्ण, /* not पढ़ो */
+			अणु .a = 3 पूर्ण,
+		पूर्ण,
+		.input_len = 4 * माप(पूर्णांक),
+		.output = STRUCT_TO_CHAR_PTR(core_reloc_misc_output) अणु
 			.a = 1,
 			.b = 1,
 			.c = 0, /* BUG in clang, should be 3 */
-		},
-		.output_len = sizeof(struct core_reloc_misc_output),
-	},
+		पूर्ण,
+		.output_len = माप(काष्ठा core_reloc_misc_output),
+	पूर्ण,
 
 	/* validate field existence checks */
-	{
+	अणु
 		FIELD_EXISTS_CASE_COMMON(existence),
-		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence) {
+		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence) अणु
 			.a = 1,
 			.b = 2,
 			.c = 3,
-			.arr = { 4 },
-			.s = { .x = 5 },
-		},
-		.input_len = sizeof(struct core_reloc_existence),
-		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) {
+			.arr = अणु 4 पूर्ण,
+			.s = अणु .x = 5 पूर्ण,
+		पूर्ण,
+		.input_len = माप(काष्ठा core_reloc_existence),
+		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) अणु
 			.a_exists = 1,
 			.b_exists = 1,
 			.c_exists = 1,
@@ -614,16 +615,16 @@ static struct core_reloc_test_case test_cases[] = {
 			.c_value = 3,
 			.arr_value = 4,
 			.s_value = 5,
-		},
-		.output_len = sizeof(struct core_reloc_existence_output),
-	},
-	{
+		पूर्ण,
+		.output_len = माप(काष्ठा core_reloc_existence_output),
+	पूर्ण,
+	अणु
 		FIELD_EXISTS_CASE_COMMON(existence___minimal),
-		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence___minimal) {
+		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence___minimal) अणु
 			.a = 42,
-		},
-		.input_len = sizeof(struct core_reloc_existence___minimal),
-		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) {
+		पूर्ण,
+		.input_len = माप(काष्ठा core_reloc_existence___minimal),
+		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) अणु
 			.a_exists = 1,
 			.b_exists = 0,
 			.c_exists = 0,
@@ -634,15 +635,15 @@ static struct core_reloc_test_case test_cases[] = {
 			.c_value = 0xff000003u,
 			.arr_value = 0xff000004u,
 			.s_value = 0xff000005u,
-		},
-		.output_len = sizeof(struct core_reloc_existence_output),
-	},
-	{
+		पूर्ण,
+		.output_len = माप(काष्ठा core_reloc_existence_output),
+	पूर्ण,
+	अणु
 		FIELD_EXISTS_CASE_COMMON(existence___wrong_field_defs),
-		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence___wrong_field_defs) {
-		},
-		.input_len = sizeof(struct core_reloc_existence___wrong_field_defs),
-		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) {
+		.input = STRUCT_TO_CHAR_PTR(core_reloc_existence___wrong_field_defs) अणु
+		पूर्ण,
+		.input_len = माप(काष्ठा core_reloc_existence___wrong_field_defs),
+		.output = STRUCT_TO_CHAR_PTR(core_reloc_existence_output) अणु
 			.a_exists = 0,
 			.b_exists = 0,
 			.c_exists = 0,
@@ -653,12 +654,12 @@ static struct core_reloc_test_case test_cases[] = {
 			.c_value = 0xff000003u,
 			.arr_value = 0xff000004u,
 			.s_value = 0xff000005u,
-		},
-		.output_len = sizeof(struct core_reloc_existence_output),
-	},
+		पूर्ण,
+		.output_len = माप(काष्ठा core_reloc_existence_output),
+	पूर्ण,
 
 	/* bitfield relocation checks */
-	BITFIELDS_CASE(bitfields, {
+	BITFIELDS_CASE(bitfields, अणु
 		.ub1 = 1,
 		.ub2 = 2,
 		.ub7 = 96,
@@ -666,8 +667,8 @@ static struct core_reloc_test_case test_cases[] = {
 		.sb20 = -0x76543,
 		.u32 = 0x80000000,
 		.s32 = -0x76543210,
-	}),
-	BITFIELDS_CASE(bitfields___bit_sz_change, {
+	पूर्ण),
+	BITFIELDS_CASE(bitfields___bit_sz_change, अणु
 		.ub1 = 6,
 		.ub2 = 0xABCDE,
 		.ub7 = 1,
@@ -675,8 +676,8 @@ static struct core_reloc_test_case test_cases[] = {
 		.sb20 = -0x17654321,
 		.u32 = 0xBEEF,
 		.s32 = -0x3FEDCBA987654321LL,
-	}),
-	BITFIELDS_CASE(bitfields___bitfield_vs_int, {
+	पूर्ण),
+	BITFIELDS_CASE(bitfields___bitfield_vs_पूर्णांक, अणु
 		.ub1 = 0xFEDCBA9876543210LL,
 		.ub2 = 0xA6,
 		.ub7 = -0x7EDCBA987654321LL,
@@ -684,85 +685,85 @@ static struct core_reloc_test_case test_cases[] = {
 		.sb20 = 0xD00DLL,
 		.u32 = -0x76543,
 		.s32 = 0x0ADEADBEEFBADB0BLL,
-	}),
-	BITFIELDS_CASE(bitfields___just_big_enough, {
+	पूर्ण),
+	BITFIELDS_CASE(bitfields___just_big_enough, अणु
 		.ub1 = 0xFLL,
 		.ub2 = 0x0812345678FEDCBALL,
-	}),
+	पूर्ण),
 	BITFIELDS_ERR_CASE(bitfields___err_too_big_bitfield),
 
 	/* size relocation checks */
 	SIZE_CASE(size),
-	SIZE_CASE(size___diff_sz),
+	SIZE_CASE(size___dअगरf_sz),
 	SIZE_ERR_CASE(size___err_ambiguous),
 
 	/* validate type existence and size relocations */
-	TYPE_BASED_CASE(type_based, {
-		.struct_exists = 1,
-		.union_exists = 1,
-		.enum_exists = 1,
-		.typedef_named_struct_exists = 1,
-		.typedef_anon_struct_exists = 1,
-		.typedef_struct_ptr_exists = 1,
-		.typedef_int_exists = 1,
-		.typedef_enum_exists = 1,
-		.typedef_void_ptr_exists = 1,
-		.typedef_func_proto_exists = 1,
-		.typedef_arr_exists = 1,
-		.struct_sz = sizeof(struct a_struct),
-		.union_sz = sizeof(union a_union),
-		.enum_sz = sizeof(enum an_enum),
-		.typedef_named_struct_sz = sizeof(named_struct_typedef),
-		.typedef_anon_struct_sz = sizeof(anon_struct_typedef),
-		.typedef_struct_ptr_sz = sizeof(struct_ptr_typedef),
-		.typedef_int_sz = sizeof(int_typedef),
-		.typedef_enum_sz = sizeof(enum_typedef),
-		.typedef_void_ptr_sz = sizeof(void_ptr_typedef),
-		.typedef_func_proto_sz = sizeof(func_proto_typedef),
-		.typedef_arr_sz = sizeof(arr_typedef),
-	}),
-	TYPE_BASED_CASE(type_based___all_missing, {
+	TYPE_BASED_CASE(type_based, अणु
+		.काष्ठा_exists = 1,
+		.जोड़_exists = 1,
+		.क्रमागत_exists = 1,
+		.प्रकार_named_काष्ठा_exists = 1,
+		.प्रकार_anon_काष्ठा_exists = 1,
+		.प्रकार_काष्ठा_ptr_exists = 1,
+		.प्रकार_पूर्णांक_exists = 1,
+		.प्रकार_क्रमागत_exists = 1,
+		.प्रकार_व्योम_ptr_exists = 1,
+		.प्रकार_func_proto_exists = 1,
+		.प्रकार_arr_exists = 1,
+		.काष्ठा_sz = माप(काष्ठा a_काष्ठा),
+		.जोड़_sz = माप(जोड़ a_जोड़),
+		.क्रमागत_sz = माप(क्रमागत an_क्रमागत),
+		.प्रकार_named_काष्ठा_sz = माप(named_काष्ठा_प्रकार),
+		.प्रकार_anon_काष्ठा_sz = माप(anon_काष्ठा_प्रकार),
+		.प्रकार_काष्ठा_ptr_sz = माप(काष्ठा_ptr_प्रकार),
+		.प्रकार_पूर्णांक_sz = माप(पूर्णांक_प्रकार),
+		.प्रकार_क्रमागत_sz = माप(क्रमागत_प्रकार),
+		.प्रकार_व्योम_ptr_sz = माप(व्योम_ptr_प्रकार),
+		.प्रकार_func_proto_sz = माप(func_proto_प्रकार),
+		.प्रकार_arr_sz = माप(arr_प्रकार),
+	पूर्ण),
+	TYPE_BASED_CASE(type_based___all_missing, अणु
 		/* all zeros */
-	}),
-	TYPE_BASED_CASE(type_based___diff_sz, {
-		.struct_exists = 1,
-		.union_exists = 1,
-		.enum_exists = 1,
-		.typedef_named_struct_exists = 1,
-		.typedef_anon_struct_exists = 1,
-		.typedef_struct_ptr_exists = 1,
-		.typedef_int_exists = 1,
-		.typedef_enum_exists = 1,
-		.typedef_void_ptr_exists = 1,
-		.typedef_func_proto_exists = 1,
-		.typedef_arr_exists = 1,
-		.struct_sz = sizeof(struct a_struct___diff_sz),
-		.union_sz = sizeof(union a_union___diff_sz),
-		.enum_sz = sizeof(enum an_enum___diff_sz),
-		.typedef_named_struct_sz = sizeof(named_struct_typedef___diff_sz),
-		.typedef_anon_struct_sz = sizeof(anon_struct_typedef___diff_sz),
-		.typedef_struct_ptr_sz = sizeof(struct_ptr_typedef___diff_sz),
-		.typedef_int_sz = sizeof(int_typedef___diff_sz),
-		.typedef_enum_sz = sizeof(enum_typedef___diff_sz),
-		.typedef_void_ptr_sz = sizeof(void_ptr_typedef___diff_sz),
-		.typedef_func_proto_sz = sizeof(func_proto_typedef___diff_sz),
-		.typedef_arr_sz = sizeof(arr_typedef___diff_sz),
-	}),
-	TYPE_BASED_CASE(type_based___incompat, {
-		.enum_exists = 1,
-		.enum_sz = sizeof(enum an_enum),
-	}),
-	TYPE_BASED_CASE(type_based___fn_wrong_args, {
-		.struct_exists = 1,
-		.struct_sz = sizeof(struct a_struct),
-	}),
+	पूर्ण),
+	TYPE_BASED_CASE(type_based___dअगरf_sz, अणु
+		.काष्ठा_exists = 1,
+		.जोड़_exists = 1,
+		.क्रमागत_exists = 1,
+		.प्रकार_named_काष्ठा_exists = 1,
+		.प्रकार_anon_काष्ठा_exists = 1,
+		.प्रकार_काष्ठा_ptr_exists = 1,
+		.प्रकार_पूर्णांक_exists = 1,
+		.प्रकार_क्रमागत_exists = 1,
+		.प्रकार_व्योम_ptr_exists = 1,
+		.प्रकार_func_proto_exists = 1,
+		.प्रकार_arr_exists = 1,
+		.काष्ठा_sz = माप(काष्ठा a_काष्ठा___dअगरf_sz),
+		.जोड़_sz = माप(जोड़ a_जोड़___dअगरf_sz),
+		.क्रमागत_sz = माप(क्रमागत an_क्रमागत___dअगरf_sz),
+		.प्रकार_named_काष्ठा_sz = माप(named_काष्ठा_प्रकार___dअगरf_sz),
+		.प्रकार_anon_काष्ठा_sz = माप(anon_काष्ठा_प्रकार___dअगरf_sz),
+		.प्रकार_काष्ठा_ptr_sz = माप(काष्ठा_ptr_प्रकार___dअगरf_sz),
+		.प्रकार_पूर्णांक_sz = माप(पूर्णांक_प्रकार___dअगरf_sz),
+		.प्रकार_क्रमागत_sz = माप(क्रमागत_प्रकार___dअगरf_sz),
+		.प्रकार_व्योम_ptr_sz = माप(व्योम_ptr_प्रकार___dअगरf_sz),
+		.प्रकार_func_proto_sz = माप(func_proto_प्रकार___dअगरf_sz),
+		.प्रकार_arr_sz = माप(arr_प्रकार___dअगरf_sz),
+	पूर्ण),
+	TYPE_BASED_CASE(type_based___incompat, अणु
+		.क्रमागत_exists = 1,
+		.क्रमागत_sz = माप(क्रमागत an_क्रमागत),
+	पूर्ण),
+	TYPE_BASED_CASE(type_based___fn_wrong_args, अणु
+		.काष्ठा_exists = 1,
+		.काष्ठा_sz = माप(काष्ठा a_काष्ठा),
+	पूर्ण),
 
 	/* BTF_TYPE_ID_LOCAL/BTF_TYPE_ID_TARGET tests */
-	TYPE_ID_CASE(type_id, setup_type_id_case_success),
-	TYPE_ID_CASE(type_id___missing_targets, setup_type_id_case_failure),
+	TYPE_ID_CASE(type_id, setup_type_id_हाल_success),
+	TYPE_ID_CASE(type_id___missing_tarमाला_लो, setup_type_id_हाल_failure),
 
 	/* Enumerator value existence and value relocations */
-	ENUMVAL_CASE(enumval, {
+	ENUMVAL_CASE(क्रमागतval, अणु
 		.named_val1_exists = true,
 		.named_val2_exists = true,
 		.named_val3_exists = true,
@@ -773,8 +774,8 @@ static struct core_reloc_test_case test_cases[] = {
 		.named_val2 = 2,
 		.anon_val1 = 0x10,
 		.anon_val2 = 0x20,
-	}),
-	ENUMVAL_CASE(enumval___diff, {
+	पूर्ण),
+	ENUMVAL_CASE(क्रमागतval___dअगरf, अणु
 		.named_val1_exists = true,
 		.named_val2_exists = true,
 		.named_val3_exists = true,
@@ -785,8 +786,8 @@ static struct core_reloc_test_case test_cases[] = {
 		.named_val2 = 202,
 		.anon_val1 = 0x11,
 		.anon_val2 = 0x22,
-	}),
-	ENUMVAL_CASE(enumval___val3_missing, {
+	पूर्ण),
+	ENUMVAL_CASE(क्रमागतval___val3_missing, अणु
 		.named_val1_exists = true,
 		.named_val2_exists = true,
 		.named_val3_exists = false,
@@ -797,154 +798,154 @@ static struct core_reloc_test_case test_cases[] = {
 		.named_val2 = 222,
 		.anon_val1 = 0x111,
 		.anon_val2 = 0x222,
-	}),
-	ENUMVAL_ERR_CASE(enumval___err_missing),
-};
+	पूर्ण),
+	ENUMVAL_ERR_CASE(क्रमागतval___err_missing),
+पूर्ण;
 
-struct data {
-	char in[256];
-	char out[256];
+काष्ठा data अणु
+	अक्षर in[256];
+	अक्षर out[256];
 	bool skip;
-	uint64_t my_pid_tgid;
-};
+	uपूर्णांक64_t my_pid_tgid;
+पूर्ण;
 
-static size_t roundup_page(size_t sz)
-{
-	long page_size = sysconf(_SC_PAGE_SIZE);
-	return (sz + page_size - 1) / page_size * page_size;
-}
+अटल माप_प्रकार roundup_page(माप_प्रकार sz)
+अणु
+	दीर्घ page_size = sysconf(_SC_PAGE_SIZE);
+	वापस (sz + page_size - 1) / page_size * page_size;
+पूर्ण
 
-void test_core_reloc(void)
-{
-	const size_t mmap_sz = roundup_page(sizeof(struct data));
-	struct bpf_object_load_attr load_attr = {};
-	struct core_reloc_test_case *test_case;
-	const char *tp_name, *probe_name;
-	int err, i, equal;
-	struct bpf_link *link = NULL;
-	struct bpf_map *data_map;
-	struct bpf_program *prog;
-	struct bpf_object *obj;
-	uint64_t my_pid_tgid;
-	struct data *data;
-	void *mmap_data = NULL;
+व्योम test_core_reloc(व्योम)
+अणु
+	स्थिर माप_प्रकार mmap_sz = roundup_page(माप(काष्ठा data));
+	काष्ठा bpf_object_load_attr load_attr = अणुपूर्ण;
+	काष्ठा core_reloc_test_हाल *test_हाल;
+	स्थिर अक्षर *tp_name, *probe_name;
+	पूर्णांक err, i, equal;
+	काष्ठा bpf_link *link = शून्य;
+	काष्ठा bpf_map *data_map;
+	काष्ठा bpf_program *prog;
+	काष्ठा bpf_object *obj;
+	uपूर्णांक64_t my_pid_tgid;
+	काष्ठा data *data;
+	व्योम *mmap_data = शून्य;
 
-	my_pid_tgid = getpid() | ((uint64_t)syscall(SYS_gettid) << 32);
+	my_pid_tgid = getpid() | ((uपूर्णांक64_t)syscall(SYS_gettid) << 32);
 
-	for (i = 0; i < ARRAY_SIZE(test_cases); i++) {
-		test_case = &test_cases[i];
-		if (!test__start_subtest(test_case->case_name))
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(test_हालs); i++) अणु
+		test_हाल = &test_हालs[i];
+		अगर (!test__start_subtest(test_हाल->हाल_name))
+			जारी;
 
-		if (test_case->needs_testmod && !env.has_testmod) {
+		अगर (test_हाल->needs_tesपंचांगod && !env.has_tesपंचांगod) अणु
 			test__skip();
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (test_case->setup) {
-			err = test_case->setup(test_case);
-			if (CHECK(err, "test_setup", "test #%d setup failed: %d\n", i, err))
-				continue;
-		}
+		अगर (test_हाल->setup) अणु
+			err = test_हाल->setup(test_हाल);
+			अगर (CHECK(err, "test_setup", "test #%d setup failed: %d\n", i, err))
+				जारी;
+		पूर्ण
 
-		obj = bpf_object__open_file(test_case->bpf_obj_file, NULL);
-		if (CHECK(IS_ERR(obj), "obj_open", "failed to open '%s': %ld\n",
-			  test_case->bpf_obj_file, PTR_ERR(obj)))
-			continue;
+		obj = bpf_object__खोलो_file(test_हाल->bpf_obj_file, शून्य);
+		अगर (CHECK(IS_ERR(obj), "obj_open", "failed to open '%s': %ld\n",
+			  test_हाल->bpf_obj_file, PTR_ERR(obj)))
+			जारी;
 
 		probe_name = "raw_tracepoint/sys_enter";
 		tp_name = "sys_enter";
-		if (test_case->prog_sec_name) {
-			probe_name = test_case->prog_sec_name;
-			tp_name = test_case->raw_tp_name; /* NULL for tp_btf */
-		}
+		अगर (test_हाल->prog_sec_name) अणु
+			probe_name = test_हाल->prog_sec_name;
+			tp_name = test_हाल->raw_tp_name; /* शून्य क्रम tp_btf */
+		पूर्ण
 
 		prog = bpf_object__find_program_by_title(obj, probe_name);
-		if (CHECK(!prog, "find_probe",
+		अगर (CHECK(!prog, "find_probe",
 			  "prog '%s' not found\n", probe_name))
-			goto cleanup;
+			जाओ cleanup;
 
 
-		if (test_case->btf_src_file) {
-			err = access(test_case->btf_src_file, R_OK);
-			if (!ASSERT_OK(err, "btf_src_file"))
-				goto cleanup;
-		}
+		अगर (test_हाल->btf_src_file) अणु
+			err = access(test_हाल->btf_src_file, R_OK);
+			अगर (!ASSERT_OK(err, "btf_src_file"))
+				जाओ cleanup;
+		पूर्ण
 
 		load_attr.obj = obj;
 		load_attr.log_level = 0;
-		load_attr.target_btf_path = test_case->btf_src_file;
+		load_attr.target_btf_path = test_हाल->btf_src_file;
 		err = bpf_object__load_xattr(&load_attr);
-		if (err) {
-			if (!test_case->fails)
+		अगर (err) अणु
+			अगर (!test_हाल->fails)
 				ASSERT_OK(err, "obj_load");
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
 		data_map = bpf_object__find_map_by_name(obj, "test_cor.bss");
-		if (CHECK(!data_map, "find_data_map", "data map not found\n"))
-			goto cleanup;
+		अगर (CHECK(!data_map, "find_data_map", "data map not found\n"))
+			जाओ cleanup;
 
-		mmap_data = mmap(NULL, mmap_sz, PROT_READ | PROT_WRITE,
+		mmap_data = mmap(शून्य, mmap_sz, PROT_READ | PROT_WRITE,
 				 MAP_SHARED, bpf_map__fd(data_map), 0);
-		if (CHECK(mmap_data == MAP_FAILED, "mmap",
-			  ".bss mmap failed: %d", errno)) {
-			mmap_data = NULL;
-			goto cleanup;
-		}
+		अगर (CHECK(mmap_data == MAP_FAILED, "mmap",
+			  ".bss mmap failed: %d", त्रुटि_सं)) अणु
+			mmap_data = शून्य;
+			जाओ cleanup;
+		पूर्ण
 		data = mmap_data;
 
-		memset(mmap_data, 0, sizeof(*data));
-		memcpy(data->in, test_case->input, test_case->input_len);
+		स_रखो(mmap_data, 0, माप(*data));
+		स_नकल(data->in, test_हाल->input, test_हाल->input_len);
 		data->my_pid_tgid = my_pid_tgid;
 
-		link = bpf_program__attach_raw_tracepoint(prog, tp_name);
-		if (CHECK(IS_ERR(link), "attach_raw_tp", "err %ld\n",
+		link = bpf_program__attach_raw_tracepoपूर्णांक(prog, tp_name);
+		अगर (CHECK(IS_ERR(link), "attach_raw_tp", "err %ld\n",
 			  PTR_ERR(link)))
-			goto cleanup;
+			जाओ cleanup;
 
 		/* trigger test run */
-		if (test_case->trigger) {
-			if (!ASSERT_OK(test_case->trigger(test_case), "test_trigger"))
-				goto cleanup;
-		} else {
+		अगर (test_हाल->trigger) अणु
+			अगर (!ASSERT_OK(test_हाल->trigger(test_हाल), "test_trigger"))
+				जाओ cleanup;
+		पूर्ण अन्यथा अणु
 			usleep(1);
-		}
+		पूर्ण
 
-		if (data->skip) {
+		अगर (data->skip) अणु
 			test__skip();
-			goto cleanup;
-		}
+			जाओ cleanup;
+		पूर्ण
 
-		if (!ASSERT_FALSE(test_case->fails, "obj_load_should_fail"))
-			goto cleanup;
+		अगर (!ASSERT_FALSE(test_हाल->fails, "obj_load_should_fail"))
+			जाओ cleanup;
 
-		equal = memcmp(data->out, test_case->output,
-			       test_case->output_len) == 0;
-		if (CHECK(!equal, "check_result",
-			  "input/output data don't match\n")) {
-			int j;
+		equal = स_भेद(data->out, test_हाल->output,
+			       test_हाल->output_len) == 0;
+		अगर (CHECK(!equal, "check_result",
+			  "input/output data don't match\n")) अणु
+			पूर्णांक j;
 
-			for (j = 0; j < test_case->input_len; j++) {
-				printf("input byte #%d: 0x%02hhx\n",
-				       j, test_case->input[j]);
-			}
-			for (j = 0; j < test_case->output_len; j++) {
-				printf("output byte #%d: EXP 0x%02hhx GOT 0x%02hhx\n",
-				       j, test_case->output[j], data->out[j]);
-			}
-			goto cleanup;
-		}
+			क्रम (j = 0; j < test_हाल->input_len; j++) अणु
+				म_लिखो("input byte #%d: 0x%02hhx\n",
+				       j, test_हाल->input[j]);
+			पूर्ण
+			क्रम (j = 0; j < test_हाल->output_len; j++) अणु
+				म_लिखो("output byte #%d: EXP 0x%02hhx GOT 0x%02hhx\n",
+				       j, test_हाल->output[j], data->out[j]);
+			पूर्ण
+			जाओ cleanup;
+		पूर्ण
 
 cleanup:
-		if (mmap_data) {
+		अगर (mmap_data) अणु
 			CHECK_FAIL(munmap(mmap_data, mmap_sz));
-			mmap_data = NULL;
-		}
-		if (!IS_ERR_OR_NULL(link)) {
+			mmap_data = शून्य;
+		पूर्ण
+		अगर (!IS_ERR_OR_शून्य(link)) अणु
 			bpf_link__destroy(link);
-			link = NULL;
-		}
-		bpf_object__close(obj);
-	}
-}
+			link = शून्य;
+		पूर्ण
+		bpf_object__बंद(obj);
+	पूर्ण
+पूर्ण

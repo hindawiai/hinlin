@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2001, 2007
  * Authors:	Fritz Elfert (felfert@millenux.com)
@@ -8,47 +9,47 @@
  *		Andy Richter (richtera@us.ibm.com)
  */
 
-#undef DEBUG
-#undef DEBUGDATA
-#undef DEBUGCCW
+#अघोषित DEBUG
+#अघोषित DEBUGDATA
+#अघोषित DEBUGCCW
 
-#define KMSG_COMPONENT "ctcm"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "ctcm"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/interrupt.h>
-#include <linux/timer.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/bitops.h>
 
-#include <linux/signal.h>
-#include <linux/string.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/माला.स>
 
-#include <linux/ip.h>
-#include <linux/if_arp.h>
-#include <linux/tcp.h>
-#include <linux/skbuff.h>
-#include <linux/ctype.h>
-#include <net/dst.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <net/dst.h>
 
-#include <linux/io.h>
-#include <asm/ccwdev.h>
-#include <asm/ccwgroup.h>
-#include <linux/uaccess.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/ccwgroup.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/idals.h>
+#समावेश <यंत्र/idals.h>
 
-#include "fsm.h"
+#समावेश "fsm.h"
 
-#include "ctcm_dbug.h"
-#include "ctcm_main.h"
-#include "ctcm_fsms.h"
+#समावेश "ctcm_dbug.h"
+#समावेश "ctcm_main.h"
+#समावेश "ctcm_fsms.h"
 
-const char *dev_state_names[] = {
+स्थिर अक्षर *dev_state_names[] = अणु
 	[DEV_STATE_STOPPED]		= "Stopped",
 	[DEV_STATE_STARTWAIT_RXTX]	= "StartWait RXTX",
 	[DEV_STATE_STARTWAIT_RX]	= "StartWait RX",
@@ -57,9 +58,9 @@ const char *dev_state_names[] = {
 	[DEV_STATE_STOPWAIT_RX]		= "StopWait RX",
 	[DEV_STATE_STOPWAIT_TX]		= "StopWait TX",
 	[DEV_STATE_RUNNING]		= "Running",
-};
+पूर्ण;
 
-const char *dev_event_names[] = {
+स्थिर अक्षर *dev_event_names[] = अणु
 	[DEV_EVENT_START]	= "Start",
 	[DEV_EVENT_STOP]	= "Stop",
 	[DEV_EVENT_RXUP]	= "RX up",
@@ -67,9 +68,9 @@ const char *dev_event_names[] = {
 	[DEV_EVENT_RXDOWN]	= "RX down",
 	[DEV_EVENT_TXDOWN]	= "TX down",
 	[DEV_EVENT_RESTART]	= "Restart",
-};
+पूर्ण;
 
-const char *ctc_ch_event_names[] = {
+स्थिर अक्षर *ctc_ch_event_names[] = अणु
 	[CTC_EVENT_IO_SUCCESS]	= "ccw_device success",
 	[CTC_EVENT_IO_EBUSY]	= "ccw_device busy",
 	[CTC_EVENT_IO_ENODEV]	= "ccw_device enodev",
@@ -98,9 +99,9 @@ const char *ctc_ch_event_names[] = {
 	*/
 	[CTC_EVENT_SEND_XID]	= "XID Exchange",
 	[CTC_EVENT_RSWEEP_TIMER] = "MPC Group Sweep Timer",
-};
+पूर्ण;
 
-const char *ctc_ch_state_names[] = {
+स्थिर अक्षर *ctc_ch_state_names[] = अणु
 	[CTC_STATE_IDLE]	= "Idle",
 	[CTC_STATE_STOPPED]	= "Stopped",
 	[CTC_STATE_STARTWAIT]	= "StartWait",
@@ -127,111 +128,111 @@ const char *ctc_ch_state_names[] = {
 	[CH_XID7_PENDING2]	= "Pending XID7 P2 Start ",
 	[CH_XID7_PENDING3]	= "Active XID7 P2 Exchange ",
 	[CH_XID7_PENDING4]	= "XID7 Complete - Pending READY ",
-};
+पूर्ण;
 
-static void ctcm_action_nop(fsm_instance *fi, int event, void *arg);
-
-/*
- * ----- static ctcm actions for channel statemachine -----
- *
-*/
-static void chx_txdone(fsm_instance *fi, int event, void *arg);
-static void chx_rx(fsm_instance *fi, int event, void *arg);
-static void chx_rxidle(fsm_instance *fi, int event, void *arg);
-static void chx_firstio(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_setmode(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_start(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_haltio(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_stopped(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_stop(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_fail(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_setuperr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_restart(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxiniterr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxinitfail(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxdisc(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_txiniterr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_txretry(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_iofatal(fsm_instance *fi, int event, void *arg);
+अटल व्योम ctcm_action_nop(fsm_instance *fi, पूर्णांक event, व्योम *arg);
 
 /*
- * ----- static ctcmpc actions for ctcmpc channel statemachine -----
+ * ----- अटल ctcm actions क्रम channel statemachine -----
  *
 */
-static void ctcmpc_chx_txdone(fsm_instance *fi, int event, void *arg);
-static void ctcmpc_chx_rx(fsm_instance *fi, int event, void *arg);
-static void ctcmpc_chx_firstio(fsm_instance *fi, int event, void *arg);
+अटल व्योम chx_txकरोne(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम chx_rx(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम chx_rxidle(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम chx_firstio(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_seपंचांगode(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_start(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_haltio(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_stopped(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_stop(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_fail(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_setuperr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_restart(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxinitfail(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxdisc(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_txiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_txretry(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_iofatal(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+
+/*
+ * ----- अटल ctcmpc actions क्रम ctcmpc channel statemachine -----
+ *
+*/
+अटल व्योम ctcmpc_chx_txकरोne(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcmpc_chx_rx(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcmpc_chx_firstio(fsm_instance *fi, पूर्णांक event, व्योम *arg);
 /* shared :
-static void ctcm_chx_setmode(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_start(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_haltio(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_stopped(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_stop(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_fail(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_setuperr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_restart(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxiniterr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxinitfail(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_rxdisc(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_txiniterr(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_txretry(fsm_instance *fi, int event, void *arg);
-static void ctcm_chx_iofatal(fsm_instance *fi, int event, void *arg);
+अटल व्योम ctcm_chx_seपंचांगode(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_start(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_haltio(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_stopped(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_stop(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_fail(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_setuperr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_restart(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxinitfail(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_rxdisc(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_txiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_txretry(fsm_instance *fi, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcm_chx_iofatal(fsm_instance *fi, पूर्णांक event, व्योम *arg);
 */
-static void ctcmpc_chx_attn(fsm_instance *fsm, int event, void *arg);
-static void ctcmpc_chx_attnbusy(fsm_instance *, int, void *);
-static void ctcmpc_chx_resend(fsm_instance *, int, void *);
-static void ctcmpc_chx_send_sweep(fsm_instance *fsm, int event, void *arg);
+अटल व्योम ctcmpc_chx_attn(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
+अटल व्योम ctcmpc_chx_attnbusy(fsm_instance *, पूर्णांक, व्योम *);
+अटल व्योम ctcmpc_chx_resend(fsm_instance *, पूर्णांक, व्योम *);
+अटल व्योम ctcmpc_chx_send_sweep(fsm_instance *fsm, पूर्णांक event, व्योम *arg);
 
 /**
- * Check return code of a preceding ccw_device call, halt_IO etc...
+ * Check वापस code of a preceding ccw_device call, halt_IO etc...
  *
- * ch	:	The channel, the error belongs to.
+ * ch	:	The channel, the error beदीर्घs to.
  * Returns the error code (!= 0) to inspect.
  */
-void ctcm_ccw_check_rc(struct channel *ch, int rc, char *msg)
-{
+व्योम ctcm_ccw_check_rc(काष्ठा channel *ch, पूर्णांक rc, अक्षर *msg)
+अणु
 	CTCM_DBF_TEXT_(ERROR, CTC_DBF_ERROR,
 		"%s(%s): %s: %04x\n",
 		CTCM_FUNTAIL, ch->id, msg, rc);
-	switch (rc) {
-	case -EBUSY:
+	चयन (rc) अणु
+	हाल -EBUSY:
 		pr_info("%s: The communication peer is busy\n",
 			ch->id);
 		fsm_event(ch->fsm, CTC_EVENT_IO_EBUSY, ch);
-		break;
-	case -ENODEV:
+		अवरोध;
+	हाल -ENODEV:
 		pr_err("%s: The specified target device is not valid\n",
 		       ch->id);
 		fsm_event(ch->fsm, CTC_EVENT_IO_ENODEV, ch);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("An I/O operation resulted in error %04x\n",
 		       rc);
 		fsm_event(ch->fsm, CTC_EVENT_IO_UNKNOWN, ch);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ctcm_purge_skb_queue(struct sk_buff_head *q)
-{
-	struct sk_buff *skb;
+व्योम ctcm_purge_skb_queue(काष्ठा sk_buff_head *q)
+अणु
+	काष्ठा sk_buff *skb;
 
 	CTCM_DBF_TEXT(TRACE, CTC_DBF_DEBUG, __func__);
 
-	while ((skb = skb_dequeue(q))) {
+	जबतक ((skb = skb_dequeue(q))) अणु
 		refcount_dec(&skb->users);
-		dev_kfree_skb_any(skb);
-	}
-}
+		dev_kमुक्त_skb_any(skb);
+	पूर्ण
+पूर्ण
 
 /**
- * NOP action for statemachines
+ * NOP action क्रम statemachines
  */
-static void ctcm_action_nop(fsm_instance *fi, int event, void *arg)
-{
-}
+अटल व्योम ctcm_action_nop(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+पूर्ण
 
 /*
- * Actions for channel - statemachines.
+ * Actions क्रम channel - statemachines.
  */
 
 /**
@@ -241,505 +242,505 @@ static void ctcm_action_nop(fsm_instance *fi, int event, void *arg)
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void chx_txdone(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct sk_buff *skb;
-	int first = 1;
-	int i;
-	unsigned long duration;
-	unsigned long done_stamp = jiffies;
+अटल व्योम chx_txकरोne(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा sk_buff *skb;
+	पूर्णांक first = 1;
+	पूर्णांक i;
+	अचिन्हित दीर्घ duration;
+	अचिन्हित दीर्घ करोne_stamp = jअगरfies;
 
 	CTCM_PR_DEBUG("%s(%s): %s\n", __func__, ch->id, dev->name);
 
-	duration = done_stamp - ch->prof.send_stamp;
-	if (duration > ch->prof.tx_time)
-		ch->prof.tx_time = duration;
+	duration = करोne_stamp - ch->prof.send_stamp;
+	अगर (duration > ch->prof.tx_समय)
+		ch->prof.tx_समय = duration;
 
-	if (ch->irb->scsw.cmd.count != 0)
+	अगर (ch->irb->scsw.cmd.count != 0)
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_DEBUG,
 			"%s(%s): TX not complete, remaining %d bytes",
 			     CTCM_FUNTAIL, dev->name, ch->irb->scsw.cmd.count);
-	fsm_deltimer(&ch->timer);
-	while ((skb = skb_dequeue(&ch->io_queue))) {
+	fsm_delसमयr(&ch->समयr);
+	जबतक ((skb = skb_dequeue(&ch->io_queue))) अणु
 		priv->stats.tx_packets++;
 		priv->stats.tx_bytes += skb->len - LL_HEADER_LENGTH;
-		if (first) {
+		अगर (first) अणु
 			priv->stats.tx_bytes += 2;
 			first = 0;
-		}
+		पूर्ण
 		refcount_dec(&skb->users);
-		dev_kfree_skb_irq(skb);
-	}
+		dev_kमुक्त_skb_irq(skb);
+	पूर्ण
 	spin_lock(&ch->collect_lock);
 	clear_normalized_cda(&ch->ccw[4]);
-	if (ch->collect_len > 0) {
-		int rc;
+	अगर (ch->collect_len > 0) अणु
+		पूर्णांक rc;
 
-		if (ctcm_checkalloc_buffer(ch)) {
+		अगर (ctcm_checkalloc_buffer(ch)) अणु
 			spin_unlock(&ch->collect_lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 		ch->trans_skb->data = ch->trans_skb_data;
-		skb_reset_tail_pointer(ch->trans_skb);
+		skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 		ch->trans_skb->len = 0;
-		if (ch->prof.maxmulti < (ch->collect_len + 2))
+		अगर (ch->prof.maxmulti < (ch->collect_len + 2))
 			ch->prof.maxmulti = ch->collect_len + 2;
-		if (ch->prof.maxcqueue < skb_queue_len(&ch->collect_queue))
+		अगर (ch->prof.maxcqueue < skb_queue_len(&ch->collect_queue))
 			ch->prof.maxcqueue = skb_queue_len(&ch->collect_queue);
 		*((__u16 *)skb_put(ch->trans_skb, 2)) = ch->collect_len + 2;
 		i = 0;
-		while ((skb = skb_dequeue(&ch->collect_queue))) {
+		जबतक ((skb = skb_dequeue(&ch->collect_queue))) अणु
 			skb_copy_from_linear_data(skb,
 				skb_put(ch->trans_skb, skb->len), skb->len);
 			priv->stats.tx_packets++;
 			priv->stats.tx_bytes += skb->len - LL_HEADER_LENGTH;
 			refcount_dec(&skb->users);
-			dev_kfree_skb_irq(skb);
+			dev_kमुक्त_skb_irq(skb);
 			i++;
-		}
+		पूर्ण
 		ch->collect_len = 0;
 		spin_unlock(&ch->collect_lock);
 		ch->ccw[1].count = ch->trans_skb->len;
-		fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
-		ch->prof.send_stamp = jiffies;
+		fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+		ch->prof.send_stamp = jअगरfies;
 		rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-		ch->prof.doios_multi++;
-		if (rc != 0) {
+		ch->prof.करोios_multi++;
+		अगर (rc != 0) अणु
 			priv->stats.tx_dropped += i;
 			priv->stats.tx_errors += i;
-			fsm_deltimer(&ch->timer);
+			fsm_delसमयr(&ch->समयr);
 			ctcm_ccw_check_rc(ch, rc, "chained TX");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		spin_unlock(&ch->collect_lock);
 		fsm_newstate(fi, CTC_STATE_TXIDLE);
-	}
-	ctcm_clear_busy_do(dev);
-}
+	पूर्ण
+	ctcm_clear_busy_करो(dev);
+पूर्ण
 
 /**
  * Initial data is sent.
- * Notify device statemachine that we are up and
+ * Notअगरy device statemachine that we are up and
  * running.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-void ctcm_chx_txidle(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+व्योम ctcm_chx_txidle(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCM_PR_DEBUG("%s(%s): %s\n", __func__, ch->id, dev->name);
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 	fsm_newstate(fi, CTC_STATE_TXIDLE);
 	fsm_event(priv->fsm, DEV_EVENT_TXUP, ch->netdev);
-}
+पूर्ण
 
 /**
- * Got normal data, check for sanity, queue it up, allocate new buffer
- * trigger bottom half, and initiate next read.
+ * Got normal data, check क्रम sanity, queue it up, allocate new buffer
+ * trigger bottom half, and initiate next पढ़ो.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void chx_rx(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	int len = ch->max_bufsize - ch->irb->scsw.cmd.count;
-	struct sk_buff *skb = ch->trans_skb;
+अटल व्योम chx_rx(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	पूर्णांक len = ch->max_bufsize - ch->irb->scsw.cmd.count;
+	काष्ठा sk_buff *skb = ch->trans_skb;
 	__u16 block_len = *((__u16 *)skb->data);
-	int check_len;
-	int rc;
+	पूर्णांक check_len;
+	पूर्णांक rc;
 
-	fsm_deltimer(&ch->timer);
-	if (len < 8) {
+	fsm_delसमयr(&ch->समयr);
+	अगर (len < 8) अणु
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 			"%s(%s): got packet with length %d < 8\n",
 					CTCM_FUNTAIL, dev->name, len);
 		priv->stats.rx_dropped++;
 		priv->stats.rx_length_errors++;
-						goto again;
-	}
-	if (len > ch->max_bufsize) {
+						जाओ again;
+	पूर्ण
+	अगर (len > ch->max_bufsize) अणु
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 			"%s(%s): got packet with length %d > %d\n",
 				CTCM_FUNTAIL, dev->name, len, ch->max_bufsize);
 		priv->stats.rx_dropped++;
 		priv->stats.rx_length_errors++;
-						goto again;
-	}
+						जाओ again;
+	पूर्ण
 
 	/*
 	 * VM TCP seems to have a bug sending 2 trailing bytes of garbage.
 	 */
-	switch (ch->protocol) {
-	case CTCM_PROTO_S390:
-	case CTCM_PROTO_OS390:
+	चयन (ch->protocol) अणु
+	हाल CTCM_PROTO_S390:
+	हाल CTCM_PROTO_OS390:
 		check_len = block_len + 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		check_len = block_len;
-		break;
-	}
-	if ((len < block_len) || (len > check_len)) {
+		अवरोध;
+	पूर्ण
+	अगर ((len < block_len) || (len > check_len)) अणु
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 			"%s(%s): got block length %d != rx length %d\n",
 				CTCM_FUNTAIL, dev->name, block_len, len);
-		if (do_debug)
+		अगर (करो_debug)
 			ctcmpc_dump_skb(skb, 0);
 
 		*((__u16 *)skb->data) = len;
 		priv->stats.rx_dropped++;
 		priv->stats.rx_length_errors++;
-						goto again;
-	}
-	if (block_len > 2) {
+						जाओ again;
+	पूर्ण
+	अगर (block_len > 2) अणु
 		*((__u16 *)skb->data) = block_len - 2;
 		ctcm_unpack_skb(ch, skb);
-	}
+	पूर्ण
  again:
 	skb->data = ch->trans_skb_data;
-	skb_reset_tail_pointer(skb);
+	skb_reset_tail_poपूर्णांकer(skb);
 	skb->len = 0;
-	if (ctcm_checkalloc_buffer(ch))
-		return;
+	अगर (ctcm_checkalloc_buffer(ch))
+		वापस;
 	ch->ccw[1].count = ch->max_bufsize;
 	rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-	if (rc != 0)
+	अगर (rc != 0)
 		ctcm_ccw_check_rc(ch, rc, "normal RX");
-}
+पूर्ण
 
 /**
  * Initialize connection by sending a __u16 of value 0.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void chx_firstio(fsm_instance *fi, int event, void *arg)
-{
-	int rc;
-	struct channel *ch = arg;
-	int fsmstate = fsm_getstate(fi);
+अटल व्योम chx_firstio(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	पूर्णांक rc;
+	काष्ठा channel *ch = arg;
+	पूर्णांक fsmstate = fsm_माला_लोtate(fi);
 
 	CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 		"%s(%s) : %02x",
 		CTCM_FUNTAIL, ch->id, fsmstate);
 
 	ch->sense_rc = 0;	/* reset unit check report control */
-	if (fsmstate == CTC_STATE_TXIDLE)
+	अगर (fsmstate == CTC_STATE_TXIDLE)
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_DEBUG,
 			"%s(%s): remote side issued READ?, init.\n",
 				CTCM_FUNTAIL, ch->id);
-	fsm_deltimer(&ch->timer);
-	if (ctcm_checkalloc_buffer(ch))
-		return;
-	if ((fsmstate == CTC_STATE_SETUPWAIT) &&
-	    (ch->protocol == CTCM_PROTO_OS390)) {
+	fsm_delसमयr(&ch->समयr);
+	अगर (ctcm_checkalloc_buffer(ch))
+		वापस;
+	अगर ((fsmstate == CTC_STATE_SETUPWAIT) &&
+	    (ch->protocol == CTCM_PROTO_OS390)) अणु
 		/* OS/390 resp. z/OS */
-		if (CHANNEL_DIRECTION(ch->flags) == CTCM_READ) {
+		अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) अणु
 			*((__u16 *)ch->trans_skb->data) = CTCM_INITIAL_BLOCKLEN;
-			fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC,
+			fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC,
 				     CTC_EVENT_TIMER, ch);
 			chx_rxidle(fi, event, arg);
-		} else {
-			struct net_device *dev = ch->netdev;
-			struct ctcm_priv *priv = dev->ml_priv;
+		पूर्ण अन्यथा अणु
+			काष्ठा net_device *dev = ch->netdev;
+			काष्ठा ctcm_priv *priv = dev->ml_priv;
 			fsm_newstate(fi, CTC_STATE_TXIDLE);
 			fsm_event(priv->fsm, DEV_EVENT_TXUP, dev);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 	/*
-	 * Don't setup a timer for receiving the initial RX frame
-	 * if in compatibility mode, since VM TCP delays the initial
+	 * Don't setup a समयr क्रम receiving the initial RX frame
+	 * अगर in compatibility mode, since VM TCP delays the initial
 	 * frame until it has some data to send.
 	 */
-	if ((CHANNEL_DIRECTION(ch->flags) == CTCM_WRITE) ||
+	अगर ((CHANNEL_सूचीECTION(ch->flags) == CTCM_WRITE) ||
 	    (ch->protocol != CTCM_PROTO_S390))
-		fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+		fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
 
 	*((__u16 *)ch->trans_skb->data) = CTCM_INITIAL_BLOCKLEN;
 	ch->ccw[1].count = 2;	/* Transfer only length */
 
-	fsm_newstate(fi, (CHANNEL_DIRECTION(ch->flags) == CTCM_READ)
+	fsm_newstate(fi, (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ)
 		     ? CTC_STATE_RXINIT : CTC_STATE_TXINIT);
 	rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-	if (rc != 0) {
-		fsm_deltimer(&ch->timer);
+	अगर (rc != 0) अणु
+		fsm_delसमयr(&ch->समयr);
 		fsm_newstate(fi, CTC_STATE_SETUPWAIT);
 		ctcm_ccw_check_rc(ch, rc, "init IO");
-	}
+	पूर्ण
 	/*
-	 * If in compatibility mode since we don't setup a timer, we
-	 * also signal RX channel up immediately. This enables us
+	 * If in compatibility mode since we करोn't setup a समयr, we
+	 * also संकेत RX channel up immediately. This enables us
 	 * to send packets early which in turn usually triggers some
 	 * reply from VM TCP which brings up the RX channel to it's
 	 * final state.
 	 */
-	if ((CHANNEL_DIRECTION(ch->flags) == CTCM_READ) &&
-	    (ch->protocol == CTCM_PROTO_S390)) {
-		struct net_device *dev = ch->netdev;
-		struct ctcm_priv *priv = dev->ml_priv;
+	अगर ((CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) &&
+	    (ch->protocol == CTCM_PROTO_S390)) अणु
+		काष्ठा net_device *dev = ch->netdev;
+		काष्ठा ctcm_priv *priv = dev->ml_priv;
 		fsm_event(priv->fsm, DEV_EVENT_RXUP, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * Got initial data, check it. If OK,
- * notify device statemachine that we are up and
+ * notअगरy device statemachine that we are up and
  * running.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void chx_rxidle(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम chx_rxidle(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 	__u16 buflen;
-	int rc;
+	पूर्णांक rc;
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 	buflen = *((__u16 *)ch->trans_skb->data);
 	CTCM_PR_DEBUG("%s: %s: Initial RX count = %d\n",
 			__func__, dev->name, buflen);
 
-	if (buflen >= CTCM_INITIAL_BLOCKLEN) {
-		if (ctcm_checkalloc_buffer(ch))
-			return;
+	अगर (buflen >= CTCM_INITIAL_BLOCKLEN) अणु
+		अगर (ctcm_checkalloc_buffer(ch))
+			वापस;
 		ch->ccw[1].count = ch->max_bufsize;
 		fsm_newstate(fi, CTC_STATE_RXIDLE);
 		rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			fsm_newstate(fi, CTC_STATE_RXINIT);
 			ctcm_ccw_check_rc(ch, rc, "initial RX");
-		} else
+		पूर्ण अन्यथा
 			fsm_event(priv->fsm, DEV_EVENT_RXUP, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		CTCM_PR_DEBUG("%s: %s: Initial RX count %d not %d\n",
 				__func__, dev->name,
 					buflen, CTCM_INITIAL_BLOCKLEN);
 		chx_firstio(fi, event, arg);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Set channel into extended mode.
+ * Set channel पूर्णांकo extended mode.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_setmode(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	int rc;
-	unsigned long saveflags = 0;
-	int timeout = CTCM_TIME_5_SEC;
+अटल व्योम ctcm_chx_seपंचांगode(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	पूर्णांक rc;
+	अचिन्हित दीर्घ saveflags = 0;
+	पूर्णांक समयout = CTCM_TIME_5_SEC;
 
-	fsm_deltimer(&ch->timer);
-	if (IS_MPC(ch)) {
-		timeout = 1500;
+	fsm_delसमयr(&ch->समयr);
+	अगर (IS_MPC(ch)) अणु
+		समयout = 1500;
 		CTCM_PR_DEBUG("enter %s: cp=%i ch=0x%p id=%s\n",
 				__func__, smp_processor_id(), ch, ch->id);
-	}
-	fsm_addtimer(&ch->timer, timeout, CTC_EVENT_TIMER, ch);
+	पूर्ण
+	fsm_addसमयr(&ch->समयr, समयout, CTC_EVENT_TIMER, ch);
 	fsm_newstate(fi, CTC_STATE_SETUPWAIT);
-	CTCM_CCW_DUMP((char *)&ch->ccw[6], sizeof(struct ccw1) * 2);
+	CTCM_CCW_DUMP((अक्षर *)&ch->ccw[6], माप(काष्ठा ccw1) * 2);
 
-	if (event == CTC_EVENT_TIMER)	/* only for timer not yet locked */
+	अगर (event == CTC_EVENT_TIMER)	/* only क्रम समयr not yet locked */
 		spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 			/* Such conditional locking is undeterministic in
-			 * static view. => ignore sparse warnings here. */
+			 * अटल view. => ignore sparse warnings here. */
 
 	rc = ccw_device_start(ch->cdev, &ch->ccw[6], 0, 0xff, 0);
-	if (event == CTC_EVENT_TIMER)	/* see above comments */
+	अगर (event == CTC_EVENT_TIMER)	/* see above comments */
 		spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
-	if (rc != 0) {
-		fsm_deltimer(&ch->timer);
+	अगर (rc != 0) अणु
+		fsm_delसमयr(&ch->समयr);
 		fsm_newstate(fi, CTC_STATE_STARTWAIT);
 		ctcm_ccw_check_rc(ch, rc, "set Mode");
-	} else
+	पूर्ण अन्यथा
 		ch->retry = 0;
-}
+पूर्ण
 
 /**
  * Setup channel.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_start(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch	= arg;
-	unsigned long saveflags;
-	int rc;
+अटल व्योम ctcm_chx_start(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch	= arg;
+	अचिन्हित दीर्घ saveflags;
+	पूर्णांक rc;
 
 	CTCM_DBF_TEXT_(SETUP, CTC_DBF_INFO, "%s(%s): %s",
 		CTCM_FUNTAIL, ch->id,
-		(CHANNEL_DIRECTION(ch->flags) == CTCM_READ) ? "RX" : "TX");
+		(CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) ? "RX" : "TX");
 
-	if (ch->trans_skb != NULL) {
+	अगर (ch->trans_skb != शून्य) अणु
 		clear_normalized_cda(&ch->ccw[1]);
-		dev_kfree_skb(ch->trans_skb);
-		ch->trans_skb = NULL;
-	}
-	if (CHANNEL_DIRECTION(ch->flags) == CTCM_READ) {
+		dev_kमुक्त_skb(ch->trans_skb);
+		ch->trans_skb = शून्य;
+	पूर्ण
+	अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) अणु
 		ch->ccw[1].cmd_code = CCW_CMD_READ;
 		ch->ccw[1].flags = CCW_FLAG_SLI;
 		ch->ccw[1].count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ch->ccw[1].cmd_code = CCW_CMD_WRITE;
 		ch->ccw[1].flags = CCW_FLAG_SLI | CCW_FLAG_CC;
 		ch->ccw[1].count = 0;
-	}
-	if (ctcm_checkalloc_buffer(ch)) {
+	पूर्ण
+	अगर (ctcm_checkalloc_buffer(ch)) अणु
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_DEBUG,
 			"%s(%s): %s trans_skb alloc delayed "
 			"until first transfer",
 			CTCM_FUNTAIL, ch->id,
-			(CHANNEL_DIRECTION(ch->flags) == CTCM_READ) ?
+			(CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) ?
 				"RX" : "TX");
-	}
+	पूर्ण
 	ch->ccw[0].cmd_code = CCW_CMD_PREPARE;
 	ch->ccw[0].flags = CCW_FLAG_SLI | CCW_FLAG_CC;
 	ch->ccw[0].count = 0;
 	ch->ccw[0].cda = 0;
-	ch->ccw[2].cmd_code = CCW_CMD_NOOP;	/* jointed CE + DE */
+	ch->ccw[2].cmd_code = CCW_CMD_NOOP;	/* joपूर्णांकed CE + DE */
 	ch->ccw[2].flags = CCW_FLAG_SLI;
 	ch->ccw[2].count = 0;
 	ch->ccw[2].cda = 0;
-	memcpy(&ch->ccw[3], &ch->ccw[0], sizeof(struct ccw1) * 3);
+	स_नकल(&ch->ccw[3], &ch->ccw[0], माप(काष्ठा ccw1) * 3);
 	ch->ccw[4].cda = 0;
 	ch->ccw[4].flags &= ~CCW_FLAG_IDA;
 
 	fsm_newstate(fi, CTC_STATE_STARTWAIT);
-	fsm_addtimer(&ch->timer, 1000, CTC_EVENT_TIMER, ch);
+	fsm_addसमयr(&ch->समयr, 1000, CTC_EVENT_TIMER, ch);
 	spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 	rc = ccw_device_halt(ch->cdev, 0);
 	spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
-	if (rc != 0) {
-		if (rc != -EBUSY)
-			fsm_deltimer(&ch->timer);
+	अगर (rc != 0) अणु
+		अगर (rc != -EBUSY)
+			fsm_delसमयr(&ch->समयr);
 		ctcm_ccw_check_rc(ch, rc, "initial HaltIO");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Shutdown a channel.
+ * Shutकरोwn a channel.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_haltio(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	unsigned long saveflags = 0;
-	int rc;
-	int oldstate;
+अटल व्योम ctcm_chx_haltio(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	अचिन्हित दीर्घ saveflags = 0;
+	पूर्णांक rc;
+	पूर्णांक oldstate;
 
-	fsm_deltimer(&ch->timer);
-	if (IS_MPC(ch))
-		fsm_deltimer(&ch->sweep_timer);
+	fsm_delसमयr(&ch->समयr);
+	अगर (IS_MPC(ch))
+		fsm_delसमयr(&ch->sweep_समयr);
 
-	fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+	fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
 
-	if (event == CTC_EVENT_STOP)	/* only for STOP not yet locked */
+	अगर (event == CTC_EVENT_STOP)	/* only क्रम STOP not yet locked */
 		spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 			/* Such conditional locking is undeterministic in
-			 * static view. => ignore sparse warnings here. */
-	oldstate = fsm_getstate(fi);
+			 * अटल view. => ignore sparse warnings here. */
+	oldstate = fsm_माला_लोtate(fi);
 	fsm_newstate(fi, CTC_STATE_TERM);
 	rc = ccw_device_halt(ch->cdev, 0);
 
-	if (event == CTC_EVENT_STOP)
+	अगर (event == CTC_EVENT_STOP)
 		spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
 			/* see remark above about conditional locking */
 
-	if (rc != 0 && rc != -EBUSY) {
-		fsm_deltimer(&ch->timer);
-		if (event != CTC_EVENT_STOP) {
+	अगर (rc != 0 && rc != -EBUSY) अणु
+		fsm_delसमयr(&ch->समयr);
+		अगर (event != CTC_EVENT_STOP) अणु
 			fsm_newstate(fi, oldstate);
-			ctcm_ccw_check_rc(ch, rc, (char *)__func__);
-		}
-	}
-}
+			ctcm_ccw_check_rc(ch, rc, (अक्षर *)__func__);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * Cleanup helper for chx_fail and chx_stopped
- * cleanup channels queue and notify interface statemachine.
+ * Cleanup helper क्रम chx_fail and chx_stopped
+ * cleanup channels queue and notअगरy पूर्णांकerface statemachine.
  *
  * fi		An instance of a channel statemachine.
  * state	The next state (depending on caller).
  * ch		The channel to operate on.
  */
-static void ctcm_chx_cleanup(fsm_instance *fi, int state,
-		struct channel *ch)
-{
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_cleanup(fsm_instance *fi, पूर्णांक state,
+		काष्ठा channel *ch)
+अणु
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCM_DBF_TEXT_(SETUP, CTC_DBF_NOTICE,
 			"%s(%s): %s[%d]\n",
 			CTCM_FUNTAIL, dev->name, ch->id, state);
 
-	fsm_deltimer(&ch->timer);
-	if (IS_MPC(ch))
-		fsm_deltimer(&ch->sweep_timer);
+	fsm_delसमयr(&ch->समयr);
+	अगर (IS_MPC(ch))
+		fsm_delसमयr(&ch->sweep_समयr);
 
 	fsm_newstate(fi, state);
-	if (state == CTC_STATE_STOPPED && ch->trans_skb != NULL) {
+	अगर (state == CTC_STATE_STOPPED && ch->trans_skb != शून्य) अणु
 		clear_normalized_cda(&ch->ccw[1]);
-		dev_kfree_skb_any(ch->trans_skb);
-		ch->trans_skb = NULL;
-	}
+		dev_kमुक्त_skb_any(ch->trans_skb);
+		ch->trans_skb = शून्य;
+	पूर्ण
 
 	ch->th_seg = 0x00;
 	ch->th_seq_num = 0x00;
-	if (CHANNEL_DIRECTION(ch->flags) == CTCM_READ) {
+	अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) अणु
 		skb_queue_purge(&ch->io_queue);
 		fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		ctcm_purge_skb_queue(&ch->io_queue);
-		if (IS_MPC(ch))
+		अगर (IS_MPC(ch))
 			ctcm_purge_skb_queue(&ch->sweep_queue);
 		spin_lock(&ch->collect_lock);
 		ctcm_purge_skb_queue(&ch->collect_queue);
 		ch->collect_len = 0;
 		spin_unlock(&ch->collect_lock);
 		fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * A channel has successfully been halted.
- * Cleanup it's queue and notify interface statemachine.
+ * Cleanup it's queue and notअगरy पूर्णांकerface statemachine.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_stopped(fsm_instance *fi, int event, void *arg)
-{
+अटल व्योम ctcm_chx_stopped(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
 	ctcm_chx_cleanup(fi, CTC_STATE_STOPPED, arg);
-}
+पूर्ण
 
 /**
  * A stop command from device statemachine arrived and we are in
@@ -747,116 +748,116 @@ static void ctcm_chx_stopped(fsm_instance *fi, int event, void *arg)
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_stop(fsm_instance *fi, int event, void *arg)
-{
+अटल व्योम ctcm_chx_stop(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
 	fsm_newstate(fi, CTC_STATE_STOPPED);
-}
+पूर्ण
 
 /**
- * A machine check for no path, not operational status or gone device has
+ * A machine check क्रम no path, not operational status or gone device has
  * happened.
- * Cleanup queue and notify interface statemachine.
+ * Cleanup queue and notअगरy पूर्णांकerface statemachine.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_fail(fsm_instance *fi, int event, void *arg)
-{
+अटल व्योम ctcm_chx_fail(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
 	ctcm_chx_cleanup(fi, CTC_STATE_NOTOP, arg);
-}
+पूर्ण
 
 /**
  * Handle error during setup of channel.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_setuperr(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_setuperr(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	/*
-	 * Special case: Got UC_RCRESET on setmode.
-	 * This means that remote side isn't setup. In this case
+	 * Special हाल: Got UC_RCRESET on seपंचांगode.
+	 * This means that remote side isn't setup. In this हाल
 	 * simply retry after some 10 secs...
 	 */
-	if ((fsm_getstate(fi) == CTC_STATE_SETUPWAIT) &&
+	अगर ((fsm_माला_लोtate(fi) == CTC_STATE_SETUPWAIT) &&
 	    ((event == CTC_EVENT_UC_RCRESET) ||
-	     (event == CTC_EVENT_UC_RSRESET))) {
+	     (event == CTC_EVENT_UC_RSRESET))) अणु
 		fsm_newstate(fi, CTC_STATE_STARTRETRY);
-		fsm_deltimer(&ch->timer);
-		fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
-		if (!IS_MPC(ch) &&
-		    (CHANNEL_DIRECTION(ch->flags) == CTCM_READ)) {
-			int rc = ccw_device_halt(ch->cdev, 0);
-			if (rc != 0)
+		fsm_delसमयr(&ch->समयr);
+		fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+		अगर (!IS_MPC(ch) &&
+		    (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ)) अणु
+			पूर्णांक rc = ccw_device_halt(ch->cdev, 0);
+			अगर (rc != 0)
 				ctcm_ccw_check_rc(ch, rc,
 					"HaltIO in chx_setuperr");
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	CTCM_DBF_TEXT_(ERROR, CTC_DBF_CRIT,
 		"%s(%s) : %s error during %s channel setup state=%s\n",
 		CTCM_FUNTAIL, dev->name, ctc_ch_event_names[event],
-		(CHANNEL_DIRECTION(ch->flags) == CTCM_READ) ? "RX" : "TX",
-		fsm_getstate_str(fi));
+		(CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) ? "RX" : "TX",
+		fsm_माला_लोtate_str(fi));
 
-	if (CHANNEL_DIRECTION(ch->flags) == CTCM_READ) {
+	अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) अणु
 		fsm_newstate(fi, CTC_STATE_RXERR);
 		fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		fsm_newstate(fi, CTC_STATE_TXERR);
 		fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * Restart a channel after an error.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_restart(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	unsigned long saveflags = 0;
-	int oldstate;
-	int rc;
+अटल व्योम ctcm_chx_restart(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	अचिन्हित दीर्घ saveflags = 0;
+	पूर्णांक oldstate;
+	पूर्णांक rc;
 
 	CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 		"%s: %s[%d] of %s\n",
 			CTCM_FUNTAIL, ch->id, event, dev->name);
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 
-	fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
-	oldstate = fsm_getstate(fi);
+	fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+	oldstate = fsm_माला_लोtate(fi);
 	fsm_newstate(fi, CTC_STATE_STARTWAIT);
-	if (event == CTC_EVENT_TIMER)	/* only for timer not yet locked */
+	अगर (event == CTC_EVENT_TIMER)	/* only क्रम समयr not yet locked */
 		spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
-			/* Such conditional locking is a known problem for
-			 * sparse because its undeterministic in static view.
+			/* Such conditional locking is a known problem क्रम
+			 * sparse because its undeterministic in अटल view.
 			 * Warnings should be ignored here. */
 	rc = ccw_device_halt(ch->cdev, 0);
-	if (event == CTC_EVENT_TIMER)
+	अगर (event == CTC_EVENT_TIMER)
 		spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev), saveflags);
-	if (rc != 0) {
-		if (rc != -EBUSY) {
-		    fsm_deltimer(&ch->timer);
+	अगर (rc != 0) अणु
+		अगर (rc != -EBUSY) अणु
+		    fsm_delसमयr(&ch->समयr);
 		    fsm_newstate(fi, oldstate);
-		}
+		पूर्ण
 		ctcm_ccw_check_rc(ch, rc, "HaltIO in ctcm_chx_restart");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * Handle error during RX initial handshake (exchange of
@@ -864,76 +865,76 @@ static void ctcm_chx_restart(fsm_instance *fi, int event, void *arg)
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_rxiniterr(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_rxiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
-	if (event == CTC_EVENT_TIMER) {
-		if (!IS_MPCDEV(dev))
-			/* TODO : check if MPC deletes timer somewhere */
-			fsm_deltimer(&ch->timer);
-		if (ch->retry++ < 3)
+	अगर (event == CTC_EVENT_TIMER) अणु
+		अगर (!IS_MPCDEV(dev))
+			/* TODO : check अगर MPC deletes समयr somewhere */
+			fsm_delसमयr(&ch->समयr);
+		अगर (ch->retry++ < 3)
 			ctcm_chx_restart(fi, event, arg);
-		else {
+		अन्यथा अणु
 			fsm_newstate(fi, CTC_STATE_RXERR);
 			fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		CTCM_DBF_TEXT_(ERROR, CTC_DBF_ERROR,
 			"%s(%s): %s in %s", CTCM_FUNTAIL, ch->id,
-			ctc_ch_event_names[event], fsm_getstate_str(fi));
+			ctc_ch_event_names[event], fsm_माला_लोtate_str(fi));
 
 		dev_warn(&dev->dev,
 			"Initialization failed with RX/TX init handshake "
 			"error %s\n", ctc_ch_event_names[event]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Notify device statemachine if we gave up initialization
+ * Notअगरy device statemachine अगर we gave up initialization
  * of RX channel.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_rxinitfail(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_rxinitfail(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCM_DBF_TEXT_(ERROR, CTC_DBF_ERROR,
 			"%s(%s): RX %s busy, init. fail",
 				CTCM_FUNTAIL, dev->name, ch->id);
 	fsm_newstate(fi, CTC_STATE_RXERR);
 	fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
-}
+पूर्ण
 
 /**
  * Handle RX Unit check remote reset (remote disconnected)
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_rxdisc(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct channel *ch2;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_rxdisc(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा channel *ch2;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCM_DBF_TEXT_(TRACE, CTC_DBF_NOTICE,
 			"%s: %s: remote disconnect - re-init ...",
 				CTCM_FUNTAIL, dev->name);
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 	/*
-	 * Notify device statemachine
+	 * Notअगरy device statemachine
 	 */
 	fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
 	fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
@@ -944,249 +945,249 @@ static void ctcm_chx_rxdisc(fsm_instance *fi, int event, void *arg)
 
 	ccw_device_halt(ch->cdev, 0);
 	ccw_device_halt(ch2->cdev, 0);
-}
+पूर्ण
 
 /**
  * Handle error during TX channel initialization.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_txiniterr(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम ctcm_chx_txiniterr(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
-	if (event == CTC_EVENT_TIMER) {
-		fsm_deltimer(&ch->timer);
-		if (ch->retry++ < 3)
+	अगर (event == CTC_EVENT_TIMER) अणु
+		fsm_delसमयr(&ch->समयr);
+		अगर (ch->retry++ < 3)
 			ctcm_chx_restart(fi, event, arg);
-		else {
+		अन्यथा अणु
 			fsm_newstate(fi, CTC_STATE_TXERR);
 			fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		CTCM_DBF_TEXT_(ERROR, CTC_DBF_ERROR,
 			"%s(%s): %s in %s", CTCM_FUNTAIL, ch->id,
-			ctc_ch_event_names[event], fsm_getstate_str(fi));
+			ctc_ch_event_names[event], fsm_माला_लोtate_str(fi));
 
 		dev_warn(&dev->dev,
 			"Initialization failed with RX/TX init handshake "
 			"error %s\n", ctc_ch_event_names[event]);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Handle TX timeout by retrying operation.
+ * Handle TX समयout by retrying operation.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_txretry(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct sk_buff *skb;
+अटल व्योम ctcm_chx_txretry(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा sk_buff *skb;
 
 	CTCM_PR_DEBUG("Enter: %s: cp=%i ch=0x%p id=%s\n",
 			__func__, smp_processor_id(), ch, ch->id);
 
-	fsm_deltimer(&ch->timer);
-	if (ch->retry++ > 3) {
-		struct mpc_group *gptr = priv->mpcg;
+	fsm_delसमयr(&ch->समयr);
+	अगर (ch->retry++ > 3) अणु
+		काष्ठा mpc_group *gptr = priv->mpcg;
 		CTCM_DBF_TEXT_(TRACE, CTC_DBF_INFO,
 				"%s: %s: retries exceeded",
 					CTCM_FUNTAIL, ch->id);
 		fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
-		/* call restart if not MPC or if MPC and mpcg fsm is ready.
+		/* call restart अगर not MPC or अगर MPC and mpcg fsm is पढ़ोy.
 			use gptr as mpc indicator */
-		if (!(gptr && (fsm_getstate(gptr->fsm) != MPCG_STATE_READY)))
+		अगर (!(gptr && (fsm_माला_लोtate(gptr->fsm) != MPCG_STATE_READY)))
 			ctcm_chx_restart(fi, event, arg);
-				goto done;
-	}
+				जाओ करोne;
+	पूर्ण
 
 	CTCM_DBF_TEXT_(TRACE, CTC_DBF_DEBUG,
 			"%s : %s: retry %d",
 				CTCM_FUNTAIL, ch->id, ch->retry);
 	skb = skb_peek(&ch->io_queue);
-	if (skb) {
-		int rc = 0;
-		unsigned long saveflags = 0;
+	अगर (skb) अणु
+		पूर्णांक rc = 0;
+		अचिन्हित दीर्घ saveflags = 0;
 		clear_normalized_cda(&ch->ccw[4]);
 		ch->ccw[4].count = skb->len;
-		if (set_normalized_cda(&ch->ccw[4], skb->data)) {
+		अगर (set_normalized_cda(&ch->ccw[4], skb->data)) अणु
 			CTCM_DBF_TEXT_(TRACE, CTC_DBF_INFO,
 				"%s: %s: IDAL alloc failed",
 						CTCM_FUNTAIL, ch->id);
 			fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
 			ctcm_chx_restart(fi, event, arg);
-				goto done;
-		}
-		fsm_addtimer(&ch->timer, 1000, CTC_EVENT_TIMER, ch);
-		if (event == CTC_EVENT_TIMER) /* for TIMER not yet locked */
+				जाओ करोne;
+		पूर्ण
+		fsm_addसमयr(&ch->समयr, 1000, CTC_EVENT_TIMER, ch);
+		अगर (event == CTC_EVENT_TIMER) /* क्रम TIMER not yet locked */
 			spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
-			/* Such conditional locking is a known problem for
-			 * sparse because its undeterministic in static view.
+			/* Such conditional locking is a known problem क्रम
+			 * sparse because its undeterministic in अटल view.
 			 * Warnings should be ignored here. */
-		if (do_debug_ccw)
-			ctcmpc_dumpit((char *)&ch->ccw[3],
-					sizeof(struct ccw1) * 3);
+		अगर (करो_debug_ccw)
+			ctcmpc_dumpit((अक्षर *)&ch->ccw[3],
+					माप(काष्ठा ccw1) * 3);
 
 		rc = ccw_device_start(ch->cdev, &ch->ccw[3], 0, 0xff, 0);
-		if (event == CTC_EVENT_TIMER)
+		अगर (event == CTC_EVENT_TIMER)
 			spin_unlock_irqrestore(get_ccwdev_lock(ch->cdev),
 					saveflags);
-		if (rc != 0) {
-			fsm_deltimer(&ch->timer);
+		अगर (rc != 0) अणु
+			fsm_delसमयr(&ch->समयr);
 			ctcm_ccw_check_rc(ch, rc, "TX in chx_txretry");
 			ctcm_purge_skb_queue(&ch->io_queue);
-		}
-	}
-done:
-	return;
-}
+		पूर्ण
+	पूर्ण
+करोne:
+	वापस;
+पूर्ण
 
 /**
  * Handle fatal errors during an I/O command.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcm_chx_iofatal(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	int rd = CHANNEL_DIRECTION(ch->flags);
+अटल व्योम ctcm_chx_iofatal(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	पूर्णांक rd = CHANNEL_सूचीECTION(ch->flags);
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 	CTCM_DBF_TEXT_(ERROR, CTC_DBF_ERROR,
 		"%s: %s: %s unrecoverable channel error",
 			CTCM_FUNTAIL, ch->id, rd == CTCM_READ ? "RX" : "TX");
 
-	if (IS_MPC(ch)) {
+	अगर (IS_MPC(ch)) अणु
 		priv->stats.tx_dropped++;
 		priv->stats.tx_errors++;
-	}
-	if (rd == CTCM_READ) {
+	पूर्ण
+	अगर (rd == CTCM_READ) अणु
 		fsm_newstate(fi, CTC_STATE_RXERR);
 		fsm_event(priv->fsm, DEV_EVENT_RXDOWN, dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		fsm_newstate(fi, CTC_STATE_TXERR);
 		fsm_event(priv->fsm, DEV_EVENT_TXDOWN, dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * The ctcm statemachine for a channel.
+ * The ctcm statemachine क्रम a channel.
  */
-const fsm_node ch_fsm[] = {
-	{ CTC_STATE_STOPPED,	CTC_EVENT_STOP,		ctcm_action_nop  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_START,	ctcm_chx_start  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  },
+स्थिर fsm_node ch_fsm[] = अणु
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_STOP,		ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_START,	ctcm_chx_start  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  पूर्ण,
 
-	{ CTC_STATE_NOTOP,	CTC_EVENT_STOP,		ctcm_chx_stop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_MC_GOOD,	ctcm_chx_start  },
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_STOP,		ctcm_chx_stop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_MC_GOOD,	ctcm_chx_start  पूर्ण,
 
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_FINSTAT,	ctcm_chx_setmode  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setuperr  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_FINSTAT,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_TIMER,	ctcm_chx_setmode  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_TIMER,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_FINSTAT,	chx_firstio  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setmode  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_FINSTAT,	chx_firstio  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_TIMER,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_FINSTAT,	chx_rxidle  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_TIMER,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_ATTNBUSY,	ctcm_chx_rxinitfail  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_ZERO,	chx_firstio  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_FINSTAT,	chx_rxidle  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_TIMER,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_ATTNBUSY,	ctcm_chx_rxinitfail  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_ZERO,	chx_firstio  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_FINSTAT,	chx_rx  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxdisc  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_UC_ZERO,	chx_rx  },
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_FINSTAT,	chx_rx  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxdisc  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_UC_ZERO,	chx_rx  पूर्ण,
 
-	{ CTC_STATE_TXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_FINSTAT,	ctcm_chx_txidle  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_TIMER,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_FINSTAT,	ctcm_chx_txidle  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_TIMER,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_FINSTAT,	chx_firstio  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_FINSTAT,	chx_firstio  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_TERM,	CTC_EVENT_STOP,		ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_START,	ctcm_chx_restart  },
-	{ CTC_STATE_TERM,	CTC_EVENT_FINSTAT,	ctcm_chx_stopped  },
-	{ CTC_STATE_TERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_TERM,	CTC_EVENT_STOP,		ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_START,	ctcm_chx_restart  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_FINSTAT,	ctcm_chx_stopped  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_DTERM,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_START,	ctcm_chx_restart  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_FINSTAT,	ctcm_chx_setmode  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_DTERM,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_START,	ctcm_chx_restart  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_FINSTAT,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_TX,		CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TX,		CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TX,		CTC_EVENT_FINSTAT,	chx_txdone  },
-	{ CTC_STATE_TX,		CTC_EVENT_UC_RCRESET,	ctcm_chx_txretry  },
-	{ CTC_STATE_TX,		CTC_EVENT_UC_RSRESET,	ctcm_chx_txretry  },
-	{ CTC_STATE_TX,		CTC_EVENT_TIMER,	ctcm_chx_txretry  },
-	{ CTC_STATE_TX,		CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TX,		CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_TX,		CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_FINSTAT,	chx_txकरोne  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_UC_RCRESET,	ctcm_chx_txretry  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_UC_RSRESET,	ctcm_chx_txretry  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_TIMER,	ctcm_chx_txretry  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_RXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-};
+	अणु CTC_STATE_RXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_RXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+पूर्ण;
 
-int ch_fsm_len = ARRAY_SIZE(ch_fsm);
+पूर्णांक ch_fsm_len = ARRAY_SIZE(ch_fsm);
 
 /*
- * MPC actions for mpc channel statemachine
+ * MPC actions क्रम mpc channel statemachine
  * handling of MPC protocol requires extra
  * statemachine and actions which are prefixed ctcmpc_ .
  * The ctc_ch_states and ctc_ch_state_names,
@@ -1195,7 +1196,7 @@ int ch_fsm_len = ARRAY_SIZE(ch_fsm);
  */
 
 /*
- * Actions for mpc channel statemachine.
+ * Actions क्रम mpc channel statemachine.
  */
 
 /**
@@ -1205,107 +1206,107 @@ int ch_fsm_len = ARRAY_SIZE(ch_fsm);
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcmpc_chx_txdone(fsm_instance *fi, int event, void *arg)
-{
-	struct channel		*ch = arg;
-	struct net_device	*dev = ch->netdev;
-	struct ctcm_priv	*priv = dev->ml_priv;
-	struct mpc_group	*grp = priv->mpcg;
-	struct sk_buff		*skb;
-	int		first = 1;
-	int		i;
+अटल व्योम ctcmpc_chx_txकरोne(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel		*ch = arg;
+	काष्ठा net_device	*dev = ch->netdev;
+	काष्ठा ctcm_priv	*priv = dev->ml_priv;
+	काष्ठा mpc_group	*grp = priv->mpcg;
+	काष्ठा sk_buff		*skb;
+	पूर्णांक		first = 1;
+	पूर्णांक		i;
 	__u32		data_space;
-	unsigned long	duration;
-	struct sk_buff	*peekskb;
-	int		rc;
-	struct th_header *header;
-	struct pdu	*p_header;
-	unsigned long done_stamp = jiffies;
+	अचिन्हित दीर्घ	duration;
+	काष्ठा sk_buff	*peekskb;
+	पूर्णांक		rc;
+	काष्ठा th_header *header;
+	काष्ठा pdu	*p_header;
+	अचिन्हित दीर्घ करोne_stamp = jअगरfies;
 
 	CTCM_PR_DEBUG("Enter %s: %s cp:%i\n",
 			__func__, dev->name, smp_processor_id());
 
-	duration = done_stamp - ch->prof.send_stamp;
-	if (duration > ch->prof.tx_time)
-		ch->prof.tx_time = duration;
+	duration = करोne_stamp - ch->prof.send_stamp;
+	अगर (duration > ch->prof.tx_समय)
+		ch->prof.tx_समय = duration;
 
-	if (ch->irb->scsw.cmd.count != 0)
+	अगर (ch->irb->scsw.cmd.count != 0)
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_DEBUG,
 			"%s(%s): TX not complete, remaining %d bytes",
 			     CTCM_FUNTAIL, dev->name, ch->irb->scsw.cmd.count);
-	fsm_deltimer(&ch->timer);
-	while ((skb = skb_dequeue(&ch->io_queue))) {
+	fsm_delसमयr(&ch->समयr);
+	जबतक ((skb = skb_dequeue(&ch->io_queue))) अणु
 		priv->stats.tx_packets++;
 		priv->stats.tx_bytes += skb->len - TH_HEADER_LENGTH;
-		if (first) {
+		अगर (first) अणु
 			priv->stats.tx_bytes += 2;
 			first = 0;
-		}
+		पूर्ण
 		refcount_dec(&skb->users);
-		dev_kfree_skb_irq(skb);
-	}
+		dev_kमुक्त_skb_irq(skb);
+	पूर्ण
 	spin_lock(&ch->collect_lock);
 	clear_normalized_cda(&ch->ccw[4]);
-	if ((ch->collect_len <= 0) || (grp->in_sweep != 0)) {
+	अगर ((ch->collect_len <= 0) || (grp->in_sweep != 0)) अणु
 		spin_unlock(&ch->collect_lock);
 		fsm_newstate(fi, CTC_STATE_TXIDLE);
-				goto done;
-	}
+				जाओ करोne;
+	पूर्ण
 
-	if (ctcm_checkalloc_buffer(ch)) {
+	अगर (ctcm_checkalloc_buffer(ch)) अणु
 		spin_unlock(&ch->collect_lock);
-				goto done;
-	}
+				जाओ करोne;
+	पूर्ण
 	ch->trans_skb->data = ch->trans_skb_data;
-	skb_reset_tail_pointer(ch->trans_skb);
+	skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 	ch->trans_skb->len = 0;
-	if (ch->prof.maxmulti < (ch->collect_len + TH_HEADER_LENGTH))
+	अगर (ch->prof.maxmulti < (ch->collect_len + TH_HEADER_LENGTH))
 		ch->prof.maxmulti = ch->collect_len + TH_HEADER_LENGTH;
-	if (ch->prof.maxcqueue < skb_queue_len(&ch->collect_queue))
+	अगर (ch->prof.maxcqueue < skb_queue_len(&ch->collect_queue))
 		ch->prof.maxcqueue = skb_queue_len(&ch->collect_queue);
 	i = 0;
-	p_header = NULL;
+	p_header = शून्य;
 	data_space = grp->group_max_buflen - TH_HEADER_LENGTH;
 
 	CTCM_PR_DBGDATA("%s: building trans_skb from collect_q"
 		       " data_space:%04x\n",
 		       __func__, data_space);
 
-	while ((skb = skb_dequeue(&ch->collect_queue))) {
+	जबतक ((skb = skb_dequeue(&ch->collect_queue))) अणु
 		skb_put_data(ch->trans_skb, skb->data, skb->len);
-		p_header = (struct pdu *)
-			(skb_tail_pointer(ch->trans_skb) - skb->len);
+		p_header = (काष्ठा pdu *)
+			(skb_tail_poपूर्णांकer(ch->trans_skb) - skb->len);
 		p_header->pdu_flag = 0x00;
-		if (be16_to_cpu(skb->protocol) == ETH_P_SNAP)
+		अगर (be16_to_cpu(skb->protocol) == ETH_P_SNAP)
 			p_header->pdu_flag |= 0x60;
-		else
+		अन्यथा
 			p_header->pdu_flag |= 0x20;
 
 		CTCM_PR_DBGDATA("%s: trans_skb len:%04x \n",
 				__func__, ch->trans_skb->len);
 		CTCM_PR_DBGDATA("%s: pdu header and data for up"
 				" to 32 bytes sent to vtam\n", __func__);
-		CTCM_D3_DUMP((char *)p_header, min_t(int, skb->len, 32));
+		CTCM_D3_DUMP((अक्षर *)p_header, min_t(पूर्णांक, skb->len, 32));
 
 		ch->collect_len -= skb->len;
 		data_space -= skb->len;
 		priv->stats.tx_packets++;
 		priv->stats.tx_bytes += skb->len;
 		refcount_dec(&skb->users);
-		dev_kfree_skb_any(skb);
+		dev_kमुक्त_skb_any(skb);
 		peekskb = skb_peek(&ch->collect_queue);
-		if (peekskb->len > data_space)
-			break;
+		अगर (peekskb->len > data_space)
+			अवरोध;
 		i++;
-	}
-	/* p_header points to the last one we handled */
-	if (p_header)
+	पूर्ण
+	/* p_header poपूर्णांकs to the last one we handled */
+	अगर (p_header)
 		p_header->pdu_flag |= PDU_LAST;	/*Say it's the last one*/
 
 	header = skb_push(ch->trans_skb, TH_HEADER_LENGTH);
-	memset(header, 0, TH_HEADER_LENGTH);
+	स_रखो(header, 0, TH_HEADER_LENGTH);
 
 	header->th_ch_flag = TH_HAS_PDU;  /* Normal data */
 	ch->th_seq_num++;
@@ -1318,967 +1319,967 @@ static void ctcmpc_chx_txdone(fsm_instance *fi, int event, void *arg)
 		       __func__, ch->trans_skb->len);
 	CTCM_PR_DBGDATA("%s: up-to-50 bytes of trans_skb "
 			"data to vtam from collect_q\n", __func__);
-	CTCM_D3_DUMP((char *)ch->trans_skb->data,
-				min_t(int, ch->trans_skb->len, 50));
+	CTCM_D3_DUMP((अक्षर *)ch->trans_skb->data,
+				min_t(पूर्णांक, ch->trans_skb->len, 50));
 
 	spin_unlock(&ch->collect_lock);
 	clear_normalized_cda(&ch->ccw[1]);
 
 	CTCM_PR_DBGDATA("ccwcda=0x%p data=0x%p\n",
-			(void *)(unsigned long)ch->ccw[1].cda,
+			(व्योम *)(अचिन्हित दीर्घ)ch->ccw[1].cda,
 			ch->trans_skb->data);
 	ch->ccw[1].count = ch->max_bufsize;
 
-	if (set_normalized_cda(&ch->ccw[1], ch->trans_skb->data)) {
-		dev_kfree_skb_any(ch->trans_skb);
-		ch->trans_skb = NULL;
+	अगर (set_normalized_cda(&ch->ccw[1], ch->trans_skb->data)) अणु
+		dev_kमुक्त_skb_any(ch->trans_skb);
+		ch->trans_skb = शून्य;
 		CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_ERROR,
 			"%s: %s: IDAL alloc failed",
 				CTCM_FUNTAIL, ch->id);
 		fsm_event(priv->mpcg->fsm, MPCG_EVENT_INOP, dev);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	CTCM_PR_DBGDATA("ccwcda=0x%p data=0x%p\n",
-			(void *)(unsigned long)ch->ccw[1].cda,
+			(व्योम *)(अचिन्हित दीर्घ)ch->ccw[1].cda,
 			ch->trans_skb->data);
 
 	ch->ccw[1].count = ch->trans_skb->len;
-	fsm_addtimer(&ch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
-	ch->prof.send_stamp = jiffies;
-	if (do_debug_ccw)
-		ctcmpc_dumpit((char *)&ch->ccw[0], sizeof(struct ccw1) * 3);
+	fsm_addसमयr(&ch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, ch);
+	ch->prof.send_stamp = jअगरfies;
+	अगर (करो_debug_ccw)
+		ctcmpc_dumpit((अक्षर *)&ch->ccw[0], माप(काष्ठा ccw1) * 3);
 	rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-	ch->prof.doios_multi++;
-	if (rc != 0) {
+	ch->prof.करोios_multi++;
+	अगर (rc != 0) अणु
 		priv->stats.tx_dropped += i;
 		priv->stats.tx_errors += i;
-		fsm_deltimer(&ch->timer);
+		fsm_delसमयr(&ch->समयr);
 		ctcm_ccw_check_rc(ch, rc, "chained TX");
-	}
-done:
+	पूर्ण
+करोne:
 	ctcm_clear_busy(dev);
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
- * Got normal data, check for sanity, queue it up, allocate new buffer
- * trigger bottom half, and initiate next read.
+ * Got normal data, check क्रम sanity, queue it up, allocate new buffer
+ * trigger bottom half, and initiate next पढ़ो.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcmpc_chx_rx(fsm_instance *fi, int event, void *arg)
-{
-	struct channel		*ch = arg;
-	struct net_device	*dev = ch->netdev;
-	struct ctcm_priv	*priv = dev->ml_priv;
-	struct mpc_group	*grp = priv->mpcg;
-	struct sk_buff		*skb = ch->trans_skb;
-	struct sk_buff		*new_skb;
-	unsigned long		saveflags = 0;	/* avoids compiler warning */
-	int len	= ch->max_bufsize - ch->irb->scsw.cmd.count;
+अटल व्योम ctcmpc_chx_rx(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel		*ch = arg;
+	काष्ठा net_device	*dev = ch->netdev;
+	काष्ठा ctcm_priv	*priv = dev->ml_priv;
+	काष्ठा mpc_group	*grp = priv->mpcg;
+	काष्ठा sk_buff		*skb = ch->trans_skb;
+	काष्ठा sk_buff		*new_skb;
+	अचिन्हित दीर्घ		saveflags = 0;	/* aव्योमs compiler warning */
+	पूर्णांक len	= ch->max_bufsize - ch->irb->scsw.cmd.count;
 
 	CTCM_PR_DEBUG("%s: %s: cp:%i %s maxbuf : %04x, len: %04x\n",
 			CTCM_FUNTAIL, dev->name, smp_processor_id(),
 				ch->id, ch->max_bufsize, len);
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 
-	if (skb == NULL) {
+	अगर (skb == शून्य) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): TRANS_SKB = NULL",
 				CTCM_FUNTAIL, dev->name);
-			goto again;
-	}
+			जाओ again;
+	पूर्ण
 
-	if (len < TH_HEADER_LENGTH) {
+	अगर (len < TH_HEADER_LENGTH) अणु
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%s): packet length %d to short",
 					CTCM_FUNTAIL, dev->name, len);
 		priv->stats.rx_dropped++;
 		priv->stats.rx_length_errors++;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* must have valid th header or game over */
 		__u32	block_len = len;
 		len = TH_HEADER_LENGTH + XID2_LENGTH + 4;
 		new_skb = __dev_alloc_skb(ch->max_bufsize, GFP_ATOMIC);
 
-		if (new_skb == NULL) {
+		अगर (new_skb == शून्य) अणु
 			CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 				"%s(%d): skb allocation failed",
 						CTCM_FUNTAIL, dev->name);
 			fsm_event(priv->mpcg->fsm, MPCG_EVENT_INOP, dev);
-					goto again;
-		}
-		switch (fsm_getstate(grp->fsm)) {
-		case MPCG_STATE_RESET:
-		case MPCG_STATE_INOP:
-			dev_kfree_skb_any(new_skb);
-			break;
-		case MPCG_STATE_FLOWC:
-		case MPCG_STATE_READY:
+					जाओ again;
+		पूर्ण
+		चयन (fsm_माला_लोtate(grp->fsm)) अणु
+		हाल MPCG_STATE_RESET:
+		हाल MPCG_STATE_INOP:
+			dev_kमुक्त_skb_any(new_skb);
+			अवरोध;
+		हाल MPCG_STATE_FLOWC:
+		हाल MPCG_STATE_READY:
 			skb_put_data(new_skb, skb->data, block_len);
 			skb_queue_tail(&ch->io_queue, new_skb);
 			tasklet_schedule(&ch->ch_tasklet);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			skb_put_data(new_skb, skb->data, len);
 			skb_queue_tail(&ch->io_queue, new_skb);
 			tasklet_hi_schedule(&ch->ch_tasklet);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 again:
-	switch (fsm_getstate(grp->fsm)) {
-	int rc, dolock;
-	case MPCG_STATE_FLOWC:
-	case MPCG_STATE_READY:
-		if (ctcm_checkalloc_buffer(ch))
-			break;
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	पूर्णांक rc, करोlock;
+	हाल MPCG_STATE_FLOWC:
+	हाल MPCG_STATE_READY:
+		अगर (ctcm_checkalloc_buffer(ch))
+			अवरोध;
 		ch->trans_skb->data = ch->trans_skb_data;
-		skb_reset_tail_pointer(ch->trans_skb);
+		skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 		ch->trans_skb->len = 0;
 		ch->ccw[1].count = ch->max_bufsize;
-			if (do_debug_ccw)
-			ctcmpc_dumpit((char *)&ch->ccw[0],
-					sizeof(struct ccw1) * 3);
-		dolock = !in_irq();
-		if (dolock)
+			अगर (करो_debug_ccw)
+			ctcmpc_dumpit((अक्षर *)&ch->ccw[0],
+					माप(काष्ठा ccw1) * 3);
+		करोlock = !in_irq();
+		अगर (करोlock)
 			spin_lock_irqsave(
 				get_ccwdev_lock(ch->cdev), saveflags);
 		rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-		if (dolock) /* see remark about conditional locking */
+		अगर (करोlock) /* see remark about conditional locking */
 			spin_unlock_irqrestore(
 				get_ccwdev_lock(ch->cdev), saveflags);
-		if (rc != 0)
+		अगर (rc != 0)
 			ctcm_ccw_check_rc(ch, rc, "normal RX");
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	CTCM_PR_DEBUG("Exit %s: %s, ch=0x%p, id=%s\n",
 			__func__, dev->name, ch, ch->id);
 
-}
+पूर्ण
 
 /**
  * Initialize connection by sending a __u16 of value 0.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-static void ctcmpc_chx_firstio(fsm_instance *fi, int event, void *arg)
-{
-	struct channel		*ch = arg;
-	struct net_device	*dev = ch->netdev;
-	struct ctcm_priv	*priv = dev->ml_priv;
-	struct mpc_group	*gptr = priv->mpcg;
+अटल व्योम ctcmpc_chx_firstio(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel		*ch = arg;
+	काष्ठा net_device	*dev = ch->netdev;
+	काष्ठा ctcm_priv	*priv = dev->ml_priv;
+	काष्ठा mpc_group	*gptr = priv->mpcg;
 
 	CTCM_PR_DEBUG("Enter %s: id=%s, ch=0x%p\n",
 				__func__, ch->id, ch);
 
 	CTCM_DBF_TEXT_(MPC_TRACE, CTC_DBF_INFO,
 			"%s: %s: chstate:%i, grpstate:%i, prot:%i\n",
-			CTCM_FUNTAIL, ch->id, fsm_getstate(fi),
-			fsm_getstate(gptr->fsm), ch->protocol);
+			CTCM_FUNTAIL, ch->id, fsm_माला_लोtate(fi),
+			fsm_माला_लोtate(gptr->fsm), ch->protocol);
 
-	if (fsm_getstate(fi) == CTC_STATE_TXIDLE)
+	अगर (fsm_माला_लोtate(fi) == CTC_STATE_TXIDLE)
 		MPC_DBF_DEV_NAME(TRACE, dev, "remote side issued READ? ");
 
-	fsm_deltimer(&ch->timer);
-	if (ctcm_checkalloc_buffer(ch))
-				goto done;
+	fsm_delसमयr(&ch->समयr);
+	अगर (ctcm_checkalloc_buffer(ch))
+				जाओ करोne;
 
-	switch (fsm_getstate(fi)) {
-	case CTC_STATE_STARTRETRY:
-	case CTC_STATE_SETUPWAIT:
-		if (CHANNEL_DIRECTION(ch->flags) == CTCM_READ) {
+	चयन (fsm_माला_लोtate(fi)) अणु
+	हाल CTC_STATE_STARTRETRY:
+	हाल CTC_STATE_SETUPWAIT:
+		अगर (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ) अणु
 			ctcmpc_chx_rxidle(fi, event, arg);
-		} else {
+		पूर्ण अन्यथा अणु
 			fsm_newstate(fi, CTC_STATE_TXIDLE);
 			fsm_event(priv->fsm, DEV_EVENT_TXUP, dev);
-		}
-				goto done;
-	default:
-		break;
-	}
+		पूर्ण
+				जाओ करोne;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	fsm_newstate(fi, (CHANNEL_DIRECTION(ch->flags) == CTCM_READ)
+	fsm_newstate(fi, (CHANNEL_सूचीECTION(ch->flags) == CTCM_READ)
 		     ? CTC_STATE_RXINIT : CTC_STATE_TXINIT);
 
-done:
+करोne:
 	CTCM_PR_DEBUG("Exit %s: id=%s, ch=0x%p\n",
 				__func__, ch->id, ch);
-	return;
-}
+	वापस;
+पूर्ण
 
 /**
  * Got initial data, check it. If OK,
- * notify device statemachine that we are up and
+ * notअगरy device statemachine that we are up and
  * running.
  *
  * fi		An instance of a channel statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from channel * upon call.
+ * arg		Generic poपूर्णांकer, casted from channel * upon call.
  */
-void ctcmpc_chx_rxidle(fsm_instance *fi, int event, void *arg)
-{
-	struct channel *ch = arg;
-	struct net_device *dev = ch->netdev;
-	struct ctcm_priv  *priv = dev->ml_priv;
-	struct mpc_group  *grp = priv->mpcg;
-	int rc;
-	unsigned long saveflags = 0;	/* avoids compiler warning */
+व्योम ctcmpc_chx_rxidle(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ch = arg;
+	काष्ठा net_device *dev = ch->netdev;
+	काष्ठा ctcm_priv  *priv = dev->ml_priv;
+	काष्ठा mpc_group  *grp = priv->mpcg;
+	पूर्णांक rc;
+	अचिन्हित दीर्घ saveflags = 0;	/* aव्योमs compiler warning */
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 	CTCM_PR_DEBUG("%s: %s: %s: cp:%i, chstate:%i grpstate:%i\n",
 			__func__, ch->id, dev->name, smp_processor_id(),
-				fsm_getstate(fi), fsm_getstate(grp->fsm));
+				fsm_माला_लोtate(fi), fsm_माला_लोtate(grp->fsm));
 
 	fsm_newstate(fi, CTC_STATE_RXIDLE);
 	/* XID processing complete */
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_FLOWC:
-	case MPCG_STATE_READY:
-		if (ctcm_checkalloc_buffer(ch))
-				goto done;
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_FLOWC:
+	हाल MPCG_STATE_READY:
+		अगर (ctcm_checkalloc_buffer(ch))
+				जाओ करोne;
 		ch->trans_skb->data = ch->trans_skb_data;
-		skb_reset_tail_pointer(ch->trans_skb);
+		skb_reset_tail_poपूर्णांकer(ch->trans_skb);
 		ch->trans_skb->len = 0;
 		ch->ccw[1].count = ch->max_bufsize;
-		CTCM_CCW_DUMP((char *)&ch->ccw[0], sizeof(struct ccw1) * 3);
-		if (event == CTC_EVENT_START)
+		CTCM_CCW_DUMP((अक्षर *)&ch->ccw[0], माप(काष्ठा ccw1) * 3);
+		अगर (event == CTC_EVENT_START)
 			/* see remark about conditional locking */
 			spin_lock_irqsave(get_ccwdev_lock(ch->cdev), saveflags);
 		rc = ccw_device_start(ch->cdev, &ch->ccw[0], 0, 0xff, 0);
-		if (event == CTC_EVENT_START)
+		अगर (event == CTC_EVENT_START)
 			spin_unlock_irqrestore(
 					get_ccwdev_lock(ch->cdev), saveflags);
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			fsm_newstate(fi, CTC_STATE_RXINIT);
 			ctcm_ccw_check_rc(ch, rc, "initial RX");
-				goto done;
-		}
-		break;
-	default:
-		break;
-	}
+				जाओ करोne;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	fsm_event(priv->fsm, DEV_EVENT_RXUP, dev);
-done:
-	return;
-}
+करोne:
+	वापस;
+पूर्ण
 
 /*
  * ctcmpc channel FSM action
- * called from several points in ctcmpc_ch_fsm
+ * called from several poपूर्णांकs in ctcmpc_ch_fsm
  * ctcmpc only
  */
-static void ctcmpc_chx_attn(fsm_instance *fsm, int event, void *arg)
-{
-	struct channel	  *ch     = arg;
-	struct net_device *dev    = ch->netdev;
-	struct ctcm_priv  *priv   = dev->ml_priv;
-	struct mpc_group  *grp = priv->mpcg;
+अटल व्योम ctcmpc_chx_attn(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel	  *ch     = arg;
+	काष्ठा net_device *dev    = ch->netdev;
+	काष्ठा ctcm_priv  *priv   = dev->ml_priv;
+	काष्ठा mpc_group  *grp = priv->mpcg;
 
 	CTCM_PR_DEBUG("%s(%s): %s(ch=0x%p), cp=%i, ChStat:%s, GrpStat:%s\n",
 		__func__, dev->name, ch->id, ch, smp_processor_id(),
-			fsm_getstate_str(ch->fsm), fsm_getstate_str(grp->fsm));
+			fsm_माला_लोtate_str(ch->fsm), fsm_माला_लोtate_str(grp->fsm));
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID2INITW:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID2INITW:
 		/* ok..start yside xid exchanges */
-		if (!ch->in_mpcgroup)
-			break;
-		if (fsm_getstate(ch->fsm) ==  CH_XID0_PENDING) {
-			fsm_deltimer(&grp->timer);
-			fsm_addtimer(&grp->timer,
+		अगर (!ch->in_mpcgroup)
+			अवरोध;
+		अगर (fsm_माला_लोtate(ch->fsm) ==  CH_XID0_PENDING) अणु
+			fsm_delसमयr(&grp->समयr);
+			fsm_addसमयr(&grp->समयr,
 				MPC_XID_TIMEOUT_VALUE,
 				MPCG_EVENT_TIMER, dev);
 			fsm_event(grp->fsm, MPCG_EVENT_XID0DO, ch);
 
-		} else if (fsm_getstate(ch->fsm) < CH_XID7_PENDING1)
-			/* attn rcvd before xid0 processed via bh */
+		पूर्ण अन्यथा अगर (fsm_माला_लोtate(ch->fsm) < CH_XID7_PENDING1)
+			/* attn rcvd beक्रमe xid0 processed via bh */
 			fsm_newstate(ch->fsm, CH_XID7_PENDING1);
-		break;
-	case MPCG_STATE_XID2INITX:
-	case MPCG_STATE_XID0IOWAIT:
-	case MPCG_STATE_XID0IOWAIX:
-		/* attn rcvd before xid0 processed on ch
-		but mid-xid0 processing for group    */
-		if (fsm_getstate(ch->fsm) < CH_XID7_PENDING1)
+		अवरोध;
+	हाल MPCG_STATE_XID2INITX:
+	हाल MPCG_STATE_XID0IOWAIT:
+	हाल MPCG_STATE_XID0IOWAIX:
+		/* attn rcvd beक्रमe xid0 processed on ch
+		but mid-xid0 processing क्रम group    */
+		अगर (fsm_माला_लोtate(ch->fsm) < CH_XID7_PENDING1)
 			fsm_newstate(ch->fsm, CH_XID7_PENDING1);
-		break;
-	case MPCG_STATE_XID7INITW:
-	case MPCG_STATE_XID7INITX:
-	case MPCG_STATE_XID7INITI:
-	case MPCG_STATE_XID7INITZ:
-		switch (fsm_getstate(ch->fsm)) {
-		case CH_XID7_PENDING:
+		अवरोध;
+	हाल MPCG_STATE_XID7INITW:
+	हाल MPCG_STATE_XID7INITX:
+	हाल MPCG_STATE_XID7INITI:
+	हाल MPCG_STATE_XID7INITZ:
+		चयन (fsm_माला_लोtate(ch->fsm)) अणु
+		हाल CH_XID7_PENDING:
 			fsm_newstate(ch->fsm, CH_XID7_PENDING1);
-			break;
-		case CH_XID7_PENDING2:
+			अवरोध;
+		हाल CH_XID7_PENDING2:
 			fsm_newstate(ch->fsm, CH_XID7_PENDING3);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fsm_event(grp->fsm, MPCG_EVENT_XID7DONE, dev);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * ctcmpc channel FSM action
- * called from one point in ctcmpc_ch_fsm
+ * called from one poपूर्णांक in ctcmpc_ch_fsm
  * ctcmpc only
  */
-static void ctcmpc_chx_attnbusy(fsm_instance *fsm, int event, void *arg)
-{
-	struct channel	  *ch     = arg;
-	struct net_device *dev    = ch->netdev;
-	struct ctcm_priv  *priv   = dev->ml_priv;
-	struct mpc_group  *grp    = priv->mpcg;
+अटल व्योम ctcmpc_chx_attnbusy(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel	  *ch     = arg;
+	काष्ठा net_device *dev    = ch->netdev;
+	काष्ठा ctcm_priv  *priv   = dev->ml_priv;
+	काष्ठा mpc_group  *grp    = priv->mpcg;
 
 	CTCM_PR_DEBUG("%s(%s): %s\n  ChState:%s GrpState:%s\n",
 			__func__, dev->name, ch->id,
-			fsm_getstate_str(ch->fsm), fsm_getstate_str(grp->fsm));
+			fsm_माला_लोtate_str(ch->fsm), fsm_माला_लोtate_str(grp->fsm));
 
-	fsm_deltimer(&ch->timer);
+	fsm_delसमयr(&ch->समयr);
 
-	switch (fsm_getstate(grp->fsm)) {
-	case MPCG_STATE_XID0IOWAIT:
+	चयन (fsm_माला_लोtate(grp->fsm)) अणु
+	हाल MPCG_STATE_XID0IOWAIT:
 		/* vtam wants to be primary.start yside xid exchanges*/
-		/* only receive one attn-busy at a time so must not  */
-		/* change state each time			     */
+		/* only receive one attn-busy at a समय so must not  */
+		/* change state each समय			     */
 		grp->changed_side = 1;
 		fsm_newstate(grp->fsm, MPCG_STATE_XID2INITW);
-		break;
-	case MPCG_STATE_XID2INITW:
-		if (grp->changed_side == 1) {
+		अवरोध;
+	हाल MPCG_STATE_XID2INITW:
+		अगर (grp->changed_side == 1) अणु
 			grp->changed_side = 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* process began via call to establish_conn	 */
 		/* so must report failure instead of reverting	 */
-		/* back to ready-for-xid passive state		 */
-		if (grp->estconnfunc)
-				goto done;
+		/* back to पढ़ोy-क्रम-xid passive state		 */
+		अगर (grp->estconnfunc)
+				जाओ करोne;
 		/* this attnbusy is NOT the result of xside xid  */
 		/* collisions so yside must have been triggered  */
-		/* by an ATTN that was not intended to start XID */
-		/* processing. Revert back to ready-for-xid and  */
-		/* wait for ATTN interrupt to signal xid start	 */
-		if (fsm_getstate(ch->fsm) == CH_XID0_INPROGRESS) {
+		/* by an ATTN that was not पूर्णांकended to start XID */
+		/* processing. Revert back to पढ़ोy-क्रम-xid and  */
+		/* रुको क्रम ATTN पूर्णांकerrupt to संकेत xid start	 */
+		अगर (fsm_माला_लोtate(ch->fsm) == CH_XID0_INPROGRESS) अणु
 			fsm_newstate(ch->fsm, CH_XID0_PENDING) ;
-			fsm_deltimer(&grp->timer);
-				goto done;
-		}
+			fsm_delसमयr(&grp->समयr);
+				जाओ करोne;
+		पूर्ण
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-				goto done;
-	case MPCG_STATE_XID2INITX:
-		/* XID2 was received before ATTN Busy for second
-		   channel.Send yside xid for second channel.
+				जाओ करोne;
+	हाल MPCG_STATE_XID2INITX:
+		/* XID2 was received beक्रमe ATTN Busy क्रम second
+		   channel.Send yside xid क्रम second channel.
 		*/
-		if (grp->changed_side == 1) {
+		अगर (grp->changed_side == 1) अणु
 			grp->changed_side = 2;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	case MPCG_STATE_XID0IOWAIX:
-	case MPCG_STATE_XID7INITW:
-	case MPCG_STATE_XID7INITX:
-	case MPCG_STATE_XID7INITI:
-	case MPCG_STATE_XID7INITZ:
-	default:
+	हाल MPCG_STATE_XID0IOWAIX:
+	हाल MPCG_STATE_XID7INITW:
+	हाल MPCG_STATE_XID7INITX:
+	हाल MPCG_STATE_XID7INITI:
+	हाल MPCG_STATE_XID7INITZ:
+	शेष:
 		/* multiple attn-busy indicates too out-of-sync      */
 		/* and they are certainly not being received as part */
 		/* of valid mpc group negotiations..		     */
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-				goto done;
-	}
+				जाओ करोne;
+	पूर्ण
 
-	if (grp->changed_side == 1) {
-		fsm_deltimer(&grp->timer);
-		fsm_addtimer(&grp->timer, MPC_XID_TIMEOUT_VALUE,
+	अगर (grp->changed_side == 1) अणु
+		fsm_delसमयr(&grp->समयr);
+		fsm_addसमयr(&grp->समयr, MPC_XID_TIMEOUT_VALUE,
 			     MPCG_EVENT_TIMER, dev);
-	}
-	if (ch->in_mpcgroup)
+	पूर्ण
+	अगर (ch->in_mpcgroup)
 		fsm_event(grp->fsm, MPCG_EVENT_XID0DO, ch);
-	else
+	अन्यथा
 		CTCM_DBF_TEXT_(MPC_ERROR, CTC_DBF_ERROR,
 			"%s(%s): channel %s not added to group",
 				CTCM_FUNTAIL, dev->name, ch->id);
 
-done:
-	return;
-}
+करोne:
+	वापस;
+पूर्ण
 
 /*
  * ctcmpc channel FSM action
- * called from several points in ctcmpc_ch_fsm
+ * called from several poपूर्णांकs in ctcmpc_ch_fsm
  * ctcmpc only
  */
-static void ctcmpc_chx_resend(fsm_instance *fsm, int event, void *arg)
-{
-	struct channel	   *ch	   = arg;
-	struct net_device  *dev    = ch->netdev;
-	struct ctcm_priv   *priv   = dev->ml_priv;
-	struct mpc_group   *grp    = priv->mpcg;
+अटल व्योम ctcmpc_chx_resend(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel	   *ch	   = arg;
+	काष्ठा net_device  *dev    = ch->netdev;
+	काष्ठा ctcm_priv   *priv   = dev->ml_priv;
+	काष्ठा mpc_group   *grp    = priv->mpcg;
 
 	fsm_event(grp->fsm, MPCG_EVENT_XID0DO, ch);
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * ctcmpc channel FSM action
- * called from several points in ctcmpc_ch_fsm
+ * called from several poपूर्णांकs in ctcmpc_ch_fsm
  * ctcmpc only
  */
-static void ctcmpc_chx_send_sweep(fsm_instance *fsm, int event, void *arg)
-{
-	struct channel *ach = arg;
-	struct net_device *dev = ach->netdev;
-	struct ctcm_priv *priv = dev->ml_priv;
-	struct mpc_group *grp = priv->mpcg;
-	struct channel *wch = priv->channel[CTCM_WRITE];
-	struct channel *rch = priv->channel[CTCM_READ];
-	struct sk_buff *skb;
-	struct th_sweep *header;
-	int rc = 0;
-	unsigned long saveflags = 0;
+अटल व्योम ctcmpc_chx_send_sweep(fsm_instance *fsm, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा channel *ach = arg;
+	काष्ठा net_device *dev = ach->netdev;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	काष्ठा mpc_group *grp = priv->mpcg;
+	काष्ठा channel *wch = priv->channel[CTCM_WRITE];
+	काष्ठा channel *rch = priv->channel[CTCM_READ];
+	काष्ठा sk_buff *skb;
+	काष्ठा th_sweep *header;
+	पूर्णांक rc = 0;
+	अचिन्हित दीर्घ saveflags = 0;
 
 	CTCM_PR_DEBUG("ctcmpc enter: %s(): cp=%i ch=0x%p id=%s\n",
 			__func__, smp_processor_id(), ach, ach->id);
 
-	if (grp->in_sweep == 0)
-				goto done;
+	अगर (grp->in_sweep == 0)
+				जाओ करोne;
 
 	CTCM_PR_DBGDATA("%s: 1: ToVTAM_th_seq= %08x\n" ,
 				__func__, wch->th_seq_num);
 	CTCM_PR_DBGDATA("%s: 1: FromVTAM_th_seq= %08x\n" ,
 				__func__, rch->th_seq_num);
 
-	if (fsm_getstate(wch->fsm) != CTC_STATE_TXIDLE) {
-		/* give the previous IO time to complete */
-		fsm_addtimer(&wch->sweep_timer,
+	अगर (fsm_माला_लोtate(wch->fsm) != CTC_STATE_TXIDLE) अणु
+		/* give the previous IO समय to complete */
+		fsm_addसमयr(&wch->sweep_समयr,
 			200, CTC_EVENT_RSWEEP_TIMER, wch);
-				goto done;
-	}
+				जाओ करोne;
+	पूर्ण
 
 	skb = skb_dequeue(&wch->sweep_queue);
-	if (!skb)
-				goto done;
+	अगर (!skb)
+				जाओ करोne;
 
-	if (set_normalized_cda(&wch->ccw[4], skb->data)) {
+	अगर (set_normalized_cda(&wch->ccw[4], skb->data)) अणु
 		grp->in_sweep = 0;
-		ctcm_clear_busy_do(dev);
-		dev_kfree_skb_any(skb);
+		ctcm_clear_busy_करो(dev);
+		dev_kमुक्त_skb_any(skb);
 		fsm_event(grp->fsm, MPCG_EVENT_INOP, dev);
-				goto done;
-	} else {
+				जाओ करोne;
+	पूर्ण अन्यथा अणु
 		refcount_inc(&skb->users);
 		skb_queue_tail(&wch->io_queue, skb);
-	}
+	पूर्ण
 
 	/* send out the sweep */
 	wch->ccw[4].count = skb->len;
 
-	header = (struct th_sweep *)skb->data;
-	switch (header->th.th_ch_flag) {
-	case TH_SWEEP_REQ:
+	header = (काष्ठा th_sweep *)skb->data;
+	चयन (header->th.th_ch_flag) अणु
+	हाल TH_SWEEP_REQ:
 		grp->sweep_req_pend_num--;
-		break;
-	case TH_SWEEP_RESP:
+		अवरोध;
+	हाल TH_SWEEP_RESP:
 		grp->sweep_rsp_pend_num--;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	header->sw.th_last_seq = wch->th_seq_num;
 
-	CTCM_CCW_DUMP((char *)&wch->ccw[3], sizeof(struct ccw1) * 3);
+	CTCM_CCW_DUMP((अक्षर *)&wch->ccw[3], माप(काष्ठा ccw1) * 3);
 	CTCM_PR_DBGDATA("%s: sweep packet\n", __func__);
-	CTCM_D3_DUMP((char *)header, TH_SWEEP_LENGTH);
+	CTCM_D3_DUMP((अक्षर *)header, TH_SWEEP_LENGTH);
 
-	fsm_addtimer(&wch->timer, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, wch);
+	fsm_addसमयr(&wch->समयr, CTCM_TIME_5_SEC, CTC_EVENT_TIMER, wch);
 	fsm_newstate(wch->fsm, CTC_STATE_TX);
 
 	spin_lock_irqsave(get_ccwdev_lock(wch->cdev), saveflags);
-	wch->prof.send_stamp = jiffies;
+	wch->prof.send_stamp = jअगरfies;
 	rc = ccw_device_start(wch->cdev, &wch->ccw[3], 0, 0xff, 0);
 	spin_unlock_irqrestore(get_ccwdev_lock(wch->cdev), saveflags);
 
-	if ((grp->sweep_req_pend_num == 0) &&
-	   (grp->sweep_rsp_pend_num == 0)) {
+	अगर ((grp->sweep_req_pend_num == 0) &&
+	   (grp->sweep_rsp_pend_num == 0)) अणु
 		grp->in_sweep = 0;
 		rch->th_seq_num = 0x00;
 		wch->th_seq_num = 0x00;
-		ctcm_clear_busy_do(dev);
-	}
+		ctcm_clear_busy_करो(dev);
+	पूर्ण
 
 	CTCM_PR_DBGDATA("%s: To-/From-VTAM_th_seq = %08x/%08x\n" ,
 			__func__, wch->th_seq_num, rch->th_seq_num);
 
-	if (rc != 0)
+	अगर (rc != 0)
 		ctcm_ccw_check_rc(wch, rc, "send sweep");
 
-done:
-	return;
-}
+करोne:
+	वापस;
+पूर्ण
 
 
 /*
- * The ctcmpc statemachine for a channel.
+ * The ctcmpc statemachine क्रम a channel.
  */
 
-const fsm_node ctcmpc_ch_fsm[] = {
-	{ CTC_STATE_STOPPED,	CTC_EVENT_STOP,		ctcm_action_nop  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_START,	ctcm_chx_start  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CTC_STATE_STOPPED,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  },
+स्थिर fsm_node ctcmpc_ch_fsm[] = अणु
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_STOP,		ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_START,	ctcm_chx_start  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STOPPED,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  पूर्ण,
 
-	{ CTC_STATE_NOTOP,	CTC_EVENT_STOP,		ctcm_chx_stop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_MC_GOOD,	ctcm_chx_start  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_UC_RCRESET,	ctcm_chx_stop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_UC_RSRESET,	ctcm_chx_stop  },
-	{ CTC_STATE_NOTOP,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_STOP,		ctcm_chx_stop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_MC_FAIL,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_MC_GOOD,	ctcm_chx_start  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_UC_RCRESET,	ctcm_chx_stop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_UC_RSRESET,	ctcm_chx_stop  पूर्ण,
+	अणु CTC_STATE_NOTOP,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
 
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_FINSTAT,	ctcm_chx_setmode  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setuperr  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_STARTWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_FINSTAT,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_STARTWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_TIMER,	ctcm_chx_setmode  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_FINSTAT,	ctcm_chx_setmode  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_STARTRETRY,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_TIMER,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_FINSTAT,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_STARTRETRY,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
 
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_FINSTAT,	ctcmpc_chx_firstio  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_TIMER,	ctcm_chx_setmode  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_SETUPWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_FINSTAT,	ctcmpc_chx_firstio  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_TIMER,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_SETUPWAIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rxidle  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_TIMER,	ctcm_chx_rxiniterr  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_ATTNBUSY,	ctcm_chx_rxinitfail  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_firstio  },
-	{ CTC_STATE_RXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rxidle  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_TIMER,	ctcm_chx_rxiniterr  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_ATTNBUSY,	ctcm_chx_rxinitfail  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_firstio  पूर्ण,
+	अणु CTC_STATE_RXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID0_PENDING,	CTC_EVENT_FINSTAT,	ctcm_action_nop  },
-	{ CH_XID0_PENDING,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID0_PENDING,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID0_PENDING,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID0_PENDING,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID0_PENDING,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID0_PENDING,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID0_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID0_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID0_PENDING,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
+	अणु CH_XID0_PENDING,	CTC_EVENT_FINSTAT,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID0_PENDING,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
 
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_ATTNBUSY,	ctcmpc_chx_attnbusy  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID0_INPROGRESS,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_ATTNBUSY,	ctcmpc_chx_attnbusy  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID0_INPROGRESS,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID7_PENDING,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID7_PENDING,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID7_PENDING,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID7_PENDING,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID7_PENDING,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID7_PENDING,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID7_PENDING,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID7_PENDING,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID7_PENDING1,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID7_PENDING1,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID7_PENDING1,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID7_PENDING1,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID7_PENDING2,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID7_PENDING2,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID7_PENDING2,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID7_PENDING2,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID7_PENDING3,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID7_PENDING3,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID7_PENDING3,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID7_PENDING3,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CH_XID7_PENDING4,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  },
-	{ CH_XID7_PENDING4,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CH_XID7_PENDING4,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_ATTN,		ctcmpc_chx_attn  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_UC_RCRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_UC_RSRESET,	ctcm_chx_setuperr  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_ATTNBUSY,	ctcm_chx_iofatal  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_TIMER,	ctcmpc_chx_resend  पूर्ण,
+	अणु CH_XID7_PENDING4,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxdisc  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_RXIDLE,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  },
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_FINSTAT,	ctcmpc_chx_rx  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_rxdisc  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_RXIDLE,	CTC_EVENT_UC_ZERO,	ctcmpc_chx_rx  पूर्ण,
 
-	{ CTC_STATE_TXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_FINSTAT,	ctcm_chx_txidle  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_TIMER,	ctcm_chx_txiniterr  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_TXINIT,	CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep },
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_FINSTAT,	ctcm_chx_txidle  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_UC_RCRESET,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_UC_RSRESET,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_TIMER,	ctcm_chx_txiniterr  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TXINIT,	CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep पूर्ण,
 
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_FINSTAT,	ctcmpc_chx_firstio  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_fail  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_TXIDLE,	CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep },
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_FINSTAT,	ctcmpc_chx_firstio  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_UC_RCRESET,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TXIDLE,	CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep पूर्ण,
 
-	{ CTC_STATE_TERM,	CTC_EVENT_STOP,		ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_START,	ctcm_chx_restart  },
-	{ CTC_STATE_TERM,	CTC_EVENT_FINSTAT,	ctcm_chx_stopped  },
-	{ CTC_STATE_TERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  },
-	{ CTC_STATE_TERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_TERM,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
-	{ CTC_STATE_TERM,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
+	अणु CTC_STATE_TERM,	CTC_EVENT_STOP,		ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_START,	ctcm_chx_restart  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_FINSTAT,	ctcm_chx_stopped  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TERM,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
 
-	{ CTC_STATE_DTERM,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_START,	ctcm_chx_restart  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_FINSTAT,	ctcm_chx_setmode  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_DTERM,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
+	अणु CTC_STATE_DTERM,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_START,	ctcm_chx_restart  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_FINSTAT,	ctcm_chx_seपंचांगode  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_UC_RCRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_UC_RSRESET,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_DTERM,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
 
-	{ CTC_STATE_TX,		CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TX,		CTC_EVENT_START,	ctcm_action_nop  },
-	{ CTC_STATE_TX,		CTC_EVENT_FINSTAT,	ctcmpc_chx_txdone  },
-	{ CTC_STATE_TX,		CTC_EVENT_UC_RCRESET,	ctcm_chx_fail  },
-	{ CTC_STATE_TX,		CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  },
-	{ CTC_STATE_TX,		CTC_EVENT_TIMER,	ctcm_chx_txretry  },
-	{ CTC_STATE_TX,		CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TX,		CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_TX,		CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep },
-	{ CTC_STATE_TX,		CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  },
+	अणु CTC_STATE_TX,		CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_START,	ctcm_action_nop  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_FINSTAT,	ctcmpc_chx_txकरोne  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_UC_RCRESET,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_UC_RSRESET,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_TIMER,	ctcm_chx_txretry  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_RSWEEP_TIMER,	ctcmpc_chx_send_sweep पूर्ण,
+	अणु CTC_STATE_TX,		CTC_EVENT_IO_EBUSY,	ctcm_chx_fail  पूर्ण,
 
-	{ CTC_STATE_RXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  },
-	{ CTC_STATE_TXERR,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  },
-	{ CTC_STATE_TXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-	{ CTC_STATE_RXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  },
-};
+	अणु CTC_STATE_RXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXERR,	CTC_EVENT_STOP,		ctcm_chx_haltio  पूर्ण,
+	अणु CTC_STATE_TXERR,	CTC_EVENT_IO_ENODEV,	ctcm_chx_iofatal  पूर्ण,
+	अणु CTC_STATE_TXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+	अणु CTC_STATE_RXERR,	CTC_EVENT_MC_FAIL,	ctcm_chx_fail  पूर्ण,
+पूर्ण;
 
-int mpc_ch_fsm_len = ARRAY_SIZE(ctcmpc_ch_fsm);
+पूर्णांक mpc_ch_fsm_len = ARRAY_SIZE(ctcmpc_ch_fsm);
 
 /*
- * Actions for interface - statemachine.
+ * Actions क्रम पूर्णांकerface - statemachine.
  */
 
 /**
  * Startup channels by sending CTC_EVENT_START to each channel.
  *
- * fi		An instance of an interface statemachine.
+ * fi		An instance of an पूर्णांकerface statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from struct net_device * upon call.
+ * arg		Generic poपूर्णांकer, casted from काष्ठा net_device * upon call.
  */
-static void dev_action_start(fsm_instance *fi, int event, void *arg)
-{
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
-	int direction;
+अटल व्योम dev_action_start(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	पूर्णांक direction;
 
 	CTCMY_DBF_DEV_NAME(SETUP, dev, "");
 
-	fsm_deltimer(&priv->restart_timer);
+	fsm_delसमयr(&priv->restart_समयr);
 	fsm_newstate(fi, DEV_STATE_STARTWAIT_RXTX);
-	if (IS_MPC(priv))
+	अगर (IS_MPC(priv))
 		priv->mpcg->channels_terminating = 0;
-	for (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) {
-		struct channel *ch = priv->channel[direction];
+	क्रम (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) अणु
+		काष्ठा channel *ch = priv->channel[direction];
 		fsm_event(ch->fsm, CTC_EVENT_START, ch);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * Shutdown channels by sending CTC_EVENT_STOP to each channel.
+ * Shutकरोwn channels by sending CTC_EVENT_STOP to each channel.
  *
- * fi		An instance of an interface statemachine.
+ * fi		An instance of an पूर्णांकerface statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from struct net_device * upon call.
+ * arg		Generic poपूर्णांकer, casted from काष्ठा net_device * upon call.
  */
-static void dev_action_stop(fsm_instance *fi, int event, void *arg)
-{
-	int direction;
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम dev_action_stop(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	पूर्णांक direction;
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCMY_DBF_DEV_NAME(SETUP, dev, "");
 
 	fsm_newstate(fi, DEV_STATE_STOPWAIT_RXTX);
-	for (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) {
-		struct channel *ch = priv->channel[direction];
+	क्रम (direction = CTCM_READ; direction <= CTCM_WRITE; direction++) अणु
+		काष्ठा channel *ch = priv->channel[direction];
 		fsm_event(ch->fsm, CTC_EVENT_STOP, ch);
 		ch->th_seq_num = 0x00;
 		CTCM_PR_DEBUG("%s: CH_th_seq= %08x\n",
 				__func__, ch->th_seq_num);
-	}
-	if (IS_MPC(priv))
+	पूर्ण
+	अगर (IS_MPC(priv))
 		fsm_newstate(priv->mpcg->fsm, MPCG_STATE_RESET);
-}
+पूर्ण
 
-static void dev_action_restart(fsm_instance *fi, int event, void *arg)
-{
-	int restart_timer;
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
+अटल व्योम dev_action_restart(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	पूर्णांक restart_समयr;
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCMY_DBF_DEV_NAME(TRACE, dev, "");
 
-	if (IS_MPC(priv)) {
-		restart_timer = CTCM_TIME_1_SEC;
-	} else {
-		restart_timer = CTCM_TIME_5_SEC;
-	}
+	अगर (IS_MPC(priv)) अणु
+		restart_समयr = CTCM_TIME_1_SEC;
+	पूर्ण अन्यथा अणु
+		restart_समयr = CTCM_TIME_5_SEC;
+	पूर्ण
 	dev_info(&dev->dev, "Restarting device\n");
 
 	dev_action_stop(fi, event, arg);
 	fsm_event(priv->fsm, DEV_EVENT_STOP, dev);
-	if (IS_MPC(priv))
+	अगर (IS_MPC(priv))
 		fsm_newstate(priv->mpcg->fsm, MPCG_STATE_RESET);
 
-	/* going back into start sequence too quickly can	  */
+	/* going back पूर्णांकo start sequence too quickly can	  */
 	/* result in the other side becoming unreachable   due	  */
-	/* to sense reported when IO is aborted			  */
-	fsm_addtimer(&priv->restart_timer, restart_timer,
+	/* to sense reported when IO is पातed			  */
+	fsm_addसमयr(&priv->restart_समयr, restart_समयr,
 			DEV_EVENT_START, dev);
-}
+पूर्ण
 
 /**
  * Called from channel statemachine
  * when a channel is up and running.
  *
- * fi		An instance of an interface statemachine.
+ * fi		An instance of an पूर्णांकerface statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from struct net_device * upon call.
+ * arg		Generic poपूर्णांकer, casted from काष्ठा net_device * upon call.
  */
-static void dev_action_chup(fsm_instance *fi, int event, void *arg)
-{
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
-	int dev_stat = fsm_getstate(fi);
+अटल व्योम dev_action_chup(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
+	पूर्णांक dev_stat = fsm_माला_लोtate(fi);
 
 	CTCM_DBF_TEXT_(SETUP, CTC_DBF_NOTICE,
 			"%s(%s): priv = %p [%d,%d]\n ",	CTCM_FUNTAIL,
 				dev->name, dev->ml_priv, dev_stat, event);
 
-	switch (fsm_getstate(fi)) {
-	case DEV_STATE_STARTWAIT_RXTX:
-		if (event == DEV_EVENT_RXUP)
+	चयन (fsm_माला_लोtate(fi)) अणु
+	हाल DEV_STATE_STARTWAIT_RXTX:
+		अगर (event == DEV_EVENT_RXUP)
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_TX);
-		else
+		अन्यथा
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_RX);
-		break;
-	case DEV_STATE_STARTWAIT_RX:
-		if (event == DEV_EVENT_RXUP) {
+		अवरोध;
+	हाल DEV_STATE_STARTWAIT_RX:
+		अगर (event == DEV_EVENT_RXUP) अणु
 			fsm_newstate(fi, DEV_STATE_RUNNING);
 			dev_info(&dev->dev,
 				"Connected with remote side\n");
 			ctcm_clear_busy(dev);
-		}
-		break;
-	case DEV_STATE_STARTWAIT_TX:
-		if (event == DEV_EVENT_TXUP) {
+		पूर्ण
+		अवरोध;
+	हाल DEV_STATE_STARTWAIT_TX:
+		अगर (event == DEV_EVENT_TXUP) अणु
 			fsm_newstate(fi, DEV_STATE_RUNNING);
 			dev_info(&dev->dev,
 				"Connected with remote side\n");
 			ctcm_clear_busy(dev);
-		}
-		break;
-	case DEV_STATE_STOPWAIT_TX:
-		if (event == DEV_EVENT_RXUP)
+		पूर्ण
+		अवरोध;
+	हाल DEV_STATE_STOPWAIT_TX:
+		अगर (event == DEV_EVENT_RXUP)
 			fsm_newstate(fi, DEV_STATE_STOPWAIT_RXTX);
-		break;
-	case DEV_STATE_STOPWAIT_RX:
-		if (event == DEV_EVENT_TXUP)
+		अवरोध;
+	हाल DEV_STATE_STOPWAIT_RX:
+		अगर (event == DEV_EVENT_TXUP)
 			fsm_newstate(fi, DEV_STATE_STOPWAIT_RXTX);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (IS_MPC(priv)) {
-		if (event == DEV_EVENT_RXUP)
+	अगर (IS_MPC(priv)) अणु
+		अगर (event == DEV_EVENT_RXUP)
 			mpc_channel_action(priv->channel[CTCM_READ],
 				CTCM_READ, MPC_CHANNEL_ADD);
-		else
+		अन्यथा
 			mpc_channel_action(priv->channel[CTCM_WRITE],
 				CTCM_WRITE, MPC_CHANNEL_ADD);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * Called from device statemachine
- * when a channel has been shutdown.
+ * when a channel has been shutकरोwn.
  *
- * fi		An instance of an interface statemachine.
+ * fi		An instance of an पूर्णांकerface statemachine.
  * event	The event, just happened.
- * arg		Generic pointer, casted from struct net_device * upon call.
+ * arg		Generic poपूर्णांकer, casted from काष्ठा net_device * upon call.
  */
-static void dev_action_chdown(fsm_instance *fi, int event, void *arg)
-{
+अटल व्योम dev_action_chकरोwn(fsm_instance *fi, पूर्णांक event, व्योम *arg)
+अणु
 
-	struct net_device *dev = arg;
-	struct ctcm_priv *priv = dev->ml_priv;
+	काष्ठा net_device *dev = arg;
+	काष्ठा ctcm_priv *priv = dev->ml_priv;
 
 	CTCMY_DBF_DEV_NAME(SETUP, dev, "");
 
-	switch (fsm_getstate(fi)) {
-	case DEV_STATE_RUNNING:
-		if (event == DEV_EVENT_TXDOWN)
+	चयन (fsm_माला_लोtate(fi)) अणु
+	हाल DEV_STATE_RUNNING:
+		अगर (event == DEV_EVENT_TXDOWN)
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_TX);
-		else
+		अन्यथा
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_RX);
-		break;
-	case DEV_STATE_STARTWAIT_RX:
-		if (event == DEV_EVENT_TXDOWN)
+		अवरोध;
+	हाल DEV_STATE_STARTWAIT_RX:
+		अगर (event == DEV_EVENT_TXDOWN)
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_RXTX);
-		break;
-	case DEV_STATE_STARTWAIT_TX:
-		if (event == DEV_EVENT_RXDOWN)
+		अवरोध;
+	हाल DEV_STATE_STARTWAIT_TX:
+		अगर (event == DEV_EVENT_RXDOWN)
 			fsm_newstate(fi, DEV_STATE_STARTWAIT_RXTX);
-		break;
-	case DEV_STATE_STOPWAIT_RXTX:
-		if (event == DEV_EVENT_TXDOWN)
+		अवरोध;
+	हाल DEV_STATE_STOPWAIT_RXTX:
+		अगर (event == DEV_EVENT_TXDOWN)
 			fsm_newstate(fi, DEV_STATE_STOPWAIT_RX);
-		else
+		अन्यथा
 			fsm_newstate(fi, DEV_STATE_STOPWAIT_TX);
-		break;
-	case DEV_STATE_STOPWAIT_RX:
-		if (event == DEV_EVENT_RXDOWN)
+		अवरोध;
+	हाल DEV_STATE_STOPWAIT_RX:
+		अगर (event == DEV_EVENT_RXDOWN)
 			fsm_newstate(fi, DEV_STATE_STOPPED);
-		break;
-	case DEV_STATE_STOPWAIT_TX:
-		if (event == DEV_EVENT_TXDOWN)
+		अवरोध;
+	हाल DEV_STATE_STOPWAIT_TX:
+		अगर (event == DEV_EVENT_TXDOWN)
 			fsm_newstate(fi, DEV_STATE_STOPPED);
-		break;
-	}
-	if (IS_MPC(priv)) {
-		if (event == DEV_EVENT_RXDOWN)
+		अवरोध;
+	पूर्ण
+	अगर (IS_MPC(priv)) अणु
+		अगर (event == DEV_EVENT_RXDOWN)
 			mpc_channel_action(priv->channel[CTCM_READ],
 				CTCM_READ, MPC_CHANNEL_REMOVE);
-		else
+		अन्यथा
 			mpc_channel_action(priv->channel[CTCM_WRITE],
 				CTCM_WRITE, MPC_CHANNEL_REMOVE);
-	}
-}
+	पूर्ण
+पूर्ण
 
-const fsm_node dev_fsm[] = {
-	{ DEV_STATE_STOPPED,        DEV_EVENT_START,   dev_action_start   },
-	{ DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_START,   dev_action_start   },
-	{ DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_RXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_TXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_STOPWAIT_RX,    DEV_EVENT_START,   dev_action_start   },
-	{ DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RXUP,    dev_action_chup    },
-	{ DEV_STATE_STOPWAIT_RX,    DEV_EVENT_TXUP,    dev_action_chup    },
-	{ DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_STOPWAIT_TX,    DEV_EVENT_START,   dev_action_start   },
-	{ DEV_STATE_STOPWAIT_TX,    DEV_EVENT_RXUP,    dev_action_chup    },
-	{ DEV_STATE_STOPWAIT_TX,    DEV_EVENT_TXUP,    dev_action_chup    },
-	{ DEV_STATE_STOPWAIT_TX,    DEV_EVENT_TXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STOPWAIT_TX,    DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_STOP,    dev_action_stop    },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_TXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_TXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_STARTWAIT_TX,   DEV_EVENT_STOP,    dev_action_stop    },
-	{ DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_TX,   DEV_EVENT_TXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_STARTWAIT_RX,   DEV_EVENT_STOP,    dev_action_stop    },
-	{ DEV_STATE_STARTWAIT_RX,   DEV_EVENT_RXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_RX,   DEV_EVENT_TXUP,    dev_action_chup    },
-	{ DEV_STATE_STARTWAIT_RX,   DEV_EVENT_TXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_STARTWAIT_RX,   DEV_EVENT_RESTART, dev_action_restart },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_STOP,    dev_action_stop    },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_RXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_TXDOWN,  dev_action_chdown  },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_TXUP,    ctcm_action_nop    },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_RXUP,    ctcm_action_nop    },
-	{ DEV_STATE_RUNNING,        DEV_EVENT_RESTART, dev_action_restart },
-};
+स्थिर fsm_node dev_fsm[] = अणु
+	अणु DEV_STATE_STOPPED,        DEV_EVENT_START,   dev_action_start   पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_START,   dev_action_start   पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_RXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_TXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RXTX,  DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RX,    DEV_EVENT_START,   dev_action_start   पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RX,    DEV_EVENT_TXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STOPWAIT_RX,    DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_STOPWAIT_TX,    DEV_EVENT_START,   dev_action_start   पूर्ण,
+	अणु DEV_STATE_STOPWAIT_TX,    DEV_EVENT_RXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STOPWAIT_TX,    DEV_EVENT_TXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STOPWAIT_TX,    DEV_EVENT_TXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STOPWAIT_TX,    DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_STOP,    dev_action_stop    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_TXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_TXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RXTX, DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_STARTWAIT_TX,   DEV_EVENT_STOP,    dev_action_stop    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_TX,   DEV_EVENT_TXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STARTWAIT_TX,   DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RX,   DEV_EVENT_STOP,    dev_action_stop    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RX,   DEV_EVENT_RXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RX,   DEV_EVENT_TXUP,    dev_action_chup    पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RX,   DEV_EVENT_TXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_STARTWAIT_RX,   DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_STOP,    dev_action_stop    पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_RXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_TXDOWN,  dev_action_chकरोwn  पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_TXUP,    ctcm_action_nop    पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_RXUP,    ctcm_action_nop    पूर्ण,
+	अणु DEV_STATE_RUNNING,        DEV_EVENT_RESTART, dev_action_restart पूर्ण,
+पूर्ण;
 
-int dev_fsm_len = ARRAY_SIZE(dev_fsm);
+पूर्णांक dev_fsm_len = ARRAY_SIZE(dev_fsm);
 
-/* --- This is the END my friend --- */
+/* --- This is the END my मित्र --- */
 

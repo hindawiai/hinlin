@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PARISC_MACHDEP_H
-#define _PARISC_MACHDEP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PARISC_MACHDEP_H
+#घोषणा _PARISC_MACHDEP_H
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
-#define	MACH_RESTART	1
-#define	MACH_HALT	2
-#define MACH_POWER_ON	3
-#define	MACH_POWER_OFF	4
+#घोषणा	MACH_RESTART	1
+#घोषणा	MACH_HALT	2
+#घोषणा MACH_POWER_ON	3
+#घोषणा	MACH_POWER_OFF	4
 
-extern struct notifier_block *mach_notifier;
-extern void pa7300lc_init(void);
+बाह्य काष्ठा notअगरier_block *mach_notअगरier;
+बाह्य व्योम pa7300lc_init(व्योम);
 
-extern void (*cpu_lpmc)(int, struct pt_regs *);
+बाह्य व्योम (*cpu_lpmc)(पूर्णांक, काष्ठा pt_regs *);
 
-#endif
+#पूर्ण_अगर

@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2018 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#ifndef __MESON_OVERLAY_H
-#define __MESON_OVERLAY_H
+#अगर_अघोषित __MESON_OVERLAY_H
+#घोषणा __MESON_OVERLAY_H
 
-#include "meson_drv.h"
+#समावेश "meson_drv.h"
 
-int meson_overlay_create(struct meson_drm *priv);
+पूर्णांक meson_overlay_create(काष्ठा meson_drm *priv);
 
-#endif /* __MESON_OVERLAY_H */
+#पूर्ण_अगर /* __MESON_OVERLAY_H */

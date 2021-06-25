@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2021 Intel Corporation
  */
 
-#if IS_ENABLED(CONFIG_BT_AOSPEXT)
+#अगर IS_ENABLED(CONFIG_BT_AOSPEXT)
 
-void aosp_do_open(struct hci_dev *hdev);
-void aosp_do_close(struct hci_dev *hdev);
+व्योम aosp_करो_खोलो(काष्ठा hci_dev *hdev);
+व्योम aosp_करो_बंद(काष्ठा hci_dev *hdev);
 
-#else
+#अन्यथा
 
-static inline void aosp_do_open(struct hci_dev *hdev) {}
-static inline void aosp_do_close(struct hci_dev *hdev) {}
+अटल अंतरभूत व्योम aosp_करो_खोलो(काष्ठा hci_dev *hdev) अणुपूर्ण
+अटल अंतरभूत व्योम aosp_करो_बंद(काष्ठा hci_dev *hdev) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर

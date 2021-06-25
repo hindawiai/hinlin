@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 1998-2020 VMware, Inc.
  *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person
+ * obtaining a copy of this software and associated करोcumentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -30,31 +31,31 @@
  *       SVGA 3d hardware cmd definitions
  */
 
-#ifndef _SVGA3D_CMD_H_
-#define _SVGA3D_CMD_H_
+#अगर_अघोषित _SVGA3D_CMD_H_
+#घोषणा _SVGA3D_CMD_H_
 
-#define INCLUDE_ALLOW_MODULE
-#define INCLUDE_ALLOW_USERLEVEL
-#define INCLUDE_ALLOW_VMCORE
+#घोषणा INCLUDE_ALLOW_MODULE
+#घोषणा INCLUDE_ALLOW_USERLEVEL
+#घोषणा INCLUDE_ALLOW_VMCORE
 
-#include "includeCheck.h"
-#include "svga3d_types.h"
+#समावेश "includeCheck.h"
+#समावेश "svga3d_types.h"
 
 /*
- * Identifiers for commands in the command FIFO.
+ * Identअगरiers क्रम commands in the command FIFO.
  *
  * IDs between 1000 and 1039 (inclusive) were used by obsolete versions of
- * the SVGA3D protocol and remain reserved; they should not be used in the
+ * the SVGA3D protocol and reमुख्य reserved; they should not be used in the
  * future.
  *
- * IDs between 1040 and 2999 (inclusive) are available for use by the
+ * IDs between 1040 and 2999 (inclusive) are available क्रम use by the
  * current SVGA3D protocol.
  *
  * FIFO clients other than SVGA3D should stay below 1000, or at 3000
  * and up.
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA_3D_CMD_LEGACY_BASE                                = 1000,
    SVGA_3D_CMD_BASE                                       = 1040,
 
@@ -298,10 +299,10 @@ typedef enum {
    SVGA_3D_CMD_DX_COPY_STRUCTURE_COUNT                    = 1249,
    SVGA_3D_CMD_DX_SET_UA_VIEWS                            = 1250,
 
-   SVGA_3D_CMD_DX_DRAW_INDEXED_INSTANCED_INDIRECT         = 1251,
-   SVGA_3D_CMD_DX_DRAW_INSTANCED_INDIRECT                 = 1252,
+   SVGA_3D_CMD_DX_DRAW_INDEXED_INSTANCED_INसूचीECT         = 1251,
+   SVGA_3D_CMD_DX_DRAW_INSTANCED_INसूचीECT                 = 1252,
    SVGA_3D_CMD_DX_DISPATCH                                = 1253,
-   SVGA_3D_CMD_DX_DISPATCH_INDIRECT                       = 1254,
+   SVGA_3D_CMD_DX_DISPATCH_INसूचीECT                       = 1254,
 
    SVGA_3D_CMD_WRITE_ZERO_SURFACE                         = 1255,
    SVGA_3D_CMD_HINT_ZERO_SURFACE                          = 1256,
@@ -332,389 +333,389 @@ typedef enum {
 
    SVGA_3D_CMD_MAX                                        = 1278,
    SVGA_3D_CMD_FUTURE_MAX                                 = 3000
-} SVGAFifo3dCmdId;
+पूर्ण SVGAFअगरo3dCmdId;
 
-#define SVGA_NUM_3D_CMD (SVGA_3D_CMD_MAX - SVGA_3D_CMD_BASE)
+#घोषणा SVGA_NUM_3D_CMD (SVGA_3D_CMD_MAX - SVGA_3D_CMD_BASE)
 
 /*
- * FIFO command format definitions:
+ * FIFO command क्रमmat definitions:
  */
 
 /*
- * The data size header following cmdNum for every 3d command
+ * The data size header following cmdNum क्रम every 3d command
  */
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               id;
-   uint32               size;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               id;
+   uपूर्णांक32               size;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdHeader;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               numMipLevels;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               numMipLevels;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSurfaceFace;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                      sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                      sid;
    SVGA3dSurface1Flags         surfaceFlags;
-   SVGA3dSurfaceFormat         format;
+   SVGA3dSurfaceFormat         क्रमmat;
 
    /*
     * If surfaceFlags has SVGA3D_SURFACE_CUBEMAP bit set, all SVGA3dSurfaceFace
-    * structures must have the same value of numMipLevels field.
-    * Otherwise, all but the first SVGA3dSurfaceFace structures must have the
+    * काष्ठाures must have the same value of numMipLevels field.
+    * Otherwise, all but the first SVGA3dSurfaceFace काष्ठाures must have the
     * numMipLevels set to 0.
     */
    SVGA3dSurfaceFace           face[SVGA3D_MAX_SURFACE_FACES];
 
    /*
-    * Followed by an SVGA3dSize structure for each mip level in each face.
+    * Followed by an SVGA3dSize काष्ठाure क्रम each mip level in each face.
     *
-    * A note on surface sizes: Sizes are always specified in pixels,
-    * even if the true surface size is not a multiple of the minimum
-    * block size of the surface's format. For example, a 3x3x1 DXT1
+    * A note on surface sizes: Sizes are always specअगरied in pixels,
+    * even अगर the true surface size is not a multiple of the minimum
+    * block size of the surface's क्रमmat. For example, a 3x3x1 DXT1
     * compressed texture would actually be stored as a 4x4x1 image in
     * memory.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineSurface;       /* SVGA_3D_CMD_SURFACE_DEFINE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                      sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                      sid;
    SVGA3dSurface1Flags         surfaceFlags;
-   SVGA3dSurfaceFormat         format;
+   SVGA3dSurfaceFormat         क्रमmat;
 
    /*
     * If surfaceFlags has SVGA3D_SURFACE_CUBEMAP bit set, all SVGA3dSurfaceFace
-    * structures must have the same value of numMipLevels field.
-    * Otherwise, all but the first SVGA3dSurfaceFace structures must have the
+    * काष्ठाures must have the same value of numMipLevels field.
+    * Otherwise, all but the first SVGA3dSurfaceFace काष्ठाures must have the
     * numMipLevels set to 0.
     */
    SVGA3dSurfaceFace           face[SVGA3D_MAX_SURFACE_FACES];
-   uint32                      multisampleCount;
-   SVGA3dTextureFilter         autogenFilter;
+   uपूर्णांक32                      multisampleCount;
+   SVGA3dTextureFilter         स्वतःgenFilter;
 
    /*
-    * Followed by an SVGA3dSize structure for each mip level in each face.
+    * Followed by an SVGA3dSize काष्ठाure क्रम each mip level in each face.
     *
-    * A note on surface sizes: Sizes are always specified in pixels,
-    * even if the true surface size is not a multiple of the minimum
-    * block size of the surface's format. For example, a 3x3x1 DXT1
+    * A note on surface sizes: Sizes are always specअगरied in pixels,
+    * even अगर the true surface size is not a multiple of the minimum
+    * block size of the surface's क्रमmat. For example, a 3x3x1 DXT1
     * compressed texture would actually be stored as a 4x4x1 image in
     * memory.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineSurface_v2;     /* SVGA_3D_CMD_SURFACE_DEFINE_V2 */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroySurface;      /* SVGA_3D_CMD_SURFACE_DESTROY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineContext;       /* SVGA_3D_CMD_CONTEXT_DEFINE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyContext;      /* SVGA_3D_CMD_CONTEXT_DESTROY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dClearFlag      clearFlag;
-   uint32               color;
-   float                depth;
-   uint32               stencil;
-   /* Followed by variable number of SVGA3dRect structures */
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32               color;
+   भग्न                depth;
+   uपूर्णांक32               stencil;
+   /* Followed by variable number of SVGA3dRect काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdClear;               /* SVGA_3D_CMD_CLEAR */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dLightType      type;
    SVGA3dBool           inWorldSpace;
-   float                diffuse[4];
-   float                specular[4];
-   float                ambient[4];
-   float                position[4];
-   float                direction[4];
-   float                range;
-   float                falloff;
-   float                attenuation0;
-   float                attenuation1;
-   float                attenuation2;
-   float                theta;
-   float                phi;
-}
-#include "vmware_pack_end.h"
+   भग्न                dअगरfuse[4];
+   भग्न                specular[4];
+   भग्न                ambient[4];
+   भग्न                position[4];
+   भग्न                direction[4];
+   भग्न                range;
+   भग्न                falloff;
+   भग्न                attenuation0;
+   भग्न                attenuation1;
+   भग्न                attenuation2;
+   भग्न                theta;
+   भग्न                phi;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dLightData;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               sid;
-   /* Followed by variable number of SVGA3dCopyRect structures */
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               sid;
+   /* Followed by variable number of SVGA3dCopyRect काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdPresent;             /* SVGA_3D_CMD_PRESENT */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dRenderStateName   state;
-   union {
-      uint32               uintValue;
-      float                floatValue;
-   };
-}
-#include "vmware_pack_end.h"
+   जोड़ अणु
+      uपूर्णांक32               uपूर्णांकValue;
+      भग्न                भग्नValue;
+   पूर्ण;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dRenderState;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   /* Followed by variable number of SVGA3dRenderState structures */
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   /* Followed by variable number of SVGA3dRenderState काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetRenderState;      /* SVGA_3D_CMD_SETRENDERSTATE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                 cid;
    SVGA3dRenderTargetType type;
    SVGA3dSurfaceImageId   target;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetRenderTarget;     /* SVGA_3D_CMD_SETRENDERTARGET */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId  src;
    SVGA3dSurfaceImageId  dest;
-   /* Followed by variable number of SVGA3dCopyBox structures */
-}
-#include "vmware_pack_end.h"
+   /* Followed by variable number of SVGA3dCopyBox काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSurfaceCopy;               /* SVGA_3D_CMD_SURFACE_COPY */
 
 /*
- * Perform a surface copy within the same image.
+ * Perक्रमm a surface copy within the same image.
  * The src/dest boxes are allowed to overlap.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId  surface;
    SVGA3dCopyBox box;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdIntraSurfaceCopy;               /* SVGA_3D_CMD_INTRA_SURFACE_COPY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 srcSid;
-   uint32 destSid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 srcSid;
+   uपूर्णांक32 destSid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdWholeSurfaceCopy;               /* SVGA_3D_CMD_WHOLE_SURFACE_COPY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId  src;
    SVGA3dSurfaceImageId  dest;
    SVGA3dBox boxSrc;
    SVGA3dBox boxDest;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSurfaceStretchBltNonMSToMS;
 /* SVGA_3D_CMD_SURFACE_STRETCHBLT_NON_MS_TO_MS */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId  src;
    SVGA3dSurfaceImageId  dest;
    SVGA3dBox             boxSrc;
    SVGA3dBox             boxDest;
    SVGA3dStretchBltMode  mode;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSurfaceStretchBlt;         /* SVGA_3D_CMD_SURFACE_STRETCHBLT */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    /*
     * If the discard flag is present in a surface DMA operation, the host may
     * discard the contents of the current mipmap level and face of the target
-    * surface before applying the surface DMA contents.
+    * surface beक्रमe applying the surface DMA contents.
     */
-   uint32 discard : 1;
+   uपूर्णांक32 discard : 1;
 
    /*
-    * If the unsynchronized flag is present, the host may perform this upload
-    * without syncing to pending reads on this surface.
+    * If the unsynchronized flag is present, the host may perक्रमm this upload
+    * without syncing to pending पढ़ोs on this surface.
     */
-   uint32 unsynchronized : 1;
+   uपूर्णांक32 unsynchronized : 1;
 
    /*
-    * Guests *MUST* set the reserved bits to 0 before submitting the command
+    * Guests *MUST* set the reserved bits to 0 beक्रमe submitting the command
     * suffix as future flags may occupy these bits.
     */
-   uint32 reserved : 30;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 reserved : 30;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSurfaceDMAFlags;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAGuestImage guest;
    SVGA3dSurfaceImageId host;
    SVGA3dTransferType transfer;
 
    /*
-    * Followed by variable number of SVGA3dCopyBox structures. For consistency
+    * Followed by variable number of SVGA3dCopyBox काष्ठाures. For consistency
     * in all clipping logic and coordinate translation, we define the
     * "source" in each copyBox as the guest image and the
     * "destination" as the host image, regardless of transfer
     * direction.
     *
-    * For efficiency, the SVGA3D device is free to copy more data than
-    * specified. For example, it may round copy boxes outwards such
+    * For efficiency, the SVGA3D device is मुक्त to copy more data than
+    * specअगरied. For example, it may round copy boxes outwards such
     * that they lie on particular alignment boundaries.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSurfaceDMA;                /* SVGA_3D_CMD_SURFACE_DMA */
 
 /*
  * SVGA3dCmdSurfaceDMASuffix --
  *
  *    This is a command suffix that will appear after a SurfaceDMA command in
- *    the FIFO.  It contains some extra information that hosts may use to
- *    optimize performance or protect the guest.  This suffix exists to preserve
- *    backwards compatibility while also allowing for new functionality to be
+ *    the FIFO.  It contains some extra inक्रमmation that hosts may use to
+ *    optimize perक्रमmance or protect the guest.  This suffix exists to preserve
+ *    backwards compatibility जबतक also allowing क्रम new functionality to be
  *    implemented.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 suffixSize;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 suffixSize;
 
    /*
     * The maximum offset is used to determine the maximum offset from the
     * guestPtr base address that will be accessed or written to during this
     * surfaceDMA.  If the suffix is supported, the host will respect this
-    * boundary while performing surface DMAs.
+    * boundary जबतक perक्रमming surface DMAs.
     *
     * Defaults to MAX_UINT32
     */
-   uint32 maximumOffset;
+   uपूर्णांक32 maximumOffset;
 
    /*
-    * A set of flags that describes optimizations that the host may perform
-    * while performing this surface DMA operation.  The guest should never rely
-    * on behaviour that is different when these flags are set for correctness.
+    * A set of flags that describes optimizations that the host may perक्रमm
+    * जबतक perक्रमming this surface DMA operation.  The guest should never rely
+    * on behaviour that is dअगरferent when these flags are set क्रम correctness.
     *
     * Defaults to 0
     */
    SVGA3dSurfaceDMAFlags flags;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSurfaceDMASuffix;
 
 /*
  * SVGA_3D_CMD_DRAW_PRIMITIVES --
  *
- *   This command is the SVGA3D device's generic drawing entry point.
+ *   This command is the SVGA3D device's generic drawing entry poपूर्णांक.
  *   It can draw multiple ranges of primitives, optionally using an
  *   index buffer, using an arbitrary collection of vertex buffers.
  *
  *   Each SVGA3dVertexDecl defines a distinct vertex array to bind
- *   during this draw call. The declarations specify which surface
- *   the vertex data lives in, what that vertex data is used for,
- *   and how to interpret it.
+ *   during this draw call. The declarations specअगरy which surface
+ *   the vertex data lives in, what that vertex data is used क्रम,
+ *   and how to पूर्णांकerpret it.
  *
  *   Each SVGA3dPrimitiveRange defines a collection of primitives
  *   to render using the same vertex arrays. An index buffer is
  *   optional.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    /*
-    * A range hint is an optional specification for the range of indices
+    * A range hपूर्णांक is an optional specअगरication क्रम the range of indices
     * in an SVGA3dArray that will be used. If 'last' is zero, it is assumed
     * that the entire array will be used.
     *
-    * These are only hints. The SVGA3D device may use them for
-    * performance optimization if possible, but it's also allowed to
+    * These are only hपूर्णांकs. The SVGA3D device may use them क्रम
+    * perक्रमmance optimization अगर possible, but it's also allowed to
     * ignore these values.
     */
-   uint32               first;
-   uint32               last;
-}
-#include "vmware_pack_end.h"
-SVGA3dArrayRangeHint;
+   uपूर्णांक32               first;
+   uपूर्णांक32               last;
+पूर्ण
+#समावेश "vmware_pack_end.h"
+SVGA3dArrayRangeHपूर्णांक;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    /*
     * Define the origin and shape of a vertex or index array. Both
     * 'offset' and 'stride' are in bytes. The provided surface will be
-    * reinterpreted as a flat array of bytes in the same format used
-    * by surface DMA operations. To avoid unnecessary conversions, the
-    * surface should be created with the SVGA3D_BUFFER format.
+    * reपूर्णांकerpreted as a flat array of bytes in the same क्रमmat used
+    * by surface DMA operations. To aव्योम unnecessary conversions, the
+    * surface should be created with the SVGA3D_BUFFER क्रमmat.
     *
-    * Index 0 in the array starts 'offset' bytes into the surface.
+    * Index 0 in the array starts 'offset' bytes पूर्णांकo the surface.
     * Index 1 begins at byte 'offset + stride', etc. Array indices may
     * not be negative.
     */
-   uint32               surfaceId;
-   uint32               offset;
-   uint32               stride;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32               surfaceId;
+   uपूर्णांक32               offset;
+   uपूर्णांक32               stride;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dArray;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    /*
     * Describe a vertex array's data type, and define how it is to be
     * used by the fixed function pipeline or the vertex shader. It
@@ -724,24 +725,24 @@ struct {
    SVGA3dDeclType       type;
    SVGA3dDeclMethod     method;
    SVGA3dDeclUsage      usage;
-   uint32               usageIndex;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32               usageIndex;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dVertexArrayIdentity;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dVertexDecl {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dVertexDecl अणु
    SVGA3dVertexArrayIdentity  identity;
    SVGA3dArray                array;
-   SVGA3dArrayRangeHint       rangeHint;
-}
-#include "vmware_pack_end.h"
+   SVGA3dArrayRangeHपूर्णांक       rangeHपूर्णांक;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dVertexDecl;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dPrimitiveRange {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dPrimitiveRange अणु
    /*
     * Define a group of primitives to render, from sequential indices.
     *
@@ -749,7 +750,7 @@ struct SVGA3dPrimitiveRange {
     * total number of vertices that will be rendered.
     */
    SVGA3dPrimitiveType  primType;
-   uint32               primitiveCount;
+   uपूर्णांक32               primitiveCount;
 
    /*
     * Optional index buffer. If indexArray.surfaceId is
@@ -757,7 +758,7 @@ struct SVGA3dPrimitiveRange {
     * without an index buffer is identical to rendering with an index
     * buffer containing the sequence [0, 1, 2, 3, ...].
     *
-    * If an index buffer is in use, indexWidth specifies the width in
+    * If an index buffer is in use, indexWidth specअगरies the width in
     * bytes of each index value. It must be less than or equal to
     * indexArray.stride.
     *
@@ -765,15 +766,15 @@ struct SVGA3dPrimitiveRange {
     * packed. In other words, indexWidth == indexArray.stride)
     */
    SVGA3dArray          indexArray;
-   uint32               indexWidth;
+   uपूर्णांक32               indexWidth;
 
    /*
     * Optional index bias. This number is added to all indices from
-    * indexArray before they are used as vertex array indices. This
+    * indexArray beक्रमe they are used as vertex array indices. This
     * can be used in multiple ways:
     *
     *  - When not using an indexArray, this bias can be used to
-    *    specify where in the vertex arrays to begin rendering.
+    *    specअगरy where in the vertex arrays to begin rendering.
     *
     *  - A positive number here is equivalent to increasing the
     *    offset in each vertex array.
@@ -781,27 +782,27 @@ struct SVGA3dPrimitiveRange {
     *  - A negative number can be used to render using a small
     *    vertex array and an index buffer that contains large
     *    values. This may be used by some applications that
-    *    crop a vertex buffer without modifying their index
+    *    crop a vertex buffer without modअगरying their index
     *    buffer.
     *
     * Note that rendering with a negative bias value may be slower and
     * use more memory than rendering with a positive or zero bias.
     */
-   int32                indexBias;
-}
-#include "vmware_pack_end.h"
+   पूर्णांक32                indexBias;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dPrimitiveRange;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               numVertexDecls;
-   uint32               numRanges;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               numVertexDecls;
+   uपूर्णांक32               numRanges;
 
    /*
     * There are two variable size arrays after the
-    * SVGA3dCmdDrawPrimitives structure. In order,
+    * SVGA3dCmdDrawPrimitives काष्ठाure. In order,
     * they are:
     *
     * 1. SVGA3dVertexDecl, quantity 'numVertexDecls', but no more than
@@ -809,69 +810,69 @@ struct {
     * 2. SVGA3dPrimitiveRange, quantity 'numRanges', but no more than
     *    SVGA3D_MAX_DRAW_PRIMITIVE_RANGES;
     * 3. Optionally, SVGA3dVertexDivisor, quantity 'numVertexDecls' (contains
-    *    the frequency divisor for the corresponding vertex decl).
+    *    the frequency भागisor क्रम the corresponding vertex decl).
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDrawPrimitives;      /* SVGA_3D_CMD_DRAWPRIMITIVES */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
 
-   uint32 primitiveCount;        /* How many primitives to render */
-   uint32 startVertexLocation;   /* Which vertex do we start rendering at. */
+   uपूर्णांक32 primitiveCount;        /* How many primitives to render */
+   uपूर्णांक32 startVertexLocation;   /* Which vertex करो we start rendering at. */
 
-   uint8 primitiveType;          /* SVGA3dPrimitiveType */
-   uint8 padding[3];
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक8 primitiveType;          /* SVGA3dPrimitiveType */
+   uपूर्णांक8 padding[3];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDraw;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
 
-   uint8 primitiveType;       /* SVGA3dPrimitiveType */
+   uपूर्णांक8 primitiveType;       /* SVGA3dPrimitiveType */
 
-   uint32 indexBufferSid;     /* Valid index buffer sid. */
-   uint32 indexBufferOffset;  /* Byte offset into the vertex buffer, almost */
-                              /* always 0 for pre SM guests, non-zero for OpenGL */
+   uपूर्णांक32 indexBufferSid;     /* Valid index buffer sid. */
+   uपूर्णांक32 indexBufferOffset;  /* Byte offset पूर्णांकo the vertex buffer, almost */
+                              /* always 0 क्रम pre SM guests, non-zero क्रम OpenGL */
                               /* guests.  We can't represent non-multiple of */
                               /* stride offsets in D3D9Renderer... */
-   uint8 indexBufferStride;   /* Allowable values = 1, 2, or 4 */
+   uपूर्णांक8 indexBufferStride;   /* Allowable values = 1, 2, or 4 */
 
-   int32 baseVertexLocation;  /* Bias applied to the index when selecting a */
+   पूर्णांक32 baseVertexLocation;  /* Bias applied to the index when selecting a */
                               /* vertex from the streams, may be negative */
 
-   uint32 primitiveCount;     /* How many primitives to render */
-   uint32 pad0;
-   uint16 pad1;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 primitiveCount;     /* How many primitives to render */
+   uपूर्णांक32 pad0;
+   uपूर्णांक16 pad1;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDrawIndexed;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    /*
     * Describe a vertex array's data type, and define how it is to be
     * used by the fixed function pipeline or the vertex shader. It
     * isn't useful to have two VertexDecls with the same
     * VertexArrayIdentity in one draw call.
     */
-   uint16 streamOffset;
-   uint8 stream;
-   uint8 type;          /* SVGA3dDeclType */
-   uint8 method;        /* SVGA3dDeclMethod */
-   uint8 usage;         /* SVGA3dDeclUsage */
-   uint8 usageIndex;
-   uint8 padding;
+   uपूर्णांक16 streamOffset;
+   uपूर्णांक8 stream;
+   uपूर्णांक8 type;          /* SVGA3dDeclType */
+   uपूर्णांक8 method;        /* SVGA3dDeclMethod */
+   uपूर्णांक8 usage;         /* SVGA3dDeclUsage */
+   uपूर्णांक8 usageIndex;
+   uपूर्णांक8 padding;
 
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dVertexElement;
 
 /*
@@ -880,293 +881,293 @@ SVGA3dVertexElement;
  * the high bit is not set, the stream will be ignored and replaced by the index
  * of the position of the currently considered vertex element.
  *
- * All guests should set this bit and correctly specify the stream going
- * forward.
+ * All guests should set this bit and correctly specअगरy the stream going
+ * क्रमward.
  */
-#define SVGA3D_VERTEX_ELEMENT_RESPECT_STREAM (1 << 7)
+#घोषणा SVGA3D_VERTEX_ELEMENT_RESPECT_STREAM (1 << 7)
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
 
-   uint32 numElements;
+   uपूर्णांक32 numElements;
 
    /*
-    * Followed by numElements SVGA3dVertexElement structures.
+    * Followed by numElements SVGA3dVertexElement काष्ठाures.
     *
-    * If numElements < SVGA3D_MAX_VERTEX_ARRAYS, the remaining elements
+    * If numElements < SVGA3D_MAX_VERTEX_ARRAYS, the reमुख्यing elements
     * are cleared and will not be used by following draws.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetVertexDecls;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-   uint32 stride;
-   uint32 offset;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+   uपूर्णांक32 stride;
+   uपूर्णांक32 offset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dVertexStream;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
 
-   uint32 numStreams;
+   uपूर्णांक32 numStreams;
    /*
-    * Followed by numStream SVGA3dVertexStream structures.
+    * Followed by numStream SVGA3dVertexStream काष्ठाures.
     *
-    * If numStreams < SVGA3D_MAX_VERTEX_ARRAYS, the remaining streams
+    * If numStreams < SVGA3D_MAX_VERTEX_ARRAYS, the reमुख्यing streams
     * are cleared and will not be used by following draws.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetVertexStreams;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
-   uint32 numDivisors;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
+   uपूर्णांक32 numDivisors;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetVertexDivisors;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                   stage;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                   stage;
    SVGA3dTextureStateName   name;
-   union {
-      uint32                value;
-      float                 floatValue;
-   };
-}
-#include "vmware_pack_end.h"
+   जोड़ अणु
+      uपूर्णांक32                value;
+      भग्न                 भग्नValue;
+   पूर्ण;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dTextureState;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   /* Followed by variable number of SVGA3dTextureState structures */
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   /* Followed by variable number of SVGA3dTextureState काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetTextureState;      /* SVGA_3D_CMD_SETTEXTURESTATE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                   cid;
-   SVGA3dTransformType      type;
-   float                    matrix[16];
-}
-#include "vmware_pack_end.h"
-SVGA3dCmdSetTransform;          /* SVGA_3D_CMD_SETTRANSFORM */
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                   cid;
+   SVGA3dTransक्रमmType      type;
+   भग्न                    matrix[16];
+पूर्ण
+#समावेश "vmware_pack_end.h"
+SVGA3dCmdSetTransक्रमm;          /* SVGA_3D_CMD_SETTRANSFORM */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   float                min;
-   float                max;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   भग्न                min;
+   भग्न                max;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dZRange;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dZRange         zRange;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetZRange;             /* SVGA_3D_CMD_SETZRANGE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   float                diffuse[4];
-   float                ambient[4];
-   float                specular[4];
-   float                emissive[4];
-   float                shininess;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   भग्न                dअगरfuse[4];
+   भग्न                ambient[4];
+   भग्न                specular[4];
+   भग्न                emissive[4];
+   भग्न                shininess;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dMaterial;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dFace           face;
    SVGA3dMaterial       material;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetMaterial;           /* SVGA_3D_CMD_SETMATERIAL */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               index;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               index;
    SVGA3dLightData      data;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetLightData;           /* SVGA_3D_CMD_SETLIGHTDATA */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               index;
-   uint32               enabled;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               index;
+   uपूर्णांक32               enabled;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetLightEnabled;      /* SVGA_3D_CMD_SETLIGHTENABLED */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dRect           rect;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetViewport;           /* SVGA_3D_CMD_SETVIEWPORT */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dRect           rect;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetScissorRect;         /* SVGA_3D_CMD_SETSCISSORRECT */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               index;
-   float                plane[4];
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               index;
+   भग्न                plane[4];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetClipPlane;           /* SVGA_3D_CMD_SETCLIPPLANE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               shid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               shid;
    SVGA3dShaderType     type;
-   /* Followed by variable number of DWORDs for shader bycode */
-}
-#include "vmware_pack_end.h"
+   /* Followed by variable number of DWORDs क्रम shader bycode */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineShader;           /* SVGA_3D_CMD_SHADER_DEFINE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
-   uint32               shid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
+   uपूर्णांक32               shid;
    SVGA3dShaderType     type;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyShader;         /* SVGA_3D_CMD_SHADER_DESTROY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                  cid;
-   uint32                  reg;     /* register number */
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                  cid;
+   uपूर्णांक32                  reg;     /* रेजिस्टर number */
    SVGA3dShaderType        type;
    SVGA3dShaderConstType   ctype;
-   uint32                  values[4];
+   uपूर्णांक32                  values[4];
 
    /*
     * Followed by a variable number of additional values.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetShaderConst;        /* SVGA_3D_CMD_SET_SHADER_CONST */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dShaderType     type;
-   uint32               shid;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32               shid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetShader;       /* SVGA_3D_CMD_SET_SHADER */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dQueryType      type;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBeginQuery;           /* SVGA_3D_CMD_BEGIN_QUERY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dQueryType      type;
-   SVGAGuestPtr         guestResult;   /* Points to an SVGA3dQueryResult structure */
-}
-#include "vmware_pack_end.h"
+   SVGAGuestPtr         guestResult;   /* Poपूर्णांकs to an SVGA3dQueryResult काष्ठाure */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdEndQuery;                  /* SVGA_3D_CMD_END_QUERY */
 
 
 /*
  * SVGA3D_CMD_WAIT_FOR_QUERY --
  *
- *    Will read the SVGA3dQueryResult structure pointed to by guestResult,
- *    and if the state member is set to anything else than
+ *    Will पढ़ो the SVGA3dQueryResult काष्ठाure poपूर्णांकed to by guestResult,
+ *    and अगर the state member is set to anything अन्यथा than
  *    SVGA3D_QUERYSTATE_PENDING, this command will always be a no-op.
  *
- *    Otherwise, in addition to the query explicitly waited for,
- *    All queries with the same type and issued with the same cid, for which
+ *    Otherwise, in addition to the query explicitly रुकोed क्रम,
+ *    All queries with the same type and issued with the same cid, क्रम which
  *    an SVGA_3D_CMD_END_QUERY command has previously been sent, will
  *    be finished after execution of this command.
  *
- *    A query will be identified by the gmrId and offset of the guestResult
+ *    A query will be identअगरied by the gmrId and offset of the guestResult
  *    member. If the device can't find an SVGA_3D_CMD_END_QUERY that has
  *    been sent previously with an indentical gmrId and offset, it will
  *    effectively end all queries with an identical type issued with the
- *    same cid, and the SVGA3dQueryResult structure pointed to by
+ *    same cid, and the SVGA3dQueryResult काष्ठाure poपूर्णांकed to by
  *    guestResult will not be written to. This property can be used to
- *    implement a query barrier for a given cid and query type.
+ *    implement a query barrier क्रम a given cid and query type.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;        /* Same parameters passed to END_QUERY */
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;        /* Same parameters passed to END_QUERY */
    SVGA3dQueryType      type;
    SVGAGuestPtr         guestResult;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdWaitForQuery;              /* SVGA_3D_CMD_WAIT_FOR_QUERY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               totalSize;    /* Set by guest before query is ended. */
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               totalSize;    /* Set by guest beक्रमe query is ended. */
    SVGA3dQueryState     state;        /* Set by host or guest. See SVGA3dQueryState. */
-   union {                            /* Set by host on exit from PENDING state */
-      uint32            result32;
-      uint32            queryCookie; /* May be used to identify which QueryGetData this
+   जोड़ अणु                            /* Set by host on निकास from PENDING state */
+      uपूर्णांक32            result32;
+      uपूर्णांक32            queryCookie; /* May be used to identअगरy which QueryGetData this
                                         result corresponds to. */
-   };
-}
-#include "vmware_pack_end.h"
+   पूर्ण;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dQueryResult;
 
 
@@ -1174,61 +1175,61 @@ SVGA3dQueryResult;
  * SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN --
  *
  *    This is a blit from an SVGA3D surface to a Screen Object.
- *    This blit must be directed at a specific screen.
+ *    This blit must be directed at a specअगरic screen.
  *
  *    The blit copies from a rectangular region of an SVGA3D surface
  *    image to a rectangular region of a screen.
  *
  *    This command takes an optional variable-length list of clipping
  *    rectangles after the body of the command. If no rectangles are
- *    specified, there is no clipping region. The entire destRect is
+ *    specअगरied, there is no clipping region. The entire destRect is
  *    drawn to. If one or more rectangles are included, they describe
  *    a clipping region. The clip rectangle coordinates are measured
  *    relative to the top-left corner of destRect.
  *
  *    The srcImage must be from mip=0 face=0.
  *
- *    This supports scaling if the src and dest are of different sizes.
+ *    This supports scaling अगर the src and dest are of dअगरferent sizes.
  *
  * Availability:
  *    SVGA_FIFO_CAP_SCREEN_OBJECT
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId srcImage;
    SVGASignedRect       srcRect;
-   uint32               destScreenId; /* Screen Object ID */
+   uपूर्णांक32               destScreenId; /* Screen Object ID */
    SVGASignedRect       destRect;
    /* Clipping: zero or more SVGASignedRects follow */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBlitSurfaceToScreen;         /* SVGA_3D_CMD_BLIT_SURFACE_TO_SCREEN */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               sid;
    SVGA3dTextureFilter  filter;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdGenerateMipmaps;             /* SVGA_3D_CMD_GENERATE_MIPMAPS */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdActivateSurface;               /* SVGA_3D_CMD_ACTIVATE_SURFACE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDeactivateSurface;             /* SVGA_3D_CMD_DEACTIVATE_SURFACE */
 
 /*
@@ -1238,37 +1239,37 @@ SVGA3dCmdDeactivateSurface;             /* SVGA_3D_CMD_DEACTIVATE_SURFACE */
  * cap bit is not required.
  *
  * - refBuffer and destBuffer are 32bit BGRX; refBuffer and destBuffer could
- *   be different, but it is required that guest makes sure refBuffer has
- *   exactly the same contents that were written to when last time screen DMA
+ *   be dअगरferent, but it is required that guest makes sure refBuffer has
+ *   exactly the same contents that were written to when last समय screen DMA
  *   command is received by host.
  *
  * - changemap is generated by lib/blit, and it has the changes from last
  *   received screen DMA or more.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdScreenDMA {
-   uint32 screenId;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdScreenDMA अणु
+   uपूर्णांक32 screenId;
    SVGAGuestImage refBuffer;
    SVGAGuestImage destBuffer;
    SVGAGuestImage changeMap;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdScreenDMA;        /* SVGA_3D_CMD_SCREEN_DMA */
 
 /*
  * Logic ops
  */
 
-#define SVGA3D_LOTRANSBLT_HONORALPHA     (0x01)
-#define SVGA3D_LOSTRETCHBLT_MIRRORX      (0x01)
-#define SVGA3D_LOSTRETCHBLT_MIRRORY      (0x02)
-#define SVGA3D_LOALPHABLEND_SRCHASALPHA  (0x01)
+#घोषणा SVGA3D_LOTRANSBLT_HONORALPHA     (0x01)
+#घोषणा SVGA3D_LOSTRETCHBLT_MIRRORX      (0x01)
+#घोषणा SVGA3D_LOSTRETCHBLT_MIRRORY      (0x02)
+#घोषणा SVGA3D_LOALPHABLEND_SRCHASALPHA  (0x01)
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsBitBlt {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsBitBlt अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
@@ -1278,15 +1279,15 @@ struct SVGA3dCmdLogicOpsBitBlt {
    SVGA3dSurfaceImageId dst;
    SVGA3dLogicOp logicOp;
    SVGA3dLogicOpRop3 logicOpRop3;
-   /* Followed by variable number of SVGA3dCopyBox structures */
-}
-#include "vmware_pack_end.h"
+   /* Followed by variable number of SVGA3dCopyBox काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsBitBlt;   /* SVGA_3D_CMD_LOGICOPS_BITBLT */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsTransBlt {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsTransBlt अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
@@ -1294,19 +1295,19 @@ struct SVGA3dCmdLogicOpsTransBlt {
     */
    SVGA3dSurfaceImageId src;
    SVGA3dSurfaceImageId dst;
-   uint32 color;
-   uint32 flags;
+   uपूर्णांक32 color;
+   uपूर्णांक32 flags;
    SVGA3dBox srcBox;
    SVGA3dSignedBox dstBox;
    SVGA3dBox clipBox;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsTransBlt;   /* SVGA_3D_CMD_LOGICOPS_TRANSBLT */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsStretchBlt {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsStretchBlt अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
@@ -1314,37 +1315,37 @@ struct SVGA3dCmdLogicOpsStretchBlt {
     */
    SVGA3dSurfaceImageId src;
    SVGA3dSurfaceImageId dst;
-   uint16 mode;
-   uint16 flags;
+   uपूर्णांक16 mode;
+   uपूर्णांक16 flags;
    SVGA3dBox srcBox;
    SVGA3dSignedBox dstBox;
    SVGA3dBox clipBox;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsStretchBlt;   /* SVGA_3D_CMD_LOGICOPS_STRETCHBLT */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsColorFill {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsColorFill अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
     * be zero.
     */
    SVGA3dSurfaceImageId dst;
-   uint32 color;
+   uपूर्णांक32 color;
    SVGA3dLogicOp logicOp;
    SVGA3dLogicOpRop3 logicOpRop3;
-   /* Followed by variable number of SVGA3dRect structures. */
-}
-#include "vmware_pack_end.h"
+   /* Followed by variable number of SVGA3dRect काष्ठाures. */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsColorFill;   /* SVGA_3D_CMD_LOGICOPS_COLORFILL */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsAlphaBlend {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsAlphaBlend अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
@@ -1352,40 +1353,40 @@ struct SVGA3dCmdLogicOpsAlphaBlend {
     */
    SVGA3dSurfaceImageId src;
    SVGA3dSurfaceImageId dst;
-   uint32 alphaVal;
-   uint32 flags;
+   uपूर्णांक32 alphaVal;
+   uपूर्णांक32 flags;
    SVGA3dBox srcBox;
    SVGA3dSignedBox dstBox;
    SVGA3dBox clipBox;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsAlphaBlend;   /* SVGA_3D_CMD_LOGICOPS_ALPHABLEND */
 
-#define SVGA3D_CLEARTYPE_INVALID_GAMMA_INDEX 0xFFFFFFFF
+#घोषणा SVGA3D_CLEARTYPE_INVALID_GAMMA_INDEX 0xFFFFFFFF
 
-#define SVGA3D_CLEARTYPE_GAMMA_WIDTH  512
-#define SVGA3D_CLEARTYPE_GAMMA_HEIGHT 16
+#घोषणा SVGA3D_CLEARTYPE_GAMMA_WIDTH  512
+#घोषणा SVGA3D_CLEARTYPE_GAMMA_HEIGHT 16
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdLogicOpsClearTypeBlend {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdLogicOpsClearTypeBlend अणु
    /*
     * All LogicOps surfaces are one-level
     * surfaces so mipmap & face should always
     * be zero.
     */
-   SVGA3dSurfaceImageId tmp;
+   SVGA3dSurfaceImageId पंचांगp;
    SVGA3dSurfaceImageId dst;
    SVGA3dSurfaceImageId gammaSurf;
    SVGA3dSurfaceImageId alphaSurf;
-   uint32 gamma;
-   uint32 color;
-   uint32 color2;
-   int32 alphaOffsetX;
-   int32 alphaOffsetY;
-   /* Followed by variable number of SVGA3dBox structures */
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 gamma;
+   uपूर्णांक32 color;
+   uपूर्णांक32 color2;
+   पूर्णांक32 alphaOffsetX;
+   पूर्णांक32 alphaOffsetY;
+   /* Followed by variable number of SVGA3dBox काष्ठाures */
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdLogicOpsClearTypeBlend;   /* SVGA_3D_CMD_LOGICOPS_CLEARTYPEBLEND */
 
 
@@ -1393,149 +1394,149 @@ SVGA3dCmdLogicOpsClearTypeBlend;   /* SVGA_3D_CMD_LOGICOPS_CLEARTYPEBLEND */
  * Guest-backed objects definitions.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAMobFormat ptDepth;
-   uint32 sizeInBytes;
+   uपूर्णांक32 sizeInBytes;
    PPN64 base;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAOTableMobEntry;
-#define SVGA3D_OTABLE_MOB_ENTRY_SIZE (sizeof(SVGAOTableMobEntry))
+#घोषणा SVGA3D_OTABLE_MOB_ENTRY_SIZE (माप(SVGAOTableMobEntry))
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   SVGA3dSurfaceFormat format;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   SVGA3dSurfaceFormat क्रमmat;
    SVGA3dSurface1Flags surface1Flags;
-   uint32 numMipLevels;
-   uint32 multisampleCount;
-   SVGA3dTextureFilter autogenFilter;
+   uपूर्णांक32 numMipLevels;
+   uपूर्णांक32 multisampleCount;
+   SVGA3dTextureFilter स्वतःgenFilter;
    SVGA3dSize size;
    SVGAMobId mobid;
-   uint32 arraySize;
-   uint32 mobPitch;
+   uपूर्णांक32 arraySize;
+   uपूर्णांक32 mobPitch;
    SVGA3dSurface2Flags surface2Flags;
-   uint8 multisamplePattern;
-   uint8 qualityLevel;
-   uint16 bufferByteStride;
-   float minLOD;
-   uint32 pad0[2];
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक8 multisamplePattern;
+   uपूर्णांक8 qualityLevel;
+   uपूर्णांक16 bufferByteStride;
+   भग्न minLOD;
+   uपूर्णांक32 pad0[2];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAOTableSurfaceEntry;
-#define SVGA3D_OTABLE_SURFACE_ENTRY_SIZE (sizeof(SVGAOTableSurfaceEntry))
+#घोषणा SVGA3D_OTABLE_SURFACE_ENTRY_SIZE (माप(SVGAOTableSurfaceEntry))
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 cid;
    SVGAMobId mobid;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAOTableContextEntry;
-#define SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE (sizeof(SVGAOTableContextEntry))
+#घोषणा SVGA3D_OTABLE_CONTEXT_ENTRY_SIZE (माप(SVGAOTableContextEntry))
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dShaderType type;
-   uint32 sizeInBytes;
-   uint32 offsetInBytes;
+   uपूर्णांक32 sizeInBytes;
+   uपूर्णांक32 offsetInBytes;
    SVGAMobId mobid;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAOTableShaderEntry;
-#define SVGA3D_OTABLE_SHADER_ENTRY_SIZE (sizeof(SVGAOTableShaderEntry))
+#घोषणा SVGA3D_OTABLE_SHADER_ENTRY_SIZE (माप(SVGAOTableShaderEntry))
 
-#define SVGA_STFLAG_PRIMARY  (1 << 0)
-#define SVGA_STFLAG_RESERVED (1 << 1) /* Added with cap SVGA_CAP_HP_CMD_QUEUE */
-typedef uint32 SVGAScreenTargetFlags;
+#घोषणा SVGA_STFLAG_PRIMARY  (1 << 0)
+#घोषणा SVGA_STFLAG_RESERVED (1 << 1) /* Added with cap SVGA_CAP_HP_CMD_QUEUE */
+प्रकार uपूर्णांक32 SVGAScreenTargetFlags;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dSurfaceImageId image;
-   uint32 width;
-   uint32 height;
-   int32 xRoot;
-   int32 yRoot;
+   uपूर्णांक32 width;
+   uपूर्णांक32 height;
+   पूर्णांक32 xRoot;
+   पूर्णांक32 yRoot;
    SVGAScreenTargetFlags flags;
-   uint32 dpi;
-   uint32 pad[7];
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 dpi;
+   uपूर्णांक32 pad[7];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAOTableScreenTargetEntry;
-#define SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE \
-	(sizeof(SVGAOTableScreenTargetEntry))
+#घोषणा SVGA3D_OTABLE_SCREEN_TARGET_ENTRY_SIZE \
+	(माप(SVGAOTableScreenTargetEntry))
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   float value[4];
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   भग्न value[4];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dShaderConstFloat;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   int32 value[4];
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   पूर्णांक32 value[4];
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dShaderConstInt;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 value;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 value;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dShaderConstBool;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint16 streamOffset;
-   uint8 stream;
-   uint8 type;
-   uint8 methodUsage;
-   uint8 usageIndex;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक16 streamOffset;
+   uपूर्णांक8 stream;
+   uपूर्णांक8 type;
+   uपूर्णांक8 methodUsage;
+   uपूर्णांक8 usageIndex;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAGBVertexElement;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-   uint16 stride;
-   uint32 offset;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+   uपूर्णांक16 stride;
+   uपूर्णांक32 offset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAGBVertexStream;
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGA3dRect viewport;
    SVGA3dRect scissorRect;
    SVGA3dZRange zRange;
 
-   SVGA3dSurfaceImageId renderTargets[SVGA3D_RT_MAX];
+   SVGA3dSurfaceImageId renderTarमाला_लो[SVGA3D_RT_MAX];
    SVGAGBVertexElement decl1[4];
 
-   uint32 renderStates[SVGA3D_RS_MAX];
+   uपूर्णांक32 renderStates[SVGA3D_RS_MAX];
    SVGAGBVertexElement decl2[18];
-   uint32 pad0[2];
+   uपूर्णांक32 pad0[2];
 
-   struct {
+   काष्ठा अणु
       SVGA3dFace face;
       SVGA3dMaterial material;
-   } material;
+   पूर्ण material;
 
-   float clipPlanes[SVGA3D_NUM_CLIPPLANES][4];
-   float matrices[SVGA3D_TRANSFORM_MAX][16];
+   भग्न clipPlanes[SVGA3D_NUM_CLIPPLANES][4];
+   भग्न matrices[SVGA3D_TRANSFORM_MAX][16];
 
    SVGA3dBool lightEnabled[SVGA3D_NUM_LIGHTS];
    SVGA3dLightData lightData[SVGA3D_NUM_LIGHTS];
@@ -1543,28 +1544,28 @@ struct {
    /*
     * Shaders currently bound
     */
-   uint32 shaders[SVGA3D_NUM_SHADERTYPE_PREDX];
+   uपूर्णांक32 shaders[SVGA3D_NUM_SHADERTYPE_PREDX];
    SVGAGBVertexElement decl3[10];
-   uint32 pad1[3];
+   uपूर्णांक32 pad1[3];
 
-   uint32 occQueryActive;
-   uint32 occQueryValue;
+   uपूर्णांक32 occQueryActive;
+   uपूर्णांक32 occQueryValue;
 
    /*
-    * Int/Bool Shader constants
+    * Int/Bool Shader स्थिरants
     */
    SVGA3dShaderConstInt pShaderIValues[SVGA3D_CONSTINTREG_MAX];
    SVGA3dShaderConstInt vShaderIValues[SVGA3D_CONSTINTREG_MAX];
-   uint16 pShaderBValues;
-   uint16 vShaderBValues;
+   uपूर्णांक16 pShaderBValues;
+   uपूर्णांक16 vShaderBValues;
 
 
    SVGAGBVertexStream streams[SVGA3D_MAX_VERTEX_ARRAYS];
-   SVGA3dVertexDivisor divisors[SVGA3D_MAX_VERTEX_ARRAYS];
-   uint32 numVertexDecls;
-   uint32 numVertexStreams;
-   uint32 numVertexDivisors;
-   uint32 pad2[30];
+   SVGA3dVertexDivisor भागisors[SVGA3D_MAX_VERTEX_ARRAYS];
+   uपूर्णांक32 numVertexDecls;
+   uपूर्णांक32 numVertexStreams;
+   uपूर्णांक32 numVertexDivisors;
+   uपूर्णांक32 pad2[30];
 
    /*
     * Texture Stages
@@ -1573,91 +1574,91 @@ struct {
     * textureStages array.
     * SVGA3D_TS_COLOR_KEY is in tsColorKey.
     */
-   uint32 tsColorKey[SVGA3D_NUM_TEXTURE_UNITS];
-   uint32 textureStages[SVGA3D_NUM_TEXTURE_UNITS][SVGA3D_TS_CONSTANT + 1];
-   uint32 tsColorKeyEnable[SVGA3D_NUM_TEXTURE_UNITS];
+   uपूर्णांक32 tsColorKey[SVGA3D_NUM_TEXTURE_UNITS];
+   uपूर्णांक32 textureStages[SVGA3D_NUM_TEXTURE_UNITS][SVGA3D_TS_CONSTANT + 1];
+   uपूर्णांक32 tsColorKeyEnable[SVGA3D_NUM_TEXTURE_UNITS];
 
    /*
-    * Float Shader constants.
+    * Float Shader स्थिरants.
     */
    SVGA3dShaderConstFloat pShaderFValues[SVGA3D_CONSTREG_MAX];
    SVGA3dShaderConstFloat vShaderFValues[SVGA3D_CONSTREG_MAX];
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGAGBContextData;
-#define SVGA3D_CONTEXT_DATA_SIZE (sizeof(SVGAGBContextData))
+#घोषणा SVGA3D_CONTEXT_DATA_SIZE (माप(SVGAGBContextData))
 
 /*
  * SVGA3dCmdSetOTableBase --
  *
- * This command allows the guest to specify the base PPN of the
- * specified object table.
+ * This command allows the guest to specअगरy the base PPN of the
+ * specअगरied object table.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAOTableType type;
    PPN32 baseAddress;
-   uint32 sizeInBytes;
-   uint32 validSizeInBytes;
+   uपूर्णांक32 sizeInBytes;
+   uपूर्णांक32 validSizeInBytes;
    SVGAMobFormat ptDepth;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetOTableBase;  /* SVGA_3D_CMD_SET_OTABLE_BASE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAOTableType type;
    PPN64 baseAddress;
-   uint32 sizeInBytes;
-   uint32 validSizeInBytes;
+   uपूर्णांक32 sizeInBytes;
+   uपूर्णांक32 validSizeInBytes;
    SVGAMobFormat ptDepth;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetOTableBase64;  /* SVGA_3D_CMD_SET_OTABLE_BASE64 */
 
 /*
  * Guests using SVGA_3D_CMD_GROW_OTABLE are promising that
  * the new OTable contains the same contents as the old one, except possibly
- * for some new invalid entries at the end.
+ * क्रम some new invalid entries at the end.
  *
  * (Otherwise, guests should use one of the SetOTableBase commands.)
  */
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAOTableType type;
    PPN64 baseAddress;
-   uint32 sizeInBytes;
-   uint32 validSizeInBytes;
+   uपूर्णांक32 sizeInBytes;
+   uपूर्णांक32 validSizeInBytes;
    SVGAMobFormat ptDepth;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdGrowOTable;  /* SVGA_3D_CMD_GROW_OTABLE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAOTableType type;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdReadbackOTable;  /* SVGA_3D_CMD_READBACK_OTABLE */
 
 /*
  * Define a memory object (Mob) in the OTable.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBMob {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBMob अणु
    SVGAMobId mobid;
    SVGAMobFormat ptDepth;
    PPN32 base;
-   uint32 sizeInBytes;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 sizeInBytes;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBMob;   /* SVGA_3D_CMD_DEFINE_GB_MOB */
 
 
@@ -1665,302 +1666,302 @@ SVGA3dCmdDefineGBMob;   /* SVGA_3D_CMD_DEFINE_GB_MOB */
  * Destroys an object in the OTable.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDestroyGBMob {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDestroyGBMob अणु
    SVGAMobId mobid;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyGBMob;   /* SVGA_3D_CMD_DESTROY_GB_MOB */
 
 /*
  * Define a memory object (Mob) in the OTable with a PPN64 base.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBMob64 {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBMob64 अणु
    SVGAMobId mobid;
    SVGAMobFormat ptDepth;
    PPN64 base;
-   uint32 sizeInBytes;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 sizeInBytes;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBMob64;   /* SVGA_3D_CMD_DEFINE_GB_MOB64 */
 
 /*
  * Redefine an object in the OTable with PPN64 base.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdRedefineGBMob64 {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdRedefineGBMob64 अणु
    SVGAMobId mobid;
    SVGAMobFormat ptDepth;
    PPN64 base;
-   uint32 sizeInBytes;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 sizeInBytes;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdRedefineGBMob64;   /* SVGA_3D_CMD_REDEFINE_GB_MOB64 */
 
 /*
- * Notification that the page tables have been modified.
+ * Notअगरication that the page tables have been modअगरied.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdUpdateGBMobMapping {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdUpdateGBMobMapping अणु
    SVGAMobId mobid;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdUpdateGBMobMapping;   /* SVGA_3D_CMD_UPDATE_GB_MOB_MAPPING */
 
 /*
  * Define a guest-backed surface.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBSurface {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBSurface अणु
+   uपूर्णांक32 sid;
    SVGA3dSurface1Flags surfaceFlags;
-   SVGA3dSurfaceFormat format;
-   uint32 numMipLevels;
-   uint32 multisampleCount;
-   SVGA3dTextureFilter autogenFilter;
+   SVGA3dSurfaceFormat क्रमmat;
+   uपूर्णांक32 numMipLevels;
+   uपूर्णांक32 multisampleCount;
+   SVGA3dTextureFilter स्वतःgenFilter;
    SVGA3dSize size;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBSurface;   /* SVGA_3D_CMD_DEFINE_GB_SURFACE */
 
 /*
  * Defines a guest-backed surface, adding the arraySize field.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBSurface_v2 {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBSurface_v2 अणु
+   uपूर्णांक32 sid;
    SVGA3dSurface1Flags surfaceFlags;
-   SVGA3dSurfaceFormat format;
-   uint32 numMipLevels;
-   uint32 multisampleCount;
-   SVGA3dTextureFilter autogenFilter;
+   SVGA3dSurfaceFormat क्रमmat;
+   uपूर्णांक32 numMipLevels;
+   uपूर्णांक32 multisampleCount;
+   SVGA3dTextureFilter स्वतःgenFilter;
    SVGA3dSize size;
-   uint32 arraySize;
-   uint32 pad;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 arraySize;
+   uपूर्णांक32 pad;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBSurface_v2;   /* SVGA_3D_CMD_DEFINE_GB_SURFACE_V2 */
 
 /*
  * Defines a guest-backed surface, adding the larger flags.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBSurface_v3 {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBSurface_v3 अणु
+   uपूर्णांक32 sid;
    SVGA3dSurfaceAllFlags surfaceFlags;
-   SVGA3dSurfaceFormat format;
-   uint32 numMipLevels;
-   uint32 multisampleCount;
+   SVGA3dSurfaceFormat क्रमmat;
+   uपूर्णांक32 numMipLevels;
+   uपूर्णांक32 multisampleCount;
    SVGA3dMSPattern multisamplePattern;
    SVGA3dMSQualityLevel qualityLevel;
-   SVGA3dTextureFilter autogenFilter;
+   SVGA3dTextureFilter स्वतःgenFilter;
    SVGA3dSize size;
-   uint32 arraySize;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 arraySize;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBSurface_v3;   /* SVGA_3D_CMD_DEFINE_GB_SURFACE_V3 */
 
 /*
  * Defines a guest-backed surface, adding buffer byte stride.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBSurface_v4 {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBSurface_v4 अणु
+   uपूर्णांक32 sid;
    SVGA3dSurfaceAllFlags surfaceFlags;
-   SVGA3dSurfaceFormat format;
-   uint32 numMipLevels;
-   uint32 multisampleCount;
+   SVGA3dSurfaceFormat क्रमmat;
+   uपूर्णांक32 numMipLevels;
+   uपूर्णांक32 multisampleCount;
    SVGA3dMSPattern multisamplePattern;
    SVGA3dMSQualityLevel qualityLevel;
-   SVGA3dTextureFilter autogenFilter;
+   SVGA3dTextureFilter स्वतःgenFilter;
    SVGA3dSize size;
-   uint32 arraySize;
-   uint32 bufferByteStride;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 arraySize;
+   uपूर्णांक32 bufferByteStride;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBSurface_v4;   /* SVGA_3D_CMD_DEFINE_GB_SURFACE_V4 */
 
 /*
  * Destroy a guest-backed surface.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDestroyGBSurface {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDestroyGBSurface अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyGBSurface;   /* SVGA_3D_CMD_DESTROY_GB_SURFACE */
 
 /*
  * Bind a guest-backed surface to a mob.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdBindGBSurface {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdBindGBSurface अणु
+   uपूर्णांक32 sid;
    SVGAMobId mobid;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBindGBSurface;   /* SVGA_3D_CMD_BIND_GB_SURFACE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdBindGBSurfaceWithPitch {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdBindGBSurfaceWithPitch अणु
+   uपूर्णांक32 sid;
    SVGAMobId mobid;
-   uint32 baseLevelPitch;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 baseLevelPitch;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBindGBSurfaceWithPitch;   /* SVGA_3D_CMD_BIND_GB_SURFACE_WITH_PITCH */
 
 /*
- * Conditionally bind a mob to a guest-backed surface if testMobid
+ * Conditionally bind a mob to a guest-backed surface अगर testMobid
  * matches the currently bound mob.  Optionally issue a
- * readback/update on the surface while it is still bound to the old
- * mobid if the mobid is changed by this command.
+ * पढ़ोback/update on the surface जबतक it is still bound to the old
+ * mobid अगर the mobid is changed by this command.
  */
 
-#define SVGA3D_COND_BIND_GB_SURFACE_FLAG_READBACK (1 << 0)
-#define SVGA3D_COND_BIND_GB_SURFACE_FLAG_UPDATE   (1 << 1)
+#घोषणा SVGA3D_COND_BIND_GB_SURFACE_FLAG_READBACK (1 << 0)
+#घोषणा SVGA3D_COND_BIND_GB_SURFACE_FLAG_UPDATE   (1 << 1)
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdCondBindGBSurface {
-   uint32 sid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdCondBindGBSurface अणु
+   uपूर्णांक32 sid;
    SVGAMobId testMobid;
    SVGAMobId mobid;
-   uint32 flags;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 flags;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdCondBindGBSurface;          /* SVGA_3D_CMD_COND_BIND_GB_SURFACE */
 
 /*
  * Update an image in a guest-backed surface.
- * (Inform the device that the guest-contents have been updated.)
+ * (Inक्रमm the device that the guest-contents have been updated.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdUpdateGBImage {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdUpdateGBImage अणु
    SVGA3dSurfaceImageId image;
    SVGA3dBox box;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdUpdateGBImage;   /* SVGA_3D_CMD_UPDATE_GB_IMAGE */
 
 /*
  * Update an entire guest-backed surface.
- * (Inform the device that the guest-contents have been updated.)
+ * (Inक्रमm the device that the guest-contents have been updated.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdUpdateGBSurface {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdUpdateGBSurface अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdUpdateGBSurface;   /* SVGA_3D_CMD_UPDATE_GB_SURFACE */
 
 /*
  * Readback an image in a guest-backed surface.
- * (Request the device to flush the dirty contents into the guest.)
+ * (Request the device to flush the dirty contents पूर्णांकo the guest.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdReadbackGBImage {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdReadbackGBImage अणु
    SVGA3dSurfaceImageId image;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdReadbackGBImage;   /* SVGA_3D_CMD_READBACK_GB_IMAGE */
 
 /*
  * Readback an entire guest-backed surface.
- * (Request the device to flush the dirty contents into the guest.)
+ * (Request the device to flush the dirty contents पूर्णांकo the guest.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdReadbackGBSurface {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdReadbackGBSurface अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdReadbackGBSurface;   /* SVGA_3D_CMD_READBACK_GB_SURFACE */
 
 /*
  * Readback a sub rect of an image in a guest-backed surface.  After
  * issuing this command the driver is required to issue an update call
- * of the same region before issuing any other commands that reference
+ * of the same region beक्रमe issuing any other commands that reference
  * this surface or rendering is not guaranteed.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdReadbackGBImagePartial {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdReadbackGBImagePartial अणु
    SVGA3dSurfaceImageId image;
    SVGA3dBox box;
-   uint32 invertBox;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 invertBox;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdReadbackGBImagePartial; /* SVGA_3D_CMD_READBACK_GB_IMAGE_PARTIAL */
 
 
 /*
  * Invalidate an image in a guest-backed surface.
- * (Notify the device that the contents can be lost.)
+ * (Notअगरy the device that the contents can be lost.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdInvalidateGBImage {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdInvalidateGBImage अणु
    SVGA3dSurfaceImageId image;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdInvalidateGBImage;   /* SVGA_3D_CMD_INVALIDATE_GB_IMAGE */
 
 /*
  * Invalidate an entire guest-backed surface.
- * (Notify the device that the contents if all images can be lost.)
+ * (Notअगरy the device that the contents अगर all images can be lost.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdInvalidateGBSurface {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdInvalidateGBSurface अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdInvalidateGBSurface; /* SVGA_3D_CMD_INVALIDATE_GB_SURFACE */
 
 /*
  * Invalidate a sub rect of an image in a guest-backed surface.  After
  * issuing this command the driver is required to issue an update call
- * of the same region before issuing any other commands that reference
+ * of the same region beक्रमe issuing any other commands that reference
  * this surface or rendering is not guaranteed.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdInvalidateGBImagePartial {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdInvalidateGBImagePartial अणु
    SVGA3dSurfaceImageId image;
    SVGA3dBox box;
-   uint32 invertBox;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 invertBox;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdInvalidateGBImagePartial; /* SVGA_3D_CMD_INVALIDATE_GB_IMAGE_PARTIAL */
 
 
@@ -1968,149 +1969,149 @@ SVGA3dCmdInvalidateGBImagePartial; /* SVGA_3D_CMD_INVALIDATE_GB_IMAGE_PARTIAL */
  * Define a guest-backed context.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBContext {
-   uint32 cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBContext अणु
+   uपूर्णांक32 cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBContext;   /* SVGA_3D_CMD_DEFINE_GB_CONTEXT */
 
 /*
  * Destroy a guest-backed context.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDestroyGBContext {
-   uint32 cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDestroyGBContext अणु
+   uपूर्णांक32 cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyGBContext;   /* SVGA_3D_CMD_DESTROY_GB_CONTEXT */
 
 /*
  * Bind a guest-backed context.
  *
- * validContents should be set to 0 for new contexts,
- * and 1 if this is an old context which is getting paged
+ * validContents should be set to 0 क्रम new contexts,
+ * and 1 अगर this is an old context which is getting paged
  * back on to the device.
  *
  * For new contexts, it is recommended that the driver
- * issue commands to initialize all interesting state
+ * issue commands to initialize all पूर्णांकeresting state
  * prior to rendering.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdBindGBContext {
-   uint32 cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdBindGBContext अणु
+   uपूर्णांक32 cid;
    SVGAMobId mobid;
-   uint32 validContents;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 validContents;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBindGBContext;   /* SVGA_3D_CMD_BIND_GB_CONTEXT */
 
 /*
  * Readback a guest-backed context.
- * (Request that the device flush the contents back into guest memory.)
+ * (Request that the device flush the contents back पूर्णांकo guest memory.)
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdReadbackGBContext {
-   uint32 cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdReadbackGBContext अणु
+   uपूर्णांक32 cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdReadbackGBContext;   /* SVGA_3D_CMD_READBACK_GB_CONTEXT */
 
 /*
  * Invalidate a guest-backed context.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdInvalidateGBContext {
-   uint32 cid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdInvalidateGBContext अणु
+   uपूर्णांक32 cid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdInvalidateGBContext;   /* SVGA_3D_CMD_INVALIDATE_GB_CONTEXT */
 
 /*
  * Define a guest-backed shader.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDefineGBShader {
-   uint32 shid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDefineGBShader अणु
+   uपूर्णांक32 shid;
    SVGA3dShaderType type;
-   uint32 sizeInBytes;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 sizeInBytes;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBShader;   /* SVGA_3D_CMD_DEFINE_GB_SHADER */
 
 /*
  * Bind a guest-backed shader.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdBindGBShader {
-   uint32 shid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdBindGBShader अणु
+   uपूर्णांक32 shid;
    SVGAMobId mobid;
-   uint32 offsetInBytes;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 offsetInBytes;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBindGBShader;   /* SVGA_3D_CMD_BIND_GB_SHADER */
 
 /*
  * Destroy a guest-backed shader.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdDestroyGBShader {
-   uint32 shid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdDestroyGBShader अणु
+   uपूर्णांक32 shid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyGBShader;   /* SVGA_3D_CMD_DESTROY_GB_SHADER */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32                  cid;
-   uint32                  regStart;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32                  cid;
+   uपूर्णांक32                  regStart;
    SVGA3dShaderType        shaderType;
-   SVGA3dShaderConstType   constType;
+   SVGA3dShaderConstType   स्थिरType;
 
    /*
-    * Followed by a variable number of shader constants.
+    * Followed by a variable number of shader स्थिरants.
     *
-    * Note that FLOAT and INT constants are 4-dwords in length, while
-    * BOOL constants are 1-dword in length.
+    * Note that FLOAT and INT स्थिरants are 4-dwords in length, जबतक
+    * BOOL स्थिरants are 1-dword in length.
     */
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdSetGBShaderConstInline;   /* SVGA_3D_CMD_SET_GB_SHADERCONSTS_INLINE */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dQueryType      type;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBeginGBQuery;           /* SVGA_3D_CMD_BEGIN_GB_QUERY */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dQueryType      type;
    SVGAMobId mobid;
-   uint32 offset;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 offset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdEndGBQuery;                  /* SVGA_3D_CMD_END_GB_QUERY */
 
 
@@ -2122,60 +2123,60 @@ SVGA3dCmdEndGBQuery;                  /* SVGA_3D_CMD_END_GB_QUERY */
  *    to a Mob instead of a GMR.
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               cid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               cid;
    SVGA3dQueryType      type;
    SVGAMobId mobid;
-   uint32 offset;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 offset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdWaitForGBQuery;          /* SVGA_3D_CMD_WAIT_FOR_GB_QUERY */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAMobId mobid;
-   uint32 mustBeZero;
-   uint32 initialized;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 mustBeZero;
+   uपूर्णांक32 initialized;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdEnableGart;              /* SVGA_3D_CMD_ENABLE_GART */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
    SVGAMobId mobid;
-   uint32 gartOffset;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 gartOffset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdMapMobIntoGart;          /* SVGA_3D_CMD_MAP_MOB_INTO_GART */
 
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 gartOffset;
-   uint32 numPages;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 gartOffset;
+   uपूर्णांक32 numPages;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdUnmapGartRange;          /* SVGA_3D_CMD_UNMAP_GART_RANGE */
 
 
 /*
- * Screen Targets
+ * Screen Tarमाला_लो
  */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 stid;
-   uint32 width;
-   uint32 height;
-   int32 xRoot;
-   int32 yRoot;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 stid;
+   uपूर्णांक32 width;
+   uपूर्णांक32 height;
+   पूर्णांक32 xRoot;
+   पूर्णांक32 yRoot;
    SVGAScreenTargetFlags flags;
 
    /*
@@ -2183,93 +2184,93 @@ struct {
     *
     * Guests which are not DPI-aware should set this to zero.
     */
-   uint32 dpi;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 dpi;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDefineGBScreenTarget;    /* SVGA_3D_CMD_DEFINE_GB_SCREENTARGET */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 stid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 stid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdDestroyGBScreenTarget;  /* SVGA_3D_CMD_DESTROY_GB_SCREENTARGET */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 stid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 stid;
    SVGA3dSurfaceImageId image;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdBindGBScreenTarget;  /* SVGA_3D_CMD_BIND_GB_SCREENTARGET */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 stid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 stid;
    SVGA3dRect rect;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdUpdateGBScreenTarget;  /* SVGA_3D_CMD_UPDATE_GB_SCREENTARGET */
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCmdGBScreenDMA {
-   uint32 screenId;
-   uint32 dead;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCmdGBScreenDMA अणु
+   uपूर्णांक32 screenId;
+   uपूर्णांक32 dead;
    SVGAMobId destMobID;
-   uint32 destPitch;
+   uपूर्णांक32 destPitch;
    SVGAMobId changeMapMobID;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdGBScreenDMA;        /* SVGA_3D_CMD_GB_SCREEN_DMA */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 value;
-   uint32 mobId;
-   uint32 mobOffset;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 value;
+   uपूर्णांक32 mobId;
+   uपूर्णांक32 mobOffset;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdGBMobFence;  /* SVGA_3D_CMD_GB_MOB_FENCE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 stid;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 stid;
    SVGA3dSurfaceImageId dest;
 
-   uint32 statusMobId;
-   uint32 statusMobOffset;
+   uपूर्णांक32 statusMobId;
+   uपूर्णांक32 statusMobOffset;
 
    /* Reserved fields */
-   uint32 mustBeInvalidId;
-   uint32 mustBeZero;
-}
-#include "vmware_pack_end.h"
+   uपूर्णांक32 mustBeInvalidId;
+   uपूर्णांक32 mustBeZero;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdScreenCopy;  /* SVGA_3D_CMD_SCREEN_COPY */
 
-#define SVGA_SCREEN_COPY_STATUS_FAILURE 0x00
-#define SVGA_SCREEN_COPY_STATUS_SUCCESS 0x01
-#define SVGA_SCREEN_COPY_STATUS_INVALID 0xFFFFFFFF
+#घोषणा SVGA_SCREEN_COPY_STATUS_FAILURE 0x00
+#घोषणा SVGA_SCREEN_COPY_STATUS_SUCCESS 0x01
+#घोषणा SVGA_SCREEN_COPY_STATUS_INVALID 0xFFFFFFFF
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCmdWriteZeroSurface;  /* SVGA_3D_CMD_WRITE_ZERO_SURFACE */
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 sid;
-}
-#include "vmware_pack_end.h"
-SVGA3dCmdHintZeroSurface;  /* SVGA_3D_CMD_HINT_ZERO_SURFACE */
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 sid;
+पूर्ण
+#समावेश "vmware_pack_end.h"
+SVGA3dCmdHपूर्णांकZeroSurface;  /* SVGA_3D_CMD_HINT_ZERO_SURFACE */
 
-#endif /* _SVGA3D_CMD_H_ */
+#पूर्ण_अगर /* _SVGA3D_CMD_H_ */

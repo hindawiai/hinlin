@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2016 Linaro Ltd.
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/mfd/stmpe.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mfd/sपंचांगpe.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/slab.h>
 
-#define STMPE24XX_PWMCS		0x30
-#define PWMCS_EN_PWM0		BIT(0)
-#define PWMCS_EN_PWM1		BIT(1)
-#define PWMCS_EN_PWM2		BIT(2)
-#define STMPE24XX_PWMIC0	0x38
-#define STMPE24XX_PWMIC1	0x39
-#define STMPE24XX_PWMIC2	0x3a
+#घोषणा STMPE24XX_PWMCS		0x30
+#घोषणा PWMCS_EN_PWM0		BIT(0)
+#घोषणा PWMCS_EN_PWM1		BIT(1)
+#घोषणा PWMCS_EN_PWM2		BIT(2)
+#घोषणा STMPE24XX_PWMIC0	0x38
+#घोषणा STMPE24XX_PWMIC1	0x39
+#घोषणा STMPE24XX_PWMIC2	0x3a
 
-#define STMPE_PWM_24XX_PINBASE	21
+#घोषणा STMPE_PWM_24XX_PINBASE	21
 
-struct stmpe_pwm {
-	struct stmpe *stmpe;
-	struct pwm_chip chip;
+काष्ठा sपंचांगpe_pwm अणु
+	काष्ठा sपंचांगpe *sपंचांगpe;
+	काष्ठा pwm_chip chip;
 	u8 last_duty;
-};
+पूर्ण;
 
-static inline struct stmpe_pwm *to_stmpe_pwm(struct pwm_chip *chip)
-{
-	return container_of(chip, struct stmpe_pwm, chip);
-}
+अटल अंतरभूत काष्ठा sपंचांगpe_pwm *to_sपंचांगpe_pwm(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा sपंचांगpe_pwm, chip);
+पूर्ण
 
-static int stmpe_24xx_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct stmpe_pwm *stmpe_pwm = to_stmpe_pwm(chip);
+अटल पूर्णांक sपंचांगpe_24xx_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा sपंचांगpe_pwm *sपंचांगpe_pwm = to_sपंचांगpe_pwm(chip);
 	u8 value;
-	int ret;
+	पूर्णांक ret;
 
-	ret = stmpe_reg_read(stmpe_pwm->stmpe, STMPE24XX_PWMCS);
-	if (ret < 0) {
+	ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe_pwm->sपंचांगpe, STMPE24XX_PWMCS);
+	अगर (ret < 0) अणु
 		dev_err(chip->dev, "error reading PWM#%u control\n",
 			pwm->hwpwm);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	value = ret | BIT(pwm->hwpwm);
 
-	ret = stmpe_reg_write(stmpe_pwm->stmpe, STMPE24XX_PWMCS, value);
-	if (ret) {
+	ret = sपंचांगpe_reg_ग_लिखो(sपंचांगpe_pwm->sपंचांगpe, STMPE24XX_PWMCS, value);
+	अगर (ret) अणु
 		dev_err(chip->dev, "error writing PWM#%u control\n",
 			pwm->hwpwm);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void stmpe_24xx_pwm_disable(struct pwm_chip *chip,
-				   struct pwm_device *pwm)
-{
-	struct stmpe_pwm *stmpe_pwm = to_stmpe_pwm(chip);
+अटल व्योम sपंचांगpe_24xx_pwm_disable(काष्ठा pwm_chip *chip,
+				   काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा sपंचांगpe_pwm *sपंचांगpe_pwm = to_sपंचांगpe_pwm(chip);
 	u8 value;
-	int ret;
+	पूर्णांक ret;
 
-	ret = stmpe_reg_read(stmpe_pwm->stmpe, STMPE24XX_PWMCS);
-	if (ret < 0) {
+	ret = sपंचांगpe_reg_पढ़ो(sपंचांगpe_pwm->sपंचांगpe, STMPE24XX_PWMCS);
+	अगर (ret < 0) अणु
 		dev_err(chip->dev, "error reading PWM#%u control\n",
 			pwm->hwpwm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	value = ret & ~BIT(pwm->hwpwm);
 
-	ret = stmpe_reg_write(stmpe_pwm->stmpe, STMPE24XX_PWMCS, value);
-	if (ret) {
+	ret = sपंचांगpe_reg_ग_लिखो(sपंचांगpe_pwm->sपंचांगpe, STMPE24XX_PWMCS, value);
+	अगर (ret) अणु
 		dev_err(chip->dev, "error writing PWM#%u control\n",
 			pwm->hwpwm);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-/* STMPE 24xx PWM instructions */
-#define SMAX		0x007f
-#define SMIN		0x00ff
-#define GTS		0x0000
-#define LOAD		BIT(14) /* Only available on 2403 */
-#define RAMPUP		0x0000
-#define RAMPDOWN	BIT(7)
-#define PRESCALE_512	BIT(14)
-#define STEPTIME_1	BIT(8)
-#define BRANCH		(BIT(15) | BIT(13))
+/* STMPE 24xx PWM inकाष्ठाions */
+#घोषणा SMAX		0x007f
+#घोषणा SMIN		0x00ff
+#घोषणा GTS		0x0000
+#घोषणा LOAD		BIT(14) /* Only available on 2403 */
+#घोषणा RAMPUP		0x0000
+#घोषणा RAMPDOWN	BIT(7)
+#घोषणा PRESCALE_512	BIT(14)
+#घोषणा STEPTIME_1	BIT(8)
+#घोषणा BRANCH		(BIT(15) | BIT(13))
 
-static int stmpe_24xx_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
-				 int duty_ns, int period_ns)
-{
-	struct stmpe_pwm *stmpe_pwm = to_stmpe_pwm(chip);
-	unsigned int i, pin;
-	u16 program[3] = {
+अटल पूर्णांक sपंचांगpe_24xx_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+				 पूर्णांक duty_ns, पूर्णांक period_ns)
+अणु
+	काष्ठा sपंचांगpe_pwm *sपंचांगpe_pwm = to_sपंचांगpe_pwm(chip);
+	अचिन्हित पूर्णांक i, pin;
+	u16 program[3] = अणु
 		SMAX,
 		GTS,
 		GTS,
-	};
+	पूर्ण;
 	u8 offset;
-	int ret;
+	पूर्णांक ret;
 
 	/* Make sure we are disabled */
-	if (pwm_is_enabled(pwm)) {
-		stmpe_24xx_pwm_disable(chip, pwm);
-	} else {
+	अगर (pwm_is_enabled(pwm)) अणु
+		sपंचांगpe_24xx_pwm_disable(chip, pwm);
+	पूर्ण अन्यथा अणु
 		/* Connect the PWM to the pin */
 		pin = pwm->hwpwm;
 
 		/* On STMPE2401 and 2403 pins 21,22,23 are used */
-		if (stmpe_pwm->stmpe->partnum == STMPE2401 ||
-		    stmpe_pwm->stmpe->partnum == STMPE2403)
+		अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2401 ||
+		    sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2403)
 			pin += STMPE_PWM_24XX_PINBASE;
 
-		ret = stmpe_set_altfunc(stmpe_pwm->stmpe, BIT(pin),
+		ret = sपंचांगpe_set_altfunc(sपंचांगpe_pwm->sपंचांगpe, BIT(pin),
 					STMPE_BLOCK_PWM);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(chip->dev, "unable to connect PWM#%u to pin\n",
 				pwm->hwpwm);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* STMPE24XX */
-	switch (pwm->hwpwm) {
-	case 0:
+	चयन (pwm->hwpwm) अणु
+	हाल 0:
 		offset = STMPE24XX_PWMIC0;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		offset = STMPE24XX_PWMIC1;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		offset = STMPE24XX_PWMIC2;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		/* Should not happen as npwm is 3 */
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dev_dbg(chip->dev, "PWM#%u: config duty %d ns, period %d ns\n",
 		pwm->hwpwm, duty_ns, period_ns);
 
-	if (duty_ns == 0) {
-		if (stmpe_pwm->stmpe->partnum == STMPE2401)
-			program[0] = SMAX; /* off all the time */
+	अगर (duty_ns == 0) अणु
+		अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2401)
+			program[0] = SMAX; /* off all the समय */
 
-		if (stmpe_pwm->stmpe->partnum == STMPE2403)
+		अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2403)
 			program[0] = LOAD | 0xff; /* LOAD 0xff */
 
-		stmpe_pwm->last_duty = 0x00;
-	} else if (duty_ns == period_ns) {
-		if (stmpe_pwm->stmpe->partnum == STMPE2401)
-			program[0] = SMIN; /* on all the time */
+		sपंचांगpe_pwm->last_duty = 0x00;
+	पूर्ण अन्यथा अगर (duty_ns == period_ns) अणु
+		अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2401)
+			program[0] = SMIN; /* on all the समय */
 
-		if (stmpe_pwm->stmpe->partnum == STMPE2403)
+		अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2403)
 			program[0] = LOAD | 0x00; /* LOAD 0x00 */
 
-		stmpe_pwm->last_duty = 0xff;
-	} else {
-		u8 value, last = stmpe_pwm->last_duty;
-		unsigned long duty;
+		sपंचांगpe_pwm->last_duty = 0xff;
+	पूर्ण अन्यथा अणु
+		u8 value, last = sपंचांगpe_pwm->last_duty;
+		अचिन्हित दीर्घ duty;
 
 		/*
 		 * Counter goes from 0x00 to 0xff repeatedly at 32768 Hz,
 		 * (means a period of 30517 ns) then this is compared to the
-		 * counter from the ramp, if this is >= PWM counter the output
+		 * counter from the ramp, अगर this is >= PWM counter the output
 		 * is high. With LOAD we can define how much of the cycle it
 		 * is on.
 		 *
@@ -187,25 +188,25 @@ static int stmpe_24xx_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 		duty = DIV_ROUND_CLOSEST(duty, period_ns);
 		value = duty;
 
-		if (value == last) {
+		अगर (value == last) अणु
 			/* Run the old program */
-			if (pwm_is_enabled(pwm))
-				stmpe_24xx_pwm_enable(chip, pwm);
+			अगर (pwm_is_enabled(pwm))
+				sपंचांगpe_24xx_pwm_enable(chip, pwm);
 
-			return 0;
-		} else if (stmpe_pwm->stmpe->partnum == STMPE2403) {
+			वापस 0;
+		पूर्ण अन्यथा अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2403) अणु
 			/* STMPE2403 can simply set the right PWM value */
 			program[0] = LOAD | value;
 			program[1] = 0x0000;
-		} else if (stmpe_pwm->stmpe->partnum == STMPE2401) {
+		पूर्ण अन्यथा अगर (sपंचांगpe_pwm->sपंचांगpe->partnum == STMPE2401) अणु
 			/* STMPE2401 need a complex program */
 			u16 incdec = 0x0000;
 
-			if (last < value)
+			अगर (last < value)
 				/* Count up */
 				incdec = RAMPUP | (value - last);
-			else
-				/* Count down */
+			अन्यथा
+				/* Count करोwn */
 				incdec = RAMPDOWN | (last - value);
 
 			/* Step to desired value, smoothly */
@@ -213,102 +214,102 @@ static int stmpe_24xx_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 
 			/* Loop eternally to 0x00 */
 			program[1] = BRANCH;
-		}
+		पूर्ण
 
 		dev_dbg(chip->dev,
 			"PWM#%u: value = %02x, last_duty = %02x, program=%04x,%04x,%04x\n",
 			pwm->hwpwm, value, last, program[0], program[1],
 			program[2]);
-		stmpe_pwm->last_duty = value;
-	}
+		sपंचांगpe_pwm->last_duty = value;
+	पूर्ण
 
 	/*
-	 * We can write programs of up to 64 16-bit words into this channel.
+	 * We can ग_लिखो programs of up to 64 16-bit words पूर्णांकo this channel.
 	 */
-	for (i = 0; i < ARRAY_SIZE(program); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(program); i++) अणु
 		u8 value;
 
 		value = (program[i] >> 8) & 0xff;
 
-		ret = stmpe_reg_write(stmpe_pwm->stmpe, offset, value);
-		if (ret) {
+		ret = sपंचांगpe_reg_ग_लिखो(sपंचांगpe_pwm->sपंचांगpe, offset, value);
+		अगर (ret) अणु
 			dev_err(chip->dev, "error writing register %02x: %d\n",
 				offset, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		value = program[i] & 0xff;
 
-		ret = stmpe_reg_write(stmpe_pwm->stmpe, offset, value);
-		if (ret) {
+		ret = sपंचांगpe_reg_ग_लिखो(sपंचांगpe_pwm->sपंचांगpe, offset, value);
+		अगर (ret) अणु
 			dev_err(chip->dev, "error writing register %02x: %d\n",
 				offset, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* If we were enabled, re-enable this PWM */
-	if (pwm_is_enabled(pwm))
-		stmpe_24xx_pwm_enable(chip, pwm);
+	अगर (pwm_is_enabled(pwm))
+		sपंचांगpe_24xx_pwm_enable(chip, pwm);
 
-	/* Sleep for 200ms so we're sure it will take effect */
+	/* Sleep क्रम 200ms so we're sure it will take effect */
 	msleep(200);
 
 	dev_dbg(chip->dev, "programmed PWM#%u, %u bytes\n", pwm->hwpwm, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pwm_ops stmpe_24xx_pwm_ops = {
-	.config = stmpe_24xx_pwm_config,
-	.enable = stmpe_24xx_pwm_enable,
-	.disable = stmpe_24xx_pwm_disable,
+अटल स्थिर काष्ठा pwm_ops sपंचांगpe_24xx_pwm_ops = अणु
+	.config = sपंचांगpe_24xx_pwm_config,
+	.enable = sपंचांगpe_24xx_pwm_enable,
+	.disable = sपंचांगpe_24xx_pwm_disable,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init stmpe_pwm_probe(struct platform_device *pdev)
-{
-	struct stmpe *stmpe = dev_get_drvdata(pdev->dev.parent);
-	struct stmpe_pwm *pwm;
-	int ret;
+अटल पूर्णांक __init sपंचांगpe_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांगpe *sपंचांगpe = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा sपंचांगpe_pwm *pwm;
+	पूर्णांक ret;
 
-	pwm = devm_kzalloc(&pdev->dev, sizeof(*pwm), GFP_KERNEL);
-	if (!pwm)
-		return -ENOMEM;
+	pwm = devm_kzalloc(&pdev->dev, माप(*pwm), GFP_KERNEL);
+	अगर (!pwm)
+		वापस -ENOMEM;
 
-	pwm->stmpe = stmpe;
+	pwm->sपंचांगpe = sपंचांगpe;
 	pwm->chip.dev = &pdev->dev;
 
-	if (stmpe->partnum == STMPE2401 || stmpe->partnum == STMPE2403) {
-		pwm->chip.ops = &stmpe_24xx_pwm_ops;
+	अगर (sपंचांगpe->partnum == STMPE2401 || sपंचांगpe->partnum == STMPE2403) अणु
+		pwm->chip.ops = &sपंचांगpe_24xx_pwm_ops;
 		pwm->chip.npwm = 3;
-	} else {
-		if (stmpe->partnum == STMPE1601)
+	पूर्ण अन्यथा अणु
+		अगर (sपंचांगpe->partnum == STMPE1601)
 			dev_err(&pdev->dev, "STMPE1601 not yet supported\n");
-		else
+		अन्यथा
 			dev_err(&pdev->dev, "Unknown STMPE PWM\n");
 
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = stmpe_enable(stmpe, STMPE_BLOCK_PWM);
-	if (ret)
-		return ret;
+	ret = sपंचांगpe_enable(sपंचांगpe, STMPE_BLOCK_PWM);
+	अगर (ret)
+		वापस ret;
 
 	ret = pwmchip_add(&pwm->chip);
-	if (ret) {
-		stmpe_disable(stmpe, STMPE_BLOCK_PWM);
-		return ret;
-	}
+	अगर (ret) अणु
+		sपंचांगpe_disable(sपंचांगpe, STMPE_BLOCK_PWM);
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pwm);
+	platक्रमm_set_drvdata(pdev, pwm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver stmpe_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sपंचांगpe_pwm_driver = अणु
+	.driver = अणु
 		.name = "stmpe-pwm",
-	},
-};
-builtin_platform_driver_probe(stmpe_pwm_driver, stmpe_pwm_probe);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver_probe(sपंचांगpe_pwm_driver, sपंचांगpe_pwm_probe);

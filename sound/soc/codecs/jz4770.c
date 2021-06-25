@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Ingenic JZ4770 CODEC driver
 //
 // Copyright (C) 2012, Maarten ter Huurne <maarten@treewalker.org>
 // Copyright (C) 2019, Paul Cercueil <paul@crapouillou.net>
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/iopoll.h>
-#include <linux/module.h>
-#include <linux/regmap.h>
-#include <linux/time64.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/module.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/समय64.h>
 
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-dai.h>
-#include <sound/soc-dapm.h>
-#include <sound/tlv.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-dai.h>
+#समावेश <sound/soc-dapm.h>
+#समावेश <sound/tlv.h>
 
-#define ICDC_RGADW_OFFSET		0x00
-#define ICDC_RGDATA_OFFSET		0x04
+#घोषणा ICDC_RGADW_OFFSET		0x00
+#घोषणा ICDC_RGDATA_OFFSET		0x04
 
-/* ICDC internal register access control register(RGADW) */
-#define ICDC_RGADW_RGWR			BIT(16)
+/* ICDC पूर्णांकernal रेजिस्टर access control रेजिस्टर(RGADW) */
+#घोषणा ICDC_RGADW_RGWR			BIT(16)
 
-#define ICDC_RGADW_RGADDR_OFFSET	8
-#define	ICDC_RGADW_RGADDR_MASK		GENMASK(14, ICDC_RGADW_RGADDR_OFFSET)
+#घोषणा ICDC_RGADW_RGADDR_OFFSET	8
+#घोषणा	ICDC_RGADW_RGADDR_MASK		GENMASK(14, ICDC_RGADW_RGADDR_OFFSET)
 
-#define ICDC_RGADW_RGDIN_OFFSET		0
-#define	ICDC_RGADW_RGDIN_MASK		GENMASK(7, ICDC_RGADW_RGDIN_OFFSET)
+#घोषणा ICDC_RGADW_RGDIN_OFFSET		0
+#घोषणा	ICDC_RGADW_RGDIN_MASK		GENMASK(7, ICDC_RGADW_RGDIN_OFFSET)
 
-/* ICDC internal register data output register (RGDATA)*/
-#define ICDC_RGDATA_IRQ			BIT(8)
+/* ICDC पूर्णांकernal रेजिस्टर data output रेजिस्टर (RGDATA)*/
+#घोषणा ICDC_RGDATA_IRQ			BIT(8)
 
-#define ICDC_RGDATA_RGDOUT_OFFSET	0
-#define ICDC_RGDATA_RGDOUT_MASK		GENMASK(7, ICDC_RGDATA_RGDOUT_OFFSET)
+#घोषणा ICDC_RGDATA_RGDOUT_OFFSET	0
+#घोषणा ICDC_RGDATA_RGDOUT_MASK		GENMASK(7, ICDC_RGDATA_RGDOUT_OFFSET)
 
-/* Internal register space, accessed through regmap */
-enum {
+/* Internal रेजिस्टर space, accessed through regmap */
+क्रमागत अणु
 	JZ4770_CODEC_REG_SR,
 	JZ4770_CODEC_REG_AICR_DAC,
 	JZ4770_CODEC_REG_AICR_ADC,
@@ -78,120 +79,120 @@ enum {
 	JZ4770_CODEC_REG_AGC3,
 	JZ4770_CODEC_REG_AGC4,
 	JZ4770_CODEC_REG_AGC5,
-};
+पूर्ण;
 
-#define REG_AICR_DAC_ADWL_OFFSET	6
-#define REG_AICR_DAC_ADWL_MASK		(0x3 << REG_AICR_DAC_ADWL_OFFSET)
-#define REG_AICR_DAC_SERIAL		BIT(1)
-#define REG_AICR_DAC_I2S		BIT(0)
+#घोषणा REG_AICR_DAC_ADWL_OFFSET	6
+#घोषणा REG_AICR_DAC_ADWL_MASK		(0x3 << REG_AICR_DAC_ADWL_OFFSET)
+#घोषणा REG_AICR_DAC_SERIAL		BIT(1)
+#घोषणा REG_AICR_DAC_I2S		BIT(0)
 
-#define REG_AICR_ADC_ADWL_OFFSET	6
-#define REG_AICR_ADC_ADWL_MASK		(0x3 << REG_AICR_ADC_ADWL_OFFSET)
-#define REG_AICR_ADC_SERIAL		BIT(1)
-#define REG_AICR_ADC_I2S		BIT(0)
+#घोषणा REG_AICR_ADC_ADWL_OFFSET	6
+#घोषणा REG_AICR_ADC_ADWL_MASK		(0x3 << REG_AICR_ADC_ADWL_OFFSET)
+#घोषणा REG_AICR_ADC_SERIAL		BIT(1)
+#घोषणा REG_AICR_ADC_I2S		BIT(0)
 
-#define REG_CR_LO_MUTE_OFFSET		7
-#define REG_CR_LO_SB_OFFSET		4
-#define REG_CR_LO_SEL_OFFSET		0
-#define REG_CR_LO_SEL_MASK		(0x3 << REG_CR_LO_SEL_OFFSET)
+#घोषणा REG_CR_LO_MUTE_OFFSET		7
+#घोषणा REG_CR_LO_SB_OFFSET		4
+#घोषणा REG_CR_LO_SEL_OFFSET		0
+#घोषणा REG_CR_LO_SEL_MASK		(0x3 << REG_CR_LO_SEL_OFFSET)
 
-#define REG_CR_HP_MUTE			BIT(7)
-#define REG_CR_HP_LOAD			BIT(6)
-#define REG_CR_HP_SB_OFFSET		4
-#define REG_CR_HP_SB_HPCM_OFFSET	3
-#define REG_CR_HP_SEL_OFFSET		0
-#define REG_CR_HP_SEL_MASK		(0x3 << REG_CR_HP_SEL_OFFSET)
+#घोषणा REG_CR_HP_MUTE			BIT(7)
+#घोषणा REG_CR_HP_LOAD			BIT(6)
+#घोषणा REG_CR_HP_SB_OFFSET		4
+#घोषणा REG_CR_HP_SB_HPCM_OFFSET	3
+#घोषणा REG_CR_HP_SEL_OFFSET		0
+#घोषणा REG_CR_HP_SEL_MASK		(0x3 << REG_CR_HP_SEL_OFFSET)
 
-#define REG_CR_DAC_MUTE			BIT(7)
-#define REG_CR_DAC_MONO			BIT(6)
-#define REG_CR_DAC_LEFT_ONLY		BIT(5)
-#define REG_CR_DAC_SB_OFFSET		4
-#define REG_CR_DAC_LRSWAP		BIT(3)
+#घोषणा REG_CR_DAC_MUTE			BIT(7)
+#घोषणा REG_CR_DAC_MONO			BIT(6)
+#घोषणा REG_CR_DAC_LEFT_ONLY		BIT(5)
+#घोषणा REG_CR_DAC_SB_OFFSET		4
+#घोषणा REG_CR_DAC_LRSWAP		BIT(3)
 
-#define REG_CR_MIC_STEREO_OFFSET	7
-#define REG_CR_MIC_IDIFF_OFFSET		6
-#define REG_CR_MIC_SB_MIC2_OFFSET	5
-#define REG_CR_MIC_SB_MIC1_OFFSET	4
-#define REG_CR_MIC_BIAS_V0_OFFSET	1
-#define REG_CR_MIC_BIAS_SB_OFFSET	0
+#घोषणा REG_CR_MIC_STEREO_OFFSET	7
+#घोषणा REG_CR_MIC_IDIFF_OFFSET		6
+#घोषणा REG_CR_MIC_SB_MIC2_OFFSET	5
+#घोषणा REG_CR_MIC_SB_MIC1_OFFSET	4
+#घोषणा REG_CR_MIC_BIAS_V0_OFFSET	1
+#घोषणा REG_CR_MIC_BIAS_SB_OFFSET	0
 
-#define REG_CR_LI_LIBY_OFFSET		4
-#define REG_CR_LI_SB_OFFSET		0
+#घोषणा REG_CR_LI_LIBY_OFFSET		4
+#घोषणा REG_CR_LI_SB_OFFSET		0
 
-#define REG_CR_ADC_DMIC_SEL		BIT(7)
-#define REG_CR_ADC_MONO			BIT(6)
-#define REG_CR_ADC_LEFT_ONLY		BIT(5)
-#define REG_CR_ADC_SB_OFFSET		4
-#define REG_CR_ADC_LRSWAP		BIT(3)
-#define REG_CR_ADC_IN_SEL_OFFSET	0
-#define REG_CR_ADC_IN_SEL_MASK		(0x3 << REG_CR_ADC_IN_SEL_OFFSET)
+#घोषणा REG_CR_ADC_DMIC_SEL		BIT(7)
+#घोषणा REG_CR_ADC_MONO			BIT(6)
+#घोषणा REG_CR_ADC_LEFT_ONLY		BIT(5)
+#घोषणा REG_CR_ADC_SB_OFFSET		4
+#घोषणा REG_CR_ADC_LRSWAP		BIT(3)
+#घोषणा REG_CR_ADC_IN_SEL_OFFSET	0
+#घोषणा REG_CR_ADC_IN_SEL_MASK		(0x3 << REG_CR_ADC_IN_SEL_OFFSET)
 
-#define REG_CR_VIC_SB_SLEEP		BIT(1)
-#define REG_CR_VIC_SB			BIT(0)
+#घोषणा REG_CR_VIC_SB_SLEEP		BIT(1)
+#घोषणा REG_CR_VIC_SB			BIT(0)
 
-#define REG_CCR_CRYSTAL_OFFSET		0
-#define REG_CCR_CRYSTAL_MASK		(0xf << REG_CCR_CRYSTAL_OFFSET)
+#घोषणा REG_CCR_CRYSTAL_OFFSET		0
+#घोषणा REG_CCR_CRYSTAL_MASK		(0xf << REG_CCR_CRYSTAL_OFFSET)
 
-#define REG_FCR_DAC_FREQ_OFFSET		0
-#define REG_FCR_DAC_FREQ_MASK		(0xf << REG_FCR_DAC_FREQ_OFFSET)
+#घोषणा REG_FCR_DAC_FREQ_OFFSET		0
+#घोषणा REG_FCR_DAC_FREQ_MASK		(0xf << REG_FCR_DAC_FREQ_OFFSET)
 
-#define REG_FCR_ADC_FREQ_OFFSET		0
-#define REG_FCR_ADC_FREQ_MASK		(0xf << REG_FCR_ADC_FREQ_OFFSET)
+#घोषणा REG_FCR_ADC_FREQ_OFFSET		0
+#घोषणा REG_FCR_ADC_FREQ_MASK		(0xf << REG_FCR_ADC_FREQ_OFFSET)
 
-#define REG_ICR_INT_FORM_OFFSET		6
-#define REG_ICR_INT_FORM_MASK		(0x3 << REG_ICR_INT_FORM_OFFSET)
+#घोषणा REG_ICR_INT_FORM_OFFSET		6
+#घोषणा REG_ICR_INT_FORM_MASK		(0x3 << REG_ICR_INT_FORM_OFFSET)
 
-#define REG_IMR_ALL_MASK		(0x7f)
-#define REG_IMR_SCLR_MASK		BIT(6)
-#define REG_IMR_JACK_MASK		BIT(5)
-#define REG_IMR_SCMC_MASK		BIT(4)
-#define REG_IMR_RUP_MASK		BIT(3)
-#define REG_IMR_RDO_MASK		BIT(2)
-#define REG_IMR_GUP_MASK		BIT(1)
-#define REG_IMR_GDO_MASK		BIT(0)
+#घोषणा REG_IMR_ALL_MASK		(0x7f)
+#घोषणा REG_IMR_SCLR_MASK		BIT(6)
+#घोषणा REG_IMR_JACK_MASK		BIT(5)
+#घोषणा REG_IMR_SCMC_MASK		BIT(4)
+#घोषणा REG_IMR_RUP_MASK		BIT(3)
+#घोषणा REG_IMR_RDO_MASK		BIT(2)
+#घोषणा REG_IMR_GUP_MASK		BIT(1)
+#घोषणा REG_IMR_GDO_MASK		BIT(0)
 
-#define REG_IFR_ALL_MASK		(0x7f)
-#define REG_IFR_SCLR			BIT(6)
-#define REG_IFR_JACK			BIT(5)
-#define REG_IFR_SCMC			BIT(4)
-#define REG_IFR_RUP			BIT(3)
-#define REG_IFR_RDO			BIT(2)
-#define REG_IFR_GUP			BIT(1)
-#define REG_IFR_GDO			BIT(0)
+#घोषणा REG_IFR_ALL_MASK		(0x7f)
+#घोषणा REG_IFR_SCLR			BIT(6)
+#घोषणा REG_IFR_JACK			BIT(5)
+#घोषणा REG_IFR_SCMC			BIT(4)
+#घोषणा REG_IFR_RUP			BIT(3)
+#घोषणा REG_IFR_RDO			BIT(2)
+#घोषणा REG_IFR_GUP			BIT(1)
+#घोषणा REG_IFR_GDO			BIT(0)
 
-#define REG_GCR_HPL_LRGO		BIT(7)
+#घोषणा REG_GCR_HPL_LRGO		BIT(7)
 
-#define REG_GCR_DACL_RLGOD		BIT(7)
+#घोषणा REG_GCR_DACL_RLGOD		BIT(7)
 
-#define REG_GCR_GAIN_OFFSET		0
-#define REG_GCR_GAIN_MAX		0x1f
+#घोषणा REG_GCR_GAIN_OFFSET		0
+#घोषणा REG_GCR_GAIN_MAX		0x1f
 
-#define REG_GCR_MIC_GAIN_OFFSET		0
-#define REG_GCR_MIC_GAIN_MAX		5
+#घोषणा REG_GCR_MIC_GAIN_OFFSET		0
+#घोषणा REG_GCR_MIC_GAIN_MAX		5
 
-#define REG_GCR_ADC_GAIN_OFFSET		0
-#define REG_GCR_ADC_GAIN_MAX		23
+#घोषणा REG_GCR_ADC_GAIN_OFFSET		0
+#घोषणा REG_GCR_ADC_GAIN_MAX		23
 
-#define REG_AGC1_EN			BIT(7)
+#घोषणा REG_AGC1_EN			BIT(7)
 
-/* codec private data */
-struct jz_codec {
-	struct device *dev;
-	struct regmap *regmap;
-	void __iomem *base;
-	struct clk *clk;
-};
+/* codec निजी data */
+काष्ठा jz_codec अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static int jz4770_codec_set_bias_level(struct snd_soc_component *codec,
-				       enum snd_soc_bias_level level)
-{
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
-	struct regmap *regmap = jz_codec->regmap;
+अटल पूर्णांक jz4770_codec_set_bias_level(काष्ठा snd_soc_component *codec,
+				       क्रमागत snd_soc_bias_level level)
+अणु
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+	काष्ठा regmap *regmap = jz_codec->regmap;
 
-	switch (level) {
-	case SND_SOC_BIAS_PREPARE:
-		/* Reset all interrupt flags. */
-		regmap_write(regmap, JZ4770_CODEC_REG_IFR, REG_IFR_ALL_MASK);
+	चयन (level) अणु
+	हाल SND_SOC_BIAS_PREPARE:
+		/* Reset all पूर्णांकerrupt flags. */
+		regmap_ग_लिखो(regmap, JZ4770_CODEC_REG_IFR, REG_IFR_ALL_MASK);
 
 		regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_VIC,
 				  REG_CR_VIC_SB);
@@ -199,117 +200,117 @@ static int jz4770_codec_set_bias_level(struct snd_soc_component *codec,
 		regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_VIC,
 				  REG_CR_VIC_SB_SLEEP);
 		msleep(400);
-		break;
-	case SND_SOC_BIAS_STANDBY:
+		अवरोध;
+	हाल SND_SOC_BIAS_STANDBY:
 		regmap_set_bits(regmap, JZ4770_CODEC_REG_CR_VIC,
 				REG_CR_VIC_SB_SLEEP);
 		regmap_set_bits(regmap, JZ4770_CODEC_REG_CR_VIC,
 				REG_CR_VIC_SB);
 		fallthrough;
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jz4770_codec_startup(struct snd_pcm_substream *substream,
-				struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *codec = dai->component;
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(codec);
+अटल पूर्णांक jz4770_codec_startup(काष्ठा snd_pcm_substream *substream,
+				काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *codec = dai->component;
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(codec);
 
 	/*
 	 * SYSCLK output from the codec to the AIC is required to keep the
-	 * DMA transfer going during playback when all audible outputs have
+	 * DMA transfer going during playback when all audible outमाला_दो have
 	 * been disabled.
 	 */
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		snd_soc_dapm_force_enable_pin(dapm, "SYSCLK");
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		snd_soc_dapm_क्रमce_enable_pin(dapm, "SYSCLK");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void jz4770_codec_shutdown(struct snd_pcm_substream *substream,
-				  struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *codec = dai->component;
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(codec);
+अटल व्योम jz4770_codec_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *codec = dai->component;
+	काष्ठा snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(codec);
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		snd_soc_dapm_disable_pin(dapm, "SYSCLK");
-}
+पूर्ण
 
 
-static int jz4770_codec_pcm_trigger(struct snd_pcm_substream *substream,
-				    int cmd, struct snd_soc_dai *dai)
-{
-	struct snd_soc_component *codec = dai->component;
-	int ret = 0;
+अटल पूर्णांक jz4770_codec_pcm_trigger(काष्ठा snd_pcm_substream *substream,
+				    पूर्णांक cmd, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा snd_soc_component *codec = dai->component;
+	पूर्णांक ret = 0;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		if (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
-			snd_soc_component_force_bias_level(codec,
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		अगर (substream->stream != SNDRV_PCM_STREAM_PLAYBACK)
+			snd_soc_component_क्रमce_bias_level(codec,
 							   SND_SOC_BIAS_ON);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		/* do nothing */
-		break;
-	default:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		/* करो nothing */
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int jz4770_codec_mute_stream(struct snd_soc_dai *dai, int mute, int direction)
-{
-	struct snd_soc_component *codec = dai->component;
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
-	unsigned int gain_bit = mute ? REG_IFR_GDO : REG_IFR_GUP;
-	unsigned int val;
-	int change, err;
+अटल पूर्णांक jz4770_codec_mute_stream(काष्ठा snd_soc_dai *dai, पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *codec = dai->component;
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+	अचिन्हित पूर्णांक gain_bit = mute ? REG_IFR_GDO : REG_IFR_GUP;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक change, err;
 
 	change = snd_soc_component_update_bits(codec, JZ4770_CODEC_REG_CR_DAC,
 					       REG_CR_DAC_MUTE,
 					       mute ? REG_CR_DAC_MUTE : 0);
-	if (change == 1) {
-		regmap_read(jz_codec->regmap, JZ4770_CODEC_REG_CR_DAC, &val);
+	अगर (change == 1) अणु
+		regmap_पढ़ो(jz_codec->regmap, JZ4770_CODEC_REG_CR_DAC, &val);
 
-		if (val & BIT(REG_CR_DAC_SB_OFFSET))
-			return 1;
+		अगर (val & BIT(REG_CR_DAC_SB_OFFSET))
+			वापस 1;
 
-		err = regmap_read_poll_timeout(jz_codec->regmap,
+		err = regmap_पढ़ो_poll_समयout(jz_codec->regmap,
 					       JZ4770_CODEC_REG_IFR,
 					       val, val & gain_bit,
 					       1000, 1 * USEC_PER_SEC);
-		if (err) {
+		अगर (err) अणु
 			dev_err(jz_codec->dev,
 				"Timeout while setting digital mute: %d", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* clear GUP/GDO flag */
 		regmap_set_bits(jz_codec->regmap, JZ4770_CODEC_REG_IFR,
 				gain_bit);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* unit: 0.01dB */
-static const DECLARE_TLV_DB_MINMAX_MUTE(dac_tlv, -3100, 0);
-static const DECLARE_TLV_DB_SCALE(adc_tlv, 0, 100, 0);
-static const DECLARE_TLV_DB_MINMAX(out_tlv, -2500, 600);
-static const DECLARE_TLV_DB_SCALE(linein_tlv, -2500, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_MINMAX_MUTE(dac_tlv, -3100, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(adc_tlv, 0, 100, 0);
+अटल स्थिर DECLARE_TLV_DB_MINMAX(out_tlv, -2500, 600);
+अटल स्थिर DECLARE_TLV_DB_SCALE(linein_tlv, -2500, 100, 0);
 
 /* Unconditional controls. */
-static const struct snd_kcontrol_new jz4770_codec_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_snd_controls[] = अणु
 	/* record gain control */
 	SOC_DOUBLE_R_TLV("PCM Capture Volume",
 			 JZ4770_CODEC_REG_GCR_ADCL, JZ4770_CODEC_REG_GCR_ADCR,
@@ -319,11 +320,11 @@ static const struct snd_kcontrol_new jz4770_codec_snd_controls[] = {
 	SOC_DOUBLE_R_TLV("Line In Bypass Playback Volume",
 			 JZ4770_CODEC_REG_GCR_LIBYL, JZ4770_CODEC_REG_GCR_LIBYR,
 			 REG_GCR_GAIN_OFFSET, REG_GCR_GAIN_MAX, 1, linein_tlv),
-};
+पूर्ण;
 
-static const struct snd_kcontrol_new jz4770_codec_pcm_playback_controls[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_pcm_playback_controls[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Volume",
 		.info = snd_soc_info_volsw,
 		.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ
@@ -336,16 +337,16 @@ static const struct snd_kcontrol_new jz4770_codec_pcm_playback_controls[] = {
 		 * seems to affect the left channel, and the gain value written
 		 * to DACL seems to affect the right channel.
 		 */
-		.private_value = SOC_DOUBLE_R_VALUE(JZ4770_CODEC_REG_GCR_DACR,
+		.निजी_value = SOC_DOUBLE_R_VALUE(JZ4770_CODEC_REG_GCR_DACR,
 						    JZ4770_CODEC_REG_GCR_DACL,
 						    REG_GCR_GAIN_OFFSET,
 						    REG_GCR_GAIN_MAX, 1),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_kcontrol_new jz4770_codec_hp_playback_controls[] = {
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_hp_playback_controls[] = अणु
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER,
 		.name = "Volume",
 		.info = snd_soc_info_volsw,
 		.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ
@@ -353,133 +354,133 @@ static const struct snd_kcontrol_new jz4770_codec_hp_playback_controls[] = {
 		.tlv.p = out_tlv,
 		.get = snd_soc_dapm_get_volsw,
 		.put = snd_soc_dapm_put_volsw,
-		/* HPR/HPL inversed for the same reason as above */
-		.private_value = SOC_DOUBLE_R_VALUE(JZ4770_CODEC_REG_GCR_HPR,
+		/* HPR/HPL inversed क्रम the same reason as above */
+		.निजी_value = SOC_DOUBLE_R_VALUE(JZ4770_CODEC_REG_GCR_HPR,
 						    JZ4770_CODEC_REG_GCR_HPL,
 						    REG_GCR_GAIN_OFFSET,
 						    REG_GCR_GAIN_MAX, 1),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int hpout_event(struct snd_soc_dapm_widget *w,
-		       struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_component *codec = snd_soc_dapm_to_component(w->dapm);
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
-	unsigned int val;
-	int err;
+अटल पूर्णांक hpout_event(काष्ठा snd_soc_dapm_widget *w,
+		       काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_component *codec = snd_soc_dapm_to_component(w->dapm);
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक err;
 
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
+	चयन (event) अणु
+	हाल SND_SOC_DAPM_PRE_PMU:
 		/* unmute HP */
 		regmap_clear_bits(jz_codec->regmap, JZ4770_CODEC_REG_CR_HP,
 				  REG_CR_HP_MUTE);
-		break;
+		अवरोध;
 
-	case SND_SOC_DAPM_POST_PMU:
-		/* wait for ramp-up complete (RUP) */
-		err = regmap_read_poll_timeout(jz_codec->regmap,
+	हाल SND_SOC_DAPM_POST_PMU:
+		/* रुको क्रम ramp-up complete (RUP) */
+		err = regmap_पढ़ो_poll_समयout(jz_codec->regmap,
 					       JZ4770_CODEC_REG_IFR,
 					       val, val & REG_IFR_RUP,
 					       1000, 1 * USEC_PER_SEC);
-		if (err) {
+		अगर (err) अणु
 			dev_err(jz_codec->dev, "RUP timeout: %d", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* clear RUP flag */
 		regmap_set_bits(jz_codec->regmap, JZ4770_CODEC_REG_IFR,
 				REG_IFR_RUP);
 
-		break;
+		अवरोध;
 
-	case SND_SOC_DAPM_POST_PMD:
+	हाल SND_SOC_DAPM_POST_PMD:
 		/* mute HP */
 		regmap_set_bits(jz_codec->regmap, JZ4770_CODEC_REG_CR_HP,
 				REG_CR_HP_MUTE);
 
-		err = regmap_read_poll_timeout(jz_codec->regmap,
+		err = regmap_पढ़ो_poll_समयout(jz_codec->regmap,
 					       JZ4770_CODEC_REG_IFR,
 					       val, val & REG_IFR_RDO,
 					       1000, 1 * USEC_PER_SEC);
-		if (err) {
+		अगर (err) अणु
 			dev_err(jz_codec->dev, "RDO timeout: %d", err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
 		/* clear RDO flag */
 		regmap_set_bits(jz_codec->regmap, JZ4770_CODEC_REG_IFR,
 				REG_IFR_RDO);
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int adc_poweron_event(struct snd_soc_dapm_widget *w,
-			     struct snd_kcontrol *kcontrol, int event)
-{
-	if (event == SND_SOC_DAPM_POST_PMU)
+अटल पूर्णांक adc_घातeron_event(काष्ठा snd_soc_dapm_widget *w,
+			     काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	अगर (event == SND_SOC_DAPM_POST_PMU)
 		msleep(1000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const char * const jz4770_codec_hp_texts[] = {
+अटल स्थिर अक्षर * स्थिर jz4770_codec_hp_texts[] = अणु
 	"PCM", "Line In", "Mic 1", "Mic 2"
-};
-static const unsigned int jz4770_codec_hp_values[] = { 3, 2, 0, 1 };
-static SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_hp_enum,
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jz4770_codec_hp_values[] = अणु 3, 2, 0, 1 पूर्ण;
+अटल SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_hp_क्रमागत,
 				  JZ4770_CODEC_REG_CR_HP,
 				  REG_CR_HP_SEL_OFFSET,
 				  REG_CR_HP_SEL_MASK,
 				  jz4770_codec_hp_texts,
 				  jz4770_codec_hp_values);
-static const struct snd_kcontrol_new jz4770_codec_hp_source =
-			SOC_DAPM_ENUM("Route", jz4770_codec_hp_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_hp_source =
+			SOC_DAPM_ENUM("Route", jz4770_codec_hp_क्रमागत);
 
-static SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_lo_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_lo_क्रमागत,
 				  JZ4770_CODEC_REG_CR_LO,
 				  REG_CR_LO_SEL_OFFSET,
 				  REG_CR_LO_SEL_MASK,
 				  jz4770_codec_hp_texts,
 				  jz4770_codec_hp_values);
-static const struct snd_kcontrol_new jz4770_codec_lo_source =
-			SOC_DAPM_ENUM("Route", jz4770_codec_lo_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_lo_source =
+			SOC_DAPM_ENUM("Route", jz4770_codec_lo_क्रमागत);
 
-static const char * const jz4770_codec_cap_texts[] = {
+अटल स्थिर अक्षर * स्थिर jz4770_codec_cap_texts[] = अणु
 	"Line In", "Mic 1", "Mic 2"
-};
-static const unsigned int jz4770_codec_cap_values[] = { 2, 0, 1 };
-static SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_cap_enum,
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक jz4770_codec_cap_values[] = अणु 2, 0, 1 पूर्ण;
+अटल SOC_VALUE_ENUM_SINGLE_DECL(jz4770_codec_cap_क्रमागत,
 				  JZ4770_CODEC_REG_CR_ADC,
 				  REG_CR_ADC_IN_SEL_OFFSET,
 				  REG_CR_ADC_IN_SEL_MASK,
 				  jz4770_codec_cap_texts,
 				  jz4770_codec_cap_values);
-static const struct snd_kcontrol_new jz4770_codec_cap_source =
-			SOC_DAPM_ENUM("Route", jz4770_codec_cap_enum);
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_cap_source =
+			SOC_DAPM_ENUM("Route", jz4770_codec_cap_क्रमागत);
 
-static const struct snd_kcontrol_new jz4770_codec_mic_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new jz4770_codec_mic_controls[] = अणु
 	SOC_DAPM_SINGLE("Stereo Capture Switch", JZ4770_CODEC_REG_CR_MIC,
 			REG_CR_MIC_STEREO_OFFSET, 1, 0),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_widget jz4770_codec_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget jz4770_codec_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_PGA_E("HP Out", JZ4770_CODEC_REG_CR_HP,
-			   REG_CR_HP_SB_OFFSET, 1, NULL, 0, hpout_event,
+			   REG_CR_HP_SB_OFFSET, 1, शून्य, 0, hpout_event,
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_PGA("Line Out", JZ4770_CODEC_REG_CR_LO,
-			 REG_CR_LO_SB_OFFSET, 1, NULL, 0),
+			 REG_CR_LO_SB_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_PGA("Line Out Switch 2", JZ4770_CODEC_REG_CR_LO,
-			 REG_CR_LO_MUTE_OFFSET, 1, NULL, 0),
+			 REG_CR_LO_MUTE_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_PGA("Line In", JZ4770_CODEC_REG_CR_LI,
-			 REG_CR_LI_SB_OFFSET, 1, NULL, 0),
+			 REG_CR_LI_SB_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_MUX("Headphones Source", SND_SOC_NOPM, 0, 0,
 			 &jz4770_codec_hp_source),
@@ -489,22 +490,22 @@ static const struct snd_soc_dapm_widget jz4770_codec_dapm_widgets[] = {
 			 &jz4770_codec_lo_source),
 
 	SND_SOC_DAPM_PGA("Mic 1", JZ4770_CODEC_REG_CR_MIC,
-			 REG_CR_MIC_SB_MIC1_OFFSET, 1, NULL, 0),
+			 REG_CR_MIC_SB_MIC1_OFFSET, 1, शून्य, 0),
 	SND_SOC_DAPM_PGA("Mic 2", JZ4770_CODEC_REG_CR_MIC,
-			 REG_CR_MIC_SB_MIC2_OFFSET, 1, NULL, 0),
+			 REG_CR_MIC_SB_MIC2_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_PGA("Mic Diff", JZ4770_CODEC_REG_CR_MIC,
-			 REG_CR_MIC_IDIFF_OFFSET, 0, NULL, 0),
+			 REG_CR_MIC_IDIFF_OFFSET, 0, शून्य, 0),
 
 	SND_SOC_DAPM_MIXER("Mic", SND_SOC_NOPM, 0, 0,
 			   jz4770_codec_mic_controls,
 			   ARRAY_SIZE(jz4770_codec_mic_controls)),
 
 	SND_SOC_DAPM_PGA("Line In Bypass", JZ4770_CODEC_REG_CR_LI,
-			 REG_CR_LI_LIBY_OFFSET, 1, NULL, 0),
+			 REG_CR_LI_LIBY_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_ADC_E("ADC", "HiFi Capture", JZ4770_CODEC_REG_CR_ADC,
-			   REG_CR_ADC_SB_OFFSET, 1, adc_poweron_event,
+			   REG_CR_ADC_SB_OFFSET, 1, adc_घातeron_event,
 			   SND_SOC_DAPM_POST_PMU),
 	SND_SOC_DAPM_DAC("DAC", "HiFi Playback", JZ4770_CODEC_REG_CR_DAC,
 			 REG_CR_DAC_SB_OFFSET, 1),
@@ -517,10 +518,10 @@ static const struct snd_soc_dapm_widget jz4770_codec_dapm_widgets[] = {
 			   ARRAY_SIZE(jz4770_codec_hp_playback_controls)),
 
 	SND_SOC_DAPM_SUPPLY("MICBIAS", JZ4770_CODEC_REG_CR_MIC,
-			    REG_CR_MIC_BIAS_SB_OFFSET, 1, NULL, 0),
+			    REG_CR_MIC_BIAS_SB_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_SUPPLY("Cap-less", JZ4770_CODEC_REG_CR_HP,
-			    REG_CR_HP_SB_HPCM_OFFSET, 1, NULL, 0),
+			    REG_CR_HP_SB_HPCM_OFFSET, 1, शून्य, 0),
 
 	SND_SOC_DAPM_INPUT("MIC1P"),
 	SND_SOC_DAPM_INPUT("MIC1N"),
@@ -537,76 +538,76 @@ static const struct snd_soc_dapm_widget jz4770_codec_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("RLINEIN"),
 
 	SND_SOC_DAPM_OUTPUT("SYSCLK"),
-};
+पूर्ण;
 
 /* Unconditional routes. */
-static const struct snd_soc_dapm_route jz4770_codec_dapm_routes[] = {
-	{ "Mic 1", NULL, "MIC1P" },
-	{ "Mic Diff", NULL, "MIC1N" },
-	{ "Mic 1", NULL, "Mic Diff" },
-	{ "Mic 2", NULL, "MIC2P" },
-	{ "Mic Diff", NULL, "MIC2N" },
-	{ "Mic 2", NULL, "Mic Diff" },
+अटल स्थिर काष्ठा snd_soc_dapm_route jz4770_codec_dapm_routes[] = अणु
+	अणु "Mic 1", शून्य, "MIC1P" पूर्ण,
+	अणु "Mic Diff", शून्य, "MIC1N" पूर्ण,
+	अणु "Mic 1", शून्य, "Mic Diff" पूर्ण,
+	अणु "Mic 2", शून्य, "MIC2P" पूर्ण,
+	अणु "Mic Diff", शून्य, "MIC2N" पूर्ण,
+	अणु "Mic 2", शून्य, "Mic Diff" पूर्ण,
 
-	{ "Line In", NULL, "LLINEIN" },
-	{ "Line In", NULL, "RLINEIN" },
+	अणु "Line In", शून्य, "LLINEIN" पूर्ण,
+	अणु "Line In", शून्य, "RLINEIN" पूर्ण,
 
-	{ "Mic", "Stereo Capture Switch", "Mic 1" },
-	{ "Mic", "Stereo Capture Switch", "Mic 2" },
-	{ "Headphones Source", "Mic 1", "Mic" },
-	{ "Headphones Source", "Mic 2", "Mic" },
-	{ "Capture Source", "Mic 1", "Mic" },
-	{ "Capture Source", "Mic 2", "Mic" },
+	अणु "Mic", "Stereo Capture Switch", "Mic 1" पूर्ण,
+	अणु "Mic", "Stereo Capture Switch", "Mic 2" पूर्ण,
+	अणु "Headphones Source", "Mic 1", "Mic" पूर्ण,
+	अणु "Headphones Source", "Mic 2", "Mic" पूर्ण,
+	अणु "Capture Source", "Mic 1", "Mic" पूर्ण,
+	अणु "Capture Source", "Mic 2", "Mic" पूर्ण,
 
-	{ "Headphones Source", "Mic 1", "Mic 1" },
-	{ "Headphones Source", "Mic 2", "Mic 2" },
-	{ "Headphones Source", "Line In", "Line In Bypass" },
-	{ "Headphones Source", "PCM", "Headphones Playback" },
-	{ "HP Out", NULL, "Headphones Source" },
+	अणु "Headphones Source", "Mic 1", "Mic 1" पूर्ण,
+	अणु "Headphones Source", "Mic 2", "Mic 2" पूर्ण,
+	अणु "Headphones Source", "Line In", "Line In Bypass" पूर्ण,
+	अणु "Headphones Source", "PCM", "Headphones Playback" पूर्ण,
+	अणु "HP Out", शून्य, "Headphones Source" पूर्ण,
 
-	{ "Capture Source", "Line In", "Line In" },
-	{ "Capture Source", "Mic 1", "Mic 1" },
-	{ "Capture Source", "Mic 2", "Mic 2" },
-	{ "ADC", NULL, "Capture Source" },
+	अणु "Capture Source", "Line In", "Line In" पूर्ण,
+	अणु "Capture Source", "Mic 1", "Mic 1" पूर्ण,
+	अणु "Capture Source", "Mic 2", "Mic 2" पूर्ण,
+	अणु "ADC", शून्य, "Capture Source" पूर्ण,
 
-	{ "Line In Bypass", NULL, "Line In" },
-	{ "Line Out Source", "Line In", "Line In Bypass" },
-	{ "Line Out Source", "PCM", "PCM Playback" },
+	अणु "Line In Bypass", शून्य, "Line In" पूर्ण,
+	अणु "Line Out Source", "Line In", "Line In Bypass" पूर्ण,
+	अणु "Line Out Source", "PCM", "PCM Playback" पूर्ण,
 
-	{ "LHPOUT", NULL, "HP Out"},
-	{ "RHPOUT", NULL, "HP Out"},
+	अणु "LHPOUT", शून्य, "HP Out"पूर्ण,
+	अणु "RHPOUT", शून्य, "HP Out"पूर्ण,
 
-	{ "Line Out", NULL, "Line Out Source" },
-	{ "Line Out Switch 2", NULL, "Line Out" },
+	अणु "Line Out", शून्य, "Line Out Source" पूर्ण,
+	अणु "Line Out Switch 2", शून्य, "Line Out" पूर्ण,
 
-	{ "LOUT", NULL, "Line Out Switch 2"},
-	{ "ROUT", NULL, "Line Out Switch 2"},
+	अणु "LOUT", शून्य, "Line Out Switch 2"पूर्ण,
+	अणु "ROUT", शून्य, "Line Out Switch 2"पूर्ण,
 
-	{ "PCM Playback", "Volume", "DAC" },
-	{ "Headphones Playback", "Volume", "PCM Playback" },
+	अणु "PCM Playback", "Volume", "DAC" पूर्ण,
+	अणु "Headphones Playback", "Volume", "PCM Playback" पूर्ण,
 
-	{ "SYSCLK", NULL, "DAC" },
-};
+	अणु "SYSCLK", शून्य, "DAC" पूर्ण,
+पूर्ण;
 
-static void jz4770_codec_codec_init_regs(struct snd_soc_component *codec)
-{
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
-	struct regmap *regmap = jz_codec->regmap;
+अटल व्योम jz4770_codec_codec_init_regs(काष्ठा snd_soc_component *codec)
+अणु
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+	काष्ठा regmap *regmap = jz_codec->regmap;
 
-	/* Collect updates for later sending. */
+	/* Collect updates क्रम later sending. */
 	regcache_cache_only(regmap, true);
 
-	/* default HP output to PCM */
+	/* शेष HP output to PCM */
 	regmap_set_bits(regmap, JZ4770_CODEC_REG_CR_HP, REG_CR_HP_SEL_MASK);
 
-	/* default line output to PCM */
+	/* शेष line output to PCM */
 	regmap_set_bits(regmap, JZ4770_CODEC_REG_CR_LO, REG_CR_LO_SEL_MASK);
 
 	/* Disable stereo mic */
 	regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_MIC,
 			  BIT(REG_CR_MIC_STEREO_OFFSET));
 
-	/* Set mic 1 as default source for ADC */
+	/* Set mic 1 as शेष source क्रम ADC */
 	regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_ADC,
 			  REG_CR_ADC_IN_SEL_MASK);
 
@@ -629,7 +630,7 @@ static void jz4770_codec_codec_init_regs(struct snd_soc_component *codec)
 	/* 0: 16ohm/220uF, 1: 10kohm/1uF */
 	regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_HP, REG_CR_HP_LOAD);
 
-	/* disable automatic gain */
+	/* disable स्वतःmatic gain */
 	regmap_clear_bits(regmap, JZ4770_CODEC_REG_AGC1, REG_AGC1_EN);
 
 	/* Disable DAC lrswap */
@@ -642,295 +643,295 @@ static void jz4770_codec_codec_init_regs(struct snd_soc_component *codec)
 	/* Disable ADC lrswap */
 	regmap_set_bits(regmap, JZ4770_CODEC_REG_CR_ADC, REG_CR_ADC_LRSWAP);
 
-	/* default to cap-less mode(0) */
+	/* शेष to cap-less mode(0) */
 	regmap_clear_bits(regmap, JZ4770_CODEC_REG_CR_HP,
 			  BIT(REG_CR_HP_SB_HPCM_OFFSET));
 
 	/* Send collected updates. */
 	regcache_cache_only(regmap, false);
 	regcache_sync(regmap);
-}
+पूर्ण
 
-static int jz4770_codec_codec_probe(struct snd_soc_component *codec)
-{
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+अटल पूर्णांक jz4770_codec_codec_probe(काष्ठा snd_soc_component *codec)
+अणु
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
 
 	clk_prepare_enable(jz_codec->clk);
 
 	jz4770_codec_codec_init_regs(codec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void jz4770_codec_codec_remove(struct snd_soc_component *codec)
-{
-	struct jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
+अटल व्योम jz4770_codec_codec_हटाओ(काष्ठा snd_soc_component *codec)
+अणु
+	काष्ठा jz_codec *jz_codec = snd_soc_component_get_drvdata(codec);
 
 	clk_disable_unprepare(jz_codec->clk);
-}
+पूर्ण
 
-static const struct snd_soc_component_driver jz4770_codec_soc_codec_dev = {
+अटल स्थिर काष्ठा snd_soc_component_driver jz4770_codec_soc_codec_dev = अणु
 	.probe			= jz4770_codec_codec_probe,
-	.remove			= jz4770_codec_codec_remove,
+	.हटाओ			= jz4770_codec_codec_हटाओ,
 	.set_bias_level		= jz4770_codec_set_bias_level,
 	.controls		= jz4770_codec_snd_controls,
 	.num_controls		= ARRAY_SIZE(jz4770_codec_snd_controls),
-	.dapm_widgets		= jz4770_codec_dapm_widgets,
-	.num_dapm_widgets	= ARRAY_SIZE(jz4770_codec_dapm_widgets),
+	.dapm_widमाला_लो		= jz4770_codec_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो	= ARRAY_SIZE(jz4770_codec_dapm_widमाला_लो),
 	.dapm_routes		= jz4770_codec_dapm_routes,
 	.num_dapm_routes	= ARRAY_SIZE(jz4770_codec_dapm_routes),
 	.suspend_bias_off	= 1,
-	.use_pmdown_time	= 1,
-};
+	.use_pmकरोwn_समय	= 1,
+पूर्ण;
 
-static const unsigned int jz4770_codec_sample_rates[] = {
+अटल स्थिर अचिन्हित पूर्णांक jz4770_codec_sample_rates[] = अणु
 	96000, 48000, 44100, 32000,
 	24000, 22050, 16000, 12000,
 	11025, 9600, 8000,
-};
+पूर्ण;
 
-static int jz4770_codec_hw_params(struct snd_pcm_substream *substream,
-				  struct snd_pcm_hw_params *params,
-				  struct snd_soc_dai *dai)
-{
-	struct jz_codec *codec = snd_soc_component_get_drvdata(dai->component);
-	unsigned int rate, bit_width;
+अटल पूर्णांक jz4770_codec_hw_params(काष्ठा snd_pcm_substream *substream,
+				  काष्ठा snd_pcm_hw_params *params,
+				  काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा jz_codec *codec = snd_soc_component_get_drvdata(dai->component);
+	अचिन्हित पूर्णांक rate, bit_width;
 
-	switch (params_format(params)) {
-	case SNDRV_PCM_FORMAT_S16_LE:
+	चयन (params_क्रमmat(params)) अणु
+	हाल SNDRV_PCM_FORMAT_S16_LE:
 		bit_width = 0;
-		break;
-	case SNDRV_PCM_FORMAT_S18_3LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S18_3LE:
 		bit_width = 1;
-		break;
-	case SNDRV_PCM_FORMAT_S20_3LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S20_3LE:
 		bit_width = 2;
-		break;
-	case SNDRV_PCM_FORMAT_S24_3LE:
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S24_3LE:
 		bit_width = 3;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	for (rate = 0; rate < ARRAY_SIZE(jz4770_codec_sample_rates); rate++) {
-		if (jz4770_codec_sample_rates[rate] == params_rate(params))
-			break;
-	}
+	क्रम (rate = 0; rate < ARRAY_SIZE(jz4770_codec_sample_rates); rate++) अणु
+		अगर (jz4770_codec_sample_rates[rate] == params_rate(params))
+			अवरोध;
+	पूर्ण
 
-	if (rate == ARRAY_SIZE(jz4770_codec_sample_rates))
-		return -EINVAL;
+	अगर (rate == ARRAY_SIZE(jz4770_codec_sample_rates))
+		वापस -EINVAL;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) अणु
 		regmap_update_bits(codec->regmap, JZ4770_CODEC_REG_AICR_DAC,
 				   REG_AICR_DAC_ADWL_MASK,
 				   bit_width << REG_AICR_DAC_ADWL_OFFSET);
 		regmap_update_bits(codec->regmap, JZ4770_CODEC_REG_FCR_DAC,
 				   REG_FCR_DAC_FREQ_MASK,
 				   rate << REG_FCR_DAC_FREQ_OFFSET);
-	} else {
+	पूर्ण अन्यथा अणु
 		regmap_update_bits(codec->regmap, JZ4770_CODEC_REG_AICR_ADC,
 				   REG_AICR_ADC_ADWL_MASK,
 				   bit_width << REG_AICR_ADC_ADWL_OFFSET);
 		regmap_update_bits(codec->regmap, JZ4770_CODEC_REG_FCR_ADC,
 				   REG_FCR_ADC_FREQ_MASK,
 				   rate << REG_FCR_ADC_FREQ_OFFSET);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops jz4770_codec_dai_ops = {
+अटल स्थिर काष्ठा snd_soc_dai_ops jz4770_codec_dai_ops = अणु
 	.startup	= jz4770_codec_startup,
-	.shutdown	= jz4770_codec_shutdown,
+	.shutकरोwn	= jz4770_codec_shutकरोwn,
 	.hw_params	= jz4770_codec_hw_params,
 	.trigger	= jz4770_codec_pcm_trigger,
 	.mute_stream	= jz4770_codec_mute_stream,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-#define JZ_CODEC_FORMATS (SNDRV_PCM_FMTBIT_S16_LE  | \
+#घोषणा JZ_CODEC_FORMATS (SNDRV_PCM_FMTBIT_S16_LE  | \
 			  SNDRV_PCM_FMTBIT_S18_3LE | \
 			  SNDRV_PCM_FMTBIT_S20_3LE | \
 			  SNDRV_PCM_FMTBIT_S24_3LE)
 
-static struct snd_soc_dai_driver jz4770_codec_dai = {
+अटल काष्ठा snd_soc_dai_driver jz4770_codec_dai = अणु
 	.name = "jz4770-hifi",
-	.playback = {
+	.playback = अणु
 		.stream_name = "Playback",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.formats = JZ_CODEC_FORMATS,
-	},
-	.capture = {
+		.क्रमmats = JZ_CODEC_FORMATS,
+	पूर्ण,
+	.capture = अणु
 		.stream_name = "Capture",
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_96000,
-		.formats = JZ_CODEC_FORMATS,
-	},
+		.क्रमmats = JZ_CODEC_FORMATS,
+	पूर्ण,
 	.ops = &jz4770_codec_dai_ops,
-};
+पूर्ण;
 
-static bool jz4770_codec_volatile(struct device *dev, unsigned int reg)
-{
-	return reg == JZ4770_CODEC_REG_SR || reg == JZ4770_CODEC_REG_IFR;
-}
+अटल bool jz4770_codec_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस reg == JZ4770_CODEC_REG_SR || reg == JZ4770_CODEC_REG_IFR;
+पूर्ण
 
-static bool jz4770_codec_readable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case JZ4770_CODEC_REG_MISSING_REG1:
-	case JZ4770_CODEC_REG_MISSING_REG2:
-		return false;
-	default:
-		return true;
-	}
-}
+अटल bool jz4770_codec_पढ़ोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल JZ4770_CODEC_REG_MISSING_REG1:
+	हाल JZ4770_CODEC_REG_MISSING_REG2:
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static bool jz4770_codec_writeable(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case JZ4770_CODEC_REG_SR:
-	case JZ4770_CODEC_REG_MISSING_REG1:
-	case JZ4770_CODEC_REG_MISSING_REG2:
-		return false;
-	default:
-		return true;
-	}
-}
+अटल bool jz4770_codec_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल JZ4770_CODEC_REG_SR:
+	हाल JZ4770_CODEC_REG_MISSING_REG1:
+	हाल JZ4770_CODEC_REG_MISSING_REG2:
+		वापस false;
+	शेष:
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static int jz4770_codec_io_wait(struct jz_codec *codec)
-{
+अटल पूर्णांक jz4770_codec_io_रुको(काष्ठा jz_codec *codec)
+अणु
 	u32 reg;
 
-	return readl_poll_timeout(codec->base + ICDC_RGADW_OFFSET, reg,
+	वापस पढ़ोl_poll_समयout(codec->base + ICDC_RGADW_OFFSET, reg,
 				  !(reg & ICDC_RGADW_RGWR),
 				  1000, 1 * USEC_PER_SEC);
-}
+पूर्ण
 
-static int jz4770_codec_reg_read(void *context, unsigned int reg,
-				 unsigned int *val)
-{
-	struct jz_codec *codec = context;
-	unsigned int i;
-	u32 tmp;
-	int ret;
+अटल पूर्णांक jz4770_codec_reg_पढ़ो(व्योम *context, अचिन्हित पूर्णांक reg,
+				 अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा jz_codec *codec = context;
+	अचिन्हित पूर्णांक i;
+	u32 पंचांगp;
+	पूर्णांक ret;
 
-	ret = jz4770_codec_io_wait(codec);
-	if (ret)
-		return ret;
+	ret = jz4770_codec_io_रुको(codec);
+	अगर (ret)
+		वापस ret;
 
-	tmp = readl(codec->base + ICDC_RGADW_OFFSET);
-	tmp = (tmp & ~ICDC_RGADW_RGADDR_MASK)
+	पंचांगp = पढ़ोl(codec->base + ICDC_RGADW_OFFSET);
+	पंचांगp = (पंचांगp & ~ICDC_RGADW_RGADDR_MASK)
 	    | (reg << ICDC_RGADW_RGADDR_OFFSET);
-	writel(tmp, codec->base + ICDC_RGADW_OFFSET);
+	ग_लिखोl(पंचांगp, codec->base + ICDC_RGADW_OFFSET);
 
-	/* wait 6+ cycles */
-	for (i = 0; i < 6; i++)
-		*val = readl(codec->base + ICDC_RGDATA_OFFSET) &
+	/* रुको 6+ cycles */
+	क्रम (i = 0; i < 6; i++)
+		*val = पढ़ोl(codec->base + ICDC_RGDATA_OFFSET) &
 			ICDC_RGDATA_RGDOUT_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jz4770_codec_reg_write(void *context, unsigned int reg,
-				  unsigned int val)
-{
-	struct jz_codec *codec = context;
-	int ret;
+अटल पूर्णांक jz4770_codec_reg_ग_लिखो(व्योम *context, अचिन्हित पूर्णांक reg,
+				  अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा jz_codec *codec = context;
+	पूर्णांक ret;
 
-	ret = jz4770_codec_io_wait(codec);
-	if (ret)
-		return ret;
+	ret = jz4770_codec_io_रुको(codec);
+	अगर (ret)
+		वापस ret;
 
-	writel(ICDC_RGADW_RGWR | (reg << ICDC_RGADW_RGADDR_OFFSET) | val,
+	ग_लिखोl(ICDC_RGADW_RGWR | (reg << ICDC_RGADW_RGADDR_OFFSET) | val,
 	       codec->base + ICDC_RGADW_OFFSET);
 
-	ret = jz4770_codec_io_wait(codec);
-	if (ret)
-		return ret;
+	ret = jz4770_codec_io_रुको(codec);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const u8 jz4770_codec_reg_defaults[] = {
+अटल स्थिर u8 jz4770_codec_reg_शेषs[] = अणु
 	0x00, 0xC3, 0xC3, 0x90, 0x98, 0xFF, 0x90, 0xB1,
 	0x11, 0x10, 0x00, 0x03, 0x00, 0x00, 0x40, 0x00,
 	0xFF, 0x00, 0x06, 0x06, 0x06, 0x06, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x34,
 	0x07, 0x44, 0x1F, 0x00
-};
+पूर्ण;
 
-static struct regmap_config jz4770_codec_regmap_config = {
+अटल काष्ठा regmap_config jz4770_codec_regmap_config = अणु
 	.reg_bits = 7,
 	.val_bits = 8,
 
-	.max_register = JZ4770_CODEC_REG_AGC5,
-	.volatile_reg = jz4770_codec_volatile,
-	.readable_reg = jz4770_codec_readable,
-	.writeable_reg = jz4770_codec_writeable,
+	.max_रेजिस्टर = JZ4770_CODEC_REG_AGC5,
+	.अस्थिर_reg = jz4770_codec_अस्थिर,
+	.पढ़ोable_reg = jz4770_codec_पढ़ोable,
+	.ग_लिखोable_reg = jz4770_codec_ग_लिखोable,
 
-	.reg_read = jz4770_codec_reg_read,
-	.reg_write = jz4770_codec_reg_write,
+	.reg_पढ़ो = jz4770_codec_reg_पढ़ो,
+	.reg_ग_लिखो = jz4770_codec_reg_ग_लिखो,
 
-	.reg_defaults_raw = jz4770_codec_reg_defaults,
-	.num_reg_defaults_raw = ARRAY_SIZE(jz4770_codec_reg_defaults),
+	.reg_शेषs_raw = jz4770_codec_reg_शेषs,
+	.num_reg_शेषs_raw = ARRAY_SIZE(jz4770_codec_reg_शेषs),
 	.cache_type = REGCACHE_FLAT,
-};
+पूर्ण;
 
-static int jz4770_codec_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct jz_codec *codec;
-	int ret;
+अटल पूर्णांक jz4770_codec_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा jz_codec *codec;
+	पूर्णांक ret;
 
-	codec = devm_kzalloc(dev, sizeof(*codec), GFP_KERNEL);
-	if (!codec)
-		return -ENOMEM;
+	codec = devm_kzalloc(dev, माप(*codec), GFP_KERNEL);
+	अगर (!codec)
+		वापस -ENOMEM;
 
 	codec->dev = dev;
 
-	codec->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(codec->base))
-		return PTR_ERR(codec->base);
+	codec->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(codec->base))
+		वापस PTR_ERR(codec->base);
 
-	codec->regmap = devm_regmap_init(dev, NULL, codec,
+	codec->regmap = devm_regmap_init(dev, शून्य, codec,
 					&jz4770_codec_regmap_config);
-	if (IS_ERR(codec->regmap))
-		return PTR_ERR(codec->regmap);
+	अगर (IS_ERR(codec->regmap))
+		वापस PTR_ERR(codec->regmap);
 
 	codec->clk = devm_clk_get(dev, "aic");
-	if (IS_ERR(codec->clk))
-		return PTR_ERR(codec->clk);
+	अगर (IS_ERR(codec->clk))
+		वापस PTR_ERR(codec->clk);
 
-	platform_set_drvdata(pdev, codec);
+	platक्रमm_set_drvdata(pdev, codec);
 
-	ret = devm_snd_soc_register_component(dev, &jz4770_codec_soc_codec_dev,
+	ret = devm_snd_soc_रेजिस्टर_component(dev, &jz4770_codec_soc_codec_dev,
 					      &jz4770_codec_dai, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register codec: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id jz4770_codec_of_matches[] = {
-	{ .compatible = "ingenic,jz4770-codec", },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id jz4770_codec_of_matches[] = अणु
+	अणु .compatible = "ingenic,jz4770-codec", पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, jz4770_codec_of_matches);
 
-static struct platform_driver jz4770_codec_driver = {
+अटल काष्ठा platक्रमm_driver jz4770_codec_driver = अणु
 	.probe			= jz4770_codec_probe,
-	.driver			= {
+	.driver			= अणु
 		.name		= "jz4770-codec",
 		.of_match_table = jz4770_codec_of_matches,
-	},
-};
-module_platform_driver(jz4770_codec_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(jz4770_codec_driver);
 
 MODULE_DESCRIPTION("JZ4770 SoC internal codec driver");
 MODULE_AUTHOR("Maarten ter Huurne <maarten@treewalker.org>");

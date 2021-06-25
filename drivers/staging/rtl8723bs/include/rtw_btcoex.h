@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2013 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __RTW_BTCOEX_H__
-#define __RTW_BTCOEX_H__
+#अगर_अघोषित __RTW_BTCOEX_H__
+#घोषणा __RTW_BTCOEX_H__
 
-#include <drv_types.h>
+#समावेश <drv_types.h>
 
 
-#define	PACKET_NORMAL			0
-#define	PACKET_DHCP				1
-#define	PACKET_ARP				2
-#define	PACKET_EAPOL			3
+#घोषणा	PACKET_NORMAL			0
+#घोषणा	PACKET_DHCP				1
+#घोषणा	PACKET_ARP				2
+#घोषणा	PACKET_EAPOL			3
 
-void rtw_btcoex_MediaStatusNotify(struct adapter *, u8 mediaStatus);
-void rtw_btcoex_HaltNotify(struct adapter *);
+व्योम rtw_btcoex_MediaStatusNotअगरy(काष्ठा adapter *, u8 mediaStatus);
+व्योम rtw_btcoex_HaltNotअगरy(काष्ठा adapter *);
 
 /*  ================================================== */
 /*  Below Functions are called by BT-Coex */
 /*  ================================================== */
-void rtw_btcoex_RejectApAggregatedPacket(struct adapter *, u8 enable);
-void rtw_btcoex_LPS_Enter(struct adapter *);
-void rtw_btcoex_LPS_Leave(struct adapter *);
+व्योम rtw_btcoex_RejectApAggregatedPacket(काष्ठा adapter *, u8 enable);
+व्योम rtw_btcoex_LPS_Enter(काष्ठा adapter *);
+व्योम rtw_btcoex_LPS_Leave(काष्ठा adapter *);
 
-#endif /*  __RTW_BTCOEX_H__ */
+#पूर्ण_अगर /*  __RTW_BTCOEX_H__ */

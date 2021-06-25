@@ -1,324 +1,325 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2017 Arm Ltd.
-#define pr_fmt(fmt) "sdei: " fmt
+#घोषणा pr_fmt(fmt) "sdei: " fmt
 
-#include <linux/arm-smccc.h>
-#include <linux/arm_sdei.h>
-#include <linux/hardirq.h>
-#include <linux/irqflags.h>
-#include <linux/sched/task_stack.h>
-#include <linux/scs.h>
-#include <linux/uaccess.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/arm_sdei.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/scs.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/alternative.h>
-#include <asm/exception.h>
-#include <asm/kprobes.h>
-#include <asm/mmu.h>
-#include <asm/ptrace.h>
-#include <asm/sections.h>
-#include <asm/stacktrace.h>
-#include <asm/sysreg.h>
-#include <asm/vmap_stack.h>
+#समावेश <यंत्र/alternative.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/kprobes.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/sysreg.h>
+#समावेश <यंत्र/vmap_stack.h>
 
-unsigned long sdei_exit_mode;
+अचिन्हित दीर्घ sdei_निकास_mode;
 
 /*
- * VMAP'd stacks checking for stack overflow on exception using sp as a scratch
- * register, meaning SDEI has to switch to its own stack. We need two stacks as
- * a critical event may interrupt a normal event that has just taken a
- * synchronous exception, and is using sp as scratch register. For a critical
- * event interrupting a normal event, we can't reliably tell if we were on the
+ * VMAP'd stacks checking क्रम stack overflow on exception using sp as a scratch
+ * रेजिस्टर, meaning SDEI has to चयन to its own stack. We need two stacks as
+ * a critical event may पूर्णांकerrupt a normal event that has just taken a
+ * synchronous exception, and is using sp as scratch रेजिस्टर. For a critical
+ * event पूर्णांकerrupting a normal event, we can't reliably tell अगर we were on the
  * sdei stack.
  * For now, we allocate stacks when the driver is probed.
  */
-DECLARE_PER_CPU(unsigned long *, sdei_stack_normal_ptr);
-DECLARE_PER_CPU(unsigned long *, sdei_stack_critical_ptr);
+DECLARE_PER_CPU(अचिन्हित दीर्घ *, sdei_stack_normal_ptr);
+DECLARE_PER_CPU(अचिन्हित दीर्घ *, sdei_stack_critical_ptr);
 
-#ifdef CONFIG_VMAP_STACK
-DEFINE_PER_CPU(unsigned long *, sdei_stack_normal_ptr);
-DEFINE_PER_CPU(unsigned long *, sdei_stack_critical_ptr);
-#endif
+#अगर_घोषित CONFIG_VMAP_STACK
+DEFINE_PER_CPU(अचिन्हित दीर्घ *, sdei_stack_normal_ptr);
+DEFINE_PER_CPU(अचिन्हित दीर्घ *, sdei_stack_critical_ptr);
+#पूर्ण_अगर
 
-DECLARE_PER_CPU(unsigned long *, sdei_shadow_call_stack_normal_ptr);
-DECLARE_PER_CPU(unsigned long *, sdei_shadow_call_stack_critical_ptr);
+DECLARE_PER_CPU(अचिन्हित दीर्घ *, sdei_shaकरोw_call_stack_normal_ptr);
+DECLARE_PER_CPU(अचिन्हित दीर्घ *, sdei_shaकरोw_call_stack_critical_ptr);
 
-#ifdef CONFIG_SHADOW_CALL_STACK
-DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_normal_ptr);
-DEFINE_PER_CPU(unsigned long *, sdei_shadow_call_stack_critical_ptr);
-#endif
+#अगर_घोषित CONFIG_SHADOW_CALL_STACK
+DEFINE_PER_CPU(अचिन्हित दीर्घ *, sdei_shaकरोw_call_stack_normal_ptr);
+DEFINE_PER_CPU(अचिन्हित दीर्घ *, sdei_shaकरोw_call_stack_critical_ptr);
+#पूर्ण_अगर
 
-static void _free_sdei_stack(unsigned long * __percpu *ptr, int cpu)
-{
-	unsigned long *p;
+अटल व्योम _मुक्त_sdei_stack(अचिन्हित दीर्घ * __percpu *ptr, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ *p;
 
 	p = per_cpu(*ptr, cpu);
-	if (p) {
-		per_cpu(*ptr, cpu) = NULL;
-		vfree(p);
-	}
-}
+	अगर (p) अणु
+		per_cpu(*ptr, cpu) = शून्य;
+		vमुक्त(p);
+	पूर्ण
+पूर्ण
 
-static void free_sdei_stacks(void)
-{
-	int cpu;
+अटल व्योम मुक्त_sdei_stacks(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	if (!IS_ENABLED(CONFIG_VMAP_STACK))
-		return;
+	अगर (!IS_ENABLED(CONFIG_VMAP_STACK))
+		वापस;
 
-	for_each_possible_cpu(cpu) {
-		_free_sdei_stack(&sdei_stack_normal_ptr, cpu);
-		_free_sdei_stack(&sdei_stack_critical_ptr, cpu);
-	}
-}
+	क्रम_each_possible_cpu(cpu) अणु
+		_मुक्त_sdei_stack(&sdei_stack_normal_ptr, cpu);
+		_मुक्त_sdei_stack(&sdei_stack_critical_ptr, cpu);
+	पूर्ण
+पूर्ण
 
-static int _init_sdei_stack(unsigned long * __percpu *ptr, int cpu)
-{
-	unsigned long *p;
+अटल पूर्णांक _init_sdei_stack(अचिन्हित दीर्घ * __percpu *ptr, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ *p;
 
 	p = arch_alloc_vmap_stack(SDEI_STACK_SIZE, cpu_to_node(cpu));
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 	per_cpu(*ptr, cpu) = p;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_sdei_stacks(void)
-{
-	int cpu;
-	int err = 0;
+अटल पूर्णांक init_sdei_stacks(व्योम)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक err = 0;
 
-	if (!IS_ENABLED(CONFIG_VMAP_STACK))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_VMAP_STACK))
+		वापस 0;
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		err = _init_sdei_stack(&sdei_stack_normal_ptr, cpu);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 		err = _init_sdei_stack(&sdei_stack_critical_ptr, cpu);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (err)
-		free_sdei_stacks();
+	अगर (err)
+		मुक्त_sdei_stacks();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void _free_sdei_scs(unsigned long * __percpu *ptr, int cpu)
-{
-	void *s;
+अटल व्योम _मुक्त_sdei_scs(अचिन्हित दीर्घ * __percpu *ptr, पूर्णांक cpu)
+अणु
+	व्योम *s;
 
 	s = per_cpu(*ptr, cpu);
-	if (s) {
-		per_cpu(*ptr, cpu) = NULL;
-		scs_free(s);
-	}
-}
+	अगर (s) अणु
+		per_cpu(*ptr, cpu) = शून्य;
+		scs_मुक्त(s);
+	पूर्ण
+पूर्ण
 
-static void free_sdei_scs(void)
-{
-	int cpu;
+अटल व्योम मुक्त_sdei_scs(व्योम)
+अणु
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		_free_sdei_scs(&sdei_shadow_call_stack_normal_ptr, cpu);
-		_free_sdei_scs(&sdei_shadow_call_stack_critical_ptr, cpu);
-	}
-}
+	क्रम_each_possible_cpu(cpu) अणु
+		_मुक्त_sdei_scs(&sdei_shaकरोw_call_stack_normal_ptr, cpu);
+		_मुक्त_sdei_scs(&sdei_shaकरोw_call_stack_critical_ptr, cpu);
+	पूर्ण
+पूर्ण
 
-static int _init_sdei_scs(unsigned long * __percpu *ptr, int cpu)
-{
-	void *s;
+अटल पूर्णांक _init_sdei_scs(अचिन्हित दीर्घ * __percpu *ptr, पूर्णांक cpu)
+अणु
+	व्योम *s;
 
 	s = scs_alloc(cpu_to_node(cpu));
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 	per_cpu(*ptr, cpu) = s;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int init_sdei_scs(void)
-{
-	int cpu;
-	int err = 0;
+अटल पूर्णांक init_sdei_scs(व्योम)
+अणु
+	पूर्णांक cpu;
+	पूर्णांक err = 0;
 
-	if (!IS_ENABLED(CONFIG_SHADOW_CALL_STACK))
-		return 0;
+	अगर (!IS_ENABLED(CONFIG_SHADOW_CALL_STACK))
+		वापस 0;
 
-	for_each_possible_cpu(cpu) {
-		err = _init_sdei_scs(&sdei_shadow_call_stack_normal_ptr, cpu);
-		if (err)
-			break;
-		err = _init_sdei_scs(&sdei_shadow_call_stack_critical_ptr, cpu);
-		if (err)
-			break;
-	}
+	क्रम_each_possible_cpu(cpu) अणु
+		err = _init_sdei_scs(&sdei_shaकरोw_call_stack_normal_ptr, cpu);
+		अगर (err)
+			अवरोध;
+		err = _init_sdei_scs(&sdei_shaकरोw_call_stack_critical_ptr, cpu);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	if (err)
-		free_sdei_scs();
+	अगर (err)
+		मुक्त_sdei_scs();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool on_sdei_normal_stack(unsigned long sp, struct stack_info *info)
-{
-	unsigned long low = (unsigned long)raw_cpu_read(sdei_stack_normal_ptr);
-	unsigned long high = low + SDEI_STACK_SIZE;
+अटल bool on_sdei_normal_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
+अणु
+	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)raw_cpu_पढ़ो(sdei_stack_normal_ptr);
+	अचिन्हित दीर्घ high = low + SDEI_STACK_SIZE;
 
-	return on_stack(sp, low, high, STACK_TYPE_SDEI_NORMAL, info);
-}
+	वापस on_stack(sp, low, high, STACK_TYPE_SDEI_NORMAL, info);
+पूर्ण
 
-static bool on_sdei_critical_stack(unsigned long sp, struct stack_info *info)
-{
-	unsigned long low = (unsigned long)raw_cpu_read(sdei_stack_critical_ptr);
-	unsigned long high = low + SDEI_STACK_SIZE;
+अटल bool on_sdei_critical_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
+अणु
+	अचिन्हित दीर्घ low = (अचिन्हित दीर्घ)raw_cpu_पढ़ो(sdei_stack_critical_ptr);
+	अचिन्हित दीर्घ high = low + SDEI_STACK_SIZE;
 
-	return on_stack(sp, low, high, STACK_TYPE_SDEI_CRITICAL, info);
-}
+	वापस on_stack(sp, low, high, STACK_TYPE_SDEI_CRITICAL, info);
+पूर्ण
 
-bool _on_sdei_stack(unsigned long sp, struct stack_info *info)
-{
-	if (!IS_ENABLED(CONFIG_VMAP_STACK))
-		return false;
+bool _on_sdei_stack(अचिन्हित दीर्घ sp, काष्ठा stack_info *info)
+अणु
+	अगर (!IS_ENABLED(CONFIG_VMAP_STACK))
+		वापस false;
 
-	if (on_sdei_critical_stack(sp, info))
-		return true;
+	अगर (on_sdei_critical_stack(sp, info))
+		वापस true;
 
-	if (on_sdei_normal_stack(sp, info))
-		return true;
+	अगर (on_sdei_normal_stack(sp, info))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-unsigned long sdei_arch_get_entry_point(int conduit)
-{
+अचिन्हित दीर्घ sdei_arch_get_entry_poपूर्णांक(पूर्णांक conduit)
+अणु
 	/*
 	 * SDEI works between adjacent exception levels. If we booted at EL1 we
 	 * assume a hypervisor is marshalling events. If we booted at EL2 and
-	 * dropped to EL1 because we don't support VHE, then we can't support
+	 * dropped to EL1 because we करोn't support VHE, then we can't support
 	 * SDEI.
 	 */
-	if (is_hyp_mode_available() && !is_kernel_in_hyp_mode()) {
+	अगर (is_hyp_mode_available() && !is_kernel_in_hyp_mode()) अणु
 		pr_err("Not supported on this hardware/boot configuration\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	if (init_sdei_stacks())
-		goto out_err;
+	अगर (init_sdei_stacks())
+		जाओ out_err;
 
-	if (init_sdei_scs())
-		goto out_err_free_stacks;
+	अगर (init_sdei_scs())
+		जाओ out_err_मुक्त_stacks;
 
-	sdei_exit_mode = (conduit == SMCCC_CONDUIT_HVC) ? SDEI_EXIT_HVC : SDEI_EXIT_SMC;
+	sdei_निकास_mode = (conduit == SMCCC_CONDUIT_HVC) ? SDEI_EXIT_HVC : SDEI_EXIT_SMC;
 
-#ifdef CONFIG_UNMAP_KERNEL_AT_EL0
-	if (arm64_kernel_unmapped_at_el0()) {
-		unsigned long offset;
+#अगर_घोषित CONFIG_UNMAP_KERNEL_AT_EL0
+	अगर (arm64_kernel_unmapped_at_el0()) अणु
+		अचिन्हित दीर्घ offset;
 
-		offset = (unsigned long)__sdei_asm_entry_trampoline -
-			 (unsigned long)__entry_tramp_text_start;
-		return TRAMP_VALIAS + offset;
-	} else
-#endif /* CONFIG_UNMAP_KERNEL_AT_EL0 */
-		return (unsigned long)__sdei_asm_handler;
+		offset = (अचिन्हित दीर्घ)__sdei_यंत्र_entry_trampoline -
+			 (अचिन्हित दीर्घ)__entry_tramp_text_start;
+		वापस TRAMP_VALIAS + offset;
+	पूर्ण अन्यथा
+#पूर्ण_अगर /* CONFIG_UNMAP_KERNEL_AT_EL0 */
+		वापस (अचिन्हित दीर्घ)__sdei_यंत्र_handler;
 
-out_err_free_stacks:
-	free_sdei_stacks();
+out_err_मुक्त_stacks:
+	मुक्त_sdei_stacks();
 out_err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * __sdei_handler() returns one of:
- *  SDEI_EV_HANDLED -  success, return to the interrupted context.
- *  SDEI_EV_FAILED  -  failure, return this error code to firmare.
- *  virtual-address -  success, return to this address.
+ * __sdei_handler() वापसs one of:
+ *  SDEI_EV_HANDLED -  success, वापस to the पूर्णांकerrupted context.
+ *  SDEI_EV_FAILED  -  failure, वापस this error code to firmare.
+ *  भव-address -  success, वापस to this address.
  */
-static __kprobes unsigned long _sdei_handler(struct pt_regs *regs,
-					     struct sdei_registered_event *arg)
-{
+अटल __kprobes अचिन्हित दीर्घ _sdei_handler(काष्ठा pt_regs *regs,
+					     काष्ठा sdei_रेजिस्टरed_event *arg)
+अणु
 	u32 mode;
-	int i, err = 0;
-	int clobbered_registers = 4;
-	u64 elr = read_sysreg(elr_el1);
-	u32 kernel_mode = read_sysreg(CurrentEL) | 1;	/* +SPSel */
-	unsigned long vbar = read_sysreg(vbar_el1);
+	पूर्णांक i, err = 0;
+	पूर्णांक clobbered_रेजिस्टरs = 4;
+	u64 elr = पढ़ो_sysreg(elr_el1);
+	u32 kernel_mode = पढ़ो_sysreg(CurrentEL) | 1;	/* +SPSel */
+	अचिन्हित दीर्घ vbar = पढ़ो_sysreg(vbar_el1);
 
-	if (arm64_kernel_unmapped_at_el0())
-		clobbered_registers++;
+	अगर (arm64_kernel_unmapped_at_el0())
+		clobbered_रेजिस्टरs++;
 
-	/* Retrieve the missing registers values */
-	for (i = 0; i < clobbered_registers; i++) {
+	/* Retrieve the missing रेजिस्टरs values */
+	क्रम (i = 0; i < clobbered_रेजिस्टरs; i++) अणु
 		/* from within the handler, this call always succeeds */
 		sdei_api_event_context(i, &regs->regs[i]);
-	}
+	पूर्ण
 
 	err = sdei_event_handler(regs, arg);
-	if (err)
-		return SDEI_EV_FAILED;
+	अगर (err)
+		वापस SDEI_EV_FAILED;
 
-	if (elr != read_sysreg(elr_el1)) {
+	अगर (elr != पढ़ो_sysreg(elr_el1)) अणु
 		/*
 		 * We took a synchronous exception from the SDEI handler.
-		 * This could deadlock, and if you interrupt KVM it will
+		 * This could deadlock, and अगर you पूर्णांकerrupt KVM it will
 		 * hyp-panic instead.
 		 */
 		pr_warn("unsafe: exception during handler\n");
-	}
+	पूर्ण
 
 	mode = regs->pstate & (PSR_MODE32_BIT | PSR_MODE_MASK);
 
 	/*
-	 * If we interrupted the kernel with interrupts masked, we always go
+	 * If we पूर्णांकerrupted the kernel with पूर्णांकerrupts masked, we always go
 	 * back to wherever we came from.
 	 */
-	if (mode == kernel_mode && !interrupts_enabled(regs))
-		return SDEI_EV_HANDLED;
+	अगर (mode == kernel_mode && !पूर्णांकerrupts_enabled(regs))
+		वापस SDEI_EV_HANDLED;
 
 	/*
 	 * Otherwise, we pretend this was an IRQ. This lets user space tasks
-	 * receive signals before we return to them, and KVM to invoke it's
-	 * world switch to do the same.
+	 * receive संकेतs beक्रमe we वापस to them, and KVM to invoke it's
+	 * world चयन to करो the same.
 	 *
 	 * See DDI0487B.a Table D1-7 'Vector offsets from vector table base
 	 * address'.
 	 */
-	if (mode == kernel_mode)
-		return vbar + 0x280;
-	else if (mode & PSR_MODE32_BIT)
-		return vbar + 0x680;
+	अगर (mode == kernel_mode)
+		वापस vbar + 0x280;
+	अन्यथा अगर (mode & PSR_MODE32_BIT)
+		वापस vbar + 0x680;
 
-	return vbar + 0x480;
-}
+	वापस vbar + 0x480;
+पूर्ण
 
-static void __kprobes notrace __sdei_pstate_entry(void)
-{
+अटल व्योम __kprobes notrace __sdei_pstate_entry(व्योम)
+अणु
 	/*
-	 * The original SDEI spec (ARM DEN 0054A) can be read ambiguously as to
+	 * The original SDEI spec (ARM DEN 0054A) can be पढ़ो ambiguously as to
 	 * whether PSTATE bits are inherited unchanged or generated from
 	 * scratch, and the TF-A implementation always clears PAN and always
 	 * clears UAO. There are no other known implementations.
 	 *
-	 * Subsequent revisions (ARM DEN 0054B) follow the usual rules for how
-	 * PSTATE is modified upon architectural exceptions, and so PAN is
+	 * Subsequent revisions (ARM DEN 0054B) follow the usual rules क्रम how
+	 * PSTATE is modअगरied upon architectural exceptions, and so PAN is
 	 * either inherited or set per SCTLR_ELx.SPAN, and UAO is always
 	 * cleared.
 	 *
 	 * We must explicitly reset PAN to the expected state, including
-	 * clearing it when the host isn't using it, in case a VM had it set.
+	 * clearing it when the host isn't using it, in हाल a VM had it set.
 	 */
-	if (system_uses_hw_pan())
+	अगर (प्रणाली_uses_hw_pan())
 		set_pstate_pan(1);
-	else if (cpu_has_pan())
+	अन्यथा अगर (cpu_has_pan())
 		set_pstate_pan(0);
-}
+पूर्ण
 
-asmlinkage noinstr unsigned long
-__sdei_handler(struct pt_regs *regs, struct sdei_registered_event *arg)
-{
-	unsigned long ret;
+यंत्रlinkage noinstr अचिन्हित दीर्घ
+__sdei_handler(काष्ठा pt_regs *regs, काष्ठा sdei_रेजिस्टरed_event *arg)
+अणु
+	अचिन्हित दीर्घ ret;
 
 	/*
 	 * We didn't take an exception to get here, so the HW hasn't
@@ -330,7 +331,7 @@ __sdei_handler(struct pt_regs *regs, struct sdei_registered_event *arg)
 
 	ret = _sdei_handler(regs, arg);
 
-	arm64_exit_nmi(regs);
+	arm64_निकास_nmi(regs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

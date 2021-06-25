@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Fixmap support for Hexagon - enough to support highmem features
+ * Fixmap support क्रम Hexagon - enough to support highmem features
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_FIXMAP_H
-#define _ASM_FIXMAP_H
+#अगर_अघोषित _ASM_FIXMAP_H
+#घोषणा _ASM_FIXMAP_H
 
 /*
- * A lot of the fixmap info is already in mem-layout.h
+ * A lot of the fixmap info is alपढ़ोy in mem-layout.h
  */
-#include <asm/mem-layout.h>
+#समावेश <यंत्र/mem-layout.h>
 
-#include <asm-generic/fixmap.h>
+#समावेश <यंत्र-generic/fixmap.h>
 
-#endif
+#पूर्ण_अगर

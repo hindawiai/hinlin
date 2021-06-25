@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Greybus SPI library header
  *
@@ -8,19 +9,19 @@
  * released under the gplv2 only.
  */
 
-#ifndef __SPILIB_H
-#define __SPILIB_H
+#अगर_अघोषित __SPILIB_H
+#घोषणा __SPILIB_H
 
-struct device;
-struct gb_connection;
+काष्ठा device;
+काष्ठा gb_connection;
 
-struct spilib_ops {
-	int (*prepare_transfer_hardware)(struct device *dev);
-	void (*unprepare_transfer_hardware)(struct device *dev);
-};
+काष्ठा spilib_ops अणु
+	पूर्णांक (*prepare_transfer_hardware)(काष्ठा device *dev);
+	व्योम (*unprepare_transfer_hardware)(काष्ठा device *dev);
+पूर्ण;
 
-int gb_spilib_master_init(struct gb_connection *connection,
-			  struct device *dev, struct spilib_ops *ops);
-void gb_spilib_master_exit(struct gb_connection *connection);
+पूर्णांक gb_spilib_master_init(काष्ठा gb_connection *connection,
+			  काष्ठा device *dev, काष्ठा spilib_ops *ops);
+व्योम gb_spilib_master_निकास(काष्ठा gb_connection *connection);
 
-#endif /* __SPILIB_H */
+#पूर्ण_अगर /* __SPILIB_H */

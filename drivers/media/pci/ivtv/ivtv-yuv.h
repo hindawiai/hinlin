@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     yuv support
 
@@ -6,27 +7,27 @@
 
  */
 
-#ifndef IVTV_YUV_H
-#define IVTV_YUV_H
+#अगर_अघोषित IVTV_YUV_H
+#घोषणा IVTV_YUV_H
 
-#define IVTV_YUV_BUFFER_UV_OFFSET 0x65400	/* Offset to UV Buffer */
+#घोषणा IVTV_YUV_BUFFER_UV_OFFSET 0x65400	/* Offset to UV Buffer */
 
 /* Offset to filter table in firmware */
-#define IVTV_YUV_HORIZONTAL_FILTER_OFFSET 0x025d8
-#define IVTV_YUV_VERTICAL_FILTER_OFFSET 0x03358
+#घोषणा IVTV_YUV_HORIZONTAL_FILTER_OFFSET 0x025d8
+#घोषणा IVTV_YUV_VERTICAL_FILTER_OFFSET 0x03358
 
-#define IVTV_YUV_UPDATE_HORIZONTAL  0x01
-#define IVTV_YUV_UPDATE_VERTICAL    0x02
-#define IVTV_YUV_UPDATE_INVALID     0x04
+#घोषणा IVTV_YUV_UPDATE_HORIZONTAL  0x01
+#घोषणा IVTV_YUV_UPDATE_VERTICAL    0x02
+#घोषणा IVTV_YUV_UPDATE_INVALID     0x04
 
-extern const u32 yuv_offset[IVTV_YUV_BUFFERS];
+बाह्य स्थिर u32 yuv_offset[IVTV_YUV_BUFFERS];
 
-int ivtv_yuv_filter_check(struct ivtv *itv);
-void ivtv_yuv_setup_stream_frame(struct ivtv *itv);
-int ivtv_yuv_udma_stream_frame(struct ivtv *itv, void __user *src);
-void ivtv_yuv_frame_complete(struct ivtv *itv);
-int ivtv_yuv_prep_frame(struct ivtv *itv, struct ivtv_dma_frame *args);
-void ivtv_yuv_close(struct ivtv *itv);
-void ivtv_yuv_work_handler(struct ivtv *itv);
+पूर्णांक ivtv_yuv_filter_check(काष्ठा ivtv *itv);
+व्योम ivtv_yuv_setup_stream_frame(काष्ठा ivtv *itv);
+पूर्णांक ivtv_yuv_udma_stream_frame(काष्ठा ivtv *itv, व्योम __user *src);
+व्योम ivtv_yuv_frame_complete(काष्ठा ivtv *itv);
+पूर्णांक ivtv_yuv_prep_frame(काष्ठा ivtv *itv, काष्ठा ivtv_dma_frame *args);
+व्योम ivtv_yuv_बंद(काष्ठा ivtv *itv);
+व्योम ivtv_yuv_work_handler(काष्ठा ivtv *itv);
 
-#endif
+#पूर्ण_अगर

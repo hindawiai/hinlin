@@ -1,317 +1,318 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* (C) 1999-2001 Paul `Rusty' Russell
  * (C) 2002-2004 Netfilter Core Team <coreteam@netfilter.org>
  * (C) 2006-2012 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/types.h>
-#include <linux/timer.h>
-#include <linux/module.h>
-#include <linux/udp.h>
-#include <linux/seq_file.h>
-#include <linux/skbuff.h>
-#include <linux/ipv6.h>
-#include <net/ip6_checksum.h>
-#include <net/checksum.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/module.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ipv6.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <net/checksum.h>
 
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv4.h>
-#include <linux/netfilter_ipv6.h>
-#include <net/netfilter/nf_conntrack_l4proto.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_timeout.h>
-#include <net/netfilter/nf_log.h>
-#include <net/netfilter/ipv4/nf_conntrack_ipv4.h>
-#include <net/netfilter/ipv6/nf_conntrack_ipv6.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv4.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <net/netfilter/nf_conntrack_l4proto.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_समयout.h>
+#समावेश <net/netfilter/nf_log.h>
+#समावेश <net/netfilter/ipv4/nf_conntrack_ipv4.h>
+#समावेश <net/netfilter/ipv6/nf_conntrack_ipv6.h>
 
-static const unsigned int udp_timeouts[UDP_CT_MAX] = {
+अटल स्थिर अचिन्हित पूर्णांक udp_समयouts[UDP_CT_MAX] = अणु
 	[UDP_CT_UNREPLIED]	= 30*HZ,
 	[UDP_CT_REPLIED]	= 120*HZ,
-};
+पूर्ण;
 
-static unsigned int *udp_get_timeouts(struct net *net)
-{
-	return nf_udp_pernet(net)->timeouts;
-}
+अटल अचिन्हित पूर्णांक *udp_get_समयouts(काष्ठा net *net)
+अणु
+	वापस nf_udp_pernet(net)->समयouts;
+पूर्ण
 
-static void udp_error_log(const struct sk_buff *skb,
-			  const struct nf_hook_state *state,
-			  const char *msg)
-{
+अटल व्योम udp_error_log(स्थिर काष्ठा sk_buff *skb,
+			  स्थिर काष्ठा nf_hook_state *state,
+			  स्थिर अक्षर *msg)
+अणु
 	nf_l4proto_log_invalid(skb, state->net, state->pf,
 			       IPPROTO_UDP, "%s", msg);
-}
+पूर्ण
 
-static bool udp_error(struct sk_buff *skb,
-		      unsigned int dataoff,
-		      const struct nf_hook_state *state)
-{
-	unsigned int udplen = skb->len - dataoff;
-	const struct udphdr *hdr;
-	struct udphdr _hdr;
+अटल bool udp_error(काष्ठा sk_buff *skb,
+		      अचिन्हित पूर्णांक dataoff,
+		      स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक udplen = skb->len - dataoff;
+	स्थिर काष्ठा udphdr *hdr;
+	काष्ठा udphdr _hdr;
 
 	/* Header is too small? */
-	hdr = skb_header_pointer(skb, dataoff, sizeof(_hdr), &_hdr);
-	if (!hdr) {
+	hdr = skb_header_poपूर्णांकer(skb, dataoff, माप(_hdr), &_hdr);
+	अगर (!hdr) अणु
 		udp_error_log(skb, state, "short packet");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	/* Truncated/malformed packets */
-	if (ntohs(hdr->len) > udplen || ntohs(hdr->len) < sizeof(*hdr)) {
+	/* Truncated/malक्रमmed packets */
+	अगर (ntohs(hdr->len) > udplen || ntohs(hdr->len) < माप(*hdr)) अणु
 		udp_error_log(skb, state, "truncated/malformed packet");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* Packet with no checksum */
-	if (!hdr->check)
-		return false;
+	अगर (!hdr->check)
+		वापस false;
 
 	/* Checksum invalid? Ignore.
 	 * We skip checking packets on the outgoing path
 	 * because the checksum is assumed to be correct.
 	 * FIXME: Source route IP option packets --RR */
-	if (state->hook == NF_INET_PRE_ROUTING &&
+	अगर (state->hook == NF_INET_PRE_ROUTING &&
 	    state->net->ct.sysctl_checksum &&
-	    nf_checksum(skb, state->hook, dataoff, IPPROTO_UDP, state->pf)) {
+	    nf_checksum(skb, state->hook, dataoff, IPPROTO_UDP, state->pf)) अणु
 		udp_error_log(skb, state, "bad checksum");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Returns verdict for packet, and may modify conntracktype */
-int nf_conntrack_udp_packet(struct nf_conn *ct,
-			    struct sk_buff *skb,
-			    unsigned int dataoff,
-			    enum ip_conntrack_info ctinfo,
-			    const struct nf_hook_state *state)
-{
-	unsigned int *timeouts;
+/* Returns verdict क्रम packet, and may modअगरy conntracktype */
+पूर्णांक nf_conntrack_udp_packet(काष्ठा nf_conn *ct,
+			    काष्ठा sk_buff *skb,
+			    अचिन्हित पूर्णांक dataoff,
+			    क्रमागत ip_conntrack_info ctinfo,
+			    स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक *समयouts;
 
-	if (udp_error(skb, dataoff, state))
-		return -NF_ACCEPT;
+	अगर (udp_error(skb, dataoff, state))
+		वापस -NF_ACCEPT;
 
-	timeouts = nf_ct_timeout_lookup(ct);
-	if (!timeouts)
-		timeouts = udp_get_timeouts(nf_ct_net(ct));
+	समयouts = nf_ct_समयout_lookup(ct);
+	अगर (!समयouts)
+		समयouts = udp_get_समयouts(nf_ct_net(ct));
 
-	if (!nf_ct_is_confirmed(ct))
-		ct->proto.udp.stream_ts = 2 * HZ + jiffies;
+	अगर (!nf_ct_is_confirmed(ct))
+		ct->proto.udp.stream_ts = 2 * HZ + jअगरfies;
 
 	/* If we've seen traffic both ways, this is some kind of UDP
 	 * stream. Set Assured.
 	 */
-	if (test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) {
-		unsigned long extra = timeouts[UDP_CT_UNREPLIED];
+	अगर (test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) अणु
+		अचिन्हित दीर्घ extra = समयouts[UDP_CT_UNREPLIED];
 
-		/* Still active after two seconds? Extend timeout. */
-		if (time_after(jiffies, ct->proto.udp.stream_ts))
-			extra = timeouts[UDP_CT_REPLIED];
+		/* Still active after two seconds? Extend समयout. */
+		अगर (समय_after(jअगरfies, ct->proto.udp.stream_ts))
+			extra = समयouts[UDP_CT_REPLIED];
 
 		nf_ct_refresh_acct(ct, ctinfo, skb, extra);
 
-		/* never set ASSURED for IPS_NAT_CLASH, they time out soon */
-		if (unlikely((ct->status & IPS_NAT_CLASH)))
-			return NF_ACCEPT;
+		/* never set ASSURED क्रम IPS_NAT_CLASH, they समय out soon */
+		अगर (unlikely((ct->status & IPS_NAT_CLASH)))
+			वापस NF_ACCEPT;
 
 		/* Also, more likely to be important, and not a probe */
-		if (!test_and_set_bit(IPS_ASSURED_BIT, &ct->status))
+		अगर (!test_and_set_bit(IPS_ASSURED_BIT, &ct->status))
 			nf_conntrack_event_cache(IPCT_ASSURED, ct);
-	} else {
-		nf_ct_refresh_acct(ct, ctinfo, skb, timeouts[UDP_CT_UNREPLIED]);
-	}
-	return NF_ACCEPT;
-}
+	पूर्ण अन्यथा अणु
+		nf_ct_refresh_acct(ct, ctinfo, skb, समयouts[UDP_CT_UNREPLIED]);
+	पूर्ण
+	वापस NF_ACCEPT;
+पूर्ण
 
-#ifdef CONFIG_NF_CT_PROTO_UDPLITE
-static void udplite_error_log(const struct sk_buff *skb,
-			      const struct nf_hook_state *state,
-			      const char *msg)
-{
+#अगर_घोषित CONFIG_NF_CT_PROTO_UDPLITE
+अटल व्योम udplite_error_log(स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा nf_hook_state *state,
+			      स्थिर अक्षर *msg)
+अणु
 	nf_l4proto_log_invalid(skb, state->net, state->pf,
 			       IPPROTO_UDPLITE, "%s", msg);
-}
+पूर्ण
 
-static bool udplite_error(struct sk_buff *skb,
-			  unsigned int dataoff,
-			  const struct nf_hook_state *state)
-{
-	unsigned int udplen = skb->len - dataoff;
-	const struct udphdr *hdr;
-	struct udphdr _hdr;
-	unsigned int cscov;
+अटल bool udplite_error(काष्ठा sk_buff *skb,
+			  अचिन्हित पूर्णांक dataoff,
+			  स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक udplen = skb->len - dataoff;
+	स्थिर काष्ठा udphdr *hdr;
+	काष्ठा udphdr _hdr;
+	अचिन्हित पूर्णांक cscov;
 
 	/* Header is too small? */
-	hdr = skb_header_pointer(skb, dataoff, sizeof(_hdr), &_hdr);
-	if (!hdr) {
+	hdr = skb_header_poपूर्णांकer(skb, dataoff, माप(_hdr), &_hdr);
+	अगर (!hdr) अणु
 		udplite_error_log(skb, state, "short packet");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	cscov = ntohs(hdr->len);
-	if (cscov == 0) {
+	अगर (cscov == 0) अणु
 		cscov = udplen;
-	} else if (cscov < sizeof(*hdr) || cscov > udplen) {
+	पूर्ण अन्यथा अगर (cscov < माप(*hdr) || cscov > udplen) अणु
 		udplite_error_log(skb, state, "invalid checksum coverage");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* UDPLITE mandates checksums */
-	if (!hdr->check) {
+	अगर (!hdr->check) अणु
 		udplite_error_log(skb, state, "checksum missing");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/* Checksum invalid? Ignore. */
-	if (state->hook == NF_INET_PRE_ROUTING &&
+	अगर (state->hook == NF_INET_PRE_ROUTING &&
 	    state->net->ct.sysctl_checksum &&
 	    nf_checksum_partial(skb, state->hook, dataoff, cscov, IPPROTO_UDP,
-				state->pf)) {
+				state->pf)) अणु
 		udplite_error_log(skb, state, "bad checksum");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Returns verdict for packet, and may modify conntracktype */
-int nf_conntrack_udplite_packet(struct nf_conn *ct,
-				struct sk_buff *skb,
-				unsigned int dataoff,
-				enum ip_conntrack_info ctinfo,
-				const struct nf_hook_state *state)
-{
-	unsigned int *timeouts;
+/* Returns verdict क्रम packet, and may modअगरy conntracktype */
+पूर्णांक nf_conntrack_udplite_packet(काष्ठा nf_conn *ct,
+				काष्ठा sk_buff *skb,
+				अचिन्हित पूर्णांक dataoff,
+				क्रमागत ip_conntrack_info ctinfo,
+				स्थिर काष्ठा nf_hook_state *state)
+अणु
+	अचिन्हित पूर्णांक *समयouts;
 
-	if (udplite_error(skb, dataoff, state))
-		return -NF_ACCEPT;
+	अगर (udplite_error(skb, dataoff, state))
+		वापस -NF_ACCEPT;
 
-	timeouts = nf_ct_timeout_lookup(ct);
-	if (!timeouts)
-		timeouts = udp_get_timeouts(nf_ct_net(ct));
+	समयouts = nf_ct_समयout_lookup(ct);
+	अगर (!समयouts)
+		समयouts = udp_get_समयouts(nf_ct_net(ct));
 
 	/* If we've seen traffic both ways, this is some kind of UDP
-	   stream.  Extend timeout. */
-	if (test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) {
+	   stream.  Extend समयout. */
+	अगर (test_bit(IPS_SEEN_REPLY_BIT, &ct->status)) अणु
 		nf_ct_refresh_acct(ct, ctinfo, skb,
-				   timeouts[UDP_CT_REPLIED]);
+				   समयouts[UDP_CT_REPLIED]);
 
-		if (unlikely((ct->status & IPS_NAT_CLASH)))
-			return NF_ACCEPT;
+		अगर (unlikely((ct->status & IPS_NAT_CLASH)))
+			वापस NF_ACCEPT;
 
 		/* Also, more likely to be important, and not a probe */
-		if (!test_and_set_bit(IPS_ASSURED_BIT, &ct->status))
+		अगर (!test_and_set_bit(IPS_ASSURED_BIT, &ct->status))
 			nf_conntrack_event_cache(IPCT_ASSURED, ct);
-	} else {
-		nf_ct_refresh_acct(ct, ctinfo, skb, timeouts[UDP_CT_UNREPLIED]);
-	}
-	return NF_ACCEPT;
-}
-#endif
+	पूर्ण अन्यथा अणु
+		nf_ct_refresh_acct(ct, ctinfo, skb, समयouts[UDP_CT_UNREPLIED]);
+	पूर्ण
+	वापस NF_ACCEPT;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
 
-#include <linux/netfilter/nfnetlink.h>
-#include <linux/netfilter/nfnetlink_cttimeout.h>
+#समावेश <linux/netfilter/nfnetlink.h>
+#समावेश <linux/netfilter/nfnetlink_ctसमयout.h>
 
-static int udp_timeout_nlattr_to_obj(struct nlattr *tb[],
-				     struct net *net, void *data)
-{
-	unsigned int *timeouts = data;
-	struct nf_udp_net *un = nf_udp_pernet(net);
+अटल पूर्णांक udp_समयout_nlattr_to_obj(काष्ठा nlattr *tb[],
+				     काष्ठा net *net, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक *समयouts = data;
+	काष्ठा nf_udp_net *un = nf_udp_pernet(net);
 
-	if (!timeouts)
-		timeouts = un->timeouts;
+	अगर (!समयouts)
+		समयouts = un->समयouts;
 
-	/* set default timeouts for UDP. */
-	timeouts[UDP_CT_UNREPLIED] = un->timeouts[UDP_CT_UNREPLIED];
-	timeouts[UDP_CT_REPLIED] = un->timeouts[UDP_CT_REPLIED];
+	/* set शेष समयouts क्रम UDP. */
+	समयouts[UDP_CT_UNREPLIED] = un->समयouts[UDP_CT_UNREPLIED];
+	समयouts[UDP_CT_REPLIED] = un->समयouts[UDP_CT_REPLIED];
 
-	if (tb[CTA_TIMEOUT_UDP_UNREPLIED]) {
-		timeouts[UDP_CT_UNREPLIED] =
+	अगर (tb[CTA_TIMEOUT_UDP_UNREPLIED]) अणु
+		समयouts[UDP_CT_UNREPLIED] =
 			ntohl(nla_get_be32(tb[CTA_TIMEOUT_UDP_UNREPLIED])) * HZ;
-	}
-	if (tb[CTA_TIMEOUT_UDP_REPLIED]) {
-		timeouts[UDP_CT_REPLIED] =
+	पूर्ण
+	अगर (tb[CTA_TIMEOUT_UDP_REPLIED]) अणु
+		समयouts[UDP_CT_REPLIED] =
 			ntohl(nla_get_be32(tb[CTA_TIMEOUT_UDP_REPLIED])) * HZ;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-udp_timeout_obj_to_nlattr(struct sk_buff *skb, const void *data)
-{
-	const unsigned int *timeouts = data;
+अटल पूर्णांक
+udp_समयout_obj_to_nlattr(काष्ठा sk_buff *skb, स्थिर व्योम *data)
+अणु
+	स्थिर अचिन्हित पूर्णांक *समयouts = data;
 
-	if (nla_put_be32(skb, CTA_TIMEOUT_UDP_UNREPLIED,
-			 htonl(timeouts[UDP_CT_UNREPLIED] / HZ)) ||
+	अगर (nla_put_be32(skb, CTA_TIMEOUT_UDP_UNREPLIED,
+			 htonl(समयouts[UDP_CT_UNREPLIED] / HZ)) ||
 	    nla_put_be32(skb, CTA_TIMEOUT_UDP_REPLIED,
-			 htonl(timeouts[UDP_CT_REPLIED] / HZ)))
-		goto nla_put_failure;
-	return 0;
+			 htonl(समयouts[UDP_CT_REPLIED] / HZ)))
+		जाओ nla_put_failure;
+	वापस 0;
 
 nla_put_failure:
-	return -ENOSPC;
-}
+	वापस -ENOSPC;
+पूर्ण
 
-static const struct nla_policy
-udp_timeout_nla_policy[CTA_TIMEOUT_UDP_MAX+1] = {
-       [CTA_TIMEOUT_UDP_UNREPLIED]	= { .type = NLA_U32 },
-       [CTA_TIMEOUT_UDP_REPLIED]	= { .type = NLA_U32 },
-};
-#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
+अटल स्थिर काष्ठा nla_policy
+udp_समयout_nla_policy[CTA_TIMEOUT_UDP_MAX+1] = अणु
+       [CTA_TIMEOUT_UDP_UNREPLIED]	= अणु .type = NLA_U32 पूर्ण,
+       [CTA_TIMEOUT_UDP_REPLIED]	= अणु .type = NLA_U32 पूर्ण,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
 
-void nf_conntrack_udp_init_net(struct net *net)
-{
-	struct nf_udp_net *un = nf_udp_pernet(net);
-	int i;
+व्योम nf_conntrack_udp_init_net(काष्ठा net *net)
+अणु
+	काष्ठा nf_udp_net *un = nf_udp_pernet(net);
+	पूर्णांक i;
 
-	for (i = 0; i < UDP_CT_MAX; i++)
-		un->timeouts[i] = udp_timeouts[i];
-}
+	क्रम (i = 0; i < UDP_CT_MAX; i++)
+		un->समयouts[i] = udp_समयouts[i];
+पूर्ण
 
-const struct nf_conntrack_l4proto nf_conntrack_l4proto_udp =
-{
+स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_udp =
+अणु
 	.l4proto		= IPPROTO_UDP,
 	.allow_clash		= true,
-#if IS_ENABLED(CONFIG_NF_CT_NETLINK)
+#अगर IS_ENABLED(CONFIG_NF_CT_NETLINK)
 	.tuple_to_nlattr	= nf_ct_port_tuple_to_nlattr,
 	.nlattr_to_tuple	= nf_ct_port_nlattr_to_tuple,
 	.nlattr_tuple_size	= nf_ct_port_nlattr_tuple_size,
 	.nla_policy		= nf_ct_port_nla_policy,
-#endif
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
-	.ctnl_timeout		= {
-		.nlattr_to_obj	= udp_timeout_nlattr_to_obj,
-		.obj_to_nlattr	= udp_timeout_obj_to_nlattr,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+	.ctnl_समयout		= अणु
+		.nlattr_to_obj	= udp_समयout_nlattr_to_obj,
+		.obj_to_nlattr	= udp_समयout_obj_to_nlattr,
 		.nlattr_max	= CTA_TIMEOUT_UDP_MAX,
-		.obj_size	= sizeof(unsigned int) * CTA_TIMEOUT_UDP_MAX,
-		.nla_policy	= udp_timeout_nla_policy,
-	},
-#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
-};
+		.obj_size	= माप(अचिन्हित पूर्णांक) * CTA_TIMEOUT_UDP_MAX,
+		.nla_policy	= udp_समयout_nla_policy,
+	पूर्ण,
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
+पूर्ण;
 
-#ifdef CONFIG_NF_CT_PROTO_UDPLITE
-const struct nf_conntrack_l4proto nf_conntrack_l4proto_udplite =
-{
+#अगर_घोषित CONFIG_NF_CT_PROTO_UDPLITE
+स्थिर काष्ठा nf_conntrack_l4proto nf_conntrack_l4proto_udplite =
+अणु
 	.l4proto		= IPPROTO_UDPLITE,
 	.allow_clash		= true,
-#if IS_ENABLED(CONFIG_NF_CT_NETLINK)
+#अगर IS_ENABLED(CONFIG_NF_CT_NETLINK)
 	.tuple_to_nlattr	= nf_ct_port_tuple_to_nlattr,
 	.nlattr_to_tuple	= nf_ct_port_nlattr_to_tuple,
 	.nlattr_tuple_size	= nf_ct_port_nlattr_tuple_size,
 	.nla_policy		= nf_ct_port_nla_policy,
-#endif
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
-	.ctnl_timeout		= {
-		.nlattr_to_obj	= udp_timeout_nlattr_to_obj,
-		.obj_to_nlattr	= udp_timeout_obj_to_nlattr,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+	.ctnl_समयout		= अणु
+		.nlattr_to_obj	= udp_समयout_nlattr_to_obj,
+		.obj_to_nlattr	= udp_समयout_obj_to_nlattr,
 		.nlattr_max	= CTA_TIMEOUT_UDP_MAX,
-		.obj_size	= sizeof(unsigned int) * CTA_TIMEOUT_UDP_MAX,
-		.nla_policy	= udp_timeout_nla_policy,
-	},
-#endif /* CONFIG_NF_CONNTRACK_TIMEOUT */
-};
-#endif
+		.obj_size	= माप(अचिन्हित पूर्णांक) * CTA_TIMEOUT_UDP_MAX,
+		.nla_policy	= udp_समयout_nla_policy,
+	पूर्ण,
+#पूर्ण_अगर /* CONFIG_NF_CONNTRACK_TIMEOUT */
+पूर्ण;
+#पूर्ण_अगर

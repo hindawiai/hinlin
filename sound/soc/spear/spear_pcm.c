@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * ALSA PCM interface for ST SPEAr Processors
+ * ALSA PCM पूर्णांकerface क्रम ST SPEAr Processors
  *
  * sound/soc/spear/spear_pcm.c
  *
@@ -11,16 +12,16 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/module.h>
-#include <linux/dmaengine.h>
-#include <linux/platform_device.h>
-#include <sound/dmaengine_pcm.h>
-#include <sound/pcm.h>
-#include <sound/soc.h>
-#include <sound/spear_dma.h>
-#include "spear_pcm.h"
+#समावेश <linux/module.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/spear_dma.h>
+#समावेश "spear_pcm.h"
 
-static const struct snd_pcm_hardware spear_pcm_hardware = {
+अटल स्थिर काष्ठा snd_pcm_hardware spear_pcm_hardware = अणु
 	.info = (SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		 SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 		 SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME),
@@ -29,26 +30,26 @@ static const struct snd_pcm_hardware spear_pcm_hardware = {
 	.period_bytes_max = 2 * 1024, /* maximum period size */
 	.periods_min = 1, /* min # periods */
 	.periods_max = 8, /* max # of periods */
-	.fifo_size = 0, /* fifo size in bytes */
-};
+	.fअगरo_size = 0, /* fअगरo size in bytes */
+पूर्ण;
 
-static const struct snd_dmaengine_pcm_config spear_dmaengine_pcm_config = {
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config spear_dmaengine_pcm_config = अणु
 	.pcm_hardware = &spear_pcm_hardware,
-	.prealloc_buffer_size = 16 * 1024,
-};
+	.pपुनः_स्मृति_buffer_size = 16 * 1024,
+पूर्ण;
 
-int devm_spear_pcm_platform_register(struct device *dev,
-			struct snd_dmaengine_pcm_config *config,
-			bool (*filter)(struct dma_chan *chan, void *slave))
-{
+पूर्णांक devm_spear_pcm_platक्रमm_रेजिस्टर(काष्ठा device *dev,
+			काष्ठा snd_dmaengine_pcm_config *config,
+			bool (*filter)(काष्ठा dma_chan *chan, व्योम *slave))
+अणु
 	*config = spear_dmaengine_pcm_config;
 	config->compat_filter_fn = filter;
 
-	return devm_snd_dmaengine_pcm_register(dev, config,
+	वापस devm_snd_dmaengine_pcm_रेजिस्टर(dev, config,
 		SND_DMAENGINE_PCM_FLAG_NO_DT |
 		SND_DMAENGINE_PCM_FLAG_COMPAT);
-}
-EXPORT_SYMBOL_GPL(devm_spear_pcm_platform_register);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_spear_pcm_platक्रमm_रेजिस्टर);
 
 MODULE_AUTHOR("Rajeev Kumar <rajeevkumar.linux@gmail.com>");
 MODULE_DESCRIPTION("SPEAr PCM DMA module");

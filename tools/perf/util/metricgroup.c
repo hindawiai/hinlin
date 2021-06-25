@@ -1,839 +1,840 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2017, Intel Corporation.
  */
 
 /* Manage metrics and groups of metrics from JSON files */
 
-#include "metricgroup.h"
-#include "debug.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "strbuf.h"
-#include "pmu.h"
-#include "expr.h"
-#include "rblist.h"
-#include <string.h>
-#include <errno.h>
-#include "strlist.h"
-#include <assert.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include <subcmd/parse-options.h>
-#include <api/fs/fs.h>
-#include "util.h"
-#include <asm/bug.h>
-#include "cgroup.h"
+#समावेश "metricgroup.h"
+#समावेश "debug.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "strbuf.h"
+#समावेश "pmu.h"
+#समावेश "expr.h"
+#समावेश "rblist.h"
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश "strlist.h"
+#समावेश <निश्चित.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश <subcmd/parse-options.h>
+#समावेश <api/fs/fs.h>
+#समावेश "util.h"
+#समावेश <यंत्र/bug.h>
+#समावेश "cgroup.h"
 
-struct metric_event *metricgroup__lookup(struct rblist *metric_events,
-					 struct evsel *evsel,
+काष्ठा metric_event *metricgroup__lookup(काष्ठा rblist *metric_events,
+					 काष्ठा evsel *evsel,
 					 bool create)
-{
-	struct rb_node *nd;
-	struct metric_event me = {
+अणु
+	काष्ठा rb_node *nd;
+	काष्ठा metric_event me = अणु
 		.evsel = evsel
-	};
+	पूर्ण;
 
-	if (!metric_events)
-		return NULL;
+	अगर (!metric_events)
+		वापस शून्य;
 
 	nd = rblist__find(metric_events, &me);
-	if (nd)
-		return container_of(nd, struct metric_event, nd);
-	if (create) {
+	अगर (nd)
+		वापस container_of(nd, काष्ठा metric_event, nd);
+	अगर (create) अणु
 		rblist__add_node(metric_events, &me);
 		nd = rblist__find(metric_events, &me);
-		if (nd)
-			return container_of(nd, struct metric_event, nd);
-	}
-	return NULL;
-}
+		अगर (nd)
+			वापस container_of(nd, काष्ठा metric_event, nd);
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int metric_event_cmp(struct rb_node *rb_node, const void *entry)
-{
-	struct metric_event *a = container_of(rb_node,
-					      struct metric_event,
+अटल पूर्णांक metric_event_cmp(काष्ठा rb_node *rb_node, स्थिर व्योम *entry)
+अणु
+	काष्ठा metric_event *a = container_of(rb_node,
+					      काष्ठा metric_event,
 					      nd);
-	const struct metric_event *b = entry;
+	स्थिर काष्ठा metric_event *b = entry;
 
-	if (a->evsel == b->evsel)
-		return 0;
-	if ((char *)a->evsel < (char *)b->evsel)
-		return -1;
-	return +1;
-}
+	अगर (a->evsel == b->evsel)
+		वापस 0;
+	अगर ((अक्षर *)a->evsel < (अक्षर *)b->evsel)
+		वापस -1;
+	वापस +1;
+पूर्ण
 
-static struct rb_node *metric_event_new(struct rblist *rblist __maybe_unused,
-					const void *entry)
-{
-	struct metric_event *me = malloc(sizeof(struct metric_event));
+अटल काष्ठा rb_node *metric_event_new(काष्ठा rblist *rblist __maybe_unused,
+					स्थिर व्योम *entry)
+अणु
+	काष्ठा metric_event *me = दो_स्मृति(माप(काष्ठा metric_event));
 
-	if (!me)
-		return NULL;
-	memcpy(me, entry, sizeof(struct metric_event));
-	me->evsel = ((struct metric_event *)entry)->evsel;
+	अगर (!me)
+		वापस शून्य;
+	स_नकल(me, entry, माप(काष्ठा metric_event));
+	me->evsel = ((काष्ठा metric_event *)entry)->evsel;
 	INIT_LIST_HEAD(&me->head);
-	return &me->nd;
-}
+	वापस &me->nd;
+पूर्ण
 
-static void metric_event_delete(struct rblist *rblist __maybe_unused,
-				struct rb_node *rb_node)
-{
-	struct metric_event *me = container_of(rb_node, struct metric_event, nd);
-	struct metric_expr *expr, *tmp;
+अटल व्योम metric_event_delete(काष्ठा rblist *rblist __maybe_unused,
+				काष्ठा rb_node *rb_node)
+अणु
+	काष्ठा metric_event *me = container_of(rb_node, काष्ठा metric_event, nd);
+	काष्ठा metric_expr *expr, *पंचांगp;
 
-	list_for_each_entry_safe(expr, tmp, &me->head, nd) {
-		free(expr->metric_refs);
-		free(expr->metric_events);
-		free(expr);
-	}
+	list_क्रम_each_entry_safe(expr, पंचांगp, &me->head, nd) अणु
+		मुक्त(expr->metric_refs);
+		मुक्त(expr->metric_events);
+		मुक्त(expr);
+	पूर्ण
 
-	free(me);
-}
+	मुक्त(me);
+पूर्ण
 
-static void metricgroup__rblist_init(struct rblist *metric_events)
-{
+अटल व्योम metricgroup__rblist_init(काष्ठा rblist *metric_events)
+अणु
 	rblist__init(metric_events);
 	metric_events->node_cmp = metric_event_cmp;
 	metric_events->node_new = metric_event_new;
 	metric_events->node_delete = metric_event_delete;
-}
+पूर्ण
 
-void metricgroup__rblist_exit(struct rblist *metric_events)
-{
-	rblist__exit(metric_events);
-}
+व्योम metricgroup__rblist_निकास(काष्ठा rblist *metric_events)
+अणु
+	rblist__निकास(metric_events);
+पूर्ण
 
 /*
  * A node in the list of referenced metrics. metric_expr
- * is held as a convenience to avoid a search through the
+ * is held as a convenience to aव्योम a search through the
  * metric list.
  */
-struct metric_ref_node {
-	const char *metric_name;
-	const char *metric_expr;
-	struct list_head list;
-};
+काष्ठा metric_ref_node अणु
+	स्थिर अक्षर *metric_name;
+	स्थिर अक्षर *metric_expr;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct metric {
-	struct list_head nd;
-	struct expr_parse_ctx pctx;
-	const char *metric_name;
-	const char *metric_expr;
-	const char *metric_unit;
-	struct list_head metric_refs;
-	int metric_refs_cnt;
-	int runtime;
-	bool has_constraint;
-};
+काष्ठा metric अणु
+	काष्ठा list_head nd;
+	काष्ठा expr_parse_ctx pctx;
+	स्थिर अक्षर *metric_name;
+	स्थिर अक्षर *metric_expr;
+	स्थिर अक्षर *metric_unit;
+	काष्ठा list_head metric_refs;
+	पूर्णांक metric_refs_cnt;
+	पूर्णांक runसमय;
+	bool has_स्थिरraपूर्णांक;
+पूर्ण;
 
-#define RECURSION_ID_MAX 1000
+#घोषणा RECURSION_ID_MAX 1000
 
-struct expr_ids {
-	struct expr_id	id[RECURSION_ID_MAX];
-	int		cnt;
-};
+काष्ठा expr_ids अणु
+	काष्ठा expr_id	id[RECURSION_ID_MAX];
+	पूर्णांक		cnt;
+पूर्ण;
 
-static struct expr_id *expr_ids__alloc(struct expr_ids *ids)
-{
-	if (ids->cnt >= RECURSION_ID_MAX)
-		return NULL;
-	return &ids->id[ids->cnt++];
-}
+अटल काष्ठा expr_id *expr_ids__alloc(काष्ठा expr_ids *ids)
+अणु
+	अगर (ids->cnt >= RECURSION_ID_MAX)
+		वापस शून्य;
+	वापस &ids->id[ids->cnt++];
+पूर्ण
 
-static void expr_ids__exit(struct expr_ids *ids)
-{
-	int i;
+अटल व्योम expr_ids__निकास(काष्ठा expr_ids *ids)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ids->cnt; i++)
-		free(ids->id[i].id);
-}
+	क्रम (i = 0; i < ids->cnt; i++)
+		मुक्त(ids->id[i].id);
+पूर्ण
 
-static bool contains_event(struct evsel **metric_events, int num_events,
-			const char *event_name)
-{
-	int i;
+अटल bool contains_event(काष्ठा evsel **metric_events, पूर्णांक num_events,
+			स्थिर अक्षर *event_name)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_events; i++) {
-		if (!strcmp(metric_events[i]->name, event_name))
-			return true;
-	}
-	return false;
-}
+	क्रम (i = 0; i < num_events; i++) अणु
+		अगर (!म_भेद(metric_events[i]->name, event_name))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static bool evsel_same_pmu_or_none(struct evsel *ev1, struct evsel *ev2)
-{
-	if (!ev1->pmu_name || !ev2->pmu_name)
-		return true;
+अटल bool evsel_same_pmu_or_none(काष्ठा evsel *ev1, काष्ठा evsel *ev2)
+अणु
+	अगर (!ev1->pmu_name || !ev2->pmu_name)
+		वापस true;
 
-	return !strcmp(ev1->pmu_name, ev2->pmu_name);
-}
+	वापस !म_भेद(ev1->pmu_name, ev2->pmu_name);
+पूर्ण
 
 /**
  * Find a group of events in perf_evlist that correspond to those from a parsed
  * metric expression. Note, as find_evsel_group is called in the same order as
- * perf_evlist was constructed, metric_no_merge doesn't need to test for
+ * perf_evlist was स्थिरructed, metric_no_merge करोesn't need to test क्रम
  * underfilling a group.
- * @perf_evlist: a list of events something like: {metric1 leader, metric1
- * sibling, metric1 sibling}:W,duration_time,{metric2 leader, metric2 sibling,
- * metric2 sibling}:W,duration_time
- * @pctx: the parse context for the metric expression.
- * @metric_no_merge: don't attempt to share events for the metric with other
+ * @perf_evlist: a list of events something like: अणुmetric1 leader, metric1
+ * sibling, metric1 siblingपूर्ण:W,duration_समय,अणुmetric2 leader, metric2 sibling,
+ * metric2 siblingपूर्ण:W,duration_समय
+ * @pctx: the parse context क्रम the metric expression.
+ * @metric_no_merge: करोn't attempt to share events क्रम the metric with other
  * metrics.
- * @has_constraint: is there a constraint on the group of events? In which case
+ * @has_स्थिरraपूर्णांक: is there a स्थिरraपूर्णांक on the group of events? In which हाल
  * the events won't be grouped.
  * @metric_events: out argument, null terminated array of evsel's associated
  * with the metric.
- * @evlist_used: in/out argument, bitmap tracking which evlist events are used.
- * @return the first metric event or NULL on failure.
+ * @evlist_used: in/out argument, biपंचांगap tracking which evlist events are used.
+ * @वापस the first metric event or शून्य on failure.
  */
-static struct evsel *find_evsel_group(struct evlist *perf_evlist,
-				      struct expr_parse_ctx *pctx,
+अटल काष्ठा evsel *find_evsel_group(काष्ठा evlist *perf_evlist,
+				      काष्ठा expr_parse_ctx *pctx,
 				      bool metric_no_merge,
-				      bool has_constraint,
-				      struct evsel **metric_events,
-				      unsigned long *evlist_used)
-{
-	struct evsel *ev, *current_leader = NULL;
-	struct expr_id_data *val_ptr;
-	int i = 0, matched_events = 0, events_to_match;
-	const int idnum = (int)hashmap__size(&pctx->ids);
+				      bool has_स्थिरraपूर्णांक,
+				      काष्ठा evsel **metric_events,
+				      अचिन्हित दीर्घ *evlist_used)
+अणु
+	काष्ठा evsel *ev, *current_leader = शून्य;
+	काष्ठा expr_id_data *val_ptr;
+	पूर्णांक i = 0, matched_events = 0, events_to_match;
+	स्थिर पूर्णांक idnum = (पूर्णांक)hashmap__size(&pctx->ids);
 
 	/*
-	 * duration_time is always grouped separately, when events are grouped
-	 * (ie has_constraint is false) then ignore it in the matching loop and
+	 * duration_समय is always grouped separately, when events are grouped
+	 * (ie has_स्थिरraपूर्णांक is false) then ignore it in the matching loop and
 	 * add it to metric_events at the end.
 	 */
-	if (!has_constraint &&
-	    hashmap__find(&pctx->ids, "duration_time", (void **)&val_ptr))
+	अगर (!has_स्थिरraपूर्णांक &&
+	    hashmap__find(&pctx->ids, "duration_time", (व्योम **)&val_ptr))
 		events_to_match = idnum - 1;
-	else
+	अन्यथा
 		events_to_match = idnum;
 
-	evlist__for_each_entry (perf_evlist, ev) {
+	evlist__क्रम_each_entry (perf_evlist, ev) अणु
 		/*
-		 * Events with a constraint aren't grouped and match the first
+		 * Events with a स्थिरraपूर्णांक aren't grouped and match the first
 		 * events available.
 		 */
-		if (has_constraint && ev->weak_group)
-			continue;
-		/* Ignore event if already used and merging is disabled. */
-		if (metric_no_merge && test_bit(ev->idx, evlist_used))
-			continue;
-		if (!has_constraint && ev->leader != current_leader) {
+		अगर (has_स्थिरraपूर्णांक && ev->weak_group)
+			जारी;
+		/* Ignore event अगर alपढ़ोy used and merging is disabled. */
+		अगर (metric_no_merge && test_bit(ev->idx, evlist_used))
+			जारी;
+		अगर (!has_स्थिरraपूर्णांक && ev->leader != current_leader) अणु
 			/*
 			 * Start of a new group, discard the whole match and
 			 * start again.
 			 */
 			matched_events = 0;
-			memset(metric_events, 0,
-				sizeof(struct evsel *) * idnum);
+			स_रखो(metric_events, 0,
+				माप(काष्ठा evsel *) * idnum);
 			current_leader = ev->leader;
-		}
+		पूर्ण
 		/*
-		 * Check for duplicate events with the same name. For example,
-		 * uncore_imc/cas_count_read/ will turn into 6 events per socket
+		 * Check क्रम duplicate events with the same name. For example,
+		 * uncore_imc/cas_count_पढ़ो/ will turn पूर्णांकo 6 events per socket
 		 * on skylakex. Only the first such event is placed in
 		 * metric_events. If events aren't grouped then this also
-		 * ensures that the same event in different sibling groups
+		 * ensures that the same event in dअगरferent sibling groups
 		 * aren't both added to metric_events.
 		 */
-		if (contains_event(metric_events, matched_events, ev->name))
-			continue;
-		/* Does this event belong to the parse context? */
-		if (hashmap__find(&pctx->ids, ev->name, (void **)&val_ptr))
+		अगर (contains_event(metric_events, matched_events, ev->name))
+			जारी;
+		/* Does this event beदीर्घ to the parse context? */
+		अगर (hashmap__find(&pctx->ids, ev->name, (व्योम **)&val_ptr))
 			metric_events[matched_events++] = ev;
 
-		if (matched_events == events_to_match)
-			break;
-	}
+		अगर (matched_events == events_to_match)
+			अवरोध;
+	पूर्ण
 
-	if (events_to_match != idnum) {
-		/* Add the first duration_time. */
-		evlist__for_each_entry(perf_evlist, ev) {
-			if (!strcmp(ev->name, "duration_time")) {
+	अगर (events_to_match != idnum) अणु
+		/* Add the first duration_समय. */
+		evlist__क्रम_each_entry(perf_evlist, ev) अणु
+			अगर (!म_भेद(ev->name, "duration_time")) अणु
 				metric_events[matched_events++] = ev;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (matched_events != idnum) {
+	अगर (matched_events != idnum) अणु
 		/* Not a whole match */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	metric_events[idnum] = NULL;
+	metric_events[idnum] = शून्य;
 
-	for (i = 0; i < idnum; i++) {
+	क्रम (i = 0; i < idnum; i++) अणु
 		ev = metric_events[i];
-		/* Don't free the used events. */
+		/* Don't मुक्त the used events. */
 		set_bit(ev->idx, evlist_used);
 		/*
-		 * The metric leader points to the identically named event in
+		 * The metric leader poपूर्णांकs to the identically named event in
 		 * metric_events.
 		 */
 		ev->metric_leader = ev;
 		/*
 		 * Mark two events with identical names in the same group (or
 		 * globally) as being in use as uncore events may be duplicated
-		 * for each pmu. Set the metric leader of such events to be the
+		 * क्रम each pmu. Set the metric leader of such events to be the
 		 * event that appears in metric_events.
 		 */
-		evlist__for_each_entry_continue(perf_evlist, ev) {
+		evlist__क्रम_each_entry_जारी(perf_evlist, ev) अणु
 			/*
 			 * If events are grouped then the search can terminate
 			 * when then group is left.
 			 */
-			if (!has_constraint &&
+			अगर (!has_स्थिरraपूर्णांक &&
 			    ev->leader != metric_events[i]->leader &&
 			    evsel_same_pmu_or_none(ev->leader, metric_events[i]->leader))
-				break;
-			if (!strcmp(metric_events[i]->name, ev->name)) {
+				अवरोध;
+			अगर (!म_भेद(metric_events[i]->name, ev->name)) अणु
 				set_bit(ev->idx, evlist_used);
 				ev->metric_leader = metric_events[i];
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return metric_events[0];
-}
+	वापस metric_events[0];
+पूर्ण
 
-static int metricgroup__setup_events(struct list_head *groups,
+अटल पूर्णांक metricgroup__setup_events(काष्ठा list_head *groups,
 				     bool metric_no_merge,
-				     struct evlist *perf_evlist,
-				     struct rblist *metric_events_list)
-{
-	struct metric_event *me;
-	struct metric_expr *expr;
-	int i = 0;
-	int ret = 0;
-	struct metric *m;
-	struct evsel *evsel, *tmp;
-	unsigned long *evlist_used;
+				     काष्ठा evlist *perf_evlist,
+				     काष्ठा rblist *metric_events_list)
+अणु
+	काष्ठा metric_event *me;
+	काष्ठा metric_expr *expr;
+	पूर्णांक i = 0;
+	पूर्णांक ret = 0;
+	काष्ठा metric *m;
+	काष्ठा evsel *evsel, *पंचांगp;
+	अचिन्हित दीर्घ *evlist_used;
 
-	evlist_used = bitmap_alloc(perf_evlist->core.nr_entries);
-	if (!evlist_used)
-		return -ENOMEM;
+	evlist_used = biपंचांगap_alloc(perf_evlist->core.nr_entries);
+	अगर (!evlist_used)
+		वापस -ENOMEM;
 
-	list_for_each_entry (m, groups, nd) {
-		struct evsel **metric_events;
-		struct metric_ref *metric_refs = NULL;
+	list_क्रम_each_entry (m, groups, nd) अणु
+		काष्ठा evsel **metric_events;
+		काष्ठा metric_ref *metric_refs = शून्य;
 
-		metric_events = calloc(sizeof(void *),
+		metric_events = सुस्मृति(माप(व्योम *),
 				hashmap__size(&m->pctx.ids) + 1);
-		if (!metric_events) {
+		अगर (!metric_events) अणु
 			ret = -ENOMEM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		evsel = find_evsel_group(perf_evlist, &m->pctx,
 					 metric_no_merge,
-					 m->has_constraint, metric_events,
+					 m->has_स्थिरraपूर्णांक, metric_events,
 					 evlist_used);
-		if (!evsel) {
+		अगर (!evsel) अणु
 			pr_debug("Cannot resolve %s: %s\n",
 					m->metric_name, m->metric_expr);
-			free(metric_events);
-			continue;
-		}
-		for (i = 0; metric_events[i]; i++)
+			मुक्त(metric_events);
+			जारी;
+		पूर्ण
+		क्रम (i = 0; metric_events[i]; i++)
 			metric_events[i]->collect_stat = true;
 		me = metricgroup__lookup(metric_events_list, evsel, true);
-		if (!me) {
+		अगर (!me) अणु
 			ret = -ENOMEM;
-			free(metric_events);
-			break;
-		}
-		expr = malloc(sizeof(struct metric_expr));
-		if (!expr) {
+			मुक्त(metric_events);
+			अवरोध;
+		पूर्ण
+		expr = दो_स्मृति(माप(काष्ठा metric_expr));
+		अगर (!expr) अणु
 			ret = -ENOMEM;
-			free(metric_events);
-			break;
-		}
+			मुक्त(metric_events);
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Collect and store collected nested expressions
-		 * for metric processing.
+		 * क्रम metric processing.
 		 */
-		if (m->metric_refs_cnt) {
-			struct metric_ref_node *ref;
+		अगर (m->metric_refs_cnt) अणु
+			काष्ठा metric_ref_node *ref;
 
-			metric_refs = zalloc(sizeof(struct metric_ref) * (m->metric_refs_cnt + 1));
-			if (!metric_refs) {
+			metric_refs = zalloc(माप(काष्ठा metric_ref) * (m->metric_refs_cnt + 1));
+			अगर (!metric_refs) अणु
 				ret = -ENOMEM;
-				free(metric_events);
-				free(expr);
-				break;
-			}
+				मुक्त(metric_events);
+				मुक्त(expr);
+				अवरोध;
+			पूर्ण
 
 			i = 0;
-			list_for_each_entry(ref, &m->metric_refs, list) {
+			list_क्रम_each_entry(ref, &m->metric_refs, list) अणु
 				/*
-				 * Intentionally passing just const char pointers,
+				 * Intentionally passing just स्थिर अक्षर poपूर्णांकers,
 				 * originally from 'struct pmu_event' object.
-				 * We don't need to change them, so there's no
+				 * We करोn't need to change them, so there's no
 				 * need to create our own copy.
 				 */
 				metric_refs[i].metric_name = ref->metric_name;
 				metric_refs[i].metric_expr = ref->metric_expr;
 				i++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		expr->metric_refs = metric_refs;
 		expr->metric_expr = m->metric_expr;
 		expr->metric_name = m->metric_name;
 		expr->metric_unit = m->metric_unit;
 		expr->metric_events = metric_events;
-		expr->runtime = m->runtime;
+		expr->runसमय = m->runसमय;
 		list_add(&expr->nd, &me->head);
-	}
+	पूर्ण
 
-	evlist__for_each_entry_safe(perf_evlist, tmp, evsel) {
-		if (!test_bit(evsel->idx, evlist_used)) {
-			evlist__remove(perf_evlist, evsel);
+	evlist__क्रम_each_entry_safe(perf_evlist, पंचांगp, evsel) अणु
+		अगर (!test_bit(evsel->idx, evlist_used)) अणु
+			evlist__हटाओ(perf_evlist, evsel);
 			evsel__delete(evsel);
-		}
-	}
-	bitmap_free(evlist_used);
+		पूर्ण
+	पूर्ण
+	biपंचांगap_मुक्त(evlist_used);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool match_metric(const char *n, const char *list)
-{
-	int len;
-	char *m;
+अटल bool match_metric(स्थिर अक्षर *n, स्थिर अक्षर *list)
+अणु
+	पूर्णांक len;
+	अक्षर *m;
 
-	if (!list)
-		return false;
-	if (!strcmp(list, "all"))
-		return true;
-	if (!n)
-		return !strcasecmp(list, "No_group");
-	len = strlen(list);
-	m = strcasestr(n, list);
-	if (!m)
-		return false;
-	if ((m == n || m[-1] == ';' || m[-1] == ' ') &&
+	अगर (!list)
+		वापस false;
+	अगर (!म_भेद(list, "all"))
+		वापस true;
+	अगर (!n)
+		वापस !strहालcmp(list, "No_group");
+	len = म_माप(list);
+	m = strहालstr(n, list);
+	अगर (!m)
+		वापस false;
+	अगर ((m == n || m[-1] == ';' || m[-1] == ' ') &&
 	    (m[len] == 0 || m[len] == ';'))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static bool match_pe_metric(struct pmu_event *pe, const char *metric)
-{
-	return match_metric(pe->metric_group, metric) ||
+अटल bool match_pe_metric(काष्ठा pmu_event *pe, स्थिर अक्षर *metric)
+अणु
+	वापस match_metric(pe->metric_group, metric) ||
 	       match_metric(pe->metric_name, metric);
-}
+पूर्ण
 
-struct mep {
-	struct rb_node nd;
-	const char *name;
-	struct strlist *metrics;
-};
+काष्ठा mep अणु
+	काष्ठा rb_node nd;
+	स्थिर अक्षर *name;
+	काष्ठा strlist *metrics;
+पूर्ण;
 
-static int mep_cmp(struct rb_node *rb_node, const void *entry)
-{
-	struct mep *a = container_of(rb_node, struct mep, nd);
-	struct mep *b = (struct mep *)entry;
+अटल पूर्णांक mep_cmp(काष्ठा rb_node *rb_node, स्थिर व्योम *entry)
+अणु
+	काष्ठा mep *a = container_of(rb_node, काष्ठा mep, nd);
+	काष्ठा mep *b = (काष्ठा mep *)entry;
 
-	return strcmp(a->name, b->name);
-}
+	वापस म_भेद(a->name, b->name);
+पूर्ण
 
-static struct rb_node *mep_new(struct rblist *rl __maybe_unused,
-					const void *entry)
-{
-	struct mep *me = malloc(sizeof(struct mep));
+अटल काष्ठा rb_node *mep_new(काष्ठा rblist *rl __maybe_unused,
+					स्थिर व्योम *entry)
+अणु
+	काष्ठा mep *me = दो_स्मृति(माप(काष्ठा mep));
 
-	if (!me)
-		return NULL;
-	memcpy(me, entry, sizeof(struct mep));
+	अगर (!me)
+		वापस शून्य;
+	स_नकल(me, entry, माप(काष्ठा mep));
 	me->name = strdup(me->name);
-	if (!me->name)
-		goto out_me;
-	me->metrics = strlist__new(NULL, NULL);
-	if (!me->metrics)
-		goto out_name;
-	return &me->nd;
+	अगर (!me->name)
+		जाओ out_me;
+	me->metrics = strlist__new(शून्य, शून्य);
+	अगर (!me->metrics)
+		जाओ out_name;
+	वापस &me->nd;
 out_name:
-	zfree(&me->name);
+	zमुक्त(&me->name);
 out_me:
-	free(me);
-	return NULL;
-}
+	मुक्त(me);
+	वापस शून्य;
+पूर्ण
 
-static struct mep *mep_lookup(struct rblist *groups, const char *name)
-{
-	struct rb_node *nd;
-	struct mep me = {
+अटल काष्ठा mep *mep_lookup(काष्ठा rblist *groups, स्थिर अक्षर *name)
+अणु
+	काष्ठा rb_node *nd;
+	काष्ठा mep me = अणु
 		.name = name
-	};
+	पूर्ण;
 	nd = rblist__find(groups, &me);
-	if (nd)
-		return container_of(nd, struct mep, nd);
+	अगर (nd)
+		वापस container_of(nd, काष्ठा mep, nd);
 	rblist__add_node(groups, &me);
 	nd = rblist__find(groups, &me);
-	if (nd)
-		return container_of(nd, struct mep, nd);
-	return NULL;
-}
+	अगर (nd)
+		वापस container_of(nd, काष्ठा mep, nd);
+	वापस शून्य;
+पूर्ण
 
-static void mep_delete(struct rblist *rl __maybe_unused,
-		       struct rb_node *nd)
-{
-	struct mep *me = container_of(nd, struct mep, nd);
+अटल व्योम mep_delete(काष्ठा rblist *rl __maybe_unused,
+		       काष्ठा rb_node *nd)
+अणु
+	काष्ठा mep *me = container_of(nd, काष्ठा mep, nd);
 
 	strlist__delete(me->metrics);
-	zfree(&me->name);
-	free(me);
-}
+	zमुक्त(&me->name);
+	मुक्त(me);
+पूर्ण
 
-static void metricgroup__print_strlist(struct strlist *metrics, bool raw)
-{
-	struct str_node *sn;
-	int n = 0;
+अटल व्योम metricgroup__prपूर्णांक_strlist(काष्ठा strlist *metrics, bool raw)
+अणु
+	काष्ठा str_node *sn;
+	पूर्णांक n = 0;
 
-	strlist__for_each_entry (sn, metrics) {
-		if (raw)
-			printf("%s%s", n > 0 ? " " : "", sn->s);
-		else
-			printf("  %s\n", sn->s);
+	strlist__क्रम_each_entry (sn, metrics) अणु
+		अगर (raw)
+			म_लिखो("%s%s", n > 0 ? " " : "", sn->s);
+		अन्यथा
+			म_लिखो("  %s\n", sn->s);
 		n++;
-	}
-	if (raw)
-		putchar('\n');
-}
+	पूर्ण
+	अगर (raw)
+		अक्षर_दो('\n');
+पूर्ण
 
-static int metricgroup__print_pmu_event(struct pmu_event *pe,
-					bool metricgroups, char *filter,
+अटल पूर्णांक metricgroup__prपूर्णांक_pmu_event(काष्ठा pmu_event *pe,
+					bool metricgroups, अक्षर *filter,
 					bool raw, bool details,
-					struct rblist *groups,
-					struct strlist *metriclist)
-{
-	const char *g;
-	char *omg, *mg;
+					काष्ठा rblist *groups,
+					काष्ठा strlist *metriclist)
+अणु
+	स्थिर अक्षर *g;
+	अक्षर *omg, *mg;
 
 	g = pe->metric_group;
-	if (!g && pe->metric_name) {
-		if (pe->name)
-			return 0;
+	अगर (!g && pe->metric_name) अणु
+		अगर (pe->name)
+			वापस 0;
 		g = "No_group";
-	}
+	पूर्ण
 
-	if (!g)
-		return 0;
+	अगर (!g)
+		वापस 0;
 
 	mg = strdup(g);
 
-	if (!mg)
-		return -ENOMEM;
+	अगर (!mg)
+		वापस -ENOMEM;
 	omg = mg;
-	while ((g = strsep(&mg, ";")) != NULL) {
-		struct mep *me;
-		char *s;
+	जबतक ((g = strsep(&mg, ";")) != शून्य) अणु
+		काष्ठा mep *me;
+		अक्षर *s;
 
 		g = skip_spaces(g);
-		if (*g == 0)
+		अगर (*g == 0)
 			g = "No_group";
-		if (filter && !strstr(g, filter))
-			continue;
-		if (raw)
-			s = (char *)pe->metric_name;
-		else {
-			if (asprintf(&s, "%s\n%*s%s]",
+		अगर (filter && !म_माला(g, filter))
+			जारी;
+		अगर (raw)
+			s = (अक्षर *)pe->metric_name;
+		अन्यथा अणु
+			अगर (aप्र_लिखो(&s, "%s\n%*s%s]",
 				     pe->metric_name, 8, "[", pe->desc) < 0)
-				return -1;
-			if (details) {
-				if (asprintf(&s, "%s\n%*s%s]",
+				वापस -1;
+			अगर (details) अणु
+				अगर (aप्र_लिखो(&s, "%s\n%*s%s]",
 					     s, 8, "[", pe->metric_expr) < 0)
-					return -1;
-			}
-		}
+					वापस -1;
+			पूर्ण
+		पूर्ण
 
-		if (!s)
-			continue;
+		अगर (!s)
+			जारी;
 
-		if (!metricgroups) {
+		अगर (!metricgroups) अणु
 			strlist__add(metriclist, s);
-		} else {
+		पूर्ण अन्यथा अणु
 			me = mep_lookup(groups, g);
-			if (!me)
-				continue;
+			अगर (!me)
+				जारी;
 			strlist__add(me->metrics, s);
-		}
+		पूर्ण
 
-		if (!raw)
-			free(s);
-	}
-	free(omg);
+		अगर (!raw)
+			मुक्त(s);
+	पूर्ण
+	मुक्त(omg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct metricgroup_print_sys_idata {
-	struct strlist *metriclist;
-	char *filter;
-	struct rblist *groups;
+काष्ठा metricgroup_prपूर्णांक_sys_idata अणु
+	काष्ठा strlist *metriclist;
+	अक्षर *filter;
+	काष्ठा rblist *groups;
 	bool metricgroups;
 	bool raw;
 	bool details;
-};
+पूर्ण;
 
-typedef int (*metricgroup_sys_event_iter_fn)(struct pmu_event *pe, void *);
+प्रकार पूर्णांक (*metricgroup_sys_event_iter_fn)(काष्ठा pmu_event *pe, व्योम *);
 
-struct metricgroup_iter_data {
+काष्ठा metricgroup_iter_data अणु
 	metricgroup_sys_event_iter_fn fn;
-	void *data;
-};
+	व्योम *data;
+पूर्ण;
 
-static int metricgroup__sys_event_iter(struct pmu_event *pe, void *data)
-{
-	struct metricgroup_iter_data *d = data;
-	struct perf_pmu *pmu = NULL;
+अटल पूर्णांक metricgroup__sys_event_iter(काष्ठा pmu_event *pe, व्योम *data)
+अणु
+	काष्ठा metricgroup_iter_data *d = data;
+	काष्ठा perf_pmu *pmu = शून्य;
 
-	if (!pe->metric_expr || !pe->compat)
-		return 0;
+	अगर (!pe->metric_expr || !pe->compat)
+		वापस 0;
 
-	while ((pmu = perf_pmu__scan(pmu))) {
+	जबतक ((pmu = perf_pmu__scan(pmu))) अणु
 
-		if (!pmu->id || strcmp(pmu->id, pe->compat))
-			continue;
+		अगर (!pmu->id || म_भेद(pmu->id, pe->compat))
+			जारी;
 
-		return d->fn(pe, d->data);
-	}
+		वापस d->fn(pe, d->data);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int metricgroup__print_sys_event_iter(struct pmu_event *pe, void *data)
-{
-	struct metricgroup_print_sys_idata *d = data;
+अटल पूर्णांक metricgroup__prपूर्णांक_sys_event_iter(काष्ठा pmu_event *pe, व्योम *data)
+अणु
+	काष्ठा metricgroup_prपूर्णांक_sys_idata *d = data;
 
-	return metricgroup__print_pmu_event(pe, d->metricgroups, d->filter, d->raw,
+	वापस metricgroup__prपूर्णांक_pmu_event(pe, d->metricgroups, d->filter, d->raw,
 				     d->details, d->groups, d->metriclist);
-}
+पूर्ण
 
-void metricgroup__print(bool metrics, bool metricgroups, char *filter,
+व्योम metricgroup__prपूर्णांक(bool metrics, bool metricgroups, अक्षर *filter,
 			bool raw, bool details)
-{
-	struct pmu_events_map *map = pmu_events_map__find();
-	struct pmu_event *pe;
-	int i;
-	struct rblist groups;
-	struct rb_node *node, *next;
-	struct strlist *metriclist = NULL;
+अणु
+	काष्ठा pmu_events_map *map = pmu_events_map__find();
+	काष्ठा pmu_event *pe;
+	पूर्णांक i;
+	काष्ठा rblist groups;
+	काष्ठा rb_node *node, *next;
+	काष्ठा strlist *metriclist = शून्य;
 
-	if (!metricgroups) {
-		metriclist = strlist__new(NULL, NULL);
-		if (!metriclist)
-			return;
-	}
+	अगर (!metricgroups) अणु
+		metriclist = strlist__new(शून्य, शून्य);
+		अगर (!metriclist)
+			वापस;
+	पूर्ण
 
 	rblist__init(&groups);
 	groups.node_new = mep_new;
 	groups.node_cmp = mep_cmp;
 	groups.node_delete = mep_delete;
-	for (i = 0; map; i++) {
+	क्रम (i = 0; map; i++) अणु
 		pe = &map->table[i];
 
-		if (!pe->name && !pe->metric_group && !pe->metric_name)
-			break;
-		if (!pe->metric_expr)
-			continue;
-		if (metricgroup__print_pmu_event(pe, metricgroups, filter,
+		अगर (!pe->name && !pe->metric_group && !pe->metric_name)
+			अवरोध;
+		अगर (!pe->metric_expr)
+			जारी;
+		अगर (metricgroup__prपूर्णांक_pmu_event(pe, metricgroups, filter,
 						 raw, details, &groups,
 						 metriclist) < 0)
-			return;
-	}
+			वापस;
+	पूर्ण
 
-	{
-		struct metricgroup_iter_data data = {
-			.fn = metricgroup__print_sys_event_iter,
-			.data = (void *) &(struct metricgroup_print_sys_idata){
+	अणु
+		काष्ठा metricgroup_iter_data data = अणु
+			.fn = metricgroup__prपूर्णांक_sys_event_iter,
+			.data = (व्योम *) &(काष्ठा metricgroup_prपूर्णांक_sys_idata)अणु
 				.metriclist = metriclist,
 				.metricgroups = metricgroups,
 				.filter = filter,
 				.raw = raw,
 				.details = details,
 				.groups = &groups,
-			},
-		};
+			पूर्ण,
+		पूर्ण;
 
-		pmu_for_each_sys_event(metricgroup__sys_event_iter, &data);
-	}
+		pmu_क्रम_each_sys_event(metricgroup__sys_event_iter, &data);
+	पूर्ण
 
-	if (!filter || !rblist__empty(&groups)) {
-		if (metricgroups && !raw)
-			printf("\nMetric Groups:\n\n");
-		else if (metrics && !raw)
-			printf("\nMetrics:\n\n");
-	}
+	अगर (!filter || !rblist__empty(&groups)) अणु
+		अगर (metricgroups && !raw)
+			म_लिखो("\nMetric Groups:\n\n");
+		अन्यथा अगर (metrics && !raw)
+			म_लिखो("\nMetrics:\n\n");
+	पूर्ण
 
-	for (node = rb_first_cached(&groups.entries); node; node = next) {
-		struct mep *me = container_of(node, struct mep, nd);
+	क्रम (node = rb_first_cached(&groups.entries); node; node = next) अणु
+		काष्ठा mep *me = container_of(node, काष्ठा mep, nd);
 
-		if (metricgroups)
-			printf("%s%s%s", me->name, metrics && !raw ? ":" : "", raw ? " " : "\n");
-		if (metrics)
-			metricgroup__print_strlist(me->metrics, raw);
+		अगर (metricgroups)
+			म_लिखो("%s%s%s", me->name, metrics && !raw ? ":" : "", raw ? " " : "\n");
+		अगर (metrics)
+			metricgroup__prपूर्णांक_strlist(me->metrics, raw);
 		next = rb_next(node);
-		rblist__remove_node(&groups, node);
-	}
-	if (!metricgroups)
-		metricgroup__print_strlist(metriclist, raw);
+		rblist__हटाओ_node(&groups, node);
+	पूर्ण
+	अगर (!metricgroups)
+		metricgroup__prपूर्णांक_strlist(metriclist, raw);
 	strlist__delete(metriclist);
-}
+पूर्ण
 
-static void metricgroup__add_metric_weak_group(struct strbuf *events,
-					       struct expr_parse_ctx *ctx)
-{
-	struct hashmap_entry *cur;
-	size_t bkt;
+अटल व्योम metricgroup__add_metric_weak_group(काष्ठा strbuf *events,
+					       काष्ठा expr_parse_ctx *ctx)
+अणु
+	काष्ठा hashmap_entry *cur;
+	माप_प्रकार bkt;
 	bool no_group = true, has_duration = false;
 
-	hashmap__for_each_entry((&ctx->ids), cur, bkt) {
-		pr_debug("found event %s\n", (const char *)cur->key);
+	hashmap__क्रम_each_entry((&ctx->ids), cur, bkt) अणु
+		pr_debug("found event %s\n", (स्थिर अक्षर *)cur->key);
 		/*
-		 * Duration time maps to a software event and can make
+		 * Duration समय maps to a software event and can make
 		 * groups not count. Always use it outside a
 		 * group.
 		 */
-		if (!strcmp(cur->key, "duration_time")) {
+		अगर (!म_भेद(cur->key, "duration_time")) अणु
 			has_duration = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		strbuf_addf(events, "%s%s",
 			no_group ? "{" : ",",
-			(const char *)cur->key);
+			(स्थिर अक्षर *)cur->key);
 		no_group = false;
-	}
-	if (!no_group) {
+	पूर्ण
+	अगर (!no_group) अणु
 		strbuf_addf(events, "}:W");
-		if (has_duration)
+		अगर (has_duration)
 			strbuf_addf(events, ",duration_time");
-	} else if (has_duration)
+	पूर्ण अन्यथा अगर (has_duration)
 		strbuf_addf(events, "duration_time");
-}
+पूर्ण
 
-static void metricgroup__add_metric_non_group(struct strbuf *events,
-					      struct expr_parse_ctx *ctx)
-{
-	struct hashmap_entry *cur;
-	size_t bkt;
+अटल व्योम metricgroup__add_metric_non_group(काष्ठा strbuf *events,
+					      काष्ठा expr_parse_ctx *ctx)
+अणु
+	काष्ठा hashmap_entry *cur;
+	माप_प्रकार bkt;
 	bool first = true;
 
-	hashmap__for_each_entry((&ctx->ids), cur, bkt) {
-		if (!first)
+	hashmap__क्रम_each_entry((&ctx->ids), cur, bkt) अणु
+		अगर (!first)
 			strbuf_addf(events, ",");
-		strbuf_addf(events, "%s", (const char *)cur->key);
+		strbuf_addf(events, "%s", (स्थिर अक्षर *)cur->key);
 		first = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void metricgroup___watchdog_constraint_hint(const char *name, bool foot)
-{
-	static bool violate_nmi_constraint;
+अटल व्योम metricgroup___watchकरोg_स्थिरraपूर्णांक_hपूर्णांक(स्थिर अक्षर *name, bool foot)
+अणु
+	अटल bool violate_nmi_स्थिरraपूर्णांक;
 
-	if (!foot) {
+	अगर (!foot) अणु
 		pr_warning("Splitting metric group %s into standalone metrics.\n", name);
-		violate_nmi_constraint = true;
-		return;
-	}
+		violate_nmi_स्थिरraपूर्णांक = true;
+		वापस;
+	पूर्ण
 
-	if (!violate_nmi_constraint)
-		return;
+	अगर (!violate_nmi_स्थिरraपूर्णांक)
+		वापस;
 
 	pr_warning("Try disabling the NMI watchdog to comply NO_NMI_WATCHDOG metric constraint:\n"
 		   "    echo 0 > /proc/sys/kernel/nmi_watchdog\n"
 		   "    perf stat ...\n"
 		   "    echo 1 > /proc/sys/kernel/nmi_watchdog\n");
-}
+पूर्ण
 
-static bool metricgroup__has_constraint(struct pmu_event *pe)
-{
-	if (!pe->metric_constraint)
-		return false;
+अटल bool metricgroup__has_स्थिरraपूर्णांक(काष्ठा pmu_event *pe)
+अणु
+	अगर (!pe->metric_स्थिरraपूर्णांक)
+		वापस false;
 
-	if (!strcmp(pe->metric_constraint, "NO_NMI_WATCHDOG") &&
-	    sysctl__nmi_watchdog_enabled()) {
-		metricgroup___watchdog_constraint_hint(pe->metric_name, false);
-		return true;
-	}
+	अगर (!म_भेद(pe->metric_स्थिरraपूर्णांक, "NO_NMI_WATCHDOG") &&
+	    sysctl__nmi_watchकरोg_enabled()) अणु
+		metricgroup___watchकरोg_स्थिरraपूर्णांक_hपूर्णांक(pe->metric_name, false);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int __weak arch_get_runtimeparam(struct pmu_event *pe __maybe_unused)
-{
-	return 1;
-}
+पूर्णांक __weak arch_get_runसमयparam(काष्ठा pmu_event *pe __maybe_unused)
+अणु
+	वापस 1;
+पूर्ण
 
-struct metricgroup_add_iter_data {
-	struct list_head *metric_list;
-	const char *metric;
-	struct expr_ids *ids;
-	int *ret;
+काष्ठा metricgroup_add_iter_data अणु
+	काष्ठा list_head *metric_list;
+	स्थिर अक्षर *metric;
+	काष्ठा expr_ids *ids;
+	पूर्णांक *ret;
 	bool *has_match;
 	bool metric_no_group;
-};
+पूर्ण;
 
-static int __add_metric(struct list_head *metric_list,
-			struct pmu_event *pe,
+अटल पूर्णांक __add_metric(काष्ठा list_head *metric_list,
+			काष्ठा pmu_event *pe,
 			bool metric_no_group,
-			int runtime,
-			struct metric **mp,
-			struct expr_id *parent,
-			struct expr_ids *ids)
-{
-	struct metric_ref_node *ref;
-	struct metric *m;
+			पूर्णांक runसमय,
+			काष्ठा metric **mp,
+			काष्ठा expr_id *parent,
+			काष्ठा expr_ids *ids)
+अणु
+	काष्ठा metric_ref_node *ref;
+	काष्ठा metric *m;
 
-	if (*mp == NULL) {
+	अगर (*mp == शून्य) अणु
 		/*
-		 * We got in here for the parent group,
+		 * We got in here क्रम the parent group,
 		 * allocate it and put it on the list.
 		 */
-		m = zalloc(sizeof(*m));
-		if (!m)
-			return -ENOMEM;
+		m = zalloc(माप(*m));
+		अगर (!m)
+			वापस -ENOMEM;
 
 		expr__ctx_init(&m->pctx);
 		m->metric_name = pe->metric_name;
 		m->metric_expr = pe->metric_expr;
 		m->metric_unit = pe->unit;
-		m->runtime = runtime;
-		m->has_constraint = metric_no_group || metricgroup__has_constraint(pe);
+		m->runसमय = runसमय;
+		m->has_स्थिरraपूर्णांक = metric_no_group || metricgroup__has_स्थिरraपूर्णांक(pe);
 		INIT_LIST_HEAD(&m->metric_refs);
 		m->metric_refs_cnt = 0;
 
 		parent = expr_ids__alloc(ids);
-		if (!parent) {
-			free(m);
-			return -EINVAL;
-		}
+		अगर (!parent) अणु
+			मुक्त(m);
+			वापस -EINVAL;
+		पूर्ण
 
 		parent->id = strdup(pe->metric_name);
-		if (!parent->id) {
-			free(m);
-			return -ENOMEM;
-		}
+		अगर (!parent->id) अणु
+			मुक्त(m);
+			वापस -ENOMEM;
+		पूर्ण
 		*mp = m;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We got here for the referenced metric, via the
+		 * We got here क्रम the referenced metric, via the
 		 * recursive metricgroup__add_metric call, add
 		 * it to the parent group.
 		 */
 		m = *mp;
 
-		ref = malloc(sizeof(*ref));
-		if (!ref)
-			return -ENOMEM;
+		ref = दो_स्मृति(माप(*ref));
+		अगर (!ref)
+			वापस -ENOMEM;
 
 		/*
-		 * Intentionally passing just const char pointers,
+		 * Intentionally passing just स्थिर अक्षर poपूर्णांकers,
 		 * from 'pe' object, so they never go away. We don't
 		 * need to change them, so there's no need to create
 		 * our own copy.
@@ -843,7 +844,7 @@ static int __add_metric(struct list_head *metric_list,
 
 		list_add(&ref->list, &m->metric_refs);
 		m->metric_refs_cnt++;
-	}
+	पूर्ण
 
 	/* Force all found IDs in metric to have us as parent ID. */
 	WARN_ON_ONCE(!parent);
@@ -853,259 +854,259 @@ static int __add_metric(struct list_head *metric_list,
 	 * For both the parent and referenced metrics, we parse
 	 * all the metric's IDs and add it to the parent context.
 	 */
-	if (expr__find_other(pe->metric_expr, NULL, &m->pctx, runtime) < 0) {
-		if (m->metric_refs_cnt == 0) {
+	अगर (expr__find_other(pe->metric_expr, शून्य, &m->pctx, runसमय) < 0) अणु
+		अगर (m->metric_refs_cnt == 0) अणु
 			expr__ctx_clear(&m->pctx);
-			free(m);
-			*mp = NULL;
-		}
-		return -EINVAL;
-	}
+			मुक्त(m);
+			*mp = शून्य;
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * We add new group only in the 'parent' call,
-	 * so bail out for referenced metric case.
+	 * so bail out क्रम referenced metric हाल.
 	 */
-	if (m->metric_refs_cnt)
-		return 0;
+	अगर (m->metric_refs_cnt)
+		वापस 0;
 
-	if (list_empty(metric_list))
+	अगर (list_empty(metric_list))
 		list_add(&m->nd, metric_list);
-	else {
-		struct list_head *pos;
+	अन्यथा अणु
+		काष्ठा list_head *pos;
 
 		/* Place the largest groups at the front. */
-		list_for_each_prev(pos, metric_list) {
-			struct metric *old = list_entry(pos, struct metric, nd);
+		list_क्रम_each_prev(pos, metric_list) अणु
+			काष्ठा metric *old = list_entry(pos, काष्ठा metric, nd);
 
-			if (hashmap__size(&m->pctx.ids) <=
+			अगर (hashmap__size(&m->pctx.ids) <=
 			    hashmap__size(&old->pctx.ids))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 		list_add(&m->nd, pos);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define map_for_each_event(__pe, __idx, __map)					\
-	if (__map)								\
-		for (__idx = 0, __pe = &__map->table[__idx];			\
+#घोषणा map_क्रम_each_event(__pe, __idx, __map)					\
+	अगर (__map)								\
+		क्रम (__idx = 0, __pe = &__map->table[__idx];			\
 		     __pe->name || __pe->metric_group || __pe->metric_name;	\
 		     __pe = &__map->table[++__idx])
 
-#define map_for_each_metric(__pe, __idx, __map, __metric)		\
-	map_for_each_event(__pe, __idx, __map)				\
-		if (__pe->metric_expr &&				\
+#घोषणा map_क्रम_each_metric(__pe, __idx, __map, __metric)		\
+	map_क्रम_each_event(__pe, __idx, __map)				\
+		अगर (__pe->metric_expr &&				\
 		    (match_metric(__pe->metric_group, __metric) ||	\
 		     match_metric(__pe->metric_name, __metric)))
 
-struct pmu_event *metricgroup__find_metric(const char *metric,
-					   struct pmu_events_map *map)
-{
-	struct pmu_event *pe;
-	int i;
+काष्ठा pmu_event *metricgroup__find_metric(स्थिर अक्षर *metric,
+					   काष्ठा pmu_events_map *map)
+अणु
+	काष्ठा pmu_event *pe;
+	पूर्णांक i;
 
-	map_for_each_event(pe, i, map) {
-		if (match_metric(pe->metric_name, metric))
-			return pe;
-	}
+	map_क्रम_each_event(pe, i, map) अणु
+		अगर (match_metric(pe->metric_name, metric))
+			वापस pe;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int recursion_check(struct metric *m, const char *id, struct expr_id **parent,
-			   struct expr_ids *ids)
-{
-	struct expr_id_data *data;
-	struct expr_id *p;
-	int ret;
+अटल पूर्णांक recursion_check(काष्ठा metric *m, स्थिर अक्षर *id, काष्ठा expr_id **parent,
+			   काष्ठा expr_ids *ids)
+अणु
+	काष्ठा expr_id_data *data;
+	काष्ठा expr_id *p;
+	पूर्णांक ret;
 
 	/*
 	 * We get the parent referenced by 'id' argument and
 	 * traverse through all the parent object IDs to check
-	 * if we already processed 'id', if we did, it's recursion
+	 * अगर we alपढ़ोy processed 'id', if we did, it's recursion
 	 * and we fail.
 	 */
 	ret = expr__get_id(&m->pctx, id, &data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	p = expr_id_data__parent(data);
 
-	while (p->parent) {
-		if (!strcmp(p->id, id)) {
+	जबतक (p->parent) अणु
+		अगर (!म_भेद(p->id, id)) अणु
 			pr_err("failed: recursion detected for %s\n", id);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 		p = p->parent;
-	}
+	पूर्ण
 
 	/*
-	 * If we are over the limit of static entris, the metric
-	 * is too difficult/nested to process, fail as well.
+	 * If we are over the limit of अटल entris, the metric
+	 * is too dअगरficult/nested to process, fail as well.
 	 */
 	p = expr_ids__alloc(ids);
-	if (!p) {
+	अगर (!p) अणु
 		pr_err("failed: too many nested metrics\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	p->id     = strdup(id);
 	p->parent = expr_id_data__parent(data);
 	*parent   = p;
 
-	return p->id ? 0 : -ENOMEM;
-}
+	वापस p->id ? 0 : -ENOMEM;
+पूर्ण
 
-static int add_metric(struct list_head *metric_list,
-		      struct pmu_event *pe,
+अटल पूर्णांक add_metric(काष्ठा list_head *metric_list,
+		      काष्ठा pmu_event *pe,
 		      bool metric_no_group,
-		      struct metric **mp,
-		      struct expr_id *parent,
-		      struct expr_ids *ids);
+		      काष्ठा metric **mp,
+		      काष्ठा expr_id *parent,
+		      काष्ठा expr_ids *ids);
 
-static int __resolve_metric(struct metric *m,
+अटल पूर्णांक __resolve_metric(काष्ठा metric *m,
 			    bool metric_no_group,
-			    struct list_head *metric_list,
-			    struct pmu_events_map *map,
-			    struct expr_ids *ids)
-{
-	struct hashmap_entry *cur;
-	size_t bkt;
+			    काष्ठा list_head *metric_list,
+			    काष्ठा pmu_events_map *map,
+			    काष्ठा expr_ids *ids)
+अणु
+	काष्ठा hashmap_entry *cur;
+	माप_प्रकार bkt;
 	bool all;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * Iterate all the parsed IDs and if there's metric,
+	 * Iterate all the parsed IDs and अगर there's metric,
 	 * add it to the context.
 	 */
-	do {
+	करो अणु
 		all = true;
-		hashmap__for_each_entry((&m->pctx.ids), cur, bkt) {
-			struct expr_id *parent;
-			struct pmu_event *pe;
+		hashmap__क्रम_each_entry((&m->pctx.ids), cur, bkt) अणु
+			काष्ठा expr_id *parent;
+			काष्ठा pmu_event *pe;
 
 			pe = metricgroup__find_metric(cur->key, map);
-			if (!pe)
-				continue;
+			अगर (!pe)
+				जारी;
 
 			ret = recursion_check(m, cur->key, &parent, ids);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			all = false;
 			/* The metric key itself needs to go out.. */
 			expr__del_id(&m->pctx, cur->key);
 
-			/* ... and it gets resolved to the parent context. */
+			/* ... and it माला_लो resolved to the parent context. */
 			ret = add_metric(metric_list, pe, metric_no_group, &m, parent, ids);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			/*
 			 * We added new metric to hashmap, so we need
-			 * to break the iteration and start over.
+			 * to अवरोध the iteration and start over.
 			 */
-			break;
-		}
-	} while (!all);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!all);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int resolve_metric(bool metric_no_group,
-			  struct list_head *metric_list,
-			  struct pmu_events_map *map,
-			  struct expr_ids *ids)
-{
-	struct metric *m;
-	int err;
+अटल पूर्णांक resolve_metric(bool metric_no_group,
+			  काष्ठा list_head *metric_list,
+			  काष्ठा pmu_events_map *map,
+			  काष्ठा expr_ids *ids)
+अणु
+	काष्ठा metric *m;
+	पूर्णांक err;
 
-	list_for_each_entry(m, metric_list, nd) {
+	list_क्रम_each_entry(m, metric_list, nd) अणु
 		err = __resolve_metric(m, metric_no_group, metric_list, map, ids);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int add_metric(struct list_head *metric_list,
-		      struct pmu_event *pe,
+अटल पूर्णांक add_metric(काष्ठा list_head *metric_list,
+		      काष्ठा pmu_event *pe,
 		      bool metric_no_group,
-		      struct metric **m,
-		      struct expr_id *parent,
-		      struct expr_ids *ids)
-{
-	struct metric *orig = *m;
-	int ret = 0;
+		      काष्ठा metric **m,
+		      काष्ठा expr_id *parent,
+		      काष्ठा expr_ids *ids)
+अणु
+	काष्ठा metric *orig = *m;
+	पूर्णांक ret = 0;
 
 	pr_debug("metric expr %s for %s\n", pe->metric_expr, pe->metric_name);
 
-	if (!strstr(pe->metric_expr, "?")) {
+	अगर (!म_माला(pe->metric_expr, "?")) अणु
 		ret = __add_metric(metric_list, pe, metric_no_group, 1, m, parent, ids);
-	} else {
-		int j, count;
+	पूर्ण अन्यथा अणु
+		पूर्णांक j, count;
 
-		count = arch_get_runtimeparam(pe);
+		count = arch_get_runसमयparam(pe);
 
 		/* This loop is added to create multiple
 		 * events depend on count value and add
 		 * those events to metric_list.
 		 */
 
-		for (j = 0; j < count && !ret; j++, *m = orig)
+		क्रम (j = 0; j < count && !ret; j++, *m = orig)
 			ret = __add_metric(metric_list, pe, metric_no_group, j, m, parent, ids);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int metricgroup__add_metric_sys_event_iter(struct pmu_event *pe,
-						  void *data)
-{
-	struct metricgroup_add_iter_data *d = data;
-	struct metric *m = NULL;
-	int ret;
+अटल पूर्णांक metricgroup__add_metric_sys_event_iter(काष्ठा pmu_event *pe,
+						  व्योम *data)
+अणु
+	काष्ठा metricgroup_add_iter_data *d = data;
+	काष्ठा metric *m = शून्य;
+	पूर्णांक ret;
 
-	if (!match_pe_metric(pe, d->metric))
-		return 0;
+	अगर (!match_pe_metric(pe, d->metric))
+		वापस 0;
 
-	ret = add_metric(d->metric_list, pe, d->metric_no_group, &m, NULL, d->ids);
-	if (ret)
-		goto out;
+	ret = add_metric(d->metric_list, pe, d->metric_no_group, &m, शून्य, d->ids);
+	अगर (ret)
+		जाओ out;
 
 	ret = resolve_metric(d->metric_no_group,
-				     d->metric_list, NULL, d->ids);
-	if (ret)
-		goto out;
+				     d->metric_list, शून्य, d->ids);
+	अगर (ret)
+		जाओ out;
 
 	*(d->has_match) = true;
 
 out:
 	*(d->ret) = ret;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int metricgroup__add_metric(const char *metric, bool metric_no_group,
-				   struct strbuf *events,
-				   struct list_head *metric_list,
-				   struct pmu_events_map *map)
-{
-	struct expr_ids ids = { .cnt = 0, };
-	struct pmu_event *pe;
-	struct metric *m;
+अटल पूर्णांक metricgroup__add_metric(स्थिर अक्षर *metric, bool metric_no_group,
+				   काष्ठा strbuf *events,
+				   काष्ठा list_head *metric_list,
+				   काष्ठा pmu_events_map *map)
+अणु
+	काष्ठा expr_ids ids = अणु .cnt = 0, पूर्ण;
+	काष्ठा pmu_event *pe;
+	काष्ठा metric *m;
 	LIST_HEAD(list);
-	int i, ret;
+	पूर्णांक i, ret;
 	bool has_match = false;
 
-	map_for_each_metric(pe, i, map, metric) {
+	map_क्रम_each_metric(pe, i, map, metric) अणु
 		has_match = true;
-		m = NULL;
+		m = शून्य;
 
-		ret = add_metric(&list, pe, metric_no_group, &m, NULL, &ids);
-		if (ret)
-			goto out;
+		ret = add_metric(&list, pe, metric_no_group, &m, शून्य, &ids);
+		अगर (ret)
+			जाओ out;
 
 		/*
 		 * Process any possible referenced metrics
@@ -1113,268 +1114,268 @@ static int metricgroup__add_metric(const char *metric, bool metric_no_group,
 		 */
 		ret = resolve_metric(metric_no_group,
 				     &list, map, &ids);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	{
-		struct metricgroup_iter_data data = {
+	अणु
+		काष्ठा metricgroup_iter_data data = अणु
 			.fn = metricgroup__add_metric_sys_event_iter,
-			.data = (void *) &(struct metricgroup_add_iter_data) {
+			.data = (व्योम *) &(काष्ठा metricgroup_add_iter_data) अणु
 				.metric_list = &list,
 				.metric = metric,
 				.metric_no_group = metric_no_group,
 				.ids = &ids,
 				.has_match = &has_match,
 				.ret = &ret,
-			},
-		};
+			पूर्ण,
+		पूर्ण;
 
-		pmu_for_each_sys_event(metricgroup__sys_event_iter, &data);
-	}
+		pmu_क्रम_each_sys_event(metricgroup__sys_event_iter, &data);
+	पूर्ण
 	/* End of pmu events. */
-	if (!has_match) {
+	अगर (!has_match) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	list_for_each_entry(m, &list, nd) {
-		if (events->len > 0)
+	list_क्रम_each_entry(m, &list, nd) अणु
+		अगर (events->len > 0)
 			strbuf_addf(events, ",");
 
-		if (m->has_constraint) {
+		अगर (m->has_स्थिरraपूर्णांक) अणु
 			metricgroup__add_metric_non_group(events,
 							  &m->pctx);
-		} else {
+		पूर्ण अन्यथा अणु
 			metricgroup__add_metric_weak_group(events,
 							   &m->pctx);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	/*
 	 * add to metric_list so that they can be released
-	 * even if it's failed
+	 * even अगर it's failed
 	 */
 	list_splice(&list, metric_list);
-	expr_ids__exit(&ids);
-	return ret;
-}
+	expr_ids__निकास(&ids);
+	वापस ret;
+पूर्ण
 
-static int metricgroup__add_metric_list(const char *list, bool metric_no_group,
-					struct strbuf *events,
-					struct list_head *metric_list,
-					struct pmu_events_map *map)
-{
-	char *llist, *nlist, *p;
-	int ret = -EINVAL;
+अटल पूर्णांक metricgroup__add_metric_list(स्थिर अक्षर *list, bool metric_no_group,
+					काष्ठा strbuf *events,
+					काष्ठा list_head *metric_list,
+					काष्ठा pmu_events_map *map)
+अणु
+	अक्षर *llist, *nlist, *p;
+	पूर्णांक ret = -EINVAL;
 
 	nlist = strdup(list);
-	if (!nlist)
-		return -ENOMEM;
+	अगर (!nlist)
+		वापस -ENOMEM;
 	llist = nlist;
 
 	strbuf_init(events, 100);
 	strbuf_addf(events, "%s", "");
 
-	while ((p = strsep(&llist, ",")) != NULL) {
+	जबतक ((p = strsep(&llist, ",")) != शून्य) अणु
 		ret = metricgroup__add_metric(p, metric_no_group, events,
 					      metric_list, map);
-		if (ret == -EINVAL) {
-			fprintf(stderr, "Cannot find metric or group `%s'\n",
+		अगर (ret == -EINVAL) अणु
+			ख_लिखो(मानक_त्रुटि, "Cannot find metric or group `%s'\n",
 					p);
-			break;
-		}
-	}
-	free(nlist);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	मुक्त(nlist);
 
-	if (!ret)
-		metricgroup___watchdog_constraint_hint(NULL, true);
+	अगर (!ret)
+		metricgroup___watchकरोg_स्थिरraपूर्णांक_hपूर्णांक(शून्य, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void metric__free_refs(struct metric *metric)
-{
-	struct metric_ref_node *ref, *tmp;
+अटल व्योम metric__मुक्त_refs(काष्ठा metric *metric)
+अणु
+	काष्ठा metric_ref_node *ref, *पंचांगp;
 
-	list_for_each_entry_safe(ref, tmp, &metric->metric_refs, list) {
+	list_क्रम_each_entry_safe(ref, पंचांगp, &metric->metric_refs, list) अणु
 		list_del(&ref->list);
-		free(ref);
-	}
-}
+		मुक्त(ref);
+	पूर्ण
+पूर्ण
 
-static void metricgroup__free_metrics(struct list_head *metric_list)
-{
-	struct metric *m, *tmp;
+अटल व्योम metricgroup__मुक्त_metrics(काष्ठा list_head *metric_list)
+अणु
+	काष्ठा metric *m, *पंचांगp;
 
-	list_for_each_entry_safe (m, tmp, metric_list, nd) {
-		metric__free_refs(m);
+	list_क्रम_each_entry_safe (m, पंचांगp, metric_list, nd) अणु
+		metric__मुक्त_refs(m);
 		expr__ctx_clear(&m->pctx);
 		list_del_init(&m->nd);
-		free(m);
-	}
-}
+		मुक्त(m);
+	पूर्ण
+पूर्ण
 
-static int parse_groups(struct evlist *perf_evlist, const char *str,
+अटल पूर्णांक parse_groups(काष्ठा evlist *perf_evlist, स्थिर अक्षर *str,
 			bool metric_no_group,
 			bool metric_no_merge,
-			struct perf_pmu *fake_pmu,
-			struct rblist *metric_events,
-			struct pmu_events_map *map)
-{
-	struct parse_events_error parse_error;
-	struct strbuf extra_events;
+			काष्ठा perf_pmu *fake_pmu,
+			काष्ठा rblist *metric_events,
+			काष्ठा pmu_events_map *map)
+अणु
+	काष्ठा parse_events_error parse_error;
+	काष्ठा strbuf extra_events;
 	LIST_HEAD(metric_list);
-	int ret;
+	पूर्णांक ret;
 
-	if (metric_events->nr_entries == 0)
+	अगर (metric_events->nr_entries == 0)
 		metricgroup__rblist_init(metric_events);
 	ret = metricgroup__add_metric_list(str, metric_no_group,
 					   &extra_events, &metric_list, map);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	pr_debug("adding %s\n", extra_events.buf);
-	bzero(&parse_error, sizeof(parse_error));
+	bzero(&parse_error, माप(parse_error));
 	ret = __parse_events(perf_evlist, extra_events.buf, &parse_error, fake_pmu);
-	if (ret) {
-		parse_events_print_error(&parse_error, extra_events.buf);
-		goto out;
-	}
+	अगर (ret) अणु
+		parse_events_prपूर्णांक_error(&parse_error, extra_events.buf);
+		जाओ out;
+	पूर्ण
 	ret = metricgroup__setup_events(&metric_list, metric_no_merge,
 					perf_evlist, metric_events);
 out:
-	metricgroup__free_metrics(&metric_list);
+	metricgroup__मुक्त_metrics(&metric_list);
 	strbuf_release(&extra_events);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int metricgroup__parse_groups(const struct option *opt,
-			      const char *str,
+पूर्णांक metricgroup__parse_groups(स्थिर काष्ठा option *opt,
+			      स्थिर अक्षर *str,
 			      bool metric_no_group,
 			      bool metric_no_merge,
-			      struct rblist *metric_events)
-{
-	struct evlist *perf_evlist = *(struct evlist **)opt->value;
-	struct pmu_events_map *map = pmu_events_map__find();
+			      काष्ठा rblist *metric_events)
+अणु
+	काष्ठा evlist *perf_evlist = *(काष्ठा evlist **)opt->value;
+	काष्ठा pmu_events_map *map = pmu_events_map__find();
 
-	return parse_groups(perf_evlist, str, metric_no_group,
-			    metric_no_merge, NULL, metric_events, map);
-}
+	वापस parse_groups(perf_evlist, str, metric_no_group,
+			    metric_no_merge, शून्य, metric_events, map);
+पूर्ण
 
-int metricgroup__parse_groups_test(struct evlist *evlist,
-				   struct pmu_events_map *map,
-				   const char *str,
+पूर्णांक metricgroup__parse_groups_test(काष्ठा evlist *evlist,
+				   काष्ठा pmu_events_map *map,
+				   स्थिर अक्षर *str,
 				   bool metric_no_group,
 				   bool metric_no_merge,
-				   struct rblist *metric_events)
-{
-	return parse_groups(evlist, str, metric_no_group,
+				   काष्ठा rblist *metric_events)
+अणु
+	वापस parse_groups(evlist, str, metric_no_group,
 			    metric_no_merge, &perf_pmu__fake, metric_events, map);
-}
+पूर्ण
 
-bool metricgroup__has_metric(const char *metric)
-{
-	struct pmu_events_map *map = pmu_events_map__find();
-	struct pmu_event *pe;
-	int i;
+bool metricgroup__has_metric(स्थिर अक्षर *metric)
+अणु
+	काष्ठा pmu_events_map *map = pmu_events_map__find();
+	काष्ठा pmu_event *pe;
+	पूर्णांक i;
 
-	if (!map)
-		return false;
+	अगर (!map)
+		वापस false;
 
-	for (i = 0; ; i++) {
+	क्रम (i = 0; ; i++) अणु
 		pe = &map->table[i];
 
-		if (!pe->name && !pe->metric_group && !pe->metric_name)
-			break;
-		if (!pe->metric_expr)
-			continue;
-		if (match_metric(pe->metric_name, metric))
-			return true;
-	}
-	return false;
-}
+		अगर (!pe->name && !pe->metric_group && !pe->metric_name)
+			अवरोध;
+		अगर (!pe->metric_expr)
+			जारी;
+		अगर (match_metric(pe->metric_name, metric))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-int metricgroup__copy_metric_events(struct evlist *evlist, struct cgroup *cgrp,
-				    struct rblist *new_metric_events,
-				    struct rblist *old_metric_events)
-{
-	unsigned i;
+पूर्णांक metricgroup__copy_metric_events(काष्ठा evlist *evlist, काष्ठा cgroup *cgrp,
+				    काष्ठा rblist *new_metric_events,
+				    काष्ठा rblist *old_metric_events)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < rblist__nr_entries(old_metric_events); i++) {
-		struct rb_node *nd;
-		struct metric_event *old_me, *new_me;
-		struct metric_expr *old_expr, *new_expr;
-		struct evsel *evsel;
-		size_t alloc_size;
-		int idx, nr;
+	क्रम (i = 0; i < rblist__nr_entries(old_metric_events); i++) अणु
+		काष्ठा rb_node *nd;
+		काष्ठा metric_event *old_me, *new_me;
+		काष्ठा metric_expr *old_expr, *new_expr;
+		काष्ठा evsel *evsel;
+		माप_प्रकार alloc_size;
+		पूर्णांक idx, nr;
 
 		nd = rblist__entry(old_metric_events, i);
-		old_me = container_of(nd, struct metric_event, nd);
+		old_me = container_of(nd, काष्ठा metric_event, nd);
 
 		evsel = evlist__find_evsel(evlist, old_me->evsel->idx);
-		if (!evsel)
-			return -EINVAL;
+		अगर (!evsel)
+			वापस -EINVAL;
 		new_me = metricgroup__lookup(new_metric_events, evsel, true);
-		if (!new_me)
-			return -ENOMEM;
+		अगर (!new_me)
+			वापस -ENOMEM;
 
 		pr_debug("copying metric event for cgroup '%s': %s (idx=%d)\n",
 			 cgrp ? cgrp->name : "root", evsel->name, evsel->idx);
 
-		list_for_each_entry(old_expr, &old_me->head, nd) {
-			new_expr = malloc(sizeof(*new_expr));
-			if (!new_expr)
-				return -ENOMEM;
+		list_क्रम_each_entry(old_expr, &old_me->head, nd) अणु
+			new_expr = दो_स्मृति(माप(*new_expr));
+			अगर (!new_expr)
+				वापस -ENOMEM;
 
 			new_expr->metric_expr = old_expr->metric_expr;
 			new_expr->metric_name = old_expr->metric_name;
 			new_expr->metric_unit = old_expr->metric_unit;
-			new_expr->runtime = old_expr->runtime;
+			new_expr->runसमय = old_expr->runसमय;
 
-			if (old_expr->metric_refs) {
+			अगर (old_expr->metric_refs) अणु
 				/* calculate number of metric_events */
-				for (nr = 0; old_expr->metric_refs[nr].metric_name; nr++)
-					continue;
-				alloc_size = sizeof(*new_expr->metric_refs);
-				new_expr->metric_refs = calloc(nr + 1, alloc_size);
-				if (!new_expr->metric_refs) {
-					free(new_expr);
-					return -ENOMEM;
-				}
+				क्रम (nr = 0; old_expr->metric_refs[nr].metric_name; nr++)
+					जारी;
+				alloc_size = माप(*new_expr->metric_refs);
+				new_expr->metric_refs = सुस्मृति(nr + 1, alloc_size);
+				अगर (!new_expr->metric_refs) अणु
+					मुक्त(new_expr);
+					वापस -ENOMEM;
+				पूर्ण
 
-				memcpy(new_expr->metric_refs, old_expr->metric_refs,
+				स_नकल(new_expr->metric_refs, old_expr->metric_refs,
 				       nr * alloc_size);
-			} else {
-				new_expr->metric_refs = NULL;
-			}
+			पूर्ण अन्यथा अणु
+				new_expr->metric_refs = शून्य;
+			पूर्ण
 
 			/* calculate number of metric_events */
-			for (nr = 0; old_expr->metric_events[nr]; nr++)
-				continue;
-			alloc_size = sizeof(*new_expr->metric_events);
-			new_expr->metric_events = calloc(nr + 1, alloc_size);
-			if (!new_expr->metric_events) {
-				free(new_expr->metric_refs);
-				free(new_expr);
-				return -ENOMEM;
-			}
+			क्रम (nr = 0; old_expr->metric_events[nr]; nr++)
+				जारी;
+			alloc_size = माप(*new_expr->metric_events);
+			new_expr->metric_events = सुस्मृति(nr + 1, alloc_size);
+			अगर (!new_expr->metric_events) अणु
+				मुक्त(new_expr->metric_refs);
+				मुक्त(new_expr);
+				वापस -ENOMEM;
+			पूर्ण
 
 			/* copy evsel in the same position */
-			for (idx = 0; idx < nr; idx++) {
+			क्रम (idx = 0; idx < nr; idx++) अणु
 				evsel = old_expr->metric_events[idx];
 				evsel = evlist__find_evsel(evlist, evsel->idx);
-				if (evsel == NULL) {
-					free(new_expr->metric_events);
-					free(new_expr->metric_refs);
-					free(new_expr);
-					return -EINVAL;
-				}
+				अगर (evsel == शून्य) अणु
+					मुक्त(new_expr->metric_events);
+					मुक्त(new_expr->metric_refs);
+					मुक्त(new_expr);
+					वापस -EINVAL;
+				पूर्ण
 				new_expr->metric_events[idx] = evsel;
-			}
+			पूर्ण
 
 			list_add(&new_expr->nd, &new_me->head);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *  Driver for Atmel AT91 Serial ports
+ *  Driver क्रम Aपंचांगel AT91 Serial ports
  *  Copyright (C) 2003 Rick Bronson
  *
- *  Based on drivers/char/serial_sa1100.c, by Deep Blue Solutions Ltd.
- *  Based on drivers/char/serial.c, by Linus Torvalds, Theodore Ts'o.
+ *  Based on drivers/अक्षर/serial_sa1100.c, by Deep Blue Solutions Ltd.
+ *  Based on drivers/अक्षर/serial.c, by Linus Torvalds, Theoकरोre Ts'o.
  *
  *  DMA support added by Chip Coldwell.
  */
-#include <linux/tty.h>
-#include <linux/ioport.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/clk.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/tty_flip.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/atmel_pdc.h>
-#include <linux/uaccess.h>
-#include <linux/platform_data/atmel.h>
-#include <linux/timer.h>
-#include <linux/err.h>
-#include <linux/irq.h>
-#include <linux/suspend.h>
-#include <linux/mm.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/aपंचांगel_pdc.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/platक्रमm_data/aपंचांगel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/err.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/mm.h>
 
-#include <asm/div64.h>
-#include <asm/io.h>
-#include <asm/ioctls.h>
+#समावेश <यंत्र/भाग64.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/ioctls.h>
 
-#define PDC_BUFFER_SIZE		512
+#घोषणा PDC_BUFFER_SIZE		512
 /* Revisit: We should calculate this based on the actual port settings */
-#define PDC_RX_TIMEOUT		(3 * 10)		/* 3 bytes */
+#घोषणा PDC_RX_TIMEOUT		(3 * 10)		/* 3 bytes */
 
 /* The minium number of data FIFOs should be able to contain */
-#define ATMEL_MIN_FIFO_SIZE	8
+#घोषणा ATMEL_MIN_FIFO_SIZE	8
 /*
  * These two offsets are substracted from the RX FIFO size to define the RTS
  * high and low thresholds
  */
-#define ATMEL_RTS_HIGH_OFFSET	16
-#define ATMEL_RTS_LOW_OFFSET	20
+#घोषणा ATMEL_RTS_HIGH_OFFSET	16
+#घोषणा ATMEL_RTS_LOW_OFFSET	20
 
-#include <linux/serial_core.h>
+#समावेश <linux/serial_core.h>
 
-#include "serial_mctrl_gpio.h"
-#include "atmel_serial.h"
+#समावेश "serial_mctrl_gpio.h"
+#समावेश "atmel_serial.h"
 
-static void atmel_start_rx(struct uart_port *port);
-static void atmel_stop_rx(struct uart_port *port);
+अटल व्योम aपंचांगel_start_rx(काष्ठा uart_port *port);
+अटल व्योम aपंचांगel_stop_rx(काष्ठा uart_port *port);
 
-#ifdef CONFIG_SERIAL_ATMEL_TTYAT
+#अगर_घोषित CONFIG_SERIAL_ATMEL_TTYAT
 
-/* Use device name ttyAT, major 204 and minor 154-169.  This is necessary if we
- * should coexist with the 8250 driver, such as if we have an external 16C550
+/* Use device name ttyAT, major 204 and minor 154-169.  This is necessary अगर we
+ * should coexist with the 8250 driver, such as अगर we have an बाह्यal 16C550
  * UART. */
-#define SERIAL_ATMEL_MAJOR	204
-#define MINOR_START		154
-#define ATMEL_DEVICENAME	"ttyAT"
+#घोषणा SERIAL_ATMEL_MAJOR	204
+#घोषणा MINOR_START		154
+#घोषणा ATMEL_DEVICENAME	"ttyAT"
 
-#else
+#अन्यथा
 
 /* Use device name ttyS, major 4, minor 64-68.  This is the usual serial port
- * name, but it is legally reserved for the 8250 driver. */
-#define SERIAL_ATMEL_MAJOR	TTY_MAJOR
-#define MINOR_START		64
-#define ATMEL_DEVICENAME	"ttyS"
+ * name, but it is legally reserved क्रम the 8250 driver. */
+#घोषणा SERIAL_ATMEL_MAJOR	TTY_MAJOR
+#घोषणा MINOR_START		64
+#घोषणा ATMEL_DEVICENAME	"ttyS"
 
-#endif
+#पूर्ण_अगर
 
-#define ATMEL_ISR_PASS_LIMIT	256
+#घोषणा ATMEL_ISR_PASS_LIMIT	256
 
-struct atmel_dma_buffer {
-	unsigned char	*buf;
+काष्ठा aपंचांगel_dma_buffer अणु
+	अचिन्हित अक्षर	*buf;
 	dma_addr_t	dma_addr;
-	unsigned int	dma_size;
-	unsigned int	ofs;
-};
+	अचिन्हित पूर्णांक	dma_size;
+	अचिन्हित पूर्णांक	ofs;
+पूर्ण;
 
-struct atmel_uart_char {
+काष्ठा aपंचांगel_uart_अक्षर अणु
 	u16		status;
 	u16		ch;
-};
+पूर्ण;
 
 /*
  * Be careful, the real size of the ring buffer is
- * sizeof(atmel_uart_char) * ATMEL_SERIAL_RINGSIZE. It means that ring buffer
- * can contain up to 1024 characters in PIO mode and up to 4096 characters in
+ * माप(aपंचांगel_uart_अक्षर) * ATMEL_SERIAL_RINGSIZE. It means that ring buffer
+ * can contain up to 1024 अक्षरacters in PIO mode and up to 4096 अक्षरacters in
  * DMA mode.
  */
-#define ATMEL_SERIAL_RINGSIZE 1024
+#घोषणा ATMEL_SERIAL_RINGSIZE 1024
 
 /*
  * at91: 6 USARTs and one DBGU port (SAM9260)
  * samx7: 3 USARTs and 5 UARTs
  */
-#define ATMEL_MAX_UART		8
+#घोषणा ATMEL_MAX_UART		8
 
 /*
- * We wrap our port structure around the generic uart_port.
+ * We wrap our port काष्ठाure around the generic uart_port.
  */
-struct atmel_uart_port {
-	struct uart_port	uart;		/* uart */
-	struct clk		*clk;		/* uart clock */
-	int			may_wakeup;	/* cached value of device_may_wakeup for times we need to disable it */
+काष्ठा aपंचांगel_uart_port अणु
+	काष्ठा uart_port	uart;		/* uart */
+	काष्ठा clk		*clk;		/* uart घड़ी */
+	पूर्णांक			may_wakeup;	/* cached value of device_may_wakeup क्रम बार we need to disable it */
 	u32			backup_imr;	/* IMR saved during suspend */
-	int			break_active;	/* break being received */
+	पूर्णांक			अवरोध_active;	/* अवरोध being received */
 
 	bool			use_dma_rx;	/* enable DMA receiver */
 	bool			use_pdc_rx;	/* enable PDC receiver */
-	short			pdc_rx_idx;	/* current PDC RX buffer */
-	struct atmel_dma_buffer	pdc_rx[2];	/* PDC receier */
+	लघु			pdc_rx_idx;	/* current PDC RX buffer */
+	काष्ठा aपंचांगel_dma_buffer	pdc_rx[2];	/* PDC receier */
 
 	bool			use_dma_tx;     /* enable DMA transmitter */
 	bool			use_pdc_tx;	/* enable PDC transmitter */
-	struct atmel_dma_buffer	pdc_tx;		/* PDC transmitter */
+	काष्ठा aपंचांगel_dma_buffer	pdc_tx;		/* PDC transmitter */
 
 	spinlock_t			lock_tx;	/* port lock */
 	spinlock_t			lock_rx;	/* port lock */
-	struct dma_chan			*chan_tx;
-	struct dma_chan			*chan_rx;
-	struct dma_async_tx_descriptor	*desc_tx;
-	struct dma_async_tx_descriptor	*desc_rx;
+	काष्ठा dma_chan			*chan_tx;
+	काष्ठा dma_chan			*chan_rx;
+	काष्ठा dma_async_tx_descriptor	*desc_tx;
+	काष्ठा dma_async_tx_descriptor	*desc_rx;
 	dma_cookie_t			cookie_tx;
 	dma_cookie_t			cookie_rx;
-	struct scatterlist		sg_tx;
-	struct scatterlist		sg_rx;
-	struct tasklet_struct	tasklet_rx;
-	struct tasklet_struct	tasklet_tx;
-	atomic_t		tasklet_shutdown;
-	unsigned int		irq_status_prev;
-	unsigned int		tx_len;
+	काष्ठा scatterlist		sg_tx;
+	काष्ठा scatterlist		sg_rx;
+	काष्ठा tasklet_काष्ठा	tasklet_rx;
+	काष्ठा tasklet_काष्ठा	tasklet_tx;
+	atomic_t		tasklet_shutकरोwn;
+	अचिन्हित पूर्णांक		irq_status_prev;
+	अचिन्हित पूर्णांक		tx_len;
 
-	struct circ_buf		rx_ring;
+	काष्ठा circ_buf		rx_ring;
 
-	struct mctrl_gpios	*gpios;
+	काष्ठा mctrl_gpios	*gpios;
 	u32			backup_mode;	/* MR saved during iso7816 operations */
 	u32			backup_brgr;	/* BRGR saved during iso7816 operations */
-	unsigned int		tx_done_mask;
-	u32			fifo_size;
+	अचिन्हित पूर्णांक		tx_करोne_mask;
+	u32			fअगरo_size;
 	u32			rts_high;
 	u32			rts_low;
 	bool			ms_irq_enabled;
-	u32			rtor;	/* address of receiver timeout register if it exists */
+	u32			rtor;	/* address of receiver समयout रेजिस्टर अगर it exists */
 	bool			has_frac_baudrate;
-	bool			has_hw_timer;
-	struct timer_list	uart_timer;
+	bool			has_hw_समयr;
+	काष्ठा समयr_list	uart_समयr;
 
 	bool			tx_stopped;
 	bool			suspended;
-	unsigned int		pending;
-	unsigned int		pending_status;
+	अचिन्हित पूर्णांक		pending;
+	अचिन्हित पूर्णांक		pending_status;
 	spinlock_t		lock_suspended;
 
 	bool			hd_start_rx;	/* can start RX during half-duplex operation */
 
 	/* ISO7816 */
-	unsigned int		fidi_min;
-	unsigned int		fidi_max;
+	अचिन्हित पूर्णांक		fidi_min;
+	अचिन्हित पूर्णांक		fidi_max;
 
-#ifdef CONFIG_PM
-	struct {
+#अगर_घोषित CONFIG_PM
+	काष्ठा अणु
 		u32		cr;
 		u32		mr;
 		u32		imr;
@@ -175,775 +176,775 @@ struct atmel_uart_port {
 		u32		ttgr;
 		u32		fmr;
 		u32		fimr;
-	} cache;
-#endif
+	पूर्ण cache;
+#पूर्ण_अगर
 
-	int (*prepare_rx)(struct uart_port *port);
-	int (*prepare_tx)(struct uart_port *port);
-	void (*schedule_rx)(struct uart_port *port);
-	void (*schedule_tx)(struct uart_port *port);
-	void (*release_rx)(struct uart_port *port);
-	void (*release_tx)(struct uart_port *port);
-};
+	पूर्णांक (*prepare_rx)(काष्ठा uart_port *port);
+	पूर्णांक (*prepare_tx)(काष्ठा uart_port *port);
+	व्योम (*schedule_rx)(काष्ठा uart_port *port);
+	व्योम (*schedule_tx)(काष्ठा uart_port *port);
+	व्योम (*release_rx)(काष्ठा uart_port *port);
+	व्योम (*release_tx)(काष्ठा uart_port *port);
+पूर्ण;
 
-static struct atmel_uart_port atmel_ports[ATMEL_MAX_UART];
-static DECLARE_BITMAP(atmel_ports_in_use, ATMEL_MAX_UART);
+अटल काष्ठा aपंचांगel_uart_port aपंचांगel_ports[ATMEL_MAX_UART];
+अटल DECLARE_BITMAP(aपंचांगel_ports_in_use, ATMEL_MAX_UART);
 
-#if defined(CONFIG_OF)
-static const struct of_device_id atmel_serial_dt_ids[] = {
-	{ .compatible = "atmel,at91rm9200-usart-serial" },
-	{ /* sentinel */ }
-};
-#endif
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id aपंचांगel_serial_dt_ids[] = अणु
+	अणु .compatible = "atmel,at91rm9200-usart-serial" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+#पूर्ण_अगर
 
-static inline struct atmel_uart_port *
-to_atmel_uart_port(struct uart_port *uart)
-{
-	return container_of(uart, struct atmel_uart_port, uart);
-}
+अटल अंतरभूत काष्ठा aपंचांगel_uart_port *
+to_aपंचांगel_uart_port(काष्ठा uart_port *uart)
+अणु
+	वापस container_of(uart, काष्ठा aपंचांगel_uart_port, uart);
+पूर्ण
 
-static inline u32 atmel_uart_readl(struct uart_port *port, u32 reg)
-{
-	return __raw_readl(port->membase + reg);
-}
+अटल अंतरभूत u32 aपंचांगel_uart_पढ़ोl(काष्ठा uart_port *port, u32 reg)
+अणु
+	वापस __raw_पढ़ोl(port->membase + reg);
+पूर्ण
 
-static inline void atmel_uart_writel(struct uart_port *port, u32 reg, u32 value)
-{
-	__raw_writel(value, port->membase + reg);
-}
+अटल अंतरभूत व्योम aपंचांगel_uart_ग_लिखोl(काष्ठा uart_port *port, u32 reg, u32 value)
+अणु
+	__raw_ग_लिखोl(value, port->membase + reg);
+पूर्ण
 
-static inline u8 atmel_uart_read_char(struct uart_port *port)
-{
-	return __raw_readb(port->membase + ATMEL_US_RHR);
-}
+अटल अंतरभूत u8 aपंचांगel_uart_पढ़ो_अक्षर(काष्ठा uart_port *port)
+अणु
+	वापस __raw_पढ़ोb(port->membase + ATMEL_US_RHR);
+पूर्ण
 
-static inline void atmel_uart_write_char(struct uart_port *port, u8 value)
-{
-	__raw_writeb(value, port->membase + ATMEL_US_THR);
-}
+अटल अंतरभूत व्योम aपंचांगel_uart_ग_लिखो_अक्षर(काष्ठा uart_port *port, u8 value)
+अणु
+	__raw_ग_लिखोb(value, port->membase + ATMEL_US_THR);
+पूर्ण
 
-static inline int atmel_uart_is_half_duplex(struct uart_port *port)
-{
-	return ((port->rs485.flags & SER_RS485_ENABLED) &&
+अटल अंतरभूत पूर्णांक aपंचांगel_uart_is_half_duplex(काष्ठा uart_port *port)
+अणु
+	वापस ((port->rs485.flags & SER_RS485_ENABLED) &&
 		!(port->rs485.flags & SER_RS485_RX_DURING_TX)) ||
 		(port->iso7816.flags & SER_ISO7816_ENABLED);
-}
+पूर्ण
 
-#ifdef CONFIG_SERIAL_ATMEL_PDC
-static bool atmel_use_pdc_rx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+#अगर_घोषित CONFIG_SERIAL_ATMEL_PDC
+अटल bool aपंचांगel_use_pdc_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	return atmel_port->use_pdc_rx;
-}
+	वापस aपंचांगel_port->use_pdc_rx;
+पूर्ण
 
-static bool atmel_use_pdc_tx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल bool aपंचांगel_use_pdc_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	return atmel_port->use_pdc_tx;
-}
-#else
-static bool atmel_use_pdc_rx(struct uart_port *port)
-{
-	return false;
-}
+	वापस aपंचांगel_port->use_pdc_tx;
+पूर्ण
+#अन्यथा
+अटल bool aपंचांगel_use_pdc_rx(काष्ठा uart_port *port)
+अणु
+	वापस false;
+पूर्ण
 
-static bool atmel_use_pdc_tx(struct uart_port *port)
-{
-	return false;
-}
-#endif
+अटल bool aपंचांगel_use_pdc_tx(काष्ठा uart_port *port)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static bool atmel_use_dma_tx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल bool aपंचांगel_use_dma_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	return atmel_port->use_dma_tx;
-}
+	वापस aपंचांगel_port->use_dma_tx;
+पूर्ण
 
-static bool atmel_use_dma_rx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल bool aपंचांगel_use_dma_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	return atmel_port->use_dma_rx;
-}
+	वापस aपंचांगel_port->use_dma_rx;
+पूर्ण
 
-static bool atmel_use_fifo(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल bool aपंचांगel_use_fअगरo(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	return atmel_port->fifo_size;
-}
+	वापस aपंचांगel_port->fअगरo_size;
+पूर्ण
 
-static void atmel_tasklet_schedule(struct atmel_uart_port *atmel_port,
-				   struct tasklet_struct *t)
-{
-	if (!atomic_read(&atmel_port->tasklet_shutdown))
+अटल व्योम aपंचांगel_tasklet_schedule(काष्ठा aपंचांगel_uart_port *aपंचांगel_port,
+				   काष्ठा tasklet_काष्ठा *t)
+अणु
+	अगर (!atomic_पढ़ो(&aपंचांगel_port->tasklet_shutकरोwn))
 		tasklet_schedule(t);
-}
+पूर्ण
 
 /* Enable or disable the rs485 support */
-static int atmel_config_rs485(struct uart_port *port,
-			      struct serial_rs485 *rs485conf)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int mode;
+अटल पूर्णांक aपंचांगel_config_rs485(काष्ठा uart_port *port,
+			      काष्ठा serial_rs485 *rs485conf)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक mode;
 
-	/* Disable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IDR, atmel_port->tx_done_mask);
+	/* Disable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, aपंचांगel_port->tx_करोne_mask);
 
-	mode = atmel_uart_readl(port, ATMEL_US_MR);
+	mode = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
 
 	/* Resetting serial mode to RS232 (0x0) */
 	mode &= ~ATMEL_US_USMODE;
 
 	port->rs485 = *rs485conf;
 
-	if (rs485conf->flags & SER_RS485_ENABLED) {
+	अगर (rs485conf->flags & SER_RS485_ENABLED) अणु
 		dev_dbg(port->dev, "Setting UART to RS485\n");
-		if (port->rs485.flags & SER_RS485_RX_DURING_TX)
-			atmel_port->tx_done_mask = ATMEL_US_TXRDY;
-		else
-			atmel_port->tx_done_mask = ATMEL_US_TXEMPTY;
+		अगर (port->rs485.flags & SER_RS485_RX_DURING_TX)
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXRDY;
+		अन्यथा
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXEMPTY;
 
-		atmel_uart_writel(port, ATMEL_US_TTGR,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR,
 				  rs485conf->delay_rts_after_send);
 		mode |= ATMEL_US_USMODE_RS485;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(port->dev, "Setting UART to RS232\n");
-		if (atmel_use_pdc_tx(port))
-			atmel_port->tx_done_mask = ATMEL_US_ENDTX |
+		अगर (aपंचांगel_use_pdc_tx(port))
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_ENDTX |
 				ATMEL_US_TXBUFE;
-		else
-			atmel_port->tx_done_mask = ATMEL_US_TXRDY;
-	}
-	atmel_uart_writel(port, ATMEL_US_MR, mode);
+		अन्यथा
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXRDY;
+	पूर्ण
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_MR, mode);
 
-	/* Enable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IER, atmel_port->tx_done_mask);
+	/* Enable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, aपंचांगel_port->tx_करोne_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int atmel_calc_cd(struct uart_port *port,
-				  struct serial_iso7816 *iso7816conf)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int cd;
+अटल अचिन्हित पूर्णांक aपंचांगel_calc_cd(काष्ठा uart_port *port,
+				  काष्ठा serial_iso7816 *iso7816conf)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक cd;
 	u64 mck_rate;
 
-	mck_rate = (u64)clk_get_rate(atmel_port->clk);
-	do_div(mck_rate, iso7816conf->clk);
+	mck_rate = (u64)clk_get_rate(aपंचांगel_port->clk);
+	करो_भाग(mck_rate, iso7816conf->clk);
 	cd = mck_rate;
-	return cd;
-}
+	वापस cd;
+पूर्ण
 
-static unsigned int atmel_calc_fidi(struct uart_port *port,
-				    struct serial_iso7816 *iso7816conf)
-{
+अटल अचिन्हित पूर्णांक aपंचांगel_calc_fidi(काष्ठा uart_port *port,
+				    काष्ठा serial_iso7816 *iso7816conf)
+अणु
 	u64 fidi = 0;
 
-	if (iso7816conf->sc_fi && iso7816conf->sc_di) {
+	अगर (iso7816conf->sc_fi && iso7816conf->sc_di) अणु
 		fidi = (u64)iso7816conf->sc_fi;
-		do_div(fidi, iso7816conf->sc_di);
-	}
-	return (u32)fidi;
-}
+		करो_भाग(fidi, iso7816conf->sc_di);
+	पूर्ण
+	वापस (u32)fidi;
+पूर्ण
 
 /* Enable or disable the iso7816 support */
-/* Called with interrupts disabled */
-static int atmel_config_iso7816(struct uart_port *port,
-				struct serial_iso7816 *iso7816conf)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int mode;
-	unsigned int cd, fidi;
-	int ret = 0;
+/* Called with पूर्णांकerrupts disabled */
+अटल पूर्णांक aपंचांगel_config_iso7816(काष्ठा uart_port *port,
+				काष्ठा serial_iso7816 *iso7816conf)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक mode;
+	अचिन्हित पूर्णांक cd, fidi;
+	पूर्णांक ret = 0;
 
-	/* Disable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IDR, atmel_port->tx_done_mask);
+	/* Disable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, aपंचांगel_port->tx_करोne_mask);
 
-	mode = atmel_uart_readl(port, ATMEL_US_MR);
+	mode = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
 
-	if (iso7816conf->flags & SER_ISO7816_ENABLED) {
+	अगर (iso7816conf->flags & SER_ISO7816_ENABLED) अणु
 		mode &= ~ATMEL_US_USMODE;
 
-		if (iso7816conf->tg > 255) {
+		अगर (iso7816conf->tg > 255) अणु
 			dev_err(port->dev, "ISO7816: Timeguard exceeding 255\n");
-			memset(iso7816conf, 0, sizeof(struct serial_iso7816));
+			स_रखो(iso7816conf, 0, माप(काष्ठा serial_iso7816));
 			ret = -EINVAL;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		if ((iso7816conf->flags & SER_ISO7816_T_PARAM)
-		    == SER_ISO7816_T(0)) {
+		अगर ((iso7816conf->flags & SER_ISO7816_T_PARAM)
+		    == SER_ISO7816_T(0)) अणु
 			mode |= ATMEL_US_USMODE_ISO7816_T0 | ATMEL_US_DSNACK;
-		} else if ((iso7816conf->flags & SER_ISO7816_T_PARAM)
-			   == SER_ISO7816_T(1)) {
+		पूर्ण अन्यथा अगर ((iso7816conf->flags & SER_ISO7816_T_PARAM)
+			   == SER_ISO7816_T(1)) अणु
 			mode |= ATMEL_US_USMODE_ISO7816_T1 | ATMEL_US_INACK;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(port->dev, "ISO7816: Type not supported\n");
-			memset(iso7816conf, 0, sizeof(struct serial_iso7816));
+			स_रखो(iso7816conf, 0, माप(काष्ठा serial_iso7816));
 			ret = -EINVAL;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
 		mode &= ~(ATMEL_US_USCLKS | ATMEL_US_NBSTOP | ATMEL_US_PAR);
 
-		/* select mck clock, and output  */
+		/* select mck घड़ी, and output  */
 		mode |= ATMEL_US_USCLKS_MCK | ATMEL_US_CLKO;
-		/* set parity for normal/inverse mode + max iterations */
+		/* set parity क्रम normal/inverse mode + max iterations */
 		mode |= ATMEL_US_PAR_EVEN | ATMEL_US_NBSTOP_1 | ATMEL_US_MAX_ITER(3);
 
-		cd = atmel_calc_cd(port, iso7816conf);
-		fidi = atmel_calc_fidi(port, iso7816conf);
-		if (fidi == 0) {
+		cd = aपंचांगel_calc_cd(port, iso7816conf);
+		fidi = aपंचांगel_calc_fidi(port, iso7816conf);
+		अगर (fidi == 0) अणु
 			dev_warn(port->dev, "ISO7816 fidi = 0, Generator generates no signal\n");
-		} else if (fidi < atmel_port->fidi_min
-			   || fidi > atmel_port->fidi_max) {
+		पूर्ण अन्यथा अगर (fidi < aपंचांगel_port->fidi_min
+			   || fidi > aपंचांगel_port->fidi_max) अणु
 			dev_err(port->dev, "ISO7816 fidi = %u, value not supported\n", fidi);
-			memset(iso7816conf, 0, sizeof(struct serial_iso7816));
+			स_रखो(iso7816conf, 0, माप(काष्ठा serial_iso7816));
 			ret = -EINVAL;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		if (!(port->iso7816.flags & SER_ISO7816_ENABLED)) {
+		अगर (!(port->iso7816.flags & SER_ISO7816_ENABLED)) अणु
 			/* port not yet in iso7816 mode: store configuration */
-			atmel_port->backup_mode = atmel_uart_readl(port, ATMEL_US_MR);
-			atmel_port->backup_brgr = atmel_uart_readl(port, ATMEL_US_BRGR);
-		}
+			aपंचांगel_port->backup_mode = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
+			aपंचांगel_port->backup_brgr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_BRGR);
+		पूर्ण
 
-		atmel_uart_writel(port, ATMEL_US_TTGR, iso7816conf->tg);
-		atmel_uart_writel(port, ATMEL_US_BRGR, cd);
-		atmel_uart_writel(port, ATMEL_US_FIDI, fidi);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR, iso7816conf->tg);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_BRGR, cd);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_FIDI, fidi);
 
-		atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXDIS | ATMEL_US_RXEN);
-		atmel_port->tx_done_mask = ATMEL_US_TXEMPTY | ATMEL_US_NACK | ATMEL_US_ITERATION;
-	} else {
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXDIS | ATMEL_US_RXEN);
+		aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXEMPTY | ATMEL_US_NACK | ATMEL_US_ITERATION;
+	पूर्ण अन्यथा अणु
 		dev_dbg(port->dev, "Setting UART back to RS232\n");
 		/* back to last RS232 settings */
-		mode = atmel_port->backup_mode;
-		memset(iso7816conf, 0, sizeof(struct serial_iso7816));
-		atmel_uart_writel(port, ATMEL_US_TTGR, 0);
-		atmel_uart_writel(port, ATMEL_US_BRGR, atmel_port->backup_brgr);
-		atmel_uart_writel(port, ATMEL_US_FIDI, 0x174);
+		mode = aपंचांगel_port->backup_mode;
+		स_रखो(iso7816conf, 0, माप(काष्ठा serial_iso7816));
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR, 0);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_BRGR, aपंचांगel_port->backup_brgr);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_FIDI, 0x174);
 
-		if (atmel_use_pdc_tx(port))
-			atmel_port->tx_done_mask = ATMEL_US_ENDTX |
+		अगर (aपंचांगel_use_pdc_tx(port))
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_ENDTX |
 						   ATMEL_US_TXBUFE;
-		else
-			atmel_port->tx_done_mask = ATMEL_US_TXRDY;
-	}
+		अन्यथा
+			aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXRDY;
+	पूर्ण
 
 	port->iso7816 = *iso7816conf;
 
-	atmel_uart_writel(port, ATMEL_US_MR, mode);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_MR, mode);
 
 err_out:
-	/* Enable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IER, atmel_port->tx_done_mask);
+	/* Enable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, aपंचांगel_port->tx_करोne_mask);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Return TIOCSER_TEMT when transmitter FIFO and Shift register is empty.
+ * Return TIOCSER_TEMT when transmitter FIFO and Shअगरt रेजिस्टर is empty.
  */
-static u_int atmel_tx_empty(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल u_पूर्णांक aपंचांगel_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_port->tx_stopped)
-		return TIOCSER_TEMT;
-	return (atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXEMPTY) ?
+	अगर (aपंचांगel_port->tx_stopped)
+		वापस TIOCSER_TEMT;
+	वापस (aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_TXEMPTY) ?
 		TIOCSER_TEMT :
 		0;
-}
+पूर्ण
 
 /*
  * Set state of the modem control output lines
  */
-static void atmel_set_mctrl(struct uart_port *port, u_int mctrl)
-{
-	unsigned int control = 0;
-	unsigned int mode = atmel_uart_readl(port, ATMEL_US_MR);
-	unsigned int rts_paused, rts_ready;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_set_mctrl(काष्ठा uart_port *port, u_पूर्णांक mctrl)
+अणु
+	अचिन्हित पूर्णांक control = 0;
+	अचिन्हित पूर्णांक mode = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
+	अचिन्हित पूर्णांक rts_छोड़ोd, rts_पढ़ोy;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	/* override mode to RS485 if needed, otherwise keep the current mode */
-	if (port->rs485.flags & SER_RS485_ENABLED) {
-		atmel_uart_writel(port, ATMEL_US_TTGR,
+	/* override mode to RS485 अगर needed, otherwise keep the current mode */
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR,
 				  port->rs485.delay_rts_after_send);
 		mode &= ~ATMEL_US_USMODE;
 		mode |= ATMEL_US_USMODE_RS485;
-	}
+	पूर्ण
 
 	/* set the RTS line state according to the mode */
-	if ((mode & ATMEL_US_USMODE) == ATMEL_US_USMODE_HWHS) {
-		/* force RTS line to high level */
-		rts_paused = ATMEL_US_RTSEN;
+	अगर ((mode & ATMEL_US_USMODE) == ATMEL_US_USMODE_HWHS) अणु
+		/* क्रमce RTS line to high level */
+		rts_छोड़ोd = ATMEL_US_RTSEN;
 
 		/* give the control of the RTS line back to the hardware */
-		rts_ready = ATMEL_US_RTSDIS;
-	} else {
-		/* force RTS line to high level */
-		rts_paused = ATMEL_US_RTSDIS;
+		rts_पढ़ोy = ATMEL_US_RTSDIS;
+	पूर्ण अन्यथा अणु
+		/* क्रमce RTS line to high level */
+		rts_छोड़ोd = ATMEL_US_RTSDIS;
 
-		/* force RTS line to low level */
-		rts_ready = ATMEL_US_RTSEN;
-	}
+		/* क्रमce RTS line to low level */
+		rts_पढ़ोy = ATMEL_US_RTSEN;
+	पूर्ण
 
-	if (mctrl & TIOCM_RTS)
-		control |= rts_ready;
-	else
-		control |= rts_paused;
+	अगर (mctrl & TIOCM_RTS)
+		control |= rts_पढ़ोy;
+	अन्यथा
+		control |= rts_छोड़ोd;
 
-	if (mctrl & TIOCM_DTR)
+	अगर (mctrl & TIOCM_DTR)
 		control |= ATMEL_US_DTREN;
-	else
+	अन्यथा
 		control |= ATMEL_US_DTRDIS;
 
-	atmel_uart_writel(port, ATMEL_US_CR, control);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, control);
 
-	mctrl_gpio_set(atmel_port->gpios, mctrl);
+	mctrl_gpio_set(aपंचांगel_port->gpios, mctrl);
 
 	/* Local loopback mode? */
 	mode &= ~ATMEL_US_CHMODE;
-	if (mctrl & TIOCM_LOOP)
+	अगर (mctrl & TIOCM_LOOP)
 		mode |= ATMEL_US_CHMODE_LOC_LOOP;
-	else
+	अन्यथा
 		mode |= ATMEL_US_CHMODE_NORMAL;
 
-	atmel_uart_writel(port, ATMEL_US_MR, mode);
-}
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_MR, mode);
+पूर्ण
 
 /*
  * Get state of the modem control input lines
  */
-static u_int atmel_get_mctrl(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int ret = 0, status;
+अटल u_पूर्णांक aपंचांगel_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक ret = 0, status;
 
-	status = atmel_uart_readl(port, ATMEL_US_CSR);
+	status = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
 
 	/*
-	 * The control signals are active low.
+	 * The control संकेतs are active low.
 	 */
-	if (!(status & ATMEL_US_DCD))
+	अगर (!(status & ATMEL_US_DCD))
 		ret |= TIOCM_CD;
-	if (!(status & ATMEL_US_CTS))
+	अगर (!(status & ATMEL_US_CTS))
 		ret |= TIOCM_CTS;
-	if (!(status & ATMEL_US_DSR))
+	अगर (!(status & ATMEL_US_DSR))
 		ret |= TIOCM_DSR;
-	if (!(status & ATMEL_US_RI))
+	अगर (!(status & ATMEL_US_RI))
 		ret |= TIOCM_RI;
 
-	return mctrl_gpio_get(atmel_port->gpios, &ret);
-}
+	वापस mctrl_gpio_get(aपंचांगel_port->gpios, &ret);
+पूर्ण
 
 /*
  * Stop transmitting.
  */
-static void atmel_stop_tx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_use_pdc_tx(port)) {
+	अगर (aपंचांगel_use_pdc_tx(port)) अणु
 		/* disable PDC transmit */
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
+	पूर्ण
 
 	/*
 	 * Disable the transmitter.
 	 * This is mandatory when DMA is used, otherwise the DMA buffer
 	 * is fully transmitted.
 	 */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXDIS);
-	atmel_port->tx_stopped = true;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXDIS);
+	aपंचांगel_port->tx_stopped = true;
 
-	/* Disable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IDR, atmel_port->tx_done_mask);
+	/* Disable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, aपंचांगel_port->tx_करोne_mask);
 
-	if (atmel_uart_is_half_duplex(port))
-		if (!atomic_read(&atmel_port->tasklet_shutdown))
-			atmel_start_rx(port);
+	अगर (aपंचांगel_uart_is_half_duplex(port))
+		अगर (!atomic_पढ़ो(&aपंचांगel_port->tasklet_shutकरोwn))
+			aपंचांगel_start_rx(port);
 
-}
+पूर्ण
 
 /*
  * Start transmitting.
  */
-static void atmel_start_tx(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_use_pdc_tx(port) && (atmel_uart_readl(port, ATMEL_PDC_PTSR)
+	अगर (aपंचांगel_use_pdc_tx(port) && (aपंचांगel_uart_पढ़ोl(port, ATMEL_PDC_PTSR)
 				       & ATMEL_PDC_TXTEN))
-		/* The transmitter is already running.  Yes, we
+		/* The transmitter is alपढ़ोy running.  Yes, we
 		   really need this.*/
-		return;
+		वापस;
 
-	if (atmel_use_pdc_tx(port) || atmel_use_dma_tx(port))
-		if (atmel_uart_is_half_duplex(port))
-			atmel_stop_rx(port);
+	अगर (aपंचांगel_use_pdc_tx(port) || aपंचांगel_use_dma_tx(port))
+		अगर (aपंचांगel_uart_is_half_duplex(port))
+			aपंचांगel_stop_rx(port);
 
-	if (atmel_use_pdc_tx(port))
+	अगर (aपंचांगel_use_pdc_tx(port))
 		/* re-enable PDC transmit */
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
 
-	/* Enable interrupts */
-	atmel_uart_writel(port, ATMEL_US_IER, atmel_port->tx_done_mask);
+	/* Enable पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, aपंचांगel_port->tx_करोne_mask);
 
 	/* re-enable the transmitter */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXEN);
-	atmel_port->tx_stopped = false;
-}
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXEN);
+	aपंचांगel_port->tx_stopped = false;
+पूर्ण
 
 /*
- * start receiving - port is in process of being opened.
+ * start receiving - port is in process of being खोलोed.
  */
-static void atmel_start_rx(struct uart_port *port)
-{
+अटल व्योम aपंचांगel_start_rx(काष्ठा uart_port *port)
+अणु
 	/* reset status and receiver */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
 
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RXEN);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RXEN);
 
-	if (atmel_use_pdc_rx(port)) {
+	अगर (aपंचांगel_use_pdc_rx(port)) अणु
 		/* enable PDC controller */
-		atmel_uart_writel(port, ATMEL_US_IER,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
 				  ATMEL_US_ENDRX | ATMEL_US_TIMEOUT |
-				  port->read_status_mask);
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTEN);
-	} else {
-		atmel_uart_writel(port, ATMEL_US_IER, ATMEL_US_RXRDY);
-	}
-}
+				  port->पढ़ो_status_mask);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTEN);
+	पूर्ण अन्यथा अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, ATMEL_US_RXRDY);
+	पूर्ण
+पूर्ण
 
 /*
- * Stop receiving - port is in process of being closed.
+ * Stop receiving - port is in process of being बंदd.
  */
-static void atmel_stop_rx(struct uart_port *port)
-{
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RXDIS);
+अटल व्योम aपंचांगel_stop_rx(काष्ठा uart_port *port)
+अणु
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RXDIS);
 
-	if (atmel_use_pdc_rx(port)) {
+	अगर (aपंचांगel_use_pdc_rx(port)) अणु
 		/* disable PDC receive */
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTDIS);
-		atmel_uart_writel(port, ATMEL_US_IDR,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTDIS);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
 				  ATMEL_US_ENDRX | ATMEL_US_TIMEOUT |
-				  port->read_status_mask);
-	} else {
-		atmel_uart_writel(port, ATMEL_US_IDR, ATMEL_US_RXRDY);
-	}
-}
+				  port->पढ़ो_status_mask);
+	पूर्ण अन्यथा अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, ATMEL_US_RXRDY);
+	पूर्ण
+पूर्ण
 
 /*
- * Enable modem status interrupts
+ * Enable modem status पूर्णांकerrupts
  */
-static void atmel_enable_ms(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	uint32_t ier = 0;
+अटल व्योम aपंचांगel_enable_ms(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	uपूर्णांक32_t ier = 0;
 
 	/*
 	 * Interrupt should not be enabled twice
 	 */
-	if (atmel_port->ms_irq_enabled)
-		return;
+	अगर (aपंचांगel_port->ms_irq_enabled)
+		वापस;
 
-	atmel_port->ms_irq_enabled = true;
+	aपंचांगel_port->ms_irq_enabled = true;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_CTS))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_CTS))
 		ier |= ATMEL_US_CTSIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_DSR))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_DSR))
 		ier |= ATMEL_US_DSRIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_RI))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_RI))
 		ier |= ATMEL_US_RIIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_DCD))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_DCD))
 		ier |= ATMEL_US_DCDIC;
 
-	atmel_uart_writel(port, ATMEL_US_IER, ier);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, ier);
 
-	mctrl_gpio_enable_ms(atmel_port->gpios);
-}
+	mctrl_gpio_enable_ms(aपंचांगel_port->gpios);
+पूर्ण
 
 /*
- * Disable modem status interrupts
+ * Disable modem status पूर्णांकerrupts
  */
-static void atmel_disable_ms(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	uint32_t idr = 0;
+अटल व्योम aपंचांगel_disable_ms(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	uपूर्णांक32_t idr = 0;
 
 	/*
 	 * Interrupt should not be disabled twice
 	 */
-	if (!atmel_port->ms_irq_enabled)
-		return;
+	अगर (!aपंचांगel_port->ms_irq_enabled)
+		वापस;
 
-	atmel_port->ms_irq_enabled = false;
+	aपंचांगel_port->ms_irq_enabled = false;
 
-	mctrl_gpio_disable_ms(atmel_port->gpios);
+	mctrl_gpio_disable_ms(aपंचांगel_port->gpios);
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_CTS))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_CTS))
 		idr |= ATMEL_US_CTSIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_DSR))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_DSR))
 		idr |= ATMEL_US_DSRIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_RI))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_RI))
 		idr |= ATMEL_US_RIIC;
 
-	if (!mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_DCD))
+	अगर (!mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_DCD))
 		idr |= ATMEL_US_DCDIC;
 
-	atmel_uart_writel(port, ATMEL_US_IDR, idr);
-}
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, idr);
+पूर्ण
 
 /*
- * Control the transmission of a break signal
+ * Control the transmission of a अवरोध संकेत
  */
-static void atmel_break_ctl(struct uart_port *port, int break_state)
-{
-	if (break_state != 0)
-		/* start break */
-		atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTBRK);
-	else
-		/* stop break */
-		atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STPBRK);
-}
+अटल व्योम aपंचांगel_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अगर (अवरोध_state != 0)
+		/* start अवरोध */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STTBRK);
+	अन्यथा
+		/* stop अवरोध */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STPBRK);
+पूर्ण
 
 /*
- * Stores the incoming character in the ring buffer
+ * Stores the incoming अक्षरacter in the ring buffer
  */
-static void
-atmel_buffer_rx_char(struct uart_port *port, unsigned int status,
-		     unsigned int ch)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct circ_buf *ring = &atmel_port->rx_ring;
-	struct atmel_uart_char *c;
+अटल व्योम
+aपंचांगel_buffer_rx_अक्षर(काष्ठा uart_port *port, अचिन्हित पूर्णांक status,
+		     अचिन्हित पूर्णांक ch)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा circ_buf *ring = &aपंचांगel_port->rx_ring;
+	काष्ठा aपंचांगel_uart_अक्षर *c;
 
-	if (!CIRC_SPACE(ring->head, ring->tail, ATMEL_SERIAL_RINGSIZE))
-		/* Buffer overflow, ignore char */
-		return;
+	अगर (!CIRC_SPACE(ring->head, ring->tail, ATMEL_SERIAL_RINGSIZE))
+		/* Buffer overflow, ignore अक्षर */
+		वापस;
 
-	c = &((struct atmel_uart_char *)ring->buf)[ring->head];
+	c = &((काष्ठा aपंचांगel_uart_अक्षर *)ring->buf)[ring->head];
 	c->status	= status;
 	c->ch		= ch;
 
-	/* Make sure the character is stored before we update head. */
+	/* Make sure the अक्षरacter is stored beक्रमe we update head. */
 	smp_wmb();
 
 	ring->head = (ring->head + 1) & (ATMEL_SERIAL_RINGSIZE - 1);
-}
+पूर्ण
 
 /*
  * Deal with parity, framing and overrun errors.
  */
-static void atmel_pdc_rxerr(struct uart_port *port, unsigned int status)
-{
+अटल व्योम aपंचांगel_pdc_rxerr(काष्ठा uart_port *port, अचिन्हित पूर्णांक status)
+अणु
 	/* clear error */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
 
-	if (status & ATMEL_US_RXBRK) {
+	अगर (status & ATMEL_US_RXBRK) अणु
 		/* ignore side-effect */
 		status &= ~(ATMEL_US_PARE | ATMEL_US_FRAME);
 		port->icount.brk++;
-	}
-	if (status & ATMEL_US_PARE)
+	पूर्ण
+	अगर (status & ATMEL_US_PARE)
 		port->icount.parity++;
-	if (status & ATMEL_US_FRAME)
+	अगर (status & ATMEL_US_FRAME)
 		port->icount.frame++;
-	if (status & ATMEL_US_OVRE)
+	अगर (status & ATMEL_US_OVRE)
 		port->icount.overrun++;
-}
+पूर्ण
 
 /*
- * Characters received (called from interrupt handler)
+ * Characters received (called from पूर्णांकerrupt handler)
  */
-static void atmel_rx_chars(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int status, ch;
+अटल व्योम aपंचांगel_rx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक status, ch;
 
-	status = atmel_uart_readl(port, ATMEL_US_CSR);
-	while (status & ATMEL_US_RXRDY) {
-		ch = atmel_uart_read_char(port);
+	status = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
+	जबतक (status & ATMEL_US_RXRDY) अणु
+		ch = aपंचांगel_uart_पढ़ो_अक्षर(port);
 
 		/*
 		 * note that the error handling code is
-		 * out of the main execution path
+		 * out of the मुख्य execution path
 		 */
-		if (unlikely(status & (ATMEL_US_PARE | ATMEL_US_FRAME
+		अगर (unlikely(status & (ATMEL_US_PARE | ATMEL_US_FRAME
 				       | ATMEL_US_OVRE | ATMEL_US_RXBRK)
-			     || atmel_port->break_active)) {
+			     || aपंचांगel_port->अवरोध_active)) अणु
 
 			/* clear error */
-			atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
 
-			if (status & ATMEL_US_RXBRK
-			    && !atmel_port->break_active) {
-				atmel_port->break_active = 1;
-				atmel_uart_writel(port, ATMEL_US_IER,
+			अगर (status & ATMEL_US_RXBRK
+			    && !aपंचांगel_port->अवरोध_active) अणु
+				aपंचांगel_port->अवरोध_active = 1;
+				aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
 						  ATMEL_US_RXBRK);
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * This is either the end-of-break
+				 * This is either the end-of-अवरोध
 				 * condition or we've received at
-				 * least one character without RXBRK
-				 * being set. In both cases, the next
-				 * RXBRK will indicate start-of-break.
+				 * least one अक्षरacter without RXBRK
+				 * being set. In both हालs, the next
+				 * RXBRK will indicate start-of-अवरोध.
 				 */
-				atmel_uart_writel(port, ATMEL_US_IDR,
+				aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
 						  ATMEL_US_RXBRK);
 				status &= ~ATMEL_US_RXBRK;
-				atmel_port->break_active = 0;
-			}
-		}
+				aपंचांगel_port->अवरोध_active = 0;
+			पूर्ण
+		पूर्ण
 
-		atmel_buffer_rx_char(port, status, ch);
-		status = atmel_uart_readl(port, ATMEL_US_CSR);
-	}
+		aपंचांगel_buffer_rx_अक्षर(port, status, ch);
+		status = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
+	पूर्ण
 
-	atmel_tasklet_schedule(atmel_port, &atmel_port->tasklet_rx);
-}
+	aपंचांगel_tasklet_schedule(aपंचांगel_port, &aपंचांगel_port->tasklet_rx);
+पूर्ण
 
 /*
- * Transmit characters (called from tasklet with TXRDY interrupt
+ * Transmit अक्षरacters (called from tasklet with TXRDY पूर्णांकerrupt
  * disabled)
  */
-static void atmel_tx_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_tx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (port->x_char &&
-	    (atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY)) {
-		atmel_uart_write_char(port, port->x_char);
+	अगर (port->x_अक्षर &&
+	    (aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY)) अणु
+		aपंचांगel_uart_ग_लिखो_अक्षर(port, port->x_अक्षर);
 		port->icount.tx++;
-		port->x_char = 0;
-	}
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
-		return;
+		port->x_अक्षर = 0;
+	पूर्ण
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		वापस;
 
-	while (atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY) {
-		atmel_uart_write_char(port, xmit->buf[xmit->tail]);
+	जबतक (aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY) अणु
+		aपंचांगel_uart_ग_लिखो_अक्षर(port, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	}
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (!uart_circ_empty(xmit)) {
-		/* we still have characters to transmit, so we should continue
-		 * transmitting them when TX is ready, regardless of
-		 * mode or duplexity
+	अगर (!uart_circ_empty(xmit)) अणु
+		/* we still have अक्षरacters to transmit, so we should जारी
+		 * transmitting them when TX is पढ़ोy, regardless of
+		 * mode or duplनिकासy
 		 */
-		atmel_port->tx_done_mask |= ATMEL_US_TXRDY;
+		aपंचांगel_port->tx_करोne_mask |= ATMEL_US_TXRDY;
 
-		/* Enable interrupts */
-		atmel_uart_writel(port, ATMEL_US_IER,
-				  atmel_port->tx_done_mask);
-	} else {
-		if (atmel_uart_is_half_duplex(port))
-			atmel_port->tx_done_mask &= ~ATMEL_US_TXRDY;
-	}
-}
+		/* Enable पूर्णांकerrupts */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
+				  aपंचांगel_port->tx_करोne_mask);
+	पूर्ण अन्यथा अणु
+		अगर (aपंचांगel_uart_is_half_duplex(port))
+			aपंचांगel_port->tx_करोne_mask &= ~ATMEL_US_TXRDY;
+	पूर्ण
+पूर्ण
 
-static void atmel_complete_tx_dma(void *arg)
-{
-	struct atmel_uart_port *atmel_port = arg;
-	struct uart_port *port = &atmel_port->uart;
-	struct circ_buf *xmit = &port->state->xmit;
-	struct dma_chan *chan = atmel_port->chan_tx;
-	unsigned long flags;
+अटल व्योम aपंचांगel_complete_tx_dma(व्योम *arg)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = arg;
+	काष्ठा uart_port *port = &aपंचांगel_port->uart;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा dma_chan *chan = aपंचांगel_port->chan_tx;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	if (chan)
+	अगर (chan)
 		dmaengine_terminate_all(chan);
-	xmit->tail += atmel_port->tx_len;
+	xmit->tail += aपंचांगel_port->tx_len;
 	xmit->tail &= UART_XMIT_SIZE - 1;
 
-	port->icount.tx += atmel_port->tx_len;
+	port->icount.tx += aपंचांगel_port->tx_len;
 
-	spin_lock_irq(&atmel_port->lock_tx);
-	async_tx_ack(atmel_port->desc_tx);
-	atmel_port->cookie_tx = -EINVAL;
-	atmel_port->desc_tx = NULL;
-	spin_unlock_irq(&atmel_port->lock_tx);
+	spin_lock_irq(&aपंचांगel_port->lock_tx);
+	async_tx_ack(aपंचांगel_port->desc_tx);
+	aपंचांगel_port->cookie_tx = -EINVAL;
+	aपंचांगel_port->desc_tx = शून्य;
+	spin_unlock_irq(&aपंचांगel_port->lock_tx);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
 	/*
-	 * xmit is a circular buffer so, if we have just send data from
+	 * xmit is a circular buffer so, अगर we have just send data from
 	 * xmit->tail to the end of xmit->buf, now we have to transmit the
-	 * remaining data from the beginning of xmit->buf to xmit->head.
+	 * reमुख्यing data from the beginning of xmit->buf to xmit->head.
 	 */
-	if (!uart_circ_empty(xmit))
-		atmel_tasklet_schedule(atmel_port, &atmel_port->tasklet_tx);
-	else if (atmel_uart_is_half_duplex(port)) {
+	अगर (!uart_circ_empty(xmit))
+		aपंचांगel_tasklet_schedule(aपंचांगel_port, &aपंचांगel_port->tasklet_tx);
+	अन्यथा अगर (aपंचांगel_uart_is_half_duplex(port)) अणु
 		/*
-		 * DMA done, re-enable TXEMPTY and signal that we can stop
-		 * TX and start RX for RS485
+		 * DMA करोne, re-enable TXEMPTY and संकेत that we can stop
+		 * TX and start RX क्रम RS485
 		 */
-		atmel_port->hd_start_rx = true;
-		atmel_uart_writel(port, ATMEL_US_IER,
-				  atmel_port->tx_done_mask);
-	}
+		aपंचांगel_port->hd_start_rx = true;
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
+				  aपंचांगel_port->tx_करोne_mask);
+	पूर्ण
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void atmel_release_tx_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct dma_chan *chan = atmel_port->chan_tx;
+अटल व्योम aपंचांगel_release_tx_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा dma_chan *chan = aपंचांगel_port->chan_tx;
 
-	if (chan) {
+	अगर (chan) अणु
 		dmaengine_terminate_all(chan);
 		dma_release_channel(chan);
-		dma_unmap_sg(port->dev, &atmel_port->sg_tx, 1,
+		dma_unmap_sg(port->dev, &aपंचांगel_port->sg_tx, 1,
 				DMA_TO_DEVICE);
-	}
+	पूर्ण
 
-	atmel_port->desc_tx = NULL;
-	atmel_port->chan_tx = NULL;
-	atmel_port->cookie_tx = -EINVAL;
-}
+	aपंचांगel_port->desc_tx = शून्य;
+	aपंचांगel_port->chan_tx = शून्य;
+	aपंचांगel_port->cookie_tx = -EINVAL;
+पूर्ण
 
 /*
- * Called from tasklet with TXRDY interrupt is disabled.
+ * Called from tasklet with TXRDY पूर्णांकerrupt is disabled.
  */
-static void atmel_tx_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct circ_buf *xmit = &port->state->xmit;
-	struct dma_chan *chan = atmel_port->chan_tx;
-	struct dma_async_tx_descriptor *desc;
-	struct scatterlist sgl[2], *sg, *sg_tx = &atmel_port->sg_tx;
-	unsigned int tx_len, part1_len, part2_len, sg_len;
+अटल व्योम aपंचांगel_tx_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा dma_chan *chan = aपंचांगel_port->chan_tx;
+	काष्ठा dma_async_tx_descriptor *desc;
+	काष्ठा scatterlist sgl[2], *sg, *sg_tx = &aपंचांगel_port->sg_tx;
+	अचिन्हित पूर्णांक tx_len, part1_len, part2_len, sg_len;
 	dma_addr_t phys_addr;
 
 	/* Make sure we have an idle channel */
-	if (atmel_port->desc_tx != NULL)
-		return;
+	अगर (aपंचांगel_port->desc_tx != शून्य)
+		वापस;
 
-	if (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) {
+	अगर (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) अणु
 		/*
 		 * DMA is idle now.
-		 * Port xmit buffer is already mapped,
+		 * Port xmit buffer is alपढ़ोy mapped,
 		 * and it is one page... Just adjust
 		 * offsets and lengths. Since it is a circular buffer,
 		 * we have to transmit till the end, and then the rest.
@@ -954,38 +955,38 @@ static void atmel_tx_dma(struct uart_port *port)
 					 xmit->tail,
 					 UART_XMIT_SIZE);
 
-		if (atmel_port->fifo_size) {
+		अगर (aपंचांगel_port->fअगरo_size) अणु
 			/* multi data mode */
 			part1_len = (tx_len & ~0x3); /* DWORD access */
 			part2_len = (tx_len & 0x3); /* BYTE access */
-		} else {
+		पूर्ण अन्यथा अणु
 			/* single data (legacy) mode */
 			part1_len = 0;
 			part2_len = tx_len; /* BYTE access only */
-		}
+		पूर्ण
 
 		sg_init_table(sgl, 2);
 		sg_len = 0;
 		phys_addr = sg_dma_address(sg_tx) + xmit->tail;
-		if (part1_len) {
+		अगर (part1_len) अणु
 			sg = &sgl[sg_len++];
 			sg_dma_address(sg) = phys_addr;
 			sg_dma_len(sg) = part1_len;
 
 			phys_addr += part1_len;
-		}
+		पूर्ण
 
-		if (part2_len) {
+		अगर (part2_len) अणु
 			sg = &sgl[sg_len++];
 			sg_dma_address(sg) = phys_addr;
 			sg_dma_len(sg) = part2_len;
-		}
+		पूर्ण
 
 		/*
-		 * save tx_len so atmel_complete_tx_dma() will increase
+		 * save tx_len so aपंचांगel_complete_tx_dma() will increase
 		 * xmit->tail correctly
 		 */
-		atmel_port->tx_len = tx_len;
+		aपंचांगel_port->tx_len = tx_len;
 
 		desc = dmaengine_prep_slave_sg(chan,
 					       sgl,
@@ -993,304 +994,304 @@ static void atmel_tx_dma(struct uart_port *port)
 					       DMA_MEM_TO_DEV,
 					       DMA_PREP_INTERRUPT |
 					       DMA_CTRL_ACK);
-		if (!desc) {
+		अगर (!desc) अणु
 			dev_err(port->dev, "Failed to send via dma!\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		dma_sync_sg_for_device(port->dev, sg_tx, 1, DMA_TO_DEVICE);
+		dma_sync_sg_क्रम_device(port->dev, sg_tx, 1, DMA_TO_DEVICE);
 
-		atmel_port->desc_tx = desc;
-		desc->callback = atmel_complete_tx_dma;
-		desc->callback_param = atmel_port;
-		atmel_port->cookie_tx = dmaengine_submit(desc);
-	}
+		aपंचांगel_port->desc_tx = desc;
+		desc->callback = aपंचांगel_complete_tx_dma;
+		desc->callback_param = aपंचांगel_port;
+		aपंचांगel_port->cookie_tx = dmaengine_submit(desc);
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static int atmel_prepare_tx_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct device *mfd_dev = port->dev->parent;
+अटल पूर्णांक aपंचांगel_prepare_tx_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा device *mfd_dev = port->dev->parent;
 	dma_cap_mask_t		mask;
-	struct dma_slave_config config;
-	int ret, nent;
+	काष्ठा dma_slave_config config;
+	पूर्णांक ret, nent;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 
-	atmel_port->chan_tx = dma_request_slave_channel(mfd_dev, "tx");
-	if (atmel_port->chan_tx == NULL)
-		goto chan_err;
+	aपंचांगel_port->chan_tx = dma_request_slave_channel(mfd_dev, "tx");
+	अगर (aपंचांगel_port->chan_tx == शून्य)
+		जाओ chan_err;
 	dev_info(port->dev, "using %s for tx DMA transfers\n",
-		dma_chan_name(atmel_port->chan_tx));
+		dma_chan_name(aपंचांगel_port->chan_tx));
 
-	spin_lock_init(&atmel_port->lock_tx);
-	sg_init_table(&atmel_port->sg_tx, 1);
+	spin_lock_init(&aपंचांगel_port->lock_tx);
+	sg_init_table(&aपंचांगel_port->sg_tx, 1);
 	/* UART circular tx buffer is an aligned page. */
 	BUG_ON(!PAGE_ALIGNED(port->state->xmit.buf));
-	sg_set_page(&atmel_port->sg_tx,
+	sg_set_page(&aपंचांगel_port->sg_tx,
 			virt_to_page(port->state->xmit.buf),
 			UART_XMIT_SIZE,
 			offset_in_page(port->state->xmit.buf));
 	nent = dma_map_sg(port->dev,
-				&atmel_port->sg_tx,
+				&aपंचांगel_port->sg_tx,
 				1,
 				DMA_TO_DEVICE);
 
-	if (!nent) {
+	अगर (!nent) अणु
 		dev_dbg(port->dev, "need to release resource of dma\n");
-		goto chan_err;
-	} else {
+		जाओ chan_err;
+	पूर्ण अन्यथा अणु
 		dev_dbg(port->dev, "%s: mapped %d@%p to %pad\n", __func__,
-			sg_dma_len(&atmel_port->sg_tx),
+			sg_dma_len(&aपंचांगel_port->sg_tx),
 			port->state->xmit.buf,
-			&sg_dma_address(&atmel_port->sg_tx));
-	}
+			&sg_dma_address(&aपंचांगel_port->sg_tx));
+	पूर्ण
 
 	/* Configure the slave DMA */
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.direction = DMA_MEM_TO_DEV;
-	config.dst_addr_width = (atmel_port->fifo_size) ?
+	config.dst_addr_width = (aपंचांगel_port->fअगरo_size) ?
 				DMA_SLAVE_BUSWIDTH_4_BYTES :
 				DMA_SLAVE_BUSWIDTH_1_BYTE;
 	config.dst_addr = port->mapbase + ATMEL_US_THR;
 	config.dst_maxburst = 1;
 
-	ret = dmaengine_slave_config(atmel_port->chan_tx,
+	ret = dmaengine_slave_config(aपंचांगel_port->chan_tx,
 				     &config);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "DMA tx slave configuration failed\n");
-		goto chan_err;
-	}
+		जाओ chan_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 chan_err:
 	dev_err(port->dev, "TX channel not available, switch to pio\n");
-	atmel_port->use_dma_tx = false;
-	if (atmel_port->chan_tx)
-		atmel_release_tx_dma(port);
-	return -EINVAL;
-}
+	aपंचांगel_port->use_dma_tx = false;
+	अगर (aपंचांगel_port->chan_tx)
+		aपंचांगel_release_tx_dma(port);
+	वापस -EINVAL;
+पूर्ण
 
-static void atmel_complete_rx_dma(void *arg)
-{
-	struct uart_port *port = arg;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_complete_rx_dma(व्योम *arg)
+अणु
+	काष्ठा uart_port *port = arg;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	atmel_tasklet_schedule(atmel_port, &atmel_port->tasklet_rx);
-}
+	aपंचांगel_tasklet_schedule(aपंचांगel_port, &aपंचांगel_port->tasklet_rx);
+पूर्ण
 
-static void atmel_release_rx_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct dma_chan *chan = atmel_port->chan_rx;
+अटल व्योम aपंचांगel_release_rx_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा dma_chan *chan = aपंचांगel_port->chan_rx;
 
-	if (chan) {
+	अगर (chan) अणु
 		dmaengine_terminate_all(chan);
 		dma_release_channel(chan);
-		dma_unmap_sg(port->dev, &atmel_port->sg_rx, 1,
+		dma_unmap_sg(port->dev, &aपंचांगel_port->sg_rx, 1,
 				DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
-	atmel_port->desc_rx = NULL;
-	atmel_port->chan_rx = NULL;
-	atmel_port->cookie_rx = -EINVAL;
-}
+	aपंचांगel_port->desc_rx = शून्य;
+	aपंचांगel_port->chan_rx = शून्य;
+	aपंचांगel_port->cookie_rx = -EINVAL;
+पूर्ण
 
-static void atmel_rx_from_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct tty_port *tport = &port->state->port;
-	struct circ_buf *ring = &atmel_port->rx_ring;
-	struct dma_chan *chan = atmel_port->chan_rx;
-	struct dma_tx_state state;
-	enum dma_status dmastat;
-	size_t count;
+अटल व्योम aपंचांगel_rx_from_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा tty_port *tport = &port->state->port;
+	काष्ठा circ_buf *ring = &aपंचांगel_port->rx_ring;
+	काष्ठा dma_chan *chan = aपंचांगel_port->chan_rx;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status dmastat;
+	माप_प्रकार count;
 
 
-	/* Reset the UART timeout early so that we don't miss one */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTTO);
+	/* Reset the UART समयout early so that we करोn't miss one */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STTTO);
 	dmastat = dmaengine_tx_status(chan,
-				atmel_port->cookie_rx,
+				aपंचांगel_port->cookie_rx,
 				&state);
-	/* Restart a new tasklet if DMA status is error */
-	if (dmastat == DMA_ERROR) {
+	/* Restart a new tasklet अगर DMA status is error */
+	अगर (dmastat == DMA_ERROR) अणु
 		dev_dbg(port->dev, "Get residue error, restart tasklet\n");
-		atmel_uart_writel(port, ATMEL_US_IER, ATMEL_US_TIMEOUT);
-		atmel_tasklet_schedule(atmel_port, &atmel_port->tasklet_rx);
-		return;
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, ATMEL_US_TIMEOUT);
+		aपंचांगel_tasklet_schedule(aपंचांगel_port, &aपंचांगel_port->tasklet_rx);
+		वापस;
+	पूर्ण
 
 	/* CPU claims ownership of RX DMA buffer */
-	dma_sync_sg_for_cpu(port->dev,
-			    &atmel_port->sg_rx,
+	dma_sync_sg_क्रम_cpu(port->dev,
+			    &aपंचांगel_port->sg_rx,
 			    1,
 			    DMA_FROM_DEVICE);
 
 	/*
-	 * ring->head points to the end of data already written by the DMA.
-	 * ring->tail points to the beginning of data to be read by the
+	 * ring->head poपूर्णांकs to the end of data alपढ़ोy written by the DMA.
+	 * ring->tail poपूर्णांकs to the beginning of data to be पढ़ो by the
 	 * framework.
 	 * The current transfer size should not be larger than the dma buffer
 	 * length.
 	 */
-	ring->head = sg_dma_len(&atmel_port->sg_rx) - state.residue;
-	BUG_ON(ring->head > sg_dma_len(&atmel_port->sg_rx));
+	ring->head = sg_dma_len(&aपंचांगel_port->sg_rx) - state.residue;
+	BUG_ON(ring->head > sg_dma_len(&aपंचांगel_port->sg_rx));
 	/*
-	 * At this point ring->head may point to the first byte right after the
+	 * At this poपूर्णांक ring->head may poपूर्णांक to the first byte right after the
 	 * last byte of the dma buffer:
-	 * 0 <= ring->head <= sg_dma_len(&atmel_port->sg_rx)
+	 * 0 <= ring->head <= sg_dma_len(&aपंचांगel_port->sg_rx)
 	 *
-	 * However ring->tail must always points inside the dma buffer:
-	 * 0 <= ring->tail <= sg_dma_len(&atmel_port->sg_rx) - 1
+	 * However ring->tail must always poपूर्णांकs inside the dma buffer:
+	 * 0 <= ring->tail <= sg_dma_len(&aपंचांगel_port->sg_rx) - 1
 	 *
-	 * Since we use a ring buffer, we have to handle the case
-	 * where head is lower than tail. In such a case, we first read from
+	 * Since we use a ring buffer, we have to handle the हाल
+	 * where head is lower than tail. In such a हाल, we first पढ़ो from
 	 * tail to the end of the buffer then reset tail.
 	 */
-	if (ring->head < ring->tail) {
-		count = sg_dma_len(&atmel_port->sg_rx) - ring->tail;
+	अगर (ring->head < ring->tail) अणु
+		count = sg_dma_len(&aपंचांगel_port->sg_rx) - ring->tail;
 
 		tty_insert_flip_string(tport, ring->buf + ring->tail, count);
 		ring->tail = 0;
 		port->icount.rx += count;
-	}
+	पूर्ण
 
-	/* Finally we read data from tail to head */
-	if (ring->tail < ring->head) {
+	/* Finally we पढ़ो data from tail to head */
+	अगर (ring->tail < ring->head) अणु
 		count = ring->head - ring->tail;
 
 		tty_insert_flip_string(tport, ring->buf + ring->tail, count);
-		/* Wrap ring->head if needed */
-		if (ring->head >= sg_dma_len(&atmel_port->sg_rx))
+		/* Wrap ring->head अगर needed */
+		अगर (ring->head >= sg_dma_len(&aपंचांगel_port->sg_rx))
 			ring->head = 0;
 		ring->tail = ring->head;
 		port->icount.rx += count;
-	}
+	पूर्ण
 
 	/* USART retreives ownership of RX DMA buffer */
-	dma_sync_sg_for_device(port->dev,
-			       &atmel_port->sg_rx,
+	dma_sync_sg_क्रम_device(port->dev,
+			       &aपंचांगel_port->sg_rx,
 			       1,
 			       DMA_FROM_DEVICE);
 
 	tty_flip_buffer_push(tport);
 
-	atmel_uart_writel(port, ATMEL_US_IER, ATMEL_US_TIMEOUT);
-}
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, ATMEL_US_TIMEOUT);
+पूर्ण
 
-static int atmel_prepare_rx_dma(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct device *mfd_dev = port->dev->parent;
-	struct dma_async_tx_descriptor *desc;
+अटल पूर्णांक aपंचांगel_prepare_rx_dma(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा device *mfd_dev = port->dev->parent;
+	काष्ठा dma_async_tx_descriptor *desc;
 	dma_cap_mask_t		mask;
-	struct dma_slave_config config;
-	struct circ_buf		*ring;
-	int ret, nent;
+	काष्ठा dma_slave_config config;
+	काष्ठा circ_buf		*ring;
+	पूर्णांक ret, nent;
 
-	ring = &atmel_port->rx_ring;
+	ring = &aपंचांगel_port->rx_ring;
 
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_CYCLIC, mask);
 
-	atmel_port->chan_rx = dma_request_slave_channel(mfd_dev, "rx");
-	if (atmel_port->chan_rx == NULL)
-		goto chan_err;
+	aपंचांगel_port->chan_rx = dma_request_slave_channel(mfd_dev, "rx");
+	अगर (aपंचांगel_port->chan_rx == शून्य)
+		जाओ chan_err;
 	dev_info(port->dev, "using %s for rx DMA transfers\n",
-		dma_chan_name(atmel_port->chan_rx));
+		dma_chan_name(aपंचांगel_port->chan_rx));
 
-	spin_lock_init(&atmel_port->lock_rx);
-	sg_init_table(&atmel_port->sg_rx, 1);
+	spin_lock_init(&aपंचांगel_port->lock_rx);
+	sg_init_table(&aपंचांगel_port->sg_rx, 1);
 	/* UART circular rx buffer is an aligned page. */
 	BUG_ON(!PAGE_ALIGNED(ring->buf));
-	sg_set_page(&atmel_port->sg_rx,
+	sg_set_page(&aपंचांगel_port->sg_rx,
 		    virt_to_page(ring->buf),
-		    sizeof(struct atmel_uart_char) * ATMEL_SERIAL_RINGSIZE,
+		    माप(काष्ठा aपंचांगel_uart_अक्षर) * ATMEL_SERIAL_RINGSIZE,
 		    offset_in_page(ring->buf));
 	nent = dma_map_sg(port->dev,
-			  &atmel_port->sg_rx,
+			  &aपंचांगel_port->sg_rx,
 			  1,
 			  DMA_FROM_DEVICE);
 
-	if (!nent) {
+	अगर (!nent) अणु
 		dev_dbg(port->dev, "need to release resource of dma\n");
-		goto chan_err;
-	} else {
+		जाओ chan_err;
+	पूर्ण अन्यथा अणु
 		dev_dbg(port->dev, "%s: mapped %d@%p to %pad\n", __func__,
-			sg_dma_len(&atmel_port->sg_rx),
+			sg_dma_len(&aपंचांगel_port->sg_rx),
 			ring->buf,
-			&sg_dma_address(&atmel_port->sg_rx));
-	}
+			&sg_dma_address(&aपंचांगel_port->sg_rx));
+	पूर्ण
 
 	/* Configure the slave DMA */
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.direction = DMA_DEV_TO_MEM;
 	config.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	config.src_addr = port->mapbase + ATMEL_US_RHR;
 	config.src_maxburst = 1;
 
-	ret = dmaengine_slave_config(atmel_port->chan_rx,
+	ret = dmaengine_slave_config(aपंचांगel_port->chan_rx,
 				     &config);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(port->dev, "DMA rx slave configuration failed\n");
-		goto chan_err;
-	}
+		जाओ chan_err;
+	पूर्ण
 	/*
 	 * Prepare a cyclic dma transfer, assign 2 descriptors,
 	 * each one is half ring buffer size
 	 */
-	desc = dmaengine_prep_dma_cyclic(atmel_port->chan_rx,
-					 sg_dma_address(&atmel_port->sg_rx),
-					 sg_dma_len(&atmel_port->sg_rx),
-					 sg_dma_len(&atmel_port->sg_rx)/2,
+	desc = dmaengine_prep_dma_cyclic(aपंचांगel_port->chan_rx,
+					 sg_dma_address(&aपंचांगel_port->sg_rx),
+					 sg_dma_len(&aपंचांगel_port->sg_rx),
+					 sg_dma_len(&aपंचांगel_port->sg_rx)/2,
 					 DMA_DEV_TO_MEM,
 					 DMA_PREP_INTERRUPT);
-	if (!desc) {
+	अगर (!desc) अणु
 		dev_err(port->dev, "Preparing DMA cyclic failed\n");
-		goto chan_err;
-	}
-	desc->callback = atmel_complete_rx_dma;
+		जाओ chan_err;
+	पूर्ण
+	desc->callback = aपंचांगel_complete_rx_dma;
 	desc->callback_param = port;
-	atmel_port->desc_rx = desc;
-	atmel_port->cookie_rx = dmaengine_submit(desc);
+	aपंचांगel_port->desc_rx = desc;
+	aपंचांगel_port->cookie_rx = dmaengine_submit(desc);
 
-	return 0;
+	वापस 0;
 
 chan_err:
 	dev_err(port->dev, "RX channel not available, switch to pio\n");
-	atmel_port->use_dma_rx = false;
-	if (atmel_port->chan_rx)
-		atmel_release_rx_dma(port);
-	return -EINVAL;
-}
+	aपंचांगel_port->use_dma_rx = false;
+	अगर (aपंचांगel_port->chan_rx)
+		aपंचांगel_release_rx_dma(port);
+	वापस -EINVAL;
+पूर्ण
 
-static void atmel_uart_timer_callback(struct timer_list *t)
-{
-	struct atmel_uart_port *atmel_port = from_timer(atmel_port, t,
-							uart_timer);
-	struct uart_port *port = &atmel_port->uart;
+अटल व्योम aपंचांगel_uart_समयr_callback(काष्ठा समयr_list *t)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = from_समयr(aपंचांगel_port, t,
+							uart_समयr);
+	काष्ठा uart_port *port = &aपंचांगel_port->uart;
 
-	if (!atomic_read(&atmel_port->tasklet_shutdown)) {
-		tasklet_schedule(&atmel_port->tasklet_rx);
-		mod_timer(&atmel_port->uart_timer,
-			  jiffies + uart_poll_timeout(port));
-	}
-}
+	अगर (!atomic_पढ़ो(&aपंचांगel_port->tasklet_shutकरोwn)) अणु
+		tasklet_schedule(&aपंचांगel_port->tasklet_rx);
+		mod_समयr(&aपंचांगel_port->uart_समयr,
+			  jअगरfies + uart_poll_समयout(port));
+	पूर्ण
+पूर्ण
 
 /*
- * receive interrupt handler.
+ * receive पूर्णांकerrupt handler.
  */
-static void
-atmel_handle_receive(struct uart_port *port, unsigned int pending)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम
+aपंचांगel_handle_receive(काष्ठा uart_port *port, अचिन्हित पूर्णांक pending)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_use_pdc_rx(port)) {
+	अगर (aपंचांगel_use_pdc_rx(port)) अणु
 		/*
 		 * PDC receive. Just schedule the tasklet and let it
 		 * figure out the details.
@@ -1298,162 +1299,162 @@ atmel_handle_receive(struct uart_port *port, unsigned int pending)
 		 * TODO: We're not handling error flags correctly at
 		 * the moment.
 		 */
-		if (pending & (ATMEL_US_ENDRX | ATMEL_US_TIMEOUT)) {
-			atmel_uart_writel(port, ATMEL_US_IDR,
+		अगर (pending & (ATMEL_US_ENDRX | ATMEL_US_TIMEOUT)) अणु
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
 					  (ATMEL_US_ENDRX | ATMEL_US_TIMEOUT));
-			atmel_tasklet_schedule(atmel_port,
-					       &atmel_port->tasklet_rx);
-		}
+			aपंचांगel_tasklet_schedule(aपंचांगel_port,
+					       &aपंचांगel_port->tasklet_rx);
+		पूर्ण
 
-		if (pending & (ATMEL_US_RXBRK | ATMEL_US_OVRE |
+		अगर (pending & (ATMEL_US_RXBRK | ATMEL_US_OVRE |
 				ATMEL_US_FRAME | ATMEL_US_PARE))
-			atmel_pdc_rxerr(port, pending);
-	}
+			aपंचांगel_pdc_rxerr(port, pending);
+	पूर्ण
 
-	if (atmel_use_dma_rx(port)) {
-		if (pending & ATMEL_US_TIMEOUT) {
-			atmel_uart_writel(port, ATMEL_US_IDR,
+	अगर (aपंचांगel_use_dma_rx(port)) अणु
+		अगर (pending & ATMEL_US_TIMEOUT) अणु
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
 					  ATMEL_US_TIMEOUT);
-			atmel_tasklet_schedule(atmel_port,
-					       &atmel_port->tasklet_rx);
-		}
-	}
+			aपंचांगel_tasklet_schedule(aपंचांगel_port,
+					       &aपंचांगel_port->tasklet_rx);
+		पूर्ण
+	पूर्ण
 
 	/* Interrupt receive */
-	if (pending & ATMEL_US_RXRDY)
-		atmel_rx_chars(port);
-	else if (pending & ATMEL_US_RXBRK) {
+	अगर (pending & ATMEL_US_RXRDY)
+		aपंचांगel_rx_अक्षरs(port);
+	अन्यथा अगर (pending & ATMEL_US_RXBRK) अणु
 		/*
-		 * End of break detected. If it came along with a
-		 * character, atmel_rx_chars will handle it.
+		 * End of अवरोध detected. If it came aदीर्घ with a
+		 * अक्षरacter, aपंचांगel_rx_अक्षरs will handle it.
 		 */
-		atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
-		atmel_uart_writel(port, ATMEL_US_IDR, ATMEL_US_RXBRK);
-		atmel_port->break_active = 0;
-	}
-}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, ATMEL_US_RXBRK);
+		aपंचांगel_port->अवरोध_active = 0;
+	पूर्ण
+पूर्ण
 
 /*
- * transmit interrupt handler. (Transmit is IRQF_NODELAY safe)
+ * transmit पूर्णांकerrupt handler. (Transmit is IRQF_NODELAY safe)
  */
-static void
-atmel_handle_transmit(struct uart_port *port, unsigned int pending)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम
+aपंचांगel_handle_transmit(काष्ठा uart_port *port, अचिन्हित पूर्णांक pending)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (pending & atmel_port->tx_done_mask) {
-		atmel_uart_writel(port, ATMEL_US_IDR,
-				  atmel_port->tx_done_mask);
+	अगर (pending & aपंचांगel_port->tx_करोne_mask) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
+				  aपंचांगel_port->tx_करोne_mask);
 
-		/* Start RX if flag was set and FIFO is empty */
-		if (atmel_port->hd_start_rx) {
-			if (!(atmel_uart_readl(port, ATMEL_US_CSR)
+		/* Start RX अगर flag was set and FIFO is empty */
+		अगर (aपंचांगel_port->hd_start_rx) अणु
+			अगर (!(aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR)
 					& ATMEL_US_TXEMPTY))
 				dev_warn(port->dev, "Should start RX, but TX fifo is not empty\n");
 
-			atmel_port->hd_start_rx = false;
-			atmel_start_rx(port);
-		}
+			aपंचांगel_port->hd_start_rx = false;
+			aपंचांगel_start_rx(port);
+		पूर्ण
 
-		atmel_tasklet_schedule(atmel_port, &atmel_port->tasklet_tx);
-	}
-}
+		aपंचांगel_tasklet_schedule(aपंचांगel_port, &aपंचांगel_port->tasklet_tx);
+	पूर्ण
+पूर्ण
 
 /*
- * status flags interrupt handler.
+ * status flags पूर्णांकerrupt handler.
  */
-static void
-atmel_handle_status(struct uart_port *port, unsigned int pending,
-		    unsigned int status)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int status_change;
+अटल व्योम
+aपंचांगel_handle_status(काष्ठा uart_port *port, अचिन्हित पूर्णांक pending,
+		    अचिन्हित पूर्णांक status)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक status_change;
 
-	if (pending & (ATMEL_US_RIIC | ATMEL_US_DSRIC | ATMEL_US_DCDIC
-				| ATMEL_US_CTSIC)) {
-		status_change = status ^ atmel_port->irq_status_prev;
-		atmel_port->irq_status_prev = status;
+	अगर (pending & (ATMEL_US_RIIC | ATMEL_US_DSRIC | ATMEL_US_DCDIC
+				| ATMEL_US_CTSIC)) अणु
+		status_change = status ^ aपंचांगel_port->irq_status_prev;
+		aपंचांगel_port->irq_status_prev = status;
 
-		if (status_change & (ATMEL_US_RI | ATMEL_US_DSR
-					| ATMEL_US_DCD | ATMEL_US_CTS)) {
-			/* TODO: All reads to CSR will clear these interrupts! */
-			if (status_change & ATMEL_US_RI)
+		अगर (status_change & (ATMEL_US_RI | ATMEL_US_DSR
+					| ATMEL_US_DCD | ATMEL_US_CTS)) अणु
+			/* TODO: All पढ़ोs to CSR will clear these पूर्णांकerrupts! */
+			अगर (status_change & ATMEL_US_RI)
 				port->icount.rng++;
-			if (status_change & ATMEL_US_DSR)
+			अगर (status_change & ATMEL_US_DSR)
 				port->icount.dsr++;
-			if (status_change & ATMEL_US_DCD)
+			अगर (status_change & ATMEL_US_DCD)
 				uart_handle_dcd_change(port, !(status & ATMEL_US_DCD));
-			if (status_change & ATMEL_US_CTS)
+			अगर (status_change & ATMEL_US_CTS)
 				uart_handle_cts_change(port, !(status & ATMEL_US_CTS));
 
-			wake_up_interruptible(&port->state->port.delta_msr_wait);
-		}
-	}
+			wake_up_पूर्णांकerruptible(&port->state->port.delta_msr_रुको);
+		पूर्ण
+	पूर्ण
 
-	if (pending & (ATMEL_US_NACK | ATMEL_US_ITERATION))
+	अगर (pending & (ATMEL_US_NACK | ATMEL_US_ITERATION))
 		dev_dbg(port->dev, "ISO7816 ERROR (0x%08x)\n", pending);
-}
+पूर्ण
 
 /*
  * Interrupt handler
  */
-static irqreturn_t atmel_interrupt(int irq, void *dev_id)
-{
-	struct uart_port *port = dev_id;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int status, pending, mask, pass_counter = 0;
+अटल irqवापस_t aपंचांगel_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = dev_id;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक status, pending, mask, pass_counter = 0;
 
-	spin_lock(&atmel_port->lock_suspended);
+	spin_lock(&aपंचांगel_port->lock_suspended);
 
-	do {
-		status = atmel_uart_readl(port, ATMEL_US_CSR);
-		mask = atmel_uart_readl(port, ATMEL_US_IMR);
+	करो अणु
+		status = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
+		mask = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_IMR);
 		pending = status & mask;
-		if (!pending)
-			break;
+		अगर (!pending)
+			अवरोध;
 
-		if (atmel_port->suspended) {
-			atmel_port->pending |= pending;
-			atmel_port->pending_status = status;
-			atmel_uart_writel(port, ATMEL_US_IDR, mask);
-			pm_system_wakeup();
-			break;
-		}
+		अगर (aपंचांगel_port->suspended) अणु
+			aपंचांगel_port->pending |= pending;
+			aपंचांगel_port->pending_status = status;
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, mask);
+			pm_प्रणाली_wakeup();
+			अवरोध;
+		पूर्ण
 
-		atmel_handle_receive(port, pending);
-		atmel_handle_status(port, pending, status);
-		atmel_handle_transmit(port, pending);
-	} while (pass_counter++ < ATMEL_ISR_PASS_LIMIT);
+		aपंचांगel_handle_receive(port, pending);
+		aपंचांगel_handle_status(port, pending, status);
+		aपंचांगel_handle_transmit(port, pending);
+	पूर्ण जबतक (pass_counter++ < ATMEL_ISR_PASS_LIMIT);
 
-	spin_unlock(&atmel_port->lock_suspended);
+	spin_unlock(&aपंचांगel_port->lock_suspended);
 
-	return pass_counter ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस pass_counter ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static void atmel_release_tx_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct atmel_dma_buffer *pdc = &atmel_port->pdc_tx;
+अटल व्योम aपंचांगel_release_tx_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा aपंचांगel_dma_buffer *pdc = &aपंचांगel_port->pdc_tx;
 
 	dma_unmap_single(port->dev,
 			 pdc->dma_addr,
 			 pdc->dma_size,
 			 DMA_TO_DEVICE);
-}
+पूर्ण
 
 /*
- * Called from tasklet with ENDTX and TXBUFE interrupts disabled.
+ * Called from tasklet with ENDTX and TXBUFE पूर्णांकerrupts disabled.
  */
-static void atmel_tx_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct circ_buf *xmit = &port->state->xmit;
-	struct atmel_dma_buffer *pdc = &atmel_port->pdc_tx;
-	int count;
+अटल व्योम aपंचांगel_tx_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	काष्ठा aपंचांगel_dma_buffer *pdc = &aपंचांगel_port->pdc_tx;
+	पूर्णांक count;
 
 	/* nothing left to transmit? */
-	if (atmel_uart_readl(port, ATMEL_PDC_TCR))
-		return;
+	अगर (aपंचांगel_uart_पढ़ोl(port, ATMEL_PDC_TCR))
+		वापस;
 
 	xmit->tail += pdc->ofs;
 	xmit->tail &= UART_XMIT_SIZE - 1;
@@ -1464,10 +1465,10 @@ static void atmel_tx_pdc(struct uart_port *port)
 	/* more to transmit - setup next transfer */
 
 	/* disable PDC transmit */
-	atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
 
-	if (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) {
-		dma_sync_single_for_device(port->dev,
+	अगर (!uart_circ_empty(xmit) && !uart_tx_stopped(port)) अणु
+		dma_sync_single_क्रम_device(port->dev,
 					   pdc->dma_addr,
 					   pdc->dma_size,
 					   DMA_TO_DEVICE);
@@ -1475,30 +1476,30 @@ static void atmel_tx_pdc(struct uart_port *port)
 		count = CIRC_CNT_TO_END(xmit->head, xmit->tail, UART_XMIT_SIZE);
 		pdc->ofs = count;
 
-		atmel_uart_writel(port, ATMEL_PDC_TPR,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_TPR,
 				  pdc->dma_addr + xmit->tail);
-		atmel_uart_writel(port, ATMEL_PDC_TCR, count);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_TCR, count);
 		/* re-enable PDC transmit */
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
-		/* Enable interrupts */
-		atmel_uart_writel(port, ATMEL_US_IER,
-				  atmel_port->tx_done_mask);
-	} else {
-		if (atmel_uart_is_half_duplex(port)) {
-			/* DMA done, stop TX, start RX for RS485 */
-			atmel_start_rx(port);
-		}
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
+		/* Enable पूर्णांकerrupts */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
+				  aपंचांगel_port->tx_करोne_mask);
+	पूर्ण अन्यथा अणु
+		अगर (aपंचांगel_uart_is_half_duplex(port)) अणु
+			/* DMA करोne, stop TX, start RX क्रम RS485 */
+			aपंचांगel_start_rx(port);
+		पूर्ण
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static int atmel_prepare_tx_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct atmel_dma_buffer *pdc = &atmel_port->pdc_tx;
-	struct circ_buf *xmit = &port->state->xmit;
+अटल पूर्णांक aपंचांगel_prepare_tx_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा aपंचांगel_dma_buffer *pdc = &aपंचांगel_port->pdc_tx;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
 	pdc->buf = xmit->buf;
 	pdc->dma_addr = dma_map_single(port->dev,
@@ -1508,23 +1509,23 @@ static int atmel_prepare_tx_pdc(struct uart_port *port)
 	pdc->dma_size = UART_XMIT_SIZE;
 	pdc->ofs = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atmel_rx_from_ring(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct circ_buf *ring = &atmel_port->rx_ring;
-	unsigned int flg;
-	unsigned int status;
+अटल व्योम aपंचांगel_rx_from_ring(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा circ_buf *ring = &aपंचांगel_port->rx_ring;
+	अचिन्हित पूर्णांक flg;
+	अचिन्हित पूर्णांक status;
 
-	while (ring->head != ring->tail) {
-		struct atmel_uart_char c;
+	जबतक (ring->head != ring->tail) अणु
+		काष्ठा aपंचांगel_uart_अक्षर c;
 
 		/* Make sure c is loaded after head. */
 		smp_rmb();
 
-		c = ((struct atmel_uart_char *)ring->buf)[ring->tail];
+		c = ((काष्ठा aपंचांगel_uart_अक्षर *)ring->buf)[ring->tail];
 
 		ring->tail = (ring->tail + 1) & (ATMEL_SERIAL_RINGSIZE - 1);
 
@@ -1534,93 +1535,93 @@ static void atmel_rx_from_ring(struct uart_port *port)
 
 		/*
 		 * note that the error handling code is
-		 * out of the main execution path
+		 * out of the मुख्य execution path
 		 */
-		if (unlikely(status & (ATMEL_US_PARE | ATMEL_US_FRAME
-				       | ATMEL_US_OVRE | ATMEL_US_RXBRK))) {
-			if (status & ATMEL_US_RXBRK) {
+		अगर (unlikely(status & (ATMEL_US_PARE | ATMEL_US_FRAME
+				       | ATMEL_US_OVRE | ATMEL_US_RXBRK))) अणु
+			अगर (status & ATMEL_US_RXBRK) अणु
 				/* ignore side-effect */
 				status &= ~(ATMEL_US_PARE | ATMEL_US_FRAME);
 
 				port->icount.brk++;
-				if (uart_handle_break(port))
-					continue;
-			}
-			if (status & ATMEL_US_PARE)
+				अगर (uart_handle_अवरोध(port))
+					जारी;
+			पूर्ण
+			अगर (status & ATMEL_US_PARE)
 				port->icount.parity++;
-			if (status & ATMEL_US_FRAME)
+			अगर (status & ATMEL_US_FRAME)
 				port->icount.frame++;
-			if (status & ATMEL_US_OVRE)
+			अगर (status & ATMEL_US_OVRE)
 				port->icount.overrun++;
 
-			status &= port->read_status_mask;
+			status &= port->पढ़ो_status_mask;
 
-			if (status & ATMEL_US_RXBRK)
+			अगर (status & ATMEL_US_RXBRK)
 				flg = TTY_BREAK;
-			else if (status & ATMEL_US_PARE)
+			अन्यथा अगर (status & ATMEL_US_PARE)
 				flg = TTY_PARITY;
-			else if (status & ATMEL_US_FRAME)
+			अन्यथा अगर (status & ATMEL_US_FRAME)
 				flg = TTY_FRAME;
-		}
+		पूर्ण
 
 
-		if (uart_handle_sysrq_char(port, c.ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(port, c.ch))
+			जारी;
 
-		uart_insert_char(port, status, ATMEL_US_OVRE, c.ch, flg);
-	}
+		uart_insert_अक्षर(port, status, ATMEL_US_OVRE, c.ch, flg);
+	पूर्ण
 
 	tty_flip_buffer_push(&port->state->port);
-}
+पूर्ण
 
-static void atmel_release_rx_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int i;
+अटल व्योम aपंचांगel_release_rx_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		struct atmel_dma_buffer *pdc = &atmel_port->pdc_rx[i];
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा aपंचांगel_dma_buffer *pdc = &aपंचांगel_port->pdc_rx[i];
 
 		dma_unmap_single(port->dev,
 				 pdc->dma_addr,
 				 pdc->dma_size,
 				 DMA_FROM_DEVICE);
-		kfree(pdc->buf);
-	}
-}
+		kमुक्त(pdc->buf);
+	पूर्ण
+पूर्ण
 
-static void atmel_rx_from_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	struct tty_port *tport = &port->state->port;
-	struct atmel_dma_buffer *pdc;
-	int rx_idx = atmel_port->pdc_rx_idx;
-	unsigned int head;
-	unsigned int tail;
-	unsigned int count;
+अटल व्योम aपंचांगel_rx_from_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	काष्ठा tty_port *tport = &port->state->port;
+	काष्ठा aपंचांगel_dma_buffer *pdc;
+	पूर्णांक rx_idx = aपंचांगel_port->pdc_rx_idx;
+	अचिन्हित पूर्णांक head;
+	अचिन्हित पूर्णांक tail;
+	अचिन्हित पूर्णांक count;
 
-	do {
-		/* Reset the UART timeout early so that we don't miss one */
-		atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTTO);
+	करो अणु
+		/* Reset the UART समयout early so that we करोn't miss one */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STTTO);
 
-		pdc = &atmel_port->pdc_rx[rx_idx];
-		head = atmel_uart_readl(port, ATMEL_PDC_RPR) - pdc->dma_addr;
+		pdc = &aपंचांगel_port->pdc_rx[rx_idx];
+		head = aपंचांगel_uart_पढ़ोl(port, ATMEL_PDC_RPR) - pdc->dma_addr;
 		tail = pdc->ofs;
 
-		/* If the PDC has switched buffers, RPR won't contain
+		/* If the PDC has चयनed buffers, RPR won't contain
 		 * any address within the current buffer. Since head
-		 * is unsigned, we just need a one-way comparison to
+		 * is अचिन्हित, we just need a one-way comparison to
 		 * find out.
 		 *
-		 * In this case, we just need to consume the entire
-		 * buffer and resubmit it for DMA. This will clear the
+		 * In this हाल, we just need to consume the entire
+		 * buffer and resubmit it क्रम DMA. This will clear the
 		 * ENDRX bit as well, so that we can safely re-enable
-		 * all interrupts below.
+		 * all पूर्णांकerrupts below.
 		 */
 		head = min(head, pdc->dma_size);
 
-		if (likely(head != tail)) {
-			dma_sync_single_for_cpu(port->dev, pdc->dma_addr,
+		अगर (likely(head != tail)) अणु
+			dma_sync_single_क्रम_cpu(port->dev, pdc->dma_addr,
 					pdc->dma_size, DMA_FROM_DEVICE);
 
 			/*
@@ -1634,1037 +1635,1037 @@ static void atmel_rx_from_pdc(struct uart_port *port)
 			tty_insert_flip_string(tport, pdc->buf + pdc->ofs,
 						count);
 
-			dma_sync_single_for_device(port->dev, pdc->dma_addr,
+			dma_sync_single_क्रम_device(port->dev, pdc->dma_addr,
 					pdc->dma_size, DMA_FROM_DEVICE);
 
 			port->icount.rx += count;
 			pdc->ofs = head;
-		}
+		पूर्ण
 
 		/*
-		 * If the current buffer is full, we need to check if
+		 * If the current buffer is full, we need to check अगर
 		 * the next one contains any additional data.
 		 */
-		if (head >= pdc->dma_size) {
+		अगर (head >= pdc->dma_size) अणु
 			pdc->ofs = 0;
-			atmel_uart_writel(port, ATMEL_PDC_RNPR, pdc->dma_addr);
-			atmel_uart_writel(port, ATMEL_PDC_RNCR, pdc->dma_size);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RNPR, pdc->dma_addr);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RNCR, pdc->dma_size);
 
 			rx_idx = !rx_idx;
-			atmel_port->pdc_rx_idx = rx_idx;
-		}
-	} while (head >= pdc->dma_size);
+			aपंचांगel_port->pdc_rx_idx = rx_idx;
+		पूर्ण
+	पूर्ण जबतक (head >= pdc->dma_size);
 
 	tty_flip_buffer_push(tport);
 
-	atmel_uart_writel(port, ATMEL_US_IER,
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
 			  ATMEL_US_ENDRX | ATMEL_US_TIMEOUT);
-}
+पूर्ण
 
-static int atmel_prepare_rx_pdc(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int i;
+अटल पूर्णांक aपंचांगel_prepare_rx_pdc(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
-		struct atmel_dma_buffer *pdc = &atmel_port->pdc_rx[i];
+	क्रम (i = 0; i < 2; i++) अणु
+		काष्ठा aपंचांगel_dma_buffer *pdc = &aपंचांगel_port->pdc_rx[i];
 
-		pdc->buf = kmalloc(PDC_BUFFER_SIZE, GFP_KERNEL);
-		if (pdc->buf == NULL) {
-			if (i != 0) {
+		pdc->buf = kदो_स्मृति(PDC_BUFFER_SIZE, GFP_KERNEL);
+		अगर (pdc->buf == शून्य) अणु
+			अगर (i != 0) अणु
 				dma_unmap_single(port->dev,
-					atmel_port->pdc_rx[0].dma_addr,
+					aपंचांगel_port->pdc_rx[0].dma_addr,
 					PDC_BUFFER_SIZE,
 					DMA_FROM_DEVICE);
-				kfree(atmel_port->pdc_rx[0].buf);
-			}
-			atmel_port->use_pdc_rx = false;
-			return -ENOMEM;
-		}
+				kमुक्त(aपंचांगel_port->pdc_rx[0].buf);
+			पूर्ण
+			aपंचांगel_port->use_pdc_rx = false;
+			वापस -ENOMEM;
+		पूर्ण
 		pdc->dma_addr = dma_map_single(port->dev,
 						pdc->buf,
 						PDC_BUFFER_SIZE,
 						DMA_FROM_DEVICE);
 		pdc->dma_size = PDC_BUFFER_SIZE;
 		pdc->ofs = 0;
-	}
+	पूर्ण
 
-	atmel_port->pdc_rx_idx = 0;
+	aपंचांगel_port->pdc_rx_idx = 0;
 
-	atmel_uart_writel(port, ATMEL_PDC_RPR, atmel_port->pdc_rx[0].dma_addr);
-	atmel_uart_writel(port, ATMEL_PDC_RCR, PDC_BUFFER_SIZE);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RPR, aपंचांगel_port->pdc_rx[0].dma_addr);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RCR, PDC_BUFFER_SIZE);
 
-	atmel_uart_writel(port, ATMEL_PDC_RNPR,
-			  atmel_port->pdc_rx[1].dma_addr);
-	atmel_uart_writel(port, ATMEL_PDC_RNCR, PDC_BUFFER_SIZE);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RNPR,
+			  aपंचांगel_port->pdc_rx[1].dma_addr);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_RNCR, PDC_BUFFER_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * tasklet handling tty stuff outside the interrupt handler.
+ * tasklet handling tty stuff outside the पूर्णांकerrupt handler.
  */
-static void atmel_tasklet_rx_func(struct tasklet_struct *t)
-{
-	struct atmel_uart_port *atmel_port = from_tasklet(atmel_port, t,
+अटल व्योम aपंचांगel_tasklet_rx_func(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = from_tasklet(aपंचांगel_port, t,
 							  tasklet_rx);
-	struct uart_port *port = &atmel_port->uart;
+	काष्ठा uart_port *port = &aपंचांगel_port->uart;
 
-	/* The interrupt handler does not take the lock */
+	/* The पूर्णांकerrupt handler करोes not take the lock */
 	spin_lock(&port->lock);
-	atmel_port->schedule_rx(port);
+	aपंचांगel_port->schedule_rx(port);
 	spin_unlock(&port->lock);
-}
+पूर्ण
 
-static void atmel_tasklet_tx_func(struct tasklet_struct *t)
-{
-	struct atmel_uart_port *atmel_port = from_tasklet(atmel_port, t,
+अटल व्योम aपंचांगel_tasklet_tx_func(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = from_tasklet(aपंचांगel_port, t,
 							  tasklet_tx);
-	struct uart_port *port = &atmel_port->uart;
+	काष्ठा uart_port *port = &aपंचांगel_port->uart;
 
-	/* The interrupt handler does not take the lock */
+	/* The पूर्णांकerrupt handler करोes not take the lock */
 	spin_lock(&port->lock);
-	atmel_port->schedule_tx(port);
+	aपंचांगel_port->schedule_tx(port);
 	spin_unlock(&port->lock);
-}
+पूर्ण
 
-static void atmel_init_property(struct atmel_uart_port *atmel_port,
-				struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
+अटल व्योम aपंचांगel_init_property(काष्ठा aपंचांगel_uart_port *aपंचांगel_port,
+				काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
 
-	/* DMA/PDC usage specification */
-	if (of_property_read_bool(np, "atmel,use-dma-rx")) {
-		if (of_property_read_bool(np, "dmas")) {
-			atmel_port->use_dma_rx  = true;
-			atmel_port->use_pdc_rx  = false;
-		} else {
-			atmel_port->use_dma_rx  = false;
-			atmel_port->use_pdc_rx  = true;
-		}
-	} else {
-		atmel_port->use_dma_rx  = false;
-		atmel_port->use_pdc_rx  = false;
-	}
+	/* DMA/PDC usage specअगरication */
+	अगर (of_property_पढ़ो_bool(np, "atmel,use-dma-rx")) अणु
+		अगर (of_property_पढ़ो_bool(np, "dmas")) अणु
+			aपंचांगel_port->use_dma_rx  = true;
+			aपंचांगel_port->use_pdc_rx  = false;
+		पूर्ण अन्यथा अणु
+			aपंचांगel_port->use_dma_rx  = false;
+			aपंचांगel_port->use_pdc_rx  = true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		aपंचांगel_port->use_dma_rx  = false;
+		aपंचांगel_port->use_pdc_rx  = false;
+	पूर्ण
 
-	if (of_property_read_bool(np, "atmel,use-dma-tx")) {
-		if (of_property_read_bool(np, "dmas")) {
-			atmel_port->use_dma_tx  = true;
-			atmel_port->use_pdc_tx  = false;
-		} else {
-			atmel_port->use_dma_tx  = false;
-			atmel_port->use_pdc_tx  = true;
-		}
-	} else {
-		atmel_port->use_dma_tx  = false;
-		atmel_port->use_pdc_tx  = false;
-	}
-}
+	अगर (of_property_पढ़ो_bool(np, "atmel,use-dma-tx")) अणु
+		अगर (of_property_पढ़ो_bool(np, "dmas")) अणु
+			aपंचांगel_port->use_dma_tx  = true;
+			aपंचांगel_port->use_pdc_tx  = false;
+		पूर्ण अन्यथा अणु
+			aपंचांगel_port->use_dma_tx  = false;
+			aपंचांगel_port->use_pdc_tx  = true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		aपंचांगel_port->use_dma_tx  = false;
+		aपंचांगel_port->use_pdc_tx  = false;
+	पूर्ण
+पूर्ण
 
-static void atmel_set_ops(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_set_ops(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_use_dma_rx(port)) {
-		atmel_port->prepare_rx = &atmel_prepare_rx_dma;
-		atmel_port->schedule_rx = &atmel_rx_from_dma;
-		atmel_port->release_rx = &atmel_release_rx_dma;
-	} else if (atmel_use_pdc_rx(port)) {
-		atmel_port->prepare_rx = &atmel_prepare_rx_pdc;
-		atmel_port->schedule_rx = &atmel_rx_from_pdc;
-		atmel_port->release_rx = &atmel_release_rx_pdc;
-	} else {
-		atmel_port->prepare_rx = NULL;
-		atmel_port->schedule_rx = &atmel_rx_from_ring;
-		atmel_port->release_rx = NULL;
-	}
+	अगर (aपंचांगel_use_dma_rx(port)) अणु
+		aपंचांगel_port->prepare_rx = &aपंचांगel_prepare_rx_dma;
+		aपंचांगel_port->schedule_rx = &aपंचांगel_rx_from_dma;
+		aपंचांगel_port->release_rx = &aपंचांगel_release_rx_dma;
+	पूर्ण अन्यथा अगर (aपंचांगel_use_pdc_rx(port)) अणु
+		aपंचांगel_port->prepare_rx = &aपंचांगel_prepare_rx_pdc;
+		aपंचांगel_port->schedule_rx = &aपंचांगel_rx_from_pdc;
+		aपंचांगel_port->release_rx = &aपंचांगel_release_rx_pdc;
+	पूर्ण अन्यथा अणु
+		aपंचांगel_port->prepare_rx = शून्य;
+		aपंचांगel_port->schedule_rx = &aपंचांगel_rx_from_ring;
+		aपंचांगel_port->release_rx = शून्य;
+	पूर्ण
 
-	if (atmel_use_dma_tx(port)) {
-		atmel_port->prepare_tx = &atmel_prepare_tx_dma;
-		atmel_port->schedule_tx = &atmel_tx_dma;
-		atmel_port->release_tx = &atmel_release_tx_dma;
-	} else if (atmel_use_pdc_tx(port)) {
-		atmel_port->prepare_tx = &atmel_prepare_tx_pdc;
-		atmel_port->schedule_tx = &atmel_tx_pdc;
-		atmel_port->release_tx = &atmel_release_tx_pdc;
-	} else {
-		atmel_port->prepare_tx = NULL;
-		atmel_port->schedule_tx = &atmel_tx_chars;
-		atmel_port->release_tx = NULL;
-	}
-}
+	अगर (aपंचांगel_use_dma_tx(port)) अणु
+		aपंचांगel_port->prepare_tx = &aपंचांगel_prepare_tx_dma;
+		aपंचांगel_port->schedule_tx = &aपंचांगel_tx_dma;
+		aपंचांगel_port->release_tx = &aपंचांगel_release_tx_dma;
+	पूर्ण अन्यथा अगर (aपंचांगel_use_pdc_tx(port)) अणु
+		aपंचांगel_port->prepare_tx = &aपंचांगel_prepare_tx_pdc;
+		aपंचांगel_port->schedule_tx = &aपंचांगel_tx_pdc;
+		aपंचांगel_port->release_tx = &aपंचांगel_release_tx_pdc;
+	पूर्ण अन्यथा अणु
+		aपंचांगel_port->prepare_tx = शून्य;
+		aपंचांगel_port->schedule_tx = &aपंचांगel_tx_अक्षरs;
+		aपंचांगel_port->release_tx = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Get ip name usart or uart
  */
-static void atmel_get_ip_name(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int name = atmel_uart_readl(port, ATMEL_US_NAME);
+अटल व्योम aपंचांगel_get_ip_name(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक name = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_NAME);
 	u32 version;
 	u32 usart, dbgu_uart, new_uart;
-	/* ASCII decoding for IP version */
+	/* ASCII decoding क्रम IP version */
 	usart = 0x55534152;	/* USAR(T) */
 	dbgu_uart = 0x44424755;	/* DBGU */
 	new_uart = 0x55415254;	/* UART */
 
 	/*
 	 * Only USART devices from at91sam9260 SOC implement fractional
-	 * baudrate. It is available for all asynchronous modes, with the
-	 * following restriction: the sampling clock's duty cycle is not
-	 * constant.
+	 * baudrate. It is available क्रम all asynchronous modes, with the
+	 * following restriction: the sampling घड़ी's duty cycle is not
+	 * स्थिरant.
 	 */
-	atmel_port->has_frac_baudrate = false;
-	atmel_port->has_hw_timer = false;
+	aपंचांगel_port->has_frac_baudrate = false;
+	aपंचांगel_port->has_hw_समयr = false;
 
-	if (name == new_uart) {
+	अगर (name == new_uart) अणु
 		dev_dbg(port->dev, "Uart with hw timer");
-		atmel_port->has_hw_timer = true;
-		atmel_port->rtor = ATMEL_UA_RTOR;
-	} else if (name == usart) {
+		aपंचांगel_port->has_hw_समयr = true;
+		aपंचांगel_port->rtor = ATMEL_UA_RTOR;
+	पूर्ण अन्यथा अगर (name == usart) अणु
 		dev_dbg(port->dev, "Usart\n");
-		atmel_port->has_frac_baudrate = true;
-		atmel_port->has_hw_timer = true;
-		atmel_port->rtor = ATMEL_US_RTOR;
-		version = atmel_uart_readl(port, ATMEL_US_VERSION);
-		switch (version) {
-		case 0x814:	/* sama5d2 */
+		aपंचांगel_port->has_frac_baudrate = true;
+		aपंचांगel_port->has_hw_समयr = true;
+		aपंचांगel_port->rtor = ATMEL_US_RTOR;
+		version = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_VERSION);
+		चयन (version) अणु
+		हाल 0x814:	/* sama5d2 */
 			fallthrough;
-		case 0x701:	/* sama5d4 */
-			atmel_port->fidi_min = 3;
-			atmel_port->fidi_max = 65535;
-			break;
-		case 0x502:	/* sam9x5, sama5d3 */
-			atmel_port->fidi_min = 3;
-			atmel_port->fidi_max = 2047;
-			break;
-		default:
-			atmel_port->fidi_min = 1;
-			atmel_port->fidi_max = 2047;
-		}
-	} else if (name == dbgu_uart) {
+		हाल 0x701:	/* sama5d4 */
+			aपंचांगel_port->fidi_min = 3;
+			aपंचांगel_port->fidi_max = 65535;
+			अवरोध;
+		हाल 0x502:	/* sam9x5, sama5d3 */
+			aपंचांगel_port->fidi_min = 3;
+			aपंचांगel_port->fidi_max = 2047;
+			अवरोध;
+		शेष:
+			aपंचांगel_port->fidi_min = 1;
+			aपंचांगel_port->fidi_max = 2047;
+		पूर्ण
+	पूर्ण अन्यथा अगर (name == dbgu_uart) अणु
 		dev_dbg(port->dev, "Dbgu or uart without hw timer\n");
-	} else {
-		/* fallback for older SoCs: use version field */
-		version = atmel_uart_readl(port, ATMEL_US_VERSION);
-		switch (version) {
-		case 0x302:
-		case 0x10213:
-		case 0x10302:
+	पूर्ण अन्यथा अणु
+		/* fallback क्रम older SoCs: use version field */
+		version = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_VERSION);
+		चयन (version) अणु
+		हाल 0x302:
+		हाल 0x10213:
+		हाल 0x10302:
 			dev_dbg(port->dev, "This version is usart\n");
-			atmel_port->has_frac_baudrate = true;
-			atmel_port->has_hw_timer = true;
-			atmel_port->rtor = ATMEL_US_RTOR;
-			break;
-		case 0x203:
-		case 0x10202:
+			aपंचांगel_port->has_frac_baudrate = true;
+			aपंचांगel_port->has_hw_समयr = true;
+			aपंचांगel_port->rtor = ATMEL_US_RTOR;
+			अवरोध;
+		हाल 0x203:
+		हाल 0x10202:
 			dev_dbg(port->dev, "This version is uart\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(port->dev, "Not supported ip name nor version, set to uart\n");
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Perform initialization and enable port for reception
+ * Perक्रमm initialization and enable port क्रम reception
  */
-static int atmel_startup(struct uart_port *port)
-{
-	struct platform_device *pdev = to_platform_device(port->dev);
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int retval;
+अटल पूर्णांक aपंचांगel_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(port->dev);
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक retval;
 
 	/*
-	 * Ensure that no interrupts are enabled otherwise when
+	 * Ensure that no पूर्णांकerrupts are enabled otherwise when
 	 * request_irq() is called we could get stuck trying to
-	 * handle an unexpected interrupt
+	 * handle an unexpected पूर्णांकerrupt
 	 */
-	atmel_uart_writel(port, ATMEL_US_IDR, -1);
-	atmel_port->ms_irq_enabled = false;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, -1);
+	aपंचांगel_port->ms_irq_enabled = false;
 
 	/*
 	 * Allocate the IRQ
 	 */
-	retval = request_irq(port->irq, atmel_interrupt,
+	retval = request_irq(port->irq, aपंचांगel_पूर्णांकerrupt,
 			     IRQF_SHARED | IRQF_COND_SUSPEND,
 			     dev_name(&pdev->dev), port);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(port->dev, "atmel_startup - Can't get irq\n");
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	atomic_set(&atmel_port->tasklet_shutdown, 0);
-	tasklet_setup(&atmel_port->tasklet_rx, atmel_tasklet_rx_func);
-	tasklet_setup(&atmel_port->tasklet_tx, atmel_tasklet_tx_func);
+	atomic_set(&aपंचांगel_port->tasklet_shutकरोwn, 0);
+	tasklet_setup(&aपंचांगel_port->tasklet_rx, aपंचांगel_tasklet_rx_func);
+	tasklet_setup(&aपंचांगel_port->tasklet_tx, aपंचांगel_tasklet_tx_func);
 
 	/*
-	 * Initialize DMA (if necessary)
+	 * Initialize DMA (अगर necessary)
 	 */
-	atmel_init_property(atmel_port, pdev);
-	atmel_set_ops(port);
+	aपंचांगel_init_property(aपंचांगel_port, pdev);
+	aपंचांगel_set_ops(port);
 
-	if (atmel_port->prepare_rx) {
-		retval = atmel_port->prepare_rx(port);
-		if (retval < 0)
-			atmel_set_ops(port);
-	}
+	अगर (aपंचांगel_port->prepare_rx) अणु
+		retval = aपंचांगel_port->prepare_rx(port);
+		अगर (retval < 0)
+			aपंचांगel_set_ops(port);
+	पूर्ण
 
-	if (atmel_port->prepare_tx) {
-		retval = atmel_port->prepare_tx(port);
-		if (retval < 0)
-			atmel_set_ops(port);
-	}
+	अगर (aपंचांगel_port->prepare_tx) अणु
+		retval = aपंचांगel_port->prepare_tx(port);
+		अगर (retval < 0)
+			aपंचांगel_set_ops(port);
+	पूर्ण
 
 	/*
 	 * Enable FIFO when available
 	 */
-	if (atmel_port->fifo_size) {
-		unsigned int txrdym = ATMEL_US_ONE_DATA;
-		unsigned int rxrdym = ATMEL_US_ONE_DATA;
-		unsigned int fmr;
+	अगर (aपंचांगel_port->fअगरo_size) अणु
+		अचिन्हित पूर्णांक txrdym = ATMEL_US_ONE_DATA;
+		अचिन्हित पूर्णांक rxrdym = ATMEL_US_ONE_DATA;
+		अचिन्हित पूर्णांक fmr;
 
-		atmel_uart_writel(port, ATMEL_US_CR,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR,
 				  ATMEL_US_FIFOEN |
 				  ATMEL_US_RXFCLR |
 				  ATMEL_US_TXFLCLR);
 
-		if (atmel_use_dma_tx(port))
+		अगर (aपंचांगel_use_dma_tx(port))
 			txrdym = ATMEL_US_FOUR_DATA;
 
 		fmr = ATMEL_US_TXRDYM(txrdym) | ATMEL_US_RXRDYM(rxrdym);
-		if (atmel_port->rts_high &&
-		    atmel_port->rts_low)
+		अगर (aपंचांगel_port->rts_high &&
+		    aपंचांगel_port->rts_low)
 			fmr |=	ATMEL_US_FRTSC |
-				ATMEL_US_RXFTHRES(atmel_port->rts_high) |
-				ATMEL_US_RXFTHRES2(atmel_port->rts_low);
+				ATMEL_US_RXFTHRES(aपंचांगel_port->rts_high) |
+				ATMEL_US_RXFTHRES2(aपंचांगel_port->rts_low);
 
-		atmel_uart_writel(port, ATMEL_US_FMR, fmr);
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_FMR, fmr);
+	पूर्ण
 
-	/* Save current CSR for comparison in atmel_tasklet_func() */
-	atmel_port->irq_status_prev = atmel_uart_readl(port, ATMEL_US_CSR);
+	/* Save current CSR क्रम comparison in aपंचांगel_tasklet_func() */
+	aपंचांगel_port->irq_status_prev = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
 
 	/*
 	 * Finally, enable the serial port
 	 */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
 	/* enable xmit & rcvr */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
-	atmel_port->tx_stopped = false;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
+	aपंचांगel_port->tx_stopped = false;
 
-	timer_setup(&atmel_port->uart_timer, atmel_uart_timer_callback, 0);
+	समयr_setup(&aपंचांगel_port->uart_समयr, aपंचांगel_uart_समयr_callback, 0);
 
-	if (atmel_use_pdc_rx(port)) {
-		/* set UART timeout */
-		if (!atmel_port->has_hw_timer) {
-			mod_timer(&atmel_port->uart_timer,
-					jiffies + uart_poll_timeout(port));
-		/* set USART timeout */
-		} else {
-			atmel_uart_writel(port, atmel_port->rtor,
+	अगर (aपंचांगel_use_pdc_rx(port)) अणु
+		/* set UART समयout */
+		अगर (!aपंचांगel_port->has_hw_समयr) अणु
+			mod_समयr(&aपंचांगel_port->uart_समयr,
+					jअगरfies + uart_poll_समयout(port));
+		/* set USART समयout */
+		पूर्ण अन्यथा अणु
+			aपंचांगel_uart_ग_लिखोl(port, aपंचांगel_port->rtor,
 					  PDC_RX_TIMEOUT);
-			atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTTO);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STTTO);
 
-			atmel_uart_writel(port, ATMEL_US_IER,
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
 					  ATMEL_US_ENDRX | ATMEL_US_TIMEOUT);
-		}
+		पूर्ण
 		/* enable PDC controller */
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTEN);
-	} else if (atmel_use_dma_rx(port)) {
-		/* set UART timeout */
-		if (!atmel_port->has_hw_timer) {
-			mod_timer(&atmel_port->uart_timer,
-					jiffies + uart_poll_timeout(port));
-		/* set USART timeout */
-		} else {
-			atmel_uart_writel(port, atmel_port->rtor,
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_RXTEN);
+	पूर्ण अन्यथा अगर (aपंचांगel_use_dma_rx(port)) अणु
+		/* set UART समयout */
+		अगर (!aपंचांगel_port->has_hw_समयr) अणु
+			mod_समयr(&aपंचांगel_port->uart_समयr,
+					jअगरfies + uart_poll_समयout(port));
+		/* set USART समयout */
+		पूर्ण अन्यथा अणु
+			aपंचांगel_uart_ग_लिखोl(port, aपंचांगel_port->rtor,
 					  PDC_RX_TIMEOUT);
-			atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_STTTO);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_STTTO);
 
-			atmel_uart_writel(port, ATMEL_US_IER,
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER,
 					  ATMEL_US_TIMEOUT);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* enable receive only */
-		atmel_uart_writel(port, ATMEL_US_IER, ATMEL_US_RXRDY);
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, ATMEL_US_RXRDY);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Flush any TX data submitted for DMA. Called when the TX circular
+ * Flush any TX data submitted क्रम DMA. Called when the TX circular
  * buffer is reset.
  */
-static void atmel_flush_buffer(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_flush_buffer(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (atmel_use_pdc_tx(port)) {
-		atmel_uart_writel(port, ATMEL_PDC_TCR, 0);
-		atmel_port->pdc_tx.ofs = 0;
-	}
+	अगर (aपंचांगel_use_pdc_tx(port)) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_TCR, 0);
+		aपंचांगel_port->pdc_tx.ofs = 0;
+	पूर्ण
 	/*
 	 * in uart_flush_buffer(), the xmit circular buffer has just
 	 * been cleared, so we have to reset tx_len accordingly.
 	 */
-	atmel_port->tx_len = 0;
-}
+	aपंचांगel_port->tx_len = 0;
+पूर्ण
 
 /*
  * Disable the port
  */
-static void atmel_shutdown(struct uart_port *port)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	/* Disable modem control lines interrupts */
-	atmel_disable_ms(port);
+	/* Disable modem control lines पूर्णांकerrupts */
+	aपंचांगel_disable_ms(port);
 
-	/* Disable interrupts at device level */
-	atmel_uart_writel(port, ATMEL_US_IDR, -1);
+	/* Disable पूर्णांकerrupts at device level */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, -1);
 
-	/* Prevent spurious interrupts from scheduling the tasklet */
-	atomic_inc(&atmel_port->tasklet_shutdown);
+	/* Prevent spurious पूर्णांकerrupts from scheduling the tasklet */
+	atomic_inc(&aपंचांगel_port->tasklet_shutकरोwn);
 
 	/*
 	 * Prevent any tasklets being scheduled during
 	 * cleanup
 	 */
-	del_timer_sync(&atmel_port->uart_timer);
+	del_समयr_sync(&aपंचांगel_port->uart_समयr);
 
-	/* Make sure that no interrupt is on the fly */
+	/* Make sure that no पूर्णांकerrupt is on the fly */
 	synchronize_irq(port->irq);
 
 	/*
-	 * Clear out any scheduled tasklets before
+	 * Clear out any scheduled tasklets beक्रमe
 	 * we destroy the buffers
 	 */
-	tasklet_kill(&atmel_port->tasklet_rx);
-	tasklet_kill(&atmel_port->tasklet_tx);
+	tasklet_समाप्त(&aपंचांगel_port->tasklet_rx);
+	tasklet_समाप्त(&aपंचांगel_port->tasklet_tx);
 
 	/*
 	 * Ensure everything is stopped and
-	 * disable port and break condition.
+	 * disable port and अवरोध condition.
 	 */
-	atmel_stop_rx(port);
-	atmel_stop_tx(port);
+	aपंचांगel_stop_rx(port);
+	aपंचांगel_stop_tx(port);
 
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA);
 
 	/*
-	 * Shut-down the DMA.
+	 * Shut-करोwn the DMA.
 	 */
-	if (atmel_port->release_rx)
-		atmel_port->release_rx(port);
-	if (atmel_port->release_tx)
-		atmel_port->release_tx(port);
+	अगर (aपंचांगel_port->release_rx)
+		aपंचांगel_port->release_rx(port);
+	अगर (aपंचांगel_port->release_tx)
+		aपंचांगel_port->release_tx(port);
 
 	/*
-	 * Reset ring buffer pointers
+	 * Reset ring buffer poपूर्णांकers
 	 */
-	atmel_port->rx_ring.head = 0;
-	atmel_port->rx_ring.tail = 0;
+	aपंचांगel_port->rx_ring.head = 0;
+	aपंचांगel_port->rx_ring.tail = 0;
 
 	/*
-	 * Free the interrupts
+	 * Free the पूर्णांकerrupts
 	 */
-	free_irq(port->irq, port);
+	मुक्त_irq(port->irq, port);
 
-	atmel_flush_buffer(port);
-}
+	aपंचांगel_flush_buffer(port);
+पूर्ण
 
 /*
  * Power / Clock management.
  */
-static void atmel_serial_pm(struct uart_port *port, unsigned int state,
-			    unsigned int oldstate)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अटल व्योम aपंचांगel_serial_pm(काष्ठा uart_port *port, अचिन्हित पूर्णांक state,
+			    अचिन्हित पूर्णांक oldstate)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	switch (state) {
-	case 0:
+	चयन (state) अणु
+	हाल 0:
 		/*
-		 * Enable the peripheral clock for this serial port.
-		 * This is called on uart_open() or a resume event.
+		 * Enable the peripheral घड़ी क्रम this serial port.
+		 * This is called on uart_खोलो() or a resume event.
 		 */
-		clk_prepare_enable(atmel_port->clk);
+		clk_prepare_enable(aपंचांगel_port->clk);
 
-		/* re-enable interrupts if we disabled some on suspend */
-		atmel_uart_writel(port, ATMEL_US_IER, atmel_port->backup_imr);
-		break;
-	case 3:
-		/* Back up the interrupt mask and disable all interrupts */
-		atmel_port->backup_imr = atmel_uart_readl(port, ATMEL_US_IMR);
-		atmel_uart_writel(port, ATMEL_US_IDR, -1);
+		/* re-enable पूर्णांकerrupts अगर we disabled some on suspend */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, aपंचांगel_port->backup_imr);
+		अवरोध;
+	हाल 3:
+		/* Back up the पूर्णांकerrupt mask and disable all पूर्णांकerrupts */
+		aपंचांगel_port->backup_imr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_IMR);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, -1);
 
 		/*
-		 * Disable the peripheral clock for this serial port.
-		 * This is called on uart_close() or a suspend event.
+		 * Disable the peripheral घड़ी क्रम this serial port.
+		 * This is called on uart_बंद() or a suspend event.
 		 */
-		clk_disable_unprepare(atmel_port->clk);
-		break;
-	default:
+		clk_disable_unprepare(aपंचांगel_port->clk);
+		अवरोध;
+	शेष:
 		dev_err(port->dev, "atmel_serial: unknown pm %d\n", state);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Change the port parameters
  */
-static void atmel_set_termios(struct uart_port *port, struct ktermios *termios,
-			      struct ktermios *old)
-{
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned long flags;
-	unsigned int old_mode, mode, imr, quot, baud, div, cd, fp = 0;
+अटल व्योम aपंचांगel_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+			      काष्ठा ktermios *old)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक old_mode, mode, imr, quot, baud, भाग, cd, fp = 0;
 
-	/* save the current mode register */
-	mode = old_mode = atmel_uart_readl(port, ATMEL_US_MR);
+	/* save the current mode रेजिस्टर */
+	mode = old_mode = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
 
-	/* reset the mode, clock divisor, parity, stop bits and data size */
+	/* reset the mode, घड़ी भागisor, parity, stop bits and data size */
 	mode &= ~(ATMEL_US_USCLKS | ATMEL_US_CHRL | ATMEL_US_NBSTOP |
 		  ATMEL_US_PAR | ATMEL_US_USMODE);
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
 
 	/* byte size */
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		mode |= ATMEL_US_CHRL_5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		mode |= ATMEL_US_CHRL_6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		mode |= ATMEL_US_CHRL_7;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		mode |= ATMEL_US_CHRL_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* stop bits */
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		mode |= ATMEL_US_NBSTOP_2;
 
 	/* parity */
-	if (termios->c_cflag & PARENB) {
+	अगर (termios->c_cflag & PARENB) अणु
 		/* Mark or Space parity */
-		if (termios->c_cflag & CMSPAR) {
-			if (termios->c_cflag & PARODD)
+		अगर (termios->c_cflag & CMSPAR) अणु
+			अगर (termios->c_cflag & PARODD)
 				mode |= ATMEL_US_PAR_MARK;
-			else
+			अन्यथा
 				mode |= ATMEL_US_PAR_SPACE;
-		} else if (termios->c_cflag & PARODD)
+		पूर्ण अन्यथा अगर (termios->c_cflag & PARODD)
 			mode |= ATMEL_US_PAR_ODD;
-		else
+		अन्यथा
 			mode |= ATMEL_US_PAR_EVEN;
-	} else
+	पूर्ण अन्यथा
 		mode |= ATMEL_US_PAR_NONE;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	port->read_status_mask = ATMEL_US_OVRE;
-	if (termios->c_iflag & INPCK)
-		port->read_status_mask |= (ATMEL_US_FRAME | ATMEL_US_PARE);
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		port->read_status_mask |= ATMEL_US_RXBRK;
+	port->पढ़ो_status_mask = ATMEL_US_OVRE;
+	अगर (termios->c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |= (ATMEL_US_FRAME | ATMEL_US_PARE);
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		port->पढ़ो_status_mask |= ATMEL_US_RXBRK;
 
-	if (atmel_use_pdc_rx(port))
-		/* need to enable error interrupts */
-		atmel_uart_writel(port, ATMEL_US_IER, port->read_status_mask);
+	अगर (aपंचांगel_use_pdc_rx(port))
+		/* need to enable error पूर्णांकerrupts */
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, port->पढ़ो_status_mask);
 
 	/*
 	 * Characters to ignore
 	 */
 	port->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= (ATMEL_US_FRAME | ATMEL_US_PARE);
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		port->ignore_status_mask |= ATMEL_US_RXBRK;
 		/*
-		 * If we're ignoring parity and break indicators,
-		 * ignore overruns too (for real raw support).
+		 * If we're ignoring parity and अवरोध indicators,
+		 * ignore overruns too (क्रम real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			port->ignore_status_mask |= ATMEL_US_OVRE;
-	}
-	/* TODO: Ignore all characters if CREAD is set.*/
+	पूर्ण
+	/* TODO: Ignore all अक्षरacters अगर CREAD is set.*/
 
-	/* update the per-port timeout */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	/* update the per-port समयout */
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/*
-	 * save/disable interrupts. The tty layer will ensure that the
-	 * transmitter is empty if requested by the caller, so there's
-	 * no need to wait for it here.
+	 * save/disable पूर्णांकerrupts. The tty layer will ensure that the
+	 * transmitter is empty अगर requested by the caller, so there's
+	 * no need to रुको क्रम it here.
 	 */
-	imr = atmel_uart_readl(port, ATMEL_US_IMR);
-	atmel_uart_writel(port, ATMEL_US_IDR, -1);
+	imr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_IMR);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, -1);
 
 	/* disable receiver and transmitter */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXDIS | ATMEL_US_RXDIS);
-	atmel_port->tx_stopped = true;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXDIS | ATMEL_US_RXDIS);
+	aपंचांगel_port->tx_stopped = true;
 
 	/* mode */
-	if (port->rs485.flags & SER_RS485_ENABLED) {
-		atmel_uart_writel(port, ATMEL_US_TTGR,
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR,
 				  port->rs485.delay_rts_after_send);
 		mode |= ATMEL_US_USMODE_RS485;
-	} else if (port->iso7816.flags & SER_ISO7816_ENABLED) {
-		atmel_uart_writel(port, ATMEL_US_TTGR, port->iso7816.tg);
-		/* select mck clock, and output  */
+	पूर्ण अन्यथा अगर (port->iso7816.flags & SER_ISO7816_ENABLED) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR, port->iso7816.tg);
+		/* select mck घड़ी, and output  */
 		mode |= ATMEL_US_USCLKS_MCK | ATMEL_US_CLKO;
 		/* set max iterations */
 		mode |= ATMEL_US_MAX_ITER(3);
-		if ((port->iso7816.flags & SER_ISO7816_T_PARAM)
+		अगर ((port->iso7816.flags & SER_ISO7816_T_PARAM)
 				== SER_ISO7816_T(0))
 			mode |= ATMEL_US_USMODE_ISO7816_T0;
-		else
+		अन्यथा
 			mode |= ATMEL_US_USMODE_ISO7816_T1;
-	} else if (termios->c_cflag & CRTSCTS) {
+	पूर्ण अन्यथा अगर (termios->c_cflag & CRTSCTS) अणु
 		/* RS232 with hardware handshake (RTS/CTS) */
-		if (atmel_use_fifo(port) &&
-		    !mctrl_gpio_to_gpiod(atmel_port->gpios, UART_GPIO_CTS)) {
+		अगर (aपंचांगel_use_fअगरo(port) &&
+		    !mctrl_gpio_to_gpiod(aपंचांगel_port->gpios, UART_GPIO_CTS)) अणु
 			/*
 			 * with ATMEL_US_USMODE_HWHS set, the controller will
 			 * be able to drive the RTS pin high/low when the RX
 			 * FIFO is above RXFTHRES/below RXFTHRES2.
 			 * It will also disable the transmitter when the CTS
 			 * pin is high.
-			 * This mode is not activated if CTS pin is a GPIO
-			 * because in this case, the transmitter is always
-			 * disabled (there must be an internal pull-up
-			 * responsible for this behaviour).
+			 * This mode is not activated अगर CTS pin is a GPIO
+			 * because in this हाल, the transmitter is always
+			 * disabled (there must be an पूर्णांकernal pull-up
+			 * responsible क्रम this behaviour).
 			 * If the RTS pin is a GPIO, the controller won't be
 			 * able to drive it according to the FIFO thresholds,
 			 * but it will be handled by the driver.
 			 */
 			mode |= ATMEL_US_USMODE_HWHS;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * For platforms without FIFO, the flow control is
+			 * For platक्रमms without FIFO, the flow control is
 			 * handled by the driver.
 			 */
 			mode |= ATMEL_US_USMODE_NORMAL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* RS232 without hadware handshake */
 		mode |= ATMEL_US_USMODE_NORMAL;
-	}
+	पूर्ण
 
 	/*
 	 * Set the baud rate:
 	 * Fractional baudrate allows to setup output frequency more
 	 * accurately. This feature is enabled only when using normal mode.
-	 * baudrate = selected clock / (8 * (2 - OVER) * (CD + FP / 8))
+	 * baudrate = selected घड़ी / (8 * (2 - OVER) * (CD + FP / 8))
 	 * Currently, OVER is always set to 0 so we get
-	 * baudrate = selected clock / (16 * (CD + FP / 8))
+	 * baudrate = selected घड़ी / (16 * (CD + FP / 8))
 	 * then
-	 * 8 CD + FP = selected clock / (2 * baudrate)
+	 * 8 CD + FP = selected घड़ी / (2 * baudrate)
 	 */
-	if (atmel_port->has_frac_baudrate) {
-		div = DIV_ROUND_CLOSEST(port->uartclk, baud * 2);
-		cd = div >> 3;
-		fp = div & ATMEL_US_FP_MASK;
-	} else {
-		cd = uart_get_divisor(port, baud);
-	}
+	अगर (aपंचांगel_port->has_frac_baudrate) अणु
+		भाग = DIV_ROUND_CLOSEST(port->uartclk, baud * 2);
+		cd = भाग >> 3;
+		fp = भाग & ATMEL_US_FP_MASK;
+	पूर्ण अन्यथा अणु
+		cd = uart_get_भागisor(port, baud);
+	पूर्ण
 
-	if (cd > 65535) {	/* BRGR is 16-bit, so switch to slower clock */
+	अगर (cd > 65535) अणु	/* BRGR is 16-bit, so चयन to slower घड़ी */
 		cd /= 8;
 		mode |= ATMEL_US_USCLKS_MCK_DIV8;
-	}
+	पूर्ण
 	quot = cd | fp << ATMEL_US_FP_OFFSET;
 
-	if (!(port->iso7816.flags & SER_ISO7816_ENABLED))
-		atmel_uart_writel(port, ATMEL_US_BRGR, quot);
+	अगर (!(port->iso7816.flags & SER_ISO7816_ENABLED))
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_BRGR, quot);
 
-	/* set the mode, clock divisor, parity, stop bits and data size */
-	atmel_uart_writel(port, ATMEL_US_MR, mode);
+	/* set the mode, घड़ी भागisor, parity, stop bits and data size */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_MR, mode);
 
 	/*
-	 * when switching the mode, set the RTS line state according to the
-	 * new mode, otherwise keep the former state
+	 * when चयनing the mode, set the RTS line state according to the
+	 * new mode, otherwise keep the क्रमmer state
 	 */
-	if ((old_mode & ATMEL_US_USMODE) != (mode & ATMEL_US_USMODE)) {
-		unsigned int rts_state;
+	अगर ((old_mode & ATMEL_US_USMODE) != (mode & ATMEL_US_USMODE)) अणु
+		अचिन्हित पूर्णांक rts_state;
 
-		if ((mode & ATMEL_US_USMODE) == ATMEL_US_USMODE_HWHS) {
+		अगर ((mode & ATMEL_US_USMODE) == ATMEL_US_USMODE_HWHS) अणु
 			/* let the hardware control the RTS line */
 			rts_state = ATMEL_US_RTSDIS;
-		} else {
-			/* force RTS line to low level */
+		पूर्ण अन्यथा अणु
+			/* क्रमce RTS line to low level */
 			rts_state = ATMEL_US_RTSEN;
-		}
+		पूर्ण
 
-		atmel_uart_writel(port, ATMEL_US_CR, rts_state);
-	}
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, rts_state);
+	पूर्ण
 
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
-	atmel_port->tx_stopped = false;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
+	aपंचांगel_port->tx_stopped = false;
 
-	/* restore interrupts */
-	atmel_uart_writel(port, ATMEL_US_IER, imr);
+	/* restore पूर्णांकerrupts */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, imr);
 
-	/* CTS flow-control and modem-status interrupts */
-	if (UART_ENABLE_MS(port, termios->c_cflag))
-		atmel_enable_ms(port);
-	else
-		atmel_disable_ms(port);
+	/* CTS flow-control and modem-status पूर्णांकerrupts */
+	अगर (UART_ENABLE_MS(port, termios->c_cflag))
+		aपंचांगel_enable_ms(port);
+	अन्यथा
+		aपंचांगel_disable_ms(port);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static void atmel_set_ldisc(struct uart_port *port, struct ktermios *termios)
-{
-	if (termios->c_line == N_PPS) {
+अटल व्योम aपंचांगel_set_ldisc(काष्ठा uart_port *port, काष्ठा ktermios *termios)
+अणु
+	अगर (termios->c_line == N_PPS) अणु
 		port->flags |= UPF_HARDPPS_CD;
 		spin_lock_irq(&port->lock);
-		atmel_enable_ms(port);
+		aपंचांगel_enable_ms(port);
 		spin_unlock_irq(&port->lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		port->flags &= ~UPF_HARDPPS_CD;
-		if (!UART_ENABLE_MS(port, termios->c_cflag)) {
+		अगर (!UART_ENABLE_MS(port, termios->c_cflag)) अणु
 			spin_lock_irq(&port->lock);
-			atmel_disable_ms(port);
+			aपंचांगel_disable_ms(port);
 			spin_unlock_irq(&port->lock);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Return string describing the specified port
+ * Return string describing the specअगरied port
  */
-static const char *atmel_type(struct uart_port *port)
-{
-	return (port->type == PORT_ATMEL) ? "ATMEL_SERIAL" : NULL;
-}
+अटल स्थिर अक्षर *aपंचांगel_type(काष्ठा uart_port *port)
+अणु
+	वापस (port->type == PORT_ATMEL) ? "ATMEL_SERIAL" : शून्य;
+पूर्ण
 
 /*
  * Release the memory region(s) being used by 'port'.
  */
-static void atmel_release_port(struct uart_port *port)
-{
-	struct platform_device *mpdev = to_platform_device(port->dev->parent);
-	int size = resource_size(mpdev->resource);
+अटल व्योम aपंचांगel_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *mpdev = to_platक्रमm_device(port->dev->parent);
+	पूर्णांक size = resource_size(mpdev->resource);
 
 	release_mem_region(port->mapbase, size);
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		iounmap(port->membase);
-		port->membase = NULL;
-	}
-}
+		port->membase = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
  * Request the memory region(s) being used by 'port'.
  */
-static int atmel_request_port(struct uart_port *port)
-{
-	struct platform_device *mpdev = to_platform_device(port->dev->parent);
-	int size = resource_size(mpdev->resource);
+अटल पूर्णांक aपंचांगel_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा platक्रमm_device *mpdev = to_platक्रमm_device(port->dev->parent);
+	पूर्णांक size = resource_size(mpdev->resource);
 
-	if (!request_mem_region(port->mapbase, size, "atmel_serial"))
-		return -EBUSY;
+	अगर (!request_mem_region(port->mapbase, size, "atmel_serial"))
+		वापस -EBUSY;
 
-	if (port->flags & UPF_IOREMAP) {
+	अगर (port->flags & UPF_IOREMAP) अणु
 		port->membase = ioremap(port->mapbase, size);
-		if (port->membase == NULL) {
+		अगर (port->membase == शून्य) अणु
 			release_mem_region(port->mapbase, size);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Configure/autoconfigure the port.
+ * Configure/स्वतःconfigure the port.
  */
-static void atmel_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+अटल व्योम aपंचांगel_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_ATMEL;
-		atmel_request_port(port);
-	}
-}
+		aपंचांगel_request_port(port);
+	पूर्ण
+पूर्ण
 
 /*
- * Verify the new serial_struct (for TIOCSSERIAL).
+ * Verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
  */
-static int atmel_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	int ret = 0;
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_ATMEL)
+अटल पूर्णांक aपंचांगel_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_ATMEL)
 		ret = -EINVAL;
-	if (port->irq != ser->irq)
+	अगर (port->irq != ser->irq)
 		ret = -EINVAL;
-	if (ser->io_type != SERIAL_IO_MEM)
+	अगर (ser->io_type != SERIAL_IO_MEM)
 		ret = -EINVAL;
-	if (port->uartclk / 16 != ser->baud_base)
+	अगर (port->uartclk / 16 != ser->baud_base)
 		ret = -EINVAL;
-	if (port->mapbase != (unsigned long)ser->iomem_base)
+	अगर (port->mapbase != (अचिन्हित दीर्घ)ser->iomem_base)
 		ret = -EINVAL;
-	if (port->iobase != ser->port)
+	अगर (port->iobase != ser->port)
 		ret = -EINVAL;
-	if (ser->hub6 != 0)
+	अगर (ser->hub6 != 0)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
-static int atmel_poll_get_char(struct uart_port *port)
-{
-	while (!(atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_RXRDY))
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक aपंचांगel_poll_get_अक्षर(काष्ठा uart_port *port)
+अणु
+	जबतक (!(aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_RXRDY))
 		cpu_relax();
 
-	return atmel_uart_read_char(port);
-}
+	वापस aपंचांगel_uart_पढ़ो_अक्षर(port);
+पूर्ण
 
-static void atmel_poll_put_char(struct uart_port *port, unsigned char ch)
-{
-	while (!(atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY))
+अटल व्योम aपंचांगel_poll_put_अक्षर(काष्ठा uart_port *port, अचिन्हित अक्षर ch)
+अणु
+	जबतक (!(aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY))
 		cpu_relax();
 
-	atmel_uart_write_char(port, ch);
-}
-#endif
+	aपंचांगel_uart_ग_लिखो_अक्षर(port, ch);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct uart_ops atmel_pops = {
-	.tx_empty	= atmel_tx_empty,
-	.set_mctrl	= atmel_set_mctrl,
-	.get_mctrl	= atmel_get_mctrl,
-	.stop_tx	= atmel_stop_tx,
-	.start_tx	= atmel_start_tx,
-	.stop_rx	= atmel_stop_rx,
-	.enable_ms	= atmel_enable_ms,
-	.break_ctl	= atmel_break_ctl,
-	.startup	= atmel_startup,
-	.shutdown	= atmel_shutdown,
-	.flush_buffer	= atmel_flush_buffer,
-	.set_termios	= atmel_set_termios,
-	.set_ldisc	= atmel_set_ldisc,
-	.type		= atmel_type,
-	.release_port	= atmel_release_port,
-	.request_port	= atmel_request_port,
-	.config_port	= atmel_config_port,
-	.verify_port	= atmel_verify_port,
-	.pm		= atmel_serial_pm,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char	= atmel_poll_get_char,
-	.poll_put_char	= atmel_poll_put_char,
-#endif
-};
+अटल स्थिर काष्ठा uart_ops aपंचांगel_pops = अणु
+	.tx_empty	= aपंचांगel_tx_empty,
+	.set_mctrl	= aपंचांगel_set_mctrl,
+	.get_mctrl	= aपंचांगel_get_mctrl,
+	.stop_tx	= aपंचांगel_stop_tx,
+	.start_tx	= aपंचांगel_start_tx,
+	.stop_rx	= aपंचांगel_stop_rx,
+	.enable_ms	= aपंचांगel_enable_ms,
+	.अवरोध_ctl	= aपंचांगel_अवरोध_ctl,
+	.startup	= aपंचांगel_startup,
+	.shutकरोwn	= aपंचांगel_shutकरोwn,
+	.flush_buffer	= aपंचांगel_flush_buffer,
+	.set_termios	= aपंचांगel_set_termios,
+	.set_ldisc	= aपंचांगel_set_ldisc,
+	.type		= aपंचांगel_type,
+	.release_port	= aपंचांगel_release_port,
+	.request_port	= aपंचांगel_request_port,
+	.config_port	= aपंचांगel_config_port,
+	.verअगरy_port	= aपंचांगel_verअगरy_port,
+	.pm		= aपंचांगel_serial_pm,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर	= aपंचांगel_poll_get_अक्षर,
+	.poll_put_अक्षर	= aपंचांगel_poll_put_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * Configure the port from the platform device resource info.
+ * Configure the port from the platक्रमm device resource info.
  */
-static int atmel_init_port(struct atmel_uart_port *atmel_port,
-				      struct platform_device *pdev)
-{
-	int ret;
-	struct uart_port *port = &atmel_port->uart;
-	struct platform_device *mpdev = to_platform_device(pdev->dev.parent);
+अटल पूर्णांक aपंचांगel_init_port(काष्ठा aपंचांगel_uart_port *aपंचांगel_port,
+				      काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
+	काष्ठा uart_port *port = &aपंचांगel_port->uart;
+	काष्ठा platक्रमm_device *mpdev = to_platक्रमm_device(pdev->dev.parent);
 
-	atmel_init_property(atmel_port, pdev);
-	atmel_set_ops(port);
+	aपंचांगel_init_property(aपंचांगel_port, pdev);
+	aपंचांगel_set_ops(port);
 
 	port->iotype		= UPIO_MEM;
 	port->flags		= UPF_BOOT_AUTOCONF | UPF_IOREMAP;
-	port->ops		= &atmel_pops;
-	port->fifosize		= 1;
+	port->ops		= &aपंचांगel_pops;
+	port->fअगरosize		= 1;
 	port->dev		= &pdev->dev;
 	port->mapbase		= mpdev->resource[0].start;
 	port->irq		= mpdev->resource[1].start;
-	port->rs485_config	= atmel_config_rs485;
-	port->iso7816_config	= atmel_config_iso7816;
-	port->membase		= NULL;
+	port->rs485_config	= aपंचांगel_config_rs485;
+	port->iso7816_config	= aपंचांगel_config_iso7816;
+	port->membase		= शून्य;
 
-	memset(&atmel_port->rx_ring, 0, sizeof(atmel_port->rx_ring));
+	स_रखो(&aपंचांगel_port->rx_ring, 0, माप(aपंचांगel_port->rx_ring));
 
 	ret = uart_get_rs485_mode(port);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* for console, the clock could already be configured */
-	if (!atmel_port->clk) {
-		atmel_port->clk = clk_get(&mpdev->dev, "usart");
-		if (IS_ERR(atmel_port->clk)) {
-			ret = PTR_ERR(atmel_port->clk);
-			atmel_port->clk = NULL;
-			return ret;
-		}
-		ret = clk_prepare_enable(atmel_port->clk);
-		if (ret) {
-			clk_put(atmel_port->clk);
-			atmel_port->clk = NULL;
-			return ret;
-		}
-		port->uartclk = clk_get_rate(atmel_port->clk);
-		clk_disable_unprepare(atmel_port->clk);
-		/* only enable clock when USART is in use */
-	}
+	/* क्रम console, the घड़ी could alपढ़ोy be configured */
+	अगर (!aपंचांगel_port->clk) अणु
+		aपंचांगel_port->clk = clk_get(&mpdev->dev, "usart");
+		अगर (IS_ERR(aपंचांगel_port->clk)) अणु
+			ret = PTR_ERR(aपंचांगel_port->clk);
+			aपंचांगel_port->clk = शून्य;
+			वापस ret;
+		पूर्ण
+		ret = clk_prepare_enable(aपंचांगel_port->clk);
+		अगर (ret) अणु
+			clk_put(aपंचांगel_port->clk);
+			aपंचांगel_port->clk = शून्य;
+			वापस ret;
+		पूर्ण
+		port->uartclk = clk_get_rate(aपंचांगel_port->clk);
+		clk_disable_unprepare(aपंचांगel_port->clk);
+		/* only enable घड़ी when USART is in use */
+	पूर्ण
 
 	/*
-	 * Use TXEMPTY for interrupt when rs485 or ISO7816 else TXRDY or
+	 * Use TXEMPTY क्रम पूर्णांकerrupt when rs485 or ISO7816 अन्यथा TXRDY or
 	 * ENDTX|TXBUFE
 	 */
-	if (atmel_uart_is_half_duplex(port))
-		atmel_port->tx_done_mask = ATMEL_US_TXEMPTY;
-	else if (atmel_use_pdc_tx(port)) {
-		port->fifosize = PDC_BUFFER_SIZE;
-		atmel_port->tx_done_mask = ATMEL_US_ENDTX | ATMEL_US_TXBUFE;
-	} else {
-		atmel_port->tx_done_mask = ATMEL_US_TXRDY;
-	}
+	अगर (aपंचांगel_uart_is_half_duplex(port))
+		aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXEMPTY;
+	अन्यथा अगर (aपंचांगel_use_pdc_tx(port)) अणु
+		port->fअगरosize = PDC_BUFFER_SIZE;
+		aपंचांगel_port->tx_करोne_mask = ATMEL_US_ENDTX | ATMEL_US_TXBUFE;
+	पूर्ण अन्यथा अणु
+		aपंचांगel_port->tx_करोne_mask = ATMEL_US_TXRDY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SERIAL_ATMEL_CONSOLE
-static void atmel_console_putchar(struct uart_port *port, int ch)
-{
-	while (!(atmel_uart_readl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY))
+#अगर_घोषित CONFIG_SERIAL_ATMEL_CONSOLE
+अटल व्योम aपंचांगel_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	जबतक (!(aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) & ATMEL_US_TXRDY))
 		cpu_relax();
-	atmel_uart_write_char(port, ch);
-}
+	aपंचांगel_uart_ग_लिखो_अक्षर(port, ch);
+पूर्ण
 
 /*
  * Interrupts are disabled on entering
  */
-static void atmel_console_write(struct console *co, const char *s, u_int count)
-{
-	struct uart_port *port = &atmel_ports[co->index].uart;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned int status, imr;
-	unsigned int pdc_tx;
+अटल व्योम aपंचांगel_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, u_पूर्णांक count)
+अणु
+	काष्ठा uart_port *port = &aपंचांगel_ports[co->index].uart;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित पूर्णांक status, imr;
+	अचिन्हित पूर्णांक pdc_tx;
 
 	/*
-	 * First, save IMR and then disable interrupts
+	 * First, save IMR and then disable पूर्णांकerrupts
 	 */
-	imr = atmel_uart_readl(port, ATMEL_US_IMR);
-	atmel_uart_writel(port, ATMEL_US_IDR,
-			  ATMEL_US_RXRDY | atmel_port->tx_done_mask);
+	imr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_IMR);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR,
+			  ATMEL_US_RXRDY | aपंचांगel_port->tx_करोne_mask);
 
 	/* Store PDC transmit status and disable it */
-	pdc_tx = atmel_uart_readl(port, ATMEL_PDC_PTSR) & ATMEL_PDC_TXTEN;
-	atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
+	pdc_tx = aपंचांगel_uart_पढ़ोl(port, ATMEL_PDC_PTSR) & ATMEL_PDC_TXTEN;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTDIS);
 
-	/* Make sure that tx path is actually able to send characters */
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXEN);
-	atmel_port->tx_stopped = false;
+	/* Make sure that tx path is actually able to send अक्षरacters */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXEN);
+	aपंचांगel_port->tx_stopped = false;
 
-	uart_console_write(port, s, count, atmel_console_putchar);
+	uart_console_ग_लिखो(port, s, count, aपंचांगel_console_अक्षर_दो);
 
 	/*
-	 * Finally, wait for transmitter to become empty
+	 * Finally, रुको क्रम transmitter to become empty
 	 * and restore IMR
 	 */
-	do {
-		status = atmel_uart_readl(port, ATMEL_US_CSR);
-	} while (!(status & ATMEL_US_TXRDY));
+	करो अणु
+		status = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR);
+	पूर्ण जबतक (!(status & ATMEL_US_TXRDY));
 
 	/* Restore PDC transmit status */
-	if (pdc_tx)
-		atmel_uart_writel(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
+	अगर (pdc_tx)
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_PDC_PTCR, ATMEL_PDC_TXTEN);
 
-	/* set interrupts back the way they were */
-	atmel_uart_writel(port, ATMEL_US_IER, imr);
-}
+	/* set पूर्णांकerrupts back the way they were */
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, imr);
+पूर्ण
 
 /*
- * If the port was already initialised (eg, by a boot loader),
+ * If the port was alपढ़ोy initialised (eg, by a boot loader),
  * try to determine the current setup.
  */
-static void __init atmel_console_get_options(struct uart_port *port, int *baud,
-					     int *parity, int *bits)
-{
-	unsigned int mr, quot;
+अटल व्योम __init aपंचांगel_console_get_options(काष्ठा uart_port *port, पूर्णांक *baud,
+					     पूर्णांक *parity, पूर्णांक *bits)
+अणु
+	अचिन्हित पूर्णांक mr, quot;
 
 	/*
 	 * If the baud rate generator isn't running, the port wasn't
 	 * initialized by the boot loader.
 	 */
-	quot = atmel_uart_readl(port, ATMEL_US_BRGR) & ATMEL_US_CD;
-	if (!quot)
-		return;
+	quot = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_BRGR) & ATMEL_US_CD;
+	अगर (!quot)
+		वापस;
 
-	mr = atmel_uart_readl(port, ATMEL_US_MR) & ATMEL_US_CHRL;
-	if (mr == ATMEL_US_CHRL_8)
+	mr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR) & ATMEL_US_CHRL;
+	अगर (mr == ATMEL_US_CHRL_8)
 		*bits = 8;
-	else
+	अन्यथा
 		*bits = 7;
 
-	mr = atmel_uart_readl(port, ATMEL_US_MR) & ATMEL_US_PAR;
-	if (mr == ATMEL_US_PAR_EVEN)
+	mr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR) & ATMEL_US_PAR;
+	अगर (mr == ATMEL_US_PAR_EVEN)
 		*parity = 'e';
-	else if (mr == ATMEL_US_PAR_ODD)
+	अन्यथा अगर (mr == ATMEL_US_PAR_ODD)
 		*parity = 'o';
 
 	/*
-	 * The serial core only rounds down when matching this to a
-	 * supported baud rate. Make sure we don't end up slightly
+	 * The serial core only rounds करोwn when matching this to a
+	 * supported baud rate. Make sure we करोn't end up slightly
 	 * lower than one of those, as it would make us fall through
 	 * to a much lower baud rate than we really want.
 	 */
 	*baud = port->uartclk / (16 * (quot - 1));
-}
+पूर्ण
 
-static int __init atmel_console_setup(struct console *co, char *options)
-{
-	int ret;
-	struct uart_port *port = &atmel_ports[co->index].uart;
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init aपंचांगel_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	पूर्णांक ret;
+	काष्ठा uart_port *port = &aपंचांगel_ports[co->index].uart;
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	if (port->membase == NULL) {
+	अगर (port->membase == शून्य) अणु
 		/* Port not initialized yet - delay setup */
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = clk_prepare_enable(atmel_ports[co->index].clk);
-	if (ret)
-		return ret;
+	ret = clk_prepare_enable(aपंचांगel_ports[co->index].clk);
+	अगर (ret)
+		वापस ret;
 
-	atmel_uart_writel(port, ATMEL_US_IDR, -1);
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
-	atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
-	atmel_port->tx_stopped = false;
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IDR, -1);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_RSTSTA | ATMEL_US_RSTRX);
+	aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_TXEN | ATMEL_US_RXEN);
+	aपंचांगel_port->tx_stopped = false;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	else
-		atmel_console_get_options(port, &baud, &parity, &bits);
+	अन्यथा
+		aपंचांगel_console_get_options(port, &baud, &parity, &bits);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver atmel_uart;
+अटल काष्ठा uart_driver aपंचांगel_uart;
 
-static struct console atmel_console = {
+अटल काष्ठा console aपंचांगel_console = अणु
 	.name		= ATMEL_DEVICENAME,
-	.write		= atmel_console_write,
+	.ग_लिखो		= aपंचांगel_console_ग_लिखो,
 	.device		= uart_console_device,
-	.setup		= atmel_console_setup,
+	.setup		= aपंचांगel_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
-	.data		= &atmel_uart,
-};
+	.data		= &aपंचांगel_uart,
+पूर्ण;
 
-#define ATMEL_CONSOLE_DEVICE	(&atmel_console)
+#घोषणा ATMEL_CONSOLE_DEVICE	(&aपंचांगel_console)
 
-#else
-#define ATMEL_CONSOLE_DEVICE	NULL
-#endif
+#अन्यथा
+#घोषणा ATMEL_CONSOLE_DEVICE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver atmel_uart = {
+अटल काष्ठा uart_driver aपंचांगel_uart = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "atmel_serial",
 	.dev_name	= ATMEL_DEVICENAME,
@@ -2672,155 +2673,155 @@ static struct uart_driver atmel_uart = {
 	.minor		= MINOR_START,
 	.nr		= ATMEL_MAX_UART,
 	.cons		= ATMEL_CONSOLE_DEVICE,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM
-static bool atmel_serial_clk_will_stop(void)
-{
-#ifdef CONFIG_ARCH_AT91
-	return at91_suspend_entering_slow_clock();
-#else
-	return false;
-#endif
-}
+#अगर_घोषित CONFIG_PM
+अटल bool aपंचांगel_serial_clk_will_stop(व्योम)
+अणु
+#अगर_घोषित CONFIG_ARCH_AT91
+	वापस at91_suspend_entering_slow_घड़ी();
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static int atmel_serial_suspend(struct platform_device *pdev,
+अटल पूर्णांक aपंचांगel_serial_suspend(काष्ठा platक्रमm_device *pdev,
 				pm_message_t state)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
 
-	if (uart_console(port) && console_suspend_enabled) {
-		/* Drain the TX shifter */
-		while (!(atmel_uart_readl(port, ATMEL_US_CSR) &
+	अगर (uart_console(port) && console_suspend_enabled) अणु
+		/* Drain the TX shअगरter */
+		जबतक (!(aपंचांगel_uart_पढ़ोl(port, ATMEL_US_CSR) &
 			 ATMEL_US_TXEMPTY))
 			cpu_relax();
-	}
+	पूर्ण
 
-	if (uart_console(port) && !console_suspend_enabled) {
-		/* Cache register values as we won't get a full shutdown/startup
+	अगर (uart_console(port) && !console_suspend_enabled) अणु
+		/* Cache रेजिस्टर values as we won't get a full shutकरोwn/startup
 		 * cycle
 		 */
-		atmel_port->cache.mr = atmel_uart_readl(port, ATMEL_US_MR);
-		atmel_port->cache.imr = atmel_uart_readl(port, ATMEL_US_IMR);
-		atmel_port->cache.brgr = atmel_uart_readl(port, ATMEL_US_BRGR);
-		atmel_port->cache.rtor = atmel_uart_readl(port,
-							  atmel_port->rtor);
-		atmel_port->cache.ttgr = atmel_uart_readl(port, ATMEL_US_TTGR);
-		atmel_port->cache.fmr = atmel_uart_readl(port, ATMEL_US_FMR);
-		atmel_port->cache.fimr = atmel_uart_readl(port, ATMEL_US_FIMR);
-	}
+		aपंचांगel_port->cache.mr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_MR);
+		aपंचांगel_port->cache.imr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_IMR);
+		aपंचांगel_port->cache.brgr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_BRGR);
+		aपंचांगel_port->cache.rtor = aपंचांगel_uart_पढ़ोl(port,
+							  aपंचांगel_port->rtor);
+		aपंचांगel_port->cache.ttgr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_TTGR);
+		aपंचांगel_port->cache.fmr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_FMR);
+		aपंचांगel_port->cache.fimr = aपंचांगel_uart_पढ़ोl(port, ATMEL_US_FIMR);
+	पूर्ण
 
-	/* we can not wake up if we're running on slow clock */
-	atmel_port->may_wakeup = device_may_wakeup(&pdev->dev);
-	if (atmel_serial_clk_will_stop()) {
-		unsigned long flags;
+	/* we can not wake up अगर we're running on slow घड़ी */
+	aपंचांगel_port->may_wakeup = device_may_wakeup(&pdev->dev);
+	अगर (aपंचांगel_serial_clk_will_stop()) अणु
+		अचिन्हित दीर्घ flags;
 
-		spin_lock_irqsave(&atmel_port->lock_suspended, flags);
-		atmel_port->suspended = true;
-		spin_unlock_irqrestore(&atmel_port->lock_suspended, flags);
+		spin_lock_irqsave(&aपंचांगel_port->lock_suspended, flags);
+		aपंचांगel_port->suspended = true;
+		spin_unlock_irqrestore(&aपंचांगel_port->lock_suspended, flags);
 		device_set_wakeup_enable(&pdev->dev, 0);
-	}
+	पूर्ण
 
-	uart_suspend_port(&atmel_uart, port);
+	uart_suspend_port(&aपंचांगel_uart, port);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_serial_resume(struct platform_device *pdev)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	unsigned long flags;
+अटल पूर्णांक aपंचांगel_serial_resume(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	अचिन्हित दीर्घ flags;
 
-	if (uart_console(port) && !console_suspend_enabled) {
-		atmel_uart_writel(port, ATMEL_US_MR, atmel_port->cache.mr);
-		atmel_uart_writel(port, ATMEL_US_IER, atmel_port->cache.imr);
-		atmel_uart_writel(port, ATMEL_US_BRGR, atmel_port->cache.brgr);
-		atmel_uart_writel(port, atmel_port->rtor,
-				  atmel_port->cache.rtor);
-		atmel_uart_writel(port, ATMEL_US_TTGR, atmel_port->cache.ttgr);
+	अगर (uart_console(port) && !console_suspend_enabled) अणु
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_MR, aपंचांगel_port->cache.mr);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_IER, aपंचांगel_port->cache.imr);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_BRGR, aपंचांगel_port->cache.brgr);
+		aपंचांगel_uart_ग_लिखोl(port, aपंचांगel_port->rtor,
+				  aपंचांगel_port->cache.rtor);
+		aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_TTGR, aपंचांगel_port->cache.ttgr);
 
-		if (atmel_port->fifo_size) {
-			atmel_uart_writel(port, ATMEL_US_CR, ATMEL_US_FIFOEN |
+		अगर (aपंचांगel_port->fअगरo_size) अणु
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_CR, ATMEL_US_FIFOEN |
 					  ATMEL_US_RXFCLR | ATMEL_US_TXFLCLR);
-			atmel_uart_writel(port, ATMEL_US_FMR,
-					  atmel_port->cache.fmr);
-			atmel_uart_writel(port, ATMEL_US_FIER,
-					  atmel_port->cache.fimr);
-		}
-		atmel_start_rx(port);
-	}
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_FMR,
+					  aपंचांगel_port->cache.fmr);
+			aपंचांगel_uart_ग_लिखोl(port, ATMEL_US_FIER,
+					  aपंचांगel_port->cache.fimr);
+		पूर्ण
+		aपंचांगel_start_rx(port);
+	पूर्ण
 
-	spin_lock_irqsave(&atmel_port->lock_suspended, flags);
-	if (atmel_port->pending) {
-		atmel_handle_receive(port, atmel_port->pending);
-		atmel_handle_status(port, atmel_port->pending,
-				    atmel_port->pending_status);
-		atmel_handle_transmit(port, atmel_port->pending);
-		atmel_port->pending = 0;
-	}
-	atmel_port->suspended = false;
-	spin_unlock_irqrestore(&atmel_port->lock_suspended, flags);
+	spin_lock_irqsave(&aपंचांगel_port->lock_suspended, flags);
+	अगर (aपंचांगel_port->pending) अणु
+		aपंचांगel_handle_receive(port, aपंचांगel_port->pending);
+		aपंचांगel_handle_status(port, aपंचांगel_port->pending,
+				    aपंचांगel_port->pending_status);
+		aपंचांगel_handle_transmit(port, aपंचांगel_port->pending);
+		aपंचांगel_port->pending = 0;
+	पूर्ण
+	aपंचांगel_port->suspended = false;
+	spin_unlock_irqrestore(&aपंचांगel_port->lock_suspended, flags);
 
-	uart_resume_port(&atmel_uart, port);
-	device_set_wakeup_enable(&pdev->dev, atmel_port->may_wakeup);
+	uart_resume_port(&aपंचांगel_uart, port);
+	device_set_wakeup_enable(&pdev->dev, aपंचांगel_port->may_wakeup);
 
-	return 0;
-}
-#else
-#define atmel_serial_suspend NULL
-#define atmel_serial_resume NULL
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा aपंचांगel_serial_suspend शून्य
+#घोषणा aपंचांगel_serial_resume शून्य
+#पूर्ण_अगर
 
-static void atmel_serial_probe_fifos(struct atmel_uart_port *atmel_port,
-				     struct platform_device *pdev)
-{
-	atmel_port->fifo_size = 0;
-	atmel_port->rts_low = 0;
-	atmel_port->rts_high = 0;
+अटल व्योम aपंचांगel_serial_probe_fअगरos(काष्ठा aपंचांगel_uart_port *aपंचांगel_port,
+				     काष्ठा platक्रमm_device *pdev)
+अणु
+	aपंचांगel_port->fअगरo_size = 0;
+	aपंचांगel_port->rts_low = 0;
+	aपंचांगel_port->rts_high = 0;
 
-	if (of_property_read_u32(pdev->dev.of_node,
+	अगर (of_property_पढ़ो_u32(pdev->dev.of_node,
 				 "atmel,fifo-size",
-				 &atmel_port->fifo_size))
-		return;
+				 &aपंचांगel_port->fअगरo_size))
+		वापस;
 
-	if (!atmel_port->fifo_size)
-		return;
+	अगर (!aपंचांगel_port->fअगरo_size)
+		वापस;
 
-	if (atmel_port->fifo_size < ATMEL_MIN_FIFO_SIZE) {
-		atmel_port->fifo_size = 0;
+	अगर (aपंचांगel_port->fअगरo_size < ATMEL_MIN_FIFO_SIZE) अणु
+		aपंचांगel_port->fअगरo_size = 0;
 		dev_err(&pdev->dev, "Invalid FIFO size\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * 0 <= rts_low <= rts_high <= fifo_size
-	 * Once their CTS line asserted by the remote peer, some x86 UARTs tend
-	 * to flush their internal TX FIFO, commonly up to 16 data, before
+	 * 0 <= rts_low <= rts_high <= fअगरo_size
+	 * Once their CTS line निश्चितed by the remote peer, some x86 UARTs tend
+	 * to flush their पूर्णांकernal TX FIFO, commonly up to 16 data, beक्रमe
 	 * actually stopping to send new data. So we try to set the RTS High
 	 * Threshold to a reasonably high value respecting this 16 data
 	 * empirical rule when possible.
 	 */
-	atmel_port->rts_high = max_t(int, atmel_port->fifo_size >> 1,
-			       atmel_port->fifo_size - ATMEL_RTS_HIGH_OFFSET);
-	atmel_port->rts_low  = max_t(int, atmel_port->fifo_size >> 2,
-			       atmel_port->fifo_size - ATMEL_RTS_LOW_OFFSET);
+	aपंचांगel_port->rts_high = max_t(पूर्णांक, aपंचांगel_port->fअगरo_size >> 1,
+			       aपंचांगel_port->fअगरo_size - ATMEL_RTS_HIGH_OFFSET);
+	aपंचांगel_port->rts_low  = max_t(पूर्णांक, aपंचांगel_port->fअगरo_size >> 2,
+			       aपंचांगel_port->fअगरo_size - ATMEL_RTS_LOW_OFFSET);
 
 	dev_info(&pdev->dev, "Using FIFO (%u data)\n",
-		 atmel_port->fifo_size);
+		 aपंचांगel_port->fअगरo_size);
 	dev_dbg(&pdev->dev, "RTS High Threshold : %2u data\n",
-		atmel_port->rts_high);
+		aपंचांगel_port->rts_high);
 	dev_dbg(&pdev->dev, "RTS Low Threshold  : %2u data\n",
-		atmel_port->rts_low);
-}
+		aपंचांगel_port->rts_low);
+पूर्ण
 
-static int atmel_serial_probe(struct platform_device *pdev)
-{
-	struct atmel_uart_port *atmel_port;
-	struct device_node *np = pdev->dev.parent->of_node;
-	void *data;
-	int ret;
+अटल पूर्णांक aपंचांगel_serial_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port;
+	काष्ठा device_node *np = pdev->dev.parent->of_node;
+	व्योम *data;
+	पूर्णांक ret;
 	bool rs485_enabled;
 
 	BUILD_BUG_ON(ATMEL_SERIAL_RINGSIZE & (ATMEL_SERIAL_RINGSIZE - 1));
@@ -2828,176 +2829,176 @@ static int atmel_serial_probe(struct platform_device *pdev)
 	/*
 	 * In device tree there is no node with "atmel,at91rm9200-usart-serial"
 	 * as compatible string. This driver is probed by at91-usart mfd driver
-	 * which is just a wrapper over the atmel_serial driver and
+	 * which is just a wrapper over the aपंचांगel_serial driver and
 	 * spi-at91-usart driver. All attributes needed by this driver are
 	 * found in of_node of parent.
 	 */
 	pdev->dev.of_node = np;
 
 	ret = of_alias_get_id(np, "serial");
-	if (ret < 0)
-		/* port id not found in platform data nor device-tree aliases:
-		 * auto-enumerate it */
-		ret = find_first_zero_bit(atmel_ports_in_use, ATMEL_MAX_UART);
+	अगर (ret < 0)
+		/* port id not found in platक्रमm data nor device-tree aliases:
+		 * स्वतः-क्रमागतerate it */
+		ret = find_first_zero_bit(aपंचांगel_ports_in_use, ATMEL_MAX_UART);
 
-	if (ret >= ATMEL_MAX_UART) {
+	अगर (ret >= ATMEL_MAX_UART) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (test_and_set_bit(ret, atmel_ports_in_use)) {
-		/* port already in use */
+	अगर (test_and_set_bit(ret, aपंचांगel_ports_in_use)) अणु
+		/* port alपढ़ोy in use */
 		ret = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	atmel_port = &atmel_ports[ret];
-	atmel_port->backup_imr = 0;
-	atmel_port->uart.line = ret;
-	atmel_port->uart.has_sysrq = IS_ENABLED(CONFIG_SERIAL_ATMEL_CONSOLE);
-	atmel_serial_probe_fifos(atmel_port, pdev);
+	aपंचांगel_port = &aपंचांगel_ports[ret];
+	aपंचांगel_port->backup_imr = 0;
+	aपंचांगel_port->uart.line = ret;
+	aपंचांगel_port->uart.has_sysrq = IS_ENABLED(CONFIG_SERIAL_ATMEL_CONSOLE);
+	aपंचांगel_serial_probe_fअगरos(aपंचांगel_port, pdev);
 
-	atomic_set(&atmel_port->tasklet_shutdown, 0);
-	spin_lock_init(&atmel_port->lock_suspended);
+	atomic_set(&aपंचांगel_port->tasklet_shutकरोwn, 0);
+	spin_lock_init(&aपंचांगel_port->lock_suspended);
 
-	ret = atmel_init_port(atmel_port, pdev);
-	if (ret)
-		goto err_clear_bit;
+	ret = aपंचांगel_init_port(aपंचांगel_port, pdev);
+	अगर (ret)
+		जाओ err_clear_bit;
 
-	atmel_port->gpios = mctrl_gpio_init(&atmel_port->uart, 0);
-	if (IS_ERR(atmel_port->gpios)) {
-		ret = PTR_ERR(atmel_port->gpios);
-		goto err_clear_bit;
-	}
+	aपंचांगel_port->gpios = mctrl_gpio_init(&aपंचांगel_port->uart, 0);
+	अगर (IS_ERR(aपंचांगel_port->gpios)) अणु
+		ret = PTR_ERR(aपंचांगel_port->gpios);
+		जाओ err_clear_bit;
+	पूर्ण
 
-	if (!atmel_use_pdc_rx(&atmel_port->uart)) {
+	अगर (!aपंचांगel_use_pdc_rx(&aपंचांगel_port->uart)) अणु
 		ret = -ENOMEM;
-		data = kmalloc_array(ATMEL_SERIAL_RINGSIZE,
-				     sizeof(struct atmel_uart_char),
+		data = kदो_स्मृति_array(ATMEL_SERIAL_RINGSIZE,
+				     माप(काष्ठा aपंचांगel_uart_अक्षर),
 				     GFP_KERNEL);
-		if (!data)
-			goto err_alloc_ring;
-		atmel_port->rx_ring.buf = data;
-	}
+		अगर (!data)
+			जाओ err_alloc_ring;
+		aपंचांगel_port->rx_ring.buf = data;
+	पूर्ण
 
-	rs485_enabled = atmel_port->uart.rs485.flags & SER_RS485_ENABLED;
+	rs485_enabled = aपंचांगel_port->uart.rs485.flags & SER_RS485_ENABLED;
 
-	ret = uart_add_one_port(&atmel_uart, &atmel_port->uart);
-	if (ret)
-		goto err_add_port;
+	ret = uart_add_one_port(&aपंचांगel_uart, &aपंचांगel_port->uart);
+	अगर (ret)
+		जाओ err_add_port;
 
-#ifdef CONFIG_SERIAL_ATMEL_CONSOLE
-	if (uart_console(&atmel_port->uart)
-			&& ATMEL_CONSOLE_DEVICE->flags & CON_ENABLED) {
+#अगर_घोषित CONFIG_SERIAL_ATMEL_CONSOLE
+	अगर (uart_console(&aपंचांगel_port->uart)
+			&& ATMEL_CONSOLE_DEVICE->flags & CON_ENABLED) अणु
 		/*
-		 * The serial core enabled the clock for us, so undo
-		 * the clk_prepare_enable() in atmel_console_setup()
+		 * The serial core enabled the घड़ी क्रम us, so unकरो
+		 * the clk_prepare_enable() in aपंचांगel_console_setup()
 		 */
-		clk_disable_unprepare(atmel_port->clk);
-	}
-#endif
+		clk_disable_unprepare(aपंचांगel_port->clk);
+	पूर्ण
+#पूर्ण_अगर
 
 	device_init_wakeup(&pdev->dev, 1);
-	platform_set_drvdata(pdev, atmel_port);
+	platक्रमm_set_drvdata(pdev, aपंचांगel_port);
 
 	/*
-	 * The peripheral clock has been disabled by atmel_init_port():
-	 * enable it before accessing I/O registers
+	 * The peripheral घड़ी has been disabled by aपंचांगel_init_port():
+	 * enable it beक्रमe accessing I/O रेजिस्टरs
 	 */
-	clk_prepare_enable(atmel_port->clk);
+	clk_prepare_enable(aपंचांगel_port->clk);
 
-	if (rs485_enabled) {
-		atmel_uart_writel(&atmel_port->uart, ATMEL_US_MR,
+	अगर (rs485_enabled) अणु
+		aपंचांगel_uart_ग_लिखोl(&aपंचांगel_port->uart, ATMEL_US_MR,
 				  ATMEL_US_USMODE_NORMAL);
-		atmel_uart_writel(&atmel_port->uart, ATMEL_US_CR,
+		aपंचांगel_uart_ग_लिखोl(&aपंचांगel_port->uart, ATMEL_US_CR,
 				  ATMEL_US_RTSEN);
-	}
+	पूर्ण
 
 	/*
 	 * Get port name of usart or uart
 	 */
-	atmel_get_ip_name(&atmel_port->uart);
+	aपंचांगel_get_ip_name(&aपंचांगel_port->uart);
 
 	/*
-	 * The peripheral clock can now safely be disabled till the port
+	 * The peripheral घड़ी can now safely be disabled till the port
 	 * is used
 	 */
-	clk_disable_unprepare(atmel_port->clk);
+	clk_disable_unprepare(aपंचांगel_port->clk);
 
-	return 0;
+	वापस 0;
 
 err_add_port:
-	kfree(atmel_port->rx_ring.buf);
-	atmel_port->rx_ring.buf = NULL;
+	kमुक्त(aपंचांगel_port->rx_ring.buf);
+	aपंचांगel_port->rx_ring.buf = शून्य;
 err_alloc_ring:
-	if (!uart_console(&atmel_port->uart)) {
-		clk_put(atmel_port->clk);
-		atmel_port->clk = NULL;
-	}
+	अगर (!uart_console(&aपंचांगel_port->uart)) अणु
+		clk_put(aपंचांगel_port->clk);
+		aपंचांगel_port->clk = शून्य;
+	पूर्ण
 err_clear_bit:
-	clear_bit(atmel_port->uart.line, atmel_ports_in_use);
+	clear_bit(aपंचांगel_port->uart.line, aपंचांगel_ports_in_use);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Even if the driver is not modular, it makes sense to be able to
+ * Even अगर the driver is not modular, it makes sense to be able to
  * unbind a device: there can be many bound devices, and there are
  * situations where dynamic binding and unbinding can be useful.
  *
- * For example, a connected device can require a specific firmware update
+ * For example, a connected device can require a specअगरic firmware update
  * protocol that needs bitbanging on IO lines, but use the regular serial
- * port in the normal case.
+ * port in the normal हाल.
  */
-static int atmel_serial_remove(struct platform_device *pdev)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
-	struct atmel_uart_port *atmel_port = to_atmel_uart_port(port);
-	int ret = 0;
+अटल पूर्णांक aपंचांगel_serial_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
+	काष्ठा aपंचांगel_uart_port *aपंचांगel_port = to_aपंचांगel_uart_port(port);
+	पूर्णांक ret = 0;
 
-	tasklet_kill(&atmel_port->tasklet_rx);
-	tasklet_kill(&atmel_port->tasklet_tx);
+	tasklet_समाप्त(&aपंचांगel_port->tasklet_rx);
+	tasklet_समाप्त(&aपंचांगel_port->tasklet_tx);
 
 	device_init_wakeup(&pdev->dev, 0);
 
-	ret = uart_remove_one_port(&atmel_uart, port);
+	ret = uart_हटाओ_one_port(&aपंचांगel_uart, port);
 
-	kfree(atmel_port->rx_ring.buf);
+	kमुक्त(aपंचांगel_port->rx_ring.buf);
 
-	/* "port" is allocated statically, so we shouldn't free it */
+	/* "port" is allocated अटलally, so we shouldn't मुक्त it */
 
-	clear_bit(port->line, atmel_ports_in_use);
+	clear_bit(port->line, aपंचांगel_ports_in_use);
 
-	clk_put(atmel_port->clk);
-	atmel_port->clk = NULL;
-	pdev->dev.of_node = NULL;
+	clk_put(aपंचांगel_port->clk);
+	aपंचांगel_port->clk = शून्य;
+	pdev->dev.of_node = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver atmel_serial_driver = {
-	.probe		= atmel_serial_probe,
-	.remove		= atmel_serial_remove,
-	.suspend	= atmel_serial_suspend,
-	.resume		= atmel_serial_resume,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver aपंचांगel_serial_driver = अणु
+	.probe		= aपंचांगel_serial_probe,
+	.हटाओ		= aपंचांगel_serial_हटाओ,
+	.suspend	= aपंचांगel_serial_suspend,
+	.resume		= aपंचांगel_serial_resume,
+	.driver		= अणु
 		.name			= "atmel_usart_serial",
-		.of_match_table		= of_match_ptr(atmel_serial_dt_ids),
-	},
-};
+		.of_match_table		= of_match_ptr(aपंचांगel_serial_dt_ids),
+	पूर्ण,
+पूर्ण;
 
-static int __init atmel_serial_init(void)
-{
-	int ret;
+अटल पूर्णांक __init aपंचांगel_serial_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = uart_register_driver(&atmel_uart);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&aपंचांगel_uart);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&atmel_serial_driver);
-	if (ret)
-		uart_unregister_driver(&atmel_uart);
+	ret = platक्रमm_driver_रेजिस्टर(&aपंचांगel_serial_driver);
+	अगर (ret)
+		uart_unरेजिस्टर_driver(&aपंचांगel_uart);
 
-	return ret;
-}
-device_initcall(atmel_serial_init);
+	वापस ret;
+पूर्ण
+device_initcall(aपंचांगel_serial_init);

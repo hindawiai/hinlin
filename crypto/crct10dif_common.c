@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Cryptographic API.
  *
- * T10 Data Integrity Field CRC16 Crypto Transform
+ * T10 Data Integrity Field CRC16 Crypto Transक्रमm
  *
  * Copyright (c) 2007 Oracle Corporation.  All rights reserved.
  * Written by Martin K. Petersen <martin.petersen@oracle.com>
  * Copyright (C) 2013 Intel Corporation
- * Author: Tim Chen <tim.c.chen@linux.intel.com>
+ * Author: Tim Chen <tim.c.chen@linux.पूर्णांकel.com>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of the GNU General Public License as published by the Free
  * Software Foundation; either version 2 of the License, or (at your option)
  * any later version.
@@ -24,15 +25,15 @@
  *
  */
 
-#include <linux/crc-t10dif.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
+#समावेश <linux/crc-t10dअगर.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
 
 /* Table generated using the following polynomium:
  * x^16 + x^15 + x^11 + x^9 + x^8 + x^7 + x^5 + x^4 + x^2 + x + 1
  * gt: 0x8bb7
  */
-static const __u16 t10_dif_crc_table[256] = {
+अटल स्थिर __u16 t10_dअगर_crc_table[256] = अणु
 	0x0000, 0x8BB7, 0x9CD9, 0x176E, 0xB205, 0x39B2, 0x2EDC, 0xA56B,
 	0xEFBD, 0x640A, 0x7364, 0xF8D3, 0x5DB8, 0xD60F, 0xC161, 0x4AD6,
 	0x54CD, 0xDF7A, 0xC814, 0x43A3, 0xE6C8, 0x6D7F, 0x7A11, 0xF1A6,
@@ -65,18 +66,18 @@ static const __u16 t10_dif_crc_table[256] = {
 	0xA415, 0x2FA2, 0x38CC, 0xB37B, 0x1610, 0x9DA7, 0x8AC9, 0x017E,
 	0x1F65, 0x94D2, 0x83BC, 0x080B, 0xAD60, 0x26D7, 0x31B9, 0xBA0E,
 	0xF0D8, 0x7B6F, 0x6C01, 0xE7B6, 0x42DD, 0xC96A, 0xDE04, 0x55B3
-};
+पूर्ण;
 
-__u16 crc_t10dif_generic(__u16 crc, const unsigned char *buffer, size_t len)
-{
-	unsigned int i;
+__u16 crc_t10dअगर_generic(__u16 crc, स्थिर अचिन्हित अक्षर *buffer, माप_प्रकार len)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0 ; i < len ; i++)
-		crc = (crc << 8) ^ t10_dif_crc_table[((crc >> 8) ^ buffer[i]) & 0xff];
+	क्रम (i = 0 ; i < len ; i++)
+		crc = (crc << 8) ^ t10_dअगर_crc_table[((crc >> 8) ^ buffer[i]) & 0xff];
 
-	return crc;
-}
-EXPORT_SYMBOL(crc_t10dif_generic);
+	वापस crc;
+पूर्ण
+EXPORT_SYMBOL(crc_t10dअगर_generic);
 
 MODULE_DESCRIPTION("T10 DIF CRC calculation common code");
 MODULE_LICENSE("GPL");

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PERF_TARGET_H
-#define _PERF_TARGET_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PERF_TARGET_H
+#घोषणा _PERF_TARGET_H
 
-#include <stdbool.h>
-#include <sys/types.h>
+#समावेश <stdbool.h>
+#समावेश <sys/types.h>
 
-struct target {
-	const char   *pid;
-	const char   *tid;
-	const char   *cpu_list;
-	const char   *uid_str;
-	const char   *bpf_str;
+काष्ठा target अणु
+	स्थिर अक्षर   *pid;
+	स्थिर अक्षर   *tid;
+	स्थिर अक्षर   *cpu_list;
+	स्थिर अक्षर   *uid_str;
+	स्थिर अक्षर   *bpf_str;
 	uid_t	     uid;
-	bool	     system_wide;
+	bool	     प्रणाली_wide;
 	bool	     uses_mmap;
-	bool	     default_per_cpu;
-	bool	     per_thread;
+	bool	     शेष_per_cpu;
+	bool	     per_thपढ़ो;
 	bool	     use_bpf;
-	const char   *attr_map;
-};
+	स्थिर अक्षर   *attr_map;
+पूर्ण;
 
-enum target_errno {
+क्रमागत target_त्रुटि_सं अणु
 	TARGET_ERRNO__SUCCESS		= 0,
 
 	/*
 	 * Choose an arbitrary negative big number not to clash with standard
-	 * errno since SUS requires the errno has distinct positive values.
+	 * त्रुटि_सं since SUS requires the त्रुटि_सं has distinct positive values.
 	 * See 'Issue 6' in the link below.
 	 *
-	 * http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/errno.h.html
+	 * http://pubs.खोलोgroup.org/onlinepubs/9699919799/basedefs/त्रुटिसं.स.hपंचांगl
 	 */
 	__TARGET_ERRNO__START		= -10000,
 
-	/* for target__validate() */
+	/* क्रम target__validate() */
 	TARGET_ERRNO__PID_OVERRIDE_CPU	= __TARGET_ERRNO__START,
 	TARGET_ERRNO__PID_OVERRIDE_UID,
 	TARGET_ERRNO__UID_OVERRIDE_CPU,
@@ -44,51 +45,51 @@ enum target_errno {
 	TARGET_ERRNO__BPF_OVERRIDE_UID,
 	TARGET_ERRNO__BPF_OVERRIDE_THREAD,
 
-	/* for target__parse_uid() */
+	/* क्रम target__parse_uid() */
 	TARGET_ERRNO__INVALID_UID,
 	TARGET_ERRNO__USER_NOT_FOUND,
 
 	__TARGET_ERRNO__END,
-};
+पूर्ण;
 
-enum target_errno target__validate(struct target *target);
-enum target_errno target__parse_uid(struct target *target);
+क्रमागत target_त्रुटि_सं target__validate(काष्ठा target *target);
+क्रमागत target_त्रुटि_सं target__parse_uid(काष्ठा target *target);
 
-int target__strerror(struct target *target, int errnum, char *buf, size_t buflen);
+पूर्णांक target__म_त्रुटि(काष्ठा target *target, पूर्णांक errnum, अक्षर *buf, माप_प्रकार buflen);
 
-static inline bool target__has_task(struct target *target)
-{
-	return target->tid || target->pid || target->uid_str;
-}
+अटल अंतरभूत bool target__has_task(काष्ठा target *target)
+अणु
+	वापस target->tid || target->pid || target->uid_str;
+पूर्ण
 
-static inline bool target__has_cpu(struct target *target)
-{
-	return target->system_wide || target->cpu_list;
-}
+अटल अंतरभूत bool target__has_cpu(काष्ठा target *target)
+अणु
+	वापस target->प्रणाली_wide || target->cpu_list;
+पूर्ण
 
-static inline bool target__none(struct target *target)
-{
-	return !target__has_task(target) && !target__has_cpu(target);
-}
+अटल अंतरभूत bool target__none(काष्ठा target *target)
+अणु
+	वापस !target__has_task(target) && !target__has_cpu(target);
+पूर्ण
 
-static inline bool target__has_per_thread(struct target *target)
-{
-	return target->system_wide && target->per_thread;
-}
+अटल अंतरभूत bool target__has_per_thपढ़ो(काष्ठा target *target)
+अणु
+	वापस target->प्रणाली_wide && target->per_thपढ़ो;
+पूर्ण
 
-static inline bool target__uses_dummy_map(struct target *target)
-{
+अटल अंतरभूत bool target__uses_dummy_map(काष्ठा target *target)
+अणु
 	bool use_dummy = false;
 
-	if (target->default_per_cpu)
-		use_dummy = target->per_thread ? true : false;
-	else if (target__has_task(target) ||
+	अगर (target->शेष_per_cpu)
+		use_dummy = target->per_thपढ़ो ? true : false;
+	अन्यथा अगर (target__has_task(target) ||
 	         (!target__has_cpu(target) && !target->uses_mmap))
 		use_dummy = true;
-	else if (target__has_per_thread(target))
+	अन्यथा अगर (target__has_per_thपढ़ो(target))
 		use_dummy = true;
 
-	return use_dummy;
-}
+	वापस use_dummy;
+पूर्ण
 
-#endif /* _PERF_TARGET_H */
+#पूर्ण_अगर /* _PERF_TARGET_H */

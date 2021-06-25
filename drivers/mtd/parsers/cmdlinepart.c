@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Read flash partition table from command line
  *
- * Copyright © 2002      SYSGO Real-Time Solutions GmbH
- * Copyright © 2002-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2002      SYSGO Real-Time Solutions GmbH
+ * Copyright तऊ 2002-2010 David Woodhouse <dwmw2@infradead.org>
  *
- * The format for the command line is as follows:
+ * The क्रमmat क्रम the command line is as follows:
  *
  * mtdparts=<mtddef>[;<mtddef]
  * <mtddef>  := <mtd-id>:<partdef>[,<partdef>]
  * <partdef> := <size>[@<offset>][<name>][ro][lk][slc]
  * <mtd-id>  := unique name used in mapping driver/device (mtd->name)
- * <size>    := standard linux memsize OR "-" to denote all remaining space
- *              size is automatically truncated at end of device
- *              if specified or truncated size is 0 the part is skipped
+ * <size>    := standard linux memsize OR "-" to denote all reमुख्यing space
+ *              size is स्वतःmatically truncated at end of device
+ *              अगर specअगरied or truncated size is 0 the part is skipped
  * <offset>  := standard linux memsize
- *              if omitted the part will immediately follow the previous part
- *              or 0 if the first part
+ *              अगर omitted the part will immediately follow the previous part
+ *              or 0 अगर the first part
  * <name>    := '(' NAME ')'
  *              NAME will appear in /proc/mtd
  *
- * <size> and <offset> can be specified such that the parts are out of order
+ * <size> and <offset> can be specअगरied such that the parts are out of order
  * in physical memory and may even overlap.
  *
- * The parts are assigned MTD numbers in the order they are specified in the
+ * The parts are asचिन्हित MTD numbers in the order they are specअगरied in the
  * command line regardless of their order in physical memory.
  *
  * Examples:
@@ -31,171 +32,171 @@
  * 1 NOR Flash, with 1 single writable partition:
  * edb7312-nor:-
  *
- * 1 NOR Flash with 2 partitions, 1 NAND with one
+ * 1 NOR Flash with 2 partitions, 1 न_अंकD with one
  * edb7312-nor:256k(ARMboot)ro,-(root);edb7312-nand:-(home)
  */
 
-#define pr_fmt(fmt)	"mtd: " fmt
+#घोषणा pr_fmt(fmt)	"mtd: " fmt
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/module.h>
-#include <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
 
 /* debug macro */
-#if 0
-#define dbg(x) do { printk("DEBUG-CMDLINE-PART: "); printk x; } while(0)
-#else
-#define dbg(x)
-#endif
+#अगर 0
+#घोषणा dbg(x) करो अणु prपूर्णांकk("DEBUG-CMDLINE-PART: "); prपूर्णांकk x; पूर्ण जबतक(0)
+#अन्यथा
+#घोषणा dbg(x)
+#पूर्ण_अगर
 
 
-/* special size referring to all the remaining space in a partition */
-#define SIZE_REMAINING ULLONG_MAX
-#define OFFSET_CONTINUOUS ULLONG_MAX
+/* special size referring to all the reमुख्यing space in a partition */
+#घोषणा SIZE_REMAINING ULदीर्घ_उच्च
+#घोषणा OFFSET_CONTINUOUS ULदीर्घ_उच्च
 
-struct cmdline_mtd_partition {
-	struct cmdline_mtd_partition *next;
-	char *mtd_id;
-	int num_parts;
-	struct mtd_partition *parts;
-};
+काष्ठा cmdline_mtd_partition अणु
+	काष्ठा cmdline_mtd_partition *next;
+	अक्षर *mtd_id;
+	पूर्णांक num_parts;
+	काष्ठा mtd_partition *parts;
+पूर्ण;
 
-/* mtdpart_setup() parses into here */
-static struct cmdline_mtd_partition *partitions;
+/* mtdpart_setup() parses पूर्णांकo here */
+अटल काष्ठा cmdline_mtd_partition *partitions;
 
 /* the command line passed to mtdpart_setup() */
-static char *mtdparts;
-static char *cmdline;
-static int cmdline_parsed;
+अटल अक्षर *mtdparts;
+अटल अक्षर *cmdline;
+अटल पूर्णांक cmdline_parsed;
 
 /*
- * Parse one partition definition for an MTD. Since there can be many
+ * Parse one partition definition क्रम an MTD. Since there can be many
  * comma separated partition definitions, this function calls itself
  * recursively until no more partition definitions are found. Nice side
- * effect: the memory to keep the mtd_partition structs and the names
- * is allocated upon the last definition being found. At that point the
- * syntax has been verified ok.
+ * effect: the memory to keep the mtd_partition काष्ठाs and the names
+ * is allocated upon the last definition being found. At that poपूर्णांक the
+ * syntax has been verअगरied ok.
  */
-static struct mtd_partition * newpart(char *s,
-				      char **retptr,
-				      int *num_parts,
-				      int this_part,
-				      unsigned char **extra_mem_ptr,
-				      int extra_mem_size)
-{
-	struct mtd_partition *parts;
-	unsigned long long size, offset = OFFSET_CONTINUOUS;
-	char *name;
-	int name_len;
-	unsigned char *extra_mem;
-	char delim;
-	unsigned int mask_flags, add_flags;
+अटल काष्ठा mtd_partition * newpart(अक्षर *s,
+				      अक्षर **retptr,
+				      पूर्णांक *num_parts,
+				      पूर्णांक this_part,
+				      अचिन्हित अक्षर **extra_mem_ptr,
+				      पूर्णांक extra_mem_size)
+अणु
+	काष्ठा mtd_partition *parts;
+	अचिन्हित दीर्घ दीर्घ size, offset = OFFSET_CONTINUOUS;
+	अक्षर *name;
+	पूर्णांक name_len;
+	अचिन्हित अक्षर *extra_mem;
+	अक्षर delim;
+	अचिन्हित पूर्णांक mask_flags, add_flags;
 
 	/* fetch the partition size */
-	if (*s == '-') {
-		/* assign all remaining space to this partition */
+	अगर (*s == '-') अणु
+		/* assign all reमुख्यing space to this partition */
 		size = SIZE_REMAINING;
 		s++;
-	} else {
+	पूर्ण अन्यथा अणु
 		size = memparse(s, &s);
-		if (!size) {
+		अगर (!size) अणु
 			pr_err("partition has size 0\n");
-			return ERR_PTR(-EINVAL);
-		}
-	}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
+	पूर्ण
 
 	/* fetch partition name and flags */
 	mask_flags = 0; /* this is going to be a regular partition */
 	add_flags = 0;
 	delim = 0;
 
-	/* check for offset */
-	if (*s == '@') {
+	/* check क्रम offset */
+	अगर (*s == '@') अणु
 		s++;
 		offset = memparse(s, &s);
-	}
+	पूर्ण
 
-	/* now look for name */
-	if (*s == '(')
+	/* now look क्रम name */
+	अगर (*s == '(')
 		delim = ')';
 
-	if (delim) {
-		char *p;
+	अगर (delim) अणु
+		अक्षर *p;
 
 		name = ++s;
-		p = strchr(name, delim);
-		if (!p) {
+		p = म_अक्षर(name, delim);
+		अगर (!p) अणु
 			pr_err("no closing %c found in partition name\n", delim);
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 		name_len = p - name;
 		s = p + 1;
-	} else {
-		name = NULL;
+	पूर्ण अन्यथा अणु
+		name = शून्य;
 		name_len = 13; /* Partition_000 */
-	}
+	पूर्ण
 
-	/* record name length for memory allocation later */
+	/* record name length क्रम memory allocation later */
 	extra_mem_size += name_len + 1;
 
-	/* test for options */
-	if (strncmp(s, "ro", 2) == 0) {
+	/* test क्रम options */
+	अगर (म_भेदन(s, "ro", 2) == 0) अणु
 		mask_flags |= MTD_WRITEABLE;
 		s += 2;
-	}
+	पूर्ण
 
-	/* if lk is found do NOT unlock the MTD partition*/
-	if (strncmp(s, "lk", 2) == 0) {
+	/* अगर lk is found करो NOT unlock the MTD partition*/
+	अगर (म_भेदन(s, "lk", 2) == 0) अणु
 		mask_flags |= MTD_POWERUP_LOCK;
 		s += 2;
-	}
+	पूर्ण
 
-	/* if slc is found use emulated SLC mode on this partition*/
-	if (!strncmp(s, "slc", 3)) {
+	/* अगर slc is found use emulated SLC mode on this partition*/
+	अगर (!म_भेदन(s, "slc", 3)) अणु
 		add_flags |= MTD_SLC_ON_MLC_EMULATION;
 		s += 3;
-	}
+	पूर्ण
 
-	/* test if more partitions are following */
-	if (*s == ',') {
-		if (size == SIZE_REMAINING) {
+	/* test अगर more partitions are following */
+	अगर (*s == ',') अणु
+		अगर (size == SIZE_REMAINING) अणु
 			pr_err("no partitions allowed after a fill-up partition\n");
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 		/* more partitions follow, parse them */
 		parts = newpart(s + 1, &s, num_parts, this_part + 1,
 				&extra_mem, extra_mem_size);
-		if (IS_ERR(parts))
-			return parts;
-	} else {
-		/* this is the last partition: allocate space for all */
-		int alloc_size;
+		अगर (IS_ERR(parts))
+			वापस parts;
+	पूर्ण अन्यथा अणु
+		/* this is the last partition: allocate space क्रम all */
+		पूर्णांक alloc_size;
 
 		*num_parts = this_part + 1;
-		alloc_size = *num_parts * sizeof(struct mtd_partition) +
+		alloc_size = *num_parts * माप(काष्ठा mtd_partition) +
 			     extra_mem_size;
 
 		parts = kzalloc(alloc_size, GFP_KERNEL);
-		if (!parts)
-			return ERR_PTR(-ENOMEM);
-		extra_mem = (unsigned char *)(parts + *num_parts);
-	}
+		अगर (!parts)
+			वापस ERR_PTR(-ENOMEM);
+		extra_mem = (अचिन्हित अक्षर *)(parts + *num_parts);
+	पूर्ण
 
 	/*
-	 * enter this partition (offset will be calculated later if it is
-	 * OFFSET_CONTINUOUS at this point)
+	 * enter this partition (offset will be calculated later अगर it is
+	 * OFFSET_CONTINUOUS at this poपूर्णांक)
 	 */
 	parts[this_part].size = size;
 	parts[this_part].offset = offset;
 	parts[this_part].mask_flags = mask_flags;
 	parts[this_part].add_flags = add_flags;
-	if (name)
+	अगर (name)
 		strlcpy(extra_mem, name, name_len + 1);
-	else
-		sprintf(extra_mem, "Partition_%03d", this_part);
+	अन्यथा
+		प्र_लिखो(extra_mem, "Partition_%03d", this_part);
 	parts[this_part].name = extra_mem;
 	extra_mem += name_len + 1;
 
@@ -203,84 +204,84 @@ static struct mtd_partition * newpart(char *s,
 	     this_part, parts[this_part].name, parts[this_part].offset,
 	     parts[this_part].size, parts[this_part].mask_flags));
 
-	/* return (updated) pointer to extra_mem memory */
-	if (extra_mem_ptr)
+	/* वापस (updated) poपूर्णांकer to extra_mem memory */
+	अगर (extra_mem_ptr)
 		*extra_mem_ptr = extra_mem;
 
-	/* return (updated) pointer command line string */
+	/* वापस (updated) poपूर्णांकer command line string */
 	*retptr = s;
 
-	/* return partition table */
-	return parts;
-}
+	/* वापस partition table */
+	वापस parts;
+पूर्ण
 
 /*
  * Parse the command line.
  */
-static int mtdpart_setup_real(char *s)
-{
+अटल पूर्णांक mtdpart_setup_real(अक्षर *s)
+अणु
 	cmdline_parsed = 1;
 
-	for( ; s != NULL; )
-	{
-		struct cmdline_mtd_partition *this_mtd;
-		struct mtd_partition *parts;
-		int mtd_id_len, num_parts;
-		char *p, *mtd_id, *semicol, *open_parenth;
+	क्रम( ; s != शून्य; )
+	अणु
+		काष्ठा cmdline_mtd_partition *this_mtd;
+		काष्ठा mtd_partition *parts;
+		पूर्णांक mtd_id_len, num_parts;
+		अक्षर *p, *mtd_id, *semicol, *खोलो_parenth;
 
 		/*
-		 * Replace the first ';' by a NULL char so strrchr can work
+		 * Replace the first ';' by a शून्य अक्षर so म_खोजप can work
 		 * properly.
 		 */
-		semicol = strchr(s, ';');
-		if (semicol)
+		semicol = म_अक्षर(s, ';');
+		अगर (semicol)
 			*semicol = '\0';
 
 		/*
 		 * make sure that part-names with ":" will not be handled as
 		 * part of the mtd-id with an ":"
 		 */
-		open_parenth = strchr(s, '(');
-		if (open_parenth)
-			*open_parenth = '\0';
+		खोलो_parenth = म_अक्षर(s, '(');
+		अगर (खोलो_parenth)
+			*खोलो_parenth = '\0';
 
 		mtd_id = s;
 
 		/*
-		 * fetch <mtd-id>. We use strrchr to ignore all ':' that could
-		 * be present in the MTD name, only the last one is interpreted
+		 * fetch <mtd-id>. We use म_खोजप to ignore all ':' that could
+		 * be present in the MTD name, only the last one is पूर्णांकerpreted
 		 * as an <mtd-id>/<part-definition> separator.
 		 */
-		p = strrchr(s, ':');
+		p = म_खोजप(s, ':');
 
 		/* Restore the '(' now. */
-		if (open_parenth)
-			*open_parenth = '(';
+		अगर (खोलो_parenth)
+			*खोलो_parenth = '(';
 
 		/* Restore the ';' now. */
-		if (semicol)
+		अगर (semicol)
 			*semicol = ';';
 
-		if (!p) {
+		अगर (!p) अणु
 			pr_err("no mtd-id\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		mtd_id_len = p - mtd_id;
 
 		dbg(("parsing <%s>\n", p+1));
 
 		/*
-		 * parse one mtd. have it reserve memory for the
-		 * struct cmdline_mtd_partition and the mtd-id string.
+		 * parse one mtd. have it reserve memory क्रम the
+		 * काष्ठा cmdline_mtd_partition and the mtd-id string.
 		 */
 		parts = newpart(p + 1,		/* cmdline */
 				&s,		/* out: updated cmdline ptr */
 				&num_parts,	/* out: number of parts */
 				0,		/* first partition */
-				(unsigned char**)&this_mtd, /* out: extra mem */
-				mtd_id_len + 1 + sizeof(*this_mtd) +
-				sizeof(void*)-1 /*alignment*/);
-		if (IS_ERR(parts)) {
+				(अचिन्हित अक्षर**)&this_mtd, /* out: extra mem */
+				mtd_id_len + 1 + माप(*this_mtd) +
+				माप(व्योम*)-1 /*alignment*/);
+		अगर (IS_ERR(parts)) अणु
 			/*
 			 * An error occurred. We're either:
 			 * a) out of memory, or
@@ -288,19 +289,19 @@ static int mtdpart_setup_real(char *s)
 			 * Either way, this mtd is hosed and we're
 			 * unlikely to succeed in parsing any more
 			 */
-			 return PTR_ERR(parts);
-		 }
+			 वापस PTR_ERR(parts);
+		 पूर्ण
 
 		/* align this_mtd */
-		this_mtd = (struct cmdline_mtd_partition *)
-				ALIGN((unsigned long)this_mtd, sizeof(void *));
+		this_mtd = (काष्ठा cmdline_mtd_partition *)
+				ALIGN((अचिन्हित दीर्घ)this_mtd, माप(व्योम *));
 		/* enter results */
 		this_mtd->parts = parts;
 		this_mtd->num_parts = num_parts;
-		this_mtd->mtd_id = (char*)(this_mtd + 1);
+		this_mtd->mtd_id = (अक्षर*)(this_mtd + 1);
 		strlcpy(this_mtd->mtd_id, mtd_id, mtd_id_len + 1);
 
-		/* link into chain */
+		/* link पूर्णांकo chain */
 		this_mtd->next = partitions;
 		partitions = this_mtd;
 
@@ -308,129 +309,129 @@ static int mtdpart_setup_real(char *s)
 		     this_mtd->mtd_id, this_mtd->num_parts));
 
 
-		/* EOS - we're done */
-		if (*s == 0)
-			break;
+		/* EOS - we're करोne */
+		अगर (*s == 0)
+			अवरोध;
 
-		/* does another spec follow? */
-		if (*s != ';') {
+		/* करोes another spec follow? */
+		अगर (*s != ';') अणु
 			pr_err("bad character after partition (%c)\n", *s);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		s++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Main function to be called from the MTD mapping driver/device to
- * obtain the partitioning information. At this point the command line
- * arguments will actually be parsed and turned to struct mtd_partition
- * information. It returns partitions for the requested mtd device, or
- * the first one in the chain if a NULL mtd_id is passed in.
+ * obtain the partitioning inक्रमmation. At this poपूर्णांक the command line
+ * arguments will actually be parsed and turned to काष्ठा mtd_partition
+ * inक्रमmation. It वापसs partitions क्रम the requested mtd device, or
+ * the first one in the chain अगर a शून्य mtd_id is passed in.
  */
-static int parse_cmdline_partitions(struct mtd_info *master,
-				    const struct mtd_partition **pparts,
-				    struct mtd_part_parser_data *data)
-{
-	unsigned long long offset;
-	int i, err;
-	struct cmdline_mtd_partition *part;
-	const char *mtd_id = master->name;
+अटल पूर्णांक parse_cmdline_partitions(काष्ठा mtd_info *master,
+				    स्थिर काष्ठा mtd_partition **pparts,
+				    काष्ठा mtd_part_parser_data *data)
+अणु
+	अचिन्हित दीर्घ दीर्घ offset;
+	पूर्णांक i, err;
+	काष्ठा cmdline_mtd_partition *part;
+	स्थिर अक्षर *mtd_id = master->name;
 
 	/* parse command line */
-	if (!cmdline_parsed) {
+	अगर (!cmdline_parsed) अणु
 		err = mtdpart_setup_real(cmdline);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	/*
-	 * Search for the partition definition matching master->name.
+	 * Search क्रम the partition definition matching master->name.
 	 * If master->name is not set, stop at first partition definition.
 	 */
-	for (part = partitions; part; part = part->next) {
-		if ((!mtd_id) || (!strcmp(part->mtd_id, mtd_id)))
-			break;
-	}
+	क्रम (part = partitions; part; part = part->next) अणु
+		अगर ((!mtd_id) || (!म_भेद(part->mtd_id, mtd_id)))
+			अवरोध;
+	पूर्ण
 
-	if (!part)
-		return 0;
+	अगर (!part)
+		वापस 0;
 
-	for (i = 0, offset = 0; i < part->num_parts; i++) {
-		if (part->parts[i].offset == OFFSET_CONTINUOUS)
+	क्रम (i = 0, offset = 0; i < part->num_parts; i++) अणु
+		अगर (part->parts[i].offset == OFFSET_CONTINUOUS)
 			part->parts[i].offset = offset;
-		else
+		अन्यथा
 			offset = part->parts[i].offset;
 
-		if (part->parts[i].size == SIZE_REMAINING)
+		अगर (part->parts[i].size == SIZE_REMAINING)
 			part->parts[i].size = master->size - offset;
 
-		if (offset + part->parts[i].size > master->size) {
+		अगर (offset + part->parts[i].size > master->size) अणु
 			pr_warn("%s: partitioning exceeds flash size, truncating\n",
 				part->mtd_id);
 			part->parts[i].size = master->size - offset;
-		}
+		पूर्ण
 		offset += part->parts[i].size;
 
-		if (part->parts[i].size == 0) {
+		अगर (part->parts[i].size == 0) अणु
 			pr_warn("%s: skipping zero sized partition\n",
 				part->mtd_id);
 			part->num_parts--;
-			memmove(&part->parts[i], &part->parts[i + 1],
-				sizeof(*part->parts) * (part->num_parts - i));
+			स_हटाओ(&part->parts[i], &part->parts[i + 1],
+				माप(*part->parts) * (part->num_parts - i));
 			i--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	*pparts = kmemdup(part->parts, sizeof(*part->parts) * part->num_parts,
+	*pparts = kmemdup(part->parts, माप(*part->parts) * part->num_parts,
 			  GFP_KERNEL);
-	if (!*pparts)
-		return -ENOMEM;
+	अगर (!*pparts)
+		वापस -ENOMEM;
 
-	return part->num_parts;
-}
+	वापस part->num_parts;
+पूर्ण
 
 
 /*
- * This is the handler for our kernel parameter, called from
- * main.c::checksetup(). Note that we can not yet kmalloc() anything,
- * so we only save the commandline for later processing.
+ * This is the handler क्रम our kernel parameter, called from
+ * मुख्य.c::checksetup(). Note that we can not yet kदो_स्मृति() anything,
+ * so we only save the commandline क्रम later processing.
  *
- * This function needs to be visible for bootloaders.
+ * This function needs to be visible क्रम bootloaders.
  */
-static int __init mtdpart_setup(char *s)
-{
+अटल पूर्णांक __init mtdpart_setup(अक्षर *s)
+अणु
 	cmdline = s;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 __setup("mtdparts=", mtdpart_setup);
 
-static struct mtd_part_parser cmdline_parser = {
+अटल काष्ठा mtd_part_parser cmdline_parser = अणु
 	.parse_fn = parse_cmdline_partitions,
 	.name = "cmdlinepart",
-};
+पूर्ण;
 
-static int __init cmdline_parser_init(void)
-{
-	if (mtdparts)
+अटल पूर्णांक __init cmdline_parser_init(व्योम)
+अणु
+	अगर (mtdparts)
 		mtdpart_setup(mtdparts);
-	register_mtd_parser(&cmdline_parser);
-	return 0;
-}
+	रेजिस्टर_mtd_parser(&cmdline_parser);
+	वापस 0;
+पूर्ण
 
-static void __exit cmdline_parser_exit(void)
-{
-	deregister_mtd_parser(&cmdline_parser);
-}
+अटल व्योम __निकास cmdline_parser_निकास(व्योम)
+अणु
+	deरेजिस्टर_mtd_parser(&cmdline_parser);
+पूर्ण
 
 module_init(cmdline_parser_init);
-module_exit(cmdline_parser_exit);
+module_निकास(cmdline_parser_निकास);
 
 MODULE_PARM_DESC(mtdparts, "Partitioning specification");
-module_param(mtdparts, charp, 0);
+module_param(mtdparts, अक्षरp, 0);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marius Groeger <mag@sysgo.de>");

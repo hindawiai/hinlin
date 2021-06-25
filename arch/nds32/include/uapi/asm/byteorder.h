@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#ifndef __NDS32_BYTEORDER_H__
-#define __NDS32_BYTEORDER_H__
+#अगर_अघोषित __NDS32_BYTEORDER_H__
+#घोषणा __NDS32_BYTEORDER_H__
 
-#ifdef __NDS32_EB__
-#include <linux/byteorder/big_endian.h>
-#else
-#include <linux/byteorder/little_endian.h>
-#endif
+#अगर_घोषित __NDS32_EB__
+#समावेश <linux/byteorder/big_endian.h>
+#अन्यथा
+#समावेश <linux/byteorder/little_endian.h>
+#पूर्ण_अगर
 
-#endif /* __NDS32_BYTEORDER_H__ */
+#पूर्ण_अगर /* __NDS32_BYTEORDER_H__ */

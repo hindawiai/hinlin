@@ -1,378 +1,379 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * intel_pmic.c - Intel PMIC operation region driver
+ * पूर्णांकel_pmic.c - Intel PMIC operation region driver
  *
  * Copyright (C) 2014 Intel Corporation. All rights reserved.
  */
 
-#include <linux/export.h>
-#include <linux/acpi.h>
-#include <linux/mfd/intel_soc_pmic.h>
-#include <linux/regmap.h>
-#include <acpi/acpi_lpat.h>
-#include "intel_pmic.h"
+#समावेश <linux/export.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/mfd/पूर्णांकel_soc_pmic.h>
+#समावेश <linux/regmap.h>
+#समावेश <acpi/acpi_lpat.h>
+#समावेश "intel_pmic.h"
 
-#define PMIC_POWER_OPREGION_ID		0x8d
-#define PMIC_THERMAL_OPREGION_ID	0x8c
-#define PMIC_REGS_OPREGION_ID		0x8f
+#घोषणा PMIC_POWER_OPREGION_ID		0x8d
+#घोषणा PMIC_THERMAL_OPREGION_ID	0x8c
+#घोषणा PMIC_REGS_OPREGION_ID		0x8f
 
-struct intel_pmic_regs_handler_ctx {
-	unsigned int val;
+काष्ठा पूर्णांकel_pmic_regs_handler_ctx अणु
+	अचिन्हित पूर्णांक val;
 	u16 addr;
-};
+पूर्ण;
 
-struct intel_pmic_opregion {
-	struct mutex lock;
-	struct acpi_lpat_conversion_table *lpat_table;
-	struct regmap *regmap;
-	struct intel_pmic_opregion_data *data;
-	struct intel_pmic_regs_handler_ctx ctx;
-};
+काष्ठा पूर्णांकel_pmic_opregion अणु
+	काष्ठा mutex lock;
+	काष्ठा acpi_lpat_conversion_table *lpat_table;
+	काष्ठा regmap *regmap;
+	काष्ठा पूर्णांकel_pmic_opregion_data *data;
+	काष्ठा पूर्णांकel_pmic_regs_handler_ctx ctx;
+पूर्ण;
 
-static struct intel_pmic_opregion *intel_pmic_opregion;
+अटल काष्ठा पूर्णांकel_pmic_opregion *पूर्णांकel_pmic_opregion;
 
-static int pmic_get_reg_bit(int address, struct pmic_table *table,
-			    int count, int *reg, int *bit)
-{
-	int i;
+अटल पूर्णांक pmic_get_reg_bit(पूर्णांक address, काष्ठा pmic_table *table,
+			    पूर्णांक count, पूर्णांक *reg, पूर्णांक *bit)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		if (table[i].address == address) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (table[i].address == address) अणु
 			*reg = table[i].reg;
-			if (bit)
+			अगर (bit)
 				*bit = table[i].bit;
-			return 0;
-		}
-	}
-	return -ENOENT;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
-static acpi_status intel_pmic_power_handler(u32 function,
+अटल acpi_status पूर्णांकel_pmic_घातer_handler(u32 function,
 		acpi_physical_address address, u32 bits, u64 *value64,
-		void *handler_context, void *region_context)
-{
-	struct intel_pmic_opregion *opregion = region_context;
-	struct regmap *regmap = opregion->regmap;
-	struct intel_pmic_opregion_data *d = opregion->data;
-	int reg, bit, result;
+		व्योम *handler_context, व्योम *region_context)
+अणु
+	काष्ठा पूर्णांकel_pmic_opregion *opregion = region_context;
+	काष्ठा regmap *regmap = opregion->regmap;
+	काष्ठा पूर्णांकel_pmic_opregion_data *d = opregion->data;
+	पूर्णांक reg, bit, result;
 
-	if (bits != 32 || !value64)
-		return AE_BAD_PARAMETER;
+	अगर (bits != 32 || !value64)
+		वापस AE_BAD_PARAMETER;
 
-	if (function == ACPI_WRITE && !(*value64 == 0 || *value64 == 1))
-		return AE_BAD_PARAMETER;
+	अगर (function == ACPI_WRITE && !(*value64 == 0 || *value64 == 1))
+		वापस AE_BAD_PARAMETER;
 
-	result = pmic_get_reg_bit(address, d->power_table,
-				  d->power_table_count, &reg, &bit);
-	if (result == -ENOENT)
-		return AE_BAD_PARAMETER;
+	result = pmic_get_reg_bit(address, d->घातer_table,
+				  d->घातer_table_count, &reg, &bit);
+	अगर (result == -ENOENT)
+		वापस AE_BAD_PARAMETER;
 
 	mutex_lock(&opregion->lock);
 
 	result = function == ACPI_READ ?
-		d->get_power(regmap, reg, bit, value64) :
-		d->update_power(regmap, reg, bit, *value64 == 1);
+		d->get_घातer(regmap, reg, bit, value64) :
+		d->update_घातer(regmap, reg, bit, *value64 == 1);
 
 	mutex_unlock(&opregion->lock);
 
-	return result ? AE_ERROR : AE_OK;
-}
+	वापस result ? AE_ERROR : AE_OK;
+पूर्ण
 
-static int pmic_read_temp(struct intel_pmic_opregion *opregion,
-			  int reg, u64 *value)
-{
-	int raw_temp, temp;
+अटल पूर्णांक pmic_पढ़ो_temp(काष्ठा पूर्णांकel_pmic_opregion *opregion,
+			  पूर्णांक reg, u64 *value)
+अणु
+	पूर्णांक raw_temp, temp;
 
-	if (!opregion->data->get_raw_temp)
-		return -ENXIO;
+	अगर (!opregion->data->get_raw_temp)
+		वापस -ENXIO;
 
 	raw_temp = opregion->data->get_raw_temp(opregion->regmap, reg);
-	if (raw_temp < 0)
-		return raw_temp;
+	अगर (raw_temp < 0)
+		वापस raw_temp;
 
-	if (!opregion->lpat_table) {
+	अगर (!opregion->lpat_table) अणु
 		*value = raw_temp;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	temp = acpi_lpat_raw_to_temp(opregion->lpat_table, raw_temp);
-	if (temp < 0)
-		return temp;
+	अगर (temp < 0)
+		वापस temp;
 
 	*value = temp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pmic_thermal_temp(struct intel_pmic_opregion *opregion, int reg,
+अटल पूर्णांक pmic_thermal_temp(काष्ठा पूर्णांकel_pmic_opregion *opregion, पूर्णांक reg,
 			     u32 function, u64 *value)
-{
-	return function == ACPI_READ ?
-		pmic_read_temp(opregion, reg, value) : -EINVAL;
-}
+अणु
+	वापस function == ACPI_READ ?
+		pmic_पढ़ो_temp(opregion, reg, value) : -EINVAL;
+पूर्ण
 
-static int pmic_thermal_aux(struct intel_pmic_opregion *opregion, int reg,
+अटल पूर्णांक pmic_thermal_aux(काष्ठा पूर्णांकel_pmic_opregion *opregion, पूर्णांक reg,
 			    u32 function, u64 *value)
-{
-	int raw_temp;
+अणु
+	पूर्णांक raw_temp;
 
-	if (function == ACPI_READ)
-		return pmic_read_temp(opregion, reg, value);
+	अगर (function == ACPI_READ)
+		वापस pmic_पढ़ो_temp(opregion, reg, value);
 
-	if (!opregion->data->update_aux)
-		return -ENXIO;
+	अगर (!opregion->data->update_aux)
+		वापस -ENXIO;
 
-	if (opregion->lpat_table) {
+	अगर (opregion->lpat_table) अणु
 		raw_temp = acpi_lpat_temp_to_raw(opregion->lpat_table, *value);
-		if (raw_temp < 0)
-			return raw_temp;
-	} else {
+		अगर (raw_temp < 0)
+			वापस raw_temp;
+	पूर्ण अन्यथा अणु
 		raw_temp = *value;
-	}
+	पूर्ण
 
-	return opregion->data->update_aux(opregion->regmap, reg, raw_temp);
-}
+	वापस opregion->data->update_aux(opregion->regmap, reg, raw_temp);
+पूर्ण
 
-static int pmic_thermal_pen(struct intel_pmic_opregion *opregion, int reg,
-			    int bit, u32 function, u64 *value)
-{
-	struct intel_pmic_opregion_data *d = opregion->data;
-	struct regmap *regmap = opregion->regmap;
+अटल पूर्णांक pmic_thermal_pen(काष्ठा पूर्णांकel_pmic_opregion *opregion, पूर्णांक reg,
+			    पूर्णांक bit, u32 function, u64 *value)
+अणु
+	काष्ठा पूर्णांकel_pmic_opregion_data *d = opregion->data;
+	काष्ठा regmap *regmap = opregion->regmap;
 
-	if (!d->get_policy || !d->update_policy)
-		return -ENXIO;
+	अगर (!d->get_policy || !d->update_policy)
+		वापस -ENXIO;
 
-	if (function == ACPI_READ)
-		return d->get_policy(regmap, reg, bit, value);
+	अगर (function == ACPI_READ)
+		वापस d->get_policy(regmap, reg, bit, value);
 
-	if (*value != 0 && *value != 1)
-		return -EINVAL;
+	अगर (*value != 0 && *value != 1)
+		वापस -EINVAL;
 
-	return d->update_policy(regmap, reg, bit, *value);
-}
+	वापस d->update_policy(regmap, reg, bit, *value);
+पूर्ण
 
-static bool pmic_thermal_is_temp(int address)
-{
-	return (address <= 0x3c) && !(address % 12);
-}
+अटल bool pmic_thermal_is_temp(पूर्णांक address)
+अणु
+	वापस (address <= 0x3c) && !(address % 12);
+पूर्ण
 
-static bool pmic_thermal_is_aux(int address)
-{
-	return (address >= 4 && address <= 0x40 && !((address - 4) % 12)) ||
+अटल bool pmic_thermal_is_aux(पूर्णांक address)
+अणु
+	वापस (address >= 4 && address <= 0x40 && !((address - 4) % 12)) ||
 	       (address >= 8 && address <= 0x44 && !((address - 8) % 12));
-}
+पूर्ण
 
-static bool pmic_thermal_is_pen(int address)
-{
-	return address >= 0x48 && address <= 0x5c;
-}
+अटल bool pmic_thermal_is_pen(पूर्णांक address)
+अणु
+	वापस address >= 0x48 && address <= 0x5c;
+पूर्ण
 
-static acpi_status intel_pmic_thermal_handler(u32 function,
+अटल acpi_status पूर्णांकel_pmic_thermal_handler(u32 function,
 		acpi_physical_address address, u32 bits, u64 *value64,
-		void *handler_context, void *region_context)
-{
-	struct intel_pmic_opregion *opregion = region_context;
-	struct intel_pmic_opregion_data *d = opregion->data;
-	int reg, bit, result;
+		व्योम *handler_context, व्योम *region_context)
+अणु
+	काष्ठा पूर्णांकel_pmic_opregion *opregion = region_context;
+	काष्ठा पूर्णांकel_pmic_opregion_data *d = opregion->data;
+	पूर्णांक reg, bit, result;
 
-	if (bits != 32 || !value64)
-		return AE_BAD_PARAMETER;
+	अगर (bits != 32 || !value64)
+		वापस AE_BAD_PARAMETER;
 
 	result = pmic_get_reg_bit(address, d->thermal_table,
 				  d->thermal_table_count, &reg, &bit);
-	if (result == -ENOENT)
-		return AE_BAD_PARAMETER;
+	अगर (result == -ENOENT)
+		वापस AE_BAD_PARAMETER;
 
 	mutex_lock(&opregion->lock);
 
-	if (pmic_thermal_is_temp(address))
+	अगर (pmic_thermal_is_temp(address))
 		result = pmic_thermal_temp(opregion, reg, function, value64);
-	else if (pmic_thermal_is_aux(address))
+	अन्यथा अगर (pmic_thermal_is_aux(address))
 		result = pmic_thermal_aux(opregion, reg, function, value64);
-	else if (pmic_thermal_is_pen(address))
+	अन्यथा अगर (pmic_thermal_is_pen(address))
 		result = pmic_thermal_pen(opregion, reg, bit,
 						function, value64);
-	else
+	अन्यथा
 		result = -EINVAL;
 
 	mutex_unlock(&opregion->lock);
 
-	if (result < 0) {
-		if (result == -EINVAL)
-			return AE_BAD_PARAMETER;
-		else
-			return AE_ERROR;
-	}
+	अगर (result < 0) अणु
+		अगर (result == -EINVAL)
+			वापस AE_BAD_PARAMETER;
+		अन्यथा
+			वापस AE_ERROR;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static acpi_status intel_pmic_regs_handler(u32 function,
+अटल acpi_status पूर्णांकel_pmic_regs_handler(u32 function,
 		acpi_physical_address address, u32 bits, u64 *value64,
-		void *handler_context, void *region_context)
-{
-	struct intel_pmic_opregion *opregion = region_context;
-	int result = 0;
+		व्योम *handler_context, व्योम *region_context)
+अणु
+	काष्ठा पूर्णांकel_pmic_opregion *opregion = region_context;
+	पूर्णांक result = 0;
 
-	switch (address) {
-	case 0:
-		return AE_OK;
-	case 1:
+	चयन (address) अणु
+	हाल 0:
+		वापस AE_OK;
+	हाल 1:
 		opregion->ctx.addr |= (*value64 & 0xff) << 8;
-		return AE_OK;
-	case 2:
+		वापस AE_OK;
+	हाल 2:
 		opregion->ctx.addr |= *value64 & 0xff;
-		return AE_OK;
-	case 3:
+		वापस AE_OK;
+	हाल 3:
 		opregion->ctx.val = *value64 & 0xff;
-		return AE_OK;
-	case 4:
-		if (*value64) {
-			result = regmap_write(opregion->regmap, opregion->ctx.addr,
+		वापस AE_OK;
+	हाल 4:
+		अगर (*value64) अणु
+			result = regmap_ग_लिखो(opregion->regmap, opregion->ctx.addr,
 					      opregion->ctx.val);
-		} else {
-			result = regmap_read(opregion->regmap, opregion->ctx.addr,
+		पूर्ण अन्यथा अणु
+			result = regmap_पढ़ो(opregion->regmap, opregion->ctx.addr,
 					     &opregion->ctx.val);
-			if (result == 0)
+			अगर (result == 0)
 				*value64 = opregion->ctx.val;
-		}
-		memset(&opregion->ctx, 0x00, sizeof(opregion->ctx));
-	}
+		पूर्ण
+		स_रखो(&opregion->ctx, 0x00, माप(opregion->ctx));
+	पूर्ण
 
-	if (result < 0) {
-		if (result == -EINVAL)
-			return AE_BAD_PARAMETER;
-		else
-			return AE_ERROR;
-	}
+	अगर (result < 0) अणु
+		अगर (result == -EINVAL)
+			वापस AE_BAD_PARAMETER;
+		अन्यथा
+			वापस AE_ERROR;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-int intel_pmic_install_opregion_handler(struct device *dev, acpi_handle handle,
-					struct regmap *regmap,
-					struct intel_pmic_opregion_data *d)
-{
+पूर्णांक पूर्णांकel_pmic_install_opregion_handler(काष्ठा device *dev, acpi_handle handle,
+					काष्ठा regmap *regmap,
+					काष्ठा पूर्णांकel_pmic_opregion_data *d)
+अणु
 	acpi_status status = AE_OK;
-	struct intel_pmic_opregion *opregion;
-	int ret;
+	काष्ठा पूर्णांकel_pmic_opregion *opregion;
+	पूर्णांक ret;
 
-	if (!dev || !regmap || !d)
-		return -EINVAL;
+	अगर (!dev || !regmap || !d)
+		वापस -EINVAL;
 
-	if (!handle)
-		return -ENODEV;
+	अगर (!handle)
+		वापस -ENODEV;
 
-	opregion = devm_kzalloc(dev, sizeof(*opregion), GFP_KERNEL);
-	if (!opregion)
-		return -ENOMEM;
+	opregion = devm_kzalloc(dev, माप(*opregion), GFP_KERNEL);
+	अगर (!opregion)
+		वापस -ENOMEM;
 
 	mutex_init(&opregion->lock);
 	opregion->regmap = regmap;
 	opregion->lpat_table = acpi_lpat_get_conversion_table(handle);
 
-	if (d->power_table_count)
+	अगर (d->घातer_table_count)
 		status = acpi_install_address_space_handler(handle,
 						    PMIC_POWER_OPREGION_ID,
-						    intel_pmic_power_handler,
-						    NULL, opregion);
-	if (ACPI_FAILURE(status)) {
+						    पूर्णांकel_pmic_घातer_handler,
+						    शून्य, opregion);
+	अगर (ACPI_FAILURE(status)) अणु
 		ret = -ENODEV;
-		goto out_error;
-	}
+		जाओ out_error;
+	पूर्ण
 
-	if (d->thermal_table_count)
+	अगर (d->thermal_table_count)
 		status = acpi_install_address_space_handler(handle,
 						    PMIC_THERMAL_OPREGION_ID,
-						    intel_pmic_thermal_handler,
-						    NULL, opregion);
-	if (ACPI_FAILURE(status)) {
+						    पूर्णांकel_pmic_thermal_handler,
+						    शून्य, opregion);
+	अगर (ACPI_FAILURE(status)) अणु
 		ret = -ENODEV;
-		goto out_remove_power_handler;
-	}
+		जाओ out_हटाओ_घातer_handler;
+	पूर्ण
 
 	status = acpi_install_address_space_handler(handle,
-			PMIC_REGS_OPREGION_ID, intel_pmic_regs_handler, NULL,
+			PMIC_REGS_OPREGION_ID, पूर्णांकel_pmic_regs_handler, शून्य,
 			opregion);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ret = -ENODEV;
-		goto out_remove_thermal_handler;
-	}
+		जाओ out_हटाओ_thermal_handler;
+	पूर्ण
 
 	opregion->data = d;
-	intel_pmic_opregion = opregion;
-	return 0;
+	पूर्णांकel_pmic_opregion = opregion;
+	वापस 0;
 
-out_remove_thermal_handler:
-	if (d->thermal_table_count)
-		acpi_remove_address_space_handler(handle,
+out_हटाओ_thermal_handler:
+	अगर (d->thermal_table_count)
+		acpi_हटाओ_address_space_handler(handle,
 						  PMIC_THERMAL_OPREGION_ID,
-						  intel_pmic_thermal_handler);
+						  पूर्णांकel_pmic_thermal_handler);
 
-out_remove_power_handler:
-	if (d->power_table_count)
-		acpi_remove_address_space_handler(handle,
+out_हटाओ_घातer_handler:
+	अगर (d->घातer_table_count)
+		acpi_हटाओ_address_space_handler(handle,
 						  PMIC_POWER_OPREGION_ID,
-						  intel_pmic_power_handler);
+						  पूर्णांकel_pmic_घातer_handler);
 
 out_error:
-	acpi_lpat_free_conversion_table(opregion->lpat_table);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(intel_pmic_install_opregion_handler);
+	acpi_lpat_मुक्त_conversion_table(opregion->lpat_table);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_pmic_install_opregion_handler);
 
 /**
- * intel_soc_pmic_exec_mipi_pmic_seq_element - Execute PMIC MIPI sequence
- * @i2c_address:  I2C client address for the PMIC
- * @reg_address:  PMIC register address
- * @value:        New value for the register bits to change
- * @mask:         Mask indicating which register bits to change
+ * पूर्णांकel_soc_pmic_exec_mipi_pmic_seq_element - Execute PMIC MIPI sequence
+ * @i2c_address:  I2C client address क्रम the PMIC
+ * @reg_address:  PMIC रेजिस्टर address
+ * @value:        New value क्रम the रेजिस्टर bits to change
+ * @mask:         Mask indicating which रेजिस्टर bits to change
  *
  * DSI LCD panels describe an initialization sequence in the i915 VBT (Video
  * BIOS Tables) using so called MIPI sequences. One possible element in these
- * sequences is a PMIC specific element of 15 bytes.
+ * sequences is a PMIC specअगरic element of 15 bytes.
  *
- * This function executes these PMIC specific elements sending the embedded
+ * This function executes these PMIC specअगरic elements sending the embedded
  * commands to the PMIC.
  *
  * Return 0 on success, < 0 on failure.
  */
-int intel_soc_pmic_exec_mipi_pmic_seq_element(u16 i2c_address, u32 reg_address,
+पूर्णांक पूर्णांकel_soc_pmic_exec_mipi_pmic_seq_element(u16 i2c_address, u32 reg_address,
 					      u32 value, u32 mask)
-{
-	struct intel_pmic_opregion_data *d;
-	int ret;
+अणु
+	काष्ठा पूर्णांकel_pmic_opregion_data *d;
+	पूर्णांक ret;
 
-	if (!intel_pmic_opregion) {
+	अगर (!पूर्णांकel_pmic_opregion) अणु
 		pr_warn("%s: No PMIC registered\n", __func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	d = intel_pmic_opregion->data;
+	d = पूर्णांकel_pmic_opregion->data;
 
-	mutex_lock(&intel_pmic_opregion->lock);
+	mutex_lock(&पूर्णांकel_pmic_opregion->lock);
 
-	if (d->exec_mipi_pmic_seq_element) {
-		ret = d->exec_mipi_pmic_seq_element(intel_pmic_opregion->regmap,
+	अगर (d->exec_mipi_pmic_seq_element) अणु
+		ret = d->exec_mipi_pmic_seq_element(पूर्णांकel_pmic_opregion->regmap,
 						    i2c_address, reg_address,
 						    value, mask);
-	} else if (d->pmic_i2c_address) {
-		if (i2c_address == d->pmic_i2c_address) {
-			ret = regmap_update_bits(intel_pmic_opregion->regmap,
+	पूर्ण अन्यथा अगर (d->pmic_i2c_address) अणु
+		अगर (i2c_address == d->pmic_i2c_address) अणु
+			ret = regmap_update_bits(पूर्णांकel_pmic_opregion->regmap,
 						 reg_address, mask, value);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_err("%s: Unexpected i2c-addr: 0x%02x (reg-addr 0x%x value 0x%x mask 0x%x)\n",
 			       __func__, i2c_address, reg_address, value, mask);
 			ret = -ENXIO;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_warn("%s: Not implemented\n", __func__);
 		pr_warn("%s: i2c-addr: 0x%x reg-addr 0x%x value 0x%x mask 0x%x\n",
 			__func__, i2c_address, reg_address, value, mask);
 		ret = -EOPNOTSUPP;
-	}
+	पूर्ण
 
-	mutex_unlock(&intel_pmic_opregion->lock);
+	mutex_unlock(&पूर्णांकel_pmic_opregion->lock);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(intel_soc_pmic_exec_mipi_pmic_seq_element);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांकel_soc_pmic_exec_mipi_pmic_seq_element);

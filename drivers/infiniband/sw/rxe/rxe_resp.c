@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include <linux/skbuff.h>
+#समावेश <linux/skbuff.h>
 
-#include "rxe.h"
-#include "rxe_loc.h"
-#include "rxe_queue.h"
+#समावेश "rxe.h"
+#समावेश "rxe_loc.h"
+#समावेश "rxe_queue.h"
 
-enum resp_states {
+क्रमागत resp_states अणु
 	RESPST_NONE,
 	RESPST_GET_REQ,
 	RESPST_CHK_PSN,
@@ -41,9 +42,9 @@ enum resp_states {
 	RESPST_RESET,
 	RESPST_DONE,
 	RESPST_EXIT,
-};
+पूर्ण;
 
-static char *resp_state_name[] = {
+अटल अक्षर *resp_state_name[] = अणु
 	[RESPST_NONE]				= "NONE",
 	[RESPST_GET_REQ]			= "GET_REQ",
 	[RESPST_CHK_PSN]			= "CHK_PSN",
@@ -74,13 +75,13 @@ static char *resp_state_name[] = {
 	[RESPST_RESET]				= "RESET",
 	[RESPST_DONE]				= "DONE",
 	[RESPST_EXIT]				= "EXIT",
-};
+पूर्ण;
 
 /* rxe_recv calls here to add a request packet to the input queue */
-void rxe_resp_queue_pkt(struct rxe_qp *qp, struct sk_buff *skb)
-{
-	int must_sched;
-	struct rxe_pkt_info *pkt = SKB_TO_PKT(skb);
+व्योम rxe_resp_queue_pkt(काष्ठा rxe_qp *qp, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक must_sched;
+	काष्ठा rxe_pkt_info *pkt = SKB_TO_PKT(skb);
 
 	skb_queue_tail(&qp->req_pkts, skb);
 
@@ -88,237 +89,237 @@ void rxe_resp_queue_pkt(struct rxe_qp *qp, struct sk_buff *skb)
 			(skb_queue_len(&qp->req_pkts) > 1);
 
 	rxe_run_task(&qp->resp.task, must_sched);
-}
+पूर्ण
 
-static inline enum resp_states get_req(struct rxe_qp *qp,
-				       struct rxe_pkt_info **pkt_p)
-{
-	struct sk_buff *skb;
+अटल अंतरभूत क्रमागत resp_states get_req(काष्ठा rxe_qp *qp,
+				       काष्ठा rxe_pkt_info **pkt_p)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (qp->resp.state == QP_STATE_ERROR) {
-		while ((skb = skb_dequeue(&qp->req_pkts))) {
+	अगर (qp->resp.state == QP_STATE_ERROR) अणु
+		जबतक ((skb = skb_dequeue(&qp->req_pkts))) अणु
 			rxe_drop_ref(qp);
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 			ib_device_put(qp->ibqp.device);
-		}
+		पूर्ण
 
 		/* go drain recv wr queue */
-		return RESPST_CHK_RESOURCE;
-	}
+		वापस RESPST_CHK_RESOURCE;
+	पूर्ण
 
 	skb = skb_peek(&qp->req_pkts);
-	if (!skb)
-		return RESPST_EXIT;
+	अगर (!skb)
+		वापस RESPST_EXIT;
 
 	*pkt_p = SKB_TO_PKT(skb);
 
-	return (qp->resp.res) ? RESPST_READ_REPLY : RESPST_CHK_PSN;
-}
+	वापस (qp->resp.res) ? RESPST_READ_REPLY : RESPST_CHK_PSN;
+पूर्ण
 
-static enum resp_states check_psn(struct rxe_qp *qp,
-				  struct rxe_pkt_info *pkt)
-{
-	int diff = psn_compare(pkt->psn, qp->resp.psn);
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
+अटल क्रमागत resp_states check_psn(काष्ठा rxe_qp *qp,
+				  काष्ठा rxe_pkt_info *pkt)
+अणु
+	पूर्णांक dअगरf = psn_compare(pkt->psn, qp->resp.psn);
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
 
-	switch (qp_type(qp)) {
-	case IB_QPT_RC:
-		if (diff > 0) {
-			if (qp->resp.sent_psn_nak)
-				return RESPST_CLEANUP;
+	चयन (qp_type(qp)) अणु
+	हाल IB_QPT_RC:
+		अगर (dअगरf > 0) अणु
+			अगर (qp->resp.sent_psn_nak)
+				वापस RESPST_CLEANUP;
 
 			qp->resp.sent_psn_nak = 1;
 			rxe_counter_inc(rxe, RXE_CNT_OUT_OF_SEQ_REQ);
-			return RESPST_ERR_PSN_OUT_OF_SEQ;
+			वापस RESPST_ERR_PSN_OUT_OF_SEQ;
 
-		} else if (diff < 0) {
+		पूर्ण अन्यथा अगर (dअगरf < 0) अणु
 			rxe_counter_inc(rxe, RXE_CNT_DUP_REQ);
-			return RESPST_DUPLICATE_REQUEST;
-		}
+			वापस RESPST_DUPLICATE_REQUEST;
+		पूर्ण
 
-		if (qp->resp.sent_psn_nak)
+		अगर (qp->resp.sent_psn_nak)
 			qp->resp.sent_psn_nak = 0;
 
-		break;
+		अवरोध;
 
-	case IB_QPT_UC:
-		if (qp->resp.drop_msg || diff != 0) {
-			if (pkt->mask & RXE_START_MASK) {
+	हाल IB_QPT_UC:
+		अगर (qp->resp.drop_msg || dअगरf != 0) अणु
+			अगर (pkt->mask & RXE_START_MASK) अणु
 				qp->resp.drop_msg = 0;
-				return RESPST_CHK_OP_SEQ;
-			}
+				वापस RESPST_CHK_OP_SEQ;
+			पूर्ण
 
 			qp->resp.drop_msg = 1;
-			return RESPST_CLEANUP;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस RESPST_CLEANUP;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return RESPST_CHK_OP_SEQ;
-}
+	वापस RESPST_CHK_OP_SEQ;
+पूर्ण
 
-static enum resp_states check_op_seq(struct rxe_qp *qp,
-				     struct rxe_pkt_info *pkt)
-{
-	switch (qp_type(qp)) {
-	case IB_QPT_RC:
-		switch (qp->resp.opcode) {
-		case IB_OPCODE_RC_SEND_FIRST:
-		case IB_OPCODE_RC_SEND_MIDDLE:
-			switch (pkt->opcode) {
-			case IB_OPCODE_RC_SEND_MIDDLE:
-			case IB_OPCODE_RC_SEND_LAST:
-			case IB_OPCODE_RC_SEND_LAST_WITH_IMMEDIATE:
-			case IB_OPCODE_RC_SEND_LAST_WITH_INVALIDATE:
-				return RESPST_CHK_OP_VALID;
-			default:
-				return RESPST_ERR_MISSING_OPCODE_LAST_C;
-			}
+अटल क्रमागत resp_states check_op_seq(काष्ठा rxe_qp *qp,
+				     काष्ठा rxe_pkt_info *pkt)
+अणु
+	चयन (qp_type(qp)) अणु
+	हाल IB_QPT_RC:
+		चयन (qp->resp.opcode) अणु
+		हाल IB_OPCODE_RC_SEND_FIRST:
+		हाल IB_OPCODE_RC_SEND_MIDDLE:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_RC_SEND_MIDDLE:
+			हाल IB_OPCODE_RC_SEND_LAST:
+			हाल IB_OPCODE_RC_SEND_LAST_WITH_IMMEDIATE:
+			हाल IB_OPCODE_RC_SEND_LAST_WITH_INVALIDATE:
+				वापस RESPST_CHK_OP_VALID;
+			शेष:
+				वापस RESPST_ERR_MISSING_OPCODE_LAST_C;
+			पूर्ण
 
-		case IB_OPCODE_RC_RDMA_WRITE_FIRST:
-		case IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
-			switch (pkt->opcode) {
-			case IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
-			case IB_OPCODE_RC_RDMA_WRITE_LAST:
-			case IB_OPCODE_RC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
-				return RESPST_CHK_OP_VALID;
-			default:
-				return RESPST_ERR_MISSING_OPCODE_LAST_C;
-			}
+		हाल IB_OPCODE_RC_RDMA_WRITE_FIRST:
+		हाल IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
+			हाल IB_OPCODE_RC_RDMA_WRITE_LAST:
+			हाल IB_OPCODE_RC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
+				वापस RESPST_CHK_OP_VALID;
+			शेष:
+				वापस RESPST_ERR_MISSING_OPCODE_LAST_C;
+			पूर्ण
 
-		default:
-			switch (pkt->opcode) {
-			case IB_OPCODE_RC_SEND_MIDDLE:
-			case IB_OPCODE_RC_SEND_LAST:
-			case IB_OPCODE_RC_SEND_LAST_WITH_IMMEDIATE:
-			case IB_OPCODE_RC_SEND_LAST_WITH_INVALIDATE:
-			case IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
-			case IB_OPCODE_RC_RDMA_WRITE_LAST:
-			case IB_OPCODE_RC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
-				return RESPST_ERR_MISSING_OPCODE_FIRST;
-			default:
-				return RESPST_CHK_OP_VALID;
-			}
-		}
-		break;
+		शेष:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_RC_SEND_MIDDLE:
+			हाल IB_OPCODE_RC_SEND_LAST:
+			हाल IB_OPCODE_RC_SEND_LAST_WITH_IMMEDIATE:
+			हाल IB_OPCODE_RC_SEND_LAST_WITH_INVALIDATE:
+			हाल IB_OPCODE_RC_RDMA_WRITE_MIDDLE:
+			हाल IB_OPCODE_RC_RDMA_WRITE_LAST:
+			हाल IB_OPCODE_RC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
+				वापस RESPST_ERR_MISSING_OPCODE_FIRST;
+			शेष:
+				वापस RESPST_CHK_OP_VALID;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case IB_QPT_UC:
-		switch (qp->resp.opcode) {
-		case IB_OPCODE_UC_SEND_FIRST:
-		case IB_OPCODE_UC_SEND_MIDDLE:
-			switch (pkt->opcode) {
-			case IB_OPCODE_UC_SEND_MIDDLE:
-			case IB_OPCODE_UC_SEND_LAST:
-			case IB_OPCODE_UC_SEND_LAST_WITH_IMMEDIATE:
-				return RESPST_CHK_OP_VALID;
-			default:
-				return RESPST_ERR_MISSING_OPCODE_LAST_D1E;
-			}
+	हाल IB_QPT_UC:
+		चयन (qp->resp.opcode) अणु
+		हाल IB_OPCODE_UC_SEND_FIRST:
+		हाल IB_OPCODE_UC_SEND_MIDDLE:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_UC_SEND_MIDDLE:
+			हाल IB_OPCODE_UC_SEND_LAST:
+			हाल IB_OPCODE_UC_SEND_LAST_WITH_IMMEDIATE:
+				वापस RESPST_CHK_OP_VALID;
+			शेष:
+				वापस RESPST_ERR_MISSING_OPCODE_LAST_D1E;
+			पूर्ण
 
-		case IB_OPCODE_UC_RDMA_WRITE_FIRST:
-		case IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
-			switch (pkt->opcode) {
-			case IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
-			case IB_OPCODE_UC_RDMA_WRITE_LAST:
-			case IB_OPCODE_UC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
-				return RESPST_CHK_OP_VALID;
-			default:
-				return RESPST_ERR_MISSING_OPCODE_LAST_D1E;
-			}
+		हाल IB_OPCODE_UC_RDMA_WRITE_FIRST:
+		हाल IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
+			हाल IB_OPCODE_UC_RDMA_WRITE_LAST:
+			हाल IB_OPCODE_UC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
+				वापस RESPST_CHK_OP_VALID;
+			शेष:
+				वापस RESPST_ERR_MISSING_OPCODE_LAST_D1E;
+			पूर्ण
 
-		default:
-			switch (pkt->opcode) {
-			case IB_OPCODE_UC_SEND_MIDDLE:
-			case IB_OPCODE_UC_SEND_LAST:
-			case IB_OPCODE_UC_SEND_LAST_WITH_IMMEDIATE:
-			case IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
-			case IB_OPCODE_UC_RDMA_WRITE_LAST:
-			case IB_OPCODE_UC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
+		शेष:
+			चयन (pkt->opcode) अणु
+			हाल IB_OPCODE_UC_SEND_MIDDLE:
+			हाल IB_OPCODE_UC_SEND_LAST:
+			हाल IB_OPCODE_UC_SEND_LAST_WITH_IMMEDIATE:
+			हाल IB_OPCODE_UC_RDMA_WRITE_MIDDLE:
+			हाल IB_OPCODE_UC_RDMA_WRITE_LAST:
+			हाल IB_OPCODE_UC_RDMA_WRITE_LAST_WITH_IMMEDIATE:
 				qp->resp.drop_msg = 1;
-				return RESPST_CLEANUP;
-			default:
-				return RESPST_CHK_OP_VALID;
-			}
-		}
-		break;
+				वापस RESPST_CLEANUP;
+			शेष:
+				वापस RESPST_CHK_OP_VALID;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	default:
-		return RESPST_CHK_OP_VALID;
-	}
-}
+	शेष:
+		वापस RESPST_CHK_OP_VALID;
+	पूर्ण
+पूर्ण
 
-static enum resp_states check_op_valid(struct rxe_qp *qp,
-				       struct rxe_pkt_info *pkt)
-{
-	switch (qp_type(qp)) {
-	case IB_QPT_RC:
-		if (((pkt->mask & RXE_READ_MASK) &&
+अटल क्रमागत resp_states check_op_valid(काष्ठा rxe_qp *qp,
+				       काष्ठा rxe_pkt_info *pkt)
+अणु
+	चयन (qp_type(qp)) अणु
+	हाल IB_QPT_RC:
+		अगर (((pkt->mask & RXE_READ_MASK) &&
 		     !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_READ)) ||
 		    ((pkt->mask & RXE_WRITE_MASK) &&
 		     !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_WRITE)) ||
 		    ((pkt->mask & RXE_ATOMIC_MASK) &&
-		     !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_ATOMIC))) {
-			return RESPST_ERR_UNSUPPORTED_OPCODE;
-		}
+		     !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_ATOMIC))) अणु
+			वापस RESPST_ERR_UNSUPPORTED_OPCODE;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case IB_QPT_UC:
-		if ((pkt->mask & RXE_WRITE_MASK) &&
-		    !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_WRITE)) {
+	हाल IB_QPT_UC:
+		अगर ((pkt->mask & RXE_WRITE_MASK) &&
+		    !(qp->attr.qp_access_flags & IB_ACCESS_REMOTE_WRITE)) अणु
 			qp->resp.drop_msg = 1;
-			return RESPST_CLEANUP;
-		}
+			वापस RESPST_CLEANUP;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case IB_QPT_UD:
-	case IB_QPT_SMI:
-	case IB_QPT_GSI:
-		break;
+	हाल IB_QPT_UD:
+	हाल IB_QPT_SMI:
+	हाल IB_QPT_GSI:
+		अवरोध;
 
-	default:
+	शेष:
 		WARN_ON_ONCE(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return RESPST_CHK_RESOURCE;
-}
+	वापस RESPST_CHK_RESOURCE;
+पूर्ण
 
-static enum resp_states get_srq_wqe(struct rxe_qp *qp)
-{
-	struct rxe_srq *srq = qp->srq;
-	struct rxe_queue *q = srq->rq.queue;
-	struct rxe_recv_wqe *wqe;
-	struct ib_event ev;
+अटल क्रमागत resp_states get_srq_wqe(काष्ठा rxe_qp *qp)
+अणु
+	काष्ठा rxe_srq *srq = qp->srq;
+	काष्ठा rxe_queue *q = srq->rq.queue;
+	काष्ठा rxe_recv_wqe *wqe;
+	काष्ठा ib_event ev;
 
-	if (srq->error)
-		return RESPST_ERR_RNR;
+	अगर (srq->error)
+		वापस RESPST_ERR_RNR;
 
 	spin_lock_bh(&srq->rq.consumer_lock);
 
 	wqe = queue_head(q);
-	if (!wqe) {
+	अगर (!wqe) अणु
 		spin_unlock_bh(&srq->rq.consumer_lock);
-		return RESPST_ERR_RNR;
-	}
+		वापस RESPST_ERR_RNR;
+	पूर्ण
 
 	/* note kernel and user space recv wqes have same size */
-	memcpy(&qp->resp.srq_wqe, wqe, sizeof(qp->resp.srq_wqe));
+	स_नकल(&qp->resp.srq_wqe, wqe, माप(qp->resp.srq_wqe));
 
 	qp->resp.wqe = &qp->resp.srq_wqe.wqe;
 	advance_consumer(q);
 
-	if (srq->limit && srq->ibsrq.event_handler &&
-	    (queue_count(q) < srq->limit)) {
+	अगर (srq->limit && srq->ibsrq.event_handler &&
+	    (queue_count(q) < srq->limit)) अणु
 		srq->limit = 0;
-		goto event;
-	}
+		जाओ event;
+	पूर्ण
 
 	spin_unlock_bh(&srq->rq.consumer_lock);
-	return RESPST_CHK_LENGTH;
+	वापस RESPST_CHK_LENGTH;
 
 event:
 	spin_unlock_bh(&srq->rq.consumer_lock);
@@ -326,104 +327,104 @@ event:
 	ev.element.srq = qp->ibqp.srq;
 	ev.event = IB_EVENT_SRQ_LIMIT_REACHED;
 	srq->ibsrq.event_handler(&ev, srq->ibsrq.srq_context);
-	return RESPST_CHK_LENGTH;
-}
+	वापस RESPST_CHK_LENGTH;
+पूर्ण
 
-static enum resp_states check_resource(struct rxe_qp *qp,
-				       struct rxe_pkt_info *pkt)
-{
-	struct rxe_srq *srq = qp->srq;
+अटल क्रमागत resp_states check_resource(काष्ठा rxe_qp *qp,
+				       काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा rxe_srq *srq = qp->srq;
 
-	if (qp->resp.state == QP_STATE_ERROR) {
-		if (qp->resp.wqe) {
+	अगर (qp->resp.state == QP_STATE_ERROR) अणु
+		अगर (qp->resp.wqe) अणु
 			qp->resp.status = IB_WC_WR_FLUSH_ERR;
-			return RESPST_COMPLETE;
-		} else if (!srq) {
+			वापस RESPST_COMPLETE;
+		पूर्ण अन्यथा अगर (!srq) अणु
 			qp->resp.wqe = queue_head(qp->rq.queue);
-			if (qp->resp.wqe) {
+			अगर (qp->resp.wqe) अणु
 				qp->resp.status = IB_WC_WR_FLUSH_ERR;
-				return RESPST_COMPLETE;
-			} else {
-				return RESPST_EXIT;
-			}
-		} else {
-			return RESPST_EXIT;
-		}
-	}
+				वापस RESPST_COMPLETE;
+			पूर्ण अन्यथा अणु
+				वापस RESPST_EXIT;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			वापस RESPST_EXIT;
+		पूर्ण
+	पूर्ण
 
-	if (pkt->mask & RXE_READ_OR_ATOMIC) {
+	अगर (pkt->mask & RXE_READ_OR_ATOMIC) अणु
 		/* it is the requesters job to not send
-		 * too many read/atomic ops, we just
+		 * too many पढ़ो/atomic ops, we just
 		 * recycle the responder resource queue
 		 */
-		if (likely(qp->attr.max_dest_rd_atomic > 0))
-			return RESPST_CHK_LENGTH;
-		else
-			return RESPST_ERR_TOO_MANY_RDMA_ATM_REQ;
-	}
+		अगर (likely(qp->attr.max_dest_rd_atomic > 0))
+			वापस RESPST_CHK_LENGTH;
+		अन्यथा
+			वापस RESPST_ERR_TOO_MANY_RDMA_ATM_REQ;
+	पूर्ण
 
-	if (pkt->mask & RXE_RWR_MASK) {
-		if (srq)
-			return get_srq_wqe(qp);
+	अगर (pkt->mask & RXE_RWR_MASK) अणु
+		अगर (srq)
+			वापस get_srq_wqe(qp);
 
 		qp->resp.wqe = queue_head(qp->rq.queue);
-		return (qp->resp.wqe) ? RESPST_CHK_LENGTH : RESPST_ERR_RNR;
-	}
+		वापस (qp->resp.wqe) ? RESPST_CHK_LENGTH : RESPST_ERR_RNR;
+	पूर्ण
 
-	return RESPST_CHK_LENGTH;
-}
+	वापस RESPST_CHK_LENGTH;
+पूर्ण
 
-static enum resp_states check_length(struct rxe_qp *qp,
-				     struct rxe_pkt_info *pkt)
-{
-	switch (qp_type(qp)) {
-	case IB_QPT_RC:
-		return RESPST_CHK_RKEY;
+अटल क्रमागत resp_states check_length(काष्ठा rxe_qp *qp,
+				     काष्ठा rxe_pkt_info *pkt)
+अणु
+	चयन (qp_type(qp)) अणु
+	हाल IB_QPT_RC:
+		वापस RESPST_CHK_RKEY;
 
-	case IB_QPT_UC:
-		return RESPST_CHK_RKEY;
+	हाल IB_QPT_UC:
+		वापस RESPST_CHK_RKEY;
 
-	default:
-		return RESPST_CHK_RKEY;
-	}
-}
+	शेष:
+		वापस RESPST_CHK_RKEY;
+	पूर्ण
+पूर्ण
 
-static enum resp_states check_rkey(struct rxe_qp *qp,
-				   struct rxe_pkt_info *pkt)
-{
-	struct rxe_mr *mr = NULL;
+अटल क्रमागत resp_states check_rkey(काष्ठा rxe_qp *qp,
+				   काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा rxe_mr *mr = शून्य;
 	u64 va;
 	u32 rkey;
 	u32 resid;
 	u32 pktlen;
-	int mtu = qp->mtu;
-	enum resp_states state;
-	int access;
+	पूर्णांक mtu = qp->mtu;
+	क्रमागत resp_states state;
+	पूर्णांक access;
 
-	if (pkt->mask & (RXE_READ_MASK | RXE_WRITE_MASK)) {
-		if (pkt->mask & RXE_RETH_MASK) {
+	अगर (pkt->mask & (RXE_READ_MASK | RXE_WRITE_MASK)) अणु
+		अगर (pkt->mask & RXE_RETH_MASK) अणु
 			qp->resp.va = reth_va(pkt);
 			qp->resp.rkey = reth_rkey(pkt);
 			qp->resp.resid = reth_len(pkt);
 			qp->resp.length = reth_len(pkt);
-		}
+		पूर्ण
 		access = (pkt->mask & RXE_READ_MASK) ? IB_ACCESS_REMOTE_READ
 						     : IB_ACCESS_REMOTE_WRITE;
-	} else if (pkt->mask & RXE_ATOMIC_MASK) {
-		qp->resp.va = atmeth_va(pkt);
-		qp->resp.rkey = atmeth_rkey(pkt);
-		qp->resp.resid = sizeof(u64);
+	पूर्ण अन्यथा अगर (pkt->mask & RXE_ATOMIC_MASK) अणु
+		qp->resp.va = aपंचांगeth_va(pkt);
+		qp->resp.rkey = aपंचांगeth_rkey(pkt);
+		qp->resp.resid = माप(u64);
 		access = IB_ACCESS_REMOTE_ATOMIC;
-	} else {
-		return RESPST_EXECUTE;
-	}
+	पूर्ण अन्यथा अणु
+		वापस RESPST_EXECUTE;
+	पूर्ण
 
 	/* A zero-byte op is not required to set an addr or rkey. */
-	if ((pkt->mask & (RXE_READ_MASK | RXE_WRITE_OR_SEND)) &&
+	अगर ((pkt->mask & (RXE_READ_MASK | RXE_WRITE_OR_SEND)) &&
 	    (pkt->mask & RXE_RETH_MASK) &&
-	    reth_len(pkt) == 0) {
-		return RESPST_EXECUTE;
-	}
+	    reth_len(pkt) == 0) अणु
+		वापस RESPST_EXECUTE;
+	पूर्ण
 
 	va	= qp->resp.va;
 	rkey	= qp->resp.rkey;
@@ -431,147 +432,147 @@ static enum resp_states check_rkey(struct rxe_qp *qp,
 	pktlen	= payload_size(pkt);
 
 	mr = lookup_mr(qp->pd, access, rkey, lookup_remote);
-	if (!mr) {
+	अगर (!mr) अणु
 		state = RESPST_ERR_RKEY_VIOLATION;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (unlikely(mr->state == RXE_MR_STATE_FREE)) {
+	अगर (unlikely(mr->state == RXE_MR_STATE_FREE)) अणु
 		state = RESPST_ERR_RKEY_VIOLATION;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (mr_check_range(mr, va, resid)) {
+	अगर (mr_check_range(mr, va, resid)) अणु
 		state = RESPST_ERR_RKEY_VIOLATION;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (pkt->mask & RXE_WRITE_MASK)	 {
-		if (resid > mtu) {
-			if (pktlen != mtu || bth_pad(pkt)) {
+	अगर (pkt->mask & RXE_WRITE_MASK)	 अणु
+		अगर (resid > mtu) अणु
+			अगर (pktlen != mtu || bth_pad(pkt)) अणु
 				state = RESPST_ERR_LENGTH;
-				goto err;
-			}
-		} else {
-			if (pktlen != resid) {
+				जाओ err;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (pktlen != resid) अणु
 				state = RESPST_ERR_LENGTH;
-				goto err;
-			}
-			if ((bth_pad(pkt) != (0x3 & (-resid)))) {
-				/* This case may not be exactly that
-				 * but nothing else fits.
+				जाओ err;
+			पूर्ण
+			अगर ((bth_pad(pkt) != (0x3 & (-resid)))) अणु
+				/* This हाल may not be exactly that
+				 * but nothing अन्यथा fits.
 				 */
 				state = RESPST_ERR_LENGTH;
-				goto err;
-			}
-		}
-	}
+				जाओ err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	WARN_ON_ONCE(qp->resp.mr);
 
 	qp->resp.mr = mr;
-	return RESPST_EXECUTE;
+	वापस RESPST_EXECUTE;
 
 err:
-	if (mr)
+	अगर (mr)
 		rxe_drop_ref(mr);
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static enum resp_states send_data_in(struct rxe_qp *qp, void *data_addr,
-				     int data_len)
-{
-	int err;
+अटल क्रमागत resp_states send_data_in(काष्ठा rxe_qp *qp, व्योम *data_addr,
+				     पूर्णांक data_len)
+अणु
+	पूर्णांक err;
 
 	err = copy_data(qp->pd, IB_ACCESS_LOCAL_WRITE, &qp->resp.wqe->dma,
-			data_addr, data_len, to_mr_obj, NULL);
-	if (unlikely(err))
-		return (err == -ENOSPC) ? RESPST_ERR_LENGTH
+			data_addr, data_len, to_mr_obj, शून्य);
+	अगर (unlikely(err))
+		वापस (err == -ENOSPC) ? RESPST_ERR_LENGTH
 					: RESPST_ERR_MALFORMED_WQE;
 
-	return RESPST_NONE;
-}
+	वापस RESPST_NONE;
+पूर्ण
 
-static enum resp_states write_data_in(struct rxe_qp *qp,
-				      struct rxe_pkt_info *pkt)
-{
-	enum resp_states rc = RESPST_NONE;
-	int	err;
-	int data_len = payload_size(pkt);
+अटल क्रमागत resp_states ग_लिखो_data_in(काष्ठा rxe_qp *qp,
+				      काष्ठा rxe_pkt_info *pkt)
+अणु
+	क्रमागत resp_states rc = RESPST_NONE;
+	पूर्णांक	err;
+	पूर्णांक data_len = payload_size(pkt);
 
 	err = rxe_mr_copy(qp->resp.mr, qp->resp.va, payload_addr(pkt), data_len,
-			  to_mr_obj, NULL);
-	if (err) {
+			  to_mr_obj, शून्य);
+	अगर (err) अणु
 		rc = RESPST_ERR_RKEY_VIOLATION;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	qp->resp.va += data_len;
 	qp->resp.resid -= data_len;
 
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Guarantee atomicity of atomic operations at the machine level. */
-static DEFINE_SPINLOCK(atomic_ops_lock);
+अटल DEFINE_SPINLOCK(atomic_ops_lock);
 
-static enum resp_states process_atomic(struct rxe_qp *qp,
-				       struct rxe_pkt_info *pkt)
-{
-	u64 iova = atmeth_va(pkt);
+अटल क्रमागत resp_states process_atomic(काष्ठा rxe_qp *qp,
+				       काष्ठा rxe_pkt_info *pkt)
+अणु
+	u64 iova = aपंचांगeth_va(pkt);
 	u64 *vaddr;
-	enum resp_states ret;
-	struct rxe_mr *mr = qp->resp.mr;
+	क्रमागत resp_states ret;
+	काष्ठा rxe_mr *mr = qp->resp.mr;
 
-	if (mr->state != RXE_MR_STATE_VALID) {
+	अगर (mr->state != RXE_MR_STATE_VALID) अणु
 		ret = RESPST_ERR_RKEY_VIOLATION;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	vaddr = iova_to_vaddr(mr, iova, sizeof(u64));
+	vaddr = iova_to_vaddr(mr, iova, माप(u64));
 
 	/* check vaddr is 8 bytes aligned. */
-	if (!vaddr || (uintptr_t)vaddr & 7) {
+	अगर (!vaddr || (uपूर्णांकptr_t)vaddr & 7) अणु
 		ret = RESPST_ERR_MISALIGNED_ATOMIC;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock_bh(&atomic_ops_lock);
 
 	qp->resp.atomic_orig = *vaddr;
 
-	if (pkt->opcode == IB_OPCODE_RC_COMPARE_SWAP ||
-	    pkt->opcode == IB_OPCODE_RD_COMPARE_SWAP) {
-		if (*vaddr == atmeth_comp(pkt))
-			*vaddr = atmeth_swap_add(pkt);
-	} else {
-		*vaddr += atmeth_swap_add(pkt);
-	}
+	अगर (pkt->opcode == IB_OPCODE_RC_COMPARE_SWAP ||
+	    pkt->opcode == IB_OPCODE_RD_COMPARE_SWAP) अणु
+		अगर (*vaddr == aपंचांगeth_comp(pkt))
+			*vaddr = aपंचांगeth_swap_add(pkt);
+	पूर्ण अन्यथा अणु
+		*vaddr += aपंचांगeth_swap_add(pkt);
+	पूर्ण
 
 	spin_unlock_bh(&atomic_ops_lock);
 
 	ret = RESPST_NONE;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct sk_buff *prepare_ack_packet(struct rxe_qp *qp,
-					  struct rxe_pkt_info *pkt,
-					  struct rxe_pkt_info *ack,
-					  int opcode,
-					  int payload,
+अटल काष्ठा sk_buff *prepare_ack_packet(काष्ठा rxe_qp *qp,
+					  काष्ठा rxe_pkt_info *pkt,
+					  काष्ठा rxe_pkt_info *ack,
+					  पूर्णांक opcode,
+					  पूर्णांक payload,
 					  u32 psn,
 					  u8 syndrome,
 					  u32 *crcp)
-{
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
-	struct sk_buff *skb;
+अणु
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	काष्ठा sk_buff *skb;
 	u32 crc = 0;
 	u32 *p;
-	int paylen;
-	int pad;
-	int err;
+	पूर्णांक paylen;
+	पूर्णांक pad;
+	पूर्णांक err;
 
 	/*
 	 * allocate packet
@@ -580,8 +581,8 @@ static struct sk_buff *prepare_ack_packet(struct rxe_qp *qp,
 	paylen = rxe_opcode[opcode].length + payload + pad + RXE_ICRC_SIZE;
 
 	skb = rxe_init_packet(rxe, &qp->pri_av, paylen, ack);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	ack->qp = qp;
 	ack->opcode = opcode;
@@ -589,7 +590,7 @@ static struct sk_buff *prepare_ack_packet(struct rxe_qp *qp,
 	ack->paylen = paylen;
 
 	/* fill in bth using the request packet headers */
-	memcpy(ack->hdr, pkt->hdr, RXE_BTH_BYTES);
+	स_नकल(ack->hdr, pkt->hdr, RXE_BTH_BYTES);
 
 	bth_set_opcode(ack, opcode);
 	bth_set_qpn(ack, qp->attr.dest_qp_num);
@@ -599,382 +600,382 @@ static struct sk_buff *prepare_ack_packet(struct rxe_qp *qp,
 	bth_set_ack(ack, 0);
 	ack->psn = psn;
 
-	if (ack->mask & RXE_AETH_MASK) {
+	अगर (ack->mask & RXE_AETH_MASK) अणु
 		aeth_set_syn(ack, syndrome);
 		aeth_set_msn(ack, qp->resp.msn);
-	}
+	पूर्ण
 
-	if (ack->mask & RXE_ATMACK_MASK)
-		atmack_set_orig(ack, qp->resp.atomic_orig);
+	अगर (ack->mask & RXE_ATMACK_MASK)
+		aपंचांगack_set_orig(ack, qp->resp.atomic_orig);
 
 	err = rxe_prepare(ack, skb, &crc);
-	if (err) {
-		kfree_skb(skb);
-		return NULL;
-	}
+	अगर (err) अणु
+		kमुक्त_skb(skb);
+		वापस शून्य;
+	पूर्ण
 
-	if (crcp) {
-		/* CRC computation will be continued by the caller */
+	अगर (crcp) अणु
+		/* CRC computation will be जारीd by the caller */
 		*crcp = crc;
-	} else {
+	पूर्ण अन्यथा अणु
 		p = payload_addr(ack) + payload + bth_pad(ack);
 		*p = ~crc;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-/* RDMA read response. If res is not NULL, then we have a current RDMA request
+/* RDMA पढ़ो response. If res is not शून्य, then we have a current RDMA request
  * being processed or replayed.
  */
-static enum resp_states read_reply(struct rxe_qp *qp,
-				   struct rxe_pkt_info *req_pkt)
-{
-	struct rxe_pkt_info ack_pkt;
-	struct sk_buff *skb;
-	int mtu = qp->mtu;
-	enum resp_states state;
-	int payload;
-	int opcode;
-	int err;
-	struct resp_res *res = qp->resp.res;
+अटल क्रमागत resp_states पढ़ो_reply(काष्ठा rxe_qp *qp,
+				   काष्ठा rxe_pkt_info *req_pkt)
+अणु
+	काष्ठा rxe_pkt_info ack_pkt;
+	काष्ठा sk_buff *skb;
+	पूर्णांक mtu = qp->mtu;
+	क्रमागत resp_states state;
+	पूर्णांक payload;
+	पूर्णांक opcode;
+	पूर्णांक err;
+	काष्ठा resp_res *res = qp->resp.res;
 	u32 icrc;
 	u32 *p;
 
-	if (!res) {
-		/* This is the first time we process that request. Get a
+	अगर (!res) अणु
+		/* This is the first समय we process that request. Get a
 		 * resource
 		 */
 		res = &qp->resp.resources[qp->resp.res_head];
 
-		free_rd_atomic_resource(qp, res);
+		मुक्त_rd_atomic_resource(qp, res);
 		rxe_advance_resp_resource(qp);
 
 		res->type		= RXE_READ_MASK;
 		res->replay		= 0;
 
-		res->read.va		= qp->resp.va;
-		res->read.va_org	= qp->resp.va;
+		res->पढ़ो.va		= qp->resp.va;
+		res->पढ़ो.va_org	= qp->resp.va;
 
 		res->first_psn		= req_pkt->psn;
 
-		if (reth_len(req_pkt)) {
+		अगर (reth_len(req_pkt)) अणु
 			res->last_psn	= (req_pkt->psn +
 					   (reth_len(req_pkt) + mtu - 1) /
 					   mtu - 1) & BTH_PSN_MASK;
-		} else {
+		पूर्ण अन्यथा अणु
 			res->last_psn	= res->first_psn;
-		}
+		पूर्ण
 		res->cur_psn		= req_pkt->psn;
 
-		res->read.resid		= qp->resp.resid;
-		res->read.length	= qp->resp.resid;
-		res->read.rkey		= qp->resp.rkey;
+		res->पढ़ो.resid		= qp->resp.resid;
+		res->पढ़ो.length	= qp->resp.resid;
+		res->पढ़ो.rkey		= qp->resp.rkey;
 
 		/* note res inherits the reference to mr from qp */
-		res->read.mr		= qp->resp.mr;
-		qp->resp.mr		= NULL;
+		res->पढ़ो.mr		= qp->resp.mr;
+		qp->resp.mr		= शून्य;
 
 		qp->resp.res		= res;
-		res->state		= rdatm_res_state_new;
-	}
+		res->state		= rdaपंचांग_res_state_new;
+	पूर्ण
 
-	if (res->state == rdatm_res_state_new) {
-		if (res->read.resid <= mtu)
+	अगर (res->state == rdaपंचांग_res_state_new) अणु
+		अगर (res->पढ़ो.resid <= mtu)
 			opcode = IB_OPCODE_RC_RDMA_READ_RESPONSE_ONLY;
-		else
+		अन्यथा
 			opcode = IB_OPCODE_RC_RDMA_READ_RESPONSE_FIRST;
-	} else {
-		if (res->read.resid > mtu)
+	पूर्ण अन्यथा अणु
+		अगर (res->पढ़ो.resid > mtu)
 			opcode = IB_OPCODE_RC_RDMA_READ_RESPONSE_MIDDLE;
-		else
+		अन्यथा
 			opcode = IB_OPCODE_RC_RDMA_READ_RESPONSE_LAST;
-	}
+	पूर्ण
 
-	res->state = rdatm_res_state_next;
+	res->state = rdaपंचांग_res_state_next;
 
-	payload = min_t(int, res->read.resid, mtu);
+	payload = min_t(पूर्णांक, res->पढ़ो.resid, mtu);
 
 	skb = prepare_ack_packet(qp, req_pkt, &ack_pkt, opcode, payload,
 				 res->cur_psn, AETH_ACK_UNLIMITED, &icrc);
-	if (!skb)
-		return RESPST_ERR_RNR;
+	अगर (!skb)
+		वापस RESPST_ERR_RNR;
 
-	err = rxe_mr_copy(res->read.mr, res->read.va, payload_addr(&ack_pkt),
+	err = rxe_mr_copy(res->पढ़ो.mr, res->पढ़ो.va, payload_addr(&ack_pkt),
 			  payload, from_mr_obj, &icrc);
-	if (err)
+	अगर (err)
 		pr_err("Failed copying memory\n");
 
-	if (bth_pad(&ack_pkt)) {
-		struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	अगर (bth_pad(&ack_pkt)) अणु
+		काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
 		u8 *pad = payload_addr(&ack_pkt) + payload;
 
-		memset(pad, 0, bth_pad(&ack_pkt));
+		स_रखो(pad, 0, bth_pad(&ack_pkt));
 		icrc = rxe_crc32(rxe, icrc, pad, bth_pad(&ack_pkt));
-	}
+	पूर्ण
 	p = payload_addr(&ack_pkt) + payload + bth_pad(&ack_pkt);
 	*p = ~icrc;
 
 	err = rxe_xmit_packet(qp, &ack_pkt, skb);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed sending RDMA reply.\n");
-		return RESPST_ERR_RNR;
-	}
+		वापस RESPST_ERR_RNR;
+	पूर्ण
 
-	res->read.va += payload;
-	res->read.resid -= payload;
+	res->पढ़ो.va += payload;
+	res->पढ़ो.resid -= payload;
 	res->cur_psn = (res->cur_psn + 1) & BTH_PSN_MASK;
 
-	if (res->read.resid > 0) {
+	अगर (res->पढ़ो.resid > 0) अणु
 		state = RESPST_DONE;
-	} else {
-		qp->resp.res = NULL;
-		if (!res->replay)
+	पूर्ण अन्यथा अणु
+		qp->resp.res = शून्य;
+		अगर (!res->replay)
 			qp->resp.opcode = -1;
-		if (psn_compare(res->cur_psn, qp->resp.psn) >= 0)
+		अगर (psn_compare(res->cur_psn, qp->resp.psn) >= 0)
 			qp->resp.psn = res->cur_psn;
 		state = RESPST_CLEANUP;
-	}
+	पूर्ण
 
-	return state;
-}
+	वापस state;
+पूर्ण
 
-static void build_rdma_network_hdr(union rdma_network_hdr *hdr,
-				   struct rxe_pkt_info *pkt)
-{
-	struct sk_buff *skb = PKT_TO_SKB(pkt);
+अटल व्योम build_rdma_network_hdr(जोड़ rdma_network_hdr *hdr,
+				   काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा sk_buff *skb = PKT_TO_SKB(pkt);
 
-	memset(hdr, 0, sizeof(*hdr));
-	if (skb->protocol == htons(ETH_P_IP))
-		memcpy(&hdr->roce4grh, ip_hdr(skb), sizeof(hdr->roce4grh));
-	else if (skb->protocol == htons(ETH_P_IPV6))
-		memcpy(&hdr->ibgrh, ipv6_hdr(skb), sizeof(hdr->ibgrh));
-}
+	स_रखो(hdr, 0, माप(*hdr));
+	अगर (skb->protocol == htons(ETH_P_IP))
+		स_नकल(&hdr->roce4grh, ip_hdr(skb), माप(hdr->roce4grh));
+	अन्यथा अगर (skb->protocol == htons(ETH_P_IPV6))
+		स_नकल(&hdr->ibgrh, ipv6_hdr(skb), माप(hdr->ibgrh));
+पूर्ण
 
 /* Executes a new request. A retried request never reach that function (send
- * and writes are discarded, and reads and atomics are retried elsewhere.
+ * and ग_लिखोs are discarded, and पढ़ोs and atomics are retried अन्यथाwhere.
  */
-static enum resp_states execute(struct rxe_qp *qp, struct rxe_pkt_info *pkt)
-{
-	enum resp_states err;
+अटल क्रमागत resp_states execute(काष्ठा rxe_qp *qp, काष्ठा rxe_pkt_info *pkt)
+अणु
+	क्रमागत resp_states err;
 
-	if (pkt->mask & RXE_SEND_MASK) {
-		if (qp_type(qp) == IB_QPT_UD ||
+	अगर (pkt->mask & RXE_SEND_MASK) अणु
+		अगर (qp_type(qp) == IB_QPT_UD ||
 		    qp_type(qp) == IB_QPT_SMI ||
-		    qp_type(qp) == IB_QPT_GSI) {
-			union rdma_network_hdr hdr;
+		    qp_type(qp) == IB_QPT_GSI) अणु
+			जोड़ rdma_network_hdr hdr;
 
 			build_rdma_network_hdr(&hdr, pkt);
 
-			err = send_data_in(qp, &hdr, sizeof(hdr));
-			if (err)
-				return err;
-		}
+			err = send_data_in(qp, &hdr, माप(hdr));
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = send_data_in(qp, payload_addr(pkt), payload_size(pkt));
-		if (err)
-			return err;
-	} else if (pkt->mask & RXE_WRITE_MASK) {
-		err = write_data_in(qp, pkt);
-		if (err)
-			return err;
-	} else if (pkt->mask & RXE_READ_MASK) {
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अगर (pkt->mask & RXE_WRITE_MASK) अणु
+		err = ग_लिखो_data_in(qp, pkt);
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अगर (pkt->mask & RXE_READ_MASK) अणु
 		/* For RDMA Read we can increment the msn now. See C9-148. */
 		qp->resp.msn++;
-		return RESPST_READ_REPLY;
-	} else if (pkt->mask & RXE_ATOMIC_MASK) {
+		वापस RESPST_READ_REPLY;
+	पूर्ण अन्यथा अगर (pkt->mask & RXE_ATOMIC_MASK) अणु
 		err = process_atomic(qp, pkt);
-		if (err)
-			return err;
-	} else {
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अणु
 		/* Unreachable */
 		WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	/* next expected psn, read handles this separately */
+	/* next expected psn, पढ़ो handles this separately */
 	qp->resp.psn = (pkt->psn + 1) & BTH_PSN_MASK;
 	qp->resp.ack_psn = qp->resp.psn;
 
 	qp->resp.opcode = pkt->opcode;
 	qp->resp.status = IB_WC_SUCCESS;
 
-	if (pkt->mask & RXE_COMP_MASK) {
+	अगर (pkt->mask & RXE_COMP_MASK) अणु
 		/* We successfully processed this new request. */
 		qp->resp.msn++;
-		return RESPST_COMPLETE;
-	} else if (qp_type(qp) == IB_QPT_RC)
-		return RESPST_ACKNOWLEDGE;
-	else
-		return RESPST_CLEANUP;
-}
+		वापस RESPST_COMPLETE;
+	पूर्ण अन्यथा अगर (qp_type(qp) == IB_QPT_RC)
+		वापस RESPST_ACKNOWLEDGE;
+	अन्यथा
+		वापस RESPST_CLEANUP;
+पूर्ण
 
-static enum resp_states do_complete(struct rxe_qp *qp,
-				    struct rxe_pkt_info *pkt)
-{
-	struct rxe_cqe cqe;
-	struct ib_wc *wc = &cqe.ibwc;
-	struct ib_uverbs_wc *uwc = &cqe.uibwc;
-	struct rxe_recv_wqe *wqe = qp->resp.wqe;
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
+अटल क्रमागत resp_states करो_complete(काष्ठा rxe_qp *qp,
+				    काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा rxe_cqe cqe;
+	काष्ठा ib_wc *wc = &cqe.ibwc;
+	काष्ठा ib_uverbs_wc *uwc = &cqe.uibwc;
+	काष्ठा rxe_recv_wqe *wqe = qp->resp.wqe;
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
 
-	if (!wqe)
-		goto finish;
+	अगर (!wqe)
+		जाओ finish;
 
-	memset(&cqe, 0, sizeof(cqe));
+	स_रखो(&cqe, 0, माप(cqe));
 
-	if (qp->rcq->is_user) {
+	अगर (qp->rcq->is_user) अणु
 		uwc->status             = qp->resp.status;
 		uwc->qp_num             = qp->ibqp.qp_num;
 		uwc->wr_id              = wqe->wr_id;
-	} else {
+	पूर्ण अन्यथा अणु
 		wc->status              = qp->resp.status;
 		wc->qp                  = &qp->ibqp;
 		wc->wr_id               = wqe->wr_id;
-	}
+	पूर्ण
 
-	if (wc->status == IB_WC_SUCCESS) {
+	अगर (wc->status == IB_WC_SUCCESS) अणु
 		rxe_counter_inc(rxe, RXE_CNT_RDMA_RECV);
 		wc->opcode = (pkt->mask & RXE_IMMDT_MASK &&
 				pkt->mask & RXE_WRITE_MASK) ?
 					IB_WC_RECV_RDMA_WITH_IMM : IB_WC_RECV;
-		wc->vendor_err = 0;
+		wc->venकरोr_err = 0;
 		wc->byte_len = (pkt->mask & RXE_IMMDT_MASK &&
 				pkt->mask & RXE_WRITE_MASK) ?
 					qp->resp.length : wqe->dma.length - wqe->dma.resid;
 
-		/* fields after byte_len are different between kernel and user
+		/* fields after byte_len are dअगरferent between kernel and user
 		 * space
 		 */
-		if (qp->rcq->is_user) {
+		अगर (qp->rcq->is_user) अणु
 			uwc->wc_flags = IB_WC_GRH;
 
-			if (pkt->mask & RXE_IMMDT_MASK) {
+			अगर (pkt->mask & RXE_IMMDT_MASK) अणु
 				uwc->wc_flags |= IB_WC_WITH_IMM;
 				uwc->ex.imm_data = immdt_imm(pkt);
-			}
+			पूर्ण
 
-			if (pkt->mask & RXE_IETH_MASK) {
+			अगर (pkt->mask & RXE_IETH_MASK) अणु
 				uwc->wc_flags |= IB_WC_WITH_INVALIDATE;
 				uwc->ex.invalidate_rkey = ieth_rkey(pkt);
-			}
+			पूर्ण
 
 			uwc->qp_num		= qp->ibqp.qp_num;
 
-			if (pkt->mask & RXE_DETH_MASK)
+			अगर (pkt->mask & RXE_DETH_MASK)
 				uwc->src_qp = deth_sqp(pkt);
 
 			uwc->port_num		= qp->attr.port_num;
-		} else {
-			struct sk_buff *skb = PKT_TO_SKB(pkt);
+		पूर्ण अन्यथा अणु
+			काष्ठा sk_buff *skb = PKT_TO_SKB(pkt);
 
 			wc->wc_flags = IB_WC_GRH | IB_WC_WITH_NETWORK_HDR_TYPE;
-			if (skb->protocol == htons(ETH_P_IP))
+			अगर (skb->protocol == htons(ETH_P_IP))
 				wc->network_hdr_type = RDMA_NETWORK_IPV4;
-			else
+			अन्यथा
 				wc->network_hdr_type = RDMA_NETWORK_IPV6;
 
-			if (is_vlan_dev(skb->dev)) {
+			अगर (is_vlan_dev(skb->dev)) अणु
 				wc->wc_flags |= IB_WC_WITH_VLAN;
 				wc->vlan_id = vlan_dev_vlan_id(skb->dev);
-			}
+			पूर्ण
 
-			if (pkt->mask & RXE_IMMDT_MASK) {
+			अगर (pkt->mask & RXE_IMMDT_MASK) अणु
 				wc->wc_flags |= IB_WC_WITH_IMM;
 				wc->ex.imm_data = immdt_imm(pkt);
-			}
+			पूर्ण
 
-			if (pkt->mask & RXE_IETH_MASK) {
-				struct rxe_mr *rmr;
+			अगर (pkt->mask & RXE_IETH_MASK) अणु
+				काष्ठा rxe_mr *rmr;
 
 				wc->wc_flags |= IB_WC_WITH_INVALIDATE;
 				wc->ex.invalidate_rkey = ieth_rkey(pkt);
 
 				rmr = rxe_pool_get_index(&rxe->mr_pool,
 							 wc->ex.invalidate_rkey >> 8);
-				if (unlikely(!rmr)) {
+				अगर (unlikely(!rmr)) अणु
 					pr_err("Bad rkey %#x invalidation\n",
 					       wc->ex.invalidate_rkey);
-					return RESPST_ERROR;
-				}
+					वापस RESPST_ERROR;
+				पूर्ण
 				rmr->state = RXE_MR_STATE_FREE;
 				rxe_drop_ref(rmr);
-			}
+			पूर्ण
 
 			wc->qp			= &qp->ibqp;
 
-			if (pkt->mask & RXE_DETH_MASK)
+			अगर (pkt->mask & RXE_DETH_MASK)
 				wc->src_qp = deth_sqp(pkt);
 
 			wc->port_num		= qp->attr.port_num;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* have copy for srq and reference for !srq */
-	if (!qp->srq)
+	/* have copy क्रम srq and reference क्रम !srq */
+	अगर (!qp->srq)
 		advance_consumer(qp->rq.queue);
 
-	qp->resp.wqe = NULL;
+	qp->resp.wqe = शून्य;
 
-	if (rxe_cq_post(qp->rcq, &cqe, pkt ? bth_se(pkt) : 1))
-		return RESPST_ERR_CQ_OVERFLOW;
+	अगर (rxe_cq_post(qp->rcq, &cqe, pkt ? bth_se(pkt) : 1))
+		वापस RESPST_ERR_CQ_OVERFLOW;
 
 finish:
-	if (unlikely(qp->resp.state == QP_STATE_ERROR))
-		return RESPST_CHK_RESOURCE;
-	if (unlikely(!pkt))
-		return RESPST_DONE;
-	if (qp_type(qp) == IB_QPT_RC)
-		return RESPST_ACKNOWLEDGE;
-	else
-		return RESPST_CLEANUP;
-}
+	अगर (unlikely(qp->resp.state == QP_STATE_ERROR))
+		वापस RESPST_CHK_RESOURCE;
+	अगर (unlikely(!pkt))
+		वापस RESPST_DONE;
+	अगर (qp_type(qp) == IB_QPT_RC)
+		वापस RESPST_ACKNOWLEDGE;
+	अन्यथा
+		वापस RESPST_CLEANUP;
+पूर्ण
 
-static int send_ack(struct rxe_qp *qp, struct rxe_pkt_info *pkt,
+अटल पूर्णांक send_ack(काष्ठा rxe_qp *qp, काष्ठा rxe_pkt_info *pkt,
 		    u8 syndrome, u32 psn)
-{
-	int err = 0;
-	struct rxe_pkt_info ack_pkt;
-	struct sk_buff *skb;
+अणु
+	पूर्णांक err = 0;
+	काष्ठा rxe_pkt_info ack_pkt;
+	काष्ठा sk_buff *skb;
 
 	skb = prepare_ack_packet(qp, pkt, &ack_pkt, IB_OPCODE_RC_ACKNOWLEDGE,
-				 0, psn, syndrome, NULL);
-	if (!skb) {
+				 0, psn, syndrome, शून्य);
+	अगर (!skb) अणु
 		err = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	err = rxe_xmit_packet(qp, &ack_pkt, skb);
-	if (err)
+	अगर (err)
 		pr_err_ratelimited("Failed sending ack\n");
 
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int send_atomic_ack(struct rxe_qp *qp, struct rxe_pkt_info *pkt,
+अटल पूर्णांक send_atomic_ack(काष्ठा rxe_qp *qp, काष्ठा rxe_pkt_info *pkt,
 			   u8 syndrome)
-{
-	int rc = 0;
-	struct rxe_pkt_info ack_pkt;
-	struct sk_buff *skb;
-	struct resp_res *res;
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा rxe_pkt_info ack_pkt;
+	काष्ठा sk_buff *skb;
+	काष्ठा resp_res *res;
 
 	skb = prepare_ack_packet(qp, pkt, &ack_pkt,
 				 IB_OPCODE_RC_ATOMIC_ACKNOWLEDGE, 0, pkt->psn,
-				 syndrome, NULL);
-	if (!skb) {
+				 syndrome, शून्य);
+	अगर (!skb) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rxe_add_ref(qp);
 
 	res = &qp->resp.resources[qp->resp.res_head];
-	free_rd_atomic_resource(qp, res);
+	मुक्त_rd_atomic_resource(qp, res);
 	rxe_advance_resp_resource(qp);
 
-	memcpy(SKB_TO_PKT(skb), &ack_pkt, sizeof(ack_pkt));
-	memset((unsigned char *)SKB_TO_PKT(skb) + sizeof(ack_pkt), 0,
-	       sizeof(skb->cb) - sizeof(ack_pkt));
+	स_नकल(SKB_TO_PKT(skb), &ack_pkt, माप(ack_pkt));
+	स_रखो((अचिन्हित अक्षर *)SKB_TO_PKT(skb) + माप(ack_pkt), 0,
+	       माप(skb->cb) - माप(ack_pkt));
 
 	skb_get(skb);
 	res->type = RXE_ATOMIC_MASK;
@@ -984,400 +985,400 @@ static int send_atomic_ack(struct rxe_qp *qp, struct rxe_pkt_info *pkt,
 	res->cur_psn   = ack_pkt.psn;
 
 	rc = rxe_xmit_packet(qp, &ack_pkt, skb);
-	if (rc) {
+	अगर (rc) अणु
 		pr_err_ratelimited("Failed sending ack\n");
 		rxe_drop_ref(qp);
-	}
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static enum resp_states acknowledge(struct rxe_qp *qp,
-				    struct rxe_pkt_info *pkt)
-{
-	if (qp_type(qp) != IB_QPT_RC)
-		return RESPST_CLEANUP;
+अटल क्रमागत resp_states acknowledge(काष्ठा rxe_qp *qp,
+				    काष्ठा rxe_pkt_info *pkt)
+अणु
+	अगर (qp_type(qp) != IB_QPT_RC)
+		वापस RESPST_CLEANUP;
 
-	if (qp->resp.aeth_syndrome != AETH_ACK_UNLIMITED)
+	अगर (qp->resp.aeth_syndrome != AETH_ACK_UNLIMITED)
 		send_ack(qp, pkt, qp->resp.aeth_syndrome, pkt->psn);
-	else if (pkt->mask & RXE_ATOMIC_MASK)
+	अन्यथा अगर (pkt->mask & RXE_ATOMIC_MASK)
 		send_atomic_ack(qp, pkt, AETH_ACK_UNLIMITED);
-	else if (bth_ack(pkt))
+	अन्यथा अगर (bth_ack(pkt))
 		send_ack(qp, pkt, AETH_ACK_UNLIMITED, pkt->psn);
 
-	return RESPST_CLEANUP;
-}
+	वापस RESPST_CLEANUP;
+पूर्ण
 
-static enum resp_states cleanup(struct rxe_qp *qp,
-				struct rxe_pkt_info *pkt)
-{
-	struct sk_buff *skb;
+अटल क्रमागत resp_states cleanup(काष्ठा rxe_qp *qp,
+				काष्ठा rxe_pkt_info *pkt)
+अणु
+	काष्ठा sk_buff *skb;
 
-	if (pkt) {
+	अगर (pkt) अणु
 		skb = skb_dequeue(&qp->req_pkts);
 		rxe_drop_ref(qp);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		ib_device_put(qp->ibqp.device);
-	}
+	पूर्ण
 
-	if (qp->resp.mr) {
+	अगर (qp->resp.mr) अणु
 		rxe_drop_ref(qp->resp.mr);
-		qp->resp.mr = NULL;
-	}
+		qp->resp.mr = शून्य;
+	पूर्ण
 
-	return RESPST_DONE;
-}
+	वापस RESPST_DONE;
+पूर्ण
 
-static struct resp_res *find_resource(struct rxe_qp *qp, u32 psn)
-{
-	int i;
+अटल काष्ठा resp_res *find_resource(काष्ठा rxe_qp *qp, u32 psn)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < qp->attr.max_dest_rd_atomic; i++) {
-		struct resp_res *res = &qp->resp.resources[i];
+	क्रम (i = 0; i < qp->attr.max_dest_rd_atomic; i++) अणु
+		काष्ठा resp_res *res = &qp->resp.resources[i];
 
-		if (res->type == 0)
-			continue;
+		अगर (res->type == 0)
+			जारी;
 
-		if (psn_compare(psn, res->first_psn) >= 0 &&
-		    psn_compare(psn, res->last_psn) <= 0) {
-			return res;
-		}
-	}
+		अगर (psn_compare(psn, res->first_psn) >= 0 &&
+		    psn_compare(psn, res->last_psn) <= 0) अणु
+			वापस res;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static enum resp_states duplicate_request(struct rxe_qp *qp,
-					  struct rxe_pkt_info *pkt)
-{
-	enum resp_states rc;
+अटल क्रमागत resp_states duplicate_request(काष्ठा rxe_qp *qp,
+					  काष्ठा rxe_pkt_info *pkt)
+अणु
+	क्रमागत resp_states rc;
 	u32 prev_psn = (qp->resp.ack_psn - 1) & BTH_PSN_MASK;
 
-	if (pkt->mask & RXE_SEND_MASK ||
-	    pkt->mask & RXE_WRITE_MASK) {
+	अगर (pkt->mask & RXE_SEND_MASK ||
+	    pkt->mask & RXE_WRITE_MASK) अणु
 		/* SEND. Ack again and cleanup. C9-105. */
 		send_ack(qp, pkt, AETH_ACK_UNLIMITED, prev_psn);
-		return RESPST_CLEANUP;
-	} else if (pkt->mask & RXE_READ_MASK) {
-		struct resp_res *res;
+		वापस RESPST_CLEANUP;
+	पूर्ण अन्यथा अगर (pkt->mask & RXE_READ_MASK) अणु
+		काष्ठा resp_res *res;
 
 		res = find_resource(qp, pkt->psn);
-		if (!res) {
+		अगर (!res) अणु
 			/* Resource not found. Class D error.  Drop the
 			 * request.
 			 */
 			rc = RESPST_CLEANUP;
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			/* Ensure this new request is the same as the previous
 			 * one or a subset of it.
 			 */
 			u64 iova = reth_va(pkt);
 			u32 resid = reth_len(pkt);
 
-			if (iova < res->read.va_org ||
-			    resid > res->read.length ||
-			    (iova + resid) > (res->read.va_org +
-					      res->read.length)) {
+			अगर (iova < res->पढ़ो.va_org ||
+			    resid > res->पढ़ो.length ||
+			    (iova + resid) > (res->पढ़ो.va_org +
+					      res->पढ़ो.length)) अणु
 				rc = RESPST_CLEANUP;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (reth_rkey(pkt) != res->read.rkey) {
+			अगर (reth_rkey(pkt) != res->पढ़ो.rkey) अणु
 				rc = RESPST_CLEANUP;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			res->cur_psn = pkt->psn;
 			res->state = (pkt->psn == res->first_psn) ?
-					rdatm_res_state_new :
-					rdatm_res_state_replay;
+					rdaपंचांग_res_state_new :
+					rdaपंचांग_res_state_replay;
 			res->replay = 1;
 
 			/* Reset the resource, except length. */
-			res->read.va_org = iova;
-			res->read.va = iova;
-			res->read.resid = resid;
+			res->पढ़ो.va_org = iova;
+			res->पढ़ो.va = iova;
+			res->पढ़ो.resid = resid;
 
-			/* Replay the RDMA read reply. */
+			/* Replay the RDMA पढ़ो reply. */
 			qp->resp.res = res;
 			rc = RESPST_READ_REPLY;
-			goto out;
-		}
-	} else {
-		struct resp_res *res;
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा resp_res *res;
 
 		/* Find the operation in our list of responder resources. */
 		res = find_resource(qp, pkt->psn);
-		if (res) {
+		अगर (res) अणु
 			skb_get(res->atomic.skb);
 			/* Resend the result. */
 			rc = rxe_xmit_packet(qp, pkt, res->atomic.skb);
-			if (rc) {
+			अगर (rc) अणु
 				pr_err("Failed resending result. This flow is not handled - skb ignored\n");
 				rc = RESPST_CLEANUP;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		/* Resource not found. Class D error. Drop the request. */
 		rc = RESPST_CLEANUP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Process a class A or C. Both are treated the same in this implementation. */
-static void do_class_ac_error(struct rxe_qp *qp, u8 syndrome,
-			      enum ib_wc_status status)
-{
+अटल व्योम करो_class_ac_error(काष्ठा rxe_qp *qp, u8 syndrome,
+			      क्रमागत ib_wc_status status)
+अणु
 	qp->resp.aeth_syndrome	= syndrome;
 	qp->resp.status		= status;
 
 	/* indicate that we should go through the ERROR state */
-	qp->resp.goto_error	= 1;
-}
+	qp->resp.जाओ_error	= 1;
+पूर्ण
 
-static enum resp_states do_class_d1e_error(struct rxe_qp *qp)
-{
+अटल क्रमागत resp_states करो_class_d1e_error(काष्ठा rxe_qp *qp)
+अणु
 	/* UC */
-	if (qp->srq) {
+	अगर (qp->srq) अणु
 		/* Class E */
 		qp->resp.drop_msg = 1;
-		if (qp->resp.wqe) {
+		अगर (qp->resp.wqe) अणु
 			qp->resp.status = IB_WC_REM_INV_REQ_ERR;
-			return RESPST_COMPLETE;
-		} else {
-			return RESPST_CLEANUP;
-		}
-	} else {
+			वापस RESPST_COMPLETE;
+		पूर्ण अन्यथा अणु
+			वापस RESPST_CLEANUP;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Class D1. This packet may be the start of a
 		 * new message and could be valid. The previous
 		 * message is invalid and ignored. reset the
 		 * recv wr to its original state
 		 */
-		if (qp->resp.wqe) {
+		अगर (qp->resp.wqe) अणु
 			qp->resp.wqe->dma.resid = qp->resp.wqe->dma.length;
 			qp->resp.wqe->dma.cur_sge = 0;
 			qp->resp.wqe->dma.sge_offset = 0;
 			qp->resp.opcode = -1;
-		}
+		पूर्ण
 
-		if (qp->resp.mr) {
+		अगर (qp->resp.mr) अणु
 			rxe_drop_ref(qp->resp.mr);
-			qp->resp.mr = NULL;
-		}
+			qp->resp.mr = शून्य;
+		पूर्ण
 
-		return RESPST_CLEANUP;
-	}
-}
+		वापस RESPST_CLEANUP;
+	पूर्ण
+पूर्ण
 
-static void rxe_drain_req_pkts(struct rxe_qp *qp, bool notify)
-{
-	struct sk_buff *skb;
+अटल व्योम rxe_drain_req_pkts(काष्ठा rxe_qp *qp, bool notअगरy)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while ((skb = skb_dequeue(&qp->req_pkts))) {
+	जबतक ((skb = skb_dequeue(&qp->req_pkts))) अणु
 		rxe_drop_ref(qp);
-		kfree_skb(skb);
+		kमुक्त_skb(skb);
 		ib_device_put(qp->ibqp.device);
-	}
+	पूर्ण
 
-	if (notify)
-		return;
+	अगर (notअगरy)
+		वापस;
 
-	while (!qp->srq && qp->rq.queue && queue_head(qp->rq.queue))
+	जबतक (!qp->srq && qp->rq.queue && queue_head(qp->rq.queue))
 		advance_consumer(qp->rq.queue);
-}
+पूर्ण
 
-int rxe_responder(void *arg)
-{
-	struct rxe_qp *qp = (struct rxe_qp *)arg;
-	struct rxe_dev *rxe = to_rdev(qp->ibqp.device);
-	enum resp_states state;
-	struct rxe_pkt_info *pkt = NULL;
-	int ret = 0;
+पूर्णांक rxe_responder(व्योम *arg)
+अणु
+	काष्ठा rxe_qp *qp = (काष्ठा rxe_qp *)arg;
+	काष्ठा rxe_dev *rxe = to_rdev(qp->ibqp.device);
+	क्रमागत resp_states state;
+	काष्ठा rxe_pkt_info *pkt = शून्य;
+	पूर्णांक ret = 0;
 
 	rxe_add_ref(qp);
 
 	qp->resp.aeth_syndrome = AETH_ACK_UNLIMITED;
 
-	if (!qp->valid) {
+	अगर (!qp->valid) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	switch (qp->resp.state) {
-	case QP_STATE_RESET:
+	चयन (qp->resp.state) अणु
+	हाल QP_STATE_RESET:
 		state = RESPST_RESET;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		state = RESPST_GET_REQ;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	while (1) {
+	जबतक (1) अणु
 		pr_debug("qp#%d state = %s\n", qp_num(qp),
 			 resp_state_name[state]);
-		switch (state) {
-		case RESPST_GET_REQ:
+		चयन (state) अणु
+		हाल RESPST_GET_REQ:
 			state = get_req(qp, &pkt);
-			break;
-		case RESPST_CHK_PSN:
+			अवरोध;
+		हाल RESPST_CHK_PSN:
 			state = check_psn(qp, pkt);
-			break;
-		case RESPST_CHK_OP_SEQ:
+			अवरोध;
+		हाल RESPST_CHK_OP_SEQ:
 			state = check_op_seq(qp, pkt);
-			break;
-		case RESPST_CHK_OP_VALID:
+			अवरोध;
+		हाल RESPST_CHK_OP_VALID:
 			state = check_op_valid(qp, pkt);
-			break;
-		case RESPST_CHK_RESOURCE:
+			अवरोध;
+		हाल RESPST_CHK_RESOURCE:
 			state = check_resource(qp, pkt);
-			break;
-		case RESPST_CHK_LENGTH:
+			अवरोध;
+		हाल RESPST_CHK_LENGTH:
 			state = check_length(qp, pkt);
-			break;
-		case RESPST_CHK_RKEY:
+			अवरोध;
+		हाल RESPST_CHK_RKEY:
 			state = check_rkey(qp, pkt);
-			break;
-		case RESPST_EXECUTE:
+			अवरोध;
+		हाल RESPST_EXECUTE:
 			state = execute(qp, pkt);
-			break;
-		case RESPST_COMPLETE:
-			state = do_complete(qp, pkt);
-			break;
-		case RESPST_READ_REPLY:
-			state = read_reply(qp, pkt);
-			break;
-		case RESPST_ACKNOWLEDGE:
+			अवरोध;
+		हाल RESPST_COMPLETE:
+			state = करो_complete(qp, pkt);
+			अवरोध;
+		हाल RESPST_READ_REPLY:
+			state = पढ़ो_reply(qp, pkt);
+			अवरोध;
+		हाल RESPST_ACKNOWLEDGE:
 			state = acknowledge(qp, pkt);
-			break;
-		case RESPST_CLEANUP:
+			अवरोध;
+		हाल RESPST_CLEANUP:
 			state = cleanup(qp, pkt);
-			break;
-		case RESPST_DUPLICATE_REQUEST:
+			अवरोध;
+		हाल RESPST_DUPLICATE_REQUEST:
 			state = duplicate_request(qp, pkt);
-			break;
-		case RESPST_ERR_PSN_OUT_OF_SEQ:
+			अवरोध;
+		हाल RESPST_ERR_PSN_OUT_OF_SEQ:
 			/* RC only - Class B. Drop packet. */
 			send_ack(qp, pkt, AETH_NAK_PSN_SEQ_ERROR, qp->resp.psn);
 			state = RESPST_CLEANUP;
-			break;
+			अवरोध;
 
-		case RESPST_ERR_TOO_MANY_RDMA_ATM_REQ:
-		case RESPST_ERR_MISSING_OPCODE_FIRST:
-		case RESPST_ERR_MISSING_OPCODE_LAST_C:
-		case RESPST_ERR_UNSUPPORTED_OPCODE:
-		case RESPST_ERR_MISALIGNED_ATOMIC:
+		हाल RESPST_ERR_TOO_MANY_RDMA_ATM_REQ:
+		हाल RESPST_ERR_MISSING_OPCODE_FIRST:
+		हाल RESPST_ERR_MISSING_OPCODE_LAST_C:
+		हाल RESPST_ERR_UNSUPPORTED_OPCODE:
+		हाल RESPST_ERR_MISALIGNED_ATOMIC:
 			/* RC Only - Class C. */
-			do_class_ac_error(qp, AETH_NAK_INVALID_REQ,
+			करो_class_ac_error(qp, AETH_NAK_INVALID_REQ,
 					  IB_WC_REM_INV_REQ_ERR);
 			state = RESPST_COMPLETE;
-			break;
+			अवरोध;
 
-		case RESPST_ERR_MISSING_OPCODE_LAST_D1E:
-			state = do_class_d1e_error(qp);
-			break;
-		case RESPST_ERR_RNR:
-			if (qp_type(qp) == IB_QPT_RC) {
+		हाल RESPST_ERR_MISSING_OPCODE_LAST_D1E:
+			state = करो_class_d1e_error(qp);
+			अवरोध;
+		हाल RESPST_ERR_RNR:
+			अगर (qp_type(qp) == IB_QPT_RC) अणु
 				rxe_counter_inc(rxe, RXE_CNT_SND_RNR);
 				/* RC - class B */
 				send_ack(qp, pkt, AETH_RNR_NAK |
 					 (~AETH_TYPE_MASK &
-					 qp->attr.min_rnr_timer),
+					 qp->attr.min_rnr_समयr),
 					 pkt->psn);
-			} else {
+			पूर्ण अन्यथा अणु
 				/* UD/UC - class D */
 				qp->resp.drop_msg = 1;
-			}
+			पूर्ण
 			state = RESPST_CLEANUP;
-			break;
+			अवरोध;
 
-		case RESPST_ERR_RKEY_VIOLATION:
-			if (qp_type(qp) == IB_QPT_RC) {
+		हाल RESPST_ERR_RKEY_VIOLATION:
+			अगर (qp_type(qp) == IB_QPT_RC) अणु
 				/* Class C */
-				do_class_ac_error(qp, AETH_NAK_REM_ACC_ERR,
+				करो_class_ac_error(qp, AETH_NAK_REM_ACC_ERR,
 						  IB_WC_REM_ACCESS_ERR);
 				state = RESPST_COMPLETE;
-			} else {
+			पूर्ण अन्यथा अणु
 				qp->resp.drop_msg = 1;
-				if (qp->srq) {
+				अगर (qp->srq) अणु
 					/* UC/SRQ Class D */
 					qp->resp.status = IB_WC_REM_ACCESS_ERR;
 					state = RESPST_COMPLETE;
-				} else {
+				पूर्ण अन्यथा अणु
 					/* UC/non-SRQ Class E. */
 					state = RESPST_CLEANUP;
-				}
-			}
-			break;
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
-		case RESPST_ERR_LENGTH:
-			if (qp_type(qp) == IB_QPT_RC) {
+		हाल RESPST_ERR_LENGTH:
+			अगर (qp_type(qp) == IB_QPT_RC) अणु
 				/* Class C */
-				do_class_ac_error(qp, AETH_NAK_INVALID_REQ,
+				करो_class_ac_error(qp, AETH_NAK_INVALID_REQ,
 						  IB_WC_REM_INV_REQ_ERR);
 				state = RESPST_COMPLETE;
-			} else if (qp->srq) {
+			पूर्ण अन्यथा अगर (qp->srq) अणु
 				/* UC/UD - class E */
 				qp->resp.status = IB_WC_REM_INV_REQ_ERR;
 				state = RESPST_COMPLETE;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* UC/UD - class D */
 				qp->resp.drop_msg = 1;
 				state = RESPST_CLEANUP;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		case RESPST_ERR_MALFORMED_WQE:
+		हाल RESPST_ERR_MALFORMED_WQE:
 			/* All, Class A. */
-			do_class_ac_error(qp, AETH_NAK_REM_OP_ERR,
+			करो_class_ac_error(qp, AETH_NAK_REM_OP_ERR,
 					  IB_WC_LOC_QP_OP_ERR);
 			state = RESPST_COMPLETE;
-			break;
+			अवरोध;
 
-		case RESPST_ERR_CQ_OVERFLOW:
+		हाल RESPST_ERR_CQ_OVERFLOW:
 			/* All - Class G */
 			state = RESPST_ERROR;
-			break;
+			अवरोध;
 
-		case RESPST_DONE:
-			if (qp->resp.goto_error) {
+		हाल RESPST_DONE:
+			अगर (qp->resp.जाओ_error) अणु
 				state = RESPST_ERROR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			goto done;
+			जाओ करोne;
 
-		case RESPST_EXIT:
-			if (qp->resp.goto_error) {
+		हाल RESPST_EXIT:
+			अगर (qp->resp.जाओ_error) अणु
 				state = RESPST_ERROR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			goto exit;
+			जाओ निकास;
 
-		case RESPST_RESET:
+		हाल RESPST_RESET:
 			rxe_drain_req_pkts(qp, false);
-			qp->resp.wqe = NULL;
-			goto exit;
+			qp->resp.wqe = शून्य;
+			जाओ निकास;
 
-		case RESPST_ERROR:
-			qp->resp.goto_error = 0;
+		हाल RESPST_ERROR:
+			qp->resp.जाओ_error = 0;
 			pr_warn("qp#%d moved to error state\n", qp_num(qp));
 			rxe_qp_error(qp);
-			goto exit;
+			जाओ निकास;
 
-		default:
+		शेष:
 			WARN_ON_ONCE(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	ret = -EAGAIN;
-done:
+करोne:
 	rxe_drop_ref(qp);
-	return ret;
-}
+	वापस ret;
+पूर्ण

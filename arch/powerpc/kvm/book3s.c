@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2009. SUSE Linux Products GmbH. All rights reserved.
  *
@@ -7,52 +8,52 @@
  *    Kevin Wolf <mail@kevin-wolf.de>
  *
  * Description:
- * This file is derived from arch/powerpc/kvm/44x.c,
- * by Hollis Blanchard <hollisb@us.ibm.com>.
+ * This file is derived from arch/घातerpc/kvm/44x.c,
+ * by Hollis Blanअक्षरd <hollisb@us.ibm.com>.
  */
 
-#include <linux/kvm_host.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/gfp.h>
-#include <linux/sched.h>
-#include <linux/vmalloc.h>
-#include <linux/highmem.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/err.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/highस्मृति.स>
 
-#include <asm/reg.h>
-#include <asm/cputable.h>
-#include <asm/cacheflush.h>
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/kvm_ppc.h>
-#include <asm/kvm_book3s.h>
-#include <asm/mmu_context.h>
-#include <asm/page.h>
-#include <asm/xive.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/kvm_ppc.h>
+#समावेश <यंत्र/kvm_book3s.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/xive.h>
 
-#include "book3s.h"
-#include "trace.h"
+#समावेश "book3s.h"
+#समावेश "trace.h"
 
-/* #define EXIT_DEBUG */
+/* #घोषणा EXIT_DEBUG */
 
-struct kvm_stats_debugfs_item debugfs_entries[] = {
-	VCPU_STAT("exits", sum_exits),
-	VCPU_STAT("mmio", mmio_exits),
-	VCPU_STAT("sig", signal_exits),
-	VCPU_STAT("sysc", syscall_exits),
-	VCPU_STAT("inst_emu", emulated_inst_exits),
-	VCPU_STAT("dec", dec_exits),
-	VCPU_STAT("ext_intr", ext_intr_exits),
-	VCPU_STAT("queue_intr", queue_intr),
+काष्ठा kvm_stats_debugfs_item debugfs_entries[] = अणु
+	VCPU_STAT("exits", sum_निकासs),
+	VCPU_STAT("mmio", mmio_निकासs),
+	VCPU_STAT("sig", संकेत_निकासs),
+	VCPU_STAT("sysc", syscall_निकासs),
+	VCPU_STAT("inst_emu", emulated_inst_निकासs),
+	VCPU_STAT("dec", dec_निकासs),
+	VCPU_STAT("ext_intr", ext_पूर्णांकr_निकासs),
+	VCPU_STAT("queue_intr", queue_पूर्णांकr),
 	VCPU_STAT("halt_poll_success_ns", halt_poll_success_ns),
 	VCPU_STAT("halt_poll_fail_ns", halt_poll_fail_ns),
-	VCPU_STAT("halt_wait_ns", halt_wait_ns),
+	VCPU_STAT("halt_wait_ns", halt_रुको_ns),
 	VCPU_STAT("halt_successful_poll", halt_successful_poll),
 	VCPU_STAT("halt_attempted_poll", halt_attempted_poll),
-	VCPU_STAT("halt_successful_wait", halt_successful_wait),
+	VCPU_STAT("halt_successful_wait", halt_successful_रुको),
 	VCPU_STAT("halt_poll_invalid", halt_poll_invalid),
 	VCPU_STAT("halt_wakeup", halt_wakeup),
 	VCPU_STAT("pf_storage", pf_storage),
@@ -68,442 +69,442 @@ struct kvm_stats_debugfs_item debugfs_entries[] = {
 	VCPU_STAT("pthru_bad_aff", pthru_bad_aff),
 	VM_STAT("largepages_2M", num_2M_pages, .mode = 0444),
 	VM_STAT("largepages_1G", num_1G_pages, .mode = 0444),
-	{ NULL }
-};
+	अणु शून्य पूर्ण
+पूर्ण;
 
-static inline void kvmppc_update_int_pending(struct kvm_vcpu *vcpu,
-			unsigned long pending_now, unsigned long old_pending)
-{
-	if (is_kvmppc_hv_enabled(vcpu->kvm))
-		return;
-	if (pending_now)
-		kvmppc_set_int_pending(vcpu, 1);
-	else if (old_pending)
-		kvmppc_set_int_pending(vcpu, 0);
-}
+अटल अंतरभूत व्योम kvmppc_update_पूर्णांक_pending(काष्ठा kvm_vcpu *vcpu,
+			अचिन्हित दीर्घ pending_now, अचिन्हित दीर्घ old_pending)
+अणु
+	अगर (is_kvmppc_hv_enabled(vcpu->kvm))
+		वापस;
+	अगर (pending_now)
+		kvmppc_set_पूर्णांक_pending(vcpu, 1);
+	अन्यथा अगर (old_pending)
+		kvmppc_set_पूर्णांक_pending(vcpu, 0);
+पूर्ण
 
-static inline bool kvmppc_critical_section(struct kvm_vcpu *vcpu)
-{
-	ulong crit_raw;
-	ulong crit_r1;
+अटल अंतरभूत bool kvmppc_critical_section(काष्ठा kvm_vcpu *vcpu)
+अणु
+	uदीर्घ crit_raw;
+	uदीर्घ crit_r1;
 	bool crit;
 
-	if (is_kvmppc_hv_enabled(vcpu->kvm))
-		return false;
+	अगर (is_kvmppc_hv_enabled(vcpu->kvm))
+		वापस false;
 
 	crit_raw = kvmppc_get_critical(vcpu);
 	crit_r1 = kvmppc_get_gpr(vcpu, 1);
 
 	/* Truncate crit indicators in 32 bit mode */
-	if (!(kvmppc_get_msr(vcpu) & MSR_SF)) {
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_SF)) अणु
 		crit_raw &= 0xffffffff;
 		crit_r1 &= 0xffffffff;
-	}
+	पूर्ण
 
 	/* Critical section when crit == r1 */
 	crit = (crit_raw == crit_r1);
 	/* ... and we're in supervisor mode */
 	crit = crit && !(kvmppc_get_msr(vcpu) & MSR_PR);
 
-	return crit;
-}
+	वापस crit;
+पूर्ण
 
-void kvmppc_inject_interrupt(struct kvm_vcpu *vcpu, int vec, u64 flags)
-{
-	vcpu->kvm->arch.kvm_ops->inject_interrupt(vcpu, vec, flags);
-}
+व्योम kvmppc_inject_पूर्णांकerrupt(काष्ठा kvm_vcpu *vcpu, पूर्णांक vec, u64 flags)
+अणु
+	vcpu->kvm->arch.kvm_ops->inject_पूर्णांकerrupt(vcpu, vec, flags);
+पूर्ण
 
-static int kvmppc_book3s_vec2irqprio(unsigned int vec)
-{
-	unsigned int prio;
+अटल पूर्णांक kvmppc_book3s_vec2irqprio(अचिन्हित पूर्णांक vec)
+अणु
+	अचिन्हित पूर्णांक prio;
 
-	switch (vec) {
-	case 0x100: prio = BOOK3S_IRQPRIO_SYSTEM_RESET;		break;
-	case 0x200: prio = BOOK3S_IRQPRIO_MACHINE_CHECK;	break;
-	case 0x300: prio = BOOK3S_IRQPRIO_DATA_STORAGE;		break;
-	case 0x380: prio = BOOK3S_IRQPRIO_DATA_SEGMENT;		break;
-	case 0x400: prio = BOOK3S_IRQPRIO_INST_STORAGE;		break;
-	case 0x480: prio = BOOK3S_IRQPRIO_INST_SEGMENT;		break;
-	case 0x500: prio = BOOK3S_IRQPRIO_EXTERNAL;		break;
-	case 0x600: prio = BOOK3S_IRQPRIO_ALIGNMENT;		break;
-	case 0x700: prio = BOOK3S_IRQPRIO_PROGRAM;		break;
-	case 0x800: prio = BOOK3S_IRQPRIO_FP_UNAVAIL;		break;
-	case 0x900: prio = BOOK3S_IRQPRIO_DECREMENTER;		break;
-	case 0xc00: prio = BOOK3S_IRQPRIO_SYSCALL;		break;
-	case 0xd00: prio = BOOK3S_IRQPRIO_DEBUG;		break;
-	case 0xf20: prio = BOOK3S_IRQPRIO_ALTIVEC;		break;
-	case 0xf40: prio = BOOK3S_IRQPRIO_VSX;			break;
-	case 0xf60: prio = BOOK3S_IRQPRIO_FAC_UNAVAIL;		break;
-	default:    prio = BOOK3S_IRQPRIO_MAX;			break;
-	}
+	चयन (vec) अणु
+	हाल 0x100: prio = BOOK3S_IRQPRIO_SYSTEM_RESET;		अवरोध;
+	हाल 0x200: prio = BOOK3S_IRQPRIO_MACHINE_CHECK;	अवरोध;
+	हाल 0x300: prio = BOOK3S_IRQPRIO_DATA_STORAGE;		अवरोध;
+	हाल 0x380: prio = BOOK3S_IRQPRIO_DATA_SEGMENT;		अवरोध;
+	हाल 0x400: prio = BOOK3S_IRQPRIO_INST_STORAGE;		अवरोध;
+	हाल 0x480: prio = BOOK3S_IRQPRIO_INST_SEGMENT;		अवरोध;
+	हाल 0x500: prio = BOOK3S_IRQPRIO_EXTERNAL;		अवरोध;
+	हाल 0x600: prio = BOOK3S_IRQPRIO_ALIGNMENT;		अवरोध;
+	हाल 0x700: prio = BOOK3S_IRQPRIO_PROGRAM;		अवरोध;
+	हाल 0x800: prio = BOOK3S_IRQPRIO_FP_UNAVAIL;		अवरोध;
+	हाल 0x900: prio = BOOK3S_IRQPRIO_DECREMENTER;		अवरोध;
+	हाल 0xc00: prio = BOOK3S_IRQPRIO_SYSCALL;		अवरोध;
+	हाल 0xd00: prio = BOOK3S_IRQPRIO_DEBUG;		अवरोध;
+	हाल 0xf20: prio = BOOK3S_IRQPRIO_ALTIVEC;		अवरोध;
+	हाल 0xf40: prio = BOOK3S_IRQPRIO_VSX;			अवरोध;
+	हाल 0xf60: prio = BOOK3S_IRQPRIO_FAC_UNAVAIL;		अवरोध;
+	शेष:    prio = BOOK3S_IRQPRIO_MAX;			अवरोध;
+	पूर्ण
 
-	return prio;
-}
+	वापस prio;
+पूर्ण
 
-void kvmppc_book3s_dequeue_irqprio(struct kvm_vcpu *vcpu,
-					  unsigned int vec)
-{
-	unsigned long old_pending = vcpu->arch.pending_exceptions;
+व्योम kvmppc_book3s_dequeue_irqprio(काष्ठा kvm_vcpu *vcpu,
+					  अचिन्हित पूर्णांक vec)
+अणु
+	अचिन्हित दीर्घ old_pending = vcpu->arch.pending_exceptions;
 
 	clear_bit(kvmppc_book3s_vec2irqprio(vec),
 		  &vcpu->arch.pending_exceptions);
 
-	kvmppc_update_int_pending(vcpu, vcpu->arch.pending_exceptions,
+	kvmppc_update_पूर्णांक_pending(vcpu, vcpu->arch.pending_exceptions,
 				  old_pending);
-}
+पूर्ण
 
-void kvmppc_book3s_queue_irqprio(struct kvm_vcpu *vcpu, unsigned int vec)
-{
-	vcpu->stat.queue_intr++;
+व्योम kvmppc_book3s_queue_irqprio(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक vec)
+अणु
+	vcpu->stat.queue_पूर्णांकr++;
 
 	set_bit(kvmppc_book3s_vec2irqprio(vec),
 		&vcpu->arch.pending_exceptions);
-#ifdef EXIT_DEBUG
-	printk(KERN_INFO "Queueing interrupt %x\n", vec);
-#endif
-}
+#अगर_घोषित EXIT_DEBUG
+	prपूर्णांकk(KERN_INFO "Queueing interrupt %x\n", vec);
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_book3s_queue_irqprio);
 
-void kvmppc_core_queue_machine_check(struct kvm_vcpu *vcpu, ulong flags)
-{
+व्योम kvmppc_core_queue_machine_check(काष्ठा kvm_vcpu *vcpu, uदीर्घ flags)
+अणु
 	/* might as well deliver this straight away */
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_MACHINE_CHECK, flags);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_MACHINE_CHECK, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_queue_machine_check);
 
-void kvmppc_core_queue_program(struct kvm_vcpu *vcpu, ulong flags)
-{
+व्योम kvmppc_core_queue_program(काष्ठा kvm_vcpu *vcpu, uदीर्घ flags)
+अणु
 	/* might as well deliver this straight away */
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_PROGRAM, flags);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_PROGRAM, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_queue_program);
 
-void kvmppc_core_queue_fpunavail(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_queue_fpunavail(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/* might as well deliver this straight away */
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_FP_UNAVAIL, 0);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_FP_UNAVAIL, 0);
+पूर्ण
 
-void kvmppc_core_queue_vec_unavail(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_queue_vec_unavail(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/* might as well deliver this straight away */
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_ALTIVEC, 0);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_ALTIVEC, 0);
+पूर्ण
 
-void kvmppc_core_queue_vsx_unavail(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_queue_vsx_unavail(काष्ठा kvm_vcpu *vcpu)
+अणु
 	/* might as well deliver this straight away */
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_VSX, 0);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_VSX, 0);
+पूर्ण
 
-void kvmppc_core_queue_dec(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_queue_dec(काष्ठा kvm_vcpu *vcpu)
+अणु
 	kvmppc_book3s_queue_irqprio(vcpu, BOOK3S_INTERRUPT_DECREMENTER);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_queue_dec);
 
-int kvmppc_core_pending_dec(struct kvm_vcpu *vcpu)
-{
-	return test_bit(BOOK3S_IRQPRIO_DECREMENTER, &vcpu->arch.pending_exceptions);
-}
+पूर्णांक kvmppc_core_pending_dec(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस test_bit(BOOK3S_IRQPRIO_DECREMENTER, &vcpu->arch.pending_exceptions);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_pending_dec);
 
-void kvmppc_core_dequeue_dec(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_dequeue_dec(काष्ठा kvm_vcpu *vcpu)
+अणु
 	kvmppc_book3s_dequeue_irqprio(vcpu, BOOK3S_INTERRUPT_DECREMENTER);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_dequeue_dec);
 
-void kvmppc_core_queue_external(struct kvm_vcpu *vcpu,
-                                struct kvm_interrupt *irq)
-{
+व्योम kvmppc_core_queue_बाह्यal(काष्ठा kvm_vcpu *vcpu,
+                                काष्ठा kvm_पूर्णांकerrupt *irq)
+अणु
 	/*
-	 * This case (KVM_INTERRUPT_SET) should never actually arise for
-	 * a pseries guest (because pseries guests expect their interrupt
-	 * controllers to continue asserting an external interrupt request
-	 * until it is acknowledged at the interrupt controller), but is
-	 * included to avoid ABI breakage and potentially for other
+	 * This हाल (KVM_INTERRUPT_SET) should never actually arise क्रम
+	 * a pseries guest (because pseries guests expect their पूर्णांकerrupt
+	 * controllers to जारी निश्चितing an बाह्यal पूर्णांकerrupt request
+	 * until it is acknowledged at the पूर्णांकerrupt controller), but is
+	 * included to aव्योम ABI अवरोधage and potentially क्रम other
 	 * sorts of guest.
 	 *
-	 * There is a subtlety here: HV KVM does not test the
-	 * external_oneshot flag in the code that synthesizes
-	 * external interrupts for the guest just before entering
-	 * the guest.  That is OK even if userspace did do a
+	 * There is a subtlety here: HV KVM करोes not test the
+	 * बाह्यal_oneshot flag in the code that synthesizes
+	 * बाह्यal पूर्णांकerrupts क्रम the guest just beक्रमe entering
+	 * the guest.  That is OK even अगर userspace did करो a
 	 * KVM_INTERRUPT_SET on a pseries guest vcpu, because the
-	 * caller (kvm_vcpu_ioctl_interrupt) does a kvm_vcpu_kick()
-	 * which ends up doing a smp_send_reschedule(), which will
+	 * caller (kvm_vcpu_ioctl_पूर्णांकerrupt) करोes a kvm_vcpu_kick()
+	 * which ends up करोing a smp_send_reschedule(), which will
 	 * pull the guest all the way out to the host, meaning that
-	 * we will call kvmppc_core_prepare_to_enter() before entering
-	 * the guest again, and that will handle the external_oneshot
+	 * we will call kvmppc_core_prepare_to_enter() beक्रमe entering
+	 * the guest again, and that will handle the बाह्यal_oneshot
 	 * flag correctly.
 	 */
-	if (irq->irq == KVM_INTERRUPT_SET)
-		vcpu->arch.external_oneshot = 1;
+	अगर (irq->irq == KVM_INTERRUPT_SET)
+		vcpu->arch.बाह्यal_oneshot = 1;
 
 	kvmppc_book3s_queue_irqprio(vcpu, BOOK3S_INTERRUPT_EXTERNAL);
-}
+पूर्ण
 
-void kvmppc_core_dequeue_external(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_dequeue_बाह्यal(काष्ठा kvm_vcpu *vcpu)
+अणु
 	kvmppc_book3s_dequeue_irqprio(vcpu, BOOK3S_INTERRUPT_EXTERNAL);
-}
+पूर्ण
 
-void kvmppc_core_queue_data_storage(struct kvm_vcpu *vcpu, ulong dar,
-				    ulong flags)
-{
+व्योम kvmppc_core_queue_data_storage(काष्ठा kvm_vcpu *vcpu, uदीर्घ dar,
+				    uदीर्घ flags)
+अणु
 	kvmppc_set_dar(vcpu, dar);
 	kvmppc_set_dsisr(vcpu, flags);
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_DATA_STORAGE, 0);
-}
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_DATA_STORAGE, 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_queue_data_storage);
 
-void kvmppc_core_queue_inst_storage(struct kvm_vcpu *vcpu, ulong flags)
-{
-	kvmppc_inject_interrupt(vcpu, BOOK3S_INTERRUPT_INST_STORAGE, flags);
-}
+व्योम kvmppc_core_queue_inst_storage(काष्ठा kvm_vcpu *vcpu, uदीर्घ flags)
+अणु
+	kvmppc_inject_पूर्णांकerrupt(vcpu, BOOK3S_INTERRUPT_INST_STORAGE, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_queue_inst_storage);
 
-static int kvmppc_book3s_irqprio_deliver(struct kvm_vcpu *vcpu,
-					 unsigned int priority)
-{
-	int deliver = 1;
-	int vec = 0;
+अटल पूर्णांक kvmppc_book3s_irqprio_deliver(काष्ठा kvm_vcpu *vcpu,
+					 अचिन्हित पूर्णांक priority)
+अणु
+	पूर्णांक deliver = 1;
+	पूर्णांक vec = 0;
 	bool crit = kvmppc_critical_section(vcpu);
 
-	switch (priority) {
-	case BOOK3S_IRQPRIO_DECREMENTER:
+	चयन (priority) अणु
+	हाल BOOK3S_IRQPRIO_DECREMENTER:
 		deliver = (kvmppc_get_msr(vcpu) & MSR_EE) && !crit;
 		vec = BOOK3S_INTERRUPT_DECREMENTER;
-		break;
-	case BOOK3S_IRQPRIO_EXTERNAL:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_EXTERNAL:
 		deliver = (kvmppc_get_msr(vcpu) & MSR_EE) && !crit;
 		vec = BOOK3S_INTERRUPT_EXTERNAL;
-		break;
-	case BOOK3S_IRQPRIO_SYSTEM_RESET:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_SYSTEM_RESET:
 		vec = BOOK3S_INTERRUPT_SYSTEM_RESET;
-		break;
-	case BOOK3S_IRQPRIO_MACHINE_CHECK:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_MACHINE_CHECK:
 		vec = BOOK3S_INTERRUPT_MACHINE_CHECK;
-		break;
-	case BOOK3S_IRQPRIO_DATA_STORAGE:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_DATA_STORAGE:
 		vec = BOOK3S_INTERRUPT_DATA_STORAGE;
-		break;
-	case BOOK3S_IRQPRIO_INST_STORAGE:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_INST_STORAGE:
 		vec = BOOK3S_INTERRUPT_INST_STORAGE;
-		break;
-	case BOOK3S_IRQPRIO_DATA_SEGMENT:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_DATA_SEGMENT:
 		vec = BOOK3S_INTERRUPT_DATA_SEGMENT;
-		break;
-	case BOOK3S_IRQPRIO_INST_SEGMENT:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_INST_SEGMENT:
 		vec = BOOK3S_INTERRUPT_INST_SEGMENT;
-		break;
-	case BOOK3S_IRQPRIO_ALIGNMENT:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_ALIGNMENT:
 		vec = BOOK3S_INTERRUPT_ALIGNMENT;
-		break;
-	case BOOK3S_IRQPRIO_PROGRAM:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_PROGRAM:
 		vec = BOOK3S_INTERRUPT_PROGRAM;
-		break;
-	case BOOK3S_IRQPRIO_VSX:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_VSX:
 		vec = BOOK3S_INTERRUPT_VSX;
-		break;
-	case BOOK3S_IRQPRIO_ALTIVEC:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_ALTIVEC:
 		vec = BOOK3S_INTERRUPT_ALTIVEC;
-		break;
-	case BOOK3S_IRQPRIO_FP_UNAVAIL:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_FP_UNAVAIL:
 		vec = BOOK3S_INTERRUPT_FP_UNAVAIL;
-		break;
-	case BOOK3S_IRQPRIO_SYSCALL:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_SYSCALL:
 		vec = BOOK3S_INTERRUPT_SYSCALL;
-		break;
-	case BOOK3S_IRQPRIO_DEBUG:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_DEBUG:
 		vec = BOOK3S_INTERRUPT_TRACE;
-		break;
-	case BOOK3S_IRQPRIO_PERFORMANCE_MONITOR:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_PERFORMANCE_MONITOR:
 		vec = BOOK3S_INTERRUPT_PERFMON;
-		break;
-	case BOOK3S_IRQPRIO_FAC_UNAVAIL:
+		अवरोध;
+	हाल BOOK3S_IRQPRIO_FAC_UNAVAIL:
 		vec = BOOK3S_INTERRUPT_FAC_UNAVAIL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		deliver = 0;
-		printk(KERN_ERR "KVM: Unknown interrupt: 0x%x\n", priority);
-		break;
-	}
+		prपूर्णांकk(KERN_ERR "KVM: Unknown interrupt: 0x%x\n", priority);
+		अवरोध;
+	पूर्ण
 
-#if 0
-	printk(KERN_INFO "Deliver interrupt 0x%x? %x\n", vec, deliver);
-#endif
+#अगर 0
+	prपूर्णांकk(KERN_INFO "Deliver interrupt 0x%x? %x\n", vec, deliver);
+#पूर्ण_अगर
 
-	if (deliver)
-		kvmppc_inject_interrupt(vcpu, vec, 0);
+	अगर (deliver)
+		kvmppc_inject_पूर्णांकerrupt(vcpu, vec, 0);
 
-	return deliver;
-}
+	वापस deliver;
+पूर्ण
 
 /*
- * This function determines if an irqprio should be cleared once issued.
+ * This function determines अगर an irqprio should be cleared once issued.
  */
-static bool clear_irqprio(struct kvm_vcpu *vcpu, unsigned int priority)
-{
-	switch (priority) {
-		case BOOK3S_IRQPRIO_DECREMENTER:
-			/* DEC interrupts get cleared by mtdec */
-			return false;
-		case BOOK3S_IRQPRIO_EXTERNAL:
+अटल bool clear_irqprio(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक priority)
+अणु
+	चयन (priority) अणु
+		हाल BOOK3S_IRQPRIO_DECREMENTER:
+			/* DEC पूर्णांकerrupts get cleared by mtdec */
+			वापस false;
+		हाल BOOK3S_IRQPRIO_EXTERNAL:
 			/*
-			 * External interrupts get cleared by userspace
+			 * External पूर्णांकerrupts get cleared by userspace
 			 * except when set by the KVM_INTERRUPT ioctl with
 			 * KVM_INTERRUPT_SET (not KVM_INTERRUPT_SET_LEVEL).
 			 */
-			if (vcpu->arch.external_oneshot) {
-				vcpu->arch.external_oneshot = 0;
-				return true;
-			}
-			return false;
-	}
+			अगर (vcpu->arch.बाह्यal_oneshot) अणु
+				vcpu->arch.बाह्यal_oneshot = 0;
+				वापस true;
+			पूर्ण
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-int kvmppc_core_prepare_to_enter(struct kvm_vcpu *vcpu)
-{
-	unsigned long *pending = &vcpu->arch.pending_exceptions;
-	unsigned long old_pending = vcpu->arch.pending_exceptions;
-	unsigned int priority;
+पूर्णांक kvmppc_core_prepare_to_enter(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ *pending = &vcpu->arch.pending_exceptions;
+	अचिन्हित दीर्घ old_pending = vcpu->arch.pending_exceptions;
+	अचिन्हित पूर्णांक priority;
 
-#ifdef EXIT_DEBUG
-	if (vcpu->arch.pending_exceptions)
-		printk(KERN_EMERG "KVM: Check pending: %lx\n", vcpu->arch.pending_exceptions);
-#endif
+#अगर_घोषित EXIT_DEBUG
+	अगर (vcpu->arch.pending_exceptions)
+		prपूर्णांकk(KERN_EMERG "KVM: Check pending: %lx\n", vcpu->arch.pending_exceptions);
+#पूर्ण_अगर
 	priority = __ffs(*pending);
-	while (priority < BOOK3S_IRQPRIO_MAX) {
-		if (kvmppc_book3s_irqprio_deliver(vcpu, priority) &&
-		    clear_irqprio(vcpu, priority)) {
+	जबतक (priority < BOOK3S_IRQPRIO_MAX) अणु
+		अगर (kvmppc_book3s_irqprio_deliver(vcpu, priority) &&
+		    clear_irqprio(vcpu, priority)) अणु
 			clear_bit(priority, &vcpu->arch.pending_exceptions);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		priority = find_next_bit(pending,
-					 BITS_PER_BYTE * sizeof(*pending),
+					 BITS_PER_BYTE * माप(*pending),
 					 priority + 1);
-	}
+	पूर्ण
 
-	/* Tell the guest about our interrupt status */
-	kvmppc_update_int_pending(vcpu, *pending, old_pending);
+	/* Tell the guest about our पूर्णांकerrupt status */
+	kvmppc_update_पूर्णांक_pending(vcpu, *pending, old_pending);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_core_prepare_to_enter);
 
-kvm_pfn_t kvmppc_gpa_to_pfn(struct kvm_vcpu *vcpu, gpa_t gpa, bool writing,
+kvm_pfn_t kvmppc_gpa_to_pfn(काष्ठा kvm_vcpu *vcpu, gpa_t gpa, bool writing,
 			bool *writable)
-{
-	ulong mp_pa = vcpu->arch.magic_page_pa & KVM_PAM;
+अणु
+	uदीर्घ mp_pa = vcpu->arch.magic_page_pa & KVM_PAM;
 	gfn_t gfn = gpa >> PAGE_SHIFT;
 
-	if (!(kvmppc_get_msr(vcpu) & MSR_SF))
-		mp_pa = (uint32_t)mp_pa;
+	अगर (!(kvmppc_get_msr(vcpu) & MSR_SF))
+		mp_pa = (uपूर्णांक32_t)mp_pa;
 
 	/* Magic page override */
 	gpa &= ~0xFFFULL;
-	if (unlikely(mp_pa) && unlikely((gpa & KVM_PAM) == mp_pa)) {
-		ulong shared_page = ((ulong)vcpu->arch.shared) & PAGE_MASK;
+	अगर (unlikely(mp_pa) && unlikely((gpa & KVM_PAM) == mp_pa)) अणु
+		uदीर्घ shared_page = ((uदीर्घ)vcpu->arch.shared) & PAGE_MASK;
 		kvm_pfn_t pfn;
 
-		pfn = (kvm_pfn_t)virt_to_phys((void*)shared_page) >> PAGE_SHIFT;
+		pfn = (kvm_pfn_t)virt_to_phys((व्योम*)shared_page) >> PAGE_SHIFT;
 		get_page(pfn_to_page(pfn));
-		if (writable)
+		अगर (writable)
 			*writable = true;
-		return pfn;
-	}
+		वापस pfn;
+	पूर्ण
 
-	return gfn_to_pfn_prot(vcpu->kvm, gfn, writing, writable);
-}
+	वापस gfn_to_pfn_prot(vcpu->kvm, gfn, writing, writable);
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_gpa_to_pfn);
 
-int kvmppc_xlate(struct kvm_vcpu *vcpu, ulong eaddr, enum xlate_instdata xlid,
-		 enum xlate_readwrite xlrw, struct kvmppc_pte *pte)
-{
+पूर्णांक kvmppc_xlate(काष्ठा kvm_vcpu *vcpu, uदीर्घ eaddr, क्रमागत xlate_instdata xlid,
+		 क्रमागत xlate_पढ़ोग_लिखो xlrw, काष्ठा kvmppc_pte *pte)
+अणु
 	bool data = (xlid == XLATE_DATA);
-	bool iswrite = (xlrw == XLATE_WRITE);
-	int relocated = (kvmppc_get_msr(vcpu) & (data ? MSR_DR : MSR_IR));
-	int r;
+	bool isग_लिखो = (xlrw == XLATE_WRITE);
+	पूर्णांक relocated = (kvmppc_get_msr(vcpu) & (data ? MSR_DR : MSR_IR));
+	पूर्णांक r;
 
-	if (relocated) {
-		r = vcpu->arch.mmu.xlate(vcpu, eaddr, pte, data, iswrite);
-	} else {
+	अगर (relocated) अणु
+		r = vcpu->arch.mmu.xlate(vcpu, eaddr, pte, data, isग_लिखो);
+	पूर्ण अन्यथा अणु
 		pte->eaddr = eaddr;
 		pte->raddr = eaddr & KVM_PAM;
 		pte->vpage = VSID_REAL | eaddr >> 12;
-		pte->may_read = true;
-		pte->may_write = true;
+		pte->may_पढ़ो = true;
+		pte->may_ग_लिखो = true;
 		pte->may_execute = true;
 		r = 0;
 
-		if ((kvmppc_get_msr(vcpu) & (MSR_IR | MSR_DR)) == MSR_DR &&
-		    !data) {
-			if ((vcpu->arch.hflags & BOOK3S_HFLAG_SPLIT_HACK) &&
+		अगर ((kvmppc_get_msr(vcpu) & (MSR_IR | MSR_DR)) == MSR_DR &&
+		    !data) अणु
+			अगर ((vcpu->arch.hflags & BOOK3S_HFLAG_SPLIT_HACK) &&
 			    ((eaddr & SPLIT_HACK_MASK) == SPLIT_HACK_OFFS))
 			pte->raddr &= ~SPLIT_HACK_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int kvmppc_load_last_inst(struct kvm_vcpu *vcpu,
-		enum instruction_fetch_type type, u32 *inst)
-{
-	ulong pc = kvmppc_get_pc(vcpu);
-	int r;
+पूर्णांक kvmppc_load_last_inst(काष्ठा kvm_vcpu *vcpu,
+		क्रमागत inकाष्ठाion_fetch_type type, u32 *inst)
+अणु
+	uदीर्घ pc = kvmppc_get_pc(vcpu);
+	पूर्णांक r;
 
-	if (type == INST_SC)
+	अगर (type == INST_SC)
 		pc -= 4;
 
-	r = kvmppc_ld(vcpu, &pc, sizeof(u32), inst, false);
-	if (r == EMULATE_DONE)
-		return r;
-	else
-		return EMULATE_AGAIN;
-}
+	r = kvmppc_ld(vcpu, &pc, माप(u32), inst, false);
+	अगर (r == EMULATE_DONE)
+		वापस r;
+	अन्यथा
+		वापस EMULATE_AGAIN;
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_load_last_inst);
 
-int kvmppc_subarch_vcpu_init(struct kvm_vcpu *vcpu)
-{
-	return 0;
-}
+पूर्णांक kvmppc_subarch_vcpu_init(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस 0;
+पूर्ण
 
-void kvmppc_subarch_vcpu_uninit(struct kvm_vcpu *vcpu)
-{
-}
+व्योम kvmppc_subarch_vcpu_uninit(काष्ठा kvm_vcpu *vcpu)
+अणु
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs)
-{
-	int ret;
+पूर्णांक kvm_arch_vcpu_ioctl_get_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs)
+अणु
+	पूर्णांक ret;
 
 	vcpu_load(vcpu);
 	ret = vcpu->kvm->arch.kvm_ops->get_sregs(vcpu, sregs);
 	vcpu_put(vcpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_sregs(struct kvm_vcpu *vcpu,
-				  struct kvm_sregs *sregs)
-{
-	int ret;
+पूर्णांक kvm_arch_vcpu_ioctl_set_sregs(काष्ठा kvm_vcpu *vcpu,
+				  काष्ठा kvm_sregs *sregs)
+अणु
+	पूर्णांक ret;
 
 	vcpu_load(vcpu);
 	ret = vcpu->kvm->arch.kvm_ops->set_sregs(vcpu, sregs);
 	vcpu_put(vcpu);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
-{
-	int i;
+पूर्णांक kvm_arch_vcpu_ioctl_get_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs)
+अणु
+	पूर्णांक i;
 
 	regs->pc = kvmppc_get_pc(vcpu);
 	regs->cr = kvmppc_get_cr(vcpu);
@@ -523,15 +524,15 @@ int kvm_arch_vcpu_ioctl_get_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
 	regs->sprg6 = kvmppc_get_sprg6(vcpu);
 	regs->sprg7 = kvmppc_get_sprg7(vcpu);
 
-	for (i = 0; i < ARRAY_SIZE(regs->gpr); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(regs->gpr); i++)
 		regs->gpr[i] = kvmppc_get_gpr(vcpu, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
-{
-	int i;
+पूर्णांक kvm_arch_vcpu_ioctl_set_regs(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_regs *regs)
+अणु
+	पूर्णांक i;
 
 	kvmppc_set_pc(vcpu, regs->pc);
 	kvmppc_set_cr(vcpu, regs->cr);
@@ -550,533 +551,533 @@ int kvm_arch_vcpu_ioctl_set_regs(struct kvm_vcpu *vcpu, struct kvm_regs *regs)
 	kvmppc_set_sprg6(vcpu, regs->sprg6);
 	kvmppc_set_sprg7(vcpu, regs->sprg7);
 
-	for (i = 0; i < ARRAY_SIZE(regs->gpr); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(regs->gpr); i++)
 		kvmppc_set_gpr(vcpu, i, regs->gpr[i]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_get_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu)
-{
-	return -EOPNOTSUPP;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_get_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_fpu(struct kvm_vcpu *vcpu, struct kvm_fpu *fpu)
-{
-	return -EOPNOTSUPP;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_set_fpu(काष्ठा kvm_vcpu *vcpu, काष्ठा kvm_fpu *fpu)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int kvmppc_get_one_reg(struct kvm_vcpu *vcpu, u64 id,
-			union kvmppc_one_reg *val)
-{
-	int r = 0;
-	long int i;
+पूर्णांक kvmppc_get_one_reg(काष्ठा kvm_vcpu *vcpu, u64 id,
+			जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = 0;
+	दीर्घ पूर्णांक i;
 
 	r = vcpu->kvm->arch.kvm_ops->get_one_reg(vcpu, id, val);
-	if (r == -EINVAL) {
+	अगर (r == -EINVAL) अणु
 		r = 0;
-		switch (id) {
-		case KVM_REG_PPC_DAR:
+		चयन (id) अणु
+		हाल KVM_REG_PPC_DAR:
 			*val = get_reg_val(id, kvmppc_get_dar(vcpu));
-			break;
-		case KVM_REG_PPC_DSISR:
+			अवरोध;
+		हाल KVM_REG_PPC_DSISR:
 			*val = get_reg_val(id, kvmppc_get_dsisr(vcpu));
-			break;
-		case KVM_REG_PPC_FPR0 ... KVM_REG_PPC_FPR31:
+			अवरोध;
+		हाल KVM_REG_PPC_FPR0 ... KVM_REG_PPC_FPR31:
 			i = id - KVM_REG_PPC_FPR0;
 			*val = get_reg_val(id, VCPU_FPR(vcpu, i));
-			break;
-		case KVM_REG_PPC_FPSCR:
+			अवरोध;
+		हाल KVM_REG_PPC_FPSCR:
 			*val = get_reg_val(id, vcpu->arch.fp.fpscr);
-			break;
-#ifdef CONFIG_VSX
-		case KVM_REG_PPC_VSR0 ... KVM_REG_PPC_VSR31:
-			if (cpu_has_feature(CPU_FTR_VSX)) {
+			अवरोध;
+#अगर_घोषित CONFIG_VSX
+		हाल KVM_REG_PPC_VSR0 ... KVM_REG_PPC_VSR31:
+			अगर (cpu_has_feature(CPU_FTR_VSX)) अणु
 				i = id - KVM_REG_PPC_VSR0;
 				val->vsxval[0] = vcpu->arch.fp.fpr[i][0];
 				val->vsxval[1] = vcpu->arch.fp.fpr[i][1];
-			} else {
+			पूर्ण अन्यथा अणु
 				r = -ENXIO;
-			}
-			break;
-#endif /* CONFIG_VSX */
-		case KVM_REG_PPC_DEBUG_INST:
+			पूर्ण
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
+		हाल KVM_REG_PPC_DEBUG_INST:
 			*val = get_reg_val(id, INS_TW);
-			break;
-#ifdef CONFIG_KVM_XICS
-		case KVM_REG_PPC_ICP_STATE:
-			if (!vcpu->arch.icp && !vcpu->arch.xive_vcpu) {
+			अवरोध;
+#अगर_घोषित CONFIG_KVM_XICS
+		हाल KVM_REG_PPC_ICP_STATE:
+			अगर (!vcpu->arch.icp && !vcpu->arch.xive_vcpu) अणु
 				r = -ENXIO;
-				break;
-			}
-			if (xics_on_xive())
+				अवरोध;
+			पूर्ण
+			अगर (xics_on_xive())
 				*val = get_reg_val(id, kvmppc_xive_get_icp(vcpu));
-			else
+			अन्यथा
 				*val = get_reg_val(id, kvmppc_xics_get_icp(vcpu));
-			break;
-#endif /* CONFIG_KVM_XICS */
-#ifdef CONFIG_KVM_XIVE
-		case KVM_REG_PPC_VP_STATE:
-			if (!vcpu->arch.xive_vcpu) {
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_KVM_XICS */
+#अगर_घोषित CONFIG_KVM_XIVE
+		हाल KVM_REG_PPC_VP_STATE:
+			अगर (!vcpu->arch.xive_vcpu) अणु
 				r = -ENXIO;
-				break;
-			}
-			if (xive_enabled())
+				अवरोध;
+			पूर्ण
+			अगर (xive_enabled())
 				r = kvmppc_xive_native_get_vp(vcpu, val);
-			else
+			अन्यथा
 				r = -ENXIO;
-			break;
-#endif /* CONFIG_KVM_XIVE */
-		case KVM_REG_PPC_FSCR:
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_KVM_XIVE */
+		हाल KVM_REG_PPC_FSCR:
 			*val = get_reg_val(id, vcpu->arch.fscr);
-			break;
-		case KVM_REG_PPC_TAR:
+			अवरोध;
+		हाल KVM_REG_PPC_TAR:
 			*val = get_reg_val(id, vcpu->arch.tar);
-			break;
-		case KVM_REG_PPC_EBBHR:
+			अवरोध;
+		हाल KVM_REG_PPC_EBBHR:
 			*val = get_reg_val(id, vcpu->arch.ebbhr);
-			break;
-		case KVM_REG_PPC_EBBRR:
+			अवरोध;
+		हाल KVM_REG_PPC_EBBRR:
 			*val = get_reg_val(id, vcpu->arch.ebbrr);
-			break;
-		case KVM_REG_PPC_BESCR:
+			अवरोध;
+		हाल KVM_REG_PPC_BESCR:
 			*val = get_reg_val(id, vcpu->arch.bescr);
-			break;
-		case KVM_REG_PPC_IC:
+			अवरोध;
+		हाल KVM_REG_PPC_IC:
 			*val = get_reg_val(id, vcpu->arch.ic);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			r = -EINVAL;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int kvmppc_set_one_reg(struct kvm_vcpu *vcpu, u64 id,
-			union kvmppc_one_reg *val)
-{
-	int r = 0;
-	long int i;
+पूर्णांक kvmppc_set_one_reg(काष्ठा kvm_vcpu *vcpu, u64 id,
+			जोड़ kvmppc_one_reg *val)
+अणु
+	पूर्णांक r = 0;
+	दीर्घ पूर्णांक i;
 
 	r = vcpu->kvm->arch.kvm_ops->set_one_reg(vcpu, id, val);
-	if (r == -EINVAL) {
+	अगर (r == -EINVAL) अणु
 		r = 0;
-		switch (id) {
-		case KVM_REG_PPC_DAR:
+		चयन (id) अणु
+		हाल KVM_REG_PPC_DAR:
 			kvmppc_set_dar(vcpu, set_reg_val(id, *val));
-			break;
-		case KVM_REG_PPC_DSISR:
+			अवरोध;
+		हाल KVM_REG_PPC_DSISR:
 			kvmppc_set_dsisr(vcpu, set_reg_val(id, *val));
-			break;
-		case KVM_REG_PPC_FPR0 ... KVM_REG_PPC_FPR31:
+			अवरोध;
+		हाल KVM_REG_PPC_FPR0 ... KVM_REG_PPC_FPR31:
 			i = id - KVM_REG_PPC_FPR0;
 			VCPU_FPR(vcpu, i) = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_FPSCR:
+			अवरोध;
+		हाल KVM_REG_PPC_FPSCR:
 			vcpu->arch.fp.fpscr = set_reg_val(id, *val);
-			break;
-#ifdef CONFIG_VSX
-		case KVM_REG_PPC_VSR0 ... KVM_REG_PPC_VSR31:
-			if (cpu_has_feature(CPU_FTR_VSX)) {
+			अवरोध;
+#अगर_घोषित CONFIG_VSX
+		हाल KVM_REG_PPC_VSR0 ... KVM_REG_PPC_VSR31:
+			अगर (cpu_has_feature(CPU_FTR_VSX)) अणु
 				i = id - KVM_REG_PPC_VSR0;
 				vcpu->arch.fp.fpr[i][0] = val->vsxval[0];
 				vcpu->arch.fp.fpr[i][1] = val->vsxval[1];
-			} else {
+			पूर्ण अन्यथा अणु
 				r = -ENXIO;
-			}
-			break;
-#endif /* CONFIG_VSX */
-#ifdef CONFIG_KVM_XICS
-		case KVM_REG_PPC_ICP_STATE:
-			if (!vcpu->arch.icp && !vcpu->arch.xive_vcpu) {
+			पूर्ण
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_VSX */
+#अगर_घोषित CONFIG_KVM_XICS
+		हाल KVM_REG_PPC_ICP_STATE:
+			अगर (!vcpu->arch.icp && !vcpu->arch.xive_vcpu) अणु
 				r = -ENXIO;
-				break;
-			}
-			if (xics_on_xive())
+				अवरोध;
+			पूर्ण
+			अगर (xics_on_xive())
 				r = kvmppc_xive_set_icp(vcpu, set_reg_val(id, *val));
-			else
+			अन्यथा
 				r = kvmppc_xics_set_icp(vcpu, set_reg_val(id, *val));
-			break;
-#endif /* CONFIG_KVM_XICS */
-#ifdef CONFIG_KVM_XIVE
-		case KVM_REG_PPC_VP_STATE:
-			if (!vcpu->arch.xive_vcpu) {
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_KVM_XICS */
+#अगर_घोषित CONFIG_KVM_XIVE
+		हाल KVM_REG_PPC_VP_STATE:
+			अगर (!vcpu->arch.xive_vcpu) अणु
 				r = -ENXIO;
-				break;
-			}
-			if (xive_enabled())
+				अवरोध;
+			पूर्ण
+			अगर (xive_enabled())
 				r = kvmppc_xive_native_set_vp(vcpu, val);
-			else
+			अन्यथा
 				r = -ENXIO;
-			break;
-#endif /* CONFIG_KVM_XIVE */
-		case KVM_REG_PPC_FSCR:
+			अवरोध;
+#पूर्ण_अगर /* CONFIG_KVM_XIVE */
+		हाल KVM_REG_PPC_FSCR:
 			vcpu->arch.fscr = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_TAR:
+			अवरोध;
+		हाल KVM_REG_PPC_TAR:
 			vcpu->arch.tar = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_EBBHR:
+			अवरोध;
+		हाल KVM_REG_PPC_EBBHR:
 			vcpu->arch.ebbhr = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_EBBRR:
+			अवरोध;
+		हाल KVM_REG_PPC_EBBRR:
 			vcpu->arch.ebbrr = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_BESCR:
+			अवरोध;
+		हाल KVM_REG_PPC_BESCR:
 			vcpu->arch.bescr = set_reg_val(id, *val);
-			break;
-		case KVM_REG_PPC_IC:
+			अवरोध;
+		हाल KVM_REG_PPC_IC:
 			vcpu->arch.ic = set_reg_val(id, *val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			r = -EINVAL;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void kvmppc_core_vcpu_load(struct kvm_vcpu *vcpu, int cpu)
-{
+व्योम kvmppc_core_vcpu_load(काष्ठा kvm_vcpu *vcpu, पूर्णांक cpu)
+अणु
 	vcpu->kvm->arch.kvm_ops->vcpu_load(vcpu, cpu);
-}
+पूर्ण
 
-void kvmppc_core_vcpu_put(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_core_vcpu_put(काष्ठा kvm_vcpu *vcpu)
+अणु
 	vcpu->kvm->arch.kvm_ops->vcpu_put(vcpu);
-}
+पूर्ण
 
-void kvmppc_set_msr(struct kvm_vcpu *vcpu, u64 msr)
-{
+व्योम kvmppc_set_msr(काष्ठा kvm_vcpu *vcpu, u64 msr)
+अणु
 	vcpu->kvm->arch.kvm_ops->set_msr(vcpu, msr);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_set_msr);
 
-int kvmppc_vcpu_run(struct kvm_vcpu *vcpu)
-{
-	return vcpu->kvm->arch.kvm_ops->vcpu_run(vcpu);
-}
+पूर्णांक kvmppc_vcpu_run(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->kvm->arch.kvm_ops->vcpu_run(vcpu);
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_translate(struct kvm_vcpu *vcpu,
-                                  struct kvm_translation *tr)
-{
-	return 0;
-}
+पूर्णांक kvm_arch_vcpu_ioctl_translate(काष्ठा kvm_vcpu *vcpu,
+                                  काष्ठा kvm_translation *tr)
+अणु
+	वापस 0;
+पूर्ण
 
-int kvm_arch_vcpu_ioctl_set_guest_debug(struct kvm_vcpu *vcpu,
-					struct kvm_guest_debug *dbg)
-{
+पूर्णांक kvm_arch_vcpu_ioctl_set_guest_debug(काष्ठा kvm_vcpu *vcpu,
+					काष्ठा kvm_guest_debug *dbg)
+अणु
 	vcpu_load(vcpu);
 	vcpu->guest_debug = dbg->control;
 	vcpu_put(vcpu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kvmppc_decrementer_func(struct kvm_vcpu *vcpu)
-{
+व्योम kvmppc_decrementer_func(काष्ठा kvm_vcpu *vcpu)
+अणु
 	kvmppc_core_queue_dec(vcpu);
 	kvm_vcpu_kick(vcpu);
-}
+पूर्ण
 
-int kvmppc_core_vcpu_create(struct kvm_vcpu *vcpu)
-{
-	return vcpu->kvm->arch.kvm_ops->vcpu_create(vcpu);
-}
+पूर्णांक kvmppc_core_vcpu_create(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->kvm->arch.kvm_ops->vcpu_create(vcpu);
+पूर्ण
 
-void kvmppc_core_vcpu_free(struct kvm_vcpu *vcpu)
-{
-	vcpu->kvm->arch.kvm_ops->vcpu_free(vcpu);
-}
+व्योम kvmppc_core_vcpu_मुक्त(काष्ठा kvm_vcpu *vcpu)
+अणु
+	vcpu->kvm->arch.kvm_ops->vcpu_मुक्त(vcpu);
+पूर्ण
 
-int kvmppc_core_check_requests(struct kvm_vcpu *vcpu)
-{
-	return vcpu->kvm->arch.kvm_ops->check_requests(vcpu);
-}
+पूर्णांक kvmppc_core_check_requests(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu->kvm->arch.kvm_ops->check_requests(vcpu);
+पूर्ण
 
-void kvm_arch_sync_dirty_log(struct kvm *kvm, struct kvm_memory_slot *memslot)
-{
+व्योम kvm_arch_sync_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *memslot)
+अणु
 
-}
+पूर्ण
 
-int kvm_vm_ioctl_get_dirty_log(struct kvm *kvm, struct kvm_dirty_log *log)
-{
-	return kvm->arch.kvm_ops->get_dirty_log(kvm, log);
-}
+पूर्णांक kvm_vm_ioctl_get_dirty_log(काष्ठा kvm *kvm, काष्ठा kvm_dirty_log *log)
+अणु
+	वापस kvm->arch.kvm_ops->get_dirty_log(kvm, log);
+पूर्ण
 
-void kvmppc_core_free_memslot(struct kvm *kvm, struct kvm_memory_slot *slot)
-{
-	kvm->arch.kvm_ops->free_memslot(slot);
-}
+व्योम kvmppc_core_मुक्त_memslot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *slot)
+अणु
+	kvm->arch.kvm_ops->मुक्त_memslot(slot);
+पूर्ण
 
-void kvmppc_core_flush_memslot(struct kvm *kvm, struct kvm_memory_slot *memslot)
-{
+व्योम kvmppc_core_flush_memslot(काष्ठा kvm *kvm, काष्ठा kvm_memory_slot *memslot)
+अणु
 	kvm->arch.kvm_ops->flush_memslot(kvm, memslot);
-}
+पूर्ण
 
-int kvmppc_core_prepare_memory_region(struct kvm *kvm,
-				struct kvm_memory_slot *memslot,
-				const struct kvm_userspace_memory_region *mem,
-				enum kvm_mr_change change)
-{
-	return kvm->arch.kvm_ops->prepare_memory_region(kvm, memslot, mem,
+पूर्णांक kvmppc_core_prepare_memory_region(काष्ठा kvm *kvm,
+				काष्ठा kvm_memory_slot *memslot,
+				स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				क्रमागत kvm_mr_change change)
+अणु
+	वापस kvm->arch.kvm_ops->prepare_memory_region(kvm, memslot, mem,
 							change);
-}
+पूर्ण
 
-void kvmppc_core_commit_memory_region(struct kvm *kvm,
-				const struct kvm_userspace_memory_region *mem,
-				const struct kvm_memory_slot *old,
-				const struct kvm_memory_slot *new,
-				enum kvm_mr_change change)
-{
+व्योम kvmppc_core_commit_memory_region(काष्ठा kvm *kvm,
+				स्थिर काष्ठा kvm_userspace_memory_region *mem,
+				स्थिर काष्ठा kvm_memory_slot *old,
+				स्थिर काष्ठा kvm_memory_slot *new,
+				क्रमागत kvm_mr_change change)
+अणु
 	kvm->arch.kvm_ops->commit_memory_region(kvm, mem, old, new, change);
-}
+पूर्ण
 
-bool kvm_unmap_gfn_range(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	return kvm->arch.kvm_ops->unmap_gfn_range(kvm, range);
-}
+bool kvm_unmap_gfn_range(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	वापस kvm->arch.kvm_ops->unmap_gfn_range(kvm, range);
+पूर्ण
 
-bool kvm_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	return kvm->arch.kvm_ops->age_gfn(kvm, range);
-}
+bool kvm_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	वापस kvm->arch.kvm_ops->age_gfn(kvm, range);
+पूर्ण
 
-bool kvm_test_age_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	return kvm->arch.kvm_ops->test_age_gfn(kvm, range);
-}
+bool kvm_test_age_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	वापस kvm->arch.kvm_ops->test_age_gfn(kvm, range);
+पूर्ण
 
-bool kvm_set_spte_gfn(struct kvm *kvm, struct kvm_gfn_range *range)
-{
-	return kvm->arch.kvm_ops->set_spte_gfn(kvm, range);
-}
+bool kvm_set_spte_gfn(काष्ठा kvm *kvm, काष्ठा kvm_gfn_range *range)
+अणु
+	वापस kvm->arch.kvm_ops->set_spte_gfn(kvm, range);
+पूर्ण
 
-int kvmppc_core_init_vm(struct kvm *kvm)
-{
+पूर्णांक kvmppc_core_init_vm(काष्ठा kvm *kvm)
+अणु
 
-#ifdef CONFIG_PPC64
+#अगर_घोषित CONFIG_PPC64
 	INIT_LIST_HEAD_RCU(&kvm->arch.spapr_tce_tables);
 	INIT_LIST_HEAD(&kvm->arch.rtas_tokens);
 	mutex_init(&kvm->arch.rtas_token_lock);
-#endif
+#पूर्ण_अगर
 
-	return kvm->arch.kvm_ops->init_vm(kvm);
-}
+	वापस kvm->arch.kvm_ops->init_vm(kvm);
+पूर्ण
 
-void kvmppc_core_destroy_vm(struct kvm *kvm)
-{
+व्योम kvmppc_core_destroy_vm(काष्ठा kvm *kvm)
+अणु
 	kvm->arch.kvm_ops->destroy_vm(kvm);
 
-#ifdef CONFIG_PPC64
-	kvmppc_rtas_tokens_free(kvm);
+#अगर_घोषित CONFIG_PPC64
+	kvmppc_rtas_tokens_मुक्त(kvm);
 	WARN_ON(!list_empty(&kvm->arch.spapr_tce_tables));
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_KVM_XICS
+#अगर_घोषित CONFIG_KVM_XICS
 	/*
-	 * Free the XIVE and XICS devices which are not directly freed by the
+	 * Free the XIVE and XICS devices which are not directly मुक्तd by the
 	 * device 'release' method
 	 */
-	kfree(kvm->arch.xive_devices.native);
-	kvm->arch.xive_devices.native = NULL;
-	kfree(kvm->arch.xive_devices.xics_on_xive);
-	kvm->arch.xive_devices.xics_on_xive = NULL;
-	kfree(kvm->arch.xics_device);
-	kvm->arch.xics_device = NULL;
-#endif /* CONFIG_KVM_XICS */
-}
+	kमुक्त(kvm->arch.xive_devices.native);
+	kvm->arch.xive_devices.native = शून्य;
+	kमुक्त(kvm->arch.xive_devices.xics_on_xive);
+	kvm->arch.xive_devices.xics_on_xive = शून्य;
+	kमुक्त(kvm->arch.xics_device);
+	kvm->arch.xics_device = शून्य;
+#पूर्ण_अगर /* CONFIG_KVM_XICS */
+पूर्ण
 
-int kvmppc_h_logical_ci_load(struct kvm_vcpu *vcpu)
-{
-	unsigned long size = kvmppc_get_gpr(vcpu, 4);
-	unsigned long addr = kvmppc_get_gpr(vcpu, 5);
+पूर्णांक kvmppc_h_logical_ci_load(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ size = kvmppc_get_gpr(vcpu, 4);
+	अचिन्हित दीर्घ addr = kvmppc_get_gpr(vcpu, 5);
 	u64 buf;
-	int srcu_idx;
-	int ret;
+	पूर्णांक srcu_idx;
+	पूर्णांक ret;
 
-	if (!is_power_of_2(size) || (size > sizeof(buf)))
-		return H_TOO_HARD;
+	अगर (!is_घातer_of_2(size) || (size > माप(buf)))
+		वापस H_TOO_HARD;
 
-	srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-	ret = kvm_io_bus_read(vcpu, KVM_MMIO_BUS, addr, size, &buf);
-	srcu_read_unlock(&vcpu->kvm->srcu, srcu_idx);
-	if (ret != 0)
-		return H_TOO_HARD;
+	srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+	ret = kvm_io_bus_पढ़ो(vcpu, KVM_MMIO_BUS, addr, size, &buf);
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, srcu_idx);
+	अगर (ret != 0)
+		वापस H_TOO_HARD;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		kvmppc_set_gpr(vcpu, 4, *(u8 *)&buf);
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		kvmppc_set_gpr(vcpu, 4, be16_to_cpu(*(__be16 *)&buf));
-		break;
+		अवरोध;
 
-	case 4:
+	हाल 4:
 		kvmppc_set_gpr(vcpu, 4, be32_to_cpu(*(__be32 *)&buf));
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		kvmppc_set_gpr(vcpu, 4, be64_to_cpu(*(__be64 *)&buf));
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_h_logical_ci_load);
 
-int kvmppc_h_logical_ci_store(struct kvm_vcpu *vcpu)
-{
-	unsigned long size = kvmppc_get_gpr(vcpu, 4);
-	unsigned long addr = kvmppc_get_gpr(vcpu, 5);
-	unsigned long val = kvmppc_get_gpr(vcpu, 6);
+पूर्णांक kvmppc_h_logical_ci_store(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ size = kvmppc_get_gpr(vcpu, 4);
+	अचिन्हित दीर्घ addr = kvmppc_get_gpr(vcpu, 5);
+	अचिन्हित दीर्घ val = kvmppc_get_gpr(vcpu, 6);
 	u64 buf;
-	int srcu_idx;
-	int ret;
+	पूर्णांक srcu_idx;
+	पूर्णांक ret;
 
-	switch (size) {
-	case 1:
+	चयन (size) अणु
+	हाल 1:
 		*(u8 *)&buf = val;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		*(__be16 *)&buf = cpu_to_be16(val);
-		break;
+		अवरोध;
 
-	case 4:
+	हाल 4:
 		*(__be32 *)&buf = cpu_to_be32(val);
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		*(__be64 *)&buf = cpu_to_be64(val);
-		break;
+		अवरोध;
 
-	default:
-		return H_TOO_HARD;
-	}
+	शेष:
+		वापस H_TOO_HARD;
+	पूर्ण
 
-	srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);
-	ret = kvm_io_bus_write(vcpu, KVM_MMIO_BUS, addr, size, &buf);
-	srcu_read_unlock(&vcpu->kvm->srcu, srcu_idx);
-	if (ret != 0)
-		return H_TOO_HARD;
+	srcu_idx = srcu_पढ़ो_lock(&vcpu->kvm->srcu);
+	ret = kvm_io_bus_ग_लिखो(vcpu, KVM_MMIO_BUS, addr, size, &buf);
+	srcu_पढ़ो_unlock(&vcpu->kvm->srcu, srcu_idx);
+	अगर (ret != 0)
+		वापस H_TOO_HARD;
 
-	return H_SUCCESS;
-}
+	वापस H_SUCCESS;
+पूर्ण
 EXPORT_SYMBOL_GPL(kvmppc_h_logical_ci_store);
 
-int kvmppc_core_check_processor_compat(void)
-{
+पूर्णांक kvmppc_core_check_processor_compat(व्योम)
+अणु
 	/*
-	 * We always return 0 for book3s. We check
-	 * for compatibility while loading the HV
+	 * We always वापस 0 क्रम book3s. We check
+	 * क्रम compatibility जबतक loading the HV
 	 * or PR module
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kvmppc_book3s_hcall_implemented(struct kvm *kvm, unsigned long hcall)
-{
-	return kvm->arch.kvm_ops->hcall_implemented(hcall);
-}
+पूर्णांक kvmppc_book3s_hcall_implemented(काष्ठा kvm *kvm, अचिन्हित दीर्घ hcall)
+अणु
+	वापस kvm->arch.kvm_ops->hcall_implemented(hcall);
+पूर्ण
 
-#ifdef CONFIG_KVM_XICS
-int kvm_set_irq(struct kvm *kvm, int irq_source_id, u32 irq, int level,
+#अगर_घोषित CONFIG_KVM_XICS
+पूर्णांक kvm_set_irq(काष्ठा kvm *kvm, पूर्णांक irq_source_id, u32 irq, पूर्णांक level,
 		bool line_status)
-{
-	if (xics_on_xive())
-		return kvmppc_xive_set_irq(kvm, irq_source_id, irq, level,
+अणु
+	अगर (xics_on_xive())
+		वापस kvmppc_xive_set_irq(kvm, irq_source_id, irq, level,
 					   line_status);
-	else
-		return kvmppc_xics_set_irq(kvm, irq_source_id, irq, level,
+	अन्यथा
+		वापस kvmppc_xics_set_irq(kvm, irq_source_id, irq, level,
 					   line_status);
-}
+पूर्ण
 
-int kvm_arch_set_irq_inatomic(struct kvm_kernel_irq_routing_entry *irq_entry,
-			      struct kvm *kvm, int irq_source_id,
-			      int level, bool line_status)
-{
-	return kvm_set_irq(kvm, irq_source_id, irq_entry->gsi,
+पूर्णांक kvm_arch_set_irq_inatomic(काष्ठा kvm_kernel_irq_routing_entry *irq_entry,
+			      काष्ठा kvm *kvm, पूर्णांक irq_source_id,
+			      पूर्णांक level, bool line_status)
+अणु
+	वापस kvm_set_irq(kvm, irq_source_id, irq_entry->gsi,
 			   level, line_status);
-}
-static int kvmppc_book3s_set_irq(struct kvm_kernel_irq_routing_entry *e,
-				 struct kvm *kvm, int irq_source_id, int level,
+पूर्ण
+अटल पूर्णांक kvmppc_book3s_set_irq(काष्ठा kvm_kernel_irq_routing_entry *e,
+				 काष्ठा kvm *kvm, पूर्णांक irq_source_id, पूर्णांक level,
 				 bool line_status)
-{
-	return kvm_set_irq(kvm, irq_source_id, e->gsi, level, line_status);
-}
+अणु
+	वापस kvm_set_irq(kvm, irq_source_id, e->gsi, level, line_status);
+पूर्ण
 
-int kvm_irq_map_gsi(struct kvm *kvm,
-		    struct kvm_kernel_irq_routing_entry *entries, int gsi)
-{
+पूर्णांक kvm_irq_map_gsi(काष्ठा kvm *kvm,
+		    काष्ठा kvm_kernel_irq_routing_entry *entries, पूर्णांक gsi)
+अणु
 	entries->gsi = gsi;
 	entries->type = KVM_IRQ_ROUTING_IRQCHIP;
 	entries->set = kvmppc_book3s_set_irq;
 	entries->irqchip.irqchip = 0;
 	entries->irqchip.pin = gsi;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int kvm_irq_map_chip_pin(struct kvm *kvm, unsigned irqchip, unsigned pin)
-{
-	return pin;
-}
+पूर्णांक kvm_irq_map_chip_pin(काष्ठा kvm *kvm, अचिन्हित irqchip, अचिन्हित pin)
+अणु
+	वापस pin;
+पूर्ण
 
-#endif /* CONFIG_KVM_XICS */
+#पूर्ण_अगर /* CONFIG_KVM_XICS */
 
-static int kvmppc_book3s_init(void)
-{
-	int r;
+अटल पूर्णांक kvmppc_book3s_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = kvm_init(NULL, sizeof(struct kvm_vcpu), 0, THIS_MODULE);
-	if (r)
-		return r;
-#ifdef CONFIG_KVM_BOOK3S_32_HANDLER
+	r = kvm_init(शून्य, माप(काष्ठा kvm_vcpu), 0, THIS_MODULE);
+	अगर (r)
+		वापस r;
+#अगर_घोषित CONFIG_KVM_BOOK3S_32_HANDLER
 	r = kvmppc_book3s_init_pr();
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_KVM_XICS
-#ifdef CONFIG_KVM_XIVE
-	if (xics_on_xive()) {
+#अगर_घोषित CONFIG_KVM_XICS
+#अगर_घोषित CONFIG_KVM_XIVE
+	अगर (xics_on_xive()) अणु
 		kvmppc_xive_init_module();
-		kvm_register_device_ops(&kvm_xive_ops, KVM_DEV_TYPE_XICS);
-		if (kvmppc_xive_native_supported()) {
+		kvm_रेजिस्टर_device_ops(&kvm_xive_ops, KVM_DEV_TYPE_XICS);
+		अगर (kvmppc_xive_native_supported()) अणु
 			kvmppc_xive_native_init_module();
-			kvm_register_device_ops(&kvm_xive_native_ops,
+			kvm_रेजिस्टर_device_ops(&kvm_xive_native_ops,
 						KVM_DEV_TYPE_XIVE);
-		}
-	} else
-#endif
-		kvm_register_device_ops(&kvm_xics_ops, KVM_DEV_TYPE_XICS);
-#endif
-	return r;
-}
+		पूर्ण
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+		kvm_रेजिस्टर_device_ops(&kvm_xics_ops, KVM_DEV_TYPE_XICS);
+#पूर्ण_अगर
+	वापस r;
+पूर्ण
 
-static void kvmppc_book3s_exit(void)
-{
-#ifdef CONFIG_KVM_XICS
-	if (xics_on_xive()) {
-		kvmppc_xive_exit_module();
-		kvmppc_xive_native_exit_module();
-	}
-#endif
-#ifdef CONFIG_KVM_BOOK3S_32_HANDLER
-	kvmppc_book3s_exit_pr();
-#endif
-	kvm_exit();
-}
+अटल व्योम kvmppc_book3s_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_KVM_XICS
+	अगर (xics_on_xive()) अणु
+		kvmppc_xive_निकास_module();
+		kvmppc_xive_native_निकास_module();
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_KVM_BOOK3S_32_HANDLER
+	kvmppc_book3s_निकास_pr();
+#पूर्ण_अगर
+	kvm_निकास();
+पूर्ण
 
 module_init(kvmppc_book3s_init);
-module_exit(kvmppc_book3s_exit);
+module_निकास(kvmppc_book3s_निकास);
 
 /* On 32bit this is our one and only kernel module */
-#ifdef CONFIG_KVM_BOOK3S_32_HANDLER
+#अगर_घोषित CONFIG_KVM_BOOK3S_32_HANDLER
 MODULE_ALIAS_MISCDEV(KVM_MINOR);
 MODULE_ALIAS("devname:kvm");
-#endif
+#पूर्ण_अगर

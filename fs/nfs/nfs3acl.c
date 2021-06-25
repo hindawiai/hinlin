@@ -1,346 +1,347 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/fs.h>
-#include <linux/gfp.h>
-#include <linux/nfs.h>
-#include <linux/nfs3.h>
-#include <linux/nfs_fs.h>
-#include <linux/posix_acl_xattr.h>
-#include <linux/nfsacl.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/fs.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/nfs.h>
+#समावेश <linux/nfs3.h>
+#समावेश <linux/nfs_fs.h>
+#समावेश <linux/posix_acl_xattr.h>
+#समावेश <linux/nfsacl.h>
 
-#include "internal.h"
-#include "nfs3_fs.h"
+#समावेश "internal.h"
+#समावेश "nfs3_fs.h"
 
-#define NFSDBG_FACILITY	NFSDBG_PROC
+#घोषणा NFSDBG_FACILITY	NFSDBG_PROC
 
 /*
- * nfs3_prepare_get_acl, nfs3_complete_get_acl, nfs3_abort_get_acl: Helpers for
- * caching get_acl results in a race-free way.  See fs/posix_acl.c:get_acl()
- * for explanations.
+ * nfs3_prepare_get_acl, nfs3_complete_get_acl, nfs3_पात_get_acl: Helpers क्रम
+ * caching get_acl results in a race-मुक्त way.  See fs/posix_acl.c:get_acl()
+ * क्रम explanations.
  */
-static void nfs3_prepare_get_acl(struct posix_acl **p)
-{
-	struct posix_acl *sentinel = uncached_acl_sentinel(current);
+अटल व्योम nfs3_prepare_get_acl(काष्ठा posix_acl **p)
+अणु
+	काष्ठा posix_acl *sentinel = uncached_acl_sentinel(current);
 
-	if (cmpxchg(p, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED) {
-		/* Not the first reader or sentinel already in place. */
-	}
-}
+	अगर (cmpxchg(p, ACL_NOT_CACHED, sentinel) != ACL_NOT_CACHED) अणु
+		/* Not the first पढ़ोer or sentinel alपढ़ोy in place. */
+	पूर्ण
+पूर्ण
 
-static void nfs3_complete_get_acl(struct posix_acl **p, struct posix_acl *acl)
-{
-	struct posix_acl *sentinel = uncached_acl_sentinel(current);
+अटल व्योम nfs3_complete_get_acl(काष्ठा posix_acl **p, काष्ठा posix_acl *acl)
+अणु
+	काष्ठा posix_acl *sentinel = uncached_acl_sentinel(current);
 
-	/* Only cache the ACL if our sentinel is still in place. */
+	/* Only cache the ACL अगर our sentinel is still in place. */
 	posix_acl_dup(acl);
-	if (cmpxchg(p, sentinel, acl) != sentinel)
+	अगर (cmpxchg(p, sentinel, acl) != sentinel)
 		posix_acl_release(acl);
-}
+पूर्ण
 
-static void nfs3_abort_get_acl(struct posix_acl **p)
-{
-	struct posix_acl *sentinel = uncached_acl_sentinel(current);
+अटल व्योम nfs3_पात_get_acl(काष्ठा posix_acl **p)
+अणु
+	काष्ठा posix_acl *sentinel = uncached_acl_sentinel(current);
 
 	/* Remove our sentinel upon failure. */
 	cmpxchg(p, sentinel, ACL_NOT_CACHED);
-}
+पूर्ण
 
-struct posix_acl *nfs3_get_acl(struct inode *inode, int type)
-{
-	struct nfs_server *server = NFS_SERVER(inode);
-	struct page *pages[NFSACL_MAXPAGES] = { };
-	struct nfs3_getaclargs args = {
+काष्ठा posix_acl *nfs3_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	काष्ठा nfs_server *server = NFS_SERVER(inode);
+	काष्ठा page *pages[NFSACL_MAXPAGES] = अणु पूर्ण;
+	काष्ठा nfs3_getaclargs args = अणु
 		.fh = NFS_FH(inode),
 		/* The xdr layer may allocate pages here. */
 		.pages = pages,
-	};
-	struct nfs3_getaclres res = {
-		NULL,
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा nfs3_getaclres res = अणु
+		शून्य,
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_argp	= &args,
 		.rpc_resp	= &res,
-	};
-	int status, count;
+	पूर्ण;
+	पूर्णांक status, count;
 
-	if (!nfs_server_capable(inode, NFS_CAP_ACLS))
-		return ERR_PTR(-EOPNOTSUPP);
+	अगर (!nfs_server_capable(inode, NFS_CAP_ACLS))
+		वापस ERR_PTR(-EOPNOTSUPP);
 
 	status = nfs_revalidate_inode(inode, NFS_INO_INVALID_CHANGE);
-	if (status < 0)
-		return ERR_PTR(status);
+	अगर (status < 0)
+		वापस ERR_PTR(status);
 
 	/*
-	 * Only get the access acl when explicitly requested: We don't
-	 * need it for access decisions, and only some applications use
+	 * Only get the access acl when explicitly requested: We करोn't
+	 * need it क्रम access decisions, and only some applications use
 	 * it. Applications which request the access acl first are not
 	 * penalized from this optimization.
 	 */
-	if (type == ACL_TYPE_ACCESS)
+	अगर (type == ACL_TYPE_ACCESS)
 		args.mask |= NFS_ACLCNT|NFS_ACL;
-	if (S_ISDIR(inode->i_mode))
+	अगर (S_ISसूची(inode->i_mode))
 		args.mask |= NFS_DFACLCNT|NFS_DFACL;
-	if (args.mask == 0)
-		return NULL;
+	अगर (args.mask == 0)
+		वापस शून्य;
 
-	dprintk("NFS call getacl\n");
+	dprपूर्णांकk("NFS call getacl\n");
 	msg.rpc_proc = &server->client_acl->cl_procinfo[ACLPROC3_GETACL];
 	res.fattr = nfs_alloc_fattr();
-	if (res.fattr == NULL)
-		return ERR_PTR(-ENOMEM);
+	अगर (res.fattr == शून्य)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (args.mask & NFS_ACL)
+	अगर (args.mask & NFS_ACL)
 		nfs3_prepare_get_acl(&inode->i_acl);
-	if (args.mask & NFS_DFACL)
-		nfs3_prepare_get_acl(&inode->i_default_acl);
+	अगर (args.mask & NFS_DFACL)
+		nfs3_prepare_get_acl(&inode->i_शेष_acl);
 
 	status = rpc_call_sync(server->client_acl, &msg, 0);
-	dprintk("NFS reply getacl: %d\n", status);
+	dprपूर्णांकk("NFS reply getacl: %d\n", status);
 
 	/* pages may have been allocated at the xdr layer. */
-	for (count = 0; count < NFSACL_MAXPAGES && args.pages[count]; count++)
-		__free_page(args.pages[count]);
+	क्रम (count = 0; count < NFSACL_MAXPAGES && args.pages[count]; count++)
+		__मुक्त_page(args.pages[count]);
 
-	switch (status) {
-		case 0:
+	चयन (status) अणु
+		हाल 0:
 			status = nfs_refresh_inode(inode, res.fattr);
-			break;
-		case -EPFNOSUPPORT:
-		case -EPROTONOSUPPORT:
-			dprintk("NFS_V3_ACL extension not supported; disabling\n");
+			अवरोध;
+		हाल -EPFNOSUPPORT:
+		हाल -EPROTONOSUPPORT:
+			dprपूर्णांकk("NFS_V3_ACL extension not supported; disabling\n");
 			server->caps &= ~NFS_CAP_ACLS;
 			fallthrough;
-		case -ENOTSUPP:
+		हाल -ENOTSUPP:
 			status = -EOPNOTSUPP;
-			goto getout;
-		default:
-			goto getout;
-	}
-	if ((args.mask & res.mask) != args.mask) {
+			जाओ getout;
+		शेष:
+			जाओ getout;
+	पूर्ण
+	अगर ((args.mask & res.mask) != args.mask) अणु
 		status = -EIO;
-		goto getout;
-	}
+		जाओ getout;
+	पूर्ण
 
-	if (res.acl_access != NULL) {
-		if ((posix_acl_equiv_mode(res.acl_access, NULL) == 0) ||
-		    res.acl_access->a_count == 0) {
+	अगर (res.acl_access != शून्य) अणु
+		अगर ((posix_acl_equiv_mode(res.acl_access, शून्य) == 0) ||
+		    res.acl_access->a_count == 0) अणु
 			posix_acl_release(res.acl_access);
-			res.acl_access = NULL;
-		}
-	}
+			res.acl_access = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (res.mask & NFS_ACL)
+	अगर (res.mask & NFS_ACL)
 		nfs3_complete_get_acl(&inode->i_acl, res.acl_access);
-	else
-		forget_cached_acl(inode, ACL_TYPE_ACCESS);
+	अन्यथा
+		क्रमget_cached_acl(inode, ACL_TYPE_ACCESS);
 
-	if (res.mask & NFS_DFACL)
-		nfs3_complete_get_acl(&inode->i_default_acl, res.acl_default);
-	else
-		forget_cached_acl(inode, ACL_TYPE_DEFAULT);
+	अगर (res.mask & NFS_DFACL)
+		nfs3_complete_get_acl(&inode->i_शेष_acl, res.acl_शेष);
+	अन्यथा
+		क्रमget_cached_acl(inode, ACL_TYPE_DEFAULT);
 
-	nfs_free_fattr(res.fattr);
-	if (type == ACL_TYPE_ACCESS) {
-		posix_acl_release(res.acl_default);
-		return res.acl_access;
-	} else {
+	nfs_मुक्त_fattr(res.fattr);
+	अगर (type == ACL_TYPE_ACCESS) अणु
+		posix_acl_release(res.acl_शेष);
+		वापस res.acl_access;
+	पूर्ण अन्यथा अणु
 		posix_acl_release(res.acl_access);
-		return res.acl_default;
-	}
+		वापस res.acl_शेष;
+	पूर्ण
 
 getout:
-	nfs3_abort_get_acl(&inode->i_acl);
-	nfs3_abort_get_acl(&inode->i_default_acl);
+	nfs3_पात_get_acl(&inode->i_acl);
+	nfs3_पात_get_acl(&inode->i_शेष_acl);
 	posix_acl_release(res.acl_access);
-	posix_acl_release(res.acl_default);
-	nfs_free_fattr(res.fattr);
-	return ERR_PTR(status);
-}
+	posix_acl_release(res.acl_शेष);
+	nfs_मुक्त_fattr(res.fattr);
+	वापस ERR_PTR(status);
+पूर्ण
 
-static int __nfs3_proc_setacls(struct inode *inode, struct posix_acl *acl,
-		struct posix_acl *dfacl)
-{
-	struct nfs_server *server = NFS_SERVER(inode);
-	struct nfs_fattr *fattr;
-	struct page *pages[NFSACL_MAXPAGES];
-	struct nfs3_setaclargs args = {
+अटल पूर्णांक __nfs3_proc_setacls(काष्ठा inode *inode, काष्ठा posix_acl *acl,
+		काष्ठा posix_acl *dfacl)
+अणु
+	काष्ठा nfs_server *server = NFS_SERVER(inode);
+	काष्ठा nfs_fattr *fattr;
+	काष्ठा page *pages[NFSACL_MAXPAGES];
+	काष्ठा nfs3_setaclargs args = अणु
 		.inode = inode,
 		.mask = NFS_ACL,
 		.acl_access = acl,
 		.pages = pages,
-	};
-	struct rpc_message msg = {
+	पूर्ण;
+	काष्ठा rpc_message msg = अणु
 		.rpc_argp	= &args,
 		.rpc_resp	= &fattr,
-	};
-	int status = 0;
+	पूर्ण;
+	पूर्णांक status = 0;
 
-	if (acl == NULL && (!S_ISDIR(inode->i_mode) || dfacl == NULL))
-		goto out;
+	अगर (acl == शून्य && (!S_ISसूची(inode->i_mode) || dfacl == शून्य))
+		जाओ out;
 
 	status = -EOPNOTSUPP;
-	if (!nfs_server_capable(inode, NFS_CAP_ACLS))
-		goto out;
+	अगर (!nfs_server_capable(inode, NFS_CAP_ACLS))
+		जाओ out;
 
-	/* We are doing this here because XDR marshalling does not
-	 * return any results, it BUGs. */
+	/* We are करोing this here because XDR marshalling करोes not
+	 * वापस any results, it BUGs. */
 	status = -ENOSPC;
-	if (acl != NULL && acl->a_count > NFS_ACL_MAX_ENTRIES)
-		goto out;
-	if (dfacl != NULL && dfacl->a_count > NFS_ACL_MAX_ENTRIES)
-		goto out;
-	if (S_ISDIR(inode->i_mode)) {
+	अगर (acl != शून्य && acl->a_count > NFS_ACL_MAX_ENTRIES)
+		जाओ out;
+	अगर (dfacl != शून्य && dfacl->a_count > NFS_ACL_MAX_ENTRIES)
+		जाओ out;
+	अगर (S_ISसूची(inode->i_mode)) अणु
 		args.mask |= NFS_DFACL;
-		args.acl_default = dfacl;
+		args.acl_शेष = dfacl;
 		args.len = nfsacl_size(acl, dfacl);
-	} else
-		args.len = nfsacl_size(acl, NULL);
+	पूर्ण अन्यथा
+		args.len = nfsacl_size(acl, शून्य);
 
-	if (args.len > NFS_ACL_INLINE_BUFSIZE) {
-		unsigned int npages = 1 + ((args.len - 1) >> PAGE_SHIFT);
+	अगर (args.len > NFS_ACL_INLINE_बफ_मानE) अणु
+		अचिन्हित पूर्णांक npages = 1 + ((args.len - 1) >> PAGE_SHIFT);
 
 		status = -ENOMEM;
-		do {
+		करो अणु
 			args.pages[args.npages] = alloc_page(GFP_KERNEL);
-			if (args.pages[args.npages] == NULL)
-				goto out_freepages;
+			अगर (args.pages[args.npages] == शून्य)
+				जाओ out_मुक्तpages;
 			args.npages++;
-		} while (args.npages < npages);
-	}
+		पूर्ण जबतक (args.npages < npages);
+	पूर्ण
 
-	dprintk("NFS call setacl\n");
+	dprपूर्णांकk("NFS call setacl\n");
 	status = -ENOMEM;
 	fattr = nfs_alloc_fattr();
-	if (fattr == NULL)
-		goto out_freepages;
+	अगर (fattr == शून्य)
+		जाओ out_मुक्तpages;
 
 	msg.rpc_proc = &server->client_acl->cl_procinfo[ACLPROC3_SETACL];
 	msg.rpc_resp = fattr;
 	status = rpc_call_sync(server->client_acl, &msg, 0);
 	nfs_access_zap_cache(inode);
 	nfs_zap_acl_cache(inode);
-	dprintk("NFS reply setacl: %d\n", status);
+	dprपूर्णांकk("NFS reply setacl: %d\n", status);
 
-	switch (status) {
-		case 0:
+	चयन (status) अणु
+		हाल 0:
 			status = nfs_refresh_inode(inode, fattr);
-			break;
-		case -EPFNOSUPPORT:
-		case -EPROTONOSUPPORT:
-			dprintk("NFS_V3_ACL SETACL RPC not supported"
+			अवरोध;
+		हाल -EPFNOSUPPORT:
+		हाल -EPROTONOSUPPORT:
+			dprपूर्णांकk("NFS_V3_ACL SETACL RPC not supported"
 					"(will not retry)\n");
 			server->caps &= ~NFS_CAP_ACLS;
 			fallthrough;
-		case -ENOTSUPP:
+		हाल -ENOTSUPP:
 			status = -EOPNOTSUPP;
-	}
-	nfs_free_fattr(fattr);
-out_freepages:
-	while (args.npages != 0) {
+	पूर्ण
+	nfs_मुक्त_fattr(fattr);
+out_मुक्तpages:
+	जबतक (args.npages != 0) अणु
 		args.npages--;
-		__free_page(args.pages[args.npages]);
-	}
+		__मुक्त_page(args.pages[args.npages]);
+	पूर्ण
 out:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int nfs3_proc_setacls(struct inode *inode, struct posix_acl *acl,
-		struct posix_acl *dfacl)
-{
-	int ret;
+पूर्णांक nfs3_proc_setacls(काष्ठा inode *inode, काष्ठा posix_acl *acl,
+		काष्ठा posix_acl *dfacl)
+अणु
+	पूर्णांक ret;
 	ret = __nfs3_proc_setacls(inode, acl, dfacl);
-	return (ret == -EOPNOTSUPP) ? 0 : ret;
+	वापस (ret == -EOPNOTSUPP) ? 0 : ret;
 
-}
+पूर्ण
 
-int nfs3_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		 struct posix_acl *acl, int type)
-{
-	struct posix_acl *orig = acl, *dfacl = NULL, *alloc;
-	int status;
+पूर्णांक nfs3_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		 काष्ठा posix_acl *acl, पूर्णांक type)
+अणु
+	काष्ठा posix_acl *orig = acl, *dfacl = शून्य, *alloc;
+	पूर्णांक status;
 
-	if (S_ISDIR(inode->i_mode)) {
-		switch(type) {
-		case ACL_TYPE_ACCESS:
+	अगर (S_ISसूची(inode->i_mode)) अणु
+		चयन(type) अणु
+		हाल ACL_TYPE_ACCESS:
 			alloc = get_acl(inode, ACL_TYPE_DEFAULT);
-			if (IS_ERR(alloc))
-				goto fail;
+			अगर (IS_ERR(alloc))
+				जाओ fail;
 			dfacl = alloc;
-			break;
+			अवरोध;
 
-		case ACL_TYPE_DEFAULT:
+		हाल ACL_TYPE_DEFAULT:
 			alloc = get_acl(inode, ACL_TYPE_ACCESS);
-			if (IS_ERR(alloc))
-				goto fail;
+			अगर (IS_ERR(alloc))
+				जाओ fail;
 			dfacl = acl;
 			acl = alloc;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (acl == NULL) {
+	अगर (acl == शून्य) अणु
 		alloc = posix_acl_from_mode(inode->i_mode, GFP_KERNEL);
-		if (IS_ERR(alloc))
-			goto fail;
+		अगर (IS_ERR(alloc))
+			जाओ fail;
 		acl = alloc;
-	}
+	पूर्ण
 	status = __nfs3_proc_setacls(inode, acl, dfacl);
 out:
-	if (acl != orig)
+	अगर (acl != orig)
 		posix_acl_release(acl);
-	if (dfacl != orig)
+	अगर (dfacl != orig)
 		posix_acl_release(dfacl);
-	return status;
+	वापस status;
 
 fail:
 	status = PTR_ERR(alloc);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-const struct xattr_handler *nfs3_xattr_handlers[] = {
+स्थिर काष्ठा xattr_handler *nfs3_xattr_handlers[] = अणु
 	&posix_acl_access_xattr_handler,
-	&posix_acl_default_xattr_handler,
-	NULL,
-};
+	&posix_acl_शेष_xattr_handler,
+	शून्य,
+पूर्ण;
 
-static int
-nfs3_list_one_acl(struct inode *inode, int type, const char *name, void *data,
-		size_t size, ssize_t *result)
-{
-	struct posix_acl *acl;
-	char *p = data + *result;
+अटल पूर्णांक
+nfs3_list_one_acl(काष्ठा inode *inode, पूर्णांक type, स्थिर अक्षर *name, व्योम *data,
+		माप_प्रकार size, sमाप_प्रकार *result)
+अणु
+	काष्ठा posix_acl *acl;
+	अक्षर *p = data + *result;
 
 	acl = get_acl(inode, type);
-	if (IS_ERR_OR_NULL(acl))
-		return 0;
+	अगर (IS_ERR_OR_शून्य(acl))
+		वापस 0;
 
 	posix_acl_release(acl);
 
-	*result += strlen(name);
+	*result += म_माप(name);
 	*result += 1;
-	if (!size)
-		return 0;
-	if (*result > size)
-		return -ERANGE;
+	अगर (!size)
+		वापस 0;
+	अगर (*result > size)
+		वापस -दुस्फल;
 
-	strcpy(p, name);
-	return 0;
-}
+	म_नकल(p, name);
+	वापस 0;
+पूर्ण
 
-ssize_t
-nfs3_listxattr(struct dentry *dentry, char *data, size_t size)
-{
-	struct inode *inode = d_inode(dentry);
-	ssize_t result = 0;
-	int error;
+sमाप_प्रकार
+nfs3_listxattr(काष्ठा dentry *dentry, अक्षर *data, माप_प्रकार size)
+अणु
+	काष्ठा inode *inode = d_inode(dentry);
+	sमाप_प्रकार result = 0;
+	पूर्णांक error;
 
 	error = nfs3_list_one_acl(inode, ACL_TYPE_ACCESS,
 			XATTR_NAME_POSIX_ACL_ACCESS, data, size, &result);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	error = nfs3_list_one_acl(inode, ACL_TYPE_DEFAULT,
 			XATTR_NAME_POSIX_ACL_DEFAULT, data, size, &result);
-	if (error)
-		return error;
-	return result;
-}
+	अगर (error)
+		वापस error;
+	वापस result;
+पूर्ण

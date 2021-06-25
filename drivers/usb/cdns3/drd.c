@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence USBSS and USBSSP DRD Driver.
  *
@@ -9,487 +10,487 @@
  *         Roger Quadros <rogerq@ti.com>
  *
  */
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/iopoll.h>
-#include <linux/usb/otg.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/usb/otg.h>
 
-#include "drd.h"
-#include "core.h"
+#समावेश "drd.h"
+#समावेश "core.h"
 
 /**
  * cdns_set_mode - change mode of OTG Core
- * @cdns: pointer to context structure
+ * @cdns: poपूर्णांकer to context काष्ठाure
  * @mode: selected mode from cdns_role
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-static int cdns_set_mode(struct cdns *cdns, enum usb_dr_mode mode)
-{
-	void __iomem  *override_reg;
+अटल पूर्णांक cdns_set_mode(काष्ठा cdns *cdns, क्रमागत usb_dr_mode mode)
+अणु
+	व्योम __iomem  *override_reg;
 	u32 reg;
 
-	switch (mode) {
-	case USB_DR_MODE_PERIPHERAL:
-		break;
-	case USB_DR_MODE_HOST:
-		break;
-	case USB_DR_MODE_OTG:
+	चयन (mode) अणु
+	हाल USB_DR_MODE_PERIPHERAL:
+		अवरोध;
+	हाल USB_DR_MODE_HOST:
+		अवरोध;
+	हाल USB_DR_MODE_OTG:
 		dev_dbg(cdns->dev, "Set controller to OTG mode\n");
 
-		if (cdns->version == CDNSP_CONTROLLER_V2)
+		अगर (cdns->version == CDNSP_CONTROLLER_V2)
 			override_reg = &cdns->otg_cdnsp_regs->override;
-		else if (cdns->version == CDNS3_CONTROLLER_V1)
+		अन्यथा अगर (cdns->version == CDNS3_CONTROLLER_V1)
 			override_reg = &cdns->otg_v1_regs->override;
-		else
+		अन्यथा
 			override_reg = &cdns->otg_v0_regs->ctrl1;
 
-		reg = readl(override_reg);
+		reg = पढ़ोl(override_reg);
 
-		if (cdns->version != CDNS3_CONTROLLER_V0)
+		अगर (cdns->version != CDNS3_CONTROLLER_V0)
 			reg |= OVERRIDE_IDPULLUP;
-		else
+		अन्यथा
 			reg |= OVERRIDE_IDPULLUP_V0;
 
-		writel(reg, override_reg);
+		ग_लिखोl(reg, override_reg);
 
-		if (cdns->version == CDNS3_CONTROLLER_V1) {
+		अगर (cdns->version == CDNS3_CONTROLLER_V1) अणु
 			/*
-			 * Enable work around feature built into the
+			 * Enable work around feature built पूर्णांकo the
 			 * controller to address issue with RX Sensitivity
-			 * est (EL_17) for USB2 PHY. The issue only occures
-			 * for 0x0002450D controller version.
+			 * est (EL_17) क्रम USB2 PHY. The issue only occures
+			 * क्रम 0x0002450D controller version.
 			 */
-			if (cdns->phyrst_a_enable) {
-				reg = readl(&cdns->otg_v1_regs->phyrst_cfg);
+			अगर (cdns->phyrst_a_enable) अणु
+				reg = पढ़ोl(&cdns->otg_v1_regs->phyrst_cfg);
 				reg |= PHYRST_CFG_PHYRST_A_ENABLE;
-				writel(reg, &cdns->otg_v1_regs->phyrst_cfg);
-			}
-		}
+				ग_लिखोl(reg, &cdns->otg_v1_regs->phyrst_cfg);
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Hardware specification says: "ID_VALUE must be valid within
-		 * 50ms after idpullup is set to '1" so driver must wait
-		 * 50ms before reading this pin.
+		 * Hardware specअगरication says: "ID_VALUE must be valid within
+		 * 50ms after idpullup is set to '1" so driver must रुको
+		 * 50ms beक्रमe पढ़ोing this pin.
 		 */
 		usleep_range(50000, 60000);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cdns->dev, "Unsupported mode of operation %d\n", mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cdns_get_id(struct cdns *cdns)
-{
-	int id;
+पूर्णांक cdns_get_id(काष्ठा cdns *cdns)
+अणु
+	पूर्णांक id;
 
-	id = readl(&cdns->otg_regs->sts) & OTGSTS_ID_VALUE;
+	id = पढ़ोl(&cdns->otg_regs->sts) & OTGSTS_ID_VALUE;
 	dev_dbg(cdns->dev, "OTG ID: %d", id);
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-int cdns_get_vbus(struct cdns *cdns)
-{
-	int vbus;
+पूर्णांक cdns_get_vbus(काष्ठा cdns *cdns)
+अणु
+	पूर्णांक vbus;
 
-	vbus = !!(readl(&cdns->otg_regs->sts) & OTGSTS_VBUS_VALID);
+	vbus = !!(पढ़ोl(&cdns->otg_regs->sts) & OTGSTS_VBUS_VALID);
 	dev_dbg(cdns->dev, "OTG VBUS: %d", vbus);
 
-	return vbus;
-}
+	वापस vbus;
+पूर्ण
 
-void cdns_clear_vbus(struct cdns *cdns)
-{
+व्योम cdns_clear_vbus(काष्ठा cdns *cdns)
+अणु
 	u32 reg;
 
-	if (cdns->version != CDNSP_CONTROLLER_V2)
-		return;
+	अगर (cdns->version != CDNSP_CONTROLLER_V2)
+		वापस;
 
-	reg = readl(&cdns->otg_cdnsp_regs->override);
+	reg = पढ़ोl(&cdns->otg_cdnsp_regs->override);
 	reg |= OVERRIDE_SESS_VLD_SEL;
-	writel(reg, &cdns->otg_cdnsp_regs->override);
-}
+	ग_लिखोl(reg, &cdns->otg_cdnsp_regs->override);
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_clear_vbus);
 
-void cdns_set_vbus(struct cdns *cdns)
-{
+व्योम cdns_set_vbus(काष्ठा cdns *cdns)
+अणु
 	u32 reg;
 
-	if (cdns->version != CDNSP_CONTROLLER_V2)
-		return;
+	अगर (cdns->version != CDNSP_CONTROLLER_V2)
+		वापस;
 
-	reg = readl(&cdns->otg_cdnsp_regs->override);
+	reg = पढ़ोl(&cdns->otg_cdnsp_regs->override);
 	reg &= ~OVERRIDE_SESS_VLD_SEL;
-	writel(reg, &cdns->otg_cdnsp_regs->override);
-}
+	ग_लिखोl(reg, &cdns->otg_cdnsp_regs->override);
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_set_vbus);
 
-bool cdns_is_host(struct cdns *cdns)
-{
-	if (cdns->dr_mode == USB_DR_MODE_HOST)
-		return true;
-	else if (cdns_get_id(cdns) == CDNS3_ID_HOST)
-		return true;
+bool cdns_is_host(काष्ठा cdns *cdns)
+अणु
+	अगर (cdns->dr_mode == USB_DR_MODE_HOST)
+		वापस true;
+	अन्यथा अगर (cdns_get_id(cdns) == CDNS3_ID_HOST)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-bool cdns_is_device(struct cdns *cdns)
-{
-	if (cdns->dr_mode == USB_DR_MODE_PERIPHERAL)
-		return true;
-	else if (cdns->dr_mode == USB_DR_MODE_OTG)
-		if (cdns_get_id(cdns) == CDNS3_ID_PERIPHERAL)
-			return true;
+bool cdns_is_device(काष्ठा cdns *cdns)
+अणु
+	अगर (cdns->dr_mode == USB_DR_MODE_PERIPHERAL)
+		वापस true;
+	अन्यथा अगर (cdns->dr_mode == USB_DR_MODE_OTG)
+		अगर (cdns_get_id(cdns) == CDNS3_ID_PERIPHERAL)
+			वापस true;
 
-	return false;
-}
-
-/**
- * cdns_otg_disable_irq - Disable all OTG interrupts
- * @cdns: Pointer to controller context structure
- */
-static void cdns_otg_disable_irq(struct cdns *cdns)
-{
-	writel(0, &cdns->otg_irq_regs->ien);
-}
+	वापस false;
+पूर्ण
 
 /**
- * cdns_otg_enable_irq - enable id and sess_valid interrupts
- * @cdns: Pointer to controller context structure
+ * cdns_otg_disable_irq - Disable all OTG पूर्णांकerrupts
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure
  */
-static void cdns_otg_enable_irq(struct cdns *cdns)
-{
-	writel(OTGIEN_ID_CHANGE_INT | OTGIEN_VBUSVALID_RISE_INT |
+अटल व्योम cdns_otg_disable_irq(काष्ठा cdns *cdns)
+अणु
+	ग_लिखोl(0, &cdns->otg_irq_regs->ien);
+पूर्ण
+
+/**
+ * cdns_otg_enable_irq - enable id and sess_valid पूर्णांकerrupts
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure
+ */
+अटल व्योम cdns_otg_enable_irq(काष्ठा cdns *cdns)
+अणु
+	ग_लिखोl(OTGIEN_ID_CHANGE_INT | OTGIEN_VBUSVALID_RISE_INT |
 	       OTGIEN_VBUSVALID_FALL_INT, &cdns->otg_irq_regs->ien);
-}
+पूर्ण
 
 /**
  * cdns_drd_host_on - start host.
- * @cdns: Pointer to controller context structure.
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure.
  *
- * Returns 0 on success otherwise negative errno.
+ * Returns 0 on success otherwise negative त्रुटि_सं.
  */
-int cdns_drd_host_on(struct cdns *cdns)
-{
-	u32 val, ready_bit;
-	int ret;
+पूर्णांक cdns_drd_host_on(काष्ठा cdns *cdns)
+अणु
+	u32 val, पढ़ोy_bit;
+	पूर्णांक ret;
 
 	/* Enable host mode. */
-	writel(OTGCMD_HOST_BUS_REQ | OTGCMD_OTG_DIS,
+	ग_लिखोl(OTGCMD_HOST_BUS_REQ | OTGCMD_OTG_DIS,
 	       &cdns->otg_regs->cmd);
 
-	if (cdns->version == CDNSP_CONTROLLER_V2)
-		ready_bit = OTGSTS_CDNSP_XHCI_READY;
-	else
-		ready_bit = OTGSTS_CDNS3_XHCI_READY;
+	अगर (cdns->version == CDNSP_CONTROLLER_V2)
+		पढ़ोy_bit = OTGSTS_CDNSP_XHCI_READY;
+	अन्यथा
+		पढ़ोy_bit = OTGSTS_CDNS3_XHCI_READY;
 
 	dev_dbg(cdns->dev, "Waiting till Host mode is turned on\n");
-	ret = readl_poll_timeout_atomic(&cdns->otg_regs->sts, val,
-					val & ready_bit, 1, 100000);
+	ret = पढ़ोl_poll_समयout_atomic(&cdns->otg_regs->sts, val,
+					val & पढ़ोy_bit, 1, 100000);
 
-	if (ret)
+	अगर (ret)
 		dev_err(cdns->dev, "timeout waiting for xhci_ready\n");
 
 	phy_set_mode(cdns->usb3_phy, PHY_MODE_USB_HOST);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * cdns_drd_host_off - stop host.
- * @cdns: Pointer to controller context structure.
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure.
  */
-void cdns_drd_host_off(struct cdns *cdns)
-{
+व्योम cdns_drd_host_off(काष्ठा cdns *cdns)
+अणु
 	u32 val;
 
-	writel(OTGCMD_HOST_BUS_DROP | OTGCMD_DEV_BUS_DROP |
+	ग_लिखोl(OTGCMD_HOST_BUS_DROP | OTGCMD_DEV_BUS_DROP |
 	       OTGCMD_DEV_POWER_OFF | OTGCMD_HOST_POWER_OFF,
 	       &cdns->otg_regs->cmd);
 
 	/* Waiting till H_IDLE state.*/
-	readl_poll_timeout_atomic(&cdns->otg_regs->state, val,
+	पढ़ोl_poll_समयout_atomic(&cdns->otg_regs->state, val,
 				  !(val & OTGSTATE_HOST_STATE_MASK),
 				  1, 2000000);
 	phy_set_mode(cdns->usb3_phy, PHY_MODE_INVALID);
-}
+पूर्ण
 
 /**
  * cdns_drd_gadget_on - start gadget.
- * @cdns: Pointer to controller context structure.
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure.
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-int cdns_drd_gadget_on(struct cdns *cdns)
-{
+पूर्णांक cdns_drd_gadget_on(काष्ठा cdns *cdns)
+अणु
 	u32 reg = OTGCMD_OTG_DIS;
-	u32 ready_bit;
-	int ret, val;
+	u32 पढ़ोy_bit;
+	पूर्णांक ret, val;
 
-	/* switch OTG core */
-	writel(OTGCMD_DEV_BUS_REQ | reg, &cdns->otg_regs->cmd);
+	/* चयन OTG core */
+	ग_लिखोl(OTGCMD_DEV_BUS_REQ | reg, &cdns->otg_regs->cmd);
 
 	dev_dbg(cdns->dev, "Waiting till Device mode is turned on\n");
 
-	if (cdns->version == CDNSP_CONTROLLER_V2)
-		ready_bit = OTGSTS_CDNSP_DEV_READY;
-	else
-		ready_bit = OTGSTS_CDNS3_DEV_READY;
+	अगर (cdns->version == CDNSP_CONTROLLER_V2)
+		पढ़ोy_bit = OTGSTS_CDNSP_DEV_READY;
+	अन्यथा
+		पढ़ोy_bit = OTGSTS_CDNS3_DEV_READY;
 
-	ret = readl_poll_timeout_atomic(&cdns->otg_regs->sts, val,
-					val & ready_bit, 1, 100000);
-	if (ret) {
+	ret = पढ़ोl_poll_समयout_atomic(&cdns->otg_regs->sts, val,
+					val & पढ़ोy_bit, 1, 100000);
+	अगर (ret) अणु
 		dev_err(cdns->dev, "timeout waiting for dev_ready\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	phy_set_mode(cdns->usb3_phy, PHY_MODE_USB_DEVICE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_drd_gadget_on);
 
 /**
  * cdns_drd_gadget_off - stop gadget.
- * @cdns: Pointer to controller context structure.
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure.
  */
-void cdns_drd_gadget_off(struct cdns *cdns)
-{
+व्योम cdns_drd_gadget_off(काष्ठा cdns *cdns)
+अणु
 	u32 val;
 
 	/*
-	 * Driver should wait at least 10us after disabling Device
-	 * before turning-off Device (DEV_BUS_DROP).
+	 * Driver should रुको at least 10us after disabling Device
+	 * beक्रमe turning-off Device (DEV_BUS_DROP).
 	 */
 	usleep_range(20, 30);
-	writel(OTGCMD_HOST_BUS_DROP | OTGCMD_DEV_BUS_DROP |
+	ग_लिखोl(OTGCMD_HOST_BUS_DROP | OTGCMD_DEV_BUS_DROP |
 	       OTGCMD_DEV_POWER_OFF | OTGCMD_HOST_POWER_OFF,
 	       &cdns->otg_regs->cmd);
 	/* Waiting till DEV_IDLE state.*/
-	readl_poll_timeout_atomic(&cdns->otg_regs->state, val,
+	पढ़ोl_poll_समयout_atomic(&cdns->otg_regs->state, val,
 				  !(val & OTGSTATE_DEV_STATE_MASK),
 				  1, 2000000);
 	phy_set_mode(cdns->usb3_phy, PHY_MODE_INVALID);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(cdns_drd_gadget_off);
 
 /**
  * cdns_init_otg_mode - initialize drd controller
- * @cdns: Pointer to controller context structure
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-static int cdns_init_otg_mode(struct cdns *cdns)
-{
-	int ret;
+अटल पूर्णांक cdns_init_otg_mode(काष्ठा cdns *cdns)
+अणु
+	पूर्णांक ret;
 
 	cdns_otg_disable_irq(cdns);
-	/* clear all interrupts */
-	writel(~0, &cdns->otg_irq_regs->ivect);
+	/* clear all पूर्णांकerrupts */
+	ग_लिखोl(~0, &cdns->otg_irq_regs->ivect);
 
 	ret = cdns_set_mode(cdns, USB_DR_MODE_OTG);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cdns_otg_enable_irq(cdns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * cdns_drd_update_mode - initialize mode of operation
- * @cdns: Pointer to controller context structure
+ * @cdns: Poपूर्णांकer to controller context काष्ठाure
  *
- * Returns 0 on success otherwise negative errno
+ * Returns 0 on success otherwise negative त्रुटि_सं
  */
-int cdns_drd_update_mode(struct cdns *cdns)
-{
-	int ret;
+पूर्णांक cdns_drd_update_mode(काष्ठा cdns *cdns)
+अणु
+	पूर्णांक ret;
 
-	switch (cdns->dr_mode) {
-	case USB_DR_MODE_PERIPHERAL:
+	चयन (cdns->dr_mode) अणु
+	हाल USB_DR_MODE_PERIPHERAL:
 		ret = cdns_set_mode(cdns, USB_DR_MODE_PERIPHERAL);
-		break;
-	case USB_DR_MODE_HOST:
+		अवरोध;
+	हाल USB_DR_MODE_HOST:
 		ret = cdns_set_mode(cdns, USB_DR_MODE_HOST);
-		break;
-	case USB_DR_MODE_OTG:
+		अवरोध;
+	हाल USB_DR_MODE_OTG:
 		ret = cdns_init_otg_mode(cdns);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cdns->dev, "Unsupported mode of operation %d\n",
 			cdns->dr_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static irqreturn_t cdns_drd_thread_irq(int irq, void *data)
-{
-	struct cdns *cdns = data;
+अटल irqवापस_t cdns_drd_thपढ़ो_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा cdns *cdns = data;
 
-	cdns_hw_role_switch(cdns);
+	cdns_hw_role_चयन(cdns);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * cdns_drd_irq - interrupt handler for OTG events
+ * cdns_drd_irq - पूर्णांकerrupt handler क्रम OTG events
  *
- * @irq: irq number for cdns core device
- * @data: structure of cdns
+ * @irq: irq number क्रम cdns core device
+ * @data: काष्ठाure of cdns
  *
  * Returns IRQ_HANDLED or IRQ_NONE
  */
-static irqreturn_t cdns_drd_irq(int irq, void *data)
-{
-	irqreturn_t ret = IRQ_NONE;
-	struct cdns *cdns = data;
+अटल irqवापस_t cdns_drd_irq(पूर्णांक irq, व्योम *data)
+अणु
+	irqवापस_t ret = IRQ_NONE;
+	काष्ठा cdns *cdns = data;
 	u32 reg;
 
-	if (cdns->dr_mode != USB_DR_MODE_OTG)
-		return IRQ_NONE;
+	अगर (cdns->dr_mode != USB_DR_MODE_OTG)
+		वापस IRQ_NONE;
 
-	if (cdns->in_lpm)
-		return ret;
+	अगर (cdns->in_lpm)
+		वापस ret;
 
-	reg = readl(&cdns->otg_irq_regs->ivect);
+	reg = पढ़ोl(&cdns->otg_irq_regs->ivect);
 
-	if (!reg)
-		return IRQ_NONE;
+	अगर (!reg)
+		वापस IRQ_NONE;
 
-	if (reg & OTGIEN_ID_CHANGE_INT) {
+	अगर (reg & OTGIEN_ID_CHANGE_INT) अणु
 		dev_dbg(cdns->dev, "OTG IRQ: new ID: %d\n",
 			cdns_get_id(cdns));
 
 		ret = IRQ_WAKE_THREAD;
-	}
+	पूर्ण
 
-	if (reg & (OTGIEN_VBUSVALID_RISE_INT | OTGIEN_VBUSVALID_FALL_INT)) {
+	अगर (reg & (OTGIEN_VBUSVALID_RISE_INT | OTGIEN_VBUSVALID_FALL_INT)) अणु
 		dev_dbg(cdns->dev, "OTG IRQ: new VBUS: %d\n",
 			cdns_get_vbus(cdns));
 
 		ret = IRQ_WAKE_THREAD;
-	}
+	पूर्ण
 
-	writel(~0, &cdns->otg_irq_regs->ivect);
-	return ret;
-}
+	ग_लिखोl(~0, &cdns->otg_irq_regs->ivect);
+	वापस ret;
+पूर्ण
 
-int cdns_drd_init(struct cdns *cdns)
-{
-	void __iomem *regs;
+पूर्णांक cdns_drd_init(काष्ठा cdns *cdns)
+अणु
+	व्योम __iomem *regs;
 	u32 state;
-	int ret;
+	पूर्णांक ret;
 
 	regs = devm_ioremap_resource(cdns->dev, &cdns->otg_res);
-	if (IS_ERR(regs))
-		return PTR_ERR(regs);
+	अगर (IS_ERR(regs))
+		वापस PTR_ERR(regs);
 
 	/* Detection of DRD version. Controller has been released
 	 * in three versions. All are very similar and are software compatible,
-	 * but they have same changes in register maps.
-	 * The first register in oldest version is command register and it's
-	 * read only. Driver should read 0 from it. On the other hand, in v1
-	 * and v2 the first register contains device ID number which is not
+	 * but they have same changes in रेजिस्टर maps.
+	 * The first रेजिस्टर in oldest version is command रेजिस्टर and it's
+	 * पढ़ो only. Driver should पढ़ो 0 from it. On the other hand, in v1
+	 * and v2 the first रेजिस्टर contains device ID number which is not
 	 * set to 0. Driver uses this fact to detect the proper version of
 	 * controller.
 	 */
 	cdns->otg_v0_regs = regs;
-	if (!readl(&cdns->otg_v0_regs->cmd)) {
+	अगर (!पढ़ोl(&cdns->otg_v0_regs->cmd)) अणु
 		cdns->version  = CDNS3_CONTROLLER_V0;
-		cdns->otg_v1_regs = NULL;
-		cdns->otg_cdnsp_regs = NULL;
+		cdns->otg_v1_regs = शून्य;
+		cdns->otg_cdnsp_regs = शून्य;
 		cdns->otg_regs = regs;
-		cdns->otg_irq_regs = (struct cdns_otg_irq_regs __iomem  *)
+		cdns->otg_irq_regs = (काष्ठा cdns_otg_irq_regs __iomem  *)
 				     &cdns->otg_v0_regs->ien;
-		writel(1, &cdns->otg_v0_regs->simulate);
+		ग_लिखोl(1, &cdns->otg_v0_regs->simulate);
 		dev_dbg(cdns->dev, "DRD version v0 (%08x)\n",
-			 readl(&cdns->otg_v0_regs->version));
-	} else {
-		cdns->otg_v0_regs = NULL;
+			 पढ़ोl(&cdns->otg_v0_regs->version));
+	पूर्ण अन्यथा अणु
+		cdns->otg_v0_regs = शून्य;
 		cdns->otg_v1_regs = regs;
 		cdns->otg_cdnsp_regs = regs;
 
-		cdns->otg_regs = (void __iomem *)&cdns->otg_v1_regs->cmd;
+		cdns->otg_regs = (व्योम __iomem *)&cdns->otg_v1_regs->cmd;
 
-		if (readl(&cdns->otg_cdnsp_regs->did) == OTG_CDNSP_DID) {
-			cdns->otg_irq_regs = (struct cdns_otg_irq_regs __iomem *)
+		अगर (पढ़ोl(&cdns->otg_cdnsp_regs->did) == OTG_CDNSP_DID) अणु
+			cdns->otg_irq_regs = (काष्ठा cdns_otg_irq_regs __iomem *)
 					      &cdns->otg_cdnsp_regs->ien;
 			cdns->version  = CDNSP_CONTROLLER_V2;
-		} else {
-			cdns->otg_irq_regs = (struct cdns_otg_irq_regs __iomem *)
+		पूर्ण अन्यथा अणु
+			cdns->otg_irq_regs = (काष्ठा cdns_otg_irq_regs __iomem *)
 					      &cdns->otg_v1_regs->ien;
-			writel(1, &cdns->otg_v1_regs->simulate);
+			ग_लिखोl(1, &cdns->otg_v1_regs->simulate);
 			cdns->version  = CDNS3_CONTROLLER_V1;
-		}
+		पूर्ण
 
 		dev_dbg(cdns->dev, "DRD version v1 (ID: %08x, rev: %08x)\n",
-			 readl(&cdns->otg_v1_regs->did),
-			 readl(&cdns->otg_v1_regs->rid));
-	}
+			 पढ़ोl(&cdns->otg_v1_regs->did),
+			 पढ़ोl(&cdns->otg_v1_regs->rid));
+	पूर्ण
 
-	state = OTGSTS_STRAP(readl(&cdns->otg_regs->sts));
+	state = OTGSTS_STRAP(पढ़ोl(&cdns->otg_regs->sts));
 
 	/* Update dr_mode according to STRAP configuration. */
 	cdns->dr_mode = USB_DR_MODE_OTG;
 
-	if ((cdns->version == CDNSP_CONTROLLER_V2 &&
+	अगर ((cdns->version == CDNSP_CONTROLLER_V2 &&
 	     state == OTGSTS_CDNSP_STRAP_HOST) ||
 	    (cdns->version != CDNSP_CONTROLLER_V2 &&
-	     state == OTGSTS_STRAP_HOST)) {
+	     state == OTGSTS_STRAP_HOST)) अणु
 		dev_dbg(cdns->dev, "Controller strapped to HOST\n");
 		cdns->dr_mode = USB_DR_MODE_HOST;
-	} else if ((cdns->version == CDNSP_CONTROLLER_V2 &&
+	पूर्ण अन्यथा अगर ((cdns->version == CDNSP_CONTROLLER_V2 &&
 		    state == OTGSTS_CDNSP_STRAP_GADGET) ||
 		   (cdns->version != CDNSP_CONTROLLER_V2 &&
-		    state == OTGSTS_STRAP_GADGET)) {
+		    state == OTGSTS_STRAP_GADGET)) अणु
 		dev_dbg(cdns->dev, "Controller strapped to PERIPHERAL\n");
 		cdns->dr_mode = USB_DR_MODE_PERIPHERAL;
-	}
+	पूर्ण
 
-	ret = devm_request_threaded_irq(cdns->dev, cdns->otg_irq,
+	ret = devm_request_thपढ़ोed_irq(cdns->dev, cdns->otg_irq,
 					cdns_drd_irq,
-					cdns_drd_thread_irq,
+					cdns_drd_thपढ़ो_irq,
 					IRQF_SHARED,
 					dev_name(cdns->dev), cdns);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(cdns->dev, "couldn't get otg_irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	state = readl(&cdns->otg_regs->sts);
-	if (OTGSTS_OTG_NRDY(state)) {
+	state = पढ़ोl(&cdns->otg_regs->sts);
+	अगर (OTGSTS_OTG_NRDY(state)) अणु
 		dev_err(cdns->dev, "Cadence USB3 OTG device not ready\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cdns_drd_exit(struct cdns *cdns)
-{
+पूर्णांक cdns_drd_निकास(काष्ठा cdns *cdns)
+अणु
 	cdns_otg_disable_irq(cdns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* Indicate the cdns3 core was power lost before */
-bool cdns_power_is_lost(struct cdns *cdns)
-{
-	if (cdns->version == CDNS3_CONTROLLER_V1) {
-		if (!(readl(&cdns->otg_v1_regs->simulate) & BIT(0)))
-			return true;
-	} else {
-		if (!(readl(&cdns->otg_v0_regs->simulate) & BIT(0)))
-			return true;
-	}
-	return false;
-}
-EXPORT_SYMBOL_GPL(cdns_power_is_lost);
+/* Indicate the cdns3 core was घातer lost beक्रमe */
+bool cdns_घातer_is_lost(काष्ठा cdns *cdns)
+अणु
+	अगर (cdns->version == CDNS3_CONTROLLER_V1) अणु
+		अगर (!(पढ़ोl(&cdns->otg_v1_regs->simulate) & BIT(0)))
+			वापस true;
+	पूर्ण अन्यथा अणु
+		अगर (!(पढ़ोl(&cdns->otg_v0_regs->simulate) & BIT(0)))
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
+EXPORT_SYMBOL_GPL(cdns_घातer_is_lost);

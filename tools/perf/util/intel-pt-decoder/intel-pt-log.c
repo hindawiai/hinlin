@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * intel_pt_log.c: Intel Processor Trace support
+ * पूर्णांकel_pt_log.c: Intel Processor Trace support
  * Copyright (c) 2013-2014, Intel Corporation.
  */
 
-#include <stdio.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <string.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकतर्क.स>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
 
-#include "intel-pt-log.h"
-#include "intel-pt-insn-decoder.h"
+#समावेश "intel-pt-log.h"
+#समावेश "intel-pt-insn-decoder.h"
 
-#include "intel-pt-pkt-decoder.h"
+#समावेश "intel-pt-pkt-decoder.h"
 
-#define MAX_LOG_NAME 256
+#घोषणा MAX_LOG_NAME 256
 
-static FILE *f;
-static char log_name[MAX_LOG_NAME];
-bool intel_pt_enable_logging;
+अटल खाता *f;
+अटल अक्षर log_name[MAX_LOG_NAME];
+bool पूर्णांकel_pt_enable_logging;
 
-void *intel_pt_log_fp(void)
-{
-	return f;
-}
+व्योम *पूर्णांकel_pt_log_fp(व्योम)
+अणु
+	वापस f;
+पूर्ण
 
-void intel_pt_log_enable(void)
-{
-	intel_pt_enable_logging = true;
-}
+व्योम पूर्णांकel_pt_log_enable(व्योम)
+अणु
+	पूर्णांकel_pt_enable_logging = true;
+पूर्ण
 
-void intel_pt_log_disable(void)
-{
-	if (f)
-		fflush(f);
-	intel_pt_enable_logging = false;
-}
+व्योम पूर्णांकel_pt_log_disable(व्योम)
+अणु
+	अगर (f)
+		ख_साफ(f);
+	पूर्णांकel_pt_enable_logging = false;
+पूर्ण
 
-void intel_pt_log_set_name(const char *name)
-{
-	strncpy(log_name, name, MAX_LOG_NAME - 5);
-	strcat(log_name, ".log");
-}
+व्योम पूर्णांकel_pt_log_set_name(स्थिर अक्षर *name)
+अणु
+	म_नकलन(log_name, name, MAX_LOG_NAME - 5);
+	म_जोड़ो(log_name, ".log");
+पूर्ण
 
-static void intel_pt_print_data(const unsigned char *buf, int len, uint64_t pos,
-				int indent)
-{
-	int i;
+अटल व्योम पूर्णांकel_pt_prपूर्णांक_data(स्थिर अचिन्हित अक्षर *buf, पूर्णांक len, uपूर्णांक64_t pos,
+				पूर्णांक indent)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < indent; i++)
-		fprintf(f, " ");
+	क्रम (i = 0; i < indent; i++)
+		ख_लिखो(f, " ");
 
-	fprintf(f, "  %08" PRIx64 ": ", pos);
-	for (i = 0; i < len; i++)
-		fprintf(f, " %02x", buf[i]);
-	for (; i < 16; i++)
-		fprintf(f, "   ");
-	fprintf(f, " ");
-}
+	ख_लिखो(f, "  %08" PRIx64 ": ", pos);
+	क्रम (i = 0; i < len; i++)
+		ख_लिखो(f, " %02x", buf[i]);
+	क्रम (; i < 16; i++)
+		ख_लिखो(f, "   ");
+	ख_लिखो(f, " ");
+पूर्ण
 
-static void intel_pt_print_no_data(uint64_t pos, int indent)
-{
-	int i;
+अटल व्योम पूर्णांकel_pt_prपूर्णांक_no_data(uपूर्णांक64_t pos, पूर्णांक indent)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < indent; i++)
-		fprintf(f, " ");
+	क्रम (i = 0; i < indent; i++)
+		ख_लिखो(f, " ");
 
-	fprintf(f, "  %08" PRIx64 ": ", pos);
-	for (i = 0; i < 16; i++)
-		fprintf(f, "   ");
-	fprintf(f, " ");
-}
+	ख_लिखो(f, "  %08" PRIx64 ": ", pos);
+	क्रम (i = 0; i < 16; i++)
+		ख_लिखो(f, "   ");
+	ख_लिखो(f, " ");
+पूर्ण
 
-static int intel_pt_log_open(void)
-{
-	if (!intel_pt_enable_logging)
-		return -1;
+अटल पूर्णांक पूर्णांकel_pt_log_खोलो(व्योम)
+अणु
+	अगर (!पूर्णांकel_pt_enable_logging)
+		वापस -1;
 
-	if (f)
-		return 0;
+	अगर (f)
+		वापस 0;
 
-	if (!log_name[0])
-		return -1;
+	अगर (!log_name[0])
+		वापस -1;
 
-	f = fopen(log_name, "w+");
-	if (!f) {
-		intel_pt_enable_logging = false;
-		return -1;
-	}
+	f = ख_खोलो(log_name, "w+");
+	अगर (!f) अणु
+		पूर्णांकel_pt_enable_logging = false;
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __intel_pt_log_packet(const struct intel_pt_pkt *packet, int pkt_len,
-			   uint64_t pos, const unsigned char *buf)
-{
-	char desc[INTEL_PT_PKT_DESC_MAX];
+व्योम __पूर्णांकel_pt_log_packet(स्थिर काष्ठा पूर्णांकel_pt_pkt *packet, पूर्णांक pkt_len,
+			   uपूर्णांक64_t pos, स्थिर अचिन्हित अक्षर *buf)
+अणु
+	अक्षर desc[INTEL_PT_PKT_DESC_MAX];
 
-	if (intel_pt_log_open())
-		return;
+	अगर (पूर्णांकel_pt_log_खोलो())
+		वापस;
 
-	intel_pt_print_data(buf, pkt_len, pos, 0);
-	intel_pt_pkt_desc(packet, desc, INTEL_PT_PKT_DESC_MAX);
-	fprintf(f, "%s\n", desc);
-}
+	पूर्णांकel_pt_prपूर्णांक_data(buf, pkt_len, pos, 0);
+	पूर्णांकel_pt_pkt_desc(packet, desc, INTEL_PT_PKT_DESC_MAX);
+	ख_लिखो(f, "%s\n", desc);
+पूर्ण
 
-void __intel_pt_log_insn(struct intel_pt_insn *intel_pt_insn, uint64_t ip)
-{
-	char desc[INTEL_PT_INSN_DESC_MAX];
-	size_t len = intel_pt_insn->length;
+व्योम __पूर्णांकel_pt_log_insn(काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn, uपूर्णांक64_t ip)
+अणु
+	अक्षर desc[INTEL_PT_INSN_DESC_MAX];
+	माप_प्रकार len = पूर्णांकel_pt_insn->length;
 
-	if (intel_pt_log_open())
-		return;
+	अगर (पूर्णांकel_pt_log_खोलो())
+		वापस;
 
-	if (len > INTEL_PT_INSN_BUF_SZ)
+	अगर (len > INTEL_PT_INSN_BUF_SZ)
 		len = INTEL_PT_INSN_BUF_SZ;
-	intel_pt_print_data(intel_pt_insn->buf, len, ip, 8);
-	if (intel_pt_insn_desc(intel_pt_insn, desc, INTEL_PT_INSN_DESC_MAX) > 0)
-		fprintf(f, "%s\n", desc);
-	else
-		fprintf(f, "Bad instruction!\n");
-}
+	पूर्णांकel_pt_prपूर्णांक_data(पूर्णांकel_pt_insn->buf, len, ip, 8);
+	अगर (पूर्णांकel_pt_insn_desc(पूर्णांकel_pt_insn, desc, INTEL_PT_INSN_DESC_MAX) > 0)
+		ख_लिखो(f, "%s\n", desc);
+	अन्यथा
+		ख_लिखो(f, "Bad instruction!\n");
+पूर्ण
 
-void __intel_pt_log_insn_no_data(struct intel_pt_insn *intel_pt_insn,
-				 uint64_t ip)
-{
-	char desc[INTEL_PT_INSN_DESC_MAX];
+व्योम __पूर्णांकel_pt_log_insn_no_data(काष्ठा पूर्णांकel_pt_insn *पूर्णांकel_pt_insn,
+				 uपूर्णांक64_t ip)
+अणु
+	अक्षर desc[INTEL_PT_INSN_DESC_MAX];
 
-	if (intel_pt_log_open())
-		return;
+	अगर (पूर्णांकel_pt_log_खोलो())
+		वापस;
 
-	intel_pt_print_no_data(ip, 8);
-	if (intel_pt_insn_desc(intel_pt_insn, desc, INTEL_PT_INSN_DESC_MAX) > 0)
-		fprintf(f, "%s\n", desc);
-	else
-		fprintf(f, "Bad instruction!\n");
-}
+	पूर्णांकel_pt_prपूर्णांक_no_data(ip, 8);
+	अगर (पूर्णांकel_pt_insn_desc(पूर्णांकel_pt_insn, desc, INTEL_PT_INSN_DESC_MAX) > 0)
+		ख_लिखो(f, "%s\n", desc);
+	अन्यथा
+		ख_लिखो(f, "Bad instruction!\n");
+पूर्ण
 
-void __intel_pt_log(const char *fmt, ...)
-{
-	va_list args;
+व्योम __पूर्णांकel_pt_log(स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
 
-	if (intel_pt_log_open())
-		return;
+	अगर (पूर्णांकel_pt_log_खोलो())
+		वापस;
 
-	va_start(args, fmt);
-	vfprintf(f, fmt, args);
-	va_end(args);
-}
+	बहु_शुरू(args, fmt);
+	भख_लिखो(f, fmt, args);
+	बहु_पूर्ण(args);
+पूर्ण

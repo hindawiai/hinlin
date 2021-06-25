@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) STMicroelectronics SA 2017
  *
@@ -8,41 +9,41 @@
  *          Mickael Reulier <mickael.reulier@st.com>
  */
 
-#ifndef _LTDC_H_
-#define _LTDC_H_
+#अगर_अघोषित _LTDC_H_
+#घोषणा _LTDC_H_
 
-struct ltdc_caps {
+काष्ठा ltdc_caps अणु
 	u32 hw_version;		/* hardware version */
 	u32 nb_layers;		/* number of supported layers */
-	u32 reg_ofs;		/* register offset for applicable regs */
+	u32 reg_ofs;		/* रेजिस्टर offset क्रम applicable regs */
 	u32 bus_width;		/* bus width (32 or 64 bits) */
-	const u32 *pix_fmt_hw;	/* supported pixel formats */
-	bool non_alpha_only_l1; /* non-native no-alpha formats on layer 1 */
-	int pad_max_freq_hz;	/* max frequency supported by pad */
-	int nb_irq;		/* number of hardware interrupts */
-};
+	स्थिर u32 *pix_fmt_hw;	/* supported pixel क्रमmats */
+	bool non_alpha_only_l1; /* non-native no-alpha क्रमmats on layer 1 */
+	पूर्णांक pad_max_freq_hz;	/* max frequency supported by pad */
+	पूर्णांक nb_irq;		/* number of hardware पूर्णांकerrupts */
+पूर्ण;
 
-#define LTDC_MAX_LAYER	4
+#घोषणा LTDC_MAX_LAYER	4
 
-struct fps_info {
-	unsigned int counter;
-	ktime_t last_timestamp;
-};
+काष्ठा fps_info अणु
+	अचिन्हित पूर्णांक counter;
+	kसमय_प्रकार last_बारtamp;
+पूर्ण;
 
-struct ltdc_device {
-	void __iomem *regs;
-	struct clk *pixel_clk;	/* lcd pixel clock */
-	struct mutex err_lock;	/* protecting error_status */
-	struct ltdc_caps caps;
+काष्ठा ltdc_device अणु
+	व्योम __iomem *regs;
+	काष्ठा clk *pixel_clk;	/* lcd pixel घड़ी */
+	काष्ठा mutex err_lock;	/* protecting error_status */
+	काष्ठा ltdc_caps caps;
 	u32 error_status;
 	u32 irq_status;
-	struct fps_info plane_fpsi[LTDC_MAX_LAYER];
-	struct drm_atomic_state *suspend_state;
-};
+	काष्ठा fps_info plane_fpsi[LTDC_MAX_LAYER];
+	काष्ठा drm_atomic_state *suspend_state;
+पूर्ण;
 
-int ltdc_load(struct drm_device *ddev);
-void ltdc_unload(struct drm_device *ddev);
-void ltdc_suspend(struct drm_device *ddev);
-int ltdc_resume(struct drm_device *ddev);
+पूर्णांक ltdc_load(काष्ठा drm_device *ddev);
+व्योम ltdc_unload(काष्ठा drm_device *ddev);
+व्योम ltdc_suspend(काष्ठा drm_device *ddev);
+पूर्णांक ltdc_resume(काष्ठा drm_device *ddev);
 
-#endif
+#पूर्ण_अगर

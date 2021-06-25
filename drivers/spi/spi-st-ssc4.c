@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (c) 2008-2014 STMicroelectronics Limited
  *
@@ -9,246 +10,246 @@
  *  SPI master mode controller driver, used in STMicroelectronics devices.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_gpio.h>
-#include <linux/of_irq.h>
-#include <linux/pm_runtime.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/spi_bitbang.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spi_bitbang.h>
 
-/* SSC registers */
-#define SSC_BRG				0x000
-#define SSC_TBUF			0x004
-#define SSC_RBUF			0x008
-#define SSC_CTL				0x00C
-#define SSC_IEN				0x010
-#define SSC_I2C				0x018
+/* SSC रेजिस्टरs */
+#घोषणा SSC_BRG				0x000
+#घोषणा SSC_TBUF			0x004
+#घोषणा SSC_RBUF			0x008
+#घोषणा SSC_CTL				0x00C
+#घोषणा SSC_IEN				0x010
+#घोषणा SSC_I2C				0x018
 
 /* SSC Control */
-#define SSC_CTL_DATA_WIDTH_9		0x8
-#define SSC_CTL_DATA_WIDTH_MSK		0xf
-#define SSC_CTL_BM			0xf
-#define SSC_CTL_HB			BIT(4)
-#define SSC_CTL_PH			BIT(5)
-#define SSC_CTL_PO			BIT(6)
-#define SSC_CTL_SR			BIT(7)
-#define SSC_CTL_MS			BIT(8)
-#define SSC_CTL_EN			BIT(9)
-#define SSC_CTL_LPB			BIT(10)
-#define SSC_CTL_EN_TX_FIFO		BIT(11)
-#define SSC_CTL_EN_RX_FIFO		BIT(12)
-#define SSC_CTL_EN_CLST_RX		BIT(13)
+#घोषणा SSC_CTL_DATA_WIDTH_9		0x8
+#घोषणा SSC_CTL_DATA_WIDTH_MSK		0xf
+#घोषणा SSC_CTL_BM			0xf
+#घोषणा SSC_CTL_HB			BIT(4)
+#घोषणा SSC_CTL_PH			BIT(5)
+#घोषणा SSC_CTL_PO			BIT(6)
+#घोषणा SSC_CTL_SR			BIT(7)
+#घोषणा SSC_CTL_MS			BIT(8)
+#घोषणा SSC_CTL_EN			BIT(9)
+#घोषणा SSC_CTL_LPB			BIT(10)
+#घोषणा SSC_CTL_EN_TX_FIFO		BIT(11)
+#घोषणा SSC_CTL_EN_RX_FIFO		BIT(12)
+#घोषणा SSC_CTL_EN_CLST_RX		BIT(13)
 
 /* SSC Interrupt Enable */
-#define SSC_IEN_TEEN			BIT(2)
+#घोषणा SSC_IEN_TEEN			BIT(2)
 
-#define FIFO_SIZE			8
+#घोषणा FIFO_SIZE			8
 
-struct spi_st {
+काष्ठा spi_st अणु
 	/* SSC SPI Controller */
-	void __iomem		*base;
-	struct clk		*clk;
-	struct device		*dev;
+	व्योम __iomem		*base;
+	काष्ठा clk		*clk;
+	काष्ठा device		*dev;
 
 	/* SSC SPI current transaction */
-	const u8		*tx_ptr;
+	स्थिर u8		*tx_ptr;
 	u8			*rx_ptr;
 	u16			bytes_per_word;
-	unsigned int		words_remaining;
-	unsigned int		baud;
-	struct completion	done;
-};
+	अचिन्हित पूर्णांक		words_reमुख्यing;
+	अचिन्हित पूर्णांक		baud;
+	काष्ठा completion	करोne;
+पूर्ण;
 
 /* Load the TX FIFO */
-static void ssc_write_tx_fifo(struct spi_st *spi_st)
-{
-	unsigned int count, i;
-	uint32_t word = 0;
+अटल व्योम ssc_ग_लिखो_tx_fअगरo(काष्ठा spi_st *spi_st)
+अणु
+	अचिन्हित पूर्णांक count, i;
+	uपूर्णांक32_t word = 0;
 
-	if (spi_st->words_remaining > FIFO_SIZE)
+	अगर (spi_st->words_reमुख्यing > FIFO_SIZE)
 		count = FIFO_SIZE;
-	else
-		count = spi_st->words_remaining;
+	अन्यथा
+		count = spi_st->words_reमुख्यing;
 
-	for (i = 0; i < count; i++) {
-		if (spi_st->tx_ptr) {
-			if (spi_st->bytes_per_word == 1) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (spi_st->tx_ptr) अणु
+			अगर (spi_st->bytes_per_word == 1) अणु
 				word = *spi_st->tx_ptr++;
-			} else {
+			पूर्ण अन्यथा अणु
 				word = *spi_st->tx_ptr++;
 				word = *spi_st->tx_ptr++ | (word << 8);
-			}
-		}
-		writel_relaxed(word, spi_st->base + SSC_TBUF);
-	}
-}
+			पूर्ण
+		पूर्ण
+		ग_लिखोl_relaxed(word, spi_st->base + SSC_TBUF);
+	पूर्ण
+पूर्ण
 
 /* Read the RX FIFO */
-static void ssc_read_rx_fifo(struct spi_st *spi_st)
-{
-	unsigned int count, i;
-	uint32_t word = 0;
+अटल व्योम ssc_पढ़ो_rx_fअगरo(काष्ठा spi_st *spi_st)
+अणु
+	अचिन्हित पूर्णांक count, i;
+	uपूर्णांक32_t word = 0;
 
-	if (spi_st->words_remaining > FIFO_SIZE)
+	अगर (spi_st->words_reमुख्यing > FIFO_SIZE)
 		count = FIFO_SIZE;
-	else
-		count = spi_st->words_remaining;
+	अन्यथा
+		count = spi_st->words_reमुख्यing;
 
-	for (i = 0; i < count; i++) {
-		word = readl_relaxed(spi_st->base + SSC_RBUF);
+	क्रम (i = 0; i < count; i++) अणु
+		word = पढ़ोl_relaxed(spi_st->base + SSC_RBUF);
 
-		if (spi_st->rx_ptr) {
-			if (spi_st->bytes_per_word == 1) {
-				*spi_st->rx_ptr++ = (uint8_t)word;
-			} else {
+		अगर (spi_st->rx_ptr) अणु
+			अगर (spi_st->bytes_per_word == 1) अणु
+				*spi_st->rx_ptr++ = (uपूर्णांक8_t)word;
+			पूर्ण अन्यथा अणु
 				*spi_st->rx_ptr++ = (word >> 8);
 				*spi_st->rx_ptr++ = word & 0xff;
-			}
-		}
-	}
-	spi_st->words_remaining -= count;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	spi_st->words_reमुख्यing -= count;
+पूर्ण
 
-static int spi_st_transfer_one(struct spi_master *master,
-			       struct spi_device *spi, struct spi_transfer *t)
-{
-	struct spi_st *spi_st = spi_master_get_devdata(master);
-	uint32_t ctl = 0;
+अटल पूर्णांक spi_st_transfer_one(काष्ठा spi_master *master,
+			       काष्ठा spi_device *spi, काष्ठा spi_transfer *t)
+अणु
+	काष्ठा spi_st *spi_st = spi_master_get_devdata(master);
+	uपूर्णांक32_t ctl = 0;
 
 	/* Setup transfer */
 	spi_st->tx_ptr = t->tx_buf;
 	spi_st->rx_ptr = t->rx_buf;
 
-	if (spi->bits_per_word > 8) {
+	अगर (spi->bits_per_word > 8) अणु
 		/*
 		 * Anything greater than 8 bits-per-word requires 2
 		 * bytes-per-word in the RX/TX buffers
 		 */
 		spi_st->bytes_per_word = 2;
-		spi_st->words_remaining = t->len / 2;
+		spi_st->words_reमुख्यing = t->len / 2;
 
-	} else if (spi->bits_per_word == 8 && !(t->len & 0x1)) {
+	पूर्ण अन्यथा अगर (spi->bits_per_word == 8 && !(t->len & 0x1)) अणु
 		/*
 		 * If transfer is even-length, and 8 bits-per-word, then
 		 * implement as half-length 16 bits-per-word transfer
 		 */
 		spi_st->bytes_per_word = 2;
-		spi_st->words_remaining = t->len / 2;
+		spi_st->words_reमुख्यing = t->len / 2;
 
 		/* Set SSC_CTL to 16 bits-per-word */
-		ctl = readl_relaxed(spi_st->base + SSC_CTL);
-		writel_relaxed((ctl | 0xf), spi_st->base + SSC_CTL);
+		ctl = पढ़ोl_relaxed(spi_st->base + SSC_CTL);
+		ग_लिखोl_relaxed((ctl | 0xf), spi_st->base + SSC_CTL);
 
-		readl_relaxed(spi_st->base + SSC_RBUF);
+		पढ़ोl_relaxed(spi_st->base + SSC_RBUF);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		spi_st->bytes_per_word = 1;
-		spi_st->words_remaining = t->len;
-	}
+		spi_st->words_reमुख्यing = t->len;
+	पूर्ण
 
-	reinit_completion(&spi_st->done);
+	reinit_completion(&spi_st->करोne);
 
 	/* Start transfer by writing to the TX FIFO */
-	ssc_write_tx_fifo(spi_st);
-	writel_relaxed(SSC_IEN_TEEN, spi_st->base + SSC_IEN);
+	ssc_ग_लिखो_tx_fअगरo(spi_st);
+	ग_लिखोl_relaxed(SSC_IEN_TEEN, spi_st->base + SSC_IEN);
 
-	/* Wait for transfer to complete */
-	wait_for_completion(&spi_st->done);
+	/* Wait क्रम transfer to complete */
+	रुको_क्रम_completion(&spi_st->करोne);
 
-	/* Restore SSC_CTL if necessary */
-	if (ctl)
-		writel_relaxed(ctl, spi_st->base + SSC_CTL);
+	/* Restore SSC_CTL अगर necessary */
+	अगर (ctl)
+		ग_लिखोl_relaxed(ctl, spi_st->base + SSC_CTL);
 
 	spi_finalize_current_transfer(spi->master);
 
-	return t->len;
-}
+	वापस t->len;
+पूर्ण
 
-static void spi_st_cleanup(struct spi_device *spi)
-{
-	gpio_free(spi->cs_gpio);
-}
+अटल व्योम spi_st_cleanup(काष्ठा spi_device *spi)
+अणु
+	gpio_मुक्त(spi->cs_gpio);
+पूर्ण
 
 /* the spi->mode bits understood by this driver: */
-#define MODEBITS  (SPI_CPOL | SPI_CPHA | SPI_LSB_FIRST | SPI_LOOP | SPI_CS_HIGH)
-static int spi_st_setup(struct spi_device *spi)
-{
-	struct spi_st *spi_st = spi_master_get_devdata(spi->master);
+#घोषणा MODEBITS  (SPI_CPOL | SPI_CPHA | SPI_LSB_FIRST | SPI_LOOP | SPI_CS_HIGH)
+अटल पूर्णांक spi_st_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spi_st *spi_st = spi_master_get_devdata(spi->master);
 	u32 spi_st_clk, sscbrg, var;
 	u32 hz = spi->max_speed_hz;
-	int cs = spi->cs_gpio;
-	int ret;
+	पूर्णांक cs = spi->cs_gpio;
+	पूर्णांक ret;
 
-	if (!hz)  {
+	अगर (!hz)  अणु
 		dev_err(&spi->dev, "max_speed_hz unspecified\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!gpio_is_valid(cs)) {
+	अगर (!gpio_is_valid(cs)) अणु
 		dev_err(&spi->dev, "%d is not a valid gpio\n", cs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = gpio_request(cs, dev_name(&spi->dev));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&spi->dev, "could not request gpio:%d\n", cs);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = gpio_direction_output(cs, spi->mode & SPI_CS_HIGH);
-	if (ret)
-		goto out_free_gpio;
+	अगर (ret)
+		जाओ out_मुक्त_gpio;
 
 	spi_st_clk = clk_get_rate(spi_st->clk);
 
 	/* Set SSC_BRF */
 	sscbrg = spi_st_clk / (2 * hz);
-	if (sscbrg < 0x07 || sscbrg > BIT(16)) {
+	अगर (sscbrg < 0x07 || sscbrg > BIT(16)) अणु
 		dev_err(&spi->dev,
 			"baudrate %d outside valid range %d\n", sscbrg, hz);
 		ret = -EINVAL;
-		goto out_free_gpio;
-	}
+		जाओ out_मुक्त_gpio;
+	पूर्ण
 
 	spi_st->baud = spi_st_clk / (2 * sscbrg);
-	if (sscbrg == BIT(16)) /* 16-bit counter wraps */
+	अगर (sscbrg == BIT(16)) /* 16-bit counter wraps */
 		sscbrg = 0x0;
 
-	writel_relaxed(sscbrg, spi_st->base + SSC_BRG);
+	ग_लिखोl_relaxed(sscbrg, spi_st->base + SSC_BRG);
 
 	dev_dbg(&spi->dev,
 		"setting baudrate:target= %u hz, actual= %u hz, sscbrg= %u\n",
 		hz, spi_st->baud, sscbrg);
 
 	/* Set SSC_CTL and enable SSC */
-	var = readl_relaxed(spi_st->base + SSC_CTL);
+	var = पढ़ोl_relaxed(spi_st->base + SSC_CTL);
 	var |= SSC_CTL_MS;
 
-	if (spi->mode & SPI_CPOL)
+	अगर (spi->mode & SPI_CPOL)
 		var |= SSC_CTL_PO;
-	else
+	अन्यथा
 		var &= ~SSC_CTL_PO;
 
-	if (spi->mode & SPI_CPHA)
+	अगर (spi->mode & SPI_CPHA)
 		var |= SSC_CTL_PH;
-	else
+	अन्यथा
 		var &= ~SSC_CTL_PH;
 
-	if ((spi->mode & SPI_LSB_FIRST) == 0)
+	अगर ((spi->mode & SPI_LSB_FIRST) == 0)
 		var |= SSC_CTL_HB;
-	else
+	अन्यथा
 		var &= ~SSC_CTL_HB;
 
-	if (spi->mode & SPI_LOOP)
+	अगर (spi->mode & SPI_LOOP)
 		var |= SSC_CTL_LPB;
-	else
+	अन्यथा
 		var &= ~SSC_CTL_LPB;
 
 	var &= ~SSC_CTL_DATA_WIDTH_MSK;
@@ -257,54 +258,54 @@ static int spi_st_setup(struct spi_device *spi)
 	var |= SSC_CTL_EN_TX_FIFO | SSC_CTL_EN_RX_FIFO;
 	var |= SSC_CTL_EN;
 
-	writel_relaxed(var, spi_st->base + SSC_CTL);
+	ग_लिखोl_relaxed(var, spi_st->base + SSC_CTL);
 
-	/* Clear the status register */
-	readl_relaxed(spi_st->base + SSC_RBUF);
+	/* Clear the status रेजिस्टर */
+	पढ़ोl_relaxed(spi_st->base + SSC_RBUF);
 
-	return 0;
+	वापस 0;
 
-out_free_gpio:
-	gpio_free(cs);
-	return ret;
-}
+out_मुक्त_gpio:
+	gpio_मुक्त(cs);
+	वापस ret;
+पूर्ण
 
-/* Interrupt fired when TX shift register becomes empty */
-static irqreturn_t spi_st_irq(int irq, void *dev_id)
-{
-	struct spi_st *spi_st = (struct spi_st *)dev_id;
+/* Interrupt fired when TX shअगरt रेजिस्टर becomes empty */
+अटल irqवापस_t spi_st_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा spi_st *spi_st = (काष्ठा spi_st *)dev_id;
 
 	/* Read RX FIFO */
-	ssc_read_rx_fifo(spi_st);
+	ssc_पढ़ो_rx_fअगरo(spi_st);
 
 	/* Fill TX FIFO */
-	if (spi_st->words_remaining) {
-		ssc_write_tx_fifo(spi_st);
-	} else {
+	अगर (spi_st->words_reमुख्यing) अणु
+		ssc_ग_लिखो_tx_fअगरo(spi_st);
+	पूर्ण अन्यथा अणु
 		/* TX/RX complete */
-		writel_relaxed(0x0, spi_st->base + SSC_IEN);
+		ग_लिखोl_relaxed(0x0, spi_st->base + SSC_IEN);
 		/*
-		 * read SSC_IEN to ensure that this bit is set
-		 * before re-enabling interrupt
+		 * पढ़ो SSC_IEN to ensure that this bit is set
+		 * beक्रमe re-enabling पूर्णांकerrupt
 		 */
-		readl(spi_st->base + SSC_IEN);
-		complete(&spi_st->done);
-	}
+		पढ़ोl(spi_st->base + SSC_IEN);
+		complete(&spi_st->करोne);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int spi_st_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct spi_master *master;
-	struct spi_st *spi_st;
-	int irq, ret = 0;
+अटल पूर्णांक spi_st_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा spi_master *master;
+	काष्ठा spi_st *spi_st;
+	पूर्णांक irq, ret = 0;
 	u32 var;
 
-	master = spi_alloc_master(&pdev->dev, sizeof(*spi_st));
-	if (!master)
-		return -ENOMEM;
+	master = spi_alloc_master(&pdev->dev, माप(*spi_st));
+	अगर (!master)
+		वापस -ENOMEM;
 
 	master->dev.of_node		= np;
 	master->mode_bits		= MODEBITS;
@@ -312,171 +313,171 @@ static int spi_st_probe(struct platform_device *pdev)
 	master->cleanup			= spi_st_cleanup;
 	master->transfer_one		= spi_st_transfer_one;
 	master->bits_per_word_mask	= SPI_BPW_MASK(8) | SPI_BPW_MASK(16);
-	master->auto_runtime_pm		= true;
+	master->स्वतः_runसमय_pm		= true;
 	master->bus_num			= pdev->id;
 	spi_st				= spi_master_get_devdata(master);
 
 	spi_st->clk = devm_clk_get(&pdev->dev, "ssc");
-	if (IS_ERR(spi_st->clk)) {
+	अगर (IS_ERR(spi_st->clk)) अणु
 		dev_err(&pdev->dev, "Unable to request clock\n");
 		ret = PTR_ERR(spi_st->clk);
-		goto put_master;
-	}
+		जाओ put_master;
+	पूर्ण
 
 	ret = clk_prepare_enable(spi_st->clk);
-	if (ret)
-		goto put_master;
+	अगर (ret)
+		जाओ put_master;
 
-	init_completion(&spi_st->done);
+	init_completion(&spi_st->करोne);
 
 	/* Get resources */
-	spi_st->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(spi_st->base)) {
+	spi_st->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(spi_st->base)) अणु
 		ret = PTR_ERR(spi_st->base);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	/* Disable I2C and Reset SSC */
-	writel_relaxed(0x0, spi_st->base + SSC_I2C);
-	var = readw_relaxed(spi_st->base + SSC_CTL);
+	ग_लिखोl_relaxed(0x0, spi_st->base + SSC_I2C);
+	var = पढ़ोw_relaxed(spi_st->base + SSC_CTL);
 	var |= SSC_CTL_SR;
-	writel_relaxed(var, spi_st->base + SSC_CTL);
+	ग_लिखोl_relaxed(var, spi_st->base + SSC_CTL);
 
 	udelay(1);
-	var = readl_relaxed(spi_st->base + SSC_CTL);
+	var = पढ़ोl_relaxed(spi_st->base + SSC_CTL);
 	var &= ~SSC_CTL_SR;
-	writel_relaxed(var, spi_st->base + SSC_CTL);
+	ग_लिखोl_relaxed(var, spi_st->base + SSC_CTL);
 
-	/* Set SSC into slave mode before reconfiguring PIO pins */
-	var = readl_relaxed(spi_st->base + SSC_CTL);
+	/* Set SSC पूर्णांकo slave mode beक्रमe reconfiguring PIO pins */
+	var = पढ़ोl_relaxed(spi_st->base + SSC_CTL);
 	var &= ~SSC_CTL_MS;
-	writel_relaxed(var, spi_st->base + SSC_CTL);
+	ग_लिखोl_relaxed(var, spi_st->base + SSC_CTL);
 
 	irq = irq_of_parse_and_map(np, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(&pdev->dev, "IRQ missing or invalid\n");
 		ret = -EINVAL;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, irq, spi_st_irq, 0,
 			       pdev->name, spi_st);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to request irq %d\n", irq);
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	/* by default the device is on */
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	/* by शेष the device is on */
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	platform_set_drvdata(pdev, master);
+	platक्रमm_set_drvdata(pdev, master);
 
-	ret = devm_spi_register_master(&pdev->dev, master);
-	if (ret) {
+	ret = devm_spi_रेजिस्टर_master(&pdev->dev, master);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to register master\n");
-		goto rpm_disable;
-	}
+		जाओ rpm_disable;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 rpm_disable:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 clk_disable:
 	clk_disable_unprepare(spi_st->clk);
 put_master:
 	spi_master_put(master);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int spi_st_remove(struct platform_device *pdev)
-{
-	struct spi_master *master = platform_get_drvdata(pdev);
-	struct spi_st *spi_st = spi_master_get_devdata(master);
+अटल पूर्णांक spi_st_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा spi_master *master = platक्रमm_get_drvdata(pdev);
+	काष्ठा spi_st *spi_st = spi_master_get_devdata(master);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
 	clk_disable_unprepare(spi_st->clk);
 
 	pinctrl_pm_select_sleep_state(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int spi_st_runtime_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct spi_st *spi_st = spi_master_get_devdata(master);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक spi_st_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा spi_st *spi_st = spi_master_get_devdata(master);
 
-	writel_relaxed(0, spi_st->base + SSC_IEN);
+	ग_लिखोl_relaxed(0, spi_st->base + SSC_IEN);
 	pinctrl_pm_select_sleep_state(dev);
 
 	clk_disable_unprepare(spi_st->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spi_st_runtime_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	struct spi_st *spi_st = spi_master_get_devdata(master);
-	int ret;
+अटल पूर्णांक spi_st_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	काष्ठा spi_st *spi_st = spi_master_get_devdata(master);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(spi_st->clk);
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
-static int spi_st_suspend(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक spi_st_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = spi_master_suspend(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return pm_runtime_force_suspend(dev);
-}
+	वापस pm_runसमय_क्रमce_suspend(dev);
+पूर्ण
 
-static int spi_st_resume(struct device *dev)
-{
-	struct spi_master *master = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक spi_st_resume(काष्ठा device *dev)
+अणु
+	काष्ठा spi_master *master = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = spi_master_resume(master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return pm_runtime_force_resume(dev);
-}
-#endif
+	वापस pm_runसमय_क्रमce_resume(dev);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops spi_st_pm = {
+अटल स्थिर काष्ठा dev_pm_ops spi_st_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(spi_st_suspend, spi_st_resume)
-	SET_RUNTIME_PM_OPS(spi_st_runtime_suspend, spi_st_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(spi_st_runसमय_suspend, spi_st_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct of_device_id stm_spi_match[] = {
-	{ .compatible = "st,comms-ssc4-spi", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, stm_spi_match);
+अटल स्थिर काष्ठा of_device_id sपंचांग_spi_match[] = अणु
+	अणु .compatible = "st,comms-ssc4-spi", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग_spi_match);
 
-static struct platform_driver spi_st_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver spi_st_driver = अणु
+	.driver = अणु
 		.name = "spi-st",
 		.pm = &spi_st_pm,
-		.of_match_table = of_match_ptr(stm_spi_match),
-	},
+		.of_match_table = of_match_ptr(sपंचांग_spi_match),
+	पूर्ण,
 	.probe = spi_st_probe,
-	.remove = spi_st_remove,
-};
-module_platform_driver(spi_st_driver);
+	.हटाओ = spi_st_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(spi_st_driver);
 
 MODULE_AUTHOR("Patrice Chotard <patrice.chotard@st.com>");
 MODULE_DESCRIPTION("STM SSC SPI driver");

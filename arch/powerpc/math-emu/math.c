@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 1999  Eddie C. Dost  (ecd@atecom.com)
  */
 
-#include <linux/types.h>
-#include <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
 
-#include <linux/uaccess.h>
-#include <asm/reg.h>
-#include <asm/switch_to.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/double.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/द्विगुन.h>
 
-#define FLOATFUNC(x)	extern int x(void *, void *, void *, void *)
+#घोषणा FLOATFUNC(x)	बाह्य पूर्णांक x(व्योम *, व्योम *, व्योम *, व्योम *)
 
-/* The instructions list which may be not implemented by a hardware FPU */
+/* The inकाष्ठाions list which may be not implemented by a hardware FPU */
 FLOATFUNC(fre);
-FLOATFUNC(frsqrtes);
-FLOATFUNC(fsqrt);
-FLOATFUNC(fsqrts);
+FLOATFUNC(frवर्ग_मूलes);
+FLOATFUNC(fवर्ग_मूल);
+FLOATFUNC(fवर्ग_मूलs);
 FLOATFUNC(mtfsf);
 FLOATFUNC(mtfsfi);
 
-#ifdef CONFIG_MATH_EMULATION_HW_UNIMPLEMENTED
-#undef FLOATFUNC(x)
-#define FLOATFUNC(x)	static inline int x(void *op1, void *op2, void *op3, \
-						 void *op4) { }
-#endif
+#अगर_घोषित CONFIG_MATH_EMULATION_HW_UNIMPLEMENTED
+#अघोषित FLOATFUNC(x)
+#घोषणा FLOATFUNC(x)	अटल अंतरभूत पूर्णांक x(व्योम *op1, व्योम *op2, व्योम *op3, \
+						 व्योम *op4) अणु पूर्ण
+#पूर्ण_अगर
 
 FLOATFUNC(fadd);
 FLOATFUNC(fadds);
-FLOATFUNC(fdiv);
-FLOATFUNC(fdivs);
+FLOATFUNC(fभाग);
+FLOATFUNC(fभागs);
 FLOATFUNC(fmul);
 FLOATFUNC(fmuls);
 FLOATFUNC(fsub);
@@ -66,151 +67,151 @@ FLOATFUNC(stfd);
 FLOATFUNC(stfs);
 FLOATFUNC(stfiwx);
 
-FLOATFUNC(fabs);
+FLOATFUNC(भ_असल);
 FLOATFUNC(fmr);
-FLOATFUNC(fnabs);
+FLOATFUNC(fnअसल);
 FLOATFUNC(fneg);
 
 /* Optional */
 FLOATFUNC(fres);
-FLOATFUNC(frsqrte);
+FLOATFUNC(frवर्ग_मूलe);
 FLOATFUNC(fsel);
 
 
-#define OP31		0x1f		/*   31 */
-#define LFS		0x30		/*   48 */
-#define LFSU		0x31		/*   49 */
-#define LFD		0x32		/*   50 */
-#define LFDU		0x33		/*   51 */
-#define STFS		0x34		/*   52 */
-#define STFSU		0x35		/*   53 */
-#define STFD		0x36		/*   54 */
-#define STFDU		0x37		/*   55 */
-#define OP59		0x3b		/*   59 */
-#define OP63		0x3f		/*   63 */
+#घोषणा OP31		0x1f		/*   31 */
+#घोषणा LFS		0x30		/*   48 */
+#घोषणा LFSU		0x31		/*   49 */
+#घोषणा LFD		0x32		/*   50 */
+#घोषणा LFDU		0x33		/*   51 */
+#घोषणा STFS		0x34		/*   52 */
+#घोषणा STFSU		0x35		/*   53 */
+#घोषणा STFD		0x36		/*   54 */
+#घोषणा STFDU		0x37		/*   55 */
+#घोषणा OP59		0x3b		/*   59 */
+#घोषणा OP63		0x3f		/*   63 */
 
 /* Opcode 31: */
 /* X-Form: */
-#define LFSX		0x217		/*  535 */
-#define LFSUX		0x237		/*  567 */
-#define LFDX		0x257		/*  599 */
-#define LFDUX		0x277		/*  631 */
-#define STFSX		0x297		/*  663 */
-#define STFSUX		0x2b7		/*  695 */
-#define STFDX		0x2d7		/*  727 */
-#define STFDUX		0x2f7		/*  759 */
-#define STFIWX		0x3d7		/*  983 */
+#घोषणा LFSX		0x217		/*  535 */
+#घोषणा LFSUX		0x237		/*  567 */
+#घोषणा LFDX		0x257		/*  599 */
+#घोषणा LFDUX		0x277		/*  631 */
+#घोषणा STFSX		0x297		/*  663 */
+#घोषणा STFSUX		0x2b7		/*  695 */
+#घोषणा STFDX		0x2d7		/*  727 */
+#घोषणा STFDUX		0x2f7		/*  759 */
+#घोषणा STFIWX		0x3d7		/*  983 */
 
 /* Opcode 59: */
 /* A-Form: */
-#define FDIVS		0x012		/*   18 */
-#define FSUBS		0x014		/*   20 */
-#define FADDS		0x015		/*   21 */
-#define FSQRTS		0x016		/*   22 */
-#define FRES		0x018		/*   24 */
-#define FMULS		0x019		/*   25 */
-#define FRSQRTES	0x01a		/*   26 */
-#define FMSUBS		0x01c		/*   28 */
-#define FMADDS		0x01d		/*   29 */
-#define FNMSUBS		0x01e		/*   30 */
-#define FNMADDS		0x01f		/*   31 */
+#घोषणा FDIVS		0x012		/*   18 */
+#घोषणा FSUBS		0x014		/*   20 */
+#घोषणा FADDS		0x015		/*   21 */
+#घोषणा FSQRTS		0x016		/*   22 */
+#घोषणा FRES		0x018		/*   24 */
+#घोषणा FMULS		0x019		/*   25 */
+#घोषणा FRSQRTES	0x01a		/*   26 */
+#घोषणा FMSUBS		0x01c		/*   28 */
+#घोषणा FMADDS		0x01d		/*   29 */
+#घोषणा FNMSUBS		0x01e		/*   30 */
+#घोषणा FNMADDS		0x01f		/*   31 */
 
 /* Opcode 63: */
 /* A-Form: */
-#define FDIV		0x012		/*   18 */
-#define FSUB		0x014		/*   20 */
-#define FADD		0x015		/*   21 */
-#define FSQRT		0x016		/*   22 */
-#define FSEL		0x017		/*   23 */
-#define FRE		0x018		/*   24 */
-#define FMUL		0x019		/*   25 */
-#define FRSQRTE		0x01a		/*   26 */
-#define FMSUB		0x01c		/*   28 */
-#define FMADD		0x01d		/*   29 */
-#define FNMSUB		0x01e		/*   30 */
-#define FNMADD		0x01f		/*   31 */
+#घोषणा FDIV		0x012		/*   18 */
+#घोषणा FSUB		0x014		/*   20 */
+#घोषणा FADD		0x015		/*   21 */
+#घोषणा FSQRT		0x016		/*   22 */
+#घोषणा FSEL		0x017		/*   23 */
+#घोषणा FRE		0x018		/*   24 */
+#घोषणा FMUL		0x019		/*   25 */
+#घोषणा FRSQRTE		0x01a		/*   26 */
+#घोषणा FMSUB		0x01c		/*   28 */
+#घोषणा FMADD		0x01d		/*   29 */
+#घोषणा FNMSUB		0x01e		/*   30 */
+#घोषणा FNMADD		0x01f		/*   31 */
 
 /* X-Form: */
-#define FCMPU		0x000		/*    0	*/
-#define FRSP		0x00c		/*   12 */
-#define FCTIW		0x00e		/*   14 */
-#define FCTIWZ		0x00f		/*   15 */
-#define FCMPO		0x020		/*   32 */
-#define MTFSB1		0x026		/*   38 */
-#define FNEG		0x028		/*   40 */
-#define MCRFS		0x040		/*   64 */
-#define MTFSB0		0x046		/*   70 */
-#define FMR		0x048		/*   72 */
-#define MTFSFI		0x086		/*  134 */
-#define FNABS		0x088		/*  136 */
-#define FABS		0x108		/*  264 */
-#define MFFS		0x247		/*  583 */
-#define MTFSF		0x2c7		/*  711 */
+#घोषणा FCMPU		0x000		/*    0	*/
+#घोषणा FRSP		0x00c		/*   12 */
+#घोषणा FCTIW		0x00e		/*   14 */
+#घोषणा FCTIWZ		0x00f		/*   15 */
+#घोषणा FCMPO		0x020		/*   32 */
+#घोषणा MTFSB1		0x026		/*   38 */
+#घोषणा FNEG		0x028		/*   40 */
+#घोषणा MCRFS		0x040		/*   64 */
+#घोषणा MTFSB0		0x046		/*   70 */
+#घोषणा FMR		0x048		/*   72 */
+#घोषणा MTFSFI		0x086		/*  134 */
+#घोषणा FNABS		0x088		/*  136 */
+#घोषणा FABS		0x108		/*  264 */
+#घोषणा MFFS		0x247		/*  583 */
+#घोषणा MTFSF		0x2c7		/*  711 */
 
 
-#define AB	2
-#define AC	3
-#define ABC	4
-#define D	5
-#define DU	6
-#define X	7
-#define XA	8
-#define XB	9
-#define XCR	11
-#define XCRB	12
-#define XCRI	13
-#define XCRL	16
-#define XE	14
-#define XEU	15
-#define XFLB	10
+#घोषणा AB	2
+#घोषणा AC	3
+#घोषणा ABC	4
+#घोषणा D	5
+#घोषणा DU	6
+#घोषणा X	7
+#घोषणा XA	8
+#घोषणा XB	9
+#घोषणा XCR	11
+#घोषणा XCRB	12
+#घोषणा XCRI	13
+#घोषणा XCRL	16
+#घोषणा XE	14
+#घोषणा XEU	15
+#घोषणा XFLB	10
 
-static int
-record_exception(struct pt_regs *regs, int eflag)
-{
+अटल पूर्णांक
+record_exception(काष्ठा pt_regs *regs, पूर्णांक eflag)
+अणु
 	u32 fpscr;
 
 	fpscr = __FPU_FPSCR;
 
-	if (eflag) {
+	अगर (eflag) अणु
 		fpscr |= FPSCR_FX;
-		if (eflag & EFLAG_OVERFLOW)
+		अगर (eflag & EFLAG_OVERFLOW)
 			fpscr |= FPSCR_OX;
-		if (eflag & EFLAG_UNDERFLOW)
+		अगर (eflag & EFLAG_UNDERFLOW)
 			fpscr |= FPSCR_UX;
-		if (eflag & EFLAG_DIVZERO)
+		अगर (eflag & EFLAG_DIVZERO)
 			fpscr |= FPSCR_ZX;
-		if (eflag & EFLAG_INEXACT)
+		अगर (eflag & EFLAG_INEXACT)
 			fpscr |= FPSCR_XX;
-		if (eflag & EFLAG_INVALID)
+		अगर (eflag & EFLAG_INVALID)
 			fpscr |= FPSCR_VX;
-		if (eflag & EFLAG_VXSNAN)
-			fpscr |= FPSCR_VXSNAN;
-		if (eflag & EFLAG_VXISI)
+		अगर (eflag & EFLAG_VXSन_अंक)
+			fpscr |= FPSCR_VXSन_अंक;
+		अगर (eflag & EFLAG_VXISI)
 			fpscr |= FPSCR_VXISI;
-		if (eflag & EFLAG_VXIDI)
+		अगर (eflag & EFLAG_VXIDI)
 			fpscr |= FPSCR_VXIDI;
-		if (eflag & EFLAG_VXZDZ)
+		अगर (eflag & EFLAG_VXZDZ)
 			fpscr |= FPSCR_VXZDZ;
-		if (eflag & EFLAG_VXIMZ)
+		अगर (eflag & EFLAG_VXIMZ)
 			fpscr |= FPSCR_VXIMZ;
-		if (eflag & EFLAG_VXVC)
+		अगर (eflag & EFLAG_VXVC)
 			fpscr |= FPSCR_VXVC;
-		if (eflag & EFLAG_VXSOFT)
+		अगर (eflag & EFLAG_VXSOFT)
 			fpscr |= FPSCR_VXSOFT;
-		if (eflag & EFLAG_VXSQRT)
+		अगर (eflag & EFLAG_VXSQRT)
 			fpscr |= FPSCR_VXSQRT;
-		if (eflag & EFLAG_VXCVI)
+		अगर (eflag & EFLAG_VXCVI)
 			fpscr |= FPSCR_VXCVI;
-	}
+	पूर्ण
 
 //	fpscr &= ~(FPSCR_VX);
-	if (fpscr & (FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI |
+	अगर (fpscr & (FPSCR_VXSन_अंक | FPSCR_VXISI | FPSCR_VXIDI |
 		     FPSCR_VXZDZ | FPSCR_VXIMZ | FPSCR_VXVC |
 		     FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI))
 		fpscr |= FPSCR_VX;
 
 	fpscr &= ~(FPSCR_FEX);
-	if (((fpscr & FPSCR_VX) && (fpscr & FPSCR_VE)) ||
+	अगर (((fpscr & FPSCR_VX) && (fpscr & FPSCR_VE)) ||
 	    ((fpscr & FPSCR_OX) && (fpscr & FPSCR_OE)) ||
 	    ((fpscr & FPSCR_UX) && (fpscr & FPSCR_UE)) ||
 	    ((fpscr & FPSCR_ZX) && (fpscr & FPSCR_ZE)) ||
@@ -219,243 +220,243 @@ record_exception(struct pt_regs *regs, int eflag)
 
 	__FPU_FPSCR = fpscr;
 
-	return (fpscr & FPSCR_FEX) ? 1 : 0;
-}
+	वापस (fpscr & FPSCR_FEX) ? 1 : 0;
+पूर्ण
 
-int
-do_mathemu(struct pt_regs *regs)
-{
-	void *op0 = NULL, *op1 = NULL, *op2 = NULL, *op3 = NULL;
-	unsigned long pc = regs->nip;
-	signed short sdisp;
+पूर्णांक
+करो_mathemu(काष्ठा pt_regs *regs)
+अणु
+	व्योम *op0 = शून्य, *op1 = शून्य, *op2 = शून्य, *op3 = शून्य;
+	अचिन्हित दीर्घ pc = regs->nip;
+	चिन्हित लघु sdisp;
 	u32 insn = 0;
-	int idx = 0;
-	int (*func)(void *, void *, void *, void *);
-	int type = 0;
-	int eflag, trap;
+	पूर्णांक idx = 0;
+	पूर्णांक (*func)(व्योम *, व्योम *, व्योम *, व्योम *);
+	पूर्णांक type = 0;
+	पूर्णांक eflag, trap;
 
-	if (get_user(insn, (u32 __user *)pc))
-		return -EFAULT;
+	अगर (get_user(insn, (u32 __user *)pc))
+		वापस -EFAULT;
 
-	switch (insn >> 26) {
-	case LFS:	func = lfs;	type = D;	break;
-	case LFSU:	func = lfs;	type = DU;	break;
-	case LFD:	func = lfd;	type = D;	break;
-	case LFDU:	func = lfd;	type = DU;	break;
-	case STFS:	func = stfs;	type = D;	break;
-	case STFSU:	func = stfs;	type = DU;	break;
-	case STFD:	func = stfd;	type = D;	break;
-	case STFDU:	func = stfd;	type = DU;	break;
+	चयन (insn >> 26) अणु
+	हाल LFS:	func = lfs;	type = D;	अवरोध;
+	हाल LFSU:	func = lfs;	type = DU;	अवरोध;
+	हाल LFD:	func = lfd;	type = D;	अवरोध;
+	हाल LFDU:	func = lfd;	type = DU;	अवरोध;
+	हाल STFS:	func = stfs;	type = D;	अवरोध;
+	हाल STFSU:	func = stfs;	type = DU;	अवरोध;
+	हाल STFD:	func = stfd;	type = D;	अवरोध;
+	हाल STFDU:	func = stfd;	type = DU;	अवरोध;
 
-	case OP31:
-		switch ((insn >> 1) & 0x3ff) {
-		case LFSX:	func = lfs;	type = XE;	break;
-		case LFSUX:	func = lfs;	type = XEU;	break;
-		case LFDX:	func = lfd;	type = XE;	break;
-		case LFDUX:	func = lfd;	type = XEU;	break;
-		case STFSX:	func = stfs;	type = XE;	break;
-		case STFSUX:	func = stfs;	type = XEU;	break;
-		case STFDX:	func = stfd;	type = XE;	break;
-		case STFDUX:	func = stfd;	type = XEU;	break;
-		case STFIWX:	func = stfiwx;	type = XE;	break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल OP31:
+		चयन ((insn >> 1) & 0x3ff) अणु
+		हाल LFSX:	func = lfs;	type = XE;	अवरोध;
+		हाल LFSUX:	func = lfs;	type = XEU;	अवरोध;
+		हाल LFDX:	func = lfd;	type = XE;	अवरोध;
+		हाल LFDUX:	func = lfd;	type = XEU;	अवरोध;
+		हाल STFSX:	func = stfs;	type = XE;	अवरोध;
+		हाल STFSUX:	func = stfs;	type = XEU;	अवरोध;
+		हाल STFDX:	func = stfd;	type = XE;	अवरोध;
+		हाल STFDUX:	func = stfd;	type = XEU;	अवरोध;
+		हाल STFIWX:	func = stfiwx;	type = XE;	अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case OP59:
-		switch ((insn >> 1) & 0x1f) {
-		case FDIVS:	func = fdivs;	type = AB;	break;
-		case FSUBS:	func = fsubs;	type = AB;	break;
-		case FADDS:	func = fadds;	type = AB;	break;
-		case FSQRTS:	func = fsqrts;	type = XB;	break;
-		case FRES:	func = fres;	type = XB;	break;
-		case FMULS:	func = fmuls;	type = AC;	break;
-		case FRSQRTES:	func = frsqrtes;type = XB;	break;
-		case FMSUBS:	func = fmsubs;	type = ABC;	break;
-		case FMADDS:	func = fmadds;	type = ABC;	break;
-		case FNMSUBS:	func = fnmsubs;	type = ABC;	break;
-		case FNMADDS:	func = fnmadds;	type = ABC;	break;
-		default:
-			goto illegal;
-		}
-		break;
+	हाल OP59:
+		चयन ((insn >> 1) & 0x1f) अणु
+		हाल FDIVS:	func = fभागs;	type = AB;	अवरोध;
+		हाल FSUBS:	func = fsubs;	type = AB;	अवरोध;
+		हाल FADDS:	func = fadds;	type = AB;	अवरोध;
+		हाल FSQRTS:	func = fवर्ग_मूलs;	type = XB;	अवरोध;
+		हाल FRES:	func = fres;	type = XB;	अवरोध;
+		हाल FMULS:	func = fmuls;	type = AC;	अवरोध;
+		हाल FRSQRTES:	func = frवर्ग_मूलes;type = XB;	अवरोध;
+		हाल FMSUBS:	func = fmsubs;	type = ABC;	अवरोध;
+		हाल FMADDS:	func = fmadds;	type = ABC;	अवरोध;
+		हाल FNMSUBS:	func = fnmsubs;	type = ABC;	अवरोध;
+		हाल FNMADDS:	func = fnmadds;	type = ABC;	अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	case OP63:
-		if (insn & 0x20) {
-			switch ((insn >> 1) & 0x1f) {
-			case FDIV:	func = fdiv;	type = AB;	break;
-			case FSUB:	func = fsub;	type = AB;	break;
-			case FADD:	func = fadd;	type = AB;	break;
-			case FSQRT:	func = fsqrt;	type = XB;	break;
-			case FRE:	func = fre;	type = XB;	break;
-			case FSEL:	func = fsel;	type = ABC;	break;
-			case FMUL:	func = fmul;	type = AC;	break;
-			case FRSQRTE:	func = frsqrte;	type = XB;	break;
-			case FMSUB:	func = fmsub;	type = ABC;	break;
-			case FMADD:	func = fmadd;	type = ABC;	break;
-			case FNMSUB:	func = fnmsub;	type = ABC;	break;
-			case FNMADD:	func = fnmadd;	type = ABC;	break;
-			default:
-				goto illegal;
-			}
-			break;
-		}
+	हाल OP63:
+		अगर (insn & 0x20) अणु
+			चयन ((insn >> 1) & 0x1f) अणु
+			हाल FDIV:	func = fभाग;	type = AB;	अवरोध;
+			हाल FSUB:	func = fsub;	type = AB;	अवरोध;
+			हाल FADD:	func = fadd;	type = AB;	अवरोध;
+			हाल FSQRT:	func = fवर्ग_मूल;	type = XB;	अवरोध;
+			हाल FRE:	func = fre;	type = XB;	अवरोध;
+			हाल FSEL:	func = fsel;	type = ABC;	अवरोध;
+			हाल FMUL:	func = fmul;	type = AC;	अवरोध;
+			हाल FRSQRTE:	func = frवर्ग_मूलe;	type = XB;	अवरोध;
+			हाल FMSUB:	func = fmsub;	type = ABC;	अवरोध;
+			हाल FMADD:	func = fmadd;	type = ABC;	अवरोध;
+			हाल FNMSUB:	func = fnmsub;	type = ABC;	अवरोध;
+			हाल FNMADD:	func = fnmadd;	type = ABC;	अवरोध;
+			शेष:
+				जाओ illegal;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		switch ((insn >> 1) & 0x3ff) {
-		case FCMPU:	func = fcmpu;	type = XCR;	break;
-		case FRSP:	func = frsp;	type = XB;	break;
-		case FCTIW:	func = fctiw;	type = XB;	break;
-		case FCTIWZ:	func = fctiwz;	type = XB;	break;
-		case FCMPO:	func = fcmpo;	type = XCR;	break;
-		case MTFSB1:	func = mtfsb1;	type = XCRB;	break;
-		case FNEG:	func = fneg;	type = XB;	break;
-		case MCRFS:	func = mcrfs;	type = XCRL;	break;
-		case MTFSB0:	func = mtfsb0;	type = XCRB;	break;
-		case FMR:	func = fmr;	type = XB;	break;
-		case MTFSFI:	func = mtfsfi;	type = XCRI;	break;
-		case FNABS:	func = fnabs;	type = XB;	break;
-		case FABS:	func = fabs;	type = XB;	break;
-		case MFFS:	func = mffs;	type = X;	break;
-		case MTFSF:	func = mtfsf;	type = XFLB;	break;
-		default:
-			goto illegal;
-		}
-		break;
+		चयन ((insn >> 1) & 0x3ff) अणु
+		हाल FCMPU:	func = fcmpu;	type = XCR;	अवरोध;
+		हाल FRSP:	func = frsp;	type = XB;	अवरोध;
+		हाल FCTIW:	func = fctiw;	type = XB;	अवरोध;
+		हाल FCTIWZ:	func = fctiwz;	type = XB;	अवरोध;
+		हाल FCMPO:	func = fcmpo;	type = XCR;	अवरोध;
+		हाल MTFSB1:	func = mtfsb1;	type = XCRB;	अवरोध;
+		हाल FNEG:	func = fneg;	type = XB;	अवरोध;
+		हाल MCRFS:	func = mcrfs;	type = XCRL;	अवरोध;
+		हाल MTFSB0:	func = mtfsb0;	type = XCRB;	अवरोध;
+		हाल FMR:	func = fmr;	type = XB;	अवरोध;
+		हाल MTFSFI:	func = mtfsfi;	type = XCRI;	अवरोध;
+		हाल FNABS:	func = fnअसल;	type = XB;	अवरोध;
+		हाल FABS:	func = भ_असल;	type = XB;	अवरोध;
+		हाल MFFS:	func = mffs;	type = X;	अवरोध;
+		हाल MTFSF:	func = mtfsf;	type = XFLB;	अवरोध;
+		शेष:
+			जाओ illegal;
+		पूर्ण
+		अवरोध;
 
-	default:
-		goto illegal;
-	}
+	शेष:
+		जाओ illegal;
+	पूर्ण
 
-	switch (type) {
-	case AB:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 16) & 0x1f);
-		op2 = (void *)&current->thread.TS_FPR((insn >> 11) & 0x1f);
-		break;
+	चयन (type) अणु
+	हाल AB:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 16) & 0x1f);
+		op2 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 11) & 0x1f);
+		अवरोध;
 
-	case AC:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 16) & 0x1f);
-		op2 = (void *)&current->thread.TS_FPR((insn >>  6) & 0x1f);
-		break;
+	हाल AC:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 16) & 0x1f);
+		op2 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >>  6) & 0x1f);
+		अवरोध;
 
-	case ABC:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 16) & 0x1f);
-		op2 = (void *)&current->thread.TS_FPR((insn >> 11) & 0x1f);
-		op3 = (void *)&current->thread.TS_FPR((insn >>  6) & 0x1f);
-		break;
+	हाल ABC:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 16) & 0x1f);
+		op2 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 11) & 0x1f);
+		op3 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >>  6) & 0x1f);
+		अवरोध;
 
-	case D:
+	हाल D:
 		idx = (insn >> 16) & 0x1f;
 		sdisp = (insn & 0xffff);
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)((idx ? regs->gpr[idx] : 0) + sdisp);
-		break;
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)((idx ? regs->gpr[idx] : 0) + sdisp);
+		अवरोध;
 
-	case DU:
+	हाल DU:
 		idx = (insn >> 16) & 0x1f;
-		if (!idx)
-			goto illegal;
+		अगर (!idx)
+			जाओ illegal;
 
 		sdisp = (insn & 0xffff);
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)(regs->gpr[idx] + sdisp);
-		break;
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)(regs->gpr[idx] + sdisp);
+		अवरोध;
 
-	case X:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		break;
+	हाल X:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		अवरोध;
 
-	case XA:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 16) & 0x1f);
-		break;
+	हाल XA:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 16) & 0x1f);
+		अवरोध;
 
-	case XB:
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 11) & 0x1f);
-		break;
+	हाल XB:
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 11) & 0x1f);
+		अवरोध;
 
-	case XE:
+	हाल XE:
 		idx = (insn >> 16) & 0x1f;
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)((idx ? regs->gpr[idx] : 0)
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)((idx ? regs->gpr[idx] : 0)
 				+ regs->gpr[(insn >> 11) & 0x1f]);
-		break;
+		अवरोध;
 
-	case XEU:
+	हाल XEU:
 		idx = (insn >> 16) & 0x1f;
-		if (!idx)
-			goto illegal;
-		op0 = (void *)&current->thread.TS_FPR((insn >> 21) & 0x1f);
-		op1 = (void *)(regs->gpr[idx]
+		अगर (!idx)
+			जाओ illegal;
+		op0 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 21) & 0x1f);
+		op1 = (व्योम *)(regs->gpr[idx]
 				+ regs->gpr[(insn >> 11) & 0x1f]);
-		break;
+		अवरोध;
 
-	case XCR:
-		op0 = (void *)&regs->ccr;
-		op1 = (void *)((insn >> 23) & 0x7);
-		op2 = (void *)&current->thread.TS_FPR((insn >> 16) & 0x1f);
-		op3 = (void *)&current->thread.TS_FPR((insn >> 11) & 0x1f);
-		break;
+	हाल XCR:
+		op0 = (व्योम *)&regs->ccr;
+		op1 = (व्योम *)((insn >> 23) & 0x7);
+		op2 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 16) & 0x1f);
+		op3 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 11) & 0x1f);
+		अवरोध;
 
-	case XCRL:
-		op0 = (void *)&regs->ccr;
-		op1 = (void *)((insn >> 23) & 0x7);
-		op2 = (void *)((insn >> 18) & 0x7);
-		break;
+	हाल XCRL:
+		op0 = (व्योम *)&regs->ccr;
+		op1 = (व्योम *)((insn >> 23) & 0x7);
+		op2 = (व्योम *)((insn >> 18) & 0x7);
+		अवरोध;
 
-	case XCRB:
-		op0 = (void *)((insn >> 21) & 0x1f);
-		break;
+	हाल XCRB:
+		op0 = (व्योम *)((insn >> 21) & 0x1f);
+		अवरोध;
 
-	case XCRI:
-		op0 = (void *)((insn >> 23) & 0x7);
-		op1 = (void *)((insn >> 12) & 0xf);
-		break;
+	हाल XCRI:
+		op0 = (व्योम *)((insn >> 23) & 0x7);
+		op1 = (व्योम *)((insn >> 12) & 0xf);
+		अवरोध;
 
-	case XFLB:
-		op0 = (void *)((insn >> 17) & 0xff);
-		op1 = (void *)&current->thread.TS_FPR((insn >> 11) & 0x1f);
-		break;
+	हाल XFLB:
+		op0 = (व्योम *)((insn >> 17) & 0xff);
+		op1 = (व्योम *)&current->thपढ़ो.TS_FPR((insn >> 11) & 0x1f);
+		अवरोध;
 
-	default:
-		goto illegal;
-	}
+	शेष:
+		जाओ illegal;
+	पूर्ण
 
 	/*
 	 * If we support a HW FPU, we need to ensure the FP state
-	 * is flushed into the thread_struct before attempting
+	 * is flushed पूर्णांकo the thपढ़ो_काष्ठा beक्रमe attempting
 	 * emulation
 	 */
-	flush_fp_to_thread(current);
+	flush_fp_to_thपढ़ो(current);
 
 	eflag = func(op0, op1, op2, op3);
 
-	if (insn & 1) {
+	अगर (insn & 1) अणु
 		regs->ccr &= ~(0x0f000000);
 		regs->ccr |= (__FPU_FPSCR >> 4) & 0x0f000000;
-	}
+	पूर्ण
 
 	trap = record_exception(regs, eflag);
-	if (trap)
-		return 1;
+	अगर (trap)
+		वापस 1;
 
-	switch (type) {
-	case DU:
-	case XEU:
-		regs->gpr[idx] = (unsigned long)op1;
-		break;
+	चयन (type) अणु
+	हाल DU:
+	हाल XEU:
+		regs->gpr[idx] = (अचिन्हित दीर्घ)op1;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	regs->nip += 4;
-	return 0;
+	वापस 0;
 
 illegal:
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण

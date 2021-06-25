@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// Regulator device driver for DA9061 and DA9062.
+// Regulator device driver क्रम DA9061 and DA9062.
 // Copyright (C) 2015-2017  Dialog Semiconductor
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/mfd/da9062/core.h>
-#include <linux/mfd/da9062/registers.h>
-#include <dt-bindings/regulator/dlg,da9063-regulator.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/mfd/da9062/core.h>
+#समावेश <linux/mfd/da9062/रेजिस्टरs.h>
+#समावेश <dt-bindings/regulator/dlg,da9063-regulator.h>
 
 /* Regulator IDs */
-enum {
+क्रमागत अणु
 	DA9061_ID_BUCK1,
 	DA9061_ID_BUCK2,
 	DA9061_ID_BUCK3,
@@ -28,9 +29,9 @@ enum {
 	DA9061_ID_LDO3,
 	DA9061_ID_LDO4,
 	DA9061_MAX_REGULATORS,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	DA9062_ID_BUCK1,
 	DA9062_ID_BUCK2,
 	DA9062_ID_BUCK3,
@@ -40,287 +41,287 @@ enum {
 	DA9062_ID_LDO3,
 	DA9062_ID_LDO4,
 	DA9062_MAX_REGULATORS,
-};
+पूर्ण;
 
-/* Regulator capabilities and registers description */
-struct da9062_regulator_info {
-	struct regulator_desc desc;
-	/* Main register fields */
-	struct reg_field mode;
-	struct reg_field suspend;
-	struct reg_field sleep;
-	struct reg_field suspend_sleep;
-	unsigned int suspend_vsel_reg;
+/* Regulator capabilities and रेजिस्टरs description */
+काष्ठा da9062_regulator_info अणु
+	काष्ठा regulator_desc desc;
+	/* Main रेजिस्टर fields */
+	काष्ठा reg_field mode;
+	काष्ठा reg_field suspend;
+	काष्ठा reg_field sleep;
+	काष्ठा reg_field suspend_sleep;
+	अचिन्हित पूर्णांक suspend_vsel_reg;
 	/* Event detection bit */
-	struct reg_field oc_event;
-};
+	काष्ठा reg_field oc_event;
+पूर्ण;
 
 /* Single regulator settings */
-struct da9062_regulator {
-	struct regulator_desc			desc;
-	struct regulator_dev			*rdev;
-	struct da9062				*hw;
-	const struct da9062_regulator_info	*info;
+काष्ठा da9062_regulator अणु
+	काष्ठा regulator_desc			desc;
+	काष्ठा regulator_dev			*rdev;
+	काष्ठा da9062				*hw;
+	स्थिर काष्ठा da9062_regulator_info	*info;
 
-	struct regmap_field			*mode;
-	struct regmap_field			*suspend;
-	struct regmap_field			*sleep;
-	struct regmap_field			*suspend_sleep;
-};
+	काष्ठा regmap_field			*mode;
+	काष्ठा regmap_field			*suspend;
+	काष्ठा regmap_field			*sleep;
+	काष्ठा regmap_field			*suspend_sleep;
+पूर्ण;
 
-/* Encapsulates all information for the regulators driver */
-struct da9062_regulators {
-	int					irq_ldo_lim;
-	unsigned				n_regulators;
+/* Encapsulates all inक्रमmation क्रम the regulators driver */
+काष्ठा da9062_regulators अणु
+	पूर्णांक					irq_lकरो_lim;
+	अचिन्हित				n_regulators;
 	/* Array size to be defined during init. Keep at end. */
-	struct da9062_regulator			regulator[];
-};
+	काष्ठा da9062_regulator			regulator[];
+पूर्ण;
 
 /* Regulator operations */
 
 /* Current limits array (in uA)
  * - DA9061_ID_[BUCK1|BUCK3]
  * - DA9062_ID_[BUCK1|BUCK2|BUCK4]
- * Entry indexes corresponds to register values.
+ * Entry indexes corresponds to रेजिस्टर values.
  */
-static const unsigned int da9062_buck_a_limits[] = {
+अटल स्थिर अचिन्हित पूर्णांक da9062_buck_a_limits[] = अणु
 	 500000,  600000,  700000,  800000,  900000, 1000000, 1100000, 1200000,
 	1300000, 1400000, 1500000, 1600000, 1700000, 1800000, 1900000, 2000000
-};
+पूर्ण;
 
 /* Current limits array (in uA)
  * - DA9061_ID_BUCK2
  * - DA9062_ID_BUCK3
- * Entry indexes corresponds to register values.
+ * Entry indexes corresponds to रेजिस्टर values.
  */
-static const unsigned int da9062_buck_b_limits[] = {
+अटल स्थिर अचिन्हित पूर्णांक da9062_buck_b_limits[] = अणु
 	1500000, 1600000, 1700000, 1800000, 1900000, 2000000, 2100000, 2200000,
 	2300000, 2400000, 2500000, 2600000, 2700000, 2800000, 2900000, 3000000
-};
+पूर्ण;
 
-static unsigned int da9062_map_buck_mode(unsigned int mode)
-{
-	switch (mode) {
-	case DA9063_BUCK_MODE_SLEEP:
-		return REGULATOR_MODE_STANDBY;
-	case DA9063_BUCK_MODE_SYNC:
-		return REGULATOR_MODE_FAST;
-	case DA9063_BUCK_MODE_AUTO:
-		return REGULATOR_MODE_NORMAL;
-	default:
-		return REGULATOR_MODE_INVALID;
-	}
-}
+अटल अचिन्हित पूर्णांक da9062_map_buck_mode(अचिन्हित पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल DA9063_BUCK_MODE_SLEEP:
+		वापस REGULATOR_MODE_STANDBY;
+	हाल DA9063_BUCK_MODE_SYNC:
+		वापस REGULATOR_MODE_FAST;
+	हाल DA9063_BUCK_MODE_AUTO:
+		वापस REGULATOR_MODE_NORMAL;
+	शेष:
+		वापस REGULATOR_MODE_INVALID;
+	पूर्ण
+पूर्ण
 
-static int da9062_buck_set_mode(struct regulator_dev *rdev, unsigned mode)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	unsigned val;
+अटल पूर्णांक da9062_buck_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित mode)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	अचिन्हित val;
 
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
 		val = DA9063_BUCK_MODE_SYNC;
-		break;
-	case REGULATOR_MODE_NORMAL:
+		अवरोध;
+	हाल REGULATOR_MODE_NORMAL:
 		val = DA9063_BUCK_MODE_AUTO;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		val = DA9063_BUCK_MODE_SLEEP;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_field_write(regl->mode, val);
-}
+	वापस regmap_field_ग_लिखो(regl->mode, val);
+पूर्ण
 
 /*
- * Bucks use single mode register field for normal operation
+ * Bucks use single mode रेजिस्टर field क्रम normal operation
  * and suspend state.
  * There are 3 modes to map to: FAST, NORMAL, and STANDBY.
  */
 
-static unsigned da9062_buck_get_mode(struct regulator_dev *rdev)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	unsigned int val;
-	int ret;
+अटल अचिन्हित da9062_buck_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_field_read(regl->mode, &val);
-	if (ret < 0)
-		return ret;
+	ret = regmap_field_पढ़ो(regl->mode, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (val) {
-	default:
+	चयन (val) अणु
+	शेष:
 		/* Sleep flag bit decides the mode */
-		break;
-	case DA9063_BUCK_MODE_SLEEP:
-		return REGULATOR_MODE_STANDBY;
-	case DA9063_BUCK_MODE_SYNC:
-		return REGULATOR_MODE_FAST;
-	case DA9063_BUCK_MODE_AUTO:
-		return REGULATOR_MODE_NORMAL;
-	}
+		अवरोध;
+	हाल DA9063_BUCK_MODE_SLEEP:
+		वापस REGULATOR_MODE_STANDBY;
+	हाल DA9063_BUCK_MODE_SYNC:
+		वापस REGULATOR_MODE_FAST;
+	हाल DA9063_BUCK_MODE_AUTO:
+		वापस REGULATOR_MODE_NORMAL;
+	पूर्ण
 
-	ret = regmap_field_read(regl->sleep, &val);
-	if (ret < 0)
-		return 0;
+	ret = regmap_field_पढ़ो(regl->sleep, &val);
+	अगर (ret < 0)
+		वापस 0;
 
-	if (val)
-		return REGULATOR_MODE_STANDBY;
-	else
-		return REGULATOR_MODE_FAST;
-}
+	अगर (val)
+		वापस REGULATOR_MODE_STANDBY;
+	अन्यथा
+		वापस REGULATOR_MODE_FAST;
+पूर्ण
 
 /*
- * LDOs use sleep flags - one for normal and one for suspend state.
- * There are 2 modes to map to: NORMAL and STANDBY (sleep) for each state.
+ * LDOs use sleep flags - one क्रम normal and one क्रम suspend state.
+ * There are 2 modes to map to: NORMAL and STANDBY (sleep) क्रम each state.
  */
 
-static int da9062_ldo_set_mode(struct regulator_dev *rdev, unsigned mode)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	unsigned val;
+अटल पूर्णांक da9062_lकरो_set_mode(काष्ठा regulator_dev *rdev, अचिन्हित mode)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	अचिन्हित val;
 
-	switch (mode) {
-	case REGULATOR_MODE_NORMAL:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_NORMAL:
 		val = 0;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		val = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_field_write(regl->sleep, val);
-}
+	वापस regmap_field_ग_लिखो(regl->sleep, val);
+पूर्ण
 
-static unsigned da9062_ldo_get_mode(struct regulator_dev *rdev)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	int ret, val;
+अटल अचिन्हित da9062_lकरो_get_mode(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	पूर्णांक ret, val;
 
-	ret = regmap_field_read(regl->sleep, &val);
-	if (ret < 0)
-		return 0;
+	ret = regmap_field_पढ़ो(regl->sleep, &val);
+	अगर (ret < 0)
+		वापस 0;
 
-	if (val)
-		return REGULATOR_MODE_STANDBY;
-	else
-		return REGULATOR_MODE_NORMAL;
-}
+	अगर (val)
+		वापस REGULATOR_MODE_STANDBY;
+	अन्यथा
+		वापस REGULATOR_MODE_NORMAL;
+पूर्ण
 
-static int da9062_buck_get_status(struct regulator_dev *rdev)
-{
-	int ret = regulator_is_enabled_regmap(rdev);
+अटल पूर्णांक da9062_buck_get_status(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret = regulator_is_enabled_regmap(rdev);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = REGULATOR_STATUS_OFF;
-	} else if (ret > 0) {
+	पूर्ण अन्यथा अगर (ret > 0) अणु
 		ret = da9062_buck_get_mode(rdev);
-		if (ret > 0)
+		अगर (ret > 0)
 			ret = regulator_mode_to_status(ret);
-		else if (ret == 0)
+		अन्यथा अगर (ret == 0)
 			ret = -EIO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9062_ldo_get_status(struct regulator_dev *rdev)
-{
-	int ret = regulator_is_enabled_regmap(rdev);
+अटल पूर्णांक da9062_lकरो_get_status(काष्ठा regulator_dev *rdev)
+अणु
+	पूर्णांक ret = regulator_is_enabled_regmap(rdev);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = REGULATOR_STATUS_OFF;
-	} else if (ret > 0) {
-		ret = da9062_ldo_get_mode(rdev);
-		if (ret > 0)
+	पूर्ण अन्यथा अगर (ret > 0) अणु
+		ret = da9062_lकरो_get_mode(rdev);
+		अगर (ret > 0)
 			ret = regulator_mode_to_status(ret);
-		else if (ret == 0)
+		अन्यथा अगर (ret == 0)
 			ret = -EIO;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9062_set_suspend_voltage(struct regulator_dev *rdev, int uv)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	const struct da9062_regulator_info *rinfo = regl->info;
-	int ret, sel;
+अटल पूर्णांक da9062_set_suspend_voltage(काष्ठा regulator_dev *rdev, पूर्णांक uv)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	स्थिर काष्ठा da9062_regulator_info *rinfo = regl->info;
+	पूर्णांक ret, sel;
 
 	sel = regulator_map_voltage_linear(rdev, uv, uv);
-	if (sel < 0)
-		return sel;
+	अगर (sel < 0)
+		वापस sel;
 
 	sel <<= ffs(rdev->desc->vsel_mask) - 1;
 
 	ret = regmap_update_bits(regl->hw->regmap, rinfo->suspend_vsel_reg,
 				 rdev->desc->vsel_mask, sel);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int da9062_suspend_enable(struct regulator_dev *rdev)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
+अटल पूर्णांक da9062_suspend_enable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
 
-	return regmap_field_write(regl->suspend, 1);
-}
+	वापस regmap_field_ग_लिखो(regl->suspend, 1);
+पूर्ण
 
-static int da9062_suspend_disable(struct regulator_dev *rdev)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
+अटल पूर्णांक da9062_suspend_disable(काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
 
-	return regmap_field_write(regl->suspend, 0);
-}
+	वापस regmap_field_ग_लिखो(regl->suspend, 0);
+पूर्ण
 
-static int da9062_buck_set_suspend_mode(struct regulator_dev *rdev,
-					unsigned mode)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	int val;
+अटल पूर्णांक da9062_buck_set_suspend_mode(काष्ठा regulator_dev *rdev,
+					अचिन्हित mode)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	पूर्णांक val;
 
-	switch (mode) {
-	case REGULATOR_MODE_FAST:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_FAST:
 		val = DA9063_BUCK_MODE_SYNC;
-		break;
-	case REGULATOR_MODE_NORMAL:
+		अवरोध;
+	हाल REGULATOR_MODE_NORMAL:
 		val = DA9063_BUCK_MODE_AUTO;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		val = DA9063_BUCK_MODE_SLEEP;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_field_write(regl->mode, val);
-}
+	वापस regmap_field_ग_लिखो(regl->mode, val);
+पूर्ण
 
-static int da9062_ldo_set_suspend_mode(struct regulator_dev *rdev,
-						unsigned mode)
-{
-	struct da9062_regulator *regl = rdev_get_drvdata(rdev);
-	unsigned val;
+अटल पूर्णांक da9062_lकरो_set_suspend_mode(काष्ठा regulator_dev *rdev,
+						अचिन्हित mode)
+अणु
+	काष्ठा da9062_regulator *regl = rdev_get_drvdata(rdev);
+	अचिन्हित val;
 
-	switch (mode) {
-	case REGULATOR_MODE_NORMAL:
+	चयन (mode) अणु
+	हाल REGULATOR_MODE_NORMAL:
 		val = 0;
-		break;
-	case REGULATOR_MODE_STANDBY:
+		अवरोध;
+	हाल REGULATOR_MODE_STANDBY:
 		val = 1;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return regmap_field_write(regl->suspend_sleep, val);
-}
+	वापस regmap_field_ग_लिखो(regl->suspend_sleep, val);
+पूर्ण
 
-static const struct regulator_ops da9062_buck_ops = {
+अटल स्थिर काष्ठा regulator_ops da9062_buck_ops = अणु
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.is_enabled		= regulator_is_enabled_regmap,
@@ -336,27 +337,27 @@ static const struct regulator_ops da9062_buck_ops = {
 	.set_suspend_enable	= da9062_suspend_enable,
 	.set_suspend_disable	= da9062_suspend_disable,
 	.set_suspend_mode	= da9062_buck_set_suspend_mode,
-};
+पूर्ण;
 
-static const struct regulator_ops da9062_ldo_ops = {
+अटल स्थिर काष्ठा regulator_ops da9062_lकरो_ops = अणु
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.is_enabled		= regulator_is_enabled_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.list_voltage		= regulator_list_voltage_linear,
-	.set_mode		= da9062_ldo_set_mode,
-	.get_mode		= da9062_ldo_get_mode,
-	.get_status		= da9062_ldo_get_status,
+	.set_mode		= da9062_lकरो_set_mode,
+	.get_mode		= da9062_lकरो_get_mode,
+	.get_status		= da9062_lकरो_get_status,
 	.set_suspend_voltage	= da9062_set_suspend_voltage,
 	.set_suspend_enable	= da9062_suspend_enable,
 	.set_suspend_disable	= da9062_suspend_disable,
-	.set_suspend_mode	= da9062_ldo_set_suspend_mode,
-};
+	.set_suspend_mode	= da9062_lकरो_set_suspend_mode,
+पूर्ण;
 
-/* DA9061 Regulator information */
-static const struct da9062_regulator_info local_da9061_regulator_info[] = {
-	{
+/* DA9061 Regulator inक्रमmation */
+अटल स्थिर काष्ठा da9062_regulator_info local_da9061_regulator_info[] = अणु
+	अणु
 		.desc.id = DA9061_ID_BUCK1,
 		.desc.name = "DA9061 BUCK1",
 		.desc.of_match = of_match_ptr("buck1"),
@@ -376,24 +377,24 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK1_A,
-			__builtin_ffs((int)DA9062AA_BUCK1_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK1_B,
-			__builtin_ffs((int)DA9062AA_BUCK1_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK1_B,
 		.mode = REG_FIELD(DA9062AA_BUCK1_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK1_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK1_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK1_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK1_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_BUCK2,
 		.desc.name = "DA9061 BUCK2",
 		.desc.of_match = of_match_ptr("buck2"),
@@ -413,24 +414,24 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK3_A,
-			__builtin_ffs((int)DA9062AA_BUCK3_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK3_B,
-			__builtin_ffs((int)DA9062AA_BUCK3_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK3_B,
 		.mode = REG_FIELD(DA9062AA_BUCK3_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK3_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK3_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK3_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK3_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_BUCK3,
 		.desc.name = "DA9061 BUCK3",
 		.desc.of_match = of_match_ptr("buck3"),
@@ -450,29 +451,29 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK4_A,
-			__builtin_ffs((int)DA9062AA_BUCK4_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK4_B,
-			__builtin_ffs((int)DA9062AA_BUCK4_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK4_B,
 		.mode = REG_FIELD(DA9062AA_BUCK4_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK4_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK4_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK4_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK4_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_LDO1,
 		.desc.name = "DA9061 LDO1",
 		.desc.of_match = of_match_ptr("ldo1"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -483,29 +484,29 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO1_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO1_A,
-			__builtin_ffs((int)DA9062AA_LDO1_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO1_B,
-			__builtin_ffs((int)DA9062AA_LDO1_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO1_B,
 		.suspend = REG_FIELD(DA9062AA_LDO1_CONT,
-			__builtin_ffs((int)DA9062AA_LDO1_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO1_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO1_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_LDO2,
 		.desc.name = "DA9061 LDO2",
 		.desc.of_match = of_match_ptr("ldo2"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -516,29 +517,29 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO2_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO2_A,
-			__builtin_ffs((int)DA9062AA_LDO2_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO2_B,
-			__builtin_ffs((int)DA9062AA_LDO2_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO2_B,
 		.suspend = REG_FIELD(DA9062AA_LDO2_CONT,
-			__builtin_ffs((int)DA9062AA_LDO2_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO2_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO2_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_LDO3,
 		.desc.name = "DA9061 LDO3",
 		.desc.of_match = of_match_ptr("ldo3"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -549,29 +550,29 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO3_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO3_A,
-			__builtin_ffs((int)DA9062AA_LDO3_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO3_B,
-			__builtin_ffs((int)DA9062AA_LDO3_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO3_B,
 		.suspend = REG_FIELD(DA9062AA_LDO3_CONT,
-			__builtin_ffs((int)DA9062AA_LDO3_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO3_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO3_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9061_ID_LDO4,
 		.desc.name = "DA9061 LDO4",
 		.desc.of_match = of_match_ptr("ldo4"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -582,28 +583,28 @@ static const struct da9062_regulator_info local_da9061_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO4_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO4_A,
-			__builtin_ffs((int)DA9062AA_LDO4_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO4_B,
-			__builtin_ffs((int)DA9062AA_LDO4_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO4_B,
 		.suspend = REG_FIELD(DA9062AA_LDO4_CONT,
-			__builtin_ffs((int)DA9062AA_LDO4_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO4_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO4_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_ILIM_MASK)) - 1),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* DA9062 Regulator information */
-static const struct da9062_regulator_info local_da9062_regulator_info[] = {
-	{
+/* DA9062 Regulator inक्रमmation */
+अटल स्थिर काष्ठा da9062_regulator_info local_da9062_regulator_info[] = अणु
+	अणु
 		.desc.id = DA9062_ID_BUCK1,
 		.desc.name = "DA9062 BUCK1",
 		.desc.of_match = of_match_ptr("buck1"),
@@ -623,24 +624,24 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK1_A,
-			__builtin_ffs((int)DA9062AA_BUCK1_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK1_B,
-			__builtin_ffs((int)DA9062AA_BUCK1_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK1_B,
 		.mode = REG_FIELD(DA9062AA_BUCK1_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK1_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK1_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK1_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK1_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK1_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK1_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_BUCK2,
 		.desc.name = "DA9062 BUCK2",
 		.desc.of_match = of_match_ptr("buck2"),
@@ -660,24 +661,24 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK2_A,
-			__builtin_ffs((int)DA9062AA_BUCK2_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK2_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK2_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK2_B,
-			__builtin_ffs((int)DA9062AA_BUCK2_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK2_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK2_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK2_B,
 		.mode = REG_FIELD(DA9062AA_BUCK2_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK2_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK2_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK2_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK2_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK2_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK2_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK2_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_BUCK3,
 		.desc.name = "DA9062 BUCK3",
 		.desc.of_match = of_match_ptr("buck3"),
@@ -697,24 +698,24 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK3_A,
-			__builtin_ffs((int)DA9062AA_BUCK3_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK3_B,
-			__builtin_ffs((int)DA9062AA_BUCK3_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK3_B,
 		.mode = REG_FIELD(DA9062AA_BUCK3_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK3_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK3_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK3_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK3_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK3_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK3_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_BUCK4,
 		.desc.name = "DA9062 BUCK4",
 		.desc.of_match = of_match_ptr("buck4"),
@@ -734,29 +735,29 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.linear_min_sel = 0,
 		.desc.of_map_mode = da9062_map_buck_mode,
 		.sleep = REG_FIELD(DA9062AA_VBUCK4_A,
-			__builtin_ffs((int)DA9062AA_BUCK4_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VBUCK4_B,
-			__builtin_ffs((int)DA9062AA_BUCK4_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VBUCK4_B,
 		.mode = REG_FIELD(DA9062AA_BUCK4_CFG,
-			__builtin_ffs((int)DA9062AA_BUCK4_MODE_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_MODE_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_BUCK4_MODE_MASK)) - 1),
 		.suspend = REG_FIELD(DA9062AA_BUCK4_CONT,
-			__builtin_ffs((int)DA9062AA_BUCK4_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_BUCK4_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_BUCK4_CONF_MASK) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_LDO1,
 		.desc.name = "DA9062 LDO1",
 		.desc.of_match = of_match_ptr("ldo1"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -767,29 +768,29 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO1_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO1_A,
-			__builtin_ffs((int)DA9062AA_LDO1_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO1_B,
-			__builtin_ffs((int)DA9062AA_LDO1_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO1_B,
 		.suspend = REG_FIELD(DA9062AA_LDO1_CONT,
-			__builtin_ffs((int)DA9062AA_LDO1_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO1_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO1_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO1_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO1_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_LDO2,
 		.desc.name = "DA9062 LDO2",
 		.desc.of_match = of_match_ptr("ldo2"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -800,29 +801,29 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO2_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO2_A,
-			__builtin_ffs((int)DA9062AA_LDO2_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO2_B,
-			__builtin_ffs((int)DA9062AA_LDO2_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO2_B,
 		.suspend = REG_FIELD(DA9062AA_LDO2_CONT,
-			__builtin_ffs((int)DA9062AA_LDO2_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO2_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO2_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO2_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO2_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_LDO3,
 		.desc.name = "DA9062 LDO3",
 		.desc.of_match = of_match_ptr("ldo3"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -833,29 +834,29 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO3_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO3_A,
-			__builtin_ffs((int)DA9062AA_LDO3_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO3_B,
-			__builtin_ffs((int)DA9062AA_LDO3_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO3_B,
 		.suspend = REG_FIELD(DA9062AA_LDO3_CONT,
-			__builtin_ffs((int)DA9062AA_LDO3_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO3_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO3_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO3_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO3_ILIM_MASK)) - 1),
-	},
-	{
+	पूर्ण,
+	अणु
 		.desc.id = DA9062_ID_LDO4,
 		.desc.name = "DA9062 LDO4",
 		.desc.of_match = of_match_ptr("ldo4"),
 		.desc.regulators_node = of_match_ptr("regulators"),
-		.desc.ops = &da9062_ldo_ops,
+		.desc.ops = &da9062_lकरो_ops,
 		.desc.min_uV = (900) * 1000,
 		.desc.uV_step = (50) * 1000,
 		.desc.n_voltages = ((3600) - (900))/(50) + 1
@@ -866,92 +867,92 @@ static const struct da9062_regulator_info local_da9062_regulator_info[] = {
 		.desc.vsel_mask = DA9062AA_VLDO4_A_MASK,
 		.desc.linear_min_sel = DA9062AA_VLDO_A_MIN_SEL,
 		.sleep = REG_FIELD(DA9062AA_VLDO4_A,
-			__builtin_ffs((int)DA9062AA_LDO4_SL_A_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_SL_A_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_SL_A_MASK)) - 1),
 		.suspend_sleep = REG_FIELD(DA9062AA_VLDO4_B,
-			__builtin_ffs((int)DA9062AA_LDO4_SL_B_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_SL_B_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_SL_B_MASK)) - 1),
 		.suspend_vsel_reg = DA9062AA_VLDO4_B,
 		.suspend = REG_FIELD(DA9062AA_LDO4_CONT,
-			__builtin_ffs((int)DA9062AA_LDO4_CONF_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_CONF_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz(DA9062AA_LDO4_CONF_MASK) - 1),
 		.oc_event = REG_FIELD(DA9062AA_STATUS_D,
-			__builtin_ffs((int)DA9062AA_LDO4_ILIM_MASK) - 1,
-			sizeof(unsigned int) * 8 -
+			__builtin_ffs((पूर्णांक)DA9062AA_LDO4_ILIM_MASK) - 1,
+			माप(अचिन्हित पूर्णांक) * 8 -
 			__builtin_clz((DA9062AA_LDO4_ILIM_MASK)) - 1),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Regulator interrupt handlers */
-static irqreturn_t da9062_ldo_lim_event(int irq, void *data)
-{
-	struct da9062_regulators *regulators = data;
-	struct da9062 *hw = regulators->regulator[0].hw;
-	struct da9062_regulator *regl;
-	int handled = IRQ_NONE;
-	int bits, i, ret;
+/* Regulator पूर्णांकerrupt handlers */
+अटल irqवापस_t da9062_lकरो_lim_event(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा da9062_regulators *regulators = data;
+	काष्ठा da9062 *hw = regulators->regulator[0].hw;
+	काष्ठा da9062_regulator *regl;
+	पूर्णांक handled = IRQ_NONE;
+	पूर्णांक bits, i, ret;
 
-	ret = regmap_read(hw->regmap, DA9062AA_STATUS_D, &bits);
-	if (ret < 0) {
+	ret = regmap_पढ़ो(hw->regmap, DA9062AA_STATUS_D, &bits);
+	अगर (ret < 0) अणु
 		dev_err(hw->dev,
 			"Failed to read LDO overcurrent indicator\n");
-		goto ldo_lim_error;
-	}
+		जाओ lकरो_lim_error;
+	पूर्ण
 
-	for (i = regulators->n_regulators - 1; i >= 0; i--) {
+	क्रम (i = regulators->n_regulators - 1; i >= 0; i--) अणु
 		regl = &regulators->regulator[i];
-		if (regl->info->oc_event.reg != DA9062AA_STATUS_D)
-			continue;
+		अगर (regl->info->oc_event.reg != DA9062AA_STATUS_D)
+			जारी;
 
-		if (BIT(regl->info->oc_event.lsb) & bits) {
-			regulator_notifier_call_chain(regl->rdev,
-					REGULATOR_EVENT_OVER_CURRENT, NULL);
+		अगर (BIT(regl->info->oc_event.lsb) & bits) अणु
+			regulator_notअगरier_call_chain(regl->rdev,
+					REGULATOR_EVENT_OVER_CURRENT, शून्य);
 			handled = IRQ_HANDLED;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-ldo_lim_error:
-	return handled;
-}
+lकरो_lim_error:
+	वापस handled;
+पूर्ण
 
-static int da9062_regulator_probe(struct platform_device *pdev)
-{
-	struct da9062 *chip = dev_get_drvdata(pdev->dev.parent);
-	struct da9062_regulators *regulators;
-	struct da9062_regulator *regl;
-	struct regulator_config config = { };
-	const struct da9062_regulator_info *rinfo;
-	int irq, n, ret;
-	int max_regulators;
+अटल पूर्णांक da9062_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा da9062 *chip = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा da9062_regulators *regulators;
+	काष्ठा da9062_regulator *regl;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	स्थिर काष्ठा da9062_regulator_info *rinfo;
+	पूर्णांक irq, n, ret;
+	पूर्णांक max_regulators;
 
-	switch (chip->chip_type) {
-	case COMPAT_TYPE_DA9061:
+	चयन (chip->chip_type) अणु
+	हाल COMPAT_TYPE_DA9061:
 		max_regulators = DA9061_MAX_REGULATORS;
 		rinfo = local_da9061_regulator_info;
-		break;
-	case COMPAT_TYPE_DA9062:
+		अवरोध;
+	हाल COMPAT_TYPE_DA9062:
 		max_regulators = DA9062_MAX_REGULATORS;
 		rinfo = local_da9062_regulator_info;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(chip->dev, "Unrecognised chip type\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Allocate memory required by usable regulators */
-	regulators = devm_kzalloc(&pdev->dev, struct_size(regulators, regulator,
+	regulators = devm_kzalloc(&pdev->dev, काष्ठा_size(regulators, regulator,
 				  max_regulators), GFP_KERNEL);
-	if (!regulators)
-		return -ENOMEM;
+	अगर (!regulators)
+		वापस -ENOMEM;
 
 	regulators->n_regulators = max_regulators;
-	platform_set_drvdata(pdev, regulators);
+	platक्रमm_set_drvdata(pdev, regulators);
 
-	for (n = 0; n < regulators->n_regulators; n++) {
-		/* Initialise regulator structure */
+	क्रम (n = 0; n < regulators->n_regulators; n++) अणु
+		/* Initialise regulator काष्ठाure */
 		regl = &regulators->regulator[n];
 		regl->hw = chip;
 		regl->info = &rinfo[n];
@@ -959,97 +960,97 @@ static int da9062_regulator_probe(struct platform_device *pdev)
 		regl->desc.type = REGULATOR_VOLTAGE;
 		regl->desc.owner = THIS_MODULE;
 
-		if (regl->info->mode.reg) {
+		अगर (regl->info->mode.reg) अणु
 			regl->mode = devm_regmap_field_alloc(
 					&pdev->dev,
 					chip->regmap,
 					regl->info->mode);
-			if (IS_ERR(regl->mode))
-				return PTR_ERR(regl->mode);
-		}
+			अगर (IS_ERR(regl->mode))
+				वापस PTR_ERR(regl->mode);
+		पूर्ण
 
-		if (regl->info->suspend.reg) {
+		अगर (regl->info->suspend.reg) अणु
 			regl->suspend = devm_regmap_field_alloc(
 					&pdev->dev,
 					chip->regmap,
 					regl->info->suspend);
-			if (IS_ERR(regl->suspend))
-				return PTR_ERR(regl->suspend);
-		}
+			अगर (IS_ERR(regl->suspend))
+				वापस PTR_ERR(regl->suspend);
+		पूर्ण
 
-		if (regl->info->sleep.reg) {
+		अगर (regl->info->sleep.reg) अणु
 			regl->sleep = devm_regmap_field_alloc(
 					&pdev->dev,
 					chip->regmap,
 					regl->info->sleep);
-			if (IS_ERR(regl->sleep))
-				return PTR_ERR(regl->sleep);
-		}
+			अगर (IS_ERR(regl->sleep))
+				वापस PTR_ERR(regl->sleep);
+		पूर्ण
 
-		if (regl->info->suspend_sleep.reg) {
+		अगर (regl->info->suspend_sleep.reg) अणु
 			regl->suspend_sleep = devm_regmap_field_alloc(
 					&pdev->dev,
 					chip->regmap,
 					regl->info->suspend_sleep);
-			if (IS_ERR(regl->suspend_sleep))
-				return PTR_ERR(regl->suspend_sleep);
-		}
+			अगर (IS_ERR(regl->suspend_sleep))
+				वापस PTR_ERR(regl->suspend_sleep);
+		पूर्ण
 
 		/* Register regulator */
-		memset(&config, 0, sizeof(config));
+		स_रखो(&config, 0, माप(config));
 		config.dev = chip->dev;
 		config.driver_data = regl;
 		config.regmap = chip->regmap;
 
-		regl->rdev = devm_regulator_register(&pdev->dev, &regl->desc,
+		regl->rdev = devm_regulator_रेजिस्टर(&pdev->dev, &regl->desc,
 						     &config);
-		if (IS_ERR(regl->rdev)) {
+		अगर (IS_ERR(regl->rdev)) अणु
 			dev_err(&pdev->dev,
 				"Failed to register %s regulator\n",
 				regl->desc.name);
-			return PTR_ERR(regl->rdev);
-		}
-	}
+			वापस PTR_ERR(regl->rdev);
+		पूर्ण
+	पूर्ण
 
 	/* LDOs overcurrent event support */
-	irq = platform_get_irq_byname(pdev, "LDO_LIM");
-	if (irq < 0)
-		return irq;
-	regulators->irq_ldo_lim = irq;
+	irq = platक्रमm_get_irq_byname(pdev, "LDO_LIM");
+	अगर (irq < 0)
+		वापस irq;
+	regulators->irq_lकरो_lim = irq;
 
-	ret = devm_request_threaded_irq(&pdev->dev, irq,
-					NULL, da9062_ldo_lim_event,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
+					शून्य, da9062_lकरो_lim_event,
 					IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					"LDO_LIM", regulators);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(&pdev->dev,
 			 "Failed to request LDO_LIM IRQ.\n");
-		regulators->irq_ldo_lim = -ENXIO;
-	}
+		regulators->irq_lकरो_lim = -ENXIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver da9062_regulator_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver da9062_regulator_driver = अणु
+	.driver = अणु
 		.name = "da9062-regulators",
-	},
+	पूर्ण,
 	.probe = da9062_regulator_probe,
-};
+पूर्ण;
 
-static int __init da9062_regulator_init(void)
-{
-	return platform_driver_register(&da9062_regulator_driver);
-}
+अटल पूर्णांक __init da9062_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&da9062_regulator_driver);
+पूर्ण
 subsys_initcall(da9062_regulator_init);
 
-static void __exit da9062_regulator_cleanup(void)
-{
-	platform_driver_unregister(&da9062_regulator_driver);
-}
-module_exit(da9062_regulator_cleanup);
+अटल व्योम __निकास da9062_regulator_cleanup(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&da9062_regulator_driver);
+पूर्ण
+module_निकास(da9062_regulator_cleanup);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("S Twiss <stwiss.opensource@diasemi.com>");
 MODULE_DESCRIPTION("REGULATOR device driver for Dialog DA9062 and DA9061");
 MODULE_LICENSE("GPL");

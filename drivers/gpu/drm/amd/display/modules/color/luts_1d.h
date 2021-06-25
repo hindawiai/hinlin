@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,30 +23,30 @@
  * Authors: AMD
  *
  */
-#ifndef LUTS_1D_H
-#define LUTS_1D_H
+#अगर_अघोषित LUTS_1D_H
+#घोषणा LUTS_1D_H
 
-#include "hw_shared.h"
+#समावेश "hw_shared.h"
 
-struct point_config {
-	uint32_t custom_float_x;
-	uint32_t custom_float_y;
-	uint32_t custom_float_slope;
-};
+काष्ठा poपूर्णांक_config अणु
+	uपूर्णांक32_t custom_भग्न_x;
+	uपूर्णांक32_t custom_भग्न_y;
+	uपूर्णांक32_t custom_भग्न_slope;
+पूर्ण;
 
-struct lut_point {
-	uint32_t red;
-	uint32_t green;
-	uint32_t blue;
-	uint32_t delta_red;
-	uint32_t delta_green;
-	uint32_t delta_blue;
-};
+काष्ठा lut_poपूर्णांक अणु
+	uपूर्णांक32_t red;
+	uपूर्णांक32_t green;
+	uपूर्णांक32_t blue;
+	uपूर्णांक32_t delta_red;
+	uपूर्णांक32_t delta_green;
+	uपूर्णांक32_t delta_blue;
+पूर्ण;
 
-struct pwl_1dlut_parameter {
-	struct gamma_curve	arr_curve_points[34];
-	struct point_config	arr_points[2];
-	struct lut_point rgb_resulted[256];
-	uint32_t hw_points_num;
-};
-#endif // LUTS_1D_H
+काष्ठा pwl_1dlut_parameter अणु
+	काष्ठा gamma_curve	arr_curve_poपूर्णांकs[34];
+	काष्ठा poपूर्णांक_config	arr_poपूर्णांकs[2];
+	काष्ठा lut_poपूर्णांक rgb_resulted[256];
+	uपूर्णांक32_t hw_poपूर्णांकs_num;
+पूर्ण;
+#पूर्ण_अगर // LUTS_1D_H

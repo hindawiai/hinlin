@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
     bttv - Bt848 frame grabber driver
@@ -22,110 +23,110 @@
 
 */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/kdev_t.h>
-#include "bttvp.h"
-#include <media/v4l2-common.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-event.h>
-#include <media/i2c/tvaudio.h>
-#include <media/drv-intf/msp3400.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kdev_t.h>
+#समावेश "bttvp.h"
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/i2c/tvaudपन.स>
+#समावेश <media/drv-पूर्णांकf/msp3400.h>
 
-#include <linux/dma-mapping.h>
+#समावेश <linux/dma-mapping.h>
 
-#include <asm/io.h>
-#include <asm/byteorder.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
 
-#include <media/i2c/saa6588.h>
+#समावेश <media/i2c/saa6588.h>
 
-#define BTTV_VERSION "0.9.19"
+#घोषणा BTTV_VERSION "0.9.19"
 
-unsigned int bttv_num;			/* number of Bt848s in use */
-struct bttv *bttvs[BTTV_MAX];
+अचिन्हित पूर्णांक bttv_num;			/* number of Bt848s in use */
+काष्ठा bttv *bttvs[BTTV_MAX];
 
-unsigned int bttv_debug;
-unsigned int bttv_verbose = 1;
-unsigned int bttv_gpio;
+अचिन्हित पूर्णांक bttv_debug;
+अचिन्हित पूर्णांक bttv_verbose = 1;
+अचिन्हित पूर्णांक bttv_gpio;
 
 /* config variables */
-#ifdef __BIG_ENDIAN
-static unsigned int bigendian=1;
-#else
-static unsigned int bigendian;
-#endif
-static unsigned int radio[BTTV_MAX];
-static unsigned int irq_debug;
-static unsigned int gbuffers = 8;
-static unsigned int gbufsize = 0x208000;
-static unsigned int reset_crop = 1;
+#अगर_घोषित __BIG_ENDIAN
+अटल अचिन्हित पूर्णांक bigendian=1;
+#अन्यथा
+अटल अचिन्हित पूर्णांक bigendian;
+#पूर्ण_अगर
+अटल अचिन्हित पूर्णांक radio[BTTV_MAX];
+अटल अचिन्हित पूर्णांक irq_debug;
+अटल अचिन्हित पूर्णांक gbuffers = 8;
+अटल अचिन्हित पूर्णांक gbufsize = 0x208000;
+अटल अचिन्हित पूर्णांक reset_crop = 1;
 
-static int video_nr[BTTV_MAX] = { [0 ... (BTTV_MAX-1)] = -1 };
-static int radio_nr[BTTV_MAX] = { [0 ... (BTTV_MAX-1)] = -1 };
-static int vbi_nr[BTTV_MAX] = { [0 ... (BTTV_MAX-1)] = -1 };
-static int debug_latency;
-static int disable_ir;
+अटल पूर्णांक video_nr[BTTV_MAX] = अणु [0 ... (BTTV_MAX-1)] = -1 पूर्ण;
+अटल पूर्णांक radio_nr[BTTV_MAX] = अणु [0 ... (BTTV_MAX-1)] = -1 पूर्ण;
+अटल पूर्णांक vbi_nr[BTTV_MAX] = अणु [0 ... (BTTV_MAX-1)] = -1 पूर्ण;
+अटल पूर्णांक debug_latency;
+अटल पूर्णांक disable_ir;
 
-static unsigned int fdsr;
+अटल अचिन्हित पूर्णांक fdsr;
 
 /* options */
-static unsigned int combfilter;
-static unsigned int lumafilter;
-static unsigned int automute    = 1;
-static unsigned int chroma_agc;
-static unsigned int agc_crush   = 1;
-static unsigned int whitecrush_upper = 0xCF;
-static unsigned int whitecrush_lower = 0x7F;
-static unsigned int vcr_hack;
-static unsigned int irq_iswitch;
-static unsigned int uv_ratio    = 50;
-static unsigned int full_luma_range;
-static unsigned int coring;
+अटल अचिन्हित पूर्णांक combfilter;
+अटल अचिन्हित पूर्णांक lumafilter;
+अटल अचिन्हित पूर्णांक स्वतःmute    = 1;
+अटल अचिन्हित पूर्णांक chroma_agc;
+अटल अचिन्हित पूर्णांक agc_crush   = 1;
+अटल अचिन्हित पूर्णांक whitecrush_upper = 0xCF;
+अटल अचिन्हित पूर्णांक whitecrush_lower = 0x7F;
+अटल अचिन्हित पूर्णांक vcr_hack;
+अटल अचिन्हित पूर्णांक irq_iचयन;
+अटल अचिन्हित पूर्णांक uv_ratio    = 50;
+अटल अचिन्हित पूर्णांक full_luma_range;
+अटल अचिन्हित पूर्णांक coring;
 
-/* API features (turn on/off stuff for testing) */
-static unsigned int v4l2        = 1;
+/* API features (turn on/off stuff क्रम testing) */
+अटल अचिन्हित पूर्णांक v4l2        = 1;
 
 /* insmod args */
-module_param(bttv_verbose,      int, 0644);
-module_param(bttv_gpio,         int, 0644);
-module_param(bttv_debug,        int, 0644);
-module_param(irq_debug,         int, 0644);
-module_param(debug_latency,     int, 0644);
-module_param(disable_ir,        int, 0444);
+module_param(bttv_verbose,      पूर्णांक, 0644);
+module_param(bttv_gpio,         पूर्णांक, 0644);
+module_param(bttv_debug,        पूर्णांक, 0644);
+module_param(irq_debug,         पूर्णांक, 0644);
+module_param(debug_latency,     पूर्णांक, 0644);
+module_param(disable_ir,        पूर्णांक, 0444);
 
-module_param(fdsr,              int, 0444);
-module_param(gbuffers,          int, 0444);
-module_param(gbufsize,          int, 0444);
-module_param(reset_crop,        int, 0444);
+module_param(fdsr,              पूर्णांक, 0444);
+module_param(gbuffers,          पूर्णांक, 0444);
+module_param(gbufsize,          पूर्णांक, 0444);
+module_param(reset_crop,        पूर्णांक, 0444);
 
-module_param(v4l2,              int, 0644);
-module_param(bigendian,         int, 0644);
-module_param(irq_iswitch,       int, 0644);
-module_param(combfilter,        int, 0444);
-module_param(lumafilter,        int, 0444);
-module_param(automute,          int, 0444);
-module_param(chroma_agc,        int, 0444);
-module_param(agc_crush,         int, 0444);
-module_param(whitecrush_upper,  int, 0444);
-module_param(whitecrush_lower,  int, 0444);
-module_param(vcr_hack,          int, 0444);
-module_param(uv_ratio,          int, 0444);
-module_param(full_luma_range,   int, 0444);
-module_param(coring,            int, 0444);
+module_param(v4l2,              पूर्णांक, 0644);
+module_param(bigendian,         पूर्णांक, 0644);
+module_param(irq_iचयन,       पूर्णांक, 0644);
+module_param(combfilter,        पूर्णांक, 0444);
+module_param(lumafilter,        पूर्णांक, 0444);
+module_param(स्वतःmute,          पूर्णांक, 0444);
+module_param(chroma_agc,        पूर्णांक, 0444);
+module_param(agc_crush,         पूर्णांक, 0444);
+module_param(whitecrush_upper,  पूर्णांक, 0444);
+module_param(whitecrush_lower,  पूर्णांक, 0444);
+module_param(vcr_hack,          पूर्णांक, 0444);
+module_param(uv_ratio,          पूर्णांक, 0444);
+module_param(full_luma_range,   पूर्णांक, 0444);
+module_param(coring,            पूर्णांक, 0444);
 
-module_param_array(radio,       int, NULL, 0444);
-module_param_array(video_nr,    int, NULL, 0444);
-module_param_array(radio_nr,    int, NULL, 0444);
-module_param_array(vbi_nr,      int, NULL, 0444);
+module_param_array(radio,       पूर्णांक, शून्य, 0444);
+module_param_array(video_nr,    पूर्णांक, शून्य, 0444);
+module_param_array(radio_nr,    पूर्णांक, शून्य, 0444);
+module_param_array(vbi_nr,      पूर्णांक, शून्य, 0444);
 
 MODULE_PARM_DESC(radio, "The TV card supports radio, default is 0 (no)");
 MODULE_PARM_DESC(bigendian, "byte order of the framebuffer, default is native endian");
@@ -137,13 +138,13 @@ MODULE_PARM_DESC(disable_ir, "disable infrared remote support");
 MODULE_PARM_DESC(gbuffers, "number of capture buffers. range 2-32, default 8");
 MODULE_PARM_DESC(gbufsize, "size of the capture buffers, default is 0x208000");
 MODULE_PARM_DESC(reset_crop, "reset cropping parameters at open(), default is 1 (yes) for compatibility with older applications");
-MODULE_PARM_DESC(automute, "mute audio on bad/missing video signal, default is 1 (yes)");
+MODULE_PARM_DESC(स्वतःmute, "mute audio on bad/missing video signal, default is 1 (yes)");
 MODULE_PARM_DESC(chroma_agc, "enables the AGC of chroma signal, default is 0 (no)");
 MODULE_PARM_DESC(agc_crush, "enables the luminance AGC crush, default is 1 (yes)");
 MODULE_PARM_DESC(whitecrush_upper, "sets the white crush upper value, default is 207");
 MODULE_PARM_DESC(whitecrush_lower, "sets the white crush lower value, default is 127");
 MODULE_PARM_DESC(vcr_hack, "enables the VCR hack (improves synch on poor VCR tapes), default is 0 (no)");
-MODULE_PARM_DESC(irq_iswitch, "switch inputs in irq handler");
+MODULE_PARM_DESC(irq_iचयन, "switch inputs in irq handler");
 MODULE_PARM_DESC(uv_ratio, "ratio between u and v gains, default is 50");
 MODULE_PARM_DESC(full_luma_range, "use the full luma range, default is 0 (no)");
 MODULE_PARM_DESC(coring, "set the luma coring level, default is 0 (no)");
@@ -156,70 +157,70 @@ MODULE_AUTHOR("Ralph Metzler & Marcus Metzler & Gerd Knorr");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(BTTV_VERSION);
 
-#define V4L2_CID_PRIVATE_COMBFILTER		(V4L2_CID_USER_BTTV_BASE + 0)
-#define V4L2_CID_PRIVATE_AUTOMUTE		(V4L2_CID_USER_BTTV_BASE + 1)
-#define V4L2_CID_PRIVATE_LUMAFILTER		(V4L2_CID_USER_BTTV_BASE + 2)
-#define V4L2_CID_PRIVATE_AGC_CRUSH		(V4L2_CID_USER_BTTV_BASE + 3)
-#define V4L2_CID_PRIVATE_VCR_HACK		(V4L2_CID_USER_BTTV_BASE + 4)
-#define V4L2_CID_PRIVATE_WHITECRUSH_LOWER	(V4L2_CID_USER_BTTV_BASE + 5)
-#define V4L2_CID_PRIVATE_WHITECRUSH_UPPER	(V4L2_CID_USER_BTTV_BASE + 6)
-#define V4L2_CID_PRIVATE_UV_RATIO		(V4L2_CID_USER_BTTV_BASE + 7)
-#define V4L2_CID_PRIVATE_FULL_LUMA_RANGE	(V4L2_CID_USER_BTTV_BASE + 8)
-#define V4L2_CID_PRIVATE_CORING			(V4L2_CID_USER_BTTV_BASE + 9)
+#घोषणा V4L2_CID_PRIVATE_COMBFILTER		(V4L2_CID_USER_BTTV_BASE + 0)
+#घोषणा V4L2_CID_PRIVATE_AUTOMUTE		(V4L2_CID_USER_BTTV_BASE + 1)
+#घोषणा V4L2_CID_PRIVATE_LUMAFILTER		(V4L2_CID_USER_BTTV_BASE + 2)
+#घोषणा V4L2_CID_PRIVATE_AGC_CRUSH		(V4L2_CID_USER_BTTV_BASE + 3)
+#घोषणा V4L2_CID_PRIVATE_VCR_HACK		(V4L2_CID_USER_BTTV_BASE + 4)
+#घोषणा V4L2_CID_PRIVATE_WHITECRUSH_LOWER	(V4L2_CID_USER_BTTV_BASE + 5)
+#घोषणा V4L2_CID_PRIVATE_WHITECRUSH_UPPER	(V4L2_CID_USER_BTTV_BASE + 6)
+#घोषणा V4L2_CID_PRIVATE_UV_RATIO		(V4L2_CID_USER_BTTV_BASE + 7)
+#घोषणा V4L2_CID_PRIVATE_FULL_LUMA_RANGE	(V4L2_CID_USER_BTTV_BASE + 8)
+#घोषणा V4L2_CID_PRIVATE_CORING			(V4L2_CID_USER_BTTV_BASE + 9)
 
 /* ----------------------------------------------------------------------- */
 /* sysfs                                                                   */
 
-static ssize_t show_card(struct device *cd,
-			 struct device_attribute *attr, char *buf)
-{
-	struct video_device *vfd = to_video_device(cd);
-	struct bttv *btv = video_get_drvdata(vfd);
-	return sprintf(buf, "%d\n", btv ? btv->c.type : UNSET);
-}
-static DEVICE_ATTR(card, S_IRUGO, show_card, NULL);
+अटल sमाप_प्रकार show_card(काष्ठा device *cd,
+			 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा video_device *vfd = to_video_device(cd);
+	काष्ठा bttv *btv = video_get_drvdata(vfd);
+	वापस प्र_लिखो(buf, "%d\n", btv ? btv->c.type : UNSET);
+पूर्ण
+अटल DEVICE_ATTR(card, S_IRUGO, show_card, शून्य);
 
 /* ----------------------------------------------------------------------- */
-/* dvb auto-load setup                                                     */
-#if defined(CONFIG_MODULES) && defined(MODULE)
-static void request_module_async(struct work_struct *work)
-{
+/* dvb स्वतः-load setup                                                     */
+#अगर defined(CONFIG_MODULES) && defined(MODULE)
+अटल व्योम request_module_async(काष्ठा work_काष्ठा *work)
+अणु
 	request_module("dvb-bt8xx");
-}
+पूर्ण
 
-static void request_modules(struct bttv *dev)
-{
+अटल व्योम request_modules(काष्ठा bttv *dev)
+अणु
 	INIT_WORK(&dev->request_module_wk, request_module_async);
 	schedule_work(&dev->request_module_wk);
-}
+पूर्ण
 
-static void flush_request_modules(struct bttv *dev)
-{
+अटल व्योम flush_request_modules(काष्ठा bttv *dev)
+अणु
 	flush_work(&dev->request_module_wk);
-}
-#else
-#define request_modules(dev)
-#define flush_request_modules(dev) do {} while(0)
-#endif /* CONFIG_MODULES */
+पूर्ण
+#अन्यथा
+#घोषणा request_modules(dev)
+#घोषणा flush_request_modules(dev) करो अणुपूर्ण जबतक(0)
+#पूर्ण_अगर /* CONFIG_MODULES */
 
 
 /* ----------------------------------------------------------------------- */
-/* static data                                                             */
+/* अटल data                                                             */
 
 /* special timing tables from conexant... */
-static u8 SRAM_Table[][60] =
-{
+अटल u8 SRAM_Table[][60] =
+अणु
 	/* PAL digital input over GPIO[7:0] */
-	{
+	अणु
 		45, // 45 bytes following
 		0x36,0x11,0x01,0x00,0x90,0x02,0x05,0x10,0x04,0x16,
 		0x12,0x05,0x11,0x00,0x04,0x12,0xC0,0x00,0x31,0x00,
 		0x06,0x51,0x08,0x03,0x89,0x08,0x07,0xC0,0x44,0x00,
 		0x81,0x01,0x01,0xA9,0x0D,0x02,0x02,0x50,0x03,0x37,
 		0x37,0x00,0xAF,0x21,0x00
-	},
+	पूर्ण,
 	/* NTSC digital input over GPIO[7:0] */
-	{
+	अणु
 		51, // 51 bytes following
 		0x0C,0xC0,0x00,0x00,0x90,0x02,0x03,0x10,0x03,0x06,
 		0x10,0x04,0x12,0x12,0x05,0x02,0x13,0x04,0x19,0x00,
@@ -227,18 +228,18 @@ static u8 SRAM_Table[][60] =
 		0x03,0x50,0x00,0xC0,0x40,0x00,0x86,0x01,0x01,0xA6,
 		0x0D,0x02,0x03,0x11,0x01,0x05,0x37,0x00,0xAC,0x21,
 		0x00,
-	},
+	पूर्ण,
 	// TGB_NTSC392 // quartzsight
-	// This table has been modified to be used for Fusion Rev D
-	{
+	// This table has been modअगरied to be used क्रम Fusion Rev D
+	अणु
 		0x2A, // size of table = 42
 		0x06, 0x08, 0x04, 0x0a, 0xc0, 0x00, 0x18, 0x08, 0x03, 0x24,
 		0x08, 0x07, 0x02, 0x90, 0x02, 0x08, 0x10, 0x04, 0x0c, 0x10,
 		0x05, 0x2c, 0x11, 0x04, 0x55, 0x48, 0x00, 0x05, 0x50, 0x00,
 		0xbf, 0x0c, 0x02, 0x2f, 0x3d, 0x00, 0x2f, 0x3f, 0x00, 0xc3,
 		0x20, 0x00
-	}
-};
+	पूर्ण
+पूर्ण;
 
 /* minhdelayx1	first video pixel we can capture on a line and
    hdelayx1	start of active video, both relative to rising edge of
@@ -247,15 +248,15 @@ static u8 SRAM_Table[][60] =
    totalwidth	total line width, both in 1 / fCLKx1.
    sqwidth	total line width in square pixels.
    vdelay	start of active video in 2 * field lines relative to
-		trailing edge of /VRESET pulse (VDELAY register).
+		trailing edge of /VRESET pulse (VDELAY रेजिस्टर).
    sheight	height of active video in 2 * field lines.
-   extraheight	Added to sheight for cropcap.bounds.height only
+   extraheight	Added to sheight क्रम cropcap.bounds.height only
    videostart0	ITU-R frame line number of the line corresponding
 		to vdelay in the first field. */
-#define CROPCAP(minhdelayx1, hdelayx1, swidth, totalwidth, sqwidth,	 \
+#घोषणा CROPCAP(minhdelayx1, hdelayx1, swidth, totalwidth, sqwidth,	 \
 		vdelay, sheight, extraheight, videostart0)		 \
 	.cropcap.bounds.left = minhdelayx1,				 \
-	/* * 2 because vertically we count field lines times two, */	 \
+	/* * 2 because vertically we count field lines बार two, */	 \
 	/* e.g. 23 * 2 to 23 * 2 + 576 in PAL-BGHI defrect. */		 \
 	.cropcap.bounds.top = (videostart0) * 2 - (vdelay) + MIN_VDELAY, \
 	/* 4 is a safety margin at the end of the line. */		 \
@@ -269,11 +270,11 @@ static u8 SRAM_Table[][60] =
 	.cropcap.pixelaspect.numerator = totalwidth,			 \
 	.cropcap.pixelaspect.denominator = sqwidth,
 
-const struct bttv_tvnorm bttv_tvnorms[] = {
+स्थिर काष्ठा bttv_tvnorm bttv_tvnorms[] = अणु
 	/* PAL-BDGHI */
-	/* max. active video is actually 922, but 924 is divisible by 4 and 3! */
+	/* max. active video is actually 922, but 924 is भागisible by 4 and 3! */
 	/* actually, max active PAL with HSCALE=0 is 948, NTSC is 768 - nil */
-	{
+	अणु
 		.v4l2_id        = V4L2_STD_PAL,
 		.name           = "PAL",
 		.Fsc            = 35468950,
@@ -282,7 +283,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 1135,
 		.adelay         = 0x7f,
 		.bdelay         = 0x72,
-		.iform          = (BT848_IFORM_PAL_BDGHI|BT848_IFORM_XT1),
+		.अगरorm          = (BT848_IFORM_PAL_BDGHI|BT848_IFORM_XT1),
 		.scaledtwidth   = 1135,
 		.hdelayx1       = 186,
 		.hactivex1      = 924,
@@ -292,11 +293,11 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		/* ITU-R frame line number of the first VBI line
 		   we can capture, of the first and second field.
 		   The last line is determined by cropcap.bounds. */
-		.vbistart       = { 7, 320 },
+		.vbistart       = अणु 7, 320 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 186,
 			/* Should be (768 * 1135 + 944 / 2) / 944.
-			   cropcap.defrect is used for image width
+			   cropcap.defrect is used क्रम image width
 			   checks, so we keep the old value 924. */
 			/* swidth */ 924,
 			/* totalwidth */ 1135,
@@ -307,7 +308,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			   line below active video. */
 			/* extraheight */ 2,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_NTSC_M | V4L2_STD_NTSC_M_KR,
 		.name           = "NTSC",
 		.Fsc            = 28636363,
@@ -316,14 +317,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 910,
 		.adelay         = 0x68,
 		.bdelay         = 0x5d,
-		.iform          = (BT848_IFORM_NTSC|BT848_IFORM_XT0),
+		.अगरorm          = (BT848_IFORM_NTSC|BT848_IFORM_XT0),
 		.scaledtwidth   = 910,
 		.hdelayx1       = 128,
 		.hactivex1      = 910,
 		.vdelay         = 0x1a,
 		.vbipack        = 144, /* min (1600 / 4, 0x1ff) & 0xff */
 		.sram           = 1,
-		.vbistart	= { 10, 273 },
+		.vbistart	= अणु 10, 273 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 128,
 			/* Should be (640 * 910 + 780 / 2) / 780? */
@@ -334,7 +335,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 480,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_SECAM,
 		.name           = "SECAM",
 		.Fsc            = 35468950,
@@ -343,14 +344,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 1135,
 		.adelay         = 0x7f,
 		.bdelay         = 0xb0,
-		.iform          = (BT848_IFORM_SECAM|BT848_IFORM_XT1),
+		.अगरorm          = (BT848_IFORM_SECAM|BT848_IFORM_XT1),
 		.scaledtwidth   = 1135,
 		.hdelayx1       = 186,
 		.hactivex1      = 922,
 		.vdelay         = 0x20,
 		.vbipack        = 255,
 		.sram           = 0, /* like PAL, correct? */
-		.vbistart	= { 7, 320 },
+		.vbistart	= अणु 7, 320 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 186,
 			/* swidth */ 924,
@@ -360,7 +361,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 576,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_PAL_Nc,
 		.name           = "PAL-Nc",
 		.Fsc            = 28636363,
@@ -369,14 +370,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 910,
 		.adelay         = 0x68,
 		.bdelay         = 0x5d,
-		.iform          = (BT848_IFORM_PAL_NC|BT848_IFORM_XT0),
+		.अगरorm          = (BT848_IFORM_PAL_NC|BT848_IFORM_XT0),
 		.scaledtwidth   = 780,
 		.hdelayx1       = 130,
 		.hactivex1      = 734,
 		.vdelay         = 0x1a,
 		.vbipack        = 144,
 		.sram           = -1,
-		.vbistart	= { 7, 320 },
+		.vbistart	= अणु 7, 320 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 130,
 			/* swidth */ (640 * 910 + 780 / 2) / 780,
@@ -386,7 +387,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 576,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_PAL_M,
 		.name           = "PAL-M",
 		.Fsc            = 28636363,
@@ -395,14 +396,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 910,
 		.adelay         = 0x68,
 		.bdelay         = 0x5d,
-		.iform          = (BT848_IFORM_PAL_M|BT848_IFORM_XT0),
+		.अगरorm          = (BT848_IFORM_PAL_M|BT848_IFORM_XT0),
 		.scaledtwidth   = 780,
 		.hdelayx1       = 135,
 		.hactivex1      = 754,
 		.vdelay         = 0x1a,
 		.vbipack        = 144,
 		.sram           = -1,
-		.vbistart	= { 10, 273 },
+		.vbistart	= अणु 10, 273 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 135,
 			/* swidth */ (640 * 910 + 780 / 2) / 780,
@@ -412,7 +413,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 480,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_PAL_N,
 		.name           = "PAL-N",
 		.Fsc            = 35468950,
@@ -421,14 +422,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 1135,
 		.adelay         = 0x7f,
 		.bdelay         = 0x72,
-		.iform          = (BT848_IFORM_PAL_N|BT848_IFORM_XT1),
+		.अगरorm          = (BT848_IFORM_PAL_N|BT848_IFORM_XT1),
 		.scaledtwidth   = 944,
 		.hdelayx1       = 186,
 		.hactivex1      = 922,
 		.vdelay         = 0x20,
 		.vbipack        = 144,
 		.sram           = -1,
-		.vbistart       = { 7, 320 },
+		.vbistart       = अणु 7, 320 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 186,
 			/* swidth */ (768 * 1135 + 944 / 2) / 944,
@@ -438,7 +439,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 576,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		.v4l2_id        = V4L2_STD_NTSC_M_JP,
 		.name           = "NTSC-JP",
 		.Fsc            = 28636363,
@@ -447,14 +448,14 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 910,
 		.adelay         = 0x68,
 		.bdelay         = 0x5d,
-		.iform          = (BT848_IFORM_NTSC_J|BT848_IFORM_XT0),
+		.अगरorm          = (BT848_IFORM_NTSC_J|BT848_IFORM_XT0),
 		.scaledtwidth   = 780,
 		.hdelayx1       = 135,
 		.hactivex1      = 754,
 		.vdelay         = 0x16,
 		.vbipack        = 144,
 		.sram           = -1,
-		.vbistart       = { 10, 273 },
+		.vbistart       = अणु 10, 273 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 135,
 			/* swidth */ (640 * 910 + 780 / 2) / 780,
@@ -464,7 +465,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 480,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	},{
+	पूर्ण,अणु
 		/* that one hopefully works with the strange timing
 		 * which video recorders produce when playing a NTSC
 		 * tape on a PAL TV ... */
@@ -476,7 +477,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.totalwidth     = 1135,
 		.adelay         = 0x7f,
 		.bdelay         = 0x72,
-		.iform          = (BT848_IFORM_PAL_BDGHI|BT848_IFORM_XT1),
+		.अगरorm          = (BT848_IFORM_PAL_BDGHI|BT848_IFORM_XT1),
 		.scaledtwidth   = 1135,
 		.hdelayx1       = 186,
 		.hactivex1      = 924,
@@ -484,7 +485,7 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 		.vbipack        = 255,
 		.vtotal         = 524,
 		.sram           = -1,
-		.vbistart	= { 10, 273 },
+		.vbistart	= अणु 10, 273 पूर्ण,
 		CROPCAP(/* minhdelayx1 */ 68,
 			/* hdelayx1 */ 186,
 			/* swidth */ 924,
@@ -494,131 +495,131 @@ const struct bttv_tvnorm bttv_tvnorms[] = {
 			/* sheight */ 480,
 			/* extraheight */ 0,
 			/* videostart0 */ 23)
-	}
-};
-static const unsigned int BTTV_TVNORMS = ARRAY_SIZE(bttv_tvnorms);
+	पूर्ण
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक BTTV_TVNORMS = ARRAY_SIZE(bttv_tvnorms);
 
 /* ----------------------------------------------------------------------- */
-/* bttv format list
-   packed pixel formats must come first */
-static const struct bttv_format formats[] = {
-	{
+/* bttv क्रमmat list
+   packed pixel क्रमmats must come first */
+अटल स्थिर काष्ठा bttv_क्रमmat क्रमmats[] = अणु
+	अणु
 		.fourcc   = V4L2_PIX_FMT_GREY,
-		.btformat = BT848_COLOR_FMT_Y8,
+		.btक्रमmat = BT848_COLOR_FMT_Y8,
 		.depth    = 8,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_HI240,
-		.btformat = BT848_COLOR_FMT_RGB8,
+		.btक्रमmat = BT848_COLOR_FMT_RGB8,
 		.depth    = 8,
 		.flags    = FORMAT_FLAGS_PACKED | FORMAT_FLAGS_DITHER,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_RGB555,
-		.btformat = BT848_COLOR_FMT_RGB15,
+		.btक्रमmat = BT848_COLOR_FMT_RGB15,
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_RGB555X,
-		.btformat = BT848_COLOR_FMT_RGB15,
+		.btक्रमmat = BT848_COLOR_FMT_RGB15,
 		.btswap   = 0x03, /* byteswap */
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_RGB565,
-		.btformat = BT848_COLOR_FMT_RGB16,
+		.btक्रमmat = BT848_COLOR_FMT_RGB16,
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_RGB565X,
-		.btformat = BT848_COLOR_FMT_RGB16,
+		.btक्रमmat = BT848_COLOR_FMT_RGB16,
 		.btswap   = 0x03, /* byteswap */
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_BGR24,
-		.btformat = BT848_COLOR_FMT_RGB24,
+		.btक्रमmat = BT848_COLOR_FMT_RGB24,
 		.depth    = 24,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_BGR32,
-		.btformat = BT848_COLOR_FMT_RGB32,
+		.btक्रमmat = BT848_COLOR_FMT_RGB32,
 		.depth    = 32,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_RGB32,
-		.btformat = BT848_COLOR_FMT_RGB32,
+		.btक्रमmat = BT848_COLOR_FMT_RGB32,
 		.btswap   = 0x0f, /* byte+word swap */
 		.depth    = 32,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YUYV,
-		.btformat = BT848_COLOR_FMT_YUY2,
+		.btक्रमmat = BT848_COLOR_FMT_YUY2,
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_UYVY,
-		.btformat = BT848_COLOR_FMT_YUY2,
+		.btक्रमmat = BT848_COLOR_FMT_YUY2,
 		.btswap   = 0x03, /* byteswap */
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PACKED,
-	},{
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YUV422P,
-		.btformat = BT848_COLOR_FMT_YCrCb422,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb422,
 		.depth    = 16,
 		.flags    = FORMAT_FLAGS_PLANAR,
-		.hshift   = 1,
-		.vshift   = 0,
-	},{
+		.hshअगरt   = 1,
+		.vshअगरt   = 0,
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YUV420,
-		.btformat = BT848_COLOR_FMT_YCrCb422,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb422,
 		.depth    = 12,
 		.flags    = FORMAT_FLAGS_PLANAR,
-		.hshift   = 1,
-		.vshift   = 1,
-	},{
+		.hshअगरt   = 1,
+		.vshअगरt   = 1,
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YVU420,
-		.btformat = BT848_COLOR_FMT_YCrCb422,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb422,
 		.depth    = 12,
 		.flags    = FORMAT_FLAGS_PLANAR | FORMAT_FLAGS_CrCb,
-		.hshift   = 1,
-		.vshift   = 1,
-	},{
+		.hshअगरt   = 1,
+		.vshअगरt   = 1,
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YUV411P,
-		.btformat = BT848_COLOR_FMT_YCrCb411,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb411,
 		.depth    = 12,
 		.flags    = FORMAT_FLAGS_PLANAR,
-		.hshift   = 2,
-		.vshift   = 0,
-	},{
+		.hshअगरt   = 2,
+		.vshअगरt   = 0,
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YUV410,
-		.btformat = BT848_COLOR_FMT_YCrCb411,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb411,
 		.depth    = 9,
 		.flags    = FORMAT_FLAGS_PLANAR,
-		.hshift   = 2,
-		.vshift   = 2,
-	},{
+		.hshअगरt   = 2,
+		.vshअगरt   = 2,
+	पूर्ण,अणु
 		.fourcc   = V4L2_PIX_FMT_YVU410,
-		.btformat = BT848_COLOR_FMT_YCrCb411,
+		.btक्रमmat = BT848_COLOR_FMT_YCrCb411,
 		.depth    = 9,
 		.flags    = FORMAT_FLAGS_PLANAR | FORMAT_FLAGS_CrCb,
-		.hshift   = 2,
-		.vshift   = 2,
-	},{
+		.hshअगरt   = 2,
+		.vshअगरt   = 2,
+	पूर्ण,अणु
 		.fourcc   = -1,
-		.btformat = BT848_COLOR_FMT_RAW,
+		.btक्रमmat = BT848_COLOR_FMT_RAW,
 		.depth    = 8,
 		.flags    = FORMAT_FLAGS_RAW,
-	}
-};
-static const unsigned int FORMATS = ARRAY_SIZE(formats);
+	पूर्ण
+पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक FORMATS = ARRAY_SIZE(क्रमmats);
 
 /* ----------------------------------------------------------------------- */
 /* resource management                                                     */
 
 /*
-   RESOURCE_    allocated by                freed by
+   RESOURCE_    allocated by                मुक्तd by
 
-   VIDEO_READ   bttv_read 1)                bttv_read 2)
+   VIDEO_READ   bttv_पढ़ो 1)                bttv_पढ़ो 2)
 
    VIDEO_STREAM VIDIOC_STREAMON             VIDIOC_STREAMOFF
 		 VIDIOC_QBUF 1)              bttv_release
@@ -630,97 +631,97 @@ static const unsigned int FORMATS = ARRAY_SIZE(formats);
 
    VBI		 VIDIOC_STREAMON             VIDIOC_STREAMOFF
 		 VIDIOC_QBUF 1)              bttv_release
-		 bttv_read, bttv_poll 1) 4)
+		 bttv_पढ़ो, bttv_poll 1) 4)
 
    1) The resource must be allocated when we enter buffer prepare functions
-      and remain allocated while buffers are in the DMA queue.
-   2) This is a single frame read.
+      and reमुख्य allocated जबतक buffers are in the DMA queue.
+   2) This is a single frame पढ़ो.
    3) VIDIOC_S_FBUF and VIDIOC_S_FMT (OVERLAY) still work when
       RESOURCE_OVERLAY is allocated.
-   4) This is a continuous read, implies VIDIOC_STREAMON.
+   4) This is a continuous पढ़ो, implies VIDIOC_STREAMON.
 
-   Note this driver permits video input and standard changes regardless if
+   Note this driver permits video input and standard changes regardless अगर
    resources are allocated.
 */
 
-#define VBI_RESOURCES (RESOURCE_VBI)
-#define VIDEO_RESOURCES (RESOURCE_VIDEO_READ | \
+#घोषणा VBI_RESOURCES (RESOURCE_VBI)
+#घोषणा VIDEO_RESOURCES (RESOURCE_VIDEO_READ | \
 			 RESOURCE_VIDEO_STREAM | \
 			 RESOURCE_OVERLAY)
 
-static
-int check_alloc_btres_lock(struct bttv *btv, struct bttv_fh *fh, int bit)
-{
-	int xbits; /* mutual exclusive resources */
+अटल
+पूर्णांक check_alloc_btres_lock(काष्ठा bttv *btv, काष्ठा bttv_fh *fh, पूर्णांक bit)
+अणु
+	पूर्णांक xbits; /* mutual exclusive resources */
 
-	if (fh->resources & bit)
-		/* have it already allocated */
-		return 1;
+	अगर (fh->resources & bit)
+		/* have it alपढ़ोy allocated */
+		वापस 1;
 
 	xbits = bit;
-	if (bit & (RESOURCE_VIDEO_READ | RESOURCE_VIDEO_STREAM))
+	अगर (bit & (RESOURCE_VIDEO_READ | RESOURCE_VIDEO_STREAM))
 		xbits |= RESOURCE_VIDEO_READ | RESOURCE_VIDEO_STREAM;
 
-	/* is it free? */
-	if (btv->resources & xbits) {
-		/* no, someone else uses it */
-		goto fail;
-	}
+	/* is it मुक्त? */
+	अगर (btv->resources & xbits) अणु
+		/* no, someone अन्यथा uses it */
+		जाओ fail;
+	पूर्ण
 
-	if ((bit & VIDEO_RESOURCES)
-	    && 0 == (btv->resources & VIDEO_RESOURCES)) {
-		/* Do crop - use current, don't - use default parameters. */
-		__s32 top = btv->crop[!!fh->do_crop].rect.top;
+	अगर ((bit & VIDEO_RESOURCES)
+	    && 0 == (btv->resources & VIDEO_RESOURCES)) अणु
+		/* Do crop - use current, करोn't - use शेष parameters. */
+		__s32 top = btv->crop[!!fh->करो_crop].rect.top;
 
-		if (btv->vbi_end > top)
-			goto fail;
+		अगर (btv->vbi_end > top)
+			जाओ fail;
 
 		/* We cannot capture the same line as video and VBI data.
 		   Claim scan lines crop[].rect.top to bottom. */
 		btv->crop_start = top;
-	} else if (bit & VBI_RESOURCES) {
+	पूर्ण अन्यथा अगर (bit & VBI_RESOURCES) अणु
 		__s32 end = fh->vbi_fmt.end;
 
-		if (end > btv->crop_start)
-			goto fail;
+		अगर (end > btv->crop_start)
+			जाओ fail;
 
 		/* Claim scan lines above fh->vbi_fmt.end. */
 		btv->vbi_end = end;
-	}
+	पूर्ण
 
-	/* it's free, grab it */
+	/* it's मुक्त, grab it */
 	fh->resources  |= bit;
 	btv->resources |= bit;
-	return 1;
+	वापस 1;
 
  fail:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static
-int check_btres(struct bttv_fh *fh, int bit)
-{
-	return (fh->resources & bit);
-}
+अटल
+पूर्णांक check_btres(काष्ठा bttv_fh *fh, पूर्णांक bit)
+अणु
+	वापस (fh->resources & bit);
+पूर्ण
 
-static
-int locked_btres(struct bttv *btv, int bit)
-{
-	return (btv->resources & bit);
-}
+अटल
+पूर्णांक locked_btres(काष्ठा bttv *btv, पूर्णांक bit)
+अणु
+	वापस (btv->resources & bit);
+पूर्ण
 
-/* Call with btv->lock down. */
-static void
-disclaim_vbi_lines(struct bttv *btv)
-{
+/* Call with btv->lock करोwn. */
+अटल व्योम
+disclaim_vbi_lines(काष्ठा bttv *btv)
+अणु
 	btv->vbi_end = 0;
-}
+पूर्ण
 
-/* Call with btv->lock down. */
-static void
-disclaim_video_lines(struct bttv *btv)
-{
-	const struct bttv_tvnorm *tvnorm;
+/* Call with btv->lock करोwn. */
+अटल व्योम
+disclaim_video_lines(काष्ठा bttv *btv)
+अणु
+	स्थिर काष्ठा bttv_tvnorm *tvnorm;
 	u8 crop;
 
 	tvnorm = &bttv_tvnorms[btv->tvnorm];
@@ -729,40 +730,40 @@ disclaim_video_lines(struct bttv *btv)
 
 	/* VBI capturing ends at VDELAY, start of video capturing, no
 	   matter how many lines the VBI RISC program expects. When video
-	   capturing is off, it shall no longer "preempt" VBI capturing,
+	   capturing is off, it shall no दीर्घer "preempt" VBI capturing,
 	   so we set VDELAY to maximum. */
-	crop = btread(BT848_E_CROP) | 0xc0;
-	btwrite(crop, BT848_E_CROP);
-	btwrite(0xfe, BT848_E_VDELAY_LO);
-	btwrite(crop, BT848_O_CROP);
-	btwrite(0xfe, BT848_O_VDELAY_LO);
-}
+	crop = btपढ़ो(BT848_E_CROP) | 0xc0;
+	btग_लिखो(crop, BT848_E_CROP);
+	btग_लिखो(0xfe, BT848_E_VDELAY_LO);
+	btग_लिखो(crop, BT848_O_CROP);
+	btग_लिखो(0xfe, BT848_O_VDELAY_LO);
+पूर्ण
 
-static
-void free_btres_lock(struct bttv *btv, struct bttv_fh *fh, int bits)
-{
-	if ((fh->resources & bits) != bits) {
-		/* trying to free resources not allocated by us ... */
+अटल
+व्योम मुक्त_btres_lock(काष्ठा bttv *btv, काष्ठा bttv_fh *fh, पूर्णांक bits)
+अणु
+	अगर ((fh->resources & bits) != bits) अणु
+		/* trying to मुक्त resources not allocated by us ... */
 		pr_err("BUG! (btres)\n");
-	}
+	पूर्ण
 	fh->resources  &= ~bits;
 	btv->resources &= ~bits;
 
 	bits = btv->resources;
 
-	if (0 == (bits & VIDEO_RESOURCES))
+	अगर (0 == (bits & VIDEO_RESOURCES))
 		disclaim_video_lines(btv);
 
-	if (0 == (bits & VBI_RESOURCES))
+	अगर (0 == (bits & VBI_RESOURCES))
 		disclaim_vbi_lines(btv);
-}
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
-/* If Bt848a or Bt849, use PLL for PAL/SECAM and crystal for NTSC          */
+/* If Bt848a or Bt849, use PLL क्रम PAL/SECAM and crystal क्रम NTSC          */
 
 /* Frequency = (F_input / PLL_X) * PLL_I.PLL_F/PLL_C
-   PLL_X = Reference pre-divider (0=1, 1=2)
-   PLL_C = Post divider (0=6, 1=4)
+   PLL_X = Reference pre-भागider (0=1, 1=2)
+   PLL_C = Post भागider (0=6, 1=4)
    PLL_I = Integer input
    PLL_F = Fractional input
 
@@ -770,9 +771,9 @@ void free_btres_lock(struct bttv *btv, struct bttv_fh *fh, int bits)
    PAL (CLKx2 = 35.46895 MHz): PLL_X = 1, PLL_I = 0x0E, PLL_F = 0xDCF9, PLL_C = 0
 */
 
-static void set_pll_freq(struct bttv *btv, unsigned int fin, unsigned int fout)
-{
-	unsigned char fl, fh, fi;
+अटल व्योम set_pll_freq(काष्ठा bttv *btv, अचिन्हित पूर्णांक fin, अचिन्हित पूर्णांक fout)
+अणु
+	अचिन्हित अक्षर fl, fh, fi;
 
 	/* prevent overflows */
 	fin/=4;
@@ -787,335 +788,335 @@ static void set_pll_freq(struct bttv *btv, unsigned int fin, unsigned int fout)
 	fout=(fout%fin)*256;
 	fl=fout/fin;
 
-	btwrite(fl, BT848_PLL_F_LO);
-	btwrite(fh, BT848_PLL_F_HI);
-	btwrite(fi|BT848_PLL_X, BT848_PLL_XCI);
-}
+	btग_लिखो(fl, BT848_PLL_F_LO);
+	btग_लिखो(fh, BT848_PLL_F_HI);
+	btग_लिखो(fi|BT848_PLL_X, BT848_PLL_XCI);
+पूर्ण
 
-static void set_pll(struct bttv *btv)
-{
-	int i;
+अटल व्योम set_pll(काष्ठा bttv *btv)
+अणु
+	पूर्णांक i;
 
-	if (!btv->pll.pll_crystal)
-		return;
+	अगर (!btv->pll.pll_crystal)
+		वापस;
 
-	if (btv->pll.pll_ofreq == btv->pll.pll_current) {
-		dprintk("%d: PLL: no change required\n", btv->c.nr);
-		return;
-	}
+	अगर (btv->pll.pll_ofreq == btv->pll.pll_current) अणु
+		dprपूर्णांकk("%d: PLL: no change required\n", btv->c.nr);
+		वापस;
+	पूर्ण
 
-	if (btv->pll.pll_ifreq == btv->pll.pll_ofreq) {
+	अगर (btv->pll.pll_अगरreq == btv->pll.pll_ofreq) अणु
 		/* no PLL needed */
-		if (btv->pll.pll_current == 0)
-			return;
-		if (bttv_verbose)
+		अगर (btv->pll.pll_current == 0)
+			वापस;
+		अगर (bttv_verbose)
 			pr_info("%d: PLL can sleep, using XTAL (%d)\n",
-				btv->c.nr, btv->pll.pll_ifreq);
-		btwrite(0x00,BT848_TGCTRL);
-		btwrite(0x00,BT848_PLL_XCI);
+				btv->c.nr, btv->pll.pll_अगरreq);
+		btग_लिखो(0x00,BT848_TGCTRL);
+		btग_लिखो(0x00,BT848_PLL_XCI);
 		btv->pll.pll_current = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (bttv_verbose)
+	अगर (bttv_verbose)
 		pr_info("%d: Setting PLL: %d => %d (needs up to 100ms)\n",
 			btv->c.nr,
-			btv->pll.pll_ifreq, btv->pll.pll_ofreq);
-	set_pll_freq(btv, btv->pll.pll_ifreq, btv->pll.pll_ofreq);
+			btv->pll.pll_अगरreq, btv->pll.pll_ofreq);
+	set_pll_freq(btv, btv->pll.pll_अगरreq, btv->pll.pll_ofreq);
 
-	for (i=0; i<10; i++) {
-		/*  Let other people run while the PLL stabilizes */
+	क्रम (i=0; i<10; i++) अणु
+		/*  Let other people run जबतक the PLL stabilizes */
 		msleep(10);
 
-		if (btread(BT848_DSTATUS) & BT848_DSTATUS_PLOCK) {
-			btwrite(0,BT848_DSTATUS);
-		} else {
-			btwrite(0x08,BT848_TGCTRL);
+		अगर (btपढ़ो(BT848_DSTATUS) & BT848_DSTATUS_PLOCK) अणु
+			btग_लिखो(0,BT848_DSTATUS);
+		पूर्ण अन्यथा अणु
+			btग_लिखो(0x08,BT848_TGCTRL);
 			btv->pll.pll_current = btv->pll.pll_ofreq;
-			if (bttv_verbose)
+			अगर (bttv_verbose)
 				pr_info("PLL set ok\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	btv->pll.pll_current = -1;
-	if (bttv_verbose)
+	अगर (bttv_verbose)
 		pr_info("Setting PLL failed\n");
-	return;
-}
+	वापस;
+पूर्ण
 
-/* used to switch between the bt848's analog/digital video capture modes */
-static void bt848A_set_timing(struct bttv *btv)
-{
-	int i, len;
-	int table_idx = bttv_tvnorms[btv->tvnorm].sram;
-	int fsc       = bttv_tvnorms[btv->tvnorm].Fsc;
+/* used to चयन between the bt848's analog/digital video capture modes */
+अटल व्योम bt848A_set_timing(काष्ठा bttv *btv)
+अणु
+	पूर्णांक i, len;
+	पूर्णांक table_idx = bttv_tvnorms[btv->tvnorm].sram;
+	पूर्णांक fsc       = bttv_tvnorms[btv->tvnorm].Fsc;
 
-	if (btv->input == btv->dig) {
-		dprintk("%d: load digital timing table (table_idx=%d)\n",
+	अगर (btv->input == btv->dig) अणु
+		dprपूर्णांकk("%d: load digital timing table (table_idx=%d)\n",
 			btv->c.nr,table_idx);
 
 		/* timing change...reset timing generator address */
-		btwrite(0x00, BT848_TGCTRL);
-		btwrite(0x02, BT848_TGCTRL);
-		btwrite(0x00, BT848_TGCTRL);
+		btग_लिखो(0x00, BT848_TGCTRL);
+		btग_लिखो(0x02, BT848_TGCTRL);
+		btग_लिखो(0x00, BT848_TGCTRL);
 
 		len=SRAM_Table[table_idx][0];
-		for(i = 1; i <= len; i++)
-			btwrite(SRAM_Table[table_idx][i],BT848_TGLB);
+		क्रम(i = 1; i <= len; i++)
+			btग_लिखो(SRAM_Table[table_idx][i],BT848_TGLB);
 		btv->pll.pll_ofreq = 27000000;
 
 		set_pll(btv);
-		btwrite(0x11, BT848_TGCTRL);
-		btwrite(0x41, BT848_DVSIF);
-	} else {
+		btग_लिखो(0x11, BT848_TGCTRL);
+		btग_लिखो(0x41, BT848_DVSIF);
+	पूर्ण अन्यथा अणु
 		btv->pll.pll_ofreq = fsc;
 		set_pll(btv);
-		btwrite(0x0, BT848_DVSIF);
-	}
-}
+		btग_लिखो(0x0, BT848_DVSIF);
+	पूर्ण
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static void bt848_bright(struct bttv *btv, int bright)
-{
-	int value;
+अटल व्योम bt848_bright(काष्ठा bttv *btv, पूर्णांक bright)
+अणु
+	पूर्णांक value;
 
-	// printk("set bright: %d\n", bright); // DEBUG
+	// prपूर्णांकk("set bright: %d\n", bright); // DEBUG
 	btv->bright = bright;
 
 	/* We want -128 to 127 we get 0-65535 */
 	value = (bright >> 8) - 128;
-	btwrite(value & 0xff, BT848_BRIGHT);
-}
+	btग_लिखो(value & 0xff, BT848_BRIGHT);
+पूर्ण
 
-static void bt848_hue(struct bttv *btv, int hue)
-{
-	int value;
+अटल व्योम bt848_hue(काष्ठा bttv *btv, पूर्णांक hue)
+अणु
+	पूर्णांक value;
 
 	btv->hue = hue;
 
 	/* -128 to 127 */
 	value = (hue >> 8) - 128;
-	btwrite(value & 0xff, BT848_HUE);
-}
+	btग_लिखो(value & 0xff, BT848_HUE);
+पूर्ण
 
-static void bt848_contrast(struct bttv *btv, int cont)
-{
-	int value,hibit;
+अटल व्योम bt848_contrast(काष्ठा bttv *btv, पूर्णांक cont)
+अणु
+	पूर्णांक value,hibit;
 
 	btv->contrast = cont;
 
 	/* 0-511 */
 	value = (cont  >> 7);
 	hibit = (value >> 6) & 4;
-	btwrite(value & 0xff, BT848_CONTRAST_LO);
+	btग_लिखो(value & 0xff, BT848_CONTRAST_LO);
 	btaor(hibit, ~4, BT848_E_CONTROL);
 	btaor(hibit, ~4, BT848_O_CONTROL);
-}
+पूर्ण
 
-static void bt848_sat(struct bttv *btv, int color)
-{
-	int val_u,val_v,hibits;
+अटल व्योम bt848_sat(काष्ठा bttv *btv, पूर्णांक color)
+अणु
+	पूर्णांक val_u,val_v,hibits;
 
 	btv->saturation = color;
 
-	/* 0-511 for the color */
+	/* 0-511 क्रम the color */
 	val_u   = ((color * btv->opt_uv_ratio) / 50) >> 7;
 	val_v   = (((color * (100 - btv->opt_uv_ratio) / 50) >>7)*180L)/254;
 	hibits  = (val_u >> 7) & 2;
 	hibits |= (val_v >> 8) & 1;
-	btwrite(val_u & 0xff, BT848_SAT_U_LO);
-	btwrite(val_v & 0xff, BT848_SAT_V_LO);
+	btग_लिखो(val_u & 0xff, BT848_SAT_U_LO);
+	btग_लिखो(val_v & 0xff, BT848_SAT_V_LO);
 	btaor(hibits, ~3, BT848_E_CONTROL);
 	btaor(hibits, ~3, BT848_O_CONTROL);
-}
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static int
-video_mux(struct bttv *btv, unsigned int input)
-{
-	int mux,mask2;
+अटल पूर्णांक
+video_mux(काष्ठा bttv *btv, अचिन्हित पूर्णांक input)
+अणु
+	पूर्णांक mux,mask2;
 
-	if (input >= bttv_tvcards[btv->c.type].video_inputs)
-		return -EINVAL;
+	अगर (input >= bttv_tvcards[btv->c.type].video_inमाला_दो)
+		वापस -EINVAL;
 
 	/* needed by RemoteVideo MX */
 	mask2 = bttv_tvcards[btv->c.type].gpiomask2;
-	if (mask2)
+	अगर (mask2)
 		gpio_inout(mask2,mask2);
 
-	if (input == btv->svhs)  {
+	अगर (input == btv->svhs)  अणु
 		btor(BT848_CONTROL_COMP, BT848_E_CONTROL);
 		btor(BT848_CONTROL_COMP, BT848_O_CONTROL);
-	} else {
+	पूर्ण अन्यथा अणु
 		btand(~BT848_CONTROL_COMP, BT848_E_CONTROL);
 		btand(~BT848_CONTROL_COMP, BT848_O_CONTROL);
-	}
+	पूर्ण
 	mux = bttv_muxsel(btv, input);
 	btaor(mux<<5, ~(3<<5), BT848_IFORM);
-	dprintk("%d: video mux: input=%d mux=%d\n", btv->c.nr, input, mux);
+	dprपूर्णांकk("%d: video mux: input=%d mux=%d\n", btv->c.nr, input, mux);
 
-	/* card specific hook */
-	if(bttv_tvcards[btv->c.type].muxsel_hook)
+	/* card specअगरic hook */
+	अगर(bttv_tvcards[btv->c.type].muxsel_hook)
 		bttv_tvcards[btv->c.type].muxsel_hook (btv, input);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *audio_modes[] = {
+अटल अक्षर *audio_modes[] = अणु
 	"audio: tuner", "audio: radio", "audio: extern",
 	"audio: intern", "audio: mute"
-};
+पूर्ण;
 
-static void
-audio_mux_gpio(struct bttv *btv, int input, int mute)
-{
-	int gpio_val, signal, mute_gpio;
+अटल व्योम
+audio_mux_gpio(काष्ठा bttv *btv, पूर्णांक input, पूर्णांक mute)
+अणु
+	पूर्णांक gpio_val, संकेत, mute_gpio;
 
 	gpio_inout(bttv_tvcards[btv->c.type].gpiomask,
 		   bttv_tvcards[btv->c.type].gpiomask);
-	signal = btread(BT848_DSTATUS) & BT848_DSTATUS_HLOC;
+	संकेत = btपढ़ो(BT848_DSTATUS) & BT848_DSTATUS_HLOC;
 
-	/* automute */
-	mute_gpio = mute || (btv->opt_automute && (!signal || !btv->users)
+	/* स्वतःmute */
+	mute_gpio = mute || (btv->opt_स्वतःmute && (!संकेत || !btv->users)
 				&& !btv->has_radio_tuner);
 
-	if (mute_gpio)
+	अगर (mute_gpio)
 		gpio_val = bttv_tvcards[btv->c.type].gpiomute;
-	else
+	अन्यथा
 		gpio_val = bttv_tvcards[btv->c.type].gpiomux[input];
 
-	switch (btv->c.type) {
-	case BTTV_BOARD_VOODOOTV_FM:
-	case BTTV_BOARD_VOODOOTV_200:
+	चयन (btv->c.type) अणु
+	हाल BTTV_BOARD_VOODOOTV_FM:
+	हाल BTTV_BOARD_VOODOOTV_200:
 		gpio_val = bttv_tda9880_setnorm(btv, gpio_val);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		gpio_bits(bttv_tvcards[btv->c.type].gpiomask, gpio_val);
-	}
+	पूर्ण
 
-	if (bttv_gpio)
+	अगर (bttv_gpio)
 		bttv_gpio_tracking(btv, audio_modes[mute_gpio ? 4 : input]);
-}
+पूर्ण
 
-static int
-audio_mute(struct bttv *btv, int mute)
-{
-	struct v4l2_ctrl *ctrl;
+अटल पूर्णांक
+audio_mute(काष्ठा bttv *btv, पूर्णांक mute)
+अणु
+	काष्ठा v4l2_ctrl *ctrl;
 
 	audio_mux_gpio(btv, btv->audio_input, mute);
 
-	if (btv->sd_msp34xx) {
+	अगर (btv->sd_msp34xx) अणु
 		ctrl = v4l2_ctrl_find(btv->sd_msp34xx->ctrl_handler, V4L2_CID_AUDIO_MUTE);
-		if (ctrl)
+		अगर (ctrl)
 			v4l2_ctrl_s_ctrl(ctrl, mute);
-	}
-	if (btv->sd_tvaudio) {
+	पूर्ण
+	अगर (btv->sd_tvaudio) अणु
 		ctrl = v4l2_ctrl_find(btv->sd_tvaudio->ctrl_handler, V4L2_CID_AUDIO_MUTE);
-		if (ctrl)
+		अगर (ctrl)
 			v4l2_ctrl_s_ctrl(ctrl, mute);
-	}
-	if (btv->sd_tda7432) {
+	पूर्ण
+	अगर (btv->sd_tda7432) अणु
 		ctrl = v4l2_ctrl_find(btv->sd_tda7432->ctrl_handler, V4L2_CID_AUDIO_MUTE);
-		if (ctrl)
+		अगर (ctrl)
 			v4l2_ctrl_s_ctrl(ctrl, mute);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-audio_input(struct bttv *btv, int input)
-{
+अटल पूर्णांक
+audio_input(काष्ठा bttv *btv, पूर्णांक input)
+अणु
 	audio_mux_gpio(btv, input, btv->mute);
 
-	if (btv->sd_msp34xx) {
+	अगर (btv->sd_msp34xx) अणु
 		u32 in;
 
-		/* Note: the inputs tuner/radio/extern/intern are translated
-		   to msp routings. This assumes common behavior for all msp3400
+		/* Note: the inमाला_दो tuner/radio/बाह्य/पूर्णांकern are translated
+		   to msp routings. This assumes common behavior क्रम all msp3400
 		   based TV cards. When this assumption fails, then the
-		   specific MSP routing must be added to the card table.
+		   specअगरic MSP routing must be added to the card table.
 		   For now this is sufficient. */
-		switch (input) {
-		case TVAUDIO_INPUT_RADIO:
-			/* Some boards need the msp do to the radio demod */
-			if (btv->radio_uses_msp_demodulator) {
+		चयन (input) अणु
+		हाल TVAUDIO_INPUT_RADIO:
+			/* Some boards need the msp करो to the radio demod */
+			अगर (btv->radio_uses_msp_demodulator) अणु
 				in = MSP_INPUT_DEFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			in = MSP_INPUT(MSP_IN_SCART2, MSP_IN_TUNER1,
 				    MSP_DSP_IN_SCART, MSP_DSP_IN_SCART);
-			break;
-		case TVAUDIO_INPUT_EXTERN:
+			अवरोध;
+		हाल TVAUDIO_INPUT_EXTERN:
 			in = MSP_INPUT(MSP_IN_SCART1, MSP_IN_TUNER1,
 				    MSP_DSP_IN_SCART, MSP_DSP_IN_SCART);
-			break;
-		case TVAUDIO_INPUT_INTERN:
-			/* Yes, this is the same input as for RADIO. I doubt
-			   if this is ever used. The only board with an INTERN
+			अवरोध;
+		हाल TVAUDIO_INPUT_INTERN:
+			/* Yes, this is the same input as क्रम RADIO. I करोubt
+			   अगर this is ever used. The only board with an INTERN
 			   input is the BTTV_BOARD_AVERMEDIA98. I wonder how
 			   that was tested. My guess is that the whole INTERN
-			   input does not work. */
+			   input करोes not work. */
 			in = MSP_INPUT(MSP_IN_SCART2, MSP_IN_TUNER1,
 				    MSP_DSP_IN_SCART, MSP_DSP_IN_SCART);
-			break;
-		case TVAUDIO_INPUT_TUNER:
-		default:
+			अवरोध;
+		हाल TVAUDIO_INPUT_TUNER:
+		शेष:
 			/* This is the only card that uses TUNER2, and afaik,
-			   is the only difference between the VOODOOTV_FM
+			   is the only dअगरference between the VOODOOTV_FM
 			   and VOODOOTV_200 */
-			if (btv->c.type == BTTV_BOARD_VOODOOTV_200)
+			अगर (btv->c.type == BTTV_BOARD_VOODOOTV_200)
 				in = MSP_INPUT(MSP_IN_SCART1, MSP_IN_TUNER2, \
 					MSP_DSP_IN_TUNER, MSP_DSP_IN_TUNER);
-			else
+			अन्यथा
 				in = MSP_INPUT_DEFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		v4l2_subdev_call(btv->sd_msp34xx, audio, s_routing,
 			       in, MSP_OUTPUT_DEFAULT, 0);
-	}
-	if (btv->sd_tvaudio) {
+	पूर्ण
+	अगर (btv->sd_tvaudio) अणु
 		v4l2_subdev_call(btv->sd_tvaudio, audio, s_routing,
 				 input, 0, 0);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-bttv_crop_calc_limits(struct bttv_crop *c)
-{
+अटल व्योम
+bttv_crop_calc_limits(काष्ठा bttv_crop *c)
+अणु
 	/* Scale factor min. 1:1, max. 16:1. Min. image size
 	   48 x 32. Scaled width must be a multiple of 4. */
 
-	if (1) {
+	अगर (1) अणु
 		/* For bug compatibility with VIDIOCGCAP and image
 		   size checks in earlier driver versions. */
 		c->min_scaled_width = 48;
 		c->min_scaled_height = 32;
-	} else {
+	पूर्ण अन्यथा अणु
 		c->min_scaled_width =
-			(max_t(unsigned int, 48, c->rect.width >> 4) + 3) & ~3;
+			(max_t(अचिन्हित पूर्णांक, 48, c->rect.width >> 4) + 3) & ~3;
 		c->min_scaled_height =
-			max_t(unsigned int, 32, c->rect.height >> 4);
-	}
+			max_t(अचिन्हित पूर्णांक, 32, c->rect.height >> 4);
+	पूर्ण
 
 	c->max_scaled_width  = c->rect.width & ~3;
 	c->max_scaled_height = c->rect.height;
-}
+पूर्ण
 
-static void
-bttv_crop_reset(struct bttv_crop *c, unsigned int norm)
-{
+अटल व्योम
+bttv_crop_reset(काष्ठा bttv_crop *c, अचिन्हित पूर्णांक norm)
+अणु
 	c->rect = bttv_tvnorms[norm].cropcap.defrect;
 	bttv_crop_calc_limits(c);
-}
+पूर्ण
 
-/* Call with btv->lock down. */
-static int
-set_tvnorm(struct bttv *btv, unsigned int norm)
-{
-	const struct bttv_tvnorm *tvnorm;
+/* Call with btv->lock करोwn. */
+अटल पूर्णांक
+set_tvnorm(काष्ठा bttv *btv, अचिन्हित पूर्णांक norm)
+अणु
+	स्थिर काष्ठा bttv_tvnorm *tvnorm;
 	v4l2_std_id id;
 
 	BUG_ON(norm >= BTTV_TVNORMS);
@@ -1123,76 +1124,76 @@ set_tvnorm(struct bttv *btv, unsigned int norm)
 
 	tvnorm = &bttv_tvnorms[norm];
 
-	if (memcmp(&bttv_tvnorms[btv->tvnorm].cropcap, &tvnorm->cropcap,
-		    sizeof (tvnorm->cropcap))) {
+	अगर (स_भेद(&bttv_tvnorms[btv->tvnorm].cropcap, &tvnorm->cropcap,
+		    माप (tvnorm->cropcap))) अणु
 		bttv_crop_reset(&btv->crop[0], norm);
-		btv->crop[1] = btv->crop[0]; /* current = default */
+		btv->crop[1] = btv->crop[0]; /* current = शेष */
 
-		if (0 == (btv->resources & VIDEO_RESOURCES)) {
+		अगर (0 == (btv->resources & VIDEO_RESOURCES)) अणु
 			btv->crop_start = tvnorm->cropcap.bounds.top
 				+ tvnorm->cropcap.bounds.height;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	btv->tvnorm = norm;
 
-	btwrite(tvnorm->adelay, BT848_ADELAY);
-	btwrite(tvnorm->bdelay, BT848_BDELAY);
-	btaor(tvnorm->iform,~(BT848_IFORM_NORM|BT848_IFORM_XTBOTH),
+	btग_लिखो(tvnorm->adelay, BT848_ADELAY);
+	btग_लिखो(tvnorm->bdelay, BT848_BDELAY);
+	btaor(tvnorm->अगरorm,~(BT848_IFORM_NORM|BT848_IFORM_XTBOTH),
 	      BT848_IFORM);
-	btwrite(tvnorm->vbipack, BT848_VBI_PACK_SIZE);
-	btwrite(1, BT848_VBI_PACK_DEL);
+	btग_लिखो(tvnorm->vbipack, BT848_VBI_PACK_SIZE);
+	btग_लिखो(1, BT848_VBI_PACK_DEL);
 	bt848A_set_timing(btv);
 
-	switch (btv->c.type) {
-	case BTTV_BOARD_VOODOOTV_FM:
-	case BTTV_BOARD_VOODOOTV_200:
-		bttv_tda9880_setnorm(btv, gpio_read());
-		break;
-	}
+	चयन (btv->c.type) अणु
+	हाल BTTV_BOARD_VOODOOTV_FM:
+	हाल BTTV_BOARD_VOODOOTV_200:
+		bttv_tda9880_setnorm(btv, gpio_पढ़ो());
+		अवरोध;
+	पूर्ण
 	id = tvnorm->v4l2_id;
 	bttv_call_all(btv, video, s_std, id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Call with btv->lock down. */
-static void
-set_input(struct bttv *btv, unsigned int input, unsigned int norm)
-{
-	unsigned long flags;
+/* Call with btv->lock करोwn. */
+अटल व्योम
+set_input(काष्ठा bttv *btv, अचिन्हित पूर्णांक input, अचिन्हित पूर्णांक norm)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	btv->input = input;
-	if (irq_iswitch) {
+	अगर (irq_iचयन) अणु
 		spin_lock_irqsave(&btv->s_lock,flags);
-		if (btv->curr.frame_irq) {
-			/* active capture -> delayed input switch */
+		अगर (btv->curr.frame_irq) अणु
+			/* active capture -> delayed input चयन */
 			btv->new_input = input;
-		} else {
+		पूर्ण अन्यथा अणु
 			video_mux(btv,input);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&btv->s_lock,flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		video_mux(btv,input);
-	}
+	पूर्ण
 	btv->audio_input = (btv->tuner_type != TUNER_ABSENT && input == 0) ?
 				TVAUDIO_INPUT_TUNER : TVAUDIO_INPUT_EXTERN;
 	audio_input(btv, btv->audio_input);
 	set_tvnorm(btv, norm);
-}
+पूर्ण
 
-static void init_irqreg(struct bttv *btv)
-{
+अटल व्योम init_irqreg(काष्ठा bttv *btv)
+अणु
 	/* clear status */
-	btwrite(0xfffffUL, BT848_INT_STAT);
+	btग_लिखो(0xfffffUL, BT848_INT_STAT);
 
-	if (bttv_tvcards[btv->c.type].no_video) {
+	अगर (bttv_tvcards[btv->c.type].no_video) अणु
 		/* i2c only */
-		btwrite(BT848_INT_I2CDONE,
+		btग_लिखो(BT848_INT_I2CDONE,
 			BT848_INT_MASK);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* full video */
-		btwrite((btv->triton1)  |
+		btग_लिखो((btv->triton1)  |
 			(btv->gpioirq ? BT848_INT_GPINT : 0) |
 			BT848_INT_SCERR |
 			(fdsr ? BT848_INT_FDSR : 0) |
@@ -1200,44 +1201,44 @@ static void init_irqreg(struct bttv *btv)
 			BT848_INT_FMTCHG|BT848_INT_HLOCK|
 			BT848_INT_I2CDONE,
 			BT848_INT_MASK);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void init_bt848(struct bttv *btv)
-{
-	if (bttv_tvcards[btv->c.type].no_video) {
+अटल व्योम init_bt848(काष्ठा bttv *btv)
+अणु
+	अगर (bttv_tvcards[btv->c.type].no_video) अणु
 		/* very basic init only */
 		init_irqreg(btv);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	btwrite(0x00, BT848_CAP_CTL);
-	btwrite(BT848_COLOR_CTL_GAMMA, BT848_COLOR_CTL);
-	btwrite(BT848_IFORM_XTAUTO | BT848_IFORM_AUTO, BT848_IFORM);
+	btग_लिखो(0x00, BT848_CAP_CTL);
+	btग_लिखो(BT848_COLOR_CTL_GAMMA, BT848_COLOR_CTL);
+	btग_लिखो(BT848_IFORM_XTAUTO | BT848_IFORM_AUTO, BT848_IFORM);
 
-	/* set planar and packed mode trigger points and         */
+	/* set planar and packed mode trigger poपूर्णांकs and         */
 	/* set rising edge of inverted GPINTR pin as irq trigger */
-	btwrite(BT848_GPIO_DMA_CTL_PKTP_32|
+	btग_लिखो(BT848_GPIO_DMA_CTL_PKTP_32|
 		BT848_GPIO_DMA_CTL_PLTP1_16|
 		BT848_GPIO_DMA_CTL_PLTP23_16|
 		BT848_GPIO_DMA_CTL_GPINTC|
 		BT848_GPIO_DMA_CTL_GPINTI,
 		BT848_GPIO_DMA_CTL);
 
-	btwrite(0x20, BT848_E_VSCALE_HI);
-	btwrite(0x20, BT848_O_VSCALE_HI);
+	btग_लिखो(0x20, BT848_E_VSCALE_HI);
+	btग_लिखो(0x20, BT848_O_VSCALE_HI);
 
 	v4l2_ctrl_handler_setup(&btv->ctrl_handler);
 
-	/* interrupt */
+	/* पूर्णांकerrupt */
 	init_irqreg(btv);
-}
+पूर्ण
 
-static void bttv_reinit_bt848(struct bttv *btv)
-{
-	unsigned long flags;
+अटल व्योम bttv_reinit_bt848(काष्ठा bttv *btv)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (bttv_verbose)
+	अगर (bttv_verbose)
 		pr_info("%d: reset, reinitialize\n", btv->c.nr);
 	spin_lock_irqsave(&btv->s_lock,flags);
 	btv->errors=0;
@@ -1247,100 +1248,100 @@ static void bttv_reinit_bt848(struct bttv *btv)
 	init_bt848(btv);
 	btv->pll.pll_current = -1;
 	set_input(btv, btv->input, btv->tvnorm);
-}
+पूर्ण
 
-static int bttv_s_ctrl(struct v4l2_ctrl *c)
-{
-	struct bttv *btv = container_of(c->handler, struct bttv, ctrl_handler);
-	int val;
+अटल पूर्णांक bttv_s_ctrl(काष्ठा v4l2_ctrl *c)
+अणु
+	काष्ठा bttv *btv = container_of(c->handler, काष्ठा bttv, ctrl_handler);
+	पूर्णांक val;
 
-	switch (c->id) {
-	case V4L2_CID_BRIGHTNESS:
+	चयन (c->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
 		bt848_bright(btv, c->val);
-		break;
-	case V4L2_CID_HUE:
+		अवरोध;
+	हाल V4L2_CID_HUE:
 		bt848_hue(btv, c->val);
-		break;
-	case V4L2_CID_CONTRAST:
+		अवरोध;
+	हाल V4L2_CID_CONTRAST:
 		bt848_contrast(btv, c->val);
-		break;
-	case V4L2_CID_SATURATION:
+		अवरोध;
+	हाल V4L2_CID_SATURATION:
 		bt848_sat(btv, c->val);
-		break;
-	case V4L2_CID_COLOR_KILLER:
-		if (c->val) {
+		अवरोध;
+	हाल V4L2_CID_COLOR_KILLER:
+		अगर (c->val) अणु
 			btor(BT848_SCLOOP_CKILL, BT848_E_SCLOOP);
 			btor(BT848_SCLOOP_CKILL, BT848_O_SCLOOP);
-		} else {
+		पूर्ण अन्यथा अणु
 			btand(~BT848_SCLOOP_CKILL, BT848_E_SCLOOP);
 			btand(~BT848_SCLOOP_CKILL, BT848_O_SCLOOP);
-		}
-		break;
-	case V4L2_CID_AUDIO_MUTE:
+		पूर्ण
+		अवरोध;
+	हाल V4L2_CID_AUDIO_MUTE:
 		audio_mute(btv, c->val);
 		btv->mute = c->val;
-		break;
-	case V4L2_CID_AUDIO_VOLUME:
+		अवरोध;
+	हाल V4L2_CID_AUDIO_VOLUME:
 		btv->volume_gpio(btv, c->val);
-		break;
+		अवरोध;
 
-	case V4L2_CID_CHROMA_AGC:
+	हाल V4L2_CID_CHROMA_AGC:
 		val = c->val ? BT848_SCLOOP_CAGC : 0;
-		btwrite(val, BT848_E_SCLOOP);
-		btwrite(val, BT848_O_SCLOOP);
-		break;
-	case V4L2_CID_PRIVATE_COMBFILTER:
+		btग_लिखो(val, BT848_E_SCLOOP);
+		btग_लिखो(val, BT848_O_SCLOOP);
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_COMBFILTER:
 		btv->opt_combfilter = c->val;
-		break;
-	case V4L2_CID_PRIVATE_LUMAFILTER:
-		if (c->val) {
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_LUMAFILTER:
+		अगर (c->val) अणु
 			btand(~BT848_CONTROL_LDEC, BT848_E_CONTROL);
 			btand(~BT848_CONTROL_LDEC, BT848_O_CONTROL);
-		} else {
+		पूर्ण अन्यथा अणु
 			btor(BT848_CONTROL_LDEC, BT848_E_CONTROL);
 			btor(BT848_CONTROL_LDEC, BT848_O_CONTROL);
-		}
-		break;
-	case V4L2_CID_PRIVATE_AUTOMUTE:
-		btv->opt_automute = c->val;
-		break;
-	case V4L2_CID_PRIVATE_AGC_CRUSH:
-		btwrite(BT848_ADC_RESERVED |
+		पूर्ण
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_AUTOMUTE:
+		btv->opt_स्वतःmute = c->val;
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_AGC_CRUSH:
+		btग_लिखो(BT848_ADC_RESERVED |
 				(c->val ? BT848_ADC_CRUSH : 0),
 				BT848_ADC);
-		break;
-	case V4L2_CID_PRIVATE_VCR_HACK:
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_VCR_HACK:
 		btv->opt_vcr_hack = c->val;
-		break;
-	case V4L2_CID_PRIVATE_WHITECRUSH_UPPER:
-		btwrite(c->val, BT848_WC_UP);
-		break;
-	case V4L2_CID_PRIVATE_WHITECRUSH_LOWER:
-		btwrite(c->val, BT848_WC_DOWN);
-		break;
-	case V4L2_CID_PRIVATE_UV_RATIO:
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_WHITECRUSH_UPPER:
+		btग_लिखो(c->val, BT848_WC_UP);
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_WHITECRUSH_LOWER:
+		btग_लिखो(c->val, BT848_WC_DOWN);
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_UV_RATIO:
 		btv->opt_uv_ratio = c->val;
 		bt848_sat(btv, btv->saturation);
-		break;
-	case V4L2_CID_PRIVATE_FULL_LUMA_RANGE:
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_FULL_LUMA_RANGE:
 		btaor((c->val << 7), ~BT848_OFORM_RANGE, BT848_OFORM);
-		break;
-	case V4L2_CID_PRIVATE_CORING:
+		अवरोध;
+	हाल V4L2_CID_PRIVATE_CORING:
 		btaor((c->val << 5), ~BT848_OFORM_CORE32, BT848_OFORM);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static const struct v4l2_ctrl_ops bttv_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops bttv_ctrl_ops = अणु
 	.s_ctrl = bttv_s_ctrl,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_combfilter = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_combfilter = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_COMBFILTER,
 	.name = "Comb Filter",
@@ -1349,9 +1350,9 @@ static struct v4l2_ctrl_config bttv_ctrl_combfilter = {
 	.max = 1,
 	.step = 1,
 	.def = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_automute = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_स्वतःmute = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_AUTOMUTE,
 	.name = "Auto Mute",
@@ -1360,9 +1361,9 @@ static struct v4l2_ctrl_config bttv_ctrl_automute = {
 	.max = 1,
 	.step = 1,
 	.def = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_lumafilter = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_lumafilter = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_LUMAFILTER,
 	.name = "Luma Decimation Filter",
@@ -1371,9 +1372,9 @@ static struct v4l2_ctrl_config bttv_ctrl_lumafilter = {
 	.max = 1,
 	.step = 1,
 	.def = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_agc_crush = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_agc_crush = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_AGC_CRUSH,
 	.name = "AGC Crush",
@@ -1382,9 +1383,9 @@ static struct v4l2_ctrl_config bttv_ctrl_agc_crush = {
 	.max = 1,
 	.step = 1,
 	.def = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_vcr_hack = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_vcr_hack = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_VCR_HACK,
 	.name = "VCR Hack",
@@ -1393,9 +1394,9 @@ static struct v4l2_ctrl_config bttv_ctrl_vcr_hack = {
 	.max = 1,
 	.step = 1,
 	.def = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_whitecrush_lower = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_whitecrush_lower = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_WHITECRUSH_LOWER,
 	.name = "Whitecrush Lower",
@@ -1404,9 +1405,9 @@ static struct v4l2_ctrl_config bttv_ctrl_whitecrush_lower = {
 	.max = 255,
 	.step = 1,
 	.def = 0x7f,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_whitecrush_upper = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_whitecrush_upper = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_WHITECRUSH_UPPER,
 	.name = "Whitecrush Upper",
@@ -1415,9 +1416,9 @@ static struct v4l2_ctrl_config bttv_ctrl_whitecrush_upper = {
 	.max = 255,
 	.step = 1,
 	.def = 0xcf,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_uv_ratio = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_uv_ratio = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_UV_RATIO,
 	.name = "UV Ratio",
@@ -1426,9 +1427,9 @@ static struct v4l2_ctrl_config bttv_ctrl_uv_ratio = {
 	.max = 100,
 	.step = 1,
 	.def = 50,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_full_luma = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_full_luma = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_FULL_LUMA_RANGE,
 	.name = "Full Luma Range",
@@ -1436,9 +1437,9 @@ static struct v4l2_ctrl_config bttv_ctrl_full_luma = {
 	.min = 0,
 	.max = 1,
 	.step = 1,
-};
+पूर्ण;
 
-static struct v4l2_ctrl_config bttv_ctrl_coring = {
+अटल काष्ठा v4l2_ctrl_config bttv_ctrl_coring = अणु
 	.ops = &bttv_ctrl_ops,
 	.id = V4L2_CID_PRIVATE_CORING,
 	.name = "Coring",
@@ -1446,63 +1447,63 @@ static struct v4l2_ctrl_config bttv_ctrl_coring = {
 	.min = 0,
 	.max = 3,
 	.step = 1,
-};
+पूर्ण;
 
 
 /* ----------------------------------------------------------------------- */
 
-void bttv_gpio_tracking(struct bttv *btv, char *comment)
-{
-	unsigned int outbits, data;
-	outbits = btread(BT848_GPIO_OUT_EN);
-	data    = btread(BT848_GPIO_DATA);
+व्योम bttv_gpio_tracking(काष्ठा bttv *btv, अक्षर *comment)
+अणु
+	अचिन्हित पूर्णांक outbits, data;
+	outbits = btपढ़ो(BT848_GPIO_OUT_EN);
+	data    = btपढ़ो(BT848_GPIO_DATA);
 	pr_debug("%d: gpio: en=%08x, out=%08x in=%08x [%s]\n",
 		 btv->c.nr, outbits, data & outbits, data & ~outbits, comment);
-}
+पूर्ण
 
-static void bttv_field_count(struct bttv *btv)
-{
-	int need_count = 0;
+अटल व्योम bttv_field_count(काष्ठा bttv *btv)
+अणु
+	पूर्णांक need_count = 0;
 
-	if (btv->users)
+	अगर (btv->users)
 		need_count++;
 
-	if (need_count) {
+	अगर (need_count) अणु
 		/* start field counter */
 		btor(BT848_INT_VSYNC,BT848_INT_MASK);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* stop field counter */
 		btand(~BT848_INT_VSYNC,BT848_INT_MASK);
 		btv->field_count = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct bttv_format*
-format_by_fourcc(int fourcc)
-{
-	unsigned int i;
+अटल स्थिर काष्ठा bttv_क्रमmat*
+क्रमmat_by_fourcc(पूर्णांक fourcc)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < FORMATS; i++) {
-		if (-1 == formats[i].fourcc)
-			continue;
-		if (formats[i].fourcc == fourcc)
-			return formats+i;
-	}
-	return NULL;
-}
+	क्रम (i = 0; i < FORMATS; i++) अणु
+		अगर (-1 == क्रमmats[i].fourcc)
+			जारी;
+		अगर (क्रमmats[i].fourcc == fourcc)
+			वापस क्रमmats+i;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 /* misc helpers                                                            */
 
-static int
-bttv_switch_overlay(struct bttv *btv, struct bttv_fh *fh,
-		    struct bttv_buffer *new)
-{
-	struct bttv_buffer *old;
-	unsigned long flags;
+अटल पूर्णांक
+bttv_चयन_overlay(काष्ठा bttv *btv, काष्ठा bttv_fh *fh,
+		    काष्ठा bttv_buffer *new)
+अणु
+	काष्ठा bttv_buffer *old;
+	अचिन्हित दीर्घ flags;
 
-	dprintk("switch_overlay: enter [new=%p]\n", new);
-	if (new)
+	dprपूर्णांकk("switch_overlay: enter [new=%p]\n", new);
+	अगर (new)
 		new->vb.state = VIDEOBUF_DONE;
 	spin_lock_irqsave(&btv->s_lock,flags);
 	old = btv->screen;
@@ -1510,493 +1511,493 @@ bttv_switch_overlay(struct bttv *btv, struct bttv_fh *fh,
 	btv->loop_irq |= 1;
 	bttv_set_dma(btv, 0x03);
 	spin_unlock_irqrestore(&btv->s_lock,flags);
-	if (NULL != old) {
-		dprintk("switch_overlay: old=%p state is %d\n",
+	अगर (शून्य != old) अणु
+		dprपूर्णांकk("switch_overlay: old=%p state is %d\n",
 			old, old->vb.state);
-		bttv_dma_free(&fh->cap,btv, old);
-		kfree(old);
-	}
-	if (NULL == new)
-		free_btres_lock(btv,fh,RESOURCE_OVERLAY);
-	dprintk("switch_overlay: done\n");
-	return 0;
-}
+		bttv_dma_मुक्त(&fh->cap,btv, old);
+		kमुक्त(old);
+	पूर्ण
+	अगर (शून्य == new)
+		मुक्त_btres_lock(btv,fh,RESOURCE_OVERLAY);
+	dprपूर्णांकk("switch_overlay: done\n");
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
-/* video4linux (1) interface                                               */
+/* video4linux (1) पूर्णांकerface                                               */
 
-static int bttv_prepare_buffer(struct videobuf_queue *q,struct bttv *btv,
-			       struct bttv_buffer *buf,
-			       const struct bttv_format *fmt,
-			       unsigned int width, unsigned int height,
-			       enum v4l2_field field)
-{
-	struct bttv_fh *fh = q->priv_data;
-	int redo_dma_risc = 0;
-	struct bttv_crop c;
-	int norm;
-	int rc;
+अटल पूर्णांक bttv_prepare_buffer(काष्ठा videobuf_queue *q,काष्ठा bttv *btv,
+			       काष्ठा bttv_buffer *buf,
+			       स्थिर काष्ठा bttv_क्रमmat *fmt,
+			       अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
+			       क्रमागत v4l2_field field)
+अणु
+	काष्ठा bttv_fh *fh = q->priv_data;
+	पूर्णांक reकरो_dma_risc = 0;
+	काष्ठा bttv_crop c;
+	पूर्णांक norm;
+	पूर्णांक rc;
 
 	/* check settings */
-	if (NULL == fmt)
-		return -EINVAL;
-	if (fmt->btformat == BT848_COLOR_FMT_RAW) {
+	अगर (शून्य == fmt)
+		वापस -EINVAL;
+	अगर (fmt->btक्रमmat == BT848_COLOR_FMT_RAW) अणु
 		width  = RAW_BPL;
 		height = RAW_LINES*2;
-		if (width*height > buf->vb.bsize)
-			return -EINVAL;
+		अगर (width*height > buf->vb.bsize)
+			वापस -EINVAL;
 		buf->vb.size = buf->vb.bsize;
 
-		/* Make sure tvnorm and vbi_end remain consistent
-		   until we're done. */
+		/* Make sure tvnorm and vbi_end reमुख्य consistent
+		   until we're करोne. */
 
 		norm = btv->tvnorm;
 
 		/* In this mode capturing always starts at defrect.top
-		   (default VDELAY), ignoring cropping parameters. */
-		if (btv->vbi_end > bttv_tvnorms[norm].cropcap.defrect.top) {
-			return -EINVAL;
-		}
+		   (शेष VDELAY), ignoring cropping parameters. */
+		अगर (btv->vbi_end > bttv_tvnorms[norm].cropcap.defrect.top) अणु
+			वापस -EINVAL;
+		पूर्ण
 
 		c.rect = bttv_tvnorms[norm].cropcap.defrect;
-	} else {
+	पूर्ण अन्यथा अणु
 		norm = btv->tvnorm;
-		c = btv->crop[!!fh->do_crop];
+		c = btv->crop[!!fh->करो_crop];
 
-		if (width < c.min_scaled_width ||
+		अगर (width < c.min_scaled_width ||
 		    width > c.max_scaled_width ||
 		    height < c.min_scaled_height)
-			return -EINVAL;
+			वापस -EINVAL;
 
-		switch (field) {
-		case V4L2_FIELD_TOP:
-		case V4L2_FIELD_BOTTOM:
-		case V4L2_FIELD_ALTERNATE:
+		चयन (field) अणु
+		हाल V4L2_FIELD_TOP:
+		हाल V4L2_FIELD_BOTTOM:
+		हाल V4L2_FIELD_ALTERNATE:
 			/* btv->crop counts frame lines. Max. scale
-			   factor is 16:1 for frames, 8:1 for fields. */
-			if (height * 2 > c.max_scaled_height)
-				return -EINVAL;
-			break;
+			   factor is 16:1 क्रम frames, 8:1 क्रम fields. */
+			अगर (height * 2 > c.max_scaled_height)
+				वापस -EINVAL;
+			अवरोध;
 
-		default:
-			if (height > c.max_scaled_height)
-				return -EINVAL;
-			break;
-		}
+		शेष:
+			अगर (height > c.max_scaled_height)
+				वापस -EINVAL;
+			अवरोध;
+		पूर्ण
 
 		buf->vb.size = (width * height * fmt->depth) >> 3;
-		if (0 != buf->vb.baddr  &&  buf->vb.bsize < buf->vb.size)
-			return -EINVAL;
-	}
+		अगर (0 != buf->vb.baddr  &&  buf->vb.bsize < buf->vb.size)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* alloc + fill struct bttv_buffer (if changed) */
-	if (buf->vb.width != width || buf->vb.height != height ||
+	/* alloc + fill काष्ठा bttv_buffer (अगर changed) */
+	अगर (buf->vb.width != width || buf->vb.height != height ||
 	    buf->vb.field != field ||
 	    buf->tvnorm != norm || buf->fmt != fmt ||
 	    buf->crop.top != c.rect.top ||
 	    buf->crop.left != c.rect.left ||
 	    buf->crop.width != c.rect.width ||
-	    buf->crop.height != c.rect.height) {
+	    buf->crop.height != c.rect.height) अणु
 		buf->vb.width  = width;
 		buf->vb.height = height;
 		buf->vb.field  = field;
 		buf->tvnorm    = norm;
 		buf->fmt       = fmt;
 		buf->crop      = c.rect;
-		redo_dma_risc = 1;
-	}
+		reकरो_dma_risc = 1;
+	पूर्ण
 
 	/* alloc risc memory */
-	if (VIDEOBUF_NEEDS_INIT == buf->vb.state) {
-		redo_dma_risc = 1;
-		if (0 != (rc = videobuf_iolock(q,&buf->vb,&btv->fbuf)))
-			goto fail;
-	}
+	अगर (VIDEOBUF_NEEDS_INIT == buf->vb.state) अणु
+		reकरो_dma_risc = 1;
+		अगर (0 != (rc = videobuf_iolock(q,&buf->vb,&btv->fbuf)))
+			जाओ fail;
+	पूर्ण
 
-	if (redo_dma_risc)
-		if (0 != (rc = bttv_buffer_risc(btv,buf)))
-			goto fail;
+	अगर (reकरो_dma_risc)
+		अगर (0 != (rc = bttv_buffer_risc(btv,buf)))
+			जाओ fail;
 
 	buf->vb.state = VIDEOBUF_PREPARED;
-	return 0;
+	वापस 0;
 
  fail:
-	bttv_dma_free(q,btv,buf);
-	return rc;
-}
+	bttv_dma_मुक्त(q,btv,buf);
+	वापस rc;
+पूर्ण
 
-static int
-buffer_setup(struct videobuf_queue *q, unsigned int *count, unsigned int *size)
-{
-	struct bttv_fh *fh = q->priv_data;
+अटल पूर्णांक
+buffer_setup(काष्ठा videobuf_queue *q, अचिन्हित पूर्णांक *count, अचिन्हित पूर्णांक *size)
+अणु
+	काष्ठा bttv_fh *fh = q->priv_data;
 
 	*size = fh->fmt->depth*fh->width*fh->height >> 3;
-	if (0 == *count)
+	अगर (0 == *count)
 		*count = gbuffers;
-	if (*size * *count > gbuffers * gbufsize)
+	अगर (*size * *count > gbuffers * gbufsize)
 		*count = (gbuffers * gbufsize) / *size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-buffer_prepare(struct videobuf_queue *q, struct videobuf_buffer *vb,
-	       enum v4l2_field field)
-{
-	struct bttv_buffer *buf = container_of(vb,struct bttv_buffer,vb);
-	struct bttv_fh *fh = q->priv_data;
+अटल पूर्णांक
+buffer_prepare(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb,
+	       क्रमागत v4l2_field field)
+अणु
+	काष्ठा bttv_buffer *buf = container_of(vb,काष्ठा bttv_buffer,vb);
+	काष्ठा bttv_fh *fh = q->priv_data;
 
-	return bttv_prepare_buffer(q,fh->btv, buf, fh->fmt,
+	वापस bttv_prepare_buffer(q,fh->btv, buf, fh->fmt,
 				   fh->width, fh->height, field);
-}
+पूर्ण
 
-static void
-buffer_queue(struct videobuf_queue *q, struct videobuf_buffer *vb)
-{
-	struct bttv_buffer *buf = container_of(vb,struct bttv_buffer,vb);
-	struct bttv_fh *fh = q->priv_data;
-	struct bttv    *btv = fh->btv;
+अटल व्योम
+buffer_queue(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb)
+अणु
+	काष्ठा bttv_buffer *buf = container_of(vb,काष्ठा bttv_buffer,vb);
+	काष्ठा bttv_fh *fh = q->priv_data;
+	काष्ठा bttv    *btv = fh->btv;
 
 	buf->vb.state = VIDEOBUF_QUEUED;
 	list_add_tail(&buf->vb.queue,&btv->capture);
-	if (!btv->curr.frame_irq) {
+	अगर (!btv->curr.frame_irq) अणु
 		btv->loop_irq |= 1;
 		bttv_set_dma(btv, 0x03);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void buffer_release(struct videobuf_queue *q, struct videobuf_buffer *vb)
-{
-	struct bttv_buffer *buf = container_of(vb,struct bttv_buffer,vb);
-	struct bttv_fh *fh = q->priv_data;
+अटल व्योम buffer_release(काष्ठा videobuf_queue *q, काष्ठा videobuf_buffer *vb)
+अणु
+	काष्ठा bttv_buffer *buf = container_of(vb,काष्ठा bttv_buffer,vb);
+	काष्ठा bttv_fh *fh = q->priv_data;
 
-	bttv_dma_free(q,fh->btv,buf);
-}
+	bttv_dma_मुक्त(q,fh->btv,buf);
+पूर्ण
 
-static const struct videobuf_queue_ops bttv_video_qops = {
+अटल स्थिर काष्ठा videobuf_queue_ops bttv_video_qops = अणु
 	.buf_setup    = buffer_setup,
 	.buf_prepare  = buffer_prepare,
 	.buf_queue    = buffer_queue,
 	.buf_release  = buffer_release,
-};
+पूर्ण;
 
-static void radio_enable(struct bttv *btv)
-{
+अटल व्योम radio_enable(काष्ठा bttv *btv)
+अणु
 	/* Switch to the radio tuner */
-	if (!btv->has_radio_tuner) {
+	अगर (!btv->has_radio_tuner) अणु
 		btv->has_radio_tuner = 1;
 		bttv_call_all(btv, tuner, s_radio);
 		btv->audio_input = TVAUDIO_INPUT_RADIO;
 		audio_input(btv, btv->audio_input);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bttv_s_std(struct file *file, void *priv, v4l2_std_id id)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
-	unsigned int i;
+अटल पूर्णांक bttv_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id id)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < BTTV_TVNORMS; i++)
-		if (id & bttv_tvnorms[i].v4l2_id)
-			break;
-	if (i == BTTV_TVNORMS)
-		return -EINVAL;
+	क्रम (i = 0; i < BTTV_TVNORMS; i++)
+		अगर (id & bttv_tvnorms[i].v4l2_id)
+			अवरोध;
+	अगर (i == BTTV_TVNORMS)
+		वापस -EINVAL;
 	btv->std = id;
 	set_tvnorm(btv, i);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_std(struct file *file, void *priv, v4l2_std_id *id)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *id)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
 
 	*id = btv->std;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_querystd(struct file *file, void *f, v4l2_std_id *id)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_querystd(काष्ठा file *file, व्योम *f, v4l2_std_id *id)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (btread(BT848_DSTATUS) & BT848_DSTATUS_NUML)
+	अगर (btपढ़ो(BT848_DSTATUS) & BT848_DSTATUS_NUML)
 		*id &= V4L2_STD_625_50;
-	else
+	अन्यथा
 		*id &= V4L2_STD_525_60;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_enum_input(struct file *file, void *priv,
-					struct v4l2_input *i)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_input *i)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (i->index >= bttv_tvcards[btv->c.type].video_inputs)
-		return -EINVAL;
+	अगर (i->index >= bttv_tvcards[btv->c.type].video_inमाला_दो)
+		वापस -EINVAL;
 
 	i->type     = V4L2_INPUT_TYPE_CAMERA;
 	i->audioset = 0;
 
-	if (btv->tuner_type != TUNER_ABSENT && i->index == 0) {
-		sprintf(i->name, "Television");
+	अगर (btv->tuner_type != TUNER_ABSENT && i->index == 0) अणु
+		प्र_लिखो(i->name, "Television");
 		i->type  = V4L2_INPUT_TYPE_TUNER;
 		i->tuner = 0;
-	} else if (i->index == btv->svhs) {
-		sprintf(i->name, "S-Video");
-	} else {
-		sprintf(i->name, "Composite%d", i->index);
-	}
+	पूर्ण अन्यथा अगर (i->index == btv->svhs) अणु
+		प्र_लिखो(i->name, "S-Video");
+	पूर्ण अन्यथा अणु
+		प्र_लिखो(i->name, "Composite%d", i->index);
+	पूर्ण
 
-	if (i->index == btv->input) {
-		__u32 dstatus = btread(BT848_DSTATUS);
-		if (0 == (dstatus & BT848_DSTATUS_PRES))
+	अगर (i->index == btv->input) अणु
+		__u32 dstatus = btपढ़ो(BT848_DSTATUS);
+		अगर (0 == (dstatus & BT848_DSTATUS_PRES))
 			i->status |= V4L2_IN_ST_NO_SIGNAL;
-		if (0 == (dstatus & BT848_DSTATUS_HLOC))
+		अगर (0 == (dstatus & BT848_DSTATUS_HLOC))
 			i->status |= V4L2_IN_ST_NO_H_LOCK;
-	}
+	पूर्ण
 
 	i->std = BTTV_NORMS;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_input(struct file *file, void *priv, unsigned int *i)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
 	*i = btv->input;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_input(struct file *file, void *priv, unsigned int i)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (i >= bttv_tvcards[btv->c.type].video_inputs)
-		return -EINVAL;
+	अगर (i >= bttv_tvcards[btv->c.type].video_inमाला_दो)
+		वापस -EINVAL;
 
 	set_input(btv, i, btv->tvnorm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_tuner(struct file *file, void *priv,
-					const struct v4l2_tuner *t)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_tuner(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_tuner *t)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (t->index)
-		return -EINVAL;
+	अगर (t->index)
+		वापस -EINVAL;
 
 	bttv_call_all(btv, tuner, s_tuner, t);
 
-	if (btv->audio_mode_gpio) {
-		struct v4l2_tuner copy = *t;
+	अगर (btv->audio_mode_gpio) अणु
+		काष्ठा v4l2_tuner copy = *t;
 
 		btv->audio_mode_gpio(btv, &copy, 1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bttv_g_frequency(struct file *file, void *priv,
-					struct v4l2_frequency *f)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_frequency(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (f->tuner)
-		return -EINVAL;
+	अगर (f->tuner)
+		वापस -EINVAL;
 
-	if (f->type == V4L2_TUNER_RADIO)
+	अगर (f->type == V4L2_TUNER_RADIO)
 		radio_enable(btv);
 	f->frequency = f->type == V4L2_TUNER_RADIO ?
 				btv->radio_freq : btv->tv_freq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bttv_set_frequency(struct bttv *btv, const struct v4l2_frequency *f)
-{
-	struct v4l2_frequency new_freq = *f;
+अटल व्योम bttv_set_frequency(काष्ठा bttv *btv, स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा v4l2_frequency new_freq = *f;
 
 	bttv_call_all(btv, tuner, s_frequency, f);
 	/* s_frequency may clamp the frequency, so get the actual
-	   frequency before assigning radio/tv_freq. */
+	   frequency beक्रमe assigning radio/tv_freq. */
 	bttv_call_all(btv, tuner, g_frequency, &new_freq);
-	if (new_freq.type == V4L2_TUNER_RADIO) {
+	अगर (new_freq.type == V4L2_TUNER_RADIO) अणु
 		radio_enable(btv);
 		btv->radio_freq = new_freq.frequency;
-		if (btv->has_tea575x) {
+		अगर (btv->has_tea575x) अणु
 			btv->tea.freq = btv->radio_freq;
 			snd_tea575x_set_freq(&btv->tea);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		btv->tv_freq = new_freq.frequency;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bttv_s_frequency(struct file *file, void *priv,
-					const struct v4l2_frequency *f)
-{
-	struct bttv_fh *fh  = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_frequency(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (f->tuner)
-		return -EINVAL;
+	अगर (f->tuner)
+		वापस -EINVAL;
 
 	bttv_set_frequency(btv, f);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_log_status(struct file *file, void *f)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct bttv_fh *fh  = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_log_status(काष्ठा file *file, व्योम *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा bttv_fh *fh  = f;
+	काष्ठा bttv *btv = fh->btv;
 
 	v4l2_ctrl_handler_log_status(vdev->ctrl_handler, btv->c.v4l2_dev.name);
 	bttv_call_all(btv, core, log_status);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-static int bttv_g_register(struct file *file, void *f,
-					struct v4l2_dbg_register *reg)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+अटल पूर्णांक bttv_g_रेजिस्टर(काष्ठा file *file, व्योम *f,
+					काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
-	/* bt848 has a 12-bit register space */
+	/* bt848 has a 12-bit रेजिस्टर space */
 	reg->reg &= 0xfff;
-	reg->val = btread(reg->reg);
+	reg->val = btपढ़ो(reg->reg);
 	reg->size = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_register(struct file *file, void *f,
-					const struct v4l2_dbg_register *reg)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_रेजिस्टर(काष्ठा file *file, व्योम *f,
+					स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
-	/* bt848 has a 12-bit register space */
-	btwrite(reg->val, reg->reg & 0xfff);
+	/* bt848 has a 12-bit रेजिस्टर space */
+	btग_लिखो(reg->val, reg->reg & 0xfff);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /* Given cropping boundaries b and the scaled width and height of a
    single field or frame, which must not exceed hardware limits, this
    function adjusts the cropping parameters c. */
-static void
-bttv_crop_adjust	(struct bttv_crop *             c,
-			 const struct v4l2_rect *	b,
+अटल व्योम
+bttv_crop_adjust	(काष्ठा bttv_crop *             c,
+			 स्थिर काष्ठा v4l2_rect *	b,
 			 __s32                          width,
 			 __s32                          height,
-			 enum v4l2_field                field)
-{
+			 क्रमागत v4l2_field                field)
+अणु
 	__s32 frame_height = height << !V4L2_FIELD_HAS_BOTH(field);
 	__s32 max_left;
 	__s32 max_top;
 
-	if (width < c->min_scaled_width) {
+	अगर (width < c->min_scaled_width) अणु
 		/* Max. hor. scale factor 16:1. */
 		c->rect.width = width * 16;
-	} else if (width > c->max_scaled_width) {
+	पूर्ण अन्यथा अगर (width > c->max_scaled_width) अणु
 		/* Min. hor. scale factor 1:1. */
 		c->rect.width = width;
 
 		max_left = b->left + b->width - width;
 		max_left = min(max_left, (__s32) MAX_HDELAY);
-		if (c->rect.left > max_left)
+		अगर (c->rect.left > max_left)
 			c->rect.left = max_left;
-	}
+	पूर्ण
 
-	if (height < c->min_scaled_height) {
+	अगर (height < c->min_scaled_height) अणु
 		/* Max. vert. scale factor 16:1, single fields 8:1. */
 		c->rect.height = height * 16;
-	} else if (frame_height > c->max_scaled_height) {
+	पूर्ण अन्यथा अगर (frame_height > c->max_scaled_height) अणु
 		/* Min. vert. scale factor 1:1.
-		   Top and height count field lines times two. */
+		   Top and height count field lines बार two. */
 		c->rect.height = (frame_height + 1) & ~1;
 
 		max_top = b->top + b->height - c->rect.height;
-		if (c->rect.top > max_top)
+		अगर (c->rect.top > max_top)
 			c->rect.top = max_top;
-	}
+	पूर्ण
 
 	bttv_crop_calc_limits(c);
-}
+पूर्ण
 
-/* Returns an error if scaling to a frame or single field with the given
+/* Returns an error अगर scaling to a frame or single field with the given
    width and height is not possible with the current cropping parameters
    and width aligned according to width_mask. If adjust_size is TRUE the
    function may adjust the width and/or height instead, rounding width
    to (width + width_bias) & width_mask. If adjust_crop is TRUE it may
-   also adjust the current cropping parameters to get closer to the
+   also adjust the current cropping parameters to get बंदr to the
    desired image size. */
-static int
-limit_scaled_size_lock       (struct bttv_fh *               fh,
+अटल पूर्णांक
+limit_scaled_size_lock       (काष्ठा bttv_fh *               fh,
 			 __s32 *                        width,
 			 __s32 *                        height,
-			 enum v4l2_field                field,
-			 unsigned int			width_mask,
-			 unsigned int			width_bias,
-			 int                            adjust_size,
-			 int                            adjust_crop)
-{
-	struct bttv *btv = fh->btv;
-	const struct v4l2_rect *b;
-	struct bttv_crop *c;
+			 क्रमागत v4l2_field                field,
+			 अचिन्हित पूर्णांक			width_mask,
+			 अचिन्हित पूर्णांक			width_bias,
+			 पूर्णांक                            adjust_size,
+			 पूर्णांक                            adjust_crop)
+अणु
+	काष्ठा bttv *btv = fh->btv;
+	स्थिर काष्ठा v4l2_rect *b;
+	काष्ठा bttv_crop *c;
 	__s32 min_width;
 	__s32 min_height;
 	__s32 max_width;
 	__s32 max_height;
-	int rc;
+	पूर्णांक rc;
 
-	BUG_ON((int) width_mask >= 0 ||
-	       width_bias >= (unsigned int) -width_mask);
+	BUG_ON((पूर्णांक) width_mask >= 0 ||
+	       width_bias >= (अचिन्हित पूर्णांक) -width_mask);
 
 	/* Make sure tvnorm, vbi_end and the current cropping parameters
-	   remain consistent until we're done. */
+	   reमुख्य consistent until we're करोne. */
 
 	b = &bttv_tvnorms[btv->tvnorm].cropcap.bounds;
 
-	/* Do crop - use current, don't - use default parameters. */
-	c = &btv->crop[!!fh->do_crop];
+	/* Do crop - use current, करोn't - use शेष parameters. */
+	c = &btv->crop[!!fh->करो_crop];
 
-	if (fh->do_crop
+	अगर (fh->करो_crop
 	    && adjust_size
 	    && adjust_crop
-	    && !locked_btres(btv, VIDEO_RESOURCES)) {
+	    && !locked_btres(btv, VIDEO_RESOURCES)) अणु
 		min_width = 48;
 		min_height = 32;
 
 		/* We cannot scale up. When the scaled image is larger
 		   than crop.rect we adjust the crop.rect as required
 		   by the V4L2 spec, hence cropcap.bounds are our limit. */
-		max_width = min_t(unsigned int, b->width, MAX_HACTIVE);
+		max_width = min_t(अचिन्हित पूर्णांक, b->width, MAX_HACTIVE);
 		max_height = b->height;
 
 		/* We cannot capture the same line as video and VBI data.
 		   Note btv->vbi_end is really a minimum, see
 		   bttv_vbi_try_fmt(). */
-		if (btv->vbi_end > b->top) {
+		अगर (btv->vbi_end > b->top) अणु
 			max_height -= btv->vbi_end - b->top;
 			rc = -EBUSY;
-			if (min_height > max_height)
-				goto fail;
-		}
-	} else {
+			अगर (min_height > max_height)
+				जाओ fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = -EBUSY;
-		if (btv->vbi_end > c->rect.top)
-			goto fail;
+		अगर (btv->vbi_end > c->rect.top)
+			जाओ fail;
 
 		min_width  = c->min_scaled_width;
 		min_height = c->min_scaled_height;
@@ -2004,167 +2005,167 @@ limit_scaled_size_lock       (struct bttv_fh *               fh,
 		max_height = c->max_scaled_height;
 
 		adjust_crop = 0;
-	}
+	पूर्ण
 
 	min_width = (min_width - width_mask - 1) & width_mask;
 	max_width = max_width & width_mask;
 
-	/* Max. scale factor is 16:1 for frames, 8:1 for fields. */
+	/* Max. scale factor is 16:1 क्रम frames, 8:1 क्रम fields. */
 	/* Min. scale factor is 1:1. */
 	max_height >>= !V4L2_FIELD_HAS_BOTH(field);
 
-	if (adjust_size) {
+	अगर (adjust_size) अणु
 		*width = clamp(*width, min_width, max_width);
 		*height = clamp(*height, min_height, max_height);
 
-		/* Round after clamping to avoid overflow. */
+		/* Round after clamping to aव्योम overflow. */
 		*width = (*width + width_bias) & width_mask;
 
-		if (adjust_crop) {
+		अगर (adjust_crop) अणु
 			bttv_crop_adjust(c, b, *width, *height, field);
 
-			if (btv->vbi_end > c->rect.top) {
-				/* Move the crop window out of the way. */
+			अगर (btv->vbi_end > c->rect.top) अणु
+				/* Move the crop winकरोw out of the way. */
 				c->rect.top = btv->vbi_end;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		rc = -EINVAL;
-		if (*width  < min_width ||
+		अगर (*width  < min_width ||
 		    *height < min_height ||
 		    *width  > max_width ||
 		    *height > max_height ||
 		    0 != (*width & ~width_mask))
-			goto fail;
-	}
+			जाओ fail;
+	पूर्ण
 
 	rc = 0; /* success */
 
  fail:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Returns an error if the given overlay window dimensions are not
+/* Returns an error अगर the given overlay winकरोw dimensions are not
    possible with the current cropping parameters. If adjust_size is
-   TRUE the function may adjust the window width and/or height
+   TRUE the function may adjust the winकरोw width and/or height
    instead, however it always rounds the horizontal position and
-   width as btcx_align() does. If adjust_crop is TRUE the function
-   may also adjust the current cropping parameters to get closer
-   to the desired window size. */
-static int
-verify_window_lock(struct bttv_fh *fh, struct v4l2_window *win,
-			 int adjust_size, int adjust_crop)
-{
-	enum v4l2_field field;
-	unsigned int width_mask;
+   width as btcx_align() करोes. If adjust_crop is TRUE the function
+   may also adjust the current cropping parameters to get बंदr
+   to the desired winकरोw size. */
+अटल पूर्णांक
+verअगरy_winकरोw_lock(काष्ठा bttv_fh *fh, काष्ठा v4l2_winकरोw *win,
+			 पूर्णांक adjust_size, पूर्णांक adjust_crop)
+अणु
+	क्रमागत v4l2_field field;
+	अचिन्हित पूर्णांक width_mask;
 
-	if (win->w.width < 48)
+	अगर (win->w.width < 48)
 		win->w.width = 48;
-	if (win->w.height < 32)
+	अगर (win->w.height < 32)
 		win->w.height = 32;
-	if (win->clipcount > 2048)
+	अगर (win->clipcount > 2048)
 		win->clipcount = 2048;
 
 	win->chromakey = 0;
 	win->global_alpha = 0;
 	field = win->field;
 
-	switch (field) {
-	case V4L2_FIELD_TOP:
-	case V4L2_FIELD_BOTTOM:
-	case V4L2_FIELD_INTERLACED:
-		break;
-	default:
+	चयन (field) अणु
+	हाल V4L2_FIELD_TOP:
+	हाल V4L2_FIELD_BOTTOM:
+	हाल V4L2_FIELD_INTERLACED:
+		अवरोध;
+	शेष:
 		field = V4L2_FIELD_ANY;
-		break;
-	}
-	if (V4L2_FIELD_ANY == field) {
+		अवरोध;
+	पूर्ण
+	अगर (V4L2_FIELD_ANY == field) अणु
 		__s32 height2;
 
-		height2 = fh->btv->crop[!!fh->do_crop].rect.height >> 1;
+		height2 = fh->btv->crop[!!fh->करो_crop].rect.height >> 1;
 		field = (win->w.height > height2)
 			? V4L2_FIELD_INTERLACED
 			: V4L2_FIELD_TOP;
-	}
+	पूर्ण
 	win->field = field;
 
-	if (NULL == fh->ovfmt)
-		return -EINVAL;
+	अगर (शून्य == fh->ovfmt)
+		वापस -EINVAL;
 	/* 4-byte alignment. */
 	width_mask = ~0;
-	switch (fh->ovfmt->depth) {
-	case 8:
-	case 24:
+	चयन (fh->ovfmt->depth) अणु
+	हाल 8:
+	हाल 24:
 		width_mask = ~3;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		width_mask = ~1;
-		break;
-	case 32:
-		break;
-	default:
+		अवरोध;
+	हाल 32:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	win->w.width -= win->w.left & ~width_mask;
 	win->w.left = (win->w.left - width_mask - 1) & width_mask;
 
-	return limit_scaled_size_lock(fh, &win->w.width, &win->w.height,
+	वापस limit_scaled_size_lock(fh, &win->w.width, &win->w.height,
 				      field, width_mask,
-				      /* width_bias: round down */ 0,
+				      /* width_bias: round करोwn */ 0,
 				      adjust_size, adjust_crop);
-}
+पूर्ण
 
-static int setup_window_lock(struct bttv_fh *fh, struct bttv *btv,
-			struct v4l2_window *win, int fixup)
-{
-	struct v4l2_clip *clips = NULL;
-	int n,size,retval = 0;
+अटल पूर्णांक setup_winकरोw_lock(काष्ठा bttv_fh *fh, काष्ठा bttv *btv,
+			काष्ठा v4l2_winकरोw *win, पूर्णांक fixup)
+अणु
+	काष्ठा v4l2_clip *clips = शून्य;
+	पूर्णांक n,size,retval = 0;
 
-	if (NULL == fh->ovfmt)
-		return -EINVAL;
-	if (!(fh->ovfmt->flags & FORMAT_FLAGS_PACKED))
-		return -EINVAL;
-	retval = verify_window_lock(fh, win,
+	अगर (शून्य == fh->ovfmt)
+		वापस -EINVAL;
+	अगर (!(fh->ovfmt->flags & FORMAT_FLAGS_PACKED))
+		वापस -EINVAL;
+	retval = verअगरy_winकरोw_lock(fh, win,
 			       /* adjust_size */ fixup,
 			       /* adjust_crop */ fixup);
-	if (0 != retval)
-		return retval;
+	अगर (0 != retval)
+		वापस retval;
 
 	/* copy clips  --  luckily v4l1 + v4l2 are binary
 	   compatible here ...*/
 	n = win->clipcount;
-	size = sizeof(*clips)*(n+4);
-	clips = kmalloc(size,GFP_KERNEL);
-	if (NULL == clips)
-		return -ENOMEM;
-	if (n > 0)
-		memcpy(clips, win->clips, sizeof(struct v4l2_clip) * n);
+	size = माप(*clips)*(n+4);
+	clips = kदो_स्मृति(size,GFP_KERNEL);
+	अगर (शून्य == clips)
+		वापस -ENOMEM;
+	अगर (n > 0)
+		स_नकल(clips, win->clips, माप(काष्ठा v4l2_clip) * n);
 
 	/* clip against screen */
-	if (NULL != btv->fbuf.base)
+	अगर (शून्य != btv->fbuf.base)
 		n = btcx_screen_clips(btv->fbuf.fmt.width, btv->fbuf.fmt.height,
 				      &win->w, clips, n);
 	btcx_sort_clips(clips,n);
 
 	/* 4-byte alignments */
-	switch (fh->ovfmt->depth) {
-	case 8:
-	case 24:
+	चयन (fh->ovfmt->depth) अणु
+	हाल 8:
+	हाल 24:
 		btcx_align(&win->w, clips, n, 3);
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		btcx_align(&win->w, clips, n, 1);
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		/* no alignment fixups needed */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	kfree(fh->ov.clips);
+	kमुक्त(fh->ov.clips);
 	fh->ov.clips    = clips;
 	fh->ov.nclips   = n;
 
@@ -2176,162 +2177,162 @@ static int setup_window_lock(struct bttv_fh *fh, struct bttv *btv,
 	btv->init.ov.w.height  = win->w.height;
 	btv->init.ov.field     = win->field;
 
-	/* update overlay if needed */
+	/* update overlay अगर needed */
 	retval = 0;
-	if (check_btres(fh, RESOURCE_OVERLAY)) {
-		struct bttv_buffer *new;
+	अगर (check_btres(fh, RESOURCE_OVERLAY)) अणु
+		काष्ठा bttv_buffer *new;
 
-		new = videobuf_sg_alloc(sizeof(*new));
-		new->crop = btv->crop[!!fh->do_crop].rect;
+		new = videobuf_sg_alloc(माप(*new));
+		new->crop = btv->crop[!!fh->करो_crop].rect;
 		bttv_overlay_risc(btv, &fh->ov, fh->ovfmt, new);
-		retval = bttv_switch_overlay(btv,fh,new);
-	}
-	return retval;
-}
+		retval = bttv_चयन_overlay(btv,fh,new);
+	पूर्ण
+	वापस retval;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static struct videobuf_queue* bttv_queue(struct bttv_fh *fh)
-{
-	struct videobuf_queue* q = NULL;
+अटल काष्ठा videobuf_queue* bttv_queue(काष्ठा bttv_fh *fh)
+अणु
+	काष्ठा videobuf_queue* q = शून्य;
 
-	switch (fh->type) {
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	चयन (fh->type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		q = &fh->cap;
-		break;
-	case V4L2_BUF_TYPE_VBI_CAPTURE:
+		अवरोध;
+	हाल V4L2_BUF_TYPE_VBI_CAPTURE:
 		q = &fh->vbi;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return q;
-}
+	पूर्ण
+	वापस q;
+पूर्ण
 
-static int bttv_resource(struct bttv_fh *fh)
-{
-	int res = 0;
+अटल पूर्णांक bttv_resource(काष्ठा bttv_fh *fh)
+अणु
+	पूर्णांक res = 0;
 
-	switch (fh->type) {
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
+	चयन (fh->type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
 		res = RESOURCE_VIDEO_STREAM;
-		break;
-	case V4L2_BUF_TYPE_VBI_CAPTURE:
+		अवरोध;
+	हाल V4L2_BUF_TYPE_VBI_CAPTURE:
 		res = RESOURCE_VBI;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-static int bttv_switch_type(struct bttv_fh *fh, enum v4l2_buf_type type)
-{
-	struct videobuf_queue *q = bttv_queue(fh);
-	int res = bttv_resource(fh);
+अटल पूर्णांक bttv_चयन_type(काष्ठा bttv_fh *fh, क्रमागत v4l2_buf_type type)
+अणु
+	काष्ठा videobuf_queue *q = bttv_queue(fh);
+	पूर्णांक res = bttv_resource(fh);
 
-	if (check_btres(fh,res))
-		return -EBUSY;
-	if (videobuf_queue_is_busy(q))
-		return -EBUSY;
+	अगर (check_btres(fh,res))
+		वापस -EBUSY;
+	अगर (videobuf_queue_is_busy(q))
+		वापस -EBUSY;
 	fh->type = type;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-pix_format_set_size     (struct v4l2_pix_format *       f,
-			 const struct bttv_format *     fmt,
-			 unsigned int                   width,
-			 unsigned int                   height)
-{
+अटल व्योम
+pix_क्रमmat_set_size     (काष्ठा v4l2_pix_क्रमmat *       f,
+			 स्थिर काष्ठा bttv_क्रमmat *     fmt,
+			 अचिन्हित पूर्णांक                   width,
+			 अचिन्हित पूर्णांक                   height)
+अणु
 	f->width = width;
 	f->height = height;
 
-	if (fmt->flags & FORMAT_FLAGS_PLANAR) {
+	अगर (fmt->flags & FORMAT_FLAGS_PLANAR) अणु
 		f->bytesperline = width; /* Y plane */
 		f->sizeimage = (width * height * fmt->depth) >> 3;
-	} else {
+	पूर्ण अन्यथा अणु
 		f->bytesperline = (width * fmt->depth) >> 3;
 		f->sizeimage = height * f->bytesperline;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bttv_g_fmt_vid_cap(struct file *file, void *priv,
-					struct v4l2_format *f)
-{
-	struct bttv_fh *fh  = priv;
+अटल पूर्णांक bttv_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
 
-	pix_format_set_size(&f->fmt.pix, fh->fmt,
+	pix_क्रमmat_set_size(&f->fmt.pix, fh->fmt,
 				fh->width, fh->height);
 	f->fmt.pix.field        = fh->cap.field;
-	f->fmt.pix.pixelformat  = fh->fmt->fourcc;
+	f->fmt.pix.pixelक्रमmat  = fh->fmt->fourcc;
 	f->fmt.pix.colorspace   = V4L2_COLORSPACE_SMPTE170M;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_fmt_vid_overlay(struct file *file, void *priv,
-					struct v4l2_format *f)
-{
-	struct bttv_fh *fh  = priv;
+अटल पूर्णांक bttv_g_fmt_vid_overlay(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा bttv_fh *fh  = priv;
 
 	f->fmt.win.w     = fh->ov.w;
 	f->fmt.win.field = fh->ov.field;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bttv_get_width_mask_vid_cap(const struct bttv_format *fmt,
-					unsigned int *width_mask,
-					unsigned int *width_bias)
-{
-	if (fmt->flags & FORMAT_FLAGS_PLANAR) {
+अटल व्योम bttv_get_width_mask_vid_cap(स्थिर काष्ठा bttv_क्रमmat *fmt,
+					अचिन्हित पूर्णांक *width_mask,
+					अचिन्हित पूर्णांक *width_bias)
+अणु
+	अगर (fmt->flags & FORMAT_FLAGS_PLANAR) अणु
 		*width_mask = ~15; /* width must be a multiple of 16 pixels */
 		*width_bias = 8;   /* nearest */
-	} else {
+	पूर्ण अन्यथा अणु
 		*width_mask = ~3; /* width must be a multiple of 4 pixels */
 		*width_bias = 2;  /* nearest */
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bttv_try_fmt_vid_cap(struct file *file, void *priv,
-						struct v4l2_format *f)
-{
-	const struct bttv_format *fmt;
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
-	enum v4l2_field field;
+अटल पूर्णांक bttv_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+						काष्ठा v4l2_क्रमmat *f)
+अणु
+	स्थिर काष्ठा bttv_क्रमmat *fmt;
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
+	क्रमागत v4l2_field field;
 	__s32 width, height;
 	__s32 height2;
-	unsigned int width_mask, width_bias;
-	int rc;
+	अचिन्हित पूर्णांक width_mask, width_bias;
+	पूर्णांक rc;
 
-	fmt = format_by_fourcc(f->fmt.pix.pixelformat);
-	if (NULL == fmt)
-		return -EINVAL;
+	fmt = क्रमmat_by_fourcc(f->fmt.pix.pixelक्रमmat);
+	अगर (शून्य == fmt)
+		वापस -EINVAL;
 
 	field = f->fmt.pix.field;
 
-	switch (field) {
-	case V4L2_FIELD_TOP:
-	case V4L2_FIELD_BOTTOM:
-	case V4L2_FIELD_ALTERNATE:
-	case V4L2_FIELD_INTERLACED:
-		break;
-	case V4L2_FIELD_SEQ_BT:
-	case V4L2_FIELD_SEQ_TB:
-		if (!(fmt->flags & FORMAT_FLAGS_PLANAR)) {
+	चयन (field) अणु
+	हाल V4L2_FIELD_TOP:
+	हाल V4L2_FIELD_BOTTOM:
+	हाल V4L2_FIELD_ALTERNATE:
+	हाल V4L2_FIELD_INTERLACED:
+		अवरोध;
+	हाल V4L2_FIELD_SEQ_BT:
+	हाल V4L2_FIELD_SEQ_TB:
+		अगर (!(fmt->flags & FORMAT_FLAGS_PLANAR)) अणु
 			field = V4L2_FIELD_SEQ_TB;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default: /* FIELD_ANY case */
-		height2 = btv->crop[!!fh->do_crop].rect.height >> 1;
+	शेष: /* FIELD_ANY हाल */
+		height2 = btv->crop[!!fh->करो_crop].rect.height >> 1;
 		field = (f->fmt.pix.height > height2)
 			? V4L2_FIELD_INTERLACED
 			: V4L2_FIELD_BOTTOM;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	width = f->fmt.pix.width;
 	height = f->fmt.pix.height;
@@ -2341,63 +2342,63 @@ static int bttv_try_fmt_vid_cap(struct file *file, void *priv,
 			       width_mask, width_bias,
 			       /* adjust_size */ 1,
 			       /* adjust_crop */ 0);
-	if (0 != rc)
-		return rc;
+	अगर (0 != rc)
+		वापस rc;
 
-	/* update data for the application */
+	/* update data क्रम the application */
 	f->fmt.pix.field = field;
-	pix_format_set_size(&f->fmt.pix, fmt, width, height);
+	pix_क्रमmat_set_size(&f->fmt.pix, fmt, width, height);
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_try_fmt_vid_overlay(struct file *file, void *priv,
-						struct v4l2_format *f)
-{
-	struct bttv_fh *fh = priv;
+अटल पूर्णांक bttv_try_fmt_vid_overlay(काष्ठा file *file, व्योम *priv,
+						काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा bttv_fh *fh = priv;
 
-	verify_window_lock(fh, &f->fmt.win,
+	verअगरy_winकरोw_lock(fh, &f->fmt.win,
 			/* adjust_size */ 1,
 			/* adjust_crop */ 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	int retval;
-	const struct bttv_format *fmt;
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक retval;
+	स्थिर काष्ठा bttv_क्रमmat *fmt;
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 	__s32 width, height;
-	unsigned int width_mask, width_bias;
-	enum v4l2_field field;
+	अचिन्हित पूर्णांक width_mask, width_bias;
+	क्रमागत v4l2_field field;
 
-	retval = bttv_switch_type(fh, f->type);
-	if (0 != retval)
-		return retval;
+	retval = bttv_चयन_type(fh, f->type);
+	अगर (0 != retval)
+		वापस retval;
 
 	retval = bttv_try_fmt_vid_cap(file, priv, f);
-	if (0 != retval)
-		return retval;
+	अगर (0 != retval)
+		वापस retval;
 
 	width = f->fmt.pix.width;
 	height = f->fmt.pix.height;
 	field = f->fmt.pix.field;
 
-	fmt = format_by_fourcc(f->fmt.pix.pixelformat);
+	fmt = क्रमmat_by_fourcc(f->fmt.pix.pixelक्रमmat);
 	bttv_get_width_mask_vid_cap(fmt, &width_mask, &width_bias);
 	retval = limit_scaled_size_lock(fh, &width, &height, f->fmt.pix.field,
 			       width_mask, width_bias,
 			       /* adjust_size */ 1,
 			       /* adjust_crop */ 1);
-	if (0 != retval)
-		return retval;
+	अगर (0 != retval)
+		वापस retval;
 
 	f->fmt.pix.field = field;
 
-	/* update our state information */
+	/* update our state inक्रमmation */
 	fh->fmt              = fmt;
 	fh->cap.field        = f->fmt.pix.field;
 	fh->cap.last         = V4L2_FIELD_NONE;
@@ -2407,181 +2408,181 @@ static int bttv_s_fmt_vid_cap(struct file *file, void *priv,
 	btv->init.width      = f->fmt.pix.width;
 	btv->init.height     = f->fmt.pix.height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_fmt_vid_overlay(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_s_fmt_vid_overlay(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (no_overlay > 0) {
+	अगर (no_overlay > 0) अणु
 		pr_err("V4L2_BUF_TYPE_VIDEO_OVERLAY: no_overlay\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return setup_window_lock(fh, btv, &f->fmt.win, 1);
-}
+	वापस setup_winकरोw_lock(fh, btv, &f->fmt.win, 1);
+पूर्ण
 
-static int bttv_querycap(struct file *file, void  *priv,
-				struct v4l2_capability *cap)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_querycap(काष्ठा file *file, व्योम  *priv,
+				काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (0 == v4l2)
-		return -EINVAL;
+	अगर (0 == v4l2)
+		वापस -EINVAL;
 
-	strscpy(cap->driver, "bttv", sizeof(cap->driver));
-	strscpy(cap->card, btv->video_dev.name, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+	strscpy(cap->driver, "bttv", माप(cap->driver));
+	strscpy(cap->card, btv->video_dev.name, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "PCI:%s", pci_name(btv->c.pci));
 	cap->capabilities = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_READWRITE |
 			    V4L2_CAP_STREAMING | V4L2_CAP_DEVICE_CAPS;
-	if (no_overlay <= 0)
+	अगर (no_overlay <= 0)
 		cap->capabilities |= V4L2_CAP_VIDEO_OVERLAY;
-	if (video_is_registered(&btv->vbi_dev))
+	अगर (video_is_रेजिस्टरed(&btv->vbi_dev))
 		cap->capabilities |= V4L2_CAP_VBI_CAPTURE;
-	if (video_is_registered(&btv->radio_dev)) {
+	अगर (video_is_रेजिस्टरed(&btv->radio_dev)) अणु
 		cap->capabilities |= V4L2_CAP_RADIO;
-		if (btv->has_tea575x)
+		अगर (btv->has_tea575x)
 			cap->capabilities |= V4L2_CAP_HW_FREQ_SEEK;
-	}
+	पूर्ण
 
 	/*
 	 * No need to lock here: those vars are initialized during board
-	 * probe and remains untouched during the rest of the driver lifecycle
+	 * probe and reमुख्यs untouched during the rest of the driver lअगरecycle
 	 */
-	if (btv->has_saa6588)
+	अगर (btv->has_saa6588)
 		cap->capabilities |= V4L2_CAP_RDS_CAPTURE;
-	if (btv->tuner_type != TUNER_ABSENT)
+	अगर (btv->tuner_type != TUNER_ABSENT)
 		cap->capabilities |= V4L2_CAP_TUNER;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_enum_fmt_cap_ovr(struct v4l2_fmtdesc *f)
-{
-	int index = -1, i;
+अटल पूर्णांक bttv_क्रमागत_fmt_cap_ovr(काष्ठा v4l2_fmtdesc *f)
+अणु
+	पूर्णांक index = -1, i;
 
-	for (i = 0; i < FORMATS; i++) {
-		if (formats[i].fourcc != -1)
+	क्रम (i = 0; i < FORMATS; i++) अणु
+		अगर (क्रमmats[i].fourcc != -1)
 			index++;
-		if ((unsigned int)index == f->index)
-			break;
-	}
-	if (FORMATS == i)
-		return -EINVAL;
+		अगर ((अचिन्हित पूर्णांक)index == f->index)
+			अवरोध;
+	पूर्ण
+	अगर (FORMATS == i)
+		वापस -EINVAL;
 
-	f->pixelformat = formats[i].fourcc;
+	f->pixelक्रमmat = क्रमmats[i].fourcc;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int bttv_enum_fmt_vid_cap(struct file *file, void  *priv,
-				struct v4l2_fmtdesc *f)
-{
-	int rc = bttv_enum_fmt_cap_ovr(f);
+अटल पूर्णांक bttv_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम  *priv,
+				काष्ठा v4l2_fmtdesc *f)
+अणु
+	पूर्णांक rc = bttv_क्रमागत_fmt_cap_ovr(f);
 
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_enum_fmt_vid_overlay(struct file *file, void  *priv,
-					struct v4l2_fmtdesc *f)
-{
-	int rc;
+अटल पूर्णांक bttv_क्रमागत_fmt_vid_overlay(काष्ठा file *file, व्योम  *priv,
+					काष्ठा v4l2_fmtdesc *f)
+अणु
+	पूर्णांक rc;
 
-	if (no_overlay > 0) {
+	अगर (no_overlay > 0) अणु
 		pr_err("V4L2_BUF_TYPE_VIDEO_OVERLAY: no_overlay\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rc = bttv_enum_fmt_cap_ovr(f);
+	rc = bttv_क्रमागत_fmt_cap_ovr(f);
 
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (!(formats[rc].flags & FORMAT_FLAGS_PACKED))
-		return -EINVAL;
+	अगर (!(क्रमmats[rc].flags & FORMAT_FLAGS_PACKED))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_fbuf(struct file *file, void *f,
-				struct v4l2_framebuffer *fb)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_fbuf(काष्ठा file *file, व्योम *f,
+				काष्ठा v4l2_framebuffer *fb)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
 	*fb = btv->fbuf;
 	fb->capability = V4L2_FBUF_CAP_LIST_CLIPPING;
 	fb->flags = V4L2_FBUF_FLAG_PRIMARY;
-	if (fh->ovfmt)
-		fb->fmt.pixelformat  = fh->ovfmt->fourcc;
-	return 0;
-}
+	अगर (fh->ovfmt)
+		fb->fmt.pixelक्रमmat  = fh->ovfmt->fourcc;
+	वापस 0;
+पूर्ण
 
-static int bttv_overlay(struct file *file, void *f, unsigned int on)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
-	struct bttv_buffer *new;
-	int retval = 0;
+अटल पूर्णांक bttv_overlay(काष्ठा file *file, व्योम *f, अचिन्हित पूर्णांक on)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
+	काष्ठा bttv_buffer *new;
+	पूर्णांक retval = 0;
 
-	if (on) {
-		/* verify args */
-		if (unlikely(!btv->fbuf.base)) {
-			return -EINVAL;
-		}
-		if (unlikely(!fh->ov.setup_ok)) {
-			dprintk("%d: overlay: !setup_ok\n", btv->c.nr);
+	अगर (on) अणु
+		/* verअगरy args */
+		अगर (unlikely(!btv->fbuf.base)) अणु
+			वापस -EINVAL;
+		पूर्ण
+		अगर (unlikely(!fh->ov.setup_ok)) अणु
+			dprपूर्णांकk("%d: overlay: !setup_ok\n", btv->c.nr);
 			retval = -EINVAL;
-		}
-		if (retval)
-			return retval;
-	}
+		पूर्ण
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	if (!check_alloc_btres_lock(btv, fh, RESOURCE_OVERLAY))
-		return -EBUSY;
+	अगर (!check_alloc_btres_lock(btv, fh, RESOURCE_OVERLAY))
+		वापस -EBUSY;
 
-	if (on) {
+	अगर (on) अणु
 		fh->ov.tvnorm = btv->tvnorm;
-		new = videobuf_sg_alloc(sizeof(*new));
-		new->crop = btv->crop[!!fh->do_crop].rect;
+		new = videobuf_sg_alloc(माप(*new));
+		new->crop = btv->crop[!!fh->करो_crop].rect;
 		bttv_overlay_risc(btv, &fh->ov, fh->ovfmt, new);
-	} else {
-		new = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		new = शून्य;
+	पूर्ण
 
-	/* switch over */
-	retval = bttv_switch_overlay(btv, fh, new);
-	return retval;
-}
+	/* चयन over */
+	retval = bttv_चयन_overlay(btv, fh, new);
+	वापस retval;
+पूर्ण
 
-static int bttv_s_fbuf(struct file *file, void *f,
-				const struct v4l2_framebuffer *fb)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
-	const struct bttv_format *fmt;
-	int retval;
+अटल पूर्णांक bttv_s_fbuf(काष्ठा file *file, व्योम *f,
+				स्थिर काष्ठा v4l2_framebuffer *fb)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
+	स्थिर काष्ठा bttv_क्रमmat *fmt;
+	पूर्णांक retval;
 
-	if (!capable(CAP_SYS_ADMIN) &&
+	अगर (!capable(CAP_SYS_ADMIN) &&
 		!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+		वापस -EPERM;
 
 	/* check args */
-	fmt = format_by_fourcc(fb->fmt.pixelformat);
-	if (NULL == fmt)
-		return -EINVAL;
-	if (0 == (fmt->flags & FORMAT_FLAGS_PACKED))
-		return -EINVAL;
+	fmt = क्रमmat_by_fourcc(fb->fmt.pixelक्रमmat);
+	अगर (शून्य == fmt)
+		वापस -EINVAL;
+	अगर (0 == (fmt->flags & FORMAT_FLAGS_PACKED))
+		वापस -EINVAL;
 
 	retval = -EINVAL;
-	if (fb->flags & V4L2_FBUF_FLAG_OVERLAY) {
+	अगर (fb->flags & V4L2_FBUF_FLAG_OVERLAY) अणु
 		__s32 width = fb->fmt.width;
 		__s32 height = fb->fmt.height;
 
@@ -2591,23 +2592,23 @@ static int bttv_s_fbuf(struct file *file, void *f,
 					   /* width_bias */ 2,
 					   /* adjust_size */ 0,
 					   /* adjust_crop */ 0);
-		if (0 != retval)
-			return retval;
-	}
+		अगर (0 != retval)
+			वापस retval;
+	पूर्ण
 
 	/* ok, accept it */
 	btv->fbuf.base       = fb->base;
 	btv->fbuf.fmt.width  = fb->fmt.width;
 	btv->fbuf.fmt.height = fb->fmt.height;
-	if (0 != fb->fmt.bytesperline)
+	अगर (0 != fb->fmt.bytesperline)
 		btv->fbuf.fmt.bytesperline = fb->fmt.bytesperline;
-	else
+	अन्यथा
 		btv->fbuf.fmt.bytesperline = btv->fbuf.fmt.width*fmt->depth/8;
 
 	retval = 0;
 	fh->ovfmt = fmt;
 	btv->init.ovfmt = fmt;
-	if (fb->flags & V4L2_FBUF_FLAG_OVERLAY) {
+	अगर (fb->flags & V4L2_FBUF_FLAG_OVERLAY) अणु
 		fh->ov.w.left   = 0;
 		fh->ov.w.top    = 0;
 		fh->ov.w.width  = fb->fmt.width;
@@ -2615,194 +2616,194 @@ static int bttv_s_fbuf(struct file *file, void *f,
 		btv->init.ov.w.width  = fb->fmt.width;
 		btv->init.ov.w.height = fb->fmt.height;
 
-		kfree(fh->ov.clips);
-		fh->ov.clips = NULL;
+		kमुक्त(fh->ov.clips);
+		fh->ov.clips = शून्य;
 		fh->ov.nclips = 0;
 
-		if (check_btres(fh, RESOURCE_OVERLAY)) {
-			struct bttv_buffer *new;
+		अगर (check_btres(fh, RESOURCE_OVERLAY)) अणु
+			काष्ठा bttv_buffer *new;
 
-			new = videobuf_sg_alloc(sizeof(*new));
-			new->crop = btv->crop[!!fh->do_crop].rect;
+			new = videobuf_sg_alloc(माप(*new));
+			new->crop = btv->crop[!!fh->करो_crop].rect;
 			bttv_overlay_risc(btv, &fh->ov, fh->ovfmt, new);
-			retval = bttv_switch_overlay(btv, fh, new);
-		}
-	}
-	return retval;
-}
+			retval = bttv_चयन_overlay(btv, fh, new);
+		पूर्ण
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static int bttv_reqbufs(struct file *file, void *priv,
-				struct v4l2_requestbuffers *p)
-{
-	struct bttv_fh *fh = priv;
-	return videobuf_reqbufs(bttv_queue(fh), p);
-}
+अटल पूर्णांक bttv_reqbufs(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_requestbuffers *p)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	वापस videobuf_reqbufs(bttv_queue(fh), p);
+पूर्ण
 
-static int bttv_querybuf(struct file *file, void *priv,
-				struct v4l2_buffer *b)
-{
-	struct bttv_fh *fh = priv;
-	return videobuf_querybuf(bttv_queue(fh), b);
-}
+अटल पूर्णांक bttv_querybuf(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_buffer *b)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	वापस videobuf_querybuf(bttv_queue(fh), b);
+पूर्ण
 
-static int bttv_qbuf(struct file *file, void *priv, struct v4l2_buffer *b)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
-	int res = bttv_resource(fh);
+अटल पूर्णांक bttv_qbuf(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_buffer *b)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
+	पूर्णांक res = bttv_resource(fh);
 
-	if (!check_alloc_btres_lock(btv, fh, res))
-		return -EBUSY;
+	अगर (!check_alloc_btres_lock(btv, fh, res))
+		वापस -EBUSY;
 
-	return videobuf_qbuf(bttv_queue(fh), b);
-}
+	वापस videobuf_qbuf(bttv_queue(fh), b);
+पूर्ण
 
-static int bttv_dqbuf(struct file *file, void *priv, struct v4l2_buffer *b)
-{
-	struct bttv_fh *fh = priv;
-	return videobuf_dqbuf(bttv_queue(fh), b,
+अटल पूर्णांक bttv_dqbuf(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_buffer *b)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	वापस videobuf_dqbuf(bttv_queue(fh), b,
 			file->f_flags & O_NONBLOCK);
-}
+पूर्ण
 
-static int bttv_streamon(struct file *file, void *priv,
-					enum v4l2_buf_type type)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
-	int res = bttv_resource(fh);
+अटल पूर्णांक bttv_streamon(काष्ठा file *file, व्योम *priv,
+					क्रमागत v4l2_buf_type type)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
+	पूर्णांक res = bttv_resource(fh);
 
-	if (!check_alloc_btres_lock(btv, fh, res))
-		return -EBUSY;
-	return videobuf_streamon(bttv_queue(fh));
-}
+	अगर (!check_alloc_btres_lock(btv, fh, res))
+		वापस -EBUSY;
+	वापस videobuf_streamon(bttv_queue(fh));
+पूर्ण
 
 
-static int bttv_streamoff(struct file *file, void *priv,
-					enum v4l2_buf_type type)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
-	int retval;
-	int res = bttv_resource(fh);
+अटल पूर्णांक bttv_streamoff(काष्ठा file *file, व्योम *priv,
+					क्रमागत v4l2_buf_type type)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
+	पूर्णांक retval;
+	पूर्णांक res = bttv_resource(fh);
 
 
 	retval = videobuf_streamoff(bttv_queue(fh));
-	if (retval < 0)
-		return retval;
-	free_btres_lock(btv, fh, res);
-	return 0;
-}
+	अगर (retval < 0)
+		वापस retval;
+	मुक्त_btres_lock(btv, fh, res);
+	वापस 0;
+पूर्ण
 
-static int bttv_g_parm(struct file *file, void *f,
-				struct v4l2_streamparm *parm)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_parm(काष्ठा file *file, व्योम *f,
+				काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
-	parm->parm.capture.readbuffers = gbuffers;
+	अगर (parm->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
+	parm->parm.capture.पढ़ोbuffers = gbuffers;
 	v4l2_video_std_frame_period(bttv_tvnorms[btv->tvnorm].v4l2_id,
-				    &parm->parm.capture.timeperframe);
+				    &parm->parm.capture.समयperframe);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_tuner(struct file *file, void *priv,
-				struct v4l2_tuner *t)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_tuner(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_tuner *t)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (0 != t->index)
-		return -EINVAL;
+	अगर (0 != t->index)
+		वापस -EINVAL;
 
 	t->rxsubchans = V4L2_TUNER_SUB_MONO;
 	t->capability = V4L2_TUNER_CAP_NORM;
 	bttv_call_all(btv, tuner, g_tuner, t);
-	strscpy(t->name, "Television", sizeof(t->name));
+	strscpy(t->name, "Television", माप(t->name));
 	t->type       = V4L2_TUNER_ANALOG_TV;
-	if (btread(BT848_DSTATUS)&BT848_DSTATUS_HLOC)
-		t->signal = 0xffff;
+	अगर (btपढ़ो(BT848_DSTATUS)&BT848_DSTATUS_HLOC)
+		t->संकेत = 0xffff;
 
-	if (btv->audio_mode_gpio)
+	अगर (btv->audio_mode_gpio)
 		btv->audio_mode_gpio(btv, t, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_pixelaspect(struct file *file, void *priv,
-			      int type, struct v4l2_fract *f)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_pixelaspect(काष्ठा file *file, व्योम *priv,
+			      पूर्णांक type, काष्ठा v4l2_fract *f)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
 	/* defrect and bounds are set via g_selection */
 	*f = bttv_tvnorms[btv->tvnorm].cropcap.pixelaspect;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_g_selection(struct file *file, void *f, struct v4l2_selection *sel)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_g_selection(काष्ठा file *file, व्योम *f, काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 	    sel->type != V4L2_BUF_TYPE_VIDEO_OVERLAY)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	switch (sel->target) {
-	case V4L2_SEL_TGT_CROP:
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_CROP:
 		/*
-		 * No fh->do_crop = 1; because btv->crop[1] may be
+		 * No fh->करो_crop = 1; because btv->crop[1] may be
 		 * inconsistent with fh->width or fh->height and apps
-		 * do not expect a change here.
+		 * करो not expect a change here.
 		 */
-		sel->r = btv->crop[!!fh->do_crop].rect;
-		break;
-	case V4L2_SEL_TGT_CROP_DEFAULT:
+		sel->r = btv->crop[!!fh->करो_crop].rect;
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
 		sel->r = bttv_tvnorms[btv->tvnorm].cropcap.defrect;
-		break;
-	case V4L2_SEL_TGT_CROP_BOUNDS:
+		अवरोध;
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
 		sel->r = bttv_tvnorms[btv->tvnorm].cropcap.bounds;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_s_selection(struct file *file, void *f, struct v4l2_selection *sel)
-{
-	struct bttv_fh *fh = f;
-	struct bttv *btv = fh->btv;
-	const struct v4l2_rect *b;
-	int retval;
-	struct bttv_crop c;
+अटल पूर्णांक bttv_s_selection(काष्ठा file *file, व्योम *f, काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा bttv_fh *fh = f;
+	काष्ठा bttv *btv = fh->btv;
+	स्थिर काष्ठा v4l2_rect *b;
+	पूर्णांक retval;
+	काष्ठा bttv_crop c;
 	__s32 b_left;
 	__s32 b_top;
 	__s32 b_right;
 	__s32 b_bottom;
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_CAPTURE &&
 	    sel->type != V4L2_BUF_TYPE_VIDEO_OVERLAY)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (sel->target != V4L2_SEL_TGT_CROP)
-		return -EINVAL;
+	अगर (sel->target != V4L2_SEL_TGT_CROP)
+		वापस -EINVAL;
 
 	/* Make sure tvnorm, vbi_end and the current cropping
-	   parameters remain consistent until we're done. Note
-	   read() may change vbi_end in check_alloc_btres_lock(). */
+	   parameters reमुख्य consistent until we're करोne. Note
+	   पढ़ो() may change vbi_end in check_alloc_btres_lock(). */
 	retval = -EBUSY;
 
-	if (locked_btres(fh->btv, VIDEO_RESOURCES)) {
-		return retval;
-	}
+	अगर (locked_btres(fh->btv, VIDEO_RESOURCES)) अणु
+		वापस retval;
+	पूर्ण
 
 	b = &bttv_tvnorms[btv->tvnorm].cropcap.bounds;
 
@@ -2811,9 +2812,9 @@ static int bttv_s_selection(struct file *file, void *f, struct v4l2_selection *s
 	b_bottom = b->top + b->height;
 
 	b_top = max(b->top, btv->vbi_end);
-	if (b_top + 32 >= b_bottom) {
-		return retval;
-	}
+	अगर (b_top + 32 >= b_bottom) अणु
+		वापस retval;
+	पूर्ण
 
 	/* Min. scaled size 48 x 32. */
 	c.rect.left = clamp_t(s32, sel->r.left, b_left, b_right - 48);
@@ -2836,144 +2837,144 @@ static int bttv_s_selection(struct file *file, void *f, struct v4l2_selection *s
 
 	btv->crop[1] = c;
 
-	fh->do_crop = 1;
+	fh->करो_crop = 1;
 
-	if (fh->width < c.min_scaled_width) {
+	अगर (fh->width < c.min_scaled_width) अणु
 		fh->width = c.min_scaled_width;
 		btv->init.width = c.min_scaled_width;
-	} else if (fh->width > c.max_scaled_width) {
+	पूर्ण अन्यथा अगर (fh->width > c.max_scaled_width) अणु
 		fh->width = c.max_scaled_width;
 		btv->init.width = c.max_scaled_width;
-	}
+	पूर्ण
 
-	if (fh->height < c.min_scaled_height) {
+	अगर (fh->height < c.min_scaled_height) अणु
 		fh->height = c.min_scaled_height;
 		btv->init.height = c.min_scaled_height;
-	} else if (fh->height > c.max_scaled_height) {
+	पूर्ण अन्यथा अगर (fh->height > c.max_scaled_height) अणु
 		fh->height = c.max_scaled_height;
 		btv->init.height = c.max_scaled_height;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t bttv_read(struct file *file, char __user *data,
-			 size_t count, loff_t *ppos)
-{
-	struct bttv_fh *fh = file->private_data;
-	int retval = 0;
+अटल sमाप_प्रकार bttv_पढ़ो(काष्ठा file *file, अक्षर __user *data,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	पूर्णांक retval = 0;
 
-	if (fh->btv->errors)
+	अगर (fh->btv->errors)
 		bttv_reinit_bt848(fh->btv);
-	dprintk("%d: read count=%d type=%s\n",
-		fh->btv->c.nr, (int)count, v4l2_type_names[fh->type]);
+	dprपूर्णांकk("%d: read count=%d type=%s\n",
+		fh->btv->c.nr, (पूर्णांक)count, v4l2_type_names[fh->type]);
 
-	switch (fh->type) {
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		if (!check_alloc_btres_lock(fh->btv, fh, RESOURCE_VIDEO_READ)) {
+	चयन (fh->type) अणु
+	हाल V4L2_BUF_TYPE_VIDEO_CAPTURE:
+		अगर (!check_alloc_btres_lock(fh->btv, fh, RESOURCE_VIDEO_READ)) अणु
 			/* VIDEO_READ in use by another fh,
 			   or VIDEO_STREAM by any fh. */
-			return -EBUSY;
-		}
-		retval = videobuf_read_one(&fh->cap, data, count, ppos,
+			वापस -EBUSY;
+		पूर्ण
+		retval = videobuf_पढ़ो_one(&fh->cap, data, count, ppos,
 					   file->f_flags & O_NONBLOCK);
-		free_btres_lock(fh->btv, fh, RESOURCE_VIDEO_READ);
-		break;
-	case V4L2_BUF_TYPE_VBI_CAPTURE:
-		if (!check_alloc_btres_lock(fh->btv,fh,RESOURCE_VBI))
-			return -EBUSY;
-		retval = videobuf_read_stream(&fh->vbi, data, count, ppos, 1,
+		मुक्त_btres_lock(fh->btv, fh, RESOURCE_VIDEO_READ);
+		अवरोध;
+	हाल V4L2_BUF_TYPE_VBI_CAPTURE:
+		अगर (!check_alloc_btres_lock(fh->btv,fh,RESOURCE_VBI))
+			वापस -EBUSY;
+		retval = videobuf_पढ़ो_stream(&fh->vbi, data, count, ppos, 1,
 					      file->f_flags & O_NONBLOCK);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static __poll_t bttv_poll(struct file *file, poll_table *wait)
-{
-	struct bttv_fh *fh = file->private_data;
-	struct bttv_buffer *buf;
-	enum v4l2_field field;
+अटल __poll_t bttv_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	काष्ठा bttv_buffer *buf;
+	क्रमागत v4l2_field field;
 	__poll_t rc = 0;
-	__poll_t req_events = poll_requested_events(wait);
+	__poll_t req_events = poll_requested_events(रुको);
 
-	if (v4l2_event_pending(&fh->fh))
+	अगर (v4l2_event_pending(&fh->fh))
 		rc = EPOLLPRI;
-	else if (req_events & EPOLLPRI)
-		poll_wait(file, &fh->fh.wait, wait);
+	अन्यथा अगर (req_events & EPOLLPRI)
+		poll_रुको(file, &fh->fh.रुको, रुको);
 
-	if (!(req_events & (EPOLLIN | EPOLLRDNORM)))
-		return rc;
+	अगर (!(req_events & (EPOLLIN | EPOLLRDNORM)))
+		वापस rc;
 
-	if (V4L2_BUF_TYPE_VBI_CAPTURE == fh->type) {
-		if (!check_alloc_btres_lock(fh->btv,fh,RESOURCE_VBI))
-			return rc | EPOLLERR;
-		return rc | videobuf_poll_stream(file, &fh->vbi, wait);
-	}
+	अगर (V4L2_BUF_TYPE_VBI_CAPTURE == fh->type) अणु
+		अगर (!check_alloc_btres_lock(fh->btv,fh,RESOURCE_VBI))
+			वापस rc | EPOLLERR;
+		वापस rc | videobuf_poll_stream(file, &fh->vbi, रुको);
+	पूर्ण
 
-	if (check_btres(fh,RESOURCE_VIDEO_STREAM)) {
+	अगर (check_btres(fh,RESOURCE_VIDEO_STREAM)) अणु
 		/* streaming capture */
-		if (list_empty(&fh->cap.stream))
-			return rc | EPOLLERR;
-		buf = list_entry(fh->cap.stream.next,struct bttv_buffer,vb.stream);
-	} else {
-		/* read() capture */
-		if (NULL == fh->cap.read_buf) {
+		अगर (list_empty(&fh->cap.stream))
+			वापस rc | EPOLLERR;
+		buf = list_entry(fh->cap.stream.next,काष्ठा bttv_buffer,vb.stream);
+	पूर्ण अन्यथा अणु
+		/* पढ़ो() capture */
+		अगर (शून्य == fh->cap.पढ़ो_buf) अणु
 			/* need to capture a new frame */
-			if (locked_btres(fh->btv,RESOURCE_VIDEO_STREAM))
-				return rc | EPOLLERR;
-			fh->cap.read_buf = videobuf_sg_alloc(fh->cap.msize);
-			if (NULL == fh->cap.read_buf)
-				return rc | EPOLLERR;
-			fh->cap.read_buf->memory = V4L2_MEMORY_USERPTR;
+			अगर (locked_btres(fh->btv,RESOURCE_VIDEO_STREAM))
+				वापस rc | EPOLLERR;
+			fh->cap.पढ़ो_buf = videobuf_sg_alloc(fh->cap.msize);
+			अगर (शून्य == fh->cap.पढ़ो_buf)
+				वापस rc | EPOLLERR;
+			fh->cap.पढ़ो_buf->memory = V4L2_MEMORY_USERPTR;
 			field = videobuf_next_field(&fh->cap);
-			if (0 != fh->cap.ops->buf_prepare(&fh->cap,fh->cap.read_buf,field)) {
-				kfree (fh->cap.read_buf);
-				fh->cap.read_buf = NULL;
-				return rc | EPOLLERR;
-			}
-			fh->cap.ops->buf_queue(&fh->cap,fh->cap.read_buf);
-			fh->cap.read_off = 0;
-		}
-		buf = (struct bttv_buffer*)fh->cap.read_buf;
-	}
+			अगर (0 != fh->cap.ops->buf_prepare(&fh->cap,fh->cap.पढ़ो_buf,field)) अणु
+				kमुक्त (fh->cap.पढ़ो_buf);
+				fh->cap.पढ़ो_buf = शून्य;
+				वापस rc | EPOLLERR;
+			पूर्ण
+			fh->cap.ops->buf_queue(&fh->cap,fh->cap.पढ़ो_buf);
+			fh->cap.पढ़ो_off = 0;
+		पूर्ण
+		buf = (काष्ठा bttv_buffer*)fh->cap.पढ़ो_buf;
+	पूर्ण
 
-	poll_wait(file, &buf->vb.done, wait);
-	if (buf->vb.state == VIDEOBUF_DONE ||
+	poll_रुको(file, &buf->vb.करोne, रुको);
+	अगर (buf->vb.state == VIDEOBUF_DONE ||
 	    buf->vb.state == VIDEOBUF_ERROR)
 		rc = rc | EPOLLIN|EPOLLRDNORM;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bttv_open(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct bttv *btv = video_drvdata(file);
-	struct bttv_fh *fh;
-	enum v4l2_buf_type type = 0;
+अटल पूर्णांक bttv_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा bttv *btv = video_drvdata(file);
+	काष्ठा bttv_fh *fh;
+	क्रमागत v4l2_buf_type type = 0;
 
-	dprintk("open dev=%s\n", video_device_node_name(vdev));
+	dprपूर्णांकk("open dev=%s\n", video_device_node_name(vdev));
 
-	if (vdev->vfl_type == VFL_TYPE_VIDEO) {
+	अगर (vdev->vfl_type == VFL_TYPE_VIDEO) अणु
 		type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-	} else if (vdev->vfl_type == VFL_TYPE_VBI) {
+	पूर्ण अन्यथा अगर (vdev->vfl_type == VFL_TYPE_VBI) अणु
 		type = V4L2_BUF_TYPE_VBI_CAPTURE;
-	} else {
+	पूर्ण अन्यथा अणु
 		WARN_ON(1);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	dprintk("%d: open called (type=%s)\n",
+	dprपूर्णांकk("%d: open called (type=%s)\n",
 		btv->c.nr, v4l2_type_names[type]);
 
 	/* allocate per filehandle data */
-	fh = kmalloc(sizeof(*fh), GFP_KERNEL);
-	if (unlikely(!fh))
-		return -ENOMEM;
+	fh = kदो_स्मृति(माप(*fh), GFP_KERNEL);
+	अगर (unlikely(!fh))
+		वापस -ENOMEM;
 	btv->users++;
-	file->private_data = fh;
+	file->निजी_data = fh;
 
 	*fh = btv->init;
 	v4l2_fh_init(&fh->fh, vdev);
@@ -2985,13 +2986,13 @@ static int bttv_open(struct file *file)
 			    &btv->c.pci->dev, &btv->s_lock,
 			    V4L2_BUF_TYPE_VIDEO_CAPTURE,
 			    V4L2_FIELD_INTERLACED,
-			    sizeof(struct bttv_buffer),
+			    माप(काष्ठा bttv_buffer),
 			    fh, &btv->lock);
 	videobuf_queue_sg_init(&fh->vbi, &bttv_vbi_qops,
 			    &btv->c.pci->dev, &btv->s_lock,
 			    V4L2_BUF_TYPE_VBI_CAPTURE,
 			    V4L2_FIELD_SEQ_TB,
-			    sizeof(struct bttv_buffer),
+			    माप(काष्ठा bttv_buffer),
 			    fh, &btv->lock);
 	set_tvnorm(btv,btv->tvnorm);
 	set_input(btv, btv->input, btv->tvnorm);
@@ -2999,100 +3000,100 @@ static int bttv_open(struct file *file)
 
 	/* The V4L2 spec requires one global set of cropping parameters
 	   which only change on request. These are stored in btv->crop[1].
-	   However for compatibility with V4L apps and cropping unaware
+	   However क्रम compatibility with V4L apps and cropping unaware
 	   V4L2 apps we now reset the cropping parameters as seen through
 	   this fh, which is to say VIDIOC_G_SELECTION and scaling limit checks
-	   will use btv->crop[0], the default cropping parameters for the
+	   will use btv->crop[0], the शेष cropping parameters क्रम the
 	   current video standard, and VIDIOC_S_FMT will not implicitly
 	   change the cropping parameters until VIDIOC_S_SELECTION has been
 	   called. */
-	fh->do_crop = !reset_crop; /* module parameter */
+	fh->करो_crop = !reset_crop; /* module parameter */
 
 	/* Likewise there should be one global set of VBI capture
-	   parameters, but for compatibility with V4L apps and earlier
+	   parameters, but क्रम compatibility with V4L apps and earlier
 	   driver versions each fh has its own parameters. */
 	bttv_vbi_fmt_reset(&fh->vbi_fmt, btv->tvnorm);
 
 	bttv_field_count(btv);
 	v4l2_fh_add(&fh->fh);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bttv_release(struct file *file)
-{
-	struct bttv_fh *fh = file->private_data;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक bttv_release(काष्ठा file *file)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	काष्ठा bttv *btv = fh->btv;
 
 	/* turn off overlay */
-	if (check_btres(fh, RESOURCE_OVERLAY))
-		bttv_switch_overlay(btv,fh,NULL);
+	अगर (check_btres(fh, RESOURCE_OVERLAY))
+		bttv_चयन_overlay(btv,fh,शून्य);
 
 	/* stop video capture */
-	if (check_btres(fh, RESOURCE_VIDEO_STREAM)) {
+	अगर (check_btres(fh, RESOURCE_VIDEO_STREAM)) अणु
 		videobuf_streamoff(&fh->cap);
-		free_btres_lock(btv,fh,RESOURCE_VIDEO_STREAM);
-	}
-	if (fh->cap.read_buf) {
-		buffer_release(&fh->cap,fh->cap.read_buf);
-		kfree(fh->cap.read_buf);
-	}
-	if (check_btres(fh, RESOURCE_VIDEO_READ)) {
-		free_btres_lock(btv, fh, RESOURCE_VIDEO_READ);
-	}
+		मुक्त_btres_lock(btv,fh,RESOURCE_VIDEO_STREAM);
+	पूर्ण
+	अगर (fh->cap.पढ़ो_buf) अणु
+		buffer_release(&fh->cap,fh->cap.पढ़ो_buf);
+		kमुक्त(fh->cap.पढ़ो_buf);
+	पूर्ण
+	अगर (check_btres(fh, RESOURCE_VIDEO_READ)) अणु
+		मुक्त_btres_lock(btv, fh, RESOURCE_VIDEO_READ);
+	पूर्ण
 
 	/* stop vbi capture */
-	if (check_btres(fh, RESOURCE_VBI)) {
+	अगर (check_btres(fh, RESOURCE_VBI)) अणु
 		videobuf_stop(&fh->vbi);
-		free_btres_lock(btv,fh,RESOURCE_VBI);
-	}
+		मुक्त_btres_lock(btv,fh,RESOURCE_VBI);
+	पूर्ण
 
-	/* free stuff */
+	/* मुक्त stuff */
 
-	videobuf_mmap_free(&fh->cap);
-	videobuf_mmap_free(&fh->vbi);
-	file->private_data = NULL;
+	videobuf_mmap_मुक्त(&fh->cap);
+	videobuf_mmap_मुक्त(&fh->vbi);
+	file->निजी_data = शून्य;
 
 	btv->users--;
 	bttv_field_count(btv);
 
-	if (!btv->users)
+	अगर (!btv->users)
 		audio_mute(btv, btv->mute);
 
 	v4l2_fh_del(&fh->fh);
-	v4l2_fh_exit(&fh->fh);
-	kfree(fh);
-	return 0;
-}
+	v4l2_fh_निकास(&fh->fh);
+	kमुक्त(fh);
+	वापस 0;
+पूर्ण
 
-static int
-bttv_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct bttv_fh *fh = file->private_data;
+अटल पूर्णांक
+bttv_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
 
-	dprintk("%d: mmap type=%s 0x%lx+%ld\n",
+	dprपूर्णांकk("%d: mmap type=%s 0x%lx+%ld\n",
 		fh->btv->c.nr, v4l2_type_names[fh->type],
 		vma->vm_start, vma->vm_end - vma->vm_start);
-	return videobuf_mmap_mapper(bttv_queue(fh),vma);
-}
+	वापस videobuf_mmap_mapper(bttv_queue(fh),vma);
+पूर्ण
 
-static const struct v4l2_file_operations bttv_fops =
-{
+अटल स्थिर काष्ठा v4l2_file_operations bttv_fops =
+अणु
 	.owner		  = THIS_MODULE,
-	.open		  = bttv_open,
+	.खोलो		  = bttv_खोलो,
 	.release	  = bttv_release,
 	.unlocked_ioctl	  = video_ioctl2,
-	.read		  = bttv_read,
+	.पढ़ो		  = bttv_पढ़ो,
 	.mmap		  = bttv_mmap,
 	.poll		  = bttv_poll,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops bttv_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops bttv_ioctl_ops = अणु
 	.vidioc_querycap                = bttv_querycap,
-	.vidioc_enum_fmt_vid_cap        = bttv_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap        = bttv_क्रमागत_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap           = bttv_g_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap         = bttv_try_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap           = bttv_s_fmt_vid_cap,
-	.vidioc_enum_fmt_vid_overlay    = bttv_enum_fmt_vid_overlay,
+	.vidioc_क्रमागत_fmt_vid_overlay    = bttv_क्रमागत_fmt_vid_overlay,
 	.vidioc_g_fmt_vid_overlay       = bttv_g_fmt_vid_overlay,
 	.vidioc_try_fmt_vid_overlay     = bttv_try_fmt_vid_overlay,
 	.vidioc_s_fmt_vid_overlay       = bttv_s_fmt_vid_overlay,
@@ -3106,7 +3107,7 @@ static const struct v4l2_ioctl_ops bttv_ioctl_ops = {
 	.vidioc_dqbuf                   = bttv_dqbuf,
 	.vidioc_s_std                   = bttv_s_std,
 	.vidioc_g_std                   = bttv_g_std,
-	.vidioc_enum_input              = bttv_enum_input,
+	.vidioc_क्रमागत_input              = bttv_क्रमागत_input,
 	.vidioc_g_input                 = bttv_g_input,
 	.vidioc_s_input                 = bttv_s_input,
 	.vidioc_streamon                = bttv_streamon,
@@ -3125,36 +3126,36 @@ static const struct v4l2_ioctl_ops bttv_ioctl_ops = {
 	.vidioc_querystd		= bttv_querystd,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-	.vidioc_g_register		= bttv_g_register,
-	.vidioc_s_register		= bttv_s_register,
-#endif
-};
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+	.vidioc_g_रेजिस्टर		= bttv_g_रेजिस्टर,
+	.vidioc_s_रेजिस्टर		= bttv_s_रेजिस्टर,
+#पूर्ण_अगर
+पूर्ण;
 
-static struct video_device bttv_video_template = {
+अटल काष्ठा video_device bttv_video_ढाँचा = अणु
 	.fops         = &bttv_fops,
 	.ioctl_ops    = &bttv_ioctl_ops,
 	.tvnorms      = BTTV_NORMS,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
-/* radio interface                                                         */
+/* radio पूर्णांकerface                                                         */
 
-static int radio_open(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct bttv *btv = video_drvdata(file);
-	struct bttv_fh *fh;
+अटल पूर्णांक radio_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा bttv *btv = video_drvdata(file);
+	काष्ठा bttv_fh *fh;
 
-	dprintk("open dev=%s\n", video_device_node_name(vdev));
+	dprपूर्णांकk("open dev=%s\n", video_device_node_name(vdev));
 
-	dprintk("%d: open called (radio)\n", btv->c.nr);
+	dprपूर्णांकk("%d: open called (radio)\n", btv->c.nr);
 
 	/* allocate per filehandle data */
-	fh = kmalloc(sizeof(*fh), GFP_KERNEL);
-	if (unlikely(!fh))
-		return -ENOMEM;
-	file->private_data = fh;
+	fh = kदो_स्मृति(माप(*fh), GFP_KERNEL);
+	अगर (unlikely(!fh))
+		वापस -ENOMEM;
+	file->निजी_data = fh;
 	*fh = btv->init;
 	v4l2_fh_init(&fh->fh, vdev);
 
@@ -3163,95 +3164,95 @@ static int radio_open(struct file *file)
 
 	v4l2_fh_add(&fh->fh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_release(struct file *file)
-{
-	struct bttv_fh *fh = file->private_data;
-	struct bttv *btv = fh->btv;
-	struct saa6588_command cmd;
+अटल पूर्णांक radio_release(काष्ठा file *file)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	काष्ठा bttv *btv = fh->btv;
+	काष्ठा saa6588_command cmd;
 
-	file->private_data = NULL;
+	file->निजी_data = शून्य;
 	v4l2_fh_del(&fh->fh);
-	v4l2_fh_exit(&fh->fh);
-	kfree(fh);
+	v4l2_fh_निकास(&fh->fh);
+	kमुक्त(fh);
 
 	btv->radio_user--;
 
 	bttv_call_all(btv, core, ioctl, SAA6588_CMD_CLOSE, &cmd);
 
-	if (btv->radio_user == 0)
+	अगर (btv->radio_user == 0)
 		btv->has_radio_tuner = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_g_tuner(struct file *file, void *priv, struct v4l2_tuner *t)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक radio_g_tuner(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_tuner *t)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (0 != t->index)
-		return -EINVAL;
-	strscpy(t->name, "Radio", sizeof(t->name));
+	अगर (0 != t->index)
+		वापस -EINVAL;
+	strscpy(t->name, "Radio", माप(t->name));
 	t->type = V4L2_TUNER_RADIO;
 	radio_enable(btv);
 
 	bttv_call_all(btv, tuner, g_tuner, t);
 
-	if (btv->audio_mode_gpio)
+	अगर (btv->audio_mode_gpio)
 		btv->audio_mode_gpio(btv, t, 0);
 
-	if (btv->has_tea575x)
-		return snd_tea575x_g_tuner(&btv->tea, t);
+	अगर (btv->has_tea575x)
+		वापस snd_tea575x_g_tuner(&btv->tea, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_s_tuner(struct file *file, void *priv,
-					const struct v4l2_tuner *t)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक radio_s_tuner(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_tuner *t)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (0 != t->index)
-		return -EINVAL;
+	अगर (0 != t->index)
+		वापस -EINVAL;
 
 	radio_enable(btv);
 	bttv_call_all(btv, tuner, s_tuner, t);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radio_s_hw_freq_seek(struct file *file, void *priv,
-					const struct v4l2_hw_freq_seek *a)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक radio_s_hw_freq_seek(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_hw_freq_seek *a)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (btv->has_tea575x)
-		return snd_tea575x_s_hw_freq_seek(file, &btv->tea, a);
+	अगर (btv->has_tea575x)
+		वापस snd_tea575x_s_hw_freq_seek(file, &btv->tea, a);
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-static int radio_enum_freq_bands(struct file *file, void *priv,
-					 struct v4l2_frequency_band *band)
-{
-	struct bttv_fh *fh = priv;
-	struct bttv *btv = fh->btv;
+अटल पूर्णांक radio_क्रमागत_freq_bands(काष्ठा file *file, व्योम *priv,
+					 काष्ठा v4l2_frequency_band *band)
+अणु
+	काष्ठा bttv_fh *fh = priv;
+	काष्ठा bttv *btv = fh->btv;
 
-	if (btv->has_tea575x)
-		return snd_tea575x_enum_freq_bands(&btv->tea, band);
+	अगर (btv->has_tea575x)
+		वापस snd_tea575x_क्रमागत_freq_bands(&btv->tea, band);
 
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 
-static ssize_t radio_read(struct file *file, char __user *data,
-			 size_t count, loff_t *ppos)
-{
-	struct bttv_fh *fh = file->private_data;
-	struct bttv *btv = fh->btv;
-	struct saa6588_command cmd;
+अटल sमाप_प्रकार radio_पढ़ो(काष्ठा file *file, अक्षर __user *data,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	काष्ठा bttv *btv = fh->btv;
+	काष्ठा saa6588_command cmd;
 
 	cmd.block_count = count / 3;
 	cmd.nonblocking = file->f_flags & O_NONBLOCK;
@@ -3262,41 +3263,41 @@ static ssize_t radio_read(struct file *file, char __user *data,
 
 	bttv_call_all(btv, core, ioctl, SAA6588_CMD_READ, &cmd);
 
-	return cmd.result;
-}
+	वापस cmd.result;
+पूर्ण
 
-static __poll_t radio_poll(struct file *file, poll_table *wait)
-{
-	struct bttv_fh *fh = file->private_data;
-	struct bttv *btv = fh->btv;
-	__poll_t req_events = poll_requested_events(wait);
-	struct saa6588_command cmd;
+अटल __poll_t radio_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा bttv_fh *fh = file->निजी_data;
+	काष्ठा bttv *btv = fh->btv;
+	__poll_t req_events = poll_requested_events(रुको);
+	काष्ठा saa6588_command cmd;
 	__poll_t res = 0;
 
-	if (v4l2_event_pending(&fh->fh))
+	अगर (v4l2_event_pending(&fh->fh))
 		res = EPOLLPRI;
-	else if (req_events & EPOLLPRI)
-		poll_wait(file, &fh->fh.wait, wait);
+	अन्यथा अगर (req_events & EPOLLPRI)
+		poll_रुको(file, &fh->fh.रुको, रुको);
 	radio_enable(btv);
 	cmd.instance = file;
-	cmd.event_list = wait;
+	cmd.event_list = रुको;
 	cmd.poll_mask = res;
 	bttv_call_all(btv, core, ioctl, SAA6588_CMD_POLL, &cmd);
 
-	return cmd.poll_mask;
-}
+	वापस cmd.poll_mask;
+पूर्ण
 
-static const struct v4l2_file_operations radio_fops =
-{
+अटल स्थिर काष्ठा v4l2_file_operations radio_fops =
+अणु
 	.owner	  = THIS_MODULE,
-	.open	  = radio_open,
-	.read     = radio_read,
+	.खोलो	  = radio_खोलो,
+	.पढ़ो     = radio_पढ़ो,
 	.release  = radio_release,
 	.unlocked_ioctl = video_ioctl2,
 	.poll     = radio_poll,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops radio_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops radio_ioctl_ops = अणु
 	.vidioc_querycap        = bttv_querycap,
 	.vidioc_log_status	= bttv_log_status,
 	.vidioc_g_tuner         = radio_g_tuner,
@@ -3304,22 +3305,22 @@ static const struct v4l2_ioctl_ops radio_ioctl_ops = {
 	.vidioc_g_frequency     = bttv_g_frequency,
 	.vidioc_s_frequency     = bttv_s_frequency,
 	.vidioc_s_hw_freq_seek	= radio_s_hw_freq_seek,
-	.vidioc_enum_freq_bands	= radio_enum_freq_bands,
+	.vidioc_क्रमागत_freq_bands	= radio_क्रमागत_freq_bands,
 	.vidioc_subscribe_event = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static struct video_device radio_template = {
+अटल काष्ठा video_device radio_ढाँचा = अणु
 	.fops      = &radio_fops,
 	.ioctl_ops = &radio_ioctl_ops,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 /* some debug code                                                         */
 
-static int bttv_risc_decode(u32 risc)
-{
-	static char *instr[16] = {
+अटल पूर्णांक bttv_risc_decode(u32 risc)
+अणु
+	अटल अक्षर *instr[16] = अणु
 		[ BT848_RISC_WRITE     >> 28 ] = "write",
 		[ BT848_RISC_SKIP      >> 28 ] = "skip",
 		[ BT848_RISC_WRITEC    >> 28 ] = "writec",
@@ -3328,76 +3329,76 @@ static int bttv_risc_decode(u32 risc)
 		[ BT848_RISC_WRITE123  >> 28 ] = "write123",
 		[ BT848_RISC_SKIP123   >> 28 ] = "skip123",
 		[ BT848_RISC_WRITE1S23 >> 28 ] = "write1s23",
-	};
-	static int incr[16] = {
+	पूर्ण;
+	अटल पूर्णांक incr[16] = अणु
 		[ BT848_RISC_WRITE     >> 28 ] = 2,
 		[ BT848_RISC_JUMP      >> 28 ] = 2,
 		[ BT848_RISC_SYNC      >> 28 ] = 2,
 		[ BT848_RISC_WRITE123  >> 28 ] = 5,
 		[ BT848_RISC_SKIP123   >> 28 ] = 2,
 		[ BT848_RISC_WRITE1S23 >> 28 ] = 3,
-	};
-	static char *bits[] = {
+	पूर्ण;
+	अटल अक्षर *bits[] = अणु
 		"be0",  "be1",  "be2",  "be3/resync",
 		"set0", "set1", "set2", "set3",
 		"clr0", "clr1", "clr2", "clr3",
 		"irq",  "res",  "eol",  "sol",
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
 	pr_cont("0x%08x [ %s", risc,
 	       instr[risc >> 28] ? instr[risc >> 28] : "INVALID");
-	for (i = ARRAY_SIZE(bits)-1; i >= 0; i--)
-		if (risc & (1 << (i + 12)))
+	क्रम (i = ARRAY_SIZE(bits)-1; i >= 0; i--)
+		अगर (risc & (1 << (i + 12)))
 			pr_cont(" %s", bits[i]);
 	pr_cont(" count=%d ]\n", risc & 0xfff);
-	return incr[risc >> 28] ? incr[risc >> 28] : 1;
-}
+	वापस incr[risc >> 28] ? incr[risc >> 28] : 1;
+पूर्ण
 
-static void bttv_risc_disasm(struct bttv *btv,
-			     struct btcx_riscmem *risc)
-{
-	unsigned int i,j,n;
+अटल व्योम bttv_risc_disयंत्र(काष्ठा bttv *btv,
+			     काष्ठा btcx_riscmem *risc)
+अणु
+	अचिन्हित पूर्णांक i,j,n;
 
 	pr_info("%s: risc disasm: %p [dma=0x%08lx]\n",
-		btv->c.v4l2_dev.name, risc->cpu, (unsigned long)risc->dma);
-	for (i = 0; i < (risc->size >> 2); i += n) {
+		btv->c.v4l2_dev.name, risc->cpu, (अचिन्हित दीर्घ)risc->dma);
+	क्रम (i = 0; i < (risc->size >> 2); i += n) अणु
 		pr_info("%s:   0x%lx: ",
 			btv->c.v4l2_dev.name,
-			(unsigned long)(risc->dma + (i<<2)));
+			(अचिन्हित दीर्घ)(risc->dma + (i<<2)));
 		n = bttv_risc_decode(le32_to_cpu(risc->cpu[i]));
-		for (j = 1; j < n; j++)
+		क्रम (j = 1; j < n; j++)
 			pr_info("%s:   0x%lx: 0x%08x [ arg #%d ]\n",
 				btv->c.v4l2_dev.name,
-				(unsigned long)(risc->dma + ((i+j)<<2)),
+				(अचिन्हित दीर्घ)(risc->dma + ((i+j)<<2)),
 				risc->cpu[i+j], j);
-		if (0 == risc->cpu[i])
-			break;
-	}
-}
+		अगर (0 == risc->cpu[i])
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void bttv_print_riscaddr(struct bttv *btv)
-{
-	pr_info("  main: %08llx\n", (unsigned long long)btv->main.dma);
+अटल व्योम bttv_prपूर्णांक_riscaddr(काष्ठा bttv *btv)
+अणु
+	pr_info("  main: %08llx\n", (अचिन्हित दीर्घ दीर्घ)btv->मुख्य.dma);
 	pr_info("  vbi : o=%08llx e=%08llx\n",
-		btv->cvbi ? (unsigned long long)btv->cvbi->top.dma : 0,
-		btv->cvbi ? (unsigned long long)btv->cvbi->bottom.dma : 0);
+		btv->cvbi ? (अचिन्हित दीर्घ दीर्घ)btv->cvbi->top.dma : 0,
+		btv->cvbi ? (अचिन्हित दीर्घ दीर्घ)btv->cvbi->bottom.dma : 0);
 	pr_info("  cap : o=%08llx e=%08llx\n",
 		btv->curr.top
-		? (unsigned long long)btv->curr.top->top.dma : 0,
+		? (अचिन्हित दीर्घ दीर्घ)btv->curr.top->top.dma : 0,
 		btv->curr.bottom
-		? (unsigned long long)btv->curr.bottom->bottom.dma : 0);
+		? (अचिन्हित दीर्घ दीर्घ)btv->curr.bottom->bottom.dma : 0);
 	pr_info("  scr : o=%08llx e=%08llx\n",
-		btv->screen ? (unsigned long long)btv->screen->top.dma : 0,
-		btv->screen ? (unsigned long long)btv->screen->bottom.dma : 0);
-	bttv_risc_disasm(btv, &btv->main);
-}
+		btv->screen ? (अचिन्हित दीर्घ दीर्घ)btv->screen->top.dma : 0,
+		btv->screen ? (अचिन्हित दीर्घ दीर्घ)btv->screen->bottom.dma : 0);
+	bttv_risc_disयंत्र(btv, &btv->मुख्य);
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 /* irq handler                                                             */
 
-static char *irq_name[] = {
-	"FMTCHG",  // format change detected (525 vs. 625)
+अटल अक्षर *irq_name[] = अणु
+	"FMTCHG",  // क्रमmat change detected (525 vs. 625)
 	"VSYNC",   // vertical sync (new field)
 	"HSYNC",   // horizontal sync
 	"OFLOW",   // chroma/luma AGC overflow
@@ -3407,80 +3408,80 @@ static char *irq_name[] = {
 	"I2CDONE", // hw irc operation finished
 	"GPINT",   // gpio port triggered irq
 	"10",
-	"RISCI",   // risc instruction triggered irq
-	"FBUS",    // pixel data fifo dropped data (high pci bus latencies)
-	"FTRGT",   // pixel data fifo overrun
-	"FDSR",    // fifo data stream resyncronisation
+	"RISCI",   // risc inकाष्ठाion triggered irq
+	"FBUS",    // pixel data fअगरo dropped data (high pci bus latencies)
+	"FTRGT",   // pixel data fअगरo overrun
+	"FDSR",    // fअगरo data stream resyncronisation
 	"PPERR",   // parity error (data transfer)
-	"RIPERR",  // parity error (read risc instructions)
-	"PABORT",  // pci abort
-	"OCERR",   // risc instruction error
+	"RIPERR",  // parity error (पढ़ो risc inकाष्ठाions)
+	"PABORT",  // pci पात
+	"OCERR",   // risc inकाष्ठाion error
 	"SCERR",   // syncronisation error
-};
+पूर्ण;
 
-static void bttv_print_irqbits(u32 print, u32 mark)
-{
-	unsigned int i;
+अटल व्योम bttv_prपूर्णांक_irqbits(u32 prपूर्णांक, u32 mark)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	pr_cont("bits:");
-	for (i = 0; i < ARRAY_SIZE(irq_name); i++) {
-		if (print & (1 << i))
+	क्रम (i = 0; i < ARRAY_SIZE(irq_name); i++) अणु
+		अगर (prपूर्णांक & (1 << i))
 			pr_cont(" %s", irq_name[i]);
-		if (mark & (1 << i))
+		अगर (mark & (1 << i))
 			pr_cont("*");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bttv_irq_debug_low_latency(struct bttv *btv, u32 rc)
-{
+अटल व्योम bttv_irq_debug_low_latency(काष्ठा bttv *btv, u32 rc)
+अणु
 	pr_warn("%d: irq: skipped frame [main=%lx,o_vbi=%lx,o_field=%lx,rc=%lx]\n",
 		btv->c.nr,
-		(unsigned long)btv->main.dma,
-		(unsigned long)le32_to_cpu(btv->main.cpu[RISC_SLOT_O_VBI+1]),
-		(unsigned long)le32_to_cpu(btv->main.cpu[RISC_SLOT_O_FIELD+1]),
-		(unsigned long)rc);
+		(अचिन्हित दीर्घ)btv->मुख्य.dma,
+		(अचिन्हित दीर्घ)le32_to_cpu(btv->मुख्य.cpu[RISC_SLOT_O_VBI+1]),
+		(अचिन्हित दीर्घ)le32_to_cpu(btv->मुख्य.cpu[RISC_SLOT_O_FIELD+1]),
+		(अचिन्हित दीर्घ)rc);
 
-	if (0 == (btread(BT848_DSTATUS) & BT848_DSTATUS_HLOC)) {
+	अगर (0 == (btपढ़ो(BT848_DSTATUS) & BT848_DSTATUS_HLOC)) अणु
 		pr_notice("%d: Oh, there (temporarily?) is no input signal. Ok, then this is harmless, don't worry ;)\n",
 			  btv->c.nr);
-		return;
-	}
+		वापस;
+	पूर्ण
 	pr_notice("%d: Uhm. Looks like we have unusual high IRQ latencies\n",
 		  btv->c.nr);
 	pr_notice("%d: Lets try to catch the culprit red-handed ...\n",
 		  btv->c.nr);
 	dump_stack();
-}
+पूर्ण
 
-static int
-bttv_irq_next_video(struct bttv *btv, struct bttv_buffer_set *set)
-{
-	struct bttv_buffer *item;
+अटल पूर्णांक
+bttv_irq_next_video(काष्ठा bttv *btv, काष्ठा bttv_buffer_set *set)
+अणु
+	काष्ठा bttv_buffer *item;
 
-	memset(set,0,sizeof(*set));
+	स_रखो(set,0,माप(*set));
 
 	/* capture request ? */
-	if (!list_empty(&btv->capture)) {
+	अगर (!list_empty(&btv->capture)) अणु
 		set->frame_irq = 1;
-		item = list_entry(btv->capture.next, struct bttv_buffer, vb.queue);
-		if (V4L2_FIELD_HAS_TOP(item->vb.field))
+		item = list_entry(btv->capture.next, काष्ठा bttv_buffer, vb.queue);
+		अगर (V4L2_FIELD_HAS_TOP(item->vb.field))
 			set->top    = item;
-		if (V4L2_FIELD_HAS_BOTTOM(item->vb.field))
+		अगर (V4L2_FIELD_HAS_BOTTOM(item->vb.field))
 			set->bottom = item;
 
-		/* capture request for other field ? */
-		if (!V4L2_FIELD_HAS_BOTH(item->vb.field) &&
-		    (item->vb.queue.next != &btv->capture)) {
-			item = list_entry(item->vb.queue.next, struct bttv_buffer, vb.queue);
+		/* capture request क्रम other field ? */
+		अगर (!V4L2_FIELD_HAS_BOTH(item->vb.field) &&
+		    (item->vb.queue.next != &btv->capture)) अणु
+			item = list_entry(item->vb.queue.next, काष्ठा bttv_buffer, vb.queue);
 			/* Mike Isely <isely@pobox.com> - Only check
 			 * and set up the bottom field in the logic
-			 * below.  Don't ever do the top field.  This
-			 * of course means that if we set up the
+			 * below.  Don't ever करो the top field.  This
+			 * of course means that अगर we set up the
 			 * bottom field in the above code that we'll
 			 * actually skip a field.  But that's OK.
 			 * Having processed only a single buffer this
-			 * time, then the next time around the first
-			 * available buffer should be for a top field.
+			 * समय, then the next समय around the first
+			 * available buffer should be क्रम a top field.
 			 * That will then cause us here to set up a
 			 * top then a bottom field in the normal way.
 			 * The alternative to this understanding is
@@ -3488,131 +3489,131 @@ bttv_irq_next_video(struct bttv *btv, struct bttv_buffer_set *set)
 			 * as a top field, but that's out of order
 			 * since this driver always processes the top
 			 * field first - the effect will be the two
-			 * buffers being returned in the wrong order,
+			 * buffers being वापसed in the wrong order,
 			 * with the second buffer also being delayed
-			 * by one field time (owing to the fifo nature
+			 * by one field समय (owing to the fअगरo nature
 			 * of videobuf).  Worse still, we'll be stuck
-			 * doing fields out of order now every time
-			 * until something else causes a field to be
-			 * dropped.  By effectively forcing a field to
-			 * drop this way then we always get back into
-			 * sync within a single frame time.  (Out of
-			 * order fields can screw up deinterlacing
+			 * करोing fields out of order now every समय
+			 * until something अन्यथा causes a field to be
+			 * dropped.  By effectively क्रमcing a field to
+			 * drop this way then we always get back पूर्णांकo
+			 * sync within a single frame समय.  (Out of
+			 * order fields can screw up deपूर्णांकerlacing
 			 * algorithms.) */
-			if (!V4L2_FIELD_HAS_BOTH(item->vb.field)) {
-				if (NULL == set->bottom &&
-				    V4L2_FIELD_BOTTOM == item->vb.field) {
+			अगर (!V4L2_FIELD_HAS_BOTH(item->vb.field)) अणु
+				अगर (शून्य == set->bottom &&
+				    V4L2_FIELD_BOTTOM == item->vb.field) अणु
 					set->bottom = item;
-				}
-				if (NULL != set->top  &&  NULL != set->bottom)
+				पूर्ण
+				अगर (शून्य != set->top  &&  शून्य != set->bottom)
 					set->top_irq = 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* screen overlay ? */
-	if (NULL != btv->screen) {
-		if (V4L2_FIELD_HAS_BOTH(btv->screen->vb.field)) {
-			if (NULL == set->top && NULL == set->bottom) {
+	अगर (शून्य != btv->screen) अणु
+		अगर (V4L2_FIELD_HAS_BOTH(btv->screen->vb.field)) अणु
+			अगर (शून्य == set->top && शून्य == set->bottom) अणु
 				set->top    = btv->screen;
 				set->bottom = btv->screen;
-			}
-		} else {
-			if (V4L2_FIELD_TOP == btv->screen->vb.field &&
-			    NULL == set->top) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (V4L2_FIELD_TOP == btv->screen->vb.field &&
+			    शून्य == set->top) अणु
 				set->top = btv->screen;
-			}
-			if (V4L2_FIELD_BOTTOM == btv->screen->vb.field &&
-			    NULL == set->bottom) {
+			पूर्ण
+			अगर (V4L2_FIELD_BOTTOM == btv->screen->vb.field &&
+			    शून्य == set->bottom) अणु
 				set->bottom = btv->screen;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	dprintk("%d: next set: top=%p bottom=%p [screen=%p,irq=%d,%d]\n",
+	dprपूर्णांकk("%d: next set: top=%p bottom=%p [screen=%p,irq=%d,%d]\n",
 		btv->c.nr, set->top, set->bottom,
 		btv->screen, set->frame_irq, set->top_irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-bttv_irq_wakeup_video(struct bttv *btv, struct bttv_buffer_set *wakeup,
-		      struct bttv_buffer_set *curr, unsigned int state)
-{
-	u64 ts = ktime_get_ns();
+अटल व्योम
+bttv_irq_wakeup_video(काष्ठा bttv *btv, काष्ठा bttv_buffer_set *wakeup,
+		      काष्ठा bttv_buffer_set *curr, अचिन्हित पूर्णांक state)
+अणु
+	u64 ts = kसमय_get_ns();
 
-	if (wakeup->top == wakeup->bottom) {
-		if (NULL != wakeup->top && curr->top != wakeup->top) {
-			if (irq_debug > 1)
+	अगर (wakeup->top == wakeup->bottom) अणु
+		अगर (शून्य != wakeup->top && curr->top != wakeup->top) अणु
+			अगर (irq_debug > 1)
 				pr_debug("%d: wakeup: both=%p\n",
 					 btv->c.nr, wakeup->top);
 			wakeup->top->vb.ts = ts;
 			wakeup->top->vb.field_count = btv->field_count;
 			wakeup->top->vb.state = state;
-			wake_up(&wakeup->top->vb.done);
-		}
-	} else {
-		if (NULL != wakeup->top && curr->top != wakeup->top) {
-			if (irq_debug > 1)
+			wake_up(&wakeup->top->vb.करोne);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (शून्य != wakeup->top && curr->top != wakeup->top) अणु
+			अगर (irq_debug > 1)
 				pr_debug("%d: wakeup: top=%p\n",
 					 btv->c.nr, wakeup->top);
 			wakeup->top->vb.ts = ts;
 			wakeup->top->vb.field_count = btv->field_count;
 			wakeup->top->vb.state = state;
-			wake_up(&wakeup->top->vb.done);
-		}
-		if (NULL != wakeup->bottom && curr->bottom != wakeup->bottom) {
-			if (irq_debug > 1)
+			wake_up(&wakeup->top->vb.करोne);
+		पूर्ण
+		अगर (शून्य != wakeup->bottom && curr->bottom != wakeup->bottom) अणु
+			अगर (irq_debug > 1)
 				pr_debug("%d: wakeup: bottom=%p\n",
 					 btv->c.nr, wakeup->bottom);
 			wakeup->bottom->vb.ts = ts;
 			wakeup->bottom->vb.field_count = btv->field_count;
 			wakeup->bottom->vb.state = state;
-			wake_up(&wakeup->bottom->vb.done);
-		}
-	}
-}
+			wake_up(&wakeup->bottom->vb.करोne);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-bttv_irq_wakeup_vbi(struct bttv *btv, struct bttv_buffer *wakeup,
-		    unsigned int state)
-{
-	if (NULL == wakeup)
-		return;
+अटल व्योम
+bttv_irq_wakeup_vbi(काष्ठा bttv *btv, काष्ठा bttv_buffer *wakeup,
+		    अचिन्हित पूर्णांक state)
+अणु
+	अगर (शून्य == wakeup)
+		वापस;
 
-	wakeup->vb.ts = ktime_get_ns();
+	wakeup->vb.ts = kसमय_get_ns();
 	wakeup->vb.field_count = btv->field_count;
 	wakeup->vb.state = state;
-	wake_up(&wakeup->vb.done);
-}
+	wake_up(&wakeup->vb.करोne);
+पूर्ण
 
-static void bttv_irq_timeout(struct timer_list *t)
-{
-	struct bttv *btv = from_timer(btv, t, timeout);
-	struct bttv_buffer_set old,new;
-	struct bttv_buffer *ovbi;
-	struct bttv_buffer *item;
-	unsigned long flags;
+अटल व्योम bttv_irq_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bttv *btv = from_समयr(btv, t, समयout);
+	काष्ठा bttv_buffer_set old,new;
+	काष्ठा bttv_buffer *ovbi;
+	काष्ठा bttv_buffer *item;
+	अचिन्हित दीर्घ flags;
 
-	if (bttv_verbose) {
+	अगर (bttv_verbose) अणु
 		pr_info("%d: timeout: drop=%d irq=%d/%d, risc=%08x, ",
 			btv->c.nr, btv->framedrop, btv->irq_me, btv->irq_total,
-			btread(BT848_RISC_COUNT));
-		bttv_print_irqbits(btread(BT848_INT_STAT),0);
+			btपढ़ो(BT848_RISC_COUNT));
+		bttv_prपूर्णांक_irqbits(btपढ़ो(BT848_INT_STAT),0);
 		pr_cont("\n");
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&btv->s_lock,flags);
 
 	/* deactivate stuff */
-	memset(&new,0,sizeof(new));
+	स_रखो(&new,0,माप(new));
 	old  = btv->curr;
 	ovbi = btv->cvbi;
 	btv->curr = new;
-	btv->cvbi = NULL;
+	btv->cvbi = शून्य;
 	btv->loop_irq = 0;
 	bttv_buffer_activate_video(btv, &new);
-	bttv_buffer_activate_vbi(btv,   NULL);
+	bttv_buffer_activate_vbi(btv,   शून्य);
 	bttv_set_dma(btv, 0);
 
 	/* wake up */
@@ -3620,115 +3621,115 @@ static void bttv_irq_timeout(struct timer_list *t)
 	bttv_irq_wakeup_vbi(btv, ovbi, VIDEOBUF_ERROR);
 
 	/* cancel all outstanding capture / vbi requests */
-	while (!list_empty(&btv->capture)) {
-		item = list_entry(btv->capture.next, struct bttv_buffer, vb.queue);
+	जबतक (!list_empty(&btv->capture)) अणु
+		item = list_entry(btv->capture.next, काष्ठा bttv_buffer, vb.queue);
 		list_del(&item->vb.queue);
 		item->vb.state = VIDEOBUF_ERROR;
-		wake_up(&item->vb.done);
-	}
-	while (!list_empty(&btv->vcapture)) {
-		item = list_entry(btv->vcapture.next, struct bttv_buffer, vb.queue);
+		wake_up(&item->vb.करोne);
+	पूर्ण
+	जबतक (!list_empty(&btv->vcapture)) अणु
+		item = list_entry(btv->vcapture.next, काष्ठा bttv_buffer, vb.queue);
 		list_del(&item->vb.queue);
 		item->vb.state = VIDEOBUF_ERROR;
-		wake_up(&item->vb.done);
-	}
+		wake_up(&item->vb.करोne);
+	पूर्ण
 
 	btv->errors++;
 	spin_unlock_irqrestore(&btv->s_lock,flags);
-}
+पूर्ण
 
-static void
-bttv_irq_wakeup_top(struct bttv *btv)
-{
-	struct bttv_buffer *wakeup = btv->curr.top;
+अटल व्योम
+bttv_irq_wakeup_top(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_buffer *wakeup = btv->curr.top;
 
-	if (NULL == wakeup)
-		return;
+	अगर (शून्य == wakeup)
+		वापस;
 
 	spin_lock(&btv->s_lock);
 	btv->curr.top_irq = 0;
-	btv->curr.top = NULL;
-	bttv_risc_hook(btv, RISC_SLOT_O_FIELD, NULL, 0);
+	btv->curr.top = शून्य;
+	bttv_risc_hook(btv, RISC_SLOT_O_FIELD, शून्य, 0);
 
-	wakeup->vb.ts = ktime_get_ns();
+	wakeup->vb.ts = kसमय_get_ns();
 	wakeup->vb.field_count = btv->field_count;
 	wakeup->vb.state = VIDEOBUF_DONE;
-	wake_up(&wakeup->vb.done);
+	wake_up(&wakeup->vb.करोne);
 	spin_unlock(&btv->s_lock);
-}
+पूर्ण
 
-static inline int is_active(struct btcx_riscmem *risc, u32 rc)
-{
-	if (rc < risc->dma)
-		return 0;
-	if (rc > risc->dma + risc->size)
-		return 0;
-	return 1;
-}
+अटल अंतरभूत पूर्णांक is_active(काष्ठा btcx_riscmem *risc, u32 rc)
+अणु
+	अगर (rc < risc->dma)
+		वापस 0;
+	अगर (rc > risc->dma + risc->size)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static void
-bttv_irq_switch_video(struct bttv *btv)
-{
-	struct bttv_buffer_set new;
-	struct bttv_buffer_set old;
+अटल व्योम
+bttv_irq_चयन_video(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_buffer_set new;
+	काष्ठा bttv_buffer_set old;
 	dma_addr_t rc;
 
 	spin_lock(&btv->s_lock);
 
 	/* new buffer set */
 	bttv_irq_next_video(btv, &new);
-	rc = btread(BT848_RISC_COUNT);
-	if ((btv->curr.top    && is_active(&btv->curr.top->top,       rc)) ||
-	    (btv->curr.bottom && is_active(&btv->curr.bottom->bottom, rc))) {
+	rc = btपढ़ो(BT848_RISC_COUNT);
+	अगर ((btv->curr.top    && is_active(&btv->curr.top->top,       rc)) ||
+	    (btv->curr.bottom && is_active(&btv->curr.bottom->bottom, rc))) अणु
 		btv->framedrop++;
-		if (debug_latency)
+		अगर (debug_latency)
 			bttv_irq_debug_low_latency(btv, rc);
 		spin_unlock(&btv->s_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* switch over */
+	/* चयन over */
 	old = btv->curr;
 	btv->curr = new;
 	btv->loop_irq &= ~1;
 	bttv_buffer_activate_video(btv, &new);
 	bttv_set_dma(btv, 0);
 
-	/* switch input */
-	if (UNSET != btv->new_input) {
+	/* चयन input */
+	अगर (UNSET != btv->new_input) अणु
 		video_mux(btv,btv->new_input);
 		btv->new_input = UNSET;
-	}
+	पूर्ण
 
 	/* wake up finished buffers */
 	bttv_irq_wakeup_video(btv, &old, &new, VIDEOBUF_DONE);
 	spin_unlock(&btv->s_lock);
-}
+पूर्ण
 
-static void
-bttv_irq_switch_vbi(struct bttv *btv)
-{
-	struct bttv_buffer *new = NULL;
-	struct bttv_buffer *old;
+अटल व्योम
+bttv_irq_चयन_vbi(काष्ठा bttv *btv)
+अणु
+	काष्ठा bttv_buffer *new = शून्य;
+	काष्ठा bttv_buffer *old;
 	u32 rc;
 
 	spin_lock(&btv->s_lock);
 
-	if (!list_empty(&btv->vcapture))
-		new = list_entry(btv->vcapture.next, struct bttv_buffer, vb.queue);
+	अगर (!list_empty(&btv->vcapture))
+		new = list_entry(btv->vcapture.next, काष्ठा bttv_buffer, vb.queue);
 	old = btv->cvbi;
 
-	rc = btread(BT848_RISC_COUNT);
-	if (NULL != old && (is_active(&old->top,    rc) ||
-			    is_active(&old->bottom, rc))) {
+	rc = btपढ़ो(BT848_RISC_COUNT);
+	अगर (शून्य != old && (is_active(&old->top,    rc) ||
+			    is_active(&old->bottom, rc))) अणु
 		btv->framedrop++;
-		if (debug_latency)
+		अगर (debug_latency)
 			bttv_irq_debug_low_latency(btv, rc);
 		spin_unlock(&btv->s_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* switch */
+	/* चयन */
 	btv->cvbi = new;
 	btv->loop_irq &= ~4;
 	bttv_buffer_activate_vbi(btv, new);
@@ -3736,264 +3737,264 @@ bttv_irq_switch_vbi(struct bttv *btv)
 
 	bttv_irq_wakeup_vbi(btv, old, VIDEOBUF_DONE);
 	spin_unlock(&btv->s_lock);
-}
+पूर्ण
 
-static irqreturn_t bttv_irq(int irq, void *dev_id)
-{
+अटल irqवापस_t bttv_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u32 stat,astat;
 	u32 dstat;
-	int count;
-	struct bttv *btv;
-	int handled = 0;
+	पूर्णांक count;
+	काष्ठा bttv *btv;
+	पूर्णांक handled = 0;
 
-	btv=(struct bttv *)dev_id;
+	btv=(काष्ठा bttv *)dev_id;
 
 	count=0;
-	while (1) {
-		/* get/clear interrupt status bits */
-		stat=btread(BT848_INT_STAT);
-		astat=stat&btread(BT848_INT_MASK);
-		if (!astat)
-			break;
+	जबतक (1) अणु
+		/* get/clear पूर्णांकerrupt status bits */
+		stat=btपढ़ो(BT848_INT_STAT);
+		astat=stat&btपढ़ो(BT848_INT_MASK);
+		अगर (!astat)
+			अवरोध;
 		handled = 1;
-		btwrite(stat,BT848_INT_STAT);
+		btग_लिखो(stat,BT848_INT_STAT);
 
 		/* get device status bits */
-		dstat=btread(BT848_DSTATUS);
+		dstat=btपढ़ो(BT848_DSTATUS);
 
-		if (irq_debug) {
+		अगर (irq_debug) अणु
 			pr_debug("%d: irq loop=%d fc=%d riscs=%x, riscc=%08x, ",
 				 btv->c.nr, count, btv->field_count,
-				 stat>>28, btread(BT848_RISC_COUNT));
-			bttv_print_irqbits(stat,astat);
-			if (stat & BT848_INT_HLOCK)
+				 stat>>28, btपढ़ो(BT848_RISC_COUNT));
+			bttv_prपूर्णांक_irqbits(stat,astat);
+			अगर (stat & BT848_INT_HLOCK)
 				pr_cont("   HLOC => %s",
 					dstat & BT848_DSTATUS_HLOC
 					? "yes" : "no");
-			if (stat & BT848_INT_VPRES)
+			अगर (stat & BT848_INT_VPRES)
 				pr_cont("   PRES => %s",
 					dstat & BT848_DSTATUS_PRES
 					? "yes" : "no");
-			if (stat & BT848_INT_FMTCHG)
+			अगर (stat & BT848_INT_FMTCHG)
 				pr_cont("   NUML => %s",
 					dstat & BT848_DSTATUS_NUML
 					? "625" : "525");
 			pr_cont("\n");
-		}
+		पूर्ण
 
-		if (astat&BT848_INT_VSYNC)
+		अगर (astat&BT848_INT_VSYNC)
 			btv->field_count++;
 
-		if ((astat & BT848_INT_GPINT) && btv->remote) {
+		अगर ((astat & BT848_INT_GPINT) && btv->remote) अणु
 			bttv_input_irq(btv);
-		}
+		पूर्ण
 
-		if (astat & BT848_INT_I2CDONE) {
-			btv->i2c_done = stat;
+		अगर (astat & BT848_INT_I2CDONE) अणु
+			btv->i2c_करोne = stat;
 			wake_up(&btv->i2c_queue);
-		}
+		पूर्ण
 
-		if ((astat & BT848_INT_RISCI)  &&  (stat & (4<<28)))
-			bttv_irq_switch_vbi(btv);
+		अगर ((astat & BT848_INT_RISCI)  &&  (stat & (4<<28)))
+			bttv_irq_चयन_vbi(btv);
 
-		if ((astat & BT848_INT_RISCI)  &&  (stat & (2<<28)))
+		अगर ((astat & BT848_INT_RISCI)  &&  (stat & (2<<28)))
 			bttv_irq_wakeup_top(btv);
 
-		if ((astat & BT848_INT_RISCI)  &&  (stat & (1<<28)))
-			bttv_irq_switch_video(btv);
+		अगर ((astat & BT848_INT_RISCI)  &&  (stat & (1<<28)))
+			bttv_irq_चयन_video(btv);
 
-		if ((astat & BT848_INT_HLOCK)  &&  btv->opt_automute)
-			/* trigger automute */
+		अगर ((astat & BT848_INT_HLOCK)  &&  btv->opt_स्वतःmute)
+			/* trigger स्वतःmute */
 			audio_mux_gpio(btv, btv->audio_input, btv->mute);
 
-		if (astat & (BT848_INT_SCERR|BT848_INT_OCERR)) {
+		अगर (astat & (BT848_INT_SCERR|BT848_INT_OCERR)) अणु
 			pr_info("%d: %s%s @ %08x,",
 				btv->c.nr,
 				(astat & BT848_INT_SCERR) ? "SCERR" : "",
 				(astat & BT848_INT_OCERR) ? "OCERR" : "",
-				btread(BT848_RISC_COUNT));
-			bttv_print_irqbits(stat,astat);
+				btपढ़ो(BT848_RISC_COUNT));
+			bttv_prपूर्णांक_irqbits(stat,astat);
 			pr_cont("\n");
-			if (bttv_debug)
-				bttv_print_riscaddr(btv);
-		}
-		if (fdsr && astat & BT848_INT_FDSR) {
+			अगर (bttv_debug)
+				bttv_prपूर्णांक_riscaddr(btv);
+		पूर्ण
+		अगर (fdsr && astat & BT848_INT_FDSR) अणु
 			pr_info("%d: FDSR @ %08x\n",
-				btv->c.nr, btread(BT848_RISC_COUNT));
-			if (bttv_debug)
-				bttv_print_riscaddr(btv);
-		}
+				btv->c.nr, btपढ़ो(BT848_RISC_COUNT));
+			अगर (bttv_debug)
+				bttv_prपूर्णांक_riscaddr(btv);
+		पूर्ण
 
 		count++;
-		if (count > 4) {
+		अगर (count > 4) अणु
 
-			if (count > 8 || !(astat & BT848_INT_GPINT)) {
-				btwrite(0, BT848_INT_MASK);
+			अगर (count > 8 || !(astat & BT848_INT_GPINT)) अणु
+				btग_लिखो(0, BT848_INT_MASK);
 
 				pr_err("%d: IRQ lockup, cleared int mask [",
 				       btv->c.nr);
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("%d: IRQ lockup, clearing GPINT from int mask [",
 				       btv->c.nr);
 
-				btwrite(btread(BT848_INT_MASK) & (-1 ^ BT848_INT_GPINT),
+				btग_लिखो(btपढ़ो(BT848_INT_MASK) & (-1 ^ BT848_INT_GPINT),
 						BT848_INT_MASK);
-			}
+			पूर्ण
 
-			bttv_print_irqbits(stat,astat);
+			bttv_prपूर्णांक_irqbits(stat,astat);
 
 			pr_cont("]\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	btv->irq_total++;
-	if (handled)
+	अगर (handled)
 		btv->irq_me++;
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
 
 /* ----------------------------------------------------------------------- */
 /* initialization                                                          */
 
-static void vdev_init(struct bttv *btv,
-		      struct video_device *vfd,
-		      const struct video_device *template,
-		      const char *type_name)
-{
-	*vfd = *template;
+अटल व्योम vdev_init(काष्ठा bttv *btv,
+		      काष्ठा video_device *vfd,
+		      स्थिर काष्ठा video_device *ढाँचा,
+		      स्थिर अक्षर *type_name)
+अणु
+	*vfd = *ढाँचा;
 	vfd->v4l2_dev = &btv->c.v4l2_dev;
 	vfd->release = video_device_release_empty;
 	video_set_drvdata(vfd, btv);
-	snprintf(vfd->name, sizeof(vfd->name), "BT%d%s %s (%s)",
+	snम_लिखो(vfd->name, माप(vfd->name), "BT%d%s %s (%s)",
 		 btv->id, (btv->id==848 && btv->revision==0x12) ? "A" : "",
 		 type_name, bttv_tvcards[btv->c.type].name);
-	if (btv->tuner_type == TUNER_ABSENT) {
+	अगर (btv->tuner_type == TUNER_ABSENT) अणु
 		v4l2_disable_ioctl(vfd, VIDIOC_G_FREQUENCY);
 		v4l2_disable_ioctl(vfd, VIDIOC_S_FREQUENCY);
 		v4l2_disable_ioctl(vfd, VIDIOC_G_TUNER);
 		v4l2_disable_ioctl(vfd, VIDIOC_S_TUNER);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bttv_unregister_video(struct bttv *btv)
-{
-	video_unregister_device(&btv->video_dev);
-	video_unregister_device(&btv->vbi_dev);
-	video_unregister_device(&btv->radio_dev);
-}
+अटल व्योम bttv_unरेजिस्टर_video(काष्ठा bttv *btv)
+अणु
+	video_unरेजिस्टर_device(&btv->video_dev);
+	video_unरेजिस्टर_device(&btv->vbi_dev);
+	video_unरेजिस्टर_device(&btv->radio_dev);
+पूर्ण
 
-/* register video4linux devices */
-static int bttv_register_video(struct bttv *btv)
-{
-	if (no_overlay > 0)
+/* रेजिस्टर video4linux devices */
+अटल पूर्णांक bttv_रेजिस्टर_video(काष्ठा bttv *btv)
+अणु
+	अगर (no_overlay > 0)
 		pr_notice("Overlay support disabled\n");
 
 	/* video */
-	vdev_init(btv, &btv->video_dev, &bttv_video_template, "video");
+	vdev_init(btv, &btv->video_dev, &bttv_video_ढाँचा, "video");
 	btv->video_dev.device_caps = V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_TUNER |
 				     V4L2_CAP_READWRITE | V4L2_CAP_STREAMING;
-	if (btv->tuner_type != TUNER_ABSENT)
+	अगर (btv->tuner_type != TUNER_ABSENT)
 		btv->video_dev.device_caps |= V4L2_CAP_TUNER;
-	if (no_overlay <= 0)
+	अगर (no_overlay <= 0)
 		btv->video_dev.device_caps |= V4L2_CAP_VIDEO_OVERLAY;
 
-	if (video_register_device(&btv->video_dev, VFL_TYPE_VIDEO,
+	अगर (video_रेजिस्टर_device(&btv->video_dev, VFL_TYPE_VIDEO,
 				  video_nr[btv->c.nr]) < 0)
-		goto err;
+		जाओ err;
 	pr_info("%d: registered device %s\n",
 		btv->c.nr, video_device_node_name(&btv->video_dev));
-	if (device_create_file(&btv->video_dev.dev,
-				     &dev_attr_card)<0) {
+	अगर (device_create_file(&btv->video_dev.dev,
+				     &dev_attr_card)<0) अणु
 		pr_err("%d: device_create_file 'card' failed\n", btv->c.nr);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* vbi */
-	vdev_init(btv, &btv->vbi_dev, &bttv_video_template, "vbi");
+	vdev_init(btv, &btv->vbi_dev, &bttv_video_ढाँचा, "vbi");
 	btv->vbi_dev.device_caps = V4L2_CAP_VBI_CAPTURE | V4L2_CAP_READWRITE |
 				   V4L2_CAP_STREAMING | V4L2_CAP_TUNER;
-	if (btv->tuner_type != TUNER_ABSENT)
+	अगर (btv->tuner_type != TUNER_ABSENT)
 		btv->vbi_dev.device_caps |= V4L2_CAP_TUNER;
 
-	if (video_register_device(&btv->vbi_dev, VFL_TYPE_VBI,
+	अगर (video_रेजिस्टर_device(&btv->vbi_dev, VFL_TYPE_VBI,
 				  vbi_nr[btv->c.nr]) < 0)
-		goto err;
+		जाओ err;
 	pr_info("%d: registered device %s\n",
 		btv->c.nr, video_device_node_name(&btv->vbi_dev));
 
-	if (!btv->has_radio)
-		return 0;
+	अगर (!btv->has_radio)
+		वापस 0;
 	/* radio */
-	vdev_init(btv, &btv->radio_dev, &radio_template, "radio");
+	vdev_init(btv, &btv->radio_dev, &radio_ढाँचा, "radio");
 	btv->radio_dev.device_caps = V4L2_CAP_RADIO | V4L2_CAP_TUNER;
-	if (btv->has_saa6588)
+	अगर (btv->has_saa6588)
 		btv->radio_dev.device_caps |= V4L2_CAP_READWRITE |
 					      V4L2_CAP_RDS_CAPTURE;
-	if (btv->has_tea575x)
+	अगर (btv->has_tea575x)
 		btv->radio_dev.device_caps |= V4L2_CAP_HW_FREQ_SEEK;
 	btv->radio_dev.ctrl_handler = &btv->radio_ctrl_handler;
-	if (video_register_device(&btv->radio_dev, VFL_TYPE_RADIO,
+	अगर (video_रेजिस्टर_device(&btv->radio_dev, VFL_TYPE_RADIO,
 				  radio_nr[btv->c.nr]) < 0)
-		goto err;
+		जाओ err;
 	pr_info("%d: registered device %s\n",
 		btv->c.nr, video_device_node_name(&btv->radio_dev));
 
-	/* all done */
-	return 0;
+	/* all करोne */
+	वापस 0;
 
  err:
-	bttv_unregister_video(btv);
-	return -1;
-}
+	bttv_unरेजिस्टर_video(btv);
+	वापस -1;
+पूर्ण
 
 
 /* on OpenFirmware machines (PowerMac at least), PCI memory cycle */
 /* response on cards with no firmware is not enabled by OF */
-static void pci_set_command(struct pci_dev *dev)
-{
-#if defined(__powerpc__)
-	unsigned int cmd;
+अटल व्योम pci_set_command(काष्ठा pci_dev *dev)
+अणु
+#अगर defined(__घातerpc__)
+	अचिन्हित पूर्णांक cmd;
 
-	pci_read_config_dword(dev, PCI_COMMAND, &cmd);
+	pci_पढ़ो_config_dword(dev, PCI_COMMAND, &cmd);
 	cmd = (cmd | PCI_COMMAND_MEMORY );
-	pci_write_config_dword(dev, PCI_COMMAND, cmd);
-#endif
-}
+	pci_ग_लिखो_config_dword(dev, PCI_COMMAND, cmd);
+#पूर्ण_अगर
+पूर्ण
 
-static int bttv_probe(struct pci_dev *dev, const struct pci_device_id *pci_id)
-{
-	struct v4l2_frequency init_freq = {
+अटल पूर्णांक bttv_probe(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा v4l2_frequency init_freq = अणु
 		.tuner = 0,
 		.type = V4L2_TUNER_ANALOG_TV,
 		.frequency = 980,
-	};
-	int result;
-	unsigned char lat;
-	struct bttv *btv;
-	struct v4l2_ctrl_handler *hdl;
+	पूर्ण;
+	पूर्णांक result;
+	अचिन्हित अक्षर lat;
+	काष्ठा bttv *btv;
+	काष्ठा v4l2_ctrl_handler *hdl;
 
-	if (bttv_num == BTTV_MAX)
-		return -ENOMEM;
+	अगर (bttv_num == BTTV_MAX)
+		वापस -ENOMEM;
 	pr_info("Bt8xx card found (%d)\n", bttv_num);
-	bttvs[bttv_num] = btv = kzalloc(sizeof(*btv), GFP_KERNEL);
-	if (btv == NULL) {
+	bttvs[bttv_num] = btv = kzalloc(माप(*btv), GFP_KERNEL);
+	अगर (btv == शून्य) अणु
 		pr_err("out of memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	btv->c.nr  = bttv_num;
-	snprintf(btv->c.v4l2_dev.name, sizeof(btv->c.v4l2_dev.name),
+	snम_लिखो(btv->c.v4l2_dev.name, माप(btv->c.v4l2_dev.name),
 			"bttv%d", btv->c.nr);
 
-	/* initialize structs / fill in defaults */
+	/* initialize काष्ठाs / fill in शेषs */
 	mutex_init(&btv->lock);
 	spin_lock_init(&btv->s_lock);
 	spin_lock_init(&btv->gpio_lock);
-	init_waitqueue_head(&btv->i2c_queue);
+	init_रुकोqueue_head(&btv->i2c_queue);
 	INIT_LIST_HEAD(&btv->c.subs);
 	INIT_LIST_HEAD(&btv->capture);
 	INIT_LIST_HEAD(&btv->vcapture);
 
-	timer_setup(&btv->timeout, bttv_irq_timeout, 0);
+	समयr_setup(&btv->समयout, bttv_irq_समयout, 0);
 
 	btv->i2c_rc = -1;
 	btv->tuner_type  = UNSET;
@@ -4003,77 +4004,77 @@ static int bttv_probe(struct pci_dev *dev, const struct pci_device_id *pci_id)
 	/* pci stuff (init, get irq/mmio, ... */
 	btv->c.pci = dev;
 	btv->id  = dev->device;
-	if (pci_enable_device(dev)) {
+	अगर (pci_enable_device(dev)) अणु
 		pr_warn("%d: Can't enable device\n", btv->c.nr);
 		result = -EIO;
-		goto free_mem;
-	}
-	if (dma_set_mask(&dev->dev, DMA_BIT_MASK(32))) {
+		जाओ मुक्त_mem;
+	पूर्ण
+	अगर (dma_set_mask(&dev->dev, DMA_BIT_MASK(32))) अणु
 		pr_warn("%d: No suitable DMA available\n", btv->c.nr);
 		result = -EIO;
-		goto free_mem;
-	}
-	if (!request_mem_region(pci_resource_start(dev,0),
+		जाओ मुक्त_mem;
+	पूर्ण
+	अगर (!request_mem_region(pci_resource_start(dev,0),
 				pci_resource_len(dev,0),
-				btv->c.v4l2_dev.name)) {
+				btv->c.v4l2_dev.name)) अणु
 		pr_warn("%d: can't request iomem (0x%llx)\n",
 			btv->c.nr,
-			(unsigned long long)pci_resource_start(dev, 0));
+			(अचिन्हित दीर्घ दीर्घ)pci_resource_start(dev, 0));
 		result = -EBUSY;
-		goto free_mem;
-	}
+		जाओ मुक्त_mem;
+	पूर्ण
 	pci_set_master(dev);
 	pci_set_command(dev);
 
-	result = v4l2_device_register(&dev->dev, &btv->c.v4l2_dev);
-	if (result < 0) {
+	result = v4l2_device_रेजिस्टर(&dev->dev, &btv->c.v4l2_dev);
+	अगर (result < 0) अणु
 		pr_warn("%d: v4l2_device_register() failed\n", btv->c.nr);
-		goto fail0;
-	}
+		जाओ fail0;
+	पूर्ण
 	hdl = &btv->ctrl_handler;
 	v4l2_ctrl_handler_init(hdl, 20);
 	btv->c.v4l2_dev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(&btv->radio_ctrl_handler, 6);
 
 	btv->revision = dev->revision;
-	pci_read_config_byte(dev, PCI_LATENCY_TIMER, &lat);
+	pci_पढ़ो_config_byte(dev, PCI_LATENCY_TIMER, &lat);
 	pr_info("%d: Bt%d (rev %d) at %s, irq: %d, latency: %d, mmio: 0x%llx\n",
 		bttv_num, btv->id, btv->revision, pci_name(dev),
 		btv->c.pci->irq, lat,
-		(unsigned long long)pci_resource_start(dev, 0));
+		(अचिन्हित दीर्घ दीर्घ)pci_resource_start(dev, 0));
 	schedule();
 
 	btv->bt848_mmio = ioremap(pci_resource_start(dev, 0), 0x1000);
-	if (NULL == btv->bt848_mmio) {
+	अगर (शून्य == btv->bt848_mmio) अणु
 		pr_err("%d: ioremap() failed\n", btv->c.nr);
 		result = -EIO;
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
-	/* identify card */
+	/* identअगरy card */
 	bttv_idcard(btv);
 
-	/* disable irqs, register irq handler */
-	btwrite(0, BT848_INT_MASK);
+	/* disable irqs, रेजिस्टर irq handler */
+	btग_लिखो(0, BT848_INT_MASK);
 	result = request_irq(btv->c.pci->irq, bttv_irq,
-	    IRQF_SHARED, btv->c.v4l2_dev.name, (void *)btv);
-	if (result < 0) {
+	    IRQF_SHARED, btv->c.v4l2_dev.name, (व्योम *)btv);
+	अगर (result < 0) अणु
 		pr_err("%d: can't get IRQ %d\n",
 		       bttv_num, btv->c.pci->irq);
-		goto fail1;
-	}
+		जाओ fail1;
+	पूर्ण
 
-	if (0 != bttv_handle_chipset(btv)) {
+	अगर (0 != bttv_handle_chipset(btv)) अणु
 		result = -EIO;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
 	/* init options from insmod args */
 	btv->opt_combfilter = combfilter;
 	bttv_ctrl_combfilter.def = combfilter;
 	bttv_ctrl_lumafilter.def = lumafilter;
-	btv->opt_automute   = automute;
-	bttv_ctrl_automute.def = automute;
+	btv->opt_स्वतःmute   = स्वतःmute;
+	bttv_ctrl_स्वतःmute.def = स्वतःmute;
 	bttv_ctrl_agc_crush.def = agc_crush;
 	btv->opt_vcr_hack   = vcr_hack;
 	bttv_ctrl_vcr_hack.def = vcr_hack;
@@ -4084,11 +4085,11 @@ static int bttv_probe(struct pci_dev *dev, const struct pci_device_id *pci_id)
 	bttv_ctrl_full_luma.def = full_luma_range;
 	bttv_ctrl_coring.def = coring;
 
-	/* fill struct bttv with some useful defaults */
+	/* fill काष्ठा bttv with some useful शेषs */
 	btv->init.btv         = btv;
 	btv->init.ov.w.width  = 320;
 	btv->init.ov.w.height = 240;
-	btv->init.fmt         = format_by_fourcc(V4L2_PIX_FMT_BGR24);
+	btv->init.fmt         = क्रमmat_by_fourcc(V4L2_PIX_FMT_BGR24);
 	btv->init.width       = 320;
 	btv->init.height      = 240;
 	btv->init.ov.w.width  = 320;
@@ -4110,203 +4111,203 @@ static int bttv_probe(struct pci_dev *dev, const struct pci_device_id *pci_id)
 			V4L2_CID_CHROMA_AGC, 0, 1, 1, !!chroma_agc);
 	v4l2_ctrl_new_std(hdl, &bttv_ctrl_ops,
 		V4L2_CID_AUDIO_MUTE, 0, 1, 1, 0);
-	if (btv->volume_gpio)
+	अगर (btv->volume_gpio)
 		v4l2_ctrl_new_std(hdl, &bttv_ctrl_ops,
 			V4L2_CID_AUDIO_VOLUME, 0, 0xff00, 0x100, 0xff00);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_combfilter, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_automute, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_lumafilter, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_agc_crush, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_vcr_hack, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_whitecrush_lower, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_whitecrush_upper, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_uv_ratio, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_full_luma, NULL);
-	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_coring, NULL);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_combfilter, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_स्वतःmute, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_lumafilter, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_agc_crush, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_vcr_hack, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_whitecrush_lower, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_whitecrush_upper, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_uv_ratio, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_full_luma, शून्य);
+	v4l2_ctrl_new_custom(hdl, &bttv_ctrl_coring, शून्य);
 
 	/* initialize hardware */
-	if (bttv_gpio)
+	अगर (bttv_gpio)
 		bttv_gpio_tracking(btv,"pre-init");
 
-	bttv_risc_init_main(btv);
+	bttv_risc_init_मुख्य(btv);
 	init_bt848(btv);
 
 	/* gpio */
-	btwrite(0x00, BT848_GPIO_REG_INP);
-	btwrite(0x00, BT848_GPIO_OUT_EN);
-	if (bttv_verbose)
+	btग_लिखो(0x00, BT848_GPIO_REG_INP);
+	btग_लिखो(0x00, BT848_GPIO_OUT_EN);
+	अगर (bttv_verbose)
 		bttv_gpio_tracking(btv,"init");
 
-	/* needs to be done before i2c is registered */
+	/* needs to be करोne beक्रमe i2c is रेजिस्टरed */
 	bttv_init_card1(btv);
 
-	/* register i2c + gpio */
+	/* रेजिस्टर i2c + gpio */
 	init_bttv_i2c(btv);
 
-	/* some card-specific stuff (needs working i2c) */
+	/* some card-specअगरic stuff (needs working i2c) */
 	bttv_init_card2(btv);
 	bttv_init_tuner(btv);
-	if (btv->tuner_type != TUNER_ABSENT) {
+	अगर (btv->tuner_type != TUNER_ABSENT) अणु
 		bttv_set_frequency(btv, &init_freq);
-		btv->radio_freq = 90500 * 16; /* 90.5Mhz default */
-	}
+		btv->radio_freq = 90500 * 16; /* 90.5Mhz शेष */
+	पूर्ण
 	btv->std = V4L2_STD_PAL;
 	init_irqreg(btv);
-	if (!bttv_tvcards[btv->c.type].no_video)
+	अगर (!bttv_tvcards[btv->c.type].no_video)
 		v4l2_ctrl_handler_setup(hdl);
-	if (hdl->error) {
+	अगर (hdl->error) अणु
 		result = hdl->error;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 	/* mute device */
 	audio_mute(btv, 1);
 
-	/* register video4linux + input */
-	if (!bttv_tvcards[btv->c.type].no_video) {
+	/* रेजिस्टर video4linux + input */
+	अगर (!bttv_tvcards[btv->c.type].no_video) अणु
 		v4l2_ctrl_add_handler(&btv->radio_ctrl_handler, hdl,
 				v4l2_ctrl_radio_filter, false);
-		if (btv->radio_ctrl_handler.error) {
+		अगर (btv->radio_ctrl_handler.error) अणु
 			result = btv->radio_ctrl_handler.error;
-			goto fail2;
-		}
+			जाओ fail2;
+		पूर्ण
 		set_input(btv, 0, btv->tvnorm);
 		bttv_crop_reset(&btv->crop[0], btv->tvnorm);
-		btv->crop[1] = btv->crop[0]; /* current = default */
+		btv->crop[1] = btv->crop[0]; /* current = शेष */
 		disclaim_vbi_lines(btv);
 		disclaim_video_lines(btv);
-		bttv_register_video(btv);
-	}
+		bttv_रेजिस्टर_video(btv);
+	पूर्ण
 
-	/* add subdevices and autoload dvb-bt8xx if needed */
-	if (bttv_tvcards[btv->c.type].has_dvb) {
+	/* add subdevices and स्वतःload dvb-bt8xx अगर needed */
+	अगर (bttv_tvcards[btv->c.type].has_dvb) अणु
 		bttv_sub_add_device(&btv->c, "dvb");
 		request_modules(btv);
-	}
+	पूर्ण
 
-	if (!disable_ir) {
+	अगर (!disable_ir) अणु
 		init_bttv_i2c_ir(btv);
 		bttv_input_init(btv);
-	}
+	पूर्ण
 
 	/* everything is fine */
 	bttv_num++;
-	return 0;
+	वापस 0;
 
 fail2:
-	free_irq(btv->c.pci->irq,btv);
+	मुक्त_irq(btv->c.pci->irq,btv);
 
 fail1:
-	v4l2_ctrl_handler_free(&btv->ctrl_handler);
-	v4l2_ctrl_handler_free(&btv->radio_ctrl_handler);
-	v4l2_device_unregister(&btv->c.v4l2_dev);
+	v4l2_ctrl_handler_मुक्त(&btv->ctrl_handler);
+	v4l2_ctrl_handler_मुक्त(&btv->radio_ctrl_handler);
+	v4l2_device_unरेजिस्टर(&btv->c.v4l2_dev);
 
 fail0:
-	if (btv->bt848_mmio)
+	अगर (btv->bt848_mmio)
 		iounmap(btv->bt848_mmio);
 	release_mem_region(pci_resource_start(btv->c.pci,0),
 			   pci_resource_len(btv->c.pci,0));
 	pci_disable_device(btv->c.pci);
 
-free_mem:
-	bttvs[btv->c.nr] = NULL;
-	kfree(btv);
-	return result;
-}
+मुक्त_mem:
+	bttvs[btv->c.nr] = शून्य;
+	kमुक्त(btv);
+	वापस result;
+पूर्ण
 
-static void bttv_remove(struct pci_dev *pci_dev)
-{
-	struct v4l2_device *v4l2_dev = pci_get_drvdata(pci_dev);
-	struct bttv *btv = to_bttv(v4l2_dev);
+अटल व्योम bttv_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = pci_get_drvdata(pci_dev);
+	काष्ठा bttv *btv = to_bttv(v4l2_dev);
 
-	if (bttv_verbose)
+	अगर (bttv_verbose)
 		pr_info("%d: unloading\n", btv->c.nr);
 
-	if (bttv_tvcards[btv->c.type].has_dvb)
+	अगर (bttv_tvcards[btv->c.type].has_dvb)
 		flush_request_modules(btv);
 
-	/* shutdown everything (DMA+IRQs) */
+	/* shutकरोwn everything (DMA+IRQs) */
 	btand(~15, BT848_GPIO_DMA_CTL);
-	btwrite(0, BT848_INT_MASK);
-	btwrite(~0x0, BT848_INT_STAT);
-	btwrite(0x0, BT848_GPIO_OUT_EN);
-	if (bttv_gpio)
+	btग_लिखो(0, BT848_INT_MASK);
+	btग_लिखो(~0x0, BT848_INT_STAT);
+	btग_लिखो(0x0, BT848_GPIO_OUT_EN);
+	अगर (bttv_gpio)
 		bttv_gpio_tracking(btv,"cleanup");
 
 	/* tell gpio modules we are leaving ... */
-	btv->shutdown=1;
+	btv->shutकरोwn=1;
 	bttv_input_fini(btv);
 	bttv_sub_del_devices(&btv->c);
 
-	/* unregister i2c_bus + input */
+	/* unरेजिस्टर i2c_bus + input */
 	fini_bttv_i2c(btv);
 
-	/* unregister video4linux */
-	bttv_unregister_video(btv);
+	/* unरेजिस्टर video4linux */
+	bttv_unरेजिस्टर_video(btv);
 
-	/* free allocated memory */
-	v4l2_ctrl_handler_free(&btv->ctrl_handler);
-	v4l2_ctrl_handler_free(&btv->radio_ctrl_handler);
-	btcx_riscmem_free(btv->c.pci,&btv->main);
+	/* मुक्त allocated memory */
+	v4l2_ctrl_handler_मुक्त(&btv->ctrl_handler);
+	v4l2_ctrl_handler_मुक्त(&btv->radio_ctrl_handler);
+	btcx_riscmem_मुक्त(btv->c.pci,&btv->मुख्य);
 
-	/* free resources */
-	free_irq(btv->c.pci->irq,btv);
+	/* मुक्त resources */
+	मुक्त_irq(btv->c.pci->irq,btv);
 	iounmap(btv->bt848_mmio);
 	release_mem_region(pci_resource_start(btv->c.pci,0),
 			   pci_resource_len(btv->c.pci,0));
 	pci_disable_device(btv->c.pci);
 
-	v4l2_device_unregister(&btv->c.v4l2_dev);
-	bttvs[btv->c.nr] = NULL;
-	kfree(btv);
+	v4l2_device_unरेजिस्टर(&btv->c.v4l2_dev);
+	bttvs[btv->c.nr] = शून्य;
+	kमुक्त(btv);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int __maybe_unused bttv_suspend(struct device *dev)
-{
-	struct v4l2_device *v4l2_dev = dev_get_drvdata(dev);
-	struct bttv *btv = to_bttv(v4l2_dev);
-	struct bttv_buffer_set idle;
-	unsigned long flags;
+अटल पूर्णांक __maybe_unused bttv_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = dev_get_drvdata(dev);
+	काष्ठा bttv *btv = to_bttv(v4l2_dev);
+	काष्ठा bttv_buffer_set idle;
+	अचिन्हित दीर्घ flags;
 
-	dprintk("%d: suspend\n", btv->c.nr);
+	dprपूर्णांकk("%d: suspend\n", btv->c.nr);
 
 	/* stop dma + irqs */
 	spin_lock_irqsave(&btv->s_lock,flags);
-	memset(&idle, 0, sizeof(idle));
+	स_रखो(&idle, 0, माप(idle));
 	btv->state.video = btv->curr;
 	btv->state.vbi   = btv->cvbi;
 	btv->state.loop_irq = btv->loop_irq;
 	btv->curr = idle;
 	btv->loop_irq = 0;
 	bttv_buffer_activate_video(btv, &idle);
-	bttv_buffer_activate_vbi(btv, NULL);
+	bttv_buffer_activate_vbi(btv, शून्य);
 	bttv_set_dma(btv, 0);
-	btwrite(0, BT848_INT_MASK);
+	btग_लिखो(0, BT848_INT_MASK);
 	spin_unlock_irqrestore(&btv->s_lock,flags);
 
 	/* save bt878 state */
-	btv->state.gpio_enable = btread(BT848_GPIO_OUT_EN);
-	btv->state.gpio_data   = gpio_read();
+	btv->state.gpio_enable = btपढ़ो(BT848_GPIO_OUT_EN);
+	btv->state.gpio_data   = gpio_पढ़ो();
 
 	btv->state.disabled = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused bttv_resume(struct device *dev)
-{
-	struct v4l2_device *v4l2_dev = dev_get_drvdata(dev);
-	struct bttv *btv = to_bttv(v4l2_dev);
-	unsigned long flags;
+अटल पूर्णांक __maybe_unused bttv_resume(काष्ठा device *dev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = dev_get_drvdata(dev);
+	काष्ठा bttv *btv = to_bttv(v4l2_dev);
+	अचिन्हित दीर्घ flags;
 
-	dprintk("%d: resume\n", btv->c.nr);
+	dprपूर्णांकk("%d: resume\n", btv->c.nr);
 
 	btv->state.disabled = 0;
 
 	/* restore bt878 state */
 	bttv_reinit_bt848(btv);
 	gpio_inout(0xffffff, btv->state.gpio_enable);
-	gpio_write(btv->state.gpio_data);
+	gpio_ग_लिखो(btv->state.gpio_data);
 
 	/* restart dma */
 	spin_lock_irqsave(&btv->s_lock,flags);
@@ -4317,67 +4318,67 @@ static int __maybe_unused bttv_resume(struct device *dev)
 	bttv_buffer_activate_vbi(btv, btv->cvbi);
 	bttv_set_dma(btv, 0);
 	spin_unlock_irqrestore(&btv->s_lock,flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id bttv_pci_tbl[] = {
-	{PCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT848), 0},
-	{PCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT849), 0},
-	{PCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT878), 0},
-	{PCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT879), 0},
-	{PCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_FUSION879), 0},
-	{0,}
-};
+अटल स्थिर काष्ठा pci_device_id bttv_pci_tbl[] = अणु
+	अणुPCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT848), 0पूर्ण,
+	अणुPCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT849), 0पूर्ण,
+	अणुPCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT878), 0पूर्ण,
+	अणुPCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_BT879), 0पूर्ण,
+	अणुPCI_VDEVICE(BROOKTREE, PCI_DEVICE_ID_FUSION879), 0पूर्ण,
+	अणु0,पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, bttv_pci_tbl);
 
-static SIMPLE_DEV_PM_OPS(bttv_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(bttv_pm_ops,
 			 bttv_suspend,
 			 bttv_resume);
 
-static struct pci_driver bttv_pci_driver = {
+अटल काष्ठा pci_driver bttv_pci_driver = अणु
 	.name      = "bttv",
 	.id_table  = bttv_pci_tbl,
 	.probe     = bttv_probe,
-	.remove    = bttv_remove,
+	.हटाओ    = bttv_हटाओ,
 	.driver.pm = &bttv_pm_ops,
-};
+पूर्ण;
 
-static int __init bttv_init_module(void)
-{
-	int ret;
+अटल पूर्णांक __init bttv_init_module(व्योम)
+अणु
+	पूर्णांक ret;
 
 	bttv_num = 0;
 
 	pr_info("driver version %s loaded\n", BTTV_VERSION);
-	if (gbuffers < 2 || gbuffers > VIDEO_MAX_FRAME)
+	अगर (gbuffers < 2 || gbuffers > VIDEO_MAX_FRAME)
 		gbuffers = 2;
-	if (gbufsize > BTTV_MAX_FBUF)
+	अगर (gbufsize > BTTV_MAX_FBUF)
 		gbufsize = BTTV_MAX_FBUF;
 	gbufsize = (gbufsize + PAGE_SIZE - 1) & PAGE_MASK;
-	if (bttv_verbose)
+	अगर (bttv_verbose)
 		pr_info("using %d buffers with %dk (%d pages) each for capture\n",
 			gbuffers, gbufsize >> 10, gbufsize >> PAGE_SHIFT);
 
 	bttv_check_chipset();
 
-	ret = bus_register(&bttv_sub_bus_type);
-	if (ret < 0) {
+	ret = bus_रेजिस्टर(&bttv_sub_bus_type);
+	अगर (ret < 0) अणु
 		pr_warn("bus_register error: %d\n", ret);
-		return ret;
-	}
-	ret = pci_register_driver(&bttv_pci_driver);
-	if (ret < 0)
-		bus_unregister(&bttv_sub_bus_type);
+		वापस ret;
+	पूर्ण
+	ret = pci_रेजिस्टर_driver(&bttv_pci_driver);
+	अगर (ret < 0)
+		bus_unरेजिस्टर(&bttv_sub_bus_type);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit bttv_cleanup_module(void)
-{
-	pci_unregister_driver(&bttv_pci_driver);
-	bus_unregister(&bttv_sub_bus_type);
-}
+अटल व्योम __निकास bttv_cleanup_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&bttv_pci_driver);
+	bus_unरेजिस्टर(&bttv_sub_bus_type);
+पूर्ण
 
 module_init(bttv_init_module);
-module_exit(bttv_cleanup_module);
+module_निकास(bttv_cleanup_module);

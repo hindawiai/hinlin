@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <test_progs.h>
+#समावेश <test_progs.h>
 
-#include "test_btf_map_in_map.skel.h"
+#समावेश "test_btf_map_in_map.skel.h"
 
-static int duration;
+अटल पूर्णांक duration;
 
-static __u32 bpf_map_id(struct bpf_map *map)
-{
-	struct bpf_map_info info;
-	__u32 info_len = sizeof(info);
-	int err;
+अटल __u32 bpf_map_id(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_map_info info;
+	__u32 info_len = माप(info);
+	पूर्णांक err;
 
-	memset(&info, 0, info_len);
+	स_रखो(&info, 0, info_len);
 	err = bpf_obj_get_info_by_fd(bpf_map__fd(map), &info, &info_len);
-	if (err)
-		return 0;
-	return info.id;
-}
+	अगर (err)
+		वापस 0;
+	वापस info.id;
+पूर्ण
 
-static void test_lookup_update(void)
-{
-	int map1_fd, map2_fd, map3_fd, map4_fd, map5_fd, map1_id, map2_id;
-	int outer_arr_fd, outer_hash_fd, outer_arr_dyn_fd;
-	struct test_btf_map_in_map *skel;
-	int err, key = 0, val, i, fd;
+अटल व्योम test_lookup_update(व्योम)
+अणु
+	पूर्णांक map1_fd, map2_fd, map3_fd, map4_fd, map5_fd, map1_id, map2_id;
+	पूर्णांक outer_arr_fd, outer_hash_fd, outer_arr_dyn_fd;
+	काष्ठा test_btf_map_in_map *skel;
+	पूर्णांक err, key = 0, val, i, fd;
 
-	skel = test_btf_map_in_map__open_and_load();
-	if (CHECK(!skel, "skel_open", "failed to open&load skeleton\n"))
-		return;
+	skel = test_btf_map_in_map__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open", "failed to open&load skeleton\n"))
+		वापस;
 
 	err = test_btf_map_in_map__attach(skel);
-	if (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
-		goto cleanup;
+	अगर (CHECK(err, "skel_attach", "skeleton attach failed: %d\n", err))
+		जाओ cleanup;
 
 	map1_fd = bpf_map__fd(skel->maps.inner_map1);
 	map2_fd = bpf_map__fd(skel->maps.inner_map2);
@@ -77,25 +78,25 @@ static void test_lookup_update(void)
 	bpf_map_lookup_elem(map5_fd, &key, &val);
 	CHECK(val != 7, "inner5", "got %d != exp %d\n", val, 7);
 
-	for (i = 0; i < 5; i++) {
+	क्रम (i = 0; i < 5; i++) अणु
 		val = i % 2 ? map1_fd : map2_fd;
 		err = bpf_map_update_elem(outer_hash_fd, &key, &val, 0);
-		if (CHECK_FAIL(err)) {
-			printf("failed to update hash_of_maps on iter #%d\n", i);
-			goto cleanup;
-		}
+		अगर (CHECK_FAIL(err)) अणु
+			म_लिखो("failed to update hash_of_maps on iter #%d\n", i);
+			जाओ cleanup;
+		पूर्ण
 		err = bpf_map_update_elem(outer_arr_fd, &key, &val, 0);
-		if (CHECK_FAIL(err)) {
-			printf("failed to update array_of_maps on iter #%d\n", i);
-			goto cleanup;
-		}
+		अगर (CHECK_FAIL(err)) अणु
+			म_लिखो("failed to update array_of_maps on iter #%d\n", i);
+			जाओ cleanup;
+		पूर्ण
 		val = i % 2 ? map4_fd : map5_fd;
 		err = bpf_map_update_elem(outer_arr_dyn_fd, &key, &val, 0);
-		if (CHECK_FAIL(err)) {
-			printf("failed to update array_of_maps (dyn) on iter #%d\n", i);
-			goto cleanup;
-		}
-	}
+		अगर (CHECK_FAIL(err)) अणु
+			म_लिखो("failed to update array_of_maps (dyn) on iter #%d\n", i);
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
 	map1_id = bpf_map_id(skel->maps.inner_map1);
 	map2_id = bpf_map_id(skel->maps.inner_map2);
@@ -103,41 +104,41 @@ static void test_lookup_update(void)
 	CHECK(map2_id == 0, "map2_id", "failed to get ID 2\n");
 
 	test_btf_map_in_map__destroy(skel);
-	skel = NULL;
+	skel = शून्य;
 
-	/* we need to either wait for or force synchronize_rcu(), before
-	 * checking for "still exists" condition, otherwise map could still be
+	/* we need to either रुको क्रम or क्रमce synchronize_rcu(), beक्रमe
+	 * checking क्रम "still exists" condition, otherwise map could still be
 	 * resolvable by ID, causing false positives.
 	 *
-	 * Older kernels (5.8 and earlier) freed map only after two
+	 * Older kernels (5.8 and earlier) मुक्तd map only after two
 	 * synchronize_rcu()s, so trigger two, to be entirely sure.
 	 */
 	CHECK(kern_sync_rcu(), "sync_rcu", "failed\n");
 	CHECK(kern_sync_rcu(), "sync_rcu", "failed\n");
 
 	fd = bpf_map_get_fd_by_id(map1_id);
-	if (CHECK(fd >= 0, "map1_leak", "inner_map1 leaked!\n")) {
-		close(fd);
-		goto cleanup;
-	}
+	अगर (CHECK(fd >= 0, "map1_leak", "inner_map1 leaked!\n")) अणु
+		बंद(fd);
+		जाओ cleanup;
+	पूर्ण
 	fd = bpf_map_get_fd_by_id(map2_id);
-	if (CHECK(fd >= 0, "map2_leak", "inner_map2 leaked!\n")) {
-		close(fd);
-		goto cleanup;
-	}
+	अगर (CHECK(fd >= 0, "map2_leak", "inner_map2 leaked!\n")) अणु
+		बंद(fd);
+		जाओ cleanup;
+	पूर्ण
 
 cleanup:
 	test_btf_map_in_map__destroy(skel);
-}
+पूर्ण
 
-static void test_diff_size(void)
-{
-	struct test_btf_map_in_map *skel;
-	int err, inner_map_fd, zero = 0;
+अटल व्योम test_dअगरf_size(व्योम)
+अणु
+	काष्ठा test_btf_map_in_map *skel;
+	पूर्णांक err, inner_map_fd, zero = 0;
 
-	skel = test_btf_map_in_map__open_and_load();
-	if (CHECK(!skel, "skel_open", "failed to open&load skeleton\n"))
-		return;
+	skel = test_btf_map_in_map__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open", "failed to open&load skeleton\n"))
+		वापस;
 
 	inner_map_fd = bpf_map__fd(skel->maps.sockarr_sz2);
 	err = bpf_map_update_elem(bpf_map__fd(skel->maps.outer_sockarr), &zero,
@@ -152,13 +153,13 @@ static void test_diff_size(void)
 	      "incorrectly updated with a different size inner_map\n");
 
 	test_btf_map_in_map__destroy(skel);
-}
+पूर्ण
 
-void test_btf_map_in_map(void)
-{
-	if (test__start_subtest("lookup_update"))
+व्योम test_btf_map_in_map(व्योम)
+अणु
+	अगर (test__start_subtest("lookup_update"))
 		test_lookup_update();
 
-	if (test__start_subtest("diff_size"))
-		test_diff_size();
-}
+	अगर (test__start_subtest("diff_size"))
+		test_dअगरf_size();
+पूर्ण

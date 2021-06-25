@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Compaq Hot Plug Controller Driver
  *
  * Copyright (c) 1995,2001 Compaq Computer Corporation
- * Copyright (c) 2001,2003 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (c) 2001,2003 Greg Kroah-Harपंचांगan (greg@kroah.com)
  * Copyright (c) 2001 IBM Corp.
  *
  * All rights reserved.
@@ -12,71 +13,71 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include "shpchp.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश "shpchp.h"
 
 
-/* A few routines that create sysfs entries for the hot plug controller */
+/* A few routines that create sysfs entries क्रम the hot plug controller */
 
-static ssize_t show_ctrl(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct pci_dev *pdev;
-	char *out = buf;
-	int index, busnr;
-	struct resource *res;
-	struct pci_bus *bus;
+अटल sमाप_प्रकार show_ctrl(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pci_dev *pdev;
+	अक्षर *out = buf;
+	पूर्णांक index, busnr;
+	काष्ठा resource *res;
+	काष्ठा pci_bus *bus;
 
 	pdev = to_pci_dev(dev);
 	bus = pdev->subordinate;
 
-	out += sprintf(buf, "Free resources: memory\n");
-	pci_bus_for_each_resource(bus, res, index) {
-		if (res && (res->flags & IORESOURCE_MEM) &&
-				!(res->flags & IORESOURCE_PREFETCH)) {
-			out += sprintf(out, "start = %8.8llx, length = %8.8llx\n",
-				       (unsigned long long)res->start,
-				       (unsigned long long)resource_size(res));
-		}
-	}
-	out += sprintf(out, "Free resources: prefetchable memory\n");
-	pci_bus_for_each_resource(bus, res, index) {
-		if (res && (res->flags & IORESOURCE_MEM) &&
-			       (res->flags & IORESOURCE_PREFETCH)) {
-			out += sprintf(out, "start = %8.8llx, length = %8.8llx\n",
-				       (unsigned long long)res->start,
-				       (unsigned long long)resource_size(res));
-		}
-	}
-	out += sprintf(out, "Free resources: IO\n");
-	pci_bus_for_each_resource(bus, res, index) {
-		if (res && (res->flags & IORESOURCE_IO)) {
-			out += sprintf(out, "start = %8.8llx, length = %8.8llx\n",
-				       (unsigned long long)res->start,
-				       (unsigned long long)resource_size(res));
-		}
-	}
-	out += sprintf(out, "Free resources: bus numbers\n");
-	for (busnr = bus->busn_res.start; busnr <= bus->busn_res.end; busnr++) {
-		if (!pci_find_bus(pci_domain_nr(bus), busnr))
-			break;
-	}
-	if (busnr < bus->busn_res.end)
-		out += sprintf(out, "start = %8.8x, length = %8.8x\n",
-				busnr, (int)(bus->busn_res.end - busnr));
+	out += प्र_लिखो(buf, "Free resources: memory\n");
+	pci_bus_क्रम_each_resource(bus, res, index) अणु
+		अगर (res && (res->flags & IORESOURCE_MEM) &&
+				!(res->flags & IORESOURCE_PREFETCH)) अणु
+			out += प्र_लिखो(out, "start = %8.8llx, length = %8.8llx\n",
+				       (अचिन्हित दीर्घ दीर्घ)res->start,
+				       (अचिन्हित दीर्घ दीर्घ)resource_size(res));
+		पूर्ण
+	पूर्ण
+	out += प्र_लिखो(out, "Free resources: prefetchable memory\n");
+	pci_bus_क्रम_each_resource(bus, res, index) अणु
+		अगर (res && (res->flags & IORESOURCE_MEM) &&
+			       (res->flags & IORESOURCE_PREFETCH)) अणु
+			out += प्र_लिखो(out, "start = %8.8llx, length = %8.8llx\n",
+				       (अचिन्हित दीर्घ दीर्घ)res->start,
+				       (अचिन्हित दीर्घ दीर्घ)resource_size(res));
+		पूर्ण
+	पूर्ण
+	out += प्र_लिखो(out, "Free resources: IO\n");
+	pci_bus_क्रम_each_resource(bus, res, index) अणु
+		अगर (res && (res->flags & IORESOURCE_IO)) अणु
+			out += प्र_लिखो(out, "start = %8.8llx, length = %8.8llx\n",
+				       (अचिन्हित दीर्घ दीर्घ)res->start,
+				       (अचिन्हित दीर्घ दीर्घ)resource_size(res));
+		पूर्ण
+	पूर्ण
+	out += प्र_लिखो(out, "Free resources: bus numbers\n");
+	क्रम (busnr = bus->busn_res.start; busnr <= bus->busn_res.end; busnr++) अणु
+		अगर (!pci_find_bus(pci_करोमुख्य_nr(bus), busnr))
+			अवरोध;
+	पूर्ण
+	अगर (busnr < bus->busn_res.end)
+		out += प्र_लिखो(out, "start = %8.8x, length = %8.8x\n",
+				busnr, (पूर्णांक)(bus->busn_res.end - busnr));
 
-	return out - buf;
-}
-static DEVICE_ATTR(ctrl, S_IRUGO, show_ctrl, NULL);
+	वापस out - buf;
+पूर्ण
+अटल DEVICE_ATTR(ctrl, S_IRUGO, show_ctrl, शून्य);
 
-int shpchp_create_ctrl_files(struct controller *ctrl)
-{
-	return device_create_file(&ctrl->pci_dev->dev, &dev_attr_ctrl);
-}
+पूर्णांक shpchp_create_ctrl_files(काष्ठा controller *ctrl)
+अणु
+	वापस device_create_file(&ctrl->pci_dev->dev, &dev_attr_ctrl);
+पूर्ण
 
-void shpchp_remove_ctrl_files(struct controller *ctrl)
-{
-	device_remove_file(&ctrl->pci_dev->dev, &dev_attr_ctrl);
-}
+व्योम shpchp_हटाओ_ctrl_files(काष्ठा controller *ctrl)
+अणु
+	device_हटाओ_file(&ctrl->pci_dev->dev, &dev_attr_ctrl);
+पूर्ण

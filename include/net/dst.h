@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * net/dst.h	Protocol independent destination cache definitions.
  *
@@ -6,559 +7,559 @@
  *
  */
 
-#ifndef _NET_DST_H
-#define _NET_DST_H
+#अगर_अघोषित _NET_DST_H
+#घोषणा _NET_DST_H
 
-#include <net/dst_ops.h>
-#include <linux/netdevice.h>
-#include <linux/rtnetlink.h>
-#include <linux/rcupdate.h>
-#include <linux/bug.h>
-#include <linux/jiffies.h>
-#include <linux/refcount.h>
-#include <net/neighbour.h>
-#include <asm/processor.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <net/dst_ops.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/refcount.h>
+#समावेश <net/neighbour.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
-struct sk_buff;
+काष्ठा sk_buff;
 
-struct dst_entry {
-	struct net_device       *dev;
-	struct  dst_ops	        *ops;
-	unsigned long		_metrics;
-	unsigned long           expires;
-#ifdef CONFIG_XFRM
-	struct xfrm_state	*xfrm;
-#else
-	void			*__pad1;
-#endif
-	int			(*input)(struct sk_buff *);
-	int			(*output)(struct net *net, struct sock *sk, struct sk_buff *skb);
+काष्ठा dst_entry अणु
+	काष्ठा net_device       *dev;
+	काष्ठा  dst_ops	        *ops;
+	अचिन्हित दीर्घ		_metrics;
+	अचिन्हित दीर्घ           expires;
+#अगर_घोषित CONFIG_XFRM
+	काष्ठा xfrm_state	*xfrm;
+#अन्यथा
+	व्योम			*__pad1;
+#पूर्ण_अगर
+	पूर्णांक			(*input)(काष्ठा sk_buff *);
+	पूर्णांक			(*output)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
 
-	unsigned short		flags;
-#define DST_NOXFRM		0x0002
-#define DST_NOPOLICY		0x0004
-#define DST_NOCOUNT		0x0008
-#define DST_FAKE_RTABLE		0x0010
-#define DST_XFRM_TUNNEL		0x0020
-#define DST_XFRM_QUEUE		0x0040
-#define DST_METADATA		0x0080
+	अचिन्हित लघु		flags;
+#घोषणा DST_NOXFRM		0x0002
+#घोषणा DST_NOPOLICY		0x0004
+#घोषणा DST_NOCOUNT		0x0008
+#घोषणा DST_FAKE_RTABLE		0x0010
+#घोषणा DST_XFRM_TUNNEL		0x0020
+#घोषणा DST_XFRM_QUEUE		0x0040
+#घोषणा DST_METADATA		0x0080
 
-	/* A non-zero value of dst->obsolete forces by-hand validation
+	/* A non-zero value of dst->obsolete क्रमces by-hand validation
 	 * of the route entry.  Positive values are set by the generic
-	 * dst layer to indicate that the entry has been forcefully
+	 * dst layer to indicate that the entry has been क्रमcefully
 	 * destroyed.
 	 *
 	 * Negative values are used by the implementation layer code to
-	 * force invocation of the dst_ops->check() method.
+	 * क्रमce invocation of the dst_ops->check() method.
 	 */
-	short			obsolete;
-#define DST_OBSOLETE_NONE	0
-#define DST_OBSOLETE_DEAD	2
-#define DST_OBSOLETE_FORCE_CHK	-1
-#define DST_OBSOLETE_KILL	-2
-	unsigned short		header_len;	/* more space at head required */
-	unsigned short		trailer_len;	/* space to reserve at tail */
+	लघु			obsolete;
+#घोषणा DST_OBSOLETE_NONE	0
+#घोषणा DST_OBSOLETE_DEAD	2
+#घोषणा DST_OBSOLETE_FORCE_CHK	-1
+#घोषणा DST_OBSOLETE_KILL	-2
+	अचिन्हित लघु		header_len;	/* more space at head required */
+	अचिन्हित लघु		trailer_len;	/* space to reserve at tail */
 
 	/*
-	 * __refcnt wants to be on a different cache line from
-	 * input/output/ops or performance tanks badly
+	 * __refcnt wants to be on a dअगरferent cache line from
+	 * input/output/ops or perक्रमmance tanks badly
 	 */
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	atomic_t		__refcnt;	/* 64-bit offset 64 */
-#endif
-	int			__use;
-	unsigned long		lastuse;
-	struct lwtunnel_state   *lwtstate;
-	struct rcu_head		rcu_head;
-	short			error;
-	short			__pad;
+#पूर्ण_अगर
+	पूर्णांक			__use;
+	अचिन्हित दीर्घ		lastuse;
+	काष्ठा lwtunnel_state   *lwtstate;
+	काष्ठा rcu_head		rcu_head;
+	लघु			error;
+	लघु			__pad;
 	__u32			tclassid;
-#ifndef CONFIG_64BIT
+#अगर_अघोषित CONFIG_64BIT
 	atomic_t		__refcnt;	/* 32-bit offset 64 */
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct dst_metrics {
+काष्ठा dst_metrics अणु
 	u32		metrics[RTAX_MAX];
 	refcount_t	refcnt;
-} __aligned(4);		/* Low pointer bits contain DST_METRICS_FLAGS */
-extern const struct dst_metrics dst_default_metrics;
+पूर्ण __aligned(4);		/* Low poपूर्णांकer bits contain DST_METRICS_FLAGS */
+बाह्य स्थिर काष्ठा dst_metrics dst_शेष_metrics;
 
-u32 *dst_cow_metrics_generic(struct dst_entry *dst, unsigned long old);
+u32 *dst_cow_metrics_generic(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old);
 
-#define DST_METRICS_READ_ONLY		0x1UL
-#define DST_METRICS_REFCOUNTED		0x2UL
-#define DST_METRICS_FLAGS		0x3UL
-#define __DST_METRICS_PTR(Y)	\
+#घोषणा DST_METRICS_READ_ONLY		0x1UL
+#घोषणा DST_METRICS_REFCOUNTED		0x2UL
+#घोषणा DST_METRICS_FLAGS		0x3UL
+#घोषणा __DST_METRICS_PTR(Y)	\
 	((u32 *)((Y) & ~DST_METRICS_FLAGS))
-#define DST_METRICS_PTR(X)	__DST_METRICS_PTR((X)->_metrics)
+#घोषणा DST_METRICS_PTR(X)	__DST_METRICS_PTR((X)->_metrics)
 
-static inline bool dst_metrics_read_only(const struct dst_entry *dst)
-{
-	return dst->_metrics & DST_METRICS_READ_ONLY;
-}
+अटल अंतरभूत bool dst_metrics_पढ़ो_only(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस dst->_metrics & DST_METRICS_READ_ONLY;
+पूर्ण
 
-void __dst_destroy_metrics_generic(struct dst_entry *dst, unsigned long old);
+व्योम __dst_destroy_metrics_generic(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old);
 
-static inline void dst_destroy_metrics_generic(struct dst_entry *dst)
-{
-	unsigned long val = dst->_metrics;
-	if (!(val & DST_METRICS_READ_ONLY))
+अटल अंतरभूत व्योम dst_destroy_metrics_generic(काष्ठा dst_entry *dst)
+अणु
+	अचिन्हित दीर्घ val = dst->_metrics;
+	अगर (!(val & DST_METRICS_READ_ONLY))
 		__dst_destroy_metrics_generic(dst, val);
-}
+पूर्ण
 
-static inline u32 *dst_metrics_write_ptr(struct dst_entry *dst)
-{
-	unsigned long p = dst->_metrics;
+अटल अंतरभूत u32 *dst_metrics_ग_लिखो_ptr(काष्ठा dst_entry *dst)
+अणु
+	अचिन्हित दीर्घ p = dst->_metrics;
 
 	BUG_ON(!p);
 
-	if (p & DST_METRICS_READ_ONLY)
-		return dst->ops->cow_metrics(dst, p);
-	return __DST_METRICS_PTR(p);
-}
+	अगर (p & DST_METRICS_READ_ONLY)
+		वापस dst->ops->cow_metrics(dst, p);
+	वापस __DST_METRICS_PTR(p);
+पूर्ण
 
-/* This may only be invoked before the entry has reached global
+/* This may only be invoked beक्रमe the entry has reached global
  * visibility.
  */
-static inline void dst_init_metrics(struct dst_entry *dst,
-				    const u32 *src_metrics,
-				    bool read_only)
-{
-	dst->_metrics = ((unsigned long) src_metrics) |
-		(read_only ? DST_METRICS_READ_ONLY : 0);
-}
+अटल अंतरभूत व्योम dst_init_metrics(काष्ठा dst_entry *dst,
+				    स्थिर u32 *src_metrics,
+				    bool पढ़ो_only)
+अणु
+	dst->_metrics = ((अचिन्हित दीर्घ) src_metrics) |
+		(पढ़ो_only ? DST_METRICS_READ_ONLY : 0);
+पूर्ण
 
-static inline void dst_copy_metrics(struct dst_entry *dest, const struct dst_entry *src)
-{
-	u32 *dst_metrics = dst_metrics_write_ptr(dest);
+अटल अंतरभूत व्योम dst_copy_metrics(काष्ठा dst_entry *dest, स्थिर काष्ठा dst_entry *src)
+अणु
+	u32 *dst_metrics = dst_metrics_ग_लिखो_ptr(dest);
 
-	if (dst_metrics) {
+	अगर (dst_metrics) अणु
 		u32 *src_metrics = DST_METRICS_PTR(src);
 
-		memcpy(dst_metrics, src_metrics, RTAX_MAX * sizeof(u32));
-	}
-}
+		स_नकल(dst_metrics, src_metrics, RTAX_MAX * माप(u32));
+	पूर्ण
+पूर्ण
 
-static inline u32 *dst_metrics_ptr(struct dst_entry *dst)
-{
-	return DST_METRICS_PTR(dst);
-}
+अटल अंतरभूत u32 *dst_metrics_ptr(काष्ठा dst_entry *dst)
+अणु
+	वापस DST_METRICS_PTR(dst);
+पूर्ण
 
-static inline u32
-dst_metric_raw(const struct dst_entry *dst, const int metric)
-{
+अटल अंतरभूत u32
+dst_metric_raw(स्थिर काष्ठा dst_entry *dst, स्थिर पूर्णांक metric)
+अणु
 	u32 *p = DST_METRICS_PTR(dst);
 
-	return p[metric-1];
-}
+	वापस p[metric-1];
+पूर्ण
 
-static inline u32
-dst_metric(const struct dst_entry *dst, const int metric)
-{
+अटल अंतरभूत u32
+dst_metric(स्थिर काष्ठा dst_entry *dst, स्थिर पूर्णांक metric)
+अणु
 	WARN_ON_ONCE(metric == RTAX_HOPLIMIT ||
 		     metric == RTAX_ADVMSS ||
 		     metric == RTAX_MTU);
-	return dst_metric_raw(dst, metric);
-}
+	वापस dst_metric_raw(dst, metric);
+पूर्ण
 
-static inline u32
-dst_metric_advmss(const struct dst_entry *dst)
-{
+अटल अंतरभूत u32
+dst_metric_advmss(स्थिर काष्ठा dst_entry *dst)
+अणु
 	u32 advmss = dst_metric_raw(dst, RTAX_ADVMSS);
 
-	if (!advmss)
-		advmss = dst->ops->default_advmss(dst);
+	अगर (!advmss)
+		advmss = dst->ops->शेष_advmss(dst);
 
-	return advmss;
-}
+	वापस advmss;
+पूर्ण
 
-static inline void dst_metric_set(struct dst_entry *dst, int metric, u32 val)
-{
-	u32 *p = dst_metrics_write_ptr(dst);
+अटल अंतरभूत व्योम dst_metric_set(काष्ठा dst_entry *dst, पूर्णांक metric, u32 val)
+अणु
+	u32 *p = dst_metrics_ग_लिखो_ptr(dst);
 
-	if (p)
+	अगर (p)
 		p[metric-1] = val;
-}
+पूर्ण
 
-/* Kernel-internal feature bits that are unallocated in user space. */
-#define DST_FEATURE_ECN_CA	(1U << 31)
+/* Kernel-पूर्णांकernal feature bits that are unallocated in user space. */
+#घोषणा DST_FEATURE_ECN_CA	(1U << 31)
 
-#define DST_FEATURE_MASK	(DST_FEATURE_ECN_CA)
-#define DST_FEATURE_ECN_MASK	(DST_FEATURE_ECN_CA | RTAX_FEATURE_ECN)
+#घोषणा DST_FEATURE_MASK	(DST_FEATURE_ECN_CA)
+#घोषणा DST_FEATURE_ECN_MASK	(DST_FEATURE_ECN_CA | RTAX_FEATURE_ECN)
 
-static inline u32
-dst_feature(const struct dst_entry *dst, u32 feature)
-{
-	return dst_metric(dst, RTAX_FEATURES) & feature;
-}
+अटल अंतरभूत u32
+dst_feature(स्थिर काष्ठा dst_entry *dst, u32 feature)
+अणु
+	वापस dst_metric(dst, RTAX_FEATURES) & feature;
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(unsigned int ip6_mtu(const struct dst_entry *));
-INDIRECT_CALLABLE_DECLARE(unsigned int ipv4_mtu(const struct dst_entry *));
-static inline u32 dst_mtu(const struct dst_entry *dst)
-{
-	return INDIRECT_CALL_INET(dst->ops->mtu, ip6_mtu, ipv4_mtu, dst);
-}
+INसूचीECT_CALLABLE_DECLARE(अचिन्हित पूर्णांक ip6_mtu(स्थिर काष्ठा dst_entry *));
+INसूचीECT_CALLABLE_DECLARE(अचिन्हित पूर्णांक ipv4_mtu(स्थिर काष्ठा dst_entry *));
+अटल अंतरभूत u32 dst_mtu(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस INसूचीECT_CALL_INET(dst->ops->mtu, ip6_mtu, ipv4_mtu, dst);
+पूर्ण
 
-/* RTT metrics are stored in milliseconds for user ABI, but used as jiffies */
-static inline unsigned long dst_metric_rtt(const struct dst_entry *dst, int metric)
-{
-	return msecs_to_jiffies(dst_metric(dst, metric));
-}
+/* RTT metrics are stored in milliseconds क्रम user ABI, but used as jअगरfies */
+अटल अंतरभूत अचिन्हित दीर्घ dst_metric_rtt(स्थिर काष्ठा dst_entry *dst, पूर्णांक metric)
+अणु
+	वापस msecs_to_jअगरfies(dst_metric(dst, metric));
+पूर्ण
 
-static inline u32
-dst_allfrag(const struct dst_entry *dst)
-{
-	int ret = dst_feature(dst,  RTAX_FEATURE_ALLFRAG);
-	return ret;
-}
+अटल अंतरभूत u32
+dst_allfrag(स्थिर काष्ठा dst_entry *dst)
+अणु
+	पूर्णांक ret = dst_feature(dst,  RTAX_FEATURE_ALLFRAG);
+	वापस ret;
+पूर्ण
 
-static inline int
-dst_metric_locked(const struct dst_entry *dst, int metric)
-{
-	return dst_metric(dst, RTAX_LOCK) & (1 << metric);
-}
+अटल अंतरभूत पूर्णांक
+dst_metric_locked(स्थिर काष्ठा dst_entry *dst, पूर्णांक metric)
+अणु
+	वापस dst_metric(dst, RTAX_LOCK) & (1 << metric);
+पूर्ण
 
-static inline void dst_hold(struct dst_entry *dst)
-{
+अटल अंतरभूत व्योम dst_hold(काष्ठा dst_entry *dst)
+अणु
 	/*
 	 * If your kernel compilation stops here, please check
-	 * the placement of __refcnt in struct dst_entry
+	 * the placement of __refcnt in काष्ठा dst_entry
 	 */
-	BUILD_BUG_ON(offsetof(struct dst_entry, __refcnt) & 63);
+	BUILD_BUG_ON(दुरत्व(काष्ठा dst_entry, __refcnt) & 63);
 	WARN_ON(atomic_inc_not_zero(&dst->__refcnt) == 0);
-}
+पूर्ण
 
-static inline void dst_use_noref(struct dst_entry *dst, unsigned long time)
-{
-	if (unlikely(time != dst->lastuse)) {
+अटल अंतरभूत व्योम dst_use_noref(काष्ठा dst_entry *dst, अचिन्हित दीर्घ समय)
+अणु
+	अगर (unlikely(समय != dst->lastuse)) अणु
 		dst->__use++;
-		dst->lastuse = time;
-	}
-}
+		dst->lastuse = समय;
+	पूर्ण
+पूर्ण
 
-static inline void dst_hold_and_use(struct dst_entry *dst, unsigned long time)
-{
+अटल अंतरभूत व्योम dst_hold_and_use(काष्ठा dst_entry *dst, अचिन्हित दीर्घ समय)
+अणु
 	dst_hold(dst);
-	dst_use_noref(dst, time);
-}
+	dst_use_noref(dst, समय);
+पूर्ण
 
-static inline struct dst_entry *dst_clone(struct dst_entry *dst)
-{
-	if (dst)
+अटल अंतरभूत काष्ठा dst_entry *dst_clone(काष्ठा dst_entry *dst)
+अणु
+	अगर (dst)
 		dst_hold(dst);
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-void dst_release(struct dst_entry *dst);
+व्योम dst_release(काष्ठा dst_entry *dst);
 
-void dst_release_immediate(struct dst_entry *dst);
+व्योम dst_release_immediate(काष्ठा dst_entry *dst);
 
-static inline void refdst_drop(unsigned long refdst)
-{
-	if (!(refdst & SKB_DST_NOREF))
-		dst_release((struct dst_entry *)(refdst & SKB_DST_PTRMASK));
-}
+अटल अंतरभूत व्योम refdst_drop(अचिन्हित दीर्घ refdst)
+अणु
+	अगर (!(refdst & SKB_DST_NOREF))
+		dst_release((काष्ठा dst_entry *)(refdst & SKB_DST_PTRMASK));
+पूर्ण
 
 /**
  * skb_dst_drop - drops skb dst
  * @skb: buffer
  *
- * Drops dst reference count if a reference was taken.
+ * Drops dst reference count अगर a reference was taken.
  */
-static inline void skb_dst_drop(struct sk_buff *skb)
-{
-	if (skb->_skb_refdst) {
+अटल अंतरभूत व्योम skb_dst_drop(काष्ठा sk_buff *skb)
+अणु
+	अगर (skb->_skb_refdst) अणु
 		refdst_drop(skb->_skb_refdst);
 		skb->_skb_refdst = 0UL;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void __skb_dst_copy(struct sk_buff *nskb, unsigned long refdst)
-{
+अटल अंतरभूत व्योम __skb_dst_copy(काष्ठा sk_buff *nskb, अचिन्हित दीर्घ refdst)
+अणु
 	nskb->_skb_refdst = refdst;
-	if (!(nskb->_skb_refdst & SKB_DST_NOREF))
+	अगर (!(nskb->_skb_refdst & SKB_DST_NOREF))
 		dst_clone(skb_dst(nskb));
-}
+पूर्ण
 
-static inline void skb_dst_copy(struct sk_buff *nskb, const struct sk_buff *oskb)
-{
+अटल अंतरभूत व्योम skb_dst_copy(काष्ठा sk_buff *nskb, स्थिर काष्ठा sk_buff *oskb)
+अणु
 	__skb_dst_copy(nskb, oskb->_skb_refdst);
-}
+पूर्ण
 
 /**
- * dst_hold_safe - Take a reference on a dst if possible
- * @dst: pointer to dst entry
+ * dst_hold_safe - Take a reference on a dst अगर possible
+ * @dst: poपूर्णांकer to dst entry
  *
- * This helper returns false if it could not safely
+ * This helper वापसs false अगर it could not safely
  * take a reference on a dst.
  */
-static inline bool dst_hold_safe(struct dst_entry *dst)
-{
-	return atomic_inc_not_zero(&dst->__refcnt);
-}
+अटल अंतरभूत bool dst_hold_safe(काष्ठा dst_entry *dst)
+अणु
+	वापस atomic_inc_not_zero(&dst->__refcnt);
+पूर्ण
 
 /**
- * skb_dst_force - makes sure skb dst is refcounted
+ * skb_dst_क्रमce - makes sure skb dst is refcounted
  * @skb: buffer
  *
  * If dst is not yet refcounted and not destroyed, grab a ref on it.
- * Returns true if dst is refcounted.
+ * Returns true अगर dst is refcounted.
  */
-static inline bool skb_dst_force(struct sk_buff *skb)
-{
-	if (skb_dst_is_noref(skb)) {
-		struct dst_entry *dst = skb_dst(skb);
+अटल अंतरभूत bool skb_dst_क्रमce(काष्ठा sk_buff *skb)
+अणु
+	अगर (skb_dst_is_noref(skb)) अणु
+		काष्ठा dst_entry *dst = skb_dst(skb);
 
-		WARN_ON(!rcu_read_lock_held());
-		if (!dst_hold_safe(dst))
-			dst = NULL;
+		WARN_ON(!rcu_पढ़ो_lock_held());
+		अगर (!dst_hold_safe(dst))
+			dst = शून्य;
 
-		skb->_skb_refdst = (unsigned long)dst;
-	}
+		skb->_skb_refdst = (अचिन्हित दीर्घ)dst;
+	पूर्ण
 
-	return skb->_skb_refdst != 0UL;
-}
+	वापस skb->_skb_refdst != 0UL;
+पूर्ण
 
 
 /**
- *	__skb_tunnel_rx - prepare skb for rx reinsert
+ *	__skb_tunnel_rx - prepare skb क्रम rx reinsert
  *	@skb: buffer
  *	@dev: tunnel device
- *	@net: netns for packet i/o
+ *	@net: netns क्रम packet i/o
  *
- *	After decapsulation, packet is going to re-enter (netif_rx()) our stack,
- *	so make some cleanups. (no accounting done)
+ *	After decapsulation, packet is going to re-enter (netअगर_rx()) our stack,
+ *	so make some cleanups. (no accounting करोne)
  */
-static inline void __skb_tunnel_rx(struct sk_buff *skb, struct net_device *dev,
-				   struct net *net)
-{
+अटल अंतरभूत व्योम __skb_tunnel_rx(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+				   काष्ठा net *net)
+अणु
 	skb->dev = dev;
 
 	/*
-	 * Clear hash so that we can recalulate the hash for the
-	 * encapsulated packet, unless we have already determine the hash
+	 * Clear hash so that we can recalulate the hash क्रम the
+	 * encapsulated packet, unless we have alपढ़ोy determine the hash
 	 * over the L4 4-tuple.
 	 */
-	skb_clear_hash_if_not_l4(skb);
+	skb_clear_hash_अगर_not_l4(skb);
 	skb_set_queue_mapping(skb, 0);
 	skb_scrub_packet(skb, !net_eq(net, dev_net(dev)));
-}
+पूर्ण
 
 /**
- *	skb_tunnel_rx - prepare skb for rx reinsert
+ *	skb_tunnel_rx - prepare skb क्रम rx reinsert
  *	@skb: buffer
  *	@dev: tunnel device
- *	@net: netns for packet i/o
+ *	@net: netns क्रम packet i/o
  *
- *	After decapsulation, packet is going to re-enter (netif_rx()) our stack,
- *	so make some cleanups, and perform accounting.
+ *	After decapsulation, packet is going to re-enter (netअगर_rx()) our stack,
+ *	so make some cleanups, and perक्रमm accounting.
  *	Note: this accounting is not SMP safe.
  */
-static inline void skb_tunnel_rx(struct sk_buff *skb, struct net_device *dev,
-				 struct net *net)
-{
+अटल अंतरभूत व्योम skb_tunnel_rx(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+				 काष्ठा net *net)
+अणु
 	/* TODO : stats should be SMP safe */
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += skb->len;
 	__skb_tunnel_rx(skb, dev, net);
-}
+पूर्ण
 
-static inline u32 dst_tclassid(const struct sk_buff *skb)
-{
-#ifdef CONFIG_IP_ROUTE_CLASSID
-	const struct dst_entry *dst;
+अटल अंतरभूत u32 dst_tclassid(स्थिर काष्ठा sk_buff *skb)
+अणु
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
+	स्थिर काष्ठा dst_entry *dst;
 
 	dst = skb_dst(skb);
-	if (dst)
-		return dst->tclassid;
-#endif
-	return 0;
-}
+	अगर (dst)
+		वापस dst->tclassid;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int dst_discard_out(struct net *net, struct sock *sk, struct sk_buff *skb);
-static inline int dst_discard(struct sk_buff *skb)
-{
-	return dst_discard_out(&init_net, skb->sk, skb);
-}
-void *dst_alloc(struct dst_ops *ops, struct net_device *dev, int initial_ref,
-		int initial_obsolete, unsigned short flags);
-void dst_init(struct dst_entry *dst, struct dst_ops *ops,
-	      struct net_device *dev, int initial_ref, int initial_obsolete,
-	      unsigned short flags);
-struct dst_entry *dst_destroy(struct dst_entry *dst);
-void dst_dev_put(struct dst_entry *dst);
+पूर्णांक dst_discard_out(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
+अटल अंतरभूत पूर्णांक dst_discard(काष्ठा sk_buff *skb)
+अणु
+	वापस dst_discard_out(&init_net, skb->sk, skb);
+पूर्ण
+व्योम *dst_alloc(काष्ठा dst_ops *ops, काष्ठा net_device *dev, पूर्णांक initial_ref,
+		पूर्णांक initial_obsolete, अचिन्हित लघु flags);
+व्योम dst_init(काष्ठा dst_entry *dst, काष्ठा dst_ops *ops,
+	      काष्ठा net_device *dev, पूर्णांक initial_ref, पूर्णांक initial_obsolete,
+	      अचिन्हित लघु flags);
+काष्ठा dst_entry *dst_destroy(काष्ठा dst_entry *dst);
+व्योम dst_dev_put(काष्ठा dst_entry *dst);
 
-static inline void dst_confirm(struct dst_entry *dst)
-{
-}
+अटल अंतरभूत व्योम dst_confirm(काष्ठा dst_entry *dst)
+अणु
+पूर्ण
 
-static inline struct neighbour *dst_neigh_lookup(const struct dst_entry *dst, const void *daddr)
-{
-	struct neighbour *n = dst->ops->neigh_lookup(dst, NULL, daddr);
-	return IS_ERR(n) ? NULL : n;
-}
+अटल अंतरभूत काष्ठा neighbour *dst_neigh_lookup(स्थिर काष्ठा dst_entry *dst, स्थिर व्योम *daddr)
+अणु
+	काष्ठा neighbour *n = dst->ops->neigh_lookup(dst, शून्य, daddr);
+	वापस IS_ERR(n) ? शून्य : n;
+पूर्ण
 
-static inline struct neighbour *dst_neigh_lookup_skb(const struct dst_entry *dst,
-						     struct sk_buff *skb)
-{
-	struct neighbour *n;
+अटल अंतरभूत काष्ठा neighbour *dst_neigh_lookup_skb(स्थिर काष्ठा dst_entry *dst,
+						     काष्ठा sk_buff *skb)
+अणु
+	काष्ठा neighbour *n;
 
-	if (WARN_ON_ONCE(!dst->ops->neigh_lookup))
-		return NULL;
+	अगर (WARN_ON_ONCE(!dst->ops->neigh_lookup))
+		वापस शून्य;
 
-	n = dst->ops->neigh_lookup(dst, skb, NULL);
+	n = dst->ops->neigh_lookup(dst, skb, शून्य);
 
-	return IS_ERR(n) ? NULL : n;
-}
+	वापस IS_ERR(n) ? शून्य : n;
+पूर्ण
 
-static inline void dst_confirm_neigh(const struct dst_entry *dst,
-				     const void *daddr)
-{
-	if (dst->ops->confirm_neigh)
+अटल अंतरभूत व्योम dst_confirm_neigh(स्थिर काष्ठा dst_entry *dst,
+				     स्थिर व्योम *daddr)
+अणु
+	अगर (dst->ops->confirm_neigh)
 		dst->ops->confirm_neigh(dst, daddr);
-}
+पूर्ण
 
-static inline void dst_link_failure(struct sk_buff *skb)
-{
-	struct dst_entry *dst = skb_dst(skb);
-	if (dst && dst->ops && dst->ops->link_failure)
+अटल अंतरभूत व्योम dst_link_failure(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
+	अगर (dst && dst->ops && dst->ops->link_failure)
 		dst->ops->link_failure(skb);
-}
+पूर्ण
 
-static inline void dst_set_expires(struct dst_entry *dst, int timeout)
-{
-	unsigned long expires = jiffies + timeout;
+अटल अंतरभूत व्योम dst_set_expires(काष्ठा dst_entry *dst, पूर्णांक समयout)
+अणु
+	अचिन्हित दीर्घ expires = jअगरfies + समयout;
 
-	if (expires == 0)
+	अगर (expires == 0)
 		expires = 1;
 
-	if (dst->expires == 0 || time_before(expires, dst->expires))
+	अगर (dst->expires == 0 || समय_beक्रमe(expires, dst->expires))
 		dst->expires = expires;
-}
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(int ip6_output(struct net *, struct sock *,
-					 struct sk_buff *));
-INDIRECT_CALLABLE_DECLARE(int ip_output(struct net *, struct sock *,
-					 struct sk_buff *));
+INसूचीECT_CALLABLE_DECLARE(पूर्णांक ip6_output(काष्ठा net *, काष्ठा sock *,
+					 काष्ठा sk_buff *));
+INसूचीECT_CALLABLE_DECLARE(पूर्णांक ip_output(काष्ठा net *, काष्ठा sock *,
+					 काष्ठा sk_buff *));
 /* Output packet to network from transport.  */
-static inline int dst_output(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	return INDIRECT_CALL_INET(skb_dst(skb)->output,
+अटल अंतरभूत पूर्णांक dst_output(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	वापस INसूचीECT_CALL_INET(skb_dst(skb)->output,
 				  ip6_output, ip_output,
 				  net, sk, skb);
-}
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(int ip6_input(struct sk_buff *));
-INDIRECT_CALLABLE_DECLARE(int ip_local_deliver(struct sk_buff *));
+INसूचीECT_CALLABLE_DECLARE(पूर्णांक ip6_input(काष्ठा sk_buff *));
+INसूचीECT_CALLABLE_DECLARE(पूर्णांक ip_local_deliver(काष्ठा sk_buff *));
 /* Input packet from network to transport.  */
-static inline int dst_input(struct sk_buff *skb)
-{
-	return INDIRECT_CALL_INET(skb_dst(skb)->input,
+अटल अंतरभूत पूर्णांक dst_input(काष्ठा sk_buff *skb)
+अणु
+	वापस INसूचीECT_CALL_INET(skb_dst(skb)->input,
 				  ip6_input, ip_local_deliver, skb);
-}
+पूर्ण
 
-INDIRECT_CALLABLE_DECLARE(struct dst_entry *ip6_dst_check(struct dst_entry *,
+INसूचीECT_CALLABLE_DECLARE(काष्ठा dst_entry *ip6_dst_check(काष्ठा dst_entry *,
 							  u32));
-INDIRECT_CALLABLE_DECLARE(struct dst_entry *ipv4_dst_check(struct dst_entry *,
+INसूचीECT_CALLABLE_DECLARE(काष्ठा dst_entry *ipv4_dst_check(काष्ठा dst_entry *,
 							   u32));
-static inline struct dst_entry *dst_check(struct dst_entry *dst, u32 cookie)
-{
-	if (dst->obsolete)
-		dst = INDIRECT_CALL_INET(dst->ops->check, ip6_dst_check,
+अटल अंतरभूत काष्ठा dst_entry *dst_check(काष्ठा dst_entry *dst, u32 cookie)
+अणु
+	अगर (dst->obsolete)
+		dst = INसूचीECT_CALL_INET(dst->ops->check, ip6_dst_check,
 					 ipv4_dst_check, dst, cookie);
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-/* Flags for xfrm_lookup flags argument. */
-enum {
+/* Flags क्रम xfrm_lookup flags argument. */
+क्रमागत अणु
 	XFRM_LOOKUP_ICMP = 1 << 0,
 	XFRM_LOOKUP_QUEUE = 1 << 1,
 	XFRM_LOOKUP_KEEP_DST_REF = 1 << 2,
-};
+पूर्ण;
 
-struct flowi;
-#ifndef CONFIG_XFRM
-static inline struct dst_entry *xfrm_lookup(struct net *net,
-					    struct dst_entry *dst_orig,
-					    const struct flowi *fl,
-					    const struct sock *sk,
-					    int flags)
-{
-	return dst_orig;
-}
+काष्ठा flowi;
+#अगर_अघोषित CONFIG_XFRM
+अटल अंतरभूत काष्ठा dst_entry *xfrm_lookup(काष्ठा net *net,
+					    काष्ठा dst_entry *dst_orig,
+					    स्थिर काष्ठा flowi *fl,
+					    स्थिर काष्ठा sock *sk,
+					    पूर्णांक flags)
+अणु
+	वापस dst_orig;
+पूर्ण
 
-static inline struct dst_entry *
-xfrm_lookup_with_ifid(struct net *net, struct dst_entry *dst_orig,
-		      const struct flowi *fl, const struct sock *sk,
-		      int flags, u32 if_id)
-{
-	return dst_orig;
-}
+अटल अंतरभूत काष्ठा dst_entry *
+xfrm_lookup_with_अगरid(काष्ठा net *net, काष्ठा dst_entry *dst_orig,
+		      स्थिर काष्ठा flowi *fl, स्थिर काष्ठा sock *sk,
+		      पूर्णांक flags, u32 अगर_id)
+अणु
+	वापस dst_orig;
+पूर्ण
 
-static inline struct dst_entry *xfrm_lookup_route(struct net *net,
-						  struct dst_entry *dst_orig,
-						  const struct flowi *fl,
-						  const struct sock *sk,
-						  int flags)
-{
-	return dst_orig;
-}
+अटल अंतरभूत काष्ठा dst_entry *xfrm_lookup_route(काष्ठा net *net,
+						  काष्ठा dst_entry *dst_orig,
+						  स्थिर काष्ठा flowi *fl,
+						  स्थिर काष्ठा sock *sk,
+						  पूर्णांक flags)
+अणु
+	वापस dst_orig;
+पूर्ण
 
-static inline struct xfrm_state *dst_xfrm(const struct dst_entry *dst)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा xfrm_state *dst_xfrm(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#else
-struct dst_entry *xfrm_lookup(struct net *net, struct dst_entry *dst_orig,
-			      const struct flowi *fl, const struct sock *sk,
-			      int flags);
+#अन्यथा
+काष्ठा dst_entry *xfrm_lookup(काष्ठा net *net, काष्ठा dst_entry *dst_orig,
+			      स्थिर काष्ठा flowi *fl, स्थिर काष्ठा sock *sk,
+			      पूर्णांक flags);
 
-struct dst_entry *xfrm_lookup_with_ifid(struct net *net,
-					struct dst_entry *dst_orig,
-					const struct flowi *fl,
-					const struct sock *sk, int flags,
-					u32 if_id);
+काष्ठा dst_entry *xfrm_lookup_with_अगरid(काष्ठा net *net,
+					काष्ठा dst_entry *dst_orig,
+					स्थिर काष्ठा flowi *fl,
+					स्थिर काष्ठा sock *sk, पूर्णांक flags,
+					u32 अगर_id);
 
-struct dst_entry *xfrm_lookup_route(struct net *net, struct dst_entry *dst_orig,
-				    const struct flowi *fl, const struct sock *sk,
-				    int flags);
+काष्ठा dst_entry *xfrm_lookup_route(काष्ठा net *net, काष्ठा dst_entry *dst_orig,
+				    स्थिर काष्ठा flowi *fl, स्थिर काष्ठा sock *sk,
+				    पूर्णांक flags);
 
-/* skb attached with this dst needs transformation if dst->xfrm is valid */
-static inline struct xfrm_state *dst_xfrm(const struct dst_entry *dst)
-{
-	return dst->xfrm;
-}
-#endif
+/* skb attached with this dst needs transक्रमmation अगर dst->xfrm is valid */
+अटल अंतरभूत काष्ठा xfrm_state *dst_xfrm(स्थिर काष्ठा dst_entry *dst)
+अणु
+	वापस dst->xfrm;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void skb_dst_update_pmtu(struct sk_buff *skb, u32 mtu)
-{
-	struct dst_entry *dst = skb_dst(skb);
+अटल अंतरभूत व्योम skb_dst_update_pmtu(काष्ठा sk_buff *skb, u32 mtu)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
 
-	if (dst && dst->ops->update_pmtu)
-		dst->ops->update_pmtu(dst, NULL, skb, mtu, true);
-}
+	अगर (dst && dst->ops->update_pmtu)
+		dst->ops->update_pmtu(dst, शून्य, skb, mtu, true);
+पूर्ण
 
-/* update dst pmtu but not do neighbor confirm */
-static inline void skb_dst_update_pmtu_no_confirm(struct sk_buff *skb, u32 mtu)
-{
-	struct dst_entry *dst = skb_dst(skb);
+/* update dst pmtu but not करो neighbor confirm */
+अटल अंतरभूत व्योम skb_dst_update_pmtu_no_confirm(काष्ठा sk_buff *skb, u32 mtu)
+अणु
+	काष्ठा dst_entry *dst = skb_dst(skb);
 
-	if (dst && dst->ops->update_pmtu)
-		dst->ops->update_pmtu(dst, NULL, skb, mtu, false);
-}
+	अगर (dst && dst->ops->update_pmtu)
+		dst->ops->update_pmtu(dst, शून्य, skb, mtu, false);
+पूर्ण
 
-struct dst_entry *dst_blackhole_check(struct dst_entry *dst, u32 cookie);
-void dst_blackhole_update_pmtu(struct dst_entry *dst, struct sock *sk,
-			       struct sk_buff *skb, u32 mtu, bool confirm_neigh);
-void dst_blackhole_redirect(struct dst_entry *dst, struct sock *sk,
-			    struct sk_buff *skb);
-u32 *dst_blackhole_cow_metrics(struct dst_entry *dst, unsigned long old);
-struct neighbour *dst_blackhole_neigh_lookup(const struct dst_entry *dst,
-					     struct sk_buff *skb,
-					     const void *daddr);
-unsigned int dst_blackhole_mtu(const struct dst_entry *dst);
+काष्ठा dst_entry *dst_blackhole_check(काष्ठा dst_entry *dst, u32 cookie);
+व्योम dst_blackhole_update_pmtu(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			       काष्ठा sk_buff *skb, u32 mtu, bool confirm_neigh);
+व्योम dst_blackhole_redirect(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			    काष्ठा sk_buff *skb);
+u32 *dst_blackhole_cow_metrics(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old);
+काष्ठा neighbour *dst_blackhole_neigh_lookup(स्थिर काष्ठा dst_entry *dst,
+					     काष्ठा sk_buff *skb,
+					     स्थिर व्योम *daddr);
+अचिन्हित पूर्णांक dst_blackhole_mtu(स्थिर काष्ठा dst_entry *dst);
 
-#endif /* _NET_DST_H */
+#पूर्ण_अगर /* _NET_DST_H */

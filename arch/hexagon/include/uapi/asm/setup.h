@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
-#ifndef _ASM_SETUP_H
-#define _ASM_SETUP_H
+#अगर_अघोषित _ASM_SETUP_H
+#घोषणा _ASM_SETUP_H
 
-#ifdef __KERNEL__
-#include <linux/init.h>
-#else
-#define __init
-#endif
+#अगर_घोषित __KERNEL__
+#समावेश <linux/init.h>
+#अन्यथा
+#घोषणा __init
+#पूर्ण_अगर
 
-#include <asm-generic/setup.h>
+#समावेश <यंत्र-generic/setup.h>
 
-extern char external_cmdline_buffer;
+बाह्य अक्षर बाह्यal_cmdline_buffer;
 
-void __init setup_arch_memory(void);
+व्योम __init setup_arch_memory(व्योम);
 
-#endif
+#पूर्ण_अगर

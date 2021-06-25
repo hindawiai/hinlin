@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* n2-drv.c: Niagara-2 RNG driver.
  *
  * Copyright (C) 2008, 2011 David S. Miller <davem@davemloft.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/preempt.h>
-#include <linux/hw_random.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/preempt.h>
+#समावेश <linux/hw_अक्रमom.h>
 
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <asm/hypervisor.h>
+#समावेश <यंत्र/hypervisor.h>
 
-#include "n2rng.h"
+#समावेश "n2rng.h"
 
-#define DRV_MODULE_NAME		"n2rng"
-#define PFX DRV_MODULE_NAME	": "
-#define DRV_MODULE_VERSION	"0.3"
-#define DRV_MODULE_RELDATE	"Jan 7, 2017"
+#घोषणा DRV_MODULE_NAME		"n2rng"
+#घोषणा PFX DRV_MODULE_NAME	": "
+#घोषणा DRV_MODULE_VERSION	"0.3"
+#घोषणा DRV_MODULE_RELDATE	"Jan 7, 2017"
 
-static char version[] =
+अटल अक्षर version[] =
 	DRV_MODULE_NAME " v" DRV_MODULE_VERSION " (" DRV_MODULE_RELDATE ")\n";
 
 MODULE_AUTHOR("David S. Miller (davem@davemloft.net)");
@@ -33,35 +34,35 @@ MODULE_DESCRIPTION("Niagara2 RNG driver");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(DRV_MODULE_VERSION);
 
-/* The Niagara2 RNG provides a 64-bit read-only random number
- * register, plus a control register.  Access to the RNG is
- * virtualized through the hypervisor so that both guests and control
+/* The Niagara2 RNG provides a 64-bit पढ़ो-only अक्रमom number
+ * रेजिस्टर, plus a control रेजिस्टर.  Access to the RNG is
+ * भवized through the hypervisor so that both guests and control
  * nodes can access the device.
  *
  * The entropy source consists of raw entropy sources, each
- * constructed from a voltage controlled oscillator whose phase is
+ * स्थिरructed from a voltage controlled oscillator whose phase is
  * jittered by thermal noise sources.
  *
  * The oscillator in each of the three raw entropy sources run at
- * different frequencies.  Normally, all three generator outputs are
- * gathered, xored together, and fed into a CRC circuit, the output of
- * which is the 64-bit read-only register.
+ * dअगरferent frequencies.  Normally, all three generator outमाला_दो are
+ * gathered, xored together, and fed पूर्णांकo a CRC circuit, the output of
+ * which is the 64-bit पढ़ो-only रेजिस्टर.
  *
- * Some time is necessary for all the necessary entropy to build up
- * such that a full 64-bits of entropy are available in the register.
+ * Some समय is necessary क्रम all the necessary entropy to build up
+ * such that a full 64-bits of entropy are available in the रेजिस्टर.
  * In normal operating mode (RNG_CTL_LFSR is set), the chip implements
- * an interlock which blocks register reads until sufficient entropy
+ * an पूर्णांकerlock which blocks रेजिस्टर पढ़ोs until sufficient entropy
  * is available.
  *
- * A control register is provided for adjusting various aspects of RNG
+ * A control रेजिस्टर is provided क्रम adjusting various aspects of RNG
  * operation, and to enable diagnostic modes.  Each of the three raw
- * entropy sources has an enable bit (RNG_CTL_ES{1,2,3}).  Also
- * provided are fields for controlling the minimum time in cycles
- * between read accesses to the register (RNG_CTL_WAIT, this controls
- * the interlock described in the previous paragraph).
+ * entropy sources has an enable bit (RNG_CTL_ESअणु1,2,3पूर्ण).  Also
+ * provided are fields क्रम controlling the minimum समय in cycles
+ * between पढ़ो accesses to the रेजिस्टर (RNG_CTL_WAIT, this controls
+ * the पूर्णांकerlock described in the previous paragraph).
  *
  * The standard setting is to have the mode bit (RNG_CTL_LFSR) set,
- * all three entropy sources enabled, and the interlock time set
+ * all three entropy sources enabled, and the पूर्णांकerlock समय set
  * appropriately.
  *
  * The CRC polynomial used by the chip is:
@@ -71,11 +72,11 @@ MODULE_VERSION(DRV_MODULE_VERSION);
  *        x22 + x21 + x17 + x15 + x13 + x12 + x11 + x7 + x5 + x + 1
  *
  * The RNG_CTL_VCO value of each noise cell must be programmed
- * separately.  This is why 4 control register values must be provided
- * to the hypervisor.  During a write, the hypervisor writes them all,
- * one at a time, to the actual RNG_CTL register.  The first three
- * values are used to setup the desired RNG_CTL_VCO for each entropy
- * source, for example:
+ * separately.  This is why 4 control रेजिस्टर values must be provided
+ * to the hypervisor.  During a ग_लिखो, the hypervisor ग_लिखोs them all,
+ * one at a समय, to the actual RNG_CTL रेजिस्टर.  The first three
+ * values are used to setup the desired RNG_CTL_VCO क्रम each entropy
+ * source, क्रम example:
  *
  *	control 0: (1 << RNG_CTL_VCO_SHIFT) | RNG_CTL_ES1
  *	control 1: (2 << RNG_CTL_VCO_SHIFT) | RNG_CTL_ES2
@@ -85,679 +86,679 @@ MODULE_VERSION(DRV_MODULE_VERSION);
  * desired.
  */
 
-static int n2rng_hv_err_trans(unsigned long hv_err)
-{
-	switch (hv_err) {
-	case HV_EOK:
-		return 0;
-	case HV_EWOULDBLOCK:
-		return -EAGAIN;
-	case HV_ENOACCESS:
-		return -EPERM;
-	case HV_EIO:
-		return -EIO;
-	case HV_EBUSY:
-		return -EBUSY;
-	case HV_EBADALIGN:
-	case HV_ENORADDR:
-		return -EFAULT;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक n2rng_hv_err_trans(अचिन्हित दीर्घ hv_err)
+अणु
+	चयन (hv_err) अणु
+	हाल HV_EOK:
+		वापस 0;
+	हाल HV_EWOULDBLOCK:
+		वापस -EAGAIN;
+	हाल HV_ENOACCESS:
+		वापस -EPERM;
+	हाल HV_EIO:
+		वापस -EIO;
+	हाल HV_EBUSY:
+		वापस -EBUSY;
+	हाल HV_EBADALIGN:
+	हाल HV_ENORADDR:
+		वापस -EFAULT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static unsigned long n2rng_generic_read_control_v2(unsigned long ra,
-						   unsigned long unit)
-{
-	unsigned long hv_err, state, ticks, watchdog_delta, watchdog_status;
-	int block = 0, busy = 0;
+अटल अचिन्हित दीर्घ n2rng_generic_पढ़ो_control_v2(अचिन्हित दीर्घ ra,
+						   अचिन्हित दीर्घ unit)
+अणु
+	अचिन्हित दीर्घ hv_err, state, ticks, watchकरोg_delta, watchकरोg_status;
+	पूर्णांक block = 0, busy = 0;
 
-	while (1) {
-		hv_err = sun4v_rng_ctl_read_v2(ra, unit, &state,
+	जबतक (1) अणु
+		hv_err = sun4v_rng_ctl_पढ़ो_v2(ra, unit, &state,
 					       &ticks,
-					       &watchdog_delta,
-					       &watchdog_status);
-		if (hv_err == HV_EOK)
-			break;
+					       &watchकरोg_delta,
+					       &watchकरोg_status);
+		अगर (hv_err == HV_EOK)
+			अवरोध;
 
-		if (hv_err == HV_EBUSY) {
-			if (++busy >= N2RNG_BUSY_LIMIT)
-				break;
+		अगर (hv_err == HV_EBUSY) अणु
+			अगर (++busy >= N2RNG_BUSY_LIMIT)
+				अवरोध;
 
 			udelay(1);
-		} else if (hv_err == HV_EWOULDBLOCK) {
-			if (++block >= N2RNG_BLOCK_LIMIT)
-				break;
+		पूर्ण अन्यथा अगर (hv_err == HV_EWOULDBLOCK) अणु
+			अगर (++block >= N2RNG_BLOCK_LIMIT)
+				अवरोध;
 
 			__delay(ticks);
-		} else
-			break;
-	}
+		पूर्ण अन्यथा
+			अवरोध;
+	पूर्ण
 
-	return hv_err;
-}
+	वापस hv_err;
+पूर्ण
 
 /* In multi-socket situations, the hypervisor might need to
- * queue up the RNG control register write if it's for a unit
+ * queue up the RNG control रेजिस्टर ग_लिखो अगर it's क्रम a unit
  * that is on a cpu socket other than the one we are executing on.
  *
- * We poll here waiting for a successful read of that control
- * register to make sure the write has been actually performed.
+ * We poll here रुकोing क्रम a successful पढ़ो of that control
+ * रेजिस्टर to make sure the ग_लिखो has been actually perक्रमmed.
  */
-static unsigned long n2rng_control_settle_v2(struct n2rng *np, int unit)
-{
-	unsigned long ra = __pa(&np->scratch_control[0]);
+अटल अचिन्हित दीर्घ n2rng_control_settle_v2(काष्ठा n2rng *np, पूर्णांक unit)
+अणु
+	अचिन्हित दीर्घ ra = __pa(&np->scratch_control[0]);
 
-	return n2rng_generic_read_control_v2(ra, unit);
-}
+	वापस n2rng_generic_पढ़ो_control_v2(ra, unit);
+पूर्ण
 
-static unsigned long n2rng_write_ctl_one(struct n2rng *np, int unit,
-					 unsigned long state,
-					 unsigned long control_ra,
-					 unsigned long watchdog_timeout,
-					 unsigned long *ticks)
-{
-	unsigned long hv_err;
+अटल अचिन्हित दीर्घ n2rng_ग_लिखो_ctl_one(काष्ठा n2rng *np, पूर्णांक unit,
+					 अचिन्हित दीर्घ state,
+					 अचिन्हित दीर्घ control_ra,
+					 अचिन्हित दीर्घ watchकरोg_समयout,
+					 अचिन्हित दीर्घ *ticks)
+अणु
+	अचिन्हित दीर्घ hv_err;
 
-	if (np->hvapi_major == 1) {
-		hv_err = sun4v_rng_ctl_write_v1(control_ra, state,
-						watchdog_timeout, ticks);
-	} else {
-		hv_err = sun4v_rng_ctl_write_v2(control_ra, state,
-						watchdog_timeout, unit);
-		if (hv_err == HV_EOK)
+	अगर (np->hvapi_major == 1) अणु
+		hv_err = sun4v_rng_ctl_ग_लिखो_v1(control_ra, state,
+						watchकरोg_समयout, ticks);
+	पूर्ण अन्यथा अणु
+		hv_err = sun4v_rng_ctl_ग_लिखो_v2(control_ra, state,
+						watchकरोg_समयout, unit);
+		अगर (hv_err == HV_EOK)
 			hv_err = n2rng_control_settle_v2(np, unit);
 		*ticks = N2RNG_ACCUM_CYCLES_DEFAULT;
-	}
+	पूर्ण
 
-	return hv_err;
-}
+	वापस hv_err;
+पूर्ण
 
-static int n2rng_generic_read_data(unsigned long data_ra)
-{
-	unsigned long ticks, hv_err;
-	int block = 0, hcheck = 0;
+अटल पूर्णांक n2rng_generic_पढ़ो_data(अचिन्हित दीर्घ data_ra)
+अणु
+	अचिन्हित दीर्घ ticks, hv_err;
+	पूर्णांक block = 0, hcheck = 0;
 
-	while (1) {
-		hv_err = sun4v_rng_data_read(data_ra, &ticks);
-		if (hv_err == HV_EOK)
-			return 0;
+	जबतक (1) अणु
+		hv_err = sun4v_rng_data_पढ़ो(data_ra, &ticks);
+		अगर (hv_err == HV_EOK)
+			वापस 0;
 
-		if (hv_err == HV_EWOULDBLOCK) {
-			if (++block >= N2RNG_BLOCK_LIMIT)
-				return -EWOULDBLOCK;
+		अगर (hv_err == HV_EWOULDBLOCK) अणु
+			अगर (++block >= N2RNG_BLOCK_LIMIT)
+				वापस -EWOULDBLOCK;
 			__delay(ticks);
-		} else if (hv_err == HV_ENOACCESS) {
-			return -EPERM;
-		} else if (hv_err == HV_EIO) {
-			if (++hcheck >= N2RNG_HCHECK_LIMIT)
-				return -EIO;
+		पूर्ण अन्यथा अगर (hv_err == HV_ENOACCESS) अणु
+			वापस -EPERM;
+		पूर्ण अन्यथा अगर (hv_err == HV_EIO) अणु
+			अगर (++hcheck >= N2RNG_HCHECK_LIMIT)
+				वापस -EIO;
 			udelay(10000);
-		} else
-			return -ENODEV;
-	}
-}
+		पूर्ण अन्यथा
+			वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
-static unsigned long n2rng_read_diag_data_one(struct n2rng *np,
-					      unsigned long unit,
-					      unsigned long data_ra,
-					      unsigned long data_len,
-					      unsigned long *ticks)
-{
-	unsigned long hv_err;
+अटल अचिन्हित दीर्घ n2rng_पढ़ो_diag_data_one(काष्ठा n2rng *np,
+					      अचिन्हित दीर्घ unit,
+					      अचिन्हित दीर्घ data_ra,
+					      अचिन्हित दीर्घ data_len,
+					      अचिन्हित दीर्घ *ticks)
+अणु
+	अचिन्हित दीर्घ hv_err;
 
-	if (np->hvapi_major == 1) {
-		hv_err = sun4v_rng_data_read_diag_v1(data_ra, data_len, ticks);
-	} else {
-		hv_err = sun4v_rng_data_read_diag_v2(data_ra, data_len,
+	अगर (np->hvapi_major == 1) अणु
+		hv_err = sun4v_rng_data_पढ़ो_diag_v1(data_ra, data_len, ticks);
+	पूर्ण अन्यथा अणु
+		hv_err = sun4v_rng_data_पढ़ो_diag_v2(data_ra, data_len,
 						     unit, ticks);
-		if (!*ticks)
+		अगर (!*ticks)
 			*ticks = N2RNG_ACCUM_CYCLES_DEFAULT;
-	}
-	return hv_err;
-}
+	पूर्ण
+	वापस hv_err;
+पूर्ण
 
-static int n2rng_generic_read_diag_data(struct n2rng *np,
-					unsigned long unit,
-					unsigned long data_ra,
-					unsigned long data_len)
-{
-	unsigned long ticks, hv_err;
-	int block = 0;
+अटल पूर्णांक n2rng_generic_पढ़ो_diag_data(काष्ठा n2rng *np,
+					अचिन्हित दीर्घ unit,
+					अचिन्हित दीर्घ data_ra,
+					अचिन्हित दीर्घ data_len)
+अणु
+	अचिन्हित दीर्घ ticks, hv_err;
+	पूर्णांक block = 0;
 
-	while (1) {
-		hv_err = n2rng_read_diag_data_one(np, unit,
+	जबतक (1) अणु
+		hv_err = n2rng_पढ़ो_diag_data_one(np, unit,
 						  data_ra, data_len,
 						  &ticks);
-		if (hv_err == HV_EOK)
-			return 0;
+		अगर (hv_err == HV_EOK)
+			वापस 0;
 
-		if (hv_err == HV_EWOULDBLOCK) {
-			if (++block >= N2RNG_BLOCK_LIMIT)
-				return -EWOULDBLOCK;
+		अगर (hv_err == HV_EWOULDBLOCK) अणु
+			अगर (++block >= N2RNG_BLOCK_LIMIT)
+				वापस -EWOULDBLOCK;
 			__delay(ticks);
-		} else if (hv_err == HV_ENOACCESS) {
-			return -EPERM;
-		} else if (hv_err == HV_EIO) {
-			return -EIO;
-		} else
-			return -ENODEV;
-	}
-}
+		पूर्ण अन्यथा अगर (hv_err == HV_ENOACCESS) अणु
+			वापस -EPERM;
+		पूर्ण अन्यथा अगर (hv_err == HV_EIO) अणु
+			वापस -EIO;
+		पूर्ण अन्यथा
+			वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
 
-static int n2rng_generic_write_control(struct n2rng *np,
-				       unsigned long control_ra,
-				       unsigned long unit,
-				       unsigned long state)
-{
-	unsigned long hv_err, ticks;
-	int block = 0, busy = 0;
+अटल पूर्णांक n2rng_generic_ग_लिखो_control(काष्ठा n2rng *np,
+				       अचिन्हित दीर्घ control_ra,
+				       अचिन्हित दीर्घ unit,
+				       अचिन्हित दीर्घ state)
+अणु
+	अचिन्हित दीर्घ hv_err, ticks;
+	पूर्णांक block = 0, busy = 0;
 
-	while (1) {
-		hv_err = n2rng_write_ctl_one(np, unit, state, control_ra,
-					     np->wd_timeo, &ticks);
-		if (hv_err == HV_EOK)
-			return 0;
+	जबतक (1) अणु
+		hv_err = n2rng_ग_लिखो_ctl_one(np, unit, state, control_ra,
+					     np->wd_समयo, &ticks);
+		अगर (hv_err == HV_EOK)
+			वापस 0;
 
-		if (hv_err == HV_EWOULDBLOCK) {
-			if (++block >= N2RNG_BLOCK_LIMIT)
-				return -EWOULDBLOCK;
+		अगर (hv_err == HV_EWOULDBLOCK) अणु
+			अगर (++block >= N2RNG_BLOCK_LIMIT)
+				वापस -EWOULDBLOCK;
 			__delay(ticks);
-		} else if (hv_err == HV_EBUSY) {
-			if (++busy >= N2RNG_BUSY_LIMIT)
-				return -EBUSY;
+		पूर्ण अन्यथा अगर (hv_err == HV_EBUSY) अणु
+			अगर (++busy >= N2RNG_BUSY_LIMIT)
+				वापस -EBUSY;
 			udelay(1);
-		} else
-			return -ENODEV;
-	}
-}
+		पूर्ण अन्यथा
+			वापस -ENODEV;
+	पूर्ण
+पूर्ण
 
-/* Just try to see if we can successfully access the control register
- * of the RNG on the domain on which we are currently executing.
+/* Just try to see अगर we can successfully access the control रेजिस्टर
+ * of the RNG on the करोमुख्य on which we are currently executing.
  */
-static int n2rng_try_read_ctl(struct n2rng *np)
-{
-	unsigned long hv_err;
-	unsigned long x;
+अटल पूर्णांक n2rng_try_पढ़ो_ctl(काष्ठा n2rng *np)
+अणु
+	अचिन्हित दीर्घ hv_err;
+	अचिन्हित दीर्घ x;
 
-	if (np->hvapi_major == 1) {
+	अगर (np->hvapi_major == 1) अणु
 		hv_err = sun4v_rng_get_diag_ctl();
-	} else {
+	पूर्ण अन्यथा अणु
 		/* We purposefully give invalid arguments, HV_NOACCESS
 		 * is higher priority than the errors we'd get from
-		 * these other cases, and that's the error we are
-		 * truly interested in.
+		 * these other हालs, and that's the error we are
+		 * truly पूर्णांकerested in.
 		 */
-		hv_err = sun4v_rng_ctl_read_v2(0UL, ~0UL, &x, &x, &x, &x);
-		switch (hv_err) {
-		case HV_EWOULDBLOCK:
-		case HV_ENOACCESS:
-			break;
-		default:
+		hv_err = sun4v_rng_ctl_पढ़ो_v2(0UL, ~0UL, &x, &x, &x, &x);
+		चयन (hv_err) अणु
+		हाल HV_EWOULDBLOCK:
+		हाल HV_ENOACCESS:
+			अवरोध;
+		शेष:
 			hv_err = HV_EOK;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return n2rng_hv_err_trans(hv_err);
-}
+	वापस n2rng_hv_err_trans(hv_err);
+पूर्ण
 
-static u64 n2rng_control_default(struct n2rng *np, int ctl)
-{
+अटल u64 n2rng_control_शेष(काष्ठा n2rng *np, पूर्णांक ctl)
+अणु
 	u64 val = 0;
 
-	if (np->data->chip_version == 1) {
+	अगर (np->data->chip_version == 1) अणु
 		val = ((2 << RNG_v1_CTL_ASEL_SHIFT) |
 			(N2RNG_ACCUM_CYCLES_DEFAULT << RNG_v1_CTL_WAIT_SHIFT) |
 			 RNG_CTL_LFSR);
 
-		switch (ctl) {
-		case 0:
+		चयन (ctl) अणु
+		हाल 0:
 			val |= (1 << RNG_v1_CTL_VCO_SHIFT) | RNG_CTL_ES1;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			val |= (2 << RNG_v1_CTL_VCO_SHIFT) | RNG_CTL_ES2;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			val |= (3 << RNG_v1_CTL_VCO_SHIFT) | RNG_CTL_ES3;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			val |= RNG_CTL_ES1 | RNG_CTL_ES2 | RNG_CTL_ES3;
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-	} else {
+	पूर्ण अन्यथा अणु
 		val = ((2 << RNG_v2_CTL_ASEL_SHIFT) |
 			(N2RNG_ACCUM_CYCLES_DEFAULT << RNG_v2_CTL_WAIT_SHIFT) |
 			 RNG_CTL_LFSR);
 
-		switch (ctl) {
-		case 0:
+		चयन (ctl) अणु
+		हाल 0:
 			val |= (1 << RNG_v2_CTL_VCO_SHIFT) | RNG_CTL_ES1;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			val |= (2 << RNG_v2_CTL_VCO_SHIFT) | RNG_CTL_ES2;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			val |= (3 << RNG_v2_CTL_VCO_SHIFT) | RNG_CTL_ES3;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			val |= RNG_CTL_ES1 | RNG_CTL_ES2 | RNG_CTL_ES3;
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void n2rng_control_swstate_init(struct n2rng *np)
-{
-	int i;
+अटल व्योम n2rng_control_swstate_init(काष्ठा n2rng *np)
+अणु
+	पूर्णांक i;
 
 	np->flags |= N2RNG_FLAG_CONTROL;
 
 	np->health_check_sec = N2RNG_HEALTH_CHECK_SEC_DEFAULT;
 	np->accum_cycles = N2RNG_ACCUM_CYCLES_DEFAULT;
-	np->wd_timeo = N2RNG_WD_TIMEO_DEFAULT;
+	np->wd_समयo = N2RNG_WD_TIMEO_DEFAULT;
 
-	for (i = 0; i < np->num_units; i++) {
-		struct n2rng_unit *up = &np->units[i];
+	क्रम (i = 0; i < np->num_units; i++) अणु
+		काष्ठा n2rng_unit *up = &np->units[i];
 
-		up->control[0] = n2rng_control_default(np, 0);
-		up->control[1] = n2rng_control_default(np, 1);
-		up->control[2] = n2rng_control_default(np, 2);
-		up->control[3] = n2rng_control_default(np, 3);
-	}
+		up->control[0] = n2rng_control_शेष(np, 0);
+		up->control[1] = n2rng_control_शेष(np, 1);
+		up->control[2] = n2rng_control_शेष(np, 2);
+		up->control[3] = n2rng_control_शेष(np, 3);
+	पूर्ण
 
 	np->hv_state = HV_RNG_STATE_UNCONFIGURED;
-}
+पूर्ण
 
-static int n2rng_grab_diag_control(struct n2rng *np)
-{
-	int i, busy_count, err = -ENODEV;
+अटल पूर्णांक n2rng_grab_diag_control(काष्ठा n2rng *np)
+अणु
+	पूर्णांक i, busy_count, err = -ENODEV;
 
 	busy_count = 0;
-	for (i = 0; i < 100; i++) {
-		err = n2rng_try_read_ctl(np);
-		if (err != -EAGAIN)
-			break;
+	क्रम (i = 0; i < 100; i++) अणु
+		err = n2rng_try_पढ़ो_ctl(np);
+		अगर (err != -EAGAIN)
+			अवरोध;
 
-		if (++busy_count > 100) {
+		अगर (++busy_count > 100) अणु
 			dev_err(&np->op->dev,
 				"Grab diag control timeout.\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		udelay(1);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int n2rng_init_control(struct n2rng *np)
-{
-	int err = n2rng_grab_diag_control(np);
+अटल पूर्णांक n2rng_init_control(काष्ठा n2rng *np)
+अणु
+	पूर्णांक err = n2rng_grab_diag_control(np);
 
-	/* Not in the control domain, that's OK we are only a consumer
-	 * of the RNG data, we don't setup and program it.
+	/* Not in the control करोमुख्य, that's OK we are only a consumer
+	 * of the RNG data, we करोn't setup and program it.
 	 */
-	if (err == -EPERM)
-		return 0;
-	if (err)
-		return err;
+	अगर (err == -EPERM)
+		वापस 0;
+	अगर (err)
+		वापस err;
 
 	n2rng_control_swstate_init(np);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int n2rng_data_read(struct hwrng *rng, u32 *data)
-{
-	struct n2rng *np = (struct n2rng *) rng->priv;
-	unsigned long ra = __pa(&np->test_data);
-	int len;
+अटल पूर्णांक n2rng_data_पढ़ो(काष्ठा hwrng *rng, u32 *data)
+अणु
+	काष्ठा n2rng *np = (काष्ठा n2rng *) rng->priv;
+	अचिन्हित दीर्घ ra = __pa(&np->test_data);
+	पूर्णांक len;
 
-	if (!(np->flags & N2RNG_FLAG_READY)) {
+	अगर (!(np->flags & N2RNG_FLAG_READY)) अणु
 		len = 0;
-	} else if (np->flags & N2RNG_FLAG_BUFFER_VALID) {
+	पूर्ण अन्यथा अगर (np->flags & N2RNG_FLAG_BUFFER_VALID) अणु
 		np->flags &= ~N2RNG_FLAG_BUFFER_VALID;
 		*data = np->buffer;
 		len = 4;
-	} else {
-		int err = n2rng_generic_read_data(ra);
-		if (!err) {
+	पूर्ण अन्यथा अणु
+		पूर्णांक err = n2rng_generic_पढ़ो_data(ra);
+		अगर (!err) अणु
 			np->flags |= N2RNG_FLAG_BUFFER_VALID;
 			np->buffer = np->test_data >> 32;
 			*data = np->test_data & 0xffffffff;
 			len = 4;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(&np->op->dev, "RNG error, retesting\n");
 			np->flags &= ~N2RNG_FLAG_READY;
-			if (!(np->flags & N2RNG_FLAG_SHUTDOWN))
+			अगर (!(np->flags & N2RNG_FLAG_SHUTDOWN))
 				schedule_delayed_work(&np->work, 0);
 			len = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-/* On a guest node, just make sure we can read random data properly.
+/* On a guest node, just make sure we can पढ़ो अक्रमom data properly.
  * If a control node reboots or reloads it's n2rng driver, this won't
- * work during that time.  So we have to keep probing until the device
+ * work during that समय.  So we have to keep probing until the device
  * becomes usable.
  */
-static int n2rng_guest_check(struct n2rng *np)
-{
-	unsigned long ra = __pa(&np->test_data);
+अटल पूर्णांक n2rng_guest_check(काष्ठा n2rng *np)
+अणु
+	अचिन्हित दीर्घ ra = __pa(&np->test_data);
 
-	return n2rng_generic_read_data(ra);
-}
+	वापस n2rng_generic_पढ़ो_data(ra);
+पूर्ण
 
-static int n2rng_entropy_diag_read(struct n2rng *np, unsigned long unit,
+अटल पूर्णांक n2rng_entropy_diag_पढ़ो(काष्ठा n2rng *np, अचिन्हित दीर्घ unit,
 				   u64 *pre_control, u64 pre_state,
-				   u64 *buffer, unsigned long buf_len,
+				   u64 *buffer, अचिन्हित दीर्घ buf_len,
 				   u64 *post_control, u64 post_state)
-{
-	unsigned long post_ctl_ra = __pa(post_control);
-	unsigned long pre_ctl_ra = __pa(pre_control);
-	unsigned long buffer_ra = __pa(buffer);
-	int err;
+अणु
+	अचिन्हित दीर्घ post_ctl_ra = __pa(post_control);
+	अचिन्हित दीर्घ pre_ctl_ra = __pa(pre_control);
+	अचिन्हित दीर्घ buffer_ra = __pa(buffer);
+	पूर्णांक err;
 
-	err = n2rng_generic_write_control(np, pre_ctl_ra, unit, pre_state);
-	if (err)
-		return err;
+	err = n2rng_generic_ग_लिखो_control(np, pre_ctl_ra, unit, pre_state);
+	अगर (err)
+		वापस err;
 
-	err = n2rng_generic_read_diag_data(np, unit,
+	err = n2rng_generic_पढ़ो_diag_data(np, unit,
 					   buffer_ra, buf_len);
 
-	(void) n2rng_generic_write_control(np, post_ctl_ra, unit,
+	(व्योम) n2rng_generic_ग_लिखो_control(np, post_ctl_ra, unit,
 					   post_state);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static u64 advance_polynomial(u64 poly, u64 val, int count)
-{
-	int i;
+अटल u64 advance_polynomial(u64 poly, u64 val, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < count; i++) {
-		int highbit_set = ((s64)val < 0);
+	क्रम (i = 0; i < count; i++) अणु
+		पूर्णांक highbit_set = ((s64)val < 0);
 
 		val <<= 1;
-		if (highbit_set)
+		अगर (highbit_set)
 			val ^= poly;
-	}
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int n2rng_test_buffer_find(struct n2rng *np, u64 val)
-{
-	int i, count = 0;
+अटल पूर्णांक n2rng_test_buffer_find(काष्ठा n2rng *np, u64 val)
+अणु
+	पूर्णांक i, count = 0;
 
 	/* Purposefully skip over the first word.  */
-	for (i = 1; i < SELFTEST_BUFFER_WORDS; i++) {
-		if (np->test_buffer[i] == val)
+	क्रम (i = 1; i < SELFTEST_BUFFER_WORDS; i++) अणु
+		अगर (np->test_buffer[i] == val)
 			count++;
-	}
-	return count;
-}
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static void n2rng_dump_test_buffer(struct n2rng *np)
-{
-	int i;
+अटल व्योम n2rng_dump_test_buffer(काष्ठा n2rng *np)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SELFTEST_BUFFER_WORDS; i++)
+	क्रम (i = 0; i < SELFTEST_BUFFER_WORDS; i++)
 		dev_err(&np->op->dev, "Test buffer slot %d [0x%016llx]\n",
 			i, np->test_buffer[i]);
-}
+पूर्ण
 
-static int n2rng_check_selftest_buffer(struct n2rng *np, unsigned long unit)
-{
+अटल पूर्णांक n2rng_check_selftest_buffer(काष्ठा n2rng *np, अचिन्हित दीर्घ unit)
+अणु
 	u64 val;
-	int err, matches, limit;
+	पूर्णांक err, matches, limit;
 
-	switch (np->data->id) {
-	case N2_n2_rng:
-	case N2_vf_rng:
-	case N2_kt_rng:
-	case N2_m4_rng:  /* yes, m4 uses the old value */
+	चयन (np->data->id) अणु
+	हाल N2_n2_rng:
+	हाल N2_vf_rng:
+	हाल N2_kt_rng:
+	हाल N2_m4_rng:  /* yes, m4 uses the old value */
 		val = RNG_v1_SELFTEST_VAL;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		val = RNG_v2_SELFTEST_VAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	matches = 0;
-	for (limit = 0; limit < SELFTEST_LOOPS_MAX; limit++) {
+	क्रम (limit = 0; limit < SELFTEST_LOOPS_MAX; limit++) अणु
 		matches += n2rng_test_buffer_find(np, val);
-		if (matches >= SELFTEST_MATCH_GOAL)
-			break;
+		अगर (matches >= SELFTEST_MATCH_GOAL)
+			अवरोध;
 		val = advance_polynomial(SELFTEST_POLY, val, 1);
-	}
+	पूर्ण
 
 	err = 0;
-	if (limit >= SELFTEST_LOOPS_MAX) {
+	अगर (limit >= SELFTEST_LOOPS_MAX) अणु
 		err = -ENODEV;
 		dev_err(&np->op->dev, "Selftest failed on unit %lu\n", unit);
 		n2rng_dump_test_buffer(np);
-	} else
+	पूर्ण अन्यथा
 		dev_info(&np->op->dev, "Selftest passed on unit %lu\n", unit);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int n2rng_control_selftest(struct n2rng *np, unsigned long unit)
-{
-	int err;
+अटल पूर्णांक n2rng_control_selftest(काष्ठा n2rng *np, अचिन्हित दीर्घ unit)
+अणु
+	पूर्णांक err;
 	u64 base, base3;
 
-	switch (np->data->id) {
-	case N2_n2_rng:
-	case N2_vf_rng:
-	case N2_kt_rng:
+	चयन (np->data->id) अणु
+	हाल N2_n2_rng:
+	हाल N2_vf_rng:
+	हाल N2_kt_rng:
 		base = RNG_v1_CTL_ASEL_NOOUT << RNG_v1_CTL_ASEL_SHIFT;
 		base3 = base | RNG_CTL_LFSR |
 			((RNG_v1_SELFTEST_TICKS - 2) << RNG_v1_CTL_WAIT_SHIFT);
-		break;
-	case N2_m4_rng:
+		अवरोध;
+	हाल N2_m4_rng:
 		base = RNG_v2_CTL_ASEL_NOOUT << RNG_v2_CTL_ASEL_SHIFT;
 		base3 = base | RNG_CTL_LFSR |
 			((RNG_v1_SELFTEST_TICKS - 2) << RNG_v2_CTL_WAIT_SHIFT);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		base = RNG_v2_CTL_ASEL_NOOUT << RNG_v2_CTL_ASEL_SHIFT;
 		base3 = base | RNG_CTL_LFSR |
 			(RNG_v2_SELFTEST_TICKS << RNG_v2_CTL_WAIT_SHIFT);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	np->test_control[0] = base;
 	np->test_control[1] = base;
 	np->test_control[2] = base;
 	np->test_control[3] = base3;
 
-	err = n2rng_entropy_diag_read(np, unit, np->test_control,
+	err = n2rng_entropy_diag_पढ़ो(np, unit, np->test_control,
 				      HV_RNG_STATE_HEALTHCHECK,
 				      np->test_buffer,
-				      sizeof(np->test_buffer),
+				      माप(np->test_buffer),
 				      &np->units[unit].control[0],
 				      np->hv_state);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return n2rng_check_selftest_buffer(np, unit);
-}
+	वापस n2rng_check_selftest_buffer(np, unit);
+पूर्ण
 
-static int n2rng_control_check(struct n2rng *np)
-{
-	int i;
+अटल पूर्णांक n2rng_control_check(काष्ठा n2rng *np)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < np->num_units; i++) {
-		int err = n2rng_control_selftest(np, i);
-		if (err)
-			return err;
-	}
-	return 0;
-}
+	क्रम (i = 0; i < np->num_units; i++) अणु
+		पूर्णांक err = n2rng_control_selftest(np, i);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* The sanity checks passed, install the final configuration into the
- * chip, it's ready to use.
+/* The sanity checks passed, install the final configuration पूर्णांकo the
+ * chip, it's पढ़ोy to use.
  */
-static int n2rng_control_configure_units(struct n2rng *np)
-{
-	int unit, err;
+अटल पूर्णांक n2rng_control_configure_units(काष्ठा n2rng *np)
+अणु
+	पूर्णांक unit, err;
 
 	err = 0;
-	for (unit = 0; unit < np->num_units; unit++) {
-		struct n2rng_unit *up = &np->units[unit];
-		unsigned long ctl_ra = __pa(&up->control[0]);
-		int esrc;
-		u64 base, shift;
+	क्रम (unit = 0; unit < np->num_units; unit++) अणु
+		काष्ठा n2rng_unit *up = &np->units[unit];
+		अचिन्हित दीर्घ ctl_ra = __pa(&up->control[0]);
+		पूर्णांक esrc;
+		u64 base, shअगरt;
 
-		if (np->data->chip_version == 1) {
+		अगर (np->data->chip_version == 1) अणु
 			base = ((np->accum_cycles << RNG_v1_CTL_WAIT_SHIFT) |
 			      (RNG_v1_CTL_ASEL_NOOUT << RNG_v1_CTL_ASEL_SHIFT) |
 			      RNG_CTL_LFSR);
-			shift = RNG_v1_CTL_VCO_SHIFT;
-		} else {
+			shअगरt = RNG_v1_CTL_VCO_SHIFT;
+		पूर्ण अन्यथा अणु
 			base = ((np->accum_cycles << RNG_v2_CTL_WAIT_SHIFT) |
 			      (RNG_v2_CTL_ASEL_NOOUT << RNG_v2_CTL_ASEL_SHIFT) |
 			      RNG_CTL_LFSR);
-			shift = RNG_v2_CTL_VCO_SHIFT;
-		}
+			shअगरt = RNG_v2_CTL_VCO_SHIFT;
+		पूर्ण
 
 		/* XXX This isn't the best.  We should fetch a bunch
 		 * XXX of words using each entropy source combined XXX
 		 * with each VCO setting, and see which combinations
-		 * XXX give the best random data.
+		 * XXX give the best अक्रमom data.
 		 */
-		for (esrc = 0; esrc < 3; esrc++)
+		क्रम (esrc = 0; esrc < 3; esrc++)
 			up->control[esrc] = base |
-				(esrc << shift) |
+				(esrc << shअगरt) |
 				(RNG_CTL_ES1 << esrc);
 
 		up->control[3] = base |
 			(RNG_CTL_ES1 | RNG_CTL_ES2 | RNG_CTL_ES3);
 
-		err = n2rng_generic_write_control(np, ctl_ra, unit,
+		err = n2rng_generic_ग_लिखो_control(np, ctl_ra, unit,
 						  HV_RNG_STATE_CONFIGURED);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void n2rng_work(struct work_struct *work)
-{
-	struct n2rng *np = container_of(work, struct n2rng, work.work);
-	int err = 0;
-	static int retries = 4;
+अटल व्योम n2rng_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा n2rng *np = container_of(work, काष्ठा n2rng, work.work);
+	पूर्णांक err = 0;
+	अटल पूर्णांक retries = 4;
 
-	if (!(np->flags & N2RNG_FLAG_CONTROL)) {
+	अगर (!(np->flags & N2RNG_FLAG_CONTROL)) अणु
 		err = n2rng_guest_check(np);
-	} else {
+	पूर्ण अन्यथा अणु
 		preempt_disable();
 		err = n2rng_control_check(np);
 		preempt_enable();
 
-		if (!err)
+		अगर (!err)
 			err = n2rng_control_configure_units(np);
-	}
+	पूर्ण
 
-	if (!err) {
+	अगर (!err) अणु
 		np->flags |= N2RNG_FLAG_READY;
 		dev_info(&np->op->dev, "RNG ready\n");
-	}
+	पूर्ण
 
-	if (--retries == 0)
+	अगर (--retries == 0)
 		dev_err(&np->op->dev, "Self-test retries failed, RNG not ready\n");
-	else if (err && !(np->flags & N2RNG_FLAG_SHUTDOWN))
+	अन्यथा अगर (err && !(np->flags & N2RNG_FLAG_SHUTDOWN))
 		schedule_delayed_work(&np->work, HZ * 2);
-}
+पूर्ण
 
-static void n2rng_driver_version(void)
-{
-	static int n2rng_version_printed;
+अटल व्योम n2rng_driver_version(व्योम)
+अणु
+	अटल पूर्णांक n2rng_version_prपूर्णांकed;
 
-	if (n2rng_version_printed++ == 0)
+	अगर (n2rng_version_prपूर्णांकed++ == 0)
 		pr_info("%s", version);
-}
+पूर्ण
 
-static const struct of_device_id n2rng_match[];
-static int n2rng_probe(struct platform_device *op)
-{
-	const struct of_device_id *match;
-	int err = -ENOMEM;
-	struct n2rng *np;
+अटल स्थिर काष्ठा of_device_id n2rng_match[];
+अटल पूर्णांक n2rng_probe(काष्ठा platक्रमm_device *op)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	पूर्णांक err = -ENOMEM;
+	काष्ठा n2rng *np;
 
 	match = of_match_device(n2rng_match, &op->dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
 	n2rng_driver_version();
-	np = devm_kzalloc(&op->dev, sizeof(*np), GFP_KERNEL);
-	if (!np)
-		goto out;
+	np = devm_kzalloc(&op->dev, माप(*np), GFP_KERNEL);
+	अगर (!np)
+		जाओ out;
 	np->op = op;
-	np->data = (struct n2rng_template *)match->data;
+	np->data = (काष्ठा n2rng_ढाँचा *)match->data;
 
 	INIT_DELAYED_WORK(&np->work, n2rng_work);
 
-	if (np->data->multi_capable)
+	अगर (np->data->multi_capable)
 		np->flags |= N2RNG_FLAG_MULTI;
 
 	err = -ENODEV;
 	np->hvapi_major = 2;
-	if (sun4v_hvapi_register(HV_GRP_RNG,
+	अगर (sun4v_hvapi_रेजिस्टर(HV_GRP_RNG,
 				 np->hvapi_major,
-				 &np->hvapi_minor)) {
+				 &np->hvapi_minor)) अणु
 		np->hvapi_major = 1;
-		if (sun4v_hvapi_register(HV_GRP_RNG,
+		अगर (sun4v_hvapi_रेजिस्टर(HV_GRP_RNG,
 					 np->hvapi_major,
-					 &np->hvapi_minor)) {
+					 &np->hvapi_minor)) अणु
 			dev_err(&op->dev, "Cannot register suitable "
 				"HVAPI version.\n");
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (np->flags & N2RNG_FLAG_MULTI) {
-		if (np->hvapi_major < 2) {
+	अगर (np->flags & N2RNG_FLAG_MULTI) अणु
+		अगर (np->hvapi_major < 2) अणु
 			dev_err(&op->dev, "multi-unit-capable RNG requires "
 				"HVAPI major version 2 or later, got %lu\n",
 				np->hvapi_major);
-			goto out_hvapi_unregister;
-		}
-		np->num_units = of_getintprop_default(op->dev.of_node,
+			जाओ out_hvapi_unरेजिस्टर;
+		पूर्ण
+		np->num_units = of_getपूर्णांकprop_शेष(op->dev.of_node,
 						      "rng-#units", 0);
-		if (!np->num_units) {
+		अगर (!np->num_units) अणु
 			dev_err(&op->dev, "VF RNG lacks rng-#units property\n");
-			goto out_hvapi_unregister;
-		}
-	} else {
+			जाओ out_hvapi_unरेजिस्टर;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		np->num_units = 1;
-	}
+	पूर्ण
 
 	dev_info(&op->dev, "Registered RNG HVAPI major %lu minor %lu\n",
 		 np->hvapi_major, np->hvapi_minor);
-	np->units = devm_kcalloc(&op->dev, np->num_units, sizeof(*np->units),
+	np->units = devm_kसुस्मृति(&op->dev, np->num_units, माप(*np->units),
 				 GFP_KERNEL);
 	err = -ENOMEM;
-	if (!np->units)
-		goto out_hvapi_unregister;
+	अगर (!np->units)
+		जाओ out_hvapi_unरेजिस्टर;
 
 	err = n2rng_init_control(np);
-	if (err)
-		goto out_hvapi_unregister;
+	अगर (err)
+		जाओ out_hvapi_unरेजिस्टर;
 
 	dev_info(&op->dev, "Found %s RNG, units: %d\n",
 		 ((np->flags & N2RNG_FLAG_MULTI) ?
@@ -765,106 +766,106 @@ static int n2rng_probe(struct platform_device *op)
 		 np->num_units);
 
 	np->hwrng.name = DRV_MODULE_NAME;
-	np->hwrng.data_read = n2rng_data_read;
-	np->hwrng.priv = (unsigned long) np;
+	np->hwrng.data_पढ़ो = n2rng_data_पढ़ो;
+	np->hwrng.priv = (अचिन्हित दीर्घ) np;
 
-	err = devm_hwrng_register(&op->dev, &np->hwrng);
-	if (err)
-		goto out_hvapi_unregister;
+	err = devm_hwrng_रेजिस्टर(&op->dev, &np->hwrng);
+	अगर (err)
+		जाओ out_hvapi_unरेजिस्टर;
 
-	platform_set_drvdata(op, np);
+	platक्रमm_set_drvdata(op, np);
 
 	schedule_delayed_work(&np->work, 0);
 
-	return 0;
+	वापस 0;
 
-out_hvapi_unregister:
-	sun4v_hvapi_unregister(HV_GRP_RNG);
+out_hvapi_unरेजिस्टर:
+	sun4v_hvapi_unरेजिस्टर(HV_GRP_RNG);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int n2rng_remove(struct platform_device *op)
-{
-	struct n2rng *np = platform_get_drvdata(op);
+अटल पूर्णांक n2rng_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा n2rng *np = platक्रमm_get_drvdata(op);
 
 	np->flags |= N2RNG_FLAG_SHUTDOWN;
 
 	cancel_delayed_work_sync(&np->work);
 
-	sun4v_hvapi_unregister(HV_GRP_RNG);
+	sun4v_hvapi_unरेजिस्टर(HV_GRP_RNG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct n2rng_template n2_template = {
+अटल काष्ठा n2rng_ढाँचा n2_ढाँचा = अणु
 	.id = N2_n2_rng,
 	.multi_capable = 0,
 	.chip_version = 1,
-};
+पूर्ण;
 
-static struct n2rng_template vf_template = {
+अटल काष्ठा n2rng_ढाँचा vf_ढाँचा = अणु
 	.id = N2_vf_rng,
 	.multi_capable = 1,
 	.chip_version = 1,
-};
+पूर्ण;
 
-static struct n2rng_template kt_template = {
+अटल काष्ठा n2rng_ढाँचा kt_ढाँचा = अणु
 	.id = N2_kt_rng,
 	.multi_capable = 1,
 	.chip_version = 1,
-};
+पूर्ण;
 
-static struct n2rng_template m4_template = {
+अटल काष्ठा n2rng_ढाँचा m4_ढाँचा = अणु
 	.id = N2_m4_rng,
 	.multi_capable = 1,
 	.chip_version = 2,
-};
+पूर्ण;
 
-static struct n2rng_template m7_template = {
+अटल काष्ठा n2rng_ढाँचा m7_ढाँचा = अणु
 	.id = N2_m7_rng,
 	.multi_capable = 1,
 	.chip_version = 2,
-};
+पूर्ण;
 
-static const struct of_device_id n2rng_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id n2rng_match[] = अणु
+	अणु
 		.name		= "random-number-generator",
 		.compatible	= "SUNW,n2-rng",
-		.data		= &n2_template,
-	},
-	{
+		.data		= &n2_ढाँचा,
+	पूर्ण,
+	अणु
 		.name		= "random-number-generator",
 		.compatible	= "SUNW,vf-rng",
-		.data		= &vf_template,
-	},
-	{
+		.data		= &vf_ढाँचा,
+	पूर्ण,
+	अणु
 		.name		= "random-number-generator",
 		.compatible	= "SUNW,kt-rng",
-		.data		= &kt_template,
-	},
-	{
+		.data		= &kt_ढाँचा,
+	पूर्ण,
+	अणु
 		.name		= "random-number-generator",
 		.compatible	= "ORCL,m4-rng",
-		.data		= &m4_template,
-	},
-	{
+		.data		= &m4_ढाँचा,
+	पूर्ण,
+	अणु
 		.name		= "random-number-generator",
 		.compatible	= "ORCL,m7-rng",
-		.data		= &m7_template,
-	},
-	{},
-};
+		.data		= &m7_ढाँचा,
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, n2rng_match);
 
-static struct platform_driver n2rng_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver n2rng_driver = अणु
+	.driver = अणु
 		.name = "n2rng",
 		.of_match_table = n2rng_match,
-	},
+	पूर्ण,
 	.probe		= n2rng_probe,
-	.remove		= n2rng_remove,
-};
+	.हटाओ		= n2rng_हटाओ,
+पूर्ण;
 
-module_platform_driver(n2rng_driver);
+module_platक्रमm_driver(n2rng_driver);

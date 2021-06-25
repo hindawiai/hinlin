@@ -1,218 +1,219 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* Applied Micro X-Gene SoC MDIO Driver
  *
  * Copyright (c) 2016, Applied Micro Circuits Corporation
  * Author: Iyappan Subramanian <isubramanian@apm.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/efi.h>
-#include <linux/if_vlan.h>
-#include <linux/io.h>
-#include <linux/mdio/mdio-xgene.h>
-#include <linux/module.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/of_platform.h>
-#include <linux/phy.h>
-#include <linux/prefetch.h>
-#include <net/ip.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mdio/mdio-xgene.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/prefetch.h>
+#समावेश <net/ip.h>
 
-static bool xgene_mdio_status;
+अटल bool xgene_mdio_status;
 
-u32 xgene_mdio_rd_mac(struct xgene_mdio_pdata *pdata, u32 rd_addr)
-{
-	void __iomem *addr, *rd, *cmd, *cmd_done;
-	u32 done, rd_data = BUSY_MASK;
-	u8 wait = 10;
+u32 xgene_mdio_rd_mac(काष्ठा xgene_mdio_pdata *pdata, u32 rd_addr)
+अणु
+	व्योम __iomem *addr, *rd, *cmd, *cmd_करोne;
+	u32 करोne, rd_data = BUSY_MASK;
+	u8 रुको = 10;
 
 	addr = pdata->mac_csr_addr + MAC_ADDR_REG_OFFSET;
 	rd = pdata->mac_csr_addr + MAC_READ_REG_OFFSET;
 	cmd = pdata->mac_csr_addr + MAC_COMMAND_REG_OFFSET;
-	cmd_done = pdata->mac_csr_addr + MAC_COMMAND_DONE_REG_OFFSET;
+	cmd_करोne = pdata->mac_csr_addr + MAC_COMMAND_DONE_REG_OFFSET;
 
 	spin_lock(&pdata->mac_lock);
-	iowrite32(rd_addr, addr);
-	iowrite32(XGENE_ENET_RD_CMD, cmd);
+	ioग_लिखो32(rd_addr, addr);
+	ioग_लिखो32(XGENE_ENET_RD_CMD, cmd);
 
-	while (!(done = ioread32(cmd_done)) && wait--)
+	जबतक (!(करोne = ioपढ़ो32(cmd_करोne)) && रुको--)
 		udelay(1);
 
-	if (done)
-		rd_data = ioread32(rd);
+	अगर (करोne)
+		rd_data = ioपढ़ो32(rd);
 
-	iowrite32(0, cmd);
+	ioग_लिखो32(0, cmd);
 	spin_unlock(&pdata->mac_lock);
 
-	return rd_data;
-}
+	वापस rd_data;
+पूर्ण
 EXPORT_SYMBOL(xgene_mdio_rd_mac);
 
-void xgene_mdio_wr_mac(struct xgene_mdio_pdata *pdata, u32 wr_addr, u32 data)
-{
-	void __iomem *addr, *wr, *cmd, *cmd_done;
-	u8 wait = 10;
-	u32 done;
+व्योम xgene_mdio_wr_mac(काष्ठा xgene_mdio_pdata *pdata, u32 wr_addr, u32 data)
+अणु
+	व्योम __iomem *addr, *wr, *cmd, *cmd_करोne;
+	u8 रुको = 10;
+	u32 करोne;
 
 	addr = pdata->mac_csr_addr + MAC_ADDR_REG_OFFSET;
 	wr = pdata->mac_csr_addr + MAC_WRITE_REG_OFFSET;
 	cmd = pdata->mac_csr_addr + MAC_COMMAND_REG_OFFSET;
-	cmd_done = pdata->mac_csr_addr + MAC_COMMAND_DONE_REG_OFFSET;
+	cmd_करोne = pdata->mac_csr_addr + MAC_COMMAND_DONE_REG_OFFSET;
 
 	spin_lock(&pdata->mac_lock);
-	iowrite32(wr_addr, addr);
-	iowrite32(data, wr);
-	iowrite32(XGENE_ENET_WR_CMD, cmd);
+	ioग_लिखो32(wr_addr, addr);
+	ioग_लिखो32(data, wr);
+	ioग_लिखो32(XGENE_ENET_WR_CMD, cmd);
 
-	while (!(done = ioread32(cmd_done)) && wait--)
+	जबतक (!(करोne = ioपढ़ो32(cmd_करोne)) && रुको--)
 		udelay(1);
 
-	if (!done)
+	अगर (!करोne)
 		pr_err("MCX mac write failed, addr: 0x%04x\n", wr_addr);
 
-	iowrite32(0, cmd);
+	ioग_लिखो32(0, cmd);
 	spin_unlock(&pdata->mac_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(xgene_mdio_wr_mac);
 
-int xgene_mdio_rgmii_read(struct mii_bus *bus, int phy_id, int reg)
-{
-	struct xgene_mdio_pdata *pdata = (struct xgene_mdio_pdata *)bus->priv;
-	u32 data, done;
-	u8 wait = 10;
+पूर्णांक xgene_mdio_rgmii_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	काष्ठा xgene_mdio_pdata *pdata = (काष्ठा xgene_mdio_pdata *)bus->priv;
+	u32 data, करोne;
+	u8 रुको = 10;
 
 	data = SET_VAL(PHY_ADDR, phy_id) | SET_VAL(REG_ADDR, reg);
 	xgene_mdio_wr_mac(pdata, MII_MGMT_ADDRESS_ADDR, data);
 	xgene_mdio_wr_mac(pdata, MII_MGMT_COMMAND_ADDR, READ_CYCLE_MASK);
-	do {
+	करो अणु
 		usleep_range(5, 10);
-		done = xgene_mdio_rd_mac(pdata, MII_MGMT_INDICATORS_ADDR);
-	} while ((done & BUSY_MASK) && wait--);
+		करोne = xgene_mdio_rd_mac(pdata, MII_MGMT_INDICATORS_ADDR);
+	पूर्ण जबतक ((करोne & BUSY_MASK) && रुको--);
 
-	if (done & BUSY_MASK) {
+	अगर (करोne & BUSY_MASK) अणु
 		dev_err(&bus->dev, "MII_MGMT read failed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	data = xgene_mdio_rd_mac(pdata, MII_MGMT_STATUS_ADDR);
 	xgene_mdio_wr_mac(pdata, MII_MGMT_COMMAND_ADDR, 0);
 
-	return data;
-}
-EXPORT_SYMBOL(xgene_mdio_rgmii_read);
+	वापस data;
+पूर्ण
+EXPORT_SYMBOL(xgene_mdio_rgmii_पढ़ो);
 
-int xgene_mdio_rgmii_write(struct mii_bus *bus, int phy_id, int reg, u16 data)
-{
-	struct xgene_mdio_pdata *pdata = (struct xgene_mdio_pdata *)bus->priv;
-	u32 val, done;
-	u8 wait = 10;
+पूर्णांक xgene_mdio_rgmii_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg, u16 data)
+अणु
+	काष्ठा xgene_mdio_pdata *pdata = (काष्ठा xgene_mdio_pdata *)bus->priv;
+	u32 val, करोne;
+	u8 रुको = 10;
 
 	val = SET_VAL(PHY_ADDR, phy_id) | SET_VAL(REG_ADDR, reg);
 	xgene_mdio_wr_mac(pdata, MII_MGMT_ADDRESS_ADDR, val);
 
 	xgene_mdio_wr_mac(pdata, MII_MGMT_CONTROL_ADDR, data);
-	do {
+	करो अणु
 		usleep_range(5, 10);
-		done = xgene_mdio_rd_mac(pdata, MII_MGMT_INDICATORS_ADDR);
-	} while ((done & BUSY_MASK) && wait--);
+		करोne = xgene_mdio_rd_mac(pdata, MII_MGMT_INDICATORS_ADDR);
+	पूर्ण जबतक ((करोne & BUSY_MASK) && रुको--);
 
-	if (done & BUSY_MASK) {
+	अगर (करोne & BUSY_MASK) अणु
 		dev_err(&bus->dev, "MII_MGMT write failed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(xgene_mdio_rgmii_write);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(xgene_mdio_rgmii_ग_लिखो);
 
-static u32 xgene_menet_rd_diag_csr(struct xgene_mdio_pdata *pdata, u32 offset)
-{
-	return ioread32(pdata->diag_csr_addr + offset);
-}
+अटल u32 xgene_menet_rd_diag_csr(काष्ठा xgene_mdio_pdata *pdata, u32 offset)
+अणु
+	वापस ioपढ़ो32(pdata->diag_csr_addr + offset);
+पूर्ण
 
-static void xgene_menet_wr_diag_csr(struct xgene_mdio_pdata *pdata,
+अटल व्योम xgene_menet_wr_diag_csr(काष्ठा xgene_mdio_pdata *pdata,
 				    u32 offset, u32 val)
-{
-	iowrite32(val, pdata->diag_csr_addr + offset);
-}
+अणु
+	ioग_लिखो32(val, pdata->diag_csr_addr + offset);
+पूर्ण
 
-static int xgene_enet_ecc_init(struct xgene_mdio_pdata *pdata)
-{
+अटल पूर्णांक xgene_enet_ecc_init(काष्ठा xgene_mdio_pdata *pdata)
+अणु
 	u32 data;
-	u8 wait = 10;
+	u8 रुको = 10;
 
 	xgene_menet_wr_diag_csr(pdata, MENET_CFG_MEM_RAM_SHUTDOWN_ADDR, 0x0);
-	do {
+	करो अणु
 		usleep_range(100, 110);
 		data = xgene_menet_rd_diag_csr(pdata, MENET_BLOCK_MEM_RDY_ADDR);
-	} while ((data != 0xffffffff) && wait--);
+	पूर्ण जबतक ((data != 0xffffffff) && रुको--);
 
-	if (data != 0xffffffff) {
+	अगर (data != 0xffffffff) अणु
 		dev_err(pdata->dev, "Failed to release memory from shutdown\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_gmac_reset(struct xgene_mdio_pdata *pdata)
-{
+अटल व्योम xgene_gmac_reset(काष्ठा xgene_mdio_pdata *pdata)
+अणु
 	xgene_mdio_wr_mac(pdata, MAC_CONFIG_1_ADDR, SOFT_RESET);
 	xgene_mdio_wr_mac(pdata, MAC_CONFIG_1_ADDR, 0);
-}
+पूर्ण
 
-static int xgene_mdio_reset(struct xgene_mdio_pdata *pdata)
-{
-	int ret;
+अटल पूर्णांक xgene_mdio_reset(काष्ठा xgene_mdio_pdata *pdata)
+अणु
+	पूर्णांक ret;
 
-	if (pdata->dev->of_node) {
+	अगर (pdata->dev->of_node) अणु
 		clk_prepare_enable(pdata->clk);
 		udelay(5);
 		clk_disable_unprepare(pdata->clk);
 		udelay(5);
 		clk_prepare_enable(pdata->clk);
 		udelay(5);
-	} else {
-#ifdef CONFIG_ACPI
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_ACPI
 		acpi_evaluate_object(ACPI_HANDLE(pdata->dev),
-				     "_RST", NULL, NULL);
-#endif
-	}
+				     "_RST", शून्य, शून्य);
+#पूर्ण_अगर
+	पूर्ण
 
 	ret = xgene_enet_ecc_init(pdata);
-	if (ret) {
-		if (pdata->dev->of_node)
+	अगर (ret) अणु
+		अगर (pdata->dev->of_node)
 			clk_disable_unprepare(pdata->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	xgene_gmac_reset(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgene_enet_rd_mdio_csr(void __iomem *base_addr,
+अटल व्योम xgene_enet_rd_mdio_csr(व्योम __iomem *base_addr,
 				   u32 offset, u32 *val)
-{
-	void __iomem *addr = base_addr  + offset;
+अणु
+	व्योम __iomem *addr = base_addr  + offset;
 
-	*val = ioread32(addr);
-}
+	*val = ioपढ़ो32(addr);
+पूर्ण
 
-static void xgene_enet_wr_mdio_csr(void __iomem *base_addr,
+अटल व्योम xgene_enet_wr_mdio_csr(व्योम __iomem *base_addr,
 				   u32 offset, u32 val)
-{
-	void __iomem *addr = base_addr  + offset;
+अणु
+	व्योम __iomem *addr = base_addr  + offset;
 
-	iowrite32(val, addr);
-}
+	ioग_लिखो32(val, addr);
+पूर्ण
 
-static int xgene_xfi_mdio_write(struct mii_bus *bus, int phy_id,
-				int reg, u16 data)
-{
-	void __iomem *addr = (void __iomem *)bus->priv;
-	int timeout = 100;
+अटल पूर्णांक xgene_xfi_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id,
+				पूर्णांक reg, u16 data)
+अणु
+	व्योम __iomem *addr = (व्योम __iomem *)bus->priv;
+	पूर्णांक समयout = 100;
 	u32 status, val;
 
 	val = SET_VAL(HSTPHYADX, phy_id) | SET_VAL(HSTREGADX, reg) |
@@ -222,21 +223,21 @@ static int xgene_xfi_mdio_write(struct mii_bus *bus, int phy_id,
 	val = HSTLDCMD | SET_VAL(HSTMIIMCMD, MIIM_CMD_LEGACY_WRITE);
 	xgene_enet_wr_mdio_csr(addr, MIIM_COMMAND_ADDR, val);
 
-	do {
+	करो अणु
 		usleep_range(5, 10);
 		xgene_enet_rd_mdio_csr(addr, MIIM_INDICATOR_ADDR, &status);
-	} while ((status & BUSY_MASK) && timeout--);
+	पूर्ण जबतक ((status & BUSY_MASK) && समयout--);
 
 	xgene_enet_wr_mdio_csr(addr, MIIM_COMMAND_ADDR, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgene_xfi_mdio_read(struct mii_bus *bus, int phy_id, int reg)
-{
-	void __iomem *addr = (void __iomem *)bus->priv;
+अटल पूर्णांक xgene_xfi_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक reg)
+अणु
+	व्योम __iomem *addr = (व्योम __iomem *)bus->priv;
 	u32 data, status, val;
-	int timeout = 100;
+	पूर्णांक समयout = 100;
 
 	val = SET_VAL(HSTPHYADX, phy_id) | SET_VAL(HSTREGADX, reg);
 	xgene_enet_wr_mdio_csr(addr, MIIM_FIELD_ADDR, val);
@@ -244,222 +245,222 @@ static int xgene_xfi_mdio_read(struct mii_bus *bus, int phy_id, int reg)
 	val = HSTLDCMD | SET_VAL(HSTMIIMCMD, MIIM_CMD_LEGACY_READ);
 	xgene_enet_wr_mdio_csr(addr, MIIM_COMMAND_ADDR, val);
 
-	do {
+	करो अणु
 		usleep_range(5, 10);
 		xgene_enet_rd_mdio_csr(addr, MIIM_INDICATOR_ADDR, &status);
-	} while ((status & BUSY_MASK) && timeout--);
+	पूर्ण जबतक ((status & BUSY_MASK) && समयout--);
 
-	if (status & BUSY_MASK) {
+	अगर (status & BUSY_MASK) अणु
 		pr_err("XGENET_MII_MGMT write failed\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	xgene_enet_rd_mdio_csr(addr, MIIMRD_FIELD_ADDR, &data);
 	xgene_enet_wr_mdio_csr(addr, MIIM_COMMAND_ADDR, 0);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-struct phy_device *xgene_enet_phy_register(struct mii_bus *bus, int phy_addr)
-{
-	struct phy_device *phy_dev;
+काष्ठा phy_device *xgene_enet_phy_रेजिस्टर(काष्ठा mii_bus *bus, पूर्णांक phy_addr)
+अणु
+	काष्ठा phy_device *phy_dev;
 
 	phy_dev = get_phy_device(bus, phy_addr, false);
-	if (!phy_dev || IS_ERR(phy_dev))
-		return NULL;
+	अगर (!phy_dev || IS_ERR(phy_dev))
+		वापस शून्य;
 
-	if (phy_device_register(phy_dev))
-		phy_device_free(phy_dev);
+	अगर (phy_device_रेजिस्टर(phy_dev))
+		phy_device_मुक्त(phy_dev);
 
-	return phy_dev;
-}
-EXPORT_SYMBOL(xgene_enet_phy_register);
+	वापस phy_dev;
+पूर्ण
+EXPORT_SYMBOL(xgene_enet_phy_रेजिस्टर);
 
-#ifdef CONFIG_ACPI
-static acpi_status acpi_register_phy(acpi_handle handle, u32 lvl,
-				     void *context, void **ret)
-{
-	struct mii_bus *mdio = context;
-	struct acpi_device *adev;
-	struct phy_device *phy_dev;
-	const union acpi_object *obj;
+#अगर_घोषित CONFIG_ACPI
+अटल acpi_status acpi_रेजिस्टर_phy(acpi_handle handle, u32 lvl,
+				     व्योम *context, व्योम **ret)
+अणु
+	काष्ठा mii_bus *mdio = context;
+	काष्ठा acpi_device *adev;
+	काष्ठा phy_device *phy_dev;
+	स्थिर जोड़ acpi_object *obj;
 	u32 phy_addr;
 
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
 
-	if (acpi_dev_get_property(adev, "phy-channel", ACPI_TYPE_INTEGER, &obj))
-		return AE_OK;
-	phy_addr = obj->integer.value;
+	अगर (acpi_dev_get_property(adev, "phy-channel", ACPI_TYPE_INTEGER, &obj))
+		वापस AE_OK;
+	phy_addr = obj->पूर्णांकeger.value;
 
-	phy_dev = xgene_enet_phy_register(mdio, phy_addr);
+	phy_dev = xgene_enet_phy_रेजिस्टर(mdio, phy_addr);
 	adev->driver_data = phy_dev;
 
-	return AE_OK;
-}
-#endif
+	वापस AE_OK;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct of_device_id xgene_mdio_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id xgene_mdio_of_match[] = अणु
+	अणु
 		.compatible = "apm,xgene-mdio-rgmii",
-		.data = (void *)XGENE_MDIO_RGMII
-	},
-	{
+		.data = (व्योम *)XGENE_MDIO_RGMII
+	पूर्ण,
+	अणु
 		.compatible = "apm,xgene-mdio-xfi",
-		.data = (void *)XGENE_MDIO_XFI
-	},
-	{},
-};
+		.data = (व्योम *)XGENE_MDIO_XFI
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xgene_mdio_of_match);
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id xgene_mdio_acpi_match[] = {
-	{ "APMC0D65", XGENE_MDIO_RGMII },
-	{ "APMC0D66", XGENE_MDIO_XFI },
-	{ }
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id xgene_mdio_acpi_match[] = अणु
+	अणु "APMC0D65", XGENE_MDIO_RGMII पूर्ण,
+	अणु "APMC0D66", XGENE_MDIO_XFI पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, xgene_mdio_acpi_match);
-#endif
+#पूर्ण_अगर
 
 
-static int xgene_mdio_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct mii_bus *mdio_bus;
-	const struct of_device_id *of_id;
-	struct xgene_mdio_pdata *pdata;
-	void __iomem *csr_base;
-	int mdio_id = 0, ret = 0;
+अटल पूर्णांक xgene_mdio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा mii_bus *mdio_bus;
+	स्थिर काष्ठा of_device_id *of_id;
+	काष्ठा xgene_mdio_pdata *pdata;
+	व्योम __iomem *csr_base;
+	पूर्णांक mdio_id = 0, ret = 0;
 
 	of_id = of_match_device(xgene_mdio_of_match, &pdev->dev);
-	if (of_id) {
-		mdio_id = (enum xgene_mdio_id)of_id->data;
-	} else {
-#ifdef CONFIG_ACPI
-		const struct acpi_device_id *acpi_id;
+	अगर (of_id) अणु
+		mdio_id = (क्रमागत xgene_mdio_id)of_id->data;
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_ACPI
+		स्थिर काष्ठा acpi_device_id *acpi_id;
 
 		acpi_id = acpi_match_device(xgene_mdio_acpi_match, &pdev->dev);
-		if (acpi_id)
-			mdio_id = (enum xgene_mdio_id)acpi_id->driver_data;
-#endif
-	}
+		अगर (acpi_id)
+			mdio_id = (क्रमागत xgene_mdio_id)acpi_id->driver_data;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (!mdio_id)
-		return -ENODEV;
+	अगर (!mdio_id)
+		वापस -ENODEV;
 
-	pdata = devm_kzalloc(dev, sizeof(struct xgene_mdio_pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = devm_kzalloc(dev, माप(काष्ठा xgene_mdio_pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 	pdata->mdio_id = mdio_id;
 	pdata->dev = dev;
 
-	csr_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(csr_base))
-		return PTR_ERR(csr_base);
+	csr_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(csr_base))
+		वापस PTR_ERR(csr_base);
 	pdata->mac_csr_addr = csr_base;
 	pdata->mdio_csr_addr = csr_base + BLOCK_XG_MDIO_CSR_OFFSET;
 	pdata->diag_csr_addr = csr_base + BLOCK_DIAG_CSR_OFFSET;
 
-	if (mdio_id == XGENE_MDIO_RGMII)
+	अगर (mdio_id == XGENE_MDIO_RGMII)
 		spin_lock_init(&pdata->mac_lock);
 
-	if (dev->of_node) {
-		pdata->clk = devm_clk_get(dev, NULL);
-		if (IS_ERR(pdata->clk)) {
+	अगर (dev->of_node) अणु
+		pdata->clk = devm_clk_get(dev, शून्य);
+		अगर (IS_ERR(pdata->clk)) अणु
 			dev_err(dev, "Unable to retrieve clk\n");
-			return PTR_ERR(pdata->clk);
-		}
-	}
+			वापस PTR_ERR(pdata->clk);
+		पूर्ण
+	पूर्ण
 
 	ret = xgene_mdio_reset(pdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mdio_bus = mdiobus_alloc();
-	if (!mdio_bus) {
+	अगर (!mdio_bus) अणु
 		ret = -ENOMEM;
-		goto out_clk;
-	}
+		जाओ out_clk;
+	पूर्ण
 
 	mdio_bus->name = "APM X-Gene MDIO bus";
 
-	if (mdio_id == XGENE_MDIO_RGMII) {
-		mdio_bus->read = xgene_mdio_rgmii_read;
-		mdio_bus->write = xgene_mdio_rgmii_write;
-		mdio_bus->priv = (void __force *)pdata;
-		snprintf(mdio_bus->id, MII_BUS_ID_SIZE, "%s",
+	अगर (mdio_id == XGENE_MDIO_RGMII) अणु
+		mdio_bus->पढ़ो = xgene_mdio_rgmii_पढ़ो;
+		mdio_bus->ग_लिखो = xgene_mdio_rgmii_ग_लिखो;
+		mdio_bus->priv = (व्योम __क्रमce *)pdata;
+		snम_लिखो(mdio_bus->id, MII_BUS_ID_SIZE, "%s",
 			 "xgene-mii-rgmii");
-	} else {
-		mdio_bus->read = xgene_xfi_mdio_read;
-		mdio_bus->write = xgene_xfi_mdio_write;
-		mdio_bus->priv = (void __force *)pdata->mdio_csr_addr;
-		snprintf(mdio_bus->id, MII_BUS_ID_SIZE, "%s",
+	पूर्ण अन्यथा अणु
+		mdio_bus->पढ़ो = xgene_xfi_mdio_पढ़ो;
+		mdio_bus->ग_लिखो = xgene_xfi_mdio_ग_लिखो;
+		mdio_bus->priv = (व्योम __क्रमce *)pdata->mdio_csr_addr;
+		snम_लिखो(mdio_bus->id, MII_BUS_ID_SIZE, "%s",
 			 "xgene-mii-xfi");
-	}
+	पूर्ण
 
 	mdio_bus->parent = dev;
-	platform_set_drvdata(pdev, pdata);
+	platक्रमm_set_drvdata(pdev, pdata);
 
-	if (dev->of_node) {
-		ret = of_mdiobus_register(mdio_bus, dev->of_node);
-	} else {
-#ifdef CONFIG_ACPI
-		/* Mask out all PHYs from auto probing. */
+	अगर (dev->of_node) अणु
+		ret = of_mdiobus_रेजिस्टर(mdio_bus, dev->of_node);
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_ACPI
+		/* Mask out all PHYs from स्वतः probing. */
 		mdio_bus->phy_mask = ~0;
-		ret = mdiobus_register(mdio_bus);
-		if (ret)
-			goto out_mdiobus;
+		ret = mdiobus_रेजिस्टर(mdio_bus);
+		अगर (ret)
+			जाओ out_mdiobus;
 
 		acpi_walk_namespace(ACPI_TYPE_DEVICE, ACPI_HANDLE(dev), 1,
-				    acpi_register_phy, NULL, mdio_bus, NULL);
-#endif
-	}
+				    acpi_रेजिस्टर_phy, शून्य, mdio_bus, शून्य);
+#पूर्ण_अगर
+	पूर्ण
 
-	if (ret)
-		goto out_mdiobus;
+	अगर (ret)
+		जाओ out_mdiobus;
 
 	pdata->mdio_bus = mdio_bus;
 	xgene_mdio_status = true;
 
-	return 0;
+	वापस 0;
 
 out_mdiobus:
-	mdiobus_free(mdio_bus);
+	mdiobus_मुक्त(mdio_bus);
 
 out_clk:
-	if (dev->of_node)
+	अगर (dev->of_node)
 		clk_disable_unprepare(pdata->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgene_mdio_remove(struct platform_device *pdev)
-{
-	struct xgene_mdio_pdata *pdata = platform_get_drvdata(pdev);
-	struct mii_bus *mdio_bus = pdata->mdio_bus;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक xgene_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा xgene_mdio_pdata *pdata = platक्रमm_get_drvdata(pdev);
+	काष्ठा mii_bus *mdio_bus = pdata->mdio_bus;
+	काष्ठा device *dev = &pdev->dev;
 
-	mdiobus_unregister(mdio_bus);
-	mdiobus_free(mdio_bus);
+	mdiobus_unरेजिस्टर(mdio_bus);
+	mdiobus_मुक्त(mdio_bus);
 
-	if (dev->of_node)
+	अगर (dev->of_node)
 		clk_disable_unprepare(pdata->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver xgene_mdio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver xgene_mdio_driver = अणु
+	.driver = अणु
 		.name = "xgene-mdio",
 		.of_match_table = of_match_ptr(xgene_mdio_of_match),
 		.acpi_match_table = ACPI_PTR(xgene_mdio_acpi_match),
-	},
+	पूर्ण,
 	.probe = xgene_mdio_probe,
-	.remove = xgene_mdio_remove,
-};
+	.हटाओ = xgene_mdio_हटाओ,
+पूर्ण;
 
-module_platform_driver(xgene_mdio_driver);
+module_platक्रमm_driver(xgene_mdio_driver);
 
 MODULE_DESCRIPTION("APM X-Gene SoC MDIO driver");
 MODULE_AUTHOR("Iyappan Subramanian <isubramanian@apm.com>");

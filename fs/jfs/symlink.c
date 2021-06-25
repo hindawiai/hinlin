@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) Christoph Hellwig, 2001-2002
  */
 
-#include <linux/fs.h>
-#include "jfs_incore.h"
-#include "jfs_inode.h"
-#include "jfs_xattr.h"
+#समावेश <linux/fs.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_xattr.h"
 
-const struct inode_operations jfs_fast_symlink_inode_operations = {
+स्थिर काष्ठा inode_operations jfs_fast_symlink_inode_operations = अणु
 	.get_link	= simple_get_link,
 	.setattr	= jfs_setattr,
 	.listxattr	= jfs_listxattr,
-};
+पूर्ण;
 
-const struct inode_operations jfs_symlink_inode_operations = {
+स्थिर काष्ठा inode_operations jfs_symlink_inode_operations = अणु
 	.get_link	= page_get_link,
 	.setattr	= jfs_setattr,
 	.listxattr	= jfs_listxattr,
-};
+पूर्ण;
 

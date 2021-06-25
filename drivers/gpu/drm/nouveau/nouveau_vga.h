@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NOUVEAU_VGA_H__
-#define __NOUVEAU_VGA_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NOUVEAU_VGA_H__
+#घोषणा __NOUVEAU_VGA_H__
 
-void nouveau_vga_init(struct nouveau_drm *);
-void nouveau_vga_fini(struct nouveau_drm *);
-void nouveau_vga_lastclose(struct drm_device *dev);
+व्योम nouveau_vga_init(काष्ठा nouveau_drm *);
+व्योम nouveau_vga_fini(काष्ठा nouveau_drm *);
+व्योम nouveau_vga_lastबंद(काष्ठा drm_device *dev);
 
-#endif
+#पूर्ण_अगर

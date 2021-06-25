@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_BL_BIT_32_H
-#define __ASM_SH_BL_BIT_32_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_BL_BIT_32_H
+#घोषणा __ASM_SH_BL_BIT_32_H
 
-static inline void set_bl_bit(void)
-{
-	unsigned long __dummy0, __dummy1;
+अटल अंतरभूत व्योम set_bl_bit(व्योम)
+अणु
+	अचिन्हित दीर्घ __dummy0, __dummy1;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"stc	sr, %0\n\t"
 		"or	%2, %0\n\t"
 		"and	%3, %0\n\t"
@@ -15,13 +16,13 @@ static inline void set_bl_bit(void)
 		: "r" (0x10000000), "r" (0xffffff0f)
 		: "memory"
 	);
-}
+पूर्ण
 
-static inline void clear_bl_bit(void)
-{
-	unsigned long __dummy0, __dummy1;
+अटल अंतरभूत व्योम clear_bl_bit(व्योम)
+अणु
+	अचिन्हित दीर्घ __dummy0, __dummy1;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"stc	sr, %0\n\t"
 		"and	%2, %0\n\t"
 		"ldc	%0, sr\n\t"
@@ -29,6 +30,6 @@ static inline void clear_bl_bit(void)
 		: "1" (~0x10000000)
 		: "memory"
 	);
-}
+पूर्ण
 
-#endif /* __ASM_SH_BL_BIT_32_H */
+#पूर्ण_अगर /* __ASM_SH_BL_BIT_32_H */

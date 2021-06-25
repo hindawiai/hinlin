@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * kobject.h - generic kernel object infrastructure.
+ * kobject.h - generic kernel object infraकाष्ठाure.
  *
  * Copyright (c) 2002-2003 Patrick Mochel
- * Copyright (c) 2002-2003 Open Source Development Labs
- * Copyright (c) 2006-2008 Greg Kroah-Hartman <greg@kroah.com>
+ * Copyright (c) 2002-2003 Open Source Development Lअसल
+ * Copyright (c) 2006-2008 Greg Kroah-Harपंचांगan <greg@kroah.com>
  * Copyright (c) 2006-2008 Novell Inc.
  *
- * Please read Documentation/core-api/kobject.rst before using the kobject
- * interface, ESPECIALLY the parts about reference counts and object
- * destructors.
+ * Please पढ़ो Documentation/core-api/kobject.rst beक्रमe using the kobject
+ * पूर्णांकerface, ESPECIALLY the parts about reference counts and object
+ * deकाष्ठाors.
  */
 
-#ifndef _KOBJECT_H_
-#define _KOBJECT_H_
+#अगर_अघोषित _KOBJECT_H_
+#घोषणा _KOBJECT_H_
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/sysfs.h>
-#include <linux/compiler.h>
-#include <linux/spinlock.h>
-#include <linux/kref.h>
-#include <linux/kobject_ns.h>
-#include <linux/kernel.h>
-#include <linux/wait.h>
-#include <linux/atomic.h>
-#include <linux/workqueue.h>
-#include <linux/uidgid.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/kobject_ns.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/uidgid.h>
 
-#define UEVENT_HELPER_PATH_LEN		256
-#define UEVENT_NUM_ENVP			64	/* number of env pointers */
-#define UEVENT_BUFFER_SIZE		2048	/* buffer for the variables */
+#घोषणा UEVENT_HELPER_PATH_LEN		256
+#घोषणा UEVENT_NUM_ENVP			64	/* number of env poपूर्णांकers */
+#घोषणा UEVENT_BUFFER_SIZE		2048	/* buffer क्रम the variables */
 
-#ifdef CONFIG_UEVENT_HELPER
+#अगर_घोषित CONFIG_UEVENT_HELPER
 /* path to the userspace helper executed on an event */
-extern char uevent_helper[];
-#endif
+बाह्य अक्षर uevent_helper[];
+#पूर्ण_अगर
 
-/* counter to tag the uevent, read only except for the kobject core */
-extern u64 uevent_seqnum;
+/* counter to tag the uevent, पढ़ो only except क्रम the kobject core */
+बाह्य u64 uevent_seqnum;
 
 /*
  * The actions here must match the index to the string array
  * in lib/kobject_uevent.c
  *
  * Do not add new actions here without checking with the driver-core
- * maintainers. Action strings are not meant to express subsystem
- * or device specific properties. In most cases you want to send a
+ * मुख्यtainers. Action strings are not meant to express subप्रणाली
+ * or device specअगरic properties. In most हालs you want to send a
  * kobject_uevent_env(kobj, KOBJ_CHANGE, env) with additional event
- * specific variables added to the event environment.
+ * specअगरic variables added to the event environment.
  */
-enum kobject_action {
+क्रमागत kobject_action अणु
 	KOBJ_ADD,
 	KOBJ_REMOVE,
 	KOBJ_CHANGE,
@@ -59,189 +60,189 @@ enum kobject_action {
 	KOBJ_OFFLINE,
 	KOBJ_BIND,
 	KOBJ_UNBIND,
-};
+पूर्ण;
 
-struct kobject {
-	const char		*name;
-	struct list_head	entry;
-	struct kobject		*parent;
-	struct kset		*kset;
-	struct kobj_type	*ktype;
-	struct kernfs_node	*sd; /* sysfs directory entry */
-	struct kref		kref;
-#ifdef CONFIG_DEBUG_KOBJECT_RELEASE
-	struct delayed_work	release;
-#endif
-	unsigned int state_initialized:1;
-	unsigned int state_in_sysfs:1;
-	unsigned int state_add_uevent_sent:1;
-	unsigned int state_remove_uevent_sent:1;
-	unsigned int uevent_suppress:1;
-};
+काष्ठा kobject अणु
+	स्थिर अक्षर		*name;
+	काष्ठा list_head	entry;
+	काष्ठा kobject		*parent;
+	काष्ठा kset		*kset;
+	काष्ठा kobj_type	*ktype;
+	काष्ठा kernfs_node	*sd; /* sysfs directory entry */
+	काष्ठा kref		kref;
+#अगर_घोषित CONFIG_DEBUG_KOBJECT_RELEASE
+	काष्ठा delayed_work	release;
+#पूर्ण_अगर
+	अचिन्हित पूर्णांक state_initialized:1;
+	अचिन्हित पूर्णांक state_in_sysfs:1;
+	अचिन्हित पूर्णांक state_add_uevent_sent:1;
+	अचिन्हित पूर्णांक state_हटाओ_uevent_sent:1;
+	अचिन्हित पूर्णांक uevent_suppress:1;
+पूर्ण;
 
-extern __printf(2, 3)
-int kobject_set_name(struct kobject *kobj, const char *name, ...);
-extern __printf(2, 0)
-int kobject_set_name_vargs(struct kobject *kobj, const char *fmt,
-			   va_list vargs);
+बाह्य __म_लिखो(2, 3)
+पूर्णांक kobject_set_name(काष्ठा kobject *kobj, स्थिर अक्षर *name, ...);
+बाह्य __म_लिखो(2, 0)
+पूर्णांक kobject_set_name_vargs(काष्ठा kobject *kobj, स्थिर अक्षर *fmt,
+			   बहु_सूची vargs);
 
-static inline const char *kobject_name(const struct kobject *kobj)
-{
-	return kobj->name;
-}
+अटल अंतरभूत स्थिर अक्षर *kobject_name(स्थिर काष्ठा kobject *kobj)
+अणु
+	वापस kobj->name;
+पूर्ण
 
-extern void kobject_init(struct kobject *kobj, struct kobj_type *ktype);
-extern __printf(3, 4) __must_check
-int kobject_add(struct kobject *kobj, struct kobject *parent,
-		const char *fmt, ...);
-extern __printf(4, 5) __must_check
-int kobject_init_and_add(struct kobject *kobj,
-			 struct kobj_type *ktype, struct kobject *parent,
-			 const char *fmt, ...);
+बाह्य व्योम kobject_init(काष्ठा kobject *kobj, काष्ठा kobj_type *ktype);
+बाह्य __म_लिखो(3, 4) __must_check
+पूर्णांक kobject_add(काष्ठा kobject *kobj, काष्ठा kobject *parent,
+		स्थिर अक्षर *fmt, ...);
+बाह्य __म_लिखो(4, 5) __must_check
+पूर्णांक kobject_init_and_add(काष्ठा kobject *kobj,
+			 काष्ठा kobj_type *ktype, काष्ठा kobject *parent,
+			 स्थिर अक्षर *fmt, ...);
 
-extern void kobject_del(struct kobject *kobj);
+बाह्य व्योम kobject_del(काष्ठा kobject *kobj);
 
-extern struct kobject * __must_check kobject_create(void);
-extern struct kobject * __must_check kobject_create_and_add(const char *name,
-						struct kobject *parent);
+बाह्य काष्ठा kobject * __must_check kobject_create(व्योम);
+बाह्य काष्ठा kobject * __must_check kobject_create_and_add(स्थिर अक्षर *name,
+						काष्ठा kobject *parent);
 
-extern int __must_check kobject_rename(struct kobject *, const char *new_name);
-extern int __must_check kobject_move(struct kobject *, struct kobject *);
+बाह्य पूर्णांक __must_check kobject_नाम(काष्ठा kobject *, स्थिर अक्षर *new_name);
+बाह्य पूर्णांक __must_check kobject_move(काष्ठा kobject *, काष्ठा kobject *);
 
-extern struct kobject *kobject_get(struct kobject *kobj);
-extern struct kobject * __must_check kobject_get_unless_zero(
-						struct kobject *kobj);
-extern void kobject_put(struct kobject *kobj);
+बाह्य काष्ठा kobject *kobject_get(काष्ठा kobject *kobj);
+बाह्य काष्ठा kobject * __must_check kobject_get_unless_zero(
+						काष्ठा kobject *kobj);
+बाह्य व्योम kobject_put(काष्ठा kobject *kobj);
 
-extern const void *kobject_namespace(struct kobject *kobj);
-extern void kobject_get_ownership(struct kobject *kobj,
+बाह्य स्थिर व्योम *kobject_namespace(काष्ठा kobject *kobj);
+बाह्य व्योम kobject_get_ownership(काष्ठा kobject *kobj,
 				  kuid_t *uid, kgid_t *gid);
-extern char *kobject_get_path(struct kobject *kobj, gfp_t flag);
+बाह्य अक्षर *kobject_get_path(काष्ठा kobject *kobj, gfp_t flag);
 
 /**
  * kobject_has_children - Returns whether a kobject has children.
  * @kobj: the object to test
  *
- * This will return whether a kobject has other kobjects as children.
+ * This will वापस whether a kobject has other kobjects as children.
  *
- * It does NOT account for the presence of attribute files, only sub
+ * It करोes NOT account क्रम the presence of attribute files, only sub
  * directories. It also assumes there is no concurrent addition or
- * removal of such children, and thus relies on external locking.
+ * removal of such children, and thus relies on बाह्यal locking.
  */
-static inline bool kobject_has_children(struct kobject *kobj)
-{
-	WARN_ON_ONCE(kref_read(&kobj->kref) == 0);
+अटल अंतरभूत bool kobject_has_children(काष्ठा kobject *kobj)
+अणु
+	WARN_ON_ONCE(kref_पढ़ो(&kobj->kref) == 0);
 
-	return kobj->sd && kobj->sd->dir.subdirs;
-}
+	वापस kobj->sd && kobj->sd->dir.subdirs;
+पूर्ण
 
-struct kobj_type {
-	void (*release)(struct kobject *kobj);
-	const struct sysfs_ops *sysfs_ops;
-	struct attribute **default_attrs;	/* use default_groups instead */
-	const struct attribute_group **default_groups;
-	const struct kobj_ns_type_operations *(*child_ns_type)(struct kobject *kobj);
-	const void *(*namespace)(struct kobject *kobj);
-	void (*get_ownership)(struct kobject *kobj, kuid_t *uid, kgid_t *gid);
-};
+काष्ठा kobj_type अणु
+	व्योम (*release)(काष्ठा kobject *kobj);
+	स्थिर काष्ठा sysfs_ops *sysfs_ops;
+	काष्ठा attribute **शेष_attrs;	/* use शेष_groups instead */
+	स्थिर काष्ठा attribute_group **शेष_groups;
+	स्थिर काष्ठा kobj_ns_type_operations *(*child_ns_type)(काष्ठा kobject *kobj);
+	स्थिर व्योम *(*namespace)(काष्ठा kobject *kobj);
+	व्योम (*get_ownership)(काष्ठा kobject *kobj, kuid_t *uid, kgid_t *gid);
+पूर्ण;
 
-struct kobj_uevent_env {
-	char *argv[3];
-	char *envp[UEVENT_NUM_ENVP];
-	int envp_idx;
-	char buf[UEVENT_BUFFER_SIZE];
-	int buflen;
-};
+काष्ठा kobj_uevent_env अणु
+	अक्षर *argv[3];
+	अक्षर *envp[UEVENT_NUM_ENVP];
+	पूर्णांक envp_idx;
+	अक्षर buf[UEVENT_BUFFER_SIZE];
+	पूर्णांक buflen;
+पूर्ण;
 
-struct kset_uevent_ops {
-	int (* const filter)(struct kset *kset, struct kobject *kobj);
-	const char *(* const name)(struct kset *kset, struct kobject *kobj);
-	int (* const uevent)(struct kset *kset, struct kobject *kobj,
-		      struct kobj_uevent_env *env);
-};
+काष्ठा kset_uevent_ops अणु
+	पूर्णांक (* स्थिर filter)(काष्ठा kset *kset, काष्ठा kobject *kobj);
+	स्थिर अक्षर *(* स्थिर name)(काष्ठा kset *kset, काष्ठा kobject *kobj);
+	पूर्णांक (* स्थिर uevent)(काष्ठा kset *kset, काष्ठा kobject *kobj,
+		      काष्ठा kobj_uevent_env *env);
+पूर्ण;
 
-struct kobj_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct kobject *kobj, struct kobj_attribute *attr,
-			char *buf);
-	ssize_t (*store)(struct kobject *kobj, struct kobj_attribute *attr,
-			 const char *buf, size_t count);
-};
+काष्ठा kobj_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			अक्षर *buf);
+	sमाप_प्रकार (*store)(काष्ठा kobject *kobj, काष्ठा kobj_attribute *attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count);
+पूर्ण;
 
-extern const struct sysfs_ops kobj_sysfs_ops;
+बाह्य स्थिर काष्ठा sysfs_ops kobj_sysfs_ops;
 
-struct sock;
+काष्ठा sock;
 
 /**
- * struct kset - a set of kobjects of a specific type, belonging to a specific subsystem.
+ * काष्ठा kset - a set of kobjects of a specअगरic type, beदीर्घing to a specअगरic subप्रणाली.
  *
- * A kset defines a group of kobjects.  They can be individually
- * different "types" but overall these kobjects all want to be grouped
+ * A kset defines a group of kobjects.  They can be inभागidually
+ * dअगरferent "types" but overall these kobjects all want to be grouped
  * together and operated on in the same manner.  ksets are used to
  * define the attribute callbacks and other common events that happen to
  * a kobject.
  *
- * @list: the list of all kobjects for this kset
- * @list_lock: a lock for iterating over the kobjects
- * @kobj: the embedded kobject for this kset (recursion, isn't it fun...)
- * @uevent_ops: the set of uevent operations for this kset.  These are
+ * @list: the list of all kobjects क्रम this kset
+ * @list_lock: a lock क्रम iterating over the kobjects
+ * @kobj: the embedded kobject क्रम this kset (recursion, isn't it fun...)
+ * @uevent_ops: the set of uevent operations क्रम this kset.  These are
  * called whenever a kobject has something happen to it so that the kset
- * can add new environment variables, or filter out the uevents if so
+ * can add new environment variables, or filter out the uevents अगर so
  * desired.
  */
-struct kset {
-	struct list_head list;
+काष्ठा kset अणु
+	काष्ठा list_head list;
 	spinlock_t list_lock;
-	struct kobject kobj;
-	const struct kset_uevent_ops *uevent_ops;
-} __randomize_layout;
+	काष्ठा kobject kobj;
+	स्थिर काष्ठा kset_uevent_ops *uevent_ops;
+पूर्ण __अक्रमomize_layout;
 
-extern void kset_init(struct kset *kset);
-extern int __must_check kset_register(struct kset *kset);
-extern void kset_unregister(struct kset *kset);
-extern struct kset * __must_check kset_create_and_add(const char *name,
-						const struct kset_uevent_ops *u,
-						struct kobject *parent_kobj);
+बाह्य व्योम kset_init(काष्ठा kset *kset);
+बाह्य पूर्णांक __must_check kset_रेजिस्टर(काष्ठा kset *kset);
+बाह्य व्योम kset_unरेजिस्टर(काष्ठा kset *kset);
+बाह्य काष्ठा kset * __must_check kset_create_and_add(स्थिर अक्षर *name,
+						स्थिर काष्ठा kset_uevent_ops *u,
+						काष्ठा kobject *parent_kobj);
 
-static inline struct kset *to_kset(struct kobject *kobj)
-{
-	return kobj ? container_of(kobj, struct kset, kobj) : NULL;
-}
+अटल अंतरभूत काष्ठा kset *to_kset(काष्ठा kobject *kobj)
+अणु
+	वापस kobj ? container_of(kobj, काष्ठा kset, kobj) : शून्य;
+पूर्ण
 
-static inline struct kset *kset_get(struct kset *k)
-{
-	return k ? to_kset(kobject_get(&k->kobj)) : NULL;
-}
+अटल अंतरभूत काष्ठा kset *kset_get(काष्ठा kset *k)
+अणु
+	वापस k ? to_kset(kobject_get(&k->kobj)) : शून्य;
+पूर्ण
 
-static inline void kset_put(struct kset *k)
-{
+अटल अंतरभूत व्योम kset_put(काष्ठा kset *k)
+अणु
 	kobject_put(&k->kobj);
-}
+पूर्ण
 
-static inline struct kobj_type *get_ktype(struct kobject *kobj)
-{
-	return kobj->ktype;
-}
+अटल अंतरभूत काष्ठा kobj_type *get_ktype(काष्ठा kobject *kobj)
+अणु
+	वापस kobj->ktype;
+पूर्ण
 
-extern struct kobject *kset_find_obj(struct kset *, const char *);
+बाह्य काष्ठा kobject *kset_find_obj(काष्ठा kset *, स्थिर अक्षर *);
 
-/* The global /sys/kernel/ kobject for people to chain off of */
-extern struct kobject *kernel_kobj;
-/* The global /sys/kernel/mm/ kobject for people to chain off of */
-extern struct kobject *mm_kobj;
-/* The global /sys/hypervisor/ kobject for people to chain off of */
-extern struct kobject *hypervisor_kobj;
-/* The global /sys/power/ kobject for people to chain off of */
-extern struct kobject *power_kobj;
-/* The global /sys/firmware/ kobject for people to chain off of */
-extern struct kobject *firmware_kobj;
+/* The global /sys/kernel/ kobject क्रम people to chain off of */
+बाह्य काष्ठा kobject *kernel_kobj;
+/* The global /sys/kernel/mm/ kobject क्रम people to chain off of */
+बाह्य काष्ठा kobject *mm_kobj;
+/* The global /sys/hypervisor/ kobject क्रम people to chain off of */
+बाह्य काष्ठा kobject *hypervisor_kobj;
+/* The global /sys/घातer/ kobject क्रम people to chain off of */
+बाह्य काष्ठा kobject *घातer_kobj;
+/* The global /sys/firmware/ kobject क्रम people to chain off of */
+बाह्य काष्ठा kobject *firmware_kobj;
 
-int kobject_uevent(struct kobject *kobj, enum kobject_action action);
-int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,
-			char *envp[]);
-int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count);
+पूर्णांक kobject_uevent(काष्ठा kobject *kobj, क्रमागत kobject_action action);
+पूर्णांक kobject_uevent_env(काष्ठा kobject *kobj, क्रमागत kobject_action action,
+			अक्षर *envp[]);
+पूर्णांक kobject_synth_uevent(काष्ठा kobject *kobj, स्थिर अक्षर *buf, माप_प्रकार count);
 
-__printf(2, 3)
-int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...);
+__म_लिखो(2, 3)
+पूर्णांक add_uevent_var(काष्ठा kobj_uevent_env *env, स्थिर अक्षर *क्रमmat, ...);
 
-#endif /* _KOBJECT_H_ */
+#पूर्ण_अगर /* _KOBJECT_H_ */

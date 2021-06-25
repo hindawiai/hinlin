@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-pxa/pcm027.c
- *  Support for the Phytec phyCORE-PXA270 CPU card (aka PCM-027).
+ *  Support क्रम the Phytec phyCORE-PXA270 CPU card (aka PCM-027).
  *
  *  Refer
- *   http://www.phytec.com/products/sbc/ARM-XScale/phyCORE-XScale-PXA270.html
- *  for additional hardware info
+ *   http://www.phytec.com/products/sbc/ARM-XScale/phyCORE-XScale-PXA270.hपंचांगl
+ *  क्रम additional hardware info
  *
  *  Author:	Juergen Kilb
  *  Created:	April 05, 2005
@@ -17,32 +18,32 @@
  *  Copyright 2007 Juergen Beisert @ Pengutronix (j.beisert@pengutronix.de)
  */
 
-#include <linux/irq.h>
-#include <linux/platform_device.h>
-#include <linux/mtd/physmap.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/max7301.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/leds.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/max7301.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/leds.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include "pxa27x.h"
-#include "pcm027.h"
-#include "generic.h"
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश "pxa27x.h"
+#समावेश "pcm027.h"
+#समावेश "generic.h"
 
 /*
  * ABSTRACT:
  *
  * The PXA270 processor comes with a bunch of hardware on its silicon.
- * Not all of this hardware can be used at the same time and not all
+ * Not all of this hardware can be used at the same समय and not all
  * is routed to module's connectors. Also it depends on the baseboard, what
  * kind of hardware can be used in which way.
- * -> So this file supports the main devices on the CPU card only!
+ * -> So this file supports the मुख्य devices on the CPU card only!
  * Refer pcm990-baseboard.c how to extend this features to get a full
- * blown system with many common interfaces.
+ * blown प्रणाली with many common पूर्णांकerfaces.
  *
- * The PCM-027 supports the following interfaces through its connectors and
+ * The PCM-027 supports the following पूर्णांकerfaces through its connectors and
  * will be used in pcm990-baseboard.c:
  *
  * - LCD support
@@ -77,10 +78,10 @@
  * GPIO117 -> SCL
  * GPIO118 -> SDA
  *
- * *) CPU internal use only
+ * *) CPU पूर्णांकernal use only
  */
 
-static unsigned long pcm027_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ pcm027_pin_config[] __initdata = अणु
 	/* Chip Selects */
 	GPIO20_nSDCS_2,
 	GPIO21_nSDCS_3,
@@ -95,128 +96,128 @@ static unsigned long pcm027_pin_config[] __initdata = {
 
 	/* GPIO */
 	GPIO52_GPIO,	/* IRQ from network controller */
-#ifdef CONFIG_LEDS_GPIO
+#अगर_घोषित CONFIG_LEDS_GPIO
 	GPIO90_GPIO,	/* PCM027_LED_CPU */
 	GPIO91_GPIO,	/* PCM027_LED_HEART_BEAT */
-#endif
+#पूर्ण_अगर
 	GPIO114_GPIO,	/* IRQ from CAN controller */
-};
+पूर्ण;
 
 /*
- * SMC91x network controller specific stuff
+ * SMC91x network controller specअगरic stuff
  */
-static struct resource smc91x_resources[] = {
-	[0] = {
+अटल काष्ठा resource smc91x_resources[] = अणु
+	[0] = अणु
 		.start	= PCM027_ETH_PHYS + 0x300,
 		.end	= PCM027_ETH_PHYS + PCM027_ETH_SIZE,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= PCM027_ETH_IRQ,
 		.end	= PCM027_ETH_IRQ,
 		/* note: smc91x's driver doesn't use the trigger bits yet */
 		.flags	= IORESOURCE_IRQ | PCM027_ETH_IRQ_EDGE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device smc91x_device = {
+अटल काष्ठा platक्रमm_device smc91x_device = अणु
 	.name		= "smc91x",
 	.id		= 0,
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
-};
+पूर्ण;
 
 /*
  * SPI host and devices
  */
-static struct pxa2xx_spi_controller pxa_ssp_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp_master_info = अणु
 	.num_chipselect	= 1,
-};
+पूर्ण;
 
-static struct max7301_platform_data max7301_info = {
+अटल काष्ठा max7301_platक्रमm_data max7301_info = अणु
 	.base = -1,
-};
+पूर्ण;
 
 /* bus_num must match id in pxa2xx_set_spi_info() call */
-static struct spi_board_info spi_board_info[] __initdata = {
-	{
+अटल काष्ठा spi_board_info spi_board_info[] __initdata = अणु
+	अणु
 		.modalias	= "max7301",
-		.platform_data	= &max7301_info,
+		.platक्रमm_data	= &max7301_info,
 		.max_speed_hz	= 13000000,
 		.bus_num	= 1,
 		.chip_select	= 0,
 		.mode		= SPI_MODE_0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
  * NOR flash
  */
-static struct physmap_flash_data pcm027_flash_data = {
+अटल काष्ठा physmap_flash_data pcm027_flash_data = अणु
 	.width  = 4,
-};
+पूर्ण;
 
-static struct resource pcm027_flash_resource = {
+अटल काष्ठा resource pcm027_flash_resource = अणु
 	.start          = PCM027_FLASH_PHYS,
 	.end            = PCM027_FLASH_PHYS + PCM027_FLASH_SIZE - 1 ,
 	.flags          = IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device pcm027_flash = {
+अटल काष्ठा platक्रमm_device pcm027_flash = अणु
 	.name           = "physmap-flash",
 	.id             = 0,
-	.dev            = {
-		.platform_data  = &pcm027_flash_data,
-	},
+	.dev            = अणु
+		.platक्रमm_data  = &pcm027_flash_data,
+	पूर्ण,
 	.resource       = &pcm027_flash_resource,
 	.num_resources  = 1,
-};
+पूर्ण;
 
-#ifdef CONFIG_LEDS_GPIO
+#अगर_घोषित CONFIG_LEDS_GPIO
 
-static struct gpio_led pcm027_led[] = {
-	{
+अटल काष्ठा gpio_led pcm027_led[] = अणु
+	अणु
 		.name = "led0:red",	/* FIXME */
 		.gpio = PCM027_LED_CPU
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "led1:green",	/* FIXME */
 		.gpio = PCM027_LED_HEARD_BEAT
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data pcm027_led_data = {
+अटल काष्ठा gpio_led_platक्रमm_data pcm027_led_data = अणु
 	.num_leds	= ARRAY_SIZE(pcm027_led),
 	.leds		= pcm027_led
-};
+पूर्ण;
 
-static struct platform_device pcm027_led_dev = {
+अटल काष्ठा platक्रमm_device pcm027_led_dev = अणु
 	.name		= "leds-gpio",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &pcm027_led_data,
-	},
-};
+	.dev		= अणु
+		.platक्रमm_data	= &pcm027_led_data,
+	पूर्ण,
+पूर्ण;
 
-#endif /* CONFIG_LEDS_GPIO */
+#पूर्ण_अगर /* CONFIG_LEDS_GPIO */
 
 /*
  * declare the available device resources on this board
  */
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&smc91x_device,
 	&pcm027_flash,
-#ifdef CONFIG_LEDS_GPIO
+#अगर_घोषित CONFIG_LEDS_GPIO
 	&pcm027_led_dev
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * pcm027_init - breath some life into the board
+ * pcm027_init - breath some lअगरe पूर्णांकo the board
  */
-static void __init pcm027_init(void)
-{
-	/* system bus arbiter setting
+अटल व्योम __init pcm027_init(व्योम)
+अणु
+	/* प्रणाली bus arbiter setting
 	 * - Core_Park
 	 * - LCD_wt:DMA_wt:CORE_Wt = 2:3:4
 	 */
@@ -224,23 +225,23 @@ static void __init pcm027_init(void)
 
 	pxa2xx_mfp_config(pcm027_pin_config, ARRAY_SIZE(pcm027_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	platform_add_devices(devices, ARRAY_SIZE(devices));
+	platक्रमm_add_devices(devices, ARRAY_SIZE(devices));
 
 	/* at last call the baseboard to initialize itself */
-#ifdef CONFIG_MACH_PCM990_BASEBOARD
+#अगर_घोषित CONFIG_MACH_PCM990_BASEBOARD
 	pcm990_baseboard_init();
-#endif
+#पूर्ण_अगर
 
 	pxa2xx_set_spi_info(1, &pxa_ssp_master_info);
-	spi_register_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
-}
+	spi_रेजिस्टर_board_info(spi_board_info, ARRAY_SIZE(spi_board_info));
+पूर्ण
 
-static void __init pcm027_map_io(void)
-{
+अटल व्योम __init pcm027_map_io(व्योम)
+अणु
 	pxa27x_map_io();
 
 	/* initialize sleep mode regs (wake-up sources, etc) */
@@ -251,16 +252,16 @@ static void __init pcm027_map_io(void)
 	PWER  = 0x40000000 | PWER_GPIO0 | PWER_GPIO1;
 	PRER  = 0x00000000;
 	PFER  = 0x00000003;
-}
+पूर्ण
 
 MACHINE_START(PCM027, "Phytec Messtechnik GmbH phyCORE-PXA270")
-	/* Maintainer: Pengutronix */
+	/* Maपूर्णांकainer: Pengutronix */
 	.atag_offset	= 0x100,
 	.map_io		= pcm027_map_io,
 	.nr_irqs	= PCM027_NR_IRQS,
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= pcm027_init,
 	.restart	= pxa_restart,
 MACHINE_END

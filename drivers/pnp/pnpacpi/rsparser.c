@@ -1,275 +1,276 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * pnpacpi -- PnP ACPI driver
  *
- * Copyright (c) 2004 Matthieu Castet <castet.matthieu@free.fr>
- * Copyright (c) 2004 Li Shaohua <shaohua.li@intel.com>
+ * Copyright (c) 2004 Matthieu Castet <castet.matthieu@मुक्त.fr>
+ * Copyright (c) 2004 Li Shaohua <shaohua.li@पूर्णांकel.com>
  * Copyright (C) 2008 Hewlett-Packard Development Company, L.P.
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
-#include <linux/kernel.h>
-#include <linux/acpi.h>
-#include <linux/pci.h>
-#include <linux/pnp.h>
-#include <linux/slab.h>
-#include "../base.h"
-#include "pnpacpi.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/slab.h>
+#समावेश "../base.h"
+#समावेश "pnpacpi.h"
 
-static void decode_irq_flags(struct pnp_dev *dev, int flags, u8 *triggering,
+अटल व्योम decode_irq_flags(काष्ठा pnp_dev *dev, पूर्णांक flags, u8 *triggering,
 			     u8 *polarity, u8 *shareable)
-{
-	switch (flags & (IORESOURCE_IRQ_LOWLEVEL | IORESOURCE_IRQ_HIGHLEVEL |
-			 IORESOURCE_IRQ_LOWEDGE  | IORESOURCE_IRQ_HIGHEDGE)) {
-	case IORESOURCE_IRQ_LOWLEVEL:
+अणु
+	चयन (flags & (IORESOURCE_IRQ_LOWLEVEL | IORESOURCE_IRQ_HIGHLEVEL |
+			 IORESOURCE_IRQ_LOWEDGE  | IORESOURCE_IRQ_HIGHEDGE)) अणु
+	हाल IORESOURCE_IRQ_LOWLEVEL:
 		*triggering = ACPI_LEVEL_SENSITIVE;
 		*polarity = ACPI_ACTIVE_LOW;
-		break;
-	case IORESOURCE_IRQ_HIGHLEVEL:
+		अवरोध;
+	हाल IORESOURCE_IRQ_HIGHLEVEL:
 		*triggering = ACPI_LEVEL_SENSITIVE;
 		*polarity = ACPI_ACTIVE_HIGH;
-		break;
-	case IORESOURCE_IRQ_LOWEDGE:
+		अवरोध;
+	हाल IORESOURCE_IRQ_LOWEDGE:
 		*triggering = ACPI_EDGE_SENSITIVE;
 		*polarity = ACPI_ACTIVE_LOW;
-		break;
-	case IORESOURCE_IRQ_HIGHEDGE:
+		अवरोध;
+	हाल IORESOURCE_IRQ_HIGHEDGE:
 		*triggering = ACPI_EDGE_SENSITIVE;
 		*polarity = ACPI_ACTIVE_HIGH;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&dev->dev, "can't encode invalid IRQ mode %#x\n",
 			flags);
 		*triggering = ACPI_EDGE_SENSITIVE;
 		*polarity = ACPI_ACTIVE_HIGH;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (flags & IORESOURCE_IRQ_SHAREABLE)
+	अगर (flags & IORESOURCE_IRQ_SHAREABLE)
 		*shareable = ACPI_SHARED;
-	else
+	अन्यथा
 		*shareable = ACPI_EXCLUSIVE;
-}
+पूर्ण
 
-static int dma_flags(struct pnp_dev *dev, int type, int bus_master,
-		     int transfer)
-{
-	int flags = 0;
+अटल पूर्णांक dma_flags(काष्ठा pnp_dev *dev, पूर्णांक type, पूर्णांक bus_master,
+		     पूर्णांक transfer)
+अणु
+	पूर्णांक flags = 0;
 
-	if (bus_master)
+	अगर (bus_master)
 		flags |= IORESOURCE_DMA_MASTER;
-	switch (type) {
-	case ACPI_COMPATIBILITY:
+	चयन (type) अणु
+	हाल ACPI_COMPATIBILITY:
 		flags |= IORESOURCE_DMA_COMPATIBLE;
-		break;
-	case ACPI_TYPE_A:
+		अवरोध;
+	हाल ACPI_TYPE_A:
 		flags |= IORESOURCE_DMA_TYPEA;
-		break;
-	case ACPI_TYPE_B:
+		अवरोध;
+	हाल ACPI_TYPE_B:
 		flags |= IORESOURCE_DMA_TYPEB;
-		break;
-	case ACPI_TYPE_F:
+		अवरोध;
+	हाल ACPI_TYPE_F:
 		flags |= IORESOURCE_DMA_TYPEF;
-		break;
-	default:
-		/* Set a default value ? */
+		अवरोध;
+	शेष:
+		/* Set a शेष value ? */
 		flags |= IORESOURCE_DMA_COMPATIBLE;
 		dev_err(&dev->dev, "invalid DMA type %d\n", type);
-	}
-	switch (transfer) {
-	case ACPI_TRANSFER_8:
+	पूर्ण
+	चयन (transfer) अणु
+	हाल ACPI_TRANSFER_8:
 		flags |= IORESOURCE_DMA_8BIT;
-		break;
-	case ACPI_TRANSFER_8_16:
+		अवरोध;
+	हाल ACPI_TRANSFER_8_16:
 		flags |= IORESOURCE_DMA_8AND16BIT;
-		break;
-	case ACPI_TRANSFER_16:
+		अवरोध;
+	हाल ACPI_TRANSFER_16:
 		flags |= IORESOURCE_DMA_16BIT;
-		break;
-	default:
-		/* Set a default value ? */
+		अवरोध;
+	शेष:
+		/* Set a शेष value ? */
 		flags |= IORESOURCE_DMA_8AND16BIT;
 		dev_err(&dev->dev, "invalid DMA transfer type %d\n", transfer);
-	}
+	पूर्ण
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
 /*
  * Allocated Resources
  */
 
-static void pnpacpi_add_irqresource(struct pnp_dev *dev, struct resource *r)
-{
-	if (!(r->flags & IORESOURCE_DISABLED))
+अटल व्योम pnpacpi_add_irqresource(काष्ठा pnp_dev *dev, काष्ठा resource *r)
+अणु
+	अगर (!(r->flags & IORESOURCE_DISABLED))
 		pcibios_penalize_isa_irq(r->start, 1);
 
 	pnp_add_resource(dev, r);
-}
+पूर्ण
 
 /*
- * Device CSRs that do not appear in PCI config space should be described
- * via ACPI.  This would normally be done with Address Space Descriptors
- * marked as "consumer-only," but old versions of Windows and Linux ignore
- * the producer/consumer flag, so HP invented a vendor-defined resource to
+ * Device CSRs that करो not appear in PCI config space should be described
+ * via ACPI.  This would normally be करोne with Address Space Descriptors
+ * marked as "consumer-only," but old versions of Winकरोws and Linux ignore
+ * the producer/consumer flag, so HP invented a venकरोr-defined resource to
  * describe the location and size of CSR space.
  */
-static struct acpi_vendor_uuid hp_ccsr_uuid = {
+अटल काष्ठा acpi_venकरोr_uuid hp_ccsr_uuid = अणु
 	.subtype = 2,
-	.data = { 0xf9, 0xad, 0xe9, 0x69, 0x4f, 0x92, 0x5f, 0xab, 0xf6, 0x4a,
-	    0x24, 0xd2, 0x01, 0x37, 0x0e, 0xad },
-};
+	.data = अणु 0xf9, 0xad, 0xe9, 0x69, 0x4f, 0x92, 0x5f, 0xab, 0xf6, 0x4a,
+	    0x24, 0xd2, 0x01, 0x37, 0x0e, 0xad पूर्ण,
+पूर्ण;
 
-static int vendor_resource_matches(struct pnp_dev *dev,
-				   struct acpi_resource_vendor_typed *vendor,
-				   struct acpi_vendor_uuid *match,
-				   int expected_len)
-{
-	int uuid_len = sizeof(vendor->uuid);
-	u8 uuid_subtype = vendor->uuid_subtype;
-	u8 *uuid = vendor->uuid;
-	int actual_len;
+अटल पूर्णांक venकरोr_resource_matches(काष्ठा pnp_dev *dev,
+				   काष्ठा acpi_resource_venकरोr_typed *venकरोr,
+				   काष्ठा acpi_venकरोr_uuid *match,
+				   पूर्णांक expected_len)
+अणु
+	पूर्णांक uuid_len = माप(venकरोr->uuid);
+	u8 uuid_subtype = venकरोr->uuid_subtype;
+	u8 *uuid = venकरोr->uuid;
+	पूर्णांक actual_len;
 
 	/* byte_length includes uuid_subtype and uuid */
-	actual_len = vendor->byte_length - uuid_len - 1;
+	actual_len = venकरोr->byte_length - uuid_len - 1;
 
-	if (uuid_subtype == match->subtype &&
-	    uuid_len == sizeof(match->data) &&
-	    memcmp(uuid, match->data, uuid_len) == 0) {
-		if (expected_len && expected_len != actual_len) {
+	अगर (uuid_subtype == match->subtype &&
+	    uuid_len == माप(match->data) &&
+	    स_भेद(uuid, match->data, uuid_len) == 0) अणु
+		अगर (expected_len && expected_len != actual_len) अणु
 			dev_err(&dev->dev,
 				"wrong vendor descriptor size; expected %d, found %d bytes\n",
 				expected_len, actual_len);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pnpacpi_parse_allocated_vendor(struct pnp_dev *dev,
-				    struct acpi_resource_vendor_typed *vendor)
-{
-	if (vendor_resource_matches(dev, vendor, &hp_ccsr_uuid, 16)) {
+अटल व्योम pnpacpi_parse_allocated_venकरोr(काष्ठा pnp_dev *dev,
+				    काष्ठा acpi_resource_venकरोr_typed *venकरोr)
+अणु
+	अगर (venकरोr_resource_matches(dev, venकरोr, &hp_ccsr_uuid, 16)) अणु
 		u64 start, length;
 
-		memcpy(&start, vendor->byte_data, sizeof(start));
-		memcpy(&length, vendor->byte_data + 8, sizeof(length));
+		स_नकल(&start, venकरोr->byte_data, माप(start));
+		स_नकल(&length, venकरोr->byte_data + 8, माप(length));
 
 		pnp_add_mem_resource(dev, start, start + length - 1, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static acpi_status pnpacpi_allocated_resource(struct acpi_resource *res,
-					      void *data)
-{
-	struct pnp_dev *dev = data;
-	struct acpi_resource_dma *dma;
-	struct acpi_resource_vendor_typed *vendor_typed;
-	struct acpi_resource_gpio *gpio;
-	struct resource_win win = {{0}, 0};
-	struct resource *r = &win.res;
-	int i, flags;
+अटल acpi_status pnpacpi_allocated_resource(काष्ठा acpi_resource *res,
+					      व्योम *data)
+अणु
+	काष्ठा pnp_dev *dev = data;
+	काष्ठा acpi_resource_dma *dma;
+	काष्ठा acpi_resource_venकरोr_typed *venकरोr_typed;
+	काष्ठा acpi_resource_gpio *gpio;
+	काष्ठा resource_win win = अणुअणु0पूर्ण, 0पूर्ण;
+	काष्ठा resource *r = &win.res;
+	पूर्णांक i, flags;
 
-	if (acpi_dev_resource_address_space(res, &win)
-	    || acpi_dev_resource_ext_address_space(res, &win)) {
+	अगर (acpi_dev_resource_address_space(res, &win)
+	    || acpi_dev_resource_ext_address_space(res, &win)) अणु
 		pnp_add_resource(dev, &win.res);
-		return AE_OK;
-	}
+		वापस AE_OK;
+	पूर्ण
 
 	r->flags = 0;
-	if (acpi_dev_resource_interrupt(res, 0, r)) {
+	अगर (acpi_dev_resource_पूर्णांकerrupt(res, 0, r)) अणु
 		pnpacpi_add_irqresource(dev, r);
-		for (i = 1; acpi_dev_resource_interrupt(res, i, r); i++)
+		क्रम (i = 1; acpi_dev_resource_पूर्णांकerrupt(res, i, r); i++)
 			pnpacpi_add_irqresource(dev, r);
 
-		if (i > 1) {
+		अगर (i > 1) अणु
 			/*
-			 * The IRQ encoder puts a single interrupt in each
-			 * descriptor, so if a _CRS descriptor has more than
-			 * one interrupt, we won't be able to re-encode it.
+			 * The IRQ encoder माला_दो a single पूर्णांकerrupt in each
+			 * descriptor, so अगर a _CRS descriptor has more than
+			 * one पूर्णांकerrupt, we won't be able to re-encode it.
 			 */
-			if (pnp_can_write(dev)) {
+			अगर (pnp_can_ग_लिखो(dev)) अणु
 				dev_warn(&dev->dev,
 					 "multiple interrupts in _CRS descriptor; configuration can't be changed\n");
 				dev->capabilities &= ~PNP_WRITE;
-			}
-		}
-		return AE_OK;
-	} else if (acpi_gpio_get_irq_resource(res, &gpio)) {
+			पूर्ण
+		पूर्ण
+		वापस AE_OK;
+	पूर्ण अन्यथा अगर (acpi_gpio_get_irq_resource(res, &gpio)) अणु
 		/*
 		 * If the resource is GpioInt() type then extract the IRQ
-		 * from GPIO resource and fill it into IRQ resource type.
+		 * from GPIO resource and fill it पूर्णांकo IRQ resource type.
 		 */
 		i = acpi_dev_gpio_irq_get(dev->data, 0);
-		if (i >= 0) {
+		अगर (i >= 0) अणु
 			flags = acpi_dev_irq_flags(gpio->triggering,
 						   gpio->polarity,
 						   gpio->shareable);
-		} else {
+		पूर्ण अन्यथा अणु
 			flags = IORESOURCE_DISABLED;
-		}
+		पूर्ण
 		pnp_add_irq_resource(dev, i, flags);
-		return AE_OK;
-	} else if (r->flags & IORESOURCE_DISABLED) {
+		वापस AE_OK;
+	पूर्ण अन्यथा अगर (r->flags & IORESOURCE_DISABLED) अणु
 		pnp_add_irq_resource(dev, 0, IORESOURCE_DISABLED);
-		return AE_OK;
-	}
+		वापस AE_OK;
+	पूर्ण
 
-	switch (res->type) {
-	case ACPI_RESOURCE_TYPE_MEMORY24:
-	case ACPI_RESOURCE_TYPE_MEMORY32:
-	case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
-		if (acpi_dev_resource_memory(res, r))
+	चयन (res->type) अणु
+	हाल ACPI_RESOURCE_TYPE_MEMORY24:
+	हाल ACPI_RESOURCE_TYPE_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+		अगर (acpi_dev_resource_memory(res, r))
 			pnp_add_resource(dev, r);
-		break;
-	case ACPI_RESOURCE_TYPE_IO:
-	case ACPI_RESOURCE_TYPE_FIXED_IO:
-		if (acpi_dev_resource_io(res, r))
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_IO:
+	हाल ACPI_RESOURCE_TYPE_FIXED_IO:
+		अगर (acpi_dev_resource_io(res, r))
 			pnp_add_resource(dev, r);
-		break;
-	case ACPI_RESOURCE_TYPE_DMA:
+		अवरोध;
+	हाल ACPI_RESOURCE_TYPE_DMA:
 		dma = &res->data.dma;
-		if (dma->channel_count > 0 && dma->channels[0] != (u8) -1)
+		अगर (dma->channel_count > 0 && dma->channels[0] != (u8) -1)
 			flags = dma_flags(dev, dma->type, dma->bus_master,
 					  dma->transfer);
-		else
+		अन्यथा
 			flags = IORESOURCE_DISABLED;
 		pnp_add_dma_resource(dev, dma->channels[0], flags);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_START_DEPENDENT:
-	case ACPI_RESOURCE_TYPE_END_DEPENDENT:
-		break;
+	हाल ACPI_RESOURCE_TYPE_START_DEPENDENT:
+	हाल ACPI_RESOURCE_TYPE_END_DEPENDENT:
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_VENDOR:
-		vendor_typed = &res->data.vendor_typed;
-		pnpacpi_parse_allocated_vendor(dev, vendor_typed);
-		break;
+	हाल ACPI_RESOURCE_TYPE_VENDOR:
+		venकरोr_typed = &res->data.venकरोr_typed;
+		pnpacpi_parse_allocated_venकरोr(dev, venकरोr_typed);
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_END_TAG:
-		break;
+	हाल ACPI_RESOURCE_TYPE_END_TAG:
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
-		break;
+	हाल ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_SERIAL_BUS:
+	हाल ACPI_RESOURCE_TYPE_SERIAL_BUS:
 		/* serial bus connections (I2C/SPI/UART) are not pnp */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&dev->dev, "unknown resource type %d in _CRS\n",
 			 res->type);
-		return AE_ERROR;
-	}
+		वापस AE_ERROR;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-int pnpacpi_parse_allocated_resource(struct pnp_dev *dev)
-{
-	struct acpi_device *acpi_dev = dev->data;
+पूर्णांक pnpacpi_parse_allocated_resource(काष्ठा pnp_dev *dev)
+अणु
+	काष्ठा acpi_device *acpi_dev = dev->data;
 	acpi_handle handle = acpi_dev->handle;
 	acpi_status status;
 
@@ -280,278 +281,278 @@ int pnpacpi_parse_allocated_resource(struct pnp_dev *dev)
 	status = acpi_walk_resources(handle, METHOD_NAME__CRS,
 				     pnpacpi_allocated_resource, dev);
 
-	if (ACPI_FAILURE(status)) {
-		if (status != AE_NOT_FOUND)
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (status != AE_NOT_FOUND)
 			dev_err(&dev->dev, "can't evaluate _CRS: %d", status);
-		return -EPERM;
-	}
-	return 0;
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static __init void pnpacpi_parse_dma_option(struct pnp_dev *dev,
-					    unsigned int option_flags,
-					    struct acpi_resource_dma *p)
-{
-	int i;
-	unsigned char map = 0, flags;
+अटल __init व्योम pnpacpi_parse_dma_option(काष्ठा pnp_dev *dev,
+					    अचिन्हित पूर्णांक option_flags,
+					    काष्ठा acpi_resource_dma *p)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर map = 0, flags;
 
-	for (i = 0; i < p->channel_count; i++)
+	क्रम (i = 0; i < p->channel_count; i++)
 		map |= 1 << p->channels[i];
 
 	flags = dma_flags(dev, p->type, p->bus_master, p->transfer);
-	pnp_register_dma_resource(dev, option_flags, map, flags);
-}
+	pnp_रेजिस्टर_dma_resource(dev, option_flags, map, flags);
+पूर्ण
 
-static __init void pnpacpi_parse_irq_option(struct pnp_dev *dev,
-					    unsigned int option_flags,
-					    struct acpi_resource_irq *p)
-{
-	int i;
+अटल __init व्योम pnpacpi_parse_irq_option(काष्ठा pnp_dev *dev,
+					    अचिन्हित पूर्णांक option_flags,
+					    काष्ठा acpi_resource_irq *p)
+अणु
+	पूर्णांक i;
 	pnp_irq_mask_t map;
-	unsigned char flags;
+	अचिन्हित अक्षर flags;
 
-	bitmap_zero(map.bits, PNP_IRQ_NR);
-	for (i = 0; i < p->interrupt_count; i++)
-		if (p->interrupts[i])
-			__set_bit(p->interrupts[i], map.bits);
+	biपंचांगap_zero(map.bits, PNP_IRQ_NR);
+	क्रम (i = 0; i < p->पूर्णांकerrupt_count; i++)
+		अगर (p->पूर्णांकerrupts[i])
+			__set_bit(p->पूर्णांकerrupts[i], map.bits);
 
 	flags = acpi_dev_irq_flags(p->triggering, p->polarity, p->shareable);
-	pnp_register_irq_resource(dev, option_flags, &map, flags);
-}
+	pnp_रेजिस्टर_irq_resource(dev, option_flags, &map, flags);
+पूर्ण
 
-static __init void pnpacpi_parse_ext_irq_option(struct pnp_dev *dev,
-					unsigned int option_flags,
-					struct acpi_resource_extended_irq *p)
-{
-	int i;
+अटल __init व्योम pnpacpi_parse_ext_irq_option(काष्ठा pnp_dev *dev,
+					अचिन्हित पूर्णांक option_flags,
+					काष्ठा acpi_resource_extended_irq *p)
+अणु
+	पूर्णांक i;
 	pnp_irq_mask_t map;
-	unsigned char flags;
+	अचिन्हित अक्षर flags;
 
-	bitmap_zero(map.bits, PNP_IRQ_NR);
-	for (i = 0; i < p->interrupt_count; i++) {
-		if (p->interrupts[i]) {
-			if (p->interrupts[i] < PNP_IRQ_NR)
-				__set_bit(p->interrupts[i], map.bits);
-			else
+	biपंचांगap_zero(map.bits, PNP_IRQ_NR);
+	क्रम (i = 0; i < p->पूर्णांकerrupt_count; i++) अणु
+		अगर (p->पूर्णांकerrupts[i]) अणु
+			अगर (p->पूर्णांकerrupts[i] < PNP_IRQ_NR)
+				__set_bit(p->पूर्णांकerrupts[i], map.bits);
+			अन्यथा
 				dev_err(&dev->dev,
 					"ignoring IRQ %d option (too large for %d entry bitmap)\n",
-					p->interrupts[i], PNP_IRQ_NR);
-		}
-	}
+					p->पूर्णांकerrupts[i], PNP_IRQ_NR);
+		पूर्ण
+	पूर्ण
 
 	flags = acpi_dev_irq_flags(p->triggering, p->polarity, p->shareable);
-	pnp_register_irq_resource(dev, option_flags, &map, flags);
-}
+	pnp_रेजिस्टर_irq_resource(dev, option_flags, &map, flags);
+पूर्ण
 
-static __init void pnpacpi_parse_port_option(struct pnp_dev *dev,
-					     unsigned int option_flags,
-					     struct acpi_resource_io *io)
-{
-	unsigned char flags = 0;
+अटल __init व्योम pnpacpi_parse_port_option(काष्ठा pnp_dev *dev,
+					     अचिन्हित पूर्णांक option_flags,
+					     काष्ठा acpi_resource_io *io)
+अणु
+	अचिन्हित अक्षर flags = 0;
 
-	if (io->io_decode == ACPI_DECODE_16)
+	अगर (io->io_decode == ACPI_DECODE_16)
 		flags = IORESOURCE_IO_16BIT_ADDR;
-	pnp_register_port_resource(dev, option_flags, io->minimum, io->maximum,
+	pnp_रेजिस्टर_port_resource(dev, option_flags, io->minimum, io->maximum,
 				   io->alignment, io->address_length, flags);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_fixed_port_option(struct pnp_dev *dev,
-					unsigned int option_flags,
-					struct acpi_resource_fixed_io *io)
-{
-	pnp_register_port_resource(dev, option_flags, io->address, io->address,
+अटल __init व्योम pnpacpi_parse_fixed_port_option(काष्ठा pnp_dev *dev,
+					अचिन्हित पूर्णांक option_flags,
+					काष्ठा acpi_resource_fixed_io *io)
+अणु
+	pnp_रेजिस्टर_port_resource(dev, option_flags, io->address, io->address,
 				   0, io->address_length, IORESOURCE_IO_FIXED);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_mem24_option(struct pnp_dev *dev,
-					      unsigned int option_flags,
-					      struct acpi_resource_memory24 *p)
-{
-	unsigned char flags = 0;
+अटल __init व्योम pnpacpi_parse_mem24_option(काष्ठा pnp_dev *dev,
+					      अचिन्हित पूर्णांक option_flags,
+					      काष्ठा acpi_resource_memory24 *p)
+अणु
+	अचिन्हित अक्षर flags = 0;
 
-	if (p->write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (p->ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 		flags = IORESOURCE_MEM_WRITEABLE;
-	pnp_register_mem_resource(dev, option_flags, p->minimum, p->maximum,
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, p->minimum, p->maximum,
 				  p->alignment, p->address_length, flags);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_mem32_option(struct pnp_dev *dev,
-					      unsigned int option_flags,
-					      struct acpi_resource_memory32 *p)
-{
-	unsigned char flags = 0;
+अटल __init व्योम pnpacpi_parse_mem32_option(काष्ठा pnp_dev *dev,
+					      अचिन्हित पूर्णांक option_flags,
+					      काष्ठा acpi_resource_memory32 *p)
+अणु
+	अचिन्हित अक्षर flags = 0;
 
-	if (p->write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (p->ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 		flags = IORESOURCE_MEM_WRITEABLE;
-	pnp_register_mem_resource(dev, option_flags, p->minimum, p->maximum,
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, p->minimum, p->maximum,
 				  p->alignment, p->address_length, flags);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_fixed_mem32_option(struct pnp_dev *dev,
-					unsigned int option_flags,
-					struct acpi_resource_fixed_memory32 *p)
-{
-	unsigned char flags = 0;
+अटल __init व्योम pnpacpi_parse_fixed_mem32_option(काष्ठा pnp_dev *dev,
+					अचिन्हित पूर्णांक option_flags,
+					काष्ठा acpi_resource_fixed_memory32 *p)
+अणु
+	अचिन्हित अक्षर flags = 0;
 
-	if (p->write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (p->ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 		flags = IORESOURCE_MEM_WRITEABLE;
-	pnp_register_mem_resource(dev, option_flags, p->address, p->address,
+	pnp_रेजिस्टर_mem_resource(dev, option_flags, p->address, p->address,
 				  0, p->address_length, flags);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_address_option(struct pnp_dev *dev,
-						unsigned int option_flags,
-						struct acpi_resource *r)
-{
-	struct acpi_resource_address64 addr, *p = &addr;
+अटल __init व्योम pnpacpi_parse_address_option(काष्ठा pnp_dev *dev,
+						अचिन्हित पूर्णांक option_flags,
+						काष्ठा acpi_resource *r)
+अणु
+	काष्ठा acpi_resource_address64 addr, *p = &addr;
 	acpi_status status;
-	unsigned char flags = 0;
+	अचिन्हित अक्षर flags = 0;
 
 	status = acpi_resource_to_address64(r, p);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_warn(&dev->dev, "can't convert resource type %d\n",
 			 r->type);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (p->resource_type == ACPI_MEMORY_RANGE) {
-		if (p->info.mem.write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (p->resource_type == ACPI_MEMORY_RANGE) अणु
+		अगर (p->info.mem.ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 			flags = IORESOURCE_MEM_WRITEABLE;
-		pnp_register_mem_resource(dev, option_flags, p->address.minimum,
+		pnp_रेजिस्टर_mem_resource(dev, option_flags, p->address.minimum,
 					  p->address.minimum, 0, p->address.address_length,
 					  flags);
-	} else if (p->resource_type == ACPI_IO_RANGE)
-		pnp_register_port_resource(dev, option_flags, p->address.minimum,
+	पूर्ण अन्यथा अगर (p->resource_type == ACPI_IO_RANGE)
+		pnp_रेजिस्टर_port_resource(dev, option_flags, p->address.minimum,
 					   p->address.minimum, 0, p->address.address_length,
 					   IORESOURCE_IO_FIXED);
-}
+पूर्ण
 
-static __init void pnpacpi_parse_ext_address_option(struct pnp_dev *dev,
-						    unsigned int option_flags,
-						    struct acpi_resource *r)
-{
-	struct acpi_resource_extended_address64 *p = &r->data.ext_address64;
-	unsigned char flags = 0;
+अटल __init व्योम pnpacpi_parse_ext_address_option(काष्ठा pnp_dev *dev,
+						    अचिन्हित पूर्णांक option_flags,
+						    काष्ठा acpi_resource *r)
+अणु
+	काष्ठा acpi_resource_extended_address64 *p = &r->data.ext_address64;
+	अचिन्हित अक्षर flags = 0;
 
-	if (p->resource_type == ACPI_MEMORY_RANGE) {
-		if (p->info.mem.write_protect == ACPI_READ_WRITE_MEMORY)
+	अगर (p->resource_type == ACPI_MEMORY_RANGE) अणु
+		अगर (p->info.mem.ग_लिखो_protect == ACPI_READ_WRITE_MEMORY)
 			flags = IORESOURCE_MEM_WRITEABLE;
-		pnp_register_mem_resource(dev, option_flags, p->address.minimum,
+		pnp_रेजिस्टर_mem_resource(dev, option_flags, p->address.minimum,
 					  p->address.minimum, 0, p->address.address_length,
 					  flags);
-	} else if (p->resource_type == ACPI_IO_RANGE)
-		pnp_register_port_resource(dev, option_flags, p->address.minimum,
+	पूर्ण अन्यथा अगर (p->resource_type == ACPI_IO_RANGE)
+		pnp_रेजिस्टर_port_resource(dev, option_flags, p->address.minimum,
 					   p->address.minimum, 0, p->address.address_length,
 					   IORESOURCE_IO_FIXED);
-}
+पूर्ण
 
-struct acpipnp_parse_option_s {
-	struct pnp_dev *dev;
-	unsigned int option_flags;
-};
+काष्ठा acpipnp_parse_option_s अणु
+	काष्ठा pnp_dev *dev;
+	अचिन्हित पूर्णांक option_flags;
+पूर्ण;
 
-static __init acpi_status pnpacpi_option_resource(struct acpi_resource *res,
-						  void *data)
-{
-	int priority;
-	struct acpipnp_parse_option_s *parse_data = data;
-	struct pnp_dev *dev = parse_data->dev;
-	unsigned int option_flags = parse_data->option_flags;
+अटल __init acpi_status pnpacpi_option_resource(काष्ठा acpi_resource *res,
+						  व्योम *data)
+अणु
+	पूर्णांक priority;
+	काष्ठा acpipnp_parse_option_s *parse_data = data;
+	काष्ठा pnp_dev *dev = parse_data->dev;
+	अचिन्हित पूर्णांक option_flags = parse_data->option_flags;
 
-	switch (res->type) {
-	case ACPI_RESOURCE_TYPE_IRQ:
+	चयन (res->type) अणु
+	हाल ACPI_RESOURCE_TYPE_IRQ:
 		pnpacpi_parse_irq_option(dev, option_flags, &res->data.irq);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_DMA:
+	हाल ACPI_RESOURCE_TYPE_DMA:
 		pnpacpi_parse_dma_option(dev, option_flags, &res->data.dma);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_START_DEPENDENT:
-		switch (res->data.start_dpf.compatibility_priority) {
-		case ACPI_GOOD_CONFIGURATION:
+	हाल ACPI_RESOURCE_TYPE_START_DEPENDENT:
+		चयन (res->data.start_dpf.compatibility_priority) अणु
+		हाल ACPI_GOOD_CONFIGURATION:
 			priority = PNP_RES_PRIORITY_PREFERRED;
-			break;
+			अवरोध;
 
-		case ACPI_ACCEPTABLE_CONFIGURATION:
+		हाल ACPI_ACCEPTABLE_CONFIGURATION:
 			priority = PNP_RES_PRIORITY_ACCEPTABLE;
-			break;
+			अवरोध;
 
-		case ACPI_SUB_OPTIMAL_CONFIGURATION:
+		हाल ACPI_SUB_OPTIMAL_CONFIGURATION:
 			priority = PNP_RES_PRIORITY_FUNCTIONAL;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			priority = PNP_RES_PRIORITY_INVALID;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		parse_data->option_flags = pnp_new_dependent_set(dev, priority);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_END_DEPENDENT:
+	हाल ACPI_RESOURCE_TYPE_END_DEPENDENT:
 		parse_data->option_flags = 0;
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_IO:
+	हाल ACPI_RESOURCE_TYPE_IO:
 		pnpacpi_parse_port_option(dev, option_flags, &res->data.io);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_FIXED_IO:
+	हाल ACPI_RESOURCE_TYPE_FIXED_IO:
 		pnpacpi_parse_fixed_port_option(dev, option_flags,
 					        &res->data.fixed_io);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_VENDOR:
-	case ACPI_RESOURCE_TYPE_END_TAG:
-		break;
+	हाल ACPI_RESOURCE_TYPE_VENDOR:
+	हाल ACPI_RESOURCE_TYPE_END_TAG:
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_MEMORY24:
+	हाल ACPI_RESOURCE_TYPE_MEMORY24:
 		pnpacpi_parse_mem24_option(dev, option_flags,
 					   &res->data.memory24);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_MEMORY32:
 		pnpacpi_parse_mem32_option(dev, option_flags,
 					   &res->data.memory32);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
 		pnpacpi_parse_fixed_mem32_option(dev, option_flags,
 						 &res->data.fixed_memory32);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_ADDRESS16:
-	case ACPI_RESOURCE_TYPE_ADDRESS32:
-	case ACPI_RESOURCE_TYPE_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS16:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS32:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS64:
 		pnpacpi_parse_address_option(dev, option_flags, res);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
 		pnpacpi_parse_ext_address_option(dev, option_flags, res);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		pnpacpi_parse_ext_irq_option(dev, option_flags,
 					     &res->data.extended_irq);
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
-		break;
+	हाल ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&dev->dev, "unknown resource type %d in _PRS\n",
 			 res->type);
-		return AE_ERROR;
-	}
+		वापस AE_ERROR;
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-int __init pnpacpi_parse_resource_option_data(struct pnp_dev *dev)
-{
-	struct acpi_device *acpi_dev = dev->data;
+पूर्णांक __init pnpacpi_parse_resource_option_data(काष्ठा pnp_dev *dev)
+अणु
+	काष्ठा acpi_device *acpi_dev = dev->data;
 	acpi_handle handle = acpi_dev->handle;
 	acpi_status status;
-	struct acpipnp_parse_option_s parse_data;
+	काष्ठा acpipnp_parse_option_s parse_data;
 
 	pnp_dbg(&dev->dev, "parse resource options\n");
 
@@ -561,195 +562,195 @@ int __init pnpacpi_parse_resource_option_data(struct pnp_dev *dev)
 	status = acpi_walk_resources(handle, METHOD_NAME__PRS,
 				     pnpacpi_option_resource, &parse_data);
 
-	if (ACPI_FAILURE(status)) {
-		if (status != AE_NOT_FOUND)
+	अगर (ACPI_FAILURE(status)) अणु
+		अगर (status != AE_NOT_FOUND)
 			dev_err(&dev->dev, "can't evaluate _PRS: %d", status);
-		return -EPERM;
-	}
-	return 0;
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pnpacpi_supported_resource(struct acpi_resource *res)
-{
-	switch (res->type) {
-	case ACPI_RESOURCE_TYPE_IRQ:
-	case ACPI_RESOURCE_TYPE_DMA:
-	case ACPI_RESOURCE_TYPE_IO:
-	case ACPI_RESOURCE_TYPE_FIXED_IO:
-	case ACPI_RESOURCE_TYPE_MEMORY24:
-	case ACPI_RESOURCE_TYPE_MEMORY32:
-	case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
-	case ACPI_RESOURCE_TYPE_ADDRESS16:
-	case ACPI_RESOURCE_TYPE_ADDRESS32:
-	case ACPI_RESOURCE_TYPE_ADDRESS64:
-	case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
-		return 1;
-	}
-	return 0;
-}
+अटल पूर्णांक pnpacpi_supported_resource(काष्ठा acpi_resource *res)
+अणु
+	चयन (res->type) अणु
+	हाल ACPI_RESOURCE_TYPE_IRQ:
+	हाल ACPI_RESOURCE_TYPE_DMA:
+	हाल ACPI_RESOURCE_TYPE_IO:
+	हाल ACPI_RESOURCE_TYPE_FIXED_IO:
+	हाल ACPI_RESOURCE_TYPE_MEMORY24:
+	हाल ACPI_RESOURCE_TYPE_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS16:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS32:
+	हाल ACPI_RESOURCE_TYPE_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Set resource
  */
-static acpi_status pnpacpi_count_resources(struct acpi_resource *res,
-					   void *data)
-{
-	int *res_cnt = data;
+अटल acpi_status pnpacpi_count_resources(काष्ठा acpi_resource *res,
+					   व्योम *data)
+अणु
+	पूर्णांक *res_cnt = data;
 
-	if (pnpacpi_supported_resource(res))
+	अगर (pnpacpi_supported_resource(res))
 		(*res_cnt)++;
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static acpi_status pnpacpi_type_resources(struct acpi_resource *res, void *data)
-{
-	struct acpi_resource **resource = data;
+अटल acpi_status pnpacpi_type_resources(काष्ठा acpi_resource *res, व्योम *data)
+अणु
+	काष्ठा acpi_resource **resource = data;
 
-	if (pnpacpi_supported_resource(res)) {
+	अगर (pnpacpi_supported_resource(res)) अणु
 		(*resource)->type = res->type;
-		(*resource)->length = sizeof(struct acpi_resource);
-		if (res->type == ACPI_RESOURCE_TYPE_IRQ)
+		(*resource)->length = माप(काष्ठा acpi_resource);
+		अगर (res->type == ACPI_RESOURCE_TYPE_IRQ)
 			(*resource)->data.irq.descriptor_length =
 					res->data.irq.descriptor_length;
 		(*resource)++;
-	}
+	पूर्ण
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-int pnpacpi_build_resource_template(struct pnp_dev *dev,
-				    struct acpi_buffer *buffer)
-{
-	struct acpi_device *acpi_dev = dev->data;
+पूर्णांक pnpacpi_build_resource_ढाँचा(काष्ठा pnp_dev *dev,
+				    काष्ठा acpi_buffer *buffer)
+अणु
+	काष्ठा acpi_device *acpi_dev = dev->data;
 	acpi_handle handle = acpi_dev->handle;
-	struct acpi_resource *resource;
-	int res_cnt = 0;
+	काष्ठा acpi_resource *resource;
+	पूर्णांक res_cnt = 0;
 	acpi_status status;
 
 	status = acpi_walk_resources(handle, METHOD_NAME__CRS,
 				     pnpacpi_count_resources, &res_cnt);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&dev->dev, "can't evaluate _CRS: %d\n", status);
-		return -EINVAL;
-	}
-	if (!res_cnt)
-		return -EINVAL;
-	buffer->length = sizeof(struct acpi_resource) * (res_cnt + 1) + 1;
-	buffer->pointer = kzalloc(buffer->length - 1, GFP_KERNEL);
-	if (!buffer->pointer)
-		return -ENOMEM;
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!res_cnt)
+		वापस -EINVAL;
+	buffer->length = माप(काष्ठा acpi_resource) * (res_cnt + 1) + 1;
+	buffer->poपूर्णांकer = kzalloc(buffer->length - 1, GFP_KERNEL);
+	अगर (!buffer->poपूर्णांकer)
+		वापस -ENOMEM;
 
-	resource = (struct acpi_resource *)buffer->pointer;
+	resource = (काष्ठा acpi_resource *)buffer->poपूर्णांकer;
 	status = acpi_walk_resources(handle, METHOD_NAME__CRS,
 				     pnpacpi_type_resources, &resource);
-	if (ACPI_FAILURE(status)) {
-		kfree(buffer->pointer);
+	अगर (ACPI_FAILURE(status)) अणु
+		kमुक्त(buffer->poपूर्णांकer);
 		dev_err(&dev->dev, "can't evaluate _CRS: %d\n", status);
-		return -EINVAL;
-	}
-	/* resource will pointer the end resource now */
+		वापस -EINVAL;
+	पूर्ण
+	/* resource will poपूर्णांकer the end resource now */
 	resource->type = ACPI_RESOURCE_TYPE_END_TAG;
-	resource->length = sizeof(struct acpi_resource);
+	resource->length = माप(काष्ठा acpi_resource);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pnpacpi_encode_irq(struct pnp_dev *dev,
-			       struct acpi_resource *resource,
-			       struct resource *p)
-{
-	struct acpi_resource_irq *irq = &resource->data.irq;
+अटल व्योम pnpacpi_encode_irq(काष्ठा pnp_dev *dev,
+			       काष्ठा acpi_resource *resource,
+			       काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_irq *irq = &resource->data.irq;
 	u8 triggering, polarity, shareable;
 
-	if (!pnp_resource_enabled(p)) {
-		irq->interrupt_count = 0;
+	अगर (!pnp_resource_enabled(p)) अणु
+		irq->पूर्णांकerrupt_count = 0;
 		pnp_dbg(&dev->dev, "  encode irq (%s)\n",
 			p ? "disabled" : "missing");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	decode_irq_flags(dev, p->flags, &triggering, &polarity, &shareable);
 	irq->triggering = triggering;
 	irq->polarity = polarity;
 	irq->shareable = shareable;
-	irq->interrupt_count = 1;
-	irq->interrupts[0] = p->start;
+	irq->पूर्णांकerrupt_count = 1;
+	irq->पूर्णांकerrupts[0] = p->start;
 
 	pnp_dbg(&dev->dev, "  encode irq %d %s %s %s (%d-byte descriptor)\n",
-		(int) p->start,
+		(पूर्णांक) p->start,
 		triggering == ACPI_LEVEL_SENSITIVE ? "level" : "edge",
 		polarity == ACPI_ACTIVE_LOW ? "low" : "high",
 		irq->shareable == ACPI_SHARED ? "shared" : "exclusive",
 		irq->descriptor_length);
-}
+पूर्ण
 
-static void pnpacpi_encode_ext_irq(struct pnp_dev *dev,
-				   struct acpi_resource *resource,
-				   struct resource *p)
-{
-	struct acpi_resource_extended_irq *extended_irq = &resource->data.extended_irq;
+अटल व्योम pnpacpi_encode_ext_irq(काष्ठा pnp_dev *dev,
+				   काष्ठा acpi_resource *resource,
+				   काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_extended_irq *extended_irq = &resource->data.extended_irq;
 	u8 triggering, polarity, shareable;
 
-	if (!pnp_resource_enabled(p)) {
-		extended_irq->interrupt_count = 0;
+	अगर (!pnp_resource_enabled(p)) अणु
+		extended_irq->पूर्णांकerrupt_count = 0;
 		pnp_dbg(&dev->dev, "  encode extended irq (%s)\n",
 			p ? "disabled" : "missing");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	decode_irq_flags(dev, p->flags, &triggering, &polarity, &shareable);
 	extended_irq->producer_consumer = ACPI_CONSUMER;
 	extended_irq->triggering = triggering;
 	extended_irq->polarity = polarity;
 	extended_irq->shareable = shareable;
-	extended_irq->interrupt_count = 1;
-	extended_irq->interrupts[0] = p->start;
+	extended_irq->पूर्णांकerrupt_count = 1;
+	extended_irq->पूर्णांकerrupts[0] = p->start;
 
-	pnp_dbg(&dev->dev, "  encode irq %d %s %s %s\n", (int) p->start,
+	pnp_dbg(&dev->dev, "  encode irq %d %s %s %s\n", (पूर्णांक) p->start,
 		triggering == ACPI_LEVEL_SENSITIVE ? "level" : "edge",
 		polarity == ACPI_ACTIVE_LOW ? "low" : "high",
 		extended_irq->shareable == ACPI_SHARED ? "shared" : "exclusive");
-}
+पूर्ण
 
-static void pnpacpi_encode_dma(struct pnp_dev *dev,
-			       struct acpi_resource *resource,
-			       struct resource *p)
-{
-	struct acpi_resource_dma *dma = &resource->data.dma;
+अटल व्योम pnpacpi_encode_dma(काष्ठा pnp_dev *dev,
+			       काष्ठा acpi_resource *resource,
+			       काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_dma *dma = &resource->data.dma;
 
-	if (!pnp_resource_enabled(p)) {
+	अगर (!pnp_resource_enabled(p)) अणु
 		dma->channel_count = 0;
 		pnp_dbg(&dev->dev, "  encode dma (%s)\n",
 			p ? "disabled" : "missing");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Note: pnp_assign_dma will copy pnp_dma->flags into p->flags */
-	switch (p->flags & IORESOURCE_DMA_SPEED_MASK) {
-	case IORESOURCE_DMA_TYPEA:
+	/* Note: pnp_assign_dma will copy pnp_dma->flags पूर्णांकo p->flags */
+	चयन (p->flags & IORESOURCE_DMA_SPEED_MASK) अणु
+	हाल IORESOURCE_DMA_TYPEA:
 		dma->type = ACPI_TYPE_A;
-		break;
-	case IORESOURCE_DMA_TYPEB:
+		अवरोध;
+	हाल IORESOURCE_DMA_TYPEB:
 		dma->type = ACPI_TYPE_B;
-		break;
-	case IORESOURCE_DMA_TYPEF:
+		अवरोध;
+	हाल IORESOURCE_DMA_TYPEF:
 		dma->type = ACPI_TYPE_F;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dma->type = ACPI_COMPATIBILITY;
-	}
+	पूर्ण
 
-	switch (p->flags & IORESOURCE_DMA_TYPE_MASK) {
-	case IORESOURCE_DMA_8BIT:
+	चयन (p->flags & IORESOURCE_DMA_TYPE_MASK) अणु
+	हाल IORESOURCE_DMA_8BIT:
 		dma->transfer = ACPI_TRANSFER_8;
-		break;
-	case IORESOURCE_DMA_8AND16BIT:
+		अवरोध;
+	हाल IORESOURCE_DMA_8AND16BIT:
 		dma->transfer = ACPI_TRANSFER_8_16;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dma->transfer = ACPI_TRANSFER_16;
-	}
+	पूर्ण
 
 	dma->bus_master = !!(p->flags & IORESOURCE_DMA_MASTER);
 	dma->channel_count = 1;
@@ -757,191 +758,191 @@ static void pnpacpi_encode_dma(struct pnp_dev *dev,
 
 	pnp_dbg(&dev->dev, "  encode dma %d "
 		"type %#x transfer %#x master %d\n",
-		(int) p->start, dma->type, dma->transfer, dma->bus_master);
-}
+		(पूर्णांक) p->start, dma->type, dma->transfer, dma->bus_master);
+पूर्ण
 
-static void pnpacpi_encode_io(struct pnp_dev *dev,
-			      struct acpi_resource *resource,
-			      struct resource *p)
-{
-	struct acpi_resource_io *io = &resource->data.io;
+अटल व्योम pnpacpi_encode_io(काष्ठा pnp_dev *dev,
+			      काष्ठा acpi_resource *resource,
+			      काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_io *io = &resource->data.io;
 
-	if (pnp_resource_enabled(p)) {
-		/* Note: pnp_assign_port copies pnp_port->flags into p->flags */
+	अगर (pnp_resource_enabled(p)) अणु
+		/* Note: pnp_assign_port copies pnp_port->flags पूर्णांकo p->flags */
 		io->io_decode = (p->flags & IORESOURCE_IO_16BIT_ADDR) ?
 		    ACPI_DECODE_16 : ACPI_DECODE_10;
 		io->minimum = p->start;
 		io->maximum = p->end;
 		io->alignment = 0;	/* Correct? */
 		io->address_length = resource_size(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		io->minimum = 0;
 		io->address_length = 0;
-	}
+	पूर्ण
 
 	pnp_dbg(&dev->dev, "  encode io %#x-%#x decode %#x\n", io->minimum,
 		io->minimum + io->address_length - 1, io->io_decode);
-}
+पूर्ण
 
-static void pnpacpi_encode_fixed_io(struct pnp_dev *dev,
-				    struct acpi_resource *resource,
-				    struct resource *p)
-{
-	struct acpi_resource_fixed_io *fixed_io = &resource->data.fixed_io;
+अटल व्योम pnpacpi_encode_fixed_io(काष्ठा pnp_dev *dev,
+				    काष्ठा acpi_resource *resource,
+				    काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_fixed_io *fixed_io = &resource->data.fixed_io;
 
-	if (pnp_resource_enabled(p)) {
+	अगर (pnp_resource_enabled(p)) अणु
 		fixed_io->address = p->start;
 		fixed_io->address_length = resource_size(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		fixed_io->address = 0;
 		fixed_io->address_length = 0;
-	}
+	पूर्ण
 
 	pnp_dbg(&dev->dev, "  encode fixed_io %#x-%#x\n", fixed_io->address,
 		fixed_io->address + fixed_io->address_length - 1);
-}
+पूर्ण
 
-static void pnpacpi_encode_mem24(struct pnp_dev *dev,
-				 struct acpi_resource *resource,
-				 struct resource *p)
-{
-	struct acpi_resource_memory24 *memory24 = &resource->data.memory24;
+अटल व्योम pnpacpi_encode_mem24(काष्ठा pnp_dev *dev,
+				 काष्ठा acpi_resource *resource,
+				 काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_memory24 *memory24 = &resource->data.memory24;
 
-	if (pnp_resource_enabled(p)) {
-		/* Note: pnp_assign_mem copies pnp_mem->flags into p->flags */
-		memory24->write_protect = p->flags & IORESOURCE_MEM_WRITEABLE ?
+	अगर (pnp_resource_enabled(p)) अणु
+		/* Note: pnp_assign_mem copies pnp_mem->flags पूर्णांकo p->flags */
+		memory24->ग_लिखो_protect = p->flags & IORESOURCE_MEM_WRITEABLE ?
 		    ACPI_READ_WRITE_MEMORY : ACPI_READ_ONLY_MEMORY;
 		memory24->minimum = p->start;
 		memory24->maximum = p->end;
 		memory24->alignment = 0;
 		memory24->address_length = resource_size(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		memory24->minimum = 0;
 		memory24->address_length = 0;
-	}
+	पूर्ण
 
 	pnp_dbg(&dev->dev, "  encode mem24 %#x-%#x write_protect %#x\n",
 		memory24->minimum,
 		memory24->minimum + memory24->address_length - 1,
-		memory24->write_protect);
-}
+		memory24->ग_लिखो_protect);
+पूर्ण
 
-static void pnpacpi_encode_mem32(struct pnp_dev *dev,
-				 struct acpi_resource *resource,
-				 struct resource *p)
-{
-	struct acpi_resource_memory32 *memory32 = &resource->data.memory32;
+अटल व्योम pnpacpi_encode_mem32(काष्ठा pnp_dev *dev,
+				 काष्ठा acpi_resource *resource,
+				 काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_memory32 *memory32 = &resource->data.memory32;
 
-	if (pnp_resource_enabled(p)) {
-		memory32->write_protect = p->flags & IORESOURCE_MEM_WRITEABLE ?
+	अगर (pnp_resource_enabled(p)) अणु
+		memory32->ग_लिखो_protect = p->flags & IORESOURCE_MEM_WRITEABLE ?
 		    ACPI_READ_WRITE_MEMORY : ACPI_READ_ONLY_MEMORY;
 		memory32->minimum = p->start;
 		memory32->maximum = p->end;
 		memory32->alignment = 0;
 		memory32->address_length = resource_size(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		memory32->minimum = 0;
 		memory32->alignment = 0;
-	}
+	पूर्ण
 
 	pnp_dbg(&dev->dev, "  encode mem32 %#x-%#x write_protect %#x\n",
 		memory32->minimum,
 		memory32->minimum + memory32->address_length - 1,
-		memory32->write_protect);
-}
+		memory32->ग_लिखो_protect);
+पूर्ण
 
-static void pnpacpi_encode_fixed_mem32(struct pnp_dev *dev,
-				       struct acpi_resource *resource,
-				       struct resource *p)
-{
-	struct acpi_resource_fixed_memory32 *fixed_memory32 = &resource->data.fixed_memory32;
+अटल व्योम pnpacpi_encode_fixed_mem32(काष्ठा pnp_dev *dev,
+				       काष्ठा acpi_resource *resource,
+				       काष्ठा resource *p)
+अणु
+	काष्ठा acpi_resource_fixed_memory32 *fixed_memory32 = &resource->data.fixed_memory32;
 
-	if (pnp_resource_enabled(p)) {
-		fixed_memory32->write_protect =
+	अगर (pnp_resource_enabled(p)) अणु
+		fixed_memory32->ग_लिखो_protect =
 		    p->flags & IORESOURCE_MEM_WRITEABLE ?
 		    ACPI_READ_WRITE_MEMORY : ACPI_READ_ONLY_MEMORY;
 		fixed_memory32->address = p->start;
 		fixed_memory32->address_length = resource_size(p);
-	} else {
+	पूर्ण अन्यथा अणु
 		fixed_memory32->address = 0;
 		fixed_memory32->address_length = 0;
-	}
+	पूर्ण
 
 	pnp_dbg(&dev->dev, "  encode fixed_mem32 %#x-%#x write_protect %#x\n",
 		fixed_memory32->address,
 		fixed_memory32->address + fixed_memory32->address_length - 1,
-		fixed_memory32->write_protect);
-}
+		fixed_memory32->ग_लिखो_protect);
+पूर्ण
 
-int pnpacpi_encode_resources(struct pnp_dev *dev, struct acpi_buffer *buffer)
-{
-	int i = 0;
-	/* pnpacpi_build_resource_template allocates extra mem */
-	int res_cnt = (buffer->length - 1) / sizeof(struct acpi_resource) - 1;
-	struct acpi_resource *resource = buffer->pointer;
-	unsigned int port = 0, irq = 0, dma = 0, mem = 0;
+पूर्णांक pnpacpi_encode_resources(काष्ठा pnp_dev *dev, काष्ठा acpi_buffer *buffer)
+अणु
+	पूर्णांक i = 0;
+	/* pnpacpi_build_resource_ढाँचा allocates extra mem */
+	पूर्णांक res_cnt = (buffer->length - 1) / माप(काष्ठा acpi_resource) - 1;
+	काष्ठा acpi_resource *resource = buffer->poपूर्णांकer;
+	अचिन्हित पूर्णांक port = 0, irq = 0, dma = 0, mem = 0;
 
 	pnp_dbg(&dev->dev, "encode %d resources\n", res_cnt);
-	while (i < res_cnt) {
-		switch (resource->type) {
-		case ACPI_RESOURCE_TYPE_IRQ:
+	जबतक (i < res_cnt) अणु
+		चयन (resource->type) अणु
+		हाल ACPI_RESOURCE_TYPE_IRQ:
 			pnpacpi_encode_irq(dev, resource,
 			       pnp_get_resource(dev, IORESOURCE_IRQ, irq));
 			irq++;
-			break;
+			अवरोध;
 
-		case ACPI_RESOURCE_TYPE_DMA:
+		हाल ACPI_RESOURCE_TYPE_DMA:
 			pnpacpi_encode_dma(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_DMA, dma));
 			dma++;
-			break;
-		case ACPI_RESOURCE_TYPE_IO:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_IO:
 			pnpacpi_encode_io(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_IO, port));
 			port++;
-			break;
-		case ACPI_RESOURCE_TYPE_FIXED_IO:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_FIXED_IO:
 			pnpacpi_encode_fixed_io(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_IO, port));
 			port++;
-			break;
-		case ACPI_RESOURCE_TYPE_MEMORY24:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_MEMORY24:
 			pnpacpi_encode_mem24(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
-		case ACPI_RESOURCE_TYPE_MEMORY32:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_MEMORY32:
 			pnpacpi_encode_mem32(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
-		case ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_FIXED_MEMORY32:
 			pnpacpi_encode_fixed_mem32(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_MEM, mem));
 			mem++;
-			break;
-		case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 			pnpacpi_encode_ext_irq(dev, resource,
 				pnp_get_resource(dev, IORESOURCE_IRQ, irq));
 			irq++;
-			break;
-		case ACPI_RESOURCE_TYPE_START_DEPENDENT:
-		case ACPI_RESOURCE_TYPE_END_DEPENDENT:
-		case ACPI_RESOURCE_TYPE_VENDOR:
-		case ACPI_RESOURCE_TYPE_END_TAG:
-		case ACPI_RESOURCE_TYPE_ADDRESS16:
-		case ACPI_RESOURCE_TYPE_ADDRESS32:
-		case ACPI_RESOURCE_TYPE_ADDRESS64:
-		case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
-		case ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
-		default:	/* other type */
+			अवरोध;
+		हाल ACPI_RESOURCE_TYPE_START_DEPENDENT:
+		हाल ACPI_RESOURCE_TYPE_END_DEPENDENT:
+		हाल ACPI_RESOURCE_TYPE_VENDOR:
+		हाल ACPI_RESOURCE_TYPE_END_TAG:
+		हाल ACPI_RESOURCE_TYPE_ADDRESS16:
+		हाल ACPI_RESOURCE_TYPE_ADDRESS32:
+		हाल ACPI_RESOURCE_TYPE_ADDRESS64:
+		हाल ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
+		हाल ACPI_RESOURCE_TYPE_GENERIC_REGISTER:
+		शेष:	/* other type */
 			dev_warn(&dev->dev,
 				 "can't encode unknown resource type %d\n",
 				 resource->type);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		resource++;
 		i++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

@@ -1,73 +1,74 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/fs/affs/inode.c
  *
  *  (c) 1996  Hans-Joachim Widmaier - Rewritten
  *
- *  (C) 1993  Ray Burr - Modified for Amiga FFS filesystem.
+ *  (C) 1993  Ray Burr - Modअगरied क्रम Amiga FFS fileप्रणाली.
  *
- *  (C) 1992  Eric Youngdale Modified for ISO 9660 filesystem.
+ *  (C) 1992  Eric Youngdale Modअगरied क्रम ISO 9660 fileप्रणाली.
  *
- *  (C) 1991  Linus Torvalds - minix filesystem
+ *  (C) 1991  Linus Torvalds - minix fileप्रणाली
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/statfs.h>
-#include <linux/parser.h>
-#include <linux/magic.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/slab.h>
-#include <linux/writeback.h>
-#include <linux/blkdev.h>
-#include <linux/seq_file.h>
-#include <linux/iversion.h>
-#include "affs.h"
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/statfs.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/iversion.h>
+#समावेश "affs.h"
 
-static int affs_statfs(struct dentry *dentry, struct kstatfs *buf);
-static int affs_show_options(struct seq_file *m, struct dentry *root);
-static int affs_remount (struct super_block *sb, int *flags, char *data);
+अटल पूर्णांक affs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf);
+अटल पूर्णांक affs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root);
+अटल पूर्णांक affs_remount (काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data);
 
-static void
-affs_commit_super(struct super_block *sb, int wait)
-{
-	struct affs_sb_info *sbi = AFFS_SB(sb);
-	struct buffer_head *bh = sbi->s_root_bh;
-	struct affs_root_tail *tail = AFFS_ROOT_TAIL(sb, bh);
+अटल व्योम
+affs_commit_super(काष्ठा super_block *sb, पूर्णांक रुको)
+अणु
+	काष्ठा affs_sb_info *sbi = AFFS_SB(sb);
+	काष्ठा buffer_head *bh = sbi->s_root_bh;
+	काष्ठा affs_root_tail *tail = AFFS_ROOT_TAIL(sb, bh);
 
 	lock_buffer(bh);
-	affs_secs_to_datestamp(ktime_get_real_seconds(), &tail->disk_change);
+	affs_secs_to_datestamp(kसमय_get_real_seconds(), &tail->disk_change);
 	affs_fix_checksum(sb, bh);
 	unlock_buffer(bh);
 
 	mark_buffer_dirty(bh);
-	if (wait)
+	अगर (रुको)
 		sync_dirty_buffer(bh);
-}
+पूर्ण
 
-static void
-affs_put_super(struct super_block *sb)
-{
-	struct affs_sb_info *sbi = AFFS_SB(sb);
+अटल व्योम
+affs_put_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा affs_sb_info *sbi = AFFS_SB(sb);
 	pr_debug("%s()\n", __func__);
 
 	cancel_delayed_work_sync(&sbi->sb_work);
-}
+पूर्ण
 
-static int
-affs_sync_fs(struct super_block *sb, int wait)
-{
-	affs_commit_super(sb, wait);
-	return 0;
-}
+अटल पूर्णांक
+affs_sync_fs(काष्ठा super_block *sb, पूर्णांक रुको)
+अणु
+	affs_commit_super(sb, रुको);
+	वापस 0;
+पूर्ण
 
-static void flush_superblock(struct work_struct *work)
-{
-	struct affs_sb_info *sbi;
-	struct super_block *sb;
+अटल व्योम flush_superblock(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा affs_sb_info *sbi;
+	काष्ठा super_block *sb;
 
-	sbi = container_of(work, struct affs_sb_info, sb_work.work);
+	sbi = container_of(work, काष्ठा affs_sb_info, sb_work.work);
 	sb = sbi->sb;
 
 	spin_lock(&sbi->work_lock);
@@ -75,125 +76,125 @@ static void flush_superblock(struct work_struct *work)
 	spin_unlock(&sbi->work_lock);
 
 	affs_commit_super(sb, 1);
-}
+पूर्ण
 
-void affs_mark_sb_dirty(struct super_block *sb)
-{
-	struct affs_sb_info *sbi = AFFS_SB(sb);
-	unsigned long delay;
+व्योम affs_mark_sb_dirty(काष्ठा super_block *sb)
+अणु
+	काष्ठा affs_sb_info *sbi = AFFS_SB(sb);
+	अचिन्हित दीर्घ delay;
 
-	if (sb_rdonly(sb))
-	       return;
+	अगर (sb_rकरोnly(sb))
+	       वापस;
 
 	spin_lock(&sbi->work_lock);
-	if (!sbi->work_queued) {
-	       delay = msecs_to_jiffies(dirty_writeback_interval * 10);
-	       queue_delayed_work(system_long_wq, &sbi->sb_work, delay);
+	अगर (!sbi->work_queued) अणु
+	       delay = msecs_to_jअगरfies(dirty_ग_लिखोback_पूर्णांकerval * 10);
+	       queue_delayed_work(प्रणाली_दीर्घ_wq, &sbi->sb_work, delay);
 	       sbi->work_queued = 1;
-	}
+	पूर्ण
 	spin_unlock(&sbi->work_lock);
-}
+पूर्ण
 
-static struct kmem_cache * affs_inode_cachep;
+अटल काष्ठा kmem_cache * affs_inode_cachep;
 
-static struct inode *affs_alloc_inode(struct super_block *sb)
-{
-	struct affs_inode_info *i;
+अटल काष्ठा inode *affs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा affs_inode_info *i;
 
 	i = kmem_cache_alloc(affs_inode_cachep, GFP_KERNEL);
-	if (!i)
-		return NULL;
+	अगर (!i)
+		वापस शून्य;
 
 	inode_set_iversion(&i->vfs_inode, 1);
-	i->i_lc = NULL;
-	i->i_ext_bh = NULL;
+	i->i_lc = शून्य;
+	i->i_ext_bh = शून्य;
 	i->i_pa_cnt = 0;
 
-	return &i->vfs_inode;
-}
+	वापस &i->vfs_inode;
+पूर्ण
 
-static void affs_free_inode(struct inode *inode)
-{
-	kmem_cache_free(affs_inode_cachep, AFFS_I(inode));
-}
+अटल व्योम affs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(affs_inode_cachep, AFFS_I(inode));
+पूर्ण
 
-static void init_once(void *foo)
-{
-	struct affs_inode_info *ei = (struct affs_inode_info *) foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा affs_inode_info *ei = (काष्ठा affs_inode_info *) foo;
 
 	mutex_init(&ei->i_link_lock);
 	mutex_init(&ei->i_ext_lock);
 	inode_init_once(&ei->vfs_inode);
-}
+पूर्ण
 
-static int __init init_inodecache(void)
-{
+अटल पूर्णांक __init init_inodecache(व्योम)
+अणु
 	affs_inode_cachep = kmem_cache_create("affs_inode_cache",
-					     sizeof(struct affs_inode_info),
+					     माप(काष्ठा affs_inode_info),
 					     0, (SLAB_RECLAIM_ACCOUNT|
 						SLAB_MEM_SPREAD|SLAB_ACCOUNT),
 					     init_once);
-	if (affs_inode_cachep == NULL)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (affs_inode_cachep == शून्य)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void destroy_inodecache(void)
-{
+अटल व्योम destroy_inodecache(व्योम)
+अणु
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(affs_inode_cachep);
-}
+पूर्ण
 
-static const struct super_operations affs_sops = {
+अटल स्थिर काष्ठा super_operations affs_sops = अणु
 	.alloc_inode	= affs_alloc_inode,
-	.free_inode	= affs_free_inode,
-	.write_inode	= affs_write_inode,
+	.मुक्त_inode	= affs_मुक्त_inode,
+	.ग_लिखो_inode	= affs_ग_लिखो_inode,
 	.evict_inode	= affs_evict_inode,
 	.put_super	= affs_put_super,
 	.sync_fs	= affs_sync_fs,
 	.statfs		= affs_statfs,
 	.remount_fs	= affs_remount,
 	.show_options	= affs_show_options,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	Opt_bs, Opt_mode, Opt_mufs, Opt_notruncate, Opt_prefix, Opt_protect,
 	Opt_reserved, Opt_root, Opt_setgid, Opt_setuid,
 	Opt_verbose, Opt_volume, Opt_ignore, Opt_err,
-};
+पूर्ण;
 
-static const match_table_t tokens = {
-	{Opt_bs, "bs=%u"},
-	{Opt_mode, "mode=%o"},
-	{Opt_mufs, "mufs"},
-	{Opt_notruncate, "nofilenametruncate"},
-	{Opt_prefix, "prefix=%s"},
-	{Opt_protect, "protect"},
-	{Opt_reserved, "reserved=%u"},
-	{Opt_root, "root=%u"},
-	{Opt_setgid, "setgid=%u"},
-	{Opt_setuid, "setuid=%u"},
-	{Opt_verbose, "verbose"},
-	{Opt_volume, "volume=%s"},
-	{Opt_ignore, "grpquota"},
-	{Opt_ignore, "noquota"},
-	{Opt_ignore, "quota"},
-	{Opt_ignore, "usrquota"},
-	{Opt_err, NULL},
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणुOpt_bs, "bs=%u"पूर्ण,
+	अणुOpt_mode, "mode=%o"पूर्ण,
+	अणुOpt_mufs, "mufs"पूर्ण,
+	अणुOpt_notruncate, "nofilenametruncate"पूर्ण,
+	अणुOpt_prefix, "prefix=%s"पूर्ण,
+	अणुOpt_protect, "protect"पूर्ण,
+	अणुOpt_reserved, "reserved=%u"पूर्ण,
+	अणुOpt_root, "root=%u"पूर्ण,
+	अणुOpt_setgid, "setgid=%u"पूर्ण,
+	अणुOpt_setuid, "setuid=%u"पूर्ण,
+	अणुOpt_verbose, "verbose"पूर्ण,
+	अणुOpt_volume, "volume=%s"पूर्ण,
+	अणुOpt_ignore, "grpquota"पूर्ण,
+	अणुOpt_ignore, "noquota"पूर्ण,
+	अणुOpt_ignore, "quota"पूर्ण,
+	अणुOpt_ignore, "usrquota"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण,
+पूर्ण;
 
-static int
-parse_options(char *options, kuid_t *uid, kgid_t *gid, int *mode, int *reserved, s32 *root,
-		int *blocksize, char **prefix, char *volume, unsigned long *mount_opts)
-{
-	char *p;
+अटल पूर्णांक
+parse_options(अक्षर *options, kuid_t *uid, kgid_t *gid, पूर्णांक *mode, पूर्णांक *reserved, s32 *root,
+		पूर्णांक *blocksize, अक्षर **prefix, अक्षर *volume, अचिन्हित दीर्घ *mount_opts)
+अणु
+	अक्षर *p;
 	substring_t args[MAX_OPT_ARGS];
 
-	/* Fill in defaults */
+	/* Fill in शेषs */
 
 	*uid        = current_uid();
 	*gid        = current_gid();
@@ -203,165 +204,165 @@ parse_options(char *options, kuid_t *uid, kgid_t *gid, int *mode, int *reserved,
 	volume[0]   = ':';
 	volume[1]   = 0;
 	*mount_opts = 0;
-	if (!options)
-		return 1;
+	अगर (!options)
+		वापस 1;
 
-	while ((p = strsep(&options, ",")) != NULL) {
-		int token, n, option;
-		if (!*p)
-			continue;
+	जबतक ((p = strsep(&options, ",")) != शून्य) अणु
+		पूर्णांक token, n, option;
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case Opt_bs:
-			if (match_int(&args[0], &n))
-				return 0;
-			if (n != 512 && n != 1024 && n != 2048
-			    && n != 4096) {
+		चयन (token) अणु
+		हाल Opt_bs:
+			अगर (match_पूर्णांक(&args[0], &n))
+				वापस 0;
+			अगर (n != 512 && n != 1024 && n != 2048
+			    && n != 4096) अणु
 				pr_warn("Invalid blocksize (512, 1024, 2048, 4096 allowed)\n");
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			*blocksize = n;
-			break;
-		case Opt_mode:
-			if (match_octal(&args[0], &option))
-				return 0;
+			अवरोध;
+		हाल Opt_mode:
+			अगर (match_octal(&args[0], &option))
+				वापस 0;
 			*mode = option & 0777;
 			affs_set_opt(*mount_opts, SF_SETMODE);
-			break;
-		case Opt_mufs:
+			अवरोध;
+		हाल Opt_mufs:
 			affs_set_opt(*mount_opts, SF_MUFS);
-			break;
-		case Opt_notruncate:
+			अवरोध;
+		हाल Opt_notruncate:
 			affs_set_opt(*mount_opts, SF_NO_TRUNCATE);
-			break;
-		case Opt_prefix:
-			kfree(*prefix);
+			अवरोध;
+		हाल Opt_prefix:
+			kमुक्त(*prefix);
 			*prefix = match_strdup(&args[0]);
-			if (!*prefix)
-				return 0;
+			अगर (!*prefix)
+				वापस 0;
 			affs_set_opt(*mount_opts, SF_PREFIX);
-			break;
-		case Opt_protect:
+			अवरोध;
+		हाल Opt_protect:
 			affs_set_opt(*mount_opts, SF_IMMUTABLE);
-			break;
-		case Opt_reserved:
-			if (match_int(&args[0], reserved))
-				return 0;
-			break;
-		case Opt_root:
-			if (match_int(&args[0], root))
-				return 0;
-			break;
-		case Opt_setgid:
-			if (match_int(&args[0], &option))
-				return 0;
+			अवरोध;
+		हाल Opt_reserved:
+			अगर (match_पूर्णांक(&args[0], reserved))
+				वापस 0;
+			अवरोध;
+		हाल Opt_root:
+			अगर (match_पूर्णांक(&args[0], root))
+				वापस 0;
+			अवरोध;
+		हाल Opt_setgid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस 0;
 			*gid = make_kgid(current_user_ns(), option);
-			if (!gid_valid(*gid))
-				return 0;
+			अगर (!gid_valid(*gid))
+				वापस 0;
 			affs_set_opt(*mount_opts, SF_SETGID);
-			break;
-		case Opt_setuid:
-			if (match_int(&args[0], &option))
-				return 0;
+			अवरोध;
+		हाल Opt_setuid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस 0;
 			*uid = make_kuid(current_user_ns(), option);
-			if (!uid_valid(*uid))
-				return 0;
+			अगर (!uid_valid(*uid))
+				वापस 0;
 			affs_set_opt(*mount_opts, SF_SETUID);
-			break;
-		case Opt_verbose:
+			अवरोध;
+		हाल Opt_verbose:
 			affs_set_opt(*mount_opts, SF_VERBOSE);
-			break;
-		case Opt_volume: {
-			char *vol = match_strdup(&args[0]);
-			if (!vol)
-				return 0;
+			अवरोध;
+		हाल Opt_volume: अणु
+			अक्षर *vol = match_strdup(&args[0]);
+			अगर (!vol)
+				वापस 0;
 			strlcpy(volume, vol, 32);
-			kfree(vol);
-			break;
-		}
-		case Opt_ignore:
+			kमुक्त(vol);
+			अवरोध;
+		पूर्ण
+		हाल Opt_ignore:
 		 	/* Silently ignore the quota options */
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_warn("Unrecognized mount option \"%s\" or missing value\n",
 				p);
-			return 0;
-		}
-	}
-	return 1;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static int affs_show_options(struct seq_file *m, struct dentry *root)
-{
-	struct super_block *sb = root->d_sb;
-	struct affs_sb_info *sbi = AFFS_SB(sb);
+अटल पूर्णांक affs_show_options(काष्ठा seq_file *m, काष्ठा dentry *root)
+अणु
+	काष्ठा super_block *sb = root->d_sb;
+	काष्ठा affs_sb_info *sbi = AFFS_SB(sb);
 
-	if (sb->s_blocksize)
-		seq_printf(m, ",bs=%lu", sb->s_blocksize);
-	if (affs_test_opt(sbi->s_flags, SF_SETMODE))
-		seq_printf(m, ",mode=%o", sbi->s_mode);
-	if (affs_test_opt(sbi->s_flags, SF_MUFS))
-		seq_puts(m, ",mufs");
-	if (affs_test_opt(sbi->s_flags, SF_NO_TRUNCATE))
-		seq_puts(m, ",nofilenametruncate");
-	if (affs_test_opt(sbi->s_flags, SF_PREFIX))
-		seq_printf(m, ",prefix=%s", sbi->s_prefix);
-	if (affs_test_opt(sbi->s_flags, SF_IMMUTABLE))
-		seq_puts(m, ",protect");
-	if (sbi->s_reserved != 2)
-		seq_printf(m, ",reserved=%u", sbi->s_reserved);
-	if (sbi->s_root_block != (sbi->s_reserved + sbi->s_partition_size - 1) / 2)
-		seq_printf(m, ",root=%u", sbi->s_root_block);
-	if (affs_test_opt(sbi->s_flags, SF_SETGID))
-		seq_printf(m, ",setgid=%u",
+	अगर (sb->s_blocksize)
+		seq_म_लिखो(m, ",bs=%lu", sb->s_blocksize);
+	अगर (affs_test_opt(sbi->s_flags, SF_SETMODE))
+		seq_म_लिखो(m, ",mode=%o", sbi->s_mode);
+	अगर (affs_test_opt(sbi->s_flags, SF_MUFS))
+		seq_माला_दो(m, ",mufs");
+	अगर (affs_test_opt(sbi->s_flags, SF_NO_TRUNCATE))
+		seq_माला_दो(m, ",nofilenametruncate");
+	अगर (affs_test_opt(sbi->s_flags, SF_PREFIX))
+		seq_म_लिखो(m, ",prefix=%s", sbi->s_prefix);
+	अगर (affs_test_opt(sbi->s_flags, SF_IMMUTABLE))
+		seq_माला_दो(m, ",protect");
+	अगर (sbi->s_reserved != 2)
+		seq_म_लिखो(m, ",reserved=%u", sbi->s_reserved);
+	अगर (sbi->s_root_block != (sbi->s_reserved + sbi->s_partition_size - 1) / 2)
+		seq_म_लिखो(m, ",root=%u", sbi->s_root_block);
+	अगर (affs_test_opt(sbi->s_flags, SF_SETGID))
+		seq_म_लिखो(m, ",setgid=%u",
 			   from_kgid_munged(&init_user_ns, sbi->s_gid));
-	if (affs_test_opt(sbi->s_flags, SF_SETUID))
-		seq_printf(m, ",setuid=%u",
+	अगर (affs_test_opt(sbi->s_flags, SF_SETUID))
+		seq_म_लिखो(m, ",setuid=%u",
 			   from_kuid_munged(&init_user_ns, sbi->s_uid));
-	if (affs_test_opt(sbi->s_flags, SF_VERBOSE))
-		seq_puts(m, ",verbose");
-	if (sbi->s_volume[0])
-		seq_printf(m, ",volume=%s", sbi->s_volume);
-	return 0;
-}
+	अगर (affs_test_opt(sbi->s_flags, SF_VERBOSE))
+		seq_माला_दो(m, ",verbose");
+	अगर (sbi->s_volume[0])
+		seq_म_लिखो(m, ",volume=%s", sbi->s_volume);
+	वापस 0;
+पूर्ण
 
 /* This function definitely needs to be split up. Some fine day I'll
- * hopefully have the guts to do so. Until then: sorry for the mess.
+ * hopefully have the guts to करो so. Until then: sorry क्रम the mess.
  */
 
-static int affs_fill_super(struct super_block *sb, void *data, int silent)
-{
-	struct affs_sb_info	*sbi;
-	struct buffer_head	*root_bh = NULL;
-	struct buffer_head	*boot_bh;
-	struct inode		*root_inode = NULL;
+अटल पूर्णांक affs_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
+अणु
+	काष्ठा affs_sb_info	*sbi;
+	काष्ठा buffer_head	*root_bh = शून्य;
+	काष्ठा buffer_head	*boot_bh;
+	काष्ठा inode		*root_inode = शून्य;
 	s32			 root_block;
-	int			 size, blocksize;
+	पूर्णांक			 size, blocksize;
 	u32			 chksum;
-	int			 num_bm;
-	int			 i, j;
+	पूर्णांक			 num_bm;
+	पूर्णांक			 i, j;
 	kuid_t			 uid;
 	kgid_t			 gid;
-	int			 reserved;
-	unsigned long		 mount_flags;
-	int			 tmp_flags;	/* fix remount prototype... */
+	पूर्णांक			 reserved;
+	अचिन्हित दीर्घ		 mount_flags;
+	पूर्णांक			 पंचांगp_flags;	/* fix remount prototype... */
 	u8			 sig[4];
-	int			 ret;
+	पूर्णांक			 ret;
 
-	pr_debug("read_super(%s)\n", data ? (const char *)data : "no options");
+	pr_debug("read_super(%s)\n", data ? (स्थिर अक्षर *)data : "no options");
 
 	sb->s_magic             = AFFS_SUPER_MAGIC;
 	sb->s_op                = &affs_sops;
-	sb->s_flags |= SB_NODIRATIME;
+	sb->s_flags |= SB_NOसूचीATIME;
 
-	sb->s_time_gran = NSEC_PER_SEC;
-	sb->s_time_min = sys_tz.tz_minuteswest * 60 + AFFS_EPOCH_DELTA;
-	sb->s_time_max = 86400LL * U32_MAX + 86400 + sb->s_time_min;
+	sb->s_समय_gran = NSEC_PER_SEC;
+	sb->s_समय_min = sys_tz.tz_minuteswest * 60 + AFFS_EPOCH_DELTA;
+	sb->s_समय_max = 86400LL * U32_MAX + 86400 + sb->s_समय_min;
 
-	sbi = kzalloc(sizeof(struct affs_sb_info), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(काष्ठा affs_sb_info), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 
 	sb->s_fs_info = sbi;
 	sbi->sb = sb;
@@ -370,13 +371,13 @@ static int affs_fill_super(struct super_block *sb, void *data, int silent)
 	spin_lock_init(&sbi->work_lock);
 	INIT_DELAYED_WORK(&sbi->sb_work, flush_superblock);
 
-	if (!parse_options(data,&uid,&gid,&i,&reserved,&root_block,
+	अगर (!parse_options(data,&uid,&gid,&i,&reserved,&root_block,
 				&blocksize,&sbi->s_prefix,
-				sbi->s_volume, &mount_flags)) {
+				sbi->s_volume, &mount_flags)) अणु
 		pr_err("Error parsing options\n");
-		return -EINVAL;
-	}
-	/* N.B. after this point s_prefix must be released */
+		वापस -EINVAL;
+	पूर्ण
+	/* N.B. after this poपूर्णांक s_prefix must be released */
 
 	sbi->s_flags   = mount_flags;
 	sbi->s_mode    = i;
@@ -389,7 +390,7 @@ static int affs_fill_super(struct super_block *sb, void *data, int silent)
 	 * blocks, we will have to change it.
 	 */
 
-	size = i_size_read(sb->s_bdev->bd_inode) >> 9;
+	size = i_size_पढ़ो(sb->s_bdev->bd_inode) >> 9;
 	pr_debug("initial blocksize=%d, #blocks=%d\n", 512, size);
 
 	affs_set_blocksize(sb, PAGE_SIZE);
@@ -397,185 +398,185 @@ static int affs_fill_super(struct super_block *sb, void *data, int silent)
 
 	i = bdev_logical_block_size(sb->s_bdev);
 	j = PAGE_SIZE;
-	if (blocksize > 0) {
+	अगर (blocksize > 0) अणु
 		i = j = blocksize;
 		size = size / (blocksize / 512);
-	}
+	पूर्ण
 
-	for (blocksize = i; blocksize <= j; blocksize <<= 1, size >>= 1) {
+	क्रम (blocksize = i; blocksize <= j; blocksize <<= 1, size >>= 1) अणु
 		sbi->s_root_block = root_block;
-		if (root_block < 0)
+		अगर (root_block < 0)
 			sbi->s_root_block = (reserved + size - 1) / 2;
 		pr_debug("setting blocksize to %d\n", blocksize);
 		affs_set_blocksize(sb, blocksize);
 		sbi->s_partition_size = size;
 
 		/* The root block location that was calculated above is not
-		 * correct if the partition size is an odd number of 512-
-		 * byte blocks, which will be rounded down to a number of
-		 * 1024-byte blocks, and if there were an even number of
+		 * correct अगर the partition size is an odd number of 512-
+		 * byte blocks, which will be rounded करोwn to a number of
+		 * 1024-byte blocks, and अगर there were an even number of
 		 * reserved blocks. Ideally, all partition checkers should
 		 * report the real number of blocks of the real blocksize,
-		 * but since this just cannot be done, we have to try to
-		 * find the root block anyways. In the above case, it is one
+		 * but since this just cannot be करोne, we have to try to
+		 * find the root block anyways. In the above हाल, it is one
 		 * block behind the calculated one. So we check this one, too.
 		 */
-		for (num_bm = 0; num_bm < 2; num_bm++) {
+		क्रम (num_bm = 0; num_bm < 2; num_bm++) अणु
 			pr_debug("Dev %s, trying root=%u, bs=%d, "
 				"size=%d, reserved=%d\n",
 				sb->s_id,
 				sbi->s_root_block + num_bm,
 				blocksize, size, reserved);
-			root_bh = affs_bread(sb, sbi->s_root_block + num_bm);
-			if (!root_bh)
-				continue;
-			if (!affs_checksum_block(sb, root_bh) &&
+			root_bh = affs_bपढ़ो(sb, sbi->s_root_block + num_bm);
+			अगर (!root_bh)
+				जारी;
+			अगर (!affs_checksum_block(sb, root_bh) &&
 			    be32_to_cpu(AFFS_ROOT_HEAD(root_bh)->ptype) == T_SHORT &&
-			    be32_to_cpu(AFFS_ROOT_TAIL(sb, root_bh)->stype) == ST_ROOT) {
+			    be32_to_cpu(AFFS_ROOT_TAIL(sb, root_bh)->stype) == ST_ROOT) अणु
 				sbi->s_hashsize    = blocksize / 4 - 56;
 				sbi->s_root_block += num_bm;
-				goto got_root;
-			}
-			affs_brelse(root_bh);
-			root_bh = NULL;
-		}
-	}
-	if (!silent)
+				जाओ got_root;
+			पूर्ण
+			affs_brअन्यथा(root_bh);
+			root_bh = शून्य;
+		पूर्ण
+	पूर्ण
+	अगर (!silent)
 		pr_err("No valid root block on device %s\n", sb->s_id);
-	return -EINVAL;
+	वापस -EINVAL;
 
-	/* N.B. after this point bh must be released */
+	/* N.B. after this poपूर्णांक bh must be released */
 got_root:
 	/* Keep super block in cache */
 	sbi->s_root_bh = root_bh;
 	root_block = sbi->s_root_block;
 
 	/* Find out which kind of FS we have */
-	boot_bh = sb_bread(sb, 0);
-	if (!boot_bh) {
+	boot_bh = sb_bपढ़ो(sb, 0);
+	अगर (!boot_bh) अणु
 		pr_err("Cannot read boot block\n");
-		return -EINVAL;
-	}
-	memcpy(sig, boot_bh->b_data, 4);
-	brelse(boot_bh);
+		वापस -EINVAL;
+	पूर्ण
+	स_नकल(sig, boot_bh->b_data, 4);
+	brअन्यथा(boot_bh);
 	chksum = be32_to_cpu(*(__be32 *)sig);
 
-	/* Dircache filesystems are compatible with non-dircache ones
-	 * when reading. As long as they aren't supported, writing is
+	/* Dircache fileप्रणालीs are compatible with non-dircache ones
+	 * when पढ़ोing. As दीर्घ as they aren't supported, writing is
 	 * not recommended.
 	 */
-	if ((chksum == FS_DCFFS || chksum == MUFS_DCFFS || chksum == FS_DCOFS
-	     || chksum == MUFS_DCOFS) && !sb_rdonly(sb)) {
+	अगर ((chksum == FS_DCFFS || chksum == MUFS_DCFFS || chksum == FS_DCOFS
+	     || chksum == MUFS_DCOFS) && !sb_rकरोnly(sb)) अणु
 		pr_notice("Dircache FS - mounting %s read only\n", sb->s_id);
 		sb->s_flags |= SB_RDONLY;
-	}
-	switch (chksum) {
-	case MUFS_FS:
-	case MUFS_INTLFFS:
-	case MUFS_DCFFS:
+	पूर्ण
+	चयन (chksum) अणु
+	हाल MUFS_FS:
+	हाल MUFS_INTLFFS:
+	हाल MUFS_DCFFS:
 		affs_set_opt(sbi->s_flags, SF_MUFS);
 		fallthrough;
-	case FS_INTLFFS:
-	case FS_DCFFS:
+	हाल FS_INTLFFS:
+	हाल FS_DCFFS:
 		affs_set_opt(sbi->s_flags, SF_INTL);
-		break;
-	case MUFS_FFS:
+		अवरोध;
+	हाल MUFS_FFS:
 		affs_set_opt(sbi->s_flags, SF_MUFS);
-		break;
-	case FS_FFS:
-		break;
-	case MUFS_OFS:
+		अवरोध;
+	हाल FS_FFS:
+		अवरोध;
+	हाल MUFS_OFS:
 		affs_set_opt(sbi->s_flags, SF_MUFS);
 		fallthrough;
-	case FS_OFS:
+	हाल FS_OFS:
 		affs_set_opt(sbi->s_flags, SF_OFS);
 		sb->s_flags |= SB_NOEXEC;
-		break;
-	case MUFS_DCOFS:
-	case MUFS_INTLOFS:
+		अवरोध;
+	हाल MUFS_DCOFS:
+	हाल MUFS_INTLOFS:
 		affs_set_opt(sbi->s_flags, SF_MUFS);
 		fallthrough;
-	case FS_DCOFS:
-	case FS_INTLOFS:
+	हाल FS_DCOFS:
+	हाल FS_INTLOFS:
 		affs_set_opt(sbi->s_flags, SF_INTL);
 		affs_set_opt(sbi->s_flags, SF_OFS);
 		sb->s_flags |= SB_NOEXEC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Unknown filesystem on device %s: %08X\n",
 		       sb->s_id, chksum);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (affs_test_opt(mount_flags, SF_VERBOSE)) {
+	अगर (affs_test_opt(mount_flags, SF_VERBOSE)) अणु
 		u8 len = AFFS_ROOT_TAIL(sb, root_bh)->disk_name[0];
 		pr_notice("Mounting volume \"%.*s\": Type=%.3s\\%c, Blocksize=%d\n",
 			len > 31 ? 31 : len,
 			AFFS_ROOT_TAIL(sb, root_bh)->disk_name + 1,
 			sig, sig[3] + '0', blocksize);
-	}
+	पूर्ण
 
 	sb->s_flags |= SB_NODEV | SB_NOSUID;
 
 	sbi->s_data_blksize = sb->s_blocksize;
-	if (affs_test_opt(sbi->s_flags, SF_OFS))
+	अगर (affs_test_opt(sbi->s_flags, SF_OFS))
 		sbi->s_data_blksize -= 24;
 
-	tmp_flags = sb->s_flags;
-	ret = affs_init_bitmap(sb, &tmp_flags);
-	if (ret)
-		return ret;
-	sb->s_flags = tmp_flags;
+	पंचांगp_flags = sb->s_flags;
+	ret = affs_init_biपंचांगap(sb, &पंचांगp_flags);
+	अगर (ret)
+		वापस ret;
+	sb->s_flags = पंचांगp_flags;
 
-	/* set up enough so that it can read an inode */
+	/* set up enough so that it can पढ़ो an inode */
 
 	root_inode = affs_iget(sb, root_block);
-	if (IS_ERR(root_inode))
-		return PTR_ERR(root_inode);
+	अगर (IS_ERR(root_inode))
+		वापस PTR_ERR(root_inode);
 
-	if (affs_test_opt(AFFS_SB(sb)->s_flags, SF_INTL))
-		sb->s_d_op = &affs_intl_dentry_operations;
-	else
+	अगर (affs_test_opt(AFFS_SB(sb)->s_flags, SF_INTL))
+		sb->s_d_op = &affs_पूर्णांकl_dentry_operations;
+	अन्यथा
 		sb->s_d_op = &affs_dentry_operations;
 
 	sb->s_root = d_make_root(root_inode);
-	if (!sb->s_root) {
+	अगर (!sb->s_root) अणु
 		pr_err("AFFS: Get root inode failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	sb->s_export_op = &affs_export_ops;
 	pr_debug("s_flags=%lX\n", sb->s_flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-affs_remount(struct super_block *sb, int *flags, char *data)
-{
-	struct affs_sb_info	*sbi = AFFS_SB(sb);
-	int			 blocksize;
+अटल पूर्णांक
+affs_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	काष्ठा affs_sb_info	*sbi = AFFS_SB(sb);
+	पूर्णांक			 blocksize;
 	kuid_t			 uid;
 	kgid_t			 gid;
-	int			 mode;
-	int			 reserved;
-	int			 root_block;
-	unsigned long		 mount_flags;
-	int			 res = 0;
-	char			 volume[32];
-	char			*prefix = NULL;
+	पूर्णांक			 mode;
+	पूर्णांक			 reserved;
+	पूर्णांक			 root_block;
+	अचिन्हित दीर्घ		 mount_flags;
+	पूर्णांक			 res = 0;
+	अक्षर			 volume[32];
+	अक्षर			*prefix = शून्य;
 
 	pr_debug("%s(flags=0x%x,opts=\"%s\")\n", __func__, *flags, data);
 
-	sync_filesystem(sb);
-	*flags |= SB_NODIRATIME;
+	sync_fileप्रणाली(sb);
+	*flags |= SB_NOसूचीATIME;
 
-	memcpy(volume, sbi->s_volume, 32);
-	if (!parse_options(data, &uid, &gid, &mode, &reserved, &root_block,
+	स_नकल(volume, sbi->s_volume, 32);
+	अगर (!parse_options(data, &uid, &gid, &mode, &reserved, &root_block,
 			   &blocksize, &prefix, volume,
-			   &mount_flags)) {
-		kfree(prefix);
-		return -EINVAL;
-	}
+			   &mount_flags)) अणु
+		kमुक्त(prefix);
+		वापस -EINVAL;
+	पूर्ण
 
 	flush_delayed_work(&sbi->sb_work);
 
@@ -583,99 +584,99 @@ affs_remount(struct super_block *sb, int *flags, char *data)
 	sbi->s_mode  = mode;
 	sbi->s_uid   = uid;
 	sbi->s_gid   = gid;
-	/* protect against readers */
+	/* protect against पढ़ोers */
 	spin_lock(&sbi->symlink_lock);
-	if (prefix) {
-		kfree(sbi->s_prefix);
+	अगर (prefix) अणु
+		kमुक्त(sbi->s_prefix);
 		sbi->s_prefix = prefix;
-	}
-	memcpy(sbi->s_volume, volume, 32);
+	पूर्ण
+	स_नकल(sbi->s_volume, volume, 32);
 	spin_unlock(&sbi->symlink_lock);
 
-	if ((bool)(*flags & SB_RDONLY) == sb_rdonly(sb))
-		return 0;
+	अगर ((bool)(*flags & SB_RDONLY) == sb_rकरोnly(sb))
+		वापस 0;
 
-	if (*flags & SB_RDONLY)
-		affs_free_bitmap(sb);
-	else
-		res = affs_init_bitmap(sb, flags);
+	अगर (*flags & SB_RDONLY)
+		affs_मुक्त_biपंचांगap(sb);
+	अन्यथा
+		res = affs_init_biपंचांगap(sb, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-affs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct super_block *sb = dentry->d_sb;
-	int		 free;
+अटल पूर्णांक
+affs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा super_block *sb = dentry->d_sb;
+	पूर्णांक		 मुक्त;
 	u64		 id = huge_encode_dev(sb->s_bdev->bd_dev);
 
 	pr_debug("%s() partsize=%d, reserved=%d\n",
 		 __func__, AFFS_SB(sb)->s_partition_size,
 		 AFFS_SB(sb)->s_reserved);
 
-	free          = affs_count_free_blocks(sb);
+	मुक्त          = affs_count_मुक्त_blocks(sb);
 	buf->f_type    = AFFS_SUPER_MAGIC;
 	buf->f_bsize   = sb->s_blocksize;
 	buf->f_blocks  = AFFS_SB(sb)->s_partition_size - AFFS_SB(sb)->s_reserved;
-	buf->f_bfree   = free;
-	buf->f_bavail  = free;
+	buf->f_bमुक्त   = मुक्त;
+	buf->f_bavail  = मुक्त;
 	buf->f_fsid    = u64_to_fsid(id);
 	buf->f_namelen = AFFSNAMEMAX;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dentry *affs_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data)
-{
-	return mount_bdev(fs_type, flags, dev_name, data, affs_fill_super);
-}
+अटल काष्ठा dentry *affs_mount(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
+अणु
+	वापस mount_bdev(fs_type, flags, dev_name, data, affs_fill_super);
+पूर्ण
 
-static void affs_kill_sb(struct super_block *sb)
-{
-	struct affs_sb_info *sbi = AFFS_SB(sb);
-	kill_block_super(sb);
-	if (sbi) {
-		affs_free_bitmap(sb);
-		affs_brelse(sbi->s_root_bh);
-		kfree(sbi->s_prefix);
+अटल व्योम affs_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा affs_sb_info *sbi = AFFS_SB(sb);
+	समाप्त_block_super(sb);
+	अगर (sbi) अणु
+		affs_मुक्त_biपंचांगap(sb);
+		affs_brअन्यथा(sbi->s_root_bh);
+		kमुक्त(sbi->s_prefix);
 		mutex_destroy(&sbi->s_bmlock);
-		kfree(sbi);
-	}
-}
+		kमुक्त(sbi);
+	पूर्ण
+पूर्ण
 
-static struct file_system_type affs_fs_type = {
+अटल काष्ठा file_प्रणाली_type affs_fs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "affs",
 	.mount		= affs_mount,
-	.kill_sb	= affs_kill_sb,
+	.समाप्त_sb	= affs_समाप्त_sb,
 	.fs_flags	= FS_REQUIRES_DEV,
-};
+पूर्ण;
 MODULE_ALIAS_FS("affs");
 
-static int __init init_affs_fs(void)
-{
-	int err = init_inodecache();
-	if (err)
-		goto out1;
-	err = register_filesystem(&affs_fs_type);
-	if (err)
-		goto out;
-	return 0;
+अटल पूर्णांक __init init_affs_fs(व्योम)
+अणु
+	पूर्णांक err = init_inodecache();
+	अगर (err)
+		जाओ out1;
+	err = रेजिस्टर_fileप्रणाली(&affs_fs_type);
+	अगर (err)
+		जाओ out;
+	वापस 0;
 out:
 	destroy_inodecache();
 out1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit exit_affs_fs(void)
-{
-	unregister_filesystem(&affs_fs_type);
+अटल व्योम __निकास निकास_affs_fs(व्योम)
+अणु
+	unरेजिस्टर_fileप्रणाली(&affs_fs_type);
 	destroy_inodecache();
-}
+पूर्ण
 
 MODULE_DESCRIPTION("Amiga filesystem support for Linux");
 MODULE_LICENSE("GPL");
 
 module_init(init_affs_fs)
-module_exit(exit_affs_fs)
+module_निकास(निकास_affs_fs)

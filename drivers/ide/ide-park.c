@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/kernel.h>
-#include <linux/gfp.h>
-#include <linux/ide.h>
-#include <linux/jiffies.h>
-#include <linux/blkdev.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/kernel.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/blkdev.h>
 
 DECLARE_WAIT_QUEUE_HEAD(ide_park_wq);
 
-static void issue_park_cmd(ide_drive_t *drive, unsigned long timeout)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	struct request_queue *q = drive->queue;
-	struct request *rq;
-	int rc;
+अटल व्योम issue_park_cmd(ide_drive_t *drive, अचिन्हित दीर्घ समयout)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा request_queue *q = drive->queue;
+	काष्ठा request *rq;
+	पूर्णांक rc;
 
-	timeout += jiffies;
-	spin_lock_irq(&hwif->lock);
-	if (drive->dev_flags & IDE_DFLAG_PARKED) {
-		int reset_timer = time_before(timeout, drive->sleep);
-		int start_queue = 0;
+	समयout += jअगरfies;
+	spin_lock_irq(&hwअगर->lock);
+	अगर (drive->dev_flags & IDE_DFLAG_PARKED) अणु
+		पूर्णांक reset_समयr = समय_beक्रमe(समयout, drive->sleep);
+		पूर्णांक start_queue = 0;
 
-		drive->sleep = timeout;
+		drive->sleep = समयout;
 		wake_up_all(&ide_park_wq);
-		if (reset_timer && del_timer(&hwif->timer))
+		अगर (reset_समयr && del_समयr(&hwअगर->समयr))
 			start_queue = 1;
-		spin_unlock_irq(&hwif->lock);
+		spin_unlock_irq(&hwअगर->lock);
 
-		if (start_queue)
+		अगर (start_queue)
 			blk_mq_run_hw_queues(q, true);
-		return;
-	}
-	spin_unlock_irq(&hwif->lock);
+		वापस;
+	पूर्ण
+	spin_unlock_irq(&hwअगर->lock);
 
 	rq = blk_get_request(q, REQ_OP_DRV_IN, 0);
 	scsi_req(rq)->cmd[0] = REQ_PARK_HEADS;
 	scsi_req(rq)->cmd_len = 1;
 	ide_req(rq)->type = ATA_PRIV_MISC;
-	ide_req(rq)->special = &timeout;
-	blk_execute_rq(NULL, rq, 1);
+	ide_req(rq)->special = &समयout;
+	blk_execute_rq(शून्य, rq, 1);
 	rc = scsi_req(rq)->result ? -EIO : 0;
 	blk_put_request(rq);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	/*
 	 * Make sure that *some* command is sent to the drive after the
-	 * timeout has expired, so power management will be reenabled.
+	 * समयout has expired, so घातer management will be reenabled.
 	 */
 	rq = blk_get_request(q, REQ_OP_DRV_IN, BLK_MQ_REQ_NOWAIT);
-	if (IS_ERR(rq))
-		goto out;
+	अगर (IS_ERR(rq))
+		जाओ out;
 
 	scsi_req(rq)->cmd[0] = REQ_UNPARK_HEADS;
 	scsi_req(rq)->cmd_len = 1;
 	ide_req(rq)->type = ATA_PRIV_MISC;
-	spin_lock_irq(&hwif->lock);
+	spin_lock_irq(&hwअगर->lock);
 	ide_insert_request_head(drive, rq);
-	spin_unlock_irq(&hwif->lock);
+	spin_unlock_irq(&hwअगर->lock);
 
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-ide_startstop_t ide_do_park_unpark(ide_drive_t *drive, struct request *rq)
-{
-	struct ide_cmd cmd;
-	struct ide_taskfile *tf = &cmd.tf;
+ide_startstop_t ide_करो_park_unpark(ide_drive_t *drive, काष्ठा request *rq)
+अणु
+	काष्ठा ide_cmd cmd;
+	काष्ठा ide_taskfile *tf = &cmd.tf;
 
-	memset(&cmd, 0, sizeof(cmd));
-	if (scsi_req(rq)->cmd[0] == REQ_PARK_HEADS) {
-		drive->sleep = *(unsigned long *)ide_req(rq)->special;
+	स_रखो(&cmd, 0, माप(cmd));
+	अगर (scsi_req(rq)->cmd[0] == REQ_PARK_HEADS) अणु
+		drive->sleep = *(अचिन्हित दीर्घ *)ide_req(rq)->special;
 		drive->dev_flags |= IDE_DFLAG_SLEEPING;
 		tf->command = ATA_CMD_IDLEIMMEDIATE;
 		tf->feature = 0x44;
@@ -78,7 +79,7 @@ ide_startstop_t ide_do_park_unpark(ide_drive_t *drive, struct request *rq)
 		tf->lbah = 0x55;
 		cmd.valid.out.tf = IDE_VALID_OUT_TF | IDE_VALID_DEVICE;
 		cmd.valid.in.tf  = IDE_VALID_IN_TF  | IDE_VALID_DEVICE;
-	} else		/* cmd == REQ_UNPARK_HEADS */
+	पूर्ण अन्यथा		/* cmd == REQ_UNPARK_HEADS */
 		tf->command = ATA_CMD_CHK_POWER;
 
 	cmd.tf_flags |= IDE_TFLAG_CUSTOM_HANDLER;
@@ -86,70 +87,70 @@ ide_startstop_t ide_do_park_unpark(ide_drive_t *drive, struct request *rq)
 
 	cmd.rq = rq;
 
-	return do_rw_taskfile(drive, &cmd);
-}
+	वापस करो_rw_taskfile(drive, &cmd);
+पूर्ण
 
-ssize_t ide_park_show(struct device *dev, struct device_attribute *attr,
-		      char *buf)
-{
+sमाप_प्रकार ide_park_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		      अक्षर *buf)
+अणु
 	ide_drive_t *drive = to_ide_device(dev);
-	ide_hwif_t *hwif = drive->hwif;
-	unsigned long now;
-	unsigned int msecs;
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	अचिन्हित दीर्घ now;
+	अचिन्हित पूर्णांक msecs;
 
-	if (drive->dev_flags & IDE_DFLAG_NO_UNLOAD)
-		return -EOPNOTSUPP;
+	अगर (drive->dev_flags & IDE_DFLAG_NO_UNLOAD)
+		वापस -EOPNOTSUPP;
 
-	spin_lock_irq(&hwif->lock);
-	now = jiffies;
-	if (drive->dev_flags & IDE_DFLAG_PARKED &&
-	    time_after(drive->sleep, now))
-		msecs = jiffies_to_msecs(drive->sleep - now);
-	else
+	spin_lock_irq(&hwअगर->lock);
+	now = jअगरfies;
+	अगर (drive->dev_flags & IDE_DFLAG_PARKED &&
+	    समय_after(drive->sleep, now))
+		msecs = jअगरfies_to_msecs(drive->sleep - now);
+	अन्यथा
 		msecs = 0;
-	spin_unlock_irq(&hwif->lock);
+	spin_unlock_irq(&hwअगर->lock);
 
-	return snprintf(buf, 20, "%u\n", msecs);
-}
+	वापस snम_लिखो(buf, 20, "%u\n", msecs);
+पूर्ण
 
-ssize_t ide_park_store(struct device *dev, struct device_attribute *attr,
-		       const char *buf, size_t len)
-{
-#define MAX_PARK_TIMEOUT 30000
+sमाप_प्रकार ide_park_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		       स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+#घोषणा MAX_PARK_TIMEOUT 30000
 	ide_drive_t *drive = to_ide_device(dev);
-	long int input;
-	int rc;
+	दीर्घ पूर्णांक input;
+	पूर्णांक rc;
 
-	rc = kstrtol(buf, 10, &input);
-	if (rc)
-		return rc;
-	if (input < -2)
-		return -EINVAL;
-	if (input > MAX_PARK_TIMEOUT) {
+	rc = kम_से_दीर्घ(buf, 10, &input);
+	अगर (rc)
+		वापस rc;
+	अगर (input < -2)
+		वापस -EINVAL;
+	अगर (input > MAX_PARK_TIMEOUT) अणु
 		input = MAX_PARK_TIMEOUT;
 		rc = -EOVERFLOW;
-	}
+	पूर्ण
 
 	mutex_lock(&ide_setting_mtx);
-	if (input >= 0) {
-		if (drive->dev_flags & IDE_DFLAG_NO_UNLOAD)
+	अगर (input >= 0) अणु
+		अगर (drive->dev_flags & IDE_DFLAG_NO_UNLOAD)
 			rc = -EOPNOTSUPP;
-		else if (input || drive->dev_flags & IDE_DFLAG_PARKED)
-			issue_park_cmd(drive, msecs_to_jiffies(input));
-	} else {
-		if (drive->media == ide_disk)
-			switch (input) {
-			case -1:
+		अन्यथा अगर (input || drive->dev_flags & IDE_DFLAG_PARKED)
+			issue_park_cmd(drive, msecs_to_jअगरfies(input));
+	पूर्ण अन्यथा अणु
+		अगर (drive->media == ide_disk)
+			चयन (input) अणु
+			हाल -1:
 				drive->dev_flags &= ~IDE_DFLAG_NO_UNLOAD;
-				break;
-			case -2:
+				अवरोध;
+			हाल -2:
 				drive->dev_flags |= IDE_DFLAG_NO_UNLOAD;
-				break;
-			}
-		else
+				अवरोध;
+			पूर्ण
+		अन्यथा
 			rc = -EOPNOTSUPP;
-	}
+	पूर्ण
 	mutex_unlock(&ide_setting_mtx);
 
-	return rc ? rc : len;
-}
+	वापस rc ? rc : len;
+पूर्ण

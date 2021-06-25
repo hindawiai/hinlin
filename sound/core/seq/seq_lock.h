@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SND_SEQ_LOCK_H
-#define __SND_SEQ_LOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SND_SEQ_LOCK_H
+#घोषणा __SND_SEQ_LOCK_H
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-typedef atomic_t snd_use_lock_t;
+प्रकार atomic_t snd_use_lock_t;
 
 /* initialize lock */
-#define snd_use_lock_init(lockp) atomic_set(lockp, 0)
+#घोषणा snd_use_lock_init(lockp) atomic_set(lockp, 0)
 
 /* increment lock */
-#define snd_use_lock_use(lockp) atomic_inc(lockp)
+#घोषणा snd_use_lock_use(lockp) atomic_inc(lockp)
 
 /* release lock */
-#define snd_use_lock_free(lockp) atomic_dec(lockp)
+#घोषणा snd_use_lock_मुक्त(lockp) atomic_dec(lockp)
 
-/* wait until all locks are released */
-void snd_use_lock_sync_helper(snd_use_lock_t *lock, const char *file, int line);
-#define snd_use_lock_sync(lockp) snd_use_lock_sync_helper(lockp, __BASE_FILE__, __LINE__)
+/* रुको until all locks are released */
+व्योम snd_use_lock_sync_helper(snd_use_lock_t *lock, स्थिर अक्षर *file, पूर्णांक line);
+#घोषणा snd_use_lock_sync(lockp) snd_use_lock_sync_helper(lockp, __BASE_खाता__, __LINE__)
 
-#endif /* __SND_SEQ_LOCK_H */
+#पूर्ण_अगर /* __SND_SEQ_LOCK_H */

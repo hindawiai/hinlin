@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * BPF JIT compiler for ARM64
+ * BPF JIT compiler क्रम ARM64
  *
  * Copyright (C) 2014-2016 Zi Shen Lim <zlim.lnx@gmail.com>
  */
 
-#define pr_fmt(fmt) "bpf_jit: " fmt
+#घोषणा pr_fmt(fmt) "bpf_jit: " fmt
 
-#include <linux/bitfield.h>
-#include <linux/bpf.h>
-#include <linux/filter.h>
-#include <linux/printk.h>
-#include <linux/slab.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bpf.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/slab.h>
 
-#include <asm/byteorder.h>
-#include <asm/cacheflush.h>
-#include <asm/debug-monitors.h>
-#include <asm/set_memory.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/debug-monitors.h>
+#समावेश <यंत्र/set_memory.h>
 
-#include "bpf_jit.h"
+#समावेश "bpf_jit.h"
 
-#define TMP_REG_1 (MAX_BPF_JIT_REG + 0)
-#define TMP_REG_2 (MAX_BPF_JIT_REG + 1)
-#define TCALL_CNT (MAX_BPF_JIT_REG + 2)
-#define TMP_REG_3 (MAX_BPF_JIT_REG + 3)
+#घोषणा TMP_REG_1 (MAX_BPF_JIT_REG + 0)
+#घोषणा TMP_REG_2 (MAX_BPF_JIT_REG + 1)
+#घोषणा TCALL_CNT (MAX_BPF_JIT_REG + 2)
+#घोषणा TMP_REG_3 (MAX_BPF_JIT_REG + 3)
 
-/* Map BPF registers to A64 registers */
-static const int bpf2a64[] = {
-	/* return value from in-kernel function, and exit value from eBPF */
+/* Map BPF रेजिस्टरs to A64 रेजिस्टरs */
+अटल स्थिर पूर्णांक bpf2a64[] = अणु
+	/* वापस value from in-kernel function, and निकास value from eBPF */
 	[BPF_REG_0] = A64_R(7),
 	/* arguments from eBPF program to in-kernel function */
 	[BPF_REG_1] = A64_R(0),
@@ -35,170 +36,170 @@ static const int bpf2a64[] = {
 	[BPF_REG_3] = A64_R(2),
 	[BPF_REG_4] = A64_R(3),
 	[BPF_REG_5] = A64_R(4),
-	/* callee saved registers that in-kernel function will preserve */
+	/* callee saved रेजिस्टरs that in-kernel function will preserve */
 	[BPF_REG_6] = A64_R(19),
 	[BPF_REG_7] = A64_R(20),
 	[BPF_REG_8] = A64_R(21),
 	[BPF_REG_9] = A64_R(22),
-	/* read-only frame pointer to access stack */
+	/* पढ़ो-only frame poपूर्णांकer to access stack */
 	[BPF_REG_FP] = A64_R(25),
-	/* temporary registers for internal BPF JIT */
+	/* temporary रेजिस्टरs क्रम पूर्णांकernal BPF JIT */
 	[TMP_REG_1] = A64_R(10),
 	[TMP_REG_2] = A64_R(11),
 	[TMP_REG_3] = A64_R(12),
 	/* tail_call_cnt */
 	[TCALL_CNT] = A64_R(26),
-	/* temporary register for blinding constants */
+	/* temporary रेजिस्टर क्रम blinding स्थिरants */
 	[BPF_REG_AX] = A64_R(9),
-};
+पूर्ण;
 
-struct jit_ctx {
-	const struct bpf_prog *prog;
-	int idx;
-	int epilogue_offset;
-	int *offset;
-	int exentry_idx;
+काष्ठा jit_ctx अणु
+	स्थिर काष्ठा bpf_prog *prog;
+	पूर्णांक idx;
+	पूर्णांक epilogue_offset;
+	पूर्णांक *offset;
+	पूर्णांक exentry_idx;
 	__le32 *image;
 	u32 stack_size;
-};
+पूर्ण;
 
-static inline void emit(const u32 insn, struct jit_ctx *ctx)
-{
-	if (ctx->image != NULL)
+अटल अंतरभूत व्योम emit(स्थिर u32 insn, काष्ठा jit_ctx *ctx)
+अणु
+	अगर (ctx->image != शून्य)
 		ctx->image[ctx->idx] = cpu_to_le32(insn);
 
 	ctx->idx++;
-}
+पूर्ण
 
-static inline void emit_a64_mov_i(const int is64, const int reg,
-				  const s32 val, struct jit_ctx *ctx)
-{
+अटल अंतरभूत व्योम emit_a64_mov_i(स्थिर पूर्णांक is64, स्थिर पूर्णांक reg,
+				  स्थिर s32 val, काष्ठा jit_ctx *ctx)
+अणु
 	u16 hi = val >> 16;
 	u16 lo = val & 0xffff;
 
-	if (hi & 0x8000) {
-		if (hi == 0xffff) {
+	अगर (hi & 0x8000) अणु
+		अगर (hi == 0xffff) अणु
 			emit(A64_MOVN(is64, reg, (u16)~lo, 0), ctx);
-		} else {
+		पूर्ण अन्यथा अणु
 			emit(A64_MOVN(is64, reg, (u16)~hi, 16), ctx);
-			if (lo != 0xffff)
+			अगर (lo != 0xffff)
 				emit(A64_MOVK(is64, reg, lo, 0), ctx);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		emit(A64_MOVZ(is64, reg, lo, 0), ctx);
-		if (hi)
+		अगर (hi)
 			emit(A64_MOVK(is64, reg, hi, 16), ctx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int i64_i16_blocks(const u64 val, bool inverse)
-{
-	return (((val >>  0) & 0xffff) != (inverse ? 0xffff : 0x0000)) +
+अटल पूर्णांक i64_i16_blocks(स्थिर u64 val, bool inverse)
+अणु
+	वापस (((val >>  0) & 0xffff) != (inverse ? 0xffff : 0x0000)) +
 	       (((val >> 16) & 0xffff) != (inverse ? 0xffff : 0x0000)) +
 	       (((val >> 32) & 0xffff) != (inverse ? 0xffff : 0x0000)) +
 	       (((val >> 48) & 0xffff) != (inverse ? 0xffff : 0x0000));
-}
+पूर्ण
 
-static inline void emit_a64_mov_i64(const int reg, const u64 val,
-				    struct jit_ctx *ctx)
-{
-	u64 nrm_tmp = val, rev_tmp = ~val;
+अटल अंतरभूत व्योम emit_a64_mov_i64(स्थिर पूर्णांक reg, स्थिर u64 val,
+				    काष्ठा jit_ctx *ctx)
+अणु
+	u64 nrm_पंचांगp = val, rev_पंचांगp = ~val;
 	bool inverse;
-	int shift;
+	पूर्णांक shअगरt;
 
-	if (!(nrm_tmp >> 32))
-		return emit_a64_mov_i(0, reg, (u32)val, ctx);
+	अगर (!(nrm_पंचांगp >> 32))
+		वापस emit_a64_mov_i(0, reg, (u32)val, ctx);
 
-	inverse = i64_i16_blocks(nrm_tmp, true) < i64_i16_blocks(nrm_tmp, false);
-	shift = max(round_down((inverse ? (fls64(rev_tmp) - 1) :
-					  (fls64(nrm_tmp) - 1)), 16), 0);
-	if (inverse)
-		emit(A64_MOVN(1, reg, (rev_tmp >> shift) & 0xffff, shift), ctx);
-	else
-		emit(A64_MOVZ(1, reg, (nrm_tmp >> shift) & 0xffff, shift), ctx);
-	shift -= 16;
-	while (shift >= 0) {
-		if (((nrm_tmp >> shift) & 0xffff) != (inverse ? 0xffff : 0x0000))
-			emit(A64_MOVK(1, reg, (nrm_tmp >> shift) & 0xffff, shift), ctx);
-		shift -= 16;
-	}
-}
+	inverse = i64_i16_blocks(nrm_पंचांगp, true) < i64_i16_blocks(nrm_पंचांगp, false);
+	shअगरt = max(round_करोwn((inverse ? (fls64(rev_पंचांगp) - 1) :
+					  (fls64(nrm_पंचांगp) - 1)), 16), 0);
+	अगर (inverse)
+		emit(A64_MOVN(1, reg, (rev_पंचांगp >> shअगरt) & 0xffff, shअगरt), ctx);
+	अन्यथा
+		emit(A64_MOVZ(1, reg, (nrm_पंचांगp >> shअगरt) & 0xffff, shअगरt), ctx);
+	shअगरt -= 16;
+	जबतक (shअगरt >= 0) अणु
+		अगर (((nrm_पंचांगp >> shअगरt) & 0xffff) != (inverse ? 0xffff : 0x0000))
+			emit(A64_MOVK(1, reg, (nrm_पंचांगp >> shअगरt) & 0xffff, shअगरt), ctx);
+		shअगरt -= 16;
+	पूर्ण
+पूर्ण
 
 /*
- * Kernel addresses in the vmalloc space use at most 48 bits, and the
- * remaining bits are guaranteed to be 0x1. So we can compose the address
+ * Kernel addresses in the vदो_स्मृति space use at most 48 bits, and the
+ * reमुख्यing bits are guaranteed to be 0x1. So we can compose the address
  * with a fixed length movn/movk/movk sequence.
  */
-static inline void emit_addr_mov_i64(const int reg, const u64 val,
-				     struct jit_ctx *ctx)
-{
-	u64 tmp = val;
-	int shift = 0;
+अटल अंतरभूत व्योम emit_addr_mov_i64(स्थिर पूर्णांक reg, स्थिर u64 val,
+				     काष्ठा jit_ctx *ctx)
+अणु
+	u64 पंचांगp = val;
+	पूर्णांक shअगरt = 0;
 
-	emit(A64_MOVN(1, reg, ~tmp & 0xffff, shift), ctx);
-	while (shift < 32) {
-		tmp >>= 16;
-		shift += 16;
-		emit(A64_MOVK(1, reg, tmp & 0xffff, shift), ctx);
-	}
-}
+	emit(A64_MOVN(1, reg, ~पंचांगp & 0xffff, shअगरt), ctx);
+	जबतक (shअगरt < 32) अणु
+		पंचांगp >>= 16;
+		shअगरt += 16;
+		emit(A64_MOVK(1, reg, पंचांगp & 0xffff, shअगरt), ctx);
+	पूर्ण
+पूर्ण
 
-static inline int bpf2a64_offset(int bpf_insn, int off,
-				 const struct jit_ctx *ctx)
-{
-	/* BPF JMP offset is relative to the next instruction */
+अटल अंतरभूत पूर्णांक bpf2a64_offset(पूर्णांक bpf_insn, पूर्णांक off,
+				 स्थिर काष्ठा jit_ctx *ctx)
+अणु
+	/* BPF JMP offset is relative to the next inकाष्ठाion */
 	bpf_insn++;
 	/*
-	 * Whereas arm64 branch instructions encode the offset
+	 * Whereas arm64 branch inकाष्ठाions encode the offset
 	 * from the branch itself, so we must subtract 1 from the
-	 * instruction offset.
+	 * inकाष्ठाion offset.
 	 */
-	return ctx->offset[bpf_insn + off] - (ctx->offset[bpf_insn] - 1);
-}
+	वापस ctx->offset[bpf_insn + off] - (ctx->offset[bpf_insn] - 1);
+पूर्ण
 
-static void jit_fill_hole(void *area, unsigned int size)
-{
+अटल व्योम jit_fill_hole(व्योम *area, अचिन्हित पूर्णांक size)
+अणु
 	__le32 *ptr;
 	/* We are guaranteed to have aligned memory. */
-	for (ptr = area; size >= sizeof(u32); size -= sizeof(u32))
+	क्रम (ptr = area; size >= माप(u32); size -= माप(u32))
 		*ptr++ = cpu_to_le32(AARCH64_BREAK_FAULT);
-}
+पूर्ण
 
-static inline int epilogue_offset(const struct jit_ctx *ctx)
-{
-	int to = ctx->epilogue_offset;
-	int from = ctx->idx;
+अटल अंतरभूत पूर्णांक epilogue_offset(स्थिर काष्ठा jit_ctx *ctx)
+अणु
+	पूर्णांक to = ctx->epilogue_offset;
+	पूर्णांक from = ctx->idx;
 
-	return to - from;
-}
+	वापस to - from;
+पूर्ण
 
-static bool is_addsub_imm(u32 imm)
-{
-	/* Either imm12 or shifted imm12. */
-	return !(imm & ~0xfff) || !(imm & ~0xfff000);
-}
+अटल bool is_addsub_imm(u32 imm)
+अणु
+	/* Either imm12 or shअगरted imm12. */
+	वापस !(imm & ~0xfff) || !(imm & ~0xfff000);
+पूर्ण
 
 /* Stack must be multiples of 16B */
-#define STACK_ALIGN(sz) (((sz) + 15) & ~15)
+#घोषणा STACK_ALIGN(sz) (((sz) + 15) & ~15)
 
-/* Tail call offset to jump into */
-#if IS_ENABLED(CONFIG_ARM64_BTI_KERNEL)
-#define PROLOGUE_OFFSET 8
-#else
-#define PROLOGUE_OFFSET 7
-#endif
+/* Tail call offset to jump पूर्णांकo */
+#अगर IS_ENABLED(CONFIG_ARM64_BTI_KERNEL)
+#घोषणा PROLOGUE_OFFSET 8
+#अन्यथा
+#घोषणा PROLOGUE_OFFSET 7
+#पूर्ण_अगर
 
-static int build_prologue(struct jit_ctx *ctx, bool ebpf_from_cbpf)
-{
-	const struct bpf_prog *prog = ctx->prog;
-	const u8 r6 = bpf2a64[BPF_REG_6];
-	const u8 r7 = bpf2a64[BPF_REG_7];
-	const u8 r8 = bpf2a64[BPF_REG_8];
-	const u8 r9 = bpf2a64[BPF_REG_9];
-	const u8 fp = bpf2a64[BPF_REG_FP];
-	const u8 tcc = bpf2a64[TCALL_CNT];
-	const int idx0 = ctx->idx;
-	int cur_offset;
+अटल पूर्णांक build_prologue(काष्ठा jit_ctx *ctx, bool ebpf_from_cbpf)
+अणु
+	स्थिर काष्ठा bpf_prog *prog = ctx->prog;
+	स्थिर u8 r6 = bpf2a64[BPF_REG_6];
+	स्थिर u8 r7 = bpf2a64[BPF_REG_7];
+	स्थिर u8 r8 = bpf2a64[BPF_REG_8];
+	स्थिर u8 r9 = bpf2a64[BPF_REG_9];
+	स्थिर u8 fp = bpf2a64[BPF_REG_FP];
+	स्थिर u8 tcc = bpf2a64[TCALL_CNT];
+	स्थिर पूर्णांक idx0 = ctx->idx;
+	पूर्णांक cur_offset;
 
 	/*
 	 * BPF prog stack layout
@@ -207,8 +208,8 @@ static int build_prologue(struct jit_ctx *ctx, bool ebpf_from_cbpf)
 	 * original A64_SP =>   0:+-----+ BPF prologue
 	 *                        |FP/LR|
 	 * current A64_FP =>  -16:+-----+
-	 *                        | ... | callee saved registers
-	 * BPF fp register => -64:+-----+ <= (BPF_FP)
+	 *                        | ... | callee saved रेजिस्टरs
+	 * BPF fp रेजिस्टर => -64:+-----+ <= (BPF_FP)
 	 *                        |     |
 	 *                        | ... | BPF prog stack
 	 *                        |     |
@@ -224,920 +225,920 @@ static int build_prologue(struct jit_ctx *ctx, bool ebpf_from_cbpf)
 	 */
 
 	/* BTI landing pad */
-	if (IS_ENABLED(CONFIG_ARM64_BTI_KERNEL))
+	अगर (IS_ENABLED(CONFIG_ARM64_BTI_KERNEL))
 		emit(A64_BTI_C, ctx);
 
-	/* Save FP and LR registers to stay align with ARM64 AAPCS */
+	/* Save FP and LR रेजिस्टरs to stay align with ARM64 AAPCS */
 	emit(A64_PUSH(A64_FP, A64_LR, A64_SP), ctx);
 	emit(A64_MOV(1, A64_FP, A64_SP), ctx);
 
-	/* Save callee-saved registers */
+	/* Save callee-saved रेजिस्टरs */
 	emit(A64_PUSH(r6, r7, A64_SP), ctx);
 	emit(A64_PUSH(r8, r9, A64_SP), ctx);
 	emit(A64_PUSH(fp, tcc, A64_SP), ctx);
 
-	/* Set up BPF prog stack base register */
+	/* Set up BPF prog stack base रेजिस्टर */
 	emit(A64_MOV(1, fp, A64_SP), ctx);
 
-	if (!ebpf_from_cbpf) {
+	अगर (!ebpf_from_cbpf) अणु
 		/* Initialize tail_call_cnt */
 		emit(A64_MOVZ(1, tcc, 0, 0), ctx);
 
 		cur_offset = ctx->idx - idx0;
-		if (cur_offset != PROLOGUE_OFFSET) {
+		अगर (cur_offset != PROLOGUE_OFFSET) अणु
 			pr_err_once("PROLOGUE_OFFSET = %d, expected %d!\n",
 				    cur_offset, PROLOGUE_OFFSET);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		/* BTI landing pad for the tail call, done with a BR */
-		if (IS_ENABLED(CONFIG_ARM64_BTI_KERNEL))
+		/* BTI landing pad क्रम the tail call, करोne with a BR */
+		अगर (IS_ENABLED(CONFIG_ARM64_BTI_KERNEL))
 			emit(A64_BTI_J, ctx);
-	}
+	पूर्ण
 
 	ctx->stack_size = STACK_ALIGN(prog->aux->stack_depth);
 
 	/* Set up function call stack */
 	emit(A64_SUB_I(1, A64_SP, A64_SP, ctx->stack_size), ctx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int out_offset = -1; /* initialized on the first pass of build_body() */
-static int emit_bpf_tail_call(struct jit_ctx *ctx)
-{
-	/* bpf_tail_call(void *prog_ctx, struct bpf_array *array, u64 index) */
-	const u8 r2 = bpf2a64[BPF_REG_2];
-	const u8 r3 = bpf2a64[BPF_REG_3];
+अटल पूर्णांक out_offset = -1; /* initialized on the first pass of build_body() */
+अटल पूर्णांक emit_bpf_tail_call(काष्ठा jit_ctx *ctx)
+अणु
+	/* bpf_tail_call(व्योम *prog_ctx, काष्ठा bpf_array *array, u64 index) */
+	स्थिर u8 r2 = bpf2a64[BPF_REG_2];
+	स्थिर u8 r3 = bpf2a64[BPF_REG_3];
 
-	const u8 tmp = bpf2a64[TMP_REG_1];
-	const u8 prg = bpf2a64[TMP_REG_2];
-	const u8 tcc = bpf2a64[TCALL_CNT];
-	const int idx0 = ctx->idx;
-#define cur_offset (ctx->idx - idx0)
-#define jmp_offset (out_offset - (cur_offset))
-	size_t off;
+	स्थिर u8 पंचांगp = bpf2a64[TMP_REG_1];
+	स्थिर u8 prg = bpf2a64[TMP_REG_2];
+	स्थिर u8 tcc = bpf2a64[TCALL_CNT];
+	स्थिर पूर्णांक idx0 = ctx->idx;
+#घोषणा cur_offset (ctx->idx - idx0)
+#घोषणा jmp_offset (out_offset - (cur_offset))
+	माप_प्रकार off;
 
-	/* if (index >= array->map.max_entries)
-	 *     goto out;
+	/* अगर (index >= array->map.max_entries)
+	 *     जाओ out;
 	 */
-	off = offsetof(struct bpf_array, map.max_entries);
-	emit_a64_mov_i64(tmp, off, ctx);
-	emit(A64_LDR32(tmp, r2, tmp), ctx);
+	off = दुरत्व(काष्ठा bpf_array, map.max_entries);
+	emit_a64_mov_i64(पंचांगp, off, ctx);
+	emit(A64_LDR32(पंचांगp, r2, पंचांगp), ctx);
 	emit(A64_MOV(0, r3, r3), ctx);
-	emit(A64_CMP(0, r3, tmp), ctx);
+	emit(A64_CMP(0, r3, पंचांगp), ctx);
 	emit(A64_B_(A64_COND_CS, jmp_offset), ctx);
 
-	/* if (tail_call_cnt > MAX_TAIL_CALL_CNT)
-	 *     goto out;
+	/* अगर (tail_call_cnt > MAX_TAIL_CALL_CNT)
+	 *     जाओ out;
 	 * tail_call_cnt++;
 	 */
-	emit_a64_mov_i64(tmp, MAX_TAIL_CALL_CNT, ctx);
-	emit(A64_CMP(1, tcc, tmp), ctx);
+	emit_a64_mov_i64(पंचांगp, MAX_TAIL_CALL_CNT, ctx);
+	emit(A64_CMP(1, tcc, पंचांगp), ctx);
 	emit(A64_B_(A64_COND_HI, jmp_offset), ctx);
 	emit(A64_ADD_I(1, tcc, tcc, 1), ctx);
 
 	/* prog = array->ptrs[index];
-	 * if (prog == NULL)
-	 *     goto out;
+	 * अगर (prog == शून्य)
+	 *     जाओ out;
 	 */
-	off = offsetof(struct bpf_array, ptrs);
-	emit_a64_mov_i64(tmp, off, ctx);
-	emit(A64_ADD(1, tmp, r2, tmp), ctx);
+	off = दुरत्व(काष्ठा bpf_array, ptrs);
+	emit_a64_mov_i64(पंचांगp, off, ctx);
+	emit(A64_ADD(1, पंचांगp, r2, पंचांगp), ctx);
 	emit(A64_LSL(1, prg, r3, 3), ctx);
-	emit(A64_LDR64(prg, tmp, prg), ctx);
+	emit(A64_LDR64(prg, पंचांगp, prg), ctx);
 	emit(A64_CBZ(1, prg, jmp_offset), ctx);
 
-	/* goto *(prog->bpf_func + prologue_offset); */
-	off = offsetof(struct bpf_prog, bpf_func);
-	emit_a64_mov_i64(tmp, off, ctx);
-	emit(A64_LDR64(tmp, prg, tmp), ctx);
-	emit(A64_ADD_I(1, tmp, tmp, sizeof(u32) * PROLOGUE_OFFSET), ctx);
+	/* जाओ *(prog->bpf_func + prologue_offset); */
+	off = दुरत्व(काष्ठा bpf_prog, bpf_func);
+	emit_a64_mov_i64(पंचांगp, off, ctx);
+	emit(A64_LDR64(पंचांगp, prg, पंचांगp), ctx);
+	emit(A64_ADD_I(1, पंचांगp, पंचांगp, माप(u32) * PROLOGUE_OFFSET), ctx);
 	emit(A64_ADD_I(1, A64_SP, A64_SP, ctx->stack_size), ctx);
-	emit(A64_BR(tmp), ctx);
+	emit(A64_BR(पंचांगp), ctx);
 
 	/* out: */
-	if (out_offset == -1)
+	अगर (out_offset == -1)
 		out_offset = cur_offset;
-	if (cur_offset != out_offset) {
+	अगर (cur_offset != out_offset) अणु
 		pr_err_once("tail_call out_offset = %d, expected %d!\n",
 			    cur_offset, out_offset);
-		return -1;
-	}
-	return 0;
-#undef cur_offset
-#undef jmp_offset
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+#अघोषित cur_offset
+#अघोषित jmp_offset
+पूर्ण
 
-static void build_epilogue(struct jit_ctx *ctx)
-{
-	const u8 r0 = bpf2a64[BPF_REG_0];
-	const u8 r6 = bpf2a64[BPF_REG_6];
-	const u8 r7 = bpf2a64[BPF_REG_7];
-	const u8 r8 = bpf2a64[BPF_REG_8];
-	const u8 r9 = bpf2a64[BPF_REG_9];
-	const u8 fp = bpf2a64[BPF_REG_FP];
+अटल व्योम build_epilogue(काष्ठा jit_ctx *ctx)
+अणु
+	स्थिर u8 r0 = bpf2a64[BPF_REG_0];
+	स्थिर u8 r6 = bpf2a64[BPF_REG_6];
+	स्थिर u8 r7 = bpf2a64[BPF_REG_7];
+	स्थिर u8 r8 = bpf2a64[BPF_REG_8];
+	स्थिर u8 r9 = bpf2a64[BPF_REG_9];
+	स्थिर u8 fp = bpf2a64[BPF_REG_FP];
 
-	/* We're done with BPF stack */
+	/* We're करोne with BPF stack */
 	emit(A64_ADD_I(1, A64_SP, A64_SP, ctx->stack_size), ctx);
 
 	/* Restore fs (x25) and x26 */
 	emit(A64_POP(fp, A64_R(26), A64_SP), ctx);
 
-	/* Restore callee-saved register */
+	/* Restore callee-saved रेजिस्टर */
 	emit(A64_POP(r8, r9, A64_SP), ctx);
 	emit(A64_POP(r6, r7, A64_SP), ctx);
 
-	/* Restore FP/LR registers */
+	/* Restore FP/LR रेजिस्टरs */
 	emit(A64_POP(A64_FP, A64_LR, A64_SP), ctx);
 
-	/* Set return value */
+	/* Set वापस value */
 	emit(A64_MOV(1, A64_R(0), r0), ctx);
 
 	emit(A64_RET(A64_LR), ctx);
-}
+पूर्ण
 
-#define BPF_FIXUP_OFFSET_MASK	GENMASK(26, 0)
-#define BPF_FIXUP_REG_MASK	GENMASK(31, 27)
+#घोषणा BPF_FIXUP_OFFSET_MASK	GENMASK(26, 0)
+#घोषणा BPF_FIXUP_REG_MASK	GENMASK(31, 27)
 
-int arm64_bpf_fixup_exception(const struct exception_table_entry *ex,
-			      struct pt_regs *regs)
-{
+पूर्णांक arm64_bpf_fixup_exception(स्थिर काष्ठा exception_table_entry *ex,
+			      काष्ठा pt_regs *regs)
+अणु
 	off_t offset = FIELD_GET(BPF_FIXUP_OFFSET_MASK, ex->fixup);
-	int dst_reg = FIELD_GET(BPF_FIXUP_REG_MASK, ex->fixup);
+	पूर्णांक dst_reg = FIELD_GET(BPF_FIXUP_REG_MASK, ex->fixup);
 
 	regs->regs[dst_reg] = 0;
-	regs->pc = (unsigned long)&ex->fixup - offset;
-	return 1;
-}
+	regs->pc = (अचिन्हित दीर्घ)&ex->fixup - offset;
+	वापस 1;
+पूर्ण
 
-/* For accesses to BTF pointers, add an entry to the exception table */
-static int add_exception_handler(const struct bpf_insn *insn,
-				 struct jit_ctx *ctx,
-				 int dst_reg)
-{
+/* For accesses to BTF poपूर्णांकers, add an entry to the exception table */
+अटल पूर्णांक add_exception_handler(स्थिर काष्ठा bpf_insn *insn,
+				 काष्ठा jit_ctx *ctx,
+				 पूर्णांक dst_reg)
+अणु
 	off_t offset;
-	unsigned long pc;
-	struct exception_table_entry *ex;
+	अचिन्हित दीर्घ pc;
+	काष्ठा exception_table_entry *ex;
 
-	if (!ctx->image)
+	अगर (!ctx->image)
 		/* First pass */
-		return 0;
+		वापस 0;
 
-	if (BPF_MODE(insn->code) != BPF_PROBE_MEM)
-		return 0;
+	अगर (BPF_MODE(insn->code) != BPF_PROBE_MEM)
+		वापस 0;
 
-	if (!ctx->prog->aux->extable ||
+	अगर (!ctx->prog->aux->extable ||
 	    WARN_ON_ONCE(ctx->exentry_idx >= ctx->prog->aux->num_exentries))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	ex = &ctx->prog->aux->extable[ctx->exentry_idx];
-	pc = (unsigned long)&ctx->image[ctx->idx - 1];
+	pc = (अचिन्हित दीर्घ)&ctx->image[ctx->idx - 1];
 
-	offset = pc - (long)&ex->insn;
-	if (WARN_ON_ONCE(offset >= 0 || offset < INT_MIN))
-		return -ERANGE;
+	offset = pc - (दीर्घ)&ex->insn;
+	अगर (WARN_ON_ONCE(offset >= 0 || offset < पूर्णांक_न्यून))
+		वापस -दुस्फल;
 	ex->insn = offset;
 
 	/*
 	 * Since the extable follows the program, the fixup offset is always
 	 * negative and limited to BPF_JIT_REGION_SIZE. Store a positive value
-	 * to keep things simple, and put the destination register in the upper
-	 * bits. We don't need to worry about buildtime or runtime sort
-	 * modifying the upper bits because the table is already sorted, and
-	 * isn't part of the main exception table.
+	 * to keep things simple, and put the destination रेजिस्टर in the upper
+	 * bits. We करोn't need to worry about buildसमय or runसमय sort
+	 * modअगरying the upper bits because the table is alपढ़ोy sorted, and
+	 * isn't part of the मुख्य exception table.
 	 */
-	offset = (long)&ex->fixup - (pc + AARCH64_INSN_SIZE);
-	if (!FIELD_FIT(BPF_FIXUP_OFFSET_MASK, offset))
-		return -ERANGE;
+	offset = (दीर्घ)&ex->fixup - (pc + AARCH64_INSN_SIZE);
+	अगर (!FIELD_FIT(BPF_FIXUP_OFFSET_MASK, offset))
+		वापस -दुस्फल;
 
 	ex->fixup = FIELD_PREP(BPF_FIXUP_OFFSET_MASK, offset) |
 		    FIELD_PREP(BPF_FIXUP_REG_MASK, dst_reg);
 
 	ctx->exentry_idx++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* JITs an eBPF instruction.
+/* JITs an eBPF inकाष्ठाion.
  * Returns:
- * 0  - successfully JITed an 8-byte eBPF instruction.
- * >0 - successfully JITed a 16-byte eBPF instruction.
+ * 0  - successfully JITed an 8-byte eBPF inकाष्ठाion.
+ * >0 - successfully JITed a 16-byte eBPF inकाष्ठाion.
  * <0 - failed to JIT.
  */
-static int build_insn(const struct bpf_insn *insn, struct jit_ctx *ctx,
+अटल पूर्णांक build_insn(स्थिर काष्ठा bpf_insn *insn, काष्ठा jit_ctx *ctx,
 		      bool extra_pass)
-{
-	const u8 code = insn->code;
-	const u8 dst = bpf2a64[insn->dst_reg];
-	const u8 src = bpf2a64[insn->src_reg];
-	const u8 tmp = bpf2a64[TMP_REG_1];
-	const u8 tmp2 = bpf2a64[TMP_REG_2];
-	const u8 tmp3 = bpf2a64[TMP_REG_3];
-	const s16 off = insn->off;
-	const s32 imm = insn->imm;
-	const int i = insn - ctx->prog->insnsi;
-	const bool is64 = BPF_CLASS(code) == BPF_ALU64 ||
+अणु
+	स्थिर u8 code = insn->code;
+	स्थिर u8 dst = bpf2a64[insn->dst_reg];
+	स्थिर u8 src = bpf2a64[insn->src_reg];
+	स्थिर u8 पंचांगp = bpf2a64[TMP_REG_1];
+	स्थिर u8 पंचांगp2 = bpf2a64[TMP_REG_2];
+	स्थिर u8 पंचांगp3 = bpf2a64[TMP_REG_3];
+	स्थिर s16 off = insn->off;
+	स्थिर s32 imm = insn->imm;
+	स्थिर पूर्णांक i = insn - ctx->prog->insnsi;
+	स्थिर bool is64 = BPF_CLASS(code) == BPF_ALU64 ||
 			  BPF_CLASS(code) == BPF_JMP;
-	const bool isdw = BPF_SIZE(code) == BPF_DW;
+	स्थिर bool isdw = BPF_SIZE(code) == BPF_DW;
 	u8 jmp_cond, reg;
 	s32 jmp_offset;
 	u32 a64_insn;
-	int ret;
+	पूर्णांक ret;
 
-#define check_imm(bits, imm) do {				\
-	if ((((imm) > 0) && ((imm) >> (bits))) ||		\
-	    (((imm) < 0) && (~(imm) >> (bits)))) {		\
+#घोषणा check_imm(bits, imm) करो अणु				\
+	अगर ((((imm) > 0) && ((imm) >> (bits))) ||		\
+	    (((imm) < 0) && (~(imm) >> (bits)))) अणु		\
 		pr_info("[%2d] imm=%d(0x%x) out of range\n",	\
 			i, imm, imm);				\
-		return -EINVAL;					\
-	}							\
-} while (0)
-#define check_imm19(imm) check_imm(19, imm)
-#define check_imm26(imm) check_imm(26, imm)
+		वापस -EINVAL;					\
+	पूर्ण							\
+पूर्ण जबतक (0)
+#घोषणा check_imm19(imm) check_imm(19, imm)
+#घोषणा check_imm26(imm) check_imm(26, imm)
 
-	switch (code) {
+	चयन (code) अणु
 	/* dst = src */
-	case BPF_ALU | BPF_MOV | BPF_X:
-	case BPF_ALU64 | BPF_MOV | BPF_X:
+	हाल BPF_ALU | BPF_MOV | BPF_X:
+	हाल BPF_ALU64 | BPF_MOV | BPF_X:
 		emit(A64_MOV(is64, dst, src), ctx);
-		break;
+		अवरोध;
 	/* dst = dst OP src */
-	case BPF_ALU | BPF_ADD | BPF_X:
-	case BPF_ALU64 | BPF_ADD | BPF_X:
+	हाल BPF_ALU | BPF_ADD | BPF_X:
+	हाल BPF_ALU64 | BPF_ADD | BPF_X:
 		emit(A64_ADD(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_SUB | BPF_X:
-	case BPF_ALU64 | BPF_SUB | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_SUB | BPF_X:
+	हाल BPF_ALU64 | BPF_SUB | BPF_X:
 		emit(A64_SUB(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_AND | BPF_X:
-	case BPF_ALU64 | BPF_AND | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_AND | BPF_X:
+	हाल BPF_ALU64 | BPF_AND | BPF_X:
 		emit(A64_AND(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_OR | BPF_X:
-	case BPF_ALU64 | BPF_OR | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_OR | BPF_X:
+	हाल BPF_ALU64 | BPF_OR | BPF_X:
 		emit(A64_ORR(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_XOR | BPF_X:
-	case BPF_ALU64 | BPF_XOR | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_XOR | BPF_X:
+	हाल BPF_ALU64 | BPF_XOR | BPF_X:
 		emit(A64_EOR(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_MUL | BPF_X:
-	case BPF_ALU64 | BPF_MUL | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_MUL | BPF_X:
+	हाल BPF_ALU64 | BPF_MUL | BPF_X:
 		emit(A64_MUL(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_DIV | BPF_X:
-	case BPF_ALU64 | BPF_DIV | BPF_X:
-	case BPF_ALU | BPF_MOD | BPF_X:
-	case BPF_ALU64 | BPF_MOD | BPF_X:
-		switch (BPF_OP(code)) {
-		case BPF_DIV:
+		अवरोध;
+	हाल BPF_ALU | BPF_DIV | BPF_X:
+	हाल BPF_ALU64 | BPF_DIV | BPF_X:
+	हाल BPF_ALU | BPF_MOD | BPF_X:
+	हाल BPF_ALU64 | BPF_MOD | BPF_X:
+		चयन (BPF_OP(code)) अणु
+		हाल BPF_DIV:
 			emit(A64_UDIV(is64, dst, dst, src), ctx);
-			break;
-		case BPF_MOD:
-			emit(A64_UDIV(is64, tmp, dst, src), ctx);
-			emit(A64_MSUB(is64, dst, dst, tmp, src), ctx);
-			break;
-		}
-		break;
-	case BPF_ALU | BPF_LSH | BPF_X:
-	case BPF_ALU64 | BPF_LSH | BPF_X:
+			अवरोध;
+		हाल BPF_MOD:
+			emit(A64_UDIV(is64, पंचांगp, dst, src), ctx);
+			emit(A64_MSUB(is64, dst, dst, पंचांगp, src), ctx);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_LSH | BPF_X:
+	हाल BPF_ALU64 | BPF_LSH | BPF_X:
 		emit(A64_LSLV(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_RSH | BPF_X:
-	case BPF_ALU64 | BPF_RSH | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_RSH | BPF_X:
+	हाल BPF_ALU64 | BPF_RSH | BPF_X:
 		emit(A64_LSRV(is64, dst, dst, src), ctx);
-		break;
-	case BPF_ALU | BPF_ARSH | BPF_X:
-	case BPF_ALU64 | BPF_ARSH | BPF_X:
+		अवरोध;
+	हाल BPF_ALU | BPF_ARSH | BPF_X:
+	हाल BPF_ALU64 | BPF_ARSH | BPF_X:
 		emit(A64_ASRV(is64, dst, dst, src), ctx);
-		break;
+		अवरोध;
 	/* dst = -dst */
-	case BPF_ALU | BPF_NEG:
-	case BPF_ALU64 | BPF_NEG:
+	हाल BPF_ALU | BPF_NEG:
+	हाल BPF_ALU64 | BPF_NEG:
 		emit(A64_NEG(is64, dst, dst), ctx);
-		break;
+		अवरोध;
 	/* dst = BSWAP##imm(dst) */
-	case BPF_ALU | BPF_END | BPF_FROM_LE:
-	case BPF_ALU | BPF_END | BPF_FROM_BE:
-#ifdef CONFIG_CPU_BIG_ENDIAN
-		if (BPF_SRC(code) == BPF_FROM_BE)
-			goto emit_bswap_uxt;
-#else /* !CONFIG_CPU_BIG_ENDIAN */
-		if (BPF_SRC(code) == BPF_FROM_LE)
-			goto emit_bswap_uxt;
-#endif
-		switch (imm) {
-		case 16:
+	हाल BPF_ALU | BPF_END | BPF_FROM_LE:
+	हाल BPF_ALU | BPF_END | BPF_FROM_BE:
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+		अगर (BPF_SRC(code) == BPF_FROM_BE)
+			जाओ emit_bswap_uxt;
+#अन्यथा /* !CONFIG_CPU_BIG_ENDIAN */
+		अगर (BPF_SRC(code) == BPF_FROM_LE)
+			जाओ emit_bswap_uxt;
+#पूर्ण_अगर
+		चयन (imm) अणु
+		हाल 16:
 			emit(A64_REV16(is64, dst, dst), ctx);
-			/* zero-extend 16 bits into 64 bits */
+			/* zero-extend 16 bits पूर्णांकo 64 bits */
 			emit(A64_UXTH(is64, dst, dst), ctx);
-			break;
-		case 32:
+			अवरोध;
+		हाल 32:
 			emit(A64_REV32(is64, dst, dst), ctx);
-			/* upper 32 bits already cleared */
-			break;
-		case 64:
+			/* upper 32 bits alपढ़ोy cleared */
+			अवरोध;
+		हाल 64:
 			emit(A64_REV64(dst, dst), ctx);
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 emit_bswap_uxt:
-		switch (imm) {
-		case 16:
-			/* zero-extend 16 bits into 64 bits */
+		चयन (imm) अणु
+		हाल 16:
+			/* zero-extend 16 bits पूर्णांकo 64 bits */
 			emit(A64_UXTH(is64, dst, dst), ctx);
-			break;
-		case 32:
-			/* zero-extend 32 bits into 64 bits */
+			अवरोध;
+		हाल 32:
+			/* zero-extend 32 bits पूर्णांकo 64 bits */
 			emit(A64_UXTW(is64, dst, dst), ctx);
-			break;
-		case 64:
+			अवरोध;
+		हाल 64:
 			/* nop */
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 	/* dst = imm */
-	case BPF_ALU | BPF_MOV | BPF_K:
-	case BPF_ALU64 | BPF_MOV | BPF_K:
+	हाल BPF_ALU | BPF_MOV | BPF_K:
+	हाल BPF_ALU64 | BPF_MOV | BPF_K:
 		emit_a64_mov_i(is64, dst, imm, ctx);
-		break;
+		अवरोध;
 	/* dst = dst OP imm */
-	case BPF_ALU | BPF_ADD | BPF_K:
-	case BPF_ALU64 | BPF_ADD | BPF_K:
-		if (is_addsub_imm(imm)) {
+	हाल BPF_ALU | BPF_ADD | BPF_K:
+	हाल BPF_ALU64 | BPF_ADD | BPF_K:
+		अगर (is_addsub_imm(imm)) अणु
 			emit(A64_ADD_I(is64, dst, dst, imm), ctx);
-		} else if (is_addsub_imm(-imm)) {
+		पूर्ण अन्यथा अगर (is_addsub_imm(-imm)) अणु
 			emit(A64_SUB_I(is64, dst, dst, -imm), ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_ADD(is64, dst, dst, tmp), ctx);
-		}
-		break;
-	case BPF_ALU | BPF_SUB | BPF_K:
-	case BPF_ALU64 | BPF_SUB | BPF_K:
-		if (is_addsub_imm(imm)) {
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_ADD(is64, dst, dst, पंचांगp), ctx);
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_SUB | BPF_K:
+	हाल BPF_ALU64 | BPF_SUB | BPF_K:
+		अगर (is_addsub_imm(imm)) अणु
 			emit(A64_SUB_I(is64, dst, dst, imm), ctx);
-		} else if (is_addsub_imm(-imm)) {
+		पूर्ण अन्यथा अगर (is_addsub_imm(-imm)) अणु
 			emit(A64_ADD_I(is64, dst, dst, -imm), ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_SUB(is64, dst, dst, tmp), ctx);
-		}
-		break;
-	case BPF_ALU | BPF_AND | BPF_K:
-	case BPF_ALU64 | BPF_AND | BPF_K:
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_SUB(is64, dst, dst, पंचांगp), ctx);
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_AND | BPF_K:
+	हाल BPF_ALU64 | BPF_AND | BPF_K:
 		a64_insn = A64_AND_I(is64, dst, dst, imm);
-		if (a64_insn != AARCH64_BREAK_FAULT) {
+		अगर (a64_insn != AARCH64_BREAK_FAULT) अणु
 			emit(a64_insn, ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_AND(is64, dst, dst, tmp), ctx);
-		}
-		break;
-	case BPF_ALU | BPF_OR | BPF_K:
-	case BPF_ALU64 | BPF_OR | BPF_K:
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_AND(is64, dst, dst, पंचांगp), ctx);
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_OR | BPF_K:
+	हाल BPF_ALU64 | BPF_OR | BPF_K:
 		a64_insn = A64_ORR_I(is64, dst, dst, imm);
-		if (a64_insn != AARCH64_BREAK_FAULT) {
+		अगर (a64_insn != AARCH64_BREAK_FAULT) अणु
 			emit(a64_insn, ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_ORR(is64, dst, dst, tmp), ctx);
-		}
-		break;
-	case BPF_ALU | BPF_XOR | BPF_K:
-	case BPF_ALU64 | BPF_XOR | BPF_K:
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_ORR(is64, dst, dst, पंचांगp), ctx);
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_XOR | BPF_K:
+	हाल BPF_ALU64 | BPF_XOR | BPF_K:
 		a64_insn = A64_EOR_I(is64, dst, dst, imm);
-		if (a64_insn != AARCH64_BREAK_FAULT) {
+		अगर (a64_insn != AARCH64_BREAK_FAULT) अणु
 			emit(a64_insn, ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_EOR(is64, dst, dst, tmp), ctx);
-		}
-		break;
-	case BPF_ALU | BPF_MUL | BPF_K:
-	case BPF_ALU64 | BPF_MUL | BPF_K:
-		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_MUL(is64, dst, dst, tmp), ctx);
-		break;
-	case BPF_ALU | BPF_DIV | BPF_K:
-	case BPF_ALU64 | BPF_DIV | BPF_K:
-		emit_a64_mov_i(is64, tmp, imm, ctx);
-		emit(A64_UDIV(is64, dst, dst, tmp), ctx);
-		break;
-	case BPF_ALU | BPF_MOD | BPF_K:
-	case BPF_ALU64 | BPF_MOD | BPF_K:
-		emit_a64_mov_i(is64, tmp2, imm, ctx);
-		emit(A64_UDIV(is64, tmp, dst, tmp2), ctx);
-		emit(A64_MSUB(is64, dst, dst, tmp, tmp2), ctx);
-		break;
-	case BPF_ALU | BPF_LSH | BPF_K:
-	case BPF_ALU64 | BPF_LSH | BPF_K:
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_EOR(is64, dst, dst, पंचांगp), ctx);
+		पूर्ण
+		अवरोध;
+	हाल BPF_ALU | BPF_MUL | BPF_K:
+	हाल BPF_ALU64 | BPF_MUL | BPF_K:
+		emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+		emit(A64_MUL(is64, dst, dst, पंचांगp), ctx);
+		अवरोध;
+	हाल BPF_ALU | BPF_DIV | BPF_K:
+	हाल BPF_ALU64 | BPF_DIV | BPF_K:
+		emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+		emit(A64_UDIV(is64, dst, dst, पंचांगp), ctx);
+		अवरोध;
+	हाल BPF_ALU | BPF_MOD | BPF_K:
+	हाल BPF_ALU64 | BPF_MOD | BPF_K:
+		emit_a64_mov_i(is64, पंचांगp2, imm, ctx);
+		emit(A64_UDIV(is64, पंचांगp, dst, पंचांगp2), ctx);
+		emit(A64_MSUB(is64, dst, dst, पंचांगp, पंचांगp2), ctx);
+		अवरोध;
+	हाल BPF_ALU | BPF_LSH | BPF_K:
+	हाल BPF_ALU64 | BPF_LSH | BPF_K:
 		emit(A64_LSL(is64, dst, dst, imm), ctx);
-		break;
-	case BPF_ALU | BPF_RSH | BPF_K:
-	case BPF_ALU64 | BPF_RSH | BPF_K:
+		अवरोध;
+	हाल BPF_ALU | BPF_RSH | BPF_K:
+	हाल BPF_ALU64 | BPF_RSH | BPF_K:
 		emit(A64_LSR(is64, dst, dst, imm), ctx);
-		break;
-	case BPF_ALU | BPF_ARSH | BPF_K:
-	case BPF_ALU64 | BPF_ARSH | BPF_K:
+		अवरोध;
+	हाल BPF_ALU | BPF_ARSH | BPF_K:
+	हाल BPF_ALU64 | BPF_ARSH | BPF_K:
 		emit(A64_ASR(is64, dst, dst, imm), ctx);
-		break;
+		अवरोध;
 
 	/* JUMP off */
-	case BPF_JMP | BPF_JA:
+	हाल BPF_JMP | BPF_JA:
 		jmp_offset = bpf2a64_offset(i, off, ctx);
 		check_imm26(jmp_offset);
 		emit(A64_B(jmp_offset), ctx);
-		break;
+		अवरोध;
 	/* IF (dst COND src) JUMP off */
-	case BPF_JMP | BPF_JEQ | BPF_X:
-	case BPF_JMP | BPF_JGT | BPF_X:
-	case BPF_JMP | BPF_JLT | BPF_X:
-	case BPF_JMP | BPF_JGE | BPF_X:
-	case BPF_JMP | BPF_JLE | BPF_X:
-	case BPF_JMP | BPF_JNE | BPF_X:
-	case BPF_JMP | BPF_JSGT | BPF_X:
-	case BPF_JMP | BPF_JSLT | BPF_X:
-	case BPF_JMP | BPF_JSGE | BPF_X:
-	case BPF_JMP | BPF_JSLE | BPF_X:
-	case BPF_JMP32 | BPF_JEQ | BPF_X:
-	case BPF_JMP32 | BPF_JGT | BPF_X:
-	case BPF_JMP32 | BPF_JLT | BPF_X:
-	case BPF_JMP32 | BPF_JGE | BPF_X:
-	case BPF_JMP32 | BPF_JLE | BPF_X:
-	case BPF_JMP32 | BPF_JNE | BPF_X:
-	case BPF_JMP32 | BPF_JSGT | BPF_X:
-	case BPF_JMP32 | BPF_JSLT | BPF_X:
-	case BPF_JMP32 | BPF_JSGE | BPF_X:
-	case BPF_JMP32 | BPF_JSLE | BPF_X:
+	हाल BPF_JMP | BPF_JEQ | BPF_X:
+	हाल BPF_JMP | BPF_JGT | BPF_X:
+	हाल BPF_JMP | BPF_JLT | BPF_X:
+	हाल BPF_JMP | BPF_JGE | BPF_X:
+	हाल BPF_JMP | BPF_JLE | BPF_X:
+	हाल BPF_JMP | BPF_JNE | BPF_X:
+	हाल BPF_JMP | BPF_JSGT | BPF_X:
+	हाल BPF_JMP | BPF_JSLT | BPF_X:
+	हाल BPF_JMP | BPF_JSGE | BPF_X:
+	हाल BPF_JMP | BPF_JSLE | BPF_X:
+	हाल BPF_JMP32 | BPF_JEQ | BPF_X:
+	हाल BPF_JMP32 | BPF_JGT | BPF_X:
+	हाल BPF_JMP32 | BPF_JLT | BPF_X:
+	हाल BPF_JMP32 | BPF_JGE | BPF_X:
+	हाल BPF_JMP32 | BPF_JLE | BPF_X:
+	हाल BPF_JMP32 | BPF_JNE | BPF_X:
+	हाल BPF_JMP32 | BPF_JSGT | BPF_X:
+	हाल BPF_JMP32 | BPF_JSLT | BPF_X:
+	हाल BPF_JMP32 | BPF_JSGE | BPF_X:
+	हाल BPF_JMP32 | BPF_JSLE | BPF_X:
 		emit(A64_CMP(is64, dst, src), ctx);
 emit_cond_jmp:
 		jmp_offset = bpf2a64_offset(i, off, ctx);
 		check_imm19(jmp_offset);
-		switch (BPF_OP(code)) {
-		case BPF_JEQ:
+		चयन (BPF_OP(code)) अणु
+		हाल BPF_JEQ:
 			jmp_cond = A64_COND_EQ;
-			break;
-		case BPF_JGT:
+			अवरोध;
+		हाल BPF_JGT:
 			jmp_cond = A64_COND_HI;
-			break;
-		case BPF_JLT:
+			अवरोध;
+		हाल BPF_JLT:
 			jmp_cond = A64_COND_CC;
-			break;
-		case BPF_JGE:
+			अवरोध;
+		हाल BPF_JGE:
 			jmp_cond = A64_COND_CS;
-			break;
-		case BPF_JLE:
+			अवरोध;
+		हाल BPF_JLE:
 			jmp_cond = A64_COND_LS;
-			break;
-		case BPF_JSET:
-		case BPF_JNE:
+			अवरोध;
+		हाल BPF_JSET:
+		हाल BPF_JNE:
 			jmp_cond = A64_COND_NE;
-			break;
-		case BPF_JSGT:
+			अवरोध;
+		हाल BPF_JSGT:
 			jmp_cond = A64_COND_GT;
-			break;
-		case BPF_JSLT:
+			अवरोध;
+		हाल BPF_JSLT:
 			jmp_cond = A64_COND_LT;
-			break;
-		case BPF_JSGE:
+			अवरोध;
+		हाल BPF_JSGE:
 			jmp_cond = A64_COND_GE;
-			break;
-		case BPF_JSLE:
+			अवरोध;
+		हाल BPF_JSLE:
 			jmp_cond = A64_COND_LE;
-			break;
-		default:
-			return -EFAULT;
-		}
+			अवरोध;
+		शेष:
+			वापस -EFAULT;
+		पूर्ण
 		emit(A64_B_(jmp_cond, jmp_offset), ctx);
-		break;
-	case BPF_JMP | BPF_JSET | BPF_X:
-	case BPF_JMP32 | BPF_JSET | BPF_X:
+		अवरोध;
+	हाल BPF_JMP | BPF_JSET | BPF_X:
+	हाल BPF_JMP32 | BPF_JSET | BPF_X:
 		emit(A64_TST(is64, dst, src), ctx);
-		goto emit_cond_jmp;
+		जाओ emit_cond_jmp;
 	/* IF (dst COND imm) JUMP off */
-	case BPF_JMP | BPF_JEQ | BPF_K:
-	case BPF_JMP | BPF_JGT | BPF_K:
-	case BPF_JMP | BPF_JLT | BPF_K:
-	case BPF_JMP | BPF_JGE | BPF_K:
-	case BPF_JMP | BPF_JLE | BPF_K:
-	case BPF_JMP | BPF_JNE | BPF_K:
-	case BPF_JMP | BPF_JSGT | BPF_K:
-	case BPF_JMP | BPF_JSLT | BPF_K:
-	case BPF_JMP | BPF_JSGE | BPF_K:
-	case BPF_JMP | BPF_JSLE | BPF_K:
-	case BPF_JMP32 | BPF_JEQ | BPF_K:
-	case BPF_JMP32 | BPF_JGT | BPF_K:
-	case BPF_JMP32 | BPF_JLT | BPF_K:
-	case BPF_JMP32 | BPF_JGE | BPF_K:
-	case BPF_JMP32 | BPF_JLE | BPF_K:
-	case BPF_JMP32 | BPF_JNE | BPF_K:
-	case BPF_JMP32 | BPF_JSGT | BPF_K:
-	case BPF_JMP32 | BPF_JSLT | BPF_K:
-	case BPF_JMP32 | BPF_JSGE | BPF_K:
-	case BPF_JMP32 | BPF_JSLE | BPF_K:
-		if (is_addsub_imm(imm)) {
+	हाल BPF_JMP | BPF_JEQ | BPF_K:
+	हाल BPF_JMP | BPF_JGT | BPF_K:
+	हाल BPF_JMP | BPF_JLT | BPF_K:
+	हाल BPF_JMP | BPF_JGE | BPF_K:
+	हाल BPF_JMP | BPF_JLE | BPF_K:
+	हाल BPF_JMP | BPF_JNE | BPF_K:
+	हाल BPF_JMP | BPF_JSGT | BPF_K:
+	हाल BPF_JMP | BPF_JSLT | BPF_K:
+	हाल BPF_JMP | BPF_JSGE | BPF_K:
+	हाल BPF_JMP | BPF_JSLE | BPF_K:
+	हाल BPF_JMP32 | BPF_JEQ | BPF_K:
+	हाल BPF_JMP32 | BPF_JGT | BPF_K:
+	हाल BPF_JMP32 | BPF_JLT | BPF_K:
+	हाल BPF_JMP32 | BPF_JGE | BPF_K:
+	हाल BPF_JMP32 | BPF_JLE | BPF_K:
+	हाल BPF_JMP32 | BPF_JNE | BPF_K:
+	हाल BPF_JMP32 | BPF_JSGT | BPF_K:
+	हाल BPF_JMP32 | BPF_JSLT | BPF_K:
+	हाल BPF_JMP32 | BPF_JSGE | BPF_K:
+	हाल BPF_JMP32 | BPF_JSLE | BPF_K:
+		अगर (is_addsub_imm(imm)) अणु
 			emit(A64_CMP_I(is64, dst, imm), ctx);
-		} else if (is_addsub_imm(-imm)) {
+		पूर्ण अन्यथा अगर (is_addsub_imm(-imm)) अणु
 			emit(A64_CMN_I(is64, dst, -imm), ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_CMP(is64, dst, tmp), ctx);
-		}
-		goto emit_cond_jmp;
-	case BPF_JMP | BPF_JSET | BPF_K:
-	case BPF_JMP32 | BPF_JSET | BPF_K:
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_CMP(is64, dst, पंचांगp), ctx);
+		पूर्ण
+		जाओ emit_cond_jmp;
+	हाल BPF_JMP | BPF_JSET | BPF_K:
+	हाल BPF_JMP32 | BPF_JSET | BPF_K:
 		a64_insn = A64_TST_I(is64, dst, imm);
-		if (a64_insn != AARCH64_BREAK_FAULT) {
+		अगर (a64_insn != AARCH64_BREAK_FAULT) अणु
 			emit(a64_insn, ctx);
-		} else {
-			emit_a64_mov_i(is64, tmp, imm, ctx);
-			emit(A64_TST(is64, dst, tmp), ctx);
-		}
-		goto emit_cond_jmp;
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(is64, पंचांगp, imm, ctx);
+			emit(A64_TST(is64, dst, पंचांगp), ctx);
+		पूर्ण
+		जाओ emit_cond_jmp;
 	/* function call */
-	case BPF_JMP | BPF_CALL:
-	{
-		const u8 r0 = bpf2a64[BPF_REG_0];
+	हाल BPF_JMP | BPF_CALL:
+	अणु
+		स्थिर u8 r0 = bpf2a64[BPF_REG_0];
 		bool func_addr_fixed;
 		u64 func_addr;
 
 		ret = bpf_jit_get_func_addr(ctx->prog, insn, extra_pass,
 					    &func_addr, &func_addr_fixed);
-		if (ret < 0)
-			return ret;
-		emit_addr_mov_i64(tmp, func_addr, ctx);
-		emit(A64_BLR(tmp), ctx);
+		अगर (ret < 0)
+			वापस ret;
+		emit_addr_mov_i64(पंचांगp, func_addr, ctx);
+		emit(A64_BLR(पंचांगp), ctx);
 		emit(A64_MOV(1, r0, A64_R(0)), ctx);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	/* tail call */
-	case BPF_JMP | BPF_TAIL_CALL:
-		if (emit_bpf_tail_call(ctx))
-			return -EFAULT;
-		break;
-	/* function return */
-	case BPF_JMP | BPF_EXIT:
-		/* Optimization: when last instruction is EXIT,
+	हाल BPF_JMP | BPF_TAIL_CALL:
+		अगर (emit_bpf_tail_call(ctx))
+			वापस -EFAULT;
+		अवरोध;
+	/* function वापस */
+	हाल BPF_JMP | BPF_EXIT:
+		/* Optimization: when last inकाष्ठाion is EXIT,
 		   simply fallthrough to epilogue. */
-		if (i == ctx->prog->len - 1)
-			break;
+		अगर (i == ctx->prog->len - 1)
+			अवरोध;
 		jmp_offset = epilogue_offset(ctx);
 		check_imm26(jmp_offset);
 		emit(A64_B(jmp_offset), ctx);
-		break;
+		अवरोध;
 
 	/* dst = imm64 */
-	case BPF_LD | BPF_IMM | BPF_DW:
-	{
-		const struct bpf_insn insn1 = insn[1];
+	हाल BPF_LD | BPF_IMM | BPF_DW:
+	अणु
+		स्थिर काष्ठा bpf_insn insn1 = insn[1];
 		u64 imm64;
 
 		imm64 = (u64)insn1.imm << 32 | (u32)imm;
 		emit_a64_mov_i64(dst, imm64, ctx);
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* LDX: dst = *(size *)(src + off) */
-	case BPF_LDX | BPF_MEM | BPF_W:
-	case BPF_LDX | BPF_MEM | BPF_H:
-	case BPF_LDX | BPF_MEM | BPF_B:
-	case BPF_LDX | BPF_MEM | BPF_DW:
-	case BPF_LDX | BPF_PROBE_MEM | BPF_DW:
-	case BPF_LDX | BPF_PROBE_MEM | BPF_W:
-	case BPF_LDX | BPF_PROBE_MEM | BPF_H:
-	case BPF_LDX | BPF_PROBE_MEM | BPF_B:
-		emit_a64_mov_i(1, tmp, off, ctx);
-		switch (BPF_SIZE(code)) {
-		case BPF_W:
-			emit(A64_LDR32(dst, src, tmp), ctx);
-			break;
-		case BPF_H:
-			emit(A64_LDRH(dst, src, tmp), ctx);
-			break;
-		case BPF_B:
-			emit(A64_LDRB(dst, src, tmp), ctx);
-			break;
-		case BPF_DW:
-			emit(A64_LDR64(dst, src, tmp), ctx);
-			break;
-		}
+	हाल BPF_LDX | BPF_MEM | BPF_W:
+	हाल BPF_LDX | BPF_MEM | BPF_H:
+	हाल BPF_LDX | BPF_MEM | BPF_B:
+	हाल BPF_LDX | BPF_MEM | BPF_DW:
+	हाल BPF_LDX | BPF_PROBE_MEM | BPF_DW:
+	हाल BPF_LDX | BPF_PROBE_MEM | BPF_W:
+	हाल BPF_LDX | BPF_PROBE_MEM | BPF_H:
+	हाल BPF_LDX | BPF_PROBE_MEM | BPF_B:
+		emit_a64_mov_i(1, पंचांगp, off, ctx);
+		चयन (BPF_SIZE(code)) अणु
+		हाल BPF_W:
+			emit(A64_LDR32(dst, src, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_H:
+			emit(A64_LDRH(dst, src, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_B:
+			emit(A64_LDRB(dst, src, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_DW:
+			emit(A64_LDR64(dst, src, पंचांगp), ctx);
+			अवरोध;
+		पूर्ण
 
 		ret = add_exception_handler(insn, ctx, dst);
-		if (ret)
-			return ret;
-		break;
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
 	/* ST: *(size *)(dst + off) = imm */
-	case BPF_ST | BPF_MEM | BPF_W:
-	case BPF_ST | BPF_MEM | BPF_H:
-	case BPF_ST | BPF_MEM | BPF_B:
-	case BPF_ST | BPF_MEM | BPF_DW:
-		/* Load imm to a register then store it */
-		emit_a64_mov_i(1, tmp2, off, ctx);
-		emit_a64_mov_i(1, tmp, imm, ctx);
-		switch (BPF_SIZE(code)) {
-		case BPF_W:
-			emit(A64_STR32(tmp, dst, tmp2), ctx);
-			break;
-		case BPF_H:
-			emit(A64_STRH(tmp, dst, tmp2), ctx);
-			break;
-		case BPF_B:
-			emit(A64_STRB(tmp, dst, tmp2), ctx);
-			break;
-		case BPF_DW:
-			emit(A64_STR64(tmp, dst, tmp2), ctx);
-			break;
-		}
-		break;
+	हाल BPF_ST | BPF_MEM | BPF_W:
+	हाल BPF_ST | BPF_MEM | BPF_H:
+	हाल BPF_ST | BPF_MEM | BPF_B:
+	हाल BPF_ST | BPF_MEM | BPF_DW:
+		/* Load imm to a रेजिस्टर then store it */
+		emit_a64_mov_i(1, पंचांगp2, off, ctx);
+		emit_a64_mov_i(1, पंचांगp, imm, ctx);
+		चयन (BPF_SIZE(code)) अणु
+		हाल BPF_W:
+			emit(A64_STR32(पंचांगp, dst, पंचांगp2), ctx);
+			अवरोध;
+		हाल BPF_H:
+			emit(A64_STRH(पंचांगp, dst, पंचांगp2), ctx);
+			अवरोध;
+		हाल BPF_B:
+			emit(A64_STRB(पंचांगp, dst, पंचांगp2), ctx);
+			अवरोध;
+		हाल BPF_DW:
+			emit(A64_STR64(पंचांगp, dst, पंचांगp2), ctx);
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
 	/* STX: *(size *)(dst + off) = src */
-	case BPF_STX | BPF_MEM | BPF_W:
-	case BPF_STX | BPF_MEM | BPF_H:
-	case BPF_STX | BPF_MEM | BPF_B:
-	case BPF_STX | BPF_MEM | BPF_DW:
-		emit_a64_mov_i(1, tmp, off, ctx);
-		switch (BPF_SIZE(code)) {
-		case BPF_W:
-			emit(A64_STR32(src, dst, tmp), ctx);
-			break;
-		case BPF_H:
-			emit(A64_STRH(src, dst, tmp), ctx);
-			break;
-		case BPF_B:
-			emit(A64_STRB(src, dst, tmp), ctx);
-			break;
-		case BPF_DW:
-			emit(A64_STR64(src, dst, tmp), ctx);
-			break;
-		}
-		break;
+	हाल BPF_STX | BPF_MEM | BPF_W:
+	हाल BPF_STX | BPF_MEM | BPF_H:
+	हाल BPF_STX | BPF_MEM | BPF_B:
+	हाल BPF_STX | BPF_MEM | BPF_DW:
+		emit_a64_mov_i(1, पंचांगp, off, ctx);
+		चयन (BPF_SIZE(code)) अणु
+		हाल BPF_W:
+			emit(A64_STR32(src, dst, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_H:
+			emit(A64_STRH(src, dst, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_B:
+			emit(A64_STRB(src, dst, पंचांगp), ctx);
+			अवरोध;
+		हाल BPF_DW:
+			emit(A64_STR64(src, dst, पंचांगp), ctx);
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case BPF_STX | BPF_ATOMIC | BPF_W:
-	case BPF_STX | BPF_ATOMIC | BPF_DW:
-		if (insn->imm != BPF_ADD) {
+	हाल BPF_STX | BPF_ATOMIC | BPF_W:
+	हाल BPF_STX | BPF_ATOMIC | BPF_DW:
+		अगर (insn->imm != BPF_ADD) अणु
 			pr_err_once("unknown atomic op code %02x\n", insn->imm);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* STX XADD: lock *(u32 *)(dst + off) += src
 		 * and
 		 * STX XADD: lock *(u64 *)(dst + off) += src
 		 */
 
-		if (!off) {
+		अगर (!off) अणु
 			reg = dst;
-		} else {
-			emit_a64_mov_i(1, tmp, off, ctx);
-			emit(A64_ADD(1, tmp, tmp, dst), ctx);
-			reg = tmp;
-		}
-		if (cpus_have_cap(ARM64_HAS_LSE_ATOMICS)) {
+		पूर्ण अन्यथा अणु
+			emit_a64_mov_i(1, पंचांगp, off, ctx);
+			emit(A64_ADD(1, पंचांगp, पंचांगp, dst), ctx);
+			reg = पंचांगp;
+		पूर्ण
+		अगर (cpus_have_cap(ARM64_HAS_LSE_ATOMICS)) अणु
 			emit(A64_STADD(isdw, reg, src), ctx);
-		} else {
-			emit(A64_LDXR(isdw, tmp2, reg), ctx);
-			emit(A64_ADD(isdw, tmp2, tmp2, src), ctx);
-			emit(A64_STXR(isdw, tmp2, reg, tmp3), ctx);
+		पूर्ण अन्यथा अणु
+			emit(A64_LDXR(isdw, पंचांगp2, reg), ctx);
+			emit(A64_ADD(isdw, पंचांगp2, पंचांगp2, src), ctx);
+			emit(A64_STXR(isdw, पंचांगp2, reg, पंचांगp3), ctx);
 			jmp_offset = -3;
 			check_imm19(jmp_offset);
-			emit(A64_CBNZ(0, tmp3, jmp_offset), ctx);
-		}
-		break;
+			emit(A64_CBNZ(0, पंचांगp3, jmp_offset), ctx);
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err_once("unknown opcode %02x\n", code);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int build_body(struct jit_ctx *ctx, bool extra_pass)
-{
-	const struct bpf_prog *prog = ctx->prog;
-	int i;
+अटल पूर्णांक build_body(काष्ठा jit_ctx *ctx, bool extra_pass)
+अणु
+	स्थिर काष्ठा bpf_prog *prog = ctx->prog;
+	पूर्णांक i;
 
 	/*
 	 * - offset[0] offset of the end of prologue,
-	 *   start of the 1st instruction.
-	 * - offset[1] - offset of the end of 1st instruction,
-	 *   start of the 2nd instruction
+	 *   start of the 1st inकाष्ठाion.
+	 * - offset[1] - offset of the end of 1st inकाष्ठाion,
+	 *   start of the 2nd inकाष्ठाion
 	 * [....]
-	 * - offset[3] - offset of the end of 3rd instruction,
-	 *   start of 4th instruction
+	 * - offset[3] - offset of the end of 3rd inकाष्ठाion,
+	 *   start of 4th inकाष्ठाion
 	 */
-	for (i = 0; i < prog->len; i++) {
-		const struct bpf_insn *insn = &prog->insnsi[i];
-		int ret;
+	क्रम (i = 0; i < prog->len; i++) अणु
+		स्थिर काष्ठा bpf_insn *insn = &prog->insnsi[i];
+		पूर्णांक ret;
 
-		if (ctx->image == NULL)
+		अगर (ctx->image == शून्य)
 			ctx->offset[i] = ctx->idx;
 		ret = build_insn(insn, ctx, extra_pass);
-		if (ret > 0) {
+		अगर (ret > 0) अणु
 			i++;
-			if (ctx->image == NULL)
+			अगर (ctx->image == शून्य)
 				ctx->offset[i] = ctx->idx;
-			continue;
-		}
-		if (ret)
-			return ret;
-	}
+			जारी;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 	/*
 	 * offset is allocated with prog->len + 1 so fill in
 	 * the last element with the offset after the last
-	 * instruction (end of program)
+	 * inकाष्ठाion (end of program)
 	 */
-	if (ctx->image == NULL)
+	अगर (ctx->image == शून्य)
 		ctx->offset[i] = ctx->idx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int validate_code(struct jit_ctx *ctx)
-{
-	int i;
+अटल पूर्णांक validate_code(काष्ठा jit_ctx *ctx)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ctx->idx; i++) {
+	क्रम (i = 0; i < ctx->idx; i++) अणु
 		u32 a64_insn = le32_to_cpu(ctx->image[i]);
 
-		if (a64_insn == AARCH64_BREAK_FAULT)
-			return -1;
-	}
+		अगर (a64_insn == AARCH64_BREAK_FAULT)
+			वापस -1;
+	पूर्ण
 
-	if (WARN_ON_ONCE(ctx->exentry_idx != ctx->prog->aux->num_exentries))
-		return -1;
+	अगर (WARN_ON_ONCE(ctx->exentry_idx != ctx->prog->aux->num_exentries))
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void bpf_flush_icache(void *start, void *end)
-{
-	flush_icache_range((unsigned long)start, (unsigned long)end);
-}
+अटल अंतरभूत व्योम bpf_flush_icache(व्योम *start, व्योम *end)
+अणु
+	flush_icache_range((अचिन्हित दीर्घ)start, (अचिन्हित दीर्घ)end);
+पूर्ण
 
-struct arm64_jit_data {
-	struct bpf_binary_header *header;
+काष्ठा arm64_jit_data अणु
+	काष्ठा bpf_binary_header *header;
 	u8 *image;
-	struct jit_ctx ctx;
-};
+	काष्ठा jit_ctx ctx;
+पूर्ण;
 
-struct bpf_prog *bpf_int_jit_compile(struct bpf_prog *prog)
-{
-	int image_size, prog_size, extable_size;
-	struct bpf_prog *tmp, *orig_prog = prog;
-	struct bpf_binary_header *header;
-	struct arm64_jit_data *jit_data;
+काष्ठा bpf_prog *bpf_पूर्णांक_jit_compile(काष्ठा bpf_prog *prog)
+अणु
+	पूर्णांक image_size, prog_size, extable_size;
+	काष्ठा bpf_prog *पंचांगp, *orig_prog = prog;
+	काष्ठा bpf_binary_header *header;
+	काष्ठा arm64_jit_data *jit_data;
 	bool was_classic = bpf_prog_was_classic(prog);
-	bool tmp_blinded = false;
+	bool पंचांगp_blinded = false;
 	bool extra_pass = false;
-	struct jit_ctx ctx;
+	काष्ठा jit_ctx ctx;
 	u8 *image_ptr;
 
-	if (!prog->jit_requested)
-		return orig_prog;
+	अगर (!prog->jit_requested)
+		वापस orig_prog;
 
-	tmp = bpf_jit_blind_constants(prog);
+	पंचांगp = bpf_jit_blind_स्थिरants(prog);
 	/* If blinding was requested and we failed during blinding,
-	 * we must fall back to the interpreter.
+	 * we must fall back to the पूर्णांकerpreter.
 	 */
-	if (IS_ERR(tmp))
-		return orig_prog;
-	if (tmp != prog) {
-		tmp_blinded = true;
-		prog = tmp;
-	}
+	अगर (IS_ERR(पंचांगp))
+		वापस orig_prog;
+	अगर (पंचांगp != prog) अणु
+		पंचांगp_blinded = true;
+		prog = पंचांगp;
+	पूर्ण
 
 	jit_data = prog->aux->jit_data;
-	if (!jit_data) {
-		jit_data = kzalloc(sizeof(*jit_data), GFP_KERNEL);
-		if (!jit_data) {
+	अगर (!jit_data) अणु
+		jit_data = kzalloc(माप(*jit_data), GFP_KERNEL);
+		अगर (!jit_data) अणु
 			prog = orig_prog;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		prog->aux->jit_data = jit_data;
-	}
-	if (jit_data->ctx.offset) {
+	पूर्ण
+	अगर (jit_data->ctx.offset) अणु
 		ctx = jit_data->ctx;
 		image_ptr = jit_data->image;
 		header = jit_data->header;
 		extra_pass = true;
-		prog_size = sizeof(u32) * ctx.idx;
-		goto skip_init_ctx;
-	}
-	memset(&ctx, 0, sizeof(ctx));
+		prog_size = माप(u32) * ctx.idx;
+		जाओ skip_init_ctx;
+	पूर्ण
+	स_रखो(&ctx, 0, माप(ctx));
 	ctx.prog = prog;
 
-	ctx.offset = kcalloc(prog->len + 1, sizeof(int), GFP_KERNEL);
-	if (ctx.offset == NULL) {
+	ctx.offset = kसुस्मृति(prog->len + 1, माप(पूर्णांक), GFP_KERNEL);
+	अगर (ctx.offset == शून्य) अणु
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
 	/* 1. Initial fake pass to compute ctx->idx. */
 
 	/* Fake pass to fill in ctx->offset. */
-	if (build_body(&ctx, extra_pass)) {
+	अगर (build_body(&ctx, extra_pass)) अणु
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
-	if (build_prologue(&ctx, was_classic)) {
+	अगर (build_prologue(&ctx, was_classic)) अणु
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
 	ctx.epilogue_offset = ctx.idx;
 	build_epilogue(&ctx);
 
 	extable_size = prog->aux->num_exentries *
-		sizeof(struct exception_table_entry);
+		माप(काष्ठा exception_table_entry);
 
 	/* Now we know the actual image size. */
-	prog_size = sizeof(u32) * ctx.idx;
+	prog_size = माप(u32) * ctx.idx;
 	image_size = prog_size + extable_size;
 	header = bpf_jit_binary_alloc(image_size, &image_ptr,
-				      sizeof(u32), jit_fill_hole);
-	if (header == NULL) {
+				      माप(u32), jit_fill_hole);
+	अगर (header == शून्य) अणु
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
 	/* 2. Now, the actual pass. */
 
 	ctx.image = (__le32 *)image_ptr;
-	if (extable_size)
-		prog->aux->extable = (void *)image_ptr + prog_size;
+	अगर (extable_size)
+		prog->aux->extable = (व्योम *)image_ptr + prog_size;
 skip_init_ctx:
 	ctx.idx = 0;
 	ctx.exentry_idx = 0;
 
 	build_prologue(&ctx, was_classic);
 
-	if (build_body(&ctx, extra_pass)) {
-		bpf_jit_binary_free(header);
+	अगर (build_body(&ctx, extra_pass)) अणु
+		bpf_jit_binary_मुक्त(header);
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
 	build_epilogue(&ctx);
 
 	/* 3. Extra pass to validate JITed code. */
-	if (validate_code(&ctx)) {
-		bpf_jit_binary_free(header);
+	अगर (validate_code(&ctx)) अणु
+		bpf_jit_binary_मुक्त(header);
 		prog = orig_prog;
-		goto out_off;
-	}
+		जाओ out_off;
+	पूर्ण
 
-	/* And we're done. */
-	if (bpf_jit_enable > 1)
+	/* And we're करोne. */
+	अगर (bpf_jit_enable > 1)
 		bpf_jit_dump(prog->len, prog_size, 2, ctx.image);
 
 	bpf_flush_icache(header, ctx.image + ctx.idx);
 
-	if (!prog->is_func || extra_pass) {
-		if (extra_pass && ctx.idx != jit_data->ctx.idx) {
+	अगर (!prog->is_func || extra_pass) अणु
+		अगर (extra_pass && ctx.idx != jit_data->ctx.idx) अणु
 			pr_err_once("multi-func JIT bug %d != %d\n",
 				    ctx.idx, jit_data->ctx.idx);
-			bpf_jit_binary_free(header);
-			prog->bpf_func = NULL;
+			bpf_jit_binary_मुक्त(header);
+			prog->bpf_func = शून्य;
 			prog->jited = 0;
-			goto out_off;
-		}
+			जाओ out_off;
+		पूर्ण
 		bpf_jit_binary_lock_ro(header);
-	} else {
+	पूर्ण अन्यथा अणु
 		jit_data->ctx = ctx;
 		jit_data->image = image_ptr;
 		jit_data->header = header;
-	}
-	prog->bpf_func = (void *)ctx.image;
+	पूर्ण
+	prog->bpf_func = (व्योम *)ctx.image;
 	prog->jited = 1;
 	prog->jited_len = prog_size;
 
-	if (!prog->is_func || extra_pass) {
+	अगर (!prog->is_func || extra_pass) अणु
 		bpf_prog_fill_jited_linfo(prog, ctx.offset + 1);
 out_off:
-		kfree(ctx.offset);
-		kfree(jit_data);
-		prog->aux->jit_data = NULL;
-	}
+		kमुक्त(ctx.offset);
+		kमुक्त(jit_data);
+		prog->aux->jit_data = शून्य;
+	पूर्ण
 out:
-	if (tmp_blinded)
+	अगर (पंचांगp_blinded)
 		bpf_jit_prog_release_other(prog, prog == orig_prog ?
-					   tmp : orig_prog);
-	return prog;
-}
+					   पंचांगp : orig_prog);
+	वापस prog;
+पूर्ण
 
-void *bpf_jit_alloc_exec(unsigned long size)
-{
-	return __vmalloc_node_range(size, PAGE_SIZE, BPF_JIT_REGION_START,
+व्योम *bpf_jit_alloc_exec(अचिन्हित दीर्घ size)
+अणु
+	वापस __vदो_स्मृति_node_range(size, PAGE_SIZE, BPF_JIT_REGION_START,
 				    BPF_JIT_REGION_END, GFP_KERNEL,
 				    PAGE_KERNEL, 0, NUMA_NO_NODE,
-				    __builtin_return_address(0));
-}
+				    __builtin_वापस_address(0));
+पूर्ण
 
-void bpf_jit_free_exec(void *addr)
-{
-	return vfree(addr);
-}
+व्योम bpf_jit_मुक्त_exec(व्योम *addr)
+अणु
+	वापस vमुक्त(addr);
+पूर्ण

@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmaengine.h>
-#include <linux/sizes.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
 
-#include "cppi_dma.h"
-#include "musb_core.h"
-#include "musb_trace.h"
+#समावेश "cppi_dma.h"
+#समावेश "musb_core.h"
+#समावेश "musb_trace.h"
 
-#define RNDIS_REG(x) (0x80 + ((x - 1) * 4))
+#घोषणा RNDIS_REG(x) (0x80 + ((x - 1) * 4))
 
-#define EP_MODE_AUTOREQ_NONE		0
-#define EP_MODE_AUTOREQ_ALL_NEOP	1
-#define EP_MODE_AUTOREQ_ALWAYS		3
+#घोषणा EP_MODE_AUTOREQ_NONE		0
+#घोषणा EP_MODE_AUTOREQ_ALL_NEOP	1
+#घोषणा EP_MODE_AUTOREQ_ALWAYS		3
 
-#define EP_MODE_DMA_TRANSPARENT		0
-#define EP_MODE_DMA_RNDIS		1
-#define EP_MODE_DMA_GEN_RNDIS		3
+#घोषणा EP_MODE_DMA_TRANSPARENT		0
+#घोषणा EP_MODE_DMA_RNDIS		1
+#घोषणा EP_MODE_DMA_GEN_RNDIS		3
 
-#define USB_CTRL_TX_MODE	0x70
-#define USB_CTRL_RX_MODE	0x74
-#define USB_CTRL_AUTOREQ	0xd0
-#define USB_TDOWN		0xd8
+#घोषणा USB_CTRL_TX_MODE	0x70
+#घोषणा USB_CTRL_RX_MODE	0x74
+#घोषणा USB_CTRL_AUTOREQ	0xd0
+#घोषणा USB_TDOWN		0xd8
 
-#define MUSB_DMA_NUM_CHANNELS 15
+#घोषणा MUSB_DMA_NUM_CHANNELS 15
 
-#define DA8XX_USB_MODE		0x10
-#define DA8XX_USB_AUTOREQ	0x14
-#define DA8XX_USB_TEARDOWN	0x1c
+#घोषणा DA8XX_USB_MODE		0x10
+#घोषणा DA8XX_USB_AUTOREQ	0x14
+#घोषणा DA8XX_USB_TEARDOWN	0x1c
 
-#define DA8XX_DMA_NUM_CHANNELS 4
+#घोषणा DA8XX_DMA_NUM_CHANNELS 4
 
-struct cppi41_dma_controller {
-	struct dma_controller controller;
-	struct cppi41_dma_channel *rx_channel;
-	struct cppi41_dma_channel *tx_channel;
-	struct hrtimer early_tx;
-	struct list_head early_tx_list;
+काष्ठा cppi41_dma_controller अणु
+	काष्ठा dma_controller controller;
+	काष्ठा cppi41_dma_channel *rx_channel;
+	काष्ठा cppi41_dma_channel *tx_channel;
+	काष्ठा hrसमयr early_tx;
+	काष्ठा list_head early_tx_list;
 	u32 rx_mode;
 	u32 tx_mode;
-	u32 auto_req;
+	u32 स्वतः_req;
 
-	u32 tdown_reg;
-	u32 autoreq_reg;
+	u32 tकरोwn_reg;
+	u32 स्वतःreq_reg;
 
-	void (*set_dma_mode)(struct cppi41_dma_channel *cppi41_channel,
-			     unsigned int mode);
+	व्योम (*set_dma_mode)(काष्ठा cppi41_dma_channel *cppi41_channel,
+			     अचिन्हित पूर्णांक mode);
 	u8 num_channels;
-};
+पूर्ण;
 
-static void save_rx_toggle(struct cppi41_dma_channel *cppi41_channel)
-{
+अटल व्योम save_rx_toggle(काष्ठा cppi41_dma_channel *cppi41_channel)
+अणु
 	u16 csr;
 	u8 toggle;
 
-	if (cppi41_channel->is_tx)
-		return;
-	if (!is_host_active(cppi41_channel->controller->controller.musb))
-		return;
+	अगर (cppi41_channel->is_tx)
+		वापस;
+	अगर (!is_host_active(cppi41_channel->controller->controller.musb))
+		वापस;
 
-	csr = musb_readw(cppi41_channel->hw_ep->regs, MUSB_RXCSR);
+	csr = musb_पढ़ोw(cppi41_channel->hw_ep->regs, MUSB_RXCSR);
 	toggle = csr & MUSB_RXCSR_H_DATATOGGLE ? 1 : 0;
 
 	cppi41_channel->usb_toggle = toggle;
-}
+पूर्ण
 
-static void update_rx_toggle(struct cppi41_dma_channel *cppi41_channel)
-{
-	struct musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
-	struct musb *musb = hw_ep->musb;
+अटल व्योम update_rx_toggle(काष्ठा cppi41_dma_channel *cppi41_channel)
+अणु
+	काष्ठा musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
+	काष्ठा musb *musb = hw_ep->musb;
 	u16 csr;
 	u8 toggle;
 
-	if (cppi41_channel->is_tx)
-		return;
-	if (!is_host_active(musb))
-		return;
+	अगर (cppi41_channel->is_tx)
+		वापस;
+	अगर (!is_host_active(musb))
+		वापस;
 
 	musb_ep_select(musb->mregs, hw_ep->epnum);
-	csr = musb_readw(hw_ep->regs, MUSB_RXCSR);
+	csr = musb_पढ़ोw(hw_ep->regs, MUSB_RXCSR);
 	toggle = csr & MUSB_RXCSR_H_DATATOGGLE ? 1 : 0;
 
 	/*
-	 * AM335x Advisory 1.0.13: Due to internal synchronisation error the
+	 * AM335x Advisory 1.0.13: Due to पूर्णांकernal synchronisation error the
 	 * data toggle may reset from DATA1 to DATA0 during receiving data from
-	 * more than one endpoint.
+	 * more than one endpoपूर्णांक.
 	 */
-	if (!toggle && toggle == cppi41_channel->usb_toggle) {
+	अगर (!toggle && toggle == cppi41_channel->usb_toggle) अणु
 		csr |= MUSB_RXCSR_H_DATATOGGLE | MUSB_RXCSR_H_WR_DATATOGGLE;
-		musb_writew(cppi41_channel->hw_ep->regs, MUSB_RXCSR, csr);
+		musb_ग_लिखोw(cppi41_channel->hw_ep->regs, MUSB_RXCSR, csr);
 		musb_dbg(musb, "Restoring DATA1 toggle.");
-	}
+	पूर्ण
 
 	cppi41_channel->usb_toggle = toggle;
-}
+पूर्ण
 
-static bool musb_is_tx_fifo_empty(struct musb_hw_ep *hw_ep)
-{
+अटल bool musb_is_tx_fअगरo_empty(काष्ठा musb_hw_ep *hw_ep)
+अणु
 	u8		epnum = hw_ep->epnum;
-	struct musb	*musb = hw_ep->musb;
-	void __iomem	*epio = musb->endpoints[epnum].regs;
+	काष्ठा musb	*musb = hw_ep->musb;
+	व्योम __iomem	*epio = musb->endpoपूर्णांकs[epnum].regs;
 	u16		csr;
 
 	musb_ep_select(musb->mregs, hw_ep->epnum);
-	csr = musb_readw(epio, MUSB_TXCSR);
-	if (csr & MUSB_TXCSR_TXPKTRDY)
-		return false;
-	return true;
-}
+	csr = musb_पढ़ोw(epio, MUSB_TXCSR);
+	अगर (csr & MUSB_TXCSR_TXPKTRDY)
+		वापस false;
+	वापस true;
+पूर्ण
 
-static void cppi41_dma_callback(void *private_data,
-				const struct dmaengine_result *result);
+अटल व्योम cppi41_dma_callback(व्योम *निजी_data,
+				स्थिर काष्ठा dmaengine_result *result);
 
-static void cppi41_trans_done(struct cppi41_dma_channel *cppi41_channel)
-{
-	struct musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
-	struct musb *musb = hw_ep->musb;
-	void __iomem *epio = hw_ep->regs;
+अटल व्योम cppi41_trans_करोne(काष्ठा cppi41_dma_channel *cppi41_channel)
+अणु
+	काष्ठा musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
+	काष्ठा musb *musb = hw_ep->musb;
+	व्योम __iomem *epio = hw_ep->regs;
 	u16 csr;
 
-	if (!cppi41_channel->prog_len ||
-	    (cppi41_channel->channel.status == MUSB_DMA_STATUS_FREE)) {
+	अगर (!cppi41_channel->prog_len ||
+	    (cppi41_channel->channel.status == MUSB_DMA_STATUS_FREE)) अणु
 
-		/* done, complete */
+		/* करोne, complete */
 		cppi41_channel->channel.actual_len =
 			cppi41_channel->transferred;
 		cppi41_channel->channel.status = MUSB_DMA_STATUS_FREE;
-		cppi41_channel->channel.rx_packet_done = true;
+		cppi41_channel->channel.rx_packet_करोne = true;
 
 		/*
-		 * transmit ZLP using PIO mode for transfers which size is
+		 * transmit ZLP using PIO mode क्रम transfers which size is
 		 * multiple of EP packet size.
 		 */
-		if (cppi41_channel->tx_zlp && (cppi41_channel->transferred %
-					cppi41_channel->packet_sz) == 0) {
+		अगर (cppi41_channel->tx_zlp && (cppi41_channel->transferred %
+					cppi41_channel->packet_sz) == 0) अणु
 			musb_ep_select(musb->mregs, hw_ep->epnum);
 			csr = MUSB_TXCSR_MODE | MUSB_TXCSR_TXPKTRDY;
-			musb_writew(epio, MUSB_TXCSR, csr);
-		}
+			musb_ग_लिखोw(epio, MUSB_TXCSR, csr);
+		पूर्ण
 
-		trace_musb_cppi41_done(cppi41_channel);
+		trace_musb_cppi41_करोne(cppi41_channel);
 		musb_dma_completion(musb, hw_ep->epnum, cppi41_channel->is_tx);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* next iteration, reload */
-		struct dma_chan *dc = cppi41_channel->dc;
-		struct dma_async_tx_descriptor *dma_desc;
-		enum dma_transfer_direction direction;
-		u32 remain_bytes;
+		काष्ठा dma_chan *dc = cppi41_channel->dc;
+		काष्ठा dma_async_tx_descriptor *dma_desc;
+		क्रमागत dma_transfer_direction direction;
+		u32 reमुख्य_bytes;
 
 		cppi41_channel->buf_addr += cppi41_channel->packet_sz;
 
-		remain_bytes = cppi41_channel->total_len;
-		remain_bytes -= cppi41_channel->transferred;
-		remain_bytes = min(remain_bytes, cppi41_channel->packet_sz);
-		cppi41_channel->prog_len = remain_bytes;
+		reमुख्य_bytes = cppi41_channel->total_len;
+		reमुख्य_bytes -= cppi41_channel->transferred;
+		reमुख्य_bytes = min(reमुख्य_bytes, cppi41_channel->packet_sz);
+		cppi41_channel->prog_len = reमुख्य_bytes;
 
 		direction = cppi41_channel->is_tx ? DMA_MEM_TO_DEV
 			: DMA_DEV_TO_MEM;
 		dma_desc = dmaengine_prep_slave_single(dc,
 				cppi41_channel->buf_addr,
-				remain_bytes,
+				reमुख्य_bytes,
 				direction,
 				DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-		if (WARN_ON(!dma_desc))
-			return;
+		अगर (WARN_ON(!dma_desc))
+			वापस;
 
 		dma_desc->callback_result = cppi41_dma_callback;
 		dma_desc->callback_param = &cppi41_channel->channel;
@@ -173,70 +174,70 @@ static void cppi41_trans_done(struct cppi41_dma_channel *cppi41_channel)
 		trace_musb_cppi41_cont(cppi41_channel);
 		dma_async_issue_pending(dc);
 
-		if (!cppi41_channel->is_tx) {
+		अगर (!cppi41_channel->is_tx) अणु
 			musb_ep_select(musb->mregs, hw_ep->epnum);
-			csr = musb_readw(epio, MUSB_RXCSR);
+			csr = musb_पढ़ोw(epio, MUSB_RXCSR);
 			csr |= MUSB_RXCSR_H_REQPKT;
-			musb_writew(epio, MUSB_RXCSR, csr);
-		}
-	}
-}
+			musb_ग_लिखोw(epio, MUSB_RXCSR, csr);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static enum hrtimer_restart cppi41_recheck_tx_req(struct hrtimer *timer)
-{
-	struct cppi41_dma_controller *controller;
-	struct cppi41_dma_channel *cppi41_channel, *n;
-	struct musb *musb;
-	unsigned long flags;
-	enum hrtimer_restart ret = HRTIMER_NORESTART;
+अटल क्रमागत hrसमयr_restart cppi41_recheck_tx_req(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा cppi41_dma_controller *controller;
+	काष्ठा cppi41_dma_channel *cppi41_channel, *n;
+	काष्ठा musb *musb;
+	अचिन्हित दीर्घ flags;
+	क्रमागत hrसमयr_restart ret = HRTIMER_NORESTART;
 
-	controller = container_of(timer, struct cppi41_dma_controller,
+	controller = container_of(समयr, काष्ठा cppi41_dma_controller,
 			early_tx);
 	musb = controller->controller.musb;
 
 	spin_lock_irqsave(&musb->lock, flags);
-	list_for_each_entry_safe(cppi41_channel, n, &controller->early_tx_list,
-			tx_check) {
+	list_क्रम_each_entry_safe(cppi41_channel, n, &controller->early_tx_list,
+			tx_check) अणु
 		bool empty;
-		struct musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
+		काष्ठा musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
 
-		empty = musb_is_tx_fifo_empty(hw_ep);
-		if (empty) {
+		empty = musb_is_tx_fअगरo_empty(hw_ep);
+		अगर (empty) अणु
 			list_del_init(&cppi41_channel->tx_check);
-			cppi41_trans_done(cppi41_channel);
-		}
-	}
+			cppi41_trans_करोne(cppi41_channel);
+		पूर्ण
+	पूर्ण
 
-	if (!list_empty(&controller->early_tx_list) &&
-	    !hrtimer_is_queued(&controller->early_tx)) {
+	अगर (!list_empty(&controller->early_tx_list) &&
+	    !hrसमयr_is_queued(&controller->early_tx)) अणु
 		ret = HRTIMER_RESTART;
-		hrtimer_forward_now(&controller->early_tx, 20 * NSEC_PER_USEC);
-	}
+		hrसमयr_क्रमward_now(&controller->early_tx, 20 * NSEC_PER_USEC);
+	पूर्ण
 
 	spin_unlock_irqrestore(&musb->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cppi41_dma_callback(void *private_data,
-				const struct dmaengine_result *result)
-{
-	struct dma_channel *channel = private_data;
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
-	struct musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
-	struct cppi41_dma_controller *controller;
-	struct musb *musb = hw_ep->musb;
-	unsigned long flags;
-	struct dma_tx_state txstate;
+अटल व्योम cppi41_dma_callback(व्योम *निजी_data,
+				स्थिर काष्ठा dmaengine_result *result)
+अणु
+	काष्ठा dma_channel *channel = निजी_data;
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
+	काष्ठा musb_hw_ep *hw_ep = cppi41_channel->hw_ep;
+	काष्ठा cppi41_dma_controller *controller;
+	काष्ठा musb *musb = hw_ep->musb;
+	अचिन्हित दीर्घ flags;
+	काष्ठा dma_tx_state txstate;
 	u32 transferred;
-	int is_hs = 0;
+	पूर्णांक is_hs = 0;
 	bool empty;
 
 	controller = cppi41_channel->controller;
-	if (controller->controller.dma_callback)
+	अगर (controller->controller.dma_callback)
 		controller->controller.dma_callback(&controller->controller);
 
-	if (result->result == DMA_TRANS_ABORTED)
-		return;
+	अगर (result->result == DMA_TRANS_ABORTED)
+		वापस;
 
 	spin_lock_irqsave(&musb->lock, flags);
 
@@ -248,127 +249,127 @@ static void cppi41_dma_callback(void *private_data,
 	trace_musb_cppi41_gb(cppi41_channel);
 	update_rx_toggle(cppi41_channel);
 
-	if (cppi41_channel->transferred == cppi41_channel->total_len ||
+	अगर (cppi41_channel->transferred == cppi41_channel->total_len ||
 			transferred < cppi41_channel->packet_sz)
 		cppi41_channel->prog_len = 0;
 
-	if (cppi41_channel->is_tx) {
+	अगर (cppi41_channel->is_tx) अणु
 		u8 type;
 
-		if (is_host_active(musb))
+		अगर (is_host_active(musb))
 			type = hw_ep->out_qh->type;
-		else
+		अन्यथा
 			type = hw_ep->ep_in.type;
 
-		if (type == USB_ENDPOINT_XFER_ISOC)
+		अगर (type == USB_ENDPOINT_XFER_ISOC)
 			/*
-			 * Don't use the early-TX-interrupt workaround below
-			 * for Isoch transfter. Since Isoch are periodic
-			 * transfer, by the time the next transfer is
-			 * scheduled, the current one should be done already.
+			 * Don't use the early-TX-पूर्णांकerrupt workaround below
+			 * क्रम Isoch transfter. Since Isoch are periodic
+			 * transfer, by the समय the next transfer is
+			 * scheduled, the current one should be करोne alपढ़ोy.
 			 *
-			 * This avoids audio playback underrun issue.
+			 * This aव्योमs audio playback underrun issue.
 			 */
 			empty = true;
-		else
-			empty = musb_is_tx_fifo_empty(hw_ep);
-	}
+		अन्यथा
+			empty = musb_is_tx_fअगरo_empty(hw_ep);
+	पूर्ण
 
-	if (!cppi41_channel->is_tx || empty) {
-		cppi41_trans_done(cppi41_channel);
-		goto out;
-	}
+	अगर (!cppi41_channel->is_tx || empty) अणु
+		cppi41_trans_करोne(cppi41_channel);
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * On AM335x it has been observed that the TX interrupt fires
+	 * On AM335x it has been observed that the TX पूर्णांकerrupt fires
 	 * too early that means the TXFIFO is not yet empty but the DMA
-	 * engine says that it is done with the transfer. We don't
-	 * receive a FIFO empty interrupt so the only thing we can do is
-	 * to poll for the bit. On HS it usually takes 2us, on FS around
+	 * engine says that it is करोne with the transfer. We करोn't
+	 * receive a FIFO empty पूर्णांकerrupt so the only thing we can करो is
+	 * to poll क्रम the bit. On HS it usually takes 2us, on FS around
 	 * 110us - 150us depending on the transfer size.
-	 * We spin on HS (no longer than than 25us and setup a timer on
-	 * FS to check for the bit and complete the transfer.
+	 * We spin on HS (no दीर्घer than than 25us and setup a समयr on
+	 * FS to check क्रम the bit and complete the transfer.
 	 */
-	if (is_host_active(musb)) {
-		if (musb->port1_status & USB_PORT_STAT_HIGH_SPEED)
+	अगर (is_host_active(musb)) अणु
+		अगर (musb->port1_status & USB_PORT_STAT_HIGH_SPEED)
 			is_hs = 1;
-	} else {
-		if (musb->g.speed == USB_SPEED_HIGH)
+	पूर्ण अन्यथा अणु
+		अगर (musb->g.speed == USB_SPEED_HIGH)
 			is_hs = 1;
-	}
-	if (is_hs) {
-		unsigned wait = 25;
+	पूर्ण
+	अगर (is_hs) अणु
+		अचिन्हित रुको = 25;
 
-		do {
-			empty = musb_is_tx_fifo_empty(hw_ep);
-			if (empty) {
-				cppi41_trans_done(cppi41_channel);
-				goto out;
-			}
-			wait--;
-			if (!wait)
-				break;
+		करो अणु
+			empty = musb_is_tx_fअगरo_empty(hw_ep);
+			अगर (empty) अणु
+				cppi41_trans_करोne(cppi41_channel);
+				जाओ out;
+			पूर्ण
+			रुको--;
+			अगर (!रुको)
+				अवरोध;
 			cpu_relax();
-		} while (1);
-	}
+		पूर्ण जबतक (1);
+	पूर्ण
 	list_add_tail(&cppi41_channel->tx_check,
 			&controller->early_tx_list);
-	if (!hrtimer_is_queued(&controller->early_tx)) {
-		unsigned long usecs = cppi41_channel->total_len / 10;
+	अगर (!hrसमयr_is_queued(&controller->early_tx)) अणु
+		अचिन्हित दीर्घ usecs = cppi41_channel->total_len / 10;
 
-		hrtimer_start_range_ns(&controller->early_tx,
+		hrसमयr_start_range_ns(&controller->early_tx,
 				       usecs * NSEC_PER_USEC,
 				       20 * NSEC_PER_USEC,
 				       HRTIMER_MODE_REL);
-	}
+	पूर्ण
 
 out:
 	spin_unlock_irqrestore(&musb->lock, flags);
-}
+पूर्ण
 
-static u32 update_ep_mode(unsigned ep, unsigned mode, u32 old)
-{
-	unsigned shift;
+अटल u32 update_ep_mode(अचिन्हित ep, अचिन्हित mode, u32 old)
+अणु
+	अचिन्हित shअगरt;
 
-	shift = (ep - 1) * 2;
-	old &= ~(3 << shift);
-	old |= mode << shift;
-	return old;
-}
+	shअगरt = (ep - 1) * 2;
+	old &= ~(3 << shअगरt);
+	old |= mode << shअगरt;
+	वापस old;
+पूर्ण
 
-static void cppi41_set_dma_mode(struct cppi41_dma_channel *cppi41_channel,
-		unsigned mode)
-{
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
-	struct musb *musb = controller->controller.musb;
+अटल व्योम cppi41_set_dma_mode(काष्ठा cppi41_dma_channel *cppi41_channel,
+		अचिन्हित mode)
+अणु
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
+	काष्ठा musb *musb = controller->controller.musb;
 	u32 port;
 	u32 new_mode;
 	u32 old_mode;
 
-	if (cppi41_channel->is_tx)
+	अगर (cppi41_channel->is_tx)
 		old_mode = controller->tx_mode;
-	else
+	अन्यथा
 		old_mode = controller->rx_mode;
 	port = cppi41_channel->port_num;
 	new_mode = update_ep_mode(port, mode, old_mode);
 
-	if (new_mode == old_mode)
-		return;
-	if (cppi41_channel->is_tx) {
+	अगर (new_mode == old_mode)
+		वापस;
+	अगर (cppi41_channel->is_tx) अणु
 		controller->tx_mode = new_mode;
-		musb_writel(musb->ctrl_base, USB_CTRL_TX_MODE, new_mode);
-	} else {
+		musb_ग_लिखोl(musb->ctrl_base, USB_CTRL_TX_MODE, new_mode);
+	पूर्ण अन्यथा अणु
 		controller->rx_mode = new_mode;
-		musb_writel(musb->ctrl_base, USB_CTRL_RX_MODE, new_mode);
-	}
-}
+		musb_ग_लिखोl(musb->ctrl_base, USB_CTRL_RX_MODE, new_mode);
+	पूर्ण
+पूर्ण
 
-static void da8xx_set_dma_mode(struct cppi41_dma_channel *cppi41_channel,
-		unsigned int mode)
-{
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
-	struct musb *musb = controller->controller.musb;
-	unsigned int shift;
+अटल व्योम da8xx_set_dma_mode(काष्ठा cppi41_dma_channel *cppi41_channel,
+		अचिन्हित पूर्णांक mode)
+अणु
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
+	काष्ठा musb *musb = controller->controller.musb;
+	अचिन्हित पूर्णांक shअगरt;
 	u32 port;
 	u32 new_mode;
 	u32 old_mode;
@@ -376,49 +377,49 @@ static void da8xx_set_dma_mode(struct cppi41_dma_channel *cppi41_channel,
 	old_mode = controller->tx_mode;
 	port = cppi41_channel->port_num;
 
-	shift = (port - 1) * 4;
-	if (!cppi41_channel->is_tx)
-		shift += 16;
-	new_mode = old_mode & ~(3 << shift);
-	new_mode |= mode << shift;
+	shअगरt = (port - 1) * 4;
+	अगर (!cppi41_channel->is_tx)
+		shअगरt += 16;
+	new_mode = old_mode & ~(3 << shअगरt);
+	new_mode |= mode << shअगरt;
 
-	if (new_mode == old_mode)
-		return;
+	अगर (new_mode == old_mode)
+		वापस;
 	controller->tx_mode = new_mode;
-	musb_writel(musb->ctrl_base, DA8XX_USB_MODE, new_mode);
-}
+	musb_ग_लिखोl(musb->ctrl_base, DA8XX_USB_MODE, new_mode);
+पूर्ण
 
 
-static void cppi41_set_autoreq_mode(struct cppi41_dma_channel *cppi41_channel,
-		unsigned mode)
-{
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
+अटल व्योम cppi41_set_स्वतःreq_mode(काष्ठा cppi41_dma_channel *cppi41_channel,
+		अचिन्हित mode)
+अणु
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
 	u32 port;
 	u32 new_mode;
 	u32 old_mode;
 
-	old_mode = controller->auto_req;
+	old_mode = controller->स्वतः_req;
 	port = cppi41_channel->port_num;
 	new_mode = update_ep_mode(port, mode, old_mode);
 
-	if (new_mode == old_mode)
-		return;
-	controller->auto_req = new_mode;
-	musb_writel(controller->controller.musb->ctrl_base,
-		    controller->autoreq_reg, new_mode);
-}
+	अगर (new_mode == old_mode)
+		वापस;
+	controller->स्वतः_req = new_mode;
+	musb_ग_लिखोl(controller->controller.musb->ctrl_base,
+		    controller->स्वतःreq_reg, new_mode);
+पूर्ण
 
-static bool cppi41_configure_channel(struct dma_channel *channel,
+अटल bool cppi41_configure_channel(काष्ठा dma_channel *channel,
 				u16 packet_sz, u8 mode,
 				dma_addr_t dma_addr, u32 len)
-{
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
-	struct dma_chan *dc = cppi41_channel->dc;
-	struct dma_async_tx_descriptor *dma_desc;
-	enum dma_transfer_direction direction;
-	struct musb *musb = cppi41_channel->controller->controller.musb;
-	unsigned use_gen_rndis = 0;
+अणु
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
+	काष्ठा dma_chan *dc = cppi41_channel->dc;
+	काष्ठा dma_async_tx_descriptor *dma_desc;
+	क्रमागत dma_transfer_direction direction;
+	काष्ठा musb *musb = cppi41_channel->controller->controller.musb;
+	अचिन्हित use_gen_rndis = 0;
 
 	cppi41_channel->buf_addr = dma_addr;
 	cppi41_channel->total_len = len;
@@ -428,282 +429,282 @@ static bool cppi41_configure_channel(struct dma_channel *channel,
 
 	/*
 	 * Due to AM335x' Advisory 1.0.13 we are not allowed to transfer more
-	 * than max packet size at a time.
+	 * than max packet size at a समय.
 	 */
-	if (cppi41_channel->is_tx)
+	अगर (cppi41_channel->is_tx)
 		use_gen_rndis = 1;
 
-	if (use_gen_rndis) {
+	अगर (use_gen_rndis) अणु
 		/* RNDIS mode */
-		if (len > packet_sz) {
-			musb_writel(musb->ctrl_base,
+		अगर (len > packet_sz) अणु
+			musb_ग_लिखोl(musb->ctrl_base,
 				RNDIS_REG(cppi41_channel->port_num), len);
 			/* gen rndis */
 			controller->set_dma_mode(cppi41_channel,
 					EP_MODE_DMA_GEN_RNDIS);
 
-			/* auto req */
-			cppi41_set_autoreq_mode(cppi41_channel,
+			/* स्वतः req */
+			cppi41_set_स्वतःreq_mode(cppi41_channel,
 					EP_MODE_AUTOREQ_ALL_NEOP);
-		} else {
-			musb_writel(musb->ctrl_base,
+		पूर्ण अन्यथा अणु
+			musb_ग_लिखोl(musb->ctrl_base,
 					RNDIS_REG(cppi41_channel->port_num), 0);
 			controller->set_dma_mode(cppi41_channel,
 					EP_MODE_DMA_TRANSPARENT);
-			cppi41_set_autoreq_mode(cppi41_channel,
+			cppi41_set_स्वतःreq_mode(cppi41_channel,
 					EP_MODE_AUTOREQ_NONE);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* fallback mode */
 		controller->set_dma_mode(cppi41_channel,
 				EP_MODE_DMA_TRANSPARENT);
-		cppi41_set_autoreq_mode(cppi41_channel, EP_MODE_AUTOREQ_NONE);
+		cppi41_set_स्वतःreq_mode(cppi41_channel, EP_MODE_AUTOREQ_NONE);
 		len = min_t(u32, packet_sz, len);
-	}
+	पूर्ण
 	cppi41_channel->prog_len = len;
 	direction = cppi41_channel->is_tx ? DMA_MEM_TO_DEV : DMA_DEV_TO_MEM;
 	dma_desc = dmaengine_prep_slave_single(dc, dma_addr, len, direction,
 			DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!dma_desc)
-		return false;
+	अगर (!dma_desc)
+		वापस false;
 
 	dma_desc->callback_result = cppi41_dma_callback;
 	dma_desc->callback_param = channel;
 	cppi41_channel->cookie = dma_desc->tx_submit(dma_desc);
-	cppi41_channel->channel.rx_packet_done = false;
+	cppi41_channel->channel.rx_packet_करोne = false;
 
 	trace_musb_cppi41_config(cppi41_channel);
 
 	save_rx_toggle(cppi41_channel);
 	dma_async_issue_pending(dc);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static struct dma_channel *cppi41_dma_channel_allocate(struct dma_controller *c,
-				struct musb_hw_ep *hw_ep, u8 is_tx)
-{
-	struct cppi41_dma_controller *controller = container_of(c,
-			struct cppi41_dma_controller, controller);
-	struct cppi41_dma_channel *cppi41_channel = NULL;
+अटल काष्ठा dma_channel *cppi41_dma_channel_allocate(काष्ठा dma_controller *c,
+				काष्ठा musb_hw_ep *hw_ep, u8 is_tx)
+अणु
+	काष्ठा cppi41_dma_controller *controller = container_of(c,
+			काष्ठा cppi41_dma_controller, controller);
+	काष्ठा cppi41_dma_channel *cppi41_channel = शून्य;
 	u8 ch_num = hw_ep->epnum - 1;
 
-	if (ch_num >= controller->num_channels)
-		return NULL;
+	अगर (ch_num >= controller->num_channels)
+		वापस शून्य;
 
-	if (is_tx)
+	अगर (is_tx)
 		cppi41_channel = &controller->tx_channel[ch_num];
-	else
+	अन्यथा
 		cppi41_channel = &controller->rx_channel[ch_num];
 
-	if (!cppi41_channel->dc)
-		return NULL;
+	अगर (!cppi41_channel->dc)
+		वापस शून्य;
 
-	if (cppi41_channel->is_allocated)
-		return NULL;
+	अगर (cppi41_channel->is_allocated)
+		वापस शून्य;
 
 	cppi41_channel->hw_ep = hw_ep;
 	cppi41_channel->is_allocated = 1;
 
 	trace_musb_cppi41_alloc(cppi41_channel);
-	return &cppi41_channel->channel;
-}
+	वापस &cppi41_channel->channel;
+पूर्ण
 
-static void cppi41_dma_channel_release(struct dma_channel *channel)
-{
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
+अटल व्योम cppi41_dma_channel_release(काष्ठा dma_channel *channel)
+अणु
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
 
-	trace_musb_cppi41_free(cppi41_channel);
-	if (cppi41_channel->is_allocated) {
+	trace_musb_cppi41_मुक्त(cppi41_channel);
+	अगर (cppi41_channel->is_allocated) अणु
 		cppi41_channel->is_allocated = 0;
 		channel->status = MUSB_DMA_STATUS_FREE;
 		channel->actual_len = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cppi41_dma_channel_program(struct dma_channel *channel,
+अटल पूर्णांक cppi41_dma_channel_program(काष्ठा dma_channel *channel,
 				u16 packet_sz, u8 mode,
 				dma_addr_t dma_addr, u32 len)
-{
-	int ret;
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
-	int hb_mult = 0;
+अणु
+	पूर्णांक ret;
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
+	पूर्णांक hb_mult = 0;
 
 	BUG_ON(channel->status == MUSB_DMA_STATUS_UNKNOWN ||
 		channel->status == MUSB_DMA_STATUS_BUSY);
 
-	if (is_host_active(cppi41_channel->controller->controller.musb)) {
-		if (cppi41_channel->is_tx)
+	अगर (is_host_active(cppi41_channel->controller->controller.musb)) अणु
+		अगर (cppi41_channel->is_tx)
 			hb_mult = cppi41_channel->hw_ep->out_qh->hb_mult;
-		else
+		अन्यथा
 			hb_mult = cppi41_channel->hw_ep->in_qh->hb_mult;
-	}
+	पूर्ण
 
 	channel->status = MUSB_DMA_STATUS_BUSY;
 	channel->actual_len = 0;
 
-	if (hb_mult)
+	अगर (hb_mult)
 		packet_sz = hb_mult * (packet_sz & 0x7FF);
 
 	ret = cppi41_configure_channel(channel, packet_sz, mode, dma_addr, len);
-	if (!ret)
+	अगर (!ret)
 		channel->status = MUSB_DMA_STATUS_FREE;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cppi41_is_compatible(struct dma_channel *channel, u16 maxpacket,
-		void *buf, u32 length)
-{
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
-	struct musb *musb = controller->controller.musb;
+अटल पूर्णांक cppi41_is_compatible(काष्ठा dma_channel *channel, u16 maxpacket,
+		व्योम *buf, u32 length)
+अणु
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
+	काष्ठा musb *musb = controller->controller.musb;
 
-	if (is_host_active(musb)) {
+	अगर (is_host_active(musb)) अणु
 		WARN_ON(1);
-		return 1;
-	}
-	if (cppi41_channel->hw_ep->ep_in.type != USB_ENDPOINT_XFER_BULK)
-		return 0;
-	if (cppi41_channel->is_tx)
-		return 1;
-	/* AM335x Advisory 1.0.13. No workaround for device RX mode */
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	अगर (cppi41_channel->hw_ep->ep_in.type != USB_ENDPOINT_XFER_BULK)
+		वापस 0;
+	अगर (cppi41_channel->is_tx)
+		वापस 1;
+	/* AM335x Advisory 1.0.13. No workaround क्रम device RX mode */
+	वापस 0;
+पूर्ण
 
-static int cppi41_dma_channel_abort(struct dma_channel *channel)
-{
-	struct cppi41_dma_channel *cppi41_channel = channel->private_data;
-	struct cppi41_dma_controller *controller = cppi41_channel->controller;
-	struct musb *musb = controller->controller.musb;
-	void __iomem *epio = cppi41_channel->hw_ep->regs;
-	int tdbit;
-	int ret;
-	unsigned is_tx;
+अटल पूर्णांक cppi41_dma_channel_पात(काष्ठा dma_channel *channel)
+अणु
+	काष्ठा cppi41_dma_channel *cppi41_channel = channel->निजी_data;
+	काष्ठा cppi41_dma_controller *controller = cppi41_channel->controller;
+	काष्ठा musb *musb = controller->controller.musb;
+	व्योम __iomem *epio = cppi41_channel->hw_ep->regs;
+	पूर्णांक tdbit;
+	पूर्णांक ret;
+	अचिन्हित is_tx;
 	u16 csr;
 
 	is_tx = cppi41_channel->is_tx;
-	trace_musb_cppi41_abort(cppi41_channel);
+	trace_musb_cppi41_पात(cppi41_channel);
 
-	if (cppi41_channel->channel.status == MUSB_DMA_STATUS_FREE)
-		return 0;
+	अगर (cppi41_channel->channel.status == MUSB_DMA_STATUS_FREE)
+		वापस 0;
 
 	list_del_init(&cppi41_channel->tx_check);
-	if (is_tx) {
-		csr = musb_readw(epio, MUSB_TXCSR);
+	अगर (is_tx) अणु
+		csr = musb_पढ़ोw(epio, MUSB_TXCSR);
 		csr &= ~MUSB_TXCSR_DMAENAB;
-		musb_writew(epio, MUSB_TXCSR, csr);
-	} else {
-		cppi41_set_autoreq_mode(cppi41_channel, EP_MODE_AUTOREQ_NONE);
+		musb_ग_लिखोw(epio, MUSB_TXCSR, csr);
+	पूर्ण अन्यथा अणु
+		cppi41_set_स्वतःreq_mode(cppi41_channel, EP_MODE_AUTOREQ_NONE);
 
-		/* delay to drain to cppi dma pipeline for isoch */
+		/* delay to drain to cppi dma pipeline क्रम isoch */
 		udelay(250);
 
-		csr = musb_readw(epio, MUSB_RXCSR);
+		csr = musb_पढ़ोw(epio, MUSB_RXCSR);
 		csr &= ~(MUSB_RXCSR_H_REQPKT | MUSB_RXCSR_DMAENAB);
-		musb_writew(epio, MUSB_RXCSR, csr);
+		musb_ग_लिखोw(epio, MUSB_RXCSR, csr);
 
-		/* wait to drain cppi dma pipe line */
+		/* रुको to drain cppi dma pipe line */
 		udelay(50);
 
-		csr = musb_readw(epio, MUSB_RXCSR);
-		if (csr & MUSB_RXCSR_RXPKTRDY) {
+		csr = musb_पढ़ोw(epio, MUSB_RXCSR);
+		अगर (csr & MUSB_RXCSR_RXPKTRDY) अणु
 			csr |= MUSB_RXCSR_FLUSHFIFO;
-			musb_writew(epio, MUSB_RXCSR, csr);
-			musb_writew(epio, MUSB_RXCSR, csr);
-		}
-	}
+			musb_ग_लिखोw(epio, MUSB_RXCSR, csr);
+			musb_ग_लिखोw(epio, MUSB_RXCSR, csr);
+		पूर्ण
+	पूर्ण
 
-	/* DA8xx Advisory 2.3.27: wait 250 ms before to start the teardown */
-	if (musb->ops->quirks & MUSB_DA8XX)
+	/* DA8xx Advisory 2.3.27: रुको 250 ms beक्रमe to start the tearकरोwn */
+	अगर (musb->ops->quirks & MUSB_DA8XX)
 		mdelay(250);
 
 	tdbit = 1 << cppi41_channel->port_num;
-	if (is_tx)
+	अगर (is_tx)
 		tdbit <<= 16;
 
-	do {
-		if (is_tx)
-			musb_writel(musb->ctrl_base, controller->tdown_reg,
+	करो अणु
+		अगर (is_tx)
+			musb_ग_लिखोl(musb->ctrl_base, controller->tकरोwn_reg,
 				    tdbit);
 		ret = dmaengine_terminate_all(cppi41_channel->dc);
-	} while (ret == -EAGAIN);
+	पूर्ण जबतक (ret == -EAGAIN);
 
-	if (is_tx) {
-		musb_writel(musb->ctrl_base, controller->tdown_reg, tdbit);
+	अगर (is_tx) अणु
+		musb_ग_लिखोl(musb->ctrl_base, controller->tकरोwn_reg, tdbit);
 
-		csr = musb_readw(epio, MUSB_TXCSR);
-		if (csr & MUSB_TXCSR_TXPKTRDY) {
+		csr = musb_पढ़ोw(epio, MUSB_TXCSR);
+		अगर (csr & MUSB_TXCSR_TXPKTRDY) अणु
 			csr |= MUSB_TXCSR_FLUSHFIFO;
-			musb_writew(epio, MUSB_TXCSR, csr);
-		}
-	}
+			musb_ग_लिखोw(epio, MUSB_TXCSR, csr);
+		पूर्ण
+	पूर्ण
 
 	cppi41_channel->channel.status = MUSB_DMA_STATUS_FREE;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cppi41_release_all_dma_chans(struct cppi41_dma_controller *ctrl)
-{
-	struct dma_chan *dc;
-	int i;
+अटल व्योम cppi41_release_all_dma_chans(काष्ठा cppi41_dma_controller *ctrl)
+अणु
+	काष्ठा dma_chan *dc;
+	पूर्णांक i;
 
-	for (i = 0; i < ctrl->num_channels; i++) {
+	क्रम (i = 0; i < ctrl->num_channels; i++) अणु
 		dc = ctrl->tx_channel[i].dc;
-		if (dc)
+		अगर (dc)
 			dma_release_channel(dc);
 		dc = ctrl->rx_channel[i].dc;
-		if (dc)
+		अगर (dc)
 			dma_release_channel(dc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cppi41_dma_controller_stop(struct cppi41_dma_controller *controller)
-{
+अटल व्योम cppi41_dma_controller_stop(काष्ठा cppi41_dma_controller *controller)
+अणु
 	cppi41_release_all_dma_chans(controller);
-}
+पूर्ण
 
-static int cppi41_dma_controller_start(struct cppi41_dma_controller *controller)
-{
-	struct musb *musb = controller->controller.musb;
-	struct device *dev = musb->controller;
-	struct device_node *np = dev->parent->of_node;
-	struct cppi41_dma_channel *cppi41_channel;
-	int count;
-	int i;
-	int ret;
+अटल पूर्णांक cppi41_dma_controller_start(काष्ठा cppi41_dma_controller *controller)
+अणु
+	काष्ठा musb *musb = controller->controller.musb;
+	काष्ठा device *dev = musb->controller;
+	काष्ठा device_node *np = dev->parent->of_node;
+	काष्ठा cppi41_dma_channel *cppi41_channel;
+	पूर्णांक count;
+	पूर्णांक i;
+	पूर्णांक ret;
 
 	count = of_property_count_strings(np, "dma-names");
-	if (count < 0)
-		return count;
+	अगर (count < 0)
+		वापस count;
 
-	for (i = 0; i < count; i++) {
-		struct dma_chan *dc;
-		struct dma_channel *musb_dma;
-		const char *str;
-		unsigned is_tx;
-		unsigned int port;
+	क्रम (i = 0; i < count; i++) अणु
+		काष्ठा dma_chan *dc;
+		काष्ठा dma_channel *musb_dma;
+		स्थिर अक्षर *str;
+		अचिन्हित is_tx;
+		अचिन्हित पूर्णांक port;
 
-		ret = of_property_read_string_index(np, "dma-names", i, &str);
-		if (ret)
-			goto err;
-		if (strstarts(str, "tx"))
+		ret = of_property_पढ़ो_string_index(np, "dma-names", i, &str);
+		अगर (ret)
+			जाओ err;
+		अगर (strstarts(str, "tx"))
 			is_tx = 1;
-		else if (strstarts(str, "rx"))
+		अन्यथा अगर (strstarts(str, "rx"))
 			is_tx = 0;
-		else {
+		अन्यथा अणु
 			dev_err(dev, "Wrong dmatype %s\n", str);
-			goto err;
-		}
-		ret = kstrtouint(str + 2, 0, &port);
-		if (ret)
-			goto err;
+			जाओ err;
+		पूर्ण
+		ret = kstrtouपूर्णांक(str + 2, 0, &port);
+		अगर (ret)
+			जाओ err;
 
 		ret = -EINVAL;
-		if (port > controller->num_channels || !port)
-			goto err;
-		if (is_tx)
+		अगर (port > controller->num_channels || !port)
+			जाओ err;
+		अगर (is_tx)
 			cppi41_channel = &controller->tx_channel[port - 1];
-		else
+		अन्यथा
 			cppi41_channel = &controller->rx_channel[port - 1];
 
 		cppi41_channel->controller = controller;
@@ -712,102 +713,102 @@ static int cppi41_dma_controller_start(struct cppi41_dma_controller *controller)
 		INIT_LIST_HEAD(&cppi41_channel->tx_check);
 
 		musb_dma = &cppi41_channel->channel;
-		musb_dma->private_data = cppi41_channel;
+		musb_dma->निजी_data = cppi41_channel;
 		musb_dma->status = MUSB_DMA_STATUS_FREE;
 		musb_dma->max_len = SZ_4M;
 
 		dc = dma_request_chan(dev->parent, str);
-		if (IS_ERR(dc)) {
+		अगर (IS_ERR(dc)) अणु
 			ret = PTR_ERR(dc);
-			if (ret != -EPROBE_DEFER)
+			अगर (ret != -EPROBE_DEFER)
 				dev_err(dev, "Failed to request %s: %d.\n",
 					str, ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		cppi41_channel->dc = dc;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 err:
 	cppi41_release_all_dma_chans(controller);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void cppi41_dma_controller_destroy(struct dma_controller *c)
-{
-	struct cppi41_dma_controller *controller = container_of(c,
-			struct cppi41_dma_controller, controller);
+व्योम cppi41_dma_controller_destroy(काष्ठा dma_controller *c)
+अणु
+	काष्ठा cppi41_dma_controller *controller = container_of(c,
+			काष्ठा cppi41_dma_controller, controller);
 
-	hrtimer_cancel(&controller->early_tx);
+	hrसमयr_cancel(&controller->early_tx);
 	cppi41_dma_controller_stop(controller);
-	kfree(controller->rx_channel);
-	kfree(controller->tx_channel);
-	kfree(controller);
-}
+	kमुक्त(controller->rx_channel);
+	kमुक्त(controller->tx_channel);
+	kमुक्त(controller);
+पूर्ण
 EXPORT_SYMBOL_GPL(cppi41_dma_controller_destroy);
 
-struct dma_controller *
-cppi41_dma_controller_create(struct musb *musb, void __iomem *base)
-{
-	struct cppi41_dma_controller *controller;
-	int channel_size;
-	int ret = 0;
+काष्ठा dma_controller *
+cppi41_dma_controller_create(काष्ठा musb *musb, व्योम __iomem *base)
+अणु
+	काष्ठा cppi41_dma_controller *controller;
+	पूर्णांक channel_size;
+	पूर्णांक ret = 0;
 
-	if (!musb->controller->parent->of_node) {
+	अगर (!musb->controller->parent->of_node) अणु
 		dev_err(musb->controller, "Need DT for the DMA engine.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	controller = kzalloc(sizeof(*controller), GFP_KERNEL);
-	if (!controller)
-		goto kzalloc_fail;
+	controller = kzalloc(माप(*controller), GFP_KERNEL);
+	अगर (!controller)
+		जाओ kzalloc_fail;
 
-	hrtimer_init(&controller->early_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+	hrसमयr_init(&controller->early_tx, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	controller->early_tx.function = cppi41_recheck_tx_req;
 	INIT_LIST_HEAD(&controller->early_tx_list);
 
 	controller->controller.channel_alloc = cppi41_dma_channel_allocate;
 	controller->controller.channel_release = cppi41_dma_channel_release;
 	controller->controller.channel_program = cppi41_dma_channel_program;
-	controller->controller.channel_abort = cppi41_dma_channel_abort;
+	controller->controller.channel_पात = cppi41_dma_channel_पात;
 	controller->controller.is_compatible = cppi41_is_compatible;
 	controller->controller.musb = musb;
 
-	if (musb->ops->quirks & MUSB_DA8XX) {
-		controller->tdown_reg = DA8XX_USB_TEARDOWN;
-		controller->autoreq_reg = DA8XX_USB_AUTOREQ;
+	अगर (musb->ops->quirks & MUSB_DA8XX) अणु
+		controller->tकरोwn_reg = DA8XX_USB_TEARDOWN;
+		controller->स्वतःreq_reg = DA8XX_USB_AUTOREQ;
 		controller->set_dma_mode = da8xx_set_dma_mode;
 		controller->num_channels = DA8XX_DMA_NUM_CHANNELS;
-	} else {
-		controller->tdown_reg = USB_TDOWN;
-		controller->autoreq_reg = USB_CTRL_AUTOREQ;
+	पूर्ण अन्यथा अणु
+		controller->tकरोwn_reg = USB_TDOWN;
+		controller->स्वतःreq_reg = USB_CTRL_AUTOREQ;
 		controller->set_dma_mode = cppi41_set_dma_mode;
 		controller->num_channels = MUSB_DMA_NUM_CHANNELS;
-	}
+	पूर्ण
 
 	channel_size = controller->num_channels *
-			sizeof(struct cppi41_dma_channel);
+			माप(काष्ठा cppi41_dma_channel);
 	controller->rx_channel = kzalloc(channel_size, GFP_KERNEL);
-	if (!controller->rx_channel)
-		goto rx_channel_alloc_fail;
+	अगर (!controller->rx_channel)
+		जाओ rx_channel_alloc_fail;
 	controller->tx_channel = kzalloc(channel_size, GFP_KERNEL);
-	if (!controller->tx_channel)
-		goto tx_channel_alloc_fail;
+	अगर (!controller->tx_channel)
+		जाओ tx_channel_alloc_fail;
 
 	ret = cppi41_dma_controller_start(controller);
-	if (ret)
-		goto plat_get_fail;
-	return &controller->controller;
+	अगर (ret)
+		जाओ plat_get_fail;
+	वापस &controller->controller;
 
 plat_get_fail:
-	kfree(controller->tx_channel);
+	kमुक्त(controller->tx_channel);
 tx_channel_alloc_fail:
-	kfree(controller->rx_channel);
+	kमुक्त(controller->rx_channel);
 rx_channel_alloc_fail:
-	kfree(controller);
+	kमुक्त(controller);
 kzalloc_fail:
-	if (ret == -EPROBE_DEFER)
-		return ERR_PTR(ret);
-	return NULL;
-}
+	अगर (ret == -EPROBE_DEFER)
+		वापस ERR_PTR(ret);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(cppi41_dma_controller_create);

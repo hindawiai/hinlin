@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  sync stress test: parallelism
  *  Copyright 2015-2016 Collabora Ltd.
@@ -6,12 +7,12 @@
  *
  *  Copyright 2012 Google, Inc
  *
- *  Permission is hereby granted, free of charge, to any person obtaining a
- *  copy of this software and associated documentation files (the "Software"),
+ *  Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ *  copy of this software and associated करोcumentation files (the "Software"),
  *  to deal in the Software without restriction, including without limitation
- *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- *  Software is furnished to do so, subject to the following conditions:
+ *  Software is furnished to करो so, subject to the following conditions:
  *
  *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
@@ -25,87 +26,87 @@
  *  OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <pthread.h>
+#समावेश <pthपढ़ो.h>
 
-#include "sync.h"
-#include "sw_sync.h"
-#include "synctest.h"
+#समावेश "sync.h"
+#समावेश "sw_sync.h"
+#समावेश "synctest.h"
 
-static struct {
-	int iterations;
-	int timeline;
-	int counter;
-} test_data_two_threads;
+अटल काष्ठा अणु
+	पूर्णांक iterations;
+	पूर्णांक समयline;
+	पूर्णांक counter;
+पूर्ण test_data_two_thपढ़ोs;
 
-static int test_stress_two_threads_shared_timeline_thread(void *d)
-{
-	int thread_id = (long)d;
-	int timeline = test_data_two_threads.timeline;
-	int iterations = test_data_two_threads.iterations;
-	int fence, valid, ret, i;
+अटल पूर्णांक test_stress_two_thपढ़ोs_shared_समयline_thपढ़ो(व्योम *d)
+अणु
+	पूर्णांक thपढ़ो_id = (दीर्घ)d;
+	पूर्णांक समयline = test_data_two_thपढ़ोs.समयline;
+	पूर्णांक iterations = test_data_two_thपढ़ोs.iterations;
+	पूर्णांक fence, valid, ret, i;
 
-	for (i = 0; i < iterations; i++) {
-		fence = sw_sync_fence_create(timeline, "fence",
-					     i * 2 + thread_id);
+	क्रम (i = 0; i < iterations; i++) अणु
+		fence = sw_sync_fence_create(समयline, "fence",
+					     i * 2 + thपढ़ो_id);
 		valid = sw_sync_fence_is_valid(fence);
 		ASSERT(valid, "Failure allocating fence\n");
 
-		/* Wait on the prior thread to complete */
-		ret = sync_wait(fence, -1);
+		/* Wait on the prior thपढ़ो to complete */
+		ret = sync_रुको(fence, -1);
 		ASSERT(ret > 0, "Problem occurred on prior thread\n");
 
 		/*
-		 * Confirm the previous thread's writes are visible
+		 * Confirm the previous thपढ़ो's ग_लिखोs are visible
 		 * and then increment
 		 */
-		ASSERT(test_data_two_threads.counter == i * 2 + thread_id,
+		ASSERT(test_data_two_thपढ़ोs.counter == i * 2 + thपढ़ो_id,
 		       "Counter got damaged!\n");
-		test_data_two_threads.counter++;
+		test_data_two_thपढ़ोs.counter++;
 
-		/* Kick off the other thread */
-		ret = sw_sync_timeline_inc(timeline, 1);
+		/* Kick off the other thपढ़ो */
+		ret = sw_sync_समयline_inc(समयline, 1);
 		ASSERT(ret == 0, "Advancing timeline failed\n");
 
 		sw_sync_fence_destroy(fence);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test_stress_two_threads_shared_timeline(void)
-{
-	pthread_t a, b;
-	int valid;
-	int timeline = sw_sync_timeline_create();
+पूर्णांक test_stress_two_thपढ़ोs_shared_समयline(व्योम)
+अणु
+	pthपढ़ो_t a, b;
+	पूर्णांक valid;
+	पूर्णांक समयline = sw_sync_समयline_create();
 
-	valid = sw_sync_timeline_is_valid(timeline);
+	valid = sw_sync_समयline_is_valid(समयline);
 	ASSERT(valid, "Failure allocating timeline\n");
 
-	test_data_two_threads.iterations = 1 << 16;
-	test_data_two_threads.counter = 0;
-	test_data_two_threads.timeline = timeline;
+	test_data_two_thपढ़ोs.iterations = 1 << 16;
+	test_data_two_thपढ़ोs.counter = 0;
+	test_data_two_thपढ़ोs.समयline = समयline;
 
 	/*
-	 * Use a single timeline to synchronize two threads
+	 * Use a single समयline to synchronize two thपढ़ोs
 	 * hammmering on the same counter.
 	 */
 
-	pthread_create(&a, NULL, (void *(*)(void *))
-		       test_stress_two_threads_shared_timeline_thread,
-		       (void *)0);
-	pthread_create(&b, NULL, (void *(*)(void *))
-		       test_stress_two_threads_shared_timeline_thread,
-		       (void *)1);
+	pthपढ़ो_create(&a, शून्य, (व्योम *(*)(व्योम *))
+		       test_stress_two_thपढ़ोs_shared_समयline_thपढ़ो,
+		       (व्योम *)0);
+	pthपढ़ो_create(&b, शून्य, (व्योम *(*)(व्योम *))
+		       test_stress_two_thपढ़ोs_shared_समयline_thपढ़ो,
+		       (व्योम *)1);
 
-	pthread_join(a, NULL);
-	pthread_join(b, NULL);
+	pthपढ़ो_join(a, शून्य);
+	pthपढ़ो_join(b, शून्य);
 
-	/* make sure the threads did not trample on one another */
-	ASSERT(test_data_two_threads.counter ==
-	       test_data_two_threads.iterations * 2,
+	/* make sure the thपढ़ोs did not trample on one another */
+	ASSERT(test_data_two_thपढ़ोs.counter ==
+	       test_data_two_thपढ़ोs.iterations * 2,
 	       "Counter has unexpected value\n");
 
-	sw_sync_timeline_destroy(timeline);
+	sw_sync_समयline_destroy(समयline);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

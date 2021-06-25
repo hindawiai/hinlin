@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for Arizona micsupp regulator
+ * Platक्रमm data क्रम Arizona micsupp regulator
  *
  * Copyright 2017 Cirrus Logic
  */
 
-#ifndef ARIZONA_MICSUPP_H
-#define ARIZONA_MICSUPP_H
+#अगर_अघोषित ARIZONA_MICSUPP_H
+#घोषणा ARIZONA_MICSUPP_H
 
-struct regulator_init_data;
+काष्ठा regulator_init_data;
 
-struct arizona_micsupp_pdata {
-	/** Regulator configuration for micsupp */
-	const struct regulator_init_data *init_data;
-};
+काष्ठा arizona_micsupp_pdata अणु
+	/** Regulator configuration क्रम micsupp */
+	स्थिर काष्ठा regulator_init_data *init_data;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

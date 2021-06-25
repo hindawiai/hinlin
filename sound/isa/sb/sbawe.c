@@ -1,2 +1,3 @@
-#define SNDRV_SBAWE
-#include "sb16.c"
+<शैली गुरु>
+#घोषणा SNDRV_SBAWE
+#समावेश "sb16.c"

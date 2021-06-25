@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,14 +22,14 @@
  *
  *
  */
-#include <linux/debugfs.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "amdgpu.h"
-#include "amdgpu_securedisplay.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_securedisplay.h"
 
 /**
- * DOC: AMDGPU SECUREDISPLAY debugfs test interface
+ * DOC: AMDGPU SECUREDISPLAY debugfs test पूर्णांकerface
  *
  * how to use?
  * echo opcode <value> > <debugfs_dir>/dri/xxx/securedisplay_test
@@ -36,140 +37,140 @@
  * eg. echo 2 phy_id > <debugfs_dir>/dri/xxx/securedisplay_test
  *
  * opcode:
- * 1：Query whether TA is responding used only for validation pupose
- * 2: Send region of Interest and CRC value to I2C. (uint32)phy_id is
- * send to determine which DIO scratch register should be used to get
+ * 1oञQuery whether TA is responding used only क्रम validation pupose
+ * 2: Send region of Interest and CRC value to I2C. (uपूर्णांक32)phy_id is
+ * send to determine which DIO scratch रेजिस्टर should be used to get
  * ROI and receive i2c_buf as the output.
  *
- * You can refer more detail from header file ta_securedisplay_if.h
+ * You can refer more detail from header file ta_securedisplay_अगर.h
  *
  */
 
-void psp_securedisplay_parse_resp_status(struct psp_context *psp,
-	enum ta_securedisplay_status status)
-{
-	switch (status) {
-	case TA_SECUREDISPLAY_STATUS__SUCCESS:
-		break;
-	case TA_SECUREDISPLAY_STATUS__GENERIC_FAILURE:
+व्योम psp_securedisplay_parse_resp_status(काष्ठा psp_context *psp,
+	क्रमागत ta_securedisplay_status status)
+अणु
+	चयन (status) अणु
+	हाल TA_SECUREDISPLAY_STATUS__SUCCESS:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__GENERIC_FAILURE:
 		dev_err(psp->adev->dev, "Secure display: Generic Failure.");
-		break;
-	case TA_SECUREDISPLAY_STATUS__INVALID_PARAMETER:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__INVALID_PARAMETER:
 		dev_err(psp->adev->dev, "Secure display: Invalid Parameter.");
-		break;
-	case TA_SECUREDISPLAY_STATUS__NULL_POINTER:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__शून्य_POINTER:
 		dev_err(psp->adev->dev, "Secure display: Null Pointer.");
-		break;
-	case TA_SECUREDISPLAY_STATUS__I2C_WRITE_ERROR:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__I2C_WRITE_ERROR:
 		dev_err(psp->adev->dev, "Secure display: Failed to write to I2C.");
-		break;
-	case TA_SECUREDISPLAY_STATUS__READ_DIO_SCRATCH_ERROR:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__READ_DIO_SCRATCH_ERROR:
 		dev_err(psp->adev->dev, "Secure display: Failed to Read DIO Scratch Register.");
-		break;
-	case TA_SECUREDISPLAY_STATUS__READ_CRC_ERROR:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__READ_CRC_ERROR:
 		dev_err(psp->adev->dev, "Secure display: Failed to Read CRC");
-		break;
-	case TA_SECUREDISPLAY_STATUS__I2C_INIT_ERROR:
+		अवरोध;
+	हाल TA_SECUREDISPLAY_STATUS__I2C_INIT_ERROR:
 		dev_err(psp->adev->dev, "Secure display: Failed to initialize I2C.");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(psp->adev->dev, "Secure display: Failed to parse status: %d\n", status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void psp_prep_securedisplay_cmd_buf(struct psp_context *psp, struct securedisplay_cmd **cmd,
-	enum ta_securedisplay_command command_id)
-{
-	*cmd = (struct securedisplay_cmd *)psp->securedisplay_context.securedisplay_shared_buf;
-	memset(*cmd, 0, sizeof(struct securedisplay_cmd));
+व्योम psp_prep_securedisplay_cmd_buf(काष्ठा psp_context *psp, काष्ठा securedisplay_cmd **cmd,
+	क्रमागत ta_securedisplay_command command_id)
+अणु
+	*cmd = (काष्ठा securedisplay_cmd *)psp->securedisplay_context.securedisplay_shared_buf;
+	स_रखो(*cmd, 0, माप(काष्ठा securedisplay_cmd));
 	(*cmd)->status = TA_SECUREDISPLAY_STATUS__GENERIC_FAILURE;
 	(*cmd)->cmd_id = command_id;
-}
+पूर्ण
 
-static ssize_t amdgpu_securedisplay_debugfs_write(struct file *f, const char __user *buf,
-		size_t size, loff_t *pos)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)file_inode(f)->i_private;
-	struct psp_context *psp = &adev->psp;
-	struct securedisplay_cmd *securedisplay_cmd;
-	struct drm_device *dev = adev_to_drm(adev);
-	uint32_t phy_id;
-	uint32_t op;
-	char str[64];
-	int ret;
+अटल sमाप_प्रकार amdgpu_securedisplay_debugfs_ग_लिखो(काष्ठा file *f, स्थिर अक्षर __user *buf,
+		माप_प्रकार size, loff_t *pos)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)file_inode(f)->i_निजी;
+	काष्ठा psp_context *psp = &adev->psp;
+	काष्ठा securedisplay_cmd *securedisplay_cmd;
+	काष्ठा drm_device *dev = adev_to_drm(adev);
+	uपूर्णांक32_t phy_id;
+	uपूर्णांक32_t op;
+	अक्षर str[64];
+	पूर्णांक ret;
 
-	if (*pos || size > sizeof(str) - 1)
-		return -EINVAL;
+	अगर (*pos || size > माप(str) - 1)
+		वापस -EINVAL;
 
-	memset(str,  0, sizeof(str));
+	स_रखो(str,  0, माप(str));
 	ret = copy_from_user(str, buf, size);
-	if (ret)
-		return -EFAULT;
+	अगर (ret)
+		वापस -EFAULT;
 
-	ret = pm_runtime_get_sync(dev->dev);
-	if (ret < 0) {
-		pm_runtime_put_autosuspend(dev->dev);
-		return ret;
-	}
+	ret = pm_runसमय_get_sync(dev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_स्वतःsuspend(dev->dev);
+		वापस ret;
+	पूर्ण
 
-	if (size < 3)
-		sscanf(str, "%u ", &op);
-	else
-		sscanf(str, "%u %u", &op, &phy_id);
+	अगर (size < 3)
+		माला_पूछो(str, "%u ", &op);
+	अन्यथा
+		माला_पूछो(str, "%u %u", &op, &phy_id);
 
-	switch (op) {
-	case 1:
+	चयन (op) अणु
+	हाल 1:
 		psp_prep_securedisplay_cmd_buf(psp, &securedisplay_cmd,
 			TA_SECUREDISPLAY_COMMAND__QUERY_TA);
 		ret = psp_securedisplay_invoke(psp, TA_SECUREDISPLAY_COMMAND__QUERY_TA);
-		if (!ret) {
-			if (securedisplay_cmd->status == TA_SECUREDISPLAY_STATUS__SUCCESS)
+		अगर (!ret) अणु
+			अगर (securedisplay_cmd->status == TA_SECUREDISPLAY_STATUS__SUCCESS)
 				dev_info(adev->dev, "SECUREDISPLAY: query securedisplay TA ret is 0x%X\n",
 					securedisplay_cmd->securedisplay_out_message.query_ta.query_cmd_ret);
-			else
+			अन्यथा
 				psp_securedisplay_parse_resp_status(psp, securedisplay_cmd->status);
-		}
-		break;
-	case 2:
+		पूर्ण
+		अवरोध;
+	हाल 2:
 		psp_prep_securedisplay_cmd_buf(psp, &securedisplay_cmd,
 			TA_SECUREDISPLAY_COMMAND__SEND_ROI_CRC);
 		securedisplay_cmd->securedisplay_in_message.send_roi_crc.phy_id = phy_id;
 		ret = psp_securedisplay_invoke(psp, TA_SECUREDISPLAY_COMMAND__SEND_ROI_CRC);
-		if (!ret) {
-			if (securedisplay_cmd->status == TA_SECUREDISPLAY_STATUS__SUCCESS) {
+		अगर (!ret) अणु
+			अगर (securedisplay_cmd->status == TA_SECUREDISPLAY_STATUS__SUCCESS) अणु
 				dev_info(adev->dev, "SECUREDISPLAY: I2C buffer out put is: %*ph\n",
 					 TA_SECUREDISPLAY_I2C_BUFFER_SIZE,
 					 securedisplay_cmd->securedisplay_out_message.send_roi_crc.i2c_buf);
-			} else {
+			पूर्ण अन्यथा अणु
 				psp_securedisplay_parse_resp_status(psp, securedisplay_cmd->status);
-			}
-		}
-		break;
-	default:
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(adev->dev, "Invalid input: %s\n", str);
-	}
+	पूर्ण
 
-	pm_runtime_mark_last_busy(dev->dev);
-	pm_runtime_put_autosuspend(dev->dev);
+	pm_runसमय_mark_last_busy(dev->dev);
+	pm_runसमय_put_स्वतःsuspend(dev->dev);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static const struct file_operations amdgpu_securedisplay_debugfs_ops = {
+अटल स्थिर काष्ठा file_operations amdgpu_securedisplay_debugfs_ops = अणु
 	.owner = THIS_MODULE,
-	.read = NULL,
-	.write = amdgpu_securedisplay_debugfs_write,
-	.llseek = default_llseek
-};
+	.पढ़ो = शून्य,
+	.ग_लिखो = amdgpu_securedisplay_debugfs_ग_लिखो,
+	.llseek = शेष_llseek
+पूर्ण;
 
-void amdgpu_securedisplay_debugfs_init(struct amdgpu_device *adev)
-{
-#if defined(CONFIG_DEBUG_FS)
+व्योम amdgpu_securedisplay_debugfs_init(काष्ठा amdgpu_device *adev)
+अणु
+#अगर defined(CONFIG_DEBUG_FS)
 
-	if (!adev->psp.securedisplay_context.securedisplay_initialized)
-		return;
+	अगर (!adev->psp.securedisplay_context.securedisplay_initialized)
+		वापस;
 
 	debugfs_create_file("securedisplay_test", S_IWUSR, adev_to_drm(adev)->primary->debugfs_root,
 				adev, &amdgpu_securedisplay_debugfs_ops);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण

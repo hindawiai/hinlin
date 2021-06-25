@@ -1,115 +1,116 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *  S390 version
  *
  *  Derived from "include/asm-i386/signal.h"
  */
 
-#ifndef _UAPI_ASMS390_SIGNAL_H
-#define _UAPI_ASMS390_SIGNAL_H
+#अगर_अघोषित _UAPI_ASMS390_SIGNAL_H
+#घोषणा _UAPI_ASMS390_SIGNAL_H
 
-#include <linux/types.h>
-#include <linux/time.h>
+#समावेश <linux/types.h>
+#समावेश <linux/समय.स>
 
-/* Avoid too many header ordering problems.  */
-struct siginfo;
-struct pt_regs;
+/* Aव्योम too many header ordering problems.  */
+काष्ठा siginfo;
+काष्ठा pt_regs;
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 /* Here we must cater to libcs that poke about in kernel headers.  */
 
-#define NSIG            32
-typedef unsigned long sigset_t;
+#घोषणा NSIG            32
+प्रकार अचिन्हित दीर्घ sigset_t;
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#define SIGHUP           1
-#define SIGINT           2
-#define SIGQUIT          3
-#define SIGILL           4
-#define SIGTRAP          5
-#define SIGABRT          6
-#define SIGIOT           6
-#define SIGBUS           7
-#define SIGFPE           8
-#define SIGKILL          9
-#define SIGUSR1         10
-#define SIGSEGV         11
-#define SIGUSR2         12
-#define SIGPIPE         13
-#define SIGALRM         14
-#define SIGTERM         15
-#define SIGSTKFLT       16
-#define SIGCHLD         17
-#define SIGCONT         18
-#define SIGSTOP         19
-#define SIGTSTP         20
-#define SIGTTIN         21
-#define SIGTTOU         22
-#define SIGURG          23
-#define SIGXCPU         24
-#define SIGXFSZ         25
-#define SIGVTALRM       26
-#define SIGPROF         27
-#define SIGWINCH        28
-#define SIGIO           29
-#define SIGPOLL         SIGIO
+#घोषणा SIGHUP           1
+#घोषणा संक_विघ्न           2
+#घोषणा SIGQUIT          3
+#घोषणा संक_अवैध           4
+#घोषणा SIGTRAP          5
+#घोषणा SIGABRT          6
+#घोषणा SIGIOT           6
+#घोषणा SIGBUS           7
+#घोषणा संक_भ_त्रुटि           8
+#घोषणा SIGKILL          9
+#घोषणा SIGUSR1         10
+#घोषणा संक_अंश         11
+#घोषणा SIGUSR2         12
+#घोषणा SIGPIPE         13
+#घोषणा SIGALRM         14
+#घोषणा संक_इति         15
+#घोषणा SIGSTKFLT       16
+#घोषणा SIGCHLD         17
+#घोषणा SIGCONT         18
+#घोषणा SIGSTOP         19
+#घोषणा SIGTSTP         20
+#घोषणा SIGTTIN         21
+#घोषणा SIGTTOU         22
+#घोषणा SIGURG          23
+#घोषणा SIGXCPU         24
+#घोषणा SIGXFSZ         25
+#घोषणा SIGVTALRM       26
+#घोषणा SIGPROF         27
+#घोषणा SIGWINCH        28
+#घोषणा SIGIO           29
+#घोषणा SIGPOLL         SIGIO
 /*
-#define SIGLOST         29
+#घोषणा SIGLOST         29
 */
-#define SIGPWR          30
-#define SIGSYS		31
-#define SIGUNUSED       31
+#घोषणा SIGPWR          30
+#घोषणा SIGSYS		31
+#घोषणा SIGUNUSED       31
 
-/* These should not be considered constants from userland.  */
-#define SIGRTMIN        32
-#define SIGRTMAX        _NSIG
+/* These should not be considered स्थिरants from userland.  */
+#घोषणा SIGRTMIN        32
+#घोषणा SIGRTMAX        _NSIG
 
-#define SA_RESTORER     0x04000000
+#घोषणा SA_RESTORER     0x04000000
 
-#define MINSIGSTKSZ     2048
-#define SIGSTKSZ        8192
+#घोषणा MINSIGSTKSZ     2048
+#घोषणा SIGSTKSZ        8192
 
-#include <asm-generic/signal-defs.h>
+#समावेश <यंत्र-generic/संकेत-defs.h>
 
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 
 /*
- * There are two system calls in regard to sigaction, sys_rt_sigaction
- * and sys_sigaction. Internally the kernel uses the struct old_sigaction
- * for the older sys_sigaction system call, and the kernel version of the
- * struct sigaction for the newer sys_rt_sigaction.
+ * There are two प्रणाली calls in regard to sigaction, sys_rt_sigaction
+ * and sys_sigaction. Internally the kernel uses the काष्ठा old_sigaction
+ * क्रम the older sys_sigaction प्रणाली call, and the kernel version of the
+ * काष्ठा sigaction क्रम the newer sys_rt_sigaction.
  *
- * The uapi definition for struct sigaction has made a strange distinction
- * between 31-bit and 64-bit in the past. For 64-bit the uapi structure
- * looks like the kernel struct sigaction, but for 31-bit it used to
- * look like the kernel struct old_sigaction. That practically made the
- * structure unusable for either system call. To get around this problem
- * the glibc always had its own definitions for the sigaction structures.
+ * The uapi definition क्रम काष्ठा sigaction has made a strange distinction
+ * between 31-bit and 64-bit in the past. For 64-bit the uapi काष्ठाure
+ * looks like the kernel काष्ठा sigaction, but क्रम 31-bit it used to
+ * look like the kernel काष्ठा old_sigaction. That practically made the
+ * काष्ठाure unusable क्रम either प्रणाली call. To get around this problem
+ * the glibc always had its own definitions क्रम the sigaction काष्ठाures.
  *
- * The current struct sigaction uapi definition below is suitable for the
- * sys_rt_sigaction system call only.
+ * The current काष्ठा sigaction uapi definition below is suitable क्रम the
+ * sys_rt_sigaction प्रणाली call only.
  */
-struct sigaction {
-        union {
+काष्ठा sigaction अणु
+        जोड़ अणु
           __sighandler_t _sa_handler;
-          void (*_sa_sigaction)(int, struct siginfo *, void *);
-        } _u;
-        unsigned long sa_flags;
-        void (*sa_restorer)(void);
+          व्योम (*_sa_sigaction)(पूर्णांक, काष्ठा siginfo *, व्योम *);
+        पूर्ण _u;
+        अचिन्हित दीर्घ sa_flags;
+        व्योम (*sa_restorer)(व्योम);
 	sigset_t sa_mask;
-};
+पूर्ण;
 
-#define sa_handler      _u._sa_handler
-#define sa_sigaction    _u._sa_sigaction
+#घोषणा sa_handler      _u._sa_handler
+#घोषणा sa_sigaction    _u._sa_sigaction
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-typedef struct sigaltstack {
-        void __user *ss_sp;
-        int ss_flags;
-        size_t ss_size;
-} stack_t;
+प्रकार काष्ठा sigaltstack अणु
+        व्योम __user *ss_sp;
+        पूर्णांक ss_flags;
+        माप_प्रकार ss_size;
+पूर्ण stack_t;
 
 
-#endif /* _UAPI_ASMS390_SIGNAL_H */
+#पूर्ण_अगर /* _UAPI_ASMS390_SIGNAL_H */

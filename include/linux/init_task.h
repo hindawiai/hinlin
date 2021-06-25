@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX__INIT_TASK_H
-#define _LINUX__INIT_TASK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX__INIT_TASK_H
+#घोषणा _LINUX__INIT_TASK_H
 
-#include <linux/rcupdate.h>
-#include <linux/irqflags.h>
-#include <linux/utsname.h>
-#include <linux/lockdep.h>
-#include <linux/ftrace.h>
-#include <linux/ipc.h>
-#include <linux/pid_namespace.h>
-#include <linux/user_namespace.h>
-#include <linux/securebits.h>
-#include <linux/seqlock.h>
-#include <linux/rbtree.h>
-#include <linux/refcount.h>
-#include <linux/sched/autogroup.h>
-#include <net/net_namespace.h>
-#include <linux/sched/rt.h>
-#include <linux/livepatch.h>
-#include <linux/mm_types.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/irqflags.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/ipc.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/user_namespace.h>
+#समावेश <linux/securebits.h>
+#समावेश <linux/seqlock.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/sched/स्वतःgroup.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/sched/rt.h>
+#समावेश <linux/livepatch.h>
+#समावेश <linux/mm_types.h>
 
-#include <asm/thread_info.h>
+#समावेश <यंत्र/thपढ़ो_info.h>
 
-extern struct files_struct init_files;
-extern struct fs_struct init_fs;
-extern struct nsproxy init_nsproxy;
-extern struct cred init_cred;
+बाह्य काष्ठा files_काष्ठा init_files;
+बाह्य काष्ठा fs_काष्ठा init_fs;
+बाह्य काष्ठा nsproxy init_nsproxy;
+बाह्य काष्ठा cred init_cred;
 
-#ifndef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-#define INIT_PREV_CPUTIME(x)	.prev_cputime = {			\
-	.lock = __RAW_SPIN_LOCK_UNLOCKED(x.prev_cputime.lock),		\
-},
-#else
-#define INIT_PREV_CPUTIME(x)
-#endif
+#अगर_अघोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+#घोषणा INIT_PREV_CPUTIME(x)	.prev_cpuसमय = अणु			\
+	.lock = __RAW_SPIN_LOCK_UNLOCKED(x.prev_cpuसमय.lock),		\
+पूर्ण,
+#अन्यथा
+#घोषणा INIT_PREV_CPUTIME(x)
+#पूर्ण_अगर
 
-#define INIT_TASK_COMM "swapper"
+#घोषणा INIT_TASK_COMM "swapper"
 
-/* Attach to the init_task data structure for proper alignment */
-#ifdef CONFIG_ARCH_TASK_STRUCT_ON_STACK
-#define __init_task_data __section(".data..init_task")
-#else
-#define __init_task_data /**/
-#endif
+/* Attach to the init_task data काष्ठाure क्रम proper alignment */
+#अगर_घोषित CONFIG_ARCH_TASK_STRUCT_ON_STACK
+#घोषणा __init_task_data __section(".data..init_task")
+#अन्यथा
+#घोषणा __init_task_data /**/
+#पूर्ण_अगर
 
-/* Attach to the thread_info data structure for proper alignment */
-#define __init_thread_info __section(".data..init_thread_info")
+/* Attach to the thपढ़ो_info data काष्ठाure क्रम proper alignment */
+#घोषणा __init_thपढ़ो_info __section(".data..init_thread_info")
 
-#endif
+#पूर्ण_अगर

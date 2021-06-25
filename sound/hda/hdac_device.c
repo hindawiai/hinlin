@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * HD-audio codec core device
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/pm_runtime.h>
-#include <sound/hdaudio.h>
-#include <sound/hda_regmap.h>
-#include <sound/pcm.h>
-#include "local.h"
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <sound/hdaudपन.स>
+#समावेश <sound/hda_regmap.h>
+#समावेश <sound/pcm.h>
+#समावेश "local.h"
 
-static void setup_fg_nodes(struct hdac_device *codec);
-static int get_codec_vendor_name(struct hdac_device *codec);
+अटल व्योम setup_fg_nodes(काष्ठा hdac_device *codec);
+अटल पूर्णांक get_codec_venकरोr_name(काष्ठा hdac_device *codec);
 
-static void default_release(struct device *dev)
-{
-	snd_hdac_device_exit(dev_to_hdac_dev(dev));
-}
+अटल व्योम शेष_release(काष्ठा device *dev)
+अणु
+	snd_hdac_device_निकास(dev_to_hdac_dev(dev));
+पूर्ण
 
 /**
  * snd_hdac_device_init - initialize the HD-audio codec base device
@@ -30,25 +31,25 @@ static void default_release(struct device *dev)
  * @name: device name string
  * @addr: codec address
  *
- * Returns zero for success or a negative error code.
+ * Returns zero क्रम success or a negative error code.
  *
- * This function increments the runtime PM counter and marks it active.
+ * This function increments the runसमय PM counter and marks it active.
  * The caller needs to turn it off appropriately later.
  *
  * The caller needs to set the device's release op properly by itself.
  */
-int snd_hdac_device_init(struct hdac_device *codec, struct hdac_bus *bus,
-			 const char *name, unsigned int addr)
-{
-	struct device *dev;
+पूर्णांक snd_hdac_device_init(काष्ठा hdac_device *codec, काष्ठा hdac_bus *bus,
+			 स्थिर अक्षर *name, अचिन्हित पूर्णांक addr)
+अणु
+	काष्ठा device *dev;
 	hda_nid_t fg;
-	int err;
+	पूर्णांक err;
 
 	dev = &codec->dev;
 	device_initialize(dev);
 	dev->parent = bus->dev;
 	dev->bus = &snd_hda_bus_type;
-	dev->release = default_release;
+	dev->release = शेष_release;
 	dev->groups = hdac_dev_attr_groups;
 	dev_set_name(dev, "%s", name);
 	device_enable_async_suspend(dev);
@@ -58,142 +59,142 @@ int snd_hdac_device_init(struct hdac_device *codec, struct hdac_bus *bus,
 	codec->type = HDA_DEV_CORE;
 	mutex_init(&codec->widget_lock);
 	mutex_init(&codec->regmap_lock);
-	pm_runtime_set_active(&codec->dev);
-	pm_runtime_get_noresume(&codec->dev);
+	pm_runसमय_set_active(&codec->dev);
+	pm_runसमय_get_noresume(&codec->dev);
 	atomic_set(&codec->in_pm, 0);
 
 	err = snd_hdac_bus_add_device(bus, codec);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	/* fill parameters */
-	codec->vendor_id = snd_hdac_read_parm(codec, AC_NODE_ROOT,
+	codec->venकरोr_id = snd_hdac_पढ़ो_parm(codec, AC_NODE_ROOT,
 					      AC_PAR_VENDOR_ID);
-	if (codec->vendor_id == -1) {
-		/* read again, hopefully the access method was corrected
-		 * in the last read...
+	अगर (codec->venकरोr_id == -1) अणु
+		/* पढ़ो again, hopefully the access method was corrected
+		 * in the last पढ़ो...
 		 */
-		codec->vendor_id = snd_hdac_read_parm(codec, AC_NODE_ROOT,
+		codec->venकरोr_id = snd_hdac_पढ़ो_parm(codec, AC_NODE_ROOT,
 						      AC_PAR_VENDOR_ID);
-	}
+	पूर्ण
 
-	codec->subsystem_id = snd_hdac_read_parm(codec, AC_NODE_ROOT,
+	codec->subप्रणाली_id = snd_hdac_पढ़ो_parm(codec, AC_NODE_ROOT,
 						 AC_PAR_SUBSYSTEM_ID);
-	codec->revision_id = snd_hdac_read_parm(codec, AC_NODE_ROOT,
+	codec->revision_id = snd_hdac_पढ़ो_parm(codec, AC_NODE_ROOT,
 						AC_PAR_REV_ID);
 
 	setup_fg_nodes(codec);
-	if (!codec->afg && !codec->mfg) {
+	अगर (!codec->afg && !codec->mfg) अणु
 		dev_err(dev, "no AFG or MFG node found\n");
 		err = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	fg = codec->afg ? codec->afg : codec->mfg;
 
-	err = snd_hdac_refresh_widgets(codec);
-	if (err < 0)
-		goto error;
+	err = snd_hdac_refresh_widमाला_लो(codec);
+	अगर (err < 0)
+		जाओ error;
 
-	codec->power_caps = snd_hdac_read_parm(codec, fg, AC_PAR_POWER_STATE);
-	/* reread ssid if not set by parameter */
-	if (codec->subsystem_id == -1 || codec->subsystem_id == 0)
-		snd_hdac_read(codec, fg, AC_VERB_GET_SUBSYSTEM_ID, 0,
-			      &codec->subsystem_id);
+	codec->घातer_caps = snd_hdac_पढ़ो_parm(codec, fg, AC_PAR_POWER_STATE);
+	/* reपढ़ो ssid अगर not set by parameter */
+	अगर (codec->subप्रणाली_id == -1 || codec->subप्रणाली_id == 0)
+		snd_hdac_पढ़ो(codec, fg, AC_VERB_GET_SUBSYSTEM_ID, 0,
+			      &codec->subप्रणाली_id);
 
-	err = get_codec_vendor_name(codec);
-	if (err < 0)
-		goto error;
+	err = get_codec_venकरोr_name(codec);
+	अगर (err < 0)
+		जाओ error;
 
-	codec->chip_name = kasprintf(GFP_KERNEL, "ID %x",
-				     codec->vendor_id & 0xffff);
-	if (!codec->chip_name) {
+	codec->chip_name = kaप्र_लिखो(GFP_KERNEL, "ID %x",
+				     codec->venकरोr_id & 0xffff);
+	अगर (!codec->chip_name) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
  error:
 	put_device(&codec->dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_device_init);
 
 /**
- * snd_hdac_device_exit - clean up the HD-audio codec base device
+ * snd_hdac_device_निकास - clean up the HD-audio codec base device
  * @codec: device to clean up
  */
-void snd_hdac_device_exit(struct hdac_device *codec)
-{
-	pm_runtime_put_noidle(&codec->dev);
-	/* keep balance of runtime PM child_count in parent device */
-	pm_runtime_set_suspended(&codec->dev);
-	snd_hdac_bus_remove_device(codec->bus, codec);
-	kfree(codec->vendor_name);
-	kfree(codec->chip_name);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_device_exit);
+व्योम snd_hdac_device_निकास(काष्ठा hdac_device *codec)
+अणु
+	pm_runसमय_put_noidle(&codec->dev);
+	/* keep balance of runसमय PM child_count in parent device */
+	pm_runसमय_set_suspended(&codec->dev);
+	snd_hdac_bus_हटाओ_device(codec->bus, codec);
+	kमुक्त(codec->venकरोr_name);
+	kमुक्त(codec->chip_name);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_device_निकास);
 
 /**
- * snd_hdac_device_register - register the hd-audio codec base device
- * @codec: the device to register
+ * snd_hdac_device_रेजिस्टर - रेजिस्टर the hd-audio codec base device
+ * @codec: the device to रेजिस्टर
  */
-int snd_hdac_device_register(struct hdac_device *codec)
-{
-	int err;
+पूर्णांक snd_hdac_device_रेजिस्टर(काष्ठा hdac_device *codec)
+अणु
+	पूर्णांक err;
 
 	err = device_add(&codec->dev);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	mutex_lock(&codec->widget_lock);
 	err = hda_widget_sysfs_init(codec);
 	mutex_unlock(&codec->widget_lock);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		device_del(&codec->dev);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_device_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_device_रेजिस्टर);
 
 /**
- * snd_hdac_device_unregister - unregister the hd-audio codec base device
- * @codec: the device to unregister
+ * snd_hdac_device_unरेजिस्टर - unरेजिस्टर the hd-audio codec base device
+ * @codec: the device to unरेजिस्टर
  */
-void snd_hdac_device_unregister(struct hdac_device *codec)
-{
-	if (device_is_registered(&codec->dev)) {
+व्योम snd_hdac_device_unरेजिस्टर(काष्ठा hdac_device *codec)
+अणु
+	अगर (device_is_रेजिस्टरed(&codec->dev)) अणु
 		mutex_lock(&codec->widget_lock);
-		hda_widget_sysfs_exit(codec);
+		hda_widget_sysfs_निकास(codec);
 		mutex_unlock(&codec->widget_lock);
 		device_del(&codec->dev);
-		snd_hdac_bus_remove_device(codec->bus, codec);
-	}
-}
-EXPORT_SYMBOL_GPL(snd_hdac_device_unregister);
+		snd_hdac_bus_हटाओ_device(codec->bus, codec);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_device_unरेजिस्टर);
 
 /**
  * snd_hdac_device_set_chip_name - set/update the codec name
  * @codec: the HDAC device
  * @name: name string to set
  *
- * Returns 0 if the name is set or updated, or a negative error code.
+ * Returns 0 अगर the name is set or updated, or a negative error code.
  */
-int snd_hdac_device_set_chip_name(struct hdac_device *codec, const char *name)
-{
-	char *newname;
+पूर्णांक snd_hdac_device_set_chip_name(काष्ठा hdac_device *codec, स्थिर अक्षर *name)
+अणु
+	अक्षर *newname;
 
-	if (!name)
-		return 0;
+	अगर (!name)
+		वापस 0;
 	newname = kstrdup(name, GFP_KERNEL);
-	if (!newname)
-		return -ENOMEM;
-	kfree(codec->chip_name);
+	अगर (!newname)
+		वापस -ENOMEM;
+	kमुक्त(codec->chip_name);
 	codec->chip_name = newname;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_device_set_chip_name);
 
 /**
@@ -202,13 +203,13 @@ EXPORT_SYMBOL_GPL(snd_hdac_device_set_chip_name);
  * @buf: string buffer to store
  * @size: string buffer size
  *
- * Returns the size of string, like snprintf(), or a negative error code.
+ * Returns the size of string, like snम_लिखो(), or a negative error code.
  */
-int snd_hdac_codec_modalias(struct hdac_device *codec, char *buf, size_t size)
-{
-	return scnprintf(buf, size, "hdaudio:v%08Xr%08Xa%02X\n",
-			codec->vendor_id, codec->revision_id, codec->type);
-}
+पूर्णांक snd_hdac_codec_modalias(काष्ठा hdac_device *codec, अक्षर *buf, माप_प्रकार size)
+अणु
+	वापस scnम_लिखो(buf, size, "hdaudio:v%08Xr%08Xa%02X\n",
+			codec->venकरोr_id, codec->revision_id, codec->type);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_codec_modalias);
 
 /**
@@ -219,882 +220,882 @@ EXPORT_SYMBOL_GPL(snd_hdac_codec_modalias);
  * @verb: verb to encode
  * @parm: parameter to encode
  *
- * Return an encoded command verb or -1 for error.
+ * Return an encoded command verb or -1 क्रम error.
  */
-static unsigned int snd_hdac_make_cmd(struct hdac_device *codec, hda_nid_t nid,
-				      unsigned int verb, unsigned int parm)
-{
+अटल अचिन्हित पूर्णांक snd_hdac_make_cmd(काष्ठा hdac_device *codec, hda_nid_t nid,
+				      अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm)
+अणु
 	u32 val, addr;
 
 	addr = codec->addr;
-	if ((addr & ~0xf) || (nid & ~0x7f) ||
-	    (verb & ~0xfff) || (parm & ~0xffff)) {
+	अगर ((addr & ~0xf) || (nid & ~0x7f) ||
+	    (verb & ~0xfff) || (parm & ~0xffff)) अणु
 		dev_err(&codec->dev, "out of range cmd %x:%x:%x:%x\n",
 			addr, nid, verb, parm);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	val = addr << 28;
 	val |= (u32)nid << 20;
 	val |= verb << 8;
 	val |= parm;
-	return val;
-}
+	वापस val;
+पूर्ण
 
 /**
  * snd_hdac_exec_verb - execute an encoded verb
  * @codec: the codec object
  * @cmd: encoded verb to execute
- * @flags: optional flags, pass zero for default
- * @res: the pointer to store the result, NULL if running async
+ * @flags: optional flags, pass zero क्रम शेष
+ * @res: the poपूर्णांकer to store the result, शून्य अगर running async
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  *
  * This calls the exec_verb op when set in hdac_codec.  If not,
- * call the default snd_hdac_bus_exec_verb().
+ * call the शेष snd_hdac_bus_exec_verb().
  */
-int snd_hdac_exec_verb(struct hdac_device *codec, unsigned int cmd,
-		       unsigned int flags, unsigned int *res)
-{
-	if (codec->exec_verb)
-		return codec->exec_verb(codec, cmd, flags, res);
-	return snd_hdac_bus_exec_verb(codec->bus, codec->addr, cmd, res);
-}
+पूर्णांक snd_hdac_exec_verb(काष्ठा hdac_device *codec, अचिन्हित पूर्णांक cmd,
+		       अचिन्हित पूर्णांक flags, अचिन्हित पूर्णांक *res)
+अणु
+	अगर (codec->exec_verb)
+		वापस codec->exec_verb(codec, cmd, flags, res);
+	वापस snd_hdac_bus_exec_verb(codec->bus, codec->addr, cmd, res);
+पूर्ण
 
 
 /**
- * snd_hdac_read - execute a verb
+ * snd_hdac_पढ़ो - execute a verb
  * @codec: the codec object
  * @nid: NID to execute a verb
  * @verb: verb to execute
- * @parm: parameter for a verb
- * @res: the pointer to store the result, NULL if running async
+ * @parm: parameter क्रम a verb
+ * @res: the poपूर्णांकer to store the result, शून्य अगर running async
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  */
-int snd_hdac_read(struct hdac_device *codec, hda_nid_t nid,
-		  unsigned int verb, unsigned int parm, unsigned int *res)
-{
-	unsigned int cmd = snd_hdac_make_cmd(codec, nid, verb, parm);
+पूर्णांक snd_hdac_पढ़ो(काष्ठा hdac_device *codec, hda_nid_t nid,
+		  अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm, अचिन्हित पूर्णांक *res)
+अणु
+	अचिन्हित पूर्णांक cmd = snd_hdac_make_cmd(codec, nid, verb, parm);
 
-	return snd_hdac_exec_verb(codec, cmd, 0, res);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_read);
+	वापस snd_hdac_exec_verb(codec, cmd, 0, res);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_पढ़ो);
 
 /**
- * _snd_hdac_read_parm - read a parmeter
+ * _snd_hdac_पढ़ो_parm - पढ़ो a parmeter
  * @codec: the codec object
- * @nid: NID to read a parameter
- * @parm: parameter to read
- * @res: pointer to store the read value
+ * @nid: NID to पढ़ो a parameter
+ * @parm: parameter to पढ़ो
+ * @res: poपूर्णांकer to store the पढ़ो value
  *
- * This function returns zero or an error unlike snd_hdac_read_parm().
+ * This function वापसs zero or an error unlike snd_hdac_पढ़ो_parm().
  */
-int _snd_hdac_read_parm(struct hdac_device *codec, hda_nid_t nid, int parm,
-			unsigned int *res)
-{
-	unsigned int cmd;
+पूर्णांक _snd_hdac_पढ़ो_parm(काष्ठा hdac_device *codec, hda_nid_t nid, पूर्णांक parm,
+			अचिन्हित पूर्णांक *res)
+अणु
+	अचिन्हित पूर्णांक cmd;
 
 	cmd = snd_hdac_regmap_encode_verb(nid, AC_VERB_PARAMETERS) | parm;
-	return snd_hdac_regmap_read_raw(codec, cmd, res);
-}
-EXPORT_SYMBOL_GPL(_snd_hdac_read_parm);
+	वापस snd_hdac_regmap_पढ़ो_raw(codec, cmd, res);
+पूर्ण
+EXPORT_SYMBOL_GPL(_snd_hdac_पढ़ो_parm);
 
 /**
- * snd_hdac_read_parm_uncached - read a codec parameter without caching
+ * snd_hdac_पढ़ो_parm_uncached - पढ़ो a codec parameter without caching
  * @codec: the codec object
- * @nid: NID to read a parameter
- * @parm: parameter to read
+ * @nid: NID to पढ़ो a parameter
+ * @parm: parameter to पढ़ो
  *
- * Returns -1 for error.  If you need to distinguish the error more
- * strictly, use snd_hdac_read() directly.
+ * Returns -1 क्रम error.  If you need to distinguish the error more
+ * strictly, use snd_hdac_पढ़ो() directly.
  */
-int snd_hdac_read_parm_uncached(struct hdac_device *codec, hda_nid_t nid,
-				int parm)
-{
-	unsigned int cmd, val;
+पूर्णांक snd_hdac_पढ़ो_parm_uncached(काष्ठा hdac_device *codec, hda_nid_t nid,
+				पूर्णांक parm)
+अणु
+	अचिन्हित पूर्णांक cmd, val;
 
 	cmd = snd_hdac_regmap_encode_verb(nid, AC_VERB_PARAMETERS) | parm;
-	if (snd_hdac_regmap_read_raw_uncached(codec, cmd, &val) < 0)
-		return -1;
-	return val;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_read_parm_uncached);
+	अगर (snd_hdac_regmap_पढ़ो_raw_uncached(codec, cmd, &val) < 0)
+		वापस -1;
+	वापस val;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_पढ़ो_parm_uncached);
 
 /**
- * snd_hdac_override_parm - override read-only parameters
+ * snd_hdac_override_parm - override पढ़ो-only parameters
  * @codec: the codec object
- * @nid: NID for the parameter
+ * @nid: NID क्रम the parameter
  * @parm: the parameter to change
- * @val: the parameter value to overwrite
+ * @val: the parameter value to overग_लिखो
  */
-int snd_hdac_override_parm(struct hdac_device *codec, hda_nid_t nid,
-			   unsigned int parm, unsigned int val)
-{
-	unsigned int verb = (AC_VERB_PARAMETERS << 8) | (nid << 20) | parm;
-	int err;
+पूर्णांक snd_hdac_override_parm(काष्ठा hdac_device *codec, hda_nid_t nid,
+			   अचिन्हित पूर्णांक parm, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक verb = (AC_VERB_PARAMETERS << 8) | (nid << 20) | parm;
+	पूर्णांक err;
 
-	if (!codec->regmap)
-		return -EINVAL;
+	अगर (!codec->regmap)
+		वापस -EINVAL;
 
 	codec->caps_overwriting = true;
-	err = snd_hdac_regmap_write_raw(codec, verb, val);
+	err = snd_hdac_regmap_ग_लिखो_raw(codec, verb, val);
 	codec->caps_overwriting = false;
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_override_parm);
 
 /**
  * snd_hdac_get_sub_nodes - get start NID and number of subtree nodes
  * @codec: the codec object
  * @nid: NID to inspect
- * @start_id: the pointer to store the starting NID
+ * @start_id: the poपूर्णांकer to store the starting NID
  *
- * Returns the number of subtree nodes or zero if not found.
- * This function reads parameters always without caching.
+ * Returns the number of subtree nodes or zero अगर not found.
+ * This function पढ़ोs parameters always without caching.
  */
-int snd_hdac_get_sub_nodes(struct hdac_device *codec, hda_nid_t nid,
+पूर्णांक snd_hdac_get_sub_nodes(काष्ठा hdac_device *codec, hda_nid_t nid,
 			   hda_nid_t *start_id)
-{
-	unsigned int parm;
+अणु
+	अचिन्हित पूर्णांक parm;
 
-	parm = snd_hdac_read_parm_uncached(codec, nid, AC_PAR_NODE_COUNT);
-	if (parm == -1) {
+	parm = snd_hdac_पढ़ो_parm_uncached(codec, nid, AC_PAR_NODE_COUNT);
+	अगर (parm == -1) अणु
 		*start_id = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	*start_id = (parm >> 16) & 0x7fff;
-	return (int)(parm & 0x7fff);
-}
+	वापस (पूर्णांक)(parm & 0x7fff);
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_get_sub_nodes);
 
 /*
- * look for an AFG and MFG nodes
+ * look क्रम an AFG and MFG nodes
  */
-static void setup_fg_nodes(struct hdac_device *codec)
-{
-	int i, total_nodes, function_id;
+अटल व्योम setup_fg_nodes(काष्ठा hdac_device *codec)
+अणु
+	पूर्णांक i, total_nodes, function_id;
 	hda_nid_t nid;
 
 	total_nodes = snd_hdac_get_sub_nodes(codec, AC_NODE_ROOT, &nid);
-	for (i = 0; i < total_nodes; i++, nid++) {
-		function_id = snd_hdac_read_parm(codec, nid,
+	क्रम (i = 0; i < total_nodes; i++, nid++) अणु
+		function_id = snd_hdac_पढ़ो_parm(codec, nid,
 						 AC_PAR_FUNCTION_TYPE);
-		switch (function_id & 0xff) {
-		case AC_GRP_AUDIO_FUNCTION:
+		चयन (function_id & 0xff) अणु
+		हाल AC_GRP_AUDIO_FUNCTION:
 			codec->afg = nid;
 			codec->afg_function_id = function_id & 0xff;
 			codec->afg_unsol = (function_id >> 8) & 1;
-			break;
-		case AC_GRP_MODEM_FUNCTION:
+			अवरोध;
+		हाल AC_GRP_MODEM_FUNCTION:
 			codec->mfg = nid;
 			codec->mfg_function_id = function_id & 0xff;
 			codec->mfg_unsol = (function_id >> 8) & 1;
-			break;
-		default:
-			break;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * snd_hdac_refresh_widgets - Reset the widget start/end nodes
+ * snd_hdac_refresh_widमाला_लो - Reset the widget start/end nodes
  * @codec: the codec object
  */
-int snd_hdac_refresh_widgets(struct hdac_device *codec)
-{
+पूर्णांक snd_hdac_refresh_widमाला_लो(काष्ठा hdac_device *codec)
+अणु
 	hda_nid_t start_nid;
-	int nums, err = 0;
+	पूर्णांक nums, err = 0;
 
 	/*
-	 * Serialize against multiple threads trying to update the sysfs
-	 * widgets array.
+	 * Serialize against multiple thपढ़ोs trying to update the sysfs
+	 * widमाला_लो array.
 	 */
 	mutex_lock(&codec->widget_lock);
 	nums = snd_hdac_get_sub_nodes(codec, codec->afg, &start_nid);
-	if (!start_nid || nums <= 0 || nums >= 0xff) {
+	अगर (!start_nid || nums <= 0 || nums >= 0xff) अणु
 		dev_err(&codec->dev, "cannot read sub nodes for FG 0x%02x\n",
 			codec->afg);
 		err = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	err = hda_widget_sysfs_reinit(codec, start_nid, nums);
-	if (err < 0)
-		goto unlock;
+	अगर (err < 0)
+		जाओ unlock;
 
 	codec->num_nodes = nums;
 	codec->start_nid = start_nid;
 	codec->end_nid = start_nid + nums;
 unlock:
 	mutex_unlock(&codec->widget_lock);
-	return err;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_refresh_widgets);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_refresh_widमाला_लो);
 
-/* return CONNLIST_LEN parameter of the given widget */
-static unsigned int get_num_conns(struct hdac_device *codec, hda_nid_t nid)
-{
-	unsigned int wcaps = get_wcaps(codec, nid);
-	unsigned int parm;
+/* वापस CONNLIST_LEN parameter of the given widget */
+अटल अचिन्हित पूर्णांक get_num_conns(काष्ठा hdac_device *codec, hda_nid_t nid)
+अणु
+	अचिन्हित पूर्णांक wcaps = get_wcaps(codec, nid);
+	अचिन्हित पूर्णांक parm;
 
-	if (!(wcaps & AC_WCAP_CONN_LIST) &&
+	अगर (!(wcaps & AC_WCAP_CONN_LIST) &&
 	    get_wcaps_type(wcaps) != AC_WID_VOL_KNB)
-		return 0;
+		वापस 0;
 
-	parm = snd_hdac_read_parm(codec, nid, AC_PAR_CONNLIST_LEN);
-	if (parm == -1)
+	parm = snd_hdac_पढ़ो_parm(codec, nid, AC_PAR_CONNLIST_LEN);
+	अगर (parm == -1)
 		parm = 0;
-	return parm;
-}
+	वापस parm;
+पूर्ण
 
 /**
  * snd_hdac_get_connections - get a widget connection list
  * @codec: the codec object
  * @nid: NID
- * @conn_list: the array to store the results, can be NULL
+ * @conn_list: the array to store the results, can be शून्य
  * @max_conns: the max size of the given array
  *
- * Returns the number of connected widgets, zero for no connection, or a
- * negative error code.  When the number of elements don't fit with the
- * given array size, it returns -ENOSPC.
+ * Returns the number of connected widमाला_लो, zero क्रम no connection, or a
+ * negative error code.  When the number of elements करोn't fit with the
+ * given array size, it वापसs -ENOSPC.
  *
- * When @conn_list is NULL, it just checks the number of connections.
+ * When @conn_list is शून्य, it just checks the number of connections.
  */
-int snd_hdac_get_connections(struct hdac_device *codec, hda_nid_t nid,
-			     hda_nid_t *conn_list, int max_conns)
-{
-	unsigned int parm;
-	int i, conn_len, conns, err;
-	unsigned int shift, num_elems, mask;
+पूर्णांक snd_hdac_get_connections(काष्ठा hdac_device *codec, hda_nid_t nid,
+			     hda_nid_t *conn_list, पूर्णांक max_conns)
+अणु
+	अचिन्हित पूर्णांक parm;
+	पूर्णांक i, conn_len, conns, err;
+	अचिन्हित पूर्णांक shअगरt, num_elems, mask;
 	hda_nid_t prev_nid;
-	int null_count = 0;
+	पूर्णांक null_count = 0;
 
 	parm = get_num_conns(codec, nid);
-	if (!parm)
-		return 0;
+	अगर (!parm)
+		वापस 0;
 
-	if (parm & AC_CLIST_LONG) {
-		/* long form */
-		shift = 16;
+	अगर (parm & AC_CLIST_LONG) अणु
+		/* दीर्घ क्रमm */
+		shअगरt = 16;
 		num_elems = 2;
-	} else {
-		/* short form */
-		shift = 8;
+	पूर्ण अन्यथा अणु
+		/* लघु क्रमm */
+		shअगरt = 8;
 		num_elems = 4;
-	}
+	पूर्ण
 	conn_len = parm & AC_CLIST_LENGTH;
-	mask = (1 << (shift-1)) - 1;
+	mask = (1 << (shअगरt-1)) - 1;
 
-	if (!conn_len)
-		return 0; /* no connection */
+	अगर (!conn_len)
+		वापस 0; /* no connection */
 
-	if (conn_len == 1) {
+	अगर (conn_len == 1) अणु
 		/* single connection */
-		err = snd_hdac_read(codec, nid, AC_VERB_GET_CONNECT_LIST, 0,
+		err = snd_hdac_पढ़ो(codec, nid, AC_VERB_GET_CONNECT_LIST, 0,
 				    &parm);
-		if (err < 0)
-			return err;
-		if (conn_list)
+		अगर (err < 0)
+			वापस err;
+		अगर (conn_list)
 			conn_list[0] = parm & mask;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* multi connection */
 	conns = 0;
 	prev_nid = 0;
-	for (i = 0; i < conn_len; i++) {
-		int range_val;
+	क्रम (i = 0; i < conn_len; i++) अणु
+		पूर्णांक range_val;
 		hda_nid_t val, n;
 
-		if (i % num_elems == 0) {
-			err = snd_hdac_read(codec, nid,
+		अगर (i % num_elems == 0) अणु
+			err = snd_hdac_पढ़ो(codec, nid,
 					    AC_VERB_GET_CONNECT_LIST, i,
 					    &parm);
-			if (err < 0)
-				return -EIO;
-		}
-		range_val = !!(parm & (1 << (shift-1))); /* ranges */
+			अगर (err < 0)
+				वापस -EIO;
+		पूर्ण
+		range_val = !!(parm & (1 << (shअगरt-1))); /* ranges */
 		val = parm & mask;
-		if (val == 0 && null_count++) {  /* no second chance */
+		अगर (val == 0 && null_count++) अणु  /* no second chance */
 			dev_dbg(&codec->dev,
 				"invalid CONNECT_LIST verb %x[%i]:%x\n",
 				nid, i, parm);
-			return 0;
-		}
-		parm >>= shift;
-		if (range_val) {
+			वापस 0;
+		पूर्ण
+		parm >>= shअगरt;
+		अगर (range_val) अणु
 			/* ranges between the previous and this one */
-			if (!prev_nid || prev_nid >= val) {
+			अगर (!prev_nid || prev_nid >= val) अणु
 				dev_warn(&codec->dev,
 					 "invalid dep_range_val %x:%x\n",
 					 prev_nid, val);
-				continue;
-			}
-			for (n = prev_nid + 1; n <= val; n++) {
-				if (conn_list) {
-					if (conns >= max_conns)
-						return -ENOSPC;
+				जारी;
+			पूर्ण
+			क्रम (n = prev_nid + 1; n <= val; n++) अणु
+				अगर (conn_list) अणु
+					अगर (conns >= max_conns)
+						वापस -ENOSPC;
 					conn_list[conns] = n;
-				}
+				पूर्ण
 				conns++;
-			}
-		} else {
-			if (conn_list) {
-				if (conns >= max_conns)
-					return -ENOSPC;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (conn_list) अणु
+				अगर (conns >= max_conns)
+					वापस -ENOSPC;
 				conn_list[conns] = val;
-			}
+			पूर्ण
 			conns++;
-		}
+		पूर्ण
 		prev_nid = val;
-	}
-	return conns;
-}
+	पूर्ण
+	वापस conns;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_get_connections);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
- * snd_hdac_power_up - power up the codec
+ * snd_hdac_घातer_up - घातer up the codec
  * @codec: the codec object
  *
- * This function calls the runtime PM helper to power up the given codec.
- * Unlike snd_hdac_power_up_pm(), you should call this only for the code
- * path that isn't included in PM path.  Otherwise it gets stuck.
+ * This function calls the runसमय PM helper to घातer up the given codec.
+ * Unlike snd_hdac_घातer_up_pm(), you should call this only क्रम the code
+ * path that isn't included in PM path.  Otherwise it माला_लो stuck.
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  */
-int snd_hdac_power_up(struct hdac_device *codec)
-{
-	return pm_runtime_get_sync(&codec->dev);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_power_up);
+पूर्णांक snd_hdac_घातer_up(काष्ठा hdac_device *codec)
+अणु
+	वापस pm_runसमय_get_sync(&codec->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_घातer_up);
 
 /**
- * snd_hdac_power_down - power down the codec
+ * snd_hdac_घातer_करोwn - घातer करोwn the codec
  * @codec: the codec object
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  */
-int snd_hdac_power_down(struct hdac_device *codec)
-{
-	struct device *dev = &codec->dev;
+पूर्णांक snd_hdac_घातer_करोwn(काष्ठा hdac_device *codec)
+अणु
+	काष्ठा device *dev = &codec->dev;
 
-	pm_runtime_mark_last_busy(dev);
-	return pm_runtime_put_autosuspend(dev);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_power_down);
+	pm_runसमय_mark_last_busy(dev);
+	वापस pm_runसमय_put_स्वतःsuspend(dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_घातer_करोwn);
 
 /**
- * snd_hdac_power_up_pm - power up the codec
+ * snd_hdac_घातer_up_pm - घातer up the codec
  * @codec: the codec object
  *
  * This function can be called in a recursive code path like init code
- * which may be called by PM suspend/resume again.  OTOH, if a power-up
+ * which may be called by PM suspend/resume again.  OTOH, अगर a घातer-up
  * call must wake up the sleeper (e.g. in a kctl callback), use
- * snd_hdac_power_up() instead.
+ * snd_hdac_घातer_up() instead.
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  */
-int snd_hdac_power_up_pm(struct hdac_device *codec)
-{
-	if (!atomic_inc_not_zero(&codec->in_pm))
-		return snd_hdac_power_up(codec);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_power_up_pm);
+पूर्णांक snd_hdac_घातer_up_pm(काष्ठा hdac_device *codec)
+अणु
+	अगर (!atomic_inc_not_zero(&codec->in_pm))
+		वापस snd_hdac_घातer_up(codec);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_घातer_up_pm);
 
-/* like snd_hdac_power_up_pm(), but only increment the pm count when
- * already powered up.  Returns -1 if not powered up, 1 if incremented
- * or 0 if unchanged.  Only used in hdac_regmap.c
+/* like snd_hdac_घातer_up_pm(), but only increment the pm count when
+ * alपढ़ोy घातered up.  Returns -1 अगर not घातered up, 1 अगर incremented
+ * or 0 अगर unchanged.  Only used in hdac_regmap.c
  */
-int snd_hdac_keep_power_up(struct hdac_device *codec)
-{
-	if (!atomic_inc_not_zero(&codec->in_pm)) {
-		int ret = pm_runtime_get_if_in_use(&codec->dev);
-		if (!ret)
-			return -1;
-		if (ret < 0)
-			return 0;
-	}
-	return 1;
-}
+पूर्णांक snd_hdac_keep_घातer_up(काष्ठा hdac_device *codec)
+अणु
+	अगर (!atomic_inc_not_zero(&codec->in_pm)) अणु
+		पूर्णांक ret = pm_runसमय_get_अगर_in_use(&codec->dev);
+		अगर (!ret)
+			वापस -1;
+		अगर (ret < 0)
+			वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /**
- * snd_hdac_power_down_pm - power down the codec
+ * snd_hdac_घातer_करोwn_pm - घातer करोwn the codec
  * @codec: the codec object
  *
- * Like snd_hdac_power_up_pm(), this function is used in a recursive
+ * Like snd_hdac_घातer_up_pm(), this function is used in a recursive
  * code path like init code which may be called by PM suspend/resume again.
  *
- * Returns zero if successful, or a negative error code.
+ * Returns zero अगर successful, or a negative error code.
  */
-int snd_hdac_power_down_pm(struct hdac_device *codec)
-{
-	if (atomic_dec_if_positive(&codec->in_pm) < 0)
-		return snd_hdac_power_down(codec);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_power_down_pm);
-#endif
+पूर्णांक snd_hdac_घातer_करोwn_pm(काष्ठा hdac_device *codec)
+अणु
+	अगर (atomic_dec_अगर_positive(&codec->in_pm) < 0)
+		वापस snd_hdac_घातer_करोwn(codec);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_घातer_करोwn_pm);
+#पूर्ण_अगर
 
-/* codec vendor labels */
-struct hda_vendor_id {
-	unsigned int id;
-	const char *name;
-};
+/* codec venकरोr labels */
+काष्ठा hda_venकरोr_id अणु
+	अचिन्हित पूर्णांक id;
+	स्थिर अक्षर *name;
+पूर्ण;
 
-static const struct hda_vendor_id hda_vendor_ids[] = {
-	{ 0x1002, "ATI" },
-	{ 0x1013, "Cirrus Logic" },
-	{ 0x1057, "Motorola" },
-	{ 0x1095, "Silicon Image" },
-	{ 0x10de, "Nvidia" },
-	{ 0x10ec, "Realtek" },
-	{ 0x1102, "Creative" },
-	{ 0x1106, "VIA" },
-	{ 0x111d, "IDT" },
-	{ 0x11c1, "LSI" },
-	{ 0x11d4, "Analog Devices" },
-	{ 0x13f6, "C-Media" },
-	{ 0x14f1, "Conexant" },
-	{ 0x17e8, "Chrontel" },
-	{ 0x1854, "LG" },
-	{ 0x1aec, "Wolfson Microelectronics" },
-	{ 0x1af4, "QEMU" },
-	{ 0x434d, "C-Media" },
-	{ 0x8086, "Intel" },
-	{ 0x8384, "SigmaTel" },
-	{} /* terminator */
-};
+अटल स्थिर काष्ठा hda_venकरोr_id hda_venकरोr_ids[] = अणु
+	अणु 0x1002, "ATI" पूर्ण,
+	अणु 0x1013, "Cirrus Logic" पूर्ण,
+	अणु 0x1057, "Motorola" पूर्ण,
+	अणु 0x1095, "Silicon Image" पूर्ण,
+	अणु 0x10de, "Nvidia" पूर्ण,
+	अणु 0x10ec, "Realtek" पूर्ण,
+	अणु 0x1102, "Creative" पूर्ण,
+	अणु 0x1106, "VIA" पूर्ण,
+	अणु 0x111d, "IDT" पूर्ण,
+	अणु 0x11c1, "LSI" पूर्ण,
+	अणु 0x11d4, "Analog Devices" पूर्ण,
+	अणु 0x13f6, "C-Media" पूर्ण,
+	अणु 0x14f1, "Conexant" पूर्ण,
+	अणु 0x17e8, "Chrontel" पूर्ण,
+	अणु 0x1854, "LG" पूर्ण,
+	अणु 0x1aec, "Wolfson Microelectronics" पूर्ण,
+	अणु 0x1af4, "QEMU" पूर्ण,
+	अणु 0x434d, "C-Media" पूर्ण,
+	अणु 0x8086, "Intel" पूर्ण,
+	अणु 0x8384, "SigmaTel" पूर्ण,
+	अणुपूर्ण /* terminator */
+पूर्ण;
 
-/* store the codec vendor name */
-static int get_codec_vendor_name(struct hdac_device *codec)
-{
-	const struct hda_vendor_id *c;
-	u16 vendor_id = codec->vendor_id >> 16;
+/* store the codec venकरोr name */
+अटल पूर्णांक get_codec_venकरोr_name(काष्ठा hdac_device *codec)
+अणु
+	स्थिर काष्ठा hda_venकरोr_id *c;
+	u16 venकरोr_id = codec->venकरोr_id >> 16;
 
-	for (c = hda_vendor_ids; c->id; c++) {
-		if (c->id == vendor_id) {
-			codec->vendor_name = kstrdup(c->name, GFP_KERNEL);
-			return codec->vendor_name ? 0 : -ENOMEM;
-		}
-	}
+	क्रम (c = hda_venकरोr_ids; c->id; c++) अणु
+		अगर (c->id == venकरोr_id) अणु
+			codec->venकरोr_name = kstrdup(c->name, GFP_KERNEL);
+			वापस codec->venकरोr_name ? 0 : -ENOMEM;
+		पूर्ण
+	पूर्ण
 
-	codec->vendor_name = kasprintf(GFP_KERNEL, "Generic %04x", vendor_id);
-	return codec->vendor_name ? 0 : -ENOMEM;
-}
+	codec->venकरोr_name = kaप्र_लिखो(GFP_KERNEL, "Generic %04x", venकरोr_id);
+	वापस codec->venकरोr_name ? 0 : -ENOMEM;
+पूर्ण
 
 /*
- * stream formats
+ * stream क्रमmats
  */
-struct hda_rate_tbl {
-	unsigned int hz;
-	unsigned int alsa_bits;
-	unsigned int hda_fmt;
-};
+काष्ठा hda_rate_tbl अणु
+	अचिन्हित पूर्णांक hz;
+	अचिन्हित पूर्णांक alsa_bits;
+	अचिन्हित पूर्णांक hda_fmt;
+पूर्ण;
 
-/* rate = base * mult / div */
-#define HDA_RATE(base, mult, div) \
+/* rate = base * mult / भाग */
+#घोषणा HDA_RATE(base, mult, भाग) \
 	(AC_FMT_BASE_##base##K | (((mult) - 1) << AC_FMT_MULT_SHIFT) | \
-	 (((div) - 1) << AC_FMT_DIV_SHIFT))
+	 (((भाग) - 1) << AC_FMT_DIV_SHIFT))
 
-static const struct hda_rate_tbl rate_bits[] = {
-	/* rate in Hz, ALSA rate bitmask, HDA format value */
+अटल स्थिर काष्ठा hda_rate_tbl rate_bits[] = अणु
+	/* rate in Hz, ALSA rate biपंचांगask, HDA क्रमmat value */
 
-	/* autodetected value used in snd_hda_query_supported_pcm */
-	{ 8000, SNDRV_PCM_RATE_8000, HDA_RATE(48, 1, 6) },
-	{ 11025, SNDRV_PCM_RATE_11025, HDA_RATE(44, 1, 4) },
-	{ 16000, SNDRV_PCM_RATE_16000, HDA_RATE(48, 1, 3) },
-	{ 22050, SNDRV_PCM_RATE_22050, HDA_RATE(44, 1, 2) },
-	{ 32000, SNDRV_PCM_RATE_32000, HDA_RATE(48, 2, 3) },
-	{ 44100, SNDRV_PCM_RATE_44100, HDA_RATE(44, 1, 1) },
-	{ 48000, SNDRV_PCM_RATE_48000, HDA_RATE(48, 1, 1) },
-	{ 88200, SNDRV_PCM_RATE_88200, HDA_RATE(44, 2, 1) },
-	{ 96000, SNDRV_PCM_RATE_96000, HDA_RATE(48, 2, 1) },
-	{ 176400, SNDRV_PCM_RATE_176400, HDA_RATE(44, 4, 1) },
-	{ 192000, SNDRV_PCM_RATE_192000, HDA_RATE(48, 4, 1) },
-#define AC_PAR_PCM_RATE_BITS	11
+	/* स्वतःdetected value used in snd_hda_query_supported_pcm */
+	अणु 8000, SNDRV_PCM_RATE_8000, HDA_RATE(48, 1, 6) पूर्ण,
+	अणु 11025, SNDRV_PCM_RATE_11025, HDA_RATE(44, 1, 4) पूर्ण,
+	अणु 16000, SNDRV_PCM_RATE_16000, HDA_RATE(48, 1, 3) पूर्ण,
+	अणु 22050, SNDRV_PCM_RATE_22050, HDA_RATE(44, 1, 2) पूर्ण,
+	अणु 32000, SNDRV_PCM_RATE_32000, HDA_RATE(48, 2, 3) पूर्ण,
+	अणु 44100, SNDRV_PCM_RATE_44100, HDA_RATE(44, 1, 1) पूर्ण,
+	अणु 48000, SNDRV_PCM_RATE_48000, HDA_RATE(48, 1, 1) पूर्ण,
+	अणु 88200, SNDRV_PCM_RATE_88200, HDA_RATE(44, 2, 1) पूर्ण,
+	अणु 96000, SNDRV_PCM_RATE_96000, HDA_RATE(48, 2, 1) पूर्ण,
+	अणु 176400, SNDRV_PCM_RATE_176400, HDA_RATE(44, 4, 1) पूर्ण,
+	अणु 192000, SNDRV_PCM_RATE_192000, HDA_RATE(48, 4, 1) पूर्ण,
+#घोषणा AC_PAR_PCM_RATE_BITS	11
 	/* up to bits 10, 384kHZ isn't supported properly */
 
-	/* not autodetected value */
-	{ 9600, SNDRV_PCM_RATE_KNOT, HDA_RATE(48, 1, 5) },
+	/* not स्वतःdetected value */
+	अणु 9600, SNDRV_PCM_RATE_KNOT, HDA_RATE(48, 1, 5) पूर्ण,
 
-	{ 0 } /* terminator */
-};
+	अणु 0 पूर्ण /* terminator */
+पूर्ण;
 
 /**
- * snd_hdac_calc_stream_format - calculate the format bitset
+ * snd_hdac_calc_stream_क्रमmat - calculate the क्रमmat bitset
  * @rate: the sample rate
  * @channels: the number of channels
- * @format: the PCM format (SNDRV_PCM_FORMAT_XXX)
+ * @क्रमmat: the PCM क्रमmat (SNDRV_PCM_FORMAT_XXX)
  * @maxbps: the max. bps
- * @spdif_ctls: HD-audio SPDIF status bits (0 if irrelevant)
+ * @spdअगर_ctls: HD-audio SPDIF status bits (0 अगर irrelevant)
  *
- * Calculate the format bitset from the given rate, channels and th PCM format.
+ * Calculate the क्रमmat bitset from the given rate, channels and th PCM क्रमmat.
  *
- * Return zero if invalid.
+ * Return zero अगर invalid.
  */
-unsigned int snd_hdac_calc_stream_format(unsigned int rate,
-					 unsigned int channels,
-					 snd_pcm_format_t format,
-					 unsigned int maxbps,
-					 unsigned short spdif_ctls)
-{
-	int i;
-	unsigned int val = 0;
+अचिन्हित पूर्णांक snd_hdac_calc_stream_क्रमmat(अचिन्हित पूर्णांक rate,
+					 अचिन्हित पूर्णांक channels,
+					 snd_pcm_क्रमmat_t क्रमmat,
+					 अचिन्हित पूर्णांक maxbps,
+					 अचिन्हित लघु spdअगर_ctls)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक val = 0;
 
-	for (i = 0; rate_bits[i].hz; i++)
-		if (rate_bits[i].hz == rate) {
+	क्रम (i = 0; rate_bits[i].hz; i++)
+		अगर (rate_bits[i].hz == rate) अणु
 			val = rate_bits[i].hda_fmt;
-			break;
-		}
-	if (!rate_bits[i].hz)
-		return 0;
+			अवरोध;
+		पूर्ण
+	अगर (!rate_bits[i].hz)
+		वापस 0;
 
-	if (channels == 0 || channels > 8)
-		return 0;
+	अगर (channels == 0 || channels > 8)
+		वापस 0;
 	val |= channels - 1;
 
-	switch (snd_pcm_format_width(format)) {
-	case 8:
+	चयन (snd_pcm_क्रमmat_width(क्रमmat)) अणु
+	हाल 8:
 		val |= AC_FMT_BITS_8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		val |= AC_FMT_BITS_16;
-		break;
-	case 20:
-	case 24:
-	case 32:
-		if (maxbps >= 32 || format == SNDRV_PCM_FORMAT_FLOAT_LE)
+		अवरोध;
+	हाल 20:
+	हाल 24:
+	हाल 32:
+		अगर (maxbps >= 32 || क्रमmat == SNDRV_PCM_FORMAT_FLOAT_LE)
 			val |= AC_FMT_BITS_32;
-		else if (maxbps >= 24)
+		अन्यथा अगर (maxbps >= 24)
 			val |= AC_FMT_BITS_24;
-		else
+		अन्यथा
 			val |= AC_FMT_BITS_20;
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	if (spdif_ctls & AC_DIG1_NONAUDIO)
+	अगर (spdअगर_ctls & AC_DIG1_NONAUDIO)
 		val |= AC_FMT_TYPE_NON_PCM;
 
-	return val;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_calc_stream_format);
+	वापस val;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_calc_stream_क्रमmat);
 
-static unsigned int query_pcm_param(struct hdac_device *codec, hda_nid_t nid)
-{
-	unsigned int val = 0;
+अटल अचिन्हित पूर्णांक query_pcm_param(काष्ठा hdac_device *codec, hda_nid_t nid)
+अणु
+	अचिन्हित पूर्णांक val = 0;
 
-	if (nid != codec->afg &&
+	अगर (nid != codec->afg &&
 	    (get_wcaps(codec, nid) & AC_WCAP_FORMAT_OVRD))
-		val = snd_hdac_read_parm(codec, nid, AC_PAR_PCM);
-	if (!val || val == -1)
-		val = snd_hdac_read_parm(codec, codec->afg, AC_PAR_PCM);
-	if (!val || val == -1)
-		return 0;
-	return val;
-}
+		val = snd_hdac_पढ़ो_parm(codec, nid, AC_PAR_PCM);
+	अगर (!val || val == -1)
+		val = snd_hdac_पढ़ो_parm(codec, codec->afg, AC_PAR_PCM);
+	अगर (!val || val == -1)
+		वापस 0;
+	वापस val;
+पूर्ण
 
-static unsigned int query_stream_param(struct hdac_device *codec, hda_nid_t nid)
-{
-	unsigned int streams = snd_hdac_read_parm(codec, nid, AC_PAR_STREAM);
+अटल अचिन्हित पूर्णांक query_stream_param(काष्ठा hdac_device *codec, hda_nid_t nid)
+अणु
+	अचिन्हित पूर्णांक streams = snd_hdac_पढ़ो_parm(codec, nid, AC_PAR_STREAM);
 
-	if (!streams || streams == -1)
-		streams = snd_hdac_read_parm(codec, codec->afg, AC_PAR_STREAM);
-	if (!streams || streams == -1)
-		return 0;
-	return streams;
-}
+	अगर (!streams || streams == -1)
+		streams = snd_hdac_पढ़ो_parm(codec, codec->afg, AC_PAR_STREAM);
+	अगर (!streams || streams == -1)
+		वापस 0;
+	वापस streams;
+पूर्ण
 
 /**
- * snd_hdac_query_supported_pcm - query the supported PCM rates and formats
+ * snd_hdac_query_supported_pcm - query the supported PCM rates and क्रमmats
  * @codec: the codec object
  * @nid: NID to query
- * @ratesp: the pointer to store the detected rate bitflags
- * @formatsp: the pointer to store the detected formats
- * @bpsp: the pointer to store the detected format widths
+ * @ratesp: the poपूर्णांकer to store the detected rate bitflags
+ * @क्रमmatsp: the poपूर्णांकer to store the detected क्रमmats
+ * @bpsp: the poपूर्णांकer to store the detected क्रमmat widths
  *
- * Queries the supported PCM rates and formats.  The NULL @ratesp, @formatsp
+ * Queries the supported PCM rates and क्रमmats.  The शून्य @ratesp, @क्रमmatsp
  * or @bsps argument is ignored.
  *
- * Returns 0 if successful, otherwise a negative error code.
+ * Returns 0 अगर successful, otherwise a negative error code.
  */
-int snd_hdac_query_supported_pcm(struct hdac_device *codec, hda_nid_t nid,
-				 u32 *ratesp, u64 *formatsp, unsigned int *bpsp)
-{
-	unsigned int i, val, wcaps;
+पूर्णांक snd_hdac_query_supported_pcm(काष्ठा hdac_device *codec, hda_nid_t nid,
+				 u32 *ratesp, u64 *क्रमmatsp, अचिन्हित पूर्णांक *bpsp)
+अणु
+	अचिन्हित पूर्णांक i, val, wcaps;
 
 	wcaps = get_wcaps(codec, nid);
 	val = query_pcm_param(codec, nid);
 
-	if (ratesp) {
+	अगर (ratesp) अणु
 		u32 rates = 0;
-		for (i = 0; i < AC_PAR_PCM_RATE_BITS; i++) {
-			if (val & (1 << i))
+		क्रम (i = 0; i < AC_PAR_PCM_RATE_BITS; i++) अणु
+			अगर (val & (1 << i))
 				rates |= rate_bits[i].alsa_bits;
-		}
-		if (rates == 0) {
+		पूर्ण
+		अगर (rates == 0) अणु
 			dev_err(&codec->dev,
 				"rates == 0 (nid=0x%x, val=0x%x, ovrd=%i)\n",
 				nid, val,
 				(wcaps & AC_WCAP_FORMAT_OVRD) ? 1 : 0);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		*ratesp = rates;
-	}
+	पूर्ण
 
-	if (formatsp || bpsp) {
-		u64 formats = 0;
-		unsigned int streams, bps;
+	अगर (क्रमmatsp || bpsp) अणु
+		u64 क्रमmats = 0;
+		अचिन्हित पूर्णांक streams, bps;
 
 		streams = query_stream_param(codec, nid);
-		if (!streams)
-			return -EIO;
+		अगर (!streams)
+			वापस -EIO;
 
 		bps = 0;
-		if (streams & AC_SUPFMT_PCM) {
-			if (val & AC_SUPPCM_BITS_8) {
-				formats |= SNDRV_PCM_FMTBIT_U8;
+		अगर (streams & AC_SUPFMT_PCM) अणु
+			अगर (val & AC_SUPPCM_BITS_8) अणु
+				क्रमmats |= SNDRV_PCM_FMTBIT_U8;
 				bps = 8;
-			}
-			if (val & AC_SUPPCM_BITS_16) {
-				formats |= SNDRV_PCM_FMTBIT_S16_LE;
+			पूर्ण
+			अगर (val & AC_SUPPCM_BITS_16) अणु
+				क्रमmats |= SNDRV_PCM_FMTBIT_S16_LE;
 				bps = 16;
-			}
-			if (wcaps & AC_WCAP_DIGITAL) {
-				if (val & AC_SUPPCM_BITS_32)
-					formats |= SNDRV_PCM_FMTBIT_IEC958_SUBFRAME_LE;
-				if (val & (AC_SUPPCM_BITS_20|AC_SUPPCM_BITS_24))
-					formats |= SNDRV_PCM_FMTBIT_S32_LE;
-				if (val & AC_SUPPCM_BITS_24)
+			पूर्ण
+			अगर (wcaps & AC_WCAP_DIGITAL) अणु
+				अगर (val & AC_SUPPCM_BITS_32)
+					क्रमmats |= SNDRV_PCM_FMTBIT_IEC958_SUBFRAME_LE;
+				अगर (val & (AC_SUPPCM_BITS_20|AC_SUPPCM_BITS_24))
+					क्रमmats |= SNDRV_PCM_FMTBIT_S32_LE;
+				अगर (val & AC_SUPPCM_BITS_24)
 					bps = 24;
-				else if (val & AC_SUPPCM_BITS_20)
+				अन्यथा अगर (val & AC_SUPPCM_BITS_20)
 					bps = 20;
-			} else if (val & (AC_SUPPCM_BITS_20|AC_SUPPCM_BITS_24|
-					  AC_SUPPCM_BITS_32)) {
-				formats |= SNDRV_PCM_FMTBIT_S32_LE;
-				if (val & AC_SUPPCM_BITS_32)
+			पूर्ण अन्यथा अगर (val & (AC_SUPPCM_BITS_20|AC_SUPPCM_BITS_24|
+					  AC_SUPPCM_BITS_32)) अणु
+				क्रमmats |= SNDRV_PCM_FMTBIT_S32_LE;
+				अगर (val & AC_SUPPCM_BITS_32)
 					bps = 32;
-				else if (val & AC_SUPPCM_BITS_24)
+				अन्यथा अगर (val & AC_SUPPCM_BITS_24)
 					bps = 24;
-				else if (val & AC_SUPPCM_BITS_20)
+				अन्यथा अगर (val & AC_SUPPCM_BITS_20)
 					bps = 20;
-			}
-		}
-#if 0 /* FIXME: CS4206 doesn't work, which is the only codec supporting float */
-		if (streams & AC_SUPFMT_FLOAT32) {
-			formats |= SNDRV_PCM_FMTBIT_FLOAT_LE;
-			if (!bps)
+			पूर्ण
+		पूर्ण
+#अगर 0 /* FIXME: CS4206 करोesn't work, which is the only codec supporting भग्न */
+		अगर (streams & AC_SUPFMT_FLOAT32) अणु
+			क्रमmats |= SNDRV_PCM_FMTBIT_FLOAT_LE;
+			अगर (!bps)
 				bps = 32;
-		}
-#endif
-		if (streams == AC_SUPFMT_AC3) {
+		पूर्ण
+#पूर्ण_अगर
+		अगर (streams == AC_SUPFMT_AC3) अणु
 			/* should be exclusive */
 			/* temporary hack: we have still no proper support
-			 * for the direct AC3 stream...
+			 * क्रम the direct AC3 stream...
 			 */
-			formats |= SNDRV_PCM_FMTBIT_U8;
+			क्रमmats |= SNDRV_PCM_FMTBIT_U8;
 			bps = 8;
-		}
-		if (formats == 0) {
+		पूर्ण
+		अगर (क्रमmats == 0) अणु
 			dev_err(&codec->dev,
 				"formats == 0 (nid=0x%x, val=0x%x, ovrd=%i, streams=0x%x)\n",
 				nid, val,
 				(wcaps & AC_WCAP_FORMAT_OVRD) ? 1 : 0,
 				streams);
-			return -EIO;
-		}
-		if (formatsp)
-			*formatsp = formats;
-		if (bpsp)
+			वापस -EIO;
+		पूर्ण
+		अगर (क्रमmatsp)
+			*क्रमmatsp = क्रमmats;
+		अगर (bpsp)
 			*bpsp = bps;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(snd_hdac_query_supported_pcm);
 
 /**
- * snd_hdac_is_supported_format - Check the validity of the format
+ * snd_hdac_is_supported_क्रमmat - Check the validity of the क्रमmat
  * @codec: the codec object
  * @nid: NID to check
- * @format: the HD-audio format value to check
+ * @क्रमmat: the HD-audio क्रमmat value to check
  *
- * Check whether the given node supports the format value.
+ * Check whether the given node supports the क्रमmat value.
  *
- * Returns true if supported, false if not.
+ * Returns true अगर supported, false अगर not.
  */
-bool snd_hdac_is_supported_format(struct hdac_device *codec, hda_nid_t nid,
-				  unsigned int format)
-{
-	int i;
-	unsigned int val = 0, rate, stream;
+bool snd_hdac_is_supported_क्रमmat(काष्ठा hdac_device *codec, hda_nid_t nid,
+				  अचिन्हित पूर्णांक क्रमmat)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक val = 0, rate, stream;
 
 	val = query_pcm_param(codec, nid);
-	if (!val)
-		return false;
+	अगर (!val)
+		वापस false;
 
-	rate = format & 0xff00;
-	for (i = 0; i < AC_PAR_PCM_RATE_BITS; i++)
-		if (rate_bits[i].hda_fmt == rate) {
-			if (val & (1 << i))
-				break;
-			return false;
-		}
-	if (i >= AC_PAR_PCM_RATE_BITS)
-		return false;
+	rate = क्रमmat & 0xff00;
+	क्रम (i = 0; i < AC_PAR_PCM_RATE_BITS; i++)
+		अगर (rate_bits[i].hda_fmt == rate) अणु
+			अगर (val & (1 << i))
+				अवरोध;
+			वापस false;
+		पूर्ण
+	अगर (i >= AC_PAR_PCM_RATE_BITS)
+		वापस false;
 
 	stream = query_stream_param(codec, nid);
-	if (!stream)
-		return false;
+	अगर (!stream)
+		वापस false;
 
-	if (stream & AC_SUPFMT_PCM) {
-		switch (format & 0xf0) {
-		case 0x00:
-			if (!(val & AC_SUPPCM_BITS_8))
-				return false;
-			break;
-		case 0x10:
-			if (!(val & AC_SUPPCM_BITS_16))
-				return false;
-			break;
-		case 0x20:
-			if (!(val & AC_SUPPCM_BITS_20))
-				return false;
-			break;
-		case 0x30:
-			if (!(val & AC_SUPPCM_BITS_24))
-				return false;
-			break;
-		case 0x40:
-			if (!(val & AC_SUPPCM_BITS_32))
-				return false;
-			break;
-		default:
-			return false;
-		}
-	} else {
-		/* FIXME: check for float32 and AC3? */
-	}
+	अगर (stream & AC_SUPFMT_PCM) अणु
+		चयन (क्रमmat & 0xf0) अणु
+		हाल 0x00:
+			अगर (!(val & AC_SUPPCM_BITS_8))
+				वापस false;
+			अवरोध;
+		हाल 0x10:
+			अगर (!(val & AC_SUPPCM_BITS_16))
+				वापस false;
+			अवरोध;
+		हाल 0x20:
+			अगर (!(val & AC_SUPPCM_BITS_20))
+				वापस false;
+			अवरोध;
+		हाल 0x30:
+			अगर (!(val & AC_SUPPCM_BITS_24))
+				वापस false;
+			अवरोध;
+		हाल 0x40:
+			अगर (!(val & AC_SUPPCM_BITS_32))
+				वापस false;
+			अवरोध;
+		शेष:
+			वापस false;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* FIXME: check क्रम भग्न32 and AC3? */
+	पूर्ण
 
-	return true;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_is_supported_format);
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_is_supported_क्रमmat);
 
-static unsigned int codec_read(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm)
-{
-	unsigned int cmd = snd_hdac_make_cmd(hdac, nid, verb, parm);
-	unsigned int res;
+अटल अचिन्हित पूर्णांक codec_पढ़ो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm)
+अणु
+	अचिन्हित पूर्णांक cmd = snd_hdac_make_cmd(hdac, nid, verb, parm);
+	अचिन्हित पूर्णांक res;
 
-	if (snd_hdac_exec_verb(hdac, cmd, flags, &res))
-		return -1;
+	अगर (snd_hdac_exec_verb(hdac, cmd, flags, &res))
+		वापस -1;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int codec_write(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm)
-{
-	unsigned int cmd = snd_hdac_make_cmd(hdac, nid, verb, parm);
+अटल पूर्णांक codec_ग_लिखो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm)
+अणु
+	अचिन्हित पूर्णांक cmd = snd_hdac_make_cmd(hdac, nid, verb, parm);
 
-	return snd_hdac_exec_verb(hdac, cmd, flags, NULL);
-}
+	वापस snd_hdac_exec_verb(hdac, cmd, flags, शून्य);
+पूर्ण
 
 /**
- * snd_hdac_codec_read - send a command and get the response
+ * snd_hdac_codec_पढ़ो - send a command and get the response
  * @hdac: the HDAC device
  * @nid: NID to send the command
  * @flags: optional bit flags
  * @verb: the verb to send
- * @parm: the parameter for the verb
+ * @parm: the parameter क्रम the verb
  *
- * Send a single command and read the corresponding response.
+ * Send a single command and पढ़ो the corresponding response.
  *
- * Returns the obtained response value, or -1 for an error.
+ * Returns the obtained response value, or -1 क्रम an error.
  */
-int snd_hdac_codec_read(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm)
-{
-	return codec_read(hdac, nid, flags, verb, parm);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_codec_read);
+पूर्णांक snd_hdac_codec_पढ़ो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm)
+अणु
+	वापस codec_पढ़ो(hdac, nid, flags, verb, parm);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_codec_पढ़ो);
 
 /**
- * snd_hdac_codec_write - send a single command without waiting for response
+ * snd_hdac_codec_ग_लिखो - send a single command without रुकोing क्रम response
  * @hdac: the HDAC device
  * @nid: NID to send the command
  * @flags: optional bit flags
  * @verb: the verb to send
- * @parm: the parameter for the verb
+ * @parm: the parameter क्रम the verb
  *
- * Send a single command without waiting for response.
+ * Send a single command without रुकोing क्रम response.
  *
- * Returns 0 if successful, or a negative error code.
+ * Returns 0 अगर successful, or a negative error code.
  */
-int snd_hdac_codec_write(struct hdac_device *hdac, hda_nid_t nid,
-			int flags, unsigned int verb, unsigned int parm)
-{
-	return codec_write(hdac, nid, flags, verb, parm);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_codec_write);
+पूर्णांक snd_hdac_codec_ग_लिखो(काष्ठा hdac_device *hdac, hda_nid_t nid,
+			पूर्णांक flags, अचिन्हित पूर्णांक verb, अचिन्हित पूर्णांक parm)
+अणु
+	वापस codec_ग_लिखो(hdac, nid, flags, verb, parm);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_codec_ग_लिखो);
 
 /**
- * snd_hdac_check_power_state - check whether the actual power state matches
+ * snd_hdac_check_घातer_state - check whether the actual घातer state matches
  * with the target state
  *
  * @hdac: the HDAC device
  * @nid: NID to send the command
- * @target_state: target state to check for
+ * @target_state: target state to check क्रम
  *
- * Return true if state matches, false if not
+ * Return true अगर state matches, false अगर not
  */
-bool snd_hdac_check_power_state(struct hdac_device *hdac,
-		hda_nid_t nid, unsigned int target_state)
-{
-	unsigned int state = codec_read(hdac, nid, 0,
+bool snd_hdac_check_घातer_state(काष्ठा hdac_device *hdac,
+		hda_nid_t nid, अचिन्हित पूर्णांक target_state)
+अणु
+	अचिन्हित पूर्णांक state = codec_पढ़ो(hdac, nid, 0,
 				AC_VERB_GET_POWER_STATE, 0);
 
-	if (state & AC_PWRST_ERROR)
-		return true;
+	अगर (state & AC_PWRST_ERROR)
+		वापस true;
 	state = (state >> 4) & 0x0f;
-	return (state == target_state);
-}
-EXPORT_SYMBOL_GPL(snd_hdac_check_power_state);
+	वापस (state == target_state);
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_check_घातer_state);
 /**
- * snd_hdac_sync_power_state - wait until actual power state matches
+ * snd_hdac_sync_घातer_state - रुको until actual घातer state matches
  * with the target state
  *
  * @codec: the HDAC device
  * @nid: NID to send the command
- * @power_state: target power state to wait for
+ * @घातer_state: target घातer state to रुको क्रम
  *
- * Return power state or PS_ERROR if codec rejects GET verb.
+ * Return घातer state or PS_ERROR अगर codec rejects GET verb.
  */
-unsigned int snd_hdac_sync_power_state(struct hdac_device *codec,
-			hda_nid_t nid, unsigned int power_state)
-{
-	unsigned long end_time = jiffies + msecs_to_jiffies(500);
-	unsigned int state, actual_state, count;
+अचिन्हित पूर्णांक snd_hdac_sync_घातer_state(काष्ठा hdac_device *codec,
+			hda_nid_t nid, अचिन्हित पूर्णांक घातer_state)
+अणु
+	अचिन्हित दीर्घ end_समय = jअगरfies + msecs_to_jअगरfies(500);
+	अचिन्हित पूर्णांक state, actual_state, count;
 
-	for (count = 0; count < 500; count++) {
-		state = snd_hdac_codec_read(codec, nid, 0,
+	क्रम (count = 0; count < 500; count++) अणु
+		state = snd_hdac_codec_पढ़ो(codec, nid, 0,
 				AC_VERB_GET_POWER_STATE, 0);
-		if (state & AC_PWRST_ERROR) {
+		अगर (state & AC_PWRST_ERROR) अणु
 			msleep(20);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		actual_state = (state >> 4) & 0x0f;
-		if (actual_state == power_state)
-			break;
-		if (time_after_eq(jiffies, end_time))
-			break;
-		/* wait until the codec reachs to the target state */
+		अगर (actual_state == घातer_state)
+			अवरोध;
+		अगर (समय_after_eq(jअगरfies, end_समय))
+			अवरोध;
+		/* रुको until the codec reachs to the target state */
 		msleep(1);
-	}
-	return state;
-}
-EXPORT_SYMBOL_GPL(snd_hdac_sync_power_state);
+	पूर्ण
+	वापस state;
+पूर्ण
+EXPORT_SYMBOL_GPL(snd_hdac_sync_घातer_state);

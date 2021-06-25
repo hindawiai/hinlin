@@ -1,2 +1,3 @@
-#include "locking-selftest-wlock.h"
-#include "locking-selftest-hardirq.h"
+<शैली गुरु>
+#समावेश "locking-selftest-wlock.h"
+#समावेश "locking-selftest-hardirq.h"

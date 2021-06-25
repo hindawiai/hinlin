@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stddef.h>
-#include <string.h>
-#include <linux/bpf.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-struct grehdr {
+काष्ठा grehdr अणु
 	__be16 flags;
 	__be16 protocol;
-};
+पूर्ण;
 
 SEC("encap_gre")
-int bpf_lwt_encap_gre(struct __sk_buff *skb)
-{
-	struct encap_hdr {
-		struct iphdr iph;
-		struct grehdr greh;
-	} hdr;
-	int err;
+पूर्णांक bpf_lwt_encap_gre(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा encap_hdr अणु
+		काष्ठा iphdr iph;
+		काष्ठा grehdr greh;
+	पूर्ण hdr;
+	पूर्णांक err;
 
-	memset(&hdr, 0, sizeof(struct encap_hdr));
+	स_रखो(&hdr, 0, माप(काष्ठा encap_hdr));
 
 	hdr.iph.ihl = 5;
 	hdr.iph.version = 4;
 	hdr.iph.ttl = 0x40;
 	hdr.iph.protocol = 47;  /* IPPROTO_GRE */
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#अगर __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 	hdr.iph.saddr = 0x640110ac;  /* 172.16.1.100 */
 	hdr.iph.daddr = 0x641010ac;  /* 172.16.16.100 */
-#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#या_अगर __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	hdr.iph.saddr = 0xac100164;  /* 172.16.1.100 */
 	hdr.iph.daddr = 0xac101064;  /* 172.16.16.100 */
-#else
-#error "Fix your compiler's __BYTE_ORDER__?!"
-#endif
-	hdr.iph.tot_len = bpf_htons(skb->len + sizeof(struct encap_hdr));
+#अन्यथा
+#त्रुटि "Fix your compiler's __BYTE_ORDER__?!"
+#पूर्ण_अगर
+	hdr.iph.tot_len = bpf_htons(skb->len + माप(काष्ठा encap_hdr));
 
 	hdr.greh.protocol = skb->protocol;
 
 	err = bpf_lwt_push_encap(skb, BPF_LWT_ENCAP_IP, &hdr,
-				 sizeof(struct encap_hdr));
-	if (err)
-		return BPF_DROP;
+				 माप(काष्ठा encap_hdr));
+	अगर (err)
+		वापस BPF_DROP;
 
-	return BPF_LWT_REROUTE;
-}
+	वापस BPF_LWT_REROUTE;
+पूर्ण
 
 SEC("encap_gre6")
-int bpf_lwt_encap_gre6(struct __sk_buff *skb)
-{
-	struct encap_hdr {
-		struct ipv6hdr ip6hdr;
-		struct grehdr greh;
-	} hdr;
-	int err;
+पूर्णांक bpf_lwt_encap_gre6(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा encap_hdr अणु
+		काष्ठा ipv6hdr ip6hdr;
+		काष्ठा grehdr greh;
+	पूर्ण hdr;
+	पूर्णांक err;
 
-	memset(&hdr, 0, sizeof(struct encap_hdr));
+	स_रखो(&hdr, 0, माप(काष्ठा encap_hdr));
 
 	hdr.ip6hdr.version = 6;
-	hdr.ip6hdr.payload_len = bpf_htons(skb->len + sizeof(struct grehdr));
+	hdr.ip6hdr.payload_len = bpf_htons(skb->len + माप(काष्ठा grehdr));
 	hdr.ip6hdr.nexthdr = 47;  /* IPPROTO_GRE */
 	hdr.ip6hdr.hop_limit = 0x40;
 	/* fb01::1 */
@@ -75,11 +76,11 @@ int bpf_lwt_encap_gre6(struct __sk_buff *skb)
 	hdr.greh.protocol = skb->protocol;
 
 	err = bpf_lwt_push_encap(skb, BPF_LWT_ENCAP_IP, &hdr,
-				 sizeof(struct encap_hdr));
-	if (err)
-		return BPF_DROP;
+				 माप(काष्ठा encap_hdr));
+	अगर (err)
+		वापस BPF_DROP;
 
-	return BPF_LWT_REROUTE;
-}
+	वापस BPF_LWT_REROUTE;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

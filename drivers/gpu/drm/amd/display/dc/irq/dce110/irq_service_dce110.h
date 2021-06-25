@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,31 +24,31 @@
  *
  */
 
-#ifndef __DAL_IRQ_SERVICE_DCE110_H__
-#define __DAL_IRQ_SERVICE_DCE110_H__
+#अगर_अघोषित __DAL_IRQ_SERVICE_DCE110_H__
+#घोषणा __DAL_IRQ_SERVICE_DCE110_H__
 
-#include "../irq_service.h"
+#समावेश "../irq_service.h"
 
-struct irq_service *dal_irq_service_dce110_create(
-	struct irq_service_init_data *init_data);
+काष्ठा irq_service *dal_irq_service_dce110_create(
+	काष्ठा irq_service_init_data *init_data);
 
-enum dc_irq_source to_dal_irq_source_dce110(
-		struct irq_service *irq_service,
-		uint32_t src_id,
-		uint32_t ext_id);
+क्रमागत dc_irq_source to_dal_irq_source_dce110(
+		काष्ठा irq_service *irq_service,
+		uपूर्णांक32_t src_id,
+		uपूर्णांक32_t ext_id);
 
 bool dal_irq_service_dummy_set(
-	struct irq_service *irq_service,
-	const struct irq_source_info *info,
+	काष्ठा irq_service *irq_service,
+	स्थिर काष्ठा irq_source_info *info,
 	bool enable);
 
 bool dal_irq_service_dummy_ack(
-	struct irq_service *irq_service,
-	const struct irq_source_info *info);
+	काष्ठा irq_service *irq_service,
+	स्थिर काष्ठा irq_source_info *info);
 
 bool dce110_vblank_set(
-	struct irq_service *irq_service,
-	const struct irq_source_info *info,
+	काष्ठा irq_service *irq_service,
+	स्थिर काष्ठा irq_source_info *info,
 	bool enable);
 
-#endif
+#पूर्ण_अगर

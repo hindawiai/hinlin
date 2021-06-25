@@ -1,341 +1,342 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  */
 
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
-#include <linux/usb/audio.h>
-#include <linux/usb/audio-v2.h>
-#include <linux/usb/audio-v3.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/audपन.स>
+#समावेश <linux/usb/audio-v2.h>
+#समावेश <linux/usb/audio-v3.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
 
-#include "usbaudio.h"
-#include "card.h"
-#include "quirks.h"
-#include "helper.h"
-#include "clock.h"
-#include "format.h"
+#समावेश "usbaudio.h"
+#समावेश "card.h"
+#समावेश "quirks.h"
+#समावेश "helper.h"
+#समावेश "clock.h"
+#समावेश "format.h"
 
 /*
- * parse the audio format type I descriptor
- * and returns the corresponding pcm format
+ * parse the audio क्रमmat type I descriptor
+ * and वापसs the corresponding pcm क्रमmat
  *
  * @dev: usb device
- * @fp: audioformat record
- * @format: the format tag (wFormatTag)
- * @fmt: the format type descriptor (v1/v2) or AudioStreaming descriptor (v3)
+ * @fp: audioक्रमmat record
+ * @क्रमmat: the क्रमmat tag (wFormatTag)
+ * @fmt: the क्रमmat type descriptor (v1/v2) or AudioStreaming descriptor (v3)
  */
-static u64 parse_audio_format_i_type(struct snd_usb_audio *chip,
-				     struct audioformat *fp,
-				     u64 format, void *_fmt)
-{
-	int sample_width, sample_bytes;
-	u64 pcm_formats = 0;
+अटल u64 parse_audio_क्रमmat_i_type(काष्ठा snd_usb_audio *chip,
+				     काष्ठा audioक्रमmat *fp,
+				     u64 क्रमmat, व्योम *_fmt)
+अणु
+	पूर्णांक sample_width, sample_bytes;
+	u64 pcm_क्रमmats = 0;
 
-	switch (fp->protocol) {
-	case UAC_VERSION_1:
-	default: {
-		struct uac_format_type_i_discrete_descriptor *fmt = _fmt;
-		if (format >= 64)
-			return 0; /* invalid format */
+	चयन (fp->protocol) अणु
+	हाल UAC_VERSION_1:
+	शेष: अणु
+		काष्ठा uac_क्रमmat_type_i_discrete_descriptor *fmt = _fmt;
+		अगर (क्रमmat >= 64)
+			वापस 0; /* invalid क्रमmat */
 		sample_width = fmt->bBitResolution;
 		sample_bytes = fmt->bSubframeSize;
-		format = 1ULL << format;
-		break;
-	}
+		क्रमmat = 1ULL << क्रमmat;
+		अवरोध;
+	पूर्ण
 
-	case UAC_VERSION_2: {
-		struct uac_format_type_i_ext_descriptor *fmt = _fmt;
+	हाल UAC_VERSION_2: अणु
+		काष्ठा uac_क्रमmat_type_i_ext_descriptor *fmt = _fmt;
 		sample_width = fmt->bBitResolution;
 		sample_bytes = fmt->bSubslotSize;
 
-		if (format & UAC2_FORMAT_TYPE_I_RAW_DATA) {
-			pcm_formats |= SNDRV_PCM_FMTBIT_SPECIAL;
+		अगर (क्रमmat & UAC2_FORMAT_TYPE_I_RAW_DATA) अणु
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_SPECIAL;
 			/* flag potentially raw DSD capable altsettings */
 			fp->dsd_raw = true;
-		}
+		पूर्ण
 
-		format <<= 1;
-		break;
-	}
-	case UAC_VERSION_3: {
-		struct uac3_as_header_descriptor *as = _fmt;
+		क्रमmat <<= 1;
+		अवरोध;
+	पूर्ण
+	हाल UAC_VERSION_3: अणु
+		काष्ठा uac3_as_header_descriptor *as = _fmt;
 
 		sample_width = as->bBitResolution;
 		sample_bytes = as->bSubslotSize;
 
-		if (format & UAC3_FORMAT_TYPE_I_RAW_DATA)
-			pcm_formats |= SNDRV_PCM_FMTBIT_SPECIAL;
+		अगर (क्रमmat & UAC3_FORMAT_TYPE_I_RAW_DATA)
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_SPECIAL;
 
-		format <<= 1;
-		break;
-	}
-	}
+		क्रमmat <<= 1;
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
 	fp->fmt_bits = sample_width;
 
-	if ((pcm_formats == 0) &&
-	    (format == 0 || format == (1 << UAC_FORMAT_TYPE_I_UNDEFINED))) {
-		/* some devices don't define this correctly... */
+	अगर ((pcm_क्रमmats == 0) &&
+	    (क्रमmat == 0 || क्रमmat == (1 << UAC_FORMAT_TYPE_I_UNDEFINED))) अणु
+		/* some devices करोn't define this correctly... */
 		usb_audio_info(chip, "%u:%d : format type 0 is detected, processed as PCM\n",
-			fp->iface, fp->altsetting);
-		format = 1 << UAC_FORMAT_TYPE_I_PCM;
-	}
-	if (format & (1 << UAC_FORMAT_TYPE_I_PCM)) {
-		if (((chip->usb_id == USB_ID(0x0582, 0x0016)) ||
+			fp->अगरace, fp->altsetting);
+		क्रमmat = 1 << UAC_FORMAT_TYPE_I_PCM;
+	पूर्ण
+	अगर (क्रमmat & (1 << UAC_FORMAT_TYPE_I_PCM)) अणु
+		अगर (((chip->usb_id == USB_ID(0x0582, 0x0016)) ||
 		     /* Edirol SD-90 */
 		     (chip->usb_id == USB_ID(0x0582, 0x000c))) &&
 		     /* Roland SC-D70 */
 		    sample_width == 24 && sample_bytes == 2)
 			sample_bytes = 3;
-		else if (sample_width > sample_bytes * 8) {
+		अन्यथा अगर (sample_width > sample_bytes * 8) अणु
 			usb_audio_info(chip, "%u:%d : sample bitwidth %d in over sample bytes %d\n",
-				 fp->iface, fp->altsetting,
+				 fp->अगरace, fp->altsetting,
 				 sample_width, sample_bytes);
-		}
-		/* check the format byte size */
-		switch (sample_bytes) {
-		case 1:
-			pcm_formats |= SNDRV_PCM_FMTBIT_S8;
-			break;
-		case 2:
-			if (snd_usb_is_big_endian_format(chip, fp))
-				pcm_formats |= SNDRV_PCM_FMTBIT_S16_BE; /* grrr, big endian!! */
-			else
-				pcm_formats |= SNDRV_PCM_FMTBIT_S16_LE;
-			break;
-		case 3:
-			if (snd_usb_is_big_endian_format(chip, fp))
-				pcm_formats |= SNDRV_PCM_FMTBIT_S24_3BE; /* grrr, big endian!! */
-			else
-				pcm_formats |= SNDRV_PCM_FMTBIT_S24_3LE;
-			break;
-		case 4:
-			pcm_formats |= SNDRV_PCM_FMTBIT_S32_LE;
-			break;
-		default:
+		पूर्ण
+		/* check the क्रमmat byte size */
+		चयन (sample_bytes) अणु
+		हाल 1:
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S8;
+			अवरोध;
+		हाल 2:
+			अगर (snd_usb_is_big_endian_क्रमmat(chip, fp))
+				pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S16_BE; /* grrr, big endian!! */
+			अन्यथा
+				pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S16_LE;
+			अवरोध;
+		हाल 3:
+			अगर (snd_usb_is_big_endian_क्रमmat(chip, fp))
+				pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S24_3BE; /* grrr, big endian!! */
+			अन्यथा
+				pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S24_3LE;
+			अवरोध;
+		हाल 4:
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S32_LE;
+			अवरोध;
+		शेष:
 			usb_audio_info(chip,
 				 "%u:%d : unsupported sample bitwidth %d in %d bytes\n",
-				 fp->iface, fp->altsetting,
+				 fp->अगरace, fp->altsetting,
 				 sample_width, sample_bytes);
-			break;
-		}
-	}
-	if (format & (1 << UAC_FORMAT_TYPE_I_PCM8)) {
-		/* Dallas DS4201 workaround: it advertises U8 format, but really
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (क्रमmat & (1 << UAC_FORMAT_TYPE_I_PCM8)) अणु
+		/* Dallas DS4201 workaround: it advertises U8 क्रमmat, but really
 		   supports S8. */
-		if (chip->usb_id == USB_ID(0x04fa, 0x4201))
-			pcm_formats |= SNDRV_PCM_FMTBIT_S8;
-		else
-			pcm_formats |= SNDRV_PCM_FMTBIT_U8;
-	}
-	if (format & (1 << UAC_FORMAT_TYPE_I_IEEE_FLOAT)) {
-		pcm_formats |= SNDRV_PCM_FMTBIT_FLOAT_LE;
-	}
-	if (format & (1 << UAC_FORMAT_TYPE_I_ALAW)) {
-		pcm_formats |= SNDRV_PCM_FMTBIT_A_LAW;
-	}
-	if (format & (1 << UAC_FORMAT_TYPE_I_MULAW)) {
-		pcm_formats |= SNDRV_PCM_FMTBIT_MU_LAW;
-	}
-	if (format & ~0x3f) {
+		अगर (chip->usb_id == USB_ID(0x04fa, 0x4201))
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_S8;
+		अन्यथा
+			pcm_क्रमmats |= SNDRV_PCM_FMTBIT_U8;
+	पूर्ण
+	अगर (क्रमmat & (1 << UAC_FORMAT_TYPE_I_IEEE_FLOAT)) अणु
+		pcm_क्रमmats |= SNDRV_PCM_FMTBIT_FLOAT_LE;
+	पूर्ण
+	अगर (क्रमmat & (1 << UAC_FORMAT_TYPE_I_ALAW)) अणु
+		pcm_क्रमmats |= SNDRV_PCM_FMTBIT_A_LAW;
+	पूर्ण
+	अगर (क्रमmat & (1 << UAC_FORMAT_TYPE_I_MULAW)) अणु
+		pcm_क्रमmats |= SNDRV_PCM_FMTBIT_MU_LAW;
+	पूर्ण
+	अगर (क्रमmat & ~0x3f) अणु
 		usb_audio_info(chip,
 			 "%u:%d : unsupported format bits %#llx\n",
-			 fp->iface, fp->altsetting, format);
-	}
+			 fp->अगरace, fp->altsetting, क्रमmat);
+	पूर्ण
 
-	pcm_formats |= snd_usb_interface_dsd_format_quirks(chip, fp, sample_bytes);
+	pcm_क्रमmats |= snd_usb_पूर्णांकerface_dsd_क्रमmat_quirks(chip, fp, sample_bytes);
 
-	return pcm_formats;
-}
+	वापस pcm_क्रमmats;
+पूर्ण
 
-static int set_fixed_rate(struct audioformat *fp, int rate, int rate_bits)
-{
-	kfree(fp->rate_table);
-	fp->rate_table = kmalloc(sizeof(int), GFP_KERNEL);
-	if (!fp->rate_table)
-		return -ENOMEM;
+अटल पूर्णांक set_fixed_rate(काष्ठा audioक्रमmat *fp, पूर्णांक rate, पूर्णांक rate_bits)
+अणु
+	kमुक्त(fp->rate_table);
+	fp->rate_table = kदो_स्मृति(माप(पूर्णांक), GFP_KERNEL);
+	अगर (!fp->rate_table)
+		वापस -ENOMEM;
 	fp->nr_rates = 1;
 	fp->rate_min = rate;
 	fp->rate_max = rate;
 	fp->rates = rate_bits;
 	fp->rate_table[0] = rate;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* set up rate_min, rate_max and rates from the rate table */
-static void set_rate_table_min_max(struct audioformat *fp)
-{
-	unsigned int rate;
-	int i;
+अटल व्योम set_rate_table_min_max(काष्ठा audioक्रमmat *fp)
+अणु
+	अचिन्हित पूर्णांक rate;
+	पूर्णांक i;
 
-	fp->rate_min = INT_MAX;
+	fp->rate_min = पूर्णांक_उच्च;
 	fp->rate_max = 0;
 	fp->rates = 0;
-	for (i = 0; i < fp->nr_rates; i++) {
+	क्रम (i = 0; i < fp->nr_rates; i++) अणु
 		rate = fp->rate_table[i];
 		fp->rate_min = min(fp->rate_min, rate);
 		fp->rate_max = max(fp->rate_max, rate);
 		fp->rates |= snd_pcm_rate_to_rate_bit(rate);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * parse the format descriptor and stores the possible sample rates
- * on the audioformat table (audio class v1).
+ * parse the क्रमmat descriptor and stores the possible sample rates
+ * on the audioक्रमmat table (audio class v1).
  *
  * @dev: usb device
- * @fp: audioformat record
- * @fmt: the format descriptor
- * @offset: the start offset of descriptor pointing the rate type
- *          (7 for type I and II, 8 for type II)
+ * @fp: audioक्रमmat record
+ * @fmt: the क्रमmat descriptor
+ * @offset: the start offset of descriptor poपूर्णांकing the rate type
+ *          (7 क्रम type I and II, 8 क्रम type II)
  */
-static int parse_audio_format_rates_v1(struct snd_usb_audio *chip, struct audioformat *fp,
-				       unsigned char *fmt, int offset)
-{
-	int nr_rates = fmt[offset];
+अटल पूर्णांक parse_audio_क्रमmat_rates_v1(काष्ठा snd_usb_audio *chip, काष्ठा audioक्रमmat *fp,
+				       अचिन्हित अक्षर *fmt, पूर्णांक offset)
+अणु
+	पूर्णांक nr_rates = fmt[offset];
 
-	if (fmt[0] < offset + 1 + 3 * (nr_rates ? nr_rates : 2)) {
+	अगर (fmt[0] < offset + 1 + 3 * (nr_rates ? nr_rates : 2)) अणु
 		usb_audio_err(chip,
 			"%u:%d : invalid UAC_FORMAT_TYPE desc\n",
-			fp->iface, fp->altsetting);
-		return -EINVAL;
-	}
+			fp->अगरace, fp->altsetting);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (nr_rates) {
+	अगर (nr_rates) अणु
 		/*
-		 * build the rate table and bitmap flags
+		 * build the rate table and biपंचांगap flags
 		 */
-		int r, idx;
+		पूर्णांक r, idx;
 
-		fp->rate_table = kmalloc_array(nr_rates, sizeof(int),
+		fp->rate_table = kदो_स्मृति_array(nr_rates, माप(पूर्णांक),
 					       GFP_KERNEL);
-		if (fp->rate_table == NULL)
-			return -ENOMEM;
+		अगर (fp->rate_table == शून्य)
+			वापस -ENOMEM;
 
 		fp->nr_rates = 0;
-		for (r = 0, idx = offset + 1; r < nr_rates; r++, idx += 3) {
-			unsigned int rate = combine_triple(&fmt[idx]);
-			if (!rate)
-				continue;
+		क्रम (r = 0, idx = offset + 1; r < nr_rates; r++, idx += 3) अणु
+			अचिन्हित पूर्णांक rate = combine_triple(&fmt[idx]);
+			अगर (!rate)
+				जारी;
 			/* C-Media CM6501 mislabels its 96 kHz altsetting */
 			/* Terratec Aureon 7.1 USB C-Media 6206, too */
-			if (rate == 48000 && nr_rates == 1 &&
+			अगर (rate == 48000 && nr_rates == 1 &&
 			    (chip->usb_id == USB_ID(0x0d8c, 0x0201) ||
 			     chip->usb_id == USB_ID(0x0d8c, 0x0102) ||
 			     chip->usb_id == USB_ID(0x0ccd, 0x00b1)) &&
 			    fp->altsetting == 5 && fp->maxpacksize == 392)
 				rate = 96000;
 			/* Creative VF0420/VF0470 Live Cams report 16 kHz instead of 8kHz */
-			if (rate == 16000 &&
+			अगर (rate == 16000 &&
 			    (chip->usb_id == USB_ID(0x041e, 0x4064) ||
 			     chip->usb_id == USB_ID(0x041e, 0x4068)))
 				rate = 8000;
 
 			fp->rate_table[fp->nr_rates++] = rate;
-		}
-		if (!fp->nr_rates) {
+		पूर्ण
+		अगर (!fp->nr_rates) अणु
 			usb_audio_info(chip,
 				       "%u:%d: All rates were zero\n",
-				       fp->iface, fp->altsetting);
-			return -EINVAL;
-		}
+				       fp->अगरace, fp->altsetting);
+			वापस -EINVAL;
+		पूर्ण
 		set_rate_table_min_max(fp);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* continuous rates */
 		fp->rates = SNDRV_PCM_RATE_CONTINUOUS;
 		fp->rate_min = combine_triple(&fmt[offset + 1]);
 		fp->rate_max = combine_triple(&fmt[offset + 4]);
-	}
+	पूर्ण
 
 	/* Jabra Evolve 65 headset */
-	if (chip->usb_id == USB_ID(0x0b0e, 0x030b)) {
-		/* only 48kHz for playback while keeping 16kHz for capture */
-		if (fp->nr_rates != 1)
-			return set_fixed_rate(fp, 48000, SNDRV_PCM_RATE_48000);
-	}
+	अगर (chip->usb_id == USB_ID(0x0b0e, 0x030b)) अणु
+		/* only 48kHz क्रम playback जबतक keeping 16kHz क्रम capture */
+		अगर (fp->nr_rates != 1)
+			वापस set_fixed_rate(fp, 48000, SNDRV_PCM_RATE_48000);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * Presonus Studio 1810c supports a limited set of sampling
- * rates per altsetting but reports the full set each time.
- * If we don't filter out the unsupported rates and attempt
- * to configure the card, it will hang refusing to do any
- * further audio I/O until a hard reset is performed.
+ * rates per altsetting but reports the full set each समय.
+ * If we करोn't filter out the unsupported rates and attempt
+ * to configure the card, it will hang refusing to करो any
+ * further audio I/O until a hard reset is perक्रमmed.
  *
  * The list of supported rates per altsetting (set of available
  * I/O channels) is described in the owner's manual, section 2.2.
  */
-static bool s1810c_valid_sample_rate(struct audioformat *fp,
-				     unsigned int rate)
-{
-	switch (fp->altsetting) {
-	case 1:
+अटल bool s1810c_valid_sample_rate(काष्ठा audioक्रमmat *fp,
+				     अचिन्हित पूर्णांक rate)
+अणु
+	चयन (fp->altsetting) अणु
+	हाल 1:
 		/* All ADAT ports available */
-		return rate <= 48000;
-	case 2:
+		वापस rate <= 48000;
+	हाल 2:
 		/* Half of ADAT ports available */
-		return (rate == 88200 || rate == 96000);
-	case 3:
+		वापस (rate == 88200 || rate == 96000);
+	हाल 3:
 		/* Analog I/O only (no S/PDIF nor ADAT) */
-		return rate >= 176400;
-	default:
-		return false;
-	}
-	return false;
-}
+		वापस rate >= 176400;
+	शेष:
+		वापस false;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /*
  * Many Focusrite devices supports a limited set of sampling rates per
  * altsetting. Maximum rate is exposed in the last 4 bytes of Format Type
  * descriptor which has a non-standard bLength = 10.
  */
-static bool focusrite_valid_sample_rate(struct snd_usb_audio *chip,
-					struct audioformat *fp,
-					unsigned int rate)
-{
-	struct usb_interface *iface;
-	struct usb_host_interface *alts;
-	unsigned char *fmt;
-	unsigned int max_rate;
+अटल bool focusrite_valid_sample_rate(काष्ठा snd_usb_audio *chip,
+					काष्ठा audioक्रमmat *fp,
+					अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा usb_पूर्णांकerface *अगरace;
+	काष्ठा usb_host_पूर्णांकerface *alts;
+	अचिन्हित अक्षर *fmt;
+	अचिन्हित पूर्णांक max_rate;
 
-	iface = usb_ifnum_to_if(chip->dev, fp->iface);
-	if (!iface)
-		return true;
+	अगरace = usb_अगरnum_to_अगर(chip->dev, fp->अगरace);
+	अगर (!अगरace)
+		वापस true;
 
-	alts = &iface->altsetting[fp->altset_idx];
-	fmt = snd_usb_find_csint_desc(alts->extra, alts->extralen,
-				      NULL, UAC_FORMAT_TYPE);
-	if (!fmt)
-		return true;
+	alts = &अगरace->altsetting[fp->altset_idx];
+	fmt = snd_usb_find_csपूर्णांक_desc(alts->extra, alts->extralen,
+				      शून्य, UAC_FORMAT_TYPE);
+	अगर (!fmt)
+		वापस true;
 
-	if (fmt[0] == 10) { /* bLength */
+	अगर (fmt[0] == 10) अणु /* bLength */
 		max_rate = combine_quad(&fmt[6]);
 
 		/* Validate max rate */
-		if (max_rate != 48000 &&
+		अगर (max_rate != 48000 &&
 		    max_rate != 96000 &&
 		    max_rate != 192000 &&
-		    max_rate != 384000) {
+		    max_rate != 384000) अणु
 
 			usb_audio_info(chip,
 				"%u:%d : unexpected max rate: %u\n",
-				fp->iface, fp->altsetting, max_rate);
+				fp->अगरace, fp->altsetting, max_rate);
 
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-		return rate <= max_rate;
-	}
+		वापस rate <= max_rate;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Helper function to walk the array of sample rate triplets reported by
@@ -343,478 +344,478 @@ static bool focusrite_valid_sample_rate(struct snd_usb_audio *chip,
  * get to know how many sample rates we have to expect.
  * Then fp->rate_table can be allocated and filled.
  */
-static int parse_uac2_sample_rate_range(struct snd_usb_audio *chip,
-					struct audioformat *fp, int nr_triplets,
-					const unsigned char *data)
-{
-	int i, nr_rates = 0;
+अटल पूर्णांक parse_uac2_sample_rate_range(काष्ठा snd_usb_audio *chip,
+					काष्ठा audioक्रमmat *fp, पूर्णांक nr_triplets,
+					स्थिर अचिन्हित अक्षर *data)
+अणु
+	पूर्णांक i, nr_rates = 0;
 
-	for (i = 0; i < nr_triplets; i++) {
-		int min = combine_quad(&data[2 + 12 * i]);
-		int max = combine_quad(&data[6 + 12 * i]);
-		int res = combine_quad(&data[10 + 12 * i]);
-		unsigned int rate;
+	क्रम (i = 0; i < nr_triplets; i++) अणु
+		पूर्णांक min = combine_quad(&data[2 + 12 * i]);
+		पूर्णांक max = combine_quad(&data[6 + 12 * i]);
+		पूर्णांक res = combine_quad(&data[10 + 12 * i]);
+		अचिन्हित पूर्णांक rate;
 
-		if ((max < 0) || (min < 0) || (res < 0) || (max < min))
-			continue;
+		अगर ((max < 0) || (min < 0) || (res < 0) || (max < min))
+			जारी;
 
 		/*
-		 * for ranges with res == 1, we announce a continuous sample
-		 * rate range, and this function should return 0 for no further
+		 * क्रम ranges with res == 1, we announce a continuous sample
+		 * rate range, and this function should वापस 0 क्रम no further
 		 * parsing.
 		 */
-		if (res == 1) {
+		अगर (res == 1) अणु
 			fp->rate_min = min;
 			fp->rate_max = max;
 			fp->rates = SNDRV_PCM_RATE_CONTINUOUS;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		for (rate = min; rate <= max; rate += res) {
+		क्रम (rate = min; rate <= max; rate += res) अणु
 
 			/* Filter out invalid rates on Presonus Studio 1810c */
-			if (chip->usb_id == USB_ID(0x0194f, 0x010c) &&
+			अगर (chip->usb_id == USB_ID(0x0194f, 0x010c) &&
 			    !s1810c_valid_sample_rate(fp, rate))
-				goto skip_rate;
+				जाओ skip_rate;
 
 			/* Filter out invalid rates on Focusrite devices */
-			if (USB_ID_VENDOR(chip->usb_id) == 0x1235 &&
+			अगर (USB_ID_VENDOR(chip->usb_id) == 0x1235 &&
 			    !focusrite_valid_sample_rate(chip, fp, rate))
-				goto skip_rate;
+				जाओ skip_rate;
 
-			if (fp->rate_table)
+			अगर (fp->rate_table)
 				fp->rate_table[nr_rates] = rate;
 			nr_rates++;
-			if (nr_rates >= MAX_NR_RATES) {
+			अगर (nr_rates >= MAX_NR_RATES) अणु
 				usb_audio_err(chip, "invalid uac2 rates\n");
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 skip_rate:
-			/* avoid endless loop */
-			if (res == 0)
-				break;
-		}
-	}
+			/* aव्योम endless loop */
+			अगर (res == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return nr_rates;
-}
+	वापस nr_rates;
+पूर्ण
 
-/* Line6 Helix series and the Rode Rodecaster Pro don't support the
- * UAC2_CS_RANGE usb function call. Return a static table of known
- * clock rates.
+/* Line6 Helix series and the Rode Rodecaster Pro करोn't support the
+ * UAC2_CS_RANGE usb function call. Return a अटल table of known
+ * घड़ी rates.
  */
-static int line6_parse_audio_format_rates_quirk(struct snd_usb_audio *chip,
-						struct audioformat *fp)
-{
-	switch (chip->usb_id) {
-	case USB_ID(0x0e41, 0x4241): /* Line6 Helix */
-	case USB_ID(0x0e41, 0x4242): /* Line6 Helix Rack */
-	case USB_ID(0x0e41, 0x4244): /* Line6 Helix LT */
-	case USB_ID(0x0e41, 0x4246): /* Line6 HX-Stomp */
-	case USB_ID(0x0e41, 0x4247): /* Line6 Pod Go */
-	case USB_ID(0x0e41, 0x4248): /* Line6 Helix >= fw 2.82 */
-	case USB_ID(0x0e41, 0x4249): /* Line6 Helix Rack >= fw 2.82 */
-	case USB_ID(0x0e41, 0x424a): /* Line6 Helix LT >= fw 2.82 */
-	case USB_ID(0x19f7, 0x0011): /* Rode Rodecaster Pro */
-		return set_fixed_rate(fp, 48000, SNDRV_PCM_RATE_48000);
-	}
+अटल पूर्णांक line6_parse_audio_क्रमmat_rates_quirk(काष्ठा snd_usb_audio *chip,
+						काष्ठा audioक्रमmat *fp)
+अणु
+	चयन (chip->usb_id) अणु
+	हाल USB_ID(0x0e41, 0x4241): /* Line6 Helix */
+	हाल USB_ID(0x0e41, 0x4242): /* Line6 Helix Rack */
+	हाल USB_ID(0x0e41, 0x4244): /* Line6 Helix LT */
+	हाल USB_ID(0x0e41, 0x4246): /* Line6 HX-Stomp */
+	हाल USB_ID(0x0e41, 0x4247): /* Line6 Pod Go */
+	हाल USB_ID(0x0e41, 0x4248): /* Line6 Helix >= fw 2.82 */
+	हाल USB_ID(0x0e41, 0x4249): /* Line6 Helix Rack >= fw 2.82 */
+	हाल USB_ID(0x0e41, 0x424a): /* Line6 Helix LT >= fw 2.82 */
+	हाल USB_ID(0x19f7, 0x0011): /* Rode Rodecaster Pro */
+		वापस set_fixed_rate(fp, 48000, SNDRV_PCM_RATE_48000);
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-/* check whether the given altsetting is supported for the already set rate */
-static bool check_valid_altsetting_v2v3(struct snd_usb_audio *chip, int iface,
-					int altsetting)
-{
-	struct usb_device *dev = chip->dev;
+/* check whether the given altsetting is supported क्रम the alपढ़ोy set rate */
+अटल bool check_valid_altsetting_v2v3(काष्ठा snd_usb_audio *chip, पूर्णांक अगरace,
+					पूर्णांक altsetting)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
 	__le64 raw_data = 0;
 	u64 data;
-	int err;
+	पूर्णांक err;
 
-	/* we assume 64bit is enough for any altsettings */
-	if (snd_BUG_ON(altsetting >= 64 - 8))
-		return false;
+	/* we assume 64bit is enough क्रम any altsettings */
+	अगर (snd_BUG_ON(altsetting >= 64 - 8))
+		वापस false;
 
 	err = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_CUR,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			      UAC2_AS_VAL_ALT_SETTINGS << 8,
-			      iface, &raw_data, sizeof(raw_data));
-	if (err < 0)
-		return false;
+			      अगरace, &raw_data, माप(raw_data));
+	अगर (err < 0)
+		वापस false;
 
 	data = le64_to_cpu(raw_data);
-	/* first byte contains the bitmap size */
-	if ((data & 0xff) * 8 < altsetting)
-		return false;
-	if (data & (1ULL << (altsetting + 8)))
-		return true;
+	/* first byte contains the biपंचांगap size */
+	अगर ((data & 0xff) * 8 < altsetting)
+		वापस false;
+	अगर (data & (1ULL << (altsetting + 8)))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Validate each sample rate with the altsetting
- * Rebuild the rate table if only partial values are valid
+ * Rebuild the rate table अगर only partial values are valid
  */
-static int validate_sample_rate_table_v2v3(struct snd_usb_audio *chip,
-					   struct audioformat *fp,
-					   int clock)
-{
-	struct usb_device *dev = chip->dev;
-	unsigned int *table;
-	unsigned int nr_rates;
-	int i, err;
+अटल पूर्णांक validate_sample_rate_table_v2v3(काष्ठा snd_usb_audio *chip,
+					   काष्ठा audioक्रमmat *fp,
+					   पूर्णांक घड़ी)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
+	अचिन्हित पूर्णांक *table;
+	अचिन्हित पूर्णांक nr_rates;
+	पूर्णांक i, err;
 
-	/* performing the rate verification may lead to unexpected USB bus
-	 * behavior afterwards by some unknown reason.  Do this only for the
+	/* perक्रमming the rate verअगरication may lead to unexpected USB bus
+	 * behavior afterwards by some unknown reason.  Do this only क्रम the
 	 * known devices.
 	 */
-	switch (USB_ID_VENDOR(chip->usb_id)) {
-	case 0x07fd: /* MOTU */
-		break;
-	default:
-		return 0; /* don't perform the validation as default */
-	}
+	चयन (USB_ID_VENDOR(chip->usb_id)) अणु
+	हाल 0x07fd: /* MOTU */
+		अवरोध;
+	शेष:
+		वापस 0; /* करोn't perक्रमm the validation as शेष */
+	पूर्ण
 
-	table = kcalloc(fp->nr_rates, sizeof(*table), GFP_KERNEL);
-	if (!table)
-		return -ENOMEM;
+	table = kसुस्मृति(fp->nr_rates, माप(*table), GFP_KERNEL);
+	अगर (!table)
+		वापस -ENOMEM;
 
-	/* clear the interface altsetting at first */
-	usb_set_interface(dev, fp->iface, 0);
+	/* clear the पूर्णांकerface altsetting at first */
+	usb_set_पूर्णांकerface(dev, fp->अगरace, 0);
 
 	nr_rates = 0;
-	for (i = 0; i < fp->nr_rates; i++) {
-		err = snd_usb_set_sample_rate_v2v3(chip, fp, clock,
+	क्रम (i = 0; i < fp->nr_rates; i++) अणु
+		err = snd_usb_set_sample_rate_v2v3(chip, fp, घड़ी,
 						   fp->rate_table[i]);
-		if (err < 0)
-			continue;
+		अगर (err < 0)
+			जारी;
 
-		if (check_valid_altsetting_v2v3(chip, fp->iface, fp->altsetting))
+		अगर (check_valid_altsetting_v2v3(chip, fp->अगरace, fp->altsetting))
 			table[nr_rates++] = fp->rate_table[i];
-	}
+	पूर्ण
 
-	if (!nr_rates) {
+	अगर (!nr_rates) अणु
 		usb_audio_dbg(chip,
 			      "No valid sample rate available for %d:%d, assuming a firmware bug\n",
-			      fp->iface, fp->altsetting);
-		nr_rates = fp->nr_rates; /* continue as is */
-	}
+			      fp->अगरace, fp->altsetting);
+		nr_rates = fp->nr_rates; /* जारी as is */
+	पूर्ण
 
-	if (fp->nr_rates == nr_rates) {
-		kfree(table);
-		return 0;
-	}
+	अगर (fp->nr_rates == nr_rates) अणु
+		kमुक्त(table);
+		वापस 0;
+	पूर्ण
 
-	kfree(fp->rate_table);
+	kमुक्त(fp->rate_table);
 	fp->rate_table = table;
 	fp->nr_rates = nr_rates;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * parse the format descriptor and stores the possible sample rates
- * on the audioformat table (audio class v2 and v3).
+ * parse the क्रमmat descriptor and stores the possible sample rates
+ * on the audioक्रमmat table (audio class v2 and v3).
  */
-static int parse_audio_format_rates_v2v3(struct snd_usb_audio *chip,
-				       struct audioformat *fp)
-{
-	struct usb_device *dev = chip->dev;
-	unsigned char tmp[2], *data;
-	int nr_triplets, data_size, ret = 0, ret_l6;
-	int clock = snd_usb_clock_find_source(chip, fp, false);
+अटल पूर्णांक parse_audio_क्रमmat_rates_v2v3(काष्ठा snd_usb_audio *chip,
+				       काष्ठा audioक्रमmat *fp)
+अणु
+	काष्ठा usb_device *dev = chip->dev;
+	अचिन्हित अक्षर पंचांगp[2], *data;
+	पूर्णांक nr_triplets, data_size, ret = 0, ret_l6;
+	पूर्णांक घड़ी = snd_usb_घड़ी_find_source(chip, fp, false);
 
-	if (clock < 0) {
+	अगर (घड़ी < 0) अणु
 		dev_err(&dev->dev,
 			"%s(): unable to find clock source (clock %d)\n",
-				__func__, clock);
-		goto err;
-	}
+				__func__, घड़ी);
+		जाओ err;
+	पूर्ण
 
 	/* get the number of sample rates first by only fetching 2 bytes */
 	ret = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_RANGE,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			      UAC2_CS_CONTROL_SAM_FREQ << 8,
-			      snd_usb_ctrl_intf(chip) | (clock << 8),
-			      tmp, sizeof(tmp));
+			      snd_usb_ctrl_पूर्णांकf(chip) | (घड़ी << 8),
+			      पंचांगp, माप(पंचांगp));
 
-	if (ret < 0) {
-		/* line6 helix devices don't support UAC2_CS_CONTROL_SAM_FREQ call */
-		ret_l6 = line6_parse_audio_format_rates_quirk(chip, fp);
-		if (ret_l6 == -ENODEV) {
-			/* no line6 device found continue showing the error */
+	अगर (ret < 0) अणु
+		/* line6 helix devices करोn't support UAC2_CS_CONTROL_SAM_FREQ call */
+		ret_l6 = line6_parse_audio_क्रमmat_rates_quirk(chip, fp);
+		अगर (ret_l6 == -ENODEV) अणु
+			/* no line6 device found जारी showing the error */
 			dev_err(&dev->dev,
 				"%s(): unable to retrieve number of sample rates (clock %d)\n",
-				__func__, clock);
-			goto err;
-		}
-		if (ret_l6 == 0) {
+				__func__, घड़ी);
+			जाओ err;
+		पूर्ण
+		अगर (ret_l6 == 0) अणु
 			dev_info(&dev->dev,
 				"%s(): unable to retrieve number of sample rates: set it to a predefined value (clock %d).\n",
-				__func__, clock);
-			return 0;
-		}
+				__func__, घड़ी);
+			वापस 0;
+		पूर्ण
 		ret = ret_l6;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	nr_triplets = (tmp[1] << 8) | tmp[0];
+	nr_triplets = (पंचांगp[1] << 8) | पंचांगp[0];
 	data_size = 2 + 12 * nr_triplets;
 	data = kzalloc(data_size, GFP_KERNEL);
-	if (!data) {
+	अगर (!data) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* now get the full information */
+	/* now get the full inक्रमmation */
 	ret = snd_usb_ctl_msg(dev, usb_rcvctrlpipe(dev, 0), UAC2_CS_RANGE,
-			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+			      USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 			      UAC2_CS_CONTROL_SAM_FREQ << 8,
-			      snd_usb_ctrl_intf(chip) | (clock << 8),
+			      snd_usb_ctrl_पूर्णांकf(chip) | (घड़ी << 8),
 			      data, data_size);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&dev->dev,
 			"%s(): unable to retrieve sample rate range (clock %d)\n",
-				__func__, clock);
+				__func__, घड़ी);
 		ret = -EINVAL;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* Call the triplet parser, and make sure fp->rate_table is NULL.
-	 * We just use the return value to know how many sample rates we
+	/* Call the triplet parser, and make sure fp->rate_table is शून्य.
+	 * We just use the वापस value to know how many sample rates we
 	 * will have to deal with. */
-	kfree(fp->rate_table);
-	fp->rate_table = NULL;
+	kमुक्त(fp->rate_table);
+	fp->rate_table = शून्य;
 	fp->nr_rates = parse_uac2_sample_rate_range(chip, fp, nr_triplets, data);
 
-	if (fp->nr_rates == 0) {
+	अगर (fp->nr_rates == 0) अणु
 		/* SNDRV_PCM_RATE_CONTINUOUS */
 		ret = 0;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	fp->rate_table = kmalloc_array(fp->nr_rates, sizeof(int), GFP_KERNEL);
-	if (!fp->rate_table) {
+	fp->rate_table = kदो_स्मृति_array(fp->nr_rates, माप(पूर्णांक), GFP_KERNEL);
+	अगर (!fp->rate_table) अणु
 		ret = -ENOMEM;
-		goto err_free;
-	}
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* Call the triplet parser again, but this time, fp->rate_table is
+	/* Call the triplet parser again, but this समय, fp->rate_table is
 	 * allocated, so the rates will be stored */
 	parse_uac2_sample_rate_range(chip, fp, nr_triplets, data);
 
-	ret = validate_sample_rate_table_v2v3(chip, fp, clock);
-	if (ret < 0)
-		goto err_free;
+	ret = validate_sample_rate_table_v2v3(chip, fp, घड़ी);
+	अगर (ret < 0)
+		जाओ err_मुक्त;
 
 	set_rate_table_min_max(fp);
 
-err_free:
-	kfree(data);
+err_मुक्त:
+	kमुक्त(data);
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * parse the format type I and III descriptors
+ * parse the क्रमmat type I and III descriptors
  */
-static int parse_audio_format_i(struct snd_usb_audio *chip,
-				struct audioformat *fp, u64 format,
-				void *_fmt)
-{
-	snd_pcm_format_t pcm_format;
-	unsigned int fmt_type;
-	int ret;
+अटल पूर्णांक parse_audio_क्रमmat_i(काष्ठा snd_usb_audio *chip,
+				काष्ठा audioक्रमmat *fp, u64 क्रमmat,
+				व्योम *_fmt)
+अणु
+	snd_pcm_क्रमmat_t pcm_क्रमmat;
+	अचिन्हित पूर्णांक fmt_type;
+	पूर्णांक ret;
 
-	switch (fp->protocol) {
-	default:
-	case UAC_VERSION_1:
-	case UAC_VERSION_2: {
-		struct uac_format_type_i_continuous_descriptor *fmt = _fmt;
+	चयन (fp->protocol) अणु
+	शेष:
+	हाल UAC_VERSION_1:
+	हाल UAC_VERSION_2: अणु
+		काष्ठा uac_क्रमmat_type_i_continuous_descriptor *fmt = _fmt;
 
 		fmt_type = fmt->bFormatType;
-		break;
-	}
-	case UAC_VERSION_3: {
-		/* fp->fmt_type is already set in this case */
+		अवरोध;
+	पूर्ण
+	हाल UAC_VERSION_3: अणु
+		/* fp->fmt_type is alपढ़ोy set in this हाल */
 		fmt_type = fp->fmt_type;
-		break;
-	}
-	}
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	if (fmt_type == UAC_FORMAT_TYPE_III) {
-		/* FIXME: the format type is really IECxxx
-		 *        but we give normal PCM format to get the existing
+	अगर (fmt_type == UAC_FORMAT_TYPE_III) अणु
+		/* FIXME: the क्रमmat type is really IECxxx
+		 *        but we give normal PCM क्रमmat to get the existing
 		 *        apps working...
 		 */
-		switch (chip->usb_id) {
+		चयन (chip->usb_id) अणु
 
-		case USB_ID(0x0763, 0x2003): /* M-Audio Audiophile USB */
-			if (chip->setup == 0x00 && 
+		हाल USB_ID(0x0763, 0x2003): /* M-Audio Audiophile USB */
+			अगर (chip->setup == 0x00 && 
 			    fp->altsetting == 6)
-				pcm_format = SNDRV_PCM_FORMAT_S16_BE;
-			else
-				pcm_format = SNDRV_PCM_FORMAT_S16_LE;
-			break;
-		default:
-			pcm_format = SNDRV_PCM_FORMAT_S16_LE;
-		}
-		fp->formats = pcm_format_to_bits(pcm_format);
-	} else {
-		fp->formats = parse_audio_format_i_type(chip, fp, format, _fmt);
-		if (!fp->formats)
-			return -EINVAL;
-	}
+				pcm_क्रमmat = SNDRV_PCM_FORMAT_S16_BE;
+			अन्यथा
+				pcm_क्रमmat = SNDRV_PCM_FORMAT_S16_LE;
+			अवरोध;
+		शेष:
+			pcm_क्रमmat = SNDRV_PCM_FORMAT_S16_LE;
+		पूर्ण
+		fp->क्रमmats = pcm_क्रमmat_to_bits(pcm_क्रमmat);
+	पूर्ण अन्यथा अणु
+		fp->क्रमmats = parse_audio_क्रमmat_i_type(chip, fp, क्रमmat, _fmt);
+		अगर (!fp->क्रमmats)
+			वापस -EINVAL;
+	पूर्ण
 
 	/* gather possible sample rates */
 	/* audio class v1 reports possible sample rates as part of the
-	 * proprietary class specific descriptor.
-	 * audio class v2 uses class specific EP0 range requests for that.
+	 * proprietary class specअगरic descriptor.
+	 * audio class v2 uses class specअगरic EP0 range requests क्रम that.
 	 */
-	switch (fp->protocol) {
-	default:
-	case UAC_VERSION_1: {
-		struct uac_format_type_i_continuous_descriptor *fmt = _fmt;
+	चयन (fp->protocol) अणु
+	शेष:
+	हाल UAC_VERSION_1: अणु
+		काष्ठा uac_क्रमmat_type_i_continuous_descriptor *fmt = _fmt;
 
 		fp->channels = fmt->bNrChannels;
-		ret = parse_audio_format_rates_v1(chip, fp, (unsigned char *) fmt, 7);
-		break;
-	}
-	case UAC_VERSION_2:
-	case UAC_VERSION_3: {
-		/* fp->channels is already set in this case */
-		ret = parse_audio_format_rates_v2v3(chip, fp);
-		break;
-	}
-	}
+		ret = parse_audio_क्रमmat_rates_v1(chip, fp, (अचिन्हित अक्षर *) fmt, 7);
+		अवरोध;
+	पूर्ण
+	हाल UAC_VERSION_2:
+	हाल UAC_VERSION_3: अणु
+		/* fp->channels is alपढ़ोy set in this हाल */
+		ret = parse_audio_क्रमmat_rates_v2v3(chip, fp);
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	if (fp->channels < 1) {
+	अगर (fp->channels < 1) अणु
 		usb_audio_err(chip,
 			"%u:%d : invalid channels %d\n",
-			fp->iface, fp->altsetting, fp->channels);
-		return -EINVAL;
-	}
+			fp->अगरace, fp->altsetting, fp->channels);
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * parse the format type II descriptor
+ * parse the क्रमmat type II descriptor
  */
-static int parse_audio_format_ii(struct snd_usb_audio *chip,
-				 struct audioformat *fp,
-				 u64 format, void *_fmt)
-{
-	int brate, framesize, ret;
+अटल पूर्णांक parse_audio_क्रमmat_ii(काष्ठा snd_usb_audio *chip,
+				 काष्ठा audioक्रमmat *fp,
+				 u64 क्रमmat, व्योम *_fmt)
+अणु
+	पूर्णांक brate, framesize, ret;
 
-	switch (format) {
-	case UAC_FORMAT_TYPE_II_AC3:
-		/* FIXME: there is no AC3 format defined yet */
-		// fp->formats = SNDRV_PCM_FMTBIT_AC3;
-		fp->formats = SNDRV_PCM_FMTBIT_U8; /* temporary hack to receive byte streams */
-		break;
-	case UAC_FORMAT_TYPE_II_MPEG:
-		fp->formats = SNDRV_PCM_FMTBIT_MPEG;
-		break;
-	default:
+	चयन (क्रमmat) अणु
+	हाल UAC_FORMAT_TYPE_II_AC3:
+		/* FIXME: there is no AC3 क्रमmat defined yet */
+		// fp->क्रमmats = SNDRV_PCM_FMTBIT_AC3;
+		fp->क्रमmats = SNDRV_PCM_FMTBIT_U8; /* temporary hack to receive byte streams */
+		अवरोध;
+	हाल UAC_FORMAT_TYPE_II_MPEG:
+		fp->क्रमmats = SNDRV_PCM_FMTBIT_MPEG;
+		अवरोध;
+	शेष:
 		usb_audio_info(chip,
 			 "%u:%d : unknown format tag %#llx is detected.  processed as MPEG.\n",
-			 fp->iface, fp->altsetting, format);
-		fp->formats = SNDRV_PCM_FMTBIT_MPEG;
-		break;
-	}
+			 fp->अगरace, fp->altsetting, क्रमmat);
+		fp->क्रमmats = SNDRV_PCM_FMTBIT_MPEG;
+		अवरोध;
+	पूर्ण
 
 	fp->channels = 1;
 
-	switch (fp->protocol) {
-	default:
-	case UAC_VERSION_1: {
-		struct uac_format_type_ii_discrete_descriptor *fmt = _fmt;
+	चयन (fp->protocol) अणु
+	शेष:
+	हाल UAC_VERSION_1: अणु
+		काष्ठा uac_क्रमmat_type_ii_discrete_descriptor *fmt = _fmt;
 		brate = le16_to_cpu(fmt->wMaxBitRate);
 		framesize = le16_to_cpu(fmt->wSamplesPerFrame);
 		usb_audio_info(chip, "found format II with max.bitrate = %d, frame size=%d\n", brate, framesize);
 		fp->frame_size = framesize;
-		ret = parse_audio_format_rates_v1(chip, fp, _fmt, 8); /* fmt[8..] sample rates */
-		break;
-	}
-	case UAC_VERSION_2: {
-		struct uac_format_type_ii_ext_descriptor *fmt = _fmt;
+		ret = parse_audio_क्रमmat_rates_v1(chip, fp, _fmt, 8); /* fmt[8..] sample rates */
+		अवरोध;
+	पूर्ण
+	हाल UAC_VERSION_2: अणु
+		काष्ठा uac_क्रमmat_type_ii_ext_descriptor *fmt = _fmt;
 		brate = le16_to_cpu(fmt->wMaxBitRate);
 		framesize = le16_to_cpu(fmt->wSamplesPerFrame);
 		usb_audio_info(chip, "found format II with max.bitrate = %d, frame size=%d\n", brate, framesize);
 		fp->frame_size = framesize;
-		ret = parse_audio_format_rates_v2v3(chip, fp);
-		break;
-	}
-	}
+		ret = parse_audio_क्रमmat_rates_v2v3(chip, fp);
+		अवरोध;
+	पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int snd_usb_parse_audio_format(struct snd_usb_audio *chip,
-			       struct audioformat *fp, u64 format,
-			       struct uac_format_type_i_continuous_descriptor *fmt,
-			       int stream)
-{
-	int err;
+पूर्णांक snd_usb_parse_audio_क्रमmat(काष्ठा snd_usb_audio *chip,
+			       काष्ठा audioक्रमmat *fp, u64 क्रमmat,
+			       काष्ठा uac_क्रमmat_type_i_continuous_descriptor *fmt,
+			       पूर्णांक stream)
+अणु
+	पूर्णांक err;
 
-	switch (fmt->bFormatType) {
-	case UAC_FORMAT_TYPE_I:
-	case UAC_FORMAT_TYPE_III:
-		err = parse_audio_format_i(chip, fp, format, fmt);
-		break;
-	case UAC_FORMAT_TYPE_II:
-		err = parse_audio_format_ii(chip, fp, format, fmt);
-		break;
-	default:
+	चयन (fmt->bFormatType) अणु
+	हाल UAC_FORMAT_TYPE_I:
+	हाल UAC_FORMAT_TYPE_III:
+		err = parse_audio_क्रमmat_i(chip, fp, क्रमmat, fmt);
+		अवरोध;
+	हाल UAC_FORMAT_TYPE_II:
+		err = parse_audio_क्रमmat_ii(chip, fp, क्रमmat, fmt);
+		अवरोध;
+	शेष:
 		usb_audio_info(chip,
 			 "%u:%d : format type %d is not supported yet\n",
-			 fp->iface, fp->altsetting,
+			 fp->अगरace, fp->altsetting,
 			 fmt->bFormatType);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 	fp->fmt_type = fmt->bFormatType;
-	if (err < 0)
-		return err;
-#if 1
-	/* FIXME: temporary hack for extigy/audigy 2 nx/zs */
+	अगर (err < 0)
+		वापस err;
+#अगर 1
+	/* FIXME: temporary hack क्रम extigy/audigy 2 nx/zs */
 	/* extigy apparently supports sample rates other than 48k
-	 * but not in ordinary way.  so we enable only 48k atm.
+	 * but not in ordinary way.  so we enable only 48k aपंचांग.
 	 */
-	if (chip->usb_id == USB_ID(0x041e, 0x3000) ||
+	अगर (chip->usb_id == USB_ID(0x041e, 0x3000) ||
 	    chip->usb_id == USB_ID(0x041e, 0x3020) ||
-	    chip->usb_id == USB_ID(0x041e, 0x3061)) {
-		if (fmt->bFormatType == UAC_FORMAT_TYPE_I &&
+	    chip->usb_id == USB_ID(0x041e, 0x3061)) अणु
+		अगर (fmt->bFormatType == UAC_FORMAT_TYPE_I &&
 		    fp->rates != SNDRV_PCM_RATE_48000 &&
 		    fp->rates != SNDRV_PCM_RATE_96000)
-			return -ENOTSUPP;
-	}
-#endif
-	return 0;
-}
+			वापस -ENOTSUPP;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-int snd_usb_parse_audio_format_v3(struct snd_usb_audio *chip,
-			       struct audioformat *fp,
-			       struct uac3_as_header_descriptor *as,
-			       int stream)
-{
-	u64 format = le64_to_cpu(as->bmFormats);
-	int err;
+पूर्णांक snd_usb_parse_audio_क्रमmat_v3(काष्ठा snd_usb_audio *chip,
+			       काष्ठा audioक्रमmat *fp,
+			       काष्ठा uac3_as_header_descriptor *as,
+			       पूर्णांक stream)
+अणु
+	u64 क्रमmat = le64_to_cpu(as->bmFormats);
+	पूर्णांक err;
 
 	/*
-	 * Type I format bits are D0..D6
+	 * Type I क्रमmat bits are D0..D6
 	 * This test works because type IV is not supported
 	 */
-	if (format & 0x7f)
+	अगर (क्रमmat & 0x7f)
 		fp->fmt_type = UAC_FORMAT_TYPE_I;
-	else
+	अन्यथा
 		fp->fmt_type = UAC_FORMAT_TYPE_III;
 
-	err = parse_audio_format_i(chip, fp, format, as);
-	if (err < 0)
-		return err;
+	err = parse_audio_क्रमmat_i(chip, fp, क्रमmat, as);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

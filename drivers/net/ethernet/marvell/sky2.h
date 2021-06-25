@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Definitions for the new Marvell Yukon 2 driver.
+ * Definitions क्रम the new Marvell Yukon 2 driver.
  */
-#ifndef _SKY2_H
-#define _SKY2_H
+#अगर_अघोषित _SKY2_H
+#घोषणा _SKY2_H
 
-#define ETH_JUMBO_MTU		9000	/* Maximum MTU supported */
+#घोषणा ETH_JUMBO_MTU		9000	/* Maximum MTU supported */
 
-/* PCI config registers */
-enum {
+/* PCI config रेजिस्टरs */
+क्रमागत अणु
 	PCI_DEV_REG1	= 0x40,
 	PCI_DEV_REG2	= 0x44,
 	PCI_DEV_STATUS  = 0x7c,
@@ -25,10 +26,10 @@ enum {
 	PSM_CONFIG_REG4  = 0x168,
 
 	PCI_LDO_CTRL    = 0xbc,
-};
+पूर्ण;
 
 /* Yukon-2 */
-enum pci_dev_reg_1 {
+क्रमागत pci_dev_reg_1 अणु
 	PCI_Y2_PIG_ENA	 = 1<<31, /* Enable Plug-in-Go (YUKON-2) */
 	PCI_Y2_DLL_DIS	 = 1<<30, /* Disable PCI DLL (YUKON-2) */
 	PCI_SW_PWR_ON_RST= 1<<30, /* SW Power on Reset (Yukon-EX) */
@@ -36,29 +37,29 @@ enum pci_dev_reg_1 {
 	PCI_Y2_PHY1_COMA = 1<<28, /* Set PHY 1 to Coma Mode (YUKON-2) */
 	PCI_Y2_PHY2_POWD = 1<<27, /* Set PHY 2 to Power Down (YUKON-2) */
 	PCI_Y2_PHY1_POWD = 1<<26, /* Set PHY 1 to Power Down (YUKON-2) */
-	PCI_Y2_PME_LEGACY= 1<<15, /* PCI Express legacy power management mode */
+	PCI_Y2_PME_LEGACY= 1<<15, /* PCI Express legacy घातer management mode */
 
 	PCI_PHY_LNK_TIM_MSK= 3L<<8,/* Bit  9.. 8:	GPHY Link Trigger Timer */
 	PCI_ENA_L1_EVENT = 1<<7, /* Enable PEX L1 Event */
-	PCI_ENA_GPHY_LNK = 1<<6, /* Enable PEX L1 on GPHY Link down */
+	PCI_ENA_GPHY_LNK = 1<<6, /* Enable PEX L1 on GPHY Link करोwn */
 	PCI_FORCE_PEX_L1 = 1<<5, /* Force to PEX L1 */
-};
+पूर्ण;
 
-enum pci_dev_reg_2 {
+क्रमागत pci_dev_reg_2 अणु
 	PCI_VPD_WR_THR	= 0xffL<<24,	/* Bit 31..24:	VPD Write Threshold */
 	PCI_DEV_SEL	= 0x7fL<<17,	/* Bit 23..17:	EEPROM Device Select */
 	PCI_VPD_ROM_SZ	= 7L<<14,	/* Bit 16..14:	VPD ROM Size	*/
 
-	PCI_PATCH_DIR	= 0xfL<<8,	/* Bit 11.. 8:	Ext Patches dir 3..0 */
+	PCI_PATCH_सूची	= 0xfL<<8,	/* Bit 11.. 8:	Ext Patches dir 3..0 */
 	PCI_EXT_PATCHS	= 0xfL<<4,	/* Bit	7.. 4:	Extended Patches 3..0 */
 	PCI_EN_DUMMY_RD	= 1<<3,		/* Enable Dummy Read */
 	PCI_REV_DESC	= 1<<2,		/* Reverse Desc. Bytes */
 
 	PCI_USEDATA64	= 1<<0,		/* Use 64Bit Data bus ext */
-};
+पूर्ण;
 
 /*	PCI_OUR_REG_3		32 bit	Our Register 3 (Yukon-ECU only) */
-enum pci_dev_reg_3 {
+क्रमागत pci_dev_reg_3 अणु
 	P_CLK_ASF_REGS_DIS	= 1<<18,/* Disable Clock ASF (Yukon-Ext.) */
 	P_CLK_COR_REGS_D0_DIS	= 1<<17,/* Disable Clock Core Regs D0 */
 	P_CLK_MACSEC_DIS	= 1<<17,/* Disable Clock MACSec (Yukon-Ext.) */
@@ -86,13 +87,13 @@ enum pci_dev_reg_3 {
 				    P_CLK_PCI_MST_ARB_DIS |
 				    P_CLK_COR_COMMON_DIS |
 				    P_CLK_COR_LNK1_BMU_DIS,
-};
+पूर्ण;
 
 /*	PCI_OUR_REG_4		32 bit	Our Register 4 (Yukon-ECU only) */
-enum pci_dev_reg_4 {
+क्रमागत pci_dev_reg_4 अणु
 				/* (Link Training & Status State Machine) */
 	P_PEX_LTSSM_STAT_MSK	= 0x7fL<<25,	/* Bit 31..25:	PEX LTSSM Mask */
-#define P_PEX_LTSSM_STAT(x)	((x << 25) & P_PEX_LTSSM_STAT_MSK)
+#घोषणा P_PEX_LTSSM_STAT(x)	((x << 25) & P_PEX_LTSSM_STAT_MSK)
 	P_PEX_LTSSM_L1_STAT	= 0x34,
 	P_PEX_LTSSM_DET_STAT	= 0x01,
 	P_TIMER_VALUE_MSK	= 0xffL<<16,	/* Bit 23..16:	Timer Value Mask */
@@ -109,15 +110,15 @@ enum pci_dev_reg_4 {
 	P_CLK_GATE_ROOT_COR_ENA	= 1<<0,	/* Enable Gate Root Core Clock */
 	P_ASPM_CONTROL_MSK	= P_FORCE_ASPM_REQUEST | P_ASPM_GPHY_LINK_DOWN
 				  | P_ASPM_CLKRUN_REQUEST | P_ASPM_INT_FIFO_EMPTY,
-};
+पूर्ण;
 
 /*	PCI_OUR_REG_5		32 bit	Our Register 5 (Yukon-ECU only) */
-enum pci_dev_reg_5 {
-					/* Bit 31..27:	for A3 & later */
+क्रमागत pci_dev_reg_5 अणु
+					/* Bit 31..27:	क्रम A3 & later */
 	P_CTL_DIV_CORE_CLK_ENA	= 1<<31, /* Divide Core Clock Enable */
-	P_CTL_SRESET_VMAIN_AV	= 1<<30, /* Soft Reset for Vmain_av De-Glitch */
-	P_CTL_BYPASS_VMAIN_AV	= 1<<29, /* Bypass En. for Vmain_av De-Glitch */
-	P_CTL_TIM_VMAIN_AV_MSK	= 3<<27, /* Bit 28..27: Timer Vmain_av Mask */
+	P_CTL_SRESET_VMAIN_AV	= 1<<30, /* Soft Reset क्रम Vमुख्य_av De-Glitch */
+	P_CTL_BYPASS_VMAIN_AV	= 1<<29, /* Bypass En. क्रम Vमुख्य_av De-Glitch */
+	P_CTL_TIM_VMAIN_AV_MSK	= 3<<27, /* Bit 28..27: Timer Vमुख्य_av Mask */
 					 /* Bit 26..16: Release Clock on Event */
 	P_REL_PCIE_RST_DE_ASS	= 1<<26, /* PCIe Reset De-Asserted */
 	P_REL_GPHY_REC_PACKET	= 1<<25, /* GPHY Received Packet */
@@ -131,7 +132,7 @@ enum pci_dev_reg_5 {
 	P_REL_PCIE_RX_EX_IDLE	= 1<<17, /* PCIe Rx Exit Electrical Idle State */
 	P_REL_GPHY_LINK_UP	= 1<<16, /* GPHY Link Up */
 
-					/* Bit 10.. 0: Mask for Gate Clock */
+					/* Bit 10.. 0: Mask क्रम Gate Clock */
 	P_GAT_PCIE_RST_ASSERTED	= 1<<10,/* PCIe Reset Asserted */
 	P_GAT_GPHY_N_REC_PACKET	= 1<<9, /* GPHY Not Received Packet */
 	P_GAT_INT_FIFO_EMPTY	= 1<<8, /* Internal FIFO Empty */
@@ -152,14 +153,14 @@ enum pci_dev_reg_5 {
 				     P_GAT_INT_FIFO_EMPTY |
 				     P_GAT_PCIE_ENTER_L1_ST |
 				     P_GAT_PCIE_RX_EL_IDLE,
-};
+पूर्ण;
 
 /*	PCI_CFG_REG_1			32 bit	Config Register 1 (Yukon-Ext only) */
-enum pci_cfg_reg1 {
+क्रमागत pci_cfg_reg1 अणु
 	P_CF1_DIS_REL_EVT_RST	= 1<<24, /* Dis. Rel. Event during PCIE reset */
 										/* Bit 23..21: Release Clock on Event */
 	P_CF1_REL_LDR_NOT_FIN	= 1<<23, /* EEPROM Loader Not Finished */
-	P_CF1_REL_VMAIN_AVLBL	= 1<<22, /* Vmain available */
+	P_CF1_REL_VMAIN_AVLBL	= 1<<22, /* Vमुख्य available */
 	P_CF1_REL_PCIE_RESET	= 1<<21, /* PCI-E reset */
 										/* Bit 20..18: Gate Clock on Event */
 	P_CF1_GAT_LDR_NOT_FIN	= 1<<20, /* EEPROM Loader Finished */
@@ -168,10 +169,10 @@ enum pci_cfg_reg1 {
 	P_CF1_PRST_PHY_CLKREQ	= 1<<17, /* Enable PCI-E rst & PM2PHY gen. CLKREQ */
 	P_CF1_PCIE_RST_CLKREQ	= 1<<16, /* Enable PCI-E rst generate CLKREQ */
 
-	P_CF1_ENA_CFG_LDR_DONE	= 1<<8, /* Enable core level Config loader done */
+	P_CF1_ENA_CFG_LDR_DONE	= 1<<8, /* Enable core level Config loader करोne */
 
-	P_CF1_ENA_TXBMU_RD_IDLE	= 1<<1, /* Enable TX BMU Read  IDLE for ASPM */
-	P_CF1_ENA_TXBMU_WR_IDLE	= 1<<0, /* Enable TX BMU Write IDLE for ASPM */
+	P_CF1_ENA_TXBMU_RD_IDLE	= 1<<1, /* Enable TX BMU Read  IDLE क्रम ASPM */
+	P_CF1_ENA_TXBMU_WR_IDLE	= 1<<0, /* Enable TX BMU Write IDLE क्रम ASPM */
 
 	PCIE_CFG1_EVENT_CLK_D3_SET = P_CF1_DIS_REL_EVT_RST |
 					P_CF1_REL_LDR_NOT_FIN |
@@ -183,10 +184,10 @@ enum pci_cfg_reg1 {
 					P_CF1_ENA_CFG_LDR_DONE |
 					P_CF1_ENA_TXBMU_RD_IDLE |
 					P_CF1_ENA_TXBMU_WR_IDLE,
-};
+पूर्ण;
 
 /* Yukon-Optima */
-enum {
+क्रमागत अणु
 	PSM_CONFIG_REG1_AC_PRESENT_STATUS = 1<<31,   /* AC Present Status */
 
 	PSM_CONFIG_REG1_PTP_CLK_SEL	  = 1<<29,   /* PTP Clock Select */
@@ -194,65 +195,65 @@ enum {
 
 	PSM_CONFIG_REG1_MUX_PHY_LINK	  = 1<<27,   /* PHY Energy Detect Event */
 
-	PSM_CONFIG_REG1_EN_PIN63_AC_PRESENT = 1<<26,  /* Enable LED_DUPLEX for ac_present */
+	PSM_CONFIG_REG1_EN_PIN63_AC_PRESENT = 1<<26,  /* Enable LED_DUPLEX क्रम ac_present */
 	PSM_CONFIG_REG1_EN_PCIE_TIMER	  = 1<<25,    /* Enable PCIe Timer */
 	PSM_CONFIG_REG1_EN_SPU_TIMER	  = 1<<24,    /* Enable SPU Timer */
 	PSM_CONFIG_REG1_POLARITY_AC_PRESENT = 1<<23,  /* AC Present Polarity */
 
 	PSM_CONFIG_REG1_EN_AC_PRESENT	  = 1<<21,    /* Enable AC Present */
 
-	PSM_CONFIG_REG1_EN_GPHY_INT_PSM	= 1<<20,      /* Enable GPHY INT for PSM */
+	PSM_CONFIG_REG1_EN_GPHY_INT_PSM	= 1<<20,      /* Enable GPHY INT क्रम PSM */
 	PSM_CONFIG_REG1_DIS_PSM_TIMER	= 1<<19,      /* Disable PSM Timer */
-};
+पूर्ण;
 
 /* Yukon-Supreme */
-enum {
+क्रमागत अणु
 	PSM_CONFIG_REG1_GPHY_ENERGY_STS	= 1<<31, /* GPHY Energy Detect Status */
 
 	PSM_CONFIG_REG1_UART_MODE_MSK	= 3<<29, /* UART_Mode */
-	PSM_CONFIG_REG1_CLK_RUN_ASF	= 1<<28, /* Enable Clock Free Running for ASF Subsystem */
-	PSM_CONFIG_REG1_UART_CLK_DISABLE= 1<<27, /* Disable UART clock */
-	PSM_CONFIG_REG1_VAUX_ONE	= 1<<26, /* Tie internal Vaux to 1'b1 */
-	PSM_CONFIG_REG1_UART_FC_RI_VAL	= 1<<25, /* Default value for UART_RI_n */
-	PSM_CONFIG_REG1_UART_FC_DCD_VAL	= 1<<24, /* Default value for UART_DCD_n */
-	PSM_CONFIG_REG1_UART_FC_DSR_VAL	= 1<<23, /* Default value for UART_DSR_n */
-	PSM_CONFIG_REG1_UART_FC_CTS_VAL	= 1<<22, /* Default value for UART_CTS_n */
+	PSM_CONFIG_REG1_CLK_RUN_ASF	= 1<<28, /* Enable Clock Free Running क्रम ASF Subप्रणाली */
+	PSM_CONFIG_REG1_UART_CLK_DISABLE= 1<<27, /* Disable UART घड़ी */
+	PSM_CONFIG_REG1_VAUX_ONE	= 1<<26, /* Tie पूर्णांकernal Vaux to 1'b1 */
+	PSM_CONFIG_REG1_UART_FC_RI_VAL	= 1<<25, /* Default value क्रम UART_RI_n */
+	PSM_CONFIG_REG1_UART_FC_DCD_VAL	= 1<<24, /* Default value क्रम UART_DCD_n */
+	PSM_CONFIG_REG1_UART_FC_DSR_VAL	= 1<<23, /* Default value क्रम UART_DSR_n */
+	PSM_CONFIG_REG1_UART_FC_CTS_VAL	= 1<<22, /* Default value क्रम UART_CTS_n */
 	PSM_CONFIG_REG1_LATCH_VAUX	= 1<<21, /* Enable Latch current Vaux_avlbl */
-	PSM_CONFIG_REG1_FORCE_TESTMODE_INPUT= 1<<20, /* Force Testmode pin as input PAD */
+	PSM_CONFIG_REG1_FORCE_TESTMODE_INPUT= 1<<20, /* Force Tesपंचांगode pin as input PAD */
 	PSM_CONFIG_REG1_UART_RST	= 1<<19, /* UART_RST */
-	PSM_CONFIG_REG1_PSM_PCIE_L1_POL	= 1<<18, /* PCIE L1 Event Polarity for PSM */
+	PSM_CONFIG_REG1_PSM_PCIE_L1_POL	= 1<<18, /* PCIE L1 Event Polarity क्रम PSM */
 	PSM_CONFIG_REG1_TIMER_STAT	= 1<<17, /* PSM Timer Status */
 	PSM_CONFIG_REG1_GPHY_INT	= 1<<16, /* GPHY INT Status */
-	PSM_CONFIG_REG1_FORCE_TESTMODE_ZERO= 1<<15, /* Force internal Testmode as 1'b0 */
-	PSM_CONFIG_REG1_EN_INT_ASPM_CLKREQ = 1<<14, /* ENABLE INT for CLKRUN on ASPM and CLKREQ */
-	PSM_CONFIG_REG1_EN_SND_TASK_ASPM_CLKREQ	= 1<<13, /* ENABLE Snd_task for CLKRUN on ASPM and CLKREQ */
+	PSM_CONFIG_REG1_FORCE_TESTMODE_ZERO= 1<<15, /* Force पूर्णांकernal Tesपंचांगode as 1'b0 */
+	PSM_CONFIG_REG1_EN_INT_ASPM_CLKREQ = 1<<14, /* ENABLE INT क्रम CLKRUN on ASPM and CLKREQ */
+	PSM_CONFIG_REG1_EN_SND_TASK_ASPM_CLKREQ	= 1<<13, /* ENABLE Snd_task क्रम CLKRUN on ASPM and CLKREQ */
 	PSM_CONFIG_REG1_DIS_CLK_GATE_SND_TASK	= 1<<12, /* Disable CLK_GATE control snd_task */
-	PSM_CONFIG_REG1_DIS_FF_CHIAN_SND_INTA	= 1<<11, /* Disable flip-flop chain for sndmsg_inta */
+	PSM_CONFIG_REG1_DIS_FF_CHIAN_SND_INTA	= 1<<11, /* Disable flip-flop chain क्रम sndmsg_पूर्णांकa */
 
 	PSM_CONFIG_REG1_DIS_LOADER	= 1<<9, /* Disable Loader SM after PSM Goes back to IDLE */
 	PSM_CONFIG_REG1_DO_PWDN		= 1<<8, /* Do Power Down, Start PSM Scheme */
 	PSM_CONFIG_REG1_DIS_PIG		= 1<<7, /* Disable Plug-in-Go SM after PSM Goes back to IDLE */
 	PSM_CONFIG_REG1_DIS_PERST	= 1<<6, /* Disable Internal PCIe Reset after PSM Goes back to IDLE */
-	PSM_CONFIG_REG1_EN_REG18_PD	= 1<<5, /* Enable REG18 Power Down for PSM */
+	PSM_CONFIG_REG1_EN_REG18_PD	= 1<<5, /* Enable REG18 Power Down क्रम PSM */
 	PSM_CONFIG_REG1_EN_PSM_LOAD	= 1<<4, /* Disable EEPROM Loader after PSM Goes back to IDLE */
-	PSM_CONFIG_REG1_EN_PSM_HOT_RST	= 1<<3, /* Enable PCIe Hot Reset for PSM */
-	PSM_CONFIG_REG1_EN_PSM_PERST	= 1<<2, /* Enable PCIe Reset Event for PSM */
-	PSM_CONFIG_REG1_EN_PSM_PCIE_L1	= 1<<1, /* Enable PCIe L1 Event for PSM */
+	PSM_CONFIG_REG1_EN_PSM_HOT_RST	= 1<<3, /* Enable PCIe Hot Reset क्रम PSM */
+	PSM_CONFIG_REG1_EN_PSM_PERST	= 1<<2, /* Enable PCIe Reset Event क्रम PSM */
+	PSM_CONFIG_REG1_EN_PSM_PCIE_L1	= 1<<1, /* Enable PCIe L1 Event क्रम PSM */
 	PSM_CONFIG_REG1_EN_PSM		= 1<<0, /* Enable PSM Scheme */
-};
+पूर्ण;
 
 /*	PSM_CONFIG_REG4				0x0168	PSM Config Register 4 */
-enum {
+क्रमागत अणु
 						/* PHY Link Detect Timer */
 	PSM_CONFIG_REG4_TIMER_PHY_LINK_DETECT_MSK = 0xf<<4,
 	PSM_CONFIG_REG4_TIMER_PHY_LINK_DETECT_BASE = 4,
 
 	PSM_CONFIG_REG4_DEBUG_TIMER	    = 1<<1, /* Debug Timer */
 	PSM_CONFIG_REG4_RST_PHY_LINK_DETECT = 1<<0, /* Reset GPHY Link Detect */
-};
+पूर्ण;
 
 
-enum csr_regs {
+क्रमागत csr_regs अणु
 	B0_RAP		= 0x0000,
 	B0_CTST		= 0x0004,
 
@@ -262,7 +263,7 @@ enum csr_regs {
 	B0_HWE_ISRC	= 0x0010,
 	B0_HWE_IMSK	= 0x0014,
 
-	/* Special ISR registers (Yukon-2 only) */
+	/* Special ISR रेजिस्टरs (Yukon-2 only) */
 	B0_Y2_SP_ISRC2	= 0x001c,
 	B0_Y2_SP_ISRC3	= 0x0020,
 	B0_Y2_SP_EISR	= 0x0024,
@@ -307,11 +308,11 @@ enum csr_regs {
 /* RAM Interface Registers */
 /* Yukon-2: use RAM_BUFFER() to access the RAM buffer */
 /*
- * The HW-Spec. calls this registers Timeout Value 0..11. But this names are
- * not usable in SW. Please notice these are NOT real timeouts, these are
+ * The HW-Spec. calls this रेजिस्टरs Timeout Value 0..11. But this names are
+ * not usable in SW. Please notice these are NOT real समयouts, these are
  * the number of qWords transferred continuously.
  */
-#define RAM_BUFFER(port, reg)	(reg | (port <<6))
+#घोषणा RAM_BUFFER(port, reg)	(reg | (port <<6))
 
 	B3_RI_WTO_R1	= 0x0190,
 	B3_RI_WTO_XA1	= 0x0191,
@@ -361,10 +362,10 @@ enum csr_regs {
 
 	Y2_CFG_SPC	= 0x1c00,	/* PCI config space region */
 	Y2_CFG_AER      = 0x1d00,	/* PCI Advanced Error Report region */
-};
+पूर्ण;
 
-/*	B0_CTST			24 bit	Control/Status register */
-enum {
+/*	B0_CTST			24 bit	Control/Status रेजिस्टर */
+क्रमागत अणु
 	Y2_VMAIN_AVAIL	= 1<<17,/* VMAIN available (YUKON-2 only) */
 	Y2_VAUX_AVAIL	= 1<<16,/* VAUX available (YUKON-2 only) */
 	Y2_HW_WOL_ON	= 1<<15,/* HW WOL On  (Yukon-EC Ultra A1 only) */
@@ -384,10 +385,10 @@ enum {
 	CS_MRST_SET	= 1<<2,	/* Set Master reset	*/
 	CS_RST_CLR	= 1<<1,	/* Clear Software reset	*/
 	CS_RST_SET	= 1,	/* Set   Software reset	*/
-};
+पूर्ण;
 
 /*	B0_POWER_CTRL	 8 Bit	Power Control reg (YUKON only) */
-enum {
+क्रमागत अणु
 	PC_VAUX_ENA	= 1<<7,	/* Switch VAUX Enable  */
 	PC_VAUX_DIS	= 1<<6,	/* Switch VAUX Disable */
 	PC_VCC_ENA	= 1<<5,	/* Switch VCC Enable  */
@@ -396,7 +397,7 @@ enum {
 	PC_VAUX_OFF	= 1<<2,	/* Switch VAUX Off */
 	PC_VCC_ON	= 1<<1,	/* Switch VCC On  */
 	PC_VCC_OFF	= 1<<0,	/* Switch VCC Off */
-};
+पूर्ण;
 
 /*	B2_IRQM_MSK 	32 bit	IRQ Moderation Mask */
 
@@ -404,14 +405,14 @@ enum {
 /*	B0_Y2_SP_ISRC3	32 bit	Special Interrupt Source Reg 3 */
 /*	B0_Y2_SP_EISR	32 bit	Enter ISR Reg */
 /*	B0_Y2_SP_LISR	32 bit	Leave ISR Reg */
-enum {
+क्रमागत अणु
 	Y2_IS_HW_ERR	= 1<<31,	/* Interrupt HW Error */
 	Y2_IS_STAT_BMU	= 1<<30,	/* Status BMU Interrupt */
-	Y2_IS_ASF	= 1<<29,	/* ASF subsystem Interrupt */
+	Y2_IS_ASF	= 1<<29,	/* ASF subप्रणाली Interrupt */
 	Y2_IS_CPU_TO	= 1<<28,	/* CPU Timeout */
 	Y2_IS_POLL_CHK	= 1<<27,	/* Check IRQ from polling unit */
 	Y2_IS_TWSI_RDY	= 1<<26,	/* IRQ on end of TWSI Tx */
-	Y2_IS_IRQ_SW	= 1<<25,	/* SW forced IRQ	*/
+	Y2_IS_IRQ_SW	= 1<<25,	/* SW क्रमced IRQ	*/
 	Y2_IS_TIMINT	= 1<<24,	/* IRQ from Timer	*/
 
 	Y2_IS_IRQ_PHY2	= 1<<12,	/* Interrupt from PHY 2 */
@@ -438,10 +439,10 @@ enum {
 	Y2_IS_ERROR     = Y2_IS_HW_ERR |
 			  Y2_IS_IRQ_MAC1 | Y2_IS_CHK_TXA1 | Y2_IS_CHK_RX1 |
 			  Y2_IS_IRQ_MAC2 | Y2_IS_CHK_TXA2 | Y2_IS_CHK_RX2,
-};
+पूर्ण;
 
 /*	B2_IRQM_HWE_MSK	32 bit	IRQ Moderation HW Error Mask */
-enum {
+क्रमागत अणु
 	IS_ERR_MSK	= 0x00003fff,/* 		All Error bits */
 
 	IS_IRQ_TIST_OV	= 1<<13, /* Time Stamp Timer Overflow (YUKON only) */
@@ -458,27 +459,27 @@ enum {
 	IS_M2_PAR_ERR	= 1<<2,	/* MAC 2 Parity Error */
 	IS_R1_PAR_ERR	= 1<<1,	/* Queue R1 Parity Error */
 	IS_R2_PAR_ERR	= 1<<0,	/* Queue R2 Parity Error */
-};
+पूर्ण;
 
-/* Hardware error interrupt mask for Yukon 2 */
-enum {
-	Y2_IS_TIST_OV	= 1<<29,/* Time Stamp Timer overflow interrupt */
-	Y2_IS_SENSOR	= 1<<28, /* Sensor interrupt */
-	Y2_IS_MST_ERR	= 1<<27, /* Master error interrupt */
-	Y2_IS_IRQ_STAT	= 1<<26, /* Status exception interrupt */
-	Y2_IS_PCI_EXP	= 1<<25, /* PCI-Express interrupt */
+/* Hardware error पूर्णांकerrupt mask क्रम Yukon 2 */
+क्रमागत अणु
+	Y2_IS_TIST_OV	= 1<<29,/* Time Stamp Timer overflow पूर्णांकerrupt */
+	Y2_IS_SENSOR	= 1<<28, /* Sensor पूर्णांकerrupt */
+	Y2_IS_MST_ERR	= 1<<27, /* Master error पूर्णांकerrupt */
+	Y2_IS_IRQ_STAT	= 1<<26, /* Status exception पूर्णांकerrupt */
+	Y2_IS_PCI_EXP	= 1<<25, /* PCI-Express पूर्णांकerrupt */
 	Y2_IS_PCI_NEXP	= 1<<24, /* PCI-Express error similar to PCI error */
 						/* Link 2 */
-	Y2_IS_PAR_RD2	= 1<<13, /* Read RAM parity error interrupt */
-	Y2_IS_PAR_WR2	= 1<<12, /* Write RAM parity error interrupt */
-	Y2_IS_PAR_MAC2	= 1<<11, /* MAC hardware fault interrupt */
+	Y2_IS_PAR_RD2	= 1<<13, /* Read RAM parity error पूर्णांकerrupt */
+	Y2_IS_PAR_WR2	= 1<<12, /* Write RAM parity error पूर्णांकerrupt */
+	Y2_IS_PAR_MAC2	= 1<<11, /* MAC hardware fault पूर्णांकerrupt */
 	Y2_IS_PAR_RX2	= 1<<10, /* Parity Error Rx Queue 2 */
 	Y2_IS_TCP_TXS2	= 1<<9, /* TCP length mismatch sync Tx queue IRQ */
 	Y2_IS_TCP_TXA2	= 1<<8, /* TCP length mismatch async Tx queue IRQ */
 						/* Link 1 */
-	Y2_IS_PAR_RD1	= 1<<5, /* Read RAM parity error interrupt */
-	Y2_IS_PAR_WR1	= 1<<4, /* Write RAM parity error interrupt */
-	Y2_IS_PAR_MAC1	= 1<<3, /* MAC hardware fault interrupt */
+	Y2_IS_PAR_RD1	= 1<<5, /* Read RAM parity error पूर्णांकerrupt */
+	Y2_IS_PAR_WR1	= 1<<4, /* Write RAM parity error पूर्णांकerrupt */
+	Y2_IS_PAR_MAC1	= 1<<3, /* MAC hardware fault पूर्णांकerrupt */
 	Y2_IS_PAR_RX1	= 1<<2, /* Parity Error Rx Queue 1 */
 	Y2_IS_TCP_TXS1	= 1<<1, /* TCP length mismatch sync Tx queue IRQ */
 	Y2_IS_TCP_TXA1	= 1<<0, /* TCP length mismatch async Tx queue IRQ */
@@ -490,50 +491,50 @@ enum {
 
 	Y2_HWE_ALL_MASK	= Y2_IS_TIST_OV | Y2_IS_MST_ERR | Y2_IS_IRQ_STAT |
 			  Y2_HWE_L1_MASK | Y2_HWE_L2_MASK,
-};
+पूर्ण;
 
 /*	B28_DPT_CTRL	 8 bit	Descriptor Poll Timer Ctrl Reg */
-enum {
+क्रमागत अणु
 	DPT_START	= 1<<1,
 	DPT_STOP	= 1<<0,
-};
+पूर्ण;
 
 /*	B2_TST_CTRL1	 8 bit	Test Control Register 1 */
-enum {
-	TST_FRC_DPERR_MR = 1<<7, /* force DATAPERR on MST RD */
-	TST_FRC_DPERR_MW = 1<<6, /* force DATAPERR on MST WR */
-	TST_FRC_DPERR_TR = 1<<5, /* force DATAPERR on TRG RD */
-	TST_FRC_DPERR_TW = 1<<4, /* force DATAPERR on TRG WR */
-	TST_FRC_APERR_M	 = 1<<3, /* force ADDRPERR on MST */
-	TST_FRC_APERR_T	 = 1<<2, /* force ADDRPERR on TRG */
+क्रमागत अणु
+	TST_FRC_DPERR_MR = 1<<7, /* क्रमce DATAPERR on MST RD */
+	TST_FRC_DPERR_MW = 1<<6, /* क्रमce DATAPERR on MST WR */
+	TST_FRC_DPERR_TR = 1<<5, /* क्रमce DATAPERR on TRG RD */
+	TST_FRC_DPERR_TW = 1<<4, /* क्रमce DATAPERR on TRG WR */
+	TST_FRC_APERR_M	 = 1<<3, /* क्रमce ADDRPERR on MST */
+	TST_FRC_APERR_T	 = 1<<2, /* क्रमce ADDRPERR on TRG */
 	TST_CFG_WRITE_ON = 1<<1, /* Enable  Config Reg WR */
 	TST_CFG_WRITE_OFF= 1<<0, /* Disable Config Reg WR */
-};
+पूर्ण;
 
 /* 	B2_GPIO */
-enum {
+क्रमागत अणु
 	GLB_GPIO_CLK_DEB_ENA = 1<<31,	/* Clock Debug Enable */
 	GLB_GPIO_CLK_DBG_MSK = 0xf<<26, /* Clock Debug */
 
 	GLB_GPIO_INT_RST_D3_DIS = 1<<15, /* Disable Internal Reset After D3 to D0 */
 	GLB_GPIO_LED_PAD_SPEED_UP = 1<<14, /* LED PAD Speed Up */
 	GLB_GPIO_STAT_RACE_DIS	= 1<<13, /* Status Race Disable */
-	GLB_GPIO_TEST_SEL_MSK	= 3<<11, /* Testmode Select */
+	GLB_GPIO_TEST_SEL_MSK	= 3<<11, /* Tesपंचांगode Select */
 	GLB_GPIO_TEST_SEL_BASE	= 1<<11,
-	GLB_GPIO_RAND_ENA	= 1<<10, /* Random Enable */
-	GLB_GPIO_RAND_BIT_1	= 1<<9,  /* Random Bit 1 */
-};
+	GLB_GPIO_RAND_ENA	= 1<<10, /* Ranकरोm Enable */
+	GLB_GPIO_RAND_BIT_1	= 1<<9,  /* Ranकरोm Bit 1 */
+पूर्ण;
 
 /*	B2_MAC_CFG		 8 bit	MAC Configuration / Chip Revision */
-enum {
+क्रमागत अणु
 	CFG_CHIP_R_MSK	  = 0xf<<4,	/* Bit 7.. 4: Chip Revision */
 					/* Bit 3.. 2:	reserved */
-	CFG_DIS_M2_CLK	  = 1<<1,	/* Disable Clock for 2nd MAC */
+	CFG_DIS_M2_CLK	  = 1<<1,	/* Disable Clock क्रम 2nd MAC */
 	CFG_SNG_MAC	  = 1<<0,	/* MAC Config: 0=2 MACs / 1=1 MAC*/
-};
+पूर्ण;
 
-/*	B2_CHIP_ID		 8 bit 	Chip Identification Number */
-enum {
+/*	B2_CHIP_ID		 8 bit 	Chip Identअगरication Number */
+क्रमागत अणु
 	CHIP_ID_YUKON_XL   = 0xb3, /* YUKON-2 XL */
 	CHIP_ID_YUKON_EC_U = 0xb4, /* YUKON-2 EC Ultra */
 	CHIP_ID_YUKON_EX   = 0xb5, /* YUKON-2 Extreme */
@@ -545,124 +546,124 @@ enum {
 	CHIP_ID_YUKON_OPT  = 0xbc, /* YUKON-2 Optima */
 	CHIP_ID_YUKON_PRM  = 0xbd, /* YUKON-2 Optima Prime */
 	CHIP_ID_YUKON_OP_2 = 0xbe, /* YUKON-2 Optima 2 */
-};
+पूर्ण;
 
-enum yukon_xl_rev {
+क्रमागत yukon_xl_rev अणु
 	CHIP_REV_YU_XL_A0  = 0,
 	CHIP_REV_YU_XL_A1  = 1,
 	CHIP_REV_YU_XL_A2  = 2,
 	CHIP_REV_YU_XL_A3  = 3,
-};
+पूर्ण;
 
-enum yukon_ec_rev {
-	CHIP_REV_YU_EC_A1    = 0,  /* Chip Rev. for Yukon-EC A1/A0 */
-	CHIP_REV_YU_EC_A2    = 1,  /* Chip Rev. for Yukon-EC A2 */
-	CHIP_REV_YU_EC_A3    = 2,  /* Chip Rev. for Yukon-EC A3 */
-};
-enum yukon_ec_u_rev {
+क्रमागत yukon_ec_rev अणु
+	CHIP_REV_YU_EC_A1    = 0,  /* Chip Rev. क्रम Yukon-EC A1/A0 */
+	CHIP_REV_YU_EC_A2    = 1,  /* Chip Rev. क्रम Yukon-EC A2 */
+	CHIP_REV_YU_EC_A3    = 2,  /* Chip Rev. क्रम Yukon-EC A3 */
+पूर्ण;
+क्रमागत yukon_ec_u_rev अणु
 	CHIP_REV_YU_EC_U_A0  = 1,
 	CHIP_REV_YU_EC_U_A1  = 2,
 	CHIP_REV_YU_EC_U_B0  = 3,
 	CHIP_REV_YU_EC_U_B1  = 5,
-};
-enum yukon_fe_rev {
+पूर्ण;
+क्रमागत yukon_fe_rev अणु
 	CHIP_REV_YU_FE_A1    = 1,
 	CHIP_REV_YU_FE_A2    = 2,
-};
-enum yukon_fe_p_rev {
+पूर्ण;
+क्रमागत yukon_fe_p_rev अणु
 	CHIP_REV_YU_FE2_A0   = 0,
-};
-enum yukon_ex_rev {
+पूर्ण;
+क्रमागत yukon_ex_rev अणु
 	CHIP_REV_YU_EX_A0    = 1,
 	CHIP_REV_YU_EX_B0    = 2,
-};
-enum yukon_supr_rev {
+पूर्ण;
+क्रमागत yukon_supr_rev अणु
 	CHIP_REV_YU_SU_A0    = 0,
 	CHIP_REV_YU_SU_B0    = 1,
 	CHIP_REV_YU_SU_B1    = 3,
-};
+पूर्ण;
 
-enum yukon_prm_rev {
+क्रमागत yukon_prm_rev अणु
 	CHIP_REV_YU_PRM_Z1   = 1,
 	CHIP_REV_YU_PRM_A0   = 2,
-};
+पूर्ण;
 
 /*	B2_Y2_CLK_GATE	 8 bit	Clock Gating (Yukon-2 only) */
-enum {
+क्रमागत अणु
 	Y2_STATUS_LNK2_INAC	= 1<<7, /* Status Link 2 inactive (0 = active) */
-	Y2_CLK_GAT_LNK2_DIS	= 1<<6, /* Disable clock gating Link 2 */
-	Y2_COR_CLK_LNK2_DIS	= 1<<5, /* Disable Core clock Link 2 */
-	Y2_PCI_CLK_LNK2_DIS	= 1<<4, /* Disable PCI clock Link 2 */
+	Y2_CLK_GAT_LNK2_DIS	= 1<<6, /* Disable घड़ी gating Link 2 */
+	Y2_COR_CLK_LNK2_DIS	= 1<<5, /* Disable Core घड़ी Link 2 */
+	Y2_PCI_CLK_LNK2_DIS	= 1<<4, /* Disable PCI घड़ी Link 2 */
 	Y2_STATUS_LNK1_INAC	= 1<<3, /* Status Link 1 inactive (0 = active) */
-	Y2_CLK_GAT_LNK1_DIS	= 1<<2, /* Disable clock gating Link 1 */
-	Y2_COR_CLK_LNK1_DIS	= 1<<1, /* Disable Core clock Link 1 */
-	Y2_PCI_CLK_LNK1_DIS	= 1<<0, /* Disable PCI clock Link 1 */
-};
+	Y2_CLK_GAT_LNK1_DIS	= 1<<2, /* Disable घड़ी gating Link 1 */
+	Y2_COR_CLK_LNK1_DIS	= 1<<1, /* Disable Core घड़ी Link 1 */
+	Y2_PCI_CLK_LNK1_DIS	= 1<<0, /* Disable PCI घड़ी Link 1 */
+पूर्ण;
 
 /*	B2_Y2_HW_RES	8 bit	HW Resources (Yukon-2 only) */
-enum {
+क्रमागत अणु
 	CFG_LED_MODE_MSK	= 7<<2,	/* Bit  4.. 2:	LED Mode Mask */
 	CFG_LINK_2_AVAIL	= 1<<1,	/* Link 2 available */
 	CFG_LINK_1_AVAIL	= 1<<0,	/* Link 1 available */
-};
-#define CFG_LED_MODE(x)		(((x) & CFG_LED_MODE_MSK) >> 2)
-#define CFG_DUAL_MAC_MSK	(CFG_LINK_2_AVAIL | CFG_LINK_1_AVAIL)
+पूर्ण;
+#घोषणा CFG_LED_MODE(x)		(((x) & CFG_LED_MODE_MSK) >> 2)
+#घोषणा CFG_DUAL_MAC_MSK	(CFG_LINK_2_AVAIL | CFG_LINK_1_AVAIL)
 
 
 /* B2_Y2_CLK_CTRL	32 bit	Clock Frequency Control Register (Yukon-2/EC) */
-enum {
+क्रमागत अणु
 	Y2_CLK_DIV_VAL_MSK	= 0xff<<16,/* Bit 23..16: Clock Divisor Value */
-#define	Y2_CLK_DIV_VAL(x)	(((x)<<16) & Y2_CLK_DIV_VAL_MSK)
+#घोषणा	Y2_CLK_DIV_VAL(x)	(((x)<<16) & Y2_CLK_DIV_VAL_MSK)
 	Y2_CLK_DIV_VAL2_MSK	= 7<<21,   /* Bit 23..21: Clock Divisor Value */
 	Y2_CLK_SELECT2_MSK	= 0x1f<<16,/* Bit 20..16: Clock Select */
-#define Y2_CLK_DIV_VAL_2(x)	(((x)<<21) & Y2_CLK_DIV_VAL2_MSK)
-#define Y2_CLK_SEL_VAL_2(x)	(((x)<<16) & Y2_CLK_SELECT2_MSK)
+#घोषणा Y2_CLK_DIV_VAL_2(x)	(((x)<<21) & Y2_CLK_DIV_VAL2_MSK)
+#घोषणा Y2_CLK_SEL_VAL_2(x)	(((x)<<16) & Y2_CLK_SELECT2_MSK)
 	Y2_CLK_DIV_ENA		= 1<<1, /* Enable  Core Clock Division */
 	Y2_CLK_DIV_DIS		= 1<<0,	/* Disable Core Clock Division */
-};
+पूर्ण;
 
 /*	B2_TI_CTRL		 8 bit	Timer control */
 /*	B2_IRQM_CTRL	 8 bit	IRQ Moderation Timer Control */
-enum {
+क्रमागत अणु
 	TIM_START	= 1<<2,	/* Start Timer */
 	TIM_STOP	= 1<<1,	/* Stop  Timer */
 	TIM_CLR_IRQ	= 1<<0,	/* Clear Timer IRQ (!IRQM) */
-};
+पूर्ण;
 
 /*	B2_TI_TEST		 8 Bit	Timer Test */
 /*	B2_IRQM_TEST	 8 bit	IRQ Moderation Timer Test */
 /*	B28_DPT_TST		 8 bit	Descriptor Poll Timer Test Reg */
-enum {
+क्रमागत अणु
 	TIM_T_ON	= 1<<2,	/* Test mode on */
 	TIM_T_OFF	= 1<<1,	/* Test mode off */
 	TIM_T_STEP	= 1<<0,	/* Test step */
-};
+पूर्ण;
 
 /*	Y2_PEX_PHY_ADDR/DATA		PEX PHY address and data reg  (Yukon-2 only) */
-enum {
+क्रमागत अणु
 	PEX_RD_ACCESS	= 1<<31, /* Access Mode Read = 1, Write = 0 */
-	PEX_DB_ACCESS	= 1<<30, /* Access to debug register */
-};
+	PEX_DB_ACCESS	= 1<<30, /* Access to debug रेजिस्टर */
+पूर्ण;
 
-/*	B3_RAM_ADDR		32 bit	RAM Address, to read or write */
+/*	B3_RAM_ADDR		32 bit	RAM Address, to पढ़ो or ग_लिखो */
 					/* Bit 31..19:	reserved */
-#define RAM_ADR_RAN	0x0007ffffL	/* Bit 18.. 0:	RAM Address Range */
+#घोषणा RAM_ADR_RAN	0x0007ffffL	/* Bit 18.. 0:	RAM Address Range */
 /* RAM Interface Registers */
 
 /*	B3_RI_CTRL		16 bit	RAM Interface Control Register */
-enum {
+क्रमागत अणु
 	RI_CLR_RD_PERR	= 1<<9,	/* Clear IRQ RAM Read Parity Err */
 	RI_CLR_WR_PERR	= 1<<8,	/* Clear IRQ RAM Write Parity Err*/
 
 	RI_RST_CLR	= 1<<1,	/* Clear RAM Interface Reset */
 	RI_RST_SET	= 1<<0,	/* Set   RAM Interface Reset */
-};
+पूर्ण;
 
-#define SK_RI_TO_53	36		/* RAM interface timeout */
+#घोषणा SK_RI_TO_53	36		/* RAM पूर्णांकerface समयout */
 
 
-/* Port related registers FIFO, and Arbiter */
-#define SK_REG(port,reg)	(((port)<<7)+(reg))
+/* Port related रेजिस्टरs FIFO, and Arbiter */
+#घोषणा SK_REG(port,reg)	(((port)<<7)+(reg))
 
 /* Transmit Arbiter Registers MAC 1 and 2, use SK_REG() to access */
 /*	TXA_ITI_INI		32 bit	Tx Arb Interval Timer Init Val */
@@ -670,25 +671,25 @@ enum {
 /*	TXA_LIM_INI		32 bit	Tx Arb Limit Counter Init Val */
 /*	TXA_LIM_VAL		32 bit	Tx Arb Limit Counter Value */
 
-#define TXA_MAX_VAL	0x00ffffffUL	/* Bit 23.. 0:	Max TXA Timer/Cnt Val */
+#घोषणा TXA_MAX_VAL	0x00ffffffUL	/* Bit 23.. 0:	Max TXA Timer/Cnt Val */
 
 /*	TXA_CTRL		 8 bit	Tx Arbiter Control Register */
-enum {
-	TXA_ENA_FSYNC	= 1<<7,	/* Enable  force of sync Tx queue */
-	TXA_DIS_FSYNC	= 1<<6,	/* Disable force of sync Tx queue */
-	TXA_ENA_ALLOC	= 1<<5,	/* Enable  alloc of free bandwidth */
-	TXA_DIS_ALLOC	= 1<<4,	/* Disable alloc of free bandwidth */
+क्रमागत अणु
+	TXA_ENA_FSYNC	= 1<<7,	/* Enable  क्रमce of sync Tx queue */
+	TXA_DIS_FSYNC	= 1<<6,	/* Disable क्रमce of sync Tx queue */
+	TXA_ENA_ALLOC	= 1<<5,	/* Enable  alloc of मुक्त bandwidth */
+	TXA_DIS_ALLOC	= 1<<4,	/* Disable alloc of मुक्त bandwidth */
 	TXA_START_RC	= 1<<3,	/* Start sync Rate Control */
 	TXA_STOP_RC	= 1<<2,	/* Stop  sync Rate Control */
 	TXA_ENA_ARB	= 1<<1,	/* Enable  Tx Arbiter */
 	TXA_DIS_ARB	= 1<<0,	/* Disable Tx Arbiter */
-};
+पूर्ण;
 
 /*
  *	Bank 4 - 5
  */
 /* Transmit Arbiter Registers MAC 1 and 2, use SK_REG() to access */
-enum {
+क्रमागत अणु
 	TXA_ITI_INI	= 0x0200,/* 32 bit	Tx Arb Interval Timer Init Val*/
 	TXA_ITI_VAL	= 0x0204,/* 32 bit	Tx Arb Interval Timer Value */
 	TXA_LIM_INI	= 0x0208,/* 32 bit	Tx Arb Limit Counter Init Val */
@@ -699,9 +700,9 @@ enum {
 
 	RSS_KEY		= 0x0220, /* RSS Key setup */
 	RSS_CFG		= 0x0248, /* RSS Configuration */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HASH_TCP_IPV6_EX_CTRL	= 1<<5,
 	HASH_IPV6_EX_CTRL	= 1<<4,
 	HASH_TCP_IPV6_CTRL	= 1<<3,
@@ -710,11 +711,11 @@ enum {
 	HASH_IPV4_CTRL		= 1<<0,
 
 	HASH_ALL		= 0x3f,
-};
+पूर्ण;
 
-enum {
-	B6_EXT_REG	= 0x0300,/* External registers (GENESIS only) */
-	B7_CFG_SPC	= 0x0380,/* copy of the Configuration register */
+क्रमागत अणु
+	B6_EXT_REG	= 0x0300,/* External रेजिस्टरs (GENESIS only) */
+	B7_CFG_SPC	= 0x0380,/* copy of the Configuration रेजिस्टर */
 	B8_RQ1_REGS	= 0x0400,/* Receive Queue 1 */
 	B8_RQ2_REGS	= 0x0480,/* Receive Queue 2 */
 	B8_TS1_REGS	= 0x0600,/* Transmit sync queue 1 */
@@ -722,11 +723,11 @@ enum {
 	B8_TS2_REGS	= 0x0700,/* Transmit sync queue 2 */
 	B8_TA2_REGS	= 0x0780,/* Transmit sync queue 2 */
 	B16_RAM_REGS	= 0x0800,/* RAM Buffer Registers */
-};
+पूर्ण;
 
 /* Queue Register Offsets, use Q_ADDR() to access */
-enum {
-	B8_Q_REGS = 0x0400, /* base of Queue registers */
+क्रमागत अणु
+	B8_Q_REGS = 0x0400, /* base of Queue रेजिस्टरs */
 	Q_D	= 0x00,	/* 8*32	bit	Current Descriptor */
 	Q_VLAN  = 0x20, /* 16 bit	Current VLAN Tag */
 	Q_DONE	= 0x24,	/* 16 bit	Done Index */
@@ -739,55 +740,55 @@ enum {
 /* Yukon-2 */
 	Q_WM	= 0x40,	/* 16 bit	FIFO Watermark */
 	Q_AL	= 0x42,	/*  8 bit	FIFO Alignment */
-	Q_RSP	= 0x44,	/* 16 bit	FIFO Read Shadow Pointer */
-	Q_RSL	= 0x46,	/*  8 bit	FIFO Read Shadow Level */
-	Q_RP	= 0x48,	/*  8 bit	FIFO Read Pointer */
+	Q_RSP	= 0x44,	/* 16 bit	FIFO Read Shaकरोw Poपूर्णांकer */
+	Q_RSL	= 0x46,	/*  8 bit	FIFO Read Shaकरोw Level */
+	Q_RP	= 0x48,	/*  8 bit	FIFO Read Poपूर्णांकer */
 	Q_RL	= 0x4a,	/*  8 bit	FIFO Read Level */
-	Q_WP	= 0x4c,	/*  8 bit	FIFO Write Pointer */
-	Q_WSP	= 0x4d,	/*  8 bit	FIFO Write Shadow Pointer */
+	Q_WP	= 0x4c,	/*  8 bit	FIFO Write Poपूर्णांकer */
+	Q_WSP	= 0x4d,	/*  8 bit	FIFO Write Shaकरोw Poपूर्णांकer */
 	Q_WL	= 0x4e,	/*  8 bit	FIFO Write Level */
-	Q_WSL	= 0x4f,	/*  8 bit	FIFO Write Shadow Level */
-};
-#define Q_ADDR(reg, offs) (B8_Q_REGS + (reg) + (offs))
+	Q_WSL	= 0x4f,	/*  8 bit	FIFO Write Shaकरोw Level */
+पूर्ण;
+#घोषणा Q_ADDR(reg, offs) (B8_Q_REGS + (reg) + (offs))
 
 /*	Q_TEST				32 bit	Test Register */
-enum {
+क्रमागत अणु
 	/* Transmit */
-	F_TX_CHK_AUTO_OFF = 1<<31, /* Tx checksum auto calc off (Yukon EX) */
-	F_TX_CHK_AUTO_ON  = 1<<30, /* Tx checksum auto calc off (Yukon EX) */
+	F_TX_CHK_AUTO_OFF = 1<<31, /* Tx checksum स्वतः calc off (Yukon EX) */
+	F_TX_CHK_AUTO_ON  = 1<<30, /* Tx checksum स्वतः calc off (Yukon EX) */
 
 	/* Receive */
 	F_M_RX_RAM_DIS	= 1<<24, /* MAC Rx RAM Read Port disable */
 
 	/* Hardware testbits not used */
-};
+पूर्ण;
 
 /* Queue Prefetch Unit Offsets, use Y2_QADDR() to address (Yukon-2 only)*/
-enum {
+क्रमागत अणु
 	Y2_B8_PREF_REGS		= 0x0450,
 
-	PREF_UNIT_CTRL		= 0x00,	/* 32 bit	Control register */
+	PREF_UNIT_CTRL		= 0x00,	/* 32 bit	Control रेजिस्टर */
 	PREF_UNIT_LAST_IDX	= 0x04,	/* 16 bit	Last Index */
 	PREF_UNIT_ADDR_LO	= 0x08,	/* 32 bit	List start addr, low part */
 	PREF_UNIT_ADDR_HI	= 0x0c,	/* 32 bit	List start addr, high part*/
 	PREF_UNIT_GET_IDX	= 0x10,	/* 16 bit	Get Index */
 	PREF_UNIT_PUT_IDX	= 0x14,	/* 16 bit	Put Index */
-	PREF_UNIT_FIFO_WP	= 0x20,	/*  8 bit	FIFO write pointer */
-	PREF_UNIT_FIFO_RP	= 0x24,	/*  8 bit	FIFO read pointer */
+	PREF_UNIT_FIFO_WP	= 0x20,	/*  8 bit	FIFO ग_लिखो poपूर्णांकer */
+	PREF_UNIT_FIFO_RP	= 0x24,	/*  8 bit	FIFO पढ़ो poपूर्णांकer */
 	PREF_UNIT_FIFO_WM	= 0x28,	/*  8 bit	FIFO watermark */
 	PREF_UNIT_FIFO_LEV	= 0x2c,	/*  8 bit	FIFO level */
 
 	PREF_UNIT_MASK_IDX	= 0x0fff,
-};
-#define Y2_QADDR(q,reg)		(Y2_B8_PREF_REGS + (q) + (reg))
+पूर्ण;
+#घोषणा Y2_QADDR(q,reg)		(Y2_B8_PREF_REGS + (q) + (reg))
 
 /* RAM Buffer Register Offsets */
-enum {
+क्रमागत अणु
 
 	RB_START	= 0x00,/* 32 bit	RAM Buffer Start Address */
 	RB_END	= 0x04,/* 32 bit	RAM Buffer End Address */
-	RB_WP	= 0x08,/* 32 bit	RAM Buffer Write Pointer */
-	RB_RP	= 0x0c,/* 32 bit	RAM Buffer Read Pointer */
+	RB_WP	= 0x08,/* 32 bit	RAM Buffer Write Poपूर्णांकer */
+	RB_RP	= 0x0c,/* 32 bit	RAM Buffer Read Poपूर्णांकer */
 	RB_RX_UTPP	= 0x10,/* 32 bit	Rx Upper Threshold, Pause Packet */
 	RB_RX_LTPP	= 0x14,/* 32 bit	Rx Lower Threshold, Pause Packet */
 	RB_RX_UTHP	= 0x18,/* 32 bit	Rx Upper Threshold, High Prio */
@@ -798,27 +799,27 @@ enum {
 	RB_CTRL	= 0x28,/* 32 bit	RAM Buffer Control Register */
 	RB_TST1	= 0x29,/*  8 bit	RAM Buffer Test Register 1 */
 	RB_TST2	= 0x2a,/*  8 bit	RAM Buffer Test Register 2 */
-};
+पूर्ण;
 
 /* Receive and Transmit Queues */
-enum {
+क्रमागत अणु
 	Q_R1	= 0x0000,	/* Receive Queue 1 */
 	Q_R2	= 0x0080,	/* Receive Queue 2 */
 	Q_XS1	= 0x0200,	/* Synchronous Transmit Queue 1 */
 	Q_XA1	= 0x0280,	/* Asynchronous Transmit Queue 1 */
 	Q_XS2	= 0x0300,	/* Synchronous Transmit Queue 2 */
 	Q_XA2	= 0x0380,	/* Asynchronous Transmit Queue 2 */
-};
+पूर्ण;
 
-/* Different PHY Types */
-enum {
+/* Dअगरferent PHY Types */
+क्रमागत अणु
 	PHY_ADDR_MARV	= 0,
-};
+पूर्ण;
 
-#define RB_ADDR(offs, queue) ((u16) B16_RAM_REGS + (queue) + (offs))
+#घोषणा RB_ADDR(offs, queue) ((u16) B16_RAM_REGS + (queue) + (offs))
 
 
-enum {
+क्रमागत अणु
 	LNK_SYNC_INI	= 0x0c30,/* 32 bit	Link Sync Cnt Init Value */
 	LNK_SYNC_VAL	= 0x0c34,/* 32 bit	Link Sync Cnt Current Value */
 	LNK_SYNC_CTRL	= 0x0c38,/*  8 bit	Link Sync Cnt Control Register */
@@ -838,14 +839,14 @@ enum {
 	RX_GMF_UP_THR	= 0x0c58,/* 16 bit	Rx Upper Pause Thr (Yukon-EC_U) */
 	RX_GMF_LP_THR	= 0x0c5a,/* 16 bit	Rx Lower Pause Thr (Yukon-EC_U) */
 	RX_GMF_VLAN	= 0x0c5c,/* 32 bit	Rx VLAN Type Register (Yukon-2) */
-	RX_GMF_WP	= 0x0c60,/* 32 bit	Rx GMAC FIFO Write Pointer */
+	RX_GMF_WP	= 0x0c60,/* 32 bit	Rx GMAC FIFO Write Poपूर्णांकer */
 
 	RX_GMF_WLEV	= 0x0c68,/* 32 bit	Rx GMAC FIFO Write Level */
 
-	RX_GMF_RP	= 0x0c70,/* 32 bit	Rx GMAC FIFO Read Pointer */
+	RX_GMF_RP	= 0x0c70,/* 32 bit	Rx GMAC FIFO Read Poपूर्णांकer */
 
 	RX_GMF_RLEV	= 0x0c78,/* 32 bit	Rx GMAC FIFO Read Level */
-};
+पूर्ण;
 
 
 /*	Q_BC			32 bit	Current Byte Counter */
@@ -860,7 +861,7 @@ enum {
 /*	Q_CSR			32 bit	BMU Control/Status Register */
 
 /* Rx BMU Control / Status Registers (Yukon-2) */
-enum {
+क्रमागत अणु
 	BMU_IDLE	= 1<<31, /* BMU Idle State */
 	BMU_RX_TCP_PKT	= 1<<30, /* Rx TCP Packet (when RSS Hash enabled) */
 	BMU_RX_IP_PKT	= 1<<29, /* Rx IP  Packet (when RSS Hash enabled) */
@@ -889,18 +890,18 @@ enum {
 
 	BMU_WM_DEFAULT = 0x600,
 	BMU_WM_PEX     = 0x80,
-};
+पूर्ण;
 
 /* Tx BMU Control / Status Registers (Yukon-2) */
-								/* Bit 31: same as for Rx */
-enum {
+								/* Bit 31: same as क्रम Rx */
+क्रमागत अणु
 	BMU_TX_IPIDINCR_ON	= 1<<13, /* Enable  IP ID Increment */
 	BMU_TX_IPIDINCR_OFF	= 1<<12, /* Disable IP ID Increment */
 	BMU_TX_CLR_IRQ_TCP	= 1<<11, /* Clear IRQ on TCP segment length mismatch */
-};
+पूर्ण;
 
 /*	TBMU_TEST			0x06B8	Transmit BMU Test Register */
-enum {
+क्रमागत अणु
 	TBMU_TEST_BMU_TX_CHK_AUTO_OFF		= 1<<31, /* BMU Tx Checksum Auto Calculation Disable */
 	TBMU_TEST_BMU_TX_CHK_AUTO_ON		= 1<<30, /* BMU Tx Checksum Auto Calculation Enable */
 	TBMU_TEST_HOME_ADD_PAD_FIX1_EN		= 1<<29, /* Home Address Paddiing FIX1 Enable */
@@ -910,45 +911,45 @@ enum {
 	TBMU_TEST_HOME_ADD_FIX_EN		= 1<<25, /* Home address checksum fix enable */
 	TBMU_TEST_HOME_ADD_FIX_DIS		= 1<<24, /* Home address checksum fix disable */
 
-	TBMU_TEST_TEST_RSPTR_ON			= 1<<22, /* Testmode Shadow Read Ptr On */
-	TBMU_TEST_TEST_RSPTR_OFF		= 1<<21, /* Testmode Shadow Read Ptr Off */
-	TBMU_TEST_TESTSTEP_RSPTR		= 1<<20, /* Teststep Shadow Read Ptr */
+	TBMU_TEST_TEST_RSPTR_ON			= 1<<22, /* Tesपंचांगode Shaकरोw Read Ptr On */
+	TBMU_TEST_TEST_RSPTR_OFF		= 1<<21, /* Tesपंचांगode Shaकरोw Read Ptr Off */
+	TBMU_TEST_TESTSTEP_RSPTR		= 1<<20, /* Teststep Shaकरोw Read Ptr */
 
-	TBMU_TEST_TEST_RPTR_ON			= 1<<18, /* Testmode Read Ptr On */
-	TBMU_TEST_TEST_RPTR_OFF			= 1<<17, /* Testmode Read Ptr Off */
+	TBMU_TEST_TEST_RPTR_ON			= 1<<18, /* Tesपंचांगode Read Ptr On */
+	TBMU_TEST_TEST_RPTR_OFF			= 1<<17, /* Tesपंचांगode Read Ptr Off */
 	TBMU_TEST_TESTSTEP_RPTR			= 1<<16, /* Teststep Read Ptr */
 
-	TBMU_TEST_TEST_WSPTR_ON			= 1<<14, /* Testmode Shadow Write Ptr On */
-	TBMU_TEST_TEST_WSPTR_OFF		= 1<<13, /* Testmode Shadow Write Ptr Off */
-	TBMU_TEST_TESTSTEP_WSPTR		= 1<<12, /* Teststep Shadow Write Ptr */
+	TBMU_TEST_TEST_WSPTR_ON			= 1<<14, /* Tesपंचांगode Shaकरोw Write Ptr On */
+	TBMU_TEST_TEST_WSPTR_OFF		= 1<<13, /* Tesपंचांगode Shaकरोw Write Ptr Off */
+	TBMU_TEST_TESTSTEP_WSPTR		= 1<<12, /* Teststep Shaकरोw Write Ptr */
 
-	TBMU_TEST_TEST_WPTR_ON			= 1<<10, /* Testmode Write Ptr On */
-	TBMU_TEST_TEST_WPTR_OFF			= 1<<9, /* Testmode Write Ptr Off */
+	TBMU_TEST_TEST_WPTR_ON			= 1<<10, /* Tesपंचांगode Write Ptr On */
+	TBMU_TEST_TEST_WPTR_OFF			= 1<<9, /* Tesपंचांगode Write Ptr Off */
 	TBMU_TEST_TESTSTEP_WPTR			= 1<<8,			/* Teststep Write Ptr */
 
-	TBMU_TEST_TEST_REQ_NB_ON		= 1<<6, /* Testmode Req Nbytes/Addr On */
-	TBMU_TEST_TEST_REQ_NB_OFF		= 1<<5, /* Testmode Req Nbytes/Addr Off */
+	TBMU_TEST_TEST_REQ_NB_ON		= 1<<6, /* Tesपंचांगode Req Nbytes/Addr On */
+	TBMU_TEST_TEST_REQ_NB_OFF		= 1<<5, /* Tesपंचांगode Req Nbytes/Addr Off */
 	TBMU_TEST_TESTSTEP_REQ_NB		= 1<<4, /* Teststep Req Nbytes/Addr */
 
-	TBMU_TEST_TEST_DONE_IDX_ON		= 1<<2, /* Testmode Done Index On */
-	TBMU_TEST_TEST_DONE_IDX_OFF		= 1<<1, /* Testmode Done Index Off */
+	TBMU_TEST_TEST_DONE_IDX_ON		= 1<<2, /* Tesपंचांगode Done Index On */
+	TBMU_TEST_TEST_DONE_IDX_OFF		= 1<<1, /* Tesपंचांगode Done Index Off */
 	TBMU_TEST_TESTSTEP_DONE_IDX		= 1<<0,	/* Teststep Done Index */
-};
+पूर्ण;
 
 /* Queue Prefetch Unit Offsets, use Y2_QADDR() to address (Yukon-2 only)*/
-/* PREF_UNIT_CTRL	32 bit	Prefetch Control register */
-enum {
+/* PREF_UNIT_CTRL	32 bit	Prefetch Control रेजिस्टर */
+क्रमागत अणु
 	PREF_UNIT_OP_ON		= 1<<3,	/* prefetch unit operational */
 	PREF_UNIT_OP_OFF	= 1<<2,	/* prefetch unit not operational */
 	PREF_UNIT_RST_CLR	= 1<<1,	/* Clear Prefetch Unit Reset */
 	PREF_UNIT_RST_SET	= 1<<0,	/* Set   Prefetch Unit Reset */
-};
+पूर्ण;
 
 /* RAM Buffer Register Offsets, use RB_ADDR(Queue, Offs) to access */
 /*	RB_START		32 bit	RAM Buffer Start Address */
 /*	RB_END			32 bit	RAM Buffer End Address */
-/*	RB_WP			32 bit	RAM Buffer Write Pointer */
-/*	RB_RP			32 bit	RAM Buffer Read Pointer */
+/*	RB_WP			32 bit	RAM Buffer Write Poपूर्णांकer */
+/*	RB_RP			32 bit	RAM Buffer Read Poपूर्णांकer */
 /*	RB_RX_UTPP		32 bit	Rx Upper Threshold, Pause Pack */
 /*	RB_RX_LTPP		32 bit	Rx Lower Threshold, Pause Pack */
 /*	RB_RX_UTHP		32 bit	Rx Upper Threshold, High Prio */
@@ -956,73 +957,73 @@ enum {
 /*	RB_PC			32 bit	RAM Buffer Packet Counter */
 /*	RB_LEV			32 bit	RAM Buffer Level Register */
 
-#define RB_MSK	0x0007ffff	/* Bit 18.. 0:	RAM Buffer Pointer Bits */
+#घोषणा RB_MSK	0x0007ffff	/* Bit 18.. 0:	RAM Buffer Poपूर्णांकer Bits */
 /*	RB_TST2			 8 bit	RAM Buffer Test Register 2 */
 /*	RB_TST1			 8 bit	RAM Buffer Test Register 1 */
 
 /*	RB_CTRL			 8 bit	RAM Buffer Control Register */
-enum {
+क्रमागत अणु
 	RB_ENA_STFWD	= 1<<5,	/* Enable  Store & Forward */
 	RB_DIS_STFWD	= 1<<4,	/* Disable Store & Forward */
 	RB_ENA_OP_MD	= 1<<3,	/* Enable  Operation Mode */
 	RB_DIS_OP_MD	= 1<<2,	/* Disable Operation Mode */
 	RB_RST_CLR	= 1<<1,	/* Clear RAM Buf STM Reset */
 	RB_RST_SET	= 1<<0,	/* Set   RAM Buf STM Reset */
-};
+पूर्ण;
 
 
 /* Transmit GMAC FIFO (YUKON only) */
-enum {
+क्रमागत अणु
 	TX_GMF_EA	= 0x0d40,/* 32 bit	Tx GMAC FIFO End Address */
 	TX_GMF_AE_THR	= 0x0d44,/* 32 bit	Tx GMAC FIFO Almost Empty Thresh.*/
 	TX_GMF_CTRL_T	= 0x0d48,/* 32 bit	Tx GMAC FIFO Control/Test */
 
-	TX_GMF_WP	= 0x0d60,/* 32 bit 	Tx GMAC FIFO Write Pointer */
-	TX_GMF_WSP	= 0x0d64,/* 32 bit 	Tx GMAC FIFO Write Shadow Ptr. */
+	TX_GMF_WP	= 0x0d60,/* 32 bit 	Tx GMAC FIFO Write Poपूर्णांकer */
+	TX_GMF_WSP	= 0x0d64,/* 32 bit 	Tx GMAC FIFO Write Shaकरोw Ptr. */
 	TX_GMF_WLEV	= 0x0d68,/* 32 bit 	Tx GMAC FIFO Write Level */
 
-	TX_GMF_RP	= 0x0d70,/* 32 bit 	Tx GMAC FIFO Read Pointer */
-	TX_GMF_RSTP	= 0x0d74,/* 32 bit 	Tx GMAC FIFO Restart Pointer */
+	TX_GMF_RP	= 0x0d70,/* 32 bit 	Tx GMAC FIFO Read Poपूर्णांकer */
+	TX_GMF_RSTP	= 0x0d74,/* 32 bit 	Tx GMAC FIFO Restart Poपूर्णांकer */
 	TX_GMF_RLEV	= 0x0d78,/* 32 bit 	Tx GMAC FIFO Read Level */
 
-	/* Threshold values for Yukon-EC Ultra and Extreme */
+	/* Threshold values क्रम Yukon-EC Ultra and Extreme */
 	ECU_AE_THR	= 0x0070, /* Almost Empty Threshold */
 	ECU_TXFF_LEV	= 0x01a0, /* Tx BMU FIFO Level */
 	ECU_JUMBO_WM	= 0x0080, /* Jumbo Mode Watermark */
-};
+पूर्ण;
 
 /* Descriptor Poll Timer Registers */
-enum {
+क्रमागत अणु
 	B28_DPT_INI	= 0x0e00,/* 24 bit	Descriptor Poll Timer Init Val */
 	B28_DPT_VAL	= 0x0e04,/* 24 bit	Descriptor Poll Timer Curr Val */
 	B28_DPT_CTRL	= 0x0e08,/*  8 bit	Descriptor Poll Timer Ctrl Reg */
 
 	B28_DPT_TST	= 0x0e0a,/*  8 bit	Descriptor Poll Timer Test Reg */
-};
+पूर्ण;
 
 /* Time Stamp Timer Registers (YUKON only) */
-enum {
+क्रमागत अणु
 	GMAC_TI_ST_VAL	= 0x0e14,/* 32 bit	Time Stamp Timer Curr Val */
 	GMAC_TI_ST_CTRL	= 0x0e18,/*  8 bit	Time Stamp Timer Ctrl Reg */
 	GMAC_TI_ST_TST	= 0x0e1a,/*  8 bit	Time Stamp Timer Test Reg */
-};
+पूर्ण;
 
 /* Polling Unit Registers (Yukon-2 only) */
-enum {
+क्रमागत अणु
 	POLL_CTRL	= 0x0e20, /* 32 bit	Polling Unit Control Reg */
 	POLL_LAST_IDX	= 0x0e24,/* 16 bit	Polling Unit List Last Index */
 
 	POLL_LIST_ADDR_LO= 0x0e28,/* 32 bit	Poll. List Start Addr (low) */
 	POLL_LIST_ADDR_HI= 0x0e2c,/* 32 bit	Poll. List Start Addr (high) */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	SMB_CFG		 = 0x0e40, /* 32 bit	SMBus Config Register */
 	SMB_CSR		 = 0x0e44, /* 32 bit	SMBus Control/Status Register */
-};
+पूर्ण;
 
-enum {
-	CPU_WDOG	 = 0x0e48, /* 32 bit	Watchdog Register  */
+क्रमागत अणु
+	CPU_WDOG	 = 0x0e48, /* 32 bit	Watchकरोg Register  */
 	CPU_CNTR	 = 0x0e4C, /* 32 bit	Counter Register  */
 	CPU_TIM		 = 0x0e50,/* 32 bit	Timer Compare Register  */
 	CPU_AHB_ADDR	 = 0x0e54, /* 32 bit	CPU AHB Debug  Register  */
@@ -1032,10 +1033,10 @@ enum {
 	CPU_AHB_CTRL	 = 0x0e64, /* 32 bit	CPU AHB Debug  Register  */
 	HCU_CCSR	 = 0x0e68, /* 32 bit	CPU Control and Status Register */
 	HCU_HCSR	 = 0x0e6C, /* 32 bit	Host Control and Status Register */
-};
+पूर्ण;
 
-/* ASF Subsystem Registers (Yukon-2 only) */
-enum {
+/* ASF Subप्रणाली Registers (Yukon-2 only) */
+क्रमागत अणु
 	B28_Y2_SMB_CONFIG  = 0x0e40,/* 32 bit	ASF SMBus Config Register */
 	B28_Y2_SMB_CSD_REG = 0x0e44,/* 32 bit	ASF SMB Control/Status/Data */
 	B28_Y2_ASF_IRQ_V_BASE=0x0e60,/* 32 bit	ASF IRQ Vector Base */
@@ -1046,10 +1047,10 @@ enum {
 	B28_Y2_DATA_REG_2  = 0x0e74,/* 32 bit	ASF/Host Data Register 2 */
 	B28_Y2_DATA_REG_3  = 0x0e78,/* 32 bit	ASF/Host Data Register 3 */
 	B28_Y2_DATA_REG_4  = 0x0e7c,/* 32 bit	ASF/Host Data Register 4 */
-};
+पूर्ण;
 
 /* Status BMU Registers (Yukon-2 only)*/
-enum {
+क्रमागत अणु
 	STAT_CTRL	= 0x0e80,/* 32 bit	Status BMU Control Reg */
 	STAT_LAST_IDX	= 0x0e84,/* 16 bit	Status BMU Last Index */
 
@@ -1063,11 +1064,11 @@ enum {
 	STAT_PUT_IDX	= 0x0e9c,/* 16 bit	Status Put Index Reg */
 
 /* FIFO Control/Status Registers (Yukon-2 only)*/
-	STAT_FIFO_WP	= 0x0ea0,/*  8 bit	Status FIFO Write Pointer Reg */
-	STAT_FIFO_RP	= 0x0ea4,/*  8 bit	Status FIFO Read Pointer Reg */
-	STAT_FIFO_RSP	= 0x0ea6,/*  8 bit	Status FIFO Read Shadow Ptr */
+	STAT_FIFO_WP	= 0x0ea0,/*  8 bit	Status FIFO Write Poपूर्णांकer Reg */
+	STAT_FIFO_RP	= 0x0ea4,/*  8 bit	Status FIFO Read Poपूर्णांकer Reg */
+	STAT_FIFO_RSP	= 0x0ea6,/*  8 bit	Status FIFO Read Shaकरोw Ptr */
 	STAT_FIFO_LEVEL	= 0x0ea8,/*  8 bit	Status FIFO Level Reg */
-	STAT_FIFO_SHLVL	= 0x0eaa,/*  8 bit	Status FIFO Shadow Level Reg */
+	STAT_FIFO_SHLVL	= 0x0eaa,/*  8 bit	Status FIFO Shaकरोw Level Reg */
 	STAT_FIFO_WM	= 0x0eac,/*  8 bit	Status FIFO Watermark Reg */
 	STAT_FIFO_ISR_WM= 0x0ead,/*  8 bit	Status FIFO ISR Watermark Reg */
 
@@ -1084,19 +1085,19 @@ enum {
 	STAT_ISR_TIMER_CNT = 0x0ed4,/* 32 bit	ISR Timer Counter Reg */
 	STAT_ISR_TIMER_CTRL= 0x0ed8,/*  8 bit	ISR Timer Control Reg */
 	STAT_ISR_TIMER_TEST= 0x0ed9,/*  8 bit	ISR Timer Test Reg */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	LINKLED_OFF 	     = 0x01,
 	LINKLED_ON  	     = 0x02,
 	LINKLED_LINKSYNC_OFF = 0x04,
 	LINKLED_LINKSYNC_ON  = 0x08,
 	LINKLED_BLINK_OFF    = 0x10,
 	LINKLED_BLINK_ON     = 0x20,
-};
+पूर्ण;
 
 /* GMAC and GPHY Control Registers (YUKON only) */
-enum {
+क्रमागत अणु
 	GMAC_CTRL	= 0x0f00,/* 32 bit	GMAC Control Reg */
 	GPHY_CTRL	= 0x0f04,/* 32 bit	GPHY Control Reg */
 	GMAC_IRQ_SRC	= 0x0f08,/*  8 bit	GMAC Interrupt Source Reg */
@@ -1108,7 +1109,7 @@ enum {
 	WOL_MATCH_CTL	= 0x0f22,/*  8 bit	WOL Match Control Reg */
 	WOL_MATCH_RES	= 0x0f23,/*  8 bit	WOL Match Result Reg */
 	WOL_MAC_ADDR	= 0x0f24,/* 32 bit	WOL MAC Address */
-	WOL_PATT_RPTR	= 0x0f2c,/*  8 bit	WOL Pattern Read Pointer */
+	WOL_PATT_RPTR	= 0x0f2c,/*  8 bit	WOL Pattern Read Poपूर्णांकer */
 
 /* WOL Pattern Length Registers (YUKON only) */
 	WOL_PATT_LEN_LO	= 0x0f30,/* 32 bit	WOL Pattern Length 3..0 */
@@ -1117,24 +1118,24 @@ enum {
 /* WOL Pattern Counter Registers (YUKON only) */
 	WOL_PATT_CNT_0	= 0x0f38,/* 32 bit	WOL Pattern Counter 3..0 */
 	WOL_PATT_CNT_4	= 0x0f3c,/* 24 bit	WOL Pattern Counter 6..4 */
-};
-#define WOL_REGS(port, x)	(x + (port)*0x80)
+पूर्ण;
+#घोषणा WOL_REGS(port, x)	(x + (port)*0x80)
 
-enum {
+क्रमागत अणु
 	WOL_PATT_RAM_1	= 0x1000,/*  WOL Pattern RAM Link 1 */
 	WOL_PATT_RAM_2	= 0x1400,/*  WOL Pattern RAM Link 2 */
-};
-#define WOL_PATT_RAM_BASE(port)	(WOL_PATT_RAM_1 + (port)*0x400)
+पूर्ण;
+#घोषणा WOL_PATT_RAM_BASE(port)	(WOL_PATT_RAM_1 + (port)*0x400)
 
-enum {
-	BASE_GMAC_1	= 0x2800,/* GMAC 1 registers */
-	BASE_GMAC_2	= 0x3800,/* GMAC 2 registers */
-};
+क्रमागत अणु
+	BASE_GMAC_1	= 0x2800,/* GMAC 1 रेजिस्टरs */
+	BASE_GMAC_2	= 0x3800,/* GMAC 2 रेजिस्टरs */
+पूर्ण;
 
 /*
  * Marvel-PHY Registers, indirect addressed over GMAC
  */
-enum {
+क्रमागत अणु
 	PHY_MARV_CTRL		= 0x00,/* 16 bit r/w	PHY Control Register */
 	PHY_MARV_STAT		= 0x01,/* 16 bit r/o	PHY Status Register */
 	PHY_MARV_ID0		= 0x02,/* 16 bit r/o	PHY ID0 Register */
@@ -1144,35 +1145,35 @@ enum {
 	PHY_MARV_AUNE_EXP	= 0x06,/* 16 bit r/o	Auto-Neg. Expansion Reg */
 	PHY_MARV_NEPG		= 0x07,/* 16 bit r/w	Next Page Register */
 	PHY_MARV_NEPG_LP	= 0x08,/* 16 bit r/o	Next Page Link Partner */
-	/* Marvel-specific registers */
+	/* Marvel-specअगरic रेजिस्टरs */
 	PHY_MARV_1000T_CTRL	= 0x09,/* 16 bit r/w	1000Base-T Control Reg */
 	PHY_MARV_1000T_STAT	= 0x0a,/* 16 bit r/o	1000Base-T Status Reg */
 	PHY_MARV_EXT_STAT	= 0x0f,/* 16 bit r/o	Extended Status Reg */
-	PHY_MARV_PHY_CTRL	= 0x10,/* 16 bit r/w	PHY Specific Ctrl Reg */
-	PHY_MARV_PHY_STAT	= 0x11,/* 16 bit r/o	PHY Specific Stat Reg */
+	PHY_MARV_PHY_CTRL	= 0x10,/* 16 bit r/w	PHY Specअगरic Ctrl Reg */
+	PHY_MARV_PHY_STAT	= 0x11,/* 16 bit r/o	PHY Specअगरic Stat Reg */
 	PHY_MARV_INT_MASK	= 0x12,/* 16 bit r/w	Interrupt Mask Reg */
 	PHY_MARV_INT_STAT	= 0x13,/* 16 bit r/o	Interrupt Status Reg */
-	PHY_MARV_EXT_CTRL	= 0x14,/* 16 bit r/w	Ext. PHY Specific Ctrl */
+	PHY_MARV_EXT_CTRL	= 0x14,/* 16 bit r/w	Ext. PHY Specअगरic Ctrl */
 	PHY_MARV_RXE_CNT	= 0x15,/* 16 bit r/w	Receive Error Counter */
-	PHY_MARV_EXT_ADR	= 0x16,/* 16 bit r/w	Ext. Ad. for Cable Diag. */
+	PHY_MARV_EXT_ADR	= 0x16,/* 16 bit r/w	Ext. Ad. क्रम Cable Diag. */
 	PHY_MARV_PORT_IRQ	= 0x17,/* 16 bit r/o	Port 0 IRQ (88E1111 only) */
 	PHY_MARV_LED_CTRL	= 0x18,/* 16 bit r/w	LED Control Reg */
 	PHY_MARV_LED_OVER	= 0x19,/* 16 bit r/w	Manual LED Override Reg */
-	PHY_MARV_EXT_CTRL_2	= 0x1a,/* 16 bit r/w	Ext. PHY Specific Ctrl 2 */
+	PHY_MARV_EXT_CTRL_2	= 0x1a,/* 16 bit r/w	Ext. PHY Specअगरic Ctrl 2 */
 	PHY_MARV_EXT_P_STAT	= 0x1b,/* 16 bit r/w	Ext. PHY Spec. Stat Reg */
 	PHY_MARV_CABLE_DIAG	= 0x1c,/* 16 bit r/o	Cable Diagnostic Reg */
 	PHY_MARV_PAGE_ADDR	= 0x1d,/* 16 bit r/w	Extended Page Address Reg */
 	PHY_MARV_PAGE_DATA	= 0x1e,/* 16 bit r/w	Extended Page Data Reg */
 
-/* for 10/100 Fast Ethernet PHY (88E3082 only) */
+/* क्रम 10/100 Fast Ethernet PHY (88E3082 only) */
 	PHY_MARV_FE_LED_PAR	= 0x16,/* 16 bit r/w	LED Parallel Select Reg. */
 	PHY_MARV_FE_LED_SER	= 0x17,/* 16 bit r/w	LED Stream Select S. LED */
-	PHY_MARV_FE_VCT_TX	= 0x1a,/* 16 bit r/w	VCT Reg. for TXP/N Pins */
-	PHY_MARV_FE_VCT_RX	= 0x1b,/* 16 bit r/o	VCT Reg. for RXP/N Pins */
-	PHY_MARV_FE_SPEC_2	= 0x1c,/* 16 bit r/w	Specific Control Reg. 2 */
-};
+	PHY_MARV_FE_VCT_TX	= 0x1a,/* 16 bit r/w	VCT Reg. क्रम TXP/N Pins */
+	PHY_MARV_FE_VCT_RX	= 0x1b,/* 16 bit r/o	VCT Reg. क्रम RXP/N Pins */
+	PHY_MARV_FE_SPEC_2	= 0x1c,/* 16 bit r/w	Specअगरic Control Reg. 2 */
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_CT_RESET	= 1<<15, /* Bit 15: (sc)	clear all PHY related regs */
 	PHY_CT_LOOP	= 1<<14, /* Bit 14:	enable Loopback over PHY */
 	PHY_CT_SPS_LSB	= 1<<13, /* Bit 13:	Speed select, lower bit */
@@ -1183,15 +1184,15 @@ enum {
 	PHY_CT_DUP_MD	= 1<<8, /* Bit  8:	Duplex Mode */
 	PHY_CT_COL_TST	= 1<<7, /* Bit  7:	Collision Test enabled */
 	PHY_CT_SPS_MSB	= 1<<6, /* Bit  6:	Speed select, upper bit */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_CT_SP1000	= PHY_CT_SPS_MSB, /* enable speed of 1000 Mbps */
 	PHY_CT_SP100	= PHY_CT_SPS_LSB, /* enable speed of  100 Mbps */
 	PHY_CT_SP10	= 0,		  /* enable speed of   10 Mbps */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_ST_EXT_ST	= 1<<8, /* Bit  8:	Extended Status Present */
 
 	PHY_ST_PRE_SUP	= 1<<6, /* Bit  6:	Preamble Suppression */
@@ -1201,17 +1202,17 @@ enum {
 	PHY_ST_LSYNC	= 1<<2, /* Bit  2:	Link Synchronized */
 	PHY_ST_JAB_DET	= 1<<1, /* Bit  1:	Jabber Detected */
 	PHY_ST_EXT_REG	= 1<<0, /* Bit  0:	Extended Register available */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_I1_OUI_MSK	= 0x3f<<10, /* Bit 15..10:	Organization Unique ID */
 	PHY_I1_MOD_NUM	= 0x3f<<4, /* Bit  9.. 4:	Model Number */
 	PHY_I1_REV_MSK	= 0xf, /* Bit  3.. 0:	Revision Number */
-};
+पूर्ण;
 
-/* different Marvell PHY Ids */
-enum {
-	PHY_MARV_ID0_VAL= 0x0141, /* Marvell Unique Identifier */
+/* dअगरferent Marvell PHY Ids */
+क्रमागत अणु
+	PHY_MARV_ID0_VAL= 0x0141, /* Marvell Unique Identअगरier */
 
 	PHY_BCOM_ID1_A1	= 0x6041,
 	PHY_BCOM_ID1_B2	= 0x6043,
@@ -1224,31 +1225,31 @@ enum {
 	PHY_MARV_ID1_Y2	= 0x0C91, /* Yukon-2	(PHY 88E1112) */
 	PHY_MARV_ID1_FE = 0x0C83, /* Yukon-FE   (PHY 88E3082 Rev.A1) */
 	PHY_MARV_ID1_ECU= 0x0CB0, /* Yukon-ECU  (PHY 88E1149 Rev.B2?) */
-};
+पूर्ण;
 
-/* Advertisement register bits */
-enum {
+/* Advertisement रेजिस्टर bits */
+क्रमागत अणु
 	PHY_AN_NXT_PG	= 1<<15, /* Bit 15:	Request Next Page */
 	PHY_AN_ACK	= 1<<14, /* Bit 14:	(ro) Acknowledge Received */
 	PHY_AN_RF	= 1<<13, /* Bit 13:	Remote Fault Bits */
 
-	PHY_AN_PAUSE_ASYM = 1<<11,/* Bit 11:	Try for asymmetric */
-	PHY_AN_PAUSE_CAP = 1<<10, /* Bit 10:	Try for pause */
-	PHY_AN_100BASE4	= 1<<9, /* Bit 9:	Try for 100mbps 4k packets */
-	PHY_AN_100FULL	= 1<<8, /* Bit 8:	Try for 100mbps full-duplex */
-	PHY_AN_100HALF	= 1<<7, /* Bit 7:	Try for 100mbps half-duplex */
-	PHY_AN_10FULL	= 1<<6, /* Bit 6:	Try for 10mbps full-duplex */
-	PHY_AN_10HALF	= 1<<5, /* Bit 5:	Try for 10mbps half-duplex */
+	PHY_AN_PAUSE_ASYM = 1<<11,/* Bit 11:	Try क्रम asymmetric */
+	PHY_AN_PAUSE_CAP = 1<<10, /* Bit 10:	Try क्रम छोड़ो */
+	PHY_AN_100BASE4	= 1<<9, /* Bit 9:	Try क्रम 100mbps 4k packets */
+	PHY_AN_100FULL	= 1<<8, /* Bit 8:	Try क्रम 100mbps full-duplex */
+	PHY_AN_100HALF	= 1<<7, /* Bit 7:	Try क्रम 100mbps half-duplex */
+	PHY_AN_10FULL	= 1<<6, /* Bit 6:	Try क्रम 10mbps full-duplex */
+	PHY_AN_10HALF	= 1<<5, /* Bit 5:	Try क्रम 10mbps half-duplex */
 	PHY_AN_CSMA	= 1<<0, /* Bit 0:	Only selector supported */
 	PHY_AN_SEL	= 0x1f, /* Bit 4..0:	Selector Field, 00001=Ethernet*/
 	PHY_AN_FULL	= PHY_AN_100FULL | PHY_AN_10FULL | PHY_AN_CSMA,
 	PHY_AN_ALL	= PHY_AN_10HALF | PHY_AN_10FULL |
 		  	  PHY_AN_100HALF | PHY_AN_100FULL,
-};
+पूर्ण;
 
 /*****  PHY_BCOM_1000T_STAT	16 bit r/o	1000Base-T Status Reg *****/
 /*****  PHY_MARV_1000T_STAT	16 bit r/o	1000Base-T Status Reg *****/
-enum {
+क्रमागत अणु
 	PHY_B_1000S_MSF	= 1<<15, /* Bit 15:	Master/Slave Fault */
 	PHY_B_1000S_MSR	= 1<<14, /* Bit 14:	Master/Slave Result */
 	PHY_B_1000S_LRS	= 1<<13, /* Bit 13:	Local Receiver Status */
@@ -1257,10 +1258,10 @@ enum {
 	PHY_B_1000S_LP_HD	= 1<<10, /* Bit 10:	Link Partner can HD */
 									/* Bit  9..8:	reserved */
 	PHY_B_1000S_IEC	= 0xff, /* Bit  7..0:	Idle Error Count */
-};
+पूर्ण;
 
-/** Marvell-Specific */
-enum {
+/** Marvell-Specअगरic */
+क्रमागत अणु
 	PHY_M_AN_NXT_PG	= 1<<15, /* Request Next Page */
 	PHY_M_AN_ACK	= 1<<14, /* (ro)	Acknowledge Received */
 	PHY_M_AN_RF	= 1<<13, /* Remote Fault */
@@ -1273,36 +1274,36 @@ enum {
 	PHY_M_AN_10_FD	= 1<<6, /* Advertise 10Base-TX Full Duplex */
 	PHY_M_AN_10_HD	= 1<<5, /* Advertise 10Base-TX Half Duplex */
 	PHY_M_AN_SEL_MSK =0x1f<<4,	/* Bit  4.. 0: Selector Field Mask */
-};
+पूर्ण;
 
-/* special defines for FIBER (88E1011S only) */
-enum {
+/* special defines क्रम FIBER (88E1011S only) */
+क्रमागत अणु
 	PHY_M_AN_ASP_X	= 1<<8, /* Asymmetric Pause */
 	PHY_M_AN_PC_X	= 1<<7, /* MAC Pause implemented */
 	PHY_M_AN_1000X_AHD	= 1<<6, /* Advertise 10000Base-X Half Duplex */
 	PHY_M_AN_1000X_AFD	= 1<<5, /* Advertise 10000Base-X Full Duplex */
-};
+पूर्ण;
 
 /* Pause Bits (PHY_M_AN_ASP_X and PHY_M_AN_PC_X) encoding */
-enum {
+क्रमागत अणु
 	PHY_M_P_NO_PAUSE_X	= 0<<7,/* Bit  8.. 7:	no Pause Mode */
 	PHY_M_P_SYM_MD_X	= 1<<7, /* Bit  8.. 7:	symmetric Pause Mode */
 	PHY_M_P_ASYM_MD_X	= 2<<7,/* Bit  8.. 7:	asymmetric Pause Mode */
 	PHY_M_P_BOTH_MD_X	= 3<<7,/* Bit  8.. 7:	both Pause Mode */
-};
+पूर्ण;
 
 /*****  PHY_MARV_1000T_CTRL	16 bit r/w	1000Base-T Control Reg *****/
-enum {
+क्रमागत अणु
 	PHY_M_1000C_TEST	= 7<<13,/* Bit 15..13:	Test Modes */
 	PHY_M_1000C_MSE	= 1<<12, /* Manual Master/Slave Enable */
 	PHY_M_1000C_MSC	= 1<<11, /* M/S Configuration (1=Master) */
 	PHY_M_1000C_MPD	= 1<<10, /* Multi-Port Device */
 	PHY_M_1000C_AFD	= 1<<9, /* Advertise Full Duplex */
 	PHY_M_1000C_AHD	= 1<<8, /* Advertise Half Duplex */
-};
+पूर्ण;
 
-/*****  PHY_MARV_PHY_CTRL	16 bit r/w	PHY Specific Ctrl Reg *****/
-enum {
+/*****  PHY_MARV_PHY_CTRL	16 bit r/w	PHY Specअगरic Ctrl Reg *****/
+क्रमागत अणु
 	PHY_M_PC_TX_FFD_MSK	= 3<<14,/* Bit 15..14: Tx FIFO Depth Mask */
 	PHY_M_PC_RX_FFD_MSK	= 3<<12,/* Bit 13..12: Rx FIFO Depth Mask */
 	PHY_M_PC_ASS_CRS_TX	= 1<<11, /* Assert CRS on Transmit */
@@ -1315,29 +1316,29 @@ enum {
 	PHY_M_PC_SQE_T_ENA	= 1<<2, /* SQE Test Enabled */
 	PHY_M_PC_POL_R_DIS	= 1<<1, /* Polarity Reversal Disabled */
 	PHY_M_PC_DIS_JABBER	= 1<<0, /* Disable Jabber */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_M_PC_EN_DET		= 2<<8,	/* Energy Detect (Mode 1) */
 	PHY_M_PC_EN_DET_PLUS	= 3<<8, /* Energy Detect Plus (Mode 2) */
-};
+पूर्ण;
 
-#define PHY_M_PC_MDI_XMODE(x)	(((u16)(x)<<5) & PHY_M_PC_MDIX_MSK)
+#घोषणा PHY_M_PC_MDI_XMODE(x)	(((u16)(x)<<5) & PHY_M_PC_MDIX_MSK)
 
-enum {
+क्रमागत अणु
 	PHY_M_PC_MAN_MDI	= 0, /* 00 = Manual MDI configuration */
 	PHY_M_PC_MAN_MDIX	= 1, /* 01 = Manual MDIX configuration */
 	PHY_M_PC_ENA_AUTO	= 3, /* 11 = Enable Automatic Crossover */
-};
+पूर्ण;
 
-/* for Yukon-EC Ultra Gigabit Ethernet PHY (88E1149 only) */
-enum {
+/* क्रम Yukon-EC Ultra Gigabit Ethernet PHY (88E1149 only) */
+क्रमागत अणु
 	PHY_M_PC_COP_TX_DIS	= 1<<3, /* Copper Transmitter Disable */
 	PHY_M_PC_POW_D_ENA	= 1<<2,	/* Power Down Enable */
-};
+पूर्ण;
 
-/* for 10/100 Fast Ethernet PHY (88E3082 only) */
-enum {
+/* क्रम 10/100 Fast Ethernet PHY (88E3082 only) */
+क्रमागत अणु
 	PHY_M_PC_ENA_DTE_DT	= 1<<15, /* Enable Data Terminal Equ. (DTE) Detect */
 	PHY_M_PC_ENA_ENE_DT	= 1<<14, /* Enable Energy Detect (sense & pulse) */
 	PHY_M_PC_DIS_NLP_CK	= 1<<13, /* Disable Normal Link Puls (NLP) Check */
@@ -1349,10 +1350,10 @@ enum {
 
 	PHY_M_PC_SH_TP_SEL	= 1<<6, /* Shielded Twisted Pair Select */
 	PHY_M_PC_RX_FD_MSK	= 3<<2,/* Bit  3.. 2: Rx FIFO Depth Mask */
-};
+पूर्ण;
 
-/*****  PHY_MARV_PHY_STAT	16 bit r/o	PHY Specific Status Reg *****/
-enum {
+/*****  PHY_MARV_PHY_STAT	16 bit r/o	PHY Specअगरic Status Reg *****/
+क्रमागत अणु
 	PHY_M_PS_SPEED_MSK	= 3<<14, /* Bit 15..14: Speed Mask */
 	PHY_M_PS_SPEED_1000	= 1<<15, /*		10 = 1000 Mbps */
 	PHY_M_PS_SPEED_100	= 1<<14, /*		01 =  100 Mbps */
@@ -1363,23 +1364,23 @@ enum {
 	PHY_M_PS_LINK_UP	= 1<<10, /* Link Up */
 	PHY_M_PS_CABLE_MSK	= 7<<7,  /* Bit  9.. 7: Cable Length Mask */
 	PHY_M_PS_MDI_X_STAT	= 1<<6,  /* MDI Crossover Stat (1=MDIX) */
-	PHY_M_PS_DOWNS_STAT	= 1<<5,  /* Downshift Status (1=downsh.) */
+	PHY_M_PS_DOWNS_STAT	= 1<<5,  /* Downshअगरt Status (1=करोwnsh.) */
 	PHY_M_PS_ENDET_STAT	= 1<<4,  /* Energy Detect Status (1=act) */
 	PHY_M_PS_TX_P_EN	= 1<<3,  /* Tx Pause Enabled */
 	PHY_M_PS_RX_P_EN	= 1<<2,  /* Rx Pause Enabled */
 	PHY_M_PS_POL_REV	= 1<<1,  /* Polarity Reversed */
 	PHY_M_PS_JABBER		= 1<<0,  /* Jabber */
-};
+पूर्ण;
 
-#define PHY_M_PS_PAUSE_MSK	(PHY_M_PS_TX_P_EN | PHY_M_PS_RX_P_EN)
+#घोषणा PHY_M_PS_PAUSE_MSK	(PHY_M_PS_TX_P_EN | PHY_M_PS_RX_P_EN)
 
-/* for 10/100 Fast Ethernet PHY (88E3082 only) */
-enum {
+/* क्रम 10/100 Fast Ethernet PHY (88E3082 only) */
+क्रमागत अणु
 	PHY_M_PS_DTE_DETECT	= 1<<15, /* Data Terminal Equipment (DTE) Detected */
 	PHY_M_PS_RES_SPEED	= 1<<14, /* Resolved Speed (1=100 Mbps, 0=10 Mbps */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_M_IS_AN_ERROR	= 1<<15, /* Auto-Negotiation Error */
 	PHY_M_IS_LSP_CHANGE	= 1<<14, /* Link Speed Changed */
 	PHY_M_IS_DUP_CHANGE	= 1<<13, /* Duplex Mode Changed */
@@ -1390,7 +1391,7 @@ enum {
 	PHY_M_IS_FALSE_CARR	= 1<<8, /* False Carrier */
 	PHY_M_IS_FIFO_ERROR	= 1<<7, /* FIFO Overflow/Underrun Error */
 	PHY_M_IS_MDI_CHANGE	= 1<<6, /* MDI Crossover Changed */
-	PHY_M_IS_DOWNSH_DET	= 1<<5, /* Downshift Detected */
+	PHY_M_IS_DOWNSH_DET	= 1<<5, /* Downshअगरt Detected */
 	PHY_M_IS_END_CHANGE	= 1<<4, /* Energy Detect Changed */
 
 	PHY_M_IS_DTE_CHANGE	= 1<<2, /* DTE Power Det. Status Changed */
@@ -1400,59 +1401,59 @@ enum {
 	PHY_M_DEF_MSK		= PHY_M_IS_LSP_CHANGE | PHY_M_IS_LST_CHANGE
 				 | PHY_M_IS_DUP_CHANGE,
 	PHY_M_AN_MSK	       = PHY_M_IS_AN_ERROR | PHY_M_IS_AN_COMPL,
-};
+पूर्ण;
 
 
-/*****  PHY_MARV_EXT_CTRL	16 bit r/w	Ext. PHY Specific Ctrl *****/
-enum {
+/*****  PHY_MARV_EXT_CTRL	16 bit r/w	Ext. PHY Specअगरic Ctrl *****/
+क्रमागत अणु
 	PHY_M_EC_ENA_BC_EXT = 1<<15, /* Enable Block Carr. Ext. (88E1111 only) */
 	PHY_M_EC_ENA_LIN_LB = 1<<14, /* Enable Line Loopback (88E1111 only) */
 
 	PHY_M_EC_DIS_LINK_P = 1<<12, /* Disable Link Pulses (88E1111 only) */
-	PHY_M_EC_M_DSC_MSK  = 3<<10, /* Bit 11..10:	Master Downshift Counter */
+	PHY_M_EC_M_DSC_MSK  = 3<<10, /* Bit 11..10:	Master Downshअगरt Counter */
 					/* (88E1011 only) */
-	PHY_M_EC_S_DSC_MSK  = 3<<8,/* Bit  9.. 8:	Slave  Downshift Counter */
+	PHY_M_EC_S_DSC_MSK  = 3<<8,/* Bit  9.. 8:	Slave  Downshअगरt Counter */
 				       /* (88E1011 only) */
-	PHY_M_EC_M_DSC_MSK2 = 7<<9,/* Bit 11.. 9:	Master Downshift Counter */
+	PHY_M_EC_M_DSC_MSK2 = 7<<9,/* Bit 11.. 9:	Master Downshअगरt Counter */
 					/* (88E1111 only) */
-	PHY_M_EC_DOWN_S_ENA = 1<<8, /* Downshift Enable (88E1111 only) */
+	PHY_M_EC_DOWN_S_ENA = 1<<8, /* Downshअगरt Enable (88E1111 only) */
 					/* !!! Errata in spec. (1 = disable) */
 	PHY_M_EC_RX_TIM_CT  = 1<<7, /* RGMII Rx Timing Control*/
-	PHY_M_EC_MAC_S_MSK  = 7<<4,/* Bit  6.. 4:	Def. MAC interface speed */
+	PHY_M_EC_MAC_S_MSK  = 7<<4,/* Bit  6.. 4:	Def. MAC पूर्णांकerface speed */
 	PHY_M_EC_FIB_AN_ENA = 1<<3, /* Fiber Auto-Neg. Enable (88E1011S only) */
 	PHY_M_EC_DTE_D_ENA  = 1<<2, /* DTE Detect Enable (88E1111 only) */
 	PHY_M_EC_TX_TIM_CT  = 1<<1, /* RGMII Tx Timing Control */
 	PHY_M_EC_TRANS_DIS  = 1<<0, /* Transmitter Disable (88E1111 only) */
 
 	PHY_M_10B_TE_ENABLE = 1<<7, /* 10Base-Te Enable (88E8079 and above) */
-};
-#define PHY_M_EC_M_DSC(x)	((u16)(x)<<10 & PHY_M_EC_M_DSC_MSK)
+पूर्ण;
+#घोषणा PHY_M_EC_M_DSC(x)	((u16)(x)<<10 & PHY_M_EC_M_DSC_MSK)
 					/* 00=1x; 01=2x; 10=3x; 11=4x */
-#define PHY_M_EC_S_DSC(x)	((u16)(x)<<8 & PHY_M_EC_S_DSC_MSK)
+#घोषणा PHY_M_EC_S_DSC(x)	((u16)(x)<<8 & PHY_M_EC_S_DSC_MSK)
 					/* 00=dis; 01=1x; 10=2x; 11=3x */
-#define PHY_M_EC_DSC_2(x)	((u16)(x)<<9 & PHY_M_EC_M_DSC_MSK2)
+#घोषणा PHY_M_EC_DSC_2(x)	((u16)(x)<<9 & PHY_M_EC_M_DSC_MSK2)
 					/* 000=1x; 001=2x; 010=3x; 011=4x */
-#define PHY_M_EC_MAC_S(x)	((u16)(x)<<4 & PHY_M_EC_MAC_S_MSK)
+#घोषणा PHY_M_EC_MAC_S(x)	((u16)(x)<<4 & PHY_M_EC_MAC_S_MSK)
 					/* 01X=0; 110=2.5; 111=25 (MHz) */
 
-/* for Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
-enum {
+/* क्रम Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
+क्रमागत अणु
 	PHY_M_PC_DIS_LINK_Pa	= 1<<15,/* Disable Link Pulses */
-	PHY_M_PC_DSC_MSK	= 7<<12,/* Bit 14..12:	Downshift Counter */
-	PHY_M_PC_DOWN_S_ENA	= 1<<11,/* Downshift Enable */
-};
+	PHY_M_PC_DSC_MSK	= 7<<12,/* Bit 14..12:	Downshअगरt Counter */
+	PHY_M_PC_DOWN_S_ENA	= 1<<11,/* Downshअगरt Enable */
+पूर्ण;
 /* !!! Errata in spec. (1 = disable) */
 
-#define PHY_M_PC_DSC(x)			(((u16)(x)<<12) & PHY_M_PC_DSC_MSK)
+#घोषणा PHY_M_PC_DSC(x)			(((u16)(x)<<12) & PHY_M_PC_DSC_MSK)
 											/* 100=5x; 101=6x; 110=7x; 111=8x */
-enum {
+क्रमागत अणु
 	MAC_TX_CLK_0_MHZ	= 2,
 	MAC_TX_CLK_2_5_MHZ	= 6,
 	MAC_TX_CLK_25_MHZ 	= 7,
-};
+पूर्ण;
 
 /*****  PHY_MARV_LED_CTRL	16 bit r/w	LED Control Reg *****/
-enum {
+क्रमागत अणु
 	PHY_M_LEDC_DIS_LED	= 1<<15, /* Disable LED */
 	PHY_M_LEDC_PULS_MSK	= 7<<12,/* Bit 14..12: Pulse Stretch Mask */
 	PHY_M_LEDC_F_INT	= 1<<11, /* Force Interrupt */
@@ -1461,9 +1462,9 @@ enum {
 	PHY_M_LEDC_TX_C_LSB	= 1<<6, /* Tx Control (LSB, 88E1111 only) */
 	PHY_M_LEDC_LK_C_MSK	= 7<<3,/* Bit  5.. 3: Link Control Mask */
 					/* (88E1111 only) */
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	PHY_M_LEDC_LINK_MSK	= 3<<3,/* Bit  4.. 3: Link Control Mask */
 									/* (88E1011 only) */
 	PHY_M_LEDC_DP_CTRL	= 1<<2, /* Duplex Control */
@@ -1471,28 +1472,28 @@ enum {
 	PHY_M_LEDC_RX_CTRL	= 1<<1, /* Rx Activity / Link */
 	PHY_M_LEDC_TX_CTRL	= 1<<0, /* Tx Activity / Link */
 	PHY_M_LEDC_TX_C_MSB	= 1<<0, /* Tx Control (MSB, 88E1111 only) */
-};
+पूर्ण;
 
-#define PHY_M_LED_PULS_DUR(x)	(((u16)(x)<<12) & PHY_M_LEDC_PULS_MSK)
+#घोषणा PHY_M_LED_PULS_DUR(x)	(((u16)(x)<<12) & PHY_M_LEDC_PULS_MSK)
 
 /*****  PHY_MARV_PHY_STAT (page 3)16 bit r/w	Polarity Control Reg. *****/
-enum {
+क्रमागत अणु
 	PHY_M_POLC_LS1M_MSK	= 0xf<<12, /* Bit 15..12: LOS,STAT1 Mix % Mask */
 	PHY_M_POLC_IS0M_MSK	= 0xf<<8,  /* Bit 11.. 8: INIT,STAT0 Mix % Mask */
 	PHY_M_POLC_LOS_MSK	= 0x3<<6,  /* Bit  7.. 6: LOS Pol. Ctrl. Mask */
 	PHY_M_POLC_INIT_MSK	= 0x3<<4,  /* Bit  5.. 4: INIT Pol. Ctrl. Mask */
 	PHY_M_POLC_STA1_MSK	= 0x3<<2,  /* Bit  3.. 2: STAT1 Pol. Ctrl. Mask */
 	PHY_M_POLC_STA0_MSK	= 0x3,     /* Bit  1.. 0: STAT0 Pol. Ctrl. Mask */
-};
+पूर्ण;
 
-#define PHY_M_POLC_LS1_P_MIX(x)	(((x)<<12) & PHY_M_POLC_LS1M_MSK)
-#define PHY_M_POLC_IS0_P_MIX(x)	(((x)<<8) & PHY_M_POLC_IS0M_MSK)
-#define PHY_M_POLC_LOS_CTRL(x)	(((x)<<6) & PHY_M_POLC_LOS_MSK)
-#define PHY_M_POLC_INIT_CTRL(x)	(((x)<<4) & PHY_M_POLC_INIT_MSK)
-#define PHY_M_POLC_STA1_CTRL(x)	(((x)<<2) & PHY_M_POLC_STA1_MSK)
-#define PHY_M_POLC_STA0_CTRL(x)	(((x)<<0) & PHY_M_POLC_STA0_MSK)
+#घोषणा PHY_M_POLC_LS1_P_MIX(x)	(((x)<<12) & PHY_M_POLC_LS1M_MSK)
+#घोषणा PHY_M_POLC_IS0_P_MIX(x)	(((x)<<8) & PHY_M_POLC_IS0M_MSK)
+#घोषणा PHY_M_POLC_LOS_CTRL(x)	(((x)<<6) & PHY_M_POLC_LOS_MSK)
+#घोषणा PHY_M_POLC_INIT_CTRL(x)	(((x)<<4) & PHY_M_POLC_INIT_MSK)
+#घोषणा PHY_M_POLC_STA1_CTRL(x)	(((x)<<2) & PHY_M_POLC_STA1_MSK)
+#घोषणा PHY_M_POLC_STA0_CTRL(x)	(((x)<<0) & PHY_M_POLC_STA0_MSK)
 
-enum {
+क्रमागत अणु
 	PULS_NO_STR	= 0,/* no pulse stretching */
 	PULS_21MS	= 1,/* 21 ms to 42 ms */
 	PULS_42MS	= 2,/* 42 ms to 84 ms */
@@ -1501,46 +1502,46 @@ enum {
 	PULS_340MS	= 5,/* 340 ms to 670 ms */
 	PULS_670MS	= 6,/* 670 ms to 1.3 s */
 	PULS_1300MS	= 7,/* 1.3 s to 2.7 s */
-};
+पूर्ण;
 
-#define PHY_M_LED_BLINK_RT(x)	(((u16)(x)<<8) & PHY_M_LEDC_BL_R_MSK)
+#घोषणा PHY_M_LED_BLINK_RT(x)	(((u16)(x)<<8) & PHY_M_LEDC_BL_R_MSK)
 
-enum {
+क्रमागत अणु
 	BLINK_42MS	= 0,/* 42 ms */
 	BLINK_84MS	= 1,/* 84 ms */
 	BLINK_170MS	= 2,/* 170 ms */
 	BLINK_340MS	= 3,/* 340 ms */
 	BLINK_670MS	= 4,/* 670 ms */
-};
+पूर्ण;
 
 /*****  PHY_MARV_LED_OVER	16 bit r/w	Manual LED Override Reg *****/
-#define PHY_M_LED_MO_SGMII(x)	((x)<<14)	/* Bit 15..14:  SGMII AN Timer */
+#घोषणा PHY_M_LED_MO_SGMII(x)	((x)<<14)	/* Bit 15..14:  SGMII AN Timer */
 
-#define PHY_M_LED_MO_DUP(x)	((x)<<10)	/* Bit 11..10:  Duplex */
-#define PHY_M_LED_MO_10(x)	((x)<<8)	/* Bit  9.. 8:  Link 10 */
-#define PHY_M_LED_MO_100(x)	((x)<<6)	/* Bit  7.. 6:  Link 100 */
-#define PHY_M_LED_MO_1000(x)	((x)<<4)	/* Bit  5.. 4:  Link 1000 */
-#define PHY_M_LED_MO_RX(x)	((x)<<2)	/* Bit  3.. 2:  Rx */
-#define PHY_M_LED_MO_TX(x)	((x)<<0)	/* Bit  1.. 0:  Tx */
+#घोषणा PHY_M_LED_MO_DUP(x)	((x)<<10)	/* Bit 11..10:  Duplex */
+#घोषणा PHY_M_LED_MO_10(x)	((x)<<8)	/* Bit  9.. 8:  Link 10 */
+#घोषणा PHY_M_LED_MO_100(x)	((x)<<6)	/* Bit  7.. 6:  Link 100 */
+#घोषणा PHY_M_LED_MO_1000(x)	((x)<<4)	/* Bit  5.. 4:  Link 1000 */
+#घोषणा PHY_M_LED_MO_RX(x)	((x)<<2)	/* Bit  3.. 2:  Rx */
+#घोषणा PHY_M_LED_MO_TX(x)	((x)<<0)	/* Bit  1.. 0:  Tx */
 
-enum led_mode {
+क्रमागत led_mode अणु
 	MO_LED_NORM  = 0,
 	MO_LED_BLINK = 1,
 	MO_LED_OFF   = 2,
 	MO_LED_ON    = 3,
-};
+पूर्ण;
 
-/*****  PHY_MARV_EXT_CTRL_2	16 bit r/w	Ext. PHY Specific Ctrl 2 *****/
-enum {
+/*****  PHY_MARV_EXT_CTRL_2	16 bit r/w	Ext. PHY Specअगरic Ctrl 2 *****/
+क्रमागत अणु
 	PHY_M_EC2_FI_IMPED	= 1<<6, /* Fiber Input  Impedance */
 	PHY_M_EC2_FO_IMPED	= 1<<5, /* Fiber Output Impedance */
 	PHY_M_EC2_FO_M_CLK	= 1<<4, /* Fiber Mode Clock Enable */
 	PHY_M_EC2_FO_BOOST	= 1<<3, /* Fiber Output Boost */
 	PHY_M_EC2_FO_AM_MSK	= 7,/* Bit  2.. 0:	Fiber Output Amplitude */
-};
+पूर्ण;
 
-/*****  PHY_MARV_EXT_P_STAT 16 bit r/w	Ext. PHY Specific Status *****/
-enum {
+/*****  PHY_MARV_EXT_P_STAT 16 bit r/w	Ext. PHY Specअगरic Status *****/
+क्रमागत अणु
 	PHY_M_FC_AUTO_SEL	= 1<<15, /* Fiber/Copper Auto Sel. Dis. */
 	PHY_M_FC_AN_REG_ACC	= 1<<14, /* Fiber/Copper AN Reg. Access */
 	PHY_M_FC_RESOLUTION	= 1<<13, /* Fiber/Copper Resolution */
@@ -1550,25 +1551,25 @@ enum {
 	PHY_M_DIS_AUT_MED	= 1<<9, /* Disable Aut. Medium Reg. Selection */
 	/* (88E1111 only) */
 
-	PHY_M_UNDOC1		= 1<<7, /* undocumented bit !! */
+	PHY_M_UNDOC1		= 1<<7, /* unकरोcumented bit !! */
 	PHY_M_DTE_POW_STAT	= 1<<4, /* DTE Power Status (88E1111 only) */
 	PHY_M_MODE_MASK	= 0xf, /* Bit  3.. 0: copy of HWCFG MODE[3:0] */
-};
+पूर्ण;
 
-/* for 10/100 Fast Ethernet PHY (88E3082 only) */
+/* क्रम 10/100 Fast Ethernet PHY (88E3082 only) */
 /*****  PHY_MARV_FE_LED_PAR		16 bit r/w	LED Parallel Select Reg. *****/
-									/* Bit 15..12: reserved (used internally) */
-enum {
+									/* Bit 15..12: reserved (used पूर्णांकernally) */
+क्रमागत अणु
 	PHY_M_FELP_LED2_MSK = 0xf<<8,	/* Bit 11.. 8: LED2 Mask (LINK) */
 	PHY_M_FELP_LED1_MSK = 0xf<<4,	/* Bit  7.. 4: LED1 Mask (ACT) */
 	PHY_M_FELP_LED0_MSK = 0xf, /* Bit  3.. 0: LED0 Mask (SPEED) */
-};
+पूर्ण;
 
-#define PHY_M_FELP_LED2_CTRL(x)	(((u16)(x)<<8) & PHY_M_FELP_LED2_MSK)
-#define PHY_M_FELP_LED1_CTRL(x)	(((u16)(x)<<4) & PHY_M_FELP_LED1_MSK)
-#define PHY_M_FELP_LED0_CTRL(x)	(((u16)(x)<<0) & PHY_M_FELP_LED0_MSK)
+#घोषणा PHY_M_FELP_LED2_CTRL(x)	(((u16)(x)<<8) & PHY_M_FELP_LED2_MSK)
+#घोषणा PHY_M_FELP_LED1_CTRL(x)	(((u16)(x)<<4) & PHY_M_FELP_LED1_MSK)
+#घोषणा PHY_M_FELP_LED0_CTRL(x)	(((u16)(x)<<0) & PHY_M_FELP_LED0_MSK)
 
-enum {
+क्रमागत अणु
 	LED_PAR_CTRL_COLX	= 0x00,
 	LED_PAR_CTRL_ERROR	= 0x01,
 	LED_PAR_CTRL_DUPLEX	= 0x02,
@@ -1585,50 +1586,50 @@ enum {
 	LED_PAR_CTRL_RX_BL	= 0x0d,
 	LED_PAR_CTRL_COL_BL	= 0x0e,
 	LED_PAR_CTRL_INACT	= 0x0f
-};
+पूर्ण;
 
-/*****,PHY_MARV_FE_SPEC_2		16 bit r/w	Specific Control Reg. 2 *****/
-enum {
+/*****,PHY_MARV_FE_SPEC_2		16 bit r/w	Specअगरic Control Reg. 2 *****/
+क्रमागत अणु
 	PHY_M_FESC_DIS_WAIT	= 1<<2, /* Disable TDR Waiting Period */
 	PHY_M_FESC_ENA_MCLK	= 1<<1, /* Enable MAC Rx Clock in sleep mode */
 	PHY_M_FESC_SEL_CL_A	= 1<<0, /* Select Class A driver (100B-TX) */
-};
+पूर्ण;
 
-/* for Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
-/*****  PHY_MARV_PHY_CTRL (page 1)		16 bit r/w	Fiber Specific Ctrl *****/
-enum {
+/* क्रम Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
+/*****  PHY_MARV_PHY_CTRL (page 1)		16 bit r/w	Fiber Specअगरic Ctrl *****/
+क्रमागत अणु
 	PHY_M_FIB_FORCE_LNK	= 1<<10,/* Force Link Good */
 	PHY_M_FIB_SIGD_POL	= 1<<9,	/* SIGDET Polarity */
 	PHY_M_FIB_TX_DIS	= 1<<3,	/* Transmitter Disable */
-};
+पूर्ण;
 
-/* for Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
-/*****  PHY_MARV_PHY_CTRL (page 2)		16 bit r/w	MAC Specific Ctrl *****/
-enum {
+/* क्रम Yukon-2 Gigabit Ethernet PHY (88E1112 only) */
+/*****  PHY_MARV_PHY_CTRL (page 2)		16 bit r/w	MAC Specअगरic Ctrl *****/
+क्रमागत अणु
 	PHY_M_MAC_MD_MSK	= 7<<7, /* Bit  9.. 7: Mode Select Mask */
 	PHY_M_MAC_GMIF_PUP	= 1<<3,	/* GMII Power Up (88E1149 only) */
 	PHY_M_MAC_MD_AUTO	= 3,/* Auto Copper/1000Base-X */
 	PHY_M_MAC_MD_COPPER	= 5,/* Copper only */
 	PHY_M_MAC_MD_1000BX	= 7,/* 1000Base-X only */
-};
-#define PHY_M_MAC_MODE_SEL(x)	(((x)<<7) & PHY_M_MAC_MD_MSK)
+पूर्ण;
+#घोषणा PHY_M_MAC_MODE_SEL(x)	(((x)<<7) & PHY_M_MAC_MD_MSK)
 
 /*****  PHY_MARV_PHY_CTRL (page 3)		16 bit r/w	LED Control Reg. *****/
-enum {
+क्रमागत अणु
 	PHY_M_LEDC_LOS_MSK	= 0xf<<12,/* Bit 15..12: LOS LED Ctrl. Mask */
 	PHY_M_LEDC_INIT_MSK	= 0xf<<8, /* Bit 11.. 8: INIT LED Ctrl. Mask */
 	PHY_M_LEDC_STA1_MSK	= 0xf<<4,/* Bit  7.. 4: STAT1 LED Ctrl. Mask */
 	PHY_M_LEDC_STA0_MSK	= 0xf, /* Bit  3.. 0: STAT0 LED Ctrl. Mask */
-};
+पूर्ण;
 
-#define PHY_M_LEDC_LOS_CTRL(x)	(((x)<<12) & PHY_M_LEDC_LOS_MSK)
-#define PHY_M_LEDC_INIT_CTRL(x)	(((x)<<8) & PHY_M_LEDC_INIT_MSK)
-#define PHY_M_LEDC_STA1_CTRL(x)	(((x)<<4) & PHY_M_LEDC_STA1_MSK)
-#define PHY_M_LEDC_STA0_CTRL(x)	(((x)<<0) & PHY_M_LEDC_STA0_MSK)
+#घोषणा PHY_M_LEDC_LOS_CTRL(x)	(((x)<<12) & PHY_M_LEDC_LOS_MSK)
+#घोषणा PHY_M_LEDC_INIT_CTRL(x)	(((x)<<8) & PHY_M_LEDC_INIT_MSK)
+#घोषणा PHY_M_LEDC_STA1_CTRL(x)	(((x)<<4) & PHY_M_LEDC_STA1_MSK)
+#घोषणा PHY_M_LEDC_STA0_CTRL(x)	(((x)<<0) & PHY_M_LEDC_STA0_MSK)
 
-/* GMAC registers  */
+/* GMAC रेजिस्टरs  */
 /* Port Registers */
-enum {
+क्रमागत अणु
 	GM_GP_STAT	= 0x0000,	/* 16 bit r/o	General Purpose Status */
 	GM_GP_CTRL	= 0x0004,	/* 16 bit r/w	General Purpose Control */
 	GM_TX_CTRL	= 0x0008,	/* 16 bit r/w	Transmit Control Reg. */
@@ -1667,14 +1668,14 @@ enum {
 /* MIB Counters */
 	GM_MIB_CNT_BASE	= 0x0100,	/* Base Address of MIB Counters */
 	GM_MIB_CNT_END	= 0x025C,	/* Last MIB counter */
-};
+पूर्ण;
 
 
 /*
  * MIB Counters base address definitions (low word) -
- * use offset 4 for access to high word	(32 bit r/o)
+ * use offset 4 क्रम access to high word	(32 bit r/o)
  */
-enum {
+क्रमागत अणु
 	GM_RXF_UC_OK    = GM_MIB_CNT_BASE + 0,	/* Unicast Frames Received OK */
 	GM_RXF_BC_OK	= GM_MIB_CNT_BASE + 8,	/* Broadcast Frames Received OK */
 	GM_RXF_MPAUSE	= GM_MIB_CNT_BASE + 16,	/* Pause MAC Ctrl Frames Received */
@@ -1714,15 +1715,15 @@ enum {
 
 	GM_TXF_COL	= GM_MIB_CNT_BASE + 304,/* Tx Collision */
 	GM_TXF_LAT_COL	= GM_MIB_CNT_BASE + 312,/* Tx Late Collision */
-	GM_TXF_ABO_COL	= GM_MIB_CNT_BASE + 320,/* Tx aborted due to Exces. Col. */
+	GM_TXF_ABO_COL	= GM_MIB_CNT_BASE + 320,/* Tx पातed due to Exces. Col. */
 	GM_TXF_MUL_COL	= GM_MIB_CNT_BASE + 328,/* Tx Multiple Collision */
 	GM_TXF_SNG_COL	= GM_MIB_CNT_BASE + 336,/* Tx Single Collision */
 	GM_TXE_FIFO_UR	= GM_MIB_CNT_BASE + 344,/* Tx FIFO Underrun Event */
-};
+पूर्ण;
 
 /* GMAC Bit Definitions */
 /*	GM_GP_STAT	16 bit r/o	General Purpose Status Register */
-enum {
+क्रमागत अणु
 	GM_GPSR_SPEED		= 1<<15, /* Bit 15:	Port Speed (1 = 100 Mbps) */
 	GM_GPSR_DUPLEX		= 1<<14, /* Bit 14:	Duplex Mode (1 = Full) */
 	GM_GPSR_FC_TX_DIS	= 1<<13, /* Bit 13:	Tx Flow-Control Mode Disabled */
@@ -1737,10 +1738,10 @@ enum {
 	GM_GPSR_PART_MODE	= 1<<3,	/* Bit  3:	Partition mode */
 	GM_GPSR_FC_RX_DIS	= 1<<2,	/* Bit  2:	Rx Flow-Control Mode Disabled */
 	GM_GPSR_PROM_EN		= 1<<1,	/* Bit  1:	Promiscuous Mode Enabled */
-};
+पूर्ण;
 
 /*	GM_GP_CTRL	16 bit r/w	General Purpose Control Register */
-enum {
+क्रमागत अणु
 	GM_GPCR_PROM_ENA	= 1<<14,	/* Bit 14:	Enable Promiscuous Mode */
 	GM_GPCR_FC_TX_DIS	= 1<<13, /* Bit 13:	Disable Tx Flow-Control Mode */
 	GM_GPCR_TX_ENA		= 1<<12, /* Bit 12:	Enable Transmit */
@@ -1756,31 +1757,31 @@ enum {
 	GM_GPCR_AU_DUP_DIS	= 1<<2,	/* Bit  2:	Disable Auto-Update Duplex */
 	GM_GPCR_AU_FCT_DIS	= 1<<1,	/* Bit  1:	Disable Auto-Update Flow-C. */
 	GM_GPCR_AU_SPD_DIS	= 1<<0,	/* Bit  0:	Disable Auto-Update Speed */
-};
+पूर्ण;
 
-#define GM_GPCR_SPEED_1000	(GM_GPCR_GIGS_ENA | GM_GPCR_SPEED_100)
+#घोषणा GM_GPCR_SPEED_1000	(GM_GPCR_GIGS_ENA | GM_GPCR_SPEED_100)
 
 /*	GM_TX_CTRL			16 bit r/w	Transmit Control Register */
-enum {
+क्रमागत अणु
 	GM_TXCR_FORCE_JAM	= 1<<15, /* Bit 15:	Force Jam / Flow-Control */
 	GM_TXCR_CRC_DIS		= 1<<14, /* Bit 14:	Disable insertion of CRC */
 	GM_TXCR_PAD_DIS		= 1<<13, /* Bit 13:	Disable padding of packets */
 	GM_TXCR_COL_THR_MSK	= 7<<10, /* Bit 12..10:	Collision Threshold */
-};
+पूर्ण;
 
-#define TX_COL_THR(x)		(((x)<<10) & GM_TXCR_COL_THR_MSK)
-#define TX_COL_DEF		0x04
+#घोषणा TX_COL_THR(x)		(((x)<<10) & GM_TXCR_COL_THR_MSK)
+#घोषणा TX_COL_DEF		0x04
 
 /*	GM_RX_CTRL			16 bit r/w	Receive Control Register */
-enum {
+क्रमागत अणु
 	GM_RXCR_UCF_ENA	= 1<<15, /* Bit 15:	Enable Unicast filtering */
 	GM_RXCR_MCF_ENA	= 1<<14, /* Bit 14:	Enable Multicast filtering */
 	GM_RXCR_CRC_DIS	= 1<<13, /* Bit 13:	Remove 4-byte CRC */
 	GM_RXCR_PASS_FC	= 1<<12, /* Bit 12:	Pass FC packets to FIFO */
-};
+पूर्ण;
 
 /*	GM_TX_PARAM		16 bit r/w	Transmit Parameter Register */
-enum {
+क्रमागत अणु
 	GM_TXPA_JAMLEN_MSK	= 0x03<<14,	/* Bit 15..14:	Jam Length */
 	GM_TXPA_JAMIPG_MSK	= 0x1f<<9,	/* Bit 13..9:	Jam IPG */
 	GM_TXPA_JAMDAT_MSK	= 0x1f<<4,	/* Bit  8..4:	IPG Jam to Data */
@@ -1790,16 +1791,16 @@ enum {
 	TX_JAM_IPG_DEF		= 0x0b,
 	TX_IPG_JAM_DEF		= 0x1c,
 	TX_BOF_LIM_DEF		= 0x04,
-};
+पूर्ण;
 
-#define TX_JAM_LEN_VAL(x)	(((x)<<14) & GM_TXPA_JAMLEN_MSK)
-#define TX_JAM_IPG_VAL(x)	(((x)<<9)  & GM_TXPA_JAMIPG_MSK)
-#define TX_IPG_JAM_DATA(x)	(((x)<<4)  & GM_TXPA_JAMDAT_MSK)
-#define TX_BACK_OFF_LIM(x)	((x) & GM_TXPA_BO_LIM_MSK)
+#घोषणा TX_JAM_LEN_VAL(x)	(((x)<<14) & GM_TXPA_JAMLEN_MSK)
+#घोषणा TX_JAM_IPG_VAL(x)	(((x)<<9)  & GM_TXPA_JAMIPG_MSK)
+#घोषणा TX_IPG_JAM_DATA(x)	(((x)<<4)  & GM_TXPA_JAMDAT_MSK)
+#घोषणा TX_BACK_OFF_LIM(x)	((x) & GM_TXPA_BO_LIM_MSK)
 
 
 /*	GM_SERIAL_MODE			16 bit r/w	Serial Mode Register */
-enum {
+क्रमागत अणु
 	GM_SMOD_DATABL_MSK	= 0x1f<<11, /* Bit 15..11:	Data Blinder (r/o) */
 	GM_SMOD_LIMIT_4		= 1<<10, /* 4 consecutive Tx trials */
 	GM_SMOD_VLAN_ENA	= 1<<9,	 /* Enable VLAN  (Max. Frame Len) */
@@ -1808,35 +1809,35 @@ enum {
 	GM_NEW_FLOW_CTRL	= 1<<6,	 /* Enable New Flow-Control */
 
 	GM_SMOD_IPG_MSK		= 0x1f	 /* Bit 4..0:	Inter-Packet Gap (IPG) */
-};
+पूर्ण;
 
-#define DATA_BLIND_VAL(x)	(((x)<<11) & GM_SMOD_DATABL_MSK)
-#define IPG_DATA_VAL(x)		(x & GM_SMOD_IPG_MSK)
+#घोषणा DATA_BLIND_VAL(x)	(((x)<<11) & GM_SMOD_DATABL_MSK)
+#घोषणा IPG_DATA_VAL(x)		(x & GM_SMOD_IPG_MSK)
 
-#define DATA_BLIND_DEF		0x04
-#define IPG_DATA_DEF_1000	0x1e
-#define IPG_DATA_DEF_10_100	0x18
+#घोषणा DATA_BLIND_DEF		0x04
+#घोषणा IPG_DATA_DEF_1000	0x1e
+#घोषणा IPG_DATA_DEF_10_100	0x18
 
 /*	GM_SMI_CTRL			16 bit r/w	SMI Control Register */
-enum {
+क्रमागत अणु
 	GM_SMI_CT_PHY_A_MSK	= 0x1f<<11,/* Bit 15..11:	PHY Device Address */
 	GM_SMI_CT_REG_A_MSK	= 0x1f<<6,/* Bit 10.. 6:	PHY Register Address */
 	GM_SMI_CT_OP_RD		= 1<<5,	/* Bit  5:	OpCode Read (0=Write)*/
 	GM_SMI_CT_RD_VAL	= 1<<4,	/* Bit  4:	Read Valid (Read completed) */
 	GM_SMI_CT_BUSY		= 1<<3,	/* Bit  3:	Busy (Operation in progress) */
-};
+पूर्ण;
 
-#define GM_SMI_CT_PHY_AD(x)	(((u16)(x)<<11) & GM_SMI_CT_PHY_A_MSK)
-#define GM_SMI_CT_REG_AD(x)	(((u16)(x)<<6) & GM_SMI_CT_REG_A_MSK)
+#घोषणा GM_SMI_CT_PHY_AD(x)	(((u16)(x)<<11) & GM_SMI_CT_PHY_A_MSK)
+#घोषणा GM_SMI_CT_REG_AD(x)	(((u16)(x)<<6) & GM_SMI_CT_REG_A_MSK)
 
 /*	GM_PHY_ADDR				16 bit r/w	GPHY Address Register */
-enum {
+क्रमागत अणु
 	GM_PAR_MIB_CLR	= 1<<5,	/* Bit  5:	Set MIB Clear Counter Mode */
 	GM_PAR_MIB_TST	= 1<<4,	/* Bit  4:	MIB Load Counter (Test Mode) */
-};
+पूर्ण;
 
 /* Receive Frame Status Encoding */
-enum {
+क्रमागत अणु
 	GMR_FS_LEN	= 0x7fff<<16, /* Bit 30..16:	Rx Frame Length */
 	GMR_FS_VLAN	= 1<<13, /* VLAN Packet */
 	GMR_FS_JABBER	= 1<<12, /* Jabber Packet */
@@ -1857,10 +1858,10 @@ enum {
 			  GMR_FS_FRAGMENT | GMR_FS_LONG_ERR |
 		  	  GMR_FS_MII_ERR | GMR_FS_BAD_FC |
 			  GMR_FS_UN_SIZE | GMR_FS_JABBER,
-};
+पूर्ण;
 
 /*	RX_GMF_CTRL_T	32 bit	Rx GMAC FIFO Control/Test */
-enum {
+क्रमागत अणु
 	RX_GCLKMAC_ENA	= 1<<31,	/* RX MAC Clock Gating Enable */
 	RX_GCLKMAC_OFF	= 1<<30,
 
@@ -1882,13 +1883,13 @@ enum {
 	GMF_ASF_RX_OVER_ON  = 1<<17,	/* enable flushing of ASF when overrun */
 	GMF_ASF_RX_OVER_OFF = 1<<16,	/* disable flushing of ASF when overrun */
 
-	GMF_WP_TST_ON	= 1<<14,	/* Write Pointer Test On */
-	GMF_WP_TST_OFF	= 1<<13,	/* Write Pointer Test Off */
-	GMF_WP_STEP	= 1<<12,	/* Write Pointer Step/Increment */
+	GMF_WP_TST_ON	= 1<<14,	/* Write Poपूर्णांकer Test On */
+	GMF_WP_TST_OFF	= 1<<13,	/* Write Poपूर्णांकer Test Off */
+	GMF_WP_STEP	= 1<<12,	/* Write Poपूर्णांकer Step/Increment */
 
-	GMF_RP_TST_ON	= 1<<10,	/* Read Pointer Test On */
-	GMF_RP_TST_OFF	= 1<<9,		/* Read Pointer Test Off */
-	GMF_RP_STEP	= 1<<8,		/* Read Pointer Step/Increment */
+	GMF_RP_TST_ON	= 1<<10,	/* Read Poपूर्णांकer Test On */
+	GMF_RP_TST_OFF	= 1<<9,		/* Read Poपूर्णांकer Test Off */
+	GMF_RP_STEP	= 1<<8,		/* Read Poपूर्णांकer Step/Increment */
 	GMF_RX_F_FL_ON	= 1<<7,		/* Rx FIFO Flush Mode On */
 	GMF_RX_F_FL_OFF	= 1<<6,		/* Rx FIFO Flush Mode Off */
 	GMF_CLI_RX_FO	= 1<<5,		/* Clear IRQ Rx FIFO Overrun */
@@ -1899,32 +1900,32 @@ enum {
 	GMF_RST_CLR	= 1<<1,		/* Clear GMAC FIFO Reset */
 	GMF_RST_SET	= 1<<0,		/* Set   GMAC FIFO Reset */
 
-	RX_GMF_FL_THR_DEF = 0xa,	/* flush threshold (default) */
+	RX_GMF_FL_THR_DEF = 0xa,	/* flush threshold (शेष) */
 
 	GMF_RX_CTRL_DEF	= GMF_OPER_ON | GMF_RX_F_FL_ON,
-};
+पूर्ण;
 
 /*	RX_GMF_FL_CTRL	16 bit	Rx GMAC FIFO Flush Control (Yukon-Supreme) */
-enum {
+क्रमागत अणु
 	RX_IPV6_SA_MOB_ENA	= 1<<9,	/* IPv6 SA Mobility Support Enable */
 	RX_IPV6_SA_MOB_DIS	= 1<<8,	/* IPv6 SA Mobility Support Disable */
 	RX_IPV6_DA_MOB_ENA	= 1<<7,	/* IPv6 DA Mobility Support Enable */
 	RX_IPV6_DA_MOB_DIS	= 1<<6,	/* IPv6 DA Mobility Support Disable */
-	RX_PTR_SYNCDLY_ENA	= 1<<5,	/* Pointers Delay Synch Enable */
-	RX_PTR_SYNCDLY_DIS	= 1<<4,	/* Pointers Delay Synch Disable */
+	RX_PTR_SYNCDLY_ENA	= 1<<5,	/* Poपूर्णांकers Delay Synch Enable */
+	RX_PTR_SYNCDLY_DIS	= 1<<4,	/* Poपूर्णांकers Delay Synch Disable */
 	RX_ASF_NEWFLAG_ENA	= 1<<3,	/* RX ASF Flag New Logic Enable */
 	RX_ASF_NEWFLAG_DIS	= 1<<2,	/* RX ASF Flag New Logic Disable */
 	RX_FLSH_MISSPKT_ENA	= 1<<1,	/* RX Flush Miss-Packet Enable */
 	RX_FLSH_MISSPKT_DIS	= 1<<0,	/* RX Flush Miss-Packet Disable */
-};
+पूर्ण;
 
 /*	TX_GMF_EA		32 bit	Tx GMAC FIFO End Address */
-enum {
-	TX_DYN_WM_ENA	= 3,	/* Yukon-FE+ specific */
-};
+क्रमागत अणु
+	TX_DYN_WM_ENA	= 3,	/* Yukon-FE+ specअगरic */
+पूर्ण;
 
 /*	TX_GMF_CTRL_T	32 bit	Tx GMAC FIFO Control/Test */
-enum {
+क्रमागत अणु
 	TX_STFW_DIS	= 1<<31,/* Disable Store & Forward */
 	TX_STFW_ENA	= 1<<30,/* Enable  Store & Forward */
 
@@ -1934,46 +1935,46 @@ enum {
 	TX_PCI_JUM_ENA  = 1<<23,/* PCI Jumbo Mode enable */
 	TX_PCI_JUM_DIS  = 1<<22,/* PCI Jumbo Mode enable */
 
-	GMF_WSP_TST_ON	= 1<<18,/* Write Shadow Pointer Test On */
-	GMF_WSP_TST_OFF	= 1<<17,/* Write Shadow Pointer Test Off */
-	GMF_WSP_STEP	= 1<<16,/* Write Shadow Pointer Step/Increment */
+	GMF_WSP_TST_ON	= 1<<18,/* Write Shaकरोw Poपूर्णांकer Test On */
+	GMF_WSP_TST_OFF	= 1<<17,/* Write Shaकरोw Poपूर्णांकer Test Off */
+	GMF_WSP_STEP	= 1<<16,/* Write Shaकरोw Poपूर्णांकer Step/Increment */
 
 	GMF_CLI_TX_FU	= 1<<6,	/* Clear IRQ Tx FIFO Underrun */
 	GMF_CLI_TX_FC	= 1<<5,	/* Clear IRQ Tx Frame Complete */
 	GMF_CLI_TX_PE	= 1<<4,	/* Clear IRQ Tx Parity Error */
-};
+पूर्ण;
 
 /*	GMAC_TI_ST_CTRL	 8 bit	Time Stamp Timer Ctrl Reg (YUKON only) */
-enum {
+क्रमागत अणु
 	GMT_ST_START	= 1<<2,	/* Start Time Stamp Timer */
 	GMT_ST_STOP	= 1<<1,	/* Stop  Time Stamp Timer */
 	GMT_ST_CLR_IRQ	= 1<<0,	/* Clear Time Stamp Timer IRQ */
-};
+पूर्ण;
 
 /* B28_Y2_ASF_STAT_CMD		32 bit	ASF Status and Command Reg */
-enum {
-	Y2_ASF_OS_PRES	= 1<<4,	/* ASF operation system present */
-	Y2_ASF_RESET	= 1<<3,	/* ASF system in reset state */
-	Y2_ASF_RUNNING	= 1<<2,	/* ASF system operational */
+क्रमागत अणु
+	Y2_ASF_OS_PRES	= 1<<4,	/* ASF operation प्रणाली present */
+	Y2_ASF_RESET	= 1<<3,	/* ASF प्रणाली in reset state */
+	Y2_ASF_RUNNING	= 1<<2,	/* ASF प्रणाली operational */
 	Y2_ASF_CLR_HSTI = 1<<1,	/* Clear ASF IRQ */
-	Y2_ASF_IRQ	= 1<<0,	/* Issue an IRQ to ASF system */
+	Y2_ASF_IRQ	= 1<<0,	/* Issue an IRQ to ASF प्रणाली */
 
 	Y2_ASF_UC_STATE = 3<<2,	/* ASF uC State */
-	Y2_ASF_CLK_HALT	= 0,	/* ASF system clock stopped */
-};
+	Y2_ASF_CLK_HALT	= 0,	/* ASF प्रणाली घड़ी stopped */
+पूर्ण;
 
 /* B28_Y2_ASF_HOST_COM	32 bit	ASF Host Communication Reg */
-enum {
+क्रमागत अणु
 	Y2_ASF_CLR_ASFI = 1<<1,	/* Clear host IRQ */
-	Y2_ASF_HOST_IRQ = 1<<0,	/* Issue an IRQ to HOST system */
-};
+	Y2_ASF_HOST_IRQ = 1<<0,	/* Issue an IRQ to HOST प्रणाली */
+पूर्ण;
 /*	HCU_CCSR	CPU Control and Status Register */
-enum {
+क्रमागत अणु
 	HCU_CCSR_SMBALERT_MONITOR= 1<<27, /* SMBALERT pin monitor */
 	HCU_CCSR_CPU_SLEEP	= 1<<26, /* CPU sleep status */
 	/* Clock Stretching Timeout */
 	HCU_CCSR_CS_TO		= 1<<25,
-	HCU_CCSR_WDOG		= 1<<24, /* Watchdog Reset */
+	HCU_CCSR_WDOG		= 1<<24, /* Watchकरोg Reset */
 
 	HCU_CCSR_CLR_IRQ_HOST	= 1<<17, /* Clear IRQ_HOST */
 	HCU_CCSR_SET_IRQ_HCU	= 1<<16, /* Set IRQ_HCU */
@@ -1991,27 +1992,27 @@ enum {
 	HCU_CCSR_ASF_RESET	= 0,
 	HCU_CCSR_ASF_HALTED	= 1<<1,
 	HCU_CCSR_ASF_RUNNING	= 1<<0,
-};
+पूर्ण;
 
 /*	HCU_HCSR	Host Control and Status Register */
-enum {
+क्रमागत अणु
 	HCU_HCSR_SET_IRQ_CPU	= 1<<16, /* Set IRQ_CPU */
 
 	HCU_HCSR_CLR_IRQ_HCU	= 1<<1, /* Clear IRQ_HCU */
 	HCU_HCSR_SET_IRQ_HOST	= 1<<0,	/* Set IRQ_HOST */
-};
+पूर्ण;
 
-/*	STAT_CTRL		32 bit	Status BMU control register (Yukon-2 only) */
-enum {
+/*	STAT_CTRL		32 bit	Status BMU control रेजिस्टर (Yukon-2 only) */
+क्रमागत अणु
 	SC_STAT_CLR_IRQ	= 1<<4,	/* Status Burst IRQ clear */
 	SC_STAT_OP_ON	= 1<<3,	/* Operational Mode On */
 	SC_STAT_OP_OFF	= 1<<2,	/* Operational Mode Off */
 	SC_STAT_RST_CLR	= 1<<1,	/* Clear Status Unit Reset (Enable) */
 	SC_STAT_RST_SET	= 1<<0,	/* Set   Status Unit Reset */
-};
+पूर्ण;
 
 /*	GMAC_CTRL		32 bit	GMAC Control Reg (YUKON only) */
-enum {
+क्रमागत अणु
 	GMC_SET_RST	    = 1<<15,/* MAC SEC RST */
 	GMC_SEC_RST_OFF     = 1<<14,/* MAC SEC RSt OFF */
 	GMC_BYP_MACSECRX_ON = 1<<13,/* Bypass macsec RX */
@@ -2029,22 +2030,22 @@ enum {
 	GMC_PAUSE_OFF	= 1<<2,	/* Pause Off */
 	GMC_RST_CLR	= 1<<1,	/* Clear GMAC Reset */
 	GMC_RST_SET	= 1<<0,	/* Set   GMAC Reset */
-};
+पूर्ण;
 
 /*	GPHY_CTRL		32 bit	GPHY Control Reg (YUKON only) */
-enum {
-	GPC_TX_PAUSE	= 1<<30, /* Tx pause enabled (ro) */
-	GPC_RX_PAUSE	= 1<<29, /* Rx pause enabled (ro) */
+क्रमागत अणु
+	GPC_TX_PAUSE	= 1<<30, /* Tx छोड़ो enabled (ro) */
+	GPC_RX_PAUSE	= 1<<29, /* Rx छोड़ो enabled (ro) */
 	GPC_SPEED	= 3<<27, /* PHY speed (ro) */
 	GPC_LINK	= 1<<26, /* Link up (ro) */
 	GPC_DUPLEX	= 1<<25, /* Duplex (ro) */
-	GPC_CLOCK	= 1<<24, /* 125Mhz clock stable (ro) */
+	GPC_CLOCK	= 1<<24, /* 125Mhz घड़ी stable (ro) */
 
-	GPC_PDOWN	= 1<<23, /* Internal regulator 2.5 power down */
+	GPC_PDOWN	= 1<<23, /* Internal regulator 2.5 घातer करोwn */
 	GPC_TSTMODE	= 1<<22, /* Test mode */
-	GPC_REG18	= 1<<21, /* Reg18 Power down */
-	GPC_REG12SEL	= 3<<19, /* Reg12 power setting */
-	GPC_REG18SEL	= 3<<17, /* Reg18 power setting */
+	GPC_REG18	= 1<<21, /* Reg18 Power करोwn */
+	GPC_REG12SEL	= 3<<19, /* Reg12 घातer setting */
+	GPC_REG18SEL	= 3<<17, /* Reg18 घातer setting */
 	GPC_SPILOCK	= 1<<16, /* SPI lock (ASF) */
 
 	GPC_LEDMUX	= 3<<14, /* LED Mux */
@@ -2057,11 +2058,11 @@ enum {
 
 	GPC_RST_CLR	= 1<<1,	/* Clear GPHY Reset */
 	GPC_RST_SET	= 1<<0,	/* Set   GPHY Reset */
-};
+पूर्ण;
 
 /*	GMAC_IRQ_SRC	 8 bit	GMAC Interrupt Source Reg (YUKON only) */
 /*	GMAC_IRQ_MSK	 8 bit	GMAC Interrupt Mask   Reg (YUKON only) */
-enum {
+क्रमागत अणु
 	GM_IS_TX_CO_OV	= 1<<5,	/* Transmit Counter Overflow IRQ */
 	GM_IS_RX_CO_OV	= 1<<4,	/* Receive Counter Overflow IRQ */
 	GM_IS_TX_FF_UR	= 1<<3,	/* Transmit FIFO Underrun */
@@ -2069,18 +2070,18 @@ enum {
 	GM_IS_RX_FF_OR	= 1<<1,	/* Receive FIFO Overrun */
 	GM_IS_RX_COMPL	= 1<<0,	/* Frame Reception Complete */
 
-#define GMAC_DEF_MSK     (GM_IS_TX_FF_UR | GM_IS_RX_FF_OR)
-};
+#घोषणा GMAC_DEF_MSK     (GM_IS_TX_FF_UR | GM_IS_RX_FF_OR)
+पूर्ण;
 
 /*	GMAC_LINK_CTRL	16 bit	GMAC Link Control Reg (YUKON only) */
-enum {						/* Bits 15.. 2:	reserved */
+क्रमागत अणु						/* Bits 15.. 2:	reserved */
 	GMLC_RST_CLR	= 1<<1,	/* Clear GMAC Link Reset */
 	GMLC_RST_SET	= 1<<0,	/* Set   GMAC Link Reset */
-};
+पूर्ण;
 
 
 /*	WOL_CTRL_STAT	16 bit	WOL Control/Status Reg */
-enum {
+क्रमागत अणु
 	WOL_CTL_LINK_CHG_OCC		= 1<<15,
 	WOL_CTL_MAGIC_PKT_OCC		= 1<<14,
 	WOL_CTL_PATTERN_OCC		= 1<<13,
@@ -2097,11 +2098,11 @@ enum {
 	WOL_CTL_DIS_MAGIC_PKT_UNIT	= 1<<2,
 	WOL_CTL_ENA_PATTERN_UNIT	= 1<<1,
 	WOL_CTL_DIS_PATTERN_UNIT	= 1<<0,
-};
+पूर्ण;
 
 
 /* Control flags */
-enum {
+क्रमागत अणु
 	UDPTCP	= 1<<0,
 	CALSUM	= 1<<1,
 	WR_SUM	= 1<<2,
@@ -2109,9 +2110,9 @@ enum {
 	LOCK_SUM= 1<<4,
 	INS_VLAN= 1<<5,
 	EOP	= 1<<7,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	HW_OWNER 	= 1<<7,
 	OP_TCPWRITE	= 0x11,
 	OP_TCPSTART	= 0x12,
@@ -2147,80 +2148,80 @@ enum {
 	OP_TXINDEXLE	= 0x68,
 	OP_MACSEC	= 0x6c,
 	OP_PUTIDX	= 0x70,
-};
+पूर्ण;
 
-enum status_css {
+क्रमागत status_css अणु
 	CSS_TCPUDPCSOK	= 1<<7,	/* TCP / UDP checksum is ok */
 	CSS_ISUDP	= 1<<6, /* packet is a UDP packet */
 	CSS_ISTCP	= 1<<5, /* packet is a TCP packet */
-	CSS_ISIPFRAG	= 1<<4, /* packet is a TCP/UDP frag, CS calc not done */
+	CSS_ISIPFRAG	= 1<<4, /* packet is a TCP/UDP frag, CS calc not करोne */
 	CSS_ISIPV6	= 1<<3, /* packet is a IPv6 packet */
 	CSS_IPV4CSUMOK	= 1<<2, /* IP v4: TCP header checksum is ok */
 	CSS_ISIPV4	= 1<<1, /* packet is a IPv4 packet */
 	CSS_LINK_BIT	= 1<<0, /* port number (legacy) */
-};
+पूर्ण;
 
-/* Yukon 2 hardware interface */
-struct sky2_tx_le {
+/* Yukon 2 hardware पूर्णांकerface */
+काष्ठा sky2_tx_le अणु
 	__le32	addr;
 	__le16	length;	/* also vlan tag or checksum start */
 	u8	ctrl;
 	u8	opcode;
-} __packed;
+पूर्ण __packed;
 
-struct sky2_rx_le {
+काष्ठा sky2_rx_le अणु
 	__le32	addr;
 	__le16	length;
 	u8	ctrl;
 	u8	opcode;
-} __packed;
+पूर्ण __packed;
 
-struct sky2_status_le {
+काष्ठा sky2_status_le अणु
 	__le32	status;	/* also checksum */
 	__le16	length;	/* also vlan tag */
 	u8	css;
 	u8	opcode;
-} __packed;
+पूर्ण __packed;
 
-struct tx_ring_info {
-	struct sk_buff	*skb;
-	unsigned long flags;
-#define TX_MAP_SINGLE   0x0001
-#define TX_MAP_PAGE     0x0002
+काष्ठा tx_ring_info अणु
+	काष्ठा sk_buff	*skb;
+	अचिन्हित दीर्घ flags;
+#घोषणा TX_MAP_SINGLE   0x0001
+#घोषणा TX_MAP_PAGE     0x0002
 	DEFINE_DMA_UNMAP_ADDR(mapaddr);
 	DEFINE_DMA_UNMAP_LEN(maplen);
-};
+पूर्ण;
 
-struct rx_ring_info {
-	struct sk_buff	*skb;
+काष्ठा rx_ring_info अणु
+	काष्ठा sk_buff	*skb;
 	dma_addr_t	data_addr;
 	DEFINE_DMA_UNMAP_LEN(data_size);
 	dma_addr_t	frag_addr[ETH_JUMBO_MTU >> PAGE_SHIFT];
-};
+पूर्ण;
 
-enum flow_control {
+क्रमागत flow_control अणु
 	FC_NONE	= 0,
 	FC_TX	= 1,
 	FC_RX	= 2,
 	FC_BOTH	= 3,
-};
+पूर्ण;
 
-struct sky2_stats {
-	struct u64_stats_sync syncp;
+काष्ठा sky2_stats अणु
+	काष्ठा u64_stats_sync syncp;
 	u64		packets;
 	u64		bytes;
-};
+पूर्ण;
 
-struct sky2_port {
-	struct sky2_hw	     *hw;
-	struct net_device    *netdev;
-	unsigned	     port;
+काष्ठा sky2_port अणु
+	काष्ठा sky2_hw	     *hw;
+	काष्ठा net_device    *netdev;
+	अचिन्हित	     port;
 	u32		     msg_enable;
 	spinlock_t	     phy_lock;
 
-	struct tx_ring_info  *tx_ring;
-	struct sky2_tx_le    *tx_le;
-	struct sky2_stats    tx_stats;
+	काष्ठा tx_ring_info  *tx_ring;
+	काष्ठा sky2_tx_le    *tx_le;
+	काष्ठा sky2_stats    tx_stats;
 
 	u16		     tx_ring_size;
 	u16		     tx_cons;		/* next le to check */
@@ -2232,9 +2233,9 @@ struct sky2_port {
 	u32		     tx_last_upper;
 	u32		     tx_tcpsum;
 
-	struct rx_ring_info  *rx_ring ____cacheline_aligned_in_smp;
-	struct sky2_rx_le    *rx_le;
-	struct sky2_stats    rx_stats;
+	काष्ठा rx_ring_info  *rx_ring ____cacheline_aligned_in_smp;
+	काष्ठा sky2_rx_le    *rx_le;
+	काष्ठा sky2_stats    rx_stats;
 
 	u16		     rx_next;		/* next re to check */
 	u16		     rx_put;		/* next le index to use */
@@ -2242,14 +2243,14 @@ struct sky2_port {
 	u16		     rx_data_size;
 	u16		     rx_nfrags;
 
-	unsigned long	     last_rx;
-	struct {
-		unsigned long last;
+	अचिन्हित दीर्घ	     last_rx;
+	काष्ठा अणु
+		अचिन्हित दीर्घ last;
 		u32	mac_rp;
 		u8	mac_lev;
-		u8	fifo_rp;
-		u8	fifo_lev;
-	} check;
+		u8	fअगरo_rp;
+		u8	fअगरo_lev;
+	पूर्ण check;
 
 	dma_addr_t	     rx_le_map;
 	dma_addr_t	     tx_le_map;
@@ -2259,170 +2260,170 @@ struct sky2_port {
 	u8		     wol;		/* WAKE_ bits */
 	u8		     duplex;		/* DUPLEX_HALF, DUPLEX_FULL */
 	u16		     flags;
-#define SKY2_FLAG_AUTO_SPEED		0x0002
-#define SKY2_FLAG_AUTO_PAUSE		0x0004
+#घोषणा SKY2_FLAG_AUTO_SPEED		0x0002
+#घोषणा SKY2_FLAG_AUTO_PAUSE		0x0004
 
- 	enum flow_control    flow_mode;
- 	enum flow_control    flow_status;
+ 	क्रमागत flow_control    flow_mode;
+ 	क्रमागत flow_control    flow_status;
 
-#ifdef CONFIG_SKY2_DEBUG
-	struct dentry	     *debugfs;
-#endif
-};
+#अगर_घोषित CONFIG_SKY2_DEBUG
+	काष्ठा dentry	     *debugfs;
+#पूर्ण_अगर
+पूर्ण;
 
-struct sky2_hw {
-	void __iomem  	     *regs;
-	struct pci_dev	     *pdev;
-	struct napi_struct   napi;
-	struct net_device    *dev[2];
-	unsigned long	     flags;
-#define SKY2_HW_USE_MSI		0x00000001
-#define SKY2_HW_FIBRE_PHY	0x00000002
-#define SKY2_HW_GIGABIT		0x00000004
-#define SKY2_HW_NEWER_PHY	0x00000008
-#define SKY2_HW_RAM_BUFFER	0x00000010
-#define SKY2_HW_NEW_LE		0x00000020	/* new LSOv2 format */
-#define SKY2_HW_AUTO_TX_SUM	0x00000040	/* new IP decode for Tx */
-#define SKY2_HW_ADV_POWER_CTL	0x00000080	/* additional PHY power regs */
-#define SKY2_HW_RSS_BROKEN	0x00000100
-#define SKY2_HW_VLAN_BROKEN     0x00000200
-#define SKY2_HW_RSS_CHKSUM	0x00000400	/* RSS requires chksum */
-#define SKY2_HW_IRQ_SETUP	0x00000800
+काष्ठा sky2_hw अणु
+	व्योम __iomem  	     *regs;
+	काष्ठा pci_dev	     *pdev;
+	काष्ठा napi_काष्ठा   napi;
+	काष्ठा net_device    *dev[2];
+	अचिन्हित दीर्घ	     flags;
+#घोषणा SKY2_HW_USE_MSI		0x00000001
+#घोषणा SKY2_HW_FIBRE_PHY	0x00000002
+#घोषणा SKY2_HW_GIGABIT		0x00000004
+#घोषणा SKY2_HW_NEWER_PHY	0x00000008
+#घोषणा SKY2_HW_RAM_BUFFER	0x00000010
+#घोषणा SKY2_HW_NEW_LE		0x00000020	/* new LSOv2 क्रमmat */
+#घोषणा SKY2_HW_AUTO_TX_SUM	0x00000040	/* new IP decode क्रम Tx */
+#घोषणा SKY2_HW_ADV_POWER_CTL	0x00000080	/* additional PHY घातer regs */
+#घोषणा SKY2_HW_RSS_BROKEN	0x00000100
+#घोषणा SKY2_HW_VLAN_BROKEN     0x00000200
+#घोषणा SKY2_HW_RSS_CHKSUM	0x00000400	/* RSS requires chksum */
+#घोषणा SKY2_HW_IRQ_SETUP	0x00000800
 
 	u8	     	     chip_id;
 	u8		     chip_rev;
 	u8		     pmd_type;
 	u8		     ports;
 
-	struct sky2_status_le *st_le;
+	काष्ठा sky2_status_le *st_le;
 	u32		     st_size;
 	u32		     st_idx;
 	dma_addr_t   	     st_dma;
 
-	struct timer_list    watchdog_timer;
-	struct work_struct   restart_work;
-	wait_queue_head_t    msi_wait;
+	काष्ठा समयr_list    watchकरोg_समयr;
+	काष्ठा work_काष्ठा   restart_work;
+	रुको_queue_head_t    msi_रुको;
 
-	char		     irq_name[];
-};
+	अक्षर		     irq_name[];
+पूर्ण;
 
-static inline int sky2_is_copper(const struct sky2_hw *hw)
-{
-	return !(hw->flags & SKY2_HW_FIBRE_PHY);
-}
+अटल अंतरभूत पूर्णांक sky2_is_copper(स्थिर काष्ठा sky2_hw *hw)
+अणु
+	वापस !(hw->flags & SKY2_HW_FIBRE_PHY);
+पूर्ण
 
-/* Register accessor for memory mapped device */
-static inline u32 sky2_read32(const struct sky2_hw *hw, unsigned reg)
-{
-	return readl(hw->regs + reg);
-}
+/* Register accessor क्रम memory mapped device */
+अटल अंतरभूत u32 sky2_पढ़ो32(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg)
+अणु
+	वापस पढ़ोl(hw->regs + reg);
+पूर्ण
 
-static inline u16 sky2_read16(const struct sky2_hw *hw, unsigned reg)
-{
-	return readw(hw->regs + reg);
-}
+अटल अंतरभूत u16 sky2_पढ़ो16(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg)
+अणु
+	वापस पढ़ोw(hw->regs + reg);
+पूर्ण
 
-static inline u8 sky2_read8(const struct sky2_hw *hw, unsigned reg)
-{
-	return readb(hw->regs + reg);
-}
+अटल अंतरभूत u8 sky2_पढ़ो8(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg)
+अणु
+	वापस पढ़ोb(hw->regs + reg);
+पूर्ण
 
-static inline void sky2_write32(const struct sky2_hw *hw, unsigned reg, u32 val)
-{
-	writel(val, hw->regs + reg);
-}
+अटल अंतरभूत व्योम sky2_ग_लिखो32(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg, u32 val)
+अणु
+	ग_लिखोl(val, hw->regs + reg);
+पूर्ण
 
-static inline void sky2_write16(const struct sky2_hw *hw, unsigned reg, u16 val)
-{
-	writew(val, hw->regs + reg);
-}
+अटल अंतरभूत व्योम sky2_ग_लिखो16(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg, u16 val)
+अणु
+	ग_लिखोw(val, hw->regs + reg);
+पूर्ण
 
-static inline void sky2_write8(const struct sky2_hw *hw, unsigned reg, u8 val)
-{
-	writeb(val, hw->regs + reg);
-}
+अटल अंतरभूत व्योम sky2_ग_लिखो8(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg, u8 val)
+अणु
+	ग_लिखोb(val, hw->regs + reg);
+पूर्ण
 
-/* Yukon PHY related registers */
-#define SK_GMAC_REG(port,reg) \
+/* Yukon PHY related रेजिस्टरs */
+#घोषणा SK_GMAC_REG(port,reg) \
 	(BASE_GMAC_1 + (port) * (BASE_GMAC_2-BASE_GMAC_1) + (reg))
-#define GM_PHY_RETRIES	100
+#घोषणा GM_PHY_RETRIES	100
 
-static inline u16 gma_read16(const struct sky2_hw *hw, unsigned port, unsigned reg)
-{
-	return sky2_read16(hw, SK_GMAC_REG(port,reg));
-}
+अटल अंतरभूत u16 gma_पढ़ो16(स्थिर काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg)
+अणु
+	वापस sky2_पढ़ो16(hw, SK_GMAC_REG(port,reg));
+पूर्ण
 
-static inline u32 gma_read32(struct sky2_hw *hw, unsigned port, unsigned reg)
-{
-	unsigned base = SK_GMAC_REG(port, reg);
-	return (u32) sky2_read16(hw, base)
-		| (u32) sky2_read16(hw, base+4) << 16;
-}
+अटल अंतरभूत u32 gma_पढ़ो32(काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg)
+अणु
+	अचिन्हित base = SK_GMAC_REG(port, reg);
+	वापस (u32) sky2_पढ़ो16(hw, base)
+		| (u32) sky2_पढ़ो16(hw, base+4) << 16;
+पूर्ण
 
-static inline u64 gma_read64(struct sky2_hw *hw, unsigned port, unsigned reg)
-{
-	unsigned base = SK_GMAC_REG(port, reg);
+अटल अंतरभूत u64 gma_पढ़ो64(काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg)
+अणु
+	अचिन्हित base = SK_GMAC_REG(port, reg);
 
-	return (u64) sky2_read16(hw, base)
-		| (u64) sky2_read16(hw, base+4) << 16
-		| (u64) sky2_read16(hw, base+8) << 32
-		| (u64) sky2_read16(hw, base+12) << 48;
-}
+	वापस (u64) sky2_पढ़ो16(hw, base)
+		| (u64) sky2_पढ़ो16(hw, base+4) << 16
+		| (u64) sky2_पढ़ो16(hw, base+8) << 32
+		| (u64) sky2_पढ़ो16(hw, base+12) << 48;
+पूर्ण
 
-/* There is no way to atomically read32 bit values from PHY, so retry */
-static inline u32 get_stats32(struct sky2_hw *hw, unsigned port, unsigned reg)
-{
+/* There is no way to atomically पढ़ो32 bit values from PHY, so retry */
+अटल अंतरभूत u32 get_stats32(काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg)
+अणु
 	u32 val;
 
-	do {
-		val = gma_read32(hw, port, reg);
-	} while (gma_read32(hw, port, reg) != val);
+	करो अणु
+		val = gma_पढ़ो32(hw, port, reg);
+	पूर्ण जबतक (gma_पढ़ो32(hw, port, reg) != val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline u64 get_stats64(struct sky2_hw *hw, unsigned port, unsigned reg)
-{
+अटल अंतरभूत u64 get_stats64(काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg)
+अणु
 	u64 val;
 
-	do {
-		val = gma_read64(hw, port, reg);
-	} while (gma_read64(hw, port, reg) != val);
+	करो अणु
+		val = gma_पढ़ो64(hw, port, reg);
+	पूर्ण जबतक (gma_पढ़ो64(hw, port, reg) != val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline void gma_write16(const struct sky2_hw *hw, unsigned port, int r, u16 v)
-{
-	sky2_write16(hw, SK_GMAC_REG(port,r), v);
-}
+अटल अंतरभूत व्योम gma_ग_लिखो16(स्थिर काष्ठा sky2_hw *hw, अचिन्हित port, पूर्णांक r, u16 v)
+अणु
+	sky2_ग_लिखो16(hw, SK_GMAC_REG(port,r), v);
+पूर्ण
 
-static inline void gma_set_addr(struct sky2_hw *hw, unsigned port, unsigned reg,
-				    const u8 *addr)
-{
-	gma_write16(hw, port, reg,  (u16) addr[0] | ((u16) addr[1] << 8));
-	gma_write16(hw, port, reg+4,(u16) addr[2] | ((u16) addr[3] << 8));
-	gma_write16(hw, port, reg+8,(u16) addr[4] | ((u16) addr[5] << 8));
-}
+अटल अंतरभूत व्योम gma_set_addr(काष्ठा sky2_hw *hw, अचिन्हित port, अचिन्हित reg,
+				    स्थिर u8 *addr)
+अणु
+	gma_ग_लिखो16(hw, port, reg,  (u16) addr[0] | ((u16) addr[1] << 8));
+	gma_ग_लिखो16(hw, port, reg+4,(u16) addr[2] | ((u16) addr[3] << 8));
+	gma_ग_लिखो16(hw, port, reg+8,(u16) addr[4] | ((u16) addr[5] << 8));
+पूर्ण
 
 /* PCI config space access */
-static inline u32 sky2_pci_read32(const struct sky2_hw *hw, unsigned reg)
-{
-	return sky2_read32(hw, Y2_CFG_SPC + reg);
-}
+अटल अंतरभूत u32 sky2_pci_पढ़ो32(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg)
+अणु
+	वापस sky2_पढ़ो32(hw, Y2_CFG_SPC + reg);
+पूर्ण
 
-static inline u16 sky2_pci_read16(const struct sky2_hw *hw, unsigned reg)
-{
-	return sky2_read16(hw, Y2_CFG_SPC + reg);
-}
+अटल अंतरभूत u16 sky2_pci_पढ़ो16(स्थिर काष्ठा sky2_hw *hw, अचिन्हित reg)
+अणु
+	वापस sky2_पढ़ो16(hw, Y2_CFG_SPC + reg);
+पूर्ण
 
-static inline void sky2_pci_write32(struct sky2_hw *hw, unsigned reg, u32 val)
-{
-	sky2_write32(hw, Y2_CFG_SPC + reg, val);
-}
+अटल अंतरभूत व्योम sky2_pci_ग_लिखो32(काष्ठा sky2_hw *hw, अचिन्हित reg, u32 val)
+अणु
+	sky2_ग_लिखो32(hw, Y2_CFG_SPC + reg, val);
+पूर्ण
 
-static inline void sky2_pci_write16(struct sky2_hw *hw, unsigned reg, u16 val)
-{
-	sky2_write16(hw, Y2_CFG_SPC + reg, val);
-}
-#endif
+अटल अंतरभूत व्योम sky2_pci_ग_लिखो16(काष्ठा sky2_hw *hw, अचिन्हित reg, u16 val)
+अणु
+	sky2_ग_लिखो16(hw, Y2_CFG_SPC + reg, val);
+पूर्ण
+#पूर्ण_अगर

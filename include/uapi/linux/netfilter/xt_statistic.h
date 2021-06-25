@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_STATISTIC_H
-#define _XT_STATISTIC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_STATISTIC_H
+#घोषणा _XT_STATISTIC_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum xt_statistic_mode {
+क्रमागत xt_statistic_mode अणु
 	XT_STATISTIC_MODE_RANDOM,
 	XT_STATISTIC_MODE_NTH,
 	__XT_STATISTIC_MODE_MAX
-};
-#define XT_STATISTIC_MODE_MAX (__XT_STATISTIC_MODE_MAX - 1)
+पूर्ण;
+#घोषणा XT_STATISTIC_MODE_MAX (__XT_STATISTIC_MODE_MAX - 1)
 
-enum xt_statistic_flags {
+क्रमागत xt_statistic_flags अणु
 	XT_STATISTIC_INVERT		= 0x1,
-};
-#define XT_STATISTIC_MASK		0x1
+पूर्ण;
+#घोषणा XT_STATISTIC_MASK		0x1
 
-struct xt_statistic_priv;
+काष्ठा xt_statistic_priv;
 
-struct xt_statistic_info {
+काष्ठा xt_statistic_info अणु
 	__u16			mode;
 	__u16			flags;
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			__u32	probability;
-		} random;
-		struct {
+		पूर्ण अक्रमom;
+		काष्ठा अणु
 			__u32	every;
 			__u32	packet;
 			__u32	count; /* unused */
-		} nth;
-	} u;
-	struct xt_statistic_priv *master __attribute__((aligned(8)));
-};
+		पूर्ण nth;
+	पूर्ण u;
+	काष्ठा xt_statistic_priv *master __attribute__((aligned(8)));
+पूर्ण;
 
-#endif /* _XT_STATISTIC_H */
+#पूर्ण_अगर /* _XT_STATISTIC_H */

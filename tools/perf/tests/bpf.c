@@ -1,95 +1,96 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <stdio.h>
-#include <sys/epoll.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <util/record.h>
-#include <util/util.h>
-#include <util/bpf-loader.h>
-#include <util/evlist.h>
-#include <linux/filter.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <api/fs/fs.h>
-#include <perf/mmap.h>
-#include "tests.h"
-#include "llvm.h"
-#include "debug.h"
-#include "parse-events.h"
-#include "util/mmap.h"
-#define NR_ITERS       111
-#define PERF_TEST_BPF_PATH "/sys/fs/bpf/perf_test"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <sys/epoll.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <util/record.h>
+#समावेश <util/util.h>
+#समावेश <util/bpf-loader.h>
+#समावेश <util/evlist.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <api/fs/fs.h>
+#समावेश <perf/mmap.h>
+#समावेश "tests.h"
+#समावेश "llvm.h"
+#समावेश "debug.h"
+#समावेश "parse-events.h"
+#समावेश "util/mmap.h"
+#घोषणा NR_ITERS       111
+#घोषणा PERF_TEST_BPF_PATH "/sys/fs/bpf/perf_test"
 
-#ifdef HAVE_LIBBPF_SUPPORT
-#include <linux/bpf.h>
-#include <bpf/bpf.h>
+#अगर_घोषित HAVE_LIBBPF_SUPPORT
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf.h>
 
-static int epoll_pwait_loop(void)
-{
-	int i;
+अटल पूर्णांक epoll_pरुको_loop(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* Should fail NR_ITERS times */
-	for (i = 0; i < NR_ITERS; i++)
-		epoll_pwait(-(i + 1), NULL, 0, 0, NULL);
-	return 0;
-}
+	/* Should fail NR_ITERS बार */
+	क्रम (i = 0; i < NR_ITERS; i++)
+		epoll_pरुको(-(i + 1), शून्य, 0, 0, शून्य);
+	वापस 0;
+पूर्ण
 
-#ifdef HAVE_BPF_PROLOGUE
+#अगर_घोषित HAVE_BPF_PROLOGUE
 
-static int llseek_loop(void)
-{
-	int fds[2], i;
+अटल पूर्णांक llseek_loop(व्योम)
+अणु
+	पूर्णांक fds[2], i;
 
-	fds[0] = open("/dev/null", O_RDONLY);
-	fds[1] = open("/dev/null", O_RDWR);
+	fds[0] = खोलो("/dev/null", O_RDONLY);
+	fds[1] = खोलो("/dev/null", O_RDWR);
 
-	if (fds[0] < 0 || fds[1] < 0)
-		return -1;
+	अगर (fds[0] < 0 || fds[1] < 0)
+		वापस -1;
 
-	for (i = 0; i < NR_ITERS; i++) {
-		lseek(fds[i % 2], i, (i / 2) % 2 ? SEEK_CUR : SEEK_SET);
-		lseek(fds[(i + 1) % 2], i, (i / 2) % 2 ? SEEK_CUR : SEEK_SET);
-	}
-	close(fds[0]);
-	close(fds[1]);
-	return 0;
-}
+	क्रम (i = 0; i < NR_ITERS; i++) अणु
+		lseek(fds[i % 2], i, (i / 2) % 2 ? प्रस्तुत_से : शुरू_से);
+		lseek(fds[(i + 1) % 2], i, (i / 2) % 2 ? प्रस्तुत_से : शुरू_से);
+	पूर्ण
+	बंद(fds[0]);
+	बंद(fds[1]);
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static struct {
-	enum test_llvm__testcase prog_id;
-	const char *desc;
-	const char *name;
-	const char *msg_compile_fail;
-	const char *msg_load_fail;
-	int (*target_func)(void);
-	int expect_result;
+अटल काष्ठा अणु
+	क्रमागत test_llvm__testहाल prog_id;
+	स्थिर अक्षर *desc;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *msg_compile_fail;
+	स्थिर अक्षर *msg_load_fail;
+	पूर्णांक (*target_func)(व्योम);
+	पूर्णांक expect_result;
 	bool	pin;
-} bpf_testcase_table[] = {
-	{
+पूर्ण bpf_testहाल_table[] = अणु
+	अणु
 		.prog_id	  = LLVM_TESTCASE_BASE,
 		.desc		  = "Basic BPF filtering",
 		.name		  = "[basic_bpf_test]",
 		.msg_compile_fail = "fix 'perf test LLVM' first",
 		.msg_load_fail	  = "load bpf object failed",
-		.target_func	  = &epoll_pwait_loop,
+		.target_func	  = &epoll_pरुको_loop,
 		.expect_result	  = (NR_ITERS + 1) / 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.prog_id	  = LLVM_TESTCASE_BASE,
 		.desc		  = "BPF pinning",
 		.name		  = "[bpf_pinning]",
 		.msg_compile_fail = "fix kbuild first",
 		.msg_load_fail	  = "check your vmlinux setting?",
-		.target_func	  = &epoll_pwait_loop,
+		.target_func	  = &epoll_pरुको_loop,
 		.expect_result	  = (NR_ITERS + 1) / 2,
 		.pin		  = true,
-	},
-#ifdef HAVE_BPF_PROLOGUE
-	{
+	पूर्ण,
+#अगर_घोषित HAVE_BPF_PROLOGUE
+	अणु
 		.prog_id	  = LLVM_TESTCASE_BPF_PROLOGUE,
 		.desc		  = "BPF prologue generation",
 		.name		  = "[bpf_prologue_test]",
@@ -97,264 +98,264 @@ static struct {
 		.msg_load_fail	  = "check your vmlinux setting?",
 		.target_func	  = &llseek_loop,
 		.expect_result	  = (NR_ITERS + 1) / 4,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static int do_test(struct bpf_object *obj, int (*func)(void),
-		   int expect)
-{
-	struct record_opts opts = {
-		.target = {
-			.uid = UINT_MAX,
+अटल पूर्णांक करो_test(काष्ठा bpf_object *obj, पूर्णांक (*func)(व्योम),
+		   पूर्णांक expect)
+अणु
+	काष्ठा record_opts opts = अणु
+		.target = अणु
+			.uid = अच_पूर्णांक_उच्च,
 			.uses_mmap = true,
-		},
+		पूर्ण,
 		.freq	      = 0,
 		.mmap_pages   = 256,
-		.default_interval = 1,
-	};
+		.शेष_पूर्णांकerval = 1,
+	पूर्ण;
 
-	char pid[16];
-	char sbuf[STRERR_BUFSIZE];
-	struct evlist *evlist;
-	int i, ret = TEST_FAIL, err = 0, count = 0;
+	अक्षर pid[16];
+	अक्षर sbuf[STRERR_बफ_मानE];
+	काष्ठा evlist *evlist;
+	पूर्णांक i, ret = TEST_FAIL, err = 0, count = 0;
 
-	struct parse_events_state parse_state;
-	struct parse_events_error parse_error;
+	काष्ठा parse_events_state parse_state;
+	काष्ठा parse_events_error parse_error;
 
-	bzero(&parse_error, sizeof(parse_error));
-	bzero(&parse_state, sizeof(parse_state));
+	bzero(&parse_error, माप(parse_error));
+	bzero(&parse_state, माप(parse_state));
 	parse_state.error = &parse_error;
 	INIT_LIST_HEAD(&parse_state.list);
 
-	err = parse_events_load_bpf_obj(&parse_state, &parse_state.list, obj, NULL);
-	if (err || list_empty(&parse_state.list)) {
+	err = parse_events_load_bpf_obj(&parse_state, &parse_state.list, obj, शून्य);
+	अगर (err || list_empty(&parse_state.list)) अणु
 		pr_debug("Failed to add events selected by BPF\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
-	snprintf(pid, sizeof(pid), "%d", getpid());
-	pid[sizeof(pid) - 1] = '\0';
+	snम_लिखो(pid, माप(pid), "%d", getpid());
+	pid[माप(pid) - 1] = '\0';
 	opts.target.tid = opts.target.pid = pid;
 
-	/* Instead of evlist__new_default, don't add default events */
+	/* Instead of evlist__new_शेष, करोn't add शेष events */
 	evlist = evlist__new();
-	if (!evlist) {
+	अगर (!evlist) अणु
 		pr_debug("Not enough memory to create evlist\n");
-		return TEST_FAIL;
-	}
+		वापस TEST_FAIL;
+	पूर्ण
 
 	err = evlist__create_maps(evlist, &opts.target);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("Not enough memory to create thread/cpu maps\n");
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	evlist__splice_list_tail(evlist, &parse_state.list);
 	evlist->nr_groups = parse_state.nr_groups;
 
-	evlist__config(evlist, &opts, NULL);
+	evlist__config(evlist, &opts, शून्य);
 
-	err = evlist__open(evlist);
-	if (err < 0) {
+	err = evlist__खोलो(evlist);
+	अगर (err < 0) अणु
 		pr_debug("perf_evlist__open: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_delete_evlist;
-	}
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	err = evlist__mmap(evlist, opts.mmap_pages);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("evlist__mmap: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_delete_evlist;
-	}
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	evlist__enable(evlist);
 	(*func)();
 	evlist__disable(evlist);
 
-	for (i = 0; i < evlist->core.nr_mmaps; i++) {
-		union perf_event *event;
-		struct mmap *md;
+	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+		जोड़ perf_event *event;
+		काष्ठा mmap *md;
 
 		md = &evlist->mmap[i];
-		if (perf_mmap__read_init(&md->core) < 0)
-			continue;
+		अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+			जारी;
 
-		while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-			const u32 type = event->header.type;
+		जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+			स्थिर u32 type = event->header.type;
 
-			if (type == PERF_RECORD_SAMPLE)
+			अगर (type == PERF_RECORD_SAMPLE)
 				count ++;
-		}
-		perf_mmap__read_done(&md->core);
-	}
+		पूर्ण
+		perf_mmap__पढ़ो_करोne(&md->core);
+	पूर्ण
 
-	if (count != expect * evlist->core.nr_entries) {
+	अगर (count != expect * evlist->core.nr_entries) अणु
 		pr_debug("BPF filter result incorrect, expected %d, got %d samples\n", expect, count);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	ret = TEST_OK;
 
 out_delete_evlist:
 	evlist__delete(evlist);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct bpf_object *
-prepare_bpf(void *obj_buf, size_t obj_buf_sz, const char *name)
-{
-	struct bpf_object *obj;
+अटल काष्ठा bpf_object *
+prepare_bpf(व्योम *obj_buf, माप_प्रकार obj_buf_sz, स्थिर अक्षर *name)
+अणु
+	काष्ठा bpf_object *obj;
 
 	obj = bpf__prepare_load_buffer(obj_buf, obj_buf_sz, name);
-	if (IS_ERR(obj)) {
+	अगर (IS_ERR(obj)) अणु
 		pr_debug("Compile BPF program failed.\n");
-		return NULL;
-	}
-	return obj;
-}
+		वापस शून्य;
+	पूर्ण
+	वापस obj;
+पूर्ण
 
-static int __test__bpf(int idx)
-{
-	int ret;
-	void *obj_buf;
-	size_t obj_buf_sz;
-	struct bpf_object *obj;
+अटल पूर्णांक __test__bpf(पूर्णांक idx)
+अणु
+	पूर्णांक ret;
+	व्योम *obj_buf;
+	माप_प्रकार obj_buf_sz;
+	काष्ठा bpf_object *obj;
 
 	ret = test_llvm__fetch_bpf_obj(&obj_buf, &obj_buf_sz,
-				       bpf_testcase_table[idx].prog_id,
-				       true, NULL);
-	if (ret != TEST_OK || !obj_buf || !obj_buf_sz) {
+				       bpf_testहाल_table[idx].prog_id,
+				       true, शून्य);
+	अगर (ret != TEST_OK || !obj_buf || !obj_buf_sz) अणु
 		pr_debug("Unable to get BPF object, %s\n",
-			 bpf_testcase_table[idx].msg_compile_fail);
-		if (idx == 0)
-			return TEST_SKIP;
-		else
-			return TEST_FAIL;
-	}
+			 bpf_testहाल_table[idx].msg_compile_fail);
+		अगर (idx == 0)
+			वापस TEST_SKIP;
+		अन्यथा
+			वापस TEST_FAIL;
+	पूर्ण
 
 	obj = prepare_bpf(obj_buf, obj_buf_sz,
-			  bpf_testcase_table[idx].name);
-	if ((!!bpf_testcase_table[idx].target_func) != (!!obj)) {
-		if (!obj)
+			  bpf_testहाल_table[idx].name);
+	अगर ((!!bpf_testहाल_table[idx].target_func) != (!!obj)) अणु
+		अगर (!obj)
 			pr_debug("Fail to load BPF object: %s\n",
-				 bpf_testcase_table[idx].msg_load_fail);
-		else
+				 bpf_testहाल_table[idx].msg_load_fail);
+		अन्यथा
 			pr_debug("Success unexpectedly: %s\n",
-				 bpf_testcase_table[idx].msg_load_fail);
+				 bpf_testहाल_table[idx].msg_load_fail);
 		ret = TEST_FAIL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (obj) {
-		ret = do_test(obj,
-			      bpf_testcase_table[idx].target_func,
-			      bpf_testcase_table[idx].expect_result);
-		if (ret != TEST_OK)
-			goto out;
-		if (bpf_testcase_table[idx].pin) {
-			int err;
+	अगर (obj) अणु
+		ret = करो_test(obj,
+			      bpf_testहाल_table[idx].target_func,
+			      bpf_testहाल_table[idx].expect_result);
+		अगर (ret != TEST_OK)
+			जाओ out;
+		अगर (bpf_testहाल_table[idx].pin) अणु
+			पूर्णांक err;
 
-			if (!bpf_fs__mount()) {
+			अगर (!bpf_fs__mount()) अणु
 				pr_debug("BPF filesystem not mounted\n");
 				ret = TEST_FAIL;
-				goto out;
-			}
-			err = mkdir(PERF_TEST_BPF_PATH, 0777);
-			if (err && errno != EEXIST) {
+				जाओ out;
+			पूर्ण
+			err = सूची_गढ़ो(PERF_TEST_BPF_PATH, 0777);
+			अगर (err && त्रुटि_सं != EEXIST) अणु
 				pr_debug("Failed to make perf_test dir: %s\n",
-					 strerror(errno));
+					 म_त्रुटि(त्रुटि_सं));
 				ret = TEST_FAIL;
-				goto out;
-			}
-			if (bpf_object__pin(obj, PERF_TEST_BPF_PATH))
+				जाओ out;
+			पूर्ण
+			अगर (bpf_object__pin(obj, PERF_TEST_BPF_PATH))
 				ret = TEST_FAIL;
-			if (rm_rf(PERF_TEST_BPF_PATH))
+			अगर (rm_rf(PERF_TEST_BPF_PATH))
 				ret = TEST_FAIL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
 	bpf__clear();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int test__bpf_subtest_get_nr(void)
-{
-	return (int)ARRAY_SIZE(bpf_testcase_table);
-}
+पूर्णांक test__bpf_subtest_get_nr(व्योम)
+अणु
+	वापस (पूर्णांक)ARRAY_SIZE(bpf_testहाल_table);
+पूर्ण
 
-const char *test__bpf_subtest_get_desc(int i)
-{
-	if (i < 0 || i >= (int)ARRAY_SIZE(bpf_testcase_table))
-		return NULL;
-	return bpf_testcase_table[i].desc;
-}
+स्थिर अक्षर *test__bpf_subtest_get_desc(पूर्णांक i)
+अणु
+	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(bpf_testहाल_table))
+		वापस शून्य;
+	वापस bpf_testहाल_table[i].desc;
+पूर्ण
 
-static int check_env(void)
-{
-	int err;
-	unsigned int kver_int;
-	char license[] = "GPL";
+अटल पूर्णांक check_env(व्योम)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक kver_पूर्णांक;
+	अक्षर license[] = "GPL";
 
-	struct bpf_insn insns[] = {
+	काष्ठा bpf_insn insns[] = अणु
 		BPF_MOV64_IMM(BPF_REG_0, 1),
 		BPF_EXIT_INSN(),
-	};
+	पूर्ण;
 
-	err = fetch_kernel_version(&kver_int, NULL, 0);
-	if (err) {
+	err = fetch_kernel_version(&kver_पूर्णांक, शून्य, 0);
+	अगर (err) अणु
 		pr_debug("Unable to get kernel version\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = bpf_load_program(BPF_PROG_TYPE_KPROBE, insns,
-			       sizeof(insns) / sizeof(insns[0]),
-			       license, kver_int, NULL, 0);
-	if (err < 0) {
+			       माप(insns) / माप(insns[0]),
+			       license, kver_पूर्णांक, शून्य, 0);
+	अगर (err < 0) अणु
 		pr_err("Missing basic BPF support, skip this test: %s\n",
-		       strerror(errno));
-		return err;
-	}
-	close(err);
+		       म_त्रुटि(त्रुटि_सं));
+		वापस err;
+	पूर्ण
+	बंद(err);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int test__bpf(struct test *test __maybe_unused, int i)
-{
-	int err;
+पूर्णांक test__bpf(काष्ठा test *test __maybe_unused, पूर्णांक i)
+अणु
+	पूर्णांक err;
 
-	if (i < 0 || i >= (int)ARRAY_SIZE(bpf_testcase_table))
-		return TEST_FAIL;
+	अगर (i < 0 || i >= (पूर्णांक)ARRAY_SIZE(bpf_testहाल_table))
+		वापस TEST_FAIL;
 
-	if (geteuid() != 0) {
+	अगर (geteuid() != 0) अणु
 		pr_debug("Only root can run BPF test\n");
-		return TEST_SKIP;
-	}
+		वापस TEST_SKIP;
+	पूर्ण
 
-	if (check_env())
-		return TEST_SKIP;
+	अगर (check_env())
+		वापस TEST_SKIP;
 
 	err = __test__bpf(i);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#else
-int test__bpf_subtest_get_nr(void)
-{
-	return 0;
-}
+#अन्यथा
+पूर्णांक test__bpf_subtest_get_nr(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-const char *test__bpf_subtest_get_desc(int i __maybe_unused)
-{
-	return NULL;
-}
+स्थिर अक्षर *test__bpf_subtest_get_desc(पूर्णांक i __maybe_unused)
+अणु
+	वापस शून्य;
+पूर्ण
 
-int test__bpf(struct test *test __maybe_unused, int i __maybe_unused)
-{
+पूर्णांक test__bpf(काष्ठा test *test __maybe_unused, पूर्णांक i __maybe_unused)
+अणु
 	pr_debug("Skip BPF test because BPF support is not compiled\n");
-	return TEST_SKIP;
-}
-#endif
+	वापस TEST_SKIP;
+पूर्ण
+#पूर्ण_अगर

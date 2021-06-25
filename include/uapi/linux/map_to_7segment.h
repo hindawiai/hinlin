@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * Copyright (c) 2005 Henk Vergonet <Henk.Vergonet@gmail.com>
  */
 
-#ifndef MAP_TO_7SEGMENT_H
-#define MAP_TO_7SEGMENT_H
+#अगर_अघोषित MAP_TO_7SEGMENT_H
+#घोषणा MAP_TO_7SEGMENT_H
 
-/* This file provides translation primitives and tables for the conversion
- * of (ASCII) characters to a 7-segments notation.
+/* This file provides translation primitives and tables क्रम the conversion
+ * of (ASCII) अक्षरacters to a 7-segments notation.
  *
  * The 7 segment's wikipedia notation below is used as standard.
  * See: https://en.wikipedia.org/wiki/Seven_segment_display
@@ -20,98 +21,98 @@
  *
  * Usage:
  *
- *   Register a map variable, and fill it with a character set:
- *	static SEG7_DEFAULT_MAP(map_seg7);
+ *   Register a map variable, and fill it with a अक्षरacter set:
+ *	अटल SEG7_DEFAULT_MAP(map_seg7);
  *
  *
- *   Then use for conversion:
- *	seg7 = map_to_seg7(&map_seg7, some_char);
+ *   Then use क्रम conversion:
+ *	seg7 = map_to_seg7(&map_seg7, some_अक्षर);
  *	...
  *
- * In device drivers it is recommended, if required, to make the char map
- * accessible via the sysfs interface using the following scheme:
+ * In device drivers it is recommended, अगर required, to make the अक्षर map
+ * accessible via the sysfs पूर्णांकerface using the following scheme:
  *
- * static ssize_t map_seg7_show(struct device *dev,
- *				struct device_attribute *attr, char *buf)
- * {
- *	memcpy(buf, &map_seg7, sizeof(map_seg7));
- *	return sizeof(map_seg7);
- * }
- * static ssize_t map_seg7_store(struct device *dev,
- *				 struct device_attribute *attr, const char *buf,
- *				 size_t cnt)
- * {
- *	if(cnt != sizeof(map_seg7))
- *		return -EINVAL;
- *	memcpy(&map_seg7, buf, cnt);
- *	return cnt;
- * }
- * static DEVICE_ATTR_RW(map_seg7);
+ * अटल sमाप_प्रकार map_seg7_show(काष्ठा device *dev,
+ *				काष्ठा device_attribute *attr, अक्षर *buf)
+ * अणु
+ *	स_नकल(buf, &map_seg7, माप(map_seg7));
+ *	वापस माप(map_seg7);
+ * पूर्ण
+ * अटल sमाप_प्रकार map_seg7_store(काष्ठा device *dev,
+ *				 काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+ *				 माप_प्रकार cnt)
+ * अणु
+ *	अगर(cnt != माप(map_seg7))
+ *		वापस -EINVAL;
+ *	स_नकल(&map_seg7, buf, cnt);
+ *	वापस cnt;
+ * पूर्ण
+ * अटल DEVICE_ATTR_RW(map_seg7);
  *
  * History:
  * 2005-05-31	RFC linux-kernel@vger.kernel.org
  */
-#include <linux/errno.h>
+#समावेश <linux/त्रुटिसं.स>
 
 
-#define BIT_SEG7_A		0
-#define BIT_SEG7_B		1
-#define BIT_SEG7_C		2
-#define BIT_SEG7_D		3
-#define BIT_SEG7_E		4
-#define BIT_SEG7_F		5
-#define BIT_SEG7_G		6
-#define BIT_SEG7_RESERVED	7
+#घोषणा BIT_SEG7_A		0
+#घोषणा BIT_SEG7_B		1
+#घोषणा BIT_SEG7_C		2
+#घोषणा BIT_SEG7_D		3
+#घोषणा BIT_SEG7_E		4
+#घोषणा BIT_SEG7_F		5
+#घोषणा BIT_SEG7_G		6
+#घोषणा BIT_SEG7_RESERVED	7
 
-struct seg7_conversion_map {
-	unsigned char	table[128];
-};
+काष्ठा seg7_conversion_map अणु
+	अचिन्हित अक्षर	table[128];
+पूर्ण;
 
-static __inline__ int map_to_seg7(struct seg7_conversion_map *map, int c)
-{
-	return c >= 0 && c < sizeof(map->table) ? map->table[c] : -EINVAL;
-}
+अटल __अंतरभूत__ पूर्णांक map_to_seg7(काष्ठा seg7_conversion_map *map, पूर्णांक c)
+अणु
+	वापस c >= 0 && c < माप(map->table) ? map->table[c] : -EINVAL;
+पूर्ण
 
-#define SEG7_CONVERSION_MAP(_name, _map)	\
-	struct seg7_conversion_map _name = { .table = { _map } }
+#घोषणा SEG7_CONVERSION_MAP(_name, _map)	\
+	काष्ठा seg7_conversion_map _name = अणु .table = अणु _map पूर्ण पूर्ण
 
 /*
  * It is recommended to use a facility that allows user space to redefine
- * custom character sets for LCD devices. Please use a sysfs interface
+ * custom अक्षरacter sets क्रम LCD devices. Please use a sysfs पूर्णांकerface
  * as described above.
  */
-#define MAP_TO_SEG7_SYSFS_FILE	"map_seg7"
+#घोषणा MAP_TO_SEG7_SYSFS_खाता	"map_seg7"
 
 /*******************************************************************************
  * ASCII conversion table
  ******************************************************************************/
 
-#define _SEG7(l,a,b,c,d,e,f,g)	\
+#घोषणा _SEG7(l,a,b,c,d,e,f,g)	\
       (	a<<BIT_SEG7_A |	b<<BIT_SEG7_B |	c<<BIT_SEG7_C |	d<<BIT_SEG7_D |	\
 	e<<BIT_SEG7_E |	f<<BIT_SEG7_F |	g<<BIT_SEG7_G )
 
-#define _MAP_0_32_ASCII_SEG7_NON_PRINTABLE	\
+#घोषणा _MAP_0_32_ASCII_SEG7_NON_PRINTABLE	\
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 
-#define _MAP_33_47_ASCII_SEG7_SYMBOL		\
+#घोषणा _MAP_33_47_ASCII_SEG7_SYMBOL		\
  _SEG7('!',0,0,0,0,1,1,0), _SEG7('"',0,1,0,0,0,1,0), _SEG7('#',0,1,1,0,1,1,0),\
  _SEG7('$',1,0,1,1,0,1,1), _SEG7('%',0,0,1,0,0,1,0), _SEG7('&',1,0,1,1,1,1,1),\
  _SEG7('\'',0,0,0,0,0,1,0),_SEG7('(',1,0,0,1,1,1,0), _SEG7(')',1,1,1,1,0,0,0),\
  _SEG7('*',0,1,1,0,1,1,1), _SEG7('+',0,1,1,0,0,0,1), _SEG7(',',0,0,0,0,1,0,0),\
  _SEG7('-',0,0,0,0,0,0,1), _SEG7('.',0,0,0,0,1,0,0), _SEG7('/',0,1,0,0,1,0,1),
 
-#define _MAP_48_57_ASCII_SEG7_NUMERIC		\
+#घोषणा _MAP_48_57_ASCII_SEG7_NUMERIC		\
  _SEG7('0',1,1,1,1,1,1,0), _SEG7('1',0,1,1,0,0,0,0), _SEG7('2',1,1,0,1,1,0,1),\
  _SEG7('3',1,1,1,1,0,0,1), _SEG7('4',0,1,1,0,0,1,1), _SEG7('5',1,0,1,1,0,1,1),\
  _SEG7('6',1,0,1,1,1,1,1), _SEG7('7',1,1,1,0,0,0,0), _SEG7('8',1,1,1,1,1,1,1),\
  _SEG7('9',1,1,1,1,0,1,1),
 
-#define _MAP_58_64_ASCII_SEG7_SYMBOL		\
+#घोषणा _MAP_58_64_ASCII_SEG7_SYMBOL		\
  _SEG7(':',0,0,0,1,0,0,1), _SEG7(';',0,0,0,1,0,0,1), _SEG7('<',1,0,0,0,0,1,1),\
  _SEG7('=',0,0,0,1,0,0,1), _SEG7('>',1,1,0,0,0,0,1), _SEG7('?',1,1,1,0,0,1,0),\
  _SEG7('@',1,1,0,1,1,1,1),
 
-#define _MAP_65_90_ASCII_SEG7_ALPHA_UPPR	\
+#घोषणा _MAP_65_90_ASCII_SEG7_ALPHA_UPPR	\
  _SEG7('A',1,1,1,0,1,1,1), _SEG7('B',1,1,1,1,1,1,1), _SEG7('C',1,0,0,1,1,1,0),\
  _SEG7('D',1,1,1,1,1,1,0), _SEG7('E',1,0,0,1,1,1,1), _SEG7('F',1,0,0,0,1,1,1),\
  _SEG7('G',1,1,1,1,0,1,1), _SEG7('H',0,1,1,0,1,1,1), _SEG7('I',0,1,1,0,0,0,0),\
@@ -122,11 +123,11 @@ static __inline__ int map_to_seg7(struct seg7_conversion_map *map, int c)
  _SEG7('V',0,1,1,1,1,1,0), _SEG7('W',0,1,1,1,1,1,1), _SEG7('X',0,1,1,0,1,1,1),\
  _SEG7('Y',0,1,1,0,0,1,1), _SEG7('Z',1,1,0,1,1,0,1),
 
-#define _MAP_91_96_ASCII_SEG7_SYMBOL		\
+#घोषणा _MAP_91_96_ASCII_SEG7_SYMBOL		\
  _SEG7('[',1,0,0,1,1,1,0), _SEG7('\\',0,0,1,0,0,1,1),_SEG7(']',1,1,1,1,0,0,0),\
  _SEG7('^',1,1,0,0,0,1,0), _SEG7('_',0,0,0,1,0,0,0), _SEG7('`',0,1,0,0,0,0,0),
 
-#define _MAP_97_122_ASCII_SEG7_ALPHA_LOWER	\
+#घोषणा _MAP_97_122_ASCII_SEG7_ALPHA_LOWER	\
  _SEG7('A',1,1,1,0,1,1,1), _SEG7('b',0,0,1,1,1,1,1), _SEG7('c',0,0,0,1,1,0,1),\
  _SEG7('d',0,1,1,1,1,0,1), _SEG7('E',1,0,0,1,1,1,1), _SEG7('F',1,0,0,0,1,1,1),\
  _SEG7('G',1,1,1,1,0,1,1), _SEG7('h',0,0,1,0,1,1,1), _SEG7('i',0,0,1,0,0,0,0),\
@@ -137,17 +138,17 @@ static __inline__ int map_to_seg7(struct seg7_conversion_map *map, int c)
  _SEG7('v',0,0,1,1,1,0,0), _SEG7('W',0,1,1,1,1,1,1), _SEG7('X',0,1,1,0,1,1,1),\
  _SEG7('y',0,1,1,1,0,1,1), _SEG7('Z',1,1,0,1,1,0,1),
 
-#define _MAP_123_126_ASCII_SEG7_SYMBOL		\
+#घोषणा _MAP_123_126_ASCII_SEG7_SYMBOL		\
  _SEG7('{',1,0,0,1,1,1,0), _SEG7('|',0,0,0,0,1,1,0), _SEG7('}',1,1,1,1,0,0,0),\
  _SEG7('~',1,0,0,0,0,0,0),
 
 /* Maps */
 
-/* This set tries to map as close as possible to the visible characteristics
- * of the ASCII symbol, lowercase and uppercase letters may differ in
+/* This set tries to map as बंद as possible to the visible अक्षरacteristics
+ * of the ASCII symbol, lowerहाल and upperहाल letters may dअगरfer in
  * presentation on the display.
  */
-#define MAP_ASCII7SEG_ALPHANUM			\
+#घोषणा MAP_ASCII7SEG_ALPHANUM			\
 	_MAP_0_32_ASCII_SEG7_NON_PRINTABLE	\
 	_MAP_33_47_ASCII_SEG7_SYMBOL		\
 	_MAP_48_57_ASCII_SEG7_NUMERIC		\
@@ -157,12 +158,12 @@ static __inline__ int map_to_seg7(struct seg7_conversion_map *map, int c)
 	_MAP_97_122_ASCII_SEG7_ALPHA_LOWER	\
 	_MAP_123_126_ASCII_SEG7_SYMBOL
 
-/* This set tries to map as close as possible to the symbolic characteristics
- * of the ASCII character for maximum discrimination.
- * For now this means all alpha chars are in lower case representations.
- * (This for example facilitates the use of hex numbers with uppercase input.)
+/* This set tries to map as बंद as possible to the symbolic अक्षरacteristics
+ * of the ASCII अक्षरacter क्रम maximum discrimination.
+ * For now this means all alpha अक्षरs are in lower हाल representations.
+ * (This क्रम example facilitates the use of hex numbers with upperहाल input.)
  */
-#define MAP_ASCII7SEG_ALPHANUM_LC			\
+#घोषणा MAP_ASCII7SEG_ALPHANUM_LC			\
 	_MAP_0_32_ASCII_SEG7_NON_PRINTABLE	\
 	_MAP_33_47_ASCII_SEG7_SYMBOL		\
 	_MAP_48_57_ASCII_SEG7_NUMERIC		\
@@ -172,8 +173,8 @@ static __inline__ int map_to_seg7(struct seg7_conversion_map *map, int c)
 	_MAP_97_122_ASCII_SEG7_ALPHA_LOWER	\
 	_MAP_123_126_ASCII_SEG7_SYMBOL
 
-#define SEG7_DEFAULT_MAP(_name)		\
+#घोषणा SEG7_DEFAULT_MAP(_name)		\
 	SEG7_CONVERSION_MAP(_name,MAP_ASCII7SEG_ALPHANUM)
 
-#endif	/* MAP_TO_7SEGMENT_H */
+#पूर्ण_अगर	/* MAP_TO_7SEGMENT_H */
 

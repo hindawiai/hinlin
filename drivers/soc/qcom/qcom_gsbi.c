@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, The Linux foundation. All rights reserved.
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
-#include <dt-bindings/soc/qcom,gsbi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <dt-bindings/soc/qcom,gsbi.h>
 
-#define GSBI_CTRL_REG		0x0000
-#define GSBI_PROTOCOL_SHIFT	4
-#define MAX_GSBI		12
+#घोषणा GSBI_CTRL_REG		0x0000
+#घोषणा GSBI_PROTOCOL_SHIFT	4
+#घोषणा MAX_GSBI		12
 
-#define TCSR_ADM_CRCI_BASE	0x70
+#घोषणा TCSR_ADM_CRCI_BASE	0x70
 
-struct crci_config {
+काष्ठा crci_config अणु
 	u32 num_rows;
-	const u32 (*array)[MAX_GSBI];
-};
+	स्थिर u32 (*array)[MAX_GSBI];
+पूर्ण;
 
-static const u32 crci_ipq8064[][MAX_GSBI] = {
-	{
+अटल स्थिर u32 crci_ipq8064[][MAX_GSBI] = अणु
+	अणु
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-	{
+	पूर्ण,
+	अणु
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct crci_config config_ipq8064 = {
+अटल स्थिर काष्ठा crci_config config_ipq8064 = अणु
 	.num_rows = ARRAY_SIZE(crci_ipq8064),
 	.array = crci_ipq8064,
-};
+पूर्ण;
 
-static const unsigned int crci_apq8064[][MAX_GSBI] = {
-	{
+अटल स्थिर अचिन्हित पूर्णांक crci_apq8064[][MAX_GSBI] = अणु
+	अणु
 		0x001800, 0x006000, 0x000030, 0x0000c0,
 		0x000300, 0x000400, 0x000000, 0x000000,
 		0x000000, 0x000000, 0x000000, 0x000000
-	},
-	{
+	पूर्ण,
+	अणु
 		0x000000, 0x000000, 0x000000, 0x000000,
 		0x000000, 0x000020, 0x0000c0, 0x000000,
 		0x000000, 0x000000, 0x000000, 0x000000
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct crci_config config_apq8064 = {
+अटल स्थिर काष्ठा crci_config config_apq8064 = अणु
 	.num_rows = ARRAY_SIZE(crci_apq8064),
 	.array = crci_apq8064,
-};
+पूर्ण;
 
-static const unsigned int crci_msm8960[][MAX_GSBI] = {
-	{
+अटल स्थिर अचिन्हित पूर्णांक crci_msm8960[][MAX_GSBI] = अणु
+	अणु
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000400, 0x000000, 0x000000,
 		0x000000, 0x000000, 0x000000, 0x000000
-	},
-	{
+	पूर्ण,
+	अणु
 		0x000000, 0x000000, 0x000000, 0x000000,
 		0x000000, 0x000020, 0x0000c0, 0x000300,
 		0x001800, 0x006000, 0x000000, 0x000000
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct crci_config config_msm8960 = {
+अटल स्थिर काष्ठा crci_config config_msm8960 = अणु
 	.num_rows = ARRAY_SIZE(crci_msm8960),
 	.array = crci_msm8960,
-};
+पूर्ण;
 
-static const unsigned int crci_msm8660[][MAX_GSBI] = {
-	{	/* ADM 0 - B */
+अटल स्थिर अचिन्हित पूर्णांक crci_msm8660[][MAX_GSBI] = अणु
+	अणु	/* ADM 0 - B */
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-	{	/* ADM 0 - B */
+	पूर्ण,
+	अणु	/* ADM 0 - B */
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-	{	/* ADM 1 - A */
+	पूर्ण,
+	अणु	/* ADM 1 - A */
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-	{	/* ADM 1 - B */
+	पूर्ण,
+	अणु	/* ADM 1 - B */
 		0x000003, 0x00000c, 0x000030, 0x0000c0,
 		0x000300, 0x000c00, 0x003000, 0x00c000,
 		0x030000, 0x0c0000, 0x300000, 0xc00000
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct crci_config config_msm8660 = {
+अटल स्थिर काष्ठा crci_config config_msm8660 = अणु
 	.num_rows = ARRAY_SIZE(crci_msm8660),
 	.array = crci_msm8660,
-};
+पूर्ण;
 
-struct gsbi_info {
-	struct clk *hclk;
+काष्ठा gsbi_info अणु
+	काष्ठा clk *hclk;
 	u32 mode;
 	u32 crci;
-	struct regmap *tcsr;
-};
+	काष्ठा regmap *tcsr;
+पूर्ण;
 
-static const struct of_device_id tcsr_dt_match[] = {
-	{ .compatible = "qcom,tcsr-ipq8064", .data = &config_ipq8064},
-	{ .compatible = "qcom,tcsr-apq8064", .data = &config_apq8064},
-	{ .compatible = "qcom,tcsr-msm8960", .data = &config_msm8960},
-	{ .compatible = "qcom,tcsr-msm8660", .data = &config_msm8660},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id tcsr_dt_match[] = अणु
+	अणु .compatible = "qcom,tcsr-ipq8064", .data = &config_ipq8064पूर्ण,
+	अणु .compatible = "qcom,tcsr-apq8064", .data = &config_apq8064पूर्ण,
+	अणु .compatible = "qcom,tcsr-msm8960", .data = &config_msm8960पूर्ण,
+	अणु .compatible = "qcom,tcsr-msm8660", .data = &config_msm8660पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int gsbi_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct device_node *tcsr_node;
-	const struct of_device_id *match;
-	struct resource *res;
-	void __iomem *base;
-	struct gsbi_info *gsbi;
-	int i, ret;
+अटल पूर्णांक gsbi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device_node *tcsr_node;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
+	काष्ठा gsbi_info *gsbi;
+	पूर्णांक i, ret;
 	u32 mask, gsbi_num;
-	const struct crci_config *config = NULL;
+	स्थिर काष्ठा crci_config *config = शून्य;
 
-	gsbi = devm_kzalloc(&pdev->dev, sizeof(*gsbi), GFP_KERNEL);
+	gsbi = devm_kzalloc(&pdev->dev, माप(*gsbi), GFP_KERNEL);
 
-	if (!gsbi)
-		return -ENOMEM;
+	अगर (!gsbi)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	/* get the tcsr node and setup the config and regmap */
 	gsbi->tcsr = syscon_regmap_lookup_by_phandle(node, "syscon-tcsr");
 
-	if (!IS_ERR(gsbi->tcsr)) {
+	अगर (!IS_ERR(gsbi->tcsr)) अणु
 		tcsr_node = of_parse_phandle(node, "syscon-tcsr", 0);
-		if (tcsr_node) {
+		अगर (tcsr_node) अणु
 			match = of_match_node(tcsr_dt_match, tcsr_node);
-			if (match)
+			अगर (match)
 				config = match->data;
-			else
+			अन्यथा
 				dev_warn(&pdev->dev, "no matching TCSR\n");
 
 			of_node_put(tcsr_node);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (of_property_read_u32(node, "cell-index", &gsbi_num)) {
+	अगर (of_property_पढ़ो_u32(node, "cell-index", &gsbi_num)) अणु
 		dev_err(&pdev->dev, "missing cell-index\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (gsbi_num < 1 || gsbi_num > MAX_GSBI) {
+	अगर (gsbi_num < 1 || gsbi_num > MAX_GSBI) अणु
 		dev_err(&pdev->dev, "invalid cell-index\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (of_property_read_u32(node, "qcom,mode", &gsbi->mode)) {
+	अगर (of_property_पढ़ो_u32(node, "qcom,mode", &gsbi->mode)) अणु
 		dev_err(&pdev->dev, "missing mode configuration\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* not required, so default to 0 if not present */
-	of_property_read_u32(node, "qcom,crci", &gsbi->crci);
+	/* not required, so शेष to 0 अगर not present */
+	of_property_पढ़ो_u32(node, "qcom,crci", &gsbi->crci);
 
 	dev_info(&pdev->dev, "GSBI port protocol: %d crci: %d\n",
 		 gsbi->mode, gsbi->crci);
 	gsbi->hclk = devm_clk_get(&pdev->dev, "iface");
-	if (IS_ERR(gsbi->hclk))
-		return PTR_ERR(gsbi->hclk);
+	अगर (IS_ERR(gsbi->hclk))
+		वापस PTR_ERR(gsbi->hclk);
 
 	clk_prepare_enable(gsbi->hclk);
 
-	writel_relaxed((gsbi->mode << GSBI_PROTOCOL_SHIFT) | gsbi->crci,
+	ग_लिखोl_relaxed((gsbi->mode << GSBI_PROTOCOL_SHIFT) | gsbi->crci,
 				base + GSBI_CTRL_REG);
 
 	/*
-	 * modify tcsr to reflect mode and ADM CRCI mux
-	 * Each gsbi contains a pair of bits, one for RX and one for TX
+	 * modअगरy tcsr to reflect mode and ADM CRCI mux
+	 * Each gsbi contains a pair of bits, one क्रम RX and one क्रम TX
 	 * SPI mode requires both bits cleared, otherwise they are set
 	 */
-	if (config) {
-		for (i = 0; i < config->num_rows; i++) {
+	अगर (config) अणु
+		क्रम (i = 0; i < config->num_rows; i++) अणु
 			mask = config->array[i][gsbi_num - 1];
 
-			if (gsbi->mode == GSBI_PROT_SPI)
+			अगर (gsbi->mode == GSBI_PROT_SPI)
 				regmap_update_bits(gsbi->tcsr,
 					TCSR_ADM_CRCI_BASE + 4 * i, mask, 0);
-			else
+			अन्यथा
 				regmap_update_bits(gsbi->tcsr,
 					TCSR_ADM_CRCI_BASE + 4 * i, mask, mask);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* make sure the gsbi control write is not reordered */
+	/* make sure the gsbi control ग_लिखो is not reordered */
 	wmb();
 
-	platform_set_drvdata(pdev, gsbi);
+	platक्रमm_set_drvdata(pdev, gsbi);
 
-	ret = of_platform_populate(node, NULL, NULL, &pdev->dev);
-	if (ret)
+	ret = of_platक्रमm_populate(node, शून्य, शून्य, &pdev->dev);
+	अगर (ret)
 		clk_disable_unprepare(gsbi->hclk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gsbi_remove(struct platform_device *pdev)
-{
-	struct gsbi_info *gsbi = platform_get_drvdata(pdev);
+अटल पूर्णांक gsbi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gsbi_info *gsbi = platक्रमm_get_drvdata(pdev);
 
 	clk_disable_unprepare(gsbi->hclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gsbi_dt_match[] = {
-	{ .compatible = "qcom,gsbi-v1.0.0", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id gsbi_dt_match[] = अणु
+	अणु .compatible = "qcom,gsbi-v1.0.0", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, gsbi_dt_match);
 
-static struct platform_driver gsbi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver gsbi_driver = अणु
+	.driver = अणु
 		.name		= "gsbi",
 		.of_match_table	= gsbi_dt_match,
-	},
+	पूर्ण,
 	.probe = gsbi_probe,
-	.remove	= gsbi_remove,
-};
+	.हटाओ	= gsbi_हटाओ,
+पूर्ण;
 
-module_platform_driver(gsbi_driver);
+module_platक्रमm_driver(gsbi_driver);
 
 MODULE_AUTHOR("Andy Gross <agross@codeaurora.org>");
 MODULE_DESCRIPTION("QCOM GSBI driver");

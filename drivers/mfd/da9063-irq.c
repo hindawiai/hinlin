@@ -1,5 +1,6 @@
-// SPDX-License-Identifier: GPL-2.0+
-/* Interrupt support for Dialog DA9063
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+/* Interrupt support क्रम Dialog DA9063
  *
  * Copyright 2012 Dialog Semiconductor Ltd.
  * Copyright 2013 Philipp Zabel, Pengutronix
@@ -7,21 +8,21 @@
  * Author: Michal Hajduk, Dialog Semiconductor
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/irq.h>
-#include <linux/mfd/core.h>
-#include <linux/interrupt.h>
-#include <linux/regmap.h>
-#include <linux/mfd/da9063/core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/da9063/core.h>
 
-#define	DA9063_REG_EVENT_A_OFFSET	0
-#define	DA9063_REG_EVENT_B_OFFSET	1
-#define	DA9063_REG_EVENT_C_OFFSET	2
-#define	DA9063_REG_EVENT_D_OFFSET	3
+#घोषणा	DA9063_REG_EVENT_A_OFFSET	0
+#घोषणा	DA9063_REG_EVENT_B_OFFSET	1
+#घोषणा	DA9063_REG_EVENT_C_OFFSET	2
+#घोषणा	DA9063_REG_EVENT_D_OFFSET	3
 
-static const struct regmap_irq da9063_irqs[] = {
-	/* DA9063 event A register */
+अटल स्थिर काष्ठा regmap_irq da9063_irqs[] = अणु
+	/* DA9063 event A रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_ONKEY,
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_ONKEY),
 	REGMAP_IRQ_REG(DA9063_IRQ_ALARM,
@@ -32,7 +33,7 @@ static const struct regmap_irq da9063_irqs[] = {
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_ADC_RDY),
 	REGMAP_IRQ_REG(DA9063_IRQ_SEQ_RDY,
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_SEQ_RDY),
-	/* DA9063 event B register */
+	/* DA9063 event B रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_WAKE,
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_WAKE),
 	REGMAP_IRQ_REG(DA9063_IRQ_TEMP,
@@ -49,7 +50,7 @@ static const struct regmap_irq da9063_irqs[] = {
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_VDD_MON),
 	REGMAP_IRQ_REG(DA9063_IRQ_WARN,
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_VDD_WARN),
-	/* DA9063 event C register */
+	/* DA9063 event C रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI0,
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI0),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI1,
@@ -66,7 +67,7 @@ static const struct regmap_irq da9063_irqs[] = {
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI6),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI7,
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI7),
-	/* DA9063 event D register */
+	/* DA9063 event D रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI8,
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI8),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI9,
@@ -83,9 +84,9 @@ static const struct regmap_irq da9063_irqs[] = {
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI14),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI15,
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI15),
-};
+पूर्ण;
 
-static const struct regmap_irq_chip da9063_irq_chip = {
+अटल स्थिर काष्ठा regmap_irq_chip da9063_irq_chip = अणु
 	.name = "da9063-irq",
 	.irqs = da9063_irqs,
 	.num_irqs = ARRAY_SIZE(da9063_irqs),
@@ -94,17 +95,17 @@ static const struct regmap_irq_chip da9063_irq_chip = {
 	.mask_base = DA9063_REG_IRQ_MASK_A,
 	.ack_base = DA9063_REG_EVENT_A,
 	.init_ack_masked = true,
-};
+पूर्ण;
 
-static const struct regmap_irq da9063l_irqs[] = {
-	/* DA9063 event A register */
+अटल स्थिर काष्ठा regmap_irq da9063l_irqs[] = अणु
+	/* DA9063 event A रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_ONKEY,
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_ONKEY),
 	REGMAP_IRQ_REG(DA9063_IRQ_ADC_RDY,
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_ADC_RDY),
 	REGMAP_IRQ_REG(DA9063_IRQ_SEQ_RDY,
 		       DA9063_REG_EVENT_A_OFFSET, DA9063_M_SEQ_RDY),
-	/* DA9063 event B register */
+	/* DA9063 event B रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_WAKE,
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_WAKE),
 	REGMAP_IRQ_REG(DA9063_IRQ_TEMP,
@@ -121,7 +122,7 @@ static const struct regmap_irq da9063l_irqs[] = {
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_VDD_MON),
 	REGMAP_IRQ_REG(DA9063_IRQ_WARN,
 		       DA9063_REG_EVENT_B_OFFSET, DA9063_M_VDD_WARN),
-	/* DA9063 event C register */
+	/* DA9063 event C रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI0,
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI0),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI1,
@@ -138,7 +139,7 @@ static const struct regmap_irq da9063l_irqs[] = {
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI6),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI7,
 		       DA9063_REG_EVENT_C_OFFSET, DA9063_M_GPI7),
-	/* DA9063 event D register */
+	/* DA9063 event D रेजिस्टर */
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI8,
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI8),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI9,
@@ -155,9 +156,9 @@ static const struct regmap_irq da9063l_irqs[] = {
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI14),
 	REGMAP_IRQ_REG(DA9063_IRQ_GPI15,
 		       DA9063_REG_EVENT_D_OFFSET, DA9063_M_GPI15),
-};
+पूर्ण;
 
-static const struct regmap_irq_chip da9063l_irq_chip = {
+अटल स्थिर काष्ठा regmap_irq_chip da9063l_irq_chip = अणु
 	.name = "da9063l-irq",
 	.irqs = da9063l_irqs,
 	.num_irqs = ARRAY_SIZE(da9063l_irqs),
@@ -166,32 +167,32 @@ static const struct regmap_irq_chip da9063l_irq_chip = {
 	.mask_base = DA9063_REG_IRQ_MASK_A,
 	.ack_base = DA9063_REG_EVENT_A,
 	.init_ack_masked = true,
-};
+पूर्ण;
 
-int da9063_irq_init(struct da9063 *da9063)
-{
-	const struct regmap_irq_chip *irq_chip;
-	int ret;
+पूर्णांक da9063_irq_init(काष्ठा da9063 *da9063)
+अणु
+	स्थिर काष्ठा regmap_irq_chip *irq_chip;
+	पूर्णांक ret;
 
-	if (!da9063->chip_irq) {
+	अगर (!da9063->chip_irq) अणु
 		dev_err(da9063->dev, "No IRQ configured\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (da9063->type == PMIC_TYPE_DA9063)
+	अगर (da9063->type == PMIC_TYPE_DA9063)
 		irq_chip = &da9063_irq_chip;
-	else
+	अन्यथा
 		irq_chip = &da9063l_irq_chip;
 
 	ret = devm_regmap_add_irq_chip(da9063->dev, da9063->regmap,
 			da9063->chip_irq,
 			IRQF_TRIGGER_LOW | IRQF_ONESHOT | IRQF_SHARED,
 			da9063->irq_base, irq_chip, &da9063->regmap_irq);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(da9063->dev, "Failed to reguest IRQ %d: %d\n",
 				da9063->chip_irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

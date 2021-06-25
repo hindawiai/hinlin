@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*  Silan SC92031 PCI Fast Ethernet Adapter driver
  *
- *  Based on vendor drivers:
+ *  Based on venकरोr drivers:
  *  Silan Fast Ethernet Netcard Driver:
  *    MODULE_AUTHOR ("gaoyonghong");
  *    MODULE_DESCRIPTION ("SILAN Fast Ethernet driver");
@@ -13,87 +14,87 @@
  *    MODULE_LICENSE("GPL");
  *  Both are almost identical and seem to be based on pci-skeleton.c
  *
- *  Rewritten for 2.6 by Cesar Eduardo Barros
+ *  Rewritten क्रम 2.6 by Cesar Eduarकरो Barros
  *
- *  A datasheet for this chip can be found at
+ *  A datasheet क्रम this chip can be found at
  *  http://www.silan.com.cn/english/product/pdf/SC92031AY.pdf 
  */
 
-/* Note about set_mac_address: I don't know how to change the hardware
+/* Note about set_mac_address: I करोn't know how to change the hardware
  * matching, so you need to enable IFF_PROMISC when using it.
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/pci.h>
-#include <linux/dma-mapping.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/ethtool.h>
-#include <linux/mii.h>
-#include <linux/crc32.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/crc32.h>
 
-#include <asm/irq.h>
+#समावेश <यंत्र/irq.h>
 
-#define SC92031_NAME "sc92031"
+#घोषणा SC92031_NAME "sc92031"
 
 /* BAR 0 is MMIO, BAR 1 is PIO */
-#define SC92031_USE_PIO	0
+#घोषणा SC92031_USE_PIO	0
 
 /* Maximum number of multicast addresses to filter (vs. Rx-all-multicast). */
-static int multicast_filter_limit = 64;
-module_param(multicast_filter_limit, int, 0);
+अटल पूर्णांक multicast_filter_limit = 64;
+module_param(multicast_filter_limit, पूर्णांक, 0);
 MODULE_PARM_DESC(multicast_filter_limit,
 	"Maximum number of filtered multicast addresses");
 
-static int media;
-module_param(media, int, 0);
+अटल पूर्णांक media;
+module_param(media, पूर्णांक, 0);
 MODULE_PARM_DESC(media, "Media type (0x00 = autodetect,"
 	" 0x01 = 10M half, 0x02 = 10M full,"
 	" 0x04 = 100M half, 0x08 = 100M full)");
 
 /* Size of the in-memory receive ring. */
-#define  RX_BUF_LEN_IDX  3 /* 0==8K, 1==16K, 2==32K, 3==64K ,4==128K*/
-#define  RX_BUF_LEN	(8192 << RX_BUF_LEN_IDX)
+#घोषणा  RX_BUF_LEN_IDX  3 /* 0==8K, 1==16K, 2==32K, 3==64K ,4==128K*/
+#घोषणा  RX_BUF_LEN	(8192 << RX_BUF_LEN_IDX)
 
-/* Number of Tx descriptor registers. */
-#define  NUM_TX_DESC	   4
+/* Number of Tx descriptor रेजिस्टरs. */
+#घोषणा  NUM_TX_DESC	   4
 
 /* max supported ethernet frame size -- must be at least (dev->mtu+14+4).*/
-#define  MAX_ETH_FRAME_SIZE	  1536
+#घोषणा  MAX_ETH_FRAME_SIZE	  1536
 
 /* Size of the Tx bounce buffers -- must be at least (dev->mtu+14+4). */
-#define  TX_BUF_SIZE       MAX_ETH_FRAME_SIZE
-#define  TX_BUF_TOT_LEN    (TX_BUF_SIZE * NUM_TX_DESC)
+#घोषणा  TX_BUF_SIZE       MAX_ETH_FRAME_SIZE
+#घोषणा  TX_BUF_TOT_LEN    (TX_BUF_SIZE * NUM_TX_DESC)
 
 /* The following settings are log_2(bytes)-4:  0 == 16 bytes .. 6==1024, 7==end of packet. */
-#define  RX_FIFO_THRESH    7     /* Rx buffer level before first PCI xfer.  */
+#घोषणा  RX_FIFO_THRESH    7     /* Rx buffer level beक्रमe first PCI xfer.  */
 
-/* Time in jiffies before concluding the transmitter is hung. */
-#define  TX_TIMEOUT     (4*HZ)
+/* Time in jअगरfies beक्रमe concluding the transmitter is hung. */
+#घोषणा  TX_TIMEOUT     (4*HZ)
 
-#define  SILAN_STATS_NUM    2    /* number of ETHTOOL_GSTATS */
+#घोषणा  SILAN_STATS_NUM    2    /* number of ETHTOOL_GSTATS */
 
 /* media options */
-#define  AUTOSELECT    0x00
-#define  M10_HALF      0x01
-#define  M10_FULL      0x02
-#define  M100_HALF     0x04
-#define  M100_FULL     0x08
+#घोषणा  AUTOSELECT    0x00
+#घोषणा  M10_HALF      0x01
+#घोषणा  M10_FULL      0x02
+#घोषणा  M100_HALF     0x04
+#घोषणा  M100_FULL     0x08
 
- /* Symbolic offsets to registers. */
-enum  silan_registers {
+ /* Symbolic offsets to रेजिस्टरs. */
+क्रमागत  silan_रेजिस्टरs अणु
    Config0    = 0x00,         // Config0
    Config1    = 0x04,         // Config1
-   RxBufWPtr  = 0x08,         // Rx buffer writer poiter
+   RxBufWPtr  = 0x08,         // Rx buffer ग_लिखोr poiter
    IntrStatus = 0x0C,         // Interrupt status
    IntrMask   = 0x10,         // Interrupt mask
    RxbufAddr  = 0x14,         // Rx buffer start address
-   RxBufRPtr  = 0x18,         // Rx buffer read pointer
+   RxBufRPtr  = 0x18,         // Rx buffer पढ़ो poपूर्णांकer
    Txstatusall = 0x1C,        // Transmit status of all descriptors
-   TxStatus0  = 0x20,	      // Transmit status (Four 32bit registers).
+   TxStatus0  = 0x20,	      // Transmit status (Four 32bit रेजिस्टरs).
    TxAddr0    = 0x30,         // Tx descriptors (also four 32bit).
    RxConfig   = 0x40,         // Rx configuration
    MAC0	      = 0x44,	      // Ethernet hardware address.
@@ -102,27 +103,27 @@ enum  silan_registers {
    TxConfig   = 0x5C,         // Tx configuration
    PhyCtrl    = 0x60,         // physical control
    FlowCtrlConfig = 0x64,     // flow control
-   Miicmd0    = 0x68,         // Mii command0 register
-   Miicmd1    = 0x6C,         // Mii command1 register
-   Miistatus  = 0x70,         // Mii status register
-   Timercnt   = 0x74,         // Timer counter register
-   TimerIntr  = 0x78,         // Timer interrupt register
+   Miicmd0    = 0x68,         // Mii command0 रेजिस्टर
+   Miicmd1    = 0x6C,         // Mii command1 रेजिस्टर
+   Miistatus  = 0x70,         // Mii status रेजिस्टर
+   Timercnt   = 0x74,         // Timer counter रेजिस्टर
+   TimerIntr  = 0x78,         // Timer पूर्णांकerrupt रेजिस्टर
    PMConfig   = 0x7C,         // Power Manager configuration
    CRC0       = 0x80,         // Power Manager CRC ( Two 32bit regisers)
-   Wakeup0    = 0x88,         // power Manager wakeup( Eight 64bit regiser)
-   LSBCRC0    = 0xC8,         // power Manager LSBCRC(Two 32bit regiser)
+   Wakeup0    = 0x88,         // घातer Manager wakeup( Eight 64bit regiser)
+   LSBCRC0    = 0xC8,         // घातer Manager LSBCRC(Two 32bit regiser)
    TestD0     = 0xD0,
    TestD4     = 0xD4,
    TestD8     = 0xD8,
-};
+पूर्ण;
 
-#define MII_JAB             16
-#define MII_OutputStatus    24
+#घोषणा MII_JAB             16
+#घोषणा MII_OutputStatus    24
 
-#define PHY_16_JAB_ENB      0x1000
-#define PHY_16_PORT_ENB     0x1
+#घोषणा PHY_16_JAB_ENB      0x1000
+#घोषणा PHY_16_PORT_ENB     0x1
 
-enum IntrStatusBits {
+क्रमागत IntrStatusBits अणु
    LinkFail       = 0x80000000,
    LinkOK         = 0x40000000,
    TimeOut        = 0x20000000,
@@ -130,20 +131,20 @@ enum IntrStatusBits {
    RxOK           = 0x0020,
    TxOK           = 0x0001,
    IntrBits = LinkFail|LinkOK|TimeOut|RxOverflow|RxOK|TxOK,
-};
+पूर्ण;
 
-enum TxStatusBits {
+क्रमागत TxStatusBits अणु
    TxCarrierLost = 0x20000000,
    TxAborted     = 0x10000000,
-   TxOutOfWindow = 0x08000000,
-   TxNccShift    = 22,
-   EarlyTxThresShift = 16,
+   TxOutOfWinकरोw = 0x08000000,
+   TxNccShअगरt    = 22,
+   EarlyTxThresShअगरt = 16,
    TxStatOK      = 0x8000,
    TxUnderrun    = 0x4000,
    TxOwn         = 0x2000,
-};
+पूर्ण;
 
-enum RxStatusBits {
+क्रमागत RxStatusBits अणु
    RxStatesOK   = 0x80000,
    RxBadAlign   = 0x40000,
    RxHugeFrame  = 0x20000,
@@ -154,9 +155,9 @@ enum RxStatusBits {
    Rx_Multicast = 0x1000,
    RxAddrMatch  = 0x0800,
    MiiErr       = 0x0400,
-};
+पूर्ण;
 
-enum RxConfigBits {
+क्रमागत RxConfigBits अणु
    RxFullDx    = 0x80000000,
    RxEnb       = 0x40000000,
    RxSmall     = 0x20000000,
@@ -166,11 +167,11 @@ enum RxConfigBits {
    RxMulticast = 0x02000000,
    RxBroadcast = 0x01000000,
    RxLoopBack  = (1 << 23) | (1 << 22),
-   LowThresholdShift  = 12,
-   HighThresholdShift = 2,
-};
+   LowThresholdShअगरt  = 12,
+   HighThresholdShअगरt = 2,
+पूर्ण;
 
-enum TxConfigBits {
+क्रमागत TxConfigBits अणु
    TxFullDx       = 0x80000000,
    TxEnb          = 0x40000000,
    TxEnbPad       = 0x20000000,
@@ -181,29 +182,29 @@ enum TxConfigBits {
    TxCareLostCrs  = 0x1000000,
    TxExdCollNum   = 0xf00000,
    TxDataRate     = 0x80000,
-};
+पूर्ण;
 
-enum PhyCtrlconfigbits {
+क्रमागत PhyCtrlconfigbits अणु
    PhyCtrlAne         = 0x80000000,
    PhyCtrlSpd100      = 0x40000000,
    PhyCtrlSpd10       = 0x20000000,
    PhyCtrlPhyBaseAddr = 0x1f000000,
    PhyCtrlDux         = 0x800000,
    PhyCtrlReset       = 0x400000,
-};
+पूर्ण;
 
-enum FlowCtrlConfigBits {
+क्रमागत FlowCtrlConfigBits अणु
    FlowCtrlFullDX = 0x80000000,
    FlowCtrlEnb    = 0x40000000,
-};
+पूर्ण;
 
-enum Config0Bits {
+क्रमागत Config0Bits अणु
    Cfg0_Reset  = 0x80000000,
    Cfg0_Anaoff = 0x40000000,
    Cfg0_LDPS   = 0x20000000,
-};
+पूर्ण;
 
-enum Config1Bits {
+क्रमागत Config1Bits अणु
    Cfg1_EarlyRx = 1 << 31,
    Cfg1_EarlyTx = 1 << 30,
 
@@ -213,9 +214,9 @@ enum Config1Bits {
    Cfg1_Rcv32K  = 0x3,
    Cfg1_Rcv64K  = 0x7,
    Cfg1_Rcv128K = 0xf,
-};
+पूर्ण;
 
-enum MiiCmd0Bits {
+क्रमागत MiiCmd0Bits अणु
    Mii_Divider = 0x20000000,
    Mii_WRITE   = 0x400000,
    Mii_READ    = 0x200000,
@@ -223,16 +224,16 @@ enum MiiCmd0Bits {
    Mii_Tamod   = 0x80000,
    Mii_Drvmod  = 0x40000,
    Mii_mdc     = 0x20000,
-   Mii_mdoen   = 0x10000,
-   Mii_mdo     = 0x8000,
+   Mii_mकरोen   = 0x10000,
+   Mii_mकरो     = 0x8000,
    Mii_mdi     = 0x4000,
-};
+पूर्ण;
 
-enum MiiStatusBits {
+क्रमागत MiiStatusBits अणु
     Mii_StatusBusy = 0x80000000,
-};
+पूर्ण;
 
-enum PMConfigBits {
+क्रमागत PMConfigBits अणु
    PM_Enable  = 1 << 31,
    PM_LongWF  = 1 << 30,
    PM_Magic   = 1 << 29,
@@ -240,235 +241,235 @@ enum PMConfigBits {
    PM_LWPTN   = (1 << 27 | 1<< 26),
    PM_LinkUp  = 1 << 25,
    PM_WakeUp  = 1 << 24,
-};
+पूर्ण;
 
 /* Locking rules:
  * priv->lock protects most of the fields of priv and most of the
- * hardware registers. It does not have to protect against softirqs
- * between sc92031_disable_interrupts and sc92031_enable_interrupts;
- * it also does not need to be used in ->open and ->stop while the
- * device interrupts are off.
+ * hardware रेजिस्टरs. It करोes not have to protect against softirqs
+ * between sc92031_disable_पूर्णांकerrupts and sc92031_enable_पूर्णांकerrupts;
+ * it also करोes not need to be used in ->खोलो and ->stop जबतक the
+ * device पूर्णांकerrupts are off.
  * Not having to protect against softirqs is very useful due to heavy
  * use of mdelay() at _sc92031_reset.
  * Functions prefixed with _sc92031_ must be called with the lock held;
  * functions prefixed with sc92031_ must be called without the lock held.
  */
 
-/* Locking rules for the interrupt:
- * - the interrupt and the tasklet never run at the same time
- * - neither run between sc92031_disable_interrupts and
- *   sc92031_enable_interrupt
+/* Locking rules क्रम the पूर्णांकerrupt:
+ * - the पूर्णांकerrupt and the tasklet never run at the same समय
+ * - neither run between sc92031_disable_पूर्णांकerrupts and
+ *   sc92031_enable_पूर्णांकerrupt
  */
 
-struct sc92031_priv {
+काष्ठा sc92031_priv अणु
 	spinlock_t		lock;
 	/* iomap.h cookie */
-	void __iomem		*port_base;
-	/* pci device structure */
-	struct pci_dev		*pdev;
+	व्योम __iomem		*port_base;
+	/* pci device काष्ठाure */
+	काष्ठा pci_dev		*pdev;
 	/* tasklet */
-	struct tasklet_struct	tasklet;
+	काष्ठा tasklet_काष्ठा	tasklet;
 
 	/* CPU address of rx ring */
-	void			*rx_ring;
+	व्योम			*rx_ring;
 	/* PCI address of rx ring */
 	dma_addr_t		rx_ring_dma_addr;
-	/* PCI address of rx ring read pointer */
+	/* PCI address of rx ring पढ़ो poपूर्णांकer */
 	dma_addr_t		rx_ring_tail;
 
-	/* tx ring write index */
-	unsigned		tx_head;
-	/* tx ring read index */
-	unsigned		tx_tail;
+	/* tx ring ग_लिखो index */
+	अचिन्हित		tx_head;
+	/* tx ring पढ़ो index */
+	अचिन्हित		tx_tail;
 	/* CPU address of tx bounce buffer */
-	void			*tx_bufs;
+	व्योम			*tx_bufs;
 	/* PCI address of tx bounce buffer */
 	dma_addr_t		tx_bufs_dma_addr;
 
-	/* copies of some hardware registers */
-	u32			intr_status;
-	atomic_t		intr_mask;
+	/* copies of some hardware रेजिस्टरs */
+	u32			पूर्णांकr_status;
+	atomic_t		पूर्णांकr_mask;
 	u32			rx_config;
 	u32			tx_config;
 	u32			pm_config;
 
 	/* copy of some flags from dev->flags */
-	unsigned int		mc_flags;
+	अचिन्हित पूर्णांक		mc_flags;
 
-	/* for ETHTOOL_GSTATS */
-	u64			tx_timeouts;
+	/* क्रम ETHTOOL_GSTATS */
+	u64			tx_समयouts;
 	u64			rx_loss;
 
-	/* for dev->get_stats */
-	long			rx_value;
-	struct net_device	*ndev;
-};
+	/* क्रम dev->get_stats */
+	दीर्घ			rx_value;
+	काष्ठा net_device	*ndev;
+पूर्ण;
 
-/* I don't know which registers can be safely read; however, I can guess
+/* I करोn't know which रेजिस्टरs can be safely पढ़ो; however, I can guess
  * MAC0 is one of them. */
-static inline void _sc92031_dummy_read(void __iomem *port_base)
-{
-	ioread32(port_base + MAC0);
-}
+अटल अंतरभूत व्योम _sc92031_dummy_पढ़ो(व्योम __iomem *port_base)
+अणु
+	ioपढ़ो32(port_base + MAC0);
+पूर्ण
 
-static u32 _sc92031_mii_wait(void __iomem *port_base)
-{
+अटल u32 _sc92031_mii_रुको(व्योम __iomem *port_base)
+अणु
 	u32 mii_status;
 
-	do {
+	करो अणु
 		udelay(10);
-		mii_status = ioread32(port_base + Miistatus);
-	} while (mii_status & Mii_StatusBusy);
+		mii_status = ioपढ़ो32(port_base + Miistatus);
+	पूर्ण जबतक (mii_status & Mii_StatusBusy);
 
-	return mii_status;
-}
+	वापस mii_status;
+पूर्ण
 
-static u32 _sc92031_mii_cmd(void __iomem *port_base, u32 cmd0, u32 cmd1)
-{
-	iowrite32(Mii_Divider, port_base + Miicmd0);
+अटल u32 _sc92031_mii_cmd(व्योम __iomem *port_base, u32 cmd0, u32 cmd1)
+अणु
+	ioग_लिखो32(Mii_Divider, port_base + Miicmd0);
 
-	_sc92031_mii_wait(port_base);
+	_sc92031_mii_रुको(port_base);
 
-	iowrite32(cmd1, port_base + Miicmd1);
-	iowrite32(Mii_Divider | cmd0, port_base + Miicmd0);
+	ioग_लिखो32(cmd1, port_base + Miicmd1);
+	ioग_लिखो32(Mii_Divider | cmd0, port_base + Miicmd0);
 
-	return _sc92031_mii_wait(port_base);
-}
+	वापस _sc92031_mii_रुको(port_base);
+पूर्ण
 
-static void _sc92031_mii_scan(void __iomem *port_base)
-{
+अटल व्योम _sc92031_mii_scan(व्योम __iomem *port_base)
+अणु
 	_sc92031_mii_cmd(port_base, Mii_SCAN, 0x1 << 6);
-}
+पूर्ण
 
-static u16 _sc92031_mii_read(void __iomem *port_base, unsigned reg)
-{
-	return _sc92031_mii_cmd(port_base, Mii_READ, reg << 6) >> 13;
-}
+अटल u16 _sc92031_mii_पढ़ो(व्योम __iomem *port_base, अचिन्हित reg)
+अणु
+	वापस _sc92031_mii_cmd(port_base, Mii_READ, reg << 6) >> 13;
+पूर्ण
 
-static void _sc92031_mii_write(void __iomem *port_base, unsigned reg, u16 val)
-{
+अटल व्योम _sc92031_mii_ग_लिखो(व्योम __iomem *port_base, अचिन्हित reg, u16 val)
+अणु
 	_sc92031_mii_cmd(port_base, Mii_WRITE, (reg << 6) | ((u32)val << 11));
-}
+पूर्ण
 
-static void sc92031_disable_interrupts(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम sc92031_disable_पूर्णांकerrupts(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
-	/* tell the tasklet/interrupt not to enable interrupts */
-	atomic_set(&priv->intr_mask, 0);
+	/* tell the tasklet/पूर्णांकerrupt not to enable पूर्णांकerrupts */
+	atomic_set(&priv->पूर्णांकr_mask, 0);
 	wmb();
 
-	/* stop interrupts */
-	iowrite32(0, port_base + IntrMask);
-	_sc92031_dummy_read(port_base);
+	/* stop पूर्णांकerrupts */
+	ioग_लिखो32(0, port_base + IntrMask);
+	_sc92031_dummy_पढ़ो(port_base);
 
-	/* wait for any concurrent interrupt/tasklet to finish */
+	/* रुको क्रम any concurrent पूर्णांकerrupt/tasklet to finish */
 	synchronize_irq(priv->pdev->irq);
 	tasklet_disable(&priv->tasklet);
-}
+पूर्ण
 
-static void sc92031_enable_interrupts(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम sc92031_enable_पूर्णांकerrupts(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
 	tasklet_enable(&priv->tasklet);
 
-	atomic_set(&priv->intr_mask, IntrBits);
+	atomic_set(&priv->पूर्णांकr_mask, IntrBits);
 	wmb();
 
-	iowrite32(IntrBits, port_base + IntrMask);
-}
+	ioग_लिखो32(IntrBits, port_base + IntrMask);
+पूर्ण
 
-static void _sc92031_disable_tx_rx(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_disable_tx_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
 	priv->rx_config &= ~RxEnb;
 	priv->tx_config &= ~TxEnb;
-	iowrite32(priv->rx_config, port_base + RxConfig);
-	iowrite32(priv->tx_config, port_base + TxConfig);
-}
+	ioग_लिखो32(priv->rx_config, port_base + RxConfig);
+	ioग_लिखो32(priv->tx_config, port_base + TxConfig);
+पूर्ण
 
-static void _sc92031_enable_tx_rx(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_enable_tx_rx(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
 	priv->rx_config |= RxEnb;
 	priv->tx_config |= TxEnb;
-	iowrite32(priv->rx_config, port_base + RxConfig);
-	iowrite32(priv->tx_config, port_base + TxConfig);
-}
+	ioग_लिखो32(priv->rx_config, port_base + RxConfig);
+	ioग_लिखो32(priv->tx_config, port_base + TxConfig);
+पूर्ण
 
-static void _sc92031_tx_clear(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल व्योम _sc92031_tx_clear(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
-	while (priv->tx_head - priv->tx_tail > 0) {
+	जबतक (priv->tx_head - priv->tx_tail > 0) अणु
 		priv->tx_tail++;
 		dev->stats.tx_dropped++;
-	}
+	पूर्ण
 	priv->tx_head = priv->tx_tail = 0;
-}
+पूर्ण
 
-static void _sc92031_set_mar(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_set_mar(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u32 mar0 = 0, mar1 = 0;
 
-	if ((dev->flags & IFF_PROMISC) ||
+	अगर ((dev->flags & IFF_PROMISC) ||
 	    netdev_mc_count(dev) > multicast_filter_limit ||
 	    (dev->flags & IFF_ALLMULTI))
 		mar0 = mar1 = 0xffffffff;
-	else if (dev->flags & IFF_MULTICAST) {
-		struct netdev_hw_addr *ha;
+	अन्यथा अगर (dev->flags & IFF_MULTICAST) अणु
+		काष्ठा netdev_hw_addr *ha;
 
-		netdev_for_each_mc_addr(ha, dev) {
+		netdev_क्रम_each_mc_addr(ha, dev) अणु
 			u32 crc;
-			unsigned bit = 0;
+			अचिन्हित bit = 0;
 
 			crc = ~ether_crc(ETH_ALEN, ha->addr);
 			crc >>= 24;
 
-			if (crc & 0x01)	bit |= 0x02;
-			if (crc & 0x02)	bit |= 0x01;
-			if (crc & 0x10)	bit |= 0x20;
-			if (crc & 0x20)	bit |= 0x10;
-			if (crc & 0x40)	bit |= 0x08;
-			if (crc & 0x80)	bit |= 0x04;
+			अगर (crc & 0x01)	bit |= 0x02;
+			अगर (crc & 0x02)	bit |= 0x01;
+			अगर (crc & 0x10)	bit |= 0x20;
+			अगर (crc & 0x20)	bit |= 0x10;
+			अगर (crc & 0x40)	bit |= 0x08;
+			अगर (crc & 0x80)	bit |= 0x04;
 
-			if (bit > 31)
+			अगर (bit > 31)
 				mar0 |= 0x1 << (bit - 32);
-			else
+			अन्यथा
 				mar1 |= 0x1 << bit;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	iowrite32(mar0, port_base + MAR0);
-	iowrite32(mar1, port_base + MAR0 + 4);
-}
+	ioग_लिखो32(mar0, port_base + MAR0);
+	ioग_लिखो32(mar1, port_base + MAR0 + 4);
+पूर्ण
 
-static void _sc92031_set_rx_config(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
-	unsigned int old_mc_flags;
+अटल व्योम _sc92031_set_rx_config(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
+	अचिन्हित पूर्णांक old_mc_flags;
 	u32 rx_config_bits = 0;
 
 	old_mc_flags = priv->mc_flags;
 
-	if (dev->flags & IFF_PROMISC)
+	अगर (dev->flags & IFF_PROMISC)
 		rx_config_bits |= RxSmall | RxHuge | RxErr | RxBroadcast
 				| RxMulticast | RxAllphys;
 
-	if (dev->flags & (IFF_ALLMULTI | IFF_MULTICAST))
+	अगर (dev->flags & (IFF_ALLMULTI | IFF_MULTICAST))
 		rx_config_bits |= RxMulticast;
 
-	if (dev->flags & IFF_BROADCAST)
+	अगर (dev->flags & IFF_BROADCAST)
 		rx_config_bits |= RxBroadcast;
 
 	priv->rx_config &= ~(RxSmall | RxHuge | RxErr | RxBroadcast
@@ -478,22 +479,22 @@ static void _sc92031_set_rx_config(struct net_device *dev)
 	priv->mc_flags = dev->flags & (IFF_PROMISC | IFF_ALLMULTI
 			| IFF_MULTICAST | IFF_BROADCAST);
 
-	if (netif_carrier_ok(dev) && priv->mc_flags != old_mc_flags)
-		iowrite32(priv->rx_config, port_base + RxConfig);
-}
+	अगर (netअगर_carrier_ok(dev) && priv->mc_flags != old_mc_flags)
+		ioग_लिखो32(priv->rx_config, port_base + RxConfig);
+पूर्ण
 
-static bool _sc92031_check_media(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल bool _sc92031_check_media(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u16 bmsr;
 
-	bmsr = _sc92031_mii_read(port_base, MII_BMSR);
+	bmsr = _sc92031_mii_पढ़ो(port_base, MII_BMSR);
 	rmb();
-	if (bmsr & BMSR_LSTATUS) {
+	अगर (bmsr & BMSR_LSTATUS) अणु
 		bool speed_100, duplex_full;
 		u32 flow_ctrl_config = 0;
-		u16 output_status = _sc92031_mii_read(port_base,
+		u16 output_status = _sc92031_mii_पढ़ो(port_base,
 				MII_OutputStatus);
 		_sc92031_mii_scan(port_base);
 
@@ -501,454 +502,454 @@ static bool _sc92031_check_media(struct net_device *dev)
 		duplex_full = output_status & 0x4;
 
 		/* Initial Tx/Rx configuration */
-		priv->rx_config = (0x40 << LowThresholdShift) | (0x1c0 << HighThresholdShift);
+		priv->rx_config = (0x40 << LowThresholdShअगरt) | (0x1c0 << HighThresholdShअगरt);
 		priv->tx_config = 0x48800000;
 
-		/* NOTE: vendor driver had dead code here to enable tx padding */
+		/* NOTE: venकरोr driver had dead code here to enable tx padding */
 
-		if (!speed_100)
+		अगर (!speed_100)
 			priv->tx_config |= 0x80000;
 
 		// configure rx mode
 		_sc92031_set_rx_config(dev);
 
-		if (duplex_full) {
+		अगर (duplex_full) अणु
 			priv->rx_config |= RxFullDx;
 			priv->tx_config |= TxFullDx;
 			flow_ctrl_config = FlowCtrlFullDX | FlowCtrlEnb;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->rx_config &= ~RxFullDx;
 			priv->tx_config &= ~TxFullDx;
-		}
+		पूर्ण
 
 		_sc92031_set_mar(dev);
 		_sc92031_set_rx_config(dev);
 		_sc92031_enable_tx_rx(dev);
-		iowrite32(flow_ctrl_config, port_base + FlowCtrlConfig);
+		ioग_लिखो32(flow_ctrl_config, port_base + FlowCtrlConfig);
 
-		netif_carrier_on(dev);
+		netअगर_carrier_on(dev);
 
-		if (printk_ratelimit())
-			printk(KERN_INFO "%s: link up, %sMbps, %s-duplex\n",
+		अगर (prपूर्णांकk_ratelimit())
+			prपूर्णांकk(KERN_INFO "%s: link up, %sMbps, %s-duplex\n",
 				dev->name,
 				speed_100 ? "100" : "10",
 				duplex_full ? "full" : "half");
-		return true;
-	} else {
+		वापस true;
+	पूर्ण अन्यथा अणु
 		_sc92031_mii_scan(port_base);
 
-		netif_carrier_off(dev);
+		netअगर_carrier_off(dev);
 
 		_sc92031_disable_tx_rx(dev);
 
-		if (printk_ratelimit())
-			printk(KERN_INFO "%s: link down\n", dev->name);
-		return false;
-	}
-}
+		अगर (prपूर्णांकk_ratelimit())
+			prपूर्णांकk(KERN_INFO "%s: link down\n", dev->name);
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void _sc92031_phy_reset(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_phy_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u32 phy_ctrl;
 
-	phy_ctrl = ioread32(port_base + PhyCtrl);
+	phy_ctrl = ioपढ़ो32(port_base + PhyCtrl);
 	phy_ctrl &= ~(PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10);
 	phy_ctrl |= PhyCtrlAne | PhyCtrlReset;
 
-	switch (media) {
-	default:
-	case AUTOSELECT:
+	चयन (media) अणु
+	शेष:
+	हाल AUTOSELECT:
 		phy_ctrl |= PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10;
-		break;
-	case M10_HALF:
+		अवरोध;
+	हाल M10_HALF:
 		phy_ctrl |= PhyCtrlSpd10;
-		break;
-	case M10_FULL:
+		अवरोध;
+	हाल M10_FULL:
 		phy_ctrl |= PhyCtrlDux | PhyCtrlSpd10;
-		break;
-	case M100_HALF:
+		अवरोध;
+	हाल M100_HALF:
 		phy_ctrl |= PhyCtrlSpd100;
-		break;
-	case M100_FULL:
+		अवरोध;
+	हाल M100_FULL:
 		phy_ctrl |= PhyCtrlDux | PhyCtrlSpd100;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	iowrite32(phy_ctrl, port_base + PhyCtrl);
+	ioग_लिखो32(phy_ctrl, port_base + PhyCtrl);
 	mdelay(10);
 
 	phy_ctrl &= ~PhyCtrlReset;
-	iowrite32(phy_ctrl, port_base + PhyCtrl);
+	ioग_लिखो32(phy_ctrl, port_base + PhyCtrl);
 	mdelay(1);
 
-	_sc92031_mii_write(port_base, MII_JAB,
+	_sc92031_mii_ग_लिखो(port_base, MII_JAB,
 			PHY_16_JAB_ENB | PHY_16_PORT_ENB);
 	_sc92031_mii_scan(port_base);
 
-	netif_carrier_off(dev);
-	netif_stop_queue(dev);
-}
+	netअगर_carrier_off(dev);
+	netअगर_stop_queue(dev);
+पूर्ण
 
-static void _sc92031_reset(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
 	/* disable PM */
-	iowrite32(0, port_base + PMConfig);
+	ioग_लिखो32(0, port_base + PMConfig);
 
 	/* soft reset the chip */
-	iowrite32(Cfg0_Reset, port_base + Config0);
+	ioग_लिखो32(Cfg0_Reset, port_base + Config0);
 	mdelay(200);
 
-	iowrite32(0, port_base + Config0);
+	ioग_लिखो32(0, port_base + Config0);
 	mdelay(10);
 
-	/* disable interrupts */
-	iowrite32(0, port_base + IntrMask);
+	/* disable पूर्णांकerrupts */
+	ioग_लिखो32(0, port_base + IntrMask);
 
 	/* clear multicast address */
-	iowrite32(0, port_base + MAR0);
-	iowrite32(0, port_base + MAR0 + 4);
+	ioग_लिखो32(0, port_base + MAR0);
+	ioग_लिखो32(0, port_base + MAR0 + 4);
 
 	/* init rx ring */
-	iowrite32(priv->rx_ring_dma_addr, port_base + RxbufAddr);
+	ioग_लिखो32(priv->rx_ring_dma_addr, port_base + RxbufAddr);
 	priv->rx_ring_tail = priv->rx_ring_dma_addr;
 
 	/* init tx ring */
 	_sc92031_tx_clear(dev);
 
-	/* clear old register values */
-	priv->intr_status = 0;
-	atomic_set(&priv->intr_mask, 0);
+	/* clear old रेजिस्टर values */
+	priv->पूर्णांकr_status = 0;
+	atomic_set(&priv->पूर्णांकr_mask, 0);
 	priv->rx_config = 0;
 	priv->tx_config = 0;
 	priv->mc_flags = 0;
 
 	/* configure rx buffer size */
-	/* NOTE: vendor driver had dead code here to enable early tx/rx */
-	iowrite32(Cfg1_Rcv64K, port_base + Config1);
+	/* NOTE: venकरोr driver had dead code here to enable early tx/rx */
+	ioग_लिखो32(Cfg1_Rcv64K, port_base + Config1);
 
 	_sc92031_phy_reset(dev);
 	_sc92031_check_media(dev);
 
-	/* calculate rx fifo overflow */
+	/* calculate rx fअगरo overflow */
 	priv->rx_value = 0;
 
 	/* enable PM */
-	iowrite32(priv->pm_config, port_base + PMConfig);
+	ioग_लिखो32(priv->pm_config, port_base + PMConfig);
 
-	/* clear intr register */
-	ioread32(port_base + IntrStatus);
-}
+	/* clear पूर्णांकr रेजिस्टर */
+	ioपढ़ो32(port_base + IntrStatus);
+पूर्ण
 
-static void _sc92031_tx_tasklet(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_tx_tasklet(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
-	unsigned old_tx_tail;
-	unsigned entry;
+	अचिन्हित old_tx_tail;
+	अचिन्हित entry;
 	u32 tx_status;
 
 	old_tx_tail = priv->tx_tail;
-	while (priv->tx_head - priv->tx_tail > 0) {
+	जबतक (priv->tx_head - priv->tx_tail > 0) अणु
 		entry = priv->tx_tail % NUM_TX_DESC;
-		tx_status = ioread32(port_base + TxStatus0 + entry * 4);
+		tx_status = ioपढ़ो32(port_base + TxStatus0 + entry * 4);
 
-		if (!(tx_status & (TxStatOK | TxUnderrun | TxAborted)))
-			break;
+		अगर (!(tx_status & (TxStatOK | TxUnderrun | TxAborted)))
+			अवरोध;
 
 		priv->tx_tail++;
 
-		if (tx_status & TxStatOK) {
+		अगर (tx_status & TxStatOK) अणु
 			dev->stats.tx_bytes += tx_status & 0x1fff;
 			dev->stats.tx_packets++;
-			/* Note: TxCarrierLost is always asserted at 100mbps. */
+			/* Note: TxCarrierLost is always निश्चितed at 100mbps. */
 			dev->stats.collisions += (tx_status >> 22) & 0xf;
-		}
+		पूर्ण
 
-		if (tx_status & (TxOutOfWindow | TxAborted)) {
+		अगर (tx_status & (TxOutOfWinकरोw | TxAborted)) अणु
 			dev->stats.tx_errors++;
 
-			if (tx_status & TxAborted)
-				dev->stats.tx_aborted_errors++;
+			अगर (tx_status & TxAborted)
+				dev->stats.tx_पातed_errors++;
 
-			if (tx_status & TxCarrierLost)
+			अगर (tx_status & TxCarrierLost)
 				dev->stats.tx_carrier_errors++;
 
-			if (tx_status & TxOutOfWindow)
-				dev->stats.tx_window_errors++;
-		}
+			अगर (tx_status & TxOutOfWinकरोw)
+				dev->stats.tx_winकरोw_errors++;
+		पूर्ण
 
-		if (tx_status & TxUnderrun)
-			dev->stats.tx_fifo_errors++;
-	}
+		अगर (tx_status & TxUnderrun)
+			dev->stats.tx_fअगरo_errors++;
+	पूर्ण
 
-	if (priv->tx_tail != old_tx_tail)
-		if (netif_queue_stopped(dev))
-			netif_wake_queue(dev);
-}
+	अगर (priv->tx_tail != old_tx_tail)
+		अगर (netअगर_queue_stopped(dev))
+			netअगर_wake_queue(dev);
+पूर्ण
 
-static void _sc92031_rx_tasklet_error(struct net_device *dev,
-				      u32 rx_status, unsigned rx_size)
-{
-	if(rx_size > (MAX_ETH_FRAME_SIZE + 4) || rx_size < 16) {
+अटल व्योम _sc92031_rx_tasklet_error(काष्ठा net_device *dev,
+				      u32 rx_status, अचिन्हित rx_size)
+अणु
+	अगर(rx_size > (MAX_ETH_FRAME_SIZE + 4) || rx_size < 16) अणु
 		dev->stats.rx_errors++;
 		dev->stats.rx_length_errors++;
-	}
+	पूर्ण
 
-	if (!(rx_status & RxStatesOK)) {
+	अगर (!(rx_status & RxStatesOK)) अणु
 		dev->stats.rx_errors++;
 
-		if (rx_status & (RxHugeFrame | RxSmallFrame))
+		अगर (rx_status & (RxHugeFrame | RxSmallFrame))
 			dev->stats.rx_length_errors++;
 
-		if (rx_status & RxBadAlign)
+		अगर (rx_status & RxBadAlign)
 			dev->stats.rx_frame_errors++;
 
-		if (!(rx_status & RxCRCOK))
+		अगर (!(rx_status & RxCRCOK))
 			dev->stats.rx_crc_errors++;
-	} else {
-		struct sc92031_priv *priv = netdev_priv(dev);
+	पूर्ण अन्यथा अणु
+		काष्ठा sc92031_priv *priv = netdev_priv(dev);
 		priv->rx_loss++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void _sc92031_rx_tasklet(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम _sc92031_rx_tasklet(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
 	dma_addr_t rx_ring_head;
-	unsigned rx_len;
-	unsigned rx_ring_offset;
-	void *rx_ring = priv->rx_ring;
+	अचिन्हित rx_len;
+	अचिन्हित rx_ring_offset;
+	व्योम *rx_ring = priv->rx_ring;
 
-	rx_ring_head = ioread32(port_base + RxBufWPtr);
+	rx_ring_head = ioपढ़ो32(port_base + RxBufWPtr);
 	rmb();
 
-	/* rx_ring_head is only 17 bits in the RxBufWPtr register.
+	/* rx_ring_head is only 17 bits in the RxBufWPtr रेजिस्टर.
 	 * we need to change it to 32 bits physical address
 	 */
 	rx_ring_head &= (dma_addr_t)(RX_BUF_LEN - 1);
 	rx_ring_head |= priv->rx_ring_dma_addr & ~(dma_addr_t)(RX_BUF_LEN - 1);
-	if (rx_ring_head < priv->rx_ring_dma_addr)
+	अगर (rx_ring_head < priv->rx_ring_dma_addr)
 		rx_ring_head += RX_BUF_LEN;
 
-	if (rx_ring_head >= priv->rx_ring_tail)
+	अगर (rx_ring_head >= priv->rx_ring_tail)
 		rx_len = rx_ring_head - priv->rx_ring_tail;
-	else
+	अन्यथा
 		rx_len = RX_BUF_LEN - (priv->rx_ring_tail - rx_ring_head);
 
-	if (!rx_len)
-		return;
+	अगर (!rx_len)
+		वापस;
 
-	if (unlikely(rx_len > RX_BUF_LEN)) {
-		if (printk_ratelimit())
-			printk(KERN_ERR "%s: rx packets length > rx buffer\n",
+	अगर (unlikely(rx_len > RX_BUF_LEN)) अणु
+		अगर (prपूर्णांकk_ratelimit())
+			prपूर्णांकk(KERN_ERR "%s: rx packets length > rx buffer\n",
 					dev->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rx_ring_offset = (priv->rx_ring_tail - priv->rx_ring_dma_addr) % RX_BUF_LEN;
 
-	while (rx_len) {
+	जबतक (rx_len) अणु
 		u32 rx_status;
-		unsigned rx_size, rx_size_align, pkt_size;
-		struct sk_buff *skb;
+		अचिन्हित rx_size, rx_size_align, pkt_size;
+		काष्ठा sk_buff *skb;
 
 		rx_status = le32_to_cpup((__le32 *)(rx_ring + rx_ring_offset));
 		rmb();
 
 		rx_size = rx_status >> 20;
-		rx_size_align = (rx_size + 3) & ~3;	// for 4 bytes aligned
+		rx_size_align = (rx_size + 3) & ~3;	// क्रम 4 bytes aligned
 		pkt_size = rx_size - 4;	// Omit the four octet CRC from the length.
 
 		rx_ring_offset = (rx_ring_offset + 4) % RX_BUF_LEN;
 
-		if (unlikely(rx_status == 0 ||
+		अगर (unlikely(rx_status == 0 ||
 			     rx_size > (MAX_ETH_FRAME_SIZE + 4) ||
 			     rx_size < 16 ||
-			     !(rx_status & RxStatesOK))) {
+			     !(rx_status & RxStatesOK))) अणु
 			_sc92031_rx_tasklet_error(dev, rx_status, rx_size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (unlikely(rx_size_align + 4 > rx_len)) {
-			if (printk_ratelimit())
-				printk(KERN_ERR "%s: rx_len is too small\n", dev->name);
-			break;
-		}
+		अगर (unlikely(rx_size_align + 4 > rx_len)) अणु
+			अगर (prपूर्णांकk_ratelimit())
+				prपूर्णांकk(KERN_ERR "%s: rx_len is too small\n", dev->name);
+			अवरोध;
+		पूर्ण
 
 		rx_len -= rx_size_align + 4;
 
 		skb = netdev_alloc_skb_ip_align(dev, pkt_size);
-		if (unlikely(!skb)) {
-			if (printk_ratelimit())
-				printk(KERN_ERR "%s: Couldn't allocate a skb_buff for a packet of size %u\n",
+		अगर (unlikely(!skb)) अणु
+			अगर (prपूर्णांकk_ratelimit())
+				prपूर्णांकk(KERN_ERR "%s: Couldn't allocate a skb_buff for a packet of size %u\n",
 						dev->name, pkt_size);
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
-		if ((rx_ring_offset + pkt_size) > RX_BUF_LEN) {
+		अगर ((rx_ring_offset + pkt_size) > RX_BUF_LEN) अणु
 			skb_put_data(skb, rx_ring + rx_ring_offset,
 				     RX_BUF_LEN - rx_ring_offset);
 			skb_put_data(skb, rx_ring,
 				     pkt_size - (RX_BUF_LEN - rx_ring_offset));
-		} else {
+		पूर्ण अन्यथा अणु
 			skb_put_data(skb, rx_ring + rx_ring_offset, pkt_size);
-		}
+		पूर्ण
 
 		skb->protocol = eth_type_trans(skb, dev);
-		netif_rx(skb);
+		netअगर_rx(skb);
 
 		dev->stats.rx_bytes += pkt_size;
 		dev->stats.rx_packets++;
 
-		if (rx_status & Rx_Multicast)
+		अगर (rx_status & Rx_Multicast)
 			dev->stats.multicast++;
 
 	next:
 		rx_ring_offset = (rx_ring_offset + rx_size_align) % RX_BUF_LEN;
-	}
+	पूर्ण
 	mb();
 
 	priv->rx_ring_tail = rx_ring_head;
-	iowrite32(priv->rx_ring_tail, port_base + RxBufRPtr);
-}
+	ioग_लिखो32(priv->rx_ring_tail, port_base + RxBufRPtr);
+पूर्ण
 
-static void _sc92031_link_tasklet(struct net_device *dev)
-{
-	if (_sc92031_check_media(dev))
-		netif_wake_queue(dev);
-	else {
-		netif_stop_queue(dev);
+अटल व्योम _sc92031_link_tasklet(काष्ठा net_device *dev)
+अणु
+	अगर (_sc92031_check_media(dev))
+		netअगर_wake_queue(dev);
+	अन्यथा अणु
+		netअगर_stop_queue(dev);
 		dev->stats.tx_carrier_errors++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void sc92031_tasklet(struct tasklet_struct *t)
-{
-	struct  sc92031_priv *priv = from_tasklet(priv, t, tasklet);
-	struct net_device *dev = priv->ndev;
-	void __iomem *port_base = priv->port_base;
-	u32 intr_status, intr_mask;
+अटल व्योम sc92031_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा  sc92031_priv *priv = from_tasklet(priv, t, tasklet);
+	काष्ठा net_device *dev = priv->ndev;
+	व्योम __iomem *port_base = priv->port_base;
+	u32 पूर्णांकr_status, पूर्णांकr_mask;
 
-	intr_status = priv->intr_status;
+	पूर्णांकr_status = priv->पूर्णांकr_status;
 
 	spin_lock(&priv->lock);
 
-	if (unlikely(!netif_running(dev)))
-		goto out;
+	अगर (unlikely(!netअगर_running(dev)))
+		जाओ out;
 
-	if (intr_status & TxOK)
+	अगर (पूर्णांकr_status & TxOK)
 		_sc92031_tx_tasklet(dev);
 
-	if (intr_status & RxOK)
+	अगर (पूर्णांकr_status & RxOK)
 		_sc92031_rx_tasklet(dev);
 
-	if (intr_status & RxOverflow)
+	अगर (पूर्णांकr_status & RxOverflow)
 		dev->stats.rx_errors++;
 
-	if (intr_status & TimeOut) {
+	अगर (पूर्णांकr_status & TimeOut) अणु
 		dev->stats.rx_errors++;
 		dev->stats.rx_length_errors++;
-	}
+	पूर्ण
 
-	if (intr_status & (LinkFail | LinkOK))
+	अगर (पूर्णांकr_status & (LinkFail | LinkOK))
 		_sc92031_link_tasklet(dev);
 
 out:
-	intr_mask = atomic_read(&priv->intr_mask);
+	पूर्णांकr_mask = atomic_पढ़ो(&priv->पूर्णांकr_mask);
 	rmb();
 
-	iowrite32(intr_mask, port_base + IntrMask);
+	ioग_लिखो32(पूर्णांकr_mask, port_base + IntrMask);
 
 	spin_unlock(&priv->lock);
-}
+पूर्ण
 
-static irqreturn_t sc92031_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
-	u32 intr_status, intr_mask;
+अटल irqवापस_t sc92031_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
+	u32 पूर्णांकr_status, पूर्णांकr_mask;
 
-	/* mask interrupts before clearing IntrStatus */
-	iowrite32(0, port_base + IntrMask);
-	_sc92031_dummy_read(port_base);
+	/* mask पूर्णांकerrupts beक्रमe clearing IntrStatus */
+	ioग_लिखो32(0, port_base + IntrMask);
+	_sc92031_dummy_पढ़ो(port_base);
 
-	intr_status = ioread32(port_base + IntrStatus);
-	if (unlikely(intr_status == 0xffffffff))
-		return IRQ_NONE;	// hardware has gone missing
+	पूर्णांकr_status = ioपढ़ो32(port_base + IntrStatus);
+	अगर (unlikely(पूर्णांकr_status == 0xffffffff))
+		वापस IRQ_NONE;	// hardware has gone missing
 
-	intr_status &= IntrBits;
-	if (!intr_status)
-		goto out_none;
+	पूर्णांकr_status &= IntrBits;
+	अगर (!पूर्णांकr_status)
+		जाओ out_none;
 
-	priv->intr_status = intr_status;
+	priv->पूर्णांकr_status = पूर्णांकr_status;
 	tasklet_schedule(&priv->tasklet);
 
-	return IRQ_HANDLED;
+	वापस IRQ_HANDLED;
 
 out_none:
-	intr_mask = atomic_read(&priv->intr_mask);
+	पूर्णांकr_mask = atomic_पढ़ो(&priv->पूर्णांकr_mask);
 	rmb();
 
-	iowrite32(intr_mask, port_base + IntrMask);
+	ioग_लिखो32(पूर्णांकr_mask, port_base + IntrMask);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static struct net_device_stats *sc92031_get_stats(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल काष्ठा net_device_stats *sc92031_get_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 
-	// FIXME I do not understand what is this trying to do.
-	if (netif_running(dev)) {
-		int temp;
+	// FIXME I करो not understand what is this trying to करो.
+	अगर (netअगर_running(dev)) अणु
+		पूर्णांक temp;
 
 		spin_lock_bh(&priv->lock);
 
 		/* Update the error count. */
-		temp = (ioread32(port_base + RxStatus0) >> 16) & 0xffff;
+		temp = (ioपढ़ो32(port_base + RxStatus0) >> 16) & 0xffff;
 
-		if (temp == 0xffff) {
+		अगर (temp == 0xffff) अणु
 			priv->rx_value += temp;
-			dev->stats.rx_fifo_errors = priv->rx_value;
-		} else
-			dev->stats.rx_fifo_errors = temp + priv->rx_value;
+			dev->stats.rx_fअगरo_errors = priv->rx_value;
+		पूर्ण अन्यथा
+			dev->stats.rx_fअगरo_errors = temp + priv->rx_value;
 
 		spin_unlock_bh(&priv->lock);
-	}
+	पूर्ण
 
-	return &dev->stats;
-}
+	वापस &dev->stats;
+पूर्ण
 
-static netdev_tx_t sc92031_start_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
-	unsigned len;
-	unsigned entry;
+अटल netdev_tx_t sc92031_start_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
+	अचिन्हित len;
+	अचिन्हित entry;
 	u32 tx_status;
 
-	if (unlikely(skb->len > TX_BUF_SIZE)) {
+	अगर (unlikely(skb->len > TX_BUF_SIZE)) अणु
 		dev->stats.tx_dropped++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	spin_lock(&priv->lock);
 
-	if (unlikely(!netif_carrier_ok(dev))) {
+	अगर (unlikely(!netअगर_carrier_ok(dev))) अणु
 		dev->stats.tx_dropped++;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	BUG_ON(priv->tx_head - priv->tx_tail >= NUM_TX_DESC);
 
@@ -957,27 +958,27 @@ static netdev_tx_t sc92031_start_xmit(struct sk_buff *skb,
 	skb_copy_and_csum_dev(skb, priv->tx_bufs + entry * TX_BUF_SIZE);
 
 	len = skb->len;
-	if (len < ETH_ZLEN) {
-		memset(priv->tx_bufs + entry * TX_BUF_SIZE + len,
+	अगर (len < ETH_ZLEN) अणु
+		स_रखो(priv->tx_bufs + entry * TX_BUF_SIZE + len,
 				0, ETH_ZLEN - len);
 		len = ETH_ZLEN;
-	}
+	पूर्ण
 
 	wmb();
 
-	if (len < 100)
+	अगर (len < 100)
 		tx_status = len;
-	else if (len < 300)
+	अन्यथा अगर (len < 300)
 		tx_status = 0x30000 | len;
-	else
+	अन्यथा
 		tx_status = 0x50000 | len;
 
-	iowrite32(priv->tx_bufs_dma_addr + entry * TX_BUF_SIZE,
+	ioग_लिखो32(priv->tx_bufs_dma_addr + entry * TX_BUF_SIZE,
 			port_base + TxAddr0 + entry * 4);
-	iowrite32(tx_status, port_base + TxStatus0 + entry * 4);
+	ioग_लिखो32(tx_status, port_base + TxStatus0 + entry * 4);
 
-	if (priv->tx_head - priv->tx_tail >= NUM_TX_DESC)
-		netif_stop_queue(dev);
+	अगर (priv->tx_head - priv->tx_tail >= NUM_TX_DESC)
+		netअगर_stop_queue(dev);
 
 out_unlock:
 	spin_unlock(&priv->lock);
@@ -985,71 +986,71 @@ out_unlock:
 out:
 	dev_consume_skb_any(skb);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int sc92031_open(struct net_device *dev)
-{
-	int err;
-	struct sc92031_priv *priv = netdev_priv(dev);
-	struct pci_dev *pdev = priv->pdev;
+अटल पूर्णांक sc92031_खोलो(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err;
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	काष्ठा pci_dev *pdev = priv->pdev;
 
 	priv->rx_ring = dma_alloc_coherent(&pdev->dev, RX_BUF_LEN,
 					   &priv->rx_ring_dma_addr, GFP_KERNEL);
-	if (unlikely(!priv->rx_ring)) {
+	अगर (unlikely(!priv->rx_ring)) अणु
 		err = -ENOMEM;
-		goto out_alloc_rx_ring;
-	}
+		जाओ out_alloc_rx_ring;
+	पूर्ण
 
 	priv->tx_bufs = dma_alloc_coherent(&pdev->dev, TX_BUF_TOT_LEN,
 					   &priv->tx_bufs_dma_addr, GFP_KERNEL);
-	if (unlikely(!priv->tx_bufs)) {
+	अगर (unlikely(!priv->tx_bufs)) अणु
 		err = -ENOMEM;
-		goto out_alloc_tx_bufs;
-	}
+		जाओ out_alloc_tx_bufs;
+	पूर्ण
 	priv->tx_head = priv->tx_tail = 0;
 
-	err = request_irq(pdev->irq, sc92031_interrupt,
+	err = request_irq(pdev->irq, sc92031_पूर्णांकerrupt,
 			IRQF_SHARED, dev->name, dev);
-	if (unlikely(err < 0))
-		goto out_request_irq;
+	अगर (unlikely(err < 0))
+		जाओ out_request_irq;
 
 	priv->pm_config = 0;
 
-	/* Interrupts already disabled by sc92031_stop or sc92031_probe */
+	/* Interrupts alपढ़ोy disabled by sc92031_stop or sc92031_probe */
 	spin_lock_bh(&priv->lock);
 
 	_sc92031_reset(dev);
 
 	spin_unlock_bh(&priv->lock);
-	sc92031_enable_interrupts(dev);
+	sc92031_enable_पूर्णांकerrupts(dev);
 
-	if (netif_carrier_ok(dev))
-		netif_start_queue(dev);
-	else
-		netif_tx_disable(dev);
+	अगर (netअगर_carrier_ok(dev))
+		netअगर_start_queue(dev);
+	अन्यथा
+		netअगर_tx_disable(dev);
 
-	return 0;
+	वापस 0;
 
 out_request_irq:
-	dma_free_coherent(&pdev->dev, TX_BUF_TOT_LEN, priv->tx_bufs,
+	dma_मुक्त_coherent(&pdev->dev, TX_BUF_TOT_LEN, priv->tx_bufs,
 			  priv->tx_bufs_dma_addr);
 out_alloc_tx_bufs:
-	dma_free_coherent(&pdev->dev, RX_BUF_LEN, priv->rx_ring,
+	dma_मुक्त_coherent(&pdev->dev, RX_BUF_LEN, priv->rx_ring,
 			  priv->rx_ring_dma_addr);
 out_alloc_rx_ring:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sc92031_stop(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	struct pci_dev *pdev = priv->pdev;
+अटल पूर्णांक sc92031_stop(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	काष्ठा pci_dev *pdev = priv->pdev;
 
-	netif_tx_disable(dev);
+	netअगर_tx_disable(dev);
 
-	/* Disable interrupts, stop Tx and Rx. */
-	sc92031_disable_interrupts(dev);
+	/* Disable पूर्णांकerrupts, stop Tx and Rx. */
+	sc92031_disable_पूर्णांकerrupts(dev);
 
 	spin_lock_bh(&priv->lock);
 
@@ -1058,18 +1059,18 @@ static int sc92031_stop(struct net_device *dev)
 
 	spin_unlock_bh(&priv->lock);
 
-	free_irq(pdev->irq, dev);
-	dma_free_coherent(&pdev->dev, TX_BUF_TOT_LEN, priv->tx_bufs,
+	मुक्त_irq(pdev->irq, dev);
+	dma_मुक्त_coherent(&pdev->dev, TX_BUF_TOT_LEN, priv->tx_bufs,
 			  priv->tx_bufs_dma_addr);
-	dma_free_coherent(&pdev->dev, RX_BUF_LEN, priv->rx_ring,
+	dma_मुक्त_coherent(&pdev->dev, RX_BUF_LEN, priv->rx_ring,
 			  priv->rx_ring_dma_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sc92031_set_multicast_list(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल व्योम sc92031_set_multicast_list(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
 	spin_lock_bh(&priv->lock);
 
@@ -1077,49 +1078,49 @@ static void sc92031_set_multicast_list(struct net_device *dev)
 	_sc92031_set_rx_config(dev);
 
 	spin_unlock_bh(&priv->lock);
-}
+पूर्ण
 
-static void sc92031_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल व्योम sc92031_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
-	/* Disable interrupts by clearing the interrupt mask.*/
-	sc92031_disable_interrupts(dev);
+	/* Disable पूर्णांकerrupts by clearing the पूर्णांकerrupt mask.*/
+	sc92031_disable_पूर्णांकerrupts(dev);
 
 	spin_lock(&priv->lock);
 
-	priv->tx_timeouts++;
+	priv->tx_समयouts++;
 
 	_sc92031_reset(dev);
 
 	spin_unlock(&priv->lock);
 
-	/* enable interrupts */
-	sc92031_enable_interrupts(dev);
+	/* enable पूर्णांकerrupts */
+	sc92031_enable_पूर्णांकerrupts(dev);
 
-	if (netif_carrier_ok(dev))
-		netif_wake_queue(dev);
-}
+	अगर (netअगर_carrier_ok(dev))
+		netअगर_wake_queue(dev);
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void sc92031_poll_controller(struct net_device *dev)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	const int irq = priv->pdev->irq;
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम sc92031_poll_controller(काष्ठा net_device *dev)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	स्थिर पूर्णांक irq = priv->pdev->irq;
 
 	disable_irq(irq);
-	if (sc92031_interrupt(irq, dev) != IRQ_NONE)
+	अगर (sc92031_पूर्णांकerrupt(irq, dev) != IRQ_NONE)
 		sc92031_tasklet(&priv->tasklet);
 	enable_irq(irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int
-sc92031_ethtool_get_link_ksettings(struct net_device *dev,
-				   struct ethtool_link_ksettings *cmd)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल पूर्णांक
+sc92031_ethtool_get_link_ksettings(काष्ठा net_device *dev,
+				   काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u8 phy_address;
 	u32 phy_ctrl;
 	u16 output_status;
@@ -1127,10 +1128,10 @@ sc92031_ethtool_get_link_ksettings(struct net_device *dev,
 
 	spin_lock_bh(&priv->lock);
 
-	phy_address = ioread32(port_base + Miicmd1) >> 27;
-	phy_ctrl = ioread32(port_base + PhyCtrl);
+	phy_address = ioपढ़ो32(port_base + Miicmd1) >> 27;
+	phy_ctrl = ioपढ़ो32(port_base + PhyCtrl);
 
-	output_status = _sc92031_mii_read(port_base, MII_OutputStatus);
+	output_status = _sc92031_mii_पढ़ो(port_base, MII_OutputStatus);
 	_sc92031_mii_scan(port_base);
 
 	spin_unlock_bh(&priv->lock);
@@ -1141,32 +1142,32 @@ sc92031_ethtool_get_link_ksettings(struct net_device *dev,
 
 	advertising = ADVERTISED_TP | ADVERTISED_MII;
 
-	if ((phy_ctrl & (PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10))
+	अगर ((phy_ctrl & (PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10))
 			== (PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10))
 		advertising |= ADVERTISED_Autoneg;
 
-	if ((phy_ctrl & PhyCtrlSpd10) == PhyCtrlSpd10)
+	अगर ((phy_ctrl & PhyCtrlSpd10) == PhyCtrlSpd10)
 		advertising |= ADVERTISED_10baseT_Half;
 
-	if ((phy_ctrl & (PhyCtrlSpd10 | PhyCtrlDux))
+	अगर ((phy_ctrl & (PhyCtrlSpd10 | PhyCtrlDux))
 			== (PhyCtrlSpd10 | PhyCtrlDux))
 		advertising |= ADVERTISED_10baseT_Full;
 
-	if ((phy_ctrl & PhyCtrlSpd100) == PhyCtrlSpd100)
+	अगर ((phy_ctrl & PhyCtrlSpd100) == PhyCtrlSpd100)
 		advertising |= ADVERTISED_100baseT_Half;
 
-	if ((phy_ctrl & (PhyCtrlSpd100 | PhyCtrlDux))
+	अगर ((phy_ctrl & (PhyCtrlSpd100 | PhyCtrlDux))
 			== (PhyCtrlSpd100 | PhyCtrlDux))
 		advertising |= ADVERTISED_100baseT_Full;
 
-	if (phy_ctrl & PhyCtrlAne)
+	अगर (phy_ctrl & PhyCtrlAne)
 		advertising |= ADVERTISED_Autoneg;
 
 	cmd->base.speed = (output_status & 0x2) ? SPEED_100 : SPEED_10;
 	cmd->base.duplex = (output_status & 0x4) ? DUPLEX_FULL : DUPLEX_HALF;
 	cmd->base.port = PORT_MII;
 	cmd->base.phy_address = phy_address;
-	cmd->base.autoneg = (phy_ctrl & PhyCtrlAne) ?
+	cmd->base.स्वतःneg = (phy_ctrl & PhyCtrlAne) ?
 		AUTONEG_ENABLE : AUTONEG_DISABLE;
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
@@ -1174,15 +1175,15 @@ sc92031_ethtool_get_link_ksettings(struct net_device *dev,
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-sc92031_ethtool_set_link_ksettings(struct net_device *dev,
-				   const struct ethtool_link_ksettings *cmd)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल पूर्णांक
+sc92031_ethtool_set_link_ksettings(काष्ठा net_device *dev,
+				   स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u32 speed = cmd->base.speed;
 	u32 phy_ctrl;
 	u32 old_phy_ctrl;
@@ -1191,75 +1192,75 @@ sc92031_ethtool_set_link_ksettings(struct net_device *dev,
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	if (!(speed == SPEED_10 || speed == SPEED_100))
-		return -EINVAL;
-	if (!(cmd->base.duplex == DUPLEX_HALF ||
+	अगर (!(speed == SPEED_10 || speed == SPEED_100))
+		वापस -EINVAL;
+	अगर (!(cmd->base.duplex == DUPLEX_HALF ||
 	      cmd->base.duplex == DUPLEX_FULL))
-		return -EINVAL;
-	if (!(cmd->base.port == PORT_MII))
-		return -EINVAL;
-	if (!(cmd->base.phy_address == 0x1f))
-		return -EINVAL;
-	if (!(cmd->base.autoneg == AUTONEG_DISABLE ||
-	      cmd->base.autoneg == AUTONEG_ENABLE))
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (!(cmd->base.port == PORT_MII))
+		वापस -EINVAL;
+	अगर (!(cmd->base.phy_address == 0x1f))
+		वापस -EINVAL;
+	अगर (!(cmd->base.स्वतःneg == AUTONEG_DISABLE ||
+	      cmd->base.स्वतःneg == AUTONEG_ENABLE))
+		वापस -EINVAL;
 
-	if (cmd->base.autoneg == AUTONEG_ENABLE) {
-		if (!(advertising & (ADVERTISED_Autoneg
+	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE) अणु
+		अगर (!(advertising & (ADVERTISED_Autoneg
 				| ADVERTISED_100baseT_Full
 				| ADVERTISED_100baseT_Half
 				| ADVERTISED_10baseT_Full
 				| ADVERTISED_10baseT_Half)))
-			return -EINVAL;
+			वापस -EINVAL;
 
 		phy_ctrl = PhyCtrlAne;
 
-		// FIXME: I'm not sure what the original code was trying to do
-		if (advertising & ADVERTISED_Autoneg)
+		// FIXME: I'm not sure what the original code was trying to करो
+		अगर (advertising & ADVERTISED_Autoneg)
 			phy_ctrl |= PhyCtrlDux | PhyCtrlSpd100 | PhyCtrlSpd10;
-		if (advertising & ADVERTISED_100baseT_Full)
+		अगर (advertising & ADVERTISED_100baseT_Full)
 			phy_ctrl |= PhyCtrlDux | PhyCtrlSpd100;
-		if (advertising & ADVERTISED_100baseT_Half)
+		अगर (advertising & ADVERTISED_100baseT_Half)
 			phy_ctrl |= PhyCtrlSpd100;
-		if (advertising & ADVERTISED_10baseT_Full)
+		अगर (advertising & ADVERTISED_10baseT_Full)
 			phy_ctrl |= PhyCtrlSpd10 | PhyCtrlDux;
-		if (advertising & ADVERTISED_10baseT_Half)
+		अगर (advertising & ADVERTISED_10baseT_Half)
 			phy_ctrl |= PhyCtrlSpd10;
-	} else {
+	पूर्ण अन्यथा अणु
 		// FIXME: Whole branch guessed
 		phy_ctrl = 0;
 
-		if (speed == SPEED_10)
+		अगर (speed == SPEED_10)
 			phy_ctrl |= PhyCtrlSpd10;
-		else /* cmd->speed == SPEED_100 */
+		अन्यथा /* cmd->speed == SPEED_100 */
 			phy_ctrl |= PhyCtrlSpd100;
 
-		if (cmd->base.duplex == DUPLEX_FULL)
+		अगर (cmd->base.duplex == DUPLEX_FULL)
 			phy_ctrl |= PhyCtrlDux;
-	}
+	पूर्ण
 
 	spin_lock_bh(&priv->lock);
 
-	old_phy_ctrl = ioread32(port_base + PhyCtrl);
+	old_phy_ctrl = ioपढ़ो32(port_base + PhyCtrl);
 	phy_ctrl |= old_phy_ctrl & ~(PhyCtrlAne | PhyCtrlDux
 			| PhyCtrlSpd100 | PhyCtrlSpd10);
-	if (phy_ctrl != old_phy_ctrl)
-		iowrite32(phy_ctrl, port_base + PhyCtrl);
+	अगर (phy_ctrl != old_phy_ctrl)
+		ioग_लिखो32(phy_ctrl, port_base + PhyCtrl);
 
 	spin_unlock_bh(&priv->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sc92031_ethtool_get_wol(struct net_device *dev,
-		struct ethtool_wolinfo *wolinfo)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल व्योम sc92031_ethtool_get_wol(काष्ठा net_device *dev,
+		काष्ठा ethtool_wolinfo *wolinfo)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u32 pm_config;
 
 	spin_lock_bh(&priv->lock);
-	pm_config = ioread32(port_base + PMConfig);
+	pm_config = ioपढ़ो32(port_base + PMConfig);
 	spin_unlock_bh(&priv->lock);
 
 	// FIXME: Guessed
@@ -1267,107 +1268,107 @@ static void sc92031_ethtool_get_wol(struct net_device *dev,
 			| WAKE_UCAST | WAKE_MCAST | WAKE_BCAST;
 	wolinfo->wolopts = 0;
 
-	if (pm_config & PM_LinkUp)
+	अगर (pm_config & PM_LinkUp)
 		wolinfo->wolopts |= WAKE_PHY;
 
-	if (pm_config & PM_Magic)
+	अगर (pm_config & PM_Magic)
 		wolinfo->wolopts |= WAKE_MAGIC;
 
-	if (pm_config & PM_WakeUp)
+	अगर (pm_config & PM_WakeUp)
 		// FIXME: Guessed
 		wolinfo->wolopts |= WAKE_UCAST | WAKE_MCAST | WAKE_BCAST;
-}
+पूर्ण
 
-static int sc92031_ethtool_set_wol(struct net_device *dev,
-		struct ethtool_wolinfo *wolinfo)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल पूर्णांक sc92031_ethtool_set_wol(काष्ठा net_device *dev,
+		काष्ठा ethtool_wolinfo *wolinfo)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u32 pm_config;
 
 	spin_lock_bh(&priv->lock);
 
-	pm_config = ioread32(port_base + PMConfig)
+	pm_config = ioपढ़ो32(port_base + PMConfig)
 			& ~(PM_LinkUp | PM_Magic | PM_WakeUp);
 
-	if (wolinfo->wolopts & WAKE_PHY)
+	अगर (wolinfo->wolopts & WAKE_PHY)
 		pm_config |= PM_LinkUp;
 
-	if (wolinfo->wolopts & WAKE_MAGIC)
+	अगर (wolinfo->wolopts & WAKE_MAGIC)
 		pm_config |= PM_Magic;
 
 	// FIXME: Guessed
-	if (wolinfo->wolopts & (WAKE_UCAST | WAKE_MCAST | WAKE_BCAST))
+	अगर (wolinfo->wolopts & (WAKE_UCAST | WAKE_MCAST | WAKE_BCAST))
 		pm_config |= PM_WakeUp;
 
 	priv->pm_config = pm_config;
-	iowrite32(pm_config, port_base + PMConfig);
+	ioग_लिखो32(pm_config, port_base + PMConfig);
 
 	spin_unlock_bh(&priv->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sc92031_ethtool_nway_reset(struct net_device *dev)
-{
-	int err = 0;
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem *port_base = priv->port_base;
+अटल पूर्णांक sc92031_ethtool_nway_reset(काष्ठा net_device *dev)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem *port_base = priv->port_base;
 	u16 bmcr;
 
 	spin_lock_bh(&priv->lock);
 
-	bmcr = _sc92031_mii_read(port_base, MII_BMCR);
-	if (!(bmcr & BMCR_ANENABLE)) {
+	bmcr = _sc92031_mii_पढ़ो(port_base, MII_BMCR);
+	अगर (!(bmcr & BMCR_ANENABLE)) अणु
 		err = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	_sc92031_mii_write(port_base, MII_BMCR, bmcr | BMCR_ANRESTART);
+	_sc92031_mii_ग_लिखो(port_base, MII_BMCR, bmcr | BMCR_ANRESTART);
 
 out:
 	_sc92031_mii_scan(port_base);
 
 	spin_unlock_bh(&priv->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const char sc92031_ethtool_stats_strings[SILAN_STATS_NUM][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर sc92031_ethtool_stats_strings[SILAN_STATS_NUM][ETH_GSTRING_LEN] = अणु
 	"tx_timeout",
 	"rx_loss",
-};
+पूर्ण;
 
-static void sc92031_ethtool_get_strings(struct net_device *dev,
+अटल व्योम sc92031_ethtool_get_strings(काष्ठा net_device *dev,
 		u32 stringset, u8 *data)
-{
-	if (stringset == ETH_SS_STATS)
-		memcpy(data, sc92031_ethtool_stats_strings,
+अणु
+	अगर (stringset == ETH_SS_STATS)
+		स_नकल(data, sc92031_ethtool_stats_strings,
 				SILAN_STATS_NUM * ETH_GSTRING_LEN);
-}
+पूर्ण
 
-static int sc92031_ethtool_get_sset_count(struct net_device *dev, int sset)
-{
-	switch (sset) {
-	case ETH_SS_STATS:
-		return SILAN_STATS_NUM;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक sc92031_ethtool_get_sset_count(काष्ठा net_device *dev, पूर्णांक sset)
+अणु
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		वापस SILAN_STATS_NUM;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void sc92031_ethtool_get_ethtool_stats(struct net_device *dev,
-		struct ethtool_stats *stats, u64 *data)
-{
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल व्योम sc92031_ethtool_get_ethtool_stats(काष्ठा net_device *dev,
+		काष्ठा ethtool_stats *stats, u64 *data)
+अणु
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
 	spin_lock_bh(&priv->lock);
-	data[0] = priv->tx_timeouts;
+	data[0] = priv->tx_समयouts;
 	data[1] = priv->rx_loss;
 	spin_unlock_bh(&priv->lock);
-}
+पूर्ण
 
-static const struct ethtool_ops sc92031_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops sc92031_ethtool_ops = अणु
 	.get_wol		= sc92031_ethtool_get_wol,
 	.set_wol		= sc92031_ethtool_set_wol,
 	.nway_reset		= sc92031_ethtool_nway_reset,
@@ -1377,60 +1378,60 @@ static const struct ethtool_ops sc92031_ethtool_ops = {
 	.get_ethtool_stats	= sc92031_ethtool_get_ethtool_stats,
 	.get_link_ksettings	= sc92031_ethtool_get_link_ksettings,
 	.set_link_ksettings	= sc92031_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
 
-static const struct net_device_ops sc92031_netdev_ops = {
-	.ndo_get_stats		= sc92031_get_stats,
-	.ndo_start_xmit		= sc92031_start_xmit,
-	.ndo_open		= sc92031_open,
-	.ndo_stop		= sc92031_stop,
-	.ndo_set_rx_mode	= sc92031_set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_tx_timeout		= sc92031_tx_timeout,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= sc92031_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops sc92031_netdev_ops = अणु
+	.nकरो_get_stats		= sc92031_get_stats,
+	.nकरो_start_xmit		= sc92031_start_xmit,
+	.nकरो_खोलो		= sc92031_खोलो,
+	.nकरो_stop		= sc92031_stop,
+	.nकरो_set_rx_mode	= sc92031_set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_tx_समयout		= sc92031_tx_समयout,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= sc92031_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-static int sc92031_probe(struct pci_dev *pdev, const struct pci_device_id *id)
-{
-	int err;
-	void __iomem* port_base;
-	struct net_device *dev;
-	struct sc92031_priv *priv;
+अटल पूर्णांक sc92031_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक err;
+	व्योम __iomem* port_base;
+	काष्ठा net_device *dev;
+	काष्ठा sc92031_priv *priv;
 	u32 mac0, mac1;
 
 	err = pci_enable_device(pdev);
-	if (unlikely(err < 0))
-		goto out_enable_device;
+	अगर (unlikely(err < 0))
+		जाओ out_enable_device;
 
 	pci_set_master(pdev);
 
 	err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (unlikely(err < 0))
-		goto out_set_dma_mask;
+	अगर (unlikely(err < 0))
+		जाओ out_set_dma_mask;
 
 	err = dma_set_coherent_mask(&pdev->dev, DMA_BIT_MASK(32));
-	if (unlikely(err < 0))
-		goto out_set_dma_mask;
+	अगर (unlikely(err < 0))
+		जाओ out_set_dma_mask;
 
 	err = pci_request_regions(pdev, SC92031_NAME);
-	if (unlikely(err < 0))
-		goto out_request_regions;
+	अगर (unlikely(err < 0))
+		जाओ out_request_regions;
 
 	port_base = pci_iomap(pdev, SC92031_USE_PIO, 0);
-	if (unlikely(!port_base)) {
+	अगर (unlikely(!port_base)) अणु
 		err = -EIO;
-		goto out_iomap;
-	}
+		जाओ out_iomap;
+	पूर्ण
 
-	dev = alloc_etherdev(sizeof(struct sc92031_priv));
-	if (unlikely(!dev)) {
+	dev = alloc_etherdev(माप(काष्ठा sc92031_priv));
+	अगर (unlikely(!dev)) अणु
 		err = -ENOMEM;
-		goto out_alloc_etherdev;
-	}
+		जाओ out_alloc_etherdev;
+	पूर्ण
 
 	pci_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
@@ -1440,7 +1441,7 @@ static int sc92031_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 		NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 
 	dev->netdev_ops		= &sc92031_netdev_ops;
-	dev->watchdog_timeo	= TX_TIMEOUT;
+	dev->watchकरोg_समयo	= TX_TIMEOUT;
 	dev->ethtool_ops	= &sc92031_ethtool_ops;
 
 	priv = netdev_priv(dev);
@@ -1449,15 +1450,15 @@ static int sc92031_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	priv->port_base = port_base;
 	priv->pdev = pdev;
 	tasklet_setup(&priv->tasklet, sc92031_tasklet);
-	/* Fudge tasklet count so the call to sc92031_enable_interrupts at
-	 * sc92031_open will work correctly */
+	/* Fudge tasklet count so the call to sc92031_enable_पूर्णांकerrupts at
+	 * sc92031_खोलो will work correctly */
 	tasklet_disable_nosync(&priv->tasklet);
 
 	/* PCI PM Wakeup */
-	iowrite32((~PM_LongWF & ~PM_LWPTN) | PM_Enable, port_base + PMConfig);
+	ioग_लिखो32((~PM_LongWF & ~PM_LWPTN) | PM_Enable, port_base + PMConfig);
 
-	mac0 = ioread32(port_base + MAC0);
-	mac1 = ioread32(port_base + MAC0 + 4);
+	mac0 = ioपढ़ो32(port_base + MAC0);
+	mac1 = ioपढ़ो32(port_base + MAC0 + 4);
 	dev->dev_addr[0] = mac0 >> 24;
 	dev->dev_addr[1] = mac0 >> 16;
 	dev->dev_addr[2] = mac0 >> 8;
@@ -1465,18 +1466,18 @@ static int sc92031_probe(struct pci_dev *pdev, const struct pci_device_id *id)
 	dev->dev_addr[4] = mac1 >> 8;
 	dev->dev_addr[5] = mac1;
 
-	err = register_netdev(dev);
-	if (err < 0)
-		goto out_register_netdev;
+	err = रेजिस्टर_netdev(dev);
+	अगर (err < 0)
+		जाओ out_रेजिस्टर_netdev;
 
-	printk(KERN_INFO "%s: SC92031 at 0x%lx, %pM, IRQ %d\n", dev->name,
-	       (long)pci_resource_start(pdev, SC92031_USE_PIO), dev->dev_addr,
+	prपूर्णांकk(KERN_INFO "%s: SC92031 at 0x%lx, %pM, IRQ %d\n", dev->name,
+	       (दीर्घ)pci_resource_start(pdev, SC92031_USE_PIO), dev->dev_addr,
 	       pdev->irq);
 
-	return 0;
+	वापस 0;
 
-out_register_netdev:
-	free_netdev(dev);
+out_रेजिस्टर_netdev:
+	मुक्त_netdev(dev);
 out_alloc_etherdev:
 	pci_iounmap(pdev, port_base);
 out_iomap:
@@ -1485,34 +1486,34 @@ out_request_regions:
 out_set_dma_mask:
 	pci_disable_device(pdev);
 out_enable_device:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sc92031_remove(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
-	struct sc92031_priv *priv = netdev_priv(dev);
-	void __iomem* port_base = priv->port_base;
+अटल व्योम sc92031_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
+	व्योम __iomem* port_base = priv->port_base;
 
-	unregister_netdev(dev);
-	free_netdev(dev);
+	unरेजिस्टर_netdev(dev);
+	मुक्त_netdev(dev);
 	pci_iounmap(pdev, port_base);
 	pci_release_regions(pdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int __maybe_unused sc92031_suspend(struct device *dev_d)
-{
-	struct net_device *dev = dev_get_drvdata(dev_d);
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल पूर्णांक __maybe_unused sc92031_suspend(काष्ठा device *dev_d)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return 0;
+	अगर (!netअगर_running(dev))
+		वापस 0;
 
-	netif_device_detach(dev);
+	netअगर_device_detach(dev);
 
-	/* Disable interrupts, stop Tx and Rx. */
-	sc92031_disable_interrupts(dev);
+	/* Disable पूर्णांकerrupts, stop Tx and Rx. */
+	sc92031_disable_पूर्णांकerrupts(dev);
 
 	spin_lock_bh(&priv->lock);
 
@@ -1521,52 +1522,52 @@ static int __maybe_unused sc92031_suspend(struct device *dev_d)
 
 	spin_unlock_bh(&priv->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused sc92031_resume(struct device *dev_d)
-{
-	struct net_device *dev = dev_get_drvdata(dev_d);
-	struct sc92031_priv *priv = netdev_priv(dev);
+अटल पूर्णांक __maybe_unused sc92031_resume(काष्ठा device *dev_d)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
+	काष्ठा sc92031_priv *priv = netdev_priv(dev);
 
-	if (!netif_running(dev))
-		return 0;
+	अगर (!netअगर_running(dev))
+		वापस 0;
 
-	/* Interrupts already disabled by sc92031_suspend */
+	/* Interrupts alपढ़ोy disabled by sc92031_suspend */
 	spin_lock_bh(&priv->lock);
 
 	_sc92031_reset(dev);
 
 	spin_unlock_bh(&priv->lock);
-	sc92031_enable_interrupts(dev);
+	sc92031_enable_पूर्णांकerrupts(dev);
 
-	netif_device_attach(dev);
+	netअगर_device_attach(dev);
 
-	if (netif_carrier_ok(dev))
-		netif_wake_queue(dev);
-	else
-		netif_tx_disable(dev);
+	अगर (netअगर_carrier_ok(dev))
+		netअगर_wake_queue(dev);
+	अन्यथा
+		netअगर_tx_disable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_device_id sc92031_pci_device_id_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x2031) },
-	{ PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x8139) },
-	{ PCI_DEVICE(0x1088, 0x2031) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id sc92031_pci_device_id_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x2031) पूर्ण,
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SILAN, 0x8139) पूर्ण,
+	अणु PCI_DEVICE(0x1088, 0x2031) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, sc92031_pci_device_id_table);
 
-static SIMPLE_DEV_PM_OPS(sc92031_pm_ops, sc92031_suspend, sc92031_resume);
+अटल SIMPLE_DEV_PM_OPS(sc92031_pm_ops, sc92031_suspend, sc92031_resume);
 
-static struct pci_driver sc92031_pci_driver = {
+अटल काष्ठा pci_driver sc92031_pci_driver = अणु
 	.name		= SC92031_NAME,
 	.id_table	= sc92031_pci_device_id_table,
 	.probe		= sc92031_probe,
-	.remove		= sc92031_remove,
+	.हटाओ		= sc92031_हटाओ,
 	.driver.pm	= &sc92031_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(sc92031_pci_driver);
 MODULE_LICENSE("GPL");

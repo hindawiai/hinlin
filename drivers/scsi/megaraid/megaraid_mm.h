@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *
  *			Linux MegaRAID device driver
  *
  * Copyright (c) 2003-2004  LSI Logic Corporation.
  *
- * FILE		: megaraid_mm.h
+ * खाता		: megaraid_mm.h
  */
 
-#ifndef MEGARAID_MM_H
-#define MEGARAID_MM_H
+#अगर_अघोषित MEGARAID_MM_H
+#घोषणा MEGARAID_MM_H
 
-#include <linux/spinlock.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/pci.h>
-#include <linux/list.h>
-#include <linux/miscdevice.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/list.h>
+#समावेश <linux/miscdevice.h>
 
-#include "mbox_defs.h"
-#include "megaraid_ioctl.h"
+#समावेश "mbox_defs.h"
+#समावेश "megaraid_ioctl.h"
 
 
-#define LSI_COMMON_MOD_VERSION	"2.20.2.7"
-#define LSI_COMMON_MOD_EXT_VERSION	\
+#घोषणा LSI_COMMON_MOD_VERSION	"2.20.2.7"
+#घोषणा LSI_COMMON_MOD_EXT_VERSION	\
 		"(Release Date: Sun Jul 16 00:01:03 EST 2006)"
 
 
-#define LSI_DBGLVL			dbglevel
+#घोषणा LSI_DBGLVL			dbglevel
 
 // The smallest dma pool
-#define MRAID_MM_INIT_BUFF_SIZE		4096
+#घोषणा MRAID_MM_INIT_BUFF_SIZE		4096
 
 /**
- * mimd_t	: Old style ioctl packet structure (deprecated)
+ * mimd_t	: Old style ioctl packet काष्ठाure (deprecated)
  *
  * @inlen	:
  * @outlen	:
@@ -51,47 +52,47 @@
  * @data	:
  * @pad		:
  *
- * Note		: This structure is DEPRECATED. New applications must use
- *		: uioc_t structure instead. All new hba drivers use the new
- *		: format. If we get this mimd packet, we will convert it into
- *		: new uioc_t format and send it to the hba drivers.
+ * Note		: This काष्ठाure is DEPRECATED. New applications must use
+ *		: uioc_t काष्ठाure instead. All new hba drivers use the new
+ *		: क्रमmat. If we get this mimd packet, we will convert it पूर्णांकo
+ *		: new uioc_t क्रमmat and send it to the hba drivers.
  */
 
-typedef struct mimd {
+प्रकार काष्ठा mimd अणु
 
-	uint32_t inlen;
-	uint32_t outlen;
+	uपूर्णांक32_t inlen;
+	uपूर्णांक32_t outlen;
 
-	union {
-		uint8_t fca[16];
-		struct {
-			uint8_t opcode;
-			uint8_t subopcode;
-			uint16_t adapno;
-#if BITS_PER_LONG == 32
-			uint8_t __user *buffer;
-			uint8_t pad[4];
-#endif
-#if BITS_PER_LONG == 64
-			uint8_t __user *buffer;
-#endif
-			uint32_t length;
-		} __attribute__ ((packed)) fcs;
-	} __attribute__ ((packed)) ui;
+	जोड़ अणु
+		uपूर्णांक8_t fca[16];
+		काष्ठा अणु
+			uपूर्णांक8_t opcode;
+			uपूर्णांक8_t subopcode;
+			uपूर्णांक16_t adapno;
+#अगर BITS_PER_LONG == 32
+			uपूर्णांक8_t __user *buffer;
+			uपूर्णांक8_t pad[4];
+#पूर्ण_अगर
+#अगर BITS_PER_LONG == 64
+			uपूर्णांक8_t __user *buffer;
+#पूर्ण_अगर
+			uपूर्णांक32_t length;
+		पूर्ण __attribute__ ((packed)) fcs;
+	पूर्ण __attribute__ ((packed)) ui;
 
-	uint8_t mbox[18];		/* 16 bytes + 2 status bytes */
+	uपूर्णांक8_t mbox[18];		/* 16 bytes + 2 status bytes */
 	mraid_passthru_t pthru;
 
-#if BITS_PER_LONG == 32
-	char __user *data;		/* buffer <= 4096 for 0x80 commands */
-	char pad[4];
-#endif
-#if BITS_PER_LONG == 64
-	char __user *data;
-#endif
+#अगर BITS_PER_LONG == 32
+	अक्षर __user *data;		/* buffer <= 4096 क्रम 0x80 commands */
+	अक्षर pad[4];
+#पूर्ण_अगर
+#अगर BITS_PER_LONG == 64
+	अक्षर __user *data;
+#पूर्ण_अगर
 
-} __attribute__ ((packed))mimd_t;
+पूर्ण __attribute__ ((packed))mimd_t;
 
-#endif // MEGARAID_MM_H
+#पूर्ण_अगर // MEGARAID_MM_H
 
 // vi: set ts=8 sw=8 tw=78:

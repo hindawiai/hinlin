@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_DISPLAY_POWER_H__
-#define __INTEL_DISPLAY_POWER_H__
+#अगर_अघोषित __INTEL_DISPLAY_POWER_H__
+#घोषणा __INTEL_DISPLAY_POWER_H__
 
-#include "intel_display.h"
-#include "intel_runtime_pm.h"
-#include "i915_reg.h"
+#समावेश "intel_display.h"
+#समावेश "intel_runtime_pm.h"
+#समावेश "i915_reg.h"
 
-struct drm_i915_private;
-struct intel_encoder;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_encoder;
 
-enum intel_display_power_domain {
+क्रमागत पूर्णांकel_display_घातer_करोमुख्य अणु
 	POWER_DOMAIN_DISPLAY_CORE,
 	POWER_DOMAIN_PIPE_A,
 	POWER_DOMAIN_PIPE_B,
@@ -28,7 +29,7 @@ enum intel_display_power_domain {
 	POWER_DOMAIN_TRANSCODER_C,
 	POWER_DOMAIN_TRANSCODER_D,
 	POWER_DOMAIN_TRANSCODER_EDP,
-	/* VDSC/joining for eDP/DSI transcoder (ICL) or pipe A (TGL) */
+	/* VDSC/joining क्रम eDP/DSI transcoder (ICL) or pipe A (TGL) */
 	POWER_DOMAIN_TRANSCODER_VDSC_PW2,
 	POWER_DOMAIN_TRANSCODER_DSI_A,
 	POWER_DOMAIN_TRANSCODER_DSI_C,
@@ -112,16 +113,16 @@ enum intel_display_power_domain {
 	POWER_DOMAIN_INIT,
 
 	POWER_DOMAIN_NUM,
-};
+पूर्ण;
 
 /*
- * i915_power_well_id:
+ * i915_घातer_well_id:
  *
- * IDs used to look up power wells. Power wells accessed directly bypassing
- * the power domains framework must be assigned a unique ID. The rest of power
- * wells must be assigned DISP_PW_ID_NONE.
+ * IDs used to look up घातer wells. Power wells accessed directly bypassing
+ * the घातer करोमुख्यs framework must be asचिन्हित a unique ID. The rest of घातer
+ * wells must be asचिन्हित DISP_PW_ID_NONE.
  */
-enum i915_power_well_id {
+क्रमागत i915_घातer_well_id अणु
 	DISP_PW_ID_NONE,
 
 	VLV_DISP_PW_DISP2D,
@@ -138,78 +139,78 @@ enum i915_power_well_id {
 	ICL_DISP_PW_3,
 	SKL_DISP_DC_OFF,
 	TGL_DISP_PW_TC_COLD_OFF,
-};
+पूर्ण;
 
-#define POWER_DOMAIN_PIPE(pipe) ((pipe) + POWER_DOMAIN_PIPE_A)
-#define POWER_DOMAIN_PIPE_PANEL_FITTER(pipe) \
+#घोषणा POWER_DOMAIN_PIPE(pipe) ((pipe) + POWER_DOMAIN_PIPE_A)
+#घोषणा POWER_DOMAIN_PIPE_PANEL_FITTER(pipe) \
 		((pipe) + POWER_DOMAIN_PIPE_A_PANEL_FITTER)
-#define POWER_DOMAIN_TRANSCODER(tran) \
+#घोषणा POWER_DOMAIN_TRANSCODER(tran) \
 	((tran) == TRANSCODER_EDP ? POWER_DOMAIN_TRANSCODER_EDP : \
 	 (tran) + POWER_DOMAIN_TRANSCODER_A)
 
-struct i915_power_well;
+काष्ठा i915_घातer_well;
 
-struct i915_power_well_ops {
+काष्ठा i915_घातer_well_ops अणु
 	/*
-	 * Synchronize the well's hw state to match the current sw state, for
+	 * Synchronize the well's hw state to match the current sw state, क्रम
 	 * example enable/disable it based on the current refcount. Called
-	 * during driver init and resume time, possibly after first calling
+	 * during driver init and resume समय, possibly after first calling
 	 * the enable/disable handlers.
 	 */
-	void (*sync_hw)(struct drm_i915_private *dev_priv,
-			struct i915_power_well *power_well);
+	व्योम (*sync_hw)(काष्ठा drm_i915_निजी *dev_priv,
+			काष्ठा i915_घातer_well *घातer_well);
 	/*
-	 * Enable the well and resources that depend on it (for example
-	 * interrupts located on the well). Called after the 0->1 refcount
+	 * Enable the well and resources that depend on it (क्रम example
+	 * पूर्णांकerrupts located on the well). Called after the 0->1 refcount
 	 * transition.
 	 */
-	void (*enable)(struct drm_i915_private *dev_priv,
-		       struct i915_power_well *power_well);
+	व्योम (*enable)(काष्ठा drm_i915_निजी *dev_priv,
+		       काष्ठा i915_घातer_well *घातer_well);
 	/*
 	 * Disable the well and resources that depend on it. Called after
 	 * the 1->0 refcount transition.
 	 */
-	void (*disable)(struct drm_i915_private *dev_priv,
-			struct i915_power_well *power_well);
+	व्योम (*disable)(काष्ठा drm_i915_निजी *dev_priv,
+			काष्ठा i915_घातer_well *घातer_well);
 	/* Returns the hw enabled state. */
-	bool (*is_enabled)(struct drm_i915_private *dev_priv,
-			   struct i915_power_well *power_well);
-};
+	bool (*is_enabled)(काष्ठा drm_i915_निजी *dev_priv,
+			   काष्ठा i915_घातer_well *घातer_well);
+पूर्ण;
 
-struct i915_power_well_regs {
+काष्ठा i915_घातer_well_regs अणु
 	i915_reg_t bios;
 	i915_reg_t driver;
 	i915_reg_t kvmr;
 	i915_reg_t debug;
-};
+पूर्ण;
 
-/* Power well structure for haswell */
-struct i915_power_well_desc {
-	const char *name;
+/* Power well काष्ठाure क्रम haswell */
+काष्ठा i915_घातer_well_desc अणु
+	स्थिर अक्षर *name;
 	bool always_on;
-	u64 domains;
-	/* unique identifier for this power well */
-	enum i915_power_well_id id;
+	u64 करोमुख्यs;
+	/* unique identअगरier क्रम this घातer well */
+	क्रमागत i915_घातer_well_id id;
 	/*
-	 * Arbitraty data associated with this power well. Platform and power
-	 * well specific.
+	 * Arbitraty data associated with this घातer well. Platक्रमm and घातer
+	 * well specअगरic.
 	 */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			/*
-			 * request/status flag index in the PUNIT power well
-			 * control/status registers.
+			 * request/status flag index in the PUNIT घातer well
+			 * control/status रेजिस्टरs.
 			 */
 			u8 idx;
-		} vlv;
-		struct {
-			enum dpio_phy phy;
-		} bxt;
-		struct {
-			const struct i915_power_well_regs *regs;
+		पूर्ण vlv;
+		काष्ठा अणु
+			क्रमागत dpio_phy phy;
+		पूर्ण bxt;
+		काष्ठा अणु
+			स्थिर काष्ठा i915_घातer_well_regs *regs;
 			/*
-			 * request/status flag index in the power well
-			 * constrol/status registers.
+			 * request/status flag index in the घातer well
+			 * स्थिरrol/status रेजिस्टरs.
 			 */
 			u8 idx;
 			/* Mask of pipes whose IRQ logic is backed by the pw */
@@ -218,181 +219,181 @@ struct i915_power_well_desc {
 			bool has_vga:1;
 			bool has_fuses:1;
 			/*
-			 * The pw is for an ICL+ TypeC PHY port in
+			 * The pw is क्रम an ICL+ TypeC PHY port in
 			 * Thunderbolt mode.
 			 */
 			bool is_tc_tbt:1;
-		} hsw;
-	};
-	const struct i915_power_well_ops *ops;
-};
+		पूर्ण hsw;
+	पूर्ण;
+	स्थिर काष्ठा i915_घातer_well_ops *ops;
+पूर्ण;
 
-struct i915_power_well {
-	const struct i915_power_well_desc *desc;
-	/* power well enable/disable usage count */
-	int count;
+काष्ठा i915_घातer_well अणु
+	स्थिर काष्ठा i915_घातer_well_desc *desc;
+	/* घातer well enable/disable usage count */
+	पूर्णांक count;
 	/* cached hw enabled state */
 	bool hw_enabled;
-};
+पूर्ण;
 
-struct i915_power_domains {
+काष्ठा i915_घातer_करोमुख्यs अणु
 	/*
-	 * Power wells needed for initialization at driver init and suspend
-	 * time are on. They are kept on until after the first modeset.
+	 * Power wells needed क्रम initialization at driver init and suspend
+	 * समय are on. They are kept on until after the first modeset.
 	 */
 	bool initializing;
 	bool display_core_suspended;
-	int power_well_count;
+	पूर्णांक घातer_well_count;
 
-	intel_wakeref_t init_wakeref;
-	intel_wakeref_t disable_wakeref;
+	पूर्णांकel_wakeref_t init_wakeref;
+	पूर्णांकel_wakeref_t disable_wakeref;
 
-	struct mutex lock;
-	int domain_use_count[POWER_DOMAIN_NUM];
+	काष्ठा mutex lock;
+	पूर्णांक करोमुख्य_use_count[POWER_DOMAIN_NUM];
 
-	struct delayed_work async_put_work;
-	intel_wakeref_t async_put_wakeref;
-	u64 async_put_domains[2];
+	काष्ठा delayed_work async_put_work;
+	पूर्णांकel_wakeref_t async_put_wakeref;
+	u64 async_put_करोमुख्यs[2];
 
-	struct i915_power_well *power_wells;
-};
+	काष्ठा i915_घातer_well *घातer_wells;
+पूर्ण;
 
-struct intel_display_power_domain_set {
+काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set अणु
 	u64 mask;
-#ifdef CONFIG_DRM_I915_DEBUG_RUNTIME_PM
-	intel_wakeref_t wakerefs[POWER_DOMAIN_NUM];
-#endif
-};
+#अगर_घोषित CONFIG_DRM_I915_DEBUG_RUNTIME_PM
+	पूर्णांकel_wakeref_t wakerefs[POWER_DOMAIN_NUM];
+#पूर्ण_अगर
+पूर्ण;
 
-#define for_each_power_domain(domain, mask)				\
-	for ((domain) = 0; (domain) < POWER_DOMAIN_NUM; (domain)++)	\
-		for_each_if(BIT_ULL(domain) & (mask))
+#घोषणा क्रम_each_घातer_करोमुख्य(करोमुख्य, mask)				\
+	क्रम ((करोमुख्य) = 0; (करोमुख्य) < POWER_DOMAIN_NUM; (करोमुख्य)++)	\
+		क्रम_each_अगर(BIT_ULL(करोमुख्य) & (mask))
 
-#define for_each_power_well(__dev_priv, __power_well)				\
-	for ((__power_well) = (__dev_priv)->power_domains.power_wells;	\
-	     (__power_well) - (__dev_priv)->power_domains.power_wells <	\
-		(__dev_priv)->power_domains.power_well_count;		\
-	     (__power_well)++)
+#घोषणा क्रम_each_घातer_well(__dev_priv, __घातer_well)				\
+	क्रम ((__घातer_well) = (__dev_priv)->घातer_करोमुख्यs.घातer_wells;	\
+	     (__घातer_well) - (__dev_priv)->घातer_करोमुख्यs.घातer_wells <	\
+		(__dev_priv)->घातer_करोमुख्यs.घातer_well_count;		\
+	     (__घातer_well)++)
 
-#define for_each_power_well_reverse(__dev_priv, __power_well)			\
-	for ((__power_well) = (__dev_priv)->power_domains.power_wells +		\
-			      (__dev_priv)->power_domains.power_well_count - 1;	\
-	     (__power_well) - (__dev_priv)->power_domains.power_wells >= 0;	\
-	     (__power_well)--)
+#घोषणा क्रम_each_घातer_well_reverse(__dev_priv, __घातer_well)			\
+	क्रम ((__घातer_well) = (__dev_priv)->घातer_करोमुख्यs.घातer_wells +		\
+			      (__dev_priv)->घातer_करोमुख्यs.घातer_well_count - 1;	\
+	     (__घातer_well) - (__dev_priv)->घातer_करोमुख्यs.घातer_wells >= 0;	\
+	     (__घातer_well)--)
 
-#define for_each_power_domain_well(__dev_priv, __power_well, __domain_mask)	\
-	for_each_power_well(__dev_priv, __power_well)				\
-		for_each_if((__power_well)->desc->domains & (__domain_mask))
+#घोषणा क्रम_each_घातer_करोमुख्य_well(__dev_priv, __घातer_well, __करोमुख्य_mask)	\
+	क्रम_each_घातer_well(__dev_priv, __घातer_well)				\
+		क्रम_each_अगर((__घातer_well)->desc->करोमुख्यs & (__करोमुख्य_mask))
 
-#define for_each_power_domain_well_reverse(__dev_priv, __power_well, __domain_mask) \
-	for_each_power_well_reverse(__dev_priv, __power_well)		        \
-		for_each_if((__power_well)->desc->domains & (__domain_mask))
+#घोषणा क्रम_each_घातer_करोमुख्य_well_reverse(__dev_priv, __घातer_well, __करोमुख्य_mask) \
+	क्रम_each_घातer_well_reverse(__dev_priv, __घातer_well)		        \
+		क्रम_each_अगर((__घातer_well)->desc->करोमुख्यs & (__करोमुख्य_mask))
 
-int intel_power_domains_init(struct drm_i915_private *dev_priv);
-void intel_power_domains_cleanup(struct drm_i915_private *dev_priv);
-void intel_power_domains_init_hw(struct drm_i915_private *dev_priv, bool resume);
-void intel_power_domains_driver_remove(struct drm_i915_private *dev_priv);
-void intel_power_domains_enable(struct drm_i915_private *dev_priv);
-void intel_power_domains_disable(struct drm_i915_private *dev_priv);
-void intel_power_domains_suspend(struct drm_i915_private *dev_priv,
-				 enum i915_drm_suspend_mode);
-void intel_power_domains_resume(struct drm_i915_private *dev_priv);
+पूर्णांक पूर्णांकel_घातer_करोमुख्यs_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_घातer_करोमुख्यs_cleanup(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_घातer_करोमुख्यs_init_hw(काष्ठा drm_i915_निजी *dev_priv, bool resume);
+व्योम पूर्णांकel_घातer_करोमुख्यs_driver_हटाओ(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_घातer_करोमुख्यs_enable(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_घातer_करोमुख्यs_disable(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_घातer_करोमुख्यs_suspend(काष्ठा drm_i915_निजी *dev_priv,
+				 क्रमागत i915_drm_suspend_mode);
+व्योम पूर्णांकel_घातer_करोमुख्यs_resume(काष्ठा drm_i915_निजी *dev_priv);
 
-void intel_display_power_suspend_late(struct drm_i915_private *i915);
-void intel_display_power_resume_early(struct drm_i915_private *i915);
-void intel_display_power_suspend(struct drm_i915_private *i915);
-void intel_display_power_resume(struct drm_i915_private *i915);
-void intel_display_power_set_target_dc_state(struct drm_i915_private *dev_priv,
+व्योम पूर्णांकel_display_घातer_suspend_late(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_घातer_resume_early(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_घातer_suspend(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_घातer_resume(काष्ठा drm_i915_निजी *i915);
+व्योम पूर्णांकel_display_घातer_set_target_dc_state(काष्ठा drm_i915_निजी *dev_priv,
 					     u32 state);
 
-const char *
-intel_display_power_domain_str(enum intel_display_power_domain domain);
+स्थिर अक्षर *
+पूर्णांकel_display_घातer_करोमुख्य_str(क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
 
-bool intel_display_power_is_enabled(struct drm_i915_private *dev_priv,
-				    enum intel_display_power_domain domain);
-bool intel_display_power_well_is_enabled(struct drm_i915_private *dev_priv,
-					 enum i915_power_well_id power_well_id);
-bool __intel_display_power_is_enabled(struct drm_i915_private *dev_priv,
-				      enum intel_display_power_domain domain);
-intel_wakeref_t intel_display_power_get(struct drm_i915_private *dev_priv,
-					enum intel_display_power_domain domain);
-intel_wakeref_t
-intel_display_power_get_if_enabled(struct drm_i915_private *dev_priv,
-				   enum intel_display_power_domain domain);
-void __intel_display_power_put_async(struct drm_i915_private *i915,
-				     enum intel_display_power_domain domain,
-				     intel_wakeref_t wakeref);
-void intel_display_power_flush_work(struct drm_i915_private *i915);
-#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
-void intel_display_power_put(struct drm_i915_private *dev_priv,
-			     enum intel_display_power_domain domain,
-			     intel_wakeref_t wakeref);
-static inline void
-intel_display_power_put_async(struct drm_i915_private *i915,
-			      enum intel_display_power_domain domain,
-			      intel_wakeref_t wakeref)
-{
-	__intel_display_power_put_async(i915, domain, wakeref);
-}
-#else
-void intel_display_power_put_unchecked(struct drm_i915_private *dev_priv,
-				       enum intel_display_power_domain domain);
+bool पूर्णांकel_display_घातer_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
+				    क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
+bool पूर्णांकel_display_घातer_well_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
+					 क्रमागत i915_घातer_well_id घातer_well_id);
+bool __पूर्णांकel_display_घातer_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
+				      क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
+पूर्णांकel_wakeref_t पूर्णांकel_display_घातer_get(काष्ठा drm_i915_निजी *dev_priv,
+					क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
+पूर्णांकel_wakeref_t
+पूर्णांकel_display_घातer_get_अगर_enabled(काष्ठा drm_i915_निजी *dev_priv,
+				   क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
+व्योम __पूर्णांकel_display_घातer_put_async(काष्ठा drm_i915_निजी *i915,
+				     क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
+				     पूर्णांकel_wakeref_t wakeref);
+व्योम पूर्णांकel_display_घातer_flush_work(काष्ठा drm_i915_निजी *i915);
+#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+व्योम पूर्णांकel_display_घातer_put(काष्ठा drm_i915_निजी *dev_priv,
+			     क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
+			     पूर्णांकel_wakeref_t wakeref);
+अटल अंतरभूत व्योम
+पूर्णांकel_display_घातer_put_async(काष्ठा drm_i915_निजी *i915,
+			      क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
+			      पूर्णांकel_wakeref_t wakeref)
+अणु
+	__पूर्णांकel_display_घातer_put_async(i915, करोमुख्य, wakeref);
+पूर्ण
+#अन्यथा
+व्योम पूर्णांकel_display_घातer_put_unchecked(काष्ठा drm_i915_निजी *dev_priv,
+				       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
 
-static inline void
-intel_display_power_put(struct drm_i915_private *i915,
-			enum intel_display_power_domain domain,
-			intel_wakeref_t wakeref)
-{
-	intel_display_power_put_unchecked(i915, domain);
-}
+अटल अंतरभूत व्योम
+पूर्णांकel_display_घातer_put(काष्ठा drm_i915_निजी *i915,
+			क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
+			पूर्णांकel_wakeref_t wakeref)
+अणु
+	पूर्णांकel_display_घातer_put_unchecked(i915, करोमुख्य);
+पूर्ण
 
-static inline void
-intel_display_power_put_async(struct drm_i915_private *i915,
-			      enum intel_display_power_domain domain,
-			      intel_wakeref_t wakeref)
-{
-	__intel_display_power_put_async(i915, domain, -1);
-}
-#endif
+अटल अंतरभूत व्योम
+पूर्णांकel_display_घातer_put_async(काष्ठा drm_i915_निजी *i915,
+			      क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
+			      पूर्णांकel_wakeref_t wakeref)
+अणु
+	__पूर्णांकel_display_घातer_put_async(i915, करोमुख्य, -1);
+पूर्ण
+#पूर्ण_अगर
 
-void
-intel_display_power_get_in_set(struct drm_i915_private *i915,
-			       struct intel_display_power_domain_set *power_domain_set,
-			       enum intel_display_power_domain domain);
+व्योम
+पूर्णांकel_display_घातer_get_in_set(काष्ठा drm_i915_निजी *i915,
+			       काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
+			       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
 
 bool
-intel_display_power_get_in_set_if_enabled(struct drm_i915_private *i915,
-					  struct intel_display_power_domain_set *power_domain_set,
-					  enum intel_display_power_domain domain);
+पूर्णांकel_display_घातer_get_in_set_अगर_enabled(काष्ठा drm_i915_निजी *i915,
+					  काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
+					  क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य);
 
-void
-intel_display_power_put_mask_in_set(struct drm_i915_private *i915,
-				    struct intel_display_power_domain_set *power_domain_set,
+व्योम
+पूर्णांकel_display_घातer_put_mask_in_set(काष्ठा drm_i915_निजी *i915,
+				    काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
 				    u64 mask);
 
-static inline void
-intel_display_power_put_all_in_set(struct drm_i915_private *i915,
-				   struct intel_display_power_domain_set *power_domain_set)
-{
-	intel_display_power_put_mask_in_set(i915, power_domain_set, power_domain_set->mask);
-}
+अटल अंतरभूत व्योम
+पूर्णांकel_display_घातer_put_all_in_set(काष्ठा drm_i915_निजी *i915,
+				   काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set)
+अणु
+	पूर्णांकel_display_घातer_put_mask_in_set(i915, घातer_करोमुख्य_set, घातer_करोमुख्य_set->mask);
+पूर्ण
 
-enum dbuf_slice {
+क्रमागत dbuf_slice अणु
 	DBUF_S1,
 	DBUF_S2,
 	I915_MAX_DBUF_SLICES
-};
+पूर्ण;
 
-void gen9_dbuf_slices_update(struct drm_i915_private *dev_priv,
+व्योम gen9_dbuf_slices_update(काष्ठा drm_i915_निजी *dev_priv,
 			     u8 req_slices);
 
-#define with_intel_display_power(i915, domain, wf) \
-	for ((wf) = intel_display_power_get((i915), (domain)); (wf); \
-	     intel_display_power_put_async((i915), (domain), (wf)), (wf) = 0)
+#घोषणा with_पूर्णांकel_display_घातer(i915, करोमुख्य, wf) \
+	क्रम ((wf) = पूर्णांकel_display_घातer_get((i915), (करोमुख्य)); (wf); \
+	     पूर्णांकel_display_घातer_put_async((i915), (करोमुख्य), (wf)), (wf) = 0)
 
-void chv_phy_powergate_lanes(struct intel_encoder *encoder,
-			     bool override, unsigned int mask);
-bool chv_phy_powergate_ch(struct drm_i915_private *dev_priv, enum dpio_phy phy,
-			  enum dpio_channel ch, bool override);
+व्योम chv_phy_घातergate_lanes(काष्ठा पूर्णांकel_encoder *encoder,
+			     bool override, अचिन्हित पूर्णांक mask);
+bool chv_phy_घातergate_ch(काष्ठा drm_i915_निजी *dev_priv, क्रमागत dpio_phy phy,
+			  क्रमागत dpio_channel ch, bool override);
 
-#endif /* __INTEL_DISPLAY_POWER_H__ */
+#पूर्ण_अगर /* __INTEL_DISPLAY_POWER_H__ */

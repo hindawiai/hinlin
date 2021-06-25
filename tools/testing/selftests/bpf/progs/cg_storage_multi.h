@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 
-#ifndef __PROGS_CG_STORAGE_MULTI_H
-#define __PROGS_CG_STORAGE_MULTI_H
+#अगर_अघोषित __PROGS_CG_STORAGE_MULTI_H
+#घोषणा __PROGS_CG_STORAGE_MULTI_H
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
-struct cgroup_value {
+काष्ठा cgroup_value अणु
 	__u32 egress_pkts;
 	__u32 ingress_pkts;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

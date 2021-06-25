@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2015 Intel Corporation
+ * Copyright तऊ 2015 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,61 +23,61 @@
  *
  */
 
-#ifndef _I915_PARAMS_H_
-#define _I915_PARAMS_H_
+#अगर_अघोषित _I915_PARAMS_H_
+#घोषणा _I915_PARAMS_H_
 
-#include <linux/bitops.h>
-#include <linux/cache.h> /* for __read_mostly */
+#समावेश <linux/bitops.h>
+#समावेश <linux/cache.h> /* क्रम __पढ़ो_mostly */
 
-struct drm_printer;
+काष्ठा drm_prपूर्णांकer;
 
-#define ENABLE_GUC_SUBMISSION		BIT(0)
-#define ENABLE_GUC_LOAD_HUC		BIT(1)
-#define ENABLE_GUC_MASK			GENMASK(1, 0)
+#घोषणा ENABLE_GUC_SUBMISSION		BIT(0)
+#घोषणा ENABLE_GUC_LOAD_HUC		BIT(1)
+#घोषणा ENABLE_GUC_MASK			GENMASK(1, 0)
 
 /*
- * Invoke param, a function-like macro, for each i915 param, with arguments:
+ * Invoke param, a function-like macro, क्रम each i915 param, with arguments:
  *
  * param(type, name, value, mode)
  *
- * type: parameter type, one of {bool, int, unsigned int, unsigned long, char *}
+ * type: parameter type, one of अणुbool, पूर्णांक, अचिन्हित पूर्णांक, अचिन्हित दीर्घ, अक्षर *पूर्ण
  * name: name of the parameter
- * value: initial/default value of the parameter
- * mode: debugfs file permissions, one of {0400, 0600, 0}, use 0 to not create
+ * value: initial/शेष value of the parameter
+ * mode: debugfs file permissions, one of अणु0400, 0600, 0पूर्ण, use 0 to not create
  *       debugfs file
  */
-#define I915_PARAMS_FOR_EACH(param) \
-	param(char *, vbt_firmware, NULL, 0400) \
-	param(int, modeset, -1, 0400) \
-	param(int, lvds_channel_mode, 0, 0400) \
-	param(int, panel_use_ssc, -1, 0600) \
-	param(int, vbt_sdvo_panel_type, -1, 0400) \
-	param(int, enable_dc, -1, 0400) \
-	param(int, enable_fbc, -1, 0600) \
-	param(int, enable_psr, -1, 0600) \
+#घोषणा I915_PARAMS_FOR_EACH(param) \
+	param(अक्षर *, vbt_firmware, शून्य, 0400) \
+	param(पूर्णांक, modeset, -1, 0400) \
+	param(पूर्णांक, lvds_channel_mode, 0, 0400) \
+	param(पूर्णांक, panel_use_ssc, -1, 0600) \
+	param(पूर्णांक, vbt_sdvo_panel_type, -1, 0400) \
+	param(पूर्णांक, enable_dc, -1, 0400) \
+	param(पूर्णांक, enable_fbc, -1, 0600) \
+	param(पूर्णांक, enable_psr, -1, 0600) \
 	param(bool, psr_safest_params, false, 0400) \
 	param(bool, enable_psr2_sel_fetch, false, 0400) \
-	param(int, disable_power_well, -1, 0400) \
-	param(int, enable_ips, 1, 0600) \
-	param(int, invert_brightness, 0, 0600) \
-	param(int, enable_guc, 0, 0400) \
-	param(int, guc_log_level, -1, 0400) \
-	param(char *, guc_firmware_path, NULL, 0400) \
-	param(char *, huc_firmware_path, NULL, 0400) \
-	param(char *, dmc_firmware_path, NULL, 0400) \
-	param(int, mmio_debug, -IS_ENABLED(CONFIG_DRM_I915_DEBUG_MMIO), 0600) \
-	param(int, edp_vswing, 0, 0400) \
-	param(unsigned int, reset, 3, 0600) \
-	param(unsigned int, inject_probe_failure, 0, 0) \
-	param(int, fastboot, -1, 0600) \
-	param(int, enable_dpcd_backlight, -1, 0600) \
-	param(char *, force_probe, CONFIG_DRM_I915_FORCE_PROBE, 0400) \
-	param(unsigned long, fake_lmem_start, 0, 0400) \
-	param(unsigned int, request_timeout_ms, CONFIG_DRM_I915_REQUEST_TIMEOUT, 0600) \
+	param(पूर्णांक, disable_घातer_well, -1, 0400) \
+	param(पूर्णांक, enable_ips, 1, 0600) \
+	param(पूर्णांक, invert_brightness, 0, 0600) \
+	param(पूर्णांक, enable_guc, 0, 0400) \
+	param(पूर्णांक, guc_log_level, -1, 0400) \
+	param(अक्षर *, guc_firmware_path, शून्य, 0400) \
+	param(अक्षर *, huc_firmware_path, शून्य, 0400) \
+	param(अक्षर *, dmc_firmware_path, शून्य, 0400) \
+	param(पूर्णांक, mmio_debug, -IS_ENABLED(CONFIG_DRM_I915_DEBUG_MMIO), 0600) \
+	param(पूर्णांक, edp_vswing, 0, 0400) \
+	param(अचिन्हित पूर्णांक, reset, 3, 0600) \
+	param(अचिन्हित पूर्णांक, inject_probe_failure, 0, 0) \
+	param(पूर्णांक, fastboot, -1, 0600) \
+	param(पूर्णांक, enable_dpcd_backlight, -1, 0600) \
+	param(अक्षर *, क्रमce_probe, CONFIG_DRM_I915_FORCE_PROBE, 0400) \
+	param(अचिन्हित दीर्घ, fake_lmem_start, 0, 0400) \
+	param(अचिन्हित पूर्णांक, request_समयout_ms, CONFIG_DRM_I915_REQUEST_TIMEOUT, 0600) \
 	/* leave bools at the end to not create holes */ \
 	param(bool, enable_hangcheck, true, 0600) \
 	param(bool, load_detect_test, false, 0600) \
-	param(bool, force_reset_modeset_test, false, 0600) \
+	param(bool, क्रमce_reset_modeset_test, false, 0600) \
 	param(bool, error_capture, true, 0600) \
 	param(bool, disable_display, false, 0400) \
 	param(bool, verbose_state_checks, true, 0) \
@@ -84,17 +85,17 @@ struct drm_printer;
 	param(bool, enable_dp_mst, true, 0600) \
 	param(bool, enable_gvt, false, 0400)
 
-#define MEMBER(T, member, ...) T member;
-struct i915_params {
+#घोषणा MEMBER(T, member, ...) T member;
+काष्ठा i915_params अणु
 	I915_PARAMS_FOR_EACH(MEMBER);
-};
-#undef MEMBER
+पूर्ण;
+#अघोषित MEMBER
 
-extern struct i915_params i915_modparams __read_mostly;
+बाह्य काष्ठा i915_params i915_modparams __पढ़ो_mostly;
 
-void i915_params_dump(const struct i915_params *params, struct drm_printer *p);
-void i915_params_copy(struct i915_params *dest, const struct i915_params *src);
-void i915_params_free(struct i915_params *params);
+व्योम i915_params_dump(स्थिर काष्ठा i915_params *params, काष्ठा drm_prपूर्णांकer *p);
+व्योम i915_params_copy(काष्ठा i915_params *dest, स्थिर काष्ठा i915_params *src);
+व्योम i915_params_मुक्त(काष्ठा i915_params *params);
 
-#endif
+#पूर्ण_अगर
 

@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Driver for the Gravis Grip Multiport, a gamepad "hub" that
+ *  Driver क्रम the Gravis Grip Multiport, a gamepad "hub" that
  *  connects up to four 9-pin digital gamepads/joysticks.
  *  Driver tested on SMP and UP kernel versions 2.4.18-4 and 2.4.18-5.
  *
- *  Thanks to Chris Gassib for helpful advice.
+ *  Thanks to Chris Gassib क्रम helpful advice.
  *
  *  Copyright (c)      2002 Brian Bonnlander, Bill Soudan
  *  Copyright (c) 1998-2000 Vojtech Pavlik
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/gameport.h>
-#include <linux/input.h>
-#include <linux/delay.h>
-#include <linux/proc_fs.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/gameport.h>
+#समावेश <linux/input.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/jअगरfies.h>
 
-#define DRIVER_DESC	"Gravis Grip Multiport driver"
+#घोषणा DRIVER_DESC	"Gravis Grip Multiport driver"
 
 MODULE_AUTHOR("Brian Bonnlander");
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#ifdef GRIP_DEBUG
-#define dbg(format, arg...) printk(KERN_ERR __FILE__ ": " format "\n" , ## arg)
-#else
-#define dbg(format, arg...) do {} while (0)
-#endif
+#अगर_घोषित GRIP_DEBUG
+#घोषणा dbg(क्रमmat, arg...) prपूर्णांकk(KERN_ERR __खाता__ ": " क्रमmat "\n" , ## arg)
+#अन्यथा
+#घोषणा dbg(क्रमmat, arg...) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#define GRIP_MAX_PORTS	4
+#घोषणा GRIP_MAX_PORTS	4
 /*
  * Grip multiport state
  */
 
-struct grip_port {
-	struct input_dev *dev;
-	int mode;
-	int registered;
+काष्ठा grip_port अणु
+	काष्ठा input_dev *dev;
+	पूर्णांक mode;
+	पूर्णांक रेजिस्टरed;
 
-	/* individual gamepad states */
-	int buttons;
-	int xaxes;
-	int yaxes;
-	int dirty;     /* has the state been updated? */
-};
+	/* inभागidual gamepad states */
+	पूर्णांक buttons;
+	पूर्णांक xaxes;
+	पूर्णांक yaxes;
+	पूर्णांक dirty;     /* has the state been updated? */
+पूर्ण;
 
-struct grip_mp {
-	struct gameport *gameport;
-	struct grip_port *port[GRIP_MAX_PORTS];
-	int reads;
-	int bads;
-};
-
-/*
- * Multiport packet interpretation
- */
-
-#define PACKET_FULL          0x80000000       /* packet is full                        */
-#define PACKET_IO_FAST       0x40000000       /* 3 bits per gameport read              */
-#define PACKET_IO_SLOW       0x20000000       /* 1 bit per gameport read               */
-#define PACKET_MP_MORE       0x04000000       /* multiport wants to send more          */
-#define PACKET_MP_DONE       0x02000000       /* multiport done sending                */
+काष्ठा grip_mp अणु
+	काष्ठा gameport *gameport;
+	काष्ठा grip_port *port[GRIP_MAX_PORTS];
+	पूर्णांक पढ़ोs;
+	पूर्णांक bads;
+पूर्ण;
 
 /*
- * Packet status code interpretation
+ * Multiport packet पूर्णांकerpretation
  */
 
-#define IO_GOT_PACKET        0x0100           /* Got a packet                           */
-#define IO_MODE_FAST         0x0200           /* Used 3 data bits per gameport read     */
-#define IO_SLOT_CHANGE       0x0800           /* Multiport physical slot status changed */
-#define IO_DONE              0x1000           /* Multiport is done sending packets      */
-#define IO_RETRY             0x4000           /* Try again later to get packet          */
-#define IO_RESET             0x8000           /* Force multiport to resend all packets  */
+#घोषणा PACKET_FULL          0x80000000       /* packet is full                        */
+#घोषणा PACKET_IO_FAST       0x40000000       /* 3 bits per gameport पढ़ो              */
+#घोषणा PACKET_IO_SLOW       0x20000000       /* 1 bit per gameport पढ़ो               */
+#घोषणा PACKET_MP_MORE       0x04000000       /* multiport wants to send more          */
+#घोषणा PACKET_MP_DONE       0x02000000       /* multiport करोne sending                */
+
+/*
+ * Packet status code पूर्णांकerpretation
+ */
+
+#घोषणा IO_GOT_PACKET        0x0100           /* Got a packet                           */
+#घोषणा IO_MODE_FAST         0x0200           /* Used 3 data bits per gameport पढ़ो     */
+#घोषणा IO_SLOT_CHANGE       0x0800           /* Multiport physical slot status changed */
+#घोषणा IO_DONE              0x1000           /* Multiport is करोne sending packets      */
+#घोषणा IO_RETRY             0x4000           /* Try again later to get packet          */
+#घोषणा IO_RESET             0x8000           /* Force multiport to resend all packets  */
 
 /*
  * Gamepad configuration data.  Other 9-pin digital joystick devices
  * may work with the multiport, so this may not be an exhaustive list!
- * Commodore 64 joystick remains untested.
+ * Commoकरोre 64 joystick reमुख्यs untested.
  */
 
-#define GRIP_INIT_DELAY         2000          /*  2 ms */
+#घोषणा GRIP_INIT_DELAY         2000          /*  2 ms */
 
-#define GRIP_MODE_NONE		0
-#define GRIP_MODE_RESET         1
-#define GRIP_MODE_GP		2
-#define GRIP_MODE_C64		3
+#घोषणा GRIP_MODE_NONE		0
+#घोषणा GRIP_MODE_RESET         1
+#घोषणा GRIP_MODE_GP		2
+#घोषणा GRIP_MODE_C64		3
 
-static const int grip_btn_gp[]  = { BTN_TR, BTN_TL, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, -1 };
-static const int grip_btn_c64[] = { BTN_JOYSTICK, -1 };
+अटल स्थिर पूर्णांक grip_btn_gp[]  = अणु BTN_TR, BTN_TL, BTN_A, BTN_B, BTN_C, BTN_X, BTN_Y, BTN_Z, -1 पूर्ण;
+अटल स्थिर पूर्णांक grip_btn_c64[] = अणु BTN_JOYSTICK, -1 पूर्ण;
 
-static const int grip_abs_gp[]  = { ABS_X, ABS_Y, -1 };
-static const int grip_abs_c64[] = { ABS_X, ABS_Y, -1 };
+अटल स्थिर पूर्णांक grip_असल_gp[]  = अणु ABS_X, ABS_Y, -1 पूर्ण;
+अटल स्थिर पूर्णांक grip_असल_c64[] = अणु ABS_X, ABS_Y, -1 पूर्ण;
 
-static const int *grip_abs[] = { NULL, NULL, grip_abs_gp, grip_abs_c64 };
-static const int *grip_btn[] = { NULL, NULL, grip_btn_gp, grip_btn_c64 };
+अटल स्थिर पूर्णांक *grip_असल[] = अणु शून्य, शून्य, grip_असल_gp, grip_असल_c64 पूर्ण;
+अटल स्थिर पूर्णांक *grip_btn[] = अणु शून्य, शून्य, grip_btn_gp, grip_btn_c64 पूर्ण;
 
-static const char *grip_name[] = { NULL, NULL, "Gravis Grip Pad", "Commodore 64 Joystick" };
+अटल स्थिर अक्षर *grip_name[] = अणु शून्य, शून्य, "Gravis Grip Pad", "Commodore 64 Joystick" पूर्ण;
 
-static const int init_seq[] = {
+अटल स्थिर पूर्णांक init_seq[] = अणु
 	1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1,
 	1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1,
 	1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1,
-	0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 };
+	0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1 पूर्ण;
 
 /* Maps multiport directional values to X,Y axis values (each axis encoded in 3 bits) */
 
-static const int axis_map[] = { 5, 9, 1, 5, 6, 10, 2, 6, 4, 8, 0, 4, 5, 9, 1, 5 };
+अटल स्थिर पूर्णांक axis_map[] = अणु 5, 9, 1, 5, 6, 10, 2, 6, 4, 8, 0, 4, 5, 9, 1, 5 पूर्ण;
 
-static int register_slot(int i, struct grip_mp *grip);
+अटल पूर्णांक रेजिस्टर_slot(पूर्णांक i, काष्ठा grip_mp *grip);
 
 /*
  * Returns whether an odd or even number of bits are on in pkt.
  */
 
-static int bit_parity(u32 pkt)
-{
-	int x = pkt ^ (pkt >> 16);
+अटल पूर्णांक bit_parity(u32 pkt)
+अणु
+	पूर्णांक x = pkt ^ (pkt >> 16);
 	x ^= x >> 8;
 	x ^= x >> 4;
 	x ^= x >> 2;
 	x ^= x >> 1;
-	return x & 1;
-}
+	वापस x & 1;
+पूर्ण
 
 /*
- * Poll gameport; return true if all bits set in 'onbits' are on and
+ * Poll gameport; वापस true अगर all bits set in 'onbits' are on and
  * all bits set in 'offbits' are off.
  */
 
-static inline int poll_until(u8 onbits, u8 offbits, int u_sec, struct gameport* gp, u8 *data)
-{
-	int i, nloops;
+अटल अंतरभूत पूर्णांक poll_until(u8 onbits, u8 offbits, पूर्णांक u_sec, काष्ठा gameport* gp, u8 *data)
+अणु
+	पूर्णांक i, nloops;
 
-	nloops = gameport_time(gp, u_sec);
-	for (i = 0; i < nloops; i++) {
-		*data = gameport_read(gp);
-		if ((*data & onbits) == onbits &&
+	nloops = gameport_समय(gp, u_sec);
+	क्रम (i = 0; i < nloops; i++) अणु
+		*data = gameport_पढ़ो(gp);
+		अगर ((*data & onbits) == onbits &&
 		    (~(*data) & offbits) == offbits)
-			return 1;
-	}
+			वापस 1;
+	पूर्ण
 	dbg("gameport timed out after %d microseconds.\n", u_sec);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Gets a 28-bit packet from the multiport.
@@ -152,201 +153,201 @@ static inline int poll_until(u8 onbits, u8 offbits, int u_sec, struct gameport* 
  * After getting a packet successfully, commands encoded by sendcode may
  * be sent to the multiport.
  *
- * The multiport clock value is reflected in gameport bit B4.
+ * The multiport घड़ी value is reflected in gameport bit B4.
  *
  * Returns a packet status code indicating whether packet is valid, the transfer
  * mode, and any error conditions.
  *
  * sendflags:      current I/O status
- * sendcode:   data to send to the multiport if sendflags is nonzero
+ * sendcode:   data to send to the multiport अगर sendflags is nonzero
  */
 
-static int mp_io(struct gameport* gameport, int sendflags, int sendcode, u32 *packet)
-{
+अटल पूर्णांक mp_io(काष्ठा gameport* gameport, पूर्णांक sendflags, पूर्णांक sendcode, u32 *packet)
+अणु
 	u8  raw_data;            /* raw data from gameport */
 	u8  data_mask;           /* packet data bits from raw_data */
 	u32 pkt;                 /* packet temporary storage */
-	int bits_per_read;       /* num packet bits per gameport read */
-	int portvals = 0;        /* used for port value sanity check */
-	int i;
+	पूर्णांक bits_per_पढ़ो;       /* num packet bits per gameport पढ़ो */
+	पूर्णांक portvals = 0;        /* used क्रम port value sanity check */
+	पूर्णांक i;
 
 	/* Gameport bits B0, B4, B5 should first be off, then B4 should come on. */
 
 	*packet = 0;
-	raw_data = gameport_read(gameport);
-	if (raw_data & 1)
-		return IO_RETRY;
+	raw_data = gameport_पढ़ो(gameport);
+	अगर (raw_data & 1)
+		वापस IO_RETRY;
 
-	for (i = 0; i < 64; i++) {
-		raw_data = gameport_read(gameport);
+	क्रम (i = 0; i < 64; i++) अणु
+		raw_data = gameport_पढ़ो(gameport);
 		portvals |= 1 << ((raw_data >> 4) & 3); /* Demux B4, B5 */
-	}
+	पूर्ण
 
-	if (portvals == 1) {                            /* B4, B5 off */
-		raw_data = gameport_read(gameport);
+	अगर (portvals == 1) अणु                            /* B4, B5 off */
+		raw_data = gameport_पढ़ो(gameport);
 		portvals = raw_data & 0xf0;
 
-		if (raw_data & 0x31)
-			return IO_RESET;
+		अगर (raw_data & 0x31)
+			वापस IO_RESET;
 		gameport_trigger(gameport);
 
-		if (!poll_until(0x10, 0, 308, gameport, &raw_data))
-			return IO_RESET;
-	} else
-		return IO_RETRY;
+		अगर (!poll_until(0x10, 0, 308, gameport, &raw_data))
+			वापस IO_RESET;
+	पूर्ण अन्यथा
+		वापस IO_RETRY;
 
-	/* Determine packet transfer mode and prepare for packet construction. */
+	/* Determine packet transfer mode and prepare क्रम packet स्थिरruction. */
 
-	if (raw_data & 0x20) {                 /* 3 data bits/read */
-		portvals |= raw_data >> 4;     /* Compare B4-B7 before & after trigger */
+	अगर (raw_data & 0x20) अणु                 /* 3 data bits/पढ़ो */
+		portvals |= raw_data >> 4;     /* Compare B4-B7 beक्रमe & after trigger */
 
-		if (portvals != 0xb)
-			return 0;
+		अगर (portvals != 0xb)
+			वापस 0;
 		data_mask = 7;
-		bits_per_read = 3;
+		bits_per_पढ़ो = 3;
 		pkt = (PACKET_FULL | PACKET_IO_FAST) >> 28;
-	} else {                                 /* 1 data bit/read */
+	पूर्ण अन्यथा अणु                                 /* 1 data bit/पढ़ो */
 		data_mask = 1;
-		bits_per_read = 1;
+		bits_per_पढ़ो = 1;
 		pkt = (PACKET_FULL | PACKET_IO_SLOW) >> 28;
-	}
+	पूर्ण
 
-	/* Construct a packet.  Final data bits must be zero. */
+	/* Conकाष्ठा a packet.  Final data bits must be zero. */
 
-	while (1) {
-		if (!poll_until(0, 0x10, 77, gameport, &raw_data))
-			return IO_RESET;
+	जबतक (1) अणु
+		अगर (!poll_until(0, 0x10, 77, gameport, &raw_data))
+			वापस IO_RESET;
 		raw_data = (raw_data >> 5) & data_mask;
 
-		if (pkt & PACKET_FULL)
-			break;
-		pkt = (pkt << bits_per_read) | raw_data;
+		अगर (pkt & PACKET_FULL)
+			अवरोध;
+		pkt = (pkt << bits_per_पढ़ो) | raw_data;
 
-		if (!poll_until(0x10, 0, 77, gameport, &raw_data))
-			return IO_RESET;
-	}
+		अगर (!poll_until(0x10, 0, 77, gameport, &raw_data))
+			वापस IO_RESET;
+	पूर्ण
 
-	if (raw_data)
-		return IO_RESET;
+	अगर (raw_data)
+		वापस IO_RESET;
 
-	/* If 3 bits/read used, drop from 30 bits to 28. */
+	/* If 3 bits/पढ़ो used, drop from 30 bits to 28. */
 
-	if (bits_per_read == 3) {
+	अगर (bits_per_पढ़ो == 3) अणु
 		pkt = (pkt & 0xffff0000) | ((pkt << 1) & 0xffff);
 		pkt = (pkt >> 2) | 0xf0000000;
-	}
+	पूर्ण
 
-	if (bit_parity(pkt) == 1)
-		return IO_RESET;
+	अगर (bit_parity(pkt) == 1)
+		वापस IO_RESET;
 
 	/* Acknowledge packet receipt */
 
-	if (!poll_until(0x30, 0, 77, gameport, &raw_data))
-		return IO_RESET;
+	अगर (!poll_until(0x30, 0, 77, gameport, &raw_data))
+		वापस IO_RESET;
 
-	raw_data = gameport_read(gameport);
+	raw_data = gameport_पढ़ो(gameport);
 
-	if (raw_data & 1)
-		return IO_RESET;
+	अगर (raw_data & 1)
+		वापस IO_RESET;
 
 	gameport_trigger(gameport);
 
-	if (!poll_until(0, 0x20, 77, gameport, &raw_data))
-		return IO_RESET;
+	अगर (!poll_until(0, 0x20, 77, gameport, &raw_data))
+		वापस IO_RESET;
 
-        /* Return if we just wanted the packet or multiport wants to send more */
+        /* Return अगर we just wanted the packet or multiport wants to send more */
 
 	*packet = pkt;
-	if ((sendflags == 0) || ((sendflags & IO_RETRY) && !(pkt & PACKET_MP_DONE)))
-		return IO_GOT_PACKET;
+	अगर ((sendflags == 0) || ((sendflags & IO_RETRY) && !(pkt & PACKET_MP_DONE)))
+		वापस IO_GOT_PACKET;
 
-	if (pkt & PACKET_MP_MORE)
-		return IO_GOT_PACKET | IO_RETRY;
+	अगर (pkt & PACKET_MP_MORE)
+		वापस IO_GOT_PACKET | IO_RETRY;
 
-	/* Multiport is done sending packets and is ready to receive data */
+	/* Multiport is करोne sending packets and is पढ़ोy to receive data */
 
-	if (!poll_until(0x20, 0, 77, gameport, &raw_data))
-		return IO_GOT_PACKET | IO_RESET;
+	अगर (!poll_until(0x20, 0, 77, gameport, &raw_data))
+		वापस IO_GOT_PACKET | IO_RESET;
 
-	raw_data = gameport_read(gameport);
-	if (raw_data & 1)
-		return IO_GOT_PACKET | IO_RESET;
+	raw_data = gameport_पढ़ो(gameport);
+	अगर (raw_data & 1)
+		वापस IO_GOT_PACKET | IO_RESET;
 
 	/* Trigger gameport based on bits in sendcode */
 
 	gameport_trigger(gameport);
-	do {
-		if (!poll_until(0x20, 0x10, 116, gameport, &raw_data))
-			return IO_GOT_PACKET | IO_RESET;
+	करो अणु
+		अगर (!poll_until(0x20, 0x10, 116, gameport, &raw_data))
+			वापस IO_GOT_PACKET | IO_RESET;
 
-		if (!poll_until(0x30, 0, 193, gameport, &raw_data))
-			return IO_GOT_PACKET | IO_RESET;
+		अगर (!poll_until(0x30, 0, 193, gameport, &raw_data))
+			वापस IO_GOT_PACKET | IO_RESET;
 
-		if (raw_data & 1)
-			return IO_GOT_PACKET | IO_RESET;
+		अगर (raw_data & 1)
+			वापस IO_GOT_PACKET | IO_RESET;
 
-		if (sendcode & 1)
+		अगर (sendcode & 1)
 			gameport_trigger(gameport);
 
 		sendcode >>= 1;
-	} while (sendcode);
+	पूर्ण जबतक (sendcode);
 
-	return IO_GOT_PACKET | IO_MODE_FAST;
-}
+	वापस IO_GOT_PACKET | IO_MODE_FAST;
+पूर्ण
 
 /*
- * Disables and restores interrupts for mp_io(), which does the actual I/O.
+ * Disables and restores पूर्णांकerrupts क्रम mp_io(), which करोes the actual I/O.
  */
 
-static int multiport_io(struct gameport* gameport, int sendflags, int sendcode, u32 *packet)
-{
-	int status;
-	unsigned long flags;
+अटल पूर्णांक multiport_io(काष्ठा gameport* gameport, पूर्णांक sendflags, पूर्णांक sendcode, u32 *packet)
+अणु
+	पूर्णांक status;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
 	status = mp_io(gameport, sendflags, sendcode, packet);
 	local_irq_restore(flags);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
- * Puts multiport into digital mode.  Multiport LED turns green.
+ * Puts multiport पूर्णांकo digital mode.  Multiport LED turns green.
  *
- * Returns true if a valid digital packet was received, false otherwise.
+ * Returns true अगर a valid digital packet was received, false otherwise.
  */
 
-static int dig_mode_start(struct gameport *gameport, u32 *packet)
-{
-	int i;
-	int flags, tries = 0, bads = 0;
+अटल पूर्णांक dig_mode_start(काष्ठा gameport *gameport, u32 *packet)
+अणु
+	पूर्णांक i;
+	पूर्णांक flags, tries = 0, bads = 0;
 
-	for (i = 0; i < ARRAY_SIZE(init_seq); i++) {     /* Send magic sequence */
-		if (init_seq[i])
+	क्रम (i = 0; i < ARRAY_SIZE(init_seq); i++) अणु     /* Send magic sequence */
+		अगर (init_seq[i])
 			gameport_trigger(gameport);
 		udelay(GRIP_INIT_DELAY);
-	}
+	पूर्ण
 
-	for (i = 0; i < 16; i++)            /* Wait for multiport to settle */
+	क्रम (i = 0; i < 16; i++)            /* Wait क्रम multiport to settle */
 		udelay(GRIP_INIT_DELAY);
 
-	while (tries < 64 && bads < 8) {    /* Reset multiport and try getting a packet */
+	जबतक (tries < 64 && bads < 8) अणु    /* Reset multiport and try getting a packet */
 
 		flags = multiport_io(gameport, IO_RESET, 0x27, packet);
 
-		if (flags & IO_MODE_FAST)
-			return 1;
+		अगर (flags & IO_MODE_FAST)
+			वापस 1;
 
-		if (flags & IO_RETRY)
+		अगर (flags & IO_RETRY)
 			tries++;
-		else
+		अन्यथा
 			bads++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Packet structure: B0-B15   => gamepad state
+ * Packet काष्ठाure: B0-B15   => gamepad state
  *                   B16-B20  => gamepad device type
  *                   B21-B24  => multiport slot index (1-4)
  *
@@ -355,336 +356,336 @@ static int dig_mode_start(struct gameport *gameport, u32 *packet)
  * Returns the packet status.
  */
 
-static int get_and_decode_packet(struct grip_mp *grip, int flags)
-{
-	struct grip_port *port;
+अटल पूर्णांक get_and_decode_packet(काष्ठा grip_mp *grip, पूर्णांक flags)
+अणु
+	काष्ठा grip_port *port;
 	u32 packet;
-	int joytype = 0;
-	int slot;
+	पूर्णांक joytype = 0;
+	पूर्णांक slot;
 
-	/* Get a packet and check for validity */
+	/* Get a packet and check क्रम validity */
 
 	flags &= IO_RESET | IO_RETRY;
 	flags = multiport_io(grip->gameport, flags, 0, &packet);
-	grip->reads++;
+	grip->पढ़ोs++;
 
-	if (packet & PACKET_MP_DONE)
+	अगर (packet & PACKET_MP_DONE)
 		flags |= IO_DONE;
 
-	if (flags && !(flags & IO_GOT_PACKET)) {
+	अगर (flags && !(flags & IO_GOT_PACKET)) अणु
 		grip->bads++;
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 
 	/* Ignore non-gamepad packets, e.g. multiport hardware version */
 
 	slot = ((packet >> 21) & 0xf) - 1;
-	if ((slot < 0) || (slot > 3))
-		return flags;
+	अगर ((slot < 0) || (slot > 3))
+		वापस flags;
 
 	port = grip->port[slot];
 
 	/*
 	 * Handle "reset" packets, which occur at startup, and when gamepads
-	 * are removed or plugged in.  May contain configuration of a new gamepad.
+	 * are हटाओd or plugged in.  May contain configuration of a new gamepad.
 	 */
 
 	joytype = (packet >> 16) & 0x1f;
-	if (!joytype) {
+	अगर (!joytype) अणु
 
-		if (port->registered) {
-			printk(KERN_INFO "grip_mp: removing %s, slot %d\n",
+		अगर (port->रेजिस्टरed) अणु
+			prपूर्णांकk(KERN_INFO "grip_mp: removing %s, slot %d\n",
 			       grip_name[port->mode], slot);
-			input_unregister_device(port->dev);
-			port->registered = 0;
-		}
+			input_unरेजिस्टर_device(port->dev);
+			port->रेजिस्टरed = 0;
+		पूर्ण
 		dbg("Reset: grip multiport slot %d\n", slot);
 		port->mode = GRIP_MODE_RESET;
 		flags |= IO_SLOT_CHANGE;
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 
 	/* Interpret a grip pad packet */
 
-	if (joytype == 0x1f) {
+	अगर (joytype == 0x1f) अणु
 
-		int dir = (packet >> 8) & 0xf;          /* eight way directional value */
+		पूर्णांक dir = (packet >> 8) & 0xf;          /* eight way directional value */
 		port->buttons = (~packet) & 0xff;
 		port->yaxes = ((axis_map[dir] >> 2) & 3) - 1;
 		port->xaxes = (axis_map[dir] & 3) - 1;
 		port->dirty = 1;
 
-		if (port->mode == GRIP_MODE_RESET)
+		अगर (port->mode == GRIP_MODE_RESET)
 			flags |= IO_SLOT_CHANGE;
 
 		port->mode = GRIP_MODE_GP;
 
-		if (!port->registered) {
+		अगर (!port->रेजिस्टरed) अणु
 			dbg("New Grip pad in multiport slot %d.\n", slot);
-			if (register_slot(slot, grip)) {
+			अगर (रेजिस्टर_slot(slot, grip)) अणु
 				port->mode = GRIP_MODE_RESET;
 				port->dirty = 0;
-			}
-		}
-		return flags;
-	}
+			पूर्ण
+		पूर्ण
+		वापस flags;
+	पूर्ण
 
-	/* Handle non-grip device codes.  For now, just print diagnostics. */
+	/* Handle non-grip device codes.  For now, just prपूर्णांक diagnostics. */
 
-	{
-		static int strange_code = 0;
-		if (strange_code != joytype) {
-			printk(KERN_INFO "Possible non-grip pad/joystick detected.\n");
-			printk(KERN_INFO "Got joy type 0x%x and packet 0x%x.\n", joytype, packet);
+	अणु
+		अटल पूर्णांक strange_code = 0;
+		अगर (strange_code != joytype) अणु
+			prपूर्णांकk(KERN_INFO "Possible non-grip pad/joystick detected.\n");
+			prपूर्णांकk(KERN_INFO "Got joy type 0x%x and packet 0x%x.\n", joytype, packet);
 			strange_code = joytype;
-		}
-	}
-	return flags;
-}
+		पूर्ण
+	पूर्ण
+	वापस flags;
+पूर्ण
 
 /*
- * Returns true if all multiport slot states appear valid.
+ * Returns true अगर all multiport slot states appear valid.
  */
 
-static int slots_valid(struct grip_mp *grip)
-{
-	int flags, slot, invalid = 0, active = 0;
+अटल पूर्णांक slots_valid(काष्ठा grip_mp *grip)
+अणु
+	पूर्णांक flags, slot, invalid = 0, active = 0;
 
 	flags = get_and_decode_packet(grip, 0);
-	if (!(flags & IO_GOT_PACKET))
-		return 0;
+	अगर (!(flags & IO_GOT_PACKET))
+		वापस 0;
 
-	for (slot = 0; slot < 4; slot++) {
-		if (grip->port[slot]->mode == GRIP_MODE_RESET)
+	क्रम (slot = 0; slot < 4; slot++) अणु
+		अगर (grip->port[slot]->mode == GRIP_MODE_RESET)
 			invalid = 1;
-		if (grip->port[slot]->mode != GRIP_MODE_NONE)
+		अगर (grip->port[slot]->mode != GRIP_MODE_NONE)
 			active = 1;
-	}
+	पूर्ण
 
-	/* Return true if no active slot but multiport sent all its data */
-	if (!active)
-		return (flags & IO_DONE) ? 1 : 0;
+	/* Return true अगर no active slot but multiport sent all its data */
+	अगर (!active)
+		वापस (flags & IO_DONE) ? 1 : 0;
 
-	/* Return false if invalid device code received */
-	return invalid ? 0 : 1;
-}
+	/* Return false अगर invalid device code received */
+	वापस invalid ? 0 : 1;
+पूर्ण
 
 /*
- * Returns whether the multiport was placed into digital mode and
+ * Returns whether the multiport was placed पूर्णांकo digital mode and
  * able to communicate its state successfully.
  */
 
-static int multiport_init(struct grip_mp *grip)
-{
-	int dig_mode, initialized = 0, tries = 0;
+अटल पूर्णांक multiport_init(काष्ठा grip_mp *grip)
+अणु
+	पूर्णांक dig_mode, initialized = 0, tries = 0;
 	u32 packet;
 
 	dig_mode = dig_mode_start(grip->gameport, &packet);
-	while (!dig_mode && tries < 4) {
+	जबतक (!dig_mode && tries < 4) अणु
 		dig_mode = dig_mode_start(grip->gameport, &packet);
 		tries++;
-	}
+	पूर्ण
 
-	if (dig_mode)
+	अगर (dig_mode)
 		dbg("multiport_init(): digital mode activated.\n");
-	else {
+	अन्यथा अणु
 		dbg("multiport_init(): unable to activate digital mode.\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Get packets, store multiport state, and check state's validity */
-	for (tries = 0; tries < 4096; tries++) {
-		if (slots_valid(grip)) {
+	क्रम (tries = 0; tries < 4096; tries++) अणु
+		अगर (slots_valid(grip)) अणु
 			initialized = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	dbg("multiport_init(): initialized == %d\n", initialized);
-	return initialized;
-}
+	वापस initialized;
+पूर्ण
 
 /*
  * Reports joystick state to the linux input layer.
  */
 
-static void report_slot(struct grip_mp *grip, int slot)
-{
-	struct grip_port *port = grip->port[slot];
-	int i;
+अटल व्योम report_slot(काष्ठा grip_mp *grip, पूर्णांक slot)
+अणु
+	काष्ठा grip_port *port = grip->port[slot];
+	पूर्णांक i;
 
 	/* Store button states with linux input driver */
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		input_report_key(port->dev, grip_btn_gp[i], (port->buttons >> i) & 1);
 
 	/* Store axis states with linux driver */
 
-	input_report_abs(port->dev, ABS_X, port->xaxes);
-	input_report_abs(port->dev, ABS_Y, port->yaxes);
+	input_report_असल(port->dev, ABS_X, port->xaxes);
+	input_report_असल(port->dev, ABS_Y, port->yaxes);
 
 	/* Tell the receiver of the events to process them */
 
 	input_sync(port->dev);
 
 	port->dirty = 0;
-}
+पूर्ण
 
 /*
  * Get the multiport state.
  */
 
-static void grip_poll(struct gameport *gameport)
-{
-	struct grip_mp *grip = gameport_get_drvdata(gameport);
-	int i, npkts, flags;
+अटल व्योम grip_poll(काष्ठा gameport *gameport)
+अणु
+	काष्ठा grip_mp *grip = gameport_get_drvdata(gameport);
+	पूर्णांक i, npkts, flags;
 
-	for (npkts = 0; npkts < 4; npkts++) {
+	क्रम (npkts = 0; npkts < 4; npkts++) अणु
 		flags = IO_RETRY;
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 			flags = get_and_decode_packet(grip, flags);
-			if ((flags & IO_GOT_PACKET) || !(flags & IO_RETRY))
-				break;
-		}
-		if (flags & IO_DONE)
-			break;
-	}
+			अगर ((flags & IO_GOT_PACKET) || !(flags & IO_RETRY))
+				अवरोध;
+		पूर्ण
+		अगर (flags & IO_DONE)
+			अवरोध;
+	पूर्ण
 
-	for (i = 0; i < 4; i++)
-		if (grip->port[i]->dirty)
+	क्रम (i = 0; i < 4; i++)
+		अगर (grip->port[i]->dirty)
 			report_slot(grip, i);
-}
+पूर्ण
 
 /*
- * Called when a joystick device file is opened
+ * Called when a joystick device file is खोलोed
  */
 
-static int grip_open(struct input_dev *dev)
-{
-	struct grip_mp *grip = input_get_drvdata(dev);
+अटल पूर्णांक grip_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा grip_mp *grip = input_get_drvdata(dev);
 
 	gameport_start_polling(grip->gameport);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Called when a joystick device file is closed
+ * Called when a joystick device file is बंदd
  */
 
-static void grip_close(struct input_dev *dev)
-{
-	struct grip_mp *grip = input_get_drvdata(dev);
+अटल व्योम grip_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा grip_mp *grip = input_get_drvdata(dev);
 
 	gameport_stop_polling(grip->gameport);
-}
+पूर्ण
 
 /*
  * Tell the linux input layer about a newly plugged-in gamepad.
  */
 
-static int register_slot(int slot, struct grip_mp *grip)
-{
-	struct grip_port *port = grip->port[slot];
-	struct input_dev *input_dev;
-	int j, t;
-	int err;
+अटल पूर्णांक रेजिस्टर_slot(पूर्णांक slot, काष्ठा grip_mp *grip)
+अणु
+	काष्ठा grip_port *port = grip->port[slot];
+	काष्ठा input_dev *input_dev;
+	पूर्णांक j, t;
+	पूर्णांक err;
 
 	port->dev = input_dev = input_allocate_device();
-	if (!input_dev)
-		return -ENOMEM;
+	अगर (!input_dev)
+		वापस -ENOMEM;
 
 	input_dev->name = grip_name[port->mode];
 	input_dev->id.bustype = BUS_GAMEPORT;
-	input_dev->id.vendor = GAMEPORT_ID_VENDOR_GRAVIS;
+	input_dev->id.venकरोr = GAMEPORT_ID_VENDOR_GRAVIS;
 	input_dev->id.product = 0x0100 + port->mode;
 	input_dev->id.version = 0x0100;
 	input_dev->dev.parent = &grip->gameport->dev;
 
 	input_set_drvdata(input_dev, grip);
 
-	input_dev->open = grip_open;
-	input_dev->close = grip_close;
+	input_dev->खोलो = grip_खोलो;
+	input_dev->बंद = grip_बंद;
 
 	input_dev->evbit[0] = BIT_MASK(EV_KEY) | BIT_MASK(EV_ABS);
 
-	for (j = 0; (t = grip_abs[port->mode][j]) >= 0; j++)
-		input_set_abs_params(input_dev, t, -1, 1, 0, 0);
+	क्रम (j = 0; (t = grip_असल[port->mode][j]) >= 0; j++)
+		input_set_असल_params(input_dev, t, -1, 1, 0, 0);
 
-	for (j = 0; (t = grip_btn[port->mode][j]) >= 0; j++)
-		if (t > 0)
+	क्रम (j = 0; (t = grip_btn[port->mode][j]) >= 0; j++)
+		अगर (t > 0)
 			set_bit(t, input_dev->keybit);
 
-	err = input_register_device(port->dev);
-	if (err) {
-		input_free_device(port->dev);
-		return err;
-	}
+	err = input_रेजिस्टर_device(port->dev);
+	अगर (err) अणु
+		input_मुक्त_device(port->dev);
+		वापस err;
+	पूर्ण
 
-	port->registered = 1;
+	port->रेजिस्टरed = 1;
 
-	if (port->dirty)	            /* report initial state, if any */
+	अगर (port->dirty)	            /* report initial state, अगर any */
 		report_slot(grip, slot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int grip_connect(struct gameport *gameport, struct gameport_driver *drv)
-{
-	struct grip_mp *grip;
-	int err;
+अटल पूर्णांक grip_connect(काष्ठा gameport *gameport, काष्ठा gameport_driver *drv)
+अणु
+	काष्ठा grip_mp *grip;
+	पूर्णांक err;
 
-	if (!(grip = kzalloc(sizeof(struct grip_mp), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(grip = kzalloc(माप(काष्ठा grip_mp), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	grip->gameport = gameport;
 
 	gameport_set_drvdata(gameport, grip);
 
-	err = gameport_open(gameport, drv, GAMEPORT_MODE_RAW);
-	if (err)
-		goto fail1;
+	err = gameport_खोलो(gameport, drv, GAMEPORT_MODE_RAW);
+	अगर (err)
+		जाओ fail1;
 
 	gameport_set_poll_handler(gameport, grip_poll);
-	gameport_set_poll_interval(gameport, 20);
+	gameport_set_poll_पूर्णांकerval(gameport, 20);
 
-	if (!multiport_init(grip)) {
+	अगर (!multiport_init(grip)) अणु
 		err = -ENODEV;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
-	if (!grip->port[0]->mode && !grip->port[1]->mode && !grip->port[2]->mode && !grip->port[3]->mode) {
+	अगर (!grip->port[0]->mode && !grip->port[1]->mode && !grip->port[2]->mode && !grip->port[3]->mode) अणु
 		/* nothing plugged in */
 		err = -ENODEV;
-		goto fail2;
-	}
+		जाओ fail2;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-fail2:	gameport_close(gameport);
-fail1:	gameport_set_drvdata(gameport, NULL);
-	kfree(grip);
-	return err;
-}
+fail2:	gameport_बंद(gameport);
+fail1:	gameport_set_drvdata(gameport, शून्य);
+	kमुक्त(grip);
+	वापस err;
+पूर्ण
 
-static void grip_disconnect(struct gameport *gameport)
-{
-	struct grip_mp *grip = gameport_get_drvdata(gameport);
-	int i;
+अटल व्योम grip_disconnect(काष्ठा gameport *gameport)
+अणु
+	काष्ठा grip_mp *grip = gameport_get_drvdata(gameport);
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++)
-		if (grip->port[i]->registered)
-			input_unregister_device(grip->port[i]->dev);
-	gameport_close(gameport);
-	gameport_set_drvdata(gameport, NULL);
-	kfree(grip);
-}
+	क्रम (i = 0; i < 4; i++)
+		अगर (grip->port[i]->रेजिस्टरed)
+			input_unरेजिस्टर_device(grip->port[i]->dev);
+	gameport_बंद(gameport);
+	gameport_set_drvdata(gameport, शून्य);
+	kमुक्त(grip);
+पूर्ण
 
-static struct gameport_driver grip_drv = {
-	.driver		= {
+अटल काष्ठा gameport_driver grip_drv = अणु
+	.driver		= अणु
 		.name	= "grip_mp",
-	},
+	पूर्ण,
 	.description	= DRIVER_DESC,
 	.connect	= grip_connect,
 	.disconnect	= grip_disconnect,
-};
+पूर्ण;
 
 module_gameport_driver(grip_drv);

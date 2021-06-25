@@ -1,541 +1,542 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Multipath support for RPC
+ * Multipath support क्रम RPC
  *
  * Copyright (c) 2015, 2016, Primary Data, Inc. All rights reserved.
  *
  * Trond Myklebust <trond.myklebust@primarydata.com>
  *
  */
-#include <linux/types.h>
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/rcupdate.h>
-#include <linux/rculist.h>
-#include <linux/slab.h>
-#include <asm/cmpxchg.h>
-#include <linux/spinlock.h>
-#include <linux/sunrpc/xprt.h>
-#include <linux/sunrpc/addr.h>
-#include <linux/sunrpc/xprtmultipath.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/cmpxchg.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sunrpc/xprt.h>
+#समावेश <linux/sunrpc/addr.h>
+#समावेश <linux/sunrpc/xprपंचांगultipath.h>
 
-typedef struct rpc_xprt *(*xprt_switch_find_xprt_t)(struct rpc_xprt_switch *xps,
-		const struct rpc_xprt *cur);
+प्रकार काष्ठा rpc_xprt *(*xprt_चयन_find_xprt_t)(काष्ठा rpc_xprt_चयन *xps,
+		स्थिर काष्ठा rpc_xprt *cur);
 
-static const struct rpc_xprt_iter_ops rpc_xprt_iter_singular;
-static const struct rpc_xprt_iter_ops rpc_xprt_iter_roundrobin;
-static const struct rpc_xprt_iter_ops rpc_xprt_iter_listall;
+अटल स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_singular;
+अटल स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_roundrobin;
+अटल स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_listall;
 
-static void xprt_switch_add_xprt_locked(struct rpc_xprt_switch *xps,
-		struct rpc_xprt *xprt)
-{
-	if (unlikely(xprt_get(xprt) == NULL))
-		return;
-	list_add_tail_rcu(&xprt->xprt_switch, &xps->xps_xprt_list);
+अटल व्योम xprt_चयन_add_xprt_locked(काष्ठा rpc_xprt_चयन *xps,
+		काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (unlikely(xprt_get(xprt) == शून्य))
+		वापस;
+	list_add_tail_rcu(&xprt->xprt_चयन, &xps->xps_xprt_list);
 	smp_wmb();
-	if (xps->xps_nxprts == 0)
+	अगर (xps->xps_nxprts == 0)
 		xps->xps_net = xprt->xprt_net;
 	xps->xps_nxprts++;
 	xps->xps_nactive++;
-}
+पूर्ण
 
 /**
- * rpc_xprt_switch_add_xprt - Add a new rpc_xprt to an rpc_xprt_switch
- * @xps: pointer to struct rpc_xprt_switch
- * @xprt: pointer to struct rpc_xprt
+ * rpc_xprt_चयन_add_xprt - Add a new rpc_xprt to an rpc_xprt_चयन
+ * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन
+ * @xprt: poपूर्णांकer to काष्ठा rpc_xprt
  *
- * Adds xprt to the end of the list of struct rpc_xprt in xps.
+ * Adds xprt to the end of the list of काष्ठा rpc_xprt in xps.
  */
-void rpc_xprt_switch_add_xprt(struct rpc_xprt_switch *xps,
-		struct rpc_xprt *xprt)
-{
-	if (xprt == NULL)
-		return;
+व्योम rpc_xprt_चयन_add_xprt(काष्ठा rpc_xprt_चयन *xps,
+		काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (xprt == शून्य)
+		वापस;
 	spin_lock(&xps->xps_lock);
-	if (xps->xps_net == xprt->xprt_net || xps->xps_net == NULL)
-		xprt_switch_add_xprt_locked(xps, xprt);
+	अगर (xps->xps_net == xprt->xprt_net || xps->xps_net == शून्य)
+		xprt_चयन_add_xprt_locked(xps, xprt);
 	spin_unlock(&xps->xps_lock);
-}
+पूर्ण
 
-static void xprt_switch_remove_xprt_locked(struct rpc_xprt_switch *xps,
-		struct rpc_xprt *xprt)
-{
-	if (unlikely(xprt == NULL))
-		return;
+अटल व्योम xprt_चयन_हटाओ_xprt_locked(काष्ठा rpc_xprt_चयन *xps,
+		काष्ठा rpc_xprt *xprt)
+अणु
+	अगर (unlikely(xprt == शून्य))
+		वापस;
 	xps->xps_nactive--;
 	xps->xps_nxprts--;
-	if (xps->xps_nxprts == 0)
-		xps->xps_net = NULL;
+	अगर (xps->xps_nxprts == 0)
+		xps->xps_net = शून्य;
 	smp_wmb();
-	list_del_rcu(&xprt->xprt_switch);
-}
+	list_del_rcu(&xprt->xprt_चयन);
+पूर्ण
 
 /**
- * rpc_xprt_switch_remove_xprt - Removes an rpc_xprt from a rpc_xprt_switch
- * @xps: pointer to struct rpc_xprt_switch
- * @xprt: pointer to struct rpc_xprt
+ * rpc_xprt_चयन_हटाओ_xprt - Removes an rpc_xprt from a rpc_xprt_चयन
+ * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन
+ * @xprt: poपूर्णांकer to काष्ठा rpc_xprt
  *
- * Removes xprt from the list of struct rpc_xprt in xps.
+ * Removes xprt from the list of काष्ठा rpc_xprt in xps.
  */
-void rpc_xprt_switch_remove_xprt(struct rpc_xprt_switch *xps,
-		struct rpc_xprt *xprt)
-{
+व्योम rpc_xprt_चयन_हटाओ_xprt(काष्ठा rpc_xprt_चयन *xps,
+		काष्ठा rpc_xprt *xprt)
+अणु
 	spin_lock(&xps->xps_lock);
-	xprt_switch_remove_xprt_locked(xps, xprt);
+	xprt_चयन_हटाओ_xprt_locked(xps, xprt);
 	spin_unlock(&xps->xps_lock);
 	xprt_put(xprt);
-}
+पूर्ण
 
 /**
- * xprt_switch_alloc - Allocate a new struct rpc_xprt_switch
- * @xprt: pointer to struct rpc_xprt
+ * xprt_चयन_alloc - Allocate a new काष्ठा rpc_xprt_चयन
+ * @xprt: poपूर्णांकer to काष्ठा rpc_xprt
  * @gfp_flags: allocation flags
  *
- * On success, returns an initialised struct rpc_xprt_switch, containing
- * the entry xprt. Returns NULL on failure.
+ * On success, वापसs an initialised काष्ठा rpc_xprt_चयन, containing
+ * the entry xprt. Returns शून्य on failure.
  */
-struct rpc_xprt_switch *xprt_switch_alloc(struct rpc_xprt *xprt,
+काष्ठा rpc_xprt_चयन *xprt_चयन_alloc(काष्ठा rpc_xprt *xprt,
 		gfp_t gfp_flags)
-{
-	struct rpc_xprt_switch *xps;
+अणु
+	काष्ठा rpc_xprt_चयन *xps;
 
-	xps = kmalloc(sizeof(*xps), gfp_flags);
-	if (xps != NULL) {
+	xps = kदो_स्मृति(माप(*xps), gfp_flags);
+	अगर (xps != शून्य) अणु
 		spin_lock_init(&xps->xps_lock);
 		kref_init(&xps->xps_kref);
 		xps->xps_nxprts = xps->xps_nactive = 0;
-		atomic_long_set(&xps->xps_queuelen, 0);
-		xps->xps_net = NULL;
+		atomic_दीर्घ_set(&xps->xps_queuelen, 0);
+		xps->xps_net = शून्य;
 		INIT_LIST_HEAD(&xps->xps_xprt_list);
 		xps->xps_iter_ops = &rpc_xprt_iter_singular;
-		xprt_switch_add_xprt_locked(xps, xprt);
-	}
+		xprt_चयन_add_xprt_locked(xps, xprt);
+	पूर्ण
 
-	return xps;
-}
+	वापस xps;
+पूर्ण
 
-static void xprt_switch_free_entries(struct rpc_xprt_switch *xps)
-{
+अटल व्योम xprt_चयन_मुक्त_entries(काष्ठा rpc_xprt_चयन *xps)
+अणु
 	spin_lock(&xps->xps_lock);
-	while (!list_empty(&xps->xps_xprt_list)) {
-		struct rpc_xprt *xprt;
+	जबतक (!list_empty(&xps->xps_xprt_list)) अणु
+		काष्ठा rpc_xprt *xprt;
 
 		xprt = list_first_entry(&xps->xps_xprt_list,
-				struct rpc_xprt, xprt_switch);
-		xprt_switch_remove_xprt_locked(xps, xprt);
+				काष्ठा rpc_xprt, xprt_चयन);
+		xprt_चयन_हटाओ_xprt_locked(xps, xprt);
 		spin_unlock(&xps->xps_lock);
 		xprt_put(xprt);
 		spin_lock(&xps->xps_lock);
-	}
+	पूर्ण
 	spin_unlock(&xps->xps_lock);
-}
+पूर्ण
 
-static void xprt_switch_free(struct kref *kref)
-{
-	struct rpc_xprt_switch *xps = container_of(kref,
-			struct rpc_xprt_switch, xps_kref);
+अटल व्योम xprt_चयन_मुक्त(काष्ठा kref *kref)
+अणु
+	काष्ठा rpc_xprt_चयन *xps = container_of(kref,
+			काष्ठा rpc_xprt_चयन, xps_kref);
 
-	xprt_switch_free_entries(xps);
-	kfree_rcu(xps, xps_rcu);
-}
-
-/**
- * xprt_switch_get - Return a reference to a rpc_xprt_switch
- * @xps: pointer to struct rpc_xprt_switch
- *
- * Returns a reference to xps unless the refcount is already zero.
- */
-struct rpc_xprt_switch *xprt_switch_get(struct rpc_xprt_switch *xps)
-{
-	if (xps != NULL && kref_get_unless_zero(&xps->xps_kref))
-		return xps;
-	return NULL;
-}
+	xprt_चयन_मुक्त_entries(xps);
+	kमुक्त_rcu(xps, xps_rcu);
+पूर्ण
 
 /**
- * xprt_switch_put - Release a reference to a rpc_xprt_switch
- * @xps: pointer to struct rpc_xprt_switch
+ * xprt_चयन_get - Return a reference to a rpc_xprt_चयन
+ * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन
  *
- * Release the reference to xps, and free it once the refcount is zero.
+ * Returns a reference to xps unless the refcount is alपढ़ोy zero.
  */
-void xprt_switch_put(struct rpc_xprt_switch *xps)
-{
-	if (xps != NULL)
-		kref_put(&xps->xps_kref, xprt_switch_free);
-}
+काष्ठा rpc_xprt_चयन *xprt_चयन_get(काष्ठा rpc_xprt_चयन *xps)
+अणु
+	अगर (xps != शून्य && kref_get_unless_zero(&xps->xps_kref))
+		वापस xps;
+	वापस शून्य;
+पूर्ण
 
 /**
- * rpc_xprt_switch_set_roundrobin - Set a round-robin policy on rpc_xprt_switch
- * @xps: pointer to struct rpc_xprt_switch
+ * xprt_चयन_put - Release a reference to a rpc_xprt_चयन
+ * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन
  *
- * Sets a round-robin default policy for iterators acting on xps.
+ * Release the reference to xps, and मुक्त it once the refcount is zero.
  */
-void rpc_xprt_switch_set_roundrobin(struct rpc_xprt_switch *xps)
-{
-	if (READ_ONCE(xps->xps_iter_ops) != &rpc_xprt_iter_roundrobin)
+व्योम xprt_चयन_put(काष्ठा rpc_xprt_चयन *xps)
+अणु
+	अगर (xps != शून्य)
+		kref_put(&xps->xps_kref, xprt_चयन_मुक्त);
+पूर्ण
+
+/**
+ * rpc_xprt_चयन_set_roundrobin - Set a round-robin policy on rpc_xprt_चयन
+ * @xps: poपूर्णांकer to काष्ठा rpc_xprt_चयन
+ *
+ * Sets a round-robin शेष policy क्रम iterators acting on xps.
+ */
+व्योम rpc_xprt_चयन_set_roundrobin(काष्ठा rpc_xprt_चयन *xps)
+अणु
+	अगर (READ_ONCE(xps->xps_iter_ops) != &rpc_xprt_iter_roundrobin)
 		WRITE_ONCE(xps->xps_iter_ops, &rpc_xprt_iter_roundrobin);
-}
+पूर्ण
 
-static
-const struct rpc_xprt_iter_ops *xprt_iter_ops(const struct rpc_xprt_iter *xpi)
-{
-	if (xpi->xpi_ops != NULL)
-		return xpi->xpi_ops;
-	return rcu_dereference(xpi->xpi_xpswitch)->xps_iter_ops;
-}
+अटल
+स्थिर काष्ठा rpc_xprt_iter_ops *xprt_iter_ops(स्थिर काष्ठा rpc_xprt_iter *xpi)
+अणु
+	अगर (xpi->xpi_ops != शून्य)
+		वापस xpi->xpi_ops;
+	वापस rcu_dereference(xpi->xpi_xpचयन)->xps_iter_ops;
+पूर्ण
 
-static
-void xprt_iter_no_rewind(struct rpc_xprt_iter *xpi)
-{
-}
+अटल
+व्योम xprt_iter_no_शुरुआत(काष्ठा rpc_xprt_iter *xpi)
+अणु
+पूर्ण
 
-static
-void xprt_iter_default_rewind(struct rpc_xprt_iter *xpi)
-{
-	WRITE_ONCE(xpi->xpi_cursor, NULL);
-}
+अटल
+व्योम xprt_iter_शेष_शुरुआत(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	WRITE_ONCE(xpi->xpi_cursor, शून्य);
+पूर्ण
 
-static
-bool xprt_is_active(const struct rpc_xprt *xprt)
-{
-	return kref_read(&xprt->kref) != 0;
-}
+अटल
+bool xprt_is_active(स्थिर काष्ठा rpc_xprt *xprt)
+अणु
+	वापस kref_पढ़ो(&xprt->kref) != 0;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_find_first_entry(struct list_head *head)
-{
-	struct rpc_xprt *pos;
+अटल
+काष्ठा rpc_xprt *xprt_चयन_find_first_entry(काष्ठा list_head *head)
+अणु
+	काष्ठा rpc_xprt *pos;
 
-	list_for_each_entry_rcu(pos, head, xprt_switch) {
-		if (xprt_is_active(pos))
-			return pos;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(pos, head, xprt_चयन) अणु
+		अगर (xprt_is_active(pos))
+			वापस pos;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_first_entry(struct rpc_xprt_iter *xpi)
-{
-	struct rpc_xprt_switch *xps = rcu_dereference(xpi->xpi_xpswitch);
+अटल
+काष्ठा rpc_xprt *xprt_iter_first_entry(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	काष्ठा rpc_xprt_चयन *xps = rcu_dereference(xpi->xpi_xpचयन);
 
-	if (xps == NULL)
-		return NULL;
-	return xprt_switch_find_first_entry(&xps->xps_xprt_list);
-}
+	अगर (xps == शून्य)
+		वापस शून्य;
+	वापस xprt_चयन_find_first_entry(&xps->xps_xprt_list);
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_find_current_entry(struct list_head *head,
-		const struct rpc_xprt *cur)
-{
-	struct rpc_xprt *pos;
+अटल
+काष्ठा rpc_xprt *xprt_चयन_find_current_entry(काष्ठा list_head *head,
+		स्थिर काष्ठा rpc_xprt *cur)
+अणु
+	काष्ठा rpc_xprt *pos;
 	bool found = false;
 
-	list_for_each_entry_rcu(pos, head, xprt_switch) {
-		if (cur == pos)
+	list_क्रम_each_entry_rcu(pos, head, xprt_चयन) अणु
+		अगर (cur == pos)
 			found = true;
-		if (found && xprt_is_active(pos))
-			return pos;
-	}
-	return NULL;
-}
+		अगर (found && xprt_is_active(pos))
+			वापस pos;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_current_entry(struct rpc_xprt_iter *xpi)
-{
-	struct rpc_xprt_switch *xps = rcu_dereference(xpi->xpi_xpswitch);
-	struct list_head *head;
+अटल
+काष्ठा rpc_xprt *xprt_iter_current_entry(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	काष्ठा rpc_xprt_चयन *xps = rcu_dereference(xpi->xpi_xpचयन);
+	काष्ठा list_head *head;
 
-	if (xps == NULL)
-		return NULL;
+	अगर (xps == शून्य)
+		वापस शून्य;
 	head = &xps->xps_xprt_list;
-	if (xpi->xpi_cursor == NULL || xps->xps_nxprts < 2)
-		return xprt_switch_find_first_entry(head);
-	return xprt_switch_find_current_entry(head, xpi->xpi_cursor);
-}
+	अगर (xpi->xpi_cursor == शून्य || xps->xps_nxprts < 2)
+		वापस xprt_चयन_find_first_entry(head);
+	वापस xprt_चयन_find_current_entry(head, xpi->xpi_cursor);
+पूर्ण
 
-bool rpc_xprt_switch_has_addr(struct rpc_xprt_switch *xps,
-			      const struct sockaddr *sap)
-{
-	struct list_head *head;
-	struct rpc_xprt *pos;
+bool rpc_xprt_चयन_has_addr(काष्ठा rpc_xprt_चयन *xps,
+			      स्थिर काष्ठा sockaddr *sap)
+अणु
+	काष्ठा list_head *head;
+	काष्ठा rpc_xprt *pos;
 
-	if (xps == NULL || sap == NULL)
-		return false;
+	अगर (xps == शून्य || sap == शून्य)
+		वापस false;
 
 	head = &xps->xps_xprt_list;
-	list_for_each_entry_rcu(pos, head, xprt_switch) {
-		if (rpc_cmp_addr_port(sap, (struct sockaddr *)&pos->addr)) {
+	list_क्रम_each_entry_rcu(pos, head, xprt_चयन) अणु
+		अगर (rpc_cmp_addr_port(sap, (काष्ठा sockaddr *)&pos->addr)) अणु
 			pr_info("RPC:   addr %s already in xprt switch\n",
 				pos->address_strings[RPC_DISPLAY_ADDR]);
-			return true;
-		}
-	}
-	return false;
-}
+			वापस true;
+		पूर्ण
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_find_next_entry(struct list_head *head,
-		const struct rpc_xprt *cur)
-{
-	struct rpc_xprt *pos, *prev = NULL;
+अटल
+काष्ठा rpc_xprt *xprt_चयन_find_next_entry(काष्ठा list_head *head,
+		स्थिर काष्ठा rpc_xprt *cur)
+अणु
+	काष्ठा rpc_xprt *pos, *prev = शून्य;
 	bool found = false;
 
-	list_for_each_entry_rcu(pos, head, xprt_switch) {
-		if (cur == prev)
+	list_क्रम_each_entry_rcu(pos, head, xprt_चयन) अणु
+		अगर (cur == prev)
 			found = true;
-		if (found && xprt_is_active(pos))
-			return pos;
+		अगर (found && xprt_is_active(pos))
+			वापस pos;
 		prev = pos;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_set_next_cursor(struct rpc_xprt_switch *xps,
-		struct rpc_xprt **cursor,
-		xprt_switch_find_xprt_t find_next)
-{
-	struct rpc_xprt *pos, *old;
+अटल
+काष्ठा rpc_xprt *xprt_चयन_set_next_cursor(काष्ठा rpc_xprt_चयन *xps,
+		काष्ठा rpc_xprt **cursor,
+		xprt_चयन_find_xprt_t find_next)
+अणु
+	काष्ठा rpc_xprt *pos, *old;
 
 	old = smp_load_acquire(cursor);
 	pos = find_next(xps, old);
 	smp_store_release(cursor, pos);
-	return pos;
-}
+	वापस pos;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_next_entry_multiple(struct rpc_xprt_iter *xpi,
-		xprt_switch_find_xprt_t find_next)
-{
-	struct rpc_xprt_switch *xps = rcu_dereference(xpi->xpi_xpswitch);
+अटल
+काष्ठा rpc_xprt *xprt_iter_next_entry_multiple(काष्ठा rpc_xprt_iter *xpi,
+		xprt_चयन_find_xprt_t find_next)
+अणु
+	काष्ठा rpc_xprt_चयन *xps = rcu_dereference(xpi->xpi_xpचयन);
 
-	if (xps == NULL)
-		return NULL;
-	return xprt_switch_set_next_cursor(xps, &xpi->xpi_cursor, find_next);
-}
+	अगर (xps == शून्य)
+		वापस शून्य;
+	वापस xprt_चयन_set_next_cursor(xps, &xpi->xpi_cursor, find_next);
+पूर्ण
 
-static
-struct rpc_xprt *__xprt_switch_find_next_entry_roundrobin(struct list_head *head,
-		const struct rpc_xprt *cur)
-{
-	struct rpc_xprt *ret;
+अटल
+काष्ठा rpc_xprt *__xprt_चयन_find_next_entry_roundrobin(काष्ठा list_head *head,
+		स्थिर काष्ठा rpc_xprt *cur)
+अणु
+	काष्ठा rpc_xprt *ret;
 
-	ret = xprt_switch_find_next_entry(head, cur);
-	if (ret != NULL)
-		return ret;
-	return xprt_switch_find_first_entry(head);
-}
+	ret = xprt_चयन_find_next_entry(head, cur);
+	अगर (ret != शून्य)
+		वापस ret;
+	वापस xprt_चयन_find_first_entry(head);
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_find_next_entry_roundrobin(struct rpc_xprt_switch *xps,
-		const struct rpc_xprt *cur)
-{
-	struct list_head *head = &xps->xps_xprt_list;
-	struct rpc_xprt *xprt;
-	unsigned int nactive;
+अटल
+काष्ठा rpc_xprt *xprt_चयन_find_next_entry_roundrobin(काष्ठा rpc_xprt_चयन *xps,
+		स्थिर काष्ठा rpc_xprt *cur)
+अणु
+	काष्ठा list_head *head = &xps->xps_xprt_list;
+	काष्ठा rpc_xprt *xprt;
+	अचिन्हित पूर्णांक nactive;
 
-	for (;;) {
-		unsigned long xprt_queuelen, xps_queuelen;
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ xprt_queuelen, xps_queuelen;
 
-		xprt = __xprt_switch_find_next_entry_roundrobin(head, cur);
-		if (!xprt)
-			break;
-		xprt_queuelen = atomic_long_read(&xprt->queuelen);
-		xps_queuelen = atomic_long_read(&xps->xps_queuelen);
+		xprt = __xprt_चयन_find_next_entry_roundrobin(head, cur);
+		अगर (!xprt)
+			अवरोध;
+		xprt_queuelen = atomic_दीर्घ_पढ़ो(&xprt->queuelen);
+		xps_queuelen = atomic_दीर्घ_पढ़ो(&xps->xps_queuelen);
 		nactive = READ_ONCE(xps->xps_nactive);
-		/* Exit loop if xprt_queuelen <= average queue length */
-		if (xprt_queuelen * nactive <= xps_queuelen)
-			break;
+		/* Exit loop अगर xprt_queuelen <= average queue length */
+		अगर (xprt_queuelen * nactive <= xps_queuelen)
+			अवरोध;
 		cur = xprt;
-	}
-	return xprt;
-}
+	पूर्ण
+	वापस xprt;
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_next_entry_roundrobin(struct rpc_xprt_iter *xpi)
-{
-	return xprt_iter_next_entry_multiple(xpi,
-			xprt_switch_find_next_entry_roundrobin);
-}
+अटल
+काष्ठा rpc_xprt *xprt_iter_next_entry_roundrobin(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	वापस xprt_iter_next_entry_multiple(xpi,
+			xprt_चयन_find_next_entry_roundrobin);
+पूर्ण
 
-static
-struct rpc_xprt *xprt_switch_find_next_entry_all(struct rpc_xprt_switch *xps,
-		const struct rpc_xprt *cur)
-{
-	return xprt_switch_find_next_entry(&xps->xps_xprt_list, cur);
-}
+अटल
+काष्ठा rpc_xprt *xprt_चयन_find_next_entry_all(काष्ठा rpc_xprt_चयन *xps,
+		स्थिर काष्ठा rpc_xprt *cur)
+अणु
+	वापस xprt_चयन_find_next_entry(&xps->xps_xprt_list, cur);
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_next_entry_all(struct rpc_xprt_iter *xpi)
-{
-	return xprt_iter_next_entry_multiple(xpi,
-			xprt_switch_find_next_entry_all);
-}
+अटल
+काष्ठा rpc_xprt *xprt_iter_next_entry_all(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	वापस xprt_iter_next_entry_multiple(xpi,
+			xprt_चयन_find_next_entry_all);
+पूर्ण
 
 /*
- * xprt_iter_rewind - Resets the xprt iterator
- * @xpi: pointer to rpc_xprt_iter
+ * xprt_iter_शुरुआत - Resets the xprt iterator
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
  *
- * Resets xpi to ensure that it points to the first entry in the list
+ * Resets xpi to ensure that it poपूर्णांकs to the first entry in the list
  * of transports.
  */
-static
-void xprt_iter_rewind(struct rpc_xprt_iter *xpi)
-{
-	rcu_read_lock();
-	xprt_iter_ops(xpi)->xpi_rewind(xpi);
-	rcu_read_unlock();
-}
+अटल
+व्योम xprt_iter_शुरुआत(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	rcu_पढ़ो_lock();
+	xprt_iter_ops(xpi)->xpi_शुरुआत(xpi);
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void __xprt_iter_init(struct rpc_xprt_iter *xpi,
-		struct rpc_xprt_switch *xps,
-		const struct rpc_xprt_iter_ops *ops)
-{
-	rcu_assign_pointer(xpi->xpi_xpswitch, xprt_switch_get(xps));
-	xpi->xpi_cursor = NULL;
+अटल व्योम __xprt_iter_init(काष्ठा rpc_xprt_iter *xpi,
+		काष्ठा rpc_xprt_चयन *xps,
+		स्थिर काष्ठा rpc_xprt_iter_ops *ops)
+अणु
+	rcu_assign_poपूर्णांकer(xpi->xpi_xpचयन, xprt_चयन_get(xps));
+	xpi->xpi_cursor = शून्य;
 	xpi->xpi_ops = ops;
-}
+पूर्ण
 
 /**
  * xprt_iter_init - Initialise an xprt iterator
- * @xpi: pointer to rpc_xprt_iter
- * @xps: pointer to rpc_xprt_switch
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
+ * @xps: poपूर्णांकer to rpc_xprt_चयन
  *
- * Initialises the iterator to use the default iterator ops
- * as set in xps. This function is mainly intended for internal
+ * Initialises the iterator to use the शेष iterator ops
+ * as set in xps. This function is मुख्यly पूर्णांकended क्रम पूर्णांकernal
  * use in the rpc_client.
  */
-void xprt_iter_init(struct rpc_xprt_iter *xpi,
-		struct rpc_xprt_switch *xps)
-{
-	__xprt_iter_init(xpi, xps, NULL);
-}
+व्योम xprt_iter_init(काष्ठा rpc_xprt_iter *xpi,
+		काष्ठा rpc_xprt_चयन *xps)
+अणु
+	__xprt_iter_init(xpi, xps, शून्य);
+पूर्ण
 
 /**
  * xprt_iter_init_listall - Initialise an xprt iterator
- * @xpi: pointer to rpc_xprt_iter
- * @xps: pointer to rpc_xprt_switch
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
+ * @xps: poपूर्णांकer to rpc_xprt_चयन
  *
  * Initialises the iterator to iterate once through the entire list
  * of entries in xps.
  */
-void xprt_iter_init_listall(struct rpc_xprt_iter *xpi,
-		struct rpc_xprt_switch *xps)
-{
+व्योम xprt_iter_init_listall(काष्ठा rpc_xprt_iter *xpi,
+		काष्ठा rpc_xprt_चयन *xps)
+अणु
 	__xprt_iter_init(xpi, xps, &rpc_xprt_iter_listall);
-}
+पूर्ण
 
 /**
- * xprt_iter_xchg_switch - Atomically swap out the rpc_xprt_switch
- * @xpi: pointer to rpc_xprt_iter
- * @newswitch: pointer to a new rpc_xprt_switch or NULL
+ * xprt_iter_xchg_चयन - Atomically swap out the rpc_xprt_चयन
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
+ * @newचयन: poपूर्णांकer to a new rpc_xprt_चयन or शून्य
  *
- * Swaps out the existing xpi->xpi_xpswitch with a new value.
+ * Swaps out the existing xpi->xpi_xpचयन with a new value.
  */
-struct rpc_xprt_switch *xprt_iter_xchg_switch(struct rpc_xprt_iter *xpi,
-		struct rpc_xprt_switch *newswitch)
-{
-	struct rpc_xprt_switch __rcu *oldswitch;
+काष्ठा rpc_xprt_चयन *xprt_iter_xchg_चयन(काष्ठा rpc_xprt_iter *xpi,
+		काष्ठा rpc_xprt_चयन *newचयन)
+अणु
+	काष्ठा rpc_xprt_चयन __rcu *oldचयन;
 
-	/* Atomically swap out the old xpswitch */
-	oldswitch = xchg(&xpi->xpi_xpswitch, RCU_INITIALIZER(newswitch));
-	if (newswitch != NULL)
-		xprt_iter_rewind(xpi);
-	return rcu_dereference_protected(oldswitch, true);
-}
+	/* Atomically swap out the old xpचयन */
+	oldचयन = xchg(&xpi->xpi_xpचयन, RCU_INITIALIZER(newचयन));
+	अगर (newचयन != शून्य)
+		xprt_iter_शुरुआत(xpi);
+	वापस rcu_dereference_रक्षित(oldचयन, true);
+पूर्ण
 
 /**
  * xprt_iter_destroy - Destroys the xprt iterator
- * @xpi: pointer to rpc_xprt_iter
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
  */
-void xprt_iter_destroy(struct rpc_xprt_iter *xpi)
-{
-	xprt_switch_put(xprt_iter_xchg_switch(xpi, NULL));
-}
+व्योम xprt_iter_destroy(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	xprt_चयन_put(xprt_iter_xchg_चयन(xpi, शून्य));
+पूर्ण
 
 /**
- * xprt_iter_xprt - Returns the rpc_xprt pointed to by the cursor
- * @xpi: pointer to rpc_xprt_iter
+ * xprt_iter_xprt - Returns the rpc_xprt poपूर्णांकed to by the cursor
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
  *
- * Returns a pointer to the struct rpc_xprt that is currently
- * pointed to by the cursor.
- * Caller must be holding rcu_read_lock().
+ * Returns a poपूर्णांकer to the काष्ठा rpc_xprt that is currently
+ * poपूर्णांकed to by the cursor.
+ * Caller must be holding rcu_पढ़ो_lock().
  */
-struct rpc_xprt *xprt_iter_xprt(struct rpc_xprt_iter *xpi)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return xprt_iter_ops(xpi)->xpi_xprt(xpi);
-}
+काष्ठा rpc_xprt *xprt_iter_xprt(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस xprt_iter_ops(xpi)->xpi_xprt(xpi);
+पूर्ण
 
-static
-struct rpc_xprt *xprt_iter_get_helper(struct rpc_xprt_iter *xpi,
-		struct rpc_xprt *(*fn)(struct rpc_xprt_iter *))
-{
-	struct rpc_xprt *ret;
+अटल
+काष्ठा rpc_xprt *xprt_iter_get_helper(काष्ठा rpc_xprt_iter *xpi,
+		काष्ठा rpc_xprt *(*fn)(काष्ठा rpc_xprt_iter *))
+अणु
+	काष्ठा rpc_xprt *ret;
 
-	do {
+	करो अणु
 		ret = fn(xpi);
-		if (ret == NULL)
-			break;
+		अगर (ret == शून्य)
+			अवरोध;
 		ret = xprt_get(ret);
-	} while (ret == NULL);
-	return ret;
-}
+	पूर्ण जबतक (ret == शून्य);
+	वापस ret;
+पूर्ण
 
 /**
- * xprt_iter_get_xprt - Returns the rpc_xprt pointed to by the cursor
- * @xpi: pointer to rpc_xprt_iter
+ * xprt_iter_get_xprt - Returns the rpc_xprt poपूर्णांकed to by the cursor
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
  *
- * Returns a reference to the struct rpc_xprt that is currently
- * pointed to by the cursor.
+ * Returns a reference to the काष्ठा rpc_xprt that is currently
+ * poपूर्णांकed to by the cursor.
  */
-struct rpc_xprt *xprt_iter_get_xprt(struct rpc_xprt_iter *xpi)
-{
-	struct rpc_xprt *xprt;
+काष्ठा rpc_xprt *xprt_iter_get_xprt(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	काष्ठा rpc_xprt *xprt;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	xprt = xprt_iter_get_helper(xpi, xprt_iter_ops(xpi)->xpi_xprt);
-	rcu_read_unlock();
-	return xprt;
-}
+	rcu_पढ़ो_unlock();
+	वापस xprt;
+पूर्ण
 
 /**
  * xprt_iter_get_next - Returns the next rpc_xprt following the cursor
- * @xpi: pointer to rpc_xprt_iter
+ * @xpi: poपूर्णांकer to rpc_xprt_iter
  *
- * Returns a reference to the struct rpc_xprt that immediately follows the
- * entry pointed to by the cursor.
+ * Returns a reference to the काष्ठा rpc_xprt that immediately follows the
+ * entry poपूर्णांकed to by the cursor.
  */
-struct rpc_xprt *xprt_iter_get_next(struct rpc_xprt_iter *xpi)
-{
-	struct rpc_xprt *xprt;
+काष्ठा rpc_xprt *xprt_iter_get_next(काष्ठा rpc_xprt_iter *xpi)
+अणु
+	काष्ठा rpc_xprt *xprt;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	xprt = xprt_iter_get_helper(xpi, xprt_iter_ops(xpi)->xpi_next);
-	rcu_read_unlock();
-	return xprt;
-}
+	rcu_पढ़ो_unlock();
+	वापस xprt;
+पूर्ण
 
-/* Policy for always returning the first entry in the rpc_xprt_switch */
-static
-const struct rpc_xprt_iter_ops rpc_xprt_iter_singular = {
-	.xpi_rewind = xprt_iter_no_rewind,
+/* Policy क्रम always वापसing the first entry in the rpc_xprt_चयन */
+अटल
+स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_singular = अणु
+	.xpi_शुरुआत = xprt_iter_no_शुरुआत,
 	.xpi_xprt = xprt_iter_first_entry,
 	.xpi_next = xprt_iter_first_entry,
-};
+पूर्ण;
 
-/* Policy for round-robin iteration of entries in the rpc_xprt_switch */
-static
-const struct rpc_xprt_iter_ops rpc_xprt_iter_roundrobin = {
-	.xpi_rewind = xprt_iter_default_rewind,
+/* Policy क्रम round-robin iteration of entries in the rpc_xprt_चयन */
+अटल
+स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_roundrobin = अणु
+	.xpi_शुरुआत = xprt_iter_शेष_शुरुआत,
 	.xpi_xprt = xprt_iter_current_entry,
 	.xpi_next = xprt_iter_next_entry_roundrobin,
-};
+पूर्ण;
 
-/* Policy for once-through iteration of entries in the rpc_xprt_switch */
-static
-const struct rpc_xprt_iter_ops rpc_xprt_iter_listall = {
-	.xpi_rewind = xprt_iter_default_rewind,
+/* Policy क्रम once-through iteration of entries in the rpc_xprt_चयन */
+अटल
+स्थिर काष्ठा rpc_xprt_iter_ops rpc_xprt_iter_listall = अणु
+	.xpi_शुरुआत = xprt_iter_शेष_शुरुआत,
 	.xpi_xprt = xprt_iter_current_entry,
 	.xpi_next = xprt_iter_next_entry_all,
-};
+पूर्ण;

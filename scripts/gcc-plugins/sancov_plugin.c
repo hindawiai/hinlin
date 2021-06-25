@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright 2011-2016 by Emese Revfy <re.emese@gmail.com>
  * Licensed under the GPL v2, or (at your option) v3
@@ -9,7 +10,7 @@
  * It supports all gcc versions with plugin support (from gcc-4.5 on).
  * It is based on the commit "Add fuzzing coverage support" by Dmitry Vyukov <dvyukov@google.com>.
  *
- * You can read about it more here:
+ * You can पढ़ो about it more here:
  *  https://gcc.gnu.org/viewcvs/gcc?limit_changes=0&view=revision&revision=231296
  *  https://lwn.net/Articles/674854/
  *  https://github.com/google/syzkaller
@@ -19,53 +20,53 @@
  * make run
  */
 
-#include "gcc-common.h"
+#समावेश "gcc-common.h"
 
-__visible int plugin_is_GPL_compatible;
+__visible पूर्णांक plugin_is_GPL_compatible;
 
 tree sancov_fndecl;
 
-static struct plugin_info sancov_plugin_info = {
+अटल काष्ठा plugin_info sancov_plugin_info = अणु
 	.version	= "20160402",
 	.help		= "sancov plugin\n",
-};
+पूर्ण;
 
-static unsigned int sancov_execute(void)
-{
+अटल अचिन्हित पूर्णांक sancov_execute(व्योम)
+अणु
 	basic_block bb;
 
 	/* Remove this line when this plugin and kcov will be in the kernel.
-	if (!strcmp(DECL_NAME_POINTER(current_function_decl), DECL_NAME_POINTER(sancov_fndecl)))
-		return 0;
+	अगर (!म_भेद(DECL_NAME_POINTER(current_function_decl), DECL_NAME_POINTER(sancov_fndecl)))
+		वापस 0;
 	*/
 
-	FOR_EACH_BB_FN(bb, cfun) {
-		const_gimple stmt;
+	FOR_EACH_BB_FN(bb, cfun) अणु
+		स्थिर_gimple sपंचांगt;
 		gcall *gcall;
-		gimple_stmt_iterator gsi = gsi_after_labels(bb);
+		gimple_sपंचांगt_iterator gsi = gsi_after_labels(bb);
 
-		if (gsi_end_p(gsi))
-			continue;
+		अगर (gsi_end_p(gsi))
+			जारी;
 
-		stmt = gsi_stmt(gsi);
+		sपंचांगt = gsi_sपंचांगt(gsi);
 		gcall = as_a_gcall(gimple_build_call(sancov_fndecl, 0));
-		gimple_set_location(gcall, gimple_location(stmt));
-		gsi_insert_before(&gsi, gcall, GSI_SAME_STMT);
-	}
-	return 0;
-}
+		gimple_set_location(gcall, gimple_location(sपंचांगt));
+		gsi_insert_beक्रमe(&gsi, gcall, GSI_SAME_STMT);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define PASS_NAME sancov
+#घोषणा PASS_NAME sancov
 
-#define NO_GATE
-#define TODO_FLAGS_FINISH TODO_dump_func | TODO_verify_stmts | TODO_update_ssa_no_phi | TODO_verify_flow
+#घोषणा NO_GATE
+#घोषणा TODO_FLAGS_FINISH TODO_dump_func | TODO_verअगरy_sपंचांगts | TODO_update_ssa_no_phi | TODO_verअगरy_flow
 
-#include "gcc-generate-gimple-pass.h"
+#समावेश "gcc-generate-gimple-pass.h"
 
-static void sancov_start_unit(void __unused *gcc_data, void __unused *user_data)
-{
+अटल व्योम sancov_start_unit(व्योम __unused *gcc_data, व्योम __unused *user_data)
+अणु
 	tree leaf_attr, nothrow_attr;
-	tree BT_FN_VOID = build_function_type_list(void_type_node, NULL_TREE);
+	tree BT_FN_VOID = build_function_type_list(व्योम_type_node, शून्य_TREE);
 
 	sancov_fndecl = build_fn_decl("__sanitizer_cov_trace_pc", BT_FN_VOID);
 
@@ -77,58 +78,58 @@ static void sancov_start_unit(void __unused *gcc_data, void __unused *user_data)
 	DECL_UNINLINABLE(sancov_fndecl) = 1;
 	TREE_USED(sancov_fndecl) = 1;
 
-	nothrow_attr = tree_cons(get_identifier("nothrow"), NULL, NULL);
+	nothrow_attr = tree_cons(get_identअगरier("nothrow"), शून्य, शून्य);
 	decl_attributes(&sancov_fndecl, nothrow_attr, 0);
-	gcc_assert(TREE_NOTHROW(sancov_fndecl));
-	leaf_attr = tree_cons(get_identifier("leaf"), NULL, NULL);
+	gcc_निश्चित(TREE_NOTHROW(sancov_fndecl));
+	leaf_attr = tree_cons(get_identअगरier("leaf"), शून्य, शून्य);
 	decl_attributes(&sancov_fndecl, leaf_attr, 0);
-}
+पूर्ण
 
-__visible int plugin_init(struct plugin_name_args *plugin_info, struct plugin_gcc_version *version)
-{
-	int i;
-	const char * const plugin_name = plugin_info->base_name;
-	const int argc = plugin_info->argc;
-	const struct plugin_argument * const argv = plugin_info->argv;
+__visible पूर्णांक plugin_init(काष्ठा plugin_name_args *plugin_info, काष्ठा plugin_gcc_version *version)
+अणु
+	पूर्णांक i;
+	स्थिर अक्षर * स्थिर plugin_name = plugin_info->base_name;
+	स्थिर पूर्णांक argc = plugin_info->argc;
+	स्थिर काष्ठा plugin_argument * स्थिर argv = plugin_info->argv;
 	bool enable = true;
 
-	static const struct ggc_root_tab gt_ggc_r_gt_sancov[] = {
-		{
+	अटल स्थिर काष्ठा ggc_root_tab gt_ggc_r_gt_sancov[] = अणु
+		अणु
 			.base = &sancov_fndecl,
 			.nelt = 1,
-			.stride = sizeof(sancov_fndecl),
+			.stride = माप(sancov_fndecl),
 			.cb = &gt_ggc_mx_tree_node,
 			.pchw = &gt_pch_nx_tree_node
-		},
+		पूर्ण,
 		LAST_GGC_ROOT_TAB
-	};
+	पूर्ण;
 
 	/* BBs can be split afterwards?? */
 	PASS_INFO(sancov, "asan", 0, PASS_POS_INSERT_BEFORE);
 
-	if (!plugin_default_version_check(version, &gcc_version)) {
+	अगर (!plugin_शेष_version_check(version, &gcc_version)) अणु
 		error(G_("incompatible gcc/plugin versions"));
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	for (i = 0; i < argc; ++i) {
-		if (!strcmp(argv[i].key, "no-sancov")) {
+	क्रम (i = 0; i < argc; ++i) अणु
+		अगर (!म_भेद(argv[i].key, "no-sancov")) अणु
 			enable = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		error(G_("unknown option '-fplugin-arg-%s-%s'"), plugin_name, argv[i].key);
-	}
+	पूर्ण
 
-	register_callback(plugin_name, PLUGIN_INFO, NULL, &sancov_plugin_info);
+	रेजिस्टर_callback(plugin_name, PLUGIN_INFO, शून्य, &sancov_plugin_info);
 
-	if (!enable)
-		return 0;
+	अगर (!enable)
+		वापस 0;
 
-#if BUILDING_GCC_VERSION < 6000
-	register_callback(plugin_name, PLUGIN_START_UNIT, &sancov_start_unit, NULL);
-	register_callback(plugin_name, PLUGIN_REGISTER_GGC_ROOTS, NULL, (void *)&gt_ggc_r_gt_sancov);
-	register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &sancov_pass_info);
-#endif
+#अगर BUILDING_GCC_VERSION < 6000
+	रेजिस्टर_callback(plugin_name, PLUGIN_START_UNIT, &sancov_start_unit, शून्य);
+	रेजिस्टर_callback(plugin_name, PLUGIN_REGISTER_GGC_ROOTS, शून्य, (व्योम *)&gt_ggc_r_gt_sancov);
+	रेजिस्टर_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, शून्य, &sancov_pass_info);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

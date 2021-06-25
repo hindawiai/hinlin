@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PPC_BOOT_STRING_H_
-#define _PPC_BOOT_STRING_H_
-#include <stddef.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PPC_BOOT_STRING_H_
+#घोषणा _PPC_BOOT_STRING_H_
+#समावेश <मानकघोष.स>
 
-extern char *strcpy(char *dest, const char *src);
-extern char *strncpy(char *dest, const char *src, size_t n);
-extern char *strcat(char *dest, const char *src);
-extern char *strchr(const char *s, int c);
-extern char *strrchr(const char *s, int c);
-extern int strcmp(const char *s1, const char *s2);
-extern int strncmp(const char *s1, const char *s2, size_t n);
-extern size_t strlen(const char *s);
-extern size_t strnlen(const char *s, size_t count);
+बाह्य अक्षर *म_नकल(अक्षर *dest, स्थिर अक्षर *src);
+बाह्य अक्षर *म_नकलन(अक्षर *dest, स्थिर अक्षर *src, माप_प्रकार n);
+बाह्य अक्षर *म_जोड़ो(अक्षर *dest, स्थिर अक्षर *src);
+बाह्य अक्षर *म_अक्षर(स्थिर अक्षर *s, पूर्णांक c);
+बाह्य अक्षर *म_खोजप(स्थिर अक्षर *s, पूर्णांक c);
+बाह्य पूर्णांक म_भेद(स्थिर अक्षर *s1, स्थिर अक्षर *s2);
+बाह्य पूर्णांक म_भेदन(स्थिर अक्षर *s1, स्थिर अक्षर *s2, माप_प्रकार n);
+बाह्य माप_प्रकार म_माप(स्थिर अक्षर *s);
+बाह्य माप_प्रकार strnlen(स्थिर अक्षर *s, माप_प्रकार count);
 
-extern void *memset(void *s, int c, size_t n);
-extern void *memmove(void *dest, const void *src, unsigned long n);
-extern void *memcpy(void *dest, const void *src, unsigned long n);
-extern void *memchr(const void *s, int c, size_t n);
-extern int memcmp(const void *s1, const void *s2, size_t n);
+बाह्य व्योम *स_रखो(व्योम *s, पूर्णांक c, माप_प्रकार n);
+बाह्य व्योम *स_हटाओ(व्योम *dest, स्थिर व्योम *src, अचिन्हित दीर्घ n);
+बाह्य व्योम *स_नकल(व्योम *dest, स्थिर व्योम *src, अचिन्हित दीर्घ n);
+बाह्य व्योम *स_प्रथम(स्थिर व्योम *s, पूर्णांक c, माप_प्रकार n);
+बाह्य पूर्णांक स_भेद(स्थिर व्योम *s1, स्थिर व्योम *s2, माप_प्रकार n);
 
-#endif	/* _PPC_BOOT_STRING_H_ */
+#पूर्ण_अगर	/* _PPC_BOOT_STRING_H_ */

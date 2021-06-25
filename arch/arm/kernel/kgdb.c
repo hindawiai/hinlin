@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/arm/kernel/kgdb.c
  *
@@ -8,86 +9,86 @@
  * Copyright (c) 2008 Wind River Systems, Inc.
  *
  * Authors:  George Davis <davis_g@mvista.com>
- *           Deepak Saxena <dsaxena@plexity.net>
+ *           Deepak Saxena <dsaxena@plनिकासy.net>
  */
-#include <linux/irq.h>
-#include <linux/kdebug.h>
-#include <linux/kgdb.h>
-#include <linux/uaccess.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/kdebug.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/patch.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/patch.h>
+#समावेश <यंत्र/traps.h>
 
-struct dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
-{
-	{ "r0", 4, offsetof(struct pt_regs, ARM_r0)},
-	{ "r1", 4, offsetof(struct pt_regs, ARM_r1)},
-	{ "r2", 4, offsetof(struct pt_regs, ARM_r2)},
-	{ "r3", 4, offsetof(struct pt_regs, ARM_r3)},
-	{ "r4", 4, offsetof(struct pt_regs, ARM_r4)},
-	{ "r5", 4, offsetof(struct pt_regs, ARM_r5)},
-	{ "r6", 4, offsetof(struct pt_regs, ARM_r6)},
-	{ "r7", 4, offsetof(struct pt_regs, ARM_r7)},
-	{ "r8", 4, offsetof(struct pt_regs, ARM_r8)},
-	{ "r9", 4, offsetof(struct pt_regs, ARM_r9)},
-	{ "r10", 4, offsetof(struct pt_regs, ARM_r10)},
-	{ "fp", 4, offsetof(struct pt_regs, ARM_fp)},
-	{ "ip", 4, offsetof(struct pt_regs, ARM_ip)},
-	{ "sp", 4, offsetof(struct pt_regs, ARM_sp)},
-	{ "lr", 4, offsetof(struct pt_regs, ARM_lr)},
-	{ "pc", 4, offsetof(struct pt_regs, ARM_pc)},
-	{ "f0", 12, -1 },
-	{ "f1", 12, -1 },
-	{ "f2", 12, -1 },
-	{ "f3", 12, -1 },
-	{ "f4", 12, -1 },
-	{ "f5", 12, -1 },
-	{ "f6", 12, -1 },
-	{ "f7", 12, -1 },
-	{ "fps", 4, -1 },
-	{ "cpsr", 4, offsetof(struct pt_regs, ARM_cpsr)},
-};
+काष्ठा dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
+अणु
+	अणु "r0", 4, दुरत्व(काष्ठा pt_regs, ARM_r0)पूर्ण,
+	अणु "r1", 4, दुरत्व(काष्ठा pt_regs, ARM_r1)पूर्ण,
+	अणु "r2", 4, दुरत्व(काष्ठा pt_regs, ARM_r2)पूर्ण,
+	अणु "r3", 4, दुरत्व(काष्ठा pt_regs, ARM_r3)पूर्ण,
+	अणु "r4", 4, दुरत्व(काष्ठा pt_regs, ARM_r4)पूर्ण,
+	अणु "r5", 4, दुरत्व(काष्ठा pt_regs, ARM_r5)पूर्ण,
+	अणु "r6", 4, दुरत्व(काष्ठा pt_regs, ARM_r6)पूर्ण,
+	अणु "r7", 4, दुरत्व(काष्ठा pt_regs, ARM_r7)पूर्ण,
+	अणु "r8", 4, दुरत्व(काष्ठा pt_regs, ARM_r8)पूर्ण,
+	अणु "r9", 4, दुरत्व(काष्ठा pt_regs, ARM_r9)पूर्ण,
+	अणु "r10", 4, दुरत्व(काष्ठा pt_regs, ARM_r10)पूर्ण,
+	अणु "fp", 4, दुरत्व(काष्ठा pt_regs, ARM_fp)पूर्ण,
+	अणु "ip", 4, दुरत्व(काष्ठा pt_regs, ARM_ip)पूर्ण,
+	अणु "sp", 4, दुरत्व(काष्ठा pt_regs, ARM_sp)पूर्ण,
+	अणु "lr", 4, दुरत्व(काष्ठा pt_regs, ARM_lr)पूर्ण,
+	अणु "pc", 4, दुरत्व(काष्ठा pt_regs, ARM_pc)पूर्ण,
+	अणु "f0", 12, -1 पूर्ण,
+	अणु "f1", 12, -1 पूर्ण,
+	अणु "f2", 12, -1 पूर्ण,
+	अणु "f3", 12, -1 पूर्ण,
+	अणु "f4", 12, -1 पूर्ण,
+	अणु "f5", 12, -1 पूर्ण,
+	अणु "f6", 12, -1 पूर्ण,
+	अणु "f7", 12, -1 पूर्ण,
+	अणु "fps", 4, -1 पूर्ण,
+	अणु "cpsr", 4, दुरत्व(काष्ठा pt_regs, ARM_cpsr)पूर्ण,
+पूर्ण;
 
-char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (regno >= DBG_MAX_REG_NUM || regno < 0)
-		return NULL;
+अक्षर *dbg_get_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (regno >= DBG_MAX_REG_NUM || regno < 0)
+		वापस शून्य;
 
-	if (dbg_reg_def[regno].offset != -1)
-		memcpy(mem, (void *)regs + dbg_reg_def[regno].offset,
+	अगर (dbg_reg_def[regno].offset != -1)
+		स_नकल(mem, (व्योम *)regs + dbg_reg_def[regno].offset,
 		       dbg_reg_def[regno].size);
-	else
-		memset(mem, 0, dbg_reg_def[regno].size);
-	return dbg_reg_def[regno].name;
-}
+	अन्यथा
+		स_रखो(mem, 0, dbg_reg_def[regno].size);
+	वापस dbg_reg_def[regno].name;
+पूर्ण
 
-int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (regno >= DBG_MAX_REG_NUM || regno < 0)
-		return -EINVAL;
+पूर्णांक dbg_set_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (regno >= DBG_MAX_REG_NUM || regno < 0)
+		वापस -EINVAL;
 
-	if (dbg_reg_def[regno].offset != -1)
-		memcpy((void *)regs + dbg_reg_def[regno].offset, mem,
+	अगर (dbg_reg_def[regno].offset != -1)
+		स_नकल((व्योम *)regs + dbg_reg_def[regno].offset, mem,
 		       dbg_reg_def[regno].size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *task)
-{
-	struct thread_info *ti;
-	int regno;
+व्योम
+sleeping_thपढ़ो_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा thपढ़ो_info *ti;
+	पूर्णांक regno;
 
 	/* Just making sure... */
-	if (task == NULL)
-		return;
+	अगर (task == शून्य)
+		वापस;
 
 	/* Initialize to zero */
-	for (regno = 0; regno < GDB_MAX_REGS; regno++)
+	क्रम (regno = 0; regno < GDB_MAX_REGS; regno++)
 		gdb_regs[regno] = 0;
 
-	/* Otherwise, we have only some registers from switch_to() */
-	ti			= task_thread_info(task);
+	/* Otherwise, we have only some रेजिस्टरs from चयन_to() */
+	ti			= task_thपढ़ो_info(task);
 	gdb_regs[_R4]		= ti->cpu_context.r4;
 	gdb_regs[_R5]		= ti->cpu_context.r5;
 	gdb_regs[_R6]		= ti->cpu_context.r6;
@@ -98,174 +99,174 @@ sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *task)
 	gdb_regs[_FP]		= ti->cpu_context.fp;
 	gdb_regs[_SPT]		= ti->cpu_context.sp;
 	gdb_regs[_PC]		= ti->cpu_context.pc;
-}
+पूर्ण
 
-void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc)
-{
+व्योम kgdb_arch_set_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc)
+अणु
 	regs->ARM_pc = pc;
-}
+पूर्ण
 
-static int compiled_break;
+अटल पूर्णांक compiled_अवरोध;
 
-int kgdb_arch_handle_exception(int exception_vector, int signo,
-			       int err_code, char *remcom_in_buffer,
-			       char *remcom_out_buffer,
-			       struct pt_regs *linux_regs)
-{
-	unsigned long addr;
-	char *ptr;
+पूर्णांक kgdb_arch_handle_exception(पूर्णांक exception_vector, पूर्णांक signo,
+			       पूर्णांक err_code, अक्षर *remcom_in_buffer,
+			       अक्षर *remcom_out_buffer,
+			       काष्ठा pt_regs *linux_regs)
+अणु
+	अचिन्हित दीर्घ addr;
+	अक्षर *ptr;
 
-	switch (remcom_in_buffer[0]) {
-	case 'D':
-	case 'k':
-	case 'c':
+	चयन (remcom_in_buffer[0]) अणु
+	हाल 'D':
+	हाल 'k':
+	हाल 'c':
 		/*
-		 * Try to read optional parameter, pc unchanged if no parm.
-		 * If this was a compiled breakpoint, we need to move
-		 * to the next instruction or we will just breakpoint
+		 * Try to पढ़ो optional parameter, pc unchanged अगर no parm.
+		 * If this was a compiled अवरोधpoपूर्णांक, we need to move
+		 * to the next inकाष्ठाion or we will just अवरोधpoपूर्णांक
 		 * over and over again.
 		 */
 		ptr = &remcom_in_buffer[1];
-		if (kgdb_hex2long(&ptr, &addr))
+		अगर (kgdb_hex2दीर्घ(&ptr, &addr))
 			linux_regs->ARM_pc = addr;
-		else if (compiled_break == 1)
+		अन्यथा अगर (compiled_अवरोध == 1)
 			linux_regs->ARM_pc += 4;
 
-		compiled_break = 0;
+		compiled_अवरोध = 0;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int kgdb_brk_fn(struct pt_regs *regs, unsigned int instr)
-{
+अटल पूर्णांक kgdb_brk_fn(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक instr)
+अणु
 	kgdb_handle_exception(1, SIGTRAP, 0, regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kgdb_compiled_brk_fn(struct pt_regs *regs, unsigned int instr)
-{
-	compiled_break = 1;
+अटल पूर्णांक kgdb_compiled_brk_fn(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक instr)
+अणु
+	compiled_अवरोध = 1;
 	kgdb_handle_exception(1, SIGTRAP, 0, regs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct undef_hook kgdb_brkpt_hook = {
+अटल काष्ठा undef_hook kgdb_brkpt_hook = अणु
 	.instr_mask		= 0xffffffff,
 	.instr_val		= KGDB_BREAKINST,
 	.cpsr_mask		= MODE_MASK,
 	.cpsr_val		= SVC_MODE,
 	.fn			= kgdb_brk_fn
-};
+पूर्ण;
 
-static struct undef_hook kgdb_compiled_brkpt_hook = {
+अटल काष्ठा undef_hook kgdb_compiled_brkpt_hook = अणु
 	.instr_mask		= 0xffffffff,
 	.instr_val		= KGDB_COMPILED_BREAK,
 	.cpsr_mask		= MODE_MASK,
 	.cpsr_val		= SVC_MODE,
 	.fn			= kgdb_compiled_brk_fn
-};
+पूर्ण;
 
-static int __kgdb_notify(struct die_args *args, unsigned long cmd)
-{
-	struct pt_regs *regs = args->regs;
+अटल पूर्णांक __kgdb_notअगरy(काष्ठा die_args *args, अचिन्हित दीर्घ cmd)
+अणु
+	काष्ठा pt_regs *regs = args->regs;
 
-	if (kgdb_handle_exception(1, args->signr, cmd, regs))
-		return NOTIFY_DONE;
-	return NOTIFY_STOP;
-}
-static int
-kgdb_notify(struct notifier_block *self, unsigned long cmd, void *ptr)
-{
-	unsigned long flags;
-	int ret;
+	अगर (kgdb_handle_exception(1, args->signr, cmd, regs))
+		वापस NOTIFY_DONE;
+	वापस NOTIFY_STOP;
+पूर्ण
+अटल पूर्णांक
+kgdb_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ cmd, व्योम *ptr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	local_irq_save(flags);
-	ret = __kgdb_notify(ptr, cmd);
+	ret = __kgdb_notअगरy(ptr, cmd);
 	local_irq_restore(flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct notifier_block kgdb_notifier = {
-	.notifier_call	= kgdb_notify,
-	.priority	= -INT_MAX,
-};
+अटल काष्ठा notअगरier_block kgdb_notअगरier = अणु
+	.notअगरier_call	= kgdb_notअगरy,
+	.priority	= -पूर्णांक_उच्च,
+पूर्ण;
 
 
 /**
- *	kgdb_arch_init - Perform any architecture specific initalization.
+ *	kgdb_arch_init - Perक्रमm any architecture specअगरic initalization.
  *
  *	This function will handle the initalization of any architecture
- *	specific callbacks.
+ *	specअगरic callbacks.
  */
-int kgdb_arch_init(void)
-{
-	int ret = register_die_notifier(&kgdb_notifier);
+पूर्णांक kgdb_arch_init(व्योम)
+अणु
+	पूर्णांक ret = रेजिस्टर_die_notअगरier(&kgdb_notअगरier);
 
-	if (ret != 0)
-		return ret;
+	अगर (ret != 0)
+		वापस ret;
 
-	register_undef_hook(&kgdb_brkpt_hook);
-	register_undef_hook(&kgdb_compiled_brkpt_hook);
+	रेजिस्टर_undef_hook(&kgdb_brkpt_hook);
+	रेजिस्टर_undef_hook(&kgdb_compiled_brkpt_hook);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	kgdb_arch_exit - Perform any architecture specific uninitalization.
+ *	kgdb_arch_निकास - Perक्रमm any architecture specअगरic uninitalization.
  *
  *	This function will handle the uninitalization of any architecture
- *	specific callbacks, for dynamic registration and unregistration.
+ *	specअगरic callbacks, क्रम dynamic registration and unregistration.
  */
-void kgdb_arch_exit(void)
-{
-	unregister_undef_hook(&kgdb_brkpt_hook);
-	unregister_undef_hook(&kgdb_compiled_brkpt_hook);
-	unregister_die_notifier(&kgdb_notifier);
-}
+व्योम kgdb_arch_निकास(व्योम)
+अणु
+	unरेजिस्टर_undef_hook(&kgdb_brkpt_hook);
+	unरेजिस्टर_undef_hook(&kgdb_compiled_brkpt_hook);
+	unरेजिस्टर_die_notअगरier(&kgdb_notअगरier);
+पूर्ण
 
-int kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt)
-{
-	int err;
+पूर्णांक kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	पूर्णांक err;
 
-	/* patch_text() only supports int-sized breakpoints */
-	BUILD_BUG_ON(sizeof(int) != BREAK_INSTR_SIZE);
+	/* patch_text() only supports पूर्णांक-sized अवरोधpoपूर्णांकs */
+	BUILD_BUG_ON(माप(पूर्णांक) != BREAK_INSTR_SIZE);
 
-	err = copy_from_kernel_nofault(bpt->saved_instr, (char *)bpt->bpt_addr,
+	err = copy_from_kernel_nofault(bpt->saved_instr, (अक्षर *)bpt->bpt_addr,
 				BREAK_INSTR_SIZE);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Machine is already stopped, so we can use __patch_text() directly */
-	__patch_text((void *)bpt->bpt_addr,
-		     *(unsigned int *)arch_kgdb_ops.gdb_bpt_instr);
+	/* Machine is alपढ़ोy stopped, so we can use __patch_text() directly */
+	__patch_text((व्योम *)bpt->bpt_addr,
+		     *(अचिन्हित पूर्णांक *)arch_kgdb_ops.gdb_bpt_instr);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt)
-{
-	/* Machine is already stopped, so we can use __patch_text() directly */
-	__patch_text((void *)bpt->bpt_addr, *(unsigned int *)bpt->saved_instr);
+पूर्णांक kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	/* Machine is alपढ़ोy stopped, so we can use __patch_text() directly */
+	__patch_text((व्योम *)bpt->bpt_addr, *(अचिन्हित पूर्णांक *)bpt->saved_instr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Register our undef instruction hooks with ARM undef core.
- * We register a hook specifically looking for the KGB break inst
- * and we handle the normal undef case within the do_undefinstr
+ * Register our undef inकाष्ठाion hooks with ARM undef core.
+ * We रेजिस्टर a hook specअगरically looking क्रम the KGB अवरोध inst
+ * and we handle the normal undef हाल within the करो_undefinstr
  * handler.
  */
-const struct kgdb_arch arch_kgdb_ops = {
-#ifndef __ARMEB__
-	.gdb_bpt_instr		= {0xfe, 0xde, 0xff, 0xe7}
-#else /* ! __ARMEB__ */
-	.gdb_bpt_instr		= {0xe7, 0xff, 0xde, 0xfe}
-#endif
-};
+स्थिर काष्ठा kgdb_arch arch_kgdb_ops = अणु
+#अगर_अघोषित __ARMEB__
+	.gdb_bpt_instr		= अणु0xfe, 0xde, 0xff, 0xe7पूर्ण
+#अन्यथा /* ! __ARMEB__ */
+	.gdb_bpt_instr		= अणु0xe7, 0xff, 0xde, 0xfeपूर्ण
+#पूर्ण_अगर
+पूर्ण;

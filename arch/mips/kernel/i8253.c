@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * i8253.c  8253/PIT functions
  *
  */
-#include <linux/clockchips.h>
-#include <linux/i8253.h>
-#include <linux/export.h>
-#include <linux/smp.h>
-#include <linux/irq.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/i8253.h>
+#समावेश <linux/export.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/irq.h>
 
-#include <asm/time.h>
+#समावेश <यंत्र/समय.स>
 
-static irqreturn_t timer_interrupt(int irq, void *dev_id)
-{
-	i8253_clockevent.event_handler(&i8253_clockevent);
+अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	i8253_घड़ीevent.event_handler(&i8253_घड़ीevent);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void __init setup_pit_timer(void)
-{
-	unsigned long flags = IRQF_NOBALANCING | IRQF_TIMER;
+व्योम __init setup_pit_समयr(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = IRQF_NOBALANCING | IRQF_TIMER;
 
-	clockevent_i8253_init(true);
-	if (request_irq(0, timer_interrupt, flags, "timer", NULL))
+	घड़ीevent_i8253_init(true);
+	अगर (request_irq(0, समयr_पूर्णांकerrupt, flags, "timer", शून्य))
 		pr_err("Failed to request irq 0 (timer)\n");
-}
+पूर्ण
 
-static int __init init_pit_clocksource(void)
-{
-	if (num_possible_cpus() > 1 || /* PIT does not scale! */
-	    !clockevent_state_periodic(&i8253_clockevent))
-		return 0;
+अटल पूर्णांक __init init_pit_घड़ीsource(व्योम)
+अणु
+	अगर (num_possible_cpus() > 1 || /* PIT करोes not scale! */
+	    !घड़ीevent_state_periodic(&i8253_घड़ीevent))
+		वापस 0;
 
-	return clocksource_i8253_init();
-}
-arch_initcall(init_pit_clocksource);
+	वापस घड़ीsource_i8253_init();
+पूर्ण
+arch_initcall(init_pit_घड़ीsource);

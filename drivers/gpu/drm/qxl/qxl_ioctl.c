@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,319 +24,319 @@
  *          Alon Levy
  */
 
-#include <linux/pci.h>
-#include <linux/uaccess.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/uaccess.h>
 
-#include "qxl_drv.h"
-#include "qxl_object.h"
+#समावेश "qxl_drv.h"
+#समावेश "qxl_object.h"
 
 /*
- * TODO: allocating a new gem(in qxl_bo) for each request.
+ * TODO: allocating a new gem(in qxl_bo) क्रम each request.
  * This is wasteful since bo's are page aligned.
  */
-static int qxl_alloc_ioctl(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_alloc *qxl_alloc = data;
-	int ret;
-	struct qxl_bo *qobj;
-	uint32_t handle;
-	u32 domain = QXL_GEM_DOMAIN_VRAM;
+अटल पूर्णांक qxl_alloc_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_alloc *qxl_alloc = data;
+	पूर्णांक ret;
+	काष्ठा qxl_bo *qobj;
+	uपूर्णांक32_t handle;
+	u32 करोमुख्य = QXL_GEM_DOMAIN_VRAM;
 
-	if (qxl_alloc->size == 0) {
+	अगर (qxl_alloc->size == 0) अणु
 		DRM_ERROR("invalid size %d\n", qxl_alloc->size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	ret = qxl_gem_object_create_with_handle(qdev, file_priv,
-						domain,
+						करोमुख्य,
 						qxl_alloc->size,
-						NULL,
+						शून्य,
 						&qobj, &handle);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("%s: failed to create gem ret=%d\n",
 			  __func__, ret);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	qxl_alloc->handle = handle;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int qxl_map_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_map *qxl_map = data;
+अटल पूर्णांक qxl_map_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_map *qxl_map = data;
 
-	return qxl_mode_dumb_mmap(file_priv, &qdev->ddev, qxl_map->handle,
+	वापस qxl_mode_dumb_mmap(file_priv, &qdev->ddev, qxl_map->handle,
 				  &qxl_map->offset);
-}
+पूर्ण
 
-struct qxl_reloc_info {
-	int type;
-	struct qxl_bo *dst_bo;
-	uint32_t dst_offset;
-	struct qxl_bo *src_bo;
-	int src_offset;
-};
+काष्ठा qxl_reloc_info अणु
+	पूर्णांक type;
+	काष्ठा qxl_bo *dst_bo;
+	uपूर्णांक32_t dst_offset;
+	काष्ठा qxl_bo *src_bo;
+	पूर्णांक src_offset;
+पूर्ण;
 
 /*
  * dst must be validated, i.e. whole bo on vram/surfacesram (right now all bo's
  * are on vram).
  * *(dst + dst_off) = qxl_bo_physical_address(src, src_off)
  */
-static void
-apply_reloc(struct qxl_device *qdev, struct qxl_reloc_info *info)
-{
-	void *reloc_page;
+अटल व्योम
+apply_reloc(काष्ठा qxl_device *qdev, काष्ठा qxl_reloc_info *info)
+अणु
+	व्योम *reloc_page;
 
 	reloc_page = qxl_bo_kmap_atomic_page(qdev, info->dst_bo, info->dst_offset & PAGE_MASK);
-	*(uint64_t *)(reloc_page + (info->dst_offset & ~PAGE_MASK)) = qxl_bo_physical_address(qdev,
+	*(uपूर्णांक64_t *)(reloc_page + (info->dst_offset & ~PAGE_MASK)) = qxl_bo_physical_address(qdev,
 											      info->src_bo,
 											      info->src_offset);
 	qxl_bo_kunmap_atomic_page(qdev, info->dst_bo, reloc_page);
-}
+पूर्ण
 
-static void
-apply_surf_reloc(struct qxl_device *qdev, struct qxl_reloc_info *info)
-{
-	uint32_t id = 0;
-	void *reloc_page;
+अटल व्योम
+apply_surf_reloc(काष्ठा qxl_device *qdev, काष्ठा qxl_reloc_info *info)
+अणु
+	uपूर्णांक32_t id = 0;
+	व्योम *reloc_page;
 
-	if (info->src_bo && !info->src_bo->is_primary)
+	अगर (info->src_bo && !info->src_bo->is_primary)
 		id = info->src_bo->surface_id;
 
 	reloc_page = qxl_bo_kmap_atomic_page(qdev, info->dst_bo, info->dst_offset & PAGE_MASK);
-	*(uint32_t *)(reloc_page + (info->dst_offset & ~PAGE_MASK)) = id;
+	*(uपूर्णांक32_t *)(reloc_page + (info->dst_offset & ~PAGE_MASK)) = id;
 	qxl_bo_kunmap_atomic_page(qdev, info->dst_bo, reloc_page);
-}
+पूर्ण
 
-/* return holding the reference to this object */
-static int qxlhw_handle_to_bo(struct drm_file *file_priv, uint64_t handle,
-			      struct qxl_release *release, struct qxl_bo **qbo_p)
-{
-	struct drm_gem_object *gobj;
-	struct qxl_bo *qobj;
-	int ret;
+/* वापस holding the reference to this object */
+अटल पूर्णांक qxlhw_handle_to_bo(काष्ठा drm_file *file_priv, uपूर्णांक64_t handle,
+			      काष्ठा qxl_release *release, काष्ठा qxl_bo **qbo_p)
+अणु
+	काष्ठा drm_gem_object *gobj;
+	काष्ठा qxl_bo *qobj;
+	पूर्णांक ret;
 
 	gobj = drm_gem_object_lookup(file_priv, handle);
-	if (!gobj)
-		return -EINVAL;
+	अगर (!gobj)
+		वापस -EINVAL;
 
 	qobj = gem_to_qxl_bo(gobj);
 
 	ret = qxl_release_list_add(release, qobj);
 	drm_gem_object_put(gobj);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*qbo_p = qobj;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Usage of execbuffer:
- * Relocations need to take into account the full QXLDrawable size.
+ * Relocations need to take पूर्णांकo account the full QXLDrawable size.
  * However, the command as passed from user space must *not* contain the initial
- * QXLReleaseInfo struct (first XXX bytes)
+ * QXLReleaseInfo काष्ठा (first XXX bytes)
  */
-static int qxl_process_single_command(struct qxl_device *qdev,
-				      struct drm_qxl_command *cmd,
-				      struct drm_file *file_priv)
-{
-	struct qxl_reloc_info *reloc_info;
-	int release_type;
-	struct qxl_release *release;
-	struct qxl_bo *cmd_bo;
-	void *fb_cmd;
-	int i, ret, num_relocs;
-	int unwritten;
+अटल पूर्णांक qxl_process_single_command(काष्ठा qxl_device *qdev,
+				      काष्ठा drm_qxl_command *cmd,
+				      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_reloc_info *reloc_info;
+	पूर्णांक release_type;
+	काष्ठा qxl_release *release;
+	काष्ठा qxl_bo *cmd_bo;
+	व्योम *fb_cmd;
+	पूर्णांक i, ret, num_relocs;
+	पूर्णांक unwritten;
 
-	switch (cmd->type) {
-	case QXL_CMD_DRAW:
+	चयन (cmd->type) अणु
+	हाल QXL_CMD_DRAW:
 		release_type = QXL_RELEASE_DRAWABLE;
-		break;
-	case QXL_CMD_SURFACE:
-	case QXL_CMD_CURSOR:
-	default:
+		अवरोध;
+	हाल QXL_CMD_SURFACE:
+	हाल QXL_CMD_CURSOR:
+	शेष:
 		DRM_DEBUG("Only draw commands in execbuffers\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cmd->command_size > PAGE_SIZE - sizeof(union qxl_release_info))
-		return -EINVAL;
+	अगर (cmd->command_size > PAGE_SIZE - माप(जोड़ qxl_release_info))
+		वापस -EINVAL;
 
-	if (!access_ok(u64_to_user_ptr(cmd->command),
+	अगर (!access_ok(u64_to_user_ptr(cmd->command),
 		       cmd->command_size))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	reloc_info = kmalloc_array(cmd->relocs_num,
-				   sizeof(struct qxl_reloc_info), GFP_KERNEL);
-	if (!reloc_info)
-		return -ENOMEM;
+	reloc_info = kदो_स्मृति_array(cmd->relocs_num,
+				   माप(काष्ठा qxl_reloc_info), GFP_KERNEL);
+	अगर (!reloc_info)
+		वापस -ENOMEM;
 
 	ret = qxl_alloc_release_reserved(qdev,
-					 sizeof(union qxl_release_info) +
+					 माप(जोड़ qxl_release_info) +
 					 cmd->command_size,
 					 release_type,
 					 &release,
 					 &cmd_bo);
-	if (ret)
-		goto out_free_reloc;
+	अगर (ret)
+		जाओ out_मुक्त_reloc;
 
 	/* TODO copy slow path code from i915 */
 	fb_cmd = qxl_bo_kmap_atomic_page(qdev, cmd_bo, (release->release_offset & PAGE_MASK));
 	unwritten = __copy_from_user_inatomic_nocache
-		(fb_cmd + sizeof(union qxl_release_info) + (release->release_offset & ~PAGE_MASK),
+		(fb_cmd + माप(जोड़ qxl_release_info) + (release->release_offset & ~PAGE_MASK),
 		 u64_to_user_ptr(cmd->command), cmd->command_size);
 
-	{
-		struct qxl_drawable *draw = fb_cmd;
+	अणु
+		काष्ठा qxl_drawable *draw = fb_cmd;
 
-		draw->mm_time = qdev->rom->mm_clock;
-	}
+		draw->mm_समय = qdev->rom->mm_घड़ी;
+	पूर्ण
 
 	qxl_bo_kunmap_atomic_page(qdev, cmd_bo, fb_cmd);
-	if (unwritten) {
+	अगर (unwritten) अणु
 		DRM_ERROR("got unwritten %d\n", unwritten);
 		ret = -EFAULT;
-		goto out_free_release;
-	}
+		जाओ out_मुक्त_release;
+	पूर्ण
 
-	/* fill out reloc info structs */
+	/* fill out reloc info काष्ठाs */
 	num_relocs = 0;
-	for (i = 0; i < cmd->relocs_num; ++i) {
-		struct drm_qxl_reloc reloc;
-		struct drm_qxl_reloc __user *u = u64_to_user_ptr(cmd->relocs);
+	क्रम (i = 0; i < cmd->relocs_num; ++i) अणु
+		काष्ठा drm_qxl_reloc reloc;
+		काष्ठा drm_qxl_reloc __user *u = u64_to_user_ptr(cmd->relocs);
 
-		if (copy_from_user(&reloc, u + i, sizeof(reloc))) {
+		अगर (copy_from_user(&reloc, u + i, माप(reloc))) अणु
 			ret = -EFAULT;
-			goto out_free_bos;
-		}
+			जाओ out_मुक्त_bos;
+		पूर्ण
 
 		/* add the bos to the list of bos to validate -
 		   need to validate first then process relocs? */
-		if (reloc.reloc_type != QXL_RELOC_TYPE_BO && reloc.reloc_type != QXL_RELOC_TYPE_SURF) {
+		अगर (reloc.reloc_type != QXL_RELOC_TYPE_BO && reloc.reloc_type != QXL_RELOC_TYPE_SURF) अणु
 			DRM_DEBUG("unknown reloc type %d\n", reloc.reloc_type);
 
 			ret = -EINVAL;
-			goto out_free_bos;
-		}
+			जाओ out_मुक्त_bos;
+		पूर्ण
 		reloc_info[i].type = reloc.reloc_type;
 
-		if (reloc.dst_handle) {
+		अगर (reloc.dst_handle) अणु
 			ret = qxlhw_handle_to_bo(file_priv, reloc.dst_handle, release,
 						 &reloc_info[i].dst_bo);
-			if (ret)
-				goto out_free_bos;
+			अगर (ret)
+				जाओ out_मुक्त_bos;
 			reloc_info[i].dst_offset = reloc.dst_offset;
-		} else {
+		पूर्ण अन्यथा अणु
 			reloc_info[i].dst_bo = cmd_bo;
 			reloc_info[i].dst_offset = reloc.dst_offset + release->release_offset;
-		}
+		पूर्ण
 		num_relocs++;
 
 		/* reserve and validate the reloc dst bo */
-		if (reloc.reloc_type == QXL_RELOC_TYPE_BO || reloc.src_handle) {
+		अगर (reloc.reloc_type == QXL_RELOC_TYPE_BO || reloc.src_handle) अणु
 			ret = qxlhw_handle_to_bo(file_priv, reloc.src_handle, release,
 						 &reloc_info[i].src_bo);
-			if (ret)
-				goto out_free_bos;
+			अगर (ret)
+				जाओ out_मुक्त_bos;
 			reloc_info[i].src_offset = reloc.src_offset;
-		} else {
-			reloc_info[i].src_bo = NULL;
+		पूर्ण अन्यथा अणु
+			reloc_info[i].src_bo = शून्य;
 			reloc_info[i].src_offset = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* validate all buffers */
 	ret = qxl_release_reserve_list(release, false);
-	if (ret)
-		goto out_free_bos;
+	अगर (ret)
+		जाओ out_मुक्त_bos;
 
-	for (i = 0; i < cmd->relocs_num; ++i) {
-		if (reloc_info[i].type == QXL_RELOC_TYPE_BO)
+	क्रम (i = 0; i < cmd->relocs_num; ++i) अणु
+		अगर (reloc_info[i].type == QXL_RELOC_TYPE_BO)
 			apply_reloc(qdev, &reloc_info[i]);
-		else if (reloc_info[i].type == QXL_RELOC_TYPE_SURF)
+		अन्यथा अगर (reloc_info[i].type == QXL_RELOC_TYPE_SURF)
 			apply_surf_reloc(qdev, &reloc_info[i]);
-	}
+	पूर्ण
 
 	qxl_release_fence_buffer_objects(release);
 	ret = qxl_push_command_ring_release(qdev, release, cmd->type, true);
 
-out_free_bos:
-out_free_release:
-	if (ret)
-		qxl_release_free(qdev, release);
-out_free_reloc:
-	kfree(reloc_info);
-	return ret;
-}
+out_मुक्त_bos:
+out_मुक्त_release:
+	अगर (ret)
+		qxl_release_मुक्त(qdev, release);
+out_मुक्त_reloc:
+	kमुक्त(reloc_info);
+	वापस ret;
+पूर्ण
 
-static int qxl_execbuffer_ioctl(struct drm_device *dev, void *data,
-				struct drm_file *file_priv)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_execbuffer *execbuffer = data;
-	struct drm_qxl_command user_cmd;
-	int cmd_num;
-	int ret;
+अटल पूर्णांक qxl_execbuffer_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_execbuffer *execbuffer = data;
+	काष्ठा drm_qxl_command user_cmd;
+	पूर्णांक cmd_num;
+	पूर्णांक ret;
 
-	for (cmd_num = 0; cmd_num < execbuffer->commands_num; ++cmd_num) {
+	क्रम (cmd_num = 0; cmd_num < execbuffer->commands_num; ++cmd_num) अणु
 
-		struct drm_qxl_command __user *commands =
+		काष्ठा drm_qxl_command __user *commands =
 			u64_to_user_ptr(execbuffer->commands);
 
-		if (copy_from_user(&user_cmd, commands + cmd_num,
-				       sizeof(user_cmd)))
-			return -EFAULT;
+		अगर (copy_from_user(&user_cmd, commands + cmd_num,
+				       माप(user_cmd)))
+			वापस -EFAULT;
 
 		ret = qxl_process_single_command(qdev, &user_cmd, file_priv);
-		if (ret)
-			return ret;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int qxl_update_area_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_update_area *update_area = data;
-	struct qxl_rect area = {.left = update_area->left,
+अटल पूर्णांक qxl_update_area_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_update_area *update_area = data;
+	काष्ठा qxl_rect area = अणु.left = update_area->left,
 				.top = update_area->top,
 				.right = update_area->right,
-				.bottom = update_area->bottom};
-	int ret;
-	struct drm_gem_object *gobj = NULL;
-	struct qxl_bo *qobj = NULL;
-	struct ttm_operation_ctx ctx = { true, false };
+				.bottom = update_area->bottomपूर्ण;
+	पूर्णांक ret;
+	काष्ठा drm_gem_object *gobj = शून्य;
+	काष्ठा qxl_bo *qobj = शून्य;
+	काष्ठा tपंचांग_operation_ctx ctx = अणु true, false पूर्ण;
 
-	if (update_area->left >= update_area->right ||
+	अगर (update_area->left >= update_area->right ||
 	    update_area->top >= update_area->bottom)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	gobj = drm_gem_object_lookup(file, update_area->handle);
-	if (gobj == NULL)
-		return -ENOENT;
+	अगर (gobj == शून्य)
+		वापस -ENOENT;
 
 	qobj = gem_to_qxl_bo(gobj);
 
 	ret = qxl_bo_reserve(qobj);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (!qobj->tbo.pin_count) {
-		qxl_ttm_placement_from_domain(qobj, qobj->type);
-		ret = ttm_bo_validate(&qobj->tbo, &qobj->placement, &ctx);
-		if (unlikely(ret))
-			goto out;
-	}
+	अगर (!qobj->tbo.pin_count) अणु
+		qxl_tपंचांग_placement_from_करोमुख्य(qobj, qobj->type);
+		ret = tपंचांग_bo_validate(&qobj->tbo, &qobj->placement, &ctx);
+		अगर (unlikely(ret))
+			जाओ out;
+	पूर्ण
 
 	ret = qxl_bo_check_id(qdev, qobj);
-	if (ret)
-		goto out2;
-	if (!qobj->surface_id)
+	अगर (ret)
+		जाओ out2;
+	अगर (!qobj->surface_id)
 		DRM_ERROR("got update area for surface with no id %d\n", update_area->handle);
 	ret = qxl_io_update_area(qdev, qobj, &area);
 
@@ -344,66 +345,66 @@ out2:
 
 out:
 	drm_gem_object_put(gobj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int qxl_getparam_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_getparam *param = data;
+अटल पूर्णांक qxl_getparam_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_getparam *param = data;
 
-	switch (param->param) {
-	case QXL_PARAM_NUM_SURFACES:
+	चयन (param->param) अणु
+	हाल QXL_PARAM_NUM_SURFACES:
 		param->value = qdev->rom->n_surfaces;
-		break;
-	case QXL_PARAM_MAX_RELOCS:
+		अवरोध;
+	हाल QXL_PARAM_MAX_RELOCS:
 		param->value = QXL_MAX_RES;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int qxl_clientcap_ioctl(struct drm_device *dev, void *data,
-				  struct drm_file *file_priv)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct pci_dev *pdev = to_pci_dev(dev->dev);
-	struct drm_qxl_clientcap *param = data;
-	int byte, idx;
+अटल पूर्णांक qxl_clientcap_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				  काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev->dev);
+	काष्ठा drm_qxl_clientcap *param = data;
+	पूर्णांक byte, idx;
 
 	byte = param->index / 8;
 	idx = param->index % 8;
 
-	if (pdev->revision < 4)
-		return -ENOSYS;
+	अगर (pdev->revision < 4)
+		वापस -ENOSYS;
 
-	if (byte >= 58)
-		return -ENOSYS;
+	अगर (byte >= 58)
+		वापस -ENOSYS;
 
-	if (qdev->rom->client_capabilities[byte] & (1 << idx))
-		return 0;
-	return -ENOSYS;
-}
+	अगर (qdev->rom->client_capabilities[byte] & (1 << idx))
+		वापस 0;
+	वापस -ENOSYS;
+पूर्ण
 
-static int qxl_alloc_surf_ioctl(struct drm_device *dev, void *data,
-				struct drm_file *file)
-{
-	struct qxl_device *qdev = to_qxl(dev);
-	struct drm_qxl_alloc_surf *param = data;
-	struct qxl_bo *qobj;
-	int handle;
-	int ret;
-	int size, actual_stride;
-	struct qxl_surface surf;
+अटल पूर्णांक qxl_alloc_surf_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				काष्ठा drm_file *file)
+अणु
+	काष्ठा qxl_device *qdev = to_qxl(dev);
+	काष्ठा drm_qxl_alloc_surf *param = data;
+	काष्ठा qxl_bo *qobj;
+	पूर्णांक handle;
+	पूर्णांक ret;
+	पूर्णांक size, actual_stride;
+	काष्ठा qxl_surface surf;
 
 	/* work out size allocate bo with handle */
 	actual_stride = param->stride < 0 ? -param->stride : param->stride;
 	size = actual_stride * param->height + actual_stride;
 
-	surf.format = param->format;
+	surf.क्रमmat = param->क्रमmat;
 	surf.width = param->width;
 	surf.height = param->height;
 	surf.stride = param->stride;
@@ -414,16 +415,16 @@ static int qxl_alloc_surf_ioctl(struct drm_device *dev, void *data,
 						size,
 						&surf,
 						&qobj, &handle);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("%s: failed to create gem ret=%d\n",
 			  __func__, ret);
-		return -ENOMEM;
-	} else
+		वापस -ENOMEM;
+	पूर्ण अन्यथा
 		param->handle = handle;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct drm_ioctl_desc qxl_ioctls[] = {
+स्थिर काष्ठा drm_ioctl_desc qxl_ioctls[] = अणु
 	DRM_IOCTL_DEF_DRV(QXL_ALLOC, qxl_alloc_ioctl, DRM_AUTH),
 
 	DRM_IOCTL_DEF_DRV(QXL_MAP, qxl_map_ioctl, DRM_AUTH),
@@ -439,6 +440,6 @@ const struct drm_ioctl_desc qxl_ioctls[] = {
 
 	DRM_IOCTL_DEF_DRV(QXL_ALLOC_SURF, qxl_alloc_surf_ioctl,
 			  DRM_AUTH),
-};
+पूर्ण;
 
-int qxl_max_ioctls = ARRAY_SIZE(qxl_ioctls);
+पूर्णांक qxl_max_ioctls = ARRAY_SIZE(qxl_ioctls);

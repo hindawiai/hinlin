@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  *  Bluetooth HCI UART driver
  *
  *  Copyright (C) 2002-2003  Fabrizio Gennari <fabrizio.gennari@philips.com>
- *  Copyright (C) 2004-2005  Marcel Holtmann <marcel@holtmann.org>
+ *  Copyright (C) 2004-2005  Marcel Holपंचांगann <marcel@holपंचांगann.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ptrace.h>
-#include <linux/poll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/poll.h>
 
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/signal.h>
-#include <linux/ioctl.h>
-#include <linux/skbuff.h>
-#include <linux/bitrev.h>
-#include <asm/unaligned.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/bitrev.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "hci_uart.h"
+#समावेश "hci_uart.h"
 
-static bool txcrc = true;
-static bool hciextn = true;
+अटल bool txcrc = true;
+अटल bool hciextn = true;
 
-#define BCSP_TXWINSIZE	4
+#घोषणा BCSP_TXWINSIZE	4
 
-#define BCSP_ACK_PKT	0x05
-#define BCSP_LE_PKT	0x06
+#घोषणा BCSP_ACK_PKT	0x05
+#घोषणा BCSP_LE_PKT	0x06
 
-struct bcsp_struct {
-	struct sk_buff_head unack;	/* Unack'ed packets queue */
-	struct sk_buff_head rel;	/* Reliable packets queue */
-	struct sk_buff_head unrel;	/* Unreliable packets queue */
+काष्ठा bcsp_काष्ठा अणु
+	काष्ठा sk_buff_head unack;	/* Unack'ed packets queue */
+	काष्ठा sk_buff_head rel;	/* Reliable packets queue */
+	काष्ठा sk_buff_head unrel;	/* Unreliable packets queue */
 
-	unsigned long rx_count;
-	struct	sk_buff *rx_skb;
+	अचिन्हित दीर्घ rx_count;
+	काष्ठा	sk_buff *rx_skb;
 	u8	rxseq_txack;		/* rxseq == txack. */
 	u8	rxack;			/* Last packet sent by us that the peer ack'ed */
-	struct	timer_list tbcsp;
-	struct	hci_uart *hu;
+	काष्ठा	समयr_list tbcsp;
+	काष्ठा	hci_uart *hu;
 
-	enum {
+	क्रमागत अणु
 		BCSP_W4_PKT_DELIMITER,
 		BCSP_W4_PKT_START,
 		BCSP_W4_BCSP_HDR,
 		BCSP_W4_DATA,
 		BCSP_W4_CRC
-	} rx_state;
+	पूर्ण rx_state;
 
-	enum {
+	क्रमागत अणु
 		BCSP_ESCSTATE_NOESC,
 		BCSP_ESCSTATE_ESC
-	} rx_esc_state;
+	पूर्ण rx_esc_state;
 
 	u8	use_crc;
 	u16	message_crc;
@@ -71,153 +72,153 @@ struct bcsp_struct {
 
 	/* Reliable packet sequence number - used to assign seq to each rel pkt. */
 	u8	msgq_txseq;
-};
+पूर्ण;
 
 /* ---- BCSP CRC calculation ---- */
 
-/* Table for calculating CRC for polynomial 0x1021, LSB processed first,
- * initial value 0xffff, bits shifted in reverse order.
+/* Table क्रम calculating CRC क्रम polynomial 0x1021, LSB processed first,
+ * initial value 0xffff, bits shअगरted in reverse order.
  */
 
-static const u16 crc_table[] = {
+अटल स्थिर u16 crc_table[] = अणु
 	0x0000, 0x1081, 0x2102, 0x3183,
 	0x4204, 0x5285, 0x6306, 0x7387,
 	0x8408, 0x9489, 0xa50a, 0xb58b,
 	0xc60c, 0xd68d, 0xe70e, 0xf78f
-};
+पूर्ण;
 
 /* Initialise the crc calculator */
-#define BCSP_CRC_INIT(x) x = 0xffff
+#घोषणा BCSP_CRC_INIT(x) x = 0xffff
 
 /* Update crc with next data byte
  *
  * Implementation note
  *     The data byte is treated as two nibbles.  The crc is generated
- *     in reverse, i.e., bits are fed into the register from the top.
+ *     in reverse, i.e., bits are fed पूर्णांकo the रेजिस्टर from the top.
  */
-static void bcsp_crc_update(u16 *crc, u8 d)
-{
+अटल व्योम bcsp_crc_update(u16 *crc, u8 d)
+अणु
 	u16 reg = *crc;
 
 	reg = (reg >> 4) ^ crc_table[(reg ^ d) & 0x000f];
 	reg = (reg >> 4) ^ crc_table[(reg ^ (d >> 4)) & 0x000f];
 
 	*crc = reg;
-}
+पूर्ण
 
 /* ---- BCSP core ---- */
 
-static void bcsp_slip_msgdelim(struct sk_buff *skb)
-{
-	const char pkt_delim = 0xc0;
+अटल व्योम bcsp_slip_msgdelim(काष्ठा sk_buff *skb)
+अणु
+	स्थिर अक्षर pkt_delim = 0xc0;
 
 	skb_put_data(skb, &pkt_delim, 1);
-}
+पूर्ण
 
-static void bcsp_slip_one_byte(struct sk_buff *skb, u8 c)
-{
-	const char esc_c0[2] = { 0xdb, 0xdc };
-	const char esc_db[2] = { 0xdb, 0xdd };
+अटल व्योम bcsp_slip_one_byte(काष्ठा sk_buff *skb, u8 c)
+अणु
+	स्थिर अक्षर esc_c0[2] = अणु 0xdb, 0xdc पूर्ण;
+	स्थिर अक्षर esc_db[2] = अणु 0xdb, 0xdd पूर्ण;
 
-	switch (c) {
-	case 0xc0:
+	चयन (c) अणु
+	हाल 0xc0:
 		skb_put_data(skb, &esc_c0, 2);
-		break;
-	case 0xdb:
+		अवरोध;
+	हाल 0xdb:
 		skb_put_data(skb, &esc_db, 2);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		skb_put_data(skb, &c, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int bcsp_enqueue(struct hci_uart *hu, struct sk_buff *skb)
-{
-	struct bcsp_struct *bcsp = hu->priv;
+अटल पूर्णांक bcsp_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
 
-	if (skb->len > 0xFFF) {
+	अगर (skb->len > 0xFFF) अणु
 		BT_ERR("Packet too long");
-		kfree_skb(skb);
-		return 0;
-	}
+		kमुक्त_skb(skb);
+		वापस 0;
+	पूर्ण
 
-	switch (hci_skb_pkt_type(skb)) {
-	case HCI_ACLDATA_PKT:
-	case HCI_COMMAND_PKT:
+	चयन (hci_skb_pkt_type(skb)) अणु
+	हाल HCI_ACLDATA_PKT:
+	हाल HCI_COMMAND_PKT:
 		skb_queue_tail(&bcsp->rel, skb);
-		break;
+		अवरोध;
 
-	case HCI_SCODATA_PKT:
+	हाल HCI_SCODATA_PKT:
 		skb_queue_tail(&bcsp->unrel, skb);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		BT_ERR("Unknown packet type");
-		kfree_skb(skb);
-		break;
-	}
+		kमुक्त_skb(skb);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
-					int len, int pkt_type)
-{
-	struct sk_buff *nskb;
+अटल काष्ठा sk_buff *bcsp_prepare_pkt(काष्ठा bcsp_काष्ठा *bcsp, u8 *data,
+					पूर्णांक len, पूर्णांक pkt_type)
+अणु
+	काष्ठा sk_buff *nskb;
 	u8 hdr[4], chan;
 	u16 BCSP_CRC_INIT(bcsp_txmsg_crc);
-	int rel, i;
+	पूर्णांक rel, i;
 
-	switch (pkt_type) {
-	case HCI_ACLDATA_PKT:
+	चयन (pkt_type) अणु
+	हाल HCI_ACLDATA_PKT:
 		chan = 6;	/* BCSP ACL channel */
 		rel = 1;	/* reliable channel */
-		break;
-	case HCI_COMMAND_PKT:
+		अवरोध;
+	हाल HCI_COMMAND_PKT:
 		chan = 5;	/* BCSP cmd/evt channel */
 		rel = 1;	/* reliable channel */
-		break;
-	case HCI_SCODATA_PKT:
+		अवरोध;
+	हाल HCI_SCODATA_PKT:
 		chan = 7;	/* BCSP SCO channel */
 		rel = 0;	/* unreliable channel */
-		break;
-	case BCSP_LE_PKT:
+		अवरोध;
+	हाल BCSP_LE_PKT:
 		chan = 1;	/* BCSP LE channel */
 		rel = 0;	/* unreliable channel */
-		break;
-	case BCSP_ACK_PKT:
-		chan = 0;	/* BCSP internal channel */
+		अवरोध;
+	हाल BCSP_ACK_PKT:
+		chan = 0;	/* BCSP पूर्णांकernal channel */
 		rel = 0;	/* unreliable channel */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BT_ERR("Unknown packet type");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (hciextn && chan == 5) {
-		__le16 opcode = ((struct hci_command_hdr *)data)->opcode;
+	अगर (hciextn && chan == 5) अणु
+		__le16 opcode = ((काष्ठा hci_command_hdr *)data)->opcode;
 
-		/* Vendor specific commands */
-		if (hci_opcode_ogf(__le16_to_cpu(opcode)) == 0x3f) {
+		/* Venकरोr specअगरic commands */
+		अगर (hci_opcode_ogf(__le16_to_cpu(opcode)) == 0x3f) अणु
 			u8 desc = *(data + HCI_COMMAND_HDR_SIZE);
 
-			if ((desc & 0xf0) == 0xc0) {
+			अगर ((desc & 0xf0) == 0xc0) अणु
 				data += HCI_COMMAND_HDR_SIZE + 1;
 				len  -= HCI_COMMAND_HDR_SIZE + 1;
 				chan = desc & 0x0f;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Max len of packet: (original len +4(bcsp hdr) +2(crc))*2
-	 * (because bytes 0xc0 and 0xdb are escaped, worst case is
+	 * (because bytes 0xc0 and 0xdb are escaped, worst हाल is
 	 * when the packet is all made of 0xc0 and 0xdb :) )
 	 * + 2 (0xc0 delimiters at start and end).
 	 */
 
 	nskb = alloc_skb((len + 6) * 2 + 2, GFP_ATOMIC);
-	if (!nskb)
-		return NULL;
+	अगर (!nskb)
+		वापस शून्य;
 
 	hci_skb_pkt_type(nskb) = pkt_type;
 
@@ -227,13 +228,13 @@ static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
 	bcsp->txack_req = 0;
 	BT_DBG("We request packet no %u to card", bcsp->rxseq_txack);
 
-	if (rel) {
+	अगर (rel) अणु
 		hdr[0] |= 0x80 + bcsp->msgq_txseq;
 		BT_DBG("Sending packet with seqno %u", bcsp->msgq_txseq);
 		bcsp->msgq_txseq = (bcsp->msgq_txseq + 1) & 0x07;
-	}
+	पूर्ण
 
-	if (bcsp->use_crc)
+	अगर (bcsp->use_crc)
 		hdr[0] |= 0x40;
 
 	hdr[1] = ((len << 4) & 0xff) | chan;
@@ -241,83 +242,83 @@ static struct sk_buff *bcsp_prepare_pkt(struct bcsp_struct *bcsp, u8 *data,
 	hdr[3] = ~(hdr[0] + hdr[1] + hdr[2]);
 
 	/* Put BCSP header */
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		bcsp_slip_one_byte(nskb, hdr[i]);
 
-		if (bcsp->use_crc)
+		अगर (bcsp->use_crc)
 			bcsp_crc_update(&bcsp_txmsg_crc, hdr[i]);
-	}
+	पूर्ण
 
 	/* Put payload */
-	for (i = 0; i < len; i++) {
+	क्रम (i = 0; i < len; i++) अणु
 		bcsp_slip_one_byte(nskb, data[i]);
 
-		if (bcsp->use_crc)
+		अगर (bcsp->use_crc)
 			bcsp_crc_update(&bcsp_txmsg_crc, data[i]);
-	}
+	पूर्ण
 
 	/* Put CRC */
-	if (bcsp->use_crc) {
+	अगर (bcsp->use_crc) अणु
 		bcsp_txmsg_crc = bitrev16(bcsp_txmsg_crc);
 		bcsp_slip_one_byte(nskb, (u8)((bcsp_txmsg_crc >> 8) & 0x00ff));
 		bcsp_slip_one_byte(nskb, (u8)(bcsp_txmsg_crc & 0x00ff));
-	}
+	पूर्ण
 
 	bcsp_slip_msgdelim(nskb);
-	return nskb;
-}
+	वापस nskb;
+पूर्ण
 
-/* This is a rewrite of pkt_avail in ABCSP */
-static struct sk_buff *bcsp_dequeue(struct hci_uart *hu)
-{
-	struct bcsp_struct *bcsp = hu->priv;
-	unsigned long flags;
-	struct sk_buff *skb;
+/* This is a reग_लिखो of pkt_avail in ABCSP */
+अटल काष्ठा sk_buff *bcsp_dequeue(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *skb;
 
-	/* First of all, check for unreliable messages in the queue,
+	/* First of all, check क्रम unreliable messages in the queue,
 	 * since they have priority
 	 */
 
 	skb = skb_dequeue(&bcsp->unrel);
-	if (skb != NULL) {
-		struct sk_buff *nskb;
+	अगर (skb != शून्य) अणु
+		काष्ठा sk_buff *nskb;
 
 		nskb = bcsp_prepare_pkt(bcsp, skb->data, skb->len,
 					hci_skb_pkt_type(skb));
-		if (nskb) {
-			kfree_skb(skb);
-			return nskb;
-		} else {
+		अगर (nskb) अणु
+			kमुक्त_skb(skb);
+			वापस nskb;
+		पूर्ण अन्यथा अणु
 			skb_queue_head(&bcsp->unrel, skb);
 			BT_ERR("Could not dequeue pkt because alloc_skb failed");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Now, try to send a reliable pkt. We can only send a
-	 * reliable packet if the number of packets sent but not yet ack'ed
+	 * reliable packet अगर the number of packets sent but not yet ack'ed
 	 * is < than the winsize
 	 */
 
 	spin_lock_irqsave_nested(&bcsp->unack.lock, flags, SINGLE_DEPTH_NESTING);
 
-	if (bcsp->unack.qlen < BCSP_TXWINSIZE) {
+	अगर (bcsp->unack.qlen < BCSP_TXWINSIZE) अणु
 		skb = skb_dequeue(&bcsp->rel);
-		if (skb != NULL) {
-			struct sk_buff *nskb;
+		अगर (skb != शून्य) अणु
+			काष्ठा sk_buff *nskb;
 
 			nskb = bcsp_prepare_pkt(bcsp, skb->data, skb->len,
 						hci_skb_pkt_type(skb));
-			if (nskb) {
+			अगर (nskb) अणु
 				__skb_queue_tail(&bcsp->unack, skb);
-				mod_timer(&bcsp->tbcsp, jiffies + HZ / 4);
+				mod_समयr(&bcsp->tbcsp, jअगरfies + HZ / 4);
 				spin_unlock_irqrestore(&bcsp->unack.lock, flags);
-				return nskb;
-			} else {
+				वापस nskb;
+			पूर्ण अन्यथा अणु
 				skb_queue_head(&bcsp->rel, skb);
 				BT_ERR("Could not dequeue pkt because alloc_skb failed");
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&bcsp->unack.lock, flags);
 
@@ -326,180 +327,180 @@ static struct sk_buff *bcsp_dequeue(struct hci_uart *hu)
 	 * any packets we have not acknowledged yet ?
 	 */
 
-	if (bcsp->txack_req) {
-		/* if so, craft an empty ACK pkt and send it on BCSP unreliable
+	अगर (bcsp->txack_req) अणु
+		/* अगर so, craft an empty ACK pkt and send it on BCSP unreliable
 		 * channel 0
 		 */
-		struct sk_buff *nskb = bcsp_prepare_pkt(bcsp, NULL, 0, BCSP_ACK_PKT);
-		return nskb;
-	}
+		काष्ठा sk_buff *nskb = bcsp_prepare_pkt(bcsp, शून्य, 0, BCSP_ACK_PKT);
+		वापस nskb;
+	पूर्ण
 
 	/* We have nothing to send */
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int bcsp_flush(struct hci_uart *hu)
-{
+अटल पूर्णांक bcsp_flush(काष्ठा hci_uart *hu)
+अणु
 	BT_DBG("hu %p", hu);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Remove ack'ed packets */
-static void bcsp_pkt_cull(struct bcsp_struct *bcsp)
-{
-	struct sk_buff *skb, *tmp;
-	unsigned long flags;
-	int i, pkts_to_be_removed;
+अटल व्योम bcsp_pkt_cull(काष्ठा bcsp_काष्ठा *bcsp)
+अणु
+	काष्ठा sk_buff *skb, *पंचांगp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i, pkts_to_be_हटाओd;
 	u8 seqno;
 
 	spin_lock_irqsave(&bcsp->unack.lock, flags);
 
-	pkts_to_be_removed = skb_queue_len(&bcsp->unack);
+	pkts_to_be_हटाओd = skb_queue_len(&bcsp->unack);
 	seqno = bcsp->msgq_txseq;
 
-	while (pkts_to_be_removed) {
-		if (bcsp->rxack == seqno)
-			break;
-		pkts_to_be_removed--;
+	जबतक (pkts_to_be_हटाओd) अणु
+		अगर (bcsp->rxack == seqno)
+			अवरोध;
+		pkts_to_be_हटाओd--;
 		seqno = (seqno - 1) & 0x07;
-	}
+	पूर्ण
 
-	if (bcsp->rxack != seqno)
+	अगर (bcsp->rxack != seqno)
 		BT_ERR("Peer acked invalid packet");
 
 	BT_DBG("Removing %u pkts out of %u, up to seqno %u",
-	       pkts_to_be_removed, skb_queue_len(&bcsp->unack),
+	       pkts_to_be_हटाओd, skb_queue_len(&bcsp->unack),
 	       (seqno - 1) & 0x07);
 
 	i = 0;
-	skb_queue_walk_safe(&bcsp->unack, skb, tmp) {
-		if (i >= pkts_to_be_removed)
-			break;
+	skb_queue_walk_safe(&bcsp->unack, skb, पंचांगp) अणु
+		अगर (i >= pkts_to_be_हटाओd)
+			अवरोध;
 		i++;
 
 		__skb_unlink(skb, &bcsp->unack);
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	if (skb_queue_empty(&bcsp->unack))
-		del_timer(&bcsp->tbcsp);
+	अगर (skb_queue_empty(&bcsp->unack))
+		del_समयr(&bcsp->tbcsp);
 
 	spin_unlock_irqrestore(&bcsp->unack.lock, flags);
 
-	if (i != pkts_to_be_removed)
-		BT_ERR("Removed only %u out of %u pkts", i, pkts_to_be_removed);
-}
+	अगर (i != pkts_to_be_हटाओd)
+		BT_ERR("Removed only %u out of %u pkts", i, pkts_to_be_हटाओd);
+पूर्ण
 
 /* Handle BCSP link-establishment packets. When we
  * detect a "sync" packet, symptom that the BT module has reset,
- * we do nothing :) (yet)
+ * we करो nothing :) (yet)
  */
-static void bcsp_handle_le_pkt(struct hci_uart *hu)
-{
-	struct bcsp_struct *bcsp = hu->priv;
-	u8 conf_pkt[4]     = { 0xad, 0xef, 0xac, 0xed };
-	u8 conf_rsp_pkt[4] = { 0xde, 0xad, 0xd0, 0xd0 };
-	u8 sync_pkt[4]     = { 0xda, 0xdc, 0xed, 0xed };
+अटल व्योम bcsp_handle_le_pkt(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
+	u8 conf_pkt[4]     = अणु 0xad, 0xef, 0xac, 0xed पूर्ण;
+	u8 conf_rsp_pkt[4] = अणु 0xde, 0xad, 0xd0, 0xd0 पूर्ण;
+	u8 sync_pkt[4]     = अणु 0xda, 0xdc, 0xed, 0xed पूर्ण;
 
 	/* spot "conf" pkts and reply with a "conf rsp" pkt */
-	if (bcsp->rx_skb->data[1] >> 4 == 4 && bcsp->rx_skb->data[2] == 0 &&
-	    !memcmp(&bcsp->rx_skb->data[4], conf_pkt, 4)) {
-		struct sk_buff *nskb = alloc_skb(4, GFP_ATOMIC);
+	अगर (bcsp->rx_skb->data[1] >> 4 == 4 && bcsp->rx_skb->data[2] == 0 &&
+	    !स_भेद(&bcsp->rx_skb->data[4], conf_pkt, 4)) अणु
+		काष्ठा sk_buff *nskb = alloc_skb(4, GFP_ATOMIC);
 
 		BT_DBG("Found a LE conf pkt");
-		if (!nskb)
-			return;
+		अगर (!nskb)
+			वापस;
 		skb_put_data(nskb, conf_rsp_pkt, 4);
 		hci_skb_pkt_type(nskb) = BCSP_LE_PKT;
 
 		skb_queue_head(&bcsp->unrel, nskb);
 		hci_uart_tx_wakeup(hu);
-	}
+	पूर्ण
 	/* Spot "sync" pkts. If we find one...disaster! */
-	else if (bcsp->rx_skb->data[1] >> 4 == 4 && bcsp->rx_skb->data[2] == 0 &&
-		 !memcmp(&bcsp->rx_skb->data[4], sync_pkt, 4)) {
+	अन्यथा अगर (bcsp->rx_skb->data[1] >> 4 == 4 && bcsp->rx_skb->data[2] == 0 &&
+		 !स_भेद(&bcsp->rx_skb->data[4], sync_pkt, 4)) अणु
 		BT_ERR("Found a LE sync pkt, card has reset");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void bcsp_unslip_one_byte(struct bcsp_struct *bcsp, unsigned char byte)
-{
-	const u8 c0 = 0xc0, db = 0xdb;
+अटल अंतरभूत व्योम bcsp_unslip_one_byte(काष्ठा bcsp_काष्ठा *bcsp, अचिन्हित अक्षर byte)
+अणु
+	स्थिर u8 c0 = 0xc0, db = 0xdb;
 
-	switch (bcsp->rx_esc_state) {
-	case BCSP_ESCSTATE_NOESC:
-		switch (byte) {
-		case 0xdb:
+	चयन (bcsp->rx_esc_state) अणु
+	हाल BCSP_ESCSTATE_NOESC:
+		चयन (byte) अणु
+		हाल 0xdb:
 			bcsp->rx_esc_state = BCSP_ESCSTATE_ESC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			skb_put_data(bcsp->rx_skb, &byte, 1);
-			if ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
+			अगर ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
 			    bcsp->rx_state != BCSP_W4_CRC)
 				bcsp_crc_update(&bcsp->message_crc, byte);
 			bcsp->rx_count--;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case BCSP_ESCSTATE_ESC:
-		switch (byte) {
-		case 0xdc:
+	हाल BCSP_ESCSTATE_ESC:
+		चयन (byte) अणु
+		हाल 0xdc:
 			skb_put_data(bcsp->rx_skb, &c0, 1);
-			if ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
+			अगर ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
 			    bcsp->rx_state != BCSP_W4_CRC)
 				bcsp_crc_update(&bcsp->message_crc, 0xc0);
 			bcsp->rx_esc_state = BCSP_ESCSTATE_NOESC;
 			bcsp->rx_count--;
-			break;
+			अवरोध;
 
-		case 0xdd:
+		हाल 0xdd:
 			skb_put_data(bcsp->rx_skb, &db, 1);
-			if ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
+			अगर ((bcsp->rx_skb->data[0] & 0x40) != 0 &&
 			    bcsp->rx_state != BCSP_W4_CRC)
 				bcsp_crc_update(&bcsp->message_crc, 0xdb);
 			bcsp->rx_esc_state = BCSP_ESCSTATE_NOESC;
 			bcsp->rx_count--;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			BT_ERR("Invalid byte %02x after esc byte", byte);
-			kfree_skb(bcsp->rx_skb);
-			bcsp->rx_skb = NULL;
+			kमुक्त_skb(bcsp->rx_skb);
+			bcsp->rx_skb = शून्य;
 			bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
 			bcsp->rx_count = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void bcsp_complete_rx_pkt(struct hci_uart *hu)
-{
-	struct bcsp_struct *bcsp = hu->priv;
-	int pass_up = 0;
+अटल व्योम bcsp_complete_rx_pkt(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
+	पूर्णांक pass_up = 0;
 
-	if (bcsp->rx_skb->data[0] & 0x80) {	/* reliable pkt */
+	अगर (bcsp->rx_skb->data[0] & 0x80) अणु	/* reliable pkt */
 		BT_DBG("Received seqno %u from card", bcsp->rxseq_txack);
 
 		/* check the rx sequence number is as expected */
-		if ((bcsp->rx_skb->data[0] & 0x07) == bcsp->rxseq_txack) {
+		अगर ((bcsp->rx_skb->data[0] & 0x07) == bcsp->rxseq_txack) अणु
 			bcsp->rxseq_txack++;
 			bcsp->rxseq_txack %= 0x8;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* handle re-transmitted packet or
 			 * when packet was missed
 			 */
 			BT_ERR("Out-of-order packet arrived, got %u expected %u",
 			       bcsp->rx_skb->data[0] & 0x07, bcsp->rxseq_txack);
 
-			/* do not process out-of-order packet payload */
+			/* करो not process out-of-order packet payload */
 			pass_up = 2;
-		}
+		पूर्ण
 
 		/* send current txack value to all received reliable packets */
 		bcsp->txack_req = 1;
 
 		/* If needed, transmit an ack pkt */
 		hci_uart_tx_wakeup(hu);
-	}
+	पूर्ण
 
 	bcsp->rxack = (bcsp->rx_skb->data[0] >> 3) & 0x07;
 	BT_DBG("Request for pkt %u from card", bcsp->rxack);
@@ -509,157 +510,157 @@ static void bcsp_complete_rx_pkt(struct hci_uart *hu)
 	 */
 	bcsp_pkt_cull(bcsp);
 
-	if (pass_up != 2) {
-		if ((bcsp->rx_skb->data[1] & 0x0f) == 6 &&
-		    (bcsp->rx_skb->data[0] & 0x80)) {
+	अगर (pass_up != 2) अणु
+		अगर ((bcsp->rx_skb->data[1] & 0x0f) == 6 &&
+		    (bcsp->rx_skb->data[0] & 0x80)) अणु
 			hci_skb_pkt_type(bcsp->rx_skb) = HCI_ACLDATA_PKT;
 			pass_up = 1;
-		} else if ((bcsp->rx_skb->data[1] & 0x0f) == 5 &&
-			   (bcsp->rx_skb->data[0] & 0x80)) {
+		पूर्ण अन्यथा अगर ((bcsp->rx_skb->data[1] & 0x0f) == 5 &&
+			   (bcsp->rx_skb->data[0] & 0x80)) अणु
 			hci_skb_pkt_type(bcsp->rx_skb) = HCI_EVENT_PKT;
 			pass_up = 1;
-		} else if ((bcsp->rx_skb->data[1] & 0x0f) == 7) {
+		पूर्ण अन्यथा अगर ((bcsp->rx_skb->data[1] & 0x0f) == 7) अणु
 			hci_skb_pkt_type(bcsp->rx_skb) = HCI_SCODATA_PKT;
 			pass_up = 1;
-		} else if ((bcsp->rx_skb->data[1] & 0x0f) == 1 &&
-			   !(bcsp->rx_skb->data[0] & 0x80)) {
+		पूर्ण अन्यथा अगर ((bcsp->rx_skb->data[1] & 0x0f) == 1 &&
+			   !(bcsp->rx_skb->data[0] & 0x80)) अणु
 			bcsp_handle_le_pkt(hu);
 			pass_up = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			pass_up = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pass_up == 0) {
-		struct hci_event_hdr hdr;
+	अगर (pass_up == 0) अणु
+		काष्ठा hci_event_hdr hdr;
 		u8 desc = (bcsp->rx_skb->data[1] & 0x0f);
 
-		if (desc != 0 && desc != 1) {
-			if (hciextn) {
+		अगर (desc != 0 && desc != 1) अणु
+			अगर (hciextn) अणु
 				desc |= 0xc0;
 				skb_pull(bcsp->rx_skb, 4);
-				memcpy(skb_push(bcsp->rx_skb, 1), &desc, 1);
+				स_नकल(skb_push(bcsp->rx_skb, 1), &desc, 1);
 
 				hdr.evt = 0xff;
 				hdr.plen = bcsp->rx_skb->len;
-				memcpy(skb_push(bcsp->rx_skb, HCI_EVENT_HDR_SIZE), &hdr, HCI_EVENT_HDR_SIZE);
+				स_नकल(skb_push(bcsp->rx_skb, HCI_EVENT_HDR_SIZE), &hdr, HCI_EVENT_HDR_SIZE);
 				hci_skb_pkt_type(bcsp->rx_skb) = HCI_EVENT_PKT;
 
 				hci_recv_frame(hu->hdev, bcsp->rx_skb);
-			} else {
+			पूर्ण अन्यथा अणु
 				BT_ERR("Packet for unknown channel (%u %s)",
 				       bcsp->rx_skb->data[1] & 0x0f,
 				       bcsp->rx_skb->data[0] & 0x80 ?
 				       "reliable" : "unreliable");
-				kfree_skb(bcsp->rx_skb);
-			}
-		} else
-			kfree_skb(bcsp->rx_skb);
-	} else if (pass_up == 1) {
+				kमुक्त_skb(bcsp->rx_skb);
+			पूर्ण
+		पूर्ण अन्यथा
+			kमुक्त_skb(bcsp->rx_skb);
+	पूर्ण अन्यथा अगर (pass_up == 1) अणु
 		/* Pull out BCSP hdr */
 		skb_pull(bcsp->rx_skb, 4);
 
 		hci_recv_frame(hu->hdev, bcsp->rx_skb);
-	} else {
-		/* ignore packet payload of already ACKed re-transmitted
-		 * packets or when a packet was missed in the BCSP window
+	पूर्ण अन्यथा अणु
+		/* ignore packet payload of alपढ़ोy ACKed re-transmitted
+		 * packets or when a packet was missed in the BCSP winकरोw
 		 */
-		kfree_skb(bcsp->rx_skb);
-	}
+		kमुक्त_skb(bcsp->rx_skb);
+	पूर्ण
 
 	bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
-	bcsp->rx_skb = NULL;
-}
+	bcsp->rx_skb = शून्य;
+पूर्ण
 
-static u16 bscp_get_crc(struct bcsp_struct *bcsp)
-{
-	return get_unaligned_be16(&bcsp->rx_skb->data[bcsp->rx_skb->len - 2]);
-}
+अटल u16 bscp_get_crc(काष्ठा bcsp_काष्ठा *bcsp)
+अणु
+	वापस get_unaligned_be16(&bcsp->rx_skb->data[bcsp->rx_skb->len - 2]);
+पूर्ण
 
 /* Recv data */
-static int bcsp_recv(struct hci_uart *hu, const void *data, int count)
-{
-	struct bcsp_struct *bcsp = hu->priv;
-	const unsigned char *ptr;
+अटल पूर्णांक bcsp_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
+	स्थिर अचिन्हित अक्षर *ptr;
 
 	BT_DBG("hu %p count %d rx_state %d rx_count %ld",
 	       hu, count, bcsp->rx_state, bcsp->rx_count);
 
 	ptr = data;
-	while (count) {
-		if (bcsp->rx_count) {
-			if (*ptr == 0xc0) {
+	जबतक (count) अणु
+		अगर (bcsp->rx_count) अणु
+			अगर (*ptr == 0xc0) अणु
 				BT_ERR("Short BCSP packet");
-				kfree_skb(bcsp->rx_skb);
-				bcsp->rx_skb = NULL;
+				kमुक्त_skb(bcsp->rx_skb);
+				bcsp->rx_skb = शून्य;
 				bcsp->rx_state = BCSP_W4_PKT_START;
 				bcsp->rx_count = 0;
-			} else
+			पूर्ण अन्यथा
 				bcsp_unslip_one_byte(bcsp, *ptr);
 
 			ptr++; count--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		switch (bcsp->rx_state) {
-		case BCSP_W4_BCSP_HDR:
-			if ((0xff & (u8)~(bcsp->rx_skb->data[0] + bcsp->rx_skb->data[1] +
-			    bcsp->rx_skb->data[2])) != bcsp->rx_skb->data[3]) {
+		चयन (bcsp->rx_state) अणु
+		हाल BCSP_W4_BCSP_HDR:
+			अगर ((0xff & (u8)~(bcsp->rx_skb->data[0] + bcsp->rx_skb->data[1] +
+			    bcsp->rx_skb->data[2])) != bcsp->rx_skb->data[3]) अणु
 				BT_ERR("Error in BCSP hdr checksum");
-				kfree_skb(bcsp->rx_skb);
-				bcsp->rx_skb = NULL;
+				kमुक्त_skb(bcsp->rx_skb);
+				bcsp->rx_skb = शून्य;
 				bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
 				bcsp->rx_count = 0;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			bcsp->rx_state = BCSP_W4_DATA;
 			bcsp->rx_count = (bcsp->rx_skb->data[1] >> 4) +
 					(bcsp->rx_skb->data[2] << 4);	/* May be 0 */
-			continue;
+			जारी;
 
-		case BCSP_W4_DATA:
-			if (bcsp->rx_skb->data[0] & 0x40) {	/* pkt with crc */
+		हाल BCSP_W4_DATA:
+			अगर (bcsp->rx_skb->data[0] & 0x40) अणु	/* pkt with crc */
 				bcsp->rx_state = BCSP_W4_CRC;
 				bcsp->rx_count = 2;
-			} else
+			पूर्ण अन्यथा
 				bcsp_complete_rx_pkt(hu);
-			continue;
+			जारी;
 
-		case BCSP_W4_CRC:
-			if (bitrev16(bcsp->message_crc) != bscp_get_crc(bcsp)) {
+		हाल BCSP_W4_CRC:
+			अगर (bitrev16(bcsp->message_crc) != bscp_get_crc(bcsp)) अणु
 				BT_ERR("Checksum failed: computed %04x received %04x",
 				       bitrev16(bcsp->message_crc),
 				       bscp_get_crc(bcsp));
 
-				kfree_skb(bcsp->rx_skb);
-				bcsp->rx_skb = NULL;
+				kमुक्त_skb(bcsp->rx_skb);
+				bcsp->rx_skb = शून्य;
 				bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
 				bcsp->rx_count = 0;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			skb_trim(bcsp->rx_skb, bcsp->rx_skb->len - 2);
 			bcsp_complete_rx_pkt(hu);
-			continue;
+			जारी;
 
-		case BCSP_W4_PKT_DELIMITER:
-			switch (*ptr) {
-			case 0xc0:
+		हाल BCSP_W4_PKT_DELIMITER:
+			चयन (*ptr) अणु
+			हाल 0xc0:
 				bcsp->rx_state = BCSP_W4_PKT_START;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				/*BT_ERR("Ignoring byte %02x", *ptr);*/
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			ptr++; count--;
-			break;
+			अवरोध;
 
-		case BCSP_W4_PKT_START:
-			switch (*ptr) {
-			case 0xc0:
+		हाल BCSP_W4_PKT_START:
+			चयन (*ptr) अणु
+			हाल 0xc0:
 				ptr++; count--;
-				break;
+				अवरोध;
 
-			default:
+			शेष:
 				bcsp->rx_state = BCSP_W4_BCSP_HDR;
 				bcsp->rx_count = 4;
 				bcsp->rx_esc_state = BCSP_ESCSTATE_NOESC;
@@ -671,51 +672,51 @@ static int bcsp_recv(struct hci_uart *hu, const void *data, int count)
 				 */
 
 				bcsp->rx_skb = bt_skb_alloc(0x1005, GFP_ATOMIC);
-				if (!bcsp->rx_skb) {
+				अगर (!bcsp->rx_skb) अणु
 					BT_ERR("Can't allocate mem for new packet");
 					bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
 					bcsp->rx_count = 0;
-					return 0;
-				}
-				break;
-			}
-			break;
-		}
-	}
-	return count;
-}
+					वापस 0;
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस count;
+पूर्ण
 
 	/* Arrange to retransmit all messages in the relq. */
-static void bcsp_timed_event(struct timer_list *t)
-{
-	struct bcsp_struct *bcsp = from_timer(bcsp, t, tbcsp);
-	struct hci_uart *hu = bcsp->hu;
-	struct sk_buff *skb;
-	unsigned long flags;
+अटल व्योम bcsp_समयd_event(काष्ठा समयr_list *t)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = from_समयr(bcsp, t, tbcsp);
+	काष्ठा hci_uart *hu = bcsp->hu;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
 	BT_DBG("hu %p retransmitting %u pkts", hu, bcsp->unack.qlen);
 
 	spin_lock_irqsave_nested(&bcsp->unack.lock, flags, SINGLE_DEPTH_NESTING);
 
-	while ((skb = __skb_dequeue_tail(&bcsp->unack)) != NULL) {
+	जबतक ((skb = __skb_dequeue_tail(&bcsp->unack)) != शून्य) अणु
 		bcsp->msgq_txseq = (bcsp->msgq_txseq - 1) & 0x07;
 		skb_queue_head(&bcsp->rel, skb);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&bcsp->unack.lock, flags);
 
 	hci_uart_tx_wakeup(hu);
-}
+पूर्ण
 
-static int bcsp_open(struct hci_uart *hu)
-{
-	struct bcsp_struct *bcsp;
+अटल पूर्णांक bcsp_खोलो(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp;
 
 	BT_DBG("hu %p", hu);
 
-	bcsp = kzalloc(sizeof(*bcsp), GFP_KERNEL);
-	if (!bcsp)
-		return -ENOMEM;
+	bcsp = kzalloc(माप(*bcsp), GFP_KERNEL);
+	अगर (!bcsp)
+		वापस -ENOMEM;
 
 	hu->priv = bcsp;
 	bcsp->hu = hu;
@@ -723,23 +724,23 @@ static int bcsp_open(struct hci_uart *hu)
 	skb_queue_head_init(&bcsp->rel);
 	skb_queue_head_init(&bcsp->unrel);
 
-	timer_setup(&bcsp->tbcsp, bcsp_timed_event, 0);
+	समयr_setup(&bcsp->tbcsp, bcsp_समयd_event, 0);
 
 	bcsp->rx_state = BCSP_W4_PKT_DELIMITER;
 
-	if (txcrc)
+	अगर (txcrc)
 		bcsp->use_crc = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcsp_close(struct hci_uart *hu)
-{
-	struct bcsp_struct *bcsp = hu->priv;
+अटल पूर्णांक bcsp_बंद(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcsp_काष्ठा *bcsp = hu->priv;
 
-	del_timer_sync(&bcsp->tbcsp);
+	del_समयr_sync(&bcsp->tbcsp);
 
-	hu->priv = NULL;
+	hu->priv = शून्य;
 
 	BT_DBG("hu %p", hu);
 
@@ -747,35 +748,35 @@ static int bcsp_close(struct hci_uart *hu)
 	skb_queue_purge(&bcsp->rel);
 	skb_queue_purge(&bcsp->unrel);
 
-	if (bcsp->rx_skb) {
-		kfree_skb(bcsp->rx_skb);
-		bcsp->rx_skb = NULL;
-	}
+	अगर (bcsp->rx_skb) अणु
+		kमुक्त_skb(bcsp->rx_skb);
+		bcsp->rx_skb = शून्य;
+	पूर्ण
 
-	kfree(bcsp);
-	return 0;
-}
+	kमुक्त(bcsp);
+	वापस 0;
+पूर्ण
 
-static const struct hci_uart_proto bcsp = {
+अटल स्थिर काष्ठा hci_uart_proto bcsp = अणु
 	.id		= HCI_UART_BCSP,
 	.name		= "BCSP",
-	.open		= bcsp_open,
-	.close		= bcsp_close,
+	.खोलो		= bcsp_खोलो,
+	.बंद		= bcsp_बंद,
 	.enqueue	= bcsp_enqueue,
 	.dequeue	= bcsp_dequeue,
 	.recv		= bcsp_recv,
 	.flush		= bcsp_flush
-};
+पूर्ण;
 
-int __init bcsp_init(void)
-{
-	return hci_uart_register_proto(&bcsp);
-}
+पूर्णांक __init bcsp_init(व्योम)
+अणु
+	वापस hci_uart_रेजिस्टर_proto(&bcsp);
+पूर्ण
 
-int __exit bcsp_deinit(void)
-{
-	return hci_uart_unregister_proto(&bcsp);
-}
+पूर्णांक __निकास bcsp_deinit(व्योम)
+अणु
+	वापस hci_uart_unरेजिस्टर_proto(&bcsp);
+पूर्ण
 
 module_param(txcrc, bool, 0644);
 MODULE_PARM_DESC(txcrc, "Transmit CRC with every BCSP packet");

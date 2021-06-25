@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/m68k/kernel/time.c
+ *  linux/arch/m68k/kernel/समय.c
  *
  *  Copyright (C) 1991, 1992, 1995  Linus Torvalds
  *
- * This file contains the m68k-specific time handling details.
- * Most of the stuff is located in the machine specific files.
+ * This file contains the m68k-specअगरic समय handling details.
+ * Most of the stuff is located in the machine specअगरic files.
  *
- * 1997-09-10	Updated NTP code according to technical memorandum Jan '96
+ * 1997-09-10	Updated NTP code according to technical memoअक्रमum Jan '96
  *		"A Kernel Model for Precision Timekeeping" by Dave Mills
  */
 
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/sched/loadavg.h>
-#include <linux/kernel.h>
-#include <linux/param.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/rtc.h>
-#include <linux/platform_device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/loadavg.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/param.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/machdep.h>
-#include <asm/io.h>
-#include <asm/irq_regs.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq_regs.h>
 
-#include <linux/time.h>
-#include <linux/timex.h>
-#include <linux/profile.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयx.h>
+#समावेश <linux/profile.h>
 
 
-unsigned long (*mach_random_get_entropy)(void);
-EXPORT_SYMBOL_GPL(mach_random_get_entropy);
+अचिन्हित दीर्घ (*mach_अक्रमom_get_entropy)(व्योम);
+EXPORT_SYMBOL_GPL(mach_अक्रमom_get_entropy);
 
-#ifdef CONFIG_HEARTBEAT
-void timer_heartbeat(void)
-{
-	/* use power LED as a heartbeat instead -- much more useful
-	   for debugging -- based on the version for PReP by Cort */
-	/* acts like an actual heart beat -- ie thump-thump-pause... */
-	if (mach_heartbeat) {
-	    static unsigned cnt = 0, period = 0, dist = 0;
+#अगर_घोषित CONFIG_HEARTBEAT
+व्योम समयr_heartbeat(व्योम)
+अणु
+	/* use घातer LED as a heartbeat instead -- much more useful
+	   क्रम debugging -- based on the version क्रम PReP by Cort */
+	/* acts like an actual heart beat -- ie thump-thump-छोड़ो... */
+	अगर (mach_heartbeat) अणु
+	    अटल अचिन्हित cnt = 0, period = 0, dist = 0;
 
-	    if (cnt == 0 || cnt == dist)
+	    अगर (cnt == 0 || cnt == dist)
 		mach_heartbeat( 1 );
-	    else if (cnt == 7 || cnt == dist+7)
+	    अन्यथा अगर (cnt == 7 || cnt == dist+7)
 		mach_heartbeat( 0 );
 
-	    if (++cnt > period) {
+	    अगर (++cnt > period) अणु
 		cnt = 0;
-		/* The hyperbolic function below modifies the heartbeat period
+		/* The hyperbolic function below modअगरies the heartbeat period
 		 * length in dependency of the current (5min) load. It goes
-		 * through the points f(0)=126, f(1)=86, f(5)=51,
+		 * through the poपूर्णांकs f(0)=126, f(1)=86, f(5)=51,
 		 * f(inf)->30. */
 		period = ((672<<FSHIFT)/(5*avenrun[0]+(7<<FSHIFT))) + 30;
 		dist = period / 4;
-	    }
-	}
-}
-#endif /* CONFIG_HEARTBEAT */
+	    पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HEARTBEAT */
 
-#ifdef CONFIG_M68KCLASSIC
-#if !IS_BUILTIN(CONFIG_RTC_DRV_GENERIC)
-void read_persistent_clock64(struct timespec64 *ts)
-{
-	struct rtc_time time;
+#अगर_घोषित CONFIG_M68KCLASSIC
+#अगर !IS_BUILTIN(CONFIG_RTC_DRV_GENERIC)
+व्योम पढ़ो_persistent_घड़ी64(काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा rtc_समय समय;
 
 	ts->tv_sec = 0;
 	ts->tv_nsec = 0;
 
-	if (!mach_hwclk)
-		return;
+	अगर (!mach_hwclk)
+		वापस;
 
-	mach_hwclk(0, &time);
+	mach_hwclk(0, &समय);
 
-	ts->tv_sec = mktime64(time.tm_year + 1900, time.tm_mon + 1, time.tm_mday,
-			      time.tm_hour, time.tm_min, time.tm_sec);
-}
-#endif
+	ts->tv_sec = स_गढ़ो64(समय.पंचांग_year + 1900, समय.पंचांग_mon + 1, समय.पंचांग_mday,
+			      समय.पंचांग_hour, समय.पंचांग_min, समय.पंचांग_sec);
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_RTC_DRV_GENERIC)
-static int rtc_generic_get_time(struct device *dev, struct rtc_time *tm)
-{
-	mach_hwclk(0, tm);
-	return 0;
-}
+#अगर IS_ENABLED(CONFIG_RTC_DRV_GENERIC)
+अटल पूर्णांक rtc_generic_get_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	mach_hwclk(0, पंचांग);
+	वापस 0;
+पूर्ण
 
-static int rtc_generic_set_time(struct device *dev, struct rtc_time *tm)
-{
-	if (mach_hwclk(1, tm) < 0)
-		return -EOPNOTSUPP;
-	return 0;
-}
+अटल पूर्णांक rtc_generic_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	अगर (mach_hwclk(1, पंचांग) < 0)
+		वापस -EOPNOTSUPP;
+	वापस 0;
+पूर्ण
 
-static int rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
-{
-	struct rtc_pll_info pll;
-	struct rtc_pll_info __user *argp = (void __user *)arg;
+अटल पूर्णांक rtc_ioctl(काष्ठा device *dev, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा rtc_pll_info pll;
+	काष्ठा rtc_pll_info __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case RTC_PLL_GET:
-		if (!mach_get_rtc_pll || mach_get_rtc_pll(&pll))
-			return -EINVAL;
-		return copy_to_user(argp, &pll, sizeof pll) ? -EFAULT : 0;
+	चयन (cmd) अणु
+	हाल RTC_PLL_GET:
+		अगर (!mach_get_rtc_pll || mach_get_rtc_pll(&pll))
+			वापस -EINVAL;
+		वापस copy_to_user(argp, &pll, माप pll) ? -EFAULT : 0;
 
-	case RTC_PLL_SET:
-		if (!mach_set_rtc_pll)
-			return -EINVAL;
-		if (!capable(CAP_SYS_TIME))
-			return -EACCES;
-		if (copy_from_user(&pll, argp, sizeof(pll)))
-			return -EFAULT;
-		return mach_set_rtc_pll(&pll);
-	}
+	हाल RTC_PLL_SET:
+		अगर (!mach_set_rtc_pll)
+			वापस -EINVAL;
+		अगर (!capable(CAP_SYS_TIME))
+			वापस -EACCES;
+		अगर (copy_from_user(&pll, argp, माप(pll)))
+			वापस -EFAULT;
+		वापस mach_set_rtc_pll(&pll);
+	पूर्ण
 
-	return -ENOIOCTLCMD;
-}
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-static const struct rtc_class_ops generic_rtc_ops = {
+अटल स्थिर काष्ठा rtc_class_ops generic_rtc_ops = अणु
 	.ioctl = rtc_ioctl,
-	.read_time = rtc_generic_get_time,
-	.set_time = rtc_generic_set_time,
-};
+	.पढ़ो_समय = rtc_generic_get_समय,
+	.set_समय = rtc_generic_set_समय,
+पूर्ण;
 
-static int __init rtc_init(void)
-{
-	struct platform_device *pdev;
+अटल पूर्णांक __init rtc_init(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	if (!mach_hwclk)
-		return -ENODEV;
+	अगर (!mach_hwclk)
+		वापस -ENODEV;
 
-	pdev = platform_device_register_data(NULL, "rtc-generic", -1,
+	pdev = platक्रमm_device_रेजिस्टर_data(शून्य, "rtc-generic", -1,
 					     &generic_rtc_ops,
-					     sizeof(generic_rtc_ops));
-	return PTR_ERR_OR_ZERO(pdev);
-}
+					     माप(generic_rtc_ops));
+	वापस PTR_ERR_OR_ZERO(pdev);
+पूर्ण
 
 module_init(rtc_init);
-#endif /* CONFIG_RTC_DRV_GENERIC */
-#endif /* CONFIG M68KCLASSIC */
+#पूर्ण_अगर /* CONFIG_RTC_DRV_GENERIC */
+#पूर्ण_अगर /* CONFIG M68KCLASSIC */
 
-void __init time_init(void)
-{
+व्योम __init समय_init(व्योम)
+अणु
 	mach_sched_init();
-}
+पूर्ण

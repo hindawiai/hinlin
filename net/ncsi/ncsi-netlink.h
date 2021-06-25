@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright Samuel Mendoza-Jonas, IBM Corporation 2018.
+ * Copyright Samuel Menकरोza-Jonas, IBM Corporation 2018.
  */
 
-#ifndef __NCSI_NETLINK_H__
-#define __NCSI_NETLINK_H__
+#अगर_अघोषित __NCSI_NETLINK_H__
+#घोषणा __NCSI_NETLINK_H__
 
-#include <linux/netdevice.h>
+#समावेश <linux/netdevice.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-int ncsi_send_netlink_rsp(struct ncsi_request *nr,
-			  struct ncsi_package *np,
-			  struct ncsi_channel *nc);
-int ncsi_send_netlink_timeout(struct ncsi_request *nr,
-			      struct ncsi_package *np,
-			      struct ncsi_channel *nc);
-int ncsi_send_netlink_err(struct net_device *dev,
+पूर्णांक ncsi_send_netlink_rsp(काष्ठा ncsi_request *nr,
+			  काष्ठा ncsi_package *np,
+			  काष्ठा ncsi_channel *nc);
+पूर्णांक ncsi_send_netlink_समयout(काष्ठा ncsi_request *nr,
+			      काष्ठा ncsi_package *np,
+			      काष्ठा ncsi_channel *nc);
+पूर्णांक ncsi_send_netlink_err(काष्ठा net_device *dev,
 			  u32 snd_seq,
 			  u32 snd_portid,
-			  struct nlmsghdr *nlhdr,
-			  int err);
+			  काष्ठा nlmsghdr *nlhdr,
+			  पूर्णांक err);
 
-#endif /* __NCSI_NETLINK_H__ */
+#पूर्ण_अगर /* __NCSI_NETLINK_H__ */

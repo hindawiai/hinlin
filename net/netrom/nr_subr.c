@@ -1,223 +1,224 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
  * Copyright Jonathan Naylor G4KLX (g4klx@g4klx.demon.co.uk)
  */
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/slab.h>
-#include <net/ax25.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <net/netrom.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/slab.h>
+#समावेश <net/ax25.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/netrom.h>
 
 /*
  *	This routine purges all of the queues of frames.
  */
-void nr_clear_queues(struct sock *sk)
-{
-	struct nr_sock *nr = nr_sk(sk);
+व्योम nr_clear_queues(काष्ठा sock *sk)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
 
-	skb_queue_purge(&sk->sk_write_queue);
+	skb_queue_purge(&sk->sk_ग_लिखो_queue);
 	skb_queue_purge(&nr->ack_queue);
 	skb_queue_purge(&nr->reseq_queue);
 	skb_queue_purge(&nr->frag_queue);
-}
+पूर्ण
 
 /*
  * This routine purges the input queue of those frames that have been
  * acknowledged. This replaces the boxes labelled "V(a) <- N(r)" on the
  * SDL diagram.
  */
-void nr_frames_acked(struct sock *sk, unsigned short nr)
-{
-	struct nr_sock *nrom = nr_sk(sk);
-	struct sk_buff *skb;
+व्योम nr_frames_acked(काष्ठा sock *sk, अचिन्हित लघु nr)
+अणु
+	काष्ठा nr_sock *nrom = nr_sk(sk);
+	काष्ठा sk_buff *skb;
 
 	/*
 	 * Remove all the ack-ed frames from the ack queue.
 	 */
-	if (nrom->va != nr) {
-		while (skb_peek(&nrom->ack_queue) != NULL && nrom->va != nr) {
+	अगर (nrom->va != nr) अणु
+		जबतक (skb_peek(&nrom->ack_queue) != शून्य && nrom->va != nr) अणु
 			skb = skb_dequeue(&nrom->ack_queue);
-			kfree_skb(skb);
+			kमुक्त_skb(skb);
 			nrom->va = (nrom->va + 1) % NR_MODULUS;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Requeue all the un-ack-ed frames on the output queue to be picked
- * up by nr_kick called from the timer. This arrangement handles the
+ * up by nr_kick called from the समयr. This arrangement handles the
  * possibility of an empty output queue.
  */
-void nr_requeue_frames(struct sock *sk)
-{
-	struct sk_buff *skb, *skb_prev = NULL;
+व्योम nr_requeue_frames(काष्ठा sock *sk)
+अणु
+	काष्ठा sk_buff *skb, *skb_prev = शून्य;
 
-	while ((skb = skb_dequeue(&nr_sk(sk)->ack_queue)) != NULL) {
-		if (skb_prev == NULL)
-			skb_queue_head(&sk->sk_write_queue, skb);
-		else
-			skb_append(skb_prev, skb, &sk->sk_write_queue);
+	जबतक ((skb = skb_dequeue(&nr_sk(sk)->ack_queue)) != शून्य) अणु
+		अगर (skb_prev == शून्य)
+			skb_queue_head(&sk->sk_ग_लिखो_queue, skb);
+		अन्यथा
+			skb_append(skb_prev, skb, &sk->sk_ग_लिखो_queue);
 		skb_prev = skb;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	Validate that the value of nr is between va and vs. Return true or
- *	false for testing.
+ *	false क्रम testing.
  */
-int nr_validate_nr(struct sock *sk, unsigned short nr)
-{
-	struct nr_sock *nrom = nr_sk(sk);
-	unsigned short vc = nrom->va;
+पूर्णांक nr_validate_nr(काष्ठा sock *sk, अचिन्हित लघु nr)
+अणु
+	काष्ठा nr_sock *nrom = nr_sk(sk);
+	अचिन्हित लघु vc = nrom->va;
 
-	while (vc != nrom->vs) {
-		if (nr == vc) return 1;
+	जबतक (vc != nrom->vs) अणु
+		अगर (nr == vc) वापस 1;
 		vc = (vc + 1) % NR_MODULUS;
-	}
+	पूर्ण
 
-	return nr == nrom->vs;
-}
+	वापस nr == nrom->vs;
+पूर्ण
 
 /*
- *	Check that ns is within the receive window.
+ *	Check that ns is within the receive winकरोw.
  */
-int nr_in_rx_window(struct sock *sk, unsigned short ns)
-{
-	struct nr_sock *nr = nr_sk(sk);
-	unsigned short vc = nr->vr;
-	unsigned short vt = (nr->vl + nr->window) % NR_MODULUS;
+पूर्णांक nr_in_rx_winकरोw(काष्ठा sock *sk, अचिन्हित लघु ns)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
+	अचिन्हित लघु vc = nr->vr;
+	अचिन्हित लघु vt = (nr->vl + nr->winकरोw) % NR_MODULUS;
 
-	while (vc != vt) {
-		if (ns == vc) return 1;
+	जबतक (vc != vt) अणु
+		अगर (ns == vc) वापस 1;
 		vc = (vc + 1) % NR_MODULUS;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  This routine is called when the HDLC layer internally generates a
+ *  This routine is called when the HDLC layer पूर्णांकernally generates a
  *  control frame.
  */
-void nr_write_internal(struct sock *sk, int frametype)
-{
-	struct nr_sock *nr = nr_sk(sk);
-	struct sk_buff *skb;
-	unsigned char  *dptr;
-	int len, timeout;
+व्योम nr_ग_लिखो_पूर्णांकernal(काष्ठा sock *sk, पूर्णांक frametype)
+अणु
+	काष्ठा nr_sock *nr = nr_sk(sk);
+	काष्ठा sk_buff *skb;
+	अचिन्हित अक्षर  *dptr;
+	पूर्णांक len, समयout;
 
 	len = NR_NETWORK_LEN + NR_TRANSPORT_LEN;
 
-	switch (frametype & 0x0F) {
-	case NR_CONNREQ:
+	चयन (frametype & 0x0F) अणु
+	हाल NR_CONNREQ:
 		len += 17;
-		break;
-	case NR_CONNACK:
+		अवरोध;
+	हाल NR_CONNACK:
 		len += (nr->bpqext) ? 2 : 1;
-		break;
-	case NR_DISCREQ:
-	case NR_DISCACK:
-	case NR_INFOACK:
-		break;
-	default:
-		printk(KERN_ERR "NET/ROM: nr_write_internal - invalid frame type %d\n", frametype);
-		return;
-	}
+		अवरोध;
+	हाल NR_DISCREQ:
+	हाल NR_DISCACK:
+	हाल NR_INFOACK:
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "NET/ROM: nr_write_internal - invalid frame type %d\n", frametype);
+		वापस;
+	पूर्ण
 
-	if ((skb = alloc_skb(len, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skb = alloc_skb(len, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	/*
-	 *	Space for AX.25 and NET/ROM network header
+	 *	Space क्रम AX.25 and NET/ROM network header
 	 */
 	skb_reserve(skb, NR_NETWORK_LEN);
 
 	dptr = skb_put(skb, skb_tailroom(skb));
 
-	switch (frametype & 0x0F) {
-	case NR_CONNREQ:
-		timeout  = nr->t1 / HZ;
+	चयन (frametype & 0x0F) अणु
+	हाल NR_CONNREQ:
+		समयout  = nr->t1 / HZ;
 		*dptr++  = nr->my_index;
 		*dptr++  = nr->my_id;
 		*dptr++  = 0;
 		*dptr++  = 0;
 		*dptr++  = frametype;
-		*dptr++  = nr->window;
-		memcpy(dptr, &nr->user_addr, AX25_ADDR_LEN);
+		*dptr++  = nr->winकरोw;
+		स_नकल(dptr, &nr->user_addr, AX25_ADDR_LEN);
 		dptr[6] &= ~AX25_CBIT;
 		dptr[6] &= ~AX25_EBIT;
 		dptr[6] |= AX25_SSSID_SPARE;
 		dptr    += AX25_ADDR_LEN;
-		memcpy(dptr, &nr->source_addr, AX25_ADDR_LEN);
+		स_नकल(dptr, &nr->source_addr, AX25_ADDR_LEN);
 		dptr[6] &= ~AX25_CBIT;
 		dptr[6] &= ~AX25_EBIT;
 		dptr[6] |= AX25_SSSID_SPARE;
 		dptr    += AX25_ADDR_LEN;
-		*dptr++  = timeout % 256;
-		*dptr++  = timeout / 256;
-		break;
+		*dptr++  = समयout % 256;
+		*dptr++  = समयout / 256;
+		अवरोध;
 
-	case NR_CONNACK:
+	हाल NR_CONNACK:
 		*dptr++ = nr->your_index;
 		*dptr++ = nr->your_id;
 		*dptr++ = nr->my_index;
 		*dptr++ = nr->my_id;
 		*dptr++ = frametype;
-		*dptr++ = nr->window;
-		if (nr->bpqext) *dptr++ = sysctl_netrom_network_ttl_initialiser;
-		break;
+		*dptr++ = nr->winकरोw;
+		अगर (nr->bpqext) *dptr++ = sysctl_netrom_network_ttl_initialiser;
+		अवरोध;
 
-	case NR_DISCREQ:
-	case NR_DISCACK:
+	हाल NR_DISCREQ:
+	हाल NR_DISCACK:
 		*dptr++ = nr->your_index;
 		*dptr++ = nr->your_id;
 		*dptr++ = 0;
 		*dptr++ = 0;
 		*dptr++ = frametype;
-		break;
+		अवरोध;
 
-	case NR_INFOACK:
+	हाल NR_INFOACK:
 		*dptr++ = nr->your_index;
 		*dptr++ = nr->your_id;
 		*dptr++ = 0;
 		*dptr++ = nr->vr;
 		*dptr++ = frametype;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	nr_transmit_buffer(sk, skb);
-}
+पूर्ण
 
 /*
  * This routine is called to send an error reply.
  */
-void __nr_transmit_reply(struct sk_buff *skb, int mine, unsigned char cmdflags)
-{
-	struct sk_buff *skbn;
-	unsigned char *dptr;
-	int len;
+व्योम __nr_transmit_reply(काष्ठा sk_buff *skb, पूर्णांक mine, अचिन्हित अक्षर cmdflags)
+अणु
+	काष्ठा sk_buff *skbn;
+	अचिन्हित अक्षर *dptr;
+	पूर्णांक len;
 
 	len = NR_NETWORK_LEN + NR_TRANSPORT_LEN + 1;
 
-	if ((skbn = alloc_skb(len, GFP_ATOMIC)) == NULL)
-		return;
+	अगर ((skbn = alloc_skb(len, GFP_ATOMIC)) == शून्य)
+		वापस;
 
 	skb_reserve(skbn, 0);
 
@@ -237,31 +238,31 @@ void __nr_transmit_reply(struct sk_buff *skb, int mine, unsigned char cmdflags)
 
 	*dptr++ = sysctl_netrom_network_ttl_initialiser;
 
-	if (mine) {
+	अगर (mine) अणु
 		*dptr++ = 0;
 		*dptr++ = 0;
 		*dptr++ = skb->data[15];
 		*dptr++ = skb->data[16];
-	} else {
+	पूर्ण अन्यथा अणु
 		*dptr++ = skb->data[15];
 		*dptr++ = skb->data[16];
 		*dptr++ = 0;
 		*dptr++ = 0;
-	}
+	पूर्ण
 
 	*dptr++ = cmdflags;
 	*dptr++ = 0;
 
-	if (!nr_route_frame(skbn, NULL))
-		kfree_skb(skbn);
-}
+	अगर (!nr_route_frame(skbn, शून्य))
+		kमुक्त_skb(skbn);
+पूर्ण
 
-void nr_disconnect(struct sock *sk, int reason)
-{
-	nr_stop_t1timer(sk);
-	nr_stop_t2timer(sk);
-	nr_stop_t4timer(sk);
-	nr_stop_idletimer(sk);
+व्योम nr_disconnect(काष्ठा sock *sk, पूर्णांक reason)
+अणु
+	nr_stop_t1समयr(sk);
+	nr_stop_t2समयr(sk);
+	nr_stop_t4समयr(sk);
+	nr_stop_idleसमयr(sk);
 
 	nr_clear_queues(sk);
 
@@ -269,10 +270,10 @@ void nr_disconnect(struct sock *sk, int reason)
 
 	sk->sk_state     = TCP_CLOSE;
 	sk->sk_err       = reason;
-	sk->sk_shutdown |= SEND_SHUTDOWN;
+	sk->sk_shutकरोwn |= SEND_SHUTDOWN;
 
-	if (!sock_flag(sk, SOCK_DEAD)) {
+	अगर (!sock_flag(sk, SOCK_DEAD)) अणु
 		sk->sk_state_change(sk);
 		sock_set_flag(sk, SOCK_DEAD);
-	}
-}
+	पूर्ण
+पूर्ण

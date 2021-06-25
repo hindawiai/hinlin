@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * 32-bit test to check vDSO mremap.
  *
@@ -6,102 +7,102 @@
  * Suggested-by: Andrew Lutomirski
  */
 /*
- * Can be built statically:
- * gcc -Os -Wall -static -m32 test_mremap_vdso.c
+ * Can be built अटलally:
+ * gcc -Os -Wall -अटल -m32 test_mremap_vdso.c
  */
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <errno.h>
-#include <unistd.h>
-#include <string.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <माला.स>
 
-#include <sys/mman.h>
-#include <sys/auxv.h>
-#include <sys/syscall.h>
-#include <sys/wait.h>
+#समावेश <sys/mman.h>
+#समावेश <sys/auxv.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/रुको.h>
 
-#define PAGE_SIZE	4096
+#घोषणा PAGE_SIZE	4096
 
-static int try_to_remap(void *vdso_addr, unsigned long size)
-{
-	void *dest_addr, *new_addr;
+अटल पूर्णांक try_to_remap(व्योम *vdso_addr, अचिन्हित दीर्घ size)
+अणु
+	व्योम *dest_addr, *new_addr;
 
-	/* Searching for memory location where to remap */
+	/* Searching क्रम memory location where to remap */
 	dest_addr = mmap(0, size, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-	if (dest_addr == MAP_FAILED) {
-		printf("[WARN]\tmmap failed (%d): %m\n", errno);
-		return 0;
-	}
+	अगर (dest_addr == MAP_FAILED) अणु
+		म_लिखो("[WARN]\tmmap failed (%d): %m\n", त्रुटि_सं);
+		वापस 0;
+	पूर्ण
 
-	printf("[NOTE]\tMoving vDSO: [%p, %#lx] -> [%p, %#lx]\n",
-		vdso_addr, (unsigned long)vdso_addr + size,
-		dest_addr, (unsigned long)dest_addr + size);
-	fflush(stdout);
+	म_लिखो("[NOTE]\tMoving vDSO: [%p, %#lx] -> [%p, %#lx]\n",
+		vdso_addr, (अचिन्हित दीर्घ)vdso_addr + size,
+		dest_addr, (अचिन्हित दीर्घ)dest_addr + size);
+	ख_साफ(मानक_निकास);
 
 	new_addr = mremap(vdso_addr, size, size,
 			MREMAP_FIXED|MREMAP_MAYMOVE, dest_addr);
-	if ((unsigned long)new_addr == (unsigned long)-1) {
+	अगर ((अचिन्हित दीर्घ)new_addr == (अचिन्हित दीर्घ)-1) अणु
 		munmap(dest_addr, size);
-		if (errno == EINVAL) {
-			printf("[NOTE]\tvDSO partial move failed, will try with bigger size\n");
-			return -1; /* Retry with larger */
-		}
-		printf("[FAIL]\tmremap failed (%d): %m\n", errno);
-		return 1;
-	}
+		अगर (त्रुटि_सं == EINVAL) अणु
+			म_लिखो("[NOTE]\tvDSO partial move failed, will try with bigger size\n");
+			वापस -1; /* Retry with larger */
+		पूर्ण
+		म_लिखो("[FAIL]\tmremap failed (%d): %m\n", त्रुटि_सं);
+		वापस 1;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-int main(int argc, char **argv, char **envp)
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv, अक्षर **envp)
+अणु
 	pid_t child;
 
-	child = fork();
-	if (child == -1) {
-		printf("[WARN]\tfailed to fork (%d): %m\n", errno);
-		return 1;
-	}
+	child = विभाजन();
+	अगर (child == -1) अणु
+		म_लिखो("[WARN]\tfailed to fork (%d): %m\n", त्रुटि_सं);
+		वापस 1;
+	पूर्ण
 
-	if (child == 0) {
-		unsigned long vdso_size = PAGE_SIZE;
-		unsigned long auxval;
-		int ret = -1;
+	अगर (child == 0) अणु
+		अचिन्हित दीर्घ vdso_size = PAGE_SIZE;
+		अचिन्हित दीर्घ auxval;
+		पूर्णांक ret = -1;
 
 		auxval = getauxval(AT_SYSINFO_EHDR);
-		printf("\tAT_SYSINFO_EHDR is %#lx\n", auxval);
-		if (!auxval || auxval == -ENOENT) {
-			printf("[WARN]\tgetauxval failed\n");
-			return 0;
-		}
+		म_लिखो("\tAT_SYSINFO_EHDR is %#lx\n", auxval);
+		अगर (!auxval || auxval == -ENOENT) अणु
+			म_लिखो("[WARN]\tgetauxval failed\n");
+			वापस 0;
+		पूर्ण
 
 		/* Simpler than parsing ELF header */
-		while (ret < 0) {
-			ret = try_to_remap((void *)auxval, vdso_size);
+		जबतक (ret < 0) अणु
+			ret = try_to_remap((व्योम *)auxval, vdso_size);
 			vdso_size += PAGE_SIZE;
-		}
+		पूर्ण
 
-#ifdef __i386__
-		/* Glibc is likely to explode now - exit with raw syscall */
-		asm volatile ("int $0x80" : : "a" (__NR_exit), "b" (!!ret));
-#else /* __x86_64__ */
-		syscall(SYS_exit, ret);
-#endif
-	} else {
-		int status;
+#अगर_घोषित __i386__
+		/* Glibc is likely to explode now - निकास with raw syscall */
+		यंत्र अस्थिर ("int $0x80" : : "a" (__NR_निकास), "b" (!!ret));
+#अन्यथा /* __x86_64__ */
+		syscall(SYS_निकास, ret);
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		पूर्णांक status;
 
-		if (waitpid(child, &status, 0) != child ||
-			!WIFEXITED(status)) {
-			printf("[FAIL]\tmremap() of the vDSO does not work on this kernel!\n");
-			return 1;
-		} else if (WEXITSTATUS(status) != 0) {
-			printf("[FAIL]\tChild failed with %d\n",
+		अगर (रुकोpid(child, &status, 0) != child ||
+			!WIFEXITED(status)) अणु
+			म_लिखो("[FAIL]\tmremap() of the vDSO does not work on this kernel!\n");
+			वापस 1;
+		पूर्ण अन्यथा अगर (WEXITSTATUS(status) != 0) अणु
+			म_लिखो("[FAIL]\tChild failed with %d\n",
 					WEXITSTATUS(status));
-			return 1;
-		}
-		printf("[OK]\n");
-	}
+			वापस 1;
+		पूर्ण
+		म_लिखो("[OK]\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,723 +1,724 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * security/tomoyo/domain.c
+ * security/tomoyo/करोमुख्य.c
  *
  * Copyright (C) 2005-2011  NTT DATA CORPORATION
  */
 
-#include "common.h"
+#समावेश "common.h"
 
-#include <linux/binfmts.h>
-#include <linux/slab.h>
-#include <linux/rculist.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rculist.h>
 
 /* Variables definitions.*/
 
-/* The initial domain. */
-struct tomoyo_domain_info tomoyo_kernel_domain;
+/* The initial करोमुख्य. */
+काष्ठा tomoyo_करोमुख्य_info tomoyo_kernel_करोमुख्य;
 
 /**
- * tomoyo_update_policy - Update an entry for exception policy.
+ * tomoyo_update_policy - Update an entry क्रम exception policy.
  *
- * @new_entry:       Pointer to "struct tomoyo_acl_info".
+ * @new_entry:       Poपूर्णांकer to "struct tomoyo_acl_info".
  * @size:            Size of @new_entry in bytes.
- * @param:           Pointer to "struct tomoyo_acl_param".
+ * @param:           Poपूर्णांकer to "struct tomoyo_acl_param".
  * @check_duplicate: Callback function to find duplicated entry.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_update_policy(struct tomoyo_acl_head *new_entry, const int size,
-			 struct tomoyo_acl_param *param,
-			 bool (*check_duplicate)(const struct tomoyo_acl_head
+पूर्णांक tomoyo_update_policy(काष्ठा tomoyo_acl_head *new_entry, स्थिर पूर्णांक size,
+			 काष्ठा tomoyo_acl_param *param,
+			 bool (*check_duplicate)(स्थिर काष्ठा tomoyo_acl_head
 						 *,
-						 const struct tomoyo_acl_head
+						 स्थिर काष्ठा tomoyo_acl_head
 						 *))
-{
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
-	struct tomoyo_acl_head *entry;
-	struct list_head *list = param->list;
+अणु
+	पूर्णांक error = param->is_delete ? -ENOENT : -ENOMEM;
+	काष्ठा tomoyo_acl_head *entry;
+	काष्ठा list_head *list = param->list;
 
-	if (mutex_lock_interruptible(&tomoyo_policy_lock))
-		return -ENOMEM;
-	list_for_each_entry_rcu(entry, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
-			continue;
-		if (!check_duplicate(entry, new_entry))
-			continue;
+	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
+		वापस -ENOMEM;
+	list_क्रम_each_entry_rcu(entry, list, list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
+			जारी;
+		अगर (!check_duplicate(entry, new_entry))
+			जारी;
 		entry->is_deleted = param->is_delete;
 		error = 0;
-		break;
-	}
-	if (error && !param->is_delete) {
+		अवरोध;
+	पूर्ण
+	अगर (error && !param->is_delete) अणु
 		entry = tomoyo_commit_ok(new_entry, size);
-		if (entry) {
+		अगर (entry) अणु
 			list_add_tail_rcu(&entry->list, list);
 			error = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&tomoyo_policy_lock);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_same_acl_head - Check for duplicated "struct tomoyo_acl_info" entry.
+ * tomoyo_same_acl_head - Check क्रम duplicated "struct tomoyo_acl_info" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_info".
- * @b: Pointer to "struct tomoyo_acl_info".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_info".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_info".
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns true अगर @a == @b, false otherwise.
  */
-static inline bool tomoyo_same_acl_head(const struct tomoyo_acl_info *a,
-					const struct tomoyo_acl_info *b)
-{
-	return a->type == b->type && a->cond == b->cond;
-}
+अटल अंतरभूत bool tomoyo_same_acl_head(स्थिर काष्ठा tomoyo_acl_info *a,
+					स्थिर काष्ठा tomoyo_acl_info *b)
+अणु
+	वापस a->type == b->type && a->cond == b->cond;
+पूर्ण
 
 /**
- * tomoyo_update_domain - Update an entry for domain policy.
+ * tomoyo_update_करोमुख्य - Update an entry क्रम करोमुख्य policy.
  *
- * @new_entry:       Pointer to "struct tomoyo_acl_info".
+ * @new_entry:       Poपूर्णांकer to "struct tomoyo_acl_info".
  * @size:            Size of @new_entry in bytes.
- * @param:           Pointer to "struct tomoyo_acl_param".
+ * @param:           Poपूर्णांकer to "struct tomoyo_acl_param".
  * @check_duplicate: Callback function to find duplicated entry.
  * @merge_duplicate: Callback function to merge duplicated entry.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_update_domain(struct tomoyo_acl_info *new_entry, const int size,
-			 struct tomoyo_acl_param *param,
-			 bool (*check_duplicate)(const struct tomoyo_acl_info
+पूर्णांक tomoyo_update_करोमुख्य(काष्ठा tomoyo_acl_info *new_entry, स्थिर पूर्णांक size,
+			 काष्ठा tomoyo_acl_param *param,
+			 bool (*check_duplicate)(स्थिर काष्ठा tomoyo_acl_info
 						 *,
-						 const struct tomoyo_acl_info
+						 स्थिर काष्ठा tomoyo_acl_info
 						 *),
-			 bool (*merge_duplicate)(struct tomoyo_acl_info *,
-						 struct tomoyo_acl_info *,
-						 const bool))
-{
-	const bool is_delete = param->is_delete;
-	int error = is_delete ? -ENOENT : -ENOMEM;
-	struct tomoyo_acl_info *entry;
-	struct list_head * const list = param->list;
+			 bool (*merge_duplicate)(काष्ठा tomoyo_acl_info *,
+						 काष्ठा tomoyo_acl_info *,
+						 स्थिर bool))
+अणु
+	स्थिर bool is_delete = param->is_delete;
+	पूर्णांक error = is_delete ? -ENOENT : -ENOMEM;
+	काष्ठा tomoyo_acl_info *entry;
+	काष्ठा list_head * स्थिर list = param->list;
 
-	if (param->data[0]) {
+	अगर (param->data[0]) अणु
 		new_entry->cond = tomoyo_get_condition(param);
-		if (!new_entry->cond)
-			return -EINVAL;
+		अगर (!new_entry->cond)
+			वापस -EINVAL;
 		/*
-		 * Domain transition preference is allowed for only
+		 * Doमुख्य transition preference is allowed क्रम only
 		 * "file execute" entries.
 		 */
-		if (new_entry->cond->transit &&
+		अगर (new_entry->cond->transit &&
 		    !(new_entry->type == TOMOYO_TYPE_PATH_ACL &&
-		      container_of(new_entry, struct tomoyo_path_acl, head)
+		      container_of(new_entry, काष्ठा tomoyo_path_acl, head)
 		      ->perm == 1 << TOMOYO_TYPE_EXECUTE))
-			goto out;
-	}
-	if (mutex_lock_interruptible(&tomoyo_policy_lock))
-		goto out;
-	list_for_each_entry_rcu(entry, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
-			continue;
-		if (!tomoyo_same_acl_head(entry, new_entry) ||
+			जाओ out;
+	पूर्ण
+	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
+		जाओ out;
+	list_क्रम_each_entry_rcu(entry, list, list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (entry->is_deleted == TOMOYO_GC_IN_PROGRESS)
+			जारी;
+		अगर (!tomoyo_same_acl_head(entry, new_entry) ||
 		    !check_duplicate(entry, new_entry))
-			continue;
-		if (merge_duplicate)
+			जारी;
+		अगर (merge_duplicate)
 			entry->is_deleted = merge_duplicate(entry, new_entry,
 							    is_delete);
-		else
+		अन्यथा
 			entry->is_deleted = is_delete;
 		error = 0;
-		break;
-	}
-	if (error && !is_delete) {
+		अवरोध;
+	पूर्ण
+	अगर (error && !is_delete) अणु
 		entry = tomoyo_commit_ok(new_entry, size);
-		if (entry) {
+		अगर (entry) अणु
 			list_add_tail_rcu(&entry->list, list);
 			error = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&tomoyo_policy_lock);
 out:
 	tomoyo_put_condition(new_entry->cond);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
  * tomoyo_check_acl - Do permission check.
  *
- * @r:           Pointer to "struct tomoyo_request_info".
- * @check_entry: Callback function to check type specific parameters.
+ * @r:           Poपूर्णांकer to "struct tomoyo_request_info".
+ * @check_entry: Callback function to check type specअगरic parameters.
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-void tomoyo_check_acl(struct tomoyo_request_info *r,
-		      bool (*check_entry)(struct tomoyo_request_info *,
-					  const struct tomoyo_acl_info *))
-{
-	const struct tomoyo_domain_info *domain = r->domain;
-	struct tomoyo_acl_info *ptr;
-	const struct list_head *list = &domain->acl_info_list;
+व्योम tomoyo_check_acl(काष्ठा tomoyo_request_info *r,
+		      bool (*check_entry)(काष्ठा tomoyo_request_info *,
+					  स्थिर काष्ठा tomoyo_acl_info *))
+अणु
+	स्थिर काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = r->करोमुख्य;
+	काष्ठा tomoyo_acl_info *ptr;
+	स्थिर काष्ठा list_head *list = &करोमुख्य->acl_info_list;
 	u16 i = 0;
 
 retry:
-	list_for_each_entry_rcu(ptr, list, list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (ptr->is_deleted || ptr->type != r->param_type)
-			continue;
-		if (!check_entry(r, ptr))
-			continue;
-		if (!tomoyo_condition(r, ptr->cond))
-			continue;
+	list_क्रम_each_entry_rcu(ptr, list, list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (ptr->is_deleted || ptr->type != r->param_type)
+			जारी;
+		अगर (!check_entry(r, ptr))
+			जारी;
+		अगर (!tomoyo_condition(r, ptr->cond))
+			जारी;
 		r->matched_acl = ptr;
 		r->granted = true;
-		return;
-	}
-	for (; i < TOMOYO_MAX_ACL_GROUPS; i++) {
-		if (!test_bit(i, domain->group))
-			continue;
-		list = &domain->ns->acl_group[i++];
-		goto retry;
-	}
+		वापस;
+	पूर्ण
+	क्रम (; i < TOMOYO_MAX_ACL_GROUPS; i++) अणु
+		अगर (!test_bit(i, करोमुख्य->group))
+			जारी;
+		list = &करोमुख्य->ns->acl_group[i++];
+		जाओ retry;
+	पूर्ण
 	r->granted = false;
-}
+पूर्ण
 
-/* The list for "struct tomoyo_domain_info". */
-LIST_HEAD(tomoyo_domain_list);
-
-/**
- * tomoyo_last_word - Get last component of a domainname.
- *
- * @name: Domainname to check.
- *
- * Returns the last word of @domainname.
- */
-static const char *tomoyo_last_word(const char *name)
-{
-	const char *cp = strrchr(name, ' ');
-
-	if (cp)
-		return cp + 1;
-	return name;
-}
+/* The list क्रम "struct tomoyo_domain_info". */
+LIST_HEAD(tomoyo_करोमुख्य_list);
 
 /**
- * tomoyo_same_transition_control - Check for duplicated "struct tomoyo_transition_control" entry.
+ * tomoyo_last_word - Get last component of a करोमुख्यname.
  *
- * @a: Pointer to "struct tomoyo_acl_head".
- * @b: Pointer to "struct tomoyo_acl_head".
+ * @name: Doमुख्यname to check.
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns the last word of @करोमुख्यname.
  */
-static bool tomoyo_same_transition_control(const struct tomoyo_acl_head *a,
-					   const struct tomoyo_acl_head *b)
-{
-	const struct tomoyo_transition_control *p1 = container_of(a,
+अटल स्थिर अक्षर *tomoyo_last_word(स्थिर अक्षर *name)
+अणु
+	स्थिर अक्षर *cp = म_खोजप(name, ' ');
+
+	अगर (cp)
+		वापस cp + 1;
+	वापस name;
+पूर्ण
+
+/**
+ * tomoyo_same_transition_control - Check क्रम duplicated "struct tomoyo_transition_control" entry.
+ *
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
+ *
+ * Returns true अगर @a == @b, false otherwise.
+ */
+अटल bool tomoyo_same_transition_control(स्थिर काष्ठा tomoyo_acl_head *a,
+					   स्थिर काष्ठा tomoyo_acl_head *b)
+अणु
+	स्थिर काष्ठा tomoyo_transition_control *p1 = container_of(a,
 								  typeof(*p1),
 								  head);
-	const struct tomoyo_transition_control *p2 = container_of(b,
+	स्थिर काष्ठा tomoyo_transition_control *p2 = container_of(b,
 								  typeof(*p2),
 								  head);
 
-	return p1->type == p2->type && p1->is_last_name == p2->is_last_name
-		&& p1->domainname == p2->domainname
+	वापस p1->type == p2->type && p1->is_last_name == p2->is_last_name
+		&& p1->करोमुख्यname == p2->करोमुख्यname
 		&& p1->program == p2->program;
-}
+पूर्ण
 
 /**
- * tomoyo_write_transition_control - Write "struct tomoyo_transition_control" list.
+ * tomoyo_ग_लिखो_transition_control - Write "struct tomoyo_transition_control" list.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  * @type:  Type of this entry.
  *
  * Returns 0 on success, negative value otherwise.
  */
-int tomoyo_write_transition_control(struct tomoyo_acl_param *param,
-				    const u8 type)
-{
-	struct tomoyo_transition_control e = { .type = type };
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
-	char *program = param->data;
-	char *domainname = strstr(program, " from ");
+पूर्णांक tomoyo_ग_लिखो_transition_control(काष्ठा tomoyo_acl_param *param,
+				    स्थिर u8 type)
+अणु
+	काष्ठा tomoyo_transition_control e = अणु .type = type पूर्ण;
+	पूर्णांक error = param->is_delete ? -ENOENT : -ENOMEM;
+	अक्षर *program = param->data;
+	अक्षर *करोमुख्यname = म_माला(program, " from ");
 
-	if (domainname) {
-		*domainname = '\0';
-		domainname += 6;
-	} else if (type == TOMOYO_TRANSITION_CONTROL_NO_KEEP ||
-		   type == TOMOYO_TRANSITION_CONTROL_KEEP) {
-		domainname = program;
-		program = NULL;
-	}
-	if (program && strcmp(program, "any")) {
-		if (!tomoyo_correct_path(program))
-			return -EINVAL;
+	अगर (करोमुख्यname) अणु
+		*करोमुख्यname = '\0';
+		करोमुख्यname += 6;
+	पूर्ण अन्यथा अगर (type == TOMOYO_TRANSITION_CONTROL_NO_KEEP ||
+		   type == TOMOYO_TRANSITION_CONTROL_KEEP) अणु
+		करोमुख्यname = program;
+		program = शून्य;
+	पूर्ण
+	अगर (program && म_भेद(program, "any")) अणु
+		अगर (!tomoyo_correct_path(program))
+			वापस -EINVAL;
 		e.program = tomoyo_get_name(program);
-		if (!e.program)
-			goto out;
-	}
-	if (domainname && strcmp(domainname, "any")) {
-		if (!tomoyo_correct_domain(domainname)) {
-			if (!tomoyo_correct_path(domainname))
-				goto out;
+		अगर (!e.program)
+			जाओ out;
+	पूर्ण
+	अगर (करोमुख्यname && म_भेद(करोमुख्यname, "any")) अणु
+		अगर (!tomoyo_correct_करोमुख्य(करोमुख्यname)) अणु
+			अगर (!tomoyo_correct_path(करोमुख्यname))
+				जाओ out;
 			e.is_last_name = true;
-		}
-		e.domainname = tomoyo_get_name(domainname);
-		if (!e.domainname)
-			goto out;
-	}
+		पूर्ण
+		e.करोमुख्यname = tomoyo_get_name(करोमुख्यname);
+		अगर (!e.करोमुख्यname)
+			जाओ out;
+	पूर्ण
 	param->list = &param->ns->policy_list[TOMOYO_ID_TRANSITION_CONTROL];
-	error = tomoyo_update_policy(&e.head, sizeof(e), param,
+	error = tomoyo_update_policy(&e.head, माप(e), param,
 				     tomoyo_same_transition_control);
 out:
-	tomoyo_put_name(e.domainname);
+	tomoyo_put_name(e.करोमुख्यname);
 	tomoyo_put_name(e.program);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_scan_transition - Try to find specific domain transition type.
+ * tomoyo_scan_transition - Try to find specअगरic करोमुख्य transition type.
  *
- * @list:       Pointer to "struct list_head".
- * @domainname: The name of current domain.
+ * @list:       Poपूर्णांकer to "struct list_head".
+ * @करोमुख्यname: The name of current करोमुख्य.
  * @program:    The name of requested program.
- * @last_name:  The last component of @domainname.
+ * @last_name:  The last component of @करोमुख्यname.
  * @type:       One of values in "enum tomoyo_transition_type".
  *
- * Returns true if found one, false otherwise.
+ * Returns true अगर found one, false otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static inline bool tomoyo_scan_transition
-(const struct list_head *list, const struct tomoyo_path_info *domainname,
- const struct tomoyo_path_info *program, const char *last_name,
- const enum tomoyo_transition_type type)
-{
-	const struct tomoyo_transition_control *ptr;
+अटल अंतरभूत bool tomoyo_scan_transition
+(स्थिर काष्ठा list_head *list, स्थिर काष्ठा tomoyo_path_info *करोमुख्यname,
+ स्थिर काष्ठा tomoyo_path_info *program, स्थिर अक्षर *last_name,
+ स्थिर क्रमागत tomoyo_transition_type type)
+अणु
+	स्थिर काष्ठा tomoyo_transition_control *ptr;
 
-	list_for_each_entry_rcu(ptr, list, head.list,
-				srcu_read_lock_held(&tomoyo_ss)) {
-		if (ptr->head.is_deleted || ptr->type != type)
-			continue;
-		if (ptr->domainname) {
-			if (!ptr->is_last_name) {
-				if (ptr->domainname != domainname)
-					continue;
-			} else {
+	list_क्रम_each_entry_rcu(ptr, list, head.list,
+				srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+		अगर (ptr->head.is_deleted || ptr->type != type)
+			जारी;
+		अगर (ptr->करोमुख्यname) अणु
+			अगर (!ptr->is_last_name) अणु
+				अगर (ptr->करोमुख्यname != करोमुख्यname)
+					जारी;
+			पूर्ण अन्यथा अणु
 				/*
-				 * Use direct strcmp() since this is
+				 * Use direct म_भेद() since this is
 				 * unlikely used.
 				 */
-				if (strcmp(ptr->domainname->name, last_name))
-					continue;
-			}
-		}
-		if (ptr->program && tomoyo_pathcmp(ptr->program, program))
-			continue;
-		return true;
-	}
-	return false;
-}
+				अगर (म_भेद(ptr->करोमुख्यname->name, last_name))
+					जारी;
+			पूर्ण
+		पूर्ण
+		अगर (ptr->program && tomoyo_pathcmp(ptr->program, program))
+			जारी;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * tomoyo_transition_type - Get domain transition type.
+ * tomoyo_transition_type - Get करोमुख्य transition type.
  *
- * @ns:         Pointer to "struct tomoyo_policy_namespace".
- * @domainname: The name of current domain.
+ * @ns:         Poपूर्णांकer to "struct tomoyo_policy_namespace".
+ * @करोमुख्यname: The name of current करोमुख्य.
  * @program:    The name of requested program.
  *
- * Returns TOMOYO_TRANSITION_CONTROL_TRANSIT if executing @program causes
- * domain transition across namespaces, TOMOYO_TRANSITION_CONTROL_INITIALIZE if
- * executing @program reinitializes domain transition within that namespace,
- * TOMOYO_TRANSITION_CONTROL_KEEP if executing @program stays at @domainname ,
+ * Returns TOMOYO_TRANSITION_CONTROL_TRANSIT अगर executing @program causes
+ * करोमुख्य transition across namespaces, TOMOYO_TRANSITION_CONTROL_INITIALIZE अगर
+ * executing @program reinitializes करोमुख्य transition within that namespace,
+ * TOMOYO_TRANSITION_CONTROL_KEEP अगर executing @program stays at @करोमुख्यname ,
  * others otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static enum tomoyo_transition_type tomoyo_transition_type
-(const struct tomoyo_policy_namespace *ns,
- const struct tomoyo_path_info *domainname,
- const struct tomoyo_path_info *program)
-{
-	const char *last_name = tomoyo_last_word(domainname->name);
-	enum tomoyo_transition_type type = TOMOYO_TRANSITION_CONTROL_NO_RESET;
+अटल क्रमागत tomoyo_transition_type tomoyo_transition_type
+(स्थिर काष्ठा tomoyo_policy_namespace *ns,
+ स्थिर काष्ठा tomoyo_path_info *करोमुख्यname,
+ स्थिर काष्ठा tomoyo_path_info *program)
+अणु
+	स्थिर अक्षर *last_name = tomoyo_last_word(करोमुख्यname->name);
+	क्रमागत tomoyo_transition_type type = TOMOYO_TRANSITION_CONTROL_NO_RESET;
 
-	while (type < TOMOYO_MAX_TRANSITION_TYPE) {
-		const struct list_head * const list =
+	जबतक (type < TOMOYO_MAX_TRANSITION_TYPE) अणु
+		स्थिर काष्ठा list_head * स्थिर list =
 			&ns->policy_list[TOMOYO_ID_TRANSITION_CONTROL];
 
-		if (!tomoyo_scan_transition(list, domainname, program,
-					    last_name, type)) {
+		अगर (!tomoyo_scan_transition(list, करोमुख्यname, program,
+					    last_name, type)) अणु
 			type++;
-			continue;
-		}
-		if (type != TOMOYO_TRANSITION_CONTROL_NO_RESET &&
+			जारी;
+		पूर्ण
+		अगर (type != TOMOYO_TRANSITION_CONTROL_NO_RESET &&
 		    type != TOMOYO_TRANSITION_CONTROL_NO_INITIALIZE)
-			break;
+			अवरोध;
 		/*
-		 * Do not check for reset_domain if no_reset_domain matched.
-		 * Do not check for initialize_domain if no_initialize_domain
+		 * Do not check क्रम reset_करोमुख्य अगर no_reset_करोमुख्य matched.
+		 * Do not check क्रम initialize_करोमुख्य अगर no_initialize_करोमुख्य
 		 * matched.
 		 */
 		type++;
 		type++;
-	}
-	return type;
-}
+	पूर्ण
+	वापस type;
+पूर्ण
 
 /**
- * tomoyo_same_aggregator - Check for duplicated "struct tomoyo_aggregator" entry.
+ * tomoyo_same_aggregator - Check क्रम duplicated "struct tomoyo_aggregator" entry.
  *
- * @a: Pointer to "struct tomoyo_acl_head".
- * @b: Pointer to "struct tomoyo_acl_head".
+ * @a: Poपूर्णांकer to "struct tomoyo_acl_head".
+ * @b: Poपूर्णांकer to "struct tomoyo_acl_head".
  *
- * Returns true if @a == @b, false otherwise.
+ * Returns true अगर @a == @b, false otherwise.
  */
-static bool tomoyo_same_aggregator(const struct tomoyo_acl_head *a,
-				   const struct tomoyo_acl_head *b)
-{
-	const struct tomoyo_aggregator *p1 = container_of(a, typeof(*p1),
+अटल bool tomoyo_same_aggregator(स्थिर काष्ठा tomoyo_acl_head *a,
+				   स्थिर काष्ठा tomoyo_acl_head *b)
+अणु
+	स्थिर काष्ठा tomoyo_aggregator *p1 = container_of(a, typeof(*p1),
 							  head);
-	const struct tomoyo_aggregator *p2 = container_of(b, typeof(*p2),
+	स्थिर काष्ठा tomoyo_aggregator *p2 = container_of(b, typeof(*p2),
 							  head);
 
-	return p1->original_name == p2->original_name &&
+	वापस p1->original_name == p2->original_name &&
 		p1->aggregated_name == p2->aggregated_name;
-}
+पूर्ण
 
 /**
- * tomoyo_write_aggregator - Write "struct tomoyo_aggregator" list.
+ * tomoyo_ग_लिखो_aggregator - Write "struct tomoyo_aggregator" list.
  *
- * @param: Pointer to "struct tomoyo_acl_param".
+ * @param: Poपूर्णांकer to "struct tomoyo_acl_param".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_write_aggregator(struct tomoyo_acl_param *param)
-{
-	struct tomoyo_aggregator e = { };
-	int error = param->is_delete ? -ENOENT : -ENOMEM;
-	const char *original_name = tomoyo_read_token(param);
-	const char *aggregated_name = tomoyo_read_token(param);
+पूर्णांक tomoyo_ग_लिखो_aggregator(काष्ठा tomoyo_acl_param *param)
+अणु
+	काष्ठा tomoyo_aggregator e = अणु पूर्ण;
+	पूर्णांक error = param->is_delete ? -ENOENT : -ENOMEM;
+	स्थिर अक्षर *original_name = tomoyo_पढ़ो_token(param);
+	स्थिर अक्षर *aggregated_name = tomoyo_पढ़ो_token(param);
 
-	if (!tomoyo_correct_word(original_name) ||
+	अगर (!tomoyo_correct_word(original_name) ||
 	    !tomoyo_correct_path(aggregated_name))
-		return -EINVAL;
+		वापस -EINVAL;
 	e.original_name = tomoyo_get_name(original_name);
 	e.aggregated_name = tomoyo_get_name(aggregated_name);
-	if (!e.original_name || !e.aggregated_name ||
+	अगर (!e.original_name || !e.aggregated_name ||
 	    e.aggregated_name->is_patterned) /* No patterns allowed. */
-		goto out;
+		जाओ out;
 	param->list = &param->ns->policy_list[TOMOYO_ID_AGGREGATOR];
-	error = tomoyo_update_policy(&e.head, sizeof(e), param,
+	error = tomoyo_update_policy(&e.head, माप(e), param,
 				     tomoyo_same_aggregator);
 out:
 	tomoyo_put_name(e.original_name);
 	tomoyo_put_name(e.aggregated_name);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_find_namespace - Find specified namespace.
+ * tomoyo_find_namespace - Find specअगरied namespace.
  *
  * @name: Name of namespace to find.
  * @len:  Length of @name.
  *
- * Returns pointer to "struct tomoyo_policy_namespace" if found,
- * NULL otherwise.
+ * Returns poपूर्णांकer to "struct tomoyo_policy_namespace" अगर found,
+ * शून्य otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-static struct tomoyo_policy_namespace *tomoyo_find_namespace
-(const char *name, const unsigned int len)
-{
-	struct tomoyo_policy_namespace *ns;
+अटल काष्ठा tomoyo_policy_namespace *tomoyo_find_namespace
+(स्थिर अक्षर *name, स्थिर अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा tomoyo_policy_namespace *ns;
 
-	list_for_each_entry(ns, &tomoyo_namespace_list, namespace_list) {
-		if (strncmp(name, ns->name, len) ||
+	list_क्रम_each_entry(ns, &tomoyo_namespace_list, namespace_list) अणु
+		अगर (म_भेदन(name, ns->name, len) ||
 		    (name[len] && name[len] != ' '))
-			continue;
-		return ns;
-	}
-	return NULL;
-}
+			जारी;
+		वापस ns;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * tomoyo_assign_namespace - Create a new namespace.
  *
- * @domainname: Name of namespace to create.
+ * @करोमुख्यname: Name of namespace to create.
  *
- * Returns pointer to "struct tomoyo_policy_namespace" on success,
- * NULL otherwise.
+ * Returns poपूर्णांकer to "struct tomoyo_policy_namespace" on success,
+ * शून्य otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-struct tomoyo_policy_namespace *tomoyo_assign_namespace(const char *domainname)
-{
-	struct tomoyo_policy_namespace *ptr;
-	struct tomoyo_policy_namespace *entry;
-	const char *cp = domainname;
-	unsigned int len = 0;
+काष्ठा tomoyo_policy_namespace *tomoyo_assign_namespace(स्थिर अक्षर *करोमुख्यname)
+अणु
+	काष्ठा tomoyo_policy_namespace *ptr;
+	काष्ठा tomoyo_policy_namespace *entry;
+	स्थिर अक्षर *cp = करोमुख्यname;
+	अचिन्हित पूर्णांक len = 0;
 
-	while (*cp && *cp++ != ' ')
+	जबतक (*cp && *cp++ != ' ')
 		len++;
-	ptr = tomoyo_find_namespace(domainname, len);
-	if (ptr)
-		return ptr;
-	if (len >= TOMOYO_EXEC_TMPSIZE - 10 || !tomoyo_domain_def(domainname))
-		return NULL;
-	entry = kzalloc(sizeof(*entry) + len + 1, GFP_NOFS | __GFP_NOWARN);
-	if (mutex_lock_interruptible(&tomoyo_policy_lock))
-		goto out;
-	ptr = tomoyo_find_namespace(domainname, len);
-	if (!ptr && tomoyo_memory_ok(entry)) {
-		char *name = (char *) (entry + 1);
+	ptr = tomoyo_find_namespace(करोमुख्यname, len);
+	अगर (ptr)
+		वापस ptr;
+	अगर (len >= TOMOYO_EXEC_TMPSIZE - 10 || !tomoyo_करोमुख्य_def(करोमुख्यname))
+		वापस शून्य;
+	entry = kzalloc(माप(*entry) + len + 1, GFP_NOFS | __GFP_NOWARN);
+	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
+		जाओ out;
+	ptr = tomoyo_find_namespace(करोमुख्यname, len);
+	अगर (!ptr && tomoyo_memory_ok(entry)) अणु
+		अक्षर *name = (अक्षर *) (entry + 1);
 
 		ptr = entry;
-		memmove(name, domainname, len);
+		स_हटाओ(name, करोमुख्यname, len);
 		name[len] = '\0';
 		entry->name = name;
 		tomoyo_init_policy_namespace(entry);
-		entry = NULL;
-	}
+		entry = शून्य;
+	पूर्ण
 	mutex_unlock(&tomoyo_policy_lock);
 out:
-	kfree(entry);
-	return ptr;
-}
+	kमुक्त(entry);
+	वापस ptr;
+पूर्ण
 
 /**
- * tomoyo_namespace_jump - Check for namespace jump.
+ * tomoyo_namespace_jump - Check क्रम namespace jump.
  *
- * @domainname: Name of domain.
+ * @करोमुख्यname: Name of करोमुख्य.
  *
- * Returns true if namespace differs, false otherwise.
+ * Returns true अगर namespace dअगरfers, false otherwise.
  */
-static bool tomoyo_namespace_jump(const char *domainname)
-{
-	const char *namespace = tomoyo_current_namespace()->name;
-	const int len = strlen(namespace);
+अटल bool tomoyo_namespace_jump(स्थिर अक्षर *करोमुख्यname)
+अणु
+	स्थिर अक्षर *namespace = tomoyo_current_namespace()->name;
+	स्थिर पूर्णांक len = म_माप(namespace);
 
-	return strncmp(domainname, namespace, len) ||
-		(domainname[len] && domainname[len] != ' ');
-}
+	वापस म_भेदन(करोमुख्यname, namespace, len) ||
+		(करोमुख्यname[len] && करोमुख्यname[len] != ' ');
+पूर्ण
 
 /**
- * tomoyo_assign_domain - Create a domain or a namespace.
+ * tomoyo_assign_करोमुख्य - Create a करोमुख्य or a namespace.
  *
- * @domainname: The name of domain.
- * @transit:    True if transit to domain found or created.
+ * @करोमुख्यname: The name of करोमुख्य.
+ * @transit:    True अगर transit to करोमुख्य found or created.
  *
- * Returns pointer to "struct tomoyo_domain_info" on success, NULL otherwise.
+ * Returns poपूर्णांकer to "struct tomoyo_domain_info" on success, शून्य otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-struct tomoyo_domain_info *tomoyo_assign_domain(const char *domainname,
-						const bool transit)
-{
-	struct tomoyo_domain_info e = { };
-	struct tomoyo_domain_info *entry = tomoyo_find_domain(domainname);
+काष्ठा tomoyo_करोमुख्य_info *tomoyo_assign_करोमुख्य(स्थिर अक्षर *करोमुख्यname,
+						स्थिर bool transit)
+अणु
+	काष्ठा tomoyo_करोमुख्य_info e = अणु पूर्ण;
+	काष्ठा tomoyo_करोमुख्य_info *entry = tomoyo_find_करोमुख्य(करोमुख्यname);
 	bool created = false;
 
-	if (entry) {
-		if (transit) {
+	अगर (entry) अणु
+		अगर (transit) अणु
 			/*
-			 * Since namespace is created at runtime, profiles may
+			 * Since namespace is created at runसमय, profiles may
 			 * not be created by the moment the process transits to
-			 * that domain. Do not perform domain transition if
-			 * profile for that domain is not yet created.
+			 * that करोमुख्य. Do not perक्रमm करोमुख्य transition अगर
+			 * profile क्रम that करोमुख्य is not yet created.
 			 */
-			if (tomoyo_policy_loaded &&
+			अगर (tomoyo_policy_loaded &&
 			    !entry->ns->profile_ptr[entry->profile])
-				return NULL;
-		}
-		return entry;
-	}
-	/* Requested domain does not exist. */
-	/* Don't create requested domain if domainname is invalid. */
-	if (strlen(domainname) >= TOMOYO_EXEC_TMPSIZE - 10 ||
-	    !tomoyo_correct_domain(domainname))
-		return NULL;
+				वापस शून्य;
+		पूर्ण
+		वापस entry;
+	पूर्ण
+	/* Requested करोमुख्य करोes not exist. */
+	/* Don't create requested करोमुख्य अगर करोमुख्यname is invalid. */
+	अगर (म_माप(करोमुख्यname) >= TOMOYO_EXEC_TMPSIZE - 10 ||
+	    !tomoyo_correct_करोमुख्य(करोमुख्यname))
+		वापस शून्य;
 	/*
-	 * Since definition of profiles and acl_groups may differ across
-	 * namespaces, do not inherit "use_profile" and "use_group" settings
-	 * by automatically creating requested domain upon domain transition.
+	 * Since definition of profiles and acl_groups may dअगरfer across
+	 * namespaces, करो not inherit "use_profile" and "use_group" settings
+	 * by स्वतःmatically creating requested करोमुख्य upon करोमुख्य transition.
 	 */
-	if (transit && tomoyo_namespace_jump(domainname))
-		return NULL;
-	e.ns = tomoyo_assign_namespace(domainname);
-	if (!e.ns)
-		return NULL;
+	अगर (transit && tomoyo_namespace_jump(करोमुख्यname))
+		वापस शून्य;
+	e.ns = tomoyo_assign_namespace(करोमुख्यname);
+	अगर (!e.ns)
+		वापस शून्य;
 	/*
-	 * "use_profile" and "use_group" settings for automatically created
-	 * domains are inherited from current domain. These are 0 for manually
-	 * created domains.
+	 * "use_profile" and "use_group" settings क्रम स्वतःmatically created
+	 * करोमुख्यs are inherited from current करोमुख्य. These are 0 क्रम manually
+	 * created करोमुख्यs.
 	 */
-	if (transit) {
-		const struct tomoyo_domain_info *domain = tomoyo_domain();
+	अगर (transit) अणु
+		स्थिर काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = tomoyo_करोमुख्य();
 
-		e.profile = domain->profile;
-		memcpy(e.group, domain->group, sizeof(e.group));
-	}
-	e.domainname = tomoyo_get_name(domainname);
-	if (!e.domainname)
-		return NULL;
-	if (mutex_lock_interruptible(&tomoyo_policy_lock))
-		goto out;
-	entry = tomoyo_find_domain(domainname);
-	if (!entry) {
-		entry = tomoyo_commit_ok(&e, sizeof(e));
-		if (entry) {
+		e.profile = करोमुख्य->profile;
+		स_नकल(e.group, करोमुख्य->group, माप(e.group));
+	पूर्ण
+	e.करोमुख्यname = tomoyo_get_name(करोमुख्यname);
+	अगर (!e.करोमुख्यname)
+		वापस शून्य;
+	अगर (mutex_lock_पूर्णांकerruptible(&tomoyo_policy_lock))
+		जाओ out;
+	entry = tomoyo_find_करोमुख्य(करोमुख्यname);
+	अगर (!entry) अणु
+		entry = tomoyo_commit_ok(&e, माप(e));
+		अगर (entry) अणु
 			INIT_LIST_HEAD(&entry->acl_info_list);
-			list_add_tail_rcu(&entry->list, &tomoyo_domain_list);
+			list_add_tail_rcu(&entry->list, &tomoyo_करोमुख्य_list);
 			created = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&tomoyo_policy_lock);
 out:
-	tomoyo_put_name(e.domainname);
-	if (entry && transit) {
-		if (created) {
-			struct tomoyo_request_info r;
-			int i;
+	tomoyo_put_name(e.करोमुख्यname);
+	अगर (entry && transit) अणु
+		अगर (created) अणु
+			काष्ठा tomoyo_request_info r;
+			पूर्णांक i;
 
 			tomoyo_init_request_info(&r, entry,
-						 TOMOYO_MAC_FILE_EXECUTE);
+						 TOMOYO_MAC_खाता_EXECUTE);
 			r.granted = false;
-			tomoyo_write_log(&r, "use_profile %u\n",
+			tomoyo_ग_लिखो_log(&r, "use_profile %u\n",
 					 entry->profile);
-			for (i = 0; i < TOMOYO_MAX_ACL_GROUPS; i++)
-				if (test_bit(i, entry->group))
-					tomoyo_write_log(&r, "use_group %u\n",
+			क्रम (i = 0; i < TOMOYO_MAX_ACL_GROUPS; i++)
+				अगर (test_bit(i, entry->group))
+					tomoyo_ग_लिखो_log(&r, "use_group %u\n",
 							 i);
 			tomoyo_update_stat(TOMOYO_STAT_POLICY_UPDATES);
-		}
-	}
-	return entry;
-}
+		पूर्ण
+	पूर्ण
+	वापस entry;
+पूर्ण
 
 /**
- * tomoyo_environ - Check permission for environment variable names.
+ * tomoyo_environ - Check permission क्रम environment variable names.
  *
- * @ee: Pointer to "struct tomoyo_execve".
+ * @ee: Poपूर्णांकer to "struct tomoyo_execve".
  *
  * Returns 0 on success, negative value otherwise.
  */
-static int tomoyo_environ(struct tomoyo_execve *ee)
-{
-	struct tomoyo_request_info *r = &ee->r;
-	struct linux_binprm *bprm = ee->bprm;
+अटल पूर्णांक tomoyo_environ(काष्ठा tomoyo_execve *ee)
+अणु
+	काष्ठा tomoyo_request_info *r = &ee->r;
+	काष्ठा linux_binprm *bprm = ee->bprm;
 	/* env_page.data is allocated by tomoyo_dump_page(). */
-	struct tomoyo_page_dump env_page = { };
-	char *arg_ptr; /* Size is TOMOYO_EXEC_TMPSIZE bytes */
-	int arg_len = 0;
-	unsigned long pos = bprm->p;
-	int offset = pos % PAGE_SIZE;
-	int argv_count = bprm->argc;
-	int envp_count = bprm->envc;
-	int error = -ENOMEM;
+	काष्ठा tomoyo_page_dump env_page = अणु पूर्ण;
+	अक्षर *arg_ptr; /* Size is TOMOYO_EXEC_TMPSIZE bytes */
+	पूर्णांक arg_len = 0;
+	अचिन्हित दीर्घ pos = bprm->p;
+	पूर्णांक offset = pos % PAGE_SIZE;
+	पूर्णांक argv_count = bprm->argc;
+	पूर्णांक envp_count = bprm->envc;
+	पूर्णांक error = -ENOMEM;
 
 	ee->r.type = TOMOYO_MAC_ENVIRON;
-	ee->r.profile = r->domain->profile;
-	ee->r.mode = tomoyo_get_mode(r->domain->ns, ee->r.profile,
+	ee->r.profile = r->करोमुख्य->profile;
+	ee->r.mode = tomoyo_get_mode(r->करोमुख्य->ns, ee->r.profile,
 				     TOMOYO_MAC_ENVIRON);
-	if (!r->mode || !envp_count)
-		return 0;
+	अगर (!r->mode || !envp_count)
+		वापस 0;
 	arg_ptr = kzalloc(TOMOYO_EXEC_TMPSIZE, GFP_NOFS);
-	if (!arg_ptr)
-		goto out;
-	while (error == -ENOMEM) {
-		if (!tomoyo_dump_page(bprm, pos, &env_page))
-			goto out;
+	अगर (!arg_ptr)
+		जाओ out;
+	जबतक (error == -ENOMEM) अणु
+		अगर (!tomoyo_dump_page(bprm, pos, &env_page))
+			जाओ out;
 		pos += PAGE_SIZE - offset;
 		/* Read. */
-		while (argv_count && offset < PAGE_SIZE) {
-			if (!env_page.data[offset++])
+		जबतक (argv_count && offset < PAGE_SIZE) अणु
+			अगर (!env_page.data[offset++])
 				argv_count--;
-		}
-		if (argv_count) {
+		पूर्ण
+		अगर (argv_count) अणु
 			offset = 0;
-			continue;
-		}
-		while (offset < PAGE_SIZE) {
-			const unsigned char c = env_page.data[offset++];
+			जारी;
+		पूर्ण
+		जबतक (offset < PAGE_SIZE) अणु
+			स्थिर अचिन्हित अक्षर c = env_page.data[offset++];
 
-			if (c && arg_len < TOMOYO_EXEC_TMPSIZE - 10) {
-				if (c == '=') {
+			अगर (c && arg_len < TOMOYO_EXEC_TMPSIZE - 10) अणु
+				अगर (c == '=') अणु
 					arg_ptr[arg_len++] = '\0';
-				} else if (c == '\\') {
+				पूर्ण अन्यथा अगर (c == '\\') अणु
 					arg_ptr[arg_len++] = '\\';
 					arg_ptr[arg_len++] = '\\';
-				} else if (c > ' ' && c < 127) {
+				पूर्ण अन्यथा अगर (c > ' ' && c < 127) अणु
 					arg_ptr[arg_len++] = c;
-				} else {
+				पूर्ण अन्यथा अणु
 					arg_ptr[arg_len++] = '\\';
 					arg_ptr[arg_len++] = (c >> 6) + '0';
 					arg_ptr[arg_len++]
 						= ((c >> 3) & 7) + '0';
 					arg_ptr[arg_len++] = (c & 7) + '0';
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				arg_ptr[arg_len] = '\0';
-			}
-			if (c)
-				continue;
-			if (tomoyo_env_perm(r, arg_ptr)) {
+			पूर्ण
+			अगर (c)
+				जारी;
+			अगर (tomoyo_env_perm(r, arg_ptr)) अणु
 				error = -EPERM;
-				break;
-			}
-			if (!--envp_count) {
+				अवरोध;
+			पूर्ण
+			अगर (!--envp_count) अणु
 				error = 0;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			arg_len = 0;
-		}
+		पूर्ण
 		offset = 0;
-	}
+	पूर्ण
 out:
-	if (r->mode != TOMOYO_CONFIG_ENFORCING)
+	अगर (r->mode != TOMOYO_CONFIG_ENFORCING)
 		error = 0;
-	kfree(env_page.data);
-	kfree(arg_ptr);
-	return error;
-}
+	kमुक्त(env_page.data);
+	kमुक्त(arg_ptr);
+	वापस error;
+पूर्ण
 
 /**
- * tomoyo_find_next_domain - Find a domain.
+ * tomoyo_find_next_करोमुख्य - Find a करोमुख्य.
  *
- * @bprm: Pointer to "struct linux_binprm".
+ * @bprm: Poपूर्णांकer to "struct linux_binprm".
  *
  * Returns 0 on success, negative value otherwise.
  *
- * Caller holds tomoyo_read_lock().
+ * Caller holds tomoyo_पढ़ो_lock().
  */
-int tomoyo_find_next_domain(struct linux_binprm *bprm)
-{
-	struct tomoyo_domain_info *old_domain = tomoyo_domain();
-	struct tomoyo_domain_info *domain = NULL;
-	const char *original_name = bprm->filename;
-	int retval = -ENOMEM;
+पूर्णांक tomoyo_find_next_करोमुख्य(काष्ठा linux_binprm *bprm)
+अणु
+	काष्ठा tomoyo_करोमुख्य_info *old_करोमुख्य = tomoyo_करोमुख्य();
+	काष्ठा tomoyo_करोमुख्य_info *करोमुख्य = शून्य;
+	स्थिर अक्षर *original_name = bprm->filename;
+	पूर्णांक retval = -ENOMEM;
 	bool reject_on_transition_failure = false;
-	const struct tomoyo_path_info *candidate;
-	struct tomoyo_path_info exename;
-	struct tomoyo_execve *ee = kzalloc(sizeof(*ee), GFP_NOFS);
+	स्थिर काष्ठा tomoyo_path_info *candidate;
+	काष्ठा tomoyo_path_info exename;
+	काष्ठा tomoyo_execve *ee = kzalloc(माप(*ee), GFP_NOFS);
 
-	if (!ee)
-		return -ENOMEM;
-	ee->tmp = kzalloc(TOMOYO_EXEC_TMPSIZE, GFP_NOFS);
-	if (!ee->tmp) {
-		kfree(ee);
-		return -ENOMEM;
-	}
+	अगर (!ee)
+		वापस -ENOMEM;
+	ee->पंचांगp = kzalloc(TOMOYO_EXEC_TMPSIZE, GFP_NOFS);
+	अगर (!ee->पंचांगp) अणु
+		kमुक्त(ee);
+		वापस -ENOMEM;
+	पूर्ण
 	/* ee->dump->data is allocated by tomoyo_dump_page(). */
-	tomoyo_init_request_info(&ee->r, NULL, TOMOYO_MAC_FILE_EXECUTE);
+	tomoyo_init_request_info(&ee->r, शून्य, TOMOYO_MAC_खाता_EXECUTE);
 	ee->r.ee = ee;
 	ee->bprm = bprm;
 	ee->r.obj = &ee->obj;
@@ -725,216 +726,216 @@ int tomoyo_find_next_domain(struct linux_binprm *bprm)
 	/* Get symlink's pathname of program. */
 	retval = -ENOENT;
 	exename.name = tomoyo_realpath_nofollow(original_name);
-	if (!exename.name)
-		goto out;
+	अगर (!exename.name)
+		जाओ out;
 	tomoyo_fill_path_info(&exename);
 retry:
 	/* Check 'aggregator' directive. */
-	{
-		struct tomoyo_aggregator *ptr;
-		struct list_head *list =
-			&old_domain->ns->policy_list[TOMOYO_ID_AGGREGATOR];
+	अणु
+		काष्ठा tomoyo_aggregator *ptr;
+		काष्ठा list_head *list =
+			&old_करोमुख्य->ns->policy_list[TOMOYO_ID_AGGREGATOR];
 
 		/* Check 'aggregator' directive. */
 		candidate = &exename;
-		list_for_each_entry_rcu(ptr, list, head.list,
-					srcu_read_lock_held(&tomoyo_ss)) {
-			if (ptr->head.is_deleted ||
+		list_क्रम_each_entry_rcu(ptr, list, head.list,
+					srcu_पढ़ो_lock_held(&tomoyo_ss)) अणु
+			अगर (ptr->head.is_deleted ||
 			    !tomoyo_path_matches_pattern(&exename,
 							 ptr->original_name))
-				continue;
+				जारी;
 			candidate = ptr->aggregated_name;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Check execute permission. */
 	retval = tomoyo_execute_permission(&ee->r, candidate);
-	if (retval == TOMOYO_RETRY_REQUEST)
-		goto retry;
-	if (retval < 0)
-		goto out;
+	अगर (retval == TOMOYO_RETRY_REQUEST)
+		जाओ retry;
+	अगर (retval < 0)
+		जाओ out;
 	/*
-	 * To be able to specify domainnames with wildcards, use the
-	 * pathname specified in the policy (which may contain
+	 * To be able to specअगरy करोमुख्यnames with wildcards, use the
+	 * pathname specअगरied in the policy (which may contain
 	 * wildcard) rather than the pathname passed to execve()
 	 * (which never contains wildcard).
 	 */
-	if (ee->r.param.path.matched_path)
+	अगर (ee->r.param.path.matched_path)
 		candidate = ee->r.param.path.matched_path;
 
 	/*
-	 * Check for domain transition preference if "file execute" matched.
-	 * If preference is given, make execve() fail if domain transition
-	 * has failed, for domain transition preference should be used with
-	 * destination domain defined.
+	 * Check क्रम करोमुख्य transition preference अगर "file execute" matched.
+	 * If preference is given, make execve() fail अगर करोमुख्य transition
+	 * has failed, क्रम करोमुख्य transition preference should be used with
+	 * destination करोमुख्य defined.
 	 */
-	if (ee->transition) {
-		const char *domainname = ee->transition->name;
+	अगर (ee->transition) अणु
+		स्थिर अक्षर *करोमुख्यname = ee->transition->name;
 
 		reject_on_transition_failure = true;
-		if (!strcmp(domainname, "keep"))
-			goto force_keep_domain;
-		if (!strcmp(domainname, "child"))
-			goto force_child_domain;
-		if (!strcmp(domainname, "reset"))
-			goto force_reset_domain;
-		if (!strcmp(domainname, "initialize"))
-			goto force_initialize_domain;
-		if (!strcmp(domainname, "parent")) {
-			char *cp;
+		अगर (!म_भेद(करोमुख्यname, "keep"))
+			जाओ क्रमce_keep_करोमुख्य;
+		अगर (!म_भेद(करोमुख्यname, "child"))
+			जाओ क्रमce_child_करोमुख्य;
+		अगर (!म_भेद(करोमुख्यname, "reset"))
+			जाओ क्रमce_reset_करोमुख्य;
+		अगर (!म_भेद(करोमुख्यname, "initialize"))
+			जाओ क्रमce_initialize_करोमुख्य;
+		अगर (!म_भेद(करोमुख्यname, "parent")) अणु
+			अक्षर *cp;
 
-			strncpy(ee->tmp, old_domain->domainname->name,
+			म_नकलन(ee->पंचांगp, old_करोमुख्य->करोमुख्यname->name,
 				TOMOYO_EXEC_TMPSIZE - 1);
-			cp = strrchr(ee->tmp, ' ');
-			if (cp)
+			cp = म_खोजप(ee->पंचांगp, ' ');
+			अगर (cp)
 				*cp = '\0';
-		} else if (*domainname == '<')
-			strncpy(ee->tmp, domainname, TOMOYO_EXEC_TMPSIZE - 1);
-		else
-			snprintf(ee->tmp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
-				 old_domain->domainname->name, domainname);
-		goto force_jump_domain;
-	}
+		पूर्ण अन्यथा अगर (*करोमुख्यname == '<')
+			म_नकलन(ee->पंचांगp, करोमुख्यname, TOMOYO_EXEC_TMPSIZE - 1);
+		अन्यथा
+			snम_लिखो(ee->पंचांगp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
+				 old_करोमुख्य->करोमुख्यname->name, करोमुख्यname);
+		जाओ क्रमce_jump_करोमुख्य;
+	पूर्ण
 	/*
-	 * No domain transition preference specified.
-	 * Calculate domain to transit to.
+	 * No करोमुख्य transition preference specअगरied.
+	 * Calculate करोमुख्य to transit to.
 	 */
-	switch (tomoyo_transition_type(old_domain->ns, old_domain->domainname,
-				       candidate)) {
-	case TOMOYO_TRANSITION_CONTROL_RESET:
-force_reset_domain:
-		/* Transit to the root of specified namespace. */
-		snprintf(ee->tmp, TOMOYO_EXEC_TMPSIZE - 1, "<%s>",
+	चयन (tomoyo_transition_type(old_करोमुख्य->ns, old_करोमुख्य->करोमुख्यname,
+				       candidate)) अणु
+	हाल TOMOYO_TRANSITION_CONTROL_RESET:
+क्रमce_reset_करोमुख्य:
+		/* Transit to the root of specअगरied namespace. */
+		snम_लिखो(ee->पंचांगp, TOMOYO_EXEC_TMPSIZE - 1, "<%s>",
 			 candidate->name);
 		/*
-		 * Make execve() fail if domain transition across namespaces
+		 * Make execve() fail अगर करोमुख्य transition across namespaces
 		 * has failed.
 		 */
 		reject_on_transition_failure = true;
-		break;
-	case TOMOYO_TRANSITION_CONTROL_INITIALIZE:
-force_initialize_domain:
+		अवरोध;
+	हाल TOMOYO_TRANSITION_CONTROL_INITIALIZE:
+क्रमce_initialize_करोमुख्य:
 		/* Transit to the child of current namespace's root. */
-		snprintf(ee->tmp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
-			 old_domain->ns->name, candidate->name);
-		break;
-	case TOMOYO_TRANSITION_CONTROL_KEEP:
-force_keep_domain:
-		/* Keep current domain. */
-		domain = old_domain;
-		break;
-	default:
-		if (old_domain == &tomoyo_kernel_domain &&
-		    !tomoyo_policy_loaded) {
+		snम_लिखो(ee->पंचांगp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
+			 old_करोमुख्य->ns->name, candidate->name);
+		अवरोध;
+	हाल TOMOYO_TRANSITION_CONTROL_KEEP:
+क्रमce_keep_करोमुख्य:
+		/* Keep current करोमुख्य. */
+		करोमुख्य = old_करोमुख्य;
+		अवरोध;
+	शेष:
+		अगर (old_करोमुख्य == &tomoyo_kernel_करोमुख्य &&
+		    !tomoyo_policy_loaded) अणु
 			/*
-			 * Needn't to transit from kernel domain before
-			 * starting /sbin/init. But transit from kernel domain
-			 * if executing initializers because they might start
-			 * before /sbin/init.
+			 * Needn't to transit from kernel करोमुख्य beक्रमe
+			 * starting /sbin/init. But transit from kernel करोमुख्य
+			 * अगर executing initializers because they might start
+			 * beक्रमe /sbin/init.
 			 */
-			domain = old_domain;
-			break;
-		}
-force_child_domain:
-		/* Normal domain transition. */
-		snprintf(ee->tmp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
-			 old_domain->domainname->name, candidate->name);
-		break;
-	}
-force_jump_domain:
-	if (!domain)
-		domain = tomoyo_assign_domain(ee->tmp, true);
-	if (domain)
+			करोमुख्य = old_करोमुख्य;
+			अवरोध;
+		पूर्ण
+क्रमce_child_करोमुख्य:
+		/* Normal करोमुख्य transition. */
+		snम_लिखो(ee->पंचांगp, TOMOYO_EXEC_TMPSIZE - 1, "%s %s",
+			 old_करोमुख्य->करोमुख्यname->name, candidate->name);
+		अवरोध;
+	पूर्ण
+क्रमce_jump_करोमुख्य:
+	अगर (!करोमुख्य)
+		करोमुख्य = tomoyo_assign_करोमुख्य(ee->पंचांगp, true);
+	अगर (करोमुख्य)
 		retval = 0;
-	else if (reject_on_transition_failure) {
-		pr_warn("ERROR: Domain '%s' not ready.\n", ee->tmp);
+	अन्यथा अगर (reject_on_transition_failure) अणु
+		pr_warn("ERROR: Domain '%s' not ready.\n", ee->पंचांगp);
 		retval = -ENOMEM;
-	} else if (ee->r.mode == TOMOYO_CONFIG_ENFORCING)
+	पूर्ण अन्यथा अगर (ee->r.mode == TOMOYO_CONFIG_ENFORCING)
 		retval = -ENOMEM;
-	else {
+	अन्यथा अणु
 		retval = 0;
-		if (!old_domain->flags[TOMOYO_DIF_TRANSITION_FAILED]) {
-			old_domain->flags[TOMOYO_DIF_TRANSITION_FAILED] = true;
+		अगर (!old_करोमुख्य->flags[TOMOYO_DIF_TRANSITION_FAILED]) अणु
+			old_करोमुख्य->flags[TOMOYO_DIF_TRANSITION_FAILED] = true;
 			ee->r.granted = false;
-			tomoyo_write_log(&ee->r, "%s", tomoyo_dif
+			tomoyo_ग_लिखो_log(&ee->r, "%s", tomoyo_dअगर
 					 [TOMOYO_DIF_TRANSITION_FAILED]);
-			pr_warn("ERROR: Domain '%s' not defined.\n", ee->tmp);
-		}
-	}
+			pr_warn("ERROR: Domain '%s' not defined.\n", ee->पंचांगp);
+		पूर्ण
+	पूर्ण
  out:
-	if (!domain)
-		domain = old_domain;
+	अगर (!करोमुख्य)
+		करोमुख्य = old_करोमुख्य;
 	/* Update reference count on "struct tomoyo_domain_info". */
-	{
-		struct tomoyo_task *s = tomoyo_task(current);
+	अणु
+		काष्ठा tomoyo_task *s = tomoyo_task(current);
 
-		s->old_domain_info = s->domain_info;
-		s->domain_info = domain;
-		atomic_inc(&domain->users);
-	}
-	kfree(exename.name);
-	if (!retval) {
-		ee->r.domain = domain;
+		s->old_करोमुख्य_info = s->करोमुख्य_info;
+		s->करोमुख्य_info = करोमुख्य;
+		atomic_inc(&करोमुख्य->users);
+	पूर्ण
+	kमुक्त(exename.name);
+	अगर (!retval) अणु
+		ee->r.करोमुख्य = करोमुख्य;
 		retval = tomoyo_environ(ee);
-	}
-	kfree(ee->tmp);
-	kfree(ee->dump.data);
-	kfree(ee);
-	return retval;
-}
+	पूर्ण
+	kमुक्त(ee->पंचांगp);
+	kमुक्त(ee->dump.data);
+	kमुक्त(ee);
+	वापस retval;
+पूर्ण
 
 /**
  * tomoyo_dump_page - Dump a page to buffer.
  *
- * @bprm: Pointer to "struct linux_binprm".
+ * @bprm: Poपूर्णांकer to "struct linux_binprm".
  * @pos:  Location to dump.
- * @dump: Pointer to "struct tomoyo_page_dump".
+ * @dump: Poपूर्णांकer to "struct tomoyo_page_dump".
  *
  * Returns true on success, false otherwise.
  */
-bool tomoyo_dump_page(struct linux_binprm *bprm, unsigned long pos,
-		      struct tomoyo_page_dump *dump)
-{
-	struct page *page;
+bool tomoyo_dump_page(काष्ठा linux_binprm *bprm, अचिन्हित दीर्घ pos,
+		      काष्ठा tomoyo_page_dump *dump)
+अणु
+	काष्ठा page *page;
 
-	/* dump->data is released by tomoyo_find_next_domain(). */
-	if (!dump->data) {
+	/* dump->data is released by tomoyo_find_next_करोमुख्य(). */
+	अगर (!dump->data) अणु
 		dump->data = kzalloc(PAGE_SIZE, GFP_NOFS);
-		if (!dump->data)
-			return false;
-	}
+		अगर (!dump->data)
+			वापस false;
+	पूर्ण
 	/* Same with get_arg_page(bprm, pos, 0) in fs/exec.c */
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	/*
-	 * This is called at execve() time in order to dig around
+	 * This is called at execve() समय in order to dig around
 	 * in the argv/environment of the new proceess
-	 * (represented by bprm).  'current' is the process doing
+	 * (represented by bprm).  'current' is the process करोing
 	 * the execve().
 	 */
-	if (get_user_pages_remote(bprm->mm, pos, 1,
-				FOLL_FORCE, &page, NULL, NULL) <= 0)
-		return false;
-#else
+	अगर (get_user_pages_remote(bprm->mm, pos, 1,
+				FOLL_FORCE, &page, शून्य, शून्य) <= 0)
+		वापस false;
+#अन्यथा
 	page = bprm->page[pos / PAGE_SIZE];
-#endif
-	if (page != dump->page) {
-		const unsigned int offset = pos % PAGE_SIZE;
+#पूर्ण_अगर
+	अगर (page != dump->page) अणु
+		स्थिर अचिन्हित पूर्णांक offset = pos % PAGE_SIZE;
 		/*
 		 * Maybe kmap()/kunmap() should be used here.
-		 * But remove_arg_zero() uses kmap_atomic()/kunmap_atomic().
-		 * So do I.
+		 * But हटाओ_arg_zero() uses kmap_atomic()/kunmap_atomic().
+		 * So करो I.
 		 */
-		char *kaddr = kmap_atomic(page);
+		अक्षर *kaddr = kmap_atomic(page);
 
 		dump->page = page;
-		memcpy(dump->data + offset, kaddr + offset,
+		स_नकल(dump->data + offset, kaddr + offset,
 		       PAGE_SIZE - offset);
 		kunmap_atomic(kaddr);
-	}
+	पूर्ण
 	/* Same with put_arg_page(page) in fs/exec.c */
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 	put_page(page);
-#endif
-	return true;
-}
+#पूर्ण_अगर
+	वापस true;
+पूर्ण

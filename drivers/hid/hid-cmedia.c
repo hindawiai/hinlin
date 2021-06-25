@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * HID driver for CMedia CM6533 audio jack controls
+ * HID driver क्रम CMedia CM6533 audio jack controls
  *
  * Copyright (C) 2015 Ben Chen <ben_chen@bizlinktech.com>
  */
 
-#include <linux/device.h>
-#include <linux/hid.h>
-#include <linux/module.h>
-#include "hid-ids.h"
+#समावेश <linux/device.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश "hid-ids.h"
 
 MODULE_AUTHOR("Ben Chen");
 MODULE_DESCRIPTION("CM6533 HID jack controls");
 MODULE_LICENSE("GPL");
 
-#define CM6533_JD_TYPE_COUNT      1
-#define CM6533_JD_RAWEV_LEN	 16
-#define CM6533_JD_SFX_OFFSET	  8
+#घोषणा CM6533_JD_TYPE_COUNT      1
+#घोषणा CM6533_JD_RAWEV_LEN	 16
+#घोषणा CM6533_JD_SFX_OFFSET	  8
 
 /*
 *
@@ -32,82 +33,82 @@ MODULE_LICENSE("GPL");
 *01000400 002083xx 080008c0 x0000000
 */
 
-static const u8 ji_sfx[] = { 0x08, 0x00, 0x08, 0xc0 };
-static const u8 ji_in[]  = { 0x01, 0x00, 0x06, 0x00 };
-static const u8 ji_out[] = { 0x01, 0x00, 0x04, 0x00 };
+अटल स्थिर u8 ji_sfx[] = अणु 0x08, 0x00, 0x08, 0xc0 पूर्ण;
+अटल स्थिर u8 ji_in[]  = अणु 0x01, 0x00, 0x06, 0x00 पूर्ण;
+अटल स्थिर u8 ji_out[] = अणु 0x01, 0x00, 0x04, 0x00 पूर्ण;
 
-static int jack_switch_types[CM6533_JD_TYPE_COUNT] = {
+अटल पूर्णांक jack_चयन_types[CM6533_JD_TYPE_COUNT] = अणु
 	SW_HEADPHONE_INSERT,
-};
+पूर्ण;
 
-struct cmhid {
-	struct input_dev *input_dev;
-	struct hid_device *hid;
-	unsigned short switch_map[CM6533_JD_TYPE_COUNT];
-};
+काष्ठा cmhid अणु
+	काष्ठा input_dev *input_dev;
+	काष्ठा hid_device *hid;
+	अचिन्हित लघु चयन_map[CM6533_JD_TYPE_COUNT];
+पूर्ण;
 
-static void hp_ev(struct hid_device *hid, struct cmhid *cm, int value)
-{
-	input_report_switch(cm->input_dev, SW_HEADPHONE_INSERT, value);
+अटल व्योम hp_ev(काष्ठा hid_device *hid, काष्ठा cmhid *cm, पूर्णांक value)
+अणु
+	input_report_चयन(cm->input_dev, SW_HEADPHONE_INSERT, value);
 	input_sync(cm->input_dev);
-}
+पूर्ण
 
-static int cmhid_raw_event(struct hid_device *hid, struct hid_report *report,
-	 u8 *data, int len)
-{
-	struct cmhid *cm = hid_get_drvdata(hid);
+अटल पूर्णांक cmhid_raw_event(काष्ठा hid_device *hid, काष्ठा hid_report *report,
+	 u8 *data, पूर्णांक len)
+अणु
+	काष्ठा cmhid *cm = hid_get_drvdata(hid);
 
-	if (len != CM6533_JD_RAWEV_LEN)
-		goto out;
-	if (memcmp(data+CM6533_JD_SFX_OFFSET, ji_sfx, sizeof(ji_sfx)))
-		goto out;
+	अगर (len != CM6533_JD_RAWEV_LEN)
+		जाओ out;
+	अगर (स_भेद(data+CM6533_JD_SFX_OFFSET, ji_sfx, माप(ji_sfx)))
+		जाओ out;
 
-	if (!memcmp(data, ji_out, sizeof(ji_out))) {
+	अगर (!स_भेद(data, ji_out, माप(ji_out))) अणु
 		hp_ev(hid, cm, 0);
-		goto out;
-	}
-	if (!memcmp(data, ji_in, sizeof(ji_in))) {
+		जाओ out;
+	पूर्ण
+	अगर (!स_भेद(data, ji_in, माप(ji_in))) अणु
 		hp_ev(hid, cm, 1);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmhid_input_configured(struct hid_device *hid,
-		struct hid_input *hidinput)
-{
-	struct input_dev *input_dev = hidinput->input;
-	struct cmhid *cm = hid_get_drvdata(hid);
-	int i;
+अटल पूर्णांक cmhid_input_configured(काष्ठा hid_device *hid,
+		काष्ठा hid_input *hidinput)
+अणु
+	काष्ठा input_dev *input_dev = hidinput->input;
+	काष्ठा cmhid *cm = hid_get_drvdata(hid);
+	पूर्णांक i;
 
 	cm->input_dev = input_dev;
-	memcpy(cm->switch_map, jack_switch_types, sizeof(cm->switch_map));
+	स_नकल(cm->चयन_map, jack_चयन_types, माप(cm->चयन_map));
 	input_dev->evbit[0] = BIT(EV_SW);
-	for (i = 0; i < CM6533_JD_TYPE_COUNT; i++)
+	क्रम (i = 0; i < CM6533_JD_TYPE_COUNT; i++)
 		input_set_capability(cm->input_dev,
-				EV_SW, jack_switch_types[i]);
-	return 0;
-}
+				EV_SW, jack_चयन_types[i]);
+	वापस 0;
+पूर्ण
 
-static int cmhid_input_mapping(struct hid_device *hid,
-		struct hid_input *hi, struct hid_field *field,
-		struct hid_usage *usage, unsigned long **bit, int *max)
-{
-	return -1;
-}
+अटल पूर्णांक cmhid_input_mapping(काष्ठा hid_device *hid,
+		काष्ठा hid_input *hi, काष्ठा hid_field *field,
+		काष्ठा hid_usage *usage, अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	वापस -1;
+पूर्ण
 
-static int cmhid_probe(struct hid_device *hid, const struct hid_device_id *id)
-{
-	int ret;
-	struct cmhid *cm;
+अटल पूर्णांक cmhid_probe(काष्ठा hid_device *hid, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा cmhid *cm;
 
-	cm = kzalloc(sizeof(struct cmhid), GFP_KERNEL);
-	if (!cm) {
+	cm = kzalloc(माप(काष्ठा cmhid), GFP_KERNEL);
+	अगर (!cm) अणु
 		ret = -ENOMEM;
-		goto allocfail;
-	}
+		जाओ allocfail;
+	पूर्ण
 
 	cm->hid = hid;
 
@@ -115,46 +116,46 @@ static int cmhid_probe(struct hid_device *hid, const struct hid_device_id *id)
 	hid_set_drvdata(hid, cm);
 
 	ret = hid_parse(hid);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hid, "parse failed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	ret = hid_hw_start(hid, HID_CONNECT_DEFAULT | HID_CONNECT_HIDDEV_FORCE);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hid, "hw start failed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 fail:
-	kfree(cm);
+	kमुक्त(cm);
 allocfail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cmhid_remove(struct hid_device *hid)
-{
-	struct cmhid *cm = hid_get_drvdata(hid);
+अटल व्योम cmhid_हटाओ(काष्ठा hid_device *hid)
+अणु
+	काष्ठा cmhid *cm = hid_get_drvdata(hid);
 
 	hid_hw_stop(hid);
-	kfree(cm);
-}
+	kमुक्त(cm);
+पूर्ण
 
-static const struct hid_device_id cmhid_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_CMEDIA, USB_DEVICE_ID_CM6533) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id cmhid_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_CMEDIA, USB_DEVICE_ID_CM6533) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, cmhid_devices);
 
-static struct hid_driver cmhid_driver = {
+अटल काष्ठा hid_driver cmhid_driver = अणु
 	.name = "cm6533_jd",
 	.id_table = cmhid_devices,
 	.raw_event = cmhid_raw_event,
 	.input_configured = cmhid_input_configured,
 	.probe = cmhid_probe,
-	.remove = cmhid_remove,
+	.हटाओ = cmhid_हटाओ,
 	.input_mapping = cmhid_input_mapping,
-};
+पूर्ण;
 module_hid_driver(cmhid_driver);
 

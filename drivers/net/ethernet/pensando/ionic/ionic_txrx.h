@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#ifndef _IONIC_TXRX_H_
-#define _IONIC_TXRX_H_
+#अगर_अघोषित _IONIC_TXRX_H_
+#घोषणा _IONIC_TXRX_H_
 
-void ionic_tx_flush(struct ionic_cq *cq);
+व्योम ionic_tx_flush(काष्ठा ionic_cq *cq);
 
-void ionic_rx_fill(struct ionic_queue *q);
-void ionic_rx_empty(struct ionic_queue *q);
-void ionic_tx_empty(struct ionic_queue *q);
-int ionic_rx_napi(struct napi_struct *napi, int budget);
-int ionic_tx_napi(struct napi_struct *napi, int budget);
-int ionic_txrx_napi(struct napi_struct *napi, int budget);
-netdev_tx_t ionic_start_xmit(struct sk_buff *skb, struct net_device *netdev);
+व्योम ionic_rx_fill(काष्ठा ionic_queue *q);
+व्योम ionic_rx_empty(काष्ठा ionic_queue *q);
+व्योम ionic_tx_empty(काष्ठा ionic_queue *q);
+पूर्णांक ionic_rx_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+पूर्णांक ionic_tx_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+पूर्णांक ionic_txrx_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget);
+netdev_tx_t ionic_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *netdev);
 
-bool ionic_rx_service(struct ionic_cq *cq, struct ionic_cq_info *cq_info);
-bool ionic_tx_service(struct ionic_cq *cq, struct ionic_cq_info *cq_info);
+bool ionic_rx_service(काष्ठा ionic_cq *cq, काष्ठा ionic_cq_info *cq_info);
+bool ionic_tx_service(काष्ठा ionic_cq *cq, काष्ठा ionic_cq_info *cq_info);
 
-#endif /* _IONIC_TXRX_H_ */
+#पूर्ण_अगर /* _IONIC_TXRX_H_ */

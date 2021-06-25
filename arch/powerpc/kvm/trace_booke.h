@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#if !defined(_TRACE_KVM_BOOKE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_KVM_BOOKE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर !defined(_TRACE_KVM_BOOKE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_KVM_BOOKE_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM kvm_booke
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM kvm_booke
 
-#define kvm_trace_symbol_exit \
-	{0, "CRITICAL"}, \
-	{1, "MACHINE_CHECK"}, \
-	{2, "DATA_STORAGE"}, \
-	{3, "INST_STORAGE"}, \
-	{4, "EXTERNAL"}, \
-	{5, "ALIGNMENT"}, \
-	{6, "PROGRAM"}, \
-	{7, "FP_UNAVAIL"}, \
-	{8, "SYSCALL"}, \
-	{9, "AP_UNAVAIL"}, \
-	{10, "DECREMENTER"}, \
-	{11, "FIT"}, \
-	{12, "WATCHDOG"}, \
-	{13, "DTLB_MISS"}, \
-	{14, "ITLB_MISS"}, \
-	{15, "DEBUG"}, \
-	{32, "SPE_UNAVAIL"}, \
-	{33, "SPE_FP_DATA"}, \
-	{34, "SPE_FP_ROUND"}, \
-	{35, "PERFORMANCE_MONITOR"}, \
-	{36, "DOORBELL"}, \
-	{37, "DOORBELL_CRITICAL"}, \
-	{38, "GUEST_DBELL"}, \
-	{39, "GUEST_DBELL_CRIT"}, \
-	{40, "HV_SYSCALL"}, \
-	{41, "HV_PRIV"}
+#घोषणा kvm_trace_symbol_निकास \
+	अणु0, "CRITICAL"पूर्ण, \
+	अणु1, "MACHINE_CHECK"पूर्ण, \
+	अणु2, "DATA_STORAGE"पूर्ण, \
+	अणु3, "INST_STORAGE"पूर्ण, \
+	अणु4, "EXTERNAL"पूर्ण, \
+	अणु5, "ALIGNMENT"पूर्ण, \
+	अणु6, "PROGRAM"पूर्ण, \
+	अणु7, "FP_UNAVAIL"पूर्ण, \
+	अणु8, "SYSCALL"पूर्ण, \
+	अणु9, "AP_UNAVAIL"पूर्ण, \
+	अणु10, "DECREMENTER"पूर्ण, \
+	अणु11, "FIT"पूर्ण, \
+	अणु12, "WATCHDOG"पूर्ण, \
+	अणु13, "DTLB_MISS"पूर्ण, \
+	अणु14, "ITLB_MISS"पूर्ण, \
+	अणु15, "DEBUG"पूर्ण, \
+	अणु32, "SPE_UNAVAIL"पूर्ण, \
+	अणु33, "SPE_FP_DATA"पूर्ण, \
+	अणु34, "SPE_FP_ROUND"पूर्ण, \
+	अणु35, "PERFORMANCE_MONITOR"पूर्ण, \
+	अणु36, "DOORBELL"पूर्ण, \
+	अणु37, "DOORBELL_CRITICAL"पूर्ण, \
+	अणु38, "GUEST_DBELL"पूर्ण, \
+	अणु39, "GUEST_DBELL_CRIT"पूर्ण, \
+	अणु40, "HV_SYSCALL"पूर्ण, \
+	अणु41, "HV_PRIV"पूर्ण
 
-TRACE_EVENT(kvm_exit,
-	TP_PROTO(unsigned int exit_nr, struct kvm_vcpu *vcpu),
-	TP_ARGS(exit_nr, vcpu),
+TRACE_EVENT(kvm_निकास,
+	TP_PROTO(अचिन्हित पूर्णांक निकास_nr, काष्ठा kvm_vcpu *vcpu),
+	TP_ARGS(निकास_nr, vcpu),
 
 	TP_STRUCT__entry(
-		__field(	unsigned int,	exit_nr		)
-		__field(	unsigned long,	pc		)
-		__field(	unsigned long,	msr		)
-		__field(	unsigned long,	dar		)
-		__field(	unsigned long,	last_inst	)
+		__field(	अचिन्हित पूर्णांक,	निकास_nr		)
+		__field(	अचिन्हित दीर्घ,	pc		)
+		__field(	अचिन्हित दीर्घ,	msr		)
+		__field(	अचिन्हित दीर्घ,	dar		)
+		__field(	अचिन्हित दीर्घ,	last_inst	)
 	),
 
 	TP_fast_assign(
-		__entry->exit_nr	= exit_nr;
+		__entry->निकास_nr	= निकास_nr;
 		__entry->pc		= kvmppc_get_pc(vcpu);
 		__entry->dar		= kvmppc_get_fault_dar(vcpu);
 		__entry->msr		= vcpu->arch.shared->msr;
 		__entry->last_inst	= vcpu->arch.last_inst;
 	),
 
-	TP_printk("exit=%s"
+	TP_prपूर्णांकk("exit=%s"
 		" | pc=0x%lx"
 		" | msr=0x%lx"
 		" | dar=0x%lx"
 		" | last_inst=0x%lx"
 		,
-		__print_symbolic(__entry->exit_nr, kvm_trace_symbol_exit),
+		__prपूर्णांक_symbolic(__entry->निकास_nr, kvm_trace_symbol_निकास),
 		__entry->pc,
 		__entry->msr,
 		__entry->dar,
@@ -69,7 +70,7 @@ TRACE_EVENT(kvm_exit,
 		)
 );
 
-TRACE_EVENT(kvm_booke206_stlb_write,
+TRACE_EVENT(kvm_booke206_stlb_ग_लिखो,
 	TP_PROTO(__u32 mas0, __u32 mas8, __u32 mas1, __u64 mas2, __u64 mas7_3),
 	TP_ARGS(mas0, mas8, mas1, mas2, mas7_3),
 
@@ -89,12 +90,12 @@ TRACE_EVENT(kvm_booke206_stlb_write,
 		__entry->mas7_3		= mas7_3;
 	),
 
-	TP_printk("mas0=%x mas8=%x mas1=%x mas2=%llx mas7_3=%llx",
+	TP_prपूर्णांकk("mas0=%x mas8=%x mas1=%x mas2=%llx mas7_3=%llx",
 		__entry->mas0, __entry->mas8, __entry->mas1,
 		__entry->mas2, __entry->mas7_3)
 );
 
-TRACE_EVENT(kvm_booke206_gtlb_write,
+TRACE_EVENT(kvm_booke206_gtlb_ग_लिखो,
 	TP_PROTO(__u32 mas0, __u32 mas1, __u64 mas2, __u64 mas7_3),
 	TP_ARGS(mas0, mas1, mas2, mas7_3),
 
@@ -112,7 +113,7 @@ TRACE_EVENT(kvm_booke206_gtlb_write,
 		__entry->mas7_3		= mas7_3;
 	),
 
-	TP_printk("mas0=%x mas1=%x mas2=%llx mas7_3=%llx",
+	TP_prपूर्णांकk("mas0=%x mas1=%x mas2=%llx mas7_3=%llx",
 		__entry->mas0, __entry->mas1,
 		__entry->mas2, __entry->mas7_3)
 );
@@ -131,59 +132,59 @@ TRACE_EVENT(kvm_booke206_ref_release,
 		__entry->flags		= flags;
 	),
 
-	TP_printk("pfn=%llx flags=%x",
+	TP_prपूर्णांकk("pfn=%llx flags=%x",
 		__entry->pfn, __entry->flags)
 );
 
-#ifdef CONFIG_SPE_POSSIBLE
-#define kvm_trace_symbol_irqprio_spe \
-	{BOOKE_IRQPRIO_SPE_UNAVAIL, "SPE_UNAVAIL"}, \
-	{BOOKE_IRQPRIO_SPE_FP_DATA, "SPE_FP_DATA"}, \
-	{BOOKE_IRQPRIO_SPE_FP_ROUND, "SPE_FP_ROUND"},
-#else
-#define kvm_trace_symbol_irqprio_spe
-#endif
+#अगर_घोषित CONFIG_SPE_POSSIBLE
+#घोषणा kvm_trace_symbol_irqprio_spe \
+	अणुBOOKE_IRQPRIO_SPE_UNAVAIL, "SPE_UNAVAIL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_SPE_FP_DATA, "SPE_FP_DATA"पूर्ण, \
+	अणुBOOKE_IRQPRIO_SPE_FP_ROUND, "SPE_FP_ROUND"पूर्ण,
+#अन्यथा
+#घोषणा kvm_trace_symbol_irqprio_spe
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_E500MC
-#define kvm_trace_symbol_irqprio_e500mc \
-	{BOOKE_IRQPRIO_ALTIVEC_UNAVAIL, "ALTIVEC_UNAVAIL"}, \
-	{BOOKE_IRQPRIO_ALTIVEC_ASSIST, "ALTIVEC_ASSIST"},
-#else
-#define kvm_trace_symbol_irqprio_e500mc
-#endif
+#अगर_घोषित CONFIG_PPC_E500MC
+#घोषणा kvm_trace_symbol_irqprio_e500mc \
+	अणुBOOKE_IRQPRIO_ALTIVEC_UNAVAIL, "ALTIVEC_UNAVAIL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_ALTIVEC_ASSIST, "ALTIVEC_ASSIST"पूर्ण,
+#अन्यथा
+#घोषणा kvm_trace_symbol_irqprio_e500mc
+#पूर्ण_अगर
 
-#define kvm_trace_symbol_irqprio \
+#घोषणा kvm_trace_symbol_irqprio \
 	kvm_trace_symbol_irqprio_spe \
 	kvm_trace_symbol_irqprio_e500mc \
-	{BOOKE_IRQPRIO_DATA_STORAGE, "DATA_STORAGE"}, \
-	{BOOKE_IRQPRIO_INST_STORAGE, "INST_STORAGE"}, \
-	{BOOKE_IRQPRIO_ALIGNMENT, "ALIGNMENT"}, \
-	{BOOKE_IRQPRIO_PROGRAM, "PROGRAM"}, \
-	{BOOKE_IRQPRIO_FP_UNAVAIL, "FP_UNAVAIL"}, \
-	{BOOKE_IRQPRIO_SYSCALL, "SYSCALL"}, \
-	{BOOKE_IRQPRIO_AP_UNAVAIL, "AP_UNAVAIL"}, \
-	{BOOKE_IRQPRIO_DTLB_MISS, "DTLB_MISS"}, \
-	{BOOKE_IRQPRIO_ITLB_MISS, "ITLB_MISS"}, \
-	{BOOKE_IRQPRIO_MACHINE_CHECK, "MACHINE_CHECK"}, \
-	{BOOKE_IRQPRIO_DEBUG, "DEBUG"}, \
-	{BOOKE_IRQPRIO_CRITICAL, "CRITICAL"}, \
-	{BOOKE_IRQPRIO_WATCHDOG, "WATCHDOG"}, \
-	{BOOKE_IRQPRIO_EXTERNAL, "EXTERNAL"}, \
-	{BOOKE_IRQPRIO_FIT, "FIT"}, \
-	{BOOKE_IRQPRIO_DECREMENTER, "DECREMENTER"}, \
-	{BOOKE_IRQPRIO_PERFORMANCE_MONITOR, "PERFORMANCE_MONITOR"}, \
-	{BOOKE_IRQPRIO_EXTERNAL_LEVEL, "EXTERNAL_LEVEL"}, \
-	{BOOKE_IRQPRIO_DBELL, "DBELL"}, \
-	{BOOKE_IRQPRIO_DBELL_CRIT, "DBELL_CRIT"} \
+	अणुBOOKE_IRQPRIO_DATA_STORAGE, "DATA_STORAGE"पूर्ण, \
+	अणुBOOKE_IRQPRIO_INST_STORAGE, "INST_STORAGE"पूर्ण, \
+	अणुBOOKE_IRQPRIO_ALIGNMENT, "ALIGNMENT"पूर्ण, \
+	अणुBOOKE_IRQPRIO_PROGRAM, "PROGRAM"पूर्ण, \
+	अणुBOOKE_IRQPRIO_FP_UNAVAIL, "FP_UNAVAIL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_SYSCALL, "SYSCALL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_AP_UNAVAIL, "AP_UNAVAIL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_DTLB_MISS, "DTLB_MISS"पूर्ण, \
+	अणुBOOKE_IRQPRIO_ITLB_MISS, "ITLB_MISS"पूर्ण, \
+	अणुBOOKE_IRQPRIO_MACHINE_CHECK, "MACHINE_CHECK"पूर्ण, \
+	अणुBOOKE_IRQPRIO_DEBUG, "DEBUG"पूर्ण, \
+	अणुBOOKE_IRQPRIO_CRITICAL, "CRITICAL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_WATCHDOG, "WATCHDOG"पूर्ण, \
+	अणुBOOKE_IRQPRIO_EXTERNAL, "EXTERNAL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_FIT, "FIT"पूर्ण, \
+	अणुBOOKE_IRQPRIO_DECREMENTER, "DECREMENTER"पूर्ण, \
+	अणुBOOKE_IRQPRIO_PERFORMANCE_MONITOR, "PERFORMANCE_MONITOR"पूर्ण, \
+	अणुBOOKE_IRQPRIO_EXTERNAL_LEVEL, "EXTERNAL_LEVEL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_DBELL, "DBELL"पूर्ण, \
+	अणुBOOKE_IRQPRIO_DBELL_CRIT, "DBELL_CRIT"पूर्ण \
 
 TRACE_EVENT(kvm_booke_queue_irqprio,
-	TP_PROTO(struct kvm_vcpu *vcpu, unsigned int priority),
+	TP_PROTO(काष्ठा kvm_vcpu *vcpu, अचिन्हित पूर्णांक priority),
 	TP_ARGS(vcpu, priority),
 
 	TP_STRUCT__entry(
 		__field(	__u32,	cpu_nr		)
 		__field(	__u32,	priority		)
-		__field(	unsigned long,	pending		)
+		__field(	अचिन्हित दीर्घ,	pending		)
 	),
 
 	TP_fast_assign(
@@ -192,20 +193,20 @@ TRACE_EVENT(kvm_booke_queue_irqprio,
 		__entry->pending	= vcpu->arch.pending_exceptions;
 	),
 
-	TP_printk("vcpu=%x prio=%s pending=%lx",
+	TP_prपूर्णांकk("vcpu=%x prio=%s pending=%lx",
 		__entry->cpu_nr,
-		__print_symbolic(__entry->priority, kvm_trace_symbol_irqprio),
+		__prपूर्णांक_symbolic(__entry->priority, kvm_trace_symbol_irqprio),
 		__entry->pending)
 );
 
-#endif
+#पूर्ण_अगर
 
 /* This part must be outside protection */
 
-#undef TRACE_INCLUDE_PATH
-#undef TRACE_INCLUDE_FILE
+#अघोषित TRACE_INCLUDE_PATH
+#अघोषित TRACE_INCLUDE_खाता
 
-#define TRACE_INCLUDE_PATH .
-#define TRACE_INCLUDE_FILE trace_booke
+#घोषणा TRACE_INCLUDE_PATH .
+#घोषणा TRACE_INCLUDE_खाता trace_booke
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

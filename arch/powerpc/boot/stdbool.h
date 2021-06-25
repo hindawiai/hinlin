@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) IBM Corporation 2016.
  *
@@ -6,4 +7,4 @@
  * expect stdbool.h to be available.
  */
 
-#include "types.h"
+#समावेश "types.h"

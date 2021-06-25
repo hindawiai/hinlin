@@ -1,133 +1,134 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Process/processor support for the Hexagon architecture
+ * Process/processor support क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_PROCESSOR_H
-#define _ASM_PROCESSOR_H
+#अगर_अघोषित _ASM_PROCESSOR_H
+#घोषणा _ASM_PROCESSOR_H
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/mem-layout.h>
-#include <asm/registers.h>
-#include <asm/hexagon_vm.h>
+#समावेश <यंत्र/mem-layout.h>
+#समावेश <यंत्र/रेजिस्टरs.h>
+#समावेश <यंत्र/hexagon_vm.h>
 
-/*  task_struct, defined elsewhere, is the "process descriptor" */
-struct task_struct;
+/*  task_काष्ठा, defined अन्यथाwhere, is the "process descriptor" */
+काष्ठा task_काष्ठा;
 
-extern void start_thread(struct pt_regs *, unsigned long, unsigned long);
+बाह्य व्योम start_thपढ़ो(काष्ठा pt_regs *, अचिन्हित दीर्घ, अचिन्हित दीर्घ);
 
 /*
- * thread_struct is supposed to be for context switch data.
- * Specifically, to hold the state necessary to perform switch_to...
+ * thपढ़ो_काष्ठा is supposed to be क्रम context चयन data.
+ * Specअगरically, to hold the state necessary to perक्रमm चयन_to...
  */
-struct thread_struct {
-	void *switch_sp;
-};
+काष्ठा thपढ़ो_काष्ठा अणु
+	व्योम *चयन_sp;
+पूर्ण;
 
 /*
- * initializes thread_struct
- * The only thing we have in there is switch_sp
- * which doesn't really need to be initialized.
+ * initializes thपढ़ो_काष्ठा
+ * The only thing we have in there is चयन_sp
+ * which करोesn't really need to be initialized.
  */
 
-#define INIT_THREAD { \
-}
+#घोषणा INIT_THREAD अणु \
+पूर्ण
 
-#define cpu_relax() __vmyield()
+#घोषणा cpu_relax() __vmyield()
 
 /*
- * Decides where the kernel will search for a free chunk of vm space during
+ * Decides where the kernel will search क्रम a मुक्त chunk of vm space during
  * mmaps.
  * See also arch_get_unmapped_area.
- * Doesn't affect if you have MAX_FIXED in the page flags set though...
+ * Doesn't affect अगर you have MAX_FIXED in the page flags set though...
  *
- * Apparently the convention is that ld.so will ask for "unmapped" private
- * memory to be allocated SOMEWHERE, but it also asks for memory explicitly
+ * Apparently the convention is that ld.so will ask क्रम "unmapped" निजी
+ * memory to be allocated SOMEWHERE, but it also asks क्रम memory explicitly
  * via MAP_FIXED at the lower * addresses starting at VA=0x0.
  *
  * If the two requests collide, you get authentic segfaulting action, so
  * you have to kick the "unmapped" base requests higher up.
  */
-#define TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE/3))
+#घोषणा TASK_UNMAPPED_BASE	(PAGE_ALIGN(TASK_SIZE/3))
 
 
-#define task_pt_regs(task) \
-	((struct pt_regs *)(task_stack_page(task) + THREAD_SIZE) - 1)
+#घोषणा task_pt_regs(task) \
+	((काष्ठा pt_regs *)(task_stack_page(task) + THREAD_SIZE) - 1)
 
-#define KSTK_EIP(tsk) (pt_elr(task_pt_regs(tsk)))
-#define KSTK_ESP(tsk) (pt_psp(task_pt_regs(tsk)))
+#घोषणा KSTK_EIP(tsk) (pt_elr(task_pt_regs(tsk)))
+#घोषणा KSTK_ESP(tsk) (pt_psp(task_pt_regs(tsk)))
 
-/*  Free all resources held by a thread; defined in process.c  */
-extern void release_thread(struct task_struct *dead_task);
+/*  Free all resources held by a thपढ़ो; defined in process.c  */
+बाह्य व्योम release_thपढ़ो(काष्ठा task_काष्ठा *dead_task);
 
-/* Get wait channel for task P.  */
-extern unsigned long get_wchan(struct task_struct *p);
+/* Get रुको channel क्रम task P.  */
+बाह्य अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *p);
 
-/*  The following stuff is pretty HEXAGON specific.  */
+/*  The following stuff is pretty HEXAGON specअगरic.  */
 
-/*  This is really just here for __switch_to.
-    Offsets are pulled via asm-offsets.c  */
+/*  This is really just here क्रम __चयन_to.
+    Offsets are pulled via यंत्र-offsets.c  */
 
 /*
- * No real reason why VM and native switch stacks should be different.
+ * No real reason why VM and native चयन stacks should be dअगरferent.
  * Ultimately this should merge.  Note that Rev C. ABI called out only
  * R24-27 as callee saved GPRs needing explicit attention (R29-31 being
- * dealt with automagically by allocframe), but the current ABI has
- * more, R16-R27.  By saving more, the worst case is that we waste some
- * cycles if building with the old compilers.
+ * dealt with स्वतःmagically by allocframe), but the current ABI has
+ * more, R16-R27.  By saving more, the worst हाल is that we waste some
+ * cycles अगर building with the old compilers.
  */
 
-struct hexagon_switch_stack {
-	union {
-		struct {
-			unsigned long r16;
-			unsigned long r17;
-		};
-		unsigned long long	r1716;
-	};
-	union {
-		struct {
-			unsigned long r18;
-			unsigned long r19;
-		};
-		unsigned long long	r1918;
-	};
-	union {
-		struct {
-			unsigned long r20;
-			unsigned long r21;
-		};
-		unsigned long long	r2120;
-	};
-	union {
-		struct {
-			unsigned long r22;
-			unsigned long r23;
-		};
-		unsigned long long	r2322;
-	};
-	union {
-		struct {
-			unsigned long r24;
-			unsigned long r25;
-		};
-		unsigned long long	r2524;
-	};
-	union {
-		struct {
-			unsigned long r26;
-			unsigned long r27;
-		};
-		unsigned long long	r2726;
-	};
+काष्ठा hexagon_चयन_stack अणु
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r16;
+			अचिन्हित दीर्घ r17;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r1716;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r18;
+			अचिन्हित दीर्घ r19;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r1918;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r20;
+			अचिन्हित दीर्घ r21;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r2120;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r22;
+			अचिन्हित दीर्घ r23;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r2322;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r24;
+			अचिन्हित दीर्घ r25;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r2524;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ r26;
+			अचिन्हित दीर्घ r27;
+		पूर्ण;
+		अचिन्हित दीर्घ दीर्घ	r2726;
+	पूर्ण;
 
-	unsigned long		fp;
-	unsigned long		lr;
-};
+	अचिन्हित दीर्घ		fp;
+	अचिन्हित दीर्घ		lr;
+पूर्ण;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif
+#पूर्ण_अगर

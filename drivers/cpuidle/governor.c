@@ -1,120 +1,121 @@
+<शैली गुरु>
 /*
  * governor.c - governor support
  *
- * (C) 2006-2007 Venkatesh Pallipadi <venkatesh.pallipadi@intel.com>
- *               Shaohua Li <shaohua.li@intel.com>
+ * (C) 2006-2007 Venkatesh Pallipadi <venkatesh.pallipadi@पूर्णांकel.com>
+ *               Shaohua Li <shaohua.li@पूर्णांकel.com>
  *               Adam Belay <abelay@novell.com>
  *
  * This code is licenced under the GPL.
  */
 
-#include <linux/cpu.h>
-#include <linux/cpuidle.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/pm_qos.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_qos.h>
 
-#include "cpuidle.h"
+#समावेश "cpuidle.h"
 
-char param_governor[CPUIDLE_NAME_LEN];
+अक्षर param_governor[CPUIDLE_NAME_LEN];
 
 LIST_HEAD(cpuidle_governors);
-struct cpuidle_governor *cpuidle_curr_governor;
-struct cpuidle_governor *cpuidle_prev_governor;
+काष्ठा cpuidle_governor *cpuidle_curr_governor;
+काष्ठा cpuidle_governor *cpuidle_prev_governor;
 
 /**
- * cpuidle_find_governor - finds a governor of the specified name
+ * cpuidle_find_governor - finds a governor of the specअगरied name
  * @str: the name
  *
  * Must be called with cpuidle_lock acquired.
  */
-struct cpuidle_governor *cpuidle_find_governor(const char *str)
-{
-	struct cpuidle_governor *gov;
+काष्ठा cpuidle_governor *cpuidle_find_governor(स्थिर अक्षर *str)
+अणु
+	काष्ठा cpuidle_governor *gov;
 
-	list_for_each_entry(gov, &cpuidle_governors, governor_list)
-		if (!strncasecmp(str, gov->name, CPUIDLE_NAME_LEN))
-			return gov;
+	list_क्रम_each_entry(gov, &cpuidle_governors, governor_list)
+		अगर (!strnहालcmp(str, gov->name, CPUIDLE_NAME_LEN))
+			वापस gov;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * cpuidle_switch_governor - changes the governor
+ * cpuidle_चयन_governor - changes the governor
  * @gov: the new target governor
  * Must be called with cpuidle_lock acquired.
  */
-int cpuidle_switch_governor(struct cpuidle_governor *gov)
-{
-	struct cpuidle_device *dev;
+पूर्णांक cpuidle_चयन_governor(काष्ठा cpuidle_governor *gov)
+अणु
+	काष्ठा cpuidle_device *dev;
 
-	if (!gov)
-		return -EINVAL;
+	अगर (!gov)
+		वापस -EINVAL;
 
-	if (gov == cpuidle_curr_governor)
-		return 0;
+	अगर (gov == cpuidle_curr_governor)
+		वापस 0;
 
 	cpuidle_uninstall_idle_handler();
 
-	if (cpuidle_curr_governor) {
-		list_for_each_entry(dev, &cpuidle_detected_devices, device_list)
+	अगर (cpuidle_curr_governor) अणु
+		list_क्रम_each_entry(dev, &cpuidle_detected_devices, device_list)
 			cpuidle_disable_device(dev);
-	}
+	पूर्ण
 
 	cpuidle_curr_governor = gov;
 
-	if (gov) {
-		list_for_each_entry(dev, &cpuidle_detected_devices, device_list)
+	अगर (gov) अणु
+		list_क्रम_each_entry(dev, &cpuidle_detected_devices, device_list)
 			cpuidle_enable_device(dev);
 		cpuidle_install_idle_handler();
-		printk(KERN_INFO "cpuidle: using governor %s\n", gov->name);
-	}
+		prपूर्णांकk(KERN_INFO "cpuidle: using governor %s\n", gov->name);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * cpuidle_register_governor - registers a governor
+ * cpuidle_रेजिस्टर_governor - रेजिस्टरs a governor
  * @gov: the governor
  */
-int cpuidle_register_governor(struct cpuidle_governor *gov)
-{
-	int ret = -EEXIST;
+पूर्णांक cpuidle_रेजिस्टर_governor(काष्ठा cpuidle_governor *gov)
+अणु
+	पूर्णांक ret = -EEXIST;
 
-	if (!gov || !gov->select)
-		return -EINVAL;
+	अगर (!gov || !gov->select)
+		वापस -EINVAL;
 
-	if (cpuidle_disabled())
-		return -ENODEV;
+	अगर (cpuidle_disabled())
+		वापस -ENODEV;
 
 	mutex_lock(&cpuidle_lock);
-	if (cpuidle_find_governor(gov->name) == NULL) {
+	अगर (cpuidle_find_governor(gov->name) == शून्य) अणु
 		ret = 0;
 		list_add_tail(&gov->governor_list, &cpuidle_governors);
-		if (!cpuidle_curr_governor ||
-		    !strncasecmp(param_governor, gov->name, CPUIDLE_NAME_LEN) ||
+		अगर (!cpuidle_curr_governor ||
+		    !strnहालcmp(param_governor, gov->name, CPUIDLE_NAME_LEN) ||
 		    (cpuidle_curr_governor->rating < gov->rating &&
-		     strncasecmp(param_governor, cpuidle_curr_governor->name,
+		     strnहालcmp(param_governor, cpuidle_curr_governor->name,
 				 CPUIDLE_NAME_LEN)))
-			cpuidle_switch_governor(gov);
-	}
+			cpuidle_चयन_governor(gov);
+	पूर्ण
 	mutex_unlock(&cpuidle_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * cpuidle_governor_latency_req - Compute a latency constraint for CPU
+ * cpuidle_governor_latency_req - Compute a latency स्थिरraपूर्णांक क्रम CPU
  * @cpu: Target CPU
  */
-s64 cpuidle_governor_latency_req(unsigned int cpu)
-{
-	struct device *device = get_cpu_device(cpu);
-	int device_req = dev_pm_qos_raw_resume_latency(device);
-	int global_req = cpu_latency_qos_limit();
+s64 cpuidle_governor_latency_req(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा device *device = get_cpu_device(cpu);
+	पूर्णांक device_req = dev_pm_qos_raw_resume_latency(device);
+	पूर्णांक global_req = cpu_latency_qos_limit();
 
-	if (device_req > global_req)
+	अगर (device_req > global_req)
 		device_req = global_req;
 
-	return (s64)device_req * NSEC_PER_USEC;
-}
+	वापस (s64)device_req * NSEC_PER_USEC;
+पूर्ण

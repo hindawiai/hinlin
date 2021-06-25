@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2016 Maxime Ripard. All rights reserved.
  */
 
-#ifndef _CCU_PHASE_H_
-#define _CCU_PHASE_H_
+#अगर_अघोषित _CCU_PHASE_H_
+#घोषणा _CCU_PHASE_H_
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "ccu_common.h"
+#समावेश "ccu_common.h"
 
-struct ccu_phase {
-	u8			shift;
+काष्ठा ccu_phase अणु
+	u8			shअगरt;
 	u8			width;
 
-	struct ccu_common	common;
-};
+	काष्ठा ccu_common	common;
+पूर्ण;
 
-#define SUNXI_CCU_PHASE(_struct, _name, _parent, _reg, _shift, _width, _flags) \
-	struct ccu_phase _struct = {					\
-		.shift	= _shift,					\
+#घोषणा SUNXI_CCU_PHASE(_काष्ठा, _name, _parent, _reg, _shअगरt, _width, _flags) \
+	काष्ठा ccu_phase _काष्ठा = अणु					\
+		.shअगरt	= _shअगरt,					\
 		.width	= _width,					\
-		.common	= {						\
+		.common	= अणु						\
 			.reg		= _reg,				\
 			.hw.init	= CLK_HW_INIT(_name,		\
 						      _parent,		\
 						      &ccu_phase_ops,	\
 						      _flags),		\
-		}							\
-	}
+		पूर्ण							\
+	पूर्ण
 
-static inline struct ccu_phase *hw_to_ccu_phase(struct clk_hw *hw)
-{
-	struct ccu_common *common = hw_to_ccu_common(hw);
+अटल अंतरभूत काष्ठा ccu_phase *hw_to_ccu_phase(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा ccu_common *common = hw_to_ccu_common(hw);
 
-	return container_of(common, struct ccu_phase, common);
-}
+	वापस container_of(common, काष्ठा ccu_phase, common);
+पूर्ण
 
-extern const struct clk_ops ccu_phase_ops;
+बाह्य स्थिर काष्ठा clk_ops ccu_phase_ops;
 
-#endif /* _CCU_PHASE_H_ */
+#पूर्ण_अगर /* _CCU_PHASE_H_ */

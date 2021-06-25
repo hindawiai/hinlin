@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Collabora Ltd.
+ * Copyright तऊ 2016 Collabora Ltd.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,56 +20,56 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __DRM_DEBUGFS_CRC_H__
-#define __DRM_DEBUGFS_CRC_H__
+#अगर_अघोषित __DRM_DEBUGFS_CRC_H__
+#घोषणा __DRM_DEBUGFS_CRC_H__
 
-#define DRM_MAX_CRC_NR		10
+#घोषणा DRM_MAX_CRC_NR		10
 
 /**
- * struct drm_crtc_crc_entry - entry describing a frame's content
+ * काष्ठा drm_crtc_crc_entry - entry describing a frame's content
  * @has_frame_counter: whether the source was able to provide a frame number
- * @frame: number of the frame this CRC is about, if @has_frame_counter is true
- * @crc: array of values that characterize the frame
+ * @frame: number of the frame this CRC is about, अगर @has_frame_counter is true
+ * @crc: array of values that अक्षरacterize the frame
  */
-struct drm_crtc_crc_entry {
+काष्ठा drm_crtc_crc_entry अणु
 	bool has_frame_counter;
-	uint32_t frame;
-	uint32_t crcs[DRM_MAX_CRC_NR];
-};
+	uपूर्णांक32_t frame;
+	uपूर्णांक32_t crcs[DRM_MAX_CRC_NR];
+पूर्ण;
 
-#define DRM_CRC_ENTRIES_NR	128
+#घोषणा DRM_CRC_ENTRIES_NR	128
 
 /**
- * struct drm_crtc_crc - data supporting CRC capture on a given CRTC
- * @lock: protects the fields in this struct
+ * काष्ठा drm_crtc_crc - data supporting CRC capture on a given CRTC
+ * @lock: protects the fields in this काष्ठा
  * @source: name of the currently configured source of CRCs
- * @opened: whether userspace has opened the data file for reading
+ * @खोलोed: whether userspace has खोलोed the data file क्रम पढ़ोing
  * @overflow: whether an overflow occured.
  * @entries: array of entries, with size of %DRM_CRC_ENTRIES_NR
  * @head: head of circular queue
  * @tail: tail of circular queue
  * @values_cnt: number of CRC values per entry, up to %DRM_MAX_CRC_NR
- * @wq: workqueue used to synchronize reading and writing
+ * @wq: workqueue used to synchronize पढ़ोing and writing
  */
-struct drm_crtc_crc {
+काष्ठा drm_crtc_crc अणु
 	spinlock_t lock;
-	const char *source;
-	bool opened, overflow;
-	struct drm_crtc_crc_entry *entries;
-	int head, tail;
-	size_t values_cnt;
-	wait_queue_head_t wq;
-};
+	स्थिर अक्षर *source;
+	bool खोलोed, overflow;
+	काष्ठा drm_crtc_crc_entry *entries;
+	पूर्णांक head, tail;
+	माप_प्रकार values_cnt;
+	रुको_queue_head_t wq;
+पूर्ण;
 
-#if defined(CONFIG_DEBUG_FS)
-int drm_crtc_add_crc_entry(struct drm_crtc *crtc, bool has_frame,
-			   uint32_t frame, uint32_t *crcs);
-#else
-static inline int drm_crtc_add_crc_entry(struct drm_crtc *crtc, bool has_frame,
-					 uint32_t frame, uint32_t *crcs)
-{
-	return -EINVAL;
-}
-#endif /* defined(CONFIG_DEBUG_FS) */
+#अगर defined(CONFIG_DEBUG_FS)
+पूर्णांक drm_crtc_add_crc_entry(काष्ठा drm_crtc *crtc, bool has_frame,
+			   uपूर्णांक32_t frame, uपूर्णांक32_t *crcs);
+#अन्यथा
+अटल अंतरभूत पूर्णांक drm_crtc_add_crc_entry(काष्ठा drm_crtc *crtc, bool has_frame,
+					 uपूर्णांक32_t frame, uपूर्णांक32_t *crcs)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर /* defined(CONFIG_DEBUG_FS) */
 
-#endif /* __DRM_DEBUGFS_CRC_H__ */
+#पूर्ण_अगर /* __DRM_DEBUGFS_CRC_H__ */

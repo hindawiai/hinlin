@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2011 Texas Instruments Inc
  */
-#ifndef _VPIF_TYPES_H
-#define _VPIF_TYPES_H
+#अगर_अघोषित _VPIF_TYPES_H
+#घोषणा _VPIF_TYPES_H
 
-#include <linux/i2c.h>
+#समावेश <linux/i2c.h>
 
-#define VPIF_CAPTURE_MAX_CHANNELS	2
-#define VPIF_DISPLAY_MAX_CHANNELS	2
+#घोषणा VPIF_CAPTURE_MAX_CHANNELS	2
+#घोषणा VPIF_DISPLAY_MAX_CHANNELS	2
 
-enum vpif_if_type {
+क्रमागत vpअगर_अगर_type अणु
 	VPIF_IF_BT656,
 	VPIF_IF_BT1120,
 	VPIF_IF_RAW_BAYER
-};
+पूर्ण;
 
-struct vpif_interface {
-	enum vpif_if_type if_type;
-	unsigned hd_pol:1;
-	unsigned vd_pol:1;
-	unsigned fid_pol:1;
-};
+काष्ठा vpअगर_पूर्णांकerface अणु
+	क्रमागत vpअगर_अगर_type अगर_type;
+	अचिन्हित hd_pol:1;
+	अचिन्हित vd_pol:1;
+	अचिन्हित fid_pol:1;
+पूर्ण;
 
-struct vpif_subdev_info {
-	const char *name;
-	struct i2c_board_info board_info;
-};
+काष्ठा vpअगर_subdev_info अणु
+	स्थिर अक्षर *name;
+	काष्ठा i2c_board_info board_info;
+पूर्ण;
 
-struct vpif_output {
-	struct v4l2_output output;
-	const char *subdev_name;
+काष्ठा vpअगर_output अणु
+	काष्ठा v4l2_output output;
+	स्थिर अक्षर *subdev_name;
 	u32 input_route;
 	u32 output_route;
-};
+पूर्ण;
 
-struct vpif_display_chan_config {
-	const struct vpif_output *outputs;
-	int output_count;
+काष्ठा vpअगर_display_chan_config अणु
+	स्थिर काष्ठा vpअगर_output *outमाला_दो;
+	पूर्णांक output_count;
 	bool clip_en;
-};
+पूर्ण;
 
-struct vpif_display_config {
-	int (*set_clock)(int, int);
-	struct vpif_subdev_info *subdevinfo;
-	int subdev_count;
-	int i2c_adapter_id;
-	struct vpif_display_chan_config chan_config[VPIF_DISPLAY_MAX_CHANNELS];
-	const char *card_name;
-};
+काष्ठा vpअगर_display_config अणु
+	पूर्णांक (*set_घड़ी)(पूर्णांक, पूर्णांक);
+	काष्ठा vpअगर_subdev_info *subdevinfo;
+	पूर्णांक subdev_count;
+	पूर्णांक i2c_adapter_id;
+	काष्ठा vpअगर_display_chan_config chan_config[VPIF_DISPLAY_MAX_CHANNELS];
+	स्थिर अक्षर *card_name;
+पूर्ण;
 
-struct vpif_input {
-	struct v4l2_input input;
-	char *subdev_name;
+काष्ठा vpअगर_input अणु
+	काष्ठा v4l2_input input;
+	अक्षर *subdev_name;
 	u32 input_route;
 	u32 output_route;
-};
+पूर्ण;
 
-struct vpif_capture_chan_config {
-	struct vpif_interface vpif_if;
-	struct vpif_input *inputs;
-	int input_count;
-};
+काष्ठा vpअगर_capture_chan_config अणु
+	काष्ठा vpअगर_पूर्णांकerface vpअगर_अगर;
+	काष्ठा vpअगर_input *inमाला_दो;
+	पूर्णांक input_count;
+पूर्ण;
 
-struct vpif_capture_config {
-	int (*setup_input_channel_mode)(int);
-	int (*setup_input_path)(int, const char *);
-	struct vpif_capture_chan_config chan_config[VPIF_CAPTURE_MAX_CHANNELS];
-	struct vpif_subdev_info *subdev_info;
-	int subdev_count;
-	int i2c_adapter_id;
-	const char *card_name;
+काष्ठा vpअगर_capture_config अणु
+	पूर्णांक (*setup_input_channel_mode)(पूर्णांक);
+	पूर्णांक (*setup_input_path)(पूर्णांक, स्थिर अक्षर *);
+	काष्ठा vpअगर_capture_chan_config chan_config[VPIF_CAPTURE_MAX_CHANNELS];
+	काष्ठा vpअगर_subdev_info *subdev_info;
+	पूर्णांक subdev_count;
+	पूर्णांक i2c_adapter_id;
+	स्थिर अक्षर *card_name;
 
-	struct v4l2_async_subdev *asd[VPIF_CAPTURE_MAX_CHANNELS];
-	int asd_sizes[VPIF_CAPTURE_MAX_CHANNELS];
-};
-#endif /* _VPIF_TYPES_H */
+	काष्ठा v4l2_async_subdev *asd[VPIF_CAPTURE_MAX_CHANNELS];
+	पूर्णांक asd_sizes[VPIF_CAPTURE_MAX_CHANNELS];
+पूर्ण;
+#पूर्ण_अगर /* _VPIF_TYPES_H */

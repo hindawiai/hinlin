@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __SH_CSS_STREAM_FORMAT_H
-#define __SH_CSS_STREAM_FORMAT_H
+#अगर_अघोषित __SH_CSS_STREAM_FORMAT_H
+#घोषणा __SH_CSS_STREAM_FORMAT_H
 
-#include <ia_css_stream_format.h>
+#समावेश <ia_css_stream_क्रमmat.h>
 
-unsigned int sh_css_stream_format_2_bits_per_subpixel(
-    enum atomisp_input_format format);
+अचिन्हित पूर्णांक sh_css_stream_क्रमmat_2_bits_per_subpixel(
+    क्रमागत atomisp_input_क्रमmat क्रमmat);
 
-#endif /* __SH_CSS_STREAM_FORMAT_H */
+#पूर्ण_अगर /* __SH_CSS_STREAM_FORMAT_H */

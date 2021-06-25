@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * SHA1 Secure Hash Algorithm.
  *
- * Derived from cryptoapi implementation, adapted for in-place
- * scatterlist interface.
+ * Derived from cryptoapi implementation, adapted क्रम in-place
+ * scatterlist पूर्णांकerface.
  *
  * Copyright (c) Alan Smithee.
- * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
  * Copyright (c) Jean-Francois Dive <jef@linuxbe.org>
  */
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <crypto/sha1.h>
-#include <crypto/sha1_base.h>
-#include <asm/byteorder.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha1_base.h>
+#समावेश <यंत्र/byteorder.h>
 
-const u8 sha1_zero_message_hash[SHA1_DIGEST_SIZE] = {
+स्थिर u8 sha1_zero_message_hash[SHA1_DIGEST_SIZE] = अणु
 	0xda, 0x39, 0xa3, 0xee, 0x5e, 0x6b, 0x4b, 0x0d,
 	0x32, 0x55, 0xbf, 0xef, 0x95, 0x60, 0x18, 0x90,
 	0xaf, 0xd8, 0x07, 0x09
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(sha1_zero_message_hash);
 
-static void sha1_generic_block_fn(struct sha1_state *sst, u8 const *src,
-				  int blocks)
-{
+अटल व्योम sha1_generic_block_fn(काष्ठा sha1_state *sst, u8 स्थिर *src,
+				  पूर्णांक blocks)
+अणु
 	u32 temp[SHA1_WORKSPACE_WORDS];
 
-	while (blocks--) {
-		sha1_transform(sst->state, src, temp);
+	जबतक (blocks--) अणु
+		sha1_transक्रमm(sst->state, src, temp);
 		src += SHA1_BLOCK_SIZE;
-	}
-	memzero_explicit(temp, sizeof(temp));
-}
+	पूर्ण
+	memzero_explicit(temp, माप(temp));
+पूर्ण
 
-int crypto_sha1_update(struct shash_desc *desc, const u8 *data,
-		       unsigned int len)
-{
-	return sha1_base_do_update(desc, data, len, sha1_generic_block_fn);
-}
+पूर्णांक crypto_sha1_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		       अचिन्हित पूर्णांक len)
+अणु
+	वापस sha1_base_करो_update(desc, data, len, sha1_generic_block_fn);
+पूर्ण
 EXPORT_SYMBOL(crypto_sha1_update);
 
-static int sha1_final(struct shash_desc *desc, u8 *out)
-{
-	sha1_base_do_finalize(desc, sha1_generic_block_fn);
-	return sha1_base_finish(desc, out);
-}
+अटल पूर्णांक sha1_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	sha1_base_करो_finalize(desc, sha1_generic_block_fn);
+	वापस sha1_base_finish(desc, out);
+पूर्ण
 
-int crypto_sha1_finup(struct shash_desc *desc, const u8 *data,
-		      unsigned int len, u8 *out)
-{
-	sha1_base_do_update(desc, data, len, sha1_generic_block_fn);
-	return sha1_final(desc, out);
-}
+पूर्णांक crypto_sha1_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+		      अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	sha1_base_करो_update(desc, data, len, sha1_generic_block_fn);
+	वापस sha1_final(desc, out);
+पूर्ण
 EXPORT_SYMBOL(crypto_sha1_finup);
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init		=	sha1_base_init,
 	.update		=	crypto_sha1_update,
 	.final		=	sha1_final,
 	.finup		=	crypto_sha1_finup,
-	.descsize	=	sizeof(struct sha1_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha1_state),
+	.base		=	अणु
 		.cra_name	=	"sha1",
 		.cra_driver_name=	"sha1-generic",
 		.cra_priority	=	100,
 		.cra_blocksize	=	SHA1_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init sha1_generic_mod_init(void)
-{
-	return crypto_register_shash(&alg);
-}
+अटल पूर्णांक __init sha1_generic_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_shash(&alg);
+पूर्ण
 
-static void __exit sha1_generic_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास sha1_generic_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 subsys_initcall(sha1_generic_mod_init);
-module_exit(sha1_generic_mod_fini);
+module_निकास(sha1_generic_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA1 Secure Hash Algorithm");

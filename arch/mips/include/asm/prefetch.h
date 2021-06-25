@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2003 by Ralf Baechle
  */
-#ifndef __ASM_PREFETCH_H
-#define __ASM_PREFETCH_H
+#अगर_अघोषित __ASM_PREFETCH_H
+#घोषणा __ASM_PREFETCH_H
 
 
 /*
- * R5000 and RM5200 implements pref and prefx instructions but they're nops, so
- * rather than wasting time we pretend these processors don't support
+ * R5000 and RM5200 implements pref and prefx inकाष्ठाions but they're nops, so
+ * rather than wasting समय we pretend these processors करोn't support
  * prefetching at all.
  *
  * R5432 implements Load, Store, LoadStreamed, StoreStreamed, LoadRetained,
  * StoreRetained and WriteBackInvalidate but not Pref_PrepareForStore.
  *
- * Hell (and the book on my shelf I can't open ...) know what the R8000 does.
+ * Hell (and the book on my shelf I can't खोलो ...) know what the R8000 करोes.
  *
- * RM7000 version 1.0 interprets all hints as Pref_Load; version 2.0 implements
+ * RM7000 version 1.0 पूर्णांकerprets all hपूर्णांकs as Pref_Load; version 2.0 implements
  * Pref_PrepareForStore also.
  *
  * RM9000 is MIPS IV but implements prefetching like MIPS32/MIPS64; it's
@@ -28,60 +29,60 @@
  *
  * VR5500 (including VR5701 and VR7701) only implement load prefetch.
  *
- * Finally MIPS32 and MIPS64 implement all of the following hints.
+ * Finally MIPS32 and MIPS64 implement all of the following hपूर्णांकs.
  */
 
-#define Pref_Load			0
-#define Pref_Store			1
+#घोषणा Pref_Load			0
+#घोषणा Pref_Store			1
 						/* 2 and 3 are reserved */
-#define Pref_LoadStreamed		4
-#define Pref_StoreStreamed		5
-#define Pref_LoadRetained		6
-#define Pref_StoreRetained		7
+#घोषणा Pref_LoadStreamed		4
+#घोषणा Pref_StoreStreamed		5
+#घोषणा Pref_LoadRetained		6
+#घोषणा Pref_StoreRetained		7
 						/* 8 ... 24 are reserved */
-#define Pref_WriteBackInvalidate	25
-#define Pref_PrepareForStore		30
+#घोषणा Pref_WriteBackInvalidate	25
+#घोषणा Pref_PrepareForStore		30
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-	.macro	__pref hint addr
-#ifdef CONFIG_CPU_HAS_PREFETCH
-	pref	\hint, \addr
-#endif
+	.macro	__pref hपूर्णांक addr
+#अगर_घोषित CONFIG_CPU_HAS_PREFETCH
+	pref	\hपूर्णांक, \चddr
+#पूर्ण_अगर
 	.endm
 
 	.macro	pref_load addr
-	__pref	Pref_Load, \addr
+	__pref	Pref_Load, \चddr
 	.endm
 
 	.macro	pref_store addr
-	__pref	Pref_Store, \addr
+	__pref	Pref_Store, \चddr
 	.endm
 
 	.macro	pref_load_streamed addr
-	__pref	Pref_LoadStreamed, \addr
+	__pref	Pref_LoadStreamed, \चddr
 	.endm
 
 	.macro	pref_store_streamed addr
-	__pref	Pref_StoreStreamed, \addr
+	__pref	Pref_StoreStreamed, \चddr
 	.endm
 
 	.macro	pref_load_retained addr
-	__pref	Pref_LoadRetained, \addr
+	__pref	Pref_LoadRetained, \चddr
 	.endm
 
 	.macro	pref_store_retained addr
-	__pref	Pref_StoreRetained, \addr
+	__pref	Pref_StoreRetained, \चddr
 	.endm
 
 	.macro	pref_wback_inv addr
-	__pref	Pref_WriteBackInvalidate, \addr
+	__pref	Pref_WriteBackInvalidate, \चddr
 	.endm
 
-	.macro	pref_prepare_for_store addr
-	__pref	Pref_PrepareForStore, \addr
+	.macro	pref_prepare_क्रम_store addr
+	__pref	Pref_PrepareForStore, \चddr
 	.endm
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASM_PREFETCH_H */
+#पूर्ण_अगर /* __ASM_PREFETCH_H */

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __ASM_ARM_IOCTLS_H
-#define __ASM_ARM_IOCTLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __ASM_ARM_IOCTLS_H
+#घोषणा __ASM_ARM_IOCTLS_H
 
-#define FIOQSIZE	0x545E
+#घोषणा FIOQSIZE	0x545E
 
-#include <asm-generic/ioctls.h>
+#समावेश <यंत्र-generic/ioctls.h>
 
-#endif
+#पूर्ण_अगर

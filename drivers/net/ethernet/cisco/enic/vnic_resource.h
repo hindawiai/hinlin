@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,25 +18,25 @@
  *
  */
 
-#ifndef _VNIC_RESOURCE_H_
-#define _VNIC_RESOURCE_H_
+#अगर_अघोषित _VNIC_RESOURCE_H_
+#घोषणा _VNIC_RESOURCE_H_
 
-#define VNIC_RES_MAGIC		0x766E6963L	/* 'vnic' */
-#define VNIC_RES_VERSION	0x00000000L
-#define MGMTVNIC_MAGIC		0x544d474dL	/* 'MGMT' */
-#define MGMTVNIC_VERSION	0x00000000L
+#घोषणा VNIC_RES_MAGIC		0x766E6963L	/* 'vnic' */
+#घोषणा VNIC_RES_VERSION	0x00000000L
+#घोषणा MGMTVNIC_MAGIC		0x544d474dL	/* 'MGMT' */
+#घोषणा MGMTVNIC_VERSION	0x00000000L
 
-/* The MAC address assigned to the CFG vNIC is fixed. */
-#define MGMTVNIC_MAC		{ 0x02, 0x00, 0x54, 0x4d, 0x47, 0x4d }
+/* The MAC address asचिन्हित to the CFG vNIC is fixed. */
+#घोषणा MGMTVNIC_MAC		अणु 0x02, 0x00, 0x54, 0x4d, 0x47, 0x4d पूर्ण
 
 /* vNIC resource types */
-enum vnic_res_type {
+क्रमागत vnic_res_type अणु
 	RES_TYPE_EOL,			/* End-of-list */
 	RES_TYPE_WQ,			/* Work queues */
 	RES_TYPE_RQ,			/* Receive queues */
 	RES_TYPE_CQ,			/* Completion queues */
 	RES_TYPE_RSVD1,
-	RES_TYPE_NIC_CFG,		/* Enet NIC config registers */
+	RES_TYPE_NIC_CFG,		/* Enet NIC config रेजिस्टरs */
 	RES_TYPE_RSVD2,
 	RES_TYPE_RSVD3,
 	RES_TYPE_RSVD4,
@@ -43,7 +44,7 @@ enum vnic_res_type {
 	RES_TYPE_INTR_CTRL,		/* Interrupt ctrl table */
 	RES_TYPE_INTR_TABLE,		/* MSI/MSI-X Interrupt table */
 	RES_TYPE_INTR_PBA,		/* MSI/MSI-X PBA table */
-	RES_TYPE_INTR_PBA_LEGACY,	/* Legacy intr status */
+	RES_TYPE_INTR_PBA_LEGACY,	/* Legacy पूर्णांकr status */
 	RES_TYPE_RSVD6,
 	RES_TYPE_RSVD7,
 	RES_TYPE_DEVCMD,		/* Device command region */
@@ -57,27 +58,27 @@ enum vnic_res_type {
 	RES_TYPE_DEVCMD2,		/* Device control region */
 
 	RES_TYPE_MAX,			/* Count of resource types */
-};
+पूर्ण;
 
-struct vnic_resource_header {
+काष्ठा vnic_resource_header अणु
 	u32 magic;
 	u32 version;
-};
+पूर्ण;
 
-struct mgmt_barmap_hdr {
+काष्ठा mgmt_barmap_hdr अणु
 	u32 magic;			/* magic number */
-	u32 version;			/* header format version */
-	u16 lif;			/* loopback lif for mgmt frames */
+	u32 version;			/* header क्रमmat version */
+	u16 lअगर;			/* loopback lअगर क्रम mgmt frames */
 	u16 pci_slot;			/* installed pci slot */
-	char serial[16];		/* card serial number */
-};
+	अक्षर serial[16];		/* card serial number */
+पूर्ण;
 
-struct vnic_resource {
+काष्ठा vnic_resource अणु
 	u8 type;
 	u8 bar;
 	u8 pad[2];
 	u32 bar_offset;
 	u32 count;
-};
+पूर्ण;
 
-#endif /* _VNIC_RESOURCE_H_ */
+#पूर्ण_अगर /* _VNIC_RESOURCE_H_ */

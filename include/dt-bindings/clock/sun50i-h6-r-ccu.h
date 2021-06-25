@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2017 Icenowy Zheng <icenowy@aosc.xyz>
  */
 
-#ifndef _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_
-#define _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_
+#अगर_अघोषित _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_
+#घोषणा _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_
 
-#define CLK_AR100		0
+#घोषणा CLK_AR100		0
 
-#define CLK_R_APB1		2
+#घोषणा CLK_R_APB1		2
 
-#define CLK_R_APB1_TIMER	4
-#define CLK_R_APB1_TWD		5
-#define CLK_R_APB1_PWM		6
-#define CLK_R_APB2_UART		7
-#define CLK_R_APB2_I2C		8
-#define CLK_R_APB1_IR		9
-#define CLK_R_APB1_W1		10
+#घोषणा CLK_R_APB1_TIMER	4
+#घोषणा CLK_R_APB1_TWD		5
+#घोषणा CLK_R_APB1_PWM		6
+#घोषणा CLK_R_APB2_UART		7
+#घोषणा CLK_R_APB2_I2C		8
+#घोषणा CLK_R_APB1_IR		9
+#घोषणा CLK_R_APB1_W1		10
 
-#define CLK_IR			11
-#define CLK_W1			12
+#घोषणा CLK_IR			11
+#घोषणा CLK_W1			12
 
-#define CLK_R_APB2_RSB		13
+#घोषणा CLK_R_APB2_RSB		13
 
-#endif /* _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_ */
+#पूर्ण_अगर /* _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_ */

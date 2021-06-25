@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * ispccp2.h
  *
@@ -7,79 +8,79 @@
  * Copyright (C) 2010 Nokia Corporation
  * Copyright (C) 2010 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef OMAP3_ISP_CCP2_H
-#define OMAP3_ISP_CCP2_H
+#अगर_अघोषित OMAP3_ISP_CCP2_H
+#घोषणा OMAP3_ISP_CCP2_H
 
-#include <linux/videodev2.h>
+#समावेश <linux/videodev2.h>
 
-struct isp_device;
-struct isp_csiphy;
+काष्ठा isp_device;
+काष्ठा isp_csiphy;
 
 /* Sink and source ccp2 pads */
-#define CCP2_PAD_SINK			0
-#define CCP2_PAD_SOURCE			1
-#define CCP2_PADS_NUM			2
+#घोषणा CCP2_PAD_SINK			0
+#घोषणा CCP2_PAD_SOURCE			1
+#घोषणा CCP2_PADS_NUM			2
 
 /* CCP2 input media entity */
-enum ccp2_input_entity {
+क्रमागत ccp2_input_entity अणु
 	CCP2_INPUT_NONE,
 	CCP2_INPUT_SENSOR,
 	CCP2_INPUT_MEMORY,
-};
+पूर्ण;
 
 /* CCP2 output media entity */
-enum ccp2_output_entity {
+क्रमागत ccp2_output_entity अणु
 	CCP2_OUTPUT_NONE,
 	CCP2_OUTPUT_CCDC,
 	CCP2_OUTPUT_MEMORY,
-};
+पूर्ण;
 
 
 /* Logical channel configuration */
-struct isp_interface_lcx_config {
-	int crc;
+काष्ठा isp_पूर्णांकerface_lcx_config अणु
+	पूर्णांक crc;
 	u32 data_start;
 	u32 data_size;
-	u32 format;
-};
+	u32 क्रमmat;
+पूर्ण;
 
 /* Memory channel configuration */
-struct isp_interface_mem_config {
+काष्ठा isp_पूर्णांकerface_mem_config अणु
 	u32 dst_port;
 	u32 vsize_count;
 	u32 hsize_count;
 	u32 src_ofst;
 	u32 dst_ofst;
-};
+पूर्ण;
 
 /* CCP2 device */
-struct isp_ccp2_device {
-	struct v4l2_subdev subdev;
-	struct v4l2_mbus_framefmt formats[CCP2_PADS_NUM];
-	struct media_pad pads[CCP2_PADS_NUM];
+काष्ठा isp_ccp2_device अणु
+	काष्ठा v4l2_subdev subdev;
+	काष्ठा v4l2_mbus_framefmt क्रमmats[CCP2_PADS_NUM];
+	काष्ठा media_pad pads[CCP2_PADS_NUM];
 
-	enum ccp2_input_entity input;
-	enum ccp2_output_entity output;
-	struct isp_interface_lcx_config if_cfg;
-	struct isp_interface_mem_config mem_cfg;
-	struct isp_video video_in;
-	struct isp_csiphy *phy;
-	struct regulator *vdds_csib;
-	enum isp_pipeline_stream_state state;
-	wait_queue_head_t wait;
+	क्रमागत ccp2_input_entity input;
+	क्रमागत ccp2_output_entity output;
+	काष्ठा isp_पूर्णांकerface_lcx_config अगर_cfg;
+	काष्ठा isp_पूर्णांकerface_mem_config mem_cfg;
+	काष्ठा isp_video video_in;
+	काष्ठा isp_csiphy *phy;
+	काष्ठा regulator *vdds_csib;
+	क्रमागत isp_pipeline_stream_state state;
+	रुको_queue_head_t रुको;
 	atomic_t stopping;
-};
+पूर्ण;
 
 /* Function declarations */
-int omap3isp_ccp2_init(struct isp_device *isp);
-void omap3isp_ccp2_cleanup(struct isp_device *isp);
-int omap3isp_ccp2_register_entities(struct isp_ccp2_device *ccp2,
-			struct v4l2_device *vdev);
-void omap3isp_ccp2_unregister_entities(struct isp_ccp2_device *ccp2);
-void omap3isp_ccp2_isr(struct isp_ccp2_device *ccp2);
+पूर्णांक omap3isp_ccp2_init(काष्ठा isp_device *isp);
+व्योम omap3isp_ccp2_cleanup(काष्ठा isp_device *isp);
+पूर्णांक omap3isp_ccp2_रेजिस्टर_entities(काष्ठा isp_ccp2_device *ccp2,
+			काष्ठा v4l2_device *vdev);
+व्योम omap3isp_ccp2_unरेजिस्टर_entities(काष्ठा isp_ccp2_device *ccp2);
+व्योम omap3isp_ccp2_isr(काष्ठा isp_ccp2_device *ccp2);
 
-#endif	/* OMAP3_ISP_CCP2_H */
+#पूर्ण_अगर	/* OMAP3_ISP_CCP2_H */

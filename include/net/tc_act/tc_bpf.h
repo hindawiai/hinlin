@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2015 Jiri Pirko <jiri@resnulli.us>
  */
 
-#ifndef __NET_TC_BPF_H
-#define __NET_TC_BPF_H
+#अगर_अघोषित __NET_TC_BPF_H
+#घोषणा __NET_TC_BPF_H
 
-#include <linux/filter.h>
-#include <net/act_api.h>
+#समावेश <linux/filter.h>
+#समावेश <net/act_api.h>
 
-struct tcf_bpf {
-	struct tc_action	common;
-	struct bpf_prog __rcu	*filter;
-	union {
+काष्ठा tcf_bpf अणु
+	काष्ठा tc_action	common;
+	काष्ठा bpf_prog __rcu	*filter;
+	जोड़ अणु
 		u32		bpf_fd;
 		u16		bpf_num_ops;
-	};
-	struct sock_filter	*bpf_ops;
-	const char		*bpf_name;
-};
-#define to_bpf(a) ((struct tcf_bpf *)a)
+	पूर्ण;
+	काष्ठा sock_filter	*bpf_ops;
+	स्थिर अक्षर		*bpf_name;
+पूर्ण;
+#घोषणा to_bpf(a) ((काष्ठा tcf_bpf *)a)
 
-#endif /* __NET_TC_BPF_H */
+#पूर्ण_अगर /* __NET_TC_BPF_H */

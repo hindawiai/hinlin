@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _INCLUDE_PALMASOC_H_
-#define _INCLUDE_PALMASOC_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _INCLUDE_PALMASOC_H_
+#घोषणा _INCLUDE_PALMASOC_H_
 
-struct palm27x_asoc_info {
-	int	jack_gpio;
-};
+काष्ठा palm27x_asoc_info अणु
+	पूर्णांक	jack_gpio;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * drivers/mmc/host/sdhci-of-hlwd.c
  *
- * Nintendo Wii Secure Digital Host Controller Interface.
+ * Nपूर्णांकenकरो Wii Secure Digital Host Controller Interface.
  * Copyright (C) 2009 The GameCube Linux Team
  * Copyright (C) 2009 Albert Herranz
  *
@@ -11,84 +12,84 @@
  * Copyright (c) 2007 Freescale Semiconductor, Inc.
  * Copyright (c) 2009 MontaVista Software, Inc.
  *
- * Authors: Xiaobo Xie <X.Xie@freescale.com>
+ * Authors: Xiaobo Xie <X.Xie@मुक्तscale.com>
  *	    Anton Vorontsov <avorontsov@ru.mvista.com>
  */
 
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/mmc/host.h>
-#include "sdhci-pltfm.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mmc/host.h>
+#समावेश "sdhci-pltfm.h"
 
 /*
- * Ops and quirks for the Nintendo Wii SDHCI controllers.
+ * Ops and quirks क्रम the Nपूर्णांकenकरो Wii SDHCI controllers.
  */
 
 /*
- * We need a small delay after each write, or things go horribly wrong.
+ * We need a small delay after each ग_लिखो, or things go horribly wrong.
  */
-#define SDHCI_HLWD_WRITE_DELAY	5 /* usecs */
+#घोषणा SDHCI_HLWD_WRITE_DELAY	5 /* usecs */
 
-static void sdhci_hlwd_writel(struct sdhci_host *host, u32 val, int reg)
-{
-	sdhci_be32bs_writel(host, val, reg);
+अटल व्योम sdhci_hlwd_ग_लिखोl(काष्ठा sdhci_host *host, u32 val, पूर्णांक reg)
+अणु
+	sdhci_be32bs_ग_लिखोl(host, val, reg);
 	udelay(SDHCI_HLWD_WRITE_DELAY);
-}
+पूर्ण
 
-static void sdhci_hlwd_writew(struct sdhci_host *host, u16 val, int reg)
-{
-	sdhci_be32bs_writew(host, val, reg);
+अटल व्योम sdhci_hlwd_ग_लिखोw(काष्ठा sdhci_host *host, u16 val, पूर्णांक reg)
+अणु
+	sdhci_be32bs_ग_लिखोw(host, val, reg);
 	udelay(SDHCI_HLWD_WRITE_DELAY);
-}
+पूर्ण
 
-static void sdhci_hlwd_writeb(struct sdhci_host *host, u8 val, int reg)
-{
-	sdhci_be32bs_writeb(host, val, reg);
+अटल व्योम sdhci_hlwd_ग_लिखोb(काष्ठा sdhci_host *host, u8 val, पूर्णांक reg)
+अणु
+	sdhci_be32bs_ग_लिखोb(host, val, reg);
 	udelay(SDHCI_HLWD_WRITE_DELAY);
-}
+पूर्ण
 
-static const struct sdhci_ops sdhci_hlwd_ops = {
-	.read_l = sdhci_be32bs_readl,
-	.read_w = sdhci_be32bs_readw,
-	.read_b = sdhci_be32bs_readb,
-	.write_l = sdhci_hlwd_writel,
-	.write_w = sdhci_hlwd_writew,
-	.write_b = sdhci_hlwd_writeb,
-	.set_clock = sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops sdhci_hlwd_ops = अणु
+	.पढ़ो_l = sdhci_be32bs_पढ़ोl,
+	.पढ़ो_w = sdhci_be32bs_पढ़ोw,
+	.पढ़ो_b = sdhci_be32bs_पढ़ोb,
+	.ग_लिखो_l = sdhci_hlwd_ग_लिखोl,
+	.ग_लिखो_w = sdhci_hlwd_ग_लिखोw,
+	.ग_लिखो_b = sdhci_hlwd_ग_लिखोb,
+	.set_घड़ी = sdhci_set_घड़ी,
 	.set_bus_width = sdhci_set_bus_width,
 	.reset = sdhci_reset,
-	.set_uhs_signaling = sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing = sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-static const struct sdhci_pltfm_data sdhci_hlwd_pdata = {
+अटल स्थिर काष्ठा sdhci_pltfm_data sdhci_hlwd_pdata = अणु
 	.quirks = SDHCI_QUIRK_32BIT_DMA_ADDR |
 		  SDHCI_QUIRK_32BIT_DMA_SIZE,
 	.ops = &sdhci_hlwd_ops,
-};
+पूर्ण;
 
-static int sdhci_hlwd_probe(struct platform_device *pdev)
-{
-	return sdhci_pltfm_register(pdev, &sdhci_hlwd_pdata, 0);
-}
+अटल पूर्णांक sdhci_hlwd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस sdhci_pltfm_रेजिस्टर(pdev, &sdhci_hlwd_pdata, 0);
+पूर्ण
 
-static const struct of_device_id sdhci_hlwd_of_match[] = {
-	{ .compatible = "nintendo,hollywood-sdhci" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id sdhci_hlwd_of_match[] = अणु
+	अणु .compatible = "nintendo,hollywood-sdhci" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sdhci_hlwd_of_match);
 
-static struct platform_driver sdhci_hlwd_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sdhci_hlwd_driver = अणु
+	.driver = अणु
 		.name = "sdhci-hlwd",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = sdhci_hlwd_of_match,
 		.pm = &sdhci_pltfm_pmops,
-	},
+	पूर्ण,
 	.probe = sdhci_hlwd_probe,
-	.remove = sdhci_pltfm_unregister,
-};
+	.हटाओ = sdhci_pltfm_unरेजिस्टर,
+पूर्ण;
 
-module_platform_driver(sdhci_hlwd_driver);
+module_platक्रमm_driver(sdhci_hlwd_driver);
 
 MODULE_DESCRIPTION("Nintendo Wii SDHCI OF driver");
 MODULE_AUTHOR("The GameCube Linux Team, Albert Herranz");

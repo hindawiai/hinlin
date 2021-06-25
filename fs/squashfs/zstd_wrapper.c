@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Squashfs - a compressed read only filesystem for Linux
+ * Squashfs - a compressed पढ़ो only fileप्रणाली क्रम Linux
  *
  * Copyright (c) 2016-present, Facebook, Inc.
  * All rights reserved.
@@ -8,137 +9,137 @@
  * zstd_wrapper.c
  */
 
-#include <linux/mutex.h>
-#include <linux/bio.h>
-#include <linux/slab.h>
-#include <linux/zstd.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/zstd.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "squashfs_fs.h"
-#include "squashfs_fs_sb.h"
-#include "squashfs.h"
-#include "decompressor.h"
-#include "page_actor.h"
+#समावेश "squashfs_fs.h"
+#समावेश "squashfs_fs_sb.h"
+#समावेश "squashfs.h"
+#समावेश "decompressor.h"
+#समावेश "page_actor.h"
 
-struct workspace {
-	void *mem;
-	size_t mem_size;
-	size_t window_size;
-};
+काष्ठा workspace अणु
+	व्योम *mem;
+	माप_प्रकार mem_size;
+	माप_प्रकार winकरोw_size;
+पूर्ण;
 
-static void *zstd_init(struct squashfs_sb_info *msblk, void *buff)
-{
-	struct workspace *wksp = kmalloc(sizeof(*wksp), GFP_KERNEL);
+अटल व्योम *zstd_init(काष्ठा squashfs_sb_info *msblk, व्योम *buff)
+अणु
+	काष्ठा workspace *wksp = kदो_स्मृति(माप(*wksp), GFP_KERNEL);
 
-	if (wksp == NULL)
-		goto failed;
-	wksp->window_size = max_t(size_t,
+	अगर (wksp == शून्य)
+		जाओ failed;
+	wksp->winकरोw_size = max_t(माप_प्रकार,
 			msblk->block_size, SQUASHFS_METADATA_SIZE);
-	wksp->mem_size = ZSTD_DStreamWorkspaceBound(wksp->window_size);
-	wksp->mem = vmalloc(wksp->mem_size);
-	if (wksp->mem == NULL)
-		goto failed;
+	wksp->mem_size = ZSTD_DStreamWorkspaceBound(wksp->winकरोw_size);
+	wksp->mem = vदो_स्मृति(wksp->mem_size);
+	अगर (wksp->mem == शून्य)
+		जाओ failed;
 
-	return wksp;
+	वापस wksp;
 
 failed:
 	ERROR("Failed to allocate zstd workspace\n");
-	kfree(wksp);
-	return ERR_PTR(-ENOMEM);
-}
+	kमुक्त(wksp);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
 
-static void zstd_free(void *strm)
-{
-	struct workspace *wksp = strm;
+अटल व्योम zstd_मुक्त(व्योम *strm)
+अणु
+	काष्ठा workspace *wksp = strm;
 
-	if (wksp)
-		vfree(wksp->mem);
-	kfree(wksp);
-}
+	अगर (wksp)
+		vमुक्त(wksp->mem);
+	kमुक्त(wksp);
+पूर्ण
 
 
-static int zstd_uncompress(struct squashfs_sb_info *msblk, void *strm,
-	struct bio *bio, int offset, int length,
-	struct squashfs_page_actor *output)
-{
-	struct workspace *wksp = strm;
+अटल पूर्णांक zstd_uncompress(काष्ठा squashfs_sb_info *msblk, व्योम *strm,
+	काष्ठा bio *bio, पूर्णांक offset, पूर्णांक length,
+	काष्ठा squashfs_page_actor *output)
+अणु
+	काष्ठा workspace *wksp = strm;
 	ZSTD_DStream *stream;
-	size_t total_out = 0;
-	int error = 0;
-	ZSTD_inBuffer in_buf = { NULL, 0, 0 };
-	ZSTD_outBuffer out_buf = { NULL, 0, 0 };
-	struct bvec_iter_all iter_all = {};
-	struct bio_vec *bvec = bvec_init_iter_all(&iter_all);
+	माप_प्रकार total_out = 0;
+	पूर्णांक error = 0;
+	ZSTD_inBuffer in_buf = अणु शून्य, 0, 0 पूर्ण;
+	ZSTD_outBuffer out_buf = अणु शून्य, 0, 0 पूर्ण;
+	काष्ठा bvec_iter_all iter_all = अणुपूर्ण;
+	काष्ठा bio_vec *bvec = bvec_init_iter_all(&iter_all);
 
-	stream = ZSTD_initDStream(wksp->window_size, wksp->mem, wksp->mem_size);
+	stream = ZSTD_initDStream(wksp->winकरोw_size, wksp->mem, wksp->mem_size);
 
-	if (!stream) {
+	अगर (!stream) अणु
 		ERROR("Failed to initialize zstd decompressor\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	out_buf.size = PAGE_SIZE;
 	out_buf.dst = squashfs_first_page(output);
 
-	for (;;) {
-		size_t zstd_err;
+	क्रम (;;) अणु
+		माप_प्रकार zstd_err;
 
-		if (in_buf.pos == in_buf.size) {
-			const void *data;
-			int avail;
+		अगर (in_buf.pos == in_buf.size) अणु
+			स्थिर व्योम *data;
+			पूर्णांक avail;
 
-			if (!bio_next_segment(bio, &iter_all)) {
+			अगर (!bio_next_segment(bio, &iter_all)) अणु
 				error = -EIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			avail = min(length, ((int)bvec->bv_len) - offset);
+			avail = min(length, ((पूर्णांक)bvec->bv_len) - offset);
 			data = page_address(bvec->bv_page) + bvec->bv_offset;
 			length -= avail;
 			in_buf.src = data + offset;
 			in_buf.size = avail;
 			in_buf.pos = 0;
 			offset = 0;
-		}
+		पूर्ण
 
-		if (out_buf.pos == out_buf.size) {
+		अगर (out_buf.pos == out_buf.size) अणु
 			out_buf.dst = squashfs_next_page(output);
-			if (out_buf.dst == NULL) {
+			अगर (out_buf.dst == शून्य) अणु
 				/* Shouldn't run out of pages
-				 * before stream is done.
+				 * beक्रमe stream is करोne.
 				 */
 				error = -EIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			out_buf.pos = 0;
 			out_buf.size = PAGE_SIZE;
-		}
+		पूर्ण
 
 		total_out -= out_buf.pos;
 		zstd_err = ZSTD_decompressStream(stream, &out_buf, &in_buf);
 		total_out += out_buf.pos; /* add the additional data produced */
-		if (zstd_err == 0)
-			break;
+		अगर (zstd_err == 0)
+			अवरोध;
 
-		if (ZSTD_isError(zstd_err)) {
+		अगर (ZSTD_isError(zstd_err)) अणु
 			ERROR("zstd decompression error: %d\n",
-					(int)ZSTD_getErrorCode(zstd_err));
+					(पूर्णांक)ZSTD_getErrorCode(zstd_err));
 			error = -EIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	squashfs_finish_page(output);
 
-	return error ? error : total_out;
-}
+	वापस error ? error : total_out;
+पूर्ण
 
-const struct squashfs_decompressor squashfs_zstd_comp_ops = {
+स्थिर काष्ठा squashfs_decompressor squashfs_zstd_comp_ops = अणु
 	.init = zstd_init,
-	.free = zstd_free,
+	.मुक्त = zstd_मुक्त,
 	.decompress = zstd_uncompress,
 	.id = ZSTD_COMPRESSION,
 	.name = "zstd",
 	.supported = 1
-};
+पूर्ण;

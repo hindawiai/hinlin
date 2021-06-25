@@ -1,248 +1,249 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * spu management operations for of based platforms
+ * spu management operations क्रम of based platक्रमms
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005
  * Copyright 2006 Sony Corp.
  * (C) Copyright 2007 TOSHIBA CORPORATION
  */
 
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/export.h>
-#include <linux/ptrace.h>
-#include <linux/wait.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <linux/mutex.h>
-#include <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/export.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/device.h>
 
-#include <asm/spu.h>
-#include <asm/spu_priv1.h>
-#include <asm/firmware.h>
-#include <asm/prom.h>
+#समावेश <यंत्र/spu.h>
+#समावेश <यंत्र/spu_priv1.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/prom.h>
 
-#include "spufs/spufs.h"
-#include "interrupt.h"
+#समावेश "spufs/spufs.h"
+#समावेश "interrupt.h"
 
-struct device_node *spu_devnode(struct spu *spu)
-{
-	return spu->devnode;
-}
+काष्ठा device_node *spu_devnode(काष्ठा spu *spu)
+अणु
+	वापस spu->devnode;
+पूर्ण
 
 EXPORT_SYMBOL_GPL(spu_devnode);
 
-static u64 __init find_spu_unit_number(struct device_node *spe)
-{
-	const unsigned int *prop;
-	int proplen;
+अटल u64 __init find_spu_unit_number(काष्ठा device_node *spe)
+अणु
+	स्थिर अचिन्हित पूर्णांक *prop;
+	पूर्णांक proplen;
 
 	/* new device trees should provide the physical-id attribute */
 	prop = of_get_property(spe, "physical-id", &proplen);
-	if (proplen == 4)
-		return (u64)*prop;
+	अगर (proplen == 4)
+		वापस (u64)*prop;
 
 	/* celleb device tree provides the unit-id */
 	prop = of_get_property(spe, "unit-id", &proplen);
-	if (proplen == 4)
-		return (u64)*prop;
+	अगर (proplen == 4)
+		वापस (u64)*prop;
 
 	/* legacy device trees provide the id in the reg attribute */
 	prop = of_get_property(spe, "reg", &proplen);
-	if (proplen == 4)
-		return (u64)*prop;
+	अगर (proplen == 4)
+		वापस (u64)*prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void spu_unmap(struct spu *spu)
-{
-	if (!firmware_has_feature(FW_FEATURE_LPAR))
+अटल व्योम spu_unmap(काष्ठा spu *spu)
+अणु
+	अगर (!firmware_has_feature(FW_FEATURE_LPAR))
 		iounmap(spu->priv1);
 	iounmap(spu->priv2);
 	iounmap(spu->problem);
-	iounmap((__force u8 __iomem *)spu->local_store);
-}
+	iounmap((__क्रमce u8 __iomem *)spu->local_store);
+पूर्ण
 
-static int __init spu_map_interrupts_old(struct spu *spu,
-	struct device_node *np)
-{
-	unsigned int isrc;
-	const u32 *tmp;
-	int nid;
+अटल पूर्णांक __init spu_map_पूर्णांकerrupts_old(काष्ठा spu *spu,
+	काष्ठा device_node *np)
+अणु
+	अचिन्हित पूर्णांक isrc;
+	स्थिर u32 *पंचांगp;
+	पूर्णांक nid;
 
-	/* Get the interrupt source unit from the device-tree */
-	tmp = of_get_property(np, "isrc", NULL);
-	if (!tmp)
-		return -ENODEV;
-	isrc = tmp[0];
+	/* Get the पूर्णांकerrupt source unit from the device-tree */
+	पंचांगp = of_get_property(np, "isrc", शून्य);
+	अगर (!पंचांगp)
+		वापस -ENODEV;
+	isrc = पंचांगp[0];
 
-	tmp = of_get_property(np->parent->parent, "node-id", NULL);
-	if (!tmp) {
-		printk(KERN_WARNING "%s: can't find node-id\n", __func__);
+	पंचांगp = of_get_property(np->parent->parent, "node-id", शून्य);
+	अगर (!पंचांगp) अणु
+		prपूर्णांकk(KERN_WARNING "%s: can't find node-id\n", __func__);
 		nid = spu->node;
-	} else
-		nid = tmp[0];
+	पूर्ण अन्यथा
+		nid = पंचांगp[0];
 
 	/* Add the node number */
 	isrc |= nid << IIC_IRQ_NODE_SHIFT;
 
-	/* Now map interrupts of all 3 classes */
-	spu->irqs[0] = irq_create_mapping(NULL, IIC_IRQ_CLASS_0 | isrc);
-	spu->irqs[1] = irq_create_mapping(NULL, IIC_IRQ_CLASS_1 | isrc);
-	spu->irqs[2] = irq_create_mapping(NULL, IIC_IRQ_CLASS_2 | isrc);
+	/* Now map पूर्णांकerrupts of all 3 classes */
+	spu->irqs[0] = irq_create_mapping(शून्य, IIC_IRQ_CLASS_0 | isrc);
+	spu->irqs[1] = irq_create_mapping(शून्य, IIC_IRQ_CLASS_1 | isrc);
+	spu->irqs[2] = irq_create_mapping(शून्य, IIC_IRQ_CLASS_2 | isrc);
 
-	/* Right now, we only fail if class 2 failed */
-	if (!spu->irqs[2])
-		return -EINVAL;
+	/* Right now, we only fail अगर class 2 failed */
+	अगर (!spu->irqs[2])
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __iomem * __init spu_map_prop_old(struct spu *spu,
-					      struct device_node *n,
-					      const char *name)
-{
-	const struct address_prop {
-		unsigned long address;
-		unsigned int len;
-	} __attribute__((packed)) *prop;
-	int proplen;
+अटल व्योम __iomem * __init spu_map_prop_old(काष्ठा spu *spu,
+					      काष्ठा device_node *n,
+					      स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा address_prop अणु
+		अचिन्हित दीर्घ address;
+		अचिन्हित पूर्णांक len;
+	पूर्ण __attribute__((packed)) *prop;
+	पूर्णांक proplen;
 
 	prop = of_get_property(n, name, &proplen);
-	if (prop == NULL || proplen != sizeof (struct address_prop))
-		return NULL;
+	अगर (prop == शून्य || proplen != माप (काष्ठा address_prop))
+		वापस शून्य;
 
-	return ioremap(prop->address, prop->len);
-}
+	वापस ioremap(prop->address, prop->len);
+पूर्ण
 
-static int __init spu_map_device_old(struct spu *spu)
-{
-	struct device_node *node = spu->devnode;
-	const char *prop;
-	int ret;
+अटल पूर्णांक __init spu_map_device_old(काष्ठा spu *spu)
+अणु
+	काष्ठा device_node *node = spu->devnode;
+	स्थिर अक्षर *prop;
+	पूर्णांक ret;
 
 	ret = -ENODEV;
-	spu->name = of_get_property(node, "name", NULL);
-	if (!spu->name)
-		goto out;
+	spu->name = of_get_property(node, "name", शून्य);
+	अगर (!spu->name)
+		जाओ out;
 
-	prop = of_get_property(node, "local-store", NULL);
-	if (!prop)
-		goto out;
-	spu->local_store_phys = *(unsigned long *)prop;
+	prop = of_get_property(node, "local-store", शून्य);
+	अगर (!prop)
+		जाओ out;
+	spu->local_store_phys = *(अचिन्हित दीर्घ *)prop;
 
 	/* we use local store as ram, not io memory */
-	spu->local_store = (void __force *)
+	spu->local_store = (व्योम __क्रमce *)
 		spu_map_prop_old(spu, node, "local-store");
-	if (!spu->local_store)
-		goto out;
+	अगर (!spu->local_store)
+		जाओ out;
 
-	prop = of_get_property(node, "problem", NULL);
-	if (!prop)
-		goto out_unmap;
-	spu->problem_phys = *(unsigned long *)prop;
+	prop = of_get_property(node, "problem", शून्य);
+	अगर (!prop)
+		जाओ out_unmap;
+	spu->problem_phys = *(अचिन्हित दीर्घ *)prop;
 
 	spu->problem = spu_map_prop_old(spu, node, "problem");
-	if (!spu->problem)
-		goto out_unmap;
+	अगर (!spu->problem)
+		जाओ out_unmap;
 
 	spu->priv2 = spu_map_prop_old(spu, node, "priv2");
-	if (!spu->priv2)
-		goto out_unmap;
+	अगर (!spu->priv2)
+		जाओ out_unmap;
 
-	if (!firmware_has_feature(FW_FEATURE_LPAR)) {
+	अगर (!firmware_has_feature(FW_FEATURE_LPAR)) अणु
 		spu->priv1 = spu_map_prop_old(spu, node, "priv1");
-		if (!spu->priv1)
-			goto out_unmap;
-	}
+		अगर (!spu->priv1)
+			जाओ out_unmap;
+	पूर्ण
 
 	ret = 0;
-	goto out;
+	जाओ out;
 
 out_unmap:
 	spu_unmap(spu);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init spu_map_interrupts(struct spu *spu, struct device_node *np)
-{
-	int i;
+अटल पूर्णांक __init spu_map_पूर्णांकerrupts(काष्ठा spu *spu, काष्ठा device_node *np)
+अणु
+	पूर्णांक i;
 
-	for (i=0; i < 3; i++) {
+	क्रम (i=0; i < 3; i++) अणु
 		spu->irqs[i] = irq_of_parse_and_map(np, i);
-		if (!spu->irqs[i])
-			goto err;
-	}
-	return 0;
+		अगर (!spu->irqs[i])
+			जाओ err;
+	पूर्ण
+	वापस 0;
 
 err:
 	pr_debug("failed to map irq %x for spu %s\n", i, spu->name);
-	for (; i >= 0; i--) {
-		if (spu->irqs[i])
+	क्रम (; i >= 0; i--) अणु
+		अगर (spu->irqs[i])
 			irq_dispose_mapping(spu->irqs[i]);
-	}
-	return -EINVAL;
-}
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int spu_map_resource(struct spu *spu, int nr,
-			    void __iomem** virt, unsigned long *phys)
-{
-	struct device_node *np = spu->devnode;
-	struct resource resource = { };
-	unsigned long len;
-	int ret;
+अटल पूर्णांक spu_map_resource(काष्ठा spu *spu, पूर्णांक nr,
+			    व्योम __iomem** virt, अचिन्हित दीर्घ *phys)
+अणु
+	काष्ठा device_node *np = spu->devnode;
+	काष्ठा resource resource = अणु पूर्ण;
+	अचिन्हित दीर्घ len;
+	पूर्णांक ret;
 
 	ret = of_address_to_resource(np, nr, &resource);
-	if (ret)
-		return ret;
-	if (phys)
+	अगर (ret)
+		वापस ret;
+	अगर (phys)
 		*phys = resource.start;
 	len = resource_size(&resource);
 	*virt = ioremap(resource.start, len);
-	if (!*virt)
-		return -EINVAL;
-	return 0;
-}
+	अगर (!*virt)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int __init spu_map_device(struct spu *spu)
-{
-	struct device_node *np = spu->devnode;
-	int ret = -ENODEV;
+अटल पूर्णांक __init spu_map_device(काष्ठा spu *spu)
+अणु
+	काष्ठा device_node *np = spu->devnode;
+	पूर्णांक ret = -ENODEV;
 
-	spu->name = of_get_property(np, "name", NULL);
-	if (!spu->name)
-		goto out;
+	spu->name = of_get_property(np, "name", शून्य);
+	अगर (!spu->name)
+		जाओ out;
 
-	ret = spu_map_resource(spu, 0, (void __iomem**)&spu->local_store,
+	ret = spu_map_resource(spu, 0, (व्योम __iomem**)&spu->local_store,
 			       &spu->local_store_phys);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("spu_new: failed to map %pOF resource 0\n",
 			 np);
-		goto out;
-	}
-	ret = spu_map_resource(spu, 1, (void __iomem**)&spu->problem,
+		जाओ out;
+	पूर्ण
+	ret = spu_map_resource(spu, 1, (व्योम __iomem**)&spu->problem,
 			       &spu->problem_phys);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("spu_new: failed to map %pOF resource 1\n",
 			 np);
-		goto out_unmap;
-	}
-	ret = spu_map_resource(spu, 2, (void __iomem**)&spu->priv2, NULL);
-	if (ret) {
+		जाओ out_unmap;
+	पूर्ण
+	ret = spu_map_resource(spu, 2, (व्योम __iomem**)&spu->priv2, शून्य);
+	अगर (ret) अणु
 		pr_debug("spu_new: failed to map %pOF resource 2\n",
 			 np);
-		goto out_unmap;
-	}
-	if (!firmware_has_feature(FW_FEATURE_LPAR))
+		जाओ out_unmap;
+	पूर्ण
+	अगर (!firmware_has_feature(FW_FEATURE_LPAR))
 		ret = spu_map_resource(spu, 3,
-			       (void __iomem**)&spu->priv1, NULL);
-	if (ret) {
+			       (व्योम __iomem**)&spu->priv1, शून्य);
+	अगर (ret) अणु
 		pr_debug("spu_new: failed to map %pOF resource 3\n",
 			 np);
-		goto out_unmap;
-	}
+		जाओ out_unmap;
+	पूर्ण
 	pr_debug("spu_new: %pOF maps:\n", np);
 	pr_debug("  local store   : 0x%016lx -> 0x%p\n",
 		 spu->local_store_phys, spu->local_store);
@@ -251,207 +252,207 @@ static int __init spu_map_device(struct spu *spu)
 	pr_debug("  priv2         :                       0x%p\n", spu->priv2);
 	pr_debug("  priv1         :                       0x%p\n", spu->priv1);
 
-	return 0;
+	वापस 0;
 
 out_unmap:
 	spu_unmap(spu);
 out:
 	pr_debug("failed to map spe %s: %d\n", spu->name, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init of_enumerate_spus(int (*fn)(void *data))
-{
-	int ret;
-	struct device_node *node;
-	unsigned int n = 0;
+अटल पूर्णांक __init of_क्रमागतerate_spus(पूर्णांक (*fn)(व्योम *data))
+अणु
+	पूर्णांक ret;
+	काष्ठा device_node *node;
+	अचिन्हित पूर्णांक n = 0;
 
 	ret = -ENODEV;
-	for_each_node_by_type(node, "spe") {
+	क्रम_each_node_by_type(node, "spe") अणु
 		ret = fn(node);
-		if (ret) {
-			printk(KERN_WARNING "%s: Error initializing %pOFn\n",
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_WARNING "%s: Error initializing %pOFn\n",
 				__func__, node);
 			of_node_put(node);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		n++;
-	}
-	return ret ? ret : n;
-}
+	पूर्ण
+	वापस ret ? ret : n;
+पूर्ण
 
-static int __init of_create_spu(struct spu *spu, void *data)
-{
-	int ret;
-	struct device_node *spe = (struct device_node *)data;
-	static int legacy_map = 0, legacy_irq = 0;
+अटल पूर्णांक __init of_create_spu(काष्ठा spu *spu, व्योम *data)
+अणु
+	पूर्णांक ret;
+	काष्ठा device_node *spe = (काष्ठा device_node *)data;
+	अटल पूर्णांक legacy_map = 0, legacy_irq = 0;
 
 	spu->devnode = of_node_get(spe);
 	spu->spe_id = find_spu_unit_number(spe);
 
 	spu->node = of_node_to_nid(spe);
-	if (spu->node >= MAX_NUMNODES) {
-		printk(KERN_WARNING "SPE %pOF on node %d ignored,"
+	अगर (spu->node >= MAX_NUMNODES) अणु
+		prपूर्णांकk(KERN_WARNING "SPE %pOF on node %d ignored,"
 		       " node number too big\n", spe, spu->node);
-		printk(KERN_WARNING "Check if CONFIG_NUMA is enabled.\n");
+		prपूर्णांकk(KERN_WARNING "Check if CONFIG_NUMA is enabled.\n");
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = spu_map_device(spu);
-	if (ret) {
-		if (!legacy_map) {
+	अगर (ret) अणु
+		अगर (!legacy_map) अणु
 			legacy_map = 1;
-			printk(KERN_WARNING "%s: Legacy device tree found, "
+			prपूर्णांकk(KERN_WARNING "%s: Legacy device tree found, "
 				"trying to map old style\n", __func__);
-		}
+		पूर्ण
 		ret = spu_map_device_old(spu);
-		if (ret) {
-			printk(KERN_ERR "Unable to map %s\n",
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "Unable to map %s\n",
 				spu->name);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	ret = spu_map_interrupts(spu, spe);
-	if (ret) {
-		if (!legacy_irq) {
+	ret = spu_map_पूर्णांकerrupts(spu, spe);
+	अगर (ret) अणु
+		अगर (!legacy_irq) अणु
 			legacy_irq = 1;
-			printk(KERN_WARNING "%s: Legacy device tree found, "
+			prपूर्णांकk(KERN_WARNING "%s: Legacy device tree found, "
 				"trying old style irq\n", __func__);
-		}
-		ret = spu_map_interrupts_old(spu, spe);
-		if (ret) {
-			printk(KERN_ERR "%s: could not map interrupts\n",
+		पूर्ण
+		ret = spu_map_पूर्णांकerrupts_old(spu, spe);
+		अगर (ret) अणु
+			prपूर्णांकk(KERN_ERR "%s: could not map interrupts\n",
 				spu->name);
-			goto out_unmap;
-		}
-	}
+			जाओ out_unmap;
+		पूर्ण
+	पूर्ण
 
 	pr_debug("Using SPE %s %p %p %p %p %d\n", spu->name,
 		spu->local_store, spu->problem, spu->priv1,
 		spu->priv2, spu->number);
-	goto out;
+	जाओ out;
 
 out_unmap:
 	spu_unmap(spu);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int of_destroy_spu(struct spu *spu)
-{
+अटल पूर्णांक of_destroy_spu(काष्ठा spu *spu)
+अणु
 	spu_unmap(spu);
 	of_node_put(spu->devnode);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enable_spu_by_master_run(struct spu_context *ctx)
-{
+अटल व्योम enable_spu_by_master_run(काष्ठा spu_context *ctx)
+अणु
 	ctx->ops->master_start(ctx);
-}
+पूर्ण
 
-static void disable_spu_by_master_run(struct spu_context *ctx)
-{
+अटल व्योम disable_spu_by_master_run(काष्ठा spu_context *ctx)
+अणु
 	ctx->ops->master_stop(ctx);
-}
+पूर्ण
 
-/* Hardcoded affinity idxs for qs20 */
-#define QS20_SPES_PER_BE 8
-static int qs20_reg_idxs[QS20_SPES_PER_BE] =   { 0, 2, 4, 6, 7, 5, 3, 1 };
-static int qs20_reg_memory[QS20_SPES_PER_BE] = { 1, 1, 0, 0, 0, 0, 0, 0 };
+/* Hardcoded affinity idxs क्रम qs20 */
+#घोषणा QS20_SPES_PER_BE 8
+अटल पूर्णांक qs20_reg_idxs[QS20_SPES_PER_BE] =   अणु 0, 2, 4, 6, 7, 5, 3, 1 पूर्ण;
+अटल पूर्णांक qs20_reg_memory[QS20_SPES_PER_BE] = अणु 1, 1, 0, 0, 0, 0, 0, 0 पूर्ण;
 
-static struct spu *spu_lookup_reg(int node, u32 reg)
-{
-	struct spu *spu;
-	const u32 *spu_reg;
+अटल काष्ठा spu *spu_lookup_reg(पूर्णांक node, u32 reg)
+अणु
+	काष्ठा spu *spu;
+	स्थिर u32 *spu_reg;
 
-	list_for_each_entry(spu, &cbe_spu_info[node].spus, cbe_list) {
-		spu_reg = of_get_property(spu_devnode(spu), "reg", NULL);
-		if (*spu_reg == reg)
-			return spu;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(spu, &cbe_spu_info[node].spus, cbe_list) अणु
+		spu_reg = of_get_property(spu_devnode(spu), "reg", शून्य);
+		अगर (*spu_reg == reg)
+			वापस spu;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void init_affinity_qs20_harcoded(void)
-{
-	int node, i;
-	struct spu *last_spu, *spu;
+अटल व्योम init_affinity_qs20_harcoded(व्योम)
+अणु
+	पूर्णांक node, i;
+	काष्ठा spu *last_spu, *spu;
 	u32 reg;
 
-	for (node = 0; node < MAX_NUMNODES; node++) {
-		last_spu = NULL;
-		for (i = 0; i < QS20_SPES_PER_BE; i++) {
+	क्रम (node = 0; node < MAX_NUMNODES; node++) अणु
+		last_spu = शून्य;
+		क्रम (i = 0; i < QS20_SPES_PER_BE; i++) अणु
 			reg = qs20_reg_idxs[i];
 			spu = spu_lookup_reg(node, reg);
-			if (!spu)
-				continue;
+			अगर (!spu)
+				जारी;
 			spu->has_mem_affinity = qs20_reg_memory[reg];
-			if (last_spu)
+			अगर (last_spu)
 				list_add_tail(&spu->aff_list,
 						&last_spu->aff_list);
 			last_spu = spu;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int of_has_vicinity(void)
-{
-	struct device_node *dn;
+अटल पूर्णांक of_has_vicinity(व्योम)
+अणु
+	काष्ठा device_node *dn;
 
-	for_each_node_by_type(dn, "spe") {
-		if (of_find_property(dn, "vicinity", NULL))  {
+	क्रम_each_node_by_type(dn, "spe") अणु
+		अगर (of_find_property(dn, "vicinity", शून्य))  अणु
 			of_node_put(dn);
-			return 1;
-		}
-	}
-	return 0;
-}
+			वापस 1;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct spu *devnode_spu(int cbe, struct device_node *dn)
-{
-	struct spu *spu;
+अटल काष्ठा spu *devnode_spu(पूर्णांक cbe, काष्ठा device_node *dn)
+अणु
+	काष्ठा spu *spu;
 
-	list_for_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list)
-		if (spu_devnode(spu) == dn)
-			return spu;
-	return NULL;
-}
+	list_क्रम_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list)
+		अगर (spu_devnode(spu) == dn)
+			वापस spu;
+	वापस शून्य;
+पूर्ण
 
-static struct spu *
-neighbour_spu(int cbe, struct device_node *target, struct device_node *avoid)
-{
-	struct spu *spu;
-	struct device_node *spu_dn;
-	const phandle *vic_handles;
-	int lenp, i;
+अटल काष्ठा spu *
+neighbour_spu(पूर्णांक cbe, काष्ठा device_node *target, काष्ठा device_node *aव्योम)
+अणु
+	काष्ठा spu *spu;
+	काष्ठा device_node *spu_dn;
+	स्थिर phandle *vic_handles;
+	पूर्णांक lenp, i;
 
-	list_for_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list) {
+	list_क्रम_each_entry(spu, &cbe_spu_info[cbe].spus, cbe_list) अणु
 		spu_dn = spu_devnode(spu);
-		if (spu_dn == avoid)
-			continue;
+		अगर (spu_dn == aव्योम)
+			जारी;
 		vic_handles = of_get_property(spu_dn, "vicinity", &lenp);
-		for (i=0; i < (lenp / sizeof(phandle)); i++) {
-			if (vic_handles[i] == target->phandle)
-				return spu;
-		}
-	}
-	return NULL;
-}
+		क्रम (i=0; i < (lenp / माप(phandle)); i++) अणु
+			अगर (vic_handles[i] == target->phandle)
+				वापस spu;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void init_affinity_node(int cbe)
-{
-	struct spu *spu, *last_spu;
-	struct device_node *vic_dn, *last_spu_dn;
-	phandle avoid_ph;
-	const phandle *vic_handles;
-	int lenp, i, added;
+अटल व्योम init_affinity_node(पूर्णांक cbe)
+अणु
+	काष्ठा spu *spu, *last_spu;
+	काष्ठा device_node *vic_dn, *last_spu_dn;
+	phandle aव्योम_ph;
+	स्थिर phandle *vic_handles;
+	पूर्णांक lenp, i, added;
 
-	last_spu = list_first_entry(&cbe_spu_info[cbe].spus, struct spu,
+	last_spu = list_first_entry(&cbe_spu_info[cbe].spus, काष्ठा spu,
 								cbe_list);
-	avoid_ph = 0;
-	for (added = 1; added < cbe_spu_info[cbe].n_spus; added++) {
+	aव्योम_ph = 0;
+	क्रम (added = 1; added < cbe_spu_info[cbe].n_spus; added++) अणु
 		last_spu_dn = spu_devnode(last_spu);
 		vic_handles = of_get_property(last_spu_dn, "vicinity", &lenp);
 
@@ -459,68 +460,68 @@ static void init_affinity_node(int cbe)
 		 * Walk through each phandle in vicinity property of the spu
 		 * (tipically two vicinity phandles per spe node)
 		 */
-		for (i = 0; i < (lenp / sizeof(phandle)); i++) {
-			if (vic_handles[i] == avoid_ph)
-				continue;
+		क्रम (i = 0; i < (lenp / माप(phandle)); i++) अणु
+			अगर (vic_handles[i] == aव्योम_ph)
+				जारी;
 
 			vic_dn = of_find_node_by_phandle(vic_handles[i]);
-			if (!vic_dn)
-				continue;
+			अगर (!vic_dn)
+				जारी;
 
-			if (of_node_name_eq(vic_dn, "spe") ) {
+			अगर (of_node_name_eq(vic_dn, "spe") ) अणु
 				spu = devnode_spu(cbe, vic_dn);
-				avoid_ph = last_spu_dn->phandle;
-			} else {
+				aव्योम_ph = last_spu_dn->phandle;
+			पूर्ण अन्यथा अणु
 				/*
-				 * "mic-tm" and "bif0" nodes do not have
+				 * "mic-tm" and "bif0" nodes करो not have
 				 * vicinity property. So we need to find the
 				 * spe which has vic_dn as neighbour, but
 				 * skipping the one we came from (last_spu_dn)
 				 */
 				spu = neighbour_spu(cbe, vic_dn, last_spu_dn);
-				if (!spu)
-					continue;
-				if (of_node_name_eq(vic_dn, "mic-tm")) {
+				अगर (!spu)
+					जारी;
+				अगर (of_node_name_eq(vic_dn, "mic-tm")) अणु
 					last_spu->has_mem_affinity = 1;
 					spu->has_mem_affinity = 1;
-				}
-				avoid_ph = vic_dn->phandle;
-			}
+				पूर्ण
+				aव्योम_ph = vic_dn->phandle;
+			पूर्ण
 
 			list_add_tail(&spu->aff_list, &last_spu->aff_list);
 			last_spu = spu;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void init_affinity_fw(void)
-{
-	int cbe;
+अटल व्योम init_affinity_fw(व्योम)
+अणु
+	पूर्णांक cbe;
 
-	for (cbe = 0; cbe < MAX_NUMNODES; cbe++)
+	क्रम (cbe = 0; cbe < MAX_NUMNODES; cbe++)
 		init_affinity_node(cbe);
-}
+पूर्ण
 
-static int __init init_affinity(void)
-{
-	if (of_has_vicinity()) {
+अटल पूर्णांक __init init_affinity(व्योम)
+अणु
+	अगर (of_has_vicinity()) अणु
 		init_affinity_fw();
-	} else {
-		if (of_machine_is_compatible("IBM,CPBW-1.0"))
+	पूर्ण अन्यथा अणु
+		अगर (of_machine_is_compatible("IBM,CPBW-1.0"))
 			init_affinity_qs20_harcoded();
-		else
-			printk("No affinity configuration found\n");
-	}
+		अन्यथा
+			prपूर्णांकk("No affinity configuration found\n");
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct spu_management_ops spu_management_of_ops = {
-	.enumerate_spus = of_enumerate_spus,
+स्थिर काष्ठा spu_management_ops spu_management_of_ops = अणु
+	.क्रमागतerate_spus = of_क्रमागतerate_spus,
 	.create_spu = of_create_spu,
 	.destroy_spu = of_destroy_spu,
 	.enable_spu = enable_spu_by_master_run,
 	.disable_spu = disable_spu_by_master_run,
 	.init_affinity = init_affinity,
-};
+पूर्ण;

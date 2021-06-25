@@ -1,152 +1,153 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Ming Hsiu Tsai <minghsiu.tsai@mediatek.com>
  *         Rick Chang <rick.chang@mediatek.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/videodev2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/videodev2.h>
 
-#include "mtk_jpeg_dec_parse.h"
+#समावेश "mtk_jpeg_dec_parse.h"
 
-#define TEM	0x01
-#define SOF0	0xc0
-#define RST	0xd0
-#define SOI	0xd8
-#define EOI	0xd9
+#घोषणा TEM	0x01
+#घोषणा SOF0	0xc0
+#घोषणा RST	0xd0
+#घोषणा SOI	0xd8
+#घोषणा EOI	0xd9
 
-struct mtk_jpeg_stream {
+काष्ठा mtk_jpeg_stream अणु
 	u8 *addr;
 	u32 size;
 	u32 curr;
-};
+पूर्ण;
 
-static int read_byte(struct mtk_jpeg_stream *stream)
-{
-	if (stream->curr >= stream->size)
-		return -1;
-	return stream->addr[stream->curr++];
-}
+अटल पूर्णांक पढ़ो_byte(काष्ठा mtk_jpeg_stream *stream)
+अणु
+	अगर (stream->curr >= stream->size)
+		वापस -1;
+	वापस stream->addr[stream->curr++];
+पूर्ण
 
-static int read_word_be(struct mtk_jpeg_stream *stream, u32 *word)
-{
+अटल पूर्णांक पढ़ो_word_be(काष्ठा mtk_jpeg_stream *stream, u32 *word)
+अणु
 	u32 temp;
-	int byte;
+	पूर्णांक byte;
 
-	byte = read_byte(stream);
-	if (byte == -1)
-		return -1;
+	byte = पढ़ो_byte(stream);
+	अगर (byte == -1)
+		वापस -1;
 	temp = byte << 8;
-	byte = read_byte(stream);
-	if (byte == -1)
-		return -1;
+	byte = पढ़ो_byte(stream);
+	अगर (byte == -1)
+		वापस -1;
 	*word = (u32)byte | temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void read_skip(struct mtk_jpeg_stream *stream, long len)
-{
-	if (len <= 0)
-		return;
-	while (len--)
-		read_byte(stream);
-}
+अटल व्योम पढ़ो_skip(काष्ठा mtk_jpeg_stream *stream, दीर्घ len)
+अणु
+	अगर (len <= 0)
+		वापस;
+	जबतक (len--)
+		पढ़ो_byte(stream);
+पूर्ण
 
-static bool mtk_jpeg_do_parse(struct mtk_jpeg_dec_param *param, u8 *src_addr_va,
+अटल bool mtk_jpeg_करो_parse(काष्ठा mtk_jpeg_dec_param *param, u8 *src_addr_va,
 			      u32 src_size)
-{
+अणु
 	bool notfound = true;
-	struct mtk_jpeg_stream stream;
+	काष्ठा mtk_jpeg_stream stream;
 
 	stream.addr = src_addr_va;
 	stream.size = src_size;
 	stream.curr = 0;
 
-	while (notfound) {
-		int i, length, byte;
+	जबतक (notfound) अणु
+		पूर्णांक i, length, byte;
 		u32 word;
 
-		byte = read_byte(&stream);
-		if (byte == -1)
-			return false;
-		if (byte != 0xff)
-			continue;
-		do
-			byte = read_byte(&stream);
-		while (byte == 0xff);
-		if (byte == -1)
-			return false;
-		if (byte == 0)
-			continue;
+		byte = पढ़ो_byte(&stream);
+		अगर (byte == -1)
+			वापस false;
+		अगर (byte != 0xff)
+			जारी;
+		करो
+			byte = पढ़ो_byte(&stream);
+		जबतक (byte == 0xff);
+		अगर (byte == -1)
+			वापस false;
+		अगर (byte == 0)
+			जारी;
 
 		length = 0;
-		switch (byte) {
-		case SOF0:
+		चयन (byte) अणु
+		हाल SOF0:
 			/* length */
-			if (read_word_be(&stream, &word))
-				break;
+			अगर (पढ़ो_word_be(&stream, &word))
+				अवरोध;
 
 			/* precision */
-			if (read_byte(&stream) == -1)
-				break;
+			अगर (पढ़ो_byte(&stream) == -1)
+				अवरोध;
 
-			if (read_word_be(&stream, &word))
-				break;
+			अगर (पढ़ो_word_be(&stream, &word))
+				अवरोध;
 			param->pic_h = word;
 
-			if (read_word_be(&stream, &word))
-				break;
+			अगर (पढ़ो_word_be(&stream, &word))
+				अवरोध;
 			param->pic_w = word;
 
-			param->comp_num = read_byte(&stream);
-			if (param->comp_num != 1 && param->comp_num != 3)
-				break;
+			param->comp_num = पढ़ो_byte(&stream);
+			अगर (param->comp_num != 1 && param->comp_num != 3)
+				अवरोध;
 
-			for (i = 0; i < param->comp_num; i++) {
-				param->comp_id[i] = read_byte(&stream);
-				if (param->comp_id[i] == -1)
-					break;
+			क्रम (i = 0; i < param->comp_num; i++) अणु
+				param->comp_id[i] = पढ़ो_byte(&stream);
+				अगर (param->comp_id[i] == -1)
+					अवरोध;
 
 				/* sampling */
-				byte = read_byte(&stream);
-				if (byte == -1)
-					break;
+				byte = पढ़ो_byte(&stream);
+				अगर (byte == -1)
+					अवरोध;
 				param->sampling_w[i] = (byte >> 4) & 0x0F;
 				param->sampling_h[i] = byte & 0x0F;
 
-				param->qtbl_num[i] = read_byte(&stream);
-				if (param->qtbl_num[i] == -1)
-					break;
-			}
+				param->qtbl_num[i] = पढ़ो_byte(&stream);
+				अगर (param->qtbl_num[i] == -1)
+					अवरोध;
+			पूर्ण
 
 			notfound = !(i == param->comp_num);
-			break;
-		case RST ... RST + 7:
-		case SOI:
-		case EOI:
-		case TEM:
-			break;
-		default:
-			if (read_word_be(&stream, &word))
-				break;
-			length = (long)word - 2;
-			read_skip(&stream, length);
-			break;
-		}
-	}
+			अवरोध;
+		हाल RST ... RST + 7:
+		हाल SOI:
+		हाल EOI:
+		हाल TEM:
+			अवरोध;
+		शेष:
+			अगर (पढ़ो_word_be(&stream, &word))
+				अवरोध;
+			length = (दीर्घ)word - 2;
+			पढ़ो_skip(&stream, length);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return !notfound;
-}
+	वापस !notfound;
+पूर्ण
 
-bool mtk_jpeg_parse(struct mtk_jpeg_dec_param *param, u8 *src_addr_va,
+bool mtk_jpeg_parse(काष्ठा mtk_jpeg_dec_param *param, u8 *src_addr_va,
 		    u32 src_size)
-{
-	if (!mtk_jpeg_do_parse(param, src_addr_va, src_size))
-		return false;
-	if (mtk_jpeg_dec_fill_param(param))
-		return false;
+अणु
+	अगर (!mtk_jpeg_करो_parse(param, src_addr_va, src_size))
+		वापस false;
+	अगर (mtk_jpeg_dec_fill_param(param))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण

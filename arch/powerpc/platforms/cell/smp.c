@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * SMP support for BPA machines.
+ * SMP support क्रम BPA machines.
  *
  * Dave Engebretsen, Peter Bergner, and
- * Mike Corrigan {engebret|bergner|mikec}@us.ibm.com
+ * Mike Corrigan अणुengebret|bergner|mikecपूर्ण@us.ibm.com
  *
  * Plus various changes from other IBM teams...
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/cache.h>
-#include <linux/err.h>
-#include <linux/device.h>
-#include <linux/cpu.h>
-#include <linux/pgtable.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/err.h>
+#समावेश <linux/device.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/ptrace.h>
-#include <linux/atomic.h>
-#include <asm/irq.h>
-#include <asm/page.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/smp.h>
-#include <asm/paca.h>
-#include <asm/machdep.h>
-#include <asm/cputable.h>
-#include <asm/firmware.h>
-#include <asm/rtas.h>
-#include <asm/cputhreads.h>
-#include <asm/code-patching.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/paca.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/cputhपढ़ोs.h>
+#समावेश <यंत्र/code-patching.h>
 
-#include "interrupt.h"
-#include <asm/udbg.h>
+#समावेश "interrupt.h"
+#समावेश <यंत्र/udbg.h>
 
-#ifdef DEBUG
-#define DBG(fmt...) udbg_printf(fmt)
-#else
-#define DBG(fmt...)
-#endif
+#अगर_घोषित DEBUG
+#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
+#अन्यथा
+#घोषणा DBG(fmt...)
+#पूर्ण_अगर
 
 /*
- * The Primary thread of each non-boot processor was started from the OF client
- * interface by prom_hold_cpus and is spinning on secondary_hold_spinloop.
+ * The Primary thपढ़ो of each non-boot processor was started from the OF client
+ * पूर्णांकerface by prom_hold_cpus and is spinning on secondary_hold_spinloop.
  */
-static cpumask_t of_spin_map;
+अटल cpumask_t of_spin_map;
 
 /**
  * smp_startup_cpu() - start the given cpu
  *
- * At boot time, there is nothing to do for primary threads which were
- * started from Open Firmware.  For anything else, call RTAS with the
+ * At boot समय, there is nothing to करो क्रम primary thपढ़ोs which were
+ * started from Open Firmware.  For anything अन्यथा, call RTAS with the
  * appropriate start location.
  *
  * Returns:
  *	0	- failure
  *	1	- success
  */
-static inline int smp_startup_cpu(unsigned int lcpu)
-{
-	int status;
-	unsigned long start_here =
+अटल अंतरभूत पूर्णांक smp_startup_cpu(अचिन्हित पूर्णांक lcpu)
+अणु
+	पूर्णांक status;
+	अचिन्हित दीर्घ start_here =
 			__pa(ppc_function_entry(generic_secondary_smp_init));
-	unsigned int pcpu;
-	int start_cpu;
+	अचिन्हित पूर्णांक pcpu;
+	पूर्णांक start_cpu;
 
-	if (cpumask_test_cpu(lcpu, &of_spin_map))
-		/* Already started by OF and sitting in spin loop */
-		return 1;
+	अगर (cpumask_test_cpu(lcpu, &of_spin_map))
+		/* Alपढ़ोy started by OF and sitting in spin loop */
+		वापस 1;
 
 	pcpu = get_hard_smp_processor_id(lcpu);
 
-	/* Fixup atomic count: it exited inside IRQ handler. */
-	task_thread_info(paca_ptrs[lcpu]->__current)->preempt_count	= 0;
+	/* Fixup atomic count: it निकासed inside IRQ handler. */
+	task_thपढ़ो_info(paca_ptrs[lcpu]->__current)->preempt_count	= 0;
 
 	/*
-	 * If the RTAS start-cpu token does not exist then presume the
-	 * cpu is already spinning.
+	 * If the RTAS start-cpu token करोes not exist then presume the
+	 * cpu is alपढ़ोy spinning.
 	 */
 	start_cpu = rtas_token("start-cpu");
-	if (start_cpu == RTAS_UNKNOWN_SERVICE)
-		return 1;
+	अगर (start_cpu == RTAS_UNKNOWN_SERVICE)
+		वापस 1;
 
-	status = rtas_call(start_cpu, 3, 1, NULL, pcpu, start_here, lcpu);
-	if (status != 0) {
-		printk(KERN_ERR "start-cpu failed: %i\n", status);
-		return 0;
-	}
+	status = rtas_call(start_cpu, 3, 1, शून्य, pcpu, start_here, lcpu);
+	अगर (status != 0) अणु
+		prपूर्णांकk(KERN_ERR "start-cpu failed: %i\n", status);
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void smp_cell_setup_cpu(int cpu)
-{
-	if (cpu != boot_cpuid)
+अटल व्योम smp_cell_setup_cpu(पूर्णांक cpu)
+अणु
+	अगर (cpu != boot_cpuid)
 		iic_setup_cpu();
 
 	/*
-	 * change default DABRX to allow user watchpoints
+	 * change शेष DABRX to allow user watchpoपूर्णांकs
 	 */
 	mtspr(SPRN_DABRX, DABRX_KERNEL | DABRX_USER);
-}
+पूर्ण
 
-static int smp_cell_kick_cpu(int nr)
-{
-	if (nr < 0 || nr >= nr_cpu_ids)
-		return -EINVAL;
+अटल पूर्णांक smp_cell_kick_cpu(पूर्णांक nr)
+अणु
+	अगर (nr < 0 || nr >= nr_cpu_ids)
+		वापस -EINVAL;
 
-	if (!smp_startup_cpu(nr))
-		return -ENOENT;
+	अगर (!smp_startup_cpu(nr))
+		वापस -ENOENT;
 
 	/*
-	 * The processor is currently spinning, waiting for the
+	 * The processor is currently spinning, रुकोing क्रम the
 	 * cpu_start field to become non-zero After we set cpu_start,
-	 * the processor will continue on to secondary_start
+	 * the processor will जारी on to secondary_start
 	 */
 	paca_ptrs[nr]->cpu_start = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct smp_ops_t bpa_iic_smp_ops = {
+अटल काष्ठा smp_ops_t bpa_iic_smp_ops = अणु
 	.message_pass	= iic_message_pass,
 	.probe		= iic_request_IPIs,
 	.kick_cpu	= smp_cell_kick_cpu,
 	.setup_cpu	= smp_cell_setup_cpu,
 	.cpu_bootable	= smp_generic_cpu_bootable,
-};
+पूर्ण;
 
 /* This is called very early */
-void __init smp_init_cell(void)
-{
-	int i;
+व्योम __init smp_init_cell(व्योम)
+अणु
+	पूर्णांक i;
 
 	DBG(" -> smp_init_cell()\n");
 
 	smp_ops = &bpa_iic_smp_ops;
 
-	/* Mark threads which are still spinning in hold loops. */
-	if (cpu_has_feature(CPU_FTR_SMT)) {
-		for_each_present_cpu(i) {
-			if (cpu_thread_in_core(i) == 0)
+	/* Mark thपढ़ोs which are still spinning in hold loops. */
+	अगर (cpu_has_feature(CPU_FTR_SMT)) अणु
+		क्रम_each_present_cpu(i) अणु
+			अगर (cpu_thपढ़ो_in_core(i) == 0)
 				cpumask_set_cpu(i, &of_spin_map);
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		cpumask_copy(&of_spin_map, cpu_present_mask);
 
 	cpumask_clear_cpu(boot_cpuid, &of_spin_map);
 
-	/* Non-lpar has additional take/give timebase */
-	if (rtas_token("freeze-time-base") != RTAS_UNKNOWN_SERVICE) {
-		smp_ops->give_timebase = rtas_give_timebase;
-		smp_ops->take_timebase = rtas_take_timebase;
-	}
+	/* Non-lpar has additional take/give समयbase */
+	अगर (rtas_token("freeze-time-base") != RTAS_UNKNOWN_SERVICE) अणु
+		smp_ops->give_समयbase = rtas_give_समयbase;
+		smp_ops->take_समयbase = rtas_take_समयbase;
+	पूर्ण
 
 	DBG(" <- smp_init_cell()\n");
-}
+पूर्ण

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_MSI_H
-#define __ASM_GENERIC_MSI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_MSI_H
+#घोषणा __ASM_GENERIC_MSI_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
 
-#ifndef NUM_MSI_ALLOC_SCRATCHPAD_REGS
+#अगर_अघोषित NUM_MSI_ALLOC_SCRATCHPAD_REGS
 # define NUM_MSI_ALLOC_SCRATCHPAD_REGS	2
-#endif
+#पूर्ण_अगर
 
-struct msi_desc;
+काष्ठा msi_desc;
 
 /**
- * struct msi_alloc_info - Default structure for MSI interrupt allocation.
- * @desc:	Pointer to msi descriptor
- * @hwirq:	Associated hw interrupt number in the domain
- * @scratchpad:	Storage for implementation specific scratch data
+ * काष्ठा msi_alloc_info - Default काष्ठाure क्रम MSI पूर्णांकerrupt allocation.
+ * @desc:	Poपूर्णांकer to msi descriptor
+ * @hwirq:	Associated hw पूर्णांकerrupt number in the करोमुख्य
+ * @scratchpad:	Storage क्रम implementation specअगरic scratch data
  *
  * Architectures can provide their own implementation by not including
- * asm-generic/msi.h into their arch specific header file.
+ * यंत्र-generic/msi.h पूर्णांकo their arch specअगरic header file.
  */
-typedef struct msi_alloc_info {
-	struct msi_desc			*desc;
+प्रकार काष्ठा msi_alloc_info अणु
+	काष्ठा msi_desc			*desc;
 	irq_hw_number_t			hwirq;
-	unsigned long			flags;
-	union {
-		unsigned long		ul;
-		void			*ptr;
-	} scratchpad[NUM_MSI_ALLOC_SCRATCHPAD_REGS];
-} msi_alloc_info_t;
+	अचिन्हित दीर्घ			flags;
+	जोड़ अणु
+		अचिन्हित दीर्घ		ul;
+		व्योम			*ptr;
+	पूर्ण scratchpad[NUM_MSI_ALLOC_SCRATCHPAD_REGS];
+पूर्ण msi_alloc_info_t;
 
-/* Device generating MSIs is proxying for another device */
-#define MSI_ALLOC_FLAGS_PROXY_DEVICE	(1UL << 0)
+/* Device generating MSIs is proxying क्रम another device */
+#घोषणा MSI_ALLOC_FLAGS_PROXY_DEVICE	(1UL << 0)
 
-#define GENERIC_MSI_DOMAIN_OPS		1
+#घोषणा GENERIC_MSI_DOMAIN_OPS		1
 
-#endif /* CONFIG_GENERIC_MSI_IRQ_DOMAIN */
+#पूर्ण_अगर /* CONFIG_GENERIC_MSI_IRQ_DOMAIN */
 
-#endif
+#पूर्ण_अगर

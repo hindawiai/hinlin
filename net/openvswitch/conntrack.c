@@ -1,533 +1,534 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Nicira, Inc.
  */
 
-#include <linux/module.h>
-#include <linux/openvswitch.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/sctp.h>
-#include <linux/static_key.h>
-#include <net/ip.h>
-#include <net/genetlink.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_count.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_labels.h>
-#include <net/netfilter/nf_conntrack_seqadj.h>
-#include <net/netfilter/nf_conntrack_timeout.h>
-#include <net/netfilter/nf_conntrack_zones.h>
-#include <net/netfilter/ipv6/nf_defrag_ipv6.h>
-#include <net/ipv6_frag.h>
+#समावेश <linux/module.h>
+#समावेश <linux/खोलोvचयन.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/sctp.h>
+#समावेश <linux/अटल_key.h>
+#समावेश <net/ip.h>
+#समावेश <net/genetlink.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_count.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_labels.h>
+#समावेश <net/netfilter/nf_conntrack_seqadj.h>
+#समावेश <net/netfilter/nf_conntrack_समयout.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/ipv6/nf_defrag_ipv6.h>
+#समावेश <net/ipv6_frag.h>
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-#include <net/netfilter/nf_nat.h>
-#endif
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+#समावेश <net/netfilter/nf_nat.h>
+#पूर्ण_अगर
 
-#include "datapath.h"
-#include "conntrack.h"
-#include "flow.h"
-#include "flow_netlink.h"
+#समावेश "datapath.h"
+#समावेश "conntrack.h"
+#समावेश "flow.h"
+#समावेश "flow_netlink.h"
 
-struct ovs_ct_len_tbl {
-	int maxlen;
-	int minlen;
-};
+काष्ठा ovs_ct_len_tbl अणु
+	पूर्णांक maxlen;
+	पूर्णांक minlen;
+पूर्ण;
 
-/* Metadata mark for masked write to conntrack mark */
-struct md_mark {
+/* Metadata mark क्रम masked ग_लिखो to conntrack mark */
+काष्ठा md_mark अणु
 	u32 value;
 	u32 mask;
-};
+पूर्ण;
 
-/* Metadata label for masked write to conntrack label. */
-struct md_labels {
-	struct ovs_key_ct_labels value;
-	struct ovs_key_ct_labels mask;
-};
+/* Metadata label क्रम masked ग_लिखो to conntrack label. */
+काष्ठा md_labels अणु
+	काष्ठा ovs_key_ct_labels value;
+	काष्ठा ovs_key_ct_labels mask;
+पूर्ण;
 
-enum ovs_ct_nat {
-	OVS_CT_NAT = 1 << 0,     /* NAT for committed connections only. */
-	OVS_CT_SRC_NAT = 1 << 1, /* Source NAT for NEW connections. */
-	OVS_CT_DST_NAT = 1 << 2, /* Destination NAT for NEW connections. */
-};
+क्रमागत ovs_ct_nat अणु
+	OVS_CT_NAT = 1 << 0,     /* NAT क्रम committed connections only. */
+	OVS_CT_SRC_NAT = 1 << 1, /* Source NAT क्रम NEW connections. */
+	OVS_CT_DST_NAT = 1 << 2, /* Destination NAT क्रम NEW connections. */
+पूर्ण;
 
-/* Conntrack action context for execution. */
-struct ovs_conntrack_info {
-	struct nf_conntrack_helper *helper;
-	struct nf_conntrack_zone zone;
-	struct nf_conn *ct;
+/* Conntrack action context क्रम execution. */
+काष्ठा ovs_conntrack_info अणु
+	काष्ठा nf_conntrack_helper *helper;
+	काष्ठा nf_conntrack_zone zone;
+	काष्ठा nf_conn *ct;
 	u8 commit : 1;
-	u8 nat : 3;                 /* enum ovs_ct_nat */
-	u8 force : 1;
-	u8 have_eventmask : 1;
+	u8 nat : 3;                 /* क्रमागत ovs_ct_nat */
+	u8 क्रमce : 1;
+	u8 have_evenपंचांगask : 1;
 	u16 family;
-	u32 eventmask;              /* Mask of 1 << IPCT_*. */
-	struct md_mark mark;
-	struct md_labels labels;
-	char timeout[CTNL_TIMEOUT_NAME_MAX];
-	struct nf_ct_timeout *nf_ct_timeout;
-#if IS_ENABLED(CONFIG_NF_NAT)
-	struct nf_nat_range2 range;  /* Only present for SRC NAT and DST NAT. */
-#endif
-};
+	u32 evenपंचांगask;              /* Mask of 1 << IPCT_*. */
+	काष्ठा md_mark mark;
+	काष्ठा md_labels labels;
+	अक्षर समयout[CTNL_TIMEOUT_NAME_MAX];
+	काष्ठा nf_ct_समयout *nf_ct_समयout;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	काष्ठा nf_nat_range2 range;  /* Only present क्रम SRC NAT and DST NAT. */
+#पूर्ण_अगर
+पूर्ण;
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-#define OVS_CT_LIMIT_UNLIMITED	0
-#define OVS_CT_LIMIT_DEFAULT OVS_CT_LIMIT_UNLIMITED
-#define CT_LIMIT_HASH_BUCKETS 512
-static DEFINE_STATIC_KEY_FALSE(ovs_ct_limit_enabled);
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+#घोषणा OVS_CT_LIMIT_UNLIMITED	0
+#घोषणा OVS_CT_LIMIT_DEFAULT OVS_CT_LIMIT_UNLIMITED
+#घोषणा CT_LIMIT_HASH_BUCKETS 512
+अटल DEFINE_STATIC_KEY_FALSE(ovs_ct_limit_enabled);
 
-struct ovs_ct_limit {
+काष्ठा ovs_ct_limit अणु
 	/* Elements in ovs_ct_limit_info->limits hash table */
-	struct hlist_node hlist_node;
-	struct rcu_head rcu;
+	काष्ठा hlist_node hlist_node;
+	काष्ठा rcu_head rcu;
 	u16 zone;
 	u32 limit;
-};
+पूर्ण;
 
-struct ovs_ct_limit_info {
-	u32 default_limit;
-	struct hlist_head *limits;
-	struct nf_conncount_data *data;
-};
+काष्ठा ovs_ct_limit_info अणु
+	u32 शेष_limit;
+	काष्ठा hlist_head *limits;
+	काष्ठा nf_conncount_data *data;
+पूर्ण;
 
-static const struct nla_policy ct_limit_policy[OVS_CT_LIMIT_ATTR_MAX + 1] = {
-	[OVS_CT_LIMIT_ATTR_ZONE_LIMIT] = { .type = NLA_NESTED, },
-};
-#endif
+अटल स्थिर काष्ठा nla_policy ct_limit_policy[OVS_CT_LIMIT_ATTR_MAX + 1] = अणु
+	[OVS_CT_LIMIT_ATTR_ZONE_LIMIT] = अणु .type = NLA_NESTED, पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
 
-static bool labels_nonzero(const struct ovs_key_ct_labels *labels);
+अटल bool labels_nonzero(स्थिर काष्ठा ovs_key_ct_labels *labels);
 
-static void __ovs_ct_free_action(struct ovs_conntrack_info *ct_info);
+अटल व्योम __ovs_ct_मुक्त_action(काष्ठा ovs_conntrack_info *ct_info);
 
-static u16 key_to_nfproto(const struct sw_flow_key *key)
-{
-	switch (ntohs(key->eth.type)) {
-	case ETH_P_IP:
-		return NFPROTO_IPV4;
-	case ETH_P_IPV6:
-		return NFPROTO_IPV6;
-	default:
-		return NFPROTO_UNSPEC;
-	}
-}
+अटल u16 key_to_nfproto(स्थिर काष्ठा sw_flow_key *key)
+अणु
+	चयन (ntohs(key->eth.type)) अणु
+	हाल ETH_P_IP:
+		वापस NFPROTO_IPV4;
+	हाल ETH_P_IPV6:
+		वापस NFPROTO_IPV6;
+	शेष:
+		वापस NFPROTO_UNSPEC;
+	पूर्ण
+पूर्ण
 
-/* Map SKB connection state into the values used by flow definition. */
-static u8 ovs_ct_get_state(enum ip_conntrack_info ctinfo)
-{
+/* Map SKB connection state पूर्णांकo the values used by flow definition. */
+अटल u8 ovs_ct_get_state(क्रमागत ip_conntrack_info ctinfo)
+अणु
 	u8 ct_state = OVS_CS_F_TRACKED;
 
-	switch (ctinfo) {
-	case IP_CT_ESTABLISHED_REPLY:
-	case IP_CT_RELATED_REPLY:
-		ct_state |= OVS_CS_F_REPLY_DIR;
-		break;
-	default:
-		break;
-	}
+	चयन (ctinfo) अणु
+	हाल IP_CT_ESTABLISHED_REPLY:
+	हाल IP_CT_RELATED_REPLY:
+		ct_state |= OVS_CS_F_REPLY_सूची;
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	switch (ctinfo) {
-	case IP_CT_ESTABLISHED:
-	case IP_CT_ESTABLISHED_REPLY:
+	चयन (ctinfo) अणु
+	हाल IP_CT_ESTABLISHED:
+	हाल IP_CT_ESTABLISHED_REPLY:
 		ct_state |= OVS_CS_F_ESTABLISHED;
-		break;
-	case IP_CT_RELATED:
-	case IP_CT_RELATED_REPLY:
+		अवरोध;
+	हाल IP_CT_RELATED:
+	हाल IP_CT_RELATED_REPLY:
 		ct_state |= OVS_CS_F_RELATED;
-		break;
-	case IP_CT_NEW:
+		अवरोध;
+	हाल IP_CT_NEW:
 		ct_state |= OVS_CS_F_NEW;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return ct_state;
-}
+	वापस ct_state;
+पूर्ण
 
-static u32 ovs_ct_get_mark(const struct nf_conn *ct)
-{
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
-	return ct ? ct->mark : 0;
-#else
-	return 0;
-#endif
-}
+अटल u32 ovs_ct_get_mark(स्थिर काष्ठा nf_conn *ct)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
+	वापस ct ? ct->mark : 0;
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
 /* Guard against conntrack labels max size shrinking below 128 bits. */
-#if NF_CT_LABELS_MAX_SIZE < 16
-#error NF_CT_LABELS_MAX_SIZE must be at least 16 bytes
-#endif
+#अगर NF_CT_LABELS_MAX_SIZE < 16
+#त्रुटि NF_CT_LABELS_MAX_SIZE must be at least 16 bytes
+#पूर्ण_अगर
 
-static void ovs_ct_get_labels(const struct nf_conn *ct,
-			      struct ovs_key_ct_labels *labels)
-{
-	struct nf_conn_labels *cl = ct ? nf_ct_labels_find(ct) : NULL;
+अटल व्योम ovs_ct_get_labels(स्थिर काष्ठा nf_conn *ct,
+			      काष्ठा ovs_key_ct_labels *labels)
+अणु
+	काष्ठा nf_conn_labels *cl = ct ? nf_ct_labels_find(ct) : शून्य;
 
-	if (cl)
-		memcpy(labels, cl->bits, OVS_CT_LABELS_LEN);
-	else
-		memset(labels, 0, OVS_CT_LABELS_LEN);
-}
+	अगर (cl)
+		स_नकल(labels, cl->bits, OVS_CT_LABELS_LEN);
+	अन्यथा
+		स_रखो(labels, 0, OVS_CT_LABELS_LEN);
+पूर्ण
 
-static void __ovs_ct_update_key_orig_tp(struct sw_flow_key *key,
-					const struct nf_conntrack_tuple *orig,
+अटल व्योम __ovs_ct_update_key_orig_tp(काष्ठा sw_flow_key *key,
+					स्थिर काष्ठा nf_conntrack_tuple *orig,
 					u8 icmp_proto)
-{
+अणु
 	key->ct_orig_proto = orig->dst.protonum;
-	if (orig->dst.protonum == icmp_proto) {
+	अगर (orig->dst.protonum == icmp_proto) अणु
 		key->ct.orig_tp.src = htons(orig->dst.u.icmp.type);
 		key->ct.orig_tp.dst = htons(orig->dst.u.icmp.code);
-	} else {
+	पूर्ण अन्यथा अणु
 		key->ct.orig_tp.src = orig->src.u.all;
 		key->ct.orig_tp.dst = orig->dst.u.all;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __ovs_ct_update_key(struct sw_flow_key *key, u8 state,
-				const struct nf_conntrack_zone *zone,
-				const struct nf_conn *ct)
-{
+अटल व्योम __ovs_ct_update_key(काष्ठा sw_flow_key *key, u8 state,
+				स्थिर काष्ठा nf_conntrack_zone *zone,
+				स्थिर काष्ठा nf_conn *ct)
+अणु
 	key->ct_state = state;
 	key->ct_zone = zone->id;
 	key->ct.mark = ovs_ct_get_mark(ct);
 	ovs_ct_get_labels(ct, &key->ct.labels);
 
-	if (ct) {
-		const struct nf_conntrack_tuple *orig;
+	अगर (ct) अणु
+		स्थिर काष्ठा nf_conntrack_tuple *orig;
 
-		/* Use the master if we have one. */
-		if (ct->master)
+		/* Use the master अगर we have one. */
+		अगर (ct->master)
 			ct = ct->master;
-		orig = &ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple;
+		orig = &ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple;
 
 		/* IP version must match with the master connection. */
-		if (key->eth.type == htons(ETH_P_IP) &&
-		    nf_ct_l3num(ct) == NFPROTO_IPV4) {
+		अगर (key->eth.type == htons(ETH_P_IP) &&
+		    nf_ct_l3num(ct) == NFPROTO_IPV4) अणु
 			key->ipv4.ct_orig.src = orig->src.u3.ip;
 			key->ipv4.ct_orig.dst = orig->dst.u3.ip;
 			__ovs_ct_update_key_orig_tp(key, orig, IPPROTO_ICMP);
-			return;
-		} else if (key->eth.type == htons(ETH_P_IPV6) &&
+			वापस;
+		पूर्ण अन्यथा अगर (key->eth.type == htons(ETH_P_IPV6) &&
 			   !sw_flow_key_is_nd(key) &&
-			   nf_ct_l3num(ct) == NFPROTO_IPV6) {
+			   nf_ct_l3num(ct) == NFPROTO_IPV6) अणु
 			key->ipv6.ct_orig.src = orig->src.u3.in6;
 			key->ipv6.ct_orig.dst = orig->dst.u3.in6;
 			__ovs_ct_update_key_orig_tp(key, orig, NEXTHDR_ICMP);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	/* Clear 'ct_orig_proto' to mark the non-existence of conntrack
 	 * original direction key fields.
 	 */
 	key->ct_orig_proto = 0;
-}
+पूर्ण
 
 /* Update 'key' based on skb->_nfct.  If 'post_ct' is true, then OVS has
  * previously sent the packet to conntrack via the ct action.  If
- * 'keep_nat_flags' is true, the existing NAT flags retained, else they are
+ * 'keep_nat_flags' is true, the existing NAT flags retained, अन्यथा they are
  * initialized from the connection status.
  */
-static void ovs_ct_update_key(const struct sk_buff *skb,
-			      const struct ovs_conntrack_info *info,
-			      struct sw_flow_key *key, bool post_ct,
+अटल व्योम ovs_ct_update_key(स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा ovs_conntrack_info *info,
+			      काष्ठा sw_flow_key *key, bool post_ct,
 			      bool keep_nat_flags)
-{
-	const struct nf_conntrack_zone *zone = &nf_ct_zone_dflt;
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+अणु
+	स्थिर काष्ठा nf_conntrack_zone *zone = &nf_ct_zone_dflt;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 	u8 state = 0;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
+	अगर (ct) अणु
 		state = ovs_ct_get_state(ctinfo);
 		/* All unconfirmed entries are NEW connections. */
-		if (!nf_ct_is_confirmed(ct))
+		अगर (!nf_ct_is_confirmed(ct))
 			state |= OVS_CS_F_NEW;
-		/* OVS persists the related flag for the duration of the
+		/* OVS persists the related flag क्रम the duration of the
 		 * connection.
 		 */
-		if (ct->master)
+		अगर (ct->master)
 			state |= OVS_CS_F_RELATED;
-		if (keep_nat_flags) {
+		अगर (keep_nat_flags) अणु
 			state |= key->ct_state & OVS_CS_F_NAT_MASK;
-		} else {
-			if (ct->status & IPS_SRC_NAT)
+		पूर्ण अन्यथा अणु
+			अगर (ct->status & IPS_SRC_NAT)
 				state |= OVS_CS_F_SRC_NAT;
-			if (ct->status & IPS_DST_NAT)
+			अगर (ct->status & IPS_DST_NAT)
 				state |= OVS_CS_F_DST_NAT;
-		}
+		पूर्ण
 		zone = nf_ct_zone(ct);
-	} else if (post_ct) {
+	पूर्ण अन्यथा अगर (post_ct) अणु
 		state = OVS_CS_F_TRACKED | OVS_CS_F_INVALID;
-		if (info)
+		अगर (info)
 			zone = &info->zone;
-	}
+	पूर्ण
 	__ovs_ct_update_key(key, state, zone, ct);
-}
+पूर्ण
 
 /* This is called to initialize CT key fields possibly coming in from the local
  * stack.
  */
-void ovs_ct_fill_key(const struct sk_buff *skb,
-		     struct sw_flow_key *key,
+व्योम ovs_ct_fill_key(स्थिर काष्ठा sk_buff *skb,
+		     काष्ठा sw_flow_key *key,
 		     bool post_ct)
-{
-	ovs_ct_update_key(skb, NULL, key, post_ct, false);
-}
+अणु
+	ovs_ct_update_key(skb, शून्य, key, post_ct, false);
+पूर्ण
 
-int ovs_ct_put_key(const struct sw_flow_key *swkey,
-		   const struct sw_flow_key *output, struct sk_buff *skb)
-{
-	if (nla_put_u32(skb, OVS_KEY_ATTR_CT_STATE, output->ct_state))
-		return -EMSGSIZE;
+पूर्णांक ovs_ct_put_key(स्थिर काष्ठा sw_flow_key *swkey,
+		   स्थिर काष्ठा sw_flow_key *output, काष्ठा sk_buff *skb)
+अणु
+	अगर (nla_put_u32(skb, OVS_KEY_ATTR_CT_STATE, output->ct_state))
+		वापस -EMSGSIZE;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    nla_put_u16(skb, OVS_KEY_ATTR_CT_ZONE, output->ct_zone))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
 	    nla_put_u32(skb, OVS_KEY_ATTR_CT_MARK, output->ct.mark))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
-	    nla_put(skb, OVS_KEY_ATTR_CT_LABELS, sizeof(output->ct.labels),
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+	    nla_put(skb, OVS_KEY_ATTR_CT_LABELS, माप(output->ct.labels),
 		    &output->ct.labels))
-		return -EMSGSIZE;
+		वापस -EMSGSIZE;
 
-	if (swkey->ct_orig_proto) {
-		if (swkey->eth.type == htons(ETH_P_IP)) {
-			struct ovs_key_ct_tuple_ipv4 orig;
+	अगर (swkey->ct_orig_proto) अणु
+		अगर (swkey->eth.type == htons(ETH_P_IP)) अणु
+			काष्ठा ovs_key_ct_tuple_ipv4 orig;
 
-			memset(&orig, 0, sizeof(orig));
+			स_रखो(&orig, 0, माप(orig));
 			orig.ipv4_src = output->ipv4.ct_orig.src;
 			orig.ipv4_dst = output->ipv4.ct_orig.dst;
 			orig.src_port = output->ct.orig_tp.src;
 			orig.dst_port = output->ct.orig_tp.dst;
 			orig.ipv4_proto = output->ct_orig_proto;
 
-			if (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4,
-				    sizeof(orig), &orig))
-				return -EMSGSIZE;
-		} else if (swkey->eth.type == htons(ETH_P_IPV6)) {
-			struct ovs_key_ct_tuple_ipv6 orig;
+			अगर (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV4,
+				    माप(orig), &orig))
+				वापस -EMSGSIZE;
+		पूर्ण अन्यथा अगर (swkey->eth.type == htons(ETH_P_IPV6)) अणु
+			काष्ठा ovs_key_ct_tuple_ipv6 orig;
 
-			memset(&orig, 0, sizeof(orig));
-			memcpy(orig.ipv6_src, output->ipv6.ct_orig.src.s6_addr32,
-			       sizeof(orig.ipv6_src));
-			memcpy(orig.ipv6_dst, output->ipv6.ct_orig.dst.s6_addr32,
-			       sizeof(orig.ipv6_dst));
+			स_रखो(&orig, 0, माप(orig));
+			स_नकल(orig.ipv6_src, output->ipv6.ct_orig.src.s6_addr32,
+			       माप(orig.ipv6_src));
+			स_नकल(orig.ipv6_dst, output->ipv6.ct_orig.dst.s6_addr32,
+			       माप(orig.ipv6_dst));
 			orig.src_port = output->ct.orig_tp.src;
 			orig.dst_port = output->ct.orig_tp.dst;
 			orig.ipv6_proto = output->ct_orig_proto;
 
-			if (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6,
-				    sizeof(orig), &orig))
-				return -EMSGSIZE;
-		}
-	}
+			अगर (nla_put(skb, OVS_KEY_ATTR_CT_ORIG_TUPLE_IPV6,
+				    माप(orig), &orig))
+				वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_set_mark(struct nf_conn *ct, struct sw_flow_key *key,
+अटल पूर्णांक ovs_ct_set_mark(काष्ठा nf_conn *ct, काष्ठा sw_flow_key *key,
 			   u32 ct_mark, u32 mask)
-{
-#if IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_CONNTRACK_MARK)
 	u32 new_mark;
 
 	new_mark = ct_mark | (ct->mark & ~(mask));
-	if (ct->mark != new_mark) {
+	अगर (ct->mark != new_mark) अणु
 		ct->mark = new_mark;
-		if (nf_ct_is_confirmed(ct))
+		अगर (nf_ct_is_confirmed(ct))
 			nf_conntrack_event_cache(IPCT_MARK, ct);
 		key->ct.mark = new_mark;
-	}
+	पूर्ण
 
-	return 0;
-#else
-	return -ENOTSUPP;
-#endif
-}
+	वापस 0;
+#अन्यथा
+	वापस -ENOTSUPP;
+#पूर्ण_अगर
+पूर्ण
 
-static struct nf_conn_labels *ovs_ct_get_conn_labels(struct nf_conn *ct)
-{
-	struct nf_conn_labels *cl;
+अटल काष्ठा nf_conn_labels *ovs_ct_get_conn_labels(काष्ठा nf_conn *ct)
+अणु
+	काष्ठा nf_conn_labels *cl;
 
 	cl = nf_ct_labels_find(ct);
-	if (!cl) {
+	अगर (!cl) अणु
 		nf_ct_labels_ext_add(ct);
 		cl = nf_ct_labels_find(ct);
-	}
+	पूर्ण
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 
-/* Initialize labels for a new, yet to be committed conntrack entry.  Note that
- * since the new connection is not yet confirmed, and thus no-one else has
- * access to it's labels, we simply write them over.
+/* Initialize labels क्रम a new, yet to be committed conntrack entry.  Note that
+ * since the new connection is not yet confirmed, and thus no-one अन्यथा has
+ * access to it's labels, we simply ग_लिखो them over.
  */
-static int ovs_ct_init_labels(struct nf_conn *ct, struct sw_flow_key *key,
-			      const struct ovs_key_ct_labels *labels,
-			      const struct ovs_key_ct_labels *mask)
-{
-	struct nf_conn_labels *cl, *master_cl;
+अटल पूर्णांक ovs_ct_init_labels(काष्ठा nf_conn *ct, काष्ठा sw_flow_key *key,
+			      स्थिर काष्ठा ovs_key_ct_labels *labels,
+			      स्थिर काष्ठा ovs_key_ct_labels *mask)
+अणु
+	काष्ठा nf_conn_labels *cl, *master_cl;
 	bool have_mask = labels_nonzero(mask);
 
 	/* Inherit master's labels to the related connection? */
-	master_cl = ct->master ? nf_ct_labels_find(ct->master) : NULL;
+	master_cl = ct->master ? nf_ct_labels_find(ct->master) : शून्य;
 
-	if (!master_cl && !have_mask)
-		return 0;   /* Nothing to do. */
+	अगर (!master_cl && !have_mask)
+		वापस 0;   /* Nothing to करो. */
 
 	cl = ovs_ct_get_conn_labels(ct);
-	if (!cl)
-		return -ENOSPC;
+	अगर (!cl)
+		वापस -ENOSPC;
 
-	/* Inherit the master's labels, if any. */
-	if (master_cl)
+	/* Inherit the master's labels, अगर any. */
+	अगर (master_cl)
 		*cl = *master_cl;
 
-	if (have_mask) {
+	अगर (have_mask) अणु
 		u32 *dst = (u32 *)cl->bits;
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < OVS_CT_LABELS_LEN_32; i++)
+		क्रम (i = 0; i < OVS_CT_LABELS_LEN_32; i++)
 			dst[i] = (dst[i] & ~mask->ct_labels_32[i]) |
 				(labels->ct_labels_32[i]
 				 & mask->ct_labels_32[i]);
-	}
+	पूर्ण
 
-	/* Labels are included in the IPCTNL_MSG_CT_NEW event only if the
+	/* Labels are included in the IPCTNL_MSG_CT_NEW event only अगर the
 	 * IPCT_LABEL bit is set in the event cache.
 	 */
 	nf_conntrack_event_cache(IPCT_LABEL, ct);
 
-	memcpy(&key->ct.labels, cl->bits, OVS_CT_LABELS_LEN);
+	स_नकल(&key->ct.labels, cl->bits, OVS_CT_LABELS_LEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_set_labels(struct nf_conn *ct, struct sw_flow_key *key,
-			     const struct ovs_key_ct_labels *labels,
-			     const struct ovs_key_ct_labels *mask)
-{
-	struct nf_conn_labels *cl;
-	int err;
+अटल पूर्णांक ovs_ct_set_labels(काष्ठा nf_conn *ct, काष्ठा sw_flow_key *key,
+			     स्थिर काष्ठा ovs_key_ct_labels *labels,
+			     स्थिर काष्ठा ovs_key_ct_labels *mask)
+अणु
+	काष्ठा nf_conn_labels *cl;
+	पूर्णांक err;
 
 	cl = ovs_ct_get_conn_labels(ct);
-	if (!cl)
-		return -ENOSPC;
+	अगर (!cl)
+		वापस -ENOSPC;
 
 	err = nf_connlabels_replace(ct, labels->ct_labels_32,
 				    mask->ct_labels_32,
 				    OVS_CT_LABELS_LEN_32);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	memcpy(&key->ct.labels, cl->bits, OVS_CT_LABELS_LEN);
+	स_नकल(&key->ct.labels, cl->bits, OVS_CT_LABELS_LEN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* 'skb' should already be pulled to nh_ofs. */
-static int ovs_ct_helper(struct sk_buff *skb, u16 proto)
-{
-	const struct nf_conntrack_helper *helper;
-	const struct nf_conn_help *help;
-	enum ip_conntrack_info ctinfo;
-	unsigned int protoff;
-	struct nf_conn *ct;
-	int err;
+/* 'skb' should alपढ़ोy be pulled to nh_ofs. */
+अटल पूर्णांक ovs_ct_helper(काष्ठा sk_buff *skb, u16 proto)
+अणु
+	स्थिर काष्ठा nf_conntrack_helper *helper;
+	स्थिर काष्ठा nf_conn_help *help;
+	क्रमागत ip_conntrack_info ctinfo;
+	अचिन्हित पूर्णांक protoff;
+	काष्ठा nf_conn *ct;
+	पूर्णांक err;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct || ctinfo == IP_CT_RELATED_REPLY)
-		return NF_ACCEPT;
+	अगर (!ct || ctinfo == IP_CT_RELATED_REPLY)
+		वापस NF_ACCEPT;
 
 	help = nfct_help(ct);
-	if (!help)
-		return NF_ACCEPT;
+	अगर (!help)
+		वापस NF_ACCEPT;
 
 	helper = rcu_dereference(help->helper);
-	if (!helper)
-		return NF_ACCEPT;
+	अगर (!helper)
+		वापस NF_ACCEPT;
 
-	switch (proto) {
-	case NFPROTO_IPV4:
+	चयन (proto) अणु
+	हाल NFPROTO_IPV4:
 		protoff = ip_hdrlen(skb);
-		break;
-	case NFPROTO_IPV6: {
+		अवरोध;
+	हाल NFPROTO_IPV6: अणु
 		u8 nexthdr = ipv6_hdr(skb)->nexthdr;
 		__be16 frag_off;
-		int ofs;
+		पूर्णांक ofs;
 
-		ofs = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr,
+		ofs = ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr), &nexthdr,
 				       &frag_off);
-		if (ofs < 0 || (frag_off & htons(~0x7)) != 0) {
+		अगर (ofs < 0 || (frag_off & htons(~0x7)) != 0) अणु
 			pr_debug("proto header not found\n");
-			return NF_ACCEPT;
-		}
+			वापस NF_ACCEPT;
+		पूर्ण
 		protoff = ofs;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		WARN_ONCE(1, "helper invoked on non-IP family!");
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 
 	err = helper->help(skb, protoff, ct, ctinfo);
-	if (err != NF_ACCEPT)
-		return err;
+	अगर (err != NF_ACCEPT)
+		वापस err;
 
 	/* Adjust seqs after helper.  This is needed due to some helpers (e.g.,
 	 * FTP with NAT) adusting the TCP payload size when mangling IP
 	 * addresses and/or port numbers in the text-based control connection.
 	 */
-	if (test_bit(IPS_SEQ_ADJUST_BIT, &ct->status) &&
+	अगर (test_bit(IPS_SEQ_ADJUST_BIT, &ct->status) &&
 	    !nf_ct_seq_adjust(skb, ct, ctinfo, protoff))
-		return NF_DROP;
-	return NF_ACCEPT;
-}
+		वापस NF_DROP;
+	वापस NF_ACCEPT;
+पूर्ण
 
-/* Returns 0 on success, -EINPROGRESS if 'skb' is stolen, or other nonzero
- * value if 'skb' is freed.
+/* Returns 0 on success, -EINPROGRESS अगर 'skb' is stolen, or other nonzero
+ * value अगर 'skb' is मुक्तd.
  */
-static int handle_fragments(struct net *net, struct sw_flow_key *key,
-			    u16 zone, struct sk_buff *skb)
-{
-	struct ovs_skb_cb ovs_cb = *OVS_CB(skb);
-	int err;
+अटल पूर्णांक handle_fragments(काष्ठा net *net, काष्ठा sw_flow_key *key,
+			    u16 zone, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ovs_skb_cb ovs_cb = *OVS_CB(skb);
+	पूर्णांक err;
 
-	if (key->eth.type == htons(ETH_P_IP)) {
-		enum ip_defrag_users user = IP_DEFRAG_CONNTRACK_IN + zone;
+	अगर (key->eth.type == htons(ETH_P_IP)) अणु
+		क्रमागत ip_defrag_users user = IP_DEFRAG_CONNTRACK_IN + zone;
 
-		memset(IPCB(skb), 0, sizeof(struct inet_skb_parm));
+		स_रखो(IPCB(skb), 0, माप(काष्ठा inet_skb_parm));
 		err = ip_defrag(net, skb, user);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		ovs_cb.mru = IPCB(skb)->frag_max_size;
-#if IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
-	} else if (key->eth.type == htons(ETH_P_IPV6)) {
-		enum ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
+#अगर IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
+	पूर्ण अन्यथा अगर (key->eth.type == htons(ETH_P_IPV6)) अणु
+		क्रमागत ip6_defrag_users user = IP6_DEFRAG_CONNTRACK_IN + zone;
 
-		memset(IP6CB(skb), 0, sizeof(struct inet6_skb_parm));
+		स_रखो(IP6CB(skb), 0, माप(काष्ठा inet6_skb_parm));
 		err = nf_ct_frag6_gather(net, skb, user);
-		if (err) {
-			if (err != -EINPROGRESS)
-				kfree_skb(skb);
-			return err;
-		}
+		अगर (err) अणु
+			अगर (err != -EINPROGRESS)
+				kमुक्त_skb(skb);
+			वापस err;
+		पूर्ण
 
 		key->ip.proto = ipv6_hdr(skb)->nexthdr;
 		ovs_cb.mru = IP6CB(skb)->frag_max_size;
-#endif
-	} else {
-		kfree_skb(skb);
-		return -EPFNOSUPPORT;
-	}
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
+		kमुक्त_skb(skb);
+		वापस -EPFNOSUPPORT;
+	पूर्ण
 
 	/* The key extracted from the fragment that completed this datagram
 	 * likely didn't have an L4 header, so regenerate it.
@@ -539,128 +540,128 @@ static int handle_fragments(struct net *net, struct sw_flow_key *key,
 	skb->ignore_df = 1;
 	*OVS_CB(skb) = ovs_cb;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nf_conntrack_expect *
-ovs_ct_expect_find(struct net *net, const struct nf_conntrack_zone *zone,
-		   u16 proto, const struct sk_buff *skb)
-{
-	struct nf_conntrack_tuple tuple;
-	struct nf_conntrack_expect *exp;
+अटल काष्ठा nf_conntrack_expect *
+ovs_ct_expect_find(काष्ठा net *net, स्थिर काष्ठा nf_conntrack_zone *zone,
+		   u16 proto, स्थिर काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nf_conntrack_tuple tuple;
+	काष्ठा nf_conntrack_expect *exp;
 
-	if (!nf_ct_get_tuplepr(skb, skb_network_offset(skb), proto, net, &tuple))
-		return NULL;
+	अगर (!nf_ct_get_tuplepr(skb, skb_network_offset(skb), proto, net, &tuple))
+		वापस शून्य;
 
 	exp = __nf_ct_expect_find(net, zone, &tuple);
-	if (exp) {
-		struct nf_conntrack_tuple_hash *h;
+	अगर (exp) अणु
+		काष्ठा nf_conntrack_tuple_hash *h;
 
-		/* Delete existing conntrack entry, if it clashes with the
-		 * expectation.  This can happen since conntrack ALGs do not
-		 * check for clashes between (new) expectations and existing
+		/* Delete existing conntrack entry, अगर it clashes with the
+		 * expectation.  This can happen since conntrack ALGs करो not
+		 * check क्रम clashes between (new) expectations and existing
 		 * conntrack entries.  nf_conntrack_in() will check the
-		 * expectations only if a conntrack entry can not be found,
+		 * expectations only अगर a conntrack entry can not be found,
 		 * which can lead to OVS finding the expectation (here) in the
-		 * init direction, but which will not be removed by the
-		 * nf_conntrack_in() call, if a matching conntrack entry is
-		 * found instead.  In this case all init direction packets
-		 * would be reported as new related packets, while reply
+		 * init direction, but which will not be हटाओd by the
+		 * nf_conntrack_in() call, अगर a matching conntrack entry is
+		 * found instead.  In this हाल all init direction packets
+		 * would be reported as new related packets, जबतक reply
 		 * direction packets would be reported as un-related
 		 * established packets.
 		 */
 		h = nf_conntrack_find_get(net, zone, &tuple);
-		if (h) {
-			struct nf_conn *ct = nf_ct_tuplehash_to_ctrack(h);
+		अगर (h) अणु
+			काष्ठा nf_conn *ct = nf_ct_tuplehash_to_ctrack(h);
 
 			nf_ct_delete(ct, 0, 0);
 			nf_conntrack_put(&ct->ct_general);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return exp;
-}
+	वापस exp;
+पूर्ण
 
 /* This replicates logic from nf_conntrack_core.c that is not exported. */
-static enum ip_conntrack_info
-ovs_ct_get_info(const struct nf_conntrack_tuple_hash *h)
-{
-	const struct nf_conn *ct = nf_ct_tuplehash_to_ctrack(h);
+अटल क्रमागत ip_conntrack_info
+ovs_ct_get_info(स्थिर काष्ठा nf_conntrack_tuple_hash *h)
+अणु
+	स्थिर काष्ठा nf_conn *ct = nf_ct_tuplehash_to_ctrack(h);
 
-	if (NF_CT_DIRECTION(h) == IP_CT_DIR_REPLY)
-		return IP_CT_ESTABLISHED_REPLY;
+	अगर (NF_CT_सूचीECTION(h) == IP_CT_सूची_REPLY)
+		वापस IP_CT_ESTABLISHED_REPLY;
 	/* Once we've had two way comms, always ESTABLISHED. */
-	if (test_bit(IPS_SEEN_REPLY_BIT, &ct->status))
-		return IP_CT_ESTABLISHED;
-	if (test_bit(IPS_EXPECTED_BIT, &ct->status))
-		return IP_CT_RELATED;
-	return IP_CT_NEW;
-}
+	अगर (test_bit(IPS_SEEN_REPLY_BIT, &ct->status))
+		वापस IP_CT_ESTABLISHED;
+	अगर (test_bit(IPS_EXPECTED_BIT, &ct->status))
+		वापस IP_CT_RELATED;
+	वापस IP_CT_NEW;
+पूर्ण
 
-/* Find an existing connection which this packet belongs to without
- * re-attributing statistics or modifying the connection state.  This allows an
+/* Find an existing connection which this packet beदीर्घs to without
+ * re-attributing statistics or modअगरying the connection state.  This allows an
  * skb->_nfct lost due to an upcall to be recovered during actions execution.
  *
- * Must be called with rcu_read_lock.
+ * Must be called with rcu_पढ़ो_lock.
  *
- * On success, populates skb->_nfct and returns the connection.  Returns NULL
- * if there is no existing entry.
+ * On success, populates skb->_nfct and वापसs the connection.  Returns शून्य
+ * अगर there is no existing entry.
  */
-static struct nf_conn *
-ovs_ct_find_existing(struct net *net, const struct nf_conntrack_zone *zone,
-		     u8 l3num, struct sk_buff *skb, bool natted)
-{
-	struct nf_conntrack_tuple tuple;
-	struct nf_conntrack_tuple_hash *h;
-	struct nf_conn *ct;
+अटल काष्ठा nf_conn *
+ovs_ct_find_existing(काष्ठा net *net, स्थिर काष्ठा nf_conntrack_zone *zone,
+		     u8 l3num, काष्ठा sk_buff *skb, bool natted)
+अणु
+	काष्ठा nf_conntrack_tuple tuple;
+	काष्ठा nf_conntrack_tuple_hash *h;
+	काष्ठा nf_conn *ct;
 
-	if (!nf_ct_get_tuplepr(skb, skb_network_offset(skb), l3num,
-			       net, &tuple)) {
+	अगर (!nf_ct_get_tuplepr(skb, skb_network_offset(skb), l3num,
+			       net, &tuple)) अणु
 		pr_debug("ovs_ct_find_existing: Can't get tuple\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* Must invert the tuple if skb has been transformed by NAT. */
-	if (natted) {
-		struct nf_conntrack_tuple inverse;
+	/* Must invert the tuple अगर skb has been transक्रमmed by NAT. */
+	अगर (natted) अणु
+		काष्ठा nf_conntrack_tuple inverse;
 
-		if (!nf_ct_invert_tuple(&inverse, &tuple)) {
+		अगर (!nf_ct_invert_tuple(&inverse, &tuple)) अणु
 			pr_debug("ovs_ct_find_existing: Inversion failed!\n");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 		tuple = inverse;
-	}
+	पूर्ण
 
-	/* look for tuple match */
+	/* look क्रम tuple match */
 	h = nf_conntrack_find_get(net, zone, &tuple);
-	if (!h)
-		return NULL;   /* Not found. */
+	अगर (!h)
+		वापस शून्य;   /* Not found. */
 
 	ct = nf_ct_tuplehash_to_ctrack(h);
 
 	/* Inverted packet tuple matches the reverse direction conntrack tuple,
-	 * select the other tuplehash to get the right 'ctinfo' bits for this
+	 * select the other tuplehash to get the right 'ctinfo' bits क्रम this
 	 * packet.
 	 */
-	if (natted)
+	अगर (natted)
 		h = &ct->tuplehash[!h->tuple.dst.dir];
 
 	nf_ct_set(skb, ct, ovs_ct_get_info(h));
-	return ct;
-}
+	वापस ct;
+पूर्ण
 
-static
-struct nf_conn *ovs_ct_executed(struct net *net,
-				const struct sw_flow_key *key,
-				const struct ovs_conntrack_info *info,
-				struct sk_buff *skb,
+अटल
+काष्ठा nf_conn *ovs_ct_executed(काष्ठा net *net,
+				स्थिर काष्ठा sw_flow_key *key,
+				स्थिर काष्ठा ovs_conntrack_info *info,
+				काष्ठा sk_buff *skb,
 				bool *ct_executed)
-{
-	struct nf_conn *ct = NULL;
+अणु
+	काष्ठा nf_conn *ct = शून्य;
 
-	/* If no ct, check if we have evidence that an existing conntrack entry
-	 * might be found for this skb.  This happens when we lose a skb->_nfct
-	 * due to an upcall, or if the direction is being forced.  If the
+	/* If no ct, check अगर we have evidence that an existing conntrack entry
+	 * might be found क्रम this skb.  This happens when we lose a skb->_nfct
+	 * due to an upcall, or अगर the direction is being क्रमced.  If the
 	 * connection was not confirmed, it is not cached and needs to be run
 	 * through conntrack again.
 	 */
@@ -668,124 +669,124 @@ struct nf_conn *ovs_ct_executed(struct net *net,
 		       !(key->ct_state & OVS_CS_F_INVALID) &&
 		       (key->ct_zone == info->zone.id);
 
-	if (*ct_executed || (!key->ct_state && info->force)) {
+	अगर (*ct_executed || (!key->ct_state && info->क्रमce)) अणु
 		ct = ovs_ct_find_existing(net, &info->zone, info->family, skb,
 					  !!(key->ct_state &
 					  OVS_CS_F_NAT_MASK));
-	}
+	पूर्ण
 
-	return ct;
-}
+	वापस ct;
+पूर्ण
 
 /* Determine whether skb->_nfct is equal to the result of conntrack lookup. */
-static bool skb_nfct_cached(struct net *net,
-			    const struct sw_flow_key *key,
-			    const struct ovs_conntrack_info *info,
-			    struct sk_buff *skb)
-{
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+अटल bool skb_nfct_cached(काष्ठा net *net,
+			    स्थिर काष्ठा sw_flow_key *key,
+			    स्थिर काष्ठा ovs_conntrack_info *info,
+			    काष्ठा sk_buff *skb)
+अणु
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 	bool ct_executed = true;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
+	अगर (!ct)
 		ct = ovs_ct_executed(net, key, info, skb, &ct_executed);
 
-	if (ct)
+	अगर (ct)
 		nf_ct_get(skb, &ctinfo);
-	else
-		return false;
+	अन्यथा
+		वापस false;
 
-	if (!net_eq(net, read_pnet(&ct->ct_net)))
-		return false;
-	if (!nf_ct_zone_equal_any(info->ct, nf_ct_zone(ct)))
-		return false;
-	if (info->helper) {
-		struct nf_conn_help *help;
+	अगर (!net_eq(net, पढ़ो_pnet(&ct->ct_net)))
+		वापस false;
+	अगर (!nf_ct_zone_equal_any(info->ct, nf_ct_zone(ct)))
+		वापस false;
+	अगर (info->helper) अणु
+		काष्ठा nf_conn_help *help;
 
 		help = nf_ct_ext_find(ct, NF_CT_EXT_HELPER);
-		if (help && rcu_access_pointer(help->helper) != info->helper)
-			return false;
-	}
-	if (info->nf_ct_timeout) {
-		struct nf_conn_timeout *timeout_ext;
+		अगर (help && rcu_access_poपूर्णांकer(help->helper) != info->helper)
+			वापस false;
+	पूर्ण
+	अगर (info->nf_ct_समयout) अणु
+		काष्ठा nf_conn_समयout *समयout_ext;
 
-		timeout_ext = nf_ct_timeout_find(ct);
-		if (!timeout_ext || info->nf_ct_timeout !=
-		    rcu_dereference(timeout_ext->timeout))
-			return false;
-	}
+		समयout_ext = nf_ct_समयout_find(ct);
+		अगर (!समयout_ext || info->nf_ct_समयout !=
+		    rcu_dereference(समयout_ext->समयout))
+			वापस false;
+	पूर्ण
 	/* Force conntrack entry direction to the current packet? */
-	if (info->force && CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL) {
-		/* Delete the conntrack entry if confirmed, else just release
+	अगर (info->क्रमce && CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL) अणु
+		/* Delete the conntrack entry अगर confirmed, अन्यथा just release
 		 * the reference.
 		 */
-		if (nf_ct_is_confirmed(ct))
+		अगर (nf_ct_is_confirmed(ct))
 			nf_ct_delete(ct, 0, 0);
 
 		nf_conntrack_put(&ct->ct_general);
-		nf_ct_set(skb, NULL, 0);
-		return false;
-	}
+		nf_ct_set(skb, शून्य, 0);
+		वापस false;
+	पूर्ण
 
-	return ct_executed;
-}
+	वापस ct_executed;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
+#अगर IS_ENABLED(CONFIG_NF_NAT)
 /* Modelled after nf_nat_ipv[46]_fn().
- * range is only used for new, uninitialized NAT state.
+ * range is only used क्रम new, uninitialized NAT state.
  * Returns either NF_ACCEPT or NF_DROP.
  */
-static int ovs_ct_nat_execute(struct sk_buff *skb, struct nf_conn *ct,
-			      enum ip_conntrack_info ctinfo,
-			      const struct nf_nat_range2 *range,
-			      enum nf_nat_manip_type maniptype)
-{
-	int hooknum, nh_off, err = NF_ACCEPT;
+अटल पूर्णांक ovs_ct_nat_execute(काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+			      क्रमागत ip_conntrack_info ctinfo,
+			      स्थिर काष्ठा nf_nat_range2 *range,
+			      क्रमागत nf_nat_manip_type maniptype)
+अणु
+	पूर्णांक hooknum, nh_off, err = NF_ACCEPT;
 
 	nh_off = skb_network_offset(skb);
 	skb_pull_rcsum(skb, nh_off);
 
 	/* See HOOK2MANIP(). */
-	if (maniptype == NF_NAT_MANIP_SRC)
+	अगर (maniptype == NF_NAT_MANIP_SRC)
 		hooknum = NF_INET_LOCAL_IN; /* Source NAT */
-	else
+	अन्यथा
 		hooknum = NF_INET_LOCAL_OUT; /* Destination NAT */
 
-	switch (ctinfo) {
-	case IP_CT_RELATED:
-	case IP_CT_RELATED_REPLY:
-		if (IS_ENABLED(CONFIG_NF_NAT) &&
+	चयन (ctinfo) अणु
+	हाल IP_CT_RELATED:
+	हाल IP_CT_RELATED_REPLY:
+		अगर (IS_ENABLED(CONFIG_NF_NAT) &&
 		    skb->protocol == htons(ETH_P_IP) &&
-		    ip_hdr(skb)->protocol == IPPROTO_ICMP) {
-			if (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
+		    ip_hdr(skb)->protocol == IPPROTO_ICMP) अणु
+			अगर (!nf_nat_icmp_reply_translation(skb, ct, ctinfo,
 							   hooknum))
 				err = NF_DROP;
-			goto push;
-		} else if (IS_ENABLED(CONFIG_IPV6) &&
-			   skb->protocol == htons(ETH_P_IPV6)) {
+			जाओ push;
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IPV6) &&
+			   skb->protocol == htons(ETH_P_IPV6)) अणु
 			__be16 frag_off;
 			u8 nexthdr = ipv6_hdr(skb)->nexthdr;
-			int hdrlen = ipv6_skip_exthdr(skb,
-						      sizeof(struct ipv6hdr),
+			पूर्णांक hdrlen = ipv6_skip_exthdr(skb,
+						      माप(काष्ठा ipv6hdr),
 						      &nexthdr, &frag_off);
 
-			if (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) {
-				if (!nf_nat_icmpv6_reply_translation(skb, ct,
+			अगर (hdrlen >= 0 && nexthdr == IPPROTO_ICMPV6) अणु
+				अगर (!nf_nat_icmpv6_reply_translation(skb, ct,
 								     ctinfo,
 								     hooknum,
 								     hdrlen))
 					err = NF_DROP;
-				goto push;
-			}
-		}
-		/* Non-ICMP, fall thru to initialize if needed. */
+				जाओ push;
+			पूर्ण
+		पूर्ण
+		/* Non-ICMP, fall thru to initialize अगर needed. */
 		fallthrough;
-	case IP_CT_NEW:
-		/* Seen it before?  This can happen for loopback, retrans,
+	हाल IP_CT_NEW:
+		/* Seen it beक्रमe?  This can happen क्रम loopback, retrans,
 		 * or local packets.
 		 */
-		if (!nf_nat_initialized(ct, maniptype)) {
+		अगर (!nf_nat_initialized(ct, maniptype)) अणु
 			/* Initialize according to the NAT action. */
 			err = (range && range->flags & NF_NAT_RANGE_MAP_IPS)
 				/* Action is set up to establish a new
@@ -793,191 +794,191 @@ static int ovs_ct_nat_execute(struct sk_buff *skb, struct nf_conn *ct,
 				 */
 				? nf_nat_setup_info(ct, range, maniptype)
 				: nf_nat_alloc_null_binding(ct, hooknum);
-			if (err != NF_ACCEPT)
-				goto push;
-		}
-		break;
+			अगर (err != NF_ACCEPT)
+				जाओ push;
+		पूर्ण
+		अवरोध;
 
-	case IP_CT_ESTABLISHED:
-	case IP_CT_ESTABLISHED_REPLY:
-		break;
+	हाल IP_CT_ESTABLISHED:
+	हाल IP_CT_ESTABLISHED_REPLY:
+		अवरोध;
 
-	default:
+	शेष:
 		err = NF_DROP;
-		goto push;
-	}
+		जाओ push;
+	पूर्ण
 
 	err = nf_nat_packet(ct, ctinfo, hooknum, skb);
 push:
 	skb_push_rcsum(skb, nh_off);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ovs_nat_update_key(struct sw_flow_key *key,
-			       const struct sk_buff *skb,
-			       enum nf_nat_manip_type maniptype)
-{
-	if (maniptype == NF_NAT_MANIP_SRC) {
+अटल व्योम ovs_nat_update_key(काष्ठा sw_flow_key *key,
+			       स्थिर काष्ठा sk_buff *skb,
+			       क्रमागत nf_nat_manip_type maniptype)
+अणु
+	अगर (maniptype == NF_NAT_MANIP_SRC) अणु
 		__be16 src;
 
 		key->ct_state |= OVS_CS_F_SRC_NAT;
-		if (key->eth.type == htons(ETH_P_IP))
+		अगर (key->eth.type == htons(ETH_P_IP))
 			key->ipv4.addr.src = ip_hdr(skb)->saddr;
-		else if (key->eth.type == htons(ETH_P_IPV6))
-			memcpy(&key->ipv6.addr.src, &ipv6_hdr(skb)->saddr,
-			       sizeof(key->ipv6.addr.src));
-		else
-			return;
+		अन्यथा अगर (key->eth.type == htons(ETH_P_IPV6))
+			स_नकल(&key->ipv6.addr.src, &ipv6_hdr(skb)->saddr,
+			       माप(key->ipv6.addr.src));
+		अन्यथा
+			वापस;
 
-		if (key->ip.proto == IPPROTO_UDP)
+		अगर (key->ip.proto == IPPROTO_UDP)
 			src = udp_hdr(skb)->source;
-		else if (key->ip.proto == IPPROTO_TCP)
+		अन्यथा अगर (key->ip.proto == IPPROTO_TCP)
 			src = tcp_hdr(skb)->source;
-		else if (key->ip.proto == IPPROTO_SCTP)
+		अन्यथा अगर (key->ip.proto == IPPROTO_SCTP)
 			src = sctp_hdr(skb)->source;
-		else
-			return;
+		अन्यथा
+			वापस;
 
 		key->tp.src = src;
-	} else {
+	पूर्ण अन्यथा अणु
 		__be16 dst;
 
 		key->ct_state |= OVS_CS_F_DST_NAT;
-		if (key->eth.type == htons(ETH_P_IP))
+		अगर (key->eth.type == htons(ETH_P_IP))
 			key->ipv4.addr.dst = ip_hdr(skb)->daddr;
-		else if (key->eth.type == htons(ETH_P_IPV6))
-			memcpy(&key->ipv6.addr.dst, &ipv6_hdr(skb)->daddr,
-			       sizeof(key->ipv6.addr.dst));
-		else
-			return;
+		अन्यथा अगर (key->eth.type == htons(ETH_P_IPV6))
+			स_नकल(&key->ipv6.addr.dst, &ipv6_hdr(skb)->daddr,
+			       माप(key->ipv6.addr.dst));
+		अन्यथा
+			वापस;
 
-		if (key->ip.proto == IPPROTO_UDP)
+		अगर (key->ip.proto == IPPROTO_UDP)
 			dst = udp_hdr(skb)->dest;
-		else if (key->ip.proto == IPPROTO_TCP)
+		अन्यथा अगर (key->ip.proto == IPPROTO_TCP)
 			dst = tcp_hdr(skb)->dest;
-		else if (key->ip.proto == IPPROTO_SCTP)
+		अन्यथा अगर (key->ip.proto == IPPROTO_SCTP)
 			dst = sctp_hdr(skb)->dest;
-		else
-			return;
+		अन्यथा
+			वापस;
 
 		key->tp.dst = dst;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Returns NF_DROP if the packet should be dropped, NF_ACCEPT otherwise. */
-static int ovs_ct_nat(struct net *net, struct sw_flow_key *key,
-		      const struct ovs_conntrack_info *info,
-		      struct sk_buff *skb, struct nf_conn *ct,
-		      enum ip_conntrack_info ctinfo)
-{
-	enum nf_nat_manip_type maniptype;
-	int err;
+/* Returns NF_DROP अगर the packet should be dropped, NF_ACCEPT otherwise. */
+अटल पूर्णांक ovs_ct_nat(काष्ठा net *net, काष्ठा sw_flow_key *key,
+		      स्थिर काष्ठा ovs_conntrack_info *info,
+		      काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		      क्रमागत ip_conntrack_info ctinfo)
+अणु
+	क्रमागत nf_nat_manip_type maniptype;
+	पूर्णांक err;
 
-	/* Add NAT extension if not confirmed yet. */
-	if (!nf_ct_is_confirmed(ct) && !nf_ct_nat_ext_add(ct))
-		return NF_ACCEPT;   /* Can't NAT. */
+	/* Add NAT extension अगर not confirmed yet. */
+	अगर (!nf_ct_is_confirmed(ct) && !nf_ct_nat_ext_add(ct))
+		वापस NF_ACCEPT;   /* Can't NAT. */
 
 	/* Determine NAT type.
-	 * Check if the NAT type can be deduced from the tracked connection.
+	 * Check अगर the NAT type can be deduced from the tracked connection.
 	 * Make sure new expected connections (IP_CT_RELATED) are NATted only
 	 * when committing.
 	 */
-	if (info->nat & OVS_CT_NAT && ctinfo != IP_CT_NEW &&
+	अगर (info->nat & OVS_CT_NAT && ctinfo != IP_CT_NEW &&
 	    ct->status & IPS_NAT_MASK &&
-	    (ctinfo != IP_CT_RELATED || info->commit)) {
-		/* NAT an established or related connection like before. */
-		if (CTINFO2DIR(ctinfo) == IP_CT_DIR_REPLY)
-			/* This is the REPLY direction for a connection
-			 * for which NAT was applied in the forward
+	    (ctinfo != IP_CT_RELATED || info->commit)) अणु
+		/* NAT an established or related connection like beक्रमe. */
+		अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_REPLY)
+			/* This is the REPLY direction क्रम a connection
+			 * क्रम which NAT was applied in the क्रमward
 			 * direction.  Do the reverse NAT.
 			 */
 			maniptype = ct->status & IPS_SRC_NAT
 				? NF_NAT_MANIP_DST : NF_NAT_MANIP_SRC;
-		else
+		अन्यथा
 			maniptype = ct->status & IPS_SRC_NAT
 				? NF_NAT_MANIP_SRC : NF_NAT_MANIP_DST;
-	} else if (info->nat & OVS_CT_SRC_NAT) {
+	पूर्ण अन्यथा अगर (info->nat & OVS_CT_SRC_NAT) अणु
 		maniptype = NF_NAT_MANIP_SRC;
-	} else if (info->nat & OVS_CT_DST_NAT) {
+	पूर्ण अन्यथा अगर (info->nat & OVS_CT_DST_NAT) अणु
 		maniptype = NF_NAT_MANIP_DST;
-	} else {
-		return NF_ACCEPT; /* Connection is not NATed. */
-	}
+	पूर्ण अन्यथा अणु
+		वापस NF_ACCEPT; /* Connection is not NATed. */
+	पूर्ण
 	err = ovs_ct_nat_execute(skb, ct, ctinfo, &info->range, maniptype);
 
-	if (err == NF_ACCEPT && ct->status & IPS_DST_NAT) {
-		if (ct->status & IPS_SRC_NAT) {
-			if (maniptype == NF_NAT_MANIP_SRC)
+	अगर (err == NF_ACCEPT && ct->status & IPS_DST_NAT) अणु
+		अगर (ct->status & IPS_SRC_NAT) अणु
+			अगर (maniptype == NF_NAT_MANIP_SRC)
 				maniptype = NF_NAT_MANIP_DST;
-			else
+			अन्यथा
 				maniptype = NF_NAT_MANIP_SRC;
 
 			err = ovs_ct_nat_execute(skb, ct, ctinfo, &info->range,
 						 maniptype);
-		} else if (CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL) {
-			err = ovs_ct_nat_execute(skb, ct, ctinfo, NULL,
+		पूर्ण अन्यथा अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL) अणु
+			err = ovs_ct_nat_execute(skb, ct, ctinfo, शून्य,
 						 NF_NAT_MANIP_SRC);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Mark NAT done if successful and update the flow key. */
-	if (err == NF_ACCEPT)
+	/* Mark NAT करोne अगर successful and update the flow key. */
+	अगर (err == NF_ACCEPT)
 		ovs_nat_update_key(key, skb, maniptype);
 
-	return err;
-}
-#else /* !CONFIG_NF_NAT */
-static int ovs_ct_nat(struct net *net, struct sw_flow_key *key,
-		      const struct ovs_conntrack_info *info,
-		      struct sk_buff *skb, struct nf_conn *ct,
-		      enum ip_conntrack_info ctinfo)
-{
-	return NF_ACCEPT;
-}
-#endif
+	वापस err;
+पूर्ण
+#अन्यथा /* !CONFIG_NF_NAT */
+अटल पूर्णांक ovs_ct_nat(काष्ठा net *net, काष्ठा sw_flow_key *key,
+		      स्थिर काष्ठा ovs_conntrack_info *info,
+		      काष्ठा sk_buff *skb, काष्ठा nf_conn *ct,
+		      क्रमागत ip_conntrack_info ctinfo)
+अणु
+	वापस NF_ACCEPT;
+पूर्ण
+#पूर्ण_अगर
 
-/* Pass 'skb' through conntrack in 'net', using zone configured in 'info', if
- * not done already.  Update key with new CT state after passing the packet
+/* Pass 'skb' through conntrack in 'net', using zone configured in 'info', अगर
+ * not करोne alपढ़ोy.  Update key with new CT state after passing the packet
  * through conntrack.
- * Note that if the packet is deemed invalid by conntrack, skb->_nfct will be
- * set to NULL and 0 will be returned.
+ * Note that अगर the packet is deemed invalid by conntrack, skb->_nfct will be
+ * set to शून्य and 0 will be वापसed.
  */
-static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
-			   const struct ovs_conntrack_info *info,
-			   struct sk_buff *skb)
-{
+अटल पूर्णांक __ovs_ct_lookup(काष्ठा net *net, काष्ठा sw_flow_key *key,
+			   स्थिर काष्ठा ovs_conntrack_info *info,
+			   काष्ठा sk_buff *skb)
+अणु
 	/* If we are recirculating packets to match on conntrack fields and
-	 * committing with a separate conntrack action,  then we don't need to
-	 * actually run the packet through conntrack twice unless it's for a
-	 * different zone.
+	 * committing with a separate conntrack action,  then we करोn't need to
+	 * actually run the packet through conntrack twice unless it's क्रम a
+	 * dअगरferent zone.
 	 */
 	bool cached = skb_nfct_cached(net, key, info, skb);
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 
-	if (!cached) {
-		struct nf_hook_state state = {
+	अगर (!cached) अणु
+		काष्ठा nf_hook_state state = अणु
 			.hook = NF_INET_PRE_ROUTING,
 			.pf = info->family,
 			.net = net,
-		};
-		struct nf_conn *tmpl = info->ct;
-		int err;
+		पूर्ण;
+		काष्ठा nf_conn *पंचांगpl = info->ct;
+		पूर्णांक err;
 
-		/* Associate skb with specified zone. */
-		if (tmpl) {
-			if (skb_nfct(skb))
+		/* Associate skb with specअगरied zone. */
+		अगर (पंचांगpl) अणु
+			अगर (skb_nfct(skb))
 				nf_conntrack_put(skb_nfct(skb));
-			nf_conntrack_get(&tmpl->ct_general);
-			nf_ct_set(skb, tmpl, IP_CT_NEW);
-		}
+			nf_conntrack_get(&पंचांगpl->ct_general);
+			nf_ct_set(skb, पंचांगpl, IP_CT_NEW);
+		पूर्ण
 
 		err = nf_conntrack_in(skb, &state);
-		if (err != NF_ACCEPT)
-			return -ENOENT;
+		अगर (err != NF_ACCEPT)
+			वापस -ENOENT;
 
-		/* Clear CT state NAT flags to mark that we have not yet done
+		/* Clear CT state NAT flags to mark that we have not yet करोne
 		 * NAT after the nf_conntrack_in() call.  We can actually clear
 		 * the whole state, as it will be re-initialized below.
 		 */
@@ -985,996 +986,996 @@ static int __ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
 
 		/* Update the key, but keep the NAT flags. */
 		ovs_ct_update_key(skb, info, key, true, true);
-	}
+	पूर्ण
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct) {
+	अगर (ct) अणु
 		bool add_helper = false;
 
-		/* Packets starting a new connection must be NATted before the
-		 * helper, so that the helper knows about the NAT.  We enforce
-		 * this by delaying both NAT and helper calls for unconfirmed
+		/* Packets starting a new connection must be NATted beक्रमe the
+		 * helper, so that the helper knows about the NAT.  We enक्रमce
+		 * this by delaying both NAT and helper calls क्रम unconfirmed
 		 * connections until the committing CT action.  For later
 		 * packets NAT and Helper may be called in either order.
 		 *
-		 * NAT will be done only if the CT action has NAT, and only
+		 * NAT will be करोne only अगर the CT action has NAT, and only
 		 * once per packet (per zone), as guarded by the NAT bits in
 		 * the key->ct_state.
 		 */
-		if (info->nat && !(key->ct_state & OVS_CS_F_NAT_MASK) &&
+		अगर (info->nat && !(key->ct_state & OVS_CS_F_NAT_MASK) &&
 		    (nf_ct_is_confirmed(ct) || info->commit) &&
-		    ovs_ct_nat(net, key, info, skb, ct, ctinfo) != NF_ACCEPT) {
-			return -EINVAL;
-		}
+		    ovs_ct_nat(net, key, info, skb, ct, ctinfo) != NF_ACCEPT) अणु
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Userspace may decide to perform a ct lookup without a helper
-		 * specified followed by a (recirculate and) commit with one,
-		 * or attach a helper in a later commit.  Therefore, for
+		/* Userspace may decide to perक्रमm a ct lookup without a helper
+		 * specअगरied followed by a (recirculate and) commit with one,
+		 * or attach a helper in a later commit.  Thereक्रमe, क्रम
 		 * connections which we will commit, we may need to attach
 		 * the helper here.
 		 */
-		if (info->commit && info->helper && !nfct_help(ct)) {
-			int err = __nf_ct_try_assign_helper(ct, info->ct,
+		अगर (info->commit && info->helper && !nfct_help(ct)) अणु
+			पूर्णांक err = __nf_ct_try_assign_helper(ct, info->ct,
 							    GFP_ATOMIC);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			add_helper = true;
 
-			/* helper installed, add seqadj if NAT is required */
-			if (info->nat && !nfct_seqadj(ct)) {
-				if (!nfct_seqadj_ext_add(ct))
-					return -EINVAL;
-			}
-		}
+			/* helper installed, add seqadj अगर NAT is required */
+			अगर (info->nat && !nfct_seqadj(ct)) अणु
+				अगर (!nfct_seqadj_ext_add(ct))
+					वापस -EINVAL;
+			पूर्ण
+		पूर्ण
 
-		/* Call the helper only if:
+		/* Call the helper only अगर:
 		 * - nf_conntrack_in() was executed above ("!cached") or a
-		 *   helper was just attached ("add_helper") for a confirmed
+		 *   helper was just attached ("add_helper") क्रम a confirmed
 		 *   connection, or
 		 * - When committing an unconfirmed connection.
 		 */
-		if ((nf_ct_is_confirmed(ct) ? !cached || add_helper :
+		अगर ((nf_ct_is_confirmed(ct) ? !cached || add_helper :
 					      info->commit) &&
-		    ovs_ct_helper(skb, info->family) != NF_ACCEPT) {
-			return -EINVAL;
-		}
+		    ovs_ct_helper(skb, info->family) != NF_ACCEPT) अणु
+			वापस -EINVAL;
+		पूर्ण
 
-		if (nf_ct_protonum(ct) == IPPROTO_TCP &&
-		    nf_ct_is_confirmed(ct) && nf_conntrack_tcp_established(ct)) {
-			/* Be liberal for tcp packets so that out-of-window
+		अगर (nf_ct_protonum(ct) == IPPROTO_TCP &&
+		    nf_ct_is_confirmed(ct) && nf_conntrack_tcp_established(ct)) अणु
+			/* Be liberal क्रम tcp packets so that out-of-winकरोw
 			 * packets are not marked invalid.
 			 */
 			nf_ct_set_tcp_be_liberal(ct);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Lookup connection and read fields into key. */
-static int ovs_ct_lookup(struct net *net, struct sw_flow_key *key,
-			 const struct ovs_conntrack_info *info,
-			 struct sk_buff *skb)
-{
-	struct nf_conntrack_expect *exp;
+/* Lookup connection and पढ़ो fields पूर्णांकo key. */
+अटल पूर्णांक ovs_ct_lookup(काष्ठा net *net, काष्ठा sw_flow_key *key,
+			 स्थिर काष्ठा ovs_conntrack_info *info,
+			 काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nf_conntrack_expect *exp;
 
 	/* If we pass an expected packet through nf_conntrack_in() the
-	 * expectation is typically removed, but the packet could still be
+	 * expectation is typically हटाओd, but the packet could still be
 	 * lost in upcall processing.  To prevent this from happening we
-	 * perform an explicit expectation lookup.  Expected connections are
+	 * perक्रमm an explicit expectation lookup.  Expected connections are
 	 * always new, and will be passed through conntrack only when they are
-	 * committed, as it is OK to remove the expectation at that time.
+	 * committed, as it is OK to हटाओ the expectation at that समय.
 	 */
 	exp = ovs_ct_expect_find(net, &info->zone, info->family, skb);
-	if (exp) {
+	अगर (exp) अणु
 		u8 state;
 
 		/* NOTE: New connections are NATted and Helped only when
-		 * committed, so we are not calling into NAT here.
+		 * committed, so we are not calling पूर्णांकo NAT here.
 		 */
 		state = OVS_CS_F_TRACKED | OVS_CS_F_NEW | OVS_CS_F_RELATED;
 		__ovs_ct_update_key(key, state, &info->zone, exp->master);
-	} else {
-		struct nf_conn *ct;
-		int err;
+	पूर्ण अन्यथा अणु
+		काष्ठा nf_conn *ct;
+		पूर्णांक err;
 
 		err = __ovs_ct_lookup(net, key, info, skb);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		ct = (struct nf_conn *)skb_nfct(skb);
-		if (ct)
+		ct = (काष्ठा nf_conn *)skb_nfct(skb);
+		अगर (ct)
 			nf_ct_deliver_cached_events(ct);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool labels_nonzero(const struct ovs_key_ct_labels *labels)
-{
-	size_t i;
+अटल bool labels_nonzero(स्थिर काष्ठा ovs_key_ct_labels *labels)
+अणु
+	माप_प्रकार i;
 
-	for (i = 0; i < OVS_CT_LABELS_LEN_32; i++)
-		if (labels->ct_labels_32[i])
-			return true;
+	क्रम (i = 0; i < OVS_CT_LABELS_LEN_32; i++)
+		अगर (labels->ct_labels_32[i])
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-static struct hlist_head *ct_limit_hash_bucket(
-	const struct ovs_ct_limit_info *info, u16 zone)
-{
-	return &info->limits[zone & (CT_LIMIT_HASH_BUCKETS - 1)];
-}
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+अटल काष्ठा hlist_head *ct_limit_hash_bucket(
+	स्थिर काष्ठा ovs_ct_limit_info *info, u16 zone)
+अणु
+	वापस &info->limits[zone & (CT_LIMIT_HASH_BUCKETS - 1)];
+पूर्ण
 
 /* Call with ovs_mutex */
-static void ct_limit_set(const struct ovs_ct_limit_info *info,
-			 struct ovs_ct_limit *new_ct_limit)
-{
-	struct ovs_ct_limit *ct_limit;
-	struct hlist_head *head;
+अटल व्योम ct_limit_set(स्थिर काष्ठा ovs_ct_limit_info *info,
+			 काष्ठा ovs_ct_limit *new_ct_limit)
+अणु
+	काष्ठा ovs_ct_limit *ct_limit;
+	काष्ठा hlist_head *head;
 
 	head = ct_limit_hash_bucket(info, new_ct_limit->zone);
-	hlist_for_each_entry_rcu(ct_limit, head, hlist_node) {
-		if (ct_limit->zone == new_ct_limit->zone) {
+	hlist_क्रम_each_entry_rcu(ct_limit, head, hlist_node) अणु
+		अगर (ct_limit->zone == new_ct_limit->zone) अणु
 			hlist_replace_rcu(&ct_limit->hlist_node,
 					  &new_ct_limit->hlist_node);
-			kfree_rcu(ct_limit, rcu);
-			return;
-		}
-	}
+			kमुक्त_rcu(ct_limit, rcu);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	hlist_add_head_rcu(&new_ct_limit->hlist_node, head);
-}
+पूर्ण
 
 /* Call with ovs_mutex */
-static void ct_limit_del(const struct ovs_ct_limit_info *info, u16 zone)
-{
-	struct ovs_ct_limit *ct_limit;
-	struct hlist_head *head;
-	struct hlist_node *n;
+अटल व्योम ct_limit_del(स्थिर काष्ठा ovs_ct_limit_info *info, u16 zone)
+अणु
+	काष्ठा ovs_ct_limit *ct_limit;
+	काष्ठा hlist_head *head;
+	काष्ठा hlist_node *n;
 
 	head = ct_limit_hash_bucket(info, zone);
-	hlist_for_each_entry_safe(ct_limit, n, head, hlist_node) {
-		if (ct_limit->zone == zone) {
+	hlist_क्रम_each_entry_safe(ct_limit, n, head, hlist_node) अणु
+		अगर (ct_limit->zone == zone) अणु
 			hlist_del_rcu(&ct_limit->hlist_node);
-			kfree_rcu(ct_limit, rcu);
-			return;
-		}
-	}
-}
+			kमुक्त_rcu(ct_limit, rcu);
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Call with RCU read lock */
-static u32 ct_limit_get(const struct ovs_ct_limit_info *info, u16 zone)
-{
-	struct ovs_ct_limit *ct_limit;
-	struct hlist_head *head;
+/* Call with RCU पढ़ो lock */
+अटल u32 ct_limit_get(स्थिर काष्ठा ovs_ct_limit_info *info, u16 zone)
+अणु
+	काष्ठा ovs_ct_limit *ct_limit;
+	काष्ठा hlist_head *head;
 
 	head = ct_limit_hash_bucket(info, zone);
-	hlist_for_each_entry_rcu(ct_limit, head, hlist_node) {
-		if (ct_limit->zone == zone)
-			return ct_limit->limit;
-	}
+	hlist_क्रम_each_entry_rcu(ct_limit, head, hlist_node) अणु
+		अगर (ct_limit->zone == zone)
+			वापस ct_limit->limit;
+	पूर्ण
 
-	return info->default_limit;
-}
+	वापस info->शेष_limit;
+पूर्ण
 
-static int ovs_ct_check_limit(struct net *net,
-			      const struct ovs_conntrack_info *info,
-			      const struct nf_conntrack_tuple *tuple)
-{
-	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
-	const struct ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
+अटल पूर्णांक ovs_ct_check_limit(काष्ठा net *net,
+			      स्थिर काष्ठा ovs_conntrack_info *info,
+			      स्थिर काष्ठा nf_conntrack_tuple *tuple)
+अणु
+	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
+	स्थिर काष्ठा ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
 	u32 per_zone_limit, connections;
 	u32 conncount_key;
 
 	conncount_key = info->zone.id;
 
 	per_zone_limit = ct_limit_get(ct_limit_info, info->zone.id);
-	if (per_zone_limit == OVS_CT_LIMIT_UNLIMITED)
-		return 0;
+	अगर (per_zone_limit == OVS_CT_LIMIT_UNLIMITED)
+		वापस 0;
 
 	connections = nf_conncount_count(net, ct_limit_info->data,
 					 &conncount_key, tuple, &info->zone);
-	if (connections > per_zone_limit)
-		return -ENOMEM;
+	अगर (connections > per_zone_limit)
+		वापस -ENOMEM;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-/* Lookup connection and confirm if unconfirmed. */
-static int ovs_ct_commit(struct net *net, struct sw_flow_key *key,
-			 const struct ovs_conntrack_info *info,
-			 struct sk_buff *skb)
-{
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
-	int err;
+/* Lookup connection and confirm अगर unconfirmed. */
+अटल पूर्णांक ovs_ct_commit(काष्ठा net *net, काष्ठा sw_flow_key *key,
+			 स्थिर काष्ठा ovs_conntrack_info *info,
+			 काष्ठा sk_buff *skb)
+अणु
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
+	पूर्णांक err;
 
 	err = __ovs_ct_lookup(net, key, info, skb);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* The connection could be invalid, in which case this is a no-op.*/
+	/* The connection could be invalid, in which हाल this is a no-op.*/
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		return 0;
+	अगर (!ct)
+		वापस 0;
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-	if (static_branch_unlikely(&ovs_ct_limit_enabled)) {
-		if (!nf_ct_is_confirmed(ct)) {
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+	अगर (अटल_branch_unlikely(&ovs_ct_limit_enabled)) अणु
+		अगर (!nf_ct_is_confirmed(ct)) अणु
 			err = ovs_ct_check_limit(net, info,
-				&ct->tuplehash[IP_CT_DIR_ORIGINAL].tuple);
-			if (err) {
+				&ct->tuplehash[IP_CT_सूची_ORIGINAL].tuple);
+			अगर (err) अणु
 				net_warn_ratelimited("openvswitch: zone: %u "
 					"exceeds conntrack limit\n",
 					info->zone.id);
-				return err;
-			}
-		}
-	}
-#endif
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	/* Set the conntrack event mask if given.  NEW and DELETE events have
+	/* Set the conntrack event mask अगर given.  NEW and DELETE events have
 	 * their own groups, but the NFNLGRP_CONNTRACK_UPDATE group listener
 	 * typically would receive many kinds of updates.  Setting the event
 	 * mask allows those events to be filtered.  The set event mask will
-	 * remain in effect for the lifetime of the connection unless changed
-	 * by a further CT action with both the commit flag and the eventmask
+	 * reमुख्य in effect क्रम the lअगरeसमय of the connection unless changed
+	 * by a further CT action with both the commit flag and the evenपंचांगask
 	 * option. */
-	if (info->have_eventmask) {
-		struct nf_conntrack_ecache *cache = nf_ct_ecache_find(ct);
+	अगर (info->have_evenपंचांगask) अणु
+		काष्ठा nf_conntrack_ecache *cache = nf_ct_ecache_find(ct);
 
-		if (cache)
-			cache->ctmask = info->eventmask;
-	}
+		अगर (cache)
+			cache->cपंचांगask = info->evenपंचांगask;
+	पूर्ण
 
-	/* Apply changes before confirming the connection so that the initial
+	/* Apply changes beक्रमe confirming the connection so that the initial
 	 * conntrack NEW netlink event carries the values given in the CT
 	 * action.
 	 */
-	if (info->mark.mask) {
+	अगर (info->mark.mask) अणु
 		err = ovs_ct_set_mark(ct, key, info->mark.value,
 				      info->mark.mask);
-		if (err)
-			return err;
-	}
-	if (!nf_ct_is_confirmed(ct)) {
+		अगर (err)
+			वापस err;
+	पूर्ण
+	अगर (!nf_ct_is_confirmed(ct)) अणु
 		err = ovs_ct_init_labels(ct, key, &info->labels.value,
 					 &info->labels.mask);
-		if (err)
-			return err;
-	} else if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
-		   labels_nonzero(&info->labels.mask)) {
+		अगर (err)
+			वापस err;
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+		   labels_nonzero(&info->labels.mask)) अणु
 		err = ovs_ct_set_labels(ct, key, &info->labels.value,
 					&info->labels.mask);
-		if (err)
-			return err;
-	}
-	/* This will take care of sending queued events even if the connection
-	 * is already confirmed.
+		अगर (err)
+			वापस err;
+	पूर्ण
+	/* This will take care of sending queued events even अगर the connection
+	 * is alपढ़ोy confirmed.
 	 */
-	if (nf_conntrack_confirm(skb) != NF_ACCEPT)
-		return -EINVAL;
+	अगर (nf_conntrack_confirm(skb) != NF_ACCEPT)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Trim the skb to the length specified by the IP/IPv6 header,
+/* Trim the skb to the length specअगरied by the IP/IPv6 header,
  * removing any trailing lower-layer padding. This prepares the skb
- * for higher-layer processing that assumes skb->len excludes padding
+ * क्रम higher-layer processing that assumes skb->len excludes padding
  * (such as nf_ip_checksum). The caller needs to pull the skb to the
- * network header, and ensure ip_hdr/ipv6_hdr points to valid data.
+ * network header, and ensure ip_hdr/ipv6_hdr poपूर्णांकs to valid data.
  */
-static int ovs_skb_network_trim(struct sk_buff *skb)
-{
-	unsigned int len;
-	int err;
+अटल पूर्णांक ovs_skb_network_trim(काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक len;
+	पूर्णांक err;
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		len = ntohs(ip_hdr(skb)->tot_len);
-		break;
-	case htons(ETH_P_IPV6):
-		len = sizeof(struct ipv6hdr)
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
+		len = माप(काष्ठा ipv6hdr)
 			+ ntohs(ipv6_hdr(skb)->payload_len);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		len = skb->len;
-	}
+	पूर्ण
 
 	err = pskb_trim_rcsum(skb, len);
-	if (err)
-		kfree_skb(skb);
+	अगर (err)
+		kमुक्त_skb(skb);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-/* Returns 0 on success, -EINPROGRESS if 'skb' is stolen, or other nonzero
- * value if 'skb' is freed.
+/* Returns 0 on success, -EINPROGRESS अगर 'skb' is stolen, or other nonzero
+ * value अगर 'skb' is मुक्तd.
  */
-int ovs_ct_execute(struct net *net, struct sk_buff *skb,
-		   struct sw_flow_key *key,
-		   const struct ovs_conntrack_info *info)
-{
-	int nh_ofs;
-	int err;
+पूर्णांक ovs_ct_execute(काष्ठा net *net, काष्ठा sk_buff *skb,
+		   काष्ठा sw_flow_key *key,
+		   स्थिर काष्ठा ovs_conntrack_info *info)
+अणु
+	पूर्णांक nh_ofs;
+	पूर्णांक err;
 
 	/* The conntrack module expects to be working at L3. */
 	nh_ofs = skb_network_offset(skb);
 	skb_pull_rcsum(skb, nh_ofs);
 
 	err = ovs_skb_network_trim(skb);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (key->ip.frag != OVS_FRAG_TYPE_NONE) {
+	अगर (key->ip.frag != OVS_FRAG_TYPE_NONE) अणु
 		err = handle_fragments(net, key, info->zone.id, skb);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (info->commit)
+	अगर (info->commit)
 		err = ovs_ct_commit(net, key, info, skb);
-	else
+	अन्यथा
 		err = ovs_ct_lookup(net, key, info, skb);
 
 	skb_push_rcsum(skb, nh_ofs);
-	if (err)
-		kfree_skb(skb);
-	return err;
-}
+	अगर (err)
+		kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-int ovs_ct_clear(struct sk_buff *skb, struct sw_flow_key *key)
-{
-	if (skb_nfct(skb)) {
+पूर्णांक ovs_ct_clear(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key)
+अणु
+	अगर (skb_nfct(skb)) अणु
 		nf_conntrack_put(skb_nfct(skb));
-		nf_ct_set(skb, NULL, IP_CT_UNTRACKED);
+		nf_ct_set(skb, शून्य, IP_CT_UNTRACKED);
 		ovs_ct_fill_key(skb, key, false);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_add_helper(struct ovs_conntrack_info *info, const char *name,
-			     const struct sw_flow_key *key, bool log)
-{
-	struct nf_conntrack_helper *helper;
-	struct nf_conn_help *help;
-	int ret = 0;
+अटल पूर्णांक ovs_ct_add_helper(काष्ठा ovs_conntrack_info *info, स्थिर अक्षर *name,
+			     स्थिर काष्ठा sw_flow_key *key, bool log)
+अणु
+	काष्ठा nf_conntrack_helper *helper;
+	काष्ठा nf_conn_help *help;
+	पूर्णांक ret = 0;
 
 	helper = nf_conntrack_helper_try_module_get(name, info->family,
 						    key->ip.proto);
-	if (!helper) {
+	अगर (!helper) अणु
 		OVS_NLERR(log, "Unknown helper \"%s\"", name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	help = nf_ct_helper_ext_add(info->ct, GFP_KERNEL);
-	if (!help) {
+	अगर (!help) अणु
 		nf_conntrack_helper_put(helper);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-	if (info->nat) {
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	अगर (info->nat) अणु
 		ret = nf_nat_helper_try_module_get(name, info->family,
 						   key->ip.proto);
-		if (ret) {
+		अगर (ret) अणु
 			nf_conntrack_helper_put(helper);
 			OVS_NLERR(log, "Failed to load \"%s\" NAT helper, error: %d",
 				  name, ret);
-			return ret;
-		}
-	}
-#endif
-	rcu_assign_pointer(help->helper, helper);
+			वापस ret;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	rcu_assign_poपूर्णांकer(help->helper, helper);
 	info->helper = helper;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-static int parse_nat(const struct nlattr *attr,
-		     struct ovs_conntrack_info *info, bool log)
-{
-	struct nlattr *a;
-	int rem;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+अटल पूर्णांक parse_nat(स्थिर काष्ठा nlattr *attr,
+		     काष्ठा ovs_conntrack_info *info, bool log)
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 	bool have_ip_max = false;
 	bool have_proto_max = false;
 	bool ip_vers = (info->family == NFPROTO_IPV6);
 
-	nla_for_each_nested(a, attr, rem) {
-		static const int ovs_nat_attr_lens[OVS_NAT_ATTR_MAX + 1][2] = {
-			[OVS_NAT_ATTR_SRC] = {0, 0},
-			[OVS_NAT_ATTR_DST] = {0, 0},
-			[OVS_NAT_ATTR_IP_MIN] = {sizeof(struct in_addr),
-						 sizeof(struct in6_addr)},
-			[OVS_NAT_ATTR_IP_MAX] = {sizeof(struct in_addr),
-						 sizeof(struct in6_addr)},
-			[OVS_NAT_ATTR_PROTO_MIN] = {sizeof(u16), sizeof(u16)},
-			[OVS_NAT_ATTR_PROTO_MAX] = {sizeof(u16), sizeof(u16)},
-			[OVS_NAT_ATTR_PERSISTENT] = {0, 0},
-			[OVS_NAT_ATTR_PROTO_HASH] = {0, 0},
-			[OVS_NAT_ATTR_PROTO_RANDOM] = {0, 0},
-		};
-		int type = nla_type(a);
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		अटल स्थिर पूर्णांक ovs_nat_attr_lens[OVS_NAT_ATTR_MAX + 1][2] = अणु
+			[OVS_NAT_ATTR_SRC] = अणु0, 0पूर्ण,
+			[OVS_NAT_ATTR_DST] = अणु0, 0पूर्ण,
+			[OVS_NAT_ATTR_IP_MIN] = अणुमाप(काष्ठा in_addr),
+						 माप(काष्ठा in6_addr)पूर्ण,
+			[OVS_NAT_ATTR_IP_MAX] = अणुमाप(काष्ठा in_addr),
+						 माप(काष्ठा in6_addr)पूर्ण,
+			[OVS_NAT_ATTR_PROTO_MIN] = अणुमाप(u16), माप(u16)पूर्ण,
+			[OVS_NAT_ATTR_PROTO_MAX] = अणुमाप(u16), माप(u16)पूर्ण,
+			[OVS_NAT_ATTR_PERSISTENT] = अणु0, 0पूर्ण,
+			[OVS_NAT_ATTR_PROTO_HASH] = अणु0, 0पूर्ण,
+			[OVS_NAT_ATTR_PROTO_RANDOM] = अणु0, 0पूर्ण,
+		पूर्ण;
+		पूर्णांक type = nla_type(a);
 
-		if (type > OVS_NAT_ATTR_MAX) {
+		अगर (type > OVS_NAT_ATTR_MAX) अणु
 			OVS_NLERR(log, "Unknown NAT attribute (type=%d, max=%d)",
 				  type, OVS_NAT_ATTR_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (nla_len(a) != ovs_nat_attr_lens[type][ip_vers]) {
+		अगर (nla_len(a) != ovs_nat_attr_lens[type][ip_vers]) अणु
 			OVS_NLERR(log, "NAT attribute type %d has unexpected length (%d != %d)",
 				  type, nla_len(a),
 				  ovs_nat_attr_lens[type][ip_vers]);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (type) {
-		case OVS_NAT_ATTR_SRC:
-		case OVS_NAT_ATTR_DST:
-			if (info->nat) {
+		चयन (type) अणु
+		हाल OVS_NAT_ATTR_SRC:
+		हाल OVS_NAT_ATTR_DST:
+			अगर (info->nat) अणु
 				OVS_NLERR(log, "Only one type of NAT may be specified");
-				return -ERANGE;
-			}
+				वापस -दुस्फल;
+			पूर्ण
 			info->nat |= OVS_CT_NAT;
 			info->nat |= ((type == OVS_NAT_ATTR_SRC)
 					? OVS_CT_SRC_NAT : OVS_CT_DST_NAT);
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_IP_MIN:
-			nla_memcpy(&info->range.min_addr, a,
-				   sizeof(info->range.min_addr));
+		हाल OVS_NAT_ATTR_IP_MIN:
+			nla_स_नकल(&info->range.min_addr, a,
+				   माप(info->range.min_addr));
 			info->range.flags |= NF_NAT_RANGE_MAP_IPS;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_IP_MAX:
+		हाल OVS_NAT_ATTR_IP_MAX:
 			have_ip_max = true;
-			nla_memcpy(&info->range.max_addr, a,
-				   sizeof(info->range.max_addr));
+			nla_स_नकल(&info->range.max_addr, a,
+				   माप(info->range.max_addr));
 			info->range.flags |= NF_NAT_RANGE_MAP_IPS;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_PROTO_MIN:
+		हाल OVS_NAT_ATTR_PROTO_MIN:
 			info->range.min_proto.all = htons(nla_get_u16(a));
 			info->range.flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_PROTO_MAX:
+		हाल OVS_NAT_ATTR_PROTO_MAX:
 			have_proto_max = true;
 			info->range.max_proto.all = htons(nla_get_u16(a));
 			info->range.flags |= NF_NAT_RANGE_PROTO_SPECIFIED;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_PERSISTENT:
+		हाल OVS_NAT_ATTR_PERSISTENT:
 			info->range.flags |= NF_NAT_RANGE_PERSISTENT;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_PROTO_HASH:
+		हाल OVS_NAT_ATTR_PROTO_HASH:
 			info->range.flags |= NF_NAT_RANGE_PROTO_RANDOM;
-			break;
+			अवरोध;
 
-		case OVS_NAT_ATTR_PROTO_RANDOM:
+		हाल OVS_NAT_ATTR_PROTO_RANDOM:
 			info->range.flags |= NF_NAT_RANGE_PROTO_RANDOM_FULLY;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			OVS_NLERR(log, "Unknown nat attribute (%d)", type);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (rem > 0) {
+	अगर (rem > 0) अणु
 		OVS_NLERR(log, "NAT attribute has %d unknown bytes", rem);
-		return -EINVAL;
-	}
-	if (!info->nat) {
-		/* Do not allow flags if no type is given. */
-		if (info->range.flags) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!info->nat) अणु
+		/* Do not allow flags अगर no type is given. */
+		अगर (info->range.flags) अणु
 			OVS_NLERR(log,
 				  "NAT flags may be given only when NAT range (SRC or DST) is also specified."
 				  );
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		info->nat = OVS_CT_NAT;   /* NAT existing connections. */
-	} else if (!info->commit) {
+	पूर्ण अन्यथा अगर (!info->commit) अणु
 		OVS_NLERR(log,
 			  "NAT attributes may be specified only when CT COMMIT flag is also specified."
 			  );
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	/* Allow missing IP_MAX. */
-	if (info->range.flags & NF_NAT_RANGE_MAP_IPS && !have_ip_max) {
-		memcpy(&info->range.max_addr, &info->range.min_addr,
-		       sizeof(info->range.max_addr));
-	}
+	अगर (info->range.flags & NF_NAT_RANGE_MAP_IPS && !have_ip_max) अणु
+		स_नकल(&info->range.max_addr, &info->range.min_addr,
+		       माप(info->range.max_addr));
+	पूर्ण
 	/* Allow missing PROTO_MAX. */
-	if (info->range.flags & NF_NAT_RANGE_PROTO_SPECIFIED &&
-	    !have_proto_max) {
+	अगर (info->range.flags & NF_NAT_RANGE_PROTO_SPECIFIED &&
+	    !have_proto_max) अणु
 		info->range.max_proto.all = info->range.min_proto.all;
-	}
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct ovs_ct_len_tbl ovs_ct_attr_lens[OVS_CT_ATTR_MAX + 1] = {
-	[OVS_CT_ATTR_COMMIT]	= { .minlen = 0, .maxlen = 0 },
-	[OVS_CT_ATTR_FORCE_COMMIT]	= { .minlen = 0, .maxlen = 0 },
-	[OVS_CT_ATTR_ZONE]	= { .minlen = sizeof(u16),
-				    .maxlen = sizeof(u16) },
-	[OVS_CT_ATTR_MARK]	= { .minlen = sizeof(struct md_mark),
-				    .maxlen = sizeof(struct md_mark) },
-	[OVS_CT_ATTR_LABELS]	= { .minlen = sizeof(struct md_labels),
-				    .maxlen = sizeof(struct md_labels) },
-	[OVS_CT_ATTR_HELPER]	= { .minlen = 1,
-				    .maxlen = NF_CT_HELPER_NAME_LEN },
-#if IS_ENABLED(CONFIG_NF_NAT)
+अटल स्थिर काष्ठा ovs_ct_len_tbl ovs_ct_attr_lens[OVS_CT_ATTR_MAX + 1] = अणु
+	[OVS_CT_ATTR_COMMIT]	= अणु .minlen = 0, .maxlen = 0 पूर्ण,
+	[OVS_CT_ATTR_FORCE_COMMIT]	= अणु .minlen = 0, .maxlen = 0 पूर्ण,
+	[OVS_CT_ATTR_ZONE]	= अणु .minlen = माप(u16),
+				    .maxlen = माप(u16) पूर्ण,
+	[OVS_CT_ATTR_MARK]	= अणु .minlen = माप(काष्ठा md_mark),
+				    .maxlen = माप(काष्ठा md_mark) पूर्ण,
+	[OVS_CT_ATTR_LABELS]	= अणु .minlen = माप(काष्ठा md_labels),
+				    .maxlen = माप(काष्ठा md_labels) पूर्ण,
+	[OVS_CT_ATTR_HELPER]	= अणु .minlen = 1,
+				    .maxlen = NF_CT_HELPER_NAME_LEN पूर्ण,
+#अगर IS_ENABLED(CONFIG_NF_NAT)
 	/* NAT length is checked when parsing the nested attributes. */
-	[OVS_CT_ATTR_NAT]	= { .minlen = 0, .maxlen = INT_MAX },
-#endif
-	[OVS_CT_ATTR_EVENTMASK]	= { .minlen = sizeof(u32),
-				    .maxlen = sizeof(u32) },
-	[OVS_CT_ATTR_TIMEOUT] = { .minlen = 1,
-				  .maxlen = CTNL_TIMEOUT_NAME_MAX },
-};
+	[OVS_CT_ATTR_NAT]	= अणु .minlen = 0, .maxlen = पूर्णांक_उच्च पूर्ण,
+#पूर्ण_अगर
+	[OVS_CT_ATTR_EVENTMASK]	= अणु .minlen = माप(u32),
+				    .maxlen = माप(u32) पूर्ण,
+	[OVS_CT_ATTR_TIMEOUT] = अणु .minlen = 1,
+				  .maxlen = CTNL_TIMEOUT_NAME_MAX पूर्ण,
+पूर्ण;
 
-static int parse_ct(const struct nlattr *attr, struct ovs_conntrack_info *info,
-		    const char **helper, bool log)
-{
-	struct nlattr *a;
-	int rem;
+अटल पूर्णांक parse_ct(स्थिर काष्ठा nlattr *attr, काष्ठा ovs_conntrack_info *info,
+		    स्थिर अक्षर **helper, bool log)
+अणु
+	काष्ठा nlattr *a;
+	पूर्णांक rem;
 
-	nla_for_each_nested(a, attr, rem) {
-		int type = nla_type(a);
-		int maxlen;
-		int minlen;
+	nla_क्रम_each_nested(a, attr, rem) अणु
+		पूर्णांक type = nla_type(a);
+		पूर्णांक maxlen;
+		पूर्णांक minlen;
 
-		if (type > OVS_CT_ATTR_MAX) {
+		अगर (type > OVS_CT_ATTR_MAX) अणु
 			OVS_NLERR(log,
 				  "Unknown conntrack attr (type=%d, max=%d)",
 				  type, OVS_CT_ATTR_MAX);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		maxlen = ovs_ct_attr_lens[type].maxlen;
 		minlen = ovs_ct_attr_lens[type].minlen;
-		if (nla_len(a) < minlen || nla_len(a) > maxlen) {
+		अगर (nla_len(a) < minlen || nla_len(a) > maxlen) अणु
 			OVS_NLERR(log,
 				  "Conntrack attr type has unexpected length (type=%d, length=%d, expected=%d)",
 				  type, nla_len(a), maxlen);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (type) {
-		case OVS_CT_ATTR_FORCE_COMMIT:
-			info->force = true;
+		चयन (type) अणु
+		हाल OVS_CT_ATTR_FORCE_COMMIT:
+			info->क्रमce = true;
 			fallthrough;
-		case OVS_CT_ATTR_COMMIT:
+		हाल OVS_CT_ATTR_COMMIT:
 			info->commit = true;
-			break;
-#ifdef CONFIG_NF_CONNTRACK_ZONES
-		case OVS_CT_ATTR_ZONE:
+			अवरोध;
+#अगर_घोषित CONFIG_NF_CONNTRACK_ZONES
+		हाल OVS_CT_ATTR_ZONE:
 			info->zone.id = nla_get_u16(a);
-			break;
-#endif
-#ifdef CONFIG_NF_CONNTRACK_MARK
-		case OVS_CT_ATTR_MARK: {
-			struct md_mark *mark = nla_data(a);
+			अवरोध;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_MARK
+		हाल OVS_CT_ATTR_MARK: अणु
+			काष्ठा md_mark *mark = nla_data(a);
 
-			if (!mark->mask) {
+			अगर (!mark->mask) अणु
 				OVS_NLERR(log, "ct_mark mask cannot be 0");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			info->mark = *mark;
-			break;
-		}
-#endif
-#ifdef CONFIG_NF_CONNTRACK_LABELS
-		case OVS_CT_ATTR_LABELS: {
-			struct md_labels *labels = nla_data(a);
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_LABELS
+		हाल OVS_CT_ATTR_LABELS: अणु
+			काष्ठा md_labels *labels = nla_data(a);
 
-			if (!labels_nonzero(&labels->mask)) {
+			अगर (!labels_nonzero(&labels->mask)) अणु
 				OVS_NLERR(log, "ct_labels mask cannot be 0");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			info->labels = *labels;
-			break;
-		}
-#endif
-		case OVS_CT_ATTR_HELPER:
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		हाल OVS_CT_ATTR_HELPER:
 			*helper = nla_data(a);
-			if (!memchr(*helper, '\0', nla_len(a))) {
+			अगर (!स_प्रथम(*helper, '\0', nla_len(a))) अणु
 				OVS_NLERR(log, "Invalid conntrack helper");
-				return -EINVAL;
-			}
-			break;
-#if IS_ENABLED(CONFIG_NF_NAT)
-		case OVS_CT_ATTR_NAT: {
-			int err = parse_nat(a, info, log);
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+		हाल OVS_CT_ATTR_NAT: अणु
+			पूर्णांक err = parse_nat(a, info, log);
 
-			if (err)
-				return err;
-			break;
-		}
-#endif
-		case OVS_CT_ATTR_EVENTMASK:
-			info->have_eventmask = true;
-			info->eventmask = nla_get_u32(a);
-			break;
-#ifdef CONFIG_NF_CONNTRACK_TIMEOUT
-		case OVS_CT_ATTR_TIMEOUT:
-			memcpy(info->timeout, nla_data(a), nla_len(a));
-			if (!memchr(info->timeout, '\0', nla_len(a))) {
+			अगर (err)
+				वापस err;
+			अवरोध;
+		पूर्ण
+#पूर्ण_अगर
+		हाल OVS_CT_ATTR_EVENTMASK:
+			info->have_evenपंचांगask = true;
+			info->evenपंचांगask = nla_get_u32(a);
+			अवरोध;
+#अगर_घोषित CONFIG_NF_CONNTRACK_TIMEOUT
+		हाल OVS_CT_ATTR_TIMEOUT:
+			स_नकल(info->समयout, nla_data(a), nla_len(a));
+			अगर (!स_प्रथम(info->समयout, '\0', nla_len(a))) अणु
 				OVS_NLERR(log, "Invalid conntrack timeout");
-				return -EINVAL;
-			}
-			break;
-#endif
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+#पूर्ण_अगर
 
-		default:
+		शेष:
 			OVS_NLERR(log, "Unknown conntrack attr (%d)",
 				  type);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_NF_CONNTRACK_MARK
-	if (!info->commit && info->mark.mask) {
+#अगर_घोषित CONFIG_NF_CONNTRACK_MARK
+	अगर (!info->commit && info->mark.mask) अणु
 		OVS_NLERR(log,
 			  "Setting conntrack mark requires 'commit' flag.");
-		return -EINVAL;
-	}
-#endif
-#ifdef CONFIG_NF_CONNTRACK_LABELS
-	if (!info->commit && labels_nonzero(&info->labels.mask)) {
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_NF_CONNTRACK_LABELS
+	अगर (!info->commit && labels_nonzero(&info->labels.mask)) अणु
 		OVS_NLERR(log,
 			  "Setting conntrack labels requires 'commit' flag.");
-		return -EINVAL;
-	}
-#endif
-	if (rem > 0) {
+		वापस -EINVAL;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (rem > 0) अणु
 		OVS_NLERR(log, "Conntrack attr has %d unknown bytes", rem);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool ovs_ct_verify(struct net *net, enum ovs_key_attr attr)
-{
-	if (attr == OVS_KEY_ATTR_CT_STATE)
-		return true;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
+bool ovs_ct_verअगरy(काष्ठा net *net, क्रमागत ovs_key_attr attr)
+अणु
+	अगर (attr == OVS_KEY_ATTR_CT_STATE)
+		वापस true;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    attr == OVS_KEY_ATTR_CT_ZONE)
-		return true;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
+		वापस true;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) &&
 	    attr == OVS_KEY_ATTR_CT_MARK)
-		return true;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
-	    attr == OVS_KEY_ATTR_CT_LABELS) {
-		struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
+		वापस true;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+	    attr == OVS_KEY_ATTR_CT_LABELS) अणु
+		काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
 
-		return ovs_net->xt_label;
-	}
+		वापस ovs_net->xt_label;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int ovs_ct_copy_action(struct net *net, const struct nlattr *attr,
-		       const struct sw_flow_key *key,
-		       struct sw_flow_actions **sfa,  bool log)
-{
-	struct ovs_conntrack_info ct_info;
-	const char *helper = NULL;
+पूर्णांक ovs_ct_copy_action(काष्ठा net *net, स्थिर काष्ठा nlattr *attr,
+		       स्थिर काष्ठा sw_flow_key *key,
+		       काष्ठा sw_flow_actions **sfa,  bool log)
+अणु
+	काष्ठा ovs_conntrack_info ct_info;
+	स्थिर अक्षर *helper = शून्य;
 	u16 family;
-	int err;
+	पूर्णांक err;
 
 	family = key_to_nfproto(key);
-	if (family == NFPROTO_UNSPEC) {
+	अगर (family == NFPROTO_UNSPEC) अणु
 		OVS_NLERR(log, "ct family unspecified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(&ct_info, 0, sizeof(ct_info));
+	स_रखो(&ct_info, 0, माप(ct_info));
 	ct_info.family = family;
 
 	nf_ct_zone_init(&ct_info.zone, NF_CT_DEFAULT_ZONE_ID,
-			NF_CT_DEFAULT_ZONE_DIR, 0);
+			NF_CT_DEFAULT_ZONE_सूची, 0);
 
 	err = parse_ct(attr, &ct_info, &helper, log);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Set up template for tracking connections in specific zones. */
-	ct_info.ct = nf_ct_tmpl_alloc(net, &ct_info.zone, GFP_KERNEL);
-	if (!ct_info.ct) {
+	/* Set up ढाँचा क्रम tracking connections in specअगरic zones. */
+	ct_info.ct = nf_ct_पंचांगpl_alloc(net, &ct_info.zone, GFP_KERNEL);
+	अगर (!ct_info.ct) अणु
 		OVS_NLERR(log, "Failed to allocate conntrack template");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (ct_info.timeout[0]) {
-		if (nf_ct_set_timeout(net, ct_info.ct, family, key->ip.proto,
-				      ct_info.timeout))
+	अगर (ct_info.समयout[0]) अणु
+		अगर (nf_ct_set_समयout(net, ct_info.ct, family, key->ip.proto,
+				      ct_info.समयout))
 			pr_info_ratelimited("Failed to associated timeout "
-					    "policy `%s'\n", ct_info.timeout);
-		else
-			ct_info.nf_ct_timeout = rcu_dereference(
-				nf_ct_timeout_find(ct_info.ct)->timeout);
+					    "policy `%s'\n", ct_info.समयout);
+		अन्यथा
+			ct_info.nf_ct_समयout = rcu_dereference(
+				nf_ct_समयout_find(ct_info.ct)->समयout);
 
-	}
+	पूर्ण
 
-	if (helper) {
+	अगर (helper) अणु
 		err = ovs_ct_add_helper(&ct_info, helper, key, log);
-		if (err)
-			goto err_free_ct;
-	}
+		अगर (err)
+			जाओ err_मुक्त_ct;
+	पूर्ण
 
 	err = ovs_nla_add_action(sfa, OVS_ACTION_ATTR_CT, &ct_info,
-				 sizeof(ct_info), log);
-	if (err)
-		goto err_free_ct;
+				 माप(ct_info), log);
+	अगर (err)
+		जाओ err_मुक्त_ct;
 
 	__set_bit(IPS_CONFIRMED_BIT, &ct_info.ct->status);
 	nf_conntrack_get(&ct_info.ct->ct_general);
-	return 0;
-err_free_ct:
-	__ovs_ct_free_action(&ct_info);
-	return err;
-}
+	वापस 0;
+err_मुक्त_ct:
+	__ovs_ct_मुक्त_action(&ct_info);
+	वापस err;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-static bool ovs_ct_nat_to_attr(const struct ovs_conntrack_info *info,
-			       struct sk_buff *skb)
-{
-	struct nlattr *start;
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+अटल bool ovs_ct_nat_to_attr(स्थिर काष्ठा ovs_conntrack_info *info,
+			       काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start;
 
 	start = nla_nest_start_noflag(skb, OVS_CT_ATTR_NAT);
-	if (!start)
-		return false;
+	अगर (!start)
+		वापस false;
 
-	if (info->nat & OVS_CT_SRC_NAT) {
-		if (nla_put_flag(skb, OVS_NAT_ATTR_SRC))
-			return false;
-	} else if (info->nat & OVS_CT_DST_NAT) {
-		if (nla_put_flag(skb, OVS_NAT_ATTR_DST))
-			return false;
-	} else {
-		goto out;
-	}
+	अगर (info->nat & OVS_CT_SRC_NAT) अणु
+		अगर (nla_put_flag(skb, OVS_NAT_ATTR_SRC))
+			वापस false;
+	पूर्ण अन्यथा अगर (info->nat & OVS_CT_DST_NAT) अणु
+		अगर (nla_put_flag(skb, OVS_NAT_ATTR_DST))
+			वापस false;
+	पूर्ण अन्यथा अणु
+		जाओ out;
+	पूर्ण
 
-	if (info->range.flags & NF_NAT_RANGE_MAP_IPS) {
-		if (IS_ENABLED(CONFIG_NF_NAT) &&
-		    info->family == NFPROTO_IPV4) {
-			if (nla_put_in_addr(skb, OVS_NAT_ATTR_IP_MIN,
+	अगर (info->range.flags & NF_NAT_RANGE_MAP_IPS) अणु
+		अगर (IS_ENABLED(CONFIG_NF_NAT) &&
+		    info->family == NFPROTO_IPV4) अणु
+			अगर (nla_put_in_addr(skb, OVS_NAT_ATTR_IP_MIN,
 					    info->range.min_addr.ip) ||
 			    (info->range.max_addr.ip
 			     != info->range.min_addr.ip &&
 			     (nla_put_in_addr(skb, OVS_NAT_ATTR_IP_MAX,
 					      info->range.max_addr.ip))))
-				return false;
-		} else if (IS_ENABLED(CONFIG_IPV6) &&
-			   info->family == NFPROTO_IPV6) {
-			if (nla_put_in6_addr(skb, OVS_NAT_ATTR_IP_MIN,
+				वापस false;
+		पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_IPV6) &&
+			   info->family == NFPROTO_IPV6) अणु
+			अगर (nla_put_in6_addr(skb, OVS_NAT_ATTR_IP_MIN,
 					     &info->range.min_addr.in6) ||
-			    (memcmp(&info->range.max_addr.in6,
+			    (स_भेद(&info->range.max_addr.in6,
 				    &info->range.min_addr.in6,
-				    sizeof(info->range.max_addr.in6)) &&
+				    माप(info->range.max_addr.in6)) &&
 			     (nla_put_in6_addr(skb, OVS_NAT_ATTR_IP_MAX,
 					       &info->range.max_addr.in6))))
-				return false;
-		} else {
-			return false;
-		}
-	}
-	if (info->range.flags & NF_NAT_RANGE_PROTO_SPECIFIED &&
+				वापस false;
+		पूर्ण अन्यथा अणु
+			वापस false;
+		पूर्ण
+	पूर्ण
+	अगर (info->range.flags & NF_NAT_RANGE_PROTO_SPECIFIED &&
 	    (nla_put_u16(skb, OVS_NAT_ATTR_PROTO_MIN,
 			 ntohs(info->range.min_proto.all)) ||
 	     (info->range.max_proto.all != info->range.min_proto.all &&
 	      nla_put_u16(skb, OVS_NAT_ATTR_PROTO_MAX,
 			  ntohs(info->range.max_proto.all)))))
-		return false;
+		वापस false;
 
-	if (info->range.flags & NF_NAT_RANGE_PERSISTENT &&
+	अगर (info->range.flags & NF_NAT_RANGE_PERSISTENT &&
 	    nla_put_flag(skb, OVS_NAT_ATTR_PERSISTENT))
-		return false;
-	if (info->range.flags & NF_NAT_RANGE_PROTO_RANDOM &&
+		वापस false;
+	अगर (info->range.flags & NF_NAT_RANGE_PROTO_RANDOM &&
 	    nla_put_flag(skb, OVS_NAT_ATTR_PROTO_HASH))
-		return false;
-	if (info->range.flags & NF_NAT_RANGE_PROTO_RANDOM_FULLY &&
+		वापस false;
+	अगर (info->range.flags & NF_NAT_RANGE_PROTO_RANDOM_FULLY &&
 	    nla_put_flag(skb, OVS_NAT_ATTR_PROTO_RANDOM))
-		return false;
+		वापस false;
 out:
 	nla_nest_end(skb, start);
 
-	return true;
-}
-#endif
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-int ovs_ct_action_to_attr(const struct ovs_conntrack_info *ct_info,
-			  struct sk_buff *skb)
-{
-	struct nlattr *start;
+पूर्णांक ovs_ct_action_to_attr(स्थिर काष्ठा ovs_conntrack_info *ct_info,
+			  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nlattr *start;
 
 	start = nla_nest_start_noflag(skb, OVS_ACTION_ATTR_CT);
-	if (!start)
-		return -EMSGSIZE;
+	अगर (!start)
+		वापस -EMSGSIZE;
 
-	if (ct_info->commit && nla_put_flag(skb, ct_info->force
+	अगर (ct_info->commit && nla_put_flag(skb, ct_info->क्रमce
 					    ? OVS_CT_ATTR_FORCE_COMMIT
 					    : OVS_CT_ATTR_COMMIT))
-		return -EMSGSIZE;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
+		वापस -EMSGSIZE;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_ZONES) &&
 	    nla_put_u16(skb, OVS_CT_ATTR_ZONE, ct_info->zone.id))
-		return -EMSGSIZE;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) && ct_info->mark.mask &&
-	    nla_put(skb, OVS_CT_ATTR_MARK, sizeof(ct_info->mark),
+		वापस -EMSGSIZE;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_MARK) && ct_info->mark.mask &&
+	    nla_put(skb, OVS_CT_ATTR_MARK, माप(ct_info->mark),
 		    &ct_info->mark))
-		return -EMSGSIZE;
-	if (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
+		वापस -EMSGSIZE;
+	अगर (IS_ENABLED(CONFIG_NF_CONNTRACK_LABELS) &&
 	    labels_nonzero(&ct_info->labels.mask) &&
-	    nla_put(skb, OVS_CT_ATTR_LABELS, sizeof(ct_info->labels),
+	    nla_put(skb, OVS_CT_ATTR_LABELS, माप(ct_info->labels),
 		    &ct_info->labels))
-		return -EMSGSIZE;
-	if (ct_info->helper) {
-		if (nla_put_string(skb, OVS_CT_ATTR_HELPER,
+		वापस -EMSGSIZE;
+	अगर (ct_info->helper) अणु
+		अगर (nla_put_string(skb, OVS_CT_ATTR_HELPER,
 				   ct_info->helper->name))
-			return -EMSGSIZE;
-	}
-	if (ct_info->have_eventmask &&
-	    nla_put_u32(skb, OVS_CT_ATTR_EVENTMASK, ct_info->eventmask))
-		return -EMSGSIZE;
-	if (ct_info->timeout[0]) {
-		if (nla_put_string(skb, OVS_CT_ATTR_TIMEOUT, ct_info->timeout))
-			return -EMSGSIZE;
-	}
+			वापस -EMSGSIZE;
+	पूर्ण
+	अगर (ct_info->have_evenपंचांगask &&
+	    nla_put_u32(skb, OVS_CT_ATTR_EVENTMASK, ct_info->evenपंचांगask))
+		वापस -EMSGSIZE;
+	अगर (ct_info->समयout[0]) अणु
+		अगर (nla_put_string(skb, OVS_CT_ATTR_TIMEOUT, ct_info->समयout))
+			वापस -EMSGSIZE;
+	पूर्ण
 
-#if IS_ENABLED(CONFIG_NF_NAT)
-	if (ct_info->nat && !ovs_ct_nat_to_attr(ct_info, skb))
-		return -EMSGSIZE;
-#endif
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+	अगर (ct_info->nat && !ovs_ct_nat_to_attr(ct_info, skb))
+		वापस -EMSGSIZE;
+#पूर्ण_अगर
 	nla_nest_end(skb, start);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ovs_ct_free_action(const struct nlattr *a)
-{
-	struct ovs_conntrack_info *ct_info = nla_data(a);
+व्योम ovs_ct_मुक्त_action(स्थिर काष्ठा nlattr *a)
+अणु
+	काष्ठा ovs_conntrack_info *ct_info = nla_data(a);
 
-	__ovs_ct_free_action(ct_info);
-}
+	__ovs_ct_मुक्त_action(ct_info);
+पूर्ण
 
-static void __ovs_ct_free_action(struct ovs_conntrack_info *ct_info)
-{
-	if (ct_info->helper) {
-#if IS_ENABLED(CONFIG_NF_NAT)
-		if (ct_info->nat)
+अटल व्योम __ovs_ct_मुक्त_action(काष्ठा ovs_conntrack_info *ct_info)
+अणु
+	अगर (ct_info->helper) अणु
+#अगर IS_ENABLED(CONFIG_NF_NAT)
+		अगर (ct_info->nat)
 			nf_nat_helper_put(ct_info->helper);
-#endif
+#पूर्ण_अगर
 		nf_conntrack_helper_put(ct_info->helper);
-	}
-	if (ct_info->ct) {
-		if (ct_info->timeout[0])
-			nf_ct_destroy_timeout(ct_info->ct);
-		nf_ct_tmpl_free(ct_info->ct);
-	}
-}
+	पूर्ण
+	अगर (ct_info->ct) अणु
+		अगर (ct_info->समयout[0])
+			nf_ct_destroy_समयout(ct_info->ct);
+		nf_ct_पंचांगpl_मुक्त(ct_info->ct);
+	पूर्ण
+पूर्ण
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-static int ovs_ct_limit_init(struct net *net, struct ovs_net *ovs_net)
-{
-	int i, err;
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+अटल पूर्णांक ovs_ct_limit_init(काष्ठा net *net, काष्ठा ovs_net *ovs_net)
+अणु
+	पूर्णांक i, err;
 
-	ovs_net->ct_limit_info = kmalloc(sizeof(*ovs_net->ct_limit_info),
+	ovs_net->ct_limit_info = kदो_स्मृति(माप(*ovs_net->ct_limit_info),
 					 GFP_KERNEL);
-	if (!ovs_net->ct_limit_info)
-		return -ENOMEM;
+	अगर (!ovs_net->ct_limit_info)
+		वापस -ENOMEM;
 
-	ovs_net->ct_limit_info->default_limit = OVS_CT_LIMIT_DEFAULT;
+	ovs_net->ct_limit_info->शेष_limit = OVS_CT_LIMIT_DEFAULT;
 	ovs_net->ct_limit_info->limits =
-		kmalloc_array(CT_LIMIT_HASH_BUCKETS, sizeof(struct hlist_head),
+		kदो_स्मृति_array(CT_LIMIT_HASH_BUCKETS, माप(काष्ठा hlist_head),
 			      GFP_KERNEL);
-	if (!ovs_net->ct_limit_info->limits) {
-		kfree(ovs_net->ct_limit_info);
-		return -ENOMEM;
-	}
+	अगर (!ovs_net->ct_limit_info->limits) अणु
+		kमुक्त(ovs_net->ct_limit_info);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0; i < CT_LIMIT_HASH_BUCKETS; i++)
+	क्रम (i = 0; i < CT_LIMIT_HASH_BUCKETS; i++)
 		INIT_HLIST_HEAD(&ovs_net->ct_limit_info->limits[i]);
 
 	ovs_net->ct_limit_info->data =
-		nf_conncount_init(net, NFPROTO_INET, sizeof(u32));
+		nf_conncount_init(net, NFPROTO_INET, माप(u32));
 
-	if (IS_ERR(ovs_net->ct_limit_info->data)) {
+	अगर (IS_ERR(ovs_net->ct_limit_info->data)) अणु
 		err = PTR_ERR(ovs_net->ct_limit_info->data);
-		kfree(ovs_net->ct_limit_info->limits);
-		kfree(ovs_net->ct_limit_info);
+		kमुक्त(ovs_net->ct_limit_info->limits);
+		kमुक्त(ovs_net->ct_limit_info);
 		pr_err("openvswitch: failed to init nf_conncount %d\n", err);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void ovs_ct_limit_exit(struct net *net, struct ovs_net *ovs_net)
-{
-	const struct ovs_ct_limit_info *info = ovs_net->ct_limit_info;
-	int i;
+अटल व्योम ovs_ct_limit_निकास(काष्ठा net *net, काष्ठा ovs_net *ovs_net)
+अणु
+	स्थिर काष्ठा ovs_ct_limit_info *info = ovs_net->ct_limit_info;
+	पूर्णांक i;
 
 	nf_conncount_destroy(net, NFPROTO_INET, info->data);
-	for (i = 0; i < CT_LIMIT_HASH_BUCKETS; ++i) {
-		struct hlist_head *head = &info->limits[i];
-		struct ovs_ct_limit *ct_limit;
+	क्रम (i = 0; i < CT_LIMIT_HASH_BUCKETS; ++i) अणु
+		काष्ठा hlist_head *head = &info->limits[i];
+		काष्ठा ovs_ct_limit *ct_limit;
 
-		hlist_for_each_entry_rcu(ct_limit, head, hlist_node,
+		hlist_क्रम_each_entry_rcu(ct_limit, head, hlist_node,
 					 lockdep_ovsl_is_held())
-			kfree_rcu(ct_limit, rcu);
-	}
-	kfree(info->limits);
-	kfree(info);
-}
+			kमुक्त_rcu(ct_limit, rcu);
+	पूर्ण
+	kमुक्त(info->limits);
+	kमुक्त(info);
+पूर्ण
 
-static struct sk_buff *
-ovs_ct_limit_cmd_reply_start(struct genl_info *info, u8 cmd,
-			     struct ovs_header **ovs_reply_header)
-{
-	struct ovs_header *ovs_header = info->userhdr;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *
+ovs_ct_limit_cmd_reply_start(काष्ठा genl_info *info, u8 cmd,
+			     काष्ठा ovs_header **ovs_reply_header)
+अणु
+	काष्ठा ovs_header *ovs_header = info->userhdr;
+	काष्ठा sk_buff *skb;
 
 	skb = genlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!skb)
-		return ERR_PTR(-ENOMEM);
+	अगर (!skb)
+		वापस ERR_PTR(-ENOMEM);
 
 	*ovs_reply_header = genlmsg_put(skb, info->snd_portid,
 					info->snd_seq,
 					&dp_ct_limit_genl_family, 0, cmd);
 
-	if (!*ovs_reply_header) {
-		nlmsg_free(skb);
-		return ERR_PTR(-EMSGSIZE);
-	}
-	(*ovs_reply_header)->dp_ifindex = ovs_header->dp_ifindex;
+	अगर (!*ovs_reply_header) अणु
+		nlmsg_मुक्त(skb);
+		वापस ERR_PTR(-EMSGSIZE);
+	पूर्ण
+	(*ovs_reply_header)->dp_अगरindex = ovs_header->dp_अगरindex;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static bool check_zone_id(int zone_id, u16 *pzone)
-{
-	if (zone_id >= 0 && zone_id <= 65535) {
+अटल bool check_zone_id(पूर्णांक zone_id, u16 *pzone)
+अणु
+	अगर (zone_id >= 0 && zone_id <= 65535) अणु
 		*pzone = (u16)zone_id;
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int ovs_ct_limit_set_zone_limit(struct nlattr *nla_zone_limit,
-				       struct ovs_ct_limit_info *info)
-{
-	struct ovs_zone_limit *zone_limit;
-	int rem;
+अटल पूर्णांक ovs_ct_limit_set_zone_limit(काष्ठा nlattr *nla_zone_limit,
+				       काष्ठा ovs_ct_limit_info *info)
+अणु
+	काष्ठा ovs_zone_limit *zone_limit;
+	पूर्णांक rem;
 	u16 zone;
 
 	rem = NLA_ALIGN(nla_len(nla_zone_limit));
-	zone_limit = (struct ovs_zone_limit *)nla_data(nla_zone_limit);
+	zone_limit = (काष्ठा ovs_zone_limit *)nla_data(nla_zone_limit);
 
-	while (rem >= sizeof(*zone_limit)) {
-		if (unlikely(zone_limit->zone_id ==
-				OVS_ZONE_LIMIT_DEFAULT_ZONE)) {
+	जबतक (rem >= माप(*zone_limit)) अणु
+		अगर (unlikely(zone_limit->zone_id ==
+				OVS_ZONE_LIMIT_DEFAULT_ZONE)) अणु
 			ovs_lock();
-			info->default_limit = zone_limit->limit;
+			info->शेष_limit = zone_limit->limit;
 			ovs_unlock();
-		} else if (unlikely(!check_zone_id(
-				zone_limit->zone_id, &zone))) {
+		पूर्ण अन्यथा अगर (unlikely(!check_zone_id(
+				zone_limit->zone_id, &zone))) अणु
 			OVS_NLERR(true, "zone id is out of range");
-		} else {
-			struct ovs_ct_limit *ct_limit;
+		पूर्ण अन्यथा अणु
+			काष्ठा ovs_ct_limit *ct_limit;
 
-			ct_limit = kmalloc(sizeof(*ct_limit), GFP_KERNEL);
-			if (!ct_limit)
-				return -ENOMEM;
+			ct_limit = kदो_स्मृति(माप(*ct_limit), GFP_KERNEL);
+			अगर (!ct_limit)
+				वापस -ENOMEM;
 
 			ct_limit->zone = zone;
 			ct_limit->limit = zone_limit->limit;
@@ -1982,289 +1983,289 @@ static int ovs_ct_limit_set_zone_limit(struct nlattr *nla_zone_limit,
 			ovs_lock();
 			ct_limit_set(info, ct_limit);
 			ovs_unlock();
-		}
-		rem -= NLA_ALIGN(sizeof(*zone_limit));
-		zone_limit = (struct ovs_zone_limit *)((u8 *)zone_limit +
-				NLA_ALIGN(sizeof(*zone_limit)));
-	}
+		पूर्ण
+		rem -= NLA_ALIGN(माप(*zone_limit));
+		zone_limit = (काष्ठा ovs_zone_limit *)((u8 *)zone_limit +
+				NLA_ALIGN(माप(*zone_limit)));
+	पूर्ण
 
-	if (rem)
+	अगर (rem)
 		OVS_NLERR(true, "set zone limit has %d unknown bytes", rem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_limit_del_zone_limit(struct nlattr *nla_zone_limit,
-				       struct ovs_ct_limit_info *info)
-{
-	struct ovs_zone_limit *zone_limit;
-	int rem;
+अटल पूर्णांक ovs_ct_limit_del_zone_limit(काष्ठा nlattr *nla_zone_limit,
+				       काष्ठा ovs_ct_limit_info *info)
+अणु
+	काष्ठा ovs_zone_limit *zone_limit;
+	पूर्णांक rem;
 	u16 zone;
 
 	rem = NLA_ALIGN(nla_len(nla_zone_limit));
-	zone_limit = (struct ovs_zone_limit *)nla_data(nla_zone_limit);
+	zone_limit = (काष्ठा ovs_zone_limit *)nla_data(nla_zone_limit);
 
-	while (rem >= sizeof(*zone_limit)) {
-		if (unlikely(zone_limit->zone_id ==
-				OVS_ZONE_LIMIT_DEFAULT_ZONE)) {
+	जबतक (rem >= माप(*zone_limit)) अणु
+		अगर (unlikely(zone_limit->zone_id ==
+				OVS_ZONE_LIMIT_DEFAULT_ZONE)) अणु
 			ovs_lock();
-			info->default_limit = OVS_CT_LIMIT_DEFAULT;
+			info->शेष_limit = OVS_CT_LIMIT_DEFAULT;
 			ovs_unlock();
-		} else if (unlikely(!check_zone_id(
-				zone_limit->zone_id, &zone))) {
+		पूर्ण अन्यथा अगर (unlikely(!check_zone_id(
+				zone_limit->zone_id, &zone))) अणु
 			OVS_NLERR(true, "zone id is out of range");
-		} else {
+		पूर्ण अन्यथा अणु
 			ovs_lock();
 			ct_limit_del(info, zone);
 			ovs_unlock();
-		}
-		rem -= NLA_ALIGN(sizeof(*zone_limit));
-		zone_limit = (struct ovs_zone_limit *)((u8 *)zone_limit +
-				NLA_ALIGN(sizeof(*zone_limit)));
-	}
+		पूर्ण
+		rem -= NLA_ALIGN(माप(*zone_limit));
+		zone_limit = (काष्ठा ovs_zone_limit *)((u8 *)zone_limit +
+				NLA_ALIGN(माप(*zone_limit)));
+	पूर्ण
 
-	if (rem)
+	अगर (rem)
 		OVS_NLERR(true, "del zone limit has %d unknown bytes", rem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_limit_get_default_limit(struct ovs_ct_limit_info *info,
-					  struct sk_buff *reply)
-{
-	struct ovs_zone_limit zone_limit = {
+अटल पूर्णांक ovs_ct_limit_get_शेष_limit(काष्ठा ovs_ct_limit_info *info,
+					  काष्ठा sk_buff *reply)
+अणु
+	काष्ठा ovs_zone_limit zone_limit = अणु
 		.zone_id = OVS_ZONE_LIMIT_DEFAULT_ZONE,
-		.limit   = info->default_limit,
-	};
+		.limit   = info->शेष_limit,
+	पूर्ण;
 
-	return nla_put_nohdr(reply, sizeof(zone_limit), &zone_limit);
-}
+	वापस nla_put_nohdr(reply, माप(zone_limit), &zone_limit);
+पूर्ण
 
-static int __ovs_ct_limit_get_zone_limit(struct net *net,
-					 struct nf_conncount_data *data,
+अटल पूर्णांक __ovs_ct_limit_get_zone_limit(काष्ठा net *net,
+					 काष्ठा nf_conncount_data *data,
 					 u16 zone_id, u32 limit,
-					 struct sk_buff *reply)
-{
-	struct nf_conntrack_zone ct_zone;
-	struct ovs_zone_limit zone_limit;
+					 काष्ठा sk_buff *reply)
+अणु
+	काष्ठा nf_conntrack_zone ct_zone;
+	काष्ठा ovs_zone_limit zone_limit;
 	u32 conncount_key = zone_id;
 
 	zone_limit.zone_id = zone_id;
 	zone_limit.limit = limit;
-	nf_ct_zone_init(&ct_zone, zone_id, NF_CT_DEFAULT_ZONE_DIR, 0);
+	nf_ct_zone_init(&ct_zone, zone_id, NF_CT_DEFAULT_ZONE_सूची, 0);
 
-	zone_limit.count = nf_conncount_count(net, data, &conncount_key, NULL,
+	zone_limit.count = nf_conncount_count(net, data, &conncount_key, शून्य,
 					      &ct_zone);
-	return nla_put_nohdr(reply, sizeof(zone_limit), &zone_limit);
-}
+	वापस nla_put_nohdr(reply, माप(zone_limit), &zone_limit);
+पूर्ण
 
-static int ovs_ct_limit_get_zone_limit(struct net *net,
-				       struct nlattr *nla_zone_limit,
-				       struct ovs_ct_limit_info *info,
-				       struct sk_buff *reply)
-{
-	struct ovs_zone_limit *zone_limit;
-	int rem, err;
+अटल पूर्णांक ovs_ct_limit_get_zone_limit(काष्ठा net *net,
+				       काष्ठा nlattr *nla_zone_limit,
+				       काष्ठा ovs_ct_limit_info *info,
+				       काष्ठा sk_buff *reply)
+अणु
+	काष्ठा ovs_zone_limit *zone_limit;
+	पूर्णांक rem, err;
 	u32 limit;
 	u16 zone;
 
 	rem = NLA_ALIGN(nla_len(nla_zone_limit));
-	zone_limit = (struct ovs_zone_limit *)nla_data(nla_zone_limit);
+	zone_limit = (काष्ठा ovs_zone_limit *)nla_data(nla_zone_limit);
 
-	while (rem >= sizeof(*zone_limit)) {
-		if (unlikely(zone_limit->zone_id ==
-				OVS_ZONE_LIMIT_DEFAULT_ZONE)) {
-			err = ovs_ct_limit_get_default_limit(info, reply);
-			if (err)
-				return err;
-		} else if (unlikely(!check_zone_id(zone_limit->zone_id,
-							&zone))) {
+	जबतक (rem >= माप(*zone_limit)) अणु
+		अगर (unlikely(zone_limit->zone_id ==
+				OVS_ZONE_LIMIT_DEFAULT_ZONE)) अणु
+			err = ovs_ct_limit_get_शेष_limit(info, reply);
+			अगर (err)
+				वापस err;
+		पूर्ण अन्यथा अगर (unlikely(!check_zone_id(zone_limit->zone_id,
+							&zone))) अणु
 			OVS_NLERR(true, "zone id is out of range");
-		} else {
-			rcu_read_lock();
+		पूर्ण अन्यथा अणु
+			rcu_पढ़ो_lock();
 			limit = ct_limit_get(info, zone);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 
 			err = __ovs_ct_limit_get_zone_limit(
 				net, info->data, zone, limit, reply);
-			if (err)
-				return err;
-		}
-		rem -= NLA_ALIGN(sizeof(*zone_limit));
-		zone_limit = (struct ovs_zone_limit *)((u8 *)zone_limit +
-				NLA_ALIGN(sizeof(*zone_limit)));
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		rem -= NLA_ALIGN(माप(*zone_limit));
+		zone_limit = (काष्ठा ovs_zone_limit *)((u8 *)zone_limit +
+				NLA_ALIGN(माप(*zone_limit)));
+	पूर्ण
 
-	if (rem)
+	अगर (rem)
 		OVS_NLERR(true, "get zone limit has %d unknown bytes", rem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovs_ct_limit_get_all_zone_limit(struct net *net,
-					   struct ovs_ct_limit_info *info,
-					   struct sk_buff *reply)
-{
-	struct ovs_ct_limit *ct_limit;
-	struct hlist_head *head;
-	int i, err = 0;
+अटल पूर्णांक ovs_ct_limit_get_all_zone_limit(काष्ठा net *net,
+					   काष्ठा ovs_ct_limit_info *info,
+					   काष्ठा sk_buff *reply)
+अणु
+	काष्ठा ovs_ct_limit *ct_limit;
+	काष्ठा hlist_head *head;
+	पूर्णांक i, err = 0;
 
-	err = ovs_ct_limit_get_default_limit(info, reply);
-	if (err)
-		return err;
+	err = ovs_ct_limit_get_शेष_limit(info, reply);
+	अगर (err)
+		वापस err;
 
-	rcu_read_lock();
-	for (i = 0; i < CT_LIMIT_HASH_BUCKETS; ++i) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < CT_LIMIT_HASH_BUCKETS; ++i) अणु
 		head = &info->limits[i];
-		hlist_for_each_entry_rcu(ct_limit, head, hlist_node) {
+		hlist_क्रम_each_entry_rcu(ct_limit, head, hlist_node) अणु
 			err = __ovs_ct_limit_get_zone_limit(net, info->data,
 				ct_limit->zone, ct_limit->limit, reply);
-			if (err)
-				goto exit_err;
-		}
-	}
+			अगर (err)
+				जाओ निकास_err;
+		पूर्ण
+	पूर्ण
 
-exit_err:
-	rcu_read_unlock();
-	return err;
-}
+निकास_err:
+	rcu_पढ़ो_unlock();
+	वापस err;
+पूर्ण
 
-static int ovs_ct_limit_cmd_set(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nlattr **a = info->attrs;
-	struct sk_buff *reply;
-	struct ovs_header *ovs_reply_header;
-	struct ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
-	struct ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
-	int err;
+अटल पूर्णांक ovs_ct_limit_cmd_set(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr **a = info->attrs;
+	काष्ठा sk_buff *reply;
+	काष्ठा ovs_header *ovs_reply_header;
+	काष्ठा ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
+	काष्ठा ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
+	पूर्णांक err;
 
 	reply = ovs_ct_limit_cmd_reply_start(info, OVS_CT_LIMIT_CMD_SET,
 					     &ovs_reply_header);
-	if (IS_ERR(reply))
-		return PTR_ERR(reply);
+	अगर (IS_ERR(reply))
+		वापस PTR_ERR(reply);
 
-	if (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) {
+	अगर (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) अणु
 		err = -EINVAL;
-		goto exit_err;
-	}
+		जाओ निकास_err;
+	पूर्ण
 
 	err = ovs_ct_limit_set_zone_limit(a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT],
 					  ct_limit_info);
-	if (err)
-		goto exit_err;
+	अगर (err)
+		जाओ निकास_err;
 
-	static_branch_enable(&ovs_ct_limit_enabled);
+	अटल_branch_enable(&ovs_ct_limit_enabled);
 
 	genlmsg_end(reply, ovs_reply_header);
-	return genlmsg_reply(reply, info);
+	वापस genlmsg_reply(reply, info);
 
-exit_err:
-	nlmsg_free(reply);
-	return err;
-}
+निकास_err:
+	nlmsg_मुक्त(reply);
+	वापस err;
+पूर्ण
 
-static int ovs_ct_limit_cmd_del(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nlattr **a = info->attrs;
-	struct sk_buff *reply;
-	struct ovs_header *ovs_reply_header;
-	struct ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
-	struct ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
-	int err;
+अटल पूर्णांक ovs_ct_limit_cmd_del(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr **a = info->attrs;
+	काष्ठा sk_buff *reply;
+	काष्ठा ovs_header *ovs_reply_header;
+	काष्ठा ovs_net *ovs_net = net_generic(sock_net(skb->sk), ovs_net_id);
+	काष्ठा ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
+	पूर्णांक err;
 
 	reply = ovs_ct_limit_cmd_reply_start(info, OVS_CT_LIMIT_CMD_DEL,
 					     &ovs_reply_header);
-	if (IS_ERR(reply))
-		return PTR_ERR(reply);
+	अगर (IS_ERR(reply))
+		वापस PTR_ERR(reply);
 
-	if (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) {
+	अगर (!a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) अणु
 		err = -EINVAL;
-		goto exit_err;
-	}
+		जाओ निकास_err;
+	पूर्ण
 
 	err = ovs_ct_limit_del_zone_limit(a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT],
 					  ct_limit_info);
-	if (err)
-		goto exit_err;
+	अगर (err)
+		जाओ निकास_err;
 
 	genlmsg_end(reply, ovs_reply_header);
-	return genlmsg_reply(reply, info);
+	वापस genlmsg_reply(reply, info);
 
-exit_err:
-	nlmsg_free(reply);
-	return err;
-}
+निकास_err:
+	nlmsg_मुक्त(reply);
+	वापस err;
+पूर्ण
 
-static int ovs_ct_limit_cmd_get(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nlattr **a = info->attrs;
-	struct nlattr *nla_reply;
-	struct sk_buff *reply;
-	struct ovs_header *ovs_reply_header;
-	struct net *net = sock_net(skb->sk);
-	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
-	struct ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
-	int err;
+अटल पूर्णांक ovs_ct_limit_cmd_get(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nlattr **a = info->attrs;
+	काष्ठा nlattr *nla_reply;
+	काष्ठा sk_buff *reply;
+	काष्ठा ovs_header *ovs_reply_header;
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
+	काष्ठा ovs_ct_limit_info *ct_limit_info = ovs_net->ct_limit_info;
+	पूर्णांक err;
 
 	reply = ovs_ct_limit_cmd_reply_start(info, OVS_CT_LIMIT_CMD_GET,
 					     &ovs_reply_header);
-	if (IS_ERR(reply))
-		return PTR_ERR(reply);
+	अगर (IS_ERR(reply))
+		वापस PTR_ERR(reply);
 
 	nla_reply = nla_nest_start_noflag(reply, OVS_CT_LIMIT_ATTR_ZONE_LIMIT);
-	if (!nla_reply) {
+	अगर (!nla_reply) अणु
 		err = -EMSGSIZE;
-		goto exit_err;
-	}
+		जाओ निकास_err;
+	पूर्ण
 
-	if (a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) {
+	अगर (a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT]) अणु
 		err = ovs_ct_limit_get_zone_limit(
 			net, a[OVS_CT_LIMIT_ATTR_ZONE_LIMIT], ct_limit_info,
 			reply);
-		if (err)
-			goto exit_err;
-	} else {
+		अगर (err)
+			जाओ निकास_err;
+	पूर्ण अन्यथा अणु
 		err = ovs_ct_limit_get_all_zone_limit(net, ct_limit_info,
 						      reply);
-		if (err)
-			goto exit_err;
-	}
+		अगर (err)
+			जाओ निकास_err;
+	पूर्ण
 
 	nla_nest_end(reply, nla_reply);
 	genlmsg_end(reply, ovs_reply_header);
-	return genlmsg_reply(reply, info);
+	वापस genlmsg_reply(reply, info);
 
-exit_err:
-	nlmsg_free(reply);
-	return err;
-}
+निकास_err:
+	nlmsg_मुक्त(reply);
+	वापस err;
+पूर्ण
 
-static const struct genl_small_ops ct_limit_genl_ops[] = {
-	{ .cmd = OVS_CT_LIMIT_CMD_SET,
+अटल स्थिर काष्ठा genl_small_ops ct_limit_genl_ops[] = अणु
+	अणु .cmd = OVS_CT_LIMIT_CMD_SET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = GENL_ADMIN_PERM, /* Requires CAP_NET_ADMIN
 					   * privilege. */
-		.doit = ovs_ct_limit_cmd_set,
-	},
-	{ .cmd = OVS_CT_LIMIT_CMD_DEL,
+		.करोit = ovs_ct_limit_cmd_set,
+	पूर्ण,
+	अणु .cmd = OVS_CT_LIMIT_CMD_DEL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.flags = GENL_ADMIN_PERM, /* Requires CAP_NET_ADMIN
 					   * privilege. */
-		.doit = ovs_ct_limit_cmd_del,
-	},
-	{ .cmd = OVS_CT_LIMIT_CMD_GET,
+		.करोit = ovs_ct_limit_cmd_del,
+	पूर्ण,
+	अणु .cmd = OVS_CT_LIMIT_CMD_GET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.flags = 0,		  /* OK for unprivileged users. */
-		.doit = ovs_ct_limit_cmd_get,
-	},
-};
+		.flags = 0,		  /* OK क्रम unprivileged users. */
+		.करोit = ovs_ct_limit_cmd_get,
+	पूर्ण,
+पूर्ण;
 
-static const struct genl_multicast_group ovs_ct_limit_multicast_group = {
+अटल स्थिर काष्ठा genl_multicast_group ovs_ct_limit_multicast_group = अणु
 	.name = OVS_CT_LIMIT_MCGROUP,
-};
+पूर्ण;
 
-struct genl_family dp_ct_limit_genl_family __ro_after_init = {
-	.hdrsize = sizeof(struct ovs_header),
+काष्ठा genl_family dp_ct_limit_genl_family __ro_after_init = अणु
+	.hdrsize = माप(काष्ठा ovs_header),
 	.name = OVS_CT_LIMIT_FAMILY,
 	.version = OVS_CT_LIMIT_VERSION,
 	.maxattr = OVS_CT_LIMIT_ATTR_MAX,
@@ -2276,36 +2277,36 @@ struct genl_family dp_ct_limit_genl_family __ro_after_init = {
 	.mcgrps = &ovs_ct_limit_multicast_group,
 	.n_mcgrps = 1,
 	.module = THIS_MODULE,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-int ovs_ct_init(struct net *net)
-{
-	unsigned int n_bits = sizeof(struct ovs_key_ct_labels) * BITS_PER_BYTE;
-	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
+पूर्णांक ovs_ct_init(काष्ठा net *net)
+अणु
+	अचिन्हित पूर्णांक n_bits = माप(काष्ठा ovs_key_ct_labels) * BITS_PER_BYTE;
+	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
 
-	if (nf_connlabels_get(net, n_bits - 1)) {
+	अगर (nf_connlabels_get(net, n_bits - 1)) अणु
 		ovs_net->xt_label = false;
 		OVS_NLERR(true, "Failed to set connlabel length");
-	} else {
+	पूर्ण अन्यथा अणु
 		ovs_net->xt_label = true;
-	}
+	पूर्ण
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-	return ovs_ct_limit_init(net, ovs_net);
-#else
-	return 0;
-#endif
-}
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+	वापस ovs_ct_limit_init(net, ovs_net);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण
 
-void ovs_ct_exit(struct net *net)
-{
-	struct ovs_net *ovs_net = net_generic(net, ovs_net_id);
+व्योम ovs_ct_निकास(काष्ठा net *net)
+अणु
+	काष्ठा ovs_net *ovs_net = net_generic(net, ovs_net_id);
 
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-	ovs_ct_limit_exit(net, ovs_net);
-#endif
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+	ovs_ct_limit_निकास(net, ovs_net);
+#पूर्ण_अगर
 
-	if (ovs_net->xt_label)
+	अगर (ovs_net->xt_label)
 		nf_connlabels_put(net);
-}
+पूर्ण

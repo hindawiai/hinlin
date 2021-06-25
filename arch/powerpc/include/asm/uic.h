@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * IBM PPC4xx UIC external definitions and structure.
+ * IBM PPC4xx UIC बाह्यal definitions and काष्ठाure.
  *
- * Maintainer: David Gibson <dwg@au1.ibm.com>
+ * Maपूर्णांकainer: David Gibson <dwg@au1.ibm.com>
  * Copyright 2007 IBM Corporation.
  */
-#ifndef _ASM_POWERPC_UIC_H
-#define _ASM_POWERPC_UIC_H
+#अगर_अघोषित _ASM_POWERPC_UIC_H
+#घोषणा _ASM_POWERPC_UIC_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-extern void __init uic_init_tree(void);
-extern unsigned int uic_get_irq(void);
+बाह्य व्योम __init uic_init_tree(व्योम);
+बाह्य अचिन्हित पूर्णांक uic_get_irq(व्योम);
 
-#endif /* __KERNEL__ */
-#endif /* _ASM_POWERPC_UIC_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_POWERPC_UIC_H */

@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NETNS_SCTP_H__
-#define __NETNS_SCTP_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NETNS_SCTP_H__
+#घोषणा __NETNS_SCTP_H__
 
-struct sock;
-struct proc_dir_entry;
-struct sctp_mib;
-struct ctl_table_header;
+काष्ठा sock;
+काष्ठा proc_dir_entry;
+काष्ठा sctp_mib;
+काष्ठा ctl_table_header;
 
-struct netns_sctp {
-	DEFINE_SNMP_STAT(struct sctp_mib, sctp_statistics);
+काष्ठा netns_sctp अणु
+	DEFINE_SNMP_STAT(काष्ठा sctp_mib, sctp_statistics);
 
-#ifdef CONFIG_PROC_FS
-	struct proc_dir_entry *proc_net_sctp;
-#endif
-#ifdef CONFIG_SYSCTL
-	struct ctl_table_header *sysctl_header;
-#endif
-	/* This is the global socket data structure used for responding to
+#अगर_घोषित CONFIG_PROC_FS
+	काष्ठा proc_dir_entry *proc_net_sctp;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_SYSCTL
+	काष्ठा ctl_table_header *sysctl_header;
+#पूर्ण_अगर
+	/* This is the global socket data काष्ठाure used क्रम responding to
 	 * the Out-of-the-blue (OOTB) packets.  A control sock will be created
-	 * for this socket at the initialization time.
+	 * क्रम this socket at the initialization समय.
 	 */
-	struct sock *ctl_sock;
+	काष्ठा sock *ctl_sock;
 
 	/* UDP tunneling listening sock. */
-	struct sock *udp4_sock;
-	struct sock *udp6_sock;
+	काष्ठा sock *udp4_sock;
+	काष्ठा sock *udp6_sock;
 	/* UDP tunneling listening port. */
-	int udp_port;
+	पूर्णांक udp_port;
 	/* UDP tunneling remote encap port. */
-	int encap_port;
+	पूर्णांक encap_port;
 
 	/* This is the global local address list.
-	 * We actively maintain this complete list of addresses on
-	 * the system by catching address add/delete events.
+	 * We actively मुख्यtain this complete list of addresses on
+	 * the प्रणाली by catching address add/delete events.
 	 *
 	 * It is a list of sctp_sockaddr_entry.
 	 */
-	struct list_head local_addr_list;
-	struct list_head addr_waitq;
-	struct timer_list addr_wq_timer;
-	struct list_head auto_asconf_splist;
-	/* Lock that protects both addr_waitq and auto_asconf_splist */
+	काष्ठा list_head local_addr_list;
+	काष्ठा list_head addr_रुकोq;
+	काष्ठा समयr_list addr_wq_समयr;
+	काष्ठा list_head स्वतः_asconf_splist;
+	/* Lock that protects both addr_रुकोq and स्वतः_asconf_splist */
 	spinlock_t addr_wq_lock;
 
-	/* Lock that protects the local_addr_list writers */
+	/* Lock that protects the local_addr_list ग_लिखोrs */
 	spinlock_t local_addr_lock;
 
 	/* RFC2960 Section 14. Suggested SCTP Protocol Parameter Values
@@ -53,122 +54,122 @@ struct netns_sctp {
 	 * RTO.Initial		    - 3	 seconds
 	 * RTO.Min		    - 1	 second
 	 * RTO.Max		   -  60 seconds
-	 * RTO.Alpha		    - 1/8  (3 when converted to right shifts.)
-	 * RTO.Beta		    - 1/4  (2 when converted to right shifts.)
+	 * RTO.Alpha		    - 1/8  (3 when converted to right shअगरts.)
+	 * RTO.Beta		    - 1/4  (2 when converted to right shअगरts.)
 	 */
-	unsigned int rto_initial;
-	unsigned int rto_min;
-	unsigned int rto_max;
+	अचिन्हित पूर्णांक rto_initial;
+	अचिन्हित पूर्णांक rto_min;
+	अचिन्हित पूर्णांक rto_max;
 
 	/* Note: rto_alpha and rto_beta are really defined as inverse
-	 * powers of two to facilitate integer operations.
+	 * घातers of two to facilitate पूर्णांकeger operations.
 	 */
-	int rto_alpha;
-	int rto_beta;
+	पूर्णांक rto_alpha;
+	पूर्णांक rto_beta;
 
 	/* Max.Burst		    - 4 */
-	int max_burst;
+	पूर्णांक max_burst;
 
 	/* Whether Cookie Preservative is enabled(1) or not(0) */
-	int cookie_preserve_enable;
+	पूर्णांक cookie_preserve_enable;
 
-	/* The namespace default hmac alg */
-	char *sctp_hmac_alg;
+	/* The namespace शेष hmac alg */
+	अक्षर *sctp_hmac_alg;
 
-	/* Valid.Cookie.Life	    - 60  seconds  */
-	unsigned int valid_cookie_life;
+	/* Valid.Cookie.Lअगरe	    - 60  seconds  */
+	अचिन्हित पूर्णांक valid_cookie_lअगरe;
 
-	/* Delayed SACK timeout  200ms default*/
-	unsigned int sack_timeout;
+	/* Delayed SACK समयout  200ms शेष*/
+	अचिन्हित पूर्णांक sack_समयout;
 
-	/* HB.interval		    - 30 seconds  */
-	unsigned int hb_interval;
+	/* HB.पूर्णांकerval		    - 30 seconds  */
+	अचिन्हित पूर्णांक hb_पूर्णांकerval;
 
 	/* Association.Max.Retrans  - 10 attempts
 	 * Path.Max.Retrans	    - 5	 attempts (per destination address)
 	 * Max.Init.Retransmits	    - 8	 attempts
 	 */
-	int max_retrans_association;
-	int max_retrans_path;
-	int max_retrans_init;
+	पूर्णांक max_retrans_association;
+	पूर्णांक max_retrans_path;
+	पूर्णांक max_retrans_init;
 	/* Potentially-Failed.Max.Retrans sysctl value
 	 * taken from:
-	 * http://tools.ietf.org/html/draft-nishida-tsvwg-sctp-failover-05
+	 * http://tools.ietf.org/hपंचांगl/draft-nishida-tsvwg-sctp-failover-05
 	 */
-	int pf_retrans;
+	पूर्णांक pf_retrans;
 
 	/* Primary.Switchover.Max.Retrans sysctl value
 	 * taken from:
-	 * https://tools.ietf.org/html/rfc7829
+	 * https://tools.ietf.org/hपंचांगl/rfc7829
 	 */
-	int ps_retrans;
+	पूर्णांक ps_retrans;
 
 	/*
-	 * Disable Potentially-Failed feature, the feature is enabled by default
+	 * Disable Potentially-Failed feature, the feature is enabled by शेष
 	 * pf_enable	-  0  : disable pf
 	 *		- >0  : enable pf
 	 */
-	int pf_enable;
+	पूर्णांक pf_enable;
 
 	/*
-	 * Disable Potentially-Failed state exposure, ignored by default
-	 * pf_expose	-  0  : compatible with old applications (by default)
+	 * Disable Potentially-Failed state exposure, ignored by शेष
+	 * pf_expose	-  0  : compatible with old applications (by शेष)
 	 *		-  1  : disable pf state exposure
 	 *		-  2  : enable  pf state exposure
 	 */
-	int pf_expose;
+	पूर्णांक pf_expose;
 
 	/*
-	 * Policy for preforming sctp/socket accounting
-	 * 0   - do socket level accounting, all assocs share sk_sndbuf
-	 * 1   - do sctp accounting, each asoc may use sk_sndbuf bytes
+	 * Policy क्रम preक्रमming sctp/socket accounting
+	 * 0   - करो socket level accounting, all assocs share sk_sndbuf
+	 * 1   - करो sctp accounting, each asoc may use sk_sndbuf bytes
 	 */
-	int sndbuf_policy;
+	पूर्णांक sndbuf_policy;
 
 	/*
-	 * Policy for preforming sctp/socket accounting
-	 * 0   - do socket level accounting, all assocs share sk_rcvbuf
-	 * 1   - do sctp accounting, each asoc may use sk_rcvbuf bytes
+	 * Policy क्रम preक्रमming sctp/socket accounting
+	 * 0   - करो socket level accounting, all assocs share sk_rcvbuf
+	 * 1   - करो sctp accounting, each asoc may use sk_rcvbuf bytes
 	 */
-	int rcvbuf_policy;
+	पूर्णांक rcvbuf_policy;
 
-	int default_auto_asconf;
+	पूर्णांक शेष_स्वतः_asconf;
 
-	/* Flag to indicate if addip is enabled. */
-	int addip_enable;
-	int addip_noauth;
+	/* Flag to indicate अगर addip is enabled. */
+	पूर्णांक addip_enable;
+	पूर्णांक addip_noauth;
 
-	/* Flag to indicate if PR-SCTP is enabled. */
-	int prsctp_enable;
+	/* Flag to indicate अगर PR-SCTP is enabled. */
+	पूर्णांक prsctp_enable;
 
-	/* Flag to indicate if PR-CONFIG is enabled. */
-	int reconf_enable;
+	/* Flag to indicate अगर PR-CONFIG is enabled. */
+	पूर्णांक reconf_enable;
 
-	/* Flag to indicate if SCTP-AUTH is enabled */
-	int auth_enable;
+	/* Flag to indicate अगर SCTP-AUTH is enabled */
+	पूर्णांक auth_enable;
 
-	/* Flag to indicate if stream interleave is enabled */
-	int intl_enable;
+	/* Flag to indicate अगर stream पूर्णांकerleave is enabled */
+	पूर्णांक पूर्णांकl_enable;
 
-	/* Flag to indicate if ecn is enabled */
-	int ecn_enable;
+	/* Flag to indicate अगर ecn is enabled */
+	पूर्णांक ecn_enable;
 
 	/*
 	 * Policy to control SCTP IPv4 address scoping
 	 * 0   - Disable IPv4 address scoping
 	 * 1   - Enable IPv4 address scoping
-	 * 2   - Selectively allow only IPv4 private addresses
+	 * 2   - Selectively allow only IPv4 निजी addresses
 	 * 3   - Selectively allow only IPv4 link local address
 	 */
-	int scope_policy;
+	पूर्णांक scope_policy;
 
-	/* Threshold for rwnd update SACKS.  Receive buffer shifted this many
-	 * bits is an indicator of when to send and window update SACK.
+	/* Threshold क्रम rwnd update SACKS.  Receive buffer shअगरted this many
+	 * bits is an indicator of when to send and winकरोw update SACK.
 	 */
-	int rwnd_upd_shift;
+	पूर्णांक rwnd_upd_shअगरt;
 
-	/* Threshold for autoclose timeout, in seconds. */
-	unsigned long max_autoclose;
-};
+	/* Threshold क्रम स्वतःबंद समयout, in seconds. */
+	अचिन्हित दीर्घ max_स्वतःबंद;
+पूर्ण;
 
-#endif /* __NETNS_SCTP_H__ */
+#पूर्ण_अगर /* __NETNS_SCTP_H__ */

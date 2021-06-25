@@ -1,1121 +1,1122 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/slab.h>
-#include <linux/file.h>
-#include <linux/fdtable.h>
-#include <linux/freezer.h>
-#include <linux/mm.h>
-#include <linux/stat.h>
-#include <linux/fcntl.h>
-#include <linux/swap.h>
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/pagemap.h>
-#include <linux/perf_event.h>
-#include <linux/highmem.h>
-#include <linux/spinlock.h>
-#include <linux/key.h>
-#include <linux/personality.h>
-#include <linux/binfmts.h>
-#include <linux/coredump.h>
-#include <linux/sched/coredump.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task_stack.h>
-#include <linux/utsname.h>
-#include <linux/pid_namespace.h>
-#include <linux/module.h>
-#include <linux/namei.h>
-#include <linux/mount.h>
-#include <linux/security.h>
-#include <linux/syscalls.h>
-#include <linux/tsacct_kern.h>
-#include <linux/cn_proc.h>
-#include <linux/audit.h>
-#include <linux/tracehook.h>
-#include <linux/kmod.h>
-#include <linux/fsnotify.h>
-#include <linux/fs_struct.h>
-#include <linux/pipe_fs_i.h>
-#include <linux/oom.h>
-#include <linux/compat.h>
-#include <linux/fs.h>
-#include <linux/path.h>
-#include <linux/timekeeping.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/slab.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fdtable.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/key.h>
+#समावेश <linux/personality.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/coredump.h>
+#समावेश <linux/sched/coredump.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/pid_namespace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/security.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/tsacct_kern.h>
+#समावेश <linux/cn_proc.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/fs_काष्ठा.h>
+#समावेश <linux/pipe_fs_i.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/path.h>
+#समावेश <linux/समयkeeping.h>
 
-#include <linux/uaccess.h>
-#include <asm/mmu_context.h>
-#include <asm/tlb.h>
-#include <asm/exec.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/exec.h>
 
-#include <trace/events/task.h>
-#include "internal.h"
+#समावेश <trace/events/task.h>
+#समावेश "internal.h"
 
-#include <trace/events/sched.h>
+#समावेश <trace/events/sched.h>
 
-int core_uses_pid;
-unsigned int core_pipe_limit;
-char core_pattern[CORENAME_MAX_SIZE] = "core";
-static int core_name_size = CORENAME_MAX_SIZE;
+पूर्णांक core_uses_pid;
+अचिन्हित पूर्णांक core_pipe_limit;
+अक्षर core_pattern[CORENAME_MAX_SIZE] = "core";
+अटल पूर्णांक core_name_size = CORENAME_MAX_SIZE;
 
-struct core_name {
-	char *corename;
-	int used, size;
-};
+काष्ठा core_name अणु
+	अक्षर *coनाम;
+	पूर्णांक used, size;
+पूर्ण;
 
-/* The maximal length of core_pattern is also specified in sysctl.c */
+/* The maximal length of core_pattern is also specअगरied in sysctl.c */
 
-static int expand_corename(struct core_name *cn, int size)
-{
-	char *corename = krealloc(cn->corename, size, GFP_KERNEL);
+अटल पूर्णांक expand_coनाम(काष्ठा core_name *cn, पूर्णांक size)
+अणु
+	अक्षर *coनाम = kपुनः_स्मृति(cn->coनाम, size, GFP_KERNEL);
 
-	if (!corename)
-		return -ENOMEM;
+	अगर (!coनाम)
+		वापस -ENOMEM;
 
-	if (size > core_name_size) /* racy but harmless */
+	अगर (size > core_name_size) /* racy but harmless */
 		core_name_size = size;
 
-	cn->size = ksize(corename);
-	cn->corename = corename;
-	return 0;
-}
+	cn->size = ksize(coनाम);
+	cn->coनाम = coनाम;
+	वापस 0;
+पूर्ण
 
-static __printf(2, 0) int cn_vprintf(struct core_name *cn, const char *fmt,
-				     va_list arg)
-{
-	int free, need;
-	va_list arg_copy;
+अटल __म_लिखो(2, 0) पूर्णांक cn_भ_लिखो(काष्ठा core_name *cn, स्थिर अक्षर *fmt,
+				     बहु_सूची arg)
+अणु
+	पूर्णांक मुक्त, need;
+	बहु_सूची arg_copy;
 
 again:
-	free = cn->size - cn->used;
+	मुक्त = cn->size - cn->used;
 
 	va_copy(arg_copy, arg);
-	need = vsnprintf(cn->corename + cn->used, free, fmt, arg_copy);
-	va_end(arg_copy);
+	need = vsnम_लिखो(cn->coनाम + cn->used, मुक्त, fmt, arg_copy);
+	बहु_पूर्ण(arg_copy);
 
-	if (need < free) {
+	अगर (need < मुक्त) अणु
 		cn->used += need;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!expand_corename(cn, cn->size + need - free + 1))
-		goto again;
+	अगर (!expand_coनाम(cn, cn->size + need - मुक्त + 1))
+		जाओ again;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static __printf(2, 3) int cn_printf(struct core_name *cn, const char *fmt, ...)
-{
-	va_list arg;
-	int ret;
+अटल __म_लिखो(2, 3) पूर्णांक cn_म_लिखो(काष्ठा core_name *cn, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची arg;
+	पूर्णांक ret;
 
-	va_start(arg, fmt);
-	ret = cn_vprintf(cn, fmt, arg);
-	va_end(arg);
+	बहु_शुरू(arg, fmt);
+	ret = cn_भ_लिखो(cn, fmt, arg);
+	बहु_पूर्ण(arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __printf(2, 3)
-int cn_esc_printf(struct core_name *cn, const char *fmt, ...)
-{
-	int cur = cn->used;
-	va_list arg;
-	int ret;
+अटल __म_लिखो(2, 3)
+पूर्णांक cn_esc_म_लिखो(काष्ठा core_name *cn, स्थिर अक्षर *fmt, ...)
+अणु
+	पूर्णांक cur = cn->used;
+	बहु_सूची arg;
+	पूर्णांक ret;
 
-	va_start(arg, fmt);
-	ret = cn_vprintf(cn, fmt, arg);
-	va_end(arg);
+	बहु_शुरू(arg, fmt);
+	ret = cn_भ_लिखो(cn, fmt, arg);
+	बहु_पूर्ण(arg);
 
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		/*
 		 * Ensure that this coredump name component can't cause the
 		 * resulting corefile path to consist of a ".." or ".".
 		 */
-		if ((cn->used - cur == 1 && cn->corename[cur] == '.') ||
-				(cn->used - cur == 2 && cn->corename[cur] == '.'
-				&& cn->corename[cur+1] == '.'))
-			cn->corename[cur] = '!';
+		अगर ((cn->used - cur == 1 && cn->coनाम[cur] == '.') ||
+				(cn->used - cur == 2 && cn->coनाम[cur] == '.'
+				&& cn->coनाम[cur+1] == '.'))
+			cn->coनाम[cur] = '!';
 
 		/*
 		 * Empty names are fishy and could be used to create a "//" in a
 		 * corefile name, causing the coredump to happen one directory
-		 * level too high. Enforce that all components of the core
-		 * pattern are at least one character long.
+		 * level too high. Enक्रमce that all components of the core
+		 * pattern are at least one अक्षरacter दीर्घ.
 		 */
-		if (cn->used == cur)
-			ret = cn_printf(cn, "!");
-	}
+		अगर (cn->used == cur)
+			ret = cn_म_लिखो(cn, "!");
+	पूर्ण
 
-	for (; cur < cn->used; ++cur) {
-		if (cn->corename[cur] == '/')
-			cn->corename[cur] = '!';
-	}
-	return ret;
-}
+	क्रम (; cur < cn->used; ++cur) अणु
+		अगर (cn->coनाम[cur] == '/')
+			cn->coनाम[cur] = '!';
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cn_print_exe_file(struct core_name *cn, bool name_only)
-{
-	struct file *exe_file;
-	char *pathbuf, *path, *ptr;
-	int ret;
+अटल पूर्णांक cn_prपूर्णांक_exe_file(काष्ठा core_name *cn, bool name_only)
+अणु
+	काष्ठा file *exe_file;
+	अक्षर *pathbuf, *path, *ptr;
+	पूर्णांक ret;
 
 	exe_file = get_mm_exe_file(current->mm);
-	if (!exe_file)
-		return cn_esc_printf(cn, "%s (path unknown)", current->comm);
+	अगर (!exe_file)
+		वापस cn_esc_म_लिखो(cn, "%s (path unknown)", current->comm);
 
-	pathbuf = kmalloc(PATH_MAX, GFP_KERNEL);
-	if (!pathbuf) {
+	pathbuf = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
+	अगर (!pathbuf) अणु
 		ret = -ENOMEM;
-		goto put_exe_file;
-	}
+		जाओ put_exe_file;
+	पूर्ण
 
 	path = file_path(exe_file, pathbuf, PATH_MAX);
-	if (IS_ERR(path)) {
+	अगर (IS_ERR(path)) अणु
 		ret = PTR_ERR(path);
-		goto free_buf;
-	}
+		जाओ मुक्त_buf;
+	पूर्ण
 
-	if (name_only) {
-		ptr = strrchr(path, '/');
-		if (ptr)
+	अगर (name_only) अणु
+		ptr = म_खोजप(path, '/');
+		अगर (ptr)
 			path = ptr + 1;
-	}
-	ret = cn_esc_printf(cn, "%s", path);
+	पूर्ण
+	ret = cn_esc_म_लिखो(cn, "%s", path);
 
-free_buf:
-	kfree(pathbuf);
+मुक्त_buf:
+	kमुक्त(pathbuf);
 put_exe_file:
 	fput(exe_file);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* format_corename will inspect the pattern parameter, and output a
- * name into corename, which must have space for at least
- * CORENAME_MAX_SIZE bytes plus one byte for the zero terminator.
+/* क्रमmat_coनाम will inspect the pattern parameter, and output a
+ * name पूर्णांकo coनाम, which must have space क्रम at least
+ * CORENAME_MAX_SIZE bytes plus one byte क्रम the zero terminator.
  */
-static int format_corename(struct core_name *cn, struct coredump_params *cprm,
-			   size_t **argv, int *argc)
-{
-	const struct cred *cred = current_cred();
-	const char *pat_ptr = core_pattern;
-	int ispipe = (*pat_ptr == '|');
+अटल पूर्णांक क्रमmat_coनाम(काष्ठा core_name *cn, काष्ठा coredump_params *cprm,
+			   माप_प्रकार **argv, पूर्णांक *argc)
+अणु
+	स्थिर काष्ठा cred *cred = current_cred();
+	स्थिर अक्षर *pat_ptr = core_pattern;
+	पूर्णांक ispipe = (*pat_ptr == '|');
 	bool was_space = false;
-	int pid_in_pattern = 0;
-	int err = 0;
+	पूर्णांक pid_in_pattern = 0;
+	पूर्णांक err = 0;
 
 	cn->used = 0;
-	cn->corename = NULL;
-	if (expand_corename(cn, core_name_size))
-		return -ENOMEM;
-	cn->corename[0] = '\0';
+	cn->coनाम = शून्य;
+	अगर (expand_coनाम(cn, core_name_size))
+		वापस -ENOMEM;
+	cn->coनाम[0] = '\0';
 
-	if (ispipe) {
-		int argvs = sizeof(core_pattern) / 2;
-		(*argv) = kmalloc_array(argvs, sizeof(**argv), GFP_KERNEL);
-		if (!(*argv))
-			return -ENOMEM;
+	अगर (ispipe) अणु
+		पूर्णांक argvs = माप(core_pattern) / 2;
+		(*argv) = kदो_स्मृति_array(argvs, माप(**argv), GFP_KERNEL);
+		अगर (!(*argv))
+			वापस -ENOMEM;
 		(*argv)[(*argc)++] = 0;
 		++pat_ptr;
-		if (!(*pat_ptr))
-			return -ENOMEM;
-	}
+		अगर (!(*pat_ptr))
+			वापस -ENOMEM;
+	पूर्ण
 
-	/* Repeat as long as we have more pattern to process and more output
+	/* Repeat as दीर्घ as we have more pattern to process and more output
 	   space */
-	while (*pat_ptr) {
+	जबतक (*pat_ptr) अणु
 		/*
-		 * Split on spaces before doing template expansion so that
-		 * %e and %E don't get split if they have spaces in them
+		 * Split on spaces beक्रमe करोing ढाँचा expansion so that
+		 * %e and %E करोn't get split अगर they have spaces in them
 		 */
-		if (ispipe) {
-			if (isspace(*pat_ptr)) {
-				if (cn->used != 0)
+		अगर (ispipe) अणु
+			अगर (है_खाली(*pat_ptr)) अणु
+				अगर (cn->used != 0)
 					was_space = true;
 				pat_ptr++;
-				continue;
-			} else if (was_space) {
+				जारी;
+			पूर्ण अन्यथा अगर (was_space) अणु
 				was_space = false;
-				err = cn_printf(cn, "%c", '\0');
-				if (err)
-					return err;
+				err = cn_म_लिखो(cn, "%c", '\0');
+				अगर (err)
+					वापस err;
 				(*argv)[(*argc)++] = cn->used;
-			}
-		}
-		if (*pat_ptr != '%') {
-			err = cn_printf(cn, "%c", *pat_ptr++);
-		} else {
-			switch (*++pat_ptr) {
+			पूर्ण
+		पूर्ण
+		अगर (*pat_ptr != '%') अणु
+			err = cn_म_लिखो(cn, "%c", *pat_ptr++);
+		पूर्ण अन्यथा अणु
+			चयन (*++pat_ptr) अणु
 			/* single % at the end, drop that */
-			case 0:
-				goto out;
+			हाल 0:
+				जाओ out;
 			/* Double percent, output one percent */
-			case '%':
-				err = cn_printf(cn, "%c", '%');
-				break;
+			हाल '%':
+				err = cn_म_लिखो(cn, "%c", '%');
+				अवरोध;
 			/* pid */
-			case 'p':
+			हाल 'p':
 				pid_in_pattern = 1;
-				err = cn_printf(cn, "%d",
+				err = cn_म_लिखो(cn, "%d",
 					      task_tgid_vnr(current));
-				break;
+				अवरोध;
 			/* global pid */
-			case 'P':
-				err = cn_printf(cn, "%d",
+			हाल 'P':
+				err = cn_म_लिखो(cn, "%d",
 					      task_tgid_nr(current));
-				break;
-			case 'i':
-				err = cn_printf(cn, "%d",
+				अवरोध;
+			हाल 'i':
+				err = cn_म_लिखो(cn, "%d",
 					      task_pid_vnr(current));
-				break;
-			case 'I':
-				err = cn_printf(cn, "%d",
+				अवरोध;
+			हाल 'I':
+				err = cn_म_लिखो(cn, "%d",
 					      task_pid_nr(current));
-				break;
+				अवरोध;
 			/* uid */
-			case 'u':
-				err = cn_printf(cn, "%u",
+			हाल 'u':
+				err = cn_म_लिखो(cn, "%u",
 						from_kuid(&init_user_ns,
 							  cred->uid));
-				break;
+				अवरोध;
 			/* gid */
-			case 'g':
-				err = cn_printf(cn, "%u",
+			हाल 'g':
+				err = cn_म_लिखो(cn, "%u",
 						from_kgid(&init_user_ns,
 							  cred->gid));
-				break;
-			case 'd':
-				err = cn_printf(cn, "%d",
+				अवरोध;
+			हाल 'd':
+				err = cn_म_लिखो(cn, "%d",
 					__get_dumpable(cprm->mm_flags));
-				break;
-			/* signal that caused the coredump */
-			case 's':
-				err = cn_printf(cn, "%d",
+				अवरोध;
+			/* संकेत that caused the coredump */
+			हाल 's':
+				err = cn_म_लिखो(cn, "%d",
 						cprm->siginfo->si_signo);
-				break;
-			/* UNIX time of coredump */
-			case 't': {
-				time64_t time;
+				अवरोध;
+			/* UNIX समय of coredump */
+			हाल 't': अणु
+				समय64_t समय;
 
-				time = ktime_get_real_seconds();
-				err = cn_printf(cn, "%lld", time);
-				break;
-			}
+				समय = kसमय_get_real_seconds();
+				err = cn_म_लिखो(cn, "%lld", समय);
+				अवरोध;
+			पूर्ण
 			/* hostname */
-			case 'h':
-				down_read(&uts_sem);
-				err = cn_esc_printf(cn, "%s",
+			हाल 'h':
+				करोwn_पढ़ो(&uts_sem);
+				err = cn_esc_म_लिखो(cn, "%s",
 					      utsname()->nodename);
-				up_read(&uts_sem);
-				break;
+				up_पढ़ो(&uts_sem);
+				अवरोध;
 			/* executable, could be changed by prctl PR_SET_NAME etc */
-			case 'e':
-				err = cn_esc_printf(cn, "%s", current->comm);
-				break;
+			हाल 'e':
+				err = cn_esc_म_लिखो(cn, "%s", current->comm);
+				अवरोध;
 			/* file name of executable */
-			case 'f':
-				err = cn_print_exe_file(cn, true);
-				break;
-			case 'E':
-				err = cn_print_exe_file(cn, false);
-				break;
+			हाल 'f':
+				err = cn_prपूर्णांक_exe_file(cn, true);
+				अवरोध;
+			हाल 'E':
+				err = cn_prपूर्णांक_exe_file(cn, false);
+				अवरोध;
 			/* core limit size */
-			case 'c':
-				err = cn_printf(cn, "%lu",
+			हाल 'c':
+				err = cn_म_लिखो(cn, "%lu",
 					      rlimit(RLIMIT_CORE));
-				break;
-			default:
-				break;
-			}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
 			++pat_ptr;
-		}
+		पूर्ण
 
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 out:
 	/* Backward compatibility with core_uses_pid:
 	 *
-	 * If core_pattern does not include a %p (as is the default)
+	 * If core_pattern करोes not include a %p (as is the शेष)
 	 * and core_uses_pid is set, then .%pid will be appended to
-	 * the filename. Do not do this for piped commands. */
-	if (!ispipe && !pid_in_pattern && core_uses_pid) {
-		err = cn_printf(cn, ".%d", task_tgid_vnr(current));
-		if (err)
-			return err;
-	}
-	return ispipe;
-}
+	 * the filename. Do not करो this क्रम piped commands. */
+	अगर (!ispipe && !pid_in_pattern && core_uses_pid) अणु
+		err = cn_म_लिखो(cn, ".%d", task_tgid_vnr(current));
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस ispipe;
+पूर्ण
 
-static int zap_process(struct task_struct *start, int exit_code, int flags)
-{
-	struct task_struct *t;
-	int nr = 0;
+अटल पूर्णांक zap_process(काष्ठा task_काष्ठा *start, पूर्णांक निकास_code, पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *t;
+	पूर्णांक nr = 0;
 
-	/* ignore all signals except SIGKILL, see prepare_signal() */
-	start->signal->flags = SIGNAL_GROUP_COREDUMP | flags;
-	start->signal->group_exit_code = exit_code;
-	start->signal->group_stop_count = 0;
+	/* ignore all संकेतs except SIGKILL, see prepare_संकेत() */
+	start->संकेत->flags = SIGNAL_GROUP_COREDUMP | flags;
+	start->संकेत->group_निकास_code = निकास_code;
+	start->संकेत->group_stop_count = 0;
 
-	for_each_thread(start, t) {
+	क्रम_each_thपढ़ो(start, t) अणु
 		task_clear_jobctl_pending(t, JOBCTL_PENDING_MASK);
-		if (t != current && t->mm) {
-			sigaddset(&t->pending.signal, SIGKILL);
-			signal_wake_up(t, 1);
+		अगर (t != current && t->mm) अणु
+			sigaddset(&t->pending.संकेत, SIGKILL);
+			संकेत_wake_up(t, 1);
 			nr++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-static int zap_threads(struct task_struct *tsk, struct mm_struct *mm,
-			struct core_state *core_state, int exit_code)
-{
-	struct task_struct *g, *p;
-	unsigned long flags;
-	int nr = -EAGAIN;
+अटल पूर्णांक zap_thपढ़ोs(काष्ठा task_काष्ठा *tsk, काष्ठा mm_काष्ठा *mm,
+			काष्ठा core_state *core_state, पूर्णांक निकास_code)
+अणु
+	काष्ठा task_काष्ठा *g, *p;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nr = -EAGAIN;
 
 	spin_lock_irq(&tsk->sighand->siglock);
-	if (!signal_group_exit(tsk->signal)) {
+	अगर (!संकेत_group_निकास(tsk->संकेत)) अणु
 		mm->core_state = core_state;
-		tsk->signal->group_exit_task = tsk;
-		nr = zap_process(tsk, exit_code, 0);
-		clear_tsk_thread_flag(tsk, TIF_SIGPENDING);
-	}
+		tsk->संकेत->group_निकास_task = tsk;
+		nr = zap_process(tsk, निकास_code, 0);
+		clear_tsk_thपढ़ो_flag(tsk, TIF_SIGPENDING);
+	पूर्ण
 	spin_unlock_irq(&tsk->sighand->siglock);
-	if (unlikely(nr < 0))
-		return nr;
+	अगर (unlikely(nr < 0))
+		वापस nr;
 
 	tsk->flags |= PF_DUMPCORE;
-	if (atomic_read(&mm->mm_users) == nr + 1)
-		goto done;
+	अगर (atomic_पढ़ो(&mm->mm_users) == nr + 1)
+		जाओ करोne;
 	/*
-	 * We should find and kill all tasks which use this mm, and we should
-	 * count them correctly into ->nr_threads. We don't take tasklist
+	 * We should find and समाप्त all tasks which use this mm, and we should
+	 * count them correctly पूर्णांकo ->nr_thपढ़ोs. We करोn't take tasklist
 	 * lock, but this is safe wrt:
 	 *
-	 * fork:
-	 *	None of sub-threads can fork after zap_process(leader). All
-	 *	processes which were created before this point should be
-	 *	visible to zap_threads() because copy_process() adds the new
+	 * विभाजन:
+	 *	None of sub-thपढ़ोs can विभाजन after zap_process(leader). All
+	 *	processes which were created beक्रमe this poपूर्णांक should be
+	 *	visible to zap_thपढ़ोs() because copy_process() adds the new
 	 *	process to the tail of init_task.tasks list, and lock/unlock
 	 *	of ->siglock provides a memory barrier.
 	 *
-	 * do_exit:
+	 * करो_निकास:
 	 *	The caller holds mm->mmap_lock. This means that the task which
-	 *	uses this mm can't pass exit_mm(), so it can't exit or clear
+	 *	uses this mm can't pass exit_mm(), so it can't निकास or clear
 	 *	its ->mm.
 	 *
-	 * de_thread:
-	 *	It does list_replace_rcu(&leader->tasks, &current->tasks),
-	 *	we must see either old or new leader, this does not matter.
+	 * de_thपढ़ो:
+	 *	It करोes list_replace_rcu(&leader->tasks, &current->tasks),
+	 *	we must see either old or new leader, this करोes not matter.
 	 *	However, it can change p->sighand, so lock_task_sighand(p)
-	 *	must be used. Since p->mm != NULL and we hold ->mmap_lock
+	 *	must be used. Since p->mm != शून्य and we hold ->mmap_lock
 	 *	it can't fail.
 	 *
-	 *	Note also that "g" can be the old leader with ->mm == NULL
-	 *	and already unhashed and thus removed from ->thread_group.
-	 *	This is OK, __unhash_process()->list_del_rcu() does not
-	 *	clear the ->next pointer, we will find the new leader via
-	 *	next_thread().
+	 *	Note also that "g" can be the old leader with ->mm == शून्य
+	 *	and alपढ़ोy unhashed and thus हटाओd from ->thपढ़ो_group.
+	 *	This is OK, __unhash_process()->list_del_rcu() करोes not
+	 *	clear the ->next poपूर्णांकer, we will find the new leader via
+	 *	next_thपढ़ो().
 	 */
-	rcu_read_lock();
-	for_each_process(g) {
-		if (g == tsk->group_leader)
-			continue;
-		if (g->flags & PF_KTHREAD)
-			continue;
+	rcu_पढ़ो_lock();
+	क्रम_each_process(g) अणु
+		अगर (g == tsk->group_leader)
+			जारी;
+		अगर (g->flags & PF_KTHREAD)
+			जारी;
 
-		for_each_thread(g, p) {
-			if (unlikely(!p->mm))
-				continue;
-			if (unlikely(p->mm == mm)) {
+		क्रम_each_thपढ़ो(g, p) अणु
+			अगर (unlikely(!p->mm))
+				जारी;
+			अगर (unlikely(p->mm == mm)) अणु
 				lock_task_sighand(p, &flags);
-				nr += zap_process(p, exit_code,
+				nr += zap_process(p, निकास_code,
 							SIGNAL_GROUP_EXIT);
 				unlock_task_sighand(p, &flags);
-			}
-			break;
-		}
-	}
-	rcu_read_unlock();
-done:
-	atomic_set(&core_state->nr_threads, nr);
-	return nr;
-}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+करोne:
+	atomic_set(&core_state->nr_thपढ़ोs, nr);
+	वापस nr;
+पूर्ण
 
-static int coredump_wait(int exit_code, struct core_state *core_state)
-{
-	struct task_struct *tsk = current;
-	struct mm_struct *mm = tsk->mm;
-	int core_waiters = -EBUSY;
+अटल पूर्णांक coredump_रुको(पूर्णांक निकास_code, काष्ठा core_state *core_state)
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
+	काष्ठा mm_काष्ठा *mm = tsk->mm;
+	पूर्णांक core_रुकोers = -EBUSY;
 
 	init_completion(&core_state->startup);
 	core_state->dumper.task = tsk;
-	core_state->dumper.next = NULL;
+	core_state->dumper.next = शून्य;
 
-	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
+		वापस -EINTR;
 
-	if (!mm->core_state)
-		core_waiters = zap_threads(tsk, mm, core_state, exit_code);
-	mmap_write_unlock(mm);
+	अगर (!mm->core_state)
+		core_रुकोers = zap_thपढ़ोs(tsk, mm, core_state, निकास_code);
+	mmap_ग_लिखो_unlock(mm);
 
-	if (core_waiters > 0) {
-		struct core_thread *ptr;
+	अगर (core_रुकोers > 0) अणु
+		काष्ठा core_thपढ़ो *ptr;
 
-		freezer_do_not_count();
-		wait_for_completion(&core_state->startup);
-		freezer_count();
+		मुक्तzer_करो_not_count();
+		रुको_क्रम_completion(&core_state->startup);
+		मुक्तzer_count();
 		/*
-		 * Wait for all the threads to become inactive, so that
-		 * all the thread context (extended register state, like
-		 * fpu etc) gets copied to the memory.
+		 * Wait क्रम all the thपढ़ोs to become inactive, so that
+		 * all the thपढ़ो context (extended रेजिस्टर state, like
+		 * fpu etc) माला_लो copied to the memory.
 		 */
 		ptr = core_state->dumper.next;
-		while (ptr != NULL) {
-			wait_task_inactive(ptr->task, 0);
+		जबतक (ptr != शून्य) अणु
+			रुको_task_inactive(ptr->task, 0);
 			ptr = ptr->next;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return core_waiters;
-}
+	वापस core_रुकोers;
+पूर्ण
 
-static void coredump_finish(struct mm_struct *mm, bool core_dumped)
-{
-	struct core_thread *curr, *next;
-	struct task_struct *task;
+अटल व्योम coredump_finish(काष्ठा mm_काष्ठा *mm, bool core_dumped)
+अणु
+	काष्ठा core_thपढ़ो *curr, *next;
+	काष्ठा task_काष्ठा *task;
 
 	spin_lock_irq(&current->sighand->siglock);
-	if (core_dumped && !__fatal_signal_pending(current))
-		current->signal->group_exit_code |= 0x80;
-	current->signal->group_exit_task = NULL;
-	current->signal->flags = SIGNAL_GROUP_EXIT;
+	अगर (core_dumped && !__fatal_संकेत_pending(current))
+		current->संकेत->group_निकास_code |= 0x80;
+	current->संकेत->group_निकास_task = शून्य;
+	current->संकेत->flags = SIGNAL_GROUP_EXIT;
 	spin_unlock_irq(&current->sighand->siglock);
 
 	next = mm->core_state->dumper.next;
-	while ((curr = next) != NULL) {
+	जबतक ((curr = next) != शून्य) अणु
 		next = curr->next;
 		task = curr->task;
 		/*
-		 * see exit_mm(), curr->task must not see
-		 * ->task == NULL before we read ->next.
+		 * see निकास_mm(), curr->task must not see
+		 * ->task == शून्य beक्रमe we पढ़ो ->next.
 		 */
 		smp_mb();
-		curr->task = NULL;
+		curr->task = शून्य;
 		wake_up_process(task);
-	}
+	पूर्ण
 
-	mm->core_state = NULL;
-}
+	mm->core_state = शून्य;
+पूर्ण
 
-static bool dump_interrupted(void)
-{
+अटल bool dump_पूर्णांकerrupted(व्योम)
+अणु
 	/*
-	 * SIGKILL or freezing() interrupt the coredumping. Perhaps we
-	 * can do try_to_freeze() and check __fatal_signal_pending(),
-	 * but then we need to teach dump_write() to restart and clear
+	 * SIGKILL or मुक्तzing() पूर्णांकerrupt the coredumping. Perhaps we
+	 * can करो try_to_मुक्तze() and check __fatal_संकेत_pending(),
+	 * but then we need to teach dump_ग_लिखो() to restart and clear
 	 * TIF_SIGPENDING.
 	 */
-	return fatal_signal_pending(current) || freezing(current);
-}
+	वापस fatal_संकेत_pending(current) || मुक्तzing(current);
+पूर्ण
 
-static void wait_for_dump_helpers(struct file *file)
-{
-	struct pipe_inode_info *pipe = file->private_data;
+अटल व्योम रुको_क्रम_dump_helpers(काष्ठा file *file)
+अणु
+	काष्ठा pipe_inode_info *pipe = file->निजी_data;
 
 	pipe_lock(pipe);
-	pipe->readers++;
-	pipe->writers--;
-	wake_up_interruptible_sync(&pipe->rd_wait);
-	kill_fasync(&pipe->fasync_readers, SIGIO, POLL_IN);
+	pipe->पढ़ोers++;
+	pipe->ग_लिखोrs--;
+	wake_up_पूर्णांकerruptible_sync(&pipe->rd_रुको);
+	समाप्त_fasync(&pipe->fasync_पढ़ोers, SIGIO, POLL_IN);
 	pipe_unlock(pipe);
 
 	/*
-	 * We actually want wait_event_freezable() but then we need
-	 * to clear TIF_SIGPENDING and improve dump_interrupted().
+	 * We actually want रुको_event_मुक्तzable() but then we need
+	 * to clear TIF_SIGPENDING and improve dump_पूर्णांकerrupted().
 	 */
-	wait_event_interruptible(pipe->rd_wait, pipe->readers == 1);
+	रुको_event_पूर्णांकerruptible(pipe->rd_रुको, pipe->पढ़ोers == 1);
 
 	pipe_lock(pipe);
-	pipe->readers--;
-	pipe->writers++;
+	pipe->पढ़ोers--;
+	pipe->ग_लिखोrs++;
 	pipe_unlock(pipe);
-}
+पूर्ण
 
 /*
  * umh_pipe_setup
  * helper function to customize the process used
- * to collect the core in userspace.  Specifically
- * it sets up a pipe and installs it as fd 0 (stdin)
- * for the process.  Returns 0 on success, or
+ * to collect the core in userspace.  Specअगरically
+ * it sets up a pipe and installs it as fd 0 (मानक_निवेश)
+ * क्रम the process.  Returns 0 on success, or
  * PTR_ERR on failure.
  * Note that it also sets the core limit to 1.  This
  * is a special value that we use to trap recursive
  * core dumps
  */
-static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
-{
-	struct file *files[2];
-	struct coredump_params *cp = (struct coredump_params *)info->data;
-	int err = create_pipe_files(files, 0);
-	if (err)
-		return err;
+अटल पूर्णांक umh_pipe_setup(काष्ठा subprocess_info *info, काष्ठा cred *new)
+अणु
+	काष्ठा file *files[2];
+	काष्ठा coredump_params *cp = (काष्ठा coredump_params *)info->data;
+	पूर्णांक err = create_pipe_files(files, 0);
+	अगर (err)
+		वापस err;
 
 	cp->file = files[1];
 
 	err = replace_fd(0, files[0], 0);
 	fput(files[0]);
 	/* and disallow core files too */
-	current->signal->rlim[RLIMIT_CORE] = (struct rlimit){1, 1};
+	current->संकेत->rlim[RLIMIT_CORE] = (काष्ठा rlimit)अणु1, 1पूर्ण;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void do_coredump(const kernel_siginfo_t *siginfo)
-{
-	struct core_state core_state;
-	struct core_name cn;
-	struct mm_struct *mm = current->mm;
-	struct linux_binfmt * binfmt;
-	const struct cred *old_cred;
-	struct cred *cred;
-	int retval = 0;
-	int ispipe;
-	size_t *argv = NULL;
-	int argc = 0;
+व्योम करो_coredump(स्थिर kernel_siginfo_t *siginfo)
+अणु
+	काष्ठा core_state core_state;
+	काष्ठा core_name cn;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	काष्ठा linux_binfmt * binfmt;
+	स्थिर काष्ठा cred *old_cred;
+	काष्ठा cred *cred;
+	पूर्णांक retval = 0;
+	पूर्णांक ispipe;
+	माप_प्रकार *argv = शून्य;
+	पूर्णांक argc = 0;
 	/* require nonrelative corefile path and be extra careful */
 	bool need_suid_safe = false;
 	bool core_dumped = false;
-	static atomic_t core_dump_count = ATOMIC_INIT(0);
-	struct coredump_params cprm = {
+	अटल atomic_t core_dump_count = ATOMIC_INIT(0);
+	काष्ठा coredump_params cprm = अणु
 		.siginfo = siginfo,
-		.regs = signal_pt_regs(),
+		.regs = संकेत_pt_regs(),
 		.limit = rlimit(RLIMIT_CORE),
 		/*
-		 * We must use the same mm->flags while dumping core to avoid
-		 * inconsistency of bit flags, since this flag is not protected
+		 * We must use the same mm->flags जबतक dumping core to aव्योम
+		 * inconsistency of bit flags, since this flag is not रक्षित
 		 * by any locks.
 		 */
 		.mm_flags = mm->flags,
-	};
+	पूर्ण;
 
 	audit_core_dumps(siginfo->si_signo);
 
 	binfmt = mm->binfmt;
-	if (!binfmt || !binfmt->core_dump)
-		goto fail;
-	if (!__get_dumpable(cprm.mm_flags))
-		goto fail;
+	अगर (!binfmt || !binfmt->core_dump)
+		जाओ fail;
+	अगर (!__get_dumpable(cprm.mm_flags))
+		जाओ fail;
 
 	cred = prepare_creds();
-	if (!cred)
-		goto fail;
+	अगर (!cred)
+		जाओ fail;
 	/*
 	 * We cannot trust fsuid as being the "true" uid of the process
-	 * nor do we know its entire history. We only know it was tainted
-	 * so we dump it as root in mode 2, and only into a controlled
-	 * environment (pipe handler or fully qualified path).
+	 * nor करो we know its entire history. We only know it was taपूर्णांकed
+	 * so we dump it as root in mode 2, and only पूर्णांकo a controlled
+	 * environment (pipe handler or fully qualअगरied path).
 	 */
-	if (__get_dumpable(cprm.mm_flags) == SUID_DUMP_ROOT) {
+	अगर (__get_dumpable(cprm.mm_flags) == SUID_DUMP_ROOT) अणु
 		/* Setuid core dump mode */
-		cred->fsuid = GLOBAL_ROOT_UID;	/* Dump root private */
+		cred->fsuid = GLOBAL_ROOT_UID;	/* Dump root निजी */
 		need_suid_safe = true;
-	}
+	पूर्ण
 
-	retval = coredump_wait(siginfo->si_signo, &core_state);
-	if (retval < 0)
-		goto fail_creds;
+	retval = coredump_रुको(siginfo->si_signo, &core_state);
+	अगर (retval < 0)
+		जाओ fail_creds;
 
 	old_cred = override_creds(cred);
 
-	ispipe = format_corename(&cn, &cprm, &argv, &argc);
+	ispipe = क्रमmat_coनाम(&cn, &cprm, &argv, &argc);
 
-	if (ispipe) {
-		int argi;
-		int dump_count;
-		char **helper_argv;
-		struct subprocess_info *sub_info;
+	अगर (ispipe) अणु
+		पूर्णांक argi;
+		पूर्णांक dump_count;
+		अक्षर **helper_argv;
+		काष्ठा subprocess_info *sub_info;
 
-		if (ispipe < 0) {
-			printk(KERN_WARNING "format_corename failed\n");
-			printk(KERN_WARNING "Aborting core\n");
-			goto fail_unlock;
-		}
+		अगर (ispipe < 0) अणु
+			prपूर्णांकk(KERN_WARNING "format_corename failed\n");
+			prपूर्णांकk(KERN_WARNING "Aborting core\n");
+			जाओ fail_unlock;
+		पूर्ण
 
-		if (cprm.limit == 1) {
+		अगर (cprm.limit == 1) अणु
 			/* See umh_pipe_setup() which sets RLIMIT_CORE = 1.
 			 *
 			 * Normally core limits are irrelevant to pipes, since
-			 * we're not writing to the file system, but we use
+			 * we're not writing to the file प्रणाली, but we use
 			 * cprm.limit of 1 here as a special value, this is a
 			 * consistent way to catch recursive crashes.
-			 * We can still crash if the core_pattern binary sets
-			 * RLIM_CORE = !1, but it runs as root, and can do
+			 * We can still crash अगर the core_pattern binary sets
+			 * RLIM_CORE = !1, but it runs as root, and can करो
 			 * lots of stupid things.
 			 *
 			 * Note that we use task_tgid_vnr here to grab the pid
 			 * of the process group leader.  That way we get the
-			 * right pid if a thread in a multi-threaded
+			 * right pid अगर a thपढ़ो in a multi-thपढ़ोed
 			 * core_pattern process dies.
 			 */
-			printk(KERN_WARNING
+			prपूर्णांकk(KERN_WARNING
 				"Process %d(%s) has RLIMIT_CORE set to 1\n",
 				task_tgid_vnr(current), current->comm);
-			printk(KERN_WARNING "Aborting core\n");
-			goto fail_unlock;
-		}
-		cprm.limit = RLIM_INFINITY;
+			prपूर्णांकk(KERN_WARNING "Aborting core\n");
+			जाओ fail_unlock;
+		पूर्ण
+		cprm.limit = RLIM_अनन्त;
 
-		dump_count = atomic_inc_return(&core_dump_count);
-		if (core_pipe_limit && (core_pipe_limit < dump_count)) {
-			printk(KERN_WARNING "Pid %d(%s) over core_pipe_limit\n",
+		dump_count = atomic_inc_वापस(&core_dump_count);
+		अगर (core_pipe_limit && (core_pipe_limit < dump_count)) अणु
+			prपूर्णांकk(KERN_WARNING "Pid %d(%s) over core_pipe_limit\n",
 			       task_tgid_vnr(current), current->comm);
-			printk(KERN_WARNING "Skipping core dump\n");
-			goto fail_dropcount;
-		}
+			prपूर्णांकk(KERN_WARNING "Skipping core dump\n");
+			जाओ fail_dropcount;
+		पूर्ण
 
-		helper_argv = kmalloc_array(argc + 1, sizeof(*helper_argv),
+		helper_argv = kदो_स्मृति_array(argc + 1, माप(*helper_argv),
 					    GFP_KERNEL);
-		if (!helper_argv) {
-			printk(KERN_WARNING "%s failed to allocate memory\n",
+		अगर (!helper_argv) अणु
+			prपूर्णांकk(KERN_WARNING "%s failed to allocate memory\n",
 			       __func__);
-			goto fail_dropcount;
-		}
-		for (argi = 0; argi < argc; argi++)
-			helper_argv[argi] = cn.corename + argv[argi];
-		helper_argv[argi] = NULL;
+			जाओ fail_dropcount;
+		पूर्ण
+		क्रम (argi = 0; argi < argc; argi++)
+			helper_argv[argi] = cn.coनाम + argv[argi];
+		helper_argv[argi] = शून्य;
 
 		retval = -ENOMEM;
 		sub_info = call_usermodehelper_setup(helper_argv[0],
-						helper_argv, NULL, GFP_KERNEL,
-						umh_pipe_setup, NULL, &cprm);
-		if (sub_info)
+						helper_argv, शून्य, GFP_KERNEL,
+						umh_pipe_setup, शून्य, &cprm);
+		अगर (sub_info)
 			retval = call_usermodehelper_exec(sub_info,
 							  UMH_WAIT_EXEC);
 
-		kfree(helper_argv);
-		if (retval) {
-			printk(KERN_INFO "Core dump to |%s pipe failed\n",
-			       cn.corename);
-			goto close_fail;
-		}
-	} else {
-		struct user_namespace *mnt_userns;
-		struct inode *inode;
-		int open_flags = O_CREAT | O_RDWR | O_NOFOLLOW |
-				 O_LARGEFILE | O_EXCL;
+		kमुक्त(helper_argv);
+		अगर (retval) अणु
+			prपूर्णांकk(KERN_INFO "Core dump to |%s pipe failed\n",
+			       cn.coनाम);
+			जाओ बंद_fail;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा user_namespace *mnt_userns;
+		काष्ठा inode *inode;
+		पूर्णांक खोलो_flags = O_CREAT | O_RDWR | O_NOFOLLOW |
+				 O_LARGEखाता | O_EXCL;
 
-		if (cprm.limit < binfmt->min_coredump)
-			goto fail_unlock;
+		अगर (cprm.limit < binfmt->min_coredump)
+			जाओ fail_unlock;
 
-		if (need_suid_safe && cn.corename[0] != '/') {
-			printk(KERN_WARNING "Pid %d(%s) can only dump core "\
+		अगर (need_suid_safe && cn.coनाम[0] != '/') अणु
+			prपूर्णांकk(KERN_WARNING "Pid %d(%s) can only dump core "\
 				"to fully qualified path!\n",
 				task_tgid_vnr(current), current->comm);
-			printk(KERN_WARNING "Skipping core dump\n");
-			goto fail_unlock;
-		}
+			prपूर्णांकk(KERN_WARNING "Skipping core dump\n");
+			जाओ fail_unlock;
+		पूर्ण
 
 		/*
-		 * Unlink the file if it exists unless this is a SUID
-		 * binary - in that case, we're running around with root
-		 * privs and don't want to unlink another user's coredump.
+		 * Unlink the file अगर it exists unless this is a SUID
+		 * binary - in that हाल, we're running around with root
+		 * privs and करोn't want to unlink another user's coredump.
 		 */
-		if (!need_suid_safe) {
+		अगर (!need_suid_safe) अणु
 			/*
-			 * If it doesn't exist, that's fine. If there's some
-			 * other problem, we'll catch it at the filp_open().
+			 * If it करोesn't exist, that's fine. If there's some
+			 * other problem, we'll catch it at the filp_खोलो().
 			 */
-			do_unlinkat(AT_FDCWD, getname_kernel(cn.corename));
-		}
+			करो_unlinkat(AT_FDCWD, getname_kernel(cn.coनाम));
+		पूर्ण
 
 		/*
 		 * There is a race between unlinking and creating the
-		 * file, but if that causes an EEXIST here, that's
-		 * fine - another process raced with us while creating
+		 * file, but अगर that causes an EEXIST here, that's
+		 * fine - another process raced with us जबतक creating
 		 * the corefile, and the other process won. To userspace,
 		 * what matters is that at least one of the two processes
-		 * writes its coredump successfully, not which one.
+		 * ग_लिखोs its coredump successfully, not which one.
 		 */
-		if (need_suid_safe) {
+		अगर (need_suid_safe) अणु
 			/*
 			 * Using user namespaces, normal user tasks can change
-			 * their current->fs->root to point to arbitrary
-			 * directories. Since the intention of the "only dump
-			 * with a fully qualified path" rule is to control where
+			 * their current->fs->root to poपूर्णांक to arbitrary
+			 * directories. Since the पूर्णांकention of the "only dump
+			 * with a fully qualअगरied path" rule is to control where
 			 * coredumps may be placed using root privileges,
 			 * current->fs->root must not be used. Instead, use the
 			 * root directory of init_task.
 			 */
-			struct path root;
+			काष्ठा path root;
 
 			task_lock(&init_task);
 			get_fs_root(init_task.fs, &root);
 			task_unlock(&init_task);
-			cprm.file = file_open_root(root.dentry, root.mnt,
-				cn.corename, open_flags, 0600);
+			cprm.file = file_खोलो_root(root.dentry, root.mnt,
+				cn.coनाम, खोलो_flags, 0600);
 			path_put(&root);
-		} else {
-			cprm.file = filp_open(cn.corename, open_flags, 0600);
-		}
-		if (IS_ERR(cprm.file))
-			goto fail_unlock;
+		पूर्ण अन्यथा अणु
+			cprm.file = filp_खोलो(cn.coनाम, खोलो_flags, 0600);
+		पूर्ण
+		अगर (IS_ERR(cprm.file))
+			जाओ fail_unlock;
 
 		inode = file_inode(cprm.file);
-		if (inode->i_nlink > 1)
-			goto close_fail;
-		if (d_unhashed(cprm.file->f_path.dentry))
-			goto close_fail;
+		अगर (inode->i_nlink > 1)
+			जाओ बंद_fail;
+		अगर (d_unhashed(cprm.file->f_path.dentry))
+			जाओ बंद_fail;
 		/*
-		 * AK: actually i see no reason to not allow this for named
-		 * pipes etc, but keep the previous behaviour for now.
+		 * AK: actually i see no reason to not allow this क्रम named
+		 * pipes etc, but keep the previous behaviour क्रम now.
 		 */
-		if (!S_ISREG(inode->i_mode))
-			goto close_fail;
+		अगर (!S_ISREG(inode->i_mode))
+			जाओ बंद_fail;
 		/*
-		 * Don't dump core if the filesystem changed owner or mode
+		 * Don't dump core अगर the fileप्रणाली changed owner or mode
 		 * of the file during file creation. This is an issue when
-		 * a process dumps core while its cwd is e.g. on a vfat
-		 * filesystem.
+		 * a process dumps core जबतक its cwd is e.g. on a vfat
+		 * fileप्रणाली.
 		 */
 		mnt_userns = file_mnt_user_ns(cprm.file);
-		if (!uid_eq(i_uid_into_mnt(mnt_userns, inode), current_fsuid()))
-			goto close_fail;
-		if ((inode->i_mode & 0677) != 0600)
-			goto close_fail;
-		if (!(cprm.file->f_mode & FMODE_CAN_WRITE))
-			goto close_fail;
-		if (do_truncate(mnt_userns, cprm.file->f_path.dentry,
+		अगर (!uid_eq(i_uid_पूर्णांकo_mnt(mnt_userns, inode), current_fsuid()))
+			जाओ बंद_fail;
+		अगर ((inode->i_mode & 0677) != 0600)
+			जाओ बंद_fail;
+		अगर (!(cprm.file->f_mode & FMODE_CAN_WRITE))
+			जाओ बंद_fail;
+		अगर (करो_truncate(mnt_userns, cprm.file->f_path.dentry,
 				0, 0, cprm.file))
-			goto close_fail;
-	}
+			जाओ बंद_fail;
+	पूर्ण
 
 	/* get us an unshared descriptor table; almost always a no-op */
-	/* The cell spufs coredump code reads the file descriptor tables */
+	/* The cell spufs coredump code पढ़ोs the file descriptor tables */
 	retval = unshare_files();
-	if (retval)
-		goto close_fail;
-	if (!dump_interrupted()) {
+	अगर (retval)
+		जाओ बंद_fail;
+	अगर (!dump_पूर्णांकerrupted()) अणु
 		/*
 		 * umh disabled with CONFIG_STATIC_USERMODEHELPER_PATH="" would
-		 * have this set to NULL.
+		 * have this set to शून्य.
 		 */
-		if (!cprm.file) {
-			pr_info("Core dump to |%s disabled\n", cn.corename);
-			goto close_fail;
-		}
-		file_start_write(cprm.file);
+		अगर (!cprm.file) अणु
+			pr_info("Core dump to |%s disabled\n", cn.coनाम);
+			जाओ बंद_fail;
+		पूर्ण
+		file_start_ग_लिखो(cprm.file);
 		core_dumped = binfmt->core_dump(&cprm);
 		/*
 		 * Ensures that file size is big enough to contain the current
 		 * file postion. This prevents gdb from complaining about
-		 * a truncated file if the last "write" to the file was
+		 * a truncated file अगर the last "write" to the file was
 		 * dump_skip.
 		 */
-		if (cprm.to_skip) {
+		अगर (cprm.to_skip) अणु
 			cprm.to_skip--;
 			dump_emit(&cprm, "", 1);
-		}
-		file_end_write(cprm.file);
-	}
-	if (ispipe && core_pipe_limit)
-		wait_for_dump_helpers(cprm.file);
-close_fail:
-	if (cprm.file)
-		filp_close(cprm.file, NULL);
+		पूर्ण
+		file_end_ग_लिखो(cprm.file);
+	पूर्ण
+	अगर (ispipe && core_pipe_limit)
+		रुको_क्रम_dump_helpers(cprm.file);
+बंद_fail:
+	अगर (cprm.file)
+		filp_बंद(cprm.file, शून्य);
 fail_dropcount:
-	if (ispipe)
+	अगर (ispipe)
 		atomic_dec(&core_dump_count);
 fail_unlock:
-	kfree(argv);
-	kfree(cn.corename);
+	kमुक्त(argv);
+	kमुक्त(cn.coनाम);
 	coredump_finish(mm, core_dumped);
 	revert_creds(old_cred);
 fail_creds:
 	put_cred(cred);
 fail:
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * Core dumping helper functions.  These are the only things you should
- * do on a core-file: use only these functions to write out all the
+ * करो on a core-file: use only these functions to ग_लिखो out all the
  * necessary info.
  */
-static int __dump_emit(struct coredump_params *cprm, const void *addr, int nr)
-{
-	struct file *file = cprm->file;
+अटल पूर्णांक __dump_emit(काष्ठा coredump_params *cprm, स्थिर व्योम *addr, पूर्णांक nr)
+अणु
+	काष्ठा file *file = cprm->file;
 	loff_t pos = file->f_pos;
-	ssize_t n;
-	if (cprm->written + nr > cprm->limit)
-		return 0;
+	sमाप_प्रकार n;
+	अगर (cprm->written + nr > cprm->limit)
+		वापस 0;
 
 
-	if (dump_interrupted())
-		return 0;
-	n = __kernel_write(file, addr, nr, &pos);
-	if (n != nr)
-		return 0;
+	अगर (dump_पूर्णांकerrupted())
+		वापस 0;
+	n = __kernel_ग_लिखो(file, addr, nr, &pos);
+	अगर (n != nr)
+		वापस 0;
 	file->f_pos = pos;
 	cprm->written += n;
 	cprm->pos += n;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int __dump_skip(struct coredump_params *cprm, size_t nr)
-{
-	static char zeroes[PAGE_SIZE];
-	struct file *file = cprm->file;
-	if (file->f_op->llseek && file->f_op->llseek != no_llseek) {
-		if (dump_interrupted() ||
-		    file->f_op->llseek(file, nr, SEEK_CUR) < 0)
-			return 0;
+अटल पूर्णांक __dump_skip(काष्ठा coredump_params *cprm, माप_प्रकार nr)
+अणु
+	अटल अक्षर zeroes[PAGE_SIZE];
+	काष्ठा file *file = cprm->file;
+	अगर (file->f_op->llseek && file->f_op->llseek != no_llseek) अणु
+		अगर (dump_पूर्णांकerrupted() ||
+		    file->f_op->llseek(file, nr, प्रस्तुत_से) < 0)
+			वापस 0;
 		cprm->pos += nr;
-		return 1;
-	} else {
-		while (nr > PAGE_SIZE) {
-			if (!__dump_emit(cprm, zeroes, PAGE_SIZE))
-				return 0;
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		जबतक (nr > PAGE_SIZE) अणु
+			अगर (!__dump_emit(cprm, zeroes, PAGE_SIZE))
+				वापस 0;
 			nr -= PAGE_SIZE;
-		}
-		return __dump_emit(cprm, zeroes, nr);
-	}
-}
+		पूर्ण
+		वापस __dump_emit(cprm, zeroes, nr);
+	पूर्ण
+पूर्ण
 
-int dump_emit(struct coredump_params *cprm, const void *addr, int nr)
-{
-	if (cprm->to_skip) {
-		if (!__dump_skip(cprm, cprm->to_skip))
-			return 0;
+पूर्णांक dump_emit(काष्ठा coredump_params *cprm, स्थिर व्योम *addr, पूर्णांक nr)
+अणु
+	अगर (cprm->to_skip) अणु
+		अगर (!__dump_skip(cprm, cprm->to_skip))
+			वापस 0;
 		cprm->to_skip = 0;
-	}
-	return __dump_emit(cprm, addr, nr);
-}
+	पूर्ण
+	वापस __dump_emit(cprm, addr, nr);
+पूर्ण
 EXPORT_SYMBOL(dump_emit);
 
-void dump_skip_to(struct coredump_params *cprm, unsigned long pos)
-{
+व्योम dump_skip_to(काष्ठा coredump_params *cprm, अचिन्हित दीर्घ pos)
+अणु
 	cprm->to_skip = pos - cprm->pos;
-}
+पूर्ण
 EXPORT_SYMBOL(dump_skip_to);
 
-void dump_skip(struct coredump_params *cprm, size_t nr)
-{
+व्योम dump_skip(काष्ठा coredump_params *cprm, माप_प्रकार nr)
+अणु
 	cprm->to_skip += nr;
-}
+पूर्ण
 EXPORT_SYMBOL(dump_skip);
 
-#ifdef CONFIG_ELF_CORE
-int dump_user_range(struct coredump_params *cprm, unsigned long start,
-		    unsigned long len)
-{
-	unsigned long addr;
+#अगर_घोषित CONFIG_ELF_CORE
+पूर्णांक dump_user_range(काष्ठा coredump_params *cprm, अचिन्हित दीर्घ start,
+		    अचिन्हित दीर्घ len)
+अणु
+	अचिन्हित दीर्घ addr;
 
-	for (addr = start; addr < start + len; addr += PAGE_SIZE) {
-		struct page *page;
-		int stop;
+	क्रम (addr = start; addr < start + len; addr += PAGE_SIZE) अणु
+		काष्ठा page *page;
+		पूर्णांक stop;
 
 		/*
-		 * To avoid having to allocate page tables for virtual address
+		 * To aव्योम having to allocate page tables क्रम भव address
 		 * ranges that have never been used yet, and also to make it
-		 * easy to generate sparse core files, use a helper that returns
-		 * NULL when encountering an empty page table entry that would
+		 * easy to generate sparse core files, use a helper that वापसs
+		 * शून्य when encountering an empty page table entry that would
 		 * otherwise have been filled with the zero page.
 		 */
 		page = get_dump_page(addr);
-		if (page) {
-			void *kaddr = kmap_local_page(page);
+		अगर (page) अणु
+			व्योम *kaddr = kmap_local_page(page);
 
 			stop = !dump_emit(cprm, kaddr, PAGE_SIZE);
 			kunmap_local(kaddr);
 			put_page(page);
-			if (stop)
-				return 0;
-		} else {
+			अगर (stop)
+				वापस 0;
+		पूर्ण अन्यथा अणु
 			dump_skip(cprm, PAGE_SIZE);
-		}
-	}
-	return 1;
-}
-#endif
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
+#पूर्ण_अगर
 
-int dump_align(struct coredump_params *cprm, int align)
-{
-	unsigned mod = (cprm->pos + cprm->to_skip) & (align - 1);
-	if (align & (align - 1))
-		return 0;
-	if (mod)
+पूर्णांक dump_align(काष्ठा coredump_params *cprm, पूर्णांक align)
+अणु
+	अचिन्हित mod = (cprm->pos + cprm->to_skip) & (align - 1);
+	अगर (align & (align - 1))
+		वापस 0;
+	अगर (mod)
 		cprm->to_skip += align - mod;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(dump_align);
 
 /*
  * The purpose of always_dump_vma() is to make sure that special kernel mappings
- * that are useful for post-mortem analysis are included in every core dump.
- * In that way we ensure that the core dump is fully interpretable later
+ * that are useful क्रम post-mortem analysis are included in every core dump.
+ * In that way we ensure that the core dump is fully पूर्णांकerpretable later
  * without matching up the same kernel and hardware config to see what PC values
  * meant. These special mappings include - vDSO, vsyscall, and other
- * architecture specific mappings
+ * architecture specअगरic mappings
  */
-static bool always_dump_vma(struct vm_area_struct *vma)
-{
+अटल bool always_dump_vma(काष्ठा vm_area_काष्ठा *vma)
+अणु
 	/* Any vsyscall mappings? */
-	if (vma == get_gate_vma(vma->vm_mm))
-		return true;
+	अगर (vma == get_gate_vma(vma->vm_mm))
+		वापस true;
 
 	/*
 	 * Assume that all vmas with a .name op should always be dumped.
 	 * If this changes, a new vm_ops field can easily be added.
 	 */
-	if (vma->vm_ops && vma->vm_ops->name && vma->vm_ops->name(vma))
-		return true;
+	अगर (vma->vm_ops && vma->vm_ops->name && vma->vm_ops->name(vma))
+		वापस true;
 
 	/*
-	 * arch_vma_name() returns non-NULL for special architecture mappings,
+	 * arch_vma_name() वापसs non-शून्य क्रम special architecture mappings,
 	 * such as vDSO sections.
 	 */
-	if (arch_vma_name(vma))
-		return true;
+	अगर (arch_vma_name(vma))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Decide how much of @vma's contents should be included in a core dump.
  */
-static unsigned long vma_dump_size(struct vm_area_struct *vma,
-				   unsigned long mm_flags)
-{
-#define FILTER(type)	(mm_flags & (1UL << MMF_DUMP_##type))
+अटल अचिन्हित दीर्घ vma_dump_size(काष्ठा vm_area_काष्ठा *vma,
+				   अचिन्हित दीर्घ mm_flags)
+अणु
+#घोषणा FILTER(type)	(mm_flags & (1UL << MMF_DUMP_##type))
 
 	/* always dump the vdso and vsyscall sections */
-	if (always_dump_vma(vma))
-		goto whole;
+	अगर (always_dump_vma(vma))
+		जाओ whole;
 
-	if (vma->vm_flags & VM_DONTDUMP)
-		return 0;
+	अगर (vma->vm_flags & VM_DONTDUMP)
+		वापस 0;
 
-	/* support for DAX */
-	if (vma_is_dax(vma)) {
-		if ((vma->vm_flags & VM_SHARED) && FILTER(DAX_SHARED))
-			goto whole;
-		if (!(vma->vm_flags & VM_SHARED) && FILTER(DAX_PRIVATE))
-			goto whole;
-		return 0;
-	}
+	/* support क्रम DAX */
+	अगर (vma_is_dax(vma)) अणु
+		अगर ((vma->vm_flags & VM_SHARED) && FILTER(DAX_SHARED))
+			जाओ whole;
+		अगर (!(vma->vm_flags & VM_SHARED) && FILTER(DAX_PRIVATE))
+			जाओ whole;
+		वापस 0;
+	पूर्ण
 
 	/* Hugetlb memory check */
-	if (is_vm_hugetlb_page(vma)) {
-		if ((vma->vm_flags & VM_SHARED) && FILTER(HUGETLB_SHARED))
-			goto whole;
-		if (!(vma->vm_flags & VM_SHARED) && FILTER(HUGETLB_PRIVATE))
-			goto whole;
-		return 0;
-	}
+	अगर (is_vm_hugetlb_page(vma)) अणु
+		अगर ((vma->vm_flags & VM_SHARED) && FILTER(HUGETLB_SHARED))
+			जाओ whole;
+		अगर (!(vma->vm_flags & VM_SHARED) && FILTER(HUGETLB_PRIVATE))
+			जाओ whole;
+		वापस 0;
+	पूर्ण
 
 	/* Do not dump I/O mapped devices or special mappings */
-	if (vma->vm_flags & VM_IO)
-		return 0;
+	अगर (vma->vm_flags & VM_IO)
+		वापस 0;
 
-	/* By default, dump shared memory if mapped from an anonymous file. */
-	if (vma->vm_flags & VM_SHARED) {
-		if (file_inode(vma->vm_file)->i_nlink == 0 ?
+	/* By शेष, dump shared memory अगर mapped from an anonymous file. */
+	अगर (vma->vm_flags & VM_SHARED) अणु
+		अगर (file_inode(vma->vm_file)->i_nlink == 0 ?
 		    FILTER(ANON_SHARED) : FILTER(MAPPED_SHARED))
-			goto whole;
-		return 0;
-	}
+			जाओ whole;
+		वापस 0;
+	पूर्ण
 
 	/* Dump segments that have been written to.  */
-	if ((!IS_ENABLED(CONFIG_MMU) || vma->anon_vma) && FILTER(ANON_PRIVATE))
-		goto whole;
-	if (vma->vm_file == NULL)
-		return 0;
+	अगर ((!IS_ENABLED(CONFIG_MMU) || vma->anon_vma) && FILTER(ANON_PRIVATE))
+		जाओ whole;
+	अगर (vma->vm_file == शून्य)
+		वापस 0;
 
-	if (FILTER(MAPPED_PRIVATE))
-		goto whole;
+	अगर (FILTER(MAPPED_PRIVATE))
+		जाओ whole;
 
 	/*
 	 * If this is the beginning of an executable file mapping,
 	 * dump the first page to aid in determining what was mapped here.
 	 */
-	if (FILTER(ELF_HEADERS) &&
+	अगर (FILTER(ELF_HEADERS) &&
 	    vma->vm_pgoff == 0 && (vma->vm_flags & VM_READ) &&
 	    (READ_ONCE(file_inode(vma->vm_file)->i_mode) & 0111) != 0)
-		return PAGE_SIZE;
+		वापस PAGE_SIZE;
 
-#undef	FILTER
+#अघोषित	FILTER
 
-	return 0;
+	वापस 0;
 
 whole:
-	return vma->vm_end - vma->vm_start;
-}
+	वापस vma->vm_end - vma->vm_start;
+पूर्ण
 
-static struct vm_area_struct *first_vma(struct task_struct *tsk,
-					struct vm_area_struct *gate_vma)
-{
-	struct vm_area_struct *ret = tsk->mm->mmap;
+अटल काष्ठा vm_area_काष्ठा *first_vma(काष्ठा task_काष्ठा *tsk,
+					काष्ठा vm_area_काष्ठा *gate_vma)
+अणु
+	काष्ठा vm_area_काष्ठा *ret = tsk->mm->mmap;
 
-	if (ret)
-		return ret;
-	return gate_vma;
-}
+	अगर (ret)
+		वापस ret;
+	वापस gate_vma;
+पूर्ण
 
 /*
- * Helper function for iterating across a vma list.  It ensures that the caller
+ * Helper function क्रम iterating across a vma list.  It ensures that the caller
  * will visit `gate_vma' prior to terminating the search.
  */
-static struct vm_area_struct *next_vma(struct vm_area_struct *this_vma,
-				       struct vm_area_struct *gate_vma)
-{
-	struct vm_area_struct *ret;
+अटल काष्ठा vm_area_काष्ठा *next_vma(काष्ठा vm_area_काष्ठा *this_vma,
+				       काष्ठा vm_area_काष्ठा *gate_vma)
+अणु
+	काष्ठा vm_area_काष्ठा *ret;
 
 	ret = this_vma->vm_next;
-	if (ret)
-		return ret;
-	if (this_vma == gate_vma)
-		return NULL;
-	return gate_vma;
-}
+	अगर (ret)
+		वापस ret;
+	अगर (this_vma == gate_vma)
+		वापस शून्य;
+	वापस gate_vma;
+पूर्ण
 
 /*
- * Under the mmap_lock, take a snapshot of relevant information about the task's
+ * Under the mmap_lock, take a snapshot of relevant inक्रमmation about the task's
  * VMAs.
  */
-int dump_vma_snapshot(struct coredump_params *cprm, int *vma_count,
-		      struct core_vma_metadata **vma_meta,
-		      size_t *vma_data_size_ptr)
-{
-	struct vm_area_struct *vma, *gate_vma;
-	struct mm_struct *mm = current->mm;
-	int i;
-	size_t vma_data_size = 0;
+पूर्णांक dump_vma_snapshot(काष्ठा coredump_params *cprm, पूर्णांक *vma_count,
+		      काष्ठा core_vma_metadata **vma_meta,
+		      माप_प्रकार *vma_data_size_ptr)
+अणु
+	काष्ठा vm_area_काष्ठा *vma, *gate_vma;
+	काष्ठा mm_काष्ठा *mm = current->mm;
+	पूर्णांक i;
+	माप_प्रकार vma_data_size = 0;
 
 	/*
 	 * Once the stack expansion code is fixed to not change VMA bounds
-	 * under mmap_lock in read mode, this can be changed to take the
-	 * mmap_lock in read mode.
+	 * under mmap_lock in पढ़ो mode, this can be changed to take the
+	 * mmap_lock in पढ़ो mode.
 	 */
-	if (mmap_write_lock_killable(mm))
-		return -EINTR;
+	अगर (mmap_ग_लिखो_lock_समाप्तable(mm))
+		वापस -EINTR;
 
 	gate_vma = get_gate_vma(mm);
 	*vma_count = mm->map_count + (gate_vma ? 1 : 0);
 
-	*vma_meta = kvmalloc_array(*vma_count, sizeof(**vma_meta), GFP_KERNEL);
-	if (!*vma_meta) {
-		mmap_write_unlock(mm);
-		return -ENOMEM;
-	}
+	*vma_meta = kvदो_स्मृति_array(*vma_count, माप(**vma_meta), GFP_KERNEL);
+	अगर (!*vma_meta) अणु
+		mmap_ग_लिखो_unlock(mm);
+		वापस -ENOMEM;
+	पूर्ण
 
-	for (i = 0, vma = first_vma(current, gate_vma); vma != NULL;
-			vma = next_vma(vma, gate_vma), i++) {
-		struct core_vma_metadata *m = (*vma_meta) + i;
+	क्रम (i = 0, vma = first_vma(current, gate_vma); vma != शून्य;
+			vma = next_vma(vma, gate_vma), i++) अणु
+		काष्ठा core_vma_metadata *m = (*vma_meta) + i;
 
 		m->start = vma->vm_start;
 		m->end = vma->vm_end;
@@ -1123,13 +1124,13 @@ int dump_vma_snapshot(struct coredump_params *cprm, int *vma_count,
 		m->dump_size = vma_dump_size(vma, cprm->mm_flags);
 
 		vma_data_size += m->dump_size;
-	}
+	पूर्ण
 
-	mmap_write_unlock(mm);
+	mmap_ग_लिखो_unlock(mm);
 
-	if (WARN_ON(i != *vma_count))
-		return -EFAULT;
+	अगर (WARN_ON(i != *vma_count))
+		वापस -EFAULT;
 
 	*vma_data_size_ptr = vma_data_size;
-	return 0;
-}
+	वापस 0;
+पूर्ण

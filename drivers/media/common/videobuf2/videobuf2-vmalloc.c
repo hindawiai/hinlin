@@ -1,445 +1,446 @@
+<शैली गुरु>
 /*
- * videobuf2-vmalloc.c - vmalloc memory allocator for videobuf2
+ * videobuf2-vदो_स्मृति.c - vदो_स्मृति memory allocator क्रम videobuf2
  *
  * Copyright (C) 2010 Samsung Electronics
  *
  * Author: Pawel Osciak <pawel@osciak.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  */
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/refcount.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-vmalloc.h>
-#include <media/videobuf2-memops.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
+#समावेश <media/videobuf2-memops.h>
 
-struct vb2_vmalloc_buf {
-	void				*vaddr;
-	struct frame_vector		*vec;
-	enum dma_data_direction		dma_dir;
-	unsigned long			size;
+काष्ठा vb2_vदो_स्मृति_buf अणु
+	व्योम				*vaddr;
+	काष्ठा frame_vector		*vec;
+	क्रमागत dma_data_direction		dma_dir;
+	अचिन्हित दीर्घ			size;
 	refcount_t			refcount;
-	struct vb2_vmarea_handler	handler;
-	struct dma_buf			*dbuf;
-};
+	काष्ठा vb2_vmarea_handler	handler;
+	काष्ठा dma_buf			*dbuf;
+पूर्ण;
 
-static void vb2_vmalloc_put(void *buf_priv);
+अटल व्योम vb2_vदो_स्मृति_put(व्योम *buf_priv);
 
-static void *vb2_vmalloc_alloc(struct device *dev, unsigned long attrs,
-			       unsigned long size, enum dma_data_direction dma_dir,
+अटल व्योम *vb2_vदो_स्मृति_alloc(काष्ठा device *dev, अचिन्हित दीर्घ attrs,
+			       अचिन्हित दीर्घ size, क्रमागत dma_data_direction dma_dir,
 			       gfp_t gfp_flags)
-{
-	struct vb2_vmalloc_buf *buf;
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf;
 
-	buf = kzalloc(sizeof(*buf), GFP_KERNEL | gfp_flags);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	buf = kzalloc(माप(*buf), GFP_KERNEL | gfp_flags);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
 	buf->size = size;
-	buf->vaddr = vmalloc_user(buf->size);
-	if (!buf->vaddr) {
+	buf->vaddr = vदो_स्मृति_user(buf->size);
+	अगर (!buf->vaddr) अणु
 		pr_debug("vmalloc of size %ld failed\n", buf->size);
-		kfree(buf);
-		return ERR_PTR(-ENOMEM);
-	}
+		kमुक्त(buf);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	buf->dma_dir = dma_dir;
 	buf->handler.refcount = &buf->refcount;
-	buf->handler.put = vb2_vmalloc_put;
+	buf->handler.put = vb2_vदो_स्मृति_put;
 	buf->handler.arg = buf;
 
 	refcount_set(&buf->refcount, 1);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static void vb2_vmalloc_put(void *buf_priv)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
+अटल व्योम vb2_vदो_स्मृति_put(व्योम *buf_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
 
-	if (refcount_dec_and_test(&buf->refcount)) {
-		vfree(buf->vaddr);
-		kfree(buf);
-	}
-}
+	अगर (refcount_dec_and_test(&buf->refcount)) अणु
+		vमुक्त(buf->vaddr);
+		kमुक्त(buf);
+	पूर्ण
+पूर्ण
 
-static void *vb2_vmalloc_get_userptr(struct device *dev, unsigned long vaddr,
-				     unsigned long size,
-				     enum dma_data_direction dma_dir)
-{
-	struct vb2_vmalloc_buf *buf;
-	struct frame_vector *vec;
-	int n_pages, offset, i;
-	int ret = -ENOMEM;
+अटल व्योम *vb2_vदो_स्मृति_get_userptr(काष्ठा device *dev, अचिन्हित दीर्घ vaddr,
+				     अचिन्हित दीर्घ size,
+				     क्रमागत dma_data_direction dma_dir)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf;
+	काष्ठा frame_vector *vec;
+	पूर्णांक n_pages, offset, i;
+	पूर्णांक ret = -ENOMEM;
 
-	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	buf = kzalloc(माप(*buf), GFP_KERNEL);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
 	buf->dma_dir = dma_dir;
 	offset = vaddr & ~PAGE_MASK;
 	buf->size = size;
 	vec = vb2_create_framevec(vaddr, size);
-	if (IS_ERR(vec)) {
+	अगर (IS_ERR(vec)) अणु
 		ret = PTR_ERR(vec);
-		goto fail_pfnvec_create;
-	}
+		जाओ fail_pfnvec_create;
+	पूर्ण
 	buf->vec = vec;
 	n_pages = frame_vector_count(vec);
-	if (frame_vector_to_pages(vec) < 0) {
-		unsigned long *nums = frame_vector_pfns(vec);
+	अगर (frame_vector_to_pages(vec) < 0) अणु
+		अचिन्हित दीर्घ *nums = frame_vector_pfns(vec);
 
 		/*
-		 * We cannot get page pointers for these pfns. Check memory is
+		 * We cannot get page poपूर्णांकers क्रम these pfns. Check memory is
 		 * physically contiguous and use direct mapping.
 		 */
-		for (i = 1; i < n_pages; i++)
-			if (nums[i-1] + 1 != nums[i])
-				goto fail_map;
-		buf->vaddr = (__force void *)
+		क्रम (i = 1; i < n_pages; i++)
+			अगर (nums[i-1] + 1 != nums[i])
+				जाओ fail_map;
+		buf->vaddr = (__क्रमce व्योम *)
 			ioremap(__pfn_to_phys(nums[0]), size + offset);
-	} else {
+	पूर्ण अन्यथा अणु
 		buf->vaddr = vm_map_ram(frame_vector_pages(vec), n_pages, -1);
-	}
+	पूर्ण
 
-	if (!buf->vaddr)
-		goto fail_map;
+	अगर (!buf->vaddr)
+		जाओ fail_map;
 	buf->vaddr += offset;
-	return buf;
+	वापस buf;
 
 fail_map:
 	vb2_destroy_framevec(vec);
 fail_pfnvec_create:
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void vb2_vmalloc_put_userptr(void *buf_priv)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
-	unsigned long vaddr = (unsigned long)buf->vaddr & PAGE_MASK;
-	unsigned int i;
-	struct page **pages;
-	unsigned int n_pages;
+अटल व्योम vb2_vदो_स्मृति_put_userptr(व्योम *buf_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
+	अचिन्हित दीर्घ vaddr = (अचिन्हित दीर्घ)buf->vaddr & PAGE_MASK;
+	अचिन्हित पूर्णांक i;
+	काष्ठा page **pages;
+	अचिन्हित पूर्णांक n_pages;
 
-	if (!buf->vec->is_pfns) {
+	अगर (!buf->vec->is_pfns) अणु
 		n_pages = frame_vector_count(buf->vec);
 		pages = frame_vector_pages(buf->vec);
-		if (vaddr)
-			vm_unmap_ram((void *)vaddr, n_pages);
-		if (buf->dma_dir == DMA_FROM_DEVICE ||
-		    buf->dma_dir == DMA_BIDIRECTIONAL)
-			for (i = 0; i < n_pages; i++)
+		अगर (vaddr)
+			vm_unmap_ram((व्योम *)vaddr, n_pages);
+		अगर (buf->dma_dir == DMA_FROM_DEVICE ||
+		    buf->dma_dir == DMA_BIसूचीECTIONAL)
+			क्रम (i = 0; i < n_pages; i++)
 				set_page_dirty_lock(pages[i]);
-	} else {
-		iounmap((__force void __iomem *)buf->vaddr);
-	}
+	पूर्ण अन्यथा अणु
+		iounmap((__क्रमce व्योम __iomem *)buf->vaddr);
+	पूर्ण
 	vb2_destroy_framevec(buf->vec);
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static void *vb2_vmalloc_vaddr(void *buf_priv)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
+अटल व्योम *vb2_vदो_स्मृति_vaddr(व्योम *buf_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
 
-	if (!buf->vaddr) {
+	अगर (!buf->vaddr) अणु
 		pr_err("Address of an unallocated plane requested or cannot map user pointer\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return buf->vaddr;
-}
+	वापस buf->vaddr;
+पूर्ण
 
-static unsigned int vb2_vmalloc_num_users(void *buf_priv)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
-	return refcount_read(&buf->refcount);
-}
+अटल अचिन्हित पूर्णांक vb2_vदो_स्मृति_num_users(व्योम *buf_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
+	वापस refcount_पढ़ो(&buf->refcount);
+पूर्ण
 
-static int vb2_vmalloc_mmap(void *buf_priv, struct vm_area_struct *vma)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
-	int ret;
+अटल पूर्णांक vb2_vदो_स्मृति_mmap(व्योम *buf_priv, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
+	पूर्णांक ret;
 
-	if (!buf) {
+	अगर (!buf) अणु
 		pr_err("No memory to map\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = remap_vmalloc_range(vma, buf->vaddr, 0);
-	if (ret) {
+	ret = remap_vदो_स्मृति_range(vma, buf->vaddr, 0);
+	अगर (ret) अणु
 		pr_err("Remapping vmalloc memory, error: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Make sure that vm_areas for 2 buffers won't be merged together
+	 * Make sure that vm_areas क्रम 2 buffers won't be merged together
 	 */
 	vma->vm_flags		|= VM_DONTEXPAND;
 
 	/*
 	 * Use common vm_area operations to track buffer refcount.
 	 */
-	vma->vm_private_data	= &buf->handler;
+	vma->vm_निजी_data	= &buf->handler;
 	vma->vm_ops		= &vb2_common_vm_ops;
 
-	vma->vm_ops->open(vma);
+	vma->vm_ops->खोलो(vma);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HAS_DMA
+#अगर_घोषित CONFIG_HAS_DMA
 /*********************************************/
-/*         DMABUF ops for exporters          */
+/*         DMABUF ops क्रम exporters          */
 /*********************************************/
 
-struct vb2_vmalloc_attachment {
-	struct sg_table sgt;
-	enum dma_data_direction dma_dir;
-};
+काष्ठा vb2_vदो_स्मृति_attachment अणु
+	काष्ठा sg_table sgt;
+	क्रमागत dma_data_direction dma_dir;
+पूर्ण;
 
-static int vb2_vmalloc_dmabuf_ops_attach(struct dma_buf *dbuf,
-	struct dma_buf_attachment *dbuf_attach)
-{
-	struct vb2_vmalloc_attachment *attach;
-	struct vb2_vmalloc_buf *buf = dbuf->priv;
-	int num_pages = PAGE_ALIGN(buf->size) / PAGE_SIZE;
-	struct sg_table *sgt;
-	struct scatterlist *sg;
-	void *vaddr = buf->vaddr;
-	int ret;
-	int i;
+अटल पूर्णांक vb2_vदो_स्मृति_dmabuf_ops_attach(काष्ठा dma_buf *dbuf,
+	काष्ठा dma_buf_attachment *dbuf_attach)
+अणु
+	काष्ठा vb2_vदो_स्मृति_attachment *attach;
+	काष्ठा vb2_vदो_स्मृति_buf *buf = dbuf->priv;
+	पूर्णांक num_pages = PAGE_ALIGN(buf->size) / PAGE_SIZE;
+	काष्ठा sg_table *sgt;
+	काष्ठा scatterlist *sg;
+	व्योम *vaddr = buf->vaddr;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	attach = kzalloc(sizeof(*attach), GFP_KERNEL);
-	if (!attach)
-		return -ENOMEM;
+	attach = kzalloc(माप(*attach), GFP_KERNEL);
+	अगर (!attach)
+		वापस -ENOMEM;
 
 	sgt = &attach->sgt;
 	ret = sg_alloc_table(sgt, num_pages, GFP_KERNEL);
-	if (ret) {
-		kfree(attach);
-		return ret;
-	}
-	for_each_sgtable_sg(sgt, sg, i) {
-		struct page *page = vmalloc_to_page(vaddr);
+	अगर (ret) अणु
+		kमुक्त(attach);
+		वापस ret;
+	पूर्ण
+	क्रम_each_sgtable_sg(sgt, sg, i) अणु
+		काष्ठा page *page = vदो_स्मृति_to_page(vaddr);
 
-		if (!page) {
-			sg_free_table(sgt);
-			kfree(attach);
-			return -ENOMEM;
-		}
+		अगर (!page) अणु
+			sg_मुक्त_table(sgt);
+			kमुक्त(attach);
+			वापस -ENOMEM;
+		पूर्ण
 		sg_set_page(sg, page, PAGE_SIZE, 0);
 		vaddr += PAGE_SIZE;
-	}
+	पूर्ण
 
 	attach->dma_dir = DMA_NONE;
 	dbuf_attach->priv = attach;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vb2_vmalloc_dmabuf_ops_detach(struct dma_buf *dbuf,
-	struct dma_buf_attachment *db_attach)
-{
-	struct vb2_vmalloc_attachment *attach = db_attach->priv;
-	struct sg_table *sgt;
+अटल व्योम vb2_vदो_स्मृति_dmabuf_ops_detach(काष्ठा dma_buf *dbuf,
+	काष्ठा dma_buf_attachment *db_attach)
+अणु
+	काष्ठा vb2_vदो_स्मृति_attachment *attach = db_attach->priv;
+	काष्ठा sg_table *sgt;
 
-	if (!attach)
-		return;
+	अगर (!attach)
+		वापस;
 
 	sgt = &attach->sgt;
 
 	/* release the scatterlist cache */
-	if (attach->dma_dir != DMA_NONE)
+	अगर (attach->dma_dir != DMA_NONE)
 		dma_unmap_sgtable(db_attach->dev, sgt, attach->dma_dir, 0);
-	sg_free_table(sgt);
-	kfree(attach);
-	db_attach->priv = NULL;
-}
+	sg_मुक्त_table(sgt);
+	kमुक्त(attach);
+	db_attach->priv = शून्य;
+पूर्ण
 
-static struct sg_table *vb2_vmalloc_dmabuf_ops_map(
-	struct dma_buf_attachment *db_attach, enum dma_data_direction dma_dir)
-{
-	struct vb2_vmalloc_attachment *attach = db_attach->priv;
+अटल काष्ठा sg_table *vb2_vदो_स्मृति_dmabuf_ops_map(
+	काष्ठा dma_buf_attachment *db_attach, क्रमागत dma_data_direction dma_dir)
+अणु
+	काष्ठा vb2_vदो_स्मृति_attachment *attach = db_attach->priv;
 	/* stealing dmabuf mutex to serialize map/unmap operations */
-	struct mutex *lock = &db_attach->dmabuf->lock;
-	struct sg_table *sgt;
+	काष्ठा mutex *lock = &db_attach->dmabuf->lock;
+	काष्ठा sg_table *sgt;
 
 	mutex_lock(lock);
 
 	sgt = &attach->sgt;
-	/* return previously mapped sg table */
-	if (attach->dma_dir == dma_dir) {
+	/* वापस previously mapped sg table */
+	अगर (attach->dma_dir == dma_dir) अणु
 		mutex_unlock(lock);
-		return sgt;
-	}
+		वापस sgt;
+	पूर्ण
 
 	/* release any previous cache */
-	if (attach->dma_dir != DMA_NONE) {
+	अगर (attach->dma_dir != DMA_NONE) अणु
 		dma_unmap_sgtable(db_attach->dev, sgt, attach->dma_dir, 0);
 		attach->dma_dir = DMA_NONE;
-	}
+	पूर्ण
 
 	/* mapping to the client with new direction */
-	if (dma_map_sgtable(db_attach->dev, sgt, dma_dir, 0)) {
+	अगर (dma_map_sgtable(db_attach->dev, sgt, dma_dir, 0)) अणु
 		pr_err("failed to map scatterlist\n");
 		mutex_unlock(lock);
-		return ERR_PTR(-EIO);
-	}
+		वापस ERR_PTR(-EIO);
+	पूर्ण
 
 	attach->dma_dir = dma_dir;
 
 	mutex_unlock(lock);
 
-	return sgt;
-}
+	वापस sgt;
+पूर्ण
 
-static void vb2_vmalloc_dmabuf_ops_unmap(struct dma_buf_attachment *db_attach,
-	struct sg_table *sgt, enum dma_data_direction dma_dir)
-{
-	/* nothing to be done here */
-}
+अटल व्योम vb2_vदो_स्मृति_dmabuf_ops_unmap(काष्ठा dma_buf_attachment *db_attach,
+	काष्ठा sg_table *sgt, क्रमागत dma_data_direction dma_dir)
+अणु
+	/* nothing to be करोne here */
+पूर्ण
 
-static void vb2_vmalloc_dmabuf_ops_release(struct dma_buf *dbuf)
-{
-	/* drop reference obtained in vb2_vmalloc_get_dmabuf */
-	vb2_vmalloc_put(dbuf->priv);
-}
+अटल व्योम vb2_vदो_स्मृति_dmabuf_ops_release(काष्ठा dma_buf *dbuf)
+अणु
+	/* drop reference obtained in vb2_vदो_स्मृति_get_dmabuf */
+	vb2_vदो_स्मृति_put(dbuf->priv);
+पूर्ण
 
-static int vb2_vmalloc_dmabuf_ops_vmap(struct dma_buf *dbuf, struct dma_buf_map *map)
-{
-	struct vb2_vmalloc_buf *buf = dbuf->priv;
+अटल पूर्णांक vb2_vदो_स्मृति_dmabuf_ops_vmap(काष्ठा dma_buf *dbuf, काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = dbuf->priv;
 
 	dma_buf_map_set_vaddr(map, buf->vaddr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vb2_vmalloc_dmabuf_ops_mmap(struct dma_buf *dbuf,
-	struct vm_area_struct *vma)
-{
-	return vb2_vmalloc_mmap(dbuf->priv, vma);
-}
+अटल पूर्णांक vb2_vदो_स्मृति_dmabuf_ops_mmap(काष्ठा dma_buf *dbuf,
+	काष्ठा vm_area_काष्ठा *vma)
+अणु
+	वापस vb2_vदो_स्मृति_mmap(dbuf->priv, vma);
+पूर्ण
 
-static const struct dma_buf_ops vb2_vmalloc_dmabuf_ops = {
-	.attach = vb2_vmalloc_dmabuf_ops_attach,
-	.detach = vb2_vmalloc_dmabuf_ops_detach,
-	.map_dma_buf = vb2_vmalloc_dmabuf_ops_map,
-	.unmap_dma_buf = vb2_vmalloc_dmabuf_ops_unmap,
-	.vmap = vb2_vmalloc_dmabuf_ops_vmap,
-	.mmap = vb2_vmalloc_dmabuf_ops_mmap,
-	.release = vb2_vmalloc_dmabuf_ops_release,
-};
+अटल स्थिर काष्ठा dma_buf_ops vb2_vदो_स्मृति_dmabuf_ops = अणु
+	.attach = vb2_vदो_स्मृति_dmabuf_ops_attach,
+	.detach = vb2_vदो_स्मृति_dmabuf_ops_detach,
+	.map_dma_buf = vb2_vदो_स्मृति_dmabuf_ops_map,
+	.unmap_dma_buf = vb2_vदो_स्मृति_dmabuf_ops_unmap,
+	.vmap = vb2_vदो_स्मृति_dmabuf_ops_vmap,
+	.mmap = vb2_vदो_स्मृति_dmabuf_ops_mmap,
+	.release = vb2_vदो_स्मृति_dmabuf_ops_release,
+पूर्ण;
 
-static struct dma_buf *vb2_vmalloc_get_dmabuf(void *buf_priv, unsigned long flags)
-{
-	struct vb2_vmalloc_buf *buf = buf_priv;
-	struct dma_buf *dbuf;
+अटल काष्ठा dma_buf *vb2_vदो_स्मृति_get_dmabuf(व्योम *buf_priv, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = buf_priv;
+	काष्ठा dma_buf *dbuf;
 	DEFINE_DMA_BUF_EXPORT_INFO(exp_info);
 
-	exp_info.ops = &vb2_vmalloc_dmabuf_ops;
+	exp_info.ops = &vb2_vदो_स्मृति_dmabuf_ops;
 	exp_info.size = buf->size;
 	exp_info.flags = flags;
 	exp_info.priv = buf;
 
-	if (WARN_ON(!buf->vaddr))
-		return NULL;
+	अगर (WARN_ON(!buf->vaddr))
+		वापस शून्य;
 
 	dbuf = dma_buf_export(&exp_info);
-	if (IS_ERR(dbuf))
-		return NULL;
+	अगर (IS_ERR(dbuf))
+		वापस शून्य;
 
 	/* dmabuf keeps reference to vb2 buffer */
 	refcount_inc(&buf->refcount);
 
-	return dbuf;
-}
-#endif /* CONFIG_HAS_DMA */
+	वापस dbuf;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HAS_DMA */
 
 
 /*********************************************/
-/*       callbacks for DMABUF buffers        */
+/*       callbacks क्रम DMABUF buffers        */
 /*********************************************/
 
-static int vb2_vmalloc_map_dmabuf(void *mem_priv)
-{
-	struct vb2_vmalloc_buf *buf = mem_priv;
-	struct dma_buf_map map;
-	int ret;
+अटल पूर्णांक vb2_vदो_स्मृति_map_dmabuf(व्योम *mem_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = mem_priv;
+	काष्ठा dma_buf_map map;
+	पूर्णांक ret;
 
 	ret = dma_buf_vmap(buf->dbuf, &map);
-	if (ret)
-		return -EFAULT;
+	अगर (ret)
+		वापस -EFAULT;
 	buf->vaddr = map.vaddr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vb2_vmalloc_unmap_dmabuf(void *mem_priv)
-{
-	struct vb2_vmalloc_buf *buf = mem_priv;
-	struct dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(buf->vaddr);
+अटल व्योम vb2_vदो_स्मृति_unmap_dmabuf(व्योम *mem_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = mem_priv;
+	काष्ठा dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(buf->vaddr);
 
 	dma_buf_vunmap(buf->dbuf, &map);
-	buf->vaddr = NULL;
-}
+	buf->vaddr = शून्य;
+पूर्ण
 
-static void vb2_vmalloc_detach_dmabuf(void *mem_priv)
-{
-	struct vb2_vmalloc_buf *buf = mem_priv;
-	struct dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(buf->vaddr);
+अटल व्योम vb2_vदो_स्मृति_detach_dmabuf(व्योम *mem_priv)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf = mem_priv;
+	काष्ठा dma_buf_map map = DMA_BUF_MAP_INIT_VADDR(buf->vaddr);
 
-	if (buf->vaddr)
+	अगर (buf->vaddr)
 		dma_buf_vunmap(buf->dbuf, &map);
 
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static void *vb2_vmalloc_attach_dmabuf(struct device *dev, struct dma_buf *dbuf,
-	unsigned long size, enum dma_data_direction dma_dir)
-{
-	struct vb2_vmalloc_buf *buf;
+अटल व्योम *vb2_vदो_स्मृति_attach_dmabuf(काष्ठा device *dev, काष्ठा dma_buf *dbuf,
+	अचिन्हित दीर्घ size, क्रमागत dma_data_direction dma_dir)
+अणु
+	काष्ठा vb2_vदो_स्मृति_buf *buf;
 
-	if (dbuf->size < size)
-		return ERR_PTR(-EFAULT);
+	अगर (dbuf->size < size)
+		वापस ERR_PTR(-EFAULT);
 
-	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
-	if (!buf)
-		return ERR_PTR(-ENOMEM);
+	buf = kzalloc(माप(*buf), GFP_KERNEL);
+	अगर (!buf)
+		वापस ERR_PTR(-ENOMEM);
 
 	buf->dbuf = dbuf;
 	buf->dma_dir = dma_dir;
 	buf->size = size;
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
 
-const struct vb2_mem_ops vb2_vmalloc_memops = {
-	.alloc		= vb2_vmalloc_alloc,
-	.put		= vb2_vmalloc_put,
-	.get_userptr	= vb2_vmalloc_get_userptr,
-	.put_userptr	= vb2_vmalloc_put_userptr,
-#ifdef CONFIG_HAS_DMA
-	.get_dmabuf	= vb2_vmalloc_get_dmabuf,
-#endif
-	.map_dmabuf	= vb2_vmalloc_map_dmabuf,
-	.unmap_dmabuf	= vb2_vmalloc_unmap_dmabuf,
-	.attach_dmabuf	= vb2_vmalloc_attach_dmabuf,
-	.detach_dmabuf	= vb2_vmalloc_detach_dmabuf,
-	.vaddr		= vb2_vmalloc_vaddr,
-	.mmap		= vb2_vmalloc_mmap,
-	.num_users	= vb2_vmalloc_num_users,
-};
-EXPORT_SYMBOL_GPL(vb2_vmalloc_memops);
+स्थिर काष्ठा vb2_mem_ops vb2_vदो_स्मृति_memops = अणु
+	.alloc		= vb2_vदो_स्मृति_alloc,
+	.put		= vb2_vदो_स्मृति_put,
+	.get_userptr	= vb2_vदो_स्मृति_get_userptr,
+	.put_userptr	= vb2_vदो_स्मृति_put_userptr,
+#अगर_घोषित CONFIG_HAS_DMA
+	.get_dmabuf	= vb2_vदो_स्मृति_get_dmabuf,
+#पूर्ण_अगर
+	.map_dmabuf	= vb2_vदो_स्मृति_map_dmabuf,
+	.unmap_dmabuf	= vb2_vदो_स्मृति_unmap_dmabuf,
+	.attach_dmabuf	= vb2_vदो_स्मृति_attach_dmabuf,
+	.detach_dmabuf	= vb2_vदो_स्मृति_detach_dmabuf,
+	.vaddr		= vb2_vदो_स्मृति_vaddr,
+	.mmap		= vb2_vदो_स्मृति_mmap,
+	.num_users	= vb2_vदो_स्मृति_num_users,
+पूर्ण;
+EXPORT_SYMBOL_GPL(vb2_vदो_स्मृति_memops);
 
 MODULE_DESCRIPTION("vmalloc memory handling routines for videobuf2");
 MODULE_AUTHOR("Pawel Osciak <pawel@osciak.com>");

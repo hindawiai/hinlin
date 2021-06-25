@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * DECnet       An implementation of the DECnet protocol suite for the LINUX
- *              operating system.  DECnet is implemented using the  BSD Socket
- *              interface as the means of communication with the user level.
+ * DECnet       An implementation of the DECnet protocol suite क्रम the LINUX
+ *              operating प्रणाली.  DECnet is implemented using the  BSD Socket
+ *              पूर्णांकerface as the means of communication with the user level.
  *
  *              DECnet sysctl support functions
  *
@@ -10,149 +11,149 @@
  *
  *
  * Changes:
- * Steve Whitehouse - C99 changes and default device handling
+ * Steve Whitehouse - C99 changes and शेष device handling
  * Steve Whitehouse - Memory buffer settings, like the tcp ones
  *
  */
-#include <linux/mm.h>
-#include <linux/sysctl.h>
-#include <linux/fs.h>
-#include <linux/netdevice.h>
-#include <linux/string.h>
-#include <net/neighbour.h>
-#include <net/dst.h>
-#include <net/flow.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/माला.स>
+#समावेश <net/neighbour.h>
+#समावेश <net/dst.h>
+#समावेश <net/flow.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include <net/dn.h>
-#include <net/dn_dev.h>
-#include <net/dn_route.h>
+#समावेश <net/dn.h>
+#समावेश <net/dn_dev.h>
+#समावेश <net/dn_route.h>
 
 
-int decnet_debug_level;
-int decnet_time_wait = 30;
-int decnet_dn_count = 1;
-int decnet_di_count = 3;
-int decnet_dr_count = 3;
-int decnet_log_martians = 1;
-int decnet_no_fc_max_cwnd = NSP_MIN_WINDOW;
+पूर्णांक decnet_debug_level;
+पूर्णांक decnet_समय_रुको = 30;
+पूर्णांक decnet_dn_count = 1;
+पूर्णांक decnet_di_count = 3;
+पूर्णांक decnet_dr_count = 3;
+पूर्णांक decnet_log_martians = 1;
+पूर्णांक decnet_no_fc_max_cwnd = NSP_MIN_WINDOW;
 
-/* Reasonable defaults, I hope, based on tcp's defaults */
-long sysctl_decnet_mem[3] = { 768 << 3, 1024 << 3, 1536 << 3 };
-int sysctl_decnet_wmem[3] = { 4 * 1024, 16 * 1024, 128 * 1024 };
-int sysctl_decnet_rmem[3] = { 4 * 1024, 87380, 87380 * 2 };
+/* Reasonable शेषs, I hope, based on tcp's शेषs */
+दीर्घ sysctl_decnet_mem[3] = अणु 768 << 3, 1024 << 3, 1536 << 3 पूर्ण;
+पूर्णांक sysctl_decnet_wmem[3] = अणु 4 * 1024, 16 * 1024, 128 * 1024 पूर्ण;
+पूर्णांक sysctl_decnet_rmem[3] = अणु 4 * 1024, 87380, 87380 * 2 पूर्ण;
 
-#ifdef CONFIG_SYSCTL
-extern int decnet_dst_gc_interval;
-static int min_decnet_time_wait[] = { 5 };
-static int max_decnet_time_wait[] = { 600 };
-static int min_state_count[] = { 1 };
-static int max_state_count[] = { NSP_MAXRXTSHIFT };
-static int min_decnet_dst_gc_interval[] = { 1 };
-static int max_decnet_dst_gc_interval[] = { 60 };
-static int min_decnet_no_fc_max_cwnd[] = { NSP_MIN_WINDOW };
-static int max_decnet_no_fc_max_cwnd[] = { NSP_MAX_WINDOW };
-static char node_name[7] = "???";
+#अगर_घोषित CONFIG_SYSCTL
+बाह्य पूर्णांक decnet_dst_gc_पूर्णांकerval;
+अटल पूर्णांक min_decnet_समय_रुको[] = अणु 5 पूर्ण;
+अटल पूर्णांक max_decnet_समय_रुको[] = अणु 600 पूर्ण;
+अटल पूर्णांक min_state_count[] = अणु 1 पूर्ण;
+अटल पूर्णांक max_state_count[] = अणु NSP_MAXRXTSHIFT पूर्ण;
+अटल पूर्णांक min_decnet_dst_gc_पूर्णांकerval[] = अणु 1 पूर्ण;
+अटल पूर्णांक max_decnet_dst_gc_पूर्णांकerval[] = अणु 60 पूर्ण;
+अटल पूर्णांक min_decnet_no_fc_max_cwnd[] = अणु NSP_MIN_WINDOW पूर्ण;
+अटल पूर्णांक max_decnet_no_fc_max_cwnd[] = अणु NSP_MAX_WINDOW पूर्ण;
+अटल अक्षर node_name[7] = "???";
 
-static struct ctl_table_header *dn_table_header = NULL;
+अटल काष्ठा ctl_table_header *dn_table_header = शून्य;
 
 /*
- * ctype.h :-)
+ * प्रकार.स :-)
  */
-#define ISNUM(x) (((x) >= '0') && ((x) <= '9'))
-#define ISLOWER(x) (((x) >= 'a') && ((x) <= 'z'))
-#define ISUPPER(x) (((x) >= 'A') && ((x) <= 'Z'))
-#define ISALPHA(x) (ISLOWER(x) || ISUPPER(x))
-#define INVALID_END_CHAR(x) (ISNUM(x) || ISALPHA(x))
+#घोषणा ISNUM(x) (((x) >= '0') && ((x) <= '9'))
+#घोषणा ISLOWER(x) (((x) >= 'a') && ((x) <= 'z'))
+#घोषणा ISUPPER(x) (((x) >= 'A') && ((x) <= 'Z'))
+#घोषणा ISALPHA(x) (ISLOWER(x) || ISUPPER(x))
+#घोषणा INVALID_END_CHAR(x) (ISNUM(x) || ISALPHA(x))
 
-static void strip_it(char *str)
-{
-	for(;;) {
-		switch (*str) {
-		case ' ':
-		case '\n':
-		case '\r':
-		case ':':
+अटल व्योम strip_it(अक्षर *str)
+अणु
+	क्रम(;;) अणु
+		चयन (*str) अणु
+		हाल ' ':
+		हाल '\n':
+		हाल '\r':
+		हाल ':':
 			*str = 0;
 			fallthrough;
-		case 0:
-			return;
-		}
+		हाल 0:
+			वापस;
+		पूर्ण
 		str++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Simple routine to parse an ascii DECnet address
- * into a network order address.
+ * पूर्णांकo a network order address.
  */
-static int parse_addr(__le16 *addr, char *str)
-{
+अटल पूर्णांक parse_addr(__le16 *addr, अक्षर *str)
+अणु
 	__u16 area, node;
 
-	while(*str && !ISNUM(*str)) str++;
+	जबतक(*str && !ISNUM(*str)) str++;
 
-	if (*str == 0)
-		return -1;
+	अगर (*str == 0)
+		वापस -1;
 
 	area = (*str++ - '0');
-	if (ISNUM(*str)) {
+	अगर (ISNUM(*str)) अणु
 		area *= 10;
 		area += (*str++ - '0');
-	}
+	पूर्ण
 
-	if (*str++ != '.')
-		return -1;
+	अगर (*str++ != '.')
+		वापस -1;
 
-	if (!ISNUM(*str))
-		return -1;
+	अगर (!ISNUM(*str))
+		वापस -1;
 
 	node = *str++ - '0';
-	if (ISNUM(*str)) {
+	अगर (ISNUM(*str)) अणु
 		node *= 10;
 		node += (*str++ - '0');
-	}
-	if (ISNUM(*str)) {
+	पूर्ण
+	अगर (ISNUM(*str)) अणु
 		node *= 10;
 		node += (*str++ - '0');
-	}
-	if (ISNUM(*str)) {
+	पूर्ण
+	अगर (ISNUM(*str)) अणु
 		node *= 10;
 		node += (*str++ - '0');
-	}
+	पूर्ण
 
-	if ((node > 1023) || (area > 63))
-		return -1;
+	अगर ((node > 1023) || (area > 63))
+		वापस -1;
 
-	if (INVALID_END_CHAR(*str))
-		return -1;
+	अगर (INVALID_END_CHAR(*str))
+		वापस -1;
 
 	*addr = cpu_to_le16((area << 10) | node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dn_node_address_handler(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	char addr[DN_ASCBUF_LEN];
-	size_t len;
+अटल पूर्णांक dn_node_address_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अक्षर addr[DN_ASCBUF_LEN];
+	माप_प्रकार len;
 	__le16 dnaddr;
 
-	if (!*lenp || (*ppos && !write)) {
+	अगर (!*lenp || (*ppos && !ग_लिखो)) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) {
+	अगर (ग_लिखो) अणु
 		len = (*lenp < DN_ASCBUF_LEN) ? *lenp : (DN_ASCBUF_LEN-1);
-		memcpy(addr, buffer, len);
+		स_नकल(addr, buffer, len);
 		addr[len] = 0;
 		strip_it(addr);
 
-		if (parse_addr(&dnaddr, addr))
-			return -EINVAL;
+		अगर (parse_addr(&dnaddr, addr))
+			वापस -EINVAL;
 
 		dn_dev_devices_off();
 
@@ -162,201 +163,201 @@ static int dn_node_address_handler(struct ctl_table *table, int write,
 
 		*ppos += len;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	dn_addr2asc(le16_to_cpu(decnet_address), addr);
-	len = strlen(addr);
+	len = म_माप(addr);
 	addr[len++] = '\n';
 
-	if (len > *lenp)
+	अगर (len > *lenp)
 		len = *lenp;
-	memcpy(buffer, addr, len);
+	स_नकल(buffer, addr, len);
 	*lenp = len;
 	*ppos += len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dn_def_dev_handler(struct ctl_table *table, int write,
-		void *buffer, size_t *lenp, loff_t *ppos)
-{
-	size_t len;
-	struct net_device *dev;
-	char devname[17];
+अटल पूर्णांक dn_def_dev_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+		व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	माप_प्रकार len;
+	काष्ठा net_device *dev;
+	अक्षर devname[17];
 
-	if (!*lenp || (*ppos && !write)) {
+	अगर (!*lenp || (*ppos && !ग_लिखो)) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) {
-		if (*lenp > 16)
-			return -E2BIG;
+	अगर (ग_लिखो) अणु
+		अगर (*lenp > 16)
+			वापस -E2BIG;
 
-		memcpy(devname, buffer, *lenp);
+		स_नकल(devname, buffer, *lenp);
 		devname[*lenp] = 0;
 		strip_it(devname);
 
 		dev = dev_get_by_name(&init_net, devname);
-		if (dev == NULL)
-			return -ENODEV;
+		अगर (dev == शून्य)
+			वापस -ENODEV;
 
-		if (dev->dn_ptr == NULL) {
+		अगर (dev->dn_ptr == शून्य) अणु
 			dev_put(dev);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
-		if (dn_dev_set_default(dev, 1)) {
+		अगर (dn_dev_set_शेष(dev, 1)) अणु
 			dev_put(dev);
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 		*ppos += *lenp;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dev = dn_dev_get_default();
-	if (dev == NULL) {
+	dev = dn_dev_get_शेष();
+	अगर (dev == शून्य) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	strcpy(devname, dev->name);
+	म_नकल(devname, dev->name);
 	dev_put(dev);
-	len = strlen(devname);
+	len = म_माप(devname);
 	devname[len++] = '\n';
 
-	if (len > *lenp) len = *lenp;
+	अगर (len > *lenp) len = *lenp;
 
-	memcpy(buffer, devname, len);
+	स_नकल(buffer, devname, len);
 	*lenp = len;
 	*ppos += len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ctl_table dn_table[] = {
-	{
+अटल काष्ठा ctl_table dn_table[] = अणु
+	अणु
 		.procname = "node_address",
 		.maxlen = 7,
 		.mode = 0644,
 		.proc_handler = dn_node_address_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "node_name",
 		.data = node_name,
 		.maxlen = 7,
 		.mode = 0644,
-		.proc_handler = proc_dostring,
-	},
-	{
+		.proc_handler = proc_करोstring,
+	पूर्ण,
+	अणु
 		.procname = "default_device",
 		.maxlen = 16,
 		.mode = 0644,
 		.proc_handler = dn_def_dev_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "time_wait",
-		.data = &decnet_time_wait,
-		.maxlen = sizeof(int),
+		.data = &decnet_समय_रुको,
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = &min_decnet_time_wait,
-		.extra2 = &max_decnet_time_wait
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = &min_decnet_समय_रुको,
+		.extra2 = &max_decnet_समय_रुको
+	पूर्ण,
+	अणु
 		.procname = "dn_count",
 		.data = &decnet_dn_count,
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_state_count,
 		.extra2 = &max_state_count
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "di_count",
 		.data = &decnet_di_count,
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_state_count,
 		.extra2 = &max_state_count
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "dr_count",
 		.data = &decnet_dr_count,
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_state_count,
 		.extra2 = &max_state_count
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname = "dst_gc_interval",
-		.data = &decnet_dst_gc_interval,
-		.maxlen = sizeof(int),
+		.data = &decnet_dst_gc_पूर्णांकerval,
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
-		.extra1 = &min_decnet_dst_gc_interval,
-		.extra2 = &max_decnet_dst_gc_interval
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
+		.extra1 = &min_decnet_dst_gc_पूर्णांकerval,
+		.extra2 = &max_decnet_dst_gc_पूर्णांकerval
+	पूर्ण,
+	अणु
 		.procname = "no_fc_max_cwnd",
 		.data = &decnet_no_fc_max_cwnd,
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec_minmax,
+		.proc_handler = proc_करोपूर्णांकvec_minmax,
 		.extra1 = &min_decnet_no_fc_max_cwnd,
 		.extra2 = &max_decnet_no_fc_max_cwnd
-	},
-       {
+	पूर्ण,
+       अणु
 		.procname = "decnet_mem",
 		.data = &sysctl_decnet_mem,
-		.maxlen = sizeof(sysctl_decnet_mem),
+		.maxlen = माप(sysctl_decnet_mem),
 		.mode = 0644,
-		.proc_handler = proc_doulongvec_minmax
-	},
-	{
+		.proc_handler = proc_करोuदीर्घvec_minmax
+	पूर्ण,
+	अणु
 		.procname = "decnet_rmem",
 		.data = &sysctl_decnet_rmem,
-		.maxlen = sizeof(sysctl_decnet_rmem),
+		.maxlen = माप(sysctl_decnet_rmem),
 		.mode = 0644,
-		.proc_handler = proc_dointvec,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname = "decnet_wmem",
 		.data = &sysctl_decnet_wmem,
-		.maxlen = sizeof(sysctl_decnet_wmem),
+		.maxlen = माप(sysctl_decnet_wmem),
 		.mode = 0644,
-		.proc_handler = proc_dointvec,
-	},
-	{
+		.proc_handler = proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु
 		.procname = "debug",
 		.data = &decnet_debug_level,
-		.maxlen = sizeof(int),
+		.maxlen = माप(पूर्णांक),
 		.mode = 0644,
-		.proc_handler = proc_dointvec,
-	},
-	{ }
-};
+		.proc_handler = proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-void dn_register_sysctl(void)
-{
-	dn_table_header = register_net_sysctl(&init_net, "net/decnet", dn_table);
-}
+व्योम dn_रेजिस्टर_sysctl(व्योम)
+अणु
+	dn_table_header = रेजिस्टर_net_sysctl(&init_net, "net/decnet", dn_table);
+पूर्ण
 
-void dn_unregister_sysctl(void)
-{
-	unregister_net_sysctl_table(dn_table_header);
-}
+व्योम dn_unरेजिस्टर_sysctl(व्योम)
+अणु
+	unरेजिस्टर_net_sysctl_table(dn_table_header);
+पूर्ण
 
-#else  /* CONFIG_SYSCTL */
-void dn_unregister_sysctl(void)
-{
-}
-void dn_register_sysctl(void)
-{
-}
+#अन्यथा  /* CONFIG_SYSCTL */
+व्योम dn_unरेजिस्टर_sysctl(व्योम)
+अणु
+पूर्ण
+व्योम dn_रेजिस्टर_sysctl(व्योम)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर

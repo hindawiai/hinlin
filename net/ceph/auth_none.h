@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FS_CEPH_AUTH_NONE_H
-#define _FS_CEPH_AUTH_NONE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FS_CEPH_AUTH_NONE_H
+#घोषणा _FS_CEPH_AUTH_NONE_H
 
-#include <linux/slab.h>
-#include <linux/ceph/auth.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/ceph/auth.h>
 
 /*
  * null security mode.
  *
- * we use a single static authorizer that simply encodes our entity name
+ * we use a single अटल authorizer that simply encodes our entity name
  * and global id.
  */
 
-struct ceph_none_authorizer {
-	struct ceph_authorizer base;
-	char buf[128];
-	int buf_len;
-	char reply_buf[0];
-};
+काष्ठा ceph_none_authorizer अणु
+	काष्ठा ceph_authorizer base;
+	अक्षर buf[128];
+	पूर्णांक buf_len;
+	अक्षर reply_buf[0];
+पूर्ण;
 
-struct ceph_auth_none_info {
+काष्ठा ceph_auth_none_info अणु
 	bool starting;
-};
+पूर्ण;
 
-int ceph_auth_none_init(struct ceph_auth_client *ac);
+पूर्णांक ceph_auth_none_init(काष्ठा ceph_auth_client *ac);
 
-#endif
+#पूर्ण_अगर

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * zfcp device driver
  *
- * Module interface and handling of zfcp data structures.
+ * Module पूर्णांकerface and handling of zfcp data काष्ठाures.
  *
  * Copyright IBM Corp. 2002, 2020
  */
@@ -28,53 +29,53 @@
  *	      Benjamin Block
  */
 
-#define KMSG_COMPONENT "zfcp"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "zfcp"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include "zfcp_ext.h"
-#include "zfcp_fc.h"
-#include "zfcp_reqlist.h"
-#include "zfcp_diag.h"
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश "zfcp_ext.h"
+#समावेश "zfcp_fc.h"
+#समावेश "zfcp_reqlist.h"
+#समावेश "zfcp_diag.h"
 
-#define ZFCP_BUS_ID_SIZE	20
+#घोषणा ZFCP_BUS_ID_SIZE	20
 
 MODULE_AUTHOR("IBM Deutschland Entwicklung GmbH - linux390@de.ibm.com");
 MODULE_DESCRIPTION("FCP HBA driver");
 MODULE_LICENSE("GPL");
 
-static char *init_device;
-module_param_named(device, init_device, charp, 0400);
+अटल अक्षर *init_device;
+module_param_named(device, init_device, अक्षरp, 0400);
 MODULE_PARM_DESC(device, "specify initial device");
 
-static struct kmem_cache * __init zfcp_cache_hw_align(const char *name,
-						      unsigned long size)
-{
-	return kmem_cache_create(name, size, roundup_pow_of_two(size), 0, NULL);
-}
+अटल काष्ठा kmem_cache * __init zfcp_cache_hw_align(स्थिर अक्षर *name,
+						      अचिन्हित दीर्घ size)
+अणु
+	वापस kmem_cache_create(name, size, roundup_घात_of_two(size), 0, शून्य);
+पूर्ण
 
-static void __init zfcp_init_device_configure(char *busid, u64 wwpn, u64 lun)
-{
-	struct ccw_device *cdev;
-	struct zfcp_adapter *adapter;
-	struct zfcp_port *port;
+अटल व्योम __init zfcp_init_device_configure(अक्षर *busid, u64 wwpn, u64 lun)
+अणु
+	काष्ठा ccw_device *cdev;
+	काष्ठा zfcp_adapter *adapter;
+	काष्ठा zfcp_port *port;
 
 	cdev = get_ccwdev_by_busid(&zfcp_ccw_driver, busid);
-	if (!cdev)
-		return;
+	अगर (!cdev)
+		वापस;
 
-	if (ccw_device_set_online(cdev))
-		goto out_ccw_device;
+	अगर (ccw_device_set_online(cdev))
+		जाओ out_ccw_device;
 
 	adapter = zfcp_ccw_adapter_by_cdev(cdev);
-	if (!adapter)
-		goto out_ccw_device;
+	अगर (!adapter)
+		जाओ out_ccw_device;
 
 	port = zfcp_get_port_by_wwpn(adapter, wwpn);
-	if (!port)
-		goto out_port;
+	अगर (!port)
+		जाओ out_port;
 	flush_work(&port->rport_work);
 
 	zfcp_unit_add(port, lun);
@@ -84,311 +85,311 @@ out_port:
 	zfcp_ccw_adapter_put(adapter);
 out_ccw_device:
 	put_device(&cdev->dev);
-	return;
-}
+	वापस;
+पूर्ण
 
-static void __init zfcp_init_device_setup(char *devstr)
-{
-	char *token;
-	char *str, *str_saved;
-	char busid[ZFCP_BUS_ID_SIZE];
+अटल व्योम __init zfcp_init_device_setup(अक्षर *devstr)
+अणु
+	अक्षर *token;
+	अक्षर *str, *str_saved;
+	अक्षर busid[ZFCP_BUS_ID_SIZE];
 	u64 wwpn, lun;
 
-	/* duplicate devstr and keep the original for sysfs presentation*/
+	/* duplicate devstr and keep the original क्रम sysfs presentation*/
 	str_saved = kstrdup(devstr, GFP_KERNEL);
 	str = str_saved;
-	if (!str)
-		return;
+	अगर (!str)
+		वापस;
 
 	token = strsep(&str, ",");
-	if (!token || strlen(token) >= ZFCP_BUS_ID_SIZE)
-		goto err_out;
+	अगर (!token || म_माप(token) >= ZFCP_BUS_ID_SIZE)
+		जाओ err_out;
 	strlcpy(busid, token, ZFCP_BUS_ID_SIZE);
 
 	token = strsep(&str, ",");
-	if (!token || kstrtoull(token, 0, (unsigned long long *) &wwpn))
-		goto err_out;
+	अगर (!token || kम_से_अदीर्घl(token, 0, (अचिन्हित दीर्घ दीर्घ *) &wwpn))
+		जाओ err_out;
 
 	token = strsep(&str, ",");
-	if (!token || kstrtoull(token, 0, (unsigned long long *) &lun))
-		goto err_out;
+	अगर (!token || kम_से_अदीर्घl(token, 0, (अचिन्हित दीर्घ दीर्घ *) &lun))
+		जाओ err_out;
 
-	kfree(str_saved);
+	kमुक्त(str_saved);
 	zfcp_init_device_configure(busid, wwpn, lun);
-	return;
+	वापस;
 
 err_out:
-	kfree(str_saved);
+	kमुक्त(str_saved);
 	pr_err("%s is not a valid SCSI device\n", devstr);
-}
+पूर्ण
 
-static int __init zfcp_module_init(void)
-{
-	int retval = -ENOMEM;
+अटल पूर्णांक __init zfcp_module_init(व्योम)
+अणु
+	पूर्णांक retval = -ENOMEM;
 
-	if (zfcp_experimental_dix)
+	अगर (zfcp_experimental_dix)
 		pr_warn("DIX is enabled. It is experimental and might cause problems\n");
 
 	zfcp_fsf_qtcb_cache = zfcp_cache_hw_align("zfcp_fsf_qtcb",
-						  sizeof(struct fsf_qtcb));
-	if (!zfcp_fsf_qtcb_cache)
-		goto out_qtcb_cache;
+						  माप(काष्ठा fsf_qtcb));
+	अगर (!zfcp_fsf_qtcb_cache)
+		जाओ out_qtcb_cache;
 
 	zfcp_fc_req_cache = zfcp_cache_hw_align("zfcp_fc_req",
-						sizeof(struct zfcp_fc_req));
-	if (!zfcp_fc_req_cache)
-		goto out_fc_cache;
+						माप(काष्ठा zfcp_fc_req));
+	अगर (!zfcp_fc_req_cache)
+		जाओ out_fc_cache;
 
-	zfcp_scsi_transport_template =
+	zfcp_scsi_transport_ढाँचा =
 		fc_attach_transport(&zfcp_transport_functions);
-	if (!zfcp_scsi_transport_template)
-		goto out_transport;
-	scsi_transport_reserve_device(zfcp_scsi_transport_template,
-				      sizeof(struct zfcp_scsi_dev));
+	अगर (!zfcp_scsi_transport_ढाँचा)
+		जाओ out_transport;
+	scsi_transport_reserve_device(zfcp_scsi_transport_ढाँचा,
+				      माप(काष्ठा zfcp_scsi_dev));
 
-	retval = ccw_driver_register(&zfcp_ccw_driver);
-	if (retval) {
+	retval = ccw_driver_रेजिस्टर(&zfcp_ccw_driver);
+	अगर (retval) अणु
 		pr_err("The zfcp device driver could not register with "
 		       "the common I/O layer\n");
-		goto out_ccw_register;
-	}
+		जाओ out_ccw_रेजिस्टर;
+	पूर्ण
 
-	if (init_device)
+	अगर (init_device)
 		zfcp_init_device_setup(init_device);
-	return 0;
+	वापस 0;
 
-out_ccw_register:
-	fc_release_transport(zfcp_scsi_transport_template);
+out_ccw_रेजिस्टर:
+	fc_release_transport(zfcp_scsi_transport_ढाँचा);
 out_transport:
 	kmem_cache_destroy(zfcp_fc_req_cache);
 out_fc_cache:
 	kmem_cache_destroy(zfcp_fsf_qtcb_cache);
 out_qtcb_cache:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 module_init(zfcp_module_init);
 
-static void __exit zfcp_module_exit(void)
-{
-	ccw_driver_unregister(&zfcp_ccw_driver);
-	fc_release_transport(zfcp_scsi_transport_template);
+अटल व्योम __निकास zfcp_module_निकास(व्योम)
+अणु
+	ccw_driver_unरेजिस्टर(&zfcp_ccw_driver);
+	fc_release_transport(zfcp_scsi_transport_ढाँचा);
 	kmem_cache_destroy(zfcp_fc_req_cache);
 	kmem_cache_destroy(zfcp_fsf_qtcb_cache);
-}
+पूर्ण
 
-module_exit(zfcp_module_exit);
+module_निकास(zfcp_module_निकास);
 
 /**
  * zfcp_get_port_by_wwpn - find port in port list of adapter by wwpn
- * @adapter: pointer to adapter to search for port
- * @wwpn: wwpn to search for
+ * @adapter: poपूर्णांकer to adapter to search क्रम port
+ * @wwpn: wwpn to search क्रम
  *
- * Returns: pointer to zfcp_port or NULL
+ * Returns: poपूर्णांकer to zfcp_port or शून्य
  */
-struct zfcp_port *zfcp_get_port_by_wwpn(struct zfcp_adapter *adapter,
+काष्ठा zfcp_port *zfcp_get_port_by_wwpn(काष्ठा zfcp_adapter *adapter,
 					u64 wwpn)
-{
-	unsigned long flags;
-	struct zfcp_port *port;
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा zfcp_port *port;
 
-	read_lock_irqsave(&adapter->port_list_lock, flags);
-	list_for_each_entry(port, &adapter->port_list, list)
-		if (port->wwpn == wwpn) {
-			if (!get_device(&port->dev))
-				port = NULL;
-			read_unlock_irqrestore(&adapter->port_list_lock, flags);
-			return port;
-		}
-	read_unlock_irqrestore(&adapter->port_list_lock, flags);
-	return NULL;
-}
+	पढ़ो_lock_irqsave(&adapter->port_list_lock, flags);
+	list_क्रम_each_entry(port, &adapter->port_list, list)
+		अगर (port->wwpn == wwpn) अणु
+			अगर (!get_device(&port->dev))
+				port = शून्य;
+			पढ़ो_unlock_irqrestore(&adapter->port_list_lock, flags);
+			वापस port;
+		पूर्ण
+	पढ़ो_unlock_irqrestore(&adapter->port_list_lock, flags);
+	वापस शून्य;
+पूर्ण
 
-static int zfcp_allocate_low_mem_buffers(struct zfcp_adapter *adapter)
-{
+अटल पूर्णांक zfcp_allocate_low_mem_buffers(काष्ठा zfcp_adapter *adapter)
+अणु
 	adapter->pool.erp_req =
-		mempool_create_kmalloc_pool(1, sizeof(struct zfcp_fsf_req));
-	if (!adapter->pool.erp_req)
-		return -ENOMEM;
+		mempool_create_kदो_स्मृति_pool(1, माप(काष्ठा zfcp_fsf_req));
+	अगर (!adapter->pool.erp_req)
+		वापस -ENOMEM;
 
 	adapter->pool.gid_pn_req =
-		mempool_create_kmalloc_pool(1, sizeof(struct zfcp_fsf_req));
-	if (!adapter->pool.gid_pn_req)
-		return -ENOMEM;
+		mempool_create_kदो_स्मृति_pool(1, माप(काष्ठा zfcp_fsf_req));
+	अगर (!adapter->pool.gid_pn_req)
+		वापस -ENOMEM;
 
 	adapter->pool.scsi_req =
-		mempool_create_kmalloc_pool(1, sizeof(struct zfcp_fsf_req));
-	if (!adapter->pool.scsi_req)
-		return -ENOMEM;
+		mempool_create_kदो_स्मृति_pool(1, माप(काष्ठा zfcp_fsf_req));
+	अगर (!adapter->pool.scsi_req)
+		वापस -ENOMEM;
 
-	adapter->pool.scsi_abort =
-		mempool_create_kmalloc_pool(1, sizeof(struct zfcp_fsf_req));
-	if (!adapter->pool.scsi_abort)
-		return -ENOMEM;
+	adapter->pool.scsi_पात =
+		mempool_create_kदो_स्मृति_pool(1, माप(काष्ठा zfcp_fsf_req));
+	अगर (!adapter->pool.scsi_पात)
+		वापस -ENOMEM;
 
-	adapter->pool.status_read_req =
-		mempool_create_kmalloc_pool(FSF_STATUS_READS_RECOM,
-					    sizeof(struct zfcp_fsf_req));
-	if (!adapter->pool.status_read_req)
-		return -ENOMEM;
+	adapter->pool.status_पढ़ो_req =
+		mempool_create_kदो_स्मृति_pool(FSF_STATUS_READS_RECOM,
+					    माप(काष्ठा zfcp_fsf_req));
+	अगर (!adapter->pool.status_पढ़ो_req)
+		वापस -ENOMEM;
 
 	adapter->pool.qtcb_pool =
 		mempool_create_slab_pool(4, zfcp_fsf_qtcb_cache);
-	if (!adapter->pool.qtcb_pool)
-		return -ENOMEM;
+	अगर (!adapter->pool.qtcb_pool)
+		वापस -ENOMEM;
 
-	BUILD_BUG_ON(sizeof(struct fsf_status_read_buffer) > PAGE_SIZE);
+	BUILD_BUG_ON(माप(काष्ठा fsf_status_पढ़ो_buffer) > PAGE_SIZE);
 	adapter->pool.sr_data =
 		mempool_create_page_pool(FSF_STATUS_READS_RECOM, 0);
-	if (!adapter->pool.sr_data)
-		return -ENOMEM;
+	अगर (!adapter->pool.sr_data)
+		वापस -ENOMEM;
 
 	adapter->pool.gid_pn =
 		mempool_create_slab_pool(1, zfcp_fc_req_cache);
-	if (!adapter->pool.gid_pn)
-		return -ENOMEM;
+	अगर (!adapter->pool.gid_pn)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void zfcp_free_low_mem_buffers(struct zfcp_adapter *adapter)
-{
+अटल व्योम zfcp_मुक्त_low_mem_buffers(काष्ठा zfcp_adapter *adapter)
+अणु
 	mempool_destroy(adapter->pool.erp_req);
 	mempool_destroy(adapter->pool.scsi_req);
-	mempool_destroy(adapter->pool.scsi_abort);
+	mempool_destroy(adapter->pool.scsi_पात);
 	mempool_destroy(adapter->pool.qtcb_pool);
-	mempool_destroy(adapter->pool.status_read_req);
+	mempool_destroy(adapter->pool.status_पढ़ो_req);
 	mempool_destroy(adapter->pool.sr_data);
 	mempool_destroy(adapter->pool.gid_pn);
-}
+पूर्ण
 
 /**
- * zfcp_status_read_refill - refill the long running status_read_requests
- * @adapter: ptr to struct zfcp_adapter for which the buffers should be refilled
+ * zfcp_status_पढ़ो_refill - refill the दीर्घ running status_पढ़ो_requests
+ * @adapter: ptr to काष्ठा zfcp_adapter क्रम which the buffers should be refilled
  *
  * Return:
- * * 0 on success meaning at least one status read is pending
- * * 1 if posting failed and not a single status read buffer is pending,
- *     also triggers adapter reopen recovery
+ * * 0 on success meaning at least one status पढ़ो is pending
+ * * 1 अगर posting failed and not a single status पढ़ो buffer is pending,
+ *     also triggers adapter reखोलो recovery
  */
-int zfcp_status_read_refill(struct zfcp_adapter *adapter)
-{
-	while (atomic_add_unless(&adapter->stat_miss, -1, 0))
-		if (zfcp_fsf_status_read(adapter->qdio)) {
-			atomic_inc(&adapter->stat_miss); /* undo add -1 */
-			if (atomic_read(&adapter->stat_miss) >=
-			    adapter->stat_read_buf_num) {
-				zfcp_erp_adapter_reopen(adapter, 0, "axsref1");
-				return 1;
-			}
-			break;
-		}
-	return 0;
-}
+पूर्णांक zfcp_status_पढ़ो_refill(काष्ठा zfcp_adapter *adapter)
+अणु
+	जबतक (atomic_add_unless(&adapter->stat_miss, -1, 0))
+		अगर (zfcp_fsf_status_पढ़ो(adapter->qdio)) अणु
+			atomic_inc(&adapter->stat_miss); /* unकरो add -1 */
+			अगर (atomic_पढ़ो(&adapter->stat_miss) >=
+			    adapter->stat_पढ़ो_buf_num) अणु
+				zfcp_erp_adapter_reखोलो(adapter, 0, "axsref1");
+				वापस 1;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	वापस 0;
+पूर्ण
 
-static void _zfcp_status_read_scheduler(struct work_struct *work)
-{
-	zfcp_status_read_refill(container_of(work, struct zfcp_adapter,
+अटल व्योम _zfcp_status_पढ़ो_scheduler(काष्ठा work_काष्ठा *work)
+अणु
+	zfcp_status_पढ़ो_refill(container_of(work, काष्ठा zfcp_adapter,
 					     stat_work));
-}
+पूर्ण
 
-static void zfcp_version_change_lost_work(struct work_struct *work)
-{
-	struct zfcp_adapter *adapter = container_of(work, struct zfcp_adapter,
+अटल व्योम zfcp_version_change_lost_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा zfcp_adapter *adapter = container_of(work, काष्ठा zfcp_adapter,
 						    version_change_lost_work);
 
-	zfcp_fsf_exchange_config_data_sync(adapter->qdio, NULL);
-}
+	zfcp_fsf_exchange_config_data_sync(adapter->qdio, शून्य);
+पूर्ण
 
-static void zfcp_print_sl(struct seq_file *m, struct service_level *sl)
-{
-	struct zfcp_adapter *adapter =
-		container_of(sl, struct zfcp_adapter, service_level);
+अटल व्योम zfcp_prपूर्णांक_sl(काष्ठा seq_file *m, काष्ठा service_level *sl)
+अणु
+	काष्ठा zfcp_adapter *adapter =
+		container_of(sl, काष्ठा zfcp_adapter, service_level);
 
-	seq_printf(m, "zfcp: %s microcode level %x\n",
+	seq_म_लिखो(m, "zfcp: %s microcode level %x\n",
 		   dev_name(&adapter->ccw_device->dev),
 		   adapter->fsf_lic_version);
-}
+पूर्ण
 
-static int zfcp_setup_adapter_work_queue(struct zfcp_adapter *adapter)
-{
-	char name[TASK_COMM_LEN];
+अटल पूर्णांक zfcp_setup_adapter_work_queue(काष्ठा zfcp_adapter *adapter)
+अणु
+	अक्षर name[TASK_COMM_LEN];
 
-	snprintf(name, sizeof(name), "zfcp_q_%s",
+	snम_लिखो(name, माप(name), "zfcp_q_%s",
 		 dev_name(&adapter->ccw_device->dev));
 	adapter->work_queue = alloc_ordered_workqueue(name, WQ_MEM_RECLAIM);
 
-	if (adapter->work_queue)
-		return 0;
-	return -ENOMEM;
-}
+	अगर (adapter->work_queue)
+		वापस 0;
+	वापस -ENOMEM;
+पूर्ण
 
-static void zfcp_destroy_adapter_work_queue(struct zfcp_adapter *adapter)
-{
-	if (adapter->work_queue)
+अटल व्योम zfcp_destroy_adapter_work_queue(काष्ठा zfcp_adapter *adapter)
+अणु
+	अगर (adapter->work_queue)
 		destroy_workqueue(adapter->work_queue);
-	adapter->work_queue = NULL;
+	adapter->work_queue = शून्य;
 
-}
+पूर्ण
 
 /**
  * zfcp_adapter_enqueue - enqueue a new adapter to the list
- * @ccw_device: pointer to the struct cc_device
+ * @ccw_device: poपूर्णांकer to the काष्ठा cc_device
  *
- * Returns:	struct zfcp_adapter*
+ * Returns:	काष्ठा zfcp_adapter*
  * Enqueues an adapter at the end of the adapter list in the driver data.
- * All adapter internal structures are set up.
+ * All adapter पूर्णांकernal काष्ठाures are set up.
  * Proc-fs entries are also created.
  */
-struct zfcp_adapter *zfcp_adapter_enqueue(struct ccw_device *ccw_device)
-{
-	struct zfcp_adapter *adapter;
+काष्ठा zfcp_adapter *zfcp_adapter_enqueue(काष्ठा ccw_device *ccw_device)
+अणु
+	काष्ठा zfcp_adapter *adapter;
 
-	if (!get_device(&ccw_device->dev))
-		return ERR_PTR(-ENODEV);
+	अगर (!get_device(&ccw_device->dev))
+		वापस ERR_PTR(-ENODEV);
 
-	adapter = kzalloc(sizeof(struct zfcp_adapter), GFP_KERNEL);
-	if (!adapter) {
+	adapter = kzalloc(माप(काष्ठा zfcp_adapter), GFP_KERNEL);
+	अगर (!adapter) अणु
 		put_device(&ccw_device->dev);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	kref_init(&adapter->ref);
 
-	ccw_device->handler = NULL;
+	ccw_device->handler = शून्य;
 	adapter->ccw_device = ccw_device;
 
-	INIT_WORK(&adapter->stat_work, _zfcp_status_read_scheduler);
+	INIT_WORK(&adapter->stat_work, _zfcp_status_पढ़ो_scheduler);
 	INIT_DELAYED_WORK(&adapter->scan_work, zfcp_fc_scan_ports);
 	INIT_WORK(&adapter->ns_up_work, zfcp_fc_sym_name_update);
 	INIT_WORK(&adapter->version_change_lost_work,
 		  zfcp_version_change_lost_work);
 
-	adapter->next_port_scan = jiffies;
+	adapter->next_port_scan = jअगरfies;
 
 	adapter->erp_action.adapter = adapter;
 
-	if (zfcp_diag_adapter_setup(adapter))
-		goto failed;
+	अगर (zfcp_diag_adapter_setup(adapter))
+		जाओ failed;
 
-	if (zfcp_qdio_setup(adapter))
-		goto failed;
+	अगर (zfcp_qdio_setup(adapter))
+		जाओ failed;
 
-	if (zfcp_allocate_low_mem_buffers(adapter))
-		goto failed;
+	अगर (zfcp_allocate_low_mem_buffers(adapter))
+		जाओ failed;
 
 	adapter->req_list = zfcp_reqlist_alloc();
-	if (!adapter->req_list)
-		goto failed;
+	अगर (!adapter->req_list)
+		जाओ failed;
 
-	if (zfcp_dbf_adapter_register(adapter))
-		goto failed;
+	अगर (zfcp_dbf_adapter_रेजिस्टर(adapter))
+		जाओ failed;
 
-	if (zfcp_setup_adapter_work_queue(adapter))
-		goto failed;
+	अगर (zfcp_setup_adapter_work_queue(adapter))
+		जाओ failed;
 
-	if (zfcp_fc_gs_setup(adapter))
-		goto failed;
+	अगर (zfcp_fc_gs_setup(adapter))
+		जाओ failed;
 
 	rwlock_init(&adapter->port_list_lock);
 	INIT_LIST_HEAD(&adapter->port_list);
@@ -397,31 +398,31 @@ struct zfcp_adapter *zfcp_adapter_enqueue(struct ccw_device *ccw_device)
 	INIT_WORK(&adapter->events.work, zfcp_fc_post_event);
 	spin_lock_init(&adapter->events.list_lock);
 
-	init_waitqueue_head(&adapter->erp_ready_wq);
-	init_waitqueue_head(&adapter->erp_done_wqh);
+	init_रुकोqueue_head(&adapter->erp_पढ़ोy_wq);
+	init_रुकोqueue_head(&adapter->erp_करोne_wqh);
 
-	INIT_LIST_HEAD(&adapter->erp_ready_head);
+	INIT_LIST_HEAD(&adapter->erp_पढ़ोy_head);
 	INIT_LIST_HEAD(&adapter->erp_running_head);
 
 	rwlock_init(&adapter->erp_lock);
-	rwlock_init(&adapter->abort_lock);
+	rwlock_init(&adapter->पात_lock);
 
-	if (zfcp_erp_thread_setup(adapter))
-		goto failed;
+	अगर (zfcp_erp_thपढ़ो_setup(adapter))
+		जाओ failed;
 
-	adapter->service_level.seq_print = zfcp_print_sl;
+	adapter->service_level.seq_prपूर्णांक = zfcp_prपूर्णांक_sl;
 
 	dev_set_drvdata(&ccw_device->dev, adapter);
 
-	if (device_add_groups(&ccw_device->dev, zfcp_sysfs_adapter_attr_groups))
-		goto err_sysfs;
+	अगर (device_add_groups(&ccw_device->dev, zfcp_sysfs_adapter_attr_groups))
+		जाओ err_sysfs;
 
 	/* report size limit per scatter-gather segment */
 	adapter->ccw_device->dev.dma_parms = &adapter->dma_parms;
 
-	adapter->stat_read_buf_num = FSF_STATUS_READS_RECOM;
+	adapter->stat_पढ़ो_buf_num = FSF_STATUS_READS_RECOM;
 
-	return adapter;
+	वापस adapter;
 
 err_sysfs:
 failed:
@@ -432,20 +433,20 @@ failed:
 	cancel_work_sync(&adapter->version_change_lost_work);
 	zfcp_destroy_adapter_work_queue(adapter);
 
-	zfcp_fc_wka_ports_force_offline(adapter->gs);
-	zfcp_scsi_adapter_unregister(adapter);
+	zfcp_fc_wka_ports_क्रमce_offline(adapter->gs);
+	zfcp_scsi_adapter_unरेजिस्टर(adapter);
 
-	zfcp_erp_thread_kill(adapter);
-	zfcp_dbf_adapter_unregister(adapter);
+	zfcp_erp_thपढ़ो_समाप्त(adapter);
+	zfcp_dbf_adapter_unरेजिस्टर(adapter);
 	zfcp_qdio_destroy(adapter->qdio);
 
 	zfcp_ccw_adapter_put(adapter); /* final put to release */
-	return ERR_PTR(-ENOMEM);
-}
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-void zfcp_adapter_unregister(struct zfcp_adapter *adapter)
-{
-	struct ccw_device *cdev = adapter->ccw_device;
+व्योम zfcp_adapter_unरेजिस्टर(काष्ठा zfcp_adapter *adapter)
+अणु
+	काष्ठा ccw_device *cdev = adapter->ccw_device;
 
 	cancel_delayed_work_sync(&adapter->scan_work);
 	cancel_work_sync(&adapter->stat_work);
@@ -453,77 +454,77 @@ void zfcp_adapter_unregister(struct zfcp_adapter *adapter)
 	cancel_work_sync(&adapter->version_change_lost_work);
 	zfcp_destroy_adapter_work_queue(adapter);
 
-	zfcp_fc_wka_ports_force_offline(adapter->gs);
-	zfcp_scsi_adapter_unregister(adapter);
-	device_remove_groups(&cdev->dev, zfcp_sysfs_adapter_attr_groups);
+	zfcp_fc_wka_ports_क्रमce_offline(adapter->gs);
+	zfcp_scsi_adapter_unरेजिस्टर(adapter);
+	device_हटाओ_groups(&cdev->dev, zfcp_sysfs_adapter_attr_groups);
 
-	zfcp_erp_thread_kill(adapter);
-	zfcp_dbf_adapter_unregister(adapter);
+	zfcp_erp_thपढ़ो_समाप्त(adapter);
+	zfcp_dbf_adapter_unरेजिस्टर(adapter);
 	zfcp_qdio_destroy(adapter->qdio);
 
 	zfcp_ccw_adapter_put(adapter); /* final put to release */
-}
+पूर्ण
 
 /**
- * zfcp_adapter_release - remove the adapter from the resource list
- * @ref: pointer to struct kref
- * locks:	adapter list write lock is assumed to be held by caller
+ * zfcp_adapter_release - हटाओ the adapter from the resource list
+ * @ref: poपूर्णांकer to काष्ठा kref
+ * locks:	adapter list ग_लिखो lock is assumed to be held by caller
  */
-void zfcp_adapter_release(struct kref *ref)
-{
-	struct zfcp_adapter *adapter = container_of(ref, struct zfcp_adapter,
+व्योम zfcp_adapter_release(काष्ठा kref *ref)
+अणु
+	काष्ठा zfcp_adapter *adapter = container_of(ref, काष्ठा zfcp_adapter,
 						    ref);
-	struct ccw_device *cdev = adapter->ccw_device;
+	काष्ठा ccw_device *cdev = adapter->ccw_device;
 
-	dev_set_drvdata(&adapter->ccw_device->dev, NULL);
+	dev_set_drvdata(&adapter->ccw_device->dev, शून्य);
 	zfcp_fc_gs_destroy(adapter);
-	zfcp_free_low_mem_buffers(adapter);
-	zfcp_diag_adapter_free(adapter);
-	kfree(adapter->req_list);
-	kfree(adapter->fc_stats);
-	kfree(adapter->stats_reset_data);
-	kfree(adapter);
+	zfcp_मुक्त_low_mem_buffers(adapter);
+	zfcp_diag_adapter_मुक्त(adapter);
+	kमुक्त(adapter->req_list);
+	kमुक्त(adapter->fc_stats);
+	kमुक्त(adapter->stats_reset_data);
+	kमुक्त(adapter);
 	put_device(&cdev->dev);
-}
+पूर्ण
 
-static void zfcp_port_release(struct device *dev)
-{
-	struct zfcp_port *port = container_of(dev, struct zfcp_port, dev);
+अटल व्योम zfcp_port_release(काष्ठा device *dev)
+अणु
+	काष्ठा zfcp_port *port = container_of(dev, काष्ठा zfcp_port, dev);
 
 	zfcp_ccw_adapter_put(port->adapter);
-	kfree(port);
-}
+	kमुक्त(port);
+पूर्ण
 
 /**
  * zfcp_port_enqueue - enqueue port to port list of adapter
  * @adapter: adapter where remote port is added
  * @wwpn: WWPN of the remote port to be enqueued
- * @status: initial status for the port
+ * @status: initial status क्रम the port
  * @d_id: destination id of the remote port to be enqueued
- * Returns: pointer to enqueued port on success, ERR_PTR on error
+ * Returns: poपूर्णांकer to enqueued port on success, ERR_PTR on error
  *
- * All port internal structures are set up and the sysfs entry is generated.
+ * All port पूर्णांकernal काष्ठाures are set up and the sysfs entry is generated.
  * d_id is used to enqueue ports with a well known address like the Directory
- * Service for nameserver lookup.
+ * Service क्रम nameserver lookup.
  */
-struct zfcp_port *zfcp_port_enqueue(struct zfcp_adapter *adapter, u64 wwpn,
+काष्ठा zfcp_port *zfcp_port_enqueue(काष्ठा zfcp_adapter *adapter, u64 wwpn,
 				     u32 status, u32 d_id)
-{
-	struct zfcp_port *port;
-	int retval = -ENOMEM;
+अणु
+	काष्ठा zfcp_port *port;
+	पूर्णांक retval = -ENOMEM;
 
 	kref_get(&adapter->ref);
 
 	port = zfcp_get_port_by_wwpn(adapter, wwpn);
-	if (port) {
+	अगर (port) अणु
 		put_device(&port->dev);
 		retval = -EEXIST;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	port = kzalloc(sizeof(struct zfcp_port), GFP_KERNEL);
-	if (!port)
-		goto err_out;
+	port = kzalloc(माप(काष्ठा zfcp_port), GFP_KERNEL);
+	अगर (!port)
+		जाओ err_out;
 
 	rwlock_init(&port->unit_list_lock);
 	INIT_LIST_HEAD(&port->unit_list);
@@ -544,26 +545,26 @@ struct zfcp_port *zfcp_port_enqueue(struct zfcp_adapter *adapter, u64 wwpn,
 	port->erp_action.adapter = adapter;
 	port->erp_action.port = port;
 
-	if (dev_set_name(&port->dev, "0x%016llx", (unsigned long long)wwpn)) {
-		kfree(port);
-		goto err_out;
-	}
+	अगर (dev_set_name(&port->dev, "0x%016llx", (अचिन्हित दीर्घ दीर्घ)wwpn)) अणु
+		kमुक्त(port);
+		जाओ err_out;
+	पूर्ण
 	retval = -EINVAL;
 
-	if (device_register(&port->dev)) {
+	अगर (device_रेजिस्टर(&port->dev)) अणु
 		put_device(&port->dev);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	write_lock_irq(&adapter->port_list_lock);
+	ग_लिखो_lock_irq(&adapter->port_list_lock);
 	list_add_tail(&port->list, &adapter->port_list);
-	write_unlock_irq(&adapter->port_list_lock);
+	ग_लिखो_unlock_irq(&adapter->port_list_lock);
 
 	atomic_or(status | ZFCP_STATUS_COMMON_RUNNING, &port->status);
 
-	return port;
+	वापस port;
 
 err_out:
 	zfcp_ccw_adapter_put(adapter);
-	return ERR_PTR(retval);
-}
+	वापस ERR_PTR(retval);
+पूर्ण

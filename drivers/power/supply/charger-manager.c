@@ -1,827 +1,828 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Samsung Electronics Co., Ltd.
  * MyungJoo Ham <myungjoo.ham@samsung.com>
  *
- * This driver enables to monitor battery health and control charger
+ * This driver enables to monitor battery health and control अक्षरger
  * during suspend-to-mem.
  * Charger manager depends on other devices. Register this later than
  * the depending devices.
  *
 **/
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/irq.h>
-#include <linux/interrupt.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
-#include <linux/power/charger-manager.h>
-#include <linux/regulator/consumer.h>
-#include <linux/sysfs.h>
-#include <linux/of.h>
-#include <linux/thermal.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer/अक्षरger-manager.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/of.h>
+#समावेश <linux/thermal.h>
 
-static struct {
-	const char *name;
+अटल काष्ठा अणु
+	स्थिर अक्षर *name;
 	u64 extcon_type;
-} extcon_mapping[] = {
+पूर्ण extcon_mapping[] = अणु
 	/* Current textual representations */
-	{ "USB", EXTCON_USB },
-	{ "USB-HOST", EXTCON_USB_HOST },
-	{ "SDP", EXTCON_CHG_USB_SDP },
-	{ "DCP", EXTCON_CHG_USB_DCP },
-	{ "CDP", EXTCON_CHG_USB_CDP },
-	{ "ACA", EXTCON_CHG_USB_ACA },
-	{ "FAST-CHARGER", EXTCON_CHG_USB_FAST },
-	{ "SLOW-CHARGER", EXTCON_CHG_USB_SLOW },
-	{ "WPT", EXTCON_CHG_WPT },
-	{ "PD", EXTCON_CHG_USB_PD },
-	{ "DOCK", EXTCON_DOCK },
-	{ "JIG", EXTCON_JIG },
-	{ "MECHANICAL", EXTCON_MECHANICAL },
+	अणु "USB", EXTCON_USB पूर्ण,
+	अणु "USB-HOST", EXTCON_USB_HOST पूर्ण,
+	अणु "SDP", EXTCON_CHG_USB_SDP पूर्ण,
+	अणु "DCP", EXTCON_CHG_USB_DCP पूर्ण,
+	अणु "CDP", EXTCON_CHG_USB_CDP पूर्ण,
+	अणु "ACA", EXTCON_CHG_USB_ACA पूर्ण,
+	अणु "FAST-CHARGER", EXTCON_CHG_USB_FAST पूर्ण,
+	अणु "SLOW-CHARGER", EXTCON_CHG_USB_SLOW पूर्ण,
+	अणु "WPT", EXTCON_CHG_WPT पूर्ण,
+	अणु "PD", EXTCON_CHG_USB_PD पूर्ण,
+	अणु "DOCK", EXTCON_DOCK पूर्ण,
+	अणु "JIG", EXTCON_JIG पूर्ण,
+	अणु "MECHANICAL", EXTCON_MECHANICAL पूर्ण,
 	/* Deprecated textual representations */
-	{ "TA", EXTCON_CHG_USB_SDP },
-	{ "CHARGE-DOWNSTREAM", EXTCON_CHG_USB_CDP },
-};
+	अणु "TA", EXTCON_CHG_USB_SDP पूर्ण,
+	अणु "CHARGE-DOWNSTREAM", EXTCON_CHG_USB_CDP पूर्ण,
+पूर्ण;
 
 /*
- * Default temperature threshold for charging.
+ * Default temperature threshold क्रम अक्षरging.
  * Every temperature units are in tenth of centigrade.
  */
-#define CM_DEFAULT_RECHARGE_TEMP_DIFF	50
-#define CM_DEFAULT_CHARGE_TEMP_MAX	500
+#घोषणा CM_DEFAULT_RECHARGE_TEMP_DIFF	50
+#घोषणा CM_DEFAULT_CHARGE_TEMP_MAX	500
 
 /*
- * Regard CM_JIFFIES_SMALL jiffies is small enough to ignore for
+ * Regard CM_JIFFIES_SMALL jअगरfies is small enough to ignore क्रम
  * delayed works so that we can run delayed works with CM_JIFFIES_SMALL
  * without any delays.
  */
-#define	CM_JIFFIES_SMALL	(2)
+#घोषणा	CM_JIFFIES_SMALL	(2)
 
-/* If y is valid (> 0) and smaller than x, do x = y */
-#define CM_MIN_VALID(x, y)	x = (((y > 0) && ((x) > (y))) ? (y) : (x))
+/* If y is valid (> 0) and smaller than x, करो x = y */
+#घोषणा CM_MIN_VALID(x, y)	x = (((y > 0) && ((x) > (y))) ? (y) : (x))
 
 /*
  * Regard CM_RTC_SMALL (sec) is small enough to ignore error in invoking
  * rtc alarm. It should be 2 or larger
  */
-#define CM_RTC_SMALL		(2)
+#घोषणा CM_RTC_SMALL		(2)
 
-static LIST_HEAD(cm_list);
-static DEFINE_MUTEX(cm_list_mtx);
+अटल LIST_HEAD(cm_list);
+अटल DEFINE_MUTEX(cm_list_mtx);
 
 /* About in-suspend (suspend-again) monitoring */
-static struct alarm *cm_timer;
+अटल काष्ठा alarm *cm_समयr;
 
-static bool cm_suspended;
-static bool cm_timer_set;
-static unsigned long cm_suspend_duration_ms;
+अटल bool cm_suspended;
+अटल bool cm_समयr_set;
+अटल अचिन्हित दीर्घ cm_suspend_duration_ms;
 
 /* About normal (not suspended) monitoring */
-static unsigned long polling_jiffy = ULONG_MAX; /* ULONG_MAX: no polling */
-static unsigned long next_polling; /* Next appointed polling time */
-static struct workqueue_struct *cm_wq; /* init at driver add */
-static struct delayed_work cm_monitor_work; /* init at driver add */
+अटल अचिन्हित दीर्घ polling_jअगरfy = अच_दीर्घ_उच्च; /* अच_दीर्घ_उच्च: no polling */
+अटल अचिन्हित दीर्घ next_polling; /* Next appoपूर्णांकed polling समय */
+अटल काष्ठा workqueue_काष्ठा *cm_wq; /* init at driver add */
+अटल काष्ठा delayed_work cm_monitor_work; /* init at driver add */
 
 /**
- * is_batt_present - See if the battery presents in place.
+ * is_batt_present - See अगर the battery presents in place.
  * @cm: the Charger Manager representing the battery.
  */
-static bool is_batt_present(struct charger_manager *cm)
-{
-	union power_supply_propval val;
-	struct power_supply *psy;
+अटल bool is_batt_present(काष्ठा अक्षरger_manager *cm)
+अणु
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *psy;
 	bool present = false;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	switch (cm->desc->battery_present) {
-	case CM_BATTERY_PRESENT:
+	चयन (cm->desc->battery_present) अणु
+	हाल CM_BATTERY_PRESENT:
 		present = true;
-		break;
-	case CM_NO_BATTERY:
-		break;
-	case CM_FUEL_GAUGE:
-		psy = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-		if (!psy)
-			break;
+		अवरोध;
+	हाल CM_NO_BATTERY:
+		अवरोध;
+	हाल CM_FUEL_GAUGE:
+		psy = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+		अगर (!psy)
+			अवरोध;
 
-		ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_PRESENT,
+		ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_PRESENT,
 				&val);
-		if (ret == 0 && val.intval)
+		अगर (ret == 0 && val.पूर्णांकval)
 			present = true;
-		power_supply_put(psy);
-		break;
-	case CM_CHARGER_STAT:
-		for (i = 0; cm->desc->psy_charger_stat[i]; i++) {
-			psy = power_supply_get_by_name(
-					cm->desc->psy_charger_stat[i]);
-			if (!psy) {
+		घातer_supply_put(psy);
+		अवरोध;
+	हाल CM_CHARGER_STAT:
+		क्रम (i = 0; cm->desc->psy_अक्षरger_stat[i]; i++) अणु
+			psy = घातer_supply_get_by_name(
+					cm->desc->psy_अक्षरger_stat[i]);
+			अगर (!psy) अणु
 				dev_err(cm->dev, "Cannot find power supply \"%s\"\n",
-					cm->desc->psy_charger_stat[i]);
-				continue;
-			}
+					cm->desc->psy_अक्षरger_stat[i]);
+				जारी;
+			पूर्ण
 
-			ret = power_supply_get_property(psy,
+			ret = घातer_supply_get_property(psy,
 				POWER_SUPPLY_PROP_PRESENT, &val);
-			power_supply_put(psy);
-			if (ret == 0 && val.intval) {
+			घातer_supply_put(psy);
+			अगर (ret == 0 && val.पूर्णांकval) अणु
 				present = true;
-				break;
-			}
-		}
-		break;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return present;
-}
+	वापस present;
+पूर्ण
 
 /**
- * is_ext_pwr_online - See if an external power source is attached to charge
+ * is_ext_pwr_online - See अगर an बाह्यal घातer source is attached to अक्षरge
  * @cm: the Charger Manager representing the battery.
  *
- * Returns true if at least one of the chargers of the battery has an external
- * power source attached to charge the battery regardless of whether it is
- * actually charging or not.
+ * Returns true अगर at least one of the अक्षरgers of the battery has an बाह्यal
+ * घातer source attached to अक्षरge the battery regardless of whether it is
+ * actually अक्षरging or not.
  */
-static bool is_ext_pwr_online(struct charger_manager *cm)
-{
-	union power_supply_propval val;
-	struct power_supply *psy;
+अटल bool is_ext_pwr_online(काष्ठा अक्षरger_manager *cm)
+अणु
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *psy;
 	bool online = false;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	/* If at least one of them has one, it's yes. */
-	for (i = 0; cm->desc->psy_charger_stat[i]; i++) {
-		psy = power_supply_get_by_name(cm->desc->psy_charger_stat[i]);
-		if (!psy) {
+	क्रम (i = 0; cm->desc->psy_अक्षरger_stat[i]; i++) अणु
+		psy = घातer_supply_get_by_name(cm->desc->psy_अक्षरger_stat[i]);
+		अगर (!psy) अणु
 			dev_err(cm->dev, "Cannot find power supply \"%s\"\n",
-					cm->desc->psy_charger_stat[i]);
-			continue;
-		}
+					cm->desc->psy_अक्षरger_stat[i]);
+			जारी;
+		पूर्ण
 
-		ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
+		ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
 				&val);
-		power_supply_put(psy);
-		if (ret == 0 && val.intval) {
+		घातer_supply_put(psy);
+		अगर (ret == 0 && val.पूर्णांकval) अणु
 			online = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return online;
-}
+	वापस online;
+पूर्ण
 
 /**
  * get_batt_uV - Get the voltage level of the battery
  * @cm: the Charger Manager representing the battery.
- * @uV: the voltage level returned.
+ * @uV: the voltage level वापसed.
  *
- * Returns 0 if there is no error.
+ * Returns 0 अगर there is no error.
  * Returns a negative value on error.
  */
-static int get_batt_uV(struct charger_manager *cm, int *uV)
-{
-	union power_supply_propval val;
-	struct power_supply *fuel_gauge;
-	int ret;
+अटल पूर्णांक get_batt_uV(काष्ठा अक्षरger_manager *cm, पूर्णांक *uV)
+अणु
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *fuel_gauge;
+	पूर्णांक ret;
 
-	fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-	if (!fuel_gauge)
-		return -ENODEV;
+	fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+	अगर (!fuel_gauge)
+		वापस -ENODEV;
 
-	ret = power_supply_get_property(fuel_gauge,
+	ret = घातer_supply_get_property(fuel_gauge,
 				POWER_SUPPLY_PROP_VOLTAGE_NOW, &val);
-	power_supply_put(fuel_gauge);
-	if (ret)
-		return ret;
+	घातer_supply_put(fuel_gauge);
+	अगर (ret)
+		वापस ret;
 
-	*uV = val.intval;
-	return 0;
-}
+	*uV = val.पूर्णांकval;
+	वापस 0;
+पूर्ण
 
 /**
- * is_charging - Returns true if the battery is being charged.
+ * is_अक्षरging - Returns true अगर the battery is being अक्षरged.
  * @cm: the Charger Manager representing the battery.
  */
-static bool is_charging(struct charger_manager *cm)
-{
-	int i, ret;
-	bool charging = false;
-	struct power_supply *psy;
-	union power_supply_propval val;
+अटल bool is_अक्षरging(काष्ठा अक्षरger_manager *cm)
+अणु
+	पूर्णांक i, ret;
+	bool अक्षरging = false;
+	काष्ठा घातer_supply *psy;
+	जोड़ घातer_supply_propval val;
 
-	/* If there is no battery, it cannot be charged */
-	if (!is_batt_present(cm))
-		return false;
+	/* If there is no battery, it cannot be अक्षरged */
+	अगर (!is_batt_present(cm))
+		वापस false;
 
-	/* If at least one of the charger is charging, return yes */
-	for (i = 0; cm->desc->psy_charger_stat[i]; i++) {
-		/* 1. The charger sholuld not be DISABLED */
-		if (cm->emergency_stop)
-			continue;
-		if (!cm->charger_enabled)
-			continue;
+	/* If at least one of the अक्षरger is अक्षरging, वापस yes */
+	क्रम (i = 0; cm->desc->psy_अक्षरger_stat[i]; i++) अणु
+		/* 1. The अक्षरger sholuld not be DISABLED */
+		अगर (cm->emergency_stop)
+			जारी;
+		अगर (!cm->अक्षरger_enabled)
+			जारी;
 
-		psy = power_supply_get_by_name(cm->desc->psy_charger_stat[i]);
-		if (!psy) {
+		psy = घातer_supply_get_by_name(cm->desc->psy_अक्षरger_stat[i]);
+		अगर (!psy) अणु
 			dev_err(cm->dev, "Cannot find power supply \"%s\"\n",
-					cm->desc->psy_charger_stat[i]);
-			continue;
-		}
+					cm->desc->psy_अक्षरger_stat[i]);
+			जारी;
+		पूर्ण
 
-		/* 2. The charger should be online (ext-power) */
-		ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
+		/* 2. The अक्षरger should be online (ext-घातer) */
+		ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
 				&val);
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(cm->dev, "Cannot read ONLINE value from %s\n",
-				 cm->desc->psy_charger_stat[i]);
-			power_supply_put(psy);
-			continue;
-		}
-		if (val.intval == 0) {
-			power_supply_put(psy);
-			continue;
-		}
+				 cm->desc->psy_अक्षरger_stat[i]);
+			घातer_supply_put(psy);
+			जारी;
+		पूर्ण
+		अगर (val.पूर्णांकval == 0) अणु
+			घातer_supply_put(psy);
+			जारी;
+		पूर्ण
 
 		/*
-		 * 3. The charger should not be FULL, DISCHARGING,
+		 * 3. The अक्षरger should not be FULL, DISCHARGING,
 		 * or NOT_CHARGING.
 		 */
-		ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS,
+		ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_STATUS,
 				&val);
-		power_supply_put(psy);
-		if (ret) {
+		घातer_supply_put(psy);
+		अगर (ret) अणु
 			dev_warn(cm->dev, "Cannot read STATUS value from %s\n",
-				 cm->desc->psy_charger_stat[i]);
-			continue;
-		}
-		if (val.intval == POWER_SUPPLY_STATUS_FULL ||
-				val.intval == POWER_SUPPLY_STATUS_DISCHARGING ||
-				val.intval == POWER_SUPPLY_STATUS_NOT_CHARGING)
-			continue;
+				 cm->desc->psy_अक्षरger_stat[i]);
+			जारी;
+		पूर्ण
+		अगर (val.पूर्णांकval == POWER_SUPPLY_STATUS_FULL ||
+				val.पूर्णांकval == POWER_SUPPLY_STATUS_DISCHARGING ||
+				val.पूर्णांकval == POWER_SUPPLY_STATUS_NOT_CHARGING)
+			जारी;
 
-		/* Then, this is charging. */
-		charging = true;
-		break;
-	}
+		/* Then, this is अक्षरging. */
+		अक्षरging = true;
+		अवरोध;
+	पूर्ण
 
-	return charging;
-}
+	वापस अक्षरging;
+पूर्ण
 
 /**
- * is_full_charged - Returns true if the battery is fully charged.
+ * is_full_अक्षरged - Returns true अगर the battery is fully अक्षरged.
  * @cm: the Charger Manager representing the battery.
  */
-static bool is_full_charged(struct charger_manager *cm)
-{
-	struct charger_desc *desc = cm->desc;
-	union power_supply_propval val;
-	struct power_supply *fuel_gauge;
+अटल bool is_full_अक्षरged(काष्ठा अक्षरger_manager *cm)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *fuel_gauge;
 	bool is_full = false;
-	int ret = 0;
-	int uV;
+	पूर्णांक ret = 0;
+	पूर्णांक uV;
 
-	/* If there is no battery, it cannot be charged */
-	if (!is_batt_present(cm))
-		return false;
+	/* If there is no battery, it cannot be अक्षरged */
+	अगर (!is_batt_present(cm))
+		वापस false;
 
-	fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-	if (!fuel_gauge)
-		return false;
+	fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+	अगर (!fuel_gauge)
+		वापस false;
 
-	/* Full, if it's over the fullbatt voltage */
-	if (desc->fullbatt_uV > 0) {
+	/* Full, अगर it's over the fullbatt voltage */
+	अगर (desc->fullbatt_uV > 0) अणु
 		ret = get_batt_uV(cm, &uV);
-		if (!ret) {
-			/* Battery is already full, checks voltage drop. */
-			if (cm->battery_status == POWER_SUPPLY_STATUS_FULL
+		अगर (!ret) अणु
+			/* Battery is alपढ़ोy full, checks voltage drop. */
+			अगर (cm->battery_status == POWER_SUPPLY_STATUS_FULL
 					&& desc->fullbatt_vchkdrop_uV)
 				uV += desc->fullbatt_vchkdrop_uV;
-			if (uV >= desc->fullbatt_uV)
-				return true;
-		}
-	}
+			अगर (uV >= desc->fullbatt_uV)
+				वापस true;
+		पूर्ण
+	पूर्ण
 
-	if (desc->fullbatt_full_capacity > 0) {
-		val.intval = 0;
+	अगर (desc->fullbatt_full_capacity > 0) अणु
+		val.पूर्णांकval = 0;
 
-		/* Not full if capacity of fuel gauge isn't full */
-		ret = power_supply_get_property(fuel_gauge,
+		/* Not full अगर capacity of fuel gauge isn't full */
+		ret = घातer_supply_get_property(fuel_gauge,
 				POWER_SUPPLY_PROP_CHARGE_FULL, &val);
-		if (!ret && val.intval > desc->fullbatt_full_capacity) {
+		अगर (!ret && val.पूर्णांकval > desc->fullbatt_full_capacity) अणु
 			is_full = true;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	/* Full, if the capacity is more than fullbatt_soc */
-	if (desc->fullbatt_soc > 0) {
-		val.intval = 0;
+	/* Full, अगर the capacity is more than fullbatt_soc */
+	अगर (desc->fullbatt_soc > 0) अणु
+		val.पूर्णांकval = 0;
 
-		ret = power_supply_get_property(fuel_gauge,
+		ret = घातer_supply_get_property(fuel_gauge,
 				POWER_SUPPLY_PROP_CAPACITY, &val);
-		if (!ret && val.intval >= desc->fullbatt_soc) {
+		अगर (!ret && val.पूर्णांकval >= desc->fullbatt_soc) अणु
 			is_full = true;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	power_supply_put(fuel_gauge);
-	return is_full;
-}
+	घातer_supply_put(fuel_gauge);
+	वापस is_full;
+पूर्ण
 
 /**
- * is_polling_required - Return true if need to continue polling for this CM.
+ * is_polling_required - Return true अगर need to जारी polling क्रम this CM.
  * @cm: the Charger Manager representing the battery.
  */
-static bool is_polling_required(struct charger_manager *cm)
-{
-	switch (cm->desc->polling_mode) {
-	case CM_POLL_DISABLE:
-		return false;
-	case CM_POLL_ALWAYS:
-		return true;
-	case CM_POLL_EXTERNAL_POWER_ONLY:
-		return is_ext_pwr_online(cm);
-	case CM_POLL_CHARGING_ONLY:
-		return is_charging(cm);
-	default:
+अटल bool is_polling_required(काष्ठा अक्षरger_manager *cm)
+अणु
+	चयन (cm->desc->polling_mode) अणु
+	हाल CM_POLL_DISABLE:
+		वापस false;
+	हाल CM_POLL_ALWAYS:
+		वापस true;
+	हाल CM_POLL_EXTERNAL_POWER_ONLY:
+		वापस is_ext_pwr_online(cm);
+	हाल CM_POLL_CHARGING_ONLY:
+		वापस is_अक्षरging(cm);
+	शेष:
 		dev_warn(cm->dev, "Incorrect polling_mode (%d)\n",
 			 cm->desc->polling_mode);
-	}
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * try_charger_enable - Enable/Disable chargers altogether
+ * try_अक्षरger_enable - Enable/Disable अक्षरgers altogether
  * @cm: the Charger Manager representing the battery.
  * @enable: true: enable / false: disable
  *
- * Note that Charger Manager keeps the charger enabled regardless whether
- * the charger is charging or not (because battery is full or no external
- * power source exists) except when CM needs to disable chargers forcibly
+ * Note that Charger Manager keeps the अक्षरger enabled regardless whether
+ * the अक्षरger is अक्षरging or not (because battery is full or no बाह्यal
+ * घातer source exists) except when CM needs to disable अक्षरgers क्रमcibly
  * because of emergency causes; when the battery is overheated or too cold.
  */
-static int try_charger_enable(struct charger_manager *cm, bool enable)
-{
-	int err = 0, i;
-	struct charger_desc *desc = cm->desc;
+अटल पूर्णांक try_अक्षरger_enable(काष्ठा अक्षरger_manager *cm, bool enable)
+अणु
+	पूर्णांक err = 0, i;
+	काष्ठा अक्षरger_desc *desc = cm->desc;
 
-	/* Ignore if it's redundant command */
-	if (enable == cm->charger_enabled)
-		return 0;
+	/* Ignore अगर it's redundant command */
+	अगर (enable == cm->अक्षरger_enabled)
+		वापस 0;
 
-	if (enable) {
-		if (cm->emergency_stop)
-			return -EAGAIN;
+	अगर (enable) अणु
+		अगर (cm->emergency_stop)
+			वापस -EAGAIN;
 
 		/*
-		 * Save start time of charging to limit
-		 * maximum possible charging time.
+		 * Save start समय of अक्षरging to limit
+		 * maximum possible अक्षरging समय.
 		 */
-		cm->charging_start_time = ktime_to_ms(ktime_get());
-		cm->charging_end_time = 0;
+		cm->अक्षरging_start_समय = kसमय_प्रकारo_ms(kसमय_get());
+		cm->अक्षरging_end_समय = 0;
 
-		for (i = 0 ; i < desc->num_charger_regulators ; i++) {
-			if (desc->charger_regulators[i].externally_control)
-				continue;
+		क्रम (i = 0 ; i < desc->num_अक्षरger_regulators ; i++) अणु
+			अगर (desc->अक्षरger_regulators[i].बाह्यally_control)
+				जारी;
 
-			err = regulator_enable(desc->charger_regulators[i].consumer);
-			if (err < 0) {
+			err = regulator_enable(desc->अक्षरger_regulators[i].consumer);
+			अगर (err < 0) अणु
 				dev_warn(cm->dev, "Cannot enable %s regulator\n",
-					 desc->charger_regulators[i].regulator_name);
-			}
-		}
-	} else {
+					 desc->अक्षरger_regulators[i].regulator_name);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Save end time of charging to maintain fully charged state
+		 * Save end समय of अक्षरging to मुख्यtain fully अक्षरged state
 		 * of battery after full-batt.
 		 */
-		cm->charging_start_time = 0;
-		cm->charging_end_time = ktime_to_ms(ktime_get());
+		cm->अक्षरging_start_समय = 0;
+		cm->अक्षरging_end_समय = kसमय_प्रकारo_ms(kसमय_get());
 
-		for (i = 0 ; i < desc->num_charger_regulators ; i++) {
-			if (desc->charger_regulators[i].externally_control)
-				continue;
+		क्रम (i = 0 ; i < desc->num_अक्षरger_regulators ; i++) अणु
+			अगर (desc->अक्षरger_regulators[i].बाह्यally_control)
+				जारी;
 
-			err = regulator_disable(desc->charger_regulators[i].consumer);
-			if (err < 0) {
+			err = regulator_disable(desc->अक्षरger_regulators[i].consumer);
+			अगर (err < 0) अणु
 				dev_warn(cm->dev, "Cannot disable %s regulator\n",
-					 desc->charger_regulators[i].regulator_name);
-			}
-		}
+					 desc->अक्षरger_regulators[i].regulator_name);
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Abnormal battery state - Stop charging forcibly,
-		 * even if charger was enabled at the other places
+		 * Abnormal battery state - Stop अक्षरging क्रमcibly,
+		 * even अगर अक्षरger was enabled at the other places
 		 */
-		for (i = 0; i < desc->num_charger_regulators; i++) {
-			if (regulator_is_enabled(
-				    desc->charger_regulators[i].consumer)) {
-				regulator_force_disable(
-					desc->charger_regulators[i].consumer);
+		क्रम (i = 0; i < desc->num_अक्षरger_regulators; i++) अणु
+			अगर (regulator_is_enabled(
+				    desc->अक्षरger_regulators[i].consumer)) अणु
+				regulator_क्रमce_disable(
+					desc->अक्षरger_regulators[i].consumer);
 				dev_warn(cm->dev, "Disable regulator(%s) forcibly\n",
-					 desc->charger_regulators[i].regulator_name);
-			}
-		}
-	}
+					 desc->अक्षरger_regulators[i].regulator_name);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!err)
-		cm->charger_enabled = enable;
+	अगर (!err)
+		cm->अक्षरger_enabled = enable;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * check_charging_duration - Monitor charging/discharging duration
+ * check_अक्षरging_duration - Monitor अक्षरging/disअक्षरging duration
  * @cm: the Charger Manager representing the battery.
  *
- * If whole charging duration exceed 'charging_max_duration_ms',
- * cm stop charging to prevent overcharge/overheat. If discharging
- * duration exceed 'discharging _max_duration_ms', charger cable is
- * attached, after full-batt, cm start charging to maintain fully
- * charged state for battery.
+ * If whole अक्षरging duration exceed 'charging_max_duration_ms',
+ * cm stop अक्षरging to prevent overअक्षरge/overheat. If disअक्षरging
+ * duration exceed 'discharging _max_duration_ms', अक्षरger cable is
+ * attached, after full-batt, cm start अक्षरging to मुख्यtain fully
+ * अक्षरged state क्रम battery.
  */
-static int check_charging_duration(struct charger_manager *cm)
-{
-	struct charger_desc *desc = cm->desc;
-	u64 curr = ktime_to_ms(ktime_get());
+अटल पूर्णांक check_अक्षरging_duration(काष्ठा अक्षरger_manager *cm)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	u64 curr = kसमय_प्रकारo_ms(kसमय_get());
 	u64 duration;
-	int ret = false;
+	पूर्णांक ret = false;
 
-	if (!desc->charging_max_duration_ms &&
-			!desc->discharging_max_duration_ms)
-		return ret;
+	अगर (!desc->अक्षरging_max_duration_ms &&
+			!desc->disअक्षरging_max_duration_ms)
+		वापस ret;
 
-	if (cm->charger_enabled) {
-		duration = curr - cm->charging_start_time;
+	अगर (cm->अक्षरger_enabled) अणु
+		duration = curr - cm->अक्षरging_start_समय;
 
-		if (duration > desc->charging_max_duration_ms) {
+		अगर (duration > desc->अक्षरging_max_duration_ms) अणु
 			dev_info(cm->dev, "Charging duration exceed %ums\n",
-				 desc->charging_max_duration_ms);
+				 desc->अक्षरging_max_duration_ms);
 			ret = true;
-		}
-	} else if (cm->battery_status == POWER_SUPPLY_STATUS_NOT_CHARGING) {
-		duration = curr - cm->charging_end_time;
+		पूर्ण
+	पूर्ण अन्यथा अगर (cm->battery_status == POWER_SUPPLY_STATUS_NOT_CHARGING) अणु
+		duration = curr - cm->अक्षरging_end_समय;
 
-		if (duration > desc->discharging_max_duration_ms) {
+		अगर (duration > desc->disअक्षरging_max_duration_ms) अणु
 			dev_info(cm->dev, "Discharging duration exceed %ums\n",
-				 desc->discharging_max_duration_ms);
+				 desc->disअक्षरging_max_duration_ms);
 			ret = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cm_get_battery_temperature_by_psy(struct charger_manager *cm,
-					int *temp)
-{
-	struct power_supply *fuel_gauge;
-	int ret;
+अटल पूर्णांक cm_get_battery_temperature_by_psy(काष्ठा अक्षरger_manager *cm,
+					पूर्णांक *temp)
+अणु
+	काष्ठा घातer_supply *fuel_gauge;
+	पूर्णांक ret;
 
-	fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-	if (!fuel_gauge)
-		return -ENODEV;
+	fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+	अगर (!fuel_gauge)
+		वापस -ENODEV;
 
-	ret = power_supply_get_property(fuel_gauge,
+	ret = घातer_supply_get_property(fuel_gauge,
 				POWER_SUPPLY_PROP_TEMP,
-				(union power_supply_propval *)temp);
-	power_supply_put(fuel_gauge);
+				(जोड़ घातer_supply_propval *)temp);
+	घातer_supply_put(fuel_gauge);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cm_get_battery_temperature(struct charger_manager *cm,
-					int *temp)
-{
-	int ret;
+अटल पूर्णांक cm_get_battery_temperature(काष्ठा अक्षरger_manager *cm,
+					पूर्णांक *temp)
+अणु
+	पूर्णांक ret;
 
-	if (!cm->desc->measure_battery_temp)
-		return -ENODEV;
+	अगर (!cm->desc->measure_battery_temp)
+		वापस -ENODEV;
 
-#ifdef CONFIG_THERMAL
-	if (cm->tzd_batt) {
+#अगर_घोषित CONFIG_THERMAL
+	अगर (cm->tzd_batt) अणु
 		ret = thermal_zone_get_temp(cm->tzd_batt, temp);
-		if (!ret)
+		अगर (!ret)
 			/* Calibrate temperature unit */
 			*temp /= 100;
-	} else
-#endif
-	{
-		/* if-else continued from CONFIG_THERMAL */
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
+		/* अगर-अन्यथा जारीd from CONFIG_THERMAL */
 		ret = cm_get_battery_temperature_by_psy(cm, temp);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cm_check_thermal_status(struct charger_manager *cm)
-{
-	struct charger_desc *desc = cm->desc;
-	int temp, upper_limit, lower_limit;
-	int ret = 0;
+अटल पूर्णांक cm_check_thermal_status(काष्ठा अक्षरger_manager *cm)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	पूर्णांक temp, upper_limit, lower_limit;
+	पूर्णांक ret = 0;
 
 	ret = cm_get_battery_temperature(cm, &temp);
-	if (ret) {
+	अगर (ret) अणु
 		/* FIXME:
-		 * No information of battery temperature might
-		 * occur hazardous result. We have to handle it
+		 * No inक्रमmation of battery temperature might
+		 * occur hazarकरोus result. We have to handle it
 		 * depending on battery type.
 		 */
 		dev_err(cm->dev, "Failed to get battery temperature\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	upper_limit = desc->temp_max;
 	lower_limit = desc->temp_min;
 
-	if (cm->emergency_stop) {
-		upper_limit -= desc->temp_diff;
-		lower_limit += desc->temp_diff;
-	}
+	अगर (cm->emergency_stop) अणु
+		upper_limit -= desc->temp_dअगरf;
+		lower_limit += desc->temp_dअगरf;
+	पूर्ण
 
-	if (temp > upper_limit)
+	अगर (temp > upper_limit)
 		ret = CM_BATT_OVERHEAT;
-	else if (temp < lower_limit)
+	अन्यथा अगर (temp < lower_limit)
 		ret = CM_BATT_COLD;
-	else
+	अन्यथा
 		ret = CM_BATT_OK;
 
 	cm->emergency_stop = ret;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * cm_get_target_status - Check current status and get next target status.
  * @cm: the Charger Manager representing the battery.
  */
-static int cm_get_target_status(struct charger_manager *cm)
-{
-	if (!is_ext_pwr_online(cm))
-		return POWER_SUPPLY_STATUS_DISCHARGING;
+अटल पूर्णांक cm_get_target_status(काष्ठा अक्षरger_manager *cm)
+अणु
+	अगर (!is_ext_pwr_online(cm))
+		वापस POWER_SUPPLY_STATUS_DISCHARGING;
 
-	if (cm_check_thermal_status(cm)) {
-		/* Check if discharging duration exceeds limit. */
-		if (check_charging_duration(cm))
-			goto charging_ok;
-		return POWER_SUPPLY_STATUS_NOT_CHARGING;
-	}
+	अगर (cm_check_thermal_status(cm)) अणु
+		/* Check अगर disअक्षरging duration exceeds limit. */
+		अगर (check_अक्षरging_duration(cm))
+			जाओ अक्षरging_ok;
+		वापस POWER_SUPPLY_STATUS_NOT_CHARGING;
+	पूर्ण
 
-	switch (cm->battery_status) {
-	case POWER_SUPPLY_STATUS_CHARGING:
-		/* Check if charging duration exceeds limit. */
-		if (check_charging_duration(cm))
-			return POWER_SUPPLY_STATUS_FULL;
+	चयन (cm->battery_status) अणु
+	हाल POWER_SUPPLY_STATUS_CHARGING:
+		/* Check अगर अक्षरging duration exceeds limit. */
+		अगर (check_अक्षरging_duration(cm))
+			वापस POWER_SUPPLY_STATUS_FULL;
 		fallthrough;
-	case POWER_SUPPLY_STATUS_FULL:
-		if (is_full_charged(cm))
-			return POWER_SUPPLY_STATUS_FULL;
+	हाल POWER_SUPPLY_STATUS_FULL:
+		अगर (is_full_अक्षरged(cm))
+			वापस POWER_SUPPLY_STATUS_FULL;
 		fallthrough;
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-charging_ok:
+अक्षरging_ok:
 	/* Charging is allowed. */
-	return POWER_SUPPLY_STATUS_CHARGING;
-}
+	वापस POWER_SUPPLY_STATUS_CHARGING;
+पूर्ण
 
 /**
- * _cm_monitor - Monitor the temperature and return true for exceptions.
+ * _cm_monitor - Monitor the temperature and वापस true क्रम exceptions.
  * @cm: the Charger Manager representing the battery.
  *
- * Returns true if there is an event to notify for the battery.
- * (True if the status of "emergency_stop" changes)
+ * Returns true अगर there is an event to notअगरy क्रम the battery.
+ * (True अगर the status of "emergency_stop" changes)
  */
-static bool _cm_monitor(struct charger_manager *cm)
-{
-	int target;
+अटल bool _cm_monitor(काष्ठा अक्षरger_manager *cm)
+अणु
+	पूर्णांक target;
 
 	target = cm_get_target_status(cm);
 
-	try_charger_enable(cm, (target == POWER_SUPPLY_STATUS_CHARGING));
+	try_अक्षरger_enable(cm, (target == POWER_SUPPLY_STATUS_CHARGING));
 
-	if (cm->battery_status != target) {
+	अगर (cm->battery_status != target) अणु
 		cm->battery_status = target;
-		power_supply_changed(cm->charger_psy);
-	}
+		घातer_supply_changed(cm->अक्षरger_psy);
+	पूर्ण
 
-	return (cm->battery_status == POWER_SUPPLY_STATUS_NOT_CHARGING);
-}
+	वापस (cm->battery_status == POWER_SUPPLY_STATUS_NOT_CHARGING);
+पूर्ण
 
 /**
  * cm_monitor - Monitor every battery.
  *
- * Returns true if there is an event to notify from any of the batteries.
- * (True if the status of "emergency_stop" changes)
+ * Returns true अगर there is an event to notअगरy from any of the batteries.
+ * (True अगर the status of "emergency_stop" changes)
  */
-static bool cm_monitor(void)
-{
+अटल bool cm_monitor(व्योम)
+अणु
 	bool stop = false;
-	struct charger_manager *cm;
+	काष्ठा अक्षरger_manager *cm;
 
 	mutex_lock(&cm_list_mtx);
 
-	list_for_each_entry(cm, &cm_list, entry) {
-		if (_cm_monitor(cm))
+	list_क्रम_each_entry(cm, &cm_list, entry) अणु
+		अगर (_cm_monitor(cm))
 			stop = true;
-	}
+	पूर्ण
 
 	mutex_unlock(&cm_list_mtx);
 
-	return stop;
-}
+	वापस stop;
+पूर्ण
 
 /**
  * _setup_polling - Setup the next instance of polling.
- * @work: work_struct of the function _setup_polling.
+ * @work: work_काष्ठा of the function _setup_polling.
  */
-static void _setup_polling(struct work_struct *work)
-{
-	unsigned long min = ULONG_MAX;
-	struct charger_manager *cm;
+अटल व्योम _setup_polling(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ min = अच_दीर्घ_उच्च;
+	काष्ठा अक्षरger_manager *cm;
 	bool keep_polling = false;
-	unsigned long _next_polling;
+	अचिन्हित दीर्घ _next_polling;
 
 	mutex_lock(&cm_list_mtx);
 
-	list_for_each_entry(cm, &cm_list, entry) {
-		if (is_polling_required(cm) && cm->desc->polling_interval_ms) {
+	list_क्रम_each_entry(cm, &cm_list, entry) अणु
+		अगर (is_polling_required(cm) && cm->desc->polling_पूर्णांकerval_ms) अणु
 			keep_polling = true;
 
-			if (min > cm->desc->polling_interval_ms)
-				min = cm->desc->polling_interval_ms;
-		}
-	}
+			अगर (min > cm->desc->polling_पूर्णांकerval_ms)
+				min = cm->desc->polling_पूर्णांकerval_ms;
+		पूर्ण
+	पूर्ण
 
-	polling_jiffy = msecs_to_jiffies(min);
-	if (polling_jiffy <= CM_JIFFIES_SMALL)
-		polling_jiffy = CM_JIFFIES_SMALL + 1;
+	polling_jअगरfy = msecs_to_jअगरfies(min);
+	अगर (polling_jअगरfy <= CM_JIFFIES_SMALL)
+		polling_jअगरfy = CM_JIFFIES_SMALL + 1;
 
-	if (!keep_polling)
-		polling_jiffy = ULONG_MAX;
-	if (polling_jiffy == ULONG_MAX)
-		goto out;
+	अगर (!keep_polling)
+		polling_jअगरfy = अच_दीर्घ_उच्च;
+	अगर (polling_jअगरfy == अच_दीर्घ_उच्च)
+		जाओ out;
 
-	WARN(cm_wq == NULL, "charger-manager: workqueue not initialized"
+	WARN(cm_wq == शून्य, "charger-manager: workqueue not initialized"
 			    ". try it later. %s\n", __func__);
 
 	/*
-	 * Use mod_delayed_work() iff the next polling interval should
-	 * occur before the currently scheduled one.  If @cm_monitor_work
+	 * Use mod_delayed_work() अगरf the next polling पूर्णांकerval should
+	 * occur beक्रमe the currently scheduled one.  If @cm_monitor_work
 	 * isn't active, the end result is the same, so no need to worry
 	 * about stale @next_polling.
 	 */
-	_next_polling = jiffies + polling_jiffy;
+	_next_polling = jअगरfies + polling_jअगरfy;
 
-	if (time_before(_next_polling, next_polling)) {
-		mod_delayed_work(cm_wq, &cm_monitor_work, polling_jiffy);
+	अगर (समय_beक्रमe(_next_polling, next_polling)) अणु
+		mod_delayed_work(cm_wq, &cm_monitor_work, polling_jअगरfy);
 		next_polling = _next_polling;
-	} else {
-		if (queue_delayed_work(cm_wq, &cm_monitor_work, polling_jiffy))
+	पूर्ण अन्यथा अणु
+		अगर (queue_delayed_work(cm_wq, &cm_monitor_work, polling_jअगरfy))
 			next_polling = _next_polling;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&cm_list_mtx);
-}
-static DECLARE_WORK(setup_polling, _setup_polling);
+पूर्ण
+अटल DECLARE_WORK(setup_polling, _setup_polling);
 
 /**
  * cm_monitor_poller - The Monitor / Poller.
- * @work: work_struct of the function cm_monitor_poller
+ * @work: work_काष्ठा of the function cm_monitor_poller
  *
  * During non-suspended state, cm_monitor_poller is used to poll and monitor
  * the batteries.
  */
-static void cm_monitor_poller(struct work_struct *work)
-{
+अटल व्योम cm_monitor_poller(काष्ठा work_काष्ठा *work)
+अणु
 	cm_monitor();
 	schedule_work(&setup_polling);
-}
+पूर्ण
 
-static int charger_get_property(struct power_supply *psy,
-		enum power_supply_property psp,
-		union power_supply_propval *val)
-{
-	struct charger_manager *cm = power_supply_get_drvdata(psy);
-	struct charger_desc *desc = cm->desc;
-	struct power_supply *fuel_gauge = NULL;
-	int ret = 0;
-	int uV;
+अटल पूर्णांक अक्षरger_get_property(काष्ठा घातer_supply *psy,
+		क्रमागत घातer_supply_property psp,
+		जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा अक्षरger_manager *cm = घातer_supply_get_drvdata(psy);
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	काष्ठा घातer_supply *fuel_gauge = शून्य;
+	पूर्णांक ret = 0;
+	पूर्णांक uV;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		val->intval = cm->battery_status;
-		break;
-	case POWER_SUPPLY_PROP_HEALTH:
-		if (cm->emergency_stop == CM_BATT_OVERHEAT)
-			val->intval = POWER_SUPPLY_HEALTH_OVERHEAT;
-		else if (cm->emergency_stop == CM_BATT_COLD)
-			val->intval = POWER_SUPPLY_HEALTH_COLD;
-		else
-			val->intval = POWER_SUPPLY_HEALTH_GOOD;
-		break;
-	case POWER_SUPPLY_PROP_PRESENT:
-		if (is_batt_present(cm))
-			val->intval = 1;
-		else
-			val->intval = 0;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		ret = get_batt_uV(cm, &val->intval);
-		break;
-	case POWER_SUPPLY_PROP_CURRENT_NOW:
-		fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-		if (!fuel_gauge) {
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		val->पूर्णांकval = cm->battery_status;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_HEALTH:
+		अगर (cm->emergency_stop == CM_BATT_OVERHEAT)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_OVERHEAT;
+		अन्यथा अगर (cm->emergency_stop == CM_BATT_COLD)
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_COLD;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_HEALTH_GOOD;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_PRESENT:
+		अगर (is_batt_present(cm))
+			val->पूर्णांकval = 1;
+		अन्यथा
+			val->पूर्णांकval = 0;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_VOLTAGE_NOW:
+		ret = get_batt_uV(cm, &val->पूर्णांकval);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CURRENT_NOW:
+		fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+		अगर (!fuel_gauge) अणु
 			ret = -ENODEV;
-			break;
-		}
-		ret = power_supply_get_property(fuel_gauge,
+			अवरोध;
+		पूर्ण
+		ret = घातer_supply_get_property(fuel_gauge,
 				POWER_SUPPLY_PROP_CURRENT_NOW, val);
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		return cm_get_battery_temperature(cm, &val->intval);
-	case POWER_SUPPLY_PROP_CAPACITY:
-		if (!is_batt_present(cm)) {
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		वापस cm_get_battery_temperature(cm, &val->पूर्णांकval);
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		अगर (!is_batt_present(cm)) अणु
 			/* There is no battery. Assume 100% */
-			val->intval = 100;
-			break;
-		}
+			val->पूर्णांकval = 100;
+			अवरोध;
+		पूर्ण
 
-		fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-		if (!fuel_gauge) {
+		fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+		अगर (!fuel_gauge) अणु
 			ret = -ENODEV;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ret = power_supply_get_property(fuel_gauge,
+		ret = घातer_supply_get_property(fuel_gauge,
 					POWER_SUPPLY_PROP_CAPACITY, val);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
-		if (val->intval > 100) {
-			val->intval = 100;
-			break;
-		}
-		if (val->intval < 0)
-			val->intval = 0;
+		अगर (val->पूर्णांकval > 100) अणु
+			val->पूर्णांकval = 100;
+			अवरोध;
+		पूर्ण
+		अगर (val->पूर्णांकval < 0)
+			val->पूर्णांकval = 0;
 
-		/* Do not adjust SOC when charging: voltage is overrated */
-		if (is_charging(cm))
-			break;
+		/* Do not adjust SOC when अक्षरging: voltage is overrated */
+		अगर (is_अक्षरging(cm))
+			अवरोध;
 
 		/*
 		 * If the capacity value is inconsistent, calibrate it base on
 		 * the battery voltage values and the thresholds given as desc
 		 */
 		ret = get_batt_uV(cm, &uV);
-		if (ret) {
-			/* Voltage information not available. No calibration */
+		अगर (ret) अणु
+			/* Voltage inक्रमmation not available. No calibration */
 			ret = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (desc->fullbatt_uV > 0 && uV >= desc->fullbatt_uV &&
-		    !is_charging(cm)) {
-			val->intval = 100;
-			break;
-		}
+		अगर (desc->fullbatt_uV > 0 && uV >= desc->fullbatt_uV &&
+		    !is_अक्षरging(cm)) अणु
+			val->पूर्णांकval = 100;
+			अवरोध;
+		पूर्ण
 
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		if (is_ext_pwr_online(cm))
-			val->intval = 1;
-		else
-			val->intval = 0;
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_FULL:
-	case POWER_SUPPLY_PROP_CHARGE_NOW:
-		fuel_gauge = power_supply_get_by_name(cm->desc->psy_fuel_gauge);
-		if (!fuel_gauge) {
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		अगर (is_ext_pwr_online(cm))
+			val->पूर्णांकval = 1;
+		अन्यथा
+			val->पूर्णांकval = 0;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_FULL:
+	हाल POWER_SUPPLY_PROP_CHARGE_NOW:
+		fuel_gauge = घातer_supply_get_by_name(cm->desc->psy_fuel_gauge);
+		अगर (!fuel_gauge) अणु
 			ret = -ENODEV;
-			break;
-		}
-		ret = power_supply_get_property(fuel_gauge, psp, val);
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (fuel_gauge)
-		power_supply_put(fuel_gauge);
-	return ret;
-}
+			अवरोध;
+		पूर्ण
+		ret = घातer_supply_get_property(fuel_gauge, psp, val);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (fuel_gauge)
+		घातer_supply_put(fuel_gauge);
+	वापस ret;
+पूर्ण
 
-#define NUM_CHARGER_PSY_OPTIONAL	(4)
-static enum power_supply_property default_charger_props[] = {
+#घोषणा NUM_CHARGER_PSY_OPTIONAL	(4)
+अटल क्रमागत घातer_supply_property शेष_अक्षरger_props[] = अणु
 	/* Guaranteed to provide */
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_HEALTH,
@@ -836,767 +837,767 @@ static enum power_supply_property default_charger_props[] = {
 	 * POWER_SUPPLY_PROP_CURRENT_NOW,
 	 * POWER_SUPPLY_PROP_TEMP,
 	 */
-};
+पूर्ण;
 
-static const struct power_supply_desc psy_default = {
+अटल स्थिर काष्ठा घातer_supply_desc psy_शेष = अणु
 	.name = "battery",
 	.type = POWER_SUPPLY_TYPE_BATTERY,
-	.properties = default_charger_props,
-	.num_properties = ARRAY_SIZE(default_charger_props),
-	.get_property = charger_get_property,
+	.properties = शेष_अक्षरger_props,
+	.num_properties = ARRAY_SIZE(शेष_अक्षरger_props),
+	.get_property = अक्षरger_get_property,
 	.no_thermal = true,
-};
+पूर्ण;
 
 /**
- * cm_setup_timer - For in-suspend monitoring setup wakeup alarm
- *		    for suspend_again.
+ * cm_setup_समयr - For in-suspend monitoring setup wakeup alarm
+ *		    क्रम suspend_again.
  *
- * Returns true if the alarm is set for Charger Manager to use.
- * Returns false if
- *	cm_setup_timer fails to set an alarm,
- *	cm_setup_timer does not need to set an alarm for Charger Manager,
+ * Returns true अगर the alarm is set क्रम Charger Manager to use.
+ * Returns false अगर
+ *	cm_setup_समयr fails to set an alarm,
+ *	cm_setup_समयr करोes not need to set an alarm क्रम Charger Manager,
  *	or an alarm previously configured is to be used.
  */
-static bool cm_setup_timer(void)
-{
-	struct charger_manager *cm;
-	unsigned int wakeup_ms = UINT_MAX;
-	int timer_req = 0;
+अटल bool cm_setup_समयr(व्योम)
+अणु
+	काष्ठा अक्षरger_manager *cm;
+	अचिन्हित पूर्णांक wakeup_ms = अच_पूर्णांक_उच्च;
+	पूर्णांक समयr_req = 0;
 
-	if (time_after(next_polling, jiffies))
+	अगर (समय_after(next_polling, jअगरfies))
 		CM_MIN_VALID(wakeup_ms,
-			jiffies_to_msecs(next_polling - jiffies));
+			jअगरfies_to_msecs(next_polling - jअगरfies));
 
 	mutex_lock(&cm_list_mtx);
-	list_for_each_entry(cm, &cm_list, entry) {
-		/* Skip if polling is not required for this CM */
-		if (!is_polling_required(cm) && !cm->emergency_stop)
-			continue;
-		timer_req++;
-		if (cm->desc->polling_interval_ms == 0)
-			continue;
-		CM_MIN_VALID(wakeup_ms, cm->desc->polling_interval_ms);
-	}
+	list_क्रम_each_entry(cm, &cm_list, entry) अणु
+		/* Skip अगर polling is not required क्रम this CM */
+		अगर (!is_polling_required(cm) && !cm->emergency_stop)
+			जारी;
+		समयr_req++;
+		अगर (cm->desc->polling_पूर्णांकerval_ms == 0)
+			जारी;
+		CM_MIN_VALID(wakeup_ms, cm->desc->polling_पूर्णांकerval_ms);
+	पूर्ण
 	mutex_unlock(&cm_list_mtx);
 
-	if (timer_req && cm_timer) {
-		ktime_t now, add;
+	अगर (समयr_req && cm_समयr) अणु
+		kसमय_प्रकार now, add;
 
 		/*
-		 * Set alarm with the polling interval (wakeup_ms)
-		 * The alarm time should be NOW + CM_RTC_SMALL or later.
+		 * Set alarm with the polling पूर्णांकerval (wakeup_ms)
+		 * The alarm समय should be NOW + CM_RTC_SMALL or later.
 		 */
-		if (wakeup_ms == UINT_MAX ||
+		अगर (wakeup_ms == अच_पूर्णांक_उच्च ||
 			wakeup_ms < CM_RTC_SMALL * MSEC_PER_SEC)
 			wakeup_ms = 2 * CM_RTC_SMALL * MSEC_PER_SEC;
 
 		pr_info("Charger Manager wakeup timer: %u ms\n", wakeup_ms);
 
-		now = ktime_get_boottime();
-		add = ktime_set(wakeup_ms / MSEC_PER_SEC,
+		now = kसमय_get_bootसमय();
+		add = kसमय_set(wakeup_ms / MSEC_PER_SEC,
 				(wakeup_ms % MSEC_PER_SEC) * NSEC_PER_MSEC);
-		alarm_start(cm_timer, ktime_add(now, add));
+		alarm_start(cm_समयr, kसमय_add(now, add));
 
 		cm_suspend_duration_ms = wakeup_ms;
 
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * charger_extcon_work - enable/diable charger according to the state
- *			of charger cable
+ * अक्षरger_extcon_work - enable/diable अक्षरger according to the state
+ *			of अक्षरger cable
  *
- * @work: work_struct of the function charger_extcon_work.
+ * @work: work_काष्ठा of the function अक्षरger_extcon_work.
  */
-static void charger_extcon_work(struct work_struct *work)
-{
-	struct charger_cable *cable =
-			container_of(work, struct charger_cable, wq);
-	int ret;
+अटल व्योम अक्षरger_extcon_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा अक्षरger_cable *cable =
+			container_of(work, काष्ठा अक्षरger_cable, wq);
+	पूर्णांक ret;
 
-	if (cable->attached && cable->min_uA != 0 && cable->max_uA != 0) {
-		ret = regulator_set_current_limit(cable->charger->consumer,
+	अगर (cable->attached && cable->min_uA != 0 && cable->max_uA != 0) अणु
+		ret = regulator_set_current_limit(cable->अक्षरger->consumer,
 					cable->min_uA, cable->max_uA);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			pr_err("Cannot set current limit of %s (%s)\n",
-			       cable->charger->regulator_name, cable->name);
-			return;
-		}
+			       cable->अक्षरger->regulator_name, cable->name);
+			वापस;
+		पूर्ण
 
 		pr_info("Set current limit of %s : %duA ~ %duA\n",
-			cable->charger->regulator_name,
+			cable->अक्षरger->regulator_name,
 			cable->min_uA, cable->max_uA);
-	}
+	पूर्ण
 
 	cancel_delayed_work(&cm_monitor_work);
 	queue_delayed_work(cm_wq, &cm_monitor_work, 0);
-}
+पूर्ण
 
 /**
- * charger_extcon_notifier - receive the state of charger cable
- *			when registered cable is attached or detached.
+ * अक्षरger_extcon_notअगरier - receive the state of अक्षरger cable
+ *			when रेजिस्टरed cable is attached or detached.
  *
- * @self: the notifier block of the charger_extcon_notifier.
+ * @self: the notअगरier block of the अक्षरger_extcon_notअगरier.
  * @event: the cable state.
- * @ptr: the data pointer of notifier block.
+ * @ptr: the data poपूर्णांकer of notअगरier block.
  */
-static int charger_extcon_notifier(struct notifier_block *self,
-			unsigned long event, void *ptr)
-{
-	struct charger_cable *cable =
-		container_of(self, struct charger_cable, nb);
+अटल पूर्णांक अक्षरger_extcon_notअगरier(काष्ठा notअगरier_block *self,
+			अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा अक्षरger_cable *cable =
+		container_of(self, काष्ठा अक्षरger_cable, nb);
 
 	/*
-	 * The newly state of charger cable.
+	 * The newly state of अक्षरger cable.
 	 * If cable is attached, cable->attached is true.
 	 */
 	cable->attached = event;
 
 	/*
-	 * Setup work for controlling charger(regulator)
-	 * according to charger cable.
+	 * Setup work क्रम controlling अक्षरger(regulator)
+	 * according to अक्षरger cable.
 	 */
 	schedule_work(&cable->wq);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /**
- * charger_extcon_init - register external connector to use it
- *			as the charger cable
+ * अक्षरger_extcon_init - रेजिस्टर बाह्यal connector to use it
+ *			as the अक्षरger cable
  *
  * @cm: the Charger Manager representing the battery.
- * @cable: the Charger cable representing the external connector.
+ * @cable: the Charger cable representing the बाह्यal connector.
  */
-static int charger_extcon_init(struct charger_manager *cm,
-		struct charger_cable *cable)
-{
-	int ret, i;
+अटल पूर्णांक अक्षरger_extcon_init(काष्ठा अक्षरger_manager *cm,
+		काष्ठा अक्षरger_cable *cable)
+अणु
+	पूर्णांक ret, i;
 	u64 extcon_type = EXTCON_NONE;
 
 	/*
-	 * Charger manager use Extcon framework to identify
-	 * the charger cable among various external connector
+	 * Charger manager use Extcon framework to identअगरy
+	 * the अक्षरger cable among various बाह्यal connector
 	 * cable (e.g., TA, USB, MHL, Dock).
 	 */
-	INIT_WORK(&cable->wq, charger_extcon_work);
-	cable->nb.notifier_call = charger_extcon_notifier;
+	INIT_WORK(&cable->wq, अक्षरger_extcon_work);
+	cable->nb.notअगरier_call = अक्षरger_extcon_notअगरier;
 
 	cable->extcon_dev = extcon_get_extcon_dev(cable->extcon_name);
-	if (IS_ERR_OR_NULL(cable->extcon_dev)) {
+	अगर (IS_ERR_OR_शून्य(cable->extcon_dev)) अणु
 		pr_err("Cannot find extcon_dev for %s (cable: %s)\n",
 			cable->extcon_name, cable->name);
-		if (cable->extcon_dev == NULL)
-			return -EPROBE_DEFER;
-		else
-			return PTR_ERR(cable->extcon_dev);
-	}
+		अगर (cable->extcon_dev == शून्य)
+			वापस -EPROBE_DEFER;
+		अन्यथा
+			वापस PTR_ERR(cable->extcon_dev);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(extcon_mapping); i++) {
-		if (!strcmp(cable->name, extcon_mapping[i].name)) {
+	क्रम (i = 0; i < ARRAY_SIZE(extcon_mapping); i++) अणु
+		अगर (!म_भेद(cable->name, extcon_mapping[i].name)) अणु
 			extcon_type = extcon_mapping[i].extcon_type;
-			break;
-		}
-	}
-	if (extcon_type == EXTCON_NONE) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (extcon_type == EXTCON_NONE) अणु
 		pr_err("Cannot find cable for type %s", cable->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cable->extcon_type = extcon_type;
 
-	ret = devm_extcon_register_notifier(cm->dev, cable->extcon_dev,
+	ret = devm_extcon_रेजिस्टर_notअगरier(cm->dev, cable->extcon_dev,
 		cable->extcon_type, &cable->nb);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("Cannot register extcon_dev for %s (cable: %s)\n",
 			cable->extcon_name, cable->name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * charger_manager_register_extcon - Register extcon device to receive state
- *				     of charger cable.
+ * अक्षरger_manager_रेजिस्टर_extcon - Register extcon device to receive state
+ *				     of अक्षरger cable.
  * @cm: the Charger Manager representing the battery.
  *
- * This function support EXTCON(External Connector) subsystem to detect the
- * state of charger cables for enabling or disabling charger(regulator) and
- * select the charger cable for charging among a number of external cable
+ * This function support EXTCON(External Connector) subप्रणाली to detect the
+ * state of अक्षरger cables क्रम enabling or disabling अक्षरger(regulator) and
+ * select the अक्षरger cable क्रम अक्षरging among a number of बाह्यal cable
  * according to policy of H/W board.
  */
-static int charger_manager_register_extcon(struct charger_manager *cm)
-{
-	struct charger_desc *desc = cm->desc;
-	struct charger_regulator *charger;
-	unsigned long event;
-	int ret;
-	int i;
-	int j;
+अटल पूर्णांक अक्षरger_manager_रेजिस्टर_extcon(काष्ठा अक्षरger_manager *cm)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	काष्ठा अक्षरger_regulator *अक्षरger;
+	अचिन्हित दीर्घ event;
+	पूर्णांक ret;
+	पूर्णांक i;
+	पूर्णांक j;
 
-	for (i = 0; i < desc->num_charger_regulators; i++) {
-		charger = &desc->charger_regulators[i];
+	क्रम (i = 0; i < desc->num_अक्षरger_regulators; i++) अणु
+		अक्षरger = &desc->अक्षरger_regulators[i];
 
-		charger->consumer = regulator_get(cm->dev,
-					charger->regulator_name);
-		if (IS_ERR(charger->consumer)) {
+		अक्षरger->consumer = regulator_get(cm->dev,
+					अक्षरger->regulator_name);
+		अगर (IS_ERR(अक्षरger->consumer)) अणु
 			dev_err(cm->dev, "Cannot find charger(%s)\n",
-				charger->regulator_name);
-			return PTR_ERR(charger->consumer);
-		}
-		charger->cm = cm;
+				अक्षरger->regulator_name);
+			वापस PTR_ERR(अक्षरger->consumer);
+		पूर्ण
+		अक्षरger->cm = cm;
 
-		for (j = 0; j < charger->num_cables; j++) {
-			struct charger_cable *cable = &charger->cables[j];
+		क्रम (j = 0; j < अक्षरger->num_cables; j++) अणु
+			काष्ठा अक्षरger_cable *cable = &अक्षरger->cables[j];
 
-			ret = charger_extcon_init(cm, cable);
-			if (ret < 0) {
+			ret = अक्षरger_extcon_init(cm, cable);
+			अगर (ret < 0) अणु
 				dev_err(cm->dev, "Cannot initialize charger(%s)\n",
-					charger->regulator_name);
-				return ret;
-			}
-			cable->charger = charger;
+					अक्षरger->regulator_name);
+				वापस ret;
+			पूर्ण
+			cable->अक्षरger = अक्षरger;
 			cable->cm = cm;
 
 			event = extcon_get_state(cable->extcon_dev,
 				cable->extcon_type);
-			charger_extcon_notifier(&cable->nb,
-				event, NULL);
-		}
-	}
+			अक्षरger_extcon_notअगरier(&cable->nb,
+				event, शून्य);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* help function of sysfs node to control charger(regulator) */
-static ssize_t charger_name_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct charger_regulator *charger
-		= container_of(attr, struct charger_regulator, attr_name);
+/* help function of sysfs node to control अक्षरger(regulator) */
+अटल sमाप_प्रकार अक्षरger_name_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा अक्षरger_regulator *अक्षरger
+		= container_of(attr, काष्ठा अक्षरger_regulator, attr_name);
 
-	return sprintf(buf, "%s\n", charger->regulator_name);
-}
+	वापस प्र_लिखो(buf, "%s\n", अक्षरger->regulator_name);
+पूर्ण
 
-static ssize_t charger_state_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct charger_regulator *charger
-		= container_of(attr, struct charger_regulator, attr_state);
-	int state = 0;
+अटल sमाप_प्रकार अक्षरger_state_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा अक्षरger_regulator *अक्षरger
+		= container_of(attr, काष्ठा अक्षरger_regulator, attr_state);
+	पूर्णांक state = 0;
 
-	if (!charger->externally_control)
-		state = regulator_is_enabled(charger->consumer);
+	अगर (!अक्षरger->बाह्यally_control)
+		state = regulator_is_enabled(अक्षरger->consumer);
 
-	return sprintf(buf, "%s\n", state ? "enabled" : "disabled");
-}
+	वापस प्र_लिखो(buf, "%s\n", state ? "enabled" : "disabled");
+पूर्ण
 
-static ssize_t charger_externally_control_show(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	struct charger_regulator *charger = container_of(attr,
-			struct charger_regulator, attr_externally_control);
+अटल sमाप_प्रकार अक्षरger_बाह्यally_control_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा अक्षरger_regulator *अक्षरger = container_of(attr,
+			काष्ठा अक्षरger_regulator, attr_बाह्यally_control);
 
-	return sprintf(buf, "%d\n", charger->externally_control);
-}
+	वापस प्र_लिखो(buf, "%d\n", अक्षरger->बाह्यally_control);
+पूर्ण
 
-static ssize_t charger_externally_control_store(struct device *dev,
-				struct device_attribute *attr, const char *buf,
-				size_t count)
-{
-	struct charger_regulator *charger
-		= container_of(attr, struct charger_regulator,
-					attr_externally_control);
-	struct charger_manager *cm = charger->cm;
-	struct charger_desc *desc = cm->desc;
-	int i;
-	int ret;
-	int externally_control;
-	int chargers_externally_control = 1;
+अटल sमाप_प्रकार अक्षरger_बाह्यally_control_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, स्थिर अक्षर *buf,
+				माप_प्रकार count)
+अणु
+	काष्ठा अक्षरger_regulator *अक्षरger
+		= container_of(attr, काष्ठा अक्षरger_regulator,
+					attr_बाह्यally_control);
+	काष्ठा अक्षरger_manager *cm = अक्षरger->cm;
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	पूर्णांक i;
+	पूर्णांक ret;
+	पूर्णांक बाह्यally_control;
+	पूर्णांक अक्षरgers_बाह्यally_control = 1;
 
-	ret = sscanf(buf, "%d", &externally_control);
-	if (ret == 0) {
+	ret = माला_पूछो(buf, "%d", &बाह्यally_control);
+	अगर (ret == 0) अणु
 		ret = -EINVAL;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!externally_control) {
-		charger->externally_control = 0;
-		return count;
-	}
+	अगर (!बाह्यally_control) अणु
+		अक्षरger->बाह्यally_control = 0;
+		वापस count;
+	पूर्ण
 
-	for (i = 0; i < desc->num_charger_regulators; i++) {
-		if (&desc->charger_regulators[i] != charger &&
-			!desc->charger_regulators[i].externally_control) {
+	क्रम (i = 0; i < desc->num_अक्षरger_regulators; i++) अणु
+		अगर (&desc->अक्षरger_regulators[i] != अक्षरger &&
+			!desc->अक्षरger_regulators[i].बाह्यally_control) अणु
 			/*
-			 * At least, one charger is controlled by
-			 * charger-manager
+			 * At least, one अक्षरger is controlled by
+			 * अक्षरger-manager
 			 */
-			chargers_externally_control = 0;
-			break;
-		}
-	}
+			अक्षरgers_बाह्यally_control = 0;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!chargers_externally_control) {
-		if (cm->charger_enabled) {
-			try_charger_enable(charger->cm, false);
-			charger->externally_control = externally_control;
-			try_charger_enable(charger->cm, true);
-		} else {
-			charger->externally_control = externally_control;
-		}
-	} else {
+	अगर (!अक्षरgers_बाह्यally_control) अणु
+		अगर (cm->अक्षरger_enabled) अणु
+			try_अक्षरger_enable(अक्षरger->cm, false);
+			अक्षरger->बाह्यally_control = बाह्यally_control;
+			try_अक्षरger_enable(अक्षरger->cm, true);
+		पूर्ण अन्यथा अणु
+			अक्षरger->बाह्यally_control = बाह्यally_control;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_warn(cm->dev,
 			 "'%s' regulator should be controlled in charger-manager because charger-manager must need at least one charger for charging\n",
-			 charger->regulator_name);
-	}
+			 अक्षरger->regulator_name);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
- * charger_manager_prepare_sysfs - Prepare sysfs entry for each charger
+ * अक्षरger_manager_prepare_sysfs - Prepare sysfs entry क्रम each अक्षरger
  * @cm: the Charger Manager representing the battery.
  *
- * This function add sysfs entry for charger(regulator) to control charger from
- * user-space. If some development board use one more chargers for charging
- * but only need one charger on specific case which is dependent on user
+ * This function add sysfs entry क्रम अक्षरger(regulator) to control अक्षरger from
+ * user-space. If some development board use one more अक्षरgers क्रम अक्षरging
+ * but only need one अक्षरger on specअगरic हाल which is dependent on user
  * scenario or hardware restrictions, the user enter 1 or 0(zero) to '/sys/
- * class/power_supply/battery/charger.[index]/externally_control'. For example,
- * if user enter 1 to 'sys/class/power_supply/battery/charger.[index]/
- * externally_control, this charger isn't controlled from charger-manager and
+ * class/घातer_supply/battery/अक्षरger.[index]/बाह्यally_control'. For example,
+ * अगर user enter 1 to 'sys/class/घातer_supply/battery/अक्षरger.[index]/
+ * बाह्यally_control, this अक्षरger isn't controlled from अक्षरger-manager and
  * always stay off state of regulator.
  */
-static int charger_manager_prepare_sysfs(struct charger_manager *cm)
-{
-	struct charger_desc *desc = cm->desc;
-	struct charger_regulator *charger;
-	int chargers_externally_control = 1;
-	char *name;
-	int i;
+अटल पूर्णांक अक्षरger_manager_prepare_sysfs(काष्ठा अक्षरger_manager *cm)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	काष्ठा अक्षरger_regulator *अक्षरger;
+	पूर्णांक अक्षरgers_बाह्यally_control = 1;
+	अक्षर *name;
+	पूर्णांक i;
 
-	/* Create sysfs entry to control charger(regulator) */
-	for (i = 0; i < desc->num_charger_regulators; i++) {
-		charger = &desc->charger_regulators[i];
+	/* Create sysfs entry to control अक्षरger(regulator) */
+	क्रम (i = 0; i < desc->num_अक्षरger_regulators; i++) अणु
+		अक्षरger = &desc->अक्षरger_regulators[i];
 
-		name = devm_kasprintf(cm->dev, GFP_KERNEL, "charger.%d", i);
-		if (!name)
-			return -ENOMEM;
+		name = devm_kaप्र_लिखो(cm->dev, GFP_KERNEL, "charger.%d", i);
+		अगर (!name)
+			वापस -ENOMEM;
 
-		charger->attrs[0] = &charger->attr_name.attr;
-		charger->attrs[1] = &charger->attr_state.attr;
-		charger->attrs[2] = &charger->attr_externally_control.attr;
-		charger->attrs[3] = NULL;
+		अक्षरger->attrs[0] = &अक्षरger->attr_name.attr;
+		अक्षरger->attrs[1] = &अक्षरger->attr_state.attr;
+		अक्षरger->attrs[2] = &अक्षरger->attr_बाह्यally_control.attr;
+		अक्षरger->attrs[3] = शून्य;
 
-		charger->attr_grp.name = name;
-		charger->attr_grp.attrs = charger->attrs;
-		desc->sysfs_groups[i] = &charger->attr_grp;
+		अक्षरger->attr_grp.name = name;
+		अक्षरger->attr_grp.attrs = अक्षरger->attrs;
+		desc->sysfs_groups[i] = &अक्षरger->attr_grp;
 
-		sysfs_attr_init(&charger->attr_name.attr);
-		charger->attr_name.attr.name = "name";
-		charger->attr_name.attr.mode = 0444;
-		charger->attr_name.show = charger_name_show;
+		sysfs_attr_init(&अक्षरger->attr_name.attr);
+		अक्षरger->attr_name.attr.name = "name";
+		अक्षरger->attr_name.attr.mode = 0444;
+		अक्षरger->attr_name.show = अक्षरger_name_show;
 
-		sysfs_attr_init(&charger->attr_state.attr);
-		charger->attr_state.attr.name = "state";
-		charger->attr_state.attr.mode = 0444;
-		charger->attr_state.show = charger_state_show;
+		sysfs_attr_init(&अक्षरger->attr_state.attr);
+		अक्षरger->attr_state.attr.name = "state";
+		अक्षरger->attr_state.attr.mode = 0444;
+		अक्षरger->attr_state.show = अक्षरger_state_show;
 
-		sysfs_attr_init(&charger->attr_externally_control.attr);
-		charger->attr_externally_control.attr.name
+		sysfs_attr_init(&अक्षरger->attr_बाह्यally_control.attr);
+		अक्षरger->attr_बाह्यally_control.attr.name
 				= "externally_control";
-		charger->attr_externally_control.attr.mode = 0644;
-		charger->attr_externally_control.show
-				= charger_externally_control_show;
-		charger->attr_externally_control.store
-				= charger_externally_control_store;
+		अक्षरger->attr_बाह्यally_control.attr.mode = 0644;
+		अक्षरger->attr_बाह्यally_control.show
+				= अक्षरger_बाह्यally_control_show;
+		अक्षरger->attr_बाह्यally_control.store
+				= अक्षरger_बाह्यally_control_store;
 
-		if (!desc->charger_regulators[i].externally_control ||
-				!chargers_externally_control)
-			chargers_externally_control = 0;
+		अगर (!desc->अक्षरger_regulators[i].बाह्यally_control ||
+				!अक्षरgers_बाह्यally_control)
+			अक्षरgers_बाह्यally_control = 0;
 
 		dev_info(cm->dev, "'%s' regulator's externally_control is %d\n",
-			 charger->regulator_name, charger->externally_control);
-	}
+			 अक्षरger->regulator_name, अक्षरger->बाह्यally_control);
+	पूर्ण
 
-	if (chargers_externally_control) {
+	अगर (अक्षरgers_बाह्यally_control) अणु
 		dev_err(cm->dev, "Cannot register regulator because charger-manager must need at least one charger for charging battery\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cm_init_thermal_data(struct charger_manager *cm,
-		struct power_supply *fuel_gauge,
-		enum power_supply_property *properties,
-		size_t *num_properties)
-{
-	struct charger_desc *desc = cm->desc;
-	union power_supply_propval val;
-	int ret;
+अटल पूर्णांक cm_init_thermal_data(काष्ठा अक्षरger_manager *cm,
+		काष्ठा घातer_supply *fuel_gauge,
+		क्रमागत घातer_supply_property *properties,
+		माप_प्रकार *num_properties)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	जोड़ घातer_supply_propval val;
+	पूर्णांक ret;
 
-	/* Verify whether fuel gauge provides battery temperature */
-	ret = power_supply_get_property(fuel_gauge,
+	/* Verअगरy whether fuel gauge provides battery temperature */
+	ret = घातer_supply_get_property(fuel_gauge,
 					POWER_SUPPLY_PROP_TEMP, &val);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		properties[*num_properties] = POWER_SUPPLY_PROP_TEMP;
 		(*num_properties)++;
 		cm->desc->measure_battery_temp = true;
-	}
-#ifdef CONFIG_THERMAL
-	if (ret && desc->thermal_zone) {
+	पूर्ण
+#अगर_घोषित CONFIG_THERMAL
+	अगर (ret && desc->thermal_zone) अणु
 		cm->tzd_batt =
 			thermal_zone_get_zone_by_name(desc->thermal_zone);
-		if (IS_ERR(cm->tzd_batt))
-			return PTR_ERR(cm->tzd_batt);
+		अगर (IS_ERR(cm->tzd_batt))
+			वापस PTR_ERR(cm->tzd_batt);
 
-		/* Use external thermometer */
+		/* Use बाह्यal thermometer */
 		properties[*num_properties] = POWER_SUPPLY_PROP_TEMP;
 		(*num_properties)++;
 		cm->desc->measure_battery_temp = true;
 		ret = 0;
-	}
-#endif
-	if (cm->desc->measure_battery_temp) {
-		/* NOTICE : Default allowable minimum charge temperature is 0 */
-		if (!desc->temp_max)
+	पूर्ण
+#पूर्ण_अगर
+	अगर (cm->desc->measure_battery_temp) अणु
+		/* NOTICE : Default allowable minimum अक्षरge temperature is 0 */
+		अगर (!desc->temp_max)
 			desc->temp_max = CM_DEFAULT_CHARGE_TEMP_MAX;
-		if (!desc->temp_diff)
-			desc->temp_diff = CM_DEFAULT_RECHARGE_TEMP_DIFF;
-	}
+		अगर (!desc->temp_dअगरf)
+			desc->temp_dअगरf = CM_DEFAULT_RECHARGE_TEMP_DIFF;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id charger_manager_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id अक्षरger_manager_match[] = अणु
+	अणु
 		.compatible = "charger-manager",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct charger_desc *of_cm_parse_desc(struct device *dev)
-{
-	struct charger_desc *desc;
-	struct device_node *np = dev->of_node;
+अटल काष्ठा अक्षरger_desc *of_cm_parse_desc(काष्ठा device *dev)
+अणु
+	काष्ठा अक्षरger_desc *desc;
+	काष्ठा device_node *np = dev->of_node;
 	u32 poll_mode = CM_POLL_DISABLE;
 	u32 battery_stat = CM_NO_BATTERY;
-	int num_chgs = 0;
+	पूर्णांक num_chgs = 0;
 
-	desc = devm_kzalloc(dev, sizeof(*desc), GFP_KERNEL);
-	if (!desc)
-		return ERR_PTR(-ENOMEM);
+	desc = devm_kzalloc(dev, माप(*desc), GFP_KERNEL);
+	अगर (!desc)
+		वापस ERR_PTR(-ENOMEM);
 
-	of_property_read_string(np, "cm-name", &desc->psy_name);
+	of_property_पढ़ो_string(np, "cm-name", &desc->psy_name);
 
-	of_property_read_u32(np, "cm-poll-mode", &poll_mode);
+	of_property_पढ़ो_u32(np, "cm-poll-mode", &poll_mode);
 	desc->polling_mode = poll_mode;
 
-	of_property_read_u32(np, "cm-poll-interval",
-				&desc->polling_interval_ms);
+	of_property_पढ़ो_u32(np, "cm-poll-interval",
+				&desc->polling_पूर्णांकerval_ms);
 
-	of_property_read_u32(np, "cm-fullbatt-vchkdrop-volt",
+	of_property_पढ़ो_u32(np, "cm-fullbatt-vchkdrop-volt",
 					&desc->fullbatt_vchkdrop_uV);
-	of_property_read_u32(np, "cm-fullbatt-voltage", &desc->fullbatt_uV);
-	of_property_read_u32(np, "cm-fullbatt-soc", &desc->fullbatt_soc);
-	of_property_read_u32(np, "cm-fullbatt-capacity",
+	of_property_पढ़ो_u32(np, "cm-fullbatt-voltage", &desc->fullbatt_uV);
+	of_property_पढ़ो_u32(np, "cm-fullbatt-soc", &desc->fullbatt_soc);
+	of_property_पढ़ो_u32(np, "cm-fullbatt-capacity",
 					&desc->fullbatt_full_capacity);
 
-	of_property_read_u32(np, "cm-battery-stat", &battery_stat);
+	of_property_पढ़ो_u32(np, "cm-battery-stat", &battery_stat);
 	desc->battery_present = battery_stat;
 
-	/* chargers */
+	/* अक्षरgers */
 	num_chgs = of_property_count_strings(np, "cm-chargers");
-	if (num_chgs > 0) {
-		int i;
+	अगर (num_chgs > 0) अणु
+		पूर्णांक i;
 
 		/* Allocate empty bin at the tail of array */
-		desc->psy_charger_stat = devm_kcalloc(dev,
+		desc->psy_अक्षरger_stat = devm_kसुस्मृति(dev,
 						      num_chgs + 1,
-						      sizeof(char *),
+						      माप(अक्षर *),
 						      GFP_KERNEL);
-		if (!desc->psy_charger_stat)
-			return ERR_PTR(-ENOMEM);
+		अगर (!desc->psy_अक्षरger_stat)
+			वापस ERR_PTR(-ENOMEM);
 
-		for (i = 0; i < num_chgs; i++)
-			of_property_read_string_index(np, "cm-chargers",
-						      i, &desc->psy_charger_stat[i]);
-	}
+		क्रम (i = 0; i < num_chgs; i++)
+			of_property_पढ़ो_string_index(np, "cm-chargers",
+						      i, &desc->psy_अक्षरger_stat[i]);
+	पूर्ण
 
-	of_property_read_string(np, "cm-fuel-gauge", &desc->psy_fuel_gauge);
+	of_property_पढ़ो_string(np, "cm-fuel-gauge", &desc->psy_fuel_gauge);
 
-	of_property_read_string(np, "cm-thermal-zone", &desc->thermal_zone);
+	of_property_पढ़ो_string(np, "cm-thermal-zone", &desc->thermal_zone);
 
-	of_property_read_u32(np, "cm-battery-cold", &desc->temp_min);
-	if (of_get_property(np, "cm-battery-cold-in-minus", NULL))
+	of_property_पढ़ो_u32(np, "cm-battery-cold", &desc->temp_min);
+	अगर (of_get_property(np, "cm-battery-cold-in-minus", शून्य))
 		desc->temp_min *= -1;
-	of_property_read_u32(np, "cm-battery-hot", &desc->temp_max);
-	of_property_read_u32(np, "cm-battery-temp-diff", &desc->temp_diff);
+	of_property_पढ़ो_u32(np, "cm-battery-hot", &desc->temp_max);
+	of_property_पढ़ो_u32(np, "cm-battery-temp-diff", &desc->temp_dअगरf);
 
-	of_property_read_u32(np, "cm-charging-max",
-				&desc->charging_max_duration_ms);
-	of_property_read_u32(np, "cm-discharging-max",
-				&desc->discharging_max_duration_ms);
+	of_property_पढ़ो_u32(np, "cm-charging-max",
+				&desc->अक्षरging_max_duration_ms);
+	of_property_पढ़ो_u32(np, "cm-discharging-max",
+				&desc->disअक्षरging_max_duration_ms);
 
-	/* battery charger regulators */
-	desc->num_charger_regulators = of_get_child_count(np);
-	if (desc->num_charger_regulators) {
-		struct charger_regulator *chg_regs;
-		struct device_node *child;
+	/* battery अक्षरger regulators */
+	desc->num_अक्षरger_regulators = of_get_child_count(np);
+	अगर (desc->num_अक्षरger_regulators) अणु
+		काष्ठा अक्षरger_regulator *chg_regs;
+		काष्ठा device_node *child;
 
-		chg_regs = devm_kcalloc(dev,
-					desc->num_charger_regulators,
-					sizeof(*chg_regs),
+		chg_regs = devm_kसुस्मृति(dev,
+					desc->num_अक्षरger_regulators,
+					माप(*chg_regs),
 					GFP_KERNEL);
-		if (!chg_regs)
-			return ERR_PTR(-ENOMEM);
+		अगर (!chg_regs)
+			वापस ERR_PTR(-ENOMEM);
 
-		desc->charger_regulators = chg_regs;
+		desc->अक्षरger_regulators = chg_regs;
 
-		desc->sysfs_groups = devm_kcalloc(dev,
-					desc->num_charger_regulators + 1,
-					sizeof(*desc->sysfs_groups),
+		desc->sysfs_groups = devm_kसुस्मृति(dev,
+					desc->num_अक्षरger_regulators + 1,
+					माप(*desc->sysfs_groups),
 					GFP_KERNEL);
-		if (!desc->sysfs_groups)
-			return ERR_PTR(-ENOMEM);
+		अगर (!desc->sysfs_groups)
+			वापस ERR_PTR(-ENOMEM);
 
-		for_each_child_of_node(np, child) {
-			struct charger_cable *cables;
-			struct device_node *_child;
+		क्रम_each_child_of_node(np, child) अणु
+			काष्ठा अक्षरger_cable *cables;
+			काष्ठा device_node *_child;
 
-			of_property_read_string(child, "cm-regulator-name",
+			of_property_पढ़ो_string(child, "cm-regulator-name",
 					&chg_regs->regulator_name);
 
-			/* charger cables */
+			/* अक्षरger cables */
 			chg_regs->num_cables = of_get_child_count(child);
-			if (chg_regs->num_cables) {
-				cables = devm_kcalloc(dev,
+			अगर (chg_regs->num_cables) अणु
+				cables = devm_kसुस्मृति(dev,
 						      chg_regs->num_cables,
-						      sizeof(*cables),
+						      माप(*cables),
 						      GFP_KERNEL);
-				if (!cables) {
+				अगर (!cables) अणु
 					of_node_put(child);
-					return ERR_PTR(-ENOMEM);
-				}
+					वापस ERR_PTR(-ENOMEM);
+				पूर्ण
 
 				chg_regs->cables = cables;
 
-				for_each_child_of_node(child, _child) {
-					of_property_read_string(_child,
+				क्रम_each_child_of_node(child, _child) अणु
+					of_property_पढ़ो_string(_child,
 					"cm-cable-name", &cables->name);
-					of_property_read_string(_child,
+					of_property_पढ़ो_string(_child,
 					"cm-cable-extcon",
 					&cables->extcon_name);
-					of_property_read_u32(_child,
+					of_property_पढ़ो_u32(_child,
 					"cm-cable-min",
 					&cables->min_uA);
-					of_property_read_u32(_child,
+					of_property_पढ़ो_u32(_child,
 					"cm-cable-max",
 					&cables->max_uA);
 					cables++;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			chg_regs++;
-		}
-	}
-	return desc;
-}
+		पूर्ण
+	पूर्ण
+	वापस desc;
+पूर्ण
 
-static inline struct charger_desc *cm_get_drv_data(struct platform_device *pdev)
-{
-	if (pdev->dev.of_node)
-		return of_cm_parse_desc(&pdev->dev);
-	return dev_get_platdata(&pdev->dev);
-}
+अटल अंतरभूत काष्ठा अक्षरger_desc *cm_get_drv_data(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (pdev->dev.of_node)
+		वापस of_cm_parse_desc(&pdev->dev);
+	वापस dev_get_platdata(&pdev->dev);
+पूर्ण
 
-static enum alarmtimer_restart cm_timer_func(struct alarm *alarm, ktime_t now)
-{
-	cm_timer_set = false;
-	return ALARMTIMER_NORESTART;
-}
+अटल क्रमागत alarmसमयr_restart cm_समयr_func(काष्ठा alarm *alarm, kसमय_प्रकार now)
+अणु
+	cm_समयr_set = false;
+	वापस ALARMTIMER_NORESTART;
+पूर्ण
 
-static int charger_manager_probe(struct platform_device *pdev)
-{
-	struct charger_desc *desc = cm_get_drv_data(pdev);
-	struct charger_manager *cm;
-	int ret, i = 0;
-	union power_supply_propval val;
-	struct power_supply *fuel_gauge;
-	enum power_supply_property *properties;
-	size_t num_properties;
-	struct power_supply_config psy_cfg = {};
+अटल पूर्णांक अक्षरger_manager_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा अक्षरger_desc *desc = cm_get_drv_data(pdev);
+	काष्ठा अक्षरger_manager *cm;
+	पूर्णांक ret, i = 0;
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *fuel_gauge;
+	क्रमागत घातer_supply_property *properties;
+	माप_प्रकार num_properties;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
 
-	if (IS_ERR(desc)) {
+	अगर (IS_ERR(desc)) अणु
 		dev_err(&pdev->dev, "No platform data (desc) found\n");
-		return PTR_ERR(desc);
-	}
+		वापस PTR_ERR(desc);
+	पूर्ण
 
-	cm = devm_kzalloc(&pdev->dev, sizeof(*cm), GFP_KERNEL);
-	if (!cm)
-		return -ENOMEM;
+	cm = devm_kzalloc(&pdev->dev, माप(*cm), GFP_KERNEL);
+	अगर (!cm)
+		वापस -ENOMEM;
 
-	/* Basic Values. Unspecified are Null or 0 */
+	/* Basic Values. Unspecअगरied are Null or 0 */
 	cm->dev = &pdev->dev;
 	cm->desc = desc;
 	psy_cfg.drv_data = cm;
 
-	/* Initialize alarm timer */
-	if (alarmtimer_get_rtcdev()) {
-		cm_timer = devm_kzalloc(cm->dev, sizeof(*cm_timer), GFP_KERNEL);
-		if (!cm_timer)
-			return -ENOMEM;
-		alarm_init(cm_timer, ALARM_BOOTTIME, cm_timer_func);
-	}
+	/* Initialize alarm समयr */
+	अगर (alarmसमयr_get_rtcdev()) अणु
+		cm_समयr = devm_kzalloc(cm->dev, माप(*cm_समयr), GFP_KERNEL);
+		अगर (!cm_समयr)
+			वापस -ENOMEM;
+		alarm_init(cm_समयr, ALARM_BOOTTIME, cm_समयr_func);
+	पूर्ण
 
 	/*
-	 * Some of the following do not need to be errors.
-	 * Users may intentionally ignore those features.
+	 * Some of the following करो not need to be errors.
+	 * Users may पूर्णांकentionally ignore those features.
 	 */
-	if (desc->fullbatt_uV == 0) {
+	अगर (desc->fullbatt_uV == 0) अणु
 		dev_info(&pdev->dev, "Ignoring full-battery voltage threshold as it is not supplied\n");
-	}
-	if (!desc->fullbatt_vchkdrop_uV) {
+	पूर्ण
+	अगर (!desc->fullbatt_vchkdrop_uV) अणु
 		dev_info(&pdev->dev, "Disabling full-battery voltage drop checking mechanism as it is not supplied\n");
 		desc->fullbatt_vchkdrop_uV = 0;
-	}
-	if (desc->fullbatt_soc == 0) {
+	पूर्ण
+	अगर (desc->fullbatt_soc == 0) अणु
 		dev_info(&pdev->dev, "Ignoring full-battery soc(state of charge) threshold as it is not supplied\n");
-	}
-	if (desc->fullbatt_full_capacity == 0) {
+	पूर्ण
+	अगर (desc->fullbatt_full_capacity == 0) अणु
 		dev_info(&pdev->dev, "Ignoring full-battery full capacity threshold as it is not supplied\n");
-	}
+	पूर्ण
 
-	if (!desc->charger_regulators || desc->num_charger_regulators < 1) {
+	अगर (!desc->अक्षरger_regulators || desc->num_अक्षरger_regulators < 1) अणु
 		dev_err(&pdev->dev, "charger_regulators undefined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!desc->psy_charger_stat || !desc->psy_charger_stat[0]) {
+	अगर (!desc->psy_अक्षरger_stat || !desc->psy_अक्षरger_stat[0]) अणु
 		dev_err(&pdev->dev, "No power supply defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!desc->psy_fuel_gauge) {
+	अगर (!desc->psy_fuel_gauge) अणु
 		dev_err(&pdev->dev, "No fuel gauge power supply defined\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Check if charger's supplies are present at probe */
-	for (i = 0; desc->psy_charger_stat[i]; i++) {
-		struct power_supply *psy;
+	/* Check अगर अक्षरger's supplies are present at probe */
+	क्रम (i = 0; desc->psy_अक्षरger_stat[i]; i++) अणु
+		काष्ठा घातer_supply *psy;
 
-		psy = power_supply_get_by_name(desc->psy_charger_stat[i]);
-		if (!psy) {
+		psy = घातer_supply_get_by_name(desc->psy_अक्षरger_stat[i]);
+		अगर (!psy) अणु
 			dev_err(&pdev->dev, "Cannot find power supply \"%s\"\n",
-				desc->psy_charger_stat[i]);
-			return -ENODEV;
-		}
-		power_supply_put(psy);
-	}
+				desc->psy_अक्षरger_stat[i]);
+			वापस -ENODEV;
+		पूर्ण
+		घातer_supply_put(psy);
+	पूर्ण
 
-	if (cm->desc->polling_mode != CM_POLL_DISABLE &&
-	    (desc->polling_interval_ms == 0 ||
-	     msecs_to_jiffies(desc->polling_interval_ms) <= CM_JIFFIES_SMALL)) {
+	अगर (cm->desc->polling_mode != CM_POLL_DISABLE &&
+	    (desc->polling_पूर्णांकerval_ms == 0 ||
+	     msecs_to_jअगरfies(desc->polling_पूर्णांकerval_ms) <= CM_JIFFIES_SMALL)) अणु
 		dev_err(&pdev->dev, "polling_interval_ms is too small\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!desc->charging_max_duration_ms ||
-			!desc->discharging_max_duration_ms) {
+	अगर (!desc->अक्षरging_max_duration_ms ||
+			!desc->disअक्षरging_max_duration_ms) अणु
 		dev_info(&pdev->dev, "Cannot limit charging duration checking mechanism to prevent overcharge/overheat and control discharging duration\n");
-		desc->charging_max_duration_ms = 0;
-		desc->discharging_max_duration_ms = 0;
-	}
+		desc->अक्षरging_max_duration_ms = 0;
+		desc->disअक्षरging_max_duration_ms = 0;
+	पूर्ण
 
-	platform_set_drvdata(pdev, cm);
+	platक्रमm_set_drvdata(pdev, cm);
 
-	memcpy(&cm->charger_psy_desc, &psy_default, sizeof(psy_default));
+	स_नकल(&cm->अक्षरger_psy_desc, &psy_शेष, माप(psy_शेष));
 
-	if (!desc->psy_name)
-		strncpy(cm->psy_name_buf, psy_default.name, PSY_NAME_MAX);
-	else
-		strncpy(cm->psy_name_buf, desc->psy_name, PSY_NAME_MAX);
-	cm->charger_psy_desc.name = cm->psy_name_buf;
+	अगर (!desc->psy_name)
+		म_नकलन(cm->psy_name_buf, psy_शेष.name, PSY_NAME_MAX);
+	अन्यथा
+		म_नकलन(cm->psy_name_buf, desc->psy_name, PSY_NAME_MAX);
+	cm->अक्षरger_psy_desc.name = cm->psy_name_buf;
 
-	/* Allocate for psy properties because they may vary */
-	properties = devm_kcalloc(&pdev->dev,
-			     ARRAY_SIZE(default_charger_props) +
+	/* Allocate क्रम psy properties because they may vary */
+	properties = devm_kसुस्मृति(&pdev->dev,
+			     ARRAY_SIZE(शेष_अक्षरger_props) +
 				NUM_CHARGER_PSY_OPTIONAL,
-			     sizeof(*properties), GFP_KERNEL);
-	if (!properties)
-		return -ENOMEM;
+			     माप(*properties), GFP_KERNEL);
+	अगर (!properties)
+		वापस -ENOMEM;
 
-	memcpy(properties, default_charger_props,
-		sizeof(enum power_supply_property) *
-		ARRAY_SIZE(default_charger_props));
-	num_properties = ARRAY_SIZE(default_charger_props);
+	स_नकल(properties, शेष_अक्षरger_props,
+		माप(क्रमागत घातer_supply_property) *
+		ARRAY_SIZE(शेष_अक्षरger_props));
+	num_properties = ARRAY_SIZE(शेष_अक्षरger_props);
 
 	/* Find which optional psy-properties are available */
-	fuel_gauge = power_supply_get_by_name(desc->psy_fuel_gauge);
-	if (!fuel_gauge) {
+	fuel_gauge = घातer_supply_get_by_name(desc->psy_fuel_gauge);
+	अगर (!fuel_gauge) अणु
 		dev_err(&pdev->dev, "Cannot find power supply \"%s\"\n",
 			desc->psy_fuel_gauge);
-		return -ENODEV;
-	}
-	if (!power_supply_get_property(fuel_gauge,
-					POWER_SUPPLY_PROP_CHARGE_FULL, &val)) {
+		वापस -ENODEV;
+	पूर्ण
+	अगर (!घातer_supply_get_property(fuel_gauge,
+					POWER_SUPPLY_PROP_CHARGE_FULL, &val)) अणु
 		properties[num_properties] =
 				POWER_SUPPLY_PROP_CHARGE_FULL;
 		num_properties++;
-	}
-	if (!power_supply_get_property(fuel_gauge,
-					  POWER_SUPPLY_PROP_CHARGE_NOW, &val)) {
+	पूर्ण
+	अगर (!घातer_supply_get_property(fuel_gauge,
+					  POWER_SUPPLY_PROP_CHARGE_NOW, &val)) अणु
 		properties[num_properties] =
 				POWER_SUPPLY_PROP_CHARGE_NOW;
 		num_properties++;
-	}
-	if (!power_supply_get_property(fuel_gauge,
+	पूर्ण
+	अगर (!घातer_supply_get_property(fuel_gauge,
 					  POWER_SUPPLY_PROP_CURRENT_NOW,
-					  &val)) {
+					  &val)) अणु
 		properties[num_properties] =
 				POWER_SUPPLY_PROP_CURRENT_NOW;
 		num_properties++;
-	}
+	पूर्ण
 
 	ret = cm_init_thermal_data(cm, fuel_gauge, properties, &num_properties);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to initialize thermal data\n");
 		cm->desc->measure_battery_temp = false;
-	}
-	power_supply_put(fuel_gauge);
+	पूर्ण
+	घातer_supply_put(fuel_gauge);
 
-	cm->charger_psy_desc.properties = properties;
-	cm->charger_psy_desc.num_properties = num_properties;
+	cm->अक्षरger_psy_desc.properties = properties;
+	cm->अक्षरger_psy_desc.num_properties = num_properties;
 
-	/* Register sysfs entry for charger(regulator) */
-	ret = charger_manager_prepare_sysfs(cm);
-	if (ret < 0) {
+	/* Register sysfs entry क्रम अक्षरger(regulator) */
+	ret = अक्षरger_manager_prepare_sysfs(cm);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev,
 			"Cannot prepare sysfs entry of regulators\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	psy_cfg.attr_grp = desc->sysfs_groups;
 
-	cm->charger_psy = power_supply_register(&pdev->dev,
-						&cm->charger_psy_desc,
+	cm->अक्षरger_psy = घातer_supply_रेजिस्टर(&pdev->dev,
+						&cm->अक्षरger_psy_desc,
 						&psy_cfg);
-	if (IS_ERR(cm->charger_psy)) {
+	अगर (IS_ERR(cm->अक्षरger_psy)) अणु
 		dev_err(&pdev->dev, "Cannot register charger-manager with name \"%s\"\n",
-			cm->charger_psy_desc.name);
-		return PTR_ERR(cm->charger_psy);
-	}
+			cm->अक्षरger_psy_desc.name);
+		वापस PTR_ERR(cm->अक्षरger_psy);
+	पूर्ण
 
-	/* Register extcon device for charger cable */
-	ret = charger_manager_register_extcon(cm);
-	if (ret < 0) {
+	/* Register extcon device क्रम अक्षरger cable */
+	ret = अक्षरger_manager_रेजिस्टर_extcon(cm);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Cannot initialize extcon device\n");
-		goto err_reg_extcon;
-	}
+		जाओ err_reg_extcon;
+	पूर्ण
 
 	/* Add to the list */
 	mutex_lock(&cm_list_mtx);
@@ -1604,37 +1605,37 @@ static int charger_manager_probe(struct platform_device *pdev)
 	mutex_unlock(&cm_list_mtx);
 
 	/*
-	 * Charger-manager is capable of waking up the system from sleep
-	 * when event is happened through cm_notify_event()
+	 * Charger-manager is capable of waking up the प्रणाली from sleep
+	 * when event is happened through cm_notअगरy_event()
 	 */
 	device_init_wakeup(&pdev->dev, true);
 	device_set_wakeup_capable(&pdev->dev, false);
 
 	/*
-	 * Charger-manager have to check the charging state right after
-	 * initialization of charger-manager and then update current charging
+	 * Charger-manager have to check the अक्षरging state right after
+	 * initialization of अक्षरger-manager and then update current अक्षरging
 	 * state.
 	 */
 	cm_monitor();
 
 	schedule_work(&setup_polling);
 
-	return 0;
+	वापस 0;
 
 err_reg_extcon:
-	for (i = 0; i < desc->num_charger_regulators; i++)
-		regulator_put(desc->charger_regulators[i].consumer);
+	क्रम (i = 0; i < desc->num_अक्षरger_regulators; i++)
+		regulator_put(desc->अक्षरger_regulators[i].consumer);
 
-	power_supply_unregister(cm->charger_psy);
+	घातer_supply_unरेजिस्टर(cm->अक्षरger_psy);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int charger_manager_remove(struct platform_device *pdev)
-{
-	struct charger_manager *cm = platform_get_drvdata(pdev);
-	struct charger_desc *desc = cm->desc;
-	int i = 0;
+अटल पूर्णांक अक्षरger_manager_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा अक्षरger_manager *cm = platक्रमm_get_drvdata(pdev);
+	काष्ठा अक्षरger_desc *desc = cm->desc;
+	पूर्णांक i = 0;
 
 	/* Remove from the list */
 	mutex_lock(&cm_list_mtx);
@@ -1644,128 +1645,128 @@ static int charger_manager_remove(struct platform_device *pdev)
 	cancel_work_sync(&setup_polling);
 	cancel_delayed_work_sync(&cm_monitor_work);
 
-	for (i = 0 ; i < desc->num_charger_regulators ; i++)
-		regulator_put(desc->charger_regulators[i].consumer);
+	क्रम (i = 0 ; i < desc->num_अक्षरger_regulators ; i++)
+		regulator_put(desc->अक्षरger_regulators[i].consumer);
 
-	power_supply_unregister(cm->charger_psy);
+	घातer_supply_unरेजिस्टर(cm->अक्षरger_psy);
 
-	try_charger_enable(cm, false);
+	try_अक्षरger_enable(cm, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id charger_manager_id[] = {
-	{ "charger-manager", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, charger_manager_id);
+अटल स्थिर काष्ठा platक्रमm_device_id अक्षरger_manager_id[] = अणु
+	अणु "charger-manager", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, अक्षरger_manager_id);
 
-static int cm_suspend_noirq(struct device *dev)
-{
-	if (device_may_wakeup(dev)) {
+अटल पूर्णांक cm_suspend_noirq(काष्ठा device *dev)
+अणु
+	अगर (device_may_wakeup(dev)) अणु
 		device_set_wakeup_capable(dev, false);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool cm_need_to_awake(void)
-{
-	struct charger_manager *cm;
+अटल bool cm_need_to_awake(व्योम)
+अणु
+	काष्ठा अक्षरger_manager *cm;
 
-	if (cm_timer)
-		return false;
+	अगर (cm_समयr)
+		वापस false;
 
 	mutex_lock(&cm_list_mtx);
-	list_for_each_entry(cm, &cm_list, entry) {
-		if (is_charging(cm)) {
+	list_क्रम_each_entry(cm, &cm_list, entry) अणु
+		अगर (is_अक्षरging(cm)) अणु
 			mutex_unlock(&cm_list_mtx);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&cm_list_mtx);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int cm_suspend_prepare(struct device *dev)
-{
-	if (cm_need_to_awake())
-		return -EBUSY;
+अटल पूर्णांक cm_suspend_prepare(काष्ठा device *dev)
+अणु
+	अगर (cm_need_to_awake())
+		वापस -EBUSY;
 
-	if (!cm_suspended)
+	अगर (!cm_suspended)
 		cm_suspended = true;
 
-	cm_timer_set = cm_setup_timer();
+	cm_समयr_set = cm_setup_समयr();
 
-	if (cm_timer_set) {
+	अगर (cm_समयr_set) अणु
 		cancel_work_sync(&setup_polling);
 		cancel_delayed_work_sync(&cm_monitor_work);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cm_suspend_complete(struct device *dev)
-{
-	struct charger_manager *cm = dev_get_drvdata(dev);
+अटल व्योम cm_suspend_complete(काष्ठा device *dev)
+अणु
+	काष्ठा अक्षरger_manager *cm = dev_get_drvdata(dev);
 
-	if (cm_suspended)
+	अगर (cm_suspended)
 		cm_suspended = false;
 
-	if (cm_timer_set) {
-		ktime_t remain;
+	अगर (cm_समयr_set) अणु
+		kसमय_प्रकार reमुख्य;
 
-		alarm_cancel(cm_timer);
-		cm_timer_set = false;
-		remain = alarm_expires_remaining(cm_timer);
-		cm_suspend_duration_ms -= ktime_to_ms(remain);
+		alarm_cancel(cm_समयr);
+		cm_समयr_set = false;
+		reमुख्य = alarm_expires_reमुख्यing(cm_समयr);
+		cm_suspend_duration_ms -= kसमय_प्रकारo_ms(reमुख्य);
 		schedule_work(&setup_polling);
-	}
+	पूर्ण
 
 	_cm_monitor(cm);
 
 	device_set_wakeup_capable(cm->dev, false);
-}
+पूर्ण
 
-static const struct dev_pm_ops charger_manager_pm = {
+अटल स्थिर काष्ठा dev_pm_ops अक्षरger_manager_pm = अणु
 	.prepare	= cm_suspend_prepare,
 	.suspend_noirq	= cm_suspend_noirq,
 	.complete	= cm_suspend_complete,
-};
+पूर्ण;
 
-static struct platform_driver charger_manager_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver अक्षरger_manager_driver = अणु
+	.driver = अणु
 		.name = "charger-manager",
-		.pm = &charger_manager_pm,
-		.of_match_table = charger_manager_match,
-	},
-	.probe = charger_manager_probe,
-	.remove = charger_manager_remove,
-	.id_table = charger_manager_id,
-};
+		.pm = &अक्षरger_manager_pm,
+		.of_match_table = अक्षरger_manager_match,
+	पूर्ण,
+	.probe = अक्षरger_manager_probe,
+	.हटाओ = अक्षरger_manager_हटाओ,
+	.id_table = अक्षरger_manager_id,
+पूर्ण;
 
-static int __init charger_manager_init(void)
-{
-	cm_wq = create_freezable_workqueue("charger_manager");
-	if (unlikely(!cm_wq))
-		return -ENOMEM;
+अटल पूर्णांक __init अक्षरger_manager_init(व्योम)
+अणु
+	cm_wq = create_मुक्तzable_workqueue("charger_manager");
+	अगर (unlikely(!cm_wq))
+		वापस -ENOMEM;
 
 	INIT_DELAYED_WORK(&cm_monitor_work, cm_monitor_poller);
 
-	return platform_driver_register(&charger_manager_driver);
-}
-late_initcall(charger_manager_init);
+	वापस platक्रमm_driver_रेजिस्टर(&अक्षरger_manager_driver);
+पूर्ण
+late_initcall(अक्षरger_manager_init);
 
-static void __exit charger_manager_cleanup(void)
-{
+अटल व्योम __निकास अक्षरger_manager_cleanup(व्योम)
+अणु
 	destroy_workqueue(cm_wq);
-	cm_wq = NULL;
+	cm_wq = शून्य;
 
-	platform_driver_unregister(&charger_manager_driver);
-}
-module_exit(charger_manager_cleanup);
+	platक्रमm_driver_unरेजिस्टर(&अक्षरger_manager_driver);
+पूर्ण
+module_निकास(अक्षरger_manager_cleanup);
 
 MODULE_AUTHOR("MyungJoo Ham <myungjoo.ham@samsung.com>");
 MODULE_DESCRIPTION("Charger Manager");

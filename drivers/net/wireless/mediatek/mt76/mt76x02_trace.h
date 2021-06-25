@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (C) 2016 Felix Fietkau <nbd@nbd.name>
  */
 
-#if !defined(__MT76x02_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
-#define __MT76x02_TRACE_H
+#अगर !defined(__MT76x02_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा __MT76x02_TRACE_H
 
-#include <linux/tracepoint.h>
-#include "mt76x02.h"
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश "mt76x02.h"
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mt76x02
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mt76x02
 
-#define MAXNAME		32
-#define DEV_ENTRY	__array(char, wiphy_name, 32)
-#define DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
+#घोषणा MAXNAME		32
+#घोषणा DEV_ENTRY	__array(अक्षर, wiphy_name, 32)
+#घोषणा DEV_ASSIGN	strlcpy(__entry->wiphy_name,	\
 				wiphy_name(mt76_hw(dev)->wiphy), MAXNAME)
-#define DEV_PR_FMT	"%s"
-#define DEV_PR_ARG	__entry->wiphy_name
+#घोषणा DEV_PR_FMT	"%s"
+#घोषणा DEV_PR_ARG	__entry->wiphy_name
 
-#define TXID_ENTRY	__field(u8, wcid) __field(u8, pktid)
-#define TXID_PR_FMT	" [%d:%d]"
-#define TXID_PR_ARG	__entry->wcid, __entry->pktid
+#घोषणा TXID_ENTRY	__field(u8, wcid) __field(u8, pktid)
+#घोषणा TXID_PR_FMT	" [%d:%d]"
+#घोषणा TXID_PR_ARG	__entry->wcid, __entry->pktid
 
 DECLARE_EVENT_CLASS(dev_evt,
-	TP_PROTO(struct mt76x02_dev *dev),
+	TP_PROTO(काष्ठा mt76x02_dev *dev),
 	TP_ARGS(dev),
 	TP_STRUCT__entry(
 		DEV_ENTRY
@@ -32,17 +33,17 @@ DECLARE_EVENT_CLASS(dev_evt,
 	TP_fast_assign(
 		DEV_ASSIGN;
 	),
-	TP_printk(DEV_PR_FMT, DEV_PR_ARG)
+	TP_prपूर्णांकk(DEV_PR_FMT, DEV_PR_ARG)
 );
 
 DEFINE_EVENT(dev_evt, mac_txstat_poll,
-	TP_PROTO(struct mt76x02_dev *dev),
+	TP_PROTO(काष्ठा mt76x02_dev *dev),
 	TP_ARGS(dev)
 );
 
 TRACE_EVENT(mac_txstat_fetch,
-	TP_PROTO(struct mt76x02_dev *dev,
-		 struct mt76x02_tx_status *stat),
+	TP_PROTO(काष्ठा mt76x02_dev *dev,
+		 काष्ठा mt76x02_tx_status *stat),
 
 	TP_ARGS(dev, stat),
 
@@ -67,7 +68,7 @@ TRACE_EVENT(mac_txstat_fetch,
 		__entry->retry = stat->retry;
 	),
 
-	TP_printk(
+	TP_prपूर्णांकk(
 		DEV_PR_FMT TXID_PR_FMT
 		" success:%d aggr:%d ack_req:%d"
 		" rate:%04x retry:%d",
@@ -77,11 +78,11 @@ TRACE_EVENT(mac_txstat_fetch,
 	)
 );
 
-#endif
+#पूर्ण_अगर
 
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE mt76x02_trace
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता mt76x02_trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

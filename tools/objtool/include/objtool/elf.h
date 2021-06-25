@@ -1,108 +1,109 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#ifndef _OBJTOOL_ELF_H
-#define _OBJTOOL_ELF_H
+#अगर_अघोषित _OBJTOOL_ELF_H
+#घोषणा _OBJTOOL_ELF_H
 
-#include <stdio.h>
-#include <gelf.h>
-#include <linux/list.h>
-#include <linux/hashtable.h>
-#include <linux/rbtree.h>
-#include <linux/jhash.h>
+#समावेश <मानकपन.स>
+#समावेश <gelf.h>
+#समावेश <linux/list.h>
+#समावेश <linux/hashtable.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/jhash.h>
 
-#ifdef LIBELF_USE_DEPRECATED
-# define elf_getshdrnum    elf_getshnum
-# define elf_getshdrstrndx elf_getshstrndx
-#endif
+#अगर_घोषित LIBELF_USE_DEPRECATED
+# define elf_माला_लोhdrnum    elf_माला_लोhnum
+# define elf_माला_लोhdrstrndx elf_माला_लोhstrndx
+#पूर्ण_अगर
 
 /*
- * Fallback for systems without this "read, mmaping if possible" cmd.
+ * Fallback क्रम प्रणालीs without this "read, mmaping if possible" cmd.
  */
-#ifndef ELF_C_READ_MMAP
-#define ELF_C_READ_MMAP ELF_C_READ
-#endif
+#अगर_अघोषित ELF_C_READ_MMAP
+#घोषणा ELF_C_READ_MMAP ELF_C_READ
+#पूर्ण_अगर
 
-struct section {
-	struct list_head list;
-	struct hlist_node hash;
-	struct hlist_node name_hash;
+काष्ठा section अणु
+	काष्ठा list_head list;
+	काष्ठा hlist_node hash;
+	काष्ठा hlist_node name_hash;
 	GElf_Shdr sh;
-	struct rb_root symbol_tree;
-	struct list_head symbol_list;
-	struct list_head reloc_list;
-	struct section *base, *reloc;
-	struct symbol *sym;
+	काष्ठा rb_root symbol_tree;
+	काष्ठा list_head symbol_list;
+	काष्ठा list_head reloc_list;
+	काष्ठा section *base, *reloc;
+	काष्ठा symbol *sym;
 	Elf_Data *data;
-	char *name;
-	int idx;
-	unsigned int len;
+	अक्षर *name;
+	पूर्णांक idx;
+	अचिन्हित पूर्णांक len;
 	bool changed, text, rodata, noinstr;
-};
+पूर्ण;
 
-struct symbol {
-	struct list_head list;
-	struct rb_node node;
-	struct hlist_node hash;
-	struct hlist_node name_hash;
+काष्ठा symbol अणु
+	काष्ठा list_head list;
+	काष्ठा rb_node node;
+	काष्ठा hlist_node hash;
+	काष्ठा hlist_node name_hash;
 	GElf_Sym sym;
-	struct section *sec;
-	char *name;
-	unsigned int idx;
-	unsigned char bind, type;
-	unsigned long offset;
-	unsigned int len;
-	struct symbol *pfunc, *cfunc, *alias;
+	काष्ठा section *sec;
+	अक्षर *name;
+	अचिन्हित पूर्णांक idx;
+	अचिन्हित अक्षर bind, type;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित पूर्णांक len;
+	काष्ठा symbol *pfunc, *cfunc, *alias;
 	bool uaccess_safe;
-	bool static_call_tramp;
-};
+	bool अटल_call_tramp;
+पूर्ण;
 
-struct reloc {
-	struct list_head list;
-	struct hlist_node hash;
-	union {
+काष्ठा reloc अणु
+	काष्ठा list_head list;
+	काष्ठा hlist_node hash;
+	जोड़ अणु
 		GElf_Rela rela;
 		GElf_Rel  rel;
-	};
-	struct section *sec;
-	struct symbol *sym;
-	unsigned long offset;
-	unsigned int type;
-	int addend;
-	int idx;
+	पूर्ण;
+	काष्ठा section *sec;
+	काष्ठा symbol *sym;
+	अचिन्हित दीर्घ offset;
+	अचिन्हित पूर्णांक type;
+	पूर्णांक addend;
+	पूर्णांक idx;
 	bool jump_table_start;
-};
+पूर्ण;
 
-#define ELF_HASH_BITS	20
+#घोषणा ELF_HASH_BITS	20
 
-struct elf {
+काष्ठा elf अणु
 	Elf *elf;
 	GElf_Ehdr ehdr;
-	int fd;
+	पूर्णांक fd;
 	bool changed;
-	char *name;
-	struct list_head sections;
+	अक्षर *name;
+	काष्ठा list_head sections;
 	DECLARE_HASHTABLE(symbol_hash, ELF_HASH_BITS);
 	DECLARE_HASHTABLE(symbol_name_hash, ELF_HASH_BITS);
 	DECLARE_HASHTABLE(section_hash, ELF_HASH_BITS);
 	DECLARE_HASHTABLE(section_name_hash, ELF_HASH_BITS);
 	DECLARE_HASHTABLE(reloc_hash, ELF_HASH_BITS);
-};
+पूर्ण;
 
-#define OFFSET_STRIDE_BITS	4
-#define OFFSET_STRIDE		(1UL << OFFSET_STRIDE_BITS)
-#define OFFSET_STRIDE_MASK	(~(OFFSET_STRIDE - 1))
+#घोषणा OFFSET_STRIDE_BITS	4
+#घोषणा OFFSET_STRIDE		(1UL << OFFSET_STRIDE_BITS)
+#घोषणा OFFSET_STRIDE_MASK	(~(OFFSET_STRIDE - 1))
 
-#define for_offset_range(_offset, _start, _end)			\
-	for (_offset = ((_start) & OFFSET_STRIDE_MASK);		\
+#घोषणा क्रम_offset_range(_offset, _start, _end)			\
+	क्रम (_offset = ((_start) & OFFSET_STRIDE_MASK);		\
 	     _offset >= ((_start) & OFFSET_STRIDE_MASK) &&	\
 	     _offset <= ((_end) & OFFSET_STRIDE_MASK);		\
 	     _offset += OFFSET_STRIDE)
 
-static inline u32 sec_offset_hash(struct section *sec, unsigned long offset)
-{
+अटल अंतरभूत u32 sec_offset_hash(काष्ठा section *sec, अचिन्हित दीर्घ offset)
+अणु
 	u32 ol, oh, idx = sec->idx;
 
 	offset &= OFFSET_STRIDE_MASK;
@@ -112,42 +113,42 @@ static inline u32 sec_offset_hash(struct section *sec, unsigned long offset)
 
 	__jhash_mix(ol, oh, idx);
 
-	return ol;
-}
+	वापस ol;
+पूर्ण
 
-static inline u32 reloc_hash(struct reloc *reloc)
-{
-	return sec_offset_hash(reloc->sec, reloc->offset);
-}
+अटल अंतरभूत u32 reloc_hash(काष्ठा reloc *reloc)
+अणु
+	वापस sec_offset_hash(reloc->sec, reloc->offset);
+पूर्ण
 
-struct elf *elf_open_read(const char *name, int flags);
-struct section *elf_create_section(struct elf *elf, const char *name, unsigned int sh_flags, size_t entsize, int nr);
+काष्ठा elf *elf_खोलो_पढ़ो(स्थिर अक्षर *name, पूर्णांक flags);
+काष्ठा section *elf_create_section(काष्ठा elf *elf, स्थिर अक्षर *name, अचिन्हित पूर्णांक sh_flags, माप_प्रकार entsize, पूर्णांक nr);
 
-int elf_add_reloc(struct elf *elf, struct section *sec, unsigned long offset,
-		  unsigned int type, struct symbol *sym, int addend);
-int elf_add_reloc_to_insn(struct elf *elf, struct section *sec,
-			  unsigned long offset, unsigned int type,
-			  struct section *insn_sec, unsigned long insn_off);
+पूर्णांक elf_add_reloc(काष्ठा elf *elf, काष्ठा section *sec, अचिन्हित दीर्घ offset,
+		  अचिन्हित पूर्णांक type, काष्ठा symbol *sym, पूर्णांक addend);
+पूर्णांक elf_add_reloc_to_insn(काष्ठा elf *elf, काष्ठा section *sec,
+			  अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक type,
+			  काष्ठा section *insn_sec, अचिन्हित दीर्घ insn_off);
 
-int elf_write_insn(struct elf *elf, struct section *sec,
-		   unsigned long offset, unsigned int len,
-		   const char *insn);
-int elf_write_reloc(struct elf *elf, struct reloc *reloc);
-struct symbol *elf_create_undef_symbol(struct elf *elf, const char *name);
-int elf_write(struct elf *elf);
-void elf_close(struct elf *elf);
+पूर्णांक elf_ग_लिखो_insn(काष्ठा elf *elf, काष्ठा section *sec,
+		   अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक len,
+		   स्थिर अक्षर *insn);
+पूर्णांक elf_ग_लिखो_reloc(काष्ठा elf *elf, काष्ठा reloc *reloc);
+काष्ठा symbol *elf_create_undef_symbol(काष्ठा elf *elf, स्थिर अक्षर *name);
+पूर्णांक elf_ग_लिखो(काष्ठा elf *elf);
+व्योम elf_बंद(काष्ठा elf *elf);
 
-struct section *find_section_by_name(const struct elf *elf, const char *name);
-struct symbol *find_func_by_offset(struct section *sec, unsigned long offset);
-struct symbol *find_symbol_by_offset(struct section *sec, unsigned long offset);
-struct symbol *find_symbol_by_name(const struct elf *elf, const char *name);
-struct symbol *find_symbol_containing(const struct section *sec, unsigned long offset);
-struct reloc *find_reloc_by_dest(const struct elf *elf, struct section *sec, unsigned long offset);
-struct reloc *find_reloc_by_dest_range(const struct elf *elf, struct section *sec,
-				     unsigned long offset, unsigned int len);
-struct symbol *find_func_containing(struct section *sec, unsigned long offset);
+काष्ठा section *find_section_by_name(स्थिर काष्ठा elf *elf, स्थिर अक्षर *name);
+काष्ठा symbol *find_func_by_offset(काष्ठा section *sec, अचिन्हित दीर्घ offset);
+काष्ठा symbol *find_symbol_by_offset(काष्ठा section *sec, अचिन्हित दीर्घ offset);
+काष्ठा symbol *find_symbol_by_name(स्थिर काष्ठा elf *elf, स्थिर अक्षर *name);
+काष्ठा symbol *find_symbol_containing(स्थिर काष्ठा section *sec, अचिन्हित दीर्घ offset);
+काष्ठा reloc *find_reloc_by_dest(स्थिर काष्ठा elf *elf, काष्ठा section *sec, अचिन्हित दीर्घ offset);
+काष्ठा reloc *find_reloc_by_dest_range(स्थिर काष्ठा elf *elf, काष्ठा section *sec,
+				     अचिन्हित दीर्घ offset, अचिन्हित पूर्णांक len);
+काष्ठा symbol *find_func_containing(काष्ठा section *sec, अचिन्हित दीर्घ offset);
 
-#define for_each_sec(file, sec)						\
-	list_for_each_entry(sec, &file->elf->sections, list)
+#घोषणा क्रम_each_sec(file, sec)						\
+	list_क्रम_each_entry(sec, &file->elf->sections, list)
 
-#endif /* _OBJTOOL_ELF_H */
+#पूर्ण_अगर /* _OBJTOOL_ELF_H */

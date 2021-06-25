@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 Samsung Electronics Co.Ltd
  * Authors: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/exynos_drm.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/exynos_drm.h>
 
-#include "exynos_drm_crtc.h"
-#include "exynos_drm_drv.h"
-#include "exynos_drm_fb.h"
-#include "exynos_drm_gem.h"
-#include "exynos_drm_plane.h"
+#समावेश "exynos_drm_crtc.h"
+#समावेश "exynos_drm_drv.h"
+#समावेश "exynos_drm_fb.h"
+#समावेश "exynos_drm_gem.h"
+#समावेश "exynos_drm_plane.h"
 
 /*
  * This function is to get X or Y size shown via screen. This needs length and
@@ -24,7 +25,7 @@
  * CRTC ----------------
  *      ^ start        ^ end
  *
- * There are six cases from a to f.
+ * There are six हालs from a to f.
  *
  *             <----- SCREEN ----->
  *             0                 last
@@ -37,39 +38,39 @@
  *                           e -------
  *                                  f -------
  */
-static int exynos_plane_get_size(int start, unsigned length, unsigned last)
-{
-	int end = start + length;
-	int size = 0;
+अटल पूर्णांक exynos_plane_get_size(पूर्णांक start, अचिन्हित length, अचिन्हित last)
+अणु
+	पूर्णांक end = start + length;
+	पूर्णांक size = 0;
 
-	if (start <= 0) {
-		if (end > 0)
-			size = min_t(unsigned, end, last);
-	} else if (start <= last) {
-		size = min_t(unsigned, last - start, length);
-	}
+	अगर (start <= 0) अणु
+		अगर (end > 0)
+			size = min_t(अचिन्हित, end, last);
+	पूर्ण अन्यथा अगर (start <= last) अणु
+		size = min_t(अचिन्हित, last - start, length);
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static void exynos_plane_mode_set(struct exynos_drm_plane_state *exynos_state)
-{
-	struct drm_plane_state *state = &exynos_state->base;
-	struct drm_crtc *crtc = state->crtc;
-	struct drm_crtc_state *crtc_state =
+अटल व्योम exynos_plane_mode_set(काष्ठा exynos_drm_plane_state *exynos_state)
+अणु
+	काष्ठा drm_plane_state *state = &exynos_state->base;
+	काष्ठा drm_crtc *crtc = state->crtc;
+	काष्ठा drm_crtc_state *crtc_state =
 			drm_atomic_get_existing_crtc_state(state->state, crtc);
-	struct drm_display_mode *mode = &crtc_state->adjusted_mode;
-	int crtc_x, crtc_y;
-	unsigned int crtc_w, crtc_h;
-	unsigned int src_x, src_y;
-	unsigned int src_w, src_h;
-	unsigned int actual_w;
-	unsigned int actual_h;
+	काष्ठा drm_display_mode *mode = &crtc_state->adjusted_mode;
+	पूर्णांक crtc_x, crtc_y;
+	अचिन्हित पूर्णांक crtc_w, crtc_h;
+	अचिन्हित पूर्णांक src_x, src_y;
+	अचिन्हित पूर्णांक src_w, src_h;
+	अचिन्हित पूर्णांक actual_w;
+	अचिन्हित पूर्णांक actual_h;
 
 	/*
 	 * The original src/dest coordinates are stored in exynos_state->base,
-	 * but we want to keep another copy internal to our driver that we can
-	 * clip/modify ourselves.
+	 * but we want to keep another copy पूर्णांकernal to our driver that we can
+	 * clip/modअगरy ourselves.
 	 */
 
 	crtc_x = state->crtc_x;
@@ -90,17 +91,17 @@ static void exynos_plane_mode_set(struct exynos_drm_plane_state *exynos_state)
 	actual_w = exynos_plane_get_size(crtc_x, crtc_w, mode->hdisplay);
 	actual_h = exynos_plane_get_size(crtc_y, crtc_h, mode->vdisplay);
 
-	if (crtc_x < 0) {
-		if (actual_w)
+	अगर (crtc_x < 0) अणु
+		अगर (actual_w)
 			src_x += ((-crtc_x) * exynos_state->h_ratio) >> 16;
 		crtc_x = 0;
-	}
+	पूर्ण
 
-	if (crtc_y < 0) {
-		if (actual_h)
+	अगर (crtc_y < 0) अणु
+		अगर (actual_h)
 			src_y += ((-crtc_y) * exynos_state->v_ratio) >> 16;
 		crtc_y = 0;
-	}
+	पूर्ण
 
 	/* set drm framebuffer data. */
 	exynos_state->src.x = src_x;
@@ -118,203 +119,203 @@ static void exynos_plane_mode_set(struct exynos_drm_plane_state *exynos_state)
 			  "plane : offset_x/y(%d,%d), width/height(%d,%d)",
 			  exynos_state->crtc.x, exynos_state->crtc.y,
 			  exynos_state->crtc.w, exynos_state->crtc.h);
-}
+पूर्ण
 
-static void exynos_drm_plane_reset(struct drm_plane *plane)
-{
-	struct exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
-	struct exynos_drm_plane_state *exynos_state;
+अटल व्योम exynos_drm_plane_reset(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
+	काष्ठा exynos_drm_plane_state *exynos_state;
 
-	if (plane->state) {
+	अगर (plane->state) अणु
 		exynos_state = to_exynos_plane_state(plane->state);
 		__drm_atomic_helper_plane_destroy_state(plane->state);
-		kfree(exynos_state);
-		plane->state = NULL;
-	}
+		kमुक्त(exynos_state);
+		plane->state = शून्य;
+	पूर्ण
 
-	exynos_state = kzalloc(sizeof(*exynos_state), GFP_KERNEL);
-	if (exynos_state) {
+	exynos_state = kzalloc(माप(*exynos_state), GFP_KERNEL);
+	अगर (exynos_state) अणु
 		__drm_atomic_helper_plane_reset(plane, &exynos_state->base);
 		plane->state->zpos = exynos_plane->config->zpos;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct drm_plane_state *
-exynos_drm_plane_duplicate_state(struct drm_plane *plane)
-{
-	struct exynos_drm_plane_state *exynos_state;
-	struct exynos_drm_plane_state *copy;
+अटल काष्ठा drm_plane_state *
+exynos_drm_plane_duplicate_state(काष्ठा drm_plane *plane)
+अणु
+	काष्ठा exynos_drm_plane_state *exynos_state;
+	काष्ठा exynos_drm_plane_state *copy;
 
 	exynos_state = to_exynos_plane_state(plane->state);
-	copy = kzalloc(sizeof(*exynos_state), GFP_KERNEL);
-	if (!copy)
-		return NULL;
+	copy = kzalloc(माप(*exynos_state), GFP_KERNEL);
+	अगर (!copy)
+		वापस शून्य;
 
 	__drm_atomic_helper_plane_duplicate_state(plane, &copy->base);
-	return &copy->base;
-}
+	वापस &copy->base;
+पूर्ण
 
-static void exynos_drm_plane_destroy_state(struct drm_plane *plane,
-					   struct drm_plane_state *old_state)
-{
-	struct exynos_drm_plane_state *old_exynos_state =
+अटल व्योम exynos_drm_plane_destroy_state(काष्ठा drm_plane *plane,
+					   काष्ठा drm_plane_state *old_state)
+अणु
+	काष्ठा exynos_drm_plane_state *old_exynos_state =
 					to_exynos_plane_state(old_state);
 	__drm_atomic_helper_plane_destroy_state(old_state);
-	kfree(old_exynos_state);
-}
+	kमुक्त(old_exynos_state);
+पूर्ण
 
-static struct drm_plane_funcs exynos_plane_funcs = {
+अटल काष्ठा drm_plane_funcs exynos_plane_funcs = अणु
 	.update_plane	= drm_atomic_helper_update_plane,
 	.disable_plane	= drm_atomic_helper_disable_plane,
 	.destroy	= drm_plane_cleanup,
 	.reset		= exynos_drm_plane_reset,
 	.atomic_duplicate_state = exynos_drm_plane_duplicate_state,
 	.atomic_destroy_state = exynos_drm_plane_destroy_state,
-};
+पूर्ण;
 
-static int
-exynos_drm_plane_check_format(const struct exynos_drm_plane_config *config,
-			      struct exynos_drm_plane_state *state)
-{
-	struct drm_framebuffer *fb = state->base.fb;
-	struct drm_device *dev = fb->dev;
+अटल पूर्णांक
+exynos_drm_plane_check_क्रमmat(स्थिर काष्ठा exynos_drm_plane_config *config,
+			      काष्ठा exynos_drm_plane_state *state)
+अणु
+	काष्ठा drm_framebuffer *fb = state->base.fb;
+	काष्ठा drm_device *dev = fb->dev;
 
-	switch (fb->modifier) {
-	case DRM_FORMAT_MOD_SAMSUNG_64_32_TILE:
-		if (!(config->capabilities & EXYNOS_DRM_PLANE_CAP_TILE))
-			return -ENOTSUPP;
-		break;
+	चयन (fb->modअगरier) अणु
+	हाल DRM_FORMAT_MOD_SAMSUNG_64_32_TILE:
+		अगर (!(config->capabilities & EXYNOS_DRM_PLANE_CAP_TILE))
+			वापस -ENOTSUPP;
+		अवरोध;
 
-	case DRM_FORMAT_MOD_LINEAR:
-		break;
+	हाल DRM_FORMAT_MOD_LINEAR:
+		अवरोध;
 
-	default:
+	शेष:
 		DRM_DEV_ERROR(dev->dev, "unsupported pixel format modifier");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-exynos_drm_plane_check_size(const struct exynos_drm_plane_config *config,
-			    struct exynos_drm_plane_state *state)
-{
-	struct drm_crtc *crtc = state->base.crtc;
+अटल पूर्णांक
+exynos_drm_plane_check_size(स्थिर काष्ठा exynos_drm_plane_config *config,
+			    काष्ठा exynos_drm_plane_state *state)
+अणु
+	काष्ठा drm_crtc *crtc = state->base.crtc;
 	bool width_ok = false, height_ok = false;
 
-	if (config->capabilities & EXYNOS_DRM_PLANE_CAP_SCALE)
-		return 0;
+	अगर (config->capabilities & EXYNOS_DRM_PLANE_CAP_SCALE)
+		वापस 0;
 
-	if (state->src.w == state->crtc.w)
+	अगर (state->src.w == state->crtc.w)
 		width_ok = true;
 
-	if (state->src.h == state->crtc.h)
+	अगर (state->src.h == state->crtc.h)
 		height_ok = true;
 
-	if ((config->capabilities & EXYNOS_DRM_PLANE_CAP_DOUBLE) &&
+	अगर ((config->capabilities & EXYNOS_DRM_PLANE_CAP_DOUBLE) &&
 	    state->h_ratio == (1 << 15))
 		width_ok = true;
 
-	if ((config->capabilities & EXYNOS_DRM_PLANE_CAP_DOUBLE) &&
+	अगर ((config->capabilities & EXYNOS_DRM_PLANE_CAP_DOUBLE) &&
 	    state->v_ratio == (1 << 15))
 		height_ok = true;
 
-	if (width_ok && height_ok)
-		return 0;
+	अगर (width_ok && height_ok)
+		वापस 0;
 
 	DRM_DEV_DEBUG_KMS(crtc->dev->dev, "scaling mode is not supported");
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int exynos_plane_atomic_check(struct drm_plane *plane,
-				     struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
+अटल पूर्णांक exynos_plane_atomic_check(काष्ठा drm_plane *plane,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_plane_state = drm_atomic_get_new_plane_state(state,
 										 plane);
-	struct exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
-	struct exynos_drm_plane_state *exynos_state =
+	काष्ठा exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
+	काष्ठा exynos_drm_plane_state *exynos_state =
 						to_exynos_plane_state(new_plane_state);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!new_plane_state->crtc || !new_plane_state->fb)
-		return 0;
+	अगर (!new_plane_state->crtc || !new_plane_state->fb)
+		वापस 0;
 
-	/* translate state into exynos_state */
+	/* translate state पूर्णांकo exynos_state */
 	exynos_plane_mode_set(exynos_state);
 
-	ret = exynos_drm_plane_check_format(exynos_plane->config, exynos_state);
-	if (ret)
-		return ret;
+	ret = exynos_drm_plane_check_क्रमmat(exynos_plane->config, exynos_state);
+	अगर (ret)
+		वापस ret;
 
 	ret = exynos_drm_plane_check_size(exynos_plane->config, exynos_state);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void exynos_plane_atomic_update(struct drm_plane *plane,
-				       struct drm_atomic_state *state)
-{
-	struct drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
+अटल व्योम exynos_plane_atomic_update(काष्ठा drm_plane *plane,
+				       काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *new_state = drm_atomic_get_new_plane_state(state,
 								           plane);
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(new_state->crtc);
-	struct exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(new_state->crtc);
+	काष्ठा exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
 
-	if (!new_state->crtc)
-		return;
+	अगर (!new_state->crtc)
+		वापस;
 
-	if (exynos_crtc->ops->update_plane)
+	अगर (exynos_crtc->ops->update_plane)
 		exynos_crtc->ops->update_plane(exynos_crtc, exynos_plane);
-}
+पूर्ण
 
-static void exynos_plane_atomic_disable(struct drm_plane *plane,
-					struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_state = drm_atomic_get_old_plane_state(state, plane);
-	struct exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
-	struct exynos_drm_crtc *exynos_crtc = to_exynos_crtc(old_state->crtc);
+अटल व्योम exynos_plane_atomic_disable(काष्ठा drm_plane *plane,
+					काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_state = drm_atomic_get_old_plane_state(state, plane);
+	काष्ठा exynos_drm_plane *exynos_plane = to_exynos_plane(plane);
+	काष्ठा exynos_drm_crtc *exynos_crtc = to_exynos_crtc(old_state->crtc);
 
-	if (!old_state->crtc)
-		return;
+	अगर (!old_state->crtc)
+		वापस;
 
-	if (exynos_crtc->ops->disable_plane)
+	अगर (exynos_crtc->ops->disable_plane)
 		exynos_crtc->ops->disable_plane(exynos_crtc, exynos_plane);
-}
+पूर्ण
 
-static const struct drm_plane_helper_funcs plane_helper_funcs = {
+अटल स्थिर काष्ठा drm_plane_helper_funcs plane_helper_funcs = अणु
 	.atomic_check = exynos_plane_atomic_check,
 	.atomic_update = exynos_plane_atomic_update,
 	.atomic_disable = exynos_plane_atomic_disable,
-};
+पूर्ण;
 
-static void exynos_plane_attach_zpos_property(struct drm_plane *plane,
-					      int zpos, bool immutable)
-{
-	if (immutable)
+अटल व्योम exynos_plane_attach_zpos_property(काष्ठा drm_plane *plane,
+					      पूर्णांक zpos, bool immutable)
+अणु
+	अगर (immutable)
 		drm_plane_create_zpos_immutable_property(plane, zpos);
-	else
+	अन्यथा
 		drm_plane_create_zpos_property(plane, zpos, 0, MAX_PLANE - 1);
-}
+पूर्ण
 
-int exynos_plane_init(struct drm_device *dev,
-		      struct exynos_drm_plane *exynos_plane, unsigned int index,
-		      const struct exynos_drm_plane_config *config)
-{
-	int err;
-	unsigned int supported_modes = BIT(DRM_MODE_BLEND_PIXEL_NONE) |
+पूर्णांक exynos_plane_init(काष्ठा drm_device *dev,
+		      काष्ठा exynos_drm_plane *exynos_plane, अचिन्हित पूर्णांक index,
+		      स्थिर काष्ठा exynos_drm_plane_config *config)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक supported_modes = BIT(DRM_MODE_BLEND_PIXEL_NONE) |
 				       BIT(DRM_MODE_BLEND_PREMULTI) |
 				       BIT(DRM_MODE_BLEND_COVERAGE);
-	struct drm_plane *plane = &exynos_plane->base;
+	काष्ठा drm_plane *plane = &exynos_plane->base;
 
 	err = drm_universal_plane_init(dev, &exynos_plane->base,
 				       1 << dev->mode_config.num_crtc,
 				       &exynos_plane_funcs,
-				       config->pixel_formats,
-				       config->num_pixel_formats,
-				       NULL, config->type, NULL);
-	if (err) {
+				       config->pixel_क्रमmats,
+				       config->num_pixel_क्रमmats,
+				       शून्य, config->type, शून्य);
+	अगर (err) अणु
 		DRM_DEV_ERROR(dev->dev, "failed to initialize plane\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	drm_plane_helper_add(&exynos_plane->base, &plane_helper_funcs);
 
@@ -324,11 +325,11 @@ int exynos_plane_init(struct drm_device *dev,
 	exynos_plane_attach_zpos_property(&exynos_plane->base, config->zpos,
 			   !(config->capabilities & EXYNOS_DRM_PLANE_CAP_ZPOS));
 
-	if (config->capabilities & EXYNOS_DRM_PLANE_CAP_PIX_BLEND)
+	अगर (config->capabilities & EXYNOS_DRM_PLANE_CAP_PIX_BLEND)
 		drm_plane_create_blend_mode_property(plane, supported_modes);
 
-	if (config->capabilities & EXYNOS_DRM_PLANE_CAP_WIN_BLEND)
+	अगर (config->capabilities & EXYNOS_DRM_PLANE_CAP_WIN_BLEND)
 		drm_plane_create_alpha_property(plane);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

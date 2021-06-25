@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,20 +24,20 @@
  *
  */
 
-#ifndef __DC_MCIF_WB_DCN20_H__
-#define __DC_MCIF_WB_DCN20_H__
+#अगर_अघोषित __DC_MCIF_WB_DCN20_H__
+#घोषणा __DC_MCIF_WB_DCN20_H__
 
-#define TO_DCN20_MMHUBBUB(mcif_wb_base) \
-	container_of(mcif_wb_base, struct dcn20_mmhubbub, base)
+#घोषणा TO_DCN20_MMHUBBUB(mcअगर_wb_base) \
+	container_of(mcअगर_wb_base, काष्ठा dcn20_mmhubbub, base)
 
 /* DCN */
-#define BASE_INNER(seg) \
+#घोषणा BASE_INNER(seg) \
 	DCE_BASE__INST0_SEG ## seg
 
-#define BASE(seg) \
+#घोषणा BASE(seg) \
 	BASE_INNER(seg)
 
-#define MCIF_WB_COMMON_REG_LIST_DCN2_0(inst) \
+#घोषणा MCIF_WB_COMMON_REG_LIST_DCN2_0(inst) \
 	SRI(MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB, inst),\
 	SRI(MCIF_WB_BUFMGR_CUR_LINE_R, MCIF_WB, inst),\
 	SRI(MCIF_WB_BUFMGR_STATUS, MCIF_WB, inst),\
@@ -94,7 +95,7 @@
 	SRI(MCIF_WB_BUF_4_RESOLUTION, MCIF_WB, inst),\
 	SRI(SMU_WM_CONTROL, WBIF, inst)
 
-#define MCIF_WB_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
+#घोषणा MCIF_WB_COMMON_MASK_SH_LIST_DCN2_0(mask_sh) \
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_ENABLE, mask_sh),\
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_EN, mask_sh),\
 	SF(MCIF_WB0_MCIF_WB_BUFMGR_SW_CONTROL, MCIF_WB_BUFMGR_SW_INT_ACK, mask_sh),\
@@ -256,7 +257,7 @@
 	SF(WBIF0_SMU_WM_CONTROL, MCIF_WB0_WM_CHG_ACK_INT_DIS, mask_sh),\
 	SF(WBIF0_SMU_WM_CONTROL, MCIF_WB0_WM_CHG_ACK_INT_STATUS, mask_sh)
 
-#define MCIF_WB_REG_FIELD_LIST_DCN2_0(type) \
+#घोषणा MCIF_WB_REG_FIELD_LIST_DCN2_0(type) \
 	type MCIF_WB_BUFMGR_ENABLE;\
 	type MCIF_WB_BUFMGR_SW_INT_EN;\
 	type MCIF_WB_BUFMGR_SW_INT_ACK;\
@@ -418,107 +419,107 @@
 	type MCIF_WB0_WM_CHG_ACK_INT_DIS;\
 	type MCIF_WB0_WM_CHG_ACK_INT_STATUS
 
-#define MCIF_WB_REG_VARIABLE_LIST_DCN2_0 \
-	uint32_t MCIF_WB_BUFMGR_SW_CONTROL;\
-	uint32_t MCIF_WB_BUFMGR_CUR_LINE_R;\
-	uint32_t MCIF_WB_BUFMGR_STATUS;\
-	uint32_t MCIF_WB_BUF_PITCH;\
-	uint32_t MCIF_WB_BUF_1_STATUS;\
-	uint32_t MCIF_WB_BUF_1_STATUS2;\
-	uint32_t MCIF_WB_BUF_2_STATUS;\
-	uint32_t MCIF_WB_BUF_2_STATUS2;\
-	uint32_t MCIF_WB_BUF_3_STATUS;\
-	uint32_t MCIF_WB_BUF_3_STATUS2;\
-	uint32_t MCIF_WB_BUF_4_STATUS;\
-	uint32_t MCIF_WB_BUF_4_STATUS2;\
-	uint32_t MCIF_WB_ARBITRATION_CONTROL;\
-	uint32_t MCIF_WB_SCLK_CHANGE;\
-	uint32_t MCIF_WB_TEST_DEBUG_INDEX;\
-	uint32_t MCIF_WB_TEST_DEBUG_DATA;\
-	uint32_t MCIF_WB_BUF_1_ADDR_Y;\
-	uint32_t MCIF_WB_BUF_1_ADDR_Y_OFFSET;\
-	uint32_t MCIF_WB_BUF_1_ADDR_C;\
-	uint32_t MCIF_WB_BUF_1_ADDR_C_OFFSET;\
-	uint32_t MCIF_WB_BUF_2_ADDR_Y;\
-	uint32_t MCIF_WB_BUF_2_ADDR_Y_OFFSET;\
-	uint32_t MCIF_WB_BUF_2_ADDR_C;\
-	uint32_t MCIF_WB_BUF_2_ADDR_C_OFFSET;\
-	uint32_t MCIF_WB_BUF_3_ADDR_Y;\
-	uint32_t MCIF_WB_BUF_3_ADDR_Y_OFFSET;\
-	uint32_t MCIF_WB_BUF_3_ADDR_C;\
-	uint32_t MCIF_WB_BUF_3_ADDR_C_OFFSET;\
-	uint32_t MCIF_WB_BUF_4_ADDR_Y;\
-	uint32_t MCIF_WB_BUF_4_ADDR_Y_OFFSET;\
-	uint32_t MCIF_WB_BUF_4_ADDR_C;\
-	uint32_t MCIF_WB_BUF_4_ADDR_C_OFFSET;\
-	uint32_t MCIF_WB_BUFMGR_VCE_CONTROL;\
-	uint32_t MCIF_WB_NB_PSTATE_LATENCY_WATERMARK;\
-	uint32_t MCIF_WB_NB_PSTATE_CONTROL;\
-	uint32_t MCIF_WB_WATERMARK;\
-	uint32_t MCIF_WB_CLOCK_GATER_CONTROL;\
-	uint32_t MCIF_WB_WARM_UP_CNTL;\
-	uint32_t MCIF_WB_SELF_REFRESH_CONTROL;\
-	uint32_t MULTI_LEVEL_QOS_CTRL;\
-	uint32_t MCIF_WB_SECURITY_LEVEL;\
-	uint32_t MCIF_WB_BUF_LUMA_SIZE;\
-	uint32_t MCIF_WB_BUF_CHROMA_SIZE;\
-	uint32_t MCIF_WB_BUF_1_ADDR_Y_HIGH;\
-	uint32_t MCIF_WB_BUF_1_ADDR_C_HIGH;\
-	uint32_t MCIF_WB_BUF_2_ADDR_Y_HIGH;\
-	uint32_t MCIF_WB_BUF_2_ADDR_C_HIGH;\
-	uint32_t MCIF_WB_BUF_3_ADDR_Y_HIGH;\
-	uint32_t MCIF_WB_BUF_3_ADDR_C_HIGH;\
-	uint32_t MCIF_WB_BUF_4_ADDR_Y_HIGH;\
-	uint32_t MCIF_WB_BUF_4_ADDR_C_HIGH;\
-	uint32_t MCIF_WB_BUF_1_RESOLUTION;\
-	uint32_t MCIF_WB_BUF_2_RESOLUTION;\
-	uint32_t MCIF_WB_BUF_3_RESOLUTION;\
-	uint32_t MCIF_WB_BUF_4_RESOLUTION;\
-	uint32_t SMU_WM_CONTROL
+#घोषणा MCIF_WB_REG_VARIABLE_LIST_DCN2_0 \
+	uपूर्णांक32_t MCIF_WB_BUFMGR_SW_CONTROL;\
+	uपूर्णांक32_t MCIF_WB_BUFMGR_CUR_LINE_R;\
+	uपूर्णांक32_t MCIF_WB_BUFMGR_STATUS;\
+	uपूर्णांक32_t MCIF_WB_BUF_PITCH;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_STATUS;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_STATUS2;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_STATUS;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_STATUS2;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_STATUS;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_STATUS2;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_STATUS;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_STATUS2;\
+	uपूर्णांक32_t MCIF_WB_ARBITRATION_CONTROL;\
+	uपूर्णांक32_t MCIF_WB_SCLK_CHANGE;\
+	uपूर्णांक32_t MCIF_WB_TEST_DEBUG_INDEX;\
+	uपूर्णांक32_t MCIF_WB_TEST_DEBUG_DATA;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_Y;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_Y_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_C;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_C_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_Y;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_Y_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_C;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_C_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_Y;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_Y_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_C;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_C_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_Y;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_Y_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_C;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_C_OFFSET;\
+	uपूर्णांक32_t MCIF_WB_BUFMGR_VCE_CONTROL;\
+	uपूर्णांक32_t MCIF_WB_NB_PSTATE_LATENCY_WATERMARK;\
+	uपूर्णांक32_t MCIF_WB_NB_PSTATE_CONTROL;\
+	uपूर्णांक32_t MCIF_WB_WATERMARK;\
+	uपूर्णांक32_t MCIF_WB_CLOCK_GATER_CONTROL;\
+	uपूर्णांक32_t MCIF_WB_WARM_UP_CNTL;\
+	uपूर्णांक32_t MCIF_WB_SELF_REFRESH_CONTROL;\
+	uपूर्णांक32_t MULTI_LEVEL_QOS_CTRL;\
+	uपूर्णांक32_t MCIF_WB_SECURITY_LEVEL;\
+	uपूर्णांक32_t MCIF_WB_BUF_LUMA_SIZE;\
+	uपूर्णांक32_t MCIF_WB_BUF_CHROMA_SIZE;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_Y_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_ADDR_C_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_Y_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_ADDR_C_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_Y_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_ADDR_C_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_Y_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_ADDR_C_HIGH;\
+	uपूर्णांक32_t MCIF_WB_BUF_1_RESOLUTION;\
+	uपूर्णांक32_t MCIF_WB_BUF_2_RESOLUTION;\
+	uपूर्णांक32_t MCIF_WB_BUF_3_RESOLUTION;\
+	uपूर्णांक32_t MCIF_WB_BUF_4_RESOLUTION;\
+	uपूर्णांक32_t SMU_WM_CONTROL
 
-struct dcn20_mmhubbub_registers {
+काष्ठा dcn20_mmhubbub_रेजिस्टरs अणु
 	MCIF_WB_REG_VARIABLE_LIST_DCN2_0;
-};
+पूर्ण;
 
 
-struct dcn20_mmhubbub_mask {
-	MCIF_WB_REG_FIELD_LIST_DCN2_0(uint32_t);
-};
+काष्ठा dcn20_mmhubbub_mask अणु
+	MCIF_WB_REG_FIELD_LIST_DCN2_0(uपूर्णांक32_t);
+पूर्ण;
 
-struct dcn20_mmhubbub_shift {
-	MCIF_WB_REG_FIELD_LIST_DCN2_0(uint8_t);
-};
+काष्ठा dcn20_mmhubbub_shअगरt अणु
+	MCIF_WB_REG_FIELD_LIST_DCN2_0(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn20_mmhubbub {
-	struct mcif_wb base;
-	const struct dcn20_mmhubbub_registers *mcif_wb_regs;
-	const struct dcn20_mmhubbub_shift *mcif_wb_shift;
-	const struct dcn20_mmhubbub_mask *mcif_wb_mask;
-};
+काष्ठा dcn20_mmhubbub अणु
+	काष्ठा mcअगर_wb base;
+	स्थिर काष्ठा dcn20_mmhubbub_रेजिस्टरs *mcअगर_wb_regs;
+	स्थिर काष्ठा dcn20_mmhubbub_shअगरt *mcअगर_wb_shअगरt;
+	स्थिर काष्ठा dcn20_mmhubbub_mask *mcअगर_wb_mask;
+पूर्ण;
 
-void mmhubbub2_config_mcif_irq(struct mcif_wb *mcif_wb,
-	struct mcif_irq_params *params);
+व्योम mmhubbub2_config_mcअगर_irq(काष्ठा mcअगर_wb *mcअगर_wb,
+	काष्ठा mcअगर_irq_params *params);
 
-void mmhubbub2_enable_mcif(struct mcif_wb *mcif_wb);
+व्योम mmhubbub2_enable_mcअगर(काष्ठा mcअगर_wb *mcअगर_wb);
 
-void mmhubbub2_disable_mcif(struct mcif_wb *mcif_wb);
+व्योम mmhubbub2_disable_mcअगर(काष्ठा mcअगर_wb *mcअगर_wb);
 
-void mcifwb2_dump_frame(struct mcif_wb *mcif_wb,
-	struct mcif_buf_params *mcif_params,
-	enum dwb_scaler_mode out_format,
-	unsigned int dest_width,
-	unsigned int dest_height,
-	struct mcif_wb_frame_dump_info *dump_info,
-	unsigned char *luma_buffer,
-	unsigned char *chroma_buffer,
-	unsigned char *dest_luma_buffer,
-	unsigned char *dest_chroma_buffer);
+व्योम mcअगरwb2_dump_frame(काष्ठा mcअगर_wb *mcअगर_wb,
+	काष्ठा mcअगर_buf_params *mcअगर_params,
+	क्रमागत dwb_scaler_mode out_क्रमmat,
+	अचिन्हित पूर्णांक dest_width,
+	अचिन्हित पूर्णांक dest_height,
+	काष्ठा mcअगर_wb_frame_dump_info *dump_info,
+	अचिन्हित अक्षर *luma_buffer,
+	अचिन्हित अक्षर *chroma_buffer,
+	अचिन्हित अक्षर *dest_luma_buffer,
+	अचिन्हित अक्षर *dest_chroma_buffer);
 
-void dcn20_mmhubbub_construct(struct dcn20_mmhubbub *mcif_wb20,
-	struct dc_context *ctx,
-	const struct dcn20_mmhubbub_registers *mcif_wb_regs,
-	const struct dcn20_mmhubbub_shift *mcif_wb_shift,
-	const struct dcn20_mmhubbub_mask *mcif_wb_mask,
-	int inst);
+व्योम dcn20_mmhubbub_स्थिरruct(काष्ठा dcn20_mmhubbub *mcअगर_wb20,
+	काष्ठा dc_context *ctx,
+	स्थिर काष्ठा dcn20_mmhubbub_रेजिस्टरs *mcअगर_wb_regs,
+	स्थिर काष्ठा dcn20_mmhubbub_shअगरt *mcअगर_wb_shअगरt,
+	स्थिर काष्ठा dcn20_mmhubbub_mask *mcअगर_wb_mask,
+	पूर्णांक inst);
 
-#endif
+#पूर्ण_अगर

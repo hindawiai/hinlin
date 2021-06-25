@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2012 Steffen Trumtrar <s.trumtrar@pengutronix.de>
  *
  * videomode of-helpers
  */
 
-#ifndef __LINUX_OF_VIDEOMODE_H
-#define __LINUX_OF_VIDEOMODE_H
+#अगर_अघोषित __LINUX_OF_VIDEOMODE_H
+#घोषणा __LINUX_OF_VIDEOMODE_H
 
-struct device_node;
-struct videomode;
+काष्ठा device_node;
+काष्ठा videomode;
 
-int of_get_videomode(struct device_node *np, struct videomode *vm,
-		     int index);
+पूर्णांक of_get_videomode(काष्ठा device_node *np, काष्ठा videomode *vm,
+		     पूर्णांक index);
 
-#endif /* __LINUX_OF_VIDEOMODE_H */
+#पूर्ण_अगर /* __LINUX_OF_VIDEOMODE_H */

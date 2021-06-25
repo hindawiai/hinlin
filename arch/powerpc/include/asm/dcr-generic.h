@@ -1,36 +1,37 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * (c) Copyright 2006 Benjamin Herrenschmidt, IBM Corp.
  *                    <benh@kernel.crashing.org>
  */
 
-#ifndef _ASM_POWERPC_DCR_GENERIC_H
-#define _ASM_POWERPC_DCR_GENERIC_H
-#ifdef __KERNEL__
-#ifndef __ASSEMBLY__
+#अगर_अघोषित _ASM_POWERPC_DCR_GENERIC_H
+#घोषणा _ASM_POWERPC_DCR_GENERIC_H
+#अगर_घोषित __KERNEL__
+#अगर_अघोषित __ASSEMBLY__
 
-enum host_type_t {DCR_HOST_MMIO, DCR_HOST_NATIVE, DCR_HOST_INVALID};
+क्रमागत host_type_t अणुDCR_HOST_MMIO, DCR_HOST_NATIVE, DCR_HOST_INVALIDपूर्ण;
 
-typedef struct {
-	enum host_type_t type;
-	union {
+प्रकार काष्ठा अणु
+	क्रमागत host_type_t type;
+	जोड़ अणु
 		dcr_host_mmio_t mmio;
 		dcr_host_native_t native;
-	} host;
-} dcr_host_t;
+	पूर्ण host;
+पूर्ण dcr_host_t;
 
-extern bool dcr_map_ok_generic(dcr_host_t host);
+बाह्य bool dcr_map_ok_generic(dcr_host_t host);
 
-extern dcr_host_t dcr_map_generic(struct device_node *dev, unsigned int dcr_n,
-			  unsigned int dcr_c);
-extern void dcr_unmap_generic(dcr_host_t host, unsigned int dcr_c);
+बाह्य dcr_host_t dcr_map_generic(काष्ठा device_node *dev, अचिन्हित पूर्णांक dcr_n,
+			  अचिन्हित पूर्णांक dcr_c);
+बाह्य व्योम dcr_unmap_generic(dcr_host_t host, अचिन्हित पूर्णांक dcr_c);
 
-extern u32 dcr_read_generic(dcr_host_t host, unsigned int dcr_n);
+बाह्य u32 dcr_पढ़ो_generic(dcr_host_t host, अचिन्हित पूर्णांक dcr_n);
 
-extern void dcr_write_generic(dcr_host_t host, unsigned int dcr_n, u32 value);
+बाह्य व्योम dcr_ग_लिखो_generic(dcr_host_t host, अचिन्हित पूर्णांक dcr_n, u32 value);
 
-#endif /* __ASSEMBLY__ */
-#endif /* __KERNEL__ */
-#endif /* _ASM_POWERPC_DCR_GENERIC_H */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_POWERPC_DCR_GENERIC_H */
 
 

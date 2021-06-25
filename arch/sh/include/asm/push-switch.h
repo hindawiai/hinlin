@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_PUSH_SWITCH_H
-#define __ASM_SH_PUSH_SWITCH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_PUSH_SWITCH_H
+#घोषणा __ASM_SH_PUSH_SWITCH_H
 
-#include <linux/timer.h>
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/platform_device.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/platक्रमm_device.h>
 
-struct push_switch {
-	/* switch state */
-	unsigned int		state:1;
-	/* debounce timer */
-	struct timer_list	debounce;
+काष्ठा push_चयन अणु
+	/* चयन state */
+	अचिन्हित पूर्णांक		state:1;
+	/* debounce समयr */
+	काष्ठा समयr_list	debounce;
 	/* workqueue */
-	struct work_struct	work;
-	/* platform device, for workqueue handler */
-	struct platform_device	*pdev;
-};
+	काष्ठा work_काष्ठा	work;
+	/* platक्रमm device, क्रम workqueue handler */
+	काष्ठा platक्रमm_device	*pdev;
+पूर्ण;
 
-struct push_switch_platform_info {
+काष्ठा push_चयन_platक्रमm_info अणु
 	/* IRQ handler */
-	irqreturn_t		(*irq_handler)(int irq, void *data);
+	irqवापस_t		(*irq_handler)(पूर्णांक irq, व्योम *data);
 	/* Special IRQ flags */
-	unsigned int		irq_flags;
-	/* Bit location of switch */
-	unsigned int		bit;
-	/* Symbolic switch name */
-	const char		*name;
-};
+	अचिन्हित पूर्णांक		irq_flags;
+	/* Bit location of चयन */
+	अचिन्हित पूर्णांक		bit;
+	/* Symbolic चयन name */
+	स्थिर अक्षर		*name;
+पूर्ण;
 
-#endif /* __ASM_SH_PUSH_SWITCH_H */
+#पूर्ण_अगर /* __ASM_SH_PUSH_SWITCH_H */

@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright 2019 NXP.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <drm/drm_of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <drm/drm_of.h>
 
-#include "dcss-dev.h"
-#include "dcss-kms.h"
+#समावेश "dcss-dev.h"
+#समावेश "dcss-kms.h"
 
-struct dcss_drv {
-	struct dcss_dev *dcss;
-	struct dcss_kms_dev *kms;
-};
+काष्ठा dcss_drv अणु
+	काष्ठा dcss_dev *dcss;
+	काष्ठा dcss_kms_dev *kms;
+पूर्ण;
 
-struct dcss_dev *dcss_drv_dev_to_dcss(struct device *dev)
-{
-	struct dcss_drv *mdrv = dev_get_drvdata(dev);
+काष्ठा dcss_dev *dcss_drv_dev_to_dcss(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_drv *mdrv = dev_get_drvdata(dev);
 
-	return mdrv ? mdrv->dcss : NULL;
-}
+	वापस mdrv ? mdrv->dcss : शून्य;
+पूर्ण
 
-struct drm_device *dcss_drv_dev_to_drm(struct device *dev)
-{
-	struct dcss_drv *mdrv = dev_get_drvdata(dev);
+काष्ठा drm_device *dcss_drv_dev_to_drm(काष्ठा device *dev)
+अणु
+	काष्ठा dcss_drv *mdrv = dev_get_drvdata(dev);
 
-	return mdrv ? &mdrv->kms->base : NULL;
-}
+	वापस mdrv ? &mdrv->kms->base : शून्य;
+पूर्ण
 
-static int dcss_drv_platform_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *remote;
-	struct dcss_drv *mdrv;
-	int err = 0;
+अटल पूर्णांक dcss_drv_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *remote;
+	काष्ठा dcss_drv *mdrv;
+	पूर्णांक err = 0;
 	bool hdmi_output = true;
 
-	if (!dev->of_node)
-		return -ENODEV;
+	अगर (!dev->of_node)
+		वापस -ENODEV;
 
 	remote = of_graph_get_remote_node(dev->of_node, 0, 0);
-	if (!remote)
-		return -ENODEV;
+	अगर (!remote)
+		वापस -ENODEV;
 
 	hdmi_output = !of_device_is_compatible(remote, "fsl,imx8mq-nwl-dsi");
 
 	of_node_put(remote);
 
-	mdrv = kzalloc(sizeof(*mdrv), GFP_KERNEL);
-	if (!mdrv)
-		return -ENOMEM;
+	mdrv = kzalloc(माप(*mdrv), GFP_KERNEL);
+	अगर (!mdrv)
+		वापस -ENOMEM;
 
 	mdrv->dcss = dcss_dev_create(dev, hdmi_output);
-	if (IS_ERR(mdrv->dcss)) {
+	अगर (IS_ERR(mdrv->dcss)) अणु
 		err = PTR_ERR(mdrv->dcss);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dev_set_drvdata(dev, mdrv);
 
 	mdrv->kms = dcss_kms_attach(mdrv->dcss);
-	if (IS_ERR(mdrv->kms)) {
+	अगर (IS_ERR(mdrv->kms)) अणु
 		err = PTR_ERR(mdrv->kms);
-		goto dcss_shutoff;
-	}
+		जाओ dcss_shutoff;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dcss_shutoff:
 	dcss_dev_destroy(mdrv->dcss);
 
-	dev_set_drvdata(dev, NULL);
+	dev_set_drvdata(dev, शून्य);
 
 err:
-	kfree(mdrv);
-	return err;
-}
+	kमुक्त(mdrv);
+	वापस err;
+पूर्ण
 
-static int dcss_drv_platform_remove(struct platform_device *pdev)
-{
-	struct dcss_drv *mdrv = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक dcss_drv_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dcss_drv *mdrv = dev_get_drvdata(&pdev->dev);
 
-	if (!mdrv)
-		return 0;
+	अगर (!mdrv)
+		वापस 0;
 
 	dcss_kms_detach(mdrv->kms);
 	dcss_dev_destroy(mdrv->dcss);
 
-	dev_set_drvdata(&pdev->dev, NULL);
+	dev_set_drvdata(&pdev->dev, शून्य);
 
-	kfree(mdrv);
+	kमुक्त(mdrv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dcss_type_data dcss_types[] = {
-	[DCSS_IMX8MQ] = {
+अटल काष्ठा dcss_type_data dcss_types[] = अणु
+	[DCSS_IMX8MQ] = अणु
 		.name = "DCSS_IMX8MQ",
 		.blkctl_ofs = 0x2F000,
 		.ctxld_ofs = 0x23000,
@@ -105,33 +106,33 @@ static struct dcss_type_data dcss_types[] = {
 		.scaler_ofs = 0x1C000,
 		.ss_ofs = 0x1B000,
 		.dpr_ofs = 0x18000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id dcss_of_match[] = {
-	{ .compatible = "nxp,imx8mq-dcss", .data = &dcss_types[DCSS_IMX8MQ], },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dcss_of_match[] = अणु
+	अणु .compatible = "nxp,imx8mq-dcss", .data = &dcss_types[DCSS_IMX8MQ], पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, dcss_of_match);
 
-static const struct dev_pm_ops dcss_dev_pm = {
+अटल स्थिर काष्ठा dev_pm_ops dcss_dev_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(dcss_dev_suspend, dcss_dev_resume)
-	SET_RUNTIME_PM_OPS(dcss_dev_runtime_suspend,
-			   dcss_dev_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(dcss_dev_runसमय_suspend,
+			   dcss_dev_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver dcss_platform_driver = {
-	.probe	= dcss_drv_platform_probe,
-	.remove	= dcss_drv_platform_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver dcss_platक्रमm_driver = अणु
+	.probe	= dcss_drv_platक्रमm_probe,
+	.हटाओ	= dcss_drv_platक्रमm_हटाओ,
+	.driver	= अणु
 		.name = "imx-dcss",
 		.of_match_table	= dcss_of_match,
 		.pm = &dcss_dev_pm,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dcss_platform_driver);
+module_platक्रमm_driver(dcss_platक्रमm_driver);
 
 MODULE_AUTHOR("Laurentiu Palcu <laurentiu.palcu@nxp.com>");
 MODULE_DESCRIPTION("DCSS driver for i.MX8MQ");

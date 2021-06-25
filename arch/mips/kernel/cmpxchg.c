@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Imagination Technologies
  * Author: Paul Burton <paul.burton@mips.com>
  */
 
-#include <linux/bitops.h>
-#include <asm/cmpxchg.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/cmpxchg.h>
 
-unsigned long __xchg_small(volatile void *ptr, unsigned long val, unsigned int size)
-{
+अचिन्हित दीर्घ __xchg_small(अस्थिर व्योम *ptr, अचिन्हित दीर्घ val, अचिन्हित पूर्णांक size)
+अणु
 	u32 old32, new32, load32, mask;
-	volatile u32 *ptr32;
-	unsigned int shift;
+	अस्थिर u32 *ptr32;
+	अचिन्हित पूर्णांक shअगरt;
 
 	/* Check that ptr is naturally aligned */
-	WARN_ON((unsigned long)ptr & (size - 1));
+	WARN_ON((अचिन्हित दीर्घ)ptr & (size - 1));
 
 	/* Mask value to the correct size. */
 	mask = GENMASK((size * BITS_PER_BYTE) - 1, 0);
 	val &= mask;
 
 	/*
-	 * Calculate a shift & mask that correspond to the value we wish to
-	 * exchange within the naturally aligned 4 byte integerthat includes
+	 * Calculate a shअगरt & mask that correspond to the value we wish to
+	 * exchange within the naturally aligned 4 byte पूर्णांकegerthat includes
 	 * it.
 	 */
-	shift = (unsigned long)ptr & 0x3;
-	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
-		shift ^= sizeof(u32) - size;
-	shift *= BITS_PER_BYTE;
-	mask <<= shift;
+	shअगरt = (अचिन्हित दीर्घ)ptr & 0x3;
+	अगर (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		shअगरt ^= माप(u32) - size;
+	shअगरt *= BITS_PER_BYTE;
+	mask <<= shअगरt;
 
 	/*
-	 * Calculate a pointer to the naturally aligned 4 byte integer that
-	 * includes our byte of interest, and load its value.
+	 * Calculate a poपूर्णांकer to the naturally aligned 4 byte पूर्णांकeger that
+	 * includes our byte of पूर्णांकerest, and load its value.
 	 */
-	ptr32 = (volatile u32 *)((unsigned long)ptr & ~0x3);
+	ptr32 = (अस्थिर u32 *)((अचिन्हित दीर्घ)ptr & ~0x3);
 	load32 = *ptr32;
 
-	do {
+	करो अणु
 		old32 = load32;
-		new32 = (load32 & ~mask) | (val << shift);
+		new32 = (load32 & ~mask) | (val << shअगरt);
 		load32 = cmpxchg(ptr32, old32, new32);
-	} while (load32 != old32);
+	पूर्ण जबतक (load32 != old32);
 
-	return (load32 & mask) >> shift;
-}
+	वापस (load32 & mask) >> shअगरt;
+पूर्ण
 
-unsigned long __cmpxchg_small(volatile void *ptr, unsigned long old,
-			      unsigned long new, unsigned int size)
-{
+अचिन्हित दीर्घ __cmpxchg_small(अस्थिर व्योम *ptr, अचिन्हित दीर्घ old,
+			      अचिन्हित दीर्घ new, अचिन्हित पूर्णांक size)
+अणु
 	u32 mask, old32, new32, load32, load;
-	volatile u32 *ptr32;
-	unsigned int shift;
+	अस्थिर u32 *ptr32;
+	अचिन्हित पूर्णांक shअगरt;
 
 	/* Check that ptr is naturally aligned */
-	WARN_ON((unsigned long)ptr & (size - 1));
+	WARN_ON((अचिन्हित दीर्घ)ptr & (size - 1));
 
-	/* Mask inputs to the correct size. */
+	/* Mask inमाला_दो to the correct size. */
 	mask = GENMASK((size * BITS_PER_BYTE) - 1, 0);
 	old &= mask;
 	new &= mask;
 
 	/*
-	 * Calculate a shift & mask that correspond to the value we wish to
-	 * compare & exchange within the naturally aligned 4 byte integer
+	 * Calculate a shअगरt & mask that correspond to the value we wish to
+	 * compare & exchange within the naturally aligned 4 byte पूर्णांकeger
 	 * that includes it.
 	 */
-	shift = (unsigned long)ptr & 0x3;
-	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
-		shift ^= sizeof(u32) - size;
-	shift *= BITS_PER_BYTE;
-	mask <<= shift;
+	shअगरt = (अचिन्हित दीर्घ)ptr & 0x3;
+	अगर (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		shअगरt ^= माप(u32) - size;
+	shअगरt *= BITS_PER_BYTE;
+	mask <<= shअगरt;
 
 	/*
-	 * Calculate a pointer to the naturally aligned 4 byte integer that
-	 * includes our byte of interest, and load its value.
+	 * Calculate a poपूर्णांकer to the naturally aligned 4 byte पूर्णांकeger that
+	 * includes our byte of पूर्णांकerest, and load its value.
 	 */
-	ptr32 = (volatile u32 *)((unsigned long)ptr & ~0x3);
+	ptr32 = (अस्थिर u32 *)((अचिन्हित दीर्घ)ptr & ~0x3);
 	load32 = *ptr32;
 
-	while (true) {
+	जबतक (true) अणु
 		/*
 		 * Ensure the byte we want to exchange matches the expected
-		 * old value, and if not then bail.
+		 * old value, and अगर not then bail.
 		 */
-		load = (load32 & mask) >> shift;
-		if (load != old)
-			return load;
+		load = (load32 & mask) >> shअगरt;
+		अगर (load != old)
+			वापस load;
 
 		/*
 		 * Calculate the old & new values of the naturally aligned
-		 * 4 byte integer that include the byte we want to exchange.
-		 * Attempt to exchange the old value for the new value, and
-		 * return if we succeed.
+		 * 4 byte पूर्णांकeger that include the byte we want to exchange.
+		 * Attempt to exchange the old value क्रम the new value, and
+		 * वापस अगर we succeed.
 		 */
-		old32 = (load32 & ~mask) | (old << shift);
-		new32 = (load32 & ~mask) | (new << shift);
+		old32 = (load32 & ~mask) | (old << shअगरt);
+		new32 = (load32 & ~mask) | (new << shअगरt);
 		load32 = cmpxchg(ptr32, old32, new32);
-		if (load32 == old32)
-			return old;
-	}
-}
+		अगर (load32 == old32)
+			वापस old;
+	पूर्ण
+पूर्ण

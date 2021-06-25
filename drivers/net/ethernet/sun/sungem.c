@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* $Id: sungem.c,v 1.44.2.22 2002/03/13 01:18:12 davem Exp $
  * sungem.c: Sun GEM ethernet driver.
  *
  * Copyright (C) 2000, 2001, 2002, 2003 David S. Miller (davem@redhat.com)
  *
- * Support for Apple GMAC and assorted PHYs, WOL, Power Management
+ * Support क्रम Apple GMAC and assorted PHYs, WOL, Power Management
  * (C) 2001,2002,2003 Benjamin Herrenscmidt (benh@kernel.crashing.org)
  * (C) 2004,2005 Benjamin Herrenscmidt, IBM Corp.
  *
@@ -13,148 +14,148 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/in.h>
-#include <linux/sched.h>
-#include <linux/string.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/dma-mapping.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/mii.h>
-#include <linux/ethtool.h>
-#include <linux/crc32.h>
-#include <linux/random.h>
-#include <linux/workqueue.h>
-#include <linux/if_vlan.h>
-#include <linux/bitops.h>
-#include <linux/mm.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/in.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/gfp.h>
 
-#include <asm/io.h>
-#include <asm/byteorder.h>
-#include <linux/uaccess.h>
-#include <asm/irq.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/irq.h>
 
-#ifdef CONFIG_SPARC
-#include <asm/idprom.h>
-#include <asm/prom.h>
-#endif
+#अगर_घोषित CONFIG_SPARC
+#समावेश <यंत्र/idprom.h>
+#समावेश <यंत्र/prom.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC_PMAC
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/pmac_feature.h>
-#endif
+#अगर_घोषित CONFIG_PPC_PMAC
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/pmac_feature.h>
+#पूर्ण_अगर
 
-#include <linux/sungem_phy.h>
-#include "sungem.h"
+#समावेश <linux/sungem_phy.h>
+#समावेश "sungem.h"
 
-#define STRIP_FCS
+#घोषणा STRIP_FCS
 
-#define DEFAULT_MSG	(NETIF_MSG_DRV		| \
+#घोषणा DEFAULT_MSG	(NETIF_MSG_DRV		| \
 			 NETIF_MSG_PROBE	| \
 			 NETIF_MSG_LINK)
 
-#define ADVERTISE_MASK	(SUPPORTED_10baseT_Half | SUPPORTED_10baseT_Full | \
+#घोषणा ADVERTISE_MASK	(SUPPORTED_10baseT_Half | SUPPORTED_10baseT_Full | \
 			 SUPPORTED_100baseT_Half | SUPPORTED_100baseT_Full | \
 			 SUPPORTED_1000baseT_Half | SUPPORTED_1000baseT_Full | \
 			 SUPPORTED_Pause | SUPPORTED_Autoneg)
 
-#define DRV_NAME	"sungem"
-#define DRV_VERSION	"1.0"
-#define DRV_AUTHOR	"David S. Miller <davem@redhat.com>"
+#घोषणा DRV_NAME	"sungem"
+#घोषणा DRV_VERSION	"1.0"
+#घोषणा DRV_AUTHOR	"David S. Miller <davem@redhat.com>"
 
-static char version[] =
+अटल अक्षर version[] =
         DRV_NAME ".c:v" DRV_VERSION " " DRV_AUTHOR "\n";
 
 MODULE_AUTHOR(DRV_AUTHOR);
 MODULE_DESCRIPTION("Sun GEM Gbit ethernet driver");
 MODULE_LICENSE("GPL");
 
-#define GEM_MODULE_NAME	"gem"
+#घोषणा GEM_MODULE_NAME	"gem"
 
-static const struct pci_device_id gem_pci_tbl[] = {
-	{ PCI_VENDOR_ID_SUN, PCI_DEVICE_ID_SUN_GEM,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
+अटल स्थिर काष्ठा pci_device_id gem_pci_tbl[] = अणु
+	अणु PCI_VENDOR_ID_SUN, PCI_DEVICE_ID_SUN_GEM,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
 
-	/* These models only differ from the original GEM in
-	 * that their tx/rx fifos are of a different size and
+	/* These models only dअगरfer from the original GEM in
+	 * that their tx/rx fअगरos are of a dअगरferent size and
 	 * they only support 10/100 speeds. -DaveM
 	 *
-	 * Apple's GMAC does support gigabit on machines with
+	 * Apple's GMAC करोes support gigabit on machines with
 	 * the BCM54xx PHYs. -BenH
 	 */
-	{ PCI_VENDOR_ID_SUN, PCI_DEVICE_ID_SUN_RIO_GEM,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMAC,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMACP,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMAC2,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_K2_GMAC,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_SH_SUNGEM,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{ PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID2_GMAC,
-	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL },
-	{0, }
-};
+	अणु PCI_VENDOR_ID_SUN, PCI_DEVICE_ID_SUN_RIO_GEM,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMAC,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMACP,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_UNI_N_GMAC2,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_K2_GMAC,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_SH_SUNGEM,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु PCI_VENDOR_ID_APPLE, PCI_DEVICE_ID_APPLE_IPID2_GMAC,
+	  PCI_ANY_ID, PCI_ANY_ID, 0, 0, 0UL पूर्ण,
+	अणु0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, gem_pci_tbl);
 
-static u16 __sungem_phy_read(struct gem *gp, int phy_addr, int reg)
-{
+अटल u16 __sungem_phy_पढ़ो(काष्ठा gem *gp, पूर्णांक phy_addr, पूर्णांक reg)
+अणु
 	u32 cmd;
-	int limit = 10000;
+	पूर्णांक limit = 10000;
 
 	cmd  = (1 << 30);
 	cmd |= (2 << 28);
 	cmd |= (phy_addr << 23) & MIF_FRAME_PHYAD;
 	cmd |= (reg << 18) & MIF_FRAME_REGAD;
 	cmd |= (MIF_FRAME_TAMSB);
-	writel(cmd, gp->regs + MIF_FRAME);
+	ग_लिखोl(cmd, gp->regs + MIF_FRAME);
 
-	while (--limit) {
-		cmd = readl(gp->regs + MIF_FRAME);
-		if (cmd & MIF_FRAME_TALSB)
-			break;
+	जबतक (--limit) अणु
+		cmd = पढ़ोl(gp->regs + MIF_FRAME);
+		अगर (cmd & MIF_FRAME_TALSB)
+			अवरोध;
 
 		udelay(10);
-	}
+	पूर्ण
 
-	if (!limit)
+	अगर (!limit)
 		cmd = 0xffff;
 
-	return cmd & MIF_FRAME_DATA;
-}
+	वापस cmd & MIF_FRAME_DATA;
+पूर्ण
 
-static inline int _sungem_phy_read(struct net_device *dev, int mii_id, int reg)
-{
-	struct gem *gp = netdev_priv(dev);
-	return __sungem_phy_read(gp, mii_id, reg);
-}
+अटल अंतरभूत पूर्णांक _sungem_phy_पढ़ो(काष्ठा net_device *dev, पूर्णांक mii_id, पूर्णांक reg)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	वापस __sungem_phy_पढ़ो(gp, mii_id, reg);
+पूर्ण
 
-static inline u16 sungem_phy_read(struct gem *gp, int reg)
-{
-	return __sungem_phy_read(gp, gp->mii_phy_addr, reg);
-}
+अटल अंतरभूत u16 sungem_phy_पढ़ो(काष्ठा gem *gp, पूर्णांक reg)
+अणु
+	वापस __sungem_phy_पढ़ो(gp, gp->mii_phy_addr, reg);
+पूर्ण
 
-static void __sungem_phy_write(struct gem *gp, int phy_addr, int reg, u16 val)
-{
+अटल व्योम __sungem_phy_ग_लिखो(काष्ठा gem *gp, पूर्णांक phy_addr, पूर्णांक reg, u16 val)
+अणु
 	u32 cmd;
-	int limit = 10000;
+	पूर्णांक limit = 10000;
 
 	cmd  = (1 << 30);
 	cmd |= (1 << 28);
@@ -162,509 +163,509 @@ static void __sungem_phy_write(struct gem *gp, int phy_addr, int reg, u16 val)
 	cmd |= (reg << 18) & MIF_FRAME_REGAD;
 	cmd |= (MIF_FRAME_TAMSB);
 	cmd |= (val & MIF_FRAME_DATA);
-	writel(cmd, gp->regs + MIF_FRAME);
+	ग_लिखोl(cmd, gp->regs + MIF_FRAME);
 
-	while (limit--) {
-		cmd = readl(gp->regs + MIF_FRAME);
-		if (cmd & MIF_FRAME_TALSB)
-			break;
+	जबतक (limit--) अणु
+		cmd = पढ़ोl(gp->regs + MIF_FRAME);
+		अगर (cmd & MIF_FRAME_TALSB)
+			अवरोध;
 
 		udelay(10);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void _sungem_phy_write(struct net_device *dev, int mii_id, int reg, int val)
-{
-	struct gem *gp = netdev_priv(dev);
-	__sungem_phy_write(gp, mii_id, reg, val & 0xffff);
-}
+अटल अंतरभूत व्योम _sungem_phy_ग_लिखो(काष्ठा net_device *dev, पूर्णांक mii_id, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	__sungem_phy_ग_लिखो(gp, mii_id, reg, val & 0xffff);
+पूर्ण
 
-static inline void sungem_phy_write(struct gem *gp, int reg, u16 val)
-{
-	__sungem_phy_write(gp, gp->mii_phy_addr, reg, val);
-}
+अटल अंतरभूत व्योम sungem_phy_ग_लिखो(काष्ठा gem *gp, पूर्णांक reg, u16 val)
+अणु
+	__sungem_phy_ग_लिखो(gp, gp->mii_phy_addr, reg, val);
+पूर्ण
 
-static inline void gem_enable_ints(struct gem *gp)
-{
-	/* Enable all interrupts but TXDONE */
-	writel(GREG_STAT_TXDONE, gp->regs + GREG_IMASK);
-}
+अटल अंतरभूत व्योम gem_enable_पूर्णांकs(काष्ठा gem *gp)
+अणु
+	/* Enable all पूर्णांकerrupts but TXDONE */
+	ग_लिखोl(GREG_STAT_TXDONE, gp->regs + GREG_IMASK);
+पूर्ण
 
-static inline void gem_disable_ints(struct gem *gp)
-{
-	/* Disable all interrupts, including TXDONE */
-	writel(GREG_STAT_NAPI | GREG_STAT_TXDONE, gp->regs + GREG_IMASK);
-	(void)readl(gp->regs + GREG_IMASK); /* write posting */
-}
+अटल अंतरभूत व्योम gem_disable_पूर्णांकs(काष्ठा gem *gp)
+अणु
+	/* Disable all पूर्णांकerrupts, including TXDONE */
+	ग_लिखोl(GREG_STAT_NAPI | GREG_STAT_TXDONE, gp->regs + GREG_IMASK);
+	(व्योम)पढ़ोl(gp->regs + GREG_IMASK); /* ग_लिखो posting */
+पूर्ण
 
-static void gem_get_cell(struct gem *gp)
-{
+अटल व्योम gem_get_cell(काष्ठा gem *gp)
+अणु
 	BUG_ON(gp->cell_enabled < 0);
 	gp->cell_enabled++;
-#ifdef CONFIG_PPC_PMAC
-	if (gp->cell_enabled == 1) {
+#अगर_घोषित CONFIG_PPC_PMAC
+	अगर (gp->cell_enabled == 1) अणु
 		mb();
 		pmac_call_feature(PMAC_FTR_GMAC_ENABLE, gp->of_node, 0, 1);
 		udelay(10);
-	}
-#endif /* CONFIG_PPC_PMAC */
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_PMAC */
+पूर्ण
 
-/* Turn off the chip's clock */
-static void gem_put_cell(struct gem *gp)
-{
+/* Turn off the chip's घड़ी */
+अटल व्योम gem_put_cell(काष्ठा gem *gp)
+अणु
 	BUG_ON(gp->cell_enabled <= 0);
 	gp->cell_enabled--;
-#ifdef CONFIG_PPC_PMAC
-	if (gp->cell_enabled == 0) {
+#अगर_घोषित CONFIG_PPC_PMAC
+	अगर (gp->cell_enabled == 0) अणु
 		mb();
 		pmac_call_feature(PMAC_FTR_GMAC_ENABLE, gp->of_node, 0, 0);
 		udelay(10);
-	}
-#endif /* CONFIG_PPC_PMAC */
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_PMAC */
+पूर्ण
 
-static inline void gem_netif_stop(struct gem *gp)
-{
-	netif_trans_update(gp->dev);	/* prevent tx timeout */
+अटल अंतरभूत व्योम gem_netअगर_stop(काष्ठा gem *gp)
+अणु
+	netअगर_trans_update(gp->dev);	/* prevent tx समयout */
 	napi_disable(&gp->napi);
-	netif_tx_disable(gp->dev);
-}
+	netअगर_tx_disable(gp->dev);
+पूर्ण
 
-static inline void gem_netif_start(struct gem *gp)
-{
-	/* NOTE: unconditional netif_wake_queue is only
-	 * appropriate so long as all callers are assured to
-	 * have free tx slots.
+अटल अंतरभूत व्योम gem_netअगर_start(काष्ठा gem *gp)
+अणु
+	/* NOTE: unconditional netअगर_wake_queue is only
+	 * appropriate so दीर्घ as all callers are assured to
+	 * have मुक्त tx slots.
 	 */
-	netif_wake_queue(gp->dev);
+	netअगर_wake_queue(gp->dev);
 	napi_enable(&gp->napi);
-}
+पूर्ण
 
-static void gem_schedule_reset(struct gem *gp)
-{
+अटल व्योम gem_schedule_reset(काष्ठा gem *gp)
+अणु
 	gp->reset_task_pending = 1;
 	schedule_work(&gp->reset_task);
-}
+पूर्ण
 
-static void gem_handle_mif_event(struct gem *gp, u32 reg_val, u32 changed_bits)
-{
-	if (netif_msg_intr(gp))
-		printk(KERN_DEBUG "%s: mif interrupt\n", gp->dev->name);
-}
+अटल व्योम gem_handle_mअगर_event(काष्ठा gem *gp, u32 reg_val, u32 changed_bits)
+अणु
+	अगर (netअगर_msg_पूर्णांकr(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: mif interrupt\n", gp->dev->name);
+पूर्ण
 
-static int gem_pcs_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 pcs_istat = readl(gp->regs + PCS_ISTAT);
+अटल पूर्णांक gem_pcs_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 pcs_istat = पढ़ोl(gp->regs + PCS_ISTAT);
 	u32 pcs_miistat;
 
-	if (netif_msg_intr(gp))
-		printk(KERN_DEBUG "%s: pcs interrupt, pcs_istat: 0x%x\n",
+	अगर (netअगर_msg_पूर्णांकr(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: pcs interrupt, pcs_istat: 0x%x\n",
 			gp->dev->name, pcs_istat);
 
-	if (!(pcs_istat & PCS_ISTAT_LSC)) {
+	अगर (!(pcs_istat & PCS_ISTAT_LSC)) अणु
 		netdev_err(dev, "PCS irq but no link status change???\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* The link status bit latches on zero, so you must
-	 * read it twice in such a case to see a transition
+	 * पढ़ो it twice in such a हाल to see a transition
 	 * to the link being up.
 	 */
-	pcs_miistat = readl(gp->regs + PCS_MIISTAT);
-	if (!(pcs_miistat & PCS_MIISTAT_LS))
+	pcs_miistat = पढ़ोl(gp->regs + PCS_MIISTAT);
+	अगर (!(pcs_miistat & PCS_MIISTAT_LS))
 		pcs_miistat |=
-			(readl(gp->regs + PCS_MIISTAT) &
+			(पढ़ोl(gp->regs + PCS_MIISTAT) &
 			 PCS_MIISTAT_LS);
 
-	if (pcs_miistat & PCS_MIISTAT_ANC) {
+	अगर (pcs_miistat & PCS_MIISTAT_ANC) अणु
 		/* The remote-fault indication is only valid
-		 * when autoneg has completed.
+		 * when स्वतःneg has completed.
 		 */
-		if (pcs_miistat & PCS_MIISTAT_RF)
+		अगर (pcs_miistat & PCS_MIISTAT_RF)
 			netdev_info(dev, "PCS AutoNEG complete, RemoteFault\n");
-		else
+		अन्यथा
 			netdev_info(dev, "PCS AutoNEG complete\n");
-	}
+	पूर्ण
 
-	if (pcs_miistat & PCS_MIISTAT_LS) {
+	अगर (pcs_miistat & PCS_MIISTAT_LS) अणु
 		netdev_info(dev, "PCS link is now up\n");
-		netif_carrier_on(gp->dev);
-	} else {
+		netअगर_carrier_on(gp->dev);
+	पूर्ण अन्यथा अणु
 		netdev_info(dev, "PCS link is now down\n");
-		netif_carrier_off(gp->dev);
-		/* If this happens and the link timer is not running,
+		netअगर_carrier_off(gp->dev);
+		/* If this happens and the link समयr is not running,
 		 * reset so we re-negotiate.
 		 */
-		if (!timer_pending(&gp->link_timer))
-			return 1;
-	}
+		अगर (!समयr_pending(&gp->link_समयr))
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_txmac_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 txmac_stat = readl(gp->regs + MAC_TXSTAT);
+अटल पूर्णांक gem_txmac_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 txmac_stat = पढ़ोl(gp->regs + MAC_TXSTAT);
 
-	if (netif_msg_intr(gp))
-		printk(KERN_DEBUG "%s: txmac interrupt, txmac_stat: 0x%x\n",
+	अगर (netअगर_msg_पूर्णांकr(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: txmac interrupt, txmac_stat: 0x%x\n",
 			gp->dev->name, txmac_stat);
 
-	/* Defer timer expiration is quite normal,
-	 * don't even log the event.
+	/* Defer समयr expiration is quite normal,
+	 * करोn't even log the event.
 	 */
-	if ((txmac_stat & MAC_TXSTAT_DTE) &&
+	अगर ((txmac_stat & MAC_TXSTAT_DTE) &&
 	    !(txmac_stat & ~MAC_TXSTAT_DTE))
-		return 0;
+		वापस 0;
 
-	if (txmac_stat & MAC_TXSTAT_URUN) {
+	अगर (txmac_stat & MAC_TXSTAT_URUN) अणु
 		netdev_err(dev, "TX MAC xmit underrun\n");
-		dev->stats.tx_fifo_errors++;
-	}
+		dev->stats.tx_fअगरo_errors++;
+	पूर्ण
 
-	if (txmac_stat & MAC_TXSTAT_MPE) {
+	अगर (txmac_stat & MAC_TXSTAT_MPE) अणु
 		netdev_err(dev, "TX MAC max packet size error\n");
 		dev->stats.tx_errors++;
-	}
+	पूर्ण
 
-	/* The rest are all cases of one of the 16-bit TX
+	/* The rest are all हालs of one of the 16-bit TX
 	 * counters expiring.
 	 */
-	if (txmac_stat & MAC_TXSTAT_NCE)
+	अगर (txmac_stat & MAC_TXSTAT_NCE)
 		dev->stats.collisions += 0x10000;
 
-	if (txmac_stat & MAC_TXSTAT_ECE) {
-		dev->stats.tx_aborted_errors += 0x10000;
+	अगर (txmac_stat & MAC_TXSTAT_ECE) अणु
+		dev->stats.tx_पातed_errors += 0x10000;
 		dev->stats.collisions += 0x10000;
-	}
+	पूर्ण
 
-	if (txmac_stat & MAC_TXSTAT_LCE) {
-		dev->stats.tx_aborted_errors += 0x10000;
+	अगर (txmac_stat & MAC_TXSTAT_LCE) अणु
+		dev->stats.tx_पातed_errors += 0x10000;
 		dev->stats.collisions += 0x10000;
-	}
+	पूर्ण
 
-	/* We do not keep track of MAC_TXSTAT_FCE and
+	/* We करो not keep track of MAC_TXSTAT_FCE and
 	 * MAC_TXSTAT_PCE events.
 	 */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* When we get a RX fifo overflow, the RX unit in GEM is probably hung
- * so we do the following.
+/* When we get a RX fअगरo overflow, the RX unit in GEM is probably hung
+ * so we करो the following.
  *
- * If any part of the reset goes wrong, we return 1 and that causes the
+ * If any part of the reset goes wrong, we वापस 1 and that causes the
  * whole chip to be reset.
  */
-static int gem_rxmac_reset(struct gem *gp)
-{
-	struct net_device *dev = gp->dev;
-	int limit, i;
+अटल पूर्णांक gem_rxmac_reset(काष्ठा gem *gp)
+अणु
+	काष्ठा net_device *dev = gp->dev;
+	पूर्णांक limit, i;
 	u64 desc_dma;
 	u32 val;
 
 	/* First, reset & disable MAC RX. */
-	writel(MAC_RXRST_CMD, gp->regs + MAC_RXRST);
-	for (limit = 0; limit < 5000; limit++) {
-		if (!(readl(gp->regs + MAC_RXRST) & MAC_RXRST_CMD))
-			break;
+	ग_लिखोl(MAC_RXRST_CMD, gp->regs + MAC_RXRST);
+	क्रम (limit = 0; limit < 5000; limit++) अणु
+		अगर (!(पढ़ोl(gp->regs + MAC_RXRST) & MAC_RXRST_CMD))
+			अवरोध;
 		udelay(10);
-	}
-	if (limit == 5000) {
+	पूर्ण
+	अगर (limit == 5000) अणु
 		netdev_err(dev, "RX MAC will not reset, resetting whole chip\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	writel(gp->mac_rx_cfg & ~MAC_RXCFG_ENAB,
+	ग_लिखोl(gp->mac_rx_cfg & ~MAC_RXCFG_ENAB,
 	       gp->regs + MAC_RXCFG);
-	for (limit = 0; limit < 5000; limit++) {
-		if (!(readl(gp->regs + MAC_RXCFG) & MAC_RXCFG_ENAB))
-			break;
+	क्रम (limit = 0; limit < 5000; limit++) अणु
+		अगर (!(पढ़ोl(gp->regs + MAC_RXCFG) & MAC_RXCFG_ENAB))
+			अवरोध;
 		udelay(10);
-	}
-	if (limit == 5000) {
+	पूर्ण
+	अगर (limit == 5000) अणु
 		netdev_err(dev, "RX MAC will not disable, resetting whole chip\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Second, disable RX DMA. */
-	writel(0, gp->regs + RXDMA_CFG);
-	for (limit = 0; limit < 5000; limit++) {
-		if (!(readl(gp->regs + RXDMA_CFG) & RXDMA_CFG_ENABLE))
-			break;
+	ग_लिखोl(0, gp->regs + RXDMA_CFG);
+	क्रम (limit = 0; limit < 5000; limit++) अणु
+		अगर (!(पढ़ोl(gp->regs + RXDMA_CFG) & RXDMA_CFG_ENABLE))
+			अवरोध;
 		udelay(10);
-	}
-	if (limit == 5000) {
+	पूर्ण
+	अगर (limit == 5000) अणु
 		netdev_err(dev, "RX DMA will not disable, resetting whole chip\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	mdelay(5);
 
 	/* Execute RX reset command. */
-	writel(gp->swrst_base | GREG_SWRST_RXRST,
+	ग_लिखोl(gp->swrst_base | GREG_SWRST_RXRST,
 	       gp->regs + GREG_SWRST);
-	for (limit = 0; limit < 5000; limit++) {
-		if (!(readl(gp->regs + GREG_SWRST) & GREG_SWRST_RXRST))
-			break;
+	क्रम (limit = 0; limit < 5000; limit++) अणु
+		अगर (!(पढ़ोl(gp->regs + GREG_SWRST) & GREG_SWRST_RXRST))
+			अवरोध;
 		udelay(10);
-	}
-	if (limit == 5000) {
+	पूर्ण
+	अगर (limit == 5000) अणु
 		netdev_err(dev, "RX reset command will not execute, resetting whole chip\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Refresh the RX ring. */
-	for (i = 0; i < RX_RING_SIZE; i++) {
-		struct gem_rxd *rxd = &gp->init_block->rxd[i];
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+		काष्ठा gem_rxd *rxd = &gp->init_block->rxd[i];
 
-		if (gp->rx_skbs[i] == NULL) {
+		अगर (gp->rx_skbs[i] == शून्य) अणु
 			netdev_err(dev, "Parts of RX ring empty, resetting whole chip\n");
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		rxd->status_word = cpu_to_le64(RXDCTRL_FRESH(gp));
-	}
+	पूर्ण
 	gp->rx_new = gp->rx_old = 0;
 
 	/* Now we must reprogram the rest of RX unit. */
 	desc_dma = (u64) gp->gblock_dvma;
-	desc_dma += (INIT_BLOCK_TX_RING_SIZE * sizeof(struct gem_txd));
-	writel(desc_dma >> 32, gp->regs + RXDMA_DBHI);
-	writel(desc_dma & 0xffffffff, gp->regs + RXDMA_DBLOW);
-	writel(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
+	desc_dma += (INIT_BLOCK_TX_RING_SIZE * माप(काष्ठा gem_txd));
+	ग_लिखोl(desc_dma >> 32, gp->regs + RXDMA_DBHI);
+	ग_लिखोl(desc_dma & 0xffffffff, gp->regs + RXDMA_DBLOW);
+	ग_लिखोl(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
 	val = (RXDMA_CFG_BASE | (RX_OFFSET << 10) |
 	       (ETH_HLEN << 13) | RXDMA_CFG_FTHRESH_128);
-	writel(val, gp->regs + RXDMA_CFG);
-	if (readl(gp->regs + GREG_BIFCFG) & GREG_BIFCFG_M66EN)
-		writel(((5 & RXDMA_BLANK_IPKTS) |
+	ग_लिखोl(val, gp->regs + RXDMA_CFG);
+	अगर (पढ़ोl(gp->regs + GREG_BIFCFG) & GREG_BIFCFG_M66EN)
+		ग_लिखोl(((5 & RXDMA_BLANK_IPKTS) |
 			((8 << 12) & RXDMA_BLANK_ITIME)),
 		       gp->regs + RXDMA_BLANK);
-	else
-		writel(((5 & RXDMA_BLANK_IPKTS) |
+	अन्यथा
+		ग_लिखोl(((5 & RXDMA_BLANK_IPKTS) |
 			((4 << 12) & RXDMA_BLANK_ITIME)),
 		       gp->regs + RXDMA_BLANK);
-	val  = (((gp->rx_pause_off / 64) << 0) & RXDMA_PTHRESH_OFF);
-	val |= (((gp->rx_pause_on / 64) << 12) & RXDMA_PTHRESH_ON);
-	writel(val, gp->regs + RXDMA_PTHRESH);
-	val = readl(gp->regs + RXDMA_CFG);
-	writel(val | RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
-	writel(MAC_RXSTAT_RCV, gp->regs + MAC_RXMASK);
-	val = readl(gp->regs + MAC_RXCFG);
-	writel(val | MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
+	val  = (((gp->rx_छोड़ो_off / 64) << 0) & RXDMA_PTHRESH_OFF);
+	val |= (((gp->rx_छोड़ो_on / 64) << 12) & RXDMA_PTHRESH_ON);
+	ग_लिखोl(val, gp->regs + RXDMA_PTHRESH);
+	val = पढ़ोl(gp->regs + RXDMA_CFG);
+	ग_लिखोl(val | RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
+	ग_लिखोl(MAC_RXSTAT_RCV, gp->regs + MAC_RXMASK);
+	val = पढ़ोl(gp->regs + MAC_RXCFG);
+	ग_लिखोl(val | MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_rxmac_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 rxmac_stat = readl(gp->regs + MAC_RXSTAT);
-	int ret = 0;
+अटल पूर्णांक gem_rxmac_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 rxmac_stat = पढ़ोl(gp->regs + MAC_RXSTAT);
+	पूर्णांक ret = 0;
 
-	if (netif_msg_intr(gp))
-		printk(KERN_DEBUG "%s: rxmac interrupt, rxmac_stat: 0x%x\n",
+	अगर (netअगर_msg_पूर्णांकr(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: rxmac interrupt, rxmac_stat: 0x%x\n",
 			gp->dev->name, rxmac_stat);
 
-	if (rxmac_stat & MAC_RXSTAT_OFLW) {
-		u32 smac = readl(gp->regs + MAC_SMACHINE);
+	अगर (rxmac_stat & MAC_RXSTAT_OFLW) अणु
+		u32 smac = पढ़ोl(gp->regs + MAC_SMACHINE);
 
 		netdev_err(dev, "RX MAC fifo overflow smac[%08x]\n", smac);
 		dev->stats.rx_over_errors++;
-		dev->stats.rx_fifo_errors++;
+		dev->stats.rx_fअगरo_errors++;
 
 		ret = gem_rxmac_reset(gp);
-	}
+	पूर्ण
 
-	if (rxmac_stat & MAC_RXSTAT_ACE)
+	अगर (rxmac_stat & MAC_RXSTAT_ACE)
 		dev->stats.rx_frame_errors += 0x10000;
 
-	if (rxmac_stat & MAC_RXSTAT_CCE)
+	अगर (rxmac_stat & MAC_RXSTAT_CCE)
 		dev->stats.rx_crc_errors += 0x10000;
 
-	if (rxmac_stat & MAC_RXSTAT_LCE)
+	अगर (rxmac_stat & MAC_RXSTAT_LCE)
 		dev->stats.rx_length_errors += 0x10000;
 
-	/* We do not track MAC_RXSTAT_FCE and MAC_RXSTAT_VCE
+	/* We करो not track MAC_RXSTAT_FCE and MAC_RXSTAT_VCE
 	 * events.
 	 */
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gem_mac_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 mac_cstat = readl(gp->regs + MAC_CSTAT);
+अटल पूर्णांक gem_mac_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 mac_cstat = पढ़ोl(gp->regs + MAC_CSTAT);
 
-	if (netif_msg_intr(gp))
-		printk(KERN_DEBUG "%s: mac interrupt, mac_cstat: 0x%x\n",
+	अगर (netअगर_msg_पूर्णांकr(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: mac interrupt, mac_cstat: 0x%x\n",
 			gp->dev->name, mac_cstat);
 
-	/* This interrupt is just for pause frame and pause
-	 * tracking.  It is useful for diagnostics and debug
-	 * but probably by default we will mask these events.
+	/* This पूर्णांकerrupt is just क्रम छोड़ो frame and छोड़ो
+	 * tracking.  It is useful क्रम diagnostics and debug
+	 * but probably by शेष we will mask these events.
 	 */
-	if (mac_cstat & MAC_CSTAT_PS)
-		gp->pause_entered++;
+	अगर (mac_cstat & MAC_CSTAT_PS)
+		gp->छोड़ो_entered++;
 
-	if (mac_cstat & MAC_CSTAT_PRCV)
-		gp->pause_last_time_recvd = (mac_cstat >> 16);
+	अगर (mac_cstat & MAC_CSTAT_PRCV)
+		gp->छोड़ो_last_समय_recvd = (mac_cstat >> 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_mif_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 mif_status = readl(gp->regs + MIF_STATUS);
+अटल पूर्णांक gem_mअगर_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 mअगर_status = पढ़ोl(gp->regs + MIF_STATUS);
 	u32 reg_val, changed_bits;
 
-	reg_val = (mif_status & MIF_STATUS_DATA) >> 16;
-	changed_bits = (mif_status & MIF_STATUS_STAT);
+	reg_val = (mअगर_status & MIF_STATUS_DATA) >> 16;
+	changed_bits = (mअगर_status & MIF_STATUS_STAT);
 
-	gem_handle_mif_event(gp, reg_val, changed_bits);
+	gem_handle_mअगर_event(gp, reg_val, changed_bits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_pci_interrupt(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	u32 pci_estat = readl(gp->regs + GREG_PCIESTAT);
+अटल पूर्णांक gem_pci_पूर्णांकerrupt(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	u32 pci_estat = पढ़ोl(gp->regs + GREG_PCIESTAT);
 
-	if (gp->pdev->vendor == PCI_VENDOR_ID_SUN &&
-	    gp->pdev->device == PCI_DEVICE_ID_SUN_GEM) {
+	अगर (gp->pdev->venकरोr == PCI_VENDOR_ID_SUN &&
+	    gp->pdev->device == PCI_DEVICE_ID_SUN_GEM) अणु
 		netdev_err(dev, "PCI error [%04x]", pci_estat);
 
-		if (pci_estat & GREG_PCIESTAT_BADACK)
+		अगर (pci_estat & GREG_PCIESTAT_BADACK)
 			pr_cont(" <No ACK64# during ABS64 cycle>");
-		if (pci_estat & GREG_PCIESTAT_DTRTO)
+		अगर (pci_estat & GREG_PCIESTAT_DTRTO)
 			pr_cont(" <Delayed transaction timeout>");
-		if (pci_estat & GREG_PCIESTAT_OTHER)
+		अगर (pci_estat & GREG_PCIESTAT_OTHER)
 			pr_cont(" <other>");
 		pr_cont("\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_estat |= GREG_PCIESTAT_OTHER;
 		netdev_err(dev, "PCI error\n");
-	}
+	पूर्ण
 
-	if (pci_estat & GREG_PCIESTAT_OTHER) {
-		int pci_errs;
+	अगर (pci_estat & GREG_PCIESTAT_OTHER) अणु
+		पूर्णांक pci_errs;
 
-		/* Interrogate PCI config space for the
+		/* Interrogate PCI config space क्रम the
 		 * true cause.
 		 */
 		pci_errs = pci_status_get_and_clear_errors(gp->pdev);
 		netdev_err(dev, "PCI status errors[%04x]\n", pci_errs);
-		if (pci_errs & PCI_STATUS_PARITY)
+		अगर (pci_errs & PCI_STATUS_PARITY)
 			netdev_err(dev, "PCI parity error detected\n");
-		if (pci_errs & PCI_STATUS_SIG_TARGET_ABORT)
+		अगर (pci_errs & PCI_STATUS_SIG_TARGET_ABORT)
 			netdev_err(dev, "PCI target abort\n");
-		if (pci_errs & PCI_STATUS_REC_TARGET_ABORT)
+		अगर (pci_errs & PCI_STATUS_REC_TARGET_ABORT)
 			netdev_err(dev, "PCI master acks target abort\n");
-		if (pci_errs & PCI_STATUS_REC_MASTER_ABORT)
+		अगर (pci_errs & PCI_STATUS_REC_MASTER_ABORT)
 			netdev_err(dev, "PCI master abort\n");
-		if (pci_errs & PCI_STATUS_SIG_SYSTEM_ERROR)
+		अगर (pci_errs & PCI_STATUS_SIG_SYSTEM_ERROR)
 			netdev_err(dev, "PCI system error SERR#\n");
-		if (pci_errs & PCI_STATUS_DETECTED_PARITY)
+		अगर (pci_errs & PCI_STATUS_DETECTED_PARITY)
 			netdev_err(dev, "PCI parity error\n");
-	}
+	पूर्ण
 
 	/* For all PCI errors, we should reset the chip. */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* All non-normal interrupt conditions get serviced here.
- * Returns non-zero if we should just exit the interrupt
- * handler right now (ie. if we reset the card which invalidates
+/* All non-normal पूर्णांकerrupt conditions get serviced here.
+ * Returns non-zero अगर we should just निकास the पूर्णांकerrupt
+ * handler right now (ie. अगर we reset the card which invalidates
  * all of the other original irq status bits).
  */
-static int gem_abnormal_irq(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	if (gem_status & GREG_STAT_RXNOBUF) {
-		/* Frame arrived, no free RX buffers available. */
-		if (netif_msg_rx_err(gp))
-			printk(KERN_DEBUG "%s: no buffer for rx frame\n",
+अटल पूर्णांक gem_abnormal_irq(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	अगर (gem_status & GREG_STAT_RXNOBUF) अणु
+		/* Frame arrived, no मुक्त RX buffers available. */
+		अगर (netअगर_msg_rx_err(gp))
+			prपूर्णांकk(KERN_DEBUG "%s: no buffer for rx frame\n",
 				gp->dev->name);
 		dev->stats.rx_dropped++;
-	}
+	पूर्ण
 
-	if (gem_status & GREG_STAT_RXTAGERR) {
+	अगर (gem_status & GREG_STAT_RXTAGERR) अणु
 		/* corrupt RX tag framing */
-		if (netif_msg_rx_err(gp))
-			printk(KERN_DEBUG "%s: corrupt rx tag framing\n",
+		अगर (netअगर_msg_rx_err(gp))
+			prपूर्णांकk(KERN_DEBUG "%s: corrupt rx tag framing\n",
 				gp->dev->name);
 		dev->stats.rx_errors++;
 
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_PCS) {
-		if (gem_pcs_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_PCS) अणु
+		अगर (gem_pcs_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_TXMAC) {
-		if (gem_txmac_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_TXMAC) अणु
+		अगर (gem_txmac_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_RXMAC) {
-		if (gem_rxmac_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_RXMAC) अणु
+		अगर (gem_rxmac_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_MAC) {
-		if (gem_mac_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_MAC) अणु
+		अगर (gem_mac_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_MIF) {
-		if (gem_mif_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_MIF) अणु
+		अगर (gem_mअगर_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	if (gem_status & GREG_STAT_PCIERR) {
-		if (gem_pci_interrupt(dev, gp, gem_status))
-			return 1;
-	}
+	अगर (gem_status & GREG_STAT_PCIERR) अणु
+		अगर (gem_pci_पूर्णांकerrupt(dev, gp, gem_status))
+			वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __inline__ void gem_tx(struct net_device *dev, struct gem *gp, u32 gem_status)
-{
-	int entry, limit;
+अटल __अंतरभूत__ व्योम gem_tx(काष्ठा net_device *dev, काष्ठा gem *gp, u32 gem_status)
+अणु
+	पूर्णांक entry, limit;
 
 	entry = gp->tx_old;
 	limit = ((gem_status & GREG_STAT_TXNR) >> GREG_STAT_TXNR_SHIFT);
-	while (entry != limit) {
-		struct sk_buff *skb;
-		struct gem_txd *txd;
+	जबतक (entry != limit) अणु
+		काष्ठा sk_buff *skb;
+		काष्ठा gem_txd *txd;
 		dma_addr_t dma_addr;
 		u32 dma_len;
-		int frag;
+		पूर्णांक frag;
 
-		if (netif_msg_tx_done(gp))
-			printk(KERN_DEBUG "%s: tx done, slot %d\n",
+		अगर (netअगर_msg_tx_करोne(gp))
+			prपूर्णांकk(KERN_DEBUG "%s: tx done, slot %d\n",
 				gp->dev->name, entry);
 		skb = gp->tx_skbs[entry];
-		if (skb_shinfo(skb)->nr_frags) {
-			int last = entry + skb_shinfo(skb)->nr_frags;
-			int walk = entry;
-			int incomplete = 0;
+		अगर (skb_shinfo(skb)->nr_frags) अणु
+			पूर्णांक last = entry + skb_shinfo(skb)->nr_frags;
+			पूर्णांक walk = entry;
+			पूर्णांक incomplete = 0;
 
 			last &= (TX_RING_SIZE - 1);
-			for (;;) {
+			क्रम (;;) अणु
 				walk = NEXT_TX(walk);
-				if (walk == limit)
+				अगर (walk == limit)
 					incomplete = 1;
-				if (walk == last)
-					break;
-			}
-			if (incomplete)
-				break;
-		}
-		gp->tx_skbs[entry] = NULL;
+				अगर (walk == last)
+					अवरोध;
+			पूर्ण
+			अगर (incomplete)
+				अवरोध;
+		पूर्ण
+		gp->tx_skbs[entry] = शून्य;
 		dev->stats.tx_bytes += skb->len;
 
-		for (frag = 0; frag <= skb_shinfo(skb)->nr_frags; frag++) {
+		क्रम (frag = 0; frag <= skb_shinfo(skb)->nr_frags; frag++) अणु
 			txd = &gp->init_block->txd[entry];
 
 			dma_addr = le64_to_cpu(txd->buffer);
@@ -673,143 +674,143 @@ static __inline__ void gem_tx(struct net_device *dev, struct gem *gp, u32 gem_st
 			dma_unmap_page(&gp->pdev->dev, dma_addr, dma_len,
 				       DMA_TO_DEVICE);
 			entry = NEXT_TX(entry);
-		}
+		पूर्ण
 
 		dev->stats.tx_packets++;
 		dev_consume_skb_any(skb);
-	}
+	पूर्ण
 	gp->tx_old = entry;
 
 	/* Need to make the tx_old update visible to gem_start_xmit()
-	 * before checking for netif_queue_stopped().  Without the
+	 * beक्रमe checking क्रम netअगर_queue_stopped().  Without the
 	 * memory barrier, there is a small possibility that gem_start_xmit()
-	 * will miss it and cause the queue to be stopped forever.
+	 * will miss it and cause the queue to be stopped क्रमever.
 	 */
 	smp_mb();
 
-	if (unlikely(netif_queue_stopped(dev) &&
-		     TX_BUFFS_AVAIL(gp) > (MAX_SKB_FRAGS + 1))) {
-		struct netdev_queue *txq = netdev_get_tx_queue(dev, 0);
+	अगर (unlikely(netअगर_queue_stopped(dev) &&
+		     TX_BUFFS_AVAIL(gp) > (MAX_SKB_FRAGS + 1))) अणु
+		काष्ठा netdev_queue *txq = netdev_get_tx_queue(dev, 0);
 
-		__netif_tx_lock(txq, smp_processor_id());
-		if (netif_queue_stopped(dev) &&
+		__netअगर_tx_lock(txq, smp_processor_id());
+		अगर (netअगर_queue_stopped(dev) &&
 		    TX_BUFFS_AVAIL(gp) > (MAX_SKB_FRAGS + 1))
-			netif_wake_queue(dev);
-		__netif_tx_unlock(txq);
-	}
-}
+			netअगर_wake_queue(dev);
+		__netअगर_tx_unlock(txq);
+	पूर्ण
+पूर्ण
 
-static __inline__ void gem_post_rxds(struct gem *gp, int limit)
-{
-	int cluster_start, curr, count, kick;
+अटल __अंतरभूत__ व्योम gem_post_rxds(काष्ठा gem *gp, पूर्णांक limit)
+अणु
+	पूर्णांक cluster_start, curr, count, kick;
 
 	cluster_start = curr = (gp->rx_new & ~(4 - 1));
 	count = 0;
 	kick = -1;
 	dma_wmb();
-	while (curr != limit) {
+	जबतक (curr != limit) अणु
 		curr = NEXT_RX(curr);
-		if (++count == 4) {
-			struct gem_rxd *rxd =
+		अगर (++count == 4) अणु
+			काष्ठा gem_rxd *rxd =
 				&gp->init_block->rxd[cluster_start];
-			for (;;) {
+			क्रम (;;) अणु
 				rxd->status_word = cpu_to_le64(RXDCTRL_FRESH(gp));
 				rxd++;
 				cluster_start = NEXT_RX(cluster_start);
-				if (cluster_start == curr)
-					break;
-			}
+				अगर (cluster_start == curr)
+					अवरोध;
+			पूर्ण
 			kick = curr;
 			count = 0;
-		}
-	}
-	if (kick >= 0) {
+		पूर्ण
+	पूर्ण
+	अगर (kick >= 0) अणु
 		mb();
-		writel(kick, gp->regs + RXDMA_KICK);
-	}
-}
+		ग_लिखोl(kick, gp->regs + RXDMA_KICK);
+	पूर्ण
+पूर्ण
 
-#define ALIGNED_RX_SKB_ADDR(addr) \
-        ((((unsigned long)(addr) + (64UL - 1UL)) & ~(64UL - 1UL)) - (unsigned long)(addr))
-static __inline__ struct sk_buff *gem_alloc_skb(struct net_device *dev, int size,
+#घोषणा ALIGNED_RX_SKB_ADDR(addr) \
+        ((((अचिन्हित दीर्घ)(addr) + (64UL - 1UL)) & ~(64UL - 1UL)) - (अचिन्हित दीर्घ)(addr))
+अटल __अंतरभूत__ काष्ठा sk_buff *gem_alloc_skb(काष्ठा net_device *dev, पूर्णांक size,
 						gfp_t gfp_flags)
-{
-	struct sk_buff *skb = alloc_skb(size + 64, gfp_flags);
+अणु
+	काष्ठा sk_buff *skb = alloc_skb(size + 64, gfp_flags);
 
-	if (likely(skb)) {
-		unsigned long offset = ALIGNED_RX_SKB_ADDR(skb->data);
+	अगर (likely(skb)) अणु
+		अचिन्हित दीर्घ offset = ALIGNED_RX_SKB_ADDR(skb->data);
 		skb_reserve(skb, offset);
-	}
-	return skb;
-}
+	पूर्ण
+	वापस skb;
+पूर्ण
 
-static int gem_rx(struct gem *gp, int work_to_do)
-{
-	struct net_device *dev = gp->dev;
-	int entry, drops, work_done = 0;
-	u32 done;
+अटल पूर्णांक gem_rx(काष्ठा gem *gp, पूर्णांक work_to_करो)
+अणु
+	काष्ठा net_device *dev = gp->dev;
+	पूर्णांक entry, drops, work_करोne = 0;
+	u32 करोne;
 
-	if (netif_msg_rx_status(gp))
-		printk(KERN_DEBUG "%s: rx interrupt, done: %d, rx_new: %d\n",
-			gp->dev->name, readl(gp->regs + RXDMA_DONE), gp->rx_new);
+	अगर (netअगर_msg_rx_status(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: rx interrupt, done: %d, rx_new: %d\n",
+			gp->dev->name, पढ़ोl(gp->regs + RXDMA_DONE), gp->rx_new);
 
 	entry = gp->rx_new;
 	drops = 0;
-	done = readl(gp->regs + RXDMA_DONE);
-	for (;;) {
-		struct gem_rxd *rxd = &gp->init_block->rxd[entry];
-		struct sk_buff *skb;
+	करोne = पढ़ोl(gp->regs + RXDMA_DONE);
+	क्रम (;;) अणु
+		काष्ठा gem_rxd *rxd = &gp->init_block->rxd[entry];
+		काष्ठा sk_buff *skb;
 		u64 status = le64_to_cpu(rxd->status_word);
 		dma_addr_t dma_addr;
-		int len;
+		पूर्णांक len;
 
-		if ((status & RXDCTRL_OWN) != 0)
-			break;
+		अगर ((status & RXDCTRL_OWN) != 0)
+			अवरोध;
 
-		if (work_done >= RX_RING_SIZE || work_done >= work_to_do)
-			break;
+		अगर (work_करोne >= RX_RING_SIZE || work_करोne >= work_to_करो)
+			अवरोध;
 
-		/* When writing back RX descriptor, GEM writes status
+		/* When writing back RX descriptor, GEM ग_लिखोs status
 		 * then buffer address, possibly in separate transactions.
-		 * If we don't wait for the chip to write both, we could
+		 * If we करोn't रुको क्रम the chip to ग_लिखो both, we could
 		 * post a new buffer to this descriptor then have GEM spam
 		 * on the buffer address.  We sync on the RX completion
-		 * register to prevent this from happening.
+		 * रेजिस्टर to prevent this from happening.
 		 */
-		if (entry == done) {
-			done = readl(gp->regs + RXDMA_DONE);
-			if (entry == done)
-				break;
-		}
+		अगर (entry == करोne) अणु
+			करोne = पढ़ोl(gp->regs + RXDMA_DONE);
+			अगर (entry == करोne)
+				अवरोध;
+		पूर्ण
 
-		/* We can now account for the work we're about to do */
-		work_done++;
+		/* We can now account क्रम the work we're about to करो */
+		work_करोne++;
 
 		skb = gp->rx_skbs[entry];
 
 		len = (status & RXDCTRL_BUFSZ) >> 16;
-		if ((len < ETH_ZLEN) || (status & RXDCTRL_BAD)) {
+		अगर ((len < ETH_ZLEN) || (status & RXDCTRL_BAD)) अणु
 			dev->stats.rx_errors++;
-			if (len < ETH_ZLEN)
+			अगर (len < ETH_ZLEN)
 				dev->stats.rx_length_errors++;
-			if (len & RXDCTRL_BAD)
+			अगर (len & RXDCTRL_BAD)
 				dev->stats.rx_crc_errors++;
 
-			/* We'll just return it to GEM. */
+			/* We'll just वापस it to GEM. */
 		drop_it:
 			dev->stats.rx_dropped++;
-			goto next;
-		}
+			जाओ next;
+		पूर्ण
 
 		dma_addr = le64_to_cpu(rxd->buffer);
-		if (len > RX_COPY_THRESHOLD) {
-			struct sk_buff *new_skb;
+		अगर (len > RX_COPY_THRESHOLD) अणु
+			काष्ठा sk_buff *new_skb;
 
 			new_skb = gem_alloc_skb(dev, RX_BUF_ALLOC_SIZE(gp), GFP_ATOMIC);
-			if (new_skb == NULL) {
+			अगर (new_skb == शून्य) अणु
 				drops++;
-				goto drop_it;
-			}
+				जाओ drop_it;
+			पूर्ण
 			dma_unmap_page(&gp->pdev->dev, dma_addr,
 				       RX_BUF_ALLOC_SIZE(gp), DMA_FROM_DEVICE);
 			gp->rx_skbs[entry] = new_skb;
@@ -821,35 +822,35 @@ static int gem_rx(struct gem *gp, int work_to_do)
 							       DMA_FROM_DEVICE));
 			skb_reserve(new_skb, RX_OFFSET);
 
-			/* Trim the original skb for the netif. */
+			/* Trim the original skb क्रम the netअगर. */
 			skb_trim(skb, len);
-		} else {
-			struct sk_buff *copy_skb = netdev_alloc_skb(dev, len + 2);
+		पूर्ण अन्यथा अणु
+			काष्ठा sk_buff *copy_skb = netdev_alloc_skb(dev, len + 2);
 
-			if (copy_skb == NULL) {
+			अगर (copy_skb == शून्य) अणु
 				drops++;
-				goto drop_it;
-			}
+				जाओ drop_it;
+			पूर्ण
 
 			skb_reserve(copy_skb, 2);
 			skb_put(copy_skb, len);
-			dma_sync_single_for_cpu(&gp->pdev->dev, dma_addr, len,
+			dma_sync_single_क्रम_cpu(&gp->pdev->dev, dma_addr, len,
 						DMA_FROM_DEVICE);
 			skb_copy_from_linear_data(skb, copy_skb->data, len);
-			dma_sync_single_for_device(&gp->pdev->dev, dma_addr,
+			dma_sync_single_क्रम_device(&gp->pdev->dev, dma_addr,
 						   len, DMA_FROM_DEVICE);
 
 			/* We'll reuse the original ring buffer. */
 			skb = copy_skb;
-		}
+		पूर्ण
 
-		if (likely(dev->features & NETIF_F_RXCSUM)) {
+		अगर (likely(dev->features & NETIF_F_RXCSUM)) अणु
 			__sum16 csum;
 
-			csum = (__force __sum16)htons((status & RXDCTRL_TCPCSUM) ^ 0xffff);
+			csum = (__क्रमce __sum16)htons((status & RXDCTRL_TCPCSUM) ^ 0xffff);
 			skb->csum = csum_unfold(csum);
 			skb->ip_summed = CHECKSUM_COMPLETE;
-		}
+		पूर्ण
 		skb->protocol = eth_type_trans(skb, gp->dev);
 
 		napi_gro_receive(&gp->napi, skb);
@@ -859,165 +860,165 @@ static int gem_rx(struct gem *gp, int work_to_do)
 
 	next:
 		entry = NEXT_RX(entry);
-	}
+	पूर्ण
 
 	gem_post_rxds(gp, entry);
 
 	gp->rx_new = entry;
 
-	if (drops)
+	अगर (drops)
 		netdev_info(gp->dev, "Memory squeeze, deferring packet\n");
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static int gem_poll(struct napi_struct *napi, int budget)
-{
-	struct gem *gp = container_of(napi, struct gem, napi);
-	struct net_device *dev = gp->dev;
-	int work_done;
+अटल पूर्णांक gem_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा gem *gp = container_of(napi, काष्ठा gem, napi);
+	काष्ठा net_device *dev = gp->dev;
+	पूर्णांक work_करोne;
 
-	work_done = 0;
-	do {
+	work_करोne = 0;
+	करो अणु
 		/* Handle anomalies */
-		if (unlikely(gp->status & GREG_STAT_ABNORMAL)) {
-			struct netdev_queue *txq = netdev_get_tx_queue(dev, 0);
-			int reset;
+		अगर (unlikely(gp->status & GREG_STAT_ABNORMAL)) अणु
+			काष्ठा netdev_queue *txq = netdev_get_tx_queue(dev, 0);
+			पूर्णांक reset;
 
-			/* We run the abnormal interrupt handling code with
+			/* We run the abnormal पूर्णांकerrupt handling code with
 			 * the Tx lock. It only resets the Rx portion of the
 			 * chip, but we need to guard it against DMA being
-			 * restarted by the link poll timer
+			 * restarted by the link poll समयr
 			 */
-			__netif_tx_lock(txq, smp_processor_id());
+			__netअगर_tx_lock(txq, smp_processor_id());
 			reset = gem_abnormal_irq(dev, gp, gp->status);
-			__netif_tx_unlock(txq);
-			if (reset) {
+			__netअगर_tx_unlock(txq);
+			अगर (reset) अणु
 				gem_schedule_reset(gp);
 				napi_complete(napi);
-				return work_done;
-			}
-		}
+				वापस work_करोne;
+			पूर्ण
+		पूर्ण
 
-		/* Run TX completion thread */
+		/* Run TX completion thपढ़ो */
 		gem_tx(dev, gp, gp->status);
 
-		/* Run RX thread. We don't use any locking here,
-		 * code willing to do bad things - like cleaning the
+		/* Run RX thपढ़ो. We करोn't use any locking here,
+		 * code willing to करो bad things - like cleaning the
 		 * rx ring - must call napi_disable(), which
-		 * schedule_timeout()'s if polling is already disabled.
+		 * schedule_समयout()'s अगर polling is alपढ़ोy disabled.
 		 */
-		work_done += gem_rx(gp, budget - work_done);
+		work_करोne += gem_rx(gp, budget - work_करोne);
 
-		if (work_done >= budget)
-			return work_done;
+		अगर (work_करोne >= budget)
+			वापस work_करोne;
 
-		gp->status = readl(gp->regs + GREG_STAT);
-	} while (gp->status & GREG_STAT_NAPI);
+		gp->status = पढ़ोl(gp->regs + GREG_STAT);
+	पूर्ण जबतक (gp->status & GREG_STAT_NAPI);
 
-	napi_complete_done(napi, work_done);
-	gem_enable_ints(gp);
+	napi_complete_करोne(napi, work_करोne);
+	gem_enable_पूर्णांकs(gp);
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-static irqreturn_t gem_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct gem *gp = netdev_priv(dev);
+अटल irqवापस_t gem_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	if (napi_schedule_prep(&gp->napi)) {
-		u32 gem_status = readl(gp->regs + GREG_STAT);
+	अगर (napi_schedule_prep(&gp->napi)) अणु
+		u32 gem_status = पढ़ोl(gp->regs + GREG_STAT);
 
-		if (unlikely(gem_status == 0)) {
+		अगर (unlikely(gem_status == 0)) अणु
 			napi_enable(&gp->napi);
-			return IRQ_NONE;
-		}
-		if (netif_msg_intr(gp))
-			printk(KERN_DEBUG "%s: gem_interrupt() gem_status: 0x%x\n",
+			वापस IRQ_NONE;
+		पूर्ण
+		अगर (netअगर_msg_पूर्णांकr(gp))
+			prपूर्णांकk(KERN_DEBUG "%s: gem_interrupt() gem_status: 0x%x\n",
 			       gp->dev->name, gem_status);
 
 		gp->status = gem_status;
-		gem_disable_ints(gp);
+		gem_disable_पूर्णांकs(gp);
 		__napi_schedule(&gp->napi);
-	}
+	पूर्ण
 
-	/* If polling was disabled at the time we received that
-	 * interrupt, we may return IRQ_HANDLED here while we
-	 * should return IRQ_NONE. No big deal...
+	/* If polling was disabled at the समय we received that
+	 * पूर्णांकerrupt, we may वापस IRQ_HANDLED here जबतक we
+	 * should वापस IRQ_NONE. No big deal...
 	 */
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void gem_poll_controller(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम gem_poll_controller(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	disable_irq(gp->pdev->irq);
-	gem_interrupt(gp->pdev->irq, dev);
+	gem_पूर्णांकerrupt(gp->pdev->irq, dev);
 	enable_irq(gp->pdev->irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void gem_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	netdev_err(dev, "transmit timed out, resetting\n");
 
 	netdev_err(dev, "TX_STATE[%08x:%08x:%08x]\n",
-		   readl(gp->regs + TXDMA_CFG),
-		   readl(gp->regs + MAC_TXSTAT),
-		   readl(gp->regs + MAC_TXCFG));
+		   पढ़ोl(gp->regs + TXDMA_CFG),
+		   पढ़ोl(gp->regs + MAC_TXSTAT),
+		   पढ़ोl(gp->regs + MAC_TXCFG));
 	netdev_err(dev, "RX_STATE[%08x:%08x:%08x]\n",
-		   readl(gp->regs + RXDMA_CFG),
-		   readl(gp->regs + MAC_RXSTAT),
-		   readl(gp->regs + MAC_RXCFG));
+		   पढ़ोl(gp->regs + RXDMA_CFG),
+		   पढ़ोl(gp->regs + MAC_RXSTAT),
+		   पढ़ोl(gp->regs + MAC_RXCFG));
 
 	gem_schedule_reset(gp);
-}
+पूर्ण
 
-static __inline__ int gem_intme(int entry)
-{
+अटल __अंतरभूत__ पूर्णांक gem_पूर्णांकme(पूर्णांक entry)
+अणु
 	/* Algorithm: IRQ every 1/2 of descriptors. */
-	if (!(entry & ((TX_RING_SIZE>>1)-1)))
-		return 1;
+	अगर (!(entry & ((TX_RING_SIZE>>1)-1)))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static netdev_tx_t gem_start_xmit(struct sk_buff *skb,
-				  struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
-	int entry;
+अटल netdev_tx_t gem_start_xmit(काष्ठा sk_buff *skb,
+				  काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	पूर्णांक entry;
 	u64 ctrl;
 
 	ctrl = 0;
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
-		const u64 csum_start_off = skb_checksum_start_offset(skb);
-		const u64 csum_stuff_off = csum_start_off + skb->csum_offset;
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL) अणु
+		स्थिर u64 csum_start_off = skb_checksum_start_offset(skb);
+		स्थिर u64 csum_stuff_off = csum_start_off + skb->csum_offset;
 
 		ctrl = (TXDCTRL_CENAB |
 			(csum_start_off << 15) |
 			(csum_stuff_off << 21));
-	}
+	पूर्ण
 
-	if (unlikely(TX_BUFFS_AVAIL(gp) <= (skb_shinfo(skb)->nr_frags + 1))) {
+	अगर (unlikely(TX_BUFFS_AVAIL(gp) <= (skb_shinfo(skb)->nr_frags + 1))) अणु
 		/* This is a hard error, log it. */
-		if (!netif_queue_stopped(dev)) {
-			netif_stop_queue(dev);
+		अगर (!netअगर_queue_stopped(dev)) अणु
+			netअगर_stop_queue(dev);
 			netdev_err(dev, "BUG! Tx Ring full when queue awake!\n");
-		}
-		return NETDEV_TX_BUSY;
-	}
+		पूर्ण
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
 	entry = gp->tx_new;
 	gp->tx_skbs[entry] = skb;
 
-	if (skb_shinfo(skb)->nr_frags == 0) {
-		struct gem_txd *txd = &gp->init_block->txd[entry];
+	अगर (skb_shinfo(skb)->nr_frags == 0) अणु
+		काष्ठा gem_txd *txd = &gp->init_block->txd[entry];
 		dma_addr_t mapping;
 		u32 len;
 
@@ -1026,23 +1027,23 @@ static netdev_tx_t gem_start_xmit(struct sk_buff *skb,
 				       virt_to_page(skb->data),
 				       offset_in_page(skb->data),
 				       len, DMA_TO_DEVICE);
-		ctrl |= TXDCTRL_SOF | TXDCTRL_EOF | len;
-		if (gem_intme(entry))
+		ctrl |= TXDCTRL_SOF | TXDCTRL_खातापूर्ण | len;
+		अगर (gem_पूर्णांकme(entry))
 			ctrl |= TXDCTRL_INTME;
 		txd->buffer = cpu_to_le64(mapping);
 		dma_wmb();
 		txd->control_word = cpu_to_le64(ctrl);
 		entry = NEXT_TX(entry);
-	} else {
-		struct gem_txd *txd;
+	पूर्ण अन्यथा अणु
+		काष्ठा gem_txd *txd;
 		u32 first_len;
-		u64 intme;
+		u64 पूर्णांकme;
 		dma_addr_t first_mapping;
-		int frag, first_entry = entry;
+		पूर्णांक frag, first_entry = entry;
 
-		intme = 0;
-		if (gem_intme(entry))
-			intme |= TXDCTRL_INTME;
+		पूर्णांकme = 0;
+		अगर (gem_पूर्णांकme(entry))
+			पूर्णांकme |= TXDCTRL_INTME;
 
 		/* We must give this initial chunk to the device last.
 		 * Otherwise we could race with the device.
@@ -1054,8 +1055,8 @@ static netdev_tx_t gem_start_xmit(struct sk_buff *skb,
 					     first_len, DMA_TO_DEVICE);
 		entry = NEXT_TX(entry);
 
-		for (frag = 0; frag < skb_shinfo(skb)->nr_frags; frag++) {
-			const skb_frag_t *this_frag = &skb_shinfo(skb)->frags[frag];
+		क्रम (frag = 0; frag < skb_shinfo(skb)->nr_frags; frag++) अणु
+			स्थिर skb_frag_t *this_frag = &skb_shinfo(skb)->frags[frag];
 			u32 len;
 			dma_addr_t mapping;
 			u64 this_ctrl;
@@ -1064,540 +1065,540 @@ static netdev_tx_t gem_start_xmit(struct sk_buff *skb,
 			mapping = skb_frag_dma_map(&gp->pdev->dev, this_frag,
 						   0, len, DMA_TO_DEVICE);
 			this_ctrl = ctrl;
-			if (frag == skb_shinfo(skb)->nr_frags - 1)
-				this_ctrl |= TXDCTRL_EOF;
+			अगर (frag == skb_shinfo(skb)->nr_frags - 1)
+				this_ctrl |= TXDCTRL_खातापूर्ण;
 
 			txd = &gp->init_block->txd[entry];
 			txd->buffer = cpu_to_le64(mapping);
 			dma_wmb();
 			txd->control_word = cpu_to_le64(this_ctrl | len);
 
-			if (gem_intme(entry))
-				intme |= TXDCTRL_INTME;
+			अगर (gem_पूर्णांकme(entry))
+				पूर्णांकme |= TXDCTRL_INTME;
 
 			entry = NEXT_TX(entry);
-		}
+		पूर्ण
 		txd = &gp->init_block->txd[first_entry];
 		txd->buffer = cpu_to_le64(first_mapping);
 		dma_wmb();
 		txd->control_word =
-			cpu_to_le64(ctrl | TXDCTRL_SOF | intme | first_len);
-	}
+			cpu_to_le64(ctrl | TXDCTRL_SOF | पूर्णांकme | first_len);
+	पूर्ण
 
 	gp->tx_new = entry;
-	if (unlikely(TX_BUFFS_AVAIL(gp) <= (MAX_SKB_FRAGS + 1))) {
-		netif_stop_queue(dev);
+	अगर (unlikely(TX_BUFFS_AVAIL(gp) <= (MAX_SKB_FRAGS + 1))) अणु
+		netअगर_stop_queue(dev);
 
-		/* netif_stop_queue() must be done before checking
+		/* netअगर_stop_queue() must be करोne beक्रमe checking
 		 * checking tx index in TX_BUFFS_AVAIL() below, because
-		 * in gem_tx(), we update tx_old before checking for
-		 * netif_queue_stopped().
+		 * in gem_tx(), we update tx_old beक्रमe checking क्रम
+		 * netअगर_queue_stopped().
 		 */
 		smp_mb();
-		if (TX_BUFFS_AVAIL(gp) > (MAX_SKB_FRAGS + 1))
-			netif_wake_queue(dev);
-	}
-	if (netif_msg_tx_queued(gp))
-		printk(KERN_DEBUG "%s: tx queued, slot %d, skblen %d\n",
+		अगर (TX_BUFFS_AVAIL(gp) > (MAX_SKB_FRAGS + 1))
+			netअगर_wake_queue(dev);
+	पूर्ण
+	अगर (netअगर_msg_tx_queued(gp))
+		prपूर्णांकk(KERN_DEBUG "%s: tx queued, slot %d, skblen %d\n",
 		       dev->name, entry, skb->len);
 	mb();
-	writel(gp->tx_new, gp->regs + TXDMA_KICK);
+	ग_लिखोl(gp->tx_new, gp->regs + TXDMA_KICK);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void gem_pcs_reset(struct gem *gp)
-{
-	int limit;
+अटल व्योम gem_pcs_reset(काष्ठा gem *gp)
+अणु
+	पूर्णांक limit;
 	u32 val;
 
 	/* Reset PCS unit. */
-	val = readl(gp->regs + PCS_MIICTRL);
+	val = पढ़ोl(gp->regs + PCS_MIICTRL);
 	val |= PCS_MIICTRL_RST;
-	writel(val, gp->regs + PCS_MIICTRL);
+	ग_लिखोl(val, gp->regs + PCS_MIICTRL);
 
 	limit = 32;
-	while (readl(gp->regs + PCS_MIICTRL) & PCS_MIICTRL_RST) {
+	जबतक (पढ़ोl(gp->regs + PCS_MIICTRL) & PCS_MIICTRL_RST) अणु
 		udelay(100);
-		if (limit-- <= 0)
-			break;
-	}
-	if (limit < 0)
+		अगर (limit-- <= 0)
+			अवरोध;
+	पूर्ण
+	अगर (limit < 0)
 		netdev_warn(gp->dev, "PCS reset bit would not clear\n");
-}
+पूर्ण
 
-static void gem_pcs_reinit_adv(struct gem *gp)
-{
+अटल व्योम gem_pcs_reinit_adv(काष्ठा gem *gp)
+अणु
 	u32 val;
 
-	/* Make sure PCS is disabled while changing advertisement
+	/* Make sure PCS is disabled जबतक changing advertisement
 	 * configuration.
 	 */
-	val = readl(gp->regs + PCS_CFG);
+	val = पढ़ोl(gp->regs + PCS_CFG);
 	val &= ~(PCS_CFG_ENABLE | PCS_CFG_TO);
-	writel(val, gp->regs + PCS_CFG);
+	ग_लिखोl(val, gp->regs + PCS_CFG);
 
 	/* Advertise all capabilities except asymmetric
-	 * pause.
+	 * छोड़ो.
 	 */
-	val = readl(gp->regs + PCS_MIIADV);
+	val = पढ़ोl(gp->regs + PCS_MIIADV);
 	val |= (PCS_MIIADV_FD | PCS_MIIADV_HD |
 		PCS_MIIADV_SP | PCS_MIIADV_AP);
-	writel(val, gp->regs + PCS_MIIADV);
+	ग_लिखोl(val, gp->regs + PCS_MIIADV);
 
-	/* Enable and restart auto-negotiation, disable wrapback/loopback,
+	/* Enable and restart स्वतः-negotiation, disable wrapback/loopback,
 	 * and re-enable PCS.
 	 */
-	val = readl(gp->regs + PCS_MIICTRL);
+	val = पढ़ोl(gp->regs + PCS_MIICTRL);
 	val |= (PCS_MIICTRL_RAN | PCS_MIICTRL_ANE);
 	val &= ~PCS_MIICTRL_WB;
-	writel(val, gp->regs + PCS_MIICTRL);
+	ग_लिखोl(val, gp->regs + PCS_MIICTRL);
 
-	val = readl(gp->regs + PCS_CFG);
+	val = पढ़ोl(gp->regs + PCS_CFG);
 	val |= PCS_CFG_ENABLE;
-	writel(val, gp->regs + PCS_CFG);
+	ग_लिखोl(val, gp->regs + PCS_CFG);
 
 	/* Make sure serialink loopback is off.  The meaning
 	 * of this bit is logically inverted based upon whether
 	 * you are in Serialink or SERDES mode.
 	 */
-	val = readl(gp->regs + PCS_SCTRL);
-	if (gp->phy_type == phy_serialink)
+	val = पढ़ोl(gp->regs + PCS_SCTRL);
+	अगर (gp->phy_type == phy_serialink)
 		val &= ~PCS_SCTRL_LOOP;
-	else
+	अन्यथा
 		val |= PCS_SCTRL_LOOP;
-	writel(val, gp->regs + PCS_SCTRL);
-}
+	ग_लिखोl(val, gp->regs + PCS_SCTRL);
+पूर्ण
 
-#define STOP_TRIES 32
+#घोषणा STOP_TRIES 32
 
-static void gem_reset(struct gem *gp)
-{
-	int limit;
+अटल व्योम gem_reset(काष्ठा gem *gp)
+अणु
+	पूर्णांक limit;
 	u32 val;
 
-	/* Make sure we won't get any more interrupts */
-	writel(0xffffffff, gp->regs + GREG_IMASK);
+	/* Make sure we won't get any more पूर्णांकerrupts */
+	ग_लिखोl(0xffffffff, gp->regs + GREG_IMASK);
 
 	/* Reset the chip */
-	writel(gp->swrst_base | GREG_SWRST_TXRST | GREG_SWRST_RXRST,
+	ग_लिखोl(gp->swrst_base | GREG_SWRST_TXRST | GREG_SWRST_RXRST,
 	       gp->regs + GREG_SWRST);
 
 	limit = STOP_TRIES;
 
-	do {
+	करो अणु
 		udelay(20);
-		val = readl(gp->regs + GREG_SWRST);
-		if (limit-- <= 0)
-			break;
-	} while (val & (GREG_SWRST_TXRST | GREG_SWRST_RXRST));
+		val = पढ़ोl(gp->regs + GREG_SWRST);
+		अगर (limit-- <= 0)
+			अवरोध;
+	पूर्ण जबतक (val & (GREG_SWRST_TXRST | GREG_SWRST_RXRST));
 
-	if (limit < 0)
+	अगर (limit < 0)
 		netdev_err(gp->dev, "SW reset is ghetto\n");
 
-	if (gp->phy_type == phy_serialink || gp->phy_type == phy_serdes)
+	अगर (gp->phy_type == phy_serialink || gp->phy_type == phy_serdes)
 		gem_pcs_reinit_adv(gp);
-}
+पूर्ण
 
-static void gem_start_dma(struct gem *gp)
-{
+अटल व्योम gem_start_dma(काष्ठा gem *gp)
+अणु
 	u32 val;
 
-	/* We are ready to rock, turn everything on. */
-	val = readl(gp->regs + TXDMA_CFG);
-	writel(val | TXDMA_CFG_ENABLE, gp->regs + TXDMA_CFG);
-	val = readl(gp->regs + RXDMA_CFG);
-	writel(val | RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
-	val = readl(gp->regs + MAC_TXCFG);
-	writel(val | MAC_TXCFG_ENAB, gp->regs + MAC_TXCFG);
-	val = readl(gp->regs + MAC_RXCFG);
-	writel(val | MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
+	/* We are पढ़ोy to rock, turn everything on. */
+	val = पढ़ोl(gp->regs + TXDMA_CFG);
+	ग_लिखोl(val | TXDMA_CFG_ENABLE, gp->regs + TXDMA_CFG);
+	val = पढ़ोl(gp->regs + RXDMA_CFG);
+	ग_लिखोl(val | RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
+	val = पढ़ोl(gp->regs + MAC_TXCFG);
+	ग_लिखोl(val | MAC_TXCFG_ENAB, gp->regs + MAC_TXCFG);
+	val = पढ़ोl(gp->regs + MAC_RXCFG);
+	ग_लिखोl(val | MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
 
-	(void) readl(gp->regs + MAC_RXCFG);
+	(व्योम) पढ़ोl(gp->regs + MAC_RXCFG);
 	udelay(100);
 
-	gem_enable_ints(gp);
+	gem_enable_पूर्णांकs(gp);
 
-	writel(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
-}
+	ग_लिखोl(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
+पूर्ण
 
-/* DMA won't be actually stopped before about 4ms tho ...
+/* DMA won't be actually stopped beक्रमe about 4ms tho ...
  */
-static void gem_stop_dma(struct gem *gp)
-{
+अटल व्योम gem_stop_dma(काष्ठा gem *gp)
+अणु
 	u32 val;
 
-	/* We are done rocking, turn everything off. */
-	val = readl(gp->regs + TXDMA_CFG);
-	writel(val & ~TXDMA_CFG_ENABLE, gp->regs + TXDMA_CFG);
-	val = readl(gp->regs + RXDMA_CFG);
-	writel(val & ~RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
-	val = readl(gp->regs + MAC_TXCFG);
-	writel(val & ~MAC_TXCFG_ENAB, gp->regs + MAC_TXCFG);
-	val = readl(gp->regs + MAC_RXCFG);
-	writel(val & ~MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
+	/* We are करोne rocking, turn everything off. */
+	val = पढ़ोl(gp->regs + TXDMA_CFG);
+	ग_लिखोl(val & ~TXDMA_CFG_ENABLE, gp->regs + TXDMA_CFG);
+	val = पढ़ोl(gp->regs + RXDMA_CFG);
+	ग_लिखोl(val & ~RXDMA_CFG_ENABLE, gp->regs + RXDMA_CFG);
+	val = पढ़ोl(gp->regs + MAC_TXCFG);
+	ग_लिखोl(val & ~MAC_TXCFG_ENAB, gp->regs + MAC_TXCFG);
+	val = पढ़ोl(gp->regs + MAC_RXCFG);
+	ग_लिखोl(val & ~MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
 
-	(void) readl(gp->regs + MAC_RXCFG);
+	(व्योम) पढ़ोl(gp->regs + MAC_RXCFG);
 
-	/* Need to wait a bit ... done by the caller */
-}
+	/* Need to रुको a bit ... करोne by the caller */
+पूर्ण
 
 
-// XXX dbl check what that function should do when called on PCS PHY
-static void gem_begin_auto_negotiation(struct gem *gp,
-				       const struct ethtool_link_ksettings *ep)
-{
+// XXX dbl check what that function should करो when called on PCS PHY
+अटल व्योम gem_begin_स्वतः_negotiation(काष्ठा gem *gp,
+				       स्थिर काष्ठा ethtool_link_ksettings *ep)
+अणु
 	u32 advertise, features;
-	int autoneg;
-	int speed;
-	int duplex;
+	पूर्णांक स्वतःneg;
+	पूर्णांक speed;
+	पूर्णांक duplex;
 	u32 advertising;
 
-	if (ep)
+	अगर (ep)
 		ethtool_convert_link_mode_to_legacy_u32(
 			&advertising, ep->link_modes.advertising);
 
-	if (gp->phy_type != phy_mii_mdio0 &&
+	अगर (gp->phy_type != phy_mii_mdio0 &&
      	    gp->phy_type != phy_mii_mdio1)
-     	    	goto non_mii;
+     	    	जाओ non_mii;
 
 	/* Setup advertise */
-	if (found_mii_phy(gp))
+	अगर (found_mii_phy(gp))
 		features = gp->phy_mii.def->features;
-	else
+	अन्यथा
 		features = 0;
 
 	advertise = features & ADVERTISE_MASK;
-	if (gp->phy_mii.advertising != 0)
+	अगर (gp->phy_mii.advertising != 0)
 		advertise &= gp->phy_mii.advertising;
 
-	autoneg = gp->want_autoneg;
+	स्वतःneg = gp->want_स्वतःneg;
 	speed = gp->phy_mii.speed;
 	duplex = gp->phy_mii.duplex;
 
 	/* Setup link parameters */
-	if (!ep)
-		goto start_aneg;
-	if (ep->base.autoneg == AUTONEG_ENABLE) {
+	अगर (!ep)
+		जाओ start_aneg;
+	अगर (ep->base.स्वतःneg == AUTONEG_ENABLE) अणु
 		advertise = advertising;
-		autoneg = 1;
-	} else {
-		autoneg = 0;
+		स्वतःneg = 1;
+	पूर्ण अन्यथा अणु
+		स्वतःneg = 0;
 		speed = ep->base.speed;
 		duplex = ep->base.duplex;
-	}
+	पूर्ण
 
 start_aneg:
 	/* Sanitize settings based on PHY capabilities */
-	if ((features & SUPPORTED_Autoneg) == 0)
-		autoneg = 0;
-	if (speed == SPEED_1000 &&
+	अगर ((features & SUPPORTED_Autoneg) == 0)
+		स्वतःneg = 0;
+	अगर (speed == SPEED_1000 &&
 	    !(features & (SUPPORTED_1000baseT_Half | SUPPORTED_1000baseT_Full)))
 		speed = SPEED_100;
-	if (speed == SPEED_100 &&
+	अगर (speed == SPEED_100 &&
 	    !(features & (SUPPORTED_100baseT_Half | SUPPORTED_100baseT_Full)))
 		speed = SPEED_10;
-	if (duplex == DUPLEX_FULL &&
+	अगर (duplex == DUPLEX_FULL &&
 	    !(features & (SUPPORTED_1000baseT_Full |
 	    		  SUPPORTED_100baseT_Full |
 	    		  SUPPORTED_10baseT_Full)))
 	    	duplex = DUPLEX_HALF;
-	if (speed == 0)
+	अगर (speed == 0)
 		speed = SPEED_10;
 
-	/* If we are asleep, we don't try to actually setup the PHY, we
+	/* If we are asleep, we करोn't try to actually setup the PHY, we
 	 * just store the settings
 	 */
-	if (!netif_device_present(gp->dev)) {
-		gp->phy_mii.autoneg = gp->want_autoneg = autoneg;
+	अगर (!netअगर_device_present(gp->dev)) अणु
+		gp->phy_mii.स्वतःneg = gp->want_स्वतःneg = स्वतःneg;
 		gp->phy_mii.speed = speed;
 		gp->phy_mii.duplex = duplex;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Configure PHY & start aneg */
-	gp->want_autoneg = autoneg;
-	if (autoneg) {
-		if (found_mii_phy(gp))
+	gp->want_स्वतःneg = स्वतःneg;
+	अगर (स्वतःneg) अणु
+		अगर (found_mii_phy(gp))
 			gp->phy_mii.def->ops->setup_aneg(&gp->phy_mii, advertise);
 		gp->lstate = link_aneg;
-	} else {
-		if (found_mii_phy(gp))
-			gp->phy_mii.def->ops->setup_forced(&gp->phy_mii, speed, duplex);
-		gp->lstate = link_force_ok;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (found_mii_phy(gp))
+			gp->phy_mii.def->ops->setup_क्रमced(&gp->phy_mii, speed, duplex);
+		gp->lstate = link_क्रमce_ok;
+	पूर्ण
 
 non_mii:
-	gp->timer_ticks = 0;
-	mod_timer(&gp->link_timer, jiffies + ((12 * HZ) / 10));
-}
+	gp->समयr_ticks = 0;
+	mod_समयr(&gp->link_समयr, jअगरfies + ((12 * HZ) / 10));
+पूर्ण
 
 /* A link-up condition has occurred, initialize and enable the
  * rest of the chip.
  */
-static int gem_set_link_modes(struct gem *gp)
-{
-	struct netdev_queue *txq = netdev_get_tx_queue(gp->dev, 0);
-	int full_duplex, speed, pause;
+अटल पूर्णांक gem_set_link_modes(काष्ठा gem *gp)
+अणु
+	काष्ठा netdev_queue *txq = netdev_get_tx_queue(gp->dev, 0);
+	पूर्णांक full_duplex, speed, छोड़ो;
 	u32 val;
 
 	full_duplex = 0;
 	speed = SPEED_10;
-	pause = 0;
+	छोड़ो = 0;
 
-	if (found_mii_phy(gp)) {
-	    	if (gp->phy_mii.def->ops->read_link(&gp->phy_mii))
-	    		return 1;
+	अगर (found_mii_phy(gp)) अणु
+	    	अगर (gp->phy_mii.def->ops->पढ़ो_link(&gp->phy_mii))
+	    		वापस 1;
 		full_duplex = (gp->phy_mii.duplex == DUPLEX_FULL);
 		speed = gp->phy_mii.speed;
-		pause = gp->phy_mii.pause;
-	} else if (gp->phy_type == phy_serialink ||
-	    	   gp->phy_type == phy_serdes) {
-		u32 pcs_lpa = readl(gp->regs + PCS_MIILP);
+		छोड़ो = gp->phy_mii.छोड़ो;
+	पूर्ण अन्यथा अगर (gp->phy_type == phy_serialink ||
+	    	   gp->phy_type == phy_serdes) अणु
+		u32 pcs_lpa = पढ़ोl(gp->regs + PCS_MIILP);
 
-		if ((pcs_lpa & PCS_MIIADV_FD) || gp->phy_type == phy_serdes)
+		अगर ((pcs_lpa & PCS_MIIADV_FD) || gp->phy_type == phy_serdes)
 			full_duplex = 1;
 		speed = SPEED_1000;
-	}
+	पूर्ण
 
-	netif_info(gp, link, gp->dev, "Link is up at %d Mbps, %s-duplex\n",
+	netअगर_info(gp, link, gp->dev, "Link is up at %d Mbps, %s-duplex\n",
 		   speed, (full_duplex ? "full" : "half"));
 
 
-	/* We take the tx queue lock to avoid collisions between
+	/* We take the tx queue lock to aव्योम collisions between
 	 * this code, the tx path and the NAPI-driven error path
 	 */
-	__netif_tx_lock(txq, smp_processor_id());
+	__netअगर_tx_lock(txq, smp_processor_id());
 
 	val = (MAC_TXCFG_EIPG0 | MAC_TXCFG_NGU);
-	if (full_duplex) {
+	अगर (full_duplex) अणु
 		val |= (MAC_TXCFG_ICS | MAC_TXCFG_ICOLL);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* MAC_TXCFG_NBO must be zero. */
-	}
-	writel(val, gp->regs + MAC_TXCFG);
+	पूर्ण
+	ग_लिखोl(val, gp->regs + MAC_TXCFG);
 
 	val = (MAC_XIFCFG_OE | MAC_XIFCFG_LLED);
-	if (!full_duplex &&
+	अगर (!full_duplex &&
 	    (gp->phy_type == phy_mii_mdio0 ||
-	     gp->phy_type == phy_mii_mdio1)) {
+	     gp->phy_type == phy_mii_mdio1)) अणु
 		val |= MAC_XIFCFG_DISE;
-	} else if (full_duplex) {
+	पूर्ण अन्यथा अगर (full_duplex) अणु
 		val |= MAC_XIFCFG_FLED;
-	}
+	पूर्ण
 
-	if (speed == SPEED_1000)
+	अगर (speed == SPEED_1000)
 		val |= (MAC_XIFCFG_GMII);
 
-	writel(val, gp->regs + MAC_XIFCFG);
+	ग_लिखोl(val, gp->regs + MAC_XIFCFG);
 
 	/* If gigabit and half-duplex, enable carrier extension
 	 * mode.  Else, disable it.
 	 */
-	if (speed == SPEED_1000 && !full_duplex) {
-		val = readl(gp->regs + MAC_TXCFG);
-		writel(val | MAC_TXCFG_TCE, gp->regs + MAC_TXCFG);
+	अगर (speed == SPEED_1000 && !full_duplex) अणु
+		val = पढ़ोl(gp->regs + MAC_TXCFG);
+		ग_लिखोl(val | MAC_TXCFG_TCE, gp->regs + MAC_TXCFG);
 
-		val = readl(gp->regs + MAC_RXCFG);
-		writel(val | MAC_RXCFG_RCE, gp->regs + MAC_RXCFG);
-	} else {
-		val = readl(gp->regs + MAC_TXCFG);
-		writel(val & ~MAC_TXCFG_TCE, gp->regs + MAC_TXCFG);
+		val = पढ़ोl(gp->regs + MAC_RXCFG);
+		ग_लिखोl(val | MAC_RXCFG_RCE, gp->regs + MAC_RXCFG);
+	पूर्ण अन्यथा अणु
+		val = पढ़ोl(gp->regs + MAC_TXCFG);
+		ग_लिखोl(val & ~MAC_TXCFG_TCE, gp->regs + MAC_TXCFG);
 
-		val = readl(gp->regs + MAC_RXCFG);
-		writel(val & ~MAC_RXCFG_RCE, gp->regs + MAC_RXCFG);
-	}
+		val = पढ़ोl(gp->regs + MAC_RXCFG);
+		ग_लिखोl(val & ~MAC_RXCFG_RCE, gp->regs + MAC_RXCFG);
+	पूर्ण
 
-	if (gp->phy_type == phy_serialink ||
-	    gp->phy_type == phy_serdes) {
- 		u32 pcs_lpa = readl(gp->regs + PCS_MIILP);
+	अगर (gp->phy_type == phy_serialink ||
+	    gp->phy_type == phy_serdes) अणु
+ 		u32 pcs_lpa = पढ़ोl(gp->regs + PCS_MIILP);
 
-		if (pcs_lpa & (PCS_MIIADV_SP | PCS_MIIADV_AP))
-			pause = 1;
-	}
+		अगर (pcs_lpa & (PCS_MIIADV_SP | PCS_MIIADV_AP))
+			छोड़ो = 1;
+	पूर्ण
 
-	if (!full_duplex)
-		writel(512, gp->regs + MAC_STIME);
-	else
-		writel(64, gp->regs + MAC_STIME);
-	val = readl(gp->regs + MAC_MCCFG);
-	if (pause)
+	अगर (!full_duplex)
+		ग_लिखोl(512, gp->regs + MAC_STIME);
+	अन्यथा
+		ग_लिखोl(64, gp->regs + MAC_STIME);
+	val = पढ़ोl(gp->regs + MAC_MCCFG);
+	अगर (छोड़ो)
 		val |= (MAC_MCCFG_SPE | MAC_MCCFG_RPE);
-	else
+	अन्यथा
 		val &= ~(MAC_MCCFG_SPE | MAC_MCCFG_RPE);
-	writel(val, gp->regs + MAC_MCCFG);
+	ग_लिखोl(val, gp->regs + MAC_MCCFG);
 
 	gem_start_dma(gp);
 
-	__netif_tx_unlock(txq);
+	__netअगर_tx_unlock(txq);
 
-	if (netif_msg_link(gp)) {
-		if (pause) {
+	अगर (netअगर_msg_link(gp)) अणु
+		अगर (छोड़ो) अणु
 			netdev_info(gp->dev,
 				    "Pause is enabled (rxfifo: %d off: %d on: %d)\n",
-				    gp->rx_fifo_sz,
-				    gp->rx_pause_off,
-				    gp->rx_pause_on);
-		} else {
+				    gp->rx_fअगरo_sz,
+				    gp->rx_छोड़ो_off,
+				    gp->rx_छोड़ो_on);
+		पूर्ण अन्यथा अणु
 			netdev_info(gp->dev, "Pause is disabled\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_mdio_link_not_up(struct gem *gp)
-{
-	switch (gp->lstate) {
-	case link_force_ret:
-		netif_info(gp, link, gp->dev,
+अटल पूर्णांक gem_mdio_link_not_up(काष्ठा gem *gp)
+अणु
+	चयन (gp->lstate) अणु
+	हाल link_क्रमce_ret:
+		netअगर_info(gp, link, gp->dev,
 			   "Autoneg failed again, keeping forced mode\n");
-		gp->phy_mii.def->ops->setup_forced(&gp->phy_mii,
-			gp->last_forced_speed, DUPLEX_HALF);
-		gp->timer_ticks = 5;
-		gp->lstate = link_force_ok;
-		return 0;
-	case link_aneg:
-		/* We try forced modes after a failed aneg only on PHYs that don't
-		 * have "magic_aneg" bit set, which means they internally do the
-		 * while forced-mode thingy. On these, we just restart aneg
+		gp->phy_mii.def->ops->setup_क्रमced(&gp->phy_mii,
+			gp->last_क्रमced_speed, DUPLEX_HALF);
+		gp->समयr_ticks = 5;
+		gp->lstate = link_क्रमce_ok;
+		वापस 0;
+	हाल link_aneg:
+		/* We try क्रमced modes after a failed aneg only on PHYs that करोn't
+		 * have "magic_aneg" bit set, which means they पूर्णांकernally करो the
+		 * जबतक क्रमced-mode thingy. On these, we just restart aneg
 		 */
-		if (gp->phy_mii.def->magic_aneg)
-			return 1;
-		netif_info(gp, link, gp->dev, "switching to forced 100bt\n");
-		/* Try forced modes. */
-		gp->phy_mii.def->ops->setup_forced(&gp->phy_mii, SPEED_100,
+		अगर (gp->phy_mii.def->magic_aneg)
+			वापस 1;
+		netअगर_info(gp, link, gp->dev, "switching to forced 100bt\n");
+		/* Try क्रमced modes. */
+		gp->phy_mii.def->ops->setup_क्रमced(&gp->phy_mii, SPEED_100,
 			DUPLEX_HALF);
-		gp->timer_ticks = 5;
-		gp->lstate = link_force_try;
-		return 0;
-	case link_force_try:
-		/* Downgrade from 100 to 10 Mbps if necessary.
-		 * If already at 10Mbps, warn user about the
+		gp->समयr_ticks = 5;
+		gp->lstate = link_क्रमce_try;
+		वापस 0;
+	हाल link_क्रमce_try:
+		/* Downgrade from 100 to 10 Mbps अगर necessary.
+		 * If alपढ़ोy at 10Mbps, warn user about the
 		 * situation every 10 ticks.
 		 */
-		if (gp->phy_mii.speed == SPEED_100) {
-			gp->phy_mii.def->ops->setup_forced(&gp->phy_mii, SPEED_10,
+		अगर (gp->phy_mii.speed == SPEED_100) अणु
+			gp->phy_mii.def->ops->setup_क्रमced(&gp->phy_mii, SPEED_10,
 				DUPLEX_HALF);
-			gp->timer_ticks = 5;
-			netif_info(gp, link, gp->dev,
+			gp->समयr_ticks = 5;
+			netअगर_info(gp, link, gp->dev,
 				   "switching to forced 10bt\n");
-			return 0;
-		} else
-			return 1;
-	default:
-		return 0;
-	}
-}
+			वापस 0;
+		पूर्ण अन्यथा
+			वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static void gem_link_timer(struct timer_list *t)
-{
-	struct gem *gp = from_timer(gp, t, link_timer);
-	struct net_device *dev = gp->dev;
-	int restart_aneg = 0;
+अटल व्योम gem_link_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा gem *gp = from_समयr(gp, t, link_समयr);
+	काष्ठा net_device *dev = gp->dev;
+	पूर्णांक restart_aneg = 0;
 
 	/* There's no point doing anything if we're going to be reset */
-	if (gp->reset_task_pending)
-		return;
+	अगर (gp->reset_task_pending)
+		वापस;
 
-	if (gp->phy_type == phy_serialink ||
-	    gp->phy_type == phy_serdes) {
-		u32 val = readl(gp->regs + PCS_MIISTAT);
+	अगर (gp->phy_type == phy_serialink ||
+	    gp->phy_type == phy_serdes) अणु
+		u32 val = पढ़ोl(gp->regs + PCS_MIISTAT);
 
-		if (!(val & PCS_MIISTAT_LS))
-			val = readl(gp->regs + PCS_MIISTAT);
+		अगर (!(val & PCS_MIISTAT_LS))
+			val = पढ़ोl(gp->regs + PCS_MIISTAT);
 
-		if ((val & PCS_MIISTAT_LS) != 0) {
-			if (gp->lstate == link_up)
-				goto restart;
+		अगर ((val & PCS_MIISTAT_LS) != 0) अणु
+			अगर (gp->lstate == link_up)
+				जाओ restart;
 
 			gp->lstate = link_up;
-			netif_carrier_on(dev);
-			(void)gem_set_link_modes(gp);
-		}
-		goto restart;
-	}
-	if (found_mii_phy(gp) && gp->phy_mii.def->ops->poll_link(&gp->phy_mii)) {
-		/* Ok, here we got a link. If we had it due to a forced
-		 * fallback, and we were configured for autoneg, we do
-		 * retry a short autoneg pass. If you know your hub is
+			netअगर_carrier_on(dev);
+			(व्योम)gem_set_link_modes(gp);
+		पूर्ण
+		जाओ restart;
+	पूर्ण
+	अगर (found_mii_phy(gp) && gp->phy_mii.def->ops->poll_link(&gp->phy_mii)) अणु
+		/* Ok, here we got a link. If we had it due to a क्रमced
+		 * fallback, and we were configured क्रम स्वतःneg, we करो
+		 * retry a लघु स्वतःneg pass. If you know your hub is
 		 * broken, use ethtool ;)
 		 */
-		if (gp->lstate == link_force_try && gp->want_autoneg) {
-			gp->lstate = link_force_ret;
-			gp->last_forced_speed = gp->phy_mii.speed;
-			gp->timer_ticks = 5;
-			if (netif_msg_link(gp))
+		अगर (gp->lstate == link_क्रमce_try && gp->want_स्वतःneg) अणु
+			gp->lstate = link_क्रमce_ret;
+			gp->last_क्रमced_speed = gp->phy_mii.speed;
+			gp->समयr_ticks = 5;
+			अगर (netअगर_msg_link(gp))
 				netdev_info(dev,
 					    "Got link after fallback, retrying autoneg once...\n");
 			gp->phy_mii.def->ops->setup_aneg(&gp->phy_mii, gp->phy_mii.advertising);
-		} else if (gp->lstate != link_up) {
+		पूर्ण अन्यथा अगर (gp->lstate != link_up) अणु
 			gp->lstate = link_up;
-			netif_carrier_on(dev);
-			if (gem_set_link_modes(gp))
+			netअगर_carrier_on(dev);
+			अगर (gem_set_link_modes(gp))
 				restart_aneg = 1;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* If the link was previously up, we restart the
 		 * whole process
 		 */
-		if (gp->lstate == link_up) {
-			gp->lstate = link_down;
-			netif_info(gp, link, dev, "Link down\n");
-			netif_carrier_off(dev);
+		अगर (gp->lstate == link_up) अणु
+			gp->lstate = link_करोwn;
+			netअगर_info(gp, link, dev, "Link down\n");
+			netअगर_carrier_off(dev);
 			gem_schedule_reset(gp);
-			/* The reset task will restart the timer */
-			return;
-		} else if (++gp->timer_ticks > 10) {
-			if (found_mii_phy(gp))
+			/* The reset task will restart the समयr */
+			वापस;
+		पूर्ण अन्यथा अगर (++gp->समयr_ticks > 10) अणु
+			अगर (found_mii_phy(gp))
 				restart_aneg = gem_mdio_link_not_up(gp);
-			else
+			अन्यथा
 				restart_aneg = 1;
-		}
-	}
-	if (restart_aneg) {
-		gem_begin_auto_negotiation(gp, NULL);
-		return;
-	}
+		पूर्ण
+	पूर्ण
+	अगर (restart_aneg) अणु
+		gem_begin_स्वतः_negotiation(gp, शून्य);
+		वापस;
+	पूर्ण
 restart:
-	mod_timer(&gp->link_timer, jiffies + ((12 * HZ) / 10));
-}
+	mod_समयr(&gp->link_समयr, jअगरfies + ((12 * HZ) / 10));
+पूर्ण
 
-static void gem_clean_rings(struct gem *gp)
-{
-	struct gem_init_block *gb = gp->init_block;
-	struct sk_buff *skb;
-	int i;
+अटल व्योम gem_clean_rings(काष्ठा gem *gp)
+अणु
+	काष्ठा gem_init_block *gb = gp->init_block;
+	काष्ठा sk_buff *skb;
+	पूर्णांक i;
 	dma_addr_t dma_addr;
 
-	for (i = 0; i < RX_RING_SIZE; i++) {
-		struct gem_rxd *rxd;
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+		काष्ठा gem_rxd *rxd;
 
 		rxd = &gb->rxd[i];
-		if (gp->rx_skbs[i] != NULL) {
+		अगर (gp->rx_skbs[i] != शून्य) अणु
 			skb = gp->rx_skbs[i];
 			dma_addr = le64_to_cpu(rxd->buffer);
 			dma_unmap_page(&gp->pdev->dev, dma_addr,
 				       RX_BUF_ALLOC_SIZE(gp),
 				       DMA_FROM_DEVICE);
-			dev_kfree_skb_any(skb);
-			gp->rx_skbs[i] = NULL;
-		}
+			dev_kमुक्त_skb_any(skb);
+			gp->rx_skbs[i] = शून्य;
+		पूर्ण
 		rxd->status_word = 0;
 		dma_wmb();
 		rxd->buffer = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < TX_RING_SIZE; i++) {
-		if (gp->tx_skbs[i] != NULL) {
-			struct gem_txd *txd;
-			int frag;
+	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
+		अगर (gp->tx_skbs[i] != शून्य) अणु
+			काष्ठा gem_txd *txd;
+			पूर्णांक frag;
 
 			skb = gp->tx_skbs[i];
-			gp->tx_skbs[i] = NULL;
+			gp->tx_skbs[i] = शून्य;
 
-			for (frag = 0; frag <= skb_shinfo(skb)->nr_frags; frag++) {
-				int ent = i & (TX_RING_SIZE - 1);
+			क्रम (frag = 0; frag <= skb_shinfo(skb)->nr_frags; frag++) अणु
+				पूर्णांक ent = i & (TX_RING_SIZE - 1);
 
 				txd = &gb->txd[ent];
 				dma_addr = le64_to_cpu(txd->buffer);
@@ -1605,19 +1606,19 @@ static void gem_clean_rings(struct gem *gp)
 					       le64_to_cpu(txd->control_word) &
 					       TXDCTRL_BUFSZ, DMA_TO_DEVICE);
 
-				if (frag != skb_shinfo(skb)->nr_frags)
+				अगर (frag != skb_shinfo(skb)->nr_frags)
 					i++;
-			}
-			dev_kfree_skb_any(skb);
-		}
-	}
-}
+			पूर्ण
+			dev_kमुक्त_skb_any(skb);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void gem_init_rings(struct gem *gp)
-{
-	struct gem_init_block *gb = gp->init_block;
-	struct net_device *dev = gp->dev;
-	int i;
+अटल व्योम gem_init_rings(काष्ठा gem *gp)
+अणु
+	काष्ठा gem_init_block *gb = gp->init_block;
+	काष्ठा net_device *dev = gp->dev;
+	पूर्णांक i;
 	dma_addr_t dma_addr;
 
 	gp->rx_new = gp->rx_old = gp->tx_new = gp->tx_old = 0;
@@ -1625,18 +1626,18 @@ static void gem_init_rings(struct gem *gp)
 	gem_clean_rings(gp);
 
 	gp->rx_buf_sz = max(dev->mtu + ETH_HLEN + VLAN_HLEN,
-			    (unsigned)VLAN_ETH_FRAME_LEN);
+			    (अचिन्हित)VLAN_ETH_FRAME_LEN);
 
-	for (i = 0; i < RX_RING_SIZE; i++) {
-		struct sk_buff *skb;
-		struct gem_rxd *rxd = &gb->rxd[i];
+	क्रम (i = 0; i < RX_RING_SIZE; i++) अणु
+		काष्ठा sk_buff *skb;
+		काष्ठा gem_rxd *rxd = &gb->rxd[i];
 
 		skb = gem_alloc_skb(dev, RX_BUF_ALLOC_SIZE(gp), GFP_KERNEL);
-		if (!skb) {
+		अगर (!skb) अणु
 			rxd->buffer = 0;
 			rxd->status_word = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		gp->rx_skbs[i] = skb;
 		skb_put(skb, (gp->rx_buf_sz + RX_OFFSET));
@@ -1649,557 +1650,557 @@ static void gem_init_rings(struct gem *gp)
 		dma_wmb();
 		rxd->status_word = cpu_to_le64(RXDCTRL_FRESH(gp));
 		skb_reserve(skb, RX_OFFSET);
-	}
+	पूर्ण
 
-	for (i = 0; i < TX_RING_SIZE; i++) {
-		struct gem_txd *txd = &gb->txd[i];
+	क्रम (i = 0; i < TX_RING_SIZE; i++) अणु
+		काष्ठा gem_txd *txd = &gb->txd[i];
 
 		txd->control_word = 0;
 		dma_wmb();
 		txd->buffer = 0;
-	}
+	पूर्ण
 	wmb();
-}
+पूर्ण
 
-/* Init PHY interface and start link poll state machine */
-static void gem_init_phy(struct gem *gp)
-{
-	u32 mifcfg;
+/* Init PHY पूर्णांकerface and start link poll state machine */
+अटल व्योम gem_init_phy(काष्ठा gem *gp)
+अणु
+	u32 mअगरcfg;
 
-	/* Revert MIF CFG setting done on stop_phy */
-	mifcfg = readl(gp->regs + MIF_CFG);
-	mifcfg &= ~MIF_CFG_BBMODE;
-	writel(mifcfg, gp->regs + MIF_CFG);
+	/* Revert MIF CFG setting करोne on stop_phy */
+	mअगरcfg = पढ़ोl(gp->regs + MIF_CFG);
+	mअगरcfg &= ~MIF_CFG_BBMODE;
+	ग_लिखोl(mअगरcfg, gp->regs + MIF_CFG);
 
-	if (gp->pdev->vendor == PCI_VENDOR_ID_APPLE) {
-		int i;
+	अगर (gp->pdev->venकरोr == PCI_VENDOR_ID_APPLE) अणु
+		पूर्णांक i;
 
 		/* Those delays sucks, the HW seems to love them though, I'll
-		 * seriously consider breaking some locks here to be able
+		 * seriously consider अवरोधing some locks here to be able
 		 * to schedule instead
 		 */
-		for (i = 0; i < 3; i++) {
-#ifdef CONFIG_PPC_PMAC
+		क्रम (i = 0; i < 3; i++) अणु
+#अगर_घोषित CONFIG_PPC_PMAC
 			pmac_call_feature(PMAC_FTR_GMAC_PHY_RESET, gp->of_node, 0, 0);
 			msleep(20);
-#endif
+#पूर्ण_अगर
 			/* Some PHYs used by apple have problem getting back to us,
-			 * we do an additional reset here
+			 * we करो an additional reset here
 			 */
-			sungem_phy_write(gp, MII_BMCR, BMCR_RESET);
+			sungem_phy_ग_लिखो(gp, MII_BMCR, BMCR_RESET);
 			msleep(20);
-			if (sungem_phy_read(gp, MII_BMCR) != 0xffff)
-				break;
-			if (i == 2)
+			अगर (sungem_phy_पढ़ो(gp, MII_BMCR) != 0xffff)
+				अवरोध;
+			अगर (i == 2)
 				netdev_warn(gp->dev, "GMAC PHY not responding !\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (gp->pdev->vendor == PCI_VENDOR_ID_SUN &&
-	    gp->pdev->device == PCI_DEVICE_ID_SUN_GEM) {
+	अगर (gp->pdev->venकरोr == PCI_VENDOR_ID_SUN &&
+	    gp->pdev->device == PCI_DEVICE_ID_SUN_GEM) अणु
 		u32 val;
 
-		/* Init datapath mode register. */
-		if (gp->phy_type == phy_mii_mdio0 ||
-		    gp->phy_type == phy_mii_mdio1) {
+		/* Init datapath mode रेजिस्टर. */
+		अगर (gp->phy_type == phy_mii_mdio0 ||
+		    gp->phy_type == phy_mii_mdio1) अणु
 			val = PCS_DMODE_MGM;
-		} else if (gp->phy_type == phy_serialink) {
+		पूर्ण अन्यथा अगर (gp->phy_type == phy_serialink) अणु
 			val = PCS_DMODE_SM | PCS_DMODE_GMOE;
-		} else {
+		पूर्ण अन्यथा अणु
 			val = PCS_DMODE_ESM;
-		}
+		पूर्ण
 
-		writel(val, gp->regs + PCS_DMODE);
-	}
+		ग_लिखोl(val, gp->regs + PCS_DMODE);
+	पूर्ण
 
-	if (gp->phy_type == phy_mii_mdio0 ||
-	    gp->phy_type == phy_mii_mdio1) {
+	अगर (gp->phy_type == phy_mii_mdio0 ||
+	    gp->phy_type == phy_mii_mdio1) अणु
 		/* Reset and detect MII PHY */
 		sungem_phy_probe(&gp->phy_mii, gp->mii_phy_addr);
 
 		/* Init PHY */
-		if (gp->phy_mii.def && gp->phy_mii.def->ops->init)
+		अगर (gp->phy_mii.def && gp->phy_mii.def->ops->init)
 			gp->phy_mii.def->ops->init(&gp->phy_mii);
-	} else {
+	पूर्ण अन्यथा अणु
 		gem_pcs_reset(gp);
 		gem_pcs_reinit_adv(gp);
-	}
+	पूर्ण
 
 	/* Default aneg parameters */
-	gp->timer_ticks = 0;
-	gp->lstate = link_down;
-	netif_carrier_off(gp->dev);
+	gp->समयr_ticks = 0;
+	gp->lstate = link_करोwn;
+	netअगर_carrier_off(gp->dev);
 
-	/* Print things out */
-	if (gp->phy_type == phy_mii_mdio0 ||
+	/* Prपूर्णांक things out */
+	अगर (gp->phy_type == phy_mii_mdio0 ||
 	    gp->phy_type == phy_mii_mdio1)
 		netdev_info(gp->dev, "Found %s PHY\n",
 			    gp->phy_mii.def ? gp->phy_mii.def->name : "no");
 
-	gem_begin_auto_negotiation(gp, NULL);
-}
+	gem_begin_स्वतः_negotiation(gp, शून्य);
+पूर्ण
 
-static void gem_init_dma(struct gem *gp)
-{
+अटल व्योम gem_init_dma(काष्ठा gem *gp)
+अणु
 	u64 desc_dma = (u64) gp->gblock_dvma;
 	u32 val;
 
 	val = (TXDMA_CFG_BASE | (0x7ff << 10) | TXDMA_CFG_PMODE);
-	writel(val, gp->regs + TXDMA_CFG);
+	ग_लिखोl(val, gp->regs + TXDMA_CFG);
 
-	writel(desc_dma >> 32, gp->regs + TXDMA_DBHI);
-	writel(desc_dma & 0xffffffff, gp->regs + TXDMA_DBLOW);
-	desc_dma += (INIT_BLOCK_TX_RING_SIZE * sizeof(struct gem_txd));
+	ग_लिखोl(desc_dma >> 32, gp->regs + TXDMA_DBHI);
+	ग_लिखोl(desc_dma & 0xffffffff, gp->regs + TXDMA_DBLOW);
+	desc_dma += (INIT_BLOCK_TX_RING_SIZE * माप(काष्ठा gem_txd));
 
-	writel(0, gp->regs + TXDMA_KICK);
+	ग_लिखोl(0, gp->regs + TXDMA_KICK);
 
 	val = (RXDMA_CFG_BASE | (RX_OFFSET << 10) |
 	       (ETH_HLEN << 13) | RXDMA_CFG_FTHRESH_128);
-	writel(val, gp->regs + RXDMA_CFG);
+	ग_लिखोl(val, gp->regs + RXDMA_CFG);
 
-	writel(desc_dma >> 32, gp->regs + RXDMA_DBHI);
-	writel(desc_dma & 0xffffffff, gp->regs + RXDMA_DBLOW);
+	ग_लिखोl(desc_dma >> 32, gp->regs + RXDMA_DBHI);
+	ग_लिखोl(desc_dma & 0xffffffff, gp->regs + RXDMA_DBLOW);
 
-	writel(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
+	ग_लिखोl(RX_RING_SIZE - 4, gp->regs + RXDMA_KICK);
 
-	val  = (((gp->rx_pause_off / 64) << 0) & RXDMA_PTHRESH_OFF);
-	val |= (((gp->rx_pause_on / 64) << 12) & RXDMA_PTHRESH_ON);
-	writel(val, gp->regs + RXDMA_PTHRESH);
+	val  = (((gp->rx_छोड़ो_off / 64) << 0) & RXDMA_PTHRESH_OFF);
+	val |= (((gp->rx_छोड़ो_on / 64) << 12) & RXDMA_PTHRESH_ON);
+	ग_लिखोl(val, gp->regs + RXDMA_PTHRESH);
 
-	if (readl(gp->regs + GREG_BIFCFG) & GREG_BIFCFG_M66EN)
-		writel(((5 & RXDMA_BLANK_IPKTS) |
+	अगर (पढ़ोl(gp->regs + GREG_BIFCFG) & GREG_BIFCFG_M66EN)
+		ग_लिखोl(((5 & RXDMA_BLANK_IPKTS) |
 			((8 << 12) & RXDMA_BLANK_ITIME)),
 		       gp->regs + RXDMA_BLANK);
-	else
-		writel(((5 & RXDMA_BLANK_IPKTS) |
+	अन्यथा
+		ग_लिखोl(((5 & RXDMA_BLANK_IPKTS) |
 			((4 << 12) & RXDMA_BLANK_ITIME)),
 		       gp->regs + RXDMA_BLANK);
-}
+पूर्ण
 
-static u32 gem_setup_multicast(struct gem *gp)
-{
+अटल u32 gem_setup_multicast(काष्ठा gem *gp)
+अणु
 	u32 rxcfg = 0;
-	int i;
+	पूर्णांक i;
 
-	if ((gp->dev->flags & IFF_ALLMULTI) ||
-	    (netdev_mc_count(gp->dev) > 256)) {
-	    	for (i=0; i<16; i++)
-			writel(0xffff, gp->regs + MAC_HASH0 + (i << 2));
+	अगर ((gp->dev->flags & IFF_ALLMULTI) ||
+	    (netdev_mc_count(gp->dev) > 256)) अणु
+	    	क्रम (i=0; i<16; i++)
+			ग_लिखोl(0xffff, gp->regs + MAC_HASH0 + (i << 2));
 		rxcfg |= MAC_RXCFG_HFE;
-	} else if (gp->dev->flags & IFF_PROMISC) {
+	पूर्ण अन्यथा अगर (gp->dev->flags & IFF_PROMISC) अणु
 		rxcfg |= MAC_RXCFG_PROM;
-	} else {
+	पूर्ण अन्यथा अणु
 		u16 hash_table[16];
 		u32 crc;
-		struct netdev_hw_addr *ha;
-		int i;
+		काष्ठा netdev_hw_addr *ha;
+		पूर्णांक i;
 
-		memset(hash_table, 0, sizeof(hash_table));
-		netdev_for_each_mc_addr(ha, gp->dev) {
+		स_रखो(hash_table, 0, माप(hash_table));
+		netdev_क्रम_each_mc_addr(ha, gp->dev) अणु
 			crc = ether_crc_le(6, ha->addr);
 			crc >>= 24;
 			hash_table[crc >> 4] |= 1 << (15 - (crc & 0xf));
-		}
-	    	for (i=0; i<16; i++)
-			writel(hash_table[i], gp->regs + MAC_HASH0 + (i << 2));
+		पूर्ण
+	    	क्रम (i=0; i<16; i++)
+			ग_लिखोl(hash_table[i], gp->regs + MAC_HASH0 + (i << 2));
 		rxcfg |= MAC_RXCFG_HFE;
-	}
+	पूर्ण
 
-	return rxcfg;
-}
+	वापस rxcfg;
+पूर्ण
 
-static void gem_init_mac(struct gem *gp)
-{
-	unsigned char *e = &gp->dev->dev_addr[0];
+अटल व्योम gem_init_mac(काष्ठा gem *gp)
+अणु
+	अचिन्हित अक्षर *e = &gp->dev->dev_addr[0];
 
-	writel(0x1bf0, gp->regs + MAC_SNDPAUSE);
+	ग_लिखोl(0x1bf0, gp->regs + MAC_SNDPAUSE);
 
-	writel(0x00, gp->regs + MAC_IPG0);
-	writel(0x08, gp->regs + MAC_IPG1);
-	writel(0x04, gp->regs + MAC_IPG2);
-	writel(0x40, gp->regs + MAC_STIME);
-	writel(0x40, gp->regs + MAC_MINFSZ);
+	ग_लिखोl(0x00, gp->regs + MAC_IPG0);
+	ग_लिखोl(0x08, gp->regs + MAC_IPG1);
+	ग_लिखोl(0x04, gp->regs + MAC_IPG2);
+	ग_लिखोl(0x40, gp->regs + MAC_STIME);
+	ग_लिखोl(0x40, gp->regs + MAC_MINFSZ);
 
 	/* Ethernet payload + header + FCS + optional VLAN tag. */
-	writel(0x20000000 | (gp->rx_buf_sz + 4), gp->regs + MAC_MAXFSZ);
+	ग_लिखोl(0x20000000 | (gp->rx_buf_sz + 4), gp->regs + MAC_MAXFSZ);
 
-	writel(0x07, gp->regs + MAC_PASIZE);
-	writel(0x04, gp->regs + MAC_JAMSIZE);
-	writel(0x10, gp->regs + MAC_ATTLIM);
-	writel(0x8808, gp->regs + MAC_MCTYPE);
+	ग_लिखोl(0x07, gp->regs + MAC_PASIZE);
+	ग_लिखोl(0x04, gp->regs + MAC_JAMSIZE);
+	ग_लिखोl(0x10, gp->regs + MAC_ATTLIM);
+	ग_लिखोl(0x8808, gp->regs + MAC_MCTYPE);
 
-	writel((e[5] | (e[4] << 8)) & 0x3ff, gp->regs + MAC_RANDSEED);
+	ग_लिखोl((e[5] | (e[4] << 8)) & 0x3ff, gp->regs + MAC_RANDSEED);
 
-	writel((e[4] << 8) | e[5], gp->regs + MAC_ADDR0);
-	writel((e[2] << 8) | e[3], gp->regs + MAC_ADDR1);
-	writel((e[0] << 8) | e[1], gp->regs + MAC_ADDR2);
+	ग_लिखोl((e[4] << 8) | e[5], gp->regs + MAC_ADDR0);
+	ग_लिखोl((e[2] << 8) | e[3], gp->regs + MAC_ADDR1);
+	ग_लिखोl((e[0] << 8) | e[1], gp->regs + MAC_ADDR2);
 
-	writel(0, gp->regs + MAC_ADDR3);
-	writel(0, gp->regs + MAC_ADDR4);
-	writel(0, gp->regs + MAC_ADDR5);
+	ग_लिखोl(0, gp->regs + MAC_ADDR3);
+	ग_लिखोl(0, gp->regs + MAC_ADDR4);
+	ग_लिखोl(0, gp->regs + MAC_ADDR5);
 
-	writel(0x0001, gp->regs + MAC_ADDR6);
-	writel(0xc200, gp->regs + MAC_ADDR7);
-	writel(0x0180, gp->regs + MAC_ADDR8);
+	ग_लिखोl(0x0001, gp->regs + MAC_ADDR6);
+	ग_लिखोl(0xc200, gp->regs + MAC_ADDR7);
+	ग_लिखोl(0x0180, gp->regs + MAC_ADDR8);
 
-	writel(0, gp->regs + MAC_AFILT0);
-	writel(0, gp->regs + MAC_AFILT1);
-	writel(0, gp->regs + MAC_AFILT2);
-	writel(0, gp->regs + MAC_AF21MSK);
-	writel(0, gp->regs + MAC_AF0MSK);
+	ग_लिखोl(0, gp->regs + MAC_AFILT0);
+	ग_लिखोl(0, gp->regs + MAC_AFILT1);
+	ग_लिखोl(0, gp->regs + MAC_AFILT2);
+	ग_लिखोl(0, gp->regs + MAC_AF21MSK);
+	ग_लिखोl(0, gp->regs + MAC_AF0MSK);
 
 	gp->mac_rx_cfg = gem_setup_multicast(gp);
-#ifdef STRIP_FCS
+#अगर_घोषित STRIP_FCS
 	gp->mac_rx_cfg |= MAC_RXCFG_SFCS;
-#endif
-	writel(0, gp->regs + MAC_NCOLL);
-	writel(0, gp->regs + MAC_FASUCC);
-	writel(0, gp->regs + MAC_ECOLL);
-	writel(0, gp->regs + MAC_LCOLL);
-	writel(0, gp->regs + MAC_DTIMER);
-	writel(0, gp->regs + MAC_PATMPS);
-	writel(0, gp->regs + MAC_RFCTR);
-	writel(0, gp->regs + MAC_LERR);
-	writel(0, gp->regs + MAC_AERR);
-	writel(0, gp->regs + MAC_FCSERR);
-	writel(0, gp->regs + MAC_RXCVERR);
+#पूर्ण_अगर
+	ग_लिखोl(0, gp->regs + MAC_NCOLL);
+	ग_लिखोl(0, gp->regs + MAC_FASUCC);
+	ग_लिखोl(0, gp->regs + MAC_ECOLL);
+	ग_लिखोl(0, gp->regs + MAC_LCOLL);
+	ग_लिखोl(0, gp->regs + MAC_DTIMER);
+	ग_लिखोl(0, gp->regs + MAC_PATMPS);
+	ग_लिखोl(0, gp->regs + MAC_RFCTR);
+	ग_लिखोl(0, gp->regs + MAC_LERR);
+	ग_लिखोl(0, gp->regs + MAC_AERR);
+	ग_लिखोl(0, gp->regs + MAC_FCSERR);
+	ग_लिखोl(0, gp->regs + MAC_RXCVERR);
 
 	/* Clear RX/TX/MAC/XIF config, we will set these up and enable
 	 * them once a link is established.
 	 */
-	writel(0, gp->regs + MAC_TXCFG);
-	writel(gp->mac_rx_cfg, gp->regs + MAC_RXCFG);
-	writel(0, gp->regs + MAC_MCCFG);
-	writel(0, gp->regs + MAC_XIFCFG);
+	ग_लिखोl(0, gp->regs + MAC_TXCFG);
+	ग_लिखोl(gp->mac_rx_cfg, gp->regs + MAC_RXCFG);
+	ग_लिखोl(0, gp->regs + MAC_MCCFG);
+	ग_लिखोl(0, gp->regs + MAC_XIFCFG);
 
-	/* Setup MAC interrupts.  We want to get all of the interesting
-	 * counter expiration events, but we do not want to hear about
+	/* Setup MAC पूर्णांकerrupts.  We want to get all of the पूर्णांकeresting
+	 * counter expiration events, but we करो not want to hear about
 	 * normal rx/tx as the DMA engine tells us that.
 	 */
-	writel(MAC_TXSTAT_XMIT, gp->regs + MAC_TXMASK);
-	writel(MAC_RXSTAT_RCV, gp->regs + MAC_RXMASK);
+	ग_लिखोl(MAC_TXSTAT_XMIT, gp->regs + MAC_TXMASK);
+	ग_लिखोl(MAC_RXSTAT_RCV, gp->regs + MAC_RXMASK);
 
-	/* Don't enable even the PAUSE interrupts for now, we
+	/* Don't enable even the PAUSE पूर्णांकerrupts क्रम now, we
 	 * make no use of those events other than to record them.
 	 */
-	writel(0xffffffff, gp->regs + MAC_MCMASK);
+	ग_लिखोl(0xffffffff, gp->regs + MAC_MCMASK);
 
 	/* Don't enable GEM's WOL in normal operations
 	 */
-	if (gp->has_wol)
-		writel(0, gp->regs + WOL_WAKECSR);
-}
+	अगर (gp->has_wol)
+		ग_लिखोl(0, gp->regs + WOL_WAKECSR);
+पूर्ण
 
-static void gem_init_pause_thresholds(struct gem *gp)
-{
+अटल व्योम gem_init_छोड़ो_thresholds(काष्ठा gem *gp)
+अणु
        	u32 cfg;
 
-	/* Calculate pause thresholds.  Setting the OFF threshold to the
-	 * full RX fifo size effectively disables PAUSE generation which
-	 * is what we do for 10/100 only GEMs which have FIFOs too small
+	/* Calculate छोड़ो thresholds.  Setting the OFF threshold to the
+	 * full RX fअगरo size effectively disables PAUSE generation which
+	 * is what we करो क्रम 10/100 only GEMs which have FIFOs too small
 	 * to make real gains from PAUSE.
 	 */
-	if (gp->rx_fifo_sz <= (2 * 1024)) {
-		gp->rx_pause_off = gp->rx_pause_on = gp->rx_fifo_sz;
-	} else {
-		int max_frame = (gp->rx_buf_sz + 4 + 64) & ~63;
-		int off = (gp->rx_fifo_sz - (max_frame * 2));
-		int on = off - max_frame;
+	अगर (gp->rx_fअगरo_sz <= (2 * 1024)) अणु
+		gp->rx_छोड़ो_off = gp->rx_छोड़ो_on = gp->rx_fअगरo_sz;
+	पूर्ण अन्यथा अणु
+		पूर्णांक max_frame = (gp->rx_buf_sz + 4 + 64) & ~63;
+		पूर्णांक off = (gp->rx_fअगरo_sz - (max_frame * 2));
+		पूर्णांक on = off - max_frame;
 
-		gp->rx_pause_off = off;
-		gp->rx_pause_on = on;
-	}
+		gp->rx_छोड़ो_off = off;
+		gp->rx_छोड़ो_on = on;
+	पूर्ण
 
 
 	/* Configure the chip "burst" DMA mode & enable some
 	 * HW bug fixes on Apple version
 	 */
        	cfg  = 0;
-       	if (gp->pdev->vendor == PCI_VENDOR_ID_APPLE)
+       	अगर (gp->pdev->venकरोr == PCI_VENDOR_ID_APPLE)
 		cfg |= GREG_CFG_RONPAULBIT | GREG_CFG_ENBUG2FIX;
-#if !defined(CONFIG_SPARC64) && !defined(CONFIG_ALPHA)
+#अगर !defined(CONFIG_SPARC64) && !defined(CONFIG_ALPHA)
        	cfg |= GREG_CFG_IBURST;
-#endif
+#पूर्ण_अगर
        	cfg |= ((31 << 1) & GREG_CFG_TXDMALIM);
        	cfg |= ((31 << 6) & GREG_CFG_RXDMALIM);
-       	writel(cfg, gp->regs + GREG_CFG);
+       	ग_लिखोl(cfg, gp->regs + GREG_CFG);
 
-	/* If Infinite Burst didn't stick, then use different
-	 * thresholds (and Apple bug fixes don't exist)
+	/* If Infinite Burst didn't stick, then use dअगरferent
+	 * thresholds (and Apple bug fixes करोn't exist)
 	 */
-	if (!(readl(gp->regs + GREG_CFG) & GREG_CFG_IBURST)) {
+	अगर (!(पढ़ोl(gp->regs + GREG_CFG) & GREG_CFG_IBURST)) अणु
 		cfg = ((2 << 1) & GREG_CFG_TXDMALIM);
 		cfg |= ((8 << 6) & GREG_CFG_RXDMALIM);
-		writel(cfg, gp->regs + GREG_CFG);
-	}
-}
+		ग_लिखोl(cfg, gp->regs + GREG_CFG);
+	पूर्ण
+पूर्ण
 
-static int gem_check_invariants(struct gem *gp)
-{
-	struct pci_dev *pdev = gp->pdev;
-	u32 mif_cfg;
+अटल पूर्णांक gem_check_invariants(काष्ठा gem *gp)
+अणु
+	काष्ठा pci_dev *pdev = gp->pdev;
+	u32 mअगर_cfg;
 
-	/* On Apple's sungem, we can't rely on registers as the chip
-	 * was been powered down by the firmware. The PHY is looked
+	/* On Apple's sungem, we can't rely on रेजिस्टरs as the chip
+	 * was been घातered करोwn by the firmware. The PHY is looked
 	 * up later on.
 	 */
-	if (pdev->vendor == PCI_VENDOR_ID_APPLE) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_APPLE) अणु
 		gp->phy_type = phy_mii_mdio0;
-		gp->tx_fifo_sz = readl(gp->regs + TXDMA_FSZ) * 64;
-		gp->rx_fifo_sz = readl(gp->regs + RXDMA_FSZ) * 64;
+		gp->tx_fअगरo_sz = पढ़ोl(gp->regs + TXDMA_FSZ) * 64;
+		gp->rx_fअगरo_sz = पढ़ोl(gp->regs + RXDMA_FSZ) * 64;
 		gp->swrst_base = 0;
 
-		mif_cfg = readl(gp->regs + MIF_CFG);
-		mif_cfg &= ~(MIF_CFG_PSELECT|MIF_CFG_POLL|MIF_CFG_BBMODE|MIF_CFG_MDI1);
-		mif_cfg |= MIF_CFG_MDI0;
-		writel(mif_cfg, gp->regs + MIF_CFG);
-		writel(PCS_DMODE_MGM, gp->regs + PCS_DMODE);
-		writel(MAC_XIFCFG_OE, gp->regs + MAC_XIFCFG);
+		mअगर_cfg = पढ़ोl(gp->regs + MIF_CFG);
+		mअगर_cfg &= ~(MIF_CFG_PSELECT|MIF_CFG_POLL|MIF_CFG_BBMODE|MIF_CFG_MDI1);
+		mअगर_cfg |= MIF_CFG_MDI0;
+		ग_लिखोl(mअगर_cfg, gp->regs + MIF_CFG);
+		ग_लिखोl(PCS_DMODE_MGM, gp->regs + PCS_DMODE);
+		ग_लिखोl(MAC_XIFCFG_OE, gp->regs + MAC_XIFCFG);
 
 		/* We hard-code the PHY address so we can properly bring it out of
-		 * reset later on, we can't really probe it at this point, though
+		 * reset later on, we can't really probe it at this poपूर्णांक, though
 		 * that isn't an issue.
 		 */
-		if (gp->pdev->device == PCI_DEVICE_ID_APPLE_K2_GMAC)
+		अगर (gp->pdev->device == PCI_DEVICE_ID_APPLE_K2_GMAC)
 			gp->mii_phy_addr = 1;
-		else
+		अन्यथा
 			gp->mii_phy_addr = 0;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	mif_cfg = readl(gp->regs + MIF_CFG);
+	mअगर_cfg = पढ़ोl(gp->regs + MIF_CFG);
 
-	if (pdev->vendor == PCI_VENDOR_ID_SUN &&
-	    pdev->device == PCI_DEVICE_ID_SUN_RIO_GEM) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_SUN &&
+	    pdev->device == PCI_DEVICE_ID_SUN_RIO_GEM) अणु
 		/* One of the MII PHYs _must_ be present
 		 * as this chip has no gigabit PHY.
 		 */
-		if ((mif_cfg & (MIF_CFG_MDI0 | MIF_CFG_MDI1)) == 0) {
+		अगर ((mअगर_cfg & (MIF_CFG_MDI0 | MIF_CFG_MDI1)) == 0) अणु
 			pr_err("RIO GEM lacks MII phy, mif_cfg[%08x]\n",
-			       mif_cfg);
-			return -1;
-		}
-	}
+			       mअगर_cfg);
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	/* Determine initial PHY interface type guess.  MDIO1 is the
-	 * external PHY and thus takes precedence over MDIO0.
+	/* Determine initial PHY पूर्णांकerface type guess.  MDIO1 is the
+	 * बाह्यal PHY and thus takes precedence over MDIO0.
 	 */
 
-	if (mif_cfg & MIF_CFG_MDI1) {
+	अगर (mअगर_cfg & MIF_CFG_MDI1) अणु
 		gp->phy_type = phy_mii_mdio1;
-		mif_cfg |= MIF_CFG_PSELECT;
-		writel(mif_cfg, gp->regs + MIF_CFG);
-	} else if (mif_cfg & MIF_CFG_MDI0) {
+		mअगर_cfg |= MIF_CFG_PSELECT;
+		ग_लिखोl(mअगर_cfg, gp->regs + MIF_CFG);
+	पूर्ण अन्यथा अगर (mअगर_cfg & MIF_CFG_MDI0) अणु
 		gp->phy_type = phy_mii_mdio0;
-		mif_cfg &= ~MIF_CFG_PSELECT;
-		writel(mif_cfg, gp->regs + MIF_CFG);
-	} else {
-#ifdef CONFIG_SPARC
-		const char *p;
+		mअगर_cfg &= ~MIF_CFG_PSELECT;
+		ग_लिखोl(mअगर_cfg, gp->regs + MIF_CFG);
+	पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_SPARC
+		स्थिर अक्षर *p;
 
-		p = of_get_property(gp->of_node, "shared-pins", NULL);
-		if (p && !strcmp(p, "serdes"))
+		p = of_get_property(gp->of_node, "shared-pins", शून्य);
+		अगर (p && !म_भेद(p, "serdes"))
 			gp->phy_type = phy_serdes;
-		else
-#endif
+		अन्यथा
+#पूर्ण_अगर
 			gp->phy_type = phy_serialink;
-	}
-	if (gp->phy_type == phy_mii_mdio1 ||
-	    gp->phy_type == phy_mii_mdio0) {
-		int i;
+	पूर्ण
+	अगर (gp->phy_type == phy_mii_mdio1 ||
+	    gp->phy_type == phy_mii_mdio0) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < 32; i++) {
+		क्रम (i = 0; i < 32; i++) अणु
 			gp->mii_phy_addr = i;
-			if (sungem_phy_read(gp, MII_BMCR) != 0xffff)
-				break;
-		}
-		if (i == 32) {
-			if (pdev->device != PCI_DEVICE_ID_SUN_GEM) {
+			अगर (sungem_phy_पढ़ो(gp, MII_BMCR) != 0xffff)
+				अवरोध;
+		पूर्ण
+		अगर (i == 32) अणु
+			अगर (pdev->device != PCI_DEVICE_ID_SUN_GEM) अणु
 				pr_err("RIO MII phy will not respond\n");
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 			gp->phy_type = phy_serdes;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Fetch the FIFO configurations now too. */
-	gp->tx_fifo_sz = readl(gp->regs + TXDMA_FSZ) * 64;
-	gp->rx_fifo_sz = readl(gp->regs + RXDMA_FSZ) * 64;
+	gp->tx_fअगरo_sz = पढ़ोl(gp->regs + TXDMA_FSZ) * 64;
+	gp->rx_fअगरo_sz = पढ़ोl(gp->regs + RXDMA_FSZ) * 64;
 
-	if (pdev->vendor == PCI_VENDOR_ID_SUN) {
-		if (pdev->device == PCI_DEVICE_ID_SUN_GEM) {
-			if (gp->tx_fifo_sz != (9 * 1024) ||
-			    gp->rx_fifo_sz != (20 * 1024)) {
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_SUN) अणु
+		अगर (pdev->device == PCI_DEVICE_ID_SUN_GEM) अणु
+			अगर (gp->tx_fअगरo_sz != (9 * 1024) ||
+			    gp->rx_fअगरo_sz != (20 * 1024)) अणु
 				pr_err("GEM has bogus fifo sizes tx(%d) rx(%d)\n",
-				       gp->tx_fifo_sz, gp->rx_fifo_sz);
-				return -1;
-			}
+				       gp->tx_fअगरo_sz, gp->rx_fअगरo_sz);
+				वापस -1;
+			पूर्ण
 			gp->swrst_base = 0;
-		} else {
-			if (gp->tx_fifo_sz != (2 * 1024) ||
-			    gp->rx_fifo_sz != (2 * 1024)) {
+		पूर्ण अन्यथा अणु
+			अगर (gp->tx_fअगरo_sz != (2 * 1024) ||
+			    gp->rx_fअगरo_sz != (2 * 1024)) अणु
 				pr_err("RIO GEM has bogus fifo sizes tx(%d) rx(%d)\n",
-				       gp->tx_fifo_sz, gp->rx_fifo_sz);
-				return -1;
-			}
+				       gp->tx_fअगरo_sz, gp->rx_fअगरo_sz);
+				वापस -1;
+			पूर्ण
 			gp->swrst_base = (64 / 4) << GREG_SWRST_CACHE_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gem_reinit_chip(struct gem *gp)
-{
+अटल व्योम gem_reinit_chip(काष्ठा gem *gp)
+अणु
 	/* Reset the chip */
 	gem_reset(gp);
 
-	/* Make sure ints are disabled */
-	gem_disable_ints(gp);
+	/* Make sure पूर्णांकs are disabled */
+	gem_disable_पूर्णांकs(gp);
 
 	/* Allocate & setup ring buffers */
 	gem_init_rings(gp);
 
-	/* Configure pause thresholds */
-	gem_init_pause_thresholds(gp);
+	/* Configure छोड़ो thresholds */
+	gem_init_छोड़ो_thresholds(gp);
 
 	/* Init DMA & MAC engines */
 	gem_init_dma(gp);
 	gem_init_mac(gp);
-}
+पूर्ण
 
 
-static void gem_stop_phy(struct gem *gp, int wol)
-{
-	u32 mifcfg;
+अटल व्योम gem_stop_phy(काष्ठा gem *gp, पूर्णांक wol)
+अणु
+	u32 mअगरcfg;
 
-	/* Let the chip settle down a bit, it seems that helps
-	 * for sleep mode on some models
+	/* Let the chip settle करोwn a bit, it seems that helps
+	 * क्रम sleep mode on some models
 	 */
 	msleep(10);
 
 	/* Make sure we aren't polling PHY status change. We
-	 * don't currently use that feature though
+	 * करोn't currently use that feature though
 	 */
-	mifcfg = readl(gp->regs + MIF_CFG);
-	mifcfg &= ~MIF_CFG_POLL;
-	writel(mifcfg, gp->regs + MIF_CFG);
+	mअगरcfg = पढ़ोl(gp->regs + MIF_CFG);
+	mअगरcfg &= ~MIF_CFG_POLL;
+	ग_लिखोl(mअगरcfg, gp->regs + MIF_CFG);
 
-	if (wol && gp->has_wol) {
-		unsigned char *e = &gp->dev->dev_addr[0];
+	अगर (wol && gp->has_wol) अणु
+		अचिन्हित अक्षर *e = &gp->dev->dev_addr[0];
 		u32 csr;
 
-		/* Setup wake-on-lan for MAGIC packet */
-		writel(MAC_RXCFG_HFE | MAC_RXCFG_SFCS | MAC_RXCFG_ENAB,
+		/* Setup wake-on-lan क्रम MAGIC packet */
+		ग_लिखोl(MAC_RXCFG_HFE | MAC_RXCFG_SFCS | MAC_RXCFG_ENAB,
 		       gp->regs + MAC_RXCFG);
-		writel((e[4] << 8) | e[5], gp->regs + WOL_MATCH0);
-		writel((e[2] << 8) | e[3], gp->regs + WOL_MATCH1);
-		writel((e[0] << 8) | e[1], gp->regs + WOL_MATCH2);
+		ग_लिखोl((e[4] << 8) | e[5], gp->regs + WOL_MATCH0);
+		ग_लिखोl((e[2] << 8) | e[3], gp->regs + WOL_MATCH1);
+		ग_लिखोl((e[0] << 8) | e[1], gp->regs + WOL_MATCH2);
 
-		writel(WOL_MCOUNT_N | WOL_MCOUNT_M, gp->regs + WOL_MCOUNT);
+		ग_लिखोl(WOL_MCOUNT_N | WOL_MCOUNT_M, gp->regs + WOL_MCOUNT);
 		csr = WOL_WAKECSR_ENABLE;
-		if ((readl(gp->regs + MAC_XIFCFG) & MAC_XIFCFG_GMII) == 0)
+		अगर ((पढ़ोl(gp->regs + MAC_XIFCFG) & MAC_XIFCFG_GMII) == 0)
 			csr |= WOL_WAKECSR_MII;
-		writel(csr, gp->regs + WOL_WAKECSR);
-	} else {
-		writel(0, gp->regs + MAC_RXCFG);
-		(void)readl(gp->regs + MAC_RXCFG);
-		/* Machine sleep will die in strange ways if we
-		 * dont wait a bit here, looks like the chip takes
-		 * some time to really shut down
+		ग_लिखोl(csr, gp->regs + WOL_WAKECSR);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0, gp->regs + MAC_RXCFG);
+		(व्योम)पढ़ोl(gp->regs + MAC_RXCFG);
+		/* Machine sleep will die in strange ways अगर we
+		 * करोnt रुको a bit here, looks like the chip takes
+		 * some समय to really shut करोwn
 		 */
 		msleep(10);
-	}
+	पूर्ण
 
-	writel(0, gp->regs + MAC_TXCFG);
-	writel(0, gp->regs + MAC_XIFCFG);
-	writel(0, gp->regs + TXDMA_CFG);
-	writel(0, gp->regs + RXDMA_CFG);
+	ग_लिखोl(0, gp->regs + MAC_TXCFG);
+	ग_लिखोl(0, gp->regs + MAC_XIFCFG);
+	ग_लिखोl(0, gp->regs + TXDMA_CFG);
+	ग_लिखोl(0, gp->regs + RXDMA_CFG);
 
-	if (!wol) {
+	अगर (!wol) अणु
 		gem_reset(gp);
-		writel(MAC_TXRST_CMD, gp->regs + MAC_TXRST);
-		writel(MAC_RXRST_CMD, gp->regs + MAC_RXRST);
+		ग_लिखोl(MAC_TXRST_CMD, gp->regs + MAC_TXRST);
+		ग_लिखोl(MAC_RXRST_CMD, gp->regs + MAC_RXRST);
 
-		if (found_mii_phy(gp) && gp->phy_mii.def->ops->suspend)
+		अगर (found_mii_phy(gp) && gp->phy_mii.def->ops->suspend)
 			gp->phy_mii.def->ops->suspend(&gp->phy_mii);
 
 		/* According to Apple, we must set the MDIO pins to this begnign
 		 * state or we may 1) eat more current, 2) damage some PHYs
 		 */
-		writel(mifcfg | MIF_CFG_BBMODE, gp->regs + MIF_CFG);
-		writel(0, gp->regs + MIF_BBCLK);
-		writel(0, gp->regs + MIF_BBDATA);
-		writel(0, gp->regs + MIF_BBOENAB);
-		writel(MAC_XIFCFG_GMII | MAC_XIFCFG_LBCK, gp->regs + MAC_XIFCFG);
-		(void) readl(gp->regs + MAC_XIFCFG);
-	}
-}
+		ग_लिखोl(mअगरcfg | MIF_CFG_BBMODE, gp->regs + MIF_CFG);
+		ग_लिखोl(0, gp->regs + MIF_BBCLK);
+		ग_लिखोl(0, gp->regs + MIF_BBDATA);
+		ग_लिखोl(0, gp->regs + MIF_BBOENAB);
+		ग_लिखोl(MAC_XIFCFG_GMII | MAC_XIFCFG_LBCK, gp->regs + MAC_XIFCFG);
+		(व्योम) पढ़ोl(gp->regs + MAC_XIFCFG);
+	पूर्ण
+पूर्ण
 
-static int gem_do_start(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक gem_करो_start(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	पूर्णांक rc;
 
 	pci_set_master(gp->pdev);
 
 	/* Init & setup chip hardware */
 	gem_reinit_chip(gp);
 
-	/* An interrupt might come in handy */
-	rc = request_irq(gp->pdev->irq, gem_interrupt,
-			 IRQF_SHARED, dev->name, (void *)dev);
-	if (rc) {
+	/* An पूर्णांकerrupt might come in handy */
+	rc = request_irq(gp->pdev->irq, gem_पूर्णांकerrupt,
+			 IRQF_SHARED, dev->name, (व्योम *)dev);
+	अगर (rc) अणु
 		netdev_err(dev, "failed to request irq !\n");
 
 		gem_reset(gp);
 		gem_clean_rings(gp);
 		gem_put_cell(gp);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Mark us as attached again if we come from resume(), this has
-	 * no effect if we weren't detached and needs to be done now.
+	/* Mark us as attached again अगर we come from resume(), this has
+	 * no effect अगर we weren't detached and needs to be करोne now.
 	 */
-	netif_device_attach(dev);
+	netअगर_device_attach(dev);
 
 	/* Restart NAPI & queues */
-	gem_netif_start(gp);
+	gem_netअगर_start(gp);
 
-	/* Detect & init PHY, start autoneg etc... this will
+	/* Detect & init PHY, start स्वतःneg etc... this will
 	 * eventually result in starting DMA operations when
 	 * the link is up
 	 */
 	gem_init_phy(gp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gem_do_stop(struct net_device *dev, int wol)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_करो_stop(काष्ठा net_device *dev, पूर्णांक wol)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	/* Stop NAPI and stop tx queue */
-	gem_netif_stop(gp);
+	gem_netअगर_stop(gp);
 
-	/* Make sure ints are disabled. We don't care about
+	/* Make sure पूर्णांकs are disabled. We करोn't care about
 	 * synchronizing as NAPI is disabled, thus a stray
-	 * interrupt will do nothing bad (our irq handler
+	 * पूर्णांकerrupt will करो nothing bad (our irq handler
 	 * just schedules NAPI)
 	 */
-	gem_disable_ints(gp);
+	gem_disable_पूर्णांकs(gp);
 
-	/* Stop the link timer */
-	del_timer_sync(&gp->link_timer);
+	/* Stop the link समयr */
+	del_समयr_sync(&gp->link_समयr);
 
-	/* We cannot cancel the reset task while holding the
+	/* We cannot cancel the reset task जबतक holding the
 	 * rtnl lock, we'd get an A->B / B->A deadlock stituation
-	 * if we did. This is not an issue however as the reset
-	 * task is synchronized vs. us (rtnl_lock) and will do
-	 * nothing if the device is down or suspended. We do
-	 * still clear reset_task_pending to avoid a spurrious
-	 * reset later on in case we do resume before it gets
+	 * अगर we did. This is not an issue however as the reset
+	 * task is synchronized vs. us (rtnl_lock) and will करो
+	 * nothing अगर the device is करोwn or suspended. We करो
+	 * still clear reset_task_pending to aव्योम a spurrious
+	 * reset later on in हाल we करो resume beक्रमe it माला_लो
 	 * scheduled.
 	 */
 	gp->reset_task_pending = 0;
@@ -2207,7 +2208,7 @@ static void gem_do_stop(struct net_device *dev, int wol)
 	/* If we are going to sleep with WOL */
 	gem_stop_dma(gp);
 	msleep(10);
-	if (!wol)
+	अगर (!wol)
 		gem_reset(gp);
 	msleep(10);
 
@@ -2215,349 +2216,349 @@ static void gem_do_stop(struct net_device *dev, int wol)
 	gem_clean_rings(gp);
 
 	/* No irq needed anymore */
-	free_irq(gp->pdev->irq, (void *) dev);
+	मुक्त_irq(gp->pdev->irq, (व्योम *) dev);
 
-	/* Shut the PHY down eventually and setup WOL */
+	/* Shut the PHY करोwn eventually and setup WOL */
 	gem_stop_phy(gp, wol);
-}
+पूर्ण
 
-static void gem_reset_task(struct work_struct *work)
-{
-	struct gem *gp = container_of(work, struct gem, reset_task);
+अटल व्योम gem_reset_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gem *gp = container_of(work, काष्ठा gem, reset_task);
 
 	/* Lock out the network stack (essentially shield ourselves
-	 * against a racing open, close, control call, or suspend
+	 * against a racing खोलो, बंद, control call, or suspend
 	 */
 	rtnl_lock();
 
-	/* Skip the reset task if suspended or closed, or if it's
-	 * been cancelled by gem_do_stop (see comment there)
+	/* Skip the reset task अगर suspended or बंदd, or अगर it's
+	 * been cancelled by gem_करो_stop (see comment there)
 	 */
-	if (!netif_device_present(gp->dev) ||
-	    !netif_running(gp->dev) ||
-	    !gp->reset_task_pending) {
+	अगर (!netअगर_device_present(gp->dev) ||
+	    !netअगर_running(gp->dev) ||
+	    !gp->reset_task_pending) अणु
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Stop the link timer */
-	del_timer_sync(&gp->link_timer);
+	/* Stop the link समयr */
+	del_समयr_sync(&gp->link_समयr);
 
 	/* Stop NAPI and tx */
-	gem_netif_stop(gp);
+	gem_netअगर_stop(gp);
 
 	/* Reset the chip & rings */
 	gem_reinit_chip(gp);
-	if (gp->lstate == link_up)
+	अगर (gp->lstate == link_up)
 		gem_set_link_modes(gp);
 
 	/* Restart NAPI and Tx */
-	gem_netif_start(gp);
+	gem_netअगर_start(gp);
 
 	/* We are back ! */
 	gp->reset_task_pending = 0;
 
-	/* If the link is not up, restart autoneg, else restart the
-	 * polling timer
+	/* If the link is not up, restart स्वतःneg, अन्यथा restart the
+	 * polling समयr
 	 */
-	if (gp->lstate != link_up)
-		gem_begin_auto_negotiation(gp, NULL);
-	else
-		mod_timer(&gp->link_timer, jiffies + ((12 * HZ) / 10));
+	अगर (gp->lstate != link_up)
+		gem_begin_स्वतः_negotiation(gp, शून्य);
+	अन्यथा
+		mod_समयr(&gp->link_समयr, jअगरfies + ((12 * HZ) / 10));
 
 	rtnl_unlock();
-}
+पूर्ण
 
-static int gem_open(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
-	int rc;
+अटल पूर्णांक gem_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	पूर्णांक rc;
 
-	/* We allow open while suspended, we just do nothing,
+	/* We allow खोलो जबतक suspended, we just करो nothing,
 	 * the chip will be initialized in resume()
 	 */
-	if (netif_device_present(dev)) {
+	अगर (netअगर_device_present(dev)) अणु
 		/* Enable the cell */
 		gem_get_cell(gp);
 
 		/* Make sure PCI access and bus master are enabled */
 		rc = pci_enable_device(gp->pdev);
-		if (rc) {
+		अगर (rc) अणु
 			netdev_err(dev, "Failed to enable chip on PCI bus !\n");
 
-			/* Put cell and forget it for now, it will be considered
+			/* Put cell and क्रमget it क्रम now, it will be considered
 			 *as still asleep, a new sleep cycle may bring it back
 			 */
 			gem_put_cell(gp);
-			return -ENXIO;
-		}
-		return gem_do_start(dev);
-	}
+			वापस -ENXIO;
+		पूर्ण
+		वापस gem_करो_start(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_close(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	if (netif_device_present(dev)) {
-		gem_do_stop(dev, 0);
+	अगर (netअगर_device_present(dev)) अणु
+		gem_करो_stop(dev, 0);
 
 		/* Make sure bus master is disabled */
 		pci_disable_device(gp->pdev);
 
-		/* Cell not needed neither if no WOL */
-		if (!gp->asleep_wol)
+		/* Cell not needed neither अगर no WOL */
+		अगर (!gp->asleep_wol)
 			gem_put_cell(gp);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused gem_suspend(struct device *dev_d)
-{
-	struct net_device *dev = dev_get_drvdata(dev_d);
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक __maybe_unused gem_suspend(काष्ठा device *dev_d)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	/* Lock the network stack first to avoid racing with open/close,
+	/* Lock the network stack first to aव्योम racing with खोलो/बंद,
 	 * reset task and setting calls
 	 */
 	rtnl_lock();
 
-	/* Not running, mark ourselves non-present, no need for
+	/* Not running, mark ourselves non-present, no need क्रम
 	 * a lock here
 	 */
-	if (!netif_running(dev)) {
-		netif_device_detach(dev);
+	अगर (!netअगर_running(dev)) अणु
+		netअगर_device_detach(dev);
 		rtnl_unlock();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	netdev_info(dev, "suspending, WakeOnLan %s\n",
-		    (gp->wake_on_lan && netif_running(dev)) ?
+		    (gp->wake_on_lan && netअगर_running(dev)) ?
 		    "enabled" : "disabled");
 
-	/* Tell the network stack we're gone. gem_do_stop() below will
+	/* Tell the network stack we're gone. gem_करो_stop() below will
 	 * synchronize with TX, stop NAPI etc...
 	 */
-	netif_device_detach(dev);
+	netअगर_device_detach(dev);
 
 	/* Switch off chip, remember WOL setting */
 	gp->asleep_wol = !!gp->wake_on_lan;
-	gem_do_stop(dev, gp->asleep_wol);
+	gem_करो_stop(dev, gp->asleep_wol);
 
-	/* Cell not needed neither if no WOL */
-	if (!gp->asleep_wol)
+	/* Cell not needed neither अगर no WOL */
+	अगर (!gp->asleep_wol)
 		gem_put_cell(gp);
 
 	/* Unlock the network stack */
 	rtnl_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused gem_resume(struct device *dev_d)
-{
-	struct net_device *dev = dev_get_drvdata(dev_d);
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक __maybe_unused gem_resume(काष्ठा device *dev_d)
+अणु
+	काष्ठा net_device *dev = dev_get_drvdata(dev_d);
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	/* See locking comment in gem_suspend */
 	rtnl_lock();
 
-	/* Not running, mark ourselves present, no need for
+	/* Not running, mark ourselves present, no need क्रम
 	 * a lock here
 	 */
-	if (!netif_running(dev)) {
-		netif_device_attach(dev);
+	अगर (!netअगर_running(dev)) अणु
+		netअगर_device_attach(dev);
 		rtnl_unlock();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Enable the cell */
 	gem_get_cell(gp);
 
-	/* Restart chip. If that fails there isn't much we can do, we
+	/* Restart chip. If that fails there isn't much we can करो, we
 	 * leave things stopped.
 	 */
-	gem_do_start(dev);
+	gem_करो_start(dev);
 
-	/* If we had WOL enabled, the cell clock was never turned off during
+	/* If we had WOL enabled, the cell घड़ी was never turned off during
 	 * sleep, so we end up beeing unbalanced. Fix that here
 	 */
-	if (gp->asleep_wol)
+	अगर (gp->asleep_wol)
 		gem_put_cell(gp);
 
 	/* Unlock the network stack */
 	rtnl_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct net_device_stats *gem_get_stats(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल काष्ठा net_device_stats *gem_get_stats(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	/* I have seen this being called while the PM was in progress,
-	 * so we shield against this. Let's also not poke at registers
-	 * while the reset task is going on.
+	/* I have seen this being called जबतक the PM was in progress,
+	 * so we shield against this. Let's also not poke at रेजिस्टरs
+	 * जबतक the reset task is going on.
 	 *
-	 * TODO: Move stats collection elsewhere (link timer ?) and
-	 * make this a nop to avoid all those synchro issues
+	 * TODO: Move stats collection अन्यथाwhere (link समयr ?) and
+	 * make this a nop to aव्योम all those synchro issues
 	 */
-	if (!netif_device_present(dev) || !netif_running(dev))
-		goto bail;
+	अगर (!netअगर_device_present(dev) || !netअगर_running(dev))
+		जाओ bail;
 
 	/* Better safe than sorry... */
-	if (WARN_ON(!gp->cell_enabled))
-		goto bail;
+	अगर (WARN_ON(!gp->cell_enabled))
+		जाओ bail;
 
-	dev->stats.rx_crc_errors += readl(gp->regs + MAC_FCSERR);
-	writel(0, gp->regs + MAC_FCSERR);
+	dev->stats.rx_crc_errors += पढ़ोl(gp->regs + MAC_FCSERR);
+	ग_लिखोl(0, gp->regs + MAC_FCSERR);
 
-	dev->stats.rx_frame_errors += readl(gp->regs + MAC_AERR);
-	writel(0, gp->regs + MAC_AERR);
+	dev->stats.rx_frame_errors += पढ़ोl(gp->regs + MAC_AERR);
+	ग_लिखोl(0, gp->regs + MAC_AERR);
 
-	dev->stats.rx_length_errors += readl(gp->regs + MAC_LERR);
-	writel(0, gp->regs + MAC_LERR);
+	dev->stats.rx_length_errors += पढ़ोl(gp->regs + MAC_LERR);
+	ग_लिखोl(0, gp->regs + MAC_LERR);
 
-	dev->stats.tx_aborted_errors += readl(gp->regs + MAC_ECOLL);
+	dev->stats.tx_पातed_errors += पढ़ोl(gp->regs + MAC_ECOLL);
 	dev->stats.collisions +=
-		(readl(gp->regs + MAC_ECOLL) + readl(gp->regs + MAC_LCOLL));
-	writel(0, gp->regs + MAC_ECOLL);
-	writel(0, gp->regs + MAC_LCOLL);
+		(पढ़ोl(gp->regs + MAC_ECOLL) + पढ़ोl(gp->regs + MAC_LCOLL));
+	ग_लिखोl(0, gp->regs + MAC_ECOLL);
+	ग_लिखोl(0, gp->regs + MAC_LCOLL);
  bail:
-	return &dev->stats;
-}
+	वापस &dev->stats;
+पूर्ण
 
-static int gem_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct sockaddr *macaddr = (struct sockaddr *) addr;
-	struct gem *gp = netdev_priv(dev);
-	unsigned char *e = &dev->dev_addr[0];
+अटल पूर्णांक gem_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा sockaddr *macaddr = (काष्ठा sockaddr *) addr;
+	काष्ठा gem *gp = netdev_priv(dev);
+	अचिन्हित अक्षर *e = &dev->dev_addr[0];
 
-	if (!is_valid_ether_addr(macaddr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(macaddr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(dev->dev_addr, macaddr->sa_data, dev->addr_len);
+	स_नकल(dev->dev_addr, macaddr->sa_data, dev->addr_len);
 
 	/* We'll just catch it later when the device is up'd or resumed */
-	if (!netif_running(dev) || !netif_device_present(dev))
-		return 0;
+	अगर (!netअगर_running(dev) || !netअगर_device_present(dev))
+		वापस 0;
 
 	/* Better safe than sorry... */
-	if (WARN_ON(!gp->cell_enabled))
-		return 0;
+	अगर (WARN_ON(!gp->cell_enabled))
+		वापस 0;
 
-	writel((e[4] << 8) | e[5], gp->regs + MAC_ADDR0);
-	writel((e[2] << 8) | e[3], gp->regs + MAC_ADDR1);
-	writel((e[0] << 8) | e[1], gp->regs + MAC_ADDR2);
+	ग_लिखोl((e[4] << 8) | e[5], gp->regs + MAC_ADDR0);
+	ग_लिखोl((e[2] << 8) | e[3], gp->regs + MAC_ADDR1);
+	ग_लिखोl((e[0] << 8) | e[1], gp->regs + MAC_ADDR2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gem_set_multicast(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_set_multicast(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 	u32 rxcfg, rxcfg_new;
-	int limit = 10000;
+	पूर्णांक limit = 10000;
 
-	if (!netif_running(dev) || !netif_device_present(dev))
-		return;
+	अगर (!netअगर_running(dev) || !netअगर_device_present(dev))
+		वापस;
 
 	/* Better safe than sorry... */
-	if (gp->reset_task_pending || WARN_ON(!gp->cell_enabled))
-		return;
+	अगर (gp->reset_task_pending || WARN_ON(!gp->cell_enabled))
+		वापस;
 
-	rxcfg = readl(gp->regs + MAC_RXCFG);
+	rxcfg = पढ़ोl(gp->regs + MAC_RXCFG);
 	rxcfg_new = gem_setup_multicast(gp);
-#ifdef STRIP_FCS
+#अगर_घोषित STRIP_FCS
 	rxcfg_new |= MAC_RXCFG_SFCS;
-#endif
+#पूर्ण_अगर
 	gp->mac_rx_cfg = rxcfg_new;
 
-	writel(rxcfg & ~MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
-	while (readl(gp->regs + MAC_RXCFG) & MAC_RXCFG_ENAB) {
-		if (!limit--)
-			break;
+	ग_लिखोl(rxcfg & ~MAC_RXCFG_ENAB, gp->regs + MAC_RXCFG);
+	जबतक (पढ़ोl(gp->regs + MAC_RXCFG) & MAC_RXCFG_ENAB) अणु
+		अगर (!limit--)
+			अवरोध;
 		udelay(10);
-	}
+	पूर्ण
 
 	rxcfg &= ~(MAC_RXCFG_PROM | MAC_RXCFG_HFE);
 	rxcfg |= rxcfg_new;
 
-	writel(rxcfg, gp->regs + MAC_RXCFG);
-}
+	ग_लिखोl(rxcfg, gp->regs + MAC_RXCFG);
+पूर्ण
 
-/* Jumbo-grams don't seem to work :-( */
-#define GEM_MIN_MTU	ETH_MIN_MTU
-#if 1
-#define GEM_MAX_MTU	ETH_DATA_LEN
-#else
-#define GEM_MAX_MTU	9000
-#endif
+/* Jumbo-grams करोn't seem to work :-( */
+#घोषणा GEM_MIN_MTU	ETH_MIN_MTU
+#अगर 1
+#घोषणा GEM_MAX_MTU	ETH_DATA_LEN
+#अन्यथा
+#घोषणा GEM_MAX_MTU	9000
+#पूर्ण_अगर
 
-static int gem_change_mtu(struct net_device *dev, int new_mtu)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_change_mtu(काष्ठा net_device *dev, पूर्णांक new_mtu)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	dev->mtu = new_mtu;
 
 	/* We'll just catch it later when the device is up'd or resumed */
-	if (!netif_running(dev) || !netif_device_present(dev))
-		return 0;
+	अगर (!netअगर_running(dev) || !netअगर_device_present(dev))
+		वापस 0;
 
 	/* Better safe than sorry... */
-	if (WARN_ON(!gp->cell_enabled))
-		return 0;
+	अगर (WARN_ON(!gp->cell_enabled))
+		वापस 0;
 
-	gem_netif_stop(gp);
+	gem_netअगर_stop(gp);
 	gem_reinit_chip(gp);
-	if (gp->lstate == link_up)
+	अगर (gp->lstate == link_up)
 		gem_set_link_modes(gp);
-	gem_netif_start(gp);
+	gem_netअगर_start(gp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void gem_get_drvinfo(struct net_device *dev, struct ethtool_drvinfo *info)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_get_drvinfo(काष्ठा net_device *dev, काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->version, DRV_VERSION, sizeof(info->version));
-	strlcpy(info->bus_info, pci_name(gp->pdev), sizeof(info->bus_info));
-}
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->version, DRV_VERSION, माप(info->version));
+	strlcpy(info->bus_info, pci_name(gp->pdev), माप(info->bus_info));
+पूर्ण
 
-static int gem_get_link_ksettings(struct net_device *dev,
-				  struct ethtool_link_ksettings *cmd)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_get_link_ksettings(काष्ठा net_device *dev,
+				  काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 	u32 supported, advertising;
 
-	if (gp->phy_type == phy_mii_mdio0 ||
-	    gp->phy_type == phy_mii_mdio1) {
-		if (gp->phy_mii.def)
+	अगर (gp->phy_type == phy_mii_mdio0 ||
+	    gp->phy_type == phy_mii_mdio1) अणु
+		अगर (gp->phy_mii.def)
 			supported = gp->phy_mii.def->features;
-		else
+		अन्यथा
 			supported = (SUPPORTED_10baseT_Half |
 					  SUPPORTED_10baseT_Full);
 
-		/* XXX hardcoded stuff for now */
+		/* XXX hardcoded stuff क्रम now */
 		cmd->base.port = PORT_MII;
 		cmd->base.phy_address = 0; /* XXX fixed PHYAD */
 
 		/* Return current PHY settings */
-		cmd->base.autoneg = gp->want_autoneg;
+		cmd->base.स्वतःneg = gp->want_स्वतःneg;
 		cmd->base.speed = gp->phy_mii.speed;
 		cmd->base.duplex = gp->phy_mii.duplex;
 		advertising = gp->phy_mii.advertising;
 
-		/* If we started with a forced mode, we don't have a default
-		 * advertise set, we need to return something sensible so
-		 * userland can re-enable autoneg properly.
+		/* If we started with a क्रमced mode, we करोn't have a शेष
+		 * advertise set, we need to वापस something sensible so
+		 * userland can re-enable स्वतःneg properly.
 		 */
-		if (advertising == 0)
+		अगर (advertising == 0)
 			advertising = supported;
-	} else { // XXX PCS ?
+	पूर्ण अन्यथा अणु // XXX PCS ?
 		supported =
 			(SUPPORTED_10baseT_Half | SUPPORTED_10baseT_Full |
 			 SUPPORTED_100baseT_Half | SUPPORTED_100baseT_Full |
@@ -2567,126 +2568,126 @@ static int gem_get_link_ksettings(struct net_device *dev,
 		cmd->base.duplex = 0;
 		cmd->base.port = 0;
 		cmd->base.phy_address = 0;
-		cmd->base.autoneg = 0;
+		cmd->base.स्वतःneg = 0;
 
 		/* serdes means usually a Fibre connector, with most fixed */
-		if (gp->phy_type == phy_serdes) {
+		अगर (gp->phy_type == phy_serdes) अणु
 			cmd->base.port = PORT_FIBRE;
 			supported = (SUPPORTED_1000baseT_Half |
 				SUPPORTED_1000baseT_Full |
 				SUPPORTED_FIBRE | SUPPORTED_Autoneg |
 				SUPPORTED_Pause | SUPPORTED_Asym_Pause);
 			advertising = supported;
-			if (gp->lstate == link_up)
+			अगर (gp->lstate == link_up)
 				cmd->base.speed = SPEED_1000;
 			cmd->base.duplex = DUPLEX_FULL;
-			cmd->base.autoneg = 1;
-		}
-	}
+			cmd->base.स्वतःneg = 1;
+		पूर्ण
+	पूर्ण
 
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.supported,
 						supported);
 	ethtool_convert_legacy_u32_to_link_mode(cmd->link_modes.advertising,
 						advertising);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_set_link_ksettings(struct net_device *dev,
-				  const struct ethtool_link_ksettings *cmd)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_set_link_ksettings(काष्ठा net_device *dev,
+				  स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 	u32 speed = cmd->base.speed;
 	u32 advertising;
 
 	ethtool_convert_link_mode_to_legacy_u32(&advertising,
 						cmd->link_modes.advertising);
 
-	/* Verify the settings we care about. */
-	if (cmd->base.autoneg != AUTONEG_ENABLE &&
-	    cmd->base.autoneg != AUTONEG_DISABLE)
-		return -EINVAL;
+	/* Verअगरy the settings we care about. */
+	अगर (cmd->base.स्वतःneg != AUTONEG_ENABLE &&
+	    cmd->base.स्वतःneg != AUTONEG_DISABLE)
+		वापस -EINVAL;
 
-	if (cmd->base.autoneg == AUTONEG_ENABLE &&
+	अगर (cmd->base.स्वतःneg == AUTONEG_ENABLE &&
 	    advertising == 0)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (cmd->base.autoneg == AUTONEG_DISABLE &&
+	अगर (cmd->base.स्वतःneg == AUTONEG_DISABLE &&
 	    ((speed != SPEED_1000 &&
 	      speed != SPEED_100 &&
 	      speed != SPEED_10) ||
 	     (cmd->base.duplex != DUPLEX_HALF &&
 	      cmd->base.duplex != DUPLEX_FULL)))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Apply settings and restart link process. */
-	if (netif_device_present(gp->dev)) {
-		del_timer_sync(&gp->link_timer);
-		gem_begin_auto_negotiation(gp, cmd);
-	}
+	अगर (netअगर_device_present(gp->dev)) अणु
+		del_समयr_sync(&gp->link_समयr);
+		gem_begin_स्वतः_negotiation(gp, cmd);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gem_nway_reset(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_nway_reset(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	if (!gp->want_autoneg)
-		return -EINVAL;
+	अगर (!gp->want_स्वतःneg)
+		वापस -EINVAL;
 
 	/* Restart link process  */
-	if (netif_device_present(gp->dev)) {
-		del_timer_sync(&gp->link_timer);
-		gem_begin_auto_negotiation(gp, NULL);
-	}
+	अगर (netअगर_device_present(gp->dev)) अणु
+		del_समयr_sync(&gp->link_समयr);
+		gem_begin_स्वतः_negotiation(gp, शून्य);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 gem_get_msglevel(struct net_device *dev)
-{
-	struct gem *gp = netdev_priv(dev);
-	return gp->msg_enable;
-}
+अटल u32 gem_get_msglevel(काष्ठा net_device *dev)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	वापस gp->msg_enable;
+पूर्ण
 
-static void gem_set_msglevel(struct net_device *dev, u32 value)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_set_msglevel(काष्ठा net_device *dev, u32 value)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 	gp->msg_enable = value;
-}
+पूर्ण
 
 
 /* Add more when I understand how to program the chip */
 /* like WAKE_UCAST | WAKE_MCAST | WAKE_BCAST */
 
-#define WOL_SUPPORTED_MASK	(WAKE_MAGIC)
+#घोषणा WOL_SUPPORTED_MASK	(WAKE_MAGIC)
 
-static void gem_get_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल व्योम gem_get_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
 	/* Add more when I understand how to program the chip */
-	if (gp->has_wol) {
+	अगर (gp->has_wol) अणु
 		wol->supported = WOL_SUPPORTED_MASK;
 		wol->wolopts = gp->wake_on_lan;
-	} else {
+	पूर्ण अन्यथा अणु
 		wol->supported = 0;
 		wol->wolopts = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gem_set_wol(struct net_device *dev, struct ethtool_wolinfo *wol)
-{
-	struct gem *gp = netdev_priv(dev);
+अटल पूर्णांक gem_set_wol(काष्ठा net_device *dev, काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
 
-	if (!gp->has_wol)
-		return -EOPNOTSUPP;
+	अगर (!gp->has_wol)
+		वापस -EOPNOTSUPP;
 	gp->wake_on_lan = wol->wolopts & WOL_SUPPORTED_MASK;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ethtool_ops gem_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops gem_ethtool_ops = अणु
 	.get_drvinfo		= gem_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.nway_reset		= gem_nway_reset,
@@ -2696,248 +2697,248 @@ static const struct ethtool_ops gem_ethtool_ops = {
 	.set_wol		= gem_set_wol,
 	.get_link_ksettings	= gem_get_link_ksettings,
 	.set_link_ksettings	= gem_set_link_ksettings,
-};
+पूर्ण;
 
-static int gem_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	struct gem *gp = netdev_priv(dev);
-	struct mii_ioctl_data *data = if_mii(ifr);
-	int rc = -EOPNOTSUPP;
+अटल पूर्णांक gem_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा gem *gp = netdev_priv(dev);
+	काष्ठा mii_ioctl_data *data = अगर_mii(अगरr);
+	पूर्णांक rc = -EOPNOTSUPP;
 
-	/* For SIOCGMIIREG and SIOCSMIIREG the core checks for us that
-	 * netif_device_present() is true and holds rtnl_lock for us
+	/* For SIOCGMIIREG and SIOCSMIIREG the core checks क्रम us that
+	 * netअगर_device_present() is true and holds rtnl_lock क्रम us
 	 * so we have nothing to worry about
 	 */
 
-	switch (cmd) {
-	case SIOCGMIIPHY:		/* Get address of MII PHY in use. */
+	चयन (cmd) अणु
+	हाल SIOCGMIIPHY:		/* Get address of MII PHY in use. */
 		data->phy_id = gp->mii_phy_addr;
 		fallthrough;
 
-	case SIOCGMIIREG:		/* Read MII PHY register. */
-		data->val_out = __sungem_phy_read(gp, data->phy_id & 0x1f,
+	हाल SIOCGMIIREG:		/* Read MII PHY रेजिस्टर. */
+		data->val_out = __sungem_phy_पढ़ो(gp, data->phy_id & 0x1f,
 					   data->reg_num & 0x1f);
 		rc = 0;
-		break;
+		अवरोध;
 
-	case SIOCSMIIREG:		/* Write MII PHY register. */
-		__sungem_phy_write(gp, data->phy_id & 0x1f, data->reg_num & 0x1f,
+	हाल SIOCSMIIREG:		/* Write MII PHY रेजिस्टर. */
+		__sungem_phy_ग_लिखो(gp, data->phy_id & 0x1f, data->reg_num & 0x1f,
 			    data->val_in);
 		rc = 0;
-		break;
-	}
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-#if (!defined(CONFIG_SPARC) && !defined(CONFIG_PPC_PMAC))
+#अगर (!defined(CONFIG_SPARC) && !defined(CONFIG_PPC_PMAC))
 /* Fetch MAC address from vital product data of PCI ROM. */
-static int find_eth_addr_in_vpd(void __iomem *rom_base, int len, unsigned char *dev_addr)
-{
-	int this_offset;
+अटल पूर्णांक find_eth_addr_in_vpd(व्योम __iomem *rom_base, पूर्णांक len, अचिन्हित अक्षर *dev_addr)
+अणु
+	पूर्णांक this_offset;
 
-	for (this_offset = 0x20; this_offset < len; this_offset++) {
-		void __iomem *p = rom_base + this_offset;
-		int i;
+	क्रम (this_offset = 0x20; this_offset < len; this_offset++) अणु
+		व्योम __iomem *p = rom_base + this_offset;
+		पूर्णांक i;
 
-		if (readb(p + 0) != 0x90 ||
-		    readb(p + 1) != 0x00 ||
-		    readb(p + 2) != 0x09 ||
-		    readb(p + 3) != 0x4e ||
-		    readb(p + 4) != 0x41 ||
-		    readb(p + 5) != 0x06)
-			continue;
+		अगर (पढ़ोb(p + 0) != 0x90 ||
+		    पढ़ोb(p + 1) != 0x00 ||
+		    पढ़ोb(p + 2) != 0x09 ||
+		    पढ़ोb(p + 3) != 0x4e ||
+		    पढ़ोb(p + 4) != 0x41 ||
+		    पढ़ोb(p + 5) != 0x06)
+			जारी;
 
 		this_offset += 6;
 		p += 6;
 
-		for (i = 0; i < 6; i++)
-			dev_addr[i] = readb(p + i);
-		return 1;
-	}
-	return 0;
-}
+		क्रम (i = 0; i < 6; i++)
+			dev_addr[i] = पढ़ोb(p + i);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void get_gem_mac_nonobp(struct pci_dev *pdev, unsigned char *dev_addr)
-{
-	size_t size;
-	void __iomem *p = pci_map_rom(pdev, &size);
+अटल व्योम get_gem_mac_nonobp(काष्ठा pci_dev *pdev, अचिन्हित अक्षर *dev_addr)
+अणु
+	माप_प्रकार size;
+	व्योम __iomem *p = pci_map_rom(pdev, &size);
 
-	if (p) {
-		int found;
+	अगर (p) अणु
+		पूर्णांक found;
 
-		found = readb(p) == 0x55 &&
-			readb(p + 1) == 0xaa &&
+		found = पढ़ोb(p) == 0x55 &&
+			पढ़ोb(p + 1) == 0xaa &&
 			find_eth_addr_in_vpd(p, (64 * 1024), dev_addr);
 		pci_unmap_rom(pdev, p);
-		if (found)
-			return;
-	}
+		अगर (found)
+			वापस;
+	पूर्ण
 
-	/* Sun MAC prefix then 3 random bytes. */
+	/* Sun MAC prefix then 3 अक्रमom bytes. */
 	dev_addr[0] = 0x08;
 	dev_addr[1] = 0x00;
 	dev_addr[2] = 0x20;
-	get_random_bytes(dev_addr + 3, 3);
-}
-#endif /* not Sparc and not PPC */
+	get_अक्रमom_bytes(dev_addr + 3, 3);
+पूर्ण
+#पूर्ण_अगर /* not Sparc and not PPC */
 
-static int gem_get_device_address(struct gem *gp)
-{
-#if defined(CONFIG_SPARC) || defined(CONFIG_PPC_PMAC)
-	struct net_device *dev = gp->dev;
-	const unsigned char *addr;
+अटल पूर्णांक gem_get_device_address(काष्ठा gem *gp)
+अणु
+#अगर defined(CONFIG_SPARC) || defined(CONFIG_PPC_PMAC)
+	काष्ठा net_device *dev = gp->dev;
+	स्थिर अचिन्हित अक्षर *addr;
 
-	addr = of_get_property(gp->of_node, "local-mac-address", NULL);
-	if (addr == NULL) {
-#ifdef CONFIG_SPARC
+	addr = of_get_property(gp->of_node, "local-mac-address", शून्य);
+	अगर (addr == शून्य) अणु
+#अगर_घोषित CONFIG_SPARC
 		addr = idprom->id_ethaddr;
-#else
-		printk("\n");
+#अन्यथा
+		prपूर्णांकk("\n");
 		pr_err("%s: can't get mac-address\n", dev->name);
-		return -1;
-#endif
-	}
-	memcpy(dev->dev_addr, addr, ETH_ALEN);
-#else
+		वापस -1;
+#पूर्ण_अगर
+	पूर्ण
+	स_नकल(dev->dev_addr, addr, ETH_ALEN);
+#अन्यथा
 	get_gem_mac_nonobp(gp->pdev, gp->dev->dev_addr);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void gem_remove_one(struct pci_dev *pdev)
-{
-	struct net_device *dev = pci_get_drvdata(pdev);
+अटल व्योम gem_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *dev = pci_get_drvdata(pdev);
 
-	if (dev) {
-		struct gem *gp = netdev_priv(dev);
+	अगर (dev) अणु
+		काष्ठा gem *gp = netdev_priv(dev);
 
-		unregister_netdev(dev);
+		unरेजिस्टर_netdev(dev);
 
 		/* Ensure reset task is truly gone */
 		cancel_work_sync(&gp->reset_task);
 
 		/* Free resources */
-		dma_free_coherent(&pdev->dev, sizeof(struct gem_init_block),
+		dma_मुक्त_coherent(&pdev->dev, माप(काष्ठा gem_init_block),
 				  gp->init_block, gp->gblock_dvma);
 		iounmap(gp->regs);
 		pci_release_regions(pdev);
-		free_netdev(dev);
-	}
-}
+		मुक्त_netdev(dev);
+	पूर्ण
+पूर्ण
 
-static const struct net_device_ops gem_netdev_ops = {
-	.ndo_open		= gem_open,
-	.ndo_stop		= gem_close,
-	.ndo_start_xmit		= gem_start_xmit,
-	.ndo_get_stats		= gem_get_stats,
-	.ndo_set_rx_mode	= gem_set_multicast,
-	.ndo_do_ioctl		= gem_ioctl,
-	.ndo_tx_timeout		= gem_tx_timeout,
-	.ndo_change_mtu		= gem_change_mtu,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address    = gem_set_mac_address,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller    = gem_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops gem_netdev_ops = अणु
+	.nकरो_खोलो		= gem_खोलो,
+	.nकरो_stop		= gem_बंद,
+	.nकरो_start_xmit		= gem_start_xmit,
+	.nकरो_get_stats		= gem_get_stats,
+	.nकरो_set_rx_mode	= gem_set_multicast,
+	.nकरो_करो_ioctl		= gem_ioctl,
+	.nकरो_tx_समयout		= gem_tx_समयout,
+	.nकरो_change_mtu		= gem_change_mtu,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address    = gem_set_mac_address,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller    = gem_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-static int gem_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	unsigned long gemreg_base, gemreg_len;
-	struct net_device *dev;
-	struct gem *gp;
-	int err, pci_using_dac;
+अटल पूर्णांक gem_init_one(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	अचिन्हित दीर्घ gemreg_base, gemreg_len;
+	काष्ठा net_device *dev;
+	काष्ठा gem *gp;
+	पूर्णांक err, pci_using_dac;
 
-	printk_once(KERN_INFO "%s", version);
+	prपूर्णांकk_once(KERN_INFO "%s", version);
 
-	/* Apple gmac note: during probe, the chip is powered up by
+	/* Apple gmac note: during probe, the chip is घातered up by
 	 * the arch code to allow the code below to work (and to let
-	 * the chip be probed on the config space. It won't stay powered
-	 * up until the interface is brought up however, so we can't rely
-	 * on register configuration done at this point.
+	 * the chip be probed on the config space. It won't stay घातered
+	 * up until the पूर्णांकerface is brought up however, so we can't rely
+	 * on रेजिस्टर configuration करोne at this poपूर्णांक.
 	 */
 	err = pci_enable_device(pdev);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Cannot enable MMIO operation, aborting\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	pci_set_master(pdev);
 
 	/* Configure DMA attributes. */
 
-	/* All of the GEM documentation states that 64-bit DMA addressing
+	/* All of the GEM करोcumentation states that 64-bit DMA addressing
 	 * is fully supported and should work just fine.  However the
-	 * front end for RIO based GEMs is different and only supports
+	 * front end क्रम RIO based GEMs is dअगरferent and only supports
 	 * 32-bit addressing.
 	 *
 	 * For now we assume the various PPC GEMs are 32-bit only as well.
 	 */
-	if (pdev->vendor == PCI_VENDOR_ID_SUN &&
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_SUN &&
 	    pdev->device == PCI_DEVICE_ID_SUN_GEM &&
-	    !dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) {
+	    !dma_set_mask(&pdev->dev, DMA_BIT_MASK(64))) अणु
 		pci_using_dac = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = dma_set_mask(&pdev->dev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			pr_err("No usable DMA configuration, aborting\n");
-			goto err_disable_device;
-		}
+			जाओ err_disable_device;
+		पूर्ण
 		pci_using_dac = 0;
-	}
+	पूर्ण
 
 	gemreg_base = pci_resource_start(pdev, 0);
 	gemreg_len = pci_resource_len(pdev, 0);
 
-	if ((pci_resource_flags(pdev, 0) & IORESOURCE_IO) != 0) {
+	अगर ((pci_resource_flags(pdev, 0) & IORESOURCE_IO) != 0) अणु
 		pr_err("Cannot find proper PCI device base address, aborting\n");
 		err = -ENODEV;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
-	dev = alloc_etherdev(sizeof(*gp));
-	if (!dev) {
+	dev = alloc_etherdev(माप(*gp));
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	gp = netdev_priv(dev);
 
 	err = pci_request_regions(pdev, DRV_NAME);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Cannot obtain PCI resources, aborting\n");
-		goto err_out_free_netdev;
-	}
+		जाओ err_out_मुक्त_netdev;
+	पूर्ण
 
 	gp->pdev = pdev;
 	gp->dev = dev;
 
 	gp->msg_enable = DEFAULT_MSG;
 
-	timer_setup(&gp->link_timer, gem_link_timer, 0);
+	समयr_setup(&gp->link_समयr, gem_link_समयr, 0);
 
 	INIT_WORK(&gp->reset_task, gem_reset_task);
 
-	gp->lstate = link_down;
-	gp->timer_ticks = 0;
-	netif_carrier_off(dev);
+	gp->lstate = link_करोwn;
+	gp->समयr_ticks = 0;
+	netअगर_carrier_off(dev);
 
 	gp->regs = ioremap(gemreg_base, gemreg_len);
-	if (!gp->regs) {
+	अगर (!gp->regs) अणु
 		pr_err("Cannot map device registers, aborting\n");
 		err = -EIO;
-		goto err_out_free_res;
-	}
+		जाओ err_out_मुक्त_res;
+	पूर्ण
 
 	/* On Apple, we want a reference to the Open Firmware device-tree
-	 * node. We use it for clock control.
+	 * node. We use it क्रम घड़ी control.
 	 */
-#if defined(CONFIG_PPC_PMAC) || defined(CONFIG_SPARC)
+#अगर defined(CONFIG_PPC_PMAC) || defined(CONFIG_SPARC)
 	gp->of_node = pci_device_to_OF_node(pdev);
-#endif
+#पूर्ण_अगर
 
 	/* Only Apple version supports WOL afaik */
-	if (pdev->vendor == PCI_VENDOR_ID_APPLE)
+	अगर (pdev->venकरोr == PCI_VENDOR_ID_APPLE)
 		gp->has_wol = 1;
 
 	/* Make sure cell is enabled */
@@ -2946,50 +2947,50 @@ static int gem_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	/* Make sure everything is stopped and in init state */
 	gem_reset(gp);
 
-	/* Fill up the mii_phy structure (even if we won't use it) */
+	/* Fill up the mii_phy काष्ठाure (even अगर we won't use it) */
 	gp->phy_mii.dev = dev;
-	gp->phy_mii.mdio_read = _sungem_phy_read;
-	gp->phy_mii.mdio_write = _sungem_phy_write;
-#ifdef CONFIG_PPC_PMAC
-	gp->phy_mii.platform_data = gp->of_node;
-#endif
-	/* By default, we start with autoneg */
-	gp->want_autoneg = 1;
+	gp->phy_mii.mdio_पढ़ो = _sungem_phy_पढ़ो;
+	gp->phy_mii.mdio_ग_लिखो = _sungem_phy_ग_लिखो;
+#अगर_घोषित CONFIG_PPC_PMAC
+	gp->phy_mii.platक्रमm_data = gp->of_node;
+#पूर्ण_अगर
+	/* By शेष, we start with स्वतःneg */
+	gp->want_स्वतःneg = 1;
 
-	/* Check fifo sizes, PHY type, etc... */
-	if (gem_check_invariants(gp)) {
+	/* Check fअगरo sizes, PHY type, etc... */
+	अगर (gem_check_invariants(gp)) अणु
 		err = -ENODEV;
-		goto err_out_iounmap;
-	}
+		जाओ err_out_iounmap;
+	पूर्ण
 
-	/* It is guaranteed that the returned buffer will be at least
+	/* It is guaranteed that the वापसed buffer will be at least
 	 * PAGE_SIZE aligned.
 	 */
-	gp->init_block = dma_alloc_coherent(&pdev->dev, sizeof(struct gem_init_block),
+	gp->init_block = dma_alloc_coherent(&pdev->dev, माप(काष्ठा gem_init_block),
 					    &gp->gblock_dvma, GFP_KERNEL);
-	if (!gp->init_block) {
+	अगर (!gp->init_block) अणु
 		pr_err("Cannot allocate init block, aborting\n");
 		err = -ENOMEM;
-		goto err_out_iounmap;
-	}
+		जाओ err_out_iounmap;
+	पूर्ण
 
 	err = gem_get_device_address(gp);
-	if (err)
-		goto err_out_free_consistent;
+	अगर (err)
+		जाओ err_out_मुक्त_consistent;
 
 	dev->netdev_ops = &gem_netdev_ops;
-	netif_napi_add(dev, &gp->napi, gem_poll, 64);
+	netअगर_napi_add(dev, &gp->napi, gem_poll, 64);
 	dev->ethtool_ops = &gem_ethtool_ops;
-	dev->watchdog_timeo = 5 * HZ;
+	dev->watchकरोg_समयo = 5 * HZ;
 	dev->dma = 0;
 
-	/* Set that now, in case PM kicks in now */
+	/* Set that now, in हाल PM kicks in now */
 	pci_set_drvdata(pdev, dev);
 
-	/* We can do scatter/gather and HW checksum */
+	/* We can करो scatter/gather and HW checksum */
 	dev->hw_features = NETIF_F_SG | NETIF_F_HW_CSUM | NETIF_F_RXCSUM;
 	dev->features = dev->hw_features;
-	if (pci_using_dac)
+	अगर (pci_using_dac)
 		dev->features |= NETIF_F_HIGHDMA;
 
 	/* MTU range: 68 - 1500 (Jumbo mode is broken) */
@@ -2997,14 +2998,14 @@ static int gem_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 	dev->max_mtu = GEM_MAX_MTU;
 
 	/* Register with kernel */
-	if (register_netdev(dev)) {
+	अगर (रेजिस्टर_netdev(dev)) अणु
 		pr_err("Cannot register net device, aborting\n");
 		err = -ENOMEM;
-		goto err_out_free_consistent;
-	}
+		जाओ err_out_मुक्त_consistent;
+	पूर्ण
 
-	/* Undo the get_cell with appropriate locking (we could use
-	 * ndo_init/uninit but that would be even more clumsy imho)
+	/* Unकरो the get_cell with appropriate locking (we could use
+	 * nकरो_init/uninit but that would be even more clumsy imho)
 	 */
 	rtnl_lock();
 	gem_put_cell(gp);
@@ -3012,33 +3013,33 @@ static int gem_init_one(struct pci_dev *pdev, const struct pci_device_id *ent)
 
 	netdev_info(dev, "Sun GEM (PCI) 10/100/1000BaseT Ethernet %pM\n",
 		    dev->dev_addr);
-	return 0;
+	वापस 0;
 
-err_out_free_consistent:
-	gem_remove_one(pdev);
+err_out_मुक्त_consistent:
+	gem_हटाओ_one(pdev);
 err_out_iounmap:
 	gem_put_cell(gp);
 	iounmap(gp->regs);
 
-err_out_free_res:
+err_out_मुक्त_res:
 	pci_release_regions(pdev);
 
-err_out_free_netdev:
-	free_netdev(dev);
+err_out_मुक्त_netdev:
+	मुक्त_netdev(dev);
 err_disable_device:
 	pci_disable_device(pdev);
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(gem_pm_ops, gem_suspend, gem_resume);
+अटल SIMPLE_DEV_PM_OPS(gem_pm_ops, gem_suspend, gem_resume);
 
-static struct pci_driver gem_driver = {
+अटल काष्ठा pci_driver gem_driver = अणु
 	.name		= GEM_MODULE_NAME,
 	.id_table	= gem_pci_tbl,
 	.probe		= gem_init_one,
-	.remove		= gem_remove_one,
+	.हटाओ		= gem_हटाओ_one,
 	.driver.pm	= &gem_pm_ops,
-};
+पूर्ण;
 
 module_pci_driver(gem_driver);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * ADAU1381/ADAU1781 driver
  *
@@ -6,17 +7,17 @@
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#ifndef __SOUND_SOC_CODECS_ADAU1781_H__
-#define __SOUND_SOC_CODECS_ADAU1781_H__
+#अगर_अघोषित __SOUND_SOC_CODECS_ADAU1781_H__
+#घोषणा __SOUND_SOC_CODECS_ADAU1781_H__
 
-#include <linux/regmap.h>
-#include "adau17x1.h"
+#समावेश <linux/regmap.h>
+#समावेश "adau17x1.h"
 
-struct device;
+काष्ठा device;
 
-int adau1781_probe(struct device *dev, struct regmap *regmap,
-	enum adau17x1_type type, void (*switch_mode)(struct device *dev));
+पूर्णांक adau1781_probe(काष्ठा device *dev, काष्ठा regmap *regmap,
+	क्रमागत adau17x1_type type, व्योम (*चयन_mode)(काष्ठा device *dev));
 
-extern const struct regmap_config adau1781_regmap_config;
+बाह्य स्थिर काष्ठा regmap_config adau1781_regmap_config;
 
-#endif
+#पूर्ण_अगर

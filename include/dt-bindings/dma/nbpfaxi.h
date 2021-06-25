@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013-2014 Renesas Electronics Europe Ltd.
  * Author: Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#ifndef DT_BINDINGS_NBPFAXI_H
-#define DT_BINDINGS_NBPFAXI_H
+#अगर_अघोषित DT_BINDINGS_NBPFAXI_H
+#घोषणा DT_BINDINGS_NBPFAXI_H
 
 /**
- * Use "#dma-cells = <2>;" with the second integer defining slave DMA flags:
+ * Use "#dma-cells = <2>;" with the second पूर्णांकeger defining slave DMA flags:
  */
-#define NBPF_SLAVE_RQ_HIGH	1
-#define NBPF_SLAVE_RQ_LOW	2
-#define NBPF_SLAVE_RQ_LEVEL	4
+#घोषणा NBPF_SLAVE_RQ_HIGH	1
+#घोषणा NBPF_SLAVE_RQ_LOW	2
+#घोषणा NBPF_SLAVE_RQ_LEVEL	4
 
-#endif
+#पूर्ण_अगर

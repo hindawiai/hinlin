@@ -1,188 +1,189 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  (C) 2010,2011       Thomas Renninger <trenn@suse.de>, Novell Inc.
  *
- * Miscellaneous helpers which do not fit or are worth
- * to put into separate headers
+ * Miscellaneous helpers which करो not fit or are worth
+ * to put पूर्णांकo separate headers
  */
 
-#ifndef __CPUPOWERUTILS_HELPERS__
-#define __CPUPOWERUTILS_HELPERS__
+#अगर_अघोषित __CPUPOWERUTILS_HELPERS__
+#घोषणा __CPUPOWERUTILS_HELPERS__
 
-#include <libintl.h>
-#include <locale.h>
+#समावेश <libपूर्णांकl.h>
+#समावेश <क्षेत्र.स>
 
-#include "helpers/bitmask.h"
-#include <cpupower.h>
+#समावेश "helpers/bitmask.h"
+#समावेश <cpuघातer.h>
 
 /* Internationalization ****************************/
-#ifdef NLS
+#अगर_घोषित NLS
 
-#define _(String) gettext(String)
-#ifndef gettext_noop
-#define gettext_noop(String) String
-#endif
-#define N_(String) gettext_noop(String)
+#घोषणा _(String) gettext(String)
+#अगर_अघोषित gettext_noop
+#घोषणा gettext_noop(String) String
+#पूर्ण_अगर
+#घोषणा N_(String) gettext_noop(String)
 
-#else /* !NLS */
+#अन्यथा /* !NLS */
 
-#define _(String) String
-#define N_(String) String
+#घोषणा _(String) String
+#घोषणा N_(String) String
 
-#endif
+#पूर्ण_अगर
 /* Internationalization ****************************/
 
-extern int run_as_root;
-extern int base_cpu;
-extern struct bitmask *cpus_chosen;
+बाह्य पूर्णांक run_as_root;
+बाह्य पूर्णांक base_cpu;
+बाह्य काष्ठा biपंचांगask *cpus_chosen;
 
 /* Global verbose (-d) stuff *********************************/
 /*
  * define DEBUG via global Makefile variable
- * Debug output is sent to stderr, do:
- * cpupower monitor 2>/tmp/debug
+ * Debug output is sent to मानक_त्रुटि, करो:
+ * cpuघातer monitor 2>/पंचांगp/debug
  * to split debug output away from normal output
 */
-#ifdef DEBUG
-extern int be_verbose;
+#अगर_घोषित DEBUG
+बाह्य पूर्णांक be_verbose;
 
-#define dprint(fmt, ...) {					\
-		if (be_verbose) {				\
-			fprintf(stderr, "%s: " fmt,		\
+#घोषणा dprपूर्णांक(fmt, ...) अणु					\
+		अगर (be_verbose) अणु				\
+			ख_लिखो(मानक_त्रुटि, "%s: " fmt,		\
 				__func__, ##__VA_ARGS__);	\
-		}						\
-	}
-#else
-static inline void dprint(const char *fmt, ...) { }
-#endif
-extern int be_verbose;
+		पूर्ण						\
+	पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम dprपूर्णांक(स्थिर अक्षर *fmt, ...) अणु पूर्ण
+#पूर्ण_अगर
+बाह्य पूर्णांक be_verbose;
 /* Global verbose (-v) stuff *********************************/
 
 /* cpuid and cpuinfo helpers  **************************/
-enum cpupower_cpu_vendor {X86_VENDOR_UNKNOWN = 0, X86_VENDOR_INTEL,
-			  X86_VENDOR_AMD, X86_VENDOR_HYGON, X86_VENDOR_MAX};
+क्रमागत cpuघातer_cpu_venकरोr अणुX86_VENDOR_UNKNOWN = 0, X86_VENDOR_INTEL,
+			  X86_VENDOR_AMD, X86_VENDOR_HYGON, X86_VENDOR_MAXपूर्ण;
 
-#define CPUPOWER_CAP_INV_TSC		0x00000001
-#define CPUPOWER_CAP_APERF		0x00000002
-#define CPUPOWER_CAP_AMD_CPB		0x00000004
-#define CPUPOWER_CAP_PERF_BIAS		0x00000008
-#define CPUPOWER_CAP_HAS_TURBO_RATIO	0x00000010
-#define CPUPOWER_CAP_IS_SNB		0x00000020
-#define CPUPOWER_CAP_INTEL_IDA		0x00000040
-#define CPUPOWER_CAP_AMD_RDPRU		0x00000080
-#define CPUPOWER_CAP_AMD_HW_PSTATE	0x00000100
-#define CPUPOWER_CAP_AMD_PSTATEDEF	0x00000200
-#define CPUPOWER_CAP_AMD_CPB_MSR	0x00000400
+#घोषणा CPUPOWER_CAP_INV_TSC		0x00000001
+#घोषणा CPUPOWER_CAP_APERF		0x00000002
+#घोषणा CPUPOWER_CAP_AMD_CPB		0x00000004
+#घोषणा CPUPOWER_CAP_PERF_BIAS		0x00000008
+#घोषणा CPUPOWER_CAP_HAS_TURBO_RATIO	0x00000010
+#घोषणा CPUPOWER_CAP_IS_SNB		0x00000020
+#घोषणा CPUPOWER_CAP_INTEL_IDA		0x00000040
+#घोषणा CPUPOWER_CAP_AMD_RDPRU		0x00000080
+#घोषणा CPUPOWER_CAP_AMD_HW_PSTATE	0x00000100
+#घोषणा CPUPOWER_CAP_AMD_PSTATEDEF	0x00000200
+#घोषणा CPUPOWER_CAP_AMD_CPB_MSR	0x00000400
 
-#define CPUPOWER_AMD_CPBDIS		0x02000000
+#घोषणा CPUPOWER_AMD_CPBDIS		0x02000000
 
-#define MAX_HW_PSTATES 10
+#घोषणा MAX_HW_PSTATES 10
 
-struct cpupower_cpu_info {
-	enum cpupower_cpu_vendor vendor;
-	unsigned int family;
-	unsigned int model;
-	unsigned int stepping;
-	/* CPU capabilities read out from cpuid */
-	unsigned long long caps;
-};
+काष्ठा cpuघातer_cpu_info अणु
+	क्रमागत cpuघातer_cpu_venकरोr venकरोr;
+	अचिन्हित पूर्णांक family;
+	अचिन्हित पूर्णांक model;
+	अचिन्हित पूर्णांक stepping;
+	/* CPU capabilities पढ़ो out from cpuid */
+	अचिन्हित दीर्घ दीर्घ caps;
+पूर्ण;
 
 /* get_cpu_info
  *
- * Extract CPU vendor, family, model, stepping info from /proc/cpuinfo
+ * Extract CPU venकरोr, family, model, stepping info from /proc/cpuinfo
  *
  * Returns 0 on success or a negative error code
- * Only used on x86, below global's struct values are zero/unknown on
+ * Only used on x86, below global's काष्ठा values are zero/unknown on
  * other archs
  */
-extern int get_cpu_info(struct cpupower_cpu_info *cpu_info);
-extern struct cpupower_cpu_info cpupower_cpu_info;
+बाह्य पूर्णांक get_cpu_info(काष्ठा cpuघातer_cpu_info *cpu_info);
+बाह्य काष्ठा cpuघातer_cpu_info cpuघातer_cpu_info;
 
 
 /* cpuid and cpuinfo helpers  **************************/
 
 /* X86 ONLY ****************************************/
-#if defined(__i386__) || defined(__x86_64__)
+#अगर defined(__i386__) || defined(__x86_64__)
 
-#include <pci/pci.h>
+#समावेश <pci/pci.h>
 
 /* Read/Write msr ****************************/
-extern int read_msr(int cpu, unsigned int idx, unsigned long long *val);
-extern int write_msr(int cpu, unsigned int idx, unsigned long long val);
+बाह्य पूर्णांक पढ़ो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ *val);
+बाह्य पूर्णांक ग_लिखो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ val);
 
-extern int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val);
-extern int cpupower_intel_get_perf_bias(unsigned int cpu);
-extern unsigned long long msr_intel_get_turbo_ratio(unsigned int cpu);
+बाह्य पूर्णांक cpuघातer_पूर्णांकel_set_perf_bias(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक val);
+बाह्य पूर्णांक cpuघातer_पूर्णांकel_get_perf_bias(अचिन्हित पूर्णांक cpu);
+बाह्य अचिन्हित दीर्घ दीर्घ msr_पूर्णांकel_get_turbo_ratio(अचिन्हित पूर्णांक cpu);
 
 /* Read/Write msr ****************************/
 
 /* PCI stuff ****************************/
-extern int amd_pci_get_num_boost_states(int *active, int *states);
-extern struct pci_dev *pci_acc_init(struct pci_access **pacc, int domain,
-				    int bus, int slot, int func, int vendor,
-				    int dev);
-extern struct pci_dev *pci_slot_func_init(struct pci_access **pacc,
-					      int slot, int func);
+बाह्य पूर्णांक amd_pci_get_num_boost_states(पूर्णांक *active, पूर्णांक *states);
+बाह्य काष्ठा pci_dev *pci_acc_init(काष्ठा pci_access **pacc, पूर्णांक करोमुख्य,
+				    पूर्णांक bus, पूर्णांक slot, पूर्णांक func, पूर्णांक venकरोr,
+				    पूर्णांक dev);
+बाह्य काष्ठा pci_dev *pci_slot_func_init(काष्ठा pci_access **pacc,
+					      पूर्णांक slot, पूर्णांक func);
 
 /* PCI stuff ****************************/
 
 /* AMD HW pstate decoding **************************/
 
-extern int decode_pstates(unsigned int cpu, int boost_states,
-			  unsigned long *pstates, int *no);
+बाह्य पूर्णांक decode_pstates(अचिन्हित पूर्णांक cpu, पूर्णांक boost_states,
+			  अचिन्हित दीर्घ *pstates, पूर्णांक *no);
 
 /* AMD HW pstate decoding **************************/
 
-extern int cpufreq_has_boost_support(unsigned int cpu, int *support,
-				     int *active, int * states);
+बाह्य पूर्णांक cpufreq_has_boost_support(अचिन्हित पूर्णांक cpu, पूर्णांक *support,
+				     पूर्णांक *active, पूर्णांक * states);
 /*
- * CPUID functions returning a single datum
+ * CPUID functions वापसing a single datum
  */
-unsigned int cpuid_eax(unsigned int op);
-unsigned int cpuid_ebx(unsigned int op);
-unsigned int cpuid_ecx(unsigned int op);
-unsigned int cpuid_edx(unsigned int op);
+अचिन्हित पूर्णांक cpuid_eax(अचिन्हित पूर्णांक op);
+अचिन्हित पूर्णांक cpuid_ebx(अचिन्हित पूर्णांक op);
+अचिन्हित पूर्णांक cpuid_ecx(अचिन्हित पूर्णांक op);
+अचिन्हित पूर्णांक cpuid_edx(अचिन्हित पूर्णांक op);
 
 /* cpuid and cpuinfo helpers  **************************/
 /* X86 ONLY ********************************************/
-#else
-static inline int decode_pstates(unsigned int cpu, int boost_states,
-				 unsigned long *pstates, int *no)
-{ return -1; };
+#अन्यथा
+अटल अंतरभूत पूर्णांक decode_pstates(अचिन्हित पूर्णांक cpu, पूर्णांक boost_states,
+				 अचिन्हित दीर्घ *pstates, पूर्णांक *no)
+अणु वापस -1; पूर्ण;
 
-static inline int read_msr(int cpu, unsigned int idx, unsigned long long *val)
-{ return -1; };
-static inline int write_msr(int cpu, unsigned int idx, unsigned long long val)
-{ return -1; };
-static inline int cpupower_intel_set_perf_bias(unsigned int cpu, unsigned int val)
-{ return -1; };
-static inline int cpupower_intel_get_perf_bias(unsigned int cpu)
-{ return -1; };
-static inline unsigned long long msr_intel_get_turbo_ratio(unsigned int cpu)
-{ return 0; };
+अटल अंतरभूत पूर्णांक पढ़ो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ *val)
+अणु वापस -1; पूर्ण;
+अटल अंतरभूत पूर्णांक ग_लिखो_msr(पूर्णांक cpu, अचिन्हित पूर्णांक idx, अचिन्हित दीर्घ दीर्घ val)
+अणु वापस -1; पूर्ण;
+अटल अंतरभूत पूर्णांक cpuघातer_पूर्णांकel_set_perf_bias(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक val)
+अणु वापस -1; पूर्ण;
+अटल अंतरभूत पूर्णांक cpuघातer_पूर्णांकel_get_perf_bias(अचिन्हित पूर्णांक cpu)
+अणु वापस -1; पूर्ण;
+अटल अंतरभूत अचिन्हित दीर्घ दीर्घ msr_पूर्णांकel_get_turbo_ratio(अचिन्हित पूर्णांक cpu)
+अणु वापस 0; पूर्ण;
 
 /* Read/Write msr ****************************/
 
-static inline int cpufreq_has_boost_support(unsigned int cpu, int *support,
-					    int *active, int * states)
-{ return -1; }
+अटल अंतरभूत पूर्णांक cpufreq_has_boost_support(अचिन्हित पूर्णांक cpu, पूर्णांक *support,
+					    पूर्णांक *active, पूर्णांक * states)
+अणु वापस -1; पूर्ण
 
 /* cpuid and cpuinfo helpers  **************************/
 
-static inline unsigned int cpuid_eax(unsigned int op) { return 0; };
-static inline unsigned int cpuid_ebx(unsigned int op) { return 0; };
-static inline unsigned int cpuid_ecx(unsigned int op) { return 0; };
-static inline unsigned int cpuid_edx(unsigned int op) { return 0; };
-#endif /* defined(__i386__) || defined(__x86_64__) */
+अटल अंतरभूत अचिन्हित पूर्णांक cpuid_eax(अचिन्हित पूर्णांक op) अणु वापस 0; पूर्ण;
+अटल अंतरभूत अचिन्हित पूर्णांक cpuid_ebx(अचिन्हित पूर्णांक op) अणु वापस 0; पूर्ण;
+अटल अंतरभूत अचिन्हित पूर्णांक cpuid_ecx(अचिन्हित पूर्णांक op) अणु वापस 0; पूर्ण;
+अटल अंतरभूत अचिन्हित पूर्णांक cpuid_edx(अचिन्हित पूर्णांक op) अणु वापस 0; पूर्ण;
+#पूर्ण_अगर /* defined(__i386__) || defined(__x86_64__) */
 
 /*
  * CPU State related functions
  */
-extern struct bitmask *online_cpus;
-extern struct bitmask *offline_cpus;
+बाह्य काष्ठा biपंचांगask *online_cpus;
+बाह्य काष्ठा biपंचांगask *offline_cpus;
 
-void get_cpustate(void);
-void print_online_cpus(void);
-void print_offline_cpus(void);
+व्योम get_cpustate(व्योम);
+व्योम prपूर्णांक_online_cpus(व्योम);
+व्योम prपूर्णांक_offline_cpus(व्योम);
 
-#endif /* __CPUPOWERUTILS_HELPERS__ */
+#पूर्ण_अगर /* __CPUPOWERUTILS_HELPERS__ */

@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * KVM page table test
  *
  * Copyright (C) 2021, Huawei, Inc.
  *
- * Make sure that THP has been enabled or enough HUGETLB pages with specific
- * page size have been pre-allocated on your system, if you are planning to
- * use hugepages to back the guest memory for testing.
+ * Make sure that THP has been enabled or enough HUGETLB pages with specअगरic
+ * page size have been pre-allocated on your प्रणाली, अगर you are planning to
+ * use hugepages to back the guest memory क्रम testing.
  */
 
-#define _GNU_SOURCE /* for program_invocation_name */
+#घोषणा _GNU_SOURCE /* क्रम program_invocation_name */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <pthread.h>
-#include <semaphore.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <समय.स>
+#समावेश <pthपढ़ो.h>
+#समावेश <semaphore.h>
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "processor.h"
-#include "guest_modes.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "processor.h"
+#समावेश "guest_modes.h"
 
-#define TEST_MEM_SLOT_INDEX             1
+#घोषणा TEST_MEM_SLOT_INDEX             1
 
-/* Default size(1GB) of the memory for testing */
-#define DEFAULT_TEST_MEM_SIZE		(1 << 30)
+/* Default size(1GB) of the memory क्रम testing */
+#घोषणा DEFAULT_TEST_MEM_SIZE		(1 << 30)
 
-/* Default guest test virtual memory offset */
-#define DEFAULT_GUEST_TEST_MEM		0xc0000000
+/* Default guest test भव memory offset */
+#घोषणा DEFAULT_GUEST_TEST_MEM		0xc0000000
 
-/* Different guest memory accessing stages */
-enum test_stage {
+/* Dअगरferent guest memory accessing stages */
+क्रमागत test_stage अणु
 	KVM_BEFORE_MAPPINGS,
 	KVM_CREATE_MAPPINGS,
 	KVM_UPDATE_MAPPINGS,
 	KVM_ADJUST_MAPPINGS,
 	NUM_TEST_STAGES,
-};
+पूर्ण;
 
-static const char * const test_stage_string[] = {
+अटल स्थिर अक्षर * स्थिर test_stage_string[] = अणु
 	"KVM_BEFORE_MAPPINGS",
 	"KVM_CREATE_MAPPINGS",
 	"KVM_UPDATE_MAPPINGS",
 	"KVM_ADJUST_MAPPINGS",
-};
+पूर्ण;
 
-struct vcpu_args {
-	int vcpu_id;
-	bool vcpu_write;
-};
+काष्ठा vcpu_args अणु
+	पूर्णांक vcpu_id;
+	bool vcpu_ग_लिखो;
+पूर्ण;
 
-struct test_args {
-	struct kvm_vm *vm;
-	uint64_t guest_test_virt_mem;
-	uint64_t host_page_size;
-	uint64_t host_num_pages;
-	uint64_t large_page_size;
-	uint64_t large_num_pages;
-	uint64_t host_pages_per_lpage;
-	enum vm_mem_backing_src_type src_type;
-	struct vcpu_args vcpu_args[KVM_MAX_VCPUS];
-};
+काष्ठा test_args अणु
+	काष्ठा kvm_vm *vm;
+	uपूर्णांक64_t guest_test_virt_mem;
+	uपूर्णांक64_t host_page_size;
+	uपूर्णांक64_t host_num_pages;
+	uपूर्णांक64_t large_page_size;
+	uपूर्णांक64_t large_num_pages;
+	uपूर्णांक64_t host_pages_per_lpage;
+	क्रमागत vm_mem_backing_src_type src_type;
+	काष्ठा vcpu_args vcpu_args[KVM_MAX_VCPUS];
+पूर्ण;
 
 /*
- * Guest variables. Use addr_gva2hva() if these variables need
+ * Guest variables. Use addr_gva2hva() अगर these variables need
  * to be changed in host.
  */
-static enum test_stage guest_test_stage;
+अटल क्रमागत test_stage guest_test_stage;
 
 /* Host variables */
-static uint32_t nr_vcpus = 1;
-static struct test_args test_args;
-static enum test_stage *current_stage;
-static bool host_quit;
+अटल uपूर्णांक32_t nr_vcpus = 1;
+अटल काष्ठा test_args test_args;
+अटल क्रमागत test_stage *current_stage;
+अटल bool host_quit;
 
 /* Whether the test stage is updated, or completed */
-static sem_t test_stage_updated;
-static sem_t test_stage_completed;
+अटल sem_t test_stage_updated;
+अटल sem_t test_stage_completed;
 
 /*
  * Guest physical memory offset of the testing memory slot.
  * This will be set to the topmost valid physical address minus
  * the test memory size.
  */
-static uint64_t guest_test_phys_mem;
+अटल uपूर्णांक64_t guest_test_phys_mem;
 
 /*
- * Guest virtual memory offset of the testing memory slot.
+ * Guest भव memory offset of the testing memory slot.
  * Must not conflict with identity mapped test code.
  */
-static uint64_t guest_test_virt_mem = DEFAULT_GUEST_TEST_MEM;
+अटल uपूर्णांक64_t guest_test_virt_mem = DEFAULT_GUEST_TEST_MEM;
 
-static void guest_code(int vcpu_id)
-{
-	struct test_args *p = &test_args;
-	struct vcpu_args *vcpu_args = &p->vcpu_args[vcpu_id];
-	enum test_stage *current_stage = &guest_test_stage;
-	uint64_t addr;
-	int i, j;
+अटल व्योम guest_code(पूर्णांक vcpu_id)
+अणु
+	काष्ठा test_args *p = &test_args;
+	काष्ठा vcpu_args *vcpu_args = &p->vcpu_args[vcpu_id];
+	क्रमागत test_stage *current_stage = &guest_test_stage;
+	uपूर्णांक64_t addr;
+	पूर्णांक i, j;
 
-	/* Make sure vCPU args data structure is not corrupt */
+	/* Make sure vCPU args data काष्ठाure is not corrupt */
 	GUEST_ASSERT(vcpu_args->vcpu_id == vcpu_id);
 
-	while (true) {
+	जबतक (true) अणु
 		addr = p->guest_test_virt_mem;
 
-		switch (READ_ONCE(*current_stage)) {
+		चयन (READ_ONCE(*current_stage)) अणु
 		/*
-		 * All vCPU threads will be started in this stage,
-		 * where guest code of each vCPU will do nothing.
+		 * All vCPU thपढ़ोs will be started in this stage,
+		 * where guest code of each vCPU will करो nothing.
 		 */
-		case KVM_BEFORE_MAPPINGS:
-			break;
+		हाल KVM_BEFORE_MAPPINGS:
+			अवरोध;
 
 		/*
-		 * Before dirty logging, vCPUs concurrently access the first
+		 * Beक्रमe dirty logging, vCPUs concurrently access the first
 		 * 8 bytes of each page (host page/large page) within the same
-		 * memory region with different accessing types (read/write).
+		 * memory region with dअगरferent accessing types (पढ़ो/ग_लिखो).
 		 * Then KVM will create normal page mappings or huge block
-		 * mappings for them.
+		 * mappings क्रम them.
 		 */
-		case KVM_CREATE_MAPPINGS:
-			for (i = 0; i < p->large_num_pages; i++) {
-				if (vcpu_args->vcpu_write)
-					*(uint64_t *)addr = 0x0123456789ABCDEF;
-				else
-					READ_ONCE(*(uint64_t *)addr);
+		हाल KVM_CREATE_MAPPINGS:
+			क्रम (i = 0; i < p->large_num_pages; i++) अणु
+				अगर (vcpu_args->vcpu_ग_लिखो)
+					*(uपूर्णांक64_t *)addr = 0x0123456789ABCDEF;
+				अन्यथा
+					READ_ONCE(*(uपूर्णांक64_t *)addr);
 
 				addr += p->large_page_size;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
 		/*
 		 * During dirty logging, KVM will only update attributes of the
-		 * normal page mappings from RO to RW if memory backing src type
-		 * is anonymous. In other cases, KVM will split the huge block
-		 * mappings into normal page mappings if memory backing src type
+		 * normal page mappings from RO to RW अगर memory backing src type
+		 * is anonymous. In other हालs, KVM will split the huge block
+		 * mappings पूर्णांकo normal page mappings अगर memory backing src type
 		 * is THP or HUGETLB.
 		 */
-		case KVM_UPDATE_MAPPINGS:
-			if (p->src_type == VM_MEM_SRC_ANONYMOUS) {
-				for (i = 0; i < p->host_num_pages; i++) {
-					*(uint64_t *)addr = 0x0123456789ABCDEF;
+		हाल KVM_UPDATE_MAPPINGS:
+			अगर (p->src_type == VM_MEM_SRC_ANONYMOUS) अणु
+				क्रम (i = 0; i < p->host_num_pages; i++) अणु
+					*(uपूर्णांक64_t *)addr = 0x0123456789ABCDEF;
 					addr += p->host_page_size;
-				}
-				break;
-			}
+				पूर्ण
+				अवरोध;
+			पूर्ण
 
-			for (i = 0; i < p->large_num_pages; i++) {
+			क्रम (i = 0; i < p->large_num_pages; i++) अणु
 				/*
 				 * Write to the first host page in each large
-				 * page region, and triger break of large pages.
+				 * page region, and triger अवरोध of large pages.
 				 */
-				*(uint64_t *)addr = 0x0123456789ABCDEF;
+				*(uपूर्णांक64_t *)addr = 0x0123456789ABCDEF;
 
 				/*
 				 * Access the middle host pages in each large
@@ -162,105 +163,105 @@ static void guest_code(int vcpu_id)
 				 * granularity.
 				 */
 				addr += p->large_page_size / 2;
-				for (j = 0; j < p->host_pages_per_lpage / 2; j++) {
-					READ_ONCE(*(uint64_t *)addr);
+				क्रम (j = 0; j < p->host_pages_per_lpage / 2; j++) अणु
+					READ_ONCE(*(uपूर्णांक64_t *)addr);
 					addr += p->host_page_size;
-				}
-			}
-			break;
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
 		/*
-		 * After dirty logging is stopped, vCPUs concurrently read
+		 * After dirty logging is stopped, vCPUs concurrently पढ़ो
 		 * from every single host page. Then KVM will coalesce the
 		 * split page mappings back to block mappings. And a TLB
-		 * conflict abort could occur here if TLB entries of the
+		 * conflict पात could occur here अगर TLB entries of the
 		 * page mappings are not fully invalidated.
 		 */
-		case KVM_ADJUST_MAPPINGS:
-			for (i = 0; i < p->host_num_pages; i++) {
-				READ_ONCE(*(uint64_t *)addr);
+		हाल KVM_ADJUST_MAPPINGS:
+			क्रम (i = 0; i < p->host_num_pages; i++) अणु
+				READ_ONCE(*(uपूर्णांक64_t *)addr);
 				addr += p->host_page_size;
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
-		default:
+		शेष:
 			GUEST_ASSERT(0);
-		}
+		पूर्ण
 
 		GUEST_SYNC(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void *vcpu_worker(void *data)
-{
-	int ret;
-	struct vcpu_args *vcpu_args = data;
-	struct kvm_vm *vm = test_args.vm;
-	int vcpu_id = vcpu_args->vcpu_id;
-	struct kvm_run *run;
-	struct timespec start;
-	struct timespec ts_diff;
-	enum test_stage stage;
+अटल व्योम *vcpu_worker(व्योम *data)
+अणु
+	पूर्णांक ret;
+	काष्ठा vcpu_args *vcpu_args = data;
+	काष्ठा kvm_vm *vm = test_args.vm;
+	पूर्णांक vcpu_id = vcpu_args->vcpu_id;
+	काष्ठा kvm_run *run;
+	काष्ठा बारpec start;
+	काष्ठा बारpec ts_dअगरf;
+	क्रमागत test_stage stage;
 
 	vcpu_args_set(vm, vcpu_id, 1, vcpu_id);
 	run = vcpu_state(vm, vcpu_id);
 
-	while (!READ_ONCE(host_quit)) {
-		ret = sem_wait(&test_stage_updated);
+	जबतक (!READ_ONCE(host_quit)) अणु
+		ret = sem_रुको(&test_stage_updated);
 		TEST_ASSERT(ret == 0, "Error in sem_wait");
 
-		if (READ_ONCE(host_quit))
-			return NULL;
+		अगर (READ_ONCE(host_quit))
+			वापस शून्य;
 
-		clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+		घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &start);
 		ret = _vcpu_run(vm, vcpu_id);
-		ts_diff = timespec_elapsed(start);
+		ts_dअगरf = बारpec_elapsed(start);
 
 		TEST_ASSERT(ret == 0, "vcpu_run failed: %d\n", ret);
-		TEST_ASSERT(get_ucall(vm, vcpu_id, NULL) == UCALL_SYNC,
+		TEST_ASSERT(get_ucall(vm, vcpu_id, शून्य) == UCALL_SYNC,
 			    "Invalid guest sync status: exit_reason=%s\n",
-			    exit_reason_str(run->exit_reason));
+			    निकास_reason_str(run->निकास_reason));
 
 		pr_debug("Got sync event from vCPU %d\n", vcpu_id);
 		stage = READ_ONCE(*current_stage);
 
 		/*
-		 * Here we can know the execution time of every
-		 * single vcpu running in different test stages.
+		 * Here we can know the execution समय of every
+		 * single vcpu running in dअगरferent test stages.
 		 */
 		pr_debug("vCPU %d has completed stage %s\n"
 			 "execution time is: %ld.%.9lds\n\n",
 			 vcpu_id, test_stage_string[stage],
-			 ts_diff.tv_sec, ts_diff.tv_nsec);
+			 ts_dअगरf.tv_sec, ts_dअगरf.tv_nsec);
 
 		ret = sem_post(&test_stage_completed);
 		TEST_ASSERT(ret == 0, "Error in sem_post");
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct test_params {
-	uint64_t phys_offset;
-	uint64_t test_mem_size;
-	enum vm_mem_backing_src_type src_type;
-};
+काष्ठा test_params अणु
+	uपूर्णांक64_t phys_offset;
+	uपूर्णांक64_t test_mem_size;
+	क्रमागत vm_mem_backing_src_type src_type;
+पूर्ण;
 
-static struct kvm_vm *pre_init_before_test(enum vm_guest_mode mode, void *arg)
-{
-	int ret;
-	struct test_params *p = arg;
-	struct vcpu_args *vcpu_args;
-	enum vm_mem_backing_src_type src_type = p->src_type;
-	uint64_t large_page_size = get_backing_src_pagesz(src_type);
-	uint64_t guest_page_size = vm_guest_mode_params[mode].page_size;
-	uint64_t host_page_size = getpagesize();
-	uint64_t test_mem_size = p->test_mem_size;
-	uint64_t guest_num_pages;
-	uint64_t alignment;
-	void *host_test_mem;
-	struct kvm_vm *vm;
-	int vcpu_id;
+अटल काष्ठा kvm_vm *pre_init_beक्रमe_test(क्रमागत vm_guest_mode mode, व्योम *arg)
+अणु
+	पूर्णांक ret;
+	काष्ठा test_params *p = arg;
+	काष्ठा vcpu_args *vcpu_args;
+	क्रमागत vm_mem_backing_src_type src_type = p->src_type;
+	uपूर्णांक64_t large_page_size = get_backing_src_pagesz(src_type);
+	uपूर्णांक64_t guest_page_size = vm_guest_mode_params[mode].page_size;
+	uपूर्णांक64_t host_page_size = getpagesize();
+	uपूर्णांक64_t test_mem_size = p->test_mem_size;
+	uपूर्णांक64_t guest_num_pages;
+	uपूर्णांक64_t alignment;
+	व्योम *host_test_mem;
+	काष्ठा kvm_vm *vm;
+	पूर्णांक vcpu_id;
 
 	/* Align up the test memory size */
 	alignment = max(large_page_size, guest_page_size);
@@ -269,20 +270,20 @@ static struct kvm_vm *pre_init_before_test(enum vm_guest_mode mode, void *arg)
 	/* Create a VM with enough guest pages */
 	guest_num_pages = test_mem_size / guest_page_size;
 	vm = vm_create_with_vcpus(mode, nr_vcpus, DEFAULT_GUEST_PHY_PAGES,
-				  guest_num_pages, 0, guest_code, NULL);
+				  guest_num_pages, 0, guest_code, शून्य);
 
-	/* Align down GPA of the testing memslot */
-	if (!p->phys_offset)
+	/* Align करोwn GPA of the testing memslot */
+	अगर (!p->phys_offset)
 		guest_test_phys_mem = (vm_get_max_gfn(vm) - guest_num_pages) *
 				       guest_page_size;
-	else
+	अन्यथा
 		guest_test_phys_mem = p->phys_offset;
-#ifdef __s390x__
+#अगर_घोषित __s390x__
 	alignment = max(0x100000, alignment);
-#endif
+#पूर्ण_अगर
 	guest_test_phys_mem &= ~(alignment - 1);
 
-	/* Set up the shared data structure test_args */
+	/* Set up the shared data काष्ठाure test_args */
 	test_args.vm = vm;
 	test_args.guest_test_virt_mem = guest_test_virt_mem;
 	test_args.host_page_size = host_page_size;
@@ -292,24 +293,24 @@ static struct kvm_vm *pre_init_before_test(enum vm_guest_mode mode, void *arg)
 	test_args.host_pages_per_lpage = large_page_size / host_page_size;
 	test_args.src_type = src_type;
 
-	for (vcpu_id = 0; vcpu_id < KVM_MAX_VCPUS; vcpu_id++) {
+	क्रम (vcpu_id = 0; vcpu_id < KVM_MAX_VCPUS; vcpu_id++) अणु
 		vcpu_args = &test_args.vcpu_args[vcpu_id];
 		vcpu_args->vcpu_id = vcpu_id;
-		vcpu_args->vcpu_write = !(vcpu_id % 2);
-	}
+		vcpu_args->vcpu_ग_लिखो = !(vcpu_id % 2);
+	पूर्ण
 
-	/* Add an extra memory slot with specified backing src type */
+	/* Add an extra memory slot with specअगरied backing src type */
 	vm_userspace_mem_region_add(vm, src_type, guest_test_phys_mem,
 				    TEST_MEM_SLOT_INDEX, guest_num_pages, 0);
 
-	/* Do mapping(GVA->GPA) for the testing memory slot */
+	/* Do mapping(GVA->GPA) क्रम the testing memory slot */
 	virt_map(vm, guest_test_virt_mem, guest_test_phys_mem, guest_num_pages, 0);
 
-	/* Cache the HVA pointer of the region */
+	/* Cache the HVA poपूर्णांकer of the region */
 	host_test_mem = addr_gpa2hva(vm, (vm_paddr_t)guest_test_phys_mem);
 
-	/* Export shared structure test_args to guest */
-	ucall_init(vm, NULL);
+	/* Export shared काष्ठाure test_args to guest */
+	ucall_init(vm, शून्य);
 	sync_global_to_guest(vm, test_args);
 
 	ret = sem_init(&test_stage_updated, 0, 0);
@@ -330,59 +331,59 @@ static struct kvm_vm *pre_init_before_test(enum vm_guest_mode mode, void *arg)
 	pr_info("Guest physical test memory offset: 0x%lx\n",
 		guest_test_phys_mem);
 	pr_info("Host  virtual  test memory offset: 0x%lx\n",
-		(uint64_t)host_test_mem);
+		(uपूर्णांक64_t)host_test_mem);
 	pr_info("Number of testing vCPUs: %d\n", nr_vcpus);
 
-	return vm;
-}
+	वापस vm;
+पूर्ण
 
-static void vcpus_complete_new_stage(enum test_stage stage)
-{
-	int ret;
-	int vcpus;
+अटल व्योम vcpus_complete_new_stage(क्रमागत test_stage stage)
+अणु
+	पूर्णांक ret;
+	पूर्णांक vcpus;
 
 	/* Wake up all the vcpus to run new test stage */
-	for (vcpus = 0; vcpus < nr_vcpus; vcpus++) {
+	क्रम (vcpus = 0; vcpus < nr_vcpus; vcpus++) अणु
 		ret = sem_post(&test_stage_updated);
 		TEST_ASSERT(ret == 0, "Error in sem_post");
-	}
+	पूर्ण
 	pr_debug("All vcpus have been notified to continue\n");
 
-	/* Wait for all the vcpus to complete new test stage */
-	for (vcpus = 0; vcpus < nr_vcpus; vcpus++) {
-		ret = sem_wait(&test_stage_completed);
+	/* Wait क्रम all the vcpus to complete new test stage */
+	क्रम (vcpus = 0; vcpus < nr_vcpus; vcpus++) अणु
+		ret = sem_रुको(&test_stage_completed);
 		TEST_ASSERT(ret == 0, "Error in sem_wait");
 
 		pr_debug("%d vcpus have completed stage %s\n",
 			 vcpus + 1, test_stage_string[stage]);
-	}
+	पूर्ण
 
 	pr_debug("All vcpus have completed stage %s\n",
 		 test_stage_string[stage]);
-}
+पूर्ण
 
-static void run_test(enum vm_guest_mode mode, void *arg)
-{
-	int ret;
-	pthread_t *vcpu_threads;
-	struct kvm_vm *vm;
-	int vcpu_id;
-	struct timespec start;
-	struct timespec ts_diff;
+अटल व्योम run_test(क्रमागत vm_guest_mode mode, व्योम *arg)
+अणु
+	पूर्णांक ret;
+	pthपढ़ो_t *vcpu_thपढ़ोs;
+	काष्ठा kvm_vm *vm;
+	पूर्णांक vcpu_id;
+	काष्ठा बारpec start;
+	काष्ठा बारpec ts_dअगरf;
 
 	/* Create VM with vCPUs and make some pre-initialization */
-	vm = pre_init_before_test(mode, arg);
+	vm = pre_init_beक्रमe_test(mode, arg);
 
-	vcpu_threads = malloc(nr_vcpus * sizeof(*vcpu_threads));
-	TEST_ASSERT(vcpu_threads, "Memory allocation failed");
+	vcpu_thपढ़ोs = दो_स्मृति(nr_vcpus * माप(*vcpu_thपढ़ोs));
+	TEST_ASSERT(vcpu_thपढ़ोs, "Memory allocation failed");
 
 	host_quit = false;
 	*current_stage = KVM_BEFORE_MAPPINGS;
 
-	for (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++) {
-		pthread_create(&vcpu_threads[vcpu_id], NULL, vcpu_worker,
+	क्रम (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++) अणु
+		pthपढ़ो_create(&vcpu_thपढ़ोs[vcpu_id], शून्य, vcpu_worker,
 			       &test_args.vcpu_args[vcpu_id]);
-	}
+	पूर्ण
 
 	vcpus_complete_new_stage(*current_stage);
 	pr_info("Started all vCPUs successfully\n");
@@ -390,47 +391,47 @@ static void run_test(enum vm_guest_mode mode, void *arg)
 	/* Test the stage of KVM creating mappings */
 	*current_stage = KVM_CREATE_MAPPINGS;
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &start);
 	vcpus_complete_new_stage(*current_stage);
-	ts_diff = timespec_elapsed(start);
+	ts_dअगरf = बारpec_elapsed(start);
 
 	pr_info("KVM_CREATE_MAPPINGS: total execution time: %ld.%.9lds\n\n",
-		ts_diff.tv_sec, ts_diff.tv_nsec);
+		ts_dअगरf.tv_sec, ts_dअगरf.tv_nsec);
 
 	/* Test the stage of KVM updating mappings */
 	vm_mem_region_set_flags(vm, TEST_MEM_SLOT_INDEX,
-				KVM_MEM_LOG_DIRTY_PAGES);
+				KVM_MEM_LOG_सूचीTY_PAGES);
 
 	*current_stage = KVM_UPDATE_MAPPINGS;
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &start);
 	vcpus_complete_new_stage(*current_stage);
-	ts_diff = timespec_elapsed(start);
+	ts_dअगरf = बारpec_elapsed(start);
 
 	pr_info("KVM_UPDATE_MAPPINGS: total execution time: %ld.%.9lds\n\n",
-		ts_diff.tv_sec, ts_diff.tv_nsec);
+		ts_dअगरf.tv_sec, ts_dअगरf.tv_nsec);
 
 	/* Test the stage of KVM adjusting mappings */
 	vm_mem_region_set_flags(vm, TEST_MEM_SLOT_INDEX, 0);
 
 	*current_stage = KVM_ADJUST_MAPPINGS;
 
-	clock_gettime(CLOCK_MONOTONIC_RAW, &start);
+	घड़ी_समय_लो(CLOCK_MONOTONIC_RAW, &start);
 	vcpus_complete_new_stage(*current_stage);
-	ts_diff = timespec_elapsed(start);
+	ts_dअगरf = बारpec_elapsed(start);
 
 	pr_info("KVM_ADJUST_MAPPINGS: total execution time: %ld.%.9lds\n\n",
-		ts_diff.tv_sec, ts_diff.tv_nsec);
+		ts_dअगरf.tv_sec, ts_dअगरf.tv_nsec);
 
-	/* Tell the vcpu thread to quit */
+	/* Tell the vcpu thपढ़ो to quit */
 	host_quit = true;
-	for (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++) {
+	क्रम (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++) अणु
 		ret = sem_post(&test_stage_updated);
 		TEST_ASSERT(ret == 0, "Error in sem_post");
-	}
+	पूर्ण
 
-	for (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++)
-		pthread_join(vcpu_threads[vcpu_id], NULL);
+	क्रम (vcpu_id = 0; vcpu_id < nr_vcpus; vcpu_id++)
+		pthपढ़ो_join(vcpu_thपढ़ोs[vcpu_id], शून्य);
 
 	ret = sem_destroy(&test_stage_updated);
 	TEST_ASSERT(ret == 0, "Error in sem_destroy");
@@ -438,69 +439,69 @@ static void run_test(enum vm_guest_mode mode, void *arg)
 	ret = sem_destroy(&test_stage_completed);
 	TEST_ASSERT(ret == 0, "Error in sem_destroy");
 
-	free(vcpu_threads);
+	मुक्त(vcpu_thपढ़ोs);
 	ucall_uninit(vm);
-	kvm_vm_free(vm);
-}
+	kvm_vm_मुक्त(vm);
+पूर्ण
 
-static void help(char *name)
-{
-	puts("");
-	printf("usage: %s [-h] [-p offset] [-m mode] "
+अटल व्योम help(अक्षर *name)
+अणु
+	माला_दो("");
+	म_लिखो("usage: %s [-h] [-p offset] [-m mode] "
 	       "[-b mem-size] [-v vcpus] [-s mem-type]\n", name);
-	puts("");
-	printf(" -p: specify guest physical test memory offset\n"
+	माला_दो("");
+	म_लिखो(" -p: specify guest physical test memory offset\n"
 	       "     Warning: a low offset can conflict with the loaded test code.\n");
 	guest_modes_help();
-	printf(" -b: specify size of the memory region for testing. e.g. 10M or 3G.\n"
+	म_लिखो(" -b: specify size of the memory region for testing. e.g. 10M or 3G.\n"
 	       "     (default: 1G)\n");
-	printf(" -v: specify the number of vCPUs to run\n"
+	म_लिखो(" -v: specify the number of vCPUs to run\n"
 	       "     (default: 1)\n");
-	printf(" -s: specify the type of memory that should be used to\n"
+	म_लिखो(" -s: specify the type of memory that should be used to\n"
 	       "     back the guest data region.\n"
 	       "     (default: anonymous)\n\n");
 	backing_src_help();
-	puts("");
-}
+	माला_दो("");
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	int max_vcpus = kvm_check_cap(KVM_CAP_MAX_VCPUS);
-	struct test_params p = {
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	पूर्णांक max_vcpus = kvm_check_cap(KVM_CAP_MAX_VCPUS);
+	काष्ठा test_params p = अणु
 		.test_mem_size = DEFAULT_TEST_MEM_SIZE,
 		.src_type = VM_MEM_SRC_ANONYMOUS,
-	};
-	int opt;
+	पूर्ण;
+	पूर्णांक opt;
 
-	guest_modes_append_default();
+	guest_modes_append_शेष();
 
-	while ((opt = getopt(argc, argv, "hp:m:b:v:s:")) != -1) {
-		switch (opt) {
-		case 'p':
-			p.phys_offset = strtoull(optarg, NULL, 0);
-			break;
-		case 'm':
+	जबतक ((opt = getopt(argc, argv, "hp:m:b:v:s:")) != -1) अणु
+		चयन (opt) अणु
+		हाल 'p':
+			p.phys_offset = म_से_अदीर्घl(optarg, शून्य, 0);
+			अवरोध;
+		हाल 'm':
 			guest_modes_cmdline(optarg);
-			break;
-		case 'b':
+			अवरोध;
+		हाल 'b':
 			p.test_mem_size = parse_size(optarg);
-			break;
-		case 'v':
-			nr_vcpus = atoi(optarg);
+			अवरोध;
+		हाल 'v':
+			nr_vcpus = म_से_प(optarg);
 			TEST_ASSERT(nr_vcpus > 0 && nr_vcpus <= max_vcpus,
 				    "Invalid number of vcpus, must be between 1 and %d", max_vcpus);
-			break;
-		case 's':
+			अवरोध;
+		हाल 's':
 			p.src_type = parse_backing_src_type(optarg);
-			break;
-		case 'h':
-		default:
+			अवरोध;
+		हाल 'h':
+		शेष:
 			help(argv[0]);
-			exit(0);
-		}
-	}
+			निकास(0);
+		पूर्ण
+	पूर्ण
 
-	for_each_guest_mode(run_test, &p);
+	क्रम_each_guest_mode(run_test, &p);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

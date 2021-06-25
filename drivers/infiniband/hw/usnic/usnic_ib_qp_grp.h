@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,79 +32,79 @@
  *
  */
 
-#ifndef USNIC_IB_QP_GRP_H_
-#define USNIC_IB_QP_GRP_H_
+#अगर_अघोषित USNIC_IB_QP_GRP_H_
+#घोषणा USNIC_IB_QP_GRP_H_
 
-#include <linux/debugfs.h>
-#include <rdma/ib_verbs.h>
+#समावेश <linux/debugfs.h>
+#समावेश <rdma/ib_verbs.h>
 
-#include "usnic_ib.h"
-#include "usnic_abi.h"
-#include "usnic_fwd.h"
-#include "usnic_vnic.h"
+#समावेश "usnic_ib.h"
+#समावेश "usnic_abi.h"
+#समावेश "usnic_fwd.h"
+#समावेश "usnic_vnic.h"
 
 /*
- * The qp group struct represents all the hw resources needed to present a ib_qp
+ * The qp group काष्ठा represents all the hw resources needed to present a ib_qp
  */
-struct usnic_ib_qp_grp {
-	struct ib_qp				ibqp;
-	enum ib_qp_state			state;
-	int					grp_id;
+काष्ठा usnic_ib_qp_grp अणु
+	काष्ठा ib_qp				ibqp;
+	क्रमागत ib_qp_state			state;
+	पूर्णांक					grp_id;
 
-	struct usnic_fwd_dev			*ufdev;
-	struct usnic_ib_ucontext		*ctx;
-	struct list_head			flows_lst;
+	काष्ठा usnic_fwd_dev			*ufdev;
+	काष्ठा usnic_ib_ucontext		*ctx;
+	काष्ठा list_head			flows_lst;
 
-	struct usnic_vnic_res_chunk		**res_chunk_list;
+	काष्ठा usnic_vnic_res_chunk		**res_chunk_list;
 
 	pid_t					owner_pid;
-	struct usnic_ib_vf			*vf;
-	struct list_head			link;
+	काष्ठा usnic_ib_vf			*vf;
+	काष्ठा list_head			link;
 
 	spinlock_t				lock;
 
-	struct kobject				kobj;
-};
+	काष्ठा kobject				kobj;
+पूर्ण;
 
-struct usnic_ib_qp_grp_flow {
-	struct usnic_fwd_flow		*flow;
-	enum usnic_transport_type	trans_type;
-	union {
-		struct {
-			uint16_t	port_num;
-		} usnic_roce;
-		struct {
-			struct socket	*sock;
-		} udp;
-	};
-	struct usnic_ib_qp_grp		*qp_grp;
-	struct list_head		link;
+काष्ठा usnic_ib_qp_grp_flow अणु
+	काष्ठा usnic_fwd_flow		*flow;
+	क्रमागत usnic_transport_type	trans_type;
+	जोड़ अणु
+		काष्ठा अणु
+			uपूर्णांक16_t	port_num;
+		पूर्ण usnic_roce;
+		काष्ठा अणु
+			काष्ठा socket	*sock;
+		पूर्ण udp;
+	पूर्ण;
+	काष्ठा usnic_ib_qp_grp		*qp_grp;
+	काष्ठा list_head		link;
 
 	/* Debug FS */
-	struct dentry			*dbgfs_dentry;
-	char				dentry_name[32];
-};
+	काष्ठा dentry			*dbgfs_dentry;
+	अक्षर				dentry_name[32];
+पूर्ण;
 
-extern const struct usnic_vnic_res_spec min_transport_spec[USNIC_TRANSPORT_MAX];
+बाह्य स्थिर काष्ठा usnic_vnic_res_spec min_transport_spec[USNIC_TRANSPORT_MAX];
 
-const char *usnic_ib_qp_grp_state_to_string(enum ib_qp_state state);
-int usnic_ib_qp_grp_dump_hdr(char *buf, int buf_sz);
-int usnic_ib_qp_grp_dump_rows(void *obj, char *buf, int buf_sz);
-struct usnic_ib_qp_grp *
-usnic_ib_qp_grp_create(struct usnic_fwd_dev *ufdev, struct usnic_ib_vf *vf,
-			struct usnic_ib_pd *pd,
-			struct usnic_vnic_res_spec *res_spec,
-			struct usnic_transport_spec *trans_spec);
-void usnic_ib_qp_grp_destroy(struct usnic_ib_qp_grp *qp_grp);
-int usnic_ib_qp_grp_modify(struct usnic_ib_qp_grp *qp_grp,
-				enum ib_qp_state new_state,
-				void *data);
-struct usnic_vnic_res_chunk
-*usnic_ib_qp_grp_get_chunk(struct usnic_ib_qp_grp *qp_grp,
-				enum usnic_vnic_res_type type);
-static inline
-struct usnic_ib_qp_grp *to_uqp_grp(struct ib_qp *ibqp)
-{
-	return container_of(ibqp, struct usnic_ib_qp_grp, ibqp);
-}
-#endif /* USNIC_IB_QP_GRP_H_ */
+स्थिर अक्षर *usnic_ib_qp_grp_state_to_string(क्रमागत ib_qp_state state);
+पूर्णांक usnic_ib_qp_grp_dump_hdr(अक्षर *buf, पूर्णांक buf_sz);
+पूर्णांक usnic_ib_qp_grp_dump_rows(व्योम *obj, अक्षर *buf, पूर्णांक buf_sz);
+काष्ठा usnic_ib_qp_grp *
+usnic_ib_qp_grp_create(काष्ठा usnic_fwd_dev *ufdev, काष्ठा usnic_ib_vf *vf,
+			काष्ठा usnic_ib_pd *pd,
+			काष्ठा usnic_vnic_res_spec *res_spec,
+			काष्ठा usnic_transport_spec *trans_spec);
+व्योम usnic_ib_qp_grp_destroy(काष्ठा usnic_ib_qp_grp *qp_grp);
+पूर्णांक usnic_ib_qp_grp_modअगरy(काष्ठा usnic_ib_qp_grp *qp_grp,
+				क्रमागत ib_qp_state new_state,
+				व्योम *data);
+काष्ठा usnic_vnic_res_chunk
+*usnic_ib_qp_grp_get_chunk(काष्ठा usnic_ib_qp_grp *qp_grp,
+				क्रमागत usnic_vnic_res_type type);
+अटल अंतरभूत
+काष्ठा usnic_ib_qp_grp *to_uqp_grp(काष्ठा ib_qp *ibqp)
+अणु
+	वापस container_of(ibqp, काष्ठा usnic_ib_qp_grp, ibqp);
+पूर्ण
+#पूर्ण_अगर /* USNIC_IB_QP_GRP_H_ */

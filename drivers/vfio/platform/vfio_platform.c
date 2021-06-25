@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013 - Virtual Open Systems
- * Author: Antonios Motakis <a.motakis@virtualopensystems.com>
+ * Author: Antonios Motakis <a.motakis@भवखोलोप्रणालीs.com>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/vfio.h>
-#include <linux/platform_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vfपन.स>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "vfio_platform_private.h"
+#समावेश "vfio_platform_private.h"
 
-#define DRIVER_VERSION  "0.10"
-#define DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
-#define DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
+#घोषणा DRIVER_VERSION  "0.10"
+#घोषणा DRIVER_AUTHOR   "Antonios Motakis <a.motakis@virtualopensystems.com>"
+#घोषणा DRIVER_DESC     "VFIO for platform devices - User Level meta-driver"
 
-static bool reset_required = true;
+अटल bool reset_required = true;
 module_param(reset_required, bool, 0444);
 MODULE_PARM_DESC(reset_required, "override reset requirement (default: 1)");
 
-/* probing devices from the linux platform bus */
+/* probing devices from the linux platक्रमm bus */
 
-static struct resource *get_platform_resource(struct vfio_platform_device *vdev,
-					      int num)
-{
-	struct platform_device *dev = (struct platform_device *) vdev->opaque;
+अटल काष्ठा resource *get_platक्रमm_resource(काष्ठा vfio_platक्रमm_device *vdev,
+					      पूर्णांक num)
+अणु
+	काष्ठा platक्रमm_device *dev = (काष्ठा platक्रमm_device *) vdev->opaque;
 
-	return platform_get_mem_or_io(dev, num);
-}
+	वापस platक्रमm_get_mem_or_io(dev, num);
+पूर्ण
 
-static int get_platform_irq(struct vfio_platform_device *vdev, int i)
-{
-	struct platform_device *pdev = (struct platform_device *) vdev->opaque;
+अटल पूर्णांक get_platक्रमm_irq(काष्ठा vfio_platक्रमm_device *vdev, पूर्णांक i)
+अणु
+	काष्ठा platक्रमm_device *pdev = (काष्ठा platक्रमm_device *) vdev->opaque;
 
-	return platform_get_irq_optional(pdev, i);
-}
+	वापस platक्रमm_get_irq_optional(pdev, i);
+पूर्ण
 
-static int vfio_platform_probe(struct platform_device *pdev)
-{
-	struct vfio_platform_device *vdev;
-	int ret;
+अटल पूर्णांक vfio_platक्रमm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vfio_platक्रमm_device *vdev;
+	पूर्णांक ret;
 
-	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-	if (!vdev)
-		return -ENOMEM;
+	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+	अगर (!vdev)
+		वापस -ENOMEM;
 
-	vdev->opaque = (void *) pdev;
+	vdev->opaque = (व्योम *) pdev;
 	vdev->name = pdev->name;
 	vdev->flags = VFIO_DEVICE_FLAGS_PLATFORM;
-	vdev->get_resource = get_platform_resource;
-	vdev->get_irq = get_platform_irq;
+	vdev->get_resource = get_platक्रमm_resource;
+	vdev->get_irq = get_platक्रमm_irq;
 	vdev->parent_module = THIS_MODULE;
 	vdev->reset_required = reset_required;
 
-	ret = vfio_platform_probe_common(vdev, &pdev->dev);
-	if (ret) {
-		kfree(vdev);
-		return ret;
-	}
+	ret = vfio_platक्रमm_probe_common(vdev, &pdev->dev);
+	अगर (ret) अणु
+		kमुक्त(vdev);
+		वापस ret;
+	पूर्ण
 	dev_set_drvdata(&pdev->dev, vdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_platform_remove(struct platform_device *pdev)
-{
-	struct vfio_platform_device *vdev = dev_get_drvdata(&pdev->dev);
+अटल पूर्णांक vfio_platक्रमm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vfio_platक्रमm_device *vdev = dev_get_drvdata(&pdev->dev);
 
-	vfio_platform_remove_common(vdev);
-	kfree(vdev);
-	return 0;
-}
+	vfio_platक्रमm_हटाओ_common(vdev);
+	kमुक्त(vdev);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vfio_platform_driver = {
-	.probe		= vfio_platform_probe,
-	.remove		= vfio_platform_remove,
-	.driver	= {
+अटल काष्ठा platक्रमm_driver vfio_platक्रमm_driver = अणु
+	.probe		= vfio_platक्रमm_probe,
+	.हटाओ		= vfio_platक्रमm_हटाओ,
+	.driver	= अणु
 		.name	= "vfio-platform",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(vfio_platform_driver);
+module_platक्रमm_driver(vfio_platक्रमm_driver);
 
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL v2");

@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __NX_H__
-#define __NX_H__
+#अगर_अघोषित __NX_H__
+#घोषणा __NX_H__
 
-#include <crypto/ctr.h>
+#समावेश <crypto/ctr.h>
 
-#define NX_NAME		"nx-crypto"
-#define NX_STRING	"IBM Power7+ Nest Accelerator Crypto Driver"
-#define NX_VERSION	"1.0"
+#घोषणा NX_NAME		"nx-crypto"
+#घोषणा NX_STRING	"IBM Power7+ Nest Accelerator Crypto Driver"
+#घोषणा NX_VERSION	"1.0"
 
-/* a scatterlist in the format PHYP is expecting */
-struct nx_sg {
+/* a scatterlist in the क्रमmat PHYP is expecting */
+काष्ठा nx_sg अणु
 	u64 addr;
 	u32 rsvd;
 	u32 len;
-} __attribute((packed));
+पूर्ण __attribute((packed));
 
-#define NX_PAGE_SIZE		(4096)
-#define NX_MAX_SG_ENTRIES	(NX_PAGE_SIZE/(sizeof(struct nx_sg)))
+#घोषणा NX_PAGE_SIZE		(4096)
+#घोषणा NX_MAX_SG_ENTRIES	(NX_PAGE_SIZE/(माप(काष्ठा nx_sg)))
 
-enum nx_status {
+क्रमागत nx_status अणु
 	NX_DISABLED,
 	NX_WAITING,
 	NX_OKAY
-};
+पूर्ण;
 
 /* msc_triplet and max_sync_cop are used only to assist in parsing the
- * openFirmware property */
-struct msc_triplet {
+ * खोलोFirmware property */
+काष्ठा msc_triplet अणु
 	u32 keybitlen;
 	u32 databytelen;
 	u32 sglen;
-} __packed;
+पूर्ण __packed;
 
-struct max_sync_cop {
+काष्ठा max_sync_cop अणु
 	u32 fc;
 	u32 mode;
 	u32 triplets;
-	struct msc_triplet trip[];
-} __packed;
+	काष्ठा msc_triplet trip[];
+पूर्ण __packed;
 
-struct alg_props {
+काष्ठा alg_props अणु
 	u32 databytelen;
 	u32 sglen;
-};
+पूर्ण;
 
-#define NX_OF_FLAG_MAXSGLEN_SET		(1)
-#define NX_OF_FLAG_STATUS_SET		(2)
-#define NX_OF_FLAG_MAXSYNCCOP_SET	(4)
-#define NX_OF_FLAG_MASK_READY		(NX_OF_FLAG_MAXSGLEN_SET | \
+#घोषणा NX_OF_FLAG_MAXSGLEN_SET		(1)
+#घोषणा NX_OF_FLAG_STATUS_SET		(2)
+#घोषणा NX_OF_FLAG_MAXSYNCCOP_SET	(4)
+#घोषणा NX_OF_FLAG_MASK_READY		(NX_OF_FLAG_MAXSGLEN_SET | \
 					 NX_OF_FLAG_STATUS_SET |   \
 					 NX_OF_FLAG_MAXSYNCCOP_SET)
-struct nx_of {
+काष्ठा nx_of अणु
 	u32 flags;
 	u32 max_sg_len;
-	enum nx_status status;
-	struct alg_props ap[NX_MAX_FC][NX_MAX_MODE][3];
-};
+	क्रमागत nx_status status;
+	काष्ठा alg_props ap[NX_MAX_FC][NX_MAX_MODE][3];
+पूर्ण;
 
-struct nx_stats {
+काष्ठा nx_stats अणु
 	atomic_t aes_ops;
 	atomic64_t aes_bytes;
 	atomic_t sha256_ops;
@@ -71,125 +72,125 @@ struct nx_stats {
 	atomic_t errors;
 	atomic_t last_error;
 	atomic_t last_error_pid;
-};
+पूर्ण;
 
-struct nx_crypto_driver {
-	struct nx_stats    stats;
-	struct nx_of       of;
-	struct vio_dev    *viodev;
-	struct vio_driver  viodriver;
-	struct dentry     *dfs_root;
-};
+काष्ठा nx_crypto_driver अणु
+	काष्ठा nx_stats    stats;
+	काष्ठा nx_of       of;
+	काष्ठा vio_dev    *viodev;
+	काष्ठा vio_driver  viodriver;
+	काष्ठा dentry     *dfs_root;
+पूर्ण;
 
-#define NX_GCM4106_NONCE_LEN		(4)
-#define NX_GCM_CTR_OFFSET		(12)
-struct nx_gcm_rctx {
+#घोषणा NX_GCM4106_NONCE_LEN		(4)
+#घोषणा NX_GCM_CTR_OFFSET		(12)
+काष्ठा nx_gcm_rctx अणु
 	u8 iv[16];
-};
+पूर्ण;
 
-struct nx_gcm_priv {
+काष्ठा nx_gcm_priv अणु
 	u8 iauth_tag[16];
 	u8 nonce[NX_GCM4106_NONCE_LEN];
-};
+पूर्ण;
 
-#define NX_CCM_AES_KEY_LEN		(16)
-#define NX_CCM4309_AES_KEY_LEN		(19)
-#define NX_CCM4309_NONCE_LEN		(3)
-struct nx_ccm_rctx {
+#घोषणा NX_CCM_AES_KEY_LEN		(16)
+#घोषणा NX_CCM4309_AES_KEY_LEN		(19)
+#घोषणा NX_CCM4309_NONCE_LEN		(3)
+काष्ठा nx_ccm_rctx अणु
 	u8 iv[16];
-};
+पूर्ण;
 
-struct nx_ccm_priv {
+काष्ठा nx_ccm_priv अणु
 	u8 b0[16];
 	u8 iauth_tag[16];
 	u8 oauth_tag[16];
 	u8 nonce[NX_CCM4309_NONCE_LEN];
-};
+पूर्ण;
 
-struct nx_xcbc_priv {
+काष्ठा nx_xcbc_priv अणु
 	u8 key[16];
-};
+पूर्ण;
 
-struct nx_ctr_priv {
+काष्ठा nx_ctr_priv अणु
 	u8 nonce[CTR_RFC3686_NONCE_SIZE];
-};
+पूर्ण;
 
-struct nx_crypto_ctx {
+काष्ठा nx_crypto_ctx अणु
 	spinlock_t lock;	  /* synchronize access to the context */
-	void *kmem;		  /* unaligned, kmalloc'd buffer */
-	size_t kmem_len;	  /* length of kmem */
-	struct nx_csbcpb *csbcpb; /* aligned page given to phyp @ hcall time */
-	struct vio_pfo_op op;     /* operation struct with hcall parameters */
-	struct nx_csbcpb *csbcpb_aead; /* secondary csbcpb used by AEAD algs */
-	struct vio_pfo_op op_aead;/* operation struct for csbcpb_aead */
+	व्योम *kmem;		  /* unaligned, kदो_स्मृति'd buffer */
+	माप_प्रकार kmem_len;	  /* length of kmem */
+	काष्ठा nx_csbcpb *csbcpb; /* aligned page given to phyp @ hcall समय */
+	काष्ठा vio_pfo_op op;     /* operation काष्ठा with hcall parameters */
+	काष्ठा nx_csbcpb *csbcpb_aead; /* secondary csbcpb used by AEAD algs */
+	काष्ठा vio_pfo_op op_aead;/* operation काष्ठा क्रम csbcpb_aead */
 
-	struct nx_sg *in_sg;      /* aligned pointer into kmem to an sg list */
-	struct nx_sg *out_sg;     /* aligned pointer into kmem to an sg list */
+	काष्ठा nx_sg *in_sg;      /* aligned poपूर्णांकer पूर्णांकo kmem to an sg list */
+	काष्ठा nx_sg *out_sg;     /* aligned poपूर्णांकer पूर्णांकo kmem to an sg list */
 
-	struct alg_props *ap;	  /* pointer into props based on our key size */
-	struct alg_props props[3];/* openFirmware properties for requests */
-	struct nx_stats *stats;   /* pointer into an nx_crypto_driver for stats
+	काष्ठा alg_props *ap;	  /* poपूर्णांकer पूर्णांकo props based on our key size */
+	काष्ठा alg_props props[3];/* खोलोFirmware properties क्रम requests */
+	काष्ठा nx_stats *stats;   /* poपूर्णांकer पूर्णांकo an nx_crypto_driver क्रम stats
 				     reporting */
 
-	union {
-		struct nx_gcm_priv gcm;
-		struct nx_ccm_priv ccm;
-		struct nx_xcbc_priv xcbc;
-		struct nx_ctr_priv ctr;
-	} priv;
-};
+	जोड़ अणु
+		काष्ठा nx_gcm_priv gcm;
+		काष्ठा nx_ccm_priv ccm;
+		काष्ठा nx_xcbc_priv xcbc;
+		काष्ठा nx_ctr_priv ctr;
+	पूर्ण priv;
+पूर्ण;
 
-struct crypto_aead;
+काष्ठा crypto_aead;
 
 /* prototypes */
-int nx_crypto_ctx_aes_ccm_init(struct crypto_aead *tfm);
-int nx_crypto_ctx_aes_gcm_init(struct crypto_aead *tfm);
-int nx_crypto_ctx_aes_xcbc_init(struct crypto_tfm *tfm);
-int nx_crypto_ctx_aes_ctr_init(struct crypto_skcipher *tfm);
-int nx_crypto_ctx_aes_cbc_init(struct crypto_skcipher *tfm);
-int nx_crypto_ctx_aes_ecb_init(struct crypto_skcipher *tfm);
-int nx_crypto_ctx_sha_init(struct crypto_tfm *tfm);
-void nx_crypto_ctx_exit(struct crypto_tfm *tfm);
-void nx_crypto_ctx_skcipher_exit(struct crypto_skcipher *tfm);
-void nx_crypto_ctx_aead_exit(struct crypto_aead *tfm);
-void nx_ctx_init(struct nx_crypto_ctx *nx_ctx, unsigned int function);
-int nx_hcall_sync(struct nx_crypto_ctx *ctx, struct vio_pfo_op *op,
+पूर्णांक nx_crypto_ctx_aes_ccm_init(काष्ठा crypto_aead *tfm);
+पूर्णांक nx_crypto_ctx_aes_gcm_init(काष्ठा crypto_aead *tfm);
+पूर्णांक nx_crypto_ctx_aes_xcbc_init(काष्ठा crypto_tfm *tfm);
+पूर्णांक nx_crypto_ctx_aes_ctr_init(काष्ठा crypto_skcipher *tfm);
+पूर्णांक nx_crypto_ctx_aes_cbc_init(काष्ठा crypto_skcipher *tfm);
+पूर्णांक nx_crypto_ctx_aes_ecb_init(काष्ठा crypto_skcipher *tfm);
+पूर्णांक nx_crypto_ctx_sha_init(काष्ठा crypto_tfm *tfm);
+व्योम nx_crypto_ctx_निकास(काष्ठा crypto_tfm *tfm);
+व्योम nx_crypto_ctx_skcipher_निकास(काष्ठा crypto_skcipher *tfm);
+व्योम nx_crypto_ctx_aead_निकास(काष्ठा crypto_aead *tfm);
+व्योम nx_ctx_init(काष्ठा nx_crypto_ctx *nx_ctx, अचिन्हित पूर्णांक function);
+पूर्णांक nx_hcall_sync(काष्ठा nx_crypto_ctx *ctx, काष्ठा vio_pfo_op *op,
 		  u32 may_sleep);
-struct nx_sg *nx_build_sg_list(struct nx_sg *, u8 *, unsigned int *, u32);
-int nx_build_sg_lists(struct nx_crypto_ctx *nx_ctx, const u8 *iv,
-		      struct scatterlist *dst, struct scatterlist *src,
-		      unsigned int *nbytes, unsigned int offset, u8 *oiv);
-struct nx_sg *nx_walk_and_build(struct nx_sg *, unsigned int,
-				struct scatterlist *, unsigned int,
-				unsigned int *);
+काष्ठा nx_sg *nx_build_sg_list(काष्ठा nx_sg *, u8 *, अचिन्हित पूर्णांक *, u32);
+पूर्णांक nx_build_sg_lists(काष्ठा nx_crypto_ctx *nx_ctx, स्थिर u8 *iv,
+		      काष्ठा scatterlist *dst, काष्ठा scatterlist *src,
+		      अचिन्हित पूर्णांक *nbytes, अचिन्हित पूर्णांक offset, u8 *oiv);
+काष्ठा nx_sg *nx_walk_and_build(काष्ठा nx_sg *, अचिन्हित पूर्णांक,
+				काष्ठा scatterlist *, अचिन्हित पूर्णांक,
+				अचिन्हित पूर्णांक *);
 
-#ifdef CONFIG_DEBUG_FS
-#define NX_DEBUGFS_INIT(drv)	nx_debugfs_init(drv)
-#define NX_DEBUGFS_FINI(drv)	nx_debugfs_fini(drv)
+#अगर_घोषित CONFIG_DEBUG_FS
+#घोषणा NX_DEBUGFS_INIT(drv)	nx_debugfs_init(drv)
+#घोषणा NX_DEBUGFS_FINI(drv)	nx_debugfs_fini(drv)
 
-void nx_debugfs_init(struct nx_crypto_driver *);
-void nx_debugfs_fini(struct nx_crypto_driver *);
-#else
-#define NX_DEBUGFS_INIT(drv)	(0)
-#define NX_DEBUGFS_FINI(drv)	(0)
-#endif
+व्योम nx_debugfs_init(काष्ठा nx_crypto_driver *);
+व्योम nx_debugfs_fini(काष्ठा nx_crypto_driver *);
+#अन्यथा
+#घोषणा NX_DEBUGFS_INIT(drv)	(0)
+#घोषणा NX_DEBUGFS_FINI(drv)	(0)
+#पूर्ण_अगर
 
-#define NX_PAGE_NUM(x)		((u64)(x) & 0xfffffffffffff000ULL)
+#घोषणा NX_PAGE_NUM(x)		((u64)(x) & 0xfffffffffffff000ULL)
 
-extern struct skcipher_alg nx_cbc_aes_alg;
-extern struct skcipher_alg nx_ecb_aes_alg;
-extern struct aead_alg nx_gcm_aes_alg;
-extern struct aead_alg nx_gcm4106_aes_alg;
-extern struct skcipher_alg nx_ctr3686_aes_alg;
-extern struct aead_alg nx_ccm_aes_alg;
-extern struct aead_alg nx_ccm4309_aes_alg;
-extern struct shash_alg nx_shash_aes_xcbc_alg;
-extern struct shash_alg nx_shash_sha512_alg;
-extern struct shash_alg nx_shash_sha256_alg;
+बाह्य काष्ठा skcipher_alg nx_cbc_aes_alg;
+बाह्य काष्ठा skcipher_alg nx_ecb_aes_alg;
+बाह्य काष्ठा aead_alg nx_gcm_aes_alg;
+बाह्य काष्ठा aead_alg nx_gcm4106_aes_alg;
+बाह्य काष्ठा skcipher_alg nx_ctr3686_aes_alg;
+बाह्य काष्ठा aead_alg nx_ccm_aes_alg;
+बाह्य काष्ठा aead_alg nx_ccm4309_aes_alg;
+बाह्य काष्ठा shash_alg nx_shash_aes_xcbc_alg;
+बाह्य काष्ठा shash_alg nx_shash_sha512_alg;
+बाह्य काष्ठा shash_alg nx_shash_sha256_alg;
 
-extern struct nx_crypto_driver nx_driver;
+बाह्य काष्ठा nx_crypto_driver nx_driver;
 
-#define SCATTERWALK_TO_SG	1
-#define SCATTERWALK_FROM_SG	0
+#घोषणा SCATTERWALK_TO_SG	1
+#घोषणा SCATTERWALK_FROM_SG	0
 
-#endif
+#पूर्ण_अगर

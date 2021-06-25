@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#include <linux/sched.h>
-#include <linux/ptrace.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ptrace.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकघोष.स>
+#समावेश <stdbool.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 SEC("raw_tracepoint/kfree_skb")
-int nested_loops(volatile struct pt_regs* ctx)
-{
-	int i, j, sum = 0, m;
+पूर्णांक nested_loops(अस्थिर काष्ठा pt_regs* ctx)
+अणु
+	पूर्णांक i, j, sum = 0, m;
 
-	for (j = 0; j < 300; j++)
-		for (i = 0; i < j; i++) {
-			if (j & 1)
+	क्रम (j = 0; j < 300; j++)
+		क्रम (i = 0; i < j; i++) अणु
+			अगर (j & 1)
 				m = PT_REGS_RC(ctx);
-			else
+			अन्यथा
 				m = j;
 			sum += i * m;
-		}
+		पूर्ण
 
-	return sum;
-}
+	वापस sum;
+पूर्ण

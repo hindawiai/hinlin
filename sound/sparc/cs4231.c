@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for CS4231 sound chips found on Sparcs.
+ * Driver क्रम CS4231 sound chips found on Sparcs.
  * Copyright (C) 2002, 2008 David S. Miller <davem@davemloft.net>
  *
  * Based entirely upon drivers/sbus/audio/cs4231.c which is:
- * Copyright (C) 1996, 1997, 1998 Derrick J Brashear (shadow@andrew.cmu.edu)
+ * Copyright (C) 1996, 1997, 1998 Derrick J Brashear (shaकरोw@andrew.cmu.edu)
  * and also sound/isa/cs423x/cs4231_lib.c which is:
  * Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/moduleparam.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/timer.h>
-#include <sound/initval.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/समयr.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm_params.h>
 
-#ifdef CONFIG_SBUS
-#define SBUS_SUPPORT
-#endif
+#अगर_घोषित CONFIG_SBUS
+#घोषणा SBUS_SUPPORT
+#पूर्ण_अगर
 
-#if defined(CONFIG_PCI) && defined(CONFIG_SPARC64)
-#define EBUS_SUPPORT
-#include <linux/pci.h>
-#include <asm/ebus_dma.h>
-#endif
+#अगर defined(CONFIG_PCI) && defined(CONFIG_SPARC64)
+#घोषणा EBUS_SUPPORT
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/ebus_dma.h>
+#पूर्ण_अगर
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
 /* Enable this card */
-static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
+अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;
 
-module_param_array(index, int, NULL, 0444);
+module_param_array(index, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(index, "Index value for Sun CS4231 soundcard.");
-module_param_array(id, charp, NULL, 0444);
+module_param_array(id, अक्षरp, शून्य, 0444);
 MODULE_PARM_DESC(id, "ID string for Sun CS4231 soundcard.");
-module_param_array(enable, bool, NULL, 0444);
+module_param_array(enable, bool, शून्य, 0444);
 MODULE_PARM_DESC(enable, "Enable Sun CS4231 soundcard.");
 MODULE_AUTHOR("Jaroslav Kysela, Derrick J. Brashear and David S. Miller");
 MODULE_DESCRIPTION("Sun CS4231");
 MODULE_LICENSE("GPL");
 
-#ifdef SBUS_SUPPORT
-struct sbus_dma_info {
+#अगर_घोषित SBUS_SUPPORT
+काष्ठा sbus_dma_info अणु
        spinlock_t	lock;	/* DMA access lock */
-       int		dir;
-       void __iomem	*regs;
-};
-#endif
+       पूर्णांक		dir;
+       व्योम __iomem	*regs;
+पूर्ण;
+#पूर्ण_अगर
 
-struct snd_cs4231;
-struct cs4231_dma_control {
-	void		(*prepare)(struct cs4231_dma_control *dma_cont,
-				   int dir);
-	void		(*enable)(struct cs4231_dma_control *dma_cont, int on);
-	int		(*request)(struct cs4231_dma_control *dma_cont,
-				   dma_addr_t bus_addr, size_t len);
-	unsigned int	(*address)(struct cs4231_dma_control *dma_cont);
-#ifdef EBUS_SUPPORT
-	struct		ebus_dma_info	ebus_info;
-#endif
-#ifdef SBUS_SUPPORT
-	struct		sbus_dma_info	sbus_info;
-#endif
-};
+काष्ठा snd_cs4231;
+काष्ठा cs4231_dma_control अणु
+	व्योम		(*prepare)(काष्ठा cs4231_dma_control *dma_cont,
+				   पूर्णांक dir);
+	व्योम		(*enable)(काष्ठा cs4231_dma_control *dma_cont, पूर्णांक on);
+	पूर्णांक		(*request)(काष्ठा cs4231_dma_control *dma_cont,
+				   dma_addr_t bus_addr, माप_प्रकार len);
+	अचिन्हित पूर्णांक	(*address)(काष्ठा cs4231_dma_control *dma_cont);
+#अगर_घोषित EBUS_SUPPORT
+	काष्ठा		ebus_dma_info	ebus_info;
+#पूर्ण_अगर
+#अगर_घोषित SBUS_SUPPORT
+	काष्ठा		sbus_dma_info	sbus_info;
+#पूर्ण_अगर
+पूर्ण;
 
-struct snd_cs4231 {
-	spinlock_t		lock;	/* registers access lock */
-	void __iomem		*port;
+काष्ठा snd_cs4231 अणु
+	spinlock_t		lock;	/* रेजिस्टरs access lock */
+	व्योम __iomem		*port;
 
-	struct cs4231_dma_control	p_dma;
-	struct cs4231_dma_control	c_dma;
+	काष्ठा cs4231_dma_control	p_dma;
+	काष्ठा cs4231_dma_control	c_dma;
 
 	u32			flags;
-#define CS4231_FLAG_EBUS	0x00000001
-#define CS4231_FLAG_PLAYBACK	0x00000002
-#define CS4231_FLAG_CAPTURE	0x00000004
+#घोषणा CS4231_FLAG_EBUS	0x00000001
+#घोषणा CS4231_FLAG_PLAYBACK	0x00000002
+#घोषणा CS4231_FLAG_CAPTURE	0x00000004
 
-	struct snd_card		*card;
-	struct snd_pcm		*pcm;
-	struct snd_pcm_substream	*playback_substream;
-	unsigned int		p_periods_sent;
-	struct snd_pcm_substream	*capture_substream;
-	unsigned int		c_periods_sent;
-	struct snd_timer	*timer;
+	काष्ठा snd_card		*card;
+	काष्ठा snd_pcm		*pcm;
+	काष्ठा snd_pcm_substream	*playback_substream;
+	अचिन्हित पूर्णांक		p_periods_sent;
+	काष्ठा snd_pcm_substream	*capture_substream;
+	अचिन्हित पूर्णांक		c_periods_sent;
+	काष्ठा snd_समयr	*समयr;
 
-	unsigned short mode;
-#define CS4231_MODE_NONE	0x0000
-#define CS4231_MODE_PLAY	0x0001
-#define CS4231_MODE_RECORD	0x0002
-#define CS4231_MODE_TIMER	0x0004
-#define CS4231_MODE_OPEN	(CS4231_MODE_PLAY | CS4231_MODE_RECORD | \
+	अचिन्हित लघु mode;
+#घोषणा CS4231_MODE_NONE	0x0000
+#घोषणा CS4231_MODE_PLAY	0x0001
+#घोषणा CS4231_MODE_RECORD	0x0002
+#घोषणा CS4231_MODE_TIMER	0x0004
+#घोषणा CS4231_MODE_OPEN	(CS4231_MODE_PLAY | CS4231_MODE_RECORD | \
 				 CS4231_MODE_TIMER)
 
-	unsigned char		image[32];	/* registers image */
-	int			mce_bit;
-	int			calibrate_mute;
-	struct mutex		mce_mutex;	/* mutex for mce register */
-	struct mutex		open_mutex;	/* mutex for ALSA open/close */
+	अचिन्हित अक्षर		image[32];	/* रेजिस्टरs image */
+	पूर्णांक			mce_bit;
+	पूर्णांक			calibrate_mute;
+	काष्ठा mutex		mce_mutex;	/* mutex क्रम mce रेजिस्टर */
+	काष्ठा mutex		खोलो_mutex;	/* mutex क्रम ALSA खोलो/बंद */
 
-	struct platform_device	*op;
-	unsigned int		irq[2];
-	unsigned int		regs_size;
-	struct snd_cs4231	*next;
-};
+	काष्ठा platक्रमm_device	*op;
+	अचिन्हित पूर्णांक		irq[2];
+	अचिन्हित पूर्णांक		regs_size;
+	काष्ठा snd_cs4231	*next;
+पूर्ण;
 
-/* Eventually we can use sound/isa/cs423x/cs4231_lib.c directly, but for
+/* Eventually we can use sound/isa/cs423x/cs4231_lib.c directly, but क्रम
  * now....  -DaveM
  */
 
 /* IO ports */
-#include <sound/cs4231-regs.h>
+#समावेश <sound/cs4231-regs.h>
 
-/* XXX offsets are different than PC ISA chips... */
-#define CS4231U(chip, x)	((chip)->port + ((c_d_c_CS4231##x) << 2))
+/* XXX offsets are dअगरferent than PC ISA chips... */
+#घोषणा CS4231U(chip, x)	((chip)->port + ((c_d_c_CS4231##x) << 2))
 
-/* SBUS DMA register defines.  */
+/* SBUS DMA रेजिस्टर defines.  */
 
-#define APCCSR	0x10UL	/* APC DMA CSR */
-#define APCCVA	0x20UL	/* APC Capture DMA Address */
-#define APCCC	0x24UL	/* APC Capture Count */
-#define APCCNVA	0x28UL	/* APC Capture DMA Next Address */
-#define APCCNC	0x2cUL	/* APC Capture Next Count */
-#define APCPVA	0x30UL	/* APC Play DMA Address */
-#define APCPC	0x34UL	/* APC Play Count */
-#define APCPNVA	0x38UL	/* APC Play DMA Next Address */
-#define APCPNC	0x3cUL	/* APC Play Next Count */
+#घोषणा APCCSR	0x10UL	/* APC DMA CSR */
+#घोषणा APCCVA	0x20UL	/* APC Capture DMA Address */
+#घोषणा APCCC	0x24UL	/* APC Capture Count */
+#घोषणा APCCNVA	0x28UL	/* APC Capture DMA Next Address */
+#घोषणा APCCNC	0x2cUL	/* APC Capture Next Count */
+#घोषणा APCPVA	0x30UL	/* APC Play DMA Address */
+#घोषणा APCPC	0x34UL	/* APC Play Count */
+#घोषणा APCPNVA	0x38UL	/* APC Play DMA Next Address */
+#घोषणा APCPNC	0x3cUL	/* APC Play Next Count */
 
-/* Defines for SBUS DMA-routines */
+/* Defines क्रम SBUS DMA-routines */
 
-#define APCVA  0x0UL	/* APC DMA Address */
-#define APCC   0x4UL	/* APC Count */
-#define APCNVA 0x8UL	/* APC DMA Next Address */
-#define APCNC  0xcUL	/* APC Next Count */
-#define APC_PLAY 0x30UL	/* Play registers start at 0x30 */
-#define APC_RECORD 0x20UL /* Record registers start at 0x20 */
+#घोषणा APCVA  0x0UL	/* APC DMA Address */
+#घोषणा APCC   0x4UL	/* APC Count */
+#घोषणा APCNVA 0x8UL	/* APC DMA Next Address */
+#घोषणा APCNC  0xcUL	/* APC Next Count */
+#घोषणा APC_PLAY 0x30UL	/* Play रेजिस्टरs start at 0x30 */
+#घोषणा APC_RECORD 0x20UL /* Record रेजिस्टरs start at 0x20 */
 
 /* APCCSR bits */
 
-#define APC_INT_PENDING 0x800000 /* Interrupt Pending */
-#define APC_PLAY_INT    0x400000 /* Playback interrupt */
-#define APC_CAPT_INT    0x200000 /* Capture interrupt */
-#define APC_GENL_INT    0x100000 /* General interrupt */
-#define APC_XINT_ENA    0x80000  /* General ext int. enable */
-#define APC_XINT_PLAY   0x40000  /* Playback ext intr */
-#define APC_XINT_CAPT   0x20000  /* Capture ext intr */
-#define APC_XINT_GENL   0x10000  /* Error ext intr */
-#define APC_XINT_EMPT   0x8000   /* Pipe empty interrupt (0 write to pva) */
-#define APC_XINT_PEMP   0x4000   /* Play pipe empty (pva and pnva not set) */
-#define APC_XINT_PNVA   0x2000   /* Playback NVA dirty */
-#define APC_XINT_PENA   0x1000   /* play pipe empty Int enable */
-#define APC_XINT_COVF   0x800    /* Cap data dropped on floor */
-#define APC_XINT_CNVA   0x400    /* Capture NVA dirty */
-#define APC_XINT_CEMP   0x200    /* Capture pipe empty (cva and cnva not set) */
-#define APC_XINT_CENA   0x100    /* Cap. pipe empty int enable */
-#define APC_PPAUSE      0x80     /* Pause the play DMA */
-#define APC_CPAUSE      0x40     /* Pause the capture DMA */
-#define APC_CDC_RESET   0x20     /* CODEC RESET */
-#define APC_PDMA_READY  0x08     /* Play DMA Go */
-#define APC_CDMA_READY  0x04     /* Capture DMA Go */
-#define APC_CHIP_RESET  0x01     /* Reset the chip */
+#घोषणा APC_INT_PENDING 0x800000 /* Interrupt Pending */
+#घोषणा APC_PLAY_INT    0x400000 /* Playback पूर्णांकerrupt */
+#घोषणा APC_CAPT_INT    0x200000 /* Capture पूर्णांकerrupt */
+#घोषणा APC_GENL_INT    0x100000 /* General पूर्णांकerrupt */
+#घोषणा APC_XINT_ENA    0x80000  /* General ext पूर्णांक. enable */
+#घोषणा APC_XINT_PLAY   0x40000  /* Playback ext पूर्णांकr */
+#घोषणा APC_XINT_CAPT   0x20000  /* Capture ext पूर्णांकr */
+#घोषणा APC_XINT_GENL   0x10000  /* Error ext पूर्णांकr */
+#घोषणा APC_XINT_EMPT   0x8000   /* Pipe empty पूर्णांकerrupt (0 ग_लिखो to pva) */
+#घोषणा APC_XINT_PEMP   0x4000   /* Play pipe empty (pva and pnva not set) */
+#घोषणा APC_XINT_PNVA   0x2000   /* Playback NVA dirty */
+#घोषणा APC_XINT_PENA   0x1000   /* play pipe empty Int enable */
+#घोषणा APC_XINT_COVF   0x800    /* Cap data dropped on न्यूनमान */
+#घोषणा APC_XINT_CNVA   0x400    /* Capture NVA dirty */
+#घोषणा APC_XINT_CEMP   0x200    /* Capture pipe empty (cva and cnva not set) */
+#घोषणा APC_XINT_CENA   0x100    /* Cap. pipe empty पूर्णांक enable */
+#घोषणा APC_PPAUSE      0x80     /* Pause the play DMA */
+#घोषणा APC_CPAUSE      0x40     /* Pause the capture DMA */
+#घोषणा APC_CDC_RESET   0x20     /* CODEC RESET */
+#घोषणा APC_PDMA_READY  0x08     /* Play DMA Go */
+#घोषणा APC_CDMA_READY  0x04     /* Capture DMA Go */
+#घोषणा APC_CHIP_RESET  0x01     /* Reset the chip */
 
-/* EBUS DMA register offsets  */
+/* EBUS DMA रेजिस्टर offsets  */
 
-#define EBDMA_CSR	0x00UL	/* Control/Status */
-#define EBDMA_ADDR	0x04UL	/* DMA Address */
-#define EBDMA_COUNT	0x08UL	/* DMA Count */
+#घोषणा EBDMA_CSR	0x00UL	/* Control/Status */
+#घोषणा EBDMA_ADDR	0x04UL	/* DMA Address */
+#घोषणा EBDMA_COUNT	0x08UL	/* DMA Count */
 
 /*
  *  Some variables
  */
 
-static const unsigned char freq_bits[14] = {
+अटल स्थिर अचिन्हित अक्षर freq_bits[14] = अणु
 	/* 5510 */	0x00 | CS4231_XTAL2,
 	/* 6620 */	0x0E | CS4231_XTAL2,
 	/* 8000 */	0x00 | CS4231_XTAL1,
@@ -198,27 +199,27 @@ static const unsigned char freq_bits[14] = {
 	/* 37800 */	0x08 | CS4231_XTAL2,
 	/* 44100 */	0x0A | CS4231_XTAL2,
 	/* 48000 */	0x0C | CS4231_XTAL1
-};
+पूर्ण;
 
-static const unsigned int rates[14] = {
+अटल स्थिर अचिन्हित पूर्णांक rates[14] = अणु
 	5510, 6620, 8000, 9600, 11025, 16000, 18900, 22050,
 	27042, 32000, 33075, 37800, 44100, 48000
-};
+पूर्ण;
 
-static const struct snd_pcm_hw_constraint_list hw_constraints_rates = {
+अटल स्थिर काष्ठा snd_pcm_hw_स्थिरraपूर्णांक_list hw_स्थिरraपूर्णांकs_rates = अणु
 	.count	= ARRAY_SIZE(rates),
 	.list	= rates,
-};
+पूर्ण;
 
-static int snd_cs4231_xrate(struct snd_pcm_runtime *runtime)
-{
-	return snd_pcm_hw_constraint_list(runtime, 0,
+अटल पूर्णांक snd_cs4231_xrate(काष्ठा snd_pcm_runसमय *runसमय)
+अणु
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_list(runसमय, 0,
 					  SNDRV_PCM_HW_PARAM_RATE,
-					  &hw_constraints_rates);
-}
+					  &hw_स्थिरraपूर्णांकs_rates);
+पूर्ण
 
-static const unsigned char snd_cs4231_original_image[32] =
-{
+अटल स्थिर अचिन्हित अक्षर snd_cs4231_original_image[32] =
+अणु
 	0x00,			/* 00/00 - lic */
 	0x00,			/* 01/01 - ric */
 	0x9f,			/* 02/02 - la1ic */
@@ -251,358 +252,358 @@ static const unsigned char snd_cs4231_original_image[32] =
 	0x00,			/* 1d/29 - res4 */
 	0x00,			/* 1e/30 - cbru */
 	0x00,			/* 1f/31 - cbrl */
-};
+पूर्ण;
 
-static u8 __cs4231_readb(struct snd_cs4231 *cp, void __iomem *reg_addr)
-{
-	if (cp->flags & CS4231_FLAG_EBUS)
-		return readb(reg_addr);
-	else
-		return sbus_readb(reg_addr);
-}
+अटल u8 __cs4231_पढ़ोb(काष्ठा snd_cs4231 *cp, व्योम __iomem *reg_addr)
+अणु
+	अगर (cp->flags & CS4231_FLAG_EBUS)
+		वापस पढ़ोb(reg_addr);
+	अन्यथा
+		वापस sbus_पढ़ोb(reg_addr);
+पूर्ण
 
-static void __cs4231_writeb(struct snd_cs4231 *cp, u8 val,
-			    void __iomem *reg_addr)
-{
-	if (cp->flags & CS4231_FLAG_EBUS)
-		return writeb(val, reg_addr);
-	else
-		return sbus_writeb(val, reg_addr);
-}
+अटल व्योम __cs4231_ग_लिखोb(काष्ठा snd_cs4231 *cp, u8 val,
+			    व्योम __iomem *reg_addr)
+अणु
+	अगर (cp->flags & CS4231_FLAG_EBUS)
+		वापस ग_लिखोb(val, reg_addr);
+	अन्यथा
+		वापस sbus_ग_लिखोb(val, reg_addr);
+पूर्ण
 
 /*
  *  Basic I/O functions
  */
 
-static void snd_cs4231_ready(struct snd_cs4231 *chip)
-{
-	int timeout;
+अटल व्योम snd_cs4231_पढ़ोy(काष्ठा snd_cs4231 *chip)
+अणु
+	पूर्णांक समयout;
 
-	for (timeout = 250; timeout > 0; timeout--) {
-		int val = __cs4231_readb(chip, CS4231U(chip, REGSEL));
-		if ((val & CS4231_INIT) == 0)
-			break;
+	क्रम (समयout = 250; समयout > 0; समयout--) अणु
+		पूर्णांक val = __cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL));
+		अगर ((val & CS4231_INIT) == 0)
+			अवरोध;
 		udelay(100);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snd_cs4231_dout(struct snd_cs4231 *chip, unsigned char reg,
-			    unsigned char value)
-{
-	snd_cs4231_ready(chip);
-#ifdef CONFIG_SND_DEBUG
-	if (__cs4231_readb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
-		snd_printdd("out: auto calibration time out - reg = 0x%x, "
+अटल व्योम snd_cs4231_करोut(काष्ठा snd_cs4231 *chip, अचिन्हित अक्षर reg,
+			    अचिन्हित अक्षर value)
+अणु
+	snd_cs4231_पढ़ोy(chip);
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
+		snd_prपूर्णांकdd("out: auto calibration time out - reg = 0x%x, "
 			    "value = 0x%x\n",
 			    reg, value);
-#endif
-	__cs4231_writeb(chip, chip->mce_bit | reg, CS4231U(chip, REGSEL));
+#पूर्ण_अगर
+	__cs4231_ग_लिखोb(chip, chip->mce_bit | reg, CS4231U(chip, REGSEL));
 	wmb();
-	__cs4231_writeb(chip, value, CS4231U(chip, REG));
+	__cs4231_ग_लिखोb(chip, value, CS4231U(chip, REG));
 	mb();
-}
+पूर्ण
 
-static inline void snd_cs4231_outm(struct snd_cs4231 *chip, unsigned char reg,
-		     unsigned char mask, unsigned char value)
-{
-	unsigned char tmp = (chip->image[reg] & mask) | value;
+अटल अंतरभूत व्योम snd_cs4231_ouपंचांग(काष्ठा snd_cs4231 *chip, अचिन्हित अक्षर reg,
+		     अचिन्हित अक्षर mask, अचिन्हित अक्षर value)
+अणु
+	अचिन्हित अक्षर पंचांगp = (chip->image[reg] & mask) | value;
 
-	chip->image[reg] = tmp;
-	if (!chip->calibrate_mute)
-		snd_cs4231_dout(chip, reg, tmp);
-}
+	chip->image[reg] = पंचांगp;
+	अगर (!chip->calibrate_mute)
+		snd_cs4231_करोut(chip, reg, पंचांगp);
+पूर्ण
 
-static void snd_cs4231_out(struct snd_cs4231 *chip, unsigned char reg,
-			   unsigned char value)
-{
-	snd_cs4231_dout(chip, reg, value);
+अटल व्योम snd_cs4231_out(काष्ठा snd_cs4231 *chip, अचिन्हित अक्षर reg,
+			   अचिन्हित अक्षर value)
+अणु
+	snd_cs4231_करोut(chip, reg, value);
 	chip->image[reg] = value;
 	mb();
-}
+पूर्ण
 
-static unsigned char snd_cs4231_in(struct snd_cs4231 *chip, unsigned char reg)
-{
-	snd_cs4231_ready(chip);
-#ifdef CONFIG_SND_DEBUG
-	if (__cs4231_readb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
-		snd_printdd("in: auto calibration time out - reg = 0x%x\n",
+अटल अचिन्हित अक्षर snd_cs4231_in(काष्ठा snd_cs4231 *chip, अचिन्हित अक्षर reg)
+अणु
+	snd_cs4231_पढ़ोy(chip);
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
+		snd_prपूर्णांकdd("in: auto calibration time out - reg = 0x%x\n",
 			    reg);
-#endif
-	__cs4231_writeb(chip, chip->mce_bit | reg, CS4231U(chip, REGSEL));
+#पूर्ण_अगर
+	__cs4231_ग_लिखोb(chip, chip->mce_bit | reg, CS4231U(chip, REGSEL));
 	mb();
-	return __cs4231_readb(chip, CS4231U(chip, REG));
-}
+	वापस __cs4231_पढ़ोb(chip, CS4231U(chip, REG));
+पूर्ण
 
 /*
  *  CS4231 detection / MCE routines
  */
 
-static void snd_cs4231_busy_wait(struct snd_cs4231 *chip)
-{
-	int timeout;
+अटल व्योम snd_cs4231_busy_रुको(काष्ठा snd_cs4231 *chip)
+अणु
+	पूर्णांक समयout;
 
-	/* looks like this sequence is proper for CS4231A chip (GUS MAX) */
-	for (timeout = 5; timeout > 0; timeout--)
-		__cs4231_readb(chip, CS4231U(chip, REGSEL));
+	/* looks like this sequence is proper क्रम CS4231A chip (GUS MAX) */
+	क्रम (समयout = 5; समयout > 0; समयout--)
+		__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL));
 
 	/* end of cleanup sequence */
-	for (timeout = 500; timeout > 0; timeout--) {
-		int val = __cs4231_readb(chip, CS4231U(chip, REGSEL));
-		if ((val & CS4231_INIT) == 0)
-			break;
+	क्रम (समयout = 500; समयout > 0; समयout--) अणु
+		पूर्णांक val = __cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL));
+		अगर ((val & CS4231_INIT) == 0)
+			अवरोध;
 		msleep(1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snd_cs4231_mce_up(struct snd_cs4231 *chip)
-{
-	unsigned long flags;
-	int timeout;
+अटल व्योम snd_cs4231_mce_up(काष्ठा snd_cs4231 *chip)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक समयout;
 
 	spin_lock_irqsave(&chip->lock, flags);
-	snd_cs4231_ready(chip);
-#ifdef CONFIG_SND_DEBUG
-	if (__cs4231_readb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
-		snd_printdd("mce_up - auto calibration time out (0)\n");
-#endif
+	snd_cs4231_पढ़ोy(chip);
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
+		snd_prपूर्णांकdd("mce_up - auto calibration time out (0)\n");
+#पूर्ण_अगर
 	chip->mce_bit |= CS4231_MCE;
-	timeout = __cs4231_readb(chip, CS4231U(chip, REGSEL));
-	if (timeout == 0x80)
-		snd_printdd("mce_up [%p]: serious init problem - "
+	समयout = __cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL));
+	अगर (समयout == 0x80)
+		snd_prपूर्णांकdd("mce_up [%p]: serious init problem - "
 			    "codec still busy\n",
 			    chip->port);
-	if (!(timeout & CS4231_MCE))
-		__cs4231_writeb(chip, chip->mce_bit | (timeout & 0x1f),
+	अगर (!(समयout & CS4231_MCE))
+		__cs4231_ग_लिखोb(chip, chip->mce_bit | (समयout & 0x1f),
 				CS4231U(chip, REGSEL));
 	spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-static void snd_cs4231_mce_down(struct snd_cs4231 *chip)
-{
-	unsigned long flags, timeout;
-	int reg;
+अटल व्योम snd_cs4231_mce_करोwn(काष्ठा snd_cs4231 *chip)
+अणु
+	अचिन्हित दीर्घ flags, समयout;
+	पूर्णांक reg;
 
-	snd_cs4231_busy_wait(chip);
+	snd_cs4231_busy_रुको(chip);
 	spin_lock_irqsave(&chip->lock, flags);
-#ifdef CONFIG_SND_DEBUG
-	if (__cs4231_readb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
-		snd_printdd("mce_down [%p] - auto calibration time out (0)\n",
+#अगर_घोषित CONFIG_SND_DEBUG
+	अगर (__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
+		snd_prपूर्णांकdd("mce_down [%p] - auto calibration time out (0)\n",
 			    CS4231U(chip, REGSEL));
-#endif
+#पूर्ण_अगर
 	chip->mce_bit &= ~CS4231_MCE;
-	reg = __cs4231_readb(chip, CS4231U(chip, REGSEL));
-	__cs4231_writeb(chip, chip->mce_bit | (reg & 0x1f),
+	reg = __cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL));
+	__cs4231_ग_लिखोb(chip, chip->mce_bit | (reg & 0x1f),
 			CS4231U(chip, REGSEL));
-	if (reg == 0x80)
-		snd_printdd("mce_down [%p]: serious init problem "
+	अगर (reg == 0x80)
+		snd_prपूर्णांकdd("mce_down [%p]: serious init problem "
 			    "- codec still busy\n", chip->port);
-	if ((reg & CS4231_MCE) == 0) {
+	अगर ((reg & CS4231_MCE) == 0) अणु
 		spin_unlock_irqrestore(&chip->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Wait for auto-calibration (AC) process to finish, i.e. ACI to go low.
+	 * Wait क्रम स्वतः-calibration (AC) process to finish, i.e. ACI to go low.
 	 */
-	timeout = jiffies + msecs_to_jiffies(250);
-	do {
+	समयout = jअगरfies + msecs_to_jअगरfies(250);
+	करो अणु
 		spin_unlock_irqrestore(&chip->lock, flags);
 		msleep(1);
 		spin_lock_irqsave(&chip->lock, flags);
 		reg = snd_cs4231_in(chip, CS4231_TEST_INIT);
 		reg &= CS4231_CALIB_IN_PROGRESS;
-	} while (reg && time_before(jiffies, timeout));
+	पूर्ण जबतक (reg && समय_beक्रमe(jअगरfies, समयout));
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	if (reg)
-		snd_printk(KERN_ERR
+	अगर (reg)
+		snd_prपूर्णांकk(KERN_ERR
 			   "mce_down - auto calibration time out (2)\n");
-}
+पूर्ण
 
-static void snd_cs4231_advance_dma(struct cs4231_dma_control *dma_cont,
-				   struct snd_pcm_substream *substream,
-				   unsigned int *periods_sent)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल व्योम snd_cs4231_advance_dma(काष्ठा cs4231_dma_control *dma_cont,
+				   काष्ठा snd_pcm_substream *substream,
+				   अचिन्हित पूर्णांक *periods_sent)
+अणु
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
-	while (1) {
-		unsigned int period_size = snd_pcm_lib_period_bytes(substream);
-		unsigned int offset = period_size * (*periods_sent);
+	जबतक (1) अणु
+		अचिन्हित पूर्णांक period_size = snd_pcm_lib_period_bytes(substream);
+		अचिन्हित पूर्णांक offset = period_size * (*periods_sent);
 
-		if (WARN_ON(period_size >= (1 << 24)))
-			return;
+		अगर (WARN_ON(period_size >= (1 << 24)))
+			वापस;
 
-		if (dma_cont->request(dma_cont,
-				      runtime->dma_addr + offset, period_size))
-			return;
-		(*periods_sent) = ((*periods_sent) + 1) % runtime->periods;
-	}
-}
+		अगर (dma_cont->request(dma_cont,
+				      runसमय->dma_addr + offset, period_size))
+			वापस;
+		(*periods_sent) = ((*periods_sent) + 1) % runसमय->periods;
+	पूर्ण
+पूर्ण
 
-static void cs4231_dma_trigger(struct snd_pcm_substream *substream,
-			       unsigned int what, int on)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct cs4231_dma_control *dma_cont;
+अटल व्योम cs4231_dma_trigger(काष्ठा snd_pcm_substream *substream,
+			       अचिन्हित पूर्णांक what, पूर्णांक on)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा cs4231_dma_control *dma_cont;
 
-	if (what & CS4231_PLAYBACK_ENABLE) {
+	अगर (what & CS4231_PLAYBACK_ENABLE) अणु
 		dma_cont = &chip->p_dma;
-		if (on) {
+		अगर (on) अणु
 			dma_cont->prepare(dma_cont, 0);
 			dma_cont->enable(dma_cont, 1);
 			snd_cs4231_advance_dma(dma_cont,
 				chip->playback_substream,
 				&chip->p_periods_sent);
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_cont->enable(dma_cont, 0);
-		}
-	}
-	if (what & CS4231_RECORD_ENABLE) {
+		पूर्ण
+	पूर्ण
+	अगर (what & CS4231_RECORD_ENABLE) अणु
 		dma_cont = &chip->c_dma;
-		if (on) {
+		अगर (on) अणु
 			dma_cont->prepare(dma_cont, 1);
 			dma_cont->enable(dma_cont, 1);
 			snd_cs4231_advance_dma(dma_cont,
 				chip->capture_substream,
 				&chip->c_periods_sent);
-		} else {
+		पूर्ण अन्यथा अणु
 			dma_cont->enable(dma_cont, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int snd_cs4231_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	int result = 0;
+अटल पूर्णांक snd_cs4231_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	पूर्णांक result = 0;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_STOP:
-	{
-		unsigned int what = 0;
-		struct snd_pcm_substream *s;
-		unsigned long flags;
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	अणु
+		अचिन्हित पूर्णांक what = 0;
+		काष्ठा snd_pcm_substream *s;
+		अचिन्हित दीर्घ flags;
 
-		snd_pcm_group_for_each_entry(s, substream) {
-			if (s == chip->playback_substream) {
+		snd_pcm_group_क्रम_each_entry(s, substream) अणु
+			अगर (s == chip->playback_substream) अणु
 				what |= CS4231_PLAYBACK_ENABLE;
-				snd_pcm_trigger_done(s, substream);
-			} else if (s == chip->capture_substream) {
+				snd_pcm_trigger_करोne(s, substream);
+			पूर्ण अन्यथा अगर (s == chip->capture_substream) अणु
 				what |= CS4231_RECORD_ENABLE;
-				snd_pcm_trigger_done(s, substream);
-			}
-		}
+				snd_pcm_trigger_करोne(s, substream);
+			पूर्ण
+		पूर्ण
 
 		spin_lock_irqsave(&chip->lock, flags);
-		if (cmd == SNDRV_PCM_TRIGGER_START) {
+		अगर (cmd == SNDRV_PCM_TRIGGER_START) अणु
 			cs4231_dma_trigger(substream, what, 1);
 			chip->image[CS4231_IFACE_CTRL] |= what;
-		} else {
+		पूर्ण अन्यथा अणु
 			cs4231_dma_trigger(substream, what, 0);
 			chip->image[CS4231_IFACE_CTRL] &= ~what;
-		}
+		पूर्ण
 		snd_cs4231_out(chip, CS4231_IFACE_CTRL,
 			       chip->image[CS4231_IFACE_CTRL]);
 		spin_unlock_irqrestore(&chip->lock, flags);
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		result = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
  *  CODEC I/O
  */
 
-static unsigned char snd_cs4231_get_rate(unsigned int rate)
-{
-	int i;
+अटल अचिन्हित अक्षर snd_cs4231_get_rate(अचिन्हित पूर्णांक rate)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 14; i++)
-		if (rate == rates[i])
-			return freq_bits[i];
+	क्रम (i = 0; i < 14; i++)
+		अगर (rate == rates[i])
+			वापस freq_bits[i];
 
-	return freq_bits[13];
-}
+	वापस freq_bits[13];
+पूर्ण
 
-static unsigned char snd_cs4231_get_format(struct snd_cs4231 *chip, int format,
-					   int channels)
-{
-	unsigned char rformat;
+अटल अचिन्हित अक्षर snd_cs4231_get_क्रमmat(काष्ठा snd_cs4231 *chip, पूर्णांक क्रमmat,
+					   पूर्णांक channels)
+अणु
+	अचिन्हित अक्षर rक्रमmat;
 
-	rformat = CS4231_LINEAR_8;
-	switch (format) {
-	case SNDRV_PCM_FORMAT_MU_LAW:
-		rformat = CS4231_ULAW_8;
-		break;
-	case SNDRV_PCM_FORMAT_A_LAW:
-		rformat = CS4231_ALAW_8;
-		break;
-	case SNDRV_PCM_FORMAT_S16_LE:
-		rformat = CS4231_LINEAR_16;
-		break;
-	case SNDRV_PCM_FORMAT_S16_BE:
-		rformat = CS4231_LINEAR_16_BIG;
-		break;
-	case SNDRV_PCM_FORMAT_IMA_ADPCM:
-		rformat = CS4231_ADPCM_16;
-		break;
-	}
-	if (channels > 1)
-		rformat |= CS4231_STEREO;
-	return rformat;
-}
+	rक्रमmat = CS4231_LINEAR_8;
+	चयन (क्रमmat) अणु
+	हाल SNDRV_PCM_FORMAT_MU_LAW:
+		rक्रमmat = CS4231_ULAW_8;
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_A_LAW:
+		rक्रमmat = CS4231_ALAW_8;
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S16_LE:
+		rक्रमmat = CS4231_LINEAR_16;
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_S16_BE:
+		rक्रमmat = CS4231_LINEAR_16_BIG;
+		अवरोध;
+	हाल SNDRV_PCM_FORMAT_IMA_ADPCM:
+		rक्रमmat = CS4231_ADPCM_16;
+		अवरोध;
+	पूर्ण
+	अगर (channels > 1)
+		rक्रमmat |= CS4231_STEREO;
+	वापस rक्रमmat;
+पूर्ण
 
-static void snd_cs4231_calibrate_mute(struct snd_cs4231 *chip, int mute)
-{
-	unsigned long flags;
+अटल व्योम snd_cs4231_calibrate_mute(काष्ठा snd_cs4231 *chip, पूर्णांक mute)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	mute = mute ? 1 : 0;
 	spin_lock_irqsave(&chip->lock, flags);
-	if (chip->calibrate_mute == mute) {
+	अगर (chip->calibrate_mute == mute) अणु
 		spin_unlock_irqrestore(&chip->lock, flags);
-		return;
-	}
-	if (!mute) {
-		snd_cs4231_dout(chip, CS4231_LEFT_INPUT,
+		वापस;
+	पूर्ण
+	अगर (!mute) अणु
+		snd_cs4231_करोut(chip, CS4231_LEFT_INPUT,
 				chip->image[CS4231_LEFT_INPUT]);
-		snd_cs4231_dout(chip, CS4231_RIGHT_INPUT,
+		snd_cs4231_करोut(chip, CS4231_RIGHT_INPUT,
 				chip->image[CS4231_RIGHT_INPUT]);
-		snd_cs4231_dout(chip, CS4231_LOOPBACK,
+		snd_cs4231_करोut(chip, CS4231_LOOPBACK,
 				chip->image[CS4231_LOOPBACK]);
-	}
-	snd_cs4231_dout(chip, CS4231_AUX1_LEFT_INPUT,
+	पूर्ण
+	snd_cs4231_करोut(chip, CS4231_AUX1_LEFT_INPUT,
 			mute ? 0x80 : chip->image[CS4231_AUX1_LEFT_INPUT]);
-	snd_cs4231_dout(chip, CS4231_AUX1_RIGHT_INPUT,
+	snd_cs4231_करोut(chip, CS4231_AUX1_RIGHT_INPUT,
 			mute ? 0x80 : chip->image[CS4231_AUX1_RIGHT_INPUT]);
-	snd_cs4231_dout(chip, CS4231_AUX2_LEFT_INPUT,
+	snd_cs4231_करोut(chip, CS4231_AUX2_LEFT_INPUT,
 			mute ? 0x80 : chip->image[CS4231_AUX2_LEFT_INPUT]);
-	snd_cs4231_dout(chip, CS4231_AUX2_RIGHT_INPUT,
+	snd_cs4231_करोut(chip, CS4231_AUX2_RIGHT_INPUT,
 			mute ? 0x80 : chip->image[CS4231_AUX2_RIGHT_INPUT]);
-	snd_cs4231_dout(chip, CS4231_LEFT_OUTPUT,
+	snd_cs4231_करोut(chip, CS4231_LEFT_OUTPUT,
 			mute ? 0x80 : chip->image[CS4231_LEFT_OUTPUT]);
-	snd_cs4231_dout(chip, CS4231_RIGHT_OUTPUT,
+	snd_cs4231_करोut(chip, CS4231_RIGHT_OUTPUT,
 			mute ? 0x80 : chip->image[CS4231_RIGHT_OUTPUT]);
-	snd_cs4231_dout(chip, CS4231_LEFT_LINE_IN,
+	snd_cs4231_करोut(chip, CS4231_LEFT_LINE_IN,
 			mute ? 0x80 : chip->image[CS4231_LEFT_LINE_IN]);
-	snd_cs4231_dout(chip, CS4231_RIGHT_LINE_IN,
+	snd_cs4231_करोut(chip, CS4231_RIGHT_LINE_IN,
 			mute ? 0x80 : chip->image[CS4231_RIGHT_LINE_IN]);
-	snd_cs4231_dout(chip, CS4231_MONO_CTRL,
+	snd_cs4231_करोut(chip, CS4231_MONO_CTRL,
 			mute ? 0xc0 : chip->image[CS4231_MONO_CTRL]);
 	chip->calibrate_mute = mute;
 	spin_unlock_irqrestore(&chip->lock, flags);
-}
+पूर्ण
 
-static void snd_cs4231_playback_format(struct snd_cs4231 *chip,
-				       struct snd_pcm_hw_params *params,
-				       unsigned char pdfr)
-{
-	unsigned long flags;
+अटल व्योम snd_cs4231_playback_क्रमmat(काष्ठा snd_cs4231 *chip,
+				       काष्ठा snd_pcm_hw_params *params,
+				       अचिन्हित अक्षर pdfr)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&chip->mce_mutex);
 	snd_cs4231_calibrate_mute(chip, 1);
@@ -616,17 +617,17 @@ static void snd_cs4231_playback_format(struct snd_cs4231 *chip,
 		       pdfr);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
 	snd_cs4231_calibrate_mute(chip, 0);
 	mutex_unlock(&chip->mce_mutex);
-}
+पूर्ण
 
-static void snd_cs4231_capture_format(struct snd_cs4231 *chip,
-				      struct snd_pcm_hw_params *params,
-				      unsigned char cdfr)
-{
-	unsigned long flags;
+अटल व्योम snd_cs4231_capture_क्रमmat(काष्ठा snd_cs4231 *chip,
+				      काष्ठा snd_pcm_hw_params *params,
+				      अचिन्हित अक्षर cdfr)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&chip->mce_mutex);
 	snd_cs4231_calibrate_mute(chip, 1);
@@ -634,65 +635,65 @@ static void snd_cs4231_capture_format(struct snd_cs4231 *chip,
 	snd_cs4231_mce_up(chip);
 
 	spin_lock_irqsave(&chip->lock, flags);
-	if (!(chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE)) {
+	अगर (!(chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE)) अणु
 		snd_cs4231_out(chip, CS4231_PLAYBK_FORMAT,
 			       ((chip->image[CS4231_PLAYBK_FORMAT]) & 0xf0) |
 			       (cdfr & 0x0f));
 		spin_unlock_irqrestore(&chip->lock, flags);
-		snd_cs4231_mce_down(chip);
+		snd_cs4231_mce_करोwn(chip);
 		snd_cs4231_mce_up(chip);
 		spin_lock_irqsave(&chip->lock, flags);
-	}
+	पूर्ण
 	snd_cs4231_out(chip, CS4231_REC_FORMAT, cdfr);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
 	snd_cs4231_calibrate_mute(chip, 0);
 	mutex_unlock(&chip->mce_mutex);
-}
+पूर्ण
 
 /*
- *  Timer interface
+ *  Timer पूर्णांकerface
  */
 
-static unsigned long snd_cs4231_timer_resolution(struct snd_timer *timer)
-{
-	struct snd_cs4231 *chip = snd_timer_chip(timer);
+अटल अचिन्हित दीर्घ snd_cs4231_समयr_resolution(काष्ठा snd_समयr *समयr)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_समयr_chip(समयr);
 
-	return chip->image[CS4231_PLAYBK_FORMAT] & 1 ? 9969 : 9920;
-}
+	वापस chip->image[CS4231_PLAYBK_FORMAT] & 1 ? 9969 : 9920;
+पूर्ण
 
-static int snd_cs4231_timer_start(struct snd_timer *timer)
-{
-	unsigned long flags;
-	unsigned int ticks;
-	struct snd_cs4231 *chip = snd_timer_chip(timer);
+अटल पूर्णांक snd_cs4231_समयr_start(काष्ठा snd_समयr *समयr)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ticks;
+	काष्ठा snd_cs4231 *chip = snd_समयr_chip(समयr);
 
 	spin_lock_irqsave(&chip->lock, flags);
-	ticks = timer->sticks;
-	if ((chip->image[CS4231_ALT_FEATURE_1] & CS4231_TIMER_ENABLE) == 0 ||
-	    (unsigned char)(ticks >> 8) != chip->image[CS4231_TIMER_HIGH] ||
-	    (unsigned char)ticks != chip->image[CS4231_TIMER_LOW]) {
+	ticks = समयr->sticks;
+	अगर ((chip->image[CS4231_ALT_FEATURE_1] & CS4231_TIMER_ENABLE) == 0 ||
+	    (अचिन्हित अक्षर)(ticks >> 8) != chip->image[CS4231_TIMER_HIGH] ||
+	    (अचिन्हित अक्षर)ticks != chip->image[CS4231_TIMER_LOW]) अणु
 		snd_cs4231_out(chip, CS4231_TIMER_HIGH,
 			       chip->image[CS4231_TIMER_HIGH] =
-			       (unsigned char) (ticks >> 8));
+			       (अचिन्हित अक्षर) (ticks >> 8));
 		snd_cs4231_out(chip, CS4231_TIMER_LOW,
 			       chip->image[CS4231_TIMER_LOW] =
-			       (unsigned char) ticks);
+			       (अचिन्हित अक्षर) ticks);
 		snd_cs4231_out(chip, CS4231_ALT_FEATURE_1,
 			       chip->image[CS4231_ALT_FEATURE_1] |
 					CS4231_TIMER_ENABLE);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_timer_stop(struct snd_timer *timer)
-{
-	unsigned long flags;
-	struct snd_cs4231 *chip = snd_timer_chip(timer);
+अटल पूर्णांक snd_cs4231_समयr_stop(काष्ठा snd_समयr *समयr)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_cs4231 *chip = snd_समयr_chip(समयr);
 
 	spin_lock_irqsave(&chip->lock, flags);
 	chip->image[CS4231_ALT_FEATURE_1] &= ~CS4231_TIMER_ENABLE;
@@ -700,18 +701,18 @@ static int snd_cs4231_timer_stop(struct snd_timer *timer)
 		       chip->image[CS4231_ALT_FEATURE_1]);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_cs4231_init(struct snd_cs4231 *chip)
-{
-	unsigned long flags;
+अटल व्योम snd_cs4231_init(काष्ठा snd_cs4231 *chip)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
-#ifdef SNDRV_DEBUG_MCE
-	snd_printdd("init: (1)\n");
-#endif
+#अगर_घोषित SNDRV_DEBUG_MCE
+	snd_prपूर्णांकdd("init: (1)\n");
+#पूर्ण_अगर
 	snd_cs4231_mce_up(chip);
 	spin_lock_irqsave(&chip->lock, flags);
 	chip->image[CS4231_IFACE_CTRL] &= ~(CS4231_PLAYBACK_ENABLE |
@@ -722,23 +723,23 @@ static void snd_cs4231_init(struct snd_cs4231 *chip)
 	chip->image[CS4231_IFACE_CTRL] |= CS4231_AUTOCALIB;
 	snd_cs4231_out(chip, CS4231_IFACE_CTRL, chip->image[CS4231_IFACE_CTRL]);
 	spin_unlock_irqrestore(&chip->lock, flags);
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
-#ifdef SNDRV_DEBUG_MCE
-	snd_printdd("init: (2)\n");
-#endif
+#अगर_घोषित SNDRV_DEBUG_MCE
+	snd_prपूर्णांकdd("init: (2)\n");
+#पूर्ण_अगर
 
 	snd_cs4231_mce_up(chip);
 	spin_lock_irqsave(&chip->lock, flags);
 	snd_cs4231_out(chip, CS4231_ALT_FEATURE_1,
 			chip->image[CS4231_ALT_FEATURE_1]);
 	spin_unlock_irqrestore(&chip->lock, flags);
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
-#ifdef SNDRV_DEBUG_MCE
-	snd_printdd("init: (3) - afei = 0x%x\n",
+#अगर_घोषित SNDRV_DEBUG_MCE
+	snd_prपूर्णांकdd("init: (3) - afei = 0x%x\n",
 		    chip->image[CS4231_ALT_FEATURE_1]);
-#endif
+#पूर्ण_अगर
 
 	spin_lock_irqsave(&chip->lock, flags);
 	snd_cs4231_out(chip, CS4231_ALT_FEATURE_2,
@@ -750,45 +751,45 @@ static void snd_cs4231_init(struct snd_cs4231 *chip)
 	snd_cs4231_out(chip, CS4231_PLAYBK_FORMAT,
 			chip->image[CS4231_PLAYBK_FORMAT]);
 	spin_unlock_irqrestore(&chip->lock, flags);
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
-#ifdef SNDRV_DEBUG_MCE
-	snd_printdd("init: (4)\n");
-#endif
+#अगर_घोषित SNDRV_DEBUG_MCE
+	snd_prपूर्णांकdd("init: (4)\n");
+#पूर्ण_अगर
 
 	snd_cs4231_mce_up(chip);
 	spin_lock_irqsave(&chip->lock, flags);
 	snd_cs4231_out(chip, CS4231_REC_FORMAT, chip->image[CS4231_REC_FORMAT]);
 	spin_unlock_irqrestore(&chip->lock, flags);
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
-#ifdef SNDRV_DEBUG_MCE
-	snd_printdd("init: (5)\n");
-#endif
-}
+#अगर_घोषित SNDRV_DEBUG_MCE
+	snd_prपूर्णांकdd("init: (5)\n");
+#पूर्ण_अगर
+पूर्ण
 
-static int snd_cs4231_open(struct snd_cs4231 *chip, unsigned int mode)
-{
-	unsigned long flags;
+अटल पूर्णांक snd_cs4231_खोलो(काष्ठा snd_cs4231 *chip, अचिन्हित पूर्णांक mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	mutex_lock(&chip->open_mutex);
-	if ((chip->mode & mode)) {
-		mutex_unlock(&chip->open_mutex);
-		return -EAGAIN;
-	}
-	if (chip->mode & CS4231_MODE_OPEN) {
+	mutex_lock(&chip->खोलो_mutex);
+	अगर ((chip->mode & mode)) अणु
+		mutex_unlock(&chip->खोलो_mutex);
+		वापस -EAGAIN;
+	पूर्ण
+	अगर (chip->mode & CS4231_MODE_OPEN) अणु
 		chip->mode |= mode;
-		mutex_unlock(&chip->open_mutex);
-		return 0;
-	}
+		mutex_unlock(&chip->खोलो_mutex);
+		वापस 0;
+	पूर्ण
 	/* ok. now enable and ack CODEC IRQ */
 	spin_lock_irqsave(&chip->lock, flags);
 	snd_cs4231_out(chip, CS4231_IRQ_STATUS, CS4231_PLAYBACK_IRQ |
 		       CS4231_RECORD_IRQ |
 		       CS4231_TIMER_IRQ);
 	snd_cs4231_out(chip, CS4231_IRQ_STATUS, 0);
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
 
 	snd_cs4231_out(chip, CS4231_IRQ_STATUS, CS4231_PLAYBACK_IRQ |
 		       CS4231_RECORD_IRQ |
@@ -798,33 +799,33 @@ static int snd_cs4231_open(struct snd_cs4231 *chip, unsigned int mode)
 	spin_unlock_irqrestore(&chip->lock, flags);
 
 	chip->mode = mode;
-	mutex_unlock(&chip->open_mutex);
-	return 0;
-}
+	mutex_unlock(&chip->खोलो_mutex);
+	वापस 0;
+पूर्ण
 
-static void snd_cs4231_close(struct snd_cs4231 *chip, unsigned int mode)
-{
-	unsigned long flags;
+अटल व्योम snd_cs4231_बंद(काष्ठा snd_cs4231 *chip, अचिन्हित पूर्णांक mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	mutex_lock(&chip->open_mutex);
+	mutex_lock(&chip->खोलो_mutex);
 	chip->mode &= ~mode;
-	if (chip->mode & CS4231_MODE_OPEN) {
-		mutex_unlock(&chip->open_mutex);
-		return;
-	}
+	अगर (chip->mode & CS4231_MODE_OPEN) अणु
+		mutex_unlock(&chip->खोलो_mutex);
+		वापस;
+	पूर्ण
 	snd_cs4231_calibrate_mute(chip, 1);
 
 	/* disable IRQ */
 	spin_lock_irqsave(&chip->lock, flags);
 	snd_cs4231_out(chip, CS4231_IRQ_STATUS, 0);
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
 
 	/* now disable record & playback */
 
-	if (chip->image[CS4231_IFACE_CTRL] &
+	अगर (chip->image[CS4231_IFACE_CTRL] &
 	    (CS4231_PLAYBACK_ENABLE | CS4231_PLAYBACK_PIO |
-	     CS4231_RECORD_ENABLE | CS4231_RECORD_PIO)) {
+	     CS4231_RECORD_ENABLE | CS4231_RECORD_PIO)) अणु
 		spin_unlock_irqrestore(&chip->lock, flags);
 		snd_cs4231_mce_up(chip);
 		spin_lock_irqsave(&chip->lock, flags);
@@ -834,112 +835,112 @@ static void snd_cs4231_close(struct snd_cs4231 *chip, unsigned int mode)
 		snd_cs4231_out(chip, CS4231_IFACE_CTRL,
 				chip->image[CS4231_IFACE_CTRL]);
 		spin_unlock_irqrestore(&chip->lock, flags);
-		snd_cs4231_mce_down(chip);
+		snd_cs4231_mce_करोwn(chip);
 		spin_lock_irqsave(&chip->lock, flags);
-	}
+	पूर्ण
 
 	/* clear IRQ again */
 	snd_cs4231_out(chip, CS4231_IRQ_STATUS, 0);
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));	/* clear IRQ */
 	spin_unlock_irqrestore(&chip->lock, flags);
 
 	snd_cs4231_calibrate_mute(chip, 0);
 
 	chip->mode = 0;
-	mutex_unlock(&chip->open_mutex);
-}
+	mutex_unlock(&chip->खोलो_mutex);
+पूर्ण
 
 /*
- *  timer open/close
+ *  समयr खोलो/बंद
  */
 
-static int snd_cs4231_timer_open(struct snd_timer *timer)
-{
-	struct snd_cs4231 *chip = snd_timer_chip(timer);
-	snd_cs4231_open(chip, CS4231_MODE_TIMER);
-	return 0;
-}
+अटल पूर्णांक snd_cs4231_समयr_खोलो(काष्ठा snd_समयr *समयr)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_समयr_chip(समयr);
+	snd_cs4231_खोलो(chip, CS4231_MODE_TIMER);
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_timer_close(struct snd_timer *timer)
-{
-	struct snd_cs4231 *chip = snd_timer_chip(timer);
-	snd_cs4231_close(chip, CS4231_MODE_TIMER);
-	return 0;
-}
+अटल पूर्णांक snd_cs4231_समयr_बंद(काष्ठा snd_समयr *समयr)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_समयr_chip(समयr);
+	snd_cs4231_बंद(chip, CS4231_MODE_TIMER);
+	वापस 0;
+पूर्ण
 
-static const struct snd_timer_hardware snd_cs4231_timer_table = {
+अटल स्थिर काष्ठा snd_समयr_hardware snd_cs4231_समयr_table = अणु
 	.flags		=	SNDRV_TIMER_HW_AUTO,
 	.resolution	=	9945,
 	.ticks		=	65535,
-	.open		=	snd_cs4231_timer_open,
-	.close		=	snd_cs4231_timer_close,
-	.c_resolution	=	snd_cs4231_timer_resolution,
-	.start		=	snd_cs4231_timer_start,
-	.stop		=	snd_cs4231_timer_stop,
-};
+	.खोलो		=	snd_cs4231_समयr_खोलो,
+	.बंद		=	snd_cs4231_समयr_बंद,
+	.c_resolution	=	snd_cs4231_समयr_resolution,
+	.start		=	snd_cs4231_समयr_start,
+	.stop		=	snd_cs4231_समयr_stop,
+पूर्ण;
 
 /*
  *  ok.. exported functions..
  */
 
-static int snd_cs4231_playback_hw_params(struct snd_pcm_substream *substream,
-					 struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	unsigned char new_pdfr;
+अटल पूर्णांक snd_cs4231_playback_hw_params(काष्ठा snd_pcm_substream *substream,
+					 काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	अचिन्हित अक्षर new_pdfr;
 
-	new_pdfr = snd_cs4231_get_format(chip, params_format(hw_params),
+	new_pdfr = snd_cs4231_get_क्रमmat(chip, params_क्रमmat(hw_params),
 					 params_channels(hw_params)) |
 		snd_cs4231_get_rate(params_rate(hw_params));
-	snd_cs4231_playback_format(chip, hw_params, new_pdfr);
+	snd_cs4231_playback_क्रमmat(chip, hw_params, new_pdfr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_playback_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक snd_cs4231_playback_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
 	chip->image[CS4231_IFACE_CTRL] &= ~(CS4231_PLAYBACK_ENABLE |
 					    CS4231_PLAYBACK_PIO);
 
-	if (WARN_ON(runtime->period_size > 0xffff + 1)) {
+	अगर (WARN_ON(runसमय->period_size > 0xffff + 1)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	chip->p_periods_sent = 0;
 
 out:
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snd_cs4231_capture_hw_params(struct snd_pcm_substream *substream,
-					struct snd_pcm_hw_params *hw_params)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	unsigned char new_cdfr;
+अटल पूर्णांक snd_cs4231_capture_hw_params(काष्ठा snd_pcm_substream *substream,
+					काष्ठा snd_pcm_hw_params *hw_params)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	अचिन्हित अक्षर new_cdfr;
 
-	new_cdfr = snd_cs4231_get_format(chip, params_format(hw_params),
+	new_cdfr = snd_cs4231_get_क्रमmat(chip, params_क्रमmat(hw_params),
 					 params_channels(hw_params)) |
 		snd_cs4231_get_rate(params_rate(hw_params));
-	snd_cs4231_capture_format(chip, hw_params, new_cdfr);
+	snd_cs4231_capture_क्रमmat(chip, hw_params, new_cdfr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_capture_prepare(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	unsigned long flags;
+अटल पूर्णांक snd_cs4231_capture_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->lock, flags);
 	chip->image[CS4231_IFACE_CTRL] &= ~(CS4231_RECORD_ENABLE |
@@ -949,104 +950,104 @@ static int snd_cs4231_capture_prepare(struct snd_pcm_substream *substream)
 	chip->c_periods_sent = 0;
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_cs4231_overrange(struct snd_cs4231 *chip)
-{
-	unsigned long flags;
-	unsigned char res;
+अटल व्योम snd_cs4231_overrange(काष्ठा snd_cs4231 *chip)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर res;
 
 	spin_lock_irqsave(&chip->lock, flags);
 	res = snd_cs4231_in(chip, CS4231_TEST_INIT);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
 	/* detect overrange only above 0dB; may be user selectable? */
-	if (res & (0x08 | 0x02))
-		chip->capture_substream->runtime->overrange++;
-}
+	अगर (res & (0x08 | 0x02))
+		chip->capture_substream->runसमय->overrange++;
+पूर्ण
 
-static void snd_cs4231_play_callback(struct snd_cs4231 *chip)
-{
-	if (chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE) {
+अटल व्योम snd_cs4231_play_callback(काष्ठा snd_cs4231 *chip)
+अणु
+	अगर (chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE) अणु
 		snd_pcm_period_elapsed(chip->playback_substream);
 		snd_cs4231_advance_dma(&chip->p_dma, chip->playback_substream,
 					    &chip->p_periods_sent);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snd_cs4231_capture_callback(struct snd_cs4231 *chip)
-{
-	if (chip->image[CS4231_IFACE_CTRL] & CS4231_RECORD_ENABLE) {
+अटल व्योम snd_cs4231_capture_callback(काष्ठा snd_cs4231 *chip)
+अणु
+	अगर (chip->image[CS4231_IFACE_CTRL] & CS4231_RECORD_ENABLE) अणु
 		snd_pcm_period_elapsed(chip->capture_substream);
 		snd_cs4231_advance_dma(&chip->c_dma, chip->capture_substream,
 					    &chip->c_periods_sent);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static snd_pcm_uframes_t snd_cs4231_playback_pointer(
-					struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct cs4231_dma_control *dma_cont = &chip->p_dma;
-	size_t ptr;
+अटल snd_pcm_uframes_t snd_cs4231_playback_poपूर्णांकer(
+					काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा cs4231_dma_control *dma_cont = &chip->p_dma;
+	माप_प्रकार ptr;
 
-	if (!(chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE))
-		return 0;
+	अगर (!(chip->image[CS4231_IFACE_CTRL] & CS4231_PLAYBACK_ENABLE))
+		वापस 0;
 	ptr = dma_cont->address(dma_cont);
-	if (ptr != 0)
-		ptr -= substream->runtime->dma_addr;
+	अगर (ptr != 0)
+		ptr -= substream->runसमय->dma_addr;
 
-	return bytes_to_frames(substream->runtime, ptr);
-}
+	वापस bytes_to_frames(substream->runसमय, ptr);
+पूर्ण
 
-static snd_pcm_uframes_t snd_cs4231_capture_pointer(
-					struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct cs4231_dma_control *dma_cont = &chip->c_dma;
-	size_t ptr;
+अटल snd_pcm_uframes_t snd_cs4231_capture_poपूर्णांकer(
+					काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा cs4231_dma_control *dma_cont = &chip->c_dma;
+	माप_प्रकार ptr;
 
-	if (!(chip->image[CS4231_IFACE_CTRL] & CS4231_RECORD_ENABLE))
-		return 0;
+	अगर (!(chip->image[CS4231_IFACE_CTRL] & CS4231_RECORD_ENABLE))
+		वापस 0;
 	ptr = dma_cont->address(dma_cont);
-	if (ptr != 0)
-		ptr -= substream->runtime->dma_addr;
+	अगर (ptr != 0)
+		ptr -= substream->runसमय->dma_addr;
 
-	return bytes_to_frames(substream->runtime, ptr);
-}
+	वापस bytes_to_frames(substream->runसमय, ptr);
+पूर्ण
 
-static int snd_cs4231_probe(struct snd_cs4231 *chip)
-{
-	unsigned long flags;
-	int i;
-	int id = 0;
-	int vers = 0;
-	unsigned char *ptr;
+अटल पूर्णांक snd_cs4231_probe(काष्ठा snd_cs4231 *chip)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
+	पूर्णांक id = 0;
+	पूर्णांक vers = 0;
+	अचिन्हित अक्षर *ptr;
 
-	for (i = 0; i < 50; i++) {
+	क्रम (i = 0; i < 50; i++) अणु
 		mb();
-		if (__cs4231_readb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
+		अगर (__cs4231_पढ़ोb(chip, CS4231U(chip, REGSEL)) & CS4231_INIT)
 			msleep(2);
-		else {
+		अन्यथा अणु
 			spin_lock_irqsave(&chip->lock, flags);
 			snd_cs4231_out(chip, CS4231_MISC_INFO, CS4231_MODE2);
 			id = snd_cs4231_in(chip, CS4231_MISC_INFO) & 0x0f;
 			vers = snd_cs4231_in(chip, CS4231_VERSION);
 			spin_unlock_irqrestore(&chip->lock, flags);
-			if (id == 0x0a)
-				break;	/* this is valid value */
-		}
-	}
-	snd_printdd("cs4231: port = %p, id = 0x%x\n", chip->port, id);
-	if (id != 0x0a)
-		return -ENODEV;	/* no valid device found */
+			अगर (id == 0x0a)
+				अवरोध;	/* this is valid value */
+		पूर्ण
+	पूर्ण
+	snd_prपूर्णांकdd("cs4231: port = %p, id = 0x%x\n", chip->port, id);
+	अगर (id != 0x0a)
+		वापस -ENODEV;	/* no valid device found */
 
 	spin_lock_irqsave(&chip->lock, flags);
 
 	/* clear any pendings IRQ */
-	__cs4231_readb(chip, CS4231U(chip, STATUS));
-	__cs4231_writeb(chip, 0, CS4231U(chip, STATUS));
+	__cs4231_पढ़ोb(chip, CS4231U(chip, STATUS));
+	__cs4231_ग_लिखोb(chip, 0, CS4231U(chip, STATUS));
 	mb();
 
 	spin_unlock_irqrestore(&chip->lock, flags);
@@ -1056,35 +1057,35 @@ static int snd_cs4231_probe(struct snd_cs4231 *chip)
 		chip->image[CS4231_IFACE_CTRL] & ~CS4231_SINGLE_DMA;
 	chip->image[CS4231_ALT_FEATURE_1] = 0x80;
 	chip->image[CS4231_ALT_FEATURE_2] = 0x01;
-	if (vers & 0x20)
+	अगर (vers & 0x20)
 		chip->image[CS4231_ALT_FEATURE_2] |= 0x02;
 
-	ptr = (unsigned char *) &chip->image;
+	ptr = (अचिन्हित अक्षर *) &chip->image;
 
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
 	spin_lock_irqsave(&chip->lock, flags);
 
-	for (i = 0; i < 32; i++)	/* ok.. fill all CS4231 registers */
+	क्रम (i = 0; i < 32; i++)	/* ok.. fill all CS4231 रेजिस्टरs */
 		snd_cs4231_out(chip, i, *ptr++);
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
 	snd_cs4231_mce_up(chip);
 
-	snd_cs4231_mce_down(chip);
+	snd_cs4231_mce_करोwn(chip);
 
 	mdelay(2);
 
-	return 0;		/* all things are ok.. */
-}
+	वापस 0;		/* all things are ok.. */
+पूर्ण
 
-static const struct snd_pcm_hardware snd_cs4231_playback = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_cs4231_playback = अणु
 	.info			= SNDRV_PCM_INFO_MMAP |
 				  SNDRV_PCM_INFO_INTERLEAVED |
 				  SNDRV_PCM_INFO_MMAP_VALID |
 				  SNDRV_PCM_INFO_SYNC_START,
-	.formats		= SNDRV_PCM_FMTBIT_MU_LAW |
+	.क्रमmats		= SNDRV_PCM_FMTBIT_MU_LAW |
 				  SNDRV_PCM_FMTBIT_A_LAW |
 				  SNDRV_PCM_FMTBIT_IMA_ADPCM |
 				  SNDRV_PCM_FMTBIT_U8 |
@@ -1101,14 +1102,14 @@ static const struct snd_pcm_hardware snd_cs4231_playback = {
 	.period_bytes_max	= 32 * 1024,
 	.periods_min		= 1,
 	.periods_max		= 1024,
-};
+पूर्ण;
 
-static const struct snd_pcm_hardware snd_cs4231_capture = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_cs4231_capture = अणु
 	.info			= SNDRV_PCM_INFO_MMAP |
 				  SNDRV_PCM_INFO_INTERLEAVED |
 				  SNDRV_PCM_INFO_MMAP_VALID |
 				  SNDRV_PCM_INFO_SYNC_START,
-	.formats		= SNDRV_PCM_FMTBIT_MU_LAW |
+	.क्रमmats		= SNDRV_PCM_FMTBIT_MU_LAW |
 				  SNDRV_PCM_FMTBIT_A_LAW |
 				  SNDRV_PCM_FMTBIT_IMA_ADPCM |
 				  SNDRV_PCM_FMTBIT_U8 |
@@ -1125,97 +1126,97 @@ static const struct snd_pcm_hardware snd_cs4231_capture = {
 	.period_bytes_max	= 32 * 1024,
 	.periods_min		= 1,
 	.periods_max		= 1024,
-};
+पूर्ण;
 
-static int snd_cs4231_playback_open(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err;
+अटल पूर्णांक snd_cs4231_playback_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err;
 
-	runtime->hw = snd_cs4231_playback;
+	runसमय->hw = snd_cs4231_playback;
 
-	err = snd_cs4231_open(chip, CS4231_MODE_PLAY);
-	if (err < 0)
-		return err;
+	err = snd_cs4231_खोलो(chip, CS4231_MODE_PLAY);
+	अगर (err < 0)
+		वापस err;
 	chip->playback_substream = substream;
 	chip->p_periods_sent = 0;
 	snd_pcm_set_sync(substream);
-	snd_cs4231_xrate(runtime);
+	snd_cs4231_xrate(runसमय);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_capture_open(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int err;
+अटल पूर्णांक snd_cs4231_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक err;
 
-	runtime->hw = snd_cs4231_capture;
+	runसमय->hw = snd_cs4231_capture;
 
-	err = snd_cs4231_open(chip, CS4231_MODE_RECORD);
-	if (err < 0)
-		return err;
+	err = snd_cs4231_खोलो(chip, CS4231_MODE_RECORD);
+	अगर (err < 0)
+		वापस err;
 	chip->capture_substream = substream;
 	chip->c_periods_sent = 0;
 	snd_pcm_set_sync(substream);
-	snd_cs4231_xrate(runtime);
+	snd_cs4231_xrate(runसमय);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_playback_close(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_cs4231_playback_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
 
-	snd_cs4231_close(chip, CS4231_MODE_PLAY);
-	chip->playback_substream = NULL;
+	snd_cs4231_बंद(chip, CS4231_MODE_PLAY);
+	chip->playback_substream = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_capture_close(struct snd_pcm_substream *substream)
-{
-	struct snd_cs4231 *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_cs4231_capture_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_pcm_substream_chip(substream);
 
-	snd_cs4231_close(chip, CS4231_MODE_RECORD);
-	chip->capture_substream = NULL;
+	snd_cs4231_बंद(chip, CS4231_MODE_RECORD);
+	chip->capture_substream = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* XXX We can do some power-management, in particular on EBUS using
- * XXX the audio AUXIO register...
+/* XXX We can करो some घातer-management, in particular on EBUS using
+ * XXX the audio AUXIO रेजिस्टर...
  */
 
-static const struct snd_pcm_ops snd_cs4231_playback_ops = {
-	.open		=	snd_cs4231_playback_open,
-	.close		=	snd_cs4231_playback_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_cs4231_playback_ops = अणु
+	.खोलो		=	snd_cs4231_playback_खोलो,
+	.बंद		=	snd_cs4231_playback_बंद,
 	.hw_params	=	snd_cs4231_playback_hw_params,
 	.prepare	=	snd_cs4231_playback_prepare,
 	.trigger	=	snd_cs4231_trigger,
-	.pointer	=	snd_cs4231_playback_pointer,
-};
+	.poपूर्णांकer	=	snd_cs4231_playback_poपूर्णांकer,
+पूर्ण;
 
-static const struct snd_pcm_ops snd_cs4231_capture_ops = {
-	.open		=	snd_cs4231_capture_open,
-	.close		=	snd_cs4231_capture_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_cs4231_capture_ops = अणु
+	.खोलो		=	snd_cs4231_capture_खोलो,
+	.बंद		=	snd_cs4231_capture_बंद,
 	.hw_params	=	snd_cs4231_capture_hw_params,
 	.prepare	=	snd_cs4231_capture_prepare,
 	.trigger	=	snd_cs4231_trigger,
-	.pointer	=	snd_cs4231_capture_pointer,
-};
+	.poपूर्णांकer	=	snd_cs4231_capture_poपूर्णांकer,
+पूर्ण;
 
-static int snd_cs4231_pcm(struct snd_card *card)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	struct snd_pcm *pcm;
-	int err;
+अटल पूर्णांक snd_cs4231_pcm(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक err;
 
 	err = snd_pcm_new(card, "CS4231", 0, 1, 1, &pcm);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 			&snd_cs4231_playback_ops);
@@ -1223,24 +1224,24 @@ static int snd_cs4231_pcm(struct snd_card *card)
 			&snd_cs4231_capture_ops);
 
 	/* global setup */
-	pcm->private_data = chip;
+	pcm->निजी_data = chip;
 	pcm->info_flags = SNDRV_PCM_INFO_JOINT_DUPLEX;
-	strcpy(pcm->name, "CS4231");
+	म_नकल(pcm->name, "CS4231");
 
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       &chip->op->dev, 64 * 1024, 128 * 1024);
 
 	chip->pcm = pcm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_timer(struct snd_card *card)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	struct snd_timer *timer;
-	struct snd_timer_id tid;
-	int err;
+अटल पूर्णांक snd_cs4231_समयr(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	काष्ठा snd_समयr *समयr;
+	काष्ठा snd_समयr_id tid;
+	पूर्णांक err;
 
 	/* Timer initialization */
 	tid.dev_class = SNDRV_TIMER_CLASS_CARD;
@@ -1248,60 +1249,60 @@ static int snd_cs4231_timer(struct snd_card *card)
 	tid.card = card->number;
 	tid.device = 0;
 	tid.subdevice = 0;
-	err = snd_timer_new(card, "CS4231", &tid, &timer);
-	if (err < 0)
-		return err;
-	strcpy(timer->name, "CS4231");
-	timer->private_data = chip;
-	timer->hw = snd_cs4231_timer_table;
-	chip->timer = timer;
+	err = snd_समयr_new(card, "CS4231", &tid, &समयr);
+	अगर (err < 0)
+		वापस err;
+	म_नकल(समयr->name, "CS4231");
+	समयr->निजी_data = chip;
+	समयr->hw = snd_cs4231_समयr_table;
+	chip->समयr = समयr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *  MIXER part
  */
 
-static int snd_cs4231_info_mux(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_info *uinfo)
-{
-	static const char * const texts[4] = {
+अटल पूर्णांक snd_cs4231_info_mux(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	अटल स्थिर अक्षर * स्थिर texts[4] = अणु
 		"Line", "CD", "Mic", "Mix"
-	};
+	पूर्ण;
 
-	return snd_ctl_enum_info(uinfo, 2, 4, texts);
-}
+	वापस snd_ctl_क्रमागत_info(uinfo, 2, 4, texts);
+पूर्ण
 
-static int snd_cs4231_get_mux(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
+अटल पूर्णांक snd_cs4231_get_mux(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chip->lock, flags);
-	ucontrol->value.enumerated.item[0] =
+	ucontrol->value.क्रमागतerated.item[0] =
 		(chip->image[CS4231_LEFT_INPUT] & CS4231_MIXS_ALL) >> 6;
-	ucontrol->value.enumerated.item[1] =
+	ucontrol->value.क्रमागतerated.item[1] =
 		(chip->image[CS4231_RIGHT_INPUT] & CS4231_MIXS_ALL) >> 6;
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_put_mux(struct snd_kcontrol *kcontrol,
-			      struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
-	unsigned short left, right;
-	int change;
+अटल पूर्णांक snd_cs4231_put_mux(काष्ठा snd_kcontrol *kcontrol,
+			      काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित लघु left, right;
+	पूर्णांक change;
 
-	if (ucontrol->value.enumerated.item[0] > 3 ||
-	    ucontrol->value.enumerated.item[1] > 3)
-		return -EINVAL;
-	left = ucontrol->value.enumerated.item[0] << 6;
-	right = ucontrol->value.enumerated.item[1] << 6;
+	अगर (ucontrol->value.क्रमागतerated.item[0] > 3 ||
+	    ucontrol->value.क्रमागतerated.item[1] > 3)
+		वापस -EINVAL;
+	left = ucontrol->value.क्रमागतerated.item[0] << 6;
+	right = ucontrol->value.क्रमागतerated.item[1] << 6;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
@@ -1314,146 +1315,146 @@ static int snd_cs4231_put_mux(struct snd_kcontrol *kcontrol,
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_cs4231_info_single(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	int mask = (kcontrol->private_value >> 16) & 0xff;
+अटल पूर्णांक snd_cs4231_info_single(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
 
 	uinfo->type = (mask == 1) ?
 		SNDRV_CTL_ELEM_TYPE_BOOLEAN : SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = mask;
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_get_single(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
-	int reg = kcontrol->private_value & 0xff;
-	int shift = (kcontrol->private_value >> 8) & 0xff;
-	int mask = (kcontrol->private_value >> 16) & 0xff;
-	int invert = (kcontrol->private_value >> 24) & 0xff;
+अटल पूर्णांक snd_cs4231_get_single(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक reg = kcontrol->निजी_value & 0xff;
+	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
+	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
+	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
-	ucontrol->value.integer.value[0] = (chip->image[reg] >> shift) & mask;
+	ucontrol->value.पूर्णांकeger.value[0] = (chip->image[reg] >> shअगरt) & mask;
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	if (invert)
-		ucontrol->value.integer.value[0] =
-			(mask - ucontrol->value.integer.value[0]);
+	अगर (invert)
+		ucontrol->value.पूर्णांकeger.value[0] =
+			(mask - ucontrol->value.पूर्णांकeger.value[0]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_put_single(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
-	int reg = kcontrol->private_value & 0xff;
-	int shift = (kcontrol->private_value >> 8) & 0xff;
-	int mask = (kcontrol->private_value >> 16) & 0xff;
-	int invert = (kcontrol->private_value >> 24) & 0xff;
-	int change;
-	unsigned short val;
+अटल पूर्णांक snd_cs4231_put_single(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक reg = kcontrol->निजी_value & 0xff;
+	पूर्णांक shअगरt = (kcontrol->निजी_value >> 8) & 0xff;
+	पूर्णांक mask = (kcontrol->निजी_value >> 16) & 0xff;
+	पूर्णांक invert = (kcontrol->निजी_value >> 24) & 0xff;
+	पूर्णांक change;
+	अचिन्हित लघु val;
 
-	val = (ucontrol->value.integer.value[0] & mask);
-	if (invert)
+	val = (ucontrol->value.पूर्णांकeger.value[0] & mask);
+	अगर (invert)
 		val = mask - val;
-	val <<= shift;
+	val <<= shअगरt;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
-	val = (chip->image[reg] & ~(mask << shift)) | val;
+	val = (chip->image[reg] & ~(mask << shअगरt)) | val;
 	change = val != chip->image[reg];
 	snd_cs4231_out(chip, reg, val);
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-static int snd_cs4231_info_double(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_info *uinfo)
-{
-	int mask = (kcontrol->private_value >> 24) & 0xff;
+अटल पूर्णांक snd_cs4231_info_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
 
 	uinfo->type = mask == 1 ?
 		SNDRV_CTL_ELEM_TYPE_BOOLEAN : SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 2;
-	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = mask;
+	uinfo->value.पूर्णांकeger.min = 0;
+	uinfo->value.पूर्णांकeger.max = mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_get_double(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
-	int left_reg = kcontrol->private_value & 0xff;
-	int right_reg = (kcontrol->private_value >> 8) & 0xff;
-	int shift_left = (kcontrol->private_value >> 16) & 0x07;
-	int shift_right = (kcontrol->private_value >> 19) & 0x07;
-	int mask = (kcontrol->private_value >> 24) & 0xff;
-	int invert = (kcontrol->private_value >> 22) & 1;
+अटल पूर्णांक snd_cs4231_get_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक left_reg = kcontrol->निजी_value & 0xff;
+	पूर्णांक right_reg = (kcontrol->निजी_value >> 8) & 0xff;
+	पूर्णांक shअगरt_left = (kcontrol->निजी_value >> 16) & 0x07;
+	पूर्णांक shअगरt_right = (kcontrol->निजी_value >> 19) & 0x07;
+	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
+	पूर्णांक invert = (kcontrol->निजी_value >> 22) & 1;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
-	ucontrol->value.integer.value[0] =
-		(chip->image[left_reg] >> shift_left) & mask;
-	ucontrol->value.integer.value[1] =
-		(chip->image[right_reg] >> shift_right) & mask;
+	ucontrol->value.पूर्णांकeger.value[0] =
+		(chip->image[left_reg] >> shअगरt_left) & mask;
+	ucontrol->value.पूर्णांकeger.value[1] =
+		(chip->image[right_reg] >> shअगरt_right) & mask;
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	if (invert) {
-		ucontrol->value.integer.value[0] =
-			(mask - ucontrol->value.integer.value[0]);
-		ucontrol->value.integer.value[1] =
-			(mask - ucontrol->value.integer.value[1]);
-	}
+	अगर (invert) अणु
+		ucontrol->value.पूर्णांकeger.value[0] =
+			(mask - ucontrol->value.पूर्णांकeger.value[0]);
+		ucontrol->value.पूर्णांकeger.value[1] =
+			(mask - ucontrol->value.पूर्णांकeger.value[1]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_put_double(struct snd_kcontrol *kcontrol,
-				 struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
-	unsigned long flags;
-	int left_reg = kcontrol->private_value & 0xff;
-	int right_reg = (kcontrol->private_value >> 8) & 0xff;
-	int shift_left = (kcontrol->private_value >> 16) & 0x07;
-	int shift_right = (kcontrol->private_value >> 19) & 0x07;
-	int mask = (kcontrol->private_value >> 24) & 0xff;
-	int invert = (kcontrol->private_value >> 22) & 1;
-	int change;
-	unsigned short val1, val2;
+अटल पूर्णांक snd_cs4231_put_द्विगुन(काष्ठा snd_kcontrol *kcontrol,
+				 काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_cs4231 *chip = snd_kcontrol_chip(kcontrol);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक left_reg = kcontrol->निजी_value & 0xff;
+	पूर्णांक right_reg = (kcontrol->निजी_value >> 8) & 0xff;
+	पूर्णांक shअगरt_left = (kcontrol->निजी_value >> 16) & 0x07;
+	पूर्णांक shअगरt_right = (kcontrol->निजी_value >> 19) & 0x07;
+	पूर्णांक mask = (kcontrol->निजी_value >> 24) & 0xff;
+	पूर्णांक invert = (kcontrol->निजी_value >> 22) & 1;
+	पूर्णांक change;
+	अचिन्हित लघु val1, val2;
 
-	val1 = ucontrol->value.integer.value[0] & mask;
-	val2 = ucontrol->value.integer.value[1] & mask;
-	if (invert) {
+	val1 = ucontrol->value.पूर्णांकeger.value[0] & mask;
+	val2 = ucontrol->value.पूर्णांकeger.value[1] & mask;
+	अगर (invert) अणु
 		val1 = mask - val1;
 		val2 = mask - val2;
-	}
-	val1 <<= shift_left;
-	val2 <<= shift_right;
+	पूर्ण
+	val1 <<= shअगरt_left;
+	val2 <<= shअगरt_right;
 
 	spin_lock_irqsave(&chip->lock, flags);
 
-	val1 = (chip->image[left_reg] & ~(mask << shift_left)) | val1;
-	val2 = (chip->image[right_reg] & ~(mask << shift_right)) | val2;
+	val1 = (chip->image[left_reg] & ~(mask << shअगरt_left)) | val1;
+	val2 = (chip->image[right_reg] & ~(mask << shअगरt_right)) | val2;
 	change = val1 != chip->image[left_reg];
 	change |= val2 != chip->image[right_reg];
 	snd_cs4231_out(chip, left_reg, val1);
@@ -1461,24 +1462,24 @@ static int snd_cs4231_put_double(struct snd_kcontrol *kcontrol,
 
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return change;
-}
+	वापस change;
+पूर्ण
 
-#define CS4231_SINGLE(xname, xindex, reg, shift, mask, invert) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), .index = (xindex), \
+#घोषणा CS4231_SINGLE(xname, xindex, reg, shअगरt, mask, invert) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), .index = (xindex), \
   .info = snd_cs4231_info_single,	\
   .get = snd_cs4231_get_single, .put = snd_cs4231_put_single,	\
-  .private_value = (reg) | ((shift) << 8) | ((mask) << 16) | ((invert) << 24) }
+  .निजी_value = (reg) | ((shअगरt) << 8) | ((mask) << 16) | ((invert) << 24) पूर्ण
 
-#define CS4231_DOUBLE(xname, xindex, left_reg, right_reg, shift_left, \
-			shift_right, mask, invert) \
-{ .iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), .index = (xindex), \
-  .info = snd_cs4231_info_double,	\
-  .get = snd_cs4231_get_double, .put = snd_cs4231_put_double,	\
-  .private_value = (left_reg) | ((right_reg) << 8) | ((shift_left) << 16) | \
-		   ((shift_right) << 19) | ((mask) << 24) | ((invert) << 22) }
+#घोषणा CS4231_DOUBLE(xname, xindex, left_reg, right_reg, shअगरt_left, \
+			shअगरt_right, mask, invert) \
+अणु .अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = (xname), .index = (xindex), \
+  .info = snd_cs4231_info_द्विगुन,	\
+  .get = snd_cs4231_get_द्विगुन, .put = snd_cs4231_put_द्विगुन,	\
+  .निजी_value = (left_reg) | ((right_reg) << 8) | ((shअगरt_left) << 16) | \
+		   ((shअगरt_right) << 19) | ((mask) << 24) | ((invert) << 22) पूर्ण
 
-static const struct snd_kcontrol_new snd_cs4231_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new snd_cs4231_controls[] = अणु
 CS4231_DOUBLE("PCM Playback Switch", 0, CS4231_LEFT_OUTPUT,
 		CS4231_RIGHT_OUTPUT, 7, 7, 1, 1),
 CS4231_DOUBLE("PCM Playback Volume", 0, CS4231_LEFT_OUTPUT,
@@ -1501,131 +1502,131 @@ CS4231_SINGLE("Mono Output Playback Switch", 0, CS4231_MONO_CTRL, 6, 1, 1),
 CS4231_SINGLE("Mono Output Playback Bypass", 0, CS4231_MONO_CTRL, 5, 1, 0),
 CS4231_DOUBLE("Capture Volume", 0, CS4231_LEFT_INPUT, CS4231_RIGHT_INPUT, 0, 0,
 		15, 0),
-{
-	.iface	= SNDRV_CTL_ELEM_IFACE_MIXER,
+अणु
+	.अगरace	= SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name	= "Capture Source",
 	.info	= snd_cs4231_info_mux,
 	.get	= snd_cs4231_get_mux,
 	.put	= snd_cs4231_put_mux,
-},
+पूर्ण,
 CS4231_DOUBLE("Mic Boost", 0, CS4231_LEFT_INPUT, CS4231_RIGHT_INPUT, 5, 5,
 		1, 0),
 CS4231_SINGLE("Loopback Capture Switch", 0, CS4231_LOOPBACK, 0, 1, 0),
 CS4231_SINGLE("Loopback Capture Volume", 0, CS4231_LOOPBACK, 2, 63, 1),
-/* SPARC specific uses of XCTL{0,1} general purpose outputs.  */
+/* SPARC specअगरic uses of XCTLअणु0,1पूर्ण general purpose outमाला_दो.  */
 CS4231_SINGLE("Line Out Switch", 0, CS4231_PIN_CTRL, 6, 1, 1),
 CS4231_SINGLE("Headphone Out Switch", 0, CS4231_PIN_CTRL, 7, 1, 1)
-};
+पूर्ण;
 
-static int snd_cs4231_mixer(struct snd_card *card)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	int err, idx;
+अटल पूर्णांक snd_cs4231_mixer(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	पूर्णांक err, idx;
 
-	if (snd_BUG_ON(!chip || !chip->pcm))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!chip || !chip->pcm))
+		वापस -EINVAL;
 
-	strcpy(card->mixername, chip->pcm->name);
+	म_नकल(card->mixername, chip->pcm->name);
 
-	for (idx = 0; idx < ARRAY_SIZE(snd_cs4231_controls); idx++) {
+	क्रम (idx = 0; idx < ARRAY_SIZE(snd_cs4231_controls); idx++) अणु
 		err = snd_ctl_add(card,
 				 snd_ctl_new1(&snd_cs4231_controls[idx], chip));
-		if (err < 0)
-			return err;
-	}
-	return 0;
-}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int dev;
+अटल पूर्णांक dev;
 
-static int cs4231_attach_begin(struct platform_device *op,
-			       struct snd_card **rcard)
-{
-	struct snd_card *card;
-	struct snd_cs4231 *chip;
-	int err;
+अटल पूर्णांक cs4231_attach_begin(काष्ठा platक्रमm_device *op,
+			       काष्ठा snd_card **rcard)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा snd_cs4231 *chip;
+	पूर्णांक err;
 
-	*rcard = NULL;
+	*rcard = शून्य;
 
-	if (dev >= SNDRV_CARDS)
-		return -ENODEV;
+	अगर (dev >= SNDRV_CARDS)
+		वापस -ENODEV;
 
-	if (!enable[dev]) {
+	अगर (!enable[dev]) अणु
 		dev++;
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	err = snd_card_new(&op->dev, index[dev], id[dev], THIS_MODULE,
-			   sizeof(struct snd_cs4231), &card);
-	if (err < 0)
-		return err;
+			   माप(काष्ठा snd_cs4231), &card);
+	अगर (err < 0)
+		वापस err;
 
-	strcpy(card->driver, "CS4231");
-	strcpy(card->shortname, "Sun CS4231");
+	म_नकल(card->driver, "CS4231");
+	म_नकल(card->लघुname, "Sun CS4231");
 
-	chip = card->private_data;
+	chip = card->निजी_data;
 	chip->card = card;
 
 	*rcard = card;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs4231_attach_finish(struct snd_card *card)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	int err;
+अटल पूर्णांक cs4231_attach_finish(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	पूर्णांक err;
 
 	err = snd_cs4231_pcm(card);
-	if (err < 0)
-		goto out_err;
+	अगर (err < 0)
+		जाओ out_err;
 
 	err = snd_cs4231_mixer(card);
-	if (err < 0)
-		goto out_err;
+	अगर (err < 0)
+		जाओ out_err;
 
-	err = snd_cs4231_timer(card);
-	if (err < 0)
-		goto out_err;
+	err = snd_cs4231_समयr(card);
+	अगर (err < 0)
+		जाओ out_err;
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto out_err;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ out_err;
 
 	dev_set_drvdata(&chip->op->dev, chip);
 
 	dev++;
-	return 0;
+	वापस 0;
 
 out_err:
-	snd_card_free(card);
-	return err;
-}
+	snd_card_मुक्त(card);
+	वापस err;
+पूर्ण
 
-#ifdef SBUS_SUPPORT
+#अगर_घोषित SBUS_SUPPORT
 
-static irqreturn_t snd_cs4231_sbus_interrupt(int irq, void *dev_id)
-{
-	unsigned long flags;
-	unsigned char status;
+अटल irqवापस_t snd_cs4231_sbus_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर status;
 	u32 csr;
-	struct snd_cs4231 *chip = dev_id;
+	काष्ठा snd_cs4231 *chip = dev_id;
 
-	/*This is IRQ is not raised by the cs4231*/
-	if (!(__cs4231_readb(chip, CS4231U(chip, STATUS)) & CS4231_GLOBALIRQ))
-		return IRQ_NONE;
+	/*This is IRQ is not उठाओd by the cs4231*/
+	अगर (!(__cs4231_पढ़ोb(chip, CS4231U(chip, STATUS)) & CS4231_GLOBALIRQ))
+		वापस IRQ_NONE;
 
-	/* ACK the APC interrupt. */
-	csr = sbus_readl(chip->port + APCCSR);
+	/* ACK the APC पूर्णांकerrupt. */
+	csr = sbus_पढ़ोl(chip->port + APCCSR);
 
-	sbus_writel(csr, chip->port + APCCSR);
+	sbus_ग_लिखोl(csr, chip->port + APCCSR);
 
-	if ((csr & APC_PDMA_READY) &&
+	अगर ((csr & APC_PDMA_READY) &&
 	    (csr & APC_PLAY_INT) &&
 	    (csr & APC_XINT_PNVA) &&
 	    !(csr & APC_XINT_EMPT))
 			snd_cs4231_play_callback(chip);
 
-	if ((csr & APC_CDMA_READY) &&
+	अगर ((csr & APC_CDMA_READY) &&
 	    (csr & APC_CAPT_INT) &&
 	    (csr & APC_XINT_CNVA) &&
 	    !(csr & APC_XINT_EMPT))
@@ -1633,170 +1634,170 @@ static irqreturn_t snd_cs4231_sbus_interrupt(int irq, void *dev_id)
 
 	status = snd_cs4231_in(chip, CS4231_IRQ_STATUS);
 
-	if (status & CS4231_TIMER_IRQ) {
-		if (chip->timer)
-			snd_timer_interrupt(chip->timer, chip->timer->sticks);
-	}
+	अगर (status & CS4231_TIMER_IRQ) अणु
+		अगर (chip->समयr)
+			snd_समयr_पूर्णांकerrupt(chip->समयr, chip->समयr->sticks);
+	पूर्ण
 
-	if ((status & CS4231_RECORD_IRQ) && (csr & APC_CDMA_READY))
+	अगर ((status & CS4231_RECORD_IRQ) && (csr & APC_CDMA_READY))
 		snd_cs4231_overrange(chip);
 
-	/* ACK the CS4231 interrupt. */
+	/* ACK the CS4231 पूर्णांकerrupt. */
 	spin_lock_irqsave(&chip->lock, flags);
-	snd_cs4231_outm(chip, CS4231_IRQ_STATUS, ~CS4231_ALL_IRQS | ~status, 0);
+	snd_cs4231_ouपंचांग(chip, CS4231_IRQ_STATUS, ~CS4231_ALL_IRQS | ~status, 0);
 	spin_unlock_irqrestore(&chip->lock, flags);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
  * SBUS DMA routines
  */
 
-static int sbus_dma_request(struct cs4231_dma_control *dma_cont,
-			    dma_addr_t bus_addr, size_t len)
-{
-	unsigned long flags;
+अटल पूर्णांक sbus_dma_request(काष्ठा cs4231_dma_control *dma_cont,
+			    dma_addr_t bus_addr, माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 test, csr;
-	int err;
-	struct sbus_dma_info *base = &dma_cont->sbus_info;
+	पूर्णांक err;
+	काष्ठा sbus_dma_info *base = &dma_cont->sbus_info;
 
-	if (len >= (1 << 24))
-		return -EINVAL;
+	अगर (len >= (1 << 24))
+		वापस -EINVAL;
 	spin_lock_irqsave(&base->lock, flags);
-	csr = sbus_readl(base->regs + APCCSR);
+	csr = sbus_पढ़ोl(base->regs + APCCSR);
 	err = -EINVAL;
 	test = APC_CDMA_READY;
-	if (base->dir == APC_PLAY)
+	अगर (base->dir == APC_PLAY)
 		test = APC_PDMA_READY;
-	if (!(csr & test))
-		goto out;
+	अगर (!(csr & test))
+		जाओ out;
 	err = -EBUSY;
 	test = APC_XINT_CNVA;
-	if (base->dir == APC_PLAY)
+	अगर (base->dir == APC_PLAY)
 		test = APC_XINT_PNVA;
-	if (!(csr & test))
-		goto out;
+	अगर (!(csr & test))
+		जाओ out;
 	err = 0;
-	sbus_writel(bus_addr, base->regs + base->dir + APCNVA);
-	sbus_writel(len, base->regs + base->dir + APCNC);
+	sbus_ग_लिखोl(bus_addr, base->regs + base->dir + APCNVA);
+	sbus_ग_लिखोl(len, base->regs + base->dir + APCNC);
 out:
 	spin_unlock_irqrestore(&base->lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void sbus_dma_prepare(struct cs4231_dma_control *dma_cont, int d)
-{
-	unsigned long flags;
+अटल व्योम sbus_dma_prepare(काष्ठा cs4231_dma_control *dma_cont, पूर्णांक d)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 csr, test;
-	struct sbus_dma_info *base = &dma_cont->sbus_info;
+	काष्ठा sbus_dma_info *base = &dma_cont->sbus_info;
 
 	spin_lock_irqsave(&base->lock, flags);
-	csr = sbus_readl(base->regs + APCCSR);
+	csr = sbus_पढ़ोl(base->regs + APCCSR);
 	test =  APC_GENL_INT | APC_PLAY_INT | APC_XINT_ENA |
 		APC_XINT_PLAY | APC_XINT_PEMP | APC_XINT_GENL |
 		 APC_XINT_PENA;
-	if (base->dir == APC_RECORD)
+	अगर (base->dir == APC_RECORD)
 		test = APC_GENL_INT | APC_CAPT_INT | APC_XINT_ENA |
 			APC_XINT_CAPT | APC_XINT_CEMP | APC_XINT_GENL;
 	csr |= test;
-	sbus_writel(csr, base->regs + APCCSR);
+	sbus_ग_लिखोl(csr, base->regs + APCCSR);
 	spin_unlock_irqrestore(&base->lock, flags);
-}
+पूर्ण
 
-static void sbus_dma_enable(struct cs4231_dma_control *dma_cont, int on)
-{
-	unsigned long flags;
-	u32 csr, shift;
-	struct sbus_dma_info *base = &dma_cont->sbus_info;
+अटल व्योम sbus_dma_enable(काष्ठा cs4231_dma_control *dma_cont, पूर्णांक on)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 csr, shअगरt;
+	काष्ठा sbus_dma_info *base = &dma_cont->sbus_info;
 
 	spin_lock_irqsave(&base->lock, flags);
-	if (!on) {
-		sbus_writel(0, base->regs + base->dir + APCNC);
-		sbus_writel(0, base->regs + base->dir + APCNVA);
-		if (base->dir == APC_PLAY) {
-			sbus_writel(0, base->regs + base->dir + APCC);
-			sbus_writel(0, base->regs + base->dir + APCVA);
-		}
+	अगर (!on) अणु
+		sbus_ग_लिखोl(0, base->regs + base->dir + APCNC);
+		sbus_ग_लिखोl(0, base->regs + base->dir + APCNVA);
+		अगर (base->dir == APC_PLAY) अणु
+			sbus_ग_लिखोl(0, base->regs + base->dir + APCC);
+			sbus_ग_लिखोl(0, base->regs + base->dir + APCVA);
+		पूर्ण
 
 		udelay(1200);
-	}
-	csr = sbus_readl(base->regs + APCCSR);
-	shift = 0;
-	if (base->dir == APC_PLAY)
-		shift = 1;
-	if (on)
-		csr &= ~(APC_CPAUSE << shift);
-	else
-		csr |= (APC_CPAUSE << shift);
-	sbus_writel(csr, base->regs + APCCSR);
-	if (on)
-		csr |= (APC_CDMA_READY << shift);
-	else
-		csr &= ~(APC_CDMA_READY << shift);
-	sbus_writel(csr, base->regs + APCCSR);
+	पूर्ण
+	csr = sbus_पढ़ोl(base->regs + APCCSR);
+	shअगरt = 0;
+	अगर (base->dir == APC_PLAY)
+		shअगरt = 1;
+	अगर (on)
+		csr &= ~(APC_CPAUSE << shअगरt);
+	अन्यथा
+		csr |= (APC_CPAUSE << shअगरt);
+	sbus_ग_लिखोl(csr, base->regs + APCCSR);
+	अगर (on)
+		csr |= (APC_CDMA_READY << shअगरt);
+	अन्यथा
+		csr &= ~(APC_CDMA_READY << shअगरt);
+	sbus_ग_लिखोl(csr, base->regs + APCCSR);
 
 	spin_unlock_irqrestore(&base->lock, flags);
-}
+पूर्ण
 
-static unsigned int sbus_dma_addr(struct cs4231_dma_control *dma_cont)
-{
-	struct sbus_dma_info *base = &dma_cont->sbus_info;
+अटल अचिन्हित पूर्णांक sbus_dma_addr(काष्ठा cs4231_dma_control *dma_cont)
+अणु
+	काष्ठा sbus_dma_info *base = &dma_cont->sbus_info;
 
-	return sbus_readl(base->regs + base->dir + APCVA);
-}
+	वापस sbus_पढ़ोl(base->regs + base->dir + APCVA);
+पूर्ण
 
 /*
- * Init and exit routines
+ * Init and निकास routines
  */
 
-static int snd_cs4231_sbus_free(struct snd_cs4231 *chip)
-{
-	struct platform_device *op = chip->op;
+अटल पूर्णांक snd_cs4231_sbus_मुक्त(काष्ठा snd_cs4231 *chip)
+अणु
+	काष्ठा platक्रमm_device *op = chip->op;
 
-	if (chip->irq[0])
-		free_irq(chip->irq[0], chip);
+	अगर (chip->irq[0])
+		मुक्त_irq(chip->irq[0], chip);
 
-	if (chip->port)
+	अगर (chip->port)
 		of_iounmap(&op->resource[0], chip->port, chip->regs_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_sbus_dev_free(struct snd_device *device)
-{
-	struct snd_cs4231 *cp = device->device_data;
+अटल पूर्णांक snd_cs4231_sbus_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_cs4231 *cp = device->device_data;
 
-	return snd_cs4231_sbus_free(cp);
-}
+	वापस snd_cs4231_sbus_मुक्त(cp);
+पूर्ण
 
-static const struct snd_device_ops snd_cs4231_sbus_dev_ops = {
-	.dev_free	=	snd_cs4231_sbus_dev_free,
-};
+अटल स्थिर काष्ठा snd_device_ops snd_cs4231_sbus_dev_ops = अणु
+	.dev_मुक्त	=	snd_cs4231_sbus_dev_मुक्त,
+पूर्ण;
 
-static int snd_cs4231_sbus_create(struct snd_card *card,
-				  struct platform_device *op,
-				  int dev)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	int err;
+अटल पूर्णांक snd_cs4231_sbus_create(काष्ठा snd_card *card,
+				  काष्ठा platक्रमm_device *op,
+				  पूर्णांक dev)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	पूर्णांक err;
 
 	spin_lock_init(&chip->lock);
 	spin_lock_init(&chip->c_dma.sbus_info.lock);
 	spin_lock_init(&chip->p_dma.sbus_info.lock);
 	mutex_init(&chip->mce_mutex);
-	mutex_init(&chip->open_mutex);
+	mutex_init(&chip->खोलो_mutex);
 	chip->op = op;
 	chip->regs_size = resource_size(&op->resource[0]);
-	memcpy(&chip->image, &snd_cs4231_original_image,
-	       sizeof(snd_cs4231_original_image));
+	स_नकल(&chip->image, &snd_cs4231_original_image,
+	       माप(snd_cs4231_original_image));
 
 	chip->port = of_ioremap(&op->resource[0], 0,
 				chip->regs_size, "cs4231");
-	if (!chip->port) {
-		snd_printdd("cs4231-%d: Unable to map chip registers.\n", dev);
-		return -EIO;
-	}
+	अगर (!chip->port) अणु
+		snd_prपूर्णांकdd("cs4231-%d: Unable to map chip registers.\n", dev);
+		वापस -EIO;
+	पूर्ण
 
 	chip->c_dma.sbus_info.regs = chip->port;
 	chip->p_dma.sbus_info.regs = chip->port;
@@ -1813,155 +1814,155 @@ static int snd_cs4231_sbus_create(struct snd_card *card,
 	chip->c_dma.request = sbus_dma_request;
 	chip->c_dma.address = sbus_dma_addr;
 
-	if (request_irq(op->archdata.irqs[0], snd_cs4231_sbus_interrupt,
-			IRQF_SHARED, "cs4231", chip)) {
-		snd_printdd("cs4231-%d: Unable to grab SBUS IRQ %d\n",
+	अगर (request_irq(op->archdata.irqs[0], snd_cs4231_sbus_पूर्णांकerrupt,
+			IRQF_SHARED, "cs4231", chip)) अणु
+		snd_prपूर्णांकdd("cs4231-%d: Unable to grab SBUS IRQ %d\n",
 			    dev, op->archdata.irqs[0]);
-		snd_cs4231_sbus_free(chip);
-		return -EBUSY;
-	}
+		snd_cs4231_sbus_मुक्त(chip);
+		वापस -EBUSY;
+	पूर्ण
 	chip->irq[0] = op->archdata.irqs[0];
 
-	if (snd_cs4231_probe(chip) < 0) {
-		snd_cs4231_sbus_free(chip);
-		return -ENODEV;
-	}
+	अगर (snd_cs4231_probe(chip) < 0) अणु
+		snd_cs4231_sbus_मुक्त(chip);
+		वापस -ENODEV;
+	पूर्ण
 	snd_cs4231_init(chip);
 
-	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
-				  chip, &snd_cs4231_sbus_dev_ops)) < 0) {
-		snd_cs4231_sbus_free(chip);
-		return err;
-	}
+	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
+				  chip, &snd_cs4231_sbus_dev_ops)) < 0) अणु
+		snd_cs4231_sbus_मुक्त(chip);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs4231_sbus_probe(struct platform_device *op)
-{
-	struct resource *rp = &op->resource[0];
-	struct snd_card *card;
-	int err;
+अटल पूर्णांक cs4231_sbus_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा resource *rp = &op->resource[0];
+	काष्ठा snd_card *card;
+	पूर्णांक err;
 
 	err = cs4231_attach_begin(op, &card);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	sprintf(card->longname, "%s at 0x%02lx:0x%016Lx, irq %d",
-		card->shortname,
+	प्र_लिखो(card->दीर्घname, "%s at 0x%02lx:0x%016Lx, irq %d",
+		card->लघुname,
 		rp->flags & 0xffL,
-		(unsigned long long)rp->start,
+		(अचिन्हित दीर्घ दीर्घ)rp->start,
 		op->archdata.irqs[0]);
 
 	err = snd_cs4231_sbus_create(card, op, dev);
-	if (err < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 
-	return cs4231_attach_finish(card);
-}
-#endif
+	वापस cs4231_attach_finish(card);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef EBUS_SUPPORT
+#अगर_घोषित EBUS_SUPPORT
 
-static void snd_cs4231_ebus_play_callback(struct ebus_dma_info *p, int event,
-					  void *cookie)
-{
-	struct snd_cs4231 *chip = cookie;
+अटल व्योम snd_cs4231_ebus_play_callback(काष्ठा ebus_dma_info *p, पूर्णांक event,
+					  व्योम *cookie)
+अणु
+	काष्ठा snd_cs4231 *chip = cookie;
 
 	snd_cs4231_play_callback(chip);
-}
+पूर्ण
 
-static void snd_cs4231_ebus_capture_callback(struct ebus_dma_info *p,
-					     int event, void *cookie)
-{
-	struct snd_cs4231 *chip = cookie;
+अटल व्योम snd_cs4231_ebus_capture_callback(काष्ठा ebus_dma_info *p,
+					     पूर्णांक event, व्योम *cookie)
+अणु
+	काष्ठा snd_cs4231 *chip = cookie;
 
 	snd_cs4231_capture_callback(chip);
-}
+पूर्ण
 
 /*
  * EBUS DMA wrappers
  */
 
-static int _ebus_dma_request(struct cs4231_dma_control *dma_cont,
-			     dma_addr_t bus_addr, size_t len)
-{
-	return ebus_dma_request(&dma_cont->ebus_info, bus_addr, len);
-}
+अटल पूर्णांक _ebus_dma_request(काष्ठा cs4231_dma_control *dma_cont,
+			     dma_addr_t bus_addr, माप_प्रकार len)
+अणु
+	वापस ebus_dma_request(&dma_cont->ebus_info, bus_addr, len);
+पूर्ण
 
-static void _ebus_dma_enable(struct cs4231_dma_control *dma_cont, int on)
-{
+अटल व्योम _ebus_dma_enable(काष्ठा cs4231_dma_control *dma_cont, पूर्णांक on)
+अणु
 	ebus_dma_enable(&dma_cont->ebus_info, on);
-}
+पूर्ण
 
-static void _ebus_dma_prepare(struct cs4231_dma_control *dma_cont, int dir)
-{
+अटल व्योम _ebus_dma_prepare(काष्ठा cs4231_dma_control *dma_cont, पूर्णांक dir)
+अणु
 	ebus_dma_prepare(&dma_cont->ebus_info, dir);
-}
+पूर्ण
 
-static unsigned int _ebus_dma_addr(struct cs4231_dma_control *dma_cont)
-{
-	return ebus_dma_addr(&dma_cont->ebus_info);
-}
+अटल अचिन्हित पूर्णांक _ebus_dma_addr(काष्ठा cs4231_dma_control *dma_cont)
+अणु
+	वापस ebus_dma_addr(&dma_cont->ebus_info);
+पूर्ण
 
 /*
- * Init and exit routines
+ * Init and निकास routines
  */
 
-static int snd_cs4231_ebus_free(struct snd_cs4231 *chip)
-{
-	struct platform_device *op = chip->op;
+अटल पूर्णांक snd_cs4231_ebus_मुक्त(काष्ठा snd_cs4231 *chip)
+अणु
+	काष्ठा platक्रमm_device *op = chip->op;
 
-	if (chip->c_dma.ebus_info.regs) {
-		ebus_dma_unregister(&chip->c_dma.ebus_info);
+	अगर (chip->c_dma.ebus_info.regs) अणु
+		ebus_dma_unरेजिस्टर(&chip->c_dma.ebus_info);
 		of_iounmap(&op->resource[2], chip->c_dma.ebus_info.regs, 0x10);
-	}
-	if (chip->p_dma.ebus_info.regs) {
-		ebus_dma_unregister(&chip->p_dma.ebus_info);
+	पूर्ण
+	अगर (chip->p_dma.ebus_info.regs) अणु
+		ebus_dma_unरेजिस्टर(&chip->p_dma.ebus_info);
 		of_iounmap(&op->resource[1], chip->p_dma.ebus_info.regs, 0x10);
-	}
+	पूर्ण
 
-	if (chip->port)
+	अगर (chip->port)
 		of_iounmap(&op->resource[0], chip->port, 0x10);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_cs4231_ebus_dev_free(struct snd_device *device)
-{
-	struct snd_cs4231 *cp = device->device_data;
+अटल पूर्णांक snd_cs4231_ebus_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_cs4231 *cp = device->device_data;
 
-	return snd_cs4231_ebus_free(cp);
-}
+	वापस snd_cs4231_ebus_मुक्त(cp);
+पूर्ण
 
-static const struct snd_device_ops snd_cs4231_ebus_dev_ops = {
-	.dev_free	=	snd_cs4231_ebus_dev_free,
-};
+अटल स्थिर काष्ठा snd_device_ops snd_cs4231_ebus_dev_ops = अणु
+	.dev_मुक्त	=	snd_cs4231_ebus_dev_मुक्त,
+पूर्ण;
 
-static int snd_cs4231_ebus_create(struct snd_card *card,
-				  struct platform_device *op,
-				  int dev)
-{
-	struct snd_cs4231 *chip = card->private_data;
-	int err;
+अटल पूर्णांक snd_cs4231_ebus_create(काष्ठा snd_card *card,
+				  काष्ठा platक्रमm_device *op,
+				  पूर्णांक dev)
+अणु
+	काष्ठा snd_cs4231 *chip = card->निजी_data;
+	पूर्णांक err;
 
 	spin_lock_init(&chip->lock);
 	spin_lock_init(&chip->c_dma.ebus_info.lock);
 	spin_lock_init(&chip->p_dma.ebus_info.lock);
 	mutex_init(&chip->mce_mutex);
-	mutex_init(&chip->open_mutex);
+	mutex_init(&chip->खोलो_mutex);
 	chip->flags |= CS4231_FLAG_EBUS;
 	chip->op = op;
-	memcpy(&chip->image, &snd_cs4231_original_image,
-	       sizeof(snd_cs4231_original_image));
-	strcpy(chip->c_dma.ebus_info.name, "cs4231(capture)");
+	स_नकल(&chip->image, &snd_cs4231_original_image,
+	       माप(snd_cs4231_original_image));
+	म_नकल(chip->c_dma.ebus_info.name, "cs4231(capture)");
 	chip->c_dma.ebus_info.flags = EBUS_DMA_FLAG_USE_EBDMA_HANDLER;
 	chip->c_dma.ebus_info.callback = snd_cs4231_ebus_capture_callback;
 	chip->c_dma.ebus_info.client_cookie = chip;
 	chip->c_dma.ebus_info.irq = op->archdata.irqs[0];
-	strcpy(chip->p_dma.ebus_info.name, "cs4231(play)");
+	म_नकल(chip->p_dma.ebus_info.name, "cs4231(play)");
 	chip->p_dma.ebus_info.flags = EBUS_DMA_FLAG_USE_EBDMA_HANDLER;
 	chip->p_dma.ebus_info.callback = snd_cs4231_ebus_play_callback;
 	chip->p_dma.ebus_info.client_cookie = chip;
@@ -1982,120 +1983,120 @@ static int snd_cs4231_ebus_create(struct snd_card *card,
 		of_ioremap(&op->resource[1], 0, 0x10, "cs4231_pdma");
 	chip->c_dma.ebus_info.regs =
 		of_ioremap(&op->resource[2], 0, 0x10, "cs4231_cdma");
-	if (!chip->port || !chip->p_dma.ebus_info.regs ||
-	    !chip->c_dma.ebus_info.regs) {
-		snd_cs4231_ebus_free(chip);
-		snd_printdd("cs4231-%d: Unable to map chip registers.\n", dev);
-		return -EIO;
-	}
+	अगर (!chip->port || !chip->p_dma.ebus_info.regs ||
+	    !chip->c_dma.ebus_info.regs) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		snd_prपूर्णांकdd("cs4231-%d: Unable to map chip registers.\n", dev);
+		वापस -EIO;
+	पूर्ण
 
-	if (ebus_dma_register(&chip->c_dma.ebus_info)) {
-		snd_cs4231_ebus_free(chip);
-		snd_printdd("cs4231-%d: Unable to register EBUS capture DMA\n",
+	अगर (ebus_dma_रेजिस्टर(&chip->c_dma.ebus_info)) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		snd_prपूर्णांकdd("cs4231-%d: Unable to register EBUS capture DMA\n",
 			    dev);
-		return -EBUSY;
-	}
-	if (ebus_dma_irq_enable(&chip->c_dma.ebus_info, 1)) {
-		snd_cs4231_ebus_free(chip);
-		snd_printdd("cs4231-%d: Unable to enable EBUS capture IRQ\n",
+		वापस -EBUSY;
+	पूर्ण
+	अगर (ebus_dma_irq_enable(&chip->c_dma.ebus_info, 1)) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		snd_prपूर्णांकdd("cs4231-%d: Unable to enable EBUS capture IRQ\n",
 			    dev);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (ebus_dma_register(&chip->p_dma.ebus_info)) {
-		snd_cs4231_ebus_free(chip);
-		snd_printdd("cs4231-%d: Unable to register EBUS play DMA\n",
+	अगर (ebus_dma_रेजिस्टर(&chip->p_dma.ebus_info)) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		snd_prपूर्णांकdd("cs4231-%d: Unable to register EBUS play DMA\n",
 			    dev);
-		return -EBUSY;
-	}
-	if (ebus_dma_irq_enable(&chip->p_dma.ebus_info, 1)) {
-		snd_cs4231_ebus_free(chip);
-		snd_printdd("cs4231-%d: Unable to enable EBUS play IRQ\n", dev);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
+	अगर (ebus_dma_irq_enable(&chip->p_dma.ebus_info, 1)) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		snd_prपूर्णांकdd("cs4231-%d: Unable to enable EBUS play IRQ\n", dev);
+		वापस -EBUSY;
+	पूर्ण
 
-	if (snd_cs4231_probe(chip) < 0) {
-		snd_cs4231_ebus_free(chip);
-		return -ENODEV;
-	}
+	अगर (snd_cs4231_probe(chip) < 0) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		वापस -ENODEV;
+	पूर्ण
 	snd_cs4231_init(chip);
 
-	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
-				  chip, &snd_cs4231_ebus_dev_ops)) < 0) {
-		snd_cs4231_ebus_free(chip);
-		return err;
-	}
+	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL,
+				  chip, &snd_cs4231_ebus_dev_ops)) < 0) अणु
+		snd_cs4231_ebus_मुक्त(chip);
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cs4231_ebus_probe(struct platform_device *op)
-{
-	struct snd_card *card;
-	int err;
+अटल पूर्णांक cs4231_ebus_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा snd_card *card;
+	पूर्णांक err;
 
 	err = cs4231_attach_begin(op, &card);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	sprintf(card->longname, "%s at 0x%llx, irq %d",
-		card->shortname,
+	प्र_लिखो(card->दीर्घname, "%s at 0x%llx, irq %d",
+		card->लघुname,
 		op->resource[0].start,
 		op->archdata.irqs[0]);
 
 	err = snd_cs4231_ebus_create(card, op, dev);
-	if (err < 0) {
-		snd_card_free(card);
-		return err;
-	}
+	अगर (err < 0) अणु
+		snd_card_मुक्त(card);
+		वापस err;
+	पूर्ण
 
-	return cs4231_attach_finish(card);
-}
-#endif
+	वापस cs4231_attach_finish(card);
+पूर्ण
+#पूर्ण_अगर
 
-static int cs4231_probe(struct platform_device *op)
-{
-#ifdef EBUS_SUPPORT
-	if (of_node_name_eq(op->dev.of_node->parent, "ebus"))
-		return cs4231_ebus_probe(op);
-#endif
-#ifdef SBUS_SUPPORT
-	if (of_node_name_eq(op->dev.of_node->parent, "sbus") ||
+अटल पूर्णांक cs4231_probe(काष्ठा platक्रमm_device *op)
+अणु
+#अगर_घोषित EBUS_SUPPORT
+	अगर (of_node_name_eq(op->dev.of_node->parent, "ebus"))
+		वापस cs4231_ebus_probe(op);
+#पूर्ण_अगर
+#अगर_घोषित SBUS_SUPPORT
+	अगर (of_node_name_eq(op->dev.of_node->parent, "sbus") ||
 	    of_node_name_eq(op->dev.of_node->parent, "sbi"))
-		return cs4231_sbus_probe(op);
-#endif
-	return -ENODEV;
-}
+		वापस cs4231_sbus_probe(op);
+#पूर्ण_अगर
+	वापस -ENODEV;
+पूर्ण
 
-static int cs4231_remove(struct platform_device *op)
-{
-	struct snd_cs4231 *chip = dev_get_drvdata(&op->dev);
+अटल पूर्णांक cs4231_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा snd_cs4231 *chip = dev_get_drvdata(&op->dev);
 
-	snd_card_free(chip->card);
+	snd_card_मुक्त(chip->card);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id cs4231_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id cs4231_match[] = अणु
+	अणु
 		.name = "SUNW,CS4231",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "audio",
 		.compatible = "SUNW,CS4231",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, cs4231_match);
 
-static struct platform_driver cs4231_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cs4231_driver = अणु
+	.driver = अणु
 		.name = "audio",
 		.of_match_table = cs4231_match,
-	},
+	पूर्ण,
 	.probe		= cs4231_probe,
-	.remove		= cs4231_remove,
-};
+	.हटाओ		= cs4231_हटाओ,
+पूर्ण;
 
-module_platform_driver(cs4231_driver);
+module_platक्रमm_driver(cs4231_driver);

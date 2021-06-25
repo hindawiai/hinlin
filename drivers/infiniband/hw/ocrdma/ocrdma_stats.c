@@ -1,4 +1,5 @@
-/* This file is part of the Emulex RoCE Device Driver for
+<शैली गुरु>
+/* This file is part of the Emulex RoCE Device Driver क्रम
  * RoCE (RDMA over Converged Ethernet) adapters.
  * Copyright (C) 2012-2015 Emulex. All rights reserved.
  * EMULEX and SLI are trademarks of Emulex.
@@ -6,25 +7,25 @@
  *
  * This software is available to you under a choice of one of two licenses.
  * You may choose to be licensed under the terms of the GNU General Public
- * License (GPL) Version 2, available from the file COPYING in the main
+ * License (GPL) Version 2, available from the file COPYING in the मुख्य
  * directory of this source tree, or the BSD license below:
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  * - Redistributions of source code must retain the above copyright notice,
  *   this list of conditions and the following disclaimer.
  *
- * - Redistributions in binary form must reproduce the above copyright
+ * - Redistributions in binary क्रमm must reproduce the above copyright
  *   notice, this list of conditions and the following disclaimer in
- *   the documentation and/or other materials provided with the distribution.
+ *   the करोcumentation and/or other materials provided with the distribution.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
@@ -32,7 +33,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Contact Information:
+ * Contact Inक्रमmation:
  * linux-drivers@emulex.com
  *
  * Emulex
@@ -40,73 +41,73 @@
  * Costa Mesa, CA 92626
  */
 
-#include <rdma/ib_addr.h>
-#include <rdma/ib_pma.h>
-#include "ocrdma_stats.h"
+#समावेश <rdma/ib_addr.h>
+#समावेश <rdma/ib_pma.h>
+#समावेश "ocrdma_stats.h"
 
-static struct dentry *ocrdma_dbgfs_dir;
+अटल काष्ठा dentry *ocrdma_dbgfs_dir;
 
-static int ocrdma_add_stat(char *start, char *pcur,
-				char *name, u64 count)
-{
-	char buff[128] = {0};
-	int cpy_len = 0;
+अटल पूर्णांक ocrdma_add_stat(अक्षर *start, अक्षर *pcur,
+				अक्षर *name, u64 count)
+अणु
+	अक्षर buff[128] = अणु0पूर्ण;
+	पूर्णांक cpy_len = 0;
 
-	snprintf(buff, 128, "%s: %llu\n", name, count);
-	cpy_len = strlen(buff);
+	snम_लिखो(buff, 128, "%s: %llu\n", name, count);
+	cpy_len = म_माप(buff);
 
-	if (pcur + cpy_len > start + OCRDMA_MAX_DBGFS_MEM) {
+	अगर (pcur + cpy_len > start + OCRDMA_MAX_DBGFS_MEM) अणु
 		pr_err("%s: No space in stats buff\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memcpy(pcur, buff, cpy_len);
-	return cpy_len;
-}
+	स_नकल(pcur, buff, cpy_len);
+	वापस cpy_len;
+पूर्ण
 
-bool ocrdma_alloc_stats_resources(struct ocrdma_dev *dev)
-{
-	struct stats_mem *mem = &dev->stats_mem;
+bool ocrdma_alloc_stats_resources(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा stats_mem *mem = &dev->stats_mem;
 
 	mutex_init(&dev->stats_lock);
 	/* Alloc mbox command mem*/
-	mem->size = max_t(u32, sizeof(struct ocrdma_rdma_stats_req),
-			sizeof(struct ocrdma_rdma_stats_resp));
+	mem->size = max_t(u32, माप(काष्ठा ocrdma_rdma_stats_req),
+			माप(काष्ठा ocrdma_rdma_stats_resp));
 
 	mem->va = dma_alloc_coherent(&dev->nic_info.pdev->dev, mem->size,
 				     &mem->pa, GFP_KERNEL);
-	if (!mem->va) {
+	अगर (!mem->va) अणु
 		pr_err("%s: stats mbox allocation failed\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Alloc debugfs mem */
 	mem->debugfs_mem = kzalloc(OCRDMA_MAX_DBGFS_MEM, GFP_KERNEL);
-	if (!mem->debugfs_mem)
-		return false;
+	अगर (!mem->debugfs_mem)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void ocrdma_release_stats_resources(struct ocrdma_dev *dev)
-{
-	struct stats_mem *mem = &dev->stats_mem;
+व्योम ocrdma_release_stats_resources(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा stats_mem *mem = &dev->stats_mem;
 
-	if (mem->va)
-		dma_free_coherent(&dev->nic_info.pdev->dev, mem->size,
+	अगर (mem->va)
+		dma_मुक्त_coherent(&dev->nic_info.pdev->dev, mem->size,
 				  mem->va, mem->pa);
-	mem->va = NULL;
-	kfree(mem->debugfs_mem);
-}
+	mem->va = शून्य;
+	kमुक्त(mem->debugfs_mem);
+पूर्ण
 
-static char *ocrdma_resource_stats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-			(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rsrc_stats *rsrc_stats = &rdma_stats->act_rsrc_stats;
+अटल अक्षर *ocrdma_resource_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+			(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rsrc_stats *rsrc_stats = &rdma_stats->act_rsrc_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "active_dpp_pds",
@@ -160,7 +161,7 @@ static char *ocrdma_resource_stats(struct ocrdma_dev *dev)
 	pcur += ocrdma_add_stat(stats, pcur, "active_mw",
 				(u64)rsrc_stats->mw);
 
-	/* Print the threshold stats */
+	/* Prपूर्णांक the threshold stats */
 	rsrc_stats = &rdma_stats->th_rsrc_stats;
 
 	pcur += ocrdma_add_stat(stats, pcur, "threshold_dpp_pds",
@@ -213,17 +214,17 @@ static char *ocrdma_resource_stats(struct ocrdma_dev *dev)
 				(u64)rsrc_stats->phy_mr);
 	pcur += ocrdma_add_stat(stats, pcur, "threshold_mw",
 				(u64)rsrc_stats->mw);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static char *ocrdma_rx_stats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
+अटल अक्षर *ocrdma_rx_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat
@@ -243,7 +244,7 @@ static char *ocrdma_rx_stats(struct ocrdma_dev *dev)
 	pcur += ocrdma_add_stat(stats, pcur, "psn_error_resp_packets",
 				(u64)rx_stats->psn_error_resp_packets);
 	pcur += ocrdma_add_stat(stats, pcur, "rnr_nak_timeouts",
-				(u64)rx_stats->rnr_nak_timeouts);
+				(u64)rx_stats->rnr_nak_समयouts);
 	pcur += ocrdma_add_stat(stats, pcur, "rnr_nak_receives",
 				(u64)rx_stats->rnr_nak_receives);
 	pcur += ocrdma_add_stat(stats, pcur, "roce_frame_rxmt_drops",
@@ -260,52 +261,52 @@ static char *ocrdma_rx_stats(struct ocrdma_dev *dev)
 				convert_to_64bit(rx_stats->roce_frames_lo,
 						 rx_stats->roce_frames_hi));
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static u64 ocrdma_sysfs_rcv_pkts(struct ocrdma_dev *dev)
-{
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
+अटल u64 ocrdma_sysfs_rcv_pkts(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
 
-	return convert_to_64bit(rx_stats->roce_frames_lo,
+	वापस convert_to_64bit(rx_stats->roce_frames_lo,
 		rx_stats->roce_frames_hi) + (u64)rx_stats->roce_frame_icrc_drops
 		+ (u64)rx_stats->roce_frame_payload_len_drops;
-}
+पूर्ण
 
-static u64 ocrdma_sysfs_rcv_data(struct ocrdma_dev *dev)
-{
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
+अटल u64 ocrdma_sysfs_rcv_data(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rx_stats *rx_stats = &rdma_stats->rx_stats;
 
-	return (convert_to_64bit(rx_stats->roce_frame_bytes_lo,
+	वापस (convert_to_64bit(rx_stats->roce_frame_bytes_lo,
 		rx_stats->roce_frame_bytes_hi))/4;
-}
+पूर्ण
 
-static char *ocrdma_tx_stats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
+अटल अक्षर *ocrdma_tx_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "send_pkts",
 				convert_to_64bit(tx_stats->send_pkts_lo,
 						 tx_stats->send_pkts_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "write_pkts",
-				convert_to_64bit(tx_stats->write_pkts_lo,
-						 tx_stats->write_pkts_hi));
+				convert_to_64bit(tx_stats->ग_लिखो_pkts_lo,
+						 tx_stats->ग_लिखो_pkts_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "read_pkts",
-				convert_to_64bit(tx_stats->read_pkts_lo,
-						 tx_stats->read_pkts_hi));
+				convert_to_64bit(tx_stats->पढ़ो_pkts_lo,
+						 tx_stats->पढ़ो_pkts_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "read_rsp_pkts",
-				convert_to_64bit(tx_stats->read_rsp_pkts_lo,
-						 tx_stats->read_rsp_pkts_hi));
+				convert_to_64bit(tx_stats->पढ़ो_rsp_pkts_lo,
+						 tx_stats->पढ़ो_rsp_pkts_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "ack_pkts",
 				convert_to_64bit(tx_stats->ack_pkts_lo,
 						 tx_stats->ack_pkts_hi));
@@ -313,70 +314,70 @@ static char *ocrdma_tx_stats(struct ocrdma_dev *dev)
 				convert_to_64bit(tx_stats->send_bytes_lo,
 						 tx_stats->send_bytes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "write_bytes",
-				convert_to_64bit(tx_stats->write_bytes_lo,
-						 tx_stats->write_bytes_hi));
+				convert_to_64bit(tx_stats->ग_लिखो_bytes_lo,
+						 tx_stats->ग_लिखो_bytes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "read_req_bytes",
-				convert_to_64bit(tx_stats->read_req_bytes_lo,
-						 tx_stats->read_req_bytes_hi));
+				convert_to_64bit(tx_stats->पढ़ो_req_bytes_lo,
+						 tx_stats->पढ़ो_req_bytes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "read_rsp_bytes",
-				convert_to_64bit(tx_stats->read_rsp_bytes_lo,
-						 tx_stats->read_rsp_bytes_hi));
+				convert_to_64bit(tx_stats->पढ़ो_rsp_bytes_lo,
+						 tx_stats->पढ़ो_rsp_bytes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "ack_timeouts",
-				(u64)tx_stats->ack_timeouts);
+				(u64)tx_stats->ack_समयouts);
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static u64 ocrdma_sysfs_xmit_pkts(struct ocrdma_dev *dev)
-{
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
+अटल u64 ocrdma_sysfs_xmit_pkts(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
 
-	return (convert_to_64bit(tx_stats->send_pkts_lo,
+	वापस (convert_to_64bit(tx_stats->send_pkts_lo,
 				 tx_stats->send_pkts_hi) +
-	convert_to_64bit(tx_stats->write_pkts_lo, tx_stats->write_pkts_hi) +
-	convert_to_64bit(tx_stats->read_pkts_lo, tx_stats->read_pkts_hi) +
-	convert_to_64bit(tx_stats->read_rsp_pkts_lo,
-			 tx_stats->read_rsp_pkts_hi) +
+	convert_to_64bit(tx_stats->ग_लिखो_pkts_lo, tx_stats->ग_लिखो_pkts_hi) +
+	convert_to_64bit(tx_stats->पढ़ो_pkts_lo, tx_stats->पढ़ो_pkts_hi) +
+	convert_to_64bit(tx_stats->पढ़ो_rsp_pkts_lo,
+			 tx_stats->पढ़ो_rsp_pkts_hi) +
 	convert_to_64bit(tx_stats->ack_pkts_lo, tx_stats->ack_pkts_hi));
-}
+पूर्ण
 
-static u64 ocrdma_sysfs_xmit_data(struct ocrdma_dev *dev)
-{
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
+अटल u64 ocrdma_sysfs_xmit_data(काष्ठा ocrdma_dev *dev)
+अणु
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_tx_stats *tx_stats = &rdma_stats->tx_stats;
 
-	return (convert_to_64bit(tx_stats->send_bytes_lo,
+	वापस (convert_to_64bit(tx_stats->send_bytes_lo,
 				 tx_stats->send_bytes_hi) +
-		convert_to_64bit(tx_stats->write_bytes_lo,
-				 tx_stats->write_bytes_hi) +
-		convert_to_64bit(tx_stats->read_req_bytes_lo,
-				 tx_stats->read_req_bytes_hi) +
-		convert_to_64bit(tx_stats->read_rsp_bytes_lo,
-				 tx_stats->read_rsp_bytes_hi))/4;
-}
+		convert_to_64bit(tx_stats->ग_लिखो_bytes_lo,
+				 tx_stats->ग_लिखो_bytes_hi) +
+		convert_to_64bit(tx_stats->पढ़ो_req_bytes_lo,
+				 tx_stats->पढ़ो_req_bytes_hi) +
+		convert_to_64bit(tx_stats->पढ़ो_rsp_bytes_lo,
+				 tx_stats->पढ़ो_rsp_bytes_hi))/4;
+पूर्ण
 
-static char *ocrdma_wqe_stats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_wqe_stats	*wqe_stats = &rdma_stats->wqe_stats;
+अटल अक्षर *ocrdma_wqe_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_wqe_stats	*wqe_stats = &rdma_stats->wqe_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "large_send_rc_wqes",
 		convert_to_64bit(wqe_stats->large_send_rc_wqes_lo,
 				 wqe_stats->large_send_rc_wqes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "large_write_rc_wqes",
-		convert_to_64bit(wqe_stats->large_write_rc_wqes_lo,
-				 wqe_stats->large_write_rc_wqes_hi));
+		convert_to_64bit(wqe_stats->large_ग_लिखो_rc_wqes_lo,
+				 wqe_stats->large_ग_लिखो_rc_wqes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "read_wqes",
-				convert_to_64bit(wqe_stats->read_wqes_lo,
-						 wqe_stats->read_wqes_hi));
+				convert_to_64bit(wqe_stats->पढ़ो_wqes_lo,
+						 wqe_stats->पढ़ो_wqes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "frmr_wqes",
 				convert_to_64bit(wqe_stats->frmr_wqes_lo,
 						 wqe_stats->frmr_wqes_hi));
@@ -388,39 +389,39 @@ static char *ocrdma_wqe_stats(struct ocrdma_dev *dev)
 				 wqe_stats->invalidate_wqes_hi));
 	pcur += ocrdma_add_stat(stats, pcur, "dpp_wqe_drops",
 				(u64)wqe_stats->dpp_wqe_drops);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static char *ocrdma_db_errstats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_db_err_stats *db_err_stats = &rdma_stats->db_err_stats;
+अटल अक्षर *ocrdma_db_errstats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_db_err_stats *db_err_stats = &rdma_stats->db_err_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "sq_doorbell_errors",
-				(u64)db_err_stats->sq_doorbell_errors);
+				(u64)db_err_stats->sq_करोorbell_errors);
 	pcur += ocrdma_add_stat(stats, pcur, "cq_doorbell_errors",
-				(u64)db_err_stats->cq_doorbell_errors);
+				(u64)db_err_stats->cq_करोorbell_errors);
 	pcur += ocrdma_add_stat(stats, pcur, "rq_srq_doorbell_errors",
-				(u64)db_err_stats->rq_srq_doorbell_errors);
+				(u64)db_err_stats->rq_srq_करोorbell_errors);
 	pcur += ocrdma_add_stat(stats, pcur, "cq_overflow_errors",
 				(u64)db_err_stats->cq_overflow_errors);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static char *ocrdma_rxqp_errstats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rx_qp_err_stats *rx_qp_err_stats =
+अटल अक्षर *ocrdma_rxqp_errstats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rx_qp_err_stats *rx_qp_err_stats =
 		 &rdma_stats->rx_qp_err_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "nak_invalid_request_errors",
@@ -435,18 +436,18 @@ static char *ocrdma_rxqp_errstats(struct ocrdma_dev *dev)
 			(u64)rx_qp_err_stats->local_protection_errors);
 	pcur += ocrdma_add_stat(stats, pcur, "local_qp_operation_errors",
 			(u64)rx_qp_err_stats->local_qp_operation_errors);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static char *ocrdma_txqp_errstats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_tx_qp_err_stats *tx_qp_err_stats =
+अटल अक्षर *ocrdma_txqp_errstats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_tx_qp_err_stats *tx_qp_err_stats =
 		&rdma_stats->tx_qp_err_stats;
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "local_length_errors",
@@ -459,51 +460,51 @@ static char *ocrdma_txqp_errstats(struct ocrdma_dev *dev)
 			(u64)tx_qp_err_stats->retry_count_exceeded_errors);
 	pcur += ocrdma_add_stat(stats, pcur, "rnr_retry_count_exceeded_errors",
 			(u64)tx_qp_err_stats->rnr_retry_count_exceeded_errors);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static char *ocrdma_tx_dbg_stats(struct ocrdma_dev *dev)
-{
-	int i;
-	char *pstats = dev->stats_mem.debugfs_mem;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_tx_dbg_stats *tx_dbg_stats =
+अटल अक्षर *ocrdma_tx_dbg_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	पूर्णांक i;
+	अक्षर *pstats = dev->stats_mem.debugfs_mem;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_tx_dbg_stats *tx_dbg_stats =
 		&rdma_stats->tx_dbg_stats;
 
-	memset(pstats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(pstats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
-	for (i = 0; i < 100; i++)
-		pstats += snprintf(pstats, 80, "DW[%d] = 0x%x\n", i,
+	क्रम (i = 0; i < 100; i++)
+		pstats += snम_लिखो(pstats, 80, "DW[%d] = 0x%x\n", i,
 				 tx_dbg_stats->data[i]);
 
-	return dev->stats_mem.debugfs_mem;
-}
+	वापस dev->stats_mem.debugfs_mem;
+पूर्ण
 
-static char *ocrdma_rx_dbg_stats(struct ocrdma_dev *dev)
-{
-	int i;
-	char *pstats = dev->stats_mem.debugfs_mem;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		(struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rx_dbg_stats *rx_dbg_stats =
+अटल अक्षर *ocrdma_rx_dbg_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	पूर्णांक i;
+	अक्षर *pstats = dev->stats_mem.debugfs_mem;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		(काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rx_dbg_stats *rx_dbg_stats =
 		&rdma_stats->rx_dbg_stats;
 
-	memset(pstats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(pstats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
-	for (i = 0; i < 200; i++)
-		pstats += snprintf(pstats, 80, "DW[%d] = 0x%x\n", i,
+	क्रम (i = 0; i < 200; i++)
+		pstats += snम_लिखो(pstats, 80, "DW[%d] = 0x%x\n", i,
 				 rx_dbg_stats->data[i]);
 
-	return dev->stats_mem.debugfs_mem;
-}
+	वापस dev->stats_mem.debugfs_mem;
+पूर्ण
 
-static char *ocrdma_driver_dbg_stats(struct ocrdma_dev *dev)
-{
-	char *stats = dev->stats_mem.debugfs_mem, *pcur;
+अटल अक्षर *ocrdma_driver_dbg_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	अक्षर *stats = dev->stats_mem.debugfs_mem, *pcur;
 
 
-	memset(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
+	स_रखो(stats, 0, (OCRDMA_MAX_DBGFS_MEM));
 
 	pcur = stats;
 	pcur += ocrdma_add_stat(stats, pcur, "async_cq_err",
@@ -600,167 +601,167 @@ static char *ocrdma_driver_dbg_stats(struct ocrdma_dev *dev)
 	pcur += ocrdma_add_stat(stats, pcur, "cqe_general_err",
 				(u64)dev->cqe_err_stats
 				[OCRDMA_CQE_GENERAL_ERR].counter);
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
-static void ocrdma_update_stats(struct ocrdma_dev *dev)
-{
-	ulong now = jiffies, secs;
-	int status;
-	struct ocrdma_rdma_stats_resp *rdma_stats =
-		      (struct ocrdma_rdma_stats_resp *)dev->stats_mem.va;
-	struct ocrdma_rsrc_stats *rsrc_stats = &rdma_stats->act_rsrc_stats;
+अटल व्योम ocrdma_update_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	uदीर्घ now = jअगरfies, secs;
+	पूर्णांक status;
+	काष्ठा ocrdma_rdma_stats_resp *rdma_stats =
+		      (काष्ठा ocrdma_rdma_stats_resp *)dev->stats_mem.va;
+	काष्ठा ocrdma_rsrc_stats *rsrc_stats = &rdma_stats->act_rsrc_stats;
 
-	secs = jiffies_to_msecs(now - dev->last_stats_time) / 1000U;
-	if (secs) {
+	secs = jअगरfies_to_msecs(now - dev->last_stats_समय) / 1000U;
+	अगर (secs) अणु
 		/* update */
 		status = ocrdma_mbx_rdma_stats(dev, false);
-		if (status)
+		अगर (status)
 			pr_err("%s: stats mbox failed with status = %d\n",
 			       __func__, status);
 		/* Update PD counters from PD resource manager */
-		if (dev->pd_mgr->pd_prealloc_valid) {
+		अगर (dev->pd_mgr->pd_pपुनः_स्मृति_valid) अणु
 			rsrc_stats->dpp_pds = dev->pd_mgr->pd_dpp_count;
 			rsrc_stats->non_dpp_pds = dev->pd_mgr->pd_norm_count;
 			/* Threshold stata*/
 			rsrc_stats = &rdma_stats->th_rsrc_stats;
 			rsrc_stats->dpp_pds = dev->pd_mgr->pd_dpp_thrsh;
 			rsrc_stats->non_dpp_pds = dev->pd_mgr->pd_norm_thrsh;
-		}
-		dev->last_stats_time = jiffies;
-	}
-}
+		पूर्ण
+		dev->last_stats_समय = jअगरfies;
+	पूर्ण
+पूर्ण
 
-static ssize_t ocrdma_dbgfs_ops_write(struct file *filp,
-					const char __user *buffer,
-					size_t count, loff_t *ppos)
-{
-	char tmp_str[32];
-	long reset;
-	int status;
-	struct ocrdma_stats *pstats = filp->private_data;
-	struct ocrdma_dev *dev = pstats->dev;
+अटल sमाप_प्रकार ocrdma_dbgfs_ops_ग_लिखो(काष्ठा file *filp,
+					स्थिर अक्षर __user *buffer,
+					माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर पंचांगp_str[32];
+	दीर्घ reset;
+	पूर्णांक status;
+	काष्ठा ocrdma_stats *pstats = filp->निजी_data;
+	काष्ठा ocrdma_dev *dev = pstats->dev;
 
-	if (*ppos != 0 || count == 0 || count > sizeof(tmp_str))
-		goto err;
+	अगर (*ppos != 0 || count == 0 || count > माप(पंचांगp_str))
+		जाओ err;
 
-	if (copy_from_user(tmp_str, buffer, count))
-		goto err;
+	अगर (copy_from_user(पंचांगp_str, buffer, count))
+		जाओ err;
 
-	tmp_str[count-1] = '\0';
-	if (kstrtol(tmp_str, 10, &reset))
-		goto err;
+	पंचांगp_str[count-1] = '\0';
+	अगर (kम_से_दीर्घ(पंचांगp_str, 10, &reset))
+		जाओ err;
 
-	switch (pstats->type) {
-	case OCRDMA_RESET_STATS:
-		if (reset) {
+	चयन (pstats->type) अणु
+	हाल OCRDMA_RESET_STATS:
+		अगर (reset) अणु
 			status = ocrdma_mbx_rdma_stats(dev, true);
-			if (status) {
+			अगर (status) अणु
 				pr_err("Failed to reset stats = %d\n", status);
-				goto err;
-			}
-		}
-		break;
-	default:
-		goto err;
-	}
+				जाओ err;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
+		जाओ err;
+	पूर्ण
 
-	return count;
+	वापस count;
 err:
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-void ocrdma_pma_counters(struct ocrdma_dev *dev, struct ib_mad *out_mad)
-{
-	struct ib_pma_portcounters *pma_cnt;
+व्योम ocrdma_pma_counters(काष्ठा ocrdma_dev *dev, काष्ठा ib_mad *out_mad)
+अणु
+	काष्ठा ib_pma_portcounters *pma_cnt;
 
-	pma_cnt = (void *)(out_mad->data + 40);
+	pma_cnt = (व्योम *)(out_mad->data + 40);
 	ocrdma_update_stats(dev);
 
 	pma_cnt->port_xmit_data    = cpu_to_be32(ocrdma_sysfs_xmit_data(dev));
 	pma_cnt->port_rcv_data     = cpu_to_be32(ocrdma_sysfs_rcv_data(dev));
 	pma_cnt->port_xmit_packets = cpu_to_be32(ocrdma_sysfs_xmit_pkts(dev));
 	pma_cnt->port_rcv_packets  = cpu_to_be32(ocrdma_sysfs_rcv_pkts(dev));
-}
+पूर्ण
 
-static ssize_t ocrdma_dbgfs_ops_read(struct file *filp, char __user *buffer,
-					size_t usr_buf_len, loff_t *ppos)
-{
-	struct ocrdma_stats *pstats = filp->private_data;
-	struct ocrdma_dev *dev = pstats->dev;
-	ssize_t status = 0;
-	char *data = NULL;
+अटल sमाप_प्रकार ocrdma_dbgfs_ops_पढ़ो(काष्ठा file *filp, अक्षर __user *buffer,
+					माप_प्रकार usr_buf_len, loff_t *ppos)
+अणु
+	काष्ठा ocrdma_stats *pstats = filp->निजी_data;
+	काष्ठा ocrdma_dev *dev = pstats->dev;
+	sमाप_प्रकार status = 0;
+	अक्षर *data = शून्य;
 
-	/* No partial reads */
-	if (*ppos != 0)
-		return 0;
+	/* No partial पढ़ोs */
+	अगर (*ppos != 0)
+		वापस 0;
 
 	mutex_lock(&dev->stats_lock);
 
 	ocrdma_update_stats(dev);
 
-	switch (pstats->type) {
-	case OCRDMA_RSRC_STATS:
+	चयन (pstats->type) अणु
+	हाल OCRDMA_RSRC_STATS:
 		data = ocrdma_resource_stats(dev);
-		break;
-	case OCRDMA_RXSTATS:
+		अवरोध;
+	हाल OCRDMA_RXSTATS:
 		data = ocrdma_rx_stats(dev);
-		break;
-	case OCRDMA_WQESTATS:
+		अवरोध;
+	हाल OCRDMA_WQESTATS:
 		data = ocrdma_wqe_stats(dev);
-		break;
-	case OCRDMA_TXSTATS:
+		अवरोध;
+	हाल OCRDMA_TXSTATS:
 		data = ocrdma_tx_stats(dev);
-		break;
-	case OCRDMA_DB_ERRSTATS:
+		अवरोध;
+	हाल OCRDMA_DB_ERRSTATS:
 		data = ocrdma_db_errstats(dev);
-		break;
-	case OCRDMA_RXQP_ERRSTATS:
+		अवरोध;
+	हाल OCRDMA_RXQP_ERRSTATS:
 		data = ocrdma_rxqp_errstats(dev);
-		break;
-	case OCRDMA_TXQP_ERRSTATS:
+		अवरोध;
+	हाल OCRDMA_TXQP_ERRSTATS:
 		data = ocrdma_txqp_errstats(dev);
-		break;
-	case OCRDMA_TX_DBG_STATS:
+		अवरोध;
+	हाल OCRDMA_TX_DBG_STATS:
 		data = ocrdma_tx_dbg_stats(dev);
-		break;
-	case OCRDMA_RX_DBG_STATS:
+		अवरोध;
+	हाल OCRDMA_RX_DBG_STATS:
 		data = ocrdma_rx_dbg_stats(dev);
-		break;
-	case OCRDMA_DRV_STATS:
+		अवरोध;
+	हाल OCRDMA_DRV_STATS:
 		data = ocrdma_driver_dbg_stats(dev);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		status = -EFAULT;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (usr_buf_len < strlen(data)) {
+	अगर (usr_buf_len < म_माप(data)) अणु
 		status = -ENOSPC;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	status = simple_read_from_buffer(buffer, usr_buf_len, ppos, data,
-					 strlen(data));
-exit:
+	status = simple_पढ़ो_from_buffer(buffer, usr_buf_len, ppos, data,
+					 म_माप(data));
+निकास:
 	mutex_unlock(&dev->stats_lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const struct file_operations ocrdma_dbg_ops = {
+अटल स्थिर काष्ठा file_operations ocrdma_dbg_ops = अणु
 	.owner = THIS_MODULE,
-	.open = simple_open,
-	.read = ocrdma_dbgfs_ops_read,
-	.write = ocrdma_dbgfs_ops_write,
-};
+	.खोलो = simple_खोलो,
+	.पढ़ो = ocrdma_dbgfs_ops_पढ़ो,
+	.ग_लिखो = ocrdma_dbgfs_ops_ग_लिखो,
+पूर्ण;
 
-void ocrdma_add_port_stats(struct ocrdma_dev *dev)
-{
-	const struct pci_dev *pdev = dev->nic_info.pdev;
+व्योम ocrdma_add_port_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	स्थिर काष्ठा pci_dev *pdev = dev->nic_info.pdev;
 
-	if (!ocrdma_dbgfs_dir)
-		return;
+	अगर (!ocrdma_dbgfs_dir)
+		वापस;
 
 	/* Create post stats base dir */
 	dev->dir = debugfs_create_dir(pci_name(pdev), ocrdma_dbgfs_dir);
@@ -819,20 +820,20 @@ void ocrdma_add_port_stats(struct ocrdma_dev *dev)
 	dev->reset_stats.dev = dev;
 	debugfs_create_file("reset_stats", 0200, dev->dir, &dev->reset_stats,
 			    &ocrdma_dbg_ops);
-}
+पूर्ण
 
-void ocrdma_rem_port_stats(struct ocrdma_dev *dev)
-{
-	debugfs_remove_recursive(dev->dir);
-}
+व्योम ocrdma_rem_port_stats(काष्ठा ocrdma_dev *dev)
+अणु
+	debugfs_हटाओ_recursive(dev->dir);
+पूर्ण
 
-void ocrdma_init_debugfs(void)
-{
+व्योम ocrdma_init_debugfs(व्योम)
+अणु
 	/* Create base dir in debugfs root dir */
-	ocrdma_dbgfs_dir = debugfs_create_dir("ocrdma", NULL);
-}
+	ocrdma_dbgfs_dir = debugfs_create_dir("ocrdma", शून्य);
+पूर्ण
 
-void ocrdma_rem_debugfs(void)
-{
-	debugfs_remove_recursive(ocrdma_dbgfs_dir);
-}
+व्योम ocrdma_rem_debugfs(व्योम)
+अणु
+	debugfs_हटाओ_recursive(ocrdma_dbgfs_dir);
+पूर्ण

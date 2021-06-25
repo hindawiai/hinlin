@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * adv_pci1710.c
- * Comedi driver for Advantech PCI-1710 series boards
- * Author: Michal Dobes <dobes@tesnet.cz>
+ * Comedi driver क्रम Advantech PCI-1710 series boards
+ * Author: Michal Dobes <करोbes@tesnet.cz>
  *
  * Thanks to ZhenGang Shang <ZhenGang.Shang@Advantech.com.cn>
- * for testing and information.
+ * क्रम testing and inक्रमmation.
  */
 
 /*
  * Driver: adv_pci1710
- * Description: Comedi driver for Advantech PCI-1710 series boards
+ * Description: Comedi driver क्रम Advantech PCI-1710 series boards
  * Devices: [Advantech] PCI-1710 (adv_pci1710), PCI-1710HG, PCI-1711,
  *   PCI-1713, PCI-1731
- * Author: Michal Dobes <dobes@tesnet.cz>
+ * Author: Michal Dobes <करोbes@tesnet.cz>
  * Updated: Fri, 29 Oct 2015 17:19:35 -0700
  * Status: works
  *
- * Configuration options: not applicable, uses PCI auto config
+ * Configuration options: not applicable, uses PCI स्वतः config
  *
  * This driver supports AI, AO, DI and DO subdevices.
- * AI subdevice supports cmd and insn interface,
- * other subdevices support only insn interface.
+ * AI subdevice supports cmd and insn पूर्णांकerface,
+ * other subdevices support only insn पूर्णांकerface.
  *
  * The PCI-1710 and PCI-1710HG have the same PCI device ID, so the
- * driver cannot distinguish between them, as would be normal for a
+ * driver cannot distinguish between them, as would be normal क्रम a
  * PCI driver.
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
-#include "comedi_8254.h"
-#include "amcc_s5933.h"
+#समावेश "comedi_8254.h"
+#समावेश "amcc_s5933.h"
 
 /*
  * PCI BAR2 Register map (dev->iobase)
  */
-#define PCI171X_AD_DATA_REG	0x00	/* R:   A/D data */
-#define PCI171X_SOFTTRG_REG	0x00	/* W:   soft trigger for A/D */
-#define PCI171X_RANGE_REG	0x02	/* W:   A/D gain/range register */
-#define PCI171X_RANGE_DIFF	BIT(5)
-#define PCI171X_RANGE_UNI	BIT(4)
-#define PCI171X_RANGE_GAIN(x)	(((x) & 0x7) << 0)
-#define PCI171X_MUX_REG		0x04	/* W:   A/D multiplexor control */
-#define PCI171X_MUX_CHANH(x)	(((x) & 0xff) << 8)
-#define PCI171X_MUX_CHANL(x)	(((x) & 0xff) << 0)
-#define PCI171X_MUX_CHAN(x)	(PCI171X_MUX_CHANH(x) | PCI171X_MUX_CHANL(x))
-#define PCI171X_STATUS_REG	0x06	/* R:   status register */
-#define PCI171X_STATUS_IRQ	BIT(11)	/* 1=IRQ occurred */
-#define PCI171X_STATUS_FF	BIT(10)	/* 1=FIFO is full, fatal error */
-#define PCI171X_STATUS_FH	BIT(9)	/* 1=FIFO is half full */
-#define PCI171X_STATUS_FE	BIT(8)	/* 1=FIFO is empty */
-#define PCI171X_CTRL_REG	0x06	/* W:   control register */
-#define PCI171X_CTRL_CNT0	BIT(6)	/* 1=ext. clk, 0=int. 100kHz clk */
-#define PCI171X_CTRL_ONEFH	BIT(5)	/* 1=on FIFO half full, 0=on sample */
-#define PCI171X_CTRL_IRQEN	BIT(4)	/* 1=enable IRQ */
-#define PCI171X_CTRL_GATE	BIT(3)	/* 1=enable ext. trigger GATE (8254?) */
-#define PCI171X_CTRL_EXT	BIT(2)	/* 1=enable ext. trigger source */
-#define PCI171X_CTRL_PACER	BIT(1)	/* 1=enable int. 8254 trigger source */
-#define PCI171X_CTRL_SW		BIT(0)	/* 1=enable software trigger source */
-#define PCI171X_CLRINT_REG	0x08	/* W:   clear interrupts request */
-#define PCI171X_CLRFIFO_REG	0x09	/* W:   clear FIFO */
-#define PCI171X_DA_REG(x)	(0x0a + ((x) * 2)) /* W:   D/A register */
-#define PCI171X_DAREF_REG	0x0e	/* W:   D/A reference control */
-#define PCI171X_DAREF(c, r)	(((r) & 0x3) << ((c) * 2))
-#define PCI171X_DAREF_MASK(c)	PCI171X_DAREF((c), 0x3)
-#define PCI171X_DI_REG		0x10	/* R:   digital inputs */
-#define PCI171X_DO_REG		0x10	/* W:   digital outputs */
-#define PCI171X_TIMER_BASE	0x18	/* R/W: 8254 timer */
+#घोषणा PCI171X_AD_DATA_REG	0x00	/* R:   A/D data */
+#घोषणा PCI171X_SOFTTRG_REG	0x00	/* W:   soft trigger क्रम A/D */
+#घोषणा PCI171X_RANGE_REG	0x02	/* W:   A/D gain/range रेजिस्टर */
+#घोषणा PCI171X_RANGE_DIFF	BIT(5)
+#घोषणा PCI171X_RANGE_UNI	BIT(4)
+#घोषणा PCI171X_RANGE_GAIN(x)	(((x) & 0x7) << 0)
+#घोषणा PCI171X_MUX_REG		0x04	/* W:   A/D multiplexor control */
+#घोषणा PCI171X_MUX_CHANH(x)	(((x) & 0xff) << 8)
+#घोषणा PCI171X_MUX_CHANL(x)	(((x) & 0xff) << 0)
+#घोषणा PCI171X_MUX_CHAN(x)	(PCI171X_MUX_CHANH(x) | PCI171X_MUX_CHANL(x))
+#घोषणा PCI171X_STATUS_REG	0x06	/* R:   status रेजिस्टर */
+#घोषणा PCI171X_STATUS_IRQ	BIT(11)	/* 1=IRQ occurred */
+#घोषणा PCI171X_STATUS_FF	BIT(10)	/* 1=FIFO is full, fatal error */
+#घोषणा PCI171X_STATUS_FH	BIT(9)	/* 1=FIFO is half full */
+#घोषणा PCI171X_STATUS_FE	BIT(8)	/* 1=FIFO is empty */
+#घोषणा PCI171X_CTRL_REG	0x06	/* W:   control रेजिस्टर */
+#घोषणा PCI171X_CTRL_CNT0	BIT(6)	/* 1=ext. clk, 0=पूर्णांक. 100kHz clk */
+#घोषणा PCI171X_CTRL_ONEFH	BIT(5)	/* 1=on FIFO half full, 0=on sample */
+#घोषणा PCI171X_CTRL_IRQEN	BIT(4)	/* 1=enable IRQ */
+#घोषणा PCI171X_CTRL_GATE	BIT(3)	/* 1=enable ext. trigger GATE (8254?) */
+#घोषणा PCI171X_CTRL_EXT	BIT(2)	/* 1=enable ext. trigger source */
+#घोषणा PCI171X_CTRL_PACER	BIT(1)	/* 1=enable पूर्णांक. 8254 trigger source */
+#घोषणा PCI171X_CTRL_SW		BIT(0)	/* 1=enable software trigger source */
+#घोषणा PCI171X_CLRINT_REG	0x08	/* W:   clear पूर्णांकerrupts request */
+#घोषणा PCI171X_CLRFIFO_REG	0x09	/* W:   clear FIFO */
+#घोषणा PCI171X_DA_REG(x)	(0x0a + ((x) * 2)) /* W:   D/A रेजिस्टर */
+#घोषणा PCI171X_DAREF_REG	0x0e	/* W:   D/A reference control */
+#घोषणा PCI171X_DAREF(c, r)	(((r) & 0x3) << ((c) * 2))
+#घोषणा PCI171X_DAREF_MASK(c)	PCI171X_DAREF((c), 0x3)
+#घोषणा PCI171X_DI_REG		0x10	/* R:   digital inमाला_दो */
+#घोषणा PCI171X_DO_REG		0x10	/* W:   digital outमाला_दो */
+#घोषणा PCI171X_TIMER_BASE	0x18	/* R/W: 8254 समयr */
 
-static const struct comedi_lrange pci1710_ai_range = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange pci1710_ai_range = अणु
+	9, अणु
 		BIP_RANGE(5),		/* gain 1   (0x00) */
 		BIP_RANGE(2.5),		/* gain 2   (0x01) */
 		BIP_RANGE(1.25),	/* gain 4   (0x02) */
@@ -83,11 +84,11 @@ static const struct comedi_lrange pci1710_ai_range = {
 		UNI_RANGE(5),		/* gain 2   (0x01 | UNI) */
 		UNI_RANGE(2.5),		/* gain 4   (0x02 | UNI) */
 		UNI_RANGE(1.25)		/* gain 8   (0x03 | UNI) */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange pci1710hg_ai_range = {
-	12, {
+अटल स्थिर काष्ठा comedi_lrange pci1710hg_ai_range = अणु
+	12, अणु
 		BIP_RANGE(5),		/* gain 1    (0x00) */
 		BIP_RANGE(0.5),		/* gain 10   (0x01) */
 		BIP_RANGE(0.05),	/* gain 100  (0x02) */
@@ -100,134 +101,134 @@ static const struct comedi_lrange pci1710hg_ai_range = {
 		UNI_RANGE(1),		/* gain 10   (0x01 | UNI) */
 		UNI_RANGE(0.1),		/* gain 100  (0x02 | UNI) */
 		UNI_RANGE(0.01)		/* gain 1000 (0x03 | UNI) */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange pci1711_ai_range = {
-	5, {
+अटल स्थिर काष्ठा comedi_lrange pci1711_ai_range = अणु
+	5, अणु
 		BIP_RANGE(10),		/* gain 1  (0x00) */
 		BIP_RANGE(5),		/* gain 2  (0x01) */
 		BIP_RANGE(2.5),		/* gain 4  (0x02) */
 		BIP_RANGE(1.25),	/* gain 8  (0x03) */
 		BIP_RANGE(0.625)	/* gain 16 (0x04) */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange pci171x_ao_range = {
-	3, {
-		UNI_RANGE(5),		/* internal -5V ref */
-		UNI_RANGE(10),		/* internal -10V ref */
-		RANGE_ext(0, 1)		/* external -Vref (+/-10V max) */
-	}
-};
+अटल स्थिर काष्ठा comedi_lrange pci171x_ao_range = अणु
+	3, अणु
+		UNI_RANGE(5),		/* पूर्णांकernal -5V ref */
+		UNI_RANGE(10),		/* पूर्णांकernal -10V ref */
+		RANGE_ext(0, 1)		/* बाह्यal -Vref (+/-10V max) */
+	पूर्ण
+पूर्ण;
 
-enum pci1710_boardid {
+क्रमागत pci1710_boardid अणु
 	BOARD_PCI1710,
 	BOARD_PCI1710HG,
 	BOARD_PCI1711,
 	BOARD_PCI1713,
 	BOARD_PCI1731,
-};
+पूर्ण;
 
-struct boardtype {
-	const char *name;
-	const struct comedi_lrange *ai_range;
-	unsigned int is_pci1711:1;
-	unsigned int is_pci1713:1;
-	unsigned int has_ao:1;
-};
+काष्ठा boardtype अणु
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा comedi_lrange *ai_range;
+	अचिन्हित पूर्णांक is_pci1711:1;
+	अचिन्हित पूर्णांक is_pci1713:1;
+	अचिन्हित पूर्णांक has_ao:1;
+पूर्ण;
 
-static const struct boardtype boardtypes[] = {
-	[BOARD_PCI1710] = {
+अटल स्थिर काष्ठा boardtype boardtypes[] = अणु
+	[BOARD_PCI1710] = अणु
 		.name		= "pci1710",
 		.ai_range	= &pci1710_ai_range,
 		.has_ao		= 1,
-	},
-	[BOARD_PCI1710HG] = {
+	पूर्ण,
+	[BOARD_PCI1710HG] = अणु
 		.name		= "pci1710hg",
 		.ai_range	= &pci1710hg_ai_range,
 		.has_ao		= 1,
-	},
-	[BOARD_PCI1711] = {
+	पूर्ण,
+	[BOARD_PCI1711] = अणु
 		.name		= "pci1711",
 		.ai_range	= &pci1711_ai_range,
 		.is_pci1711	= 1,
 		.has_ao		= 1,
-	},
-	[BOARD_PCI1713] = {
+	पूर्ण,
+	[BOARD_PCI1713] = अणु
 		.name		= "pci1713",
 		.ai_range	= &pci1710_ai_range,
 		.is_pci1713	= 1,
-	},
-	[BOARD_PCI1731] = {
+	पूर्ण,
+	[BOARD_PCI1731] = अणु
 		.name		= "pci1731",
 		.ai_range	= &pci1711_ai_range,
 		.is_pci1711	= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct pci1710_private {
-	unsigned int max_samples;
-	unsigned int ctrl;	/* control register value */
-	unsigned int ctrl_ext;	/* used to switch from TRIG_EXT to TRIG_xxx */
-	unsigned int mux_scan;	/* used to set the channel interval to scan */
-	unsigned char ai_et;
-	unsigned int act_chanlist[32];	/*  list of scanned channel */
-	unsigned char saved_seglen;	/* len of the non-repeating chanlist */
-	unsigned char da_ranges;	/*  copy of D/A outpit range register */
-	unsigned char unipolar_gain;	/* adjust for unipolar gain codes */
-};
+काष्ठा pci1710_निजी अणु
+	अचिन्हित पूर्णांक max_samples;
+	अचिन्हित पूर्णांक ctrl;	/* control रेजिस्टर value */
+	अचिन्हित पूर्णांक ctrl_ext;	/* used to चयन from TRIG_EXT to TRIG_xxx */
+	अचिन्हित पूर्णांक mux_scan;	/* used to set the channel पूर्णांकerval to scan */
+	अचिन्हित अक्षर ai_et;
+	अचिन्हित पूर्णांक act_chanlist[32];	/*  list of scanned channel */
+	अचिन्हित अक्षर saved_seglen;	/* len of the non-repeating chanlist */
+	अचिन्हित अक्षर da_ranges;	/*  copy of D/A outpit range रेजिस्टर */
+	अचिन्हित अक्षर unipolar_gain;	/* adjust क्रम unipolar gain codes */
+पूर्ण;
 
-static int pci1710_ai_check_chanlist(struct comedi_device *dev,
-				     struct comedi_subdevice *s,
-				     struct comedi_cmd *cmd)
-{
-	struct pci1710_private *devpriv = dev->private;
-	unsigned int chan0 = CR_CHAN(cmd->chanlist[0]);
-	unsigned int last_aref = CR_AREF(cmd->chanlist[0]);
-	unsigned int next_chan = (chan0 + 1) % s->n_chan;
-	unsigned int chansegment[32];
-	unsigned int seglen;
-	int i;
+अटल पूर्णांक pci1710_ai_check_chanlist(काष्ठा comedi_device *dev,
+				     काष्ठा comedi_subdevice *s,
+				     काष्ठा comedi_cmd *cmd)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan0 = CR_CHAN(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक last_aref = CR_AREF(cmd->chanlist[0]);
+	अचिन्हित पूर्णांक next_chan = (chan0 + 1) % s->n_chan;
+	अचिन्हित पूर्णांक chansegment[32];
+	अचिन्हित पूर्णांक seglen;
+	पूर्णांक i;
 
-	if (cmd->chanlist_len == 1) {
+	अगर (cmd->chanlist_len == 1) अणु
 		devpriv->saved_seglen = cmd->chanlist_len;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* first channel is always ok */
 	chansegment[0] = cmd->chanlist[0];
 
-	for (i = 1; i < cmd->chanlist_len; i++) {
-		unsigned int chan = CR_CHAN(cmd->chanlist[i]);
-		unsigned int aref = CR_AREF(cmd->chanlist[i]);
+	क्रम (i = 1; i < cmd->chanlist_len; i++) अणु
+		अचिन्हित पूर्णांक chan = CR_CHAN(cmd->chanlist[i]);
+		अचिन्हित पूर्णांक aref = CR_AREF(cmd->chanlist[i]);
 
-		if (cmd->chanlist[0] == cmd->chanlist[i])
-			break;	/*  we detected a loop, stop */
+		अगर (cmd->chanlist[0] == cmd->chanlist[i])
+			अवरोध;	/*  we detected a loop, stop */
 
-		if (aref == AREF_DIFF && (chan & 1)) {
+		अगर (aref == AREF_DIFF && (chan & 1)) अणु
 			dev_err(dev->class_dev,
 				"Odd channel cannot be differential input!\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (last_aref == AREF_DIFF)
+		अगर (last_aref == AREF_DIFF)
 			next_chan = (next_chan + 1) % s->n_chan;
-		if (chan != next_chan) {
+		अगर (chan != next_chan) अणु
 			dev_err(dev->class_dev,
 				"channel list must be continuous! chanlist[%i]=%d but must be %d or %d!\n",
 				i, chan, next_chan, chan0);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* next correct channel in list */
 		chansegment[i] = cmd->chanlist[i];
 		last_aref = aref;
-	}
+	पूर्ण
 	seglen = i;
 
-	for (i = 0; i < cmd->chanlist_len; i++) {
-		if (cmd->chanlist[i] != chansegment[i % seglen]) {
+	क्रम (i = 0; i < cmd->chanlist_len; i++) अणु
+		अगर (cmd->chanlist[i] != chansegment[i % seglen]) अणु
 			dev_err(dev->class_dev,
 				"bad channel, reference or range number! chanlist[%i]=%d,%d,%d and not %d,%d,%d!\n",
 				i, CR_CHAN(chansegment[i]),
@@ -236,37 +237,37 @@ static int pci1710_ai_check_chanlist(struct comedi_device *dev,
 				CR_CHAN(cmd->chanlist[i % seglen]),
 				CR_RANGE(cmd->chanlist[i % seglen]),
 				CR_AREF(chansegment[i % seglen]));
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	devpriv->saved_seglen = seglen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pci1710_ai_setup_chanlist(struct comedi_device *dev,
-				      struct comedi_subdevice *s,
-				      unsigned int *chanlist,
-				      unsigned int n_chan,
-				      unsigned int seglen)
-{
-	struct pci1710_private *devpriv = dev->private;
-	unsigned int first_chan = CR_CHAN(chanlist[0]);
-	unsigned int last_chan = CR_CHAN(chanlist[seglen - 1]);
-	unsigned int i;
+अटल व्योम pci1710_ai_setup_chanlist(काष्ठा comedi_device *dev,
+				      काष्ठा comedi_subdevice *s,
+				      अचिन्हित पूर्णांक *chanlist,
+				      अचिन्हित पूर्णांक n_chan,
+				      अचिन्हित पूर्णांक seglen)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक first_chan = CR_CHAN(chanlist[0]);
+	अचिन्हित पूर्णांक last_chan = CR_CHAN(chanlist[seglen - 1]);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < seglen; i++) {	/*  store range list to card */
-		unsigned int chan = CR_CHAN(chanlist[i]);
-		unsigned int range = CR_RANGE(chanlist[i]);
-		unsigned int aref = CR_AREF(chanlist[i]);
-		unsigned int rangeval = 0;
+	क्रम (i = 0; i < seglen; i++) अणु	/*  store range list to card */
+		अचिन्हित पूर्णांक chan = CR_CHAN(chanlist[i]);
+		अचिन्हित पूर्णांक range = CR_RANGE(chanlist[i]);
+		अचिन्हित पूर्णांक aref = CR_AREF(chanlist[i]);
+		अचिन्हित पूर्णांक rangeval = 0;
 
-		if (aref == AREF_DIFF)
+		अगर (aref == AREF_DIFF)
 			rangeval |= PCI171X_RANGE_DIFF;
-		if (comedi_range_is_unipolar(s, range)) {
+		अगर (comedi_range_is_unipolar(s, range)) अणु
 			rangeval |= PCI171X_RANGE_UNI;
 			range -= devpriv->unipolar_gain;
-		}
+		पूर्ण
 		rangeval |= PCI171X_RANGE_GAIN(range);
 
 		/* select channel and set range */
@@ -274,66 +275,66 @@ static void pci1710_ai_setup_chanlist(struct comedi_device *dev,
 		outw(rangeval, dev->iobase + PCI171X_RANGE_REG);
 
 		devpriv->act_chanlist[i] = chan;
-	}
-	for ( ; i < n_chan; i++)	/* store remainder of channel list */
+	पूर्ण
+	क्रम ( ; i < n_chan; i++)	/* store reमुख्यder of channel list */
 		devpriv->act_chanlist[i] = CR_CHAN(chanlist[i]);
 
-	/* select channel interval to scan */
+	/* select channel पूर्णांकerval to scan */
 	devpriv->mux_scan = PCI171X_MUX_CHANL(first_chan) |
 			    PCI171X_MUX_CHANH(last_chan);
 	outw(devpriv->mux_scan, dev->iobase + PCI171X_MUX_REG);
-}
+पूर्ण
 
-static int pci1710_ai_eoc(struct comedi_device *dev,
-			  struct comedi_subdevice *s,
-			  struct comedi_insn *insn,
-			  unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक pci1710_ai_eoc(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_insn *insn,
+			  अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inw(dev->iobase + PCI171X_STATUS_REG);
-	if ((status & PCI171X_STATUS_FE) == 0)
-		return 0;
-	return -EBUSY;
-}
+	अगर ((status & PCI171X_STATUS_FE) == 0)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int pci1710_ai_read_sample(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  unsigned int cur_chan,
-				  unsigned short *val)
-{
-	const struct boardtype *board = dev->board_ptr;
-	struct pci1710_private *devpriv = dev->private;
-	unsigned short sample;
-	unsigned int chan;
+अटल पूर्णांक pci1710_ai_पढ़ो_sample(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  अचिन्हित पूर्णांक cur_chan,
+				  अचिन्हित लघु *val)
+अणु
+	स्थिर काष्ठा boardtype *board = dev->board_ptr;
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	अचिन्हित लघु sample;
+	अचिन्हित पूर्णांक chan;
 
 	sample = inw(dev->iobase + PCI171X_AD_DATA_REG);
-	if (!board->is_pci1713) {
+	अगर (!board->is_pci1713) अणु
 		/*
 		 * The upper 4 bits of the 16-bit sample are the channel number
-		 * that the sample was acquired from. Verify that this channel
+		 * that the sample was acquired from. Verअगरy that this channel
 		 * number matches the expected channel number.
 		 */
 		chan = sample >> 12;
-		if (chan != devpriv->act_chanlist[cur_chan]) {
+		अगर (chan != devpriv->act_chanlist[cur_chan]) अणु
 			dev_err(dev->class_dev,
 				"A/D data dropout: received from channel %d, expected %d\n",
 				chan, devpriv->act_chanlist[cur_chan]);
-			return -ENODATA;
-		}
-	}
+			वापस -ENODATA;
+		पूर्ण
+	पूर्ण
 	*val = sample & s->maxdata;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci1710_ai_insn_read(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	struct pci1710_private *devpriv = dev->private;
-	int ret = 0;
-	int i;
+अटल पूर्णांक pci1710_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	/* enable software trigger */
 	devpriv->ctrl |= PCI171X_CTRL_SW;
@@ -344,22 +345,22 @@ static int pci1710_ai_insn_read(struct comedi_device *dev,
 
 	pci1710_ai_setup_chanlist(dev, s, &insn->chanspec, 1, 1);
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned short val;
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित लघु val;
 
 		/* start conversion */
 		outw(0, dev->iobase + PCI171X_SOFTTRG_REG);
 
-		ret = comedi_timeout(dev, s, insn, pci1710_ai_eoc, 0);
-		if (ret)
-			break;
+		ret = comedi_समयout(dev, s, insn, pci1710_ai_eoc, 0);
+		अगर (ret)
+			अवरोध;
 
-		ret = pci1710_ai_read_sample(dev, s, 0, &val);
-		if (ret)
-			break;
+		ret = pci1710_ai_पढ़ो_sample(dev, s, 0, &val);
+		अगर (ret)
+			अवरोध;
 
 		data[i] = val;
-	}
+	पूर्ण
 
 	/* disable software trigger */
 	devpriv->ctrl &= ~PCI171X_CTRL_SW;
@@ -368,133 +369,133 @@ static int pci1710_ai_insn_read(struct comedi_device *dev,
 	outb(0, dev->iobase + PCI171X_CLRFIFO_REG);
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
 
-	return ret ? ret : insn->n;
-}
+	वापस ret ? ret : insn->n;
+पूर्ण
 
-static int pci1710_ai_cancel(struct comedi_device *dev,
-			     struct comedi_subdevice *s)
-{
-	struct pci1710_private *devpriv = dev->private;
+अटल पूर्णांक pci1710_ai_cancel(काष्ठा comedi_device *dev,
+			     काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
 
-	/* disable A/D triggers and interrupt sources */
+	/* disable A/D triggers and पूर्णांकerrupt sources */
 	devpriv->ctrl &= PCI171X_CTRL_CNT0;	/* preserve counter 0 clk src */
 	outw(devpriv->ctrl, dev->iobase + PCI171X_CTRL_REG);
 
 	/* disable pacer */
 	comedi_8254_pacer_enable(dev->pacer, 1, 2, false);
 
-	/* clear A/D FIFO and any pending interrutps */
+	/* clear A/D FIFO and any pending पूर्णांकerrutps */
 	outb(0, dev->iobase + PCI171X_CLRFIFO_REG);
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pci1710_handle_every_sample(struct comedi_device *dev,
-					struct comedi_subdevice *s)
-{
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned int status;
-	unsigned short val;
-	int ret;
+अटल व्योम pci1710_handle_every_sample(काष्ठा comedi_device *dev,
+					काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित पूर्णांक status;
+	अचिन्हित लघु val;
+	पूर्णांक ret;
 
 	status = inw(dev->iobase + PCI171X_STATUS_REG);
-	if (status & PCI171X_STATUS_FE) {
+	अगर (status & PCI171X_STATUS_FE) अणु
 		dev_dbg(dev->class_dev, "A/D FIFO empty (%4x)\n", status);
 		s->async->events |= COMEDI_CB_ERROR;
-		return;
-	}
-	if (status & PCI171X_STATUS_FF) {
+		वापस;
+	पूर्ण
+	अगर (status & PCI171X_STATUS_FF) अणु
 		dev_dbg(dev->class_dev,
 			"A/D FIFO Full status (Fatal Error!) (%4x)\n", status);
 		s->async->events |= COMEDI_CB_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
 
-	for (; !(inw(dev->iobase + PCI171X_STATUS_REG) & PCI171X_STATUS_FE);) {
-		ret = pci1710_ai_read_sample(dev, s, s->async->cur_chan, &val);
-		if (ret) {
+	क्रम (; !(inw(dev->iobase + PCI171X_STATUS_REG) & PCI171X_STATUS_FE);) अणु
+		ret = pci1710_ai_पढ़ो_sample(dev, s, s->async->cur_chan, &val);
+		अगर (ret) अणु
 			s->async->events |= COMEDI_CB_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		comedi_buf_write_samples(s, &val, 1);
+		comedi_buf_ग_लिखो_samples(s, &val, 1);
 
-		if (cmd->stop_src == TRIG_COUNT &&
-		    s->async->scans_done >= cmd->stop_arg) {
+		अगर (cmd->stop_src == TRIG_COUNT &&
+		    s->async->scans_करोne >= cmd->stop_arg) अणु
 			s->async->events |= COMEDI_CB_EOA;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
-}
+पूर्ण
 
-static void pci1710_handle_fifo(struct comedi_device *dev,
-				struct comedi_subdevice *s)
-{
-	struct pci1710_private *devpriv = dev->private;
-	struct comedi_async *async = s->async;
-	struct comedi_cmd *cmd = &async->cmd;
-	unsigned int status;
-	int i;
+अटल व्योम pci1710_handle_fअगरo(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_async *async = s->async;
+	काष्ठा comedi_cmd *cmd = &async->cmd;
+	अचिन्हित पूर्णांक status;
+	पूर्णांक i;
 
 	status = inw(dev->iobase + PCI171X_STATUS_REG);
-	if (!(status & PCI171X_STATUS_FH)) {
+	अगर (!(status & PCI171X_STATUS_FH)) अणु
 		dev_dbg(dev->class_dev, "A/D FIFO not half full!\n");
 		async->events |= COMEDI_CB_ERROR;
-		return;
-	}
-	if (status & PCI171X_STATUS_FF) {
+		वापस;
+	पूर्ण
+	अगर (status & PCI171X_STATUS_FF) अणु
 		dev_dbg(dev->class_dev,
 			"A/D FIFO Full status (Fatal Error!)\n");
 		async->events |= COMEDI_CB_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < devpriv->max_samples; i++) {
-		unsigned short val;
-		int ret;
+	क्रम (i = 0; i < devpriv->max_samples; i++) अणु
+		अचिन्हित लघु val;
+		पूर्णांक ret;
 
-		ret = pci1710_ai_read_sample(dev, s, s->async->cur_chan, &val);
-		if (ret) {
+		ret = pci1710_ai_पढ़ो_sample(dev, s, s->async->cur_chan, &val);
+		अगर (ret) अणु
 			s->async->events |= COMEDI_CB_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!comedi_buf_write_samples(s, &val, 1))
-			break;
+		अगर (!comedi_buf_ग_लिखो_samples(s, &val, 1))
+			अवरोध;
 
-		if (cmd->stop_src == TRIG_COUNT &&
-		    async->scans_done >= cmd->stop_arg) {
+		अगर (cmd->stop_src == TRIG_COUNT &&
+		    async->scans_करोne >= cmd->stop_arg) अणु
 			async->events |= COMEDI_CB_EOA;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
-}
+पूर्ण
 
-static irqreturn_t pci1710_irq_handler(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct pci1710_private *devpriv = dev->private;
-	struct comedi_subdevice *s;
-	struct comedi_cmd *cmd;
+अटल irqवापस_t pci1710_irq_handler(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s;
+	काष्ठा comedi_cmd *cmd;
 
-	if (!dev->attached)	/*  is device attached? */
-		return IRQ_NONE;	/*  no, exit */
+	अगर (!dev->attached)	/*  is device attached? */
+		वापस IRQ_NONE;	/*  no, निकास */
 
-	s = dev->read_subdev;
+	s = dev->पढ़ो_subdev;
 	cmd = &s->async->cmd;
 
-	/*  is this interrupt from our board? */
-	if (!(inw(dev->iobase + PCI171X_STATUS_REG) & PCI171X_STATUS_IRQ))
-		return IRQ_NONE;	/*  no, exit */
+	/*  is this पूर्णांकerrupt from our board? */
+	अगर (!(inw(dev->iobase + PCI171X_STATUS_REG) & PCI171X_STATUS_IRQ))
+		वापस IRQ_NONE;	/*  no, निकास */
 
-	if (devpriv->ai_et) {	/*  Switch from initial TRIG_EXT to TRIG_xxx. */
+	अगर (devpriv->ai_et) अणु	/*  Switch from initial TRIG_EXT to TRIG_xxx. */
 		devpriv->ai_et = 0;
 		devpriv->ctrl &= PCI171X_CTRL_CNT0;
 		devpriv->ctrl |= PCI171X_CTRL_SW; /* set software trigger */
@@ -502,27 +503,27 @@ static irqreturn_t pci1710_irq_handler(int irq, void *d)
 		devpriv->ctrl = devpriv->ctrl_ext;
 		outb(0, dev->iobase + PCI171X_CLRFIFO_REG);
 		outb(0, dev->iobase + PCI171X_CLRINT_REG);
-		/* no sample on this interrupt; reset the channel interval */
+		/* no sample on this पूर्णांकerrupt; reset the channel पूर्णांकerval */
 		outw(devpriv->mux_scan, dev->iobase + PCI171X_MUX_REG);
 		outw(devpriv->ctrl, dev->iobase + PCI171X_CTRL_REG);
 		comedi_8254_pacer_enable(dev->pacer, 1, 2, true);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (cmd->flags & CMDF_WAKE_EOS)
+	अगर (cmd->flags & CMDF_WAKE_EOS)
 		pci1710_handle_every_sample(dev, s);
-	else
-		pci1710_handle_fifo(dev, s);
+	अन्यथा
+		pci1710_handle_fअगरo(dev, s);
 
 	comedi_handle_events(dev, s);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int pci1710_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
-{
-	struct pci1710_private *devpriv = dev->private;
-	struct comedi_cmd *cmd = &s->async->cmd;
+अटल पूर्णांक pci1710_ai_cmd(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
 
 	pci1710_ai_setup_chanlist(dev, s, cmd->chanlist, cmd->chanlist_len,
 				  devpriv->saved_seglen);
@@ -531,42 +532,42 @@ static int pci1710_ai_cmd(struct comedi_device *dev, struct comedi_subdevice *s)
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
 
 	devpriv->ctrl &= PCI171X_CTRL_CNT0;
-	if ((cmd->flags & CMDF_WAKE_EOS) == 0)
+	अगर ((cmd->flags & CMDF_WAKE_EOS) == 0)
 		devpriv->ctrl |= PCI171X_CTRL_ONEFH;
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		comedi_8254_update_divisors(dev->pacer);
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		comedi_8254_update_भागisors(dev->pacer);
 
 		devpriv->ctrl |= PCI171X_CTRL_PACER | PCI171X_CTRL_IRQEN;
-		if (cmd->start_src == TRIG_EXT) {
+		अगर (cmd->start_src == TRIG_EXT) अणु
 			devpriv->ctrl_ext = devpriv->ctrl;
 			devpriv->ctrl &= ~(PCI171X_CTRL_PACER |
 					   PCI171X_CTRL_ONEFH |
 					   PCI171X_CTRL_GATE);
 			devpriv->ctrl |= PCI171X_CTRL_EXT;
 			devpriv->ai_et = 1;
-		} else {	/* TRIG_NOW */
+		पूर्ण अन्यथा अणु	/* TRIG_NOW */
 			devpriv->ai_et = 0;
-		}
+		पूर्ण
 		outw(devpriv->ctrl, dev->iobase + PCI171X_CTRL_REG);
 
-		if (cmd->start_src == TRIG_NOW)
+		अगर (cmd->start_src == TRIG_NOW)
 			comedi_8254_pacer_enable(dev->pacer, 1, 2, true);
-	} else {	/* TRIG_EXT */
+	पूर्ण अन्यथा अणु	/* TRIG_EXT */
 		devpriv->ctrl |= PCI171X_CTRL_EXT | PCI171X_CTRL_IRQEN;
 		outw(devpriv->ctrl, dev->iobase + PCI171X_CTRL_REG);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci1710_ai_cmdtest(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      struct comedi_cmd *cmd)
-{
-	int err = 0;
+अटल पूर्णांक pci1710_ai_cmdtest(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      काष्ठा comedi_cmd *cmd)
+अणु
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW | TRIG_EXT);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_FOLLOW);
@@ -575,8 +576,8 @@ static int pci1710_ai_cmdtest(struct comedi_device *dev,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* step 2a: make sure trigger sources are unique */
 
@@ -586,216 +587,216 @@ static int pci1710_ai_cmdtest(struct comedi_device *dev,
 
 	/* step 2b: and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 
-	if (cmd->convert_src == TRIG_TIMER)
+	अगर (cmd->convert_src == TRIG_TIMER)
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg, 10000);
-	else	/* TRIG_FOLLOW */
+	अन्यथा	/* TRIG_FOLLOW */
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, 0);
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* step 4: fix up any arguments */
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		unsigned int arg = cmd->convert_arg;
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		अचिन्हित पूर्णांक arg = cmd->convert_arg;
 
-		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
+		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, arg);
-	}
+	पूर्ण
 
-	if (err)
-		return 4;
+	अगर (err)
+		वापस 4;
 
 	/* Step 5: check channel list */
 
 	err |= pci1710_ai_check_chanlist(dev, s, cmd);
 
-	if (err)
-		return 5;
+	अगर (err)
+		वापस 5;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci1710_ao_insn_write(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
-	struct pci1710_private *devpriv = dev->private;
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	unsigned int val = s->readback[chan];
-	int i;
+अटल पूर्णांक pci1710_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
+	पूर्णांक i;
 
 	devpriv->da_ranges &= ~PCI171X_DAREF_MASK(chan);
 	devpriv->da_ranges |= PCI171X_DAREF(chan, range);
 	outw(devpriv->da_ranges, dev->iobase + PCI171X_DAREF_REG);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		val = data[i];
 		outw(val, dev->iobase + PCI171X_DA_REG(chan));
-	}
+	पूर्ण
 
-	s->readback[chan] = val;
+	s->पढ़ोback[chan] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci1710_di_insn_bits(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
+अटल पूर्णांक pci1710_di_insn_bits(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inw(dev->iobase + PCI171X_DI_REG);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci1710_do_insn_bits(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
+अटल पूर्णांक pci1710_करो_insn_bits(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
 		outw(s->state, dev->iobase + PCI171X_DO_REG);
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci1710_counter_insn_config(struct comedi_device *dev,
-				       struct comedi_subdevice *s,
-				       struct comedi_insn *insn,
-				       unsigned int *data)
-{
-	struct pci1710_private *devpriv = dev->private;
+अटल पूर्णांक pci1710_counter_insn_config(काष्ठा comedi_device *dev,
+				       काष्ठा comedi_subdevice *s,
+				       काष्ठा comedi_insn *insn,
+				       अचिन्हित पूर्णांक *data)
+अणु
+	काष्ठा pci1710_निजी *devpriv = dev->निजी;
 
-	switch (data[0]) {
-	case INSN_CONFIG_SET_CLOCK_SRC:
-		switch (data[1]) {
-		case 0:	/* internal */
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_SET_CLOCK_SRC:
+		चयन (data[1]) अणु
+		हाल 0:	/* पूर्णांकernal */
 			devpriv->ctrl_ext &= ~PCI171X_CTRL_CNT0;
-			break;
-		case 1:	/* external */
+			अवरोध;
+		हाल 1:	/* बाह्यal */
 			devpriv->ctrl_ext |= PCI171X_CTRL_CNT0;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 		outw(devpriv->ctrl_ext, dev->iobase + PCI171X_CTRL_REG);
-		break;
-	case INSN_CONFIG_GET_CLOCK_SRC:
-		if (devpriv->ctrl_ext & PCI171X_CTRL_CNT0) {
+		अवरोध;
+	हाल INSN_CONFIG_GET_CLOCK_SRC:
+		अगर (devpriv->ctrl_ext & PCI171X_CTRL_CNT0) अणु
 			data[1] = 1;
 			data[2] = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			data[1] = 0;
 			data[2] = I8254_OSC_BASE_1MHZ;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void pci1710_reset(struct comedi_device *dev)
-{
-	const struct boardtype *board = dev->board_ptr;
+अटल व्योम pci1710_reset(काष्ठा comedi_device *dev)
+अणु
+	स्थिर काष्ठा boardtype *board = dev->board_ptr;
 
 	/*
-	 * Disable A/D triggers and interrupt sources, set counter 0
-	 * to use internal 1 MHz clock.
+	 * Disable A/D triggers and पूर्णांकerrupt sources, set counter 0
+	 * to use पूर्णांकernal 1 MHz घड़ी.
 	 */
 	outw(0, dev->iobase + PCI171X_CTRL_REG);
 
-	/* clear A/D FIFO and any pending interrutps */
+	/* clear A/D FIFO and any pending पूर्णांकerrutps */
 	outb(0, dev->iobase + PCI171X_CLRFIFO_REG);
 	outb(0, dev->iobase + PCI171X_CLRINT_REG);
 
-	if (board->has_ao) {
-		/* set DACs to 0..5V and outputs to 0V */
+	अगर (board->has_ao) अणु
+		/* set DACs to 0..5V and outमाला_दो to 0V */
 		outb(0, dev->iobase + PCI171X_DAREF_REG);
 		outw(0, dev->iobase + PCI171X_DA_REG(0));
 		outw(0, dev->iobase + PCI171X_DA_REG(1));
-	}
+	पूर्ण
 
-	/* set digital outputs to 0 */
+	/* set digital outमाला_दो to 0 */
 	outw(0, dev->iobase + PCI171X_DO_REG);
-}
+पूर्ण
 
-static int pci1710_auto_attach(struct comedi_device *dev,
-			       unsigned long context)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	const struct boardtype *board = NULL;
-	struct pci1710_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret, subdev, n_subdevices;
-	int i;
+अटल पूर्णांक pci1710_स्वतः_attach(काष्ठा comedi_device *dev,
+			       अचिन्हित दीर्घ context)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	स्थिर काष्ठा boardtype *board = शून्य;
+	काष्ठा pci1710_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret, subdev, n_subdevices;
+	पूर्णांक i;
 
-	if (context < ARRAY_SIZE(boardtypes))
+	अगर (context < ARRAY_SIZE(boardtypes))
 		board = &boardtypes[context];
-	if (!board)
-		return -ENODEV;
+	अगर (!board)
+		वापस -ENODEV;
 	dev->board_ptr = board;
 	dev->board_name = board->name;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	dev->iobase = pci_resource_start(pcidev, 2);
 
 	dev->pacer = comedi_8254_init(dev->iobase + PCI171X_TIMER_BASE,
 				      I8254_OSC_BASE_10MHZ, I8254_IO16, 0);
-	if (!dev->pacer)
-		return -ENOMEM;
+	अगर (!dev->pacer)
+		वापस -ENOMEM;
 
-	n_subdevices = 1;	/* all boards have analog inputs */
-	if (board->has_ao)
+	n_subdevices = 1;	/* all boards have analog inमाला_दो */
+	अगर (board->has_ao)
 		n_subdevices++;
-	if (!board->is_pci1713) {
+	अगर (!board->is_pci1713) अणु
 		/*
-		 * All other boards have digital inputs and outputs as
+		 * All other boards have digital inमाला_दो and outमाला_दो as
 		 * well as a user counter.
 		 */
 		n_subdevices += 3;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, n_subdevices);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	pci1710_reset(dev);
 
-	if (pcidev->irq) {
+	अगर (pcidev->irq) अणु
 		ret = request_irq(pcidev->irq, pci1710_irq_handler,
 				  IRQF_SHARED, dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = pcidev->irq;
-	}
+	पूर्ण
 
 	subdev = 0;
 
@@ -803,30 +804,30 @@ static int pci1710_auto_attach(struct comedi_device *dev,
 	s = &dev->subdevices[subdev++];
 	s->type		= COMEDI_SUBD_AI;
 	s->subdev_flags	= SDF_READABLE | SDF_GROUND;
-	if (!board->is_pci1711)
+	अगर (!board->is_pci1711)
 		s->subdev_flags	|= SDF_DIFF;
 	s->n_chan	= board->is_pci1713 ? 32 : 16;
 	s->maxdata	= 0x0fff;
 	s->range_table	= board->ai_range;
-	s->insn_read	= pci1710_ai_insn_read;
-	if (dev->irq) {
-		dev->read_subdev = s;
+	s->insn_पढ़ो	= pci1710_ai_insn_पढ़ो;
+	अगर (dev->irq) अणु
+		dev->पढ़ो_subdev = s;
 		s->subdev_flags	|= SDF_CMD_READ;
 		s->len_chanlist	= s->n_chan;
-		s->do_cmdtest	= pci1710_ai_cmdtest;
-		s->do_cmd	= pci1710_ai_cmd;
+		s->करो_cmdtest	= pci1710_ai_cmdtest;
+		s->करो_cmd	= pci1710_ai_cmd;
 		s->cancel	= pci1710_ai_cancel;
-	}
+	पूर्ण
 
-	/* find the value needed to adjust for unipolar gain codes */
-	for (i = 0; i < s->range_table->length; i++) {
-		if (comedi_range_is_unipolar(s, i)) {
+	/* find the value needed to adjust क्रम unipolar gain codes */
+	क्रम (i = 0; i < s->range_table->length; i++) अणु
+		अगर (comedi_range_is_unipolar(s, i)) अणु
 			devpriv->unipolar_gain = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (board->has_ao) {
+	अगर (board->has_ao) अणु
 		/* Analog Output subdevice */
 		s = &dev->subdevices[subdev++];
 		s->type		= COMEDI_SUBD_AO;
@@ -834,14 +835,14 @@ static int pci1710_auto_attach(struct comedi_device *dev,
 		s->n_chan	= 2;
 		s->maxdata	= 0x0fff;
 		s->range_table	= &pci171x_ao_range;
-		s->insn_write	= pci1710_ao_insn_write;
+		s->insn_ग_लिखो	= pci1710_ao_insn_ग_लिखो;
 
-		ret = comedi_alloc_subdev_readback(s);
-		if (ret)
-			return ret;
-	}
+		ret = comedi_alloc_subdev_पढ़ोback(s);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (!board->is_pci1713) {
+	अगर (!board->is_pci1713) अणु
 		/* Digital Input subdevice */
 		s = &dev->subdevices[subdev++];
 		s->type		= COMEDI_SUBD_DI;
@@ -858,7 +859,7 @@ static int pci1710_auto_attach(struct comedi_device *dev,
 		s->n_chan	= 16;
 		s->maxdata	= 1;
 		s->range_table	= &range_digital;
-		s->insn_bits	= pci1710_do_insn_bits;
+		s->insn_bits	= pci1710_करो_insn_bits;
 
 		/* Counter subdevice (8254) */
 		s = &dev->subdevices[subdev++];
@@ -866,96 +867,96 @@ static int pci1710_auto_attach(struct comedi_device *dev,
 
 		dev->pacer->insn_config = pci1710_counter_insn_config;
 
-		/* counters 1 and 2 are used internally for the pacer */
+		/* counters 1 and 2 are used पूर्णांकernally क्रम the pacer */
 		comedi_8254_set_busy(dev->pacer, 1, true);
 		comedi_8254_set_busy(dev->pacer, 2, true);
-	}
+	पूर्ण
 
 	/* max_samples is half the FIFO size (2 bytes/sample) */
 	devpriv->max_samples = (board->is_pci1711) ? 512 : 2048;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver adv_pci1710_driver = {
+अटल काष्ठा comedi_driver adv_pci1710_driver = अणु
 	.driver_name	= "adv_pci1710",
 	.module		= THIS_MODULE,
-	.auto_attach	= pci1710_auto_attach,
+	.स्वतः_attach	= pci1710_स्वतः_attach,
 	.detach		= comedi_pci_detach,
-};
+पूर्ण;
 
-static int adv_pci1710_pci_probe(struct pci_dev *dev,
-				 const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &adv_pci1710_driver,
+अटल पूर्णांक adv_pci1710_pci_probe(काष्ठा pci_dev *dev,
+				 स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &adv_pci1710_driver,
 				      id->driver_data);
-}
+पूर्ण
 
-static const struct pci_device_id adv_pci1710_pci_table[] = {
-	{
+अटल स्थिर काष्ठा pci_device_id adv_pci1710_pci_table[] = अणु
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0x0000),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xb100),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xb200),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xc100),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xc200),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710, 0x1000, 0xd100),
 		.driver_data = BOARD_PCI1710,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0x0002),
 		.driver_data = BOARD_PCI1710HG,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xb102),
 		.driver_data = BOARD_PCI1710HG,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xb202),
 		.driver_data = BOARD_PCI1710HG,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xc102),
 		.driver_data = BOARD_PCI1710HG,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710,
 			       PCI_VENDOR_ID_ADVANTECH, 0xc202),
 		.driver_data = BOARD_PCI1710HG,
-	}, {
+	पूर्ण, अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADVANTECH, 0x1710, 0x1000, 0xd102),
 		.driver_data = BOARD_PCI1710HG,
-	},
-	{ PCI_VDEVICE(ADVANTECH, 0x1711), BOARD_PCI1711 },
-	{ PCI_VDEVICE(ADVANTECH, 0x1713), BOARD_PCI1713 },
-	{ PCI_VDEVICE(ADVANTECH, 0x1731), BOARD_PCI1731 },
-	{ 0 }
-};
+	पूर्ण,
+	अणु PCI_VDEVICE(ADVANTECH, 0x1711), BOARD_PCI1711 पूर्ण,
+	अणु PCI_VDEVICE(ADVANTECH, 0x1713), BOARD_PCI1713 पूर्ण,
+	अणु PCI_VDEVICE(ADVANTECH, 0x1731), BOARD_PCI1731 पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, adv_pci1710_pci_table);
 
-static struct pci_driver adv_pci1710_pci_driver = {
+अटल काष्ठा pci_driver adv_pci1710_pci_driver = अणु
 	.name		= "adv_pci1710",
 	.id_table	= adv_pci1710_pci_table,
 	.probe		= adv_pci1710_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(adv_pci1710_driver, adv_pci1710_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

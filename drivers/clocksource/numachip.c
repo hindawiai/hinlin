@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2015 Numascale AS. All rights reserved.
  */
 
-#include <linux/clockchips.h>
+#समावेश <linux/घड़ीchips.h>
 
-#include <asm/irq.h>
-#include <asm/numachip/numachip.h>
-#include <asm/numachip/numachip_csr.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/numachip/numachip.h>
+#समावेश <यंत्र/numachip/numachip_csr.h>
 
-static DEFINE_PER_CPU(struct clock_event_device, numachip2_ced);
+अटल DEFINE_PER_CPU(काष्ठा घड़ी_event_device, numachip2_ced);
 
-static cycles_t numachip2_timer_read(struct clocksource *cs)
-{
-	return numachip2_read64_lcsr(NUMACHIP2_TIMER_NOW);
-}
+अटल cycles_t numachip2_समयr_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस numachip2_पढ़ो64_lcsr(NUMACHIP2_TIMER_NOW);
+पूर्ण
 
-static struct clocksource numachip2_clocksource = {
+अटल काष्ठा घड़ीsource numachip2_घड़ीsource = अणु
 	.name            = "numachip2",
 	.rating          = 295,
-	.read            = numachip2_timer_read,
+	.पढ़ो            = numachip2_समयr_पढ़ो,
 	.mask            = CLOCKSOURCE_MASK(64),
 	.flags           = CLOCK_SOURCE_IS_CONTINUOUS,
 	.mult            = 1,
-	.shift           = 0,
-};
+	.shअगरt           = 0,
+पूर्ण;
 
-static int numachip2_set_next_event(unsigned long delta, struct clock_event_device *ced)
-{
-	numachip2_write64_lcsr(NUMACHIP2_TIMER_DEADLINE + numachip2_timer(),
+अटल पूर्णांक numachip2_set_next_event(अचिन्हित दीर्घ delta, काष्ठा घड़ी_event_device *ced)
+अणु
+	numachip2_ग_लिखो64_lcsr(NUMACHIP2_TIMER_DEADLINE + numachip2_समयr(),
 		delta);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clock_event_device numachip2_clockevent __initconst = {
+अटल स्थिर काष्ठा घड़ी_event_device numachip2_घड़ीevent __initस्थिर = अणु
 	.name            = "numachip2",
 	.rating          = 400,
 	.set_next_event  = numachip2_set_next_event,
 	.features        = CLOCK_EVT_FEAT_ONESHOT,
 	.mult            = 1,
-	.shift           = 0,
+	.shअगरt           = 0,
 	.min_delta_ns    = 1250,
 	.min_delta_ticks = 1250,
-	.max_delta_ns    = LONG_MAX,
-	.max_delta_ticks = LONG_MAX,
-};
+	.max_delta_ns    = दीर्घ_उच्च,
+	.max_delta_ticks = दीर्घ_उच्च,
+पूर्ण;
 
-static void numachip_timer_interrupt(void)
-{
-	struct clock_event_device *ced = this_cpu_ptr(&numachip2_ced);
+अटल व्योम numachip_समयr_पूर्णांकerrupt(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *ced = this_cpu_ptr(&numachip2_ced);
 
 	ced->event_handler(ced);
-}
+पूर्ण
 
-static __init void numachip_timer_each(struct work_struct *work)
-{
-	unsigned local_apicid = __this_cpu_read(x86_cpu_to_apicid) & 0xff;
-	struct clock_event_device *ced = this_cpu_ptr(&numachip2_ced);
+अटल __init व्योम numachip_समयr_each(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित local_apicid = __this_cpu_पढ़ो(x86_cpu_to_apicid) & 0xff;
+	काष्ठा घड़ी_event_device *ced = this_cpu_ptr(&numachip2_ced);
 
 	/* Setup IPI vector to local core and relative timing mode */
-	numachip2_write64_lcsr(NUMACHIP2_TIMER_INT + numachip2_timer(),
+	numachip2_ग_लिखो64_lcsr(NUMACHIP2_TIMER_INT + numachip2_समयr(),
 		(3 << 22) | (X86_PLATFORM_IPI_VECTOR << 14) |
 		(local_apicid << 6));
 
-	*ced = numachip2_clockevent;
+	*ced = numachip2_घड़ीevent;
 	ced->cpumask = cpumask_of(smp_processor_id());
-	clockevents_register_device(ced);
-}
+	घड़ीevents_रेजिस्टर_device(ced);
+पूर्ण
 
-static int __init numachip_timer_init(void)
-{
-	if (numachip_system != 2)
-		return -ENODEV;
+अटल पूर्णांक __init numachip_समयr_init(व्योम)
+अणु
+	अगर (numachip_प्रणाली != 2)
+		वापस -ENODEV;
 
-	/* Reset timer */
-	numachip2_write64_lcsr(NUMACHIP2_TIMER_RESET, 0);
-	clocksource_register_hz(&numachip2_clocksource, NSEC_PER_SEC);
+	/* Reset समयr */
+	numachip2_ग_लिखो64_lcsr(NUMACHIP2_TIMER_RESET, 0);
+	घड़ीsource_रेजिस्टर_hz(&numachip2_घड़ीsource, NSEC_PER_SEC);
 
-	/* Setup per-cpu clockevents */
-	x86_platform_ipi_callback = numachip_timer_interrupt;
-	schedule_on_each_cpu(&numachip_timer_each);
+	/* Setup per-cpu घड़ीevents */
+	x86_platक्रमm_ipi_callback = numachip_समयr_पूर्णांकerrupt;
+	schedule_on_each_cpu(&numachip_समयr_each);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-arch_initcall(numachip_timer_init);
+arch_initcall(numachip_समयr_init);

@@ -1,65 +1,66 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#ifndef _WG_DEVICE_H
-#define _WG_DEVICE_H
+#अगर_अघोषित _WG_DEVICE_H
+#घोषणा _WG_DEVICE_H
 
-#include "noise.h"
-#include "allowedips.h"
-#include "peerlookup.h"
-#include "cookie.h"
+#समावेश "noise.h"
+#समावेश "allowedips.h"
+#समावेश "peerlookup.h"
+#समावेश "cookie.h"
 
-#include <linux/types.h>
-#include <linux/netdevice.h>
-#include <linux/workqueue.h>
-#include <linux/mutex.h>
-#include <linux/net.h>
-#include <linux/ptr_ring.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/net.h>
+#समावेश <linux/ptr_ring.h>
 
-struct wg_device;
+काष्ठा wg_device;
 
-struct multicore_worker {
-	void *ptr;
-	struct work_struct work;
-};
+काष्ठा multicore_worker अणु
+	व्योम *ptr;
+	काष्ठा work_काष्ठा work;
+पूर्ण;
 
-struct crypt_queue {
-	struct ptr_ring ring;
-	struct multicore_worker __percpu *worker;
-	int last_cpu;
-};
+काष्ठा crypt_queue अणु
+	काष्ठा ptr_ring ring;
+	काष्ठा multicore_worker __percpu *worker;
+	पूर्णांक last_cpu;
+पूर्ण;
 
-struct prev_queue {
-	struct sk_buff *head, *tail, *peeked;
-	struct { struct sk_buff *next, *prev; } empty; // Match first 2 members of struct sk_buff.
+काष्ठा prev_queue अणु
+	काष्ठा sk_buff *head, *tail, *peeked;
+	काष्ठा अणु काष्ठा sk_buff *next, *prev; पूर्ण empty; // Match first 2 members of काष्ठा sk_buff.
 	atomic_t count;
-};
+पूर्ण;
 
-struct wg_device {
-	struct net_device *dev;
-	struct crypt_queue encrypt_queue, decrypt_queue;
-	struct sock __rcu *sock4, *sock6;
-	struct net __rcu *creating_net;
-	struct noise_static_identity static_identity;
-	struct workqueue_struct *handshake_receive_wq, *handshake_send_wq;
-	struct workqueue_struct *packet_crypt_wq;
-	struct sk_buff_head incoming_handshakes;
-	int incoming_handshake_cpu;
-	struct multicore_worker __percpu *incoming_handshakes_worker;
-	struct cookie_checker cookie_checker;
-	struct pubkey_hashtable *peer_hashtable;
-	struct index_hashtable *index_hashtable;
-	struct allowedips peer_allowedips;
-	struct mutex device_update_lock, socket_update_lock;
-	struct list_head device_list, peer_list;
-	unsigned int num_peers, device_update_gen;
+काष्ठा wg_device अणु
+	काष्ठा net_device *dev;
+	काष्ठा crypt_queue encrypt_queue, decrypt_queue;
+	काष्ठा sock __rcu *sock4, *sock6;
+	काष्ठा net __rcu *creating_net;
+	काष्ठा noise_अटल_identity अटल_identity;
+	काष्ठा workqueue_काष्ठा *handshake_receive_wq, *handshake_send_wq;
+	काष्ठा workqueue_काष्ठा *packet_crypt_wq;
+	काष्ठा sk_buff_head incoming_handshakes;
+	पूर्णांक incoming_handshake_cpu;
+	काष्ठा multicore_worker __percpu *incoming_handshakes_worker;
+	काष्ठा cookie_checker cookie_checker;
+	काष्ठा pubkey_hashtable *peer_hashtable;
+	काष्ठा index_hashtable *index_hashtable;
+	काष्ठा allowedips peer_allowedips;
+	काष्ठा mutex device_update_lock, socket_update_lock;
+	काष्ठा list_head device_list, peer_list;
+	अचिन्हित पूर्णांक num_peers, device_update_gen;
 	u32 fwmark;
 	u16 incoming_port;
-};
+पूर्ण;
 
-int wg_device_init(void);
-void wg_device_uninit(void);
+पूर्णांक wg_device_init(व्योम);
+व्योम wg_device_uninit(व्योम);
 
-#endif /* _WG_DEVICE_H */
+#पूर्ण_अगर /* _WG_DEVICE_H */

@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM rpm
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM rpm
 
-#if !defined(_TRACE_RUNTIME_POWER_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_RUNTIME_POWER_H
+#अगर !defined(_TRACE_RUNTIME_POWER_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_RUNTIME_POWER_H
 
-#include <linux/ktime.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-struct device;
+काष्ठा device;
 
 /*
- * The rpm_internal events are used for tracing some important
- * runtime pm internal functions.
+ * The rpm_पूर्णांकernal events are used क्रम tracing some important
+ * runसमय pm पूर्णांकernal functions.
  */
-DECLARE_EVENT_CLASS(rpm_internal,
+DECLARE_EVENT_CLASS(rpm_पूर्णांकernal,
 
-	TP_PROTO(struct device *dev, int flags),
+	TP_PROTO(काष्ठा device *dev, पूर्णांक flags),
 
 	TP_ARGS(dev, flags),
 
 	TP_STRUCT__entry(
 		__string(       name,		dev_name(dev)	)
-		__field(        int,            flags           )
-		__field(        int ,   	usage_count	)
-		__field(        int ,   	disable_depth   )
-		__field(        int ,   	runtime_auto	)
-		__field(        int ,   	request_pending	)
-		__field(        int ,   	irq_safe	)
-		__field(        int ,   	child_count 	)
+		__field(        पूर्णांक,            flags           )
+		__field(        पूर्णांक ,   	usage_count	)
+		__field(        पूर्णांक ,   	disable_depth   )
+		__field(        पूर्णांक ,   	runसमय_स्वतः	)
+		__field(        पूर्णांक ,   	request_pending	)
+		__field(        पूर्णांक ,   	irq_safe	)
+		__field(        पूर्णांक ,   	child_count 	)
 	),
 
 	TP_fast_assign(
 		__assign_str(name, dev_name(dev));
 		__entry->flags = flags;
-		__entry->usage_count = atomic_read(
-			&dev->power.usage_count);
-		__entry->disable_depth = dev->power.disable_depth;
-		__entry->runtime_auto = dev->power.runtime_auto;
-		__entry->request_pending = dev->power.request_pending;
-		__entry->irq_safe = dev->power.irq_safe;
-		__entry->child_count = atomic_read(
-			&dev->power.child_count);
+		__entry->usage_count = atomic_पढ़ो(
+			&dev->घातer.usage_count);
+		__entry->disable_depth = dev->घातer.disable_depth;
+		__entry->runसमय_स्वतः = dev->घातer.runसमय_स्वतः;
+		__entry->request_pending = dev->घातer.request_pending;
+		__entry->irq_safe = dev->घातer.irq_safe;
+		__entry->child_count = atomic_पढ़ो(
+			&dev->घातer.child_count);
 	),
 
-	TP_printk("%s flags-%x cnt-%-2d dep-%-2d auto-%-1d p-%-1d"
+	TP_prपूर्णांकk("%s flags-%x cnt-%-2d dep-%-2d auto-%-1d p-%-1d"
 			" irq-%-1d child-%d",
 			__get_str(name), __entry->flags,
 			__entry->usage_count,
 			__entry->disable_depth,
-			__entry->runtime_auto,
+			__entry->runसमय_स्वतः,
 			__entry->request_pending,
 			__entry->irq_safe,
 			__entry->child_count
 		 )
 );
-DEFINE_EVENT(rpm_internal, rpm_suspend,
+DEFINE_EVENT(rpm_पूर्णांकernal, rpm_suspend,
 
-	TP_PROTO(struct device *dev, int flags),
-
-	TP_ARGS(dev, flags)
-);
-DEFINE_EVENT(rpm_internal, rpm_resume,
-
-	TP_PROTO(struct device *dev, int flags),
+	TP_PROTO(काष्ठा device *dev, पूर्णांक flags),
 
 	TP_ARGS(dev, flags)
 );
-DEFINE_EVENT(rpm_internal, rpm_idle,
+DEFINE_EVENT(rpm_पूर्णांकernal, rpm_resume,
 
-	TP_PROTO(struct device *dev, int flags),
-
-	TP_ARGS(dev, flags)
-);
-DEFINE_EVENT(rpm_internal, rpm_usage,
-
-	TP_PROTO(struct device *dev, int flags),
+	TP_PROTO(काष्ठा device *dev, पूर्णांक flags),
 
 	TP_ARGS(dev, flags)
 );
+DEFINE_EVENT(rpm_पूर्णांकernal, rpm_idle,
 
-TRACE_EVENT(rpm_return_int,
-	TP_PROTO(struct device *dev, unsigned long ip, int ret),
+	TP_PROTO(काष्ठा device *dev, पूर्णांक flags),
+
+	TP_ARGS(dev, flags)
+);
+DEFINE_EVENT(rpm_पूर्णांकernal, rpm_usage,
+
+	TP_PROTO(काष्ठा device *dev, पूर्णांक flags),
+
+	TP_ARGS(dev, flags)
+);
+
+TRACE_EVENT(rpm_वापस_पूर्णांक,
+	TP_PROTO(काष्ठा device *dev, अचिन्हित दीर्घ ip, पूर्णांक ret),
 	TP_ARGS(dev, ip, ret),
 
 	TP_STRUCT__entry(
 		__string(       name,		dev_name(dev))
-		__field(	unsigned long,		ip	)
-		__field(	int,			ret	)
+		__field(	अचिन्हित दीर्घ,		ip	)
+		__field(	पूर्णांक,			ret	)
 	),
 
 	TP_fast_assign(
@@ -97,11 +98,11 @@ TRACE_EVENT(rpm_return_int,
 		__entry->ret = ret;
 	),
 
-	TP_printk("%pS:%s ret=%d", (void *)__entry->ip, __get_str(name),
+	TP_prपूर्णांकk("%pS:%s ret=%d", (व्योम *)__entry->ip, __get_str(name),
 		__entry->ret)
 );
 
-#endif /* _TRACE_RUNTIME_POWER_H */
+#पूर्ण_अगर /* _TRACE_RUNTIME_POWER_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

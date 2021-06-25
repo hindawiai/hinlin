@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <stddef.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct S {
-	int x;
-};
+काष्ठा S अणु
+	पूर्णांक x;
+पूर्ण;
 
-struct C {
-	int x;
-	int y;
-};
+काष्ठा C अणु
+	पूर्णांक x;
+	पूर्णांक y;
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
-	__type(value, struct S);
-} map SEC(".maps");
+	__type(value, काष्ठा S);
+पूर्ण map SEC(".maps");
 
-enum E {
+क्रमागत E अणु
 	E_ITEM
-};
+पूर्ण;
 
-static int global_data_x = 100;
-static int volatile global_data_y = 500;
+अटल पूर्णांक global_data_x = 100;
+अटल पूर्णांक अस्थिर global_data_y = 500;
 
-__noinline int foo(const struct S *s)
-{
-	if (s)
-		return bpf_get_prandom_u32() < s->x;
+__noअंतरभूत पूर्णांक foo(स्थिर काष्ठा S *s)
+अणु
+	अगर (s)
+		वापस bpf_get_pअक्रमom_u32() < s->x;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__noinline int bar(int *x)
-{
-	if (x)
-		*x &= bpf_get_prandom_u32();
+__noअंतरभूत पूर्णांक bar(पूर्णांक *x)
+अणु
+	अगर (x)
+		*x &= bpf_get_pअक्रमom_u32();
 
-	return 0;
-}
-__noinline int baz(volatile int *x)
-{
-	if (x)
-		*x &= bpf_get_prandom_u32();
+	वापस 0;
+पूर्ण
+__noअंतरभूत पूर्णांक baz(अस्थिर पूर्णांक *x)
+अणु
+	अगर (x)
+		*x &= bpf_get_pअक्रमom_u32();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__noinline int qux(enum E *e)
-{
-	if (e)
-		return *e;
+__noअंतरभूत पूर्णांक qux(क्रमागत E *e)
+अणु
+	अगर (e)
+		वापस *e;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__noinline int quux(int (*arr)[10])
-{
-	if (arr)
-		return (*arr)[9];
+__noअंतरभूत पूर्णांक quux(पूर्णांक (*arr)[10])
+अणु
+	अगर (arr)
+		वापस (*arr)[9];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-__noinline int quuz(int **p)
-{
-	if (p)
-		*p = NULL;
+__noअंतरभूत पूर्णांक quuz(पूर्णांक **p)
+अणु
+	अगर (p)
+		*p = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("cgroup_skb/ingress")
-int test_cls(struct __sk_buff *skb)
-{
-	int result = 0;
+पूर्णांक test_cls(काष्ठा __sk_buff *skb)
+अणु
+	पूर्णांक result = 0;
 
-	{
-		const struct S s = {.x = skb->len };
+	अणु
+		स्थिर काष्ठा S s = अणु.x = skb->len पूर्ण;
 
 		result |= foo(&s);
-	}
+	पूर्ण
 
-	{
-		const __u32 key = 1;
-		const struct S *s = bpf_map_lookup_elem(&map, &key);
+	अणु
+		स्थिर __u32 key = 1;
+		स्थिर काष्ठा S *s = bpf_map_lookup_elem(&map, &key);
 
 		result |= foo(s);
-	}
+	पूर्ण
 
-	{
-		const struct C c = {.x = skb->len, .y = skb->family };
+	अणु
+		स्थिर काष्ठा C c = अणु.x = skb->len, .y = skb->family पूर्ण;
 
-		result |= foo((const struct S *)&c);
-	}
+		result |= foo((स्थिर काष्ठा S *)&c);
+	पूर्ण
 
-	{
-		result |= foo(NULL);
-	}
+	अणु
+		result |= foo(शून्य);
+	पूर्ण
 
-	{
+	अणु
 		bar(&result);
 		bar(&global_data_x);
-	}
+	पूर्ण
 
-	{
+	अणु
 		result |= baz(&global_data_y);
-	}
+	पूर्ण
 
-	{
-		enum E e = E_ITEM;
+	अणु
+		क्रमागत E e = E_ITEM;
 
 		result |= qux(&e);
-	}
+	पूर्ण
 
-	{
-		int array[10] = {0};
+	अणु
+		पूर्णांक array[10] = अणु0पूर्ण;
 
 		result |= quux(&array);
-	}
+	पूर्ण
 
-	{
-		int *p;
+	अणु
+		पूर्णांक *p;
 
 		result |= quuz(&p);
-	}
+	पूर्ण
 
-	return result ? 1 : 0;
-}
+	वापस result ? 1 : 0;
+पूर्ण

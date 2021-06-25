@@ -1,63 +1,64 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright � 2008-2018 Intel Corporation
+ * Copyright oडट 2008-2018 Intel Corporation
  */
 
-#ifndef _I915_GPU_ERROR_H_
-#define _I915_GPU_ERROR_H_
+#अगर_अघोषित _I915_GPU_ERROR_H_
+#घोषणा _I915_GPU_ERROR_H_
 
-#include <linux/atomic.h>
-#include <linux/kref.h>
-#include <linux/ktime.h>
-#include <linux/sched.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/sched.h>
 
-#include <drm/drm_mm.h>
+#समावेश <drm/drm_mm.h>
 
-#include "gt/intel_engine.h"
-#include "gt/intel_gt_types.h"
-#include "gt/uc/intel_uc_fw.h"
+#समावेश "gt/intel_engine.h"
+#समावेश "gt/intel_gt_types.h"
+#समावेश "gt/uc/intel_uc_fw.h"
 
-#include "intel_device_info.h"
+#समावेश "intel_device_info.h"
 
-#include "i915_gem.h"
-#include "i915_gem_gtt.h"
-#include "i915_params.h"
-#include "i915_scheduler.h"
+#समावेश "i915_gem.h"
+#समावेश "i915_gem_gtt.h"
+#समावेश "i915_params.h"
+#समावेश "i915_scheduler.h"
 
-struct drm_i915_private;
-struct i915_vma_compress;
-struct intel_engine_capture_vma;
-struct intel_overlay_error_state;
-struct intel_display_error_state;
+काष्ठा drm_i915_निजी;
+काष्ठा i915_vma_compress;
+काष्ठा पूर्णांकel_engine_capture_vma;
+काष्ठा पूर्णांकel_overlay_error_state;
+काष्ठा पूर्णांकel_display_error_state;
 
-struct i915_vma_coredump {
-	struct i915_vma_coredump *next;
+काष्ठा i915_vma_coredump अणु
+	काष्ठा i915_vma_coredump *next;
 
-	char name[20];
+	अक्षर name[20];
 
 	u64 gtt_offset;
 	u64 gtt_size;
 	u32 gtt_page_sizes;
 
-	int num_pages;
-	int page_count;
-	int unused;
+	पूर्णांक num_pages;
+	पूर्णांक page_count;
+	पूर्णांक unused;
 	u32 *pages[];
-};
+पूर्ण;
 
-struct i915_request_coredump {
-	unsigned long flags;
+काष्ठा i915_request_coredump अणु
+	अचिन्हित दीर्घ flags;
 	pid_t pid;
 	u32 context;
 	u32 seqno;
 	u32 head;
 	u32 tail;
-	struct i915_sched_attr sched_attr;
-};
+	काष्ठा i915_sched_attr sched_attr;
+पूर्ण;
 
-struct intel_engine_coredump {
-	const struct intel_engine_cs *engine;
+काष्ठा पूर्णांकel_engine_coredump अणु
+	स्थिर काष्ठा पूर्णांकel_engine_cs *engine;
 
 	bool hung;
 	bool simulated;
@@ -85,269 +86,269 @@ struct intel_engine_coredump {
 	u32 fault_reg;
 	u64 faddr;
 	u32 rc_psmi; /* sleep state */
-	struct intel_instdone instdone;
+	काष्ठा पूर्णांकel_instकरोne instकरोne;
 
-	struct i915_gem_context_coredump {
-		char comm[TASK_COMM_LEN];
+	काष्ठा i915_gem_context_coredump अणु
+		अक्षर comm[TASK_COMM_LEN];
 
-		u64 total_runtime;
-		u32 avg_runtime;
+		u64 total_runसमय;
+		u32 avg_runसमय;
 
 		pid_t pid;
-		int active;
-		int guilty;
-		struct i915_sched_attr sched_attr;
-	} context;
+		पूर्णांक active;
+		पूर्णांक guilty;
+		काष्ठा i915_sched_attr sched_attr;
+	पूर्ण context;
 
-	struct i915_vma_coredump *vma;
+	काष्ठा i915_vma_coredump *vma;
 
-	struct i915_request_coredump execlist[EXECLIST_MAX_PORTS];
-	unsigned int num_ports;
+	काष्ठा i915_request_coredump execlist[EXECLIST_MAX_PORTS];
+	अचिन्हित पूर्णांक num_ports;
 
-	struct {
+	काष्ठा अणु
 		u32 gfx_mode;
-		union {
+		जोड़ अणु
 			u64 pdp[4];
 			u32 pp_dir_base;
-		};
-	} vm_info;
+		पूर्ण;
+	पूर्ण vm_info;
 
-	struct intel_engine_coredump *next;
-};
+	काष्ठा पूर्णांकel_engine_coredump *next;
+पूर्ण;
 
-struct intel_gt_coredump {
-	const struct intel_gt *_gt;
+काष्ठा पूर्णांकel_gt_coredump अणु
+	स्थिर काष्ठा पूर्णांकel_gt *_gt;
 	bool awake;
 	bool simulated;
 
-	struct intel_gt_info info;
+	काष्ठा पूर्णांकel_gt_info info;
 
-	/* Generic register state */
+	/* Generic रेजिस्टर state */
 	u32 eir;
 	u32 pgtbl_er;
 	u32 ier;
 	u32 gtier[6], ngtier;
 	u32 derrmr;
-	u32 forcewake;
+	u32 क्रमcewake;
 	u32 error; /* gen6+ */
-	u32 err_int; /* gen7 */
+	u32 err_पूर्णांक; /* gen7 */
 	u32 fault_data0; /* gen8, gen9 */
 	u32 fault_data1; /* gen8, gen9 */
-	u32 done_reg;
+	u32 करोne_reg;
 	u32 gac_eco;
 	u32 gam_ecochk;
 	u32 gab_ctl;
 	u32 gfx_mode;
 	u32 gtt_cache;
 	u32 aux_err; /* gen12 */
-	u32 sfc_done[GEN12_SFC_DONE_MAX]; /* gen12 */
-	u32 gam_done; /* gen12 */
+	u32 sfc_करोne[GEN12_SFC_DONE_MAX]; /* gen12 */
+	u32 gam_करोne; /* gen12 */
 
 	u32 nfence;
 	u64 fence[I915_MAX_NUM_FENCES];
 
-	struct intel_engine_coredump *engine;
+	काष्ठा पूर्णांकel_engine_coredump *engine;
 
-	struct intel_uc_coredump {
-		struct intel_uc_fw guc_fw;
-		struct intel_uc_fw huc_fw;
-		struct i915_vma_coredump *guc_log;
-	} *uc;
+	काष्ठा पूर्णांकel_uc_coredump अणु
+		काष्ठा पूर्णांकel_uc_fw guc_fw;
+		काष्ठा पूर्णांकel_uc_fw huc_fw;
+		काष्ठा i915_vma_coredump *guc_log;
+	पूर्ण *uc;
 
-	struct intel_gt_coredump *next;
-};
+	काष्ठा पूर्णांकel_gt_coredump *next;
+पूर्ण;
 
-struct i915_gpu_coredump {
-	struct kref ref;
-	ktime_t time;
-	ktime_t boottime;
-	ktime_t uptime;
-	unsigned long capture;
+काष्ठा i915_gpu_coredump अणु
+	काष्ठा kref ref;
+	kसमय_प्रकार समय;
+	kसमय_प्रकार bootसमय;
+	kसमय_प्रकार upसमय;
+	अचिन्हित दीर्घ capture;
 
-	struct drm_i915_private *i915;
+	काष्ठा drm_i915_निजी *i915;
 
-	struct intel_gt_coredump *gt;
+	काष्ठा पूर्णांकel_gt_coredump *gt;
 
-	char error_msg[128];
+	अक्षर error_msg[128];
 	bool simulated;
 	bool wakelock;
 	bool suspended;
-	int iommu;
+	पूर्णांक iommu;
 	u32 reset_count;
 	u32 suspend_count;
 
-	struct intel_device_info device_info;
-	struct intel_runtime_info runtime_info;
-	struct intel_driver_caps driver_caps;
-	struct i915_params params;
+	काष्ठा पूर्णांकel_device_info device_info;
+	काष्ठा पूर्णांकel_runसमय_info runसमय_info;
+	काष्ठा पूर्णांकel_driver_caps driver_caps;
+	काष्ठा i915_params params;
 
-	struct intel_overlay_error_state *overlay;
-	struct intel_display_error_state *display;
+	काष्ठा पूर्णांकel_overlay_error_state *overlay;
+	काष्ठा पूर्णांकel_display_error_state *display;
 
-	struct scatterlist *sgl, *fit;
-};
+	काष्ठा scatterlist *sgl, *fit;
+पूर्ण;
 
-struct i915_gpu_error {
+काष्ठा i915_gpu_error अणु
 	/* For reset and error_state handling. */
 	spinlock_t lock;
 	/* Protected by the above dev->gpu_error.lock. */
-	struct i915_gpu_coredump *first_error;
+	काष्ठा i915_gpu_coredump *first_error;
 
 	atomic_t pending_fb_pin;
 
-	/** Number of times the device has been reset (global) */
+	/** Number of बार the device has been reset (global) */
 	atomic_t reset_count;
 
-	/** Number of times an engine has been reset */
+	/** Number of बार an engine has been reset */
 	atomic_t reset_engine_count[I915_NUM_ENGINES];
-};
+पूर्ण;
 
-struct drm_i915_error_state_buf {
-	struct drm_i915_private *i915;
-	struct scatterlist *sgl, *cur, *end;
+काष्ठा drm_i915_error_state_buf अणु
+	काष्ठा drm_i915_निजी *i915;
+	काष्ठा scatterlist *sgl, *cur, *end;
 
-	char *buf;
-	size_t bytes;
-	size_t size;
+	अक्षर *buf;
+	माप_प्रकार bytes;
+	माप_प्रकार size;
 	loff_t iter;
 
-	int err;
-};
+	पूर्णांक err;
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR)
+#अगर IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR)
 
-__printf(2, 3)
-void i915_error_printf(struct drm_i915_error_state_buf *e, const char *f, ...);
+__म_लिखो(2, 3)
+व्योम i915_error_म_लिखो(काष्ठा drm_i915_error_state_buf *e, स्थिर अक्षर *f, ...);
 
-struct i915_gpu_coredump *i915_gpu_coredump(struct intel_gt *gt,
-					    intel_engine_mask_t engine_mask);
-void i915_capture_error_state(struct intel_gt *gt,
-			      intel_engine_mask_t engine_mask);
+काष्ठा i915_gpu_coredump *i915_gpu_coredump(काष्ठा पूर्णांकel_gt *gt,
+					    पूर्णांकel_engine_mask_t engine_mask);
+व्योम i915_capture_error_state(काष्ठा पूर्णांकel_gt *gt,
+			      पूर्णांकel_engine_mask_t engine_mask);
 
-struct i915_gpu_coredump *
-i915_gpu_coredump_alloc(struct drm_i915_private *i915, gfp_t gfp);
+काष्ठा i915_gpu_coredump *
+i915_gpu_coredump_alloc(काष्ठा drm_i915_निजी *i915, gfp_t gfp);
 
-struct intel_gt_coredump *
-intel_gt_coredump_alloc(struct intel_gt *gt, gfp_t gfp);
+काष्ठा पूर्णांकel_gt_coredump *
+पूर्णांकel_gt_coredump_alloc(काष्ठा पूर्णांकel_gt *gt, gfp_t gfp);
 
-struct intel_engine_coredump *
-intel_engine_coredump_alloc(struct intel_engine_cs *engine, gfp_t gfp);
+काष्ठा पूर्णांकel_engine_coredump *
+पूर्णांकel_engine_coredump_alloc(काष्ठा पूर्णांकel_engine_cs *engine, gfp_t gfp);
 
-struct intel_engine_capture_vma *
-intel_engine_coredump_add_request(struct intel_engine_coredump *ee,
-				  struct i915_request *rq,
+काष्ठा पूर्णांकel_engine_capture_vma *
+पूर्णांकel_engine_coredump_add_request(काष्ठा पूर्णांकel_engine_coredump *ee,
+				  काष्ठा i915_request *rq,
 				  gfp_t gfp);
 
-void intel_engine_coredump_add_vma(struct intel_engine_coredump *ee,
-				   struct intel_engine_capture_vma *capture,
-				   struct i915_vma_compress *compress);
+व्योम पूर्णांकel_engine_coredump_add_vma(काष्ठा पूर्णांकel_engine_coredump *ee,
+				   काष्ठा पूर्णांकel_engine_capture_vma *capture,
+				   काष्ठा i915_vma_compress *compress);
 
-struct i915_vma_compress *
-i915_vma_capture_prepare(struct intel_gt_coredump *gt);
+काष्ठा i915_vma_compress *
+i915_vma_capture_prepare(काष्ठा पूर्णांकel_gt_coredump *gt);
 
-void i915_vma_capture_finish(struct intel_gt_coredump *gt,
-			     struct i915_vma_compress *compress);
+व्योम i915_vma_capture_finish(काष्ठा पूर्णांकel_gt_coredump *gt,
+			     काष्ठा i915_vma_compress *compress);
 
-void i915_error_state_store(struct i915_gpu_coredump *error);
+व्योम i915_error_state_store(काष्ठा i915_gpu_coredump *error);
 
-static inline struct i915_gpu_coredump *
-i915_gpu_coredump_get(struct i915_gpu_coredump *gpu)
-{
+अटल अंतरभूत काष्ठा i915_gpu_coredump *
+i915_gpu_coredump_get(काष्ठा i915_gpu_coredump *gpu)
+अणु
 	kref_get(&gpu->ref);
-	return gpu;
-}
+	वापस gpu;
+पूर्ण
 
-ssize_t
-i915_gpu_coredump_copy_to_buffer(struct i915_gpu_coredump *error,
-				 char *buf, loff_t offset, size_t count);
+sमाप_प्रकार
+i915_gpu_coredump_copy_to_buffer(काष्ठा i915_gpu_coredump *error,
+				 अक्षर *buf, loff_t offset, माप_प्रकार count);
 
-void __i915_gpu_coredump_free(struct kref *kref);
-static inline void i915_gpu_coredump_put(struct i915_gpu_coredump *gpu)
-{
-	if (gpu)
-		kref_put(&gpu->ref, __i915_gpu_coredump_free);
-}
+व्योम __i915_gpu_coredump_मुक्त(काष्ठा kref *kref);
+अटल अंतरभूत व्योम i915_gpu_coredump_put(काष्ठा i915_gpu_coredump *gpu)
+अणु
+	अगर (gpu)
+		kref_put(&gpu->ref, __i915_gpu_coredump_मुक्त);
+पूर्ण
 
-struct i915_gpu_coredump *i915_first_error_state(struct drm_i915_private *i915);
-void i915_reset_error_state(struct drm_i915_private *i915);
-void i915_disable_error_state(struct drm_i915_private *i915, int err);
+काष्ठा i915_gpu_coredump *i915_first_error_state(काष्ठा drm_i915_निजी *i915);
+व्योम i915_reset_error_state(काष्ठा drm_i915_निजी *i915);
+व्योम i915_disable_error_state(काष्ठा drm_i915_निजी *i915, पूर्णांक err);
 
-#else
+#अन्यथा
 
-static inline void
-i915_capture_error_state(struct intel_gt *gt, intel_engine_mask_t engine_mask)
-{
-}
+अटल अंतरभूत व्योम
+i915_capture_error_state(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t engine_mask)
+अणु
+पूर्ण
 
-static inline struct i915_gpu_coredump *
-i915_gpu_coredump_alloc(struct drm_i915_private *i915, gfp_t gfp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा i915_gpu_coredump *
+i915_gpu_coredump_alloc(काष्ठा drm_i915_निजी *i915, gfp_t gfp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct intel_gt_coredump *
-intel_gt_coredump_alloc(struct intel_gt *gt, gfp_t gfp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_gt_coredump *
+पूर्णांकel_gt_coredump_alloc(काष्ठा पूर्णांकel_gt *gt, gfp_t gfp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct intel_engine_coredump *
-intel_engine_coredump_alloc(struct intel_engine_cs *engine, gfp_t gfp)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_engine_coredump *
+पूर्णांकel_engine_coredump_alloc(काष्ठा पूर्णांकel_engine_cs *engine, gfp_t gfp)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct intel_engine_capture_vma *
-intel_engine_coredump_add_request(struct intel_engine_coredump *ee,
-				  struct i915_request *rq,
+अटल अंतरभूत काष्ठा पूर्णांकel_engine_capture_vma *
+पूर्णांकel_engine_coredump_add_request(काष्ठा पूर्णांकel_engine_coredump *ee,
+				  काष्ठा i915_request *rq,
 				  gfp_t gfp)
-{
-	return NULL;
-}
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void
-intel_engine_coredump_add_vma(struct intel_engine_coredump *ee,
-			      struct intel_engine_capture_vma *capture,
-			      struct i915_vma_compress *compress)
-{
-}
+अटल अंतरभूत व्योम
+पूर्णांकel_engine_coredump_add_vma(काष्ठा पूर्णांकel_engine_coredump *ee,
+			      काष्ठा पूर्णांकel_engine_capture_vma *capture,
+			      काष्ठा i915_vma_compress *compress)
+अणु
+पूर्ण
 
-static inline struct i915_vma_compress *
-i915_vma_capture_prepare(struct intel_gt_coredump *gt)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा i915_vma_compress *
+i915_vma_capture_prepare(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void
-i915_vma_capture_finish(struct intel_gt_coredump *gt,
-			struct i915_vma_compress *compress)
-{
-}
+अटल अंतरभूत व्योम
+i915_vma_capture_finish(काष्ठा पूर्णांकel_gt_coredump *gt,
+			काष्ठा i915_vma_compress *compress)
+अणु
+पूर्ण
 
-static inline void
-i915_error_state_store(struct i915_gpu_coredump *error)
-{
-}
+अटल अंतरभूत व्योम
+i915_error_state_store(काष्ठा i915_gpu_coredump *error)
+अणु
+पूर्ण
 
-static inline void i915_gpu_coredump_put(struct i915_gpu_coredump *gpu)
-{
-}
+अटल अंतरभूत व्योम i915_gpu_coredump_put(काष्ठा i915_gpu_coredump *gpu)
+अणु
+पूर्ण
 
-static inline struct i915_gpu_coredump *
-i915_first_error_state(struct drm_i915_private *i915)
-{
-	return ERR_PTR(-ENODEV);
-}
+अटल अंतरभूत काष्ठा i915_gpu_coredump *
+i915_first_error_state(काष्ठा drm_i915_निजी *i915)
+अणु
+	वापस ERR_PTR(-ENODEV);
+पूर्ण
 
-static inline void i915_reset_error_state(struct drm_i915_private *i915)
-{
-}
+अटल अंतरभूत व्योम i915_reset_error_state(काष्ठा drm_i915_निजी *i915)
+अणु
+पूर्ण
 
-static inline void i915_disable_error_state(struct drm_i915_private *i915,
-					    int err)
-{
-}
+अटल अंतरभूत व्योम i915_disable_error_state(काष्ठा drm_i915_निजी *i915,
+					    पूर्णांक err)
+अणु
+पूर्ण
 
-#endif /* IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR) */
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR) */
 
-#endif /* _I915_GPU_ERROR_H_ */
+#पूर्ण_अगर /* _I915_GPU_ERROR_H_ */

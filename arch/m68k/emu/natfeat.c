@@ -1,27 +1,28 @@
+<शैली गुरु>
 /*
  * natfeat.c - ARAnyM hardware support via Native Features (natfeats)
  *
  * Copyright (c) 2005 Petr Stehlik of ARAnyM dev team
  *
- * Reworked for Linux by Roman Zippel <zippel@linux-m68k.org>
+ * Reworked क्रम Linux by Roman Zippel <zippel@linux-m68k.org>
  *
  * This software may be used and distributed according to the terms of
  * the GNU General Public License (GPL), incorporated herein by reference.
  */
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/console.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <asm/machdep.h>
-#include <asm/natfeat.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/console.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/natfeat.h>
 
-extern long nf_get_id_phys(unsigned long feature_name);
+बाह्य दीर्घ nf_get_id_phys(अचिन्हित दीर्घ feature_name);
 
-asm("\n"
+यंत्र("\n"
 "	.global nf_get_id_phys,nf_call\n"
 "nf_get_id_phys:\n"
 "	.short	0x7300\n"
@@ -37,58 +38,58 @@ asm("\n"
 "	.previous");
 EXPORT_SYMBOL_GPL(nf_call);
 
-long nf_get_id(const char *feature_name)
-{
-	/* feature_name may be in vmalloc()ed memory, so make a copy */
-	char name_copy[32];
-	size_t n;
+दीर्घ nf_get_id(स्थिर अक्षर *feature_name)
+अणु
+	/* feature_name may be in vदो_स्मृति()ed memory, so make a copy */
+	अक्षर name_copy[32];
+	माप_प्रकार n;
 
-	n = strlcpy(name_copy, feature_name, sizeof(name_copy));
-	if (n >= sizeof(name_copy))
-		return 0;
+	n = strlcpy(name_copy, feature_name, माप(name_copy));
+	अगर (n >= माप(name_copy))
+		वापस 0;
 
-	return nf_get_id_phys(virt_to_phys(name_copy));
-}
+	वापस nf_get_id_phys(virt_to_phys(name_copy));
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_get_id);
 
-void nfprint(const char *fmt, ...)
-{
-	static char buf[256];
-	va_list ap;
-	int n;
+व्योम nfprपूर्णांक(स्थिर अक्षर *fmt, ...)
+अणु
+	अटल अक्षर buf[256];
+	बहु_सूची ap;
+	पूर्णांक n;
 
-	va_start(ap, fmt);
-	n = vsnprintf(buf, 256, fmt, ap);
+	बहु_शुरू(ap, fmt);
+	n = vsnम_लिखो(buf, 256, fmt, ap);
 	nf_call(nf_get_id("NF_STDERR"), virt_to_phys(buf));
-	va_end(ap);
-}
+	बहु_पूर्ण(ap);
+पूर्ण
 
-static void nf_poweroff(void)
-{
-	long id = nf_get_id("NF_SHUTDOWN");
+अटल व्योम nf_घातeroff(व्योम)
+अणु
+	दीर्घ id = nf_get_id("NF_SHUTDOWN");
 
-	if (id)
+	अगर (id)
 		nf_call(id);
-}
+पूर्ण
 
-void __init nf_init(void)
-{
-	unsigned long id, version;
-	char buf[256];
+व्योम __init nf_init(व्योम)
+अणु
+	अचिन्हित दीर्घ id, version;
+	अक्षर buf[256];
 
 	id = nf_get_id("NF_VERSION");
-	if (!id)
-		return;
+	अगर (!id)
+		वापस;
 	version = nf_call(id);
 
 	id = nf_get_id("NF_NAME");
-	if (!id)
-		return;
+	अगर (!id)
+		वापस;
 	nf_call(id, virt_to_phys(buf), 256);
 	buf[255] = 0;
 
 	pr_info("NatFeats found (%s, %lu.%lu)\n", buf, version >> 16,
 		version & 0xffff);
 
-	mach_power_off = nf_poweroff;
-}
+	mach_घातer_off = nf_घातeroff;
+पूर्ण

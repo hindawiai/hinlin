@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_INTLIST_H
-#define __PERF_INTLIST_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_INTLIST_H
+#घोषणा __PERF_INTLIST_H
 
-#include <linux/rbtree.h>
-#include <stdbool.h>
+#समावेश <linux/rbtree.h>
+#समावेश <stdbool.h>
 
-#include "rblist.h"
+#समावेश "rblist.h"
 
-struct int_node {
-	struct rb_node rb_node;
-	unsigned long i;
-	void *priv;
-};
+काष्ठा पूर्णांक_node अणु
+	काष्ठा rb_node rb_node;
+	अचिन्हित दीर्घ i;
+	व्योम *priv;
+पूर्ण;
 
-struct intlist {
-	struct rblist rblist;
-};
+काष्ठा पूर्णांकlist अणु
+	काष्ठा rblist rblist;
+पूर्ण;
 
-struct intlist *intlist__new(const char *slist);
-void intlist__delete(struct intlist *ilist);
+काष्ठा पूर्णांकlist *पूर्णांकlist__new(स्थिर अक्षर *slist);
+व्योम पूर्णांकlist__delete(काष्ठा पूर्णांकlist *ilist);
 
-void intlist__remove(struct intlist *ilist, struct int_node *in);
-int intlist__add(struct intlist *ilist, unsigned long i);
+व्योम पूर्णांकlist__हटाओ(काष्ठा पूर्णांकlist *ilist, काष्ठा पूर्णांक_node *in);
+पूर्णांक पूर्णांकlist__add(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i);
 
-struct int_node *intlist__entry(const struct intlist *ilist, unsigned int idx);
-struct int_node *intlist__find(struct intlist *ilist, unsigned long i);
-struct int_node *intlist__findnew(struct intlist *ilist, unsigned long i);
+काष्ठा पूर्णांक_node *पूर्णांकlist__entry(स्थिर काष्ठा पूर्णांकlist *ilist, अचिन्हित पूर्णांक idx);
+काष्ठा पूर्णांक_node *पूर्णांकlist__find(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i);
+काष्ठा पूर्णांक_node *पूर्णांकlist__findnew(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i);
 
-static inline bool intlist__has_entry(struct intlist *ilist, unsigned long i)
-{
-	return intlist__find(ilist, i) != NULL;
-}
+अटल अंतरभूत bool पूर्णांकlist__has_entry(काष्ठा पूर्णांकlist *ilist, अचिन्हित दीर्घ i)
+अणु
+	वापस पूर्णांकlist__find(ilist, i) != शून्य;
+पूर्ण
 
-static inline bool intlist__empty(const struct intlist *ilist)
-{
-	return rblist__empty(&ilist->rblist);
-}
+अटल अंतरभूत bool पूर्णांकlist__empty(स्थिर काष्ठा पूर्णांकlist *ilist)
+अणु
+	वापस rblist__empty(&ilist->rblist);
+पूर्ण
 
-static inline unsigned int intlist__nr_entries(const struct intlist *ilist)
-{
-	return rblist__nr_entries(&ilist->rblist);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक पूर्णांकlist__nr_entries(स्थिर काष्ठा पूर्णांकlist *ilist)
+अणु
+	वापस rblist__nr_entries(&ilist->rblist);
+पूर्ण
 
-/* For intlist iteration */
-static inline struct int_node *intlist__first(struct intlist *ilist)
-{
-	struct rb_node *rn = rb_first_cached(&ilist->rblist.entries);
-	return rn ? rb_entry(rn, struct int_node, rb_node) : NULL;
-}
-static inline struct int_node *intlist__next(struct int_node *in)
-{
-	struct rb_node *rn;
-	if (!in)
-		return NULL;
+/* For पूर्णांकlist iteration */
+अटल अंतरभूत काष्ठा पूर्णांक_node *पूर्णांकlist__first(काष्ठा पूर्णांकlist *ilist)
+अणु
+	काष्ठा rb_node *rn = rb_first_cached(&ilist->rblist.entries);
+	वापस rn ? rb_entry(rn, काष्ठा पूर्णांक_node, rb_node) : शून्य;
+पूर्ण
+अटल अंतरभूत काष्ठा पूर्णांक_node *पूर्णांकlist__next(काष्ठा पूर्णांक_node *in)
+अणु
+	काष्ठा rb_node *rn;
+	अगर (!in)
+		वापस शून्य;
 	rn = rb_next(&in->rb_node);
-	return rn ? rb_entry(rn, struct int_node, rb_node) : NULL;
-}
+	वापस rn ? rb_entry(rn, काष्ठा पूर्णांक_node, rb_node) : शून्य;
+पूर्ण
 
 /**
- * intlist__for_each_entry      - iterate over a intlist
- * @pos:	the &struct int_node to use as a loop cursor.
- * @ilist:	the &struct intlist for loop.
+ * पूर्णांकlist__क्रम_each_entry      - iterate over a पूर्णांकlist
+ * @pos:	the &काष्ठा पूर्णांक_node to use as a loop cursor.
+ * @ilist:	the &काष्ठा पूर्णांकlist क्रम loop.
  */
-#define intlist__for_each_entry(pos, ilist)	\
-	for (pos = intlist__first(ilist); pos; pos = intlist__next(pos))
+#घोषणा पूर्णांकlist__क्रम_each_entry(pos, ilist)	\
+	क्रम (pos = पूर्णांकlist__first(ilist); pos; pos = पूर्णांकlist__next(pos))
 
 /**
- * intlist__for_each_entry_safe - iterate over a intlist safe against removal of
- *                         int_node
- * @pos:	the &struct int_node to use as a loop cursor.
- * @n:		another &struct int_node to use as temporary storage.
- * @ilist:	the &struct intlist for loop.
+ * पूर्णांकlist__क्रम_each_entry_safe - iterate over a पूर्णांकlist safe against removal of
+ *                         पूर्णांक_node
+ * @pos:	the &काष्ठा पूर्णांक_node to use as a loop cursor.
+ * @n:		another &काष्ठा पूर्णांक_node to use as temporary storage.
+ * @ilist:	the &काष्ठा पूर्णांकlist क्रम loop.
  */
-#define intlist__for_each_entry_safe(pos, n, ilist)	\
-	for (pos = intlist__first(ilist), n = intlist__next(pos); pos;\
-	     pos = n, n = intlist__next(n))
-#endif /* __PERF_INTLIST_H */
+#घोषणा पूर्णांकlist__क्रम_each_entry_safe(pos, n, ilist)	\
+	क्रम (pos = पूर्णांकlist__first(ilist), n = पूर्णांकlist__next(pos); pos;\
+	     pos = n, n = पूर्णांकlist__next(n))
+#पूर्ण_अगर /* __PERF_INTLIST_H */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,335 +24,335 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dm_services.h"
+#समावेश "dm_services.h"
 
-#include "atom.h"
+#समावेश "atom.h"
 
-#include "dc_bios_types.h"
-#include "include/gpio_service_interface.h"
-#include "include/grph_object_ctrl_defs.h"
-#include "include/bios_parser_interface.h"
-#include "include/i2caux_interface.h"
-#include "include/logger_interface.h"
+#समावेश "dc_bios_types.h"
+#समावेश "include/gpio_service_interface.h"
+#समावेश "include/grph_object_ctrl_defs.h"
+#समावेश "include/bios_parser_interface.h"
+#समावेश "include/i2caux_interface.h"
+#समावेश "include/logger_interface.h"
 
-#include "command_table.h"
-#include "bios_parser_helper.h"
-#include "command_table_helper.h"
-#include "bios_parser.h"
-#include "bios_parser_types_internal.h"
-#include "bios_parser_interface.h"
+#समावेश "command_table.h"
+#समावेश "bios_parser_helper.h"
+#समावेश "command_table_helper.h"
+#समावेश "bios_parser.h"
+#समावेश "bios_parser_types_internal.h"
+#समावेश "bios_parser_interface.h"
 
-#include "bios_parser_common.h"
+#समावेश "bios_parser_common.h"
 
-#include "dc.h"
+#समावेश "dc.h"
 
-#define THREE_PERCENT_OF_10000 300
+#घोषणा THREE_PERCENT_OF_10000 300
 
-#define LAST_RECORD_TYPE 0xff
+#घोषणा LAST_RECORD_TYPE 0xff
 
-#define DC_LOGGER \
+#घोषणा DC_LOGGER \
 	bp->base.ctx->logger
 
-#define DATA_TABLES(table) (bp->master_data_tbl->ListOfDataTables.table)
+#घोषणा DATA_TABLES(table) (bp->master_data_tbl->ListOfDataTables.table)
 
-static void get_atom_data_table_revision(
+अटल व्योम get_atom_data_table_revision(
 	ATOM_COMMON_TABLE_HEADER *atom_data_tbl,
-	struct atom_data_revision *tbl_revision);
-static uint32_t get_src_obj_list(struct bios_parser *bp, ATOM_OBJECT *object,
-	uint16_t **id_list);
-static ATOM_OBJECT *get_bios_object(struct bios_parser *bp,
-	struct graphics_object_id id);
-static enum bp_result get_gpio_i2c_info(struct bios_parser *bp,
+	काष्ठा atom_data_revision *tbl_revision);
+अटल uपूर्णांक32_t get_src_obj_list(काष्ठा bios_parser *bp, ATOM_OBJECT *object,
+	uपूर्णांक16_t **id_list);
+अटल ATOM_OBJECT *get_bios_object(काष्ठा bios_parser *bp,
+	काष्ठा graphics_object_id id);
+अटल क्रमागत bp_result get_gpio_i2c_info(काष्ठा bios_parser *bp,
 	ATOM_I2C_RECORD *record,
-	struct graphics_object_i2c_info *info);
-static ATOM_HPD_INT_RECORD *get_hpd_record(struct bios_parser *bp,
+	काष्ठा graphics_object_i2c_info *info);
+अटल ATOM_HPD_INT_RECORD *get_hpd_record(काष्ठा bios_parser *bp,
 	ATOM_OBJECT *object);
-static struct device_id device_type_from_device_id(uint16_t device_id);
-static uint32_t signal_to_ss_id(enum as_signal_type signal);
-static uint32_t get_support_mask_for_device_id(struct device_id device_id);
-static ATOM_ENCODER_CAP_RECORD_V2 *get_encoder_cap_record(
-	struct bios_parser *bp,
+अटल काष्ठा device_id device_type_from_device_id(uपूर्णांक16_t device_id);
+अटल uपूर्णांक32_t संकेत_to_ss_id(क्रमागत as_संकेत_type संकेत);
+अटल uपूर्णांक32_t get_support_mask_क्रम_device_id(काष्ठा device_id device_id);
+अटल ATOM_ENCODER_CAP_RECORD_V2 *get_encoder_cap_record(
+	काष्ठा bios_parser *bp,
 	ATOM_OBJECT *object);
 
-#define BIOS_IMAGE_SIZE_OFFSET 2
-#define BIOS_IMAGE_SIZE_UNIT 512
+#घोषणा BIOS_IMAGE_SIZE_OFFSET 2
+#घोषणा BIOS_IMAGE_SIZE_UNIT 512
 
 /*****************************************************************************/
-static bool bios_parser_construct(
-	struct bios_parser *bp,
-	struct bp_init_data *init,
-	enum dce_version dce_version);
+अटल bool bios_parser_स्थिरruct(
+	काष्ठा bios_parser *bp,
+	काष्ठा bp_init_data *init,
+	क्रमागत dce_version dce_version);
 
-static uint8_t bios_parser_get_connectors_number(
-	struct dc_bios *dcb);
+अटल uपूर्णांक8_t bios_parser_get_connectors_number(
+	काष्ठा dc_bios *dcb);
 
-static enum bp_result bios_parser_get_embedded_panel_info(
-	struct dc_bios *dcb,
-	struct embedded_panel_info *info);
+अटल क्रमागत bp_result bios_parser_get_embedded_panel_info(
+	काष्ठा dc_bios *dcb,
+	काष्ठा embedded_panel_info *info);
 
 /*****************************************************************************/
 
-struct dc_bios *bios_parser_create(
-	struct bp_init_data *init,
-	enum dce_version dce_version)
-{
-	struct bios_parser *bp = NULL;
+काष्ठा dc_bios *bios_parser_create(
+	काष्ठा bp_init_data *init,
+	क्रमागत dce_version dce_version)
+अणु
+	काष्ठा bios_parser *bp = शून्य;
 
-	bp = kzalloc(sizeof(struct bios_parser), GFP_KERNEL);
-	if (!bp)
-		return NULL;
+	bp = kzalloc(माप(काष्ठा bios_parser), GFP_KERNEL);
+	अगर (!bp)
+		वापस शून्य;
 
-	if (bios_parser_construct(bp, init, dce_version))
-		return &bp->base;
+	अगर (bios_parser_स्थिरruct(bp, init, dce_version))
+		वापस &bp->base;
 
-	kfree(bp);
+	kमुक्त(bp);
 	BREAK_TO_DEBUGGER();
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void bios_parser_destruct(struct bios_parser *bp)
-{
-	kfree(bp->base.bios_local_image);
-	kfree(bp->base.integrated_info);
-}
+अटल व्योम bios_parser_deकाष्ठा(काष्ठा bios_parser *bp)
+अणु
+	kमुक्त(bp->base.bios_local_image);
+	kमुक्त(bp->base.पूर्णांकegrated_info);
+पूर्ण
 
-static void bios_parser_destroy(struct dc_bios **dcb)
-{
-	struct bios_parser *bp = BP_FROM_DCB(*dcb);
+अटल व्योम bios_parser_destroy(काष्ठा dc_bios **dcb)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(*dcb);
 
-	if (!bp) {
+	अगर (!bp) अणु
 		BREAK_TO_DEBUGGER();
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bios_parser_destruct(bp);
+	bios_parser_deकाष्ठा(bp);
 
-	kfree(bp);
-	*dcb = NULL;
-}
+	kमुक्त(bp);
+	*dcb = शून्य;
+पूर्ण
 
-static uint8_t get_number_of_objects(struct bios_parser *bp, uint32_t offset)
-{
+अटल uपूर्णांक8_t get_number_of_objects(काष्ठा bios_parser *bp, uपूर्णांक32_t offset)
+अणु
 	ATOM_OBJECT_TABLE *table;
 
-	uint32_t object_table_offset = bp->object_info_tbl_offset + offset;
+	uपूर्णांक32_t object_table_offset = bp->object_info_tbl_offset + offset;
 
 	table = GET_IMAGE(ATOM_OBJECT_TABLE, object_table_offset);
 
-	if (!table)
-		return 0;
-	else
-		return table->ucNumberOfObjects;
-}
+	अगर (!table)
+		वापस 0;
+	अन्यथा
+		वापस table->ucNumberOfObjects;
+पूर्ण
 
-static uint8_t bios_parser_get_connectors_number(struct dc_bios *dcb)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल uपूर्णांक8_t bios_parser_get_connectors_number(काष्ठा dc_bios *dcb)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	return get_number_of_objects(bp,
+	वापस get_number_of_objects(bp,
 		le16_to_cpu(bp->object_info_tbl.v1_1->usConnectorObjectTableOffset));
-}
+पूर्ण
 
-static struct graphics_object_id bios_parser_get_connector_id(
-	struct dc_bios *dcb,
-	uint8_t i)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
-	struct graphics_object_id object_id = dal_graphics_object_id_init(
+अटल काष्ठा graphics_object_id bios_parser_get_connector_id(
+	काष्ठा dc_bios *dcb,
+	uपूर्णांक8_t i)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
+	काष्ठा graphics_object_id object_id = dal_graphics_object_id_init(
 		0, ENUM_ID_UNKNOWN, OBJECT_TYPE_UNKNOWN);
-	uint16_t id;
+	uपूर्णांक16_t id;
 
-	uint32_t connector_table_offset = bp->object_info_tbl_offset
+	uपूर्णांक32_t connector_table_offset = bp->object_info_tbl_offset
 		+ le16_to_cpu(bp->object_info_tbl.v1_1->usConnectorObjectTableOffset);
 
 	ATOM_OBJECT_TABLE *tbl =
 		GET_IMAGE(ATOM_OBJECT_TABLE, connector_table_offset);
 
-	if (!tbl) {
+	अगर (!tbl) अणु
 		dm_error("Can't get connector table from atom bios.\n");
-		return object_id;
-	}
+		वापस object_id;
+	पूर्ण
 
-	if (tbl->ucNumberOfObjects <= i) {
+	अगर (tbl->ucNumberOfObjects <= i) अणु
 		dm_error("Can't find connector id %d in connector table of size %d.\n",
 			 i, tbl->ucNumberOfObjects);
-		return object_id;
-	}
+		वापस object_id;
+	पूर्ण
 
 	id = le16_to_cpu(tbl->asObjects[i].usObjectID);
 	object_id = object_id_from_bios_object_id(id);
-	return object_id;
-}
+	वापस object_id;
+पूर्ण
 
-static enum bp_result bios_parser_get_src_obj(struct dc_bios *dcb,
-	struct graphics_object_id object_id, uint32_t index,
-	struct graphics_object_id *src_object_id)
-{
-	uint32_t number;
-	uint16_t *id;
+अटल क्रमागत bp_result bios_parser_get_src_obj(काष्ठा dc_bios *dcb,
+	काष्ठा graphics_object_id object_id, uपूर्णांक32_t index,
+	काष्ठा graphics_object_id *src_object_id)
+अणु
+	uपूर्णांक32_t number;
+	uपूर्णांक16_t *id;
 	ATOM_OBJECT *object;
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!src_object_id)
-		return BP_RESULT_BADINPUT;
+	अगर (!src_object_id)
+		वापस BP_RESULT_BADINPUT;
 
 	object = get_bios_object(bp, object_id);
 
-	if (!object) {
+	अगर (!object) अणु
 		BREAK_TO_DEBUGGER(); /* Invalid object id */
-		return BP_RESULT_BADINPUT;
-	}
+		वापस BP_RESULT_BADINPUT;
+	पूर्ण
 
 	number = get_src_obj_list(bp, object, &id);
 
-	if (number <= index)
-		return BP_RESULT_BADINPUT;
+	अगर (number <= index)
+		वापस BP_RESULT_BADINPUT;
 
 	*src_object_id = object_id_from_bios_object_id(id[index]);
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result bios_parser_get_i2c_info(struct dc_bios *dcb,
-	struct graphics_object_id id,
-	struct graphics_object_i2c_info *info)
-{
-	uint32_t offset;
+अटल क्रमागत bp_result bios_parser_get_i2c_info(काष्ठा dc_bios *dcb,
+	काष्ठा graphics_object_id id,
+	काष्ठा graphics_object_i2c_info *info)
+अणु
+	uपूर्णांक32_t offset;
 	ATOM_OBJECT *object;
 	ATOM_COMMON_RECORD_HEADER *header;
 	ATOM_I2C_RECORD *record;
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
 	object = get_bios_object(bp, id);
 
-	if (!object)
-		return BP_RESULT_BADINPUT;
+	अगर (!object)
+		वापस BP_RESULT_BADINPUT;
 
 	offset = le16_to_cpu(object->usRecordOffset)
 			+ bp->object_info_tbl_offset;
 
-	for (;;) {
+	क्रम (;;) अणु
 		header = GET_IMAGE(ATOM_COMMON_RECORD_HEADER, offset);
 
-		if (!header)
-			return BP_RESULT_BADBIOSTABLE;
+		अगर (!header)
+			वापस BP_RESULT_BADBIOSTABLE;
 
-		if (LAST_RECORD_TYPE == header->ucRecordType ||
+		अगर (LAST_RECORD_TYPE == header->ucRecordType ||
 			!header->ucRecordSize)
-			break;
+			अवरोध;
 
-		if (ATOM_I2C_RECORD_TYPE == header->ucRecordType
-			&& sizeof(ATOM_I2C_RECORD) <= header->ucRecordSize) {
+		अगर (ATOM_I2C_RECORD_TYPE == header->ucRecordType
+			&& माप(ATOM_I2C_RECORD) <= header->ucRecordSize) अणु
 			/* get the I2C info */
 			record = (ATOM_I2C_RECORD *) header;
 
-			if (get_gpio_i2c_info(bp, record, info) == BP_RESULT_OK)
-				return BP_RESULT_OK;
-		}
+			अगर (get_gpio_i2c_info(bp, record, info) == BP_RESULT_OK)
+				वापस BP_RESULT_OK;
+		पूर्ण
 
 		offset += header->ucRecordSize;
-	}
+	पूर्ण
 
-	return BP_RESULT_NORECORD;
-}
+	वापस BP_RESULT_NORECORD;
+पूर्ण
 
-static enum bp_result bios_parser_get_hpd_info(struct dc_bios *dcb,
-	struct graphics_object_id id,
-	struct graphics_object_hpd_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_get_hpd_info(काष्ठा dc_bios *dcb,
+	काष्ठा graphics_object_id id,
+	काष्ठा graphics_object_hpd_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 	ATOM_OBJECT *object;
-	ATOM_HPD_INT_RECORD *record = NULL;
+	ATOM_HPD_INT_RECORD *record = शून्य;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
 	object = get_bios_object(bp, id);
 
-	if (!object)
-		return BP_RESULT_BADINPUT;
+	अगर (!object)
+		वापस BP_RESULT_BADINPUT;
 
 	record = get_hpd_record(bp, object);
 
-	if (record != NULL) {
-		info->hpd_int_gpio_uid = record->ucHPDIntGPIOID;
+	अगर (record != शून्य) अणु
+		info->hpd_पूर्णांक_gpio_uid = record->ucHPDIntGPIOID;
 		info->hpd_active = record->ucPlugged_PinState;
-		return BP_RESULT_OK;
-	}
+		वापस BP_RESULT_OK;
+	पूर्ण
 
-	return BP_RESULT_NORECORD;
-}
+	वापस BP_RESULT_NORECORD;
+पूर्ण
 
-static enum bp_result bios_parser_get_device_tag_record(
-	struct bios_parser *bp,
+अटल क्रमागत bp_result bios_parser_get_device_tag_record(
+	काष्ठा bios_parser *bp,
 	ATOM_OBJECT *object,
 	ATOM_CONNECTOR_DEVICE_TAG_RECORD **record)
-{
+अणु
 	ATOM_COMMON_RECORD_HEADER *header;
-	uint32_t offset;
+	uपूर्णांक32_t offset;
 
 	offset = le16_to_cpu(object->usRecordOffset)
 			+ bp->object_info_tbl_offset;
 
-	for (;;) {
+	क्रम (;;) अणु
 		header = GET_IMAGE(ATOM_COMMON_RECORD_HEADER, offset);
 
-		if (!header)
-			return BP_RESULT_BADBIOSTABLE;
+		अगर (!header)
+			वापस BP_RESULT_BADBIOSTABLE;
 
 		offset += header->ucRecordSize;
 
-		if (LAST_RECORD_TYPE == header->ucRecordType ||
+		अगर (LAST_RECORD_TYPE == header->ucRecordType ||
 			!header->ucRecordSize)
-			break;
+			अवरोध;
 
-		if (ATOM_CONNECTOR_DEVICE_TAG_RECORD_TYPE !=
+		अगर (ATOM_CONNECTOR_DEVICE_TAG_RECORD_TYPE !=
 			header->ucRecordType)
-			continue;
+			जारी;
 
-		if (sizeof(ATOM_CONNECTOR_DEVICE_TAG) > header->ucRecordSize)
-			continue;
+		अगर (माप(ATOM_CONNECTOR_DEVICE_TAG) > header->ucRecordSize)
+			जारी;
 
 		*record = (ATOM_CONNECTOR_DEVICE_TAG_RECORD *) header;
-		return BP_RESULT_OK;
-	}
+		वापस BP_RESULT_OK;
+	पूर्ण
 
-	return BP_RESULT_NORECORD;
-}
+	वापस BP_RESULT_NORECORD;
+पूर्ण
 
-static enum bp_result bios_parser_get_device_tag(
-	struct dc_bios *dcb,
-	struct graphics_object_id connector_object_id,
-	uint32_t device_tag_index,
-	struct connector_device_tag_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_get_device_tag(
+	काष्ठा dc_bios *dcb,
+	काष्ठा graphics_object_id connector_object_id,
+	uपूर्णांक32_t device_tag_index,
+	काष्ठा connector_device_tag_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 	ATOM_OBJECT *object;
-	ATOM_CONNECTOR_DEVICE_TAG_RECORD *record = NULL;
+	ATOM_CONNECTOR_DEVICE_TAG_RECORD *record = शून्य;
 	ATOM_CONNECTOR_DEVICE_TAG *device_tag;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
-	/* getBiosObject will return MXM object */
+	/* getBiosObject will वापस MXM object */
 	object = get_bios_object(bp, connector_object_id);
 
-	if (!object) {
+	अगर (!object) अणु
 		BREAK_TO_DEBUGGER(); /* Invalid object id */
-		return BP_RESULT_BADINPUT;
-	}
+		वापस BP_RESULT_BADINPUT;
+	पूर्ण
 
-	if (bios_parser_get_device_tag_record(bp, object, &record)
+	अगर (bios_parser_get_device_tag_record(bp, object, &record)
 		!= BP_RESULT_OK)
-		return BP_RESULT_NORECORD;
+		वापस BP_RESULT_NORECORD;
 
-	if (device_tag_index >= record->ucNumberOfDevice)
-		return BP_RESULT_NORECORD;
+	अगर (device_tag_index >= record->ucNumberOfDevice)
+		वापस BP_RESULT_NORECORD;
 
 	device_tag = &record->asDeviceTag[device_tag_index];
 
@@ -359,80 +360,80 @@ static enum bp_result bios_parser_get_device_tag(
 	info->dev_id =
 		device_type_from_device_id(le16_to_cpu(device_tag->usDeviceID));
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result get_firmware_info_v1_4(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info);
-static enum bp_result get_firmware_info_v2_1(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info);
-static enum bp_result get_firmware_info_v2_2(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info);
+अटल क्रमागत bp_result get_firmware_info_v1_4(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info);
+अटल क्रमागत bp_result get_firmware_info_v2_1(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info);
+अटल क्रमागत bp_result get_firmware_info_v2_2(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info);
 
-static enum bp_result bios_parser_get_firmware_info(
-	struct dc_bios *dcb,
-	struct dc_firmware_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
-	enum bp_result result = BP_RESULT_BADBIOSTABLE;
+अटल क्रमागत bp_result bios_parser_get_firmware_info(
+	काष्ठा dc_bios *dcb,
+	काष्ठा dc_firmware_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
+	क्रमागत bp_result result = BP_RESULT_BADBIOSTABLE;
 	ATOM_COMMON_TABLE_HEADER *header;
-	struct atom_data_revision revision;
+	काष्ठा atom_data_revision revision;
 
-	if (info && DATA_TABLES(FirmwareInfo)) {
+	अगर (info && DATA_TABLES(FirmwareInfo)) अणु
 		header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER,
 			DATA_TABLES(FirmwareInfo));
 		get_atom_data_table_revision(header, &revision);
-		switch (revision.major) {
-		case 1:
-			switch (revision.minor) {
-			case 4:
+		चयन (revision.major) अणु
+		हाल 1:
+			चयन (revision.minor) अणु
+			हाल 4:
 				result = get_firmware_info_v1_4(bp, info);
-				break;
-			default:
-				break;
-			}
-			break;
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
 
-		case 2:
-			switch (revision.minor) {
-			case 1:
+		हाल 2:
+			चयन (revision.minor) अणु
+			हाल 1:
 				result = get_firmware_info_v2_1(bp, info);
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				result = get_firmware_info_v2_2(bp, info);
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static enum bp_result get_firmware_info_v1_4(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info)
-{
+अटल क्रमागत bp_result get_firmware_info_v1_4(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info)
+अणु
 	ATOM_FIRMWARE_INFO_V1_4 *firmware_info =
 		GET_IMAGE(ATOM_FIRMWARE_INFO_V1_4,
 			DATA_TABLES(FirmwareInfo));
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
-	if (!firmware_info)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!firmware_info)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 
-	/* Pixel clock pll information. We need to convert from 10KHz units into
+	/* Pixel घड़ी pll inक्रमmation. We need to convert from 10KHz units पूर्णांकo
 	 * KHz units */
 	info->pll_info.crystal_frequency =
 		le16_to_cpu(firmware_info->usReferenceClock) * 10;
@@ -445,45 +446,45 @@ static enum bp_result get_firmware_info_v1_4(
 	info->pll_info.max_output_pxl_clk_pll_frequency =
 		le32_to_cpu(firmware_info->ulMaxPixelClockPLL_Output) * 10;
 
-	if (firmware_info->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
-		/* Since there is no information on the SS, report conservative
-		 * value 3% for bandwidth calculation */
+	अगर (firmware_info->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
+		/* Since there is no inक्रमmation on the SS, report conservative
+		 * value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.memory_clk_ss_percentage = THREE_PERCENT_OF_10000;
 
-	if (firmware_info->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
-		/* Since there is no information on the SS,report conservative
-		 * value 3% for bandwidth calculation */
+	अगर (firmware_info->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
+		/* Since there is no inक्रमmation on the SS,report conservative
+		 * value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.engine_clk_ss_percentage = THREE_PERCENT_OF_10000;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result get_ss_info_v3_1(
-	struct bios_parser *bp,
-	uint32_t id,
-	uint32_t index,
-	struct spread_spectrum_info *ss_info);
+अटल क्रमागत bp_result get_ss_info_v3_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	uपूर्णांक32_t index,
+	काष्ठा spपढ़ो_spectrum_info *ss_info);
 
-static enum bp_result get_firmware_info_v2_1(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info)
-{
+अटल क्रमागत bp_result get_firmware_info_v2_1(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info)
+अणु
 	ATOM_FIRMWARE_INFO_V2_1 *firmwareInfo =
 		GET_IMAGE(ATOM_FIRMWARE_INFO_V2_1, DATA_TABLES(FirmwareInfo));
-	struct spread_spectrum_info internalSS;
-	uint32_t index;
+	काष्ठा spपढ़ो_spectrum_info पूर्णांकernalSS;
+	uपूर्णांक32_t index;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
-	if (!firmwareInfo)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!firmwareInfo)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 
-	/* Pixel clock pll information. We need to convert from 10KHz units into
+	/* Pixel घड़ी pll inक्रमmation. We need to convert from 10KHz units पूर्णांकo
 	 * KHz units */
 	info->pll_info.crystal_frequency =
 		le16_to_cpu(firmwareInfo->usCoreReferenceClock) * 10;
@@ -495,81 +496,81 @@ static enum bp_result get_firmware_info_v2_1(
 		le32_to_cpu(firmwareInfo->ulMinPixelClockPLL_Output) * 10;
 	info->pll_info.max_output_pxl_clk_pll_frequency =
 		le32_to_cpu(firmwareInfo->ulMaxPixelClockPLL_Output) * 10;
-	info->default_display_engine_pll_frequency =
+	info->शेष_display_engine_pll_frequency =
 		le32_to_cpu(firmwareInfo->ulDefaultDispEngineClkFreq) * 10;
-	info->external_clock_source_frequency_for_dp =
+	info->बाह्यal_घड़ी_source_frequency_क्रम_dp =
 		le16_to_cpu(firmwareInfo->usUniphyDPModeExtClkFreq) * 10;
 	info->min_allowed_bl_level = firmwareInfo->ucMinAllowedBL_Level;
 
-	/* There should be only one entry in the SS info table for Memory Clock
+	/* There should be only one entry in the SS info table क्रम Memory Clock
 	 */
 	index = 0;
-	if (firmwareInfo->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
-		/* Since there is no information for external SS, report
-		 *  conservative value 3% for bandwidth calculation */
+	अगर (firmwareInfo->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
+		/* Since there is no inक्रमmation क्रम बाह्यal SS, report
+		 *  conservative value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.memory_clk_ss_percentage = THREE_PERCENT_OF_10000;
-	else if (get_ss_info_v3_1(bp,
-		ASIC_INTERNAL_MEMORY_SS, index, &internalSS) == BP_RESULT_OK) {
-		if (internalSS.spread_spectrum_percentage) {
+	अन्यथा अगर (get_ss_info_v3_1(bp,
+		ASIC_INTERNAL_MEMORY_SS, index, &पूर्णांकernalSS) == BP_RESULT_OK) अणु
+		अगर (पूर्णांकernalSS.spपढ़ो_spectrum_percentage) अणु
 			info->feature.memory_clk_ss_percentage =
-				internalSS.spread_spectrum_percentage;
-			if (internalSS.type.CENTER_MODE) {
-				/* if it is centermode, the exact SS Percentage
+				पूर्णांकernalSS.spपढ़ो_spectrum_percentage;
+			अगर (पूर्णांकernalSS.type.CENTER_MODE) अणु
+				/* अगर it is centermode, the exact SS Percentage
 				 * will be round up of half of the percentage
 				 * reported in the SS table */
 				++info->feature.memory_clk_ss_percentage;
 				info->feature.memory_clk_ss_percentage /= 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* There should be only one entry in the SS info table for Engine Clock
+	/* There should be only one entry in the SS info table क्रम Engine Clock
 	 */
 	index = 1;
-	if (firmwareInfo->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
-		/* Since there is no information for external SS, report
-		 * conservative value 3% for bandwidth calculation */
+	अगर (firmwareInfo->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
+		/* Since there is no inक्रमmation क्रम बाह्यal SS, report
+		 * conservative value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.engine_clk_ss_percentage = THREE_PERCENT_OF_10000;
-	else if (get_ss_info_v3_1(bp,
-		ASIC_INTERNAL_ENGINE_SS, index, &internalSS) == BP_RESULT_OK) {
-		if (internalSS.spread_spectrum_percentage) {
+	अन्यथा अगर (get_ss_info_v3_1(bp,
+		ASIC_INTERNAL_ENGINE_SS, index, &पूर्णांकernalSS) == BP_RESULT_OK) अणु
+		अगर (पूर्णांकernalSS.spपढ़ो_spectrum_percentage) अणु
 			info->feature.engine_clk_ss_percentage =
-				internalSS.spread_spectrum_percentage;
-			if (internalSS.type.CENTER_MODE) {
-				/* if it is centermode, the exact SS Percentage
+				पूर्णांकernalSS.spपढ़ो_spectrum_percentage;
+			अगर (पूर्णांकernalSS.type.CENTER_MODE) अणु
+				/* अगर it is centermode, the exact SS Percentage
 				 * will be round up of half of the percentage
 				 * reported in the SS table */
 				++info->feature.engine_clk_ss_percentage;
 				info->feature.engine_clk_ss_percentage /= 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result get_firmware_info_v2_2(
-	struct bios_parser *bp,
-	struct dc_firmware_info *info)
-{
+अटल क्रमागत bp_result get_firmware_info_v2_2(
+	काष्ठा bios_parser *bp,
+	काष्ठा dc_firmware_info *info)
+अणु
 	ATOM_FIRMWARE_INFO_V2_2 *firmware_info;
-	struct spread_spectrum_info internal_ss;
-	uint32_t index;
+	काष्ठा spपढ़ो_spectrum_info पूर्णांकernal_ss;
+	uपूर्णांक32_t index;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
 	firmware_info = GET_IMAGE(ATOM_FIRMWARE_INFO_V2_2,
 		DATA_TABLES(FirmwareInfo));
 
-	if (!firmware_info)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!firmware_info)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 
-	/* Pixel clock pll information. We need to convert from 10KHz units into
+	/* Pixel घड़ी pll inक्रमmation. We need to convert from 10KHz units पूर्णांकo
 	 * KHz units */
 	info->pll_info.crystal_frequency =
 		le16_to_cpu(firmware_info->usCoreReferenceClock) * 10;
@@ -581,56 +582,56 @@ static enum bp_result get_firmware_info_v2_2(
 		le32_to_cpu(firmware_info->ulMinPixelClockPLL_Output) * 10;
 	info->pll_info.max_output_pxl_clk_pll_frequency =
 		le32_to_cpu(firmware_info->ulMaxPixelClockPLL_Output) * 10;
-	info->default_display_engine_pll_frequency =
+	info->शेष_display_engine_pll_frequency =
 		le32_to_cpu(firmware_info->ulDefaultDispEngineClkFreq) * 10;
-	info->external_clock_source_frequency_for_dp =
+	info->बाह्यal_घड़ी_source_frequency_क्रम_dp =
 		le16_to_cpu(firmware_info->usUniphyDPModeExtClkFreq) * 10;
 
-	/* There should be only one entry in the SS info table for Memory Clock
+	/* There should be only one entry in the SS info table क्रम Memory Clock
 	 */
 	index = 0;
-	if (firmware_info->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
-		/* Since there is no information for external SS, report
-		 *  conservative value 3% for bandwidth calculation */
+	अगर (firmware_info->usFirmwareCapability.sbfAccess.MemoryClockSS_Support)
+		/* Since there is no inक्रमmation क्रम बाह्यal SS, report
+		 *  conservative value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.memory_clk_ss_percentage = THREE_PERCENT_OF_10000;
-	else if (get_ss_info_v3_1(bp,
-			ASIC_INTERNAL_MEMORY_SS, index, &internal_ss) == BP_RESULT_OK) {
-		if (internal_ss.spread_spectrum_percentage) {
+	अन्यथा अगर (get_ss_info_v3_1(bp,
+			ASIC_INTERNAL_MEMORY_SS, index, &पूर्णांकernal_ss) == BP_RESULT_OK) अणु
+		अगर (पूर्णांकernal_ss.spपढ़ो_spectrum_percentage) अणु
 			info->feature.memory_clk_ss_percentage =
-					internal_ss.spread_spectrum_percentage;
-			if (internal_ss.type.CENTER_MODE) {
-				/* if it is centermode, the exact SS Percentage
+					पूर्णांकernal_ss.spपढ़ो_spectrum_percentage;
+			अगर (पूर्णांकernal_ss.type.CENTER_MODE) अणु
+				/* अगर it is centermode, the exact SS Percentage
 				 * will be round up of half of the percentage
 				 * reported in the SS table */
 				++info->feature.memory_clk_ss_percentage;
 				info->feature.memory_clk_ss_percentage /= 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* There should be only one entry in the SS info table for Engine Clock
+	/* There should be only one entry in the SS info table क्रम Engine Clock
 	 */
 	index = 1;
-	if (firmware_info->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
-		/* Since there is no information for external SS, report
-		 * conservative value 3% for bandwidth calculation */
+	अगर (firmware_info->usFirmwareCapability.sbfAccess.EngineClockSS_Support)
+		/* Since there is no inक्रमmation क्रम बाह्यal SS, report
+		 * conservative value 3% क्रम bandwidth calculation */
 		/* unit of 0.01% */
 		info->feature.engine_clk_ss_percentage = THREE_PERCENT_OF_10000;
-	else if (get_ss_info_v3_1(bp,
-			ASIC_INTERNAL_ENGINE_SS, index, &internal_ss) == BP_RESULT_OK) {
-		if (internal_ss.spread_spectrum_percentage) {
+	अन्यथा अगर (get_ss_info_v3_1(bp,
+			ASIC_INTERNAL_ENGINE_SS, index, &पूर्णांकernal_ss) == BP_RESULT_OK) अणु
+		अगर (पूर्णांकernal_ss.spपढ़ो_spectrum_percentage) अणु
 			info->feature.engine_clk_ss_percentage =
-					internal_ss.spread_spectrum_percentage;
-			if (internal_ss.type.CENTER_MODE) {
-				/* if it is centermode, the exact SS Percentage
+					पूर्णांकernal_ss.spपढ़ो_spectrum_percentage;
+			अगर (पूर्णांकernal_ss.type.CENTER_MODE) अणु
+				/* अगर it is centermode, the exact SS Percentage
 				 * will be round up of half of the percentage
 				 * reported in the SS table */
 				++info->feature.engine_clk_ss_percentage;
 				info->feature.engine_clk_ss_percentage /= 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Remote Display */
 	info->remote_display_config = firmware_info->ucRemoteDisplayConfig;
@@ -639,619 +640,619 @@ static enum bp_result get_firmware_info_v2_2(
 	info->min_allowed_bl_level = firmware_info->ucMinAllowedBL_Level;
 	/* Used starting from CI */
 	info->smu_gpu_pll_output_freq =
-			(uint32_t) (le32_to_cpu(firmware_info->ulGPUPLL_OutputFreq) * 10);
+			(uपूर्णांक32_t) (le32_to_cpu(firmware_info->ulGPUPLL_OutputFreq) * 10);
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result get_ss_info_v3_1(
-	struct bios_parser *bp,
-	uint32_t id,
-	uint32_t index,
-	struct spread_spectrum_info *ss_info)
-{
+अटल क्रमागत bp_result get_ss_info_v3_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	uपूर्णांक32_t index,
+	काष्ठा spपढ़ो_spectrum_info *ss_info)
+अणु
 	ATOM_ASIC_INTERNAL_SS_INFO_V3 *ss_table_header_include;
 	ATOM_ASIC_SS_ASSIGNMENT_V3 *tbl;
-	uint32_t table_size;
-	uint32_t i;
-	uint32_t table_index = 0;
+	uपूर्णांक32_t table_size;
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t table_index = 0;
 
-	if (!ss_info)
-		return BP_RESULT_BADINPUT;
+	अगर (!ss_info)
+		वापस BP_RESULT_BADINPUT;
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		return BP_RESULT_UNSUPPORTED;
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		वापस BP_RESULT_UNSUPPORTED;
 
 	ss_table_header_include = GET_IMAGE(ATOM_ASIC_INTERNAL_SS_INFO_V3,
 		DATA_TABLES(ASIC_InternalSS_Info));
 	table_size =
 		(le16_to_cpu(ss_table_header_include->sHeader.usStructureSize)
-				- sizeof(ATOM_COMMON_TABLE_HEADER))
-				/ sizeof(ATOM_ASIC_SS_ASSIGNMENT_V3);
+				- माप(ATOM_COMMON_TABLE_HEADER))
+				/ माप(ATOM_ASIC_SS_ASSIGNMENT_V3);
 
 	tbl = (ATOM_ASIC_SS_ASSIGNMENT_V3 *)
-				&ss_table_header_include->asSpreadSpectrum[0];
+				&ss_table_header_include->asSpपढ़ोSpectrum[0];
 
-	memset(ss_info, 0, sizeof(struct spread_spectrum_info));
+	स_रखो(ss_info, 0, माप(काष्ठा spपढ़ो_spectrum_info));
 
-	for (i = 0; i < table_size; i++) {
-		if (tbl[i].ucClockIndication != (uint8_t) id)
-			continue;
+	क्रम (i = 0; i < table_size; i++) अणु
+		अगर (tbl[i].ucClockIndication != (uपूर्णांक8_t) id)
+			जारी;
 
-		if (table_index != index) {
+		अगर (table_index != index) अणु
 			table_index++;
-			continue;
-		}
-		/* VBIOS introduced new defines for Version 3, same values as
-		 *  before, so now use these new ones for Version 3.
+			जारी;
+		पूर्ण
+		/* VBIOS पूर्णांकroduced new defines क्रम Version 3, same values as
+		 *  beक्रमe, so now use these new ones क्रम Version 3.
 		 * Shouldn't affect field VBIOS's V3 as define values are still
 		 *  same.
-		 * #define SS_MODE_V3_CENTRE_SPREAD_MASK                0x01
-		 * #define SS_MODE_V3_EXTERNAL_SS_MASK                  0x02
+		 * #घोषणा SS_MODE_V3_CENTRE_SPREAD_MASK                0x01
+		 * #घोषणा SS_MODE_V3_EXTERNAL_SS_MASK                  0x02
 
 		 * Old VBIOS defines:
-		 * #define ATOM_SS_CENTRE_SPREAD_MODE_MASK        0x00000001
-		 * #define ATOM_EXTERNAL_SS_MASK                  0x00000002
+		 * #घोषणा ATOM_SS_CENTRE_SPREAD_MODE_MASK        0x00000001
+		 * #घोषणा ATOM_EXTERNAL_SS_MASK                  0x00000002
 		 */
 
-		if (SS_MODE_V3_EXTERNAL_SS_MASK & tbl[i].ucSpreadSpectrumMode)
+		अगर (SS_MODE_V3_EXTERNAL_SS_MASK & tbl[i].ucSpपढ़ोSpectrumMode)
 			ss_info->type.EXTERNAL = true;
 
-		if (SS_MODE_V3_CENTRE_SPREAD_MASK & tbl[i].ucSpreadSpectrumMode)
+		अगर (SS_MODE_V3_CENTRE_SPREAD_MASK & tbl[i].ucSpपढ़ोSpectrumMode)
 			ss_info->type.CENTER_MODE = true;
 
 		/* Older VBIOS (in field) always provides SS percentage in 0.01%
 		 * units set Divider to 100 */
-		ss_info->spread_percentage_divider = 100;
+		ss_info->spपढ़ो_percentage_भागider = 100;
 
-		/* #define SS_MODE_V3_PERCENTAGE_DIV_BY_1000_MASK 0x10 */
-		if (SS_MODE_V3_PERCENTAGE_DIV_BY_1000_MASK
-				& tbl[i].ucSpreadSpectrumMode)
-			ss_info->spread_percentage_divider = 1000;
+		/* #घोषणा SS_MODE_V3_PERCENTAGE_DIV_BY_1000_MASK 0x10 */
+		अगर (SS_MODE_V3_PERCENTAGE_DIV_BY_1000_MASK
+				& tbl[i].ucSpपढ़ोSpectrumMode)
+			ss_info->spपढ़ो_percentage_भागider = 1000;
 
 		ss_info->type.STEP_AND_DELAY_INFO = false;
-		/* convert [10KHz] into [KHz] */
-		ss_info->target_clock_range =
+		/* convert [10KHz] पूर्णांकo [KHz] */
+		ss_info->target_घड़ी_range =
 				le32_to_cpu(tbl[i].ulTargetClockRange) * 10;
-		ss_info->spread_spectrum_percentage =
-				(uint32_t)le16_to_cpu(tbl[i].usSpreadSpectrumPercentage);
-		ss_info->spread_spectrum_range =
-				(uint32_t)(le16_to_cpu(tbl[i].usSpreadRateIn10Hz) * 10);
+		ss_info->spपढ़ो_spectrum_percentage =
+				(uपूर्णांक32_t)le16_to_cpu(tbl[i].usSpपढ़ोSpectrumPercentage);
+		ss_info->spपढ़ो_spectrum_range =
+				(uपूर्णांक32_t)(le16_to_cpu(tbl[i].usSpपढ़ोRateIn10Hz) * 10);
 
-		return BP_RESULT_OK;
-	}
-	return BP_RESULT_NORECORD;
-}
+		वापस BP_RESULT_OK;
+	पूर्ण
+	वापस BP_RESULT_NORECORD;
+पूर्ण
 
-static enum bp_result bios_parser_transmitter_control(
-	struct dc_bios *dcb,
-	struct bp_transmitter_control *cntl)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_transmitter_control(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_transmitter_control *cntl)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.transmitter_control)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.transmitter_control)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.transmitter_control(bp, cntl);
-}
+	वापस bp->cmd_tbl.transmitter_control(bp, cntl);
+पूर्ण
 
-static enum bp_result bios_parser_encoder_control(
-	struct dc_bios *dcb,
-	struct bp_encoder_control *cntl)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_encoder_control(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_encoder_control *cntl)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.dig_encoder_control)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.dig_encoder_control)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.dig_encoder_control(bp, cntl);
-}
+	वापस bp->cmd_tbl.dig_encoder_control(bp, cntl);
+पूर्ण
 
-static enum bp_result bios_parser_adjust_pixel_clock(
-	struct dc_bios *dcb,
-	struct bp_adjust_pixel_clock_parameters *bp_params)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_adjust_pixel_घड़ी(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_adjust_pixel_घड़ी_parameters *bp_params)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.adjust_display_pll)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.adjust_display_pll)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.adjust_display_pll(bp, bp_params);
-}
+	वापस bp->cmd_tbl.adjust_display_pll(bp, bp_params);
+पूर्ण
 
-static enum bp_result bios_parser_set_pixel_clock(
-	struct dc_bios *dcb,
-	struct bp_pixel_clock_parameters *bp_params)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_set_pixel_घड़ी(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_pixel_घड़ी_parameters *bp_params)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.set_pixel_clock)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.set_pixel_घड़ी)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.set_pixel_clock(bp, bp_params);
-}
+	वापस bp->cmd_tbl.set_pixel_घड़ी(bp, bp_params);
+पूर्ण
 
-static enum bp_result bios_parser_set_dce_clock(
-	struct dc_bios *dcb,
-	struct bp_set_dce_clock_parameters *bp_params)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_set_dce_घड़ी(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_set_dce_घड़ी_parameters *bp_params)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.set_dce_clock)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.set_dce_घड़ी)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.set_dce_clock(bp, bp_params);
-}
+	वापस bp->cmd_tbl.set_dce_घड़ी(bp, bp_params);
+पूर्ण
 
-static enum bp_result bios_parser_enable_spread_spectrum_on_ppll(
-	struct dc_bios *dcb,
-	struct bp_spread_spectrum_parameters *bp_params,
+अटल क्रमागत bp_result bios_parser_enable_spपढ़ो_spectrum_on_ppll(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_spपढ़ो_spectrum_parameters *bp_params,
 	bool enable)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.enable_spread_spectrum_on_ppll)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.enable_spपढ़ो_spectrum_on_ppll)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.enable_spread_spectrum_on_ppll(
+	वापस bp->cmd_tbl.enable_spपढ़ो_spectrum_on_ppll(
 			bp, bp_params, enable);
 
-}
+पूर्ण
 
-static enum bp_result bios_parser_program_crtc_timing(
-	struct dc_bios *dcb,
-	struct bp_hw_crtc_timing_parameters *bp_params)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_program_crtc_timing(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_hw_crtc_timing_parameters *bp_params)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.set_crtc_timing)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.set_crtc_timing)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.set_crtc_timing(bp, bp_params);
-}
+	वापस bp->cmd_tbl.set_crtc_timing(bp, bp_params);
+पूर्ण
 
-static enum bp_result bios_parser_program_display_engine_pll(
-	struct dc_bios *dcb,
-	struct bp_pixel_clock_parameters *bp_params)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_program_display_engine_pll(
+	काष्ठा dc_bios *dcb,
+	काष्ठा bp_pixel_घड़ी_parameters *bp_params)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.program_clock)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.program_घड़ी)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.program_clock(bp, bp_params);
+	वापस bp->cmd_tbl.program_घड़ी(bp, bp_params);
 
-}
+पूर्ण
 
 
-static enum bp_result bios_parser_enable_crtc(
-	struct dc_bios *dcb,
-	enum controller_id id,
+अटल क्रमागत bp_result bios_parser_enable_crtc(
+	काष्ठा dc_bios *dcb,
+	क्रमागत controller_id id,
 	bool enable)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.enable_crtc)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.enable_crtc)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.enable_crtc(bp, id, enable);
-}
+	वापस bp->cmd_tbl.enable_crtc(bp, id, enable);
+पूर्ण
 
-static enum bp_result bios_parser_enable_disp_power_gating(
-	struct dc_bios *dcb,
-	enum controller_id controller_id,
-	enum bp_pipe_control_action action)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_enable_disp_घातer_gating(
+	काष्ठा dc_bios *dcb,
+	क्रमागत controller_id controller_id,
+	क्रमागत bp_pipe_control_action action)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	if (!bp->cmd_tbl.enable_disp_power_gating)
-		return BP_RESULT_FAILURE;
+	अगर (!bp->cmd_tbl.enable_disp_घातer_gating)
+		वापस BP_RESULT_FAILURE;
 
-	return bp->cmd_tbl.enable_disp_power_gating(bp, controller_id,
+	वापस bp->cmd_tbl.enable_disp_घातer_gating(bp, controller_id,
 		action);
-}
+पूर्ण
 
-static bool bios_parser_is_device_id_supported(
-	struct dc_bios *dcb,
-	struct device_id id)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल bool bios_parser_is_device_id_supported(
+	काष्ठा dc_bios *dcb,
+	काष्ठा device_id id)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 
-	uint32_t mask = get_support_mask_for_device_id(id);
+	uपूर्णांक32_t mask = get_support_mask_क्रम_device_id(id);
 
-	return (le16_to_cpu(bp->object_info_tbl.v1_1->usDeviceSupport) & mask) != 0;
-}
+	वापस (le16_to_cpu(bp->object_info_tbl.v1_1->usDeviceSupport) & mask) != 0;
+पूर्ण
 
-static ATOM_HPD_INT_RECORD *get_hpd_record(struct bios_parser *bp,
+अटल ATOM_HPD_INT_RECORD *get_hpd_record(काष्ठा bios_parser *bp,
 	ATOM_OBJECT *object)
-{
+अणु
 	ATOM_COMMON_RECORD_HEADER *header;
-	uint32_t offset;
+	uपूर्णांक32_t offset;
 
-	if (!object) {
+	अगर (!object) अणु
 		BREAK_TO_DEBUGGER(); /* Invalid object */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	offset = le16_to_cpu(object->usRecordOffset)
 			+ bp->object_info_tbl_offset;
 
-	for (;;) {
+	क्रम (;;) अणु
 		header = GET_IMAGE(ATOM_COMMON_RECORD_HEADER, offset);
 
-		if (!header)
-			return NULL;
+		अगर (!header)
+			वापस शून्य;
 
-		if (LAST_RECORD_TYPE == header->ucRecordType ||
+		अगर (LAST_RECORD_TYPE == header->ucRecordType ||
 			!header->ucRecordSize)
-			break;
+			अवरोध;
 
-		if (ATOM_HPD_INT_RECORD_TYPE == header->ucRecordType
-			&& sizeof(ATOM_HPD_INT_RECORD) <= header->ucRecordSize)
-			return (ATOM_HPD_INT_RECORD *) header;
+		अगर (ATOM_HPD_INT_RECORD_TYPE == header->ucRecordType
+			&& माप(ATOM_HPD_INT_RECORD) <= header->ucRecordSize)
+			वापस (ATOM_HPD_INT_RECORD *) header;
 
 		offset += header->ucRecordSize;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static enum bp_result get_ss_info_from_ss_info_table(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *ss_info);
-static enum bp_result get_ss_info_from_tbl(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *ss_info);
+अटल क्रमागत bp_result get_ss_info_from_ss_info_table(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *ss_info);
+अटल क्रमागत bp_result get_ss_info_from_tbl(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *ss_info);
 /**
- * bios_parser_get_spread_spectrum_info
- * Get spread spectrum information from the ASIC_InternalSS_Info(ver 2.1 or
+ * bios_parser_get_spपढ़ो_spectrum_info
+ * Get spपढ़ो spectrum inक्रमmation from the ASIC_InternalSS_Info(ver 2.1 or
  * ver 3.1) or SS_Info table from the VBIOS. Currently ASIC_InternalSS_Info
  * ver 2.1 can co-exist with SS_Info table. Expect ASIC_InternalSS_Info ver 3.1,
- * there is only one entry for each signal /ss id.  However, there is
- * no planning of supporting multiple spread Sprectum entry for EverGreen
- * @dcb:     pointer to the DC BIOS
- * @signal:  ASSignalType to be converted to info index
+ * there is only one entry क्रम each संकेत /ss id.  However, there is
+ * no planning of supporting multiple spपढ़ो Sprectum entry क्रम EverGreen
+ * @dcb:     poपूर्णांकer to the DC BIOS
+ * @संकेत:  ASSignalType to be converted to info index
  * @index:   number of entries that match the converted info index
- * @ss_info: sprectrum information structure,
- * return:   Bios parser result code
+ * @ss_info: sprectrum inक्रमmation काष्ठाure,
+ * वापस:   Bios parser result code
  */
-static enum bp_result bios_parser_get_spread_spectrum_info(
-	struct dc_bios *dcb,
-	enum as_signal_type signal,
-	uint32_t index,
-	struct spread_spectrum_info *ss_info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
-	enum bp_result result = BP_RESULT_UNSUPPORTED;
-	uint32_t clk_id_ss = 0;
+अटल क्रमागत bp_result bios_parser_get_spपढ़ो_spectrum_info(
+	काष्ठा dc_bios *dcb,
+	क्रमागत as_संकेत_type संकेत,
+	uपूर्णांक32_t index,
+	काष्ठा spपढ़ो_spectrum_info *ss_info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
+	क्रमागत bp_result result = BP_RESULT_UNSUPPORTED;
+	uपूर्णांक32_t clk_id_ss = 0;
 	ATOM_COMMON_TABLE_HEADER *header;
-	struct atom_data_revision tbl_revision;
+	काष्ठा atom_data_revision tbl_revision;
 
-	if (!ss_info) /* check for bad input */
-		return BP_RESULT_BADINPUT;
-	/* signal translation */
-	clk_id_ss = signal_to_ss_id(signal);
+	अगर (!ss_info) /* check क्रम bad input */
+		वापस BP_RESULT_BADINPUT;
+	/* संकेत translation */
+	clk_id_ss = संकेत_to_ss_id(संकेत);
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		if (!index)
-			return get_ss_info_from_ss_info_table(bp, clk_id_ss,
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		अगर (!index)
+			वापस get_ss_info_from_ss_info_table(bp, clk_id_ss,
 				ss_info);
 
 	header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER,
 		DATA_TABLES(ASIC_InternalSS_Info));
 	get_atom_data_table_revision(header, &tbl_revision);
 
-	switch (tbl_revision.major) {
-	case 2:
-		switch (tbl_revision.minor) {
-		case 1:
-			/* there can not be more then one entry for Internal
+	चयन (tbl_revision.major) अणु
+	हाल 2:
+		चयन (tbl_revision.minor) अणु
+		हाल 1:
+			/* there can not be more then one entry क्रम Internal
 			 * SS Info table version 2.1 */
-			if (!index)
-				return get_ss_info_from_tbl(bp, clk_id_ss,
+			अगर (!index)
+				वापस get_ss_info_from_tbl(bp, clk_id_ss,
 						ss_info);
-			break;
-		default:
-			break;
-		}
-		break;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case 3:
-		switch (tbl_revision.minor) {
-		case 1:
-			return get_ss_info_v3_1(bp, clk_id_ss, index, ss_info);
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
-	/* there can not be more then one entry for SS Info table */
-	return result;
-}
+	हाल 3:
+		चयन (tbl_revision.minor) अणु
+		हाल 1:
+			वापस get_ss_info_v3_1(bp, clk_id_ss, index, ss_info);
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	/* there can not be more then one entry क्रम SS Info table */
+	वापस result;
+पूर्ण
 
-static enum bp_result get_ss_info_from_internal_ss_info_tbl_V2_1(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *info);
+अटल क्रमागत bp_result get_ss_info_from_पूर्णांकernal_ss_info_tbl_V2_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *info);
 
 /**
  * get_ss_info_from_table
- * Get spread sprectrum information from the ASIC_InternalSS_Info Ver 2.1 or
+ * Get spपढ़ो sprectrum inक्रमmation from the ASIC_InternalSS_Info Ver 2.1 or
  * SS_Info table from the VBIOS
- * There can not be more than 1 entry for  ASIC_InternalSS_Info Ver 2.1 or
+ * There can not be more than 1 entry क्रम  ASIC_InternalSS_Info Ver 2.1 or
  * SS_Info.
  *
- * @bp:      pointer to the BIOS parser
- * @id:      spread sprectrum info index
- * @ss_info: sprectrum information structure,
- * return:   BIOS parser result code
+ * @bp:      poपूर्णांकer to the BIOS parser
+ * @id:      spपढ़ो sprectrum info index
+ * @ss_info: sprectrum inक्रमmation काष्ठाure,
+ * वापस:   BIOS parser result code
  */
-static enum bp_result get_ss_info_from_tbl(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *ss_info)
-{
-	if (!ss_info) /* check for bad input, if ss_info is not NULL */
-		return BP_RESULT_BADINPUT;
-	/* for SS_Info table only support DP and LVDS */
-	if (id == ASIC_INTERNAL_SS_ON_DP || id == ASIC_INTERNAL_SS_ON_LVDS)
-		return get_ss_info_from_ss_info_table(bp, id, ss_info);
-	else
-		return get_ss_info_from_internal_ss_info_tbl_V2_1(bp, id,
+अटल क्रमागत bp_result get_ss_info_from_tbl(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *ss_info)
+अणु
+	अगर (!ss_info) /* check क्रम bad input, अगर ss_info is not शून्य */
+		वापस BP_RESULT_BADINPUT;
+	/* क्रम SS_Info table only support DP and LVDS */
+	अगर (id == ASIC_INTERNAL_SS_ON_DP || id == ASIC_INTERNAL_SS_ON_LVDS)
+		वापस get_ss_info_from_ss_info_table(bp, id, ss_info);
+	अन्यथा
+		वापस get_ss_info_from_पूर्णांकernal_ss_info_tbl_V2_1(bp, id,
 			ss_info);
-}
+पूर्ण
 
 /**
- * get_ss_info_from_internal_ss_info_tbl_V2_1
- * Get spread sprectrum information from the ASIC_InternalSS_Info table Ver 2.1
+ * get_ss_info_from_पूर्णांकernal_ss_info_tbl_V2_1
+ * Get spपढ़ो sprectrum inक्रमmation from the ASIC_InternalSS_Info table Ver 2.1
  * from the VBIOS
- * There will not be multiple entry for Ver 2.1
+ * There will not be multiple entry क्रम Ver 2.1
  *
- * @bp:    pointer to the Bios parser
- * @id:    spread sprectrum info index
- * @info:  sprectrum information structure,
- * return: Bios parser result code
+ * @bp:    poपूर्णांकer to the Bios parser
+ * @id:    spपढ़ो sprectrum info index
+ * @info:  sprectrum inक्रमmation काष्ठाure,
+ * वापस: Bios parser result code
  */
-static enum bp_result get_ss_info_from_internal_ss_info_tbl_V2_1(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *info)
-{
-	enum bp_result result = BP_RESULT_UNSUPPORTED;
+अटल क्रमागत bp_result get_ss_info_from_पूर्णांकernal_ss_info_tbl_V2_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *info)
+अणु
+	क्रमागत bp_result result = BP_RESULT_UNSUPPORTED;
 	ATOM_ASIC_INTERNAL_SS_INFO_V2 *header;
 	ATOM_ASIC_SS_ASSIGNMENT_V2 *tbl;
-	uint32_t tbl_size, i;
+	uपूर्णांक32_t tbl_size, i;
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		return result;
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		वापस result;
 
 	header = GET_IMAGE(ATOM_ASIC_INTERNAL_SS_INFO_V2,
 		DATA_TABLES(ASIC_InternalSS_Info));
 
-	memset(info, 0, sizeof(struct spread_spectrum_info));
+	स_रखो(info, 0, माप(काष्ठा spपढ़ो_spectrum_info));
 
 	tbl_size = (le16_to_cpu(header->sHeader.usStructureSize)
-			- sizeof(ATOM_COMMON_TABLE_HEADER))
-					/ sizeof(ATOM_ASIC_SS_ASSIGNMENT_V2);
+			- माप(ATOM_COMMON_TABLE_HEADER))
+					/ माप(ATOM_ASIC_SS_ASSIGNMENT_V2);
 
 	tbl = (ATOM_ASIC_SS_ASSIGNMENT_V2 *)
-					&(header->asSpreadSpectrum[0]);
-	for (i = 0; i < tbl_size; i++) {
+					&(header->asSpपढ़ोSpectrum[0]);
+	क्रम (i = 0; i < tbl_size; i++) अणु
 		result = BP_RESULT_NORECORD;
 
-		if (tbl[i].ucClockIndication != (uint8_t)id)
-			continue;
+		अगर (tbl[i].ucClockIndication != (uपूर्णांक8_t)id)
+			जारी;
 
-		if (ATOM_EXTERNAL_SS_MASK
-			& tbl[i].ucSpreadSpectrumMode) {
+		अगर (ATOM_EXTERNAL_SS_MASK
+			& tbl[i].ucSpपढ़ोSpectrumMode) अणु
 			info->type.EXTERNAL = true;
-		}
-		if (ATOM_SS_CENTRE_SPREAD_MODE_MASK
-			& tbl[i].ucSpreadSpectrumMode) {
+		पूर्ण
+		अगर (ATOM_SS_CENTRE_SPREAD_MODE_MASK
+			& tbl[i].ucSpपढ़ोSpectrumMode) अणु
 			info->type.CENTER_MODE = true;
-		}
+		पूर्ण
 		info->type.STEP_AND_DELAY_INFO = false;
-		/* convert [10KHz] into [KHz] */
-		info->target_clock_range =
+		/* convert [10KHz] पूर्णांकo [KHz] */
+		info->target_घड़ी_range =
 			le32_to_cpu(tbl[i].ulTargetClockRange) * 10;
-		info->spread_spectrum_percentage =
-			(uint32_t)le16_to_cpu(tbl[i].usSpreadSpectrumPercentage);
-		info->spread_spectrum_range =
-			(uint32_t)(le16_to_cpu(tbl[i].usSpreadRateIn10Hz) * 10);
+		info->spपढ़ो_spectrum_percentage =
+			(uपूर्णांक32_t)le16_to_cpu(tbl[i].usSpपढ़ोSpectrumPercentage);
+		info->spपढ़ो_spectrum_range =
+			(uपूर्णांक32_t)(le16_to_cpu(tbl[i].usSpपढ़ोRateIn10Hz) * 10);
 		result = BP_RESULT_OK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
+	वापस result;
 
-}
+पूर्ण
 
 /**
  * get_ss_info_from_ss_info_table
- * Get spread sprectrum information from the SS_Info table from the VBIOS
- * if the pointer to info is NULL, indicate the caller what to know the number
+ * Get spपढ़ो sprectrum inक्रमmation from the SS_Info table from the VBIOS
+ * अगर the poपूर्णांकer to info is शून्य, indicate the caller what to know the number
  * of entries that matches the id
- * for, the SS_Info table, there should not be more than 1 entry match.
+ * क्रम, the SS_Info table, there should not be more than 1 entry match.
  *
- * @bp:      pointer to the Bios parser
- * @id:      spread sprectrum id
- * @ss_info: sprectrum information structure,
- * return:   Bios parser result code
+ * @bp:      poपूर्णांकer to the Bios parser
+ * @id:      spपढ़ो sprectrum id
+ * @ss_info: sprectrum inक्रमmation काष्ठाure,
+ * वापस:   Bios parser result code
  */
-static enum bp_result get_ss_info_from_ss_info_table(
-	struct bios_parser *bp,
-	uint32_t id,
-	struct spread_spectrum_info *ss_info)
-{
-	enum bp_result result = BP_RESULT_UNSUPPORTED;
+अटल क्रमागत bp_result get_ss_info_from_ss_info_table(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id,
+	काष्ठा spपढ़ो_spectrum_info *ss_info)
+अणु
+	क्रमागत bp_result result = BP_RESULT_UNSUPPORTED;
 	ATOM_SPREAD_SPECTRUM_INFO *tbl;
 	ATOM_COMMON_TABLE_HEADER *header;
-	uint32_t table_size;
-	uint32_t i;
-	uint32_t id_local = SS_ID_UNKNOWN;
-	struct atom_data_revision revision;
+	uपूर्णांक32_t table_size;
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t id_local = SS_ID_UNKNOWN;
+	काष्ठा atom_data_revision revision;
 
 	/* exist of the SS_Info table */
-	/* check for bad input, pSSinfo can not be NULL */
-	if (!DATA_TABLES(SS_Info) || !ss_info)
-		return result;
+	/* check क्रम bad input, pSSinfo can not be शून्य */
+	अगर (!DATA_TABLES(SS_Info) || !ss_info)
+		वापस result;
 
 	header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER, DATA_TABLES(SS_Info));
 	get_atom_data_table_revision(header, &revision);
 
 	tbl = GET_IMAGE(ATOM_SPREAD_SPECTRUM_INFO, DATA_TABLES(SS_Info));
 
-	if (1 != revision.major || 2 > revision.minor)
-		return result;
+	अगर (1 != revision.major || 2 > revision.minor)
+		वापस result;
 
-	/* have to convert from Internal_SS format to SS_Info format */
-	switch (id) {
-	case ASIC_INTERNAL_SS_ON_DP:
+	/* have to convert from Internal_SS क्रमmat to SS_Info क्रमmat */
+	चयन (id) अणु
+	हाल ASIC_INTERNAL_SS_ON_DP:
 		id_local = SS_ID_DP1;
-		break;
-	case ASIC_INTERNAL_SS_ON_LVDS:
-	{
-		struct embedded_panel_info panel_info;
+		अवरोध;
+	हाल ASIC_INTERNAL_SS_ON_LVDS:
+	अणु
+		काष्ठा embedded_panel_info panel_info;
 
-		if (bios_parser_get_embedded_panel_info(&bp->base, &panel_info)
+		अगर (bios_parser_get_embedded_panel_info(&bp->base, &panel_info)
 				== BP_RESULT_OK)
 			id_local = panel_info.ss_id;
-		break;
-	}
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (id_local == SS_ID_UNKNOWN)
-		return result;
+	अगर (id_local == SS_ID_UNKNOWN)
+		वापस result;
 
 	table_size = (le16_to_cpu(tbl->sHeader.usStructureSize) -
-			sizeof(ATOM_COMMON_TABLE_HEADER)) /
-					sizeof(ATOM_SPREAD_SPECTRUM_ASSIGNMENT);
+			माप(ATOM_COMMON_TABLE_HEADER)) /
+					माप(ATOM_SPREAD_SPECTRUM_ASSIGNMENT);
 
-	for (i = 0; i < table_size; i++) {
-		if (id_local != (uint32_t)tbl->asSS_Info[i].ucSS_Id)
-			continue;
+	क्रम (i = 0; i < table_size; i++) अणु
+		अगर (id_local != (uपूर्णांक32_t)tbl->asSS_Info[i].ucSS_Id)
+			जारी;
 
-		memset(ss_info, 0, sizeof(struct spread_spectrum_info));
+		स_रखो(ss_info, 0, माप(काष्ठा spपढ़ो_spectrum_info));
 
-		if (ATOM_EXTERNAL_SS_MASK &
-				tbl->asSS_Info[i].ucSpreadSpectrumType)
+		अगर (ATOM_EXTERNAL_SS_MASK &
+				tbl->asSS_Info[i].ucSpपढ़ोSpectrumType)
 			ss_info->type.EXTERNAL = true;
 
-		if (ATOM_SS_CENTRE_SPREAD_MODE_MASK &
-				tbl->asSS_Info[i].ucSpreadSpectrumType)
+		अगर (ATOM_SS_CENTRE_SPREAD_MODE_MASK &
+				tbl->asSS_Info[i].ucSpपढ़ोSpectrumType)
 			ss_info->type.CENTER_MODE = true;
 
 		ss_info->type.STEP_AND_DELAY_INFO = true;
-		ss_info->spread_spectrum_percentage =
-			(uint32_t)le16_to_cpu(tbl->asSS_Info[i].usSpreadSpectrumPercentage);
+		ss_info->spपढ़ो_spectrum_percentage =
+			(uपूर्णांक32_t)le16_to_cpu(tbl->asSS_Info[i].usSpपढ़ोSpectrumPercentage);
 		ss_info->step_and_delay_info.step = tbl->asSS_Info[i].ucSS_Step;
 		ss_info->step_and_delay_info.delay =
 			tbl->asSS_Info[i].ucSS_Delay;
-		ss_info->step_and_delay_info.recommended_ref_div =
+		ss_info->step_and_delay_info.recommended_ref_भाग =
 			tbl->asSS_Info[i].ucRecommendedRef_Div;
-		ss_info->spread_spectrum_range =
-			(uint32_t)tbl->asSS_Info[i].ucSS_Range * 10000;
+		ss_info->spपढ़ो_spectrum_range =
+			(uपूर्णांक32_t)tbl->asSS_Info[i].ucSS_Range * 10000;
 
-		/* there will be only one entry for each display type in SS_info
+		/* there will be only one entry क्रम each display type in SS_info
 		 * table */
 		result = BP_RESULT_OK;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return result;
-}
-static enum bp_result get_embedded_panel_info_v1_2(
-	struct bios_parser *bp,
-	struct embedded_panel_info *info);
-static enum bp_result get_embedded_panel_info_v1_3(
-	struct bios_parser *bp,
-	struct embedded_panel_info *info);
+	वापस result;
+पूर्ण
+अटल क्रमागत bp_result get_embedded_panel_info_v1_2(
+	काष्ठा bios_parser *bp,
+	काष्ठा embedded_panel_info *info);
+अटल क्रमागत bp_result get_embedded_panel_info_v1_3(
+	काष्ठा bios_parser *bp,
+	काष्ठा embedded_panel_info *info);
 
-static enum bp_result bios_parser_get_embedded_panel_info(
-	struct dc_bios *dcb,
-	struct embedded_panel_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_get_embedded_panel_info(
+	काष्ठा dc_bios *dcb,
+	काष्ठा embedded_panel_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 	ATOM_COMMON_TABLE_HEADER *hdr;
 
-	if (!DATA_TABLES(LCD_Info))
-		return BP_RESULT_FAILURE;
+	अगर (!DATA_TABLES(LCD_Info))
+		वापस BP_RESULT_FAILURE;
 
 	hdr = GET_IMAGE(ATOM_COMMON_TABLE_HEADER, DATA_TABLES(LCD_Info));
 
-	if (!hdr)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!hdr)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	switch (hdr->ucTableFormatRevision) {
-	case 1:
-		switch (hdr->ucTableContentRevision) {
-		case 0:
-		case 1:
-		case 2:
-			return get_embedded_panel_info_v1_2(bp, info);
-		case 3:
-			return get_embedded_panel_info_v1_3(bp, info);
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+	चयन (hdr->ucTableFormatRevision) अणु
+	हाल 1:
+		चयन (hdr->ucTableContentRevision) अणु
+		हाल 0:
+		हाल 1:
+		हाल 2:
+			वापस get_embedded_panel_info_v1_2(bp, info);
+		हाल 3:
+			वापस get_embedded_panel_info_v1_3(bp, info);
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return BP_RESULT_FAILURE;
-}
+	वापस BP_RESULT_FAILURE;
+पूर्ण
 
-static enum bp_result get_embedded_panel_info_v1_2(
-	struct bios_parser *bp,
-	struct embedded_panel_info *info)
-{
+अटल क्रमागत bp_result get_embedded_panel_info_v1_2(
+	काष्ठा bios_parser *bp,
+	काष्ठा embedded_panel_info *info)
+अणु
 	ATOM_LVDS_INFO_V12 *lvds;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
-	if (!DATA_TABLES(LVDS_Info))
-		return BP_RESULT_UNSUPPORTED;
+	अगर (!DATA_TABLES(LVDS_Info))
+		वापस BP_RESULT_UNSUPPORTED;
 
 	lvds =
 		GET_IMAGE(ATOM_LVDS_INFO_V12, DATA_TABLES(LVDS_Info));
 
-	if (!lvds)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!lvds)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (1 != lvds->sHeader.ucTableFormatRevision
+	अगर (1 != lvds->sHeader.ucTableFormatRevision
 		|| 2 > lvds->sHeader.ucTableContentRevision)
-		return BP_RESULT_UNSUPPORTED;
+		वापस BP_RESULT_UNSUPPORTED;
 
-	memset(info, 0, sizeof(struct embedded_panel_info));
+	स_रखो(info, 0, माप(काष्ठा embedded_panel_info));
 
-	/* We need to convert from 10KHz units into KHz units*/
+	/* We need to convert from 10KHz units पूर्णांकo KHz units*/
 	info->lcd_timing.pixel_clk =
 		le16_to_cpu(lvds->sLCDTiming.usPixClk) * 10;
-	/* usHActive does not include borders, according to VBIOS team*/
+	/* usHActive करोes not include borders, according to VBIOS team*/
 	info->lcd_timing.horizontal_addressable =
 		le16_to_cpu(lvds->sLCDTiming.usHActive);
 	/* usHBlanking_Time includes borders, so we should really be subtracting
 	 * borders duing this translation, but LVDS generally*/
-	/* doesn't have borders, so we should be okay leaving this as is for
-	 * now.  May need to revisit if we ever have LVDS with borders*/
-	info->lcd_timing.horizontal_blanking_time =
+	/* करोesn't have borders, so we should be okay leaving this as is क्रम
+	 * now.  May need to revisit अगर we ever have LVDS with borders*/
+	info->lcd_timing.horizontal_blanking_समय =
 			le16_to_cpu(lvds->sLCDTiming.usHBlanking_Time);
-	/* usVActive does not include borders, according to VBIOS team*/
+	/* usVActive करोes not include borders, according to VBIOS team*/
 	info->lcd_timing.vertical_addressable =
 			le16_to_cpu(lvds->sLCDTiming.usVActive);
 	/* usVBlanking_Time includes borders, so we should really be subtracting
 	 * borders duing this translation, but LVDS generally*/
-	/* doesn't have borders, so we should be okay leaving this as is for
-	 * now. May need to revisit if we ever have LVDS with borders*/
-	info->lcd_timing.vertical_blanking_time =
+	/* करोesn't have borders, so we should be okay leaving this as is क्रम
+	 * now. May need to revisit अगर we ever have LVDS with borders*/
+	info->lcd_timing.vertical_blanking_समय =
 		le16_to_cpu(lvds->sLCDTiming.usVBlanking_Time);
 	info->lcd_timing.horizontal_sync_offset =
 		le16_to_cpu(lvds->sLCDTiming.usHSyncOffset);
@@ -1266,10 +1267,10 @@ static enum bp_result get_embedded_panel_info_v1_2(
 	info->lcd_timing.misc_info.HORIZONTAL_CUT_OFF =
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.HorizontalCutOff;
 	info->lcd_timing.misc_info.H_SYNC_POLARITY =
-		~(uint32_t)
+		~(uपूर्णांक32_t)
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.HSyncPolarity;
 	info->lcd_timing.misc_info.V_SYNC_POLARITY =
-		~(uint32_t)
+		~(uपूर्णांक32_t)
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.VSyncPolarity;
 	info->lcd_timing.misc_info.VERTICAL_CUT_OFF =
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.VerticalCutOff;
@@ -1285,91 +1286,91 @@ static enum bp_result get_embedded_panel_info_v1_2(
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.DoubleClock;
 	info->ss_id = lvds->ucSS_Id;
 
-	{
-		uint8_t rr = le16_to_cpu(lvds->usSupportedRefreshRate);
+	अणु
+		uपूर्णांक8_t rr = le16_to_cpu(lvds->usSupportedRefreshRate);
 		/* Get minimum supported refresh rate*/
-		if (SUPPORTED_LCD_REFRESHRATE_30Hz & rr)
+		अगर (SUPPORTED_LCD_REFRESHRATE_30Hz & rr)
 			info->supported_rr.REFRESH_RATE_30HZ = 1;
-		else if (SUPPORTED_LCD_REFRESHRATE_40Hz & rr)
+		अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_40Hz & rr)
 			info->supported_rr.REFRESH_RATE_40HZ = 1;
-		else if (SUPPORTED_LCD_REFRESHRATE_48Hz & rr)
+		अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_48Hz & rr)
 			info->supported_rr.REFRESH_RATE_48HZ = 1;
-		else if (SUPPORTED_LCD_REFRESHRATE_50Hz & rr)
+		अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_50Hz & rr)
 			info->supported_rr.REFRESH_RATE_50HZ = 1;
-		else if (SUPPORTED_LCD_REFRESHRATE_60Hz & rr)
+		अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_60Hz & rr)
 			info->supported_rr.REFRESH_RATE_60HZ = 1;
-	}
+	पूर्ण
 
 	/*Drr panel support can be reported by VBIOS*/
-	if (LCDPANEL_CAP_DRR_SUPPORTED
+	अगर (LCDPANEL_CAP_DRR_SUPPORTED
 			& lvds->ucLCDPanel_SpecialHandlingCap)
 		info->drr_enabled = 1;
 
-	if (ATOM_PANEL_MISC_DUAL & lvds->ucLVDS_Misc)
+	अगर (ATOM_PANEL_MISC_DUAL & lvds->ucLVDS_Misc)
 		info->lcd_timing.misc_info.DOUBLE_CLOCK = true;
 
-	if (ATOM_PANEL_MISC_888RGB & lvds->ucLVDS_Misc)
+	अगर (ATOM_PANEL_MISC_888RGB & lvds->ucLVDS_Misc)
 		info->lcd_timing.misc_info.RGB888 = true;
 
 	info->lcd_timing.misc_info.GREY_LEVEL =
-		(uint32_t) (ATOM_PANEL_MISC_GREY_LEVEL &
+		(uपूर्णांक32_t) (ATOM_PANEL_MISC_GREY_LEVEL &
 			lvds->ucLVDS_Misc) >> ATOM_PANEL_MISC_GREY_LEVEL_SHIFT;
 
-	if (ATOM_PANEL_MISC_SPATIAL & lvds->ucLVDS_Misc)
+	अगर (ATOM_PANEL_MISC_SPATIAL & lvds->ucLVDS_Misc)
 		info->lcd_timing.misc_info.SPATIAL = true;
 
-	if (ATOM_PANEL_MISC_TEMPORAL & lvds->ucLVDS_Misc)
+	अगर (ATOM_PANEL_MISC_TEMPORAL & lvds->ucLVDS_Misc)
 		info->lcd_timing.misc_info.TEMPORAL = true;
 
-	if (ATOM_PANEL_MISC_API_ENABLED & lvds->ucLVDS_Misc)
+	अगर (ATOM_PANEL_MISC_API_ENABLED & lvds->ucLVDS_Misc)
 		info->lcd_timing.misc_info.API_ENABLED = true;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static enum bp_result get_embedded_panel_info_v1_3(
-	struct bios_parser *bp,
-	struct embedded_panel_info *info)
-{
+अटल क्रमागत bp_result get_embedded_panel_info_v1_3(
+	काष्ठा bios_parser *bp,
+	काष्ठा embedded_panel_info *info)
+अणु
 	ATOM_LCD_INFO_V13 *lvds;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
-	if (!DATA_TABLES(LCD_Info))
-		return BP_RESULT_UNSUPPORTED;
+	अगर (!DATA_TABLES(LCD_Info))
+		वापस BP_RESULT_UNSUPPORTED;
 
 	lvds = GET_IMAGE(ATOM_LCD_INFO_V13, DATA_TABLES(LCD_Info));
 
-	if (!lvds)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!lvds)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (!((1 == lvds->sHeader.ucTableFormatRevision)
+	अगर (!((1 == lvds->sHeader.ucTableFormatRevision)
 			&& (3 <= lvds->sHeader.ucTableContentRevision)))
-		return BP_RESULT_UNSUPPORTED;
+		वापस BP_RESULT_UNSUPPORTED;
 
-	memset(info, 0, sizeof(struct embedded_panel_info));
+	स_रखो(info, 0, माप(काष्ठा embedded_panel_info));
 
-	/* We need to convert from 10KHz units into KHz units */
+	/* We need to convert from 10KHz units पूर्णांकo KHz units */
 	info->lcd_timing.pixel_clk =
 			le16_to_cpu(lvds->sLCDTiming.usPixClk) * 10;
-	/* usHActive does not include borders, according to VBIOS team */
+	/* usHActive करोes not include borders, according to VBIOS team */
 	info->lcd_timing.horizontal_addressable =
 			le16_to_cpu(lvds->sLCDTiming.usHActive);
 	/* usHBlanking_Time includes borders, so we should really be subtracting
 	 * borders duing this translation, but LVDS generally*/
-	/* doesn't have borders, so we should be okay leaving this as is for
-	 * now.  May need to revisit if we ever have LVDS with borders*/
-	info->lcd_timing.horizontal_blanking_time =
+	/* करोesn't have borders, so we should be okay leaving this as is क्रम
+	 * now.  May need to revisit अगर we ever have LVDS with borders*/
+	info->lcd_timing.horizontal_blanking_समय =
 		le16_to_cpu(lvds->sLCDTiming.usHBlanking_Time);
-	/* usVActive does not include borders, according to VBIOS team*/
+	/* usVActive करोes not include borders, according to VBIOS team*/
 	info->lcd_timing.vertical_addressable =
 		le16_to_cpu(lvds->sLCDTiming.usVActive);
 	/* usVBlanking_Time includes borders, so we should really be subtracting
 	 * borders duing this translation, but LVDS generally*/
-	/* doesn't have borders, so we should be okay leaving this as is for
-	 * now. May need to revisit if we ever have LVDS with borders*/
-	info->lcd_timing.vertical_blanking_time =
+	/* करोesn't have borders, so we should be okay leaving this as is क्रम
+	 * now. May need to revisit अगर we ever have LVDS with borders*/
+	info->lcd_timing.vertical_blanking_समय =
 		le16_to_cpu(lvds->sLCDTiming.usVBlanking_Time);
 	info->lcd_timing.horizontal_sync_offset =
 		le16_to_cpu(lvds->sLCDTiming.usHSyncOffset);
@@ -1384,10 +1385,10 @@ static enum bp_result get_embedded_panel_info_v1_3(
 	info->lcd_timing.misc_info.HORIZONTAL_CUT_OFF =
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.HorizontalCutOff;
 	info->lcd_timing.misc_info.H_SYNC_POLARITY =
-		~(uint32_t)
+		~(uपूर्णांक32_t)
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.HSyncPolarity;
 	info->lcd_timing.misc_info.V_SYNC_POLARITY =
-		~(uint32_t)
+		~(uपूर्णांक32_t)
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.VSyncPolarity;
 	info->lcd_timing.misc_info.VERTICAL_CUT_OFF =
 		lvds->sLCDTiming.susModeMiscInfo.sbfAccess.VerticalCutOff;
@@ -1404,226 +1405,226 @@ static enum bp_result get_embedded_panel_info_v1_3(
 	info->ss_id = lvds->ucSS_Id;
 
 	/* Drr panel support can be reported by VBIOS*/
-	if (LCDPANEL_CAP_V13_DRR_SUPPORTED
+	अगर (LCDPANEL_CAP_V13_DRR_SUPPORTED
 			& lvds->ucLCDPanel_SpecialHandlingCap)
 		info->drr_enabled = 1;
 
 	/* Get supported refresh rate*/
-	if (info->drr_enabled == 1) {
-		uint8_t min_rr =
+	अगर (info->drr_enabled == 1) अणु
+		uपूर्णांक8_t min_rr =
 				lvds->sRefreshRateSupport.ucMinRefreshRateForDRR;
-		uint8_t rr = lvds->sRefreshRateSupport.ucSupportedRefreshRate;
+		uपूर्णांक8_t rr = lvds->sRefreshRateSupport.ucSupportedRefreshRate;
 
-		if (min_rr != 0) {
-			if (SUPPORTED_LCD_REFRESHRATE_30Hz & min_rr)
+		अगर (min_rr != 0) अणु
+			अगर (SUPPORTED_LCD_REFRESHRATE_30Hz & min_rr)
 				info->supported_rr.REFRESH_RATE_30HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_40Hz & min_rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_40Hz & min_rr)
 				info->supported_rr.REFRESH_RATE_40HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_48Hz & min_rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_48Hz & min_rr)
 				info->supported_rr.REFRESH_RATE_48HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_50Hz & min_rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_50Hz & min_rr)
 				info->supported_rr.REFRESH_RATE_50HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_60Hz & min_rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_60Hz & min_rr)
 				info->supported_rr.REFRESH_RATE_60HZ = 1;
-		} else {
-			if (SUPPORTED_LCD_REFRESHRATE_30Hz & rr)
+		पूर्ण अन्यथा अणु
+			अगर (SUPPORTED_LCD_REFRESHRATE_30Hz & rr)
 				info->supported_rr.REFRESH_RATE_30HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_40Hz & rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_40Hz & rr)
 				info->supported_rr.REFRESH_RATE_40HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_48Hz & rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_48Hz & rr)
 				info->supported_rr.REFRESH_RATE_48HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_50Hz & rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_50Hz & rr)
 				info->supported_rr.REFRESH_RATE_50HZ = 1;
-			else if (SUPPORTED_LCD_REFRESHRATE_60Hz & rr)
+			अन्यथा अगर (SUPPORTED_LCD_REFRESHRATE_60Hz & rr)
 				info->supported_rr.REFRESH_RATE_60HZ = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ATOM_PANEL_MISC_V13_DUAL & lvds->ucLCD_Misc)
+	अगर (ATOM_PANEL_MISC_V13_DUAL & lvds->ucLCD_Misc)
 		info->lcd_timing.misc_info.DOUBLE_CLOCK = true;
 
-	if (ATOM_PANEL_MISC_V13_8BIT_PER_COLOR & lvds->ucLCD_Misc)
+	अगर (ATOM_PANEL_MISC_V13_8BIT_PER_COLOR & lvds->ucLCD_Misc)
 		info->lcd_timing.misc_info.RGB888 = true;
 
 	info->lcd_timing.misc_info.GREY_LEVEL =
-			(uint32_t) (ATOM_PANEL_MISC_V13_GREY_LEVEL &
+			(uपूर्णांक32_t) (ATOM_PANEL_MISC_V13_GREY_LEVEL &
 				lvds->ucLCD_Misc) >> ATOM_PANEL_MISC_V13_GREY_LEVEL_SHIFT;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
 /**
  * bios_parser_get_encoder_cap_info - get encoder capability
- *                                    information of input object id
+ *                                    inक्रमmation of input object id
  *
- * @dcb:       pointer to the DC BIOS
+ * @dcb:       poपूर्णांकer to the DC BIOS
  * @object_id: object id
- * @info:      encoder cap information structure
+ * @info:      encoder cap inक्रमmation काष्ठाure
  *
- * return: Bios parser result code
+ * वापस: Bios parser result code
  */
-static enum bp_result bios_parser_get_encoder_cap_info(
-	struct dc_bios *dcb,
-	struct graphics_object_id object_id,
-	struct bp_encoder_cap_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_get_encoder_cap_info(
+	काष्ठा dc_bios *dcb,
+	काष्ठा graphics_object_id object_id,
+	काष्ठा bp_encoder_cap_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 	ATOM_OBJECT *object;
-	ATOM_ENCODER_CAP_RECORD_V2 *record = NULL;
+	ATOM_ENCODER_CAP_RECORD_V2 *record = शून्य;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
 	object = get_bios_object(bp, object_id);
 
-	if (!object)
-		return BP_RESULT_BADINPUT;
+	अगर (!object)
+		वापस BP_RESULT_BADINPUT;
 
 	record = get_encoder_cap_record(bp, object);
-	if (!record)
-		return BP_RESULT_NORECORD;
+	अगर (!record)
+		वापस BP_RESULT_NORECORD;
 
 	info->DP_HBR2_EN = record->usHBR2En;
 	info->DP_HBR3_EN = record->usHBR3En;
 	info->HDMI_6GB_EN = record->usHDMI6GEn;
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
 /**
- * get_encoder_cap_record - Get encoder cap record for the object
+ * get_encoder_cap_record - Get encoder cap record क्रम the object
  *
- * @bp:      pointer to the BIOS parser
+ * @bp:      poपूर्णांकer to the BIOS parser
  * @object:  ATOM object
- * return:   atom encoder cap record
+ * वापस:   atom encoder cap record
  * note:     search all records to find the ATOM_ENCODER_CAP_RECORD_V2 record
  */
-static ATOM_ENCODER_CAP_RECORD_V2 *get_encoder_cap_record(
-	struct bios_parser *bp,
+अटल ATOM_ENCODER_CAP_RECORD_V2 *get_encoder_cap_record(
+	काष्ठा bios_parser *bp,
 	ATOM_OBJECT *object)
-{
+अणु
 	ATOM_COMMON_RECORD_HEADER *header;
-	uint32_t offset;
+	uपूर्णांक32_t offset;
 
-	if (!object) {
+	अगर (!object) अणु
 		BREAK_TO_DEBUGGER(); /* Invalid object */
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	offset = le16_to_cpu(object->usRecordOffset)
 					+ bp->object_info_tbl_offset;
 
-	for (;;) {
+	क्रम (;;) अणु
 		header = GET_IMAGE(ATOM_COMMON_RECORD_HEADER, offset);
 
-		if (!header)
-			return NULL;
+		अगर (!header)
+			वापस शून्य;
 
 		offset += header->ucRecordSize;
 
-		if (LAST_RECORD_TYPE == header->ucRecordType ||
+		अगर (LAST_RECORD_TYPE == header->ucRecordType ||
 				!header->ucRecordSize)
-			break;
+			अवरोध;
 
-		if (ATOM_ENCODER_CAP_RECORD_TYPE != header->ucRecordType)
-			continue;
+		अगर (ATOM_ENCODER_CAP_RECORD_TYPE != header->ucRecordType)
+			जारी;
 
-		if (sizeof(ATOM_ENCODER_CAP_RECORD_V2) <= header->ucRecordSize)
-			return (ATOM_ENCODER_CAP_RECORD_V2 *)header;
-	}
+		अगर (माप(ATOM_ENCODER_CAP_RECORD_V2) <= header->ucRecordSize)
+			वापस (ATOM_ENCODER_CAP_RECORD_V2 *)header;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static uint32_t get_ss_entry_number(
-	struct bios_parser *bp,
-	uint32_t id);
-static uint32_t get_ss_entry_number_from_internal_ss_info_tbl_v2_1(
-	struct bios_parser *bp,
-	uint32_t id);
-static uint32_t get_ss_entry_number_from_internal_ss_info_tbl_V3_1(
-	struct bios_parser *bp,
-	uint32_t id);
-static uint32_t get_ss_entry_number_from_ss_info_tbl(
-	struct bios_parser *bp,
-	uint32_t id);
+अटल uपूर्णांक32_t get_ss_entry_number(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id);
+अटल uपूर्णांक32_t get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_v2_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id);
+अटल uपूर्णांक32_t get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_V3_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id);
+अटल uपूर्णांक32_t get_ss_entry_number_from_ss_info_tbl(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id);
 
 /**
- * BiosParserObject::GetNumberofSpreadSpectrumEntry
- * Get Number of SpreadSpectrum Entry from the ASIC_InternalSS_Info table from
- * the VBIOS that match the SSid (to be converted from signal)
+ * BiosParserObject::GetNumberofSpपढ़ोSpectrumEntry
+ * Get Number of Spपढ़ोSpectrum Entry from the ASIC_InternalSS_Info table from
+ * the VBIOS that match the SSid (to be converted from संकेत)
  *
- * @dcb:    pointer to the DC BIOS
- * @signal: ASSignalType to be converted to SSid
- * return: number of SS Entry that match the signal
+ * @dcb:    poपूर्णांकer to the DC BIOS
+ * @संकेत: ASSignalType to be converted to SSid
+ * वापस: number of SS Entry that match the संकेत
  */
-static uint32_t bios_parser_get_ss_entry_number(
-	struct dc_bios *dcb,
-	enum as_signal_type signal)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
-	uint32_t ss_id = 0;
+अटल uपूर्णांक32_t bios_parser_get_ss_entry_number(
+	काष्ठा dc_bios *dcb,
+	क्रमागत as_संकेत_type संकेत)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
+	uपूर्णांक32_t ss_id = 0;
 	ATOM_COMMON_TABLE_HEADER *header;
-	struct atom_data_revision revision;
+	काष्ठा atom_data_revision revision;
 
-	ss_id = signal_to_ss_id(signal);
+	ss_id = संकेत_to_ss_id(संकेत);
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		return get_ss_entry_number_from_ss_info_tbl(bp, ss_id);
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		वापस get_ss_entry_number_from_ss_info_tbl(bp, ss_id);
 
 	header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER,
 			DATA_TABLES(ASIC_InternalSS_Info));
 	get_atom_data_table_revision(header, &revision);
 
-	switch (revision.major) {
-	case 2:
-		switch (revision.minor) {
-		case 1:
-			return get_ss_entry_number(bp, ss_id);
-		default:
-			break;
-		}
-		break;
-	case 3:
-		switch (revision.minor) {
-		case 1:
-			return
-				get_ss_entry_number_from_internal_ss_info_tbl_V3_1(
+	चयन (revision.major) अणु
+	हाल 2:
+		चयन (revision.minor) अणु
+		हाल 1:
+			वापस get_ss_entry_number(bp, ss_id);
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल 3:
+		चयन (revision.minor) अणु
+		हाल 1:
+			वापस
+				get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_V3_1(
 						bp, ss_id);
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * get_ss_entry_number_from_ss_info_tbl
- * Get Number of spread spectrum entry from the SS_Info table from the VBIOS.
+ * Get Number of spपढ़ो spectrum entry from the SS_Info table from the VBIOS.
  *
- * @bp:  pointer to the BIOS parser
- * @id:  spread spectrum id
- * return: number of SS Entry that match the id
- * note: There can only be one entry for each id for SS_Info Table
+ * @bp:  poपूर्णांकer to the BIOS parser
+ * @id:  spपढ़ो spectrum id
+ * वापस: number of SS Entry that match the id
+ * note: There can only be one entry क्रम each id क्रम SS_Info Table
  */
-static uint32_t get_ss_entry_number_from_ss_info_tbl(
-	struct bios_parser *bp,
-	uint32_t id)
-{
+अटल uपूर्णांक32_t get_ss_entry_number_from_ss_info_tbl(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id)
+अणु
 	ATOM_SPREAD_SPECTRUM_INFO *tbl;
 	ATOM_COMMON_TABLE_HEADER *header;
-	uint32_t table_size;
-	uint32_t i;
-	uint32_t number = 0;
-	uint32_t id_local = SS_ID_UNKNOWN;
-	struct atom_data_revision revision;
+	uपूर्णांक32_t table_size;
+	uपूर्णांक32_t i;
+	uपूर्णांक32_t number = 0;
+	uपूर्णांक32_t id_local = SS_ID_UNKNOWN;
+	काष्ठा atom_data_revision revision;
 
 	/* SS_Info table exist */
-	if (!DATA_TABLES(SS_Info))
-		return number;
+	अगर (!DATA_TABLES(SS_Info))
+		वापस number;
 
 	header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER,
 			DATA_TABLES(SS_Info));
@@ -1632,230 +1633,230 @@ static uint32_t get_ss_entry_number_from_ss_info_tbl(
 	tbl = GET_IMAGE(ATOM_SPREAD_SPECTRUM_INFO,
 			DATA_TABLES(SS_Info));
 
-	if (1 != revision.major || 2 > revision.minor)
-		return number;
+	अगर (1 != revision.major || 2 > revision.minor)
+		वापस number;
 
-	/* have to convert from Internal_SS format to SS_Info format */
-	switch (id) {
-	case ASIC_INTERNAL_SS_ON_DP:
+	/* have to convert from Internal_SS क्रमmat to SS_Info क्रमmat */
+	चयन (id) अणु
+	हाल ASIC_INTERNAL_SS_ON_DP:
 		id_local = SS_ID_DP1;
-		break;
-	case ASIC_INTERNAL_SS_ON_LVDS: {
-		struct embedded_panel_info panel_info;
+		अवरोध;
+	हाल ASIC_INTERNAL_SS_ON_LVDS: अणु
+		काष्ठा embedded_panel_info panel_info;
 
-		if (bios_parser_get_embedded_panel_info(&bp->base, &panel_info)
+		अगर (bios_parser_get_embedded_panel_info(&bp->base, &panel_info)
 				== BP_RESULT_OK)
 			id_local = panel_info.ss_id;
-		break;
-	}
-	default:
-		break;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (id_local == SS_ID_UNKNOWN)
-		return number;
+	अगर (id_local == SS_ID_UNKNOWN)
+		वापस number;
 
 	table_size = (le16_to_cpu(tbl->sHeader.usStructureSize) -
-			sizeof(ATOM_COMMON_TABLE_HEADER)) /
-					sizeof(ATOM_SPREAD_SPECTRUM_ASSIGNMENT);
+			माप(ATOM_COMMON_TABLE_HEADER)) /
+					माप(ATOM_SPREAD_SPECTRUM_ASSIGNMENT);
 
-	for (i = 0; i < table_size; i++)
-		if (id_local == (uint32_t)tbl->asSS_Info[i].ucSS_Id) {
+	क्रम (i = 0; i < table_size; i++)
+		अगर (id_local == (uपूर्णांक32_t)tbl->asSS_Info[i].ucSS_Id) अणु
 			number = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	return number;
-}
+	वापस number;
+पूर्ण
 
 /**
  * get_ss_entry_number
- * Get spread sprectrum information from the ASIC_InternalSS_Info Ver 2.1 or
+ * Get spपढ़ो sprectrum inक्रमmation from the ASIC_InternalSS_Info Ver 2.1 or
  * SS_Info table from the VBIOS
- * There can not be more than 1 entry for  ASIC_InternalSS_Info Ver 2.1 or
+ * There can not be more than 1 entry क्रम  ASIC_InternalSS_Info Ver 2.1 or
  * SS_Info.
  *
- * @bp:    pointer to the BIOS parser
- * @id:    spread sprectrum info index
- * return: Bios parser result code
+ * @bp:    poपूर्णांकer to the BIOS parser
+ * @id:    spपढ़ो sprectrum info index
+ * वापस: Bios parser result code
  */
-static uint32_t get_ss_entry_number(struct bios_parser *bp, uint32_t id)
-{
-	if (id == ASIC_INTERNAL_SS_ON_DP || id == ASIC_INTERNAL_SS_ON_LVDS)
-		return get_ss_entry_number_from_ss_info_tbl(bp, id);
+अटल uपूर्णांक32_t get_ss_entry_number(काष्ठा bios_parser *bp, uपूर्णांक32_t id)
+अणु
+	अगर (id == ASIC_INTERNAL_SS_ON_DP || id == ASIC_INTERNAL_SS_ON_LVDS)
+		वापस get_ss_entry_number_from_ss_info_tbl(bp, id);
 
-	return get_ss_entry_number_from_internal_ss_info_tbl_v2_1(bp, id);
-}
+	वापस get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_v2_1(bp, id);
+पूर्ण
 
 /**
- * get_ss_entry_number_from_internal_ss_info_tbl_v2_1
- * Get NUmber of spread sprectrum entry from the ASIC_InternalSS_Info table
+ * get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_v2_1
+ * Get NUmber of spपढ़ो sprectrum entry from the ASIC_InternalSS_Info table
  * Ver 2.1 from the VBIOS
- * There will not be multiple entry for Ver 2.1
+ * There will not be multiple entry क्रम Ver 2.1
  *
- * @bp:    pointer to the BIOS parser
- * @id:    spread sprectrum info index
- * return: number of SS Entry that match the id
+ * @bp:    poपूर्णांकer to the BIOS parser
+ * @id:    spपढ़ो sprectrum info index
+ * वापस: number of SS Entry that match the id
  */
-static uint32_t get_ss_entry_number_from_internal_ss_info_tbl_v2_1(
-	struct bios_parser *bp,
-	uint32_t id)
-{
+अटल uपूर्णांक32_t get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_v2_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id)
+अणु
 	ATOM_ASIC_INTERNAL_SS_INFO_V2 *header_include;
 	ATOM_ASIC_SS_ASSIGNMENT_V2 *tbl;
-	uint32_t size;
-	uint32_t i;
+	uपूर्णांक32_t size;
+	uपूर्णांक32_t i;
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		return 0;
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		वापस 0;
 
 	header_include = GET_IMAGE(ATOM_ASIC_INTERNAL_SS_INFO_V2,
 			DATA_TABLES(ASIC_InternalSS_Info));
 
 	size = (le16_to_cpu(header_include->sHeader.usStructureSize)
-			- sizeof(ATOM_COMMON_TABLE_HEADER))
-						/ sizeof(ATOM_ASIC_SS_ASSIGNMENT_V2);
+			- माप(ATOM_COMMON_TABLE_HEADER))
+						/ माप(ATOM_ASIC_SS_ASSIGNMENT_V2);
 
 	tbl = (ATOM_ASIC_SS_ASSIGNMENT_V2 *)
-				&header_include->asSpreadSpectrum[0];
-	for (i = 0; i < size; i++)
-		if (tbl[i].ucClockIndication == (uint8_t)id)
-			return 1;
+				&header_include->asSpपढ़ोSpectrum[0];
+	क्रम (i = 0; i < size; i++)
+		अगर (tbl[i].ucClockIndication == (uपूर्णांक8_t)id)
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 /**
- * get_ss_entry_number_from_internal_ss_info_table_V3_1
- * Get Number of SpreadSpectrum Entry from the ASIC_InternalSS_Info table of
+ * get_ss_entry_number_from_पूर्णांकernal_ss_info_table_V3_1
+ * Get Number of Spपढ़ोSpectrum Entry from the ASIC_InternalSS_Info table of
  * the VBIOS that matches id
  *
- * @bp:    pointer to the BIOS parser
- * @id:    spread sprectrum id
- * return: number of SS Entry that match the id
+ * @bp:    poपूर्णांकer to the BIOS parser
+ * @id:    spपढ़ो sprectrum id
+ * वापस: number of SS Entry that match the id
  */
-static uint32_t get_ss_entry_number_from_internal_ss_info_tbl_V3_1(
-	struct bios_parser *bp,
-	uint32_t id)
-{
-	uint32_t number = 0;
+अटल uपूर्णांक32_t get_ss_entry_number_from_पूर्णांकernal_ss_info_tbl_V3_1(
+	काष्ठा bios_parser *bp,
+	uपूर्णांक32_t id)
+अणु
+	uपूर्णांक32_t number = 0;
 	ATOM_ASIC_INTERNAL_SS_INFO_V3 *header_include;
 	ATOM_ASIC_SS_ASSIGNMENT_V3 *tbl;
-	uint32_t size;
-	uint32_t i;
+	uपूर्णांक32_t size;
+	uपूर्णांक32_t i;
 
-	if (!DATA_TABLES(ASIC_InternalSS_Info))
-		return number;
+	अगर (!DATA_TABLES(ASIC_InternalSS_Info))
+		वापस number;
 
 	header_include = GET_IMAGE(ATOM_ASIC_INTERNAL_SS_INFO_V3,
 			DATA_TABLES(ASIC_InternalSS_Info));
 	size = (le16_to_cpu(header_include->sHeader.usStructureSize) -
-			sizeof(ATOM_COMMON_TABLE_HEADER)) /
-					sizeof(ATOM_ASIC_SS_ASSIGNMENT_V3);
+			माप(ATOM_COMMON_TABLE_HEADER)) /
+					माप(ATOM_ASIC_SS_ASSIGNMENT_V3);
 
 	tbl = (ATOM_ASIC_SS_ASSIGNMENT_V3 *)
-				&header_include->asSpreadSpectrum[0];
+				&header_include->asSpपढ़ोSpectrum[0];
 
-	for (i = 0; i < size; i++)
-		if (tbl[i].ucClockIndication == (uint8_t)id)
+	क्रम (i = 0; i < size; i++)
+		अगर (tbl[i].ucClockIndication == (uपूर्णांक8_t)id)
 			number++;
 
-	return number;
-}
+	वापस number;
+पूर्ण
 
 /**
  * bios_parser_get_gpio_pin_info
- * Get GpioPin information of input gpio id
+ * Get GpioPin inक्रमmation of input gpio id
  *
- * @dcb:     pointer to the DC BIOS
+ * @dcb:     poपूर्णांकer to the DC BIOS
  * @gpio_id: GPIO ID
- * @info:    GpioPin information structure
- * return:   Bios parser result code
+ * @info:    GpioPin inक्रमmation काष्ठाure
+ * वापस:   Bios parser result code
  * note:
  *  to get the GPIO PIN INFO, we need:
  *  1. get the GPIO_ID from other object table, see GetHPDInfo()
- *  2. in DATA_TABLE.GPIO_Pin_LUT, search all records, to get the registerA
+ *  2. in DATA_TABLE.GPIO_Pin_LUT, search all records, to get the रेजिस्टरA
  *  offset/mask
  */
-static enum bp_result bios_parser_get_gpio_pin_info(
-	struct dc_bios *dcb,
-	uint32_t gpio_id,
-	struct gpio_pin_info *info)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
+अटल क्रमागत bp_result bios_parser_get_gpio_pin_info(
+	काष्ठा dc_bios *dcb,
+	uपूर्णांक32_t gpio_id,
+	काष्ठा gpio_pin_info *info)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
 	ATOM_GPIO_PIN_LUT *header;
-	uint32_t count = 0;
-	uint32_t i = 0;
+	uपूर्णांक32_t count = 0;
+	uपूर्णांक32_t i = 0;
 
-	if (!DATA_TABLES(GPIO_Pin_LUT))
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!DATA_TABLES(GPIO_Pin_LUT))
+		वापस BP_RESULT_BADBIOSTABLE;
 
 	header = GET_IMAGE(ATOM_GPIO_PIN_LUT, DATA_TABLES(GPIO_Pin_LUT));
-	if (!header)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!header)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (sizeof(ATOM_COMMON_TABLE_HEADER) + sizeof(ATOM_GPIO_PIN_LUT)
+	अगर (माप(ATOM_COMMON_TABLE_HEADER) + माप(ATOM_GPIO_PIN_LUT)
 			> le16_to_cpu(header->sHeader.usStructureSize))
-		return BP_RESULT_BADBIOSTABLE;
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (1 != header->sHeader.ucTableContentRevision)
-		return BP_RESULT_UNSUPPORTED;
+	अगर (1 != header->sHeader.ucTableContentRevision)
+		वापस BP_RESULT_UNSUPPORTED;
 
 	count = (le16_to_cpu(header->sHeader.usStructureSize)
-			- sizeof(ATOM_COMMON_TABLE_HEADER))
-				/ sizeof(ATOM_GPIO_PIN_ASSIGNMENT);
-	for (i = 0; i < count; ++i) {
-		if (header->asGPIO_Pin[i].ucGPIO_ID != gpio_id)
-			continue;
+			- माप(ATOM_COMMON_TABLE_HEADER))
+				/ माप(ATOM_GPIO_PIN_ASSIGNMENT);
+	क्रम (i = 0; i < count; ++i) अणु
+		अगर (header->asGPIO_Pin[i].ucGPIO_ID != gpio_id)
+			जारी;
 
 		info->offset =
-			(uint32_t) le16_to_cpu(header->asGPIO_Pin[i].usGpioPin_AIndex);
+			(uपूर्णांक32_t) le16_to_cpu(header->asGPIO_Pin[i].usGpioPin_AIndex);
 		info->offset_y = info->offset + 2;
 		info->offset_en = info->offset + 1;
 		info->offset_mask = info->offset - 1;
 
-		info->mask = (uint32_t) (1 <<
-			header->asGPIO_Pin[i].ucGpioPinBitShift);
+		info->mask = (uपूर्णांक32_t) (1 <<
+			header->asGPIO_Pin[i].ucGpioPinBitShअगरt);
 		info->mask_y = info->mask + 2;
 		info->mask_en = info->mask + 1;
 		info->mask_mask = info->mask - 1;
 
-		return BP_RESULT_OK;
-	}
+		वापस BP_RESULT_OK;
+	पूर्ण
 
-	return BP_RESULT_NORECORD;
-}
+	वापस BP_RESULT_NORECORD;
+पूर्ण
 
-static enum bp_result get_gpio_i2c_info(struct bios_parser *bp,
+अटल क्रमागत bp_result get_gpio_i2c_info(काष्ठा bios_parser *bp,
 	ATOM_I2C_RECORD *record,
-	struct graphics_object_i2c_info *info)
-{
+	काष्ठा graphics_object_i2c_info *info)
+अणु
 	ATOM_GPIO_I2C_INFO *header;
-	uint32_t count = 0;
+	uपूर्णांक32_t count = 0;
 
-	if (!info)
-		return BP_RESULT_BADINPUT;
+	अगर (!info)
+		वापस BP_RESULT_BADINPUT;
 
 	/* get the GPIO_I2C info */
-	if (!DATA_TABLES(GPIO_I2C_Info))
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!DATA_TABLES(GPIO_I2C_Info))
+		वापस BP_RESULT_BADBIOSTABLE;
 
 	header = GET_IMAGE(ATOM_GPIO_I2C_INFO, DATA_TABLES(GPIO_I2C_Info));
-	if (!header)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!header)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (sizeof(ATOM_COMMON_TABLE_HEADER) + sizeof(ATOM_GPIO_I2C_ASSIGMENT)
+	अगर (माप(ATOM_COMMON_TABLE_HEADER) + माप(ATOM_GPIO_I2C_ASSIGMENT)
 			> le16_to_cpu(header->sHeader.usStructureSize))
-		return BP_RESULT_BADBIOSTABLE;
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	if (1 != header->sHeader.ucTableContentRevision)
-		return BP_RESULT_UNSUPPORTED;
+	अगर (1 != header->sHeader.ucTableContentRevision)
+		वापस BP_RESULT_UNSUPPORTED;
 
 	/* get data count */
 	count = (le16_to_cpu(header->sHeader.usStructureSize)
-			- sizeof(ATOM_COMMON_TABLE_HEADER))
-				/ sizeof(ATOM_GPIO_I2C_ASSIGMENT);
-	if (count < record->sucI2cId.bfI2C_LineMux)
-		return BP_RESULT_BADBIOSTABLE;
+			- माप(ATOM_COMMON_TABLE_HEADER))
+				/ माप(ATOM_GPIO_I2C_ASSIGMENT);
+	अगर (count < record->sucI2cId.bfI2C_LineMux)
+		वापस BP_RESULT_BADBIOSTABLE;
 
 	/* get the GPIO_I2C_INFO */
 	info->i2c_hw_assist = record->sucI2cId.bfHW_Capable;
@@ -1863,390 +1864,390 @@ static enum bp_result get_gpio_i2c_info(struct bios_parser *bp,
 	info->i2c_engine_id = record->sucI2cId.bfHW_EngineID;
 	info->i2c_slave_address = record->ucI2CAddr;
 
-	info->gpio_info.clk_mask_register_index =
+	info->gpio_info.clk_mask_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usClkMaskRegisterIndex);
-	info->gpio_info.clk_en_register_index =
+	info->gpio_info.clk_en_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usClkEnRegisterIndex);
-	info->gpio_info.clk_y_register_index =
+	info->gpio_info.clk_y_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usClkY_RegisterIndex);
-	info->gpio_info.clk_a_register_index =
+	info->gpio_info.clk_a_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usClkA_RegisterIndex);
-	info->gpio_info.data_mask_register_index =
+	info->gpio_info.data_mask_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usDataMaskRegisterIndex);
-	info->gpio_info.data_en_register_index =
+	info->gpio_info.data_en_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usDataEnRegisterIndex);
-	info->gpio_info.data_y_register_index =
+	info->gpio_info.data_y_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usDataY_RegisterIndex);
-	info->gpio_info.data_a_register_index =
+	info->gpio_info.data_a_रेजिस्टर_index =
 			le16_to_cpu(header->asGPIO_Info[info->i2c_line].usDataA_RegisterIndex);
 
-	info->gpio_info.clk_mask_shift =
-			header->asGPIO_Info[info->i2c_line].ucClkMaskShift;
-	info->gpio_info.clk_en_shift =
-			header->asGPIO_Info[info->i2c_line].ucClkEnShift;
-	info->gpio_info.clk_y_shift =
-			header->asGPIO_Info[info->i2c_line].ucClkY_Shift;
-	info->gpio_info.clk_a_shift =
-			header->asGPIO_Info[info->i2c_line].ucClkA_Shift;
-	info->gpio_info.data_mask_shift =
-			header->asGPIO_Info[info->i2c_line].ucDataMaskShift;
-	info->gpio_info.data_en_shift =
-			header->asGPIO_Info[info->i2c_line].ucDataEnShift;
-	info->gpio_info.data_y_shift =
-			header->asGPIO_Info[info->i2c_line].ucDataY_Shift;
-	info->gpio_info.data_a_shift =
-			header->asGPIO_Info[info->i2c_line].ucDataA_Shift;
+	info->gpio_info.clk_mask_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucClkMaskShअगरt;
+	info->gpio_info.clk_en_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucClkEnShअगरt;
+	info->gpio_info.clk_y_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucClkY_Shअगरt;
+	info->gpio_info.clk_a_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucClkA_Shअगरt;
+	info->gpio_info.data_mask_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucDataMaskShअगरt;
+	info->gpio_info.data_en_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucDataEnShअगरt;
+	info->gpio_info.data_y_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucDataY_Shअगरt;
+	info->gpio_info.data_a_shअगरt =
+			header->asGPIO_Info[info->i2c_line].ucDataA_Shअगरt;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
-static bool dal_graphics_object_id_is_valid(struct graphics_object_id id)
-{
+अटल bool dal_graphics_object_id_is_valid(काष्ठा graphics_object_id id)
+अणु
 	bool rc = true;
 
-	switch (id.type) {
-	case OBJECT_TYPE_UNKNOWN:
+	चयन (id.type) अणु
+	हाल OBJECT_TYPE_UNKNOWN:
 		rc = false;
-		break;
-	case OBJECT_TYPE_GPU:
-	case OBJECT_TYPE_ENGINE:
-		/* do NOT check for id.id == 0 */
-		if (id.enum_id == ENUM_ID_UNKNOWN)
+		अवरोध;
+	हाल OBJECT_TYPE_GPU:
+	हाल OBJECT_TYPE_ENGINE:
+		/* करो NOT check क्रम id.id == 0 */
+		अगर (id.क्रमागत_id == ENUM_ID_UNKNOWN)
 			rc = false;
-		break;
-	default:
-		if (id.id == 0 || id.enum_id == ENUM_ID_UNKNOWN)
+		अवरोध;
+	शेष:
+		अगर (id.id == 0 || id.क्रमागत_id == ENUM_ID_UNKNOWN)
 			rc = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool dal_graphics_object_id_is_equal(
-	struct graphics_object_id id1,
-	struct graphics_object_id id2)
-{
-	if (false == dal_graphics_object_id_is_valid(id1)) {
+अटल bool dal_graphics_object_id_is_equal(
+	काष्ठा graphics_object_id id1,
+	काष्ठा graphics_object_id id2)
+अणु
+	अगर (false == dal_graphics_object_id_is_valid(id1)) अणु
 		dm_output_to_console(
 		"%s: Warning: comparing invalid object 'id1'!\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (false == dal_graphics_object_id_is_valid(id2)) {
+	अगर (false == dal_graphics_object_id_is_valid(id2)) अणु
 		dm_output_to_console(
 		"%s: Warning: comparing invalid object 'id2'!\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (id1.id == id2.id && id1.enum_id == id2.enum_id
+	अगर (id1.id == id2.id && id1.क्रमागत_id == id2.क्रमागत_id
 		&& id1.type == id2.type)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static ATOM_OBJECT *get_bios_object(struct bios_parser *bp,
-	struct graphics_object_id id)
-{
-	uint32_t offset;
+अटल ATOM_OBJECT *get_bios_object(काष्ठा bios_parser *bp,
+	काष्ठा graphics_object_id id)
+अणु
+	uपूर्णांक32_t offset;
 	ATOM_OBJECT_TABLE *tbl;
-	uint32_t i;
+	uपूर्णांक32_t i;
 
-	switch (id.type) {
-	case OBJECT_TYPE_ENCODER:
+	चयन (id.type) अणु
+	हाल OBJECT_TYPE_ENCODER:
 		offset = le16_to_cpu(bp->object_info_tbl.v1_1->usEncoderObjectTableOffset);
-		break;
+		अवरोध;
 
-	case OBJECT_TYPE_CONNECTOR:
+	हाल OBJECT_TYPE_CONNECTOR:
 		offset = le16_to_cpu(bp->object_info_tbl.v1_1->usConnectorObjectTableOffset);
-		break;
+		अवरोध;
 
-	case OBJECT_TYPE_ROUTER:
+	हाल OBJECT_TYPE_ROUTER:
 		offset = le16_to_cpu(bp->object_info_tbl.v1_1->usRouterObjectTableOffset);
-		break;
+		अवरोध;
 
-	case OBJECT_TYPE_GENERIC:
-		if (bp->object_info_tbl.revision.minor < 3)
-			return NULL;
+	हाल OBJECT_TYPE_GENERIC:
+		अगर (bp->object_info_tbl.revision.minor < 3)
+			वापस शून्य;
 		offset = le16_to_cpu(bp->object_info_tbl.v1_3->usMiscObjectTableOffset);
-		break;
+		अवरोध;
 
-	default:
-		return NULL;
-	}
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
 	offset += bp->object_info_tbl_offset;
 
 	tbl = GET_IMAGE(ATOM_OBJECT_TABLE, offset);
-	if (!tbl)
-		return NULL;
+	अगर (!tbl)
+		वापस शून्य;
 
-	for (i = 0; i < tbl->ucNumberOfObjects; i++)
-		if (dal_graphics_object_id_is_equal(id,
+	क्रम (i = 0; i < tbl->ucNumberOfObjects; i++)
+		अगर (dal_graphics_object_id_is_equal(id,
 				object_id_from_bios_object_id(
 						le16_to_cpu(tbl->asObjects[i].usObjectID))))
-			return &tbl->asObjects[i];
+			वापस &tbl->asObjects[i];
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static uint32_t get_src_obj_list(struct bios_parser *bp, ATOM_OBJECT *object,
-	uint16_t **id_list)
-{
-	uint32_t offset;
-	uint8_t *number;
+अटल uपूर्णांक32_t get_src_obj_list(काष्ठा bios_parser *bp, ATOM_OBJECT *object,
+	uपूर्णांक16_t **id_list)
+अणु
+	uपूर्णांक32_t offset;
+	uपूर्णांक8_t *number;
 
-	if (!object) {
+	अगर (!object) अणु
 		BREAK_TO_DEBUGGER(); /* Invalid object id */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	offset = le16_to_cpu(object->usSrcDstTableOffset)
 					+ bp->object_info_tbl_offset;
 
-	number = GET_IMAGE(uint8_t, offset);
-	if (!number)
-		return 0;
+	number = GET_IMAGE(uपूर्णांक8_t, offset);
+	अगर (!number)
+		वापस 0;
 
-	offset += sizeof(uint8_t);
-	*id_list = (uint16_t *)bios_get_image(&bp->base, offset, *number * sizeof(uint16_t));
+	offset += माप(uपूर्णांक8_t);
+	*id_list = (uपूर्णांक16_t *)bios_get_image(&bp->base, offset, *number * माप(uपूर्णांक16_t));
 
-	if (!*id_list)
-		return 0;
+	अगर (!*id_list)
+		वापस 0;
 
-	return *number;
-}
+	वापस *number;
+पूर्ण
 
-static struct device_id device_type_from_device_id(uint16_t device_id)
-{
+अटल काष्ठा device_id device_type_from_device_id(uपूर्णांक16_t device_id)
+अणु
 
-	struct device_id result_device_id = {0};
+	काष्ठा device_id result_device_id = अणु0पूर्ण;
 
-	switch (device_id) {
-	case ATOM_DEVICE_LCD1_SUPPORT:
+	चयन (device_id) अणु
+	हाल ATOM_DEVICE_LCD1_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_LCD;
-		result_device_id.enum_id = 1;
-		break;
+		result_device_id.क्रमागत_id = 1;
+		अवरोध;
 
-	case ATOM_DEVICE_LCD2_SUPPORT:
+	हाल ATOM_DEVICE_LCD2_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_LCD;
-		result_device_id.enum_id = 2;
-		break;
+		result_device_id.क्रमागत_id = 2;
+		अवरोध;
 
-	case ATOM_DEVICE_CRT1_SUPPORT:
+	हाल ATOM_DEVICE_CRT1_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_CRT;
-		result_device_id.enum_id = 1;
-		break;
+		result_device_id.क्रमागत_id = 1;
+		अवरोध;
 
-	case ATOM_DEVICE_CRT2_SUPPORT:
+	हाल ATOM_DEVICE_CRT2_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_CRT;
-		result_device_id.enum_id = 2;
-		break;
+		result_device_id.क्रमागत_id = 2;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP1_SUPPORT:
+	हाल ATOM_DEVICE_DFP1_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 1;
-		break;
+		result_device_id.क्रमागत_id = 1;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP2_SUPPORT:
+	हाल ATOM_DEVICE_DFP2_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 2;
-		break;
+		result_device_id.क्रमागत_id = 2;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP3_SUPPORT:
+	हाल ATOM_DEVICE_DFP3_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 3;
-		break;
+		result_device_id.क्रमागत_id = 3;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP4_SUPPORT:
+	हाल ATOM_DEVICE_DFP4_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 4;
-		break;
+		result_device_id.क्रमागत_id = 4;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP5_SUPPORT:
+	हाल ATOM_DEVICE_DFP5_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 5;
-		break;
+		result_device_id.क्रमागत_id = 5;
+		अवरोध;
 
-	case ATOM_DEVICE_DFP6_SUPPORT:
+	हाल ATOM_DEVICE_DFP6_SUPPORT:
 		result_device_id.device_type = DEVICE_TYPE_DFP;
-		result_device_id.enum_id = 6;
-		break;
+		result_device_id.क्रमागत_id = 6;
+		अवरोध;
 
-	default:
+	शेष:
 		BREAK_TO_DEBUGGER(); /* Invalid device Id */
 		result_device_id.device_type = DEVICE_TYPE_UNKNOWN;
-		result_device_id.enum_id = 0;
-	}
-	return result_device_id;
-}
+		result_device_id.क्रमागत_id = 0;
+	पूर्ण
+	वापस result_device_id;
+पूर्ण
 
-static void get_atom_data_table_revision(
+अटल व्योम get_atom_data_table_revision(
 	ATOM_COMMON_TABLE_HEADER *atom_data_tbl,
-	struct atom_data_revision *tbl_revision)
-{
-	if (!tbl_revision)
-		return;
+	काष्ठा atom_data_revision *tbl_revision)
+अणु
+	अगर (!tbl_revision)
+		वापस;
 
 	/* initialize the revision to 0 which is invalid revision */
 	tbl_revision->major = 0;
 	tbl_revision->minor = 0;
 
-	if (!atom_data_tbl)
-		return;
+	अगर (!atom_data_tbl)
+		वापस;
 
 	tbl_revision->major =
-			(uint32_t) GET_DATA_TABLE_MAJOR_REVISION(atom_data_tbl);
+			(uपूर्णांक32_t) GET_DATA_TABLE_MAJOR_REVISION(atom_data_tbl);
 	tbl_revision->minor =
-			(uint32_t) GET_DATA_TABLE_MINOR_REVISION(atom_data_tbl);
-}
+			(uपूर्णांक32_t) GET_DATA_TABLE_MINOR_REVISION(atom_data_tbl);
+पूर्ण
 
-static uint32_t signal_to_ss_id(enum as_signal_type signal)
-{
-	uint32_t clk_id_ss = 0;
+अटल uपूर्णांक32_t संकेत_to_ss_id(क्रमागत as_संकेत_type संकेत)
+अणु
+	uपूर्णांक32_t clk_id_ss = 0;
 
-	switch (signal) {
-	case AS_SIGNAL_TYPE_DVI:
+	चयन (संकेत) अणु
+	हाल AS_SIGNAL_TYPE_DVI:
 		clk_id_ss = ASIC_INTERNAL_SS_ON_TMDS;
-		break;
-	case AS_SIGNAL_TYPE_HDMI:
+		अवरोध;
+	हाल AS_SIGNAL_TYPE_HDMI:
 		clk_id_ss = ASIC_INTERNAL_SS_ON_HDMI;
-		break;
-	case AS_SIGNAL_TYPE_LVDS:
+		अवरोध;
+	हाल AS_SIGNAL_TYPE_LVDS:
 		clk_id_ss = ASIC_INTERNAL_SS_ON_LVDS;
-		break;
-	case AS_SIGNAL_TYPE_DISPLAY_PORT:
+		अवरोध;
+	हाल AS_SIGNAL_TYPE_DISPLAY_PORT:
 		clk_id_ss = ASIC_INTERNAL_SS_ON_DP;
-		break;
-	case AS_SIGNAL_TYPE_GPU_PLL:
+		अवरोध;
+	हाल AS_SIGNAL_TYPE_GPU_PLL:
 		clk_id_ss = ASIC_INTERNAL_GPUPLL_SS;
-		break;
-	default:
-		break;
-	}
-	return clk_id_ss;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस clk_id_ss;
+पूर्ण
 
-static uint32_t get_support_mask_for_device_id(struct device_id device_id)
-{
-	enum dal_device_type device_type = device_id.device_type;
-	uint32_t enum_id = device_id.enum_id;
+अटल uपूर्णांक32_t get_support_mask_क्रम_device_id(काष्ठा device_id device_id)
+अणु
+	क्रमागत dal_device_type device_type = device_id.device_type;
+	uपूर्णांक32_t क्रमागत_id = device_id.क्रमागत_id;
 
-	switch (device_type) {
-	case DEVICE_TYPE_LCD:
-		switch (enum_id) {
-		case 1:
-			return ATOM_DEVICE_LCD1_SUPPORT;
-		case 2:
-			return ATOM_DEVICE_LCD2_SUPPORT;
-		default:
-			break;
-		}
-		break;
-	case DEVICE_TYPE_CRT:
-		switch (enum_id) {
-		case 1:
-			return ATOM_DEVICE_CRT1_SUPPORT;
-		case 2:
-			return ATOM_DEVICE_CRT2_SUPPORT;
-		default:
-			break;
-		}
-		break;
-	case DEVICE_TYPE_DFP:
-		switch (enum_id) {
-		case 1:
-			return ATOM_DEVICE_DFP1_SUPPORT;
-		case 2:
-			return ATOM_DEVICE_DFP2_SUPPORT;
-		case 3:
-			return ATOM_DEVICE_DFP3_SUPPORT;
-		case 4:
-			return ATOM_DEVICE_DFP4_SUPPORT;
-		case 5:
-			return ATOM_DEVICE_DFP5_SUPPORT;
-		case 6:
-			return ATOM_DEVICE_DFP6_SUPPORT;
-		default:
-			break;
-		}
-		break;
-	case DEVICE_TYPE_CV:
-		switch (enum_id) {
-		case 1:
-			return ATOM_DEVICE_CV_SUPPORT;
-		default:
-			break;
-		}
-		break;
-	case DEVICE_TYPE_TV:
-		switch (enum_id) {
-		case 1:
-			return ATOM_DEVICE_TV1_SUPPORT;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+	चयन (device_type) अणु
+	हाल DEVICE_TYPE_LCD:
+		चयन (क्रमागत_id) अणु
+		हाल 1:
+			वापस ATOM_DEVICE_LCD1_SUPPORT;
+		हाल 2:
+			वापस ATOM_DEVICE_LCD2_SUPPORT;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DEVICE_TYPE_CRT:
+		चयन (क्रमागत_id) अणु
+		हाल 1:
+			वापस ATOM_DEVICE_CRT1_SUPPORT;
+		हाल 2:
+			वापस ATOM_DEVICE_CRT2_SUPPORT;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DEVICE_TYPE_DFP:
+		चयन (क्रमागत_id) अणु
+		हाल 1:
+			वापस ATOM_DEVICE_DFP1_SUPPORT;
+		हाल 2:
+			वापस ATOM_DEVICE_DFP2_SUPPORT;
+		हाल 3:
+			वापस ATOM_DEVICE_DFP3_SUPPORT;
+		हाल 4:
+			वापस ATOM_DEVICE_DFP4_SUPPORT;
+		हाल 5:
+			वापस ATOM_DEVICE_DFP5_SUPPORT;
+		हाल 6:
+			वापस ATOM_DEVICE_DFP6_SUPPORT;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DEVICE_TYPE_CV:
+		चयन (क्रमागत_id) अणु
+		हाल 1:
+			वापस ATOM_DEVICE_CV_SUPPORT;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल DEVICE_TYPE_TV:
+		चयन (क्रमागत_id) अणु
+		हाल 1:
+			वापस ATOM_DEVICE_TV1_SUPPORT;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	/* Unidentified device ID, return empty support mask. */
-	return 0;
-}
+	/* Unidentअगरied device ID, वापस empty support mask. */
+	वापस 0;
+पूर्ण
 
 /**
  * bios_parser_set_scratch_critical_state - update critical state
- *                                          bit in VBIOS scratch register
- * @dcb:    pointer to the DC BIOS
+ *                                          bit in VBIOS scratch रेजिस्टर
+ * @dcb:    poपूर्णांकer to the DC BIOS
  * @state:  set or reset state
  */
-static void bios_parser_set_scratch_critical_state(
-	struct dc_bios *dcb,
+अटल व्योम bios_parser_set_scratch_critical_state(
+	काष्ठा dc_bios *dcb,
 	bool state)
-{
+अणु
 	bios_set_scratch_critical_state(dcb, state);
-}
+पूर्ण
 
 /*
- * get_integrated_info_v8
+ * get_पूर्णांकegrated_info_v8
  *
  * @brief
- * Get V8 integrated BIOS information
+ * Get V8 पूर्णांकegrated BIOS inक्रमmation
  *
  * @param
  * bios_parser *bp - [in]BIOS parser handler to get master data table
- * integrated_info *info - [out] store and output integrated info
+ * पूर्णांकegrated_info *info - [out] store and output पूर्णांकegrated info
  *
- * return:
- * enum bp_result - BP_RESULT_OK if information is available,
+ * वापस:
+ * क्रमागत bp_result - BP_RESULT_OK अगर inक्रमmation is available,
  *                  BP_RESULT_BADBIOSTABLE otherwise.
  */
-static enum bp_result get_integrated_info_v8(
-	struct bios_parser *bp,
-	struct integrated_info *info)
-{
+अटल क्रमागत bp_result get_पूर्णांकegrated_info_v8(
+	काष्ठा bios_parser *bp,
+	काष्ठा पूर्णांकegrated_info *info)
+अणु
 	ATOM_INTEGRATED_SYSTEM_INFO_V1_8 *info_v8;
-	uint32_t i;
+	uपूर्णांक32_t i;
 
 	info_v8 = GET_IMAGE(ATOM_INTEGRATED_SYSTEM_INFO_V1_8,
 			bp->master_data_tbl->ListOfDataTables.IntegratedSystemInfo);
 
-	if (info_v8 == NULL)
-		return BP_RESULT_BADBIOSTABLE;
-	info->boot_up_engine_clock = le32_to_cpu(info_v8->ulBootUpEngineClock) * 10;
+	अगर (info_v8 == शून्य)
+		वापस BP_RESULT_BADBIOSTABLE;
+	info->boot_up_engine_घड़ी = le32_to_cpu(info_v8->ulBootUpEngineClock) * 10;
 	info->dentist_vco_freq = le32_to_cpu(info_v8->ulDentistVCOFreq) * 10;
-	info->boot_up_uma_clock = le32_to_cpu(info_v8->ulBootUpUMAClock) * 10;
+	info->boot_up_uma_घड़ी = le32_to_cpu(info_v8->ulBootUpUMAClock) * 10;
 
-	for (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) {
-		/* Convert [10KHz] into [KHz] */
+	क्रम (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) अणु
+		/* Convert [10KHz] पूर्णांकo [KHz] */
 		info->disp_clk_voltage[i].max_supported_clk =
 			le32_to_cpu(info_v8->sDISPCLK_Voltage[i].
 				    ulMaximumSupportedCLK) * 10;
 		info->disp_clk_voltage[i].voltage_index =
 			le32_to_cpu(info_v8->sDISPCLK_Voltage[i].ulVoltageIndex);
-	}
+	पूर्ण
 
 	info->boot_up_req_display_vector =
 		le32_to_cpu(info_v8->ulBootUpReqDisplayVector);
@@ -2254,14 +2255,14 @@ static enum bp_result get_integrated_info_v8(
 		le32_to_cpu(info_v8->ulGPUCapInfo);
 
 	/*
-	 * system_config: Bit[0] = 0 : PCIE power gating disabled
-	 *                       = 1 : PCIE power gating enabled
-	 *                Bit[1] = 0 : DDR-PLL shut down disabled
-	 *                       = 1 : DDR-PLL shut down enabled
-	 *                Bit[2] = 0 : DDR-PLL power down disabled
-	 *                       = 1 : DDR-PLL power down enabled
+	 * प्रणाली_config: Bit[0] = 0 : PCIE घातer gating disabled
+	 *                       = 1 : PCIE घातer gating enabled
+	 *                Bit[1] = 0 : DDR-PLL shut करोwn disabled
+	 *                       = 1 : DDR-PLL shut करोwn enabled
+	 *                Bit[2] = 0 : DDR-PLL घातer करोwn disabled
+	 *                       = 1 : DDR-PLL घातer करोwn enabled
 	 */
-	info->system_config = le32_to_cpu(info_v8->ulSystemConfig);
+	info->प्रणाली_config = le32_to_cpu(info_v8->ulSystemConfig);
 	info->cpu_cap_info = le32_to_cpu(info_v8->ulCPUCapInfo);
 	info->boot_up_nb_voltage =
 		le16_to_cpu(info_v8->usBootUpNBVoltage);
@@ -2269,34 +2270,34 @@ static enum bp_result get_integrated_info_v8(
 		le16_to_cpu(info_v8->usExtDispConnInfoOffset);
 	info->memory_type = info_v8->ucMemoryType;
 	info->ma_channel_number = info_v8->ucUMAChannelNumber;
-	info->gmc_restore_reset_time =
+	info->gmc_restore_reset_समय =
 		le32_to_cpu(info_v8->ulGMCRestoreResetTime);
 
 	info->minimum_n_clk =
 		le32_to_cpu(info_v8->ulNbpStateNClkFreq[0]);
-	for (i = 1; i < 4; ++i)
+	क्रम (i = 1; i < 4; ++i)
 		info->minimum_n_clk =
 			info->minimum_n_clk < le32_to_cpu(info_v8->ulNbpStateNClkFreq[i]) ?
 			info->minimum_n_clk : le32_to_cpu(info_v8->ulNbpStateNClkFreq[i]);
 
 	info->idle_n_clk = le32_to_cpu(info_v8->ulIdleNClk);
-	info->ddr_dll_power_up_time =
+	info->ddr_dll_घातer_up_समय =
 		le32_to_cpu(info_v8->ulDDR_DLL_PowerUpTime);
-	info->ddr_pll_power_up_time =
+	info->ddr_pll_घातer_up_समय =
 		le32_to_cpu(info_v8->ulDDR_PLL_PowerUpTime);
 	info->pcie_clk_ss_type = le16_to_cpu(info_v8->usPCIEClkSSType);
 	info->lvds_ss_percentage =
 		le16_to_cpu(info_v8->usLvdsSSPercentage);
-	info->lvds_sspread_rate_in_10hz =
-		le16_to_cpu(info_v8->usLvdsSSpreadRateIn10Hz);
+	info->lvds_sspपढ़ो_rate_in_10hz =
+		le16_to_cpu(info_v8->usLvdsSSpपढ़ोRateIn10Hz);
 	info->hdmi_ss_percentage =
 		le16_to_cpu(info_v8->usHDMISSPercentage);
-	info->hdmi_sspread_rate_in_10hz =
-		le16_to_cpu(info_v8->usHDMISSpreadRateIn10Hz);
+	info->hdmi_sspपढ़ो_rate_in_10hz =
+		le16_to_cpu(info_v8->usHDMISSpपढ़ोRateIn10Hz);
 	info->dvi_ss_percentage =
 		le16_to_cpu(info_v8->usDVISSPercentage);
-	info->dvi_sspread_rate_in_10_hz =
-		le16_to_cpu(info_v8->usDVISSpreadRateIn10Hz);
+	info->dvi_sspपढ़ो_rate_in_10_hz =
+		le16_to_cpu(info_v8->usDVISSpपढ़ोRateIn10Hz);
 
 	info->max_lvds_pclk_freq_in_single_link =
 		le16_to_cpu(info_v8->usMaxLVDSPclkFreqInSingleLink);
@@ -2318,22 +2319,22 @@ static enum bp_result get_integrated_info_v8(
 	info->lvds_bit_depth_control_val =
 		le32_to_cpu(info_v8->ulLCDBitDepthControlVal);
 
-	for (i = 0; i < NUMBER_OF_AVAILABLE_SCLK; ++i) {
-		/* Convert [10KHz] into [KHz] */
+	क्रम (i = 0; i < NUMBER_OF_AVAILABLE_SCLK; ++i) अणु
+		/* Convert [10KHz] पूर्णांकo [KHz] */
 		info->avail_s_clk[i].supported_s_clk =
 			le32_to_cpu(info_v8->sAvail_SCLK[i].ulSupportedSCLK) * 10;
 		info->avail_s_clk[i].voltage_index =
 			le16_to_cpu(info_v8->sAvail_SCLK[i].usVoltageIndex);
 		info->avail_s_clk[i].voltage_id =
 			le16_to_cpu(info_v8->sAvail_SCLK[i].usVoltageID);
-	}
+	पूर्ण
 
-	for (i = 0; i < NUMBER_OF_UCHAR_FOR_GUID; ++i) {
+	क्रम (i = 0; i < NUMBER_OF_UCHAR_FOR_GUID; ++i) अणु
 		info->ext_disp_conn_info.gu_id[i] =
 			info_v8->sExtDispConnInfo.ucGuid[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < MAX_NUMBER_OF_EXT_DISPLAY_PATH; ++i) {
+	क्रम (i = 0; i < MAX_NUMBER_OF_EXT_DISPLAY_PATH; ++i) अणु
 		info->ext_disp_conn_info.path[i].device_connector_id =
 			object_id_from_bios_object_id(
 				le16_to_cpu(info_v8->sExtDispConnInfo.sPath[i].usDeviceConnector));
@@ -2344,7 +2345,7 @@ static enum bp_result get_integrated_info_v8(
 
 		info->ext_disp_conn_info.path[i].device_tag =
 			le16_to_cpu(info_v8->sExtDispConnInfo.sPath[i].usDeviceTag);
-		info->ext_disp_conn_info.path[i].device_acpi_enum =
+		info->ext_disp_conn_info.path[i].device_acpi_क्रमागत =
 			le16_to_cpu(info_v8->sExtDispConnInfo.sPath[i].usDeviceACPIEnum);
 		info->ext_disp_conn_info.path[i].ext_aux_ddc_lut_index =
 			info_v8->sExtDispConnInfo.sPath[i].ucExtAUXDDCLutIndex;
@@ -2352,88 +2353,88 @@ static enum bp_result get_integrated_info_v8(
 			info_v8->sExtDispConnInfo.sPath[i].ucExtHPDPINLutIndex;
 		info->ext_disp_conn_info.path[i].channel_mapping.raw =
 			info_v8->sExtDispConnInfo.sPath[i].ucChannelMapping;
-	}
+	पूर्ण
 	info->ext_disp_conn_info.checksum =
 		info_v8->sExtDispConnInfo.ucChecksum;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
 /*
- * get_integrated_info_v8
+ * get_पूर्णांकegrated_info_v8
  *
  * @brief
- * Get V8 integrated BIOS information
+ * Get V8 पूर्णांकegrated BIOS inक्रमmation
  *
  * @param
  * bios_parser *bp - [in]BIOS parser handler to get master data table
- * integrated_info *info - [out] store and output integrated info
+ * पूर्णांकegrated_info *info - [out] store and output पूर्णांकegrated info
  *
- * return:
- * enum bp_result - BP_RESULT_OK if information is available,
+ * वापस:
+ * क्रमागत bp_result - BP_RESULT_OK अगर inक्रमmation is available,
  *                  BP_RESULT_BADBIOSTABLE otherwise.
  */
-static enum bp_result get_integrated_info_v9(
-	struct bios_parser *bp,
-	struct integrated_info *info)
-{
+अटल क्रमागत bp_result get_पूर्णांकegrated_info_v9(
+	काष्ठा bios_parser *bp,
+	काष्ठा पूर्णांकegrated_info *info)
+अणु
 	ATOM_INTEGRATED_SYSTEM_INFO_V1_9 *info_v9;
-	uint32_t i;
+	uपूर्णांक32_t i;
 
 	info_v9 = GET_IMAGE(ATOM_INTEGRATED_SYSTEM_INFO_V1_9,
 			bp->master_data_tbl->ListOfDataTables.IntegratedSystemInfo);
 
-	if (!info_v9)
-		return BP_RESULT_BADBIOSTABLE;
+	अगर (!info_v9)
+		वापस BP_RESULT_BADBIOSTABLE;
 
-	info->boot_up_engine_clock = le32_to_cpu(info_v9->ulBootUpEngineClock) * 10;
+	info->boot_up_engine_घड़ी = le32_to_cpu(info_v9->ulBootUpEngineClock) * 10;
 	info->dentist_vco_freq = le32_to_cpu(info_v9->ulDentistVCOFreq) * 10;
-	info->boot_up_uma_clock = le32_to_cpu(info_v9->ulBootUpUMAClock) * 10;
+	info->boot_up_uma_घड़ी = le32_to_cpu(info_v9->ulBootUpUMAClock) * 10;
 
-	for (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) {
-		/* Convert [10KHz] into [KHz] */
+	क्रम (i = 0; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) अणु
+		/* Convert [10KHz] पूर्णांकo [KHz] */
 		info->disp_clk_voltage[i].max_supported_clk =
 			le32_to_cpu(info_v9->sDISPCLK_Voltage[i].ulMaximumSupportedCLK) * 10;
 		info->disp_clk_voltage[i].voltage_index =
 			le32_to_cpu(info_v9->sDISPCLK_Voltage[i].ulVoltageIndex);
-	}
+	पूर्ण
 
 	info->boot_up_req_display_vector =
 		le32_to_cpu(info_v9->ulBootUpReqDisplayVector);
 	info->gpu_cap_info = le32_to_cpu(info_v9->ulGPUCapInfo);
 
 	/*
-	 * system_config: Bit[0] = 0 : PCIE power gating disabled
-	 *                       = 1 : PCIE power gating enabled
-	 *                Bit[1] = 0 : DDR-PLL shut down disabled
-	 *                       = 1 : DDR-PLL shut down enabled
-	 *                Bit[2] = 0 : DDR-PLL power down disabled
-	 *                       = 1 : DDR-PLL power down enabled
+	 * प्रणाली_config: Bit[0] = 0 : PCIE घातer gating disabled
+	 *                       = 1 : PCIE घातer gating enabled
+	 *                Bit[1] = 0 : DDR-PLL shut करोwn disabled
+	 *                       = 1 : DDR-PLL shut करोwn enabled
+	 *                Bit[2] = 0 : DDR-PLL घातer करोwn disabled
+	 *                       = 1 : DDR-PLL घातer करोwn enabled
 	 */
-	info->system_config = le32_to_cpu(info_v9->ulSystemConfig);
+	info->प्रणाली_config = le32_to_cpu(info_v9->ulSystemConfig);
 	info->cpu_cap_info = le32_to_cpu(info_v9->ulCPUCapInfo);
 	info->boot_up_nb_voltage = le16_to_cpu(info_v9->usBootUpNBVoltage);
 	info->ext_disp_conn_info_offset = le16_to_cpu(info_v9->usExtDispConnInfoOffset);
 	info->memory_type = info_v9->ucMemoryType;
 	info->ma_channel_number = info_v9->ucUMAChannelNumber;
-	info->gmc_restore_reset_time = le32_to_cpu(info_v9->ulGMCRestoreResetTime);
+	info->gmc_restore_reset_समय = le32_to_cpu(info_v9->ulGMCRestoreResetTime);
 
 	info->minimum_n_clk = le32_to_cpu(info_v9->ulNbpStateNClkFreq[0]);
-	for (i = 1; i < 4; ++i)
+	क्रम (i = 1; i < 4; ++i)
 		info->minimum_n_clk =
 			info->minimum_n_clk < le32_to_cpu(info_v9->ulNbpStateNClkFreq[i]) ?
 			info->minimum_n_clk : le32_to_cpu(info_v9->ulNbpStateNClkFreq[i]);
 
 	info->idle_n_clk = le32_to_cpu(info_v9->ulIdleNClk);
-	info->ddr_dll_power_up_time = le32_to_cpu(info_v9->ulDDR_DLL_PowerUpTime);
-	info->ddr_pll_power_up_time = le32_to_cpu(info_v9->ulDDR_PLL_PowerUpTime);
+	info->ddr_dll_घातer_up_समय = le32_to_cpu(info_v9->ulDDR_DLL_PowerUpTime);
+	info->ddr_pll_घातer_up_समय = le32_to_cpu(info_v9->ulDDR_PLL_PowerUpTime);
 	info->pcie_clk_ss_type = le16_to_cpu(info_v9->usPCIEClkSSType);
 	info->lvds_ss_percentage = le16_to_cpu(info_v9->usLvdsSSPercentage);
-	info->lvds_sspread_rate_in_10hz = le16_to_cpu(info_v9->usLvdsSSpreadRateIn10Hz);
+	info->lvds_sspपढ़ो_rate_in_10hz = le16_to_cpu(info_v9->usLvdsSSpपढ़ोRateIn10Hz);
 	info->hdmi_ss_percentage = le16_to_cpu(info_v9->usHDMISSPercentage);
-	info->hdmi_sspread_rate_in_10hz = le16_to_cpu(info_v9->usHDMISSpreadRateIn10Hz);
+	info->hdmi_sspपढ़ो_rate_in_10hz = le16_to_cpu(info_v9->usHDMISSpपढ़ोRateIn10Hz);
 	info->dvi_ss_percentage = le16_to_cpu(info_v9->usDVISSPercentage);
-	info->dvi_sspread_rate_in_10_hz = le16_to_cpu(info_v9->usDVISSpreadRateIn10Hz);
+	info->dvi_sspपढ़ो_rate_in_10_hz = le16_to_cpu(info_v9->usDVISSpपढ़ोRateIn10Hz);
 
 	info->max_lvds_pclk_freq_in_single_link =
 		le16_to_cpu(info_v9->usMaxLVDSPclkFreqInSingleLink);
@@ -2455,22 +2456,22 @@ static enum bp_result get_integrated_info_v9(
 	info->lvds_bit_depth_control_val =
 		le32_to_cpu(info_v9->ulLCDBitDepthControlVal);
 
-	for (i = 0; i < NUMBER_OF_AVAILABLE_SCLK; ++i) {
-		/* Convert [10KHz] into [KHz] */
+	क्रम (i = 0; i < NUMBER_OF_AVAILABLE_SCLK; ++i) अणु
+		/* Convert [10KHz] पूर्णांकo [KHz] */
 		info->avail_s_clk[i].supported_s_clk =
 			le32_to_cpu(info_v9->sAvail_SCLK[i].ulSupportedSCLK) * 10;
 		info->avail_s_clk[i].voltage_index =
 			le16_to_cpu(info_v9->sAvail_SCLK[i].usVoltageIndex);
 		info->avail_s_clk[i].voltage_id =
 			le16_to_cpu(info_v9->sAvail_SCLK[i].usVoltageID);
-	}
+	पूर्ण
 
-	for (i = 0; i < NUMBER_OF_UCHAR_FOR_GUID; ++i) {
+	क्रम (i = 0; i < NUMBER_OF_UCHAR_FOR_GUID; ++i) अणु
 		info->ext_disp_conn_info.gu_id[i] =
 			info_v9->sExtDispConnInfo.ucGuid[i];
-	}
+	पूर्ण
 
-	for (i = 0; i < MAX_NUMBER_OF_EXT_DISPLAY_PATH; ++i) {
+	क्रम (i = 0; i < MAX_NUMBER_OF_EXT_DISPLAY_PATH; ++i) अणु
 		info->ext_disp_conn_info.path[i].device_connector_id =
 			object_id_from_bios_object_id(
 				le16_to_cpu(info_v9->sExtDispConnInfo.sPath[i].usDeviceConnector));
@@ -2481,7 +2482,7 @@ static enum bp_result get_integrated_info_v9(
 
 		info->ext_disp_conn_info.path[i].device_tag =
 			le16_to_cpu(info_v9->sExtDispConnInfo.sPath[i].usDeviceTag);
-		info->ext_disp_conn_info.path[i].device_acpi_enum =
+		info->ext_disp_conn_info.path[i].device_acpi_क्रमागत =
 			le16_to_cpu(info_v9->sExtDispConnInfo.sPath[i].usDeviceACPIEnum);
 		info->ext_disp_conn_info.path[i].ext_aux_ddc_lut_index =
 			info_v9->sExtDispConnInfo.sPath[i].ucExtAUXDDCLutIndex;
@@ -2489,236 +2490,236 @@ static enum bp_result get_integrated_info_v9(
 			info_v9->sExtDispConnInfo.sPath[i].ucExtHPDPINLutIndex;
 		info->ext_disp_conn_info.path[i].channel_mapping.raw =
 			info_v9->sExtDispConnInfo.sPath[i].ucChannelMapping;
-	}
+	पूर्ण
 	info->ext_disp_conn_info.checksum =
 		info_v9->sExtDispConnInfo.ucChecksum;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
 /*
- * construct_integrated_info
+ * स्थिरruct_पूर्णांकegrated_info
  *
  * @brief
- * Get integrated BIOS information based on table revision
+ * Get पूर्णांकegrated BIOS inक्रमmation based on table revision
  *
  * @param
  * bios_parser *bp - [in]BIOS parser handler to get master data table
- * integrated_info *info - [out] store and output integrated info
+ * पूर्णांकegrated_info *info - [out] store and output पूर्णांकegrated info
  *
- * return:
- * enum bp_result - BP_RESULT_OK if information is available,
+ * वापस:
+ * क्रमागत bp_result - BP_RESULT_OK अगर inक्रमmation is available,
  *                  BP_RESULT_BADBIOSTABLE otherwise.
  */
-static enum bp_result construct_integrated_info(
-	struct bios_parser *bp,
-	struct integrated_info *info)
-{
-	enum bp_result result = BP_RESULT_BADBIOSTABLE;
+अटल क्रमागत bp_result स्थिरruct_पूर्णांकegrated_info(
+	काष्ठा bios_parser *bp,
+	काष्ठा पूर्णांकegrated_info *info)
+अणु
+	क्रमागत bp_result result = BP_RESULT_BADBIOSTABLE;
 
 	ATOM_COMMON_TABLE_HEADER *header;
-	struct atom_data_revision revision;
+	काष्ठा atom_data_revision revision;
 
-	if (bp->master_data_tbl->ListOfDataTables.IntegratedSystemInfo) {
+	अगर (bp->master_data_tbl->ListOfDataTables.IntegratedSystemInfo) अणु
 		header = GET_IMAGE(ATOM_COMMON_TABLE_HEADER,
 				bp->master_data_tbl->ListOfDataTables.IntegratedSystemInfo);
 
 		get_atom_data_table_revision(header, &revision);
 
 		/* Don't need to check major revision as they are all 1 */
-		switch (revision.minor) {
-		case 8:
-			result = get_integrated_info_v8(bp, info);
-			break;
-		case 9:
-			result = get_integrated_info_v9(bp, info);
-			break;
-		default:
-			return result;
+		चयन (revision.minor) अणु
+		हाल 8:
+			result = get_पूर्णांकegrated_info_v8(bp, info);
+			अवरोध;
+		हाल 9:
+			result = get_पूर्णांकegrated_info_v9(bp, info);
+			अवरोध;
+		शेष:
+			वापस result;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Sort voltage table from low to high*/
-	if (result == BP_RESULT_OK) {
-		uint32_t i;
-		uint32_t j;
+	अगर (result == BP_RESULT_OK) अणु
+		uपूर्णांक32_t i;
+		uपूर्णांक32_t j;
 
-		for (i = 1; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) {
-			for (j = i; j > 0; --j) {
-				if (
+		क्रम (i = 1; i < NUMBER_OF_DISP_CLK_VOLTAGE; ++i) अणु
+			क्रम (j = i; j > 0; --j) अणु
+				अगर (
 						info->disp_clk_voltage[j].max_supported_clk <
-						info->disp_clk_voltage[j-1].max_supported_clk) {
+						info->disp_clk_voltage[j-1].max_supported_clk) अणु
 					/* swap j and j - 1*/
 					swap(info->disp_clk_voltage[j - 1],
 					     info->disp_clk_voltage[j]);
-				}
-			}
-		}
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct integrated_info *bios_parser_create_integrated_info(
-	struct dc_bios *dcb)
-{
-	struct bios_parser *bp = BP_FROM_DCB(dcb);
-	struct integrated_info *info = NULL;
+अटल काष्ठा पूर्णांकegrated_info *bios_parser_create_पूर्णांकegrated_info(
+	काष्ठा dc_bios *dcb)
+अणु
+	काष्ठा bios_parser *bp = BP_FROM_DCB(dcb);
+	काष्ठा पूर्णांकegrated_info *info = शून्य;
 
-	info = kzalloc(sizeof(struct integrated_info), GFP_KERNEL);
+	info = kzalloc(माप(काष्ठा पूर्णांकegrated_info), GFP_KERNEL);
 
-	if (info == NULL) {
+	अगर (info == शून्य) अणु
 		ASSERT_CRITICAL(0);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (construct_integrated_info(bp, info) == BP_RESULT_OK)
-		return info;
+	अगर (स्थिरruct_पूर्णांकegrated_info(bp, info) == BP_RESULT_OK)
+		वापस info;
 
-	kfree(info);
+	kमुक्त(info);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static enum bp_result update_slot_layout_info(
-	struct dc_bios *dcb,
-	unsigned int i,
-	struct slot_layout_info *slot_layout_info,
-	unsigned int record_offset)
-{
-	unsigned int j;
-	struct bios_parser *bp;
+अटल क्रमागत bp_result update_slot_layout_info(
+	काष्ठा dc_bios *dcb,
+	अचिन्हित पूर्णांक i,
+	काष्ठा slot_layout_info *slot_layout_info,
+	अचिन्हित पूर्णांक record_offset)
+अणु
+	अचिन्हित पूर्णांक j;
+	काष्ठा bios_parser *bp;
 	ATOM_BRACKET_LAYOUT_RECORD *record;
 	ATOM_COMMON_RECORD_HEADER *record_header;
-	enum bp_result result = BP_RESULT_NORECORD;
+	क्रमागत bp_result result = BP_RESULT_NORECORD;
 
 	bp = BP_FROM_DCB(dcb);
-	record = NULL;
-	record_header = NULL;
+	record = शून्य;
+	record_header = शून्य;
 
-	for (;;) {
+	क्रम (;;) अणु
 
 		record_header = (ATOM_COMMON_RECORD_HEADER *)
 			GET_IMAGE(ATOM_COMMON_RECORD_HEADER, record_offset);
-		if (record_header == NULL) {
+		अगर (record_header == शून्य) अणु
 			result = BP_RESULT_BADBIOSTABLE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* the end of the list */
-		if (record_header->ucRecordType == 0xff ||
-			record_header->ucRecordSize == 0)	{
-			break;
-		}
+		अगर (record_header->ucRecordType == 0xff ||
+			record_header->ucRecordSize == 0)	अणु
+			अवरोध;
+		पूर्ण
 
-		if (record_header->ucRecordType ==
+		अगर (record_header->ucRecordType ==
 			ATOM_BRACKET_LAYOUT_RECORD_TYPE &&
-			sizeof(ATOM_BRACKET_LAYOUT_RECORD)
-			<= record_header->ucRecordSize) {
+			माप(ATOM_BRACKET_LAYOUT_RECORD)
+			<= record_header->ucRecordSize) अणु
 			record = (ATOM_BRACKET_LAYOUT_RECORD *)
 				(record_header);
 			result = BP_RESULT_OK;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		record_offset += record_header->ucRecordSize;
-	}
+	पूर्ण
 
-	/* return if the record not found */
-	if (result != BP_RESULT_OK)
-		return result;
+	/* वापस अगर the record not found */
+	अगर (result != BP_RESULT_OK)
+		वापस result;
 
 	/* get slot sizes */
 	slot_layout_info->length = record->ucLength;
 	slot_layout_info->width = record->ucWidth;
 
-	/* get info for each connector in the slot */
+	/* get info क्रम each connector in the slot */
 	slot_layout_info->num_of_connectors = record->ucConnNum;
-	for (j = 0; j < slot_layout_info->num_of_connectors; ++j) {
+	क्रम (j = 0; j < slot_layout_info->num_of_connectors; ++j) अणु
 		slot_layout_info->connectors[j].connector_type =
-			(enum connector_layout_type)
+			(क्रमागत connector_layout_type)
 			(record->asConnInfo[j].ucConnectorType);
-		switch (record->asConnInfo[j].ucConnectorType) {
-		case CONNECTOR_TYPE_DVI_D:
+		चयन (record->asConnInfo[j].ucConnectorType) अणु
+		हाल CONNECTOR_TYPE_DVI_D:
 			slot_layout_info->connectors[j].connector_type =
 				CONNECTOR_LAYOUT_TYPE_DVI_D;
 			slot_layout_info->connectors[j].length =
 				CONNECTOR_SIZE_DVI;
-			break;
+			अवरोध;
 
-		case CONNECTOR_TYPE_HDMI:
+		हाल CONNECTOR_TYPE_HDMI:
 			slot_layout_info->connectors[j].connector_type =
 				CONNECTOR_LAYOUT_TYPE_HDMI;
 			slot_layout_info->connectors[j].length =
 				CONNECTOR_SIZE_HDMI;
-			break;
+			अवरोध;
 
-		case CONNECTOR_TYPE_DISPLAY_PORT:
+		हाल CONNECTOR_TYPE_DISPLAY_PORT:
 			slot_layout_info->connectors[j].connector_type =
 				CONNECTOR_LAYOUT_TYPE_DP;
 			slot_layout_info->connectors[j].length =
 				CONNECTOR_SIZE_DP;
-			break;
+			अवरोध;
 
-		case CONNECTOR_TYPE_MINI_DISPLAY_PORT:
+		हाल CONNECTOR_TYPE_MINI_DISPLAY_PORT:
 			slot_layout_info->connectors[j].connector_type =
 				CONNECTOR_LAYOUT_TYPE_MINI_DP;
 			slot_layout_info->connectors[j].length =
 				CONNECTOR_SIZE_MINI_DP;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			slot_layout_info->connectors[j].connector_type =
 				CONNECTOR_LAYOUT_TYPE_UNKNOWN;
 			slot_layout_info->connectors[j].length =
 				CONNECTOR_SIZE_UNKNOWN;
-		}
+		पूर्ण
 
 		slot_layout_info->connectors[j].position =
 			record->asConnInfo[j].ucPosition;
 		slot_layout_info->connectors[j].connector_id =
 			object_id_from_bios_object_id(
 				record->asConnInfo[j].usConnectorObjectId);
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
 
-static enum bp_result get_bracket_layout_record(
-	struct dc_bios *dcb,
-	unsigned int bracket_layout_id,
-	struct slot_layout_info *slot_layout_info)
-{
-	unsigned int i;
-	unsigned int record_offset;
-	struct bios_parser *bp;
-	enum bp_result result;
+अटल क्रमागत bp_result get_bracket_layout_record(
+	काष्ठा dc_bios *dcb,
+	अचिन्हित पूर्णांक bracket_layout_id,
+	काष्ठा slot_layout_info *slot_layout_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक record_offset;
+	काष्ठा bios_parser *bp;
+	क्रमागत bp_result result;
 	ATOM_OBJECT *object;
 	ATOM_OBJECT_TABLE *object_table;
-	unsigned int genericTableOffset;
+	अचिन्हित पूर्णांक genericTableOffset;
 
 	bp = BP_FROM_DCB(dcb);
-	object = NULL;
-	if (slot_layout_info == NULL) {
+	object = शून्य;
+	अगर (slot_layout_info == शून्य) अणु
 		DC_LOG_DETECTION_EDID_PARSER("Invalid slot_layout_info\n");
-		return BP_RESULT_BADINPUT;
-	}
+		वापस BP_RESULT_BADINPUT;
+	पूर्ण
 
 
 	genericTableOffset = bp->object_info_tbl_offset +
 		bp->object_info_tbl.v1_3->usMiscObjectTableOffset;
 	object_table = (ATOM_OBJECT_TABLE *)
 		GET_IMAGE(ATOM_OBJECT_TABLE, genericTableOffset);
-	if (!object_table)
-		return BP_RESULT_FAILURE;
+	अगर (!object_table)
+		वापस BP_RESULT_FAILURE;
 
 	result = BP_RESULT_NORECORD;
-	for (i = 0; i < object_table->ucNumberOfObjects; ++i) {
+	क्रम (i = 0; i < object_table->ucNumberOfObjects; ++i) अणु
 
-		if (bracket_layout_id ==
-			object_table->asObjects[i].usObjectID) {
+		अगर (bracket_layout_id ==
+			object_table->asObjects[i].usObjectID) अणु
 
 			object = &object_table->asObjects[i];
 			record_offset = object->usRecordOffset +
@@ -2726,44 +2727,44 @@ static enum bp_result get_bracket_layout_record(
 
 			result = update_slot_layout_info(dcb, i,
 				slot_layout_info, record_offset);
-			break;
-		}
-	}
-	return result;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static enum bp_result bios_get_board_layout_info(
-	struct dc_bios *dcb,
-	struct board_layout_info *board_layout_info)
-{
-	unsigned int i;
-	enum bp_result record_result;
+अटल क्रमागत bp_result bios_get_board_layout_info(
+	काष्ठा dc_bios *dcb,
+	काष्ठा board_layout_info *board_layout_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	क्रमागत bp_result record_result;
 
-	const unsigned int slot_index_to_vbios_id[MAX_BOARD_SLOTS] = {
+	स्थिर अचिन्हित पूर्णांक slot_index_to_vbios_id[MAX_BOARD_SLOTS] = अणु
 		GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID1,
 		GENERICOBJECT_BRACKET_LAYOUT_ENUM_ID2,
 		0, 0
-	};
+	पूर्ण;
 
-	if (board_layout_info == NULL) {
+	अगर (board_layout_info == शून्य) अणु
 		DC_LOG_DETECTION_EDID_PARSER("Invalid board_layout_info\n");
-		return BP_RESULT_BADINPUT;
-	}
+		वापस BP_RESULT_BADINPUT;
+	पूर्ण
 
 	board_layout_info->num_of_slots = 0;
 
-	for (i = 0; i < MAX_BOARD_SLOTS; ++i) {
+	क्रम (i = 0; i < MAX_BOARD_SLOTS; ++i) अणु
 		record_result = get_bracket_layout_record(dcb,
 			slot_index_to_vbios_id[i],
 			&board_layout_info->slots[i]);
 
-		if (record_result == BP_RESULT_NORECORD && i > 0)
-			break; /* no more slots present in bios */
-		else if (record_result != BP_RESULT_OK)
-			return record_result;  /* fail */
+		अगर (record_result == BP_RESULT_NORECORD && i > 0)
+			अवरोध; /* no more slots present in bios */
+		अन्यथा अगर (record_result != BP_RESULT_OK)
+			वापस record_result;  /* fail */
 
 		++board_layout_info->num_of_slots;
-	}
+	पूर्ण
 
 	/* all data is valid */
 	board_layout_info->is_number_of_slots_valid = 1;
@@ -2771,12 +2772,12 @@ static enum bp_result bios_get_board_layout_info(
 	board_layout_info->is_connector_offsets_valid = 1;
 	board_layout_info->is_connector_lengths_valid = 1;
 
-	return BP_RESULT_OK;
-}
+	वापस BP_RESULT_OK;
+पूर्ण
 
 /******************************************************************************/
 
-static const struct dc_vbios_funcs vbios_funcs = {
+अटल स्थिर काष्ठा dc_vbios_funcs vbios_funcs = अणु
 	.get_connectors_number = bios_parser_get_connectors_number,
 
 	.get_connector_id = bios_parser_get_connector_id,
@@ -2789,7 +2790,7 @@ static const struct dc_vbios_funcs vbios_funcs = {
 
 	.get_device_tag = bios_parser_get_device_tag,
 
-	.get_spread_spectrum_info = bios_parser_get_spread_spectrum_info,
+	.get_spपढ़ो_spectrum_info = bios_parser_get_spपढ़ो_spectrum_info,
 
 	.get_ss_entry_number = bios_parser_get_ss_entry_number,
 
@@ -2799,7 +2800,7 @@ static const struct dc_vbios_funcs vbios_funcs = {
 
 	.get_encoder_cap_info = bios_parser_get_encoder_cap_info,
 
-	/* bios scratch register communication */
+	/* bios scratch रेजिस्टर communication */
 	.is_accelerated_mode = bios_is_accelerated_mode,
 
 	.set_scratch_critical_state = bios_parser_set_scratch_critical_state,
@@ -2813,19 +2814,19 @@ static const struct dc_vbios_funcs vbios_funcs = {
 
 	.enable_crtc = bios_parser_enable_crtc,
 
-	.adjust_pixel_clock = bios_parser_adjust_pixel_clock,
+	.adjust_pixel_घड़ी = bios_parser_adjust_pixel_घड़ी,
 
-	.set_pixel_clock = bios_parser_set_pixel_clock,
+	.set_pixel_घड़ी = bios_parser_set_pixel_घड़ी,
 
-	.set_dce_clock = bios_parser_set_dce_clock,
+	.set_dce_घड़ी = bios_parser_set_dce_घड़ी,
 
-	.enable_spread_spectrum_on_ppll = bios_parser_enable_spread_spectrum_on_ppll,
+	.enable_spपढ़ो_spectrum_on_ppll = bios_parser_enable_spपढ़ो_spectrum_on_ppll,
 
 	.program_crtc_timing = bios_parser_program_crtc_timing, /* still use.  should probably retire and program directly */
 
 	.program_display_engine_pll = bios_parser_program_display_engine_pll,
 
-	.enable_disp_power_gating = bios_parser_enable_disp_power_gating,
+	.enable_disp_घातer_gating = bios_parser_enable_disp_घातer_gating,
 
 	/* SW init and patch */
 
@@ -2833,91 +2834,91 @@ static const struct dc_vbios_funcs vbios_funcs = {
 
 	.get_board_layout_info = bios_get_board_layout_info,
 
-	.get_atom_dc_golden_table = NULL
-};
+	.get_atom_dc_golden_table = शून्य
+पूर्ण;
 
-static bool bios_parser_construct(
-	struct bios_parser *bp,
-	struct bp_init_data *init,
-	enum dce_version dce_version)
-{
-	uint16_t *rom_header_offset = NULL;
-	ATOM_ROM_HEADER *rom_header = NULL;
+अटल bool bios_parser_स्थिरruct(
+	काष्ठा bios_parser *bp,
+	काष्ठा bp_init_data *init,
+	क्रमागत dce_version dce_version)
+अणु
+	uपूर्णांक16_t *rom_header_offset = शून्य;
+	ATOM_ROM_HEADER *rom_header = शून्य;
 	ATOM_OBJECT_HEADER *object_info_tbl;
-	struct atom_data_revision tbl_rev = {0};
+	काष्ठा atom_data_revision tbl_rev = अणु0पूर्ण;
 
-	if (!init)
-		return false;
+	अगर (!init)
+		वापस false;
 
-	if (!init->bios)
-		return false;
+	अगर (!init->bios)
+		वापस false;
 
 	bp->base.funcs = &vbios_funcs;
 	bp->base.bios = init->bios;
 	bp->base.bios_size = bp->base.bios[BIOS_IMAGE_SIZE_OFFSET] * BIOS_IMAGE_SIZE_UNIT;
 
 	bp->base.ctx = init->ctx;
-	bp->base.bios_local_image = NULL;
+	bp->base.bios_local_image = शून्य;
 
 	rom_header_offset =
-	GET_IMAGE(uint16_t, OFFSET_TO_POINTER_TO_ATOM_ROM_HEADER);
+	GET_IMAGE(uपूर्णांक16_t, OFFSET_TO_POINTER_TO_ATOM_ROM_HEADER);
 
-	if (!rom_header_offset)
-		return false;
+	अगर (!rom_header_offset)
+		वापस false;
 
 	rom_header = GET_IMAGE(ATOM_ROM_HEADER, *rom_header_offset);
 
-	if (!rom_header)
-		return false;
+	अगर (!rom_header)
+		वापस false;
 
 	get_atom_data_table_revision(&rom_header->sHeader, &tbl_rev);
-	if (tbl_rev.major >= 2 && tbl_rev.minor >= 2)
-		return false;
+	अगर (tbl_rev.major >= 2 && tbl_rev.minor >= 2)
+		वापस false;
 
 	bp->master_data_tbl =
 	GET_IMAGE(ATOM_MASTER_DATA_TABLE,
 		rom_header->usMasterDataTableOffset);
 
-	if (!bp->master_data_tbl)
-		return false;
+	अगर (!bp->master_data_tbl)
+		वापस false;
 
 	bp->object_info_tbl_offset = DATA_TABLES(Object_Header);
 
-	if (!bp->object_info_tbl_offset)
-		return false;
+	अगर (!bp->object_info_tbl_offset)
+		वापस false;
 
 	object_info_tbl =
 	GET_IMAGE(ATOM_OBJECT_HEADER, bp->object_info_tbl_offset);
 
-	if (!object_info_tbl)
-		return false;
+	अगर (!object_info_tbl)
+		वापस false;
 
 	get_atom_data_table_revision(&object_info_tbl->sHeader,
 		&bp->object_info_tbl.revision);
 
-	if (bp->object_info_tbl.revision.major == 1
-		&& bp->object_info_tbl.revision.minor >= 3) {
+	अगर (bp->object_info_tbl.revision.major == 1
+		&& bp->object_info_tbl.revision.minor >= 3) अणु
 		ATOM_OBJECT_HEADER_V3 *tbl_v3;
 
 		tbl_v3 = GET_IMAGE(ATOM_OBJECT_HEADER_V3,
 			bp->object_info_tbl_offset);
-		if (!tbl_v3)
-			return false;
+		अगर (!tbl_v3)
+			वापस false;
 
 		bp->object_info_tbl.v1_3 = tbl_v3;
-	} else if (bp->object_info_tbl.revision.major == 1
+	पूर्ण अन्यथा अगर (bp->object_info_tbl.revision.major == 1
 		&& bp->object_info_tbl.revision.minor >= 1)
 		bp->object_info_tbl.v1_1 = object_info_tbl;
-	else
-		return false;
+	अन्यथा
+		वापस false;
 
 	dal_bios_parser_init_cmd_tbl(bp);
 	dal_bios_parser_init_cmd_tbl_helper(&bp->cmd_helper, dce_version);
 
-	bp->base.integrated_info = bios_parser_create_integrated_info(&bp->base);
+	bp->base.पूर्णांकegrated_info = bios_parser_create_पूर्णांकegrated_info(&bp->base);
 	bp->base.fw_info_valid = bios_parser_get_firmware_info(&bp->base, &bp->base.fw_info) == BP_RESULT_OK;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /******************************************************************************/

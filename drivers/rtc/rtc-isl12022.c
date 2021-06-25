@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * An I2C driver for the Intersil ISL 12022
+ * An I2C driver क्रम the Intersil ISL 12022
  *
  * Author: Roman Fietze <roman.fietze@telemotive.de>
  *
@@ -8,115 +9,115 @@
  * by Alessandro Zummo <a.zummo@towertech.it>.
  */
 
-#include <linux/i2c.h>
-#include <linux/bcd.h>
-#include <linux/rtc.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-/* ISL register offsets */
-#define ISL12022_REG_SC		0x00
-#define ISL12022_REG_MN		0x01
-#define ISL12022_REG_HR		0x02
-#define ISL12022_REG_DT		0x03
-#define ISL12022_REG_MO		0x04
-#define ISL12022_REG_YR		0x05
-#define ISL12022_REG_DW		0x06
+/* ISL रेजिस्टर offsets */
+#घोषणा ISL12022_REG_SC		0x00
+#घोषणा ISL12022_REG_MN		0x01
+#घोषणा ISL12022_REG_HR		0x02
+#घोषणा ISL12022_REG_DT		0x03
+#घोषणा ISL12022_REG_MO		0x04
+#घोषणा ISL12022_REG_YR		0x05
+#घोषणा ISL12022_REG_DW		0x06
 
-#define ISL12022_REG_SR		0x07
-#define ISL12022_REG_INT	0x08
+#घोषणा ISL12022_REG_SR		0x07
+#घोषणा ISL12022_REG_INT	0x08
 
-/* ISL register bits */
-#define ISL12022_HR_MIL		(1 << 7)	/* military or 24 hour time */
+/* ISL रेजिस्टर bits */
+#घोषणा ISL12022_HR_MIL		(1 << 7)	/* military or 24 hour समय */
 
-#define ISL12022_SR_LBAT85	(1 << 2)
-#define ISL12022_SR_LBAT75	(1 << 1)
+#घोषणा ISL12022_SR_LBAT85	(1 << 2)
+#घोषणा ISL12022_SR_LBAT75	(1 << 1)
 
-#define ISL12022_INT_WRTC	(1 << 6)
-
-
-static struct i2c_driver isl12022_driver;
-
-struct isl12022 {
-	struct rtc_device *rtc;
-
-	bool write_enabled;	/* true if write enable is set */
-};
+#घोषणा ISL12022_INT_WRTC	(1 << 6)
 
 
-static int isl12022_read_regs(struct i2c_client *client, uint8_t reg,
-			      uint8_t *data, size_t n)
-{
-	struct i2c_msg msgs[] = {
-		{
+अटल काष्ठा i2c_driver isl12022_driver;
+
+काष्ठा isl12022 अणु
+	काष्ठा rtc_device *rtc;
+
+	bool ग_लिखो_enabled;	/* true अगर ग_लिखो enable is set */
+पूर्ण;
+
+
+अटल पूर्णांक isl12022_पढ़ो_regs(काष्ठा i2c_client *client, uपूर्णांक8_t reg,
+			      uपूर्णांक8_t *data, माप_प्रकार n)
+अणु
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr	= client->addr,
 			.flags	= 0,
 			.len	= 1,
 			.buf	= data
-		},		/* setup read ptr */
-		{
+		पूर्ण,		/* setup पढ़ो ptr */
+		अणु
 			.addr	= client->addr,
 			.flags	= I2C_M_RD,
 			.len	= n,
 			.buf	= data
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
-	int ret;
+	पूर्णांक ret;
 
 	data[0] = reg;
 	ret = i2c_transfer(client->adapter, msgs, ARRAY_SIZE(msgs));
-	if (ret != ARRAY_SIZE(msgs)) {
+	अगर (ret != ARRAY_SIZE(msgs)) अणु
 		dev_err(&client->dev, "%s: read error, ret=%d\n",
 			__func__, ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int isl12022_write_reg(struct i2c_client *client,
-			      uint8_t reg, uint8_t val)
-{
-	uint8_t data[2] = { reg, val };
-	int err;
+अटल पूर्णांक isl12022_ग_लिखो_reg(काष्ठा i2c_client *client,
+			      uपूर्णांक8_t reg, uपूर्णांक8_t val)
+अणु
+	uपूर्णांक8_t data[2] = अणु reg, val पूर्ण;
+	पूर्णांक err;
 
-	err = i2c_master_send(client, data, sizeof(data));
-	if (err != sizeof(data)) {
+	err = i2c_master_send(client, data, माप(data));
+	अगर (err != माप(data)) अणु
 		dev_err(&client->dev,
 			"%s: err=%d addr=%02x, data=%02x\n",
 			__func__, err, data[0], data[1]);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * In the routines that deal directly with the isl12022 hardware, we use
- * rtc_time -- month 0-11, hour 0-23, yr = calendar year-epoch.
+ * rtc_समय -- month 0-11, hour 0-23, yr = calendar year-epoch.
  */
-static int isl12022_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	uint8_t buf[ISL12022_REG_INT + 1];
-	int ret;
+अटल पूर्णांक isl12022_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	uपूर्णांक8_t buf[ISL12022_REG_INT + 1];
+	पूर्णांक ret;
 
-	ret = isl12022_read_regs(client, ISL12022_REG_SC, buf, sizeof(buf));
-	if (ret)
-		return ret;
+	ret = isl12022_पढ़ो_regs(client, ISL12022_REG_SC, buf, माप(buf));
+	अगर (ret)
+		वापस ret;
 
-	if (buf[ISL12022_REG_SR] & (ISL12022_SR_LBAT85 | ISL12022_SR_LBAT75)) {
+	अगर (buf[ISL12022_REG_SR] & (ISL12022_SR_LBAT85 | ISL12022_SR_LBAT75)) अणु
 		dev_warn(&client->dev,
 			 "voltage dropped below %u%%, "
 			 "date and time is not reliable.\n",
 			 buf[ISL12022_REG_SR] & ISL12022_SR_LBAT85 ? 85 : 75);
-	}
+	पूर्ण
 
 	dev_dbg(&client->dev,
 		"%s: raw data is sec=%02x, min=%02x, hr=%02x, "
@@ -133,151 +134,151 @@ static int isl12022_rtc_read_time(struct device *dev, struct rtc_time *tm)
 		buf[ISL12022_REG_SR],
 		buf[ISL12022_REG_INT]);
 
-	tm->tm_sec = bcd2bin(buf[ISL12022_REG_SC] & 0x7F);
-	tm->tm_min = bcd2bin(buf[ISL12022_REG_MN] & 0x7F);
-	tm->tm_hour = bcd2bin(buf[ISL12022_REG_HR] & 0x3F);
-	tm->tm_mday = bcd2bin(buf[ISL12022_REG_DT] & 0x3F);
-	tm->tm_wday = buf[ISL12022_REG_DW] & 0x07;
-	tm->tm_mon = bcd2bin(buf[ISL12022_REG_MO] & 0x1F) - 1;
-	tm->tm_year = bcd2bin(buf[ISL12022_REG_YR]) + 100;
+	पंचांग->पंचांग_sec = bcd2bin(buf[ISL12022_REG_SC] & 0x7F);
+	पंचांग->पंचांग_min = bcd2bin(buf[ISL12022_REG_MN] & 0x7F);
+	पंचांग->पंचांग_hour = bcd2bin(buf[ISL12022_REG_HR] & 0x3F);
+	पंचांग->पंचांग_mday = bcd2bin(buf[ISL12022_REG_DT] & 0x3F);
+	पंचांग->पंचांग_wday = buf[ISL12022_REG_DW] & 0x07;
+	पंचांग->पंचांग_mon = bcd2bin(buf[ISL12022_REG_MO] & 0x1F) - 1;
+	पंचांग->पंचांग_year = bcd2bin(buf[ISL12022_REG_YR]) + 100;
 
 	dev_dbg(&client->dev, "%s: secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isl12022_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct i2c_client *client = to_i2c_client(dev);
-	struct isl12022 *isl12022 = i2c_get_clientdata(client);
-	size_t i;
-	int ret;
-	uint8_t buf[ISL12022_REG_DW + 1];
+अटल पूर्णांक isl12022_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev);
+	काष्ठा isl12022 *isl12022 = i2c_get_clientdata(client);
+	माप_प्रकार i;
+	पूर्णांक ret;
+	uपूर्णांक8_t buf[ISL12022_REG_DW + 1];
 
 	dev_dbg(&client->dev, "%s: secs=%d, mins=%d, hours=%d, "
 		"mday=%d, mon=%d, year=%d, wday=%d\n",
 		__func__,
-		tm->tm_sec, tm->tm_min, tm->tm_hour,
-		tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_wday);
+		पंचांग->पंचांग_sec, पंचांग->पंचांग_min, पंचांग->पंचांग_hour,
+		पंचांग->पंचांग_mday, पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	if (!isl12022->write_enabled) {
+	अगर (!isl12022->ग_लिखो_enabled) अणु
 
-		ret = isl12022_read_regs(client, ISL12022_REG_INT, buf, 1);
-		if (ret)
-			return ret;
+		ret = isl12022_पढ़ो_regs(client, ISL12022_REG_INT, buf, 1);
+		अगर (ret)
+			वापस ret;
 
-		/* Check if WRTC (write rtc enable) is set factory default is
+		/* Check अगर WRTC (ग_लिखो rtc enable) is set factory शेष is
 		 * 0 (not set) */
-		if (!(buf[0] & ISL12022_INT_WRTC)) {
+		अगर (!(buf[0] & ISL12022_INT_WRTC)) अणु
 			dev_info(&client->dev,
 				 "init write enable and 24 hour format\n");
 
-			/* Set the write enable bit. */
-			ret = isl12022_write_reg(client,
+			/* Set the ग_लिखो enable bit. */
+			ret = isl12022_ग_लिखो_reg(client,
 						 ISL12022_REG_INT,
 						 buf[0] | ISL12022_INT_WRTC);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			/* Write to any RTC register to start RTC, we use the
-			 * HR register, setting the MIL bit to use the 24 hour
-			 * format. */
-			ret = isl12022_read_regs(client, ISL12022_REG_HR,
+			/* Write to any RTC रेजिस्टर to start RTC, we use the
+			 * HR रेजिस्टर, setting the MIL bit to use the 24 hour
+			 * क्रमmat. */
+			ret = isl12022_पढ़ो_regs(client, ISL12022_REG_HR,
 						 buf, 1);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			ret = isl12022_write_reg(client,
+			ret = isl12022_ग_लिखो_reg(client,
 						 ISL12022_REG_HR,
 						 buf[0] | ISL12022_HR_MIL);
-			if (ret)
-				return ret;
-		}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
 
-		isl12022->write_enabled = true;
-	}
+		isl12022->ग_लिखो_enabled = true;
+	पूर्ण
 
 	/* hours, minutes and seconds */
-	buf[ISL12022_REG_SC] = bin2bcd(tm->tm_sec);
-	buf[ISL12022_REG_MN] = bin2bcd(tm->tm_min);
-	buf[ISL12022_REG_HR] = bin2bcd(tm->tm_hour) | ISL12022_HR_MIL;
+	buf[ISL12022_REG_SC] = bin2bcd(पंचांग->पंचांग_sec);
+	buf[ISL12022_REG_MN] = bin2bcd(पंचांग->पंचांग_min);
+	buf[ISL12022_REG_HR] = bin2bcd(पंचांग->पंचांग_hour) | ISL12022_HR_MIL;
 
-	buf[ISL12022_REG_DT] = bin2bcd(tm->tm_mday);
+	buf[ISL12022_REG_DT] = bin2bcd(पंचांग->पंचांग_mday);
 
 	/* month, 1 - 12 */
-	buf[ISL12022_REG_MO] = bin2bcd(tm->tm_mon + 1);
+	buf[ISL12022_REG_MO] = bin2bcd(पंचांग->पंचांग_mon + 1);
 
 	/* year and century */
-	buf[ISL12022_REG_YR] = bin2bcd(tm->tm_year % 100);
+	buf[ISL12022_REG_YR] = bin2bcd(पंचांग->पंचांग_year % 100);
 
-	buf[ISL12022_REG_DW] = tm->tm_wday & 0x07;
+	buf[ISL12022_REG_DW] = पंचांग->पंचांग_wday & 0x07;
 
-	/* write register's data */
-	for (i = 0; i < ARRAY_SIZE(buf); i++) {
-		ret = isl12022_write_reg(client, ISL12022_REG_SC + i,
+	/* ग_लिखो रेजिस्टर's data */
+	क्रम (i = 0; i < ARRAY_SIZE(buf); i++) अणु
+		ret = isl12022_ग_लिखो_reg(client, ISL12022_REG_SC + i,
 					 buf[ISL12022_REG_SC + i]);
-		if (ret)
-			return -EIO;
-	}
+		अगर (ret)
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops isl12022_rtc_ops = {
-	.read_time	= isl12022_rtc_read_time,
-	.set_time	= isl12022_rtc_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops isl12022_rtc_ops = अणु
+	.पढ़ो_समय	= isl12022_rtc_पढ़ो_समय,
+	.set_समय	= isl12022_rtc_set_समय,
+पूर्ण;
 
-static int isl12022_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct isl12022 *isl12022;
+अटल पूर्णांक isl12022_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा isl12022 *isl12022;
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C))
+		वापस -ENODEV;
 
-	isl12022 = devm_kzalloc(&client->dev, sizeof(struct isl12022),
+	isl12022 = devm_kzalloc(&client->dev, माप(काष्ठा isl12022),
 				GFP_KERNEL);
-	if (!isl12022)
-		return -ENOMEM;
+	अगर (!isl12022)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, isl12022);
 
-	isl12022->rtc = devm_rtc_device_register(&client->dev,
+	isl12022->rtc = devm_rtc_device_रेजिस्टर(&client->dev,
 					isl12022_driver.driver.name,
 					&isl12022_rtc_ops, THIS_MODULE);
-	return PTR_ERR_OR_ZERO(isl12022->rtc);
-}
+	वापस PTR_ERR_OR_ZERO(isl12022->rtc);
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id isl12022_dt_match[] = {
-	{ .compatible = "isl,isl12022" }, /* for backward compat., don't use */
-	{ .compatible = "isil,isl12022" },
-	{ },
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id isl12022_dt_match[] = अणु
+	अणु .compatible = "isl,isl12022" पूर्ण, /* क्रम backward compat., करोn't use */
+	अणु .compatible = "isil,isl12022" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, isl12022_dt_match);
-#endif
+#पूर्ण_अगर
 
-static const struct i2c_device_id isl12022_id[] = {
-	{ "isl12022", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id isl12022_id[] = अणु
+	अणु "isl12022", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, isl12022_id);
 
-static struct i2c_driver isl12022_driver = {
-	.driver		= {
+अटल काष्ठा i2c_driver isl12022_driver = अणु
+	.driver		= अणु
 		.name	= "rtc-isl12022",
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 		.of_match_table = of_match_ptr(isl12022_dt_match),
-#endif
-	},
+#पूर्ण_अगर
+	पूर्ण,
 	.probe		= isl12022_probe,
 	.id_table	= isl12022_id,
-};
+पूर्ण;
 
 module_i2c_driver(isl12022_driver);
 

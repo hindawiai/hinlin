@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  */
 
-#ifndef _ASM_RISCV_TLB_H
-#define _ASM_RISCV_TLB_H
+#अगर_अघोषित _ASM_RISCV_TLB_H
+#घोषणा _ASM_RISCV_TLB_H
 
-struct mmu_gather;
+काष्ठा mmu_gather;
 
-static void tlb_flush(struct mmu_gather *tlb);
+अटल व्योम tlb_flush(काष्ठा mmu_gather *tlb);
 
-#define tlb_flush tlb_flush
-#include <asm-generic/tlb.h>
+#घोषणा tlb_flush tlb_flush
+#समावेश <यंत्र-generic/tlb.h>
 
-static inline void tlb_flush(struct mmu_gather *tlb)
-{
+अटल अंतरभूत व्योम tlb_flush(काष्ठा mmu_gather *tlb)
+अणु
 	flush_tlb_mm(tlb->mm);
-}
+पूर्ण
 
-#endif /* _ASM_RISCV_TLB_H */
+#पूर्ण_अगर /* _ASM_RISCV_TLB_H */

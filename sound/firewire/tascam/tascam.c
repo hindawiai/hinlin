@@ -1,272 +1,273 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tascam.c - a part of driver for TASCAM FireWire series
+ * tascam.c - a part of driver क्रम TASCAM FireWire series
  *
  * Copyright (c) 2015 Takashi Sakamoto
  */
 
-#include "tascam.h"
+#समावेश "tascam.h"
 
 MODULE_DESCRIPTION("TASCAM FireWire series Driver");
 MODULE_AUTHOR("Takashi Sakamoto <o-takashi@sakamocchi.jp>");
 MODULE_LICENSE("GPL v2");
 
-static const struct snd_tscm_spec model_specs[] = {
-	{
+अटल स्थिर काष्ठा snd_tscm_spec model_specs[] = अणु
+	अणु
 		.name = "FW-1884",
 		.has_adat = true,
-		.has_spdif = true,
+		.has_spdअगर = true,
 		.pcm_capture_analog_channels = 8,
 		.pcm_playback_analog_channels = 8,
 		.midi_capture_ports = 4,
 		.midi_playback_ports = 4,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "FW-1082",
 		.has_adat = false,
-		.has_spdif = true,
+		.has_spdअगर = true,
 		.pcm_capture_analog_channels = 8,
 		.pcm_playback_analog_channels = 2,
 		.midi_capture_ports = 2,
 		.midi_playback_ports = 2,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "FW-1804",
 		.has_adat = true,
-		.has_spdif = true,
+		.has_spdअगर = true,
 		.pcm_capture_analog_channels = 8,
 		.pcm_playback_analog_channels = 2,
 		.midi_capture_ports = 2,
 		.midi_playback_ports = 4,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int identify_model(struct snd_tscm *tscm)
-{
-	struct fw_device *fw_dev = fw_parent_device(tscm->unit);
-	const u32 *config_rom = fw_dev->config_rom;
-	char model[9];
-	unsigned int i;
+अटल पूर्णांक identअगरy_model(काष्ठा snd_tscm *tscm)
+अणु
+	काष्ठा fw_device *fw_dev = fw_parent_device(tscm->unit);
+	स्थिर u32 *config_rom = fw_dev->config_rom;
+	अक्षर model[9];
+	अचिन्हित पूर्णांक i;
 	u8 c;
 
-	if (fw_dev->config_rom_length < 30) {
+	अगर (fw_dev->config_rom_length < 30) अणु
 		dev_err(&tscm->unit->device,
 			"Configuration ROM is too short.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Pick up model name from certain addresses. */
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		c = config_rom[28 + i / 4] >> (24 - 8 * (i % 4));
-		if (c == '\0')
-			break;
+		अगर (c == '\0')
+			अवरोध;
 		model[i] = c;
-	}
+	पूर्ण
 	model[i] = '\0';
 
-	for (i = 0; i < ARRAY_SIZE(model_specs); i++) {
-		if (strcmp(model, model_specs[i].name) == 0) {
+	क्रम (i = 0; i < ARRAY_SIZE(model_specs); i++) अणु
+		अगर (म_भेद(model, model_specs[i].name) == 0) अणु
 			tscm->spec = &model_specs[i];
-			break;
-		}
-	}
-	if (tscm->spec == NULL)
-		return -ENODEV;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (tscm->spec == शून्य)
+		वापस -ENODEV;
 
-	strcpy(tscm->card->driver, "FW-TASCAM");
-	strcpy(tscm->card->shortname, model);
-	strcpy(tscm->card->mixername, model);
-	snprintf(tscm->card->longname, sizeof(tscm->card->longname),
+	म_नकल(tscm->card->driver, "FW-TASCAM");
+	म_नकल(tscm->card->लघुname, model);
+	म_नकल(tscm->card->mixername, model);
+	snम_लिखो(tscm->card->दीर्घname, माप(tscm->card->दीर्घname),
 		 "TASCAM %s, GUID %08x%08x at %s, S%d", model,
 		 fw_dev->config_rom[3], fw_dev->config_rom[4],
 		 dev_name(&tscm->unit->device), 100 << fw_dev->max_speed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tscm_card_free(struct snd_card *card)
-{
-	struct snd_tscm *tscm = card->private_data;
+अटल व्योम tscm_card_मुक्त(काष्ठा snd_card *card)
+अणु
+	काष्ठा snd_tscm *tscm = card->निजी_data;
 
-	snd_tscm_transaction_unregister(tscm);
+	snd_tscm_transaction_unरेजिस्टर(tscm);
 	snd_tscm_stream_destroy_duplex(tscm);
-}
+पूर्ण
 
-static void do_registration(struct work_struct *work)
-{
-	struct snd_tscm *tscm = container_of(work, struct snd_tscm, dwork.work);
-	int err;
+अटल व्योम करो_registration(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_tscm *tscm = container_of(work, काष्ठा snd_tscm, dwork.work);
+	पूर्णांक err;
 
-	err = snd_card_new(&tscm->unit->device, -1, NULL, THIS_MODULE, 0,
+	err = snd_card_new(&tscm->unit->device, -1, शून्य, THIS_MODULE, 0,
 			   &tscm->card);
-	if (err < 0)
-		return;
-	tscm->card->private_free = tscm_card_free;
-	tscm->card->private_data = tscm;
+	अगर (err < 0)
+		वापस;
+	tscm->card->निजी_मुक्त = tscm_card_मुक्त;
+	tscm->card->निजी_data = tscm;
 
-	err = identify_model(tscm);
-	if (err < 0)
-		goto error;
+	err = identअगरy_model(tscm);
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_tscm_transaction_register(tscm);
-	if (err < 0)
-		goto error;
+	err = snd_tscm_transaction_रेजिस्टर(tscm);
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_tscm_stream_init_duplex(tscm);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	snd_tscm_proc_init(tscm);
 
 	err = snd_tscm_create_pcm_devices(tscm);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_tscm_create_midi_devices(tscm);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
 	err = snd_tscm_create_hwdep_device(tscm);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	err = snd_card_register(tscm->card);
-	if (err < 0)
-		goto error;
+	err = snd_card_रेजिस्टर(tscm->card);
+	अगर (err < 0)
+		जाओ error;
 
-	tscm->registered = true;
+	tscm->रेजिस्टरed = true;
 
-	return;
+	वापस;
 error:
-	snd_card_free(tscm->card);
+	snd_card_मुक्त(tscm->card);
 	dev_info(&tscm->unit->device,
 		 "Sound card registration failed: %d\n", err);
-}
+पूर्ण
 
-static int snd_tscm_probe(struct fw_unit *unit,
-			   const struct ieee1394_device_id *entry)
-{
-	struct snd_tscm *tscm;
+अटल पूर्णांक snd_tscm_probe(काष्ठा fw_unit *unit,
+			   स्थिर काष्ठा ieee1394_device_id *entry)
+अणु
+	काष्ठा snd_tscm *tscm;
 
 	/* Allocate this independent of sound card instance. */
-	tscm = devm_kzalloc(&unit->device, sizeof(struct snd_tscm), GFP_KERNEL);
-	if (!tscm)
-		return -ENOMEM;
+	tscm = devm_kzalloc(&unit->device, माप(काष्ठा snd_tscm), GFP_KERNEL);
+	अगर (!tscm)
+		वापस -ENOMEM;
 	tscm->unit = fw_unit_get(unit);
 	dev_set_drvdata(&unit->device, tscm);
 
 	mutex_init(&tscm->mutex);
 	spin_lock_init(&tscm->lock);
-	init_waitqueue_head(&tscm->hwdep_wait);
+	init_रुकोqueue_head(&tscm->hwdep_रुको);
 
-	/* Allocate and register this sound card later. */
-	INIT_DEFERRABLE_WORK(&tscm->dwork, do_registration);
+	/* Allocate and रेजिस्टर this sound card later. */
+	INIT_DEFERRABLE_WORK(&tscm->dwork, करो_registration);
 	snd_fw_schedule_registration(unit, &tscm->dwork);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void snd_tscm_update(struct fw_unit *unit)
-{
-	struct snd_tscm *tscm = dev_get_drvdata(&unit->device);
+अटल व्योम snd_tscm_update(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_tscm *tscm = dev_get_drvdata(&unit->device);
 
-	/* Postpone a workqueue for deferred registration. */
-	if (!tscm->registered)
+	/* Postpone a workqueue क्रम deferred registration. */
+	अगर (!tscm->रेजिस्टरed)
 		snd_fw_schedule_registration(unit, &tscm->dwork);
 
-	snd_tscm_transaction_reregister(tscm);
+	snd_tscm_transaction_reरेजिस्टर(tscm);
 
 	/*
 	 * After registration, userspace can start packet streaming, then this
 	 * code block works fine.
 	 */
-	if (tscm->registered) {
+	अगर (tscm->रेजिस्टरed) अणु
 		mutex_lock(&tscm->mutex);
 		snd_tscm_stream_update_duplex(tscm);
 		mutex_unlock(&tscm->mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void snd_tscm_remove(struct fw_unit *unit)
-{
-	struct snd_tscm *tscm = dev_get_drvdata(&unit->device);
+अटल व्योम snd_tscm_हटाओ(काष्ठा fw_unit *unit)
+अणु
+	काष्ठा snd_tscm *tscm = dev_get_drvdata(&unit->device);
 
 	/*
-	 * Confirm to stop the work for registration before the sound card is
+	 * Confirm to stop the work क्रम registration beक्रमe the sound card is
 	 * going to be released. The work is not scheduled again because bus
 	 * reset handler is not called anymore.
 	 */
 	cancel_delayed_work_sync(&tscm->dwork);
 
-	if (tscm->registered) {
-		// Block till all of ALSA character devices are released.
-		snd_card_free(tscm->card);
-	}
+	अगर (tscm->रेजिस्टरed) अणु
+		// Block till all of ALSA अक्षरacter devices are released.
+		snd_card_मुक्त(tscm->card);
+	पूर्ण
 
 	mutex_destroy(&tscm->mutex);
 	fw_unit_put(tscm->unit);
-}
+पूर्ण
 
-static const struct ieee1394_device_id snd_tscm_id_table[] = {
+अटल स्थिर काष्ठा ieee1394_device_id snd_tscm_id_table[] = अणु
 	// Tascam, FW-1884.
-	{
+	अणु
 		.match_flags = IEEE1394_MATCH_VENDOR_ID |
 			       IEEE1394_MATCH_SPECIFIER_ID |
 			       IEEE1394_MATCH_VERSION,
-		.vendor_id = 0x00022e,
-		.specifier_id = 0x00022e,
+		.venकरोr_id = 0x00022e,
+		.specअगरier_id = 0x00022e,
 		.version = 0x800000,
-	},
+	पूर्ण,
 	// Tascam, FE-8 (.version = 0x800001)
-	// This kernel module doesn't support FE-8 because the most of features
-	// can be implemented in userspace without any specific support of this
+	// This kernel module करोesn't support FE-8 because the most of features
+	// can be implemented in userspace without any specअगरic support of this
 	// module.
 	//
 	// .version = 0x800002 is unknown.
 	//
 	// Tascam, FW-1082.
-	{
+	अणु
 		.match_flags = IEEE1394_MATCH_VENDOR_ID |
 			       IEEE1394_MATCH_SPECIFIER_ID |
 			       IEEE1394_MATCH_VERSION,
-		.vendor_id = 0x00022e,
-		.specifier_id = 0x00022e,
+		.venकरोr_id = 0x00022e,
+		.specअगरier_id = 0x00022e,
 		.version = 0x800003,
-	},
+	पूर्ण,
 	// Tascam, FW-1804.
-	{
+	अणु
 		.match_flags = IEEE1394_MATCH_VENDOR_ID |
 			       IEEE1394_MATCH_SPECIFIER_ID |
 			       IEEE1394_MATCH_VERSION,
-		.vendor_id = 0x00022e,
-		.specifier_id = 0x00022e,
+		.venकरोr_id = 0x00022e,
+		.specअगरier_id = 0x00022e,
 		.version = 0x800004,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(ieee1394, snd_tscm_id_table);
 
-static struct fw_driver tscm_driver = {
-	.driver = {
+अटल काष्ठा fw_driver tscm_driver = अणु
+	.driver = अणु
 		.owner = THIS_MODULE,
 		.name = KBUILD_MODNAME,
 		.bus = &fw_bus_type,
-	},
+	पूर्ण,
 	.probe    = snd_tscm_probe,
 	.update   = snd_tscm_update,
-	.remove   = snd_tscm_remove,
+	.हटाओ   = snd_tscm_हटाओ,
 	.id_table = snd_tscm_id_table,
-};
+पूर्ण;
 
-static int __init snd_tscm_init(void)
-{
-	return driver_register(&tscm_driver.driver);
-}
+अटल पूर्णांक __init snd_tscm_init(व्योम)
+अणु
+	वापस driver_रेजिस्टर(&tscm_driver.driver);
+पूर्ण
 
-static void __exit snd_tscm_exit(void)
-{
-	driver_unregister(&tscm_driver.driver);
-}
+अटल व्योम __निकास snd_tscm_निकास(व्योम)
+अणु
+	driver_unरेजिस्टर(&tscm_driver.driver);
+पूर्ण
 
 module_init(snd_tscm_init);
-module_exit(snd_tscm_exit);
+module_निकास(snd_tscm_निकास);

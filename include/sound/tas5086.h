@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SND_SOC_CODEC_TAS5086_H_
-#define _SND_SOC_CODEC_TAS5086_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SND_SOC_CODEC_TAS5086_H_
+#घोषणा _SND_SOC_CODEC_TAS5086_H_
 
-#define TAS5086_CLK_IDX_MCLK	0
-#define TAS5086_CLK_IDX_SCLK	1
+#घोषणा TAS5086_CLK_IDX_MCLK	0
+#घोषणा TAS5086_CLK_IDX_SCLK	1
 
-#endif /* _SND_SOC_CODEC_TAS5086_H_ */
+#पूर्ण_अगर /* _SND_SOC_CODEC_TAS5086_H_ */

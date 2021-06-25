@@ -1,186 +1,187 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Driver for the LID cover switch of the Surface 3
+ *  Driver क्रम the LID cover चयन of the Surface 3
  *
  *  Copyright (c) 2016 Red Hat Inc.
  */
 
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <linux/acpi.h>
-#include <linux/dmi.h>
-#include <linux/input.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/input.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spi/spi.h>
 
 MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@redhat.com>");
 MODULE_DESCRIPTION("Surface 3 platform driver");
 MODULE_LICENSE("GPL");
 
-#define ACPI_BUTTON_HID_LID		"PNP0C0D"
-#define SPI_CTL_OBJ_NAME		"SPI"
-#define SPI_TS_OBJ_NAME			"NTRG"
+#घोषणा ACPI_BUTTON_HID_LID		"PNP0C0D"
+#घोषणा SPI_CTL_OBJ_NAME		"SPI"
+#घोषणा SPI_TS_OBJ_NAME			"NTRG"
 
-#define SURFACE3_LID_GUID "F7CC25EC-D20B-404C-8903-0ED4359C18AE"
+#घोषणा SURFACE3_LID_GUID "F7CC25EC-D20B-404C-8903-0ED4359C18AE"
 
 MODULE_ALIAS("wmi:" SURFACE3_LID_GUID);
 
-static const struct dmi_system_id surface3_dmi_table[] = {
-#if defined(CONFIG_X86)
-	{
-		.matches = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id surface3_dmi_table[] = अणु
+#अगर defined(CONFIG_X86)
+	अणु
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "Microsoft Corporation"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "Surface 3"),
-		},
-	},
-#endif
-	{ }
-};
+		पूर्ण,
+	पूर्ण,
+#पूर्ण_अगर
+	अणु पूर्ण
+पूर्ण;
 
-struct surface3_wmi {
-	struct acpi_device *touchscreen_adev;
-	struct acpi_device *pnp0c0d_adev;
-	struct acpi_hotplug_context hp;
-	struct input_dev *input;
-};
+काष्ठा surface3_wmi अणु
+	काष्ठा acpi_device *touchscreen_adev;
+	काष्ठा acpi_device *pnp0c0d_adev;
+	काष्ठा acpi_hotplug_context hp;
+	काष्ठा input_dev *input;
+पूर्ण;
 
-static struct platform_device *s3_wmi_pdev;
+अटल काष्ठा platक्रमm_device *s3_wmi_pdev;
 
-static struct surface3_wmi s3_wmi;
+अटल काष्ठा surface3_wmi s3_wmi;
 
-static DEFINE_MUTEX(s3_wmi_lock);
+अटल DEFINE_MUTEX(s3_wmi_lock);
 
-static int s3_wmi_query_block(const char *guid, int instance, int *ret)
-{
-	struct acpi_buffer output = { ACPI_ALLOCATE_BUFFER, NULL };
-	union acpi_object *obj = NULL;
+अटल पूर्णांक s3_wmi_query_block(स्थिर अक्षर *guid, पूर्णांक instance, पूर्णांक *ret)
+अणु
+	काष्ठा acpi_buffer output = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
+	जोड़ acpi_object *obj = शून्य;
 	acpi_status status;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	mutex_lock(&s3_wmi_lock);
 	status = wmi_query_block(guid, instance, &output);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		error = -EIO;
-		goto out_free_unlock;
-	}
+		जाओ out_मुक्त_unlock;
+	पूर्ण
 
-	obj = output.pointer;
+	obj = output.poपूर्णांकer;
 
-	if (!obj || obj->type != ACPI_TYPE_INTEGER) {
-		if (obj) {
+	अगर (!obj || obj->type != ACPI_TYPE_INTEGER) अणु
+		अगर (obj) अणु
 			pr_err("query block returned object type: %d - buffer length:%d\n",
 			       obj->type,
 			       obj->type == ACPI_TYPE_BUFFER ?
 						obj->buffer.length : 0);
-		}
+		पूर्ण
 		error = -EINVAL;
-		goto out_free_unlock;
-	}
-	*ret = obj->integer.value;
- out_free_unlock:
-	kfree(obj);
+		जाओ out_मुक्त_unlock;
+	पूर्ण
+	*ret = obj->पूर्णांकeger.value;
+ out_मुक्त_unlock:
+	kमुक्त(obj);
 	mutex_unlock(&s3_wmi_lock);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static inline int s3_wmi_query_lid(int *ret)
-{
-	return s3_wmi_query_block(SURFACE3_LID_GUID, 0, ret);
-}
+अटल अंतरभूत पूर्णांक s3_wmi_query_lid(पूर्णांक *ret)
+अणु
+	वापस s3_wmi_query_block(SURFACE3_LID_GUID, 0, ret);
+पूर्ण
 
-static int s3_wmi_send_lid_state(void)
-{
-	int ret, lid_sw;
+अटल पूर्णांक s3_wmi_send_lid_state(व्योम)
+अणु
+	पूर्णांक ret, lid_sw;
 
 	ret = s3_wmi_query_lid(&lid_sw);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	input_report_switch(s3_wmi.input, SW_LID, lid_sw);
+	input_report_चयन(s3_wmi.input, SW_LID, lid_sw);
 	input_sync(s3_wmi.input);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3_wmi_hp_notify(struct acpi_device *adev, u32 value)
-{
-	return s3_wmi_send_lid_state();
-}
+अटल पूर्णांक s3_wmi_hp_notअगरy(काष्ठा acpi_device *adev, u32 value)
+अणु
+	वापस s3_wmi_send_lid_state();
+पूर्ण
 
-static acpi_status s3_wmi_attach_spi_device(acpi_handle handle,
+अटल acpi_status s3_wmi_attach_spi_device(acpi_handle handle,
 					    u32 level,
-					    void *data,
-					    void **return_value)
-{
-	struct acpi_device *adev, **ts_adev;
+					    व्योम *data,
+					    व्योम **वापस_value)
+अणु
+	काष्ठा acpi_device *adev, **ts_adev;
 
-	if (acpi_bus_get_device(handle, &adev))
-		return AE_OK;
+	अगर (acpi_bus_get_device(handle, &adev))
+		वापस AE_OK;
 
 	ts_adev = data;
 
-	if (strncmp(acpi_device_bid(adev), SPI_TS_OBJ_NAME,
-	    strlen(SPI_TS_OBJ_NAME)))
-		return AE_OK;
+	अगर (म_भेदन(acpi_device_bid(adev), SPI_TS_OBJ_NAME,
+	    म_माप(SPI_TS_OBJ_NAME)))
+		वापस AE_OK;
 
-	if (*ts_adev) {
+	अगर (*ts_adev) अणु
 		pr_err("duplicate entry %s\n", SPI_TS_OBJ_NAME);
-		return AE_OK;
-	}
+		वापस AE_OK;
+	पूर्ण
 
 	*ts_adev = adev;
 
-	return AE_OK;
-}
+	वापस AE_OK;
+पूर्ण
 
-static int s3_wmi_check_platform_device(struct device *dev, void *data)
-{
-	struct acpi_device *adev, *ts_adev = NULL;
+अटल पूर्णांक s3_wmi_check_platक्रमm_device(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा acpi_device *adev, *ts_adev = शून्य;
 	acpi_handle handle;
 	acpi_status status;
 
 	/* ignore non ACPI devices */
 	handle = ACPI_HANDLE(dev);
-	if (!handle || acpi_bus_get_device(handle, &adev))
-		return 0;
+	अगर (!handle || acpi_bus_get_device(handle, &adev))
+		वापस 0;
 
-	/* check for LID ACPI switch */
-	if (!strcmp(ACPI_BUTTON_HID_LID, acpi_device_hid(adev))) {
+	/* check क्रम LID ACPI चयन */
+	अगर (!म_भेद(ACPI_BUTTON_HID_LID, acpi_device_hid(adev))) अणु
 		s3_wmi.pnp0c0d_adev = adev;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* ignore non SPI controllers */
-	if (strncmp(acpi_device_bid(adev), SPI_CTL_OBJ_NAME,
-	    strlen(SPI_CTL_OBJ_NAME)))
-		return 0;
+	अगर (म_भेदन(acpi_device_bid(adev), SPI_CTL_OBJ_NAME,
+	    म_माप(SPI_CTL_OBJ_NAME)))
+		वापस 0;
 
 	status = acpi_walk_namespace(ACPI_TYPE_DEVICE, handle, 1,
-				     s3_wmi_attach_spi_device, NULL,
-				     &ts_adev, NULL);
-	if (ACPI_FAILURE(status))
+				     s3_wmi_attach_spi_device, शून्य,
+				     &ts_adev, शून्य);
+	अगर (ACPI_FAILURE(status))
 		dev_warn(dev, "failed to enumerate SPI slaves\n");
 
-	if (!ts_adev)
-		return 0;
+	अगर (!ts_adev)
+		वापस 0;
 
 	s3_wmi.touchscreen_adev = ts_adev;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s3_wmi_create_and_register_input(struct platform_device *pdev)
-{
-	struct input_dev *input;
-	int error;
+अटल पूर्णांक s3_wmi_create_and_रेजिस्टर_input(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा input_dev *input;
+	पूर्णांक error;
 
 	input = devm_input_allocate_device(&pdev->dev);
-	if (!input)
-		return -ENOMEM;
+	अगर (!input)
+		वापस -ENOMEM;
 
 	input->name = "Lid Switch";
 	input->phys = "button/input0";
@@ -189,107 +190,107 @@ static int s3_wmi_create_and_register_input(struct platform_device *pdev)
 
 	input_set_capability(input, EV_SW, SW_LID);
 
-	error = input_register_device(input);
-	if (error)
-		goto out_err;
+	error = input_रेजिस्टर_device(input);
+	अगर (error)
+		जाओ out_err;
 
 	s3_wmi.input = input;
 
-	return 0;
+	वापस 0;
  out_err:
-	input_free_device(s3_wmi.input);
-	return error;
-}
+	input_मुक्त_device(s3_wmi.input);
+	वापस error;
+पूर्ण
 
-static int __init s3_wmi_probe(struct platform_device *pdev)
-{
-	int error;
+अटल पूर्णांक __init s3_wmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक error;
 
-	if (!dmi_check_system(surface3_dmi_table))
-		return -ENODEV;
+	अगर (!dmi_check_प्रणाली(surface3_dmi_table))
+		वापस -ENODEV;
 
-	memset(&s3_wmi, 0, sizeof(s3_wmi));
+	स_रखो(&s3_wmi, 0, माप(s3_wmi));
 
-	bus_for_each_dev(&platform_bus_type, NULL, NULL,
-			 s3_wmi_check_platform_device);
+	bus_क्रम_each_dev(&platक्रमm_bus_type, शून्य, शून्य,
+			 s3_wmi_check_platक्रमm_device);
 
-	if (!s3_wmi.touchscreen_adev)
-		return -ENODEV;
+	अगर (!s3_wmi.touchscreen_adev)
+		वापस -ENODEV;
 
 	acpi_bus_trim(s3_wmi.pnp0c0d_adev);
 
-	error = s3_wmi_create_and_register_input(pdev);
-	if (error)
-		goto restore_acpi_lid;
+	error = s3_wmi_create_and_रेजिस्टर_input(pdev);
+	अगर (error)
+		जाओ restore_acpi_lid;
 
 	acpi_initialize_hp_context(s3_wmi.touchscreen_adev, &s3_wmi.hp,
-				   s3_wmi_hp_notify, NULL);
+				   s3_wmi_hp_notअगरy, शून्य);
 
 	s3_wmi_send_lid_state();
 
-	return 0;
+	वापस 0;
 
  restore_acpi_lid:
 	acpi_bus_scan(s3_wmi.pnp0c0d_adev->handle);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int s3_wmi_remove(struct platform_device *device)
-{
-	/* remove the hotplug context from the acpi device */
-	s3_wmi.touchscreen_adev->hp = NULL;
+अटल पूर्णांक s3_wmi_हटाओ(काष्ठा platक्रमm_device *device)
+अणु
+	/* हटाओ the hotplug context from the acpi device */
+	s3_wmi.touchscreen_adev->hp = शून्य;
 
-	/* reinstall the actual PNPC0C0D LID default handle */
+	/* reinstall the actual PNPC0C0D LID शेष handle */
 	acpi_bus_scan(s3_wmi.pnp0c0d_adev->handle);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused s3_wmi_resume(struct device *dev)
-{
+अटल पूर्णांक __maybe_unused s3_wmi_resume(काष्ठा device *dev)
+अणु
 	s3_wmi_send_lid_state();
-	return 0;
-}
-static SIMPLE_DEV_PM_OPS(s3_wmi_pm, NULL, s3_wmi_resume);
+	वापस 0;
+पूर्ण
+अटल SIMPLE_DEV_PM_OPS(s3_wmi_pm, शून्य, s3_wmi_resume);
 
-static struct platform_driver s3_wmi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver s3_wmi_driver = अणु
+	.driver = अणु
 		.name = "surface3-wmi",
 		.pm = &s3_wmi_pm,
-	},
-	.remove = s3_wmi_remove,
-};
+	पूर्ण,
+	.हटाओ = s3_wmi_हटाओ,
+पूर्ण;
 
-static int __init s3_wmi_init(void)
-{
-	int error;
+अटल पूर्णांक __init s3_wmi_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	s3_wmi_pdev = platform_device_alloc("surface3-wmi", -1);
-	if (!s3_wmi_pdev)
-		return -ENOMEM;
+	s3_wmi_pdev = platक्रमm_device_alloc("surface3-wmi", -1);
+	अगर (!s3_wmi_pdev)
+		वापस -ENOMEM;
 
-	error = platform_device_add(s3_wmi_pdev);
-	if (error)
-		goto err_device_put;
+	error = platक्रमm_device_add(s3_wmi_pdev);
+	अगर (error)
+		जाओ err_device_put;
 
-	error = platform_driver_probe(&s3_wmi_driver, s3_wmi_probe);
-	if (error)
-		goto err_device_del;
+	error = platक्रमm_driver_probe(&s3_wmi_driver, s3_wmi_probe);
+	अगर (error)
+		जाओ err_device_del;
 
 	pr_info("Surface 3 WMI Extras loaded\n");
-	return 0;
+	वापस 0;
 
  err_device_del:
-	platform_device_del(s3_wmi_pdev);
+	platक्रमm_device_del(s3_wmi_pdev);
  err_device_put:
-	platform_device_put(s3_wmi_pdev);
-	return error;
-}
+	platक्रमm_device_put(s3_wmi_pdev);
+	वापस error;
+पूर्ण
 
-static void __exit s3_wmi_exit(void)
-{
-	platform_device_unregister(s3_wmi_pdev);
-	platform_driver_unregister(&s3_wmi_driver);
-}
+अटल व्योम __निकास s3_wmi_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(s3_wmi_pdev);
+	platक्रमm_driver_unरेजिस्टर(&s3_wmi_driver);
+पूर्ण
 
 module_init(s3_wmi_init);
-module_exit(s3_wmi_exit);
+module_निकास(s3_wmi_निकास);

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  drivers/media/radio/si470x/radio-si470x-usb.c
  *
- *  USB driver for radios with Silicon Labs Si470x FM Radio Receivers
+ *  USB driver क्रम radios with Silicon Lअसल Si470x FM Radio Receivers
  *
  *  Copyright (c) 2009 Tobias Lorenz <tobias.lorenz@gmx.net>
  */
@@ -10,39 +11,39 @@
 
 /*
  * ToDo:
- * - add firmware download/update support
+ * - add firmware करोwnload/update support
  */
 
 
 /* driver definitions */
-#define DRIVER_AUTHOR "Tobias Lorenz <tobias.lorenz@gmx.net>"
-#define DRIVER_CARD "Silicon Labs Si470x FM Radio Receiver"
-#define DRIVER_DESC "USB radio driver for Si470x FM Radio Receivers"
-#define DRIVER_VERSION "1.0.10"
+#घोषणा DRIVER_AUTHOR "Tobias Lorenz <tobias.lorenz@gmx.net>"
+#घोषणा DRIVER_CARD "Silicon Labs Si470x FM Radio Receiver"
+#घोषणा DRIVER_DESC "USB radio driver for Si470x FM Radio Receivers"
+#घोषणा DRIVER_VERSION "1.0.10"
 
 /* kernel includes */
-#include <linux/usb.h>
-#include <linux/hid.h>
-#include <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/slab.h>
 
-#include "radio-si470x.h"
+#समावेश "radio-si470x.h"
 
 
 /* USB Device ID List */
-static const struct usb_device_id si470x_usb_driver_id_table[] = {
-	/* Silicon Labs USB FM Radio Reference Design */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x10c4, 0x818a, USB_CLASS_HID, 0, 0) },
-	/* ADS/Tech FM Radio Receiver (formerly Instant FM Music) */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x06e1, 0xa155, USB_CLASS_HID, 0, 0) },
+अटल स्थिर काष्ठा usb_device_id si470x_usb_driver_id_table[] = अणु
+	/* Silicon Lअसल USB FM Radio Reference Design */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x10c4, 0x818a, USB_CLASS_HID, 0, 0) पूर्ण,
+	/* ADS/Tech FM Radio Receiver (क्रमmerly Instant FM Music) */
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x06e1, 0xa155, USB_CLASS_HID, 0, 0) पूर्ण,
 	/* KWorld USB FM Radio SnapMusic Mobile 700 (FM700) */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x1b80, 0xd700, USB_CLASS_HID, 0, 0) },
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x1b80, 0xd700, USB_CLASS_HID, 0, 0) पूर्ण,
 	/* Sanei Electric, Inc. FM USB Radio (sold as DealExtreme.com PCear) */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x10c5, 0x819a, USB_CLASS_HID, 0, 0) },
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x10c5, 0x819a, USB_CLASS_HID, 0, 0) पूर्ण,
 	/* Axentia ALERT FM USB Receiver */
-	{ USB_DEVICE_AND_INTERFACE_INFO(0x12cf, 0x7111, USB_CLASS_HID, 0, 0) },
+	अणु USB_DEVICE_AND_INTERFACE_INFO(0x12cf, 0x7111, USB_CLASS_HID, 0, 0) पूर्ण,
 	/* Terminating entry */
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, si470x_usb_driver_id_table);
 
 
@@ -52,27 +53,27 @@ MODULE_DEVICE_TABLE(usb, si470x_usb_driver_id_table);
  **************************************************************************/
 
 /* Radio Nr */
-static int radio_nr = -1;
-module_param(radio_nr, int, 0444);
+अटल पूर्णांक radio_nr = -1;
+module_param(radio_nr, पूर्णांक, 0444);
 MODULE_PARM_DESC(radio_nr, "Radio Nr");
 
-/* USB timeout */
-static unsigned int usb_timeout = 500;
-module_param(usb_timeout, uint, 0644);
-MODULE_PARM_DESC(usb_timeout, "USB timeout (ms): *500*");
+/* USB समयout */
+अटल अचिन्हित पूर्णांक usb_समयout = 500;
+module_param(usb_समयout, uपूर्णांक, 0644);
+MODULE_PARM_DESC(usb_समयout, "USB timeout (ms): *500*");
 
 /* RDS buffer blocks */
-static unsigned int rds_buf = 100;
-module_param(rds_buf, uint, 0444);
+अटल अचिन्हित पूर्णांक rds_buf = 100;
+module_param(rds_buf, uपूर्णांक, 0444);
 MODULE_PARM_DESC(rds_buf, "RDS buffer entries: *100*");
 
 /* RDS maximum block errors */
-static unsigned short max_rds_errors = 1;
+अटल अचिन्हित लघु max_rds_errors = 1;
 /* 0 means   0  errors requiring correction */
 /* 1 means 1-2  errors requiring correction (used by original USBRadio.exe) */
 /* 2 means 3-5  errors requiring correction */
 /* 3 means   6+ errors or errors in checkword, correction not possible */
-module_param(max_rds_errors, ushort, 0644);
+module_param(max_rds_errors, uलघु, 0644);
 MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
 
 
@@ -81,82 +82,82 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  * USB HID Reports
  **************************************************************************/
 
-/* Reports 1-16 give direct read/write access to the 16 Si470x registers */
-/* with the (REPORT_ID - 1) corresponding to the register address across USB */
-/* endpoint 0 using GET_REPORT and SET_REPORT */
-#define REGISTER_REPORT_SIZE	(RADIO_REGISTER_SIZE + 1)
-#define REGISTER_REPORT(reg)	((reg) + 1)
+/* Reports 1-16 give direct पढ़ो/ग_लिखो access to the 16 Si470x रेजिस्टरs */
+/* with the (REPORT_ID - 1) corresponding to the रेजिस्टर address across USB */
+/* endpoपूर्णांक 0 using GET_REPORT and SET_REPORT */
+#घोषणा REGISTER_REPORT_SIZE	(RADIO_REGISTER_SIZE + 1)
+#घोषणा REGISTER_REPORT(reg)	((reg) + 1)
 
-/* Report 17 gives direct read/write access to the entire Si470x register */
-/* map across endpoint 0 using GET_REPORT and SET_REPORT */
-#define ENTIRE_REPORT_SIZE	(RADIO_REGISTER_NUM * RADIO_REGISTER_SIZE + 1)
-#define ENTIRE_REPORT		17
+/* Report 17 gives direct पढ़ो/ग_लिखो access to the entire Si470x रेजिस्टर */
+/* map across endpoपूर्णांक 0 using GET_REPORT and SET_REPORT */
+#घोषणा ENTIRE_REPORT_SIZE	(RADIO_REGISTER_NUM * RADIO_REGISTER_SIZE + 1)
+#घोषणा ENTIRE_REPORT		17
 
-/* Report 18 is used to send the lowest 6 Si470x registers up the HID */
-/* interrupt endpoint 1 to Windows every 20 milliseconds for status */
-#define RDS_REPORT_SIZE		(RDS_REGISTER_NUM * RADIO_REGISTER_SIZE + 1)
-#define RDS_REPORT		18
+/* Report 18 is used to send the lowest 6 Si470x रेजिस्टरs up the HID */
+/* पूर्णांकerrupt endpoपूर्णांक 1 to Winकरोws every 20 milliseconds क्रम status */
+#घोषणा RDS_REPORT_SIZE		(RDS_REGISTER_NUM * RADIO_REGISTER_SIZE + 1)
+#घोषणा RDS_REPORT		18
 
 /* Report 19: LED state */
-#define LED_REPORT_SIZE		3
-#define LED_REPORT		19
+#घोषणा LED_REPORT_SIZE		3
+#घोषणा LED_REPORT		19
 
 /* Report 19: stream */
-#define STREAM_REPORT_SIZE	3
-#define STREAM_REPORT		19
+#घोषणा STREAM_REPORT_SIZE	3
+#घोषणा STREAM_REPORT		19
 
 /* Report 20: scratch */
-#define SCRATCH_PAGE_SIZE	63
-#define SCRATCH_REPORT_SIZE	(SCRATCH_PAGE_SIZE + 1)
-#define SCRATCH_REPORT		20
+#घोषणा SCRATCH_PAGE_SIZE	63
+#घोषणा SCRATCH_REPORT_SIZE	(SCRATCH_PAGE_SIZE + 1)
+#घोषणा SCRATCH_REPORT		20
 
 /* Reports 19-22: flash upgrade of the C8051F321 */
-#define WRITE_REPORT_SIZE	4
-#define WRITE_REPORT		19
-#define FLASH_REPORT_SIZE	64
-#define FLASH_REPORT		20
-#define CRC_REPORT_SIZE		3
-#define CRC_REPORT		21
-#define RESPONSE_REPORT_SIZE	2
-#define RESPONSE_REPORT		22
+#घोषणा WRITE_REPORT_SIZE	4
+#घोषणा WRITE_REPORT		19
+#घोषणा FLASH_REPORT_SIZE	64
+#घोषणा FLASH_REPORT		20
+#घोषणा CRC_REPORT_SIZE		3
+#घोषणा CRC_REPORT		21
+#घोषणा RESPONSE_REPORT_SIZE	2
+#घोषणा RESPONSE_REPORT		22
 
 /* Report 23: currently unused, but can accept 60 byte reports on the HID */
-/* interrupt out endpoint 2 every 1 millisecond */
-#define UNUSED_REPORT		23
+/* पूर्णांकerrupt out endpoपूर्णांक 2 every 1 millisecond */
+#घोषणा UNUSED_REPORT		23
 
-#define MAX_REPORT_SIZE		64
+#घोषणा MAX_REPORT_SIZE		64
 
 
 
 /**************************************************************************
  * Software/Hardware Versions from Scratch Page
  **************************************************************************/
-#define RADIO_HW_VERSION			1
+#घोषणा RADIO_HW_VERSION			1
 
 
 
 /**************************************************************************
  * LED State Definitions
  **************************************************************************/
-#define LED_COMMAND		0x35
+#घोषणा LED_COMMAND		0x35
 
-#define NO_CHANGE_LED		0x00
-#define ALL_COLOR_LED		0x01	/* streaming state */
-#define BLINK_GREEN_LED		0x02	/* connect state */
-#define BLINK_RED_LED		0x04
-#define BLINK_ORANGE_LED	0x10	/* disconnect state */
-#define SOLID_GREEN_LED		0x20	/* tuning/seeking state */
-#define SOLID_RED_LED		0x40	/* bootload state */
-#define SOLID_ORANGE_LED	0x80
+#घोषणा NO_CHANGE_LED		0x00
+#घोषणा ALL_COLOR_LED		0x01	/* streaming state */
+#घोषणा BLINK_GREEN_LED		0x02	/* connect state */
+#घोषणा BLINK_RED_LED		0x04
+#घोषणा BLINK_ORANGE_LED	0x10	/* disconnect state */
+#घोषणा SOLID_GREEN_LED		0x20	/* tuning/seeking state */
+#घोषणा SOLID_RED_LED		0x40	/* bootload state */
+#घोषणा SOLID_ORANGE_LED	0x80
 
 
 
 /**************************************************************************
  * Stream State Definitions
  **************************************************************************/
-#define STREAM_COMMAND	0x36
-#define STREAM_VIDPID	0x00
-#define STREAM_AUDIO	0xff
+#घोषणा STREAM_COMMAND	0x36
+#घोषणा STREAM_VIDPID	0x00
+#घोषणा STREAM_AUDIO	0xff
 
 
 
@@ -164,27 +165,27 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
  * Bootloader / Flash Commands
  **************************************************************************/
 
-/* unique id sent to bootloader and required to put into a bootload state */
-#define UNIQUE_BL_ID		0x34
+/* unique id sent to bootloader and required to put पूर्णांकo a bootload state */
+#घोषणा UNIQUE_BL_ID		0x34
 
-/* mask for the flash data */
-#define FLASH_DATA_MASK		0x55
+/* mask क्रम the flash data */
+#घोषणा FLASH_DATA_MASK		0x55
 
 /* bootloader commands */
-#define GET_SW_VERSION_COMMAND	0x00
-#define SET_PAGE_COMMAND	0x01
-#define ERASE_PAGE_COMMAND	0x02
-#define WRITE_PAGE_COMMAND	0x03
-#define CRC_ON_PAGE_COMMAND	0x04
-#define READ_FLASH_BYTE_COMMAND	0x05
-#define RESET_DEVICE_COMMAND	0x06
-#define GET_HW_VERSION_COMMAND	0x07
-#define BLANK			0xff
+#घोषणा GET_SW_VERSION_COMMAND	0x00
+#घोषणा SET_PAGE_COMMAND	0x01
+#घोषणा ERASE_PAGE_COMMAND	0x02
+#घोषणा WRITE_PAGE_COMMAND	0x03
+#घोषणा CRC_ON_PAGE_COMMAND	0x04
+#घोषणा READ_FLASH_BYTE_COMMAND	0x05
+#घोषणा RESET_DEVICE_COMMAND	0x06
+#घोषणा GET_HW_VERSION_COMMAND	0x07
+#घोषणा BLANK			0xff
 
 /* bootloader command responses */
-#define COMMAND_OK		0x01
-#define COMMAND_FAILED		0x02
-#define COMMAND_PENDING		0x03
+#घोषणा COMMAND_OK		0x01
+#घोषणा COMMAND_FAILED		0x02
+#घोषणा COMMAND_PENDING		0x03
 
 
 
@@ -195,81 +196,81 @@ MODULE_PARM_DESC(max_rds_errors, "RDS maximum block errors: *1*");
 /*
  * si470x_get_report - receive a HID report
  */
-static int si470x_get_report(struct si470x_device *radio, void *buf, int size)
-{
-	unsigned char *report = buf;
-	int retval;
+अटल पूर्णांक si470x_get_report(काष्ठा si470x_device *radio, व्योम *buf, पूर्णांक size)
+अणु
+	अचिन्हित अक्षर *report = buf;
+	पूर्णांक retval;
 
 	retval = usb_control_msg(radio->usbdev,
 		usb_rcvctrlpipe(radio->usbdev, 0),
 		HID_REQ_GET_REPORT,
-		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 		report[0], 2,
-		buf, size, usb_timeout);
+		buf, size, usb_समयout);
 
-	if (retval < 0)
-		dev_warn(&radio->intf->dev,
+	अगर (retval < 0)
+		dev_warn(&radio->पूर्णांकf->dev,
 			"si470x_get_report: usb_control_msg returned %d\n",
 			retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
  * si470x_set_report - send a HID report
  */
-static int si470x_set_report(struct si470x_device *radio, void *buf, int size)
-{
-	unsigned char *report = buf;
-	int retval;
+अटल पूर्णांक si470x_set_report(काष्ठा si470x_device *radio, व्योम *buf, पूर्णांक size)
+अणु
+	अचिन्हित अक्षर *report = buf;
+	पूर्णांक retval;
 
 	retval = usb_control_msg(radio->usbdev,
 		usb_sndctrlpipe(radio->usbdev, 0),
 		HID_REQ_SET_REPORT,
-		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_OUT,
+		USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_OUT,
 		report[0], 2,
-		buf, size, usb_timeout);
+		buf, size, usb_समयout);
 
-	if (retval < 0)
-		dev_warn(&radio->intf->dev,
+	अगर (retval < 0)
+		dev_warn(&radio->पूर्णांकf->dev,
 			"si470x_set_report: usb_control_msg returned %d\n",
 			retval);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
- * si470x_get_register - read register
+ * si470x_get_रेजिस्टर - पढ़ो रेजिस्टर
  */
-static int si470x_get_register(struct si470x_device *radio, int regnr)
-{
-	int retval;
+अटल पूर्णांक si470x_get_रेजिस्टर(काष्ठा si470x_device *radio, पूर्णांक regnr)
+अणु
+	पूर्णांक retval;
 
 	radio->usb_buf[0] = REGISTER_REPORT(regnr);
 
 	retval = si470x_get_report(radio, radio->usb_buf, REGISTER_REPORT_SIZE);
 
-	if (retval >= 0)
-		radio->registers[regnr] = get_unaligned_be16(&radio->usb_buf[1]);
+	अगर (retval >= 0)
+		radio->रेजिस्टरs[regnr] = get_unaligned_be16(&radio->usb_buf[1]);
 
-	return (retval < 0) ? -EINVAL : 0;
-}
+	वापस (retval < 0) ? -EINVAL : 0;
+पूर्ण
 
 
 /*
- * si470x_set_register - write register
+ * si470x_set_रेजिस्टर - ग_लिखो रेजिस्टर
  */
-static int si470x_set_register(struct si470x_device *radio, int regnr)
-{
-	int retval;
+अटल पूर्णांक si470x_set_रेजिस्टर(काष्ठा si470x_device *radio, पूर्णांक regnr)
+अणु
+	पूर्णांक retval;
 
 	radio->usb_buf[0] = REGISTER_REPORT(regnr);
-	put_unaligned_be16(radio->registers[regnr], &radio->usb_buf[1]);
+	put_unaligned_be16(radio->रेजिस्टरs[regnr], &radio->usb_buf[1]);
 
 	retval = si470x_set_report(radio, radio->usb_buf, REGISTER_REPORT_SIZE);
 
-	return (retval < 0) ? -EINVAL : 0;
-}
+	वापस (retval < 0) ? -EINVAL : 0;
+पूर्ण
 
 
 
@@ -278,24 +279,24 @@ static int si470x_set_register(struct si470x_device *radio, int regnr)
  **************************************************************************/
 
 /*
- * si470x_get_all_registers - read entire registers
+ * si470x_get_all_रेजिस्टरs - पढ़ो entire रेजिस्टरs
  */
-static int si470x_get_all_registers(struct si470x_device *radio)
-{
-	int retval;
-	unsigned char regnr;
+अटल पूर्णांक si470x_get_all_रेजिस्टरs(काष्ठा si470x_device *radio)
+अणु
+	पूर्णांक retval;
+	अचिन्हित अक्षर regnr;
 
 	radio->usb_buf[0] = ENTIRE_REPORT;
 
 	retval = si470x_get_report(radio, radio->usb_buf, ENTIRE_REPORT_SIZE);
 
-	if (retval >= 0)
-		for (regnr = 0; regnr < RADIO_REGISTER_NUM; regnr++)
-			radio->registers[regnr] = get_unaligned_be16(
+	अगर (retval >= 0)
+		क्रम (regnr = 0; regnr < RADIO_REGISTER_NUM; regnr++)
+			radio->रेजिस्टरs[regnr] = get_unaligned_be16(
 				&radio->usb_buf[regnr * RADIO_REGISTER_SIZE + 1]);
 
-	return (retval < 0) ? -EINVAL : 0;
-}
+	वापस (retval < 0) ? -EINVAL : 0;
+पूर्ण
 
 
 
@@ -306,10 +307,10 @@ static int si470x_get_all_registers(struct si470x_device *radio)
 /*
  * si470x_set_led_state - sets the led state
  */
-static int si470x_set_led_state(struct si470x_device *radio,
-		unsigned char led_state)
-{
-	int retval;
+अटल पूर्णांक si470x_set_led_state(काष्ठा si470x_device *radio,
+		अचिन्हित अक्षर led_state)
+अणु
+	पूर्णांक retval;
 
 	radio->usb_buf[0] = LED_REPORT;
 	radio->usb_buf[1] = LED_COMMAND;
@@ -317,8 +318,8 @@ static int si470x_set_led_state(struct si470x_device *radio,
 
 	retval = si470x_set_report(radio, radio->usb_buf, LED_REPORT_SIZE);
 
-	return (retval < 0) ? -EINVAL : 0;
-}
+	वापस (retval < 0) ? -EINVAL : 0;
+पूर्ण
 
 
 
@@ -327,26 +328,26 @@ static int si470x_set_led_state(struct si470x_device *radio,
  **************************************************************************/
 
 /*
- * si470x_get_scratch_versions - gets the scratch page and version infos
+ * si470x_get_scratch_versions - माला_लो the scratch page and version infos
  */
-static int si470x_get_scratch_page_versions(struct si470x_device *radio)
-{
-	int retval;
+अटल पूर्णांक si470x_get_scratch_page_versions(काष्ठा si470x_device *radio)
+अणु
+	पूर्णांक retval;
 
 	radio->usb_buf[0] = SCRATCH_REPORT;
 
 	retval = si470x_get_report(radio, radio->usb_buf, SCRATCH_REPORT_SIZE);
 
-	if (retval < 0)
-		dev_warn(&radio->intf->dev, "si470x_get_scratch: si470x_get_report returned %d\n",
+	अगर (retval < 0)
+		dev_warn(&radio->पूर्णांकf->dev, "si470x_get_scratch: si470x_get_report returned %d\n",
 			 retval);
-	else {
+	अन्यथा अणु
 		radio->software_version = radio->usb_buf[1];
 		radio->hardware_version = radio->usb_buf[2];
-	}
+	पूर्ण
 
-	return (retval < 0) ? -EINVAL : 0;
-}
+	वापस (retval < 0) ? -EINVAL : 0;
+पूर्ण
 
 
 
@@ -355,147 +356,147 @@ static int si470x_get_scratch_page_versions(struct si470x_device *radio)
  **************************************************************************/
 
 /*
- * si470x_int_in_callback - rds callback and processing function
+ * si470x_पूर्णांक_in_callback - rds callback and processing function
  *
- * TODO: do we need to use mutex locks in some sections?
+ * TODO: करो we need to use mutex locks in some sections?
  */
-static void si470x_int_in_callback(struct urb *urb)
-{
-	struct si470x_device *radio = urb->context;
-	int retval;
-	unsigned char regnr;
-	unsigned char blocknum;
-	unsigned short bler; /* rds block errors */
-	unsigned short rds;
-	unsigned char tmpbuf[3];
+अटल व्योम si470x_पूर्णांक_in_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा si470x_device *radio = urb->context;
+	पूर्णांक retval;
+	अचिन्हित अक्षर regnr;
+	अचिन्हित अक्षर blocknum;
+	अचिन्हित लघु bler; /* rds block errors */
+	अचिन्हित लघु rds;
+	अचिन्हित अक्षर पंचांगpbuf[3];
 
-	if (urb->status) {
-		if (urb->status == -ENOENT ||
+	अगर (urb->status) अणु
+		अगर (urb->status == -ENOENT ||
 				urb->status == -ECONNRESET ||
-				urb->status == -ESHUTDOWN) {
-			return;
-		} else {
-			dev_warn(&radio->intf->dev,
+				urb->status == -ESHUTDOWN) अणु
+			वापस;
+		पूर्ण अन्यथा अणु
+			dev_warn(&radio->पूर्णांकf->dev,
 			 "non-zero urb status (%d)\n", urb->status);
-			goto resubmit; /* Maybe we can recover. */
-		}
-	}
+			जाओ resubmit; /* Maybe we can recover. */
+		पूर्ण
+	पूर्ण
 
-	/* Sometimes the device returns len 0 packets */
-	if (urb->actual_length != RDS_REPORT_SIZE)
-		goto resubmit;
+	/* Someबार the device वापसs len 0 packets */
+	अगर (urb->actual_length != RDS_REPORT_SIZE)
+		जाओ resubmit;
 
-	radio->registers[STATUSRSSI] =
-		get_unaligned_be16(&radio->int_in_buffer[1]);
+	radio->रेजिस्टरs[STATUSRSSI] =
+		get_unaligned_be16(&radio->पूर्णांक_in_buffer[1]);
 
-	if (radio->registers[STATUSRSSI] & STATUSRSSI_STC)
+	अगर (radio->रेजिस्टरs[STATUSRSSI] & STATUSRSSI_STC)
 		complete(&radio->completion);
 
-	if ((radio->registers[SYSCONFIG1] & SYSCONFIG1_RDS)) {
-		/* Update RDS registers with URB data */
-		for (regnr = 1; regnr < RDS_REGISTER_NUM; regnr++)
-			radio->registers[STATUSRSSI + regnr] =
-			    get_unaligned_be16(&radio->int_in_buffer[
+	अगर ((radio->रेजिस्टरs[SYSCONFIG1] & SYSCONFIG1_RDS)) अणु
+		/* Update RDS रेजिस्टरs with URB data */
+		क्रम (regnr = 1; regnr < RDS_REGISTER_NUM; regnr++)
+			radio->रेजिस्टरs[STATUSRSSI + regnr] =
+			    get_unaligned_be16(&radio->पूर्णांक_in_buffer[
 				regnr * RADIO_REGISTER_SIZE + 1]);
 		/* get rds blocks */
-		if ((radio->registers[STATUSRSSI] & STATUSRSSI_RDSR) == 0) {
-			/* No RDS group ready, better luck next time */
-			goto resubmit;
-		}
-		if ((radio->registers[STATUSRSSI] & STATUSRSSI_RDSS) == 0) {
+		अगर ((radio->रेजिस्टरs[STATUSRSSI] & STATUSRSSI_RDSR) == 0) अणु
+			/* No RDS group पढ़ोy, better luck next समय */
+			जाओ resubmit;
+		पूर्ण
+		अगर ((radio->रेजिस्टरs[STATUSRSSI] & STATUSRSSI_RDSS) == 0) अणु
 			/* RDS decoder not synchronized */
-			goto resubmit;
-		}
-		for (blocknum = 0; blocknum < 4; blocknum++) {
-			switch (blocknum) {
-			default:
-				bler = (radio->registers[STATUSRSSI] &
+			जाओ resubmit;
+		पूर्ण
+		क्रम (blocknum = 0; blocknum < 4; blocknum++) अणु
+			चयन (blocknum) अणु
+			शेष:
+				bler = (radio->रेजिस्टरs[STATUSRSSI] &
 						STATUSRSSI_BLERA) >> 9;
-				rds = radio->registers[RDSA];
-				break;
-			case 1:
-				bler = (radio->registers[READCHAN] &
+				rds = radio->रेजिस्टरs[RDSA];
+				अवरोध;
+			हाल 1:
+				bler = (radio->रेजिस्टरs[READCHAN] &
 						READCHAN_BLERB) >> 14;
-				rds = radio->registers[RDSB];
-				break;
-			case 2:
-				bler = (radio->registers[READCHAN] &
+				rds = radio->रेजिस्टरs[RDSB];
+				अवरोध;
+			हाल 2:
+				bler = (radio->रेजिस्टरs[READCHAN] &
 						READCHAN_BLERC) >> 12;
-				rds = radio->registers[RDSC];
-				break;
-			case 3:
-				bler = (radio->registers[READCHAN] &
+				rds = radio->रेजिस्टरs[RDSC];
+				अवरोध;
+			हाल 3:
+				bler = (radio->रेजिस्टरs[READCHAN] &
 						READCHAN_BLERD) >> 10;
-				rds = radio->registers[RDSD];
-				break;
-			}
+				rds = radio->रेजिस्टरs[RDSD];
+				अवरोध;
+			पूर्ण
 
 			/* Fill the V4L2 RDS buffer */
-			put_unaligned_le16(rds, &tmpbuf);
-			tmpbuf[2] = blocknum;		/* offset name */
-			tmpbuf[2] |= blocknum << 3;	/* received offset */
-			if (bler > max_rds_errors)
-				tmpbuf[2] |= 0x80; /* uncorrectable errors */
-			else if (bler > 0)
-				tmpbuf[2] |= 0x40; /* corrected error(s) */
+			put_unaligned_le16(rds, &पंचांगpbuf);
+			पंचांगpbuf[2] = blocknum;		/* offset name */
+			पंचांगpbuf[2] |= blocknum << 3;	/* received offset */
+			अगर (bler > max_rds_errors)
+				पंचांगpbuf[2] |= 0x80; /* uncorrectable errors */
+			अन्यथा अगर (bler > 0)
+				पंचांगpbuf[2] |= 0x40; /* corrected error(s) */
 
-			/* copy RDS block to internal buffer */
-			memcpy(&radio->buffer[radio->wr_index], &tmpbuf, 3);
+			/* copy RDS block to पूर्णांकernal buffer */
+			स_नकल(&radio->buffer[radio->wr_index], &पंचांगpbuf, 3);
 			radio->wr_index += 3;
 
-			/* wrap write pointer */
-			if (radio->wr_index >= radio->buf_size)
+			/* wrap ग_लिखो poपूर्णांकer */
+			अगर (radio->wr_index >= radio->buf_size)
 				radio->wr_index = 0;
 
-			/* check for overflow */
-			if (radio->wr_index == radio->rd_index) {
-				/* increment and wrap read pointer */
+			/* check क्रम overflow */
+			अगर (radio->wr_index == radio->rd_index) अणु
+				/* increment and wrap पढ़ो poपूर्णांकer */
 				radio->rd_index += 3;
-				if (radio->rd_index >= radio->buf_size)
+				अगर (radio->rd_index >= radio->buf_size)
 					radio->rd_index = 0;
-			}
-		}
-		if (radio->wr_index != radio->rd_index)
-			wake_up_interruptible(&radio->read_queue);
-	}
+			पूर्ण
+		पूर्ण
+		अगर (radio->wr_index != radio->rd_index)
+			wake_up_पूर्णांकerruptible(&radio->पढ़ो_queue);
+	पूर्ण
 
 resubmit:
-	/* Resubmit if we're still running. */
-	if (radio->int_in_running && radio->usbdev) {
-		retval = usb_submit_urb(radio->int_in_urb, GFP_ATOMIC);
-		if (retval) {
-			dev_warn(&radio->intf->dev,
+	/* Resubmit अगर we're still running. */
+	अगर (radio->पूर्णांक_in_running && radio->usbdev) अणु
+		retval = usb_submit_urb(radio->पूर्णांक_in_urb, GFP_ATOMIC);
+		अगर (retval) अणु
+			dev_warn(&radio->पूर्णांकf->dev,
 			       "resubmitting urb failed (%d)", retval);
-			radio->int_in_running = 0;
-		}
-	}
-	radio->status_rssi_auto_update = radio->int_in_running;
-}
+			radio->पूर्णांक_in_running = 0;
+		पूर्ण
+	पूर्ण
+	radio->status_rssi_स्वतः_update = radio->पूर्णांक_in_running;
+पूर्ण
 
 
-static int si470x_fops_open(struct file *file)
-{
-	return v4l2_fh_open(file);
-}
+अटल पूर्णांक si470x_fops_खोलो(काष्ठा file *file)
+अणु
+	वापस v4l2_fh_खोलो(file);
+पूर्ण
 
-static int si470x_fops_release(struct file *file)
-{
-	return v4l2_fh_release(file);
-}
+अटल पूर्णांक si470x_fops_release(काष्ठा file *file)
+अणु
+	वापस v4l2_fh_release(file);
+पूर्ण
 
-static void si470x_usb_release(struct v4l2_device *v4l2_dev)
-{
-	struct si470x_device *radio =
-		container_of(v4l2_dev, struct si470x_device, v4l2_dev);
+अटल व्योम si470x_usb_release(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	काष्ठा si470x_device *radio =
+		container_of(v4l2_dev, काष्ठा si470x_device, v4l2_dev);
 
-	usb_free_urb(radio->int_in_urb);
-	v4l2_ctrl_handler_free(&radio->hdl);
-	v4l2_device_unregister(&radio->v4l2_dev);
-	kfree(radio->int_in_buffer);
-	kfree(radio->buffer);
-	kfree(radio->usb_buf);
-	kfree(radio);
-}
+	usb_मुक्त_urb(radio->पूर्णांक_in_urb);
+	v4l2_ctrl_handler_मुक्त(&radio->hdl);
+	v4l2_device_unरेजिस्टर(&radio->v4l2_dev);
+	kमुक्त(radio->पूर्णांक_in_buffer);
+	kमुक्त(radio->buffer);
+	kमुक्त(radio->usb_buf);
+	kमुक्त(radio);
+पूर्ण
 
 
 /**************************************************************************
@@ -505,164 +506,164 @@ static void si470x_usb_release(struct v4l2_device *v4l2_dev)
 /*
  * si470x_vidioc_querycap - query device capabilities
  */
-static int si470x_vidioc_querycap(struct file *file, void *priv,
-				  struct v4l2_capability *capability)
-{
-	struct si470x_device *radio = video_drvdata(file);
+अटल पूर्णांक si470x_vidioc_querycap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_capability *capability)
+अणु
+	काष्ठा si470x_device *radio = video_drvdata(file);
 
-	strscpy(capability->driver, DRIVER_NAME, sizeof(capability->driver));
-	strscpy(capability->card, DRIVER_CARD, sizeof(capability->card));
+	strscpy(capability->driver, DRIVER_NAME, माप(capability->driver));
+	strscpy(capability->card, DRIVER_CARD, माप(capability->card));
 	usb_make_path(radio->usbdev, capability->bus_info,
-			sizeof(capability->bus_info));
-	return 0;
-}
+			माप(capability->bus_info));
+	वापस 0;
+पूर्ण
 
 
-static int si470x_start_usb(struct si470x_device *radio)
-{
-	int retval;
+अटल पूर्णांक si470x_start_usb(काष्ठा si470x_device *radio)
+अणु
+	पूर्णांक retval;
 
-	/* initialize interrupt urb */
-	usb_fill_int_urb(radio->int_in_urb, radio->usbdev,
-			usb_rcvintpipe(radio->usbdev,
-				radio->int_in_endpoint->bEndpointAddress),
-			radio->int_in_buffer,
-			le16_to_cpu(radio->int_in_endpoint->wMaxPacketSize),
-			si470x_int_in_callback,
+	/* initialize पूर्णांकerrupt urb */
+	usb_fill_पूर्णांक_urb(radio->पूर्णांक_in_urb, radio->usbdev,
+			usb_rcvपूर्णांकpipe(radio->usbdev,
+				radio->पूर्णांक_in_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+			radio->पूर्णांक_in_buffer,
+			le16_to_cpu(radio->पूर्णांक_in_endpoपूर्णांक->wMaxPacketSize),
+			si470x_पूर्णांक_in_callback,
 			radio,
-			radio->int_in_endpoint->bInterval);
+			radio->पूर्णांक_in_endpoपूर्णांक->bInterval);
 
-	radio->int_in_running = 1;
+	radio->पूर्णांक_in_running = 1;
 	mb();
 
-	retval = usb_submit_urb(radio->int_in_urb, GFP_KERNEL);
-	if (retval) {
-		dev_info(&radio->intf->dev,
+	retval = usb_submit_urb(radio->पूर्णांक_in_urb, GFP_KERNEL);
+	अगर (retval) अणु
+		dev_info(&radio->पूर्णांकf->dev,
 				"submitting int urb failed (%d)\n", retval);
-		radio->int_in_running = 0;
-	}
-	radio->status_rssi_auto_update = radio->int_in_running;
+		radio->पूर्णांक_in_running = 0;
+	पूर्ण
+	radio->status_rssi_स्वतः_update = radio->पूर्णांक_in_running;
 
 	/* start radio */
 	retval = si470x_start(radio);
-	if (retval < 0)
-		return retval;
+	अगर (retval < 0)
+		वापस retval;
 
 	v4l2_ctrl_handler_setup(&radio->hdl);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /**************************************************************************
  * USB Interface
  **************************************************************************/
 
 /*
- * si470x_usb_driver_probe - probe for the device
+ * si470x_usb_driver_probe - probe क्रम the device
  */
-static int si470x_usb_driver_probe(struct usb_interface *intf,
-		const struct usb_device_id *id)
-{
-	struct si470x_device *radio;
-	struct usb_host_interface *iface_desc;
-	struct usb_endpoint_descriptor *endpoint;
-	int i, int_end_size, retval;
-	unsigned char version_warning = 0;
+अटल पूर्णांक si470x_usb_driver_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा si470x_device *radio;
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc;
+	काष्ठा usb_endpoपूर्णांक_descriptor *endpoपूर्णांक;
+	पूर्णांक i, पूर्णांक_end_size, retval;
+	अचिन्हित अक्षर version_warning = 0;
 
-	/* private data allocation and initialization */
-	radio = kzalloc(sizeof(struct si470x_device), GFP_KERNEL);
-	if (!radio) {
+	/* निजी data allocation and initialization */
+	radio = kzalloc(माप(काष्ठा si470x_device), GFP_KERNEL);
+	अगर (!radio) अणु
 		retval = -ENOMEM;
-		goto err_initial;
-	}
-	radio->usb_buf = kmalloc(MAX_REPORT_SIZE, GFP_KERNEL);
-	if (radio->usb_buf == NULL) {
+		जाओ err_initial;
+	पूर्ण
+	radio->usb_buf = kदो_स्मृति(MAX_REPORT_SIZE, GFP_KERNEL);
+	अगर (radio->usb_buf == शून्य) अणु
 		retval = -ENOMEM;
-		goto err_radio;
-	}
-	radio->usbdev = interface_to_usbdev(intf);
-	radio->intf = intf;
+		जाओ err_radio;
+	पूर्ण
+	radio->usbdev = पूर्णांकerface_to_usbdev(पूर्णांकf);
+	radio->पूर्णांकf = पूर्णांकf;
 	radio->band = 1; /* Default to 76 - 108 MHz */
 	mutex_init(&radio->lock);
 	init_completion(&radio->completion);
 
-	radio->get_register = si470x_get_register;
-	radio->set_register = si470x_set_register;
-	radio->fops_open = si470x_fops_open;
+	radio->get_रेजिस्टर = si470x_get_रेजिस्टर;
+	radio->set_रेजिस्टर = si470x_set_रेजिस्टर;
+	radio->fops_खोलो = si470x_fops_खोलो;
 	radio->fops_release = si470x_fops_release;
 	radio->vidioc_querycap = si470x_vidioc_querycap;
 
-	iface_desc = intf->cur_altsetting;
+	अगरace_desc = पूर्णांकf->cur_altsetting;
 
-	/* Set up interrupt endpoint information. */
-	for (i = 0; i < iface_desc->desc.bNumEndpoints; ++i) {
-		endpoint = &iface_desc->endpoint[i].desc;
-		if (usb_endpoint_is_int_in(endpoint))
-			radio->int_in_endpoint = endpoint;
-	}
-	if (!radio->int_in_endpoint) {
-		dev_info(&intf->dev, "could not find interrupt in endpoint\n");
+	/* Set up पूर्णांकerrupt endpoपूर्णांक inक्रमmation. */
+	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; ++i) अणु
+		endpoपूर्णांक = &अगरace_desc->endpoपूर्णांक[i].desc;
+		अगर (usb_endpoपूर्णांक_is_पूर्णांक_in(endpoपूर्णांक))
+			radio->पूर्णांक_in_endpoपूर्णांक = endpoपूर्णांक;
+	पूर्ण
+	अगर (!radio->पूर्णांक_in_endpoपूर्णांक) अणु
+		dev_info(&पूर्णांकf->dev, "could not find interrupt in endpoint\n");
 		retval = -EIO;
-		goto err_usbbuf;
-	}
+		जाओ err_usbbuf;
+	पूर्ण
 
-	int_end_size = le16_to_cpu(radio->int_in_endpoint->wMaxPacketSize);
+	पूर्णांक_end_size = le16_to_cpu(radio->पूर्णांक_in_endpoपूर्णांक->wMaxPacketSize);
 
-	radio->int_in_buffer = kmalloc(int_end_size, GFP_KERNEL);
-	if (!radio->int_in_buffer) {
-		dev_info(&intf->dev, "could not allocate int_in_buffer");
+	radio->पूर्णांक_in_buffer = kदो_स्मृति(पूर्णांक_end_size, GFP_KERNEL);
+	अगर (!radio->पूर्णांक_in_buffer) अणु
+		dev_info(&पूर्णांकf->dev, "could not allocate int_in_buffer");
 		retval = -ENOMEM;
-		goto err_usbbuf;
-	}
+		जाओ err_usbbuf;
+	पूर्ण
 
-	radio->int_in_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!radio->int_in_urb) {
+	radio->पूर्णांक_in_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!radio->पूर्णांक_in_urb) अणु
 		retval = -ENOMEM;
-		goto err_intbuffer;
-	}
+		जाओ err_पूर्णांकbuffer;
+	पूर्ण
 
 	radio->v4l2_dev.release = si470x_usb_release;
 
 	/*
-	 * The si470x SiLabs reference design uses the same USB IDs as
+	 * The si470x SiLअसल reference design uses the same USB IDs as
 	 * 'Thanko's Raremono' si4734 based receiver. So check here which we
-	 * have: attempt to read the device ID from the si470x: the lower 12
-	 * bits should be 0x0242 for the si470x.
+	 * have: attempt to पढ़ो the device ID from the si470x: the lower 12
+	 * bits should be 0x0242 क्रम the si470x.
 	 *
 	 * We use this check to determine which device we are dealing with.
 	 */
-	if (id->idVendor == 0x10c4 && id->idProduct == 0x818a) {
+	अगर (id->idVenकरोr == 0x10c4 && id->idProduct == 0x818a) अणु
 		retval = usb_control_msg(radio->usbdev,
 				usb_rcvctrlpipe(radio->usbdev, 0),
 				HID_REQ_GET_REPORT,
-				USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_DIR_IN,
+				USB_TYPE_CLASS | USB_RECIP_INTERFACE | USB_सूची_IN,
 				1, 2,
 				radio->usb_buf, 3, 500);
-		if (retval != 3 ||
-		    (get_unaligned_be16(&radio->usb_buf[1]) & 0xfff) != 0x0242) {
-			dev_info(&intf->dev, "this is not a si470x device.\n");
+		अगर (retval != 3 ||
+		    (get_unaligned_be16(&radio->usb_buf[1]) & 0xfff) != 0x0242) अणु
+			dev_info(&पूर्णांकf->dev, "this is not a si470x device.\n");
 			retval = -ENODEV;
-			goto err_urb;
-		}
-	}
+			जाओ err_urb;
+		पूर्ण
+	पूर्ण
 
-	retval = v4l2_device_register(&intf->dev, &radio->v4l2_dev);
-	if (retval < 0) {
-		dev_err(&intf->dev, "couldn't register v4l2_device\n");
-		goto err_urb;
-	}
+	retval = v4l2_device_रेजिस्टर(&पूर्णांकf->dev, &radio->v4l2_dev);
+	अगर (retval < 0) अणु
+		dev_err(&पूर्णांकf->dev, "couldn't register v4l2_device\n");
+		जाओ err_urb;
+	पूर्ण
 
 	v4l2_ctrl_handler_init(&radio->hdl, 2);
 	v4l2_ctrl_new_std(&radio->hdl, &si470x_ctrl_ops,
 			  V4L2_CID_AUDIO_MUTE, 0, 1, 1, 1);
 	v4l2_ctrl_new_std(&radio->hdl, &si470x_ctrl_ops,
 			  V4L2_CID_AUDIO_VOLUME, 0, 15, 1, 15);
-	if (radio->hdl.error) {
+	अगर (radio->hdl.error) अणु
 		retval = radio->hdl.error;
-		dev_err(&intf->dev, "couldn't register control\n");
-		goto err_dev;
-	}
-	radio->videodev = si470x_viddev_template;
+		dev_err(&पूर्णांकf->dev, "couldn't register control\n");
+		जाओ err_dev;
+	पूर्ण
+	radio->videodev = si470x_viddev_ढाँचा;
 	radio->videodev.ctrl_handler = &radio->hdl;
 	radio->videodev.lock = &radio->lock;
 	radio->videodev.v4l2_dev = &radio->v4l2_dev;
@@ -673,174 +674,174 @@ static int si470x_usb_driver_probe(struct usb_interface *intf,
 	video_set_drvdata(&radio->videodev, radio);
 
 	/* get device and chip versions */
-	if (si470x_get_all_registers(radio) < 0) {
+	अगर (si470x_get_all_रेजिस्टरs(radio) < 0) अणु
 		retval = -EIO;
-		goto err_ctrl;
-	}
-	dev_info(&intf->dev, "DeviceID=0x%4.4hx ChipID=0x%4.4hx\n",
-			radio->registers[DEVICEID], radio->registers[SI_CHIPID]);
-	if ((radio->registers[SI_CHIPID] & SI_CHIPID_FIRMWARE) < RADIO_FW_VERSION) {
-		dev_warn(&intf->dev,
+		जाओ err_ctrl;
+	पूर्ण
+	dev_info(&पूर्णांकf->dev, "DeviceID=0x%4.4hx ChipID=0x%4.4hx\n",
+			radio->रेजिस्टरs[DEVICEID], radio->रेजिस्टरs[SI_CHIPID]);
+	अगर ((radio->रेजिस्टरs[SI_CHIPID] & SI_CHIPID_FIRMWARE) < RADIO_FW_VERSION) अणु
+		dev_warn(&पूर्णांकf->dev,
 			"This driver is known to work with firmware version %hu,\n",
 			RADIO_FW_VERSION);
-		dev_warn(&intf->dev,
+		dev_warn(&पूर्णांकf->dev,
 			"but the device has firmware version %hu.\n",
-			radio->registers[SI_CHIPID] & SI_CHIPID_FIRMWARE);
+			radio->रेजिस्टरs[SI_CHIPID] & SI_CHIPID_FIRMWARE);
 		version_warning = 1;
-	}
+	पूर्ण
 
 	/* get software and hardware versions */
-	if (si470x_get_scratch_page_versions(radio) < 0) {
+	अगर (si470x_get_scratch_page_versions(radio) < 0) अणु
 		retval = -EIO;
-		goto err_ctrl;
-	}
-	dev_info(&intf->dev, "software version %d, hardware version %d\n",
+		जाओ err_ctrl;
+	पूर्ण
+	dev_info(&पूर्णांकf->dev, "software version %d, hardware version %d\n",
 			radio->software_version, radio->hardware_version);
-	if (radio->hardware_version < RADIO_HW_VERSION) {
-		dev_warn(&intf->dev,
+	अगर (radio->hardware_version < RADIO_HW_VERSION) अणु
+		dev_warn(&पूर्णांकf->dev,
 			"This driver is known to work with hardware version %hu,\n",
 			RADIO_HW_VERSION);
-		dev_warn(&intf->dev,
+		dev_warn(&पूर्णांकf->dev,
 			"but the device has hardware version %hu.\n",
 			radio->hardware_version);
 		version_warning = 1;
-	}
+	पूर्ण
 
 	/* give out version warning */
-	if (version_warning == 1) {
-		dev_warn(&intf->dev,
+	अगर (version_warning == 1) अणु
+		dev_warn(&पूर्णांकf->dev,
 			"If you have some trouble using this driver,\n");
-		dev_warn(&intf->dev,
+		dev_warn(&पूर्णांकf->dev,
 			"please report to V4L ML at linux-media@vger.kernel.org\n");
-	}
+	पूर्ण
 
 	/* set led to connect state */
 	si470x_set_led_state(radio, BLINK_GREEN_LED);
 
 	/* rds buffer allocation */
 	radio->buf_size = rds_buf * 3;
-	radio->buffer = kmalloc(radio->buf_size, GFP_KERNEL);
-	if (!radio->buffer) {
+	radio->buffer = kदो_स्मृति(radio->buf_size, GFP_KERNEL);
+	अगर (!radio->buffer) अणु
 		retval = -EIO;
-		goto err_ctrl;
-	}
+		जाओ err_ctrl;
+	पूर्ण
 
 	/* rds buffer configuration */
 	radio->wr_index = 0;
 	radio->rd_index = 0;
-	init_waitqueue_head(&radio->read_queue);
-	usb_set_intfdata(intf, radio);
+	init_रुकोqueue_head(&radio->पढ़ो_queue);
+	usb_set_पूर्णांकfdata(पूर्णांकf, radio);
 
 	/* start radio */
 	retval = si470x_start_usb(radio);
-	if (retval < 0)
-		goto err_buf;
+	अगर (retval < 0)
+		जाओ err_buf;
 
 	/* set initial frequency */
 	si470x_set_freq(radio, 87.5 * FREQ_MUL); /* available in all regions */
 
-	/* register video device */
-	retval = video_register_device(&radio->videodev, VFL_TYPE_RADIO,
+	/* रेजिस्टर video device */
+	retval = video_रेजिस्टर_device(&radio->videodev, VFL_TYPE_RADIO,
 			radio_nr);
-	if (retval) {
-		dev_err(&intf->dev, "Could not register video device\n");
-		goto err_all;
-	}
+	अगर (retval) अणु
+		dev_err(&पूर्णांकf->dev, "Could not register video device\n");
+		जाओ err_all;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_all:
-	usb_kill_urb(radio->int_in_urb);
+	usb_समाप्त_urb(radio->पूर्णांक_in_urb);
 err_buf:
-	kfree(radio->buffer);
+	kमुक्त(radio->buffer);
 err_ctrl:
-	v4l2_ctrl_handler_free(&radio->hdl);
+	v4l2_ctrl_handler_मुक्त(&radio->hdl);
 err_dev:
-	v4l2_device_unregister(&radio->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&radio->v4l2_dev);
 err_urb:
-	usb_free_urb(radio->int_in_urb);
-err_intbuffer:
-	kfree(radio->int_in_buffer);
+	usb_मुक्त_urb(radio->पूर्णांक_in_urb);
+err_पूर्णांकbuffer:
+	kमुक्त(radio->पूर्णांक_in_buffer);
 err_usbbuf:
-	kfree(radio->usb_buf);
+	kमुक्त(radio->usb_buf);
 err_radio:
-	kfree(radio);
+	kमुक्त(radio);
 err_initial:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
  * si470x_usb_driver_suspend - suspend the device
  */
-static int si470x_usb_driver_suspend(struct usb_interface *intf,
+अटल पूर्णांक si470x_usb_driver_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
 		pm_message_t message)
-{
-	struct si470x_device *radio = usb_get_intfdata(intf);
+अणु
+	काष्ठा si470x_device *radio = usb_get_पूर्णांकfdata(पूर्णांकf);
 
-	dev_info(&intf->dev, "suspending now...\n");
+	dev_info(&पूर्णांकf->dev, "suspending now...\n");
 
-	/* shutdown interrupt handler */
-	if (radio->int_in_running) {
-		radio->int_in_running = 0;
-		if (radio->int_in_urb)
-			usb_kill_urb(radio->int_in_urb);
-	}
+	/* shutकरोwn पूर्णांकerrupt handler */
+	अगर (radio->पूर्णांक_in_running) अणु
+		radio->पूर्णांक_in_running = 0;
+		अगर (radio->पूर्णांक_in_urb)
+			usb_समाप्त_urb(radio->पूर्णांक_in_urb);
+	पूर्ण
 
-	/* cancel read processes */
-	wake_up_interruptible(&radio->read_queue);
+	/* cancel पढ़ो processes */
+	wake_up_पूर्णांकerruptible(&radio->पढ़ो_queue);
 
 	/* stop radio */
 	si470x_stop(radio);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * si470x_usb_driver_resume - resume the device
  */
-static int si470x_usb_driver_resume(struct usb_interface *intf)
-{
-	struct si470x_device *radio = usb_get_intfdata(intf);
-	int ret;
+अटल पूर्णांक si470x_usb_driver_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा si470x_device *radio = usb_get_पूर्णांकfdata(पूर्णांकf);
+	पूर्णांक ret;
 
-	dev_info(&intf->dev, "resuming now...\n");
+	dev_info(&पूर्णांकf->dev, "resuming now...\n");
 
 	/* start radio */
 	ret = si470x_start_usb(radio);
-	if (ret == 0)
+	अगर (ret == 0)
 		v4l2_ctrl_handler_setup(&radio->hdl);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  * si470x_usb_driver_disconnect - disconnect the device
  */
-static void si470x_usb_driver_disconnect(struct usb_interface *intf)
-{
-	struct si470x_device *radio = usb_get_intfdata(intf);
+अटल व्योम si470x_usb_driver_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा si470x_device *radio = usb_get_पूर्णांकfdata(पूर्णांकf);
 
 	mutex_lock(&radio->lock);
 	v4l2_device_disconnect(&radio->v4l2_dev);
-	video_unregister_device(&radio->videodev);
-	usb_kill_urb(radio->int_in_urb);
-	usb_set_intfdata(intf, NULL);
+	video_unरेजिस्टर_device(&radio->videodev);
+	usb_समाप्त_urb(radio->पूर्णांक_in_urb);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 	mutex_unlock(&radio->lock);
 	v4l2_device_put(&radio->v4l2_dev);
-}
+पूर्ण
 
 
 /*
- * si470x_usb_driver - usb driver interface
+ * si470x_usb_driver - usb driver पूर्णांकerface
  *
  * A note on suspend/resume: this driver had only empty suspend/resume
  * functions, and when I tried to test suspend/resume it always disconnected
  * instead of resuming (using my ADS InstantFM stick). So I've decided to
- * remove these callbacks until someone else with better hardware can
+ * हटाओ these callbacks until someone अन्यथा with better hardware can
  * implement and test this.
  */
-static struct usb_driver si470x_usb_driver = {
+अटल काष्ठा usb_driver si470x_usb_driver = अणु
 	.name			= DRIVER_NAME,
 	.probe			= si470x_usb_driver_probe,
 	.disconnect		= si470x_usb_driver_disconnect,
@@ -848,7 +849,7 @@ static struct usb_driver si470x_usb_driver = {
 	.resume			= si470x_usb_driver_resume,
 	.reset_resume		= si470x_usb_driver_resume,
 	.id_table		= si470x_usb_driver_id_table,
-};
+पूर्ण;
 
 module_usb_driver(si470x_usb_driver);
 

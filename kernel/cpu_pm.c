@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011 Google, Inc.
  *
@@ -6,183 +7,183 @@
  *	Colin Cross <ccross@android.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/cpu_pm.h>
-#include <linux/module.h>
-#include <linux/notifier.h>
-#include <linux/spinlock.h>
-#include <linux/syscore_ops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/syscore_ops.h>
 
-static ATOMIC_NOTIFIER_HEAD(cpu_pm_notifier_chain);
+अटल ATOMIC_NOTIFIER_HEAD(cpu_pm_notअगरier_chain);
 
-static int cpu_pm_notify(enum cpu_pm_event event)
-{
-	int ret;
+अटल पूर्णांक cpu_pm_notअगरy(क्रमागत cpu_pm_event event)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * atomic_notifier_call_chain has a RCU read critical section, which
+	 * atomic_notअगरier_call_chain has a RCU पढ़ो critical section, which
 	 * could be disfunctional in cpu idle. Copy RCU_NONIDLE code to let
 	 * RCU know this.
 	 */
 	rcu_irq_enter_irqson();
-	ret = atomic_notifier_call_chain(&cpu_pm_notifier_chain, event, NULL);
-	rcu_irq_exit_irqson();
+	ret = atomic_notअगरier_call_chain(&cpu_pm_notअगरier_chain, event, शून्य);
+	rcu_irq_निकास_irqson();
 
-	return notifier_to_errno(ret);
-}
+	वापस notअगरier_to_त्रुटि_सं(ret);
+पूर्ण
 
-static int cpu_pm_notify_robust(enum cpu_pm_event event_up, enum cpu_pm_event event_down)
-{
-	int ret;
+अटल पूर्णांक cpu_pm_notअगरy_robust(क्रमागत cpu_pm_event event_up, क्रमागत cpu_pm_event event_करोwn)
+अणु
+	पूर्णांक ret;
 
 	rcu_irq_enter_irqson();
-	ret = atomic_notifier_call_chain_robust(&cpu_pm_notifier_chain, event_up, event_down, NULL);
-	rcu_irq_exit_irqson();
+	ret = atomic_notअगरier_call_chain_robust(&cpu_pm_notअगरier_chain, event_up, event_करोwn, शून्य);
+	rcu_irq_निकास_irqson();
 
-	return notifier_to_errno(ret);
-}
-
-/**
- * cpu_pm_register_notifier - register a driver with cpu_pm
- * @nb: notifier block to register
- *
- * Add a driver to a list of drivers that are notified about
- * CPU and CPU cluster low power entry and exit.
- *
- * This function may sleep, and has the same return conditions as
- * raw_notifier_chain_register.
- */
-int cpu_pm_register_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&cpu_pm_notifier_chain, nb);
-}
-EXPORT_SYMBOL_GPL(cpu_pm_register_notifier);
+	वापस notअगरier_to_त्रुटि_सं(ret);
+पूर्ण
 
 /**
- * cpu_pm_unregister_notifier - unregister a driver with cpu_pm
- * @nb: notifier block to be unregistered
+ * cpu_pm_रेजिस्टर_notअगरier - रेजिस्टर a driver with cpu_pm
+ * @nb: notअगरier block to रेजिस्टर
  *
- * Remove a driver from the CPU PM notifier list.
+ * Add a driver to a list of drivers that are notअगरied about
+ * CPU and CPU cluster low घातer entry and निकास.
  *
- * This function may sleep, and has the same return conditions as
- * raw_notifier_chain_unregister.
+ * This function may sleep, and has the same वापस conditions as
+ * raw_notअगरier_chain_रेजिस्टर.
  */
-int cpu_pm_unregister_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_unregister(&cpu_pm_notifier_chain, nb);
-}
-EXPORT_SYMBOL_GPL(cpu_pm_unregister_notifier);
+पूर्णांक cpu_pm_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&cpu_pm_notअगरier_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(cpu_pm_रेजिस्टर_notअगरier);
 
 /**
- * cpu_pm_enter - CPU low power entry notifier
+ * cpu_pm_unरेजिस्टर_notअगरier - unरेजिस्टर a driver with cpu_pm
+ * @nb: notअगरier block to be unरेजिस्टरed
  *
- * Notifies listeners that a single CPU is entering a low power state that may
- * cause some blocks in the same power domain as the cpu to reset.
+ * Remove a driver from the CPU PM notअगरier list.
  *
- * Must be called on the affected CPU with interrupts disabled.  Platform is
- * responsible for ensuring that cpu_pm_enter is not called twice on the same
- * CPU before cpu_pm_exit is called. Notified drivers can include VFP
- * co-processor, interrupt controller and its PM extensions, local CPU
- * timers context save/restore which shouldn't be interrupted. Hence it
- * must be called with interrupts disabled.
- *
- * Return conditions are same as __raw_notifier_call_chain.
+ * This function may sleep, and has the same वापस conditions as
+ * raw_notअगरier_chain_unरेजिस्टर.
  */
-int cpu_pm_enter(void)
-{
-	return cpu_pm_notify_robust(CPU_PM_ENTER, CPU_PM_ENTER_FAILED);
-}
+पूर्णांक cpu_pm_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_unरेजिस्टर(&cpu_pm_notअगरier_chain, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(cpu_pm_unरेजिस्टर_notअगरier);
+
+/**
+ * cpu_pm_enter - CPU low घातer entry notअगरier
+ *
+ * Notअगरies listeners that a single CPU is entering a low घातer state that may
+ * cause some blocks in the same घातer करोमुख्य as the cpu to reset.
+ *
+ * Must be called on the affected CPU with पूर्णांकerrupts disabled.  Platक्रमm is
+ * responsible क्रम ensuring that cpu_pm_enter is not called twice on the same
+ * CPU beक्रमe cpu_pm_निकास is called. Notअगरied drivers can include VFP
+ * co-processor, पूर्णांकerrupt controller and its PM extensions, local CPU
+ * समयrs context save/restore which shouldn't be पूर्णांकerrupted. Hence it
+ * must be called with पूर्णांकerrupts disabled.
+ *
+ * Return conditions are same as __raw_notअगरier_call_chain.
+ */
+पूर्णांक cpu_pm_enter(व्योम)
+अणु
+	वापस cpu_pm_notअगरy_robust(CPU_PM_ENTER, CPU_PM_ENTER_FAILED);
+पूर्ण
 EXPORT_SYMBOL_GPL(cpu_pm_enter);
 
 /**
- * cpu_pm_exit - CPU low power exit notifier
+ * cpu_pm_निकास - CPU low घातer निकास notअगरier
  *
- * Notifies listeners that a single CPU is exiting a low power state that may
- * have caused some blocks in the same power domain as the cpu to reset.
+ * Notअगरies listeners that a single CPU is निकासing a low घातer state that may
+ * have caused some blocks in the same घातer करोमुख्य as the cpu to reset.
  *
- * Notified drivers can include VFP co-processor, interrupt controller
- * and its PM extensions, local CPU timers context save/restore which
- * shouldn't be interrupted. Hence it must be called with interrupts disabled.
+ * Notअगरied drivers can include VFP co-processor, पूर्णांकerrupt controller
+ * and its PM extensions, local CPU समयrs context save/restore which
+ * shouldn't be पूर्णांकerrupted. Hence it must be called with पूर्णांकerrupts disabled.
  *
- * Return conditions are same as __raw_notifier_call_chain.
+ * Return conditions are same as __raw_notअगरier_call_chain.
  */
-int cpu_pm_exit(void)
-{
-	return cpu_pm_notify(CPU_PM_EXIT);
-}
-EXPORT_SYMBOL_GPL(cpu_pm_exit);
+पूर्णांक cpu_pm_निकास(व्योम)
+अणु
+	वापस cpu_pm_notअगरy(CPU_PM_EXIT);
+पूर्ण
+EXPORT_SYMBOL_GPL(cpu_pm_निकास);
 
 /**
- * cpu_cluster_pm_enter - CPU cluster low power entry notifier
+ * cpu_cluster_pm_enter - CPU cluster low घातer entry notअगरier
  *
- * Notifies listeners that all cpus in a power domain are entering a low power
- * state that may cause some blocks in the same power domain to reset.
+ * Notअगरies listeners that all cpus in a घातer करोमुख्य are entering a low घातer
+ * state that may cause some blocks in the same घातer करोमुख्य to reset.
  *
- * Must be called after cpu_pm_enter has been called on all cpus in the power
- * domain, and before cpu_pm_exit has been called on any cpu in the power
- * domain. Notified drivers can include VFP co-processor, interrupt controller
- * and its PM extensions, local CPU timers context save/restore which
- * shouldn't be interrupted. Hence it must be called with interrupts disabled.
+ * Must be called after cpu_pm_enter has been called on all cpus in the घातer
+ * करोमुख्य, and beक्रमe cpu_pm_निकास has been called on any cpu in the घातer
+ * करोमुख्य. Notअगरied drivers can include VFP co-processor, पूर्णांकerrupt controller
+ * and its PM extensions, local CPU समयrs context save/restore which
+ * shouldn't be पूर्णांकerrupted. Hence it must be called with पूर्णांकerrupts disabled.
  *
- * Must be called with interrupts disabled.
+ * Must be called with पूर्णांकerrupts disabled.
  *
- * Return conditions are same as __raw_notifier_call_chain.
+ * Return conditions are same as __raw_notअगरier_call_chain.
  */
-int cpu_cluster_pm_enter(void)
-{
-	return cpu_pm_notify_robust(CPU_CLUSTER_PM_ENTER, CPU_CLUSTER_PM_ENTER_FAILED);
-}
+पूर्णांक cpu_cluster_pm_enter(व्योम)
+अणु
+	वापस cpu_pm_notअगरy_robust(CPU_CLUSTER_PM_ENTER, CPU_CLUSTER_PM_ENTER_FAILED);
+पूर्ण
 EXPORT_SYMBOL_GPL(cpu_cluster_pm_enter);
 
 /**
- * cpu_cluster_pm_exit - CPU cluster low power exit notifier
+ * cpu_cluster_pm_निकास - CPU cluster low घातer निकास notअगरier
  *
- * Notifies listeners that all cpus in a power domain are exiting form a
- * low power state that may have caused some blocks in the same power domain
+ * Notअगरies listeners that all cpus in a घातer करोमुख्य are निकासing क्रमm a
+ * low घातer state that may have caused some blocks in the same घातer करोमुख्य
  * to reset.
  *
- * Must be called after cpu_cluster_pm_enter has been called for the power
- * domain, and before cpu_pm_exit has been called on any cpu in the power
- * domain. Notified drivers can include VFP co-processor, interrupt controller
- * and its PM extensions, local CPU timers context save/restore which
- * shouldn't be interrupted. Hence it must be called with interrupts disabled.
+ * Must be called after cpu_cluster_pm_enter has been called क्रम the घातer
+ * करोमुख्य, and beक्रमe cpu_pm_निकास has been called on any cpu in the घातer
+ * करोमुख्य. Notअगरied drivers can include VFP co-processor, पूर्णांकerrupt controller
+ * and its PM extensions, local CPU समयrs context save/restore which
+ * shouldn't be पूर्णांकerrupted. Hence it must be called with पूर्णांकerrupts disabled.
  *
- * Return conditions are same as __raw_notifier_call_chain.
+ * Return conditions are same as __raw_notअगरier_call_chain.
  */
-int cpu_cluster_pm_exit(void)
-{
-	return cpu_pm_notify(CPU_CLUSTER_PM_EXIT);
-}
-EXPORT_SYMBOL_GPL(cpu_cluster_pm_exit);
+पूर्णांक cpu_cluster_pm_निकास(व्योम)
+अणु
+	वापस cpu_pm_notअगरy(CPU_CLUSTER_PM_EXIT);
+पूर्ण
+EXPORT_SYMBOL_GPL(cpu_cluster_pm_निकास);
 
-#ifdef CONFIG_PM
-static int cpu_pm_suspend(void)
-{
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक cpu_pm_suspend(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = cpu_pm_enter();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = cpu_cluster_pm_enter();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cpu_pm_resume(void)
-{
-	cpu_cluster_pm_exit();
-	cpu_pm_exit();
-}
+अटल व्योम cpu_pm_resume(व्योम)
+अणु
+	cpu_cluster_pm_निकास();
+	cpu_pm_निकास();
+पूर्ण
 
-static struct syscore_ops cpu_pm_syscore_ops = {
+अटल काष्ठा syscore_ops cpu_pm_syscore_ops = अणु
 	.suspend = cpu_pm_suspend,
 	.resume = cpu_pm_resume,
-};
+पूर्ण;
 
-static int cpu_pm_init(void)
-{
-	register_syscore_ops(&cpu_pm_syscore_ops);
-	return 0;
-}
+अटल पूर्णांक cpu_pm_init(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&cpu_pm_syscore_ops);
+	वापस 0;
+पूर्ण
 core_initcall(cpu_pm_init);
-#endif
+#पूर्ण_अगर

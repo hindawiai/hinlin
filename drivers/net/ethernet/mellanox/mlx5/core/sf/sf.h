@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2020 Mellanox Technologies Ltd */
 
-#ifndef __MLX5_SF_H__
-#define __MLX5_SF_H__
+#अगर_अघोषित __MLX5_SF_H__
+#घोषणा __MLX5_SF_H__
 
-#include <linux/mlx5/driver.h>
+#समावेश <linux/mlx5/driver.h>
 
-static inline u16 mlx5_sf_start_function_id(const struct mlx5_core_dev *dev)
-{
-	return MLX5_CAP_GEN(dev, sf_base_id);
-}
+अटल अंतरभूत u16 mlx5_sf_start_function_id(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस MLX5_CAP_GEN(dev, sf_base_id);
+पूर्ण
 
-#ifdef CONFIG_MLX5_SF
+#अगर_घोषित CONFIG_MLX5_SF
 
-static inline bool mlx5_sf_supported(const struct mlx5_core_dev *dev)
-{
-	return MLX5_CAP_GEN(dev, sf);
-}
+अटल अंतरभूत bool mlx5_sf_supported(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस MLX5_CAP_GEN(dev, sf);
+पूर्ण
 
-static inline u16 mlx5_sf_max_functions(const struct mlx5_core_dev *dev)
-{
-	if (!mlx5_sf_supported(dev))
-		return 0;
-	if (MLX5_CAP_GEN(dev, max_num_sf))
-		return MLX5_CAP_GEN(dev, max_num_sf);
-	else
-		return 1 << MLX5_CAP_GEN(dev, log_max_sf);
-}
+अटल अंतरभूत u16 mlx5_sf_max_functions(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	अगर (!mlx5_sf_supported(dev))
+		वापस 0;
+	अगर (MLX5_CAP_GEN(dev, max_num_sf))
+		वापस MLX5_CAP_GEN(dev, max_num_sf);
+	अन्यथा
+		वापस 1 << MLX5_CAP_GEN(dev, log_max_sf);
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline bool mlx5_sf_supported(const struct mlx5_core_dev *dev)
-{
-	return false;
-}
+अटल अंतरभूत bool mlx5_sf_supported(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस false;
+पूर्ण
 
-static inline u16 mlx5_sf_max_functions(const struct mlx5_core_dev *dev)
-{
-	return 0;
-}
+अटल अंतरभूत u16 mlx5_sf_max_functions(स्थिर काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MLX5_SF_MANAGER
+#अगर_घोषित CONFIG_MLX5_SF_MANAGER
 
-int mlx5_sf_hw_table_init(struct mlx5_core_dev *dev);
-void mlx5_sf_hw_table_cleanup(struct mlx5_core_dev *dev);
+पूर्णांक mlx5_sf_hw_table_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_sf_hw_table_cleanup(काष्ठा mlx5_core_dev *dev);
 
-int mlx5_sf_hw_table_create(struct mlx5_core_dev *dev);
-void mlx5_sf_hw_table_destroy(struct mlx5_core_dev *dev);
+पूर्णांक mlx5_sf_hw_table_create(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_sf_hw_table_destroy(काष्ठा mlx5_core_dev *dev);
 
-int mlx5_sf_table_init(struct mlx5_core_dev *dev);
-void mlx5_sf_table_cleanup(struct mlx5_core_dev *dev);
+पूर्णांक mlx5_sf_table_init(काष्ठा mlx5_core_dev *dev);
+व्योम mlx5_sf_table_cleanup(काष्ठा mlx5_core_dev *dev);
 
-int mlx5_devlink_sf_port_new(struct devlink *devlink,
-			     const struct devlink_port_new_attrs *add_attr,
-			     struct netlink_ext_ack *extack,
-			     unsigned int *new_port_index);
-int mlx5_devlink_sf_port_del(struct devlink *devlink, unsigned int port_index,
-			     struct netlink_ext_ack *extack);
-int mlx5_devlink_sf_port_fn_state_get(struct devlink *devlink, struct devlink_port *dl_port,
-				      enum devlink_port_fn_state *state,
-				      enum devlink_port_fn_opstate *opstate,
-				      struct netlink_ext_ack *extack);
-int mlx5_devlink_sf_port_fn_state_set(struct devlink *devlink, struct devlink_port *dl_port,
-				      enum devlink_port_fn_state state,
-				      struct netlink_ext_ack *extack);
-#else
+पूर्णांक mlx5_devlink_sf_port_new(काष्ठा devlink *devlink,
+			     स्थिर काष्ठा devlink_port_new_attrs *add_attr,
+			     काष्ठा netlink_ext_ack *extack,
+			     अचिन्हित पूर्णांक *new_port_index);
+पूर्णांक mlx5_devlink_sf_port_del(काष्ठा devlink *devlink, अचिन्हित पूर्णांक port_index,
+			     काष्ठा netlink_ext_ack *extack);
+पूर्णांक mlx5_devlink_sf_port_fn_state_get(काष्ठा devlink *devlink, काष्ठा devlink_port *dl_port,
+				      क्रमागत devlink_port_fn_state *state,
+				      क्रमागत devlink_port_fn_opstate *opstate,
+				      काष्ठा netlink_ext_ack *extack);
+पूर्णांक mlx5_devlink_sf_port_fn_state_set(काष्ठा devlink *devlink, काष्ठा devlink_port *dl_port,
+				      क्रमागत devlink_port_fn_state state,
+				      काष्ठा netlink_ext_ack *extack);
+#अन्यथा
 
-static inline int mlx5_sf_hw_table_init(struct mlx5_core_dev *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlx5_sf_hw_table_init(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlx5_sf_hw_table_cleanup(struct mlx5_core_dev *dev)
-{
-}
+अटल अंतरभूत व्योम mlx5_sf_hw_table_cleanup(काष्ठा mlx5_core_dev *dev)
+अणु
+पूर्ण
 
-static inline int mlx5_sf_hw_table_create(struct mlx5_core_dev *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlx5_sf_hw_table_create(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlx5_sf_hw_table_destroy(struct mlx5_core_dev *dev)
-{
-}
+अटल अंतरभूत व्योम mlx5_sf_hw_table_destroy(काष्ठा mlx5_core_dev *dev)
+अणु
+पूर्ण
 
-static inline int mlx5_sf_table_init(struct mlx5_core_dev *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक mlx5_sf_table_init(काष्ठा mlx5_core_dev *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void mlx5_sf_table_cleanup(struct mlx5_core_dev *dev)
-{
-}
+अटल अंतरभूत व्योम mlx5_sf_table_cleanup(काष्ठा mlx5_core_dev *dev)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

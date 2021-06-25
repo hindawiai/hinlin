@@ -1,24 +1,25 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2019 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2019 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <elfutils/libdwfl.h>
-#include "../../util/unwind-libdw.h"
-#include "../../util/perf_regs.h"
-#include "../../util/event.h"
+#समावेश <elfutils/libdwfl.h>
+#समावेश "../../util/unwind-libdw.h"
+#समावेश "../../util/perf_regs.h"
+#समावेश "../../util/event.h"
 
-bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
-{
-	struct unwind_info *ui = arg;
-	struct regs_dump *user_regs = &ui->sample->user_regs;
+bool libdw__arch_set_initial_रेजिस्टरs(Dwfl_Thपढ़ो *thपढ़ो, व्योम *arg)
+अणु
+	काष्ठा unwind_info *ui = arg;
+	काष्ठा regs_dump *user_regs = &ui->sample->user_regs;
 	Dwarf_Word dwarf_regs[PERF_REG_CSKY_MAX];
 
-#define REG(r) ({						\
+#घोषणा REG(r) (अणु						\
 	Dwarf_Word val = 0;					\
 	perf_reg_value(&val, user_regs, PERF_REG_CSKY_##r);	\
 	val;							\
-})
+पूर्ण)
 
-#if defined(__CSKYABIV2__)
+#अगर defined(__CSKYABIV2__)
 	dwarf_regs[0]  = REG(A0);
 	dwarf_regs[1]  = REG(A1);
 	dwarf_regs[2]  = REG(A2);
@@ -52,7 +53,7 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
 	dwarf_regs[30] = REG(EXREGS14);
 	dwarf_regs[31] = REG(TLS);
 	dwarf_regs[32] = REG(PC);
-#else
+#अन्यथा
 	dwarf_regs[0]  = REG(SP);
 	dwarf_regs[1]  = REG(REGS9);
 	dwarf_regs[2]  = REG(A0);
@@ -69,9 +70,9 @@ bool libdw__arch_set_initial_registers(Dwfl_Thread *thread, void *arg)
 	dwarf_regs[13] = REG(REGS7);
 	dwarf_regs[14] = REG(REGS8);
 	dwarf_regs[15] = REG(LR);
-#endif
-	dwfl_thread_state_register_pc(thread, REG(PC));
+#पूर्ण_अगर
+	dwfl_thपढ़ो_state_रेजिस्टर_pc(thपढ़ो, REG(PC));
 
-	return dwfl_thread_state_registers(thread, 0, PERF_REG_CSKY_MAX,
+	वापस dwfl_thपढ़ो_state_रेजिस्टरs(thपढ़ो, 0, PERF_REG_CSKY_MAX,
 					   dwarf_regs);
-}
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,91 +20,91 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <core/device.h>
-#include <core/firmware.h>
+#समावेश <core/device.h>
+#समावेश <core/firmware.h>
 
-int
-nvkm_firmware_load_name(const struct nvkm_subdev *subdev, const char *base,
-			const char *name, int ver, const struct firmware **pfw)
-{
-	char path[64];
-	int ret;
+पूर्णांक
+nvkm_firmware_load_name(स्थिर काष्ठा nvkm_subdev *subdev, स्थिर अक्षर *base,
+			स्थिर अक्षर *name, पूर्णांक ver, स्थिर काष्ठा firmware **pfw)
+अणु
+	अक्षर path[64];
+	पूर्णांक ret;
 
-	snprintf(path, sizeof(path), "%s%s", base, name);
+	snम_लिखो(path, माप(path), "%s%s", base, name);
 	ret = nvkm_firmware_get(subdev, path, ver, pfw);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvkm_firmware_load_blob(const struct nvkm_subdev *subdev, const char *base,
-			const char *name, int ver, struct nvkm_blob *blob)
-{
-	const struct firmware *fw;
-	int ret;
+पूर्णांक
+nvkm_firmware_load_blob(स्थिर काष्ठा nvkm_subdev *subdev, स्थिर अक्षर *base,
+			स्थिर अक्षर *name, पूर्णांक ver, काष्ठा nvkm_blob *blob)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	पूर्णांक ret;
 
 	ret = nvkm_firmware_load_name(subdev, base, name, ver, &fw);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		blob->data = kmemdup(fw->data, fw->size, GFP_KERNEL);
 		blob->size = fw->size;
 		nvkm_firmware_put(fw);
-		if (!blob->data)
-			return -ENOMEM;
-	}
+		अगर (!blob->data)
+			वापस -ENOMEM;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * nvkm_firmware_get - load firmware from the official nvidia/chip/ directory
  * @subdev:	subdevice that will use that firmware
  * @fwname:	name of firmware file to load
  * @ver:	firmware version to load
- * @fw:		firmware structure to load to
+ * @fw:		firmware काष्ठाure to load to
  *
- * Use this function to load firmware files in the form nvidia/chip/fwname.bin.
- * Firmware files released by NVIDIA will always follow this format.
+ * Use this function to load firmware files in the क्रमm nvidia/chip/fwname.bin.
+ * Firmware files released by NVIDIA will always follow this क्रमmat.
  */
-int
-nvkm_firmware_get(const struct nvkm_subdev *subdev, const char *fwname, int ver,
-		  const struct firmware **fw)
-{
-	struct nvkm_device *device = subdev->device;
-	char f[64];
-	char cname[16];
-	int i;
+पूर्णांक
+nvkm_firmware_get(स्थिर काष्ठा nvkm_subdev *subdev, स्थिर अक्षर *fwname, पूर्णांक ver,
+		  स्थिर काष्ठा firmware **fw)
+अणु
+	काष्ठा nvkm_device *device = subdev->device;
+	अक्षर f[64];
+	अक्षर cname[16];
+	पूर्णांक i;
 
-	/* Convert device name to lowercase */
-	strncpy(cname, device->chip->name, sizeof(cname));
-	cname[sizeof(cname) - 1] = '\0';
-	i = strlen(cname);
-	while (i) {
+	/* Convert device name to lowerहाल */
+	म_नकलन(cname, device->chip->name, माप(cname));
+	cname[माप(cname) - 1] = '\0';
+	i = म_माप(cname);
+	जबतक (i) अणु
 		--i;
-		cname[i] = tolower(cname[i]);
-	}
+		cname[i] = छोटे(cname[i]);
+	पूर्ण
 
-	if (ver != 0)
-		snprintf(f, sizeof(f), "nvidia/%s/%s-%d.bin", cname, fwname, ver);
-	else
-		snprintf(f, sizeof(f), "nvidia/%s/%s.bin", cname, fwname);
+	अगर (ver != 0)
+		snम_लिखो(f, माप(f), "nvidia/%s/%s-%d.bin", cname, fwname, ver);
+	अन्यथा
+		snम_लिखो(f, माप(f), "nvidia/%s/%s.bin", cname, fwname);
 
-	if (!firmware_request_nowarn(fw, f, device->dev)) {
+	अगर (!firmware_request_nowarn(fw, f, device->dev)) अणु
 		nvkm_debug(subdev, "firmware \"%s\" loaded - %zu byte(s)\n",
 			   f, (*fw)->size);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	nvkm_debug(subdev, "firmware \"%s\" unavailable\n", f);
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
 /*
  * nvkm_firmware_put - release firmware loaded with nvkm_firmware_get
  */
-void
-nvkm_firmware_put(const struct firmware *fw)
-{
+व्योम
+nvkm_firmware_put(स्थिर काष्ठा firmware *fw)
+अणु
 	release_firmware(fw);
-}
+पूर्ण

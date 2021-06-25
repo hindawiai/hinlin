@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_ENGINE_USER_H
-#define INTEL_ENGINE_USER_H
+#अगर_अघोषित INTEL_ENGINE_USER_H
+#घोषणा INTEL_ENGINE_USER_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct drm_i915_private;
-struct intel_engine_cs;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_engine_cs;
 
-struct intel_engine_cs *
-intel_engine_lookup_user(struct drm_i915_private *i915, u8 class, u8 instance);
+काष्ठा पूर्णांकel_engine_cs *
+पूर्णांकel_engine_lookup_user(काष्ठा drm_i915_निजी *i915, u8 class, u8 instance);
 
-unsigned int intel_engines_has_context_isolation(struct drm_i915_private *i915);
+अचिन्हित पूर्णांक पूर्णांकel_engines_has_context_isolation(काष्ठा drm_i915_निजी *i915);
 
-void intel_engine_add_user(struct intel_engine_cs *engine);
-void intel_engines_driver_register(struct drm_i915_private *i915);
+व्योम पूर्णांकel_engine_add_user(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम पूर्णांकel_engines_driver_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
 
-const char *intel_engine_class_repr(u8 class);
+स्थिर अक्षर *पूर्णांकel_engine_class_repr(u8 class);
 
-#endif /* INTEL_ENGINE_USER_H */
+#पूर्ण_अगर /* INTEL_ENGINE_USER_H */

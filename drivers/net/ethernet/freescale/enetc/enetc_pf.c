@@ -1,332 +1,333 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
 /* Copyright 2017-2019 NXP */
 
-#include <linux/mdio.h>
-#include <linux/module.h>
-#include <linux/fsl/enetc_mdio.h>
-#include <linux/of_platform.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include "enetc_ierb.h"
-#include "enetc_pf.h"
+#समावेश <linux/mdपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/fsl/enetc_mdपन.स>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश "enetc_ierb.h"
+#समावेश "enetc_pf.h"
 
-#define ENETC_DRV_NAME_STR "ENETC PF driver"
+#घोषणा ENETC_DRV_NAME_STR "ENETC PF driver"
 
-static void enetc_pf_get_primary_mac_addr(struct enetc_hw *hw, int si, u8 *addr)
-{
-	u32 upper = __raw_readl(hw->port + ENETC_PSIPMAR0(si));
-	u16 lower = __raw_readw(hw->port + ENETC_PSIPMAR1(si));
+अटल व्योम enetc_pf_get_primary_mac_addr(काष्ठा enetc_hw *hw, पूर्णांक si, u8 *addr)
+अणु
+	u32 upper = __raw_पढ़ोl(hw->port + ENETC_PSIPMAR0(si));
+	u16 lower = __raw_पढ़ोw(hw->port + ENETC_PSIPMAR1(si));
 
 	*(u32 *)addr = upper;
 	*(u16 *)(addr + 4) = lower;
-}
+पूर्ण
 
-static void enetc_pf_set_primary_mac_addr(struct enetc_hw *hw, int si,
-					  const u8 *addr)
-{
-	u32 upper = *(const u32 *)addr;
-	u16 lower = *(const u16 *)(addr + 4);
+अटल व्योम enetc_pf_set_primary_mac_addr(काष्ठा enetc_hw *hw, पूर्णांक si,
+					  स्थिर u8 *addr)
+अणु
+	u32 upper = *(स्थिर u32 *)addr;
+	u16 lower = *(स्थिर u16 *)(addr + 4);
 
-	__raw_writel(upper, hw->port + ENETC_PSIPMAR0(si));
-	__raw_writew(lower, hw->port + ENETC_PSIPMAR1(si));
-}
+	__raw_ग_लिखोl(upper, hw->port + ENETC_PSIPMAR0(si));
+	__raw_ग_लिखोw(lower, hw->port + ENETC_PSIPMAR1(si));
+पूर्ण
 
-static int enetc_pf_set_mac_addr(struct net_device *ndev, void *addr)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct sockaddr *saddr = addr;
+अटल पूर्णांक enetc_pf_set_mac_addr(काष्ठा net_device *ndev, व्योम *addr)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा sockaddr *saddr = addr;
 
-	if (!is_valid_ether_addr(saddr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(saddr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(ndev->dev_addr, saddr->sa_data, ndev->addr_len);
+	स_नकल(ndev->dev_addr, saddr->sa_data, ndev->addr_len);
 	enetc_pf_set_primary_mac_addr(&priv->si->hw, 0, saddr->sa_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_set_vlan_promisc(struct enetc_hw *hw, char si_map)
-{
+अटल व्योम enetc_set_vlan_promisc(काष्ठा enetc_hw *hw, अक्षर si_map)
+अणु
 	u32 val = enetc_port_rd(hw, ENETC_PSIPVMR);
 
 	val &= ~ENETC_PSIPVMR_SET_VP(ENETC_VLAN_PROMISC_MAP_ALL);
 	enetc_port_wr(hw, ENETC_PSIPVMR, ENETC_PSIPVMR_SET_VP(si_map) | val);
-}
+पूर्ण
 
-static void enetc_enable_si_vlan_promisc(struct enetc_pf *pf, int si_idx)
-{
+अटल व्योम enetc_enable_si_vlan_promisc(काष्ठा enetc_pf *pf, पूर्णांक si_idx)
+अणु
 	pf->vlan_promisc_simap |= BIT(si_idx);
 	enetc_set_vlan_promisc(&pf->si->hw, pf->vlan_promisc_simap);
-}
+पूर्ण
 
-static void enetc_disable_si_vlan_promisc(struct enetc_pf *pf, int si_idx)
-{
+अटल व्योम enetc_disable_si_vlan_promisc(काष्ठा enetc_pf *pf, पूर्णांक si_idx)
+अणु
 	pf->vlan_promisc_simap &= ~BIT(si_idx);
 	enetc_set_vlan_promisc(&pf->si->hw, pf->vlan_promisc_simap);
-}
+पूर्ण
 
-static void enetc_set_isol_vlan(struct enetc_hw *hw, int si, u16 vlan, u8 qos)
-{
+अटल व्योम enetc_set_isol_vlan(काष्ठा enetc_hw *hw, पूर्णांक si, u16 vlan, u8 qos)
+अणु
 	u32 val = 0;
 
-	if (vlan)
+	अगर (vlan)
 		val = ENETC_PSIVLAN_EN | ENETC_PSIVLAN_SET_QOS(qos) | vlan;
 
 	enetc_port_wr(hw, ENETC_PSIVLANR(si), val);
-}
+पूर्ण
 
-static int enetc_mac_addr_hash_idx(const u8 *addr)
-{
+अटल पूर्णांक enetc_mac_addr_hash_idx(स्थिर u8 *addr)
+अणु
 	u64 fold = __swab64(ether_addr_to_u64(addr)) >> 16;
 	u64 mask = 0;
-	int res = 0;
-	int i;
+	पूर्णांक res = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		mask |= BIT_ULL(i * 6);
 
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		res |= (hweight64(fold & (mask << i)) & 0x1) << i;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void enetc_reset_mac_addr_filter(struct enetc_mac_filter *filter)
-{
+अटल व्योम enetc_reset_mac_addr_filter(काष्ठा enetc_mac_filter *filter)
+अणु
 	filter->mac_addr_cnt = 0;
 
-	bitmap_zero(filter->mac_hash_table,
+	biपंचांगap_zero(filter->mac_hash_table,
 		    ENETC_MADDR_HASH_TBL_SZ);
-}
+पूर्ण
 
-static void enetc_add_mac_addr_em_filter(struct enetc_mac_filter *filter,
-					 const unsigned char *addr)
-{
+अटल व्योम enetc_add_mac_addr_em_filter(काष्ठा enetc_mac_filter *filter,
+					 स्थिर अचिन्हित अक्षर *addr)
+अणु
 	/* add exact match addr */
 	ether_addr_copy(filter->mac_addr, addr);
 	filter->mac_addr_cnt++;
-}
+पूर्ण
 
-static void enetc_add_mac_addr_ht_filter(struct enetc_mac_filter *filter,
-					 const unsigned char *addr)
-{
-	int idx = enetc_mac_addr_hash_idx(addr);
+अटल व्योम enetc_add_mac_addr_ht_filter(काष्ठा enetc_mac_filter *filter,
+					 स्थिर अचिन्हित अक्षर *addr)
+अणु
+	पूर्णांक idx = enetc_mac_addr_hash_idx(addr);
 
 	/* add hash table entry */
 	__set_bit(idx, filter->mac_hash_table);
 	filter->mac_addr_cnt++;
-}
+पूर्ण
 
-static void enetc_clear_mac_ht_flt(struct enetc_si *si, int si_idx, int type)
-{
+अटल व्योम enetc_clear_mac_ht_flt(काष्ठा enetc_si *si, पूर्णांक si_idx, पूर्णांक type)
+अणु
 	bool err = si->errata & ENETC_ERR_UCMCSWP;
 
-	if (type == UC) {
+	अगर (type == UC) अणु
 		enetc_port_wr(&si->hw, ENETC_PSIUMHFR0(si_idx, err), 0);
 		enetc_port_wr(&si->hw, ENETC_PSIUMHFR1(si_idx), 0);
-	} else { /* MC */
+	पूर्ण अन्यथा अणु /* MC */
 		enetc_port_wr(&si->hw, ENETC_PSIMMHFR0(si_idx, err), 0);
 		enetc_port_wr(&si->hw, ENETC_PSIMMHFR1(si_idx), 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enetc_set_mac_ht_flt(struct enetc_si *si, int si_idx, int type,
-				 unsigned long hash)
-{
+अटल व्योम enetc_set_mac_ht_flt(काष्ठा enetc_si *si, पूर्णांक si_idx, पूर्णांक type,
+				 अचिन्हित दीर्घ hash)
+अणु
 	bool err = si->errata & ENETC_ERR_UCMCSWP;
 
-	if (type == UC) {
+	अगर (type == UC) अणु
 		enetc_port_wr(&si->hw, ENETC_PSIUMHFR0(si_idx, err),
 			      lower_32_bits(hash));
 		enetc_port_wr(&si->hw, ENETC_PSIUMHFR1(si_idx),
 			      upper_32_bits(hash));
-	} else { /* MC */
+	पूर्ण अन्यथा अणु /* MC */
 		enetc_port_wr(&si->hw, ENETC_PSIMMHFR0(si_idx, err),
 			      lower_32_bits(hash));
 		enetc_port_wr(&si->hw, ENETC_PSIMMHFR1(si_idx),
 			      upper_32_bits(hash));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enetc_sync_mac_filters(struct enetc_pf *pf)
-{
-	struct enetc_mac_filter *f = pf->mac_filter;
-	struct enetc_si *si = pf->si;
-	int i, pos;
+अटल व्योम enetc_sync_mac_filters(काष्ठा enetc_pf *pf)
+अणु
+	काष्ठा enetc_mac_filter *f = pf->mac_filter;
+	काष्ठा enetc_si *si = pf->si;
+	पूर्णांक i, pos;
 
 	pos = EMETC_MAC_ADDR_FILT_RES;
 
-	for (i = 0; i < MADDR_TYPE; i++, f++) {
+	क्रम (i = 0; i < MADDR_TYPE; i++, f++) अणु
 		bool em = (f->mac_addr_cnt == 1) && (i == UC);
 		bool clear = !f->mac_addr_cnt;
 
-		if (clear) {
-			if (i == UC)
+		अगर (clear) अणु
+			अगर (i == UC)
 				enetc_clear_mac_flt_entry(si, pos);
 
 			enetc_clear_mac_ht_flt(si, 0, i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* exact match filter */
-		if (em) {
-			int err;
+		अगर (em) अणु
+			पूर्णांक err;
 
 			enetc_clear_mac_ht_flt(si, 0, UC);
 
 			err = enetc_set_mac_flt_entry(si, pos, f->mac_addr,
 						      BIT(0));
-			if (!err)
-				continue;
+			अगर (!err)
+				जारी;
 
 			/* fallback to HT filtering */
 			dev_warn(&si->pdev->dev, "fallback to HT filt (%d)\n",
 				 err);
-		}
+		पूर्ण
 
-		/* hash table filter, clear EM filter for UC entries */
-		if (i == UC)
+		/* hash table filter, clear EM filter क्रम UC entries */
+		अगर (i == UC)
 			enetc_clear_mac_flt_entry(si, pos);
 
 		enetc_set_mac_ht_flt(si, 0, i, *f->mac_hash_table);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enetc_pf_set_rx_mode(struct net_device *ndev)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
-	struct enetc_hw *hw = &priv->si->hw;
+अटल व्योम enetc_pf_set_rx_mode(काष्ठा net_device *ndev)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
+	काष्ठा enetc_hw *hw = &priv->si->hw;
 	bool uprom = false, mprom = false;
-	struct enetc_mac_filter *filter;
-	struct netdev_hw_addr *ha;
+	काष्ठा enetc_mac_filter *filter;
+	काष्ठा netdev_hw_addr *ha;
 	u32 psipmr = 0;
 	bool em;
 
-	if (ndev->flags & IFF_PROMISC) {
-		/* enable promisc mode for SI0 (PF) */
+	अगर (ndev->flags & IFF_PROMISC) अणु
+		/* enable promisc mode क्रम SI0 (PF) */
 		psipmr = ENETC_PSIPMR_SET_UP(0) | ENETC_PSIPMR_SET_MP(0);
 		uprom = true;
 		mprom = true;
-	} else if (ndev->flags & IFF_ALLMULTI) {
-		/* enable multi cast promisc mode for SI0 (PF) */
+	पूर्ण अन्यथा अगर (ndev->flags & IFF_ALLMULTI) अणु
+		/* enable multi cast promisc mode क्रम SI0 (PF) */
 		psipmr = ENETC_PSIPMR_SET_MP(0);
 		mprom = true;
-	}
+	पूर्ण
 
-	/* first 2 filter entries belong to PF */
-	if (!uprom) {
+	/* first 2 filter entries beदीर्घ to PF */
+	अगर (!uprom) अणु
 		/* Update unicast filters */
 		filter = &pf->mac_filter[UC];
 		enetc_reset_mac_addr_filter(filter);
 
 		em = (netdev_uc_count(ndev) == 1);
-		netdev_for_each_uc_addr(ha, ndev) {
-			if (em) {
+		netdev_क्रम_each_uc_addr(ha, ndev) अणु
+			अगर (em) अणु
 				enetc_add_mac_addr_em_filter(filter, ha->addr);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			enetc_add_mac_addr_ht_filter(filter, ha->addr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!mprom) {
+	अगर (!mprom) अणु
 		/* Update multicast filters */
 		filter = &pf->mac_filter[MC];
 		enetc_reset_mac_addr_filter(filter);
 
-		netdev_for_each_mc_addr(ha, ndev) {
-			if (!is_multicast_ether_addr(ha->addr))
-				continue;
+		netdev_क्रम_each_mc_addr(ha, ndev) अणु
+			अगर (!is_multicast_ether_addr(ha->addr))
+				जारी;
 
 			enetc_add_mac_addr_ht_filter(filter, ha->addr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!uprom || !mprom)
+	अगर (!uprom || !mprom)
 		/* update PF entries */
 		enetc_sync_mac_filters(pf);
 
 	psipmr |= enetc_port_rd(hw, ENETC_PSIPMR) &
 		  ~(ENETC_PSIPMR_SET_UP(0) | ENETC_PSIPMR_SET_MP(0));
 	enetc_port_wr(hw, ENETC_PSIPMR, psipmr);
-}
+पूर्ण
 
-static void enetc_set_vlan_ht_filter(struct enetc_hw *hw, int si_idx,
-				     unsigned long hash)
-{
+अटल व्योम enetc_set_vlan_ht_filter(काष्ठा enetc_hw *hw, पूर्णांक si_idx,
+				     अचिन्हित दीर्घ hash)
+अणु
 	enetc_port_wr(hw, ENETC_PSIVHFR0(si_idx), lower_32_bits(hash));
 	enetc_port_wr(hw, ENETC_PSIVHFR1(si_idx), upper_32_bits(hash));
-}
+पूर्ण
 
-static int enetc_vid_hash_idx(unsigned int vid)
-{
-	int res = 0;
-	int i;
+अटल पूर्णांक enetc_vid_hash_idx(अचिन्हित पूर्णांक vid)
+अणु
+	पूर्णांक res = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < 6; i++)
+	क्रम (i = 0; i < 6; i++)
 		res |= (hweight8(vid & (BIT(i) | BIT(i + 6))) & 0x1) << i;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void enetc_sync_vlan_ht_filter(struct enetc_pf *pf, bool rehash)
-{
-	int i;
+अटल व्योम enetc_sync_vlan_ht_filter(काष्ठा enetc_pf *pf, bool rehash)
+अणु
+	पूर्णांक i;
 
-	if (rehash) {
-		bitmap_zero(pf->vlan_ht_filter, ENETC_VLAN_HT_SIZE);
+	अगर (rehash) अणु
+		biपंचांगap_zero(pf->vlan_ht_filter, ENETC_VLAN_HT_SIZE);
 
-		for_each_set_bit(i, pf->active_vlans, VLAN_N_VID) {
-			int hidx = enetc_vid_hash_idx(i);
+		क्रम_each_set_bit(i, pf->active_vlans, VLAN_N_VID) अणु
+			पूर्णांक hidx = enetc_vid_hash_idx(i);
 
 			__set_bit(hidx, pf->vlan_ht_filter);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	enetc_set_vlan_ht_filter(&pf->si->hw, 0, *pf->vlan_ht_filter);
-}
+पूर्ण
 
-static int enetc_vlan_rx_add_vid(struct net_device *ndev, __be16 prot, u16 vid)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
-	int idx;
+अटल पूर्णांक enetc_vlan_rx_add_vid(काष्ठा net_device *ndev, __be16 prot, u16 vid)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
+	पूर्णांक idx;
 
 	__set_bit(vid, pf->active_vlans);
 
 	idx = enetc_vid_hash_idx(vid);
-	if (!__test_and_set_bit(idx, pf->vlan_ht_filter))
+	अगर (!__test_and_set_bit(idx, pf->vlan_ht_filter))
 		enetc_sync_vlan_ht_filter(pf, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enetc_vlan_rx_del_vid(struct net_device *ndev, __be16 prot, u16 vid)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
+अटल पूर्णांक enetc_vlan_rx_del_vid(काष्ठा net_device *ndev, __be16 prot, u16 vid)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
 
 	__clear_bit(vid, pf->active_vlans);
 	enetc_sync_vlan_ht_filter(pf, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_set_loopback(struct net_device *ndev, bool en)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_hw *hw = &priv->si->hw;
+अटल व्योम enetc_set_loopback(काष्ठा net_device *ndev, bool en)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_hw *hw = &priv->si->hw;
 	u32 reg;
 
 	reg = enetc_port_rd(hw, ENETC_PM0_IF_MODE);
-	if (reg & ENETC_PM0_IFM_RG) {
+	अगर (reg & ENETC_PM0_IFM_RG) अणु
 		/* RGMII mode */
 		reg = (reg & ~ENETC_PM0_IFM_RLP) |
 		      (en ? ENETC_PM0_IFM_RLP : 0);
 		enetc_port_wr(hw, ENETC_PM0_IF_MODE, reg);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* assume SGMII mode */
 		reg = enetc_port_rd(hw, ENETC_PM0_CMD_CFG);
 		reg = (reg & ~ENETC_PM0_CMD_XGLP) |
@@ -335,118 +336,118 @@ static void enetc_set_loopback(struct net_device *ndev, bool en)
 		      (en ? ENETC_PM0_CMD_PHY_TX_EN : 0);
 		enetc_port_wr(hw, ENETC_PM0_CMD_CFG, reg);
 		enetc_port_wr(hw, ENETC_PM1_CMD_CFG, reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int enetc_pf_set_vf_mac(struct net_device *ndev, int vf, u8 *mac)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
-	struct enetc_vf_state *vf_state;
+अटल पूर्णांक enetc_pf_set_vf_mac(काष्ठा net_device *ndev, पूर्णांक vf, u8 *mac)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
+	काष्ठा enetc_vf_state *vf_state;
 
-	if (vf >= pf->total_vfs)
-		return -EINVAL;
+	अगर (vf >= pf->total_vfs)
+		वापस -EINVAL;
 
-	if (!is_valid_ether_addr(mac))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(mac))
+		वापस -EADDRNOTAVAIL;
 
 	vf_state = &pf->vf_state[vf];
 	vf_state->flags |= ENETC_VF_FLAG_PF_SET_MAC;
 	enetc_pf_set_primary_mac_addr(&priv->si->hw, vf + 1, mac);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enetc_pf_set_vf_vlan(struct net_device *ndev, int vf, u16 vlan,
+अटल पूर्णांक enetc_pf_set_vf_vlan(काष्ठा net_device *ndev, पूर्णांक vf, u16 vlan,
 				u8 qos, __be16 proto)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
 
-	if (priv->si->errata & ENETC_ERR_VLAN_ISOL)
-		return -EOPNOTSUPP;
+	अगर (priv->si->errata & ENETC_ERR_VLAN_ISOL)
+		वापस -EOPNOTSUPP;
 
-	if (vf >= pf->total_vfs)
-		return -EINVAL;
+	अगर (vf >= pf->total_vfs)
+		वापस -EINVAL;
 
-	if (proto != htons(ETH_P_8021Q))
-		/* only C-tags supported for now */
-		return -EPROTONOSUPPORT;
+	अगर (proto != htons(ETH_P_8021Q))
+		/* only C-tags supported क्रम now */
+		वापस -EPROTONOSUPPORT;
 
 	enetc_set_isol_vlan(&priv->si->hw, vf + 1, vlan, qos);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enetc_pf_set_vf_spoofchk(struct net_device *ndev, int vf, bool en)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
+अटल पूर्णांक enetc_pf_set_vf_spoofchk(काष्ठा net_device *ndev, पूर्णांक vf, bool en)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
 	u32 cfgr;
 
-	if (vf >= pf->total_vfs)
-		return -EINVAL;
+	अगर (vf >= pf->total_vfs)
+		वापस -EINVAL;
 
 	cfgr = enetc_port_rd(&priv->si->hw, ENETC_PSICFGR0(vf + 1));
 	cfgr = (cfgr & ~ENETC_PSICFGR0_ASE) | (en ? ENETC_PSICFGR0_ASE : 0);
 	enetc_port_wr(&priv->si->hw, ENETC_PSICFGR0(vf + 1), cfgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enetc_setup_mac_address(struct device_node *np, struct enetc_pf *pf,
-				   int si)
-{
-	struct device *dev = &pf->si->pdev->dev;
-	struct enetc_hw *hw = &pf->si->hw;
-	u8 mac_addr[ETH_ALEN] = { 0 };
-	int err;
+अटल पूर्णांक enetc_setup_mac_address(काष्ठा device_node *np, काष्ठा enetc_pf *pf,
+				   पूर्णांक si)
+अणु
+	काष्ठा device *dev = &pf->si->pdev->dev;
+	काष्ठा enetc_hw *hw = &pf->si->hw;
+	u8 mac_addr[ETH_ALEN] = अणु 0 पूर्ण;
+	पूर्णांक err;
 
 	/* (1) try to get the MAC address from the device tree */
-	if (np) {
+	अगर (np) अणु
 		err = of_get_mac_address(np, mac_addr);
-		if (err == -EPROBE_DEFER)
-			return err;
-	}
+		अगर (err == -EPROBE_DEFER)
+			वापस err;
+	पूर्ण
 
 	/* (2) bootloader supplied MAC address */
-	if (is_zero_ether_addr(mac_addr))
+	अगर (is_zero_ether_addr(mac_addr))
 		enetc_pf_get_primary_mac_addr(hw, si, mac_addr);
 
-	/* (3) choose a random one */
-	if (is_zero_ether_addr(mac_addr)) {
-		eth_random_addr(mac_addr);
+	/* (3) choose a अक्रमom one */
+	अगर (is_zero_ether_addr(mac_addr)) अणु
+		eth_अक्रमom_addr(mac_addr);
 		dev_info(dev, "no MAC address specified for SI%d, using %pM\n",
 			 si, mac_addr);
-	}
+	पूर्ण
 
 	enetc_pf_set_primary_mac_addr(hw, si, mac_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int enetc_setup_mac_addresses(struct device_node *np,
-				     struct enetc_pf *pf)
-{
-	int err, i;
+अटल पूर्णांक enetc_setup_mac_addresses(काष्ठा device_node *np,
+				     काष्ठा enetc_pf *pf)
+अणु
+	पूर्णांक err, i;
 
 	/* The PF might take its MAC from the device tree */
 	err = enetc_setup_mac_address(np, pf, 0);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	for (i = 0; i < pf->total_vfs; i++) {
-		err = enetc_setup_mac_address(NULL, pf, i + 1);
-		if (err)
-			return err;
-	}
+	क्रम (i = 0; i < pf->total_vfs; i++) अणु
+		err = enetc_setup_mac_address(शून्य, pf, i + 1);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_port_assign_rfs_entries(struct enetc_si *si)
-{
-	struct enetc_pf *pf = enetc_si_priv(si);
-	struct enetc_hw *hw = &si->hw;
-	int num_entries, vf_entries, i;
+अटल व्योम enetc_port_assign_rfs_entries(काष्ठा enetc_si *si)
+अणु
+	काष्ठा enetc_pf *pf = enetc_si_priv(si);
+	काष्ठा enetc_hw *hw = &si->hw;
+	पूर्णांक num_entries, vf_entries, i;
 	u32 val;
 
 	/* split RFS entries between functions */
@@ -454,20 +455,20 @@ static void enetc_port_assign_rfs_entries(struct enetc_si *si)
 	num_entries = ENETC_PRFSCAPR_GET_NUM_RFS(val);
 	vf_entries = num_entries / (pf->total_vfs + 1);
 
-	for (i = 0; i < pf->total_vfs; i++)
+	क्रम (i = 0; i < pf->total_vfs; i++)
 		enetc_port_wr(hw, ENETC_PSIRFSCFGR(i + 1), vf_entries);
 	enetc_port_wr(hw, ENETC_PSIRFSCFGR(0),
 		      num_entries - vf_entries * pf->total_vfs);
 
 	/* enable RFS on port */
 	enetc_port_wr(hw, ENETC_PRFSMR, ENETC_PRFSMR_RFSE);
-}
+पूर्ण
 
-static void enetc_port_si_configure(struct enetc_si *si)
-{
-	struct enetc_pf *pf = enetc_si_priv(si);
-	struct enetc_hw *hw = &si->hw;
-	int num_rings, i;
+अटल व्योम enetc_port_si_configure(काष्ठा enetc_si *si)
+अणु
+	काष्ठा enetc_pf *pf = enetc_si_priv(si);
+	काष्ठा enetc_hw *hw = &si->hw;
+	पूर्णांक num_rings, i;
 	u32 val;
 
 	val = enetc_port_rd(hw, ENETC_PCAPR0);
@@ -476,7 +477,7 @@ static void enetc_port_si_configure(struct enetc_si *si)
 	val = ENETC_PSICFGR0_SET_TXBDR(ENETC_PF_NUM_RINGS);
 	val |= ENETC_PSICFGR0_SET_RXBDR(ENETC_PF_NUM_RINGS);
 
-	if (unlikely(num_rings < ENETC_PF_NUM_RINGS)) {
+	अगर (unlikely(num_rings < ENETC_PF_NUM_RINGS)) अणु
 		val = ENETC_PSICFGR0_SET_TXBDR(num_rings);
 		val |= ENETC_PSICFGR0_SET_RXBDR(num_rings);
 
@@ -484,38 +485,38 @@ static void enetc_port_si_configure(struct enetc_si *si)
 			 num_rings, ENETC_PF_NUM_RINGS);
 
 		num_rings = 0;
-	}
+	पूर्ण
 
-	/* Add default one-time settings for SI0 (PF) */
+	/* Add शेष one-समय settings क्रम SI0 (PF) */
 	val |= ENETC_PSICFGR0_SIVC(ENETC_VLAN_TYPE_C | ENETC_VLAN_TYPE_S);
 
 	enetc_port_wr(hw, ENETC_PSICFGR0(0), val);
 
-	if (num_rings)
+	अगर (num_rings)
 		num_rings -= ENETC_PF_NUM_RINGS;
 
-	/* Configure the SIs for each available VF */
+	/* Configure the SIs क्रम each available VF */
 	val = ENETC_PSICFGR0_SIVC(ENETC_VLAN_TYPE_C | ENETC_VLAN_TYPE_S);
 	val |= ENETC_PSICFGR0_VTE | ENETC_PSICFGR0_SIVIE;
 
-	if (num_rings) {
+	अगर (num_rings) अणु
 		num_rings /= pf->total_vfs;
 		val |= ENETC_PSICFGR0_SET_TXBDR(num_rings);
 		val |= ENETC_PSICFGR0_SET_RXBDR(num_rings);
-	}
+	पूर्ण
 
-	for (i = 0; i < pf->total_vfs; i++)
+	क्रम (i = 0; i < pf->total_vfs; i++)
 		enetc_port_wr(hw, ENETC_PSICFGR0(i + 1), val);
 
 	/* Port level VLAN settings */
 	val = ENETC_PVCLCTR_OVTPIDL(ENETC_VLAN_TYPE_C | ENETC_VLAN_TYPE_S);
 	enetc_port_wr(hw, ENETC_PVCLCTR, val);
-	/* use outer tag for VLAN filtering */
+	/* use outer tag क्रम VLAN filtering */
 	enetc_port_wr(hw, ENETC_PSIVLANFMR, ENETC_PSIVLANFMR_VS);
-}
+पूर्ण
 
-static void enetc_configure_port_mac(struct enetc_hw *hw)
-{
+अटल व्योम enetc_configure_port_mac(काष्ठा enetc_hw *hw)
+अणु
 	enetc_port_wr(hw, ENETC_PM0_MAXFRM,
 		      ENETC_SET_MAXFRM(ENETC_RX_MAXFRM_SIZE));
 
@@ -527,33 +528,33 @@ static void enetc_configure_port_mac(struct enetc_hw *hw)
 	enetc_port_wr(hw, ENETC_PM1_CMD_CFG, ENETC_PM0_CMD_PHY_TX_EN |
 		      ENETC_PM0_CMD_TXP	| ENETC_PM0_PROMISC);
 
-	/* On LS1028A, the MAC RX FIFO defaults to 2, which is too high
+	/* On LS1028A, the MAC RX FIFO शेषs to 2, which is too high
 	 * and may lead to RX lock-up under traffic. Set it to 1 instead,
 	 * as recommended by the hardware team.
 	 */
 	enetc_port_wr(hw, ENETC_PM0_RX_FIFO, ENETC_PM0_RX_FIFO_VAL);
-}
+पूर्ण
 
-static void enetc_mac_config(struct enetc_hw *hw, phy_interface_t phy_mode)
-{
+अटल व्योम enetc_mac_config(काष्ठा enetc_hw *hw, phy_पूर्णांकerface_t phy_mode)
+अणु
 	u32 val;
 
-	if (phy_interface_mode_is_rgmii(phy_mode)) {
+	अगर (phy_पूर्णांकerface_mode_is_rgmii(phy_mode)) अणु
 		val = enetc_port_rd(hw, ENETC_PM0_IF_MODE);
 		val &= ~ENETC_PM0_IFM_EN_AUTO;
 		val &= ENETC_PM0_IFM_IFMODE_MASK;
 		val |= ENETC_PM0_IFM_IFMODE_GMII | ENETC_PM0_IFM_RG;
 		enetc_port_wr(hw, ENETC_PM0_IF_MODE, val);
-	}
+	पूर्ण
 
-	if (phy_mode == PHY_INTERFACE_MODE_USXGMII) {
+	अगर (phy_mode == PHY_INTERFACE_MODE_USXGMII) अणु
 		val = ENETC_PM0_IFM_FULL_DPX | ENETC_PM0_IFM_IFMODE_XGMII;
 		enetc_port_wr(hw, ENETC_PM0_IF_MODE, val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void enetc_mac_enable(struct enetc_hw *hw, bool en)
-{
+अटल व्योम enetc_mac_enable(काष्ठा enetc_hw *hw, bool en)
+अणु
 	u32 val = enetc_port_rd(hw, ENETC_PM0_CMD_CFG);
 
 	val &= ~(ENETC_PM0_TX_EN | ENETC_PM0_RX_EN);
@@ -561,10 +562,10 @@ static void enetc_mac_enable(struct enetc_hw *hw, bool en)
 
 	enetc_port_wr(hw, ENETC_PM0_CMD_CFG, val);
 	enetc_port_wr(hw, ENETC_PM1_CMD_CFG, val);
-}
+पूर्ण
 
-static void enetc_configure_port_pmac(struct enetc_hw *hw)
-{
+अटल व्योम enetc_configure_port_pmac(काष्ठा enetc_hw *hw)
+अणु
 	u32 temp;
 
 	/* Set pMAC step lock */
@@ -574,12 +575,12 @@ static void enetc_configure_port_pmac(struct enetc_hw *hw)
 
 	temp = enetc_port_rd(hw, ENETC_MMCSR);
 	enetc_port_wr(hw, ENETC_MMCSR, temp | ENETC_MMCSR_ME);
-}
+पूर्ण
 
-static void enetc_configure_port(struct enetc_pf *pf)
-{
+अटल व्योम enetc_configure_port(काष्ठा enetc_pf *pf)
+अणु
 	u8 hash_key[ENETC_RSSHASH_KEY_SIZE];
-	struct enetc_hw *hw = &pf->si->hw;
+	काष्ठा enetc_hw *hw = &pf->si->hw;
 
 	enetc_configure_port_pmac(hw);
 
@@ -588,13 +589,13 @@ static void enetc_configure_port(struct enetc_pf *pf)
 	enetc_port_si_configure(pf->si);
 
 	/* set up hash key */
-	get_random_bytes(hash_key, ENETC_RSSHASH_KEY_SIZE);
+	get_अक्रमom_bytes(hash_key, ENETC_RSSHASH_KEY_SIZE);
 	enetc_set_rss_key(hw, hash_key);
 
 	/* split up RFS entries */
 	enetc_port_assign_rfs_entries(pf->si);
 
-	/* enforce VLAN promisc mode for all SIs */
+	/* enक्रमce VLAN promisc mode क्रम all SIs */
 	pf->vlan_promisc_simap = ENETC_VLAN_PROMISC_MAP_ALL;
 	enetc_set_vlan_promisc(hw, pf->vlan_promisc_simap);
 
@@ -602,148 +603,148 @@ static void enetc_configure_port(struct enetc_pf *pf)
 
 	/* enable port */
 	enetc_port_wr(hw, ENETC_PMR, ENETC_PMR_EN);
-}
+पूर्ण
 
 /* Messaging */
-static u16 enetc_msg_pf_set_vf_primary_mac_addr(struct enetc_pf *pf,
-						int vf_id)
-{
-	struct enetc_vf_state *vf_state = &pf->vf_state[vf_id];
-	struct enetc_msg_swbd *msg = &pf->rxmsg[vf_id];
-	struct enetc_msg_cmd_set_primary_mac *cmd;
-	struct device *dev = &pf->si->pdev->dev;
+अटल u16 enetc_msg_pf_set_vf_primary_mac_addr(काष्ठा enetc_pf *pf,
+						पूर्णांक vf_id)
+अणु
+	काष्ठा enetc_vf_state *vf_state = &pf->vf_state[vf_id];
+	काष्ठा enetc_msg_swbd *msg = &pf->rxmsg[vf_id];
+	काष्ठा enetc_msg_cmd_set_primary_mac *cmd;
+	काष्ठा device *dev = &pf->si->pdev->dev;
 	u16 cmd_id;
-	char *addr;
+	अक्षर *addr;
 
-	cmd = (struct enetc_msg_cmd_set_primary_mac *)msg->vaddr;
+	cmd = (काष्ठा enetc_msg_cmd_set_primary_mac *)msg->vaddr;
 	cmd_id = cmd->header.id;
-	if (cmd_id != ENETC_MSG_CMD_MNG_ADD)
-		return ENETC_MSG_CMD_STATUS_FAIL;
+	अगर (cmd_id != ENETC_MSG_CMD_MNG_ADD)
+		वापस ENETC_MSG_CMD_STATUS_FAIL;
 
 	addr = cmd->mac.sa_data;
-	if (vf_state->flags & ENETC_VF_FLAG_PF_SET_MAC)
+	अगर (vf_state->flags & ENETC_VF_FLAG_PF_SET_MAC)
 		dev_warn(dev, "Attempt to override PF set mac addr for VF%d\n",
 			 vf_id);
-	else
+	अन्यथा
 		enetc_pf_set_primary_mac_addr(&pf->si->hw, vf_id + 1, addr);
 
-	return ENETC_MSG_CMD_STATUS_OK;
-}
+	वापस ENETC_MSG_CMD_STATUS_OK;
+पूर्ण
 
-void enetc_msg_handle_rxmsg(struct enetc_pf *pf, int vf_id, u16 *status)
-{
-	struct enetc_msg_swbd *msg = &pf->rxmsg[vf_id];
-	struct device *dev = &pf->si->pdev->dev;
-	struct enetc_msg_cmd_header *cmd_hdr;
+व्योम enetc_msg_handle_rxmsg(काष्ठा enetc_pf *pf, पूर्णांक vf_id, u16 *status)
+अणु
+	काष्ठा enetc_msg_swbd *msg = &pf->rxmsg[vf_id];
+	काष्ठा device *dev = &pf->si->pdev->dev;
+	काष्ठा enetc_msg_cmd_header *cmd_hdr;
 	u16 cmd_type;
 
 	*status = ENETC_MSG_CMD_STATUS_OK;
-	cmd_hdr = (struct enetc_msg_cmd_header *)msg->vaddr;
+	cmd_hdr = (काष्ठा enetc_msg_cmd_header *)msg->vaddr;
 	cmd_type = cmd_hdr->type;
 
-	switch (cmd_type) {
-	case ENETC_MSG_CMD_MNG_MAC:
+	चयन (cmd_type) अणु
+	हाल ENETC_MSG_CMD_MNG_MAC:
 		*status = enetc_msg_pf_set_vf_primary_mac_addr(pf, vf_id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "command not supported (cmd_type: 0x%x)\n",
 			cmd_type);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PCI_IOV
-static int enetc_sriov_configure(struct pci_dev *pdev, int num_vfs)
-{
-	struct enetc_si *si = pci_get_drvdata(pdev);
-	struct enetc_pf *pf = enetc_si_priv(si);
-	int err;
+#अगर_घोषित CONFIG_PCI_IOV
+अटल पूर्णांक enetc_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
+अणु
+	काष्ठा enetc_si *si = pci_get_drvdata(pdev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(si);
+	पूर्णांक err;
 
-	if (!num_vfs) {
-		enetc_msg_psi_free(pf);
-		kfree(pf->vf_state);
+	अगर (!num_vfs) अणु
+		enetc_msg_psi_मुक्त(pf);
+		kमुक्त(pf->vf_state);
 		pf->num_vfs = 0;
 		pci_disable_sriov(pdev);
-	} else {
+	पूर्ण अन्यथा अणु
 		pf->num_vfs = num_vfs;
 
-		pf->vf_state = kcalloc(num_vfs, sizeof(struct enetc_vf_state),
+		pf->vf_state = kसुस्मृति(num_vfs, माप(काष्ठा enetc_vf_state),
 				       GFP_KERNEL);
-		if (!pf->vf_state) {
+		अगर (!pf->vf_state) अणु
 			pf->num_vfs = 0;
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		err = enetc_msg_psi_init(pf);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev, "enetc_msg_psi_init (%d)\n", err);
-			goto err_msg_psi;
-		}
+			जाओ err_msg_psi;
+		पूर्ण
 
 		err = pci_enable_sriov(pdev, num_vfs);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev, "pci_enable_sriov err %d\n", err);
-			goto err_en_sriov;
-		}
-	}
+			जाओ err_en_sriov;
+		पूर्ण
+	पूर्ण
 
-	return num_vfs;
+	वापस num_vfs;
 
 err_en_sriov:
-	enetc_msg_psi_free(pf);
+	enetc_msg_psi_मुक्त(pf);
 err_msg_psi:
-	kfree(pf->vf_state);
+	kमुक्त(pf->vf_state);
 	pf->num_vfs = 0;
 
-	return err;
-}
-#else
-#define enetc_sriov_configure(pdev, num_vfs)	(void)0
-#endif
+	वापस err;
+पूर्ण
+#अन्यथा
+#घोषणा enetc_sriov_configure(pdev, num_vfs)	(व्योम)0
+#पूर्ण_अगर
 
-static int enetc_pf_set_features(struct net_device *ndev,
+अटल पूर्णांक enetc_pf_set_features(काष्ठा net_device *ndev,
 				 netdev_features_t features)
-{
+अणु
 	netdev_features_t changed = ndev->features ^ features;
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
 
-	if (changed & NETIF_F_HW_VLAN_CTAG_FILTER) {
-		struct enetc_pf *pf = enetc_si_priv(priv->si);
+	अगर (changed & NETIF_F_HW_VLAN_CTAG_FILTER) अणु
+		काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
 
-		if (!!(features & NETIF_F_HW_VLAN_CTAG_FILTER))
+		अगर (!!(features & NETIF_F_HW_VLAN_CTAG_FILTER))
 			enetc_disable_si_vlan_promisc(pf, 0);
-		else
+		अन्यथा
 			enetc_enable_si_vlan_promisc(pf, 0);
-	}
+	पूर्ण
 
-	if (changed & NETIF_F_LOOPBACK)
+	अगर (changed & NETIF_F_LOOPBACK)
 		enetc_set_loopback(ndev, !!(features & NETIF_F_LOOPBACK));
 
-	return enetc_set_features(ndev, features);
-}
+	वापस enetc_set_features(ndev, features);
+पूर्ण
 
-static const struct net_device_ops enetc_ndev_ops = {
-	.ndo_open		= enetc_open,
-	.ndo_stop		= enetc_close,
-	.ndo_start_xmit		= enetc_xmit,
-	.ndo_get_stats		= enetc_get_stats,
-	.ndo_set_mac_address	= enetc_pf_set_mac_addr,
-	.ndo_set_rx_mode	= enetc_pf_set_rx_mode,
-	.ndo_vlan_rx_add_vid	= enetc_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid	= enetc_vlan_rx_del_vid,
-	.ndo_set_vf_mac		= enetc_pf_set_vf_mac,
-	.ndo_set_vf_vlan	= enetc_pf_set_vf_vlan,
-	.ndo_set_vf_spoofchk	= enetc_pf_set_vf_spoofchk,
-	.ndo_set_features	= enetc_pf_set_features,
-	.ndo_do_ioctl		= enetc_ioctl,
-	.ndo_setup_tc		= enetc_setup_tc,
-	.ndo_bpf		= enetc_setup_bpf,
-	.ndo_xdp_xmit		= enetc_xdp_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops enetc_ndev_ops = अणु
+	.nकरो_खोलो		= enetc_खोलो,
+	.nकरो_stop		= enetc_बंद,
+	.nकरो_start_xmit		= enetc_xmit,
+	.nकरो_get_stats		= enetc_get_stats,
+	.nकरो_set_mac_address	= enetc_pf_set_mac_addr,
+	.nकरो_set_rx_mode	= enetc_pf_set_rx_mode,
+	.nकरो_vlan_rx_add_vid	= enetc_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid	= enetc_vlan_rx_del_vid,
+	.nकरो_set_vf_mac		= enetc_pf_set_vf_mac,
+	.nकरो_set_vf_vlan	= enetc_pf_set_vf_vlan,
+	.nकरो_set_vf_spoofchk	= enetc_pf_set_vf_spoofchk,
+	.nकरो_set_features	= enetc_pf_set_features,
+	.nकरो_करो_ioctl		= enetc_ioctl,
+	.nकरो_setup_tc		= enetc_setup_tc,
+	.nकरो_bpf		= enetc_setup_bpf,
+	.nकरो_xdp_xmit		= enetc_xdp_xmit,
+पूर्ण;
 
-static void enetc_pf_netdev_setup(struct enetc_si *si, struct net_device *ndev,
-				  const struct net_device_ops *ndev_ops)
-{
-	struct enetc_ndev_priv *priv = netdev_priv(ndev);
+अटल व्योम enetc_pf_netdev_setup(काष्ठा enetc_si *si, काष्ठा net_device *ndev,
+				  स्थिर काष्ठा net_device_ops *ndev_ops)
+अणु
+	काष्ठा enetc_ndev_priv *priv = netdev_priv(ndev);
 
 	SET_NETDEV_DEV(ndev, &si->pdev->dev);
 	priv->ndev = ndev;
@@ -754,7 +755,7 @@ static void enetc_pf_netdev_setup(struct enetc_si *si, struct net_device *ndev,
 	priv->msg_enable = (NETIF_MSG_WOL << 1) - 1;
 	ndev->netdev_ops = ndev_ops;
 	enetc_set_ethtool_ops(ndev);
-	ndev->watchdog_timeo = 5 * HZ;
+	ndev->watchकरोg_समयo = 5 * HZ;
 	ndev->max_mtu = ENETC_MAX_MTU;
 
 	ndev->hw_features = NETIF_F_SG | NETIF_F_RXCSUM |
@@ -764,182 +765,182 @@ static void enetc_pf_netdev_setup(struct enetc_si *si, struct net_device *ndev,
 			 NETIF_F_HW_VLAN_CTAG_TX |
 			 NETIF_F_HW_VLAN_CTAG_RX;
 
-	if (si->num_rss)
+	अगर (si->num_rss)
 		ndev->hw_features |= NETIF_F_RXHASH;
 
 	ndev->priv_flags |= IFF_UNICAST_FLT;
 
-	if (si->hw_features & ENETC_SI_F_QBV)
+	अगर (si->hw_features & ENETC_SI_F_QBV)
 		priv->active_offloads |= ENETC_F_QBV;
 
-	if (si->hw_features & ENETC_SI_F_PSFP && !enetc_psfp_enable(priv)) {
+	अगर (si->hw_features & ENETC_SI_F_PSFP && !enetc_psfp_enable(priv)) अणु
 		priv->active_offloads |= ENETC_F_QCI;
 		ndev->features |= NETIF_F_HW_TC;
 		ndev->hw_features |= NETIF_F_HW_TC;
-	}
+	पूर्ण
 
 	/* pick up primary MAC address from SI */
 	enetc_get_primary_mac_addr(&si->hw, ndev->dev_addr);
-}
+पूर्ण
 
-static int enetc_mdio_probe(struct enetc_pf *pf, struct device_node *np)
-{
-	struct device *dev = &pf->si->pdev->dev;
-	struct enetc_mdio_priv *mdio_priv;
-	struct mii_bus *bus;
-	int err;
+अटल पूर्णांक enetc_mdio_probe(काष्ठा enetc_pf *pf, काष्ठा device_node *np)
+अणु
+	काष्ठा device *dev = &pf->si->pdev->dev;
+	काष्ठा enetc_mdio_priv *mdio_priv;
+	काष्ठा mii_bus *bus;
+	पूर्णांक err;
 
-	bus = devm_mdiobus_alloc_size(dev, sizeof(*mdio_priv));
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_mdiobus_alloc_size(dev, माप(*mdio_priv));
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	bus->name = "Freescale ENETC MDIO Bus";
-	bus->read = enetc_mdio_read;
-	bus->write = enetc_mdio_write;
+	bus->पढ़ो = enetc_mdio_पढ़ो;
+	bus->ग_लिखो = enetc_mdio_ग_लिखो;
 	bus->parent = dev;
 	mdio_priv = bus->priv;
 	mdio_priv->hw = &pf->si->hw;
 	mdio_priv->mdio_base = ENETC_EMDIO_BASE;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s", dev_name(dev));
 
-	err = of_mdiobus_register(bus, np);
-	if (err) {
+	err = of_mdiobus_रेजिस्टर(bus, np);
+	अगर (err) अणु
 		dev_err(dev, "cannot register MDIO bus\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pf->mdio = bus;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_mdio_remove(struct enetc_pf *pf)
-{
-	if (pf->mdio)
-		mdiobus_unregister(pf->mdio);
-}
+अटल व्योम enetc_mdio_हटाओ(काष्ठा enetc_pf *pf)
+अणु
+	अगर (pf->mdio)
+		mdiobus_unरेजिस्टर(pf->mdio);
+पूर्ण
 
-static int enetc_imdio_create(struct enetc_pf *pf)
-{
-	struct device *dev = &pf->si->pdev->dev;
-	struct enetc_mdio_priv *mdio_priv;
-	struct lynx_pcs *pcs_lynx;
-	struct mdio_device *pcs;
-	struct mii_bus *bus;
-	int err;
+अटल पूर्णांक enetc_imdio_create(काष्ठा enetc_pf *pf)
+अणु
+	काष्ठा device *dev = &pf->si->pdev->dev;
+	काष्ठा enetc_mdio_priv *mdio_priv;
+	काष्ठा lynx_pcs *pcs_lynx;
+	काष्ठा mdio_device *pcs;
+	काष्ठा mii_bus *bus;
+	पूर्णांक err;
 
-	bus = mdiobus_alloc_size(sizeof(*mdio_priv));
-	if (!bus)
-		return -ENOMEM;
+	bus = mdiobus_alloc_size(माप(*mdio_priv));
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	bus->name = "Freescale ENETC internal MDIO Bus";
-	bus->read = enetc_mdio_read;
-	bus->write = enetc_mdio_write;
+	bus->पढ़ो = enetc_mdio_पढ़ो;
+	bus->ग_लिखो = enetc_mdio_ग_लिखो;
 	bus->parent = dev;
 	bus->phy_mask = ~0;
 	mdio_priv = bus->priv;
 	mdio_priv->hw = &pf->si->hw;
 	mdio_priv->mdio_base = ENETC_PM_IMDIO_BASE;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
 
-	err = mdiobus_register(bus);
-	if (err) {
+	err = mdiobus_रेजिस्टर(bus);
+	अगर (err) अणु
 		dev_err(dev, "cannot register internal MDIO bus (%d)\n", err);
-		goto free_mdio_bus;
-	}
+		जाओ मुक्त_mdio_bus;
+	पूर्ण
 
 	pcs = mdio_device_create(bus, 0);
-	if (IS_ERR(pcs)) {
+	अगर (IS_ERR(pcs)) अणु
 		err = PTR_ERR(pcs);
 		dev_err(dev, "cannot create pcs (%d)\n", err);
-		goto unregister_mdiobus;
-	}
+		जाओ unरेजिस्टर_mdiobus;
+	पूर्ण
 
 	pcs_lynx = lynx_pcs_create(pcs);
-	if (!pcs_lynx) {
-		mdio_device_free(pcs);
+	अगर (!pcs_lynx) अणु
+		mdio_device_मुक्त(pcs);
 		err = -ENOMEM;
 		dev_err(dev, "cannot create lynx pcs (%d)\n", err);
-		goto unregister_mdiobus;
-	}
+		जाओ unरेजिस्टर_mdiobus;
+	पूर्ण
 
 	pf->imdio = bus;
 	pf->pcs = pcs_lynx;
 
-	return 0;
+	वापस 0;
 
-unregister_mdiobus:
-	mdiobus_unregister(bus);
-free_mdio_bus:
-	mdiobus_free(bus);
-	return err;
-}
+unरेजिस्टर_mdiobus:
+	mdiobus_unरेजिस्टर(bus);
+मुक्त_mdio_bus:
+	mdiobus_मुक्त(bus);
+	वापस err;
+पूर्ण
 
-static void enetc_imdio_remove(struct enetc_pf *pf)
-{
-	if (pf->pcs) {
-		mdio_device_free(pf->pcs->mdio);
+अटल व्योम enetc_imdio_हटाओ(काष्ठा enetc_pf *pf)
+अणु
+	अगर (pf->pcs) अणु
+		mdio_device_मुक्त(pf->pcs->mdio);
 		lynx_pcs_destroy(pf->pcs);
-	}
-	if (pf->imdio) {
-		mdiobus_unregister(pf->imdio);
-		mdiobus_free(pf->imdio);
-	}
-}
+	पूर्ण
+	अगर (pf->imdio) अणु
+		mdiobus_unरेजिस्टर(pf->imdio);
+		mdiobus_मुक्त(pf->imdio);
+	पूर्ण
+पूर्ण
 
-static bool enetc_port_has_pcs(struct enetc_pf *pf)
-{
-	return (pf->if_mode == PHY_INTERFACE_MODE_SGMII ||
-		pf->if_mode == PHY_INTERFACE_MODE_2500BASEX ||
-		pf->if_mode == PHY_INTERFACE_MODE_USXGMII);
-}
+अटल bool enetc_port_has_pcs(काष्ठा enetc_pf *pf)
+अणु
+	वापस (pf->अगर_mode == PHY_INTERFACE_MODE_SGMII ||
+		pf->अगर_mode == PHY_INTERFACE_MODE_2500BASEX ||
+		pf->अगर_mode == PHY_INTERFACE_MODE_USXGMII);
+पूर्ण
 
-static int enetc_mdiobus_create(struct enetc_pf *pf, struct device_node *node)
-{
-	struct device_node *mdio_np;
-	int err;
+अटल पूर्णांक enetc_mdiobus_create(काष्ठा enetc_pf *pf, काष्ठा device_node *node)
+अणु
+	काष्ठा device_node *mdio_np;
+	पूर्णांक err;
 
 	mdio_np = of_get_child_by_name(node, "mdio");
-	if (mdio_np) {
+	अगर (mdio_np) अणु
 		err = enetc_mdio_probe(pf, mdio_np);
 
 		of_node_put(mdio_np);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (enetc_port_has_pcs(pf)) {
+	अगर (enetc_port_has_pcs(pf)) अणु
 		err = enetc_imdio_create(pf);
-		if (err) {
-			enetc_mdio_remove(pf);
-			return err;
-		}
-	}
+		अगर (err) अणु
+			enetc_mdio_हटाओ(pf);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_mdiobus_destroy(struct enetc_pf *pf)
-{
-	enetc_mdio_remove(pf);
-	enetc_imdio_remove(pf);
-}
+अटल व्योम enetc_mdiobus_destroy(काष्ठा enetc_pf *pf)
+अणु
+	enetc_mdio_हटाओ(pf);
+	enetc_imdio_हटाओ(pf);
+पूर्ण
 
-static void enetc_pl_mac_validate(struct phylink_config *config,
-				  unsigned long *supported,
-				  struct phylink_link_state *state)
-{
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+अटल व्योम enetc_pl_mac_validate(काष्ठा phylink_config *config,
+				  अचिन्हित दीर्घ *supported,
+				  काष्ठा phylink_link_state *state)
+अणु
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
 
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    state->interface != PHY_INTERFACE_MODE_INTERNAL &&
-	    state->interface != PHY_INTERFACE_MODE_SGMII &&
-	    state->interface != PHY_INTERFACE_MODE_2500BASEX &&
-	    state->interface != PHY_INTERFACE_MODE_USXGMII &&
-	    !phy_interface_mode_is_rgmii(state->interface)) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		return;
-	}
+	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_INTERNAL &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_SGMII &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_2500BASEX &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_USXGMII &&
+	    !phy_पूर्णांकerface_mode_is_rgmii(state->पूर्णांकerface)) अणु
+		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		वापस;
+	पूर्ण
 
 	phylink_set_port_modes(mask);
 	phylink_set(mask, Autoneg);
@@ -953,321 +954,321 @@ static void enetc_pl_mac_validate(struct phylink_config *config,
 	phylink_set(mask, 1000baseT_Half);
 	phylink_set(mask, 1000baseT_Full);
 
-	if (state->interface == PHY_INTERFACE_MODE_INTERNAL ||
-	    state->interface == PHY_INTERFACE_MODE_2500BASEX ||
-	    state->interface == PHY_INTERFACE_MODE_USXGMII) {
+	अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_INTERNAL ||
+	    state->पूर्णांकerface == PHY_INTERFACE_MODE_2500BASEX ||
+	    state->पूर्णांकerface == PHY_INTERFACE_MODE_USXGMII) अणु
 		phylink_set(mask, 2500baseT_Full);
 		phylink_set(mask, 2500baseX_Full);
-	}
+	पूर्ण
 
-	bitmap_and(supported, supported, mask,
+	biपंचांगap_and(supported, supported, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
+	biपंचांगap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
+पूर्ण
 
-static void enetc_pl_mac_config(struct phylink_config *config,
-				unsigned int mode,
-				const struct phylink_link_state *state)
-{
-	struct enetc_pf *pf = phylink_to_enetc_pf(config);
-	struct enetc_ndev_priv *priv;
+अटल व्योम enetc_pl_mac_config(काष्ठा phylink_config *config,
+				अचिन्हित पूर्णांक mode,
+				स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा enetc_pf *pf = phylink_to_enetc_pf(config);
+	काष्ठा enetc_ndev_priv *priv;
 
-	enetc_mac_config(&pf->si->hw, state->interface);
+	enetc_mac_config(&pf->si->hw, state->पूर्णांकerface);
 
 	priv = netdev_priv(pf->si->ndev);
-	if (pf->pcs)
+	अगर (pf->pcs)
 		phylink_set_pcs(priv->phylink, &pf->pcs->pcs);
-}
+पूर्ण
 
-static void enetc_force_rgmii_mac(struct enetc_hw *hw, int speed, int duplex)
-{
+अटल व्योम enetc_क्रमce_rgmii_mac(काष्ठा enetc_hw *hw, पूर्णांक speed, पूर्णांक duplex)
+अणु
 	u32 old_val, val;
 
 	old_val = val = enetc_port_rd(hw, ENETC_PM0_IF_MODE);
 
-	if (speed == SPEED_1000) {
+	अगर (speed == SPEED_1000) अणु
 		val &= ~ENETC_PM0_IFM_SSP_MASK;
 		val |= ENETC_PM0_IFM_SSP_1000;
-	} else if (speed == SPEED_100) {
+	पूर्ण अन्यथा अगर (speed == SPEED_100) अणु
 		val &= ~ENETC_PM0_IFM_SSP_MASK;
 		val |= ENETC_PM0_IFM_SSP_100;
-	} else if (speed == SPEED_10) {
+	पूर्ण अन्यथा अगर (speed == SPEED_10) अणु
 		val &= ~ENETC_PM0_IFM_SSP_MASK;
 		val |= ENETC_PM0_IFM_SSP_10;
-	}
+	पूर्ण
 
-	if (duplex == DUPLEX_FULL)
+	अगर (duplex == DUPLEX_FULL)
 		val |= ENETC_PM0_IFM_FULL_DPX;
-	else
+	अन्यथा
 		val &= ~ENETC_PM0_IFM_FULL_DPX;
 
-	if (val == old_val)
-		return;
+	अगर (val == old_val)
+		वापस;
 
 	enetc_port_wr(hw, ENETC_PM0_IF_MODE, val);
-}
+पूर्ण
 
-static void enetc_pl_mac_link_up(struct phylink_config *config,
-				 struct phy_device *phy, unsigned int mode,
-				 phy_interface_t interface, int speed,
-				 int duplex, bool tx_pause, bool rx_pause)
-{
-	struct enetc_pf *pf = phylink_to_enetc_pf(config);
-	u32 pause_off_thresh = 0, pause_on_thresh = 0;
+अटल व्योम enetc_pl_mac_link_up(काष्ठा phylink_config *config,
+				 काष्ठा phy_device *phy, अचिन्हित पूर्णांक mode,
+				 phy_पूर्णांकerface_t पूर्णांकerface, पूर्णांक speed,
+				 पूर्णांक duplex, bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा enetc_pf *pf = phylink_to_enetc_pf(config);
+	u32 छोड़ो_off_thresh = 0, छोड़ो_on_thresh = 0;
 	u32 init_quanta = 0, refresh_quanta = 0;
-	struct enetc_hw *hw = &pf->si->hw;
-	struct enetc_ndev_priv *priv;
+	काष्ठा enetc_hw *hw = &pf->si->hw;
+	काष्ठा enetc_ndev_priv *priv;
 	u32 rbmr, cmd_cfg;
-	int idx;
+	पूर्णांक idx;
 
 	priv = netdev_priv(pf->si->ndev);
-	if (priv->active_offloads & ENETC_F_QBV)
+	अगर (priv->active_offloads & ENETC_F_QBV)
 		enetc_sched_speed_set(priv, speed);
 
-	if (!phylink_autoneg_inband(mode) &&
-	    phy_interface_mode_is_rgmii(interface))
-		enetc_force_rgmii_mac(hw, speed, duplex);
+	अगर (!phylink_स्वतःneg_inband(mode) &&
+	    phy_पूर्णांकerface_mode_is_rgmii(पूर्णांकerface))
+		enetc_क्रमce_rgmii_mac(hw, speed, duplex);
 
 	/* Flow control */
-	for (idx = 0; idx < priv->num_rx_rings; idx++) {
+	क्रम (idx = 0; idx < priv->num_rx_rings; idx++) अणु
 		rbmr = enetc_rxbdr_rd(hw, idx, ENETC_RBMR);
 
-		if (tx_pause)
+		अगर (tx_छोड़ो)
 			rbmr |= ENETC_RBMR_CM;
-		else
+		अन्यथा
 			rbmr &= ~ENETC_RBMR_CM;
 
 		enetc_rxbdr_wr(hw, idx, ENETC_RBMR, rbmr);
-	}
+	पूर्ण
 
-	if (tx_pause) {
+	अगर (tx_छोड़ो) अणु
 		/* When the port first enters congestion, send a PAUSE request
-		 * with the maximum number of quanta. When the port exits
-		 * congestion, it will automatically send a PAUSE frame with
+		 * with the maximum number of quanta. When the port निकासs
+		 * congestion, it will स्वतःmatically send a PAUSE frame with
 		 * zero quanta.
 		 */
 		init_quanta = 0xffff;
 
-		/* Also, set up the refresh timer to send follow-up PAUSE
-		 * frames at half the quanta value, in case the congestion
+		/* Also, set up the refresh समयr to send follow-up PAUSE
+		 * frames at half the quanta value, in हाल the congestion
 		 * condition persists.
 		 */
 		refresh_quanta = 0xffff / 2;
 
 		/* Start emitting PAUSE frames when 3 large frames (or more
-		 * smaller frames) have accumulated in the FIFO waiting to be
+		 * smaller frames) have accumulated in the FIFO रुकोing to be
 		 * DMAed to the RX ring.
 		 */
-		pause_on_thresh = 3 * ENETC_MAC_MAXFRM_SIZE;
-		pause_off_thresh = 1 * ENETC_MAC_MAXFRM_SIZE;
-	}
+		छोड़ो_on_thresh = 3 * ENETC_MAC_MAXFRM_SIZE;
+		छोड़ो_off_thresh = 1 * ENETC_MAC_MAXFRM_SIZE;
+	पूर्ण
 
 	enetc_port_wr(hw, ENETC_PM0_PAUSE_QUANTA, init_quanta);
 	enetc_port_wr(hw, ENETC_PM1_PAUSE_QUANTA, init_quanta);
 	enetc_port_wr(hw, ENETC_PM0_PAUSE_THRESH, refresh_quanta);
 	enetc_port_wr(hw, ENETC_PM1_PAUSE_THRESH, refresh_quanta);
-	enetc_port_wr(hw, ENETC_PPAUONTR, pause_on_thresh);
-	enetc_port_wr(hw, ENETC_PPAUOFFTR, pause_off_thresh);
+	enetc_port_wr(hw, ENETC_PPAUONTR, छोड़ो_on_thresh);
+	enetc_port_wr(hw, ENETC_PPAUOFFTR, छोड़ो_off_thresh);
 
 	cmd_cfg = enetc_port_rd(hw, ENETC_PM0_CMD_CFG);
 
-	if (rx_pause)
+	अगर (rx_छोड़ो)
 		cmd_cfg &= ~ENETC_PM0_PAUSE_IGN;
-	else
+	अन्यथा
 		cmd_cfg |= ENETC_PM0_PAUSE_IGN;
 
 	enetc_port_wr(hw, ENETC_PM0_CMD_CFG, cmd_cfg);
 	enetc_port_wr(hw, ENETC_PM1_CMD_CFG, cmd_cfg);
 
 	enetc_mac_enable(hw, true);
-}
+पूर्ण
 
-static void enetc_pl_mac_link_down(struct phylink_config *config,
-				   unsigned int mode,
-				   phy_interface_t interface)
-{
-	struct enetc_pf *pf = phylink_to_enetc_pf(config);
+अटल व्योम enetc_pl_mac_link_करोwn(काष्ठा phylink_config *config,
+				   अचिन्हित पूर्णांक mode,
+				   phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा enetc_pf *pf = phylink_to_enetc_pf(config);
 
 	enetc_mac_enable(&pf->si->hw, false);
-}
+पूर्ण
 
-static const struct phylink_mac_ops enetc_mac_phylink_ops = {
+अटल स्थिर काष्ठा phylink_mac_ops enetc_mac_phylink_ops = अणु
 	.validate = enetc_pl_mac_validate,
 	.mac_config = enetc_pl_mac_config,
 	.mac_link_up = enetc_pl_mac_link_up,
-	.mac_link_down = enetc_pl_mac_link_down,
-};
+	.mac_link_करोwn = enetc_pl_mac_link_करोwn,
+पूर्ण;
 
-static int enetc_phylink_create(struct enetc_ndev_priv *priv,
-				struct device_node *node)
-{
-	struct enetc_pf *pf = enetc_si_priv(priv->si);
-	struct phylink *phylink;
-	int err;
+अटल पूर्णांक enetc_phylink_create(काष्ठा enetc_ndev_priv *priv,
+				काष्ठा device_node *node)
+अणु
+	काष्ठा enetc_pf *pf = enetc_si_priv(priv->si);
+	काष्ठा phylink *phylink;
+	पूर्णांक err;
 
 	pf->phylink_config.dev = &priv->ndev->dev;
 	pf->phylink_config.type = PHYLINK_NETDEV;
 
 	phylink = phylink_create(&pf->phylink_config, of_fwnode_handle(node),
-				 pf->if_mode, &enetc_mac_phylink_ops);
-	if (IS_ERR(phylink)) {
+				 pf->अगर_mode, &enetc_mac_phylink_ops);
+	अगर (IS_ERR(phylink)) अणु
 		err = PTR_ERR(phylink);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	priv->phylink = phylink;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void enetc_phylink_destroy(struct enetc_ndev_priv *priv)
-{
-	if (priv->phylink)
+अटल व्योम enetc_phylink_destroy(काष्ठा enetc_ndev_priv *priv)
+अणु
+	अगर (priv->phylink)
 		phylink_destroy(priv->phylink);
-}
+पूर्ण
 
-/* Initialize the entire shared memory for the flow steering entries
+/* Initialize the entire shared memory क्रम the flow steering entries
  * of this port (PF + VFs)
  */
-static int enetc_init_port_rfs_memory(struct enetc_si *si)
-{
-	struct enetc_cmd_rfse rfse = {0};
-	struct enetc_hw *hw = &si->hw;
-	int num_rfs, i, err = 0;
+अटल पूर्णांक enetc_init_port_rfs_memory(काष्ठा enetc_si *si)
+अणु
+	काष्ठा enetc_cmd_rfse rfse = अणु0पूर्ण;
+	काष्ठा enetc_hw *hw = &si->hw;
+	पूर्णांक num_rfs, i, err = 0;
 	u32 val;
 
 	val = enetc_port_rd(hw, ENETC_PRFSCAPR);
 	num_rfs = ENETC_PRFSCAPR_GET_NUM_RFS(val);
 
-	for (i = 0; i < num_rfs; i++) {
+	क्रम (i = 0; i < num_rfs; i++) अणु
 		err = enetc_set_fs_entry(si, &rfse, i);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int enetc_init_port_rss_memory(struct enetc_si *si)
-{
-	struct enetc_hw *hw = &si->hw;
-	int num_rss, err;
-	int *rss_table;
+अटल पूर्णांक enetc_init_port_rss_memory(काष्ठा enetc_si *si)
+अणु
+	काष्ठा enetc_hw *hw = &si->hw;
+	पूर्णांक num_rss, err;
+	पूर्णांक *rss_table;
 	u32 val;
 
 	val = enetc_port_rd(hw, ENETC_PRSSCAPR);
 	num_rss = ENETC_PRSSCAPR_GET_NUM_RSS(val);
-	if (!num_rss)
-		return 0;
+	अगर (!num_rss)
+		वापस 0;
 
-	rss_table = kcalloc(num_rss, sizeof(*rss_table), GFP_KERNEL);
-	if (!rss_table)
-		return -ENOMEM;
+	rss_table = kसुस्मृति(num_rss, माप(*rss_table), GFP_KERNEL);
+	अगर (!rss_table)
+		वापस -ENOMEM;
 
 	err = enetc_set_rss_table(si, rss_table, num_rss);
 
-	kfree(rss_table);
+	kमुक्त(rss_table);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int enetc_pf_register_with_ierb(struct pci_dev *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct platform_device *ierb_pdev;
-	struct device_node *ierb_node;
+अटल पूर्णांक enetc_pf_रेजिस्टर_with_ierb(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा platक्रमm_device *ierb_pdev;
+	काष्ठा device_node *ierb_node;
 
-	/* Don't register with the IERB if the PF itself is disabled */
-	if (!node || !of_device_is_available(node))
-		return 0;
+	/* Don't रेजिस्टर with the IERB अगर the PF itself is disabled */
+	अगर (!node || !of_device_is_available(node))
+		वापस 0;
 
-	ierb_node = of_find_compatible_node(NULL, NULL,
+	ierb_node = of_find_compatible_node(शून्य, शून्य,
 					    "fsl,ls1028a-enetc-ierb");
-	if (!ierb_node || !of_device_is_available(ierb_node))
-		return -ENODEV;
+	अगर (!ierb_node || !of_device_is_available(ierb_node))
+		वापस -ENODEV;
 
 	ierb_pdev = of_find_device_by_node(ierb_node);
 	of_node_put(ierb_node);
 
-	if (!ierb_pdev)
-		return -EPROBE_DEFER;
+	अगर (!ierb_pdev)
+		वापस -EPROBE_DEFER;
 
-	return enetc_ierb_register_pf(ierb_pdev, pdev);
-}
+	वापस enetc_ierb_रेजिस्टर_pf(ierb_pdev, pdev);
+पूर्ण
 
-static int enetc_pf_probe(struct pci_dev *pdev,
-			  const struct pci_device_id *ent)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct enetc_ndev_priv *priv;
-	struct net_device *ndev;
-	struct enetc_si *si;
-	struct enetc_pf *pf;
-	int err;
+अटल पूर्णांक enetc_pf_probe(काष्ठा pci_dev *pdev,
+			  स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा enetc_ndev_priv *priv;
+	काष्ठा net_device *ndev;
+	काष्ठा enetc_si *si;
+	काष्ठा enetc_pf *pf;
+	पूर्णांक err;
 
-	err = enetc_pf_register_with_ierb(pdev);
-	if (err == -EPROBE_DEFER)
-		return err;
-	if (err)
+	err = enetc_pf_रेजिस्टर_with_ierb(pdev);
+	अगर (err == -EPROBE_DEFER)
+		वापस err;
+	अगर (err)
 		dev_warn(&pdev->dev,
 			 "Could not register with IERB driver: %pe, please update the device tree\n",
 			 ERR_PTR(err));
 
-	err = enetc_pci_probe(pdev, KBUILD_MODNAME, sizeof(*pf));
-	if (err) {
+	err = enetc_pci_probe(pdev, KBUILD_MODNAME, माप(*pf));
+	अगर (err) अणु
 		dev_err(&pdev->dev, "PCI probing failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	si = pci_get_drvdata(pdev);
-	if (!si->hw.port || !si->hw.global) {
+	अगर (!si->hw.port || !si->hw.global) अणु
 		err = -ENODEV;
 		dev_err(&pdev->dev, "could not map PF space, probing a VF?\n");
-		goto err_map_pf_space;
-	}
+		जाओ err_map_pf_space;
+	पूर्ण
 
 	err = enetc_setup_cbdr(&pdev->dev, &si->hw, ENETC_CBDR_DEFAULT_SIZE,
 			       &si->cbd_ring);
-	if (err)
-		goto err_setup_cbdr;
+	अगर (err)
+		जाओ err_setup_cbdr;
 
 	err = enetc_init_port_rfs_memory(si);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to initialize RFS memory\n");
-		goto err_init_port_rfs;
-	}
+		जाओ err_init_port_rfs;
+	पूर्ण
 
 	err = enetc_init_port_rss_memory(si);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to initialize RSS memory\n");
-		goto err_init_port_rss;
-	}
+		जाओ err_init_port_rss;
+	पूर्ण
 
-	if (node && !of_device_is_available(node)) {
+	अगर (node && !of_device_is_available(node)) अणु
 		dev_info(&pdev->dev, "device is disabled, skipping\n");
 		err = -ENODEV;
-		goto err_device_disabled;
-	}
+		जाओ err_device_disabled;
+	पूर्ण
 
 	pf = enetc_si_priv(si);
 	pf->si = si;
 	pf->total_vfs = pci_sriov_get_totalvfs(pdev);
 
 	err = enetc_setup_mac_addresses(node, pf);
-	if (err)
-		goto err_setup_mac_addresses;
+	अगर (err)
+		जाओ err_setup_mac_addresses;
 
 	enetc_configure_port(pf);
 
 	enetc_get_si_caps(si);
 
-	ndev = alloc_etherdev_mq(sizeof(*priv), ENETC_MAX_NUM_TXQS);
-	if (!ndev) {
+	ndev = alloc_etherdev_mq(माप(*priv), ENETC_MAX_NUM_TXQS);
+	अगर (!ndev) अणु
 		err = -ENOMEM;
 		dev_err(&pdev->dev, "netdev creation failed\n");
-		goto err_alloc_netdev;
-	}
+		जाओ err_alloc_netdev;
+	पूर्ण
 
 	enetc_pf_netdev_setup(si, ndev, &enetc_ndev_ops);
 
@@ -1276,105 +1277,105 @@ static int enetc_pf_probe(struct pci_dev *pdev,
 	enetc_init_si_rings_params(priv);
 
 	err = enetc_alloc_si_resources(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "SI resource alloc failed\n");
-		goto err_alloc_si_res;
-	}
+		जाओ err_alloc_si_res;
+	पूर्ण
 
 	err = enetc_configure_si(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to configure SI\n");
-		goto err_config_si;
-	}
+		जाओ err_config_si;
+	पूर्ण
 
 	err = enetc_alloc_msix(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "MSIX alloc failed\n");
-		goto err_alloc_msix;
-	}
+		जाओ err_alloc_msix;
+	पूर्ण
 
-	if (!of_get_phy_mode(node, &pf->if_mode)) {
+	अगर (!of_get_phy_mode(node, &pf->अगर_mode)) अणु
 		err = enetc_mdiobus_create(pf, node);
-		if (err)
-			goto err_mdiobus_create;
+		अगर (err)
+			जाओ err_mdiobus_create;
 
 		err = enetc_phylink_create(priv, node);
-		if (err)
-			goto err_phylink_create;
-	}
+		अगर (err)
+			जाओ err_phylink_create;
+	पूर्ण
 
-	err = register_netdev(ndev);
-	if (err)
-		goto err_reg_netdev;
+	err = रेजिस्टर_netdev(ndev);
+	अगर (err)
+		जाओ err_reg_netdev;
 
-	return 0;
+	वापस 0;
 
 err_reg_netdev:
 	enetc_phylink_destroy(priv);
 err_phylink_create:
 	enetc_mdiobus_destroy(pf);
 err_mdiobus_create:
-	enetc_free_msix(priv);
+	enetc_मुक्त_msix(priv);
 err_config_si:
 err_alloc_msix:
-	enetc_free_si_resources(priv);
+	enetc_मुक्त_si_resources(priv);
 err_alloc_si_res:
-	si->ndev = NULL;
-	free_netdev(ndev);
+	si->ndev = शून्य;
+	मुक्त_netdev(ndev);
 err_alloc_netdev:
 err_init_port_rss:
 err_init_port_rfs:
 err_device_disabled:
 err_setup_mac_addresses:
-	enetc_teardown_cbdr(&si->cbd_ring);
+	enetc_tearकरोwn_cbdr(&si->cbd_ring);
 err_setup_cbdr:
 err_map_pf_space:
-	enetc_pci_remove(pdev);
+	enetc_pci_हटाओ(pdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void enetc_pf_remove(struct pci_dev *pdev)
-{
-	struct enetc_si *si = pci_get_drvdata(pdev);
-	struct enetc_pf *pf = enetc_si_priv(si);
-	struct enetc_ndev_priv *priv;
+अटल व्योम enetc_pf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा enetc_si *si = pci_get_drvdata(pdev);
+	काष्ठा enetc_pf *pf = enetc_si_priv(si);
+	काष्ठा enetc_ndev_priv *priv;
 
 	priv = netdev_priv(si->ndev);
 
-	if (pf->num_vfs)
+	अगर (pf->num_vfs)
 		enetc_sriov_configure(pdev, 0);
 
-	unregister_netdev(si->ndev);
+	unरेजिस्टर_netdev(si->ndev);
 
 	enetc_phylink_destroy(priv);
 	enetc_mdiobus_destroy(pf);
 
-	enetc_free_msix(priv);
+	enetc_मुक्त_msix(priv);
 
-	enetc_free_si_resources(priv);
-	enetc_teardown_cbdr(&si->cbd_ring);
+	enetc_मुक्त_si_resources(priv);
+	enetc_tearकरोwn_cbdr(&si->cbd_ring);
 
-	free_netdev(si->ndev);
+	मुक्त_netdev(si->ndev);
 
-	enetc_pci_remove(pdev);
-}
+	enetc_pci_हटाओ(pdev);
+पूर्ण
 
-static const struct pci_device_id enetc_pf_id_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_FREESCALE, ENETC_DEV_ID_PF) },
-	{ 0, } /* End of table. */
-};
+अटल स्थिर काष्ठा pci_device_id enetc_pf_id_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_FREESCALE, ENETC_DEV_ID_PF) पूर्ण,
+	अणु 0, पूर्ण /* End of table. */
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, enetc_pf_id_table);
 
-static struct pci_driver enetc_pf_driver = {
+अटल काष्ठा pci_driver enetc_pf_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = enetc_pf_id_table,
 	.probe = enetc_pf_probe,
-	.remove = enetc_pf_remove,
-#ifdef CONFIG_PCI_IOV
+	.हटाओ = enetc_pf_हटाओ,
+#अगर_घोषित CONFIG_PCI_IOV
 	.sriov_configure = enetc_sriov_configure,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 module_pci_driver(enetc_pf_driver);
 
 MODULE_DESCRIPTION(ENETC_DRV_NAME_STR);

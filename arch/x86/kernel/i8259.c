@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/linkage.h>
-#include <linux/errno.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/timex.h>
-#include <linux/random.h>
-#include <linux/init.h>
-#include <linux/kernel_stat.h>
-#include <linux/syscore_ops.h>
-#include <linux/bitops.h>
-#include <linux/acpi.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/pgtable.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/linkage.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/समयx.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/pgtable.h>
 
-#include <linux/atomic.h>
-#include <asm/timer.h>
-#include <asm/hw_irq.h>
-#include <asm/desc.h>
-#include <asm/apic.h>
-#include <asm/i8259.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/समयr.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/i8259.h>
 
 /*
  * This is the 'legacy' 8259A Programmable Interrupt Controller,
  * present in the majority of PC/AT boxes.
- * plus some generic x86 specific things if generic specifics makes
+ * plus some generic x86 specअगरic things अगर generic specअगरics makes
  * any sense at all.
  */
-static void init_8259A(int auto_eoi);
+अटल व्योम init_8259A(पूर्णांक स्वतः_eoi);
 
-static int i8259A_auto_eoi;
+अटल पूर्णांक i8259A_स्वतः_eoi;
 DEFINE_RAW_SPINLOCK(i8259A_lock);
 
 /*
@@ -40,243 +41,243 @@ DEFINE_RAW_SPINLOCK(i8259A_lock);
  */
 
 /*
- * This contains the irq mask for both 8259A irq controllers,
+ * This contains the irq mask क्रम both 8259A irq controllers,
  */
-unsigned int cached_irq_mask = 0xffff;
+अचिन्हित पूर्णांक cached_irq_mask = 0xffff;
 
 /*
  * Not all IRQs can be routed through the IO-APIC, eg. on certain (older)
- * boards the timer interrupt is not really connected to any IO-APIC pin,
+ * boards the समयr पूर्णांकerrupt is not really connected to any IO-APIC pin,
  * it's fed to the master 8259A's IR0 line only.
  *
  * Any '1' bit in this mask means the IRQ is routed through the IO-APIC.
  * this 'mixed mode' IRQ handling costs nothing because it's only used
- * at IRQ setup time.
+ * at IRQ setup समय.
  */
-unsigned long io_apic_irqs;
+अचिन्हित दीर्घ io_apic_irqs;
 
-static void mask_8259A_irq(unsigned int irq)
-{
-	unsigned int mask = 1 << irq;
-	unsigned long flags;
+अटल व्योम mask_8259A_irq(अचिन्हित पूर्णांक irq)
+अणु
+	अचिन्हित पूर्णांक mask = 1 << irq;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 	cached_irq_mask |= mask;
-	if (irq & 8)
+	अगर (irq & 8)
 		outb(cached_slave_mask, PIC_SLAVE_IMR);
-	else
+	अन्यथा
 		outb(cached_master_mask, PIC_MASTER_IMR);
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-}
+पूर्ण
 
-static void disable_8259A_irq(struct irq_data *data)
-{
+अटल व्योम disable_8259A_irq(काष्ठा irq_data *data)
+अणु
 	mask_8259A_irq(data->irq);
-}
+पूर्ण
 
-static void unmask_8259A_irq(unsigned int irq)
-{
-	unsigned int mask = ~(1 << irq);
-	unsigned long flags;
+अटल व्योम unmask_8259A_irq(अचिन्हित पूर्णांक irq)
+अणु
+	अचिन्हित पूर्णांक mask = ~(1 << irq);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 	cached_irq_mask &= mask;
-	if (irq & 8)
+	अगर (irq & 8)
 		outb(cached_slave_mask, PIC_SLAVE_IMR);
-	else
+	अन्यथा
 		outb(cached_master_mask, PIC_MASTER_IMR);
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-}
+पूर्ण
 
-static void enable_8259A_irq(struct irq_data *data)
-{
+अटल व्योम enable_8259A_irq(काष्ठा irq_data *data)
+अणु
 	unmask_8259A_irq(data->irq);
-}
+पूर्ण
 
-static int i8259A_irq_pending(unsigned int irq)
-{
-	unsigned int mask = 1<<irq;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक i8259A_irq_pending(अचिन्हित पूर्णांक irq)
+अणु
+	अचिन्हित पूर्णांक mask = 1<<irq;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
-	if (irq < 8)
+	अगर (irq < 8)
 		ret = inb(PIC_MASTER_CMD) & mask;
-	else
+	अन्यथा
 		ret = inb(PIC_SLAVE_CMD) & (mask >> 8);
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void make_8259A_irq(unsigned int irq)
-{
+अटल व्योम make_8259A_irq(अचिन्हित पूर्णांक irq)
+अणु
 	disable_irq_nosync(irq);
 	io_apic_irqs &= ~(1<<irq);
 	irq_set_chip_and_handler(irq, &i8259A_chip, handle_level_irq);
 	enable_irq(irq);
 	lapic_assign_legacy_vector(irq, true);
-}
+पूर्ण
 
 /*
  * This function assumes to be called rarely. Switching between
- * 8259A registers is slow.
- * This has to be protected by the irq controller spinlock
- * before being called.
+ * 8259A रेजिस्टरs is slow.
+ * This has to be रक्षित by the irq controller spinlock
+ * beक्रमe being called.
  */
-static inline int i8259A_irq_real(unsigned int irq)
-{
-	int value;
-	int irqmask = 1<<irq;
+अटल अंतरभूत पूर्णांक i8259A_irq_real(अचिन्हित पूर्णांक irq)
+अणु
+	पूर्णांक value;
+	पूर्णांक irqmask = 1<<irq;
 
-	if (irq < 8) {
-		outb(0x0B, PIC_MASTER_CMD);	/* ISR register */
+	अगर (irq < 8) अणु
+		outb(0x0B, PIC_MASTER_CMD);	/* ISR रेजिस्टर */
 		value = inb(PIC_MASTER_CMD) & irqmask;
-		outb(0x0A, PIC_MASTER_CMD);	/* back to the IRR register */
-		return value;
-	}
-	outb(0x0B, PIC_SLAVE_CMD);	/* ISR register */
+		outb(0x0A, PIC_MASTER_CMD);	/* back to the IRR रेजिस्टर */
+		वापस value;
+	पूर्ण
+	outb(0x0B, PIC_SLAVE_CMD);	/* ISR रेजिस्टर */
 	value = inb(PIC_SLAVE_CMD) & (irqmask >> 8);
-	outb(0x0A, PIC_SLAVE_CMD);	/* back to the IRR register */
-	return value;
-}
+	outb(0x0A, PIC_SLAVE_CMD);	/* back to the IRR रेजिस्टर */
+	वापस value;
+पूर्ण
 
 /*
  * Careful! The 8259A is a fragile beast, it pretty
- * much _has_ to be done exactly like this (mask it
+ * much _has_ to be करोne exactly like this (mask it
  * first, _then_ send the EOI, and the order of EOI
  * to the two 8259s is important!
  */
-static void mask_and_ack_8259A(struct irq_data *data)
-{
-	unsigned int irq = data->irq;
-	unsigned int irqmask = 1 << irq;
-	unsigned long flags;
+अटल व्योम mask_and_ack_8259A(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक irq = data->irq;
+	अचिन्हित पूर्णांक irqmask = 1 << irq;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 	/*
-	 * Lightweight spurious IRQ detection. We do not want
-	 * to overdo spurious IRQ handling - it's usually a sign
-	 * of hardware problems, so we only do the checks we can
-	 * do without slowing down good hardware unnecessarily.
+	 * Lightweight spurious IRQ detection. We करो not want
+	 * to overकरो spurious IRQ handling - it's usually a sign
+	 * of hardware problems, so we only करो the checks we can
+	 * करो without slowing करोwn good hardware unnecessarily.
 	 *
 	 * Note that IRQ7 and IRQ15 (the two spurious IRQs
 	 * usually resulting from the 8259A-1|2 PICs) occur
-	 * even if the IRQ is masked in the 8259A. Thus we
-	 * can check spurious 8259A IRQs without doing the
-	 * quite slow i8259A_irq_real() call for every IRQ.
-	 * This does not cover 100% of spurious interrupts,
+	 * even अगर the IRQ is masked in the 8259A. Thus we
+	 * can check spurious 8259A IRQs without करोing the
+	 * quite slow i8259A_irq_real() call क्रम every IRQ.
+	 * This करोes not cover 100% of spurious पूर्णांकerrupts,
 	 * but should be enough to warn the user that there
 	 * is something bad going on ...
 	 */
-	if (cached_irq_mask & irqmask)
-		goto spurious_8259A_irq;
+	अगर (cached_irq_mask & irqmask)
+		जाओ spurious_8259A_irq;
 	cached_irq_mask |= irqmask;
 
 handle_real_irq:
-	if (irq & 8) {
-		inb(PIC_SLAVE_IMR);	/* DUMMY - (do we need this?) */
+	अगर (irq & 8) अणु
+		inb(PIC_SLAVE_IMR);	/* DUMMY - (करो we need this?) */
 		outb(cached_slave_mask, PIC_SLAVE_IMR);
 		/* 'Specific EOI' to slave */
 		outb(0x60+(irq&7), PIC_SLAVE_CMD);
 		 /* 'Specific EOI' to master-IRQ2 */
 		outb(0x60+PIC_CASCADE_IR, PIC_MASTER_CMD);
-	} else {
-		inb(PIC_MASTER_IMR);	/* DUMMY - (do we need this?) */
+	पूर्ण अन्यथा अणु
+		inb(PIC_MASTER_IMR);	/* DUMMY - (करो we need this?) */
 		outb(cached_master_mask, PIC_MASTER_IMR);
-		outb(0x60+irq, PIC_MASTER_CMD);	/* 'Specific EOI to master */
-	}
+		outb(0x60+irq, PIC_MASTER_CMD);	/* 'Specअगरic EOI to master */
+	पूर्ण
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-	return;
+	वापस;
 
 spurious_8259A_irq:
 	/*
 	 * this is the slow path - should happen rarely.
 	 */
-	if (i8259A_irq_real(irq))
+	अगर (i8259A_irq_real(irq))
 		/*
 		 * oops, the IRQ _is_ in service according to the
 		 * 8259A - not spurious, go handle it.
 		 */
-		goto handle_real_irq;
+		जाओ handle_real_irq;
 
-	{
-		static int spurious_irq_mask;
+	अणु
+		अटल पूर्णांक spurious_irq_mask;
 		/*
-		 * At this point we can be sure the IRQ is spurious,
+		 * At this poपूर्णांक we can be sure the IRQ is spurious,
 		 * lets ACK and report it. [once per IRQ]
 		 */
-		if (!(spurious_irq_mask & irqmask)) {
-			printk_deferred(KERN_DEBUG
+		अगर (!(spurious_irq_mask & irqmask)) अणु
+			prपूर्णांकk_deferred(KERN_DEBUG
 			       "spurious 8259A interrupt: IRQ%d.\n", irq);
 			spurious_irq_mask |= irqmask;
-		}
+		पूर्ण
 		atomic_inc(&irq_err_count);
 		/*
-		 * Theoretically we do not have to handle this IRQ,
-		 * but in Linux this does not cause problems and is
-		 * simpler for us.
+		 * Theoretically we करो not have to handle this IRQ,
+		 * but in Linux this करोes not cause problems and is
+		 * simpler क्रम us.
 		 */
-		goto handle_real_irq;
-	}
-}
+		जाओ handle_real_irq;
+	पूर्ण
+पूर्ण
 
-struct irq_chip i8259A_chip = {
+काष्ठा irq_chip i8259A_chip = अणु
 	.name		= "XT-PIC",
 	.irq_mask	= disable_8259A_irq,
 	.irq_disable	= disable_8259A_irq,
 	.irq_unmask	= enable_8259A_irq,
 	.irq_mask_ack	= mask_and_ack_8259A,
-};
+पूर्ण;
 
-static char irq_trigger[2];
+अटल अक्षर irq_trigger[2];
 /**
- * ELCR registers (0x4d0, 0x4d1) control edge/level of IRQ
+ * ELCR रेजिस्टरs (0x4d0, 0x4d1) control edge/level of IRQ
  */
-static void restore_ELCR(char *trigger)
-{
+अटल व्योम restore_ELCR(अक्षर *trigger)
+अणु
 	outb(trigger[0], 0x4d0);
 	outb(trigger[1], 0x4d1);
-}
+पूर्ण
 
-static void save_ELCR(char *trigger)
-{
+अटल व्योम save_ELCR(अक्षर *trigger)
+अणु
 	/* IRQ 0,1,2,8,13 are marked as reserved */
 	trigger[0] = inb(0x4d0) & 0xF8;
 	trigger[1] = inb(0x4d1) & 0xDE;
-}
+पूर्ण
 
-static void i8259A_resume(void)
-{
-	init_8259A(i8259A_auto_eoi);
+अटल व्योम i8259A_resume(व्योम)
+अणु
+	init_8259A(i8259A_स्वतः_eoi);
 	restore_ELCR(irq_trigger);
-}
+पूर्ण
 
-static int i8259A_suspend(void)
-{
+अटल पूर्णांक i8259A_suspend(व्योम)
+अणु
 	save_ELCR(irq_trigger);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void i8259A_shutdown(void)
-{
-	/* Put the i8259A into a quiescent state that
+अटल व्योम i8259A_shutकरोwn(व्योम)
+अणु
+	/* Put the i8259A पूर्णांकo a quiescent state that
 	 * the kernel initialization code can get it
 	 * out of.
 	 */
 	outb(0xff, PIC_MASTER_IMR);	/* mask all of 8259A-1 */
 	outb(0xff, PIC_SLAVE_IMR);	/* mask all of 8259A-2 */
-}
+पूर्ण
 
-static struct syscore_ops i8259_syscore_ops = {
+अटल काष्ठा syscore_ops i8259_syscore_ops = अणु
 	.suspend = i8259A_suspend,
 	.resume = i8259A_resume,
-	.shutdown = i8259A_shutdown,
-};
+	.shutकरोwn = i8259A_shutकरोwn,
+पूर्ण;
 
-static void mask_8259A(void)
-{
-	unsigned long flags;
+अटल व्योम mask_8259A(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 
@@ -284,11 +285,11 @@ static void mask_8259A(void)
 	outb(0xff, PIC_SLAVE_IMR);	/* mask all of 8259A-2 */
 
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-}
+पूर्ण
 
-static void unmask_8259A(void)
-{
-	unsigned long flags;
+अटल व्योम unmask_8259A(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 
@@ -296,18 +297,18 @@ static void unmask_8259A(void)
 	outb(cached_slave_mask, PIC_SLAVE_IMR);	  /* restore slave IRQ mask */
 
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-}
+पूर्ण
 
-static int probe_8259A(void)
-{
-	unsigned long flags;
-	unsigned char probe_val = ~(1 << PIC_CASCADE_IR);
-	unsigned char new_val;
+अटल पूर्णांक probe_8259A(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर probe_val = ~(1 << PIC_CASCADE_IR);
+	अचिन्हित अक्षर new_val;
 	/*
-	 * Check to see if we have a PIC.
-	 * Mask all except the cascade and read
-	 * back the value we just wrote. If we don't
-	 * have a PIC, we will read 0xff as opposed to the
+	 * Check to see अगर we have a PIC.
+	 * Mask all except the cascade and पढ़ो
+	 * back the value we just wrote. If we करोn't
+	 * have a PIC, we will पढ़ो 0xff as opposed to the
 	 * value we wrote.
 	 */
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
@@ -315,20 +316,20 @@ static int probe_8259A(void)
 	outb(0xff, PIC_SLAVE_IMR);	/* mask all of 8259A-2 */
 	outb(probe_val, PIC_MASTER_IMR);
 	new_val = inb(PIC_MASTER_IMR);
-	if (new_val != probe_val) {
-		printk(KERN_INFO "Using NULL legacy PIC\n");
+	अगर (new_val != probe_val) अणु
+		prपूर्णांकk(KERN_INFO "Using NULL legacy PIC\n");
 		legacy_pic = &null_legacy_pic;
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-	return nr_legacy_irqs();
-}
+	वापस nr_legacy_irqs();
+पूर्ण
 
-static void init_8259A(int auto_eoi)
-{
-	unsigned long flags;
+अटल व्योम init_8259A(पूर्णांक स्वतः_eoi)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	i8259A_auto_eoi = auto_eoi;
+	i8259A_स्वतः_eoi = स्वतः_eoi;
 
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 
@@ -345,9 +346,9 @@ static void init_8259A(int auto_eoi)
 	/* 8259A-1 (the master) has a slave on IR2 */
 	outb_pic(1U << PIC_CASCADE_IR, PIC_MASTER_IMR);
 
-	if (auto_eoi)	/* master does Auto EOI */
+	अगर (स्वतः_eoi)	/* master करोes Auto EOI */
 		outb_pic(MASTER_ICW4_DEFAULT | PIC_ICW4_AEOI, PIC_MASTER_IMR);
-	else		/* master expects normal EOI */
+	अन्यथा		/* master expects normal EOI */
 		outb_pic(MASTER_ICW4_DEFAULT, PIC_MASTER_IMR);
 
 	outb_pic(0x11, PIC_SLAVE_CMD);	/* ICW1: select 8259A-2 init */
@@ -356,58 +357,58 @@ static void init_8259A(int auto_eoi)
 	outb_pic(ISA_IRQ_VECTOR(8), PIC_SLAVE_IMR);
 	/* 8259A-2 is a slave on master's IR2 */
 	outb_pic(PIC_CASCADE_IR, PIC_SLAVE_IMR);
-	/* (slave's support for AEOI in flat mode is to be investigated) */
+	/* (slave's support क्रम AEOI in flat mode is to be investigated) */
 	outb_pic(SLAVE_ICW4_DEFAULT, PIC_SLAVE_IMR);
 
-	if (auto_eoi)
+	अगर (स्वतः_eoi)
 		/*
-		 * In AEOI mode we just have to mask the interrupt
+		 * In AEOI mode we just have to mask the पूर्णांकerrupt
 		 * when acking.
 		 */
 		i8259A_chip.irq_mask_ack = disable_8259A_irq;
-	else
+	अन्यथा
 		i8259A_chip.irq_mask_ack = mask_and_ack_8259A;
 
-	udelay(100);		/* wait for 8259A to initialize */
+	udelay(100);		/* रुको क्रम 8259A to initialize */
 
 	outb(cached_master_mask, PIC_MASTER_IMR); /* restore master IRQ mask */
 	outb(cached_slave_mask, PIC_SLAVE_IMR);	  /* restore slave IRQ mask */
 
 	raw_spin_unlock_irqrestore(&i8259A_lock, flags);
-}
+पूर्ण
 
 /*
- * make i8259 a driver so that we can select pic functions at run time. the goal
+ * make i8259 a driver so that we can select pic functions at run समय. the goal
  * is to make x86 binary compatible among pc compatible and non-pc compatible
- * platforms, such as x86 MID.
+ * platक्रमms, such as x86 MID.
  */
 
-static void legacy_pic_noop(void) { };
-static void legacy_pic_uint_noop(unsigned int unused) { };
-static void legacy_pic_int_noop(int unused) { };
-static int legacy_pic_irq_pending_noop(unsigned int irq)
-{
-	return 0;
-}
-static int legacy_pic_probe(void)
-{
-	return 0;
-}
+अटल व्योम legacy_pic_noop(व्योम) अणु पूर्ण;
+अटल व्योम legacy_pic_uपूर्णांक_noop(अचिन्हित पूर्णांक unused) अणु पूर्ण;
+अटल व्योम legacy_pic_पूर्णांक_noop(पूर्णांक unused) अणु पूर्ण;
+अटल पूर्णांक legacy_pic_irq_pending_noop(अचिन्हित पूर्णांक irq)
+अणु
+	वापस 0;
+पूर्ण
+अटल पूर्णांक legacy_pic_probe(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-struct legacy_pic null_legacy_pic = {
+काष्ठा legacy_pic null_legacy_pic = अणु
 	.nr_legacy_irqs = 0,
 	.chip = &dummy_irq_chip,
-	.mask = legacy_pic_uint_noop,
-	.unmask = legacy_pic_uint_noop,
+	.mask = legacy_pic_uपूर्णांक_noop,
+	.unmask = legacy_pic_uपूर्णांक_noop,
 	.mask_all = legacy_pic_noop,
 	.restore_mask = legacy_pic_noop,
-	.init = legacy_pic_int_noop,
+	.init = legacy_pic_पूर्णांक_noop,
 	.probe = legacy_pic_probe,
 	.irq_pending = legacy_pic_irq_pending_noop,
-	.make_irq = legacy_pic_uint_noop,
-};
+	.make_irq = legacy_pic_uपूर्णांक_noop,
+पूर्ण;
 
-struct legacy_pic default_legacy_pic = {
+काष्ठा legacy_pic शेष_legacy_pic = अणु
 	.nr_legacy_irqs = NR_IRQS_LEGACY,
 	.chip  = &i8259A_chip,
 	.mask = mask_8259A_irq,
@@ -418,17 +419,17 @@ struct legacy_pic default_legacy_pic = {
 	.probe = probe_8259A,
 	.irq_pending = i8259A_irq_pending,
 	.make_irq = make_8259A_irq,
-};
+पूर्ण;
 
-struct legacy_pic *legacy_pic = &default_legacy_pic;
+काष्ठा legacy_pic *legacy_pic = &शेष_legacy_pic;
 EXPORT_SYMBOL(legacy_pic);
 
-static int __init i8259A_init_ops(void)
-{
-	if (legacy_pic == &default_legacy_pic)
-		register_syscore_ops(&i8259_syscore_ops);
+अटल पूर्णांक __init i8259A_init_ops(व्योम)
+अणु
+	अगर (legacy_pic == &शेष_legacy_pic)
+		रेजिस्टर_syscore_ops(&i8259_syscore_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(i8259A_init_ops);

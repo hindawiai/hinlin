@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
  * Copyright (C) 2013-2017 Oracle Corporation
  * This file is based on ast_drv.c
@@ -7,80 +8,80 @@
  *          Michael Thayer <michael.thayer@oracle.com,
  *          Hans de Goede <hdegoede@redhat.com>
  */
-#include <linux/console.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/vt_kern.h>
+#समावेश <linux/console.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vt_kern.h>
 
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_file.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_managed.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_file.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_managed.h>
 
-#include "vbox_drv.h"
+#समावेश "vbox_drv.h"
 
-static int vbox_modeset = -1;
+अटल पूर्णांक vbox_modeset = -1;
 
 MODULE_PARM_DESC(modeset, "Disable/Enable modesetting");
-module_param_named(modeset, vbox_modeset, int, 0400);
+module_param_named(modeset, vbox_modeset, पूर्णांक, 0400);
 
-static const struct drm_driver driver;
+अटल स्थिर काष्ठा drm_driver driver;
 
-static const struct pci_device_id pciidlist[] = {
-	{ PCI_DEVICE(0x80ee, 0xbeef) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id pciidlist[] = अणु
+	अणु PCI_DEVICE(0x80ee, 0xbeef) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, pciidlist);
 
-static int vbox_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct vbox_private *vbox;
-	int ret = 0;
+अटल पूर्णांक vbox_pci_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा vbox_निजी *vbox;
+	पूर्णांक ret = 0;
 
-	if (!vbox_check_supported(VBE_DISPI_ID_HGSMI))
-		return -ENODEV;
+	अगर (!vbox_check_supported(VBE_DISPI_ID_HGSMI))
+		वापस -ENODEV;
 
-	ret = drm_fb_helper_remove_conflicting_pci_framebuffers(pdev, "vboxvideodrmfb");
-	if (ret)
-		return ret;
+	ret = drm_fb_helper_हटाओ_conflicting_pci_framebuffers(pdev, "vboxvideodrmfb");
+	अगर (ret)
+		वापस ret;
 
 	vbox = devm_drm_dev_alloc(&pdev->dev, &driver,
-				  struct vbox_private, ddev);
-	if (IS_ERR(vbox))
-		return PTR_ERR(vbox);
+				  काष्ठा vbox_निजी, ddev);
+	अगर (IS_ERR(vbox))
+		वापस PTR_ERR(vbox);
 
 	pci_set_drvdata(pdev, vbox);
 	mutex_init(&vbox->hw_mutex);
 
 	ret = pcim_enable_device(pdev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = vbox_hw_init(vbox);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = vbox_mm_init(vbox);
-	if (ret)
-		goto err_hw_fini;
+	अगर (ret)
+		जाओ err_hw_fini;
 
 	ret = vbox_mode_init(vbox);
-	if (ret)
-		goto err_mm_fini;
+	अगर (ret)
+		जाओ err_mm_fini;
 
 	ret = vbox_irq_init(vbox);
-	if (ret)
-		goto err_mode_fini;
+	अगर (ret)
+		जाओ err_mode_fini;
 
-	ret = drm_dev_register(&vbox->ddev, 0);
-	if (ret)
-		goto err_irq_fini;
+	ret = drm_dev_रेजिस्टर(&vbox->ddev, 0);
+	अगर (ret)
+		जाओ err_irq_fini;
 
 	drm_fbdev_generic_setup(&vbox->ddev, 32);
 
-	return 0;
+	वापस 0;
 
 err_irq_fini:
 	vbox_irq_fini(vbox);
@@ -90,97 +91,97 @@ err_mm_fini:
 	vbox_mm_fini(vbox);
 err_hw_fini:
 	vbox_hw_fini(vbox);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void vbox_pci_remove(struct pci_dev *pdev)
-{
-	struct vbox_private *vbox = pci_get_drvdata(pdev);
+अटल व्योम vbox_pci_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा vbox_निजी *vbox = pci_get_drvdata(pdev);
 
-	drm_dev_unregister(&vbox->ddev);
+	drm_dev_unरेजिस्टर(&vbox->ddev);
 	vbox_irq_fini(vbox);
 	vbox_mode_fini(vbox);
 	vbox_mm_fini(vbox);
 	vbox_hw_fini(vbox);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int vbox_pm_suspend(struct device *dev)
-{
-	struct vbox_private *vbox = dev_get_drvdata(dev);
-	struct pci_dev *pdev = to_pci_dev(dev);
-	int error;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक vbox_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा vbox_निजी *vbox = dev_get_drvdata(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	पूर्णांक error;
 
 	error = drm_mode_config_helper_suspend(&vbox->ddev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	pci_save_state(pdev);
 	pci_disable_device(pdev);
-	pci_set_power_state(pdev, PCI_D3hot);
+	pci_set_घातer_state(pdev, PCI_D3hot);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vbox_pm_resume(struct device *dev)
-{
-	struct vbox_private *vbox = dev_get_drvdata(dev);
-	struct pci_dev *pdev = to_pci_dev(dev);
+अटल पूर्णांक vbox_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा vbox_निजी *vbox = dev_get_drvdata(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
 
-	if (pci_enable_device(pdev))
-		return -EIO;
+	अगर (pci_enable_device(pdev))
+		वापस -EIO;
 
-	return drm_mode_config_helper_resume(&vbox->ddev);
-}
+	वापस drm_mode_config_helper_resume(&vbox->ddev);
+पूर्ण
 
-static int vbox_pm_freeze(struct device *dev)
-{
-	struct vbox_private *vbox = dev_get_drvdata(dev);
+अटल पूर्णांक vbox_pm_मुक्तze(काष्ठा device *dev)
+अणु
+	काष्ठा vbox_निजी *vbox = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_suspend(&vbox->ddev);
-}
+	वापस drm_mode_config_helper_suspend(&vbox->ddev);
+पूर्ण
 
-static int vbox_pm_thaw(struct device *dev)
-{
-	struct vbox_private *vbox = dev_get_drvdata(dev);
+अटल पूर्णांक vbox_pm_thaw(काष्ठा device *dev)
+अणु
+	काष्ठा vbox_निजी *vbox = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_resume(&vbox->ddev);
-}
+	वापस drm_mode_config_helper_resume(&vbox->ddev);
+पूर्ण
 
-static int vbox_pm_poweroff(struct device *dev)
-{
-	struct vbox_private *vbox = dev_get_drvdata(dev);
+अटल पूर्णांक vbox_pm_घातeroff(काष्ठा device *dev)
+अणु
+	काष्ठा vbox_निजी *vbox = dev_get_drvdata(dev);
 
-	return drm_mode_config_helper_suspend(&vbox->ddev);
-}
+	वापस drm_mode_config_helper_suspend(&vbox->ddev);
+पूर्ण
 
-static const struct dev_pm_ops vbox_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops vbox_pm_ops = अणु
 	.suspend = vbox_pm_suspend,
 	.resume = vbox_pm_resume,
-	.freeze = vbox_pm_freeze,
+	.मुक्तze = vbox_pm_मुक्तze,
 	.thaw = vbox_pm_thaw,
-	.poweroff = vbox_pm_poweroff,
+	.घातeroff = vbox_pm_घातeroff,
 	.restore = vbox_pm_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static struct pci_driver vbox_pci_driver = {
+अटल काष्ठा pci_driver vbox_pci_driver = अणु
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
 	.probe = vbox_pci_probe,
-	.remove = vbox_pci_remove,
-#ifdef CONFIG_PM_SLEEP
+	.हटाओ = vbox_pci_हटाओ,
+#अगर_घोषित CONFIG_PM_SLEEP
 	.driver.pm = &vbox_pm_ops,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 DEFINE_DRM_GEM_FOPS(vbox_fops);
 
-static const struct drm_driver driver = {
+अटल स्थिर काष्ठा drm_driver driver = अणु
 	.driver_features =
 	    DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
 
-	.lastclose = drm_fb_helper_lastclose,
+	.lastबंद = drm_fb_helper_lastबंद,
 
 	.fops = &vbox_fops,
 	.irq_handler = vbox_irq_handler,
@@ -192,28 +193,28 @@ static const struct drm_driver driver = {
 	.patchlevel = DRIVER_PATCHLEVEL,
 
 	DRM_GEM_VRAM_DRIVER,
-};
+पूर्ण;
 
-static int __init vbox_init(void)
-{
-#ifdef CONFIG_VGA_CONSOLE
-	if (vgacon_text_force() && vbox_modeset == -1)
-		return -EINVAL;
-#endif
+अटल पूर्णांक __init vbox_init(व्योम)
+अणु
+#अगर_घोषित CONFIG_VGA_CONSOLE
+	अगर (vgacon_text_क्रमce() && vbox_modeset == -1)
+		वापस -EINVAL;
+#पूर्ण_अगर
 
-	if (vbox_modeset == 0)
-		return -EINVAL;
+	अगर (vbox_modeset == 0)
+		वापस -EINVAL;
 
-	return pci_register_driver(&vbox_pci_driver);
-}
+	वापस pci_रेजिस्टर_driver(&vbox_pci_driver);
+पूर्ण
 
-static void __exit vbox_exit(void)
-{
-	pci_unregister_driver(&vbox_pci_driver);
-}
+अटल व्योम __निकास vbox_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&vbox_pci_driver);
+पूर्ण
 
 module_init(vbox_init);
-module_exit(vbox_exit);
+module_निकास(vbox_निकास);
 
 MODULE_AUTHOR("Oracle Corporation");
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");

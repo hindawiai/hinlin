@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * PWM framework driver for Cirrus Logic EP93xx
+ * PWM framework driver क्रम Cirrus Logic EP93xx
  *
  * Copyright (c) 2009        Matthieu Crapet <mcrapet@gmail.com>
  * Copyright (c) 2009, 2013  H Hartley Sweeten <hsweeten@visionengravers.com>
  *
  * EP9301/02 have only one channel:
- *   platform device ep93xx-pwm.1 - PWMOUT1 (EGPIO14)
+ *   platक्रमm device ep93xx-pwm.1 - PWMOUT1 (EGPIO14)
  *
  * EP9307 has only one channel:
- *   platform device ep93xx-pwm.0 - PWMOUT
+ *   platक्रमm device ep93xx-pwm.0 - PWMOUT
  *
  * EP9312/15 have two channels:
- *   platform device ep93xx-pwm.0 - PWMOUT
- *   platform device ep93xx-pwm.1 - PWMOUT1 (EGPIO14)
+ *   platक्रमm device ep93xx-pwm.0 - PWMOUT
+ *   platक्रमm device ep93xx-pwm.1 - PWMOUT1 (EGPIO14)
  */
 
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/pwm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pwm.h>
 
-#include <asm/div64.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <linux/soc/cirrus/ep93xx.h>	/* for ep93xx_pwm_{acquire,release}_gpio() */
+#समावेश <linux/soc/cirrus/ep93xx.h>	/* क्रम ep93xx_pwm_अणुacquire,releaseपूर्ण_gpio() */
 
-#define EP93XX_PWMx_TERM_COUNT	0x00
-#define EP93XX_PWMx_DUTY_CYCLE	0x04
-#define EP93XX_PWMx_ENABLE	0x08
-#define EP93XX_PWMx_INVERT	0x0c
+#घोषणा EP93XX_PWMx_TERM_COUNT	0x00
+#घोषणा EP93XX_PWMx_DUTY_CYCLE	0x04
+#घोषणा EP93XX_PWMx_ENABLE	0x08
+#घोषणा EP93XX_PWMx_INVERT	0x0c
 
-struct ep93xx_pwm {
-	void __iomem *base;
-	struct clk *clk;
-	struct pwm_chip chip;
-};
+काष्ठा ep93xx_pwm अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	काष्ठा pwm_chip chip;
+पूर्ण;
 
-static inline struct ep93xx_pwm *to_ep93xx_pwm(struct pwm_chip *chip)
-{
-	return container_of(chip, struct ep93xx_pwm, chip);
-}
+अटल अंतरभूत काष्ठा ep93xx_pwm *to_ep93xx_pwm(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा ep93xx_pwm, chip);
+पूर्ण
 
-static int ep93xx_pwm_request(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct platform_device *pdev = to_platform_device(chip->dev);
+अटल पूर्णांक ep93xx_pwm_request(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(chip->dev);
 
-	return ep93xx_pwm_acquire_gpio(pdev);
-}
+	वापस ep93xx_pwm_acquire_gpio(pdev);
+पूर्ण
 
-static void ep93xx_pwm_free(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct platform_device *pdev = to_platform_device(chip->dev);
+अटल व्योम ep93xx_pwm_मुक्त(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(chip->dev);
 
 	ep93xx_pwm_release_gpio(pdev);
-}
+पूर्ण
 
-static int ep93xx_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
-			     int duty_ns, int period_ns)
-{
-	struct ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
-	void __iomem *base = ep93xx_pwm->base;
-	unsigned long long c;
-	unsigned long period_cycles;
-	unsigned long duty_cycles;
-	unsigned long term;
-	int ret = 0;
+अटल पूर्णांक ep93xx_pwm_config(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			     पूर्णांक duty_ns, पूर्णांक period_ns)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
+	व्योम __iomem *base = ep93xx_pwm->base;
+	अचिन्हित दीर्घ दीर्घ c;
+	अचिन्हित दीर्घ period_cycles;
+	अचिन्हित दीर्घ duty_cycles;
+	अचिन्हित दीर्घ term;
+	पूर्णांक ret = 0;
 
 	/*
-	 * The clock needs to be enabled to access the PWM registers.
-	 * Configuration can be changed at any time.
+	 * The घड़ी needs to be enabled to access the PWM रेजिस्टरs.
+	 * Configuration can be changed at any समय.
 	 */
-	if (!pwm_is_enabled(pwm)) {
+	अगर (!pwm_is_enabled(pwm)) अणु
 		ret = clk_enable(ep93xx_pwm->clk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	c = clk_get_rate(ep93xx_pwm->clk);
 	c *= period_ns;
-	do_div(c, 1000000000);
+	करो_भाग(c, 1000000000);
 	period_cycles = c;
 
 	c = period_cycles;
 	c *= duty_ns;
-	do_div(c, period_ns);
+	करो_भाग(c, period_ns);
 	duty_cycles = c;
 
-	if (period_cycles < 0x10000 && duty_cycles < 0x10000) {
-		term = readw(base + EP93XX_PWMx_TERM_COUNT);
+	अगर (period_cycles < 0x10000 && duty_cycles < 0x10000) अणु
+		term = पढ़ोw(base + EP93XX_PWMx_TERM_COUNT);
 
-		/* Order is important if PWM is running */
-		if (period_cycles > term) {
-			writew(period_cycles, base + EP93XX_PWMx_TERM_COUNT);
-			writew(duty_cycles, base + EP93XX_PWMx_DUTY_CYCLE);
-		} else {
-			writew(duty_cycles, base + EP93XX_PWMx_DUTY_CYCLE);
-			writew(period_cycles, base + EP93XX_PWMx_TERM_COUNT);
-		}
-	} else {
+		/* Order is important अगर PWM is running */
+		अगर (period_cycles > term) अणु
+			ग_लिखोw(period_cycles, base + EP93XX_PWMx_TERM_COUNT);
+			ग_लिखोw(duty_cycles, base + EP93XX_PWMx_DUTY_CYCLE);
+		पूर्ण अन्यथा अणु
+			ग_लिखोw(duty_cycles, base + EP93XX_PWMx_DUTY_CYCLE);
+			ग_लिखोw(period_cycles, base + EP93XX_PWMx_TERM_COUNT);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	if (!pwm_is_enabled(pwm))
+	अगर (!pwm_is_enabled(pwm))
 		clk_disable(ep93xx_pwm->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ep93xx_pwm_polarity(struct pwm_chip *chip, struct pwm_device *pwm,
-			       enum pwm_polarity polarity)
-{
-	struct ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
-	int ret;
+अटल पूर्णांक ep93xx_pwm_polarity(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			       क्रमागत pwm_polarity polarity)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
+	पूर्णांक ret;
 
 	/*
-	 * The clock needs to be enabled to access the PWM registers.
+	 * The घड़ी needs to be enabled to access the PWM रेजिस्टरs.
 	 * Polarity can only be changed when the PWM is disabled.
 	 */
 	ret = clk_enable(ep93xx_pwm->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (polarity == PWM_POLARITY_INVERSED)
-		writew(0x1, ep93xx_pwm->base + EP93XX_PWMx_INVERT);
-	else
-		writew(0x0, ep93xx_pwm->base + EP93XX_PWMx_INVERT);
+	अगर (polarity == PWM_POLARITY_INVERSED)
+		ग_लिखोw(0x1, ep93xx_pwm->base + EP93XX_PWMx_INVERT);
+	अन्यथा
+		ग_लिखोw(0x0, ep93xx_pwm->base + EP93XX_PWMx_INVERT);
 
 	clk_disable(ep93xx_pwm->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ep93xx_pwm_enable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
-	int ret;
+अटल पूर्णांक ep93xx_pwm_enable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
+	पूर्णांक ret;
 
 	ret = clk_enable(ep93xx_pwm->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	writew(0x1, ep93xx_pwm->base + EP93XX_PWMx_ENABLE);
+	ग_लिखोw(0x1, ep93xx_pwm->base + EP93XX_PWMx_ENABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ep93xx_pwm_disable(struct pwm_chip *chip, struct pwm_device *pwm)
-{
-	struct ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
+अटल व्योम ep93xx_pwm_disable(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm = to_ep93xx_pwm(chip);
 
-	writew(0x0, ep93xx_pwm->base + EP93XX_PWMx_ENABLE);
+	ग_लिखोw(0x0, ep93xx_pwm->base + EP93XX_PWMx_ENABLE);
 	clk_disable(ep93xx_pwm->clk);
-}
+पूर्ण
 
-static const struct pwm_ops ep93xx_pwm_ops = {
+अटल स्थिर काष्ठा pwm_ops ep93xx_pwm_ops = अणु
 	.request = ep93xx_pwm_request,
-	.free = ep93xx_pwm_free,
+	.मुक्त = ep93xx_pwm_मुक्त,
 	.config = ep93xx_pwm_config,
 	.set_polarity = ep93xx_pwm_polarity,
 	.enable = ep93xx_pwm_enable,
 	.disable = ep93xx_pwm_disable,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int ep93xx_pwm_probe(struct platform_device *pdev)
-{
-	struct ep93xx_pwm *ep93xx_pwm;
-	int ret;
+अटल पूर्णांक ep93xx_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm;
+	पूर्णांक ret;
 
-	ep93xx_pwm = devm_kzalloc(&pdev->dev, sizeof(*ep93xx_pwm), GFP_KERNEL);
-	if (!ep93xx_pwm)
-		return -ENOMEM;
+	ep93xx_pwm = devm_kzalloc(&pdev->dev, माप(*ep93xx_pwm), GFP_KERNEL);
+	अगर (!ep93xx_pwm)
+		वापस -ENOMEM;
 
-	ep93xx_pwm->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(ep93xx_pwm->base))
-		return PTR_ERR(ep93xx_pwm->base);
+	ep93xx_pwm->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(ep93xx_pwm->base))
+		वापस PTR_ERR(ep93xx_pwm->base);
 
 	ep93xx_pwm->clk = devm_clk_get(&pdev->dev, "pwm_clk");
-	if (IS_ERR(ep93xx_pwm->clk))
-		return PTR_ERR(ep93xx_pwm->clk);
+	अगर (IS_ERR(ep93xx_pwm->clk))
+		वापस PTR_ERR(ep93xx_pwm->clk);
 
 	ep93xx_pwm->chip.dev = &pdev->dev;
 	ep93xx_pwm->chip.ops = &ep93xx_pwm_ops;
 	ep93xx_pwm->chip.npwm = 1;
 
 	ret = pwmchip_add(&ep93xx_pwm->chip);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	platform_set_drvdata(pdev, ep93xx_pwm);
-	return 0;
-}
+	platक्रमm_set_drvdata(pdev, ep93xx_pwm);
+	वापस 0;
+पूर्ण
 
-static int ep93xx_pwm_remove(struct platform_device *pdev)
-{
-	struct ep93xx_pwm *ep93xx_pwm = platform_get_drvdata(pdev);
+अटल पूर्णांक ep93xx_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ep93xx_pwm *ep93xx_pwm = platक्रमm_get_drvdata(pdev);
 
-	return pwmchip_remove(&ep93xx_pwm->chip);
-}
+	वापस pwmchip_हटाओ(&ep93xx_pwm->chip);
+पूर्ण
 
-static struct platform_driver ep93xx_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ep93xx_pwm_driver = अणु
+	.driver = अणु
 		.name = "ep93xx-pwm",
-	},
+	पूर्ण,
 	.probe = ep93xx_pwm_probe,
-	.remove = ep93xx_pwm_remove,
-};
-module_platform_driver(ep93xx_pwm_driver);
+	.हटाओ = ep93xx_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(ep93xx_pwm_driver);
 
 MODULE_DESCRIPTION("Cirrus Logic EP93xx PWM driver");
 MODULE_AUTHOR("Matthieu Crapet <mcrapet@gmail.com>");

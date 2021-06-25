@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * bootstr.c:  Boot string/argument acquisition from the PROM.
  *
  * Copyright(C) 1995 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#include <linux/string.h>
-#include <asm/oplib.h>
-#include <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/oplib.h>
+#समावेश <linux/init.h>
 
-#define BARG_LEN  256
-static char barg_buf[BARG_LEN] = { 0 };
-static char fetched __initdata = 0;
+#घोषणा BARG_LEN  256
+अटल अक्षर barg_buf[BARG_LEN] = अणु 0 पूर्ण;
+अटल अक्षर fetched __initdata = 0;
 
-char * __init
-prom_getbootargs(void)
-{
-	int iter;
-	char *cp, *arg;
+अक्षर * __init
+prom_getbootargs(व्योम)
+अणु
+	पूर्णांक iter;
+	अक्षर *cp, *arg;
 
 	/* This check saves us from a panic when bootfd patches args. */
-	if (fetched) {
-		return barg_buf;
-	}
+	अगर (fetched) अणु
+		वापस barg_buf;
+	पूर्ण
 
-	switch (prom_vers) {
-	case PROM_V0:
+	चयन (prom_vers) अणु
+	हाल PROM_V0:
 		cp = barg_buf;
 		/* Start from 1 and go over fd(0,0,0)kernel */
-		for (iter = 1; iter < 8; iter++) {
+		क्रम (iter = 1; iter < 8; iter++) अणु
 			arg = (*(romvec->pv_v0bootargs))->argv[iter];
-			if (arg == NULL)
-				break;
-			while (*arg != 0) {
-				/* Leave place for space and null. */
-				if (cp >= barg_buf + BARG_LEN - 2)
+			अगर (arg == शून्य)
+				अवरोध;
+			जबतक (*arg != 0) अणु
+				/* Leave place क्रम space and null. */
+				अगर (cp >= barg_buf + BARG_LEN - 2)
 					/* We might issue a warning here. */
-					break;
+					अवरोध;
 				*cp++ = *arg++;
-			}
+			पूर्ण
 			*cp++ = ' ';
-			if (cp >= barg_buf + BARG_LEN - 1)
+			अगर (cp >= barg_buf + BARG_LEN - 1)
 				/* We might issue a warning here. */
-				break;
-		}
+				अवरोध;
+		पूर्ण
 		*cp = 0;
-		break;
-	case PROM_V2:
-	case PROM_V3:
+		अवरोध;
+	हाल PROM_V2:
+	हाल PROM_V3:
 		/*
 		 * V3 PROM cannot supply as with more than 128 bytes
 		 * of an argument. But a smart bootstrap loader can.
 		 */
-		strlcpy(barg_buf, *romvec->pv_v2bootargs.bootargs, sizeof(barg_buf));
-		break;
-	default:
-		break;
-	}
+		strlcpy(barg_buf, *romvec->pv_v2bootargs.bootargs, माप(barg_buf));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	fetched = 1;
-	return barg_buf;
-}
+	वापस barg_buf;
+पूर्ण

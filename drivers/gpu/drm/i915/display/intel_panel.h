@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_PANEL_H__
-#define __INTEL_PANEL_H__
+#अगर_अघोषित __INTEL_PANEL_H__
+#घोषणा __INTEL_PANEL_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "intel_display.h"
+#समावेश "intel_display.h"
 
-struct drm_connector;
-struct drm_connector_state;
-struct drm_display_mode;
-struct intel_connector;
-struct intel_crtc;
-struct intel_crtc_state;
-struct intel_encoder;
-struct intel_panel;
+काष्ठा drm_connector;
+काष्ठा drm_connector_state;
+काष्ठा drm_display_mode;
+काष्ठा पूर्णांकel_connector;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_panel;
 
-int intel_panel_init(struct intel_panel *panel,
-		     struct drm_display_mode *fixed_mode,
-		     struct drm_display_mode *downclock_mode);
-void intel_panel_fini(struct intel_panel *panel);
-enum drm_connector_status
-intel_panel_detect(struct drm_connector *connector, bool force);
-void intel_fixed_panel_mode(const struct drm_display_mode *fixed_mode,
-			    struct drm_display_mode *adjusted_mode);
-int intel_pch_panel_fitting(struct intel_crtc_state *crtc_state,
-			    const struct drm_connector_state *conn_state);
-int intel_gmch_panel_fitting(struct intel_crtc_state *crtc_state,
-			     const struct drm_connector_state *conn_state);
-void intel_panel_set_backlight_acpi(const struct drm_connector_state *conn_state,
+पूर्णांक पूर्णांकel_panel_init(काष्ठा पूर्णांकel_panel *panel,
+		     काष्ठा drm_display_mode *fixed_mode,
+		     काष्ठा drm_display_mode *करोwnघड़ी_mode);
+व्योम पूर्णांकel_panel_fini(काष्ठा पूर्णांकel_panel *panel);
+क्रमागत drm_connector_status
+पूर्णांकel_panel_detect(काष्ठा drm_connector *connector, bool क्रमce);
+व्योम पूर्णांकel_fixed_panel_mode(स्थिर काष्ठा drm_display_mode *fixed_mode,
+			    काष्ठा drm_display_mode *adjusted_mode);
+पूर्णांक पूर्णांकel_pch_panel_fitting(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			    स्थिर काष्ठा drm_connector_state *conn_state);
+पूर्णांक पूर्णांकel_gmch_panel_fitting(काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			     स्थिर काष्ठा drm_connector_state *conn_state);
+व्योम पूर्णांकel_panel_set_backlight_acpi(स्थिर काष्ठा drm_connector_state *conn_state,
 				    u32 level, u32 max);
-int intel_panel_setup_backlight(struct drm_connector *connector,
-				enum pipe pipe);
-void intel_panel_enable_backlight(const struct intel_crtc_state *crtc_state,
-				  const struct drm_connector_state *conn_state);
-void intel_panel_update_backlight(struct intel_atomic_state *state,
-				  struct intel_encoder *encoder,
-				  const struct intel_crtc_state *crtc_state,
-				  const struct drm_connector_state *conn_state);
-void intel_panel_disable_backlight(const struct drm_connector_state *old_conn_state);
-struct drm_display_mode *
-intel_panel_edid_downclock_mode(struct intel_connector *connector,
-				const struct drm_display_mode *fixed_mode);
-struct drm_display_mode *
-intel_panel_edid_fixed_mode(struct intel_connector *connector);
-struct drm_display_mode *
-intel_panel_vbt_fixed_mode(struct intel_connector *connector);
-void intel_panel_set_pwm_level(const struct drm_connector_state *conn_state, u32 level);
-u32 intel_panel_invert_pwm_level(struct intel_connector *connector, u32 level);
-u32 intel_panel_backlight_level_to_pwm(struct intel_connector *connector, u32 level);
-u32 intel_panel_backlight_level_from_pwm(struct intel_connector *connector, u32 val);
+पूर्णांक पूर्णांकel_panel_setup_backlight(काष्ठा drm_connector *connector,
+				क्रमागत pipe pipe);
+व्योम पूर्णांकel_panel_enable_backlight(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+				  स्थिर काष्ठा drm_connector_state *conn_state);
+व्योम पूर्णांकel_panel_update_backlight(काष्ठा पूर्णांकel_atomic_state *state,
+				  काष्ठा पूर्णांकel_encoder *encoder,
+				  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+				  स्थिर काष्ठा drm_connector_state *conn_state);
+व्योम पूर्णांकel_panel_disable_backlight(स्थिर काष्ठा drm_connector_state *old_conn_state);
+काष्ठा drm_display_mode *
+पूर्णांकel_panel_edid_करोwnघड़ी_mode(काष्ठा पूर्णांकel_connector *connector,
+				स्थिर काष्ठा drm_display_mode *fixed_mode);
+काष्ठा drm_display_mode *
+पूर्णांकel_panel_edid_fixed_mode(काष्ठा पूर्णांकel_connector *connector);
+काष्ठा drm_display_mode *
+पूर्णांकel_panel_vbt_fixed_mode(काष्ठा पूर्णांकel_connector *connector);
+व्योम पूर्णांकel_panel_set_pwm_level(स्थिर काष्ठा drm_connector_state *conn_state, u32 level);
+u32 पूर्णांकel_panel_invert_pwm_level(काष्ठा पूर्णांकel_connector *connector, u32 level);
+u32 पूर्णांकel_panel_backlight_level_to_pwm(काष्ठा पूर्णांकel_connector *connector, u32 level);
+u32 पूर्णांकel_panel_backlight_level_from_pwm(काष्ठा पूर्णांकel_connector *connector, u32 val);
 
-#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
-int intel_backlight_device_register(struct intel_connector *connector);
-void intel_backlight_device_unregister(struct intel_connector *connector);
-#else /* CONFIG_BACKLIGHT_CLASS_DEVICE */
-static inline int intel_backlight_device_register(struct intel_connector *connector)
-{
-	return 0;
-}
-static inline void intel_backlight_device_unregister(struct intel_connector *connector)
-{
-}
-#endif /* CONFIG_BACKLIGHT_CLASS_DEVICE */
+#अगर IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE)
+पूर्णांक पूर्णांकel_backlight_device_रेजिस्टर(काष्ठा पूर्णांकel_connector *connector);
+व्योम पूर्णांकel_backlight_device_unरेजिस्टर(काष्ठा पूर्णांकel_connector *connector);
+#अन्यथा /* CONFIG_BACKLIGHT_CLASS_DEVICE */
+अटल अंतरभूत पूर्णांक पूर्णांकel_backlight_device_रेजिस्टर(काष्ठा पूर्णांकel_connector *connector)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम पूर्णांकel_backlight_device_unरेजिस्टर(काष्ठा पूर्णांकel_connector *connector)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BACKLIGHT_CLASS_DEVICE */
 
-#endif /* __INTEL_PANEL_H__ */
+#पूर्ण_अगर /* __INTEL_PANEL_H__ */

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * cxd2880_integ.h
+ * cxd2880_पूर्णांकeg.h
  * Sony CXD2880 DVB-T2/T tuner + demodulator driver
- * integration layer common interface
+ * पूर्णांकegration layer common पूर्णांकerface
  *
  * Copyright (C) 2016, 2017, 2018 Sony Semiconductor Solutions Corporation
  */
 
-#ifndef CXD2880_INTEG_H
-#define CXD2880_INTEG_H
+#अगर_अघोषित CXD2880_INTEG_H
+#घोषणा CXD2880_INTEG_H
 
-#include "cxd2880_tnrdmd.h"
+#समावेश "cxd2880_tnrdmd.h"
 
-#define CXD2880_TNRDMD_WAIT_INIT_TIMEOUT	500
-#define CXD2880_TNRDMD_WAIT_INIT_INTVL	10
+#घोषणा CXD2880_TNRDMD_WAIT_INIT_TIMEOUT	500
+#घोषणा CXD2880_TNRDMD_WAIT_INIT_INTVL	10
 
-#define CXD2880_TNRDMD_WAIT_AGC_STABLE		100
+#घोषणा CXD2880_TNRDMD_WAIT_AGC_STABLE		100
 
-int cxd2880_integ_init(struct cxd2880_tnrdmd *tnr_dmd);
+पूर्णांक cxd2880_पूर्णांकeg_init(काष्ठा cxd2880_tnrdmd *tnr_dmd);
 
-int cxd2880_integ_cancel(struct cxd2880_tnrdmd *tnr_dmd);
+पूर्णांक cxd2880_पूर्णांकeg_cancel(काष्ठा cxd2880_tnrdmd *tnr_dmd);
 
-int cxd2880_integ_check_cancellation(struct cxd2880_tnrdmd
+पूर्णांक cxd2880_पूर्णांकeg_check_cancellation(काष्ठा cxd2880_tnrdmd
 				     *tnr_dmd);
 
-#endif
+#पूर्ण_अगर

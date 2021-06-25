@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * adl_pci6208.c
- * Comedi driver for ADLink 6208 series cards
+ * Comedi driver क्रम ADLink 6208 series cards
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
@@ -15,114 +16,114 @@
  * Updated: Wed, 11 Feb 2015 11:37:18 +0000
  * Status: untested
  *
- * Configuration Options: not applicable, uses PCI auto config
+ * Configuration Options: not applicable, uses PCI स्वतः config
  *
  * All supported devices share the same PCI device ID and are treated as a
  * PCI-6216 with 16 analog output channels.  On a PCI-6208, the upper 8
- * channels exist in registers, but don't go to DAC chips.
+ * channels exist in रेजिस्टरs, but करोn't go to DAC chips.
  */
 
-#include <linux/module.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
 
-#include "../comedi_pci.h"
+#समावेश "../comedi_pci.h"
 
 /*
- * PCI-6208/6216-GL register map
+ * PCI-6208/6216-GL रेजिस्टर map
  */
-#define PCI6208_AO_CONTROL(x)		(0x00 + (2 * (x)))
-#define PCI6208_AO_STATUS		0x00
-#define PCI6208_AO_STATUS_DATA_SEND	BIT(0)
-#define PCI6208_DIO			0x40
-#define PCI6208_DIO_DO_MASK		(0x0f)
-#define PCI6208_DIO_DO_SHIFT		(0)
-#define PCI6208_DIO_DI_MASK		(0xf0)
-#define PCI6208_DIO_DI_SHIFT		(4)
+#घोषणा PCI6208_AO_CONTROL(x)		(0x00 + (2 * (x)))
+#घोषणा PCI6208_AO_STATUS		0x00
+#घोषणा PCI6208_AO_STATUS_DATA_SEND	BIT(0)
+#घोषणा PCI6208_DIO			0x40
+#घोषणा PCI6208_DIO_DO_MASK		(0x0f)
+#घोषणा PCI6208_DIO_DO_SHIFT		(0)
+#घोषणा PCI6208_DIO_DI_MASK		(0xf0)
+#घोषणा PCI6208_DIO_DI_SHIFT		(4)
 
-static int pci6208_ao_eoc(struct comedi_device *dev,
-			  struct comedi_subdevice *s,
-			  struct comedi_insn *insn,
-			  unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक pci6208_ao_eoc(काष्ठा comedi_device *dev,
+			  काष्ठा comedi_subdevice *s,
+			  काष्ठा comedi_insn *insn,
+			  अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inw(dev->iobase + PCI6208_AO_STATUS);
-	if ((status & PCI6208_AO_STATUS_DATA_SEND) == 0)
-		return 0;
-	return -EBUSY;
-}
+	अगर ((status & PCI6208_AO_STATUS_DATA_SEND) == 0)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static int pci6208_ao_insn_write(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	int ret;
-	int i;
+अटल पूर्णांक pci6208_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
-		unsigned int val = data[i];
+	क्रम (i = 0; i < insn->n; i++) अणु
+		अचिन्हित पूर्णांक val = data[i];
 
 		/* D/A transfer rate is 2.2us */
-		ret = comedi_timeout(dev, s, insn, pci6208_ao_eoc, 0);
-		if (ret)
-			return ret;
+		ret = comedi_समयout(dev, s, insn, pci6208_ao_eoc, 0);
+		अगर (ret)
+			वापस ret;
 
 		/* the hardware expects two's complement values */
 		outw(comedi_offset_munge(s, val),
 		     dev->iobase + PCI6208_AO_CONTROL(chan));
 
-		s->readback[chan] = val;
-	}
+		s->पढ़ोback[chan] = val;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci6208_di_insn_bits(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	unsigned int val;
+अटल पूर्णांक pci6208_di_insn_bits(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = inw(dev->iobase + PCI6208_DIO);
 	val = (val & PCI6208_DIO_DI_MASK) >> PCI6208_DIO_DI_SHIFT;
 
 	data[1] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci6208_do_insn_bits(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data))
+अटल पूर्णांक pci6208_करो_insn_bits(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data))
 		outw(s->state, dev->iobase + PCI6208_DIO);
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pci6208_auto_attach(struct comedi_device *dev,
-			       unsigned long context_unused)
-{
-	struct pci_dev *pcidev = comedi_to_pci_dev(dev);
-	struct comedi_subdevice *s;
-	unsigned int val;
-	int ret;
+अटल पूर्णांक pci6208_स्वतः_attach(काष्ठा comedi_device *dev,
+			       अचिन्हित दीर्घ context_unused)
+अणु
+	काष्ठा pci_dev *pcidev = comedi_to_pci_dev(dev);
+	काष्ठा comedi_subdevice *s;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
 	ret = comedi_pci_enable(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	dev->iobase = pci_resource_start(pcidev, 2);
 
 	ret = comedi_alloc_subdevices(dev, 3);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[0];
 	/* analog output subdevice */
@@ -131,11 +132,11 @@ static int pci6208_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 16;	/* Only 8 usable on PCI-6208 */
 	s->maxdata	= 0xffff;
 	s->range_table	= &range_bipolar10;
-	s->insn_write	= pci6208_ao_insn_write;
+	s->insn_ग_लिखो	= pci6208_ao_insn_ग_लिखो;
 
-	ret = comedi_alloc_subdev_readback(s);
-	if (ret)
-		return ret;
+	ret = comedi_alloc_subdev_पढ़ोback(s);
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[1];
 	/* digital input subdevice */
@@ -153,47 +154,47 @@ static int pci6208_auto_attach(struct comedi_device *dev,
 	s->n_chan	= 4;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= pci6208_do_insn_bits;
+	s->insn_bits	= pci6208_करो_insn_bits;
 
 	/*
-	 * Get the read back signals from the digital outputs
-	 * and save it as the initial state for the subdevice.
+	 * Get the पढ़ो back संकेतs from the digital outमाला_दो
+	 * and save it as the initial state क्रम the subdevice.
 	 */
 	val = inw(dev->iobase + PCI6208_DIO);
 	val = (val & PCI6208_DIO_DO_MASK) >> PCI6208_DIO_DO_SHIFT;
 	s->state	= val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct comedi_driver adl_pci6208_driver = {
+अटल काष्ठा comedi_driver adl_pci6208_driver = अणु
 	.driver_name	= "adl_pci6208",
 	.module		= THIS_MODULE,
-	.auto_attach	= pci6208_auto_attach,
+	.स्वतः_attach	= pci6208_स्वतः_attach,
 	.detach		= comedi_pci_detach,
-};
+पूर्ण;
 
-static int adl_pci6208_pci_probe(struct pci_dev *dev,
-				 const struct pci_device_id *id)
-{
-	return comedi_pci_auto_config(dev, &adl_pci6208_driver,
+अटल पूर्णांक adl_pci6208_pci_probe(काष्ठा pci_dev *dev,
+				 स्थिर काष्ठा pci_device_id *id)
+अणु
+	वापस comedi_pci_स्वतः_config(dev, &adl_pci6208_driver,
 				      id->driver_data);
-}
+पूर्ण
 
-static const struct pci_device_id adl_pci6208_pci_table[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_ADLINK, 0x6208) },
-	{ PCI_DEVICE_SUB(PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
-			 0x9999, 0x6208) },
-	{ 0 }
-};
+अटल स्थिर काष्ठा pci_device_id adl_pci6208_pci_table[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_ADLINK, 0x6208) पूर्ण,
+	अणु PCI_DEVICE_SUB(PCI_VENDOR_ID_PLX, PCI_DEVICE_ID_PLX_9050,
+			 0x9999, 0x6208) पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, adl_pci6208_pci_table);
 
-static struct pci_driver adl_pci6208_pci_driver = {
+अटल काष्ठा pci_driver adl_pci6208_pci_driver = अणु
 	.name		= "adl_pci6208",
 	.id_table	= adl_pci6208_pci_table,
 	.probe		= adl_pci6208_pci_probe,
-	.remove		= comedi_pci_auto_unconfig,
-};
+	.हटाओ		= comedi_pci_स्वतः_unconfig,
+पूर्ण;
 module_comedi_pci_driver(adl_pci6208_driver, adl_pci6208_pci_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

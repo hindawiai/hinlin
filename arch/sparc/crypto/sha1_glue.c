@@ -1,87 +1,88 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Glue code for SHA1 hashing optimized for sparc64 crypto opcodes.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Glue code क्रम SHA1 hashing optimized क्रम sparc64 crypto opcodes.
  *
  * This is based largely upon arch/x86/crypto/sha1_ssse3_glue.c
  *
  * Copyright (c) Alan Smithee.
- * Copyright (c) Andrew McDonald <andrew@mcdonald.org.uk>
+ * Copyright (c) Andrew McDonald <andrew@mcकरोnald.org.uk>
  * Copyright (c) Jean-Francois Dive <jef@linuxbe.org>
  * Copyright (c) Mathias Krause <minipli@googlemail.com>
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <crypto/internal/hash.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <crypto/sha1.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/sha1.h>
 
-#include <asm/pstate.h>
-#include <asm/elf.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/elf.h>
 
-#include "opcodes.h"
+#समावेश "opcodes.h"
 
-asmlinkage void sha1_sparc64_transform(u32 *digest, const char *data,
-				       unsigned int rounds);
+यंत्रlinkage व्योम sha1_sparc64_transक्रमm(u32 *digest, स्थिर अक्षर *data,
+				       अचिन्हित पूर्णांक rounds);
 
-static int sha1_sparc64_init(struct shash_desc *desc)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha1_sparc64_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
 
-	*sctx = (struct sha1_state){
-		.state = { SHA1_H0, SHA1_H1, SHA1_H2, SHA1_H3, SHA1_H4 },
-	};
+	*sctx = (काष्ठा sha1_state)अणु
+		.state = अणु SHA1_H0, SHA1_H1, SHA1_H2, SHA1_H3, SHA1_H4 पूर्ण,
+	पूर्ण;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __sha1_sparc64_update(struct sha1_state *sctx, const u8 *data,
-				  unsigned int len, unsigned int partial)
-{
-	unsigned int done = 0;
+अटल व्योम __sha1_sparc64_update(काष्ठा sha1_state *sctx, स्थिर u8 *data,
+				  अचिन्हित पूर्णांक len, अचिन्हित पूर्णांक partial)
+अणु
+	अचिन्हित पूर्णांक करोne = 0;
 
 	sctx->count += len;
-	if (partial) {
-		done = SHA1_BLOCK_SIZE - partial;
-		memcpy(sctx->buffer + partial, data, done);
-		sha1_sparc64_transform(sctx->state, sctx->buffer, 1);
-	}
-	if (len - done >= SHA1_BLOCK_SIZE) {
-		const unsigned int rounds = (len - done) / SHA1_BLOCK_SIZE;
+	अगर (partial) अणु
+		करोne = SHA1_BLOCK_SIZE - partial;
+		स_नकल(sctx->buffer + partial, data, करोne);
+		sha1_sparc64_transक्रमm(sctx->state, sctx->buffer, 1);
+	पूर्ण
+	अगर (len - करोne >= SHA1_BLOCK_SIZE) अणु
+		स्थिर अचिन्हित पूर्णांक rounds = (len - करोne) / SHA1_BLOCK_SIZE;
 
-		sha1_sparc64_transform(sctx->state, data + done, rounds);
-		done += rounds * SHA1_BLOCK_SIZE;
-	}
+		sha1_sparc64_transक्रमm(sctx->state, data + करोne, rounds);
+		करोne += rounds * SHA1_BLOCK_SIZE;
+	पूर्ण
 
-	memcpy(sctx->buffer, data + done, len - done);
-}
+	स_नकल(sctx->buffer, data + करोne, len - करोne);
+पूर्ण
 
-static int sha1_sparc64_update(struct shash_desc *desc, const u8 *data,
-			       unsigned int len)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
-	unsigned int partial = sctx->count % SHA1_BLOCK_SIZE;
+अटल पूर्णांक sha1_sparc64_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+			       अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = sctx->count % SHA1_BLOCK_SIZE;
 
-	/* Handle the fast case right here */
-	if (partial + len < SHA1_BLOCK_SIZE) {
+	/* Handle the fast हाल right here */
+	अगर (partial + len < SHA1_BLOCK_SIZE) अणु
 		sctx->count += len;
-		memcpy(sctx->buffer + partial, data, len);
-	} else
+		स_नकल(sctx->buffer + partial, data, len);
+	पूर्ण अन्यथा
 		__sha1_sparc64_update(sctx, data, len, partial);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Add padding and return the message digest. */
-static int sha1_sparc64_final(struct shash_desc *desc, u8 *out)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
-	unsigned int i, index, padlen;
+/* Add padding and वापस the message digest. */
+अटल पूर्णांक sha1_sparc64_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक i, index, padlen;
 	__be32 *dst = (__be32 *)out;
 	__be64 bits;
-	static const u8 padding[SHA1_BLOCK_SIZE] = { 0x80, };
+	अटल स्थिर u8 padding[SHA1_BLOCK_SIZE] = अणु 0x80, पूर्ण;
 
 	bits = cpu_to_be64(sctx->count << 3);
 
@@ -89,96 +90,96 @@ static int sha1_sparc64_final(struct shash_desc *desc, u8 *out)
 	index = sctx->count % SHA1_BLOCK_SIZE;
 	padlen = (index < 56) ? (56 - index) : ((SHA1_BLOCK_SIZE+56) - index);
 
-	/* We need to fill a whole block for __sha1_sparc64_update() */
-	if (padlen <= 56) {
+	/* We need to fill a whole block क्रम __sha1_sparc64_update() */
+	अगर (padlen <= 56) अणु
 		sctx->count += padlen;
-		memcpy(sctx->buffer + index, padding, padlen);
-	} else {
+		स_नकल(sctx->buffer + index, padding, padlen);
+	पूर्ण अन्यथा अणु
 		__sha1_sparc64_update(sctx, padding, padlen, index);
-	}
-	__sha1_sparc64_update(sctx, (const u8 *)&bits, sizeof(bits), 56);
+	पूर्ण
+	__sha1_sparc64_update(sctx, (स्थिर u8 *)&bits, माप(bits), 56);
 
 	/* Store state in digest */
-	for (i = 0; i < 5; i++)
+	क्रम (i = 0; i < 5; i++)
 		dst[i] = cpu_to_be32(sctx->state[i]);
 
 	/* Wipe context */
-	memset(sctx, 0, sizeof(*sctx));
+	स_रखो(sctx, 0, माप(*sctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha1_sparc64_export(struct shash_desc *desc, void *out)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha1_sparc64_export(काष्ठा shash_desc *desc, व्योम *out)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
 
-	memcpy(out, sctx, sizeof(*sctx));
+	स_नकल(out, sctx, माप(*sctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sha1_sparc64_import(struct shash_desc *desc, const void *in)
-{
-	struct sha1_state *sctx = shash_desc_ctx(desc);
+अटल पूर्णांक sha1_sparc64_import(काष्ठा shash_desc *desc, स्थिर व्योम *in)
+अणु
+	काष्ठा sha1_state *sctx = shash_desc_ctx(desc);
 
-	memcpy(sctx, in, sizeof(*sctx));
+	स_नकल(sctx, in, माप(*sctx));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize	=	SHA1_DIGEST_SIZE,
 	.init		=	sha1_sparc64_init,
 	.update		=	sha1_sparc64_update,
 	.final		=	sha1_sparc64_final,
 	.export		=	sha1_sparc64_export,
 	.import		=	sha1_sparc64_import,
-	.descsize	=	sizeof(struct sha1_state),
-	.statesize	=	sizeof(struct sha1_state),
-	.base		=	{
+	.descsize	=	माप(काष्ठा sha1_state),
+	.statesize	=	माप(काष्ठा sha1_state),
+	.base		=	अणु
 		.cra_name	=	"sha1",
 		.cra_driver_name=	"sha1-sparc64",
 		.cra_priority	=	SPARC_CR_OPCODE_PRIORITY,
 		.cra_blocksize	=	SHA1_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static bool __init sparc64_has_sha1_opcode(void)
-{
-	unsigned long cfr;
+अटल bool __init sparc64_has_sha1_opcode(व्योम)
+अणु
+	अचिन्हित दीर्घ cfr;
 
-	if (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
-		return false;
+	अगर (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
+		वापस false;
 
-	__asm__ __volatile__("rd %%asr26, %0" : "=r" (cfr));
-	if (!(cfr & CFR_SHA1))
-		return false;
+	__यंत्र__ __अस्थिर__("rd %%asr26, %0" : "=r" (cfr));
+	अगर (!(cfr & CFR_SHA1))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __init sha1_sparc64_mod_init(void)
-{
-	if (sparc64_has_sha1_opcode()) {
+अटल पूर्णांक __init sha1_sparc64_mod_init(व्योम)
+अणु
+	अगर (sparc64_has_sha1_opcode()) अणु
 		pr_info("Using sparc64 sha1 opcode optimized SHA-1 implementation\n");
-		return crypto_register_shash(&alg);
-	}
+		वापस crypto_रेजिस्टर_shash(&alg);
+	पूर्ण
 	pr_info("sparc64 sha1 opcode not available.\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit sha1_sparc64_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास sha1_sparc64_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 module_init(sha1_sparc64_mod_init);
-module_exit(sha1_sparc64_mod_fini);
+module_निकास(sha1_sparc64_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("SHA1 Secure Hash Algorithm, sparc64 sha1 opcode accelerated");
 
 MODULE_ALIAS_CRYPTO("sha1");
 
-#include "crop_devid.c"
+#समावेश "crop_devid.c"

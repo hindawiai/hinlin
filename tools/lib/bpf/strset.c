@@ -1,176 +1,177 @@
-// SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (LGPL-2.1 OR BSD-2-Clause)
 /* Copyright (c) 2021 Facebook */
-#include <stdint.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <linux/err.h>
-#include "hashmap.h"
-#include "libbpf_internal.h"
-#include "strset.h"
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश "hashmap.h"
+#समावेश "libbpf_internal.h"
+#समावेश "strset.h"
 
-struct strset {
-	void *strs_data;
-	size_t strs_data_len;
-	size_t strs_data_cap;
-	size_t strs_data_max_len;
+काष्ठा strset अणु
+	व्योम *strs_data;
+	माप_प्रकार strs_data_len;
+	माप_प्रकार strs_data_cap;
+	माप_प्रकार strs_data_max_len;
 
-	/* lookup index for each unique string in strings set */
-	struct hashmap *strs_hash;
-};
+	/* lookup index क्रम each unique string in strings set */
+	काष्ठा hashmap *strs_hash;
+पूर्ण;
 
-static size_t strset_hash_fn(const void *key, void *ctx)
-{
-	const struct strset *s = ctx;
-	const char *str = s->strs_data + (long)key;
+अटल माप_प्रकार strset_hash_fn(स्थिर व्योम *key, व्योम *ctx)
+अणु
+	स्थिर काष्ठा strset *s = ctx;
+	स्थिर अक्षर *str = s->strs_data + (दीर्घ)key;
 
-	return str_hash(str);
-}
+	वापस str_hash(str);
+पूर्ण
 
-static bool strset_equal_fn(const void *key1, const void *key2, void *ctx)
-{
-	const struct strset *s = ctx;
-	const char *str1 = s->strs_data + (long)key1;
-	const char *str2 = s->strs_data + (long)key2;
+अटल bool strset_equal_fn(स्थिर व्योम *key1, स्थिर व्योम *key2, व्योम *ctx)
+अणु
+	स्थिर काष्ठा strset *s = ctx;
+	स्थिर अक्षर *str1 = s->strs_data + (दीर्घ)key1;
+	स्थिर अक्षर *str2 = s->strs_data + (दीर्घ)key2;
 
-	return strcmp(str1, str2) == 0;
-}
+	वापस म_भेद(str1, str2) == 0;
+पूर्ण
 
-struct strset *strset__new(size_t max_data_sz, const char *init_data, size_t init_data_sz)
-{
-	struct strset *set = calloc(1, sizeof(*set));
-	struct hashmap *hash;
-	int err = -ENOMEM;
+काष्ठा strset *strset__new(माप_प्रकार max_data_sz, स्थिर अक्षर *init_data, माप_प्रकार init_data_sz)
+अणु
+	काष्ठा strset *set = सुस्मृति(1, माप(*set));
+	काष्ठा hashmap *hash;
+	पूर्णांक err = -ENOMEM;
 
-	if (!set)
-		return ERR_PTR(-ENOMEM);
+	अगर (!set)
+		वापस ERR_PTR(-ENOMEM);
 
 	hash = hashmap__new(strset_hash_fn, strset_equal_fn, set);
-	if (IS_ERR(hash))
-		goto err_out;
+	अगर (IS_ERR(hash))
+		जाओ err_out;
 
 	set->strs_data_max_len = max_data_sz;
 	set->strs_hash = hash;
 
-	if (init_data) {
-		long off;
+	अगर (init_data) अणु
+		दीर्घ off;
 
-		set->strs_data = malloc(init_data_sz);
-		if (!set->strs_data)
-			goto err_out;
+		set->strs_data = दो_स्मृति(init_data_sz);
+		अगर (!set->strs_data)
+			जाओ err_out;
 
-		memcpy(set->strs_data, init_data, init_data_sz);
+		स_नकल(set->strs_data, init_data, init_data_sz);
 		set->strs_data_len = init_data_sz;
 		set->strs_data_cap = init_data_sz;
 
-		for (off = 0; off < set->strs_data_len; off += strlen(set->strs_data + off) + 1) {
-			/* hashmap__add() returns EEXIST if string with the same
-			 * content already is in the hash map
+		क्रम (off = 0; off < set->strs_data_len; off += म_माप(set->strs_data + off) + 1) अणु
+			/* hashmap__add() वापसs EEXIST अगर string with the same
+			 * content alपढ़ोy is in the hash map
 			 */
-			err = hashmap__add(hash, (void *)off, (void *)off);
-			if (err == -EEXIST)
-				continue; /* duplicate */
-			if (err)
-				goto err_out;
-		}
-	}
+			err = hashmap__add(hash, (व्योम *)off, (व्योम *)off);
+			अगर (err == -EEXIST)
+				जारी; /* duplicate */
+			अगर (err)
+				जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	return set;
+	वापस set;
 err_out:
-	strset__free(set);
-	return ERR_PTR(err);
-}
+	strset__मुक्त(set);
+	वापस ERR_PTR(err);
+पूर्ण
 
-void strset__free(struct strset *set)
-{
-	if (IS_ERR_OR_NULL(set))
-		return;
+व्योम strset__मुक्त(काष्ठा strset *set)
+अणु
+	अगर (IS_ERR_OR_शून्य(set))
+		वापस;
 
-	hashmap__free(set->strs_hash);
-	free(set->strs_data);
-}
+	hashmap__मुक्त(set->strs_hash);
+	मुक्त(set->strs_data);
+पूर्ण
 
-size_t strset__data_size(const struct strset *set)
-{
-	return set->strs_data_len;
-}
+माप_प्रकार strset__data_size(स्थिर काष्ठा strset *set)
+अणु
+	वापस set->strs_data_len;
+पूर्ण
 
-const char *strset__data(const struct strset *set)
-{
-	return set->strs_data;
-}
+स्थिर अक्षर *strset__data(स्थिर काष्ठा strset *set)
+अणु
+	वापस set->strs_data;
+पूर्ण
 
-static void *strset_add_str_mem(struct strset *set, size_t add_sz)
-{
-	return libbpf_add_mem(&set->strs_data, &set->strs_data_cap, 1,
+अटल व्योम *strset_add_str_mem(काष्ठा strset *set, माप_प्रकार add_sz)
+अणु
+	वापस libbpf_add_mem(&set->strs_data, &set->strs_data_cap, 1,
 			      set->strs_data_len, set->strs_data_max_len, add_sz);
-}
+पूर्ण
 
 /* Find string offset that corresponds to a given string *s*.
  * Returns:
- *   - >0 offset into string data, if string is found;
- *   - -ENOENT, if string is not in the string data;
+ *   - >0 offset पूर्णांकo string data, अगर string is found;
+ *   - -ENOENT, अगर string is not in the string data;
  *   - <0, on any other error.
  */
-int strset__find_str(struct strset *set, const char *s)
-{
-	long old_off, new_off, len;
-	void *p;
+पूर्णांक strset__find_str(काष्ठा strset *set, स्थिर अक्षर *s)
+अणु
+	दीर्घ old_off, new_off, len;
+	व्योम *p;
 
-	/* see strset__add_str() for why we do this */
-	len = strlen(s) + 1;
+	/* see strset__add_str() क्रम why we करो this */
+	len = म_माप(s) + 1;
 	p = strset_add_str_mem(set, len);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	new_off = set->strs_data_len;
-	memcpy(p, s, len);
+	स_नकल(p, s, len);
 
-	if (hashmap__find(set->strs_hash, (void *)new_off, (void **)&old_off))
-		return old_off;
+	अगर (hashmap__find(set->strs_hash, (व्योम *)new_off, (व्योम **)&old_off))
+		वापस old_off;
 
-	return -ENOENT;
-}
+	वापस -ENOENT;
+पूर्ण
 
-/* Add a string s to the string data. If the string already exists, return its
+/* Add a string s to the string data. If the string alपढ़ोy exists, वापस its
  * offset within string data.
  * Returns:
- *   - > 0 offset into string data, on success;
+ *   - > 0 offset पूर्णांकo string data, on success;
  *   - < 0, on error.
  */
-int strset__add_str(struct strset *set, const char *s)
-{
-	long old_off, new_off, len;
-	void *p;
-	int err;
+पूर्णांक strset__add_str(काष्ठा strset *set, स्थिर अक्षर *s)
+अणु
+	दीर्घ old_off, new_off, len;
+	व्योम *p;
+	पूर्णांक err;
 
 	/* Hashmap keys are always offsets within set->strs_data, so to even
 	 * look up some string from the "outside", we need to first append it
 	 * at the end, so that it can be addressed with an offset. Luckily,
 	 * until set->strs_data_len is incremented, that string is just a piece
-	 * of garbage for the rest of the code, so no harm, no foul. On the
-	 * other hand, if the string is unique, it's already appended and
-	 * ready to be used, only a simple set->strs_data_len increment away.
+	 * of garbage क्रम the rest of the code, so no harm, no foul. On the
+	 * other hand, अगर the string is unique, it's alपढ़ोy appended and
+	 * पढ़ोy to be used, only a simple set->strs_data_len increment away.
 	 */
-	len = strlen(s) + 1;
+	len = म_माप(s) + 1;
 	p = strset_add_str_mem(set, len);
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
 	new_off = set->strs_data_len;
-	memcpy(p, s, len);
+	स_नकल(p, s, len);
 
-	/* Now attempt to add the string, but only if the string with the same
-	 * contents doesn't exist already (HASHMAP_ADD strategy). If such
+	/* Now attempt to add the string, but only अगर the string with the same
+	 * contents करोesn't exist alपढ़ोy (HASHMAP_ADD strategy). If such
 	 * string exists, we'll get its offset in old_off (that's old_key).
 	 */
-	err = hashmap__insert(set->strs_hash, (void *)new_off, (void *)new_off,
-			      HASHMAP_ADD, (const void **)&old_off, NULL);
-	if (err == -EEXIST)
-		return old_off; /* duplicated string, return existing offset */
-	if (err)
-		return err;
+	err = hashmap__insert(set->strs_hash, (व्योम *)new_off, (व्योम *)new_off,
+			      HASHMAP_ADD, (स्थिर व्योम **)&old_off, शून्य);
+	अगर (err == -EEXIST)
+		वापस old_off; /* duplicated string, वापस existing offset */
+	अगर (err)
+		वापस err;
 
 	set->strs_data_len += len; /* new unique string, adjust data length */
-	return new_off;
-}
+	वापस new_off;
+पूर्ण

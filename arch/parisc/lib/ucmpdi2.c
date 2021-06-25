@@ -1,26 +1,27 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/module.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/module.h>
 
-union ull_union {
-	unsigned long long ull;
-	struct {
-		unsigned int high;
-		unsigned int low;
-	} ui;
-};
+जोड़ ull_जोड़ अणु
+	अचिन्हित दीर्घ दीर्घ ull;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक high;
+		अचिन्हित पूर्णांक low;
+	पूर्ण ui;
+पूर्ण;
 
-int __ucmpdi2(unsigned long long a, unsigned long long b)
-{
-	union ull_union au = {.ull = a};
-	union ull_union bu = {.ull = b};
+पूर्णांक __ucmpdi2(अचिन्हित दीर्घ दीर्घ a, अचिन्हित दीर्घ दीर्घ b)
+अणु
+	जोड़ ull_जोड़ au = अणु.ull = aपूर्ण;
+	जोड़ ull_जोड़ bu = अणु.ull = bपूर्ण;
 
-	if (au.ui.high < bu.ui.high)
-		return 0;
-	else if (au.ui.high > bu.ui.high)
-		return 2;
-	if (au.ui.low < bu.ui.low)
-		return 0;
-	else if (au.ui.low > bu.ui.low)
-		return 2;
-	return 1;
-}
+	अगर (au.ui.high < bu.ui.high)
+		वापस 0;
+	अन्यथा अगर (au.ui.high > bu.ui.high)
+		वापस 2;
+	अगर (au.ui.low < bu.ui.low)
+		वापस 0;
+	अन्यथा अगर (au.ui.low > bu.ui.low)
+		वापस 2;
+	वापस 1;
+पूर्ण

@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * tools/testing/selftests/kvm/include/kvm_util.h
  *
  * Copyright (C) 2018, Google LLC.
  */
-#ifndef SELFTEST_KVM_UTIL_H
-#define SELFTEST_KVM_UTIL_H
+#अगर_अघोषित SELFTEST_KVM_UTIL_H
+#घोषणा SELFTEST_KVM_UTIL_H
 
-#include "test_util.h"
+#समावेश "test_util.h"
 
-#include "asm/kvm.h"
-#include "linux/list.h"
-#include "linux/kvm.h"
-#include <sys/ioctl.h>
+#समावेश "asm/kvm.h"
+#समावेश "linux/list.h"
+#समावेश "linux/kvm.h"
+#समावेश <sys/ioctl.h>
 
-#include "sparsebit.h"
+#समावेश "sparsebit.h"
 
-#define KVM_DEV_PATH "/dev/kvm"
-#define KVM_MAX_VCPUS 512
+#घोषणा KVM_DEV_PATH "/dev/kvm"
+#घोषणा KVM_MAX_VCPUS 512
 
 /*
  * Callers of kvm_util only have an incomplete/opaque description of the
- * structure kvm_util is using to maintain the state of a VM.
+ * काष्ठाure kvm_util is using to मुख्यtain the state of a VM.
  */
-struct kvm_vm;
+काष्ठा kvm_vm;
 
-typedef uint64_t vm_paddr_t; /* Virtual Machine (Guest) physical address */
-typedef uint64_t vm_vaddr_t; /* Virtual Machine (Guest) virtual address */
+प्रकार uपूर्णांक64_t vm_paddr_t; /* Virtual Machine (Guest) physical address */
+प्रकार uपूर्णांक64_t vm_vaddr_t; /* Virtual Machine (Guest) भव address */
 
-/* Minimum allocated guest virtual and physical addresses */
-#define KVM_UTIL_MIN_VADDR		0x2000
+/* Minimum allocated guest भव and physical addresses */
+#घोषणा KVM_UTIL_MIN_VADDR		0x2000
 
-#define DEFAULT_GUEST_PHY_PAGES		512
-#define DEFAULT_GUEST_STACK_VADDR_MIN	0xab6000
-#define DEFAULT_STACK_PGS		5
+#घोषणा DEFAULT_GUEST_PHY_PAGES		512
+#घोषणा DEFAULT_GUEST_STACK_VADDR_MIN	0xab6000
+#घोषणा DEFAULT_STACK_PGS		5
 
-enum vm_guest_mode {
+क्रमागत vm_guest_mode अणु
 	VM_MODE_P52V48_4K,
 	VM_MODE_P52V48_64K,
 	VM_MODE_P48V48_4K,
@@ -45,69 +46,69 @@ enum vm_guest_mode {
 	VM_MODE_PXXV48_4K,	/* For 48bits VA but ANY bits PA */
 	VM_MODE_P47V64_4K,
 	NUM_VM_MODES,
-};
+पूर्ण;
 
-#if defined(__aarch64__)
+#अगर defined(__aarch64__)
 
-#define VM_MODE_DEFAULT			VM_MODE_P40V48_4K
-#define MIN_PAGE_SHIFT			12U
-#define ptes_per_page(page_size)	((page_size) / 8)
+#घोषणा VM_MODE_DEFAULT			VM_MODE_P40V48_4K
+#घोषणा MIN_PAGE_SHIFT			12U
+#घोषणा ptes_per_page(page_size)	((page_size) / 8)
 
-#elif defined(__x86_64__)
+#या_अगर defined(__x86_64__)
 
-#define VM_MODE_DEFAULT			VM_MODE_PXXV48_4K
-#define MIN_PAGE_SHIFT			12U
-#define ptes_per_page(page_size)	((page_size) / 8)
+#घोषणा VM_MODE_DEFAULT			VM_MODE_PXXV48_4K
+#घोषणा MIN_PAGE_SHIFT			12U
+#घोषणा ptes_per_page(page_size)	((page_size) / 8)
 
-#elif defined(__s390x__)
+#या_अगर defined(__s390x__)
 
-#define VM_MODE_DEFAULT			VM_MODE_P47V64_4K
-#define MIN_PAGE_SHIFT			12U
-#define ptes_per_page(page_size)	((page_size) / 16)
+#घोषणा VM_MODE_DEFAULT			VM_MODE_P47V64_4K
+#घोषणा MIN_PAGE_SHIFT			12U
+#घोषणा ptes_per_page(page_size)	((page_size) / 16)
 
-#endif
+#पूर्ण_अगर
 
-#define MIN_PAGE_SIZE		(1U << MIN_PAGE_SHIFT)
-#define PTES_PER_MIN_PAGE	ptes_per_page(MIN_PAGE_SIZE)
+#घोषणा MIN_PAGE_SIZE		(1U << MIN_PAGE_SHIFT)
+#घोषणा PTES_PER_MIN_PAGE	ptes_per_page(MIN_PAGE_SIZE)
 
-struct vm_guest_mode_params {
-	unsigned int pa_bits;
-	unsigned int va_bits;
-	unsigned int page_size;
-	unsigned int page_shift;
-};
-extern const struct vm_guest_mode_params vm_guest_mode_params[];
+काष्ठा vm_guest_mode_params अणु
+	अचिन्हित पूर्णांक pa_bits;
+	अचिन्हित पूर्णांक va_bits;
+	अचिन्हित पूर्णांक page_size;
+	अचिन्हित पूर्णांक page_shअगरt;
+पूर्ण;
+बाह्य स्थिर काष्ठा vm_guest_mode_params vm_guest_mode_params[];
 
-int open_kvm_dev_path_or_exit(void);
-int kvm_check_cap(long cap);
-int vm_enable_cap(struct kvm_vm *vm, struct kvm_enable_cap *cap);
-int vcpu_enable_cap(struct kvm_vm *vm, uint32_t vcpu_id,
-		    struct kvm_enable_cap *cap);
-void vm_enable_dirty_ring(struct kvm_vm *vm, uint32_t ring_size);
-const char *vm_guest_mode_string(uint32_t i);
+पूर्णांक खोलो_kvm_dev_path_or_निकास(व्योम);
+पूर्णांक kvm_check_cap(दीर्घ cap);
+पूर्णांक vm_enable_cap(काष्ठा kvm_vm *vm, काष्ठा kvm_enable_cap *cap);
+पूर्णांक vcpu_enable_cap(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpu_id,
+		    काष्ठा kvm_enable_cap *cap);
+व्योम vm_enable_dirty_ring(काष्ठा kvm_vm *vm, uपूर्णांक32_t ring_size);
+स्थिर अक्षर *vm_guest_mode_string(uपूर्णांक32_t i);
 
-struct kvm_vm *vm_create(enum vm_guest_mode mode, uint64_t phy_pages, int perm);
-void kvm_vm_free(struct kvm_vm *vmp);
-void kvm_vm_restart(struct kvm_vm *vmp, int perm);
-void kvm_vm_release(struct kvm_vm *vmp);
-void kvm_vm_get_dirty_log(struct kvm_vm *vm, int slot, void *log);
-void kvm_vm_clear_dirty_log(struct kvm_vm *vm, int slot, void *log,
-			    uint64_t first_page, uint32_t num_pages);
-uint32_t kvm_vm_reset_dirty_ring(struct kvm_vm *vm);
+काष्ठा kvm_vm *vm_create(क्रमागत vm_guest_mode mode, uपूर्णांक64_t phy_pages, पूर्णांक perm);
+व्योम kvm_vm_मुक्त(काष्ठा kvm_vm *vmp);
+व्योम kvm_vm_restart(काष्ठा kvm_vm *vmp, पूर्णांक perm);
+व्योम kvm_vm_release(काष्ठा kvm_vm *vmp);
+व्योम kvm_vm_get_dirty_log(काष्ठा kvm_vm *vm, पूर्णांक slot, व्योम *log);
+व्योम kvm_vm_clear_dirty_log(काष्ठा kvm_vm *vm, पूर्णांक slot, व्योम *log,
+			    uपूर्णांक64_t first_page, uपूर्णांक32_t num_pages);
+uपूर्णांक32_t kvm_vm_reset_dirty_ring(काष्ठा kvm_vm *vm);
 
-int kvm_memcmp_hva_gva(void *hva, struct kvm_vm *vm, const vm_vaddr_t gva,
-		       size_t len);
+पूर्णांक kvm_स_भेद_hva_gva(व्योम *hva, काष्ठा kvm_vm *vm, स्थिर vm_vaddr_t gva,
+		       माप_प्रकार len);
 
-void kvm_vm_elf_load(struct kvm_vm *vm, const char *filename,
-		     uint32_t data_memslot, uint32_t pgd_memslot);
+व्योम kvm_vm_elf_load(काष्ठा kvm_vm *vm, स्थिर अक्षर *filename,
+		     uपूर्णांक32_t data_memslot, uपूर्णांक32_t pgd_memslot);
 
-void vm_dump(FILE *stream, struct kvm_vm *vm, uint8_t indent);
+व्योम vm_dump(खाता *stream, काष्ठा kvm_vm *vm, uपूर्णांक8_t indent);
 
 /*
  * VM VCPU Dump
  *
  * Input Args:
- *   stream - Output FILE stream
+ *   stream - Output खाता stream
  *   vm     - Virtual Machine
  *   vcpuid - VCPU ID
  *   indent - Left margin indent amount
@@ -116,69 +117,69 @@ void vm_dump(FILE *stream, struct kvm_vm *vm, uint8_t indent);
  *
  * Return: None
  *
- * Dumps the current state of the VCPU specified by @vcpuid, within the VM
- * given by @vm, to the FILE stream given by @stream.
+ * Dumps the current state of the VCPU specअगरied by @vcpuid, within the VM
+ * given by @vm, to the खाता stream given by @stream.
  */
-void vcpu_dump(FILE *stream, struct kvm_vm *vm, uint32_t vcpuid,
-	       uint8_t indent);
+व्योम vcpu_dump(खाता *stream, काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+	       uपूर्णांक8_t indent);
 
-void vm_create_irqchip(struct kvm_vm *vm);
+व्योम vm_create_irqchip(काष्ठा kvm_vm *vm);
 
-void vm_userspace_mem_region_add(struct kvm_vm *vm,
-	enum vm_mem_backing_src_type src_type,
-	uint64_t guest_paddr, uint32_t slot, uint64_t npages,
-	uint32_t flags);
+व्योम vm_userspace_mem_region_add(काष्ठा kvm_vm *vm,
+	क्रमागत vm_mem_backing_src_type src_type,
+	uपूर्णांक64_t guest_paddr, uपूर्णांक32_t slot, uपूर्णांक64_t npages,
+	uपूर्णांक32_t flags);
 
-void vcpu_ioctl(struct kvm_vm *vm, uint32_t vcpuid, unsigned long ioctl,
-		void *arg);
-int _vcpu_ioctl(struct kvm_vm *vm, uint32_t vcpuid, unsigned long ioctl,
-		void *arg);
-void vm_ioctl(struct kvm_vm *vm, unsigned long ioctl, void *arg);
-int _vm_ioctl(struct kvm_vm *vm, unsigned long cmd, void *arg);
-void kvm_ioctl(struct kvm_vm *vm, unsigned long ioctl, void *arg);
-int _kvm_ioctl(struct kvm_vm *vm, unsigned long ioctl, void *arg);
-void vm_mem_region_set_flags(struct kvm_vm *vm, uint32_t slot, uint32_t flags);
-void vm_mem_region_move(struct kvm_vm *vm, uint32_t slot, uint64_t new_gpa);
-void vm_mem_region_delete(struct kvm_vm *vm, uint32_t slot);
-void vm_vcpu_add(struct kvm_vm *vm, uint32_t vcpuid);
-vm_vaddr_t vm_vaddr_alloc(struct kvm_vm *vm, size_t sz, vm_vaddr_t vaddr_min,
-			  uint32_t data_memslot, uint32_t pgd_memslot);
-void virt_map(struct kvm_vm *vm, uint64_t vaddr, uint64_t paddr,
-	      unsigned int npages, uint32_t pgd_memslot);
-void *addr_gpa2hva(struct kvm_vm *vm, vm_paddr_t gpa);
-void *addr_gva2hva(struct kvm_vm *vm, vm_vaddr_t gva);
-vm_paddr_t addr_hva2gpa(struct kvm_vm *vm, void *hva);
-void *addr_gpa2alias(struct kvm_vm *vm, vm_paddr_t gpa);
+व्योम vcpu_ioctl(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, अचिन्हित दीर्घ ioctl,
+		व्योम *arg);
+पूर्णांक _vcpu_ioctl(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, अचिन्हित दीर्घ ioctl,
+		व्योम *arg);
+व्योम vm_ioctl(काष्ठा kvm_vm *vm, अचिन्हित दीर्घ ioctl, व्योम *arg);
+पूर्णांक _vm_ioctl(काष्ठा kvm_vm *vm, अचिन्हित दीर्घ cmd, व्योम *arg);
+व्योम kvm_ioctl(काष्ठा kvm_vm *vm, अचिन्हित दीर्घ ioctl, व्योम *arg);
+पूर्णांक _kvm_ioctl(काष्ठा kvm_vm *vm, अचिन्हित दीर्घ ioctl, व्योम *arg);
+व्योम vm_mem_region_set_flags(काष्ठा kvm_vm *vm, uपूर्णांक32_t slot, uपूर्णांक32_t flags);
+व्योम vm_mem_region_move(काष्ठा kvm_vm *vm, uपूर्णांक32_t slot, uपूर्णांक64_t new_gpa);
+व्योम vm_mem_region_delete(काष्ठा kvm_vm *vm, uपूर्णांक32_t slot);
+व्योम vm_vcpu_add(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+vm_vaddr_t vm_vaddr_alloc(काष्ठा kvm_vm *vm, माप_प्रकार sz, vm_vaddr_t vaddr_min,
+			  uपूर्णांक32_t data_memslot, uपूर्णांक32_t pgd_memslot);
+व्योम virt_map(काष्ठा kvm_vm *vm, uपूर्णांक64_t vaddr, uपूर्णांक64_t paddr,
+	      अचिन्हित पूर्णांक npages, uपूर्णांक32_t pgd_memslot);
+व्योम *addr_gpa2hva(काष्ठा kvm_vm *vm, vm_paddr_t gpa);
+व्योम *addr_gva2hva(काष्ठा kvm_vm *vm, vm_vaddr_t gva);
+vm_paddr_t addr_hva2gpa(काष्ठा kvm_vm *vm, व्योम *hva);
+व्योम *addr_gpa2alias(काष्ठा kvm_vm *vm, vm_paddr_t gpa);
 
 /*
  * Address Guest Virtual to Guest Physical
  *
  * Input Args:
  *   vm - Virtual Machine
- *   gva - VM virtual address
+ *   gva - VM भव address
  *
  * Output Args: None
  *
  * Return:
  *   Equivalent VM physical address
  *
- * Returns the VM physical address of the translated VM virtual
+ * Returns the VM physical address of the translated VM भव
  * address given by @gva.
  */
-vm_paddr_t addr_gva2gpa(struct kvm_vm *vm, vm_vaddr_t gva);
+vm_paddr_t addr_gva2gpa(काष्ठा kvm_vm *vm, vm_vaddr_t gva);
 
-struct kvm_run *vcpu_state(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_run(struct kvm_vm *vm, uint32_t vcpuid);
-int _vcpu_run(struct kvm_vm *vm, uint32_t vcpuid);
-int vcpu_get_fd(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_run_complete_io(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_set_guest_debug(struct kvm_vm *vm, uint32_t vcpuid,
-			  struct kvm_guest_debug *debug);
-void vcpu_set_mp_state(struct kvm_vm *vm, uint32_t vcpuid,
-		       struct kvm_mp_state *mp_state);
-struct kvm_reg_list *vcpu_get_reg_list(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_regs_get(struct kvm_vm *vm, uint32_t vcpuid, struct kvm_regs *regs);
-void vcpu_regs_set(struct kvm_vm *vm, uint32_t vcpuid, struct kvm_regs *regs);
+काष्ठा kvm_run *vcpu_state(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_run(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+पूर्णांक _vcpu_run(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+पूर्णांक vcpu_get_fd(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_run_complete_io(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_set_guest_debug(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+			  काष्ठा kvm_guest_debug *debug);
+व्योम vcpu_set_mp_state(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		       काष्ठा kvm_mp_state *mp_state);
+काष्ठा kvm_reg_list *vcpu_get_reg_list(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_regs_get(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, काष्ठा kvm_regs *regs);
+व्योम vcpu_regs_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, काष्ठा kvm_regs *regs);
 
 /*
  * VM VCPU Args Set
@@ -187,57 +188,57 @@ void vcpu_regs_set(struct kvm_vm *vm, uint32_t vcpuid, struct kvm_regs *regs);
  *   vm - Virtual Machine
  *   vcpuid - VCPU ID
  *   num - number of arguments
- *   ... - arguments, each of type uint64_t
+ *   ... - arguments, each of type uपूर्णांक64_t
  *
  * Output Args: None
  *
  * Return: None
  *
- * Sets the first @num function input registers of the VCPU with @vcpuid,
+ * Sets the first @num function input रेजिस्टरs of the VCPU with @vcpuid,
  * per the C calling convention of the architecture, to the values given
  * as variable args. Each of the variable args is expected to be of type
- * uint64_t. The maximum @num can be is specific to the architecture.
+ * uपूर्णांक64_t. The maximum @num can be is specअगरic to the architecture.
  */
-void vcpu_args_set(struct kvm_vm *vm, uint32_t vcpuid, unsigned int num, ...);
+व्योम vcpu_args_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, अचिन्हित पूर्णांक num, ...);
 
-void vcpu_sregs_get(struct kvm_vm *vm, uint32_t vcpuid,
-		    struct kvm_sregs *sregs);
-void vcpu_sregs_set(struct kvm_vm *vm, uint32_t vcpuid,
-		    struct kvm_sregs *sregs);
-int _vcpu_sregs_set(struct kvm_vm *vm, uint32_t vcpuid,
-		    struct kvm_sregs *sregs);
-void vcpu_fpu_get(struct kvm_vm *vm, uint32_t vcpuid,
-		  struct kvm_fpu *fpu);
-void vcpu_fpu_set(struct kvm_vm *vm, uint32_t vcpuid,
-		  struct kvm_fpu *fpu);
-void vcpu_get_reg(struct kvm_vm *vm, uint32_t vcpuid, struct kvm_one_reg *reg);
-void vcpu_set_reg(struct kvm_vm *vm, uint32_t vcpuid, struct kvm_one_reg *reg);
-#ifdef __KVM_HAVE_VCPU_EVENTS
-void vcpu_events_get(struct kvm_vm *vm, uint32_t vcpuid,
-		     struct kvm_vcpu_events *events);
-void vcpu_events_set(struct kvm_vm *vm, uint32_t vcpuid,
-		     struct kvm_vcpu_events *events);
-#endif
-#ifdef __x86_64__
-void vcpu_nested_state_get(struct kvm_vm *vm, uint32_t vcpuid,
-			   struct kvm_nested_state *state);
-int vcpu_nested_state_set(struct kvm_vm *vm, uint32_t vcpuid,
-			  struct kvm_nested_state *state, bool ignore_error);
-#endif
-void *vcpu_map_dirty_ring(struct kvm_vm *vm, uint32_t vcpuid);
+व्योम vcpu_sregs_get(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		    काष्ठा kvm_sregs *sregs);
+व्योम vcpu_sregs_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		    काष्ठा kvm_sregs *sregs);
+पूर्णांक _vcpu_sregs_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		    काष्ठा kvm_sregs *sregs);
+व्योम vcpu_fpu_get(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		  काष्ठा kvm_fpu *fpu);
+व्योम vcpu_fpu_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		  काष्ठा kvm_fpu *fpu);
+व्योम vcpu_get_reg(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, काष्ठा kvm_one_reg *reg);
+व्योम vcpu_set_reg(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, काष्ठा kvm_one_reg *reg);
+#अगर_घोषित __KVM_HAVE_VCPU_EVENTS
+व्योम vcpu_events_get(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		     काष्ठा kvm_vcpu_events *events);
+व्योम vcpu_events_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		     काष्ठा kvm_vcpu_events *events);
+#पूर्ण_अगर
+#अगर_घोषित __x86_64__
+व्योम vcpu_nested_state_get(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+			   काष्ठा kvm_nested_state *state);
+पूर्णांक vcpu_nested_state_set(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+			  काष्ठा kvm_nested_state *state, bool ignore_error);
+#पूर्ण_अगर
+व्योम *vcpu_map_dirty_ring(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
 
-int _kvm_device_check_attr(int dev_fd, uint32_t group, uint64_t attr);
-int kvm_device_check_attr(int dev_fd, uint32_t group, uint64_t attr);
-int _kvm_create_device(struct kvm_vm *vm, uint64_t type, bool test, int *fd);
-int kvm_create_device(struct kvm_vm *vm, uint64_t type, bool test);
-int _kvm_device_access(int dev_fd, uint32_t group, uint64_t attr,
-		       void *val, bool write);
-int kvm_device_access(int dev_fd, uint32_t group, uint64_t attr,
-		      void *val, bool write);
+पूर्णांक _kvm_device_check_attr(पूर्णांक dev_fd, uपूर्णांक32_t group, uपूर्णांक64_t attr);
+पूर्णांक kvm_device_check_attr(पूर्णांक dev_fd, uपूर्णांक32_t group, uपूर्णांक64_t attr);
+पूर्णांक _kvm_create_device(काष्ठा kvm_vm *vm, uपूर्णांक64_t type, bool test, पूर्णांक *fd);
+पूर्णांक kvm_create_device(काष्ठा kvm_vm *vm, uपूर्णांक64_t type, bool test);
+पूर्णांक _kvm_device_access(पूर्णांक dev_fd, uपूर्णांक32_t group, uपूर्णांक64_t attr,
+		       व्योम *val, bool ग_लिखो);
+पूर्णांक kvm_device_access(पूर्णांक dev_fd, uपूर्णांक32_t group, uपूर्णांक64_t attr,
+		      व्योम *val, bool ग_लिखो);
 
-const char *exit_reason_str(unsigned int exit_reason);
+स्थिर अक्षर *निकास_reason_str(अचिन्हित पूर्णांक निकास_reason);
 
-void virt_pgd_alloc(struct kvm_vm *vm, uint32_t pgd_memslot);
+व्योम virt_pgd_alloc(काष्ठा kvm_vm *vm, uपूर्णांक32_t pgd_memslot);
 
 /*
  * VM Virtual Page Map
@@ -246,149 +247,149 @@ void virt_pgd_alloc(struct kvm_vm *vm, uint32_t pgd_memslot);
  *   vm - Virtual Machine
  *   vaddr - VM Virtual Address
  *   paddr - VM Physical Address
- *   memslot - Memory region slot for new virtual translation tables
+ *   memslot - Memory region slot क्रम new भव translation tables
  *
  * Output Args: None
  *
  * Return: None
  *
- * Within @vm, creates a virtual translation for the page starting
+ * Within @vm, creates a भव translation क्रम the page starting
  * at @vaddr to the page starting at @paddr.
  */
-void virt_pg_map(struct kvm_vm *vm, uint64_t vaddr, uint64_t paddr,
-		 uint32_t memslot);
+व्योम virt_pg_map(काष्ठा kvm_vm *vm, uपूर्णांक64_t vaddr, uपूर्णांक64_t paddr,
+		 uपूर्णांक32_t memslot);
 
-vm_paddr_t vm_phy_page_alloc(struct kvm_vm *vm, vm_paddr_t paddr_min,
-			     uint32_t memslot);
-vm_paddr_t vm_phy_pages_alloc(struct kvm_vm *vm, size_t num,
-			      vm_paddr_t paddr_min, uint32_t memslot);
+vm_paddr_t vm_phy_page_alloc(काष्ठा kvm_vm *vm, vm_paddr_t paddr_min,
+			     uपूर्णांक32_t memslot);
+vm_paddr_t vm_phy_pages_alloc(काष्ठा kvm_vm *vm, माप_प्रकार num,
+			      vm_paddr_t paddr_min, uपूर्णांक32_t memslot);
 
 /*
- * Create a VM with reasonable defaults
+ * Create a VM with reasonable शेषs
  *
  * Input Args:
  *   vcpuid - The id of the single VCPU to add to the VM.
  *   extra_mem_pages - The number of extra pages to add (this will
  *                     decide how much extra space we will need to
  *                     setup the page tables using memslot 0)
- *   guest_code - The vCPU's entry point
+ *   guest_code - The vCPU's entry poपूर्णांक
  *
  * Output Args: None
  *
  * Return:
- *   Pointer to opaque structure that describes the created VM.
+ *   Poपूर्णांकer to opaque काष्ठाure that describes the created VM.
  */
-struct kvm_vm *vm_create_default(uint32_t vcpuid, uint64_t extra_mem_pages,
-				 void *guest_code);
+काष्ठा kvm_vm *vm_create_शेष(uपूर्णांक32_t vcpuid, uपूर्णांक64_t extra_mem_pages,
+				 व्योम *guest_code);
 
-/* Same as vm_create_default, but can be used for more than one vcpu */
-struct kvm_vm *vm_create_default_with_vcpus(uint32_t nr_vcpus, uint64_t extra_mem_pages,
-					    uint32_t num_percpu_pages, void *guest_code,
-					    uint32_t vcpuids[]);
+/* Same as vm_create_शेष, but can be used क्रम more than one vcpu */
+काष्ठा kvm_vm *vm_create_शेष_with_vcpus(uपूर्णांक32_t nr_vcpus, uपूर्णांक64_t extra_mem_pages,
+					    uपूर्णांक32_t num_percpu_pages, व्योम *guest_code,
+					    uपूर्णांक32_t vcpuids[]);
 
-/* Like vm_create_default_with_vcpus, but accepts mode and slot0 memory as a parameter */
-struct kvm_vm *vm_create_with_vcpus(enum vm_guest_mode mode, uint32_t nr_vcpus,
-				    uint64_t slot0_mem_pages, uint64_t extra_mem_pages,
-				    uint32_t num_percpu_pages, void *guest_code,
-				    uint32_t vcpuids[]);
+/* Like vm_create_शेष_with_vcpus, but accepts mode and slot0 memory as a parameter */
+काष्ठा kvm_vm *vm_create_with_vcpus(क्रमागत vm_guest_mode mode, uपूर्णांक32_t nr_vcpus,
+				    uपूर्णांक64_t slot0_mem_pages, uपूर्णांक64_t extra_mem_pages,
+				    uपूर्णांक32_t num_percpu_pages, व्योम *guest_code,
+				    uपूर्णांक32_t vcpuids[]);
 
 /*
- * Adds a vCPU with reasonable defaults (e.g. a stack)
+ * Adds a vCPU with reasonable शेषs (e.g. a stack)
  *
  * Input Args:
  *   vm - Virtual Machine
  *   vcpuid - The id of the VCPU to add to the VM.
- *   guest_code - The vCPU's entry point
+ *   guest_code - The vCPU's entry poपूर्णांक
  */
-void vm_vcpu_add_default(struct kvm_vm *vm, uint32_t vcpuid, void *guest_code);
+व्योम vm_vcpu_add_शेष(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, व्योम *guest_code);
 
-bool vm_is_unrestricted_guest(struct kvm_vm *vm);
+bool vm_is_unrestricted_guest(काष्ठा kvm_vm *vm);
 
-unsigned int vm_get_page_size(struct kvm_vm *vm);
-unsigned int vm_get_page_shift(struct kvm_vm *vm);
-uint64_t vm_get_max_gfn(struct kvm_vm *vm);
-int vm_get_fd(struct kvm_vm *vm);
+अचिन्हित पूर्णांक vm_get_page_size(काष्ठा kvm_vm *vm);
+अचिन्हित पूर्णांक vm_get_page_shअगरt(काष्ठा kvm_vm *vm);
+uपूर्णांक64_t vm_get_max_gfn(काष्ठा kvm_vm *vm);
+पूर्णांक vm_get_fd(काष्ठा kvm_vm *vm);
 
-unsigned int vm_calc_num_guest_pages(enum vm_guest_mode mode, size_t size);
-unsigned int vm_num_host_pages(enum vm_guest_mode mode, unsigned int num_guest_pages);
-unsigned int vm_num_guest_pages(enum vm_guest_mode mode, unsigned int num_host_pages);
-static inline unsigned int
-vm_adjust_num_guest_pages(enum vm_guest_mode mode, unsigned int num_guest_pages)
-{
-	unsigned int n;
+अचिन्हित पूर्णांक vm_calc_num_guest_pages(क्रमागत vm_guest_mode mode, माप_प्रकार size);
+अचिन्हित पूर्णांक vm_num_host_pages(क्रमागत vm_guest_mode mode, अचिन्हित पूर्णांक num_guest_pages);
+अचिन्हित पूर्णांक vm_num_guest_pages(क्रमागत vm_guest_mode mode, अचिन्हित पूर्णांक num_host_pages);
+अटल अंतरभूत अचिन्हित पूर्णांक
+vm_adjust_num_guest_pages(क्रमागत vm_guest_mode mode, अचिन्हित पूर्णांक num_guest_pages)
+अणु
+	अचिन्हित पूर्णांक n;
 	n = vm_num_guest_pages(mode, vm_num_host_pages(mode, num_guest_pages));
-#ifdef __s390x__
+#अगर_घोषित __s390x__
 	/* s390 requires 1M aligned guest sizes */
 	n = (n + 255) & ~255;
-#endif
-	return n;
-}
+#पूर्ण_अगर
+	वापस n;
+पूर्ण
 
-struct kvm_userspace_memory_region *
-kvm_userspace_memory_region_find(struct kvm_vm *vm, uint64_t start,
-				 uint64_t end);
+काष्ठा kvm_userspace_memory_region *
+kvm_userspace_memory_region_find(काष्ठा kvm_vm *vm, uपूर्णांक64_t start,
+				 uपूर्णांक64_t end);
 
-struct kvm_dirty_log *
-allocate_kvm_dirty_log(struct kvm_userspace_memory_region *region);
+काष्ठा kvm_dirty_log *
+allocate_kvm_dirty_log(काष्ठा kvm_userspace_memory_region *region);
 
-int vm_create_device(struct kvm_vm *vm, struct kvm_create_device *cd);
+पूर्णांक vm_create_device(काष्ठा kvm_vm *vm, काष्ठा kvm_create_device *cd);
 
-#define sync_global_to_guest(vm, g) ({				\
+#घोषणा sync_global_to_guest(vm, g) (अणु				\
 	typeof(g) *_p = addr_gva2hva(vm, (vm_vaddr_t)&(g));	\
-	memcpy(_p, &(g), sizeof(g));				\
-})
+	स_नकल(_p, &(g), माप(g));				\
+पूर्ण)
 
-#define sync_global_from_guest(vm, g) ({			\
+#घोषणा sync_global_from_guest(vm, g) (अणु			\
 	typeof(g) *_p = addr_gva2hva(vm, (vm_vaddr_t)&(g));	\
-	memcpy(&(g), _p, sizeof(g));				\
-})
+	स_नकल(&(g), _p, माप(g));				\
+पूर्ण)
 
-void assert_on_unhandled_exception(struct kvm_vm *vm, uint32_t vcpuid);
+व्योम निश्चित_on_unhandled_exception(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
 
 /* Common ucalls */
-enum {
+क्रमागत अणु
 	UCALL_NONE,
 	UCALL_SYNC,
 	UCALL_ABORT,
 	UCALL_DONE,
-};
+पूर्ण;
 
-#define UCALL_MAX_ARGS 6
+#घोषणा UCALL_MAX_ARGS 6
 
-struct ucall {
-	uint64_t cmd;
-	uint64_t args[UCALL_MAX_ARGS];
-};
+काष्ठा ucall अणु
+	uपूर्णांक64_t cmd;
+	uपूर्णांक64_t args[UCALL_MAX_ARGS];
+पूर्ण;
 
-void ucall_init(struct kvm_vm *vm, void *arg);
-void ucall_uninit(struct kvm_vm *vm);
-void ucall(uint64_t cmd, int nargs, ...);
-uint64_t get_ucall(struct kvm_vm *vm, uint32_t vcpu_id, struct ucall *uc);
+व्योम ucall_init(काष्ठा kvm_vm *vm, व्योम *arg);
+व्योम ucall_uninit(काष्ठा kvm_vm *vm);
+व्योम ucall(uपूर्णांक64_t cmd, पूर्णांक nargs, ...);
+uपूर्णांक64_t get_ucall(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpu_id, काष्ठा ucall *uc);
 
-#define GUEST_SYNC_ARGS(stage, arg1, arg2, arg3, arg4)	\
+#घोषणा GUEST_SYNC_ARGS(stage, arg1, arg2, arg3, arg4)	\
 				ucall(UCALL_SYNC, 6, "hello", stage, arg1, arg2, arg3, arg4)
-#define GUEST_SYNC(stage)	ucall(UCALL_SYNC, 2, "hello", stage)
-#define GUEST_DONE()		ucall(UCALL_DONE, 0)
-#define __GUEST_ASSERT(_condition, _nargs, _args...) do {	\
-	if (!(_condition))					\
+#घोषणा GUEST_SYNC(stage)	ucall(UCALL_SYNC, 2, "hello", stage)
+#घोषणा GUEST_DONE()		ucall(UCALL_DONE, 0)
+#घोषणा __GUEST_ASSERT(_condition, _nargs, _args...) करो अणु	\
+	अगर (!(_condition))					\
 		ucall(UCALL_ABORT, 2 + _nargs,			\
 			"Failed guest assert: "			\
 			#_condition, __LINE__, _args);		\
-} while (0)
+पूर्ण जबतक (0)
 
-#define GUEST_ASSERT(_condition) \
+#घोषणा GUEST_ASSERT(_condition) \
 	__GUEST_ASSERT((_condition), 0, 0)
 
-#define GUEST_ASSERT_1(_condition, arg1) \
+#घोषणा GUEST_ASSERT_1(_condition, arg1) \
 	__GUEST_ASSERT((_condition), 1, (arg1))
 
-#define GUEST_ASSERT_2(_condition, arg1, arg2) \
+#घोषणा GUEST_ASSERT_2(_condition, arg1, arg2) \
 	__GUEST_ASSERT((_condition), 2, (arg1), (arg2))
 
-#define GUEST_ASSERT_3(_condition, arg1, arg2, arg3) \
+#घोषणा GUEST_ASSERT_3(_condition, arg1, arg2, arg3) \
 	__GUEST_ASSERT((_condition), 3, (arg1), (arg2), (arg3))
 
-#define GUEST_ASSERT_4(_condition, arg1, arg2, arg3, arg4) \
+#घोषणा GUEST_ASSERT_4(_condition, arg1, arg2, arg3, arg4) \
 	__GUEST_ASSERT((_condition), 4, (arg1), (arg2), (arg3), (arg4))
 
-#endif /* SELFTEST_KVM_UTIL_H */
+#पूर्ण_अगर /* SELFTEST_KVM_UTIL_H */

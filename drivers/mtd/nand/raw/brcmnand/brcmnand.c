@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2010-2015 Broadcom Corporation
+ * Copyright तऊ 2010-2015 Broadcom Corporation
  */
 
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/err.h>
-#include <linux/completion.h>
-#include <linux/interrupt.h>
-#include <linux/spinlock.h>
-#include <linux/dma-mapping.h>
-#include <linux/ioport.h>
-#include <linux/bug.h>
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/mm.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/log2.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/log2.h>
 
-#include "brcmnand.h"
+#समावेश "brcmnand.h"
 
 /*
- * This flag controls if WP stays on between erase/write commands to mitigate
- * flash corruption due to power glitches. Values:
- * 0: NAND_WP is not used or not available
- * 1: NAND_WP is set by default, cleared for erase/write operations
- * 2: NAND_WP is always cleared
+ * This flag controls अगर WP stays on between erase/ग_लिखो commands to mitigate
+ * flash corruption due to घातer glitches. Values:
+ * 0: न_अंकD_WP is not used or not available
+ * 1: न_अंकD_WP is set by शेष, cleared क्रम erase/ग_लिखो operations
+ * 2: न_अंकD_WP is always cleared
  */
-static int wp_on = 1;
-module_param(wp_on, int, 0444);
+अटल पूर्णांक wp_on = 1;
+module_param(wp_on, पूर्णांक, 0444);
 
 /***********************************************************************
  * Definitions
  ***********************************************************************/
 
-#define DRV_NAME			"brcmnand"
+#घोषणा DRV_NAME			"brcmnand"
 
-#define CMD_NULL			0x00
-#define CMD_PAGE_READ			0x01
-#define CMD_SPARE_AREA_READ		0x02
-#define CMD_STATUS_READ			0x03
-#define CMD_PROGRAM_PAGE		0x04
-#define CMD_PROGRAM_SPARE_AREA		0x05
-#define CMD_COPY_BACK			0x06
-#define CMD_DEVICE_ID_READ		0x07
-#define CMD_BLOCK_ERASE			0x08
-#define CMD_FLASH_RESET			0x09
-#define CMD_BLOCKS_LOCK			0x0a
-#define CMD_BLOCKS_LOCK_DOWN		0x0b
-#define CMD_BLOCKS_UNLOCK		0x0c
-#define CMD_READ_BLOCKS_LOCK_STATUS	0x0d
-#define CMD_PARAMETER_READ		0x0e
-#define CMD_PARAMETER_CHANGE_COL	0x0f
-#define CMD_LOW_LEVEL_OP		0x10
+#घोषणा CMD_शून्य			0x00
+#घोषणा CMD_PAGE_READ			0x01
+#घोषणा CMD_SPARE_AREA_READ		0x02
+#घोषणा CMD_STATUS_READ			0x03
+#घोषणा CMD_PROGRAM_PAGE		0x04
+#घोषणा CMD_PROGRAM_SPARE_AREA		0x05
+#घोषणा CMD_COPY_BACK			0x06
+#घोषणा CMD_DEVICE_ID_READ		0x07
+#घोषणा CMD_BLOCK_ERASE			0x08
+#घोषणा CMD_FLASH_RESET			0x09
+#घोषणा CMD_BLOCKS_LOCK			0x0a
+#घोषणा CMD_BLOCKS_LOCK_DOWN		0x0b
+#घोषणा CMD_BLOCKS_UNLOCK		0x0c
+#घोषणा CMD_READ_BLOCKS_LOCK_STATUS	0x0d
+#घोषणा CMD_PARAMETER_READ		0x0e
+#घोषणा CMD_PARAMETER_CHANGE_COL	0x0f
+#घोषणा CMD_LOW_LEVEL_OP		0x10
 
-struct brcm_nand_dma_desc {
+काष्ठा brcm_nand_dma_desc अणु
 	u32 next_desc;
 	u32 next_desc_ext;
 	u32 cmd_irq;
@@ -77,46 +78,46 @@ struct brcm_nand_dma_desc {
 	u32 cs;
 	u32 pad2[5];
 	u32 status_valid;
-} __packed;
+पूर्ण __packed;
 
-/* Bitfields for brcm_nand_dma_desc::status_valid */
-#define FLASH_DMA_ECC_ERROR	(1 << 8)
-#define FLASH_DMA_CORR_ERROR	(1 << 9)
+/* Bitfields क्रम brcm_nand_dma_desc::status_valid */
+#घोषणा FLASH_DMA_ECC_ERROR	(1 << 8)
+#घोषणा FLASH_DMA_CORR_ERROR	(1 << 9)
 
-/* Bitfields for DMA_MODE */
-#define FLASH_DMA_MODE_STOP_ON_ERROR	BIT(1) /* stop in Uncorr ECC error */
-#define FLASH_DMA_MODE_MODE		BIT(0) /* link list */
-#define FLASH_DMA_MODE_MASK		(FLASH_DMA_MODE_STOP_ON_ERROR |	\
+/* Bitfields क्रम DMA_MODE */
+#घोषणा FLASH_DMA_MODE_STOP_ON_ERROR	BIT(1) /* stop in Uncorr ECC error */
+#घोषणा FLASH_DMA_MODE_MODE		BIT(0) /* link list */
+#घोषणा FLASH_DMA_MODE_MASK		(FLASH_DMA_MODE_STOP_ON_ERROR |	\
 						FLASH_DMA_MODE_MODE)
 
-/* 512B flash cache in the NAND controller HW */
-#define FC_SHIFT		9U
-#define FC_BYTES		512U
-#define FC_WORDS		(FC_BYTES >> 2)
+/* 512B flash cache in the न_अंकD controller HW */
+#घोषणा FC_SHIFT		9U
+#घोषणा FC_BYTES		512U
+#घोषणा FC_WORDS		(FC_BYTES >> 2)
 
-#define BRCMNAND_MIN_PAGESIZE	512
-#define BRCMNAND_MIN_BLOCKSIZE	(8 * 1024)
-#define BRCMNAND_MIN_DEVSIZE	(4ULL * 1024 * 1024)
+#घोषणा BRCMन_अंकD_MIN_PAGESIZE	512
+#घोषणा BRCMन_अंकD_MIN_BLOCKSIZE	(8 * 1024)
+#घोषणा BRCMन_अंकD_MIN_DEVSIZE	(4ULL * 1024 * 1024)
 
-#define NAND_CTRL_RDY			(INTFC_CTLR_READY | INTFC_FLASH_READY)
-#define NAND_POLL_STATUS_TIMEOUT_MS	100
+#घोषणा न_अंकD_CTRL_RDY			(INTFC_CTLR_READY | INTFC_FLASH_READY)
+#घोषणा न_अंकD_POLL_STATUS_TIMEOUT_MS	100
 
-#define EDU_CMD_WRITE          0x00
-#define EDU_CMD_READ           0x01
-#define EDU_STATUS_ACTIVE      BIT(0)
-#define EDU_ERR_STATUS_ERRACK  BIT(0)
-#define EDU_DONE_MASK		GENMASK(1, 0)
+#घोषणा EDU_CMD_WRITE          0x00
+#घोषणा EDU_CMD_READ           0x01
+#घोषणा EDU_STATUS_ACTIVE      BIT(0)
+#घोषणा EDU_ERR_STATUS_ERRACK  BIT(0)
+#घोषणा EDU_DONE_MASK		GENMASK(1, 0)
 
-#define EDU_CONFIG_MODE_NAND   BIT(0)
-#define EDU_CONFIG_SWAP_BYTE   BIT(1)
-#ifdef CONFIG_CPU_BIG_ENDIAN
-#define EDU_CONFIG_SWAP_CFG     EDU_CONFIG_SWAP_BYTE
-#else
-#define EDU_CONFIG_SWAP_CFG     0
-#endif
+#घोषणा EDU_CONFIG_MODE_न_अंकD   BIT(0)
+#घोषणा EDU_CONFIG_SWAP_BYTE   BIT(1)
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+#घोषणा EDU_CONFIG_SWAP_CFG     EDU_CONFIG_SWAP_BYTE
+#अन्यथा
+#घोषणा EDU_CONFIG_SWAP_CFG     0
+#पूर्ण_अगर
 
-/* edu registers */
-enum edu_reg {
+/* edu रेजिस्टरs */
+क्रमागत edu_reg अणु
 	EDU_CONFIG = 0,
 	EDU_DRAM_ADDR,
 	EDU_EXT_ADDR,
@@ -126,9 +127,9 @@ enum edu_reg {
 	EDU_STATUS,
 	EDU_DONE,
 	EDU_ERR_STATUS,
-};
+पूर्ण;
 
-static const u16  edu_regs[] = {
+अटल स्थिर u16  edu_regs[] = अणु
 	[EDU_CONFIG] = 0x00,
 	[EDU_DRAM_ADDR] = 0x04,
 	[EDU_EXT_ADDR] = 0x08,
@@ -138,10 +139,10 @@ static const u16  edu_regs[] = {
 	[EDU_STATUS] = 0x18,
 	[EDU_DONE] = 0x1c,
 	[EDU_ERR_STATUS] = 0x20,
-};
+पूर्ण;
 
-/* flash_dma registers */
-enum flash_dma_reg {
+/* flash_dma रेजिस्टरs */
+क्रमागत flash_dma_reg अणु
 	FLASH_DMA_REVISION = 0,
 	FLASH_DMA_FIRST_DESC,
 	FLASH_DMA_FIRST_DESC_EXT,
@@ -153,10 +154,10 @@ enum flash_dma_reg {
 	FLASH_DMA_ERROR_STATUS,
 	FLASH_DMA_CURRENT_DESC,
 	FLASH_DMA_CURRENT_DESC_EXT,
-};
+पूर्ण;
 
-/* flash_dma registers v0*/
-static const u16 flash_dma_regs_v0[] = {
+/* flash_dma रेजिस्टरs v0*/
+अटल स्थिर u16 flash_dma_regs_v0[] = अणु
 	[FLASH_DMA_REVISION]		= 0x00,
 	[FLASH_DMA_FIRST_DESC]		= 0x04,
 	[FLASH_DMA_CTRL]		= 0x08,
@@ -165,10 +166,10 @@ static const u16 flash_dma_regs_v0[] = {
 	[FLASH_DMA_INTERRUPT_DESC]	= 0x14,
 	[FLASH_DMA_ERROR_STATUS]	= 0x18,
 	[FLASH_DMA_CURRENT_DESC]	= 0x1c,
-};
+पूर्ण;
 
-/* flash_dma registers v1*/
-static const u16 flash_dma_regs_v1[] = {
+/* flash_dma रेजिस्टरs v1*/
+अटल स्थिर u16 flash_dma_regs_v1[] = अणु
 	[FLASH_DMA_REVISION]		= 0x00,
 	[FLASH_DMA_FIRST_DESC]		= 0x04,
 	[FLASH_DMA_FIRST_DESC_EXT]	= 0x08,
@@ -180,10 +181,10 @@ static const u16 flash_dma_regs_v1[] = {
 	[FLASH_DMA_ERROR_STATUS]	= 0x20,
 	[FLASH_DMA_CURRENT_DESC]	= 0x24,
 	[FLASH_DMA_CURRENT_DESC_EXT]	= 0x28,
-};
+पूर्ण;
 
-/* flash_dma registers v4 */
-static const u16 flash_dma_regs_v4[] = {
+/* flash_dma रेजिस्टरs v4 */
+अटल स्थिर u16 flash_dma_regs_v4[] = अणु
 	[FLASH_DMA_REVISION]		= 0x00,
 	[FLASH_DMA_FIRST_DESC]		= 0x08,
 	[FLASH_DMA_FIRST_DESC_EXT]	= 0x0c,
@@ -195,373 +196,373 @@ static const u16 flash_dma_regs_v4[] = {
 	[FLASH_DMA_ERROR_STATUS]	= 0x28,
 	[FLASH_DMA_CURRENT_DESC]	= 0x30,
 	[FLASH_DMA_CURRENT_DESC_EXT]	= 0x34,
-};
+पूर्ण;
 
 /* Controller feature flags */
-enum {
-	BRCMNAND_HAS_1K_SECTORS			= BIT(0),
-	BRCMNAND_HAS_PREFETCH			= BIT(1),
-	BRCMNAND_HAS_CACHE_MODE			= BIT(2),
-	BRCMNAND_HAS_WP				= BIT(3),
-};
+क्रमागत अणु
+	BRCMन_अंकD_HAS_1K_SECTORS			= BIT(0),
+	BRCMन_अंकD_HAS_PREFETCH			= BIT(1),
+	BRCMन_अंकD_HAS_CACHE_MODE			= BIT(2),
+	BRCMन_अंकD_HAS_WP				= BIT(3),
+पूर्ण;
 
-struct brcmnand_host;
+काष्ठा brcmnand_host;
 
-struct brcmnand_controller {
-	struct device		*dev;
-	struct nand_controller	controller;
-	void __iomem		*nand_base;
-	void __iomem		*nand_fc; /* flash cache */
-	void __iomem		*flash_dma_base;
-	unsigned int		irq;
-	unsigned int		dma_irq;
-	int			nand_version;
+काष्ठा brcmnand_controller अणु
+	काष्ठा device		*dev;
+	काष्ठा nand_controller	controller;
+	व्योम __iomem		*nand_base;
+	व्योम __iomem		*nand_fc; /* flash cache */
+	व्योम __iomem		*flash_dma_base;
+	अचिन्हित पूर्णांक		irq;
+	अचिन्हित पूर्णांक		dma_irq;
+	पूर्णांक			nand_version;
 
-	/* Some SoCs provide custom interrupt status register(s) */
-	struct brcmnand_soc	*soc;
+	/* Some SoCs provide custom पूर्णांकerrupt status रेजिस्टर(s) */
+	काष्ठा brcmnand_soc	*soc;
 
-	/* Some SoCs have a gateable clock for the controller */
-	struct clk		*clk;
+	/* Some SoCs have a gateable घड़ी क्रम the controller */
+	काष्ठा clk		*clk;
 
-	int			cmd_pending;
+	पूर्णांक			cmd_pending;
 	bool			dma_pending;
 	bool                    edu_pending;
-	struct completion	done;
-	struct completion	dma_done;
-	struct completion       edu_done;
+	काष्ठा completion	करोne;
+	काष्ठा completion	dma_करोne;
+	काष्ठा completion       edu_करोne;
 
-	/* List of NAND hosts (one for each chip-select) */
-	struct list_head host_list;
+	/* List of न_अंकD hosts (one क्रम each chip-select) */
+	काष्ठा list_head host_list;
 
 	/* EDU info, per-transaction */
-	const u16               *edu_offsets;
-	void __iomem            *edu_base;
-	int			edu_irq;
-	int                     edu_count;
+	स्थिर u16               *edu_offsets;
+	व्योम __iomem            *edu_base;
+	पूर्णांक			edu_irq;
+	पूर्णांक                     edu_count;
 	u64                     edu_dram_addr;
 	u32                     edu_ext_addr;
 	u32                     edu_cmd;
 	u32                     edu_config;
-	int			sas; /* spare area size, per flash cache */
-	int			sector_size_1k;
+	पूर्णांक			sas; /* spare area size, per flash cache */
+	पूर्णांक			sector_size_1k;
 	u8			*oob;
 
 	/* flash_dma reg */
-	const u16		*flash_dma_offsets;
-	struct brcm_nand_dma_desc *dma_desc;
+	स्थिर u16		*flash_dma_offsets;
+	काष्ठा brcm_nand_dma_desc *dma_desc;
 	dma_addr_t		dma_pa;
 
-	int (*dma_trans)(struct brcmnand_host *host, u64 addr, u32 *buf,
+	पूर्णांक (*dma_trans)(काष्ठा brcmnand_host *host, u64 addr, u32 *buf,
 			 u8 *oob, u32 len, u8 dma_cmd);
 
-	/* in-memory cache of the FLASH_CACHE, used only for some commands */
+	/* in-memory cache of the FLASH_CACHE, used only क्रम some commands */
 	u8			flash_cache[FC_BYTES];
 
 	/* Controller revision details */
-	const u16		*reg_offsets;
-	unsigned int		reg_spacing; /* between CS1, CS2, ... regs */
-	const u8		*cs_offsets; /* within each chip-select */
-	const u8		*cs0_offsets; /* within CS0, if different */
-	unsigned int		max_block_size;
-	const unsigned int	*block_sizes;
-	unsigned int		max_page_size;
-	const unsigned int	*page_sizes;
-	unsigned int		page_size_shift;
-	unsigned int		max_oob;
+	स्थिर u16		*reg_offsets;
+	अचिन्हित पूर्णांक		reg_spacing; /* between CS1, CS2, ... regs */
+	स्थिर u8		*cs_offsets; /* within each chip-select */
+	स्थिर u8		*cs0_offsets; /* within CS0, अगर dअगरferent */
+	अचिन्हित पूर्णांक		max_block_size;
+	स्थिर अचिन्हित पूर्णांक	*block_sizes;
+	अचिन्हित पूर्णांक		max_page_size;
+	स्थिर अचिन्हित पूर्णांक	*page_sizes;
+	अचिन्हित पूर्णांक		page_size_shअगरt;
+	अचिन्हित पूर्णांक		max_oob;
 	u32			features;
 
-	/* for low-power standby/resume only */
+	/* क्रम low-घातer standby/resume only */
 	u32			nand_cs_nand_select;
 	u32			nand_cs_nand_xor;
 	u32			corr_stat_threshold;
 	u32			flash_dma_mode;
 	u32                     flash_edu_mode;
 	bool			pio_poll_mode;
-};
+पूर्ण;
 
-struct brcmnand_cfg {
+काष्ठा brcmnand_cfg अणु
 	u64			device_size;
-	unsigned int		block_size;
-	unsigned int		page_size;
-	unsigned int		spare_area_size;
-	unsigned int		device_width;
-	unsigned int		col_adr_bytes;
-	unsigned int		blk_adr_bytes;
-	unsigned int		ful_adr_bytes;
-	unsigned int		sector_size_1k;
-	unsigned int		ecc_level;
-	/* use for low-power standby/resume only */
+	अचिन्हित पूर्णांक		block_size;
+	अचिन्हित पूर्णांक		page_size;
+	अचिन्हित पूर्णांक		spare_area_size;
+	अचिन्हित पूर्णांक		device_width;
+	अचिन्हित पूर्णांक		col_adr_bytes;
+	अचिन्हित पूर्णांक		blk_adr_bytes;
+	अचिन्हित पूर्णांक		ful_adr_bytes;
+	अचिन्हित पूर्णांक		sector_size_1k;
+	अचिन्हित पूर्णांक		ecc_level;
+	/* use क्रम low-घातer standby/resume only */
 	u32			acc_control;
 	u32			config;
 	u32			config_ext;
 	u32			timing_1;
 	u32			timing_2;
-};
+पूर्ण;
 
-struct brcmnand_host {
-	struct list_head	node;
+काष्ठा brcmnand_host अणु
+	काष्ठा list_head	node;
 
-	struct nand_chip	chip;
-	struct platform_device	*pdev;
-	int			cs;
+	काष्ठा nand_chip	chip;
+	काष्ठा platक्रमm_device	*pdev;
+	पूर्णांक			cs;
 
-	unsigned int		last_cmd;
-	unsigned int		last_byte;
+	अचिन्हित पूर्णांक		last_cmd;
+	अचिन्हित पूर्णांक		last_byte;
 	u64			last_addr;
-	struct brcmnand_cfg	hwcfg;
-	struct brcmnand_controller *ctrl;
-};
+	काष्ठा brcmnand_cfg	hwcfg;
+	काष्ठा brcmnand_controller *ctrl;
+पूर्ण;
 
-enum brcmnand_reg {
-	BRCMNAND_CMD_START = 0,
-	BRCMNAND_CMD_EXT_ADDRESS,
-	BRCMNAND_CMD_ADDRESS,
-	BRCMNAND_INTFC_STATUS,
-	BRCMNAND_CS_SELECT,
-	BRCMNAND_CS_XOR,
-	BRCMNAND_LL_OP,
-	BRCMNAND_CS0_BASE,
-	BRCMNAND_CS1_BASE,		/* CS1 regs, if non-contiguous */
-	BRCMNAND_CORR_THRESHOLD,
-	BRCMNAND_CORR_THRESHOLD_EXT,
-	BRCMNAND_UNCORR_COUNT,
-	BRCMNAND_CORR_COUNT,
-	BRCMNAND_CORR_EXT_ADDR,
-	BRCMNAND_CORR_ADDR,
-	BRCMNAND_UNCORR_EXT_ADDR,
-	BRCMNAND_UNCORR_ADDR,
-	BRCMNAND_SEMAPHORE,
-	BRCMNAND_ID,
-	BRCMNAND_ID_EXT,
-	BRCMNAND_LL_RDATA,
-	BRCMNAND_OOB_READ_BASE,
-	BRCMNAND_OOB_READ_10_BASE,	/* offset 0x10, if non-contiguous */
-	BRCMNAND_OOB_WRITE_BASE,
-	BRCMNAND_OOB_WRITE_10_BASE,	/* offset 0x10, if non-contiguous */
-	BRCMNAND_FC_BASE,
-};
+क्रमागत brcmnand_reg अणु
+	BRCMन_अंकD_CMD_START = 0,
+	BRCMन_अंकD_CMD_EXT_ADDRESS,
+	BRCMन_अंकD_CMD_ADDRESS,
+	BRCMन_अंकD_INTFC_STATUS,
+	BRCMन_अंकD_CS_SELECT,
+	BRCMन_अंकD_CS_XOR,
+	BRCMन_अंकD_LL_OP,
+	BRCMन_अंकD_CS0_BASE,
+	BRCMन_अंकD_CS1_BASE,		/* CS1 regs, अगर non-contiguous */
+	BRCMन_अंकD_CORR_THRESHOLD,
+	BRCMन_अंकD_CORR_THRESHOLD_EXT,
+	BRCMन_अंकD_UNCORR_COUNT,
+	BRCMन_अंकD_CORR_COUNT,
+	BRCMन_अंकD_CORR_EXT_ADDR,
+	BRCMन_अंकD_CORR_ADDR,
+	BRCMन_अंकD_UNCORR_EXT_ADDR,
+	BRCMन_अंकD_UNCORR_ADDR,
+	BRCMन_अंकD_SEMAPHORE,
+	BRCMन_अंकD_ID,
+	BRCMन_अंकD_ID_EXT,
+	BRCMन_अंकD_LL_RDATA,
+	BRCMन_अंकD_OOB_READ_BASE,
+	BRCMन_अंकD_OOB_READ_10_BASE,	/* offset 0x10, अगर non-contiguous */
+	BRCMन_अंकD_OOB_WRITE_BASE,
+	BRCMन_अंकD_OOB_WRITE_10_BASE,	/* offset 0x10, अगर non-contiguous */
+	BRCMन_अंकD_FC_BASE,
+पूर्ण;
 
-/* BRCMNAND v2.1-v2.2 */
-static const u16 brcmnand_regs_v21[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x5c,
-	[BRCMNAND_CS_SELECT]		=  0x14,
-	[BRCMNAND_CS_XOR]		=  0x18,
-	[BRCMNAND_LL_OP]		=     0,
-	[BRCMNAND_CS0_BASE]		=  0x40,
-	[BRCMNAND_CS1_BASE]		=     0,
-	[BRCMNAND_CORR_THRESHOLD]	=     0,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=     0,
-	[BRCMNAND_UNCORR_COUNT]		=     0,
-	[BRCMNAND_CORR_COUNT]		=     0,
-	[BRCMNAND_CORR_EXT_ADDR]	=  0x60,
-	[BRCMNAND_CORR_ADDR]		=  0x64,
-	[BRCMNAND_UNCORR_EXT_ADDR]	=  0x68,
-	[BRCMNAND_UNCORR_ADDR]		=  0x6c,
-	[BRCMNAND_SEMAPHORE]		=  0x50,
-	[BRCMNAND_ID]			=  0x54,
-	[BRCMNAND_ID_EXT]		=     0,
-	[BRCMNAND_LL_RDATA]		=     0,
-	[BRCMNAND_OOB_READ_BASE]	=  0x20,
-	[BRCMNAND_OOB_READ_10_BASE]	=     0,
-	[BRCMNAND_OOB_WRITE_BASE]	=  0x30,
-	[BRCMNAND_OOB_WRITE_10_BASE]	=     0,
-	[BRCMNAND_FC_BASE]		= 0x200,
-};
+/* BRCMन_अंकD v2.1-v2.2 */
+अटल स्थिर u16 brcmnand_regs_v21[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x5c,
+	[BRCMन_अंकD_CS_SELECT]		=  0x14,
+	[BRCMन_अंकD_CS_XOR]		=  0x18,
+	[BRCMन_अंकD_LL_OP]		=     0,
+	[BRCMन_अंकD_CS0_BASE]		=  0x40,
+	[BRCMन_अंकD_CS1_BASE]		=     0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=     0,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=     0,
+	[BRCMन_अंकD_UNCORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	=  0x60,
+	[BRCMन_अंकD_CORR_ADDR]		=  0x64,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	=  0x68,
+	[BRCMन_अंकD_UNCORR_ADDR]		=  0x6c,
+	[BRCMन_अंकD_SEMAPHORE]		=  0x50,
+	[BRCMन_अंकD_ID]			=  0x54,
+	[BRCMन_अंकD_ID_EXT]		=     0,
+	[BRCMन_अंकD_LL_RDATA]		=     0,
+	[BRCMन_अंकD_OOB_READ_BASE]	=  0x20,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	=     0,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	=  0x30,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	=     0,
+	[BRCMन_अंकD_FC_BASE]		= 0x200,
+पूर्ण;
 
-/* BRCMNAND v3.3-v4.0 */
-static const u16 brcmnand_regs_v33[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x6c,
-	[BRCMNAND_CS_SELECT]		=  0x14,
-	[BRCMNAND_CS_XOR]		=  0x18,
-	[BRCMNAND_LL_OP]		= 0x178,
-	[BRCMNAND_CS0_BASE]		=  0x40,
-	[BRCMNAND_CS1_BASE]		=  0xd0,
-	[BRCMNAND_CORR_THRESHOLD]	=  0x84,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=     0,
-	[BRCMNAND_UNCORR_COUNT]		=     0,
-	[BRCMNAND_CORR_COUNT]		=     0,
-	[BRCMNAND_CORR_EXT_ADDR]	=  0x70,
-	[BRCMNAND_CORR_ADDR]		=  0x74,
-	[BRCMNAND_UNCORR_EXT_ADDR]	=  0x78,
-	[BRCMNAND_UNCORR_ADDR]		=  0x7c,
-	[BRCMNAND_SEMAPHORE]		=  0x58,
-	[BRCMNAND_ID]			=  0x60,
-	[BRCMNAND_ID_EXT]		=  0x64,
-	[BRCMNAND_LL_RDATA]		= 0x17c,
-	[BRCMNAND_OOB_READ_BASE]	=  0x20,
-	[BRCMNAND_OOB_READ_10_BASE]	= 0x130,
-	[BRCMNAND_OOB_WRITE_BASE]	=  0x30,
-	[BRCMNAND_OOB_WRITE_10_BASE]	=     0,
-	[BRCMNAND_FC_BASE]		= 0x200,
-};
+/* BRCMन_अंकD v3.3-v4.0 */
+अटल स्थिर u16 brcmnand_regs_v33[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x6c,
+	[BRCMन_अंकD_CS_SELECT]		=  0x14,
+	[BRCMन_अंकD_CS_XOR]		=  0x18,
+	[BRCMन_अंकD_LL_OP]		= 0x178,
+	[BRCMन_अंकD_CS0_BASE]		=  0x40,
+	[BRCMन_अंकD_CS1_BASE]		=  0xd0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=  0x84,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=     0,
+	[BRCMन_अंकD_UNCORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	=  0x70,
+	[BRCMन_अंकD_CORR_ADDR]		=  0x74,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	=  0x78,
+	[BRCMन_अंकD_UNCORR_ADDR]		=  0x7c,
+	[BRCMन_अंकD_SEMAPHORE]		=  0x58,
+	[BRCMन_अंकD_ID]			=  0x60,
+	[BRCMन_अंकD_ID_EXT]		=  0x64,
+	[BRCMन_अंकD_LL_RDATA]		= 0x17c,
+	[BRCMन_अंकD_OOB_READ_BASE]	=  0x20,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	= 0x130,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	=  0x30,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	=     0,
+	[BRCMन_अंकD_FC_BASE]		= 0x200,
+पूर्ण;
 
-/* BRCMNAND v5.0 */
-static const u16 brcmnand_regs_v50[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x6c,
-	[BRCMNAND_CS_SELECT]		=  0x14,
-	[BRCMNAND_CS_XOR]		=  0x18,
-	[BRCMNAND_LL_OP]		= 0x178,
-	[BRCMNAND_CS0_BASE]		=  0x40,
-	[BRCMNAND_CS1_BASE]		=  0xd0,
-	[BRCMNAND_CORR_THRESHOLD]	=  0x84,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=     0,
-	[BRCMNAND_UNCORR_COUNT]		=     0,
-	[BRCMNAND_CORR_COUNT]		=     0,
-	[BRCMNAND_CORR_EXT_ADDR]	=  0x70,
-	[BRCMNAND_CORR_ADDR]		=  0x74,
-	[BRCMNAND_UNCORR_EXT_ADDR]	=  0x78,
-	[BRCMNAND_UNCORR_ADDR]		=  0x7c,
-	[BRCMNAND_SEMAPHORE]		=  0x58,
-	[BRCMNAND_ID]			=  0x60,
-	[BRCMNAND_ID_EXT]		=  0x64,
-	[BRCMNAND_LL_RDATA]		= 0x17c,
-	[BRCMNAND_OOB_READ_BASE]	=  0x20,
-	[BRCMNAND_OOB_READ_10_BASE]	= 0x130,
-	[BRCMNAND_OOB_WRITE_BASE]	=  0x30,
-	[BRCMNAND_OOB_WRITE_10_BASE]	= 0x140,
-	[BRCMNAND_FC_BASE]		= 0x200,
-};
+/* BRCMन_अंकD v5.0 */
+अटल स्थिर u16 brcmnand_regs_v50[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x6c,
+	[BRCMन_अंकD_CS_SELECT]		=  0x14,
+	[BRCMन_अंकD_CS_XOR]		=  0x18,
+	[BRCMन_अंकD_LL_OP]		= 0x178,
+	[BRCMन_अंकD_CS0_BASE]		=  0x40,
+	[BRCMन_अंकD_CS1_BASE]		=  0xd0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=  0x84,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=     0,
+	[BRCMन_अंकD_UNCORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_COUNT]		=     0,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	=  0x70,
+	[BRCMन_अंकD_CORR_ADDR]		=  0x74,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	=  0x78,
+	[BRCMन_अंकD_UNCORR_ADDR]		=  0x7c,
+	[BRCMन_अंकD_SEMAPHORE]		=  0x58,
+	[BRCMन_अंकD_ID]			=  0x60,
+	[BRCMन_अंकD_ID_EXT]		=  0x64,
+	[BRCMन_अंकD_LL_RDATA]		= 0x17c,
+	[BRCMन_अंकD_OOB_READ_BASE]	=  0x20,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	= 0x130,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	=  0x30,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	= 0x140,
+	[BRCMन_अंकD_FC_BASE]		= 0x200,
+पूर्ण;
 
-/* BRCMNAND v6.0 - v7.1 */
-static const u16 brcmnand_regs_v60[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x14,
-	[BRCMNAND_CS_SELECT]		=  0x18,
-	[BRCMNAND_CS_XOR]		=  0x1c,
-	[BRCMNAND_LL_OP]		=  0x20,
-	[BRCMNAND_CS0_BASE]		=  0x50,
-	[BRCMNAND_CS1_BASE]		=     0,
-	[BRCMNAND_CORR_THRESHOLD]	=  0xc0,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=  0xc4,
-	[BRCMNAND_UNCORR_COUNT]		=  0xfc,
-	[BRCMNAND_CORR_COUNT]		= 0x100,
-	[BRCMNAND_CORR_EXT_ADDR]	= 0x10c,
-	[BRCMNAND_CORR_ADDR]		= 0x110,
-	[BRCMNAND_UNCORR_EXT_ADDR]	= 0x114,
-	[BRCMNAND_UNCORR_ADDR]		= 0x118,
-	[BRCMNAND_SEMAPHORE]		= 0x150,
-	[BRCMNAND_ID]			= 0x194,
-	[BRCMNAND_ID_EXT]		= 0x198,
-	[BRCMNAND_LL_RDATA]		= 0x19c,
-	[BRCMNAND_OOB_READ_BASE]	= 0x200,
-	[BRCMNAND_OOB_READ_10_BASE]	=     0,
-	[BRCMNAND_OOB_WRITE_BASE]	= 0x280,
-	[BRCMNAND_OOB_WRITE_10_BASE]	=     0,
-	[BRCMNAND_FC_BASE]		= 0x400,
-};
+/* BRCMन_अंकD v6.0 - v7.1 */
+अटल स्थिर u16 brcmnand_regs_v60[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x14,
+	[BRCMन_अंकD_CS_SELECT]		=  0x18,
+	[BRCMन_अंकD_CS_XOR]		=  0x1c,
+	[BRCMन_अंकD_LL_OP]		=  0x20,
+	[BRCMन_अंकD_CS0_BASE]		=  0x50,
+	[BRCMन_अंकD_CS1_BASE]		=     0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=  0xc0,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=  0xc4,
+	[BRCMन_अंकD_UNCORR_COUNT]		=  0xfc,
+	[BRCMन_अंकD_CORR_COUNT]		= 0x100,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	= 0x10c,
+	[BRCMन_अंकD_CORR_ADDR]		= 0x110,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	= 0x114,
+	[BRCMन_अंकD_UNCORR_ADDR]		= 0x118,
+	[BRCMन_अंकD_SEMAPHORE]		= 0x150,
+	[BRCMन_अंकD_ID]			= 0x194,
+	[BRCMन_अंकD_ID_EXT]		= 0x198,
+	[BRCMन_अंकD_LL_RDATA]		= 0x19c,
+	[BRCMन_अंकD_OOB_READ_BASE]	= 0x200,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	=     0,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	= 0x280,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	=     0,
+	[BRCMन_अंकD_FC_BASE]		= 0x400,
+पूर्ण;
 
-/* BRCMNAND v7.1 */
-static const u16 brcmnand_regs_v71[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x14,
-	[BRCMNAND_CS_SELECT]		=  0x18,
-	[BRCMNAND_CS_XOR]		=  0x1c,
-	[BRCMNAND_LL_OP]		=  0x20,
-	[BRCMNAND_CS0_BASE]		=  0x50,
-	[BRCMNAND_CS1_BASE]		=     0,
-	[BRCMNAND_CORR_THRESHOLD]	=  0xdc,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=  0xe0,
-	[BRCMNAND_UNCORR_COUNT]		=  0xfc,
-	[BRCMNAND_CORR_COUNT]		= 0x100,
-	[BRCMNAND_CORR_EXT_ADDR]	= 0x10c,
-	[BRCMNAND_CORR_ADDR]		= 0x110,
-	[BRCMNAND_UNCORR_EXT_ADDR]	= 0x114,
-	[BRCMNAND_UNCORR_ADDR]		= 0x118,
-	[BRCMNAND_SEMAPHORE]		= 0x150,
-	[BRCMNAND_ID]			= 0x194,
-	[BRCMNAND_ID_EXT]		= 0x198,
-	[BRCMNAND_LL_RDATA]		= 0x19c,
-	[BRCMNAND_OOB_READ_BASE]	= 0x200,
-	[BRCMNAND_OOB_READ_10_BASE]	=     0,
-	[BRCMNAND_OOB_WRITE_BASE]	= 0x280,
-	[BRCMNAND_OOB_WRITE_10_BASE]	=     0,
-	[BRCMNAND_FC_BASE]		= 0x400,
-};
+/* BRCMन_अंकD v7.1 */
+अटल स्थिर u16 brcmnand_regs_v71[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x14,
+	[BRCMन_अंकD_CS_SELECT]		=  0x18,
+	[BRCMन_अंकD_CS_XOR]		=  0x1c,
+	[BRCMन_अंकD_LL_OP]		=  0x20,
+	[BRCMन_अंकD_CS0_BASE]		=  0x50,
+	[BRCMन_अंकD_CS1_BASE]		=     0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=  0xdc,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=  0xe0,
+	[BRCMन_अंकD_UNCORR_COUNT]		=  0xfc,
+	[BRCMन_अंकD_CORR_COUNT]		= 0x100,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	= 0x10c,
+	[BRCMन_अंकD_CORR_ADDR]		= 0x110,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	= 0x114,
+	[BRCMन_अंकD_UNCORR_ADDR]		= 0x118,
+	[BRCMन_अंकD_SEMAPHORE]		= 0x150,
+	[BRCMन_अंकD_ID]			= 0x194,
+	[BRCMन_अंकD_ID_EXT]		= 0x198,
+	[BRCMन_अंकD_LL_RDATA]		= 0x19c,
+	[BRCMन_अंकD_OOB_READ_BASE]	= 0x200,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	=     0,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	= 0x280,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	=     0,
+	[BRCMन_अंकD_FC_BASE]		= 0x400,
+पूर्ण;
 
-/* BRCMNAND v7.2 */
-static const u16 brcmnand_regs_v72[] = {
-	[BRCMNAND_CMD_START]		=  0x04,
-	[BRCMNAND_CMD_EXT_ADDRESS]	=  0x08,
-	[BRCMNAND_CMD_ADDRESS]		=  0x0c,
-	[BRCMNAND_INTFC_STATUS]		=  0x14,
-	[BRCMNAND_CS_SELECT]		=  0x18,
-	[BRCMNAND_CS_XOR]		=  0x1c,
-	[BRCMNAND_LL_OP]		=  0x20,
-	[BRCMNAND_CS0_BASE]		=  0x50,
-	[BRCMNAND_CS1_BASE]		=     0,
-	[BRCMNAND_CORR_THRESHOLD]	=  0xdc,
-	[BRCMNAND_CORR_THRESHOLD_EXT]	=  0xe0,
-	[BRCMNAND_UNCORR_COUNT]		=  0xfc,
-	[BRCMNAND_CORR_COUNT]		= 0x100,
-	[BRCMNAND_CORR_EXT_ADDR]	= 0x10c,
-	[BRCMNAND_CORR_ADDR]		= 0x110,
-	[BRCMNAND_UNCORR_EXT_ADDR]	= 0x114,
-	[BRCMNAND_UNCORR_ADDR]		= 0x118,
-	[BRCMNAND_SEMAPHORE]		= 0x150,
-	[BRCMNAND_ID]			= 0x194,
-	[BRCMNAND_ID_EXT]		= 0x198,
-	[BRCMNAND_LL_RDATA]		= 0x19c,
-	[BRCMNAND_OOB_READ_BASE]	= 0x200,
-	[BRCMNAND_OOB_READ_10_BASE]	=     0,
-	[BRCMNAND_OOB_WRITE_BASE]	= 0x400,
-	[BRCMNAND_OOB_WRITE_10_BASE]	=     0,
-	[BRCMNAND_FC_BASE]		= 0x600,
-};
+/* BRCMन_अंकD v7.2 */
+अटल स्थिर u16 brcmnand_regs_v72[] = अणु
+	[BRCMन_अंकD_CMD_START]		=  0x04,
+	[BRCMन_अंकD_CMD_EXT_ADDRESS]	=  0x08,
+	[BRCMन_अंकD_CMD_ADDRESS]		=  0x0c,
+	[BRCMन_अंकD_INTFC_STATUS]		=  0x14,
+	[BRCMन_अंकD_CS_SELECT]		=  0x18,
+	[BRCMन_अंकD_CS_XOR]		=  0x1c,
+	[BRCMन_अंकD_LL_OP]		=  0x20,
+	[BRCMन_अंकD_CS0_BASE]		=  0x50,
+	[BRCMन_अंकD_CS1_BASE]		=     0,
+	[BRCMन_अंकD_CORR_THRESHOLD]	=  0xdc,
+	[BRCMन_अंकD_CORR_THRESHOLD_EXT]	=  0xe0,
+	[BRCMन_अंकD_UNCORR_COUNT]		=  0xfc,
+	[BRCMन_अंकD_CORR_COUNT]		= 0x100,
+	[BRCMन_अंकD_CORR_EXT_ADDR]	= 0x10c,
+	[BRCMन_अंकD_CORR_ADDR]		= 0x110,
+	[BRCMन_अंकD_UNCORR_EXT_ADDR]	= 0x114,
+	[BRCMन_अंकD_UNCORR_ADDR]		= 0x118,
+	[BRCMन_अंकD_SEMAPHORE]		= 0x150,
+	[BRCMन_अंकD_ID]			= 0x194,
+	[BRCMन_अंकD_ID_EXT]		= 0x198,
+	[BRCMन_अंकD_LL_RDATA]		= 0x19c,
+	[BRCMन_अंकD_OOB_READ_BASE]	= 0x200,
+	[BRCMन_अंकD_OOB_READ_10_BASE]	=     0,
+	[BRCMन_अंकD_OOB_WRITE_BASE]	= 0x400,
+	[BRCMन_अंकD_OOB_WRITE_10_BASE]	=     0,
+	[BRCMन_अंकD_FC_BASE]		= 0x600,
+पूर्ण;
 
-enum brcmnand_cs_reg {
-	BRCMNAND_CS_CFG_EXT = 0,
-	BRCMNAND_CS_CFG,
-	BRCMNAND_CS_ACC_CONTROL,
-	BRCMNAND_CS_TIMING1,
-	BRCMNAND_CS_TIMING2,
-};
+क्रमागत brcmnand_cs_reg अणु
+	BRCMन_अंकD_CS_CFG_EXT = 0,
+	BRCMन_अंकD_CS_CFG,
+	BRCMन_अंकD_CS_ACC_CONTROL,
+	BRCMन_अंकD_CS_TIMING1,
+	BRCMन_अंकD_CS_TIMING2,
+पूर्ण;
 
-/* Per chip-select offsets for v7.1 */
-static const u8 brcmnand_cs_offsets_v71[] = {
-	[BRCMNAND_CS_ACC_CONTROL]	= 0x00,
-	[BRCMNAND_CS_CFG_EXT]		= 0x04,
-	[BRCMNAND_CS_CFG]		= 0x08,
-	[BRCMNAND_CS_TIMING1]		= 0x0c,
-	[BRCMNAND_CS_TIMING2]		= 0x10,
-};
+/* Per chip-select offsets क्रम v7.1 */
+अटल स्थिर u8 brcmnand_cs_offsets_v71[] = अणु
+	[BRCMन_अंकD_CS_ACC_CONTROL]	= 0x00,
+	[BRCMन_अंकD_CS_CFG_EXT]		= 0x04,
+	[BRCMन_अंकD_CS_CFG]		= 0x08,
+	[BRCMन_अंकD_CS_TIMING1]		= 0x0c,
+	[BRCMन_अंकD_CS_TIMING2]		= 0x10,
+पूर्ण;
 
-/* Per chip-select offsets for pre v7.1, except CS0 on <= v5.0 */
-static const u8 brcmnand_cs_offsets[] = {
-	[BRCMNAND_CS_ACC_CONTROL]	= 0x00,
-	[BRCMNAND_CS_CFG_EXT]		= 0x04,
-	[BRCMNAND_CS_CFG]		= 0x04,
-	[BRCMNAND_CS_TIMING1]		= 0x08,
-	[BRCMNAND_CS_TIMING2]		= 0x0c,
-};
+/* Per chip-select offsets क्रम pre v7.1, except CS0 on <= v5.0 */
+अटल स्थिर u8 brcmnand_cs_offsets[] = अणु
+	[BRCMन_अंकD_CS_ACC_CONTROL]	= 0x00,
+	[BRCMन_अंकD_CS_CFG_EXT]		= 0x04,
+	[BRCMन_अंकD_CS_CFG]		= 0x04,
+	[BRCMन_अंकD_CS_TIMING1]		= 0x08,
+	[BRCMन_अंकD_CS_TIMING2]		= 0x0c,
+पूर्ण;
 
-/* Per chip-select offset for <= v5.0 on CS0 only */
-static const u8 brcmnand_cs_offsets_cs0[] = {
-	[BRCMNAND_CS_ACC_CONTROL]	= 0x00,
-	[BRCMNAND_CS_CFG_EXT]		= 0x08,
-	[BRCMNAND_CS_CFG]		= 0x08,
-	[BRCMNAND_CS_TIMING1]		= 0x10,
-	[BRCMNAND_CS_TIMING2]		= 0x14,
-};
+/* Per chip-select offset क्रम <= v5.0 on CS0 only */
+अटल स्थिर u8 brcmnand_cs_offsets_cs0[] = अणु
+	[BRCMन_अंकD_CS_ACC_CONTROL]	= 0x00,
+	[BRCMन_अंकD_CS_CFG_EXT]		= 0x08,
+	[BRCMन_अंकD_CS_CFG]		= 0x08,
+	[BRCMन_अंकD_CS_TIMING1]		= 0x10,
+	[BRCMन_अंकD_CS_TIMING2]		= 0x14,
+पूर्ण;
 
 /*
- * Bitfields for the CFG and CFG_EXT registers. Pre-v7.1 controllers only had
- * one config register, but once the bitfields overflowed, newer controllers
- * (v7.1 and newer) added a CFG_EXT register and shuffled a few fields around.
+ * Bitfields क्रम the CFG and CFG_EXT रेजिस्टरs. Pre-v7.1 controllers only had
+ * one config रेजिस्टर, but once the bitfields overflowed, newer controllers
+ * (v7.1 and newer) added a CFG_EXT रेजिस्टर and shuffled a few fields around.
  */
-enum {
+क्रमागत अणु
 	CFG_BLK_ADR_BYTES_SHIFT		= 8,
 	CFG_COL_ADR_BYTES_SHIFT		= 12,
 	CFG_FUL_ADR_BYTES_SHIFT		= 16,
@@ -569,20 +570,20 @@ enum {
 	CFG_BUS_WIDTH			= BIT(CFG_BUS_WIDTH_SHIFT),
 	CFG_DEVICE_SIZE_SHIFT		= 24,
 
-	/* Only for v2.1 */
+	/* Only क्रम v2.1 */
 	CFG_PAGE_SIZE_SHIFT_v2_1	= 30,
 
-	/* Only for pre-v7.1 (with no CFG_EXT register) */
+	/* Only क्रम pre-v7.1 (with no CFG_EXT रेजिस्टर) */
 	CFG_PAGE_SIZE_SHIFT		= 20,
 	CFG_BLK_SIZE_SHIFT		= 28,
 
-	/* Only for v7.1+ (with CFG_EXT register) */
+	/* Only क्रम v7.1+ (with CFG_EXT रेजिस्टर) */
 	CFG_EXT_PAGE_SIZE_SHIFT		= 0,
 	CFG_EXT_BLK_SIZE_SHIFT		= 4,
-};
+पूर्ण;
 
-/* BRCMNAND_INTFC_STATUS */
-enum {
+/* BRCMन_अंकD_INTFC_STATUS */
+क्रमागत अणु
 	INTFC_FLASH_STATUS		= GENMASK(7, 0),
 
 	INTFC_ERASED			= BIT(27),
@@ -590,331 +591,331 @@ enum {
 	INTFC_CACHE_VALID		= BIT(29),
 	INTFC_FLASH_READY		= BIT(30),
 	INTFC_CTLR_READY		= BIT(31),
-};
+पूर्ण;
 
-static inline u32 nand_readreg(struct brcmnand_controller *ctrl, u32 offs)
-{
-	return brcmnand_readl(ctrl->nand_base + offs);
-}
+अटल अंतरभूत u32 nand_पढ़ोreg(काष्ठा brcmnand_controller *ctrl, u32 offs)
+अणु
+	वापस brcmnand_पढ़ोl(ctrl->nand_base + offs);
+पूर्ण
 
-static inline void nand_writereg(struct brcmnand_controller *ctrl, u32 offs,
+अटल अंतरभूत व्योम nand_ग_लिखोreg(काष्ठा brcmnand_controller *ctrl, u32 offs,
 				 u32 val)
-{
-	brcmnand_writel(val, ctrl->nand_base + offs);
-}
+अणु
+	brcmnand_ग_लिखोl(val, ctrl->nand_base + offs);
+पूर्ण
 
-static int brcmnand_revision_init(struct brcmnand_controller *ctrl)
-{
-	static const unsigned int block_sizes_v6[] = { 8, 16, 128, 256, 512, 1024, 2048, 0 };
-	static const unsigned int block_sizes_v4[] = { 16, 128, 8, 512, 256, 1024, 2048, 0 };
-	static const unsigned int block_sizes_v2_2[] = { 16, 128, 8, 512, 256, 0 };
-	static const unsigned int block_sizes_v2_1[] = { 16, 128, 8, 512, 0 };
-	static const unsigned int page_sizes_v3_4[] = { 512, 2048, 4096, 8192, 0 };
-	static const unsigned int page_sizes_v2_2[] = { 512, 2048, 4096, 0 };
-	static const unsigned int page_sizes_v2_1[] = { 512, 2048, 0 };
+अटल पूर्णांक brcmnand_revision_init(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अटल स्थिर अचिन्हित पूर्णांक block_sizes_v6[] = अणु 8, 16, 128, 256, 512, 1024, 2048, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक block_sizes_v4[] = अणु 16, 128, 8, 512, 256, 1024, 2048, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक block_sizes_v2_2[] = अणु 16, 128, 8, 512, 256, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक block_sizes_v2_1[] = अणु 16, 128, 8, 512, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक page_sizes_v3_4[] = अणु 512, 2048, 4096, 8192, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक page_sizes_v2_2[] = अणु 512, 2048, 4096, 0 पूर्ण;
+	अटल स्थिर अचिन्हित पूर्णांक page_sizes_v2_1[] = अणु 512, 2048, 0 पूर्ण;
 
-	ctrl->nand_version = nand_readreg(ctrl, 0) & 0xffff;
+	ctrl->nand_version = nand_पढ़ोreg(ctrl, 0) & 0xffff;
 
 	/* Only support v2.1+ */
-	if (ctrl->nand_version < 0x0201) {
+	अगर (ctrl->nand_version < 0x0201) अणु
 		dev_err(ctrl->dev, "version %#x not supported\n",
 			ctrl->nand_version);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Register offsets */
-	if (ctrl->nand_version >= 0x0702)
+	अगर (ctrl->nand_version >= 0x0702)
 		ctrl->reg_offsets = brcmnand_regs_v72;
-	else if (ctrl->nand_version == 0x0701)
+	अन्यथा अगर (ctrl->nand_version == 0x0701)
 		ctrl->reg_offsets = brcmnand_regs_v71;
-	else if (ctrl->nand_version >= 0x0600)
+	अन्यथा अगर (ctrl->nand_version >= 0x0600)
 		ctrl->reg_offsets = brcmnand_regs_v60;
-	else if (ctrl->nand_version >= 0x0500)
+	अन्यथा अगर (ctrl->nand_version >= 0x0500)
 		ctrl->reg_offsets = brcmnand_regs_v50;
-	else if (ctrl->nand_version >= 0x0303)
+	अन्यथा अगर (ctrl->nand_version >= 0x0303)
 		ctrl->reg_offsets = brcmnand_regs_v33;
-	else if (ctrl->nand_version >= 0x0201)
+	अन्यथा अगर (ctrl->nand_version >= 0x0201)
 		ctrl->reg_offsets = brcmnand_regs_v21;
 
 	/* Chip-select stride */
-	if (ctrl->nand_version >= 0x0701)
+	अगर (ctrl->nand_version >= 0x0701)
 		ctrl->reg_spacing = 0x14;
-	else
+	अन्यथा
 		ctrl->reg_spacing = 0x10;
 
-	/* Per chip-select registers */
-	if (ctrl->nand_version >= 0x0701) {
+	/* Per chip-select रेजिस्टरs */
+	अगर (ctrl->nand_version >= 0x0701) अणु
 		ctrl->cs_offsets = brcmnand_cs_offsets_v71;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl->cs_offsets = brcmnand_cs_offsets;
 
-		/* v3.3-5.0 have a different CS0 offset layout */
-		if (ctrl->nand_version >= 0x0303 &&
+		/* v3.3-5.0 have a dअगरferent CS0 offset layout */
+		अगर (ctrl->nand_version >= 0x0303 &&
 		    ctrl->nand_version <= 0x0500)
 			ctrl->cs0_offsets = brcmnand_cs_offsets_cs0;
-	}
+	पूर्ण
 
 	/* Page / block sizes */
-	if (ctrl->nand_version >= 0x0701) {
-		/* >= v7.1 use nice power-of-2 values! */
+	अगर (ctrl->nand_version >= 0x0701) अणु
+		/* >= v7.1 use nice घातer-of-2 values! */
 		ctrl->max_page_size = 16 * 1024;
 		ctrl->max_block_size = 2 * 1024 * 1024;
-	} else {
-		if (ctrl->nand_version >= 0x0304)
+	पूर्ण अन्यथा अणु
+		अगर (ctrl->nand_version >= 0x0304)
 			ctrl->page_sizes = page_sizes_v3_4;
-		else if (ctrl->nand_version >= 0x0202)
+		अन्यथा अगर (ctrl->nand_version >= 0x0202)
 			ctrl->page_sizes = page_sizes_v2_2;
-		else
+		अन्यथा
 			ctrl->page_sizes = page_sizes_v2_1;
 
-		if (ctrl->nand_version >= 0x0202)
-			ctrl->page_size_shift = CFG_PAGE_SIZE_SHIFT;
-		else
-			ctrl->page_size_shift = CFG_PAGE_SIZE_SHIFT_v2_1;
+		अगर (ctrl->nand_version >= 0x0202)
+			ctrl->page_size_shअगरt = CFG_PAGE_SIZE_SHIFT;
+		अन्यथा
+			ctrl->page_size_shअगरt = CFG_PAGE_SIZE_SHIFT_v2_1;
 
-		if (ctrl->nand_version >= 0x0600)
+		अगर (ctrl->nand_version >= 0x0600)
 			ctrl->block_sizes = block_sizes_v6;
-		else if (ctrl->nand_version >= 0x0400)
+		अन्यथा अगर (ctrl->nand_version >= 0x0400)
 			ctrl->block_sizes = block_sizes_v4;
-		else if (ctrl->nand_version >= 0x0202)
+		अन्यथा अगर (ctrl->nand_version >= 0x0202)
 			ctrl->block_sizes = block_sizes_v2_2;
-		else
+		अन्यथा
 			ctrl->block_sizes = block_sizes_v2_1;
 
-		if (ctrl->nand_version < 0x0400) {
-			if (ctrl->nand_version < 0x0202)
+		अगर (ctrl->nand_version < 0x0400) अणु
+			अगर (ctrl->nand_version < 0x0202)
 				ctrl->max_page_size = 2048;
-			else
+			अन्यथा
 				ctrl->max_page_size = 4096;
 			ctrl->max_block_size = 512 * 1024;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Maximum spare area sector size (per 512B) */
-	if (ctrl->nand_version == 0x0702)
+	अगर (ctrl->nand_version == 0x0702)
 		ctrl->max_oob = 128;
-	else if (ctrl->nand_version >= 0x0600)
+	अन्यथा अगर (ctrl->nand_version >= 0x0600)
 		ctrl->max_oob = 64;
-	else if (ctrl->nand_version >= 0x0500)
+	अन्यथा अगर (ctrl->nand_version >= 0x0500)
 		ctrl->max_oob = 32;
-	else
+	अन्यथा
 		ctrl->max_oob = 16;
 
 	/* v6.0 and newer (except v6.1) have prefetch support */
-	if (ctrl->nand_version >= 0x0600 && ctrl->nand_version != 0x0601)
-		ctrl->features |= BRCMNAND_HAS_PREFETCH;
+	अगर (ctrl->nand_version >= 0x0600 && ctrl->nand_version != 0x0601)
+		ctrl->features |= BRCMन_अंकD_HAS_PREFETCH;
 
 	/*
-	 * v6.x has cache mode, but it's implemented differently. Ignore it for
+	 * v6.x has cache mode, but it's implemented dअगरferently. Ignore it क्रम
 	 * now.
 	 */
-	if (ctrl->nand_version >= 0x0700)
-		ctrl->features |= BRCMNAND_HAS_CACHE_MODE;
+	अगर (ctrl->nand_version >= 0x0700)
+		ctrl->features |= BRCMन_अंकD_HAS_CACHE_MODE;
 
-	if (ctrl->nand_version >= 0x0500)
-		ctrl->features |= BRCMNAND_HAS_1K_SECTORS;
+	अगर (ctrl->nand_version >= 0x0500)
+		ctrl->features |= BRCMन_अंकD_HAS_1K_SECTORS;
 
-	if (ctrl->nand_version >= 0x0700)
-		ctrl->features |= BRCMNAND_HAS_WP;
-	else if (of_property_read_bool(ctrl->dev->of_node, "brcm,nand-has-wp"))
-		ctrl->features |= BRCMNAND_HAS_WP;
+	अगर (ctrl->nand_version >= 0x0700)
+		ctrl->features |= BRCMन_अंकD_HAS_WP;
+	अन्यथा अगर (of_property_पढ़ो_bool(ctrl->dev->of_node, "brcm,nand-has-wp"))
+		ctrl->features |= BRCMन_अंकD_HAS_WP;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void brcmnand_flash_dma_revision_init(struct brcmnand_controller *ctrl)
-{
-	/* flash_dma register offsets */
-	if (ctrl->nand_version >= 0x0703)
+अटल व्योम brcmnand_flash_dma_revision_init(काष्ठा brcmnand_controller *ctrl)
+अणु
+	/* flash_dma रेजिस्टर offsets */
+	अगर (ctrl->nand_version >= 0x0703)
 		ctrl->flash_dma_offsets = flash_dma_regs_v4;
-	else if (ctrl->nand_version == 0x0602)
+	अन्यथा अगर (ctrl->nand_version == 0x0602)
 		ctrl->flash_dma_offsets = flash_dma_regs_v0;
-	else
+	अन्यथा
 		ctrl->flash_dma_offsets = flash_dma_regs_v1;
-}
+पूर्ण
 
-static inline u32 brcmnand_read_reg(struct brcmnand_controller *ctrl,
-		enum brcmnand_reg reg)
-{
+अटल अंतरभूत u32 brcmnand_पढ़ो_reg(काष्ठा brcmnand_controller *ctrl,
+		क्रमागत brcmnand_reg reg)
+अणु
 	u16 offs = ctrl->reg_offsets[reg];
 
-	if (offs)
-		return nand_readreg(ctrl, offs);
-	else
-		return 0;
-}
+	अगर (offs)
+		वापस nand_पढ़ोreg(ctrl, offs);
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static inline void brcmnand_write_reg(struct brcmnand_controller *ctrl,
-				      enum brcmnand_reg reg, u32 val)
-{
+अटल अंतरभूत व्योम brcmnand_ग_लिखो_reg(काष्ठा brcmnand_controller *ctrl,
+				      क्रमागत brcmnand_reg reg, u32 val)
+अणु
 	u16 offs = ctrl->reg_offsets[reg];
 
-	if (offs)
-		nand_writereg(ctrl, offs, val);
-}
+	अगर (offs)
+		nand_ग_लिखोreg(ctrl, offs, val);
+पूर्ण
 
-static inline void brcmnand_rmw_reg(struct brcmnand_controller *ctrl,
-				    enum brcmnand_reg reg, u32 mask, unsigned
-				    int shift, u32 val)
-{
-	u32 tmp = brcmnand_read_reg(ctrl, reg);
+अटल अंतरभूत व्योम brcmnand_rmw_reg(काष्ठा brcmnand_controller *ctrl,
+				    क्रमागत brcmnand_reg reg, u32 mask, अचिन्हित
+				    पूर्णांक shअगरt, u32 val)
+अणु
+	u32 पंचांगp = brcmnand_पढ़ो_reg(ctrl, reg);
 
-	tmp &= ~mask;
-	tmp |= val << shift;
-	brcmnand_write_reg(ctrl, reg, tmp);
-}
+	पंचांगp &= ~mask;
+	पंचांगp |= val << shअगरt;
+	brcmnand_ग_लिखो_reg(ctrl, reg, पंचांगp);
+पूर्ण
 
-static inline u32 brcmnand_read_fc(struct brcmnand_controller *ctrl, int word)
-{
-	return __raw_readl(ctrl->nand_fc + word * 4);
-}
+अटल अंतरभूत u32 brcmnand_पढ़ो_fc(काष्ठा brcmnand_controller *ctrl, पूर्णांक word)
+अणु
+	वापस __raw_पढ़ोl(ctrl->nand_fc + word * 4);
+पूर्ण
 
-static inline void brcmnand_write_fc(struct brcmnand_controller *ctrl,
-				     int word, u32 val)
-{
-	__raw_writel(val, ctrl->nand_fc + word * 4);
-}
+अटल अंतरभूत व्योम brcmnand_ग_लिखो_fc(काष्ठा brcmnand_controller *ctrl,
+				     पूर्णांक word, u32 val)
+अणु
+	__raw_ग_लिखोl(val, ctrl->nand_fc + word * 4);
+पूर्ण
 
-static inline void edu_writel(struct brcmnand_controller *ctrl,
-			      enum edu_reg reg, u32 val)
-{
+अटल अंतरभूत व्योम edu_ग_लिखोl(काष्ठा brcmnand_controller *ctrl,
+			      क्रमागत edu_reg reg, u32 val)
+अणु
 	u16 offs = ctrl->edu_offsets[reg];
 
-	brcmnand_writel(val, ctrl->edu_base + offs);
-}
+	brcmnand_ग_लिखोl(val, ctrl->edu_base + offs);
+पूर्ण
 
-static inline u32 edu_readl(struct brcmnand_controller *ctrl,
-			    enum edu_reg reg)
-{
+अटल अंतरभूत u32 edu_पढ़ोl(काष्ठा brcmnand_controller *ctrl,
+			    क्रमागत edu_reg reg)
+अणु
 	u16 offs = ctrl->edu_offsets[reg];
 
-	return brcmnand_readl(ctrl->edu_base + offs);
-}
+	वापस brcmnand_पढ़ोl(ctrl->edu_base + offs);
+पूर्ण
 
-static void brcmnand_clear_ecc_addr(struct brcmnand_controller *ctrl)
-{
+अटल व्योम brcmnand_clear_ecc_addr(काष्ठा brcmnand_controller *ctrl)
+अणु
 
 	/* Clear error addresses */
-	brcmnand_write_reg(ctrl, BRCMNAND_UNCORR_ADDR, 0);
-	brcmnand_write_reg(ctrl, BRCMNAND_CORR_ADDR, 0);
-	brcmnand_write_reg(ctrl, BRCMNAND_UNCORR_EXT_ADDR, 0);
-	brcmnand_write_reg(ctrl, BRCMNAND_CORR_EXT_ADDR, 0);
-}
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_UNCORR_ADDR, 0);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CORR_ADDR, 0);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_UNCORR_EXT_ADDR, 0);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CORR_EXT_ADDR, 0);
+पूर्ण
 
-static u64 brcmnand_get_uncorrecc_addr(struct brcmnand_controller *ctrl)
-{
+अटल u64 brcmnand_get_uncorrecc_addr(काष्ठा brcmnand_controller *ctrl)
+अणु
 	u64 err_addr;
 
-	err_addr = brcmnand_read_reg(ctrl, BRCMNAND_UNCORR_ADDR);
-	err_addr |= ((u64)(brcmnand_read_reg(ctrl,
-					     BRCMNAND_UNCORR_EXT_ADDR)
+	err_addr = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_UNCORR_ADDR);
+	err_addr |= ((u64)(brcmnand_पढ़ो_reg(ctrl,
+					     BRCMन_अंकD_UNCORR_EXT_ADDR)
 					     & 0xffff) << 32);
 
-	return err_addr;
-}
+	वापस err_addr;
+पूर्ण
 
-static u64 brcmnand_get_correcc_addr(struct brcmnand_controller *ctrl)
-{
+अटल u64 brcmnand_get_correcc_addr(काष्ठा brcmnand_controller *ctrl)
+अणु
 	u64 err_addr;
 
-	err_addr = brcmnand_read_reg(ctrl, BRCMNAND_CORR_ADDR);
-	err_addr |= ((u64)(brcmnand_read_reg(ctrl,
-					     BRCMNAND_CORR_EXT_ADDR)
+	err_addr = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CORR_ADDR);
+	err_addr |= ((u64)(brcmnand_पढ़ो_reg(ctrl,
+					     BRCMन_अंकD_CORR_EXT_ADDR)
 					     & 0xffff) << 32);
 
-	return err_addr;
-}
+	वापस err_addr;
+पूर्ण
 
-static void brcmnand_set_cmd_addr(struct mtd_info *mtd, u64 addr)
-{
-	struct nand_chip *chip =  mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
+अटल व्योम brcmnand_set_cmd_addr(काष्ठा mtd_info *mtd, u64 addr)
+अणु
+	काष्ठा nand_chip *chip =  mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
 
-	brcmnand_write_reg(ctrl, BRCMNAND_CMD_EXT_ADDRESS,
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CMD_EXT_ADDRESS,
 			   (host->cs << 16) | ((addr >> 32) & 0xffff));
-	(void)brcmnand_read_reg(ctrl, BRCMNAND_CMD_EXT_ADDRESS);
-	brcmnand_write_reg(ctrl, BRCMNAND_CMD_ADDRESS,
+	(व्योम)brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_EXT_ADDRESS);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS,
 			   lower_32_bits(addr));
-	(void)brcmnand_read_reg(ctrl, BRCMNAND_CMD_ADDRESS);
-}
+	(व्योम)brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS);
+पूर्ण
 
-static inline u16 brcmnand_cs_offset(struct brcmnand_controller *ctrl, int cs,
-				     enum brcmnand_cs_reg reg)
-{
-	u16 offs_cs0 = ctrl->reg_offsets[BRCMNAND_CS0_BASE];
-	u16 offs_cs1 = ctrl->reg_offsets[BRCMNAND_CS1_BASE];
+अटल अंतरभूत u16 brcmnand_cs_offset(काष्ठा brcmnand_controller *ctrl, पूर्णांक cs,
+				     क्रमागत brcmnand_cs_reg reg)
+अणु
+	u16 offs_cs0 = ctrl->reg_offsets[BRCMन_अंकD_CS0_BASE];
+	u16 offs_cs1 = ctrl->reg_offsets[BRCMन_अंकD_CS1_BASE];
 	u8 cs_offs;
 
-	if (cs == 0 && ctrl->cs0_offsets)
+	अगर (cs == 0 && ctrl->cs0_offsets)
 		cs_offs = ctrl->cs0_offsets[reg];
-	else
+	अन्यथा
 		cs_offs = ctrl->cs_offsets[reg];
 
-	if (cs && offs_cs1)
-		return offs_cs1 + (cs - 1) * ctrl->reg_spacing + cs_offs;
+	अगर (cs && offs_cs1)
+		वापस offs_cs1 + (cs - 1) * ctrl->reg_spacing + cs_offs;
 
-	return offs_cs0 + cs * ctrl->reg_spacing + cs_offs;
-}
+	वापस offs_cs0 + cs * ctrl->reg_spacing + cs_offs;
+पूर्ण
 
-static inline u32 brcmnand_count_corrected(struct brcmnand_controller *ctrl)
-{
-	if (ctrl->nand_version < 0x0600)
-		return 1;
-	return brcmnand_read_reg(ctrl, BRCMNAND_CORR_COUNT);
-}
+अटल अंतरभूत u32 brcmnand_count_corrected(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अगर (ctrl->nand_version < 0x0600)
+		वापस 1;
+	वापस brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CORR_COUNT);
+पूर्ण
 
-static void brcmnand_wr_corr_thresh(struct brcmnand_host *host, u8 val)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	unsigned int shift = 0, bits;
-	enum brcmnand_reg reg = BRCMNAND_CORR_THRESHOLD;
-	int cs = host->cs;
+अटल व्योम brcmnand_wr_corr_thresh(काष्ठा brcmnand_host *host, u8 val)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	अचिन्हित पूर्णांक shअगरt = 0, bits;
+	क्रमागत brcmnand_reg reg = BRCMन_अंकD_CORR_THRESHOLD;
+	पूर्णांक cs = host->cs;
 
-	if (!ctrl->reg_offsets[reg])
-		return;
+	अगर (!ctrl->reg_offsets[reg])
+		वापस;
 
-	if (ctrl->nand_version == 0x0702)
+	अगर (ctrl->nand_version == 0x0702)
 		bits = 7;
-	else if (ctrl->nand_version >= 0x0600)
+	अन्यथा अगर (ctrl->nand_version >= 0x0600)
 		bits = 6;
-	else if (ctrl->nand_version >= 0x0500)
+	अन्यथा अगर (ctrl->nand_version >= 0x0500)
 		bits = 5;
-	else
+	अन्यथा
 		bits = 4;
 
-	if (ctrl->nand_version >= 0x0702) {
-		if (cs >= 4)
-			reg = BRCMNAND_CORR_THRESHOLD_EXT;
-		shift = (cs % 4) * bits;
-	} else if (ctrl->nand_version >= 0x0600) {
-		if (cs >= 5)
-			reg = BRCMNAND_CORR_THRESHOLD_EXT;
-		shift = (cs % 5) * bits;
-	}
-	brcmnand_rmw_reg(ctrl, reg, (bits - 1) << shift, shift, val);
-}
+	अगर (ctrl->nand_version >= 0x0702) अणु
+		अगर (cs >= 4)
+			reg = BRCMन_अंकD_CORR_THRESHOLD_EXT;
+		shअगरt = (cs % 4) * bits;
+	पूर्ण अन्यथा अगर (ctrl->nand_version >= 0x0600) अणु
+		अगर (cs >= 5)
+			reg = BRCMन_अंकD_CORR_THRESHOLD_EXT;
+		shअगरt = (cs % 5) * bits;
+	पूर्ण
+	brcmnand_rmw_reg(ctrl, reg, (bits - 1) << shअगरt, shअगरt, val);
+पूर्ण
 
-static inline int brcmnand_cmd_shift(struct brcmnand_controller *ctrl)
-{
-	if (ctrl->nand_version < 0x0602)
-		return 24;
-	return 0;
-}
+अटल अंतरभूत पूर्णांक brcmnand_cmd_shअगरt(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अगर (ctrl->nand_version < 0x0602)
+		वापस 24;
+	वापस 0;
+पूर्ण
 
 /***********************************************************************
- * NAND ACC CONTROL bitfield
+ * न_अंकD ACC CONTROL bitfield
  *
- * Some bits have remained constant throughout hardware revision, while
- * others have shifted around.
+ * Some bits have reमुख्यed स्थिरant throughout hardware revision, जबतक
+ * others have shअगरted around.
  ***********************************************************************/
 
-/* Constant for all versions (where supported) */
-enum {
-	/* See BRCMNAND_HAS_CACHE_MODE */
+/* Constant क्रम all versions (where supported) */
+क्रमागत अणु
+	/* See BRCMन_अंकD_HAS_CACHE_MODE */
 	ACC_CONTROL_CACHE_MODE				= BIT(22),
 
-	/* See BRCMNAND_HAS_PREFETCH */
+	/* See BRCMन_अंकD_HAS_PREFETCH */
 	ACC_CONTROL_PREFETCH				= BIT(23),
 
 	ACC_CONTROL_PAGE_HIT				= BIT(24),
@@ -924,716 +925,716 @@ enum {
 	ACC_CONTROL_FAST_PGM_RDIN			= BIT(28),
 	ACC_CONTROL_WR_ECC				= BIT(30),
 	ACC_CONTROL_RD_ECC				= BIT(31),
-};
+पूर्ण;
 
-static inline u32 brcmnand_spare_area_mask(struct brcmnand_controller *ctrl)
-{
-	if (ctrl->nand_version == 0x0702)
-		return GENMASK(7, 0);
-	else if (ctrl->nand_version >= 0x0600)
-		return GENMASK(6, 0);
-	else if (ctrl->nand_version >= 0x0303)
-		return GENMASK(5, 0);
-	else
-		return GENMASK(4, 0);
-}
+अटल अंतरभूत u32 brcmnand_spare_area_mask(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अगर (ctrl->nand_version == 0x0702)
+		वापस GENMASK(7, 0);
+	अन्यथा अगर (ctrl->nand_version >= 0x0600)
+		वापस GENMASK(6, 0);
+	अन्यथा अगर (ctrl->nand_version >= 0x0303)
+		वापस GENMASK(5, 0);
+	अन्यथा
+		वापस GENMASK(4, 0);
+पूर्ण
 
-#define NAND_ACC_CONTROL_ECC_SHIFT	16
-#define NAND_ACC_CONTROL_ECC_EXT_SHIFT	13
+#घोषणा न_अंकD_ACC_CONTROL_ECC_SHIFT	16
+#घोषणा न_अंकD_ACC_CONTROL_ECC_EXT_SHIFT	13
 
-static inline u32 brcmnand_ecc_level_mask(struct brcmnand_controller *ctrl)
-{
+अटल अंतरभूत u32 brcmnand_ecc_level_mask(काष्ठा brcmnand_controller *ctrl)
+अणु
 	u32 mask = (ctrl->nand_version >= 0x0600) ? 0x1f : 0x0f;
 
-	mask <<= NAND_ACC_CONTROL_ECC_SHIFT;
+	mask <<= न_अंकD_ACC_CONTROL_ECC_SHIFT;
 
 	/* v7.2 includes additional ECC levels */
-	if (ctrl->nand_version >= 0x0702)
-		mask |= 0x7 << NAND_ACC_CONTROL_ECC_EXT_SHIFT;
+	अगर (ctrl->nand_version >= 0x0702)
+		mask |= 0x7 << न_अंकD_ACC_CONTROL_ECC_EXT_SHIFT;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static void brcmnand_set_ecc_enabled(struct brcmnand_host *host, int en)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	u16 offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_ACC_CONTROL);
-	u32 acc_control = nand_readreg(ctrl, offs);
+अटल व्योम brcmnand_set_ecc_enabled(काष्ठा brcmnand_host *host, पूर्णांक en)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	u16 offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_ACC_CONTROL);
+	u32 acc_control = nand_पढ़ोreg(ctrl, offs);
 	u32 ecc_flags = ACC_CONTROL_WR_ECC | ACC_CONTROL_RD_ECC;
 
-	if (en) {
+	अगर (en) अणु
 		acc_control |= ecc_flags; /* enable RD/WR ECC */
 		acc_control |= host->hwcfg.ecc_level
-			       << NAND_ACC_CONTROL_ECC_SHIFT;
-	} else {
+			       << न_अंकD_ACC_CONTROL_ECC_SHIFT;
+	पूर्ण अन्यथा अणु
 		acc_control &= ~ecc_flags; /* disable RD/WR ECC */
 		acc_control &= ~brcmnand_ecc_level_mask(ctrl);
-	}
+	पूर्ण
 
-	nand_writereg(ctrl, offs, acc_control);
-}
+	nand_ग_लिखोreg(ctrl, offs, acc_control);
+पूर्ण
 
-static inline int brcmnand_sector_1k_shift(struct brcmnand_controller *ctrl)
-{
-	if (ctrl->nand_version >= 0x0702)
-		return 9;
-	else if (ctrl->nand_version >= 0x0600)
-		return 7;
-	else if (ctrl->nand_version >= 0x0500)
-		return 6;
-	else
-		return -1;
-}
+अटल अंतरभूत पूर्णांक brcmnand_sector_1k_shअगरt(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अगर (ctrl->nand_version >= 0x0702)
+		वापस 9;
+	अन्यथा अगर (ctrl->nand_version >= 0x0600)
+		वापस 7;
+	अन्यथा अगर (ctrl->nand_version >= 0x0500)
+		वापस 6;
+	अन्यथा
+		वापस -1;
+पूर्ण
 
-static int brcmnand_get_sector_size_1k(struct brcmnand_host *host)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	int shift = brcmnand_sector_1k_shift(ctrl);
+अटल पूर्णांक brcmnand_get_sector_size_1k(काष्ठा brcmnand_host *host)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	पूर्णांक shअगरt = brcmnand_sector_1k_shअगरt(ctrl);
 	u16 acc_control_offs = brcmnand_cs_offset(ctrl, host->cs,
-						  BRCMNAND_CS_ACC_CONTROL);
+						  BRCMन_अंकD_CS_ACC_CONTROL);
 
-	if (shift < 0)
-		return 0;
+	अगर (shअगरt < 0)
+		वापस 0;
 
-	return (nand_readreg(ctrl, acc_control_offs) >> shift) & 0x1;
-}
+	वापस (nand_पढ़ोreg(ctrl, acc_control_offs) >> shअगरt) & 0x1;
+पूर्ण
 
-static void brcmnand_set_sector_size_1k(struct brcmnand_host *host, int val)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	int shift = brcmnand_sector_1k_shift(ctrl);
+अटल व्योम brcmnand_set_sector_size_1k(काष्ठा brcmnand_host *host, पूर्णांक val)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	पूर्णांक shअगरt = brcmnand_sector_1k_shअगरt(ctrl);
 	u16 acc_control_offs = brcmnand_cs_offset(ctrl, host->cs,
-						  BRCMNAND_CS_ACC_CONTROL);
-	u32 tmp;
+						  BRCMन_अंकD_CS_ACC_CONTROL);
+	u32 पंचांगp;
 
-	if (shift < 0)
-		return;
+	अगर (shअगरt < 0)
+		वापस;
 
-	tmp = nand_readreg(ctrl, acc_control_offs);
-	tmp &= ~(1 << shift);
-	tmp |= (!!val) << shift;
-	nand_writereg(ctrl, acc_control_offs, tmp);
-}
+	पंचांगp = nand_पढ़ोreg(ctrl, acc_control_offs);
+	पंचांगp &= ~(1 << shअगरt);
+	पंचांगp |= (!!val) << shअगरt;
+	nand_ग_लिखोreg(ctrl, acc_control_offs, पंचांगp);
+पूर्ण
 
 /***********************************************************************
- * CS_NAND_SELECT
+ * CS_न_अंकD_SELECT
  ***********************************************************************/
 
-enum {
-	CS_SELECT_NAND_WP			= BIT(29),
+क्रमागत अणु
+	CS_SELECT_न_अंकD_WP			= BIT(29),
 	CS_SELECT_AUTO_DEVICE_ID_CFG		= BIT(30),
-};
+पूर्ण;
 
-static int bcmnand_ctrl_poll_status(struct brcmnand_controller *ctrl,
+अटल पूर्णांक bcmnand_ctrl_poll_status(काष्ठा brcmnand_controller *ctrl,
 				    u32 mask, u32 expected_val,
-				    unsigned long timeout_ms)
-{
-	unsigned long limit;
+				    अचिन्हित दीर्घ समयout_ms)
+अणु
+	अचिन्हित दीर्घ limit;
 	u32 val;
 
-	if (!timeout_ms)
-		timeout_ms = NAND_POLL_STATUS_TIMEOUT_MS;
+	अगर (!समयout_ms)
+		समयout_ms = न_अंकD_POLL_STATUS_TIMEOUT_MS;
 
-	limit = jiffies + msecs_to_jiffies(timeout_ms);
-	do {
-		val = brcmnand_read_reg(ctrl, BRCMNAND_INTFC_STATUS);
-		if ((val & mask) == expected_val)
-			return 0;
+	limit = jअगरfies + msecs_to_jअगरfies(समयout_ms);
+	करो अणु
+		val = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_INTFC_STATUS);
+		अगर ((val & mask) == expected_val)
+			वापस 0;
 
 		cpu_relax();
-	} while (time_after(limit, jiffies));
+	पूर्ण जबतक (समय_after(limit, jअगरfies));
 
 	dev_warn(ctrl->dev, "timeout on status poll (expected %x got %x)\n",
 		 expected_val, val & mask);
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static inline void brcmnand_set_wp(struct brcmnand_controller *ctrl, bool en)
-{
-	u32 val = en ? CS_SELECT_NAND_WP : 0;
+अटल अंतरभूत व्योम brcmnand_set_wp(काष्ठा brcmnand_controller *ctrl, bool en)
+अणु
+	u32 val = en ? CS_SELECT_न_अंकD_WP : 0;
 
-	brcmnand_rmw_reg(ctrl, BRCMNAND_CS_SELECT, CS_SELECT_NAND_WP, 0, val);
-}
+	brcmnand_rmw_reg(ctrl, BRCMन_अंकD_CS_SELECT, CS_SELECT_न_अंकD_WP, 0, val);
+पूर्ण
 
 /***********************************************************************
  * Flash DMA
  ***********************************************************************/
 
-static inline bool has_flash_dma(struct brcmnand_controller *ctrl)
-{
-	return ctrl->flash_dma_base;
-}
+अटल अंतरभूत bool has_flash_dma(काष्ठा brcmnand_controller *ctrl)
+अणु
+	वापस ctrl->flash_dma_base;
+पूर्ण
 
-static inline bool has_edu(struct brcmnand_controller *ctrl)
-{
-	return ctrl->edu_base;
-}
+अटल अंतरभूत bool has_edu(काष्ठा brcmnand_controller *ctrl)
+अणु
+	वापस ctrl->edu_base;
+पूर्ण
 
-static inline bool use_dma(struct brcmnand_controller *ctrl)
-{
-	return has_flash_dma(ctrl) || has_edu(ctrl);
-}
+अटल अंतरभूत bool use_dma(काष्ठा brcmnand_controller *ctrl)
+अणु
+	वापस has_flash_dma(ctrl) || has_edu(ctrl);
+पूर्ण
 
-static inline void disable_ctrl_irqs(struct brcmnand_controller *ctrl)
-{
-	if (ctrl->pio_poll_mode)
-		return;
+अटल अंतरभूत व्योम disable_ctrl_irqs(काष्ठा brcmnand_controller *ctrl)
+अणु
+	अगर (ctrl->pio_poll_mode)
+		वापस;
 
-	if (has_flash_dma(ctrl)) {
-		ctrl->flash_dma_base = NULL;
+	अगर (has_flash_dma(ctrl)) अणु
+		ctrl->flash_dma_base = शून्य;
 		disable_irq(ctrl->dma_irq);
-	}
+	पूर्ण
 
 	disable_irq(ctrl->irq);
 	ctrl->pio_poll_mode = true;
-}
+पूर्ण
 
-static inline bool flash_dma_buf_ok(const void *buf)
-{
-	return buf && !is_vmalloc_addr(buf) &&
-		likely(IS_ALIGNED((uintptr_t)buf, 4));
-}
+अटल अंतरभूत bool flash_dma_buf_ok(स्थिर व्योम *buf)
+अणु
+	वापस buf && !is_vदो_स्मृति_addr(buf) &&
+		likely(IS_ALIGNED((uपूर्णांकptr_t)buf, 4));
+पूर्ण
 
-static inline void flash_dma_writel(struct brcmnand_controller *ctrl,
-				    enum flash_dma_reg dma_reg, u32 val)
-{
+अटल अंतरभूत व्योम flash_dma_ग_लिखोl(काष्ठा brcmnand_controller *ctrl,
+				    क्रमागत flash_dma_reg dma_reg, u32 val)
+अणु
 	u16 offs = ctrl->flash_dma_offsets[dma_reg];
 
-	brcmnand_writel(val, ctrl->flash_dma_base + offs);
-}
+	brcmnand_ग_लिखोl(val, ctrl->flash_dma_base + offs);
+पूर्ण
 
-static inline u32 flash_dma_readl(struct brcmnand_controller *ctrl,
-				  enum flash_dma_reg dma_reg)
-{
+अटल अंतरभूत u32 flash_dma_पढ़ोl(काष्ठा brcmnand_controller *ctrl,
+				  क्रमागत flash_dma_reg dma_reg)
+अणु
 	u16 offs = ctrl->flash_dma_offsets[dma_reg];
 
-	return brcmnand_readl(ctrl->flash_dma_base + offs);
-}
+	वापस brcmnand_पढ़ोl(ctrl->flash_dma_base + offs);
+पूर्ण
 
-/* Low-level operation types: command, address, write, or read */
-enum brcmnand_llop_type {
+/* Low-level operation types: command, address, ग_लिखो, or पढ़ो */
+क्रमागत brcmnand_llop_type अणु
 	LL_OP_CMD,
 	LL_OP_ADDR,
 	LL_OP_WR,
 	LL_OP_RD,
-};
+पूर्ण;
 
 /***********************************************************************
  * Internal support functions
  ***********************************************************************/
 
-static inline bool is_hamming_ecc(struct brcmnand_controller *ctrl,
-				  struct brcmnand_cfg *cfg)
-{
-	if (ctrl->nand_version <= 0x0701)
-		return cfg->sector_size_1k == 0 && cfg->spare_area_size == 16 &&
+अटल अंतरभूत bool is_hamming_ecc(काष्ठा brcmnand_controller *ctrl,
+				  काष्ठा brcmnand_cfg *cfg)
+अणु
+	अगर (ctrl->nand_version <= 0x0701)
+		वापस cfg->sector_size_1k == 0 && cfg->spare_area_size == 16 &&
 			cfg->ecc_level == 15;
-	else
-		return cfg->sector_size_1k == 0 && ((cfg->spare_area_size == 16 &&
+	अन्यथा
+		वापस cfg->sector_size_1k == 0 && ((cfg->spare_area_size == 16 &&
 			cfg->ecc_level == 15) ||
 			(cfg->spare_area_size == 28 && cfg->ecc_level == 16));
-}
+पूर्ण
 
 /*
  * Set mtd->ooblayout to the appropriate mtd_ooblayout_ops given
  * the layout/configuration.
  * Returns -ERRCODE on failure.
  */
-static int brcmnand_hamming_ooblayout_ecc(struct mtd_info *mtd, int section,
-					  struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	int sas = cfg->spare_area_size << cfg->sector_size_1k;
-	int sectors = cfg->page_size / (512 << cfg->sector_size_1k);
+अटल पूर्णांक brcmnand_hamming_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+					  काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	पूर्णांक sas = cfg->spare_area_size << cfg->sector_size_1k;
+	पूर्णांक sectors = cfg->page_size / (512 << cfg->sector_size_1k);
 
-	if (section >= sectors)
-		return -ERANGE;
+	अगर (section >= sectors)
+		वापस -दुस्फल;
 
 	oobregion->offset = (section * sas) + 6;
 	oobregion->length = 3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_hamming_ooblayout_free(struct mtd_info *mtd, int section,
-					   struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	int sas = cfg->spare_area_size << cfg->sector_size_1k;
-	int sectors = cfg->page_size / (512 << cfg->sector_size_1k);
+अटल पूर्णांक brcmnand_hamming_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+					   काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	पूर्णांक sas = cfg->spare_area_size << cfg->sector_size_1k;
+	पूर्णांक sectors = cfg->page_size / (512 << cfg->sector_size_1k);
 	u32 next;
 
-	if (section > sectors)
-		return -ERANGE;
+	अगर (section > sectors)
+		वापस -दुस्फल;
 
 	next = (section * sas);
-	if (section < sectors)
+	अगर (section < sectors)
 		next += 6;
 
-	if (section) {
+	अगर (section) अणु
 		oobregion->offset = ((section - 1) * sas) + 9;
-	} else {
-		if (cfg->page_size > 512) {
-			/* Large page NAND uses first 2 bytes for BBI */
+	पूर्ण अन्यथा अणु
+		अगर (cfg->page_size > 512) अणु
+			/* Large page न_अंकD uses first 2 bytes क्रम BBI */
 			oobregion->offset = 2;
-		} else {
-			/* Small page NAND uses last byte before ECC for BBI */
+		पूर्ण अन्यथा अणु
+			/* Small page न_अंकD uses last byte beक्रमe ECC क्रम BBI */
 			oobregion->offset = 0;
 			next--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	oobregion->length = next - oobregion->offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops brcmnand_hamming_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops brcmnand_hamming_ooblayout_ops = अणु
 	.ecc = brcmnand_hamming_ooblayout_ecc,
-	.free = brcmnand_hamming_ooblayout_free,
-};
+	.मुक्त = brcmnand_hamming_ooblayout_मुक्त,
+पूर्ण;
 
-static int brcmnand_bch_ooblayout_ecc(struct mtd_info *mtd, int section,
-				      struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	int sas = cfg->spare_area_size << cfg->sector_size_1k;
-	int sectors = cfg->page_size / (512 << cfg->sector_size_1k);
+अटल पूर्णांक brcmnand_bch_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				      काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	पूर्णांक sas = cfg->spare_area_size << cfg->sector_size_1k;
+	पूर्णांक sectors = cfg->page_size / (512 << cfg->sector_size_1k);
 
-	if (section >= sectors)
-		return -ERANGE;
+	अगर (section >= sectors)
+		वापस -दुस्फल;
 
 	oobregion->offset = ((section + 1) * sas) - chip->ecc.bytes;
 	oobregion->length = chip->ecc.bytes;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_bch_ooblayout_free_lp(struct mtd_info *mtd, int section,
-					  struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	int sas = cfg->spare_area_size << cfg->sector_size_1k;
-	int sectors = cfg->page_size / (512 << cfg->sector_size_1k);
+अटल पूर्णांक brcmnand_bch_ooblayout_मुक्त_lp(काष्ठा mtd_info *mtd, पूर्णांक section,
+					  काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	पूर्णांक sas = cfg->spare_area_size << cfg->sector_size_1k;
+	पूर्णांक sectors = cfg->page_size / (512 << cfg->sector_size_1k);
 
-	if (section >= sectors)
-		return -ERANGE;
+	अगर (section >= sectors)
+		वापस -दुस्फल;
 
-	if (sas <= chip->ecc.bytes)
-		return 0;
+	अगर (sas <= chip->ecc.bytes)
+		वापस 0;
 
 	oobregion->offset = section * sas;
 	oobregion->length = sas - chip->ecc.bytes;
 
-	if (!section) {
+	अगर (!section) अणु
 		oobregion->offset++;
 		oobregion->length--;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_bch_ooblayout_free_sp(struct mtd_info *mtd, int section,
-					  struct mtd_oob_region *oobregion)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	int sas = cfg->spare_area_size << cfg->sector_size_1k;
+अटल पूर्णांक brcmnand_bch_ooblayout_मुक्त_sp(काष्ठा mtd_info *mtd, पूर्णांक section,
+					  काष्ठा mtd_oob_region *oobregion)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	पूर्णांक sas = cfg->spare_area_size << cfg->sector_size_1k;
 
-	if (section > 1 || sas - chip->ecc.bytes < 6 ||
+	अगर (section > 1 || sas - chip->ecc.bytes < 6 ||
 	    (section && sas - chip->ecc.bytes == 6))
-		return -ERANGE;
+		वापस -दुस्फल;
 
-	if (!section) {
+	अगर (!section) अणु
 		oobregion->offset = 0;
 		oobregion->length = 5;
-	} else {
+	पूर्ण अन्यथा अणु
 		oobregion->offset = 6;
 		oobregion->length = sas - chip->ecc.bytes - 6;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops brcmnand_bch_lp_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops brcmnand_bch_lp_ooblayout_ops = अणु
 	.ecc = brcmnand_bch_ooblayout_ecc,
-	.free = brcmnand_bch_ooblayout_free_lp,
-};
+	.मुक्त = brcmnand_bch_ooblayout_मुक्त_lp,
+पूर्ण;
 
-static const struct mtd_ooblayout_ops brcmnand_bch_sp_ooblayout_ops = {
+अटल स्थिर काष्ठा mtd_ooblayout_ops brcmnand_bch_sp_ooblayout_ops = अणु
 	.ecc = brcmnand_bch_ooblayout_ecc,
-	.free = brcmnand_bch_ooblayout_free_sp,
-};
+	.मुक्त = brcmnand_bch_ooblayout_मुक्त_sp,
+पूर्ण;
 
-static int brcmstb_choose_ecc_layout(struct brcmnand_host *host)
-{
-	struct brcmnand_cfg *p = &host->hwcfg;
-	struct mtd_info *mtd = nand_to_mtd(&host->chip);
-	struct nand_ecc_ctrl *ecc = &host->chip.ecc;
-	unsigned int ecc_level = p->ecc_level;
-	int sas = p->spare_area_size << p->sector_size_1k;
-	int sectors = p->page_size / (512 << p->sector_size_1k);
+अटल पूर्णांक brcmstb_choose_ecc_layout(काष्ठा brcmnand_host *host)
+अणु
+	काष्ठा brcmnand_cfg *p = &host->hwcfg;
+	काष्ठा mtd_info *mtd = nand_to_mtd(&host->chip);
+	काष्ठा nand_ecc_ctrl *ecc = &host->chip.ecc;
+	अचिन्हित पूर्णांक ecc_level = p->ecc_level;
+	पूर्णांक sas = p->spare_area_size << p->sector_size_1k;
+	पूर्णांक sectors = p->page_size / (512 << p->sector_size_1k);
 
-	if (p->sector_size_1k)
+	अगर (p->sector_size_1k)
 		ecc_level <<= 1;
 
-	if (is_hamming_ecc(host->ctrl, p)) {
+	अगर (is_hamming_ecc(host->ctrl, p)) अणु
 		ecc->bytes = 3 * sectors;
 		mtd_set_ooblayout(mtd, &brcmnand_hamming_ooblayout_ops);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * CONTROLLER_VERSION:
-	 *   < v5.0: ECC_REQ = ceil(BCH_T * 13/8)
-	 *  >= v5.0: ECC_REQ = ceil(BCH_T * 14/8)
+	 *   < v5.0: ECC_REQ = उच्चमान(BCH_T * 13/8)
+	 *  >= v5.0: ECC_REQ = उच्चमान(BCH_T * 14/8)
 	 * But we will just be conservative.
 	 */
 	ecc->bytes = DIV_ROUND_UP(ecc_level * 14, 8);
-	if (p->page_size == 512)
+	अगर (p->page_size == 512)
 		mtd_set_ooblayout(mtd, &brcmnand_bch_sp_ooblayout_ops);
-	else
+	अन्यथा
 		mtd_set_ooblayout(mtd, &brcmnand_bch_lp_ooblayout_ops);
 
-	if (ecc->bytes >= sas) {
+	अगर (ecc->bytes >= sas) अणु
 		dev_err(&host->pdev->dev,
 			"error: ECC too large for OOB (ECC bytes %d, spare sector %d)\n",
 			ecc->bytes, sas);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void brcmnand_wp(struct mtd_info *mtd, int wp)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
+अटल व्योम brcmnand_wp(काष्ठा mtd_info *mtd, पूर्णांक wp)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
 
-	if ((ctrl->features & BRCMNAND_HAS_WP) && wp_on == 1) {
-		static int old_wp = -1;
-		int ret;
+	अगर ((ctrl->features & BRCMन_अंकD_HAS_WP) && wp_on == 1) अणु
+		अटल पूर्णांक old_wp = -1;
+		पूर्णांक ret;
 
-		if (old_wp != wp) {
+		अगर (old_wp != wp) अणु
 			dev_dbg(ctrl->dev, "WP %s\n", wp ? "on" : "off");
 			old_wp = wp;
-		}
+		पूर्ण
 
 		/*
-		 * make sure ctrl/flash ready before and after
+		 * make sure ctrl/flash पढ़ोy beक्रमe and after
 		 * changing state of #WP pin
 		 */
-		ret = bcmnand_ctrl_poll_status(ctrl, NAND_CTRL_RDY |
-					       NAND_STATUS_READY,
-					       NAND_CTRL_RDY |
-					       NAND_STATUS_READY, 0);
-		if (ret)
-			return;
+		ret = bcmnand_ctrl_poll_status(ctrl, न_अंकD_CTRL_RDY |
+					       न_अंकD_STATUS_READY,
+					       न_अंकD_CTRL_RDY |
+					       न_अंकD_STATUS_READY, 0);
+		अगर (ret)
+			वापस;
 
 		brcmnand_set_wp(ctrl, wp);
-		nand_status_op(chip, NULL);
-		/* NAND_STATUS_WP 0x00 = protected, 0x80 = not protected */
+		nand_status_op(chip, शून्य);
+		/* न_अंकD_STATUS_WP 0x00 = रक्षित, 0x80 = not रक्षित */
 		ret = bcmnand_ctrl_poll_status(ctrl,
-					       NAND_CTRL_RDY |
-					       NAND_STATUS_READY |
-					       NAND_STATUS_WP,
-					       NAND_CTRL_RDY |
-					       NAND_STATUS_READY |
-					       (wp ? 0 : NAND_STATUS_WP), 0);
+					       न_अंकD_CTRL_RDY |
+					       न_अंकD_STATUS_READY |
+					       न_अंकD_STATUS_WP,
+					       न_अंकD_CTRL_RDY |
+					       न_अंकD_STATUS_READY |
+					       (wp ? 0 : न_अंकD_STATUS_WP), 0);
 
-		if (ret)
+		अगर (ret)
 			dev_err_ratelimited(&host->pdev->dev,
 					    "nand #WP expected %s\n",
 					    wp ? "on" : "off");
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Helper functions for reading and writing OOB registers */
-static inline u8 oob_reg_read(struct brcmnand_controller *ctrl, u32 offs)
-{
+/* Helper functions क्रम पढ़ोing and writing OOB रेजिस्टरs */
+अटल अंतरभूत u8 oob_reg_पढ़ो(काष्ठा brcmnand_controller *ctrl, u32 offs)
+अणु
 	u16 offset0, offset10, reg_offs;
 
-	offset0 = ctrl->reg_offsets[BRCMNAND_OOB_READ_BASE];
-	offset10 = ctrl->reg_offsets[BRCMNAND_OOB_READ_10_BASE];
+	offset0 = ctrl->reg_offsets[BRCMन_अंकD_OOB_READ_BASE];
+	offset10 = ctrl->reg_offsets[BRCMन_अंकD_OOB_READ_10_BASE];
 
-	if (offs >= ctrl->max_oob)
-		return 0x77;
+	अगर (offs >= ctrl->max_oob)
+		वापस 0x77;
 
-	if (offs >= 16 && offset10)
+	अगर (offs >= 16 && offset10)
 		reg_offs = offset10 + ((offs - 0x10) & ~0x03);
-	else
+	अन्यथा
 		reg_offs = offset0 + (offs & ~0x03);
 
-	return nand_readreg(ctrl, reg_offs) >> (24 - ((offs & 0x03) << 3));
-}
+	वापस nand_पढ़ोreg(ctrl, reg_offs) >> (24 - ((offs & 0x03) << 3));
+पूर्ण
 
-static inline void oob_reg_write(struct brcmnand_controller *ctrl, u32 offs,
+अटल अंतरभूत व्योम oob_reg_ग_लिखो(काष्ठा brcmnand_controller *ctrl, u32 offs,
 				 u32 data)
-{
+अणु
 	u16 offset0, offset10, reg_offs;
 
-	offset0 = ctrl->reg_offsets[BRCMNAND_OOB_WRITE_BASE];
-	offset10 = ctrl->reg_offsets[BRCMNAND_OOB_WRITE_10_BASE];
+	offset0 = ctrl->reg_offsets[BRCMन_अंकD_OOB_WRITE_BASE];
+	offset10 = ctrl->reg_offsets[BRCMन_अंकD_OOB_WRITE_10_BASE];
 
-	if (offs >= ctrl->max_oob)
-		return;
+	अगर (offs >= ctrl->max_oob)
+		वापस;
 
-	if (offs >= 16 && offset10)
+	अगर (offs >= 16 && offset10)
 		reg_offs = offset10 + ((offs - 0x10) & ~0x03);
-	else
+	अन्यथा
 		reg_offs = offset0 + (offs & ~0x03);
 
-	nand_writereg(ctrl, reg_offs, data);
-}
+	nand_ग_लिखोreg(ctrl, reg_offs, data);
+पूर्ण
 
 /*
- * read_oob_from_regs - read data from OOB registers
- * @ctrl: NAND controller
+ * पढ़ो_oob_from_regs - पढ़ो data from OOB रेजिस्टरs
+ * @ctrl: न_अंकD controller
  * @i: sub-page sector index
- * @oob: buffer to read to
+ * @oob: buffer to पढ़ो to
  * @sas: spare area sector size (i.e., OOB size per FLASH_CACHE)
- * @sector_1k: 1 for 1KiB sectors, 0 for 512B, other values are illegal
+ * @sector_1k: 1 क्रम 1KiB sectors, 0 क्रम 512B, other values are illegal
  */
-static int read_oob_from_regs(struct brcmnand_controller *ctrl, int i, u8 *oob,
-			      int sas, int sector_1k)
-{
-	int tbytes = sas << sector_1k;
-	int j;
+अटल पूर्णांक पढ़ो_oob_from_regs(काष्ठा brcmnand_controller *ctrl, पूर्णांक i, u8 *oob,
+			      पूर्णांक sas, पूर्णांक sector_1k)
+अणु
+	पूर्णांक tbytes = sas << sector_1k;
+	पूर्णांक j;
 
-	/* Adjust OOB values for 1K sector size */
-	if (sector_1k && (i & 0x01))
-		tbytes = max(0, tbytes - (int)ctrl->max_oob);
-	tbytes = min_t(int, tbytes, ctrl->max_oob);
+	/* Adjust OOB values क्रम 1K sector size */
+	अगर (sector_1k && (i & 0x01))
+		tbytes = max(0, tbytes - (पूर्णांक)ctrl->max_oob);
+	tbytes = min_t(पूर्णांक, tbytes, ctrl->max_oob);
 
-	for (j = 0; j < tbytes; j++)
-		oob[j] = oob_reg_read(ctrl, j);
-	return tbytes;
-}
+	क्रम (j = 0; j < tbytes; j++)
+		oob[j] = oob_reg_पढ़ो(ctrl, j);
+	वापस tbytes;
+पूर्ण
 
 /*
- * write_oob_to_regs - write data to OOB registers
+ * ग_लिखो_oob_to_regs - ग_लिखो data to OOB रेजिस्टरs
  * @i: sub-page sector index
- * @oob: buffer to write from
+ * @oob: buffer to ग_लिखो from
  * @sas: spare area sector size (i.e., OOB size per FLASH_CACHE)
- * @sector_1k: 1 for 1KiB sectors, 0 for 512B, other values are illegal
+ * @sector_1k: 1 क्रम 1KiB sectors, 0 क्रम 512B, other values are illegal
  */
-static int write_oob_to_regs(struct brcmnand_controller *ctrl, int i,
-			     const u8 *oob, int sas, int sector_1k)
-{
-	int tbytes = sas << sector_1k;
-	int j;
+अटल पूर्णांक ग_लिखो_oob_to_regs(काष्ठा brcmnand_controller *ctrl, पूर्णांक i,
+			     स्थिर u8 *oob, पूर्णांक sas, पूर्णांक sector_1k)
+अणु
+	पूर्णांक tbytes = sas << sector_1k;
+	पूर्णांक j;
 
-	/* Adjust OOB values for 1K sector size */
-	if (sector_1k && (i & 0x01))
-		tbytes = max(0, tbytes - (int)ctrl->max_oob);
-	tbytes = min_t(int, tbytes, ctrl->max_oob);
+	/* Adjust OOB values क्रम 1K sector size */
+	अगर (sector_1k && (i & 0x01))
+		tbytes = max(0, tbytes - (पूर्णांक)ctrl->max_oob);
+	tbytes = min_t(पूर्णांक, tbytes, ctrl->max_oob);
 
-	for (j = 0; j < tbytes; j += 4)
-		oob_reg_write(ctrl, j,
+	क्रम (j = 0; j < tbytes; j += 4)
+		oob_reg_ग_लिखो(ctrl, j,
 				(oob[j + 0] << 24) |
 				(oob[j + 1] << 16) |
 				(oob[j + 2] <<  8) |
 				(oob[j + 3] <<  0));
-	return tbytes;
-}
+	वापस tbytes;
+पूर्ण
 
-static void brcmnand_edu_init(struct brcmnand_controller *ctrl)
-{
+अटल व्योम brcmnand_edu_init(काष्ठा brcmnand_controller *ctrl)
+अणु
 	/* initialize edu */
-	edu_writel(ctrl, EDU_ERR_STATUS, 0);
-	edu_readl(ctrl, EDU_ERR_STATUS);
-	edu_writel(ctrl, EDU_DONE, 0);
-	edu_writel(ctrl, EDU_DONE, 0);
-	edu_writel(ctrl, EDU_DONE, 0);
-	edu_writel(ctrl, EDU_DONE, 0);
-	edu_readl(ctrl, EDU_DONE);
-}
+	edu_ग_लिखोl(ctrl, EDU_ERR_STATUS, 0);
+	edu_पढ़ोl(ctrl, EDU_ERR_STATUS);
+	edu_ग_लिखोl(ctrl, EDU_DONE, 0);
+	edu_ग_लिखोl(ctrl, EDU_DONE, 0);
+	edu_ग_लिखोl(ctrl, EDU_DONE, 0);
+	edu_ग_लिखोl(ctrl, EDU_DONE, 0);
+	edu_पढ़ोl(ctrl, EDU_DONE);
+पूर्ण
 
 /* edu irq */
-static irqreturn_t brcmnand_edu_irq(int irq, void *data)
-{
-	struct brcmnand_controller *ctrl = data;
+अटल irqवापस_t brcmnand_edu_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा brcmnand_controller *ctrl = data;
 
-	if (ctrl->edu_count) {
+	अगर (ctrl->edu_count) अणु
 		ctrl->edu_count--;
-		while (!(edu_readl(ctrl, EDU_DONE) & EDU_DONE_MASK))
+		जबतक (!(edu_पढ़ोl(ctrl, EDU_DONE) & EDU_DONE_MASK))
 			udelay(1);
-		edu_writel(ctrl, EDU_DONE, 0);
-		edu_readl(ctrl, EDU_DONE);
-	}
+		edu_ग_लिखोl(ctrl, EDU_DONE, 0);
+		edu_पढ़ोl(ctrl, EDU_DONE);
+	पूर्ण
 
-	if (ctrl->edu_count) {
+	अगर (ctrl->edu_count) अणु
 		ctrl->edu_dram_addr += FC_BYTES;
 		ctrl->edu_ext_addr += FC_BYTES;
 
-		edu_writel(ctrl, EDU_DRAM_ADDR, (u32)ctrl->edu_dram_addr);
-		edu_readl(ctrl, EDU_DRAM_ADDR);
-		edu_writel(ctrl, EDU_EXT_ADDR, ctrl->edu_ext_addr);
-		edu_readl(ctrl, EDU_EXT_ADDR);
+		edu_ग_लिखोl(ctrl, EDU_DRAM_ADDR, (u32)ctrl->edu_dram_addr);
+		edu_पढ़ोl(ctrl, EDU_DRAM_ADDR);
+		edu_ग_लिखोl(ctrl, EDU_EXT_ADDR, ctrl->edu_ext_addr);
+		edu_पढ़ोl(ctrl, EDU_EXT_ADDR);
 
-		if (ctrl->oob) {
-			if (ctrl->edu_cmd == EDU_CMD_READ) {
-				ctrl->oob += read_oob_from_regs(ctrl,
+		अगर (ctrl->oob) अणु
+			अगर (ctrl->edu_cmd == EDU_CMD_READ) अणु
+				ctrl->oob += पढ़ो_oob_from_regs(ctrl,
 							ctrl->edu_count + 1,
 							ctrl->oob, ctrl->sas,
 							ctrl->sector_size_1k);
-			} else {
-				brcmnand_write_reg(ctrl, BRCMNAND_CMD_ADDRESS,
+			पूर्ण अन्यथा अणु
+				brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS,
 						   ctrl->edu_ext_addr);
-				brcmnand_read_reg(ctrl, BRCMNAND_CMD_ADDRESS);
-				ctrl->oob += write_oob_to_regs(ctrl,
+				brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS);
+				ctrl->oob += ग_लिखो_oob_to_regs(ctrl,
 							       ctrl->edu_count,
 							       ctrl->oob, ctrl->sas,
 							       ctrl->sector_size_1k);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		mb(); /* flush previous writes */
-		edu_writel(ctrl, EDU_CMD, ctrl->edu_cmd);
-		edu_readl(ctrl, EDU_CMD);
+		mb(); /* flush previous ग_लिखोs */
+		edu_ग_लिखोl(ctrl, EDU_CMD, ctrl->edu_cmd);
+		edu_पढ़ोl(ctrl, EDU_CMD);
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	complete(&ctrl->edu_done);
+	complete(&ctrl->edu_करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t brcmnand_ctlrdy_irq(int irq, void *data)
-{
-	struct brcmnand_controller *ctrl = data;
+अटल irqवापस_t brcmnand_ctlrdy_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा brcmnand_controller *ctrl = data;
 
-	/* Discard all NAND_CTLRDY interrupts during DMA */
-	if (ctrl->dma_pending)
-		return IRQ_HANDLED;
+	/* Discard all न_अंकD_CTLRDY पूर्णांकerrupts during DMA */
+	अगर (ctrl->dma_pending)
+		वापस IRQ_HANDLED;
 
-	/* check if you need to piggy back on the ctrlrdy irq */
-	if (ctrl->edu_pending) {
-		if (irq == ctrl->irq && ((int)ctrl->edu_irq >= 0))
-	/* Discard interrupts while using dedicated edu irq */
-			return IRQ_HANDLED;
+	/* check अगर you need to piggy back on the ctrlrdy irq */
+	अगर (ctrl->edu_pending) अणु
+		अगर (irq == ctrl->irq && ((पूर्णांक)ctrl->edu_irq >= 0))
+	/* Discard पूर्णांकerrupts जबतक using dedicated edu irq */
+			वापस IRQ_HANDLED;
 
-	/* no registered edu irq, call handler */
-		return brcmnand_edu_irq(irq, data);
-	}
+	/* no रेजिस्टरed edu irq, call handler */
+		वापस brcmnand_edu_irq(irq, data);
+	पूर्ण
 
-	complete(&ctrl->done);
-	return IRQ_HANDLED;
-}
+	complete(&ctrl->करोne);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Handle SoC-specific interrupt hardware */
-static irqreturn_t brcmnand_irq(int irq, void *data)
-{
-	struct brcmnand_controller *ctrl = data;
+/* Handle SoC-specअगरic पूर्णांकerrupt hardware */
+अटल irqवापस_t brcmnand_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा brcmnand_controller *ctrl = data;
 
-	if (ctrl->soc->ctlrdy_ack(ctrl->soc))
-		return brcmnand_ctlrdy_irq(irq, data);
+	अगर (ctrl->soc->ctlrdy_ack(ctrl->soc))
+		वापस brcmnand_ctlrdy_irq(irq, data);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static irqreturn_t brcmnand_dma_irq(int irq, void *data)
-{
-	struct brcmnand_controller *ctrl = data;
+अटल irqवापस_t brcmnand_dma_irq(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा brcmnand_controller *ctrl = data;
 
-	complete(&ctrl->dma_done);
+	complete(&ctrl->dma_करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void brcmnand_send_cmd(struct brcmnand_host *host, int cmd)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	int ret;
+अटल व्योम brcmnand_send_cmd(काष्ठा brcmnand_host *host, पूर्णांक cmd)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	पूर्णांक ret;
 	u64 cmd_addr;
 
-	cmd_addr = brcmnand_read_reg(ctrl, BRCMNAND_CMD_ADDRESS);
+	cmd_addr = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS);
 
 	dev_dbg(ctrl->dev, "send native cmd %d addr 0x%llx\n", cmd, cmd_addr);
 
 	BUG_ON(ctrl->cmd_pending != 0);
 	ctrl->cmd_pending = cmd;
 
-	ret = bcmnand_ctrl_poll_status(ctrl, NAND_CTRL_RDY, NAND_CTRL_RDY, 0);
+	ret = bcmnand_ctrl_poll_status(ctrl, न_अंकD_CTRL_RDY, न_अंकD_CTRL_RDY, 0);
 	WARN_ON(ret);
 
-	mb(); /* flush previous writes */
-	brcmnand_write_reg(ctrl, BRCMNAND_CMD_START,
-			   cmd << brcmnand_cmd_shift(ctrl));
-}
+	mb(); /* flush previous ग_लिखोs */
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CMD_START,
+			   cmd << brcmnand_cmd_shअगरt(ctrl));
+पूर्ण
 
 /***********************************************************************
- * NAND MTD API: read/program/erase
+ * न_अंकD MTD API: पढ़ो/program/erase
  ***********************************************************************/
 
-static void brcmnand_cmd_ctrl(struct nand_chip *chip, int dat,
-			      unsigned int ctrl)
-{
-	/* intentionally left blank */
-}
+अटल व्योम brcmnand_cmd_ctrl(काष्ठा nand_chip *chip, पूर्णांक dat,
+			      अचिन्हित पूर्णांक ctrl)
+अणु
+	/* पूर्णांकentionally left blank */
+पूर्ण
 
-static bool brcmstb_nand_wait_for_completion(struct nand_chip *chip)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल bool brcmstb_nand_रुको_क्रम_completion(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 	bool err = false;
-	int sts;
+	पूर्णांक sts;
 
-	if (mtd->oops_panic_write) {
-		/* switch to interrupt polling and PIO mode */
+	अगर (mtd->oops_panic_ग_लिखो) अणु
+		/* चयन to पूर्णांकerrupt polling and PIO mode */
 		disable_ctrl_irqs(ctrl);
-		sts = bcmnand_ctrl_poll_status(ctrl, NAND_CTRL_RDY,
-					       NAND_CTRL_RDY, 0);
+		sts = bcmnand_ctrl_poll_status(ctrl, न_अंकD_CTRL_RDY,
+					       न_अंकD_CTRL_RDY, 0);
 		err = (sts < 0) ? true : false;
-	} else {
-		unsigned long timeo = msecs_to_jiffies(
-						NAND_POLL_STATUS_TIMEOUT_MS);
-		/* wait for completion interrupt */
-		sts = wait_for_completion_timeout(&ctrl->done, timeo);
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ समयo = msecs_to_jअगरfies(
+						न_अंकD_POLL_STATUS_TIMEOUT_MS);
+		/* रुको क्रम completion पूर्णांकerrupt */
+		sts = रुको_क्रम_completion_समयout(&ctrl->करोne, समयo);
 		err = (sts <= 0) ? true : false;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int brcmnand_waitfunc(struct nand_chip *chip)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
+अटल पूर्णांक brcmnand_रुकोfunc(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
 	bool err = false;
 
 	dev_dbg(ctrl->dev, "wait on native cmd %d\n", ctrl->cmd_pending);
-	if (ctrl->cmd_pending)
-		err = brcmstb_nand_wait_for_completion(chip);
+	अगर (ctrl->cmd_pending)
+		err = brcmstb_nand_रुको_क्रम_completion(chip);
 
-	if (err) {
-		u32 cmd = brcmnand_read_reg(ctrl, BRCMNAND_CMD_START)
-					>> brcmnand_cmd_shift(ctrl);
+	अगर (err) अणु
+		u32 cmd = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_START)
+					>> brcmnand_cmd_shअगरt(ctrl);
 
 		dev_err_ratelimited(ctrl->dev,
 			"timeout waiting for command %#02x\n", cmd);
 		dev_err_ratelimited(ctrl->dev, "intfc status %08x\n",
-			brcmnand_read_reg(ctrl, BRCMNAND_INTFC_STATUS));
-	}
+			brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_INTFC_STATUS));
+	पूर्ण
 	ctrl->cmd_pending = 0;
-	return brcmnand_read_reg(ctrl, BRCMNAND_INTFC_STATUS) &
+	वापस brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_INTFC_STATUS) &
 				 INTFC_FLASH_STATUS;
-}
+पूर्ण
 
-enum {
+क्रमागत अणु
 	LLOP_RE				= BIT(16),
 	LLOP_WE				= BIT(17),
 	LLOP_ALE			= BIT(18),
@@ -1641,122 +1642,122 @@ enum {
 	LLOP_RETURN_IDLE		= BIT(31),
 
 	LLOP_DATA_MASK			= GENMASK(15, 0),
-};
+पूर्ण;
 
-static int brcmnand_low_level_op(struct brcmnand_host *host,
-				 enum brcmnand_llop_type type, u32 data,
+अटल पूर्णांक brcmnand_low_level_op(काष्ठा brcmnand_host *host,
+				 क्रमागत brcmnand_llop_type type, u32 data,
 				 bool last_op)
-{
-	struct nand_chip *chip = &host->chip;
-	struct brcmnand_controller *ctrl = host->ctrl;
-	u32 tmp;
+अणु
+	काष्ठा nand_chip *chip = &host->chip;
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	u32 पंचांगp;
 
-	tmp = data & LLOP_DATA_MASK;
-	switch (type) {
-	case LL_OP_CMD:
-		tmp |= LLOP_WE | LLOP_CLE;
-		break;
-	case LL_OP_ADDR:
+	पंचांगp = data & LLOP_DATA_MASK;
+	चयन (type) अणु
+	हाल LL_OP_CMD:
+		पंचांगp |= LLOP_WE | LLOP_CLE;
+		अवरोध;
+	हाल LL_OP_ADDR:
 		/* WE | ALE */
-		tmp |= LLOP_WE | LLOP_ALE;
-		break;
-	case LL_OP_WR:
+		पंचांगp |= LLOP_WE | LLOP_ALE;
+		अवरोध;
+	हाल LL_OP_WR:
 		/* WE */
-		tmp |= LLOP_WE;
-		break;
-	case LL_OP_RD:
+		पंचांगp |= LLOP_WE;
+		अवरोध;
+	हाल LL_OP_RD:
 		/* RE */
-		tmp |= LLOP_RE;
-		break;
-	}
-	if (last_op)
+		पंचांगp |= LLOP_RE;
+		अवरोध;
+	पूर्ण
+	अगर (last_op)
 		/* RETURN_IDLE */
-		tmp |= LLOP_RETURN_IDLE;
+		पंचांगp |= LLOP_RETURN_IDLE;
 
-	dev_dbg(ctrl->dev, "ll_op cmd %#x\n", tmp);
+	dev_dbg(ctrl->dev, "ll_op cmd %#x\n", पंचांगp);
 
-	brcmnand_write_reg(ctrl, BRCMNAND_LL_OP, tmp);
-	(void)brcmnand_read_reg(ctrl, BRCMNAND_LL_OP);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_LL_OP, पंचांगp);
+	(व्योम)brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_LL_OP);
 
 	brcmnand_send_cmd(host, CMD_LOW_LEVEL_OP);
-	return brcmnand_waitfunc(chip);
-}
+	वापस brcmnand_रुकोfunc(chip);
+पूर्ण
 
-static void brcmnand_cmdfunc(struct nand_chip *chip, unsigned command,
-			     int column, int page_addr)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	u64 addr = (u64)page_addr << chip->page_shift;
-	int native_cmd = 0;
+अटल व्योम brcmnand_cmdfunc(काष्ठा nand_chip *chip, अचिन्हित command,
+			     पूर्णांक column, पूर्णांक page_addr)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	u64 addr = (u64)page_addr << chip->page_shअगरt;
+	पूर्णांक native_cmd = 0;
 
-	if (command == NAND_CMD_READID || command == NAND_CMD_PARAM ||
-			command == NAND_CMD_RNDOUT)
+	अगर (command == न_अंकD_CMD_READID || command == न_अंकD_CMD_PARAM ||
+			command == न_अंकD_CMD_RNDOUT)
 		addr = (u64)column;
-	/* Avoid propagating a negative, don't-care address */
-	else if (page_addr < 0)
+	/* Aव्योम propagating a negative, करोn't-care address */
+	अन्यथा अगर (page_addr < 0)
 		addr = 0;
 
 	dev_dbg(ctrl->dev, "cmd 0x%x addr 0x%llx\n", command,
-		(unsigned long long)addr);
+		(अचिन्हित दीर्घ दीर्घ)addr);
 
 	host->last_cmd = command;
 	host->last_byte = 0;
 	host->last_addr = addr;
 
-	switch (command) {
-	case NAND_CMD_RESET:
+	चयन (command) अणु
+	हाल न_अंकD_CMD_RESET:
 		native_cmd = CMD_FLASH_RESET;
-		break;
-	case NAND_CMD_STATUS:
+		अवरोध;
+	हाल न_अंकD_CMD_STATUS:
 		native_cmd = CMD_STATUS_READ;
-		break;
-	case NAND_CMD_READID:
+		अवरोध;
+	हाल न_अंकD_CMD_READID:
 		native_cmd = CMD_DEVICE_ID_READ;
-		break;
-	case NAND_CMD_READOOB:
+		अवरोध;
+	हाल न_अंकD_CMD_READOOB:
 		native_cmd = CMD_SPARE_AREA_READ;
-		break;
-	case NAND_CMD_ERASE1:
+		अवरोध;
+	हाल न_अंकD_CMD_ERASE1:
 		native_cmd = CMD_BLOCK_ERASE;
 		brcmnand_wp(mtd, 0);
-		break;
-	case NAND_CMD_PARAM:
+		अवरोध;
+	हाल न_अंकD_CMD_PARAM:
 		native_cmd = CMD_PARAMETER_READ;
-		break;
-	case NAND_CMD_SET_FEATURES:
-	case NAND_CMD_GET_FEATURES:
+		अवरोध;
+	हाल न_अंकD_CMD_SET_FEATURES:
+	हाल न_अंकD_CMD_GET_FEATURES:
 		brcmnand_low_level_op(host, LL_OP_CMD, command, false);
 		brcmnand_low_level_op(host, LL_OP_ADDR, column, false);
-		break;
-	case NAND_CMD_RNDOUT:
+		अवरोध;
+	हाल न_अंकD_CMD_RNDOUT:
 		native_cmd = CMD_PARAMETER_CHANGE_COL;
 		addr &= ~((u64)(FC_BYTES - 1));
 		/*
 		 * HW quirk: PARAMETER_CHANGE_COL requires SECTOR_SIZE_1K=0
 		 * NB: hwcfg.sector_size_1k may not be initialized yet
 		 */
-		if (brcmnand_get_sector_size_1k(host)) {
+		अगर (brcmnand_get_sector_size_1k(host)) अणु
 			host->hwcfg.sector_size_1k =
 				brcmnand_get_sector_size_1k(host);
 			brcmnand_set_sector_size_1k(host, 0);
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (!native_cmd)
-		return;
+	अगर (!native_cmd)
+		वापस;
 
 	brcmnand_set_cmd_addr(mtd, addr);
 	brcmnand_send_cmd(host, native_cmd);
-	brcmnand_waitfunc(chip);
+	brcmnand_रुकोfunc(chip);
 
-	if (native_cmd == CMD_PARAMETER_READ ||
-			native_cmd == CMD_PARAMETER_CHANGE_COL) {
+	अगर (native_cmd == CMD_PARAMETER_READ ||
+			native_cmd == CMD_PARAMETER_CHANGE_COL) अणु
 		/* Copy flash cache word-wise */
 		u32 *flash_cache = (u32 *)ctrl->flash_cache;
-		int i;
+		पूर्णांक i;
 
 		brcmnand_soc_data_bus_prepare(ctrl->soc, true);
 
@@ -1764,131 +1765,131 @@ static void brcmnand_cmdfunc(struct nand_chip *chip, unsigned command,
 		 * Must cache the FLASH_CACHE now, since changes in
 		 * SECTOR_SIZE_1K may invalidate it
 		 */
-		for (i = 0; i < FC_WORDS; i++)
+		क्रम (i = 0; i < FC_WORDS; i++)
 			/*
-			 * Flash cache is big endian for parameter pages, at
+			 * Flash cache is big endian क्रम parameter pages, at
 			 * least on STB SoCs
 			 */
-			flash_cache[i] = be32_to_cpu(brcmnand_read_fc(ctrl, i));
+			flash_cache[i] = be32_to_cpu(brcmnand_पढ़ो_fc(ctrl, i));
 
 		brcmnand_soc_data_bus_unprepare(ctrl->soc, true);
 
 		/* Cleanup from HW quirk: restore SECTOR_SIZE_1K */
-		if (host->hwcfg.sector_size_1k)
+		अगर (host->hwcfg.sector_size_1k)
 			brcmnand_set_sector_size_1k(host,
 						    host->hwcfg.sector_size_1k);
-	}
+	पूर्ण
 
 	/* Re-enable protection is necessary only after erase */
-	if (command == NAND_CMD_ERASE1)
+	अगर (command == न_अंकD_CMD_ERASE1)
 		brcmnand_wp(mtd, 1);
-}
+पूर्ण
 
-static uint8_t brcmnand_read_byte(struct nand_chip *chip)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	uint8_t ret = 0;
-	int addr, offs;
+अटल uपूर्णांक8_t brcmnand_पढ़ो_byte(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	uपूर्णांक8_t ret = 0;
+	पूर्णांक addr, offs;
 
-	switch (host->last_cmd) {
-	case NAND_CMD_READID:
-		if (host->last_byte < 4)
-			ret = brcmnand_read_reg(ctrl, BRCMNAND_ID) >>
+	चयन (host->last_cmd) अणु
+	हाल न_अंकD_CMD_READID:
+		अगर (host->last_byte < 4)
+			ret = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_ID) >>
 				(24 - (host->last_byte << 3));
-		else if (host->last_byte < 8)
-			ret = brcmnand_read_reg(ctrl, BRCMNAND_ID_EXT) >>
+		अन्यथा अगर (host->last_byte < 8)
+			ret = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_ID_EXT) >>
 				(56 - (host->last_byte << 3));
-		break;
+		अवरोध;
 
-	case NAND_CMD_READOOB:
-		ret = oob_reg_read(ctrl, host->last_byte);
-		break;
+	हाल न_अंकD_CMD_READOOB:
+		ret = oob_reg_पढ़ो(ctrl, host->last_byte);
+		अवरोध;
 
-	case NAND_CMD_STATUS:
-		ret = brcmnand_read_reg(ctrl, BRCMNAND_INTFC_STATUS) &
+	हाल न_अंकD_CMD_STATUS:
+		ret = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_INTFC_STATUS) &
 					INTFC_FLASH_STATUS;
-		if (wp_on) /* hide WP status */
-			ret |= NAND_STATUS_WP;
-		break;
+		अगर (wp_on) /* hide WP status */
+			ret |= न_अंकD_STATUS_WP;
+		अवरोध;
 
-	case NAND_CMD_PARAM:
-	case NAND_CMD_RNDOUT:
+	हाल न_अंकD_CMD_PARAM:
+	हाल न_अंकD_CMD_RNDOUT:
 		addr = host->last_addr + host->last_byte;
 		offs = addr & (FC_BYTES - 1);
 
-		/* At FC_BYTES boundary, switch to next column */
-		if (host->last_byte > 0 && offs == 0)
-			nand_change_read_column_op(chip, addr, NULL, 0, false);
+		/* At FC_BYTES boundary, चयन to next column */
+		अगर (host->last_byte > 0 && offs == 0)
+			nand_change_पढ़ो_column_op(chip, addr, शून्य, 0, false);
 
 		ret = ctrl->flash_cache[offs];
-		break;
-	case NAND_CMD_GET_FEATURES:
-		if (host->last_byte >= ONFI_SUBFEATURE_PARAM_LEN) {
+		अवरोध;
+	हाल न_अंकD_CMD_GET_FEATURES:
+		अगर (host->last_byte >= ONFI_SUBFEATURE_PARAM_LEN) अणु
 			ret = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			bool last = host->last_byte ==
 				ONFI_SUBFEATURE_PARAM_LEN - 1;
 			brcmnand_low_level_op(host, LL_OP_RD, 0, last);
-			ret = brcmnand_read_reg(ctrl, BRCMNAND_LL_RDATA) & 0xff;
-		}
-	}
+			ret = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_LL_RDATA) & 0xff;
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(ctrl->dev, "read byte = 0x%02x\n", ret);
 	host->last_byte++;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void brcmnand_read_buf(struct nand_chip *chip, uint8_t *buf, int len)
-{
-	int i;
+अटल व्योम brcmnand_पढ़ो_buf(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++, buf++)
-		*buf = brcmnand_read_byte(chip);
-}
+	क्रम (i = 0; i < len; i++, buf++)
+		*buf = brcmnand_पढ़ो_byte(chip);
+पूर्ण
 
-static void brcmnand_write_buf(struct nand_chip *chip, const uint8_t *buf,
-			       int len)
-{
-	int i;
-	struct brcmnand_host *host = nand_get_controller_data(chip);
+अटल व्योम brcmnand_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+			       पूर्णांक len)
+अणु
+	पूर्णांक i;
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
 
-	switch (host->last_cmd) {
-	case NAND_CMD_SET_FEATURES:
-		for (i = 0; i < len; i++)
+	चयन (host->last_cmd) अणु
+	हाल न_अंकD_CMD_SET_FEATURES:
+		क्रम (i = 0; i < len; i++)
 			brcmnand_low_level_op(host, LL_OP_WR, buf[i],
 						  (i + 1) == len);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /*
  *  Kick EDU engine
  */
-static int brcmnand_edu_trans(struct brcmnand_host *host, u64 addr, u32 *buf,
+अटल पूर्णांक brcmnand_edu_trans(काष्ठा brcmnand_host *host, u64 addr, u32 *buf,
 			      u8 *oob, u32 len, u8 cmd)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	unsigned long timeo = msecs_to_jiffies(200);
-	int ret = 0;
-	int dir = (cmd == CMD_PAGE_READ ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	अचिन्हित दीर्घ समयo = msecs_to_jअगरfies(200);
+	पूर्णांक ret = 0;
+	पूर्णांक dir = (cmd == CMD_PAGE_READ ? DMA_FROM_DEVICE : DMA_TO_DEVICE);
 	u8 edu_cmd = (cmd == CMD_PAGE_READ ? EDU_CMD_READ : EDU_CMD_WRITE);
-	unsigned int trans = len >> FC_SHIFT;
+	अचिन्हित पूर्णांक trans = len >> FC_SHIFT;
 	dma_addr_t pa;
 
 	dev_dbg(ctrl->dev, "EDU %s %p:%p\n", ((edu_cmd == EDU_CMD_READ) ?
 					      "read" : "write"), buf, oob);
 
 	pa = dma_map_single(ctrl->dev, buf, len, dir);
-	if (dma_mapping_error(ctrl->dev, pa)) {
+	अगर (dma_mapping_error(ctrl->dev, pa)) अणु
 		dev_err(ctrl->dev, "unable to map buffer for EDU DMA\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ctrl->edu_pending = true;
 	ctrl->edu_dram_addr = pa;
@@ -1898,111 +1899,111 @@ static int brcmnand_edu_trans(struct brcmnand_host *host, u64 addr, u32 *buf,
 	ctrl->sas = cfg->spare_area_size;
 	ctrl->oob = oob;
 
-	edu_writel(ctrl, EDU_DRAM_ADDR, (u32)ctrl->edu_dram_addr);
-	edu_readl(ctrl,  EDU_DRAM_ADDR);
-	edu_writel(ctrl, EDU_EXT_ADDR, ctrl->edu_ext_addr);
-	edu_readl(ctrl, EDU_EXT_ADDR);
-	edu_writel(ctrl, EDU_LENGTH, FC_BYTES);
-	edu_readl(ctrl, EDU_LENGTH);
+	edu_ग_लिखोl(ctrl, EDU_DRAM_ADDR, (u32)ctrl->edu_dram_addr);
+	edu_पढ़ोl(ctrl,  EDU_DRAM_ADDR);
+	edu_ग_लिखोl(ctrl, EDU_EXT_ADDR, ctrl->edu_ext_addr);
+	edu_पढ़ोl(ctrl, EDU_EXT_ADDR);
+	edu_ग_लिखोl(ctrl, EDU_LENGTH, FC_BYTES);
+	edu_पढ़ोl(ctrl, EDU_LENGTH);
 
-	if (ctrl->oob && (ctrl->edu_cmd == EDU_CMD_WRITE)) {
-		brcmnand_write_reg(ctrl, BRCMNAND_CMD_ADDRESS,
+	अगर (ctrl->oob && (ctrl->edu_cmd == EDU_CMD_WRITE)) अणु
+		brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS,
 				   ctrl->edu_ext_addr);
-		brcmnand_read_reg(ctrl, BRCMNAND_CMD_ADDRESS);
-		ctrl->oob += write_oob_to_regs(ctrl,
+		brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CMD_ADDRESS);
+		ctrl->oob += ग_लिखो_oob_to_regs(ctrl,
 					       1,
 					       ctrl->oob, ctrl->sas,
 					       ctrl->sector_size_1k);
-	}
+	पूर्ण
 
 	/* Start edu engine */
-	mb(); /* flush previous writes */
-	edu_writel(ctrl, EDU_CMD, ctrl->edu_cmd);
-	edu_readl(ctrl, EDU_CMD);
+	mb(); /* flush previous ग_लिखोs */
+	edu_ग_लिखोl(ctrl, EDU_CMD, ctrl->edu_cmd);
+	edu_पढ़ोl(ctrl, EDU_CMD);
 
-	if (wait_for_completion_timeout(&ctrl->edu_done, timeo) <= 0) {
+	अगर (रुको_क्रम_completion_समयout(&ctrl->edu_करोne, समयo) <= 0) अणु
 		dev_err(ctrl->dev,
 			"timeout waiting for EDU; status %#x, error status %#x\n",
-			edu_readl(ctrl, EDU_STATUS),
-			edu_readl(ctrl, EDU_ERR_STATUS));
-	}
+			edu_पढ़ोl(ctrl, EDU_STATUS),
+			edu_पढ़ोl(ctrl, EDU_ERR_STATUS));
+	पूर्ण
 
 	dma_unmap_single(ctrl->dev, pa, len, dir);
 
-	/* read last subpage oob */
-	if (ctrl->oob && (ctrl->edu_cmd == EDU_CMD_READ)) {
-		ctrl->oob += read_oob_from_regs(ctrl,
+	/* पढ़ो last subpage oob */
+	अगर (ctrl->oob && (ctrl->edu_cmd == EDU_CMD_READ)) अणु
+		ctrl->oob += पढ़ो_oob_from_regs(ctrl,
 						1,
 						ctrl->oob, ctrl->sas,
 						ctrl->sector_size_1k);
-	}
+	पूर्ण
 
-	/* for program page check NAND status */
-	if (((brcmnand_read_reg(ctrl, BRCMNAND_INTFC_STATUS) &
-	      INTFC_FLASH_STATUS) & NAND_STATUS_FAIL) &&
-	    edu_cmd == EDU_CMD_WRITE) {
+	/* क्रम program page check न_अंकD status */
+	अगर (((brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_INTFC_STATUS) &
+	      INTFC_FLASH_STATUS) & न_अंकD_STATUS_FAIL) &&
+	    edu_cmd == EDU_CMD_WRITE) अणु
 		dev_info(ctrl->dev, "program failed at %llx\n",
-			 (unsigned long long)addr);
+			 (अचिन्हित दीर्घ दीर्घ)addr);
 		ret = -EIO;
-	}
+	पूर्ण
 
 	/* Make sure the EDU status is clean */
-	if (edu_readl(ctrl, EDU_STATUS) & EDU_STATUS_ACTIVE)
+	अगर (edu_पढ़ोl(ctrl, EDU_STATUS) & EDU_STATUS_ACTIVE)
 		dev_warn(ctrl->dev, "EDU still active: %#x\n",
-			 edu_readl(ctrl, EDU_STATUS));
+			 edu_पढ़ोl(ctrl, EDU_STATUS));
 
-	if (unlikely(edu_readl(ctrl, EDU_ERR_STATUS) & EDU_ERR_STATUS_ERRACK)) {
+	अगर (unlikely(edu_पढ़ोl(ctrl, EDU_ERR_STATUS) & EDU_ERR_STATUS_ERRACK)) अणु
 		dev_warn(ctrl->dev, "EDU RBUS error at addr %llx\n",
-			 (unsigned long long)addr);
+			 (अचिन्हित दीर्घ दीर्घ)addr);
 		ret = -EIO;
-	}
+	पूर्ण
 
 	ctrl->edu_pending = false;
 	brcmnand_edu_init(ctrl);
-	edu_writel(ctrl, EDU_STOP, 0); /* force stop */
-	edu_readl(ctrl, EDU_STOP);
+	edu_ग_लिखोl(ctrl, EDU_STOP, 0); /* क्रमce stop */
+	edu_पढ़ोl(ctrl, EDU_STOP);
 
-	if (!ret && edu_cmd == EDU_CMD_READ) {
+	अगर (!ret && edu_cmd == EDU_CMD_READ) अणु
 		u64 err_addr = 0;
 
 		/*
-		 * check for ECC errors here, subpage ECC errors are
-		 * retained in ECC error address register
+		 * check क्रम ECC errors here, subpage ECC errors are
+		 * retained in ECC error address रेजिस्टर
 		 */
 		err_addr = brcmnand_get_uncorrecc_addr(ctrl);
-		if (!err_addr) {
+		अगर (!err_addr) अणु
 			err_addr = brcmnand_get_correcc_addr(ctrl);
-			if (err_addr)
+			अगर (err_addr)
 				ret = -EUCLEAN;
-		} else
+		पूर्ण अन्यथा
 			ret = -EBADMSG;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Construct a FLASH_DMA descriptor as part of a linked list. You must know the
- * following ahead of time:
+ * Conकाष्ठा a FLASH_DMA descriptor as part of a linked list. You must know the
+ * following ahead of समय:
  *  - Is this descriptor the beginning or end of a linked list?
  *  - What is the (DMA) address of the next descriptor in the linked list?
  */
-static int brcmnand_fill_dma_desc(struct brcmnand_host *host,
-				  struct brcm_nand_dma_desc *desc, u64 addr,
+अटल पूर्णांक brcmnand_fill_dma_desc(काष्ठा brcmnand_host *host,
+				  काष्ठा brcm_nand_dma_desc *desc, u64 addr,
 				  dma_addr_t buf, u32 len, u8 dma_cmd,
 				  bool begin, bool end,
 				  dma_addr_t next_desc)
-{
-	memset(desc, 0, sizeof(*desc));
+अणु
+	स_रखो(desc, 0, माप(*desc));
 	/* Descriptors are written in native byte order (wordwise) */
 	desc->next_desc = lower_32_bits(next_desc);
 	desc->next_desc_ext = upper_32_bits(next_desc);
 	desc->cmd_irq = (dma_cmd << 24) |
 		(end ? (0x03 << 8) : 0) | /* IRQ | STOP */
 		(!!begin) | ((!!end) << 1); /* head, tail */
-#ifdef CONFIG_CPU_BIG_ENDIAN
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
 	desc->cmd_irq |= 0x01 << 12;
-#endif
+#पूर्ण_अगर
 	desc->dram_addr = lower_32_bits(buf);
 	desc->dram_addr_ext = upper_32_bits(buf);
 	desc->tfr_len = len;
@@ -2011,52 +2012,52 @@ static int brcmnand_fill_dma_desc(struct brcmnand_host *host,
 	desc->flash_addr_ext = upper_32_bits(addr);
 	desc->cs = host->cs;
 	desc->status_valid = 0x01;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Kick the FLASH_DMA engine, with a given DMA descriptor
  */
-static void brcmnand_dma_run(struct brcmnand_host *host, dma_addr_t desc)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	unsigned long timeo = msecs_to_jiffies(100);
+अटल व्योम brcmnand_dma_run(काष्ठा brcmnand_host *host, dma_addr_t desc)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	अचिन्हित दीर्घ समयo = msecs_to_jअगरfies(100);
 
-	flash_dma_writel(ctrl, FLASH_DMA_FIRST_DESC, lower_32_bits(desc));
-	(void)flash_dma_readl(ctrl, FLASH_DMA_FIRST_DESC);
-	if (ctrl->nand_version > 0x0602) {
-		flash_dma_writel(ctrl, FLASH_DMA_FIRST_DESC_EXT,
+	flash_dma_ग_लिखोl(ctrl, FLASH_DMA_FIRST_DESC, lower_32_bits(desc));
+	(व्योम)flash_dma_पढ़ोl(ctrl, FLASH_DMA_FIRST_DESC);
+	अगर (ctrl->nand_version > 0x0602) अणु
+		flash_dma_ग_लिखोl(ctrl, FLASH_DMA_FIRST_DESC_EXT,
 				 upper_32_bits(desc));
-		(void)flash_dma_readl(ctrl, FLASH_DMA_FIRST_DESC_EXT);
-	}
+		(व्योम)flash_dma_पढ़ोl(ctrl, FLASH_DMA_FIRST_DESC_EXT);
+	पूर्ण
 
 	/* Start FLASH_DMA engine */
 	ctrl->dma_pending = true;
-	mb(); /* flush previous writes */
-	flash_dma_writel(ctrl, FLASH_DMA_CTRL, 0x03); /* wake | run */
+	mb(); /* flush previous ग_लिखोs */
+	flash_dma_ग_लिखोl(ctrl, FLASH_DMA_CTRL, 0x03); /* wake | run */
 
-	if (wait_for_completion_timeout(&ctrl->dma_done, timeo) <= 0) {
+	अगर (रुको_क्रम_completion_समयout(&ctrl->dma_करोne, समयo) <= 0) अणु
 		dev_err(ctrl->dev,
 				"timeout waiting for DMA; status %#x, error status %#x\n",
-				flash_dma_readl(ctrl, FLASH_DMA_STATUS),
-				flash_dma_readl(ctrl, FLASH_DMA_ERROR_STATUS));
-	}
+				flash_dma_पढ़ोl(ctrl, FLASH_DMA_STATUS),
+				flash_dma_पढ़ोl(ctrl, FLASH_DMA_ERROR_STATUS));
+	पूर्ण
 	ctrl->dma_pending = false;
-	flash_dma_writel(ctrl, FLASH_DMA_CTRL, 0); /* force stop */
-}
+	flash_dma_ग_लिखोl(ctrl, FLASH_DMA_CTRL, 0); /* क्रमce stop */
+पूर्ण
 
-static int brcmnand_dma_trans(struct brcmnand_host *host, u64 addr, u32 *buf,
+अटल पूर्णांक brcmnand_dma_trans(काष्ठा brcmnand_host *host, u64 addr, u32 *buf,
 			      u8 *oob, u32 len, u8 dma_cmd)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
 	dma_addr_t buf_pa;
-	int dir = dma_cmd == CMD_PAGE_READ ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
+	पूर्णांक dir = dma_cmd == CMD_PAGE_READ ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
 
 	buf_pa = dma_map_single(ctrl->dev, buf, len, dir);
-	if (dma_mapping_error(ctrl->dev, buf_pa)) {
+	अगर (dma_mapping_error(ctrl->dev, buf_pa)) अणु
 		dev_err(ctrl->dev, "unable to map buffer for DMA\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	brcmnand_fill_dma_desc(host, ctrl->dma_desc, addr, buf_pa, len,
 				   dma_cmd, true, true, 0);
@@ -2065,99 +2066,99 @@ static int brcmnand_dma_trans(struct brcmnand_host *host, u64 addr, u32 *buf,
 
 	dma_unmap_single(ctrl->dev, buf_pa, len, dir);
 
-	if (ctrl->dma_desc->status_valid & FLASH_DMA_ECC_ERROR)
-		return -EBADMSG;
-	else if (ctrl->dma_desc->status_valid & FLASH_DMA_CORR_ERROR)
-		return -EUCLEAN;
+	अगर (ctrl->dma_desc->status_valid & FLASH_DMA_ECC_ERROR)
+		वापस -EBADMSG;
+	अन्यथा अगर (ctrl->dma_desc->status_valid & FLASH_DMA_CORR_ERROR)
+		वापस -EUCLEAN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Assumes proper CS is already set
+ * Assumes proper CS is alपढ़ोy set
  */
-static int brcmnand_read_by_pio(struct mtd_info *mtd, struct nand_chip *chip,
-				u64 addr, unsigned int trans, u32 *buf,
+अटल पूर्णांक brcmnand_पढ़ो_by_pio(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+				u64 addr, अचिन्हित पूर्णांक trans, u32 *buf,
 				u8 *oob, u64 *err_addr)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	int i, j, ret = 0;
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	पूर्णांक i, j, ret = 0;
 
 	brcmnand_clear_ecc_addr(ctrl);
 
-	for (i = 0; i < trans; i++, addr += FC_BYTES) {
+	क्रम (i = 0; i < trans; i++, addr += FC_BYTES) अणु
 		brcmnand_set_cmd_addr(mtd, addr);
-		/* SPARE_AREA_READ does not use ECC, so just use PAGE_READ */
+		/* SPARE_AREA_READ करोes not use ECC, so just use PAGE_READ */
 		brcmnand_send_cmd(host, CMD_PAGE_READ);
-		brcmnand_waitfunc(chip);
+		brcmnand_रुकोfunc(chip);
 
-		if (likely(buf)) {
+		अगर (likely(buf)) अणु
 			brcmnand_soc_data_bus_prepare(ctrl->soc, false);
 
-			for (j = 0; j < FC_WORDS; j++, buf++)
-				*buf = brcmnand_read_fc(ctrl, j);
+			क्रम (j = 0; j < FC_WORDS; j++, buf++)
+				*buf = brcmnand_पढ़ो_fc(ctrl, j);
 
 			brcmnand_soc_data_bus_unprepare(ctrl->soc, false);
-		}
+		पूर्ण
 
-		if (oob)
-			oob += read_oob_from_regs(ctrl, i, oob,
+		अगर (oob)
+			oob += पढ़ो_oob_from_regs(ctrl, i, oob,
 					mtd->oobsize / trans,
 					host->hwcfg.sector_size_1k);
 
-		if (!ret) {
+		अगर (!ret) अणु
 			*err_addr = brcmnand_get_uncorrecc_addr(ctrl);
 
-			if (*err_addr)
+			अगर (*err_addr)
 				ret = -EBADMSG;
-		}
+		पूर्ण
 
-		if (!ret) {
+		अगर (!ret) अणु
 			*err_addr = brcmnand_get_correcc_addr(ctrl);
 
-			if (*err_addr)
+			अगर (*err_addr)
 				ret = -EUCLEAN;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Check a page to see if it is erased (w/ bitflips) after an uncorrectable ECC
+ * Check a page to see अगर it is erased (w/ bitflips) after an uncorrectable ECC
  * error
  *
- * Because the HW ECC signals an ECC error if an erase paged has even a single
- * bitflip, we must check each ECC error to see if it is actually an erased
+ * Because the HW ECC संकेतs an ECC error अगर an erase paged has even a single
+ * bitflip, we must check each ECC error to see अगर it is actually an erased
  * page with bitflips, not a truly corrupted page.
  *
- * On a real error, return a negative error code (-EBADMSG for ECC error), and
+ * On a real error, वापस a negative error code (-EBADMSG क्रम ECC error), and
  * buf will contain raw data.
- * Otherwise, buf gets filled with 0xffs and return the maximum number of
+ * Otherwise, buf माला_लो filled with 0xffs and वापस the maximum number of
  * bitflips-per-ECC-sector to the caller.
  *
  */
-static int brcmstb_nand_verify_erased_page(struct mtd_info *mtd,
-		  struct nand_chip *chip, void *buf, u64 addr)
-{
-	struct mtd_oob_region ecc;
-	int i;
-	int bitflips = 0;
-	int page = addr >> chip->page_shift;
-	int ret;
-	void *ecc_bytes;
-	void *ecc_chunk;
+अटल पूर्णांक brcmstb_nand_verअगरy_erased_page(काष्ठा mtd_info *mtd,
+		  काष्ठा nand_chip *chip, व्योम *buf, u64 addr)
+अणु
+	काष्ठा mtd_oob_region ecc;
+	पूर्णांक i;
+	पूर्णांक bitflips = 0;
+	पूर्णांक page = addr >> chip->page_shअगरt;
+	पूर्णांक ret;
+	व्योम *ecc_bytes;
+	व्योम *ecc_chunk;
 
-	if (!buf)
+	अगर (!buf)
 		buf = nand_get_data_buf(chip);
 
-	/* read without ecc for verification */
-	ret = chip->ecc.read_page_raw(chip, buf, true, page);
-	if (ret)
-		return ret;
+	/* पढ़ो without ecc क्रम verअगरication */
+	ret = chip->ecc.पढ़ो_page_raw(chip, buf, true, page);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < chip->ecc.steps; i++) {
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
 		ecc_chunk = buf + chip->ecc.size * i;
 
 		mtd_ooblayout_ecc(mtd, i, &ecc);
@@ -2165,1057 +2166,1057 @@ static int brcmstb_nand_verify_erased_page(struct mtd_info *mtd,
 
 		ret = nand_check_erased_ecc_chunk(ecc_chunk, chip->ecc.size,
 						  ecc_bytes, ecc.length,
-						  NULL, 0,
+						  शून्य, 0,
 						  chip->ecc.strength);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		bitflips = max(bitflips, ret);
-	}
+	पूर्ण
 
-	return bitflips;
-}
+	वापस bitflips;
+पूर्ण
 
-static int brcmnand_read(struct mtd_info *mtd, struct nand_chip *chip,
-			 u64 addr, unsigned int trans, u32 *buf, u8 *oob)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
+अटल पूर्णांक brcmnand_पढ़ो(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+			 u64 addr, अचिन्हित पूर्णांक trans, u32 *buf, u8 *oob)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
 	u64 err_addr = 0;
-	int err;
+	पूर्णांक err;
 	bool retry = true;
 	bool edu_err = false;
 
-	dev_dbg(ctrl->dev, "read %llx -> %p\n", (unsigned long long)addr, buf);
+	dev_dbg(ctrl->dev, "read %llx -> %p\n", (अचिन्हित दीर्घ दीर्घ)addr, buf);
 
-try_dmaread:
+try_dmaपढ़ो:
 	brcmnand_clear_ecc_addr(ctrl);
 
-	if (ctrl->dma_trans && (has_edu(ctrl) || !oob) &&
-	    flash_dma_buf_ok(buf)) {
+	अगर (ctrl->dma_trans && (has_edu(ctrl) || !oob) &&
+	    flash_dma_buf_ok(buf)) अणु
 		err = ctrl->dma_trans(host, addr, buf, oob,
 				      trans * FC_BYTES,
 				      CMD_PAGE_READ);
 
-		if (err) {
-			if (mtd_is_bitflip_or_eccerr(err))
+		अगर (err) अणु
+			अगर (mtd_is_bitflip_or_eccerr(err))
 				err_addr = addr;
-			else
-				return -EIO;
-		}
+			अन्यथा
+				वापस -EIO;
+		पूर्ण
 
-		if (has_edu(ctrl) && err_addr)
+		अगर (has_edu(ctrl) && err_addr)
 			edu_err = true;
 
-	} else {
-		if (oob)
-			memset(oob, 0x99, mtd->oobsize);
+	पूर्ण अन्यथा अणु
+		अगर (oob)
+			स_रखो(oob, 0x99, mtd->oobsize);
 
-		err = brcmnand_read_by_pio(mtd, chip, addr, trans, buf,
+		err = brcmnand_पढ़ो_by_pio(mtd, chip, addr, trans, buf,
 					       oob, &err_addr);
-	}
+	पूर्ण
 
-	if (mtd_is_eccerr(err)) {
+	अगर (mtd_is_eccerr(err)) अणु
 		/*
-		 * On controller version and 7.0, 7.1 , DMA read after a
-		 * prior PIO read that reported uncorrectable error,
-		 * the DMA engine captures this error following DMA read
-		 * cleared only on subsequent DMA read, so just retry once
-		 * to clear a possible false error reported for current DMA
-		 * read
+		 * On controller version and 7.0, 7.1 , DMA पढ़ो after a
+		 * prior PIO पढ़ो that reported uncorrectable error,
+		 * the DMA engine captures this error following DMA पढ़ो
+		 * cleared only on subsequent DMA पढ़ो, so just retry once
+		 * to clear a possible false error reported क्रम current DMA
+		 * पढ़ो
 		 */
-		if ((ctrl->nand_version == 0x0700) ||
-		    (ctrl->nand_version == 0x0701)) {
-			if (retry) {
+		अगर ((ctrl->nand_version == 0x0700) ||
+		    (ctrl->nand_version == 0x0701)) अणु
+			अगर (retry) अणु
 				retry = false;
-				goto try_dmaread;
-			}
-		}
+				जाओ try_dmaपढ़ो;
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * Controller version 7.2 has hw encoder to detect erased page
-		 * bitflips, apply sw verification for older controllers only
+		 * bitflips, apply sw verअगरication क्रम older controllers only
 		 */
-		if (ctrl->nand_version < 0x0702) {
-			err = brcmstb_nand_verify_erased_page(mtd, chip, buf,
+		अगर (ctrl->nand_version < 0x0702) अणु
+			err = brcmstb_nand_verअगरy_erased_page(mtd, chip, buf,
 							      addr);
 			/* erased page bitflips corrected */
-			if (err >= 0)
-				return err;
-		}
+			अगर (err >= 0)
+				वापस err;
+		पूर्ण
 
 		dev_dbg(ctrl->dev, "uncorrectable error at 0x%llx\n",
-			(unsigned long long)err_addr);
+			(अचिन्हित दीर्घ दीर्घ)err_addr);
 		mtd->ecc_stats.failed++;
-		/* NAND layer expects zero on ECC errors */
-		return 0;
-	}
+		/* न_अंकD layer expects zero on ECC errors */
+		वापस 0;
+	पूर्ण
 
-	if (mtd_is_bitflip(err)) {
-		unsigned int corrected = brcmnand_count_corrected(ctrl);
+	अगर (mtd_is_bitflip(err)) अणु
+		अचिन्हित पूर्णांक corrected = brcmnand_count_corrected(ctrl);
 
-		/* in case of EDU correctable error we read again using PIO */
-		if (edu_err)
-			err = brcmnand_read_by_pio(mtd, chip, addr, trans, buf,
+		/* in हाल of EDU correctable error we पढ़ो again using PIO */
+		अगर (edu_err)
+			err = brcmnand_पढ़ो_by_pio(mtd, chip, addr, trans, buf,
 						   oob, &err_addr);
 
 		dev_dbg(ctrl->dev, "corrected error at 0x%llx\n",
-			(unsigned long long)err_addr);
+			(अचिन्हित दीर्घ दीर्घ)err_addr);
 		mtd->ecc_stats.corrected += corrected;
 		/* Always exceed the software-imposed threshold */
-		return max(mtd->bitflip_threshold, corrected);
-	}
+		वापस max(mtd->bitflip_threshold, corrected);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_read_page(struct nand_chip *chip, uint8_t *buf,
-			      int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	u8 *oob = oob_required ? (u8 *)chip->oob_poi : NULL;
+अटल पूर्णांक brcmnand_पढ़ो_page(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+			      पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	u8 *oob = oob_required ? (u8 *)chip->oob_poi : शून्य;
 
-	nand_read_page_op(chip, page, 0, NULL, 0);
+	nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
 
-	return brcmnand_read(mtd, chip, host->last_addr,
-			mtd->writesize >> FC_SHIFT, (u32 *)buf, oob);
-}
+	वापस brcmnand_पढ़ो(mtd, chip, host->last_addr,
+			mtd->ग_लिखोsize >> FC_SHIFT, (u32 *)buf, oob);
+पूर्ण
 
-static int brcmnand_read_page_raw(struct nand_chip *chip, uint8_t *buf,
-				  int oob_required, int page)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	u8 *oob = oob_required ? (u8 *)chip->oob_poi : NULL;
-	int ret;
+अटल पूर्णांक brcmnand_पढ़ो_page_raw(काष्ठा nand_chip *chip, uपूर्णांक8_t *buf,
+				  पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	u8 *oob = oob_required ? (u8 *)chip->oob_poi : शून्य;
+	पूर्णांक ret;
 
-	nand_read_page_op(chip, page, 0, NULL, 0);
-
-	brcmnand_set_ecc_enabled(host, 0);
-	ret = brcmnand_read(mtd, chip, host->last_addr,
-			mtd->writesize >> FC_SHIFT, (u32 *)buf, oob);
-	brcmnand_set_ecc_enabled(host, 1);
-	return ret;
-}
-
-static int brcmnand_read_oob(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-
-	return brcmnand_read(mtd, chip, (u64)page << chip->page_shift,
-			mtd->writesize >> FC_SHIFT,
-			NULL, (u8 *)chip->oob_poi);
-}
-
-static int brcmnand_read_oob_raw(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
+	nand_पढ़ो_page_op(chip, page, 0, शून्य, 0);
 
 	brcmnand_set_ecc_enabled(host, 0);
-	brcmnand_read(mtd, chip, (u64)page << chip->page_shift,
-		mtd->writesize >> FC_SHIFT,
-		NULL, (u8 *)chip->oob_poi);
+	ret = brcmnand_पढ़ो(mtd, chip, host->last_addr,
+			mtd->ग_लिखोsize >> FC_SHIFT, (u32 *)buf, oob);
 	brcmnand_set_ecc_enabled(host, 1);
-	return 0;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmnand_write(struct mtd_info *mtd, struct nand_chip *chip,
-			  u64 addr, const u32 *buf, u8 *oob)
-{
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	unsigned int i, j, trans = mtd->writesize >> FC_SHIFT;
-	int status, ret = 0;
+अटल पूर्णांक brcmnand_पढ़ो_oob(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	dev_dbg(ctrl->dev, "write %llx <- %p\n", (unsigned long long)addr, buf);
+	वापस brcmnand_पढ़ो(mtd, chip, (u64)page << chip->page_shअगरt,
+			mtd->ग_लिखोsize >> FC_SHIFT,
+			शून्य, (u8 *)chip->oob_poi);
+पूर्ण
 
-	if (unlikely((unsigned long)buf & 0x03)) {
+अटल पूर्णांक brcmnand_पढ़ो_oob_raw(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+
+	brcmnand_set_ecc_enabled(host, 0);
+	brcmnand_पढ़ो(mtd, chip, (u64)page << chip->page_shअगरt,
+		mtd->ग_लिखोsize >> FC_SHIFT,
+		शून्य, (u8 *)chip->oob_poi);
+	brcmnand_set_ecc_enabled(host, 1);
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक brcmnand_ग_लिखो(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+			  u64 addr, स्थिर u32 *buf, u8 *oob)
+अणु
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	अचिन्हित पूर्णांक i, j, trans = mtd->ग_लिखोsize >> FC_SHIFT;
+	पूर्णांक status, ret = 0;
+
+	dev_dbg(ctrl->dev, "write %llx <- %p\n", (अचिन्हित दीर्घ दीर्घ)addr, buf);
+
+	अगर (unlikely((अचिन्हित दीर्घ)buf & 0x03)) अणु
 		dev_warn(ctrl->dev, "unaligned buffer: %p\n", buf);
-		buf = (u32 *)((unsigned long)buf & ~0x03);
-	}
+		buf = (u32 *)((अचिन्हित दीर्घ)buf & ~0x03);
+	पूर्ण
 
 	brcmnand_wp(mtd, 0);
 
-	for (i = 0; i < ctrl->max_oob; i += 4)
-		oob_reg_write(ctrl, i, 0xffffffff);
+	क्रम (i = 0; i < ctrl->max_oob; i += 4)
+		oob_reg_ग_लिखो(ctrl, i, 0xffffffff);
 
-	if (mtd->oops_panic_write)
-		/* switch to interrupt polling and PIO mode */
+	अगर (mtd->oops_panic_ग_लिखो)
+		/* चयन to पूर्णांकerrupt polling and PIO mode */
 		disable_ctrl_irqs(ctrl);
 
-	if (use_dma(ctrl) && (has_edu(ctrl) || !oob) && flash_dma_buf_ok(buf)) {
-		if (ctrl->dma_trans(host, addr, (u32 *)buf, oob, mtd->writesize,
+	अगर (use_dma(ctrl) && (has_edu(ctrl) || !oob) && flash_dma_buf_ok(buf)) अणु
+		अगर (ctrl->dma_trans(host, addr, (u32 *)buf, oob, mtd->ग_लिखोsize,
 				    CMD_PROGRAM_PAGE))
 
 			ret = -EIO;
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < trans; i++, addr += FC_BYTES) {
-		/* full address MUST be set before populating FC */
+	क्रम (i = 0; i < trans; i++, addr += FC_BYTES) अणु
+		/* full address MUST be set beक्रमe populating FC */
 		brcmnand_set_cmd_addr(mtd, addr);
 
-		if (buf) {
+		अगर (buf) अणु
 			brcmnand_soc_data_bus_prepare(ctrl->soc, false);
 
-			for (j = 0; j < FC_WORDS; j++, buf++)
-				brcmnand_write_fc(ctrl, j, *buf);
+			क्रम (j = 0; j < FC_WORDS; j++, buf++)
+				brcmnand_ग_लिखो_fc(ctrl, j, *buf);
 
 			brcmnand_soc_data_bus_unprepare(ctrl->soc, false);
-		} else if (oob) {
-			for (j = 0; j < FC_WORDS; j++)
-				brcmnand_write_fc(ctrl, j, 0xffffffff);
-		}
+		पूर्ण अन्यथा अगर (oob) अणु
+			क्रम (j = 0; j < FC_WORDS; j++)
+				brcmnand_ग_लिखो_fc(ctrl, j, 0xffffffff);
+		पूर्ण
 
-		if (oob) {
-			oob += write_oob_to_regs(ctrl, i, oob,
+		अगर (oob) अणु
+			oob += ग_लिखो_oob_to_regs(ctrl, i, oob,
 					mtd->oobsize / trans,
 					host->hwcfg.sector_size_1k);
-		}
+		पूर्ण
 
 		/* we cannot use SPARE_AREA_PROGRAM when PARTIAL_PAGE_EN=0 */
 		brcmnand_send_cmd(host, CMD_PROGRAM_PAGE);
-		status = brcmnand_waitfunc(chip);
+		status = brcmnand_रुकोfunc(chip);
 
-		if (status & NAND_STATUS_FAIL) {
+		अगर (status & न_अंकD_STATUS_FAIL) अणु
 			dev_info(ctrl->dev, "program failed at %llx\n",
-				(unsigned long long)addr);
+				(अचिन्हित दीर्घ दीर्घ)addr);
 			ret = -EIO;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 out:
 	brcmnand_wp(mtd, 1);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int brcmnand_write_page(struct nand_chip *chip, const uint8_t *buf,
-			       int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	void *oob = oob_required ? chip->oob_poi : NULL;
+अटल पूर्णांक brcmnand_ग_लिखो_page(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+			       पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	व्योम *oob = oob_required ? chip->oob_poi : शून्य;
 
-	nand_prog_page_begin_op(chip, page, 0, NULL, 0);
-	brcmnand_write(mtd, chip, host->last_addr, (const u32 *)buf, oob);
+	nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
+	brcmnand_ग_लिखो(mtd, chip, host->last_addr, (स्थिर u32 *)buf, oob);
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
-static int brcmnand_write_page_raw(struct nand_chip *chip, const uint8_t *buf,
-				   int oob_required, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	void *oob = oob_required ? chip->oob_poi : NULL;
+अटल पूर्णांक brcmnand_ग_लिखो_page_raw(काष्ठा nand_chip *chip, स्थिर uपूर्णांक8_t *buf,
+				   पूर्णांक oob_required, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	व्योम *oob = oob_required ? chip->oob_poi : शून्य;
 
-	nand_prog_page_begin_op(chip, page, 0, NULL, 0);
+	nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
 	brcmnand_set_ecc_enabled(host, 0);
-	brcmnand_write(mtd, chip, host->last_addr, (const u32 *)buf, oob);
+	brcmnand_ग_लिखो(mtd, chip, host->last_addr, (स्थिर u32 *)buf, oob);
 	brcmnand_set_ecc_enabled(host, 1);
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
-static int brcmnand_write_oob(struct nand_chip *chip, int page)
-{
-	return brcmnand_write(nand_to_mtd(chip), chip,
-			      (u64)page << chip->page_shift, NULL,
+अटल पूर्णांक brcmnand_ग_लिखो_oob(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	वापस brcmnand_ग_लिखो(nand_to_mtd(chip), chip,
+			      (u64)page << chip->page_shअगरt, शून्य,
 			      chip->oob_poi);
-}
+पूर्ण
 
-static int brcmnand_write_oob_raw(struct nand_chip *chip, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	int ret;
+अटल पूर्णांक brcmnand_ग_लिखो_oob_raw(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	पूर्णांक ret;
 
 	brcmnand_set_ecc_enabled(host, 0);
-	ret = brcmnand_write(mtd, chip, (u64)page << chip->page_shift, NULL,
+	ret = brcmnand_ग_लिखो(mtd, chip, (u64)page << chip->page_shअगरt, शून्य,
 				 (u8 *)chip->oob_poi);
 	brcmnand_set_ecc_enabled(host, 1);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /***********************************************************************
- * Per-CS setup (1 NAND device)
+ * Per-CS setup (1 न_अंकD device)
  ***********************************************************************/
 
-static int brcmnand_set_cfg(struct brcmnand_host *host,
-			    struct brcmnand_cfg *cfg)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	struct nand_chip *chip = &host->chip;
-	u16 cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_CFG);
+अटल पूर्णांक brcmnand_set_cfg(काष्ठा brcmnand_host *host,
+			    काष्ठा brcmnand_cfg *cfg)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	काष्ठा nand_chip *chip = &host->chip;
+	u16 cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_CFG);
 	u16 cfg_ext_offs = brcmnand_cs_offset(ctrl, host->cs,
-			BRCMNAND_CS_CFG_EXT);
+			BRCMन_अंकD_CS_CFG_EXT);
 	u16 acc_control_offs = brcmnand_cs_offset(ctrl, host->cs,
-			BRCMNAND_CS_ACC_CONTROL);
+			BRCMन_अंकD_CS_ACC_CONTROL);
 	u8 block_size = 0, page_size = 0, device_size = 0;
-	u32 tmp;
+	u32 पंचांगp;
 
-	if (ctrl->block_sizes) {
-		int i, found;
+	अगर (ctrl->block_sizes) अणु
+		पूर्णांक i, found;
 
-		for (i = 0, found = 0; ctrl->block_sizes[i]; i++)
-			if (ctrl->block_sizes[i] * 1024 == cfg->block_size) {
+		क्रम (i = 0, found = 0; ctrl->block_sizes[i]; i++)
+			अगर (ctrl->block_sizes[i] * 1024 == cfg->block_size) अणु
 				block_size = i;
 				found = 1;
-			}
-		if (!found) {
+			पूर्ण
+		अगर (!found) अणु
 			dev_warn(ctrl->dev, "invalid block size %u\n",
 					cfg->block_size);
-			return -EINVAL;
-		}
-	} else {
-		block_size = ffs(cfg->block_size) - ffs(BRCMNAND_MIN_BLOCKSIZE);
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		block_size = ffs(cfg->block_size) - ffs(BRCMन_अंकD_MIN_BLOCKSIZE);
+	पूर्ण
 
-	if (cfg->block_size < BRCMNAND_MIN_BLOCKSIZE || (ctrl->max_block_size &&
-				cfg->block_size > ctrl->max_block_size)) {
+	अगर (cfg->block_size < BRCMन_अंकD_MIN_BLOCKSIZE || (ctrl->max_block_size &&
+				cfg->block_size > ctrl->max_block_size)) अणु
 		dev_warn(ctrl->dev, "invalid block size %u\n",
 				cfg->block_size);
 		block_size = 0;
-	}
+	पूर्ण
 
-	if (ctrl->page_sizes) {
-		int i, found;
+	अगर (ctrl->page_sizes) अणु
+		पूर्णांक i, found;
 
-		for (i = 0, found = 0; ctrl->page_sizes[i]; i++)
-			if (ctrl->page_sizes[i] == cfg->page_size) {
+		क्रम (i = 0, found = 0; ctrl->page_sizes[i]; i++)
+			अगर (ctrl->page_sizes[i] == cfg->page_size) अणु
 				page_size = i;
 				found = 1;
-			}
-		if (!found) {
+			पूर्ण
+		अगर (!found) अणु
 			dev_warn(ctrl->dev, "invalid page size %u\n",
 					cfg->page_size);
-			return -EINVAL;
-		}
-	} else {
-		page_size = ffs(cfg->page_size) - ffs(BRCMNAND_MIN_PAGESIZE);
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		page_size = ffs(cfg->page_size) - ffs(BRCMन_अंकD_MIN_PAGESIZE);
+	पूर्ण
 
-	if (cfg->page_size < BRCMNAND_MIN_PAGESIZE || (ctrl->max_page_size &&
-				cfg->page_size > ctrl->max_page_size)) {
+	अगर (cfg->page_size < BRCMन_अंकD_MIN_PAGESIZE || (ctrl->max_page_size &&
+				cfg->page_size > ctrl->max_page_size)) अणु
 		dev_warn(ctrl->dev, "invalid page size %u\n", cfg->page_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (fls64(cfg->device_size) < fls64(BRCMNAND_MIN_DEVSIZE)) {
+	अगर (fls64(cfg->device_size) < fls64(BRCMन_अंकD_MIN_DEVSIZE)) अणु
 		dev_warn(ctrl->dev, "invalid device size 0x%llx\n",
-			(unsigned long long)cfg->device_size);
-		return -EINVAL;
-	}
-	device_size = fls64(cfg->device_size) - fls64(BRCMNAND_MIN_DEVSIZE);
+			(अचिन्हित दीर्घ दीर्घ)cfg->device_size);
+		वापस -EINVAL;
+	पूर्ण
+	device_size = fls64(cfg->device_size) - fls64(BRCMन_अंकD_MIN_DEVSIZE);
 
-	tmp = (cfg->blk_adr_bytes << CFG_BLK_ADR_BYTES_SHIFT) |
+	पंचांगp = (cfg->blk_adr_bytes << CFG_BLK_ADR_BYTES_SHIFT) |
 		(cfg->col_adr_bytes << CFG_COL_ADR_BYTES_SHIFT) |
 		(cfg->ful_adr_bytes << CFG_FUL_ADR_BYTES_SHIFT) |
 		(!!(cfg->device_width == 16) << CFG_BUS_WIDTH_SHIFT) |
 		(device_size << CFG_DEVICE_SIZE_SHIFT);
-	if (cfg_offs == cfg_ext_offs) {
-		tmp |= (page_size << ctrl->page_size_shift) |
+	अगर (cfg_offs == cfg_ext_offs) अणु
+		पंचांगp |= (page_size << ctrl->page_size_shअगरt) |
 		       (block_size << CFG_BLK_SIZE_SHIFT);
-		nand_writereg(ctrl, cfg_offs, tmp);
-	} else {
-		nand_writereg(ctrl, cfg_offs, tmp);
-		tmp = (page_size << CFG_EXT_PAGE_SIZE_SHIFT) |
+		nand_ग_लिखोreg(ctrl, cfg_offs, पंचांगp);
+	पूर्ण अन्यथा अणु
+		nand_ग_लिखोreg(ctrl, cfg_offs, पंचांगp);
+		पंचांगp = (page_size << CFG_EXT_PAGE_SIZE_SHIFT) |
 		      (block_size << CFG_EXT_BLK_SIZE_SHIFT);
-		nand_writereg(ctrl, cfg_ext_offs, tmp);
-	}
+		nand_ग_लिखोreg(ctrl, cfg_ext_offs, पंचांगp);
+	पूर्ण
 
-	tmp = nand_readreg(ctrl, acc_control_offs);
-	tmp &= ~brcmnand_ecc_level_mask(ctrl);
-	tmp &= ~brcmnand_spare_area_mask(ctrl);
-	if (ctrl->nand_version >= 0x0302) {
-		tmp |= cfg->ecc_level << NAND_ACC_CONTROL_ECC_SHIFT;
-		tmp |= cfg->spare_area_size;
-	}
-	nand_writereg(ctrl, acc_control_offs, tmp);
+	पंचांगp = nand_पढ़ोreg(ctrl, acc_control_offs);
+	पंचांगp &= ~brcmnand_ecc_level_mask(ctrl);
+	पंचांगp &= ~brcmnand_spare_area_mask(ctrl);
+	अगर (ctrl->nand_version >= 0x0302) अणु
+		पंचांगp |= cfg->ecc_level << न_अंकD_ACC_CONTROL_ECC_SHIFT;
+		पंचांगp |= cfg->spare_area_size;
+	पूर्ण
+	nand_ग_लिखोreg(ctrl, acc_control_offs, पंचांगp);
 
 	brcmnand_set_sector_size_1k(host, cfg->sector_size_1k);
 
-	/* threshold = ceil(BCH-level * 0.75) */
+	/* threshold = उच्चमान(BCH-level * 0.75) */
 	brcmnand_wr_corr_thresh(host, DIV_ROUND_UP(chip->ecc.strength * 3, 4));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void brcmnand_print_cfg(struct brcmnand_host *host,
-			       char *buf, struct brcmnand_cfg *cfg)
-{
-	buf += sprintf(buf,
+अटल व्योम brcmnand_prपूर्णांक_cfg(काष्ठा brcmnand_host *host,
+			       अक्षर *buf, काष्ठा brcmnand_cfg *cfg)
+अणु
+	buf += प्र_लिखो(buf,
 		"%lluMiB total, %uKiB blocks, %u%s pages, %uB OOB, %u-bit",
-		(unsigned long long)cfg->device_size >> 20,
+		(अचिन्हित दीर्घ दीर्घ)cfg->device_size >> 20,
 		cfg->block_size >> 10,
 		cfg->page_size >= 1024 ? cfg->page_size >> 10 : cfg->page_size,
 		cfg->page_size >= 1024 ? "KiB" : "B",
 		cfg->spare_area_size, cfg->device_width);
 
-	/* Account for Hamming ECC and for BCH 512B vs 1KiB sectors */
-	if (is_hamming_ecc(host->ctrl, cfg))
-		sprintf(buf, ", Hamming ECC");
-	else if (cfg->sector_size_1k)
-		sprintf(buf, ", BCH-%u (1KiB sector)", cfg->ecc_level << 1);
-	else
-		sprintf(buf, ", BCH-%u", cfg->ecc_level);
-}
+	/* Account क्रम Hamming ECC and क्रम BCH 512B vs 1KiB sectors */
+	अगर (is_hamming_ecc(host->ctrl, cfg))
+		प्र_लिखो(buf, ", Hamming ECC");
+	अन्यथा अगर (cfg->sector_size_1k)
+		प्र_लिखो(buf, ", BCH-%u (1KiB sector)", cfg->ecc_level << 1);
+	अन्यथा
+		प्र_लिखो(buf, ", BCH-%u", cfg->ecc_level);
+पूर्ण
 
 /*
  * Minimum number of bytes to address a page. Calculated as:
  *     roundup(log2(size / page-size) / 8)
  *
- * NB: the following does not "round up" for non-power-of-2 'size'; but this is
- *     OK because many other things will break if 'size' is irregular...
+ * NB: the following करोes not "round up" क्रम non-घातer-of-2 'size'; but this is
+ *     OK because many other things will अवरोध अगर 'size' is irregular...
  */
-static inline int get_blk_adr_bytes(u64 size, u32 writesize)
-{
-	return ALIGN(ilog2(size) - ilog2(writesize), 8) >> 3;
-}
+अटल अंतरभूत पूर्णांक get_blk_adr_bytes(u64 size, u32 ग_लिखोsize)
+अणु
+	वापस ALIGN(ilog2(size) - ilog2(ग_लिखोsize), 8) >> 3;
+पूर्ण
 
-static int brcmnand_setup_dev(struct brcmnand_host *host)
-{
-	struct mtd_info *mtd = nand_to_mtd(&host->chip);
-	struct nand_chip *chip = &host->chip;
-	const struct nand_ecc_props *requirements =
+अटल पूर्णांक brcmnand_setup_dev(काष्ठा brcmnand_host *host)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(&host->chip);
+	काष्ठा nand_chip *chip = &host->chip;
+	स्थिर काष्ठा nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(&chip->base);
-	struct brcmnand_controller *ctrl = host->ctrl;
-	struct brcmnand_cfg *cfg = &host->hwcfg;
-	char msg[128];
-	u32 offs, tmp, oob_sector;
-	int ret;
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	काष्ठा brcmnand_cfg *cfg = &host->hwcfg;
+	अक्षर msg[128];
+	u32 offs, पंचांगp, oob_sector;
+	पूर्णांक ret;
 
-	memset(cfg, 0, sizeof(*cfg));
+	स_रखो(cfg, 0, माप(*cfg));
 
-	ret = of_property_read_u32(nand_get_flash_node(chip),
+	ret = of_property_पढ़ो_u32(nand_get_flash_node(chip),
 				   "brcm,nand-oob-sector-size",
 				   &oob_sector);
-	if (ret) {
+	अगर (ret) अणु
 		/* Use detected size */
 		cfg->spare_area_size = mtd->oobsize /
-					(mtd->writesize >> FC_SHIFT);
-	} else {
+					(mtd->ग_लिखोsize >> FC_SHIFT);
+	पूर्ण अन्यथा अणु
 		cfg->spare_area_size = oob_sector;
-	}
-	if (cfg->spare_area_size > ctrl->max_oob)
+	पूर्ण
+	अगर (cfg->spare_area_size > ctrl->max_oob)
 		cfg->spare_area_size = ctrl->max_oob;
 	/*
 	 * Set oobsize to be consistent with controller's spare_area_size, as
 	 * the rest is inaccessible.
 	 */
-	mtd->oobsize = cfg->spare_area_size * (mtd->writesize >> FC_SHIFT);
+	mtd->oobsize = cfg->spare_area_size * (mtd->ग_लिखोsize >> FC_SHIFT);
 
 	cfg->device_size = mtd->size;
 	cfg->block_size = mtd->erasesize;
-	cfg->page_size = mtd->writesize;
-	cfg->device_width = (chip->options & NAND_BUSWIDTH_16) ? 16 : 8;
+	cfg->page_size = mtd->ग_लिखोsize;
+	cfg->device_width = (chip->options & न_अंकD_BUSWIDTH_16) ? 16 : 8;
 	cfg->col_adr_bytes = 2;
-	cfg->blk_adr_bytes = get_blk_adr_bytes(mtd->size, mtd->writesize);
+	cfg->blk_adr_bytes = get_blk_adr_bytes(mtd->size, mtd->ग_लिखोsize);
 
-	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST) {
+	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST) अणु
 		dev_err(ctrl->dev, "only HW ECC supported; selected: %d\n",
 			chip->ecc.engine_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (chip->ecc.algo == NAND_ECC_ALGO_UNKNOWN) {
-		if (chip->ecc.strength == 1 && chip->ecc.size == 512)
-			/* Default to Hamming for 1-bit ECC, if unspecified */
-			chip->ecc.algo = NAND_ECC_ALGO_HAMMING;
-		else
+	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_UNKNOWN) अणु
+		अगर (chip->ecc.strength == 1 && chip->ecc.size == 512)
+			/* Default to Hamming क्रम 1-bit ECC, अगर unspecअगरied */
+			chip->ecc.algo = न_अंकD_ECC_ALGO_HAMMING;
+		अन्यथा
 			/* Otherwise, BCH */
-			chip->ecc.algo = NAND_ECC_ALGO_BCH;
-	}
+			chip->ecc.algo = न_अंकD_ECC_ALGO_BCH;
+	पूर्ण
 
-	if (chip->ecc.algo == NAND_ECC_ALGO_HAMMING &&
-	    (chip->ecc.strength != 1 || chip->ecc.size != 512)) {
+	अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_HAMMING &&
+	    (chip->ecc.strength != 1 || chip->ecc.size != 512)) अणु
 		dev_err(ctrl->dev, "invalid Hamming params: %d bits per %d bytes\n",
 			chip->ecc.strength, chip->ecc.size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_NONE &&
-	    (!chip->ecc.size || !chip->ecc.strength)) {
-		if (requirements->step_size && requirements->strength) {
+	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_NONE &&
+	    (!chip->ecc.size || !chip->ecc.strength)) अणु
+		अगर (requirements->step_size && requirements->strength) अणु
 			/* use detected ECC parameters */
 			chip->ecc.size = requirements->step_size;
 			chip->ecc.strength = requirements->strength;
 			dev_info(ctrl->dev, "Using ECC step-size %d, strength %d\n",
 				chip->ecc.size, chip->ecc.strength);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (chip->ecc.size) {
-	case 512:
-		if (chip->ecc.algo == NAND_ECC_ALGO_HAMMING)
+	चयन (chip->ecc.size) अणु
+	हाल 512:
+		अगर (chip->ecc.algo == न_अंकD_ECC_ALGO_HAMMING)
 			cfg->ecc_level = 15;
-		else
+		अन्यथा
 			cfg->ecc_level = chip->ecc.strength;
 		cfg->sector_size_1k = 0;
-		break;
-	case 1024:
-		if (!(ctrl->features & BRCMNAND_HAS_1K_SECTORS)) {
+		अवरोध;
+	हाल 1024:
+		अगर (!(ctrl->features & BRCMन_अंकD_HAS_1K_SECTORS)) अणु
 			dev_err(ctrl->dev, "1KB sectors not supported\n");
-			return -EINVAL;
-		}
-		if (chip->ecc.strength & 0x1) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (chip->ecc.strength & 0x1) अणु
 			dev_err(ctrl->dev,
 				"odd ECC not supported with 1KB sectors\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		cfg->ecc_level = chip->ecc.strength >> 1;
 		cfg->sector_size_1k = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ctrl->dev, "unsupported ECC size: %d\n",
 			chip->ecc.size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	cfg->ful_adr_bytes = cfg->blk_adr_bytes;
-	if (mtd->writesize > 512)
+	अगर (mtd->ग_लिखोsize > 512)
 		cfg->ful_adr_bytes += cfg->col_adr_bytes;
-	else
+	अन्यथा
 		cfg->ful_adr_bytes += 1;
 
 	ret = brcmnand_set_cfg(host, cfg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	brcmnand_set_ecc_enabled(host, 1);
 
-	brcmnand_print_cfg(host, msg, cfg);
+	brcmnand_prपूर्णांक_cfg(host, msg, cfg);
 	dev_info(ctrl->dev, "detected %s\n", msg);
 
 	/* Configure ACC_CONTROL */
-	offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_ACC_CONTROL);
-	tmp = nand_readreg(ctrl, offs);
-	tmp &= ~ACC_CONTROL_PARTIAL_PAGE;
-	tmp &= ~ACC_CONTROL_RD_ERASED;
+	offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_ACC_CONTROL);
+	पंचांगp = nand_पढ़ोreg(ctrl, offs);
+	पंचांगp &= ~ACC_CONTROL_PARTIAL_PAGE;
+	पंचांगp &= ~ACC_CONTROL_RD_ERASED;
 
-	/* We need to turn on Read from erased paged protected by ECC */
-	if (ctrl->nand_version >= 0x0702)
-		tmp |= ACC_CONTROL_RD_ERASED;
-	tmp &= ~ACC_CONTROL_FAST_PGM_RDIN;
-	if (ctrl->features & BRCMNAND_HAS_PREFETCH)
-		tmp &= ~ACC_CONTROL_PREFETCH;
+	/* We need to turn on Read from erased paged रक्षित by ECC */
+	अगर (ctrl->nand_version >= 0x0702)
+		पंचांगp |= ACC_CONTROL_RD_ERASED;
+	पंचांगp &= ~ACC_CONTROL_FAST_PGM_RDIN;
+	अगर (ctrl->features & BRCMन_अंकD_HAS_PREFETCH)
+		पंचांगp &= ~ACC_CONTROL_PREFETCH;
 
-	nand_writereg(ctrl, offs, tmp);
+	nand_ग_लिखोreg(ctrl, offs, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_attach_chip(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct brcmnand_host *host = nand_get_controller_data(chip);
-	int ret;
+अटल पूर्णांक brcmnand_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा brcmnand_host *host = nand_get_controller_data(chip);
+	पूर्णांक ret;
 
-	chip->options |= NAND_NO_SUBPAGE_WRITE;
+	chip->options |= न_अंकD_NO_SUBPAGE_WRITE;
 	/*
-	 * Avoid (for instance) kmap()'d buffers from JFFS2, which we can't DMA
+	 * Aव्योम (क्रम instance) kmap()'d buffers from JFFS2, which we can't DMA
 	 * to/from, and have nand_base pass us a bounce buffer instead, as
 	 * needed.
 	 */
-	chip->options |= NAND_USES_DMA;
+	chip->options |= न_अंकD_USES_DMA;
 
-	if (chip->bbt_options & NAND_BBT_USE_FLASH)
-		chip->bbt_options |= NAND_BBT_NO_OOB;
+	अगर (chip->bbt_options & न_अंकD_BBT_USE_FLASH)
+		chip->bbt_options |= न_अंकD_BBT_NO_OOB;
 
-	if (brcmnand_setup_dev(host))
-		return -ENXIO;
+	अगर (brcmnand_setup_dev(host))
+		वापस -ENXIO;
 
 	chip->ecc.size = host->hwcfg.sector_size_1k ? 1024 : 512;
 
-	/* only use our internal HW threshold */
+	/* only use our पूर्णांकernal HW threshold */
 	mtd->bitflip_threshold = 1;
 
 	ret = brcmstb_choose_ecc_layout(host);
 
 	/* If OOB is written with ECC enabled it will cause ECC errors */
-	if (is_hamming_ecc(host->ctrl, &host->hwcfg)) {
-		chip->ecc.write_oob = brcmnand_write_oob_raw;
-		chip->ecc.read_oob = brcmnand_read_oob_raw;
-	}
+	अगर (is_hamming_ecc(host->ctrl, &host->hwcfg)) अणु
+		chip->ecc.ग_लिखो_oob = brcmnand_ग_लिखो_oob_raw;
+		chip->ecc.पढ़ो_oob = brcmnand_पढ़ो_oob_raw;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nand_controller_ops brcmnand_controller_ops = {
+अटल स्थिर काष्ठा nand_controller_ops brcmnand_controller_ops = अणु
 	.attach_chip = brcmnand_attach_chip,
-};
+पूर्ण;
 
-static int brcmnand_init_cs(struct brcmnand_host *host, struct device_node *dn)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	struct platform_device *pdev = host->pdev;
-	struct mtd_info *mtd;
-	struct nand_chip *chip;
-	int ret;
+अटल पूर्णांक brcmnand_init_cs(काष्ठा brcmnand_host *host, काष्ठा device_node *dn)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	काष्ठा platक्रमm_device *pdev = host->pdev;
+	काष्ठा mtd_info *mtd;
+	काष्ठा nand_chip *chip;
+	पूर्णांक ret;
 	u16 cfg_offs;
 
-	ret = of_property_read_u32(dn, "reg", &host->cs);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(dn, "reg", &host->cs);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't get chip-select\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	mtd = nand_to_mtd(&host->chip);
 	chip = &host->chip;
 
 	nand_set_flash_node(chip, dn);
 	nand_set_controller_data(chip, host);
-	mtd->name = devm_kasprintf(&pdev->dev, GFP_KERNEL, "brcmnand.%d",
+	mtd->name = devm_kaप्र_लिखो(&pdev->dev, GFP_KERNEL, "brcmnand.%d",
 				   host->cs);
-	if (!mtd->name)
-		return -ENOMEM;
+	अगर (!mtd->name)
+		वापस -ENOMEM;
 
 	mtd->owner = THIS_MODULE;
 	mtd->dev.parent = &pdev->dev;
 
 	chip->legacy.cmd_ctrl = brcmnand_cmd_ctrl;
 	chip->legacy.cmdfunc = brcmnand_cmdfunc;
-	chip->legacy.waitfunc = brcmnand_waitfunc;
-	chip->legacy.read_byte = brcmnand_read_byte;
-	chip->legacy.read_buf = brcmnand_read_buf;
-	chip->legacy.write_buf = brcmnand_write_buf;
+	chip->legacy.रुकोfunc = brcmnand_रुकोfunc;
+	chip->legacy.पढ़ो_byte = brcmnand_पढ़ो_byte;
+	chip->legacy.पढ़ो_buf = brcmnand_पढ़ो_buf;
+	chip->legacy.ग_लिखो_buf = brcmnand_ग_लिखो_buf;
 
-	chip->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
-	chip->ecc.read_page = brcmnand_read_page;
-	chip->ecc.write_page = brcmnand_write_page;
-	chip->ecc.read_page_raw = brcmnand_read_page_raw;
-	chip->ecc.write_page_raw = brcmnand_write_page_raw;
-	chip->ecc.write_oob_raw = brcmnand_write_oob_raw;
-	chip->ecc.read_oob_raw = brcmnand_read_oob_raw;
-	chip->ecc.read_oob = brcmnand_read_oob;
-	chip->ecc.write_oob = brcmnand_write_oob;
+	chip->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+	chip->ecc.पढ़ो_page = brcmnand_पढ़ो_page;
+	chip->ecc.ग_लिखो_page = brcmnand_ग_लिखो_page;
+	chip->ecc.पढ़ो_page_raw = brcmnand_पढ़ो_page_raw;
+	chip->ecc.ग_लिखो_page_raw = brcmnand_ग_लिखो_page_raw;
+	chip->ecc.ग_लिखो_oob_raw = brcmnand_ग_लिखो_oob_raw;
+	chip->ecc.पढ़ो_oob_raw = brcmnand_पढ़ो_oob_raw;
+	chip->ecc.पढ़ो_oob = brcmnand_पढ़ो_oob;
+	chip->ecc.ग_लिखो_oob = brcmnand_ग_लिखो_oob;
 
 	chip->controller = &ctrl->controller;
 
 	/*
 	 * The bootloader might have configured 16bit mode but
-	 * NAND READID command only works in 8bit mode. We force
-	 * 8bit mode here to ensure that NAND READID commands works.
+	 * न_अंकD READID command only works in 8bit mode. We क्रमce
+	 * 8bit mode here to ensure that न_अंकD READID commands works.
 	 */
-	cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_CFG);
-	nand_writereg(ctrl, cfg_offs,
-		      nand_readreg(ctrl, cfg_offs) & ~CFG_BUS_WIDTH);
+	cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_CFG);
+	nand_ग_लिखोreg(ctrl, cfg_offs,
+		      nand_पढ़ोreg(ctrl, cfg_offs) & ~CFG_BUS_WIDTH);
 
 	ret = nand_scan(chip, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = mtd_device_register(mtd, NULL, 0);
-	if (ret)
+	ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	अगर (ret)
 		nand_cleanup(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void brcmnand_save_restore_cs_config(struct brcmnand_host *host,
-					    int restore)
-{
-	struct brcmnand_controller *ctrl = host->ctrl;
-	u16 cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_CFG);
+अटल व्योम brcmnand_save_restore_cs_config(काष्ठा brcmnand_host *host,
+					    पूर्णांक restore)
+अणु
+	काष्ठा brcmnand_controller *ctrl = host->ctrl;
+	u16 cfg_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_CFG);
 	u16 cfg_ext_offs = brcmnand_cs_offset(ctrl, host->cs,
-			BRCMNAND_CS_CFG_EXT);
+			BRCMन_अंकD_CS_CFG_EXT);
 	u16 acc_control_offs = brcmnand_cs_offset(ctrl, host->cs,
-			BRCMNAND_CS_ACC_CONTROL);
-	u16 t1_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_TIMING1);
-	u16 t2_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMNAND_CS_TIMING2);
+			BRCMन_अंकD_CS_ACC_CONTROL);
+	u16 t1_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_TIMING1);
+	u16 t2_offs = brcmnand_cs_offset(ctrl, host->cs, BRCMन_अंकD_CS_TIMING2);
 
-	if (restore) {
-		nand_writereg(ctrl, cfg_offs, host->hwcfg.config);
-		if (cfg_offs != cfg_ext_offs)
-			nand_writereg(ctrl, cfg_ext_offs,
+	अगर (restore) अणु
+		nand_ग_लिखोreg(ctrl, cfg_offs, host->hwcfg.config);
+		अगर (cfg_offs != cfg_ext_offs)
+			nand_ग_लिखोreg(ctrl, cfg_ext_offs,
 				      host->hwcfg.config_ext);
-		nand_writereg(ctrl, acc_control_offs, host->hwcfg.acc_control);
-		nand_writereg(ctrl, t1_offs, host->hwcfg.timing_1);
-		nand_writereg(ctrl, t2_offs, host->hwcfg.timing_2);
-	} else {
-		host->hwcfg.config = nand_readreg(ctrl, cfg_offs);
-		if (cfg_offs != cfg_ext_offs)
+		nand_ग_लिखोreg(ctrl, acc_control_offs, host->hwcfg.acc_control);
+		nand_ग_लिखोreg(ctrl, t1_offs, host->hwcfg.timing_1);
+		nand_ग_लिखोreg(ctrl, t2_offs, host->hwcfg.timing_2);
+	पूर्ण अन्यथा अणु
+		host->hwcfg.config = nand_पढ़ोreg(ctrl, cfg_offs);
+		अगर (cfg_offs != cfg_ext_offs)
 			host->hwcfg.config_ext =
-				nand_readreg(ctrl, cfg_ext_offs);
-		host->hwcfg.acc_control = nand_readreg(ctrl, acc_control_offs);
-		host->hwcfg.timing_1 = nand_readreg(ctrl, t1_offs);
-		host->hwcfg.timing_2 = nand_readreg(ctrl, t2_offs);
-	}
-}
+				nand_पढ़ोreg(ctrl, cfg_ext_offs);
+		host->hwcfg.acc_control = nand_पढ़ोreg(ctrl, acc_control_offs);
+		host->hwcfg.timing_1 = nand_पढ़ोreg(ctrl, t1_offs);
+		host->hwcfg.timing_2 = nand_पढ़ोreg(ctrl, t2_offs);
+	पूर्ण
+पूर्ण
 
-static int brcmnand_suspend(struct device *dev)
-{
-	struct brcmnand_controller *ctrl = dev_get_drvdata(dev);
-	struct brcmnand_host *host;
+अटल पूर्णांक brcmnand_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा brcmnand_controller *ctrl = dev_get_drvdata(dev);
+	काष्ठा brcmnand_host *host;
 
-	list_for_each_entry(host, &ctrl->host_list, node)
+	list_क्रम_each_entry(host, &ctrl->host_list, node)
 		brcmnand_save_restore_cs_config(host, 0);
 
-	ctrl->nand_cs_nand_select = brcmnand_read_reg(ctrl, BRCMNAND_CS_SELECT);
-	ctrl->nand_cs_nand_xor = brcmnand_read_reg(ctrl, BRCMNAND_CS_XOR);
+	ctrl->nand_cs_nand_select = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CS_SELECT);
+	ctrl->nand_cs_nand_xor = brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CS_XOR);
 	ctrl->corr_stat_threshold =
-		brcmnand_read_reg(ctrl, BRCMNAND_CORR_THRESHOLD);
+		brcmnand_पढ़ो_reg(ctrl, BRCMन_अंकD_CORR_THRESHOLD);
 
-	if (has_flash_dma(ctrl))
-		ctrl->flash_dma_mode = flash_dma_readl(ctrl, FLASH_DMA_MODE);
-	else if (has_edu(ctrl))
-		ctrl->edu_config = edu_readl(ctrl, EDU_CONFIG);
+	अगर (has_flash_dma(ctrl))
+		ctrl->flash_dma_mode = flash_dma_पढ़ोl(ctrl, FLASH_DMA_MODE);
+	अन्यथा अगर (has_edu(ctrl))
+		ctrl->edu_config = edu_पढ़ोl(ctrl, EDU_CONFIG);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int brcmnand_resume(struct device *dev)
-{
-	struct brcmnand_controller *ctrl = dev_get_drvdata(dev);
-	struct brcmnand_host *host;
+अटल पूर्णांक brcmnand_resume(काष्ठा device *dev)
+अणु
+	काष्ठा brcmnand_controller *ctrl = dev_get_drvdata(dev);
+	काष्ठा brcmnand_host *host;
 
-	if (has_flash_dma(ctrl)) {
-		flash_dma_writel(ctrl, FLASH_DMA_MODE, ctrl->flash_dma_mode);
-		flash_dma_writel(ctrl, FLASH_DMA_ERROR_STATUS, 0);
-	}
+	अगर (has_flash_dma(ctrl)) अणु
+		flash_dma_ग_लिखोl(ctrl, FLASH_DMA_MODE, ctrl->flash_dma_mode);
+		flash_dma_ग_लिखोl(ctrl, FLASH_DMA_ERROR_STATUS, 0);
+	पूर्ण
 
-	if (has_edu(ctrl)) {
-		ctrl->edu_config = edu_readl(ctrl, EDU_CONFIG);
-		edu_writel(ctrl, EDU_CONFIG, ctrl->edu_config);
-		edu_readl(ctrl, EDU_CONFIG);
+	अगर (has_edu(ctrl)) अणु
+		ctrl->edu_config = edu_पढ़ोl(ctrl, EDU_CONFIG);
+		edu_ग_लिखोl(ctrl, EDU_CONFIG, ctrl->edu_config);
+		edu_पढ़ोl(ctrl, EDU_CONFIG);
 		brcmnand_edu_init(ctrl);
-	}
+	पूर्ण
 
-	brcmnand_write_reg(ctrl, BRCMNAND_CS_SELECT, ctrl->nand_cs_nand_select);
-	brcmnand_write_reg(ctrl, BRCMNAND_CS_XOR, ctrl->nand_cs_nand_xor);
-	brcmnand_write_reg(ctrl, BRCMNAND_CORR_THRESHOLD,
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CS_SELECT, ctrl->nand_cs_nand_select);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CS_XOR, ctrl->nand_cs_nand_xor);
+	brcmnand_ग_लिखो_reg(ctrl, BRCMन_अंकD_CORR_THRESHOLD,
 			ctrl->corr_stat_threshold);
-	if (ctrl->soc) {
-		/* Clear/re-enable interrupt */
+	अगर (ctrl->soc) अणु
+		/* Clear/re-enable पूर्णांकerrupt */
 		ctrl->soc->ctlrdy_ack(ctrl->soc);
 		ctrl->soc->ctlrdy_set_enabled(ctrl->soc, true);
-	}
+	पूर्ण
 
-	list_for_each_entry(host, &ctrl->host_list, node) {
-		struct nand_chip *chip = &host->chip;
+	list_क्रम_each_entry(host, &ctrl->host_list, node) अणु
+		काष्ठा nand_chip *chip = &host->chip;
 
 		brcmnand_save_restore_cs_config(host, 1);
 
-		/* Reset the chip, required by some chips after power-up */
+		/* Reset the chip, required by some chips after घातer-up */
 		nand_reset_op(chip);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct dev_pm_ops brcmnand_pm_ops = {
+स्थिर काष्ठा dev_pm_ops brcmnand_pm_ops = अणु
 	.suspend		= brcmnand_suspend,
 	.resume			= brcmnand_resume,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(brcmnand_pm_ops);
 
-static const struct of_device_id brcmnand_of_match[] = {
-	{ .compatible = "brcm,brcmnand-v2.1" },
-	{ .compatible = "brcm,brcmnand-v2.2" },
-	{ .compatible = "brcm,brcmnand-v4.0" },
-	{ .compatible = "brcm,brcmnand-v5.0" },
-	{ .compatible = "brcm,brcmnand-v6.0" },
-	{ .compatible = "brcm,brcmnand-v6.1" },
-	{ .compatible = "brcm,brcmnand-v6.2" },
-	{ .compatible = "brcm,brcmnand-v7.0" },
-	{ .compatible = "brcm,brcmnand-v7.1" },
-	{ .compatible = "brcm,brcmnand-v7.2" },
-	{ .compatible = "brcm,brcmnand-v7.3" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id brcmnand_of_match[] = अणु
+	अणु .compatible = "brcm,brcmnand-v2.1" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v2.2" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v4.0" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v5.0" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v6.0" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v6.1" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v6.2" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v7.0" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v7.1" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v7.2" पूर्ण,
+	अणु .compatible = "brcm,brcmnand-v7.3" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, brcmnand_of_match);
 
 /***********************************************************************
- * Platform driver setup (per controller)
+ * Platक्रमm driver setup (per controller)
  ***********************************************************************/
-static int brcmnand_edu_setup(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct brcmnand_controller *ctrl = dev_get_drvdata(&pdev->dev);
-	struct resource *res;
-	int ret;
+अटल पूर्णांक brcmnand_edu_setup(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा brcmnand_controller *ctrl = dev_get_drvdata(&pdev->dev);
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "flash-edu");
-	if (res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "flash-edu");
+	अगर (res) अणु
 		ctrl->edu_base = devm_ioremap_resource(dev, res);
-		if (IS_ERR(ctrl->edu_base))
-			return PTR_ERR(ctrl->edu_base);
+		अगर (IS_ERR(ctrl->edu_base))
+			वापस PTR_ERR(ctrl->edu_base);
 
 		ctrl->edu_offsets = edu_regs;
 
-		edu_writel(ctrl, EDU_CONFIG, EDU_CONFIG_MODE_NAND |
+		edu_ग_लिखोl(ctrl, EDU_CONFIG, EDU_CONFIG_MODE_न_अंकD |
 			   EDU_CONFIG_SWAP_CFG);
-		edu_readl(ctrl, EDU_CONFIG);
+		edu_पढ़ोl(ctrl, EDU_CONFIG);
 
 		/* initialize edu */
 		brcmnand_edu_init(ctrl);
 
-		ctrl->edu_irq = platform_get_irq_optional(pdev, 1);
-		if (ctrl->edu_irq < 0) {
+		ctrl->edu_irq = platक्रमm_get_irq_optional(pdev, 1);
+		अगर (ctrl->edu_irq < 0) अणु
 			dev_warn(dev,
 				 "FLASH EDU enabled, using ctlrdy irq\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = devm_request_irq(dev, ctrl->edu_irq,
 					       brcmnand_edu_irq, 0,
 					       "brcmnand-edu", ctrl);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(ctrl->dev, "can't allocate IRQ %d: error %d\n",
 					ctrl->edu_irq, ret);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			dev_info(dev, "FLASH EDU enabled using irq %u\n",
 				 ctrl->edu_irq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int brcmnand_probe(struct platform_device *pdev, struct brcmnand_soc *soc)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *dn = dev->of_node, *child;
-	struct brcmnand_controller *ctrl;
-	struct resource *res;
-	int ret;
+पूर्णांक brcmnand_probe(काष्ठा platक्रमm_device *pdev, काष्ठा brcmnand_soc *soc)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *dn = dev->of_node, *child;
+	काष्ठा brcmnand_controller *ctrl;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
 	/* We only support device-tree instantiation */
-	if (!dn)
-		return -ENODEV;
+	अगर (!dn)
+		वापस -ENODEV;
 
-	if (!of_match_node(brcmnand_of_match, dn))
-		return -ENODEV;
+	अगर (!of_match_node(brcmnand_of_match, dn))
+		वापस -ENODEV;
 
-	ctrl = devm_kzalloc(dev, sizeof(*ctrl), GFP_KERNEL);
-	if (!ctrl)
-		return -ENOMEM;
+	ctrl = devm_kzalloc(dev, माप(*ctrl), GFP_KERNEL);
+	अगर (!ctrl)
+		वापस -ENOMEM;
 
 	dev_set_drvdata(dev, ctrl);
 	ctrl->dev = dev;
 
-	init_completion(&ctrl->done);
-	init_completion(&ctrl->dma_done);
-	init_completion(&ctrl->edu_done);
+	init_completion(&ctrl->करोne);
+	init_completion(&ctrl->dma_करोne);
+	init_completion(&ctrl->edu_करोne);
 	nand_controller_init(&ctrl->controller);
 	ctrl->controller.ops = &brcmnand_controller_ops;
 	INIT_LIST_HEAD(&ctrl->host_list);
 
-	/* NAND register range */
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	/* न_अंकD रेजिस्टर range */
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	ctrl->nand_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(ctrl->nand_base))
-		return PTR_ERR(ctrl->nand_base);
+	अगर (IS_ERR(ctrl->nand_base))
+		वापस PTR_ERR(ctrl->nand_base);
 
-	/* Enable clock before using NAND registers */
+	/* Enable घड़ी beक्रमe using न_अंकD रेजिस्टरs */
 	ctrl->clk = devm_clk_get(dev, "nand");
-	if (!IS_ERR(ctrl->clk)) {
+	अगर (!IS_ERR(ctrl->clk)) अणु
 		ret = clk_prepare_enable(ctrl->clk);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		ret = PTR_ERR(ctrl->clk);
-		if (ret == -EPROBE_DEFER)
-			return ret;
+		अगर (ret == -EPROBE_DEFER)
+			वापस ret;
 
-		ctrl->clk = NULL;
-	}
+		ctrl->clk = शून्य;
+	पूर्ण
 
-	/* Initialize NAND revision */
+	/* Initialize न_अंकD revision */
 	ret = brcmnand_revision_init(ctrl);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	/*
 	 * Most chips have this cache at a fixed offset within 'nand' block.
-	 * Some must specify this region separately.
+	 * Some must specअगरy this region separately.
 	 */
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "nand-cache");
-	if (res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "nand-cache");
+	अगर (res) अणु
 		ctrl->nand_fc = devm_ioremap_resource(dev, res);
-		if (IS_ERR(ctrl->nand_fc)) {
+		अगर (IS_ERR(ctrl->nand_fc)) अणु
 			ret = PTR_ERR(ctrl->nand_fc);
-			goto err;
-		}
-	} else {
+			जाओ err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ctrl->nand_fc = ctrl->nand_base +
-				ctrl->reg_offsets[BRCMNAND_FC_BASE];
-	}
+				ctrl->reg_offsets[BRCMन_अंकD_FC_BASE];
+	पूर्ण
 
 	/* FLASH_DMA */
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "flash-dma");
-	if (res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "flash-dma");
+	अगर (res) अणु
 		ctrl->flash_dma_base = devm_ioremap_resource(dev, res);
-		if (IS_ERR(ctrl->flash_dma_base)) {
+		अगर (IS_ERR(ctrl->flash_dma_base)) अणु
 			ret = PTR_ERR(ctrl->flash_dma_base);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		/* initialize the dma version */
 		brcmnand_flash_dma_revision_init(ctrl);
 
 		ret = -EIO;
-		if (ctrl->nand_version >= 0x0700)
+		अगर (ctrl->nand_version >= 0x0700)
 			ret = dma_set_mask_and_coherent(&pdev->dev,
 							DMA_BIT_MASK(40));
-		if (ret)
+		अगर (ret)
 			ret = dma_set_mask_and_coherent(&pdev->dev,
 							DMA_BIT_MASK(32));
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		/* linked-list and stop on error */
-		flash_dma_writel(ctrl, FLASH_DMA_MODE, FLASH_DMA_MODE_MASK);
-		flash_dma_writel(ctrl, FLASH_DMA_ERROR_STATUS, 0);
+		flash_dma_ग_लिखोl(ctrl, FLASH_DMA_MODE, FLASH_DMA_MODE_MASK);
+		flash_dma_ग_लिखोl(ctrl, FLASH_DMA_ERROR_STATUS, 0);
 
 		/* Allocate descriptor(s) */
 		ctrl->dma_desc = dmam_alloc_coherent(dev,
-						     sizeof(*ctrl->dma_desc),
+						     माप(*ctrl->dma_desc),
 						     &ctrl->dma_pa, GFP_KERNEL);
-		if (!ctrl->dma_desc) {
+		अगर (!ctrl->dma_desc) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		ctrl->dma_irq = platform_get_irq(pdev, 1);
-		if ((int)ctrl->dma_irq < 0) {
+		ctrl->dma_irq = platक्रमm_get_irq(pdev, 1);
+		अगर ((पूर्णांक)ctrl->dma_irq < 0) अणु
 			dev_err(dev, "missing FLASH_DMA IRQ\n");
 			ret = -ENODEV;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		ret = devm_request_irq(dev, ctrl->dma_irq,
 				brcmnand_dma_irq, 0, DRV_NAME,
 				ctrl);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "can't allocate IRQ %d: error %d\n",
 					ctrl->dma_irq, ret);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		dev_info(dev, "enabling FLASH_DMA\n");
 		/* set flash dma transfer function to call */
 		ctrl->dma_trans = brcmnand_dma_trans;
-	} else	{
+	पूर्ण अन्यथा	अणु
 		ret = brcmnand_edu_setup(pdev);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 
-		if (has_edu(ctrl))
+		अगर (has_edu(ctrl))
 			/* set edu transfer function to call */
 			ctrl->dma_trans = brcmnand_edu_trans;
-	}
+	पूर्ण
 
-	/* Disable automatic device ID config, direct addressing */
-	brcmnand_rmw_reg(ctrl, BRCMNAND_CS_SELECT,
+	/* Disable स्वतःmatic device ID config, direct addressing */
+	brcmnand_rmw_reg(ctrl, BRCMन_अंकD_CS_SELECT,
 			 CS_SELECT_AUTO_DEVICE_ID_CFG | 0xff, 0, 0);
 	/* Disable XOR addressing */
-	brcmnand_rmw_reg(ctrl, BRCMNAND_CS_XOR, 0xff, 0, 0);
+	brcmnand_rmw_reg(ctrl, BRCMन_अंकD_CS_XOR, 0xff, 0, 0);
 
-	if (ctrl->features & BRCMNAND_HAS_WP) {
-		/* Permanently disable write protection */
-		if (wp_on == 2)
+	अगर (ctrl->features & BRCMन_अंकD_HAS_WP) अणु
+		/* Permanently disable ग_लिखो protection */
+		अगर (wp_on == 2)
 			brcmnand_set_wp(ctrl, false);
-	} else {
+	पूर्ण अन्यथा अणु
 		wp_on = 0;
-	}
+	पूर्ण
 
 	/* IRQ */
-	ctrl->irq = platform_get_irq(pdev, 0);
-	if ((int)ctrl->irq < 0) {
+	ctrl->irq = platक्रमm_get_irq(pdev, 0);
+	अगर ((पूर्णांक)ctrl->irq < 0) अणु
 		dev_err(dev, "no IRQ defined\n");
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * Some SoCs integrate this controller (e.g., its interrupt bits) in
-	 * interesting ways
+	 * Some SoCs पूर्णांकegrate this controller (e.g., its पूर्णांकerrupt bits) in
+	 * पूर्णांकeresting ways
 	 */
-	if (soc) {
+	अगर (soc) अणु
 		ctrl->soc = soc;
 
 		ret = devm_request_irq(dev, ctrl->irq, brcmnand_irq, 0,
 				       DRV_NAME, ctrl);
 
-		/* Enable interrupt */
+		/* Enable पूर्णांकerrupt */
 		ctrl->soc->ctlrdy_ack(ctrl->soc);
 		ctrl->soc->ctlrdy_set_enabled(ctrl->soc, true);
-	} else {
-		/* Use standard interrupt infrastructure */
+	पूर्ण अन्यथा अणु
+		/* Use standard पूर्णांकerrupt infraकाष्ठाure */
 		ret = devm_request_irq(dev, ctrl->irq, brcmnand_ctlrdy_irq, 0,
 				       DRV_NAME, ctrl);
-	}
-	if (ret < 0) {
+	पूर्ण
+	अगर (ret < 0) अणु
 		dev_err(dev, "can't allocate IRQ %d: error %d\n",
 			ctrl->irq, ret);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for_each_available_child_of_node(dn, child) {
-		if (of_device_is_compatible(child, "brcm,nandcs")) {
-			struct brcmnand_host *host;
+	क्रम_each_available_child_of_node(dn, child) अणु
+		अगर (of_device_is_compatible(child, "brcm,nandcs")) अणु
+			काष्ठा brcmnand_host *host;
 
-			host = devm_kzalloc(dev, sizeof(*host), GFP_KERNEL);
-			if (!host) {
+			host = devm_kzalloc(dev, माप(*host), GFP_KERNEL);
+			अगर (!host) अणु
 				of_node_put(child);
 				ret = -ENOMEM;
-				goto err;
-			}
+				जाओ err;
+			पूर्ण
 			host->pdev = pdev;
 			host->ctrl = ctrl;
 
 			ret = brcmnand_init_cs(host, child);
-			if (ret) {
-				devm_kfree(dev, host);
-				continue; /* Try all chip-selects */
-			}
+			अगर (ret) अणु
+				devm_kमुक्त(dev, host);
+				जारी; /* Try all chip-selects */
+			पूर्ण
 
 			list_add_tail(&host->node, &ctrl->host_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* No chip-selects could initialize properly */
-	if (list_empty(&ctrl->host_list)) {
+	अगर (list_empty(&ctrl->host_list)) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
 	clk_disable_unprepare(ctrl->clk);
-	return ret;
+	वापस ret;
 
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(brcmnand_probe);
 
-int brcmnand_remove(struct platform_device *pdev)
-{
-	struct brcmnand_controller *ctrl = dev_get_drvdata(&pdev->dev);
-	struct brcmnand_host *host;
-	struct nand_chip *chip;
-	int ret;
+पूर्णांक brcmnand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा brcmnand_controller *ctrl = dev_get_drvdata(&pdev->dev);
+	काष्ठा brcmnand_host *host;
+	काष्ठा nand_chip *chip;
+	पूर्णांक ret;
 
-	list_for_each_entry(host, &ctrl->host_list, node) {
+	list_क्रम_each_entry(host, &ctrl->host_list, node) अणु
 		chip = &host->chip;
-		ret = mtd_device_unregister(nand_to_mtd(chip));
+		ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 		WARN_ON(ret);
 		nand_cleanup(chip);
-	}
+	पूर्ण
 
 	clk_disable_unprepare(ctrl->clk);
 
-	dev_set_drvdata(&pdev->dev, NULL);
+	dev_set_drvdata(&pdev->dev, शून्य);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(brcmnand_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(brcmnand_हटाओ);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Kevin Cernekee");

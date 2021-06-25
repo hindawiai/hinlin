@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * RDC321x GPIO driver
  *
- * Copyright (C) 2008, Volker Weiss <dev@tintuc.de>
- * Copyright (C) 2007-2010 Florian Fainelli <florian@openwrt.org>
+ * Copyright (C) 2008, Volker Weiss <dev@tपूर्णांकuc.de>
+ * Copyright (C) 2007-2010 Florian Fainelli <florian@खोलोwrt.org>
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/spinlock.h>
-#include <linux/platform_device.h>
-#include <linux/pci.h>
-#include <linux/gpio/driver.h>
-#include <linux/mfd/rdc321x.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/mfd/rdc321x.h>
+#समावेश <linux/slab.h>
 
-struct rdc321x_gpio {
+काष्ठा rdc321x_gpio अणु
 	spinlock_t		lock;
-	struct pci_dev		*sb_pdev;
+	काष्ठा pci_dev		*sb_pdev;
 	u32			data_reg[2];
-	int			reg1_ctrl_base;
-	int			reg1_data_base;
-	int			reg2_ctrl_base;
-	int			reg2_data_base;
-	struct gpio_chip	chip;
-};
+	पूर्णांक			reg1_ctrl_base;
+	पूर्णांक			reg1_data_base;
+	पूर्णांक			reg2_ctrl_base;
+	पूर्णांक			reg2_data_base;
+	काष्ठा gpio_chip	chip;
+पूर्ण;
 
-/* read GPIO pin */
-static int rdc_gpio_get_value(struct gpio_chip *chip, unsigned gpio)
-{
-	struct rdc321x_gpio *gpch;
+/* पढ़ो GPIO pin */
+अटल पूर्णांक rdc_gpio_get_value(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
+	काष्ठा rdc321x_gpio *gpch;
 	u32 value = 0;
-	int reg;
+	पूर्णांक reg;
 
 	gpch = gpiochip_get_data(chip);
 	reg = gpio < 32 ? gpch->reg1_data_base : gpch->reg2_data_base;
 
 	spin_lock(&gpch->lock);
-	pci_write_config_dword(gpch->sb_pdev, reg,
+	pci_ग_लिखो_config_dword(gpch->sb_pdev, reg,
 					gpch->data_reg[gpio < 32 ? 0 : 1]);
-	pci_read_config_dword(gpch->sb_pdev, reg, &value);
+	pci_पढ़ो_config_dword(gpch->sb_pdev, reg, &value);
 	spin_unlock(&gpch->lock);
 
-	return (1 << (gpio & 0x1f)) & value ? 1 : 0;
-}
+	वापस (1 << (gpio & 0x1f)) & value ? 1 : 0;
+पूर्ण
 
-static void rdc_gpio_set_value_impl(struct gpio_chip *chip,
-				unsigned gpio, int value)
-{
-	struct rdc321x_gpio *gpch;
-	int reg = (gpio < 32) ? 0 : 1;
+अटल व्योम rdc_gpio_set_value_impl(काष्ठा gpio_chip *chip,
+				अचिन्हित gpio, पूर्णांक value)
+अणु
+	काष्ठा rdc321x_gpio *gpch;
+	पूर्णांक reg = (gpio < 32) ? 0 : 1;
 
 	gpch = gpiochip_get_data(chip);
 
-	if (value)
+	अगर (value)
 		gpch->data_reg[reg] |= 1 << (gpio & 0x1f);
-	else
+	अन्यथा
 		gpch->data_reg[reg] &= ~(1 << (gpio & 0x1f));
 
-	pci_write_config_dword(gpch->sb_pdev,
+	pci_ग_लिखो_config_dword(gpch->sb_pdev,
 			reg ? gpch->reg2_data_base : gpch->reg1_data_base,
 			gpch->data_reg[reg]);
-}
+पूर्ण
 
 /* set GPIO pin to value */
-static void rdc_gpio_set_value(struct gpio_chip *chip,
-				unsigned gpio, int value)
-{
-	struct rdc321x_gpio *gpch;
+अटल व्योम rdc_gpio_set_value(काष्ठा gpio_chip *chip,
+				अचिन्हित gpio, पूर्णांक value)
+अणु
+	काष्ठा rdc321x_gpio *gpch;
 
 	gpch = gpiochip_get_data(chip);
 	spin_lock(&gpch->lock);
 	rdc_gpio_set_value_impl(chip, gpio, value);
 	spin_unlock(&gpch->lock);
-}
+पूर्ण
 
-static int rdc_gpio_config(struct gpio_chip *chip,
-				unsigned gpio, int value)
-{
-	struct rdc321x_gpio *gpch;
-	int err;
+अटल पूर्णांक rdc_gpio_config(काष्ठा gpio_chip *chip,
+				अचिन्हित gpio, पूर्णांक value)
+अणु
+	काष्ठा rdc321x_gpio *gpch;
+	पूर्णांक err;
 	u32 reg;
 
 	gpch = gpiochip_get_data(chip);
 
 	spin_lock(&gpch->lock);
-	err = pci_read_config_dword(gpch->sb_pdev, gpio < 32 ?
+	err = pci_पढ़ो_config_dword(gpch->sb_pdev, gpio < 32 ?
 			gpch->reg1_ctrl_base : gpch->reg2_ctrl_base, &reg);
-	if (err)
-		goto unlock;
+	अगर (err)
+		जाओ unlock;
 
 	reg |= 1 << (gpio & 0x1f);
 
-	err = pci_write_config_dword(gpch->sb_pdev, gpio < 32 ?
+	err = pci_ग_लिखो_config_dword(gpch->sb_pdev, gpio < 32 ?
 			gpch->reg1_ctrl_base : gpch->reg2_ctrl_base, reg);
-	if (err)
-		goto unlock;
+	अगर (err)
+		जाओ unlock;
 
 	rdc_gpio_set_value_impl(chip, gpio, value);
 
 unlock:
 	spin_unlock(&gpch->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* configure GPIO pin as input */
-static int rdc_gpio_direction_input(struct gpio_chip *chip, unsigned gpio)
-{
-	return rdc_gpio_config(chip, gpio, 1);
-}
+अटल पूर्णांक rdc_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित gpio)
+अणु
+	वापस rdc_gpio_config(chip, gpio, 1);
+पूर्ण
 
 /*
- * Cache the initial value of both GPIO data registers
+ * Cache the initial value of both GPIO data रेजिस्टरs
  */
-static int rdc321x_gpio_probe(struct platform_device *pdev)
-{
-	int err;
-	struct resource *r;
-	struct rdc321x_gpio *rdc321x_gpio_dev;
-	struct rdc321x_gpio_pdata *pdata;
+अटल पूर्णांक rdc321x_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err;
+	काष्ठा resource *r;
+	काष्ठा rdc321x_gpio *rdc321x_gpio_dev;
+	काष्ठा rdc321x_gpio_pdata *pdata;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	if (!pdata) {
+	अगर (!pdata) अणु
 		dev_err(&pdev->dev, "no platform data supplied\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	rdc321x_gpio_dev = devm_kzalloc(&pdev->dev, sizeof(struct rdc321x_gpio),
+	rdc321x_gpio_dev = devm_kzalloc(&pdev->dev, माप(काष्ठा rdc321x_gpio),
 					GFP_KERNEL);
-	if (!rdc321x_gpio_dev)
-		return -ENOMEM;
+	अगर (!rdc321x_gpio_dev)
+		वापस -ENOMEM;
 
-	r = platform_get_resource_byname(pdev, IORESOURCE_IO, "gpio-reg1");
-	if (!r) {
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IO, "gpio-reg1");
+	अगर (!r) अणु
 		dev_err(&pdev->dev, "failed to get gpio-reg1 resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_init(&rdc321x_gpio_dev->lock);
 	rdc321x_gpio_dev->sb_pdev = pdata->sb_pdev;
 	rdc321x_gpio_dev->reg1_ctrl_base = r->start;
 	rdc321x_gpio_dev->reg1_data_base = r->start + 0x4;
 
-	r = platform_get_resource_byname(pdev, IORESOURCE_IO, "gpio-reg2");
-	if (!r) {
+	r = platक्रमm_get_resource_byname(pdev, IORESOURCE_IO, "gpio-reg2");
+	अगर (!r) अणु
 		dev_err(&pdev->dev, "failed to get gpio-reg2 resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	rdc321x_gpio_dev->reg2_ctrl_base = r->start;
 	rdc321x_gpio_dev->reg2_data_base = r->start + 0x4;
@@ -161,35 +162,35 @@ static int rdc321x_gpio_probe(struct platform_device *pdev)
 	rdc321x_gpio_dev->chip.base = 0;
 	rdc321x_gpio_dev->chip.ngpio = pdata->max_gpios;
 
-	platform_set_drvdata(pdev, rdc321x_gpio_dev);
+	platक्रमm_set_drvdata(pdev, rdc321x_gpio_dev);
 
 	/* This might not be, what others (BIOS, bootloader, etc.)
-	   wrote to these registers before, but it's a good guess. Still
+	   wrote to these रेजिस्टरs beक्रमe, but it's a good guess. Still
 	   better than just using 0xffffffff. */
-	err = pci_read_config_dword(rdc321x_gpio_dev->sb_pdev,
+	err = pci_पढ़ो_config_dword(rdc321x_gpio_dev->sb_pdev,
 					rdc321x_gpio_dev->reg1_data_base,
 					&rdc321x_gpio_dev->data_reg[0]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = pci_read_config_dword(rdc321x_gpio_dev->sb_pdev,
+	err = pci_पढ़ो_config_dword(rdc321x_gpio_dev->sb_pdev,
 					rdc321x_gpio_dev->reg2_data_base,
 					&rdc321x_gpio_dev->data_reg[1]);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dev_info(&pdev->dev, "registering %d GPIOs\n",
 					rdc321x_gpio_dev->chip.ngpio);
-	return devm_gpiochip_add_data(&pdev->dev, &rdc321x_gpio_dev->chip,
+	वापस devm_gpiochip_add_data(&pdev->dev, &rdc321x_gpio_dev->chip,
 				      rdc321x_gpio_dev);
-}
+पूर्ण
 
-static struct platform_driver rdc321x_gpio_driver = {
+अटल काष्ठा platक्रमm_driver rdc321x_gpio_driver = अणु
 	.driver.name	= "rdc321x-gpio",
 	.probe		= rdc321x_gpio_probe,
-};
+पूर्ण;
 
-module_platform_driver(rdc321x_gpio_driver);
+module_platक्रमm_driver(rdc321x_gpio_driver);
 
 MODULE_AUTHOR("Florian Fainelli <florian@openwrt.org>");
 MODULE_DESCRIPTION("RDC321x GPIO driver");

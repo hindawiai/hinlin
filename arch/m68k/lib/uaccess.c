@@ -1,18 +1,19 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
 
-unsigned long __generic_copy_from_user(void *to, const void __user *from,
-				       unsigned long n)
-{
-	unsigned long tmp, res;
+अचिन्हित दीर्घ __generic_copy_from_user(व्योम *to, स्थिर व्योम __user *from,
+				       अचिन्हित दीर्घ n)
+अणु
+	अचिन्हित दीर्घ पंचांगp, res;
 
-	asm volatile ("\n"
+	यंत्र अस्थिर ("\n"
 		"	tst.l	%0\n"
 		"	jeq	2f\n"
 		"1:	"MOVES".l	(%1)+,%3\n"
@@ -46,19 +47,19 @@ unsigned long __generic_copy_from_user(void *to, const void __user *from,
 		"	.long	3b,30b\n"
 		"	.long	5b,50b\n"
 		"	.previous"
-		: "=d" (res), "+a" (from), "+a" (to), "=&d" (tmp)
+		: "=d" (res), "+a" (from), "+a" (to), "=&d" (पंचांगp)
 		: "0" (n / 4), "d" (n & 3));
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__generic_copy_from_user);
 
-unsigned long __generic_copy_to_user(void __user *to, const void *from,
-				     unsigned long n)
-{
-	unsigned long tmp, res;
+अचिन्हित दीर्घ __generic_copy_to_user(व्योम __user *to, स्थिर व्योम *from,
+				     अचिन्हित दीर्घ n)
+अणु
+	अचिन्हित दीर्घ पंचांगp, res;
 
-	asm volatile ("\n"
+	यंत्र अस्थिर ("\n"
 		"	tst.l	%0\n"
 		"	jeq	4f\n"
 		"1:	move.l	(%1)+,%3\n"
@@ -90,22 +91,22 @@ unsigned long __generic_copy_to_user(void __user *to, const void *from,
 		"	.long	7b,50b\n"
 		"	.long	8b,50b\n"
 		"	.previous"
-		: "=d" (res), "+a" (from), "+a" (to), "=&d" (tmp)
+		: "=d" (res), "+a" (from), "+a" (to), "=&d" (पंचांगp)
 		: "0" (n / 4), "d" (n & 3));
 
-	return res;
-}
+	वापस res;
+पूर्ण
 EXPORT_SYMBOL(__generic_copy_to_user);
 
 /*
  * Zero Userspace
  */
 
-unsigned long __clear_user(void __user *to, unsigned long n)
-{
-	unsigned long res;
+अचिन्हित दीर्घ __clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
+अणु
+	अचिन्हित दीर्घ res;
 
-	asm volatile ("\n"
+	यंत्र अस्थिर ("\n"
 		"	tst.l	%0\n"
 		"	jeq	3f\n"
 		"1:	"MOVES".l	%2,(%1)+\n"
@@ -137,6 +138,6 @@ unsigned long __clear_user(void __user *to, unsigned long n)
 		: "=d" (res), "+a" (to)
 		: "d" (0), "0" (n / 4), "d" (n & 3));
 
-    return res;
-}
+    वापस res;
+पूर्ण
 EXPORT_SYMBOL(__clear_user);

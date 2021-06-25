@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// pin-controller/pin-mux/pin-config/gpio-driver for Samsung's SoC's.
+// pin-controller/pin-mux/pin-config/gpio-driver क्रम Samsung's SoC's.
 //
 // Copyright (c) 2012 Samsung Electronics Co., Ltd.
 //		http://www.samsung.com
@@ -10,123 +11,123 @@
 // Author: Thomas Abraham <thomas.ab@samsung.com>
 //
 // This driver implements the Samsung pinctrl driver. It supports setting up of
-// pinmux and pinconf configurations. The gpiolib interface is also included.
-// External interrupt (gpio and wakeup) support are not included in this driver
-// but provides extensions to which platform specific implementation of the gpio
-// and wakeup interrupts can be hooked to.
+// pinmux and pinconf configurations. The gpiolib पूर्णांकerface is also included.
+// External पूर्णांकerrupt (gpio and wakeup) support are not included in this driver
+// but provides extensions to which platक्रमm specअगरic implementation of the gpio
+// and wakeup पूर्णांकerrupts can be hooked to.
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/irqdomain.h>
-#include <linux/of_device.h>
-#include <linux/spinlock.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/spinlock.h>
 
-#include <dt-bindings/pinctrl/samsung.h>
+#समावेश <dt-bindings/pinctrl/samsung.h>
 
-#include "../core.h"
-#include "pinctrl-samsung.h"
+#समावेश "../core.h"
+#समावेश "pinctrl-samsung.h"
 
 /* maximum number of the memory resources */
-#define	SAMSUNG_PINCTRL_NUM_RESOURCES	2
+#घोषणा	SAMSUNG_PINCTRL_NUM_RESOURCES	2
 
 /* list of all possible config options supported */
-static struct pin_config {
-	const char *property;
-	enum pincfg_type param;
-} cfg_params[] = {
-	{ "samsung,pin-pud", PINCFG_TYPE_PUD },
-	{ "samsung,pin-drv", PINCFG_TYPE_DRV },
-	{ "samsung,pin-con-pdn", PINCFG_TYPE_CON_PDN },
-	{ "samsung,pin-pud-pdn", PINCFG_TYPE_PUD_PDN },
-	{ "samsung,pin-val", PINCFG_TYPE_DAT },
-};
+अटल काष्ठा pin_config अणु
+	स्थिर अक्षर *property;
+	क्रमागत pincfg_type param;
+पूर्ण cfg_params[] = अणु
+	अणु "samsung,pin-pud", PINCFG_TYPE_PUD पूर्ण,
+	अणु "samsung,pin-drv", PINCFG_TYPE_DRV पूर्ण,
+	अणु "samsung,pin-con-pdn", PINCFG_TYPE_CON_PDN पूर्ण,
+	अणु "samsung,pin-pud-pdn", PINCFG_TYPE_PUD_PDN पूर्ण,
+	अणु "samsung,pin-val", PINCFG_TYPE_DAT पूर्ण,
+पूर्ण;
 
-static unsigned int pin_base;
+अटल अचिन्हित पूर्णांक pin_base;
 
-static int samsung_get_group_count(struct pinctrl_dev *pctldev)
-{
-	struct samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक samsung_get_group_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	return pmx->nr_groups;
-}
+	वापस pmx->nr_groups;
+पूर्ण
 
-static const char *samsung_get_group_name(struct pinctrl_dev *pctldev,
-						unsigned group)
-{
-	struct samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *samsung_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित group)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
 
-	return pmx->pin_groups[group].name;
-}
+	वापस pmx->pin_groups[group].name;
+पूर्ण
 
-static int samsung_get_group_pins(struct pinctrl_dev *pctldev,
-					unsigned group,
-					const unsigned **pins,
-					unsigned *num_pins)
-{
-	struct samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक samsung_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित group,
+					स्थिर अचिन्हित **pins,
+					अचिन्हित *num_pins)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *pmx = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = pmx->pin_groups[group].pins;
 	*num_pins = pmx->pin_groups[group].num_pins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int reserve_map(struct device *dev, struct pinctrl_map **map,
-		       unsigned *reserved_maps, unsigned *num_maps,
-		       unsigned reserve)
-{
-	unsigned old_num = *reserved_maps;
-	unsigned new_num = *num_maps + reserve;
-	struct pinctrl_map *new_map;
+अटल पूर्णांक reserve_map(काष्ठा device *dev, काष्ठा pinctrl_map **map,
+		       अचिन्हित *reserved_maps, अचिन्हित *num_maps,
+		       अचिन्हित reserve)
+अणु
+	अचिन्हित old_num = *reserved_maps;
+	अचिन्हित new_num = *num_maps + reserve;
+	काष्ठा pinctrl_map *new_map;
 
-	if (old_num >= new_num)
-		return 0;
+	अगर (old_num >= new_num)
+		वापस 0;
 
-	new_map = krealloc(*map, sizeof(*new_map) * new_num, GFP_KERNEL);
-	if (!new_map)
-		return -ENOMEM;
+	new_map = kपुनः_स्मृति(*map, माप(*new_map) * new_num, GFP_KERNEL);
+	अगर (!new_map)
+		वापस -ENOMEM;
 
-	memset(new_map + old_num, 0, (new_num - old_num) * sizeof(*new_map));
+	स_रखो(new_map + old_num, 0, (new_num - old_num) * माप(*new_map));
 
 	*map = new_map;
 	*reserved_maps = new_num;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int add_map_mux(struct pinctrl_map **map, unsigned *reserved_maps,
-		       unsigned *num_maps, const char *group,
-		       const char *function)
-{
-	if (WARN_ON(*num_maps == *reserved_maps))
-		return -ENOSPC;
+अटल पूर्णांक add_map_mux(काष्ठा pinctrl_map **map, अचिन्हित *reserved_maps,
+		       अचिन्हित *num_maps, स्थिर अक्षर *group,
+		       स्थिर अक्षर *function)
+अणु
+	अगर (WARN_ON(*num_maps == *reserved_maps))
+		वापस -ENOSPC;
 
 	(*map)[*num_maps].type = PIN_MAP_TYPE_MUX_GROUP;
 	(*map)[*num_maps].data.mux.group = group;
 	(*map)[*num_maps].data.mux.function = function;
 	(*num_maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int add_map_configs(struct device *dev, struct pinctrl_map **map,
-			   unsigned *reserved_maps, unsigned *num_maps,
-			   const char *group, unsigned long *configs,
-			   unsigned num_configs)
-{
-	unsigned long *dup_configs;
+अटल पूर्णांक add_map_configs(काष्ठा device *dev, काष्ठा pinctrl_map **map,
+			   अचिन्हित *reserved_maps, अचिन्हित *num_maps,
+			   स्थिर अक्षर *group, अचिन्हित दीर्घ *configs,
+			   अचिन्हित num_configs)
+अणु
+	अचिन्हित दीर्घ *dup_configs;
 
-	if (WARN_ON(*num_maps == *reserved_maps))
-		return -ENOSPC;
+	अगर (WARN_ON(*num_maps == *reserved_maps))
+		वापस -ENOSPC;
 
-	dup_configs = kmemdup(configs, num_configs * sizeof(*dup_configs),
+	dup_configs = kmemdup(configs, num_configs * माप(*dup_configs),
 			      GFP_KERNEL);
-	if (!dup_configs)
-		return -ENOMEM;
+	अगर (!dup_configs)
+		वापस -ENOMEM;
 
 	(*map)[*num_maps].type = PIN_MAP_TYPE_CONFIGS_GROUP;
 	(*map)[*num_maps].data.configs.group_or_pin = group;
@@ -134,256 +135,256 @@ static int add_map_configs(struct device *dev, struct pinctrl_map **map,
 	(*map)[*num_maps].data.configs.num_configs = num_configs;
 	(*num_maps)++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int add_config(struct device *dev, unsigned long **configs,
-		      unsigned *num_configs, unsigned long config)
-{
-	unsigned old_num = *num_configs;
-	unsigned new_num = old_num + 1;
-	unsigned long *new_configs;
+अटल पूर्णांक add_config(काष्ठा device *dev, अचिन्हित दीर्घ **configs,
+		      अचिन्हित *num_configs, अचिन्हित दीर्घ config)
+अणु
+	अचिन्हित old_num = *num_configs;
+	अचिन्हित new_num = old_num + 1;
+	अचिन्हित दीर्घ *new_configs;
 
-	new_configs = krealloc(*configs, sizeof(*new_configs) * new_num,
+	new_configs = kपुनः_स्मृति(*configs, माप(*new_configs) * new_num,
 			       GFP_KERNEL);
-	if (!new_configs)
-		return -ENOMEM;
+	अगर (!new_configs)
+		वापस -ENOMEM;
 
 	new_configs[old_num] = config;
 
 	*configs = new_configs;
 	*num_configs = new_num;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void samsung_dt_free_map(struct pinctrl_dev *pctldev,
-				      struct pinctrl_map *map,
-				      unsigned num_maps)
-{
-	int i;
+अटल व्योम samsung_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा pinctrl_map *map,
+				      अचिन्हित num_maps)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < num_maps; i++)
-		if (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP)
-			kfree(map[i].data.configs.configs);
+	क्रम (i = 0; i < num_maps; i++)
+		अगर (map[i].type == PIN_MAP_TYPE_CONFIGS_GROUP)
+			kमुक्त(map[i].data.configs.configs);
 
-	kfree(map);
-}
+	kमुक्त(map);
+पूर्ण
 
-static int samsung_dt_subnode_to_map(struct samsung_pinctrl_drv_data *drvdata,
-				     struct device *dev,
-				     struct device_node *np,
-				     struct pinctrl_map **map,
-				     unsigned *reserved_maps,
-				     unsigned *num_maps)
-{
-	int ret, i;
+अटल पूर्णांक samsung_dt_subnode_to_map(काष्ठा samsung_pinctrl_drv_data *drvdata,
+				     काष्ठा device *dev,
+				     काष्ठा device_node *np,
+				     काष्ठा pinctrl_map **map,
+				     अचिन्हित *reserved_maps,
+				     अचिन्हित *num_maps)
+अणु
+	पूर्णांक ret, i;
 	u32 val;
-	unsigned long config;
-	unsigned long *configs = NULL;
-	unsigned num_configs = 0;
-	unsigned reserve;
-	struct property *prop;
-	const char *group;
+	अचिन्हित दीर्घ config;
+	अचिन्हित दीर्घ *configs = शून्य;
+	अचिन्हित num_configs = 0;
+	अचिन्हित reserve;
+	काष्ठा property *prop;
+	स्थिर अक्षर *group;
 	bool has_func = false;
 
-	ret = of_property_read_u32(np, "samsung,pin-function", &val);
-	if (!ret)
+	ret = of_property_पढ़ो_u32(np, "samsung,pin-function", &val);
+	अगर (!ret)
 		has_func = true;
 
-	for (i = 0; i < ARRAY_SIZE(cfg_params); i++) {
-		ret = of_property_read_u32(np, cfg_params[i].property, &val);
-		if (!ret) {
+	क्रम (i = 0; i < ARRAY_SIZE(cfg_params); i++) अणु
+		ret = of_property_पढ़ो_u32(np, cfg_params[i].property, &val);
+		अगर (!ret) अणु
 			config = PINCFG_PACK(cfg_params[i].param, val);
 			ret = add_config(dev, &configs, &num_configs, config);
-			if (ret < 0)
-				goto exit;
+			अगर (ret < 0)
+				जाओ निकास;
 		/* EINVAL=missing, which is fine since it's optional */
-		} else if (ret != -EINVAL) {
+		पूर्ण अन्यथा अगर (ret != -EINVAL) अणु
 			dev_err(dev, "could not parse property %s\n",
 				cfg_params[i].property);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	reserve = 0;
-	if (has_func)
+	अगर (has_func)
 		reserve++;
-	if (num_configs)
+	अगर (num_configs)
 		reserve++;
 	ret = of_property_count_strings(np, "samsung,pins");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "could not parse property samsung,pins\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	reserve *= ret;
 
 	ret = reserve_map(dev, map, reserved_maps, num_maps, reserve);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
-	of_property_for_each_string(np, "samsung,pins", prop, group) {
-		if (has_func) {
+	of_property_क्रम_each_string(np, "samsung,pins", prop, group) अणु
+		अगर (has_func) अणु
 			ret = add_map_mux(map, reserved_maps,
 						num_maps, group, np->full_name);
-			if (ret < 0)
-				goto exit;
-		}
+			अगर (ret < 0)
+				जाओ निकास;
+		पूर्ण
 
-		if (num_configs) {
+		अगर (num_configs) अणु
 			ret = add_map_configs(dev, map, reserved_maps,
 					      num_maps, group, configs,
 					      num_configs);
-			if (ret < 0)
-				goto exit;
-		}
-	}
+			अगर (ret < 0)
+				जाओ निकास;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 
-exit:
-	kfree(configs);
-	return ret;
-}
+निकास:
+	kमुक्त(configs);
+	वापस ret;
+पूर्ण
 
-static int samsung_dt_node_to_map(struct pinctrl_dev *pctldev,
-					struct device_node *np_config,
-					struct pinctrl_map **map,
-					unsigned *num_maps)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	unsigned reserved_maps;
-	struct device_node *np;
-	int ret;
+अटल पूर्णांक samsung_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+					काष्ठा device_node *np_config,
+					काष्ठा pinctrl_map **map,
+					अचिन्हित *num_maps)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	अचिन्हित reserved_maps;
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 
 	reserved_maps = 0;
-	*map = NULL;
+	*map = शून्य;
 	*num_maps = 0;
 
-	if (!of_get_child_count(np_config))
-		return samsung_dt_subnode_to_map(drvdata, pctldev->dev,
+	अगर (!of_get_child_count(np_config))
+		वापस samsung_dt_subnode_to_map(drvdata, pctldev->dev,
 							np_config, map,
 							&reserved_maps,
 							num_maps);
 
-	for_each_child_of_node(np_config, np) {
+	क्रम_each_child_of_node(np_config, np) अणु
 		ret = samsung_dt_subnode_to_map(drvdata, pctldev->dev, np, map,
 						&reserved_maps, num_maps);
-		if (ret < 0) {
-			samsung_dt_free_map(pctldev, *map, *num_maps);
+		अगर (ret < 0) अणु
+			samsung_dt_मुक्त_map(pctldev, *map, *num_maps);
 			of_node_put(np);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 /* Forward declaration which can be used by samsung_pin_dbg_show */
-static int samsung_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
-					unsigned long *config);
-static const char * const reg_names[] = {"CON", "DAT", "PUD", "DRV", "CON_PDN",
-					 "PUD_PDN"};
+अटल पूर्णांक samsung_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+					अचिन्हित दीर्घ *config);
+अटल स्थिर अक्षर * स्थिर reg_names[] = अणु"CON", "DAT", "PUD", "DRV", "CON_PDN",
+					 "PUD_PDN"पूर्ण;
 
-static void samsung_pin_dbg_show(struct pinctrl_dev *pctldev,
-				struct seq_file *s, unsigned int pin)
-{
-	enum pincfg_type cfg_type;
-	unsigned long config;
-	int ret;
+अटल व्योम samsung_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				काष्ठा seq_file *s, अचिन्हित पूर्णांक pin)
+अणु
+	क्रमागत pincfg_type cfg_type;
+	अचिन्हित दीर्घ config;
+	पूर्णांक ret;
 
-	for (cfg_type = 0; cfg_type < PINCFG_TYPE_NUM; cfg_type++) {
+	क्रम (cfg_type = 0; cfg_type < PINCFG_TYPE_NUM; cfg_type++) अणु
 		config = PINCFG_PACK(cfg_type, 0);
 		ret = samsung_pinconf_get(pctldev, pin, &config);
-		if (ret < 0)
-			continue;
+		अगर (ret < 0)
+			जारी;
 
-		seq_printf(s, " %s(0x%lx)", reg_names[cfg_type],
+		seq_म_लिखो(s, " %s(0x%lx)", reg_names[cfg_type],
 			   PINCFG_UNPACK_VALUE(config));
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-/* list of pinctrl callbacks for the pinctrl core */
-static const struct pinctrl_ops samsung_pctrl_ops = {
+/* list of pinctrl callbacks क्रम the pinctrl core */
+अटल स्थिर काष्ठा pinctrl_ops samsung_pctrl_ops = अणु
 	.get_groups_count	= samsung_get_group_count,
 	.get_group_name		= samsung_get_group_name,
 	.get_group_pins		= samsung_get_group_pins,
 	.dt_node_to_map		= samsung_dt_node_to_map,
-	.dt_free_map		= samsung_dt_free_map,
-#ifdef CONFIG_DEBUG_FS
+	.dt_मुक्त_map		= samsung_dt_मुक्त_map,
+#अगर_घोषित CONFIG_DEBUG_FS
 	.pin_dbg_show		= samsung_pin_dbg_show,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-/* check if the selector is a valid pin function selector */
-static int samsung_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-
-	drvdata = pinctrl_dev_get_drvdata(pctldev);
-	return drvdata->nr_functions;
-}
-
-/* return the name of the pin function specified */
-static const char *samsung_pinmux_get_fname(struct pinctrl_dev *pctldev,
-						unsigned selector)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
+/* check अगर the selector is a valid pin function selector */
+अटल पूर्णांक samsung_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
-	return drvdata->pmx_functions[selector].name;
-}
+	वापस drvdata->nr_functions;
+पूर्ण
 
-/* return the groups associated for the specified function selector */
-static int samsung_pinmux_get_groups(struct pinctrl_dev *pctldev,
-		unsigned selector, const char * const **groups,
-		unsigned * const num_groups)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
+/* वापस the name of the pin function specअगरied */
+अटल स्थिर अक्षर *samsung_pinmux_get_fname(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित selector)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+
+	drvdata = pinctrl_dev_get_drvdata(pctldev);
+	वापस drvdata->pmx_functions[selector].name;
+पूर्ण
+
+/* वापस the groups associated क्रम the specअगरied function selector */
+अटल पूर्णांक samsung_pinmux_get_groups(काष्ठा pinctrl_dev *pctldev,
+		अचिन्हित selector, स्थिर अक्षर * स्थिर **groups,
+		अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 	*groups = drvdata->pmx_functions[selector].groups;
 	*num_groups = drvdata->pmx_functions[selector].num_groups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * given a pin number that is local to a pin controller, find out the pin bank
- * and the register base of the pin bank.
+ * and the रेजिस्टर base of the pin bank.
  */
-static void pin_to_reg_bank(struct samsung_pinctrl_drv_data *drvdata,
-			unsigned pin, void __iomem **reg, u32 *offset,
-			struct samsung_pin_bank **bank)
-{
-	struct samsung_pin_bank *b;
+अटल व्योम pin_to_reg_bank(काष्ठा samsung_pinctrl_drv_data *drvdata,
+			अचिन्हित pin, व्योम __iomem **reg, u32 *offset,
+			काष्ठा samsung_pin_bank **bank)
+अणु
+	काष्ठा samsung_pin_bank *b;
 
 	b = drvdata->pin_banks;
 
-	while ((pin >= b->pin_base) &&
+	जबतक ((pin >= b->pin_base) &&
 			((b->pin_base + b->nr_pins - 1) < pin))
 		b++;
 
 	*reg = b->pctl_base + b->pctl_offset;
 	*offset = pin - b->pin_base;
-	if (bank)
+	अगर (bank)
 		*bank = b;
-}
+पूर्ण
 
 /* enable or disable a pinmux function */
-static void samsung_pinmux_setup(struct pinctrl_dev *pctldev, unsigned selector,
-					unsigned group)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	const struct samsung_pin_bank_type *type;
-	struct samsung_pin_bank *bank;
-	void __iomem *reg;
-	u32 mask, shift, data, pin_offset;
-	unsigned long flags;
-	const struct samsung_pmx_func *func;
-	const struct samsung_pin_group *grp;
+अटल व्योम samsung_pinmux_setup(काष्ठा pinctrl_dev *pctldev, अचिन्हित selector,
+					अचिन्हित group)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	स्थिर काष्ठा samsung_pin_bank_type *type;
+	काष्ठा samsung_pin_bank *bank;
+	व्योम __iomem *reg;
+	u32 mask, shअगरt, data, pin_offset;
+	अचिन्हित दीर्घ flags;
+	स्थिर काष्ठा samsung_pmx_func *func;
+	स्थिर काष्ठा samsung_pin_group *grp;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 	func = &drvdata->pmx_functions[selector];
@@ -393,60 +394,60 @@ static void samsung_pinmux_setup(struct pinctrl_dev *pctldev, unsigned selector,
 			&reg, &pin_offset, &bank);
 	type = bank->type;
 	mask = (1 << type->fld_width[PINCFG_TYPE_FUNC]) - 1;
-	shift = pin_offset * type->fld_width[PINCFG_TYPE_FUNC];
-	if (shift >= 32) {
-		/* Some banks have two config registers */
-		shift -= 32;
+	shअगरt = pin_offset * type->fld_width[PINCFG_TYPE_FUNC];
+	अगर (shअगरt >= 32) अणु
+		/* Some banks have two config रेजिस्टरs */
+		shअगरt -= 32;
 		reg += 4;
-	}
+	पूर्ण
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
-	data = readl(reg + type->reg_offset[PINCFG_TYPE_FUNC]);
-	data &= ~(mask << shift);
-	data |= func->val << shift;
-	writel(data, reg + type->reg_offset[PINCFG_TYPE_FUNC]);
+	data = पढ़ोl(reg + type->reg_offset[PINCFG_TYPE_FUNC]);
+	data &= ~(mask << shअगरt);
+	data |= func->val << shअगरt;
+	ग_लिखोl(data, reg + type->reg_offset[PINCFG_TYPE_FUNC]);
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-}
+पूर्ण
 
-/* enable a specified pinmux by writing to registers */
-static int samsung_pinmux_set_mux(struct pinctrl_dev *pctldev,
-				  unsigned selector,
-				  unsigned group)
-{
+/* enable a specअगरied pinmux by writing to रेजिस्टरs */
+अटल पूर्णांक samsung_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित selector,
+				  अचिन्हित group)
+अणु
 	samsung_pinmux_setup(pctldev, selector, group);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* list of pinmux callbacks for the pinmux vertical in pinctrl core */
-static const struct pinmux_ops samsung_pinmux_ops = {
+/* list of pinmux callbacks क्रम the pinmux vertical in pinctrl core */
+अटल स्थिर काष्ठा pinmux_ops samsung_pinmux_ops = अणु
 	.get_functions_count	= samsung_get_functions_count,
 	.get_function_name	= samsung_pinmux_get_fname,
 	.get_function_groups	= samsung_pinmux_get_groups,
 	.set_mux		= samsung_pinmux_set_mux,
-};
+पूर्ण;
 
-/* set or get the pin config settings for a specified pin */
-static int samsung_pinconf_rw(struct pinctrl_dev *pctldev, unsigned int pin,
-				unsigned long *config, bool set)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	const struct samsung_pin_bank_type *type;
-	struct samsung_pin_bank *bank;
-	void __iomem *reg_base;
-	enum pincfg_type cfg_type = PINCFG_UNPACK_TYPE(*config);
-	u32 data, width, pin_offset, mask, shift;
+/* set or get the pin config settings क्रम a specअगरied pin */
+अटल पूर्णांक samsung_pinconf_rw(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *config, bool set)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	स्थिर काष्ठा samsung_pin_bank_type *type;
+	काष्ठा samsung_pin_bank *bank;
+	व्योम __iomem *reg_base;
+	क्रमागत pincfg_type cfg_type = PINCFG_UNPACK_TYPE(*config);
+	u32 data, width, pin_offset, mask, shअगरt;
 	u32 cfg_value, cfg_reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 	pin_to_reg_bank(drvdata, pin - drvdata->pin_base, &reg_base,
 					&pin_offset, &bank);
 	type = bank->type;
 
-	if (cfg_type >= PINCFG_TYPE_NUM || !type->fld_width[cfg_type])
-		return -EINVAL;
+	अगर (cfg_type >= PINCFG_TYPE_NUM || !type->fld_width[cfg_type])
+		वापस -EINVAL;
 
 	width = type->fld_width[cfg_type];
 	cfg_reg = type->reg_offset[cfg_type];
@@ -454,147 +455,147 @@ static int samsung_pinconf_rw(struct pinctrl_dev *pctldev, unsigned int pin,
 	raw_spin_lock_irqsave(&bank->slock, flags);
 
 	mask = (1 << width) - 1;
-	shift = pin_offset * width;
-	data = readl(reg_base + cfg_reg);
+	shअगरt = pin_offset * width;
+	data = पढ़ोl(reg_base + cfg_reg);
 
-	if (set) {
+	अगर (set) अणु
 		cfg_value = PINCFG_UNPACK_VALUE(*config);
-		data &= ~(mask << shift);
-		data |= (cfg_value << shift);
-		writel(data, reg_base + cfg_reg);
-	} else {
-		data >>= shift;
+		data &= ~(mask << shअगरt);
+		data |= (cfg_value << shअगरt);
+		ग_लिखोl(data, reg_base + cfg_reg);
+	पूर्ण अन्यथा अणु
+		data >>= shअगरt;
 		data &= mask;
 		*config = PINCFG_PACK(cfg_type, data);
-	}
+	पूर्ण
 
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* set the pin config settings for a specified pin */
-static int samsung_pinconf_set(struct pinctrl_dev *pctldev, unsigned int pin,
-				unsigned long *configs, unsigned num_configs)
-{
-	int i, ret;
+/* set the pin config settings क्रम a specअगरied pin */
+अटल पूर्णांक samsung_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		ret = samsung_pinconf_rw(pctldev, pin, &configs[i], true);
-		if (ret < 0)
-			return ret;
-	} /* for each config */
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण /* क्रम each config */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* get the pin config settings for a specified pin */
-static int samsung_pinconf_get(struct pinctrl_dev *pctldev, unsigned int pin,
-					unsigned long *config)
-{
-	return samsung_pinconf_rw(pctldev, pin, config, false);
-}
+/* get the pin config settings क्रम a specअगरied pin */
+अटल पूर्णांक samsung_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+					अचिन्हित दीर्घ *config)
+अणु
+	वापस samsung_pinconf_rw(pctldev, pin, config, false);
+पूर्ण
 
-/* set the pin config settings for a specified pin group */
-static int samsung_pinconf_group_set(struct pinctrl_dev *pctldev,
-			unsigned group, unsigned long *configs,
-			unsigned num_configs)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	const unsigned int *pins;
-	unsigned int cnt;
+/* set the pin config settings क्रम a specअगरied pin group */
+अटल पूर्णांक samsung_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+			अचिन्हित group, अचिन्हित दीर्घ *configs,
+			अचिन्हित num_configs)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	स्थिर अचिन्हित पूर्णांक *pins;
+	अचिन्हित पूर्णांक cnt;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 	pins = drvdata->pin_groups[group].pins;
 
-	for (cnt = 0; cnt < drvdata->pin_groups[group].num_pins; cnt++)
+	क्रम (cnt = 0; cnt < drvdata->pin_groups[group].num_pins; cnt++)
 		samsung_pinconf_set(pctldev, pins[cnt], configs, num_configs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* get the pin config settings for a specified pin group */
-static int samsung_pinconf_group_get(struct pinctrl_dev *pctldev,
-				unsigned int group, unsigned long *config)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	const unsigned int *pins;
+/* get the pin config settings क्रम a specअगरied pin group */
+अटल पूर्णांक samsung_pinconf_group_get(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक group, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	स्थिर अचिन्हित पूर्णांक *pins;
 
 	drvdata = pinctrl_dev_get_drvdata(pctldev);
 	pins = drvdata->pin_groups[group].pins;
 	samsung_pinconf_get(pctldev, pins[0], config);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* list of pinconfig callbacks for pinconfig vertical in the pinctrl code */
-static const struct pinconf_ops samsung_pinconf_ops = {
+/* list of pinconfig callbacks क्रम pinconfig vertical in the pinctrl code */
+अटल स्थिर काष्ठा pinconf_ops samsung_pinconf_ops = अणु
 	.pin_config_get		= samsung_pinconf_get,
 	.pin_config_set		= samsung_pinconf_set,
 	.pin_config_group_get	= samsung_pinconf_group_get,
 	.pin_config_group_set	= samsung_pinconf_group_set,
-};
+पूर्ण;
 
 /*
  * The samsung_gpio_set_vlaue() should be called with "bank->slock" held
- * to avoid race condition.
+ * to aव्योम race condition.
  */
-static void samsung_gpio_set_value(struct gpio_chip *gc,
-					  unsigned offset, int value)
-{
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	const struct samsung_pin_bank_type *type = bank->type;
-	void __iomem *reg;
+अटल व्योम samsung_gpio_set_value(काष्ठा gpio_chip *gc,
+					  अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	स्थिर काष्ठा samsung_pin_bank_type *type = bank->type;
+	व्योम __iomem *reg;
 	u32 data;
 
 	reg = bank->pctl_base + bank->pctl_offset;
 
-	data = readl(reg + type->reg_offset[PINCFG_TYPE_DAT]);
+	data = पढ़ोl(reg + type->reg_offset[PINCFG_TYPE_DAT]);
 	data &= ~(1 << offset);
-	if (value)
+	अगर (value)
 		data |= 1 << offset;
-	writel(data, reg + type->reg_offset[PINCFG_TYPE_DAT]);
-}
+	ग_लिखोl(data, reg + type->reg_offset[PINCFG_TYPE_DAT]);
+पूर्ण
 
 /* gpiolib gpio_set callback function */
-static void samsung_gpio_set(struct gpio_chip *gc, unsigned offset, int value)
-{
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	unsigned long flags;
+अटल व्योम samsung_gpio_set(काष्ठा gpio_chip *gc, अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 	samsung_gpio_set_value(gc, offset, value);
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-}
+पूर्ण
 
 /* gpiolib gpio_get callback function */
-static int samsung_gpio_get(struct gpio_chip *gc, unsigned offset)
-{
-	void __iomem *reg;
+अटल पूर्णांक samsung_gpio_get(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	व्योम __iomem *reg;
 	u32 data;
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	const struct samsung_pin_bank_type *type = bank->type;
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	स्थिर काष्ठा samsung_pin_bank_type *type = bank->type;
 
 	reg = bank->pctl_base + bank->pctl_offset;
 
-	data = readl(reg + type->reg_offset[PINCFG_TYPE_DAT]);
+	data = पढ़ोl(reg + type->reg_offset[PINCFG_TYPE_DAT]);
 	data >>= offset;
 	data &= 1;
-	return data;
-}
+	वापस data;
+पूर्ण
 
 /*
  * The samsung_gpio_set_direction() should be called with "bank->slock" held
- * to avoid race condition.
+ * to aव्योम race condition.
  * The calls to gpio_direction_output() and gpio_direction_input()
  * leads to this function call.
  */
-static int samsung_gpio_set_direction(struct gpio_chip *gc,
-					     unsigned offset, bool input)
-{
-	const struct samsung_pin_bank_type *type;
-	struct samsung_pin_bank *bank;
-	void __iomem *reg;
-	u32 data, mask, shift;
+अटल पूर्णांक samsung_gpio_set_direction(काष्ठा gpio_chip *gc,
+					     अचिन्हित offset, bool input)
+अणु
+	स्थिर काष्ठा samsung_pin_bank_type *type;
+	काष्ठा samsung_pin_bank *bank;
+	व्योम __iomem *reg;
+	u32 data, mask, shअगरt;
 
 	bank = gpiochip_get_data(gc);
 	type = bank->type;
@@ -603,176 +604,176 @@ static int samsung_gpio_set_direction(struct gpio_chip *gc,
 			+ type->reg_offset[PINCFG_TYPE_FUNC];
 
 	mask = (1 << type->fld_width[PINCFG_TYPE_FUNC]) - 1;
-	shift = offset * type->fld_width[PINCFG_TYPE_FUNC];
-	if (shift >= 32) {
-		/* Some banks have two config registers */
-		shift -= 32;
+	shअगरt = offset * type->fld_width[PINCFG_TYPE_FUNC];
+	अगर (shअगरt >= 32) अणु
+		/* Some banks have two config रेजिस्टरs */
+		shअगरt -= 32;
 		reg += 4;
-	}
+	पूर्ण
 
-	data = readl(reg);
-	data &= ~(mask << shift);
-	if (!input)
-		data |= EXYNOS_PIN_FUNC_OUTPUT << shift;
-	writel(data, reg);
+	data = पढ़ोl(reg);
+	data &= ~(mask << shअगरt);
+	अगर (!input)
+		data |= EXYNOS_PIN_FUNC_OUTPUT << shअगरt;
+	ग_लिखोl(data, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* gpiolib gpio_direction_input callback function. */
-static int samsung_gpio_direction_input(struct gpio_chip *gc, unsigned offset)
-{
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक samsung_gpio_direction_input(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 	ret = samsung_gpio_set_direction(gc, offset, true);
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* gpiolib gpio_direction_output callback function. */
-static int samsung_gpio_direction_output(struct gpio_chip *gc, unsigned offset,
-							int value)
-{
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक samsung_gpio_direction_output(काष्ठा gpio_chip *gc, अचिन्हित offset,
+							पूर्णांक value)
+अणु
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	raw_spin_lock_irqsave(&bank->slock, flags);
 	samsung_gpio_set_value(gc, offset, value);
 	ret = samsung_gpio_set_direction(gc, offset, false);
 	raw_spin_unlock_irqrestore(&bank->slock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * gpiolib gpio_to_irq callback function. Creates a mapping between a GPIO pin
- * and a virtual IRQ, if not already present.
+ * and a भव IRQ, अगर not alपढ़ोy present.
  */
-static int samsung_gpio_to_irq(struct gpio_chip *gc, unsigned offset)
-{
-	struct samsung_pin_bank *bank = gpiochip_get_data(gc);
-	unsigned int virq;
+अटल पूर्णांक samsung_gpio_to_irq(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा samsung_pin_bank *bank = gpiochip_get_data(gc);
+	अचिन्हित पूर्णांक virq;
 
-	if (!bank->irq_domain)
-		return -ENXIO;
+	अगर (!bank->irq_करोमुख्य)
+		वापस -ENXIO;
 
-	virq = irq_create_mapping(bank->irq_domain, offset);
+	virq = irq_create_mapping(bank->irq_करोमुख्य, offset);
 
-	return (virq) ? : -ENXIO;
-}
+	वापस (virq) ? : -ENXIO;
+पूर्ण
 
-static struct samsung_pin_group *samsung_pinctrl_create_groups(
-				struct device *dev,
-				struct samsung_pinctrl_drv_data *drvdata,
-				unsigned int *cnt)
-{
-	struct pinctrl_desc *ctrldesc = &drvdata->pctl;
-	struct samsung_pin_group *groups, *grp;
-	const struct pinctrl_pin_desc *pdesc;
-	int i;
+अटल काष्ठा samsung_pin_group *samsung_pinctrl_create_groups(
+				काष्ठा device *dev,
+				काष्ठा samsung_pinctrl_drv_data *drvdata,
+				अचिन्हित पूर्णांक *cnt)
+अणु
+	काष्ठा pinctrl_desc *ctrldesc = &drvdata->pctl;
+	काष्ठा samsung_pin_group *groups, *grp;
+	स्थिर काष्ठा pinctrl_pin_desc *pdesc;
+	पूर्णांक i;
 
-	groups = devm_kcalloc(dev, ctrldesc->npins, sizeof(*groups),
+	groups = devm_kसुस्मृति(dev, ctrldesc->npins, माप(*groups),
 				GFP_KERNEL);
-	if (!groups)
-		return ERR_PTR(-EINVAL);
+	अगर (!groups)
+		वापस ERR_PTR(-EINVAL);
 	grp = groups;
 
 	pdesc = ctrldesc->pins;
-	for (i = 0; i < ctrldesc->npins; ++i, ++pdesc, ++grp) {
+	क्रम (i = 0; i < ctrldesc->npins; ++i, ++pdesc, ++grp) अणु
 		grp->name = pdesc->name;
 		grp->pins = &pdesc->number;
 		grp->num_pins = 1;
-	}
+	पूर्ण
 
 	*cnt = ctrldesc->npins;
-	return groups;
-}
+	वापस groups;
+पूर्ण
 
-static int samsung_pinctrl_create_function(struct device *dev,
-				struct samsung_pinctrl_drv_data *drvdata,
-				struct device_node *func_np,
-				struct samsung_pmx_func *func)
-{
-	int npins;
-	int ret;
-	int i;
+अटल पूर्णांक samsung_pinctrl_create_function(काष्ठा device *dev,
+				काष्ठा samsung_pinctrl_drv_data *drvdata,
+				काष्ठा device_node *func_np,
+				काष्ठा samsung_pmx_func *func)
+अणु
+	पूर्णांक npins;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (of_property_read_u32(func_np, "samsung,pin-function", &func->val))
-		return 0;
+	अगर (of_property_पढ़ो_u32(func_np, "samsung,pin-function", &func->val))
+		वापस 0;
 
 	npins = of_property_count_strings(func_np, "samsung,pins");
-	if (npins < 1) {
+	अगर (npins < 1) अणु
 		dev_err(dev, "invalid pin list in %pOFn node", func_np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	func->name = func_np->full_name;
 
-	func->groups = devm_kcalloc(dev, npins, sizeof(char *), GFP_KERNEL);
-	if (!func->groups)
-		return -ENOMEM;
+	func->groups = devm_kसुस्मृति(dev, npins, माप(अक्षर *), GFP_KERNEL);
+	अगर (!func->groups)
+		वापस -ENOMEM;
 
-	for (i = 0; i < npins; ++i) {
-		const char *gname;
+	क्रम (i = 0; i < npins; ++i) अणु
+		स्थिर अक्षर *gname;
 
-		ret = of_property_read_string_index(func_np, "samsung,pins",
+		ret = of_property_पढ़ो_string_index(func_np, "samsung,pins",
 							i, &gname);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev,
 				"failed to read pin name %d from %pOFn node\n",
 				i, func_np);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		func->groups[i] = gname;
-	}
+	पूर्ण
 
 	func->num_groups = npins;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static struct samsung_pmx_func *samsung_pinctrl_create_functions(
-				struct device *dev,
-				struct samsung_pinctrl_drv_data *drvdata,
-				unsigned int *cnt)
-{
-	struct samsung_pmx_func *functions, *func;
-	struct device_node *dev_np = dev->of_node;
-	struct device_node *cfg_np;
-	unsigned int func_cnt = 0;
-	int ret;
+अटल काष्ठा samsung_pmx_func *samsung_pinctrl_create_functions(
+				काष्ठा device *dev,
+				काष्ठा samsung_pinctrl_drv_data *drvdata,
+				अचिन्हित पूर्णांक *cnt)
+अणु
+	काष्ठा samsung_pmx_func *functions, *func;
+	काष्ठा device_node *dev_np = dev->of_node;
+	काष्ठा device_node *cfg_np;
+	अचिन्हित पूर्णांक func_cnt = 0;
+	पूर्णांक ret;
 
 	/*
 	 * Iterate over all the child nodes of the pin controller node
 	 * and create pin groups and pin function lists.
 	 */
-	for_each_child_of_node(dev_np, cfg_np) {
-		struct device_node *func_np;
+	क्रम_each_child_of_node(dev_np, cfg_np) अणु
+		काष्ठा device_node *func_np;
 
-		if (!of_get_child_count(cfg_np)) {
-			if (!of_find_property(cfg_np,
-			    "samsung,pin-function", NULL))
-				continue;
+		अगर (!of_get_child_count(cfg_np)) अणु
+			अगर (!of_find_property(cfg_np,
+			    "samsung,pin-function", शून्य))
+				जारी;
 			++func_cnt;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for_each_child_of_node(cfg_np, func_np) {
-			if (!of_find_property(func_np,
-			    "samsung,pin-function", NULL))
-				continue;
+		क्रम_each_child_of_node(cfg_np, func_np) अणु
+			अगर (!of_find_property(func_np,
+			    "samsung,pin-function", शून्य))
+				जारी;
 			++func_cnt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	functions = devm_kcalloc(dev, func_cnt, sizeof(*functions),
+	functions = devm_kसुस्मृति(dev, func_cnt, माप(*functions),
 					GFP_KERNEL);
-	if (!functions)
-		return ERR_PTR(-ENOMEM);
+	अगर (!functions)
+		वापस ERR_PTR(-ENOMEM);
 	func = functions;
 
 	/*
@@ -780,85 +781,85 @@ static struct samsung_pmx_func *samsung_pinctrl_create_functions(
 	 * and create pin groups and pin function lists.
 	 */
 	func_cnt = 0;
-	for_each_child_of_node(dev_np, cfg_np) {
-		struct device_node *func_np;
+	क्रम_each_child_of_node(dev_np, cfg_np) अणु
+		काष्ठा device_node *func_np;
 
-		if (!of_get_child_count(cfg_np)) {
+		अगर (!of_get_child_count(cfg_np)) अणु
 			ret = samsung_pinctrl_create_function(dev, drvdata,
 							cfg_np, func);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				of_node_put(cfg_np);
-				return ERR_PTR(ret);
-			}
-			if (ret > 0) {
+				वापस ERR_PTR(ret);
+			पूर्ण
+			अगर (ret > 0) अणु
 				++func;
 				++func_cnt;
-			}
-			continue;
-		}
+			पूर्ण
+			जारी;
+		पूर्ण
 
-		for_each_child_of_node(cfg_np, func_np) {
+		क्रम_each_child_of_node(cfg_np, func_np) अणु
 			ret = samsung_pinctrl_create_function(dev, drvdata,
 						func_np, func);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				of_node_put(func_np);
 				of_node_put(cfg_np);
-				return ERR_PTR(ret);
-			}
-			if (ret > 0) {
+				वापस ERR_PTR(ret);
+			पूर्ण
+			अगर (ret > 0) अणु
 				++func;
 				++func_cnt;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	*cnt = func_cnt;
-	return functions;
-}
+	वापस functions;
+पूर्ण
 
 /*
- * Parse the information about all the available pin groups and pin functions
- * from device node of the pin-controller. A pin group is formed with all
+ * Parse the inक्रमmation about all the available pin groups and pin functions
+ * from device node of the pin-controller. A pin group is क्रमmed with all
  * the pins listed in the "samsung,pins" property.
  */
 
-static int samsung_pinctrl_parse_dt(struct platform_device *pdev,
-				    struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct device *dev = &pdev->dev;
-	struct samsung_pin_group *groups;
-	struct samsung_pmx_func *functions;
-	unsigned int grp_cnt = 0, func_cnt = 0;
+अटल पूर्णांक samsung_pinctrl_parse_dt(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा samsung_pin_group *groups;
+	काष्ठा samsung_pmx_func *functions;
+	अचिन्हित पूर्णांक grp_cnt = 0, func_cnt = 0;
 
 	groups = samsung_pinctrl_create_groups(dev, drvdata, &grp_cnt);
-	if (IS_ERR(groups)) {
+	अगर (IS_ERR(groups)) अणु
 		dev_err(dev, "failed to parse pin groups\n");
-		return PTR_ERR(groups);
-	}
+		वापस PTR_ERR(groups);
+	पूर्ण
 
 	functions = samsung_pinctrl_create_functions(dev, drvdata, &func_cnt);
-	if (IS_ERR(functions)) {
+	अगर (IS_ERR(functions)) अणु
 		dev_err(dev, "failed to parse pin functions\n");
-		return PTR_ERR(functions);
-	}
+		वापस PTR_ERR(functions);
+	पूर्ण
 
 	drvdata->pin_groups = groups;
 	drvdata->nr_groups = grp_cnt;
 	drvdata->pmx_functions = functions;
 	drvdata->nr_functions = func_cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* register the pinctrl interface with the pinctrl subsystem */
-static int samsung_pinctrl_register(struct platform_device *pdev,
-				    struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct pinctrl_desc *ctrldesc = &drvdata->pctl;
-	struct pinctrl_pin_desc *pindesc, *pdesc;
-	struct samsung_pin_bank *pin_bank;
-	char *pin_names;
-	int pin, bank, ret;
+/* रेजिस्टर the pinctrl पूर्णांकerface with the pinctrl subप्रणाली */
+अटल पूर्णांक samsung_pinctrl_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा pinctrl_desc *ctrldesc = &drvdata->pctl;
+	काष्ठा pinctrl_pin_desc *pindesc, *pdesc;
+	काष्ठा samsung_pin_bank *pin_bank;
+	अक्षर *pin_names;
+	पूर्णांक pin, bank, ret;
 
 	ctrldesc->name = "samsung-pinctrl";
 	ctrldesc->owner = THIS_MODULE;
@@ -866,52 +867,52 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 	ctrldesc->pmxops = &samsung_pinmux_ops;
 	ctrldesc->confops = &samsung_pinconf_ops;
 
-	pindesc = devm_kcalloc(&pdev->dev,
-			       drvdata->nr_pins, sizeof(*pindesc),
+	pindesc = devm_kसुस्मृति(&pdev->dev,
+			       drvdata->nr_pins, माप(*pindesc),
 			       GFP_KERNEL);
-	if (!pindesc)
-		return -ENOMEM;
+	अगर (!pindesc)
+		वापस -ENOMEM;
 	ctrldesc->pins = pindesc;
 	ctrldesc->npins = drvdata->nr_pins;
 
-	/* dynamically populate the pin number and pin name for pindesc */
-	for (pin = 0, pdesc = pindesc; pin < ctrldesc->npins; pin++, pdesc++)
+	/* dynamically populate the pin number and pin name क्रम pindesc */
+	क्रम (pin = 0, pdesc = pindesc; pin < ctrldesc->npins; pin++, pdesc++)
 		pdesc->number = pin + drvdata->pin_base;
 
 	/*
-	 * allocate space for storing the dynamically generated names for all
-	 * the pins which belong to this pin-controller.
+	 * allocate space क्रम storing the dynamically generated names क्रम all
+	 * the pins which beदीर्घ to this pin-controller.
 	 */
 	pin_names = devm_kzalloc(&pdev->dev,
-				 array3_size(sizeof(char), PIN_NAME_LENGTH,
+				 array3_size(माप(अक्षर), PIN_NAME_LENGTH,
 					     drvdata->nr_pins),
 				 GFP_KERNEL);
-	if (!pin_names)
-		return -ENOMEM;
+	अगर (!pin_names)
+		वापस -ENOMEM;
 
-	/* for each pin, the name of the pin is pin-bank name + pin number */
-	for (bank = 0; bank < drvdata->nr_banks; bank++) {
+	/* क्रम each pin, the name of the pin is pin-bank name + pin number */
+	क्रम (bank = 0; bank < drvdata->nr_banks; bank++) अणु
 		pin_bank = &drvdata->pin_banks[bank];
-		for (pin = 0; pin < pin_bank->nr_pins; pin++) {
-			sprintf(pin_names, "%s-%d", pin_bank->name, pin);
+		क्रम (pin = 0; pin < pin_bank->nr_pins; pin++) अणु
+			प्र_लिखो(pin_names, "%s-%d", pin_bank->name, pin);
 			pdesc = pindesc + pin_bank->pin_base + pin;
 			pdesc->name = pin_names;
 			pin_names += PIN_NAME_LENGTH;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ret = samsung_pinctrl_parse_dt(pdev, drvdata);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	drvdata->pctl_dev = devm_pinctrl_register(&pdev->dev, ctrldesc,
+	drvdata->pctl_dev = devm_pinctrl_रेजिस्टर(&pdev->dev, ctrldesc,
 						  drvdata);
-	if (IS_ERR(drvdata->pctl_dev)) {
+	अगर (IS_ERR(drvdata->pctl_dev)) अणु
 		dev_err(&pdev->dev, "could not register pinctrl driver\n");
-		return PTR_ERR(drvdata->pctl_dev);
-	}
+		वापस PTR_ERR(drvdata->pctl_dev);
+	पूर्ण
 
-	for (bank = 0; bank < drvdata->nr_banks; ++bank) {
+	क्रम (bank = 0; bank < drvdata->nr_banks; ++bank) अणु
 		pin_bank = &drvdata->pin_banks[bank];
 		pin_bank->grange.name = pin_bank->name;
 		pin_bank->grange.id = bank;
@@ -921,45 +922,45 @@ static int samsung_pinctrl_register(struct platform_device *pdev,
 		pin_bank->grange.npins = pin_bank->gpio_chip.ngpio;
 		pin_bank->grange.gc = &pin_bank->gpio_chip;
 		pinctrl_add_gpio_range(drvdata->pctl_dev, &pin_bank->grange);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* unregister the pinctrl interface with the pinctrl subsystem */
-static int samsung_pinctrl_unregister(struct platform_device *pdev,
-				      struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct samsung_pin_bank *bank = drvdata->pin_banks;
-	int i;
+/* unरेजिस्टर the pinctrl पूर्णांकerface with the pinctrl subप्रणाली */
+अटल पूर्णांक samsung_pinctrl_unरेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				      काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा samsung_pin_bank *bank = drvdata->pin_banks;
+	पूर्णांक i;
 
-	for (i = 0; i < drvdata->nr_banks; ++i, ++bank)
-		pinctrl_remove_gpio_range(drvdata->pctl_dev, &bank->grange);
+	क्रम (i = 0; i < drvdata->nr_banks; ++i, ++bank)
+		pinctrl_हटाओ_gpio_range(drvdata->pctl_dev, &bank->grange);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct gpio_chip samsung_gpiolib_chip = {
+अटल स्थिर काष्ठा gpio_chip samsung_gpiolib_chip = अणु
 	.request = gpiochip_generic_request,
-	.free = gpiochip_generic_free,
+	.मुक्त = gpiochip_generic_मुक्त,
 	.set = samsung_gpio_set,
 	.get = samsung_gpio_get,
 	.direction_input = samsung_gpio_direction_input,
 	.direction_output = samsung_gpio_direction_output,
 	.to_irq = samsung_gpio_to_irq,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-/* register the gpiolib interface with the gpiolib subsystem */
-static int samsung_gpiolib_register(struct platform_device *pdev,
-				    struct samsung_pinctrl_drv_data *drvdata)
-{
-	struct samsung_pin_bank *bank = drvdata->pin_banks;
-	struct gpio_chip *gc;
-	int ret;
-	int i;
+/* रेजिस्टर the gpiolib पूर्णांकerface with the gpiolib subप्रणाली */
+अटल पूर्णांक samsung_gpiolib_रेजिस्टर(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा samsung_pinctrl_drv_data *drvdata)
+अणु
+	काष्ठा samsung_pin_bank *bank = drvdata->pin_banks;
+	काष्ठा gpio_chip *gc;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < drvdata->nr_banks; ++i, ++bank) {
+	क्रम (i = 0; i < drvdata->nr_banks; ++i, ++bank) अणु
 		bank->gpio_chip = samsung_gpiolib_chip;
 
 		gc = &bank->gpio_chip;
@@ -970,91 +971,91 @@ static int samsung_gpiolib_register(struct platform_device *pdev,
 		gc->label = bank->name;
 
 		ret = devm_gpiochip_add_data(&pdev->dev, gc, bank);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to register gpio_chip %s, error code: %d\n",
 							gc->label, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct samsung_pin_ctrl *
-samsung_pinctrl_get_soc_data_for_of_alias(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	const struct samsung_pinctrl_of_match_data *of_data;
-	int id;
+अटल स्थिर काष्ठा samsung_pin_ctrl *
+samsung_pinctrl_get_soc_data_क्रम_of_alias(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	स्थिर काष्ठा samsung_pinctrl_of_match_data *of_data;
+	पूर्णांक id;
 
 	id = of_alias_get_id(node, "pinctrl");
-	if (id < 0) {
+	अगर (id < 0) अणु
 		dev_err(&pdev->dev, "failed to get alias id\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	of_data = of_device_get_match_data(&pdev->dev);
-	if (id >= of_data->num_ctrl) {
+	अगर (id >= of_data->num_ctrl) अणु
 		dev_err(&pdev->dev, "invalid alias id %d\n", id);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return &(of_data->ctrl[id]);
-}
+	वापस &(of_data->ctrl[id]);
+पूर्ण
 
-/* retrieve the soc specific data */
-static const struct samsung_pin_ctrl *
-samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
-			     struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct device_node *np;
-	const struct samsung_pin_bank_data *bdata;
-	const struct samsung_pin_ctrl *ctrl;
-	struct samsung_pin_bank *bank;
-	struct resource *res;
-	void __iomem *virt_base[SAMSUNG_PINCTRL_NUM_RESOURCES];
-	unsigned int i;
+/* retrieve the soc specअगरic data */
+अटल स्थिर काष्ठा samsung_pin_ctrl *
+samsung_pinctrl_get_soc_data(काष्ठा samsung_pinctrl_drv_data *d,
+			     काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा device_node *np;
+	स्थिर काष्ठा samsung_pin_bank_data *bdata;
+	स्थिर काष्ठा samsung_pin_ctrl *ctrl;
+	काष्ठा samsung_pin_bank *bank;
+	काष्ठा resource *res;
+	व्योम __iomem *virt_base[SAMSUNG_PINCTRL_NUM_RESOURCES];
+	अचिन्हित पूर्णांक i;
 
-	ctrl = samsung_pinctrl_get_soc_data_for_of_alias(pdev);
-	if (!ctrl)
-		return ERR_PTR(-ENOENT);
+	ctrl = samsung_pinctrl_get_soc_data_क्रम_of_alias(pdev);
+	अगर (!ctrl)
+		वापस ERR_PTR(-ENOENT);
 
 	d->suspend = ctrl->suspend;
 	d->resume = ctrl->resume;
 	d->nr_banks = ctrl->nr_banks;
-	d->pin_banks = devm_kcalloc(&pdev->dev, d->nr_banks,
-					sizeof(*d->pin_banks), GFP_KERNEL);
-	if (!d->pin_banks)
-		return ERR_PTR(-ENOMEM);
+	d->pin_banks = devm_kसुस्मृति(&pdev->dev, d->nr_banks,
+					माप(*d->pin_banks), GFP_KERNEL);
+	अगर (!d->pin_banks)
+		वापस ERR_PTR(-ENOMEM);
 
-	if (ctrl->nr_ext_resources + 1 > SAMSUNG_PINCTRL_NUM_RESOURCES)
-		return ERR_PTR(-EINVAL);
+	अगर (ctrl->nr_ext_resources + 1 > SAMSUNG_PINCTRL_NUM_RESOURCES)
+		वापस ERR_PTR(-EINVAL);
 
-	for (i = 0; i < ctrl->nr_ext_resources + 1; i++) {
-		res = platform_get_resource(pdev, IORESOURCE_MEM, i);
-		if (!res) {
+	क्रम (i = 0; i < ctrl->nr_ext_resources + 1; i++) अणु
+		res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
+		अगर (!res) अणु
 			dev_err(&pdev->dev, "failed to get mem%d resource\n", i);
-			return ERR_PTR(-EINVAL);
-		}
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 		virt_base[i] = devm_ioremap(&pdev->dev, res->start,
 						resource_size(res));
-		if (!virt_base[i]) {
+		अगर (!virt_base[i]) अणु
 			dev_err(&pdev->dev, "failed to ioremap %pR\n", res);
-			return ERR_PTR(-EIO);
-		}
-	}
+			वापस ERR_PTR(-EIO);
+		पूर्ण
+	पूर्ण
 
 	bank = d->pin_banks;
 	bdata = ctrl->pin_banks;
-	for (i = 0; i < ctrl->nr_banks; ++i, ++bdata, ++bank) {
+	क्रम (i = 0; i < ctrl->nr_banks; ++i, ++bdata, ++bank) अणु
 		bank->type = bdata->type;
 		bank->pctl_offset = bdata->pctl_offset;
 		bank->nr_pins = bdata->nr_pins;
-		bank->eint_func = bdata->eint_func;
-		bank->eint_type = bdata->eint_type;
-		bank->eint_mask = bdata->eint_mask;
-		bank->eint_offset = bdata->eint_offset;
+		bank->eपूर्णांक_func = bdata->eपूर्णांक_func;
+		bank->eपूर्णांक_type = bdata->eपूर्णांक_type;
+		bank->eपूर्णांक_mask = bdata->eपूर्णांक_mask;
+		bank->eपूर्णांक_offset = bdata->eपूर्णांक_offset;
 		bank->name = bdata->name;
 
 		raw_spin_lock_init(&bank->slock);
@@ -1062,243 +1063,243 @@ samsung_pinctrl_get_soc_data(struct samsung_pinctrl_drv_data *d,
 		bank->pin_base = d->nr_pins;
 		d->nr_pins += bank->nr_pins;
 
-		bank->eint_base = virt_base[0];
+		bank->eपूर्णांक_base = virt_base[0];
 		bank->pctl_base = virt_base[bdata->pctl_res_idx];
-	}
+	पूर्ण
 	/*
-	 * Legacy platforms should provide only one resource with IO memory.
+	 * Legacy platक्रमms should provide only one resource with IO memory.
 	 * Store it as virt_base because legacy driver needs to access it
 	 * through samsung_pinctrl_drv_data.
 	 */
 	d->virt_base = virt_base[0];
 
-	for_each_child_of_node(node, np) {
-		if (!of_find_property(np, "gpio-controller", NULL))
-			continue;
+	क्रम_each_child_of_node(node, np) अणु
+		अगर (!of_find_property(np, "gpio-controller", शून्य))
+			जारी;
 		bank = d->pin_banks;
-		for (i = 0; i < d->nr_banks; ++i, ++bank) {
-			if (of_node_name_eq(np, bank->name)) {
+		क्रम (i = 0; i < d->nr_banks; ++i, ++bank) अणु
+			अगर (of_node_name_eq(np, bank->name)) अणु
 				bank->of_node = np;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	d->pin_base = pin_base;
 	pin_base += d->nr_pins;
 
-	return ctrl;
-}
+	वापस ctrl;
+पूर्ण
 
-static int samsung_pinctrl_probe(struct platform_device *pdev)
-{
-	struct samsung_pinctrl_drv_data *drvdata;
-	const struct samsung_pin_ctrl *ctrl;
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक samsung_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata;
+	स्थिर काष्ठा samsung_pin_ctrl *ctrl;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	drvdata = devm_kzalloc(dev, sizeof(*drvdata), GFP_KERNEL);
-	if (!drvdata)
-		return -ENOMEM;
+	drvdata = devm_kzalloc(dev, माप(*drvdata), GFP_KERNEL);
+	अगर (!drvdata)
+		वापस -ENOMEM;
 
 	ctrl = samsung_pinctrl_get_soc_data(drvdata, pdev);
-	if (IS_ERR(ctrl)) {
+	अगर (IS_ERR(ctrl)) अणु
 		dev_err(&pdev->dev, "driver data not available\n");
-		return PTR_ERR(ctrl);
-	}
+		वापस PTR_ERR(ctrl);
+	पूर्ण
 	drvdata->dev = dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (res)
+	res = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (res)
 		drvdata->irq = res->start;
 
-	if (ctrl->retention_data) {
+	अगर (ctrl->retention_data) अणु
 		drvdata->retention_ctrl = ctrl->retention_data->init(drvdata,
 							  ctrl->retention_data);
-		if (IS_ERR(drvdata->retention_ctrl))
-			return PTR_ERR(drvdata->retention_ctrl);
-	}
+		अगर (IS_ERR(drvdata->retention_ctrl))
+			वापस PTR_ERR(drvdata->retention_ctrl);
+	पूर्ण
 
-	ret = samsung_pinctrl_register(pdev, drvdata);
-	if (ret)
-		return ret;
+	ret = samsung_pinctrl_रेजिस्टर(pdev, drvdata);
+	अगर (ret)
+		वापस ret;
 
-	ret = samsung_gpiolib_register(pdev, drvdata);
-	if (ret) {
-		samsung_pinctrl_unregister(pdev, drvdata);
-		return ret;
-	}
+	ret = samsung_gpiolib_रेजिस्टर(pdev, drvdata);
+	अगर (ret) अणु
+		samsung_pinctrl_unरेजिस्टर(pdev, drvdata);
+		वापस ret;
+	पूर्ण
 
-	if (ctrl->eint_gpio_init)
-		ctrl->eint_gpio_init(drvdata);
-	if (ctrl->eint_wkup_init)
-		ctrl->eint_wkup_init(drvdata);
+	अगर (ctrl->eपूर्णांक_gpio_init)
+		ctrl->eपूर्णांक_gpio_init(drvdata);
+	अगर (ctrl->eपूर्णांक_wkup_init)
+		ctrl->eपूर्णांक_wkup_init(drvdata);
 
-	platform_set_drvdata(pdev, drvdata);
+	platक्रमm_set_drvdata(pdev, drvdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * samsung_pinctrl_suspend - save pinctrl state for suspend
+ * samsung_pinctrl_suspend - save pinctrl state क्रम suspend
  *
- * Save data for all banks handled by this device.
+ * Save data क्रम all banks handled by this device.
  */
-static int __maybe_unused samsung_pinctrl_suspend(struct device *dev)
-{
-	struct samsung_pinctrl_drv_data *drvdata = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused samsung_pinctrl_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	for (i = 0; i < drvdata->nr_banks; i++) {
-		struct samsung_pin_bank *bank = &drvdata->pin_banks[i];
-		void __iomem *reg = bank->pctl_base + bank->pctl_offset;
-		const u8 *offs = bank->type->reg_offset;
-		const u8 *widths = bank->type->fld_width;
-		enum pincfg_type type;
+	क्रम (i = 0; i < drvdata->nr_banks; i++) अणु
+		काष्ठा samsung_pin_bank *bank = &drvdata->pin_banks[i];
+		व्योम __iomem *reg = bank->pctl_base + bank->pctl_offset;
+		स्थिर u8 *offs = bank->type->reg_offset;
+		स्थिर u8 *widths = bank->type->fld_width;
+		क्रमागत pincfg_type type;
 
-		/* Registers without a powerdown config aren't lost */
-		if (!widths[PINCFG_TYPE_CON_PDN])
-			continue;
+		/* Registers without a घातerकरोwn config aren't lost */
+		अगर (!widths[PINCFG_TYPE_CON_PDN])
+			जारी;
 
-		for (type = 0; type < PINCFG_TYPE_NUM; type++)
-			if (widths[type])
-				bank->pm_save[type] = readl(reg + offs[type]);
+		क्रम (type = 0; type < PINCFG_TYPE_NUM; type++)
+			अगर (widths[type])
+				bank->pm_save[type] = पढ़ोl(reg + offs[type]);
 
-		if (widths[PINCFG_TYPE_FUNC] * bank->nr_pins > 32) {
-			/* Some banks have two config registers */
+		अगर (widths[PINCFG_TYPE_FUNC] * bank->nr_pins > 32) अणु
+			/* Some banks have two config रेजिस्टरs */
 			bank->pm_save[PINCFG_TYPE_NUM] =
-				readl(reg + offs[PINCFG_TYPE_FUNC] + 4);
+				पढ़ोl(reg + offs[PINCFG_TYPE_FUNC] + 4);
 			pr_debug("Save %s @ %p (con %#010x %08x)\n",
 				 bank->name, reg,
 				 bank->pm_save[PINCFG_TYPE_FUNC],
 				 bank->pm_save[PINCFG_TYPE_NUM]);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("Save %s @ %p (con %#010x)\n", bank->name,
 				 reg, bank->pm_save[PINCFG_TYPE_FUNC]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (drvdata->suspend)
+	अगर (drvdata->suspend)
 		drvdata->suspend(drvdata);
-	if (drvdata->retention_ctrl && drvdata->retention_ctrl->enable)
+	अगर (drvdata->retention_ctrl && drvdata->retention_ctrl->enable)
 		drvdata->retention_ctrl->enable(drvdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * samsung_pinctrl_resume - restore pinctrl state from suspend
  *
  * Restore one of the banks that was saved during suspend.
  *
- * We don't bother doing anything complicated to avoid glitching lines since
- * we're called before pad retention is turned off.
+ * We करोn't bother करोing anything complicated to aव्योम glitching lines since
+ * we're called beक्रमe pad retention is turned off.
  */
-static int __maybe_unused samsung_pinctrl_resume(struct device *dev)
-{
-	struct samsung_pinctrl_drv_data *drvdata = dev_get_drvdata(dev);
-	int i;
+अटल पूर्णांक __maybe_unused samsung_pinctrl_resume(काष्ठा device *dev)
+अणु
+	काष्ठा samsung_pinctrl_drv_data *drvdata = dev_get_drvdata(dev);
+	पूर्णांक i;
 
-	if (drvdata->resume)
+	अगर (drvdata->resume)
 		drvdata->resume(drvdata);
 
-	for (i = 0; i < drvdata->nr_banks; i++) {
-		struct samsung_pin_bank *bank = &drvdata->pin_banks[i];
-		void __iomem *reg = bank->pctl_base + bank->pctl_offset;
-		const u8 *offs = bank->type->reg_offset;
-		const u8 *widths = bank->type->fld_width;
-		enum pincfg_type type;
+	क्रम (i = 0; i < drvdata->nr_banks; i++) अणु
+		काष्ठा samsung_pin_bank *bank = &drvdata->pin_banks[i];
+		व्योम __iomem *reg = bank->pctl_base + bank->pctl_offset;
+		स्थिर u8 *offs = bank->type->reg_offset;
+		स्थिर u8 *widths = bank->type->fld_width;
+		क्रमागत pincfg_type type;
 
-		/* Registers without a powerdown config aren't lost */
-		if (!widths[PINCFG_TYPE_CON_PDN])
-			continue;
+		/* Registers without a घातerकरोwn config aren't lost */
+		अगर (!widths[PINCFG_TYPE_CON_PDN])
+			जारी;
 
-		if (widths[PINCFG_TYPE_FUNC] * bank->nr_pins > 32) {
-			/* Some banks have two config registers */
+		अगर (widths[PINCFG_TYPE_FUNC] * bank->nr_pins > 32) अणु
+			/* Some banks have two config रेजिस्टरs */
 			pr_debug("%s @ %p (con %#010x %08x => %#010x %08x)\n",
 				 bank->name, reg,
-				 readl(reg + offs[PINCFG_TYPE_FUNC]),
-				 readl(reg + offs[PINCFG_TYPE_FUNC] + 4),
+				 पढ़ोl(reg + offs[PINCFG_TYPE_FUNC]),
+				 पढ़ोl(reg + offs[PINCFG_TYPE_FUNC] + 4),
 				 bank->pm_save[PINCFG_TYPE_FUNC],
 				 bank->pm_save[PINCFG_TYPE_NUM]);
-			writel(bank->pm_save[PINCFG_TYPE_NUM],
+			ग_लिखोl(bank->pm_save[PINCFG_TYPE_NUM],
 			       reg + offs[PINCFG_TYPE_FUNC] + 4);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_debug("%s @ %p (con %#010x => %#010x)\n", bank->name,
-				 reg, readl(reg + offs[PINCFG_TYPE_FUNC]),
+				 reg, पढ़ोl(reg + offs[PINCFG_TYPE_FUNC]),
 				 bank->pm_save[PINCFG_TYPE_FUNC]);
-		}
-		for (type = 0; type < PINCFG_TYPE_NUM; type++)
-			if (widths[type])
-				writel(bank->pm_save[type], reg + offs[type]);
-	}
+		पूर्ण
+		क्रम (type = 0; type < PINCFG_TYPE_NUM; type++)
+			अगर (widths[type])
+				ग_लिखोl(bank->pm_save[type], reg + offs[type]);
+	पूर्ण
 
-	if (drvdata->retention_ctrl && drvdata->retention_ctrl->disable)
+	अगर (drvdata->retention_ctrl && drvdata->retention_ctrl->disable)
 		drvdata->retention_ctrl->disable(drvdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id samsung_pinctrl_dt_match[] = {
-#ifdef CONFIG_PINCTRL_EXYNOS_ARM
-	{ .compatible = "samsung,exynos3250-pinctrl",
-		.data = &exynos3250_of_data },
-	{ .compatible = "samsung,exynos4210-pinctrl",
-		.data = &exynos4210_of_data },
-	{ .compatible = "samsung,exynos4x12-pinctrl",
-		.data = &exynos4x12_of_data },
-	{ .compatible = "samsung,exynos5250-pinctrl",
-		.data = &exynos5250_of_data },
-	{ .compatible = "samsung,exynos5260-pinctrl",
-		.data = &exynos5260_of_data },
-	{ .compatible = "samsung,exynos5410-pinctrl",
-		.data = &exynos5410_of_data },
-	{ .compatible = "samsung,exynos5420-pinctrl",
-		.data = &exynos5420_of_data },
-	{ .compatible = "samsung,s5pv210-pinctrl",
-		.data = &s5pv210_of_data },
-#endif
-#ifdef CONFIG_PINCTRL_EXYNOS_ARM64
-	{ .compatible = "samsung,exynos5433-pinctrl",
-		.data = &exynos5433_of_data },
-	{ .compatible = "samsung,exynos7-pinctrl",
-		.data = &exynos7_of_data },
-#endif
-#ifdef CONFIG_PINCTRL_S3C64XX
-	{ .compatible = "samsung,s3c64xx-pinctrl",
-		.data = &s3c64xx_of_data },
-#endif
-#ifdef CONFIG_PINCTRL_S3C24XX
-	{ .compatible = "samsung,s3c2412-pinctrl",
-		.data = &s3c2412_of_data },
-	{ .compatible = "samsung,s3c2416-pinctrl",
-		.data = &s3c2416_of_data },
-	{ .compatible = "samsung,s3c2440-pinctrl",
-		.data = &s3c2440_of_data },
-	{ .compatible = "samsung,s3c2450-pinctrl",
-		.data = &s3c2450_of_data },
-#endif
-	{},
-};
+अटल स्थिर काष्ठा of_device_id samsung_pinctrl_dt_match[] = अणु
+#अगर_घोषित CONFIG_PINCTRL_EXYNOS_ARM
+	अणु .compatible = "samsung,exynos3250-pinctrl",
+		.data = &exynos3250_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos4210-pinctrl",
+		.data = &exynos4210_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos4x12-pinctrl",
+		.data = &exynos4x12_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos5250-pinctrl",
+		.data = &exynos5250_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos5260-pinctrl",
+		.data = &exynos5260_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos5410-pinctrl",
+		.data = &exynos5410_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos5420-pinctrl",
+		.data = &exynos5420_of_data पूर्ण,
+	अणु .compatible = "samsung,s5pv210-pinctrl",
+		.data = &s5pv210_of_data पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PINCTRL_EXYNOS_ARM64
+	अणु .compatible = "samsung,exynos5433-pinctrl",
+		.data = &exynos5433_of_data पूर्ण,
+	अणु .compatible = "samsung,exynos7-pinctrl",
+		.data = &exynos7_of_data पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PINCTRL_S3C64XX
+	अणु .compatible = "samsung,s3c64xx-pinctrl",
+		.data = &s3c64xx_of_data पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PINCTRL_S3C24XX
+	अणु .compatible = "samsung,s3c2412-pinctrl",
+		.data = &s3c2412_of_data पूर्ण,
+	अणु .compatible = "samsung,s3c2416-pinctrl",
+		.data = &s3c2416_of_data पूर्ण,
+	अणु .compatible = "samsung,s3c2440-pinctrl",
+		.data = &s3c2440_of_data पूर्ण,
+	अणु .compatible = "samsung,s3c2450-pinctrl",
+		.data = &s3c2450_of_data पूर्ण,
+#पूर्ण_अगर
+	अणुपूर्ण,
+पूर्ण;
 
-static const struct dev_pm_ops samsung_pinctrl_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops samsung_pinctrl_pm_ops = अणु
 	SET_LATE_SYSTEM_SLEEP_PM_OPS(samsung_pinctrl_suspend,
 				     samsung_pinctrl_resume)
-};
+पूर्ण;
 
-static struct platform_driver samsung_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver samsung_pinctrl_driver = अणु
 	.probe		= samsung_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "samsung-pinctrl",
 		.of_match_table = samsung_pinctrl_dt_match,
 		.suppress_bind_attrs = true,
 		.pm = &samsung_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init samsung_pinctrl_drv_register(void)
-{
-	return platform_driver_register(&samsung_pinctrl_driver);
-}
-postcore_initcall(samsung_pinctrl_drv_register);
+अटल पूर्णांक __init samsung_pinctrl_drv_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&samsung_pinctrl_driver);
+पूर्ण
+postcore_initcall(samsung_pinctrl_drv_रेजिस्टर);

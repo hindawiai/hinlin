@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-struct {
-	__uint(type, BPF_MAP_TYPE_DEVMAP);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(struct bpf_devmap_val));
-	__uint(max_entries, 4);
-} dm_ports SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_DEVMAP);
+	__uपूर्णांक(key_size, माप(__u32));
+	__uपूर्णांक(value_size, माप(काष्ठा bpf_devmap_val));
+	__uपूर्णांक(max_entries, 4);
+पूर्ण dm_ports SEC(".maps");
 
 SEC("xdp_redir")
-int xdp_redir_prog(struct xdp_md *ctx)
-{
-	return bpf_redirect_map(&dm_ports, 1, 0);
-}
+पूर्णांक xdp_redir_prog(काष्ठा xdp_md *ctx)
+अणु
+	वापस bpf_redirect_map(&dm_ports, 1, 0);
+पूर्ण
 
 /* invalid program on DEVMAP entry;
  * SEC name means expected attach type not set
  */
 SEC("xdp_dummy")
-int xdp_dummy_prog(struct xdp_md *ctx)
-{
-	return XDP_PASS;
-}
+पूर्णांक xdp_dummy_prog(काष्ठा xdp_md *ctx)
+अणु
+	वापस XDP_PASS;
+पूर्ण
 
 /* valid program on DEVMAP entry via SEC name;
- * has access to egress and ingress ifindex
+ * has access to egress and ingress अगरindex
  */
 SEC("xdp_devmap/map_prog")
-int xdp_dummy_dm(struct xdp_md *ctx)
-{
-	char fmt[] = "devmap redirect: dev %u -> dev %u len %u\n";
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	unsigned int len = data_end - data;
+पूर्णांक xdp_dummy_dm(काष्ठा xdp_md *ctx)
+अणु
+	अक्षर fmt[] = "devmap redirect: dev %u -> dev %u len %u\n";
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	अचिन्हित पूर्णांक len = data_end - data;
 
-	bpf_trace_printk(fmt, sizeof(fmt),
-			 ctx->ingress_ifindex, ctx->egress_ifindex, len);
+	bpf_trace_prपूर्णांकk(fmt, माप(fmt),
+			 ctx->ingress_अगरindex, ctx->egress_अगरindex, len);
 
-	return XDP_PASS;
-}
-char _license[] SEC("license") = "GPL";
+	वापस XDP_PASS;
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,90 +1,91 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * SSH message builder functions.
  *
  * Copyright (C) 2019-2020 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#ifndef _SURFACE_AGGREGATOR_SSH_MSGB_H
-#define _SURFACE_AGGREGATOR_SSH_MSGB_H
+#अगर_अघोषित _SURFACE_AGGREGATOR_SSH_MSGB_H
+#घोषणा _SURFACE_AGGREGATOR_SSH_MSGB_H
 
-#include <asm/unaligned.h>
-#include <linux/types.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/types.h>
 
-#include <linux/surface_aggregator/controller.h>
-#include <linux/surface_aggregator/serial_hub.h>
+#समावेश <linux/surface_aggregator/controller.h>
+#समावेश <linux/surface_aggregator/serial_hub.h>
 
 /**
- * struct msgbuf - Buffer struct to construct SSH messages.
- * @begin: Pointer to the beginning of the allocated buffer space.
- * @end:   Pointer to the end (one past last element) of the allocated buffer
+ * काष्ठा msgbuf - Buffer काष्ठा to स्थिरruct SSH messages.
+ * @begin: Poपूर्णांकer to the beginning of the allocated buffer space.
+ * @end:   Poपूर्णांकer to the end (one past last element) of the allocated buffer
  *         space.
- * @ptr:   Pointer to the first free element in the buffer.
+ * @ptr:   Poपूर्णांकer to the first मुक्त element in the buffer.
  */
-struct msgbuf {
+काष्ठा msgbuf अणु
 	u8 *begin;
 	u8 *end;
 	u8 *ptr;
-};
+पूर्ण;
 
 /**
- * msgb_init() - Initialize the given message buffer struct.
- * @msgb: The buffer struct to initialize
- * @ptr:  Pointer to the underlying memory by which the buffer will be backed.
+ * msgb_init() - Initialize the given message buffer काष्ठा.
+ * @msgb: The buffer काष्ठा to initialize
+ * @ptr:  Poपूर्णांकer to the underlying memory by which the buffer will be backed.
  * @cap:  Size of the underlying memory.
  *
- * Initialize the given message buffer struct using the provided memory as
+ * Initialize the given message buffer काष्ठा using the provided memory as
  * backing.
  */
-static inline void msgb_init(struct msgbuf *msgb, u8 *ptr, size_t cap)
-{
+अटल अंतरभूत व्योम msgb_init(काष्ठा msgbuf *msgb, u8 *ptr, माप_प्रकार cap)
+अणु
 	msgb->begin = ptr;
 	msgb->end = ptr + cap;
 	msgb->ptr = ptr;
-}
+पूर्ण
 
 /**
  * msgb_bytes_used() - Return the current number of bytes used in the buffer.
  * @msgb: The message buffer.
  */
-static inline size_t msgb_bytes_used(const struct msgbuf *msgb)
-{
-	return msgb->ptr - msgb->begin;
-}
+अटल अंतरभूत माप_प्रकार msgb_bytes_used(स्थिर काष्ठा msgbuf *msgb)
+अणु
+	वापस msgb->ptr - msgb->begin;
+पूर्ण
 
-static inline void __msgb_push_u8(struct msgbuf *msgb, u8 value)
-{
+अटल अंतरभूत व्योम __msgb_push_u8(काष्ठा msgbuf *msgb, u8 value)
+अणु
 	*msgb->ptr = value;
-	msgb->ptr += sizeof(u8);
-}
+	msgb->ptr += माप(u8);
+पूर्ण
 
-static inline void __msgb_push_u16(struct msgbuf *msgb, u16 value)
-{
+अटल अंतरभूत व्योम __msgb_push_u16(काष्ठा msgbuf *msgb, u16 value)
+अणु
 	put_unaligned_le16(value, msgb->ptr);
-	msgb->ptr += sizeof(u16);
-}
+	msgb->ptr += माप(u16);
+पूर्ण
 
 /**
  * msgb_push_u16() - Push a u16 value to the buffer.
  * @msgb:  The message buffer.
  * @value: The value to push to the buffer.
  */
-static inline void msgb_push_u16(struct msgbuf *msgb, u16 value)
-{
-	if (WARN_ON(msgb->ptr + sizeof(u16) > msgb->end))
-		return;
+अटल अंतरभूत व्योम msgb_push_u16(काष्ठा msgbuf *msgb, u16 value)
+अणु
+	अगर (WARN_ON(msgb->ptr + माप(u16) > msgb->end))
+		वापस;
 
 	__msgb_push_u16(msgb, value);
-}
+पूर्ण
 
 /**
  * msgb_push_syn() - Push SSH SYN bytes to the buffer.
  * @msgb: The message buffer.
  */
-static inline void msgb_push_syn(struct msgbuf *msgb)
-{
+अटल अंतरभूत व्योम msgb_push_syn(काष्ठा msgbuf *msgb)
+अणु
 	msgb_push_u16(msgb, SSH_MSG_SYN);
-}
+पूर्ण
 
 /**
  * msgb_push_buf() - Push raw data to the buffer.
@@ -92,21 +93,21 @@ static inline void msgb_push_syn(struct msgbuf *msgb)
  * @buf:  The data to push to the buffer.
  * @len:  The length of the data to push to the buffer.
  */
-static inline void msgb_push_buf(struct msgbuf *msgb, const u8 *buf, size_t len)
-{
-	msgb->ptr = memcpy(msgb->ptr, buf, len) + len;
-}
+अटल अंतरभूत व्योम msgb_push_buf(काष्ठा msgbuf *msgb, स्थिर u8 *buf, माप_प्रकार len)
+अणु
+	msgb->ptr = स_नकल(msgb->ptr, buf, len) + len;
+पूर्ण
 
 /**
  * msgb_push_crc() - Compute CRC and push it to the buffer.
  * @msgb: The message buffer.
- * @buf:  The data for which the CRC should be computed.
- * @len:  The length of the data for which the CRC should be computed.
+ * @buf:  The data क्रम which the CRC should be computed.
+ * @len:  The length of the data क्रम which the CRC should be computed.
  */
-static inline void msgb_push_crc(struct msgbuf *msgb, const u8 *buf, size_t len)
-{
+अटल अंतरभूत व्योम msgb_push_crc(काष्ठा msgbuf *msgb, स्थिर u8 *buf, माप_प्रकार len)
+अणु
 	msgb_push_u16(msgb, ssh_crc(buf, len));
-}
+पूर्ण
 
 /**
  * msgb_push_frame() - Push a SSH message frame header to the buffer.
@@ -115,52 +116,52 @@ static inline void msgb_push_crc(struct msgbuf *msgb, const u8 *buf, size_t len)
  * @len:  The length of the payload of the frame.
  * @seq:  The sequence ID of the frame/packet.
  */
-static inline void msgb_push_frame(struct msgbuf *msgb, u8 ty, u16 len, u8 seq)
-{
-	u8 *const begin = msgb->ptr;
+अटल अंतरभूत व्योम msgb_push_frame(काष्ठा msgbuf *msgb, u8 ty, u16 len, u8 seq)
+अणु
+	u8 *स्थिर begin = msgb->ptr;
 
-	if (WARN_ON(msgb->ptr + sizeof(struct ssh_frame) > msgb->end))
-		return;
+	अगर (WARN_ON(msgb->ptr + माप(काष्ठा ssh_frame) > msgb->end))
+		वापस;
 
 	__msgb_push_u8(msgb, ty);	/* Frame type. */
 	__msgb_push_u16(msgb, len);	/* Frame payload length. */
 	__msgb_push_u8(msgb, seq);	/* Frame sequence ID. */
 
 	msgb_push_crc(msgb, begin, msgb->ptr - begin);
-}
+पूर्ण
 
 /**
  * msgb_push_ack() - Push a SSH ACK frame to the buffer.
  * @msgb: The message buffer
  * @seq:  The sequence ID of the frame/packet to be ACKed.
  */
-static inline void msgb_push_ack(struct msgbuf *msgb, u8 seq)
-{
+अटल अंतरभूत व्योम msgb_push_ack(काष्ठा msgbuf *msgb, u8 seq)
+अणु
 	/* SYN. */
 	msgb_push_syn(msgb);
 
 	/* ACK-type frame + CRC. */
 	msgb_push_frame(msgb, SSH_FRAME_TYPE_ACK, 0x00, seq);
 
-	/* Payload CRC (ACK-type frames do not have a payload). */
+	/* Payload CRC (ACK-type frames करो not have a payload). */
 	msgb_push_crc(msgb, msgb->ptr, 0);
-}
+पूर्ण
 
 /**
  * msgb_push_nak() - Push a SSH NAK frame to the buffer.
  * @msgb: The message buffer
  */
-static inline void msgb_push_nak(struct msgbuf *msgb)
-{
+अटल अंतरभूत व्योम msgb_push_nak(काष्ठा msgbuf *msgb)
+अणु
 	/* SYN. */
 	msgb_push_syn(msgb);
 
 	/* NAK-type frame + CRC. */
 	msgb_push_frame(msgb, SSH_FRAME_TYPE_NAK, 0x00, 0x00);
 
-	/* Payload CRC (ACK-type frames do not have a payload). */
+	/* Payload CRC (ACK-type frames करो not have a payload). */
 	msgb_push_crc(msgb, msgb->ptr, 0);
-}
+पूर्ण
 
 /**
  * msgb_push_cmd() - Push a SSH command frame with payload to the buffer.
@@ -169,21 +170,21 @@ static inline void msgb_push_nak(struct msgbuf *msgb)
  * @rqid: The request ID (RQID) of the request contained in the frame.
  * @rqst: The request to wrap in the frame.
  */
-static inline void msgb_push_cmd(struct msgbuf *msgb, u8 seq, u16 rqid,
-				 const struct ssam_request *rqst)
-{
-	const u8 type = SSH_FRAME_TYPE_DATA_SEQ;
+अटल अंतरभूत व्योम msgb_push_cmd(काष्ठा msgbuf *msgb, u8 seq, u16 rqid,
+				 स्थिर काष्ठा ssam_request *rqst)
+अणु
+	स्थिर u8 type = SSH_FRAME_TYPE_DATA_SEQ;
 	u8 *cmd;
 
 	/* SYN. */
 	msgb_push_syn(msgb);
 
 	/* Command frame + CRC. */
-	msgb_push_frame(msgb, type, sizeof(struct ssh_command) + rqst->length, seq);
+	msgb_push_frame(msgb, type, माप(काष्ठा ssh_command) + rqst->length, seq);
 
-	/* Frame payload: Command struct + payload. */
-	if (WARN_ON(msgb->ptr + sizeof(struct ssh_command) > msgb->end))
-		return;
+	/* Frame payload: Command काष्ठा + payload. */
+	अगर (WARN_ON(msgb->ptr + माप(काष्ठा ssh_command) > msgb->end))
+		वापस;
 
 	cmd = msgb->ptr;
 
@@ -198,8 +199,8 @@ static inline void msgb_push_cmd(struct msgbuf *msgb, u8 seq, u16 rqid,
 	/* Command payload. */
 	msgb_push_buf(msgb, rqst->payload, rqst->length);
 
-	/* CRC for command struct + payload. */
+	/* CRC क्रम command काष्ठा + payload. */
 	msgb_push_crc(msgb, cmd, msgb->ptr - cmd);
-}
+पूर्ण
 
-#endif /* _SURFACE_AGGREGATOR_SSH_MSGB_H */
+#पूर्ण_अगर /* _SURFACE_AGGREGATOR_SSH_MSGB_H */

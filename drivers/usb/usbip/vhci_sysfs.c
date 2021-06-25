@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2003-2008 Takahiro Hirofuchi
  * Copyright (C) 2015-2016 Nobuo Iwata
  */
 
-#include <linux/kthread.h>
-#include <linux/file.h>
-#include <linux/net.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/file.h>
+#समावेश <linux/net.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-/* Hardening for Spectre-v1 */
-#include <linux/nospec.h>
+/* Hardening क्रम Spectre-v1 */
+#समावेश <linux/nospec.h>
 
-#include "usbip_common.h"
-#include "vhci.h"
+#समावेश "usbip_common.h"
+#समावेश "vhci.h"
 
 /* TODO: refine locking ?*/
 
@@ -26,162 +27,162 @@
  * ss  0008 004 000 00000000  000004 2-3.4
  * ................................................
  *
- * Output includes socket fd instead of socket pointer address to avoid
+ * Output includes socket fd instead of socket poपूर्णांकer address to aव्योम
  * leaking kernel memory address in:
- *	/sys/devices/platform/vhci_hcd.0/status and in debug output.
- * The socket pointer address is not used at the moment and it was made
- * visible as a convenient way to find IP address from socket pointer
- * address by looking up /proc/net/{tcp,tcp6}. As this opens a security
+ *	/sys/devices/platक्रमm/vhci_hcd.0/status and in debug output.
+ * The socket poपूर्णांकer address is not used at the moment and it was made
+ * visible as a convenient way to find IP address from socket poपूर्णांकer
+ * address by looking up /proc/net/अणुtcp,tcp6पूर्ण. As this खोलोs a security
  * hole, the change is made to use sockfd instead.
  *
  */
-static void port_show_vhci(char **out, int hub, int port, struct vhci_device *vdev)
-{
-	if (hub == HUB_SPEED_HIGH)
-		*out += sprintf(*out, "hs  %04u %03u ",
+अटल व्योम port_show_vhci(अक्षर **out, पूर्णांक hub, पूर्णांक port, काष्ठा vhci_device *vdev)
+अणु
+	अगर (hub == HUB_SPEED_HIGH)
+		*out += प्र_लिखो(*out, "hs  %04u %03u ",
 				      port, vdev->ud.status);
-	else /* hub == HUB_SPEED_SUPER */
-		*out += sprintf(*out, "ss  %04u %03u ",
+	अन्यथा /* hub == HUB_SPEED_SUPER */
+		*out += प्र_लिखो(*out, "ss  %04u %03u ",
 				      port, vdev->ud.status);
 
-	if (vdev->ud.status == VDEV_ST_USED) {
-		*out += sprintf(*out, "%03u %08x ",
+	अगर (vdev->ud.status == VDEV_ST_USED) अणु
+		*out += प्र_लिखो(*out, "%03u %08x ",
 				      vdev->speed, vdev->devid);
-		*out += sprintf(*out, "%06u %s",
+		*out += प्र_लिखो(*out, "%06u %s",
 				      vdev->ud.sockfd,
 				      dev_name(&vdev->udev->dev));
 
-	} else {
-		*out += sprintf(*out, "000 00000000 ");
-		*out += sprintf(*out, "000000 0-0");
-	}
+	पूर्ण अन्यथा अणु
+		*out += प्र_लिखो(*out, "000 00000000 ");
+		*out += प्र_लिखो(*out, "000000 0-0");
+	पूर्ण
 
-	*out += sprintf(*out, "\n");
-}
+	*out += प्र_लिखो(*out, "\n");
+पूर्ण
 
 /* Sysfs entry to show port status */
-static ssize_t status_show_vhci(int pdev_nr, char *out)
-{
-	struct platform_device *pdev = vhcis[pdev_nr].pdev;
-	struct vhci *vhci;
-	struct usb_hcd *hcd;
-	struct vhci_hcd *vhci_hcd;
-	char *s = out;
-	int i;
-	unsigned long flags;
+अटल sमाप_प्रकार status_show_vhci(पूर्णांक pdev_nr, अक्षर *out)
+अणु
+	काष्ठा platक्रमm_device *pdev = vhcis[pdev_nr].pdev;
+	काष्ठा vhci *vhci;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा vhci_hcd *vhci_hcd;
+	अक्षर *s = out;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags;
 
-	if (!pdev || !out) {
+	अगर (!pdev || !out) अणु
 		usbip_dbg_vhci_sysfs("show status error\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	hcd = platform_get_drvdata(pdev);
+	hcd = platक्रमm_get_drvdata(pdev);
 	vhci_hcd = hcd_to_vhci_hcd(hcd);
 	vhci = vhci_hcd->vhci;
 
 	spin_lock_irqsave(&vhci->lock, flags);
 
-	for (i = 0; i < VHCI_HC_PORTS; i++) {
-		struct vhci_device *vdev = &vhci->vhci_hcd_hs->vdev[i];
+	क्रम (i = 0; i < VHCI_HC_PORTS; i++) अणु
+		काष्ठा vhci_device *vdev = &vhci->vhci_hcd_hs->vdev[i];
 
 		spin_lock(&vdev->ud.lock);
 		port_show_vhci(&out, HUB_SPEED_HIGH,
 			       pdev_nr * VHCI_PORTS + i, vdev);
 		spin_unlock(&vdev->ud.lock);
-	}
+	पूर्ण
 
-	for (i = 0; i < VHCI_HC_PORTS; i++) {
-		struct vhci_device *vdev = &vhci->vhci_hcd_ss->vdev[i];
+	क्रम (i = 0; i < VHCI_HC_PORTS; i++) अणु
+		काष्ठा vhci_device *vdev = &vhci->vhci_hcd_ss->vdev[i];
 
 		spin_lock(&vdev->ud.lock);
 		port_show_vhci(&out, HUB_SPEED_SUPER,
 			       pdev_nr * VHCI_PORTS + VHCI_HC_PORTS + i, vdev);
 		spin_unlock(&vdev->ud.lock);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&vhci->lock, flags);
 
-	return out - s;
-}
+	वापस out - s;
+पूर्ण
 
-static ssize_t status_show_not_ready(int pdev_nr, char *out)
-{
-	char *s = out;
-	int i = 0;
+अटल sमाप_प्रकार status_show_not_पढ़ोy(पूर्णांक pdev_nr, अक्षर *out)
+अणु
+	अक्षर *s = out;
+	पूर्णांक i = 0;
 
-	for (i = 0; i < VHCI_HC_PORTS; i++) {
-		out += sprintf(out, "hs  %04u %03u ",
+	क्रम (i = 0; i < VHCI_HC_PORTS; i++) अणु
+		out += प्र_लिखो(out, "hs  %04u %03u ",
 				    (pdev_nr * VHCI_PORTS) + i,
 				    VDEV_ST_NOTASSIGNED);
-		out += sprintf(out, "000 00000000 0000000000000000 0-0");
-		out += sprintf(out, "\n");
-	}
+		out += प्र_लिखो(out, "000 00000000 0000000000000000 0-0");
+		out += प्र_लिखो(out, "\n");
+	पूर्ण
 
-	for (i = 0; i < VHCI_HC_PORTS; i++) {
-		out += sprintf(out, "ss  %04u %03u ",
+	क्रम (i = 0; i < VHCI_HC_PORTS; i++) अणु
+		out += प्र_लिखो(out, "ss  %04u %03u ",
 				    (pdev_nr * VHCI_PORTS) + VHCI_HC_PORTS + i,
 				    VDEV_ST_NOTASSIGNED);
-		out += sprintf(out, "000 00000000 0000000000000000 0-0");
-		out += sprintf(out, "\n");
-	}
-	return out - s;
-}
+		out += प्र_लिखो(out, "000 00000000 0000000000000000 0-0");
+		out += प्र_लिखो(out, "\n");
+	पूर्ण
+	वापस out - s;
+पूर्ण
 
-static int status_name_to_id(const char *name)
-{
-	char *c;
-	long val;
-	int ret;
+अटल पूर्णांक status_name_to_id(स्थिर अक्षर *name)
+अणु
+	अक्षर *c;
+	दीर्घ val;
+	पूर्णांक ret;
 
-	c = strchr(name, '.');
-	if (c == NULL)
-		return 0;
+	c = म_अक्षर(name, '.');
+	अगर (c == शून्य)
+		वापस 0;
 
-	ret = kstrtol(c+1, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_दीर्घ(c+1, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static ssize_t status_show(struct device *dev,
-			   struct device_attribute *attr, char *out)
-{
-	char *s = out;
-	int pdev_nr;
+अटल sमाप_प्रकार status_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr, अक्षर *out)
+अणु
+	अक्षर *s = out;
+	पूर्णांक pdev_nr;
 
-	out += sprintf(out,
+	out += प्र_लिखो(out,
 		       "hub port sta spd dev      sockfd local_busid\n");
 
 	pdev_nr = status_name_to_id(attr->attr.name);
-	if (pdev_nr < 0)
-		out += status_show_not_ready(pdev_nr, out);
-	else
+	अगर (pdev_nr < 0)
+		out += status_show_not_पढ़ोy(pdev_nr, out);
+	अन्यथा
 		out += status_show_vhci(pdev_nr, out);
 
-	return out - s;
-}
+	वापस out - s;
+पूर्ण
 
-static ssize_t nports_show(struct device *dev, struct device_attribute *attr,
-			   char *out)
-{
-	char *s = out;
+अटल sमाप_प्रकार nports_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   अक्षर *out)
+अणु
+	अक्षर *s = out;
 
 	/*
-	 * Half the ports are for SPEED_HIGH and half for SPEED_SUPER,
+	 * Half the ports are क्रम SPEED_HIGH and half क्रम SPEED_SUPER,
 	 * thus the * 2.
 	 */
-	out += sprintf(out, "%d\n", VHCI_PORTS * vhci_num_controllers);
-	return out - s;
-}
-static DEVICE_ATTR_RO(nports);
+	out += प्र_लिखो(out, "%d\n", VHCI_PORTS * vhci_num_controllers);
+	वापस out - s;
+पूर्ण
+अटल DEVICE_ATTR_RO(nports);
 
-/* Sysfs entry to shutdown a virtual connection */
-static int vhci_port_disconnect(struct vhci_hcd *vhci_hcd, __u32 rhport)
-{
-	struct vhci_device *vdev = &vhci_hcd->vdev[rhport];
-	struct vhci *vhci = vhci_hcd->vhci;
-	unsigned long flags;
+/* Sysfs entry to shutकरोwn a भव connection */
+अटल पूर्णांक vhci_port_disconnect(काष्ठा vhci_hcd *vhci_hcd, __u32 rhport)
+अणु
+	काष्ठा vhci_device *vdev = &vhci_hcd->vdev[rhport];
+	काष्ठा vhci *vhci = vhci_hcd->vhci;
+	अचिन्हित दीर्घ flags;
 
 	usbip_dbg_vhci_sysfs("enter\n");
 
@@ -191,7 +192,7 @@ static int vhci_port_disconnect(struct vhci_hcd *vhci_hcd, __u32 rhport)
 	spin_lock_irqsave(&vhci->lock, flags);
 	spin_lock(&vdev->ud.lock);
 
-	if (vdev->ud.status == VDEV_ST_NULL) {
+	अगर (vdev->ud.status == VDEV_ST_शून्य) अणु
 		pr_err("not connected %d\n", vdev->ud.status);
 
 		/* unlock */
@@ -199,8 +200,8 @@ static int vhci_port_disconnect(struct vhci_hcd *vhci_hcd, __u32 rhport)
 		spin_unlock_irqrestore(&vhci->lock, flags);
 		mutex_unlock(&vdev->ud.sysfs_lock);
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* unlock */
 	spin_unlock(&vdev->ud.lock);
@@ -210,124 +211,124 @@ static int vhci_port_disconnect(struct vhci_hcd *vhci_hcd, __u32 rhport)
 
 	mutex_unlock(&vdev->ud.sysfs_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int valid_port(__u32 *pdev_nr, __u32 *rhport)
-{
-	if (*pdev_nr >= vhci_num_controllers) {
+अटल पूर्णांक valid_port(__u32 *pdev_nr, __u32 *rhport)
+अणु
+	अगर (*pdev_nr >= vhci_num_controllers) अणु
 		pr_err("pdev %u\n", *pdev_nr);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	*pdev_nr = array_index_nospec(*pdev_nr, vhci_num_controllers);
 
-	if (*rhport >= VHCI_HC_PORTS) {
+	अगर (*rhport >= VHCI_HC_PORTS) अणु
 		pr_err("rhport %u\n", *rhport);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	*rhport = array_index_nospec(*rhport, VHCI_HC_PORTS);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static ssize_t detach_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
+अटल sमाप_प्रकार detach_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	__u32 port = 0, pdev_nr = 0, rhport = 0;
-	struct usb_hcd *hcd;
-	struct vhci_hcd *vhci_hcd;
-	int ret;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा vhci_hcd *vhci_hcd;
+	पूर्णांक ret;
 
-	if (kstrtoint(buf, 10, &port) < 0)
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 10, &port) < 0)
+		वापस -EINVAL;
 
 	pdev_nr = port_to_pdev_nr(port);
 	rhport = port_to_rhport(port);
 
-	if (!valid_port(&pdev_nr, &rhport))
-		return -EINVAL;
+	अगर (!valid_port(&pdev_nr, &rhport))
+		वापस -EINVAL;
 
-	hcd = platform_get_drvdata(vhcis[pdev_nr].pdev);
-	if (hcd == NULL) {
+	hcd = platक्रमm_get_drvdata(vhcis[pdev_nr].pdev);
+	अगर (hcd == शून्य) अणु
 		dev_err(dev, "port is not ready %u\n", port);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	usbip_dbg_vhci_sysfs("rhport %d\n", rhport);
 
-	if ((port / VHCI_HC_PORTS) % 2)
+	अगर ((port / VHCI_HC_PORTS) % 2)
 		vhci_hcd = hcd_to_vhci_hcd(hcd)->vhci->vhci_hcd_ss;
-	else
+	अन्यथा
 		vhci_hcd = hcd_to_vhci_hcd(hcd)->vhci->vhci_hcd_hs;
 
 	ret = vhci_port_disconnect(vhci_hcd, rhport);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	usbip_dbg_vhci_sysfs("Leave\n");
 
-	return count;
-}
-static DEVICE_ATTR_WO(detach);
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_WO(detach);
 
-static int valid_args(__u32 *pdev_nr, __u32 *rhport,
-		      enum usb_device_speed speed)
-{
-	if (!valid_port(pdev_nr, rhport)) {
-		return 0;
-	}
+अटल पूर्णांक valid_args(__u32 *pdev_nr, __u32 *rhport,
+		      क्रमागत usb_device_speed speed)
+अणु
+	अगर (!valid_port(pdev_nr, rhport)) अणु
+		वापस 0;
+	पूर्ण
 
-	switch (speed) {
-	case USB_SPEED_LOW:
-	case USB_SPEED_FULL:
-	case USB_SPEED_HIGH:
-	case USB_SPEED_WIRELESS:
-	case USB_SPEED_SUPER:
-		break;
-	default:
+	चयन (speed) अणु
+	हाल USB_SPEED_LOW:
+	हाल USB_SPEED_FULL:
+	हाल USB_SPEED_HIGH:
+	हाल USB_SPEED_WIRELESS:
+	हाल USB_SPEED_SUPER:
+		अवरोध;
+	शेष:
 		pr_err("Failed attach request for unsupported USB speed: %s\n",
 			usb_speed_string(speed));
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Sysfs entry to establish a virtual connection */
+/* Sysfs entry to establish a भव connection */
 /*
  * To start a new USB/IP attachment, a userland program needs to setup a TCP
- * connection and then write its socket descriptor with remote device
- * information into this sysfs file.
+ * connection and then ग_लिखो its socket descriptor with remote device
+ * inक्रमmation पूर्णांकo this sysfs file.
  *
- * A remote device is virtually attached to the root-hub port of @rhport with
- * @speed. @devid is embedded into a request to specify the remote device in a
+ * A remote device is भवly attached to the root-hub port of @rhport with
+ * @speed. @devid is embedded पूर्णांकo a request to specअगरy the remote device in a
  * server host.
  *
- * write() returns 0 on success, else negative errno.
+ * ग_लिखो() वापसs 0 on success, अन्यथा negative त्रुटि_सं.
  */
-static ssize_t attach_store(struct device *dev, struct device_attribute *attr,
-			    const char *buf, size_t count)
-{
-	struct socket *socket;
-	int sockfd = 0;
+अटल sमाप_प्रकार attach_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा socket *socket;
+	पूर्णांक sockfd = 0;
 	__u32 port = 0, pdev_nr = 0, rhport = 0, devid = 0, speed = 0;
-	struct usb_hcd *hcd;
-	struct vhci_hcd *vhci_hcd;
-	struct vhci_device *vdev;
-	struct vhci *vhci;
-	int err;
-	unsigned long flags;
-	struct task_struct *tcp_rx = NULL;
-	struct task_struct *tcp_tx = NULL;
+	काष्ठा usb_hcd *hcd;
+	काष्ठा vhci_hcd *vhci_hcd;
+	काष्ठा vhci_device *vdev;
+	काष्ठा vhci *vhci;
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags;
+	काष्ठा task_काष्ठा *tcp_rx = शून्य;
+	काष्ठा task_काष्ठा *tcp_tx = शून्य;
 
 	/*
 	 * @rhport: port number of vhci_hcd
 	 * @sockfd: socket descriptor of an established TCP connection
-	 * @devid: unique device identifier in a remote host
+	 * @devid: unique device identअगरier in a remote host
 	 * @speed: usb device speed in a remote host
 	 */
-	if (sscanf(buf, "%u %u %u %u", &port, &sockfd, &devid, &speed) != 4)
-		return -EINVAL;
+	अगर (माला_पूछो(buf, "%u %u %u %u", &port, &sockfd, &devid, &speed) != 4)
+		वापस -EINVAL;
 	pdev_nr = port_to_pdev_nr(port);
 	rhport = port_to_rhport(port);
 
@@ -337,80 +338,80 @@ static ssize_t attach_store(struct device *dev, struct device_attribute *attr,
 			     sockfd, devid, speed);
 
 	/* check received parameters */
-	if (!valid_args(&pdev_nr, &rhport, speed))
-		return -EINVAL;
+	अगर (!valid_args(&pdev_nr, &rhport, speed))
+		वापस -EINVAL;
 
-	hcd = platform_get_drvdata(vhcis[pdev_nr].pdev);
-	if (hcd == NULL) {
+	hcd = platक्रमm_get_drvdata(vhcis[pdev_nr].pdev);
+	अगर (hcd == शून्य) अणु
 		dev_err(dev, "port %d is not ready\n", port);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
 	vhci_hcd = hcd_to_vhci_hcd(hcd);
 	vhci = vhci_hcd->vhci;
 
-	if (speed == USB_SPEED_SUPER)
+	अगर (speed == USB_SPEED_SUPER)
 		vdev = &vhci->vhci_hcd_ss->vdev[rhport];
-	else
+	अन्यथा
 		vdev = &vhci->vhci_hcd_hs->vdev[rhport];
 
 	mutex_lock(&vdev->ud.sysfs_lock);
 
 	/* Extract socket from fd. */
 	socket = sockfd_lookup(sockfd, &err);
-	if (!socket) {
+	अगर (!socket) अणु
 		dev_err(dev, "failed to lookup sock");
 		err = -EINVAL;
-		goto unlock_mutex;
-	}
-	if (socket->type != SOCK_STREAM) {
+		जाओ unlock_mutex;
+	पूर्ण
+	अगर (socket->type != SOCK_STREAM) अणु
 		dev_err(dev, "Expecting SOCK_STREAM - found %d",
 			socket->type);
 		sockfd_put(socket);
 		err = -EINVAL;
-		goto unlock_mutex;
-	}
+		जाओ unlock_mutex;
+	पूर्ण
 
-	/* create threads before locking */
-	tcp_rx = kthread_create(vhci_rx_loop, &vdev->ud, "vhci_rx");
-	if (IS_ERR(tcp_rx)) {
+	/* create thपढ़ोs beक्रमe locking */
+	tcp_rx = kthपढ़ो_create(vhci_rx_loop, &vdev->ud, "vhci_rx");
+	अगर (IS_ERR(tcp_rx)) अणु
 		sockfd_put(socket);
 		err = -EINVAL;
-		goto unlock_mutex;
-	}
-	tcp_tx = kthread_create(vhci_tx_loop, &vdev->ud, "vhci_tx");
-	if (IS_ERR(tcp_tx)) {
-		kthread_stop(tcp_rx);
+		जाओ unlock_mutex;
+	पूर्ण
+	tcp_tx = kthपढ़ो_create(vhci_tx_loop, &vdev->ud, "vhci_tx");
+	अगर (IS_ERR(tcp_tx)) अणु
+		kthपढ़ो_stop(tcp_rx);
 		sockfd_put(socket);
 		err = -EINVAL;
-		goto unlock_mutex;
-	}
+		जाओ unlock_mutex;
+	पूर्ण
 
-	/* get task structs now */
-	get_task_struct(tcp_rx);
-	get_task_struct(tcp_tx);
+	/* get task काष्ठाs now */
+	get_task_काष्ठा(tcp_rx);
+	get_task_काष्ठा(tcp_tx);
 
 	/* now begin lock until setting vdev status set */
 	spin_lock_irqsave(&vhci->lock, flags);
 	spin_lock(&vdev->ud.lock);
 
-	if (vdev->ud.status != VDEV_ST_NULL) {
+	अगर (vdev->ud.status != VDEV_ST_शून्य) अणु
 		/* end of the lock */
 		spin_unlock(&vdev->ud.lock);
 		spin_unlock_irqrestore(&vhci->lock, flags);
 
 		sockfd_put(socket);
-		kthread_stop_put(tcp_rx);
-		kthread_stop_put(tcp_tx);
+		kthपढ़ो_stop_put(tcp_rx);
+		kthपढ़ो_stop_put(tcp_tx);
 
 		dev_err(dev, "port %d already used\n", rhport);
 		/*
 		 * Will be retried from userspace
-		 * if there's another free port.
+		 * अगर there's another मुक्त port.
 		 */
 		err = -EBUSY;
-		goto unlock_mutex;
-	}
+		जाओ unlock_mutex;
+	पूर्ण
 
 	dev_info(dev, "pdev(%u) rhport(%u) sockfd(%d)\n",
 		 pdev_nr, rhport, sockfd);
@@ -439,89 +440,89 @@ static ssize_t attach_store(struct device *dev, struct device_attribute *attr,
 
 	mutex_unlock(&vdev->ud.sysfs_lock);
 
-	return count;
+	वापस count;
 
 unlock_mutex:
 	mutex_unlock(&vdev->ud.sysfs_lock);
-	return err;
-}
-static DEVICE_ATTR_WO(attach);
+	वापस err;
+पूर्ण
+अटल DEVICE_ATTR_WO(attach);
 
-#define MAX_STATUS_NAME 16
+#घोषणा MAX_STATUS_NAME 16
 
-struct status_attr {
-	struct device_attribute attr;
-	char name[MAX_STATUS_NAME+1];
-};
+काष्ठा status_attr अणु
+	काष्ठा device_attribute attr;
+	अक्षर name[MAX_STATUS_NAME+1];
+पूर्ण;
 
-static struct status_attr *status_attrs;
+अटल काष्ठा status_attr *status_attrs;
 
-static void set_status_attr(int id)
-{
-	struct status_attr *status;
+अटल व्योम set_status_attr(पूर्णांक id)
+अणु
+	काष्ठा status_attr *status;
 
 	status = status_attrs + id;
-	if (id == 0)
-		strcpy(status->name, "status");
-	else
-		snprintf(status->name, MAX_STATUS_NAME+1, "status.%d", id);
+	अगर (id == 0)
+		म_नकल(status->name, "status");
+	अन्यथा
+		snम_लिखो(status->name, MAX_STATUS_NAME+1, "status.%d", id);
 	status->attr.attr.name = status->name;
 	status->attr.attr.mode = S_IRUGO;
 	status->attr.show = status_show;
 	sysfs_attr_init(&status->attr.attr);
-}
+पूर्ण
 
-static int init_status_attrs(void)
-{
-	int id;
+अटल पूर्णांक init_status_attrs(व्योम)
+अणु
+	पूर्णांक id;
 
-	status_attrs = kcalloc(vhci_num_controllers, sizeof(struct status_attr),
+	status_attrs = kसुस्मृति(vhci_num_controllers, माप(काष्ठा status_attr),
 			       GFP_KERNEL);
-	if (status_attrs == NULL)
-		return -ENOMEM;
+	अगर (status_attrs == शून्य)
+		वापस -ENOMEM;
 
-	for (id = 0; id < vhci_num_controllers; id++)
+	क्रम (id = 0; id < vhci_num_controllers; id++)
 		set_status_attr(id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void finish_status_attrs(void)
-{
-	kfree(status_attrs);
-}
+अटल व्योम finish_status_attrs(व्योम)
+अणु
+	kमुक्त(status_attrs);
+पूर्ण
 
-struct attribute_group vhci_attr_group = {
-	.attrs = NULL,
-};
+काष्ठा attribute_group vhci_attr_group = अणु
+	.attrs = शून्य,
+पूर्ण;
 
-int vhci_init_attr_group(void)
-{
-	struct attribute **attrs;
-	int ret, i;
+पूर्णांक vhci_init_attr_group(व्योम)
+अणु
+	काष्ठा attribute **attrs;
+	पूर्णांक ret, i;
 
-	attrs = kcalloc((vhci_num_controllers + 5), sizeof(struct attribute *),
+	attrs = kसुस्मृति((vhci_num_controllers + 5), माप(काष्ठा attribute *),
 			GFP_KERNEL);
-	if (attrs == NULL)
-		return -ENOMEM;
+	अगर (attrs == शून्य)
+		वापस -ENOMEM;
 
 	ret = init_status_attrs();
-	if (ret) {
-		kfree(attrs);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(attrs);
+		वापस ret;
+	पूर्ण
 	*attrs = &dev_attr_nports.attr;
 	*(attrs + 1) = &dev_attr_detach.attr;
 	*(attrs + 2) = &dev_attr_attach.attr;
 	*(attrs + 3) = &dev_attr_usbip_debug.attr;
-	for (i = 0; i < vhci_num_controllers; i++)
+	क्रम (i = 0; i < vhci_num_controllers; i++)
 		*(attrs + i + 4) = &((status_attrs + i)->attr.attr);
 	vhci_attr_group.attrs = attrs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vhci_finish_attr_group(void)
-{
+व्योम vhci_finish_attr_group(व्योम)
+अणु
 	finish_status_attrs();
-	kfree(vhci_attr_group.attrs);
-}
+	kमुक्त(vhci_attr_group.attrs);
+पूर्ण

@@ -1,133 +1,134 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2019 Arm Ltd.
 
-#include <linux/arm-smccc.h>
-#include <linux/kvm_host.h>
-#include <linux/sched/stat.h>
+#समावेश <linux/arm-smccc.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/sched/स्थिति.स>
 
-#include <asm/kvm_mmu.h>
-#include <asm/pvclock-abi.h>
+#समावेश <यंत्र/kvm_mmu.h>
+#समावेश <यंत्र/pvघड़ी-abi.h>
 
-#include <kvm/arm_hypercalls.h>
+#समावेश <kvm/arm_hypercalls.h>
 
-void kvm_update_stolen_time(struct kvm_vcpu *vcpu)
-{
-	struct kvm *kvm = vcpu->kvm;
+व्योम kvm_update_stolen_समय(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा kvm *kvm = vcpu->kvm;
 	u64 base = vcpu->arch.steal.base;
 	u64 last_steal = vcpu->arch.steal.last_steal;
-	u64 offset = offsetof(struct pvclock_vcpu_stolen_time, stolen_time);
+	u64 offset = दुरत्व(काष्ठा pvघड़ी_vcpu_stolen_समय, stolen_समय);
 	u64 steal = 0;
-	int idx;
+	पूर्णांक idx;
 
-	if (base == GPA_INVALID)
-		return;
+	अगर (base == GPA_INVALID)
+		वापस;
 
-	idx = srcu_read_lock(&kvm->srcu);
-	if (!kvm_get_guest(kvm, base + offset, steal)) {
+	idx = srcu_पढ़ो_lock(&kvm->srcu);
+	अगर (!kvm_get_guest(kvm, base + offset, steal)) अणु
 		steal = le64_to_cpu(steal);
 		vcpu->arch.steal.last_steal = READ_ONCE(current->sched_info.run_delay);
 		steal += vcpu->arch.steal.last_steal - last_steal;
 		kvm_put_guest(kvm, base + offset, cpu_to_le64(steal));
-	}
-	srcu_read_unlock(&kvm->srcu, idx);
-}
+	पूर्ण
+	srcu_पढ़ो_unlock(&kvm->srcu, idx);
+पूर्ण
 
-long kvm_hypercall_pv_features(struct kvm_vcpu *vcpu)
-{
+दीर्घ kvm_hypercall_pv_features(काष्ठा kvm_vcpu *vcpu)
+अणु
 	u32 feature = smccc_get_arg1(vcpu);
-	long val = SMCCC_RET_NOT_SUPPORTED;
+	दीर्घ val = SMCCC_RET_NOT_SUPPORTED;
 
-	switch (feature) {
-	case ARM_SMCCC_HV_PV_TIME_FEATURES:
-	case ARM_SMCCC_HV_PV_TIME_ST:
-		if (vcpu->arch.steal.base != GPA_INVALID)
+	चयन (feature) अणु
+	हाल ARM_SMCCC_HV_PV_TIME_FEATURES:
+	हाल ARM_SMCCC_HV_PV_TIME_ST:
+		अगर (vcpu->arch.steal.base != GPA_INVALID)
 			val = SMCCC_RET_SUCCESS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-gpa_t kvm_init_stolen_time(struct kvm_vcpu *vcpu)
-{
-	struct pvclock_vcpu_stolen_time init_values = {};
-	struct kvm *kvm = vcpu->kvm;
+gpa_t kvm_init_stolen_समय(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा pvघड़ी_vcpu_stolen_समय init_values = अणुपूर्ण;
+	काष्ठा kvm *kvm = vcpu->kvm;
 	u64 base = vcpu->arch.steal.base;
 
-	if (base == GPA_INVALID)
-		return base;
+	अगर (base == GPA_INVALID)
+		वापस base;
 
 	/*
-	 * Start counting stolen time from the time the guest requests
+	 * Start counting stolen समय from the समय the guest requests
 	 * the feature enabled.
 	 */
 	vcpu->arch.steal.last_steal = current->sched_info.run_delay;
-	kvm_write_guest_lock(kvm, base, &init_values, sizeof(init_values));
+	kvm_ग_लिखो_guest_lock(kvm, base, &init_values, माप(init_values));
 
-	return base;
-}
+	वापस base;
+पूर्ण
 
-bool kvm_arm_pvtime_supported(void)
-{
-	return !!sched_info_on();
-}
+bool kvm_arm_pvसमय_supported(व्योम)
+अणु
+	वापस !!sched_info_on();
+पूर्ण
 
-int kvm_arm_pvtime_set_attr(struct kvm_vcpu *vcpu,
-			    struct kvm_device_attr *attr)
-{
+पूर्णांक kvm_arm_pvसमय_set_attr(काष्ठा kvm_vcpu *vcpu,
+			    काष्ठा kvm_device_attr *attr)
+अणु
 	u64 __user *user = (u64 __user *)attr->addr;
-	struct kvm *kvm = vcpu->kvm;
+	काष्ठा kvm *kvm = vcpu->kvm;
 	u64 ipa;
-	int ret = 0;
-	int idx;
+	पूर्णांक ret = 0;
+	पूर्णांक idx;
 
-	if (!kvm_arm_pvtime_supported() ||
+	अगर (!kvm_arm_pvसमय_supported() ||
 	    attr->attr != KVM_ARM_VCPU_PVTIME_IPA)
-		return -ENXIO;
+		वापस -ENXIO;
 
-	if (get_user(ipa, user))
-		return -EFAULT;
-	if (!IS_ALIGNED(ipa, 64))
-		return -EINVAL;
-	if (vcpu->arch.steal.base != GPA_INVALID)
-		return -EEXIST;
+	अगर (get_user(ipa, user))
+		वापस -EFAULT;
+	अगर (!IS_ALIGNED(ipa, 64))
+		वापस -EINVAL;
+	अगर (vcpu->arch.steal.base != GPA_INVALID)
+		वापस -EEXIST;
 
 	/* Check the address is in a valid memslot */
-	idx = srcu_read_lock(&kvm->srcu);
-	if (kvm_is_error_hva(gfn_to_hva(kvm, ipa >> PAGE_SHIFT)))
+	idx = srcu_पढ़ो_lock(&kvm->srcu);
+	अगर (kvm_is_error_hva(gfn_to_hva(kvm, ipa >> PAGE_SHIFT)))
 		ret = -EINVAL;
-	srcu_read_unlock(&kvm->srcu, idx);
+	srcu_पढ़ो_unlock(&kvm->srcu, idx);
 
-	if (!ret)
+	अगर (!ret)
 		vcpu->arch.steal.base = ipa;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int kvm_arm_pvtime_get_attr(struct kvm_vcpu *vcpu,
-			    struct kvm_device_attr *attr)
-{
+पूर्णांक kvm_arm_pvसमय_get_attr(काष्ठा kvm_vcpu *vcpu,
+			    काष्ठा kvm_device_attr *attr)
+अणु
 	u64 __user *user = (u64 __user *)attr->addr;
 	u64 ipa;
 
-	if (!kvm_arm_pvtime_supported() ||
+	अगर (!kvm_arm_pvसमय_supported() ||
 	    attr->attr != KVM_ARM_VCPU_PVTIME_IPA)
-		return -ENXIO;
+		वापस -ENXIO;
 
 	ipa = vcpu->arch.steal.base;
 
-	if (put_user(ipa, user))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(ipa, user))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-int kvm_arm_pvtime_has_attr(struct kvm_vcpu *vcpu,
-			    struct kvm_device_attr *attr)
-{
-	switch (attr->attr) {
-	case KVM_ARM_VCPU_PVTIME_IPA:
-		if (kvm_arm_pvtime_supported())
-			return 0;
-	}
-	return -ENXIO;
-}
+पूर्णांक kvm_arm_pvसमय_has_attr(काष्ठा kvm_vcpu *vcpu,
+			    काष्ठा kvm_device_attr *attr)
+अणु
+	चयन (attr->attr) अणु
+	हाल KVM_ARM_VCPU_PVTIME_IPA:
+		अगर (kvm_arm_pvसमय_supported())
+			वापस 0;
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण

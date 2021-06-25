@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: utcache - local cache allocation routines
@@ -7,21 +8,21 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_UTILITIES
+#घोषणा _COMPONENT          ACPI_UTILITIES
 ACPI_MODULE_NAME("utcache")
 
-#ifdef ACPI_USE_LOCAL_CACHE
+#अगर_घोषित ACPI_USE_LOCAL_CACHE
 /*******************************************************************************
  *
  * FUNCTION:    acpi_os_create_cache
  *
- * PARAMETERS:  cache_name      - Ascii name for the cache
+ * PARAMETERS:  cache_name      - Ascii name क्रम the cache
  *              object_size     - Size of each cached object
  *              max_depth       - Maximum depth of the cache (in objects)
- *              return_cache    - Where the new cache object is returned
+ *              वापस_cache    - Where the new cache object is वापसed
  *
  * RETURN:      Status
  *
@@ -29,35 +30,35 @@ ACPI_MODULE_NAME("utcache")
  *
  ******************************************************************************/
 acpi_status
-acpi_os_create_cache(char *cache_name,
+acpi_os_create_cache(अक्षर *cache_name,
 		     u16 object_size,
-		     u16 max_depth, struct acpi_memory_list **return_cache)
-{
-	struct acpi_memory_list *cache;
+		     u16 max_depth, काष्ठा acpi_memory_list **वापस_cache)
+अणु
+	काष्ठा acpi_memory_list *cache;
 
 	ACPI_FUNCTION_ENTRY();
 
-	if (!cache_name || !return_cache || !object_size) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!cache_name || !वापस_cache || !object_size) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
 	/* Create the cache object */
 
-	cache = acpi_os_allocate(sizeof(struct acpi_memory_list));
-	if (!cache) {
-		return (AE_NO_MEMORY);
-	}
+	cache = acpi_os_allocate(माप(काष्ठा acpi_memory_list));
+	अगर (!cache) अणु
+		वापस (AE_NO_MEMORY);
+	पूर्ण
 
-	/* Populate the cache object and return it */
+	/* Populate the cache object and वापस it */
 
-	memset(cache, 0, sizeof(struct acpi_memory_list));
+	स_रखो(cache, 0, माप(काष्ठा acpi_memory_list));
 	cache->list_name = cache_name;
 	cache->object_size = object_size;
 	cache->max_depth = max_depth;
 
-	*return_cache = cache;
-	return (AE_OK);
-}
+	*वापस_cache = cache;
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -71,25 +72,25 @@ acpi_os_create_cache(char *cache_name,
  *
  ******************************************************************************/
 
-acpi_status acpi_os_purge_cache(struct acpi_memory_list *cache)
-{
-	void *next;
+acpi_status acpi_os_purge_cache(काष्ठा acpi_memory_list *cache)
+अणु
+	व्योम *next;
 	acpi_status status;
 
 	ACPI_FUNCTION_ENTRY();
 
-	if (!cache) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!cache) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_CACHES);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Walk the list of objects in this cache */
 
-	while (cache->list_head) {
+	जबतक (cache->list_head) अणु
 
 		/* Delete and unlink one cached state object */
 
@@ -98,11 +99,11 @@ acpi_status acpi_os_purge_cache(struct acpi_memory_list *cache)
 
 		cache->list_head = next;
 		cache->current_depth--;
-	}
+	पूर्ण
 
-	(void)acpi_ut_release_mutex(ACPI_MTX_CACHES);
-	return (AE_OK);
-}
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_CACHES);
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -117,8 +118,8 @@ acpi_status acpi_os_purge_cache(struct acpi_memory_list *cache)
  *
  ******************************************************************************/
 
-acpi_status acpi_os_delete_cache(struct acpi_memory_list *cache)
-{
+acpi_status acpi_os_delete_cache(काष्ठा acpi_memory_list *cache)
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_ENTRY();
@@ -126,15 +127,15 @@ acpi_status acpi_os_delete_cache(struct acpi_memory_list *cache)
 	/* Purge all objects in the cache */
 
 	status = acpi_os_purge_cache(cache);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	/* Now we can delete the cache object */
 
-	acpi_os_free(cache);
-	return (AE_OK);
-}
+	acpi_os_मुक्त(cache);
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -145,39 +146,39 @@ acpi_status acpi_os_delete_cache(struct acpi_memory_list *cache)
  *
  * RETURN:      None
  *
- * DESCRIPTION: Release an object to the specified cache. If cache is full,
+ * DESCRIPTION: Release an object to the specअगरied cache. If cache is full,
  *              the object is deleted.
  *
  ******************************************************************************/
 
-acpi_status acpi_os_release_object(struct acpi_memory_list *cache, void *object)
-{
+acpi_status acpi_os_release_object(काष्ठा acpi_memory_list *cache, व्योम *object)
+अणु
 	acpi_status status;
 
 	ACPI_FUNCTION_ENTRY();
 
-	if (!cache || !object) {
-		return (AE_BAD_PARAMETER);
-	}
+	अगर (!cache || !object) अणु
+		वापस (AE_BAD_PARAMETER);
+	पूर्ण
 
-	/* If cache is full, just free this object */
+	/* If cache is full, just मुक्त this object */
 
-	if (cache->current_depth >= cache->max_depth) {
+	अगर (cache->current_depth >= cache->max_depth) अणु
 		ACPI_FREE(object);
-		ACPI_MEM_TRACKING(cache->total_freed++);
-	}
+		ACPI_MEM_TRACKING(cache->total_मुक्तd++);
+	पूर्ण
 
-	/* Otherwise put this object back into the cache */
+	/* Otherwise put this object back पूर्णांकo the cache */
 
-	else {
+	अन्यथा अणु
 		status = acpi_ut_acquire_mutex(ACPI_MTX_CACHES);
-		if (ACPI_FAILURE(status)) {
-			return (status);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस (status);
+		पूर्ण
 
 		/* Mark the object as cached */
 
-		memset(object, 0xCA, cache->object_size);
+		स_रखो(object, 0xCA, cache->object_size);
 		ACPI_SET_DESCRIPTOR_TYPE(object, ACPI_DESC_TYPE_CACHED);
 
 		/* Put the object at the head of the cache list */
@@ -186,11 +187,11 @@ acpi_status acpi_os_release_object(struct acpi_memory_list *cache, void *object)
 		cache->list_head = object;
 		cache->current_depth++;
 
-		(void)acpi_ut_release_mutex(ACPI_MTX_CACHES);
-	}
+		(व्योम)acpi_ut_release_mutex(ACPI_MTX_CACHES);
+	पूर्ण
 
-	return (AE_OK);
-}
+	वापस (AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -198,34 +199,34 @@ acpi_status acpi_os_release_object(struct acpi_memory_list *cache, void *object)
  *
  * PARAMETERS:  cache           - Handle to cache object
  *
- * RETURN:      the acquired object. NULL on error
+ * RETURN:      the acquired object. शून्य on error
  *
- * DESCRIPTION: Get an object from the specified cache. If cache is empty,
+ * DESCRIPTION: Get an object from the specअगरied cache. If cache is empty,
  *              the object is allocated.
  *
  ******************************************************************************/
 
-void *acpi_os_acquire_object(struct acpi_memory_list *cache)
-{
+व्योम *acpi_os_acquire_object(काष्ठा acpi_memory_list *cache)
+अणु
 	acpi_status status;
-	void *object;
+	व्योम *object;
 
 	ACPI_FUNCTION_TRACE(os_acquire_object);
 
-	if (!cache) {
-		return_PTR(NULL);
-	}
+	अगर (!cache) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_CACHES);
-	if (ACPI_FAILURE(status)) {
-		return_PTR(NULL);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_PTR(शून्य);
+	पूर्ण
 
 	ACPI_MEM_TRACKING(cache->requests++);
 
 	/* Check the cache first */
 
-	if (cache->list_head) {
+	अगर (cache->list_head) अणु
 
 		/* There is an object available, use it */
 
@@ -241,39 +242,39 @@ void *acpi_os_acquire_object(struct acpi_memory_list *cache)
 				      cache->list_name));
 
 		status = acpi_ut_release_mutex(ACPI_MTX_CACHES);
-		if (ACPI_FAILURE(status)) {
-			return_PTR(NULL);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_PTR(शून्य);
+		पूर्ण
 
 		/* Clear (zero) the previously used Object */
 
-		memset(object, 0, cache->object_size);
-	} else {
+		स_रखो(object, 0, cache->object_size);
+	पूर्ण अन्यथा अणु
 		/* The cache is empty, create a new object */
 
 		ACPI_MEM_TRACKING(cache->total_allocated++);
 
-#ifdef ACPI_DBG_TRACK_ALLOCATIONS
-		if ((cache->total_allocated - cache->total_freed) >
-		    cache->max_occupied) {
+#अगर_घोषित ACPI_DBG_TRACK_ALLOCATIONS
+		अगर ((cache->total_allocated - cache->total_मुक्तd) >
+		    cache->max_occupied) अणु
 			cache->max_occupied =
-			    cache->total_allocated - cache->total_freed;
-		}
-#endif
+			    cache->total_allocated - cache->total_मुक्तd;
+		पूर्ण
+#पूर्ण_अगर
 
-		/* Avoid deadlock with ACPI_ALLOCATE_ZEROED */
+		/* Aव्योम deadlock with ACPI_ALLOCATE_ZEROED */
 
 		status = acpi_ut_release_mutex(ACPI_MTX_CACHES);
-		if (ACPI_FAILURE(status)) {
-			return_PTR(NULL);
-		}
+		अगर (ACPI_FAILURE(status)) अणु
+			वापस_PTR(शून्य);
+		पूर्ण
 
 		object = ACPI_ALLOCATE_ZEROED(cache->object_size);
-		if (!object) {
-			return_PTR(NULL);
-		}
-	}
+		अगर (!object) अणु
+			वापस_PTR(शून्य);
+		पूर्ण
+	पूर्ण
 
-	return_PTR(object);
-}
-#endif				/* ACPI_USE_LOCAL_CACHE */
+	वापस_PTR(object);
+पूर्ण
+#पूर्ण_अगर				/* ACPI_USE_LOCAL_CACHE */

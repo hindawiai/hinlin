@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * debugfs interface for sunrpc
+ * debugfs पूर्णांकerface क्रम sunrpc
  *
  * (c) 2014 Jeff Layton <jlayton@primarydata.com>
  */
 
-#include <linux/debugfs.h>
-#include <linux/sunrpc/sched.h>
-#include <linux/sunrpc/clnt.h>
-#include "netns.h"
+#समावेश <linux/debugfs.h>
+#समावेश <linux/sunrpc/sched.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश "netns.h"
 
-static struct dentry *topdir;
-static struct dentry *rpc_clnt_dir;
-static struct dentry *rpc_xprt_dir;
+अटल काष्ठा dentry *topdir;
+अटल काष्ठा dentry *rpc_clnt_dir;
+अटल काष्ठा dentry *rpc_xprt_dir;
 
-unsigned int rpc_inject_disconnect;
+अचिन्हित पूर्णांक rpc_inject_disconnect;
 
-static int
-tasks_show(struct seq_file *f, void *v)
-{
+अटल पूर्णांक
+tasks_show(काष्ठा seq_file *f, व्योम *v)
+अणु
 	u32 xid = 0;
-	struct rpc_task *task = v;
-	struct rpc_clnt *clnt = task->tk_client;
-	const char *rpc_waitq = "none";
+	काष्ठा rpc_task *task = v;
+	काष्ठा rpc_clnt *clnt = task->tk_client;
+	स्थिर अक्षर *rpc_रुकोq = "none";
 
-	if (RPC_IS_QUEUED(task))
-		rpc_waitq = rpc_qname(task->tk_waitqueue);
+	अगर (RPC_IS_QUEUED(task))
+		rpc_रुकोq = rpc_qname(task->tk_रुकोqueue);
 
-	if (task->tk_rqstp)
+	अगर (task->tk_rqstp)
 		xid = be32_to_cpu(task->tk_rqstp->rq_xid);
 
-	seq_printf(f, "%5u %04x %6d 0x%x 0x%x %8ld %ps %sv%u %s a:%ps q:%s\n",
+	seq_म_लिखो(f, "%5u %04x %6d 0x%x 0x%x %8ld %ps %sv%u %s a:%ps q:%s\n",
 		task->tk_pid, task->tk_flags, task->tk_status,
-		clnt->cl_clid, xid, rpc_task_timeout(task), task->tk_ops,
+		clnt->cl_clid, xid, rpc_task_समयout(task), task->tk_ops,
 		clnt->cl_program->name, clnt->cl_vers, rpc_proc_name(task),
-		task->tk_action, rpc_waitq);
-	return 0;
-}
+		task->tk_action, rpc_रुकोq);
+	वापस 0;
+पूर्ण
 
-static void *
-tasks_start(struct seq_file *f, loff_t *ppos)
+अटल व्योम *
+tasks_start(काष्ठा seq_file *f, loff_t *ppos)
 	__acquires(&clnt->cl_lock)
-{
-	struct rpc_clnt *clnt = f->private;
+अणु
+	काष्ठा rpc_clnt *clnt = f->निजी;
 	loff_t pos = *ppos;
-	struct rpc_task *task;
+	काष्ठा rpc_task *task;
 
 	spin_lock(&clnt->cl_lock);
-	list_for_each_entry(task, &clnt->cl_tasks, tk_task)
-		if (pos-- == 0)
-			return task;
-	return NULL;
-}
+	list_क्रम_each_entry(task, &clnt->cl_tasks, tk_task)
+		अगर (pos-- == 0)
+			वापस task;
+	वापस शून्य;
+पूर्ण
 
-static void *
-tasks_next(struct seq_file *f, void *v, loff_t *pos)
-{
-	struct rpc_clnt *clnt = f->private;
-	struct rpc_task *task = v;
-	struct list_head *next = task->tk_task.next;
+अटल व्योम *
+tasks_next(काष्ठा seq_file *f, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा rpc_clnt *clnt = f->निजी;
+	काष्ठा rpc_task *task = v;
+	काष्ठा list_head *next = task->tk_task.next;
 
 	++*pos;
 
-	/* If there's another task on list, return it */
-	if (next == &clnt->cl_tasks)
-		return NULL;
-	return list_entry(next, struct rpc_task, tk_task);
-}
+	/* If there's another task on list, वापस it */
+	अगर (next == &clnt->cl_tasks)
+		वापस शून्य;
+	वापस list_entry(next, काष्ठा rpc_task, tk_task);
+पूर्ण
 
-static void
-tasks_stop(struct seq_file *f, void *v)
+अटल व्योम
+tasks_stop(काष्ठा seq_file *f, व्योम *v)
 	__releases(&clnt->cl_lock)
-{
-	struct rpc_clnt *clnt = f->private;
+अणु
+	काष्ठा rpc_clnt *clnt = f->निजी;
 	spin_unlock(&clnt->cl_lock);
-}
+पूर्ण
 
-static const struct seq_operations tasks_seq_operations = {
+अटल स्थिर काष्ठा seq_operations tasks_seq_operations = अणु
 	.start	= tasks_start,
 	.next	= tasks_next,
 	.stop	= tasks_stop,
 	.show	= tasks_show,
-};
+पूर्ण;
 
-static int tasks_open(struct inode *inode, struct file *filp)
-{
-	int ret = seq_open(filp, &tasks_seq_operations);
-	if (!ret) {
-		struct seq_file *seq = filp->private_data;
-		struct rpc_clnt *clnt = seq->private = inode->i_private;
+अटल पूर्णांक tasks_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक ret = seq_खोलो(filp, &tasks_seq_operations);
+	अगर (!ret) अणु
+		काष्ठा seq_file *seq = filp->निजी_data;
+		काष्ठा rpc_clnt *clnt = seq->निजी = inode->i_निजी;
 
-		if (!atomic_inc_not_zero(&clnt->cl_count)) {
+		अगर (!atomic_inc_not_zero(&clnt->cl_count)) अणु
 			seq_release(inode, filp);
 			ret = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-tasks_release(struct inode *inode, struct file *filp)
-{
-	struct seq_file *seq = filp->private_data;
-	struct rpc_clnt *clnt = seq->private;
+अटल पूर्णांक
+tasks_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा seq_file *seq = filp->निजी_data;
+	काष्ठा rpc_clnt *clnt = seq->निजी;
 
 	rpc_release_client(clnt);
-	return seq_release(inode, filp);
-}
+	वापस seq_release(inode, filp);
+पूर्ण
 
-static const struct file_operations tasks_fops = {
+अटल स्थिर काष्ठा file_operations tasks_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= tasks_open,
-	.read		= seq_read,
+	.खोलो		= tasks_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= tasks_release,
-};
+पूर्ण;
 
-static int do_xprt_debugfs(struct rpc_clnt *clnt, struct rpc_xprt *xprt, void *numv)
-{
-	int len;
-	char name[24]; /* enough for "../../rpc_xprt/ + 8 hex digits + NULL */
-	char link[9]; /* enough for 8 hex digits + NULL */
-	int *nump = numv;
+अटल पूर्णांक करो_xprt_debugfs(काष्ठा rpc_clnt *clnt, काष्ठा rpc_xprt *xprt, व्योम *numv)
+अणु
+	पूर्णांक len;
+	अक्षर name[24]; /* enough क्रम "../../rpc_xprt/ + 8 hex digits + शून्य */
+	अक्षर link[9]; /* enough क्रम 8 hex digits + शून्य */
+	पूर्णांक *nump = numv;
 
-	if (IS_ERR_OR_NULL(xprt->debugfs))
-		return 0;
-	len = snprintf(name, sizeof(name), "../../rpc_xprt/%s",
+	अगर (IS_ERR_OR_शून्य(xprt->debugfs))
+		वापस 0;
+	len = snम_लिखो(name, माप(name), "../../rpc_xprt/%s",
 		       xprt->debugfs->d_name.name);
-	if (len >= sizeof(name))
-		return -1;
-	if (*nump == 0)
-		strcpy(link, "xprt");
-	else {
-		len = snprintf(link, sizeof(link), "xprt%d", *nump);
-		if (len >= sizeof(link))
-			return -1;
-	}
+	अगर (len >= माप(name))
+		वापस -1;
+	अगर (*nump == 0)
+		म_नकल(link, "xprt");
+	अन्यथा अणु
+		len = snम_लिखो(link, माप(link), "xprt%d", *nump);
+		अगर (len >= माप(link))
+			वापस -1;
+	पूर्ण
 	debugfs_create_symlink(link, clnt->cl_debugfs, name);
 	(*nump)++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-rpc_clnt_debugfs_register(struct rpc_clnt *clnt)
-{
-	int len;
-	char name[9]; /* enough for 8 hex digits + NULL */
-	int xprtnum = 0;
+व्योम
+rpc_clnt_debugfs_रेजिस्टर(काष्ठा rpc_clnt *clnt)
+अणु
+	पूर्णांक len;
+	अक्षर name[9]; /* enough क्रम 8 hex digits + शून्य */
+	पूर्णांक xprtnum = 0;
 
-	len = snprintf(name, sizeof(name), "%x", clnt->cl_clid);
-	if (len >= sizeof(name))
-		return;
+	len = snम_लिखो(name, माप(name), "%x", clnt->cl_clid);
+	अगर (len >= माप(name))
+		वापस;
 
 	/* make the per-client dir */
 	clnt->cl_debugfs = debugfs_create_dir(name, rpc_clnt_dir);
@@ -160,74 +161,74 @@ rpc_clnt_debugfs_register(struct rpc_clnt *clnt)
 	debugfs_create_file("tasks", S_IFREG | 0400, clnt->cl_debugfs, clnt,
 			    &tasks_fops);
 
-	rpc_clnt_iterate_for_each_xprt(clnt, do_xprt_debugfs, &xprtnum);
-}
+	rpc_clnt_iterate_क्रम_each_xprt(clnt, करो_xprt_debugfs, &xprtnum);
+पूर्ण
 
-void
-rpc_clnt_debugfs_unregister(struct rpc_clnt *clnt)
-{
-	debugfs_remove_recursive(clnt->cl_debugfs);
-	clnt->cl_debugfs = NULL;
-}
+व्योम
+rpc_clnt_debugfs_unरेजिस्टर(काष्ठा rpc_clnt *clnt)
+अणु
+	debugfs_हटाओ_recursive(clnt->cl_debugfs);
+	clnt->cl_debugfs = शून्य;
+पूर्ण
 
-static int
-xprt_info_show(struct seq_file *f, void *v)
-{
-	struct rpc_xprt *xprt = f->private;
+अटल पूर्णांक
+xprt_info_show(काष्ठा seq_file *f, व्योम *v)
+अणु
+	काष्ठा rpc_xprt *xprt = f->निजी;
 
-	seq_printf(f, "netid: %s\n", xprt->address_strings[RPC_DISPLAY_NETID]);
-	seq_printf(f, "addr:  %s\n", xprt->address_strings[RPC_DISPLAY_ADDR]);
-	seq_printf(f, "port:  %s\n", xprt->address_strings[RPC_DISPLAY_PORT]);
-	seq_printf(f, "state: 0x%lx\n", xprt->state);
-	return 0;
-}
+	seq_म_लिखो(f, "netid: %s\n", xprt->address_strings[RPC_DISPLAY_NETID]);
+	seq_म_लिखो(f, "addr:  %s\n", xprt->address_strings[RPC_DISPLAY_ADDR]);
+	seq_म_लिखो(f, "port:  %s\n", xprt->address_strings[RPC_DISPLAY_PORT]);
+	seq_म_लिखो(f, "state: 0x%lx\n", xprt->state);
+	वापस 0;
+पूर्ण
 
-static int
-xprt_info_open(struct inode *inode, struct file *filp)
-{
-	int ret;
-	struct rpc_xprt *xprt = inode->i_private;
+अटल पूर्णांक
+xprt_info_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक ret;
+	काष्ठा rpc_xprt *xprt = inode->i_निजी;
 
-	ret = single_open(filp, xprt_info_show, xprt);
+	ret = single_खोलो(filp, xprt_info_show, xprt);
 
-	if (!ret) {
-		if (!xprt_get(xprt)) {
+	अगर (!ret) अणु
+		अगर (!xprt_get(xprt)) अणु
 			single_release(inode, filp);
 			ret = -EINVAL;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int
-xprt_info_release(struct inode *inode, struct file *filp)
-{
-	struct rpc_xprt *xprt = inode->i_private;
+अटल पूर्णांक
+xprt_info_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा rpc_xprt *xprt = inode->i_निजी;
 
 	xprt_put(xprt);
-	return single_release(inode, filp);
-}
+	वापस single_release(inode, filp);
+पूर्ण
 
-static const struct file_operations xprt_info_fops = {
+अटल स्थिर काष्ठा file_operations xprt_info_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= xprt_info_open,
-	.read		= seq_read,
+	.खोलो		= xprt_info_खोलो,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
 	.release	= xprt_info_release,
-};
+पूर्ण;
 
-void
-rpc_xprt_debugfs_register(struct rpc_xprt *xprt)
-{
-	int len, id;
-	static atomic_t	cur_id;
-	char		name[9]; /* 8 hex digits + NULL term */
+व्योम
+rpc_xprt_debugfs_रेजिस्टर(काष्ठा rpc_xprt *xprt)
+अणु
+	पूर्णांक len, id;
+	अटल atomic_t	cur_id;
+	अक्षर		name[9]; /* 8 hex digits + शून्य term */
 
-	id = (unsigned int)atomic_inc_return(&cur_id);
+	id = (अचिन्हित पूर्णांक)atomic_inc_वापस(&cur_id);
 
-	len = snprintf(name, sizeof(name), "%x", id);
-	if (len >= sizeof(name))
-		return;
+	len = snम_लिखो(name, माप(name), "%x", id);
+	अगर (len >= माप(name))
+		वापस;
 
 	/* make the per-client dir */
 	xprt->debugfs = debugfs_create_dir(name, rpc_xprt_dir);
@@ -237,81 +238,81 @@ rpc_xprt_debugfs_register(struct rpc_xprt *xprt)
 			    &xprt_info_fops);
 
 	atomic_set(&xprt->inject_disconnect, rpc_inject_disconnect);
-}
+पूर्ण
 
-void
-rpc_xprt_debugfs_unregister(struct rpc_xprt *xprt)
-{
-	debugfs_remove_recursive(xprt->debugfs);
-	xprt->debugfs = NULL;
-}
+व्योम
+rpc_xprt_debugfs_unरेजिस्टर(काष्ठा rpc_xprt *xprt)
+अणु
+	debugfs_हटाओ_recursive(xprt->debugfs);
+	xprt->debugfs = शून्य;
+पूर्ण
 
-static int
-fault_open(struct inode *inode, struct file *filp)
-{
-	filp->private_data = kmalloc(128, GFP_KERNEL);
-	if (!filp->private_data)
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक
+fault_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	filp->निजी_data = kदो_स्मृति(128, GFP_KERNEL);
+	अगर (!filp->निजी_data)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int
-fault_release(struct inode *inode, struct file *filp)
-{
-	kfree(filp->private_data);
-	return 0;
-}
+अटल पूर्णांक
+fault_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	kमुक्त(filp->निजी_data);
+	वापस 0;
+पूर्ण
 
-static ssize_t
-fault_disconnect_read(struct file *filp, char __user *user_buf,
-		      size_t len, loff_t *offset)
-{
-	char *buffer = (char *)filp->private_data;
-	size_t size;
+अटल sमाप_प्रकार
+fault_disconnect_पढ़ो(काष्ठा file *filp, अक्षर __user *user_buf,
+		      माप_प्रकार len, loff_t *offset)
+अणु
+	अक्षर *buffer = (अक्षर *)filp->निजी_data;
+	माप_प्रकार size;
 
-	size = sprintf(buffer, "%u\n", rpc_inject_disconnect);
-	return simple_read_from_buffer(user_buf, len, offset, buffer, size);
-}
+	size = प्र_लिखो(buffer, "%u\n", rpc_inject_disconnect);
+	वापस simple_पढ़ो_from_buffer(user_buf, len, offset, buffer, size);
+पूर्ण
 
-static ssize_t
-fault_disconnect_write(struct file *filp, const char __user *user_buf,
-		       size_t len, loff_t *offset)
-{
-	char buffer[16];
+अटल sमाप_प्रकार
+fault_disconnect_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *user_buf,
+		       माप_प्रकार len, loff_t *offset)
+अणु
+	अक्षर buffer[16];
 
-	if (len >= sizeof(buffer))
-		len = sizeof(buffer) - 1;
-	if (copy_from_user(buffer, user_buf, len))
-		return -EFAULT;
+	अगर (len >= माप(buffer))
+		len = माप(buffer) - 1;
+	अगर (copy_from_user(buffer, user_buf, len))
+		वापस -EFAULT;
 	buffer[len] = '\0';
-	if (kstrtouint(buffer, 10, &rpc_inject_disconnect))
-		return -EINVAL;
-	return len;
-}
+	अगर (kstrtouपूर्णांक(buffer, 10, &rpc_inject_disconnect))
+		वापस -EINVAL;
+	वापस len;
+पूर्ण
 
-static const struct file_operations fault_disconnect_fops = {
+अटल स्थिर काष्ठा file_operations fault_disconnect_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= fault_open,
-	.read		= fault_disconnect_read,
-	.write		= fault_disconnect_write,
+	.खोलो		= fault_खोलो,
+	.पढ़ो		= fault_disconnect_पढ़ो,
+	.ग_लिखो		= fault_disconnect_ग_लिखो,
 	.release	= fault_release,
-};
+पूर्ण;
 
-void __exit
-sunrpc_debugfs_exit(void)
-{
-	debugfs_remove_recursive(topdir);
-	topdir = NULL;
-	rpc_clnt_dir = NULL;
-	rpc_xprt_dir = NULL;
-}
+व्योम __निकास
+sunrpc_debugfs_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(topdir);
+	topdir = शून्य;
+	rpc_clnt_dir = शून्य;
+	rpc_xprt_dir = शून्य;
+पूर्ण
 
-void __init
-sunrpc_debugfs_init(void)
-{
-	struct dentry *rpc_fault_dir;
+व्योम __init
+sunrpc_debugfs_init(व्योम)
+अणु
+	काष्ठा dentry *rpc_fault_dir;
 
-	topdir = debugfs_create_dir("sunrpc", NULL);
+	topdir = debugfs_create_dir("sunrpc", शून्य);
 
 	rpc_clnt_dir = debugfs_create_dir("rpc_clnt", topdir);
 
@@ -319,6 +320,6 @@ sunrpc_debugfs_init(void)
 
 	rpc_fault_dir = debugfs_create_dir("inject_fault", topdir);
 
-	debugfs_create_file("disconnect", S_IFREG | 0400, rpc_fault_dir, NULL,
+	debugfs_create_file("disconnect", S_IFREG | 0400, rpc_fault_dir, शून्य,
 			    &fault_disconnect_fops);
-}
+पूर्ण

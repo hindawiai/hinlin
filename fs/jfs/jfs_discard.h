@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *   Copyright (C) Tino Reichardt, 2012
+ *   Copyright (C) Tino Reiअक्षरdt, 2012
  */
-#ifndef _H_JFS_DISCARD
-#define _H_JFS_DISCARD
+#अगर_अघोषित _H_JFS_DISCARD
+#घोषणा _H_JFS_DISCARD
 
-struct fstrim_range;
+काष्ठा fstrim_range;
 
-extern void jfs_issue_discard(struct inode *ip, u64 blkno, u64 nblocks);
-extern int jfs_ioc_trim(struct inode *ip, struct fstrim_range *range);
+बाह्य व्योम jfs_issue_discard(काष्ठा inode *ip, u64 blkno, u64 nblocks);
+बाह्य पूर्णांक jfs_ioc_trim(काष्ठा inode *ip, काष्ठा fstrim_range *range);
 
-#endif /* _H_JFS_DISCARD */
+#पूर्ण_अगर /* _H_JFS_DISCARD */

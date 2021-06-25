@@ -1,820 +1,821 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * builtin-inject.c
  *
- * Builtin inject command: Examine the live mode (stdin) event stream
- * and repipe it to stdout while optionally injecting additional
- * events into it.
+ * Builtin inject command: Examine the live mode (मानक_निवेश) event stream
+ * and repipe it to मानक_निकास जबतक optionally injecting additional
+ * events पूर्णांकo it.
  */
-#include "builtin.h"
+#समावेश "builtin.h"
 
-#include "util/color.h"
-#include "util/dso.h"
-#include "util/vdso.h"
-#include "util/evlist.h"
-#include "util/evsel.h"
-#include "util/map.h"
-#include "util/session.h"
-#include "util/tool.h"
-#include "util/debug.h"
-#include "util/build-id.h"
-#include "util/data.h"
-#include "util/auxtrace.h"
-#include "util/jit.h"
-#include "util/symbol.h"
-#include "util/synthetic-events.h"
-#include "util/thread.h"
-#include "util/namespaces.h"
+#समावेश "util/color.h"
+#समावेश "util/dso.h"
+#समावेश "util/vdso.h"
+#समावेश "util/evlist.h"
+#समावेश "util/evsel.h"
+#समावेश "util/map.h"
+#समावेश "util/session.h"
+#समावेश "util/tool.h"
+#समावेश "util/debug.h"
+#समावेश "util/build-id.h"
+#समावेश "util/data.h"
+#समावेश "util/auxtrace.h"
+#समावेश "util/jit.h"
+#समावेश "util/symbol.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "util/thread.h"
+#समावेश "util/namespaces.h"
 
-#include <linux/err.h>
-#include <subcmd/parse-options.h>
-#include <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
+#समावेश <linux/err.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश <uapi/linux/mman.h> /* To get things like MAP_HUGETLB even on older libc headers */
 
-#include <linux/list.h>
-#include <errno.h>
-#include <signal.h>
+#समावेश <linux/list.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <संकेत.स>
 
-struct perf_inject {
-	struct perf_tool	tool;
-	struct perf_session	*session;
+काष्ठा perf_inject अणु
+	काष्ठा perf_tool	tool;
+	काष्ठा perf_session	*session;
 	bool			build_ids;
 	bool			build_id_all;
 	bool			sched_stat;
 	bool			have_auxtrace;
 	bool			strip;
 	bool			jit_mode;
-	const char		*input_name;
-	struct perf_data	output;
+	स्थिर अक्षर		*input_name;
+	काष्ठा perf_data	output;
 	u64			bytes_written;
 	u64			aux_id;
-	struct list_head	samples;
-	struct itrace_synth_opts itrace_synth_opts;
-	char			event_copy[PERF_SAMPLE_MAX_SIZE];
-};
+	काष्ठा list_head	samples;
+	काष्ठा itrace_synth_opts itrace_synth_opts;
+	अक्षर			event_copy[PERF_SAMPLE_MAX_SIZE];
+पूर्ण;
 
-struct event_entry {
-	struct list_head node;
+काष्ठा event_entry अणु
+	काष्ठा list_head node;
 	u32		 tid;
-	union perf_event event[];
-};
+	जोड़ perf_event event[];
+पूर्ण;
 
-static int dso__inject_build_id(struct dso *dso, struct perf_tool *tool,
-				struct machine *machine, u8 cpumode, u32 flags);
+अटल पूर्णांक dso__inject_build_id(काष्ठा dso *dso, काष्ठा perf_tool *tool,
+				काष्ठा machine *machine, u8 cpumode, u32 flags);
 
-static int output_bytes(struct perf_inject *inject, void *buf, size_t sz)
-{
-	ssize_t size;
+अटल पूर्णांक output_bytes(काष्ठा perf_inject *inject, व्योम *buf, माप_प्रकार sz)
+अणु
+	sमाप_प्रकार size;
 
-	size = perf_data__write(&inject->output, buf, sz);
-	if (size < 0)
-		return -errno;
+	size = perf_data__ग_लिखो(&inject->output, buf, sz);
+	अगर (size < 0)
+		वापस -त्रुटि_सं;
 
 	inject->bytes_written += size;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_event__repipe_synth(struct perf_tool *tool,
-				    union perf_event *event)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject,
+अटल पूर्णांक perf_event__repipe_synth(काष्ठा perf_tool *tool,
+				    जोड़ perf_event *event)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject,
 						  tool);
 
-	return output_bytes(inject, event, event->header.size);
-}
+	वापस output_bytes(inject, event, event->header.size);
+पूर्ण
 
-static int perf_event__repipe_oe_synth(struct perf_tool *tool,
-				       union perf_event *event,
-				       struct ordered_events *oe __maybe_unused)
-{
-	return perf_event__repipe_synth(tool, event);
-}
+अटल पूर्णांक perf_event__repipe_oe_synth(काष्ठा perf_tool *tool,
+				       जोड़ perf_event *event,
+				       काष्ठा ordered_events *oe __maybe_unused)
+अणु
+	वापस perf_event__repipe_synth(tool, event);
+पूर्ण
 
-#ifdef HAVE_JITDUMP
-static int perf_event__drop_oe(struct perf_tool *tool __maybe_unused,
-			       union perf_event *event __maybe_unused,
-			       struct ordered_events *oe __maybe_unused)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित HAVE_JITDUMP
+अटल पूर्णांक perf_event__drop_oe(काष्ठा perf_tool *tool __maybe_unused,
+			       जोड़ perf_event *event __maybe_unused,
+			       काष्ठा ordered_events *oe __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int perf_event__repipe_op2_synth(struct perf_session *session,
-					union perf_event *event)
-{
-	return perf_event__repipe_synth(session->tool, event);
-}
+अटल पूर्णांक perf_event__repipe_op2_synth(काष्ठा perf_session *session,
+					जोड़ perf_event *event)
+अणु
+	वापस perf_event__repipe_synth(session->tool, event);
+पूर्ण
 
-static int perf_event__repipe_op4_synth(struct perf_session *session,
-					union perf_event *event,
+अटल पूर्णांक perf_event__repipe_op4_synth(काष्ठा perf_session *session,
+					जोड़ perf_event *event,
 					u64 data __maybe_unused)
-{
-	return perf_event__repipe_synth(session->tool, event);
-}
+अणु
+	वापस perf_event__repipe_synth(session->tool, event);
+पूर्ण
 
-static int perf_event__repipe_attr(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct evlist **pevlist)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject,
+अटल पूर्णांक perf_event__repipe_attr(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा evlist **pevlist)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject,
 						  tool);
-	int ret;
+	पूर्णांक ret;
 
 	ret = perf_event__process_attr(tool, event, pevlist);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!inject->output.is_pipe)
-		return 0;
+	अगर (!inject->output.is_pipe)
+		वापस 0;
 
-	return perf_event__repipe_synth(tool, event);
-}
+	वापस perf_event__repipe_synth(tool, event);
+पूर्ण
 
-static int perf_event__repipe_event_update(struct perf_tool *tool,
-					   union perf_event *event,
-					   struct evlist **pevlist __maybe_unused)
-{
-	return perf_event__repipe_synth(tool, event);
-}
+अटल पूर्णांक perf_event__repipe_event_update(काष्ठा perf_tool *tool,
+					   जोड़ perf_event *event,
+					   काष्ठा evlist **pevlist __maybe_unused)
+अणु
+	वापस perf_event__repipe_synth(tool, event);
+पूर्ण
 
-#ifdef HAVE_AUXTRACE_SUPPORT
+#अगर_घोषित HAVE_AUXTRACE_SUPPORT
 
-static int copy_bytes(struct perf_inject *inject, int fd, off_t size)
-{
-	char buf[4096];
-	ssize_t ssz;
-	int ret;
+अटल पूर्णांक copy_bytes(काष्ठा perf_inject *inject, पूर्णांक fd, off_t size)
+अणु
+	अक्षर buf[4096];
+	sमाप_प्रकार ssz;
+	पूर्णांक ret;
 
-	while (size > 0) {
-		ssz = read(fd, buf, min(size, (off_t)sizeof(buf)));
-		if (ssz < 0)
-			return -errno;
+	जबतक (size > 0) अणु
+		ssz = पढ़ो(fd, buf, min(size, (off_t)माप(buf)));
+		अगर (ssz < 0)
+			वापस -त्रुटि_सं;
 		ret = output_bytes(inject, buf, ssz);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		size -= ssz;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static s64 perf_event__repipe_auxtrace(struct perf_session *session,
-				       union perf_event *event)
-{
-	struct perf_tool *tool = session->tool;
-	struct perf_inject *inject = container_of(tool, struct perf_inject,
+अटल s64 perf_event__repipe_auxtrace(काष्ठा perf_session *session,
+				       जोड़ perf_event *event)
+अणु
+	काष्ठा perf_tool *tool = session->tool;
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject,
 						  tool);
-	int ret;
+	पूर्णांक ret;
 
 	inject->have_auxtrace = true;
 
-	if (!inject->output.is_pipe) {
+	अगर (!inject->output.is_pipe) अणु
 		off_t offset;
 
-		offset = lseek(inject->output.file.fd, 0, SEEK_CUR);
-		if (offset == -1)
-			return -errno;
+		offset = lseek(inject->output.file.fd, 0, प्रस्तुत_से);
+		अगर (offset == -1)
+			वापस -त्रुटि_सं;
 		ret = auxtrace_index__auxtrace_event(&session->auxtrace_index,
 						     event, offset);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	if (perf_data__is_pipe(session->data) || !session->one_mmap) {
+	अगर (perf_data__is_pipe(session->data) || !session->one_mmap) अणु
 		ret = output_bytes(inject, event, event->header.size);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		ret = copy_bytes(inject, perf_data__fd(session->data),
 				 event->auxtrace.size);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = output_bytes(inject, event,
 				   event->header.size + event->auxtrace.size);
-	}
-	if (ret < 0)
-		return ret;
+	पूर्ण
+	अगर (ret < 0)
+		वापस ret;
 
-	return event->auxtrace.size;
-}
+	वापस event->auxtrace.size;
+पूर्ण
 
-#else
+#अन्यथा
 
-static s64
-perf_event__repipe_auxtrace(struct perf_session *session __maybe_unused,
-			    union perf_event *event __maybe_unused)
-{
+अटल s64
+perf_event__repipe_auxtrace(काष्ठा perf_session *session __maybe_unused,
+			    जोड़ perf_event *event __maybe_unused)
+अणु
 	pr_err("AUX area tracing not supported\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static int perf_event__repipe(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample __maybe_unused,
-			      struct machine *machine __maybe_unused)
-{
-	return perf_event__repipe_synth(tool, event);
-}
+अटल पूर्णांक perf_event__repipe(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample __maybe_unused,
+			      काष्ठा machine *machine __maybe_unused)
+अणु
+	वापस perf_event__repipe_synth(tool, event);
+पूर्ण
 
-static int perf_event__drop(struct perf_tool *tool __maybe_unused,
-			    union perf_event *event __maybe_unused,
-			    struct perf_sample *sample __maybe_unused,
-			    struct machine *machine __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक perf_event__drop(काष्ठा perf_tool *tool __maybe_unused,
+			    जोड़ perf_event *event __maybe_unused,
+			    काष्ठा perf_sample *sample __maybe_unused,
+			    काष्ठा machine *machine __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int perf_event__drop_aux(struct perf_tool *tool,
-				union perf_event *event __maybe_unused,
-				struct perf_sample *sample,
-				struct machine *machine __maybe_unused)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
+अटल पूर्णांक perf_event__drop_aux(काष्ठा perf_tool *tool,
+				जोड़ perf_event *event __maybe_unused,
+				काष्ठा perf_sample *sample,
+				काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
 
-	if (!inject->aux_id)
+	अगर (!inject->aux_id)
 		inject->aux_id = sample->id;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static union perf_event *
-perf_inject__cut_auxtrace_sample(struct perf_inject *inject,
-				 union perf_event *event,
-				 struct perf_sample *sample)
-{
-	size_t sz1 = sample->aux_sample.data - (void *)event;
-	size_t sz2 = event->header.size - sample->aux_sample.size - sz1;
-	union perf_event *ev = (union perf_event *)inject->event_copy;
+अटल जोड़ perf_event *
+perf_inject__cut_auxtrace_sample(काष्ठा perf_inject *inject,
+				 जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample)
+अणु
+	माप_प्रकार sz1 = sample->aux_sample.data - (व्योम *)event;
+	माप_प्रकार sz2 = event->header.size - sample->aux_sample.size - sz1;
+	जोड़ perf_event *ev = (जोड़ perf_event *)inject->event_copy;
 
-	if (sz1 > event->header.size || sz2 > event->header.size ||
+	अगर (sz1 > event->header.size || sz2 > event->header.size ||
 	    sz1 + sz2 > event->header.size ||
-	    sz1 < sizeof(struct perf_event_header) + sizeof(u64))
-		return event;
+	    sz1 < माप(काष्ठा perf_event_header) + माप(u64))
+		वापस event;
 
-	memcpy(ev, event, sz1);
-	memcpy((void *)ev + sz1, (void *)event + event->header.size - sz2, sz2);
+	स_नकल(ev, event, sz1);
+	स_नकल((व्योम *)ev + sz1, (व्योम *)event + event->header.size - sz2, sz2);
 	ev->header.size = sz1 + sz2;
-	((u64 *)((void *)ev + sz1))[-1] = 0;
+	((u64 *)((व्योम *)ev + sz1))[-1] = 0;
 
-	return ev;
-}
+	वापस ev;
+पूर्ण
 
-typedef int (*inject_handler)(struct perf_tool *tool,
-			      union perf_event *event,
-			      struct perf_sample *sample,
-			      struct evsel *evsel,
-			      struct machine *machine);
+प्रकार पूर्णांक (*inject_handler)(काष्ठा perf_tool *tool,
+			      जोड़ perf_event *event,
+			      काष्ठा perf_sample *sample,
+			      काष्ठा evsel *evsel,
+			      काष्ठा machine *machine);
 
-static int perf_event__repipe_sample(struct perf_tool *tool,
-				     union perf_event *event,
-				     struct perf_sample *sample,
-				     struct evsel *evsel,
-				     struct machine *machine)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject,
+अटल पूर्णांक perf_event__repipe_sample(काष्ठा perf_tool *tool,
+				     जोड़ perf_event *event,
+				     काष्ठा perf_sample *sample,
+				     काष्ठा evsel *evsel,
+				     काष्ठा machine *machine)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject,
 						  tool);
 
-	if (evsel && evsel->handler) {
+	अगर (evsel && evsel->handler) अणु
 		inject_handler f = evsel->handler;
-		return f(tool, event, sample, evsel, machine);
-	}
+		वापस f(tool, event, sample, evsel, machine);
+	पूर्ण
 
 	build_id__mark_dso_hit(tool, event, sample, evsel, machine);
 
-	if (inject->itrace_synth_opts.set && sample->aux_sample.size)
+	अगर (inject->itrace_synth_opts.set && sample->aux_sample.size)
 		event = perf_inject__cut_auxtrace_sample(inject, event, sample);
 
-	return perf_event__repipe_synth(tool, event);
-}
+	वापस perf_event__repipe_synth(tool, event);
+पूर्ण
 
-static int perf_event__repipe_mmap(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct perf_sample *sample,
-				   struct machine *machine)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_mmap(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
 
 	err = perf_event__process_mmap(tool, event, sample, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef HAVE_JITDUMP
-static int perf_event__jit_repipe_mmap(struct perf_tool *tool,
-				       union perf_event *event,
-				       struct perf_sample *sample,
-				       struct machine *machine)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
+#अगर_घोषित HAVE_JITDUMP
+अटल पूर्णांक perf_event__jit_repipe_mmap(काष्ठा perf_tool *tool,
+				       जोड़ perf_event *event,
+				       काष्ठा perf_sample *sample,
+				       काष्ठा machine *machine)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
 	u64 n = 0;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * if jit marker, then inject jit mmaps and generate ELF images
+	 * अगर jit marker, then inject jit mmaps and generate ELF images
 	 */
 	ret = jit_process(inject->session, &inject->output, machine,
 			  event->mmap.filename, event->mmap.pid, event->mmap.tid, &n);
-	if (ret < 0)
-		return ret;
-	if (ret) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret) अणु
 		inject->bytes_written += n;
-		return 0;
-	}
-	return perf_event__repipe_mmap(tool, event, sample, machine);
-}
-#endif
+		वापस 0;
+	पूर्ण
+	वापस perf_event__repipe_mmap(tool, event, sample, machine);
+पूर्ण
+#पूर्ण_अगर
 
-static struct dso *findnew_dso(int pid, int tid, const char *filename,
-			       struct dso_id *id, struct machine *machine)
-{
-	struct thread *thread;
-	struct nsinfo *nsi = NULL;
-	struct nsinfo *nnsi;
-	struct dso *dso;
+अटल काष्ठा dso *findnew_dso(पूर्णांक pid, पूर्णांक tid, स्थिर अक्षर *filename,
+			       काष्ठा dso_id *id, काष्ठा machine *machine)
+अणु
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा nsinfo *nsi = शून्य;
+	काष्ठा nsinfo *nnsi;
+	काष्ठा dso *dso;
 	bool vdso;
 
-	thread = machine__findnew_thread(machine, pid, tid);
-	if (thread == NULL) {
+	thपढ़ो = machine__findnew_thपढ़ो(machine, pid, tid);
+	अगर (thपढ़ो == शून्य) अणु
 		pr_err("cannot find or create a task %d/%d.\n", tid, pid);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	vdso = is_vdso_map(filename);
-	nsi = nsinfo__get(thread->nsinfo);
+	nsi = nsinfo__get(thपढ़ो->nsinfo);
 
-	if (vdso) {
+	अगर (vdso) अणु
 		/* The vdso maps are always on the host and not the
-		 * container.  Ensure that we don't use setns to look
+		 * container.  Ensure that we करोn't use setns to look
 		 * them up.
 		 */
 		nnsi = nsinfo__copy(nsi);
-		if (nnsi) {
+		अगर (nnsi) अणु
 			nsinfo__put(nsi);
 			nnsi->need_setns = false;
 			nsi = nnsi;
-		}
-		dso = machine__findnew_vdso(machine, thread);
-	} else {
+		पूर्ण
+		dso = machine__findnew_vdso(machine, thपढ़ो);
+	पूर्ण अन्यथा अणु
 		dso = machine__findnew_dso_id(machine, filename, id);
-	}
+	पूर्ण
 
-	if (dso)
+	अगर (dso)
 		dso->nsinfo = nsi;
-	else
+	अन्यथा
 		nsinfo__put(nsi);
 
-	thread__put(thread);
-	return dso;
-}
+	thपढ़ो__put(thपढ़ो);
+	वापस dso;
+पूर्ण
 
-static int perf_event__repipe_buildid_mmap(struct perf_tool *tool,
-					   union perf_event *event,
-					   struct perf_sample *sample,
-					   struct machine *machine)
-{
-	struct dso *dso;
+अटल पूर्णांक perf_event__repipe_buildid_mmap(काष्ठा perf_tool *tool,
+					   जोड़ perf_event *event,
+					   काष्ठा perf_sample *sample,
+					   काष्ठा machine *machine)
+अणु
+	काष्ठा dso *dso;
 
 	dso = findnew_dso(event->mmap.pid, event->mmap.tid,
-			  event->mmap.filename, NULL, machine);
+			  event->mmap.filename, शून्य, machine);
 
-	if (dso && !dso->hit) {
+	अगर (dso && !dso->hit) अणु
 		dso->hit = 1;
 		dso__inject_build_id(dso, tool, machine, sample->cpumode, 0);
 		dso__put(dso);
-	}
+	पूर्ण
 
-	return perf_event__repipe(tool, event, sample, machine);
-}
+	वापस perf_event__repipe(tool, event, sample, machine);
+पूर्ण
 
-static int perf_event__repipe_mmap2(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct perf_sample *sample,
-				   struct machine *machine)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_mmap2(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
 
 	err = perf_event__process_mmap2(tool, event, sample, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef HAVE_JITDUMP
-static int perf_event__jit_repipe_mmap2(struct perf_tool *tool,
-					union perf_event *event,
-					struct perf_sample *sample,
-					struct machine *machine)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
+#अगर_घोषित HAVE_JITDUMP
+अटल पूर्णांक perf_event__jit_repipe_mmap2(काष्ठा perf_tool *tool,
+					जोड़ perf_event *event,
+					काष्ठा perf_sample *sample,
+					काष्ठा machine *machine)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
 	u64 n = 0;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * if jit marker, then inject jit mmaps and generate ELF images
+	 * अगर jit marker, then inject jit mmaps and generate ELF images
 	 */
 	ret = jit_process(inject->session, &inject->output, machine,
 			  event->mmap2.filename, event->mmap2.pid, event->mmap2.tid, &n);
-	if (ret < 0)
-		return ret;
-	if (ret) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret) अणु
 		inject->bytes_written += n;
-		return 0;
-	}
-	return perf_event__repipe_mmap2(tool, event, sample, machine);
-}
-#endif
+		वापस 0;
+	पूर्ण
+	वापस perf_event__repipe_mmap2(tool, event, sample, machine);
+पूर्ण
+#पूर्ण_अगर
 
-static int perf_event__repipe_buildid_mmap2(struct perf_tool *tool,
-					    union perf_event *event,
-					    struct perf_sample *sample,
-					    struct machine *machine)
-{
-	struct dso_id dso_id = {
+अटल पूर्णांक perf_event__repipe_buildid_mmap2(काष्ठा perf_tool *tool,
+					    जोड़ perf_event *event,
+					    काष्ठा perf_sample *sample,
+					    काष्ठा machine *machine)
+अणु
+	काष्ठा dso_id dso_id = अणु
 		.maj = event->mmap2.maj,
 		.min = event->mmap2.min,
 		.ino = event->mmap2.ino,
 		.ino_generation = event->mmap2.ino_generation,
-	};
-	struct dso *dso;
+	पूर्ण;
+	काष्ठा dso *dso;
 
 	dso = findnew_dso(event->mmap2.pid, event->mmap2.tid,
 			  event->mmap2.filename, &dso_id, machine);
 
-	if (dso && !dso->hit) {
+	अगर (dso && !dso->hit) अणु
 		dso->hit = 1;
 		dso__inject_build_id(dso, tool, machine, sample->cpumode,
 				     event->mmap2.flags);
 		dso__put(dso);
-	}
+	पूर्ण
 
 	perf_event__repipe(tool, event, sample, machine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_event__repipe_fork(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct perf_sample *sample,
-				   struct machine *machine)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_विभाजन(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
 
-	err = perf_event__process_fork(tool, event, sample, machine);
+	err = perf_event__process_विभाजन(tool, event, sample, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int perf_event__repipe_comm(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct perf_sample *sample,
-				   struct machine *machine)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_comm(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
 
 	err = perf_event__process_comm(tool, event, sample, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int perf_event__repipe_namespaces(struct perf_tool *tool,
-					 union perf_event *event,
-					 struct perf_sample *sample,
-					 struct machine *machine)
-{
-	int err = perf_event__process_namespaces(tool, event, sample, machine);
+अटल पूर्णांक perf_event__repipe_namespaces(काष्ठा perf_tool *tool,
+					 जोड़ perf_event *event,
+					 काष्ठा perf_sample *sample,
+					 काष्ठा machine *machine)
+अणु
+	पूर्णांक err = perf_event__process_namespaces(tool, event, sample, machine);
 
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int perf_event__repipe_exit(struct perf_tool *tool,
-				   union perf_event *event,
-				   struct perf_sample *sample,
-				   struct machine *machine)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_निकास(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
 
-	err = perf_event__process_exit(tool, event, sample, machine);
+	err = perf_event__process_निकास(tool, event, sample, machine);
 	perf_event__repipe(tool, event, sample, machine);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int perf_event__repipe_tracing_data(struct perf_session *session,
-					   union perf_event *event)
-{
-	int err;
+अटल पूर्णांक perf_event__repipe_tracing_data(काष्ठा perf_session *session,
+					   जोड़ perf_event *event)
+अणु
+	पूर्णांक err;
 
 	perf_event__repipe_synth(session->tool, event);
 	err = perf_event__process_tracing_data(session, event);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dso__read_build_id(struct dso *dso)
-{
-	struct nscookie nsc;
+अटल पूर्णांक dso__पढ़ो_build_id(काष्ठा dso *dso)
+अणु
+	काष्ठा nscookie nsc;
 
-	if (dso->has_build_id)
-		return 0;
+	अगर (dso->has_build_id)
+		वापस 0;
 
 	nsinfo__mountns_enter(dso->nsinfo, &nsc);
-	if (filename__read_build_id(dso->long_name, &dso->bid) > 0)
+	अगर (filename__पढ़ो_build_id(dso->दीर्घ_name, &dso->bid) > 0)
 		dso->has_build_id = true;
-	nsinfo__mountns_exit(&nsc);
+	nsinfo__mountns_निकास(&nsc);
 
-	return dso->has_build_id ? 0 : -1;
-}
+	वापस dso->has_build_id ? 0 : -1;
+पूर्ण
 
-static int dso__inject_build_id(struct dso *dso, struct perf_tool *tool,
-				struct machine *machine, u8 cpumode, u32 flags)
-{
-	int err;
+अटल पूर्णांक dso__inject_build_id(काष्ठा dso *dso, काष्ठा perf_tool *tool,
+				काष्ठा machine *machine, u8 cpumode, u32 flags)
+अणु
+	पूर्णांक err;
 
-	if (is_anon_memory(dso->long_name) || flags & MAP_HUGETLB)
-		return 0;
-	if (is_no_dso_memory(dso->long_name))
-		return 0;
+	अगर (is_anon_memory(dso->दीर्घ_name) || flags & MAP_HUGETLB)
+		वापस 0;
+	अगर (is_no_dso_memory(dso->दीर्घ_name))
+		वापस 0;
 
-	if (dso__read_build_id(dso) < 0) {
-		pr_debug("no build_id found for %s\n", dso->long_name);
-		return -1;
-	}
+	अगर (dso__पढ़ो_build_id(dso) < 0) अणु
+		pr_debug("no build_id found for %s\n", dso->दीर्घ_name);
+		वापस -1;
+	पूर्ण
 
 	err = perf_event__synthesize_build_id(tool, dso, cpumode,
 					      perf_event__repipe, machine);
-	if (err) {
-		pr_err("Can't synthesize build_id event for %s\n", dso->long_name);
-		return -1;
-	}
+	अगर (err) अणु
+		pr_err("Can't synthesize build_id event for %s\n", dso->दीर्घ_name);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int perf_event__inject_buildid(struct perf_tool *tool, union perf_event *event,
-			       struct perf_sample *sample,
-			       struct evsel *evsel __maybe_unused,
-			       struct machine *machine)
-{
-	struct addr_location al;
-	struct thread *thread;
+पूर्णांक perf_event__inject_buildid(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+			       काष्ठा perf_sample *sample,
+			       काष्ठा evsel *evsel __maybe_unused,
+			       काष्ठा machine *machine)
+अणु
+	काष्ठा addr_location al;
+	काष्ठा thपढ़ो *thपढ़ो;
 
-	thread = machine__findnew_thread(machine, sample->pid, sample->tid);
-	if (thread == NULL) {
+	thपढ़ो = machine__findnew_thपढ़ो(machine, sample->pid, sample->tid);
+	अगर (thपढ़ो == शून्य) अणु
 		pr_err("problem processing %d event, skipping it.\n",
 		       event->header.type);
-		goto repipe;
-	}
+		जाओ repipe;
+	पूर्ण
 
-	if (thread__find_map(thread, sample->cpumode, sample->ip, &al)) {
-		if (!al.map->dso->hit) {
+	अगर (thपढ़ो__find_map(thपढ़ो, sample->cpumode, sample->ip, &al)) अणु
+		अगर (!al.map->dso->hit) अणु
 			al.map->dso->hit = 1;
 			dso__inject_build_id(al.map->dso, tool, machine,
 					     sample->cpumode, al.map->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	thread__put(thread);
+	thपढ़ो__put(thपढ़ो);
 repipe:
 	perf_event__repipe(tool, event, sample, machine);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_inject__sched_process_exit(struct perf_tool *tool,
-					   union perf_event *event __maybe_unused,
-					   struct perf_sample *sample,
-					   struct evsel *evsel __maybe_unused,
-					   struct machine *machine __maybe_unused)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
-	struct event_entry *ent;
+अटल पूर्णांक perf_inject__sched_process_निकास(काष्ठा perf_tool *tool,
+					   जोड़ perf_event *event __maybe_unused,
+					   काष्ठा perf_sample *sample,
+					   काष्ठा evsel *evsel __maybe_unused,
+					   काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
+	काष्ठा event_entry *ent;
 
-	list_for_each_entry(ent, &inject->samples, node) {
-		if (sample->tid == ent->tid) {
+	list_क्रम_each_entry(ent, &inject->samples, node) अणु
+		अगर (sample->tid == ent->tid) अणु
 			list_del_init(&ent->node);
-			free(ent);
-			break;
-		}
-	}
+			मुक्त(ent);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_inject__sched_switch(struct perf_tool *tool,
-				     union perf_event *event,
-				     struct perf_sample *sample,
-				     struct evsel *evsel,
-				     struct machine *machine)
-{
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
-	struct event_entry *ent;
+अटल पूर्णांक perf_inject__sched_चयन(काष्ठा perf_tool *tool,
+				     जोड़ perf_event *event,
+				     काष्ठा perf_sample *sample,
+				     काष्ठा evsel *evsel,
+				     काष्ठा machine *machine)
+अणु
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
+	काष्ठा event_entry *ent;
 
-	perf_inject__sched_process_exit(tool, event, sample, evsel, machine);
+	perf_inject__sched_process_निकास(tool, event, sample, evsel, machine);
 
-	ent = malloc(event->header.size + sizeof(struct event_entry));
-	if (ent == NULL) {
-		color_fprintf(stderr, PERF_COLOR_RED,
+	ent = दो_स्मृति(event->header.size + माप(काष्ठा event_entry));
+	अगर (ent == शून्य) अणु
+		color_ख_लिखो(मानक_त्रुटि, PERF_COLOR_RED,
 			     "Not enough memory to process sched switch event!");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	ent->tid = sample->tid;
-	memcpy(&ent->event, event, event->header.size);
+	स_नकल(&ent->event, event, event->header.size);
 	list_add(&ent->node, &inject->samples);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int perf_inject__sched_stat(struct perf_tool *tool,
-				   union perf_event *event __maybe_unused,
-				   struct perf_sample *sample,
-				   struct evsel *evsel,
-				   struct machine *machine)
-{
-	struct event_entry *ent;
-	union perf_event *event_sw;
-	struct perf_sample sample_sw;
-	struct perf_inject *inject = container_of(tool, struct perf_inject, tool);
-	u32 pid = evsel__intval(evsel, sample, "pid");
+अटल पूर्णांक perf_inject__sched_stat(काष्ठा perf_tool *tool,
+				   जोड़ perf_event *event __maybe_unused,
+				   काष्ठा perf_sample *sample,
+				   काष्ठा evsel *evsel,
+				   काष्ठा machine *machine)
+अणु
+	काष्ठा event_entry *ent;
+	जोड़ perf_event *event_sw;
+	काष्ठा perf_sample sample_sw;
+	काष्ठा perf_inject *inject = container_of(tool, काष्ठा perf_inject, tool);
+	u32 pid = evsel__पूर्णांकval(evsel, sample, "pid");
 
-	list_for_each_entry(ent, &inject->samples, node) {
-		if (pid == ent->tid)
-			goto found;
-	}
+	list_क्रम_each_entry(ent, &inject->samples, node) अणु
+		अगर (pid == ent->tid)
+			जाओ found;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 found:
 	event_sw = &ent->event[0];
 	evsel__parse_sample(evsel, event_sw, &sample_sw);
 
 	sample_sw.period = sample->period;
-	sample_sw.time	 = sample->time;
+	sample_sw.समय	 = sample->समय;
 	perf_event__synthesize_sample(event_sw, evsel->core.attr.sample_type,
-				      evsel->core.attr.read_format, &sample_sw);
+				      evsel->core.attr.पढ़ो_क्रमmat, &sample_sw);
 	build_id__mark_dso_hit(tool, event_sw, &sample_sw, evsel, machine);
-	return perf_event__repipe(tool, event_sw, &sample_sw, machine);
-}
+	वापस perf_event__repipe(tool, event_sw, &sample_sw, machine);
+पूर्ण
 
-static void sig_handler(int sig __maybe_unused)
-{
-	session_done = 1;
-}
+अटल व्योम sig_handler(पूर्णांक sig __maybe_unused)
+अणु
+	session_करोne = 1;
+पूर्ण
 
-static int evsel__check_stype(struct evsel *evsel, u64 sample_type, const char *sample_msg)
-{
-	struct perf_event_attr *attr = &evsel->core.attr;
-	const char *name = evsel__name(evsel);
+अटल पूर्णांक evsel__check_stype(काष्ठा evsel *evsel, u64 sample_type, स्थिर अक्षर *sample_msg)
+अणु
+	काष्ठा perf_event_attr *attr = &evsel->core.attr;
+	स्थिर अक्षर *name = evsel__name(evsel);
 
-	if (!(attr->sample_type & sample_type)) {
+	अगर (!(attr->sample_type & sample_type)) अणु
 		pr_err("Samples for %s event do not have %s attribute set.",
 			name, sample_msg);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int drop_sample(struct perf_tool *tool __maybe_unused,
-		       union perf_event *event __maybe_unused,
-		       struct perf_sample *sample __maybe_unused,
-		       struct evsel *evsel __maybe_unused,
-		       struct machine *machine __maybe_unused)
-{
-	return 0;
-}
+अटल पूर्णांक drop_sample(काष्ठा perf_tool *tool __maybe_unused,
+		       जोड़ perf_event *event __maybe_unused,
+		       काष्ठा perf_sample *sample __maybe_unused,
+		       काष्ठा evsel *evsel __maybe_unused,
+		       काष्ठा machine *machine __maybe_unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static void strip_init(struct perf_inject *inject)
-{
-	struct evlist *evlist = inject->session->evlist;
-	struct evsel *evsel;
+अटल व्योम strip_init(काष्ठा perf_inject *inject)
+अणु
+	काष्ठा evlist *evlist = inject->session->evlist;
+	काष्ठा evsel *evsel;
 
-	inject->tool.context_switch = perf_event__drop;
+	inject->tool.context_चयन = perf_event__drop;
 
-	evlist__for_each_entry(evlist, evsel)
+	evlist__क्रम_each_entry(evlist, evsel)
 		evsel->handler = drop_sample;
-}
+पूर्ण
 
-static int __cmd_inject(struct perf_inject *inject)
-{
-	int ret = -EINVAL;
-	struct perf_session *session = inject->session;
-	struct perf_data *data_out = &inject->output;
-	int fd = perf_data__fd(data_out);
+अटल पूर्णांक __cmd_inject(काष्ठा perf_inject *inject)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा perf_session *session = inject->session;
+	काष्ठा perf_data *data_out = &inject->output;
+	पूर्णांक fd = perf_data__fd(data_out);
 	u64 output_data_offset;
 
-	signal(SIGINT, sig_handler);
+	संकेत(संक_विघ्न, sig_handler);
 
-	if (inject->build_ids || inject->sched_stat ||
-	    inject->itrace_synth_opts.set || inject->build_id_all) {
+	अगर (inject->build_ids || inject->sched_stat ||
+	    inject->itrace_synth_opts.set || inject->build_id_all) अणु
 		inject->tool.mmap	  = perf_event__repipe_mmap;
 		inject->tool.mmap2	  = perf_event__repipe_mmap2;
-		inject->tool.fork	  = perf_event__repipe_fork;
+		inject->tool.विभाजन	  = perf_event__repipe_विभाजन;
 		inject->tool.tracing_data = perf_event__repipe_tracing_data;
-	}
+	पूर्ण
 
 	output_data_offset = session->header.data_offset;
 
-	if (inject->build_id_all) {
+	अगर (inject->build_id_all) अणु
 		inject->tool.mmap	  = perf_event__repipe_buildid_mmap;
 		inject->tool.mmap2	  = perf_event__repipe_buildid_mmap2;
-	} else if (inject->build_ids) {
+	पूर्ण अन्यथा अगर (inject->build_ids) अणु
 		inject->tool.sample = perf_event__inject_buildid;
-	} else if (inject->sched_stat) {
-		struct evsel *evsel;
+	पूर्ण अन्यथा अगर (inject->sched_stat) अणु
+		काष्ठा evsel *evsel;
 
-		evlist__for_each_entry(session->evlist, evsel) {
-			const char *name = evsel__name(evsel);
+		evlist__क्रम_each_entry(session->evlist, evsel) अणु
+			स्थिर अक्षर *name = evsel__name(evsel);
 
-			if (!strcmp(name, "sched:sched_switch")) {
-				if (evsel__check_stype(evsel, PERF_SAMPLE_TID, "TID"))
-					return -EINVAL;
+			अगर (!म_भेद(name, "sched:sched_switch")) अणु
+				अगर (evsel__check_stype(evsel, PERF_SAMPLE_TID, "TID"))
+					वापस -EINVAL;
 
-				evsel->handler = perf_inject__sched_switch;
-			} else if (!strcmp(name, "sched:sched_process_exit"))
-				evsel->handler = perf_inject__sched_process_exit;
-			else if (!strncmp(name, "sched:sched_stat_", 17))
+				evsel->handler = perf_inject__sched_चयन;
+			पूर्ण अन्यथा अगर (!म_भेद(name, "sched:sched_process_exit"))
+				evsel->handler = perf_inject__sched_process_निकास;
+			अन्यथा अगर (!म_भेदन(name, "sched:sched_stat_", 17))
 				evsel->handler = perf_inject__sched_stat;
-		}
-	} else if (inject->itrace_synth_opts.set) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (inject->itrace_synth_opts.set) अणु
 		session->itrace_synth_opts = &inject->itrace_synth_opts;
 		inject->itrace_synth_opts.inject = true;
 		inject->tool.comm	    = perf_event__repipe_comm;
 		inject->tool.namespaces	    = perf_event__repipe_namespaces;
-		inject->tool.exit	    = perf_event__repipe_exit;
+		inject->tool.निकास	    = perf_event__repipe_निकास;
 		inject->tool.id_index	    = perf_event__process_id_index;
 		inject->tool.auxtrace_info  = perf_event__process_auxtrace_info;
 		inject->tool.auxtrace	    = perf_event__process_auxtrace;
 		inject->tool.aux	    = perf_event__drop_aux;
 		inject->tool.itrace_start   = perf_event__drop_aux,
 		inject->tool.ordered_events = true;
-		inject->tool.ordering_requires_timestamps = true;
-		/* Allow space in the header for new attributes */
+		inject->tool.ordering_requires_बारtamps = true;
+		/* Allow space in the header क्रम new attributes */
 		output_data_offset = 4096;
-		if (inject->strip)
+		अगर (inject->strip)
 			strip_init(inject);
-	}
+	पूर्ण
 
-	if (!inject->itrace_synth_opts.set)
-		auxtrace_index__free(&session->auxtrace_index);
+	अगर (!inject->itrace_synth_opts.set)
+		auxtrace_index__मुक्त(&session->auxtrace_index);
 
-	if (!data_out->is_pipe)
-		lseek(fd, output_data_offset, SEEK_SET);
+	अगर (!data_out->is_pipe)
+		lseek(fd, output_data_offset, शुरू_से);
 
 	ret = perf_session__process_events(session);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!data_out->is_pipe) {
-		if (inject->build_ids)
+	अगर (!data_out->is_pipe) अणु
+		अगर (inject->build_ids)
 			perf_header__set_feat(&session->header,
 					      HEADER_BUILD_ID);
 		/*
 		 * Keep all buildids when there is unprocessed AUX data because
 		 * it is not known which ones the AUX trace hits.
 		 */
-		if (perf_header__has_feat(&session->header, HEADER_BUILD_ID) &&
+		अगर (perf_header__has_feat(&session->header, HEADER_BUILD_ID) &&
 		    inject->have_auxtrace && !inject->itrace_synth_opts.set)
 			dsos__hit_all(session);
 		/*
-		 * The AUX areas have been removed and replaced with
+		 * The AUX areas have been हटाओd and replaced with
 		 * synthesized hardware events, so clear the feature flag.
 		 */
-		if (inject->itrace_synth_opts.set) {
+		अगर (inject->itrace_synth_opts.set) अणु
 			perf_header__clear_feat(&session->header,
 						HEADER_AUXTRACE);
-			if (inject->itrace_synth_opts.last_branch ||
+			अगर (inject->itrace_synth_opts.last_branch ||
 			    inject->itrace_synth_opts.add_last_branch)
 				perf_header__set_feat(&session->header,
 						      HEADER_BRANCH_STACK);
-		}
+		पूर्ण
 		session->header.data_offset = output_data_offset;
 		session->header.data_size = inject->bytes_written;
-		perf_session__write_header(session, session->evlist, fd, true);
-	}
+		perf_session__ग_लिखो_header(session, session->evlist, fd, true);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cmd_inject(int argc, const char **argv)
-{
-	struct perf_inject inject = {
-		.tool = {
+पूर्णांक cmd_inject(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा perf_inject inject = अणु
+		.tool = अणु
 			.sample		= perf_event__repipe_sample,
-			.read		= perf_event__repipe_sample,
+			.पढ़ो		= perf_event__repipe_sample,
 			.mmap		= perf_event__repipe,
 			.mmap2		= perf_event__repipe,
 			.comm		= perf_event__repipe,
 			.namespaces	= perf_event__repipe,
 			.cgroup		= perf_event__repipe,
-			.fork		= perf_event__repipe,
-			.exit		= perf_event__repipe,
+			.विभाजन		= perf_event__repipe,
+			.निकास		= perf_event__repipe,
 			.lost		= perf_event__repipe,
 			.lost_samples	= perf_event__repipe,
 			.aux		= perf_event__repipe,
 			.itrace_start	= perf_event__repipe,
-			.context_switch	= perf_event__repipe,
+			.context_चयन	= perf_event__repipe,
 			.throttle	= perf_event__repipe,
 			.unthrottle	= perf_event__repipe,
 			.ksymbol	= perf_event__repipe,
@@ -828,8 +829,8 @@ int cmd_inject(int argc, const char **argv)
 			.id_index	= perf_event__repipe_op2_synth,
 			.auxtrace_info	= perf_event__repipe_op2_synth,
 			.auxtrace_error	= perf_event__repipe_op2_synth,
-			.time_conv	= perf_event__repipe_op2_synth,
-			.thread_map	= perf_event__repipe_op2_synth,
+			.समय_conv	= perf_event__repipe_op2_synth,
+			.thपढ़ो_map	= perf_event__repipe_op2_synth,
 			.cpu_map	= perf_event__repipe_op2_synth,
 			.stat_config	= perf_event__repipe_op2_synth,
 			.stat		= perf_event__repipe_op2_synth,
@@ -837,22 +838,22 @@ int cmd_inject(int argc, const char **argv)
 			.feature	= perf_event__repipe_op2_synth,
 			.compressed	= perf_event__repipe_op4_synth,
 			.auxtrace	= perf_event__repipe_auxtrace,
-		},
+		पूर्ण,
 		.input_name  = "-",
 		.samples = LIST_HEAD_INIT(inject.samples),
-		.output = {
+		.output = अणु
 			.path = "-",
 			.mode = PERF_DATA_MODE_WRITE,
 			.use_stdio = true,
-		},
-	};
-	struct perf_data data = {
+		पूर्ण,
+	पूर्ण;
+	काष्ठा perf_data data = अणु
 		.mode = PERF_DATA_MODE_READ,
 		.use_stdio = true,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	struct option options[] = {
+	काष्ठा option options[] = अणु
 		OPT_BOOLEAN('b', "build-ids", &inject.build_ids,
 			    "Inject build-ids into the output stream"),
 		OPT_BOOLEAN(0, "buildid-all", &inject.build_id_all,
@@ -864,91 +865,91 @@ int cmd_inject(int argc, const char **argv)
 		OPT_BOOLEAN('s', "sched-stat", &inject.sched_stat,
 			    "Merge sched-stat and sched-switch for getting events "
 			    "where and how long tasks slept"),
-#ifdef HAVE_JITDUMP
+#अगर_घोषित HAVE_JITDUMP
 		OPT_BOOLEAN('j', "jit", &inject.jit_mode, "merge jitdump files into perf.data file"),
-#endif
+#पूर्ण_अगर
 		OPT_INCR('v', "verbose", &verbose,
 			 "be more verbose (show build ids, etc)"),
 		OPT_STRING(0, "kallsyms", &symbol_conf.kallsyms_name, "file",
 			   "kallsyms pathname"),
-		OPT_BOOLEAN('f', "force", &data.force, "don't complain, do it"),
+		OPT_BOOLEAN('f', "force", &data.force, "don't complain, करो it"),
 		OPT_CALLBACK_OPTARG(0, "itrace", &inject.itrace_synth_opts,
-				    NULL, "opts", "Instruction Tracing options\n"
+				    शून्य, "opts", "Instruction Tracing options\n"
 				    ITRACE_HELP,
 				    itrace_parse_synth_opts),
 		OPT_BOOLEAN(0, "strip", &inject.strip,
 			    "strip non-synthesized events (use with --itrace)"),
 		OPT_END()
-	};
-	const char * const inject_usage[] = {
+	पूर्ण;
+	स्थिर अक्षर * स्थिर inject_usage[] = अणु
 		"perf inject [<options>]",
-		NULL
-	};
-#ifndef HAVE_JITDUMP
+		शून्य
+	पूर्ण;
+#अगर_अघोषित HAVE_JITDUMP
 	set_option_nobuild(options, 'j', "jit", "NO_LIBELF=1", true);
-#endif
+#पूर्ण_अगर
 	argc = parse_options(argc, argv, options, inject_usage, 0);
 
 	/*
 	 * Any (unrecognized) arguments left?
 	 */
-	if (argc)
+	अगर (argc)
 		usage_with_options(inject_usage, options);
 
-	if (inject.strip && !inject.itrace_synth_opts.set) {
+	अगर (inject.strip && !inject.itrace_synth_opts.set) अणु
 		pr_err("--strip option requires --itrace option\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (perf_data__open(&inject.output)) {
-		perror("failed to create output file");
-		return -1;
-	}
+	अगर (perf_data__खोलो(&inject.output)) अणु
+		लिखो_त्रुटि("failed to create output file");
+		वापस -1;
+	पूर्ण
 
 	data.path = inject.input_name;
 	inject.session = perf_session__new(&data, inject.output.is_pipe, &inject.tool);
-	if (IS_ERR(inject.session))
-		return PTR_ERR(inject.session);
+	अगर (IS_ERR(inject.session))
+		वापस PTR_ERR(inject.session);
 
-	if (zstd_init(&(inject.session->zstd_data), 0) < 0)
+	अगर (zstd_init(&(inject.session->zstd_data), 0) < 0)
 		pr_warning("Decompression initialization failed.\n");
 
-	if (inject.build_ids && !inject.build_id_all) {
+	अगर (inject.build_ids && !inject.build_id_all) अणु
 		/*
 		 * to make sure the mmap records are ordered correctly
 		 * and so that the correct especially due to jitted code
 		 * mmaps. We cannot generate the buildid hit list and
-		 * inject the jit mmaps at the same time for now.
+		 * inject the jit mmaps at the same समय क्रम now.
 		 */
 		inject.tool.ordered_events = true;
-		inject.tool.ordering_requires_timestamps = true;
-	}
+		inject.tool.ordering_requires_बारtamps = true;
+	पूर्ण
 
-	if (inject.sched_stat) {
+	अगर (inject.sched_stat) अणु
 		inject.tool.ordered_events = true;
-	}
+	पूर्ण
 
-#ifdef HAVE_JITDUMP
-	if (inject.jit_mode) {
+#अगर_घोषित HAVE_JITDUMP
+	अगर (inject.jit_mode) अणु
 		inject.tool.mmap2	   = perf_event__jit_repipe_mmap2;
 		inject.tool.mmap	   = perf_event__jit_repipe_mmap;
 		inject.tool.ordered_events = true;
-		inject.tool.ordering_requires_timestamps = true;
+		inject.tool.ordering_requires_बारtamps = true;
 		/*
 		 * JIT MMAP injection injects all MMAP events in one go, so it
-		 * does not obey finished_round semantics.
+		 * करोes not obey finished_round semantics.
 		 */
 		inject.tool.finished_round = perf_event__drop_oe;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	ret = symbol__init(&inject.session->header.env);
-	if (ret < 0)
-		goto out_delete;
+	अगर (ret < 0)
+		जाओ out_delete;
 
 	ret = __cmd_inject(&inject);
 
 out_delete:
 	zstd_fini(&(inject.session->zstd_data));
 	perf_session__delete(inject.session);
-	return ret;
-}
+	वापस ret;
+पूर्ण

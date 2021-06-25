@@ -1,438 +1,439 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * bus.c - bus driver management
  *
  * Copyright (c) 2002-3 Patrick Mochel
- * Copyright (c) 2002-3 Open Source Development Labs
- * Copyright (c) 2007 Greg Kroah-Hartman <gregkh@suse.de>
+ * Copyright (c) 2002-3 Open Source Development Lअसल
+ * Copyright (c) 2007 Greg Kroah-Harपंचांगan <gregkh@suse.de>
  * Copyright (c) 2007 Novell Inc.
  */
 
-#include <linux/async.h>
-#include <linux/device/bus.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/mutex.h>
-#include <linux/sysfs.h>
-#include "base.h"
-#include "power/power.h"
+#समावेश <linux/async.h>
+#समावेश <linux/device/bus.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sysfs.h>
+#समावेश "base.h"
+#समावेश "power/power.h"
 
-/* /sys/devices/system */
-static struct kset *system_kset;
+/* /sys/devices/प्रणाली */
+अटल काष्ठा kset *प्रणाली_kset;
 
-#define to_bus_attr(_attr) container_of(_attr, struct bus_attribute, attr)
+#घोषणा to_bus_attr(_attr) container_of(_attr, काष्ठा bus_attribute, attr)
 
 /*
- * sysfs bindings for drivers
+ * sysfs bindings क्रम drivers
  */
 
-#define to_drv_attr(_attr) container_of(_attr, struct driver_attribute, attr)
+#घोषणा to_drv_attr(_attr) container_of(_attr, काष्ठा driver_attribute, attr)
 
-#define DRIVER_ATTR_IGNORE_LOCKDEP(_name, _mode, _show, _store) \
-	struct driver_attribute driver_attr_##_name =		\
+#घोषणा DRIVER_ATTR_IGNORE_LOCKDEP(_name, _mode, _show, _store) \
+	काष्ठा driver_attribute driver_attr_##_name =		\
 		__ATTR_IGNORE_LOCKDEP(_name, _mode, _show, _store)
 
-static int __must_check bus_rescan_devices_helper(struct device *dev,
-						void *data);
+अटल पूर्णांक __must_check bus_rescan_devices_helper(काष्ठा device *dev,
+						व्योम *data);
 
-static struct bus_type *bus_get(struct bus_type *bus)
-{
-	if (bus) {
+अटल काष्ठा bus_type *bus_get(काष्ठा bus_type *bus)
+अणु
+	अगर (bus) अणु
 		kset_get(&bus->p->subsys);
-		return bus;
-	}
-	return NULL;
-}
+		वापस bus;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static void bus_put(struct bus_type *bus)
-{
-	if (bus)
+अटल व्योम bus_put(काष्ठा bus_type *bus)
+अणु
+	अगर (bus)
 		kset_put(&bus->p->subsys);
-}
+पूर्ण
 
-static ssize_t drv_attr_show(struct kobject *kobj, struct attribute *attr,
-			     char *buf)
-{
-	struct driver_attribute *drv_attr = to_drv_attr(attr);
-	struct driver_private *drv_priv = to_driver(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार drv_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा driver_attribute *drv_attr = to_drv_attr(attr);
+	काष्ठा driver_निजी *drv_priv = to_driver(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (drv_attr->show)
+	अगर (drv_attr->show)
 		ret = drv_attr->show(drv_priv->driver, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t drv_attr_store(struct kobject *kobj, struct attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct driver_attribute *drv_attr = to_drv_attr(attr);
-	struct driver_private *drv_priv = to_driver(kobj);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार drv_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा driver_attribute *drv_attr = to_drv_attr(attr);
+	काष्ठा driver_निजी *drv_priv = to_driver(kobj);
+	sमाप_प्रकार ret = -EIO;
 
-	if (drv_attr->store)
+	अगर (drv_attr->store)
 		ret = drv_attr->store(drv_priv->driver, buf, count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops driver_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops driver_sysfs_ops = अणु
 	.show	= drv_attr_show,
 	.store	= drv_attr_store,
-};
+पूर्ण;
 
-static void driver_release(struct kobject *kobj)
-{
-	struct driver_private *drv_priv = to_driver(kobj);
+अटल व्योम driver_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा driver_निजी *drv_priv = to_driver(kobj);
 
 	pr_debug("driver: '%s': %s\n", kobject_name(kobj), __func__);
-	kfree(drv_priv);
-}
+	kमुक्त(drv_priv);
+पूर्ण
 
-static struct kobj_type driver_ktype = {
+अटल काष्ठा kobj_type driver_ktype = अणु
 	.sysfs_ops	= &driver_sysfs_ops,
 	.release	= driver_release,
-};
+पूर्ण;
 
 /*
- * sysfs bindings for buses
+ * sysfs bindings क्रम buses
  */
-static ssize_t bus_attr_show(struct kobject *kobj, struct attribute *attr,
-			     char *buf)
-{
-	struct bus_attribute *bus_attr = to_bus_attr(attr);
-	struct subsys_private *subsys_priv = to_subsys_private(kobj);
-	ssize_t ret = 0;
+अटल sमाप_प्रकार bus_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा bus_attribute *bus_attr = to_bus_attr(attr);
+	काष्ठा subsys_निजी *subsys_priv = to_subsys_निजी(kobj);
+	sमाप_प्रकार ret = 0;
 
-	if (bus_attr->show)
+	अगर (bus_attr->show)
 		ret = bus_attr->show(subsys_priv->bus, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t bus_attr_store(struct kobject *kobj, struct attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct bus_attribute *bus_attr = to_bus_attr(attr);
-	struct subsys_private *subsys_priv = to_subsys_private(kobj);
-	ssize_t ret = 0;
+अटल sमाप_प्रकार bus_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा bus_attribute *bus_attr = to_bus_attr(attr);
+	काष्ठा subsys_निजी *subsys_priv = to_subsys_निजी(kobj);
+	sमाप_प्रकार ret = 0;
 
-	if (bus_attr->store)
+	अगर (bus_attr->store)
 		ret = bus_attr->store(subsys_priv->bus, buf, count);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops bus_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops bus_sysfs_ops = अणु
 	.show	= bus_attr_show,
 	.store	= bus_attr_store,
-};
+पूर्ण;
 
-int bus_create_file(struct bus_type *bus, struct bus_attribute *attr)
-{
-	int error;
-	if (bus_get(bus)) {
+पूर्णांक bus_create_file(काष्ठा bus_type *bus, काष्ठा bus_attribute *attr)
+अणु
+	पूर्णांक error;
+	अगर (bus_get(bus)) अणु
 		error = sysfs_create_file(&bus->p->subsys.kobj, &attr->attr);
 		bus_put(bus);
-	} else
+	पूर्ण अन्यथा
 		error = -EINVAL;
-	return error;
-}
+	वापस error;
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_create_file);
 
-void bus_remove_file(struct bus_type *bus, struct bus_attribute *attr)
-{
-	if (bus_get(bus)) {
-		sysfs_remove_file(&bus->p->subsys.kobj, &attr->attr);
+व्योम bus_हटाओ_file(काष्ठा bus_type *bus, काष्ठा bus_attribute *attr)
+अणु
+	अगर (bus_get(bus)) अणु
+		sysfs_हटाओ_file(&bus->p->subsys.kobj, &attr->attr);
 		bus_put(bus);
-	}
-}
-EXPORT_SYMBOL_GPL(bus_remove_file);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_हटाओ_file);
 
-static void bus_release(struct kobject *kobj)
-{
-	struct subsys_private *priv = to_subsys_private(kobj);
-	struct bus_type *bus = priv->bus;
+अटल व्योम bus_release(काष्ठा kobject *kobj)
+अणु
+	काष्ठा subsys_निजी *priv = to_subsys_निजी(kobj);
+	काष्ठा bus_type *bus = priv->bus;
 
-	kfree(priv);
-	bus->p = NULL;
-}
+	kमुक्त(priv);
+	bus->p = शून्य;
+पूर्ण
 
-static struct kobj_type bus_ktype = {
+अटल काष्ठा kobj_type bus_ktype = अणु
 	.sysfs_ops	= &bus_sysfs_ops,
 	.release	= bus_release,
-};
+पूर्ण;
 
-static int bus_uevent_filter(struct kset *kset, struct kobject *kobj)
-{
-	struct kobj_type *ktype = get_ktype(kobj);
+अटल पूर्णांक bus_uevent_filter(काष्ठा kset *kset, काष्ठा kobject *kobj)
+अणु
+	काष्ठा kobj_type *ktype = get_ktype(kobj);
 
-	if (ktype == &bus_ktype)
-		return 1;
-	return 0;
-}
+	अगर (ktype == &bus_ktype)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static const struct kset_uevent_ops bus_uevent_ops = {
+अटल स्थिर काष्ठा kset_uevent_ops bus_uevent_ops = अणु
 	.filter = bus_uevent_filter,
-};
+पूर्ण;
 
-static struct kset *bus_kset;
+अटल काष्ठा kset *bus_kset;
 
 /* Manually detach a device from its associated driver. */
-static ssize_t unbind_store(struct device_driver *drv, const char *buf,
-			    size_t count)
-{
-	struct bus_type *bus = bus_get(drv->bus);
-	struct device *dev;
-	int err = -ENODEV;
+अटल sमाप_प्रकार unbind_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
+			    माप_प्रकार count)
+अणु
+	काष्ठा bus_type *bus = bus_get(drv->bus);
+	काष्ठा device *dev;
+	पूर्णांक err = -ENODEV;
 
-	dev = bus_find_device_by_name(bus, NULL, buf);
-	if (dev && dev->driver == drv) {
+	dev = bus_find_device_by_name(bus, शून्य, buf);
+	अगर (dev && dev->driver == drv) अणु
 		device_driver_detach(dev);
 		err = count;
-	}
+	पूर्ण
 	put_device(dev);
 	bus_put(bus);
-	return err;
-}
-static DRIVER_ATTR_IGNORE_LOCKDEP(unbind, S_IWUSR, NULL, unbind_store);
+	वापस err;
+पूर्ण
+अटल DRIVER_ATTR_IGNORE_LOCKDEP(unbind, S_IWUSR, शून्य, unbind_store);
 
 /*
  * Manually attach a device to a driver.
  * Note: the driver must want to bind to the device,
  * it is not possible to override the driver's id table.
  */
-static ssize_t bind_store(struct device_driver *drv, const char *buf,
-			  size_t count)
-{
-	struct bus_type *bus = bus_get(drv->bus);
-	struct device *dev;
-	int err = -ENODEV;
+अटल sमाप_प्रकार bind_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
+			  माप_प्रकार count)
+अणु
+	काष्ठा bus_type *bus = bus_get(drv->bus);
+	काष्ठा device *dev;
+	पूर्णांक err = -ENODEV;
 
-	dev = bus_find_device_by_name(bus, NULL, buf);
-	if (dev && dev->driver == NULL && driver_match_device(drv, dev)) {
+	dev = bus_find_device_by_name(bus, शून्य, buf);
+	अगर (dev && dev->driver == शून्य && driver_match_device(drv, dev)) अणु
 		err = device_driver_attach(drv, dev);
 
-		if (err > 0) {
+		अगर (err > 0) अणु
 			/* success */
 			err = count;
-		} else if (err == 0) {
+		पूर्ण अन्यथा अगर (err == 0) अणु
 			/* driver didn't accept device */
 			err = -ENODEV;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	put_device(dev);
 	bus_put(bus);
-	return err;
-}
-static DRIVER_ATTR_IGNORE_LOCKDEP(bind, S_IWUSR, NULL, bind_store);
+	वापस err;
+पूर्ण
+अटल DRIVER_ATTR_IGNORE_LOCKDEP(bind, S_IWUSR, शून्य, bind_store);
 
-static ssize_t drivers_autoprobe_show(struct bus_type *bus, char *buf)
-{
-	return sysfs_emit(buf, "%d\n", bus->p->drivers_autoprobe);
-}
+अटल sमाप_प्रकार drivers_स्वतःprobe_show(काष्ठा bus_type *bus, अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "%d\n", bus->p->drivers_स्वतःprobe);
+पूर्ण
 
-static ssize_t drivers_autoprobe_store(struct bus_type *bus,
-				       const char *buf, size_t count)
-{
-	if (buf[0] == '0')
-		bus->p->drivers_autoprobe = 0;
-	else
-		bus->p->drivers_autoprobe = 1;
-	return count;
-}
+अटल sमाप_प्रकार drivers_स्वतःprobe_store(काष्ठा bus_type *bus,
+				       स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अगर (buf[0] == '0')
+		bus->p->drivers_स्वतःprobe = 0;
+	अन्यथा
+		bus->p->drivers_स्वतःprobe = 1;
+	वापस count;
+पूर्ण
 
-static ssize_t drivers_probe_store(struct bus_type *bus,
-				   const char *buf, size_t count)
-{
-	struct device *dev;
-	int err = -EINVAL;
+अटल sमाप_प्रकार drivers_probe_store(काष्ठा bus_type *bus,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा device *dev;
+	पूर्णांक err = -EINVAL;
 
-	dev = bus_find_device_by_name(bus, NULL, buf);
-	if (!dev)
-		return -ENODEV;
-	if (bus_rescan_devices_helper(dev, NULL) == 0)
+	dev = bus_find_device_by_name(bus, शून्य, buf);
+	अगर (!dev)
+		वापस -ENODEV;
+	अगर (bus_rescan_devices_helper(dev, शून्य) == 0)
 		err = count;
 	put_device(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct device *next_device(struct klist_iter *i)
-{
-	struct klist_node *n = klist_next(i);
-	struct device *dev = NULL;
-	struct device_private *dev_prv;
+अटल काष्ठा device *next_device(काष्ठा klist_iter *i)
+अणु
+	काष्ठा klist_node *n = klist_next(i);
+	काष्ठा device *dev = शून्य;
+	काष्ठा device_निजी *dev_prv;
 
-	if (n) {
-		dev_prv = to_device_private_bus(n);
+	अगर (n) अणु
+		dev_prv = to_device_निजी_bus(n);
 		dev = dev_prv->device;
-	}
-	return dev;
-}
+	पूर्ण
+	वापस dev;
+पूर्ण
 
 /**
- * bus_for_each_dev - device iterator.
+ * bus_क्रम_each_dev - device iterator.
  * @bus: bus type.
  * @start: device to start iterating from.
- * @data: data for the callback.
- * @fn: function to be called for each device.
+ * @data: data क्रम the callback.
+ * @fn: function to be called क्रम each device.
  *
- * Iterate over @bus's list of devices, and call @fn for each,
- * passing it @data. If @start is not NULL, we use that device to
+ * Iterate over @bus's list of devices, and call @fn क्रम each,
+ * passing it @data. If @start is not शून्य, we use that device to
  * begin iterating from.
  *
- * We check the return of @fn each time. If it returns anything
- * other than 0, we break out and return that value.
+ * We check the वापस of @fn each समय. If it वापसs anything
+ * other than 0, we अवरोध out and वापस that value.
  *
- * NOTE: The device that returns a non-zero value is not retained
+ * NOTE: The device that वापसs a non-zero value is not retained
  * in any way, nor is its refcount incremented. If the caller needs
- * to retain this data, it should do so, and increment the reference
+ * to retain this data, it should करो so, and increment the reference
  * count in the supplied callback.
  */
-int bus_for_each_dev(struct bus_type *bus, struct device *start,
-		     void *data, int (*fn)(struct device *, void *))
-{
-	struct klist_iter i;
-	struct device *dev;
-	int error = 0;
+पूर्णांक bus_क्रम_each_dev(काष्ठा bus_type *bus, काष्ठा device *start,
+		     व्योम *data, पूर्णांक (*fn)(काष्ठा device *, व्योम *))
+अणु
+	काष्ठा klist_iter i;
+	काष्ठा device *dev;
+	पूर्णांक error = 0;
 
-	if (!bus || !bus->p)
-		return -EINVAL;
+	अगर (!bus || !bus->p)
+		वापस -EINVAL;
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,
-			     (start ? &start->p->knode_bus : NULL));
-	while (!error && (dev = next_device(&i)))
+			     (start ? &start->p->knode_bus : शून्य));
+	जबतक (!error && (dev = next_device(&i)))
 		error = fn(dev, data);
-	klist_iter_exit(&i);
-	return error;
-}
-EXPORT_SYMBOL_GPL(bus_for_each_dev);
+	klist_iter_निकास(&i);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_क्रम_each_dev);
 
 /**
- * bus_find_device - device iterator for locating a particular device.
+ * bus_find_device - device iterator क्रम locating a particular device.
  * @bus: bus type
  * @start: Device to begin with
  * @data: Data to pass to match function
  * @match: Callback function to check device
  *
- * This is similar to the bus_for_each_dev() function above, but it
- * returns a reference to a device that is 'found' for later use, as
+ * This is similar to the bus_क्रम_each_dev() function above, but it
+ * वापसs a reference to a device that is 'found' क्रम later use, as
  * determined by the @match callback.
  *
- * The callback should return 0 if the device doesn't match and non-zero
- * if it does.  If the callback returns non-zero, this function will
- * return to the caller and not iterate over any more devices.
+ * The callback should वापस 0 अगर the device करोesn't match and non-zero
+ * अगर it करोes.  If the callback वापसs non-zero, this function will
+ * वापस to the caller and not iterate over any more devices.
  */
-struct device *bus_find_device(struct bus_type *bus,
-			       struct device *start, const void *data,
-			       int (*match)(struct device *dev, const void *data))
-{
-	struct klist_iter i;
-	struct device *dev;
+काष्ठा device *bus_find_device(काष्ठा bus_type *bus,
+			       काष्ठा device *start, स्थिर व्योम *data,
+			       पूर्णांक (*match)(काष्ठा device *dev, स्थिर व्योम *data))
+अणु
+	काष्ठा klist_iter i;
+	काष्ठा device *dev;
 
-	if (!bus || !bus->p)
-		return NULL;
+	अगर (!bus || !bus->p)
+		वापस शून्य;
 
 	klist_iter_init_node(&bus->p->klist_devices, &i,
-			     (start ? &start->p->knode_bus : NULL));
-	while ((dev = next_device(&i)))
-		if (match(dev, data) && get_device(dev))
-			break;
-	klist_iter_exit(&i);
-	return dev;
-}
+			     (start ? &start->p->knode_bus : शून्य));
+	जबतक ((dev = next_device(&i)))
+		अगर (match(dev, data) && get_device(dev))
+			अवरोध;
+	klist_iter_निकास(&i);
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_find_device);
 
 /**
- * subsys_find_device_by_id - find a device with a specific enumeration number
- * @subsys: subsystem
- * @id: index 'id' in struct device
- * @hint: device to check first
+ * subsys_find_device_by_id - find a device with a specअगरic क्रमागतeration number
+ * @subsys: subप्रणाली
+ * @id: index 'id' in काष्ठा device
+ * @hपूर्णांक: device to check first
  *
- * Check the hint's next object and if it is a match return it directly,
- * otherwise, fall back to a full list search. Either way a reference for
- * the returned object is taken.
+ * Check the hपूर्णांक's next object and अगर it is a match वापस it directly,
+ * otherwise, fall back to a full list search. Either way a reference क्रम
+ * the वापसed object is taken.
  */
-struct device *subsys_find_device_by_id(struct bus_type *subsys, unsigned int id,
-					struct device *hint)
-{
-	struct klist_iter i;
-	struct device *dev;
+काष्ठा device *subsys_find_device_by_id(काष्ठा bus_type *subsys, अचिन्हित पूर्णांक id,
+					काष्ठा device *hपूर्णांक)
+अणु
+	काष्ठा klist_iter i;
+	काष्ठा device *dev;
 
-	if (!subsys)
-		return NULL;
+	अगर (!subsys)
+		वापस शून्य;
 
-	if (hint) {
-		klist_iter_init_node(&subsys->p->klist_devices, &i, &hint->p->knode_bus);
+	अगर (hपूर्णांक) अणु
+		klist_iter_init_node(&subsys->p->klist_devices, &i, &hपूर्णांक->p->knode_bus);
 		dev = next_device(&i);
-		if (dev && dev->id == id && get_device(dev)) {
-			klist_iter_exit(&i);
-			return dev;
-		}
-		klist_iter_exit(&i);
-	}
+		अगर (dev && dev->id == id && get_device(dev)) अणु
+			klist_iter_निकास(&i);
+			वापस dev;
+		पूर्ण
+		klist_iter_निकास(&i);
+	पूर्ण
 
-	klist_iter_init_node(&subsys->p->klist_devices, &i, NULL);
-	while ((dev = next_device(&i))) {
-		if (dev->id == id && get_device(dev)) {
-			klist_iter_exit(&i);
-			return dev;
-		}
-	}
-	klist_iter_exit(&i);
-	return NULL;
-}
+	klist_iter_init_node(&subsys->p->klist_devices, &i, शून्य);
+	जबतक ((dev = next_device(&i))) अणु
+		अगर (dev->id == id && get_device(dev)) अणु
+			klist_iter_निकास(&i);
+			वापस dev;
+		पूर्ण
+	पूर्ण
+	klist_iter_निकास(&i);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(subsys_find_device_by_id);
 
-static struct device_driver *next_driver(struct klist_iter *i)
-{
-	struct klist_node *n = klist_next(i);
-	struct driver_private *drv_priv;
+अटल काष्ठा device_driver *next_driver(काष्ठा klist_iter *i)
+अणु
+	काष्ठा klist_node *n = klist_next(i);
+	काष्ठा driver_निजी *drv_priv;
 
-	if (n) {
-		drv_priv = container_of(n, struct driver_private, knode_bus);
-		return drv_priv->driver;
-	}
-	return NULL;
-}
+	अगर (n) अणु
+		drv_priv = container_of(n, काष्ठा driver_निजी, knode_bus);
+		वापस drv_priv->driver;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * bus_for_each_drv - driver iterator
+ * bus_क्रम_each_drv - driver iterator
  * @bus: bus we're dealing with.
  * @start: driver to start iterating on.
  * @data: data to pass to the callback.
- * @fn: function to call for each driver.
+ * @fn: function to call क्रम each driver.
  *
  * This is nearly identical to the device iterator above.
- * We iterate over each driver that belongs to @bus, and call
- * @fn for each. If @fn returns anything but 0, we break out
- * and return it. If @start is not NULL, we use it as the head
+ * We iterate over each driver that beदीर्घs to @bus, and call
+ * @fn क्रम each. If @fn वापसs anything but 0, we अवरोध out
+ * and वापस it. If @start is not शून्य, we use it as the head
  * of the list.
  *
- * NOTE: we don't return the driver that returns a non-zero
- * value, nor do we leave the reference count incremented for that
+ * NOTE: we करोn't वापस the driver that वापसs a non-zero
+ * value, nor करो we leave the reference count incremented क्रम that
  * driver. If the caller needs to know that info, it must set it
  * in the callback. It must also be sure to increment the refcount
- * so it doesn't disappear before returning to the caller.
+ * so it करोesn't disappear beक्रमe वापसing to the caller.
  */
-int bus_for_each_drv(struct bus_type *bus, struct device_driver *start,
-		     void *data, int (*fn)(struct device_driver *, void *))
-{
-	struct klist_iter i;
-	struct device_driver *drv;
-	int error = 0;
+पूर्णांक bus_क्रम_each_drv(काष्ठा bus_type *bus, काष्ठा device_driver *start,
+		     व्योम *data, पूर्णांक (*fn)(काष्ठा device_driver *, व्योम *))
+अणु
+	काष्ठा klist_iter i;
+	काष्ठा device_driver *drv;
+	पूर्णांक error = 0;
 
-	if (!bus)
-		return -EINVAL;
+	अगर (!bus)
+		वापस -EINVAL;
 
 	klist_iter_init_node(&bus->p->klist_drivers, &i,
-			     start ? &start->p->knode_bus : NULL);
-	while ((drv = next_driver(&i)) && !error)
+			     start ? &start->p->knode_bus : शून्य);
+	जबतक ((drv = next_driver(&i)) && !error)
 		error = fn(drv, data);
-	klist_iter_exit(&i);
-	return error;
-}
-EXPORT_SYMBOL_GPL(bus_for_each_drv);
+	klist_iter_निकास(&i);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_क्रम_each_drv);
 
 /**
  * bus_add_device - add device to bus
@@ -442,741 +443,741 @@ EXPORT_SYMBOL_GPL(bus_for_each_drv);
  * - Create links to device's bus.
  * - Add the device to its bus's list of devices.
  */
-int bus_add_device(struct device *dev)
-{
-	struct bus_type *bus = bus_get(dev->bus);
-	int error = 0;
+पूर्णांक bus_add_device(काष्ठा device *dev)
+अणु
+	काष्ठा bus_type *bus = bus_get(dev->bus);
+	पूर्णांक error = 0;
 
-	if (bus) {
+	अगर (bus) अणु
 		pr_debug("bus: '%s': add device %s\n", bus->name, dev_name(dev));
 		error = device_add_groups(dev, bus->dev_groups);
-		if (error)
-			goto out_put;
+		अगर (error)
+			जाओ out_put;
 		error = sysfs_create_link(&bus->p->devices_kset->kobj,
 						&dev->kobj, dev_name(dev));
-		if (error)
-			goto out_groups;
+		अगर (error)
+			जाओ out_groups;
 		error = sysfs_create_link(&dev->kobj,
 				&dev->bus->p->subsys.kobj, "subsystem");
-		if (error)
-			goto out_subsys;
+		अगर (error)
+			जाओ out_subsys;
 		klist_add_tail(&dev->p->knode_bus, &bus->p->klist_devices);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 out_subsys:
-	sysfs_remove_link(&bus->p->devices_kset->kobj, dev_name(dev));
+	sysfs_हटाओ_link(&bus->p->devices_kset->kobj, dev_name(dev));
 out_groups:
-	device_remove_groups(dev, bus->dev_groups);
+	device_हटाओ_groups(dev, bus->dev_groups);
 out_put:
 	bus_put(dev->bus);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * bus_probe_device - probe drivers for a new device
+ * bus_probe_device - probe drivers क्रम a new device
  * @dev: device to probe
  *
- * - Automatically probe for a driver if the bus allows it.
+ * - Automatically probe क्रम a driver अगर the bus allows it.
  */
-void bus_probe_device(struct device *dev)
-{
-	struct bus_type *bus = dev->bus;
-	struct subsys_interface *sif;
+व्योम bus_probe_device(काष्ठा device *dev)
+अणु
+	काष्ठा bus_type *bus = dev->bus;
+	काष्ठा subsys_पूर्णांकerface *sअगर;
 
-	if (!bus)
-		return;
+	अगर (!bus)
+		वापस;
 
-	if (bus->p->drivers_autoprobe)
+	अगर (bus->p->drivers_स्वतःprobe)
 		device_initial_probe(dev);
 
 	mutex_lock(&bus->p->mutex);
-	list_for_each_entry(sif, &bus->p->interfaces, node)
-		if (sif->add_dev)
-			sif->add_dev(dev, sif);
+	list_क्रम_each_entry(sअगर, &bus->p->पूर्णांकerfaces, node)
+		अगर (sअगर->add_dev)
+			sअगर->add_dev(dev, sअगर);
 	mutex_unlock(&bus->p->mutex);
-}
+पूर्ण
 
 /**
- * bus_remove_device - remove device from bus
- * @dev: device to be removed
+ * bus_हटाओ_device - हटाओ device from bus
+ * @dev: device to be हटाओd
  *
- * - Remove device from all interfaces.
+ * - Remove device from all पूर्णांकerfaces.
  * - Remove symlink from bus' directory.
  * - Delete device from bus's list.
  * - Detach from its driver.
  * - Drop reference taken in bus_add_device().
  */
-void bus_remove_device(struct device *dev)
-{
-	struct bus_type *bus = dev->bus;
-	struct subsys_interface *sif;
+व्योम bus_हटाओ_device(काष्ठा device *dev)
+अणु
+	काष्ठा bus_type *bus = dev->bus;
+	काष्ठा subsys_पूर्णांकerface *sअगर;
 
-	if (!bus)
-		return;
+	अगर (!bus)
+		वापस;
 
 	mutex_lock(&bus->p->mutex);
-	list_for_each_entry(sif, &bus->p->interfaces, node)
-		if (sif->remove_dev)
-			sif->remove_dev(dev, sif);
+	list_क्रम_each_entry(sअगर, &bus->p->पूर्णांकerfaces, node)
+		अगर (sअगर->हटाओ_dev)
+			sअगर->हटाओ_dev(dev, sअगर);
 	mutex_unlock(&bus->p->mutex);
 
-	sysfs_remove_link(&dev->kobj, "subsystem");
-	sysfs_remove_link(&dev->bus->p->devices_kset->kobj,
+	sysfs_हटाओ_link(&dev->kobj, "subsystem");
+	sysfs_हटाओ_link(&dev->bus->p->devices_kset->kobj,
 			  dev_name(dev));
-	device_remove_groups(dev, dev->bus->dev_groups);
-	if (klist_node_attached(&dev->p->knode_bus))
+	device_हटाओ_groups(dev, dev->bus->dev_groups);
+	अगर (klist_node_attached(&dev->p->knode_bus))
 		klist_del(&dev->p->knode_bus);
 
 	pr_debug("bus: '%s': remove device %s\n",
 		 dev->bus->name, dev_name(dev));
 	device_release_driver(dev);
 	bus_put(dev->bus);
-}
+पूर्ण
 
-static int __must_check add_bind_files(struct device_driver *drv)
-{
-	int ret;
+अटल पूर्णांक __must_check add_bind_files(काष्ठा device_driver *drv)
+अणु
+	पूर्णांक ret;
 
 	ret = driver_create_file(drv, &driver_attr_unbind);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		ret = driver_create_file(drv, &driver_attr_bind);
-		if (ret)
-			driver_remove_file(drv, &driver_attr_unbind);
-	}
-	return ret;
-}
+		अगर (ret)
+			driver_हटाओ_file(drv, &driver_attr_unbind);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void remove_bind_files(struct device_driver *drv)
-{
-	driver_remove_file(drv, &driver_attr_bind);
-	driver_remove_file(drv, &driver_attr_unbind);
-}
+अटल व्योम हटाओ_bind_files(काष्ठा device_driver *drv)
+अणु
+	driver_हटाओ_file(drv, &driver_attr_bind);
+	driver_हटाओ_file(drv, &driver_attr_unbind);
+पूर्ण
 
-static BUS_ATTR_WO(drivers_probe);
-static BUS_ATTR_RW(drivers_autoprobe);
+अटल BUS_ATTR_WO(drivers_probe);
+अटल BUS_ATTR_RW(drivers_स्वतःprobe);
 
-static int add_probe_files(struct bus_type *bus)
-{
-	int retval;
+अटल पूर्णांक add_probe_files(काष्ठा bus_type *bus)
+अणु
+	पूर्णांक retval;
 
 	retval = bus_create_file(bus, &bus_attr_drivers_probe);
-	if (retval)
-		goto out;
+	अगर (retval)
+		जाओ out;
 
-	retval = bus_create_file(bus, &bus_attr_drivers_autoprobe);
-	if (retval)
-		bus_remove_file(bus, &bus_attr_drivers_probe);
+	retval = bus_create_file(bus, &bus_attr_drivers_स्वतःprobe);
+	अगर (retval)
+		bus_हटाओ_file(bus, &bus_attr_drivers_probe);
 out:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void remove_probe_files(struct bus_type *bus)
-{
-	bus_remove_file(bus, &bus_attr_drivers_autoprobe);
-	bus_remove_file(bus, &bus_attr_drivers_probe);
-}
+अटल व्योम हटाओ_probe_files(काष्ठा bus_type *bus)
+अणु
+	bus_हटाओ_file(bus, &bus_attr_drivers_स्वतःprobe);
+	bus_हटाओ_file(bus, &bus_attr_drivers_probe);
+पूर्ण
 
-static ssize_t uevent_store(struct device_driver *drv, const char *buf,
-			    size_t count)
-{
-	int rc;
+अटल sमाप_प्रकार uevent_store(काष्ठा device_driver *drv, स्थिर अक्षर *buf,
+			    माप_प्रकार count)
+अणु
+	पूर्णांक rc;
 
 	rc = kobject_synth_uevent(&drv->p->kobj, buf, count);
-	return rc ? rc : count;
-}
-static DRIVER_ATTR_WO(uevent);
+	वापस rc ? rc : count;
+पूर्ण
+अटल DRIVER_ATTR_WO(uevent);
 
 /**
  * bus_add_driver - Add a driver to the bus.
  * @drv: driver.
  */
-int bus_add_driver(struct device_driver *drv)
-{
-	struct bus_type *bus;
-	struct driver_private *priv;
-	int error = 0;
+पूर्णांक bus_add_driver(काष्ठा device_driver *drv)
+अणु
+	काष्ठा bus_type *bus;
+	काष्ठा driver_निजी *priv;
+	पूर्णांक error = 0;
 
 	bus = bus_get(drv->bus);
-	if (!bus)
-		return -EINVAL;
+	अगर (!bus)
+		वापस -EINVAL;
 
 	pr_debug("bus: '%s': add driver %s\n", bus->name, drv->name);
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		error = -ENOMEM;
-		goto out_put_bus;
-	}
-	klist_init(&priv->klist_devices, NULL, NULL);
+		जाओ out_put_bus;
+	पूर्ण
+	klist_init(&priv->klist_devices, शून्य, शून्य);
 	priv->driver = drv;
 	drv->p = priv;
 	priv->kobj.kset = bus->p->drivers_kset;
-	error = kobject_init_and_add(&priv->kobj, &driver_ktype, NULL,
+	error = kobject_init_and_add(&priv->kobj, &driver_ktype, शून्य,
 				     "%s", drv->name);
-	if (error)
-		goto out_unregister;
+	अगर (error)
+		जाओ out_unरेजिस्टर;
 
 	klist_add_tail(&priv->knode_bus, &bus->p->klist_drivers);
-	if (drv->bus->p->drivers_autoprobe) {
+	अगर (drv->bus->p->drivers_स्वतःprobe) अणु
 		error = driver_attach(drv);
-		if (error)
-			goto out_unregister;
-	}
+		अगर (error)
+			जाओ out_unरेजिस्टर;
+	पूर्ण
 	module_add_driver(drv->owner, drv);
 
 	error = driver_create_file(drv, &driver_attr_uevent);
-	if (error) {
-		printk(KERN_ERR "%s: uevent attr (%s) failed\n",
+	अगर (error) अणु
+		prपूर्णांकk(KERN_ERR "%s: uevent attr (%s) failed\n",
 			__func__, drv->name);
-	}
+	पूर्ण
 	error = driver_add_groups(drv, bus->drv_groups);
-	if (error) {
-		/* How the hell do we get out of this pickle? Give up */
-		printk(KERN_ERR "%s: driver_add_groups(%s) failed\n",
+	अगर (error) अणु
+		/* How the hell करो we get out of this pickle? Give up */
+		prपूर्णांकk(KERN_ERR "%s: driver_add_groups(%s) failed\n",
 			__func__, drv->name);
-	}
+	पूर्ण
 
-	if (!drv->suppress_bind_attrs) {
+	अगर (!drv->suppress_bind_attrs) अणु
 		error = add_bind_files(drv);
-		if (error) {
+		अगर (error) अणु
 			/* Ditto */
-			printk(KERN_ERR "%s: add_bind_files(%s) failed\n",
+			prपूर्णांकk(KERN_ERR "%s: add_bind_files(%s) failed\n",
 				__func__, drv->name);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_unregister:
+out_unरेजिस्टर:
 	kobject_put(&priv->kobj);
-	/* drv->p is freed in driver_release()  */
-	drv->p = NULL;
+	/* drv->p is मुक्तd in driver_release()  */
+	drv->p = शून्य;
 out_put_bus:
 	bus_put(bus);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /**
- * bus_remove_driver - delete driver from bus's knowledge.
+ * bus_हटाओ_driver - delete driver from bus's knowledge.
  * @drv: driver.
  *
- * Detach the driver from the devices it controls, and remove
+ * Detach the driver from the devices it controls, and हटाओ
  * it from its bus's list of drivers. Finally, we drop the reference
  * to the bus we took in bus_add_driver().
  */
-void bus_remove_driver(struct device_driver *drv)
-{
-	if (!drv->bus)
-		return;
+व्योम bus_हटाओ_driver(काष्ठा device_driver *drv)
+अणु
+	अगर (!drv->bus)
+		वापस;
 
-	if (!drv->suppress_bind_attrs)
-		remove_bind_files(drv);
-	driver_remove_groups(drv, drv->bus->drv_groups);
-	driver_remove_file(drv, &driver_attr_uevent);
-	klist_remove(&drv->p->knode_bus);
+	अगर (!drv->suppress_bind_attrs)
+		हटाओ_bind_files(drv);
+	driver_हटाओ_groups(drv, drv->bus->drv_groups);
+	driver_हटाओ_file(drv, &driver_attr_uevent);
+	klist_हटाओ(&drv->p->knode_bus);
 	pr_debug("bus: '%s': remove driver %s\n", drv->bus->name, drv->name);
 	driver_detach(drv);
-	module_remove_driver(drv);
+	module_हटाओ_driver(drv);
 	kobject_put(&drv->p->kobj);
 	bus_put(drv->bus);
-}
+पूर्ण
 
-/* Helper for bus_rescan_devices's iter */
-static int __must_check bus_rescan_devices_helper(struct device *dev,
-						  void *data)
-{
-	int ret = 0;
+/* Helper क्रम bus_rescan_devices's iter */
+अटल पूर्णांक __must_check bus_rescan_devices_helper(काष्ठा device *dev,
+						  व्योम *data)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!dev->driver) {
-		if (dev->parent && dev->bus->need_parent_lock)
+	अगर (!dev->driver) अणु
+		अगर (dev->parent && dev->bus->need_parent_lock)
 			device_lock(dev->parent);
 		ret = device_attach(dev);
-		if (dev->parent && dev->bus->need_parent_lock)
+		अगर (dev->parent && dev->bus->need_parent_lock)
 			device_unlock(dev->parent);
-	}
-	return ret < 0 ? ret : 0;
-}
+	पूर्ण
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
 /**
- * bus_rescan_devices - rescan devices on the bus for possible drivers
+ * bus_rescan_devices - rescan devices on the bus क्रम possible drivers
  * @bus: the bus to scan.
  *
- * This function will look for devices on the bus with no driver
- * attached and rescan it against existing drivers to see if it matches
- * any by calling device_attach() for the unbound devices.
+ * This function will look क्रम devices on the bus with no driver
+ * attached and rescan it against existing drivers to see अगर it matches
+ * any by calling device_attach() क्रम the unbound devices.
  */
-int bus_rescan_devices(struct bus_type *bus)
-{
-	return bus_for_each_dev(bus, NULL, NULL, bus_rescan_devices_helper);
-}
+पूर्णांक bus_rescan_devices(काष्ठा bus_type *bus)
+अणु
+	वापस bus_क्रम_each_dev(bus, शून्य, शून्य, bus_rescan_devices_helper);
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_rescan_devices);
 
 /**
- * device_reprobe - remove driver for a device and probe for a new driver
+ * device_reprobe - हटाओ driver क्रम a device and probe क्रम a new driver
  * @dev: the device to reprobe
  *
- * This function detaches the attached driver (if any) for the given
- * device and restarts the driver probing process.  It is intended
- * to use if probing criteria changed during a devices lifetime and
+ * This function detaches the attached driver (अगर any) क्रम the given
+ * device and restarts the driver probing process.  It is पूर्णांकended
+ * to use अगर probing criteria changed during a devices lअगरeसमय and
  * driver attachment should change accordingly.
  */
-int device_reprobe(struct device *dev)
-{
-	if (dev->driver)
+पूर्णांक device_reprobe(काष्ठा device *dev)
+अणु
+	अगर (dev->driver)
 		device_driver_detach(dev);
-	return bus_rescan_devices_helper(dev, NULL);
-}
+	वापस bus_rescan_devices_helper(dev, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(device_reprobe);
 
-static int bus_add_groups(struct bus_type *bus,
-			  const struct attribute_group **groups)
-{
-	return sysfs_create_groups(&bus->p->subsys.kobj, groups);
-}
+अटल पूर्णांक bus_add_groups(काष्ठा bus_type *bus,
+			  स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस sysfs_create_groups(&bus->p->subsys.kobj, groups);
+पूर्ण
 
-static void bus_remove_groups(struct bus_type *bus,
-			      const struct attribute_group **groups)
-{
-	sysfs_remove_groups(&bus->p->subsys.kobj, groups);
-}
+अटल व्योम bus_हटाओ_groups(काष्ठा bus_type *bus,
+			      स्थिर काष्ठा attribute_group **groups)
+अणु
+	sysfs_हटाओ_groups(&bus->p->subsys.kobj, groups);
+पूर्ण
 
-static void klist_devices_get(struct klist_node *n)
-{
-	struct device_private *dev_prv = to_device_private_bus(n);
-	struct device *dev = dev_prv->device;
+अटल व्योम klist_devices_get(काष्ठा klist_node *n)
+अणु
+	काष्ठा device_निजी *dev_prv = to_device_निजी_bus(n);
+	काष्ठा device *dev = dev_prv->device;
 
 	get_device(dev);
-}
+पूर्ण
 
-static void klist_devices_put(struct klist_node *n)
-{
-	struct device_private *dev_prv = to_device_private_bus(n);
-	struct device *dev = dev_prv->device;
+अटल व्योम klist_devices_put(काष्ठा klist_node *n)
+अणु
+	काष्ठा device_निजी *dev_prv = to_device_निजी_bus(n);
+	काष्ठा device *dev = dev_prv->device;
 
 	put_device(dev);
-}
+पूर्ण
 
-static ssize_t bus_uevent_store(struct bus_type *bus,
-				const char *buf, size_t count)
-{
-	int rc;
+अटल sमाप_प्रकार bus_uevent_store(काष्ठा bus_type *bus,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक rc;
 
 	rc = kobject_synth_uevent(&bus->p->subsys.kobj, buf, count);
-	return rc ? rc : count;
-}
+	वापस rc ? rc : count;
+पूर्ण
 /*
  * "open code" the old BUS_ATTR() macro here.  We want to use BUS_ATTR_WO()
  * here, but can not use it as earlier in the file we have
  * DEVICE_ATTR_WO(uevent), which would cause a clash with the with the store
  * function name.
  */
-static struct bus_attribute bus_attr_uevent = __ATTR(uevent, S_IWUSR, NULL,
+अटल काष्ठा bus_attribute bus_attr_uevent = __ATTR(uevent, S_IWUSR, शून्य,
 						     bus_uevent_store);
 
 /**
- * bus_register - register a driver-core subsystem
- * @bus: bus to register
+ * bus_रेजिस्टर - रेजिस्टर a driver-core subप्रणाली
+ * @bus: bus to रेजिस्टर
  *
- * Once we have that, we register the bus with the kobject
- * infrastructure, then register the children subsystems it has:
- * the devices and drivers that belong to the subsystem.
+ * Once we have that, we रेजिस्टर the bus with the kobject
+ * infraकाष्ठाure, then रेजिस्टर the children subप्रणालीs it has:
+ * the devices and drivers that beदीर्घ to the subप्रणाली.
  */
-int bus_register(struct bus_type *bus)
-{
-	int retval;
-	struct subsys_private *priv;
-	struct lock_class_key *key = &bus->lock_key;
+पूर्णांक bus_रेजिस्टर(काष्ठा bus_type *bus)
+अणु
+	पूर्णांक retval;
+	काष्ठा subsys_निजी *priv;
+	काष्ठा lock_class_key *key = &bus->lock_key;
 
-	priv = kzalloc(sizeof(struct subsys_private), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(काष्ठा subsys_निजी), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->bus = bus;
 	bus->p = priv;
 
-	BLOCKING_INIT_NOTIFIER_HEAD(&priv->bus_notifier);
+	BLOCKING_INIT_NOTIFIER_HEAD(&priv->bus_notअगरier);
 
 	retval = kobject_set_name(&priv->subsys.kobj, "%s", bus->name);
-	if (retval)
-		goto out;
+	अगर (retval)
+		जाओ out;
 
 	priv->subsys.kobj.kset = bus_kset;
 	priv->subsys.kobj.ktype = &bus_ktype;
-	priv->drivers_autoprobe = 1;
+	priv->drivers_स्वतःprobe = 1;
 
-	retval = kset_register(&priv->subsys);
-	if (retval)
-		goto out;
+	retval = kset_रेजिस्टर(&priv->subsys);
+	अगर (retval)
+		जाओ out;
 
 	retval = bus_create_file(bus, &bus_attr_uevent);
-	if (retval)
-		goto bus_uevent_fail;
+	अगर (retval)
+		जाओ bus_uevent_fail;
 
-	priv->devices_kset = kset_create_and_add("devices", NULL,
+	priv->devices_kset = kset_create_and_add("devices", शून्य,
 						 &priv->subsys.kobj);
-	if (!priv->devices_kset) {
+	अगर (!priv->devices_kset) अणु
 		retval = -ENOMEM;
-		goto bus_devices_fail;
-	}
+		जाओ bus_devices_fail;
+	पूर्ण
 
-	priv->drivers_kset = kset_create_and_add("drivers", NULL,
+	priv->drivers_kset = kset_create_and_add("drivers", शून्य,
 						 &priv->subsys.kobj);
-	if (!priv->drivers_kset) {
+	अगर (!priv->drivers_kset) अणु
 		retval = -ENOMEM;
-		goto bus_drivers_fail;
-	}
+		जाओ bus_drivers_fail;
+	पूर्ण
 
-	INIT_LIST_HEAD(&priv->interfaces);
+	INIT_LIST_HEAD(&priv->पूर्णांकerfaces);
 	__mutex_init(&priv->mutex, "subsys mutex", key);
 	klist_init(&priv->klist_devices, klist_devices_get, klist_devices_put);
-	klist_init(&priv->klist_drivers, NULL, NULL);
+	klist_init(&priv->klist_drivers, शून्य, शून्य);
 
 	retval = add_probe_files(bus);
-	if (retval)
-		goto bus_probe_files_fail;
+	अगर (retval)
+		जाओ bus_probe_files_fail;
 
 	retval = bus_add_groups(bus, bus->bus_groups);
-	if (retval)
-		goto bus_groups_fail;
+	अगर (retval)
+		जाओ bus_groups_fail;
 
 	pr_debug("bus: '%s': registered\n", bus->name);
-	return 0;
+	वापस 0;
 
 bus_groups_fail:
-	remove_probe_files(bus);
+	हटाओ_probe_files(bus);
 bus_probe_files_fail:
-	kset_unregister(bus->p->drivers_kset);
+	kset_unरेजिस्टर(bus->p->drivers_kset);
 bus_drivers_fail:
-	kset_unregister(bus->p->devices_kset);
+	kset_unरेजिस्टर(bus->p->devices_kset);
 bus_devices_fail:
-	bus_remove_file(bus, &bus_attr_uevent);
+	bus_हटाओ_file(bus, &bus_attr_uevent);
 bus_uevent_fail:
-	kset_unregister(&bus->p->subsys);
+	kset_unरेजिस्टर(&bus->p->subsys);
 out:
-	kfree(bus->p);
-	bus->p = NULL;
-	return retval;
-}
-EXPORT_SYMBOL_GPL(bus_register);
+	kमुक्त(bus->p);
+	bus->p = शून्य;
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_रेजिस्टर);
 
 /**
- * bus_unregister - remove a bus from the system
+ * bus_unरेजिस्टर - हटाओ a bus from the प्रणाली
  * @bus: bus.
  *
- * Unregister the child subsystems and the bus itself.
+ * Unरेजिस्टर the child subप्रणालीs and the bus itself.
  * Finally, we call bus_put() to release the refcount
  */
-void bus_unregister(struct bus_type *bus)
-{
+व्योम bus_unरेजिस्टर(काष्ठा bus_type *bus)
+अणु
 	pr_debug("bus: '%s': unregistering\n", bus->name);
-	if (bus->dev_root)
-		device_unregister(bus->dev_root);
-	bus_remove_groups(bus, bus->bus_groups);
-	remove_probe_files(bus);
-	kset_unregister(bus->p->drivers_kset);
-	kset_unregister(bus->p->devices_kset);
-	bus_remove_file(bus, &bus_attr_uevent);
-	kset_unregister(&bus->p->subsys);
-}
-EXPORT_SYMBOL_GPL(bus_unregister);
+	अगर (bus->dev_root)
+		device_unरेजिस्टर(bus->dev_root);
+	bus_हटाओ_groups(bus, bus->bus_groups);
+	हटाओ_probe_files(bus);
+	kset_unरेजिस्टर(bus->p->drivers_kset);
+	kset_unरेजिस्टर(bus->p->devices_kset);
+	bus_हटाओ_file(bus, &bus_attr_uevent);
+	kset_unरेजिस्टर(&bus->p->subsys);
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_unरेजिस्टर);
 
-int bus_register_notifier(struct bus_type *bus, struct notifier_block *nb)
-{
-	return blocking_notifier_chain_register(&bus->p->bus_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(bus_register_notifier);
+पूर्णांक bus_रेजिस्टर_notअगरier(काष्ठा bus_type *bus, काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_रेजिस्टर(&bus->p->bus_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_रेजिस्टर_notअगरier);
 
-int bus_unregister_notifier(struct bus_type *bus, struct notifier_block *nb)
-{
-	return blocking_notifier_chain_unregister(&bus->p->bus_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(bus_unregister_notifier);
+पूर्णांक bus_unरेजिस्टर_notअगरier(काष्ठा bus_type *bus, काष्ठा notअगरier_block *nb)
+अणु
+	वापस blocking_notअगरier_chain_unरेजिस्टर(&bus->p->bus_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_unरेजिस्टर_notअगरier);
 
-struct kset *bus_get_kset(struct bus_type *bus)
-{
-	return &bus->p->subsys;
-}
+काष्ठा kset *bus_get_kset(काष्ठा bus_type *bus)
+अणु
+	वापस &bus->p->subsys;
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_get_kset);
 
-struct klist *bus_get_device_klist(struct bus_type *bus)
-{
-	return &bus->p->klist_devices;
-}
+काष्ठा klist *bus_get_device_klist(काष्ठा bus_type *bus)
+अणु
+	वापस &bus->p->klist_devices;
+पूर्ण
 EXPORT_SYMBOL_GPL(bus_get_device_klist);
 
 /*
- * Yes, this forcibly breaks the klist abstraction temporarily.  It
+ * Yes, this क्रमcibly अवरोधs the klist असलtraction temporarily.  It
  * just wants to sort the klist, not change reference counts and
- * take/drop locks rapidly in the process.  It does all this while
- * holding the lock for the list, so objects can't otherwise be
- * added/removed while we're swizzling.
+ * take/drop locks rapidly in the process.  It करोes all this जबतक
+ * holding the lock क्रम the list, so objects can't otherwise be
+ * added/हटाओd जबतक we're swizzling.
  */
-static void device_insertion_sort_klist(struct device *a, struct list_head *list,
-					int (*compare)(const struct device *a,
-							const struct device *b))
-{
-	struct klist_node *n;
-	struct device_private *dev_prv;
-	struct device *b;
+अटल व्योम device_insertion_sort_klist(काष्ठा device *a, काष्ठा list_head *list,
+					पूर्णांक (*compare)(स्थिर काष्ठा device *a,
+							स्थिर काष्ठा device *b))
+अणु
+	काष्ठा klist_node *n;
+	काष्ठा device_निजी *dev_prv;
+	काष्ठा device *b;
 
-	list_for_each_entry(n, list, n_node) {
-		dev_prv = to_device_private_bus(n);
+	list_क्रम_each_entry(n, list, n_node) अणु
+		dev_prv = to_device_निजी_bus(n);
 		b = dev_prv->device;
-		if (compare(a, b) <= 0) {
+		अगर (compare(a, b) <= 0) अणु
 			list_move_tail(&a->p->knode_bus.n_node,
 				       &b->p->knode_bus.n_node);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	list_move_tail(&a->p->knode_bus.n_node, list);
-}
+पूर्ण
 
-void bus_sort_breadthfirst(struct bus_type *bus,
-			   int (*compare)(const struct device *a,
-					  const struct device *b))
-{
+व्योम bus_sort_bपढ़ोthfirst(काष्ठा bus_type *bus,
+			   पूर्णांक (*compare)(स्थिर काष्ठा device *a,
+					  स्थिर काष्ठा device *b))
+अणु
 	LIST_HEAD(sorted_devices);
-	struct klist_node *n, *tmp;
-	struct device_private *dev_prv;
-	struct device *dev;
-	struct klist *device_klist;
+	काष्ठा klist_node *n, *पंचांगp;
+	काष्ठा device_निजी *dev_prv;
+	काष्ठा device *dev;
+	काष्ठा klist *device_klist;
 
 	device_klist = bus_get_device_klist(bus);
 
 	spin_lock(&device_klist->k_lock);
-	list_for_each_entry_safe(n, tmp, &device_klist->k_list, n_node) {
-		dev_prv = to_device_private_bus(n);
+	list_क्रम_each_entry_safe(n, पंचांगp, &device_klist->k_list, n_node) अणु
+		dev_prv = to_device_निजी_bus(n);
 		dev = dev_prv->device;
 		device_insertion_sort_klist(dev, &sorted_devices, compare);
-	}
+	पूर्ण
 	list_splice(&sorted_devices, &device_klist->k_list);
 	spin_unlock(&device_klist->k_lock);
-}
-EXPORT_SYMBOL_GPL(bus_sort_breadthfirst);
+पूर्ण
+EXPORT_SYMBOL_GPL(bus_sort_bपढ़ोthfirst);
 
 /**
  * subsys_dev_iter_init - initialize subsys device iterator
  * @iter: subsys iterator to initialize
  * @subsys: the subsys we wanna iterate over
- * @start: the device to start iterating from, if any
- * @type: device_type of the devices to iterate over, NULL for all
+ * @start: the device to start iterating from, अगर any
+ * @type: device_type of the devices to iterate over, शून्य क्रम all
  *
  * Initialize subsys iterator @iter such that it iterates over devices
  * of @subsys.  If @start is set, the list iteration will start there,
- * otherwise if it is NULL, the iteration starts at the beginning of
+ * otherwise अगर it is शून्य, the iteration starts at the beginning of
  * the list.
  */
-void subsys_dev_iter_init(struct subsys_dev_iter *iter, struct bus_type *subsys,
-			  struct device *start, const struct device_type *type)
-{
-	struct klist_node *start_knode = NULL;
+व्योम subsys_dev_iter_init(काष्ठा subsys_dev_iter *iter, काष्ठा bus_type *subsys,
+			  काष्ठा device *start, स्थिर काष्ठा device_type *type)
+अणु
+	काष्ठा klist_node *start_knode = शून्य;
 
-	if (start)
+	अगर (start)
 		start_knode = &start->p->knode_bus;
 	klist_iter_init_node(&subsys->p->klist_devices, &iter->ki, start_knode);
 	iter->type = type;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(subsys_dev_iter_init);
 
 /**
  * subsys_dev_iter_next - iterate to the next device
  * @iter: subsys iterator to proceed
  *
- * Proceed @iter to the next device and return it.  Returns NULL if
+ * Proceed @iter to the next device and वापस it.  Returns शून्य अगर
  * iteration is complete.
  *
- * The returned device is referenced and won't be released till
- * iterator is proceed to the next device or exited.  The caller is
- * free to do whatever it wants to do with the device including
- * calling back into subsys code.
+ * The वापसed device is referenced and won't be released till
+ * iterator is proceed to the next device or निकासed.  The caller is
+ * मुक्त to करो whatever it wants to करो with the device including
+ * calling back पूर्णांकo subsys code.
  */
-struct device *subsys_dev_iter_next(struct subsys_dev_iter *iter)
-{
-	struct klist_node *knode;
-	struct device *dev;
+काष्ठा device *subsys_dev_iter_next(काष्ठा subsys_dev_iter *iter)
+अणु
+	काष्ठा klist_node *knode;
+	काष्ठा device *dev;
 
-	for (;;) {
+	क्रम (;;) अणु
 		knode = klist_next(&iter->ki);
-		if (!knode)
-			return NULL;
-		dev = to_device_private_bus(knode)->device;
-		if (!iter->type || iter->type == dev->type)
-			return dev;
-	}
-}
+		अगर (!knode)
+			वापस शून्य;
+		dev = to_device_निजी_bus(knode)->device;
+		अगर (!iter->type || iter->type == dev->type)
+			वापस dev;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(subsys_dev_iter_next);
 
 /**
- * subsys_dev_iter_exit - finish iteration
+ * subsys_dev_iter_निकास - finish iteration
  * @iter: subsys iterator to finish
  *
  * Finish an iteration.  Always call this function after iteration is
  * complete whether the iteration ran till the end or not.
  */
-void subsys_dev_iter_exit(struct subsys_dev_iter *iter)
-{
-	klist_iter_exit(&iter->ki);
-}
-EXPORT_SYMBOL_GPL(subsys_dev_iter_exit);
+व्योम subsys_dev_iter_निकास(काष्ठा subsys_dev_iter *iter)
+अणु
+	klist_iter_निकास(&iter->ki);
+पूर्ण
+EXPORT_SYMBOL_GPL(subsys_dev_iter_निकास);
 
-int subsys_interface_register(struct subsys_interface *sif)
-{
-	struct bus_type *subsys;
-	struct subsys_dev_iter iter;
-	struct device *dev;
+पूर्णांक subsys_पूर्णांकerface_रेजिस्टर(काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	काष्ठा bus_type *subsys;
+	काष्ठा subsys_dev_iter iter;
+	काष्ठा device *dev;
 
-	if (!sif || !sif->subsys)
-		return -ENODEV;
+	अगर (!sअगर || !sअगर->subsys)
+		वापस -ENODEV;
 
-	subsys = bus_get(sif->subsys);
-	if (!subsys)
-		return -EINVAL;
+	subsys = bus_get(sअगर->subsys);
+	अगर (!subsys)
+		वापस -EINVAL;
 
 	mutex_lock(&subsys->p->mutex);
-	list_add_tail(&sif->node, &subsys->p->interfaces);
-	if (sif->add_dev) {
-		subsys_dev_iter_init(&iter, subsys, NULL, NULL);
-		while ((dev = subsys_dev_iter_next(&iter)))
-			sif->add_dev(dev, sif);
-		subsys_dev_iter_exit(&iter);
-	}
+	list_add_tail(&sअगर->node, &subsys->p->पूर्णांकerfaces);
+	अगर (sअगर->add_dev) अणु
+		subsys_dev_iter_init(&iter, subsys, शून्य, शून्य);
+		जबतक ((dev = subsys_dev_iter_next(&iter)))
+			sअगर->add_dev(dev, sअगर);
+		subsys_dev_iter_निकास(&iter);
+	पूर्ण
 	mutex_unlock(&subsys->p->mutex);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(subsys_interface_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(subsys_पूर्णांकerface_रेजिस्टर);
 
-void subsys_interface_unregister(struct subsys_interface *sif)
-{
-	struct bus_type *subsys;
-	struct subsys_dev_iter iter;
-	struct device *dev;
+व्योम subsys_पूर्णांकerface_unरेजिस्टर(काष्ठा subsys_पूर्णांकerface *sअगर)
+अणु
+	काष्ठा bus_type *subsys;
+	काष्ठा subsys_dev_iter iter;
+	काष्ठा device *dev;
 
-	if (!sif || !sif->subsys)
-		return;
+	अगर (!sअगर || !sअगर->subsys)
+		वापस;
 
-	subsys = sif->subsys;
+	subsys = sअगर->subsys;
 
 	mutex_lock(&subsys->p->mutex);
-	list_del_init(&sif->node);
-	if (sif->remove_dev) {
-		subsys_dev_iter_init(&iter, subsys, NULL, NULL);
-		while ((dev = subsys_dev_iter_next(&iter)))
-			sif->remove_dev(dev, sif);
-		subsys_dev_iter_exit(&iter);
-	}
+	list_del_init(&sअगर->node);
+	अगर (sअगर->हटाओ_dev) अणु
+		subsys_dev_iter_init(&iter, subsys, शून्य, शून्य);
+		जबतक ((dev = subsys_dev_iter_next(&iter)))
+			sअगर->हटाओ_dev(dev, sअगर);
+		subsys_dev_iter_निकास(&iter);
+	पूर्ण
 	mutex_unlock(&subsys->p->mutex);
 
 	bus_put(subsys);
-}
-EXPORT_SYMBOL_GPL(subsys_interface_unregister);
+पूर्ण
+EXPORT_SYMBOL_GPL(subsys_पूर्णांकerface_unरेजिस्टर);
 
-static void system_root_device_release(struct device *dev)
-{
-	kfree(dev);
-}
+अटल व्योम प्रणाली_root_device_release(काष्ठा device *dev)
+अणु
+	kमुक्त(dev);
+पूर्ण
 
-static int subsys_register(struct bus_type *subsys,
-			   const struct attribute_group **groups,
-			   struct kobject *parent_of_root)
-{
-	struct device *dev;
-	int err;
+अटल पूर्णांक subsys_रेजिस्टर(काष्ठा bus_type *subsys,
+			   स्थिर काष्ठा attribute_group **groups,
+			   काष्ठा kobject *parent_of_root)
+अणु
+	काष्ठा device *dev;
+	पूर्णांक err;
 
-	err = bus_register(subsys);
-	if (err < 0)
-		return err;
+	err = bus_रेजिस्टर(subsys);
+	अगर (err < 0)
+		वापस err;
 
-	dev = kzalloc(sizeof(struct device), GFP_KERNEL);
-	if (!dev) {
+	dev = kzalloc(माप(काष्ठा device), GFP_KERNEL);
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 
 	err = dev_set_name(dev, "%s", subsys->name);
-	if (err < 0)
-		goto err_name;
+	अगर (err < 0)
+		जाओ err_name;
 
 	dev->kobj.parent = parent_of_root;
 	dev->groups = groups;
-	dev->release = system_root_device_release;
+	dev->release = प्रणाली_root_device_release;
 
-	err = device_register(dev);
-	if (err < 0)
-		goto err_dev_reg;
+	err = device_रेजिस्टर(dev);
+	अगर (err < 0)
+		जाओ err_dev_reg;
 
 	subsys->dev_root = dev;
-	return 0;
+	वापस 0;
 
 err_dev_reg:
 	put_device(dev);
-	dev = NULL;
+	dev = शून्य;
 err_name:
-	kfree(dev);
+	kमुक्त(dev);
 err_dev:
-	bus_unregister(subsys);
-	return err;
-}
+	bus_unरेजिस्टर(subsys);
+	वापस err;
+पूर्ण
 
 /**
- * subsys_system_register - register a subsystem at /sys/devices/system/
- * @subsys: system subsystem
- * @groups: default attributes for the root device
+ * subsys_प्रणाली_रेजिस्टर - रेजिस्टर a subप्रणाली at /sys/devices/प्रणाली/
+ * @subsys: प्रणाली subप्रणाली
+ * @groups: शेष attributes क्रम the root device
  *
- * All 'system' subsystems have a /sys/devices/system/<name> root device
- * with the name of the subsystem. The root device can carry subsystem-
- * wide attributes. All registered devices are below this single root
- * device and are named after the subsystem with a simple enumeration
- * number appended. The registered devices are not explicitly named;
+ * All 'system' subप्रणालीs have a /sys/devices/प्रणाली/<name> root device
+ * with the name of the subप्रणाली. The root device can carry subप्रणाली-
+ * wide attributes. All रेजिस्टरed devices are below this single root
+ * device and are named after the subप्रणाली with a simple क्रमागतeration
+ * number appended. The रेजिस्टरed devices are not explicitly named;
  * only 'id' in the device needs to be set.
  *
- * Do not use this interface for anything new, it exists for compatibility
- * with bad ideas only. New subsystems should use plain subsystems; and
- * add the subsystem-wide attributes should be added to the subsystem
+ * Do not use this पूर्णांकerface क्रम anything new, it exists क्रम compatibility
+ * with bad ideas only. New subप्रणालीs should use plain subप्रणालीs; and
+ * add the subप्रणाली-wide attributes should be added to the subप्रणाली
  * directory itself and not some create fake root-device placed in
- * /sys/devices/system/<name>.
+ * /sys/devices/प्रणाली/<name>.
  */
-int subsys_system_register(struct bus_type *subsys,
-			   const struct attribute_group **groups)
-{
-	return subsys_register(subsys, groups, &system_kset->kobj);
-}
-EXPORT_SYMBOL_GPL(subsys_system_register);
+पूर्णांक subsys_प्रणाली_रेजिस्टर(काष्ठा bus_type *subsys,
+			   स्थिर काष्ठा attribute_group **groups)
+अणु
+	वापस subsys_रेजिस्टर(subsys, groups, &प्रणाली_kset->kobj);
+पूर्ण
+EXPORT_SYMBOL_GPL(subsys_प्रणाली_रेजिस्टर);
 
 /**
- * subsys_virtual_register - register a subsystem at /sys/devices/virtual/
- * @subsys: virtual subsystem
- * @groups: default attributes for the root device
+ * subsys_भव_रेजिस्टर - रेजिस्टर a subप्रणाली at /sys/devices/भव/
+ * @subsys: भव subप्रणाली
+ * @groups: शेष attributes क्रम the root device
  *
- * All 'virtual' subsystems have a /sys/devices/system/<name> root device
- * with the name of the subystem.  The root device can carry subsystem-wide
- * attributes.  All registered devices are below this single root device.
- * There's no restriction on device naming.  This is for kernel software
- * constructs which need sysfs interface.
+ * All 'virtual' subप्रणालीs have a /sys/devices/प्रणाली/<name> root device
+ * with the name of the subystem.  The root device can carry subप्रणाली-wide
+ * attributes.  All रेजिस्टरed devices are below this single root device.
+ * There's no restriction on device naming.  This is क्रम kernel software
+ * स्थिरructs which need sysfs पूर्णांकerface.
  */
-int subsys_virtual_register(struct bus_type *subsys,
-			    const struct attribute_group **groups)
-{
-	struct kobject *virtual_dir;
+पूर्णांक subsys_भव_रेजिस्टर(काष्ठा bus_type *subsys,
+			    स्थिर काष्ठा attribute_group **groups)
+अणु
+	काष्ठा kobject *भव_dir;
 
-	virtual_dir = virtual_device_parent(NULL);
-	if (!virtual_dir)
-		return -ENOMEM;
+	भव_dir = भव_device_parent(शून्य);
+	अगर (!भव_dir)
+		वापस -ENOMEM;
 
-	return subsys_register(subsys, groups, virtual_dir);
-}
-EXPORT_SYMBOL_GPL(subsys_virtual_register);
+	वापस subsys_रेजिस्टर(subsys, groups, भव_dir);
+पूर्ण
+EXPORT_SYMBOL_GPL(subsys_भव_रेजिस्टर);
 
-int __init buses_init(void)
-{
-	bus_kset = kset_create_and_add("bus", &bus_uevent_ops, NULL);
-	if (!bus_kset)
-		return -ENOMEM;
+पूर्णांक __init buses_init(व्योम)
+अणु
+	bus_kset = kset_create_and_add("bus", &bus_uevent_ops, शून्य);
+	अगर (!bus_kset)
+		वापस -ENOMEM;
 
-	system_kset = kset_create_and_add("system", NULL, &devices_kset->kobj);
-	if (!system_kset)
-		return -ENOMEM;
+	प्रणाली_kset = kset_create_and_add("system", शून्य, &devices_kset->kobj);
+	अगर (!प्रणाली_kset)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

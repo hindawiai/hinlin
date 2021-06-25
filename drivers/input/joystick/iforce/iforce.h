@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (c) 2000-2002 Vojtech Pavlik <vojtech@ucw.cz>
  *  Copyright (c) 2001-2002, 2007 Johann Deneux <johann.deneux@gmail.com>
@@ -6,136 +7,136 @@
  *  USB/RS232 I-Force joysticks and wheels.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/circ_buf.h>
-#include <linux/mutex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/circ_buf.h>
+#समावेश <linux/mutex.h>
 
 /* This module provides arbitrary resource management routines.
  * I use it to manage the device's memory.
  * Despite the name of this module, I am *not* going to access the ioports.
  */
-#include <linux/ioport.h>
+#समावेश <linux/ioport.h>
 
 
-#define IFORCE_MAX_LENGTH	16
+#घोषणा IFORCE_MAX_LENGTH	16
 
-#define IFORCE_EFFECTS_MAX	32
+#घोषणा IFORCE_EFFECTS_MAX	32
 
-/* Each force feedback effect is made of one core effect, which can be
- * associated to at most to effect modifiers
+/* Each क्रमce feedback effect is made of one core effect, which can be
+ * associated to at most to effect modअगरiers
  */
-#define FF_MOD1_IS_USED		0
-#define FF_MOD2_IS_USED		1
-#define FF_CORE_IS_USED		2
-#define FF_CORE_IS_PLAYED	3	/* Effect is currently being played */
-#define FF_CORE_SHOULD_PLAY	4	/* User wants the effect to be played */
-#define FF_CORE_UPDATE		5	/* Effect is being updated */
-#define FF_MODCORE_CNT		6
+#घोषणा FF_MOD1_IS_USED		0
+#घोषणा FF_MOD2_IS_USED		1
+#घोषणा FF_CORE_IS_USED		2
+#घोषणा FF_CORE_IS_PLAYED	3	/* Effect is currently being played */
+#घोषणा FF_CORE_SHOULD_PLAY	4	/* User wants the effect to be played */
+#घोषणा FF_CORE_UPDATE		5	/* Effect is being updated */
+#घोषणा FF_MODCORE_CNT		6
 
-struct iforce_core_effect {
-	/* Information about where modifiers are stored in the device's memory */
-	struct resource mod1_chunk;
-	struct resource mod2_chunk;
-	unsigned long flags[BITS_TO_LONGS(FF_MODCORE_CNT)];
-};
+काष्ठा अगरorce_core_effect अणु
+	/* Inक्रमmation about where modअगरiers are stored in the device's memory */
+	काष्ठा resource mod1_chunk;
+	काष्ठा resource mod2_chunk;
+	अचिन्हित दीर्घ flags[BITS_TO_LONGS(FF_MODCORE_CNT)];
+पूर्ण;
 
-#define FF_CMD_EFFECT		0x010e
-#define FF_CMD_ENVELOPE		0x0208
-#define FF_CMD_MAGNITUDE	0x0303
-#define FF_CMD_PERIOD		0x0407
-#define FF_CMD_CONDITION	0x050a
+#घोषणा FF_CMD_EFFECT		0x010e
+#घोषणा FF_CMD_ENVELOPE		0x0208
+#घोषणा FF_CMD_MAGNITUDE	0x0303
+#घोषणा FF_CMD_PERIOD		0x0407
+#घोषणा FF_CMD_CONDITION	0x050a
 
-#define FF_CMD_AUTOCENTER	0x4002
-#define FF_CMD_PLAY		0x4103
-#define FF_CMD_ENABLE		0x4201
-#define FF_CMD_GAIN		0x4301
+#घोषणा FF_CMD_AUTOCENTER	0x4002
+#घोषणा FF_CMD_PLAY		0x4103
+#घोषणा FF_CMD_ENABLE		0x4201
+#घोषणा FF_CMD_GAIN		0x4301
 
-#define FF_CMD_QUERY		0xff01
+#घोषणा FF_CMD_QUERY		0xff01
 
-/* Buffer for async write */
-#define XMIT_SIZE		256
-#define XMIT_INC(var, n)	(var)+=n; (var)&= XMIT_SIZE -1
-/* iforce::xmit_flags */
-#define IFORCE_XMIT_RUNNING	0
-#define IFORCE_XMIT_AGAIN	1
+/* Buffer क्रम async ग_लिखो */
+#घोषणा XMIT_SIZE		256
+#घोषणा XMIT_INC(var, n)	(var)+=n; (var)&= XMIT_SIZE -1
+/* अगरorce::xmit_flags */
+#घोषणा IFORCE_XMIT_RUNNING	0
+#घोषणा IFORCE_XMIT_AGAIN	1
 
-struct iforce_device {
-	u16 idvendor;
+काष्ठा अगरorce_device अणु
+	u16 idvenकरोr;
 	u16 idproduct;
-	char *name;
-	signed short *btn;
-	signed short *abs;
-	signed short *ff;
-};
+	अक्षर *name;
+	चिन्हित लघु *btn;
+	चिन्हित लघु *असल;
+	चिन्हित लघु *ff;
+पूर्ण;
 
-struct iforce;
+काष्ठा अगरorce;
 
-struct iforce_xport_ops {
-	void (*xmit)(struct iforce *iforce);
-	int (*get_id)(struct iforce *iforce, u8 id,
-		      u8 *response_data, size_t *response_len);
-	int (*start_io)(struct iforce *iforce);
-	void (*stop_io)(struct iforce *iforce);
-};
+काष्ठा अगरorce_xport_ops अणु
+	व्योम (*xmit)(काष्ठा अगरorce *अगरorce);
+	पूर्णांक (*get_id)(काष्ठा अगरorce *अगरorce, u8 id,
+		      u8 *response_data, माप_प्रकार *response_len);
+	पूर्णांक (*start_io)(काष्ठा अगरorce *अगरorce);
+	व्योम (*stop_io)(काष्ठा अगरorce *अगरorce);
+पूर्ण;
 
-struct iforce {
-	struct input_dev *dev;		/* Input device interface */
-	struct iforce_device *type;
-	const struct iforce_xport_ops *xport_ops;
+काष्ठा अगरorce अणु
+	काष्ठा input_dev *dev;		/* Input device पूर्णांकerface */
+	काष्ठा अगरorce_device *type;
+	स्थिर काष्ठा अगरorce_xport_ops *xport_ops;
 
 	spinlock_t xmit_lock;
-	/* Buffer used for asynchronous sending of bytes to the device */
-	struct circ_buf xmit;
-	unsigned char xmit_data[XMIT_SIZE];
-	unsigned long xmit_flags[1];
+	/* Buffer used क्रम asynchronous sending of bytes to the device */
+	काष्ठा circ_buf xmit;
+	अचिन्हित अक्षर xmit_data[XMIT_SIZE];
+	अचिन्हित दीर्घ xmit_flags[1];
 
 					/* Force Feedback */
-	wait_queue_head_t wait;
-	struct resource device_memory;
-	struct iforce_core_effect core_effects[IFORCE_EFFECTS_MAX];
-	struct mutex mem_mutex;
-};
+	रुको_queue_head_t रुको;
+	काष्ठा resource device_memory;
+	काष्ठा अगरorce_core_effect core_effects[IFORCE_EFFECTS_MAX];
+	काष्ठा mutex mem_mutex;
+पूर्ण;
 
-/* Get hi and low bytes of a 16-bits int */
-#define HI(a)	((unsigned char)((a) >> 8))
-#define LO(a)	((unsigned char)((a) & 0xff))
+/* Get hi and low bytes of a 16-bits पूर्णांक */
+#घोषणा HI(a)	((अचिन्हित अक्षर)((a) >> 8))
+#घोषणा LO(a)	((अचिन्हित अक्षर)((a) & 0xff))
 
 /* For many parameters, it seems that 0x80 is a special value that should
- * be avoided. Instead, we replace this value by 0x7f
+ * be aव्योमed. Instead, we replace this value by 0x7f
  */
-#define HIFIX80(a) ((unsigned char)(((a)<0? (a)+255 : (a))>>8))
+#घोषणा HIFIX80(a) ((अचिन्हित अक्षर)(((a)<0? (a)+255 : (a))>>8))
 
-/* Encode a time value */
-#define TIME_SCALE(a)	(a)
+/* Encode a समय value */
+#घोषणा TIME_SCALE(a)	(a)
 
-static inline int iforce_get_id_packet(struct iforce *iforce, u8 id,
-				       u8 *response_data, size_t *response_len)
-{
-	return iforce->xport_ops->get_id(iforce, id,
+अटल अंतरभूत पूर्णांक अगरorce_get_id_packet(काष्ठा अगरorce *अगरorce, u8 id,
+				       u8 *response_data, माप_प्रकार *response_len)
+अणु
+	वापस अगरorce->xport_ops->get_id(अगरorce, id,
 					 response_data, response_len);
-}
+पूर्ण
 
 /* Public functions */
-/* iforce-main.c */
-int iforce_init_device(struct device *parent, u16 bustype,
-		       struct iforce *iforce);
+/* अगरorce-मुख्य.c */
+पूर्णांक अगरorce_init_device(काष्ठा device *parent, u16 bustype,
+		       काष्ठा अगरorce *अगरorce);
 
-/* iforce-packets.c */
-int iforce_control_playback(struct iforce*, u16 id, unsigned int);
-void iforce_process_packet(struct iforce *iforce,
-			   u8 packet_id, u8 *data, size_t len);
-int iforce_send_packet(struct iforce *iforce, u16 cmd, unsigned char* data);
-void iforce_dump_packet(struct iforce *iforce, char *msg, u16 cmd, unsigned char *data);
+/* अगरorce-packets.c */
+पूर्णांक अगरorce_control_playback(काष्ठा अगरorce*, u16 id, अचिन्हित पूर्णांक);
+व्योम अगरorce_process_packet(काष्ठा अगरorce *अगरorce,
+			   u8 packet_id, u8 *data, माप_प्रकार len);
+पूर्णांक अगरorce_send_packet(काष्ठा अगरorce *अगरorce, u16 cmd, अचिन्हित अक्षर* data);
+व्योम अगरorce_dump_packet(काष्ठा अगरorce *अगरorce, अक्षर *msg, u16 cmd, अचिन्हित अक्षर *data);
 
-/* iforce-ff.c */
-int iforce_upload_periodic(struct iforce *, struct ff_effect *, struct ff_effect *);
-int iforce_upload_constant(struct iforce *, struct ff_effect *, struct ff_effect *);
-int iforce_upload_condition(struct iforce *, struct ff_effect *, struct ff_effect *);
+/* अगरorce-ff.c */
+पूर्णांक अगरorce_upload_periodic(काष्ठा अगरorce *, काष्ठा ff_effect *, काष्ठा ff_effect *);
+पूर्णांक अगरorce_upload_स्थिरant(काष्ठा अगरorce *, काष्ठा ff_effect *, काष्ठा ff_effect *);
+पूर्णांक अगरorce_upload_condition(काष्ठा अगरorce *, काष्ठा ff_effect *, काष्ठा ff_effect *);
 
 /* Public variables */
-extern struct serio_driver iforce_serio_drv;
-extern struct usb_driver iforce_usb_driver;
+बाह्य काष्ठा serio_driver अगरorce_serio_drv;
+बाह्य काष्ठा usb_driver अगरorce_usb_driver;

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,105 +24,105 @@
  *          Alon Levy
  */
 
-#include <linux/gfp.h>
-#include <linux/slab.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/slab.h>
 
-#include "qxl_drv.h"
-#include "qxl_object.h"
+#समावेश "qxl_drv.h"
+#समावेश "qxl_object.h"
 
-static int
-qxl_allocate_chunk(struct qxl_device *qdev,
-		   struct qxl_release *release,
-		   struct qxl_drm_image *image,
-		   unsigned int chunk_size)
-{
-	struct qxl_drm_chunk *chunk;
-	int ret;
+अटल पूर्णांक
+qxl_allocate_chunk(काष्ठा qxl_device *qdev,
+		   काष्ठा qxl_release *release,
+		   काष्ठा qxl_drm_image *image,
+		   अचिन्हित पूर्णांक chunk_size)
+अणु
+	काष्ठा qxl_drm_chunk *chunk;
+	पूर्णांक ret;
 
-	chunk = kmalloc(sizeof(struct qxl_drm_chunk), GFP_KERNEL);
-	if (!chunk)
-		return -ENOMEM;
+	chunk = kदो_स्मृति(माप(काष्ठा qxl_drm_chunk), GFP_KERNEL);
+	अगर (!chunk)
+		वापस -ENOMEM;
 
 	ret = qxl_alloc_bo_reserved(qdev, release, chunk_size, &chunk->bo);
-	if (ret) {
-		kfree(chunk);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(chunk);
+		वापस ret;
+	पूर्ण
 
 	list_add_tail(&chunk->head, &image->chunk_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-qxl_image_alloc_objects(struct qxl_device *qdev,
-			struct qxl_release *release,
-			struct qxl_drm_image **image_ptr,
-			int height, int stride)
-{
-	struct qxl_drm_image *image;
-	int ret;
+पूर्णांक
+qxl_image_alloc_objects(काष्ठा qxl_device *qdev,
+			काष्ठा qxl_release *release,
+			काष्ठा qxl_drm_image **image_ptr,
+			पूर्णांक height, पूर्णांक stride)
+अणु
+	काष्ठा qxl_drm_image *image;
+	पूर्णांक ret;
 
-	image = kmalloc(sizeof(struct qxl_drm_image), GFP_KERNEL);
-	if (!image)
-		return -ENOMEM;
+	image = kदो_स्मृति(माप(काष्ठा qxl_drm_image), GFP_KERNEL);
+	अगर (!image)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&image->chunk_list);
 
-	ret = qxl_alloc_bo_reserved(qdev, release, sizeof(struct qxl_image), &image->bo);
-	if (ret) {
-		kfree(image);
-		return ret;
-	}
+	ret = qxl_alloc_bo_reserved(qdev, release, माप(काष्ठा qxl_image), &image->bo);
+	अगर (ret) अणु
+		kमुक्त(image);
+		वापस ret;
+	पूर्ण
 
-	ret = qxl_allocate_chunk(qdev, release, image, sizeof(struct qxl_data_chunk) + stride * height);
-	if (ret) {
+	ret = qxl_allocate_chunk(qdev, release, image, माप(काष्ठा qxl_data_chunk) + stride * height);
+	अगर (ret) अणु
 		qxl_bo_unref(&image->bo);
-		kfree(image);
-		return ret;
-	}
+		kमुक्त(image);
+		वापस ret;
+	पूर्ण
 	*image_ptr = image;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void qxl_image_free_objects(struct qxl_device *qdev, struct qxl_drm_image *dimage)
-{
-	struct qxl_drm_chunk *chunk, *tmp;
+व्योम qxl_image_मुक्त_objects(काष्ठा qxl_device *qdev, काष्ठा qxl_drm_image *dimage)
+अणु
+	काष्ठा qxl_drm_chunk *chunk, *पंचांगp;
 
-	list_for_each_entry_safe(chunk, tmp, &dimage->chunk_list, head) {
+	list_क्रम_each_entry_safe(chunk, पंचांगp, &dimage->chunk_list, head) अणु
 		qxl_bo_unref(&chunk->bo);
-		kfree(chunk);
-	}
+		kमुक्त(chunk);
+	पूर्ण
 
 	qxl_bo_unref(&dimage->bo);
-	kfree(dimage);
-}
+	kमुक्त(dimage);
+पूर्ण
 
-static int
-qxl_image_init_helper(struct qxl_device *qdev,
-		      struct qxl_release *release,
-		      struct qxl_drm_image *dimage,
-		      const uint8_t *data,
-		      int width, int height,
-		      int depth, unsigned int hash,
-		      int stride)
-{
-	struct qxl_drm_chunk *drv_chunk;
-	struct qxl_image *image;
-	struct qxl_data_chunk *chunk;
-	int i;
-	int chunk_stride;
-	int linesize = width * depth / 8;
-	struct qxl_bo *chunk_bo, *image_bo;
-	void *ptr;
+अटल पूर्णांक
+qxl_image_init_helper(काष्ठा qxl_device *qdev,
+		      काष्ठा qxl_release *release,
+		      काष्ठा qxl_drm_image *dimage,
+		      स्थिर uपूर्णांक8_t *data,
+		      पूर्णांक width, पूर्णांक height,
+		      पूर्णांक depth, अचिन्हित पूर्णांक hash,
+		      पूर्णांक stride)
+अणु
+	काष्ठा qxl_drm_chunk *drv_chunk;
+	काष्ठा qxl_image *image;
+	काष्ठा qxl_data_chunk *chunk;
+	पूर्णांक i;
+	पूर्णांक chunk_stride;
+	पूर्णांक linesize = width * depth / 8;
+	काष्ठा qxl_bo *chunk_bo, *image_bo;
+	व्योम *ptr;
 	/* Chunk */
-	/* FIXME: Check integer overflow */
+	/* FIXME: Check पूर्णांकeger overflow */
 	/* TODO: variable number of chunks */
 
-	drv_chunk = list_first_entry(&dimage->chunk_list, struct qxl_drm_chunk, head);
+	drv_chunk = list_first_entry(&dimage->chunk_list, काष्ठा qxl_drm_chunk, head);
 
 	chunk_bo = drv_chunk->bo;
 	chunk_stride = stride; /* TODO: should use linesize, but it renders
-				  wrong (check the bitmaps are sent correctly
+				  wrong (check the biपंचांगaps are sent correctly
 				  first) */
 
 	ptr = qxl_bo_kmap_atomic_page(qdev, chunk_bo, 0);
@@ -131,61 +132,61 @@ qxl_image_init_helper(struct qxl_device *qdev,
 	chunk->next_chunk = 0;
 	qxl_bo_kunmap_atomic_page(qdev, chunk_bo, ptr);
 
-	{
-		void *k_data, *i_data;
-		int remain;
-		int page;
-		int size;
+	अणु
+		व्योम *k_data, *i_data;
+		पूर्णांक reमुख्य;
+		पूर्णांक page;
+		पूर्णांक size;
 
-		if (stride == linesize && chunk_stride == stride) {
-			remain = linesize * height;
+		अगर (stride == linesize && chunk_stride == stride) अणु
+			reमुख्य = linesize * height;
 			page = 0;
-			i_data = (void *)data;
+			i_data = (व्योम *)data;
 
-			while (remain > 0) {
+			जबतक (reमुख्य > 0) अणु
 				ptr = qxl_bo_kmap_atomic_page(qdev, chunk_bo, page << PAGE_SHIFT);
 
-				if (page == 0) {
+				अगर (page == 0) अणु
 					chunk = ptr;
 					k_data = chunk->data;
-					size = PAGE_SIZE - offsetof(struct qxl_data_chunk, data);
-				} else {
+					size = PAGE_SIZE - दुरत्व(काष्ठा qxl_data_chunk, data);
+				पूर्ण अन्यथा अणु
 					k_data = ptr;
 					size = PAGE_SIZE;
-				}
-				size = min(size, remain);
+				पूर्ण
+				size = min(size, reमुख्य);
 
-				memcpy(k_data, i_data, size);
+				स_नकल(k_data, i_data, size);
 
 				qxl_bo_kunmap_atomic_page(qdev, chunk_bo, ptr);
 				i_data += size;
-				remain -= size;
+				reमुख्य -= size;
 				page++;
-			}
-		} else {
-			unsigned int page_base, page_offset, out_offset;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अचिन्हित पूर्णांक page_base, page_offset, out_offset;
 
-			for (i = 0 ; i < height ; ++i) {
-				i_data = (void *)data + i * stride;
-				remain = linesize;
-				out_offset = offsetof(struct qxl_data_chunk, data) + i * chunk_stride;
+			क्रम (i = 0 ; i < height ; ++i) अणु
+				i_data = (व्योम *)data + i * stride;
+				reमुख्य = linesize;
+				out_offset = दुरत्व(काष्ठा qxl_data_chunk, data) + i * chunk_stride;
 
-				while (remain > 0) {
+				जबतक (reमुख्य > 0) अणु
 					page_base = out_offset & PAGE_MASK;
 					page_offset = offset_in_page(out_offset);
-					size = min((int)(PAGE_SIZE - page_offset), remain);
+					size = min((पूर्णांक)(PAGE_SIZE - page_offset), reमुख्य);
 
 					ptr = qxl_bo_kmap_atomic_page(qdev, chunk_bo, page_base);
 					k_data = ptr + page_offset;
-					memcpy(k_data, i_data, size);
+					स_नकल(k_data, i_data, size);
 					qxl_bo_kunmap_atomic_page(qdev, chunk_bo, ptr);
-					remain -= size;
+					reमुख्य -= size;
 					i_data += size;
 					out_offset += size;
-				}
-			}
-		}
-	}
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	qxl_bo_vunmap_locked(chunk_bo);
 
 	image_bo = dimage->bo;
@@ -199,42 +200,42 @@ qxl_image_init_helper(struct qxl_device *qdev,
 	image->descriptor.width = width;
 	image->descriptor.height = height;
 
-	switch (depth) {
-	case 1:
+	चयन (depth) अणु
+	हाल 1:
 		/* TODO: BE? check by arch? */
-		image->u.bitmap.format = SPICE_BITMAP_FMT_1BIT_BE;
-		break;
-	case 24:
-		image->u.bitmap.format = SPICE_BITMAP_FMT_24BIT;
-		break;
-	case 32:
-		image->u.bitmap.format = SPICE_BITMAP_FMT_32BIT;
-		break;
-	default:
+		image->u.biपंचांगap.क्रमmat = SPICE_BITMAP_FMT_1BIT_BE;
+		अवरोध;
+	हाल 24:
+		image->u.biपंचांगap.क्रमmat = SPICE_BITMAP_FMT_24BIT;
+		अवरोध;
+	हाल 32:
+		image->u.biपंचांगap.क्रमmat = SPICE_BITMAP_FMT_32BIT;
+		अवरोध;
+	शेष:
 		DRM_ERROR("unsupported image bit depth\n");
 		qxl_bo_kunmap_atomic_page(qdev, image_bo, ptr);
-		return -EINVAL;
-	}
-	image->u.bitmap.flags = QXL_BITMAP_TOP_DOWN;
-	image->u.bitmap.x = width;
-	image->u.bitmap.y = height;
-	image->u.bitmap.stride = chunk_stride;
-	image->u.bitmap.palette = 0;
-	image->u.bitmap.data = qxl_bo_physical_address(qdev, chunk_bo, 0);
+		वापस -EINVAL;
+	पूर्ण
+	image->u.biपंचांगap.flags = QXL_BITMAP_TOP_DOWN;
+	image->u.biपंचांगap.x = width;
+	image->u.biपंचांगap.y = height;
+	image->u.biपंचांगap.stride = chunk_stride;
+	image->u.biपंचांगap.palette = 0;
+	image->u.biपंचांगap.data = qxl_bo_physical_address(qdev, chunk_bo, 0);
 
 	qxl_bo_kunmap_atomic_page(qdev, image_bo, ptr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int qxl_image_init(struct qxl_device *qdev,
-		     struct qxl_release *release,
-		     struct qxl_drm_image *dimage,
-		     const uint8_t *data,
-		     int x, int y, int width, int height,
-		     int depth, int stride)
-{
+पूर्णांक qxl_image_init(काष्ठा qxl_device *qdev,
+		     काष्ठा qxl_release *release,
+		     काष्ठा qxl_drm_image *dimage,
+		     स्थिर uपूर्णांक8_t *data,
+		     पूर्णांक x, पूर्णांक y, पूर्णांक width, पूर्णांक height,
+		     पूर्णांक depth, पूर्णांक stride)
+अणु
 	data += y * stride + x * (depth / 8);
-	return qxl_image_init_helper(qdev, release, dimage, data,
+	वापस qxl_image_init_helper(qdev, release, dimage, data,
 				       width, height, depth, 0, stride);
-}
+पूर्ण

@@ -1,739 +1,740 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Media entity
  *
  * Copyright (C) 2010 Nokia Corporation
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  */
 
-#ifndef _MEDIA_ENTITY_H
-#define _MEDIA_ENTITY_H
+#अगर_अघोषित _MEDIA_ENTITY_H
+#घोषणा _MEDIA_ENTITY_H
 
-#include <linux/bitmap.h>
-#include <linux/bug.h>
-#include <linux/fwnode.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/media.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/fwnode.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/media.h>
 
-/* Enums used internally at the media controller to represent graphs */
+/* Enums used पूर्णांकernally at the media controller to represent graphs */
 
 /**
- * enum media_gobj_type - type of a graph object
+ * क्रमागत media_gobj_type - type of a graph object
  *
- * @MEDIA_GRAPH_ENTITY:		Identify a media entity
- * @MEDIA_GRAPH_PAD:		Identify a media pad
- * @MEDIA_GRAPH_LINK:		Identify a media link
- * @MEDIA_GRAPH_INTF_DEVNODE:	Identify a media Kernel API interface via
+ * @MEDIA_GRAPH_ENTITY:		Identअगरy a media entity
+ * @MEDIA_GRAPH_PAD:		Identअगरy a media pad
+ * @MEDIA_GRAPH_LINK:		Identअगरy a media link
+ * @MEDIA_GRAPH_INTF_DEVNODE:	Identअगरy a media Kernel API पूर्णांकerface via
  *				a device node
  */
-enum media_gobj_type {
+क्रमागत media_gobj_type अणु
 	MEDIA_GRAPH_ENTITY,
 	MEDIA_GRAPH_PAD,
 	MEDIA_GRAPH_LINK,
 	MEDIA_GRAPH_INTF_DEVNODE,
-};
+पूर्ण;
 
-#define MEDIA_BITS_PER_TYPE		8
-#define MEDIA_BITS_PER_ID		(32 - MEDIA_BITS_PER_TYPE)
-#define MEDIA_ID_MASK			 GENMASK_ULL(MEDIA_BITS_PER_ID - 1, 0)
+#घोषणा MEDIA_BITS_PER_TYPE		8
+#घोषणा MEDIA_BITS_PER_ID		(32 - MEDIA_BITS_PER_TYPE)
+#घोषणा MEDIA_ID_MASK			 GENMASK_ULL(MEDIA_BITS_PER_ID - 1, 0)
 
-/* Structs to represent the objects that belong to a media graph */
+/* Structs to represent the objects that beदीर्घ to a media graph */
 
 /**
- * struct media_gobj - Define a graph object.
+ * काष्ठा media_gobj - Define a graph object.
  *
- * @mdev:	Pointer to the struct &media_device that owns the object
- * @id:		Non-zero object ID identifier. The ID should be unique
+ * @mdev:	Poपूर्णांकer to the काष्ठा &media_device that owns the object
+ * @id:		Non-zero object ID identअगरier. The ID should be unique
  *		inside a media_device, as it is composed by
  *		%MEDIA_BITS_PER_TYPE to store the type plus
  *		%MEDIA_BITS_PER_ID to store the ID
  * @list:	List entry stored in one of the per-type mdev object lists
  *
- * All objects on the media graph should have this struct embedded
+ * All objects on the media graph should have this काष्ठा embedded
  */
-struct media_gobj {
-	struct media_device	*mdev;
+काष्ठा media_gobj अणु
+	काष्ठा media_device	*mdev;
 	u32			id;
-	struct list_head	list;
-};
+	काष्ठा list_head	list;
+पूर्ण;
 
-#define MEDIA_ENTITY_ENUM_MAX_DEPTH	16
+#घोषणा MEDIA_ENTITY_ENUM_MAX_DEPTH	16
 
 /**
- * struct media_entity_enum - An enumeration of media entities.
+ * काष्ठा media_entity_क्रमागत - An क्रमागतeration of media entities.
  *
- * @bmap:	Bit map in which each bit represents one entity at struct
- *		media_entity->internal_idx.
+ * @bmap:	Bit map in which each bit represents one entity at काष्ठा
+ *		media_entity->पूर्णांकernal_idx.
  * @idx_max:	Number of bits in bmap
  */
-struct media_entity_enum {
-	unsigned long *bmap;
-	int idx_max;
-};
+काष्ठा media_entity_क्रमागत अणु
+	अचिन्हित दीर्घ *bmap;
+	पूर्णांक idx_max;
+पूर्ण;
 
 /**
- * struct media_graph - Media graph traversal state
+ * काष्ठा media_graph - Media graph traversal state
  *
- * @stack:		Graph traversal stack; the stack contains information
+ * @stack:		Graph traversal stack; the stack contains inक्रमmation
  *			on the path the media entities to be walked and the
  *			links through which they were reached.
- * @stack.entity:	pointer to &struct media_entity at the graph.
- * @stack.link:		pointer to &struct list_head.
- * @ent_enum:		Visited entities
+ * @stack.entity:	poपूर्णांकer to &काष्ठा media_entity at the graph.
+ * @stack.link:		poपूर्णांकer to &काष्ठा list_head.
+ * @ent_क्रमागत:		Visited entities
  * @top:		The top of the stack
  */
-struct media_graph {
-	struct {
-		struct media_entity *entity;
-		struct list_head *link;
-	} stack[MEDIA_ENTITY_ENUM_MAX_DEPTH];
+काष्ठा media_graph अणु
+	काष्ठा अणु
+		काष्ठा media_entity *entity;
+		काष्ठा list_head *link;
+	पूर्ण stack[MEDIA_ENTITY_ENUM_MAX_DEPTH];
 
-	struct media_entity_enum ent_enum;
-	int top;
-};
+	काष्ठा media_entity_क्रमागत ent_क्रमागत;
+	पूर्णांक top;
+पूर्ण;
 
 /**
- * struct media_pipeline - Media pipeline related information
+ * काष्ठा media_pipeline - Media pipeline related inक्रमmation
  *
  * @streaming_count:	Streaming start count - streaming stop count
  * @graph:		Media graph walk during pipeline start / stop
  */
-struct media_pipeline {
-	int streaming_count;
-	struct media_graph graph;
-};
+काष्ठा media_pipeline अणु
+	पूर्णांक streaming_count;
+	काष्ठा media_graph graph;
+पूर्ण;
 
 /**
- * struct media_link - A link object part of a media graph.
+ * काष्ठा media_link - A link object part of a media graph.
  *
- * @graph_obj:	Embedded structure containing the media object common data
- * @list:	Linked list associated with an entity or an interface that
+ * @graph_obj:	Embedded काष्ठाure containing the media object common data
+ * @list:	Linked list associated with an entity or an पूर्णांकerface that
  *		owns the link.
- * @gobj0:	Part of a union. Used to get the pointer for the first
+ * @gobj0:	Part of a जोड़. Used to get the poपूर्णांकer क्रम the first
  *		graph_object of the link.
- * @source:	Part of a union. Used only if the first object (gobj0) is
- *		a pad. In that case, it represents the source pad.
- * @intf:	Part of a union. Used only if the first object (gobj0) is
- *		an interface.
- * @gobj1:	Part of a union. Used to get the pointer for the second
+ * @source:	Part of a जोड़. Used only अगर the first object (gobj0) is
+ *		a pad. In that हाल, it represents the source pad.
+ * @पूर्णांकf:	Part of a जोड़. Used only अगर the first object (gobj0) is
+ *		an पूर्णांकerface.
+ * @gobj1:	Part of a जोड़. Used to get the poपूर्णांकer क्रम the second
  *		graph_object of the link.
- * @sink:	Part of a union. Used only if the second object (gobj1) is
- *		a pad. In that case, it represents the sink pad.
- * @entity:	Part of a union. Used only if the second object (gobj1) is
+ * @sink:	Part of a जोड़. Used only अगर the second object (gobj1) is
+ *		a pad. In that हाल, it represents the sink pad.
+ * @entity:	Part of a जोड़. Used only अगर the second object (gobj1) is
  *		an entity.
- * @reverse:	Pointer to the link for the reverse direction of a pad to pad
+ * @reverse:	Poपूर्णांकer to the link क्रम the reverse direction of a pad to pad
  *		link.
  * @flags:	Link flags, as defined in uapi/media.h (MEDIA_LNK_FL_*)
- * @is_backlink: Indicate if the link is a backlink.
+ * @is_backlink: Indicate अगर the link is a backlink.
  */
-struct media_link {
-	struct media_gobj graph_obj;
-	struct list_head list;
-	union {
-		struct media_gobj *gobj0;
-		struct media_pad *source;
-		struct media_interface *intf;
-	};
-	union {
-		struct media_gobj *gobj1;
-		struct media_pad *sink;
-		struct media_entity *entity;
-	};
-	struct media_link *reverse;
-	unsigned long flags;
+काष्ठा media_link अणु
+	काष्ठा media_gobj graph_obj;
+	काष्ठा list_head list;
+	जोड़ अणु
+		काष्ठा media_gobj *gobj0;
+		काष्ठा media_pad *source;
+		काष्ठा media_पूर्णांकerface *पूर्णांकf;
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा media_gobj *gobj1;
+		काष्ठा media_pad *sink;
+		काष्ठा media_entity *entity;
+	पूर्ण;
+	काष्ठा media_link *reverse;
+	अचिन्हित दीर्घ flags;
 	bool is_backlink;
-};
+पूर्ण;
 
 /**
- * enum media_pad_signal_type - type of the signal inside a media pad
+ * क्रमागत media_pad_संकेत_type - type of the संकेत inside a media pad
  *
  * @PAD_SIGNAL_DEFAULT:
- *	Default signal. Use this when all inputs or all outputs are
- *	uniquely identified by the pad number.
+ *	Default संकेत. Use this when all inमाला_दो or all outमाला_दो are
+ *	uniquely identअगरied by the pad number.
  * @PAD_SIGNAL_ANALOG:
- *	The pad contains an analog signal. It can be Radio Frequency,
- *	Intermediate Frequency, a baseband signal or sub-carriers.
- *	Tuner inputs, IF-PLL demodulators, composite and s-video signals
+ *	The pad contains an analog संकेत. It can be Radio Frequency,
+ *	Intermediate Frequency, a baseband संकेत or sub-carriers.
+ *	Tuner inमाला_दो, IF-PLL demodulators, composite and s-video संकेतs
  *	should use it.
  * @PAD_SIGNAL_DV:
- *	Contains a digital video signal, with can be a bitstream of samples
- *	taken from an analog TV video source. On such case, it usually
+ *	Contains a digital video संकेत, with can be a bitstream of samples
+ *	taken from an analog TV video source. On such हाल, it usually
  *	contains the VBI data on it.
  * @PAD_SIGNAL_AUDIO:
- *	Contains an Intermediate Frequency analog signal from an audio
- *	sub-carrier or an audio bitstream. IF signals are provided by tuners
+ *	Contains an Intermediate Frequency analog संकेत from an audio
+ *	sub-carrier or an audio bitstream. IF संकेतs are provided by tuners
  *	and consumed by	audio AM/FM decoders. Bitstream audio is provided by
  *	an audio decoder.
  */
-enum media_pad_signal_type {
+क्रमागत media_pad_संकेत_type अणु
 	PAD_SIGNAL_DEFAULT = 0,
 	PAD_SIGNAL_ANALOG,
 	PAD_SIGNAL_DV,
 	PAD_SIGNAL_AUDIO,
-};
+पूर्ण;
 
 /**
- * struct media_pad - A media pad graph object.
+ * काष्ठा media_pad - A media pad graph object.
  *
- * @graph_obj:	Embedded structure containing the media object common data
- * @entity:	Entity this pad belongs to
+ * @graph_obj:	Embedded काष्ठाure containing the media object common data
+ * @entity:	Entity this pad beदीर्घs to
  * @index:	Pad index in the entity pads array, numbered from 0 to n
- * @sig_type:	Type of the signal inside a media pad
+ * @sig_type:	Type of the संकेत inside a media pad
  * @flags:	Pad flags, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		(seek for ``MEDIA_PAD_FL_*``)
+ *		(seek क्रम ``MEDIA_PAD_FL_*``)
  */
-struct media_pad {
-	struct media_gobj graph_obj;	/* must be first field in struct */
-	struct media_entity *entity;
+काष्ठा media_pad अणु
+	काष्ठा media_gobj graph_obj;	/* must be first field in काष्ठा */
+	काष्ठा media_entity *entity;
 	u16 index;
-	enum media_pad_signal_type sig_type;
-	unsigned long flags;
-};
+	क्रमागत media_pad_संकेत_type sig_type;
+	अचिन्हित दीर्घ flags;
+पूर्ण;
 
 /**
- * struct media_entity_operations - Media entity operations
- * @get_fwnode_pad:	Return the pad number based on a fwnode endpoint or
+ * काष्ठा media_entity_operations - Media entity operations
+ * @get_fwnode_pad:	Return the pad number based on a fwnode endpoपूर्णांक or
  *			a negative value on error. This operation can be used
  *			to map a fwnode to a media pad number. Optional.
- * @link_setup:		Notify the entity of link changes. The operation can
- *			return an error, in which case link setup will be
+ * @link_setup:		Notअगरy the entity of link changes. The operation can
+ *			वापस an error, in which हाल link setup will be
  *			cancelled. Optional.
- * @link_validate:	Return whether a link is valid from the entity point of
+ * @link_validate:	Return whether a link is valid from the entity poपूर्णांक of
  *			view. The media_pipeline_start() function
  *			validates all links by calling this operation. Optional.
  *
  * .. note::
  *
- *    Those these callbacks are called with struct &media_device.graph_mutex
+ *    Those these callbacks are called with काष्ठा &media_device.graph_mutex
  *    mutex held.
  */
-struct media_entity_operations {
-	int (*get_fwnode_pad)(struct media_entity *entity,
-			      struct fwnode_endpoint *endpoint);
-	int (*link_setup)(struct media_entity *entity,
-			  const struct media_pad *local,
-			  const struct media_pad *remote, u32 flags);
-	int (*link_validate)(struct media_link *link);
-};
+काष्ठा media_entity_operations अणु
+	पूर्णांक (*get_fwnode_pad)(काष्ठा media_entity *entity,
+			      काष्ठा fwnode_endpoपूर्णांक *endpoपूर्णांक);
+	पूर्णांक (*link_setup)(काष्ठा media_entity *entity,
+			  स्थिर काष्ठा media_pad *local,
+			  स्थिर काष्ठा media_pad *remote, u32 flags);
+	पूर्णांक (*link_validate)(काष्ठा media_link *link);
+पूर्ण;
 
 /**
- * enum media_entity_type - Media entity type
+ * क्रमागत media_entity_type - Media entity type
  *
  * @MEDIA_ENTITY_TYPE_BASE:
- *	The entity isn't embedded in another subsystem structure.
+ *	The entity isn't embedded in another subप्रणाली काष्ठाure.
  * @MEDIA_ENTITY_TYPE_VIDEO_DEVICE:
- *	The entity is embedded in a struct video_device instance.
+ *	The entity is embedded in a काष्ठा video_device instance.
  * @MEDIA_ENTITY_TYPE_V4L2_SUBDEV:
- *	The entity is embedded in a struct v4l2_subdev instance.
+ *	The entity is embedded in a काष्ठा v4l2_subdev instance.
  *
  * Media entity objects are often not instantiated directly, but the media
- * entity structure is inherited by (through embedding) other subsystem-specific
- * structures. The media entity type identifies the type of the subclass
- * structure that implements a media entity instance.
+ * entity काष्ठाure is inherited by (through embedding) other subप्रणाली-specअगरic
+ * काष्ठाures. The media entity type identअगरies the type of the subclass
+ * काष्ठाure that implements a media entity instance.
  *
- * This allows runtime type identification of media entities and safe casting to
- * the correct object type. For instance, a media entity structure instance
- * embedded in a v4l2_subdev structure instance will have the type
+ * This allows runसमय type identअगरication of media entities and safe casting to
+ * the correct object type. For instance, a media entity काष्ठाure instance
+ * embedded in a v4l2_subdev काष्ठाure instance will have the type
  * %MEDIA_ENTITY_TYPE_V4L2_SUBDEV and can safely be cast to a &v4l2_subdev
- * structure using the container_of() macro.
+ * काष्ठाure using the container_of() macro.
  */
-enum media_entity_type {
+क्रमागत media_entity_type अणु
 	MEDIA_ENTITY_TYPE_BASE,
 	MEDIA_ENTITY_TYPE_VIDEO_DEVICE,
 	MEDIA_ENTITY_TYPE_V4L2_SUBDEV,
-};
+पूर्ण;
 
 /**
- * struct media_entity - A media entity graph object.
+ * काष्ठा media_entity - A media entity graph object.
  *
- * @graph_obj:	Embedded structure containing the media object common data.
+ * @graph_obj:	Embedded काष्ठाure containing the media object common data.
  * @name:	Entity name.
  * @obj_type:	Type of the object that implements the media_entity.
- * @function:	Entity main function, as defined in
+ * @function:	Entity मुख्य function, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		(seek for ``MEDIA_ENT_F_*``)
+ *		(seek क्रम ``MEDIA_ENT_F_*``)
  * @flags:	Entity flags, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		(seek for ``MEDIA_ENT_FL_*``)
+ *		(seek क्रम ``MEDIA_ENT_FL_*``)
  * @num_pads:	Number of sink and source pads.
- * @num_links:	Total number of links, forward and back, enabled and disabled.
+ * @num_links:	Total number of links, क्रमward and back, enabled and disabled.
  * @num_backlinks: Number of backlinks
- * @internal_idx: An unique internal entity specific number. The numbers are
- *		re-used if entities are unregistered or registered again.
+ * @पूर्णांकernal_idx: An unique पूर्णांकernal entity specअगरic number. The numbers are
+ *		re-used अगर entities are unरेजिस्टरed or रेजिस्टरed again.
  * @pads:	Pads array with the size defined by @num_pads.
  * @links:	List of data links.
  * @ops:	Entity operations.
- * @stream_count: Stream count for the entity.
- * @use_count:	Use count for the entity.
- * @pipe:	Pipeline this entity belongs to.
- * @info:	Union with devnode information.  Kept just for backward
+ * @stream_count: Stream count क्रम the entity.
+ * @use_count:	Use count क्रम the entity.
+ * @pipe:	Pipeline this entity beदीर्घs to.
+ * @info:	Union with devnode inक्रमmation.  Kept just क्रम backward
  *		compatibility.
  * @info.dev:	Contains device major and minor info.
- * @info.dev.major: device node major, if the device is a devnode.
- * @info.dev.minor: device node minor, if the device is a devnode.
- * @major:	Devnode major number (zero if not applicable). Kept just
- *		for backward compatibility.
- * @minor:	Devnode minor number (zero if not applicable). Kept just
- *		for backward compatibility.
+ * @info.dev.major: device node major, अगर the device is a devnode.
+ * @info.dev.minor: device node minor, अगर the device is a devnode.
+ * @major:	Devnode major number (zero अगर not applicable). Kept just
+ *		क्रम backward compatibility.
+ * @minor:	Devnode minor number (zero अगर not applicable). Kept just
+ *		क्रम backward compatibility.
  *
  * .. note::
  *
  *    @stream_count and @use_count reference counts must never be
- *    negative, but are signed integers on purpose: a simple ``WARN_ON(<0)``
+ *    negative, but are चिन्हित पूर्णांकegers on purpose: a simple ``WARN_ON(<0)``
  *    check can be used to detect reference count bugs that would make them
  *    negative.
  */
-struct media_entity {
-	struct media_gobj graph_obj;	/* must be first field in struct */
-	const char *name;
-	enum media_entity_type obj_type;
+काष्ठा media_entity अणु
+	काष्ठा media_gobj graph_obj;	/* must be first field in काष्ठा */
+	स्थिर अक्षर *name;
+	क्रमागत media_entity_type obj_type;
 	u32 function;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	u16 num_pads;
 	u16 num_links;
 	u16 num_backlinks;
-	int internal_idx;
+	पूर्णांक पूर्णांकernal_idx;
 
-	struct media_pad *pads;
-	struct list_head links;
+	काष्ठा media_pad *pads;
+	काष्ठा list_head links;
 
-	const struct media_entity_operations *ops;
+	स्थिर काष्ठा media_entity_operations *ops;
 
-	int stream_count;
-	int use_count;
+	पूर्णांक stream_count;
+	पूर्णांक use_count;
 
-	struct media_pipeline *pipe;
+	काष्ठा media_pipeline *pipe;
 
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			u32 major;
 			u32 minor;
-		} dev;
-	} info;
-};
+		पूर्ण dev;
+	पूर्ण info;
+पूर्ण;
 
 /**
- * struct media_interface - A media interface graph object.
+ * काष्ठा media_पूर्णांकerface - A media पूर्णांकerface graph object.
  *
  * @graph_obj:		embedded graph object
- * @links:		List of links pointing to graph entities
- * @type:		Type of the interface as defined in
+ * @links:		List of links poपूर्णांकing to graph entities
+ * @type:		Type of the पूर्णांकerface as defined in
  *			:ref:`include/uapi/linux/media.h <media_header>`
- *			(seek for ``MEDIA_INTF_T_*``)
+ *			(seek क्रम ``MEDIA_INTF_T_*``)
  * @flags:		Interface flags as defined in
  *			:ref:`include/uapi/linux/media.h <media_header>`
- *			(seek for ``MEDIA_INTF_FL_*``)
+ *			(seek क्रम ``MEDIA_INTF_FL_*``)
  *
  * .. note::
  *
- *    Currently, no flags for &media_interface is defined.
+ *    Currently, no flags क्रम &media_पूर्णांकerface is defined.
  */
-struct media_interface {
-	struct media_gobj		graph_obj;
-	struct list_head		links;
+काष्ठा media_पूर्णांकerface अणु
+	काष्ठा media_gobj		graph_obj;
+	काष्ठा list_head		links;
 	u32				type;
 	u32				flags;
-};
+पूर्ण;
 
 /**
- * struct media_intf_devnode - A media interface via a device node.
+ * काष्ठा media_पूर्णांकf_devnode - A media पूर्णांकerface via a device node.
  *
- * @intf:	embedded interface object
+ * @पूर्णांकf:	embedded पूर्णांकerface object
  * @major:	Major number of a device node
  * @minor:	Minor number of a device node
  */
-struct media_intf_devnode {
-	struct media_interface		intf;
+काष्ठा media_पूर्णांकf_devnode अणु
+	काष्ठा media_पूर्णांकerface		पूर्णांकf;
 
-	/* Should match the fields at media_v2_intf_devnode */
+	/* Should match the fields at media_v2_पूर्णांकf_devnode */
 	u32				major;
 	u32				minor;
-};
+पूर्ण;
 
 /**
- * media_entity_id() - return the media entity graph object id
+ * media_entity_id() - वापस the media entity graph object id
  *
- * @entity:	pointer to &media_entity
+ * @entity:	poपूर्णांकer to &media_entity
  */
-static inline u32 media_entity_id(struct media_entity *entity)
-{
-	return entity->graph_obj.id;
-}
+अटल अंतरभूत u32 media_entity_id(काष्ठा media_entity *entity)
+अणु
+	वापस entity->graph_obj.id;
+पूर्ण
 
 /**
- * media_type() - return the media object type
+ * media_type() - वापस the media object type
  *
- * @gobj:	Pointer to the struct &media_gobj graph object
+ * @gobj:	Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-static inline enum media_gobj_type media_type(struct media_gobj *gobj)
-{
-	return gobj->id >> MEDIA_BITS_PER_ID;
-}
+अटल अंतरभूत क्रमागत media_gobj_type media_type(काष्ठा media_gobj *gobj)
+अणु
+	वापस gobj->id >> MEDIA_BITS_PER_ID;
+पूर्ण
 
 /**
- * media_id() - return the media object ID
+ * media_id() - वापस the media object ID
  *
- * @gobj:	Pointer to the struct &media_gobj graph object
+ * @gobj:	Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-static inline u32 media_id(struct media_gobj *gobj)
-{
-	return gobj->id & MEDIA_ID_MASK;
-}
+अटल अंतरभूत u32 media_id(काष्ठा media_gobj *gobj)
+अणु
+	वापस gobj->id & MEDIA_ID_MASK;
+पूर्ण
 
 /**
  * media_gobj_gen_id() - encapsulates type and ID on at the object ID
  *
- * @type:	object type as define at enum &media_gobj_type.
- * @local_id:	next ID, from struct &media_device.id.
+ * @type:	object type as define at क्रमागत &media_gobj_type.
+ * @local_id:	next ID, from काष्ठा &media_device.id.
  */
-static inline u32 media_gobj_gen_id(enum media_gobj_type type, u64 local_id)
-{
+अटल अंतरभूत u32 media_gobj_gen_id(क्रमागत media_gobj_type type, u64 local_id)
+अणु
 	u32 id;
 
 	id = type << MEDIA_BITS_PER_ID;
 	id |= local_id & MEDIA_ID_MASK;
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
 /**
- * is_media_entity_v4l2_video_device() - Check if the entity is a video_device
- * @entity:	pointer to entity
+ * is_media_entity_v4l2_video_device() - Check अगर the entity is a video_device
+ * @entity:	poपूर्णांकer to entity
  *
- * Return: %true if the entity is an instance of a video_device object and can
- * safely be cast to a struct video_device using the container_of() macro, or
+ * Return: %true अगर the entity is an instance of a video_device object and can
+ * safely be cast to a काष्ठा video_device using the container_of() macro, or
  * %false otherwise.
  */
-static inline bool is_media_entity_v4l2_video_device(struct media_entity *entity)
-{
-	return entity && entity->obj_type == MEDIA_ENTITY_TYPE_VIDEO_DEVICE;
-}
+अटल अंतरभूत bool is_media_entity_v4l2_video_device(काष्ठा media_entity *entity)
+अणु
+	वापस entity && entity->obj_type == MEDIA_ENTITY_TYPE_VIDEO_DEVICE;
+पूर्ण
 
 /**
- * is_media_entity_v4l2_subdev() - Check if the entity is a v4l2_subdev
- * @entity:	pointer to entity
+ * is_media_entity_v4l2_subdev() - Check अगर the entity is a v4l2_subdev
+ * @entity:	poपूर्णांकer to entity
  *
- * Return: %true if the entity is an instance of a &v4l2_subdev object and can
- * safely be cast to a struct &v4l2_subdev using the container_of() macro, or
+ * Return: %true अगर the entity is an instance of a &v4l2_subdev object and can
+ * safely be cast to a काष्ठा &v4l2_subdev using the container_of() macro, or
  * %false otherwise.
  */
-static inline bool is_media_entity_v4l2_subdev(struct media_entity *entity)
-{
-	return entity && entity->obj_type == MEDIA_ENTITY_TYPE_V4L2_SUBDEV;
-}
+अटल अंतरभूत bool is_media_entity_v4l2_subdev(काष्ठा media_entity *entity)
+अणु
+	वापस entity && entity->obj_type == MEDIA_ENTITY_TYPE_V4L2_SUBDEV;
+पूर्ण
 
 /**
- * __media_entity_enum_init - Initialise an entity enumeration
+ * __media_entity_क्रमागत_init - Initialise an entity क्रमागतeration
  *
- * @ent_enum: Entity enumeration to be initialised
- * @idx_max: Maximum number of entities in the enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration to be initialised
+ * @idx_max: Maximum number of entities in the क्रमागतeration
  *
  * Return: Returns zero on success or a negative error code.
  */
-__must_check int __media_entity_enum_init(struct media_entity_enum *ent_enum,
-					  int idx_max);
+__must_check पूर्णांक __media_entity_क्रमागत_init(काष्ठा media_entity_क्रमागत *ent_क्रमागत,
+					  पूर्णांक idx_max);
 
 /**
- * media_entity_enum_cleanup - Release resources of an entity enumeration
+ * media_entity_क्रमागत_cleanup - Release resources of an entity क्रमागतeration
  *
- * @ent_enum: Entity enumeration to be released
+ * @ent_क्रमागत: Entity क्रमागतeration to be released
  */
-void media_entity_enum_cleanup(struct media_entity_enum *ent_enum);
+व्योम media_entity_क्रमागत_cleanup(काष्ठा media_entity_क्रमागत *ent_क्रमागत);
 
 /**
- * media_entity_enum_zero - Clear the entire enum
+ * media_entity_क्रमागत_zero - Clear the entire क्रमागत
  *
- * @ent_enum: Entity enumeration to be cleared
+ * @ent_क्रमागत: Entity क्रमागतeration to be cleared
  */
-static inline void media_entity_enum_zero(struct media_entity_enum *ent_enum)
-{
-	bitmap_zero(ent_enum->bmap, ent_enum->idx_max);
-}
+अटल अंतरभूत व्योम media_entity_क्रमागत_zero(काष्ठा media_entity_क्रमागत *ent_क्रमागत)
+अणु
+	biपंचांगap_zero(ent_क्रमागत->bmap, ent_क्रमागत->idx_max);
+पूर्ण
 
 /**
- * media_entity_enum_set - Mark a single entity in the enum
+ * media_entity_क्रमागत_set - Mark a single entity in the क्रमागत
  *
- * @ent_enum: Entity enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration
  * @entity: Entity to be marked
  */
-static inline void media_entity_enum_set(struct media_entity_enum *ent_enum,
-					 struct media_entity *entity)
-{
-	if (WARN_ON(entity->internal_idx >= ent_enum->idx_max))
-		return;
+अटल अंतरभूत व्योम media_entity_क्रमागत_set(काष्ठा media_entity_क्रमागत *ent_क्रमागत,
+					 काष्ठा media_entity *entity)
+अणु
+	अगर (WARN_ON(entity->पूर्णांकernal_idx >= ent_क्रमागत->idx_max))
+		वापस;
 
-	__set_bit(entity->internal_idx, ent_enum->bmap);
-}
+	__set_bit(entity->पूर्णांकernal_idx, ent_क्रमागत->bmap);
+पूर्ण
 
 /**
- * media_entity_enum_clear - Unmark a single entity in the enum
+ * media_entity_क्रमागत_clear - Unmark a single entity in the क्रमागत
  *
- * @ent_enum: Entity enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration
  * @entity: Entity to be unmarked
  */
-static inline void media_entity_enum_clear(struct media_entity_enum *ent_enum,
-					   struct media_entity *entity)
-{
-	if (WARN_ON(entity->internal_idx >= ent_enum->idx_max))
-		return;
+अटल अंतरभूत व्योम media_entity_क्रमागत_clear(काष्ठा media_entity_क्रमागत *ent_क्रमागत,
+					   काष्ठा media_entity *entity)
+अणु
+	अगर (WARN_ON(entity->पूर्णांकernal_idx >= ent_क्रमागत->idx_max))
+		वापस;
 
-	__clear_bit(entity->internal_idx, ent_enum->bmap);
-}
+	__clear_bit(entity->पूर्णांकernal_idx, ent_क्रमागत->bmap);
+पूर्ण
 
 /**
- * media_entity_enum_test - Test whether the entity is marked
+ * media_entity_क्रमागत_test - Test whether the entity is marked
  *
- * @ent_enum: Entity enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration
  * @entity: Entity to be tested
  *
- * Returns %true if the entity was marked.
+ * Returns %true अगर the entity was marked.
  */
-static inline bool media_entity_enum_test(struct media_entity_enum *ent_enum,
-					  struct media_entity *entity)
-{
-	if (WARN_ON(entity->internal_idx >= ent_enum->idx_max))
-		return true;
+अटल अंतरभूत bool media_entity_क्रमागत_test(काष्ठा media_entity_क्रमागत *ent_क्रमागत,
+					  काष्ठा media_entity *entity)
+अणु
+	अगर (WARN_ON(entity->पूर्णांकernal_idx >= ent_क्रमागत->idx_max))
+		वापस true;
 
-	return test_bit(entity->internal_idx, ent_enum->bmap);
-}
+	वापस test_bit(entity->पूर्णांकernal_idx, ent_क्रमागत->bmap);
+पूर्ण
 
 /**
- * media_entity_enum_test_and_set - Test whether the entity is marked,
+ * media_entity_क्रमागत_test_and_set - Test whether the entity is marked,
  *	and mark it
  *
- * @ent_enum: Entity enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration
  * @entity: Entity to be tested
  *
- * Returns %true if the entity was marked, and mark it before doing so.
+ * Returns %true अगर the entity was marked, and mark it beक्रमe करोing so.
  */
-static inline bool
-media_entity_enum_test_and_set(struct media_entity_enum *ent_enum,
-			       struct media_entity *entity)
-{
-	if (WARN_ON(entity->internal_idx >= ent_enum->idx_max))
-		return true;
+अटल अंतरभूत bool
+media_entity_क्रमागत_test_and_set(काष्ठा media_entity_क्रमागत *ent_क्रमागत,
+			       काष्ठा media_entity *entity)
+अणु
+	अगर (WARN_ON(entity->पूर्णांकernal_idx >= ent_क्रमागत->idx_max))
+		वापस true;
 
-	return __test_and_set_bit(entity->internal_idx, ent_enum->bmap);
-}
+	वापस __test_and_set_bit(entity->पूर्णांकernal_idx, ent_क्रमागत->bmap);
+पूर्ण
 
 /**
- * media_entity_enum_empty - Test whether the entire enum is empty
+ * media_entity_क्रमागत_empty - Test whether the entire क्रमागत is empty
  *
- * @ent_enum: Entity enumeration
+ * @ent_क्रमागत: Entity क्रमागतeration
  *
- * Return: %true if the entity was empty.
+ * Return: %true अगर the entity was empty.
  */
-static inline bool media_entity_enum_empty(struct media_entity_enum *ent_enum)
-{
-	return bitmap_empty(ent_enum->bmap, ent_enum->idx_max);
-}
+अटल अंतरभूत bool media_entity_क्रमागत_empty(काष्ठा media_entity_क्रमागत *ent_क्रमागत)
+अणु
+	वापस biपंचांगap_empty(ent_क्रमागत->bmap, ent_क्रमागत->idx_max);
+पूर्ण
 
 /**
- * media_entity_enum_intersects - Test whether two enums intersect
+ * media_entity_क्रमागत_पूर्णांकersects - Test whether two क्रमागतs पूर्णांकersect
  *
- * @ent_enum1: First entity enumeration
- * @ent_enum2: Second entity enumeration
+ * @ent_क्रमागत1: First entity क्रमागतeration
+ * @ent_क्रमागत2: Second entity क्रमागतeration
  *
- * Return: %true if entity enumerations @ent_enum1 and @ent_enum2 intersect,
+ * Return: %true अगर entity क्रमागतerations @ent_क्रमागत1 and @ent_क्रमागत2 पूर्णांकersect,
  * otherwise %false.
  */
-static inline bool media_entity_enum_intersects(
-	struct media_entity_enum *ent_enum1,
-	struct media_entity_enum *ent_enum2)
-{
-	WARN_ON(ent_enum1->idx_max != ent_enum2->idx_max);
+अटल अंतरभूत bool media_entity_क्रमागत_पूर्णांकersects(
+	काष्ठा media_entity_क्रमागत *ent_क्रमागत1,
+	काष्ठा media_entity_क्रमागत *ent_क्रमागत2)
+अणु
+	WARN_ON(ent_क्रमागत1->idx_max != ent_क्रमागत2->idx_max);
 
-	return bitmap_intersects(ent_enum1->bmap, ent_enum2->bmap,
-				 min(ent_enum1->idx_max, ent_enum2->idx_max));
-}
+	वापस biपंचांगap_पूर्णांकersects(ent_क्रमागत1->bmap, ent_क्रमागत2->bmap,
+				 min(ent_क्रमागत1->idx_max, ent_क्रमागत2->idx_max));
+पूर्ण
 
 /**
- * gobj_to_entity - returns the struct &media_entity pointer from the
+ * gobj_to_entity - वापसs the काष्ठा &media_entity poपूर्णांकer from the
  *	@gobj contained on it.
  *
- * @gobj: Pointer to the struct &media_gobj graph object
+ * @gobj: Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-#define gobj_to_entity(gobj) \
-		container_of(gobj, struct media_entity, graph_obj)
+#घोषणा gobj_to_entity(gobj) \
+		container_of(gobj, काष्ठा media_entity, graph_obj)
 
 /**
- * gobj_to_pad - returns the struct &media_pad pointer from the
+ * gobj_to_pad - वापसs the काष्ठा &media_pad poपूर्णांकer from the
  *	@gobj contained on it.
  *
- * @gobj: Pointer to the struct &media_gobj graph object
+ * @gobj: Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-#define gobj_to_pad(gobj) \
-		container_of(gobj, struct media_pad, graph_obj)
+#घोषणा gobj_to_pad(gobj) \
+		container_of(gobj, काष्ठा media_pad, graph_obj)
 
 /**
- * gobj_to_link - returns the struct &media_link pointer from the
+ * gobj_to_link - वापसs the काष्ठा &media_link poपूर्णांकer from the
  *	@gobj contained on it.
  *
- * @gobj: Pointer to the struct &media_gobj graph object
+ * @gobj: Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-#define gobj_to_link(gobj) \
-		container_of(gobj, struct media_link, graph_obj)
+#घोषणा gobj_to_link(gobj) \
+		container_of(gobj, काष्ठा media_link, graph_obj)
 
 /**
- * gobj_to_intf - returns the struct &media_interface pointer from the
+ * gobj_to_पूर्णांकf - वापसs the काष्ठा &media_पूर्णांकerface poपूर्णांकer from the
  *	@gobj contained on it.
  *
- * @gobj: Pointer to the struct &media_gobj graph object
+ * @gobj: Poपूर्णांकer to the काष्ठा &media_gobj graph object
  */
-#define gobj_to_intf(gobj) \
-		container_of(gobj, struct media_interface, graph_obj)
+#घोषणा gobj_to_पूर्णांकf(gobj) \
+		container_of(gobj, काष्ठा media_पूर्णांकerface, graph_obj)
 
 /**
- * intf_to_devnode - returns the struct media_intf_devnode pointer from the
- *	@intf contained on it.
+ * पूर्णांकf_to_devnode - वापसs the काष्ठा media_पूर्णांकf_devnode poपूर्णांकer from the
+ *	@पूर्णांकf contained on it.
  *
- * @intf: Pointer to struct &media_intf_devnode
+ * @पूर्णांकf: Poपूर्णांकer to काष्ठा &media_पूर्णांकf_devnode
  */
-#define intf_to_devnode(intf) \
-		container_of(intf, struct media_intf_devnode, intf)
+#घोषणा पूर्णांकf_to_devnode(पूर्णांकf) \
+		container_of(पूर्णांकf, काष्ठा media_पूर्णांकf_devnode, पूर्णांकf)
 
 /**
  *  media_gobj_create - Initialize a graph object
  *
- * @mdev:	Pointer to the &media_device that contains the object
+ * @mdev:	Poपूर्णांकer to the &media_device that contains the object
  * @type:	Type of the object
- * @gobj:	Pointer to the struct &media_gobj graph object
+ * @gobj:	Poपूर्णांकer to the काष्ठा &media_gobj graph object
  *
- * This routine initializes the embedded struct &media_gobj inside a
- * media graph object. It is called automatically if ``media_*_create``
- * function calls are used. However, if the object (entity, link, pad,
- * interface) is embedded on some other object, this function should be
- * called before registering the object at the media controller.
+ * This routine initializes the embedded काष्ठा &media_gobj inside a
+ * media graph object. It is called स्वतःmatically अगर ``media_*_create``
+ * function calls are used. However, अगर the object (entity, link, pad,
+ * पूर्णांकerface) is embedded on some other object, this function should be
+ * called beक्रमe रेजिस्टरing the object at the media controller.
  */
-void media_gobj_create(struct media_device *mdev,
-		    enum media_gobj_type type,
-		    struct media_gobj *gobj);
+व्योम media_gobj_create(काष्ठा media_device *mdev,
+		    क्रमागत media_gobj_type type,
+		    काष्ठा media_gobj *gobj);
 
 /**
  *  media_gobj_destroy - Stop using a graph object on a media device
  *
- * @gobj:	Pointer to the struct &media_gobj graph object
+ * @gobj:	Poपूर्णांकer to the काष्ठा &media_gobj graph object
  *
- * This should be called by all routines like media_device_unregister()
- * that remove/destroy media graph objects.
+ * This should be called by all routines like media_device_unरेजिस्टर()
+ * that हटाओ/destroy media graph objects.
  */
-void media_gobj_destroy(struct media_gobj *gobj);
+व्योम media_gobj_destroy(काष्ठा media_gobj *gobj);
 
 /**
  * media_entity_pads_init() - Initialize the entity pads
  *
- * @entity:	entity where the pads belong
+ * @entity:	entity where the pads beदीर्घ
  * @num_pads:	total number of sink and source pads
  * @pads:	Array of @num_pads pads.
  *
  * The pads array is managed by the entity driver and passed to
- * media_entity_pads_init() where its pointer will be stored in the
- * &media_entity structure.
+ * media_entity_pads_init() where its poपूर्णांकer will be stored in the
+ * &media_entity काष्ठाure.
  *
  * If no pads are needed, drivers could either directly fill
- * &media_entity->num_pads with 0 and &media_entity->pads with %NULL or call
- * this function that will do the same.
+ * &media_entity->num_pads with 0 and &media_entity->pads with %शून्य or call
+ * this function that will करो the same.
  *
  * As the number of pads is known in advance, the pads array is not allocated
  * dynamically but is managed by the entity driver. Most drivers will embed the
- * pads array in a driver-specific structure, avoiding dynamic allocation.
+ * pads array in a driver-specअगरic काष्ठाure, aव्योमing dynamic allocation.
  *
- * Drivers must set the direction of every pad in the pads array before calling
+ * Drivers must set the direction of every pad in the pads array beक्रमe calling
  * media_entity_pads_init(). The function will initialize the other pads fields.
  */
-int media_entity_pads_init(struct media_entity *entity, u16 num_pads,
-		      struct media_pad *pads);
+पूर्णांक media_entity_pads_init(काष्ठा media_entity *entity, u16 num_pads,
+		      काष्ठा media_pad *pads);
 
 /**
- * media_entity_cleanup() - free resources associated with an entity
+ * media_entity_cleanup() - मुक्त resources associated with an entity
  *
- * @entity:	entity where the pads belong
+ * @entity:	entity where the pads beदीर्घ
  *
- * This function must be called during the cleanup phase after unregistering
- * the entity (currently, it does nothing).
+ * This function must be called during the cleanup phase after unरेजिस्टरing
+ * the entity (currently, it करोes nothing).
  */
-#if IS_ENABLED(CONFIG_MEDIA_CONTROLLER)
-static inline void media_entity_cleanup(struct media_entity *entity) {}
-#else
-#define media_entity_cleanup(entity) do { } while (false)
-#endif
+#अगर IS_ENABLED(CONFIG_MEDIA_CONTROLLER)
+अटल अंतरभूत व्योम media_entity_cleanup(काष्ठा media_entity *entity) अणुपूर्ण
+#अन्यथा
+#घोषणा media_entity_cleanup(entity) करो अणु पूर्ण जबतक (false)
+#पूर्ण_अगर
 
 /**
  * media_get_pad_index() - retrieves a pad index from an entity
  *
- * @entity:	entity where the pads belong
- * @is_sink:	true if the pad is a sink, false if it is a source
- * @sig_type:	type of signal of the pad to be search
+ * @entity:	entity where the pads beदीर्घ
+ * @is_sink:	true अगर the pad is a sink, false अगर it is a source
+ * @sig_type:	type of संकेत of the pad to be search
  *
  * This helper function finds the first pad index inside an entity that
  * satisfies both @is_sink and @sig_type conditions.
  *
  * Return:
  *
- * On success, return the pad number. If the pad was not found or the media
- * entity is a NULL pointer, return -EINVAL.
+ * On success, वापस the pad number. If the pad was not found or the media
+ * entity is a शून्य poपूर्णांकer, वापस -EINVAL.
  */
-int media_get_pad_index(struct media_entity *entity, bool is_sink,
-			enum media_pad_signal_type sig_type);
+पूर्णांक media_get_pad_index(काष्ठा media_entity *entity, bool is_sink,
+			क्रमागत media_pad_संकेत_type sig_type);
 
 /**
  * media_create_pad_link() - creates a link between two entities.
  *
- * @source:	pointer to &media_entity of the source pad.
+ * @source:	poपूर्णांकer to &media_entity of the source pad.
  * @source_pad:	number of the source pad in the pads array
- * @sink:	pointer to &media_entity of the sink pad.
+ * @sink:	poपूर्णांकer to &media_entity of the sink pad.
  * @sink_pad:	number of the sink pad in the pads array.
  * @flags:	Link flags, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		( seek for ``MEDIA_LNK_FL_*``)
+ *		( seek क्रम ``MEDIA_LNK_FL_*``)
  *
- * Valid values for flags:
+ * Valid values क्रम flags:
  *
  * %MEDIA_LNK_FL_ENABLED
  *   Indicates that the link is enabled and can be used to transfer media data.
  *   When two or more links target a sink pad, only one of them can be
- *   enabled at a time.
+ *   enabled at a समय.
  *
  * %MEDIA_LNK_FL_IMMUTABLE
- *   Indicates that the link enabled state can't be modified at runtime. If
+ *   Indicates that the link enabled state can't be modअगरied at runसमय. If
  *   %MEDIA_LNK_FL_IMMUTABLE is set, then %MEDIA_LNK_FL_ENABLED must also be
  *   set, since an immutable link is always enabled.
  *
  * .. note::
  *
- *    Before calling this function, media_entity_pads_init() and
- *    media_device_register_entity() should be called previously for both ends.
+ *    Beक्रमe calling this function, media_entity_pads_init() and
+ *    media_device_रेजिस्टर_entity() should be called previously क्रम both ends.
  */
-__must_check int media_create_pad_link(struct media_entity *source,
-			u16 source_pad, struct media_entity *sink,
+__must_check पूर्णांक media_create_pad_link(काष्ठा media_entity *source,
+			u16 source_pad, काष्ठा media_entity *sink,
 			u16 sink_pad, u32 flags);
 
 /**
  * media_create_pad_links() - creates a link between two entities.
  *
- * @mdev: Pointer to the media_device that contains the object
- * @source_function: Function of the source entities. Used only if @source is
- *	NULL.
- * @source: pointer to &media_entity of the source pad. If NULL, it will use
+ * @mdev: Poपूर्णांकer to the media_device that contains the object
+ * @source_function: Function of the source entities. Used only अगर @source is
+ *	शून्य.
+ * @source: poपूर्णांकer to &media_entity of the source pad. If शून्य, it will use
  *	all entities that matches the @sink_function.
  * @source_pad: number of the source pad in the pads array
- * @sink_function: Function of the sink entities. Used only if @sink is NULL.
- * @sink: pointer to &media_entity of the sink pad. If NULL, it will use
+ * @sink_function: Function of the sink entities. Used only अगर @sink is शून्य.
+ * @sink: poपूर्णांकer to &media_entity of the sink pad. If शून्य, it will use
  *	all entities that matches the @sink_function.
  * @sink_pad: number of the sink pad in the pads array.
  * @flags: Link flags, as defined in include/uapi/linux/media.h.
- * @allow_both_undefined: if %true, then both @source and @sink can be NULL.
- *	In such case, it will create a crossbar between all entities that
+ * @allow_both_undefined: अगर %true, then both @source and @sink can be शून्य.
+ *	In such हाल, it will create a crossbar between all entities that
  *	matches @source_function to all entities that matches @sink_function.
- *	If %false, it will return 0 and won't create any link if both @source
- *	and @sink are NULL.
+ *	If %false, it will वापस 0 and won't create any link अगर both @source
+ *	and @sink are शून्य.
  *
- * Valid values for flags:
+ * Valid values क्रम flags:
  *
  * A %MEDIA_LNK_FL_ENABLED flag indicates that the link is enabled and can be
  *	used to transfer media data. If multiple links are created and this
@@ -741,44 +742,44 @@ __must_check int media_create_pad_link(struct media_entity *source,
  *	this flag.
  *
  * A %MEDIA_LNK_FL_IMMUTABLE flag indicates that the link enabled state can't
- *	be modified at runtime. If %MEDIA_LNK_FL_IMMUTABLE is set, then
+ *	be modअगरied at runसमय. If %MEDIA_LNK_FL_IMMUTABLE is set, then
  *	%MEDIA_LNK_FL_ENABLED must also be set since an immutable link is
  *	always enabled.
  *
- * It is common for some devices to have multiple source and/or sink entities
+ * It is common क्रम some devices to have multiple source and/or sink entities
  * of the same type that should be linked. While media_create_pad_link()
  * creates link by link, this function is meant to allow 1:n, n:1 and even
  * cross-bar (n:n) links.
  *
  * .. note::
  *
- *    Before calling this function, media_entity_pads_init() and
- *    media_device_register_entity() should be called previously for the
+ *    Beक्रमe calling this function, media_entity_pads_init() and
+ *    media_device_रेजिस्टर_entity() should be called previously क्रम the
  *    entities to be linked.
  */
-int media_create_pad_links(const struct media_device *mdev,
-			   const u32 source_function,
-			   struct media_entity *source,
-			   const u16 source_pad,
-			   const u32 sink_function,
-			   struct media_entity *sink,
-			   const u16 sink_pad,
+पूर्णांक media_create_pad_links(स्थिर काष्ठा media_device *mdev,
+			   स्थिर u32 source_function,
+			   काष्ठा media_entity *source,
+			   स्थिर u16 source_pad,
+			   स्थिर u32 sink_function,
+			   काष्ठा media_entity *sink,
+			   स्थिर u16 sink_pad,
 			   u32 flags,
-			   const bool allow_both_undefined);
+			   स्थिर bool allow_both_undefined);
 
-void __media_entity_remove_links(struct media_entity *entity);
+व्योम __media_entity_हटाओ_links(काष्ठा media_entity *entity);
 
 /**
- * media_entity_remove_links() - remove all links associated with an entity
+ * media_entity_हटाओ_links() - हटाओ all links associated with an entity
  *
- * @entity:	pointer to &media_entity
+ * @entity:	poपूर्णांकer to &media_entity
  *
  * .. note::
  *
- *    This is called automatically when an entity is unregistered via
- *    media_device_register_entity().
+ *    This is called स्वतःmatically when an entity is unरेजिस्टरed via
+ *    media_device_रेजिस्टर_entity().
  */
-void media_entity_remove_links(struct media_entity *entity);
+व्योम media_entity_हटाओ_links(काष्ठा media_entity *entity);
 
 /**
  * __media_entity_setup_link - Configure a media link without locking
@@ -786,20 +787,20 @@ void media_entity_remove_links(struct media_entity *entity);
  * @flags: Link configuration flags
  *
  * The bulk of link setup is handled by the two entities connected through the
- * link. This function notifies both entities of the link configuration change.
+ * link. This function notअगरies both entities of the link configuration change.
  *
- * If the link is immutable or if the current and new configuration are
- * identical, return immediately.
+ * If the link is immutable or अगर the current and new configuration are
+ * identical, वापस immediately.
  *
  * The user is expected to hold link->source->parent->mutex. If not,
  * media_entity_setup_link() should be used instead.
  */
-int __media_entity_setup_link(struct media_link *link, u32 flags);
+पूर्णांक __media_entity_setup_link(काष्ठा media_link *link, u32 flags);
 
 /**
- * media_entity_setup_link() - changes the link flags properties in runtime
+ * media_entity_setup_link() - changes the link flags properties in runसमय
  *
- * @link:	pointer to &media_link
+ * @link:	poपूर्णांकer to &media_link
  * @flags:	the requested new link flags
  *
  * The only configurable property is the %MEDIA_LNK_FL_ENABLED link flag
@@ -807,158 +808,158 @@ int __media_entity_setup_link(struct media_link *link, u32 flags);
  * %MEDIA_LNK_FL_IMMUTABLE link flag can not be enabled or disabled.
  *
  * When a link is enabled or disabled, the media framework calls the
- * link_setup operation for the two entities at the source and sink of the
+ * link_setup operation क्रम the two entities at the source and sink of the
  * link, in that order. If the second link_setup call fails, another
  * link_setup call is made on the first entity to restore the original link
  * flags.
  *
- * Media device drivers can be notified of link setup operations by setting the
- * &media_device.link_notify pointer to a callback function. If provided, the
- * notification callback will be called before enabling and after disabling
+ * Media device drivers can be notअगरied of link setup operations by setting the
+ * &media_device.link_notअगरy poपूर्णांकer to a callback function. If provided, the
+ * notअगरication callback will be called beक्रमe enabling and after disabling
  * links.
  *
- * Entity drivers must implement the link_setup operation if any of their links
+ * Entity drivers must implement the link_setup operation अगर any of their links
  * is non-immutable. The operation must either configure the hardware or store
- * the configuration information to be applied later.
+ * the configuration inक्रमmation to be applied later.
  *
  * Link configuration must not have any side effect on other links. If an
  * enabled link at a sink pad prevents another link at the same pad from
- * being enabled, the link_setup operation must return %-EBUSY and can't
+ * being enabled, the link_setup operation must वापस %-EBUSY and can't
  * implicitly disable the first enabled link.
  *
  * .. note::
  *
- *    The valid values of the flags for the link is the same as described
- *    on media_create_pad_link(), for pad to pad links or the same as described
- *    on media_create_intf_link(), for interface to entity links.
+ *    The valid values of the flags क्रम the link is the same as described
+ *    on media_create_pad_link(), क्रम pad to pad links or the same as described
+ *    on media_create_पूर्णांकf_link(), क्रम पूर्णांकerface to entity links.
  */
-int media_entity_setup_link(struct media_link *link, u32 flags);
+पूर्णांक media_entity_setup_link(काष्ठा media_link *link, u32 flags);
 
 /**
  * media_entity_find_link - Find a link between two pads
  * @source: Source pad
  * @sink: Sink pad
  *
- * Return: returns a pointer to the link between the two entities. If no
- * such link exists, return %NULL.
+ * Return: वापसs a poपूर्णांकer to the link between the two entities. If no
+ * such link exists, वापस %शून्य.
  */
-struct media_link *media_entity_find_link(struct media_pad *source,
-		struct media_pad *sink);
+काष्ठा media_link *media_entity_find_link(काष्ठा media_pad *source,
+		काष्ठा media_pad *sink);
 
 /**
  * media_entity_remote_pad - Find the pad at the remote end of a link
  * @pad: Pad at the local end of the link
  *
- * Search for a remote pad connected to the given pad by iterating over all
+ * Search क्रम a remote pad connected to the given pad by iterating over all
  * links originating or terminating at that pad until an enabled link is found.
  *
- * Return: returns a pointer to the pad at the remote end of the first found
- * enabled link, or %NULL if no enabled link has been found.
+ * Return: वापसs a poपूर्णांकer to the pad at the remote end of the first found
+ * enabled link, or %शून्य अगर no enabled link has been found.
  */
-struct media_pad *media_entity_remote_pad(const struct media_pad *pad);
+काष्ठा media_pad *media_entity_remote_pad(स्थिर काष्ठा media_pad *pad);
 
 /**
  * media_entity_get_fwnode_pad - Get pad number from fwnode
  *
  * @entity: The entity
- * @fwnode: Pointer to the fwnode_handle which should be used to find the pad
+ * @fwnode: Poपूर्णांकer to the fwnode_handle which should be used to find the pad
  * @direction_flags: Expected direction of the pad, as defined in
  *		     :ref:`include/uapi/linux/media.h <media_header>`
- *		     (seek for ``MEDIA_PAD_FL_*``)
+ *		     (seek क्रम ``MEDIA_PAD_FL_*``)
  *
  * This function can be used to resolve the media pad number from
- * a fwnode. This is useful for devices which use more complex
+ * a fwnode. This is useful क्रम devices which use more complex
  * mappings of media pads.
  *
- * If the entity does not implement the get_fwnode_pad() operation
- * then this function searches the entity for the first pad that
+ * If the entity करोes not implement the get_fwnode_pad() operation
+ * then this function searches the entity क्रम the first pad that
  * matches the @direction_flags.
  *
- * Return: returns the pad number on success or a negative error code.
+ * Return: वापसs the pad number on success or a negative error code.
  */
-int media_entity_get_fwnode_pad(struct media_entity *entity,
-				struct fwnode_handle *fwnode,
-				unsigned long direction_flags);
+पूर्णांक media_entity_get_fwnode_pad(काष्ठा media_entity *entity,
+				काष्ठा fwnode_handle *fwnode,
+				अचिन्हित दीर्घ direction_flags);
 
 /**
  * media_graph_walk_init - Allocate resources used by graph walk.
  *
- * @graph: Media graph structure that will be used to walk the graph
- * @mdev: Pointer to the &media_device that contains the object
+ * @graph: Media graph काष्ठाure that will be used to walk the graph
+ * @mdev: Poपूर्णांकer to the &media_device that contains the object
  *
  * The caller is required to hold the media_device graph_mutex during the graph
  * walk until the graph state is released.
  *
  * Returns zero on success or a negative error code otherwise.
  */
-__must_check int media_graph_walk_init(
-	struct media_graph *graph, struct media_device *mdev);
+__must_check पूर्णांक media_graph_walk_init(
+	काष्ठा media_graph *graph, काष्ठा media_device *mdev);
 
 /**
  * media_graph_walk_cleanup - Release resources used by graph walk.
  *
- * @graph: Media graph structure that will be used to walk the graph
+ * @graph: Media graph काष्ठाure that will be used to walk the graph
  */
-void media_graph_walk_cleanup(struct media_graph *graph);
+व्योम media_graph_walk_cleanup(काष्ठा media_graph *graph);
 
 /**
  * media_graph_walk_start - Start walking the media graph at a
  *	given entity
  *
- * @graph: Media graph structure that will be used to walk the graph
+ * @graph: Media graph काष्ठाure that will be used to walk the graph
  * @entity: Starting entity
  *
- * Before using this function, media_graph_walk_init() must be
- * used to allocate resources used for walking the graph. This
- * function initializes the graph traversal structure to walk the
+ * Beक्रमe using this function, media_graph_walk_init() must be
+ * used to allocate resources used क्रम walking the graph. This
+ * function initializes the graph traversal काष्ठाure to walk the
  * entities graph starting at the given entity. The traversal
- * structure must not be modified by the caller during graph
+ * काष्ठाure must not be modअगरied by the caller during graph
  * traversal. After the graph walk, the resources must be released
  * using media_graph_walk_cleanup().
  */
-void media_graph_walk_start(struct media_graph *graph,
-			    struct media_entity *entity);
+व्योम media_graph_walk_start(काष्ठा media_graph *graph,
+			    काष्ठा media_entity *entity);
 
 /**
  * media_graph_walk_next - Get the next entity in the graph
- * @graph: Media graph structure
+ * @graph: Media graph काष्ठाure
  *
- * Perform a depth-first traversal of the given media entities graph.
+ * Perक्रमm a depth-first traversal of the given media entities graph.
  *
- * The graph structure must have been previously initialized with a call to
+ * The graph काष्ठाure must have been previously initialized with a call to
  * media_graph_walk_start().
  *
- * Return: returns the next entity in the graph or %NULL if the whole graph
+ * Return: वापसs the next entity in the graph or %शून्य अगर the whole graph
  * have been traversed.
  */
-struct media_entity *media_graph_walk_next(struct media_graph *graph);
+काष्ठा media_entity *media_graph_walk_next(काष्ठा media_graph *graph);
 
 /**
  * media_pipeline_start - Mark a pipeline as streaming
  * @entity: Starting entity
- * @pipe: Media pipeline to be assigned to all entities in the pipeline.
+ * @pipe: Media pipeline to be asचिन्हित to all entities in the pipeline.
  *
  * Mark all entities connected to a given entity through enabled links, either
- * directly or indirectly, as streaming. The given pipeline object is assigned
+ * directly or indirectly, as streaming. The given pipeline object is asचिन्हित
  * to every entity in the pipeline and stored in the media_entity pipe field.
  *
- * Calls to this function can be nested, in which case the same number of
+ * Calls to this function can be nested, in which हाल the same number of
  * media_pipeline_stop() calls will be required to stop streaming. The
- * pipeline pointer must be identical for all nested calls to
+ * pipeline poपूर्णांकer must be identical क्रम all nested calls to
  * media_pipeline_start().
  */
-__must_check int media_pipeline_start(struct media_entity *entity,
-				      struct media_pipeline *pipe);
+__must_check पूर्णांक media_pipeline_start(काष्ठा media_entity *entity,
+				      काष्ठा media_pipeline *pipe);
 /**
  * __media_pipeline_start - Mark a pipeline as streaming
  *
  * @entity: Starting entity
- * @pipe: Media pipeline to be assigned to all entities in the pipeline.
+ * @pipe: Media pipeline to be asचिन्हित to all entities in the pipeline.
  *
  * ..note:: This is the non-locking version of media_pipeline_start()
  */
-__must_check int __media_pipeline_start(struct media_entity *entity,
-					struct media_pipeline *pipe);
+__must_check पूर्णांक __media_pipeline_start(काष्ठा media_entity *entity,
+					काष्ठा media_pipeline *pipe);
 
 /**
  * media_pipeline_stop - Mark a pipeline as not streaming
@@ -966,13 +967,13 @@ __must_check int __media_pipeline_start(struct media_entity *entity,
  *
  * Mark all entities connected to a given entity through enabled links, either
  * directly or indirectly, as not streaming. The media_entity pipe field is
- * reset to %NULL.
+ * reset to %शून्य.
  *
  * If multiple calls to media_pipeline_start() have been made, the same
  * number of calls to this function are required to mark the pipeline as not
  * streaming.
  */
-void media_pipeline_stop(struct media_entity *entity);
+व्योम media_pipeline_stop(काष्ठा media_entity *entity);
 
 /**
  * __media_pipeline_stop - Mark a pipeline as not streaming
@@ -981,130 +982,130 @@ void media_pipeline_stop(struct media_entity *entity);
  *
  * .. note:: This is the non-locking version of media_pipeline_stop()
  */
-void __media_pipeline_stop(struct media_entity *entity);
+व्योम __media_pipeline_stop(काष्ठा media_entity *entity);
 
 /**
- * media_devnode_create() - creates and initializes a device node interface
+ * media_devnode_create() - creates and initializes a device node पूर्णांकerface
  *
- * @mdev:	pointer to struct &media_device
- * @type:	type of the interface, as given by
+ * @mdev:	poपूर्णांकer to काष्ठा &media_device
+ * @type:	type of the पूर्णांकerface, as given by
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		( seek for ``MEDIA_INTF_T_*``) macros.
+ *		( seek क्रम ``MEDIA_INTF_T_*``) macros.
  * @flags:	Interface flags, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		( seek for ``MEDIA_INTF_FL_*``)
+ *		( seek क्रम ``MEDIA_INTF_FL_*``)
  * @major:	Device node major number.
  * @minor:	Device node minor number.
  *
- * Return: if succeeded, returns a pointer to the newly allocated
- *	&media_intf_devnode pointer.
+ * Return: अगर succeeded, वापसs a poपूर्णांकer to the newly allocated
+ *	&media_पूर्णांकf_devnode poपूर्णांकer.
  *
  * .. note::
  *
- *    Currently, no flags for &media_interface is defined.
+ *    Currently, no flags क्रम &media_पूर्णांकerface is defined.
  */
-struct media_intf_devnode *
-__must_check media_devnode_create(struct media_device *mdev,
+काष्ठा media_पूर्णांकf_devnode *
+__must_check media_devnode_create(काष्ठा media_device *mdev,
 				  u32 type, u32 flags,
 				  u32 major, u32 minor);
 /**
- * media_devnode_remove() - removes a device node interface
+ * media_devnode_हटाओ() - हटाओs a device node पूर्णांकerface
  *
- * @devnode:	pointer to &media_intf_devnode to be freed.
+ * @devnode:	poपूर्णांकer to &media_पूर्णांकf_devnode to be मुक्तd.
  *
- * When a device node interface is removed, all links to it are automatically
- * removed.
+ * When a device node पूर्णांकerface is हटाओd, all links to it are स्वतःmatically
+ * हटाओd.
  */
-void media_devnode_remove(struct media_intf_devnode *devnode);
-struct media_link *
+व्योम media_devnode_हटाओ(काष्ठा media_पूर्णांकf_devnode *devnode);
+काष्ठा media_link *
 
 /**
- * media_create_intf_link() - creates a link between an entity and an interface
+ * media_create_पूर्णांकf_link() - creates a link between an entity and an पूर्णांकerface
  *
- * @entity:	pointer to %media_entity
- * @intf:	pointer to %media_interface
+ * @entity:	poपूर्णांकer to %media_entity
+ * @पूर्णांकf:	poपूर्णांकer to %media_पूर्णांकerface
  * @flags:	Link flags, as defined in
  *		:ref:`include/uapi/linux/media.h <media_header>`
- *		( seek for ``MEDIA_LNK_FL_*``)
+ *		( seek क्रम ``MEDIA_LNK_FL_*``)
  *
  *
- * Valid values for flags:
+ * Valid values क्रम flags:
  *
  * %MEDIA_LNK_FL_ENABLED
- *   Indicates that the interface is connected to the entity hardware.
- *   That's the default value for interfaces. An interface may be disabled if
- *   the hardware is busy due to the usage of some other interface that it is
+ *   Indicates that the पूर्णांकerface is connected to the entity hardware.
+ *   That's the शेष value क्रम पूर्णांकerfaces. An पूर्णांकerface may be disabled अगर
+ *   the hardware is busy due to the usage of some other पूर्णांकerface that it is
  *   currently controlling the hardware.
  *
  *   A typical example is an hybrid TV device that handle only one type of
- *   stream on a given time. So, when the digital TV is streaming,
- *   the V4L2 interfaces won't be enabled, as such device is not able to
+ *   stream on a given समय. So, when the digital TV is streaming,
+ *   the V4L2 पूर्णांकerfaces won't be enabled, as such device is not able to
  *   also stream analog TV or radio.
  *
  * .. note::
  *
- *    Before calling this function, media_devnode_create() should be called for
- *    the interface and media_device_register_entity() should be called for the
- *    interface that will be part of the link.
+ *    Beक्रमe calling this function, media_devnode_create() should be called क्रम
+ *    the पूर्णांकerface and media_device_रेजिस्टर_entity() should be called क्रम the
+ *    पूर्णांकerface that will be part of the link.
  */
-__must_check media_create_intf_link(struct media_entity *entity,
-				    struct media_interface *intf,
+__must_check media_create_पूर्णांकf_link(काष्ठा media_entity *entity,
+				    काष्ठा media_पूर्णांकerface *पूर्णांकf,
 				    u32 flags);
 /**
- * __media_remove_intf_link() - remove a single interface link
+ * __media_हटाओ_पूर्णांकf_link() - हटाओ a single पूर्णांकerface link
  *
- * @link:	pointer to &media_link.
+ * @link:	poपूर्णांकer to &media_link.
  *
- * .. note:: This is an unlocked version of media_remove_intf_link()
+ * .. note:: This is an unlocked version of media_हटाओ_पूर्णांकf_link()
  */
-void __media_remove_intf_link(struct media_link *link);
+व्योम __media_हटाओ_पूर्णांकf_link(काष्ठा media_link *link);
 
 /**
- * media_remove_intf_link() - remove a single interface link
+ * media_हटाओ_पूर्णांकf_link() - हटाओ a single पूर्णांकerface link
  *
- * @link:	pointer to &media_link.
+ * @link:	poपूर्णांकer to &media_link.
  *
- * .. note:: Prefer to use this one, instead of __media_remove_intf_link()
+ * .. note:: Prefer to use this one, instead of __media_हटाओ_पूर्णांकf_link()
  */
-void media_remove_intf_link(struct media_link *link);
+व्योम media_हटाओ_पूर्णांकf_link(काष्ठा media_link *link);
 
 /**
- * __media_remove_intf_links() - remove all links associated with an interface
+ * __media_हटाओ_पूर्णांकf_links() - हटाओ all links associated with an पूर्णांकerface
  *
- * @intf:	pointer to &media_interface
+ * @पूर्णांकf:	poपूर्णांकer to &media_पूर्णांकerface
  *
- * .. note:: This is an unlocked version of media_remove_intf_links().
+ * .. note:: This is an unlocked version of media_हटाओ_पूर्णांकf_links().
  */
-void __media_remove_intf_links(struct media_interface *intf);
+व्योम __media_हटाओ_पूर्णांकf_links(काष्ठा media_पूर्णांकerface *पूर्णांकf);
 
 /**
- * media_remove_intf_links() - remove all links associated with an interface
+ * media_हटाओ_पूर्णांकf_links() - हटाओ all links associated with an पूर्णांकerface
  *
- * @intf:	pointer to &media_interface
+ * @पूर्णांकf:	poपूर्णांकer to &media_पूर्णांकerface
  *
  * .. note::
  *
- *   #) This is called automatically when an entity is unregistered via
- *      media_device_register_entity() and by media_devnode_remove().
+ *   #) This is called स्वतःmatically when an entity is unरेजिस्टरed via
+ *      media_device_रेजिस्टर_entity() and by media_devnode_हटाओ().
  *
- *   #) Prefer to use this one, instead of __media_remove_intf_links().
+ *   #) Prefer to use this one, instead of __media_हटाओ_पूर्णांकf_links().
  */
-void media_remove_intf_links(struct media_interface *intf);
+व्योम media_हटाओ_पूर्णांकf_links(काष्ठा media_पूर्णांकerface *पूर्णांकf);
 
 /**
- * media_entity_call - Calls a struct media_entity_operations operation on
+ * media_entity_call - Calls a काष्ठा media_entity_operations operation on
  *	an entity
  *
  * @entity: entity where the @operation will be called
  * @operation: type of the operation. Should be the name of a member of
- *	struct &media_entity_operations.
+ *	काष्ठा &media_entity_operations.
  *
- * This helper function will check if @operation is not %NULL. On such case,
+ * This helper function will check अगर @operation is not %शून्य. On such हाल,
  * it will issue a call to @operation\(@entity, @args\).
  */
 
-#define media_entity_call(entity, operation, args...)			\
+#घोषणा media_entity_call(entity, operation, args...)			\
 	(((entity)->ops && (entity)->ops->operation) ?			\
 	 (entity)->ops->operation((entity) , ##args) : -ENOIOCTLCMD)
 
-#endif
+#पूर्ण_अगर

@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/kernel.h>
-#include <linux/printk.h>
-#include <linux/reboot.h>
-#include <linux/pm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/pm.h>
 
-void machine_halt(void)
-{
+व्योम machine_halt(व्योम)
+अणु
 	/* Halt the processor */
-	__asm__ __volatile__("flag  1\n");
-}
+	__यंत्र__ __अस्थिर__("flag  1\n");
+पूर्ण
 
-void machine_restart(char *__unused)
-{
+व्योम machine_restart(अक्षर *__unused)
+अणु
 	/* Soft reset : jump to reset vector */
 	pr_info("Put your restart handler here\n");
 	machine_halt();
-}
+पूर्ण
 
-void machine_power_off(void)
-{
-	/* FIXME ::  power off ??? */
+व्योम machine_घातer_off(व्योम)
+अणु
+	/* FIXME ::  घातer off ??? */
 	machine_halt();
-}
+पूर्ण
 
-void (*pm_power_off) (void) = NULL;
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off) (व्योम) = शून्य;
+EXPORT_SYMBOL(pm_घातer_off);

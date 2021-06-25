@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2016, Linaro Limited
  */
-#ifndef TEE_PRIVATE_H
-#define TEE_PRIVATE_H
+#अगर_अघोषित TEE_PRIVATE_H
+#घोषणा TEE_PRIVATE_H
 
-#include <linux/cdev.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/kref.h>
-#include <linux/mutex.h>
-#include <linux/types.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
 
 /**
- * struct tee_shm_pool - shared memory pool
- * @private_mgr:	pool manager for shared memory only between kernel
+ * काष्ठा tee_shm_pool - shared memory pool
+ * @निजी_mgr:	pool manager क्रम shared memory only between kernel
  *			and secure world
- * @dma_buf_mgr:	pool manager for shared memory exported to user space
+ * @dma_buf_mgr:	pool manager क्रम shared memory exported to user space
  */
-struct tee_shm_pool {
-	struct tee_shm_pool_mgr *private_mgr;
-	struct tee_shm_pool_mgr *dma_buf_mgr;
-};
+काष्ठा tee_shm_pool अणु
+	काष्ठा tee_shm_pool_mgr *निजी_mgr;
+	काष्ठा tee_shm_pool_mgr *dma_buf_mgr;
+पूर्ण;
 
-#define TEE_DEVICE_FLAG_REGISTERED	0x1
-#define TEE_MAX_DEV_NAME_LEN		32
+#घोषणा TEE_DEVICE_FLAG_REGISTERED	0x1
+#घोषणा TEE_MAX_DEV_NAME_LEN		32
 
 /**
- * struct tee_device - TEE Device representation
+ * काष्ठा tee_device - TEE Device representation
  * @name:	name of device
  * @desc:	description of device
  * @id:		unique id of device
  * @flags:	represented by TEE_DEVICE_FLAG_REGISTERED above
- * @dev:	embedded basic device structure
+ * @dev:	embedded basic device काष्ठाure
  * @cdev:	embedded cdev
  * @num_users:	number of active users of this device
- * @c_no_user:	completion used when unregistering the device
+ * @c_no_user:	completion used when unरेजिस्टरing the device
  * @mutex:	mutex protecting @num_users and @idr
- * @idr:	register of user space shared memory objects allocated or
- *		registered on this device
+ * @idr:	रेजिस्टर of user space shared memory objects allocated or
+ *		रेजिस्टरed on this device
  * @pool:	shared memory pool
  */
-struct tee_device {
-	char name[TEE_MAX_DEV_NAME_LEN];
-	const struct tee_desc *desc;
-	int id;
-	unsigned int flags;
+काष्ठा tee_device अणु
+	अक्षर name[TEE_MAX_DEV_NAME_LEN];
+	स्थिर काष्ठा tee_desc *desc;
+	पूर्णांक id;
+	अचिन्हित पूर्णांक flags;
 
-	struct device dev;
-	struct cdev cdev;
+	काष्ठा device dev;
+	काष्ठा cdev cdev;
 
-	size_t num_users;
-	struct completion c_no_users;
-	struct mutex mutex;	/* protects num_users and idr */
+	माप_प्रकार num_users;
+	काष्ठा completion c_no_users;
+	काष्ठा mutex mutex;	/* protects num_users and idr */
 
-	struct idr idr;
-	struct tee_shm_pool *pool;
-};
+	काष्ठा idr idr;
+	काष्ठा tee_shm_pool *pool;
+पूर्ण;
 
-int tee_shm_init(void);
+पूर्णांक tee_shm_init(व्योम);
 
-int tee_shm_get_fd(struct tee_shm *shm);
+पूर्णांक tee_shm_get_fd(काष्ठा tee_shm *shm);
 
-bool tee_device_get(struct tee_device *teedev);
-void tee_device_put(struct tee_device *teedev);
+bool tee_device_get(काष्ठा tee_device *teedev);
+व्योम tee_device_put(काष्ठा tee_device *teedev);
 
-void teedev_ctx_get(struct tee_context *ctx);
-void teedev_ctx_put(struct tee_context *ctx);
+व्योम teedev_ctx_get(काष्ठा tee_context *ctx);
+व्योम teedev_ctx_put(काष्ठा tee_context *ctx);
 
-#endif /*TEE_PRIVATE_H*/
+#पूर्ण_अगर /*TEE_PRIVATE_H*/

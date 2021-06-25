@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2020 NXP
  *
- * Header file containing the public API for the System Controller (SC)
- * Resource Management (RM) function. This includes functions for
+ * Header file containing the खुला API क्रम the System Controller (SC)
+ * Resource Management (RM) function. This includes functions क्रम
  * partitioning resources, pads, and memory regions.
  *
  * RM_SVC (SVC) Resource Management Service
  *
- * Module for the Resource Management (RM) service.
+ * Module क्रम the Resource Management (RM) service.
  */
 
-#ifndef _SC_RM_API_H
-#define _SC_RM_API_H
+#अगर_अघोषित _SC_RM_API_H
+#घोषणा _SC_RM_API_H
 
-#include <linux/firmware/imx/sci.h>
+#समावेश <linux/firmware/imx/sci.h>
 
 /*
  * This type is used to indicate RPC RM function calls.
  */
-enum imx_sc_rm_func {
+क्रमागत imx_sc_rm_func अणु
 	IMX_SC_RM_FUNC_UNKNOWN = 0,
 	IMX_SC_RM_FUNC_PARTITION_ALLOC = 1,
 	IMX_SC_RM_FUNC_SET_CONFIDENTIAL = 31,
@@ -55,15 +56,15 @@ enum imx_sc_rm_func {
 	IMX_SC_RM_FUNC_SET_PAD_MOVABLE = 24,
 	IMX_SC_RM_FUNC_IS_PAD_OWNED = 25,
 	IMX_SC_RM_FUNC_DUMP = 27,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_IMX_SCU)
-bool imx_sc_rm_is_resource_owned(struct imx_sc_ipc *ipc, u16 resource);
-#else
-static inline bool
-imx_sc_rm_is_resource_owned(struct imx_sc_ipc *ipc, u16 resource)
-{
-	return true;
-}
-#endif
-#endif
+#अगर IS_ENABLED(CONFIG_IMX_SCU)
+bool imx_sc_rm_is_resource_owned(काष्ठा imx_sc_ipc *ipc, u16 resource);
+#अन्यथा
+अटल अंतरभूत bool
+imx_sc_rm_is_resource_owned(काष्ठा imx_sc_ipc *ipc, u16 resource)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

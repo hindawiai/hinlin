@@ -1,263 +1,264 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTW_CMD_C_
+#घोषणा _RTW_CMD_C_
 
-#include <drv_types.h>
-#include <rtw_debug.h>
-#include <hal_btcoex.h>
-#include <linux/jiffies.h>
+#समावेश <drv_types.h>
+#समावेश <rtw_debug.h>
+#समावेश <hal_btcoex.h>
+#समावेश <linux/jअगरfies.h>
 
-static struct _cmd_callback rtw_cmd_callback[] = {
-	{GEN_CMD_CODE(_Read_MACREG), NULL}, /*0*/
-	{GEN_CMD_CODE(_Write_MACREG), NULL},
-	{GEN_CMD_CODE(_Read_BBREG), &rtw_getbbrfreg_cmdrsp_callback},
-	{GEN_CMD_CODE(_Write_BBREG), NULL},
-	{GEN_CMD_CODE(_Read_RFREG), &rtw_getbbrfreg_cmdrsp_callback},
-	{GEN_CMD_CODE(_Write_RFREG), NULL}, /*5*/
-	{GEN_CMD_CODE(_Read_EEPROM), NULL},
-	{GEN_CMD_CODE(_Write_EEPROM), NULL},
-	{GEN_CMD_CODE(_Read_EFUSE), NULL},
-	{GEN_CMD_CODE(_Write_EFUSE), NULL},
+अटल काष्ठा _cmd_callback rtw_cmd_callback[] = अणु
+	अणुGEN_CMD_CODE(_Read_MACREG), शून्यपूर्ण, /*0*/
+	अणुGEN_CMD_CODE(_Write_MACREG), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_Read_BBREG), &rtw_getbbrfreg_cmdrsp_callbackपूर्ण,
+	अणुGEN_CMD_CODE(_Write_BBREG), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_Read_RFREG), &rtw_getbbrfreg_cmdrsp_callbackपूर्ण,
+	अणुGEN_CMD_CODE(_Write_RFREG), शून्यपूर्ण, /*5*/
+	अणुGEN_CMD_CODE(_Read_EEPROM), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_Write_EEPROM), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_Read_EFUSE), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_Write_EFUSE), शून्यपूर्ण,
 
-	{GEN_CMD_CODE(_Read_CAM),	NULL},	/*10*/
-	{GEN_CMD_CODE(_Write_CAM),	 NULL},
-	{GEN_CMD_CODE(_setBCNITV), NULL},
-	{GEN_CMD_CODE(_setMBIDCFG), NULL},
-	{GEN_CMD_CODE(_JoinBss), &rtw_joinbss_cmd_callback},  /*14*/
-	{GEN_CMD_CODE(_DisConnect), &rtw_disassoc_cmd_callback}, /*15*/
-	{GEN_CMD_CODE(_CreateBss), &rtw_createbss_cmd_callback},
-	{GEN_CMD_CODE(_SetOpMode), NULL},
-	{GEN_CMD_CODE(_SiteSurvey), &rtw_survey_cmd_callback}, /*18*/
-	{GEN_CMD_CODE(_SetAuth), NULL},
+	अणुGEN_CMD_CODE(_Read_CAM),	शून्यपूर्ण,	/*10*/
+	अणुGEN_CMD_CODE(_Write_CAM),	 शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_setBCNITV), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_setMBIDCFG), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_JoinBss), &rtw_joinbss_cmd_callbackपूर्ण,  /*14*/
+	अणुGEN_CMD_CODE(_DisConnect), &rtw_disassoc_cmd_callbackपूर्ण, /*15*/
+	अणुGEN_CMD_CODE(_CreateBss), &rtw_createbss_cmd_callbackपूर्ण,
+	अणुGEN_CMD_CODE(_SetOpMode), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SiteSurvey), &rtw_survey_cmd_callbackपूर्ण, /*18*/
+	अणुGEN_CMD_CODE(_SetAuth), शून्यपूर्ण,
 
-	{GEN_CMD_CODE(_SetKey), NULL},	/*20*/
-	{GEN_CMD_CODE(_SetStaKey), &rtw_setstaKey_cmdrsp_callback},
-	{GEN_CMD_CODE(_SetAssocSta), &rtw_setassocsta_cmdrsp_callback},
-	{GEN_CMD_CODE(_DelAssocSta), NULL},
-	{GEN_CMD_CODE(_SetStaPwrState), NULL},
-	{GEN_CMD_CODE(_SetBasicRate), NULL}, /*25*/
-	{GEN_CMD_CODE(_GetBasicRate), NULL},
-	{GEN_CMD_CODE(_SetDataRate), NULL},
-	{GEN_CMD_CODE(_GetDataRate), NULL},
-	{GEN_CMD_CODE(_SetPhyInfo), NULL},
+	अणुGEN_CMD_CODE(_SetKey), शून्यपूर्ण,	/*20*/
+	अणुGEN_CMD_CODE(_SetStaKey), &rtw_setstaKey_cmdrsp_callbackपूर्ण,
+	अणुGEN_CMD_CODE(_SetAssocSta), &rtw_setassocsta_cmdrsp_callbackपूर्ण,
+	अणुGEN_CMD_CODE(_DelAssocSta), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetStaPwrState), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetBasicRate), शून्यपूर्ण, /*25*/
+	अणुGEN_CMD_CODE(_GetBasicRate), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetDataRate), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_GetDataRate), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetPhyInfo), शून्यपूर्ण,
 
-	{GEN_CMD_CODE(_GetPhyInfo), NULL}, /*30*/
-	{GEN_CMD_CODE(_SetPhy), NULL},
-	{GEN_CMD_CODE(_GetPhy), NULL},
-	{GEN_CMD_CODE(_readRssi), NULL},
-	{GEN_CMD_CODE(_readGain), NULL},
-	{GEN_CMD_CODE(_SetAtim), NULL}, /*35*/
-	{GEN_CMD_CODE(_SetPwrMode), NULL},
-	{GEN_CMD_CODE(_JoinbssRpt), NULL},
-	{GEN_CMD_CODE(_SetRaTable), NULL},
-	{GEN_CMD_CODE(_GetRaTable), NULL},
+	अणुGEN_CMD_CODE(_GetPhyInfo), शून्यपूर्ण, /*30*/
+	अणुGEN_CMD_CODE(_SetPhy), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_GetPhy), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_पढ़ोRssi), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_पढ़ोGain), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetAtim), शून्यपूर्ण, /*35*/
+	अणुGEN_CMD_CODE(_SetPwrMode), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_JoinbssRpt), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetRaTable), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_GetRaTable), शून्यपूर्ण,
 
-	{GEN_CMD_CODE(_GetCCXReport), NULL}, /*40*/
-	{GEN_CMD_CODE(_GetDTMReport),	NULL},
-	{GEN_CMD_CODE(_GetTXRateStatistics), NULL},
-	{GEN_CMD_CODE(_SetUsbSuspend), NULL},
-	{GEN_CMD_CODE(_SetH2cLbk), NULL},
-	{GEN_CMD_CODE(_AddBAReq), NULL}, /*45*/
-	{GEN_CMD_CODE(_SetChannel), NULL},		/*46*/
-	{GEN_CMD_CODE(_SetTxPower), NULL},
-	{GEN_CMD_CODE(_SwitchAntenna), NULL},
-	{GEN_CMD_CODE(_SetCrystalCap), NULL},
-	{GEN_CMD_CODE(_SetSingleCarrierTx), NULL},	/*50*/
+	अणुGEN_CMD_CODE(_GetCCXReport), शून्यपूर्ण, /*40*/
+	अणुGEN_CMD_CODE(_GetDTMReport),	शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_GetTXRateStatistics), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetUsbSuspend), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetH2cLbk), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_AddBAReq), शून्यपूर्ण, /*45*/
+	अणुGEN_CMD_CODE(_SetChannel), शून्यपूर्ण,		/*46*/
+	अणुGEN_CMD_CODE(_SetTxPower), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SwitchAntenna), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetCrystalCap), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetSingleCarrierTx), शून्यपूर्ण,	/*50*/
 
-	{GEN_CMD_CODE(_SetSingleToneTx), NULL}, /*51*/
-	{GEN_CMD_CODE(_SetCarrierSuppressionTx), NULL},
-	{GEN_CMD_CODE(_SetContinuousTx), NULL},
-	{GEN_CMD_CODE(_SwitchBandwidth), NULL},		/*54*/
-	{GEN_CMD_CODE(_TX_Beacon), NULL},/*55*/
+	अणुGEN_CMD_CODE(_SetSingleToneTx), शून्यपूर्ण, /*51*/
+	अणुGEN_CMD_CODE(_SetCarrierSuppressionTx), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SetContinuousTx), शून्यपूर्ण,
+	अणुGEN_CMD_CODE(_SwitchBandwidth), शून्यपूर्ण,		/*54*/
+	अणुGEN_CMD_CODE(_TX_Beacon), शून्यपूर्ण,/*55*/
 
-	{GEN_CMD_CODE(_Set_MLME_EVT), NULL},/*56*/
-	{GEN_CMD_CODE(_Set_Drv_Extra), NULL},/*57*/
-	{GEN_CMD_CODE(_Set_H2C_MSG), NULL},/*58*/
-	{GEN_CMD_CODE(_SetChannelPlan), NULL},/*59*/
+	अणुGEN_CMD_CODE(_Set_MLME_EVT), शून्यपूर्ण,/*56*/
+	अणुGEN_CMD_CODE(_Set_Drv_Extra), शून्यपूर्ण,/*57*/
+	अणुGEN_CMD_CODE(_Set_H2C_MSG), शून्यपूर्ण,/*58*/
+	अणुGEN_CMD_CODE(_SetChannelPlan), शून्यपूर्ण,/*59*/
 
-	{GEN_CMD_CODE(_SetChannelSwitch), NULL},/*60*/
-	{GEN_CMD_CODE(_TDLS), NULL},/*61*/
-	{GEN_CMD_CODE(_ChkBMCSleepq), NULL}, /*62*/
+	अणुGEN_CMD_CODE(_SetChannelSwitch), शून्यपूर्ण,/*60*/
+	अणुGEN_CMD_CODE(_TDLS), शून्यपूर्ण,/*61*/
+	अणुGEN_CMD_CODE(_ChkBMCSleepq), शून्यपूर्ण, /*62*/
 
-	{GEN_CMD_CODE(_RunInThreadCMD), NULL},/*63*/
-};
+	अणुGEN_CMD_CODE(_RunInThपढ़ोCMD), शून्यपूर्ण,/*63*/
+पूर्ण;
 
-static struct cmd_hdl wlancmds[] = {
-	GEN_DRV_CMD_HANDLER(0, NULL) /*0*/
-	GEN_DRV_CMD_HANDLER(0, NULL)
-	GEN_DRV_CMD_HANDLER(0, NULL)
-	GEN_DRV_CMD_HANDLER(0, NULL)
-	GEN_DRV_CMD_HANDLER(0, NULL)
-	GEN_DRV_CMD_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL) /*10*/
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct joinbss_parm), join_cmd_hdl) /*14*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct disconnect_parm), disconnect_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct createbss_parm), createbss_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setopmode_parm), setopmode_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct sitesurvey_parm), sitesurvey_cmd_hdl) /*18*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct setauth_parm), setauth_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setkey_parm), setkey_hdl) /*20*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct set_stakey_parm), set_stakey_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct set_assocsta_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct del_assocsta_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setstapwrstate_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setbasicrate_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct getbasicrate_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setdatarate_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct getdatarate_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct setphyinfo_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct getphyinfo_parm), NULL)  /*30*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct setphy_parm), NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct getphy_parm), NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)	/*40*/
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct addBaReq_parm), add_ba_hdl)
-	GEN_MLME_EXT_HANDLER(sizeof(struct set_ch_parm), set_ch_hdl) /* 46 */
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL) /*50*/
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(0, NULL)
-	GEN_MLME_EXT_HANDLER(sizeof(struct Tx_Beacon_param), tx_beacon_hdl) /*55*/
+अटल काष्ठा cmd_hdl wlancmds[] = अणु
+	GEN_DRV_CMD_HANDLER(0, शून्य) /*0*/
+	GEN_DRV_CMD_HANDLER(0, शून्य)
+	GEN_DRV_CMD_HANDLER(0, शून्य)
+	GEN_DRV_CMD_HANDLER(0, शून्य)
+	GEN_DRV_CMD_HANDLER(0, शून्य)
+	GEN_DRV_CMD_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य) /*10*/
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा joinbss_parm), join_cmd_hdl) /*14*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा disconnect_parm), disconnect_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा createbss_parm), createbss_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setopmode_parm), setopmode_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा sitesurvey_parm), sitesurvey_cmd_hdl) /*18*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setauth_parm), setauth_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setkey_parm), setkey_hdl) /*20*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा set_stakey_parm), set_stakey_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा set_assocsta_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा del_assocsta_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setstapwrstate_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setbasicrate_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा getbasicrate_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setdatarate_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा getdatarate_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setphyinfo_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा getphyinfo_parm), शून्य)  /*30*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा setphy_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा getphy_parm), शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)	/*40*/
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा addBaReq_parm), add_ba_hdl)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा set_ch_parm), set_ch_hdl) /* 46 */
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य) /*50*/
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(0, शून्य)
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा Tx_Beacon_param), tx_beacon_hdl) /*55*/
 
 	GEN_MLME_EXT_HANDLER(0, mlme_evt_hdl) /*56*/
 	GEN_MLME_EXT_HANDLER(0, rtw_drvextra_cmd_hdl) /*57*/
 
 	GEN_MLME_EXT_HANDLER(0, h2c_msg_hdl) /*58*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct SetChannelPlan_param), set_chplan_hdl) /*59*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा SetChannelPlan_param), set_chplan_hdl) /*59*/
 
-	GEN_MLME_EXT_HANDLER(sizeof(struct SetChannelSwitch_param), set_csa_hdl) /*60*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct TDLSoption_param), tdls_hdl) /*61*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा SetChannelSwitch_param), set_csa_hdl) /*60*/
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा TDLSoption_param), tdls_hdl) /*61*/
 	GEN_MLME_EXT_HANDLER(0, chk_bmc_sleepq_hdl) /*62*/
-	GEN_MLME_EXT_HANDLER(sizeof(struct RunInThread_param), run_in_thread_hdl) /*63*/
-};
+	GEN_MLME_EXT_HANDLER(माप(काष्ठा RunInThपढ़ो_param), run_in_thपढ़ो_hdl) /*63*/
+पूर्ण;
 
 /*
-Caller and the rtw_cmd_thread can protect cmd_q by spin_lock.
+Caller and the rtw_cmd_thपढ़ो can protect cmd_q by spin_lock.
 No irqsave is necessary.
 */
 
-int rtw_init_cmd_priv(struct	cmd_priv *pcmdpriv)
-{
-	int res = 0;
+पूर्णांक rtw_init_cmd_priv(काष्ठा	cmd_priv *pcmdpriv)
+अणु
+	पूर्णांक res = 0;
 
 	init_completion(&pcmdpriv->cmd_queue_comp);
-	init_completion(&pcmdpriv->terminate_cmdthread_comp);
+	init_completion(&pcmdpriv->terminate_cmdthपढ़ो_comp);
 
 	_rtw_init_queue(&(pcmdpriv->cmd_queue));
 
-	/* allocate DMA-able/Non-Page memory for cmd_buf and rsp_buf */
+	/* allocate DMA-able/Non-Page memory क्रम cmd_buf and rsp_buf */
 
 	pcmdpriv->cmd_seq = 1;
 
-	pcmdpriv->cmd_allocated_buf = rtw_zmalloc(MAX_CMDSZ + CMDBUFF_ALIGN_SZ);
+	pcmdpriv->cmd_allocated_buf = rtw_zदो_स्मृति(MAX_CMDSZ + CMDBUFF_ALIGN_SZ);
 
-	if (!pcmdpriv->cmd_allocated_buf) {
+	अगर (!pcmdpriv->cmd_allocated_buf) अणु
 		res = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pcmdpriv->cmd_buf = pcmdpriv->cmd_allocated_buf  +  CMDBUFF_ALIGN_SZ - ((SIZE_PTR)(pcmdpriv->cmd_allocated_buf) & (CMDBUFF_ALIGN_SZ-1));
 
-	pcmdpriv->rsp_allocated_buf = rtw_zmalloc(MAX_RSPSZ + 4);
+	pcmdpriv->rsp_allocated_buf = rtw_zदो_स्मृति(MAX_RSPSZ + 4);
 
-	if (!pcmdpriv->rsp_allocated_buf) {
+	अगर (!pcmdpriv->rsp_allocated_buf) अणु
 		res = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pcmdpriv->rsp_buf = pcmdpriv->rsp_allocated_buf  +  4 - ((SIZE_PTR)(pcmdpriv->rsp_allocated_buf) & 3);
 
 	pcmdpriv->cmd_issued_cnt = 0;
-	pcmdpriv->cmd_done_cnt = 0;
+	pcmdpriv->cmd_करोne_cnt = 0;
 	pcmdpriv->rsp_cnt = 0;
 
 	mutex_init(&pcmdpriv->sctx_mutex);
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-static void c2h_wk_callback(struct work_struct *work);
-int rtw_init_evt_priv(struct evt_priv *pevtpriv)
-{
-	/* allocate DMA-able/Non-Page memory for cmd_buf and rsp_buf */
+अटल व्योम c2h_wk_callback(काष्ठा work_काष्ठा *work);
+पूर्णांक rtw_init_evt_priv(काष्ठा evt_priv *pevtpriv)
+अणु
+	/* allocate DMA-able/Non-Page memory क्रम cmd_buf and rsp_buf */
 	atomic_set(&pevtpriv->event_seq, 0);
-	pevtpriv->evt_done_cnt = 0;
+	pevtpriv->evt_करोne_cnt = 0;
 
-	_init_workitem(&pevtpriv->c2h_wk, c2h_wk_callback, NULL);
+	_init_workitem(&pevtpriv->c2h_wk, c2h_wk_callback, शून्य);
 	pevtpriv->c2h_wk_alive = false;
 	pevtpriv->c2h_queue = rtw_cbuf_alloc(C2H_QUEUE_MAX_LEN+1);
-	if (!pevtpriv->c2h_queue)
-		return -ENOMEM;
+	अगर (!pevtpriv->c2h_queue)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void _rtw_free_evt_priv(struct	evt_priv *pevtpriv)
-{
+व्योम _rtw_मुक्त_evt_priv(काष्ठा	evt_priv *pevtpriv)
+अणु
 	_cancel_workitem_sync(&pevtpriv->c2h_wk);
-	while (pevtpriv->c2h_wk_alive)
+	जबतक (pevtpriv->c2h_wk_alive)
 		msleep(10);
 
-	while (!rtw_cbuf_empty(pevtpriv->c2h_queue)) {
-		void *c2h = rtw_cbuf_pop(pevtpriv->c2h_queue);
-		if (c2h && c2h != (void *)pevtpriv)
-			kfree(c2h);
-	}
-	kfree(pevtpriv->c2h_queue);
-}
+	जबतक (!rtw_cbuf_empty(pevtpriv->c2h_queue)) अणु
+		व्योम *c2h = rtw_cbuf_pop(pevtpriv->c2h_queue);
+		अगर (c2h && c2h != (व्योम *)pevtpriv)
+			kमुक्त(c2h);
+	पूर्ण
+	kमुक्त(pevtpriv->c2h_queue);
+पूर्ण
 
-void _rtw_free_cmd_priv(struct	cmd_priv *pcmdpriv)
-{
-	if (pcmdpriv) {
-		kfree(pcmdpriv->cmd_allocated_buf);
+व्योम _rtw_मुक्त_cmd_priv(काष्ठा	cmd_priv *pcmdpriv)
+अणु
+	अगर (pcmdpriv) अणु
+		kमुक्त(pcmdpriv->cmd_allocated_buf);
 
-		kfree(pcmdpriv->rsp_allocated_buf);
+		kमुक्त(pcmdpriv->rsp_allocated_buf);
 
 		mutex_destroy(&pcmdpriv->sctx_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
 Calling Context:
 
-rtw_enqueue_cmd can only be called between kernel thread,
+rtw_enqueue_cmd can only be called between kernel thपढ़ो,
 since only spin_lock is used.
 
 ISR/Call-Back functions can't call this sub-function.
 
 */
 
-int _rtw_enqueue_cmd(struct __queue *queue, struct cmd_obj *obj)
-{
-	unsigned long irqL;
+पूर्णांक _rtw_enqueue_cmd(काष्ठा __queue *queue, काष्ठा cmd_obj *obj)
+अणु
+	अचिन्हित दीर्घ irqL;
 
-	if (obj == NULL)
-		goto exit;
+	अगर (obj == शून्य)
+		जाओ निकास;
 
 	/* spin_lock_bh(&queue->lock); */
 	spin_lock_irqsave(&queue->lock, irqL);
@@ -267,295 +268,295 @@ int _rtw_enqueue_cmd(struct __queue *queue, struct cmd_obj *obj)
 	/* spin_unlock_bh(&queue->lock); */
 	spin_unlock_irqrestore(&queue->lock, irqL);
 
-exit:
-	return _SUCCESS;
-}
+निकास:
+	वापस _SUCCESS;
+पूर्ण
 
-struct	cmd_obj	*_rtw_dequeue_cmd(struct __queue *queue)
-{
-	unsigned long irqL;
-	struct cmd_obj *obj;
+काष्ठा	cmd_obj	*_rtw_dequeue_cmd(काष्ठा __queue *queue)
+अणु
+	अचिन्हित दीर्घ irqL;
+	काष्ठा cmd_obj *obj;
 
 	/* spin_lock_bh(&(queue->lock)); */
 	spin_lock_irqsave(&queue->lock, irqL);
-	if (list_empty(&(queue->queue)))
-		obj = NULL;
-	else {
-		obj = container_of(get_next(&(queue->queue)), struct cmd_obj, list);
+	अगर (list_empty(&(queue->queue)))
+		obj = शून्य;
+	अन्यथा अणु
+		obj = container_of(get_next(&(queue->queue)), काष्ठा cmd_obj, list);
 		list_del_init(&obj->list);
-	}
+	पूर्ण
 
 	/* spin_unlock_bh(&(queue->lock)); */
 	spin_unlock_irqrestore(&queue->lock, irqL);
 
-	return obj;
-}
+	वापस obj;
+पूर्ण
 
-void rtw_free_evt_priv(struct	evt_priv *pevtpriv)
-{
-	_rtw_free_evt_priv(pevtpriv);
-}
+व्योम rtw_मुक्त_evt_priv(काष्ठा	evt_priv *pevtpriv)
+अणु
+	_rtw_मुक्त_evt_priv(pevtpriv);
+पूर्ण
 
-void rtw_free_cmd_priv(struct	cmd_priv *pcmdpriv)
-{
-	_rtw_free_cmd_priv(pcmdpriv);
-}
+व्योम rtw_मुक्त_cmd_priv(काष्ठा	cmd_priv *pcmdpriv)
+अणु
+	_rtw_मुक्त_cmd_priv(pcmdpriv);
+पूर्ण
 
-int rtw_cmd_filter(struct cmd_priv *pcmdpriv, struct cmd_obj *cmd_obj);
-int rtw_cmd_filter(struct cmd_priv *pcmdpriv, struct cmd_obj *cmd_obj)
-{
+पूर्णांक rtw_cmd_filter(काष्ठा cmd_priv *pcmdpriv, काष्ठा cmd_obj *cmd_obj);
+पूर्णांक rtw_cmd_filter(काष्ठा cmd_priv *pcmdpriv, काष्ठा cmd_obj *cmd_obj)
+अणु
 	u8 bAllow = false; /* set to true to allow enqueuing cmd when hw_init_completed is false */
 
-	if (cmd_obj->cmdcode == GEN_CMD_CODE(_SetChannelPlan))
+	अगर (cmd_obj->cmdcode == GEN_CMD_CODE(_SetChannelPlan))
 		bAllow = true;
 
-	if ((pcmdpriv->padapter->hw_init_completed == false && bAllow == false)
-		|| atomic_read(&(pcmdpriv->cmdthd_running)) == false	/* com_thread not running */
+	अगर ((pcmdpriv->padapter->hw_init_completed == false && bAllow == false)
+		|| atomic_पढ़ो(&(pcmdpriv->cmdthd_running)) == false	/* com_thपढ़ो not running */
 	)
-		return _FAIL;
+		वापस _FAIL;
 
-	return _SUCCESS;
-}
+	वापस _SUCCESS;
+पूर्ण
 
 
 
-int rtw_enqueue_cmd(struct cmd_priv *pcmdpriv, struct cmd_obj *cmd_obj)
-{
-	int res = _FAIL;
-	struct adapter *padapter = pcmdpriv->padapter;
+पूर्णांक rtw_enqueue_cmd(काष्ठा cmd_priv *pcmdpriv, काष्ठा cmd_obj *cmd_obj)
+अणु
+	पूर्णांक res = _FAIL;
+	काष्ठा adapter *padapter = pcmdpriv->padapter;
 
-	if (cmd_obj == NULL)
-		goto exit;
+	अगर (cmd_obj == शून्य)
+		जाओ निकास;
 
 	cmd_obj->padapter = padapter;
 
 	res = rtw_cmd_filter(pcmdpriv, cmd_obj);
-	if (res == _FAIL) {
-		rtw_free_cmd_obj(cmd_obj);
-		goto exit;
-	}
+	अगर (res == _FAIL) अणु
+		rtw_मुक्त_cmd_obj(cmd_obj);
+		जाओ निकास;
+	पूर्ण
 
 	res = _rtw_enqueue_cmd(&pcmdpriv->cmd_queue, cmd_obj);
 
-	if (res == _SUCCESS)
+	अगर (res == _SUCCESS)
 		complete(&pcmdpriv->cmd_queue_comp);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-struct	cmd_obj	*rtw_dequeue_cmd(struct cmd_priv *pcmdpriv)
-{
-	return _rtw_dequeue_cmd(&pcmdpriv->cmd_queue);
-}
+काष्ठा	cmd_obj	*rtw_dequeue_cmd(काष्ठा cmd_priv *pcmdpriv)
+अणु
+	वापस _rtw_dequeue_cmd(&pcmdpriv->cmd_queue);
+पूर्ण
 
-void rtw_free_cmd_obj(struct cmd_obj *pcmd)
-{
-	if ((pcmd->cmdcode != _JoinBss_CMD_) &&
-	    (pcmd->cmdcode != _CreateBss_CMD_)) {
-		/* free parmbuf in cmd_obj */
-		kfree(pcmd->parmbuf);
-	}
+व्योम rtw_मुक्त_cmd_obj(काष्ठा cmd_obj *pcmd)
+अणु
+	अगर ((pcmd->cmdcode != _JoinBss_CMD_) &&
+	    (pcmd->cmdcode != _CreateBss_CMD_)) अणु
+		/* मुक्त parmbuf in cmd_obj */
+		kमुक्त(pcmd->parmbuf);
+	पूर्ण
 
-	if (pcmd->rsp) {
-		if (pcmd->rspsz != 0) {
-			/* free rsp in cmd_obj */
-			kfree(pcmd->rsp);
-		}
-	}
+	अगर (pcmd->rsp) अणु
+		अगर (pcmd->rspsz != 0) अणु
+			/* मुक्त rsp in cmd_obj */
+			kमुक्त(pcmd->rsp);
+		पूर्ण
+	पूर्ण
 
-	/* free cmd_obj */
-	kfree(pcmd);
-}
+	/* मुक्त cmd_obj */
+	kमुक्त(pcmd);
+पूर्ण
 
 
-void rtw_stop_cmd_thread(struct adapter *adapter)
-{
-	if (adapter->cmdThread &&
-		atomic_read(&(adapter->cmdpriv.cmdthd_running)) == true &&
-		adapter->cmdpriv.stop_req == 0) {
+व्योम rtw_stop_cmd_thपढ़ो(काष्ठा adapter *adapter)
+अणु
+	अगर (adapter->cmdThपढ़ो &&
+		atomic_पढ़ो(&(adapter->cmdpriv.cmdthd_running)) == true &&
+		adapter->cmdpriv.stop_req == 0) अणु
 		adapter->cmdpriv.stop_req = 1;
 		complete(&adapter->cmdpriv.cmd_queue_comp);
-		wait_for_completion(&adapter->cmdpriv.terminate_cmdthread_comp);
-	}
-}
+		रुको_क्रम_completion(&adapter->cmdpriv.terminate_cmdthपढ़ो_comp);
+	पूर्ण
+पूर्ण
 
-int rtw_cmd_thread(void *context)
-{
+पूर्णांक rtw_cmd_thपढ़ो(व्योम *context)
+अणु
 	u8 ret;
-	struct cmd_obj *pcmd;
+	काष्ठा cmd_obj *pcmd;
 	u8 *pcmdbuf;
-	u8 (*cmd_hdl)(struct adapter *padapter, u8 *pbuf);
-	void (*pcmd_callback)(struct adapter *dev, struct cmd_obj *pcmd);
-	struct adapter *padapter = context;
-	struct cmd_priv *pcmdpriv = &(padapter->cmdpriv);
-	struct drvextra_cmd_parm *extra_parm = NULL;
+	u8 (*cmd_hdl)(काष्ठा adapter *padapter, u8 *pbuf);
+	व्योम (*pcmd_callback)(काष्ठा adapter *dev, काष्ठा cmd_obj *pcmd);
+	काष्ठा adapter *padapter = context;
+	काष्ठा cmd_priv *pcmdpriv = &(padapter->cmdpriv);
+	काष्ठा drvextra_cmd_parm *extra_parm = शून्य;
 
-	thread_enter("RTW_CMD_THREAD");
+	thपढ़ो_enter("RTW_CMD_THREAD");
 
 	pcmdbuf = pcmdpriv->cmd_buf;
 
 	pcmdpriv->stop_req = 0;
 	atomic_set(&(pcmdpriv->cmdthd_running), true);
-	complete(&pcmdpriv->terminate_cmdthread_comp);
+	complete(&pcmdpriv->terminate_cmdthपढ़ो_comp);
 
-	while (1) {
-		if (wait_for_completion_interruptible(&pcmdpriv->cmd_queue_comp)) {
+	जबतक (1) अणु
+		अगर (रुको_क्रम_completion_पूर्णांकerruptible(&pcmdpriv->cmd_queue_comp)) अणु
 			netdev_dbg(padapter->pnetdev,
 				   FUNC_ADPT_FMT " wait_for_completion_interruptible(&pcmdpriv->cmd_queue_comp) return != 0, break\n",
 				   FUNC_ADPT_ARG(padapter));
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((padapter->bDriverStopped == true) || (padapter->bSurpriseRemoved == true)) {
+		अगर ((padapter->bDriverStopped == true) || (padapter->bSurpriseRemoved == true)) अणु
 			netdev_dbg(padapter->pnetdev,
 				   "%s: DriverStopped(%d) SurpriseRemoved(%d) break at line %d\n",
 				   __func__, padapter->bDriverStopped,
 				   padapter->bSurpriseRemoved, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (pcmdpriv->stop_req) {
+		अगर (pcmdpriv->stop_req) अणु
 			netdev_dbg(padapter->pnetdev,
 				   FUNC_ADPT_FMT " stop_req:%u, break\n",
 				   FUNC_ADPT_ARG(padapter),
 				   pcmdpriv->stop_req);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (list_empty(&pcmdpriv->cmd_queue.queue))
-			continue;
+		अगर (list_empty(&pcmdpriv->cmd_queue.queue))
+			जारी;
 
-		if (rtw_register_cmd_alive(padapter) != _SUCCESS)
-			continue;
+		अगर (rtw_रेजिस्टर_cmd_alive(padapter) != _SUCCESS)
+			जारी;
 
 _next:
-		if ((padapter->bDriverStopped == true) || (padapter->bSurpriseRemoved == true)) {
+		अगर ((padapter->bDriverStopped == true) || (padapter->bSurpriseRemoved == true)) अणु
 			netdev_dbg(padapter->pnetdev,
 				   "%s: DriverStopped(%d) SurpriseRemoved(%d) break at line %d\n",
 				   __func__, padapter->bDriverStopped,
 				   padapter->bSurpriseRemoved, __LINE__);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		pcmd = rtw_dequeue_cmd(pcmdpriv);
-		if (!pcmd) {
-			rtw_unregister_cmd_alive(padapter);
-			continue;
-		}
+		अगर (!pcmd) अणु
+			rtw_unरेजिस्टर_cmd_alive(padapter);
+			जारी;
+		पूर्ण
 
-		if (rtw_cmd_filter(pcmdpriv, pcmd) == _FAIL) {
+		अगर (rtw_cmd_filter(pcmdpriv, pcmd) == _FAIL) अणु
 			pcmd->res = H2C_DROPPED;
-			goto post_process;
-		}
+			जाओ post_process;
+		पूर्ण
 
 		pcmdpriv->cmd_issued_cnt++;
 
 		pcmd->cmdsz = round_up((pcmd->cmdsz), 4);
 
-		memcpy(pcmdbuf, pcmd->parmbuf, pcmd->cmdsz);
+		स_नकल(pcmdbuf, pcmd->parmbuf, pcmd->cmdsz);
 
-		if (pcmd->cmdcode < ARRAY_SIZE(wlancmds)) {
+		अगर (pcmd->cmdcode < ARRAY_SIZE(wlancmds)) अणु
 			cmd_hdl = wlancmds[pcmd->cmdcode].h2cfuns;
 
-			if (cmd_hdl) {
+			अगर (cmd_hdl) अणु
 				ret = cmd_hdl(pcmd->padapter, pcmdbuf);
 				pcmd->res = ret;
-			}
+			पूर्ण
 
 			pcmdpriv->cmd_seq++;
-		} else {
+		पूर्ण अन्यथा अणु
 			pcmd->res = H2C_PARAMETERS_ERROR;
-		}
+		पूर्ण
 
-		cmd_hdl = NULL;
+		cmd_hdl = शून्य;
 
 post_process:
 
-		if (mutex_lock_interruptible(&(pcmd->padapter->cmdpriv.sctx_mutex)) == 0) {
-			if (pcmd->sctx) {
+		अगर (mutex_lock_पूर्णांकerruptible(&(pcmd->padapter->cmdpriv.sctx_mutex)) == 0) अणु
+			अगर (pcmd->sctx) अणु
 				netdev_dbg(padapter->pnetdev,
 					   FUNC_ADPT_FMT " pcmd->sctx\n",
 					   FUNC_ADPT_ARG(pcmd->padapter));
 
-				if (pcmd->res == H2C_SUCCESS)
-					rtw_sctx_done(&pcmd->sctx);
-				else
-					rtw_sctx_done_err(&pcmd->sctx, RTW_SCTX_DONE_CMD_ERROR);
-			}
+				अगर (pcmd->res == H2C_SUCCESS)
+					rtw_sctx_करोne(&pcmd->sctx);
+				अन्यथा
+					rtw_sctx_करोne_err(&pcmd->sctx, RTW_SCTX_DONE_CMD_ERROR);
+			पूर्ण
 			mutex_unlock(&(pcmd->padapter->cmdpriv.sctx_mutex));
-		}
+		पूर्ण
 
-		/* call callback function for post-processed */
-		if (pcmd->cmdcode < ARRAY_SIZE(rtw_cmd_callback)) {
+		/* call callback function क्रम post-processed */
+		अगर (pcmd->cmdcode < ARRAY_SIZE(rtw_cmd_callback)) अणु
 			pcmd_callback = rtw_cmd_callback[pcmd->cmdcode].callback;
-			if (pcmd_callback == NULL) {
-				rtw_free_cmd_obj(pcmd);
-			} else {
-				/* todo: !!! fill rsp_buf to pcmd->rsp if (pcmd->rsp!= NULL) */
-				pcmd_callback(pcmd->padapter, pcmd);/* need consider that free cmd_obj in rtw_cmd_callback */
-			}
-		} else {
-			rtw_free_cmd_obj(pcmd);
-		}
+			अगर (pcmd_callback == शून्य) अणु
+				rtw_मुक्त_cmd_obj(pcmd);
+			पूर्ण अन्यथा अणु
+				/* toकरो: !!! fill rsp_buf to pcmd->rsp अगर (pcmd->rsp!= शून्य) */
+				pcmd_callback(pcmd->padapter, pcmd);/* need consider that मुक्त cmd_obj in rtw_cmd_callback */
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			rtw_मुक्त_cmd_obj(pcmd);
+		पूर्ण
 
-		flush_signals_thread();
+		flush_संकेतs_thपढ़ो();
 
-		goto _next;
+		जाओ _next;
 
-	}
+	पूर्ण
 
-	/*  free all cmd_obj resources */
-	do {
+	/*  मुक्त all cmd_obj resources */
+	करो अणु
 		pcmd = rtw_dequeue_cmd(pcmdpriv);
-		if (pcmd == NULL) {
-			rtw_unregister_cmd_alive(padapter);
-			break;
-		}
+		अगर (pcmd == शून्य) अणु
+			rtw_unरेजिस्टर_cmd_alive(padapter);
+			अवरोध;
+		पूर्ण
 
-		if (pcmd->cmdcode == GEN_CMD_CODE(_Set_Drv_Extra)) {
-			extra_parm = (struct drvextra_cmd_parm *)pcmd->parmbuf;
-			if (extra_parm->pbuf && extra_parm->size > 0)
-				kfree(extra_parm->pbuf);
-		}
+		अगर (pcmd->cmdcode == GEN_CMD_CODE(_Set_Drv_Extra)) अणु
+			extra_parm = (काष्ठा drvextra_cmd_parm *)pcmd->parmbuf;
+			अगर (extra_parm->pbuf && extra_parm->size > 0)
+				kमुक्त(extra_parm->pbuf);
+		पूर्ण
 
-		rtw_free_cmd_obj(pcmd);
-	} while (1);
+		rtw_मुक्त_cmd_obj(pcmd);
+	पूर्ण जबतक (1);
 
-	complete(&pcmdpriv->terminate_cmdthread_comp);
+	complete(&pcmdpriv->terminate_cmdthपढ़ो_comp);
 	atomic_set(&(pcmdpriv->cmdthd_running), false);
 
-	thread_exit();
-}
+	thपढ़ो_निकास();
+पूर्ण
 
 /*
 rtw_sitesurvey_cmd(~)
 	### NOTE:#### (!!!!)
 	MUST TAKE CARE THAT BEFORE CALLING THIS FUNC, YOU SHOULD HAVE LOCKED pmlmepriv->lock
 */
-u8 rtw_sitesurvey_cmd(struct adapter  *padapter, struct ndis_802_11_ssid *ssid, int ssid_num,
-	struct rtw_ieee80211_channel *ch, int ch_num)
-{
+u8 rtw_sitesurvey_cmd(काष्ठा adapter  *padapter, काष्ठा ndis_802_11_ssid *ssid, पूर्णांक ssid_num,
+	काष्ठा rtw_ieee80211_channel *ch, पूर्णांक ch_num)
+अणु
 	u8 res = _FAIL;
-	struct cmd_obj		*ph2c;
-	struct sitesurvey_parm	*psurveyPara;
-	struct cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा cmd_obj		*ph2c;
+	काष्ठा sitesurvey_parm	*psurveyPara;
+	काष्ठा cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	if (check_fwstate(pmlmepriv, _FW_LINKED) == true)
+	अगर (check_fwstate(pmlmepriv, _FW_LINKED) == true)
 		rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_SCAN, 1);
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL)
-		return _FAIL;
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य)
+		वापस _FAIL;
 
-	psurveyPara = rtw_zmalloc(sizeof(struct sitesurvey_parm));
-	if (psurveyPara == NULL) {
-		kfree(ph2c);
-		return _FAIL;
-	}
+	psurveyPara = rtw_zदो_स्मृति(माप(काष्ठा sitesurvey_parm));
+	अगर (psurveyPara == शून्य) अणु
+		kमुक्त(ph2c);
+		वापस _FAIL;
+	पूर्ण
 
-	rtw_free_network_queue(padapter, false);
+	rtw_मुक्त_network_queue(padapter, false);
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, psurveyPara, GEN_CMD_CODE(_SiteSurvey));
 
@@ -563,515 +564,515 @@ u8 rtw_sitesurvey_cmd(struct adapter  *padapter, struct ndis_802_11_ssid *ssid, 
 	psurveyPara->scan_mode = pmlmepriv->scan_mode;
 
 	/* prepare ssid list */
-	if (ssid) {
-		int i;
-		for (i = 0; i < ssid_num && i < RTW_SSID_SCAN_AMOUNT; i++) {
-			if (ssid[i].SsidLength) {
-				memcpy(&psurveyPara->ssid[i], &ssid[i], sizeof(struct ndis_802_11_ssid));
+	अगर (ssid) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < ssid_num && i < RTW_SSID_SCAN_AMOUNT; i++) अणु
+			अगर (ssid[i].SsidLength) अणु
+				स_नकल(&psurveyPara->ssid[i], &ssid[i], माप(काष्ठा ndis_802_11_ssid));
 				psurveyPara->ssid_num++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* prepare channel list */
-	if (ch) {
-		int i;
-		for (i = 0; i < ch_num && i < RTW_CHANNEL_SCAN_AMOUNT; i++) {
-			if (ch[i].hw_value && !(ch[i].flags & RTW_IEEE80211_CHAN_DISABLED)) {
-				memcpy(&psurveyPara->ch[i], &ch[i], sizeof(struct rtw_ieee80211_channel));
+	अगर (ch) अणु
+		पूर्णांक i;
+		क्रम (i = 0; i < ch_num && i < RTW_CHANNEL_SCAN_AMOUNT; i++) अणु
+			अगर (ch[i].hw_value && !(ch[i].flags & RTW_IEEE80211_CHAN_DISABLED)) अणु
+				स_नकल(&psurveyPara->ch[i], &ch[i], माप(काष्ठा rtw_ieee80211_channel));
 				psurveyPara->ch_num++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	set_fwstate(pmlmepriv, _FW_UNDER_SURVEY);
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-	if (res == _SUCCESS) {
+	अगर (res == _SUCCESS) अणु
 
-		pmlmepriv->scan_start_time = jiffies;
-		_set_timer(&pmlmepriv->scan_to_timer, SCANNING_TIMEOUT);
-	} else {
+		pmlmepriv->scan_start_समय = jअगरfies;
+		_set_समयr(&pmlmepriv->scan_to_समयr, SCANNING_TIMEOUT);
+	पूर्ण अन्यथा अणु
 		_clr_fwstate_(pmlmepriv, _FW_UNDER_SURVEY);
-	}
-	return res;
-}
+	पूर्ण
+	वापस res;
+पूर्ण
 
-u8 rtw_setdatarate_cmd(struct adapter *padapter, u8 *rateset)
-{
-	struct cmd_obj *ph2c;
-	struct setdatarate_parm *pbsetdataratepara;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_setdatarate_cmd(काष्ठा adapter *padapter, u8 *rateset)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा setdatarate_parm *pbsetdataratepara;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pbsetdataratepara = rtw_zmalloc(sizeof(struct setdatarate_parm));
-	if (pbsetdataratepara == NULL) {
-		kfree(ph2c);
+	pbsetdataratepara = rtw_zदो_स्मृति(माप(काष्ठा setdatarate_parm));
+	अगर (pbsetdataratepara == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pbsetdataratepara, GEN_CMD_CODE(_SetDataRate));
 	pbsetdataratepara->mac_id = 5;
-	memcpy(pbsetdataratepara->datarates, rateset, NumRates);
+	स_नकल(pbsetdataratepara->datarates, rateset, NumRates);
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-void rtw_getbbrfreg_cmdrsp_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
-	/* rtw_free_cmd_obj(pcmd); */
-	kfree(pcmd->parmbuf);
-	kfree(pcmd);
-}
+व्योम rtw_getbbrfreg_cmdrsp_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
+	/* rtw_मुक्त_cmd_obj(pcmd); */
+	kमुक्त(pcmd->parmbuf);
+	kमुक्त(pcmd);
+पूर्ण
 
-u8 rtw_createbss_cmd(struct adapter  *padapter)
-{
-	struct cmd_obj *pcmd;
-	struct cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
-	struct wlan_bssid_ex		*pdev_network = &padapter->registrypriv.dev_network;
+u8 rtw_createbss_cmd(काष्ठा adapter  *padapter)
+अणु
+	काष्ठा cmd_obj *pcmd;
+	काष्ठा cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा wlan_bssid_ex		*pdev_network = &padapter->registrypriv.dev_network;
 	u8 res = _SUCCESS;
 
-	pcmd = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (pcmd == NULL) {
+	pcmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (pcmd == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	INIT_LIST_HEAD(&pcmd->list);
 	pcmd->cmdcode = _CreateBss_CMD_;
-	pcmd->parmbuf = (unsigned char *)pdev_network;
-	pcmd->cmdsz = get_wlan_bssid_ex_sz((struct wlan_bssid_ex *)pdev_network);
-	pcmd->rsp = NULL;
+	pcmd->parmbuf = (अचिन्हित अक्षर *)pdev_network;
+	pcmd->cmdsz = get_wlan_bssid_ex_sz((काष्ठा wlan_bssid_ex *)pdev_network);
+	pcmd->rsp = शून्य;
 	pcmd->rspsz = 0;
 
 	pdev_network->Length = pcmd->cmdsz;
 
 	res = rtw_enqueue_cmd(pcmdpriv, pcmd);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-int rtw_startbss_cmd(struct adapter  *padapter, int flags)
-{
-	struct cmd_obj *pcmd;
-	struct cmd_priv  *pcmdpriv = &padapter->cmdpriv;
-	struct submit_ctx sctx;
-	int res = _SUCCESS;
+पूर्णांक rtw_startbss_cmd(काष्ठा adapter  *padapter, पूर्णांक flags)
+अणु
+	काष्ठा cmd_obj *pcmd;
+	काष्ठा cmd_priv  *pcmdpriv = &padapter->cmdpriv;
+	काष्ठा submit_ctx sctx;
+	पूर्णांक res = _SUCCESS;
 
-	if (flags & RTW_CMDF_DIRECTLY) {
-		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
+	अगर (flags & RTW_CMDF_सूचीECTLY) अणु
+		/* no need to enqueue, करो the cmd hdl directly and मुक्त cmd parameter */
 		start_bss_network(padapter, (u8 *)&(padapter->mlmepriv.cur_network.network));
-	} else {
+	पूर्ण अन्यथा अणु
 		/* need enqueue, prepare cmd_obj and enqueue */
-		pcmd = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (pcmd == NULL) {
+		pcmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (pcmd == शून्य) अणु
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		INIT_LIST_HEAD(&pcmd->list);
 		pcmd->cmdcode = GEN_CMD_CODE(_CreateBss);
-		pcmd->parmbuf = NULL;
+		pcmd->parmbuf = शून्य;
 		pcmd->cmdsz =  0;
-		pcmd->rsp = NULL;
+		pcmd->rsp = शून्य;
 		pcmd->rspsz = 0;
 
-		if (flags & RTW_CMDF_WAIT_ACK) {
+		अगर (flags & RTW_CMDF_WAIT_ACK) अणु
 			pcmd->sctx = &sctx;
 			rtw_sctx_init(&sctx, 2000);
-		}
+		पूर्ण
 
 		res = rtw_enqueue_cmd(pcmdpriv, pcmd);
 
-		if (res == _SUCCESS && (flags & RTW_CMDF_WAIT_ACK)) {
-			rtw_sctx_wait(&sctx, __func__);
-			if (mutex_lock_interruptible(&pcmdpriv->sctx_mutex) == 0) {
-				if (sctx.status == RTW_SCTX_SUBMITTED)
-					pcmd->sctx = NULL;
+		अगर (res == _SUCCESS && (flags & RTW_CMDF_WAIT_ACK)) अणु
+			rtw_sctx_रुको(&sctx, __func__);
+			अगर (mutex_lock_पूर्णांकerruptible(&pcmdpriv->sctx_mutex) == 0) अणु
+				अगर (sctx.status == RTW_SCTX_SUBMITTED)
+					pcmd->sctx = शून्य;
 				mutex_unlock(&pcmdpriv->sctx_mutex);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_joinbss_cmd(struct adapter  *padapter, struct wlan_network *pnetwork)
-{
+u8 rtw_joinbss_cmd(काष्ठा adapter  *padapter, काष्ठा wlan_network *pnetwork)
+अणु
 	u8 res = _SUCCESS;
-	uint	t_len = 0;
-	struct wlan_bssid_ex		*psecnetwork;
-	struct cmd_obj		*pcmd;
-	struct cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
-	struct mlme_priv 	*pmlmepriv = &padapter->mlmepriv;
-	struct qos_priv 	*pqospriv = &pmlmepriv->qospriv;
-	struct security_priv *psecuritypriv = &padapter->securitypriv;
-	struct registry_priv *pregistrypriv = &padapter->registrypriv;
-	struct ht_priv 		*phtpriv = &pmlmepriv->htpriv;
-	enum ndis_802_11_network_infrastructure ndis_network_mode = pnetwork->network.InfrastructureMode;
-	struct mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
-	struct mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
-	u32 tmp_len;
-	u8 *ptmp = NULL;
+	uपूर्णांक	t_len = 0;
+	काष्ठा wlan_bssid_ex		*psecnetwork;
+	काष्ठा cmd_obj		*pcmd;
+	काष्ठा cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा mlme_priv 	*pmlmepriv = &padapter->mlmepriv;
+	काष्ठा qos_priv 	*pqospriv = &pmlmepriv->qospriv;
+	काष्ठा security_priv *psecuritypriv = &padapter->securitypriv;
+	काष्ठा registry_priv *pregistrypriv = &padapter->registrypriv;
+	काष्ठा ht_priv 		*phtpriv = &pmlmepriv->htpriv;
+	क्रमागत ndis_802_11_network_infraकाष्ठाure ndis_network_mode = pnetwork->network.Infraकाष्ठाureMode;
+	काष्ठा mlme_ext_priv *pmlmeext = &padapter->mlmeextpriv;
+	काष्ठा mlme_ext_info *pmlmeinfo = &(pmlmeext->mlmext_info);
+	u32 पंचांगp_len;
+	u8 *pपंचांगp = शून्य;
 
-	pcmd = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (pcmd == NULL) {
+	pcmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (pcmd == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
-	/* for IEs is fix buf size */
-	t_len = sizeof(struct wlan_bssid_ex);
+		जाओ निकास;
+	पूर्ण
+	/* क्रम IEs is fix buf size */
+	t_len = माप(काष्ठा wlan_bssid_ex);
 
 
-	/* for hidden ap to set fw_state here */
-	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE|WIFI_ADHOC_STATE) != true) {
-		switch (ndis_network_mode) {
-		case Ndis802_11IBSS:
+	/* क्रम hidden ap to set fw_state here */
+	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE|WIFI_ADHOC_STATE) != true) अणु
+		चयन (ndis_network_mode) अणु
+		हाल Ndis802_11IBSS:
 			set_fwstate(pmlmepriv, WIFI_ADHOC_STATE);
-			break;
+			अवरोध;
 
-		case Ndis802_11Infrastructure:
+		हाल Ndis802_11Infraकाष्ठाure:
 			set_fwstate(pmlmepriv, WIFI_STATION_STATE);
-			break;
+			अवरोध;
 
-		case Ndis802_11APMode:
-		case Ndis802_11AutoUnknown:
-		case Ndis802_11InfrastructureMax:
-			break;
+		हाल Ndis802_11APMode:
+		हाल Ndis802_11AutoUnknown:
+		हाल Ndis802_11Infraकाष्ठाureMax:
+			अवरोध;
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	psecnetwork = (struct wlan_bssid_ex *)&psecuritypriv->sec_bss;
+	psecnetwork = (काष्ठा wlan_bssid_ex *)&psecuritypriv->sec_bss;
 
-	memset(psecnetwork, 0, t_len);
+	स_रखो(psecnetwork, 0, t_len);
 
-	memcpy(psecnetwork, &pnetwork->network, get_wlan_bssid_ex_sz(&pnetwork->network));
+	स_नकल(psecnetwork, &pnetwork->network, get_wlan_bssid_ex_sz(&pnetwork->network));
 
-	psecuritypriv->authenticator_ie[0] = (unsigned char)psecnetwork->IELength;
+	psecuritypriv->authenticator_ie[0] = (अचिन्हित अक्षर)psecnetwork->IELength;
 
-	if ((psecnetwork->IELength-12) < (256-1))
-		memcpy(&psecuritypriv->authenticator_ie[1], &psecnetwork->IEs[12], psecnetwork->IELength-12);
-	else
-		memcpy(&psecuritypriv->authenticator_ie[1], &psecnetwork->IEs[12], (256-1));
+	अगर ((psecnetwork->IELength-12) < (256-1))
+		स_नकल(&psecuritypriv->authenticator_ie[1], &psecnetwork->IEs[12], psecnetwork->IELength-12);
+	अन्यथा
+		स_नकल(&psecuritypriv->authenticator_ie[1], &psecnetwork->IEs[12], (256-1));
 
 	psecnetwork->IELength = 0;
 	/*  Added by Albert 2009/02/18 */
 	/*  If the driver wants to use the bssid to create the connection. */
 	/*  If not,  we have to copy the connecting AP's MAC address to it so that */
-	/*  the driver just has the bssid information for PMKIDList searching. */
+	/*  the driver just has the bssid inक्रमmation क्रम PMKIDList searching. */
 
-	if (pmlmepriv->assoc_by_bssid == false)
-		memcpy(&pmlmepriv->assoc_bssid[0], &pnetwork->network.MacAddress[0], ETH_ALEN);
+	अगर (pmlmepriv->assoc_by_bssid == false)
+		स_नकल(&pmlmepriv->assoc_bssid[0], &pnetwork->network.MacAddress[0], ETH_ALEN);
 
-	psecnetwork->IELength = rtw_restruct_sec_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], pnetwork->network.IELength);
+	psecnetwork->IELength = rtw_reकाष्ठा_sec_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], pnetwork->network.IELength);
 
 
 	pqospriv->qos_option = 0;
 
-	if (pregistrypriv->wmm_enable) {
-		tmp_len = rtw_restruct_wmm_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], pnetwork->network.IELength, psecnetwork->IELength);
+	अगर (pregistrypriv->wmm_enable) अणु
+		पंचांगp_len = rtw_reकाष्ठा_wmm_ie(padapter, &pnetwork->network.IEs[0], &psecnetwork->IEs[0], pnetwork->network.IELength, psecnetwork->IELength);
 
-		if (psecnetwork->IELength != tmp_len) {
-			psecnetwork->IELength = tmp_len;
+		अगर (psecnetwork->IELength != पंचांगp_len) अणु
+			psecnetwork->IELength = पंचांगp_len;
 			pqospriv->qos_option = 1; /* There is WMM IE in this corresp. beacon */
-		} else {
+		पूर्ण अन्यथा अणु
 			pqospriv->qos_option = 0;/* There is no WMM IE in this corresp. beacon */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	phtpriv->ht_option = false;
-	ptmp = rtw_get_ie(&pnetwork->network.IEs[12], WLAN_EID_HT_CAPABILITY, &tmp_len, pnetwork->network.IELength-12);
-	if (pregistrypriv->ht_enable && ptmp && tmp_len > 0) {
+	pपंचांगp = rtw_get_ie(&pnetwork->network.IEs[12], WLAN_EID_HT_CAPABILITY, &पंचांगp_len, pnetwork->network.IELength-12);
+	अगर (pregistrypriv->ht_enable && pपंचांगp && पंचांगp_len > 0) अणु
 		/* 	Added by Albert 2010/06/23 */
-		/* 	For the WEP mode, we will use the bg mode to do the connection to avoid some IOT issue. */
-		/* 	Especially for Realtek 8192u SoftAP. */
-		if ((padapter->securitypriv.dot11PrivacyAlgrthm != _WEP40_) &&
-			(padapter->securitypriv.dot11PrivacyAlgrthm != _WEP104_) &&
-			(padapter->securitypriv.dot11PrivacyAlgrthm != _TKIP_)) {
-			rtw_ht_use_default_setting(padapter);
+		/* 	For the WEP mode, we will use the bg mode to करो the connection to aव्योम some IOT issue. */
+		/* 	Especially क्रम Realtek 8192u SoftAP. */
+		अगर ((padapter->securitypriv.करोt11PrivacyAlgrthm != _WEP40_) &&
+			(padapter->securitypriv.करोt11PrivacyAlgrthm != _WEP104_) &&
+			(padapter->securitypriv.करोt11PrivacyAlgrthm != _TKIP_)) अणु
+			rtw_ht_use_शेष_setting(padapter);
 
 			rtw_build_wmm_ie_ht(padapter, &psecnetwork->IEs[12], &psecnetwork->IELength);
 
-			/* rtw_restructure_ht_ie */
-			rtw_restructure_ht_ie(padapter, &pnetwork->network.IEs[12], &psecnetwork->IEs[0],
+			/* rtw_reकाष्ठाure_ht_ie */
+			rtw_reकाष्ठाure_ht_ie(padapter, &pnetwork->network.IEs[12], &psecnetwork->IEs[0],
 									pnetwork->network.IELength-12, &psecnetwork->IELength,
 									pnetwork->network.Configuration.DSConfig);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rtw_append_exented_cap(padapter, &psecnetwork->IEs[0], &psecnetwork->IELength);
 
-	pmlmeinfo->assoc_AP_vendor = check_assoc_AP(pnetwork->network.IEs, pnetwork->network.IELength);
+	pmlmeinfo->assoc_AP_venकरोr = check_assoc_AP(pnetwork->network.IEs, pnetwork->network.IELength);
 
-	pcmd->cmdsz = get_wlan_bssid_ex_sz(psecnetwork);/* get cmdsz before endian conversion */
+	pcmd->cmdsz = get_wlan_bssid_ex_sz(psecnetwork);/* get cmdsz beक्रमe endian conversion */
 
 	INIT_LIST_HEAD(&pcmd->list);
 	pcmd->cmdcode = _JoinBss_CMD_;/* GEN_CMD_CODE(_JoinBss) */
-	pcmd->parmbuf = (unsigned char *)psecnetwork;
-	pcmd->rsp = NULL;
+	pcmd->parmbuf = (अचिन्हित अक्षर *)psecnetwork;
+	pcmd->rsp = शून्य;
 	pcmd->rspsz = 0;
 
 	res = rtw_enqueue_cmd(pcmdpriv, pcmd);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_disassoc_cmd(struct adapter *padapter, u32 deauth_timeout_ms, bool enqueue) /* for sta_mode */
-{
-	struct cmd_obj *cmdobj = NULL;
-	struct disconnect_parm *param = NULL;
-	struct cmd_priv *cmdpriv = &padapter->cmdpriv;
+u8 rtw_disassoc_cmd(काष्ठा adapter *padapter, u32 deauth_समयout_ms, bool enqueue) /* क्रम sta_mode */
+अणु
+	काष्ठा cmd_obj *cmकरोbj = शून्य;
+	काष्ठा disconnect_parm *param = शून्य;
+	काष्ठा cmd_priv *cmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
 	/* prepare cmd parameter */
-	param = rtw_zmalloc(sizeof(*param));
-	if (param == NULL) {
+	param = rtw_zदो_स्मृति(माप(*param));
+	अगर (param == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
-	param->deauth_timeout_ms = deauth_timeout_ms;
+		जाओ निकास;
+	पूर्ण
+	param->deauth_समयout_ms = deauth_समयout_ms;
 
-	if (enqueue) {
+	अगर (enqueue) अणु
 		/* need enqueue, prepare cmd_obj and enqueue */
-		cmdobj = rtw_zmalloc(sizeof(*cmdobj));
-		if (cmdobj == NULL) {
+		cmकरोbj = rtw_zदो_स्मृति(माप(*cmकरोbj));
+		अगर (cmकरोbj == शून्य) अणु
 			res = _FAIL;
-			kfree(param);
-			goto exit;
-		}
-		init_h2fwcmd_w_parm_no_rsp(cmdobj, param, _DisConnect_CMD_);
-		res = rtw_enqueue_cmd(cmdpriv, cmdobj);
-	} else {
-		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
-		if (disconnect_hdl(padapter, (u8 *)param) != H2C_SUCCESS)
+			kमुक्त(param);
+			जाओ निकास;
+		पूर्ण
+		init_h2fwcmd_w_parm_no_rsp(cmकरोbj, param, _DisConnect_CMD_);
+		res = rtw_enqueue_cmd(cmdpriv, cmकरोbj);
+	पूर्ण अन्यथा अणु
+		/* no need to enqueue, करो the cmd hdl directly and मुक्त cmd parameter */
+		अगर (disconnect_hdl(padapter, (u8 *)param) != H2C_SUCCESS)
 			res = _FAIL;
-		kfree(param);
-	}
+		kमुक्त(param);
+	पूर्ण
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_setopmode_cmd(struct adapter  *padapter, enum ndis_802_11_network_infrastructure networktype, bool enqueue)
-{
-	struct	cmd_obj *ph2c;
-	struct	setopmode_parm *psetop;
+u8 rtw_setopmode_cmd(काष्ठा adapter  *padapter, क्रमागत ndis_802_11_network_infraकाष्ठाure networktype, bool enqueue)
+अणु
+	काष्ठा	cmd_obj *ph2c;
+	काष्ठा	setopmode_parm *psetop;
 
-	struct	cmd_priv   *pcmdpriv = &padapter->cmdpriv;
+	काष्ठा	cmd_priv   *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	psetop = rtw_zmalloc(sizeof(struct setopmode_parm));
+	psetop = rtw_zदो_स्मृति(माप(काष्ठा setopmode_parm));
 
-	if (psetop == NULL) {
+	अगर (psetop == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	psetop->mode = (u8)networktype;
 
-	if (enqueue) {
-		ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (ph2c == NULL) {
-			kfree(psetop);
+	अगर (enqueue) अणु
+		ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (ph2c == शून्य) अणु
+			kमुक्त(psetop);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		init_h2fwcmd_w_parm_no_rsp(ph2c, psetop, _SetOpMode_CMD_);
 		res = rtw_enqueue_cmd(pcmdpriv, ph2c);
-	} else {
+	पूर्ण अन्यथा अणु
 		setopmode_hdl(padapter, (u8 *)psetop);
-		kfree(psetop);
-	}
-exit:
-	return res;
-}
+		kमुक्त(psetop);
+	पूर्ण
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_setstakey_cmd(struct adapter *padapter, struct sta_info *sta, u8 unicast_key, bool enqueue)
-{
-	struct cmd_obj *ph2c;
-	struct set_stakey_parm	*psetstakey_para;
-	struct cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
-	struct set_stakey_rsp		*psetstakey_rsp = NULL;
+u8 rtw_setstakey_cmd(काष्ठा adapter *padapter, काष्ठा sta_info *sta, u8 unicast_key, bool enqueue)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा set_stakey_parm	*psetstakey_para;
+	काष्ठा cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा set_stakey_rsp		*psetstakey_rsp = शून्य;
 
-	struct mlme_priv 		*pmlmepriv = &padapter->mlmepriv;
-	struct security_priv 	*psecuritypriv = &padapter->securitypriv;
+	काष्ठा mlme_priv 		*pmlmepriv = &padapter->mlmepriv;
+	काष्ठा security_priv 	*psecuritypriv = &padapter->securitypriv;
 	u8 res = _SUCCESS;
 
-	psetstakey_para = rtw_zmalloc(sizeof(struct set_stakey_parm));
-	if (psetstakey_para == NULL) {
+	psetstakey_para = rtw_zदो_स्मृति(माप(काष्ठा set_stakey_parm));
+	अगर (psetstakey_para == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	memcpy(psetstakey_para->addr, sta->hwaddr, ETH_ALEN);
+	स_नकल(psetstakey_para->addr, sta->hwaddr, ETH_ALEN);
 
-	if (check_fwstate(pmlmepriv, WIFI_STATION_STATE))
-		psetstakey_para->algorithm = (unsigned char) psecuritypriv->dot11PrivacyAlgrthm;
-	else
+	अगर (check_fwstate(pmlmepriv, WIFI_STATION_STATE))
+		psetstakey_para->algorithm = (अचिन्हित अक्षर) psecuritypriv->करोt11PrivacyAlgrthm;
+	अन्यथा
 		GET_ENCRY_ALGO(psecuritypriv, sta, psetstakey_para->algorithm, false);
 
-	if (unicast_key == true)
-		memcpy(&psetstakey_para->key, &sta->dot118021x_UncstKey, 16);
-	else
-		memcpy(&psetstakey_para->key, &psecuritypriv->dot118021XGrpKey[psecuritypriv->dot118021XGrpKeyid].skey, 16);
+	अगर (unicast_key == true)
+		स_नकल(&psetstakey_para->key, &sta->करोt118021x_UncstKey, 16);
+	अन्यथा
+		स_नकल(&psetstakey_para->key, &psecuritypriv->करोt118021XGrpKey[psecuritypriv->करोt118021XGrpKeyid].skey, 16);
 
-	/* jeff: set this because at least sw key is ready */
+	/* jeff: set this because at least sw key is पढ़ोy */
 	padapter->securitypriv.busetkipkey = true;
 
-	if (enqueue) {
-		ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (ph2c == NULL) {
-			kfree(psetstakey_para);
+	अगर (enqueue) अणु
+		ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (ph2c == शून्य) अणु
+			kमुक्त(psetstakey_para);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		psetstakey_rsp = rtw_zmalloc(sizeof(struct set_stakey_rsp));
-		if (psetstakey_rsp == NULL) {
-			kfree(ph2c);
-			kfree(psetstakey_para);
+		psetstakey_rsp = rtw_zदो_स्मृति(माप(काष्ठा set_stakey_rsp));
+		अगर (psetstakey_rsp == शून्य) अणु
+			kमुक्त(ph2c);
+			kमुक्त(psetstakey_para);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		init_h2fwcmd_w_parm_no_rsp(ph2c, psetstakey_para, _SetStaKey_CMD_);
 		ph2c->rsp = (u8 *) psetstakey_rsp;
-		ph2c->rspsz = sizeof(struct set_stakey_rsp);
+		ph2c->rspsz = माप(काष्ठा set_stakey_rsp);
 		res = rtw_enqueue_cmd(pcmdpriv, ph2c);
-	} else {
+	पूर्ण अन्यथा अणु
 		set_stakey_hdl(padapter, (u8 *)psetstakey_para);
-		kfree(psetstakey_para);
-	}
-exit:
-	return res;
-}
+		kमुक्त(psetstakey_para);
+	पूर्ण
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_clearstakey_cmd(struct adapter *padapter, struct sta_info *sta, u8 enqueue)
-{
-	struct cmd_obj *ph2c;
-	struct set_stakey_parm	*psetstakey_para;
-	struct cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
-	struct set_stakey_rsp		*psetstakey_rsp = NULL;
+u8 rtw_clearstakey_cmd(काष्ठा adapter *padapter, काष्ठा sta_info *sta, u8 enqueue)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा set_stakey_parm	*psetstakey_para;
+	काष्ठा cmd_priv 			*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा set_stakey_rsp		*psetstakey_rsp = शून्य;
 	s16 cam_id = 0;
 	u8 res = _SUCCESS;
 
-	if (!enqueue) {
-		while ((cam_id = rtw_camid_search(padapter, sta->hwaddr, -1)) >= 0) {
+	अगर (!enqueue) अणु
+		जबतक ((cam_id = rtw_camid_search(padapter, sta->hwaddr, -1)) >= 0) अणु
 			netdev_dbg(padapter->pnetdev,
 				   "clear key for addr:%pM, camid:%d\n",
 				   MAC_ARG(sta->hwaddr), cam_id);
 			clear_cam_entry(padapter, cam_id);
-			rtw_camid_free(padapter, cam_id);
-		}
-	} else {
-		ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (ph2c == NULL) {
+			rtw_camid_मुक्त(padapter, cam_id);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (ph2c == शून्य) अणु
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		psetstakey_para = rtw_zmalloc(sizeof(struct set_stakey_parm));
-		if (psetstakey_para == NULL) {
-			kfree(ph2c);
+		psetstakey_para = rtw_zदो_स्मृति(माप(काष्ठा set_stakey_parm));
+		अगर (psetstakey_para == शून्य) अणु
+			kमुक्त(ph2c);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		psetstakey_rsp = rtw_zmalloc(sizeof(struct set_stakey_rsp));
-		if (psetstakey_rsp == NULL) {
-			kfree(ph2c);
-			kfree(psetstakey_para);
+		psetstakey_rsp = rtw_zदो_स्मृति(माप(काष्ठा set_stakey_rsp));
+		अगर (psetstakey_rsp == शून्य) अणु
+			kमुक्त(ph2c);
+			kमुक्त(psetstakey_para);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		init_h2fwcmd_w_parm_no_rsp(ph2c, psetstakey_para, _SetStaKey_CMD_);
 		ph2c->rsp = (u8 *) psetstakey_rsp;
-		ph2c->rspsz = sizeof(struct set_stakey_rsp);
+		ph2c->rspsz = माप(काष्ठा set_stakey_rsp);
 
-		memcpy(psetstakey_para->addr, sta->hwaddr, ETH_ALEN);
+		स_नकल(psetstakey_para->addr, sta->hwaddr, ETH_ALEN);
 
 		psetstakey_para->algorithm = _NO_PRIVACY_;
 
 		res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-	}
+	पूर्ण
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_addbareq_cmd(struct adapter *padapter, u8 tid, u8 *addr)
-{
-	struct cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
-	struct cmd_obj *ph2c;
-	struct addBaReq_parm	*paddbareq_parm;
+u8 rtw_addbareq_cmd(काष्ठा adapter *padapter, u8 tid, u8 *addr)
+अणु
+	काष्ठा cmd_priv 	*pcmdpriv = &padapter->cmdpriv;
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा addBaReq_parm	*paddbareq_parm;
 
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	paddbareq_parm = rtw_zmalloc(sizeof(struct addBaReq_parm));
-	if (paddbareq_parm == NULL) {
-		kfree(ph2c);
+	paddbareq_parm = rtw_zदो_स्मृति(माप(काष्ठा addBaReq_parm));
+	अगर (paddbareq_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	paddbareq_parm->tid = tid;
-	memcpy(paddbareq_parm->addr, addr, ETH_ALEN);
+	स_नकल(paddbareq_parm->addr, addr, ETH_ALEN);
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, paddbareq_parm, GEN_CMD_CODE(_AddBAReq));
 
 	/* rtw_enqueue_cmd(pcmdpriv, ph2c); */
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
-	return res;
-}
-/* add for CONFIG_IEEE80211W, none 11w can use it */
-u8 rtw_reset_securitypriv_cmd(struct adapter *padapter)
-{
-	struct cmd_obj *ph2c;
-	struct drvextra_cmd_parm  *pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+निकास:
+	वापस res;
+पूर्ण
+/* add क्रम CONFIG_IEEE80211W, none 11w can use it */
+u8 rtw_reset_securitypriv_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा drvextra_cmd_parm  *pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = RESET_SECURITYPRIV;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
@@ -1079,34 +1080,34 @@ u8 rtw_reset_securitypriv_cmd(struct adapter *padapter)
 	/* rtw_enqueue_cmd(pcmdpriv, ph2c); */
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_free_assoc_resources_cmd(struct adapter *padapter)
-{
-	struct cmd_obj *ph2c;
-	struct drvextra_cmd_parm  *pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_मुक्त_assoc_resources_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा drvextra_cmd_parm  *pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = FREE_ASSOC_RESOURCES;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
@@ -1114,103 +1115,103 @@ u8 rtw_free_assoc_resources_cmd(struct adapter *padapter)
 	/* rtw_enqueue_cmd(pcmdpriv, ph2c); */
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_dynamic_chk_wk_cmd(struct adapter *padapter)
-{
-	struct cmd_obj *ph2c;
-	struct drvextra_cmd_parm  *pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_dynamic_chk_wk_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा drvextra_cmd_parm  *pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	/* only  primary padapter does this cmd */
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	/* only  primary padapter करोes this cmd */
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = DYNAMIC_CHK_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 
 	/* rtw_enqueue_cmd(pcmdpriv, ph2c); */
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u8 rtw_set_chplan_cmd(struct adapter *padapter, u8 chplan, u8 enqueue, u8 swconfig)
-{
-	struct	cmd_obj *pcmdobj;
-	struct	SetChannelPlan_param *setChannelPlan_param;
-	struct	cmd_priv   *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_set_chplan_cmd(काष्ठा adapter *padapter, u8 chplan, u8 enqueue, u8 swconfig)
+अणु
+	काष्ठा	cmd_obj *pcmकरोbj;
+	काष्ठा	SetChannelPlan_param *setChannelPlan_param;
+	काष्ठा	cmd_priv   *pcmdpriv = &padapter->cmdpriv;
 
 	u8 res = _SUCCESS;
 
-	/*  check if allow software config */
-	if (swconfig && rtw_hal_is_disable_sw_channel_plan(padapter) == true) {
+	/*  check अगर allow software config */
+	अगर (swconfig && rtw_hal_is_disable_sw_channel_plan(padapter) == true) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* check input parameter */
-	if (!rtw_is_channel_plan_valid(chplan)) {
+	अगर (!rtw_is_channel_plan_valid(chplan)) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* prepare cmd parameter */
-	setChannelPlan_param = rtw_zmalloc(sizeof(struct SetChannelPlan_param));
-	if (setChannelPlan_param == NULL) {
+	setChannelPlan_param = rtw_zदो_स्मृति(माप(काष्ठा SetChannelPlan_param));
+	अगर (setChannelPlan_param == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	setChannelPlan_param->channel_plan = chplan;
 
-	if (enqueue) {
+	अगर (enqueue) अणु
 		/* need enqueue, prepare cmd_obj and enqueue */
-		pcmdobj = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (pcmdobj == NULL) {
-			kfree(setChannelPlan_param);
+		pcmकरोbj = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (pcmकरोbj == शून्य) अणु
+			kमुक्त(setChannelPlan_param);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		init_h2fwcmd_w_parm_no_rsp(pcmdobj, setChannelPlan_param, GEN_CMD_CODE(_SetChannelPlan));
-		res = rtw_enqueue_cmd(pcmdpriv, pcmdobj);
-	} else {
-		/* no need to enqueue, do the cmd hdl directly and free cmd parameter */
-		if (set_chplan_hdl(padapter, (unsigned char *)setChannelPlan_param) != H2C_SUCCESS)
+		init_h2fwcmd_w_parm_no_rsp(pcmकरोbj, setChannelPlan_param, GEN_CMD_CODE(_SetChannelPlan));
+		res = rtw_enqueue_cmd(pcmdpriv, pcmकरोbj);
+	पूर्ण अन्यथा अणु
+		/* no need to enqueue, करो the cmd hdl directly and मुक्त cmd parameter */
+		अगर (set_chplan_hdl(padapter, (अचिन्हित अक्षर *)setChannelPlan_param) != H2C_SUCCESS)
 			res = _FAIL;
 
-		kfree(setChannelPlan_param);
-	}
+		kमुक्त(setChannelPlan_param);
+	पूर्ण
 
-	/* do something based on res... */
-	if (res == _SUCCESS)
+	/* करो something based on res... */
+	अगर (res == _SUCCESS)
 		padapter->mlmepriv.ChannelPlan = chplan;
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-static void collect_traffic_statistics(struct adapter *padapter)
-{
-	struct dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
+अटल व्योम collect_traffic_statistics(काष्ठा adapter *padapter)
+अणु
+	काष्ठा dvobj_priv *pdvobjpriv = adapter_to_dvobj(padapter);
 
 	/*  Tx */
 	pdvobjpriv->traffic_stat.tx_bytes = padapter->xmitpriv.tx_bytes;
@@ -1222,7 +1223,7 @@ static void collect_traffic_statistics(struct adapter *padapter)
 	pdvobjpriv->traffic_stat.rx_pkts = padapter->recvpriv.rx_pkts;
 	pdvobjpriv->traffic_stat.rx_drop = padapter->recvpriv.rx_drop;
 
-	/*  Calculate throughput in last interval */
+	/*  Calculate throughput in last पूर्णांकerval */
 	pdvobjpriv->traffic_stat.cur_tx_bytes = pdvobjpriv->traffic_stat.tx_bytes - pdvobjpriv->traffic_stat.last_tx_bytes;
 	pdvobjpriv->traffic_stat.cur_rx_bytes = pdvobjpriv->traffic_stat.rx_bytes - pdvobjpriv->traffic_stat.last_rx_bytes;
 	pdvobjpriv->traffic_stat.last_tx_bytes = pdvobjpriv->traffic_stat.tx_bytes;
@@ -1230,10 +1231,10 @@ static void collect_traffic_statistics(struct adapter *padapter)
 
 	pdvobjpriv->traffic_stat.cur_tx_tp = (u32)(pdvobjpriv->traffic_stat.cur_tx_bytes * 8/2/1024/1024);
 	pdvobjpriv->traffic_stat.cur_rx_tp = (u32)(pdvobjpriv->traffic_stat.cur_rx_bytes * 8/2/1024/1024);
-}
+पूर्ण
 
-u8 traffic_status_watchdog(struct adapter *padapter, u8 from_timer)
-{
+u8 traffic_status_watchकरोg(काष्ठा adapter *padapter, u8 from_समयr)
+अणु
 	u8 bEnterPS = false;
 	u16 BusyThresholdHigh = 25;
 	u16 BusyThresholdLow = 10;
@@ -1241,84 +1242,84 @@ u8 traffic_status_watchdog(struct adapter *padapter, u8 from_timer)
 	u8 bBusyTraffic = false, bTxBusyTraffic = false, bRxBusyTraffic = false;
 	u8 bHigherBusyTraffic = false, bHigherBusyRxTraffic = false, bHigherBusyTxTraffic = false;
 
-	struct mlme_priv 	*pmlmepriv = &(padapter->mlmepriv);
+	काष्ठा mlme_priv 	*pmlmepriv = &(padapter->mlmepriv);
 
 	collect_traffic_statistics(padapter);
 
 	/*  */
-	/*  Determine if our traffic is busy now */
+	/*  Determine अगर our traffic is busy now */
 	/*  */
-	if ((check_fwstate(pmlmepriv, _FW_LINKED) == true)
-		/*&& !MgntInitAdapterInProgress(pMgntInfo)*/) {
-		/*  if we raise bBusyTraffic in last watchdog, using lower threshold. */
-		if (pmlmepriv->LinkDetectInfo.bBusyTraffic)
+	अगर ((check_fwstate(pmlmepriv, _FW_LINKED) == true)
+		/*&& !MgntInitAdapterInProgress(pMgntInfo)*/) अणु
+		/*  अगर we उठाओ bBusyTraffic in last watchकरोg, using lower threshold. */
+		अगर (pmlmepriv->LinkDetectInfo.bBusyTraffic)
 				BusyThreshold = BusyThresholdLow;
 
-		if (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > BusyThreshold ||
-			pmlmepriv->LinkDetectInfo.NumTxOkInPeriod > BusyThreshold) {
+		अगर (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > BusyThreshold ||
+			pmlmepriv->LinkDetectInfo.NumTxOkInPeriod > BusyThreshold) अणु
 			bBusyTraffic = true;
 
-			if (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > pmlmepriv->LinkDetectInfo.NumTxOkInPeriod)
+			अगर (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > pmlmepriv->LinkDetectInfo.NumTxOkInPeriod)
 				bRxBusyTraffic = true;
-			else
+			अन्यथा
 				bTxBusyTraffic = true;
-		}
+		पूर्ण
 
 		/*  Higher Tx/Rx data. */
-		if (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > 4000 ||
-			pmlmepriv->LinkDetectInfo.NumTxOkInPeriod > 4000) {
+		अगर (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > 4000 ||
+			pmlmepriv->LinkDetectInfo.NumTxOkInPeriod > 4000) अणु
 			bHigherBusyTraffic = true;
 
-			if (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > pmlmepriv->LinkDetectInfo.NumTxOkInPeriod)
+			अगर (pmlmepriv->LinkDetectInfo.NumRxOkInPeriod > pmlmepriv->LinkDetectInfo.NumTxOkInPeriod)
 				bHigherBusyRxTraffic = true;
-			else
+			अन्यथा
 				bHigherBusyTxTraffic = true;
-		}
+		पूर्ण
 
-		/*  check traffic for  powersaving. */
-		if (((pmlmepriv->LinkDetectInfo.NumRxUnicastOkInPeriod + pmlmepriv->LinkDetectInfo.NumTxOkInPeriod) > 8) ||
-			(pmlmepriv->LinkDetectInfo.NumRxUnicastOkInPeriod > 2)) {
+		/*  check traffic क्रम  घातersaving. */
+		अगर (((pmlmepriv->LinkDetectInfo.NumRxUnicastOkInPeriod + pmlmepriv->LinkDetectInfo.NumTxOkInPeriod) > 8) ||
+			(pmlmepriv->LinkDetectInfo.NumRxUnicastOkInPeriod > 2)) अणु
 			bEnterPS = false;
 
-			if (bBusyTraffic == true) {
-				if (pmlmepriv->LinkDetectInfo.TrafficTransitionCount <= 4)
+			अगर (bBusyTraffic == true) अणु
+				अगर (pmlmepriv->LinkDetectInfo.TrafficTransitionCount <= 4)
 					pmlmepriv->LinkDetectInfo.TrafficTransitionCount = 4;
 
 				pmlmepriv->LinkDetectInfo.TrafficTransitionCount++;
 
-				if (pmlmepriv->LinkDetectInfo.TrafficTransitionCount > 30/*TrafficTransitionLevel*/)
+				अगर (pmlmepriv->LinkDetectInfo.TrafficTransitionCount > 30/*TrafficTransitionLevel*/)
 					pmlmepriv->LinkDetectInfo.TrafficTransitionCount = 30;
-			}
-		} else {
-			if (pmlmepriv->LinkDetectInfo.TrafficTransitionCount >= 2)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (pmlmepriv->LinkDetectInfo.TrafficTransitionCount >= 2)
 				pmlmepriv->LinkDetectInfo.TrafficTransitionCount -= 2;
-			else
+			अन्यथा
 				pmlmepriv->LinkDetectInfo.TrafficTransitionCount = 0;
 
-			if (pmlmepriv->LinkDetectInfo.TrafficTransitionCount == 0)
+			अगर (pmlmepriv->LinkDetectInfo.TrafficTransitionCount == 0)
 				bEnterPS = true;
-		}
+		पूर्ण
 
 		/*  LeisurePS only work in infra mode. */
-		if (bEnterPS) {
-			if (!from_timer)
+		अगर (bEnterPS) अणु
+			अगर (!from_समयr)
 				LPS_Enter(padapter, "TRAFFIC_IDLE");
-		} else {
-			if (!from_timer)
+		पूर्ण अन्यथा अणु
+			अगर (!from_समयr)
 				LPS_Leave(padapter, "TRAFFIC_BUSY");
-			else
+			अन्यथा
 				rtw_lps_ctrl_wk_cmd(padapter, LPS_CTRL_TRAFFIC_BUSY, 1);
-		}
-	} else {
-		struct dvobj_priv *dvobj = adapter_to_dvobj(padapter);
-		int n_assoc_iface = 0;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा dvobj_priv *dvobj = adapter_to_dvobj(padapter);
+		पूर्णांक n_assoc_अगरace = 0;
 
-		if (check_fwstate(&(dvobj->padapters->mlmepriv), WIFI_ASOC_STATE))
-			n_assoc_iface++;
+		अगर (check_fwstate(&(dvobj->padapters->mlmepriv), WIFI_ASOC_STATE))
+			n_assoc_अगरace++;
 
-		if (!from_timer && n_assoc_iface == 0)
+		अगर (!from_समयr && n_assoc_अगरace == 0)
 			LPS_Leave(padapter, "NON_LINKED");
-	}
+	पूर्ण
 
 	pmlmepriv->LinkDetectInfo.NumRxOkInPeriod = 0;
 	pmlmepriv->LinkDetectInfo.NumTxOkInPeriod = 0;
@@ -1330,29 +1331,29 @@ u8 traffic_status_watchdog(struct adapter *padapter, u8 from_timer)
 	pmlmepriv->LinkDetectInfo.bHigherBusyRxTraffic = bHigherBusyRxTraffic;
 	pmlmepriv->LinkDetectInfo.bHigherBusyTxTraffic = bHigherBusyTxTraffic;
 
-	return bEnterPS;
+	वापस bEnterPS;
 
-}
+पूर्ण
 
-static void dynamic_chk_wk_hdl(struct adapter *padapter)
-{
-	struct mlme_priv *pmlmepriv;
+अटल व्योम dynamic_chk_wk_hdl(काष्ठा adapter *padapter)
+अणु
+	काष्ठा mlme_priv *pmlmepriv;
 	pmlmepriv = &(padapter->mlmepriv);
 
-	if (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true)
-		expire_timeout_chk(padapter);
+	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE) == true)
+		expire_समयout_chk(padapter);
 
-	/* for debug purpose */
+	/* क्रम debug purpose */
 	_linked_info_dump(padapter);
 
 
-	/* if (check_fwstate(pmlmepriv, _FW_UNDER_LINKING|_FW_UNDER_SURVEY) ==false) */
-	{
+	/* अगर (check_fwstate(pmlmepriv, _FW_UNDER_LINKING|_FW_UNDER_SURVEY) ==false) */
+	अणु
 		linked_status_chk(padapter);
-		traffic_status_watchdog(padapter, 0);
-	}
+		traffic_status_watchकरोg(padapter, 0);
+	पूर्ण
 
-	rtw_hal_dm_watchdog(padapter);
+	rtw_hal_dm_watchकरोg(padapter);
 
 	/* check_hw_pbc(padapter, pdrvextra_cmd->pbuf, pdrvextra_cmd->type); */
 
@@ -1363,195 +1364,195 @@ static void dynamic_chk_wk_hdl(struct adapter *padapter)
 
 
 	/* always call rtw_ps_processor() at last one. */
-	if (is_primary_adapter(padapter))
+	अगर (is_primary_adapter(padapter))
 		rtw_ps_processor(padapter);
-}
+पूर्ण
 
-void lps_ctrl_wk_hdl(struct adapter *padapter, u8 lps_ctrl_type);
-void lps_ctrl_wk_hdl(struct adapter *padapter, u8 lps_ctrl_type)
-{
-	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
-	struct mlme_priv *pmlmepriv = &(padapter->mlmepriv);
+व्योम lps_ctrl_wk_hdl(काष्ठा adapter *padapter, u8 lps_ctrl_type);
+व्योम lps_ctrl_wk_hdl(काष्ठा adapter *padapter, u8 lps_ctrl_type)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
+	काष्ठा mlme_priv *pmlmepriv = &(padapter->mlmepriv);
 	u8 mstatus;
 
-	if ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)
-		|| (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) {
-		return;
-	}
+	अगर ((check_fwstate(pmlmepriv, WIFI_ADHOC_MASTER_STATE) == true)
+		|| (check_fwstate(pmlmepriv, WIFI_ADHOC_STATE) == true)) अणु
+		वापस;
+	पूर्ण
 
-	switch (lps_ctrl_type) {
-	case LPS_CTRL_SCAN:
-		hal_btcoex_ScanNotify(padapter, true);
+	चयन (lps_ctrl_type) अणु
+	हाल LPS_CTRL_SCAN:
+		hal_btcoex_ScanNotअगरy(padapter, true);
 
-		if (check_fwstate(pmlmepriv, _FW_LINKED) == true) {
+		अगर (check_fwstate(pmlmepriv, _FW_LINKED) == true) अणु
 			/*  connect */
 			LPS_Leave(padapter, "LPS_CTRL_SCAN");
-		}
-		break;
-	case LPS_CTRL_JOINBSS:
+		पूर्ण
+		अवरोध;
+	हाल LPS_CTRL_JOINBSS:
 		LPS_Leave(padapter, "LPS_CTRL_JOINBSS");
-		break;
-	case LPS_CTRL_CONNECT:
+		अवरोध;
+	हाल LPS_CTRL_CONNECT:
 		mstatus = 1;/* connect */
 		/*  Reset LPS Setting */
 		pwrpriv->LpsIdleCount = 0;
 		rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_JOINBSSRPT, (u8 *)(&mstatus));
-		rtw_btcoex_MediaStatusNotify(padapter, mstatus);
-		break;
-	case LPS_CTRL_DISCONNECT:
+		rtw_btcoex_MediaStatusNotअगरy(padapter, mstatus);
+		अवरोध;
+	हाल LPS_CTRL_DISCONNECT:
 		mstatus = 0;/* disconnect */
-		rtw_btcoex_MediaStatusNotify(padapter, mstatus);
+		rtw_btcoex_MediaStatusNotअगरy(padapter, mstatus);
 		LPS_Leave(padapter, "LPS_CTRL_DISCONNECT");
 		rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_JOINBSSRPT, (u8 *)(&mstatus));
-		break;
-	case LPS_CTRL_SPECIAL_PACKET:
-		pwrpriv->DelayLPSLastTimeStamp = jiffies;
-		hal_btcoex_SpecialPacketNotify(padapter, PACKET_DHCP);
+		अवरोध;
+	हाल LPS_CTRL_SPECIAL_PACKET:
+		pwrpriv->DelayLPSLastTimeStamp = jअगरfies;
+		hal_btcoex_SpecialPacketNotअगरy(padapter, PACKET_DHCP);
 		LPS_Leave(padapter, "LPS_CTRL_SPECIAL_PACKET");
-		break;
-	case LPS_CTRL_LEAVE:
+		अवरोध;
+	हाल LPS_CTRL_LEAVE:
 		LPS_Leave(padapter, "LPS_CTRL_LEAVE");
-		break;
-	case LPS_CTRL_TRAFFIC_BUSY:
+		अवरोध;
+	हाल LPS_CTRL_TRAFFIC_BUSY:
 		LPS_Leave(padapter, "LPS_CTRL_TRAFFIC_BUSY");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-u8 rtw_lps_ctrl_wk_cmd(struct adapter *padapter, u8 lps_ctrl_type, u8 enqueue)
-{
-	struct cmd_obj	*ph2c;
-	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
-	/* struct pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(padapter); */
+u8 rtw_lps_ctrl_wk_cmd(काष्ठा adapter *padapter, u8 lps_ctrl_type, u8 enqueue)
+अणु
+	काष्ठा cmd_obj	*ph2c;
+	काष्ठा drvextra_cmd_parm	*pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
+	/* काष्ठा pwrctrl_priv *pwrctrlpriv = adapter_to_pwrctl(padapter); */
 	u8 res = _SUCCESS;
 
-	/* if (!pwrctrlpriv->bLeisurePs) */
-	/* 	return res; */
+	/* अगर (!pwrctrlpriv->bLeisurePs) */
+	/* 	वापस res; */
 
-	if (enqueue) {
-		ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-		if (ph2c == NULL) {
+	अगर (enqueue) अणु
+		ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+		अगर (ph2c == शून्य) अणु
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-		if (pdrvextra_cmd_parm == NULL) {
-			kfree(ph2c);
+		pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+		अगर (pdrvextra_cmd_parm == शून्य) अणु
+			kमुक्त(ph2c);
 			res = _FAIL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		pdrvextra_cmd_parm->ec_id = LPS_CTRL_WK_CID;
 		pdrvextra_cmd_parm->type = lps_ctrl_type;
 		pdrvextra_cmd_parm->size = 0;
-		pdrvextra_cmd_parm->pbuf = NULL;
+		pdrvextra_cmd_parm->pbuf = शून्य;
 
 		init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 		res = rtw_enqueue_cmd(pcmdpriv, ph2c);
-	} else {
+	पूर्ण अन्यथा अणु
 		lps_ctrl_wk_hdl(padapter, lps_ctrl_type);
-	}
+	पूर्ण
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-static void rtw_dm_in_lps_hdl(struct adapter *padapter)
-{
-	rtw_hal_set_hwreg(padapter, HW_VAR_DM_IN_LPS, NULL);
-}
+अटल व्योम rtw_dm_in_lps_hdl(काष्ठा adapter *padapter)
+अणु
+	rtw_hal_set_hwreg(padapter, HW_VAR_DM_IN_LPS, शून्य);
+पूर्ण
 
-u8 rtw_dm_in_lps_wk_cmd(struct adapter *padapter)
-{
-	struct cmd_obj	*ph2c;
-	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_dm_in_lps_wk_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj	*ph2c;
+	काष्ठा drvextra_cmd_parm	*pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = DM_IN_LPS_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
+निकास:
 
-	return res;
+	वापस res;
 
-}
+पूर्ण
 
-static void rtw_lps_change_dtim_hdl(struct adapter *padapter, u8 dtim)
-{
-	struct pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
+अटल व्योम rtw_lps_change_dtim_hdl(काष्ठा adapter *padapter, u8 dtim)
+अणु
+	काष्ठा pwrctrl_priv *pwrpriv = adapter_to_pwrctl(padapter);
 
-	if (dtim <= 0 || dtim > 16)
-		return;
+	अगर (dtim <= 0 || dtim > 16)
+		वापस;
 
-	if (hal_btcoex_IsBtControlLps(padapter) == true)
-		return;
+	अगर (hal_btcoex_IsBtControlLps(padapter) == true)
+		वापस;
 
 	mutex_lock(&pwrpriv->lock);
 
-	if (pwrpriv->dtim != dtim)
+	अगर (pwrpriv->dtim != dtim)
 		pwrpriv->dtim = dtim;
 
-	if (pwrpriv->fw_current_in_ps_mode && (pwrpriv->pwr_mode > PS_MODE_ACTIVE)) {
+	अगर (pwrpriv->fw_current_in_ps_mode && (pwrpriv->pwr_mode > PS_MODE_ACTIVE)) अणु
 		u8 ps_mode = pwrpriv->pwr_mode;
 
 		rtw_hal_set_hwreg(padapter, HW_VAR_H2C_FW_PWRMODE, (u8 *)(&ps_mode));
-	}
+	पूर्ण
 
 	mutex_unlock(&pwrpriv->lock);
-}
+पूर्ण
 
-static void rtw_dm_ra_mask_hdl(struct adapter *padapter, struct sta_info *psta)
-{
-	if (psta)
+अटल व्योम rtw_dm_ra_mask_hdl(काष्ठा adapter *padapter, काष्ठा sta_info *psta)
+अणु
+	अगर (psta)
 		set_sta_rate(padapter, psta);
-}
+पूर्ण
 
-u8 rtw_dm_ra_mask_wk_cmd(struct adapter *padapter, u8 *psta)
-{
-	struct cmd_obj	*ph2c;
-	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_dm_ra_mask_wk_cmd(काष्ठा adapter *padapter, u8 *psta)
+अणु
+	काष्ठा cmd_obj	*ph2c;
+	काष्ठा drvextra_cmd_parm	*pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = DM_RA_MSK_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
@@ -1562,120 +1563,120 @@ u8 rtw_dm_ra_mask_wk_cmd(struct adapter *padapter, u8 *psta)
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
+निकास:
 
-	return res;
+	वापस res;
 
-}
+पूर्ण
 
-u8 rtw_ps_cmd(struct adapter *padapter)
-{
-	struct cmd_obj		*ppscmd;
-	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_ps_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj		*ppscmd;
+	काष्ठा drvextra_cmd_parm	*pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ppscmd = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ppscmd == NULL) {
+	ppscmd = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ppscmd == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ppscmd);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ppscmd);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = POWER_SAVING_CTRL_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 	init_h2fwcmd_w_parm_no_rsp(ppscmd, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 	res = rtw_enqueue_cmd(pcmdpriv, ppscmd);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-u32 g_wait_hiq_empty;
+u32 g_रुको_hiq_empty;
 
-static void rtw_chk_hi_queue_hdl(struct adapter *padapter)
-{
-	struct sta_info *psta_bmc;
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	unsigned long start = jiffies;
+अटल व्योम rtw_chk_hi_queue_hdl(काष्ठा adapter *padapter)
+अणु
+	काष्ठा sta_info *psta_bmc;
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	अचिन्हित दीर्घ start = jअगरfies;
 	u8 empty = false;
 
 	psta_bmc = rtw_get_bcmc_stainfo(padapter);
-	if (!psta_bmc)
-		return;
+	अगर (!psta_bmc)
+		वापस;
 
 	rtw_hal_get_hwreg(padapter, HW_VAR_CHK_HI_QUEUE_EMPTY, &empty);
 
-	while (false == empty && jiffies_to_msecs(jiffies - start) < g_wait_hiq_empty) {
+	जबतक (false == empty && jअगरfies_to_msecs(jअगरfies - start) < g_रुको_hiq_empty) अणु
 		msleep(100);
 		rtw_hal_get_hwreg(padapter, HW_VAR_CHK_HI_QUEUE_EMPTY, &empty);
-	}
+	पूर्ण
 
-	if (psta_bmc->sleepq_len == 0) {
-		if (empty == _SUCCESS) {
+	अगर (psta_bmc->sleepq_len == 0) अणु
+		अगर (empty == _SUCCESS) अणु
 			bool update_tim = false;
 
-			if (pstapriv->tim_bitmap & BIT(0))
+			अगर (pstapriv->tim_biपंचांगap & BIT(0))
 				update_tim = true;
 
-			pstapriv->tim_bitmap &= ~BIT(0);
-			pstapriv->sta_dz_bitmap &= ~BIT(0);
+			pstapriv->tim_biपंचांगap &= ~BIT(0);
+			pstapriv->sta_dz_biपंचांगap &= ~BIT(0);
 
-			if (update_tim)
-				update_beacon(padapter, WLAN_EID_TIM, NULL, true);
-		} else {/* re check again */
+			अगर (update_tim)
+				update_beacon(padapter, WLAN_EID_TIM, शून्य, true);
+		पूर्ण अन्यथा अणु/* re check again */
 			rtw_chk_hi_queue_cmd(padapter);
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-u8 rtw_chk_hi_queue_cmd(struct adapter *padapter)
-{
-	struct cmd_obj	*ph2c;
-	struct drvextra_cmd_parm	*pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_chk_hi_queue_cmd(काष्ठा adapter *padapter)
+अणु
+	काष्ठा cmd_obj	*ph2c;
+	काष्ठा drvextra_cmd_parm	*pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = CHECK_HIQ_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
 	pdrvextra_cmd_parm->size = 0;
-	pdrvextra_cmd_parm->pbuf = NULL;
+	pdrvextra_cmd_parm->pbuf = शून्य;
 
 	init_h2fwcmd_w_parm_no_rsp(ph2c, pdrvextra_cmd_parm, GEN_CMD_CODE(_Set_Drv_Extra));
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
+निकास:
 
-	return res;
+	वापस res;
 
-}
+पूर्ण
 
-struct btinfo {
+काष्ठा btinfo अणु
 	u8 cid;
 	u8 len;
 
@@ -1707,52 +1708,52 @@ struct btinfo {
 
 	u8 rsvd_6;
 	u8 rsvd_7;
-};
+पूर्ण;
 
-static void rtw_btinfo_hdl(struct adapter *adapter, u8 *buf, u16 buf_len)
-{
-	#define BTINFO_WIFI_FETCH 0x23
-	#define BTINFO_BT_AUTO_RPT 0x27
-	struct btinfo *info = (struct btinfo *)buf;
+अटल व्योम rtw_btinfo_hdl(काष्ठा adapter *adapter, u8 *buf, u16 buf_len)
+अणु
+	#घोषणा BTINFO_WIFI_FETCH 0x23
+	#घोषणा BTINFO_BT_AUTO_RPT 0x27
+	काष्ठा btinfo *info = (काष्ठा btinfo *)buf;
 	u8 cmd_idx;
 	u8 len;
 
 	cmd_idx = info->cid;
 
-	if (info->len > buf_len-2) {
+	अगर (info->len > buf_len-2) अणु
 		rtw_warn_on(1);
 		len = buf_len-2;
-	} else {
+	पूर्ण अन्यथा अणु
 		len = info->len;
-	}
+	पूर्ण
 
-	/* transform BT-FW btinfo to WiFI-FW C2H format and notify */
-	if (cmd_idx == BTINFO_WIFI_FETCH)
+	/* transक्रमm BT-FW btinfo to WiFI-FW C2H क्रमmat and notअगरy */
+	अगर (cmd_idx == BTINFO_WIFI_FETCH)
 		buf[1] = 0;
-	else if (cmd_idx == BTINFO_BT_AUTO_RPT)
+	अन्यथा अगर (cmd_idx == BTINFO_BT_AUTO_RPT)
 		buf[1] = 2;
-	hal_btcoex_BtInfoNotify(adapter, len+1, &buf[1]);
-}
+	hal_btcoex_BtInfoNotअगरy(adapter, len+1, &buf[1]);
+पूर्ण
 
-u8 rtw_c2h_packet_wk_cmd(struct adapter *padapter, u8 *pbuf, u16 length)
-{
-	struct cmd_obj *ph2c;
-	struct drvextra_cmd_parm *pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+u8 rtw_c2h_packet_wk_cmd(काष्ठा adapter *padapter, u8 *pbuf, u16 length)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा drvextra_cmd_parm *pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = C2H_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
@@ -1763,31 +1764,31 @@ u8 rtw_c2h_packet_wk_cmd(struct adapter *padapter, u8 *pbuf, u16 length)
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
-	return res;
-}
+निकास:
+	वापस res;
+पूर्ण
 
-/* dont call R/W in this function, beucase SDIO interrupt have claim host */
-/* or deadlock will happen and cause special-systemserver-died in android */
-u8 rtw_c2h_wk_cmd(struct adapter *padapter, u8 *c2h_evt)
-{
-	struct cmd_obj *ph2c;
-	struct drvextra_cmd_parm *pdrvextra_cmd_parm;
-	struct cmd_priv *pcmdpriv = &padapter->cmdpriv;
+/* करोnt call R/W in this function, beuहाल SDIO पूर्णांकerrupt have claim host */
+/* or deadlock will happen and cause special-प्रणालीserver-died in android */
+u8 rtw_c2h_wk_cmd(काष्ठा adapter *padapter, u8 *c2h_evt)
+अणु
+	काष्ठा cmd_obj *ph2c;
+	काष्ठा drvextra_cmd_parm *pdrvextra_cmd_parm;
+	काष्ठा cmd_priv *pcmdpriv = &padapter->cmdpriv;
 	u8 res = _SUCCESS;
 
-	ph2c = rtw_zmalloc(sizeof(struct cmd_obj));
-	if (ph2c == NULL) {
+	ph2c = rtw_zदो_स्मृति(माप(काष्ठा cmd_obj));
+	अगर (ph2c == शून्य) अणु
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	pdrvextra_cmd_parm = rtw_zmalloc(sizeof(struct drvextra_cmd_parm));
-	if (pdrvextra_cmd_parm == NULL) {
-		kfree(ph2c);
+	pdrvextra_cmd_parm = rtw_zदो_स्मृति(माप(काष्ठा drvextra_cmd_parm));
+	अगर (pdrvextra_cmd_parm == शून्य) अणु
+		kमुक्त(ph2c);
 		res = _FAIL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	pdrvextra_cmd_parm->ec_id = C2H_WK_CID;
 	pdrvextra_cmd_parm->type = 0;
@@ -1798,208 +1799,208 @@ u8 rtw_c2h_wk_cmd(struct adapter *padapter, u8 *c2h_evt)
 
 	res = rtw_enqueue_cmd(pcmdpriv, ph2c);
 
-exit:
+निकास:
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void c2h_wk_callback(struct work_struct *work)
-{
-	struct evt_priv *evtpriv = container_of(work, struct evt_priv, c2h_wk);
-	struct adapter *adapter = container_of(evtpriv, struct adapter, evtpriv);
+अटल व्योम c2h_wk_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा evt_priv *evtpriv = container_of(work, काष्ठा evt_priv, c2h_wk);
+	काष्ठा adapter *adapter = container_of(evtpriv, काष्ठा adapter, evtpriv);
 	u8 *c2h_evt;
 	c2h_id_filter ccx_id_filter = rtw_hal_c2h_id_filter_ccx(adapter);
 
 	evtpriv->c2h_wk_alive = true;
 
-	while (!rtw_cbuf_empty(evtpriv->c2h_queue)) {
+	जबतक (!rtw_cbuf_empty(evtpriv->c2h_queue)) अणु
 		c2h_evt = (u8 *)rtw_cbuf_pop(evtpriv->c2h_queue);
-		if (c2h_evt) {
-			/* This C2H event is read, clear it */
+		अगर (c2h_evt) अणु
+			/* This C2H event is पढ़ो, clear it */
 			c2h_evt_clear(adapter);
-		} else {
-			c2h_evt = rtw_malloc(16);
-			if (c2h_evt) {
-				/* This C2H event is not read, read & clear now */
-				if (c2h_evt_read_88xx(adapter, c2h_evt) != _SUCCESS) {
-					kfree(c2h_evt);
-					continue;
-				}
-			}
-		}
+		पूर्ण अन्यथा अणु
+			c2h_evt = rtw_दो_स्मृति(16);
+			अगर (c2h_evt) अणु
+				/* This C2H event is not पढ़ो, पढ़ो & clear now */
+				अगर (c2h_evt_पढ़ो_88xx(adapter, c2h_evt) != _SUCCESS) अणु
+					kमुक्त(c2h_evt);
+					जारी;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		/* Special pointer to trigger c2h_evt_clear only */
-		if ((void *)c2h_evt == (void *)evtpriv)
-			continue;
+		/* Special poपूर्णांकer to trigger c2h_evt_clear only */
+		अगर ((व्योम *)c2h_evt == (व्योम *)evtpriv)
+			जारी;
 
-		if (!rtw_hal_c2h_valid(adapter, c2h_evt)) {
-			kfree(c2h_evt);
-			continue;
-		}
+		अगर (!rtw_hal_c2h_valid(adapter, c2h_evt)) अणु
+			kमुक्त(c2h_evt);
+			जारी;
+		पूर्ण
 
-		if (ccx_id_filter(c2h_evt) == true) {
+		अगर (ccx_id_filter(c2h_evt) == true) अणु
 			/* Handle CCX report here */
 			rtw_hal_c2h_handler(adapter, c2h_evt);
-			kfree(c2h_evt);
-		} else {
-			/* Enqueue into cmd_thread for others */
+			kमुक्त(c2h_evt);
+		पूर्ण अन्यथा अणु
+			/* Enqueue पूर्णांकo cmd_thपढ़ो क्रम others */
 			rtw_c2h_wk_cmd(adapter, c2h_evt);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	evtpriv->c2h_wk_alive = false;
-}
+पूर्ण
 
-u8 rtw_drvextra_cmd_hdl(struct adapter *padapter, unsigned char *pbuf)
-{
-	struct drvextra_cmd_parm *pdrvextra_cmd;
+u8 rtw_drvextra_cmd_hdl(काष्ठा adapter *padapter, अचिन्हित अक्षर *pbuf)
+अणु
+	काष्ठा drvextra_cmd_parm *pdrvextra_cmd;
 
-	if (!pbuf)
-		return H2C_PARAMETERS_ERROR;
+	अगर (!pbuf)
+		वापस H2C_PARAMETERS_ERROR;
 
-	pdrvextra_cmd = (struct drvextra_cmd_parm *)pbuf;
+	pdrvextra_cmd = (काष्ठा drvextra_cmd_parm *)pbuf;
 
-	switch (pdrvextra_cmd->ec_id) {
-	case DYNAMIC_CHK_WK_CID:/* only  primary padapter go to this cmd, but execute dynamic_chk_wk_hdl() for two interfaces */
+	चयन (pdrvextra_cmd->ec_id) अणु
+	हाल DYNAMIC_CHK_WK_CID:/* only  primary padapter go to this cmd, but execute dynamic_chk_wk_hdl() क्रम two पूर्णांकerfaces */
 		dynamic_chk_wk_hdl(padapter);
-		break;
-	case POWER_SAVING_CTRL_WK_CID:
+		अवरोध;
+	हाल POWER_SAVING_CTRL_WK_CID:
 		rtw_ps_processor(padapter);
-		break;
-	case LPS_CTRL_WK_CID:
+		अवरोध;
+	हाल LPS_CTRL_WK_CID:
 		lps_ctrl_wk_hdl(padapter, (u8)pdrvextra_cmd->type);
-		break;
-	case DM_IN_LPS_WK_CID:
+		अवरोध;
+	हाल DM_IN_LPS_WK_CID:
 		rtw_dm_in_lps_hdl(padapter);
-		break;
-	case LPS_CHANGE_DTIM_CID:
+		अवरोध;
+	हाल LPS_CHANGE_DTIM_CID:
 		rtw_lps_change_dtim_hdl(padapter, (u8)pdrvextra_cmd->type);
-		break;
-	case CHECK_HIQ_WK_CID:
+		अवरोध;
+	हाल CHECK_HIQ_WK_CID:
 		rtw_chk_hi_queue_hdl(padapter);
-		break;
-	/* add for CONFIG_IEEE80211W, none 11w can use it */
-	case RESET_SECURITYPRIV:
+		अवरोध;
+	/* add क्रम CONFIG_IEEE80211W, none 11w can use it */
+	हाल RESET_SECURITYPRIV:
 		rtw_reset_securitypriv(padapter);
-		break;
-	case FREE_ASSOC_RESOURCES:
-		rtw_free_assoc_resources(padapter, 1);
-		break;
-	case C2H_WK_CID:
+		अवरोध;
+	हाल FREE_ASSOC_RESOURCES:
+		rtw_मुक्त_assoc_resources(padapter, 1);
+		अवरोध;
+	हाल C2H_WK_CID:
 		rtw_hal_set_hwreg_with_buf(padapter, HW_VAR_C2H_HANDLE, pdrvextra_cmd->pbuf, pdrvextra_cmd->size);
-		break;
-	case DM_RA_MSK_WK_CID:
-		rtw_dm_ra_mask_hdl(padapter, (struct sta_info *)pdrvextra_cmd->pbuf);
-		break;
-	case BTINFO_WK_CID:
+		अवरोध;
+	हाल DM_RA_MSK_WK_CID:
+		rtw_dm_ra_mask_hdl(padapter, (काष्ठा sta_info *)pdrvextra_cmd->pbuf);
+		अवरोध;
+	हाल BTINFO_WK_CID:
 		rtw_btinfo_hdl(padapter, pdrvextra_cmd->pbuf, pdrvextra_cmd->size);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (pdrvextra_cmd->pbuf && pdrvextra_cmd->size > 0)
-		kfree(pdrvextra_cmd->pbuf);
+	अगर (pdrvextra_cmd->pbuf && pdrvextra_cmd->size > 0)
+		kमुक्त(pdrvextra_cmd->pbuf);
 
-	return H2C_SUCCESS;
-}
+	वापस H2C_SUCCESS;
+पूर्ण
 
-void rtw_survey_cmd_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
-	struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+व्योम rtw_survey_cmd_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
+	काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	if (pcmd->res == H2C_DROPPED) {
-		/* TODO: cancel timer and do timeout handler directly... */
-		/* need to make timeout handlerOS independent */
-		_set_timer(&pmlmepriv->scan_to_timer, 1);
-	} else if (pcmd->res != H2C_SUCCESS) {
-		_set_timer(&pmlmepriv->scan_to_timer, 1);
-	}
+	अगर (pcmd->res == H2C_DROPPED) अणु
+		/* TODO: cancel समयr and करो समयout handler directly... */
+		/* need to make समयout handlerOS independent */
+		_set_समयr(&pmlmepriv->scan_to_समयr, 1);
+	पूर्ण अन्यथा अगर (pcmd->res != H2C_SUCCESS) अणु
+		_set_समयr(&pmlmepriv->scan_to_समयr, 1);
+	पूर्ण
 
-	/*  free cmd */
-	rtw_free_cmd_obj(pcmd);
-}
+	/*  मुक्त cmd */
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण
 
-void rtw_disassoc_cmd_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
-	struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+व्योम rtw_disassoc_cmd_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
+	काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	if (pcmd->res != H2C_SUCCESS) {
+	अगर (pcmd->res != H2C_SUCCESS) अणु
 		spin_lock_bh(&pmlmepriv->lock);
 		set_fwstate(pmlmepriv, _FW_LINKED);
 		spin_unlock_bh(&pmlmepriv->lock);
 
-		return;
-	}
-	/*  free cmd */
-	rtw_free_cmd_obj(pcmd);
-}
+		वापस;
+	पूर्ण
+	/*  मुक्त cmd */
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण
 
-void rtw_joinbss_cmd_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
-	struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+व्योम rtw_joinbss_cmd_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
+	काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
 
-	if (pcmd->res == H2C_DROPPED) {
-		/* TODO: cancel timer and do timeout handler directly... */
-		/* need to make timeout handlerOS independent */
-		_set_timer(&pmlmepriv->assoc_timer, 1);
-	} else if (pcmd->res != H2C_SUCCESS) {
-		_set_timer(&pmlmepriv->assoc_timer, 1);
-	}
+	अगर (pcmd->res == H2C_DROPPED) अणु
+		/* TODO: cancel समयr and करो समयout handler directly... */
+		/* need to make समयout handlerOS independent */
+		_set_समयr(&pmlmepriv->assoc_समयr, 1);
+	पूर्ण अन्यथा अगर (pcmd->res != H2C_SUCCESS) अणु
+		_set_समयr(&pmlmepriv->assoc_समयr, 1);
+	पूर्ण
 
-	rtw_free_cmd_obj(pcmd);
-}
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण
 
-void rtw_createbss_cmd_callback(struct adapter *padapter, struct cmd_obj *pcmd)
-{
-	struct sta_info *psta = NULL;
-	struct wlan_network *pwlan = NULL;
-	struct	mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct wlan_bssid_ex *pnetwork = (struct wlan_bssid_ex *)pcmd->parmbuf;
-	struct wlan_network *tgt_network = &(pmlmepriv->cur_network);
+व्योम rtw_createbss_cmd_callback(काष्ठा adapter *padapter, काष्ठा cmd_obj *pcmd)
+अणु
+	काष्ठा sta_info *psta = शून्य;
+	काष्ठा wlan_network *pwlan = शून्य;
+	काष्ठा	mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा wlan_bssid_ex *pnetwork = (काष्ठा wlan_bssid_ex *)pcmd->parmbuf;
+	काष्ठा wlan_network *tgt_network = &(pmlmepriv->cur_network);
 
-	if (pcmd->parmbuf == NULL)
-		goto exit;
+	अगर (pcmd->parmbuf == शून्य)
+		जाओ निकास;
 
-	if (pcmd->res != H2C_SUCCESS)
-		_set_timer(&pmlmepriv->assoc_timer, 1);
+	अगर (pcmd->res != H2C_SUCCESS)
+		_set_समयr(&pmlmepriv->assoc_समयr, 1);
 
-	del_timer_sync(&pmlmepriv->assoc_timer);
+	del_समयr_sync(&pmlmepriv->assoc_समयr);
 
 	spin_lock_bh(&pmlmepriv->lock);
 
 
-	if (check_fwstate(pmlmepriv, WIFI_AP_STATE)) {
+	अगर (check_fwstate(pmlmepriv, WIFI_AP_STATE)) अणु
 		psta = rtw_get_stainfo(&padapter->stapriv, pnetwork->MacAddress);
-		if (!psta) {
+		अगर (!psta) अणु
 			psta = rtw_alloc_stainfo(&padapter->stapriv, pnetwork->MacAddress);
-			if (!psta)
-				goto createbss_cmd_fail;
-		}
+			अगर (!psta)
+				जाओ createbss_cmd_fail;
+		पूर्ण
 
 		rtw_indicate_connect(padapter);
-	} else {
+	पूर्ण अन्यथा अणु
 		pwlan = rtw_alloc_network(pmlmepriv);
 		spin_lock_bh(&(pmlmepriv->scanned_queue.lock));
-		if (pwlan == NULL) {
+		अगर (pwlan == शून्य) अणु
 			pwlan = rtw_get_oldest_wlan_network(&pmlmepriv->scanned_queue);
-			if (pwlan == NULL) {
+			अगर (pwlan == शून्य) अणु
 				spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
-				goto createbss_cmd_fail;
-			}
-			pwlan->last_scanned = jiffies;
-		} else {
+				जाओ createbss_cmd_fail;
+			पूर्ण
+			pwlan->last_scanned = jअगरfies;
+		पूर्ण अन्यथा अणु
 			list_add_tail(&(pwlan->list), &pmlmepriv->scanned_queue.queue);
-		}
+		पूर्ण
 
 		pnetwork->Length = get_wlan_bssid_ex_sz(pnetwork);
-		memcpy(&(pwlan->network), pnetwork, pnetwork->Length);
+		स_नकल(&(pwlan->network), pnetwork, pnetwork->Length);
 		/* pwlan->fixed = true; */
 
 		/* list_add_tail(&(pwlan->list), &pmlmepriv->scanned_queue.queue); */
 
-		/*  copy pdev_network information to	pmlmepriv->cur_network */
-		memcpy(&tgt_network->network, pnetwork, (get_wlan_bssid_ex_sz(pnetwork)));
+		/*  copy pdev_network inक्रमmation to	pmlmepriv->cur_network */
+		स_नकल(&tgt_network->network, pnetwork, (get_wlan_bssid_ex_sz(pnetwork)));
 
 		/*  reset DSConfig */
 		/* tgt_network->network.Configuration.DSConfig = (u32)rtw_ch2freq(pnetwork->Configuration.DSConfig); */
@@ -2009,53 +2010,53 @@ void rtw_createbss_cmd_callback(struct adapter *padapter, struct cmd_obj *pcmd)
 		spin_unlock_bh(&(pmlmepriv->scanned_queue.lock));
 		/*  we will set _FW_LINKED when there is one more sat to join us (rtw_stassoc_event_callback) */
 
-	}
+	पूर्ण
 
 createbss_cmd_fail:
 
 	spin_unlock_bh(&pmlmepriv->lock);
-exit:
-	rtw_free_cmd_obj(pcmd);
-}
+निकास:
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण
 
 
 
-void rtw_setstaKey_cmdrsp_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
+व्योम rtw_setstaKey_cmdrsp_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
 
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct set_stakey_rsp *psetstakey_rsp = (struct set_stakey_rsp *) (pcmd->rsp);
-	struct sta_info *psta = rtw_get_stainfo(pstapriv, psetstakey_rsp->addr);
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	काष्ठा set_stakey_rsp *psetstakey_rsp = (काष्ठा set_stakey_rsp *) (pcmd->rsp);
+	काष्ठा sta_info *psta = rtw_get_stainfo(pstapriv, psetstakey_rsp->addr);
 
-	if (!psta)
-		goto exit;
+	अगर (!psta)
+		जाओ निकास;
 
-exit:
-	rtw_free_cmd_obj(pcmd);
-}
+निकास:
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण
 
-void rtw_setassocsta_cmdrsp_callback(struct adapter *padapter,  struct cmd_obj *pcmd)
-{
-	struct sta_priv *pstapriv = &padapter->stapriv;
-	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
-	struct set_assocsta_parm *passocsta_parm = (struct set_assocsta_parm *)(pcmd->parmbuf);
-	struct set_assocsta_rsp *passocsta_rsp = (struct set_assocsta_rsp *) (pcmd->rsp);
-	struct sta_info *psta = rtw_get_stainfo(pstapriv, passocsta_parm->addr);
+व्योम rtw_setassocsta_cmdrsp_callback(काष्ठा adapter *padapter,  काष्ठा cmd_obj *pcmd)
+अणु
+	काष्ठा sta_priv *pstapriv = &padapter->stapriv;
+	काष्ठा mlme_priv *pmlmepriv = &padapter->mlmepriv;
+	काष्ठा set_assocsta_parm *passocsta_parm = (काष्ठा set_assocsta_parm *)(pcmd->parmbuf);
+	काष्ठा set_assocsta_rsp *passocsta_rsp = (काष्ठा set_assocsta_rsp *) (pcmd->rsp);
+	काष्ठा sta_info *psta = rtw_get_stainfo(pstapriv, passocsta_parm->addr);
 
-	if (!psta)
-		goto exit;
+	अगर (!psta)
+		जाओ निकास;
 
 	psta->aid = passocsta_rsp->cam_id;
 	psta->mac_id = passocsta_rsp->cam_id;
 
 	spin_lock_bh(&pmlmepriv->lock);
 
-	if ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) && (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == true))
+	अगर ((check_fwstate(pmlmepriv, WIFI_MP_STATE) == true) && (check_fwstate(pmlmepriv, _FW_UNDER_LINKING) == true))
 		_clr_fwstate_(pmlmepriv, _FW_UNDER_LINKING);
 
 	set_fwstate(pmlmepriv, _FW_LINKED);
 	spin_unlock_bh(&pmlmepriv->lock);
 
-exit:
-	rtw_free_cmd_obj(pcmd);
-}
+निकास:
+	rtw_मुक्त_cmd_obj(pcmd);
+पूर्ण

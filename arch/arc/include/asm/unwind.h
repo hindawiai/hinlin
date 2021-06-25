@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  */
 
-#ifndef _ASM_ARC_UNWIND_H
-#define _ASM_ARC_UNWIND_H
+#अगर_अघोषित _ASM_ARC_UNWIND_H
+#घोषणा _ASM_ARC_UNWIND_H
 
-#ifdef CONFIG_ARC_DW2_UNWIND
+#अगर_घोषित CONFIG_ARC_DW2_UNWIND
 
-#include <linux/sched.h>
+#समावेश <linux/sched.h>
 
-struct arc700_regs {
-	unsigned long r0;
-	unsigned long r1;
-	unsigned long r2;
-	unsigned long r3;
-	unsigned long r4;
-	unsigned long r5;
-	unsigned long r6;
-	unsigned long r7;
-	unsigned long r8;
-	unsigned long r9;
-	unsigned long r10;
-	unsigned long r11;
-	unsigned long r12;
-	unsigned long r13;
-	unsigned long r14;
-	unsigned long r15;
-	unsigned long r16;
-	unsigned long r17;
-	unsigned long r18;
-	unsigned long r19;
-	unsigned long r20;
-	unsigned long r21;
-	unsigned long r22;
-	unsigned long r23;
-	unsigned long r24;
-	unsigned long r25;
-	unsigned long r26;
-	unsigned long r27;	/* fp */
-	unsigned long r28;	/* sp */
-	unsigned long r29;
-	unsigned long r30;
-	unsigned long r31;	/* blink */
-	unsigned long r63;	/* pc */
-};
+काष्ठा arc700_regs अणु
+	अचिन्हित दीर्घ r0;
+	अचिन्हित दीर्घ r1;
+	अचिन्हित दीर्घ r2;
+	अचिन्हित दीर्घ r3;
+	अचिन्हित दीर्घ r4;
+	अचिन्हित दीर्घ r5;
+	अचिन्हित दीर्घ r6;
+	अचिन्हित दीर्घ r7;
+	अचिन्हित दीर्घ r8;
+	अचिन्हित दीर्घ r9;
+	अचिन्हित दीर्घ r10;
+	अचिन्हित दीर्घ r11;
+	अचिन्हित दीर्घ r12;
+	अचिन्हित दीर्घ r13;
+	अचिन्हित दीर्घ r14;
+	अचिन्हित दीर्घ r15;
+	अचिन्हित दीर्घ r16;
+	अचिन्हित दीर्घ r17;
+	अचिन्हित दीर्घ r18;
+	अचिन्हित दीर्घ r19;
+	अचिन्हित दीर्घ r20;
+	अचिन्हित दीर्घ r21;
+	अचिन्हित दीर्घ r22;
+	अचिन्हित दीर्घ r23;
+	अचिन्हित दीर्घ r24;
+	अचिन्हित दीर्घ r25;
+	अचिन्हित दीर्घ r26;
+	अचिन्हित दीर्घ r27;	/* fp */
+	अचिन्हित दीर्घ r28;	/* sp */
+	अचिन्हित दीर्घ r29;
+	अचिन्हित दीर्घ r30;
+	अचिन्हित दीर्घ r31;	/* blink */
+	अचिन्हित दीर्घ r63;	/* pc */
+पूर्ण;
 
-struct unwind_frame_info {
-	struct arc700_regs regs;
-	struct task_struct *task;
-	unsigned call_frame:1;
-};
+काष्ठा unwind_frame_info अणु
+	काष्ठा arc700_regs regs;
+	काष्ठा task_काष्ठा *task;
+	अचिन्हित call_frame:1;
+पूर्ण;
 
-#define UNW_PC(frame)		((frame)->regs.r63)
-#define UNW_SP(frame)		((frame)->regs.r28)
-#define UNW_BLINK(frame)	((frame)->regs.r31)
+#घोषणा UNW_PC(frame)		((frame)->regs.r63)
+#घोषणा UNW_SP(frame)		((frame)->regs.r28)
+#घोषणा UNW_BLINK(frame)	((frame)->regs.r31)
 
 /* Rajesh FIXME */
-#ifdef CONFIG_FRAME_POINTER
-#define UNW_FP(frame)		((frame)->regs.r27)
-#define FRAME_RETADDR_OFFSET	4
-#define FRAME_LINK_OFFSET	0
-#define STACK_BOTTOM_UNW(tsk)	STACK_LIMIT((tsk)->thread.ksp)
-#define STACK_TOP_UNW(tsk)	((tsk)->thread.ksp)
-#else
-#define UNW_FP(frame)		((void)(frame), 0)
-#endif
+#अगर_घोषित CONFIG_FRAME_POINTER
+#घोषणा UNW_FP(frame)		((frame)->regs.r27)
+#घोषणा FRAME_RETADDR_OFFSET	4
+#घोषणा FRAME_LINK_OFFSET	0
+#घोषणा STACK_BOTTOM_UNW(tsk)	STACK_LIMIT((tsk)->thपढ़ो.ksp)
+#घोषणा STACK_TOP_UNW(tsk)	((tsk)->thपढ़ो.ksp)
+#अन्यथा
+#घोषणा UNW_FP(frame)		((व्योम)(frame), 0)
+#पूर्ण_अगर
 
-#define STACK_LIMIT(ptr)	(((ptr) - 1) & ~(THREAD_SIZE - 1))
+#घोषणा STACK_LIMIT(ptr)	(((ptr) - 1) & ~(THREAD_SIZE - 1))
 
-#define UNW_REGISTER_INFO \
+#घोषणा UNW_REGISTER_INFO \
 	PTREGS_INFO(r0), \
 	PTREGS_INFO(r1), \
 	PTREGS_INFO(r2), \
@@ -104,53 +105,53 @@ struct unwind_frame_info {
 	PTREGS_INFO(r31), \
 	PTREGS_INFO(r63)
 
-#define UNW_DEFAULT_RA(raItem, dataAlign) \
+#घोषणा UNW_DEFAULT_RA(raItem, dataAlign) \
 	((raItem).where == Memory && !((raItem).value * (dataAlign) + 4))
 
-extern int arc_unwind(struct unwind_frame_info *frame);
-extern void arc_unwind_init(void);
-extern void *unwind_add_table(struct module *module, const void *table_start,
-			      unsigned long table_size);
-extern void unwind_remove_table(void *handle, int init_only);
+बाह्य पूर्णांक arc_unwind(काष्ठा unwind_frame_info *frame);
+बाह्य व्योम arc_unwind_init(व्योम);
+बाह्य व्योम *unwind_add_table(काष्ठा module *module, स्थिर व्योम *table_start,
+			      अचिन्हित दीर्घ table_size);
+बाह्य व्योम unwind_हटाओ_table(व्योम *handle, पूर्णांक init_only);
 
-static inline int
-arch_unwind_init_running(struct unwind_frame_info *info,
-			 int (*callback) (struct unwind_frame_info *info,
-					  void *arg),
-			 void *arg)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+arch_unwind_init_running(काष्ठा unwind_frame_info *info,
+			 पूर्णांक (*callback) (काष्ठा unwind_frame_info *info,
+					  व्योम *arg),
+			 व्योम *arg)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int arch_unw_user_mode(const struct unwind_frame_info *info)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक arch_unw_user_mode(स्थिर काष्ठा unwind_frame_info *info)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void arch_unw_init_blocked(struct unwind_frame_info *info)
-{
-	return;
-}
+अटल अंतरभूत व्योम arch_unw_init_blocked(काष्ठा unwind_frame_info *info)
+अणु
+	वापस;
+पूर्ण
 
-static inline void arch_unw_init_frame_info(struct unwind_frame_info *info,
-					    struct pt_regs *regs)
-{
-	return;
-}
+अटल अंतरभूत व्योम arch_unw_init_frame_info(काष्ठा unwind_frame_info *info,
+					    काष्ठा pt_regs *regs)
+अणु
+	वापस;
+पूर्ण
 
-#else
+#अन्यथा
 
-#define UNW_PC(frame) ((void)(frame), 0)
-#define UNW_SP(frame) ((void)(frame), 0)
-#define UNW_FP(frame) ((void)(frame), 0)
+#घोषणा UNW_PC(frame) ((व्योम)(frame), 0)
+#घोषणा UNW_SP(frame) ((व्योम)(frame), 0)
+#घोषणा UNW_FP(frame) ((व्योम)(frame), 0)
 
-static inline void arc_unwind_init(void)
-{
-}
+अटल अंतरभूत व्योम arc_unwind_init(व्योम)
+अणु
+पूर्ण
 
-#define unwind_add_table(a, b, c)
-#define unwind_remove_table(a, b)
+#घोषणा unwind_add_table(a, b, c)
+#घोषणा unwind_हटाओ_table(a, b)
 
-#endif /* CONFIG_ARC_DW2_UNWIND */
+#पूर्ण_अगर /* CONFIG_ARC_DW2_UNWIND */
 
-#endif /* _ASM_ARC_UNWIND_H */
+#पूर्ण_अगर /* _ASM_ARC_UNWIND_H */

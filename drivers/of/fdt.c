@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Functions for working with the Flattened Device Tree data format
+ * Functions क्रम working with the Flattened Device Tree data क्रमmat
  *
  * Copyright 2009 Benjamin Herrenschmidt, IBM Corp
  * benh@kernel.crashing.org
  */
 
-#define pr_fmt(fmt)	"OF: fdt: " fmt
+#घोषणा pr_fmt(fmt)	"OF: fdt: " fmt
 
-#include <linux/crc32.h>
-#include <linux/kernel.h>
-#include <linux/initrd.h>
-#include <linux/memblock.h>
-#include <linux/mutex.h>
-#include <linux/of.h>
-#include <linux/of_fdt.h>
-#include <linux/of_reserved_mem.h>
-#include <linux/sizes.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/libfdt.h>
-#include <linux/debugfs.h>
-#include <linux/serial_core.h>
-#include <linux/sysfs.h>
-#include <linux/random.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_reserved_स्मृति.स>
+#समावेश <linux/sizes.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/अक्रमom.h>
 
-#include <asm/setup.h>  /* for COMMAND_LINE_SIZE */
-#include <asm/page.h>
+#समावेश <यंत्र/setup.h>  /* क्रम COMMAND_LINE_SIZE */
+#समावेश <यंत्र/page.h>
 
-#include "of_private.h"
+#समावेश "of_private.h"
 
 /*
  * of_fdt_limit_memory - limit the number of regions in the /memory node
@@ -37,408 +38,408 @@
  *
  * Adjust the flattened device tree to have at most 'limit' number of
  * memory entries in the /memory node. This function may be called
- * any time after initial_boot_param is set.
+ * any समय after initial_boot_param is set.
  */
-void __init of_fdt_limit_memory(int limit)
-{
-	int memory;
-	int len;
-	const void *val;
-	int nr_address_cells = OF_ROOT_NODE_ADDR_CELLS_DEFAULT;
-	int nr_size_cells = OF_ROOT_NODE_SIZE_CELLS_DEFAULT;
-	const __be32 *addr_prop;
-	const __be32 *size_prop;
-	int root_offset;
-	int cell_size;
+व्योम __init of_fdt_limit_memory(पूर्णांक limit)
+अणु
+	पूर्णांक memory;
+	पूर्णांक len;
+	स्थिर व्योम *val;
+	पूर्णांक nr_address_cells = OF_ROOT_NODE_ADDR_CELLS_DEFAULT;
+	पूर्णांक nr_size_cells = OF_ROOT_NODE_SIZE_CELLS_DEFAULT;
+	स्थिर __be32 *addr_prop;
+	स्थिर __be32 *size_prop;
+	पूर्णांक root_offset;
+	पूर्णांक cell_size;
 
 	root_offset = fdt_path_offset(initial_boot_params, "/");
-	if (root_offset < 0)
-		return;
+	अगर (root_offset < 0)
+		वापस;
 
 	addr_prop = fdt_getprop(initial_boot_params, root_offset,
-				"#address-cells", NULL);
-	if (addr_prop)
+				"#address-cells", शून्य);
+	अगर (addr_prop)
 		nr_address_cells = fdt32_to_cpu(*addr_prop);
 
 	size_prop = fdt_getprop(initial_boot_params, root_offset,
-				"#size-cells", NULL);
-	if (size_prop)
+				"#size-cells", शून्य);
+	अगर (size_prop)
 		nr_size_cells = fdt32_to_cpu(*size_prop);
 
-	cell_size = sizeof(uint32_t)*(nr_address_cells + nr_size_cells);
+	cell_size = माप(uपूर्णांक32_t)*(nr_address_cells + nr_size_cells);
 
 	memory = fdt_path_offset(initial_boot_params, "/memory");
-	if (memory > 0) {
+	अगर (memory > 0) अणु
 		val = fdt_getprop(initial_boot_params, memory, "reg", &len);
-		if (len > limit*cell_size) {
+		अगर (len > limit*cell_size) अणु
 			len = limit*cell_size;
 			pr_debug("Limiting number of entries to %d\n", limit);
 			fdt_setprop(initial_boot_params, memory, "reg", val,
 					len);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static bool of_fdt_device_is_available(const void *blob, unsigned long node)
-{
-	const char *status = fdt_getprop(blob, node, "status", NULL);
+अटल bool of_fdt_device_is_available(स्थिर व्योम *blob, अचिन्हित दीर्घ node)
+अणु
+	स्थिर अक्षर *status = fdt_getprop(blob, node, "status", शून्य);
 
-	if (!status)
-		return true;
+	अगर (!status)
+		वापस true;
 
-	if (!strcmp(status, "ok") || !strcmp(status, "okay"))
-		return true;
+	अगर (!म_भेद(status, "ok") || !म_भेद(status, "okay"))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void *unflatten_dt_alloc(void **mem, unsigned long size,
-				       unsigned long align)
-{
-	void *res;
+अटल व्योम *unflatten_dt_alloc(व्योम **mem, अचिन्हित दीर्घ size,
+				       अचिन्हित दीर्घ align)
+अणु
+	व्योम *res;
 
 	*mem = PTR_ALIGN(*mem, align);
 	res = *mem;
 	*mem += size;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void populate_properties(const void *blob,
-				int offset,
-				void **mem,
-				struct device_node *np,
-				const char *nodename,
+अटल व्योम populate_properties(स्थिर व्योम *blob,
+				पूर्णांक offset,
+				व्योम **mem,
+				काष्ठा device_node *np,
+				स्थिर अक्षर *nodename,
 				bool dryrun)
-{
-	struct property *pp, **pprev = NULL;
-	int cur;
+अणु
+	काष्ठा property *pp, **pprev = शून्य;
+	पूर्णांक cur;
 	bool has_name = false;
 
 	pprev = &np->properties;
-	for (cur = fdt_first_property_offset(blob, offset);
+	क्रम (cur = fdt_first_property_offset(blob, offset);
 	     cur >= 0;
-	     cur = fdt_next_property_offset(blob, cur)) {
-		const __be32 *val;
-		const char *pname;
+	     cur = fdt_next_property_offset(blob, cur)) अणु
+		स्थिर __be32 *val;
+		स्थिर अक्षर *pname;
 		u32 sz;
 
 		val = fdt_getprop_by_offset(blob, cur, &pname, &sz);
-		if (!val) {
+		अगर (!val) अणु
 			pr_warn("Cannot locate property at 0x%x\n", cur);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!pname) {
+		अगर (!pname) अणु
 			pr_warn("Cannot find property name at 0x%x\n", cur);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!strcmp(pname, "name"))
+		अगर (!म_भेद(pname, "name"))
 			has_name = true;
 
-		pp = unflatten_dt_alloc(mem, sizeof(struct property),
-					__alignof__(struct property));
-		if (dryrun)
-			continue;
+		pp = unflatten_dt_alloc(mem, माप(काष्ठा property),
+					__alignof__(काष्ठा property));
+		अगर (dryrun)
+			जारी;
 
 		/* We accept flattened tree phandles either in
 		 * ePAPR-style "phandle" properties, or the
 		 * legacy "linux,phandle" properties.  If both
-		 * appear and have different values, things
-		 * will get weird. Don't do that.
+		 * appear and have dअगरferent values, things
+		 * will get weird. Don't करो that.
 		 */
-		if (!strcmp(pname, "phandle") ||
-		    !strcmp(pname, "linux,phandle")) {
-			if (!np->phandle)
+		अगर (!म_भेद(pname, "phandle") ||
+		    !म_भेद(pname, "linux,phandle")) अणु
+			अगर (!np->phandle)
 				np->phandle = be32_to_cpup(val);
-		}
+		पूर्ण
 
 		/* And we process the "ibm,phandle" property
 		 * used in pSeries dynamic device tree
 		 * stuff
 		 */
-		if (!strcmp(pname, "ibm,phandle"))
+		अगर (!म_भेद(pname, "ibm,phandle"))
 			np->phandle = be32_to_cpup(val);
 
-		pp->name   = (char *)pname;
+		pp->name   = (अक्षर *)pname;
 		pp->length = sz;
 		pp->value  = (__be32 *)val;
 		*pprev     = pp;
 		pprev      = &pp->next;
-	}
+	पूर्ण
 
 	/* With version 0x10 we may not have the name property,
-	 * recreate it here from the unit name if absent
+	 * recreate it here from the unit name अगर असलent
 	 */
-	if (!has_name) {
-		const char *p = nodename, *ps = p, *pa = NULL;
-		int len;
+	अगर (!has_name) अणु
+		स्थिर अक्षर *p = nodename, *ps = p, *pa = शून्य;
+		पूर्णांक len;
 
-		while (*p) {
-			if ((*p) == '@')
+		जबतक (*p) अणु
+			अगर ((*p) == '@')
 				pa = p;
-			else if ((*p) == '/')
+			अन्यथा अगर ((*p) == '/')
 				ps = p + 1;
 			p++;
-		}
+		पूर्ण
 
-		if (pa < ps)
+		अगर (pa < ps)
 			pa = p;
 		len = (pa - ps) + 1;
-		pp = unflatten_dt_alloc(mem, sizeof(struct property) + len,
-					__alignof__(struct property));
-		if (!dryrun) {
+		pp = unflatten_dt_alloc(mem, माप(काष्ठा property) + len,
+					__alignof__(काष्ठा property));
+		अगर (!dryrun) अणु
 			pp->name   = "name";
 			pp->length = len;
 			pp->value  = pp + 1;
 			*pprev     = pp;
 			pprev      = &pp->next;
-			memcpy(pp->value, ps, len - 1);
-			((char *)pp->value)[len - 1] = 0;
+			स_नकल(pp->value, ps, len - 1);
+			((अक्षर *)pp->value)[len - 1] = 0;
 			pr_debug("fixed up name for %s -> %s\n",
-				 nodename, (char *)pp->value);
-		}
-	}
+				 nodename, (अक्षर *)pp->value);
+		पूर्ण
+	पूर्ण
 
-	if (!dryrun)
-		*pprev = NULL;
-}
+	अगर (!dryrun)
+		*pprev = शून्य;
+पूर्ण
 
-static int populate_node(const void *blob,
-			  int offset,
-			  void **mem,
-			  struct device_node *dad,
-			  struct device_node **pnp,
+अटल पूर्णांक populate_node(स्थिर व्योम *blob,
+			  पूर्णांक offset,
+			  व्योम **mem,
+			  काष्ठा device_node *dad,
+			  काष्ठा device_node **pnp,
 			  bool dryrun)
-{
-	struct device_node *np;
-	const char *pathp;
-	int len;
+अणु
+	काष्ठा device_node *np;
+	स्थिर अक्षर *pathp;
+	पूर्णांक len;
 
 	pathp = fdt_get_name(blob, offset, &len);
-	if (!pathp) {
-		*pnp = NULL;
-		return len;
-	}
+	अगर (!pathp) अणु
+		*pnp = शून्य;
+		वापस len;
+	पूर्ण
 
 	len++;
 
-	np = unflatten_dt_alloc(mem, sizeof(struct device_node) + len,
-				__alignof__(struct device_node));
-	if (!dryrun) {
-		char *fn;
+	np = unflatten_dt_alloc(mem, माप(काष्ठा device_node) + len,
+				__alignof__(काष्ठा device_node));
+	अगर (!dryrun) अणु
+		अक्षर *fn;
 		of_node_init(np);
-		np->full_name = fn = ((char *)np) + sizeof(*np);
+		np->full_name = fn = ((अक्षर *)np) + माप(*np);
 
-		memcpy(fn, pathp, len);
+		स_नकल(fn, pathp, len);
 
-		if (dad != NULL) {
+		अगर (dad != शून्य) अणु
 			np->parent = dad;
 			np->sibling = dad->child;
 			dad->child = np;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	populate_properties(blob, offset, mem, np, pathp, dryrun);
-	if (!dryrun) {
-		np->name = of_get_property(np, "name", NULL);
-		if (!np->name)
+	अगर (!dryrun) अणु
+		np->name = of_get_property(np, "name", शून्य);
+		अगर (!np->name)
 			np->name = "<NULL>";
-	}
+	पूर्ण
 
 	*pnp = np;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void reverse_nodes(struct device_node *parent)
-{
-	struct device_node *child, *next;
+अटल व्योम reverse_nodes(काष्ठा device_node *parent)
+अणु
+	काष्ठा device_node *child, *next;
 
 	/* In-depth first */
 	child = parent->child;
-	while (child) {
+	जबतक (child) अणु
 		reverse_nodes(child);
 
 		child = child->sibling;
-	}
+	पूर्ण
 
 	/* Reverse the nodes in the child list */
 	child = parent->child;
-	parent->child = NULL;
-	while (child) {
+	parent->child = शून्य;
+	जबतक (child) अणु
 		next = child->sibling;
 
 		child->sibling = parent->child;
 		parent->child = child;
 		child = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * unflatten_dt_nodes - Alloc and populate a device_node from the flat tree
  * @blob: The parent device tree blob
- * @mem: Memory chunk to use for allocating device nodes and properties
- * @dad: Parent struct device_node
+ * @mem: Memory chunk to use क्रम allocating device nodes and properties
+ * @dad: Parent काष्ठा device_node
  * @nodepp: The device_node tree created by the call
  *
  * Return: The size of unflattened device tree or error code
  */
-static int unflatten_dt_nodes(const void *blob,
-			      void *mem,
-			      struct device_node *dad,
-			      struct device_node **nodepp)
-{
-	struct device_node *root;
-	int offset = 0, depth = 0, initial_depth = 0;
-#define FDT_MAX_DEPTH	64
-	struct device_node *nps[FDT_MAX_DEPTH];
-	void *base = mem;
+अटल पूर्णांक unflatten_dt_nodes(स्थिर व्योम *blob,
+			      व्योम *mem,
+			      काष्ठा device_node *dad,
+			      काष्ठा device_node **nodepp)
+अणु
+	काष्ठा device_node *root;
+	पूर्णांक offset = 0, depth = 0, initial_depth = 0;
+#घोषणा FDT_MAX_DEPTH	64
+	काष्ठा device_node *nps[FDT_MAX_DEPTH];
+	व्योम *base = mem;
 	bool dryrun = !base;
-	int ret;
+	पूर्णांक ret;
 
-	if (nodepp)
-		*nodepp = NULL;
+	अगर (nodepp)
+		*nodepp = शून्य;
 
 	/*
-	 * We're unflattening device sub-tree if @dad is valid. There are
+	 * We're unflattening device sub-tree अगर @dad is valid. There are
 	 * possibly multiple nodes in the first level of depth. We need
 	 * set @depth to 1 to make fdt_next_node() happy as it bails
 	 * immediately when negative @depth is found. Otherwise, the device
 	 * nodes except the first one won't be unflattened successfully.
 	 */
-	if (dad)
+	अगर (dad)
 		depth = initial_depth = 1;
 
 	root = dad;
 	nps[depth] = dad;
 
-	for (offset = 0;
+	क्रम (offset = 0;
 	     offset >= 0 && depth >= initial_depth;
-	     offset = fdt_next_node(blob, offset, &depth)) {
-		if (WARN_ON_ONCE(depth >= FDT_MAX_DEPTH))
-			continue;
+	     offset = fdt_next_node(blob, offset, &depth)) अणु
+		अगर (WARN_ON_ONCE(depth >= FDT_MAX_DEPTH))
+			जारी;
 
-		if (!IS_ENABLED(CONFIG_OF_KOBJ) &&
+		अगर (!IS_ENABLED(CONFIG_OF_KOBJ) &&
 		    !of_fdt_device_is_available(blob, offset))
-			continue;
+			जारी;
 
 		ret = populate_node(blob, offset, &mem, nps[depth],
 				   &nps[depth+1], dryrun);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
-		if (!dryrun && nodepp && !*nodepp)
+		अगर (!dryrun && nodepp && !*nodepp)
 			*nodepp = nps[depth+1];
-		if (!dryrun && !root)
+		अगर (!dryrun && !root)
 			root = nps[depth+1];
-	}
+	पूर्ण
 
-	if (offset < 0 && offset != -FDT_ERR_NOTFOUND) {
+	अगर (offset < 0 && offset != -FDT_ERR_NOTFOUND) अणु
 		pr_err("Error %d processing FDT\n", offset);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Reverse the child list. Some drivers assumes node order matches .dts
 	 * node order
 	 */
-	if (!dryrun)
+	अगर (!dryrun)
 		reverse_nodes(root);
 
-	return mem - base;
-}
+	वापस mem - base;
+पूर्ण
 
 /**
  * __unflatten_device_tree - create tree of device_nodes from flat blob
  * @blob: The blob to expand
  * @dad: Parent device node
  * @mynodes: The device_node tree created by the call
- * @dt_alloc: An allocator that provides a virtual address to memory
- * for the resulting tree
- * @detached: if true set OF_DETACHED on @mynodes
+ * @dt_alloc: An allocator that provides a भव address to memory
+ * क्रम the resulting tree
+ * @detached: अगर true set OF_DETACHED on @mynodes
  *
- * unflattens a device-tree, creating the tree of struct device_node. It also
- * fills the "name" and "type" pointers of the nodes so the normal device-tree
+ * unflattens a device-tree, creating the tree of काष्ठा device_node. It also
+ * fills the "name" and "type" poपूर्णांकers of the nodes so the normal device-tree
  * walking functions can be used.
  *
- * Return: NULL on failure or the memory chunk containing the unflattened
+ * Return: शून्य on failure or the memory chunk containing the unflattened
  * device tree on success.
  */
-void *__unflatten_device_tree(const void *blob,
-			      struct device_node *dad,
-			      struct device_node **mynodes,
-			      void *(*dt_alloc)(u64 size, u64 align),
+व्योम *__unflatten_device_tree(स्थिर व्योम *blob,
+			      काष्ठा device_node *dad,
+			      काष्ठा device_node **mynodes,
+			      व्योम *(*dt_alloc)(u64 size, u64 align),
 			      bool detached)
-{
-	int size;
-	void *mem;
-	int ret;
+अणु
+	पूर्णांक size;
+	व्योम *mem;
+	पूर्णांक ret;
 
-	if (mynodes)
-		*mynodes = NULL;
+	अगर (mynodes)
+		*mynodes = शून्य;
 
 	pr_debug(" -> unflatten_device_tree()\n");
 
-	if (!blob) {
+	अगर (!blob) अणु
 		pr_debug("No device tree pointer\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	pr_debug("Unflattening device tree:\n");
 	pr_debug("magic: %08x\n", fdt_magic(blob));
 	pr_debug("size: %08x\n", fdt_totalsize(blob));
 	pr_debug("version: %08x\n", fdt_version(blob));
 
-	if (fdt_check_header(blob)) {
+	अगर (fdt_check_header(blob)) अणु
 		pr_err("Invalid device tree blob header\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* First pass, scan for size */
-	size = unflatten_dt_nodes(blob, NULL, dad, NULL);
-	if (size <= 0)
-		return NULL;
+	/* First pass, scan क्रम size */
+	size = unflatten_dt_nodes(blob, शून्य, dad, शून्य);
+	अगर (size <= 0)
+		वापस शून्य;
 
 	size = ALIGN(size, 4);
 	pr_debug("  size is %d, allocating...\n", size);
 
-	/* Allocate memory for the expanded device tree */
-	mem = dt_alloc(size + 4, __alignof__(struct device_node));
-	if (!mem)
-		return NULL;
+	/* Allocate memory क्रम the expanded device tree */
+	mem = dt_alloc(size + 4, __alignof__(काष्ठा device_node));
+	अगर (!mem)
+		वापस शून्य;
 
-	memset(mem, 0, size);
+	स_रखो(mem, 0, size);
 
 	*(__be32 *)(mem + size) = cpu_to_be32(0xdeadbeef);
 
 	pr_debug("  unflattening %p...\n", mem);
 
-	/* Second pass, do actual unflattening */
+	/* Second pass, करो actual unflattening */
 	ret = unflatten_dt_nodes(blob, mem, dad, mynodes);
 
-	if (be32_to_cpup(mem + size) != 0xdeadbeef)
+	अगर (be32_to_cpup(mem + size) != 0xdeadbeef)
 		pr_warn("End of tree marker overwritten: %08x\n",
 			be32_to_cpup(mem + size));
 
-	if (ret <= 0)
-		return NULL;
+	अगर (ret <= 0)
+		वापस शून्य;
 
-	if (detached && mynodes && *mynodes) {
+	अगर (detached && mynodes && *mynodes) अणु
 		of_node_set_flag(*mynodes, OF_DETACHED);
 		pr_debug("unflattened tree is detached\n");
-	}
+	पूर्ण
 
 	pr_debug(" <- unflatten_device_tree()\n");
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static void *kernel_tree_alloc(u64 size, u64 align)
-{
-	return kzalloc(size, GFP_KERNEL);
-}
+अटल व्योम *kernel_tree_alloc(u64 size, u64 align)
+अणु
+	वापस kzalloc(size, GFP_KERNEL);
+पूर्ण
 
-static DEFINE_MUTEX(of_fdt_unflatten_mutex);
+अटल DEFINE_MUTEX(of_fdt_unflatten_mutex);
 
 /**
  * of_fdt_unflatten_tree - create tree of device_nodes from flat blob
@@ -447,645 +448,645 @@ static DEFINE_MUTEX(of_fdt_unflatten_mutex);
  * @mynodes: The device tree created by the call
  *
  * unflattens the device-tree passed by the firmware, creating the
- * tree of struct device_node. It also fills the "name" and "type"
- * pointers of the nodes so the normal device-tree walking functions
+ * tree of काष्ठा device_node. It also fills the "name" and "type"
+ * poपूर्णांकers of the nodes so the normal device-tree walking functions
  * can be used.
  *
- * Return: NULL on failure or the memory chunk containing the unflattened
+ * Return: शून्य on failure or the memory chunk containing the unflattened
  * device tree on success.
  */
-void *of_fdt_unflatten_tree(const unsigned long *blob,
-			    struct device_node *dad,
-			    struct device_node **mynodes)
-{
-	void *mem;
+व्योम *of_fdt_unflatten_tree(स्थिर अचिन्हित दीर्घ *blob,
+			    काष्ठा device_node *dad,
+			    काष्ठा device_node **mynodes)
+अणु
+	व्योम *mem;
 
 	mutex_lock(&of_fdt_unflatten_mutex);
 	mem = __unflatten_device_tree(blob, dad, mynodes, &kernel_tree_alloc,
 				      true);
 	mutex_unlock(&of_fdt_unflatten_mutex);
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 EXPORT_SYMBOL_GPL(of_fdt_unflatten_tree);
 
 /* Everything below here references initial_boot_params directly. */
-int __initdata dt_root_addr_cells;
-int __initdata dt_root_size_cells;
+पूर्णांक __initdata dt_root_addr_cells;
+पूर्णांक __initdata dt_root_size_cells;
 
-void *initial_boot_params __ro_after_init;
+व्योम *initial_boot_params __ro_after_init;
 
-#ifdef CONFIG_OF_EARLY_FLATTREE
+#अगर_घोषित CONFIG_OF_EARLY_FLATTREE
 
-static u32 of_fdt_crc32;
+अटल u32 of_fdt_crc32;
 
 /*
  * __reserved_mem_reserve_reg() - reserve all memory described in 'reg' property
  */
-static int __init __reserved_mem_reserve_reg(unsigned long node,
-					     const char *uname)
-{
-	int t_len = (dt_root_addr_cells + dt_root_size_cells) * sizeof(__be32);
+अटल पूर्णांक __init __reserved_mem_reserve_reg(अचिन्हित दीर्घ node,
+					     स्थिर अक्षर *uname)
+अणु
+	पूर्णांक t_len = (dt_root_addr_cells + dt_root_size_cells) * माप(__be32);
 	phys_addr_t base, size;
-	int len;
-	const __be32 *prop;
-	int first = 1;
+	पूर्णांक len;
+	स्थिर __be32 *prop;
+	पूर्णांक first = 1;
 	bool nomap;
 
 	prop = of_get_flat_dt_prop(node, "reg", &len);
-	if (!prop)
-		return -ENOENT;
+	अगर (!prop)
+		वापस -ENOENT;
 
-	if (len && len % t_len != 0) {
+	अगर (len && len % t_len != 0) अणु
 		pr_err("Reserved memory: invalid reg property in '%s', skipping node.\n",
 		       uname);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	nomap = of_get_flat_dt_prop(node, "no-map", NULL) != NULL;
+	nomap = of_get_flat_dt_prop(node, "no-map", शून्य) != शून्य;
 
-	while (len >= t_len) {
+	जबतक (len >= t_len) अणु
 		base = dt_mem_next_cell(dt_root_addr_cells, &prop);
 		size = dt_mem_next_cell(dt_root_size_cells, &prop);
 
-		if (size &&
+		अगर (size &&
 		    early_init_dt_reserve_memory_arch(base, size, nomap) == 0)
 			pr_debug("Reserved memory: reserved region for node '%s': base %pa, size %ld MiB\n",
-				uname, &base, (unsigned long)size / SZ_1M);
-		else
+				uname, &base, (अचिन्हित दीर्घ)size / SZ_1M);
+		अन्यथा
 			pr_info("Reserved memory: failed to reserve memory for node '%s': base %pa, size %ld MiB\n",
-				uname, &base, (unsigned long)size / SZ_1M);
+				uname, &base, (अचिन्हित दीर्घ)size / SZ_1M);
 
 		len -= t_len;
-		if (first) {
+		अगर (first) अणु
 			fdt_reserved_mem_save_node(node, uname, base, size);
 			first = 0;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * __reserved_mem_check_root() - check if #size-cells, #address-cells provided
+ * __reserved_mem_check_root() - check अगर #size-cells, #address-cells provided
  * in /reserved-memory matches the values supported by the current implementation,
- * also check if ranges property has been provided
+ * also check अगर ranges property has been provided
  */
-static int __init __reserved_mem_check_root(unsigned long node)
-{
-	const __be32 *prop;
+अटल पूर्णांक __init __reserved_mem_check_root(अचिन्हित दीर्घ node)
+अणु
+	स्थिर __be32 *prop;
 
-	prop = of_get_flat_dt_prop(node, "#size-cells", NULL);
-	if (!prop || be32_to_cpup(prop) != dt_root_size_cells)
-		return -EINVAL;
+	prop = of_get_flat_dt_prop(node, "#size-cells", शून्य);
+	अगर (!prop || be32_to_cpup(prop) != dt_root_size_cells)
+		वापस -EINVAL;
 
-	prop = of_get_flat_dt_prop(node, "#address-cells", NULL);
-	if (!prop || be32_to_cpup(prop) != dt_root_addr_cells)
-		return -EINVAL;
+	prop = of_get_flat_dt_prop(node, "#address-cells", शून्य);
+	अगर (!prop || be32_to_cpup(prop) != dt_root_addr_cells)
+		वापस -EINVAL;
 
-	prop = of_get_flat_dt_prop(node, "ranges", NULL);
-	if (!prop)
-		return -EINVAL;
-	return 0;
-}
+	prop = of_get_flat_dt_prop(node, "ranges", शून्य);
+	अगर (!prop)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /*
- * __fdt_scan_reserved_mem() - scan a single FDT node for reserved memory
+ * __fdt_scan_reserved_mem() - scan a single FDT node क्रम reserved memory
  */
-static int __init __fdt_scan_reserved_mem(unsigned long node, const char *uname,
-					  int depth, void *data)
-{
-	static int found;
-	int err;
+अटल पूर्णांक __init __fdt_scan_reserved_mem(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+					  पूर्णांक depth, व्योम *data)
+अणु
+	अटल पूर्णांक found;
+	पूर्णांक err;
 
-	if (!found && depth == 1 && strcmp(uname, "reserved-memory") == 0) {
-		if (__reserved_mem_check_root(node) != 0) {
+	अगर (!found && depth == 1 && म_भेद(uname, "reserved-memory") == 0) अणु
+		अगर (__reserved_mem_check_root(node) != 0) अणु
 			pr_err("Reserved memory: unsupported node format, ignoring\n");
-			/* break scan */
-			return 1;
-		}
+			/* अवरोध scan */
+			वापस 1;
+		पूर्ण
 		found = 1;
 		/* scan next node */
-		return 0;
-	} else if (!found) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (!found) अणु
 		/* scan next node */
-		return 0;
-	} else if (found && depth < 2) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (found && depth < 2) अणु
 		/* scanning of /reserved-memory has been finished */
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if (!of_fdt_device_is_available(initial_boot_params, node))
-		return 0;
+	अगर (!of_fdt_device_is_available(initial_boot_params, node))
+		वापस 0;
 
 	err = __reserved_mem_reserve_reg(node, uname);
-	if (err == -ENOENT && of_get_flat_dt_prop(node, "size", NULL))
+	अगर (err == -ENOENT && of_get_flat_dt_prop(node, "size", शून्य))
 		fdt_reserved_mem_save_node(node, uname, 0, 0);
 
 	/* scan next node */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * early_init_fdt_scan_reserved_mem() - create reserved memory regions
  *
- * This function grabs memory from early allocator for device exclusive use
- * defined in device tree structures. It should be called by arch specific code
+ * This function grअसल memory from early allocator क्रम device exclusive use
+ * defined in device tree काष्ठाures. It should be called by arch specअगरic code
  * once the early allocator (i.e. memblock) has been fully activated.
  */
-void __init early_init_fdt_scan_reserved_mem(void)
-{
-	int n;
+व्योम __init early_init_fdt_scan_reserved_mem(व्योम)
+अणु
+	पूर्णांक n;
 	u64 base, size;
 
-	if (!initial_boot_params)
-		return;
+	अगर (!initial_boot_params)
+		वापस;
 
 	/* Process header /memreserve/ fields */
-	for (n = 0; ; n++) {
+	क्रम (n = 0; ; n++) अणु
 		fdt_get_mem_rsv(initial_boot_params, n, &base, &size);
-		if (!size)
-			break;
+		अगर (!size)
+			अवरोध;
 		early_init_dt_reserve_memory_arch(base, size, false);
-	}
+	पूर्ण
 
-	of_scan_flat_dt(__fdt_scan_reserved_mem, NULL);
+	of_scan_flat_dt(__fdt_scan_reserved_mem, शून्य);
 	fdt_init_reserved_mem();
-}
+पूर्ण
 
 /**
  * early_init_fdt_reserve_self() - reserve the memory used by the FDT blob
  */
-void __init early_init_fdt_reserve_self(void)
-{
-	if (!initial_boot_params)
-		return;
+व्योम __init early_init_fdt_reserve_self(व्योम)
+अणु
+	अगर (!initial_boot_params)
+		वापस;
 
 	/* Reserve the dtb region */
 	early_init_dt_reserve_memory_arch(__pa(initial_boot_params),
 					  fdt_totalsize(initial_boot_params),
 					  false);
-}
+पूर्ण
 
 /**
  * of_scan_flat_dt - scan flattened tree blob and call callback on each.
  * @it: callback function
- * @data: context data pointer
+ * @data: context data poपूर्णांकer
  *
  * This function is used to scan the flattened device-tree, it is
- * used to extract the memory information at boot before we can
+ * used to extract the memory inक्रमmation at boot beक्रमe we can
  * unflatten the tree
  */
-int __init of_scan_flat_dt(int (*it)(unsigned long node,
-				     const char *uname, int depth,
-				     void *data),
-			   void *data)
-{
-	const void *blob = initial_boot_params;
-	const char *pathp;
-	int offset, rc = 0, depth = -1;
+पूर्णांक __init of_scan_flat_dt(पूर्णांक (*it)(अचिन्हित दीर्घ node,
+				     स्थिर अक्षर *uname, पूर्णांक depth,
+				     व्योम *data),
+			   व्योम *data)
+अणु
+	स्थिर व्योम *blob = initial_boot_params;
+	स्थिर अक्षर *pathp;
+	पूर्णांक offset, rc = 0, depth = -1;
 
-	if (!blob)
-		return 0;
+	अगर (!blob)
+		वापस 0;
 
-	for (offset = fdt_next_node(blob, -1, &depth);
+	क्रम (offset = fdt_next_node(blob, -1, &depth);
 	     offset >= 0 && depth >= 0 && !rc;
-	     offset = fdt_next_node(blob, offset, &depth)) {
+	     offset = fdt_next_node(blob, offset, &depth)) अणु
 
-		pathp = fdt_get_name(blob, offset, NULL);
+		pathp = fdt_get_name(blob, offset, शून्य);
 		rc = it(offset, pathp, depth, data);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 /**
  * of_scan_flat_dt_subnodes - scan sub-nodes of a node call callback on each.
  * @parent: parent node
  * @it: callback function
- * @data: context data pointer
+ * @data: context data poपूर्णांकer
  *
  * This function is used to scan sub-nodes of a node.
  */
-int __init of_scan_flat_dt_subnodes(unsigned long parent,
-				    int (*it)(unsigned long node,
-					      const char *uname,
-					      void *data),
-				    void *data)
-{
-	const void *blob = initial_boot_params;
-	int node;
+पूर्णांक __init of_scan_flat_dt_subnodes(अचिन्हित दीर्घ parent,
+				    पूर्णांक (*it)(अचिन्हित दीर्घ node,
+					      स्थिर अक्षर *uname,
+					      व्योम *data),
+				    व्योम *data)
+अणु
+	स्थिर व्योम *blob = initial_boot_params;
+	पूर्णांक node;
 
-	fdt_for_each_subnode(node, blob, parent) {
-		const char *pathp;
-		int rc;
+	fdt_क्रम_each_subnode(node, blob, parent) अणु
+		स्थिर अक्षर *pathp;
+		पूर्णांक rc;
 
-		pathp = fdt_get_name(blob, node, NULL);
+		pathp = fdt_get_name(blob, node, शून्य);
 		rc = it(node, pathp, data);
-		if (rc)
-			return rc;
-	}
-	return 0;
-}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * of_get_flat_dt_subnode_by_name - get the subnode by given name
  *
  * @node: the parent node
  * @uname: the name of subnode
- * @return offset of the subnode, or -FDT_ERR_NOTFOUND if there is none
+ * @वापस offset of the subnode, or -FDT_ERR_NOTFOUND अगर there is none
  */
 
-int __init of_get_flat_dt_subnode_by_name(unsigned long node, const char *uname)
-{
-	return fdt_subnode_offset(initial_boot_params, node, uname);
-}
+पूर्णांक __init of_get_flat_dt_subnode_by_name(अचिन्हित दीर्घ node, स्थिर अक्षर *uname)
+अणु
+	वापस fdt_subnode_offset(initial_boot_params, node, uname);
+पूर्ण
 
 /*
  * of_get_flat_dt_root - find the root node in the flat blob
  */
-unsigned long __init of_get_flat_dt_root(void)
-{
-	return 0;
-}
+अचिन्हित दीर्घ __init of_get_flat_dt_root(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
- * of_get_flat_dt_prop - Given a node in the flat blob, return the property ptr
+ * of_get_flat_dt_prop - Given a node in the flat blob, वापस the property ptr
  *
  * This function can be used within scan_flattened_dt callback to get
  * access to properties
  */
-const void *__init of_get_flat_dt_prop(unsigned long node, const char *name,
-				       int *size)
-{
-	return fdt_getprop(initial_boot_params, node, name, size);
-}
+स्थिर व्योम *__init of_get_flat_dt_prop(अचिन्हित दीर्घ node, स्थिर अक्षर *name,
+				       पूर्णांक *size)
+अणु
+	वापस fdt_getprop(initial_boot_params, node, name, size);
+पूर्ण
 
 /**
- * of_fdt_is_compatible - Return true if given node from the given blob has
+ * of_fdt_is_compatible - Return true अगर given node from the given blob has
  * compat in its compatible list
  * @blob: A device tree blob
  * @node: node to test
  * @compat: compatible string to compare with compatible list.
  *
- * Return: a non-zero value on match with smaller values returned for more
- * specific compatible values.
+ * Return: a non-zero value on match with smaller values वापसed क्रम more
+ * specअगरic compatible values.
  */
-static int of_fdt_is_compatible(const void *blob,
-		      unsigned long node, const char *compat)
-{
-	const char *cp;
-	int cplen;
-	unsigned long l, score = 0;
+अटल पूर्णांक of_fdt_is_compatible(स्थिर व्योम *blob,
+		      अचिन्हित दीर्घ node, स्थिर अक्षर *compat)
+अणु
+	स्थिर अक्षर *cp;
+	पूर्णांक cplen;
+	अचिन्हित दीर्घ l, score = 0;
 
 	cp = fdt_getprop(blob, node, "compatible", &cplen);
-	if (cp == NULL)
-		return 0;
-	while (cplen > 0) {
+	अगर (cp == शून्य)
+		वापस 0;
+	जबतक (cplen > 0) अणु
 		score++;
-		if (of_compat_cmp(cp, compat, strlen(compat)) == 0)
-			return score;
-		l = strlen(cp) + 1;
+		अगर (of_compat_cmp(cp, compat, म_माप(compat)) == 0)
+			वापस score;
+		l = म_माप(cp) + 1;
 		cp += l;
 		cplen -= l;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * of_flat_dt_is_compatible - Return true if given node has compat in compatible list
+ * of_flat_dt_is_compatible - Return true अगर given node has compat in compatible list
  * @node: node to test
  * @compat: compatible string to compare with compatible list.
  */
-int __init of_flat_dt_is_compatible(unsigned long node, const char *compat)
-{
-	return of_fdt_is_compatible(initial_boot_params, node, compat);
-}
+पूर्णांक __init of_flat_dt_is_compatible(अचिन्हित दीर्घ node, स्थिर अक्षर *compat)
+अणु
+	वापस of_fdt_is_compatible(initial_boot_params, node, compat);
+पूर्ण
 
 /*
- * of_flat_dt_match - Return true if node matches a list of compatible values
+ * of_flat_dt_match - Return true अगर node matches a list of compatible values
  */
-static int __init of_flat_dt_match(unsigned long node, const char *const *compat)
-{
-	unsigned int tmp, score = 0;
+अटल पूर्णांक __init of_flat_dt_match(अचिन्हित दीर्घ node, स्थिर अक्षर *स्थिर *compat)
+अणु
+	अचिन्हित पूर्णांक पंचांगp, score = 0;
 
-	if (!compat)
-		return 0;
+	अगर (!compat)
+		वापस 0;
 
-	while (*compat) {
-		tmp = of_fdt_is_compatible(initial_boot_params, node, *compat);
-		if (tmp && (score == 0 || (tmp < score)))
-			score = tmp;
+	जबतक (*compat) अणु
+		पंचांगp = of_fdt_is_compatible(initial_boot_params, node, *compat);
+		अगर (पंचांगp && (score == 0 || (पंचांगp < score)))
+			score = पंचांगp;
 		compat++;
-	}
+	पूर्ण
 
-	return score;
-}
+	वापस score;
+पूर्ण
 
 /*
- * of_get_flat_dt_phandle - Given a node in the flat blob, return the phandle
+ * of_get_flat_dt_phandle - Given a node in the flat blob, वापस the phandle
  */
-uint32_t __init of_get_flat_dt_phandle(unsigned long node)
-{
-	return fdt_get_phandle(initial_boot_params, node);
-}
+uपूर्णांक32_t __init of_get_flat_dt_phandle(अचिन्हित दीर्घ node)
+अणु
+	वापस fdt_get_phandle(initial_boot_params, node);
+पूर्ण
 
-struct fdt_scan_status {
-	const char *name;
-	int namelen;
-	int depth;
-	int found;
-	int (*iterator)(unsigned long node, const char *uname, int depth, void *data);
-	void *data;
-};
+काष्ठा fdt_scan_status अणु
+	स्थिर अक्षर *name;
+	पूर्णांक namelen;
+	पूर्णांक depth;
+	पूर्णांक found;
+	पूर्णांक (*iterator)(अचिन्हित दीर्घ node, स्थिर अक्षर *uname, पूर्णांक depth, व्योम *data);
+	व्योम *data;
+पूर्ण;
 
-const char * __init of_flat_dt_get_machine_name(void)
-{
-	const char *name;
-	unsigned long dt_root = of_get_flat_dt_root();
+स्थिर अक्षर * __init of_flat_dt_get_machine_name(व्योम)
+अणु
+	स्थिर अक्षर *name;
+	अचिन्हित दीर्घ dt_root = of_get_flat_dt_root();
 
-	name = of_get_flat_dt_prop(dt_root, "model", NULL);
-	if (!name)
-		name = of_get_flat_dt_prop(dt_root, "compatible", NULL);
-	return name;
-}
+	name = of_get_flat_dt_prop(dt_root, "model", शून्य);
+	अगर (!name)
+		name = of_get_flat_dt_prop(dt_root, "compatible", शून्य);
+	वापस name;
+पूर्ण
 
 /**
  * of_flat_dt_match_machine - Iterate match tables to find matching machine.
  *
- * @default_match: A machine specific ptr to return in case of no match.
- * @get_next_compat: callback function to return next compatible match table.
+ * @शेष_match: A machine specअगरic ptr to वापस in हाल of no match.
+ * @get_next_compat: callback function to वापस next compatible match table.
  *
- * Iterate through machine match tables to find the best match for the machine
+ * Iterate through machine match tables to find the best match क्रम the machine
  * compatible string in the FDT.
  */
-const void * __init of_flat_dt_match_machine(const void *default_match,
-		const void * (*get_next_compat)(const char * const**))
-{
-	const void *data = NULL;
-	const void *best_data = default_match;
-	const char *const *compat;
-	unsigned long dt_root;
-	unsigned int best_score = ~1, score = 0;
+स्थिर व्योम * __init of_flat_dt_match_machine(स्थिर व्योम *शेष_match,
+		स्थिर व्योम * (*get_next_compat)(स्थिर अक्षर * स्थिर**))
+अणु
+	स्थिर व्योम *data = शून्य;
+	स्थिर व्योम *best_data = शेष_match;
+	स्थिर अक्षर *स्थिर *compat;
+	अचिन्हित दीर्घ dt_root;
+	अचिन्हित पूर्णांक best_score = ~1, score = 0;
 
 	dt_root = of_get_flat_dt_root();
-	while ((data = get_next_compat(&compat))) {
+	जबतक ((data = get_next_compat(&compat))) अणु
 		score = of_flat_dt_match(dt_root, compat);
-		if (score > 0 && score < best_score) {
+		अगर (score > 0 && score < best_score) अणु
 			best_data = data;
 			best_score = score;
-		}
-	}
-	if (!best_data) {
-		const char *prop;
-		int size;
+		पूर्ण
+	पूर्ण
+	अगर (!best_data) अणु
+		स्थिर अक्षर *prop;
+		पूर्णांक size;
 
 		pr_err("\n unrecognized device tree list:\n[ ");
 
 		prop = of_get_flat_dt_prop(dt_root, "compatible", &size);
-		if (prop) {
-			while (size > 0) {
-				printk("'%s' ", prop);
-				size -= strlen(prop) + 1;
-				prop += strlen(prop) + 1;
-			}
-		}
-		printk("]\n\n");
-		return NULL;
-	}
+		अगर (prop) अणु
+			जबतक (size > 0) अणु
+				prपूर्णांकk("'%s' ", prop);
+				size -= म_माप(prop) + 1;
+				prop += म_माप(prop) + 1;
+			पूर्ण
+		पूर्ण
+		prपूर्णांकk("]\n\n");
+		वापस शून्य;
+	पूर्ण
 
 	pr_info("Machine model: %s\n", of_flat_dt_get_machine_name());
 
-	return best_data;
-}
+	वापस best_data;
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_INITRD
-static void __early_init_dt_declare_initrd(unsigned long start,
-					   unsigned long end)
-{
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
+अटल व्योम __early_init_dt_declare_initrd(अचिन्हित दीर्घ start,
+					   अचिन्हित दीर्घ end)
+अणु
 	/* ARM64 would cause a BUG to occur here when CONFIG_DEBUG_VM is
-	 * enabled since __va() is called too early. ARM64 does make use
+	 * enabled since __va() is called too early. ARM64 करोes make use
 	 * of phys_initrd_start/phys_initrd_size so we can skip this
 	 * conversion.
 	 */
-	if (!IS_ENABLED(CONFIG_ARM64)) {
-		initrd_start = (unsigned long)__va(start);
-		initrd_end = (unsigned long)__va(end);
+	अगर (!IS_ENABLED(CONFIG_ARM64)) अणु
+		initrd_start = (अचिन्हित दीर्घ)__va(start);
+		initrd_end = (अचिन्हित दीर्घ)__va(end);
 		initrd_below_start_ok = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * early_init_dt_check_for_initrd - Decode initrd location from flat tree
+ * early_init_dt_check_क्रम_initrd - Decode initrd location from flat tree
  * @node: reference to node containing initrd location ('chosen')
  */
-static void __init early_init_dt_check_for_initrd(unsigned long node)
-{
+अटल व्योम __init early_init_dt_check_क्रम_initrd(अचिन्हित दीर्घ node)
+अणु
 	u64 start, end;
-	int len;
-	const __be32 *prop;
+	पूर्णांक len;
+	स्थिर __be32 *prop;
 
 	pr_debug("Looking for initrd properties... ");
 
 	prop = of_get_flat_dt_prop(node, "linux,initrd-start", &len);
-	if (!prop)
-		return;
-	start = of_read_number(prop, len/4);
+	अगर (!prop)
+		वापस;
+	start = of_पढ़ो_number(prop, len/4);
 
 	prop = of_get_flat_dt_prop(node, "linux,initrd-end", &len);
-	if (!prop)
-		return;
-	end = of_read_number(prop, len/4);
+	अगर (!prop)
+		वापस;
+	end = of_पढ़ो_number(prop, len/4);
 
 	__early_init_dt_declare_initrd(start, end);
 	phys_initrd_start = start;
 	phys_initrd_size = end - start;
 
 	pr_debug("initrd_start=0x%llx  initrd_end=0x%llx\n",
-		 (unsigned long long)start, (unsigned long long)end);
-}
-#else
-static inline void early_init_dt_check_for_initrd(unsigned long node)
-{
-}
-#endif /* CONFIG_BLK_DEV_INITRD */
+		 (अचिन्हित दीर्घ दीर्घ)start, (अचिन्हित दीर्घ दीर्घ)end);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम early_init_dt_check_क्रम_initrd(अचिन्हित दीर्घ node)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
 
-#ifdef CONFIG_SERIAL_EARLYCON
+#अगर_घोषित CONFIG_SERIAL_EARLYCON
 
-int __init early_init_dt_scan_chosen_stdout(void)
-{
-	int offset;
-	const char *p, *q, *options = NULL;
-	int l;
-	const struct earlycon_id *match;
-	const void *fdt = initial_boot_params;
+पूर्णांक __init early_init_dt_scan_chosen_मानक_निकास(व्योम)
+अणु
+	पूर्णांक offset;
+	स्थिर अक्षर *p, *q, *options = शून्य;
+	पूर्णांक l;
+	स्थिर काष्ठा earlycon_id *match;
+	स्थिर व्योम *fdt = initial_boot_params;
 
 	offset = fdt_path_offset(fdt, "/chosen");
-	if (offset < 0)
+	अगर (offset < 0)
 		offset = fdt_path_offset(fdt, "/chosen@0");
-	if (offset < 0)
-		return -ENOENT;
+	अगर (offset < 0)
+		वापस -ENOENT;
 
 	p = fdt_getprop(fdt, offset, "stdout-path", &l);
-	if (!p)
+	अगर (!p)
 		p = fdt_getprop(fdt, offset, "linux,stdout-path", &l);
-	if (!p || !l)
-		return -ENOENT;
+	अगर (!p || !l)
+		वापस -ENOENT;
 
-	q = strchrnul(p, ':');
-	if (*q != '\0')
+	q = म_अक्षरnul(p, ':');
+	अगर (*q != '\0')
 		options = q + 1;
 	l = q - p;
 
-	/* Get the node specified by stdout-path */
+	/* Get the node specअगरied by मानक_निकास-path */
 	offset = fdt_path_offset_namelen(fdt, p, l);
-	if (offset < 0) {
+	अगर (offset < 0) अणु
 		pr_warn("earlycon: stdout-path %.*s not found\n", l, p);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (match = __earlycon_table; match < __earlycon_table_end; match++) {
-		if (!match->compatible[0])
-			continue;
+	क्रम (match = __earlycon_table; match < __earlycon_table_end; match++) अणु
+		अगर (!match->compatible[0])
+			जारी;
 
-		if (fdt_node_check_compatible(fdt, offset, match->compatible))
-			continue;
+		अगर (fdt_node_check_compatible(fdt, offset, match->compatible))
+			जारी;
 
-		if (of_setup_earlycon(match, offset, options) == 0)
-			return 0;
-	}
-	return -ENODEV;
-}
-#endif
+		अगर (of_setup_earlycon(match, offset, options) == 0)
+			वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * early_init_dt_scan_root - fetch the top level address and size cells
  */
-int __init early_init_dt_scan_root(unsigned long node, const char *uname,
-				   int depth, void *data)
-{
-	const __be32 *prop;
+पूर्णांक __init early_init_dt_scan_root(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				   पूर्णांक depth, व्योम *data)
+अणु
+	स्थिर __be32 *prop;
 
-	if (depth != 0)
-		return 0;
+	अगर (depth != 0)
+		वापस 0;
 
 	dt_root_size_cells = OF_ROOT_NODE_SIZE_CELLS_DEFAULT;
 	dt_root_addr_cells = OF_ROOT_NODE_ADDR_CELLS_DEFAULT;
 
-	prop = of_get_flat_dt_prop(node, "#size-cells", NULL);
-	if (prop)
+	prop = of_get_flat_dt_prop(node, "#size-cells", शून्य);
+	अगर (prop)
 		dt_root_size_cells = be32_to_cpup(prop);
 	pr_debug("dt_root_size_cells = %x\n", dt_root_size_cells);
 
-	prop = of_get_flat_dt_prop(node, "#address-cells", NULL);
-	if (prop)
+	prop = of_get_flat_dt_prop(node, "#address-cells", शून्य);
+	अगर (prop)
 		dt_root_addr_cells = be32_to_cpup(prop);
 	pr_debug("dt_root_addr_cells = %x\n", dt_root_addr_cells);
 
-	/* break now */
-	return 1;
-}
+	/* अवरोध now */
+	वापस 1;
+पूर्ण
 
-u64 __init dt_mem_next_cell(int s, const __be32 **cellp)
-{
-	const __be32 *p = *cellp;
+u64 __init dt_mem_next_cell(पूर्णांक s, स्थिर __be32 **cellp)
+अणु
+	स्थिर __be32 *p = *cellp;
 
 	*cellp = p + s;
-	return of_read_number(p, s);
-}
+	वापस of_पढ़ो_number(p, s);
+पूर्ण
 
 /*
- * early_init_dt_scan_memory - Look for and parse memory nodes
+ * early_init_dt_scan_memory - Look क्रम and parse memory nodes
  */
-int __init early_init_dt_scan_memory(unsigned long node, const char *uname,
-				     int depth, void *data)
-{
-	const char *type = of_get_flat_dt_prop(node, "device_type", NULL);
-	const __be32 *reg, *endp;
-	int l;
+पूर्णांक __init early_init_dt_scan_memory(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				     पूर्णांक depth, व्योम *data)
+अणु
+	स्थिर अक्षर *type = of_get_flat_dt_prop(node, "device_type", शून्य);
+	स्थिर __be32 *reg, *endp;
+	पूर्णांक l;
 	bool hotpluggable;
 
 	/* We are scanning "memory" nodes only */
-	if (type == NULL || strcmp(type, "memory") != 0)
-		return 0;
+	अगर (type == शून्य || म_भेद(type, "memory") != 0)
+		वापस 0;
 
 	reg = of_get_flat_dt_prop(node, "linux,usable-memory", &l);
-	if (reg == NULL)
+	अगर (reg == शून्य)
 		reg = of_get_flat_dt_prop(node, "reg", &l);
-	if (reg == NULL)
-		return 0;
+	अगर (reg == शून्य)
+		वापस 0;
 
-	endp = reg + (l / sizeof(__be32));
-	hotpluggable = of_get_flat_dt_prop(node, "hotpluggable", NULL);
+	endp = reg + (l / माप(__be32));
+	hotpluggable = of_get_flat_dt_prop(node, "hotpluggable", शून्य);
 
 	pr_debug("memory scan node %s, reg size %d,\n", uname, l);
 
-	while ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) {
+	जबतक ((endp - reg) >= (dt_root_addr_cells + dt_root_size_cells)) अणु
 		u64 base, size;
 
 		base = dt_mem_next_cell(dt_root_addr_cells, &reg);
 		size = dt_mem_next_cell(dt_root_size_cells, &reg);
 
-		if (size == 0)
-			continue;
-		pr_debug(" - %llx ,  %llx\n", (unsigned long long)base,
-		    (unsigned long long)size);
+		अगर (size == 0)
+			जारी;
+		pr_debug(" - %llx ,  %llx\n", (अचिन्हित दीर्घ दीर्घ)base,
+		    (अचिन्हित दीर्घ दीर्घ)size);
 
 		early_init_dt_add_memory_arch(base, size);
 
-		if (!hotpluggable)
-			continue;
+		अगर (!hotpluggable)
+			जारी;
 
-		if (early_init_dt_mark_hotplug_memory_arch(base, size))
+		अगर (early_init_dt_mark_hotplug_memory_arch(base, size))
 			pr_warn("failed to mark hotplug range 0x%llx - 0x%llx\n",
 				base, base + size);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
-				     int depth, void *data)
-{
-	int l;
-	const char *p;
-	const void *rng_seed;
+पूर्णांक __init early_init_dt_scan_chosen(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				     पूर्णांक depth, व्योम *data)
+अणु
+	पूर्णांक l;
+	स्थिर अक्षर *p;
+	स्थिर व्योम *rng_seed;
 
 	pr_debug("search \"chosen\", depth: %d, uname: %s\n", depth, uname);
 
-	if (depth != 1 || !data ||
-	    (strcmp(uname, "chosen") != 0 && strcmp(uname, "chosen@0") != 0))
-		return 0;
+	अगर (depth != 1 || !data ||
+	    (म_भेद(uname, "chosen") != 0 && म_भेद(uname, "chosen@0") != 0))
+		वापस 0;
 
-	early_init_dt_check_for_initrd(node);
+	early_init_dt_check_क्रम_initrd(node);
 
 	/* Retrieve command line */
 	p = of_get_flat_dt_prop(node, "bootargs", &l);
-	if (p != NULL && l > 0)
+	अगर (p != शून्य && l > 0)
 		strlcpy(data, p, min(l, COMMAND_LINE_SIZE));
 
 	/*
-	 * CONFIG_CMDLINE is meant to be a default in case nothing else
+	 * CONFIG_CMDLINE is meant to be a शेष in हाल nothing अन्यथा
 	 * managed to set the command line, unless CONFIG_CMDLINE_FORCE
-	 * is set in which case we override whatever was found earlier.
+	 * is set in which हाल we override whatever was found earlier.
 	 */
-#ifdef CONFIG_CMDLINE
-#if defined(CONFIG_CMDLINE_EXTEND)
+#अगर_घोषित CONFIG_CMDLINE
+#अगर defined(CONFIG_CMDLINE_EXTEND)
 	strlcat(data, " ", COMMAND_LINE_SIZE);
 	strlcat(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
-#elif defined(CONFIG_CMDLINE_FORCE)
+#या_अगर defined(CONFIG_CMDLINE_FORCE)
 	strlcpy(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
-#else
+#अन्यथा
 	/* No arguments from boot loader, use kernel's  cmdl*/
-	if (!((char *)data)[0])
+	अगर (!((अक्षर *)data)[0])
 		strlcpy(data, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
-#endif
-#endif /* CONFIG_CMDLINE */
+#पूर्ण_अगर
+#पूर्ण_अगर /* CONFIG_CMDLINE */
 
-	pr_debug("Command line is: %s\n", (char *)data);
+	pr_debug("Command line is: %s\n", (अक्षर *)data);
 
 	rng_seed = of_get_flat_dt_prop(node, "rng-seed", &l);
-	if (rng_seed && l > 0) {
-		add_bootloader_randomness(rng_seed, l);
+	अगर (rng_seed && l > 0) अणु
+		add_bootloader_अक्रमomness(rng_seed, l);
 
 		/* try to clear seed so it won't be found. */
 		fdt_nop_property(initial_boot_params, node, "rng-seed");
@@ -1093,215 +1094,215 @@ int __init early_init_dt_scan_chosen(unsigned long node, const char *uname,
 		/* update CRC check value */
 		of_fdt_crc32 = crc32_be(~0, initial_boot_params,
 				fdt_totalsize(initial_boot_params));
-	}
+	पूर्ण
 
-	/* break now */
-	return 1;
-}
+	/* अवरोध now */
+	वापस 1;
+पूर्ण
 
-#ifndef MIN_MEMBLOCK_ADDR
-#define MIN_MEMBLOCK_ADDR	__pa(PAGE_OFFSET)
-#endif
-#ifndef MAX_MEMBLOCK_ADDR
-#define MAX_MEMBLOCK_ADDR	((phys_addr_t)~0)
-#endif
+#अगर_अघोषित MIN_MEMBLOCK_ADDR
+#घोषणा MIN_MEMBLOCK_ADDR	__pa(PAGE_OFFSET)
+#पूर्ण_अगर
+#अगर_अघोषित MAX_MEMBLOCK_ADDR
+#घोषणा MAX_MEMBLOCK_ADDR	((phys_addr_t)~0)
+#पूर्ण_अगर
 
-void __init __weak early_init_dt_add_memory_arch(u64 base, u64 size)
-{
-	const u64 phys_offset = MIN_MEMBLOCK_ADDR;
+व्योम __init __weak early_init_dt_add_memory_arch(u64 base, u64 size)
+अणु
+	स्थिर u64 phys_offset = MIN_MEMBLOCK_ADDR;
 
-	if (size < PAGE_SIZE - (base & ~PAGE_MASK)) {
+	अगर (size < PAGE_SIZE - (base & ~PAGE_MASK)) अणु
 		pr_warn("Ignoring memory block 0x%llx - 0x%llx\n",
 			base, base + size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!PAGE_ALIGNED(base)) {
+	अगर (!PAGE_ALIGNED(base)) अणु
 		size -= PAGE_SIZE - (base & ~PAGE_MASK);
 		base = PAGE_ALIGN(base);
-	}
+	पूर्ण
 	size &= PAGE_MASK;
 
-	if (base > MAX_MEMBLOCK_ADDR) {
+	अगर (base > MAX_MEMBLOCK_ADDR) अणु
 		pr_warn("Ignoring memory block 0x%llx - 0x%llx\n",
 			base, base + size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (base + size - 1 > MAX_MEMBLOCK_ADDR) {
+	अगर (base + size - 1 > MAX_MEMBLOCK_ADDR) अणु
 		pr_warn("Ignoring memory range 0x%llx - 0x%llx\n",
 			((u64)MAX_MEMBLOCK_ADDR) + 1, base + size);
 		size = MAX_MEMBLOCK_ADDR - base + 1;
-	}
+	पूर्ण
 
-	if (base + size < phys_offset) {
+	अगर (base + size < phys_offset) अणु
 		pr_warn("Ignoring memory block 0x%llx - 0x%llx\n",
 			base, base + size);
-		return;
-	}
-	if (base < phys_offset) {
+		वापस;
+	पूर्ण
+	अगर (base < phys_offset) अणु
 		pr_warn("Ignoring memory range 0x%llx - 0x%llx\n",
 			base, phys_offset);
 		size -= phys_offset - base;
 		base = phys_offset;
-	}
+	पूर्ण
 	memblock_add(base, size);
-}
+पूर्ण
 
-int __init __weak early_init_dt_mark_hotplug_memory_arch(u64 base, u64 size)
-{
-	return memblock_mark_hotplug(base, size);
-}
+पूर्णांक __init __weak early_init_dt_mark_hotplug_memory_arch(u64 base, u64 size)
+अणु
+	वापस memblock_mark_hotplug(base, size);
+पूर्ण
 
-int __init __weak early_init_dt_reserve_memory_arch(phys_addr_t base,
+पूर्णांक __init __weak early_init_dt_reserve_memory_arch(phys_addr_t base,
 					phys_addr_t size, bool nomap)
-{
-	if (nomap) {
+अणु
+	अगर (nomap) अणु
 		/*
-		 * If the memory is already reserved (by another region), we
+		 * If the memory is alपढ़ोy reserved (by another region), we
 		 * should not allow it to be marked nomap.
 		 */
-		if (memblock_is_region_reserved(base, size))
-			return -EBUSY;
+		अगर (memblock_is_region_reserved(base, size))
+			वापस -EBUSY;
 
-		return memblock_mark_nomap(base, size);
-	}
-	return memblock_reserve(base, size);
-}
+		वापस memblock_mark_nomap(base, size);
+	पूर्ण
+	वापस memblock_reserve(base, size);
+पूर्ण
 
-static void * __init early_init_dt_alloc_memory_arch(u64 size, u64 align)
-{
-	void *ptr = memblock_alloc(size, align);
+अटल व्योम * __init early_init_dt_alloc_memory_arch(u64 size, u64 align)
+अणु
+	व्योम *ptr = memblock_alloc(size, align);
 
-	if (!ptr)
+	अगर (!ptr)
 		panic("%s: Failed to allocate %llu bytes align=0x%llx\n",
 		      __func__, size, align);
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-bool __init early_init_dt_verify(void *params)
-{
-	if (!params)
-		return false;
+bool __init early_init_dt_verअगरy(व्योम *params)
+अणु
+	अगर (!params)
+		वापस false;
 
 	/* check device tree validity */
-	if (fdt_check_header(params))
-		return false;
+	अगर (fdt_check_header(params))
+		वापस false;
 
-	/* Setup flat device-tree pointer */
+	/* Setup flat device-tree poपूर्णांकer */
 	initial_boot_params = params;
 	of_fdt_crc32 = crc32_be(~0, initial_boot_params,
 				fdt_totalsize(initial_boot_params));
-	return true;
-}
+	वापस true;
+पूर्ण
 
 
-void __init early_init_dt_scan_nodes(void)
-{
-	int rc = 0;
+व्योम __init early_init_dt_scan_nodes(व्योम)
+अणु
+	पूर्णांक rc = 0;
 
-	/* Retrieve various information from the /chosen node */
+	/* Retrieve various inक्रमmation from the /chosen node */
 	rc = of_scan_flat_dt(early_init_dt_scan_chosen, boot_command_line);
-	if (!rc)
+	अगर (!rc)
 		pr_warn("No chosen node found, continuing without\n");
 
-	/* Initialize {size,address}-cells info */
-	of_scan_flat_dt(early_init_dt_scan_root, NULL);
+	/* Initialize अणुsize,addressपूर्ण-cells info */
+	of_scan_flat_dt(early_init_dt_scan_root, शून्य);
 
 	/* Setup memory, calling early_init_dt_add_memory_arch */
-	of_scan_flat_dt(early_init_dt_scan_memory, NULL);
-}
+	of_scan_flat_dt(early_init_dt_scan_memory, शून्य);
+पूर्ण
 
-bool __init early_init_dt_scan(void *params)
-{
+bool __init early_init_dt_scan(व्योम *params)
+अणु
 	bool status;
 
-	status = early_init_dt_verify(params);
-	if (!status)
-		return false;
+	status = early_init_dt_verअगरy(params);
+	अगर (!status)
+		वापस false;
 
 	early_init_dt_scan_nodes();
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * unflatten_device_tree - create tree of device_nodes from flat blob
  *
  * unflattens the device-tree passed by the firmware, creating the
- * tree of struct device_node. It also fills the "name" and "type"
- * pointers of the nodes so the normal device-tree walking functions
+ * tree of काष्ठा device_node. It also fills the "name" and "type"
+ * poपूर्णांकers of the nodes so the normal device-tree walking functions
  * can be used.
  */
-void __init unflatten_device_tree(void)
-{
-	__unflatten_device_tree(initial_boot_params, NULL, &of_root,
+व्योम __init unflatten_device_tree(व्योम)
+अणु
+	__unflatten_device_tree(initial_boot_params, शून्य, &of_root,
 				early_init_dt_alloc_memory_arch, false);
 
-	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
+	/* Get poपूर्णांकer to "/chosen" and "/aliases" nodes क्रम use everywhere */
 	of_alias_scan(early_init_dt_alloc_memory_arch);
 
 	unittest_unflatten_overlay_base();
-}
+पूर्ण
 
 /**
  * unflatten_and_copy_device_tree - copy and create tree of device_nodes from flat blob
  *
  * Copies and unflattens the device-tree passed by the firmware, creating the
- * tree of struct device_node. It also fills the "name" and "type"
- * pointers of the nodes so the normal device-tree walking functions
+ * tree of काष्ठा device_node. It also fills the "name" and "type"
+ * poपूर्णांकers of the nodes so the normal device-tree walking functions
  * can be used. This should only be used when the FDT memory has not been
- * reserved such is the case when the FDT is built-in to the kernel init
- * section. If the FDT memory is reserved already then unflatten_device_tree
+ * reserved such is the हाल when the FDT is built-in to the kernel init
+ * section. If the FDT memory is reserved alपढ़ोy then unflatten_device_tree
  * should be used instead.
  */
-void __init unflatten_and_copy_device_tree(void)
-{
-	int size;
-	void *dt;
+व्योम __init unflatten_and_copy_device_tree(व्योम)
+अणु
+	पूर्णांक size;
+	व्योम *dt;
 
-	if (!initial_boot_params) {
+	अगर (!initial_boot_params) अणु
 		pr_warn("No valid device tree found, continuing without\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	size = fdt_totalsize(initial_boot_params);
 	dt = early_init_dt_alloc_memory_arch(size,
-					     roundup_pow_of_two(FDT_V17_SIZE));
+					     roundup_घात_of_two(FDT_V17_SIZE));
 
-	if (dt) {
-		memcpy(dt, initial_boot_params, size);
+	अगर (dt) अणु
+		स_नकल(dt, initial_boot_params, size);
 		initial_boot_params = dt;
-	}
+	पूर्ण
 	unflatten_device_tree();
-}
+पूर्ण
 
-#ifdef CONFIG_SYSFS
-static ssize_t of_fdt_raw_read(struct file *filp, struct kobject *kobj,
-			       struct bin_attribute *bin_attr,
-			       char *buf, loff_t off, size_t count)
-{
-	memcpy(buf, initial_boot_params + off, count);
-	return count;
-}
+#अगर_घोषित CONFIG_SYSFS
+अटल sमाप_प्रकार of_fdt_raw_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+			       काष्ठा bin_attribute *bin_attr,
+			       अक्षर *buf, loff_t off, माप_प्रकार count)
+अणु
+	स_नकल(buf, initial_boot_params + off, count);
+	वापस count;
+पूर्ण
 
-static int __init of_fdt_raw_init(void)
-{
-	static struct bin_attribute of_fdt_raw_attr =
-		__BIN_ATTR(fdt, S_IRUSR, of_fdt_raw_read, NULL, 0);
+अटल पूर्णांक __init of_fdt_raw_init(व्योम)
+अणु
+	अटल काष्ठा bin_attribute of_fdt_raw_attr =
+		__BIN_ATTR(fdt, S_IRUSR, of_fdt_raw_पढ़ो, शून्य, 0);
 
-	if (!initial_boot_params)
-		return 0;
+	अगर (!initial_boot_params)
+		वापस 0;
 
-	if (of_fdt_crc32 != crc32_be(~0, initial_boot_params,
-				     fdt_totalsize(initial_boot_params))) {
+	अगर (of_fdt_crc32 != crc32_be(~0, initial_boot_params,
+				     fdt_totalsize(initial_boot_params))) अणु
 		pr_warn("not creating '/sys/firmware/fdt': CRC check failed\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	of_fdt_raw_attr.size = fdt_totalsize(initial_boot_params);
-	return sysfs_create_bin_file(firmware_kobj, &of_fdt_raw_attr);
-}
+	वापस sysfs_create_bin_file(firmware_kobj, &of_fdt_raw_attr);
+पूर्ण
 late_initcall(of_fdt_raw_init);
-#endif
+#पूर्ण_अगर
 
-#endif /* CONFIG_OF_EARLY_FLATTREE */
+#पूर्ण_अगर /* CONFIG_OF_EARLY_FLATTREE */

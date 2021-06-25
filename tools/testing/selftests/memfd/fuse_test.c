@@ -1,330 +1,331 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * memfd GUP test-case
- * This tests memfd interactions with get_user_pages(). We require the
- * fuse_mnt.c program to provide a fake direct-IO FUSE mount-point for us. This
- * file-system delays _all_ reads by 1s and forces direct-IO. This means, any
- * read() on files in that file-system will pin the receive-buffer pages for at
+ * memfd GUP test-हाल
+ * This tests memfd पूर्णांकeractions with get_user_pages(). We require the
+ * fuse_mnt.c program to provide a fake direct-IO FUSE mount-poपूर्णांक क्रम us. This
+ * file-प्रणाली delays _all_ पढ़ोs by 1s and क्रमces direct-IO. This means, any
+ * पढ़ो() on files in that file-प्रणाली will pin the receive-buffer pages क्रम at
  * least 1s via get_user_pages().
  *
- * We use this trick to race ADD_SEALS against a write on a memfd object. The
- * ADD_SEALS must fail if the memfd pages are still pinned. Note that we use
- * the read() syscall with our memory-mapped memfd object as receive buffer to
- * force the kernel to write into our memfd object.
+ * We use this trick to race ADD_SEALS against a ग_लिखो on a memfd object. The
+ * ADD_SEALS must fail अगर the memfd pages are still pinned. Note that we use
+ * the पढ़ो() syscall with our memory-mapped memfd object as receive buffer to
+ * क्रमce the kernel to ग_लिखो पूर्णांकo our memfd object.
  */
 
-#define _GNU_SOURCE
-#define __EXPORTED_HEADERS__
+#घोषणा _GNU_SOURCE
+#घोषणा __EXPORTED_HEADERS__
 
-#include <errno.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <linux/falloc.h>
-#include <fcntl.h>
-#include <linux/memfd.h>
-#include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <string.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/syscall.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <सीमा.स>
+#समावेश <linux/fभाग.स>
+#समावेश <fcntl.h>
+#समावेश <linux/memfd.h>
+#समावेश <sched.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <संकेत.स>
+#समावेश <माला.स>
+#समावेश <sys/mman.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#define MFD_DEF_SIZE 8192
-#define STACK_SIZE 65536
+#घोषणा MFD_DEF_SIZE 8192
+#घोषणा STACK_SIZE 65536
 
-static size_t mfd_def_size = MFD_DEF_SIZE;
+अटल माप_प्रकार mfd_def_size = MFD_DEF_SIZE;
 
-static int mfd_assert_new(const char *name, loff_t sz, unsigned int flags)
-{
-	int r, fd;
+अटल पूर्णांक mfd_निश्चित_new(स्थिर अक्षर *name, loff_t sz, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक r, fd;
 
 	fd = sys_memfd_create(name, flags);
-	if (fd < 0) {
-		printf("memfd_create(\"%s\", %u) failed: %m\n",
+	अगर (fd < 0) अणु
+		म_लिखो("memfd_create(\"%s\", %u) failed: %m\n",
 		       name, flags);
-		abort();
-	}
+		पात();
+	पूर्ण
 
 	r = ftruncate(fd, sz);
-	if (r < 0) {
-		printf("ftruncate(%llu) failed: %m\n", (unsigned long long)sz);
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("ftruncate(%llu) failed: %m\n", (अचिन्हित दीर्घ दीर्घ)sz);
+		पात();
+	पूर्ण
 
-	return fd;
-}
+	वापस fd;
+पूर्ण
 
-static __u64 mfd_assert_get_seals(int fd)
-{
-	long r;
+अटल __u64 mfd_निश्चित_get_seals(पूर्णांक fd)
+अणु
+	दीर्घ r;
 
 	r = fcntl(fd, F_GET_SEALS);
-	if (r < 0) {
-		printf("GET_SEALS(%d) failed: %m\n", fd);
-		abort();
-	}
+	अगर (r < 0) अणु
+		म_लिखो("GET_SEALS(%d) failed: %m\n", fd);
+		पात();
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void mfd_assert_has_seals(int fd, __u64 seals)
-{
+अटल व्योम mfd_निश्चित_has_seals(पूर्णांक fd, __u64 seals)
+अणु
 	__u64 s;
 
-	s = mfd_assert_get_seals(fd);
-	if (s != seals) {
-		printf("%llu != %llu = GET_SEALS(%d)\n",
-		       (unsigned long long)seals, (unsigned long long)s, fd);
-		abort();
-	}
-}
+	s = mfd_निश्चित_get_seals(fd);
+	अगर (s != seals) अणु
+		म_लिखो("%llu != %llu = GET_SEALS(%d)\n",
+		       (अचिन्हित दीर्घ दीर्घ)seals, (अचिन्हित दीर्घ दीर्घ)s, fd);
+		पात();
+	पूर्ण
+पूर्ण
 
-static void mfd_assert_add_seals(int fd, __u64 seals)
-{
-	long r;
+अटल व्योम mfd_निश्चित_add_seals(पूर्णांक fd, __u64 seals)
+अणु
+	दीर्घ r;
 	__u64 s;
 
-	s = mfd_assert_get_seals(fd);
+	s = mfd_निश्चित_get_seals(fd);
 	r = fcntl(fd, F_ADD_SEALS, seals);
-	if (r < 0) {
-		printf("ADD_SEALS(%d, %llu -> %llu) failed: %m\n",
-		       fd, (unsigned long long)s, (unsigned long long)seals);
-		abort();
-	}
-}
+	अगर (r < 0) अणु
+		म_लिखो("ADD_SEALS(%d, %llu -> %llu) failed: %m\n",
+		       fd, (अचिन्हित दीर्घ दीर्घ)s, (अचिन्हित दीर्घ दीर्घ)seals);
+		पात();
+	पूर्ण
+पूर्ण
 
-static int mfd_busy_add_seals(int fd, __u64 seals)
-{
-	long r;
+अटल पूर्णांक mfd_busy_add_seals(पूर्णांक fd, __u64 seals)
+अणु
+	दीर्घ r;
 	__u64 s;
 
 	r = fcntl(fd, F_GET_SEALS);
-	if (r < 0)
+	अगर (r < 0)
 		s = 0;
-	else
+	अन्यथा
 		s = r;
 
 	r = fcntl(fd, F_ADD_SEALS, seals);
-	if (r < 0 && errno != EBUSY) {
-		printf("ADD_SEALS(%d, %llu -> %llu) didn't fail as expected with EBUSY: %m\n",
-		       fd, (unsigned long long)s, (unsigned long long)seals);
-		abort();
-	}
+	अगर (r < 0 && त्रुटि_सं != EBUSY) अणु
+		म_लिखो("ADD_SEALS(%d, %llu -> %llu) didn't fail as expected with EBUSY: %m\n",
+		       fd, (अचिन्हित दीर्घ दीर्घ)s, (अचिन्हित दीर्घ दीर्घ)seals);
+		पात();
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void *mfd_assert_mmap_shared(int fd)
-{
-	void *p;
+अटल व्योम *mfd_निश्चित_mmap_shared(पूर्णांक fd)
+अणु
+	व्योम *p;
 
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_SHARED,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void *mfd_assert_mmap_private(int fd)
-{
-	void *p;
+अटल व्योम *mfd_निश्चित_mmap_निजी(पूर्णांक fd)
+अणु
+	व्योम *p;
 
-	p = mmap(NULL,
+	p = mmap(शून्य,
 		 mfd_def_size,
 		 PROT_READ | PROT_WRITE,
 		 MAP_PRIVATE,
 		 fd,
 		 0);
-	if (p == MAP_FAILED) {
-		printf("mmap() failed: %m\n");
-		abort();
-	}
+	अगर (p == MAP_FAILED) अणु
+		म_लिखो("mmap() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int global_mfd = -1;
-static void *global_p = NULL;
+अटल पूर्णांक global_mfd = -1;
+अटल व्योम *global_p = शून्य;
 
-static int sealing_thread_fn(void *arg)
-{
-	int sig, r;
+अटल पूर्णांक sealing_thपढ़ो_fn(व्योम *arg)
+अणु
+	पूर्णांक sig, r;
 
 	/*
-	 * This thread first waits 200ms so any pending operation in the parent
+	 * This thपढ़ो first रुकोs 200ms so any pending operation in the parent
 	 * is correctly started. After that, it tries to seal @global_mfd as
-	 * SEAL_WRITE. This _must_ fail as the parent thread has a read() into
+	 * SEAL_WRITE. This _must_ fail as the parent thपढ़ो has a पढ़ो() पूर्णांकo
 	 * that memory mapped object still ongoing.
-	 * We then wait one more second and try sealing again. This time it
-	 * must succeed as there shouldn't be anyone else pinning the pages.
+	 * We then रुको one more second and try sealing again. This समय it
+	 * must succeed as there shouldn't be anyone अन्यथा pinning the pages.
 	 */
 
-	/* wait 200ms for FUSE-request to be active */
+	/* रुको 200ms क्रम FUSE-request to be active */
 	usleep(200000);
 
-	/* unmount mapping before sealing to avoid i_mmap_writable failures */
+	/* unmount mapping beक्रमe sealing to aव्योम i_mmap_writable failures */
 	munmap(global_p, mfd_def_size);
 
 	/* Try sealing the global file; expect EBUSY or success. Current
 	 * kernels will never succeed, but in the future, kernels might
-	 * implement page-replacements or other fancy ways to avoid racing
-	 * writes. */
+	 * implement page-replacements or other fancy ways to aव्योम racing
+	 * ग_लिखोs. */
 	r = mfd_busy_add_seals(global_mfd, F_SEAL_WRITE);
-	if (r >= 0) {
-		printf("HURRAY! This kernel fixed GUP races!\n");
-	} else {
-		/* wait 1s more so the FUSE-request is done */
+	अगर (r >= 0) अणु
+		म_लिखो("HURRAY! This kernel fixed GUP races!\n");
+	पूर्ण अन्यथा अणु
+		/* रुको 1s more so the FUSE-request is करोne */
 		sleep(1);
 
 		/* try sealing the global file again */
-		mfd_assert_add_seals(global_mfd, F_SEAL_WRITE);
-	}
+		mfd_निश्चित_add_seals(global_mfd, F_SEAL_WRITE);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static pid_t spawn_sealing_thread(void)
-{
-	uint8_t *stack;
+अटल pid_t spawn_sealing_thपढ़ो(व्योम)
+अणु
+	uपूर्णांक8_t *stack;
 	pid_t pid;
 
-	stack = malloc(STACK_SIZE);
-	if (!stack) {
-		printf("malloc(STACK_SIZE) failed: %m\n");
-		abort();
-	}
+	stack = दो_स्मृति(STACK_SIZE);
+	अगर (!stack) अणु
+		म_लिखो("malloc(STACK_SIZE) failed: %m\n");
+		पात();
+	पूर्ण
 
-	pid = clone(sealing_thread_fn,
+	pid = clone(sealing_thपढ़ो_fn,
 		    stack + STACK_SIZE,
-		    SIGCHLD | CLONE_FILES | CLONE_FS | CLONE_VM,
-		    NULL);
-	if (pid < 0) {
-		printf("clone() failed: %m\n");
-		abort();
-	}
+		    SIGCHLD | CLONE_खाताS | CLONE_FS | CLONE_VM,
+		    शून्य);
+	अगर (pid < 0) अणु
+		म_लिखो("clone() failed: %m\n");
+		पात();
+	पूर्ण
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-static void join_sealing_thread(pid_t pid)
-{
-	waitpid(pid, NULL, 0);
-}
+अटल व्योम join_sealing_thपढ़ो(pid_t pid)
+अणु
+	रुकोpid(pid, शून्य, 0);
+पूर्ण
 
-int main(int argc, char **argv)
-{
-	char *zero;
-	int fd, mfd, r;
-	void *p;
-	int was_sealed;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर *zero;
+	पूर्णांक fd, mfd, r;
+	व्योम *p;
+	पूर्णांक was_sealed;
 	pid_t pid;
 
-	if (argc < 2) {
-		printf("error: please pass path to file in fuse_mnt mount-point\n");
-		abort();
-	}
+	अगर (argc < 2) अणु
+		म_लिखो("error: please pass path to file in fuse_mnt mount-point\n");
+		पात();
+	पूर्ण
 
-	if (argc >= 3) {
-		if (!strcmp(argv[2], "hugetlbfs")) {
-			unsigned long hpage_size = default_huge_page_size();
+	अगर (argc >= 3) अणु
+		अगर (!म_भेद(argv[2], "hugetlbfs")) अणु
+			अचिन्हित दीर्घ hpage_size = शेष_huge_page_size();
 
-			if (!hpage_size) {
-				printf("Unable to determine huge page size\n");
-				abort();
-			}
+			अगर (!hpage_size) अणु
+				म_लिखो("Unable to determine huge page size\n");
+				पात();
+			पूर्ण
 
 			hugetlbfs_test = 1;
 			mfd_def_size = hpage_size * 2;
-		} else {
-			printf("Unknown option: %s\n", argv[2]);
-			abort();
-		}
-	}
+		पूर्ण अन्यथा अणु
+			म_लिखो("Unknown option: %s\n", argv[2]);
+			पात();
+		पूर्ण
+	पूर्ण
 
-	zero = calloc(sizeof(*zero), mfd_def_size);
+	zero = सुस्मृति(माप(*zero), mfd_def_size);
 
-	/* open FUSE memfd file for GUP testing */
-	printf("opening: %s\n", argv[1]);
-	fd = open(argv[1], O_RDONLY | O_CLOEXEC);
-	if (fd < 0) {
-		printf("cannot open(\"%s\"): %m\n", argv[1]);
-		abort();
-	}
+	/* खोलो FUSE memfd file क्रम GUP testing */
+	म_लिखो("opening: %s\n", argv[1]);
+	fd = खोलो(argv[1], O_RDONLY | O_CLOEXEC);
+	अगर (fd < 0) अणु
+		म_लिखो("cannot open(\"%s\"): %m\n", argv[1]);
+		पात();
+	पूर्ण
 
 	/* create new memfd-object */
-	mfd = mfd_assert_new("kern_memfd_fuse",
+	mfd = mfd_निश्चित_new("kern_memfd_fuse",
 			     mfd_def_size,
 			     MFD_CLOEXEC | MFD_ALLOW_SEALING);
 
-	/* mmap memfd-object for writing */
-	p = mfd_assert_mmap_shared(mfd);
+	/* mmap memfd-object क्रम writing */
+	p = mfd_निश्चित_mmap_shared(mfd);
 
-	/* pass mfd+mapping to a separate sealing-thread which tries to seal
-	 * the memfd objects with SEAL_WRITE while we write into it */
+	/* pass mfd+mapping to a separate sealing-thपढ़ो which tries to seal
+	 * the memfd objects with SEAL_WRITE जबतक we ग_लिखो पूर्णांकo it */
 	global_mfd = mfd;
 	global_p = p;
-	pid = spawn_sealing_thread();
+	pid = spawn_sealing_thपढ़ो();
 
-	/* Use read() on the FUSE file to read into our memory-mapped memfd
-	 * object. This races the other thread which tries to seal the
+	/* Use पढ़ो() on the FUSE file to पढ़ो पूर्णांकo our memory-mapped memfd
+	 * object. This races the other thपढ़ो which tries to seal the
 	 * memfd-object.
-	 * If @fd is on the memfd-fake-FUSE-FS, the read() is delayed by 1s.
-	 * This guarantees that the receive-buffer is pinned for 1s until the
-	 * data is written into it. The racing ADD_SEALS should thus fail as
+	 * If @fd is on the memfd-fake-FUSE-FS, the पढ़ो() is delayed by 1s.
+	 * This guarantees that the receive-buffer is pinned क्रम 1s until the
+	 * data is written पूर्णांकo it. The racing ADD_SEALS should thus fail as
 	 * the pages are still pinned. */
-	r = read(fd, p, mfd_def_size);
-	if (r < 0) {
-		printf("read() failed: %m\n");
-		abort();
-	} else if (!r) {
-		printf("unexpected EOF on read()\n");
-		abort();
-	}
+	r = पढ़ो(fd, p, mfd_def_size);
+	अगर (r < 0) अणु
+		म_लिखो("read() failed: %m\n");
+		पात();
+	पूर्ण अन्यथा अगर (!r) अणु
+		म_लिखो("unexpected EOF on read()\n");
+		पात();
+	पूर्ण
 
-	was_sealed = mfd_assert_get_seals(mfd) & F_SEAL_WRITE;
+	was_sealed = mfd_निश्चित_get_seals(mfd) & F_SEAL_WRITE;
 
-	/* Wait for sealing-thread to finish and verify that it
+	/* Wait क्रम sealing-thपढ़ो to finish and verअगरy that it
 	 * successfully sealed the file after the second try. */
-	join_sealing_thread(pid);
-	mfd_assert_has_seals(mfd, F_SEAL_WRITE);
+	join_sealing_thपढ़ो(pid);
+	mfd_निश्चित_has_seals(mfd, F_SEAL_WRITE);
 
-	/* *IF* the memfd-object was sealed at the time our read() returned,
-	 * then the kernel did a page-replacement or canceled the read() (or
-	 * whatever magic it did..). In that case, the memfd object is still
+	/* *IF* the memfd-object was sealed at the समय our पढ़ो() वापसed,
+	 * then the kernel did a page-replacement or canceled the पढ़ो() (or
+	 * whatever magic it did..). In that हाल, the memfd object is still
 	 * all zero.
-	 * In case the memfd-object was *not* sealed, the read() was successfull
+	 * In हाल the memfd-object was *not* sealed, the पढ़ो() was successfull
 	 * and the memfd object must *not* be all zero.
 	 * Note that in real scenarios, there might be a mixture of both, but
-	 * in this test-cases, we have explicit 200ms delays which should be
-	 * enough to avoid any in-flight writes. */
+	 * in this test-हालs, we have explicit 200ms delays which should be
+	 * enough to aव्योम any in-flight ग_लिखोs. */
 
-	p = mfd_assert_mmap_private(mfd);
-	if (was_sealed && memcmp(p, zero, mfd_def_size)) {
-		printf("memfd sealed during read() but data not discarded\n");
-		abort();
-	} else if (!was_sealed && !memcmp(p, zero, mfd_def_size)) {
-		printf("memfd sealed after read() but data discarded\n");
-		abort();
-	}
+	p = mfd_निश्चित_mmap_निजी(mfd);
+	अगर (was_sealed && स_भेद(p, zero, mfd_def_size)) अणु
+		म_लिखो("memfd sealed during read() but data not discarded\n");
+		पात();
+	पूर्ण अन्यथा अगर (!was_sealed && !स_भेद(p, zero, mfd_def_size)) अणु
+		म_लिखो("memfd sealed after read() but data discarded\n");
+		पात();
+	पूर्ण
 
-	close(mfd);
-	close(fd);
+	बंद(mfd);
+	बंद(fd);
 
-	printf("fuse: DONE\n");
-	free(zero);
+	म_लिखो("fuse: DONE\n");
+	मुक्त(zero);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

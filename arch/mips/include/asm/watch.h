@@ -1,32 +1,33 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2008 David Daney
  */
-#ifndef _ASM_WATCH_H
-#define _ASM_WATCH_H
+#अगर_अघोषित _ASM_WATCH_H
+#घोषणा _ASM_WATCH_H
 
-#include <linux/bitops.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/mipsregs.h>
+#समावेश <यंत्र/mipsregs.h>
 
-void mips_install_watch_registers(struct task_struct *t);
-void mips_read_watch_registers(void);
-void mips_clear_watch_registers(void);
-void mips_probe_watch_registers(struct cpuinfo_mips *c);
+व्योम mips_install_watch_रेजिस्टरs(काष्ठा task_काष्ठा *t);
+व्योम mips_पढ़ो_watch_रेजिस्टरs(व्योम);
+व्योम mips_clear_watch_रेजिस्टरs(व्योम);
+व्योम mips_probe_watch_रेजिस्टरs(काष्ठा cpuinfo_mips *c);
 
-#ifdef CONFIG_HARDWARE_WATCHPOINTS
-#define __restore_watch(task) do {					\
-	if (unlikely(test_bit(TIF_LOAD_WATCH,				\
-			      &task_thread_info(task)->flags))) {	\
-		mips_install_watch_registers(task);			\
-	}								\
-} while (0)
+#अगर_घोषित CONFIG_HARDWARE_WATCHPOINTS
+#घोषणा __restore_watch(task) करो अणु					\
+	अगर (unlikely(test_bit(TIF_LOAD_WATCH,				\
+			      &task_thपढ़ो_info(task)->flags))) अणु	\
+		mips_install_watch_रेजिस्टरs(task);			\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-#else
-#define __restore_watch(task) do {} while (0)
-#endif
+#अन्यथा
+#घोषणा __restore_watch(task) करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-#endif /* _ASM_WATCH_H */
+#पूर्ण_अगर /* _ASM_WATCH_H */

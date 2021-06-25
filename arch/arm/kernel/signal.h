@@ -1,13 +1,14 @@
-#include <asm/ucontext.h>
+<शैली गुरु>
+#समावेश <यंत्र/ucontext.h>
 
-struct sigframe {
-	struct ucontext uc;
-	unsigned long retcode[4];
-};
+काष्ठा sigframe अणु
+	काष्ठा ucontext uc;
+	अचिन्हित दीर्घ retcode[4];
+पूर्ण;
 
-struct rt_sigframe {
-	struct siginfo info;
-	struct sigframe sig;
-};
+काष्ठा rt_sigframe अणु
+	काष्ठा siginfo info;
+	काष्ठा sigframe sig;
+पूर्ण;
 
-extern struct page *get_signal_page(void);
+बाह्य काष्ठा page *get_संकेत_page(व्योम);

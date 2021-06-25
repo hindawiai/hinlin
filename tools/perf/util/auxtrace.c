@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * auxtrace.c: AUX area trace support
  * Copyright (c) 2013-2015, Intel Corporation.
  */
 
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <stdbool.h>
-#include <string.h>
-#include <limits.h>
-#include <errno.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <sys/types.h>
+#समावेश <sys/mman.h>
+#समावेश <stdbool.h>
+#समावेश <माला.स>
+#समावेश <सीमा.स>
+#समावेश <त्रुटिसं.स>
 
-#include <linux/kernel.h>
-#include <linux/perf_event.h>
-#include <linux/types.h>
-#include <linux/bitops.h>
-#include <linux/log2.h>
-#include <linux/string.h>
-#include <linux/time64.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समय64.h>
 
-#include <sys/param.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <linux/list.h>
-#include <linux/zalloc.h>
+#समावेश <sys/param.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <linux/list.h>
+#समावेश <linux/zभाग.स>
 
-#include "evlist.h"
-#include "dso.h"
-#include "map.h"
-#include "pmu.h"
-#include "evsel.h"
-#include "evsel_config.h"
-#include "symbol.h"
-#include "util/perf_api_probe.h"
-#include "util/synthetic-events.h"
-#include "thread_map.h"
-#include "asm/bug.h"
-#include "auxtrace.h"
+#समावेश "evlist.h"
+#समावेश "dso.h"
+#समावेश "map.h"
+#समावेश "pmu.h"
+#समावेश "evsel.h"
+#समावेश "evsel_config.h"
+#समावेश "symbol.h"
+#समावेश "util/perf_api_probe.h"
+#समावेश "util/synthetic-events.h"
+#समावेश "thread_map.h"
+#समावेश "asm/bug.h"
+#समावेश "auxtrace.h"
 
-#include <linux/hash.h>
+#समावेश <linux/hash.h>
 
-#include "event.h"
-#include "record.h"
-#include "session.h"
-#include "debug.h"
-#include <subcmd/parse-options.h>
+#समावेश "event.h"
+#समावेश "record.h"
+#समावेश "session.h"
+#समावेश "debug.h"
+#समावेश <subcmd/parse-options.h>
 
-#include "cs-etm.h"
-#include "intel-pt.h"
-#include "intel-bts.h"
-#include "arm-spe.h"
-#include "s390-cpumsf.h"
-#include "util/mmap.h"
+#समावेश "cs-etm.h"
+#समावेश "intel-pt.h"
+#समावेश "intel-bts.h"
+#समावेश "arm-spe.h"
+#समावेश "s390-cpumsf.h"
+#समावेश "util/mmap.h"
 
-#include <linux/ctype.h>
-#include "symbol/kallsyms.h"
-#include <internal/lib.h>
+#समावेश <linux/प्रकार.स>
+#समावेश "symbol/kallsyms.h"
+#समावेश <पूर्णांकernal/lib.h>
 
 /*
  * Make a group from 'leader' to 'last', requiring that the events were not
- * already grouped to a different leader.
+ * alपढ़ोy grouped to a dअगरferent leader.
  */
-static int evlist__regroup(struct evlist *evlist, struct evsel *leader, struct evsel *last)
-{
-	struct evsel *evsel;
+अटल पूर्णांक evlist__regroup(काष्ठा evlist *evlist, काष्ठा evsel *leader, काष्ठा evsel *last)
+अणु
+	काष्ठा evsel *evsel;
 	bool grp;
 
-	if (!evsel__is_group_leader(leader))
-		return -EINVAL;
+	अगर (!evsel__is_group_leader(leader))
+		वापस -EINVAL;
 
 	grp = false;
-	evlist__for_each_entry(evlist, evsel) {
-		if (grp) {
-			if (!(evsel->leader == leader ||
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (grp) अणु
+			अगर (!(evsel->leader == leader ||
 			     (evsel->leader == evsel &&
 			      evsel->core.nr_members <= 1)))
-				return -EINVAL;
-		} else if (evsel == leader) {
+				वापस -EINVAL;
+		पूर्ण अन्यथा अगर (evsel == leader) अणु
 			grp = true;
-		}
-		if (evsel == last)
-			break;
-	}
+		पूर्ण
+		अगर (evsel == last)
+			अवरोध;
+	पूर्ण
 
 	grp = false;
-	evlist__for_each_entry(evlist, evsel) {
-		if (grp) {
-			if (evsel->leader != leader) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (grp) अणु
+			अगर (evsel->leader != leader) अणु
 				evsel->leader = leader;
-				if (leader->core.nr_members < 1)
+				अगर (leader->core.nr_members < 1)
 					leader->core.nr_members = 1;
 				leader->core.nr_members += 1;
-			}
-		} else if (evsel == leader) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (evsel == leader) अणु
 			grp = true;
-		}
-		if (evsel == last)
-			break;
-	}
+		पूर्ण
+		अगर (evsel == last)
+			अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool auxtrace__dont_decode(struct perf_session *session)
-{
-	return !session->itrace_synth_opts ||
-	       session->itrace_synth_opts->dont_decode;
-}
+अटल bool auxtrace__करोnt_decode(काष्ठा perf_session *session)
+अणु
+	वापस !session->itrace_synth_opts ||
+	       session->itrace_synth_opts->करोnt_decode;
+पूर्ण
 
-int auxtrace_mmap__mmap(struct auxtrace_mmap *mm,
-			struct auxtrace_mmap_params *mp,
-			void *userpg, int fd)
-{
-	struct perf_event_mmap_page *pc = userpg;
+पूर्णांक auxtrace_mmap__mmap(काष्ठा auxtrace_mmap *mm,
+			काष्ठा auxtrace_mmap_params *mp,
+			व्योम *userpg, पूर्णांक fd)
+अणु
+	काष्ठा perf_event_mmap_page *pc = userpg;
 
 	WARN_ONCE(mm->base, "Uninitialized auxtrace_mmap\n");
 
@@ -125,180 +126,180 @@ int auxtrace_mmap__mmap(struct auxtrace_mmap *mm,
 	mm->tid = mp->tid;
 	mm->cpu = mp->cpu;
 
-	if (!mp->len) {
-		mm->base = NULL;
-		return 0;
-	}
+	अगर (!mp->len) अणु
+		mm->base = शून्य;
+		वापस 0;
+	पूर्ण
 
-#if BITS_PER_LONG != 64 && !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
+#अगर BITS_PER_LONG != 64 && !defined(HAVE_SYNC_COMPARE_AND_SWAP_SUPPORT)
 	pr_err("Cannot use AUX area tracing mmaps\n");
-	return -1;
-#endif
+	वापस -1;
+#पूर्ण_अगर
 
 	pc->aux_offset = mp->offset;
 	pc->aux_size = mp->len;
 
-	mm->base = mmap(NULL, mp->len, mp->prot, MAP_SHARED, fd, mp->offset);
-	if (mm->base == MAP_FAILED) {
+	mm->base = mmap(शून्य, mp->len, mp->prot, MAP_SHARED, fd, mp->offset);
+	अगर (mm->base == MAP_FAILED) अणु
 		pr_debug2("failed to mmap AUX area\n");
-		mm->base = NULL;
-		return -1;
-	}
+		mm->base = शून्य;
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void auxtrace_mmap__munmap(struct auxtrace_mmap *mm)
-{
-	if (mm->base) {
+व्योम auxtrace_mmap__munmap(काष्ठा auxtrace_mmap *mm)
+अणु
+	अगर (mm->base) अणु
 		munmap(mm->base, mm->len);
-		mm->base = NULL;
-	}
-}
+		mm->base = शून्य;
+	पूर्ण
+पूर्ण
 
-void auxtrace_mmap_params__init(struct auxtrace_mmap_params *mp,
+व्योम auxtrace_mmap_params__init(काष्ठा auxtrace_mmap_params *mp,
 				off_t auxtrace_offset,
-				unsigned int auxtrace_pages,
-				bool auxtrace_overwrite)
-{
-	if (auxtrace_pages) {
+				अचिन्हित पूर्णांक auxtrace_pages,
+				bool auxtrace_overग_लिखो)
+अणु
+	अगर (auxtrace_pages) अणु
 		mp->offset = auxtrace_offset;
-		mp->len = auxtrace_pages * (size_t)page_size;
-		mp->mask = is_power_of_2(mp->len) ? mp->len - 1 : 0;
-		mp->prot = PROT_READ | (auxtrace_overwrite ? 0 : PROT_WRITE);
+		mp->len = auxtrace_pages * (माप_प्रकार)page_size;
+		mp->mask = is_घातer_of_2(mp->len) ? mp->len - 1 : 0;
+		mp->prot = PROT_READ | (auxtrace_overग_लिखो ? 0 : PROT_WRITE);
 		pr_debug2("AUX area mmap length %zu\n", mp->len);
-	} else {
+	पूर्ण अन्यथा अणु
 		mp->len = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void auxtrace_mmap_params__set_idx(struct auxtrace_mmap_params *mp,
-				   struct evlist *evlist, int idx,
+व्योम auxtrace_mmap_params__set_idx(काष्ठा auxtrace_mmap_params *mp,
+				   काष्ठा evlist *evlist, पूर्णांक idx,
 				   bool per_cpu)
-{
+अणु
 	mp->idx = idx;
 
-	if (per_cpu) {
+	अगर (per_cpu) अणु
 		mp->cpu = evlist->core.cpus->map[idx];
-		if (evlist->core.threads)
-			mp->tid = perf_thread_map__pid(evlist->core.threads, 0);
-		else
+		अगर (evlist->core.thपढ़ोs)
+			mp->tid = perf_thपढ़ो_map__pid(evlist->core.thपढ़ोs, 0);
+		अन्यथा
 			mp->tid = -1;
-	} else {
+	पूर्ण अन्यथा अणु
 		mp->cpu = -1;
-		mp->tid = perf_thread_map__pid(evlist->core.threads, idx);
-	}
-}
+		mp->tid = perf_thपढ़ो_map__pid(evlist->core.thपढ़ोs, idx);
+	पूर्ण
+पूर्ण
 
-#define AUXTRACE_INIT_NR_QUEUES	32
+#घोषणा AUXTRACE_INIT_NR_QUEUES	32
 
-static struct auxtrace_queue *auxtrace_alloc_queue_array(unsigned int nr_queues)
-{
-	struct auxtrace_queue *queue_array;
-	unsigned int max_nr_queues, i;
+अटल काष्ठा auxtrace_queue *auxtrace_alloc_queue_array(अचिन्हित पूर्णांक nr_queues)
+अणु
+	काष्ठा auxtrace_queue *queue_array;
+	अचिन्हित पूर्णांक max_nr_queues, i;
 
-	max_nr_queues = UINT_MAX / sizeof(struct auxtrace_queue);
-	if (nr_queues > max_nr_queues)
-		return NULL;
+	max_nr_queues = अच_पूर्णांक_उच्च / माप(काष्ठा auxtrace_queue);
+	अगर (nr_queues > max_nr_queues)
+		वापस शून्य;
 
-	queue_array = calloc(nr_queues, sizeof(struct auxtrace_queue));
-	if (!queue_array)
-		return NULL;
+	queue_array = सुस्मृति(nr_queues, माप(काष्ठा auxtrace_queue));
+	अगर (!queue_array)
+		वापस शून्य;
 
-	for (i = 0; i < nr_queues; i++) {
+	क्रम (i = 0; i < nr_queues; i++) अणु
 		INIT_LIST_HEAD(&queue_array[i].head);
-		queue_array[i].priv = NULL;
-	}
+		queue_array[i].priv = शून्य;
+	पूर्ण
 
-	return queue_array;
-}
+	वापस queue_array;
+पूर्ण
 
-int auxtrace_queues__init(struct auxtrace_queues *queues)
-{
+पूर्णांक auxtrace_queues__init(काष्ठा auxtrace_queues *queues)
+अणु
 	queues->nr_queues = AUXTRACE_INIT_NR_QUEUES;
 	queues->queue_array = auxtrace_alloc_queue_array(queues->nr_queues);
-	if (!queues->queue_array)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!queues->queue_array)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int auxtrace_queues__grow(struct auxtrace_queues *queues,
-				 unsigned int new_nr_queues)
-{
-	unsigned int nr_queues = queues->nr_queues;
-	struct auxtrace_queue *queue_array;
-	unsigned int i;
+अटल पूर्णांक auxtrace_queues__grow(काष्ठा auxtrace_queues *queues,
+				 अचिन्हित पूर्णांक new_nr_queues)
+अणु
+	अचिन्हित पूर्णांक nr_queues = queues->nr_queues;
+	काष्ठा auxtrace_queue *queue_array;
+	अचिन्हित पूर्णांक i;
 
-	if (!nr_queues)
+	अगर (!nr_queues)
 		nr_queues = AUXTRACE_INIT_NR_QUEUES;
 
-	while (nr_queues && nr_queues < new_nr_queues)
+	जबतक (nr_queues && nr_queues < new_nr_queues)
 		nr_queues <<= 1;
 
-	if (nr_queues < queues->nr_queues || nr_queues < new_nr_queues)
-		return -EINVAL;
+	अगर (nr_queues < queues->nr_queues || nr_queues < new_nr_queues)
+		वापस -EINVAL;
 
 	queue_array = auxtrace_alloc_queue_array(nr_queues);
-	if (!queue_array)
-		return -ENOMEM;
+	अगर (!queue_array)
+		वापस -ENOMEM;
 
-	for (i = 0; i < queues->nr_queues; i++) {
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
 		list_splice_tail(&queues->queue_array[i].head,
 				 &queue_array[i].head);
 		queue_array[i].tid = queues->queue_array[i].tid;
 		queue_array[i].cpu = queues->queue_array[i].cpu;
 		queue_array[i].set = queues->queue_array[i].set;
 		queue_array[i].priv = queues->queue_array[i].priv;
-	}
+	पूर्ण
 
 	queues->nr_queues = nr_queues;
 	queues->queue_array = queue_array;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void *auxtrace_copy_data(u64 size, struct perf_session *session)
-{
-	int fd = perf_data__fd(session->data);
-	void *p;
-	ssize_t ret;
+अटल व्योम *auxtrace_copy_data(u64 size, काष्ठा perf_session *session)
+अणु
+	पूर्णांक fd = perf_data__fd(session->data);
+	व्योम *p;
+	sमाप_प्रकार ret;
 
-	if (size > SSIZE_MAX)
-		return NULL;
+	अगर (size > SSIZE_MAX)
+		वापस शून्य;
 
-	p = malloc(size);
-	if (!p)
-		return NULL;
+	p = दो_स्मृति(size);
+	अगर (!p)
+		वापस शून्य;
 
-	ret = readn(fd, p, size);
-	if (ret != (ssize_t)size) {
-		free(p);
-		return NULL;
-	}
+	ret = पढ़ोn(fd, p, size);
+	अगर (ret != (sमाप_प्रकार)size) अणु
+		मुक्त(p);
+		वापस शून्य;
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int auxtrace_queues__queue_buffer(struct auxtrace_queues *queues,
-					 unsigned int idx,
-					 struct auxtrace_buffer *buffer)
-{
-	struct auxtrace_queue *queue;
-	int err;
+अटल पूर्णांक auxtrace_queues__queue_buffer(काष्ठा auxtrace_queues *queues,
+					 अचिन्हित पूर्णांक idx,
+					 काष्ठा auxtrace_buffer *buffer)
+अणु
+	काष्ठा auxtrace_queue *queue;
+	पूर्णांक err;
 
-	if (idx >= queues->nr_queues) {
+	अगर (idx >= queues->nr_queues) अणु
 		err = auxtrace_queues__grow(queues, idx + 1);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	queue = &queues->queue_array[idx];
 
-	if (!queue->set) {
+	अगर (!queue->set) अणु
 		queue->set = true;
 		queue->tid = buffer->tid;
 		queue->cpu = buffer->cpu;
-	}
+	पूर्ण
 
 	buffer->buffer_nr = queues->next_buffer_nr++;
 
@@ -307,101 +308,101 @@ static int auxtrace_queues__queue_buffer(struct auxtrace_queues *queues,
 	queues->new_data = true;
 	queues->populated = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Limit buffers to 32MiB on 32-bit */
-#define BUFFER_LIMIT_FOR_32_BIT (32 * 1024 * 1024)
+#घोषणा BUFFER_LIMIT_FOR_32_BIT (32 * 1024 * 1024)
 
-static int auxtrace_queues__split_buffer(struct auxtrace_queues *queues,
-					 unsigned int idx,
-					 struct auxtrace_buffer *buffer)
-{
+अटल पूर्णांक auxtrace_queues__split_buffer(काष्ठा auxtrace_queues *queues,
+					 अचिन्हित पूर्णांक idx,
+					 काष्ठा auxtrace_buffer *buffer)
+अणु
 	u64 sz = buffer->size;
 	bool consecutive = false;
-	struct auxtrace_buffer *b;
-	int err;
+	काष्ठा auxtrace_buffer *b;
+	पूर्णांक err;
 
-	while (sz > BUFFER_LIMIT_FOR_32_BIT) {
-		b = memdup(buffer, sizeof(struct auxtrace_buffer));
-		if (!b)
-			return -ENOMEM;
+	जबतक (sz > BUFFER_LIMIT_FOR_32_BIT) अणु
+		b = memdup(buffer, माप(काष्ठा auxtrace_buffer));
+		अगर (!b)
+			वापस -ENOMEM;
 		b->size = BUFFER_LIMIT_FOR_32_BIT;
 		b->consecutive = consecutive;
 		err = auxtrace_queues__queue_buffer(queues, idx, b);
-		if (err) {
-			auxtrace_buffer__free(b);
-			return err;
-		}
+		अगर (err) अणु
+			auxtrace_buffer__मुक्त(b);
+			वापस err;
+		पूर्ण
 		buffer->data_offset += BUFFER_LIMIT_FOR_32_BIT;
 		sz -= BUFFER_LIMIT_FOR_32_BIT;
 		consecutive = true;
-	}
+	पूर्ण
 
 	buffer->size = sz;
 	buffer->consecutive = consecutive;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool filter_cpu(struct perf_session *session, int cpu)
-{
-	unsigned long *cpu_bitmap = session->itrace_synth_opts->cpu_bitmap;
+अटल bool filter_cpu(काष्ठा perf_session *session, पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ *cpu_biपंचांगap = session->itrace_synth_opts->cpu_biपंचांगap;
 
-	return cpu_bitmap && cpu != -1 && !test_bit(cpu, cpu_bitmap);
-}
+	वापस cpu_biपंचांगap && cpu != -1 && !test_bit(cpu, cpu_biपंचांगap);
+पूर्ण
 
-static int auxtrace_queues__add_buffer(struct auxtrace_queues *queues,
-				       struct perf_session *session,
-				       unsigned int idx,
-				       struct auxtrace_buffer *buffer,
-				       struct auxtrace_buffer **buffer_ptr)
-{
-	int err = -ENOMEM;
+अटल पूर्णांक auxtrace_queues__add_buffer(काष्ठा auxtrace_queues *queues,
+				       काष्ठा perf_session *session,
+				       अचिन्हित पूर्णांक idx,
+				       काष्ठा auxtrace_buffer *buffer,
+				       काष्ठा auxtrace_buffer **buffer_ptr)
+अणु
+	पूर्णांक err = -ENOMEM;
 
-	if (filter_cpu(session, buffer->cpu))
-		return 0;
+	अगर (filter_cpu(session, buffer->cpu))
+		वापस 0;
 
-	buffer = memdup(buffer, sizeof(*buffer));
-	if (!buffer)
-		return -ENOMEM;
+	buffer = memdup(buffer, माप(*buffer));
+	अगर (!buffer)
+		वापस -ENOMEM;
 
-	if (session->one_mmap) {
+	अगर (session->one_mmap) अणु
 		buffer->data = buffer->data_offset - session->one_mmap_offset +
 			       session->one_mmap_addr;
-	} else if (perf_data__is_pipe(session->data)) {
+	पूर्ण अन्यथा अगर (perf_data__is_pipe(session->data)) अणु
 		buffer->data = auxtrace_copy_data(buffer->size, session);
-		if (!buffer->data)
-			goto out_free;
-		buffer->data_needs_freeing = true;
-	} else if (BITS_PER_LONG == 32 &&
-		   buffer->size > BUFFER_LIMIT_FOR_32_BIT) {
+		अगर (!buffer->data)
+			जाओ out_मुक्त;
+		buffer->data_needs_मुक्तing = true;
+	पूर्ण अन्यथा अगर (BITS_PER_LONG == 32 &&
+		   buffer->size > BUFFER_LIMIT_FOR_32_BIT) अणु
 		err = auxtrace_queues__split_buffer(queues, idx, buffer);
-		if (err)
-			goto out_free;
-	}
+		अगर (err)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	err = auxtrace_queues__queue_buffer(queues, idx, buffer);
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
-	/* FIXME: Doesn't work for split buffer */
-	if (buffer_ptr)
+	/* FIXME: Doesn't work क्रम split buffer */
+	अगर (buffer_ptr)
 		*buffer_ptr = buffer;
 
-	return 0;
+	वापस 0;
 
-out_free:
-	auxtrace_buffer__free(buffer);
-	return err;
-}
+out_मुक्त:
+	auxtrace_buffer__मुक्त(buffer);
+	वापस err;
+पूर्ण
 
-int auxtrace_queues__add_event(struct auxtrace_queues *queues,
-			       struct perf_session *session,
-			       union perf_event *event, off_t data_offset,
-			       struct auxtrace_buffer **buffer_ptr)
-{
-	struct auxtrace_buffer buffer = {
+पूर्णांक auxtrace_queues__add_event(काष्ठा auxtrace_queues *queues,
+			       काष्ठा perf_session *session,
+			       जोड़ perf_event *event, off_t data_offset,
+			       काष्ठा auxtrace_buffer **buffer_ptr)
+अणु
+	काष्ठा auxtrace_buffer buffer = अणु
 		.pid = -1,
 		.tid = event->auxtrace.tid,
 		.cpu = event->auxtrace.cpu,
@@ -409,774 +410,774 @@ int auxtrace_queues__add_event(struct auxtrace_queues *queues,
 		.offset = event->auxtrace.offset,
 		.reference = event->auxtrace.reference,
 		.size = event->auxtrace.size,
-	};
-	unsigned int idx = event->auxtrace.idx;
+	पूर्ण;
+	अचिन्हित पूर्णांक idx = event->auxtrace.idx;
 
-	return auxtrace_queues__add_buffer(queues, session, idx, &buffer,
+	वापस auxtrace_queues__add_buffer(queues, session, idx, &buffer,
 					   buffer_ptr);
-}
+पूर्ण
 
-static int auxtrace_queues__add_indexed_event(struct auxtrace_queues *queues,
-					      struct perf_session *session,
-					      off_t file_offset, size_t sz)
-{
-	union perf_event *event;
-	int err;
-	char buf[PERF_SAMPLE_MAX_SIZE];
+अटल पूर्णांक auxtrace_queues__add_indexed_event(काष्ठा auxtrace_queues *queues,
+					      काष्ठा perf_session *session,
+					      off_t file_offset, माप_प्रकार sz)
+अणु
+	जोड़ perf_event *event;
+	पूर्णांक err;
+	अक्षर buf[PERF_SAMPLE_MAX_SIZE];
 
 	err = perf_session__peek_event(session, file_offset, buf,
-				       PERF_SAMPLE_MAX_SIZE, &event, NULL);
-	if (err)
-		return err;
+				       PERF_SAMPLE_MAX_SIZE, &event, शून्य);
+	अगर (err)
+		वापस err;
 
-	if (event->header.type == PERF_RECORD_AUXTRACE) {
-		if (event->header.size < sizeof(struct perf_record_auxtrace) ||
-		    event->header.size != sz) {
+	अगर (event->header.type == PERF_RECORD_AUXTRACE) अणु
+		अगर (event->header.size < माप(काष्ठा perf_record_auxtrace) ||
+		    event->header.size != sz) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		file_offset += event->header.size;
 		err = auxtrace_queues__add_event(queues, session, event,
-						 file_offset, NULL);
-	}
+						 file_offset, शून्य);
+	पूर्ण
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void auxtrace_queues__free(struct auxtrace_queues *queues)
-{
-	unsigned int i;
+व्योम auxtrace_queues__मुक्त(काष्ठा auxtrace_queues *queues)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < queues->nr_queues; i++) {
-		while (!list_empty(&queues->queue_array[i].head)) {
-			struct auxtrace_buffer *buffer;
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
+		जबतक (!list_empty(&queues->queue_array[i].head)) अणु
+			काष्ठा auxtrace_buffer *buffer;
 
 			buffer = list_entry(queues->queue_array[i].head.next,
-					    struct auxtrace_buffer, list);
+					    काष्ठा auxtrace_buffer, list);
 			list_del_init(&buffer->list);
-			auxtrace_buffer__free(buffer);
-		}
-	}
+			auxtrace_buffer__मुक्त(buffer);
+		पूर्ण
+	पूर्ण
 
-	zfree(&queues->queue_array);
+	zमुक्त(&queues->queue_array);
 	queues->nr_queues = 0;
-}
+पूर्ण
 
-static void auxtrace_heapify(struct auxtrace_heap_item *heap_array,
-			     unsigned int pos, unsigned int queue_nr,
+अटल व्योम auxtrace_heapअगरy(काष्ठा auxtrace_heap_item *heap_array,
+			     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक queue_nr,
 			     u64 ordinal)
-{
-	unsigned int parent;
+अणु
+	अचिन्हित पूर्णांक parent;
 
-	while (pos) {
+	जबतक (pos) अणु
 		parent = (pos - 1) >> 1;
-		if (heap_array[parent].ordinal <= ordinal)
-			break;
+		अगर (heap_array[parent].ordinal <= ordinal)
+			अवरोध;
 		heap_array[pos] = heap_array[parent];
 		pos = parent;
-	}
+	पूर्ण
 	heap_array[pos].queue_nr = queue_nr;
 	heap_array[pos].ordinal = ordinal;
-}
+पूर्ण
 
-int auxtrace_heap__add(struct auxtrace_heap *heap, unsigned int queue_nr,
+पूर्णांक auxtrace_heap__add(काष्ठा auxtrace_heap *heap, अचिन्हित पूर्णांक queue_nr,
 		       u64 ordinal)
-{
-	struct auxtrace_heap_item *heap_array;
+अणु
+	काष्ठा auxtrace_heap_item *heap_array;
 
-	if (queue_nr >= heap->heap_sz) {
-		unsigned int heap_sz = AUXTRACE_INIT_NR_QUEUES;
+	अगर (queue_nr >= heap->heap_sz) अणु
+		अचिन्हित पूर्णांक heap_sz = AUXTRACE_INIT_NR_QUEUES;
 
-		while (heap_sz <= queue_nr)
+		जबतक (heap_sz <= queue_nr)
 			heap_sz <<= 1;
-		heap_array = realloc(heap->heap_array,
-				     heap_sz * sizeof(struct auxtrace_heap_item));
-		if (!heap_array)
-			return -ENOMEM;
+		heap_array = पुनः_स्मृति(heap->heap_array,
+				     heap_sz * माप(काष्ठा auxtrace_heap_item));
+		अगर (!heap_array)
+			वापस -ENOMEM;
 		heap->heap_array = heap_array;
 		heap->heap_sz = heap_sz;
-	}
+	पूर्ण
 
-	auxtrace_heapify(heap->heap_array, heap->heap_cnt++, queue_nr, ordinal);
+	auxtrace_heapअगरy(heap->heap_array, heap->heap_cnt++, queue_nr, ordinal);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void auxtrace_heap__free(struct auxtrace_heap *heap)
-{
-	zfree(&heap->heap_array);
+व्योम auxtrace_heap__मुक्त(काष्ठा auxtrace_heap *heap)
+अणु
+	zमुक्त(&heap->heap_array);
 	heap->heap_cnt = 0;
 	heap->heap_sz = 0;
-}
+पूर्ण
 
-void auxtrace_heap__pop(struct auxtrace_heap *heap)
-{
-	unsigned int pos, last, heap_cnt = heap->heap_cnt;
-	struct auxtrace_heap_item *heap_array;
+व्योम auxtrace_heap__pop(काष्ठा auxtrace_heap *heap)
+अणु
+	अचिन्हित पूर्णांक pos, last, heap_cnt = heap->heap_cnt;
+	काष्ठा auxtrace_heap_item *heap_array;
 
-	if (!heap_cnt)
-		return;
+	अगर (!heap_cnt)
+		वापस;
 
 	heap->heap_cnt -= 1;
 
 	heap_array = heap->heap_array;
 
 	pos = 0;
-	while (1) {
-		unsigned int left, right;
+	जबतक (1) अणु
+		अचिन्हित पूर्णांक left, right;
 
 		left = (pos << 1) + 1;
-		if (left >= heap_cnt)
-			break;
+		अगर (left >= heap_cnt)
+			अवरोध;
 		right = left + 1;
-		if (right >= heap_cnt) {
+		अगर (right >= heap_cnt) अणु
 			heap_array[pos] = heap_array[left];
-			return;
-		}
-		if (heap_array[left].ordinal < heap_array[right].ordinal) {
+			वापस;
+		पूर्ण
+		अगर (heap_array[left].ordinal < heap_array[right].ordinal) अणु
 			heap_array[pos] = heap_array[left];
 			pos = left;
-		} else {
+		पूर्ण अन्यथा अणु
 			heap_array[pos] = heap_array[right];
 			pos = right;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	last = heap_cnt - 1;
-	auxtrace_heapify(heap_array, pos, heap_array[last].queue_nr,
+	auxtrace_heapअगरy(heap_array, pos, heap_array[last].queue_nr,
 			 heap_array[last].ordinal);
-}
+पूर्ण
 
-size_t auxtrace_record__info_priv_size(struct auxtrace_record *itr,
-				       struct evlist *evlist)
-{
-	if (itr)
-		return itr->info_priv_size(itr, evlist);
-	return 0;
-}
+माप_प्रकार auxtrace_record__info_priv_size(काष्ठा auxtrace_record *itr,
+				       काष्ठा evlist *evlist)
+अणु
+	अगर (itr)
+		वापस itr->info_priv_size(itr, evlist);
+	वापस 0;
+पूर्ण
 
-static int auxtrace_not_supported(void)
-{
+अटल पूर्णांक auxtrace_not_supported(व्योम)
+अणु
 	pr_err("AUX area tracing is not supported on this architecture\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int auxtrace_record__info_fill(struct auxtrace_record *itr,
-			       struct perf_session *session,
-			       struct perf_record_auxtrace_info *auxtrace_info,
-			       size_t priv_size)
-{
-	if (itr)
-		return itr->info_fill(itr, session, auxtrace_info, priv_size);
-	return auxtrace_not_supported();
-}
+पूर्णांक auxtrace_record__info_fill(काष्ठा auxtrace_record *itr,
+			       काष्ठा perf_session *session,
+			       काष्ठा perf_record_auxtrace_info *auxtrace_info,
+			       माप_प्रकार priv_size)
+अणु
+	अगर (itr)
+		वापस itr->info_fill(itr, session, auxtrace_info, priv_size);
+	वापस auxtrace_not_supported();
+पूर्ण
 
-void auxtrace_record__free(struct auxtrace_record *itr)
-{
-	if (itr)
-		itr->free(itr);
-}
+व्योम auxtrace_record__मुक्त(काष्ठा auxtrace_record *itr)
+अणु
+	अगर (itr)
+		itr->मुक्त(itr);
+पूर्ण
 
-int auxtrace_record__snapshot_start(struct auxtrace_record *itr)
-{
-	if (itr && itr->snapshot_start)
-		return itr->snapshot_start(itr);
-	return 0;
-}
+पूर्णांक auxtrace_record__snapshot_start(काष्ठा auxtrace_record *itr)
+अणु
+	अगर (itr && itr->snapshot_start)
+		वापस itr->snapshot_start(itr);
+	वापस 0;
+पूर्ण
 
-int auxtrace_record__snapshot_finish(struct auxtrace_record *itr, bool on_exit)
-{
-	if (!on_exit && itr && itr->snapshot_finish)
-		return itr->snapshot_finish(itr);
-	return 0;
-}
+पूर्णांक auxtrace_record__snapshot_finish(काष्ठा auxtrace_record *itr, bool on_निकास)
+अणु
+	अगर (!on_निकास && itr && itr->snapshot_finish)
+		वापस itr->snapshot_finish(itr);
+	वापस 0;
+पूर्ण
 
-int auxtrace_record__find_snapshot(struct auxtrace_record *itr, int idx,
-				   struct auxtrace_mmap *mm,
-				   unsigned char *data, u64 *head, u64 *old)
-{
-	if (itr && itr->find_snapshot)
-		return itr->find_snapshot(itr, idx, mm, data, head, old);
-	return 0;
-}
+पूर्णांक auxtrace_record__find_snapshot(काष्ठा auxtrace_record *itr, पूर्णांक idx,
+				   काष्ठा auxtrace_mmap *mm,
+				   अचिन्हित अक्षर *data, u64 *head, u64 *old)
+अणु
+	अगर (itr && itr->find_snapshot)
+		वापस itr->find_snapshot(itr, idx, mm, data, head, old);
+	वापस 0;
+पूर्ण
 
-int auxtrace_record__options(struct auxtrace_record *itr,
-			     struct evlist *evlist,
-			     struct record_opts *opts)
-{
-	if (itr) {
+पूर्णांक auxtrace_record__options(काष्ठा auxtrace_record *itr,
+			     काष्ठा evlist *evlist,
+			     काष्ठा record_opts *opts)
+अणु
+	अगर (itr) अणु
 		itr->evlist = evlist;
-		return itr->recording_options(itr, evlist, opts);
-	}
-	return 0;
-}
+		वापस itr->recording_options(itr, evlist, opts);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-u64 auxtrace_record__reference(struct auxtrace_record *itr)
-{
-	if (itr)
-		return itr->reference(itr);
-	return 0;
-}
+u64 auxtrace_record__reference(काष्ठा auxtrace_record *itr)
+अणु
+	अगर (itr)
+		वापस itr->reference(itr);
+	वापस 0;
+पूर्ण
 
-int auxtrace_parse_snapshot_options(struct auxtrace_record *itr,
-				    struct record_opts *opts, const char *str)
-{
-	if (!str)
-		return 0;
+पूर्णांक auxtrace_parse_snapshot_options(काष्ठा auxtrace_record *itr,
+				    काष्ठा record_opts *opts, स्थिर अक्षर *str)
+अणु
+	अगर (!str)
+		वापस 0;
 
 	/* PMU-agnostic options */
-	switch (*str) {
-	case 'e':
-		opts->auxtrace_snapshot_on_exit = true;
+	चयन (*str) अणु
+	हाल 'e':
+		opts->auxtrace_snapshot_on_निकास = true;
 		str++;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (itr && itr->parse_snapshot_options)
-		return itr->parse_snapshot_options(itr, opts, str);
+	अगर (itr && itr->parse_snapshot_options)
+		वापस itr->parse_snapshot_options(itr, opts, str);
 
 	pr_err("No AUX area tracing to snapshot\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-int auxtrace_record__read_finish(struct auxtrace_record *itr, int idx)
-{
-	struct evsel *evsel;
+पूर्णांक auxtrace_record__पढ़ो_finish(काष्ठा auxtrace_record *itr, पूर्णांक idx)
+अणु
+	काष्ठा evsel *evsel;
 
-	if (!itr->evlist || !itr->pmu)
-		return -EINVAL;
+	अगर (!itr->evlist || !itr->pmu)
+		वापस -EINVAL;
 
-	evlist__for_each_entry(itr->evlist, evsel) {
-		if (evsel->core.attr.type == itr->pmu->type) {
-			if (evsel->disabled)
-				return 0;
-			return evlist__enable_event_idx(itr->evlist, evsel, idx);
-		}
-	}
-	return -EINVAL;
-}
+	evlist__क्रम_each_entry(itr->evlist, evsel) अणु
+		अगर (evsel->core.attr.type == itr->pmu->type) अणु
+			अगर (evsel->disabled)
+				वापस 0;
+			वापस evlist__enable_event_idx(itr->evlist, evsel, idx);
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Event record size is 16-bit which results in a maximum size of about 64KiB.
- * Allow about 4KiB for the rest of the sample record, to give a maximum
+ * Allow about 4KiB क्रम the rest of the sample record, to give a maximum
  * AUX area sample size of 60KiB.
  */
-#define MAX_AUX_SAMPLE_SIZE (60 * 1024)
+#घोषणा MAX_AUX_SAMPLE_SIZE (60 * 1024)
 
-/* Arbitrary default size if no other default provided */
-#define DEFAULT_AUX_SAMPLE_SIZE (4 * 1024)
+/* Arbitrary शेष size अगर no other शेष provided */
+#घोषणा DEFAULT_AUX_SAMPLE_SIZE (4 * 1024)
 
-static int auxtrace_validate_aux_sample_size(struct evlist *evlist,
-					     struct record_opts *opts)
-{
-	struct evsel *evsel;
+अटल पूर्णांक auxtrace_validate_aux_sample_size(काष्ठा evlist *evlist,
+					     काष्ठा record_opts *opts)
+अणु
+	काष्ठा evsel *evsel;
 	bool has_aux_leader = false;
 	u32 sz;
 
-	evlist__for_each_entry(evlist, evsel) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
 		sz = evsel->core.attr.aux_sample_size;
-		if (evsel__is_group_leader(evsel)) {
+		अगर (evsel__is_group_leader(evsel)) अणु
 			has_aux_leader = evsel__is_aux_event(evsel);
-			if (sz) {
-				if (has_aux_leader)
+			अगर (sz) अणु
+				अगर (has_aux_leader)
 					pr_err("Cannot add AUX area sampling to an AUX area event\n");
-				else
+				अन्यथा
 					pr_err("Cannot add AUX area sampling to a group leader\n");
-				return -EINVAL;
-			}
-		}
-		if (sz > MAX_AUX_SAMPLE_SIZE) {
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+		अगर (sz > MAX_AUX_SAMPLE_SIZE) अणु
 			pr_err("AUX area sample size %u too big, max. %d\n",
 			       sz, MAX_AUX_SAMPLE_SIZE);
-			return -EINVAL;
-		}
-		if (sz) {
-			if (!has_aux_leader) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर (sz) अणु
+			अगर (!has_aux_leader) अणु
 				pr_err("Cannot add AUX area sampling because group leader is not an AUX area event\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 			evsel__set_sample_bit(evsel, AUX);
 			opts->auxtrace_sample_mode = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			evsel__reset_sample_bit(evsel, AUX);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!opts->auxtrace_sample_mode) {
+	अगर (!opts->auxtrace_sample_mode) अणु
 		pr_err("AUX area sampling requires an AUX area event group leader plus other events to which to add samples\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!perf_can_aux_sample()) {
+	अगर (!perf_can_aux_sample()) अणु
 		pr_err("AUX area sampling is not supported by kernel\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int auxtrace_parse_sample_options(struct auxtrace_record *itr,
-				  struct evlist *evlist,
-				  struct record_opts *opts, const char *str)
-{
-	struct evsel_config_term *term;
-	struct evsel *aux_evsel;
+पूर्णांक auxtrace_parse_sample_options(काष्ठा auxtrace_record *itr,
+				  काष्ठा evlist *evlist,
+				  काष्ठा record_opts *opts, स्थिर अक्षर *str)
+अणु
+	काष्ठा evsel_config_term *term;
+	काष्ठा evsel *aux_evsel;
 	bool has_aux_sample_size = false;
 	bool has_aux_leader = false;
-	struct evsel *evsel;
-	char *endptr;
-	unsigned long sz;
+	काष्ठा evsel *evsel;
+	अक्षर *endptr;
+	अचिन्हित दीर्घ sz;
 
-	if (!str)
-		goto no_opt;
+	अगर (!str)
+		जाओ no_opt;
 
-	if (!itr) {
+	अगर (!itr) अणु
 		pr_err("No AUX area event to sample\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	sz = strtoul(str, &endptr, 0);
-	if (*endptr || sz > UINT_MAX) {
+	sz = म_से_अदीर्घ(str, &endptr, 0);
+	अगर (*endptr || sz > अच_पूर्णांक_उच्च) अणु
 		pr_err("Bad AUX area sampling option: '%s'\n", str);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!sz)
-		sz = itr->default_aux_sample_size;
+	अगर (!sz)
+		sz = itr->शेष_aux_sample_size;
 
-	if (!sz)
+	अगर (!sz)
 		sz = DEFAULT_AUX_SAMPLE_SIZE;
 
 	/* Set aux_sample_size based on --aux-sample option */
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel__is_group_leader(evsel)) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel__is_group_leader(evsel)) अणु
 			has_aux_leader = evsel__is_aux_event(evsel);
-		} else if (has_aux_leader) {
+		पूर्ण अन्यथा अगर (has_aux_leader) अणु
 			evsel->core.attr.aux_sample_size = sz;
-		}
-	}
+		पूर्ण
+	पूर्ण
 no_opt:
-	aux_evsel = NULL;
+	aux_evsel = शून्य;
 	/* Override with aux_sample_size from config term */
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel__is_aux_event(evsel))
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel__is_aux_event(evsel))
 			aux_evsel = evsel;
 		term = evsel__get_config_term(evsel, AUX_SAMPLE_SIZE);
-		if (term) {
+		अगर (term) अणु
 			has_aux_sample_size = true;
 			evsel->core.attr.aux_sample_size = term->val.aux_sample_size;
 			/* If possible, group with the AUX event */
-			if (aux_evsel && evsel->core.attr.aux_sample_size)
+			अगर (aux_evsel && evsel->core.attr.aux_sample_size)
 				evlist__regroup(evlist, aux_evsel, evsel);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!str && !has_aux_sample_size)
-		return 0;
+	अगर (!str && !has_aux_sample_size)
+		वापस 0;
 
-	if (!itr) {
+	अगर (!itr) अणु
 		pr_err("No AUX area event to sample\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return auxtrace_validate_aux_sample_size(evlist, opts);
-}
+	वापस auxtrace_validate_aux_sample_size(evlist, opts);
+पूर्ण
 
-void auxtrace_regroup_aux_output(struct evlist *evlist)
-{
-	struct evsel *evsel, *aux_evsel = NULL;
-	struct evsel_config_term *term;
+व्योम auxtrace_regroup_aux_output(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel, *aux_evsel = शून्य;
+	काष्ठा evsel_config_term *term;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel__is_aux_event(evsel))
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel__is_aux_event(evsel))
 			aux_evsel = evsel;
 		term = evsel__get_config_term(evsel, AUX_OUTPUT);
 		/* If possible, group with the AUX event */
-		if (term && aux_evsel)
+		अगर (term && aux_evsel)
 			evlist__regroup(evlist, aux_evsel, evsel);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct auxtrace_record *__weak
-auxtrace_record__init(struct evlist *evlist __maybe_unused, int *err)
-{
+काष्ठा auxtrace_record *__weak
+auxtrace_record__init(काष्ठा evlist *evlist __maybe_unused, पूर्णांक *err)
+अणु
 	*err = 0;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int auxtrace_index__alloc(struct list_head *head)
-{
-	struct auxtrace_index *auxtrace_index;
+अटल पूर्णांक auxtrace_index__alloc(काष्ठा list_head *head)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
 
-	auxtrace_index = malloc(sizeof(struct auxtrace_index));
-	if (!auxtrace_index)
-		return -ENOMEM;
+	auxtrace_index = दो_स्मृति(माप(काष्ठा auxtrace_index));
+	अगर (!auxtrace_index)
+		वापस -ENOMEM;
 
 	auxtrace_index->nr = 0;
 	INIT_LIST_HEAD(&auxtrace_index->list);
 
 	list_add_tail(&auxtrace_index->list, head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void auxtrace_index__free(struct list_head *head)
-{
-	struct auxtrace_index *auxtrace_index, *n;
+व्योम auxtrace_index__मुक्त(काष्ठा list_head *head)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index, *n;
 
-	list_for_each_entry_safe(auxtrace_index, n, head, list) {
+	list_क्रम_each_entry_safe(auxtrace_index, n, head, list) अणु
 		list_del_init(&auxtrace_index->list);
-		free(auxtrace_index);
-	}
-}
+		मुक्त(auxtrace_index);
+	पूर्ण
+पूर्ण
 
-static struct auxtrace_index *auxtrace_index__last(struct list_head *head)
-{
-	struct auxtrace_index *auxtrace_index;
-	int err;
+अटल काष्ठा auxtrace_index *auxtrace_index__last(काष्ठा list_head *head)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
+	पूर्णांक err;
 
-	if (list_empty(head)) {
+	अगर (list_empty(head)) अणु
 		err = auxtrace_index__alloc(head);
-		if (err)
-			return NULL;
-	}
+		अगर (err)
+			वापस शून्य;
+	पूर्ण
 
-	auxtrace_index = list_entry(head->prev, struct auxtrace_index, list);
+	auxtrace_index = list_entry(head->prev, काष्ठा auxtrace_index, list);
 
-	if (auxtrace_index->nr >= PERF_AUXTRACE_INDEX_ENTRY_COUNT) {
+	अगर (auxtrace_index->nr >= PERF_AUXTRACE_INDEX_ENTRY_COUNT) अणु
 		err = auxtrace_index__alloc(head);
-		if (err)
-			return NULL;
-		auxtrace_index = list_entry(head->prev, struct auxtrace_index,
+		अगर (err)
+			वापस शून्य;
+		auxtrace_index = list_entry(head->prev, काष्ठा auxtrace_index,
 					    list);
-	}
+	पूर्ण
 
-	return auxtrace_index;
-}
+	वापस auxtrace_index;
+पूर्ण
 
-int auxtrace_index__auxtrace_event(struct list_head *head,
-				   union perf_event *event, off_t file_offset)
-{
-	struct auxtrace_index *auxtrace_index;
-	size_t nr;
+पूर्णांक auxtrace_index__auxtrace_event(काष्ठा list_head *head,
+				   जोड़ perf_event *event, off_t file_offset)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
+	माप_प्रकार nr;
 
 	auxtrace_index = auxtrace_index__last(head);
-	if (!auxtrace_index)
-		return -ENOMEM;
+	अगर (!auxtrace_index)
+		वापस -ENOMEM;
 
 	nr = auxtrace_index->nr;
 	auxtrace_index->entries[nr].file_offset = file_offset;
 	auxtrace_index->entries[nr].sz = event->header.size;
 	auxtrace_index->nr += 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int auxtrace_index__do_write(int fd,
-				    struct auxtrace_index *auxtrace_index)
-{
-	struct auxtrace_index_entry ent;
-	size_t i;
+अटल पूर्णांक auxtrace_index__करो_ग_लिखो(पूर्णांक fd,
+				    काष्ठा auxtrace_index *auxtrace_index)
+अणु
+	काष्ठा auxtrace_index_entry ent;
+	माप_प्रकार i;
 
-	for (i = 0; i < auxtrace_index->nr; i++) {
+	क्रम (i = 0; i < auxtrace_index->nr; i++) अणु
 		ent.file_offset = auxtrace_index->entries[i].file_offset;
 		ent.sz = auxtrace_index->entries[i].sz;
-		if (writen(fd, &ent, sizeof(ent)) != sizeof(ent))
-			return -errno;
-	}
-	return 0;
-}
+		अगर (ग_लिखोn(fd, &ent, माप(ent)) != माप(ent))
+			वापस -त्रुटि_सं;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int auxtrace_index__write(int fd, struct list_head *head)
-{
-	struct auxtrace_index *auxtrace_index;
+पूर्णांक auxtrace_index__ग_लिखो(पूर्णांक fd, काष्ठा list_head *head)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
 	u64 total = 0;
-	int err;
+	पूर्णांक err;
 
-	list_for_each_entry(auxtrace_index, head, list)
+	list_क्रम_each_entry(auxtrace_index, head, list)
 		total += auxtrace_index->nr;
 
-	if (writen(fd, &total, sizeof(total)) != sizeof(total))
-		return -errno;
+	अगर (ग_लिखोn(fd, &total, माप(total)) != माप(total))
+		वापस -त्रुटि_सं;
 
-	list_for_each_entry(auxtrace_index, head, list) {
-		err = auxtrace_index__do_write(fd, auxtrace_index);
-		if (err)
-			return err;
-	}
+	list_क्रम_each_entry(auxtrace_index, head, list) अणु
+		err = auxtrace_index__करो_ग_लिखो(fd, auxtrace_index);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int auxtrace_index__process_entry(int fd, struct list_head *head,
+अटल पूर्णांक auxtrace_index__process_entry(पूर्णांक fd, काष्ठा list_head *head,
 					 bool needs_swap)
-{
-	struct auxtrace_index *auxtrace_index;
-	struct auxtrace_index_entry ent;
-	size_t nr;
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
+	काष्ठा auxtrace_index_entry ent;
+	माप_प्रकार nr;
 
-	if (readn(fd, &ent, sizeof(ent)) != sizeof(ent))
-		return -1;
+	अगर (पढ़ोn(fd, &ent, माप(ent)) != माप(ent))
+		वापस -1;
 
 	auxtrace_index = auxtrace_index__last(head);
-	if (!auxtrace_index)
-		return -1;
+	अगर (!auxtrace_index)
+		वापस -1;
 
 	nr = auxtrace_index->nr;
-	if (needs_swap) {
+	अगर (needs_swap) अणु
 		auxtrace_index->entries[nr].file_offset =
 						bswap_64(ent.file_offset);
 		auxtrace_index->entries[nr].sz = bswap_64(ent.sz);
-	} else {
+	पूर्ण अन्यथा अणु
 		auxtrace_index->entries[nr].file_offset = ent.file_offset;
 		auxtrace_index->entries[nr].sz = ent.sz;
-	}
+	पूर्ण
 
 	auxtrace_index->nr = nr + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int auxtrace_index__process(int fd, u64 size, struct perf_session *session,
+पूर्णांक auxtrace_index__process(पूर्णांक fd, u64 size, काष्ठा perf_session *session,
 			    bool needs_swap)
-{
-	struct list_head *head = &session->auxtrace_index;
+अणु
+	काष्ठा list_head *head = &session->auxtrace_index;
 	u64 nr;
 
-	if (readn(fd, &nr, sizeof(u64)) != sizeof(u64))
-		return -1;
+	अगर (पढ़ोn(fd, &nr, माप(u64)) != माप(u64))
+		वापस -1;
 
-	if (needs_swap)
+	अगर (needs_swap)
 		nr = bswap_64(nr);
 
-	if (sizeof(u64) + nr * sizeof(struct auxtrace_index_entry) > size)
-		return -1;
+	अगर (माप(u64) + nr * माप(काष्ठा auxtrace_index_entry) > size)
+		वापस -1;
 
-	while (nr--) {
-		int err;
+	जबतक (nr--) अणु
+		पूर्णांक err;
 
 		err = auxtrace_index__process_entry(fd, head, needs_swap);
-		if (err)
-			return -1;
-	}
+		अगर (err)
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int auxtrace_queues__process_index_entry(struct auxtrace_queues *queues,
-						struct perf_session *session,
-						struct auxtrace_index_entry *ent)
-{
-	return auxtrace_queues__add_indexed_event(queues, session,
+अटल पूर्णांक auxtrace_queues__process_index_entry(काष्ठा auxtrace_queues *queues,
+						काष्ठा perf_session *session,
+						काष्ठा auxtrace_index_entry *ent)
+अणु
+	वापस auxtrace_queues__add_indexed_event(queues, session,
 						  ent->file_offset, ent->sz);
-}
+पूर्ण
 
-int auxtrace_queues__process_index(struct auxtrace_queues *queues,
-				   struct perf_session *session)
-{
-	struct auxtrace_index *auxtrace_index;
-	struct auxtrace_index_entry *ent;
-	size_t i;
-	int err;
+पूर्णांक auxtrace_queues__process_index(काष्ठा auxtrace_queues *queues,
+				   काष्ठा perf_session *session)
+अणु
+	काष्ठा auxtrace_index *auxtrace_index;
+	काष्ठा auxtrace_index_entry *ent;
+	माप_प्रकार i;
+	पूर्णांक err;
 
-	if (auxtrace__dont_decode(session))
-		return 0;
+	अगर (auxtrace__करोnt_decode(session))
+		वापस 0;
 
-	list_for_each_entry(auxtrace_index, &session->auxtrace_index, list) {
-		for (i = 0; i < auxtrace_index->nr; i++) {
+	list_क्रम_each_entry(auxtrace_index, &session->auxtrace_index, list) अणु
+		क्रम (i = 0; i < auxtrace_index->nr; i++) अणु
 			ent = &auxtrace_index->entries[i];
 			err = auxtrace_queues__process_index_entry(queues,
 								   session,
 								   ent);
-			if (err)
-				return err;
-		}
-	}
-	return 0;
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct auxtrace_buffer *auxtrace_buffer__next(struct auxtrace_queue *queue,
-					      struct auxtrace_buffer *buffer)
-{
-	if (buffer) {
-		if (list_is_last(&buffer->list, &queue->head))
-			return NULL;
-		return list_entry(buffer->list.next, struct auxtrace_buffer,
+काष्ठा auxtrace_buffer *auxtrace_buffer__next(काष्ठा auxtrace_queue *queue,
+					      काष्ठा auxtrace_buffer *buffer)
+अणु
+	अगर (buffer) अणु
+		अगर (list_is_last(&buffer->list, &queue->head))
+			वापस शून्य;
+		वापस list_entry(buffer->list.next, काष्ठा auxtrace_buffer,
 				  list);
-	} else {
-		if (list_empty(&queue->head))
-			return NULL;
-		return list_entry(queue->head.next, struct auxtrace_buffer,
+	पूर्ण अन्यथा अणु
+		अगर (list_empty(&queue->head))
+			वापस शून्य;
+		वापस list_entry(queue->head.next, काष्ठा auxtrace_buffer,
 				  list);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct auxtrace_queue *auxtrace_queues__sample_queue(struct auxtrace_queues *queues,
-						     struct perf_sample *sample,
-						     struct perf_session *session)
-{
-	struct perf_sample_id *sid;
-	unsigned int idx;
+काष्ठा auxtrace_queue *auxtrace_queues__sample_queue(काष्ठा auxtrace_queues *queues,
+						     काष्ठा perf_sample *sample,
+						     काष्ठा perf_session *session)
+अणु
+	काष्ठा perf_sample_id *sid;
+	अचिन्हित पूर्णांक idx;
 	u64 id;
 
 	id = sample->id;
-	if (!id)
-		return NULL;
+	अगर (!id)
+		वापस शून्य;
 
 	sid = evlist__id2sid(session->evlist, id);
-	if (!sid)
-		return NULL;
+	अगर (!sid)
+		वापस शून्य;
 
 	idx = sid->idx;
 
-	if (idx >= queues->nr_queues)
-		return NULL;
+	अगर (idx >= queues->nr_queues)
+		वापस शून्य;
 
-	return &queues->queue_array[idx];
-}
+	वापस &queues->queue_array[idx];
+पूर्ण
 
-int auxtrace_queues__add_sample(struct auxtrace_queues *queues,
-				struct perf_session *session,
-				struct perf_sample *sample, u64 data_offset,
+पूर्णांक auxtrace_queues__add_sample(काष्ठा auxtrace_queues *queues,
+				काष्ठा perf_session *session,
+				काष्ठा perf_sample *sample, u64 data_offset,
 				u64 reference)
-{
-	struct auxtrace_buffer buffer = {
+अणु
+	काष्ठा auxtrace_buffer buffer = अणु
 		.pid = -1,
 		.data_offset = data_offset,
 		.reference = reference,
 		.size = sample->aux_sample.size,
-	};
-	struct perf_sample_id *sid;
+	पूर्ण;
+	काष्ठा perf_sample_id *sid;
 	u64 id = sample->id;
-	unsigned int idx;
+	अचिन्हित पूर्णांक idx;
 
-	if (!id)
-		return -EINVAL;
+	अगर (!id)
+		वापस -EINVAL;
 
 	sid = evlist__id2sid(session->evlist, id);
-	if (!sid)
-		return -ENOENT;
+	अगर (!sid)
+		वापस -ENOENT;
 
 	idx = sid->idx;
 	buffer.tid = sid->tid;
 	buffer.cpu = sid->cpu;
 
-	return auxtrace_queues__add_buffer(queues, session, idx, &buffer, NULL);
-}
+	वापस auxtrace_queues__add_buffer(queues, session, idx, &buffer, शून्य);
+पूर्ण
 
-struct queue_data {
+काष्ठा queue_data अणु
 	bool samples;
 	bool events;
-};
+पूर्ण;
 
-static int auxtrace_queue_data_cb(struct perf_session *session,
-				  union perf_event *event, u64 offset,
-				  void *data)
-{
-	struct queue_data *qd = data;
-	struct perf_sample sample;
-	int err;
+अटल पूर्णांक auxtrace_queue_data_cb(काष्ठा perf_session *session,
+				  जोड़ perf_event *event, u64 offset,
+				  व्योम *data)
+अणु
+	काष्ठा queue_data *qd = data;
+	काष्ठा perf_sample sample;
+	पूर्णांक err;
 
-	if (qd->events && event->header.type == PERF_RECORD_AUXTRACE) {
-		if (event->header.size < sizeof(struct perf_record_auxtrace))
-			return -EINVAL;
+	अगर (qd->events && event->header.type == PERF_RECORD_AUXTRACE) अणु
+		अगर (event->header.size < माप(काष्ठा perf_record_auxtrace))
+			वापस -EINVAL;
 		offset += event->header.size;
-		return session->auxtrace->queue_data(session, NULL, event,
+		वापस session->auxtrace->queue_data(session, शून्य, event,
 						     offset);
-	}
+	पूर्ण
 
-	if (!qd->samples || event->header.type != PERF_RECORD_SAMPLE)
-		return 0;
+	अगर (!qd->samples || event->header.type != PERF_RECORD_SAMPLE)
+		वापस 0;
 
 	err = evlist__parse_sample(session->evlist, event, &sample);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!sample.aux_sample.size)
-		return 0;
+	अगर (!sample.aux_sample.size)
+		वापस 0;
 
-	offset += sample.aux_sample.data - (void *)event;
+	offset += sample.aux_sample.data - (व्योम *)event;
 
-	return session->auxtrace->queue_data(session, &sample, NULL, offset);
-}
+	वापस session->auxtrace->queue_data(session, &sample, शून्य, offset);
+पूर्ण
 
-int auxtrace_queue_data(struct perf_session *session, bool samples, bool events)
-{
-	struct queue_data qd = {
+पूर्णांक auxtrace_queue_data(काष्ठा perf_session *session, bool samples, bool events)
+अणु
+	काष्ठा queue_data qd = अणु
 		.samples = samples,
 		.events = events,
-	};
+	पूर्ण;
 
-	if (auxtrace__dont_decode(session))
-		return 0;
+	अगर (auxtrace__करोnt_decode(session))
+		वापस 0;
 
-	if (!session->auxtrace || !session->auxtrace->queue_data)
-		return -EINVAL;
+	अगर (!session->auxtrace || !session->auxtrace->queue_data)
+		वापस -EINVAL;
 
-	return perf_session__peek_events(session, session->header.data_offset,
+	वापस perf_session__peek_events(session, session->header.data_offset,
 					 session->header.data_size,
 					 auxtrace_queue_data_cb, &qd);
-}
+पूर्ण
 
-void *auxtrace_buffer__get_data(struct auxtrace_buffer *buffer, int fd)
-{
-	size_t adj = buffer->data_offset & (page_size - 1);
-	size_t size = buffer->size + adj;
+व्योम *auxtrace_buffer__get_data(काष्ठा auxtrace_buffer *buffer, पूर्णांक fd)
+अणु
+	माप_प्रकार adj = buffer->data_offset & (page_size - 1);
+	माप_प्रकार size = buffer->size + adj;
 	off_t file_offset = buffer->data_offset - adj;
-	void *addr;
+	व्योम *addr;
 
-	if (buffer->data)
-		return buffer->data;
+	अगर (buffer->data)
+		वापस buffer->data;
 
-	addr = mmap(NULL, size, PROT_READ, MAP_SHARED, fd, file_offset);
-	if (addr == MAP_FAILED)
-		return NULL;
+	addr = mmap(शून्य, size, PROT_READ, MAP_SHARED, fd, file_offset);
+	अगर (addr == MAP_FAILED)
+		वापस शून्य;
 
 	buffer->mmap_addr = addr;
 	buffer->mmap_size = size;
 
 	buffer->data = addr + adj;
 
-	return buffer->data;
-}
+	वापस buffer->data;
+पूर्ण
 
-void auxtrace_buffer__put_data(struct auxtrace_buffer *buffer)
-{
-	if (!buffer->data || !buffer->mmap_addr)
-		return;
+व्योम auxtrace_buffer__put_data(काष्ठा auxtrace_buffer *buffer)
+अणु
+	अगर (!buffer->data || !buffer->mmap_addr)
+		वापस;
 	munmap(buffer->mmap_addr, buffer->mmap_size);
-	buffer->mmap_addr = NULL;
+	buffer->mmap_addr = शून्य;
 	buffer->mmap_size = 0;
-	buffer->data = NULL;
-	buffer->use_data = NULL;
-}
+	buffer->data = शून्य;
+	buffer->use_data = शून्य;
+पूर्ण
 
-void auxtrace_buffer__drop_data(struct auxtrace_buffer *buffer)
-{
+व्योम auxtrace_buffer__drop_data(काष्ठा auxtrace_buffer *buffer)
+अणु
 	auxtrace_buffer__put_data(buffer);
-	if (buffer->data_needs_freeing) {
-		buffer->data_needs_freeing = false;
-		zfree(&buffer->data);
-		buffer->use_data = NULL;
+	अगर (buffer->data_needs_मुक्तing) अणु
+		buffer->data_needs_मुक्तing = false;
+		zमुक्त(&buffer->data);
+		buffer->use_data = शून्य;
 		buffer->size = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void auxtrace_buffer__free(struct auxtrace_buffer *buffer)
-{
+व्योम auxtrace_buffer__मुक्त(काष्ठा auxtrace_buffer *buffer)
+अणु
 	auxtrace_buffer__drop_data(buffer);
-	free(buffer);
-}
+	मुक्त(buffer);
+पूर्ण
 
-void auxtrace_synth_error(struct perf_record_auxtrace_error *auxtrace_error, int type,
-			  int code, int cpu, pid_t pid, pid_t tid, u64 ip,
-			  const char *msg, u64 timestamp)
-{
-	size_t size;
+व्योम auxtrace_synth_error(काष्ठा perf_record_auxtrace_error *auxtrace_error, पूर्णांक type,
+			  पूर्णांक code, पूर्णांक cpu, pid_t pid, pid_t tid, u64 ip,
+			  स्थिर अक्षर *msg, u64 बारtamp)
+अणु
+	माप_प्रकार size;
 
-	memset(auxtrace_error, 0, sizeof(struct perf_record_auxtrace_error));
+	स_रखो(auxtrace_error, 0, माप(काष्ठा perf_record_auxtrace_error));
 
 	auxtrace_error->header.type = PERF_RECORD_AUXTRACE_ERROR;
 	auxtrace_error->type = type;
@@ -1186,155 +1187,155 @@ void auxtrace_synth_error(struct perf_record_auxtrace_error *auxtrace_error, int
 	auxtrace_error->tid = tid;
 	auxtrace_error->fmt = 1;
 	auxtrace_error->ip = ip;
-	auxtrace_error->time = timestamp;
+	auxtrace_error->समय = बारtamp;
 	strlcpy(auxtrace_error->msg, msg, MAX_AUXTRACE_ERROR_MSG);
 
-	size = (void *)auxtrace_error->msg - (void *)auxtrace_error +
-	       strlen(auxtrace_error->msg) + 1;
-	auxtrace_error->header.size = PERF_ALIGN(size, sizeof(u64));
-}
+	size = (व्योम *)auxtrace_error->msg - (व्योम *)auxtrace_error +
+	       म_माप(auxtrace_error->msg) + 1;
+	auxtrace_error->header.size = PERF_ALIGN(size, माप(u64));
+पूर्ण
 
-int perf_event__synthesize_auxtrace_info(struct auxtrace_record *itr,
-					 struct perf_tool *tool,
-					 struct perf_session *session,
+पूर्णांक perf_event__synthesize_auxtrace_info(काष्ठा auxtrace_record *itr,
+					 काष्ठा perf_tool *tool,
+					 काष्ठा perf_session *session,
 					 perf_event__handler_t process)
-{
-	union perf_event *ev;
-	size_t priv_size;
-	int err;
+अणु
+	जोड़ perf_event *ev;
+	माप_प्रकार priv_size;
+	पूर्णांक err;
 
 	pr_debug2("Synthesizing auxtrace information\n");
 	priv_size = auxtrace_record__info_priv_size(itr, session->evlist);
-	ev = zalloc(sizeof(struct perf_record_auxtrace_info) + priv_size);
-	if (!ev)
-		return -ENOMEM;
+	ev = zalloc(माप(काष्ठा perf_record_auxtrace_info) + priv_size);
+	अगर (!ev)
+		वापस -ENOMEM;
 
 	ev->auxtrace_info.header.type = PERF_RECORD_AUXTRACE_INFO;
-	ev->auxtrace_info.header.size = sizeof(struct perf_record_auxtrace_info) +
+	ev->auxtrace_info.header.size = माप(काष्ठा perf_record_auxtrace_info) +
 					priv_size;
 	err = auxtrace_record__info_fill(itr, session, &ev->auxtrace_info,
 					 priv_size);
-	if (err)
-		goto out_free;
+	अगर (err)
+		जाओ out_मुक्त;
 
-	err = process(tool, ev, NULL, NULL);
-out_free:
-	free(ev);
-	return err;
-}
+	err = process(tool, ev, शून्य, शून्य);
+out_मुक्त:
+	मुक्त(ev);
+	वापस err;
+पूर्ण
 
-static void unleader_evsel(struct evlist *evlist, struct evsel *leader)
-{
-	struct evsel *new_leader = NULL;
-	struct evsel *evsel;
+अटल व्योम unleader_evsel(काष्ठा evlist *evlist, काष्ठा evsel *leader)
+अणु
+	काष्ठा evsel *new_leader = शून्य;
+	काष्ठा evsel *evsel;
 
-	/* Find new leader for the group */
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->leader != leader || evsel == leader)
-			continue;
-		if (!new_leader)
+	/* Find new leader क्रम the group */
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->leader != leader || evsel == leader)
+			जारी;
+		अगर (!new_leader)
 			new_leader = evsel;
 		evsel->leader = new_leader;
-	}
+	पूर्ण
 
-	/* Update group information */
-	if (new_leader) {
-		zfree(&new_leader->group_name);
+	/* Update group inक्रमmation */
+	अगर (new_leader) अणु
+		zमुक्त(&new_leader->group_name);
 		new_leader->group_name = leader->group_name;
-		leader->group_name = NULL;
+		leader->group_name = शून्य;
 
 		new_leader->core.nr_members = leader->core.nr_members - 1;
 		leader->core.nr_members = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void unleader_auxtrace(struct perf_session *session)
-{
-	struct evsel *evsel;
+अटल व्योम unleader_auxtrace(काष्ठा perf_session *session)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(session->evlist, evsel) {
-		if (auxtrace__evsel_is_auxtrace(session, evsel) &&
-		    evsel__is_group_leader(evsel)) {
+	evlist__क्रम_each_entry(session->evlist, evsel) अणु
+		अगर (auxtrace__evsel_is_auxtrace(session, evsel) &&
+		    evsel__is_group_leader(evsel)) अणु
 			unleader_evsel(session->evlist, evsel);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int perf_event__process_auxtrace_info(struct perf_session *session,
-				      union perf_event *event)
-{
-	enum auxtrace_type type = event->auxtrace_info.type;
-	int err;
+पूर्णांक perf_event__process_auxtrace_info(काष्ठा perf_session *session,
+				      जोड़ perf_event *event)
+अणु
+	क्रमागत auxtrace_type type = event->auxtrace_info.type;
+	पूर्णांक err;
 
-	if (dump_trace)
-		fprintf(stdout, " type: %u\n", type);
+	अगर (dump_trace)
+		ख_लिखो(मानक_निकास, " type: %u\n", type);
 
-	switch (type) {
-	case PERF_AUXTRACE_INTEL_PT:
-		err = intel_pt_process_auxtrace_info(event, session);
-		break;
-	case PERF_AUXTRACE_INTEL_BTS:
-		err = intel_bts_process_auxtrace_info(event, session);
-		break;
-	case PERF_AUXTRACE_ARM_SPE:
+	चयन (type) अणु
+	हाल PERF_AUXTRACE_INTEL_PT:
+		err = पूर्णांकel_pt_process_auxtrace_info(event, session);
+		अवरोध;
+	हाल PERF_AUXTRACE_INTEL_BTS:
+		err = पूर्णांकel_bts_process_auxtrace_info(event, session);
+		अवरोध;
+	हाल PERF_AUXTRACE_ARM_SPE:
 		err = arm_spe_process_auxtrace_info(event, session);
-		break;
-	case PERF_AUXTRACE_CS_ETM:
-		err = cs_etm__process_auxtrace_info(event, session);
-		break;
-	case PERF_AUXTRACE_S390_CPUMSF:
+		अवरोध;
+	हाल PERF_AUXTRACE_CS_ETM:
+		err = cs_eपंचांग__process_auxtrace_info(event, session);
+		अवरोध;
+	हाल PERF_AUXTRACE_S390_CPUMSF:
 		err = s390_cpumsf_process_auxtrace_info(event, session);
-		break;
-	case PERF_AUXTRACE_UNKNOWN:
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल PERF_AUXTRACE_UNKNOWN:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	unleader_auxtrace(session);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-s64 perf_event__process_auxtrace(struct perf_session *session,
-				 union perf_event *event)
-{
+s64 perf_event__process_auxtrace(काष्ठा perf_session *session,
+				 जोड़ perf_event *event)
+अणु
 	s64 err;
 
-	if (dump_trace)
-		fprintf(stdout, " size: %#"PRI_lx64"  offset: %#"PRI_lx64"  ref: %#"PRI_lx64"  idx: %u  tid: %d  cpu: %d\n",
+	अगर (dump_trace)
+		ख_लिखो(मानक_निकास, " size: %#"PRI_lx64"  offset: %#"PRI_lx64"  ref: %#"PRI_lx64"  idx: %u  tid: %d  cpu: %d\n",
 			event->auxtrace.size, event->auxtrace.offset,
 			event->auxtrace.reference, event->auxtrace.idx,
 			event->auxtrace.tid, event->auxtrace.cpu);
 
-	if (auxtrace__dont_decode(session))
-		return event->auxtrace.size;
+	अगर (auxtrace__करोnt_decode(session))
+		वापस event->auxtrace.size;
 
-	if (!session->auxtrace || event->header.type != PERF_RECORD_AUXTRACE)
-		return -EINVAL;
+	अगर (!session->auxtrace || event->header.type != PERF_RECORD_AUXTRACE)
+		वापस -EINVAL;
 
 	err = session->auxtrace->process_auxtrace_event(session, event, session->tool);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return event->auxtrace.size;
-}
+	वापस event->auxtrace.size;
+पूर्ण
 
-#define PERF_ITRACE_DEFAULT_PERIOD_TYPE		PERF_ITRACE_PERIOD_NANOSECS
-#define PERF_ITRACE_DEFAULT_PERIOD		100000
-#define PERF_ITRACE_DEFAULT_CALLCHAIN_SZ	16
-#define PERF_ITRACE_MAX_CALLCHAIN_SZ		1024
-#define PERF_ITRACE_DEFAULT_LAST_BRANCH_SZ	64
-#define PERF_ITRACE_MAX_LAST_BRANCH_SZ		1024
+#घोषणा PERF_ITRACE_DEFAULT_PERIOD_TYPE		PERF_ITRACE_PERIOD_न_अंकOSECS
+#घोषणा PERF_ITRACE_DEFAULT_PERIOD		100000
+#घोषणा PERF_ITRACE_DEFAULT_CALLCHAIN_SZ	16
+#घोषणा PERF_ITRACE_MAX_CALLCHAIN_SZ		1024
+#घोषणा PERF_ITRACE_DEFAULT_LAST_BRANCH_SZ	64
+#घोषणा PERF_ITRACE_MAX_LAST_BRANCH_SZ		1024
 
-void itrace_synth_opts__set_default(struct itrace_synth_opts *synth_opts,
+व्योम itrace_synth_opts__set_शेष(काष्ठा itrace_synth_opts *synth_opts,
 				    bool no_sample)
-{
+अणु
 	synth_opts->branches = true;
 	synth_opts->transactions = true;
-	synth_opts->ptwrites = true;
+	synth_opts->ptग_लिखोs = true;
 	synth_opts->pwr_events = true;
 	synth_opts->other_events = true;
 	synth_opts->errors = true;
@@ -1344,413 +1345,413 @@ void itrace_synth_opts__set_default(struct itrace_synth_opts *synth_opts,
 	synth_opts->mem = true;
 	synth_opts->remote_access = true;
 
-	if (no_sample) {
+	अगर (no_sample) अणु
 		synth_opts->period_type = PERF_ITRACE_PERIOD_INSTRUCTIONS;
 		synth_opts->period = 1;
 		synth_opts->calls = true;
-	} else {
-		synth_opts->instructions = true;
+	पूर्ण अन्यथा अणु
+		synth_opts->inकाष्ठाions = true;
 		synth_opts->period_type = PERF_ITRACE_DEFAULT_PERIOD_TYPE;
 		synth_opts->period = PERF_ITRACE_DEFAULT_PERIOD;
-	}
+	पूर्ण
 	synth_opts->callchain_sz = PERF_ITRACE_DEFAULT_CALLCHAIN_SZ;
 	synth_opts->last_branch_sz = PERF_ITRACE_DEFAULT_LAST_BRANCH_SZ;
 	synth_opts->initial_skip = 0;
-}
+पूर्ण
 
-static int get_flag(const char **ptr, unsigned int *flags)
-{
-	while (1) {
-		char c = **ptr;
+अटल पूर्णांक get_flag(स्थिर अक्षर **ptr, अचिन्हित पूर्णांक *flags)
+अणु
+	जबतक (1) अणु
+		अक्षर c = **ptr;
 
-		if (c >= 'a' && c <= 'z') {
+		अगर (c >= 'a' && c <= 'z') अणु
 			*flags |= 1 << (c - 'a');
 			++*ptr;
-			return 0;
-		} else if (c == ' ') {
+			वापस 0;
+		पूर्ण अन्यथा अगर (c == ' ') अणु
 			++*ptr;
-			continue;
-		} else {
-			return -1;
-		}
-	}
-}
+			जारी;
+		पूर्ण अन्यथा अणु
+			वापस -1;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int get_flags(const char **ptr, unsigned int *plus_flags, unsigned int *minus_flags)
-{
-	while (1) {
-		switch (**ptr) {
-		case '+':
+अटल पूर्णांक get_flags(स्थिर अक्षर **ptr, अचिन्हित पूर्णांक *plus_flags, अचिन्हित पूर्णांक *minus_flags)
+अणु
+	जबतक (1) अणु
+		चयन (**ptr) अणु
+		हाल '+':
 			++*ptr;
-			if (get_flag(ptr, plus_flags))
-				return -1;
-			break;
-		case '-':
+			अगर (get_flag(ptr, plus_flags))
+				वापस -1;
+			अवरोध;
+		हाल '-':
 			++*ptr;
-			if (get_flag(ptr, minus_flags))
-				return -1;
-			break;
-		case ' ':
+			अगर (get_flag(ptr, minus_flags))
+				वापस -1;
+			अवरोध;
+		हाल ' ':
 			++*ptr;
-			break;
-		default:
-			return 0;
-		}
-	}
-}
+			अवरोध;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Please check tools/perf/Documentation/perf-script.txt for information
- * about the options parsed here, which is introduced after this cset,
- * when support in 'perf script' for these options is introduced.
+ * Please check tools/perf/Documentation/perf-script.txt क्रम inक्रमmation
+ * about the options parsed here, which is पूर्णांकroduced after this cset,
+ * when support in 'perf script' क्रम these options is पूर्णांकroduced.
  */
-int itrace_parse_synth_opts(const struct option *opt, const char *str,
-			    int unset)
-{
-	struct itrace_synth_opts *synth_opts = opt->value;
-	const char *p;
-	char *endptr;
+पूर्णांक itrace_parse_synth_opts(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
+			    पूर्णांक unset)
+अणु
+	काष्ठा itrace_synth_opts *synth_opts = opt->value;
+	स्थिर अक्षर *p;
+	अक्षर *endptr;
 	bool period_type_set = false;
 	bool period_set = false;
 
 	synth_opts->set = true;
 
-	if (unset) {
-		synth_opts->dont_decode = true;
-		return 0;
-	}
+	अगर (unset) अणु
+		synth_opts->करोnt_decode = true;
+		वापस 0;
+	पूर्ण
 
-	if (!str) {
-		itrace_synth_opts__set_default(synth_opts,
-					       synth_opts->default_no_sample);
-		return 0;
-	}
+	अगर (!str) अणु
+		itrace_synth_opts__set_शेष(synth_opts,
+					       synth_opts->शेष_no_sample);
+		वापस 0;
+	पूर्ण
 
-	for (p = str; *p;) {
-		switch (*p++) {
-		case 'i':
-			synth_opts->instructions = true;
-			while (*p == ' ' || *p == ',')
+	क्रम (p = str; *p;) अणु
+		चयन (*p++) अणु
+		हाल 'i':
+			synth_opts->inकाष्ठाions = true;
+			जबतक (*p == ' ' || *p == ',')
 				p += 1;
-			if (isdigit(*p)) {
-				synth_opts->period = strtoull(p, &endptr, 10);
+			अगर (है_अंक(*p)) अणु
+				synth_opts->period = म_से_अदीर्घl(p, &endptr, 10);
 				period_set = true;
 				p = endptr;
-				while (*p == ' ' || *p == ',')
+				जबतक (*p == ' ' || *p == ',')
 					p += 1;
-				switch (*p++) {
-				case 'i':
+				चयन (*p++) अणु
+				हाल 'i':
 					synth_opts->period_type =
 						PERF_ITRACE_PERIOD_INSTRUCTIONS;
 					period_type_set = true;
-					break;
-				case 't':
+					अवरोध;
+				हाल 't':
 					synth_opts->period_type =
 						PERF_ITRACE_PERIOD_TICKS;
 					period_type_set = true;
-					break;
-				case 'm':
+					अवरोध;
+				हाल 'm':
 					synth_opts->period *= 1000;
 					/* Fall through */
-				case 'u':
+				हाल 'u':
 					synth_opts->period *= 1000;
 					/* Fall through */
-				case 'n':
-					if (*p++ != 's')
-						goto out_err;
+				हाल 'n':
+					अगर (*p++ != 's')
+						जाओ out_err;
 					synth_opts->period_type =
-						PERF_ITRACE_PERIOD_NANOSECS;
+						PERF_ITRACE_PERIOD_न_अंकOSECS;
 					period_type_set = true;
-					break;
-				case '\0':
-					goto out;
-				default:
-					goto out_err;
-				}
-			}
-			break;
-		case 'b':
+					अवरोध;
+				हाल '\0':
+					जाओ out;
+				शेष:
+					जाओ out_err;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल 'b':
 			synth_opts->branches = true;
-			break;
-		case 'x':
+			अवरोध;
+		हाल 'x':
 			synth_opts->transactions = true;
-			break;
-		case 'w':
-			synth_opts->ptwrites = true;
-			break;
-		case 'p':
+			अवरोध;
+		हाल 'w':
+			synth_opts->ptग_लिखोs = true;
+			अवरोध;
+		हाल 'p':
 			synth_opts->pwr_events = true;
-			break;
-		case 'o':
+			अवरोध;
+		हाल 'o':
 			synth_opts->other_events = true;
-			break;
-		case 'e':
+			अवरोध;
+		हाल 'e':
 			synth_opts->errors = true;
-			if (get_flags(&p, &synth_opts->error_plus_flags,
+			अगर (get_flags(&p, &synth_opts->error_plus_flags,
 				      &synth_opts->error_minus_flags))
-				goto out_err;
-			break;
-		case 'd':
+				जाओ out_err;
+			अवरोध;
+		हाल 'd':
 			synth_opts->log = true;
-			if (get_flags(&p, &synth_opts->log_plus_flags,
+			अगर (get_flags(&p, &synth_opts->log_plus_flags,
 				      &synth_opts->log_minus_flags))
-				goto out_err;
-			break;
-		case 'c':
+				जाओ out_err;
+			अवरोध;
+		हाल 'c':
 			synth_opts->branches = true;
 			synth_opts->calls = true;
-			break;
-		case 'r':
+			अवरोध;
+		हाल 'r':
 			synth_opts->branches = true;
-			synth_opts->returns = true;
-			break;
-		case 'G':
-		case 'g':
-			if (p[-1] == 'G')
+			synth_opts->वापसs = true;
+			अवरोध;
+		हाल 'G':
+		हाल 'g':
+			अगर (p[-1] == 'G')
 				synth_opts->add_callchain = true;
-			else
+			अन्यथा
 				synth_opts->callchain = true;
 			synth_opts->callchain_sz =
 					PERF_ITRACE_DEFAULT_CALLCHAIN_SZ;
-			while (*p == ' ' || *p == ',')
+			जबतक (*p == ' ' || *p == ',')
 				p += 1;
-			if (isdigit(*p)) {
-				unsigned int val;
+			अगर (है_अंक(*p)) अणु
+				अचिन्हित पूर्णांक val;
 
-				val = strtoul(p, &endptr, 10);
+				val = म_से_अदीर्घ(p, &endptr, 10);
 				p = endptr;
-				if (!val || val > PERF_ITRACE_MAX_CALLCHAIN_SZ)
-					goto out_err;
+				अगर (!val || val > PERF_ITRACE_MAX_CALLCHAIN_SZ)
+					जाओ out_err;
 				synth_opts->callchain_sz = val;
-			}
-			break;
-		case 'L':
-		case 'l':
-			if (p[-1] == 'L')
+			पूर्ण
+			अवरोध;
+		हाल 'L':
+		हाल 'l':
+			अगर (p[-1] == 'L')
 				synth_opts->add_last_branch = true;
-			else
+			अन्यथा
 				synth_opts->last_branch = true;
 			synth_opts->last_branch_sz =
 					PERF_ITRACE_DEFAULT_LAST_BRANCH_SZ;
-			while (*p == ' ' || *p == ',')
+			जबतक (*p == ' ' || *p == ',')
 				p += 1;
-			if (isdigit(*p)) {
-				unsigned int val;
+			अगर (है_अंक(*p)) अणु
+				अचिन्हित पूर्णांक val;
 
-				val = strtoul(p, &endptr, 10);
+				val = म_से_अदीर्घ(p, &endptr, 10);
 				p = endptr;
-				if (!val ||
+				अगर (!val ||
 				    val > PERF_ITRACE_MAX_LAST_BRANCH_SZ)
-					goto out_err;
+					जाओ out_err;
 				synth_opts->last_branch_sz = val;
-			}
-			break;
-		case 's':
-			synth_opts->initial_skip = strtoul(p, &endptr, 10);
-			if (p == endptr)
-				goto out_err;
+			पूर्ण
+			अवरोध;
+		हाल 's':
+			synth_opts->initial_skip = म_से_अदीर्घ(p, &endptr, 10);
+			अगर (p == endptr)
+				जाओ out_err;
 			p = endptr;
-			break;
-		case 'f':
+			अवरोध;
+		हाल 'f':
 			synth_opts->flc = true;
-			break;
-		case 'm':
+			अवरोध;
+		हाल 'm':
 			synth_opts->llc = true;
-			break;
-		case 't':
+			अवरोध;
+		हाल 't':
 			synth_opts->tlb = true;
-			break;
-		case 'a':
+			अवरोध;
+		हाल 'a':
 			synth_opts->remote_access = true;
-			break;
-		case 'M':
+			अवरोध;
+		हाल 'M':
 			synth_opts->mem = true;
-			break;
-		case 'q':
+			अवरोध;
+		हाल 'q':
 			synth_opts->quick += 1;
-			break;
-		case ' ':
-		case ',':
-			break;
-		default:
-			goto out_err;
-		}
-	}
+			अवरोध;
+		हाल ' ':
+		हाल ',':
+			अवरोध;
+		शेष:
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 out:
-	if (synth_opts->instructions) {
-		if (!period_type_set)
+	अगर (synth_opts->inकाष्ठाions) अणु
+		अगर (!period_type_set)
 			synth_opts->period_type =
 					PERF_ITRACE_DEFAULT_PERIOD_TYPE;
-		if (!period_set)
+		अगर (!period_set)
 			synth_opts->period = PERF_ITRACE_DEFAULT_PERIOD;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_err:
 	pr_err("Bad Instruction Tracing options '%s'\n", str);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const char * const auxtrace_error_type_name[] = {
+अटल स्थिर अक्षर * स्थिर auxtrace_error_type_name[] = अणु
 	[PERF_AUXTRACE_ERROR_ITRACE] = "instruction trace",
-};
+पूर्ण;
 
-static const char *auxtrace_error_name(int type)
-{
-	const char *error_type_name = NULL;
+अटल स्थिर अक्षर *auxtrace_error_name(पूर्णांक type)
+अणु
+	स्थिर अक्षर *error_type_name = शून्य;
 
-	if (type < PERF_AUXTRACE_ERROR_MAX)
+	अगर (type < PERF_AUXTRACE_ERROR_MAX)
 		error_type_name = auxtrace_error_type_name[type];
-	if (!error_type_name)
+	अगर (!error_type_name)
 		error_type_name = "unknown AUX";
-	return error_type_name;
-}
+	वापस error_type_name;
+पूर्ण
 
-size_t perf_event__fprintf_auxtrace_error(union perf_event *event, FILE *fp)
-{
-	struct perf_record_auxtrace_error *e = &event->auxtrace_error;
-	unsigned long long nsecs = e->time;
-	const char *msg = e->msg;
-	int ret;
+माप_प्रकार perf_event__ख_लिखो_auxtrace_error(जोड़ perf_event *event, खाता *fp)
+अणु
+	काष्ठा perf_record_auxtrace_error *e = &event->auxtrace_error;
+	अचिन्हित दीर्घ दीर्घ nsecs = e->समय;
+	स्थिर अक्षर *msg = e->msg;
+	पूर्णांक ret;
 
-	ret = fprintf(fp, " %s error type %u",
+	ret = ख_लिखो(fp, " %s error type %u",
 		      auxtrace_error_name(e->type), e->type);
 
-	if (e->fmt && nsecs) {
-		unsigned long secs = nsecs / NSEC_PER_SEC;
+	अगर (e->fmt && nsecs) अणु
+		अचिन्हित दीर्घ secs = nsecs / NSEC_PER_SEC;
 
 		nsecs -= secs * NSEC_PER_SEC;
-		ret += fprintf(fp, " time %lu.%09llu", secs, nsecs);
-	} else {
-		ret += fprintf(fp, " time 0");
-	}
+		ret += ख_लिखो(fp, " time %lu.%09llu", secs, nsecs);
+	पूर्ण अन्यथा अणु
+		ret += ख_लिखो(fp, " time 0");
+	पूर्ण
 
-	if (!e->fmt)
-		msg = (const char *)&e->time;
+	अगर (!e->fmt)
+		msg = (स्थिर अक्षर *)&e->समय;
 
-	ret += fprintf(fp, " cpu %d pid %d tid %d ip %#"PRI_lx64" code %u: %s\n",
+	ret += ख_लिखो(fp, " cpu %d pid %d tid %d ip %#"PRI_lx64" code %u: %s\n",
 		       e->cpu, e->pid, e->tid, e->ip, e->code, msg);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void perf_session__auxtrace_error_inc(struct perf_session *session,
-				      union perf_event *event)
-{
-	struct perf_record_auxtrace_error *e = &event->auxtrace_error;
+व्योम perf_session__auxtrace_error_inc(काष्ठा perf_session *session,
+				      जोड़ perf_event *event)
+अणु
+	काष्ठा perf_record_auxtrace_error *e = &event->auxtrace_error;
 
-	if (e->type < PERF_AUXTRACE_ERROR_MAX)
+	अगर (e->type < PERF_AUXTRACE_ERROR_MAX)
 		session->evlist->stats.nr_auxtrace_errors[e->type] += 1;
-}
+पूर्ण
 
-void events_stats__auxtrace_error_warn(const struct events_stats *stats)
-{
-	int i;
+व्योम events_stats__auxtrace_error_warn(स्थिर काष्ठा events_stats *stats)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PERF_AUXTRACE_ERROR_MAX; i++) {
-		if (!stats->nr_auxtrace_errors[i])
-			continue;
+	क्रम (i = 0; i < PERF_AUXTRACE_ERROR_MAX; i++) अणु
+		अगर (!stats->nr_auxtrace_errors[i])
+			जारी;
 		ui__warning("%u %s errors\n",
 			    stats->nr_auxtrace_errors[i],
 			    auxtrace_error_name(i));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int perf_event__process_auxtrace_error(struct perf_session *session,
-				       union perf_event *event)
-{
-	if (auxtrace__dont_decode(session))
-		return 0;
+पूर्णांक perf_event__process_auxtrace_error(काष्ठा perf_session *session,
+				       जोड़ perf_event *event)
+अणु
+	अगर (auxtrace__करोnt_decode(session))
+		वापस 0;
 
-	perf_event__fprintf_auxtrace_error(event, stdout);
-	return 0;
-}
+	perf_event__ख_लिखो_auxtrace_error(event, मानक_निकास);
+	वापस 0;
+पूर्ण
 
-static int __auxtrace_mmap__read(struct mmap *map,
-				 struct auxtrace_record *itr,
-				 struct perf_tool *tool, process_auxtrace_t fn,
-				 bool snapshot, size_t snapshot_size)
-{
-	struct auxtrace_mmap *mm = &map->auxtrace_mmap;
+अटल पूर्णांक __auxtrace_mmap__पढ़ो(काष्ठा mmap *map,
+				 काष्ठा auxtrace_record *itr,
+				 काष्ठा perf_tool *tool, process_auxtrace_t fn,
+				 bool snapshot, माप_प्रकार snapshot_size)
+अणु
+	काष्ठा auxtrace_mmap *mm = &map->auxtrace_mmap;
 	u64 head, old = mm->prev, offset, ref;
-	unsigned char *data = mm->base;
-	size_t size, head_off, old_off, len1, len2, padding;
-	union perf_event ev;
-	void *data1, *data2;
+	अचिन्हित अक्षर *data = mm->base;
+	माप_प्रकार size, head_off, old_off, len1, len2, padding;
+	जोड़ perf_event ev;
+	व्योम *data1, *data2;
 
-	if (snapshot) {
-		head = auxtrace_mmap__read_snapshot_head(mm);
-		if (auxtrace_record__find_snapshot(itr, mm->idx, mm, data,
+	अगर (snapshot) अणु
+		head = auxtrace_mmap__पढ़ो_snapshot_head(mm);
+		अगर (auxtrace_record__find_snapshot(itr, mm->idx, mm, data,
 						   &head, &old))
-			return -1;
-	} else {
-		head = auxtrace_mmap__read_head(mm);
-	}
+			वापस -1;
+	पूर्ण अन्यथा अणु
+		head = auxtrace_mmap__पढ़ो_head(mm);
+	पूर्ण
 
-	if (old == head)
-		return 0;
+	अगर (old == head)
+		वापस 0;
 
 	pr_debug3("auxtrace idx %d old %#"PRIx64" head %#"PRIx64" diff %#"PRIx64"\n",
 		  mm->idx, old, head, head - old);
 
-	if (mm->mask) {
+	अगर (mm->mask) अणु
 		head_off = head & mm->mask;
 		old_off = old & mm->mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		head_off = head % mm->len;
 		old_off = old % mm->len;
-	}
+	पूर्ण
 
-	if (head_off > old_off)
+	अगर (head_off > old_off)
 		size = head_off - old_off;
-	else
+	अन्यथा
 		size = mm->len - (old_off - head_off);
 
-	if (snapshot && size > snapshot_size)
+	अगर (snapshot && size > snapshot_size)
 		size = snapshot_size;
 
 	ref = auxtrace_record__reference(itr);
 
-	if (head > old || size <= head || mm->mask) {
+	अगर (head > old || size <= head || mm->mask) अणु
 		offset = head - size;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * When the buffer size is not a power of 2, 'head' wraps at the
+		 * When the buffer size is not a घातer of 2, 'head' wraps at the
 		 * highest multiple of the buffer size, so we have to subtract
-		 * the remainder here.
+		 * the reमुख्यder here.
 		 */
 		u64 rem = (0ULL - mm->len) % mm->len;
 
 		offset = head - size - rem;
-	}
+	पूर्ण
 
-	if (size > head_off) {
+	अगर (size > head_off) अणु
 		len1 = size - head_off;
 		data1 = &data[mm->len - len1];
 		len2 = head_off;
 		data2 = &data[0];
-	} else {
+	पूर्ण अन्यथा अणु
 		len1 = size;
 		data1 = &data[head_off - len1];
 		len2 = 0;
-		data2 = NULL;
-	}
+		data2 = शून्य;
+	पूर्ण
 
-	if (itr->alignment) {
-		unsigned int unwanted = len1 % itr->alignment;
+	अगर (itr->alignment) अणु
+		अचिन्हित पूर्णांक unwanted = len1 % itr->alignment;
 
 		len1 -= unwanted;
 		size -= unwanted;
-	}
+	पूर्ण
 
 	/* padding must be written by fn() e.g. record__process_auxtrace() */
 	padding = size & (PERF_AUXTRACE_RECORD_ALIGNMENT - 1);
-	if (padding)
+	अगर (padding)
 		padding = PERF_AUXTRACE_RECORD_ALIGNMENT - padding;
 
-	memset(&ev, 0, sizeof(ev));
+	स_रखो(&ev, 0, माप(ev));
 	ev.auxtrace.header.type = PERF_RECORD_AUXTRACE;
-	ev.auxtrace.header.size = sizeof(ev.auxtrace);
+	ev.auxtrace.header.size = माप(ev.auxtrace);
 	ev.auxtrace.size = size + padding;
 	ev.auxtrace.offset = offset;
 	ev.auxtrace.reference = ref;
@@ -1758,41 +1759,41 @@ static int __auxtrace_mmap__read(struct mmap *map,
 	ev.auxtrace.tid = mm->tid;
 	ev.auxtrace.cpu = mm->cpu;
 
-	if (fn(tool, map, &ev, data1, len1, data2, len2))
-		return -1;
+	अगर (fn(tool, map, &ev, data1, len1, data2, len2))
+		वापस -1;
 
 	mm->prev = head;
 
-	if (!snapshot) {
-		auxtrace_mmap__write_tail(mm, head);
-		if (itr->read_finish) {
-			int err;
+	अगर (!snapshot) अणु
+		auxtrace_mmap__ग_लिखो_tail(mm, head);
+		अगर (itr->पढ़ो_finish) अणु
+			पूर्णांक err;
 
-			err = itr->read_finish(itr, mm->idx);
-			if (err < 0)
-				return err;
-		}
-	}
+			err = itr->पढ़ो_finish(itr, mm->idx);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-int auxtrace_mmap__read(struct mmap *map, struct auxtrace_record *itr,
-			struct perf_tool *tool, process_auxtrace_t fn)
-{
-	return __auxtrace_mmap__read(map, itr, tool, fn, false, 0);
-}
+पूर्णांक auxtrace_mmap__पढ़ो(काष्ठा mmap *map, काष्ठा auxtrace_record *itr,
+			काष्ठा perf_tool *tool, process_auxtrace_t fn)
+अणु
+	वापस __auxtrace_mmap__पढ़ो(map, itr, tool, fn, false, 0);
+पूर्ण
 
-int auxtrace_mmap__read_snapshot(struct mmap *map,
-				 struct auxtrace_record *itr,
-				 struct perf_tool *tool, process_auxtrace_t fn,
-				 size_t snapshot_size)
-{
-	return __auxtrace_mmap__read(map, itr, tool, fn, true, snapshot_size);
-}
+पूर्णांक auxtrace_mmap__पढ़ो_snapshot(काष्ठा mmap *map,
+				 काष्ठा auxtrace_record *itr,
+				 काष्ठा perf_tool *tool, process_auxtrace_t fn,
+				 माप_प्रकार snapshot_size)
+अणु
+	वापस __auxtrace_mmap__पढ़ो(map, itr, tool, fn, true, snapshot_size);
+पूर्ण
 
 /**
- * struct auxtrace_cache - hash table to implement a cache
+ * काष्ठा auxtrace_cache - hash table to implement a cache
  * @hashtable: the hashtable
  * @sz: hashtable size (number of hlists)
  * @entry_size: size of an entry
@@ -1801,33 +1802,33 @@ int auxtrace_mmap__read_snapshot(struct mmap *map,
  * @cnt: current number of entries
  * @bits: hashtable size (@sz = 2^@bits)
  */
-struct auxtrace_cache {
-	struct hlist_head *hashtable;
-	size_t sz;
-	size_t entry_size;
-	size_t limit;
-	size_t cnt;
-	unsigned int bits;
-};
+काष्ठा auxtrace_cache अणु
+	काष्ठा hlist_head *hashtable;
+	माप_प्रकार sz;
+	माप_प्रकार entry_size;
+	माप_प्रकार limit;
+	माप_प्रकार cnt;
+	अचिन्हित पूर्णांक bits;
+पूर्ण;
 
-struct auxtrace_cache *auxtrace_cache__new(unsigned int bits, size_t entry_size,
-					   unsigned int limit_percent)
-{
-	struct auxtrace_cache *c;
-	struct hlist_head *ht;
-	size_t sz, i;
+काष्ठा auxtrace_cache *auxtrace_cache__new(अचिन्हित पूर्णांक bits, माप_प्रकार entry_size,
+					   अचिन्हित पूर्णांक limit_percent)
+अणु
+	काष्ठा auxtrace_cache *c;
+	काष्ठा hlist_head *ht;
+	माप_प्रकार sz, i;
 
-	c = zalloc(sizeof(struct auxtrace_cache));
-	if (!c)
-		return NULL;
+	c = zalloc(माप(काष्ठा auxtrace_cache));
+	अगर (!c)
+		वापस शून्य;
 
 	sz = 1UL << bits;
 
-	ht = calloc(sz, sizeof(struct hlist_head));
-	if (!ht)
-		goto out_free;
+	ht = सुस्मृति(sz, माप(काष्ठा hlist_head));
+	अगर (!ht)
+		जाओ out_मुक्त;
 
-	for (i = 0; i < sz; i++)
+	क्रम (i = 0; i < sz; i++)
 		INIT_HLIST_HEAD(&ht[i]);
 
 	c->hashtable = ht;
@@ -1836,871 +1837,871 @@ struct auxtrace_cache *auxtrace_cache__new(unsigned int bits, size_t entry_size,
 	c->limit = (c->sz * limit_percent) / 100;
 	c->bits = bits;
 
-	return c;
+	वापस c;
 
-out_free:
-	free(c);
-	return NULL;
-}
+out_मुक्त:
+	मुक्त(c);
+	वापस शून्य;
+पूर्ण
 
-static void auxtrace_cache__drop(struct auxtrace_cache *c)
-{
-	struct auxtrace_cache_entry *entry;
-	struct hlist_node *tmp;
-	size_t i;
+अटल व्योम auxtrace_cache__drop(काष्ठा auxtrace_cache *c)
+अणु
+	काष्ठा auxtrace_cache_entry *entry;
+	काष्ठा hlist_node *पंचांगp;
+	माप_प्रकार i;
 
-	if (!c)
-		return;
+	अगर (!c)
+		वापस;
 
-	for (i = 0; i < c->sz; i++) {
-		hlist_for_each_entry_safe(entry, tmp, &c->hashtable[i], hash) {
+	क्रम (i = 0; i < c->sz; i++) अणु
+		hlist_क्रम_each_entry_safe(entry, पंचांगp, &c->hashtable[i], hash) अणु
 			hlist_del(&entry->hash);
-			auxtrace_cache__free_entry(c, entry);
-		}
-	}
+			auxtrace_cache__मुक्त_entry(c, entry);
+		पूर्ण
+	पूर्ण
 
 	c->cnt = 0;
-}
+पूर्ण
 
-void auxtrace_cache__free(struct auxtrace_cache *c)
-{
-	if (!c)
-		return;
+व्योम auxtrace_cache__मुक्त(काष्ठा auxtrace_cache *c)
+अणु
+	अगर (!c)
+		वापस;
 
 	auxtrace_cache__drop(c);
-	zfree(&c->hashtable);
-	free(c);
-}
+	zमुक्त(&c->hashtable);
+	मुक्त(c);
+पूर्ण
 
-void *auxtrace_cache__alloc_entry(struct auxtrace_cache *c)
-{
-	return malloc(c->entry_size);
-}
+व्योम *auxtrace_cache__alloc_entry(काष्ठा auxtrace_cache *c)
+अणु
+	वापस दो_स्मृति(c->entry_size);
+पूर्ण
 
-void auxtrace_cache__free_entry(struct auxtrace_cache *c __maybe_unused,
-				void *entry)
-{
-	free(entry);
-}
+व्योम auxtrace_cache__मुक्त_entry(काष्ठा auxtrace_cache *c __maybe_unused,
+				व्योम *entry)
+अणु
+	मुक्त(entry);
+पूर्ण
 
-int auxtrace_cache__add(struct auxtrace_cache *c, u32 key,
-			struct auxtrace_cache_entry *entry)
-{
-	if (c->limit && ++c->cnt > c->limit)
+पूर्णांक auxtrace_cache__add(काष्ठा auxtrace_cache *c, u32 key,
+			काष्ठा auxtrace_cache_entry *entry)
+अणु
+	अगर (c->limit && ++c->cnt > c->limit)
 		auxtrace_cache__drop(c);
 
 	entry->key = key;
 	hlist_add_head(&entry->hash, &c->hashtable[hash_32(key, c->bits)]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct auxtrace_cache_entry *auxtrace_cache__rm(struct auxtrace_cache *c,
+अटल काष्ठा auxtrace_cache_entry *auxtrace_cache__rm(काष्ठा auxtrace_cache *c,
 						       u32 key)
-{
-	struct auxtrace_cache_entry *entry;
-	struct hlist_head *hlist;
-	struct hlist_node *n;
+अणु
+	काष्ठा auxtrace_cache_entry *entry;
+	काष्ठा hlist_head *hlist;
+	काष्ठा hlist_node *n;
 
-	if (!c)
-		return NULL;
+	अगर (!c)
+		वापस शून्य;
 
 	hlist = &c->hashtable[hash_32(key, c->bits)];
-	hlist_for_each_entry_safe(entry, n, hlist, hash) {
-		if (entry->key == key) {
+	hlist_क्रम_each_entry_safe(entry, n, hlist, hash) अणु
+		अगर (entry->key == key) अणु
 			hlist_del(&entry->hash);
-			return entry;
-		}
-	}
+			वापस entry;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void auxtrace_cache__remove(struct auxtrace_cache *c, u32 key)
-{
-	struct auxtrace_cache_entry *entry = auxtrace_cache__rm(c, key);
+व्योम auxtrace_cache__हटाओ(काष्ठा auxtrace_cache *c, u32 key)
+अणु
+	काष्ठा auxtrace_cache_entry *entry = auxtrace_cache__rm(c, key);
 
-	auxtrace_cache__free_entry(c, entry);
-}
+	auxtrace_cache__मुक्त_entry(c, entry);
+पूर्ण
 
-void *auxtrace_cache__lookup(struct auxtrace_cache *c, u32 key)
-{
-	struct auxtrace_cache_entry *entry;
-	struct hlist_head *hlist;
+व्योम *auxtrace_cache__lookup(काष्ठा auxtrace_cache *c, u32 key)
+अणु
+	काष्ठा auxtrace_cache_entry *entry;
+	काष्ठा hlist_head *hlist;
 
-	if (!c)
-		return NULL;
+	अगर (!c)
+		वापस शून्य;
 
 	hlist = &c->hashtable[hash_32(key, c->bits)];
-	hlist_for_each_entry(entry, hlist, hash) {
-		if (entry->key == key)
-			return entry;
-	}
+	hlist_क्रम_each_entry(entry, hlist, hash) अणु
+		अगर (entry->key == key)
+			वापस entry;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void addr_filter__free_str(struct addr_filter *filt)
-{
-	zfree(&filt->str);
-	filt->action   = NULL;
-	filt->sym_from = NULL;
-	filt->sym_to   = NULL;
-	filt->filename = NULL;
-}
+अटल व्योम addr_filter__मुक्त_str(काष्ठा addr_filter *filt)
+अणु
+	zमुक्त(&filt->str);
+	filt->action   = शून्य;
+	filt->sym_from = शून्य;
+	filt->sym_to   = शून्य;
+	filt->filename = शून्य;
+पूर्ण
 
-static struct addr_filter *addr_filter__new(void)
-{
-	struct addr_filter *filt = zalloc(sizeof(*filt));
+अटल काष्ठा addr_filter *addr_filter__new(व्योम)
+अणु
+	काष्ठा addr_filter *filt = zalloc(माप(*filt));
 
-	if (filt)
+	अगर (filt)
 		INIT_LIST_HEAD(&filt->list);
 
-	return filt;
-}
+	वापस filt;
+पूर्ण
 
-static void addr_filter__free(struct addr_filter *filt)
-{
-	if (filt)
-		addr_filter__free_str(filt);
-	free(filt);
-}
+अटल व्योम addr_filter__मुक्त(काष्ठा addr_filter *filt)
+अणु
+	अगर (filt)
+		addr_filter__मुक्त_str(filt);
+	मुक्त(filt);
+पूर्ण
 
-static void addr_filters__add(struct addr_filters *filts,
-			      struct addr_filter *filt)
-{
+अटल व्योम addr_filters__add(काष्ठा addr_filters *filts,
+			      काष्ठा addr_filter *filt)
+अणु
 	list_add_tail(&filt->list, &filts->head);
 	filts->cnt += 1;
-}
+पूर्ण
 
-static void addr_filters__del(struct addr_filters *filts,
-			      struct addr_filter *filt)
-{
+अटल व्योम addr_filters__del(काष्ठा addr_filters *filts,
+			      काष्ठा addr_filter *filt)
+अणु
 	list_del_init(&filt->list);
 	filts->cnt -= 1;
-}
+पूर्ण
 
-void addr_filters__init(struct addr_filters *filts)
-{
+व्योम addr_filters__init(काष्ठा addr_filters *filts)
+अणु
 	INIT_LIST_HEAD(&filts->head);
 	filts->cnt = 0;
-}
+पूर्ण
 
-void addr_filters__exit(struct addr_filters *filts)
-{
-	struct addr_filter *filt, *n;
+व्योम addr_filters__निकास(काष्ठा addr_filters *filts)
+अणु
+	काष्ठा addr_filter *filt, *n;
 
-	list_for_each_entry_safe(filt, n, &filts->head, list) {
+	list_क्रम_each_entry_safe(filt, n, &filts->head, list) अणु
 		addr_filters__del(filts, filt);
-		addr_filter__free(filt);
-	}
-}
+		addr_filter__मुक्त(filt);
+	पूर्ण
+पूर्ण
 
-static int parse_num_or_str(char **inp, u64 *num, const char **str,
-			    const char *str_delim)
-{
-	*inp += strspn(*inp, " ");
+अटल पूर्णांक parse_num_or_str(अक्षर **inp, u64 *num, स्थिर अक्षर **str,
+			    स्थिर अक्षर *str_delim)
+अणु
+	*inp += म_अखोज(*inp, " ");
 
-	if (isdigit(**inp)) {
-		char *endptr;
+	अगर (है_अंक(**inp)) अणु
+		अक्षर *endptr;
 
-		if (!num)
-			return -EINVAL;
-		errno = 0;
-		*num = strtoull(*inp, &endptr, 0);
-		if (errno)
-			return -errno;
-		if (endptr == *inp)
-			return -EINVAL;
+		अगर (!num)
+			वापस -EINVAL;
+		त्रुटि_सं = 0;
+		*num = म_से_अदीर्घl(*inp, &endptr, 0);
+		अगर (त्रुटि_सं)
+			वापस -त्रुटि_सं;
+		अगर (endptr == *inp)
+			वापस -EINVAL;
 		*inp = endptr;
-	} else {
-		size_t n;
+	पूर्ण अन्यथा अणु
+		माप_प्रकार n;
 
-		if (!str)
-			return -EINVAL;
-		*inp += strspn(*inp, " ");
+		अगर (!str)
+			वापस -EINVAL;
+		*inp += म_अखोज(*inp, " ");
 		*str = *inp;
-		n = strcspn(*inp, str_delim);
-		if (!n)
-			return -EINVAL;
+		n = म_खोज(*inp, str_delim);
+		अगर (!n)
+			वापस -EINVAL;
 		*inp += n;
-		if (**inp) {
+		अगर (**inp) अणु
 			**inp = '\0';
 			*inp += 1;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int parse_action(struct addr_filter *filt)
-{
-	if (!strcmp(filt->action, "filter")) {
+अटल पूर्णांक parse_action(काष्ठा addr_filter *filt)
+अणु
+	अगर (!म_भेद(filt->action, "filter")) अणु
 		filt->start = true;
 		filt->range = true;
-	} else if (!strcmp(filt->action, "start")) {
+	पूर्ण अन्यथा अगर (!म_भेद(filt->action, "start")) अणु
 		filt->start = true;
-	} else if (!strcmp(filt->action, "stop")) {
+	पूर्ण अन्यथा अगर (!म_भेद(filt->action, "stop")) अणु
 		filt->start = false;
-	} else if (!strcmp(filt->action, "tracestop")) {
+	पूर्ण अन्यथा अगर (!म_भेद(filt->action, "tracestop")) अणु
 		filt->start = false;
 		filt->range = true;
 		filt->action += 5; /* Change 'tracestop' to 'stop' */
-	} else {
-		return -EINVAL;
-	}
-	return 0;
-}
+	पूर्ण अन्यथा अणु
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int parse_sym_idx(char **inp, int *idx)
-{
+अटल पूर्णांक parse_sym_idx(अक्षर **inp, पूर्णांक *idx)
+अणु
 	*idx = -1;
 
-	*inp += strspn(*inp, " ");
+	*inp += म_अखोज(*inp, " ");
 
-	if (**inp != '#')
-		return 0;
+	अगर (**inp != '#')
+		वापस 0;
 
 	*inp += 1;
 
-	if (**inp == 'g' || **inp == 'G') {
+	अगर (**inp == 'g' || **inp == 'G') अणु
 		*inp += 1;
 		*idx = 0;
-	} else {
-		unsigned long num;
-		char *endptr;
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ num;
+		अक्षर *endptr;
 
-		errno = 0;
-		num = strtoul(*inp, &endptr, 0);
-		if (errno)
-			return -errno;
-		if (endptr == *inp || num > INT_MAX)
-			return -EINVAL;
+		त्रुटि_सं = 0;
+		num = म_से_अदीर्घ(*inp, &endptr, 0);
+		अगर (त्रुटि_सं)
+			वापस -त्रुटि_सं;
+		अगर (endptr == *inp || num > पूर्णांक_उच्च)
+			वापस -EINVAL;
 		*inp = endptr;
 		*idx = num;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parse_addr_size(char **inp, u64 *num, const char **str, int *idx)
-{
-	int err = parse_num_or_str(inp, num, str, " ");
+अटल पूर्णांक parse_addr_size(अक्षर **inp, u64 *num, स्थिर अक्षर **str, पूर्णांक *idx)
+अणु
+	पूर्णांक err = parse_num_or_str(inp, num, str, " ");
 
-	if (!err && *str)
+	अगर (!err && *str)
 		err = parse_sym_idx(inp, idx);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int parse_one_filter(struct addr_filter *filt, const char **filter_inp)
-{
-	char *fstr;
-	int err;
+अटल पूर्णांक parse_one_filter(काष्ठा addr_filter *filt, स्थिर अक्षर **filter_inp)
+अणु
+	अक्षर *fstr;
+	पूर्णांक err;
 
 	filt->str = fstr = strdup(*filter_inp);
-	if (!fstr)
-		return -ENOMEM;
+	अगर (!fstr)
+		वापस -ENOMEM;
 
-	err = parse_num_or_str(&fstr, NULL, &filt->action, " ");
-	if (err)
-		goto out_err;
+	err = parse_num_or_str(&fstr, शून्य, &filt->action, " ");
+	अगर (err)
+		जाओ out_err;
 
 	err = parse_action(filt);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
 	err = parse_addr_size(&fstr, &filt->addr, &filt->sym_from,
 			      &filt->sym_from_idx);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 
-	fstr += strspn(fstr, " ");
+	fstr += म_अखोज(fstr, " ");
 
-	if (*fstr == '/') {
+	अगर (*fstr == '/') अणु
 		fstr += 1;
 		err = parse_addr_size(&fstr, &filt->size, &filt->sym_to,
 				      &filt->sym_to_idx);
-		if (err)
-			goto out_err;
+		अगर (err)
+			जाओ out_err;
 		filt->range = true;
-	}
+	पूर्ण
 
-	fstr += strspn(fstr, " ");
+	fstr += म_अखोज(fstr, " ");
 
-	if (*fstr == '@') {
+	अगर (*fstr == '@') अणु
 		fstr += 1;
-		err = parse_num_or_str(&fstr, NULL, &filt->filename, " ,");
-		if (err)
-			goto out_err;
-	}
+		err = parse_num_or_str(&fstr, शून्य, &filt->filename, " ,");
+		अगर (err)
+			जाओ out_err;
+	पूर्ण
 
-	fstr += strspn(fstr, " ,");
+	fstr += म_अखोज(fstr, " ,");
 
 	*filter_inp += fstr - filt->str;
 
-	return 0;
+	वापस 0;
 
 out_err:
-	addr_filter__free_str(filt);
+	addr_filter__मुक्त_str(filt);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int addr_filters__parse_bare_filter(struct addr_filters *filts,
-				    const char *filter)
-{
-	struct addr_filter *filt;
-	const char *fstr = filter;
-	int err;
+पूर्णांक addr_filters__parse_bare_filter(काष्ठा addr_filters *filts,
+				    स्थिर अक्षर *filter)
+अणु
+	काष्ठा addr_filter *filt;
+	स्थिर अक्षर *fstr = filter;
+	पूर्णांक err;
 
-	while (*fstr) {
+	जबतक (*fstr) अणु
 		filt = addr_filter__new();
 		err = parse_one_filter(filt, &fstr);
-		if (err) {
-			addr_filter__free(filt);
-			addr_filters__exit(filts);
-			return err;
-		}
+		अगर (err) अणु
+			addr_filter__मुक्त(filt);
+			addr_filters__निकास(filts);
+			वापस err;
+		पूर्ण
 		addr_filters__add(filts, filt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct sym_args {
-	const char	*name;
+काष्ठा sym_args अणु
+	स्थिर अक्षर	*name;
 	u64		start;
 	u64		size;
-	int		idx;
-	int		cnt;
+	पूर्णांक		idx;
+	पूर्णांक		cnt;
 	bool		started;
 	bool		global;
 	bool		selected;
 	bool		duplicate;
 	bool		near;
-};
+पूर्ण;
 
-static bool kern_sym_match(struct sym_args *args, const char *name, char type)
-{
+अटल bool kern_sym_match(काष्ठा sym_args *args, स्थिर अक्षर *name, अक्षर type)
+अणु
 	/* A function with the same name, and global or the n'th found or any */
-	return kallsyms__is_function(type) &&
-	       !strcmp(name, args->name) &&
-	       ((args->global && isupper(type)) ||
+	वापस kallsyms__is_function(type) &&
+	       !म_भेद(name, args->name) &&
+	       ((args->global && है_बड़ा(type)) ||
 		(args->selected && ++(args->cnt) == args->idx) ||
 		(!args->global && !args->selected));
-}
+पूर्ण
 
-static int find_kern_sym_cb(void *arg, const char *name, char type, u64 start)
-{
-	struct sym_args *args = arg;
+अटल पूर्णांक find_kern_sym_cb(व्योम *arg, स्थिर अक्षर *name, अक्षर type, u64 start)
+अणु
+	काष्ठा sym_args *args = arg;
 
-	if (args->started) {
-		if (!args->size)
+	अगर (args->started) अणु
+		अगर (!args->size)
 			args->size = start - args->start;
-		if (args->selected) {
-			if (args->size)
-				return 1;
-		} else if (kern_sym_match(args, name, type)) {
+		अगर (args->selected) अणु
+			अगर (args->size)
+				वापस 1;
+		पूर्ण अन्यथा अगर (kern_sym_match(args, name, type)) अणु
 			args->duplicate = true;
-			return 1;
-		}
-	} else if (kern_sym_match(args, name, type)) {
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अगर (kern_sym_match(args, name, type)) अणु
 		args->started = true;
 		args->start = start;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int print_kern_sym_cb(void *arg, const char *name, char type, u64 start)
-{
-	struct sym_args *args = arg;
+अटल पूर्णांक prपूर्णांक_kern_sym_cb(व्योम *arg, स्थिर अक्षर *name, अक्षर type, u64 start)
+अणु
+	काष्ठा sym_args *args = arg;
 
-	if (kern_sym_match(args, name, type)) {
+	अगर (kern_sym_match(args, name, type)) अणु
 		pr_err("#%d\t0x%"PRIx64"\t%c\t%s\n",
 		       ++args->cnt, start, type, name);
 		args->near = true;
-	} else if (args->near) {
+	पूर्ण अन्यथा अगर (args->near) अणु
 		args->near = false;
 		pr_err("\t\twhich is near\t\t%s\n", name);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sym_not_found_error(const char *sym_name, int idx)
-{
-	if (idx > 0) {
+अटल पूर्णांक sym_not_found_error(स्थिर अक्षर *sym_name, पूर्णांक idx)
+अणु
+	अगर (idx > 0) अणु
 		pr_err("N'th occurrence (N=%d) of symbol '%s' not found.\n",
 		       idx, sym_name);
-	} else if (!idx) {
+	पूर्ण अन्यथा अगर (!idx) अणु
 		pr_err("Global symbol '%s' not found.\n", sym_name);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Symbol '%s' not found.\n", sym_name);
-	}
+	पूर्ण
 	pr_err("Note that symbols must be functions.\n");
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int find_kern_sym(const char *sym_name, u64 *start, u64 *size, int idx)
-{
-	struct sym_args args = {
+अटल पूर्णांक find_kern_sym(स्थिर अक्षर *sym_name, u64 *start, u64 *size, पूर्णांक idx)
+अणु
+	काष्ठा sym_args args = अणु
 		.name = sym_name,
 		.idx = idx,
 		.global = !idx,
 		.selected = idx > 0,
-	};
-	int err;
+	पूर्ण;
+	पूर्णांक err;
 
 	*start = 0;
 	*size = 0;
 
 	err = kallsyms__parse("/proc/kallsyms", &args, find_kern_sym_cb);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("Failed to parse /proc/kallsyms\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (args.duplicate) {
+	अगर (args.duplicate) अणु
 		pr_err("Multiple kernel symbols with name '%s'\n", sym_name);
 		args.cnt = 0;
-		kallsyms__parse("/proc/kallsyms", &args, print_kern_sym_cb);
+		kallsyms__parse("/proc/kallsyms", &args, prपूर्णांक_kern_sym_cb);
 		pr_err("Disambiguate symbol name by inserting #n after the name e.g. %s #2\n",
 		       sym_name);
 		pr_err("Or select a global symbol by inserting #0 or #g or #G\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!args.started) {
+	अगर (!args.started) अणु
 		pr_err("Kernel symbol lookup: ");
-		return sym_not_found_error(sym_name, idx);
-	}
+		वापस sym_not_found_error(sym_name, idx);
+	पूर्ण
 
 	*start = args.start;
 	*size = args.size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_entire_kern_cb(void *arg, const char *name __maybe_unused,
-			       char type, u64 start)
-{
-	struct sym_args *args = arg;
+अटल पूर्णांक find_entire_kern_cb(व्योम *arg, स्थिर अक्षर *name __maybe_unused,
+			       अक्षर type, u64 start)
+अणु
+	काष्ठा sym_args *args = arg;
 
-	if (!kallsyms__is_function(type))
-		return 0;
+	अगर (!kallsyms__is_function(type))
+		वापस 0;
 
-	if (!args->started) {
+	अगर (!args->started) अणु
 		args->started = true;
 		args->start = start;
-	}
+	पूर्ण
 	/* Don't know exactly where the kernel ends, so we add a page */
 	args->size = round_up(start, page_size) + page_size - args->start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int addr_filter__entire_kernel(struct addr_filter *filt)
-{
-	struct sym_args args = { .started = false };
-	int err;
+अटल पूर्णांक addr_filter__entire_kernel(काष्ठा addr_filter *filt)
+अणु
+	काष्ठा sym_args args = अणु .started = false पूर्ण;
+	पूर्णांक err;
 
 	err = kallsyms__parse("/proc/kallsyms", &args, find_entire_kern_cb);
-	if (err < 0 || !args.started) {
+	अगर (err < 0 || !args.started) अणु
 		pr_err("Failed to parse /proc/kallsyms\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	filt->addr = args.start;
 	filt->size = args.size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_end_after_start(struct addr_filter *filt, u64 start, u64 size)
-{
-	if (start + size >= filt->addr)
-		return 0;
+अटल पूर्णांक check_end_after_start(काष्ठा addr_filter *filt, u64 start, u64 size)
+अणु
+	अगर (start + size >= filt->addr)
+		वापस 0;
 
-	if (filt->sym_from) {
+	अगर (filt->sym_from) अणु
 		pr_err("Symbol '%s' (0x%"PRIx64") comes before '%s' (0x%"PRIx64")\n",
 		       filt->sym_to, start, filt->sym_from, filt->addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("Symbol '%s' (0x%"PRIx64") comes before address 0x%"PRIx64")\n",
 		       filt->sym_to, start, filt->addr);
-	}
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int addr_filter__resolve_kernel_syms(struct addr_filter *filt)
-{
+अटल पूर्णांक addr_filter__resolve_kernel_syms(काष्ठा addr_filter *filt)
+अणु
 	bool no_size = false;
 	u64 start, size;
-	int err;
+	पूर्णांक err;
 
-	if (symbol_conf.kptr_restrict) {
+	अगर (symbol_conf.kptr_restrict) अणु
 		pr_err("Kernel addresses are restricted. Unable to resolve kernel symbols.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (filt->sym_from && !strcmp(filt->sym_from, "*"))
-		return addr_filter__entire_kernel(filt);
+	अगर (filt->sym_from && !म_भेद(filt->sym_from, "*"))
+		वापस addr_filter__entire_kernel(filt);
 
-	if (filt->sym_from) {
+	अगर (filt->sym_from) अणु
 		err = find_kern_sym(filt->sym_from, &start, &size,
 				    filt->sym_from_idx);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		filt->addr = start;
-		if (filt->range && !filt->size && !filt->sym_to) {
+		अगर (filt->range && !filt->size && !filt->sym_to) अणु
 			filt->size = size;
 			no_size = !size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (filt->sym_to) {
+	अगर (filt->sym_to) अणु
 		err = find_kern_sym(filt->sym_to, &start, &size,
 				    filt->sym_to_idx);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = check_end_after_start(filt, start, size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		filt->size = start + size - filt->addr;
 		no_size = !size;
-	}
+	पूर्ण
 
-	/* The very last symbol in kallsyms does not imply a particular size */
-	if (no_size) {
+	/* The very last symbol in kallsyms करोes not imply a particular size */
+	अगर (no_size) अणु
 		pr_err("Cannot determine size of symbol '%s'\n",
 		       filt->sym_to ? filt->sym_to : filt->sym_from);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct dso *load_dso(const char *name)
-{
-	struct map *map;
-	struct dso *dso;
+अटल काष्ठा dso *load_dso(स्थिर अक्षर *name)
+अणु
+	काष्ठा map *map;
+	काष्ठा dso *dso;
 
 	map = dso__new_map(name);
-	if (!map)
-		return NULL;
+	अगर (!map)
+		वापस शून्य;
 
-	if (map__load(map) < 0)
+	अगर (map__load(map) < 0)
 		pr_err("File '%s' not found or has no symbols.\n", name);
 
 	dso = dso__get(map->dso);
 
 	map__put(map);
 
-	return dso;
-}
+	वापस dso;
+पूर्ण
 
-static bool dso_sym_match(struct symbol *sym, const char *name, int *cnt,
-			  int idx)
-{
+अटल bool dso_sym_match(काष्ठा symbol *sym, स्थिर अक्षर *name, पूर्णांक *cnt,
+			  पूर्णांक idx)
+अणु
 	/* Same name, and global or the n'th found or any */
-	return !arch__compare_symbol_names(name, sym->name) &&
+	वापस !arch__compare_symbol_names(name, sym->name) &&
 	       ((!idx && sym->binding == STB_GLOBAL) ||
 		(idx > 0 && ++*cnt == idx) ||
 		idx < 0);
-}
+पूर्ण
 
-static void print_duplicate_syms(struct dso *dso, const char *sym_name)
-{
-	struct symbol *sym;
+अटल व्योम prपूर्णांक_duplicate_syms(काष्ठा dso *dso, स्थिर अक्षर *sym_name)
+अणु
+	काष्ठा symbol *sym;
 	bool near = false;
-	int cnt = 0;
+	पूर्णांक cnt = 0;
 
 	pr_err("Multiple symbols with name '%s'\n", sym_name);
 
 	sym = dso__first_symbol(dso);
-	while (sym) {
-		if (dso_sym_match(sym, sym_name, &cnt, -1)) {
+	जबतक (sym) अणु
+		अगर (dso_sym_match(sym, sym_name, &cnt, -1)) अणु
 			pr_err("#%d\t0x%"PRIx64"\t%c\t%s\n",
 			       ++cnt, sym->start,
 			       sym->binding == STB_GLOBAL ? 'g' :
 			       sym->binding == STB_LOCAL  ? 'l' : 'w',
 			       sym->name);
 			near = true;
-		} else if (near) {
+		पूर्ण अन्यथा अगर (near) अणु
 			near = false;
 			pr_err("\t\twhich is near\t\t%s\n", sym->name);
-		}
+		पूर्ण
 		sym = dso__next_symbol(sym);
-	}
+	पूर्ण
 
 	pr_err("Disambiguate symbol name by inserting #n after the name e.g. %s #2\n",
 	       sym_name);
 	pr_err("Or select a global symbol by inserting #0 or #g or #G\n");
-}
+पूर्ण
 
-static int find_dso_sym(struct dso *dso, const char *sym_name, u64 *start,
-			u64 *size, int idx)
-{
-	struct symbol *sym;
-	int cnt = 0;
+अटल पूर्णांक find_dso_sym(काष्ठा dso *dso, स्थिर अक्षर *sym_name, u64 *start,
+			u64 *size, पूर्णांक idx)
+अणु
+	काष्ठा symbol *sym;
+	पूर्णांक cnt = 0;
 
 	*start = 0;
 	*size = 0;
 
 	sym = dso__first_symbol(dso);
-	while (sym) {
-		if (*start) {
-			if (!*size)
+	जबतक (sym) अणु
+		अगर (*start) अणु
+			अगर (!*size)
 				*size = sym->start - *start;
-			if (idx > 0) {
-				if (*size)
-					return 1;
-			} else if (dso_sym_match(sym, sym_name, &cnt, idx)) {
-				print_duplicate_syms(dso, sym_name);
-				return -EINVAL;
-			}
-		} else if (dso_sym_match(sym, sym_name, &cnt, idx)) {
+			अगर (idx > 0) अणु
+				अगर (*size)
+					वापस 1;
+			पूर्ण अन्यथा अगर (dso_sym_match(sym, sym_name, &cnt, idx)) अणु
+				prपूर्णांक_duplicate_syms(dso, sym_name);
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अगर (dso_sym_match(sym, sym_name, &cnt, idx)) अणु
 			*start = sym->start;
 			*size = sym->end - sym->start;
-		}
+		पूर्ण
 		sym = dso__next_symbol(sym);
-	}
+	पूर्ण
 
-	if (!*start)
-		return sym_not_found_error(sym_name, idx);
+	अगर (!*start)
+		वापस sym_not_found_error(sym_name, idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int addr_filter__entire_dso(struct addr_filter *filt, struct dso *dso)
-{
-	if (dso__data_file_size(dso, NULL)) {
+अटल पूर्णांक addr_filter__entire_dso(काष्ठा addr_filter *filt, काष्ठा dso *dso)
+अणु
+	अगर (dso__data_file_size(dso, शून्य)) अणु
 		pr_err("Failed to determine filter for %s\nCannot determine file size.\n",
 		       filt->filename);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	filt->addr = 0;
 	filt->size = dso->data.file_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int addr_filter__resolve_syms(struct addr_filter *filt)
-{
+अटल पूर्णांक addr_filter__resolve_syms(काष्ठा addr_filter *filt)
+अणु
 	u64 start, size;
-	struct dso *dso;
-	int err = 0;
+	काष्ठा dso *dso;
+	पूर्णांक err = 0;
 
-	if (!filt->sym_from && !filt->sym_to)
-		return 0;
+	अगर (!filt->sym_from && !filt->sym_to)
+		वापस 0;
 
-	if (!filt->filename)
-		return addr_filter__resolve_kernel_syms(filt);
+	अगर (!filt->filename)
+		वापस addr_filter__resolve_kernel_syms(filt);
 
 	dso = load_dso(filt->filename);
-	if (!dso) {
+	अगर (!dso) अणु
 		pr_err("Failed to load symbols from: %s\n", filt->filename);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (filt->sym_from && !strcmp(filt->sym_from, "*")) {
+	अगर (filt->sym_from && !म_भेद(filt->sym_from, "*")) अणु
 		err = addr_filter__entire_dso(filt, dso);
-		goto put_dso;
-	}
+		जाओ put_dso;
+	पूर्ण
 
-	if (filt->sym_from) {
+	अगर (filt->sym_from) अणु
 		err = find_dso_sym(dso, filt->sym_from, &start, &size,
 				   filt->sym_from_idx);
-		if (err)
-			goto put_dso;
+		अगर (err)
+			जाओ put_dso;
 		filt->addr = start;
-		if (filt->range && !filt->size && !filt->sym_to)
+		अगर (filt->range && !filt->size && !filt->sym_to)
 			filt->size = size;
-	}
+	पूर्ण
 
-	if (filt->sym_to) {
+	अगर (filt->sym_to) अणु
 		err = find_dso_sym(dso, filt->sym_to, &start, &size,
 				   filt->sym_to_idx);
-		if (err)
-			goto put_dso;
+		अगर (err)
+			जाओ put_dso;
 
 		err = check_end_after_start(filt, start, size);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		filt->size = start + size - filt->addr;
-	}
+	पूर्ण
 
 put_dso:
 	dso__put(dso);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static char *addr_filter__to_str(struct addr_filter *filt)
-{
-	char filename_buf[PATH_MAX];
-	const char *at = "";
-	const char *fn = "";
-	char *filter;
-	int err;
+अटल अक्षर *addr_filter__to_str(काष्ठा addr_filter *filt)
+अणु
+	अक्षर filename_buf[PATH_MAX];
+	स्थिर अक्षर *at = "";
+	स्थिर अक्षर *fn = "";
+	अक्षर *filter;
+	पूर्णांक err;
 
-	if (filt->filename) {
+	अगर (filt->filename) अणु
 		at = "@";
 		fn = realpath(filt->filename, filename_buf);
-		if (!fn)
-			return NULL;
-	}
+		अगर (!fn)
+			वापस शून्य;
+	पूर्ण
 
-	if (filt->range) {
-		err = asprintf(&filter, "%s 0x%"PRIx64"/0x%"PRIx64"%s%s",
+	अगर (filt->range) अणु
+		err = aप्र_लिखो(&filter, "%s 0x%"PRIx64"/0x%"PRIx64"%s%s",
 			       filt->action, filt->addr, filt->size, at, fn);
-	} else {
-		err = asprintf(&filter, "%s 0x%"PRIx64"%s%s",
+	पूर्ण अन्यथा अणु
+		err = aप्र_लिखो(&filter, "%s 0x%"PRIx64"%s%s",
 			       filt->action, filt->addr, at, fn);
-	}
+	पूर्ण
 
-	return err < 0 ? NULL : filter;
-}
+	वापस err < 0 ? शून्य : filter;
+पूर्ण
 
-static int parse_addr_filter(struct evsel *evsel, const char *filter,
-			     int max_nr)
-{
-	struct addr_filters filts;
-	struct addr_filter *filt;
-	int err;
+अटल पूर्णांक parse_addr_filter(काष्ठा evsel *evsel, स्थिर अक्षर *filter,
+			     पूर्णांक max_nr)
+अणु
+	काष्ठा addr_filters filts;
+	काष्ठा addr_filter *filt;
+	पूर्णांक err;
 
 	addr_filters__init(&filts);
 
 	err = addr_filters__parse_bare_filter(&filts, filter);
-	if (err)
-		goto out_exit;
+	अगर (err)
+		जाओ out_निकास;
 
-	if (filts.cnt > max_nr) {
+	अगर (filts.cnt > max_nr) अणु
 		pr_err("Error: number of address filters (%d) exceeds maximum (%d)\n",
 		       filts.cnt, max_nr);
 		err = -EINVAL;
-		goto out_exit;
-	}
+		जाओ out_निकास;
+	पूर्ण
 
-	list_for_each_entry(filt, &filts.head, list) {
-		char *new_filter;
+	list_क्रम_each_entry(filt, &filts.head, list) अणु
+		अक्षर *new_filter;
 
 		err = addr_filter__resolve_syms(filt);
-		if (err)
-			goto out_exit;
+		अगर (err)
+			जाओ out_निकास;
 
 		new_filter = addr_filter__to_str(filt);
-		if (!new_filter) {
+		अगर (!new_filter) अणु
 			err = -ENOMEM;
-			goto out_exit;
-		}
+			जाओ out_निकास;
+		पूर्ण
 
-		if (evsel__append_addr_filter(evsel, new_filter)) {
+		अगर (evsel__append_addr_filter(evsel, new_filter)) अणु
 			err = -ENOMEM;
-			goto out_exit;
-		}
-	}
+			जाओ out_निकास;
+		पूर्ण
+	पूर्ण
 
-out_exit:
-	addr_filters__exit(&filts);
+out_निकास:
+	addr_filters__निकास(&filts);
 
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to parse address filter: '%s'\n", filter);
 		pr_err("Filter format is: filter|start|stop|tracestop <start symbol or address> [/ <end symbol or size>] [@<file name>]\n");
 		pr_err("Where multiple filters are separated by space or comma.\n");
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int evsel__nr_addr_filter(struct evsel *evsel)
-{
-	struct perf_pmu *pmu = evsel__find_pmu(evsel);
-	int nr_addr_filters = 0;
+अटल पूर्णांक evsel__nr_addr_filter(काष्ठा evsel *evsel)
+अणु
+	काष्ठा perf_pmu *pmu = evsel__find_pmu(evsel);
+	पूर्णांक nr_addr_filters = 0;
 
-	if (!pmu)
-		return 0;
+	अगर (!pmu)
+		वापस 0;
 
 	perf_pmu__scan_file(pmu, "nr_addr_filters", "%d", &nr_addr_filters);
 
-	return nr_addr_filters;
-}
+	वापस nr_addr_filters;
+पूर्ण
 
-int auxtrace_parse_filters(struct evlist *evlist)
-{
-	struct evsel *evsel;
-	char *filter;
-	int err, max_nr;
+पूर्णांक auxtrace_parse_filters(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel;
+	अक्षर *filter;
+	पूर्णांक err, max_nr;
 
-	evlist__for_each_entry(evlist, evsel) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
 		filter = evsel->filter;
 		max_nr = evsel__nr_addr_filter(evsel);
-		if (!filter || !max_nr)
-			continue;
-		evsel->filter = NULL;
+		अगर (!filter || !max_nr)
+			जारी;
+		evsel->filter = शून्य;
 		err = parse_addr_filter(evsel, filter, max_nr);
-		free(filter);
-		if (err)
-			return err;
+		मुक्त(filter);
+		अगर (err)
+			वापस err;
 		pr_debug("Address filter: %s\n", evsel->filter);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int auxtrace__process_event(struct perf_session *session, union perf_event *event,
-			    struct perf_sample *sample, struct perf_tool *tool)
-{
-	if (!session->auxtrace)
-		return 0;
+पूर्णांक auxtrace__process_event(काष्ठा perf_session *session, जोड़ perf_event *event,
+			    काष्ठा perf_sample *sample, काष्ठा perf_tool *tool)
+अणु
+	अगर (!session->auxtrace)
+		वापस 0;
 
-	return session->auxtrace->process_event(session, event, sample, tool);
-}
+	वापस session->auxtrace->process_event(session, event, sample, tool);
+पूर्ण
 
-void auxtrace__dump_auxtrace_sample(struct perf_session *session,
-				    struct perf_sample *sample)
-{
-	if (!session->auxtrace || !session->auxtrace->dump_auxtrace_sample ||
-	    auxtrace__dont_decode(session))
-		return;
+व्योम auxtrace__dump_auxtrace_sample(काष्ठा perf_session *session,
+				    काष्ठा perf_sample *sample)
+अणु
+	अगर (!session->auxtrace || !session->auxtrace->dump_auxtrace_sample ||
+	    auxtrace__करोnt_decode(session))
+		वापस;
 
 	session->auxtrace->dump_auxtrace_sample(session, sample);
-}
+पूर्ण
 
-int auxtrace__flush_events(struct perf_session *session, struct perf_tool *tool)
-{
-	if (!session->auxtrace)
-		return 0;
+पूर्णांक auxtrace__flush_events(काष्ठा perf_session *session, काष्ठा perf_tool *tool)
+अणु
+	अगर (!session->auxtrace)
+		वापस 0;
 
-	return session->auxtrace->flush_events(session, tool);
-}
+	वापस session->auxtrace->flush_events(session, tool);
+पूर्ण
 
-void auxtrace__free_events(struct perf_session *session)
-{
-	if (!session->auxtrace)
-		return;
+व्योम auxtrace__मुक्त_events(काष्ठा perf_session *session)
+अणु
+	अगर (!session->auxtrace)
+		वापस;
 
-	return session->auxtrace->free_events(session);
-}
+	वापस session->auxtrace->मुक्त_events(session);
+पूर्ण
 
-void auxtrace__free(struct perf_session *session)
-{
-	if (!session->auxtrace)
-		return;
+व्योम auxtrace__मुक्त(काष्ठा perf_session *session)
+अणु
+	अगर (!session->auxtrace)
+		वापस;
 
-	return session->auxtrace->free(session);
-}
+	वापस session->auxtrace->मुक्त(session);
+पूर्ण
 
-bool auxtrace__evsel_is_auxtrace(struct perf_session *session,
-				 struct evsel *evsel)
-{
-	if (!session->auxtrace || !session->auxtrace->evsel_is_auxtrace)
-		return false;
+bool auxtrace__evsel_is_auxtrace(काष्ठा perf_session *session,
+				 काष्ठा evsel *evsel)
+अणु
+	अगर (!session->auxtrace || !session->auxtrace->evsel_is_auxtrace)
+		वापस false;
 
-	return session->auxtrace->evsel_is_auxtrace(session, evsel);
-}
+	वापस session->auxtrace->evsel_is_auxtrace(session, evsel);
+पूर्ण

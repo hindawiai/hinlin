@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * cyttsp4_core.c
  * Cypress TrueTouch(TM) Standard Product V4 Core driver module.
@@ -12,25 +13,25 @@
  * Contact Cypress Semiconductor at www.cypress.com <ttdrivers@cypress.com>
  */
 
-#include "cyttsp4_core.h"
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/input/mt.h>
-#include <linux/interrupt.h>
-#include <linux/pm_runtime.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश "cyttsp4_core.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/input/mt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
 /* Timeout in ms. */
-#define CY_CORE_REQUEST_EXCLUSIVE_TIMEOUT	500
-#define CY_CORE_SLEEP_REQUEST_EXCLUSIVE_TIMEOUT	5000
-#define CY_CORE_MODE_CHANGE_TIMEOUT		1000
-#define CY_CORE_RESET_AND_WAIT_TIMEOUT		500
-#define CY_CORE_WAKEUP_TIMEOUT			500
+#घोषणा CY_CORE_REQUEST_EXCLUSIVE_TIMEOUT	500
+#घोषणा CY_CORE_SLEEP_REQUEST_EXCLUSIVE_TIMEOUT	5000
+#घोषणा CY_CORE_MODE_CHANGE_TIMEOUT		1000
+#घोषणा CY_CORE_RESET_AND_WAIT_TIMEOUT		500
+#घोषणा CY_CORE_WAKEUP_TIMEOUT			500
 
-#define CY_CORE_STARTUP_RETRY_COUNT		3
+#घोषणा CY_CORE_STARTUP_RETRY_COUNT		3
 
-static const char * const cyttsp4_tch_abs_string[] = {
+अटल स्थिर अक्षर * स्थिर cyttsp4_tch_असल_string[] = अणु
 	[CY_TCH_X]	= "X",
 	[CY_TCH_Y]	= "Y",
 	[CY_TCH_P]	= "P",
@@ -42,141 +43,141 @@ static const char * const cyttsp4_tch_abs_string[] = {
 	[CY_TCH_MIN]	= "MIN",
 	[CY_TCH_OR]	= "OR",
 	[CY_TCH_NUM_ABS] = "INVALID"
-};
+पूर्ण;
 
-static const u8 ldr_exit[] = {
+अटल स्थिर u8 ldr_निकास[] = अणु
 	0xFF, 0x01, 0x3B, 0x00, 0x00, 0x4F, 0x6D, 0x17
-};
+पूर्ण;
 
-static const u8 ldr_err_app[] = {
+अटल स्थिर u8 ldr_err_app[] = अणु
 	0x01, 0x02, 0x00, 0x00, 0x55, 0xDD, 0x17
-};
+पूर्ण;
 
-static inline size_t merge_bytes(u8 high, u8 low)
-{
-	return (high << 8) + low;
-}
+अटल अंतरभूत माप_प्रकार merge_bytes(u8 high, u8 low)
+अणु
+	वापस (high << 8) + low;
+पूर्ण
 
-#ifdef VERBOSE_DEBUG
-static void cyttsp4_pr_buf(struct device *dev, u8 *pr_buf, u8 *dptr, int size,
-		const char *data_name)
-{
-	int i, k;
-	const char fmt[] = "%02X ";
-	int max;
+#अगर_घोषित VERBOSE_DEBUG
+अटल व्योम cyttsp4_pr_buf(काष्ठा device *dev, u8 *pr_buf, u8 *dptr, पूर्णांक size,
+		स्थिर अक्षर *data_name)
+अणु
+	पूर्णांक i, k;
+	स्थिर अक्षर fmt[] = "%02X ";
+	पूर्णांक max;
 
-	if (!size)
-		return;
+	अगर (!size)
+		वापस;
 
-	max = (CY_MAX_PRBUF_SIZE - 1) - sizeof(CY_PR_TRUNCATED);
+	max = (CY_MAX_PRBUF_SIZE - 1) - माप(CY_PR_TRUNCATED);
 
 	pr_buf[0] = 0;
-	for (i = k = 0; i < size && k < max; i++, k += 3)
-		scnprintf(pr_buf + k, CY_MAX_PRBUF_SIZE, fmt, dptr[i]);
+	क्रम (i = k = 0; i < size && k < max; i++, k += 3)
+		scnम_लिखो(pr_buf + k, CY_MAX_PRBUF_SIZE, fmt, dptr[i]);
 
 	dev_vdbg(dev, "%s:  %s[0..%d]=%s%s\n", __func__, data_name, size - 1,
 			pr_buf, size <= max ? "" : CY_PR_TRUNCATED);
-}
-#else
-#define cyttsp4_pr_buf(dev, pr_buf, dptr, size, data_name) do { } while (0)
-#endif
+पूर्ण
+#अन्यथा
+#घोषणा cyttsp4_pr_buf(dev, pr_buf, dptr, size, data_name) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static int cyttsp4_load_status_regs(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	struct device *dev = cd->dev;
-	int rc;
+अटल पूर्णांक cyttsp4_load_status_regs(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	काष्ठा device *dev = cd->dev;
+	पूर्णांक rc;
 
-	rc = cyttsp4_adap_read(cd, CY_REG_BASE, si->si_ofs.mode_size,
+	rc = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, si->si_ofs.mode_size,
 			si->xy_mode);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(dev, "%s: fail read mode regs r=%d\n",
 			__func__, rc);
-	else
+	अन्यथा
 		cyttsp4_pr_buf(dev, cd->pr_buf, si->xy_mode,
 			si->si_ofs.mode_size, "xy_mode");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_handshake(struct cyttsp4 *cd, u8 mode)
-{
+अटल पूर्णांक cyttsp4_handshake(काष्ठा cyttsp4 *cd, u8 mode)
+अणु
 	u8 cmd = mode ^ CY_HST_TOGGLE;
-	int rc;
+	पूर्णांक rc;
 
 	/*
 	 * Mode change issued, handshaking now will cause endless mode change
-	 * requests, for sync mode modechange will do same with handshake
+	 * requests, क्रम sync mode modechange will करो same with handshake
 	 * */
-	if (mode & CY_HST_MODE_CHANGE)
-		return 0;
+	अगर (mode & CY_HST_MODE_CHANGE)
+		वापस 0;
 
-	rc = cyttsp4_adap_write(cd, CY_REG_BASE, sizeof(cmd), &cmd);
-	if (rc < 0)
+	rc = cyttsp4_adap_ग_लिखो(cd, CY_REG_BASE, माप(cmd), &cmd);
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: bus write fail on handshake (ret=%d)\n",
 				__func__, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_hw_soft_reset(struct cyttsp4 *cd)
-{
+अटल पूर्णांक cyttsp4_hw_soft_reset(काष्ठा cyttsp4 *cd)
+अणु
 	u8 cmd = CY_HST_RESET;
-	int rc = cyttsp4_adap_write(cd, CY_REG_BASE, sizeof(cmd), &cmd);
-	if (rc < 0) {
+	पूर्णांक rc = cyttsp4_adap_ग_लिखो(cd, CY_REG_BASE, माप(cmd), &cmd);
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: FAILED to execute SOFT reset\n",
 				__func__);
-		return rc;
-	}
-	return 0;
-}
+		वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_hw_hard_reset(struct cyttsp4 *cd)
-{
-	if (cd->cpdata->xres) {
+अटल पूर्णांक cyttsp4_hw_hard_reset(काष्ठा cyttsp4 *cd)
+अणु
+	अगर (cd->cpdata->xres) अणु
 		cd->cpdata->xres(cd->cpdata, cd->dev);
 		dev_dbg(cd->dev, "%s: execute HARD reset\n", __func__);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	dev_err(cd->dev, "%s: FAILED to execute HARD reset\n", __func__);
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static int cyttsp4_hw_reset(struct cyttsp4 *cd)
-{
-	int rc = cyttsp4_hw_hard_reset(cd);
-	if (rc == -ENOSYS)
+अटल पूर्णांक cyttsp4_hw_reset(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक rc = cyttsp4_hw_hard_reset(cd);
+	अगर (rc == -ENOSYS)
 		rc = cyttsp4_hw_soft_reset(cd);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * Gets number of bits for a touch filed as parameter,
- * sets maximum value for field which is used as bit mask
- * and returns number of bytes required for that field
+ * Gets number of bits क्रम a touch filed as parameter,
+ * sets maximum value क्रम field which is used as bit mask
+ * and वापसs number of bytes required क्रम that field
  */
-static int cyttsp4_bits_2_bytes(unsigned int nbits, size_t *max)
-{
+अटल पूर्णांक cyttsp4_bits_2_bytes(अचिन्हित पूर्णांक nbits, माप_प्रकार *max)
+अणु
 	*max = 1UL << nbits;
-	return (nbits + 7) / 8;
-}
+	वापस (nbits + 7) / 8;
+पूर्ण
 
-static int cyttsp4_si_data_offsets(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	int rc = cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(si->si_data),
+अटल पूर्णांक cyttsp4_si_data_offsets(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	पूर्णांक rc = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(si->si_data),
 			&si->si_data);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read sysinfo data offsets r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Print sysinfo data offsets */
+	/* Prपूर्णांक sysinfo data offsets */
 	cyttsp4_pr_buf(cd->dev, cd->pr_buf, (u8 *)&si->si_data,
-		       sizeof(si->si_data), "sysinfo_data_offsets");
+		       माप(si->si_data), "sysinfo_data_offsets");
 
-	/* convert sysinfo data offset bytes into integers */
+	/* convert sysinfo data offset bytes पूर्णांकo पूर्णांकegers */
 
 	si->si_ofs.map_sz = merge_bytes(si->si_data.map_szh,
 			si->si_data.map_szl);
@@ -194,135 +195,135 @@ static int cyttsp4_si_data_offsets(struct cyttsp4 *cd)
 			si->si_data.ddata_ofsl);
 	si->si_ofs.mdata_ofs = merge_bytes(si->si_data.mdata_ofsh,
 			si->si_data.mdata_ofsl);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_cydata(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	int read_offset;
-	int mfgid_sz, calc_mfgid_sz;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_cydata(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	पूर्णांक पढ़ो_offset;
+	पूर्णांक mfgid_sz, calc_mfgid_sz;
+	व्योम *p;
+	पूर्णांक rc;
 
-	if (si->si_ofs.test_ofs <= si->si_ofs.cydata_ofs) {
+	अगर (si->si_ofs.test_ofs <= si->si_ofs.cydata_ofs) अणु
 		dev_err(cd->dev,
 			"%s: invalid offset test_ofs: %zu, cydata_ofs: %zu\n",
 			__func__, si->si_ofs.test_ofs, si->si_ofs.cydata_ofs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	si->si_ofs.cydata_size = si->si_ofs.test_ofs - si->si_ofs.cydata_ofs;
 	dev_dbg(cd->dev, "%s: cydata size: %zd\n", __func__,
 			si->si_ofs.cydata_size);
 
-	p = krealloc(si->si_ptrs.cydata, si->si_ofs.cydata_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.cydata, si->si_ofs.cydata_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: failed to allocate cydata memory\n",
 			__func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.cydata = p;
 
-	read_offset = si->si_ofs.cydata_ofs;
+	पढ़ो_offset = si->si_ofs.cydata_ofs;
 
-	/* Read the CYDA registers up to MFGID field */
-	rc = cyttsp4_adap_read(cd, read_offset,
-			offsetof(struct cyttsp4_cydata, mfgid_sz)
-				+ sizeof(si->si_ptrs.cydata->mfgid_sz),
+	/* Read the CYDA रेजिस्टरs up to MFGID field */
+	rc = cyttsp4_adap_पढ़ो(cd, पढ़ो_offset,
+			दुरत्व(काष्ठा cyttsp4_cydata, mfgid_sz)
+				+ माप(si->si_ptrs.cydata->mfgid_sz),
 			si->si_ptrs.cydata);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read cydata r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* Check MFGID size */
 	mfgid_sz = si->si_ptrs.cydata->mfgid_sz;
-	calc_mfgid_sz = si->si_ofs.cydata_size - sizeof(struct cyttsp4_cydata);
-	if (mfgid_sz != calc_mfgid_sz) {
+	calc_mfgid_sz = si->si_ofs.cydata_size - माप(काष्ठा cyttsp4_cydata);
+	अगर (mfgid_sz != calc_mfgid_sz) अणु
 		dev_err(cd->dev, "%s: mismatch in MFGID size, reported:%d calculated:%d\n",
 			__func__, mfgid_sz, calc_mfgid_sz);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	read_offset += offsetof(struct cyttsp4_cydata, mfgid_sz)
-			+ sizeof(si->si_ptrs.cydata->mfgid_sz);
+	पढ़ो_offset += दुरत्व(काष्ठा cyttsp4_cydata, mfgid_sz)
+			+ माप(si->si_ptrs.cydata->mfgid_sz);
 
-	/* Read the CYDA registers for MFGID field */
-	rc = cyttsp4_adap_read(cd, read_offset, si->si_ptrs.cydata->mfgid_sz,
+	/* Read the CYDA रेजिस्टरs क्रम MFGID field */
+	rc = cyttsp4_adap_पढ़ो(cd, पढ़ो_offset, si->si_ptrs.cydata->mfgid_sz,
 			si->si_ptrs.cydata->mfg_id);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read cydata r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	read_offset += si->si_ptrs.cydata->mfgid_sz;
+	पढ़ो_offset += si->si_ptrs.cydata->mfgid_sz;
 
-	/* Read the rest of the CYDA registers */
-	rc = cyttsp4_adap_read(cd, read_offset,
-			sizeof(struct cyttsp4_cydata)
-				- offsetof(struct cyttsp4_cydata, cyito_idh),
+	/* Read the rest of the CYDA रेजिस्टरs */
+	rc = cyttsp4_adap_पढ़ो(cd, पढ़ो_offset,
+			माप(काष्ठा cyttsp4_cydata)
+				- दुरत्व(काष्ठा cyttsp4_cydata, cyito_idh),
 			&si->si_ptrs.cydata->cyito_idh);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read cydata r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	cyttsp4_pr_buf(cd->dev, cd->pr_buf, (u8 *)si->si_ptrs.cydata,
 		si->si_ofs.cydata_size, "sysinfo_cydata");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_test_data(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_test_data(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	व्योम *p;
+	पूर्णांक rc;
 
-	if (si->si_ofs.pcfg_ofs <= si->si_ofs.test_ofs) {
+	अगर (si->si_ofs.pcfg_ofs <= si->si_ofs.test_ofs) अणु
 		dev_err(cd->dev,
 			"%s: invalid offset pcfg_ofs: %zu, test_ofs: %zu\n",
 			__func__, si->si_ofs.pcfg_ofs, si->si_ofs.test_ofs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	si->si_ofs.test_size = si->si_ofs.pcfg_ofs - si->si_ofs.test_ofs;
 
-	p = krealloc(si->si_ptrs.test, si->si_ofs.test_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.test, si->si_ofs.test_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: failed to allocate test memory\n",
 			__func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.test = p;
 
-	rc = cyttsp4_adap_read(cd, si->si_ofs.test_ofs, si->si_ofs.test_size,
+	rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.test_ofs, si->si_ofs.test_size,
 			si->si_ptrs.test);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read test data r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	cyttsp4_pr_buf(cd->dev, cd->pr_buf,
 		       (u8 *)si->si_ptrs.test, si->si_ofs.test_size,
 		       "sysinfo_test_data");
-	if (si->si_ptrs.test->post_codel &
+	अगर (si->si_ptrs.test->post_codel &
 	    CY_POST_CODEL_WDG_RST)
 		dev_info(cd->dev, "%s: %s codel=%02X\n",
 			 __func__, "Reset was a WATCHDOG RESET",
 			 si->si_ptrs.test->post_codel);
 
-	if (!(si->si_ptrs.test->post_codel &
+	अगर (!(si->si_ptrs.test->post_codel &
 	      CY_POST_CODEL_CFG_DATA_CRC_FAIL))
 		dev_info(cd->dev, "%s: %s codel=%02X\n", __func__,
 			 "Config Data CRC FAIL",
 			 si->si_ptrs.test->post_codel);
 
-	if (!(si->si_ptrs.test->post_codel &
+	अगर (!(si->si_ptrs.test->post_codel &
 	      CY_POST_CODEL_PANEL_TEST_FAIL))
 		dev_info(cd->dev, "%s: %s codel=%02X\n",
 			 __func__, "PANEL TEST FAIL",
@@ -332,39 +333,39 @@ static int cyttsp4_si_get_test_data(struct cyttsp4 *cd)
 		 __func__, si->si_ptrs.test->post_codel & 0x08 ?
 		 "ENABLED" : "DISABLED",
 		 si->si_ptrs.test->post_codel);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_pcfg_data(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_pcfg_data(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	व्योम *p;
+	पूर्णांक rc;
 
-	if (si->si_ofs.opcfg_ofs <= si->si_ofs.pcfg_ofs) {
+	अगर (si->si_ofs.opcfg_ofs <= si->si_ofs.pcfg_ofs) अणु
 		dev_err(cd->dev,
 			"%s: invalid offset opcfg_ofs: %zu, pcfg_ofs: %zu\n",
 			__func__, si->si_ofs.opcfg_ofs, si->si_ofs.pcfg_ofs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	si->si_ofs.pcfg_size = si->si_ofs.opcfg_ofs - si->si_ofs.pcfg_ofs;
 
-	p = krealloc(si->si_ptrs.pcfg, si->si_ofs.pcfg_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.pcfg, si->si_ofs.pcfg_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: failed to allocate pcfg memory\n",
 			__func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.pcfg = p;
 
-	rc = cyttsp4_adap_read(cd, si->si_ofs.pcfg_ofs, si->si_ofs.pcfg_size,
+	rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.pcfg_ofs, si->si_ofs.pcfg_size,
 			si->si_ptrs.pcfg);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read pcfg data r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	si->si_ofs.max_x = merge_bytes((si->si_ptrs.pcfg->res_xh
 			& CY_PCFG_RESOLUTION_X_MASK), si->si_ptrs.pcfg->res_xl);
@@ -380,43 +381,43 @@ static int cyttsp4_si_get_pcfg_data(struct cyttsp4 *cd)
 	cyttsp4_pr_buf(cd->dev, cd->pr_buf,
 		       (u8 *)si->si_ptrs.pcfg,
 		       si->si_ofs.pcfg_size, "sysinfo_pcfg_data");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_opcfg_data(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	struct cyttsp4_tch_abs_params *tch;
-	struct cyttsp4_tch_rec_params *tch_old, *tch_new;
-	enum cyttsp4_tch_abs abs;
-	int i;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_opcfg_data(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	काष्ठा cyttsp4_tch_असल_params *tch;
+	काष्ठा cyttsp4_tch_rec_params *tch_old, *tch_new;
+	क्रमागत cyttsp4_tch_असल असल;
+	पूर्णांक i;
+	व्योम *p;
+	पूर्णांक rc;
 
-	if (si->si_ofs.ddata_ofs <= si->si_ofs.opcfg_ofs) {
+	अगर (si->si_ofs.ddata_ofs <= si->si_ofs.opcfg_ofs) अणु
 		dev_err(cd->dev,
 			"%s: invalid offset ddata_ofs: %zu, opcfg_ofs: %zu\n",
 			__func__, si->si_ofs.ddata_ofs, si->si_ofs.opcfg_ofs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	si->si_ofs.opcfg_size = si->si_ofs.ddata_ofs - si->si_ofs.opcfg_ofs;
 
-	p = krealloc(si->si_ptrs.opcfg, si->si_ofs.opcfg_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.opcfg, si->si_ofs.opcfg_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: failed to allocate opcfg memory\n",
 			__func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.opcfg = p;
 
-	rc = cyttsp4_adap_read(cd, si->si_ofs.opcfg_ofs, si->si_ofs.opcfg_size,
+	rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.opcfg_ofs, si->si_ofs.opcfg_size,
 			si->si_ptrs.opcfg);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail read opcfg data r=%d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	si->si_ofs.cmd_ofs = si->si_ptrs.opcfg->cmd_ofs;
 	si->si_ofs.rep_ofs = si->si_ptrs.opcfg->rep_ofs;
 	si->si_ofs.rep_sz = (si->si_ptrs.opcfg->rep_szh * 256) +
@@ -432,46 +433,46 @@ static int cyttsp4_si_get_opcfg_data(struct cyttsp4 *cd)
 		CY_BYTE_OFS_MASK;
 
 	/* Get the old touch fields */
-	for (abs = CY_TCH_X; abs < CY_NUM_TCH_FIELDS; abs++) {
-		tch = &si->si_ofs.tch_abs[abs];
-		tch_old = &si->si_ptrs.opcfg->tch_rec_old[abs];
+	क्रम (असल = CY_TCH_X; असल < CY_NUM_TCH_FIELDS; असल++) अणु
+		tch = &si->si_ofs.tch_असल[असल];
+		tch_old = &si->si_ptrs.opcfg->tch_rec_old[असल];
 
 		tch->ofs = tch_old->loc & CY_BYTE_OFS_MASK;
 		tch->size = cyttsp4_bits_2_bytes(tch_old->size,
 						 &tch->max);
 		tch->bofs = (tch_old->loc & CY_BOFS_MASK) >> CY_BOFS_SHIFT;
-	}
+	पूर्ण
 
 	/* button fields */
 	si->si_ofs.btn_rec_size = si->si_ptrs.opcfg->btn_rec_size;
-	si->si_ofs.btn_diff_ofs = si->si_ptrs.opcfg->btn_diff_ofs;
-	si->si_ofs.btn_diff_size = si->si_ptrs.opcfg->btn_diff_size;
+	si->si_ofs.btn_dअगरf_ofs = si->si_ptrs.opcfg->btn_dअगरf_ofs;
+	si->si_ofs.btn_dअगरf_size = si->si_ptrs.opcfg->btn_dअगरf_size;
 
-	if (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE) {
+	अगर (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE) अणु
 		/* Get the extended touch fields */
-		for (i = 0; i < CY_NUM_EXT_TCH_FIELDS; abs++, i++) {
-			tch = &si->si_ofs.tch_abs[abs];
+		क्रम (i = 0; i < CY_NUM_EXT_TCH_FIELDS; असल++, i++) अणु
+			tch = &si->si_ofs.tch_असल[असल];
 			tch_new = &si->si_ptrs.opcfg->tch_rec_new[i];
 
 			tch->ofs = tch_new->loc & CY_BYTE_OFS_MASK;
 			tch->size = cyttsp4_bits_2_bytes(tch_new->size,
 							 &tch->max);
 			tch->bofs = (tch_new->loc & CY_BOFS_MASK) >> CY_BOFS_SHIFT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (abs = 0; abs < CY_TCH_NUM_ABS; abs++) {
+	क्रम (असल = 0; असल < CY_TCH_NUM_ABS; असल++) अणु
 		dev_dbg(cd->dev, "%s: tch_rec_%s\n", __func__,
-			cyttsp4_tch_abs_string[abs]);
+			cyttsp4_tch_असल_string[असल]);
 		dev_dbg(cd->dev, "%s:     ofs =%2zd\n", __func__,
-			si->si_ofs.tch_abs[abs].ofs);
+			si->si_ofs.tch_असल[असल].ofs);
 		dev_dbg(cd->dev, "%s:     siz =%2zd\n", __func__,
-			si->si_ofs.tch_abs[abs].size);
+			si->si_ofs.tch_असल[असल].size);
 		dev_dbg(cd->dev, "%s:     max =%2zd\n", __func__,
-			si->si_ofs.tch_abs[abs].max);
+			si->si_ofs.tch_असल[असल].max);
 		dev_dbg(cd->dev, "%s:     bofs=%2zd\n", __func__,
-			si->si_ofs.tch_abs[abs].bofs);
-	}
+			si->si_ofs.tch_असल[असल].bofs);
+	पूर्ण
 
 	si->si_ofs.mode_size = si->si_ofs.tt_stat_ofs + 1;
 	si->si_ofs.data_size = si->si_ofs.max_tchs *
@@ -480,144 +481,144 @@ static int cyttsp4_si_get_opcfg_data(struct cyttsp4 *cd)
 	cyttsp4_pr_buf(cd->dev, cd->pr_buf, (u8 *)si->si_ptrs.opcfg,
 		si->si_ofs.opcfg_size, "sysinfo_opcfg_data");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_si_get_ddata(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_ddata(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	व्योम *p;
+	पूर्णांक rc;
 
 	si->si_ofs.ddata_size = si->si_ofs.mdata_ofs - si->si_ofs.ddata_ofs;
 
-	p = krealloc(si->si_ptrs.ddata, si->si_ofs.ddata_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.ddata, si->si_ofs.ddata_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: fail alloc ddata memory\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.ddata = p;
 
-	rc = cyttsp4_adap_read(cd, si->si_ofs.ddata_ofs, si->si_ofs.ddata_size,
+	rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.ddata_ofs, si->si_ofs.ddata_size,
 			si->si_ptrs.ddata);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: fail read ddata data r=%d\n",
 			__func__, rc);
-	else
+	अन्यथा
 		cyttsp4_pr_buf(cd->dev, cd->pr_buf,
 			       (u8 *)si->si_ptrs.ddata,
 			       si->si_ofs.ddata_size, "sysinfo_ddata");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_mdata(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	void *p;
-	int rc;
+अटल पूर्णांक cyttsp4_si_get_mdata(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	व्योम *p;
+	पूर्णांक rc;
 
 	si->si_ofs.mdata_size = si->si_ofs.map_sz - si->si_ofs.mdata_ofs;
 
-	p = krealloc(si->si_ptrs.mdata, si->si_ofs.mdata_size, GFP_KERNEL);
-	if (p == NULL) {
+	p = kपुनः_स्मृति(si->si_ptrs.mdata, si->si_ofs.mdata_size, GFP_KERNEL);
+	अगर (p == शून्य) अणु
 		dev_err(cd->dev, "%s: fail alloc mdata memory\n", __func__);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	si->si_ptrs.mdata = p;
 
-	rc = cyttsp4_adap_read(cd, si->si_ofs.mdata_ofs, si->si_ofs.mdata_size,
+	rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.mdata_ofs, si->si_ofs.mdata_size,
 			si->si_ptrs.mdata);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: fail read mdata data r=%d\n",
 			__func__, rc);
-	else
+	अन्यथा
 		cyttsp4_pr_buf(cd->dev, cd->pr_buf,
 			       (u8 *)si->si_ptrs.mdata,
 			       si->si_ofs.mdata_size, "sysinfo_mdata");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_btn_data(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	int btn;
-	int num_defined_keys;
+अटल पूर्णांक cyttsp4_si_get_btn_data(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	पूर्णांक btn;
+	पूर्णांक num_defined_keys;
 	u16 *key_table;
-	void *p;
-	int rc = 0;
+	व्योम *p;
+	पूर्णांक rc = 0;
 
-	if (si->si_ofs.num_btns) {
+	अगर (si->si_ofs.num_btns) अणु
 		si->si_ofs.btn_keys_size = si->si_ofs.num_btns *
-			sizeof(struct cyttsp4_btn);
+			माप(काष्ठा cyttsp4_btn);
 
-		p = krealloc(si->btn, si->si_ofs.btn_keys_size,
+		p = kपुनः_स्मृति(si->btn, si->si_ofs.btn_keys_size,
 				GFP_KERNEL|__GFP_ZERO);
-		if (p == NULL) {
+		अगर (p == शून्य) अणु
 			dev_err(cd->dev, "%s: %s\n", __func__,
 				"fail alloc btn_keys memory");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		si->btn = p;
 
-		if (cd->cpdata->sett[CY_IC_GRPNUM_BTN_KEYS] == NULL)
+		अगर (cd->cpdata->sett[CY_IC_GRPNUM_BTN_KEYS] == शून्य)
 			num_defined_keys = 0;
-		else if (cd->cpdata->sett[CY_IC_GRPNUM_BTN_KEYS]->data == NULL)
+		अन्यथा अगर (cd->cpdata->sett[CY_IC_GRPNUM_BTN_KEYS]->data == शून्य)
 			num_defined_keys = 0;
-		else
+		अन्यथा
 			num_defined_keys = cd->cpdata->sett
 				[CY_IC_GRPNUM_BTN_KEYS]->size;
 
-		for (btn = 0; btn < si->si_ofs.num_btns &&
-			btn < num_defined_keys; btn++) {
+		क्रम (btn = 0; btn < si->si_ofs.num_btns &&
+			btn < num_defined_keys; btn++) अणु
 			key_table = (u16 *)cd->cpdata->sett
 				[CY_IC_GRPNUM_BTN_KEYS]->data;
 			si->btn[btn].key_code = key_table[btn];
 			si->btn[btn].state = CY_BTN_RELEASED;
 			si->btn[btn].enabled = true;
-		}
-		for (; btn < si->si_ofs.num_btns; btn++) {
+		पूर्ण
+		क्रम (; btn < si->si_ofs.num_btns; btn++) अणु
 			si->btn[btn].key_code = KEY_RESERVED;
 			si->btn[btn].state = CY_BTN_RELEASED;
 			si->btn[btn].enabled = true;
-		}
+		पूर्ण
 
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	si->si_ofs.btn_keys_size = 0;
-	kfree(si->btn);
-	si->btn = NULL;
-	return rc;
-}
+	kमुक्त(si->btn);
+	si->btn = शून्य;
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_si_get_op_data_ptrs(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	void *p;
+अटल पूर्णांक cyttsp4_si_get_op_data_ptrs(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	व्योम *p;
 
-	p = krealloc(si->xy_mode, si->si_ofs.mode_size, GFP_KERNEL|__GFP_ZERO);
-	if (p == NULL)
-		return -ENOMEM;
+	p = kपुनः_स्मृति(si->xy_mode, si->si_ofs.mode_size, GFP_KERNEL|__GFP_ZERO);
+	अगर (p == शून्य)
+		वापस -ENOMEM;
 	si->xy_mode = p;
 
-	p = krealloc(si->xy_data, si->si_ofs.data_size, GFP_KERNEL|__GFP_ZERO);
-	if (p == NULL)
-		return -ENOMEM;
+	p = kपुनः_स्मृति(si->xy_data, si->si_ofs.data_size, GFP_KERNEL|__GFP_ZERO);
+	अगर (p == शून्य)
+		वापस -ENOMEM;
 	si->xy_data = p;
 
-	p = krealloc(si->btn_rec_data,
+	p = kपुनः_स्मृति(si->btn_rec_data,
 			si->si_ofs.btn_rec_size * si->si_ofs.num_btns,
 			GFP_KERNEL|__GFP_ZERO);
-	if (p == NULL)
-		return -ENOMEM;
+	अगर (p == शून्य)
+		वापस -ENOMEM;
 	si->btn_rec_data = p;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cyttsp4_si_put_log_data(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
+अटल व्योम cyttsp4_si_put_log_data(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
 	dev_dbg(cd->dev, "%s: cydata_ofs =%4zd siz=%4zd\n", __func__,
 		si->si_ofs.cydata_ofs, si->si_ofs.cydata_size);
 	dev_dbg(cd->dev, "%s: test_ofs   =%4zd siz=%4zd\n", __func__,
@@ -657,9 +658,9 @@ static void cyttsp4_si_put_log_data(struct cyttsp4 *cd)
 	dev_dbg(cd->dev, "%s: btn_rec_size   =%2zd\n", __func__,
 		si->si_ofs.btn_rec_size);
 	dev_dbg(cd->dev, "%s: btn_diff_ofs   =%2zd\n", __func__,
-		si->si_ofs.btn_diff_ofs);
+		si->si_ofs.btn_dअगरf_ofs);
 	dev_dbg(cd->dev, "%s: btn_diff_size  =%2zd\n", __func__,
-		si->si_ofs.btn_diff_size);
+		si->si_ofs.btn_dअगरf_size);
 
 	dev_dbg(cd->dev, "%s: max_x    = 0x%04zX (%zd)\n", __func__,
 		si->si_ofs.max_x, si->si_ofs.max_x);
@@ -678,110 +679,110 @@ static void cyttsp4_si_put_log_data(struct cyttsp4 *cd)
 
 	dev_dbg(cd->dev, "%s: xy_mode=%p xy_data=%p\n", __func__,
 		si->xy_mode, si->xy_data);
-}
+पूर्ण
 
-static int cyttsp4_get_sysinfo_regs(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
-	int rc;
+अटल पूर्णांक cyttsp4_get_sysinfo_regs(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
+	पूर्णांक rc;
 
 	rc = cyttsp4_si_data_offsets(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_cydata(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_test_data(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_pcfg_data(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_opcfg_data(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_ddata(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_mdata(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_btn_data(cd);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	rc = cyttsp4_si_get_op_data_ptrs(cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: failed to get_op_data\n",
 			__func__);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	cyttsp4_si_put_log_data(cd);
 
 	/* provide flow control handshake */
 	rc = cyttsp4_handshake(cd, si->si_data.hst_mode);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: handshake fail on sysinfo reg\n",
 			__func__);
 
-	si->ready = true;
-	return rc;
-}
+	si->पढ़ोy = true;
+	वापस rc;
+पूर्ण
 
-static void cyttsp4_queue_startup_(struct cyttsp4 *cd)
-{
-	if (cd->startup_state == STARTUP_NONE) {
+अटल व्योम cyttsp4_queue_startup_(काष्ठा cyttsp4 *cd)
+अणु
+	अगर (cd->startup_state == STARTUP_NONE) अणु
 		cd->startup_state = STARTUP_QUEUED;
 		schedule_work(&cd->startup_work);
 		dev_dbg(cd->dev, "%s: cyttsp4_startup queued\n", __func__);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(cd->dev, "%s: startup_state = %d\n", __func__,
 			cd->startup_state);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cyttsp4_report_slot_liftoff(struct cyttsp4_mt_data *md,
-		int max_slots)
-{
-	int t;
+अटल व्योम cyttsp4_report_slot_lअगरtoff(काष्ठा cyttsp4_mt_data *md,
+		पूर्णांक max_slots)
+अणु
+	पूर्णांक t;
 
-	if (md->num_prv_tch == 0)
-		return;
+	अगर (md->num_prv_tch == 0)
+		वापस;
 
-	for (t = 0; t < max_slots; t++) {
+	क्रम (t = 0; t < max_slots; t++) अणु
 		input_mt_slot(md->input, t);
 		input_mt_report_slot_inactive(md->input);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cyttsp4_lift_all(struct cyttsp4_mt_data *md)
-{
-	if (!md->si)
-		return;
+अटल व्योम cyttsp4_lअगरt_all(काष्ठा cyttsp4_mt_data *md)
+अणु
+	अगर (!md->si)
+		वापस;
 
-	if (md->num_prv_tch != 0) {
-		cyttsp4_report_slot_liftoff(md,
-				md->si->si_ofs.tch_abs[CY_TCH_T].max);
+	अगर (md->num_prv_tch != 0) अणु
+		cyttsp4_report_slot_lअगरtoff(md,
+				md->si->si_ofs.tch_असल[CY_TCH_T].max);
 		input_sync(md->input);
 		md->num_prv_tch = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cyttsp4_get_touch_axis(struct cyttsp4_mt_data *md,
-	int *axis, int size, int max, u8 *xy_data, int bofs)
-{
-	int nbyte;
-	int next;
+अटल व्योम cyttsp4_get_touch_axis(काष्ठा cyttsp4_mt_data *md,
+	पूर्णांक *axis, पूर्णांक size, पूर्णांक max, u8 *xy_data, पूर्णांक bofs)
+अणु
+	पूर्णांक nbyte;
+	पूर्णांक next;
 
-	for (nbyte = 0, *axis = 0, next = 0; nbyte < size; nbyte++) {
+	क्रम (nbyte = 0, *axis = 0, next = 0; nbyte < size; nbyte++) अणु
 		dev_vdbg(&md->input->dev,
 			"%s: *axis=%02X(%d) size=%d max=%08X xy_data=%p"
 			" xy_data[%d]=%02X(%d) bofs=%d\n",
@@ -789,7 +790,7 @@ static void cyttsp4_get_touch_axis(struct cyttsp4_mt_data *md,
 			xy_data[next], xy_data[next], bofs);
 		*axis = (*axis * 256) + (xy_data[next] >> bofs);
 		next++;
-	}
+	पूर्ण
 
 	*axis &= max - 1;
 
@@ -798,194 +799,194 @@ static void cyttsp4_get_touch_axis(struct cyttsp4_mt_data *md,
 		" xy_data[%d]=%02X(%d)\n",
 		__func__, *axis, *axis, size, max, xy_data, next,
 		xy_data[next], xy_data[next]);
-}
+पूर्ण
 
-static void cyttsp4_get_touch(struct cyttsp4_mt_data *md,
-	struct cyttsp4_touch *touch, u8 *xy_data)
-{
-	struct device *dev = &md->input->dev;
-	struct cyttsp4_sysinfo *si = md->si;
-	enum cyttsp4_tch_abs abs;
+अटल व्योम cyttsp4_get_touch(काष्ठा cyttsp4_mt_data *md,
+	काष्ठा cyttsp4_touch *touch, u8 *xy_data)
+अणु
+	काष्ठा device *dev = &md->input->dev;
+	काष्ठा cyttsp4_sysinfo *si = md->si;
+	क्रमागत cyttsp4_tch_असल असल;
 	bool flipped;
 
-	for (abs = CY_TCH_X; abs < CY_TCH_NUM_ABS; abs++) {
-		cyttsp4_get_touch_axis(md, &touch->abs[abs],
-			si->si_ofs.tch_abs[abs].size,
-			si->si_ofs.tch_abs[abs].max,
-			xy_data + si->si_ofs.tch_abs[abs].ofs,
-			si->si_ofs.tch_abs[abs].bofs);
+	क्रम (असल = CY_TCH_X; असल < CY_TCH_NUM_ABS; असल++) अणु
+		cyttsp4_get_touch_axis(md, &touch->असल[असल],
+			si->si_ofs.tch_असल[असल].size,
+			si->si_ofs.tch_असल[असल].max,
+			xy_data + si->si_ofs.tch_असल[असल].ofs,
+			si->si_ofs.tch_असल[असल].bofs);
 		dev_vdbg(dev, "%s: get %s=%04X(%d)\n", __func__,
-			cyttsp4_tch_abs_string[abs],
-			touch->abs[abs], touch->abs[abs]);
-	}
+			cyttsp4_tch_असल_string[असल],
+			touch->असल[असल], touch->असल[असल]);
+	पूर्ण
 
-	if (md->pdata->flags & CY_FLAG_FLIP) {
-		swap(touch->abs[CY_TCH_X], touch->abs[CY_TCH_Y]);
+	अगर (md->pdata->flags & CY_FLAG_FLIP) अणु
+		swap(touch->असल[CY_TCH_X], touch->असल[CY_TCH_Y]);
 		flipped = true;
-	} else
+	पूर्ण अन्यथा
 		flipped = false;
 
-	if (md->pdata->flags & CY_FLAG_INV_X) {
-		if (flipped)
-			touch->abs[CY_TCH_X] = md->si->si_ofs.max_y -
-				touch->abs[CY_TCH_X];
-		else
-			touch->abs[CY_TCH_X] = md->si->si_ofs.max_x -
-				touch->abs[CY_TCH_X];
-	}
-	if (md->pdata->flags & CY_FLAG_INV_Y) {
-		if (flipped)
-			touch->abs[CY_TCH_Y] = md->si->si_ofs.max_x -
-				touch->abs[CY_TCH_Y];
-		else
-			touch->abs[CY_TCH_Y] = md->si->si_ofs.max_y -
-				touch->abs[CY_TCH_Y];
-	}
+	अगर (md->pdata->flags & CY_FLAG_INV_X) अणु
+		अगर (flipped)
+			touch->असल[CY_TCH_X] = md->si->si_ofs.max_y -
+				touch->असल[CY_TCH_X];
+		अन्यथा
+			touch->असल[CY_TCH_X] = md->si->si_ofs.max_x -
+				touch->असल[CY_TCH_X];
+	पूर्ण
+	अगर (md->pdata->flags & CY_FLAG_INV_Y) अणु
+		अगर (flipped)
+			touch->असल[CY_TCH_Y] = md->si->si_ofs.max_x -
+				touch->असल[CY_TCH_Y];
+		अन्यथा
+			touch->असल[CY_TCH_Y] = md->si->si_ofs.max_y -
+				touch->असल[CY_TCH_Y];
+	पूर्ण
 
 	dev_vdbg(dev, "%s: flip=%s inv-x=%s inv-y=%s x=%04X(%d) y=%04X(%d)\n",
 		__func__, flipped ? "true" : "false",
 		md->pdata->flags & CY_FLAG_INV_X ? "true" : "false",
 		md->pdata->flags & CY_FLAG_INV_Y ? "true" : "false",
-		touch->abs[CY_TCH_X], touch->abs[CY_TCH_X],
-		touch->abs[CY_TCH_Y], touch->abs[CY_TCH_Y]);
-}
+		touch->असल[CY_TCH_X], touch->असल[CY_TCH_X],
+		touch->असल[CY_TCH_Y], touch->असल[CY_TCH_Y]);
+पूर्ण
 
-static void cyttsp4_final_sync(struct input_dev *input, int max_slots, int *ids)
-{
-	int t;
+अटल व्योम cyttsp4_final_sync(काष्ठा input_dev *input, पूर्णांक max_slots, पूर्णांक *ids)
+अणु
+	पूर्णांक t;
 
-	for (t = 0; t < max_slots; t++) {
-		if (ids[t])
-			continue;
+	क्रम (t = 0; t < max_slots; t++) अणु
+		अगर (ids[t])
+			जारी;
 		input_mt_slot(input, t);
 		input_mt_report_slot_inactive(input);
-	}
+	पूर्ण
 
 	input_sync(input);
-}
+पूर्ण
 
-static void cyttsp4_get_mt_touches(struct cyttsp4_mt_data *md, int num_cur_tch)
-{
-	struct device *dev = &md->input->dev;
-	struct cyttsp4_sysinfo *si = md->si;
-	struct cyttsp4_touch tch;
-	int sig;
-	int i, j, t = 0;
-	int ids[max(CY_TMA1036_MAX_TCH, CY_TMA4XX_MAX_TCH)];
+अटल व्योम cyttsp4_get_mt_touches(काष्ठा cyttsp4_mt_data *md, पूर्णांक num_cur_tch)
+अणु
+	काष्ठा device *dev = &md->input->dev;
+	काष्ठा cyttsp4_sysinfo *si = md->si;
+	काष्ठा cyttsp4_touch tch;
+	पूर्णांक sig;
+	पूर्णांक i, j, t = 0;
+	पूर्णांक ids[max(CY_TMA1036_MAX_TCH, CY_TMA4XX_MAX_TCH)];
 
-	memset(ids, 0, si->si_ofs.tch_abs[CY_TCH_T].max * sizeof(int));
-	for (i = 0; i < num_cur_tch; i++) {
+	स_रखो(ids, 0, si->si_ofs.tch_असल[CY_TCH_T].max * माप(पूर्णांक));
+	क्रम (i = 0; i < num_cur_tch; i++) अणु
 		cyttsp4_get_touch(md, &tch, si->xy_data +
 			(i * si->si_ofs.tch_rec_size));
-		if ((tch.abs[CY_TCH_T] < md->pdata->frmwrk->abs
+		अगर ((tch.असल[CY_TCH_T] < md->pdata->frmwrk->असल
 			[(CY_ABS_ID_OST * CY_NUM_ABS_SET) + CY_MIN_OST]) ||
-			(tch.abs[CY_TCH_T] > md->pdata->frmwrk->abs
-			[(CY_ABS_ID_OST * CY_NUM_ABS_SET) + CY_MAX_OST])) {
+			(tch.असल[CY_TCH_T] > md->pdata->frmwrk->असल
+			[(CY_ABS_ID_OST * CY_NUM_ABS_SET) + CY_MAX_OST])) अणु
 			dev_err(dev, "%s: tch=%d -> bad trk_id=%d max_id=%d\n",
-				__func__, i, tch.abs[CY_TCH_T],
-				md->pdata->frmwrk->abs[(CY_ABS_ID_OST *
+				__func__, i, tch.असल[CY_TCH_T],
+				md->pdata->frmwrk->असल[(CY_ABS_ID_OST *
 				CY_NUM_ABS_SET) + CY_MAX_OST]);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* use 0 based track id's */
-		sig = md->pdata->frmwrk->abs
+		sig = md->pdata->frmwrk->असल
 			[(CY_ABS_ID_OST * CY_NUM_ABS_SET) + 0];
-		if (sig != CY_IGNORE_VALUE) {
-			t = tch.abs[CY_TCH_T] - md->pdata->frmwrk->abs
+		अगर (sig != CY_IGNORE_VALUE) अणु
+			t = tch.असल[CY_TCH_T] - md->pdata->frmwrk->असल
 				[(CY_ABS_ID_OST * CY_NUM_ABS_SET) + CY_MIN_OST];
-			if (tch.abs[CY_TCH_E] == CY_EV_LIFTOFF) {
+			अगर (tch.असल[CY_TCH_E] == CY_EV_LIFTOFF) अणु
 				dev_dbg(dev, "%s: t=%d e=%d lift-off\n",
-					__func__, t, tch.abs[CY_TCH_E]);
-				goto cyttsp4_get_mt_touches_pr_tch;
-			}
+					__func__, t, tch.असल[CY_TCH_E]);
+				जाओ cyttsp4_get_mt_touches_pr_tch;
+			पूर्ण
 			input_mt_slot(md->input, t);
 			input_mt_report_slot_state(md->input, MT_TOOL_FINGER,
 					true);
 			ids[t] = true;
-		}
+		पूर्ण
 
 		/* all devices: position and pressure fields */
-		for (j = 0; j <= CY_ABS_W_OST; j++) {
-			sig = md->pdata->frmwrk->abs[((CY_ABS_X_OST + j) *
+		क्रम (j = 0; j <= CY_ABS_W_OST; j++) अणु
+			sig = md->pdata->frmwrk->असल[((CY_ABS_X_OST + j) *
 				CY_NUM_ABS_SET) + 0];
-			if (sig != CY_IGNORE_VALUE)
-				input_report_abs(md->input, sig,
-					tch.abs[CY_TCH_X + j]);
-		}
-		if (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE) {
+			अगर (sig != CY_IGNORE_VALUE)
+				input_report_असल(md->input, sig,
+					tch.असल[CY_TCH_X + j]);
+		पूर्ण
+		अगर (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE) अणु
 			/*
 			 * TMA400 size and orientation fields:
-			 * if pressure is non-zero and major touch
-			 * signal is zero, then set major and minor touch
-			 * signals to minimum non-zero value
+			 * अगर pressure is non-zero and major touch
+			 * संकेत is zero, then set major and minor touch
+			 * संकेतs to minimum non-zero value
 			 */
-			if (tch.abs[CY_TCH_P] > 0 && tch.abs[CY_TCH_MAJ] == 0)
-				tch.abs[CY_TCH_MAJ] = tch.abs[CY_TCH_MIN] = 1;
+			अगर (tch.असल[CY_TCH_P] > 0 && tch.असल[CY_TCH_MAJ] == 0)
+				tch.असल[CY_TCH_MAJ] = tch.असल[CY_TCH_MIN] = 1;
 
 			/* Get the extended touch fields */
-			for (j = 0; j < CY_NUM_EXT_TCH_FIELDS; j++) {
-				sig = md->pdata->frmwrk->abs
+			क्रम (j = 0; j < CY_NUM_EXT_TCH_FIELDS; j++) अणु
+				sig = md->pdata->frmwrk->असल
 					[((CY_ABS_MAJ_OST + j) *
 					CY_NUM_ABS_SET) + 0];
-				if (sig != CY_IGNORE_VALUE)
-					input_report_abs(md->input, sig,
-						tch.abs[CY_TCH_MAJ + j]);
-			}
-		}
+				अगर (sig != CY_IGNORE_VALUE)
+					input_report_असल(md->input, sig,
+						tch.असल[CY_TCH_MAJ + j]);
+			पूर्ण
+		पूर्ण
 
 cyttsp4_get_mt_touches_pr_tch:
-		if (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE)
+		अगर (si->si_ofs.tch_rec_size > CY_TMA1036_TCH_REC_SIZE)
 			dev_dbg(dev,
 				"%s: t=%d x=%d y=%d z=%d M=%d m=%d o=%d e=%d\n",
 				__func__, t,
-				tch.abs[CY_TCH_X],
-				tch.abs[CY_TCH_Y],
-				tch.abs[CY_TCH_P],
-				tch.abs[CY_TCH_MAJ],
-				tch.abs[CY_TCH_MIN],
-				tch.abs[CY_TCH_OR],
-				tch.abs[CY_TCH_E]);
-		else
+				tch.असल[CY_TCH_X],
+				tch.असल[CY_TCH_Y],
+				tch.असल[CY_TCH_P],
+				tch.असल[CY_TCH_MAJ],
+				tch.असल[CY_TCH_MIN],
+				tch.असल[CY_TCH_OR],
+				tch.असल[CY_TCH_E]);
+		अन्यथा
 			dev_dbg(dev,
 				"%s: t=%d x=%d y=%d z=%d e=%d\n", __func__,
 				t,
-				tch.abs[CY_TCH_X],
-				tch.abs[CY_TCH_Y],
-				tch.abs[CY_TCH_P],
-				tch.abs[CY_TCH_E]);
-	}
+				tch.असल[CY_TCH_X],
+				tch.असल[CY_TCH_Y],
+				tch.असल[CY_TCH_P],
+				tch.असल[CY_TCH_E]);
+	पूर्ण
 
-	cyttsp4_final_sync(md->input, si->si_ofs.tch_abs[CY_TCH_T].max, ids);
+	cyttsp4_final_sync(md->input, si->si_ofs.tch_असल[CY_TCH_T].max, ids);
 
 	md->num_prv_tch = num_cur_tch;
 
-	return;
-}
+	वापस;
+पूर्ण
 
-/* read xy_data for all current touches */
-static int cyttsp4_xy_worker(struct cyttsp4 *cd)
-{
-	struct cyttsp4_mt_data *md = &cd->md;
-	struct device *dev = &md->input->dev;
-	struct cyttsp4_sysinfo *si = md->si;
+/* पढ़ो xy_data क्रम all current touches */
+अटल पूर्णांक cyttsp4_xy_worker(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	काष्ठा device *dev = &md->input->dev;
+	काष्ठा cyttsp4_sysinfo *si = md->si;
 	u8 num_cur_tch;
 	u8 hst_mode;
 	u8 rep_len;
 	u8 rep_stat;
 	u8 tt_stat;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	/*
 	 * Get event data from cyttsp4 device.
 	 * The event data includes all data
-	 * for all active touches.
+	 * क्रम all active touches.
 	 * Event data also includes button data
 	 */
 	/*
-	 * Use 2 reads:
-	 * 1st read to get mode + button bytes + touch count (core)
-	 * 2nd read (optional) to get touch 1 - touch n data
+	 * Use 2 पढ़ोs:
+	 * 1st पढ़ो to get mode + button bytes + touch count (core)
+	 * 2nd पढ़ो (optional) to get touch 1 - touch n data
 	 */
 	hst_mode = si->xy_mode[CY_REG_BASE];
 	rep_len = si->xy_mode[si->si_ofs.rep_ofs];
@@ -998,229 +999,229 @@ static int cyttsp4_xy_worker(struct cyttsp4 *cd)
 	num_cur_tch = GET_NUM_TOUCHES(tt_stat);
 	dev_vdbg(dev, "%s: num_cur_tch=%d\n", __func__, num_cur_tch);
 
-	if (rep_len == 0 && num_cur_tch > 0) {
+	अगर (rep_len == 0 && num_cur_tch > 0) अणु
 		dev_err(dev, "%s: report length error rep_len=%d num_tch=%d\n",
 			__func__, rep_len, num_cur_tch);
-		goto cyttsp4_xy_worker_exit;
-	}
+		जाओ cyttsp4_xy_worker_निकास;
+	पूर्ण
 
-	/* read touches */
-	if (num_cur_tch > 0) {
-		rc = cyttsp4_adap_read(cd, si->si_ofs.tt_stat_ofs + 1,
+	/* पढ़ो touches */
+	अगर (num_cur_tch > 0) अणु
+		rc = cyttsp4_adap_पढ़ो(cd, si->si_ofs.tt_stat_ofs + 1,
 				num_cur_tch * si->si_ofs.tch_rec_size,
 				si->xy_data);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			dev_err(dev, "%s: read fail on touch regs r=%d\n",
 				__func__, rc);
-			goto cyttsp4_xy_worker_exit;
-		}
-	}
+			जाओ cyttsp4_xy_worker_निकास;
+		पूर्ण
+	पूर्ण
 
-	/* print xy data */
+	/* prपूर्णांक xy data */
 	cyttsp4_pr_buf(dev, cd->pr_buf, si->xy_data, num_cur_tch *
 		si->si_ofs.tch_rec_size, "xy_data");
 
 	/* check any error conditions */
-	if (IS_BAD_PKT(rep_stat)) {
+	अगर (IS_BAD_PKT(rep_stat)) अणु
 		dev_dbg(dev, "%s: Invalid buffer detected\n", __func__);
 		rc = 0;
-		goto cyttsp4_xy_worker_exit;
-	}
+		जाओ cyttsp4_xy_worker_निकास;
+	पूर्ण
 
-	if (IS_LARGE_AREA(tt_stat))
+	अगर (IS_LARGE_AREA(tt_stat))
 		dev_dbg(dev, "%s: Large area detected\n", __func__);
 
-	if (num_cur_tch > si->si_ofs.max_tchs) {
+	अगर (num_cur_tch > si->si_ofs.max_tchs) अणु
 		dev_err(dev, "%s: too many tch; set to max tch (n=%d c=%zd)\n",
 				__func__, num_cur_tch, si->si_ofs.max_tchs);
 		num_cur_tch = si->si_ofs.max_tchs;
-	}
+	पूर्ण
 
-	/* extract xy_data for all currently reported touches */
+	/* extract xy_data क्रम all currently reported touches */
 	dev_vdbg(dev, "%s: extract data num_cur_tch=%d\n", __func__,
 		num_cur_tch);
-	if (num_cur_tch)
+	अगर (num_cur_tch)
 		cyttsp4_get_mt_touches(md, num_cur_tch);
-	else
-		cyttsp4_lift_all(md);
+	अन्यथा
+		cyttsp4_lअगरt_all(md);
 
 	rc = 0;
 
-cyttsp4_xy_worker_exit:
-	return rc;
-}
+cyttsp4_xy_worker_निकास:
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_mt_attention(struct cyttsp4 *cd)
-{
-	struct device *dev = cd->dev;
-	struct cyttsp4_mt_data *md = &cd->md;
-	int rc = 0;
+अटल पूर्णांक cyttsp4_mt_attention(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा device *dev = cd->dev;
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	पूर्णांक rc = 0;
 
-	if (!md->si)
-		return 0;
+	अगर (!md->si)
+		वापस 0;
 
 	mutex_lock(&md->report_lock);
-	if (!md->is_suspended) {
+	अगर (!md->is_suspended) अणु
 		/* core handles handshake */
 		rc = cyttsp4_xy_worker(cd);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_vdbg(dev, "%s: Ignoring report while suspended\n",
 			__func__);
-	}
+	पूर्ण
 	mutex_unlock(&md->report_lock);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(dev, "%s: xy_worker error r=%d\n", __func__, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static irqreturn_t cyttsp4_irq(int irq, void *handle)
-{
-	struct cyttsp4 *cd = handle;
-	struct device *dev = cd->dev;
-	enum cyttsp4_mode cur_mode;
+अटल irqवापस_t cyttsp4_irq(पूर्णांक irq, व्योम *handle)
+अणु
+	काष्ठा cyttsp4 *cd = handle;
+	काष्ठा device *dev = cd->dev;
+	क्रमागत cyttsp4_mode cur_mode;
 	u8 cmd_ofs = cd->sysinfo.si_ofs.cmd_ofs;
 	u8 mode[3];
-	int rc;
+	पूर्णांक rc;
 
 	/*
-	 * Check whether this IRQ should be ignored (external)
+	 * Check whether this IRQ should be ignored (बाह्यal)
 	 * This should be the very first thing to check since
-	 * ignore_irq may be set for a very short period of time
+	 * ignore_irq may be set क्रम a very लघु period of समय
 	 */
-	if (atomic_read(&cd->ignore_irq)) {
+	अगर (atomic_पढ़ो(&cd->ignore_irq)) अणु
 		dev_vdbg(dev, "%s: Ignoring IRQ\n", __func__);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	dev_dbg(dev, "%s int:0x%x\n", __func__, cd->int_status);
+	dev_dbg(dev, "%s int:0x%x\n", __func__, cd->पूर्णांक_status);
 
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 
 	/* Just to debug */
-	if (cd->sleep_state == SS_SLEEP_ON || cd->sleep_state == SS_SLEEPING)
+	अगर (cd->sleep_state == SS_SLEEP_ON || cd->sleep_state == SS_SLEEPING)
 		dev_vdbg(dev, "%s: Received IRQ while in sleep\n", __func__);
 
-	rc = cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(mode), mode);
-	if (rc) {
+	rc = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(mode), mode);
+	अगर (rc) अणु
 		dev_err(cd->dev, "%s: Fail read adapter r=%d\n", __func__, rc);
-		goto cyttsp4_irq_exit;
-	}
+		जाओ cyttsp4_irq_निकास;
+	पूर्ण
 	dev_vdbg(dev, "%s mode[0-2]:0x%X 0x%X 0x%X\n", __func__,
 			mode[0], mode[1], mode[2]);
 
-	if (IS_BOOTLOADER(mode[0], mode[1])) {
+	अगर (IS_BOOTLOADER(mode[0], mode[1])) अणु
 		cur_mode = CY_MODE_BOOTLOADER;
 		dev_vdbg(dev, "%s: bl running\n", __func__);
-		if (cd->mode == CY_MODE_BOOTLOADER) {
+		अगर (cd->mode == CY_MODE_BOOTLOADER) अणु
 			/* Signal bootloader heartbeat heard */
-			wake_up(&cd->wait_q);
-			goto cyttsp4_irq_exit;
-		}
+			wake_up(&cd->रुको_q);
+			जाओ cyttsp4_irq_निकास;
+		पूर्ण
 
-		/* switch to bootloader */
+		/* चयन to bootloader */
 		dev_dbg(dev, "%s: restart switch to bl m=%d -> m=%d\n",
 			__func__, cd->mode, cur_mode);
 
 		/* catch operation->bl glitch */
-		if (cd->mode != CY_MODE_UNKNOWN) {
-			/* Incase startup_state do not let startup_() */
+		अगर (cd->mode != CY_MODE_UNKNOWN) अणु
+			/* Inहाल startup_state करो not let startup_() */
 			cd->mode = CY_MODE_UNKNOWN;
 			cyttsp4_queue_startup_(cd);
-			goto cyttsp4_irq_exit;
-		}
+			जाओ cyttsp4_irq_निकास;
+		पूर्ण
 
 		/*
-		 * do not wake thread on this switch since
+		 * करो not wake thपढ़ो on this चयन since
 		 * it is possible to get an early heartbeat
-		 * prior to performing the reset
+		 * prior to perक्रमming the reset
 		 */
 		cd->mode = cur_mode;
 
-		goto cyttsp4_irq_exit;
-	}
+		जाओ cyttsp4_irq_निकास;
+	पूर्ण
 
-	switch (mode[0] & CY_HST_MODE) {
-	case CY_HST_OPERATE:
+	चयन (mode[0] & CY_HST_MODE) अणु
+	हाल CY_HST_OPERATE:
 		cur_mode = CY_MODE_OPERATIONAL;
 		dev_vdbg(dev, "%s: operational\n", __func__);
-		break;
-	case CY_HST_CAT:
+		अवरोध;
+	हाल CY_HST_CAT:
 		cur_mode = CY_MODE_CAT;
 		dev_vdbg(dev, "%s: CaT\n", __func__);
-		break;
-	case CY_HST_SYSINFO:
+		अवरोध;
+	हाल CY_HST_SYSINFO:
 		cur_mode = CY_MODE_SYSINFO;
 		dev_vdbg(dev, "%s: sysinfo\n", __func__);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cur_mode = CY_MODE_UNKNOWN;
 		dev_err(dev, "%s: unknown HST mode 0x%02X\n", __func__,
 			mode[0]);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Check whether this IRQ should be ignored (internal) */
-	if (cd->int_status & CY_INT_IGNORE) {
+	/* Check whether this IRQ should be ignored (पूर्णांकernal) */
+	अगर (cd->पूर्णांक_status & CY_INT_IGNORE) अणु
 		dev_vdbg(dev, "%s: Ignoring IRQ\n", __func__);
-		goto cyttsp4_irq_exit;
-	}
+		जाओ cyttsp4_irq_निकास;
+	पूर्ण
 
-	/* Check for wake up interrupt */
-	if (cd->int_status & CY_INT_AWAKE) {
-		cd->int_status &= ~CY_INT_AWAKE;
-		wake_up(&cd->wait_q);
+	/* Check क्रम wake up पूर्णांकerrupt */
+	अगर (cd->पूर्णांक_status & CY_INT_AWAKE) अणु
+		cd->पूर्णांक_status &= ~CY_INT_AWAKE;
+		wake_up(&cd->रुको_q);
 		dev_vdbg(dev, "%s: Received wake up interrupt\n", __func__);
-		goto cyttsp4_irq_handshake;
-	}
+		जाओ cyttsp4_irq_handshake;
+	पूर्ण
 
-	/* Expecting mode change interrupt */
-	if ((cd->int_status & CY_INT_MODE_CHANGE)
-			&& (mode[0] & CY_HST_MODE_CHANGE) == 0) {
-		cd->int_status &= ~CY_INT_MODE_CHANGE;
+	/* Expecting mode change पूर्णांकerrupt */
+	अगर ((cd->पूर्णांक_status & CY_INT_MODE_CHANGE)
+			&& (mode[0] & CY_HST_MODE_CHANGE) == 0) अणु
+		cd->पूर्णांक_status &= ~CY_INT_MODE_CHANGE;
 		dev_dbg(dev, "%s: finish mode switch m=%d -> m=%d\n",
 				__func__, cd->mode, cur_mode);
 		cd->mode = cur_mode;
-		wake_up(&cd->wait_q);
-		goto cyttsp4_irq_handshake;
-	}
+		wake_up(&cd->रुको_q);
+		जाओ cyttsp4_irq_handshake;
+	पूर्ण
 
 	/* compare current core mode to current device mode */
 	dev_vdbg(dev, "%s: cd->mode=%d cur_mode=%d\n",
 			__func__, cd->mode, cur_mode);
-	if ((mode[0] & CY_HST_MODE_CHANGE) == 0 && cd->mode != cur_mode) {
+	अगर ((mode[0] & CY_HST_MODE_CHANGE) == 0 && cd->mode != cur_mode) अणु
 		/* Unexpected mode change occurred */
 		dev_err(dev, "%s %d->%d 0x%x\n", __func__, cd->mode,
-				cur_mode, cd->int_status);
+				cur_mode, cd->पूर्णांक_status);
 		dev_dbg(dev, "%s: Unexpected mode change, startup\n",
 				__func__);
 		cyttsp4_queue_startup_(cd);
-		goto cyttsp4_irq_exit;
-	}
+		जाओ cyttsp4_irq_निकास;
+	पूर्ण
 
-	/* Expecting command complete interrupt */
+	/* Expecting command complete पूर्णांकerrupt */
 	dev_vdbg(dev, "%s: command byte:0x%x\n", __func__, mode[cmd_ofs]);
-	if ((cd->int_status & CY_INT_EXEC_CMD)
-			&& mode[cmd_ofs] & CY_CMD_COMPLETE) {
-		cd->int_status &= ~CY_INT_EXEC_CMD;
+	अगर ((cd->पूर्णांक_status & CY_INT_EXEC_CMD)
+			&& mode[cmd_ofs] & CY_CMD_COMPLETE) अणु
+		cd->पूर्णांक_status &= ~CY_INT_EXEC_CMD;
 		dev_vdbg(dev, "%s: Received command complete interrupt\n",
 				__func__);
-		wake_up(&cd->wait_q);
+		wake_up(&cd->रुको_q);
 		/*
-		 * It is possible to receive a single interrupt for
+		 * It is possible to receive a single पूर्णांकerrupt क्रम
 		 * command complete and touch/button status report.
-		 * Continue processing for a possible status report.
+		 * Continue processing क्रम a possible status report.
 		 */
-	}
+	पूर्ण
 
-	/* This should be status report, read status regs */
-	if (cd->mode == CY_MODE_OPERATIONAL) {
+	/* This should be status report, पढ़ो status regs */
+	अगर (cd->mode == CY_MODE_OPERATIONAL) अणु
 		dev_vdbg(dev, "%s: Read status registers\n", __func__);
 		rc = cyttsp4_load_status_regs(cd);
-		if (rc < 0)
+		अगर (rc < 0)
 			dev_err(dev, "%s: fail read mode regs r=%d\n",
 				__func__, rc);
-	}
+	पूर्ण
 
 	cyttsp4_mt_attention(cd);
 
@@ -1229,821 +1230,821 @@ cyttsp4_irq_handshake:
 	dev_vdbg(dev, "%s: Handshake mode=0x%02X r=%d\n",
 			__func__, mode[0], rc);
 	rc = cyttsp4_handshake(cd, mode[0]);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(dev, "%s: Fail handshake mode=0x%02X r=%d\n",
 				__func__, mode[0], rc);
 
 	/*
-	 * a non-zero udelay period is required for using
+	 * a non-zero udelay period is required क्रम using
 	 * IRQF_TRIGGER_LOW in order to delay until the
-	 * device completes isr deassert
+	 * device completes isr deनिश्चित
 	 */
 	udelay(cd->cpdata->level_irq_udelay);
 
-cyttsp4_irq_exit:
-	mutex_unlock(&cd->system_lock);
-	return IRQ_HANDLED;
-}
+cyttsp4_irq_निकास:
+	mutex_unlock(&cd->प्रणाली_lock);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void cyttsp4_start_wd_timer(struct cyttsp4 *cd)
-{
-	if (!CY_WATCHDOG_TIMEOUT)
-		return;
+अटल व्योम cyttsp4_start_wd_समयr(काष्ठा cyttsp4 *cd)
+अणु
+	अगर (!CY_WATCHDOG_TIMEOUT)
+		वापस;
 
-	mod_timer(&cd->watchdog_timer, jiffies +
-			msecs_to_jiffies(CY_WATCHDOG_TIMEOUT));
-}
+	mod_समयr(&cd->watchकरोg_समयr, jअगरfies +
+			msecs_to_jअगरfies(CY_WATCHDOG_TIMEOUT));
+पूर्ण
 
-static void cyttsp4_stop_wd_timer(struct cyttsp4 *cd)
-{
-	if (!CY_WATCHDOG_TIMEOUT)
-		return;
+अटल व्योम cyttsp4_stop_wd_समयr(काष्ठा cyttsp4 *cd)
+अणु
+	अगर (!CY_WATCHDOG_TIMEOUT)
+		वापस;
 
 	/*
-	 * Ensure we wait until the watchdog timer
-	 * running on a different CPU finishes
+	 * Ensure we रुको until the watchकरोg समयr
+	 * running on a dअगरferent CPU finishes
 	 */
-	del_timer_sync(&cd->watchdog_timer);
-	cancel_work_sync(&cd->watchdog_work);
-	del_timer_sync(&cd->watchdog_timer);
-}
+	del_समयr_sync(&cd->watchकरोg_समयr);
+	cancel_work_sync(&cd->watchकरोg_work);
+	del_समयr_sync(&cd->watchकरोg_समयr);
+पूर्ण
 
-static void cyttsp4_watchdog_timer(struct timer_list *t)
-{
-	struct cyttsp4 *cd = from_timer(cd, t, watchdog_timer);
+अटल व्योम cyttsp4_watchकरोg_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा cyttsp4 *cd = from_समयr(cd, t, watchकरोg_समयr);
 
 	dev_vdbg(cd->dev, "%s: Watchdog timer triggered\n", __func__);
 
-	schedule_work(&cd->watchdog_work);
+	schedule_work(&cd->watchकरोg_work);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int cyttsp4_request_exclusive(struct cyttsp4 *cd, void *ownptr,
-		int timeout_ms)
-{
-	int t = msecs_to_jiffies(timeout_ms);
-	bool with_timeout = (timeout_ms != 0);
+अटल पूर्णांक cyttsp4_request_exclusive(काष्ठा cyttsp4 *cd, व्योम *ownptr,
+		पूर्णांक समयout_ms)
+अणु
+	पूर्णांक t = msecs_to_jअगरfies(समयout_ms);
+	bool with_समयout = (समयout_ms != 0);
 
-	mutex_lock(&cd->system_lock);
-	if (!cd->exclusive_dev && cd->exclusive_waits == 0) {
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (!cd->exclusive_dev && cd->exclusive_रुकोs == 0) अणु
 		cd->exclusive_dev = ownptr;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	cd->exclusive_waits++;
-wait:
-	mutex_unlock(&cd->system_lock);
-	if (with_timeout) {
-		t = wait_event_timeout(cd->wait_q, !cd->exclusive_dev, t);
-		if (IS_TMO(t)) {
+	cd->exclusive_रुकोs++;
+रुको:
+	mutex_unlock(&cd->प्रणाली_lock);
+	अगर (with_समयout) अणु
+		t = रुको_event_समयout(cd->रुको_q, !cd->exclusive_dev, t);
+		अगर (IS_TMO(t)) अणु
 			dev_err(cd->dev, "%s: tmo waiting exclusive access\n",
 				__func__);
-			mutex_lock(&cd->system_lock);
-			cd->exclusive_waits--;
-			mutex_unlock(&cd->system_lock);
-			return -ETIME;
-		}
-	} else {
-		wait_event(cd->wait_q, !cd->exclusive_dev);
-	}
-	mutex_lock(&cd->system_lock);
-	if (cd->exclusive_dev)
-		goto wait;
+			mutex_lock(&cd->प्रणाली_lock);
+			cd->exclusive_रुकोs--;
+			mutex_unlock(&cd->प्रणाली_lock);
+			वापस -ETIME;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		रुको_event(cd->रुको_q, !cd->exclusive_dev);
+	पूर्ण
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (cd->exclusive_dev)
+		जाओ रुको;
 	cd->exclusive_dev = ownptr;
-	cd->exclusive_waits--;
-exit:
-	mutex_unlock(&cd->system_lock);
+	cd->exclusive_रुकोs--;
+निकास:
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * returns error if was not owned
+ * वापसs error अगर was not owned
  */
-static int cyttsp4_release_exclusive(struct cyttsp4 *cd, void *ownptr)
-{
-	mutex_lock(&cd->system_lock);
-	if (cd->exclusive_dev != ownptr) {
-		mutex_unlock(&cd->system_lock);
-		return -EINVAL;
-	}
+अटल पूर्णांक cyttsp4_release_exclusive(काष्ठा cyttsp4 *cd, व्योम *ownptr)
+अणु
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (cd->exclusive_dev != ownptr) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_vdbg(cd->dev, "%s: exclusive_dev %p freed\n",
 		__func__, cd->exclusive_dev);
-	cd->exclusive_dev = NULL;
-	wake_up(&cd->wait_q);
-	mutex_unlock(&cd->system_lock);
-	return 0;
-}
+	cd->exclusive_dev = शून्य;
+	wake_up(&cd->रुको_q);
+	mutex_unlock(&cd->प्रणाली_lock);
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_wait_bl_heartbeat(struct cyttsp4 *cd)
-{
-	long t;
-	int rc = 0;
+अटल पूर्णांक cyttsp4_रुको_bl_heartbeat(काष्ठा cyttsp4 *cd)
+अणु
+	दीर्घ t;
+	पूर्णांक rc = 0;
 
-	/* wait heartbeat */
+	/* रुको heartbeat */
 	dev_vdbg(cd->dev, "%s: wait heartbeat...\n", __func__);
-	t = wait_event_timeout(cd->wait_q, cd->mode == CY_MODE_BOOTLOADER,
-			msecs_to_jiffies(CY_CORE_RESET_AND_WAIT_TIMEOUT));
-	if (IS_TMO(t)) {
+	t = रुको_event_समयout(cd->रुको_q, cd->mode == CY_MODE_BOOTLOADER,
+			msecs_to_jअगरfies(CY_CORE_RESET_AND_WAIT_TIMEOUT));
+	अगर (IS_TMO(t)) अणु
 		dev_err(cd->dev, "%s: tmo waiting bl heartbeat cd->mode=%d\n",
 			__func__, cd->mode);
 		rc = -ETIME;
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_wait_sysinfo_mode(struct cyttsp4 *cd)
-{
-	long t;
+अटल पूर्णांक cyttsp4_रुको_sysinfo_mode(काष्ठा cyttsp4 *cd)
+अणु
+	दीर्घ t;
 
 	dev_vdbg(cd->dev, "%s: wait sysinfo...\n", __func__);
 
-	t = wait_event_timeout(cd->wait_q, cd->mode == CY_MODE_SYSINFO,
-			msecs_to_jiffies(CY_CORE_MODE_CHANGE_TIMEOUT));
-	if (IS_TMO(t)) {
+	t = रुको_event_समयout(cd->रुको_q, cd->mode == CY_MODE_SYSINFO,
+			msecs_to_jअगरfies(CY_CORE_MODE_CHANGE_TIMEOUT));
+	अगर (IS_TMO(t)) अणु
 		dev_err(cd->dev, "%s: tmo waiting exit bl cd->mode=%d\n",
 			__func__, cd->mode);
-		mutex_lock(&cd->system_lock);
-		cd->int_status &= ~CY_INT_MODE_CHANGE;
-		mutex_unlock(&cd->system_lock);
-		return -ETIME;
-	}
+		mutex_lock(&cd->प्रणाली_lock);
+		cd->पूर्णांक_status &= ~CY_INT_MODE_CHANGE;
+		mutex_unlock(&cd->प्रणाली_lock);
+		वापस -ETIME;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_reset_and_wait(struct cyttsp4 *cd)
-{
-	int rc;
+अटल पूर्णांक cyttsp4_reset_and_रुको(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक rc;
 
 	/* reset hardware */
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 	dev_dbg(cd->dev, "%s: reset hw...\n", __func__);
 	rc = cyttsp4_hw_reset(cd);
 	cd->mode = CY_MODE_UNKNOWN;
-	mutex_unlock(&cd->system_lock);
-	if (rc < 0) {
+	mutex_unlock(&cd->प्रणाली_lock);
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s:Fail hw reset r=%d\n", __func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return cyttsp4_wait_bl_heartbeat(cd);
-}
+	वापस cyttsp4_रुको_bl_heartbeat(cd);
+पूर्ण
 
 /*
- * returns err if refused or timeout; block until mode change complete
- * bit is set (mode change interrupt)
+ * वापसs err अगर refused or समयout; block until mode change complete
+ * bit is set (mode change पूर्णांकerrupt)
  */
-static int cyttsp4_set_mode(struct cyttsp4 *cd, int new_mode)
-{
+अटल पूर्णांक cyttsp4_set_mode(काष्ठा cyttsp4 *cd, पूर्णांक new_mode)
+अणु
 	u8 new_dev_mode;
 	u8 mode;
-	long t;
-	int rc;
+	दीर्घ t;
+	पूर्णांक rc;
 
-	switch (new_mode) {
-	case CY_MODE_OPERATIONAL:
+	चयन (new_mode) अणु
+	हाल CY_MODE_OPERATIONAL:
 		new_dev_mode = CY_HST_OPERATE;
-		break;
-	case CY_MODE_SYSINFO:
+		अवरोध;
+	हाल CY_MODE_SYSINFO:
 		new_dev_mode = CY_HST_SYSINFO;
-		break;
-	case CY_MODE_CAT:
+		अवरोध;
+	हाल CY_MODE_CAT:
 		new_dev_mode = CY_HST_CAT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(cd->dev, "%s: invalid mode: %02X(%d)\n",
 			__func__, new_mode, new_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* change mode */
 	dev_dbg(cd->dev, "%s: %s=%p new_dev_mode=%02X new_mode=%d\n",
 			__func__, "have exclusive", cd->exclusive_dev,
 			new_dev_mode, new_mode);
 
-	mutex_lock(&cd->system_lock);
-	rc = cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(mode), &mode);
-	if (rc < 0) {
-		mutex_unlock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
+	rc = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(mode), &mode);
+	अगर (rc < 0) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
 		dev_err(cd->dev, "%s: Fail read mode r=%d\n",
 			__func__, rc);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* Clear device mode bits and set to new mode */
 	mode &= ~CY_HST_MODE;
 	mode |= new_dev_mode | CY_HST_MODE_CHANGE;
 
-	cd->int_status |= CY_INT_MODE_CHANGE;
-	rc = cyttsp4_adap_write(cd, CY_REG_BASE, sizeof(mode), &mode);
-	mutex_unlock(&cd->system_lock);
-	if (rc < 0) {
+	cd->पूर्णांक_status |= CY_INT_MODE_CHANGE;
+	rc = cyttsp4_adap_ग_लिखो(cd, CY_REG_BASE, माप(mode), &mode);
+	mutex_unlock(&cd->प्रणाली_lock);
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: Fail write mode change r=%d\n",
 				__func__, rc);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* wait for mode change done interrupt */
-	t = wait_event_timeout(cd->wait_q,
-			(cd->int_status & CY_INT_MODE_CHANGE) == 0,
-			msecs_to_jiffies(CY_CORE_MODE_CHANGE_TIMEOUT));
+	/* रुको क्रम mode change करोne पूर्णांकerrupt */
+	t = रुको_event_समयout(cd->रुको_q,
+			(cd->पूर्णांक_status & CY_INT_MODE_CHANGE) == 0,
+			msecs_to_jअगरfies(CY_CORE_MODE_CHANGE_TIMEOUT));
 	dev_dbg(cd->dev, "%s: back from wait t=%ld cd->mode=%d\n",
 			__func__, t, cd->mode);
 
-	if (IS_TMO(t)) {
+	अगर (IS_TMO(t)) अणु
 		dev_err(cd->dev, "%s: %s\n", __func__,
 				"tmo waiting mode change");
-		mutex_lock(&cd->system_lock);
-		cd->int_status &= ~CY_INT_MODE_CHANGE;
-		mutex_unlock(&cd->system_lock);
+		mutex_lock(&cd->प्रणाली_lock);
+		cd->पूर्णांक_status &= ~CY_INT_MODE_CHANGE;
+		mutex_unlock(&cd->प्रणाली_lock);
 		rc = -EINVAL;
-	}
+	पूर्ण
 
-exit:
-	return rc;
-}
+निकास:
+	वापस rc;
+पूर्ण
 
-static void cyttsp4_watchdog_work(struct work_struct *work)
-{
-	struct cyttsp4 *cd =
-		container_of(work, struct cyttsp4, watchdog_work);
+अटल व्योम cyttsp4_watchकरोg_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cyttsp4 *cd =
+		container_of(work, काष्ठा cyttsp4, watchकरोg_work);
 	u8 *mode;
-	int retval;
+	पूर्णांक retval;
 
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 	retval = cyttsp4_load_status_regs(cd);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		dev_err(cd->dev,
 			"%s: failed to access device in watchdog timer r=%d\n",
 			__func__, retval);
 		cyttsp4_queue_startup_(cd);
-		goto cyttsp4_timer_watchdog_exit_error;
-	}
+		जाओ cyttsp4_समयr_watchकरोg_निकास_error;
+	पूर्ण
 	mode = &cd->sysinfo.xy_mode[CY_REG_BASE];
-	if (IS_BOOTLOADER(mode[0], mode[1])) {
+	अगर (IS_BOOTLOADER(mode[0], mode[1])) अणु
 		dev_err(cd->dev,
 			"%s: device found in bootloader mode when operational mode\n",
 			__func__);
 		cyttsp4_queue_startup_(cd);
-		goto cyttsp4_timer_watchdog_exit_error;
-	}
+		जाओ cyttsp4_समयr_watchकरोg_निकास_error;
+	पूर्ण
 
-	cyttsp4_start_wd_timer(cd);
-cyttsp4_timer_watchdog_exit_error:
-	mutex_unlock(&cd->system_lock);
-	return;
-}
+	cyttsp4_start_wd_समयr(cd);
+cyttsp4_समयr_watchकरोg_निकास_error:
+	mutex_unlock(&cd->प्रणाली_lock);
+	वापस;
+पूर्ण
 
-static int cyttsp4_core_sleep_(struct cyttsp4 *cd)
-{
-	enum cyttsp4_sleep_state ss = SS_SLEEP_ON;
-	enum cyttsp4_int_state int_status = CY_INT_IGNORE;
-	int rc = 0;
+अटल पूर्णांक cyttsp4_core_sleep_(काष्ठा cyttsp4 *cd)
+अणु
+	क्रमागत cyttsp4_sleep_state ss = SS_SLEEP_ON;
+	क्रमागत cyttsp4_पूर्णांक_state पूर्णांक_status = CY_INT_IGNORE;
+	पूर्णांक rc = 0;
 	u8 mode[2];
 
-	/* Already in sleep mode? */
-	mutex_lock(&cd->system_lock);
-	if (cd->sleep_state == SS_SLEEP_ON) {
-		mutex_unlock(&cd->system_lock);
-		return 0;
-	}
+	/* Alपढ़ोy in sleep mode? */
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (cd->sleep_state == SS_SLEEP_ON) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
+		वापस 0;
+	पूर्ण
 	cd->sleep_state = SS_SLEEPING;
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	cyttsp4_stop_wd_timer(cd);
+	cyttsp4_stop_wd_समयr(cd);
 
-	/* Wait until currently running IRQ handler exits and disable IRQ */
+	/* Wait until currently running IRQ handler निकासs and disable IRQ */
 	disable_irq(cd->irq);
 
 	dev_vdbg(cd->dev, "%s: write DEEP SLEEP...\n", __func__);
-	mutex_lock(&cd->system_lock);
-	rc = cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(mode), &mode);
-	if (rc) {
-		mutex_unlock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
+	rc = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(mode), &mode);
+	अगर (rc) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
 		dev_err(cd->dev, "%s: Fail read adapter r=%d\n", __func__, rc);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (IS_BOOTLOADER(mode[0], mode[1])) {
-		mutex_unlock(&cd->system_lock);
+	अगर (IS_BOOTLOADER(mode[0], mode[1])) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
 		dev_err(cd->dev, "%s: Device in BOOTLOADER mode.\n", __func__);
 		rc = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	mode[0] |= CY_HST_SLEEP;
-	rc = cyttsp4_adap_write(cd, CY_REG_BASE, sizeof(mode[0]), &mode[0]);
-	mutex_unlock(&cd->system_lock);
-	if (rc) {
+	rc = cyttsp4_adap_ग_लिखो(cd, CY_REG_BASE, माप(mode[0]), &mode[0]);
+	mutex_unlock(&cd->प्रणाली_lock);
+	अगर (rc) अणु
 		dev_err(cd->dev, "%s: Fail write adapter r=%d\n", __func__, rc);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 	dev_vdbg(cd->dev, "%s: write DEEP SLEEP succeeded\n", __func__);
 
-	if (cd->cpdata->power) {
+	अगर (cd->cpdata->घातer) अणु
 		dev_dbg(cd->dev, "%s: Power down HW\n", __func__);
-		rc = cd->cpdata->power(cd->cpdata, 0, cd->dev, &cd->ignore_irq);
-	} else {
+		rc = cd->cpdata->घातer(cd->cpdata, 0, cd->dev, &cd->ignore_irq);
+	पूर्ण अन्यथा अणु
 		dev_dbg(cd->dev, "%s: No power function\n", __func__);
 		rc = 0;
-	}
-	if (rc < 0) {
+	पूर्ण
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: HW Power down fails r=%d\n",
 				__func__, rc);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* Give time to FW to sleep */
+	/* Give समय to FW to sleep */
 	msleep(50);
 
-	goto exit;
+	जाओ निकास;
 
 error:
 	ss = SS_SLEEP_OFF;
-	int_status = CY_INT_NONE;
-	cyttsp4_start_wd_timer(cd);
+	पूर्णांक_status = CY_INT_NONE;
+	cyttsp4_start_wd_समयr(cd);
 
-exit:
-	mutex_lock(&cd->system_lock);
+निकास:
+	mutex_lock(&cd->प्रणाली_lock);
 	cd->sleep_state = ss;
-	cd->int_status |= int_status;
-	mutex_unlock(&cd->system_lock);
+	cd->पूर्णांक_status |= पूर्णांक_status;
+	mutex_unlock(&cd->प्रणाली_lock);
 	enable_irq(cd->irq);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_startup_(struct cyttsp4 *cd)
-{
-	int retry = CY_CORE_STARTUP_RETRY_COUNT;
-	int rc;
+अटल पूर्णांक cyttsp4_startup_(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक retry = CY_CORE_STARTUP_RETRY_COUNT;
+	पूर्णांक rc;
 
-	cyttsp4_stop_wd_timer(cd);
+	cyttsp4_stop_wd_समयr(cd);
 
 reset:
-	if (retry != CY_CORE_STARTUP_RETRY_COUNT)
+	अगर (retry != CY_CORE_STARTUP_RETRY_COUNT)
 		dev_dbg(cd->dev, "%s: Retry %d\n", __func__,
 			CY_CORE_STARTUP_RETRY_COUNT - retry);
 
-	/* reset hardware and wait for heartbeat */
-	rc = cyttsp4_reset_and_wait(cd);
-	if (rc < 0) {
+	/* reset hardware and रुको क्रम heartbeat */
+	rc = cyttsp4_reset_and_रुको(cd);
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: Error on h/w reset r=%d\n", __func__, rc);
-		if (retry--)
-			goto reset;
-		goto exit;
-	}
+		अगर (retry--)
+			जाओ reset;
+		जाओ निकास;
+	पूर्ण
 
-	/* exit bl into sysinfo mode */
+	/* निकास bl पूर्णांकo sysinfo mode */
 	dev_vdbg(cd->dev, "%s: write exit ldr...\n", __func__);
-	mutex_lock(&cd->system_lock);
-	cd->int_status &= ~CY_INT_IGNORE;
-	cd->int_status |= CY_INT_MODE_CHANGE;
+	mutex_lock(&cd->प्रणाली_lock);
+	cd->पूर्णांक_status &= ~CY_INT_IGNORE;
+	cd->पूर्णांक_status |= CY_INT_MODE_CHANGE;
 
-	rc = cyttsp4_adap_write(cd, CY_REG_BASE, sizeof(ldr_exit),
-			(u8 *)ldr_exit);
-	mutex_unlock(&cd->system_lock);
-	if (rc < 0) {
+	rc = cyttsp4_adap_ग_लिखो(cd, CY_REG_BASE, माप(ldr_निकास),
+			(u8 *)ldr_निकास);
+	mutex_unlock(&cd->प्रणाली_lock);
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: Fail write r=%d\n", __func__, rc);
-		if (retry--)
-			goto reset;
-		goto exit;
-	}
+		अगर (retry--)
+			जाओ reset;
+		जाओ निकास;
+	पूर्ण
 
-	rc = cyttsp4_wait_sysinfo_mode(cd);
-	if (rc < 0) {
-		u8 buf[sizeof(ldr_err_app)];
-		int rc1;
+	rc = cyttsp4_रुको_sysinfo_mode(cd);
+	अगर (rc < 0) अणु
+		u8 buf[माप(ldr_err_app)];
+		पूर्णांक rc1;
 
-		/* Check for invalid/corrupted touch application */
-		rc1 = cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(ldr_err_app),
+		/* Check क्रम invalid/corrupted touch application */
+		rc1 = cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(ldr_err_app),
 				buf);
-		if (rc1) {
+		अगर (rc1) अणु
 			dev_err(cd->dev, "%s: Fail read r=%d\n", __func__, rc1);
-		} else if (!memcmp(buf, ldr_err_app, sizeof(ldr_err_app))) {
+		पूर्ण अन्यथा अगर (!स_भेद(buf, ldr_err_app, माप(ldr_err_app))) अणु
 			dev_err(cd->dev, "%s: Error launching touch application\n",
 				__func__);
-			mutex_lock(&cd->system_lock);
+			mutex_lock(&cd->प्रणाली_lock);
 			cd->invalid_touch_app = true;
-			mutex_unlock(&cd->system_lock);
-			goto exit_no_wd;
-		}
+			mutex_unlock(&cd->प्रणाली_lock);
+			जाओ निकास_no_wd;
+		पूर्ण
 
-		if (retry--)
-			goto reset;
-		goto exit;
-	}
+		अगर (retry--)
+			जाओ reset;
+		जाओ निकास;
+	पूर्ण
 
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 	cd->invalid_touch_app = false;
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	/* read sysinfo data */
+	/* पढ़ो sysinfo data */
 	dev_vdbg(cd->dev, "%s: get sysinfo regs..\n", __func__);
 	rc = cyttsp4_get_sysinfo_regs(cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: failed to get sysinfo regs rc=%d\n",
 			__func__, rc);
-		if (retry--)
-			goto reset;
-		goto exit;
-	}
+		अगर (retry--)
+			जाओ reset;
+		जाओ निकास;
+	पूर्ण
 
 	rc = cyttsp4_set_mode(cd, CY_MODE_OPERATIONAL);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: failed to set mode to operational rc=%d\n",
 			__func__, rc);
-		if (retry--)
-			goto reset;
-		goto exit;
-	}
+		अगर (retry--)
+			जाओ reset;
+		जाओ निकास;
+	पूर्ण
 
-	cyttsp4_lift_all(&cd->md);
+	cyttsp4_lअगरt_all(&cd->md);
 
-	/* restore to sleep if was suspended */
-	mutex_lock(&cd->system_lock);
-	if (cd->sleep_state == SS_SLEEP_ON) {
+	/* restore to sleep अगर was suspended */
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (cd->sleep_state == SS_SLEEP_ON) अणु
 		cd->sleep_state = SS_SLEEP_OFF;
-		mutex_unlock(&cd->system_lock);
+		mutex_unlock(&cd->प्रणाली_lock);
 		cyttsp4_core_sleep_(cd);
-		goto exit_no_wd;
-	}
-	mutex_unlock(&cd->system_lock);
+		जाओ निकास_no_wd;
+	पूर्ण
+	mutex_unlock(&cd->प्रणाली_lock);
 
-exit:
-	cyttsp4_start_wd_timer(cd);
-exit_no_wd:
-	return rc;
-}
+निकास:
+	cyttsp4_start_wd_समयr(cd);
+निकास_no_wd:
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_startup(struct cyttsp4 *cd)
-{
-	int rc;
+अटल पूर्णांक cyttsp4_startup(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक rc;
 
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 	cd->startup_state = STARTUP_RUNNING;
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
 	rc = cyttsp4_request_exclusive(cd, cd->dev,
 			CY_CORE_REQUEST_EXCLUSIVE_TIMEOUT);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail get exclusive ex=%p own=%p\n",
 				__func__, cd->exclusive_dev, cd->dev);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = cyttsp4_startup_(cd);
 
-	if (cyttsp4_release_exclusive(cd, cd->dev) < 0)
-		/* Don't return fail code, mode is already changed. */
+	अगर (cyttsp4_release_exclusive(cd, cd->dev) < 0)
+		/* Don't वापस fail code, mode is alपढ़ोy changed. */
 		dev_err(cd->dev, "%s: fail to release exclusive\n", __func__);
-	else
+	अन्यथा
 		dev_vdbg(cd->dev, "%s: pass release exclusive\n", __func__);
 
-exit:
-	mutex_lock(&cd->system_lock);
+निकास:
+	mutex_lock(&cd->प्रणाली_lock);
 	cd->startup_state = STARTUP_NONE;
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	/* Wake the waiters for end of startup */
-	wake_up(&cd->wait_q);
+	/* Wake the रुकोers क्रम end of startup */
+	wake_up(&cd->रुको_q);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void cyttsp4_startup_work_function(struct work_struct *work)
-{
-	struct cyttsp4 *cd =  container_of(work, struct cyttsp4, startup_work);
-	int rc;
+अटल व्योम cyttsp4_startup_work_function(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cyttsp4 *cd =  container_of(work, काष्ठा cyttsp4, startup_work);
+	पूर्णांक rc;
 
 	rc = cyttsp4_startup(cd);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: Fail queued startup r=%d\n",
 			__func__, rc);
-}
+पूर्ण
 
-static void cyttsp4_free_si_ptrs(struct cyttsp4 *cd)
-{
-	struct cyttsp4_sysinfo *si = &cd->sysinfo;
+अटल व्योम cyttsp4_मुक्त_si_ptrs(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा cyttsp4_sysinfo *si = &cd->sysinfo;
 
-	if (!si)
-		return;
+	अगर (!si)
+		वापस;
 
-	kfree(si->si_ptrs.cydata);
-	kfree(si->si_ptrs.test);
-	kfree(si->si_ptrs.pcfg);
-	kfree(si->si_ptrs.opcfg);
-	kfree(si->si_ptrs.ddata);
-	kfree(si->si_ptrs.mdata);
-	kfree(si->btn);
-	kfree(si->xy_mode);
-	kfree(si->xy_data);
-	kfree(si->btn_rec_data);
-}
+	kमुक्त(si->si_ptrs.cydata);
+	kमुक्त(si->si_ptrs.test);
+	kमुक्त(si->si_ptrs.pcfg);
+	kमुक्त(si->si_ptrs.opcfg);
+	kमुक्त(si->si_ptrs.ddata);
+	kमुक्त(si->si_ptrs.mdata);
+	kमुक्त(si->btn);
+	kमुक्त(si->xy_mode);
+	kमुक्त(si->xy_data);
+	kमुक्त(si->btn_rec_data);
+पूर्ण
 
-#ifdef CONFIG_PM
-static int cyttsp4_core_sleep(struct cyttsp4 *cd)
-{
-	int rc;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक cyttsp4_core_sleep(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक rc;
 
 	rc = cyttsp4_request_exclusive(cd, cd->dev,
 			CY_CORE_SLEEP_REQUEST_EXCLUSIVE_TIMEOUT);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail get exclusive ex=%p own=%p\n",
 				__func__, cd->exclusive_dev, cd->dev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rc = cyttsp4_core_sleep_(cd);
 
-	if (cyttsp4_release_exclusive(cd, cd->dev) < 0)
+	अगर (cyttsp4_release_exclusive(cd, cd->dev) < 0)
 		dev_err(cd->dev, "%s: fail to release exclusive\n", __func__);
-	else
+	अन्यथा
 		dev_vdbg(cd->dev, "%s: pass release exclusive\n", __func__);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_core_wake_(struct cyttsp4 *cd)
-{
-	struct device *dev = cd->dev;
-	int rc;
+अटल पूर्णांक cyttsp4_core_wake_(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा device *dev = cd->dev;
+	पूर्णांक rc;
 	u8 mode;
-	int t;
+	पूर्णांक t;
 
-	/* Already woken? */
-	mutex_lock(&cd->system_lock);
-	if (cd->sleep_state == SS_SLEEP_OFF) {
-		mutex_unlock(&cd->system_lock);
-		return 0;
-	}
-	cd->int_status &= ~CY_INT_IGNORE;
-	cd->int_status |= CY_INT_AWAKE;
+	/* Alपढ़ोy woken? */
+	mutex_lock(&cd->प्रणाली_lock);
+	अगर (cd->sleep_state == SS_SLEEP_OFF) अणु
+		mutex_unlock(&cd->प्रणाली_lock);
+		वापस 0;
+	पूर्ण
+	cd->पूर्णांक_status &= ~CY_INT_IGNORE;
+	cd->पूर्णांक_status |= CY_INT_AWAKE;
 	cd->sleep_state = SS_WAKING;
 
-	if (cd->cpdata->power) {
+	अगर (cd->cpdata->घातer) अणु
 		dev_dbg(dev, "%s: Power up HW\n", __func__);
-		rc = cd->cpdata->power(cd->cpdata, 1, dev, &cd->ignore_irq);
-	} else {
+		rc = cd->cpdata->घातer(cd->cpdata, 1, dev, &cd->ignore_irq);
+	पूर्ण अन्यथा अणु
 		dev_dbg(dev, "%s: No power function\n", __func__);
 		rc = -ENOSYS;
-	}
-	if (rc < 0) {
+	पूर्ण
+	अगर (rc < 0) अणु
 		dev_err(dev, "%s: HW Power up fails r=%d\n",
 				__func__, rc);
 
-		/* Initiate a read transaction to wake up */
-		cyttsp4_adap_read(cd, CY_REG_BASE, sizeof(mode), &mode);
-	} else
+		/* Initiate a पढ़ो transaction to wake up */
+		cyttsp4_adap_पढ़ो(cd, CY_REG_BASE, माप(mode), &mode);
+	पूर्ण अन्यथा
 		dev_vdbg(cd->dev, "%s: HW power up succeeds\n",
 			__func__);
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	t = wait_event_timeout(cd->wait_q,
-			(cd->int_status & CY_INT_AWAKE) == 0,
-			msecs_to_jiffies(CY_CORE_WAKEUP_TIMEOUT));
-	if (IS_TMO(t)) {
+	t = रुको_event_समयout(cd->रुको_q,
+			(cd->पूर्णांक_status & CY_INT_AWAKE) == 0,
+			msecs_to_jअगरfies(CY_CORE_WAKEUP_TIMEOUT));
+	अगर (IS_TMO(t)) अणु
 		dev_err(dev, "%s: TMO waiting for wakeup\n", __func__);
-		mutex_lock(&cd->system_lock);
-		cd->int_status &= ~CY_INT_AWAKE;
+		mutex_lock(&cd->प्रणाली_lock);
+		cd->पूर्णांक_status &= ~CY_INT_AWAKE;
 		/* Try starting up */
 		cyttsp4_queue_startup_(cd);
-		mutex_unlock(&cd->system_lock);
-	}
+		mutex_unlock(&cd->प्रणाली_lock);
+	पूर्ण
 
-	mutex_lock(&cd->system_lock);
+	mutex_lock(&cd->प्रणाली_lock);
 	cd->sleep_state = SS_SLEEP_OFF;
-	mutex_unlock(&cd->system_lock);
+	mutex_unlock(&cd->प्रणाली_lock);
 
-	cyttsp4_start_wd_timer(cd);
+	cyttsp4_start_wd_समयr(cd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_core_wake(struct cyttsp4 *cd)
-{
-	int rc;
+अटल पूर्णांक cyttsp4_core_wake(काष्ठा cyttsp4 *cd)
+अणु
+	पूर्णांक rc;
 
 	rc = cyttsp4_request_exclusive(cd, cd->dev,
 			CY_CORE_REQUEST_EXCLUSIVE_TIMEOUT);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(cd->dev, "%s: fail get exclusive ex=%p own=%p\n",
 				__func__, cd->exclusive_dev, cd->dev);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rc = cyttsp4_core_wake_(cd);
 
-	if (cyttsp4_release_exclusive(cd, cd->dev) < 0)
+	अगर (cyttsp4_release_exclusive(cd, cd->dev) < 0)
 		dev_err(cd->dev, "%s: fail to release exclusive\n", __func__);
-	else
+	अन्यथा
 		dev_vdbg(cd->dev, "%s: pass release exclusive\n", __func__);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_core_suspend(struct device *dev)
-{
-	struct cyttsp4 *cd = dev_get_drvdata(dev);
-	struct cyttsp4_mt_data *md = &cd->md;
-	int rc;
+अटल पूर्णांक cyttsp4_core_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cyttsp4 *cd = dev_get_drvdata(dev);
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	पूर्णांक rc;
 
 	md->is_suspended = true;
 
 	rc = cyttsp4_core_sleep(cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "%s: Error on sleep\n", __func__);
-		return -EAGAIN;
-	}
-	return 0;
-}
+		वापस -EAGAIN;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cyttsp4_core_resume(struct device *dev)
-{
-	struct cyttsp4 *cd = dev_get_drvdata(dev);
-	struct cyttsp4_mt_data *md = &cd->md;
-	int rc;
+अटल पूर्णांक cyttsp4_core_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cyttsp4 *cd = dev_get_drvdata(dev);
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	पूर्णांक rc;
 
 	md->is_suspended = false;
 
 	rc = cyttsp4_core_wake(cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "%s: Error on wake\n", __func__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-const struct dev_pm_ops cyttsp4_pm_ops = {
+स्थिर काष्ठा dev_pm_ops cyttsp4_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(cyttsp4_core_suspend, cyttsp4_core_resume)
-	SET_RUNTIME_PM_OPS(cyttsp4_core_suspend, cyttsp4_core_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(cyttsp4_core_suspend, cyttsp4_core_resume, शून्य)
+पूर्ण;
 EXPORT_SYMBOL_GPL(cyttsp4_pm_ops);
 
-static int cyttsp4_mt_open(struct input_dev *input)
-{
-	pm_runtime_get(input->dev.parent);
-	return 0;
-}
+अटल पूर्णांक cyttsp4_mt_खोलो(काष्ठा input_dev *input)
+अणु
+	pm_runसमय_get(input->dev.parent);
+	वापस 0;
+पूर्ण
 
-static void cyttsp4_mt_close(struct input_dev *input)
-{
-	struct cyttsp4_mt_data *md = input_get_drvdata(input);
+अटल व्योम cyttsp4_mt_बंद(काष्ठा input_dev *input)
+अणु
+	काष्ठा cyttsp4_mt_data *md = input_get_drvdata(input);
 	mutex_lock(&md->report_lock);
-	if (!md->is_suspended)
-		pm_runtime_put(input->dev.parent);
+	अगर (!md->is_suspended)
+		pm_runसमय_put(input->dev.parent);
 	mutex_unlock(&md->report_lock);
-}
+पूर्ण
 
 
-static int cyttsp4_setup_input_device(struct cyttsp4 *cd)
-{
-	struct device *dev = cd->dev;
-	struct cyttsp4_mt_data *md = &cd->md;
-	int signal = CY_IGNORE_VALUE;
-	int max_x, max_y, max_p, min, max;
-	int max_x_tmp, max_y_tmp;
-	int i;
-	int rc;
+अटल पूर्णांक cyttsp4_setup_input_device(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा device *dev = cd->dev;
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	पूर्णांक संकेत = CY_IGNORE_VALUE;
+	पूर्णांक max_x, max_y, max_p, min, max;
+	पूर्णांक max_x_पंचांगp, max_y_पंचांगp;
+	पूर्णांक i;
+	पूर्णांक rc;
 
 	dev_vdbg(dev, "%s: Initialize event signals\n", __func__);
 	__set_bit(EV_ABS, md->input->evbit);
 	__set_bit(EV_REL, md->input->evbit);
 	__set_bit(EV_KEY, md->input->evbit);
 
-	max_x_tmp = md->si->si_ofs.max_x;
-	max_y_tmp = md->si->si_ofs.max_y;
+	max_x_पंचांगp = md->si->si_ofs.max_x;
+	max_y_पंचांगp = md->si->si_ofs.max_y;
 
 	/* get maximum values from the sysinfo data */
-	if (md->pdata->flags & CY_FLAG_FLIP) {
-		max_x = max_y_tmp - 1;
-		max_y = max_x_tmp - 1;
-	} else {
-		max_x = max_x_tmp - 1;
-		max_y = max_y_tmp - 1;
-	}
+	अगर (md->pdata->flags & CY_FLAG_FLIP) अणु
+		max_x = max_y_पंचांगp - 1;
+		max_y = max_x_पंचांगp - 1;
+	पूर्ण अन्यथा अणु
+		max_x = max_x_पंचांगp - 1;
+		max_y = max_y_पंचांगp - 1;
+	पूर्ण
 	max_p = md->si->si_ofs.max_p;
 
-	/* set event signal capabilities */
-	for (i = 0; i < (md->pdata->frmwrk->size / CY_NUM_ABS_SET); i++) {
-		signal = md->pdata->frmwrk->abs
+	/* set event संकेत capabilities */
+	क्रम (i = 0; i < (md->pdata->frmwrk->size / CY_NUM_ABS_SET); i++) अणु
+		संकेत = md->pdata->frmwrk->असल
 			[(i * CY_NUM_ABS_SET) + CY_SIGNAL_OST];
-		if (signal != CY_IGNORE_VALUE) {
-			__set_bit(signal, md->input->absbit);
-			min = md->pdata->frmwrk->abs
+		अगर (संकेत != CY_IGNORE_VALUE) अणु
+			__set_bit(संकेत, md->input->असलbit);
+			min = md->pdata->frmwrk->असल
 				[(i * CY_NUM_ABS_SET) + CY_MIN_OST];
-			max = md->pdata->frmwrk->abs
+			max = md->pdata->frmwrk->असल
 				[(i * CY_NUM_ABS_SET) + CY_MAX_OST];
-			if (i == CY_ABS_ID_OST) {
-				/* shift track ids down to start at 0 */
+			अगर (i == CY_ABS_ID_OST) अणु
+				/* shअगरt track ids करोwn to start at 0 */
 				max = max - min;
 				min = min - min;
-			} else if (i == CY_ABS_X_OST)
+			पूर्ण अन्यथा अगर (i == CY_ABS_X_OST)
 				max = max_x;
-			else if (i == CY_ABS_Y_OST)
+			अन्यथा अगर (i == CY_ABS_Y_OST)
 				max = max_y;
-			else if (i == CY_ABS_P_OST)
+			अन्यथा अगर (i == CY_ABS_P_OST)
 				max = max_p;
-			input_set_abs_params(md->input, signal, min, max,
-				md->pdata->frmwrk->abs
+			input_set_असल_params(md->input, संकेत, min, max,
+				md->pdata->frmwrk->असल
 				[(i * CY_NUM_ABS_SET) + CY_FUZZ_OST],
-				md->pdata->frmwrk->abs
+				md->pdata->frmwrk->असल
 				[(i * CY_NUM_ABS_SET) + CY_FLAT_OST]);
 			dev_dbg(dev, "%s: register signal=%02X min=%d max=%d\n",
-				__func__, signal, min, max);
-			if ((i == CY_ABS_ID_OST) &&
+				__func__, संकेत, min, max);
+			अगर ((i == CY_ABS_ID_OST) &&
 				(md->si->si_ofs.tch_rec_size <
 				CY_TMA4XX_TCH_REC_SIZE))
-				break;
-		}
-	}
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	input_mt_init_slots(md->input, md->si->si_ofs.tch_abs[CY_TCH_T].max,
-			INPUT_MT_DIRECT);
-	rc = input_register_device(md->input);
-	if (rc < 0)
+	input_mt_init_slots(md->input, md->si->si_ofs.tch_असल[CY_TCH_T].max,
+			INPUT_MT_सूचीECT);
+	rc = input_रेजिस्टर_device(md->input);
+	अगर (rc < 0)
 		dev_err(dev, "%s: Error, failed register input device r=%d\n",
 			__func__, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int cyttsp4_mt_probe(struct cyttsp4 *cd)
-{
-	struct device *dev = cd->dev;
-	struct cyttsp4_mt_data *md = &cd->md;
-	struct cyttsp4_mt_platform_data *pdata = cd->pdata->mt_pdata;
-	int rc = 0;
+अटल पूर्णांक cyttsp4_mt_probe(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा device *dev = cd->dev;
+	काष्ठा cyttsp4_mt_data *md = &cd->md;
+	काष्ठा cyttsp4_mt_platक्रमm_data *pdata = cd->pdata->mt_pdata;
+	पूर्णांक rc = 0;
 
 	mutex_init(&md->report_lock);
 	md->pdata = pdata;
-	/* Create the input device and register it. */
+	/* Create the input device and रेजिस्टर it. */
 	dev_vdbg(dev, "%s: Create the input device and register it\n",
 		__func__);
 	md->input = input_allocate_device();
-	if (md->input == NULL) {
+	अगर (md->input == शून्य) अणु
 		dev_err(dev, "%s: Error, failed to allocate input device\n",
 			__func__);
 		rc = -ENOSYS;
-		goto error_alloc_failed;
-	}
+		जाओ error_alloc_failed;
+	पूर्ण
 
 	md->input->name = pdata->inp_dev_name;
-	scnprintf(md->phys, sizeof(md->phys)-1, "%s", dev_name(dev));
+	scnम_लिखो(md->phys, माप(md->phys)-1, "%s", dev_name(dev));
 	md->input->phys = md->phys;
 	md->input->id.bustype = cd->bus_ops->bustype;
 	md->input->dev.parent = dev;
-	md->input->open = cyttsp4_mt_open;
-	md->input->close = cyttsp4_mt_close;
+	md->input->खोलो = cyttsp4_mt_खोलो;
+	md->input->बंद = cyttsp4_mt_बंद;
 	input_set_drvdata(md->input, md);
 
 	/* get sysinfo */
 	md->si = &cd->sysinfo;
 
 	rc = cyttsp4_setup_input_device(cd);
-	if (rc)
-		goto error_init_input;
+	अगर (rc)
+		जाओ error_init_input;
 
-	return 0;
+	वापस 0;
 
 error_init_input:
-	input_free_device(md->input);
+	input_मुक्त_device(md->input);
 error_alloc_failed:
 	dev_err(dev, "%s failed.\n", __func__);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct cyttsp4 *cyttsp4_probe(const struct cyttsp4_bus_ops *ops,
-		struct device *dev, u16 irq, size_t xfer_buf_size)
-{
-	struct cyttsp4 *cd;
-	struct cyttsp4_platform_data *pdata = dev_get_platdata(dev);
-	unsigned long irq_flags;
-	int rc = 0;
+काष्ठा cyttsp4 *cyttsp4_probe(स्थिर काष्ठा cyttsp4_bus_ops *ops,
+		काष्ठा device *dev, u16 irq, माप_प्रकार xfer_buf_size)
+अणु
+	काष्ठा cyttsp4 *cd;
+	काष्ठा cyttsp4_platक्रमm_data *pdata = dev_get_platdata(dev);
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक rc = 0;
 
-	if (!pdata || !pdata->core_pdata || !pdata->mt_pdata) {
+	अगर (!pdata || !pdata->core_pdata || !pdata->mt_pdata) अणु
 		dev_err(dev, "%s: Missing platform data\n", __func__);
 		rc = -ENODEV;
-		goto error_no_pdata;
-	}
+		जाओ error_no_pdata;
+	पूर्ण
 
-	cd = kzalloc(sizeof(*cd), GFP_KERNEL);
-	if (!cd) {
+	cd = kzalloc(माप(*cd), GFP_KERNEL);
+	अगर (!cd) अणु
 		dev_err(dev, "%s: Error, kzalloc\n", __func__);
 		rc = -ENOMEM;
-		goto error_alloc_data;
-	}
+		जाओ error_alloc_data;
+	पूर्ण
 
 	cd->xfer_buf = kzalloc(xfer_buf_size, GFP_KERNEL);
-	if (!cd->xfer_buf) {
+	अगर (!cd->xfer_buf) अणु
 		dev_err(dev, "%s: Error, kzalloc\n", __func__);
 		rc = -ENOMEM;
-		goto error_free_cd;
-	}
+		जाओ error_मुक्त_cd;
+	पूर्ण
 
 	/* Initialize device info */
 	cd->dev = dev;
@@ -2052,128 +2053,128 @@ struct cyttsp4 *cyttsp4_probe(const struct cyttsp4_bus_ops *ops,
 	cd->bus_ops = ops;
 
 	/* Initialize mutexes and spinlocks */
-	mutex_init(&cd->system_lock);
+	mutex_init(&cd->प्रणाली_lock);
 	mutex_init(&cd->adap_lock);
 
-	/* Initialize wait queue */
-	init_waitqueue_head(&cd->wait_q);
+	/* Initialize रुको queue */
+	init_रुकोqueue_head(&cd->रुको_q);
 
 	/* Initialize works */
 	INIT_WORK(&cd->startup_work, cyttsp4_startup_work_function);
-	INIT_WORK(&cd->watchdog_work, cyttsp4_watchdog_work);
+	INIT_WORK(&cd->watchकरोg_work, cyttsp4_watchकरोg_work);
 
 	/* Initialize IRQ */
 	cd->irq = gpio_to_irq(cd->cpdata->irq_gpio);
-	if (cd->irq < 0) {
+	अगर (cd->irq < 0) अणु
 		rc = -EINVAL;
-		goto error_free_xfer;
-	}
+		जाओ error_मुक्त_xfer;
+	पूर्ण
 
 	dev_set_drvdata(dev, cd);
 
-	/* Call platform init function */
-	if (cd->cpdata->init) {
+	/* Call platक्रमm init function */
+	अगर (cd->cpdata->init) अणु
 		dev_dbg(cd->dev, "%s: Init HW\n", __func__);
 		rc = cd->cpdata->init(cd->cpdata, 1, cd->dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(cd->dev, "%s: No HW INIT function\n", __func__);
 		rc = 0;
-	}
-	if (rc < 0)
+	पूर्ण
+	अगर (rc < 0)
 		dev_err(cd->dev, "%s: HW Init fail r=%d\n", __func__, rc);
 
 	dev_dbg(dev, "%s: initialize threaded irq=%d\n", __func__, cd->irq);
-	if (cd->cpdata->level_irq_udelay > 0)
-		/* use level triggered interrupts */
+	अगर (cd->cpdata->level_irq_udelay > 0)
+		/* use level triggered पूर्णांकerrupts */
 		irq_flags = IRQF_TRIGGER_LOW | IRQF_ONESHOT;
-	else
-		/* use edge triggered interrupts */
+	अन्यथा
+		/* use edge triggered पूर्णांकerrupts */
 		irq_flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
 
-	rc = request_threaded_irq(cd->irq, NULL, cyttsp4_irq, irq_flags,
+	rc = request_thपढ़ोed_irq(cd->irq, शून्य, cyttsp4_irq, irq_flags,
 		dev_name(dev), cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "%s: Error, could not request irq\n", __func__);
-		goto error_request_irq;
-	}
+		जाओ error_request_irq;
+	पूर्ण
 
-	/* Setup watchdog timer */
-	timer_setup(&cd->watchdog_timer, cyttsp4_watchdog_timer, 0);
+	/* Setup watchकरोg समयr */
+	समयr_setup(&cd->watchकरोg_समयr, cyttsp4_watchकरोg_समयr, 0);
 
 	/*
 	 * call startup directly to ensure that the device
-	 * is tested before leaving the probe
+	 * is tested beक्रमe leaving the probe
 	 */
 	rc = cyttsp4_startup(cd);
 
-	/* Do not fail probe if startup fails but the device is detected */
-	if (rc < 0 && cd->mode == CY_MODE_UNKNOWN) {
+	/* Do not fail probe अगर startup fails but the device is detected */
+	अगर (rc < 0 && cd->mode == CY_MODE_UNKNOWN) अणु
 		dev_err(cd->dev, "%s: Fail initial startup r=%d\n",
 			__func__, rc);
-		goto error_startup;
-	}
+		जाओ error_startup;
+	पूर्ण
 
 	rc = cyttsp4_mt_probe(cd);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev, "%s: Error, fail mt probe\n", __func__);
-		goto error_startup;
-	}
+		जाओ error_startup;
+	पूर्ण
 
-	pm_runtime_enable(dev);
+	pm_runसमय_enable(dev);
 
-	return cd;
+	वापस cd;
 
 error_startup:
 	cancel_work_sync(&cd->startup_work);
-	cyttsp4_stop_wd_timer(cd);
-	pm_runtime_disable(dev);
-	cyttsp4_free_si_ptrs(cd);
-	free_irq(cd->irq, cd);
+	cyttsp4_stop_wd_समयr(cd);
+	pm_runसमय_disable(dev);
+	cyttsp4_मुक्त_si_ptrs(cd);
+	मुक्त_irq(cd->irq, cd);
 error_request_irq:
-	if (cd->cpdata->init)
+	अगर (cd->cpdata->init)
 		cd->cpdata->init(cd->cpdata, 0, dev);
-error_free_xfer:
-	kfree(cd->xfer_buf);
-error_free_cd:
-	kfree(cd);
+error_मुक्त_xfer:
+	kमुक्त(cd->xfer_buf);
+error_मुक्त_cd:
+	kमुक्त(cd);
 error_alloc_data:
 error_no_pdata:
 	dev_err(dev, "%s failed.\n", __func__);
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 EXPORT_SYMBOL_GPL(cyttsp4_probe);
 
-static void cyttsp4_mt_release(struct cyttsp4_mt_data *md)
-{
-	input_unregister_device(md->input);
-	input_set_drvdata(md->input, NULL);
-}
+अटल व्योम cyttsp4_mt_release(काष्ठा cyttsp4_mt_data *md)
+अणु
+	input_unरेजिस्टर_device(md->input);
+	input_set_drvdata(md->input, शून्य);
+पूर्ण
 
-int cyttsp4_remove(struct cyttsp4 *cd)
-{
-	struct device *dev = cd->dev;
+पूर्णांक cyttsp4_हटाओ(काष्ठा cyttsp4 *cd)
+अणु
+	काष्ठा device *dev = cd->dev;
 
 	cyttsp4_mt_release(&cd->md);
 
 	/*
-	 * Suspend the device before freeing the startup_work and stopping
-	 * the watchdog since sleep function restarts watchdog on failure
+	 * Suspend the device beक्रमe मुक्तing the startup_work and stopping
+	 * the watchकरोg since sleep function restarts watchकरोg on failure
 	 */
-	pm_runtime_suspend(dev);
-	pm_runtime_disable(dev);
+	pm_runसमय_suspend(dev);
+	pm_runसमय_disable(dev);
 
 	cancel_work_sync(&cd->startup_work);
 
-	cyttsp4_stop_wd_timer(cd);
+	cyttsp4_stop_wd_समयr(cd);
 
-	free_irq(cd->irq, cd);
-	if (cd->cpdata->init)
+	मुक्त_irq(cd->irq, cd);
+	अगर (cd->cpdata->init)
 		cd->cpdata->init(cd->cpdata, 0, dev);
-	cyttsp4_free_si_ptrs(cd);
-	kfree(cd);
-	return 0;
-}
-EXPORT_SYMBOL_GPL(cyttsp4_remove);
+	cyttsp4_मुक्त_si_ptrs(cd);
+	kमुक्त(cd);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(cyttsp4_हटाओ);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Cypress TrueTouch(R) Standard touchscreen core driver");

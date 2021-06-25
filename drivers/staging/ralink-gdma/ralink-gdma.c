@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  *  GDMA4740 DMAC support
  */
 
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/irq.h>
-#include <linux/of_dma.h>
-#include <linux/reset.h>
-#include <linux/of_device.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of_dma.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/of_device.h>
 
-#include "virt-dma.h"
+#समावेश "virt-dma.h"
 
-#define GDMA_REG_SRC_ADDR(x)		(0x00 + (x) * 0x10)
-#define GDMA_REG_DST_ADDR(x)		(0x04 + (x) * 0x10)
+#घोषणा GDMA_REG_SRC_ADDR(x)		(0x00 + (x) * 0x10)
+#घोषणा GDMA_REG_DST_ADDR(x)		(0x04 + (x) * 0x10)
 
-#define GDMA_REG_CTRL0(x)		(0x08 + (x) * 0x10)
-#define GDMA_REG_CTRL0_TX_MASK		0xffff
-#define GDMA_REG_CTRL0_TX_SHIFT		16
-#define GDMA_REG_CTRL0_CURR_MASK	0xff
-#define GDMA_REG_CTRL0_CURR_SHIFT	8
-#define	GDMA_REG_CTRL0_SRC_ADDR_FIXED	BIT(7)
-#define GDMA_REG_CTRL0_DST_ADDR_FIXED	BIT(6)
-#define GDMA_REG_CTRL0_BURST_MASK	0x7
-#define GDMA_REG_CTRL0_BURST_SHIFT	3
-#define	GDMA_REG_CTRL0_DONE_INT		BIT(2)
-#define	GDMA_REG_CTRL0_ENABLE		BIT(1)
-#define GDMA_REG_CTRL0_SW_MODE          BIT(0)
+#घोषणा GDMA_REG_CTRL0(x)		(0x08 + (x) * 0x10)
+#घोषणा GDMA_REG_CTRL0_TX_MASK		0xffff
+#घोषणा GDMA_REG_CTRL0_TX_SHIFT		16
+#घोषणा GDMA_REG_CTRL0_CURR_MASK	0xff
+#घोषणा GDMA_REG_CTRL0_CURR_SHIFT	8
+#घोषणा	GDMA_REG_CTRL0_SRC_ADDR_FIXED	BIT(7)
+#घोषणा GDMA_REG_CTRL0_DST_ADDR_FIXED	BIT(6)
+#घोषणा GDMA_REG_CTRL0_BURST_MASK	0x7
+#घोषणा GDMA_REG_CTRL0_BURST_SHIFT	3
+#घोषणा	GDMA_REG_CTRL0_DONE_INT		BIT(2)
+#घोषणा	GDMA_REG_CTRL0_ENABLE		BIT(1)
+#घोषणा GDMA_REG_CTRL0_SW_MODE          BIT(0)
 
-#define GDMA_REG_CTRL1(x)		(0x0c + (x) * 0x10)
-#define GDMA_REG_CTRL1_SEG_MASK		0xf
-#define GDMA_REG_CTRL1_SEG_SHIFT	22
-#define GDMA_REG_CTRL1_REQ_MASK		0x3f
-#define GDMA_REG_CTRL1_SRC_REQ_SHIFT	16
-#define GDMA_REG_CTRL1_DST_REQ_SHIFT	8
-#define GDMA_REG_CTRL1_NEXT_MASK	0x1f
-#define GDMA_REG_CTRL1_NEXT_SHIFT	3
-#define GDMA_REG_CTRL1_COHERENT		BIT(2)
-#define GDMA_REG_CTRL1_FAIL		BIT(1)
-#define GDMA_REG_CTRL1_MASK		BIT(0)
+#घोषणा GDMA_REG_CTRL1(x)		(0x0c + (x) * 0x10)
+#घोषणा GDMA_REG_CTRL1_SEG_MASK		0xf
+#घोषणा GDMA_REG_CTRL1_SEG_SHIFT	22
+#घोषणा GDMA_REG_CTRL1_REQ_MASK		0x3f
+#घोषणा GDMA_REG_CTRL1_SRC_REQ_SHIFT	16
+#घोषणा GDMA_REG_CTRL1_DST_REQ_SHIFT	8
+#घोषणा GDMA_REG_CTRL1_NEXT_MASK	0x1f
+#घोषणा GDMA_REG_CTRL1_NEXT_SHIFT	3
+#घोषणा GDMA_REG_CTRL1_COHERENT		BIT(2)
+#घोषणा GDMA_REG_CTRL1_FAIL		BIT(1)
+#घोषणा GDMA_REG_CTRL1_MASK		BIT(0)
 
-#define GDMA_REG_UNMASK_INT		0x200
-#define GDMA_REG_DONE_INT		0x204
+#घोषणा GDMA_REG_UNMASK_INT		0x200
+#घोषणा GDMA_REG_DONE_INT		0x204
 
-#define GDMA_REG_GCT			0x220
-#define GDMA_REG_GCT_CHAN_MASK		0x3
-#define GDMA_REG_GCT_CHAN_SHIFT		3
-#define GDMA_REG_GCT_VER_MASK		0x3
-#define GDMA_REG_GCT_VER_SHIFT		1
-#define GDMA_REG_GCT_ARBIT_RR		BIT(0)
+#घोषणा GDMA_REG_GCT			0x220
+#घोषणा GDMA_REG_GCT_CHAN_MASK		0x3
+#घोषणा GDMA_REG_GCT_CHAN_SHIFT		3
+#घोषणा GDMA_REG_GCT_VER_MASK		0x3
+#घोषणा GDMA_REG_GCT_VER_SHIFT		1
+#घोषणा GDMA_REG_GCT_ARBIT_RR		BIT(0)
 
-#define GDMA_REG_REQSTS			0x2a0
-#define GDMA_REG_ACKSTS			0x2a4
-#define GDMA_REG_FINSTS			0x2a8
+#घोषणा GDMA_REG_REQSTS			0x2a0
+#घोषणा GDMA_REG_ACKSTS			0x2a4
+#घोषणा GDMA_REG_FINSTS			0x2a8
 
-/* for RT305X gdma registers */
-#define GDMA_RT305X_CTRL0_REQ_MASK	0xf
-#define GDMA_RT305X_CTRL0_SRC_REQ_SHIFT	12
-#define GDMA_RT305X_CTRL0_DST_REQ_SHIFT	8
+/* क्रम RT305X gdma रेजिस्टरs */
+#घोषणा GDMA_RT305X_CTRL0_REQ_MASK	0xf
+#घोषणा GDMA_RT305X_CTRL0_SRC_REQ_SHIFT	12
+#घोषणा GDMA_RT305X_CTRL0_DST_REQ_SHIFT	8
 
-#define GDMA_RT305X_CTRL1_FAIL		BIT(4)
-#define GDMA_RT305X_CTRL1_NEXT_MASK	0x7
-#define GDMA_RT305X_CTRL1_NEXT_SHIFT	1
+#घोषणा GDMA_RT305X_CTRL1_FAIL		BIT(4)
+#घोषणा GDMA_RT305X_CTRL1_NEXT_MASK	0x7
+#घोषणा GDMA_RT305X_CTRL1_NEXT_SHIFT	1
 
-#define GDMA_RT305X_STATUS_INT		0x80
-#define GDMA_RT305X_STATUS_SIGNAL	0x84
-#define GDMA_RT305X_GCT			0x88
+#घोषणा GDMA_RT305X_STATUS_INT		0x80
+#घोषणा GDMA_RT305X_STATUS_SIGNAL	0x84
+#घोषणा GDMA_RT305X_GCT			0x88
 
-/* for MT7621 gdma registers */
-#define GDMA_REG_PERF_START(x)		(0x230 + (x) * 0x8)
-#define GDMA_REG_PERF_END(x)		(0x234 + (x) * 0x8)
+/* क्रम MT7621 gdma रेजिस्टरs */
+#घोषणा GDMA_REG_PERF_START(x)		(0x230 + (x) * 0x8)
+#घोषणा GDMA_REG_PERF_END(x)		(0x234 + (x) * 0x8)
 
-enum gdma_dma_transfer_size {
+क्रमागत gdma_dma_transfer_size अणु
 	GDMA_TRANSFER_SIZE_4BYTE	= 0,
 	GDMA_TRANSFER_SIZE_8BYTE	= 1,
 	GDMA_TRANSFER_SIZE_16BYTE	= 2,
 	GDMA_TRANSFER_SIZE_32BYTE	= 3,
 	GDMA_TRANSFER_SIZE_64BYTE	= 4,
-};
+पूर्ण;
 
-struct gdma_dma_sg {
+काष्ठा gdma_dma_sg अणु
 	dma_addr_t src_addr;
 	dma_addr_t dst_addr;
 	u32 len;
-};
+पूर्ण;
 
-struct gdma_dma_desc {
-	struct virt_dma_desc vdesc;
+काष्ठा gdma_dma_desc अणु
+	काष्ठा virt_dma_desc vdesc;
 
-	enum dma_transfer_direction direction;
+	क्रमागत dma_transfer_direction direction;
 	bool cyclic;
 
 	u32 residue;
-	unsigned int num_sgs;
-	struct gdma_dma_sg sg[];
-};
+	अचिन्हित पूर्णांक num_sgs;
+	काष्ठा gdma_dma_sg sg[];
+पूर्ण;
 
-struct gdma_dmaengine_chan {
-	struct virt_dma_chan vchan;
-	unsigned int id;
-	unsigned int slave_id;
+काष्ठा gdma_dmaengine_chan अणु
+	काष्ठा virt_dma_chan vchan;
+	अचिन्हित पूर्णांक id;
+	अचिन्हित पूर्णांक slave_id;
 
-	dma_addr_t fifo_addr;
-	enum gdma_dma_transfer_size burst_size;
+	dma_addr_t fअगरo_addr;
+	क्रमागत gdma_dma_transfer_size burst_size;
 
-	struct gdma_dma_desc *desc;
-	unsigned int next_sg;
-};
+	काष्ठा gdma_dma_desc *desc;
+	अचिन्हित पूर्णांक next_sg;
+पूर्ण;
 
-struct gdma_dma_dev {
-	struct dma_device ddev;
-	struct device_dma_parameters dma_parms;
-	struct gdma_data *data;
-	void __iomem *base;
-	struct tasklet_struct task;
-	volatile unsigned long chan_issued;
+काष्ठा gdma_dma_dev अणु
+	काष्ठा dma_device ddev;
+	काष्ठा device_dma_parameters dma_parms;
+	काष्ठा gdma_data *data;
+	व्योम __iomem *base;
+	काष्ठा tasklet_काष्ठा task;
+	अस्थिर अचिन्हित दीर्घ chan_issued;
 	atomic_t cnt;
 
-	struct gdma_dmaengine_chan chan[];
-};
+	काष्ठा gdma_dmaengine_chan chan[];
+पूर्ण;
 
-struct gdma_data {
-	int chancnt;
-	u32 done_int_reg;
-	void (*init)(struct gdma_dma_dev *dma_dev);
-	int (*start_transfer)(struct gdma_dmaengine_chan *chan);
-};
+काष्ठा gdma_data अणु
+	पूर्णांक chancnt;
+	u32 करोne_पूर्णांक_reg;
+	व्योम (*init)(काष्ठा gdma_dma_dev *dma_dev);
+	पूर्णांक (*start_transfer)(काष्ठा gdma_dmaengine_chan *chan);
+पूर्ण;
 
-static struct gdma_dma_dev *gdma_dma_chan_get_dev(
-	struct gdma_dmaengine_chan *chan)
-{
-	return container_of(chan->vchan.chan.device, struct gdma_dma_dev,
+अटल काष्ठा gdma_dma_dev *gdma_dma_chan_get_dev(
+	काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	वापस container_of(chan->vchan.chan.device, काष्ठा gdma_dma_dev,
 		ddev);
-}
+पूर्ण
 
-static struct gdma_dmaengine_chan *to_gdma_dma_chan(struct dma_chan *c)
-{
-	return container_of(c, struct gdma_dmaengine_chan, vchan.chan);
-}
+अटल काष्ठा gdma_dmaengine_chan *to_gdma_dma_chan(काष्ठा dma_chan *c)
+अणु
+	वापस container_of(c, काष्ठा gdma_dmaengine_chan, vchan.chan);
+पूर्ण
 
-static struct gdma_dma_desc *to_gdma_dma_desc(struct virt_dma_desc *vdesc)
-{
-	return container_of(vdesc, struct gdma_dma_desc, vdesc);
-}
+अटल काष्ठा gdma_dma_desc *to_gdma_dma_desc(काष्ठा virt_dma_desc *vdesc)
+अणु
+	वापस container_of(vdesc, काष्ठा gdma_dma_desc, vdesc);
+पूर्ण
 
-static inline uint32_t gdma_dma_read(struct gdma_dma_dev *dma_dev,
-				     unsigned int reg)
-{
-	return readl(dma_dev->base + reg);
-}
+अटल अंतरभूत uपूर्णांक32_t gdma_dma_पढ़ो(काष्ठा gdma_dma_dev *dma_dev,
+				     अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(dma_dev->base + reg);
+पूर्ण
 
-static inline void gdma_dma_write(struct gdma_dma_dev *dma_dev,
-				  unsigned int reg, uint32_t val)
-{
-	writel(val, dma_dev->base + reg);
-}
+अटल अंतरभूत व्योम gdma_dma_ग_लिखो(काष्ठा gdma_dma_dev *dma_dev,
+				  अचिन्हित पूर्णांक reg, uपूर्णांक32_t val)
+अणु
+	ग_लिखोl(val, dma_dev->base + reg);
+पूर्ण
 
-static enum gdma_dma_transfer_size gdma_dma_maxburst(u32 maxburst)
-{
-	if (maxburst < 2)
-		return GDMA_TRANSFER_SIZE_4BYTE;
-	else if (maxburst < 4)
-		return GDMA_TRANSFER_SIZE_8BYTE;
-	else if (maxburst < 8)
-		return GDMA_TRANSFER_SIZE_16BYTE;
-	else if (maxburst < 16)
-		return GDMA_TRANSFER_SIZE_32BYTE;
-	else
-		return GDMA_TRANSFER_SIZE_64BYTE;
-}
+अटल क्रमागत gdma_dma_transfer_size gdma_dma_maxburst(u32 maxburst)
+अणु
+	अगर (maxburst < 2)
+		वापस GDMA_TRANSFER_SIZE_4BYTE;
+	अन्यथा अगर (maxburst < 4)
+		वापस GDMA_TRANSFER_SIZE_8BYTE;
+	अन्यथा अगर (maxburst < 8)
+		वापस GDMA_TRANSFER_SIZE_16BYTE;
+	अन्यथा अगर (maxburst < 16)
+		वापस GDMA_TRANSFER_SIZE_32BYTE;
+	अन्यथा
+		वापस GDMA_TRANSFER_SIZE_64BYTE;
+पूर्ण
 
-static int gdma_dma_config(struct dma_chan *c,
-			   struct dma_slave_config *config)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
+अटल पूर्णांक gdma_dma_config(काष्ठा dma_chan *c,
+			   काष्ठा dma_slave_config *config)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
 
-	if (config->device_fc) {
+	अगर (config->device_fc) अणु
 		dev_err(dma_dev->ddev.dev, "not support flow controller\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (config->direction) {
-	case DMA_MEM_TO_DEV:
-		if (config->dst_addr_width != DMA_SLAVE_BUSWIDTH_4_BYTES) {
+	चयन (config->direction) अणु
+	हाल DMA_MEM_TO_DEV:
+		अगर (config->dst_addr_width != DMA_SLAVE_BUSWIDTH_4_BYTES) अणु
 			dev_err(dma_dev->ddev.dev, "only support 4 byte buswidth\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		chan->slave_id = config->slave_id;
-		chan->fifo_addr = config->dst_addr;
+		chan->fअगरo_addr = config->dst_addr;
 		chan->burst_size = gdma_dma_maxburst(config->dst_maxburst);
-		break;
-	case DMA_DEV_TO_MEM:
-		if (config->src_addr_width != DMA_SLAVE_BUSWIDTH_4_BYTES) {
+		अवरोध;
+	हाल DMA_DEV_TO_MEM:
+		अगर (config->src_addr_width != DMA_SLAVE_BUSWIDTH_4_BYTES) अणु
 			dev_err(dma_dev->ddev.dev, "only support 4 byte buswidth\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		chan->slave_id = config->slave_id;
-		chan->fifo_addr = config->src_addr;
+		chan->fअगरo_addr = config->src_addr;
 		chan->burst_size = gdma_dma_maxburst(config->src_maxburst);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dma_dev->ddev.dev, "direction type %d error\n",
 			config->direction);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gdma_dma_terminate_all(struct dma_chan *c)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
-	unsigned long flags, timeout;
+अटल पूर्णांक gdma_dma_terminate_all(काष्ठा dma_chan *c)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
+	अचिन्हित दीर्घ flags, समयout;
 	LIST_HEAD(head);
-	int i = 0;
+	पूर्णांक i = 0;
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	chan->desc = NULL;
+	chan->desc = शून्य;
 	clear_bit(chan->id, &dma_dev->chan_issued);
 	vchan_get_all_descriptors(&chan->vchan, &head);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
 
-	vchan_dma_desc_free_list(&chan->vchan, &head);
+	vchan_dma_desc_मुक्त_list(&chan->vchan, &head);
 
-	/* wait dma transfer complete */
-	timeout = jiffies + msecs_to_jiffies(5000);
-	while (gdma_dma_read(dma_dev, GDMA_REG_CTRL0(chan->id)) &
-			GDMA_REG_CTRL0_ENABLE) {
-		if (time_after_eq(jiffies, timeout)) {
+	/* रुको dma transfer complete */
+	समयout = jअगरfies + msecs_to_jअगरfies(5000);
+	जबतक (gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL0(chan->id)) &
+			GDMA_REG_CTRL0_ENABLE) अणु
+		अगर (समय_after_eq(jअगरfies, समयout)) अणु
 			dev_err(dma_dev->ddev.dev, "chan %d wait timeout\n",
 				chan->id);
 			/* restore to init value */
-			gdma_dma_write(dma_dev, GDMA_REG_CTRL0(chan->id), 0);
-			break;
-		}
+			gdma_dma_ग_लिखो(dma_dev, GDMA_REG_CTRL0(chan->id), 0);
+			अवरोध;
+		पूर्ण
 		cpu_relax();
 		i++;
-	}
+	पूर्ण
 
-	if (i)
+	अगर (i)
 		dev_dbg(dma_dev->ddev.dev, "terminate chan %d loops %d\n",
 			chan->id, i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rt305x_dump_reg(struct gdma_dma_dev *dma_dev, int id)
-{
+अटल व्योम rt305x_dump_reg(काष्ठा gdma_dma_dev *dma_dev, पूर्णांक id)
+अणु
 	dev_dbg(dma_dev->ddev.dev, "chan %d, src %08x, dst %08x, ctr0 %08x, ctr1 %08x, intr %08x, signal %08x\n",
 		id,
-		gdma_dma_read(dma_dev, GDMA_REG_SRC_ADDR(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_DST_ADDR(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_CTRL0(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_CTRL1(id)),
-		gdma_dma_read(dma_dev, GDMA_RT305X_STATUS_INT),
-		gdma_dma_read(dma_dev, GDMA_RT305X_STATUS_SIGNAL));
-}
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_SRC_ADDR(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_DST_ADDR(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL0(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL1(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_RT305X_STATUS_INT),
+		gdma_dma_पढ़ो(dma_dev, GDMA_RT305X_STATUS_SIGNAL));
+पूर्ण
 
-static int rt305x_gdma_start_transfer(struct gdma_dmaengine_chan *chan)
-{
-	struct gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
+अटल पूर्णांक rt305x_gdma_start_transfer(काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	काष्ठा gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
 	dma_addr_t src_addr, dst_addr;
-	struct gdma_dma_sg *sg;
+	काष्ठा gdma_dma_sg *sg;
 	u32 ctrl0, ctrl1;
 
-	/* verify chan is already stopped */
-	ctrl0 = gdma_dma_read(dma_dev, GDMA_REG_CTRL0(chan->id));
-	if (unlikely(ctrl0 & GDMA_REG_CTRL0_ENABLE)) {
+	/* verअगरy chan is alपढ़ोy stopped */
+	ctrl0 = gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL0(chan->id));
+	अगर (unlikely(ctrl0 & GDMA_REG_CTRL0_ENABLE)) अणु
 		dev_err(dma_dev->ddev.dev, "chan %d is start(%08x).\n",
 			chan->id, ctrl0);
 		rt305x_dump_reg(dma_dev, chan->id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sg = &chan->desc->sg[chan->next_sg];
-	if (chan->desc->direction == DMA_MEM_TO_DEV) {
+	अगर (chan->desc->direction == DMA_MEM_TO_DEV) अणु
 		src_addr = sg->src_addr;
-		dst_addr = chan->fifo_addr;
+		dst_addr = chan->fअगरo_addr;
 		ctrl0 = GDMA_REG_CTRL0_DST_ADDR_FIXED |
 			(8 << GDMA_RT305X_CTRL0_SRC_REQ_SHIFT) |
 			(chan->slave_id << GDMA_RT305X_CTRL0_DST_REQ_SHIFT);
-	} else if (chan->desc->direction == DMA_DEV_TO_MEM) {
-		src_addr = chan->fifo_addr;
+	पूर्ण अन्यथा अगर (chan->desc->direction == DMA_DEV_TO_MEM) अणु
+		src_addr = chan->fअगरo_addr;
 		dst_addr = sg->dst_addr;
 		ctrl0 = GDMA_REG_CTRL0_SRC_ADDR_FIXED |
 			(chan->slave_id << GDMA_RT305X_CTRL0_SRC_REQ_SHIFT) |
 			(8 << GDMA_RT305X_CTRL0_DST_REQ_SHIFT);
-	} else if (chan->desc->direction == DMA_MEM_TO_MEM) {
+	पूर्ण अन्यथा अगर (chan->desc->direction == DMA_MEM_TO_MEM) अणु
 		/*
-		 * TODO: memcpy function have bugs. sometime it will copy
-		 * more 8 bytes data when using dmatest verify.
+		 * TODO: स_नकल function have bugs. someसमय it will copy
+		 * more 8 bytes data when using dmatest verअगरy.
 		 */
 		src_addr = sg->src_addr;
 		dst_addr = sg->dst_addr;
 		ctrl0 = GDMA_REG_CTRL0_SW_MODE |
 			(8 << GDMA_REG_CTRL1_SRC_REQ_SHIFT) |
 			(8 << GDMA_REG_CTRL1_DST_REQ_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dma_dev->ddev.dev, "direction type %d error\n",
 			chan->desc->direction);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ctrl0 |= (sg->len << GDMA_REG_CTRL0_TX_SHIFT) |
 		 (chan->burst_size << GDMA_REG_CTRL0_BURST_SHIFT) |
@@ -317,74 +318,74 @@ static int rt305x_gdma_start_transfer(struct gdma_dmaengine_chan *chan)
 	ctrl1 = chan->id << GDMA_REG_CTRL1_NEXT_SHIFT;
 
 	chan->next_sg++;
-	gdma_dma_write(dma_dev, GDMA_REG_SRC_ADDR(chan->id), src_addr);
-	gdma_dma_write(dma_dev, GDMA_REG_DST_ADDR(chan->id), dst_addr);
-	gdma_dma_write(dma_dev, GDMA_REG_CTRL1(chan->id), ctrl1);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_SRC_ADDR(chan->id), src_addr);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_DST_ADDR(chan->id), dst_addr);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_CTRL1(chan->id), ctrl1);
 
 	/* make sure next_sg is update */
 	wmb();
-	gdma_dma_write(dma_dev, GDMA_REG_CTRL0(chan->id), ctrl0);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_CTRL0(chan->id), ctrl0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rt3883_dump_reg(struct gdma_dma_dev *dma_dev, int id)
-{
+अटल व्योम rt3883_dump_reg(काष्ठा gdma_dma_dev *dma_dev, पूर्णांक id)
+अणु
 	dev_dbg(dma_dev->ddev.dev, "chan %d, src %08x, dst %08x, ctr0 %08x, ctr1 %08x, unmask %08x, done %08x, req %08x, ack %08x, fin %08x\n",
 		id,
-		gdma_dma_read(dma_dev, GDMA_REG_SRC_ADDR(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_DST_ADDR(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_CTRL0(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_CTRL1(id)),
-		gdma_dma_read(dma_dev, GDMA_REG_UNMASK_INT),
-		gdma_dma_read(dma_dev, GDMA_REG_DONE_INT),
-		gdma_dma_read(dma_dev, GDMA_REG_REQSTS),
-		gdma_dma_read(dma_dev, GDMA_REG_ACKSTS),
-		gdma_dma_read(dma_dev, GDMA_REG_FINSTS));
-}
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_SRC_ADDR(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_DST_ADDR(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL0(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL1(id)),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_UNMASK_INT),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_DONE_INT),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_REQSTS),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_ACKSTS),
+		gdma_dma_पढ़ो(dma_dev, GDMA_REG_FINSTS));
+पूर्ण
 
-static int rt3883_gdma_start_transfer(struct gdma_dmaengine_chan *chan)
-{
-	struct gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
+अटल पूर्णांक rt3883_gdma_start_transfer(काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	काष्ठा gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
 	dma_addr_t src_addr, dst_addr;
-	struct gdma_dma_sg *sg;
+	काष्ठा gdma_dma_sg *sg;
 	u32 ctrl0, ctrl1;
 
-	/* verify chan is already stopped */
-	ctrl0 = gdma_dma_read(dma_dev, GDMA_REG_CTRL0(chan->id));
-	if (unlikely(ctrl0 & GDMA_REG_CTRL0_ENABLE)) {
+	/* verअगरy chan is alपढ़ोy stopped */
+	ctrl0 = gdma_dma_पढ़ो(dma_dev, GDMA_REG_CTRL0(chan->id));
+	अगर (unlikely(ctrl0 & GDMA_REG_CTRL0_ENABLE)) अणु
 		dev_err(dma_dev->ddev.dev, "chan %d is start(%08x).\n",
 			chan->id, ctrl0);
 		rt3883_dump_reg(dma_dev, chan->id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sg = &chan->desc->sg[chan->next_sg];
-	if (chan->desc->direction == DMA_MEM_TO_DEV) {
+	अगर (chan->desc->direction == DMA_MEM_TO_DEV) अणु
 		src_addr = sg->src_addr;
-		dst_addr = chan->fifo_addr;
+		dst_addr = chan->fअगरo_addr;
 		ctrl0 = GDMA_REG_CTRL0_DST_ADDR_FIXED;
 		ctrl1 = (32 << GDMA_REG_CTRL1_SRC_REQ_SHIFT) |
 			(chan->slave_id << GDMA_REG_CTRL1_DST_REQ_SHIFT);
-	} else if (chan->desc->direction == DMA_DEV_TO_MEM) {
-		src_addr = chan->fifo_addr;
+	पूर्ण अन्यथा अगर (chan->desc->direction == DMA_DEV_TO_MEM) अणु
+		src_addr = chan->fअगरo_addr;
 		dst_addr = sg->dst_addr;
 		ctrl0 = GDMA_REG_CTRL0_SRC_ADDR_FIXED;
 		ctrl1 = (chan->slave_id << GDMA_REG_CTRL1_SRC_REQ_SHIFT) |
 			(32 << GDMA_REG_CTRL1_DST_REQ_SHIFT) |
 			GDMA_REG_CTRL1_COHERENT;
-	} else if (chan->desc->direction == DMA_MEM_TO_MEM) {
+	पूर्ण अन्यथा अगर (chan->desc->direction == DMA_MEM_TO_MEM) अणु
 		src_addr = sg->src_addr;
 		dst_addr = sg->dst_addr;
 		ctrl0 = GDMA_REG_CTRL0_SW_MODE;
 		ctrl1 = (32 << GDMA_REG_CTRL1_SRC_REQ_SHIFT) |
 			(32 << GDMA_REG_CTRL1_DST_REQ_SHIFT) |
 			GDMA_REG_CTRL1_COHERENT;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(dma_dev->ddev.dev, "direction type %d error\n",
 			chan->desc->direction);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ctrl0 |= (sg->len << GDMA_REG_CTRL0_TX_SHIFT) |
 		 (chan->burst_size << GDMA_REG_CTRL0_BURST_SHIFT) |
@@ -392,457 +393,457 @@ static int rt3883_gdma_start_transfer(struct gdma_dmaengine_chan *chan)
 	ctrl1 |= chan->id << GDMA_REG_CTRL1_NEXT_SHIFT;
 
 	chan->next_sg++;
-	gdma_dma_write(dma_dev, GDMA_REG_SRC_ADDR(chan->id), src_addr);
-	gdma_dma_write(dma_dev, GDMA_REG_DST_ADDR(chan->id), dst_addr);
-	gdma_dma_write(dma_dev, GDMA_REG_CTRL1(chan->id), ctrl1);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_SRC_ADDR(chan->id), src_addr);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_DST_ADDR(chan->id), dst_addr);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_CTRL1(chan->id), ctrl1);
 
 	/* make sure next_sg is update */
 	wmb();
-	gdma_dma_write(dma_dev, GDMA_REG_CTRL0(chan->id), ctrl0);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_CTRL0(chan->id), ctrl0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int gdma_start_transfer(struct gdma_dma_dev *dma_dev,
-				      struct gdma_dmaengine_chan *chan)
-{
-	return dma_dev->data->start_transfer(chan);
-}
+अटल अंतरभूत पूर्णांक gdma_start_transfer(काष्ठा gdma_dma_dev *dma_dev,
+				      काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	वापस dma_dev->data->start_transfer(chan);
+पूर्ण
 
-static int gdma_next_desc(struct gdma_dmaengine_chan *chan)
-{
-	struct virt_dma_desc *vdesc;
+अटल पूर्णांक gdma_next_desc(काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	काष्ठा virt_dma_desc *vdesc;
 
 	vdesc = vchan_next_desc(&chan->vchan);
-	if (!vdesc) {
-		chan->desc = NULL;
-		return 0;
-	}
+	अगर (!vdesc) अणु
+		chan->desc = शून्य;
+		वापस 0;
+	पूर्ण
 	chan->desc = to_gdma_dma_desc(vdesc);
 	chan->next_sg = 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static void gdma_dma_chan_irq(struct gdma_dma_dev *dma_dev,
-			      struct gdma_dmaengine_chan *chan)
-{
-	struct gdma_dma_desc *desc;
-	unsigned long flags;
-	int chan_issued;
+अटल व्योम gdma_dma_chan_irq(काष्ठा gdma_dma_dev *dma_dev,
+			      काष्ठा gdma_dmaengine_chan *chan)
+अणु
+	काष्ठा gdma_dma_desc *desc;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक chan_issued;
 
 	chan_issued = 0;
 	spin_lock_irqsave(&chan->vchan.lock, flags);
 	desc = chan->desc;
-	if (desc) {
-		if (desc->cyclic) {
+	अगर (desc) अणु
+		अगर (desc->cyclic) अणु
 			vchan_cyclic_callback(&desc->vdesc);
-			if (chan->next_sg == desc->num_sgs)
+			अगर (chan->next_sg == desc->num_sgs)
 				chan->next_sg = 0;
 			chan_issued = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			desc->residue -= desc->sg[chan->next_sg - 1].len;
-			if (chan->next_sg == desc->num_sgs) {
+			अगर (chan->next_sg == desc->num_sgs) अणु
 				list_del(&desc->vdesc.node);
 				vchan_cookie_complete(&desc->vdesc);
 				chan_issued = gdma_next_desc(chan);
-			} else {
+			पूर्ण अन्यथा अणु
 				chan_issued = 1;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_dbg(dma_dev->ddev.dev, "chan %d no desc to complete\n",
 			chan->id);
-	}
-	if (chan_issued)
+	पूर्ण
+	अगर (chan_issued)
 		set_bit(chan->id, &dma_dev->chan_issued);
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
-}
+पूर्ण
 
-static irqreturn_t gdma_dma_irq(int irq, void *devid)
-{
-	struct gdma_dma_dev *dma_dev = devid;
-	u32 done, done_reg;
-	unsigned int i;
+अटल irqवापस_t gdma_dma_irq(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा gdma_dma_dev *dma_dev = devid;
+	u32 करोne, करोne_reg;
+	अचिन्हित पूर्णांक i;
 
-	done_reg = dma_dev->data->done_int_reg;
-	done = gdma_dma_read(dma_dev, done_reg);
-	if (unlikely(!done))
-		return IRQ_NONE;
+	करोne_reg = dma_dev->data->करोne_पूर्णांक_reg;
+	करोne = gdma_dma_पढ़ो(dma_dev, करोne_reg);
+	अगर (unlikely(!करोne))
+		वापस IRQ_NONE;
 
-	/* clean done bits */
-	gdma_dma_write(dma_dev, done_reg, done);
+	/* clean करोne bits */
+	gdma_dma_ग_लिखो(dma_dev, करोne_reg, करोne);
 
 	i = 0;
-	while (done) {
-		if (done & 0x1) {
+	जबतक (करोne) अणु
+		अगर (करोne & 0x1) अणु
 			gdma_dma_chan_irq(dma_dev, &dma_dev->chan[i]);
 			atomic_dec(&dma_dev->cnt);
-		}
-		done >>= 1;
+		पूर्ण
+		करोne >>= 1;
 		i++;
-	}
+	पूर्ण
 
-	/* start only have work to do */
-	if (dma_dev->chan_issued)
+	/* start only have work to करो */
+	अगर (dma_dev->chan_issued)
 		tasklet_schedule(&dma_dev->task);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void gdma_dma_issue_pending(struct dma_chan *c)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
-	unsigned long flags;
+अटल व्योम gdma_dma_issue_pending(काष्ठा dma_chan *c)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_dev *dma_dev = gdma_dma_chan_get_dev(chan);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
-	if (vchan_issue_pending(&chan->vchan) && !chan->desc) {
-		if (gdma_next_desc(chan)) {
+	अगर (vchan_issue_pending(&chan->vchan) && !chan->desc) अणु
+		अगर (gdma_next_desc(chan)) अणु
 			set_bit(chan->id, &dma_dev->chan_issued);
 			tasklet_schedule(&dma_dev->task);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_dbg(dma_dev->ddev.dev, "chan %d no desc to issue\n",
 				chan->id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
-}
+पूर्ण
 
-static struct dma_async_tx_descriptor *gdma_dma_prep_slave_sg(
-		struct dma_chan *c, struct scatterlist *sgl,
-		unsigned int sg_len, enum dma_transfer_direction direction,
-		unsigned long flags, void *context)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_desc *desc;
-	struct scatterlist *sg;
-	unsigned int i;
+अटल काष्ठा dma_async_tx_descriptor *gdma_dma_prep_slave_sg(
+		काष्ठा dma_chan *c, काष्ठा scatterlist *sgl,
+		अचिन्हित पूर्णांक sg_len, क्रमागत dma_transfer_direction direction,
+		अचिन्हित दीर्घ flags, व्योम *context)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_desc *desc;
+	काष्ठा scatterlist *sg;
+	अचिन्हित पूर्णांक i;
 
-	desc = kzalloc(struct_size(desc, sg, sg_len), GFP_ATOMIC);
-	if (!desc) {
+	desc = kzalloc(काष्ठा_size(desc, sg, sg_len), GFP_ATOMIC);
+	अगर (!desc) अणु
 		dev_err(c->device->dev, "alloc sg decs error\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	desc->residue = 0;
 
-	for_each_sg(sgl, sg, sg_len, i) {
-		if (direction == DMA_MEM_TO_DEV) {
+	क्रम_each_sg(sgl, sg, sg_len, i) अणु
+		अगर (direction == DMA_MEM_TO_DEV) अणु
 			desc->sg[i].src_addr = sg_dma_address(sg);
-		} else if (direction == DMA_DEV_TO_MEM) {
+		पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_MEM) अणु
 			desc->sg[i].dst_addr = sg_dma_address(sg);
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(c->device->dev, "direction type %d error\n",
 				direction);
-			goto free_desc;
-		}
+			जाओ मुक्त_desc;
+		पूर्ण
 
-		if (unlikely(sg_dma_len(sg) > GDMA_REG_CTRL0_TX_MASK)) {
+		अगर (unlikely(sg_dma_len(sg) > GDMA_REG_CTRL0_TX_MASK)) अणु
 			dev_err(c->device->dev, "sg len too large %d\n",
 				sg_dma_len(sg));
-			goto free_desc;
-		}
+			जाओ मुक्त_desc;
+		पूर्ण
 		desc->sg[i].len = sg_dma_len(sg);
 		desc->residue += sg_dma_len(sg);
-	}
+	पूर्ण
 
 	desc->num_sgs = sg_len;
 	desc->direction = direction;
 	desc->cyclic = false;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
 
-free_desc:
-	kfree(desc);
-	return NULL;
-}
+मुक्त_desc:
+	kमुक्त(desc);
+	वापस शून्य;
+पूर्ण
 
-static struct dma_async_tx_descriptor *gdma_dma_prep_dma_memcpy(
-		struct dma_chan *c, dma_addr_t dest, dma_addr_t src,
-		size_t len, unsigned long flags)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_desc *desc;
-	unsigned int num_periods, i;
-	size_t xfer_count;
+अटल काष्ठा dma_async_tx_descriptor *gdma_dma_prep_dma_स_नकल(
+		काष्ठा dma_chan *c, dma_addr_t dest, dma_addr_t src,
+		माप_प्रकार len, अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_desc *desc;
+	अचिन्हित पूर्णांक num_periods, i;
+	माप_प्रकार xfer_count;
 
-	if (len <= 0)
-		return NULL;
+	अगर (len <= 0)
+		वापस शून्य;
 
 	chan->burst_size = gdma_dma_maxburst(len >> 2);
 
 	xfer_count = GDMA_REG_CTRL0_TX_MASK;
 	num_periods = DIV_ROUND_UP(len, xfer_count);
 
-	desc = kzalloc(struct_size(desc, sg, num_periods), GFP_ATOMIC);
-	if (!desc) {
+	desc = kzalloc(काष्ठा_size(desc, sg, num_periods), GFP_ATOMIC);
+	अगर (!desc) अणु
 		dev_err(c->device->dev, "alloc memcpy decs error\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	desc->residue = len;
 
-	for (i = 0; i < num_periods; i++) {
+	क्रम (i = 0; i < num_periods; i++) अणु
 		desc->sg[i].src_addr = src;
 		desc->sg[i].dst_addr = dest;
-		if (len > xfer_count)
+		अगर (len > xfer_count)
 			desc->sg[i].len = xfer_count;
-		else
+		अन्यथा
 			desc->sg[i].len = len;
 		src += desc->sg[i].len;
 		dest += desc->sg[i].len;
 		len -= desc->sg[i].len;
-	}
+	पूर्ण
 
 	desc->num_sgs = num_periods;
 	desc->direction = DMA_MEM_TO_MEM;
 	desc->cyclic = false;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
-}
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+पूर्ण
 
-static struct dma_async_tx_descriptor *gdma_dma_prep_dma_cyclic(
-	struct dma_chan *c, dma_addr_t buf_addr, size_t buf_len,
-	size_t period_len, enum dma_transfer_direction direction,
-	unsigned long flags)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct gdma_dma_desc *desc;
-	unsigned int num_periods, i;
+अटल काष्ठा dma_async_tx_descriptor *gdma_dma_prep_dma_cyclic(
+	काष्ठा dma_chan *c, dma_addr_t buf_addr, माप_प्रकार buf_len,
+	माप_प्रकार period_len, क्रमागत dma_transfer_direction direction,
+	अचिन्हित दीर्घ flags)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा gdma_dma_desc *desc;
+	अचिन्हित पूर्णांक num_periods, i;
 
-	if (buf_len % period_len)
-		return NULL;
+	अगर (buf_len % period_len)
+		वापस शून्य;
 
-	if (period_len > GDMA_REG_CTRL0_TX_MASK) {
+	अगर (period_len > GDMA_REG_CTRL0_TX_MASK) अणु
 		dev_err(c->device->dev, "cyclic len too large %d\n",
 			period_len);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	num_periods = buf_len / period_len;
-	desc = kzalloc(struct_size(desc, sg, num_periods), GFP_ATOMIC);
-	if (!desc) {
+	desc = kzalloc(काष्ठा_size(desc, sg, num_periods), GFP_ATOMIC);
+	अगर (!desc) अणु
 		dev_err(c->device->dev, "alloc cyclic decs error\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	desc->residue = buf_len;
 
-	for (i = 0; i < num_periods; i++) {
-		if (direction == DMA_MEM_TO_DEV) {
+	क्रम (i = 0; i < num_periods; i++) अणु
+		अगर (direction == DMA_MEM_TO_DEV) अणु
 			desc->sg[i].src_addr = buf_addr;
-		} else if (direction == DMA_DEV_TO_MEM) {
+		पूर्ण अन्यथा अगर (direction == DMA_DEV_TO_MEM) अणु
 			desc->sg[i].dst_addr = buf_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			dev_err(c->device->dev, "direction type %d error\n",
 				direction);
-			goto free_desc;
-		}
+			जाओ मुक्त_desc;
+		पूर्ण
 		desc->sg[i].len = period_len;
 		buf_addr += period_len;
-	}
+	पूर्ण
 
 	desc->num_sgs = num_periods;
 	desc->direction = direction;
 	desc->cyclic = true;
 
-	return vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
+	वापस vchan_tx_prep(&chan->vchan, &desc->vdesc, flags);
 
-free_desc:
-	kfree(desc);
-	return NULL;
-}
+मुक्त_desc:
+	kमुक्त(desc);
+	वापस शून्य;
+पूर्ण
 
-static enum dma_status gdma_dma_tx_status(struct dma_chan *c,
+अटल क्रमागत dma_status gdma_dma_tx_status(काष्ठा dma_chan *c,
 					  dma_cookie_t cookie,
-					  struct dma_tx_state *state)
-{
-	struct gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
-	struct virt_dma_desc *vdesc;
-	enum dma_status status;
-	unsigned long flags;
-	struct gdma_dma_desc *desc;
+					  काष्ठा dma_tx_state *state)
+अणु
+	काष्ठा gdma_dmaengine_chan *chan = to_gdma_dma_chan(c);
+	काष्ठा virt_dma_desc *vdesc;
+	क्रमागत dma_status status;
+	अचिन्हित दीर्घ flags;
+	काष्ठा gdma_dma_desc *desc;
 
 	status = dma_cookie_status(c, cookie, state);
-	if (status == DMA_COMPLETE || !state)
-		return status;
+	अगर (status == DMA_COMPLETE || !state)
+		वापस status;
 
 	spin_lock_irqsave(&chan->vchan.lock, flags);
 	desc = chan->desc;
-	if (desc && (cookie == desc->vdesc.tx.cookie)) {
+	अगर (desc && (cookie == desc->vdesc.tx.cookie)) अणु
 		/*
-		 * We never update edesc->residue in the cyclic case, so we
-		 * can tell the remaining room to the end of the circular
+		 * We never update edesc->residue in the cyclic हाल, so we
+		 * can tell the reमुख्यing room to the end of the circular
 		 * buffer.
 		 */
-		if (desc->cyclic)
+		अगर (desc->cyclic)
 			state->residue = desc->residue -
 				((chan->next_sg - 1) * desc->sg[0].len);
-		else
+		अन्यथा
 			state->residue = desc->residue;
-	} else {
+	पूर्ण अन्यथा अणु
 		vdesc = vchan_find_desc(&chan->vchan, cookie);
-		if (vdesc)
+		अगर (vdesc)
 			state->residue = to_gdma_dma_desc(vdesc)->residue;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&chan->vchan.lock, flags);
 
 	dev_dbg(c->device->dev, "tx residue %d bytes\n", state->residue);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void gdma_dma_free_chan_resources(struct dma_chan *c)
-{
-	vchan_free_chan_resources(to_virt_chan(c));
-}
+अटल व्योम gdma_dma_मुक्त_chan_resources(काष्ठा dma_chan *c)
+अणु
+	vchan_मुक्त_chan_resources(to_virt_chan(c));
+पूर्ण
 
-static void gdma_dma_desc_free(struct virt_dma_desc *vdesc)
-{
-	kfree(container_of(vdesc, struct gdma_dma_desc, vdesc));
-}
+अटल व्योम gdma_dma_desc_मुक्त(काष्ठा virt_dma_desc *vdesc)
+अणु
+	kमुक्त(container_of(vdesc, काष्ठा gdma_dma_desc, vdesc));
+पूर्ण
 
-static void gdma_dma_tasklet(struct tasklet_struct *t)
-{
-	struct gdma_dma_dev *dma_dev = from_tasklet(dma_dev, t, task);
-	struct gdma_dmaengine_chan *chan;
-	static unsigned int last_chan;
-	unsigned int i, chan_mask;
+अटल व्योम gdma_dma_tasklet(काष्ठा tasklet_काष्ठा *t)
+अणु
+	काष्ठा gdma_dma_dev *dma_dev = from_tasklet(dma_dev, t, task);
+	काष्ठा gdma_dmaengine_chan *chan;
+	अटल अचिन्हित पूर्णांक last_chan;
+	अचिन्हित पूर्णांक i, chan_mask;
 
 	/* record last chan to round robin all chans */
 	i = last_chan;
 	chan_mask = dma_dev->data->chancnt - 1;
-	do {
+	करो अणु
 		/*
-		 * on mt7621. when verify with dmatest with all
+		 * on mt7621. when verअगरy with dmatest with all
 		 * channel is enable. we need to limit only two
-		 * channel is working at the same time. otherwise the
+		 * channel is working at the same समय. otherwise the
 		 * data will have problem.
 		 */
-		if (atomic_read(&dma_dev->cnt) >= 2) {
+		अगर (atomic_पढ़ो(&dma_dev->cnt) >= 2) अणु
 			last_chan = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (test_and_clear_bit(i, &dma_dev->chan_issued)) {
+		अगर (test_and_clear_bit(i, &dma_dev->chan_issued)) अणु
 			chan = &dma_dev->chan[i];
-			if (chan->desc) {
+			अगर (chan->desc) अणु
 				atomic_inc(&dma_dev->cnt);
 				gdma_start_transfer(dma_dev, chan);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_dbg(dma_dev->ddev.dev,
 					"chan %d no desc to issue\n",
 					chan->id);
-			}
-			if (!dma_dev->chan_issued)
-				break;
-		}
+			पूर्ण
+			अगर (!dma_dev->chan_issued)
+				अवरोध;
+		पूर्ण
 
 		i = (i + 1) & chan_mask;
-	} while (i != last_chan);
-}
+	पूर्ण जबतक (i != last_chan);
+पूर्ण
 
-static void rt305x_gdma_init(struct gdma_dma_dev *dma_dev)
-{
+अटल व्योम rt305x_gdma_init(काष्ठा gdma_dma_dev *dma_dev)
+अणु
 	u32 gct;
 
 	/* all chans round robin */
-	gdma_dma_write(dma_dev, GDMA_RT305X_GCT, GDMA_REG_GCT_ARBIT_RR);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_RT305X_GCT, GDMA_REG_GCT_ARBIT_RR);
 
-	gct = gdma_dma_read(dma_dev, GDMA_RT305X_GCT);
+	gct = gdma_dma_पढ़ो(dma_dev, GDMA_RT305X_GCT);
 	dev_info(dma_dev->ddev.dev, "revision: %d, channels: %d\n",
 		 (gct >> GDMA_REG_GCT_VER_SHIFT) & GDMA_REG_GCT_VER_MASK,
 		 8 << ((gct >> GDMA_REG_GCT_CHAN_SHIFT) &
 			GDMA_REG_GCT_CHAN_MASK));
-}
+पूर्ण
 
-static void rt3883_gdma_init(struct gdma_dma_dev *dma_dev)
-{
+अटल व्योम rt3883_gdma_init(काष्ठा gdma_dma_dev *dma_dev)
+अणु
 	u32 gct;
 
 	/* all chans round robin */
-	gdma_dma_write(dma_dev, GDMA_REG_GCT, GDMA_REG_GCT_ARBIT_RR);
+	gdma_dma_ग_लिखो(dma_dev, GDMA_REG_GCT, GDMA_REG_GCT_ARBIT_RR);
 
-	gct = gdma_dma_read(dma_dev, GDMA_REG_GCT);
+	gct = gdma_dma_पढ़ो(dma_dev, GDMA_REG_GCT);
 	dev_info(dma_dev->ddev.dev, "revision: %d, channels: %d\n",
 		 (gct >> GDMA_REG_GCT_VER_SHIFT) & GDMA_REG_GCT_VER_MASK,
 		 8 << ((gct >> GDMA_REG_GCT_CHAN_SHIFT) &
 			GDMA_REG_GCT_CHAN_MASK));
-}
+पूर्ण
 
-static struct gdma_data rt305x_gdma_data = {
+अटल काष्ठा gdma_data rt305x_gdma_data = अणु
 	.chancnt = 8,
-	.done_int_reg = GDMA_RT305X_STATUS_INT,
+	.करोne_पूर्णांक_reg = GDMA_RT305X_STATUS_INT,
 	.init = rt305x_gdma_init,
 	.start_transfer = rt305x_gdma_start_transfer,
-};
+पूर्ण;
 
-static struct gdma_data rt3883_gdma_data = {
+अटल काष्ठा gdma_data rt3883_gdma_data = अणु
 	.chancnt = 16,
-	.done_int_reg = GDMA_REG_DONE_INT,
+	.करोne_पूर्णांक_reg = GDMA_REG_DONE_INT,
 	.init = rt3883_gdma_init,
 	.start_transfer = rt3883_gdma_start_transfer,
-};
+पूर्ण;
 
-static const struct of_device_id gdma_of_match_table[] = {
-	{ .compatible = "ralink,rt305x-gdma", .data = &rt305x_gdma_data },
-	{ .compatible = "ralink,rt3883-gdma", .data = &rt3883_gdma_data },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id gdma_of_match_table[] = अणु
+	अणु .compatible = "ralink,rt305x-gdma", .data = &rt305x_gdma_data पूर्ण,
+	अणु .compatible = "ralink,rt3883-gdma", .data = &rt3883_gdma_data पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gdma_of_match_table);
 
-static int gdma_dma_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *match;
-	struct gdma_dmaengine_chan *chan;
-	struct gdma_dma_dev *dma_dev;
-	struct dma_device *dd;
-	unsigned int i;
-	int ret;
-	int irq;
-	void __iomem *base;
-	struct gdma_data *data;
+अटल पूर्णांक gdma_dma_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा gdma_dmaengine_chan *chan;
+	काष्ठा gdma_dma_dev *dma_dev;
+	काष्ठा dma_device *dd;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
+	पूर्णांक irq;
+	व्योम __iomem *base;
+	काष्ठा gdma_data *data;
 
 	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	match = of_match_device(gdma_of_match_table, &pdev->dev);
-	if (!match)
-		return -EINVAL;
-	data = (struct gdma_data *)match->data;
+	अगर (!match)
+		वापस -EINVAL;
+	data = (काष्ठा gdma_data *)match->data;
 
 	dma_dev = devm_kzalloc(&pdev->dev,
-			       struct_size(dma_dev, chan, data->chancnt),
+			       काष्ठा_size(dma_dev, chan, data->chancnt),
 			       GFP_KERNEL);
-	if (!dma_dev)
-		return -EINVAL;
+	अगर (!dma_dev)
+		वापस -EINVAL;
 	dma_dev->data = data;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 	dma_dev->base = base;
 	tasklet_setup(&dma_dev->task, gdma_dma_tasklet);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -EINVAL;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -EINVAL;
 	ret = devm_request_irq(&pdev->dev, irq, gdma_dma_irq,
 			       0, dev_name(&pdev->dev), dma_dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to request irq\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = device_reset(&pdev->dev);
-	if (ret)
+	अगर (ret)
 		dev_err(&pdev->dev, "failed to reset: %d\n", ret);
 
 	dd = &dma_dev->ddev;
 	dma_cap_set(DMA_MEMCPY, dd->cap_mask);
 	dma_cap_set(DMA_SLAVE, dd->cap_mask);
 	dma_cap_set(DMA_CYCLIC, dd->cap_mask);
-	dd->device_free_chan_resources = gdma_dma_free_chan_resources;
-	dd->device_prep_dma_memcpy = gdma_dma_prep_dma_memcpy;
+	dd->device_मुक्त_chan_resources = gdma_dma_मुक्त_chan_resources;
+	dd->device_prep_dma_स_नकल = gdma_dma_prep_dma_स_नकल;
 	dd->device_prep_slave_sg = gdma_dma_prep_slave_sg;
 	dd->device_prep_dma_cyclic = gdma_dma_prep_dma_cyclic;
 	dd->device_config = gdma_dma_config;
@@ -860,58 +861,58 @@ static int gdma_dma_probe(struct platform_device *pdev)
 	dma_set_max_seg_size(dd->dev, GDMA_REG_CTRL0_TX_MASK);
 	INIT_LIST_HEAD(&dd->channels);
 
-	for (i = 0; i < data->chancnt; i++) {
+	क्रम (i = 0; i < data->chancnt; i++) अणु
 		chan = &dma_dev->chan[i];
 		chan->id = i;
-		chan->vchan.desc_free = gdma_dma_desc_free;
+		chan->vchan.desc_मुक्त = gdma_dma_desc_मुक्त;
 		vchan_init(&chan->vchan, dd);
-	}
+	पूर्ण
 
 	/* init hardware */
 	data->init(dma_dev);
 
-	ret = dma_async_device_register(dd);
-	if (ret) {
+	ret = dma_async_device_रेजिस्टर(dd);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register dma device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = of_dma_controller_register(pdev->dev.of_node,
+	ret = of_dma_controller_रेजिस्टर(pdev->dev.of_node,
 					 of_dma_xlate_by_chan_id, dma_dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register of dma controller\n");
-		goto err_unregister;
-	}
+		जाओ err_unरेजिस्टर;
+	पूर्ण
 
-	platform_set_drvdata(pdev, dma_dev);
+	platक्रमm_set_drvdata(pdev, dma_dev);
 
-	return 0;
+	वापस 0;
 
-err_unregister:
-	dma_async_device_unregister(dd);
-	return ret;
-}
+err_unरेजिस्टर:
+	dma_async_device_unरेजिस्टर(dd);
+	वापस ret;
+पूर्ण
 
-static int gdma_dma_remove(struct platform_device *pdev)
-{
-	struct gdma_dma_dev *dma_dev = platform_get_drvdata(pdev);
+अटल पूर्णांक gdma_dma_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gdma_dma_dev *dma_dev = platक्रमm_get_drvdata(pdev);
 
-	tasklet_kill(&dma_dev->task);
-	of_dma_controller_free(pdev->dev.of_node);
-	dma_async_device_unregister(&dma_dev->ddev);
+	tasklet_समाप्त(&dma_dev->task);
+	of_dma_controller_मुक्त(pdev->dev.of_node);
+	dma_async_device_unरेजिस्टर(&dma_dev->ddev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver gdma_dma_driver = {
+अटल काष्ठा platक्रमm_driver gdma_dma_driver = अणु
 	.probe = gdma_dma_probe,
-	.remove = gdma_dma_remove,
-	.driver = {
+	.हटाओ = gdma_dma_हटाओ,
+	.driver = अणु
 		.name = "gdma-rt2880",
 		.of_match_table = gdma_of_match_table,
-	},
-};
-module_platform_driver(gdma_dma_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(gdma_dma_driver);
 
 MODULE_DESCRIPTION("Ralink/MTK DMA driver");
 MODULE_LICENSE("GPL v2");

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * <linux/patchkey.h> -- definition of _PATCHKEY macro
  *
  * Copyright (C) 2005 Stuart Brady
  *
  * This exists because awe_voice.h defined its own _PATCHKEY and it wasn't
- * clear whether removing this would break anything in userspace.
+ * clear whether removing this would अवरोध anything in userspace.
  *
  * Do not include this file directly.  Please use <sys/soundcard.h> instead.
  * For kernel code, use <linux/soundcard.h>
  */
 
-#ifndef _LINUX_PATCHKEY_H_INDIRECT
-#error "patchkey.h included directly"
-#endif
+#अगर_अघोषित _LINUX_PATCHKEY_H_INसूचीECT
+#त्रुटि "patchkey.h included directly"
+#पूर्ण_अगर
 
-#ifndef _UAPI_LINUX_PATCHKEY_H
-#define _UAPI_LINUX_PATCHKEY_H
+#अगर_अघोषित _UAPI_LINUX_PATCHKEY_H
+#घोषणा _UAPI_LINUX_PATCHKEY_H
 
 /* Endian macros. */
-#ifndef __KERNEL__
+#अगर_अघोषित __KERNEL__
 #  include <endian.h>
-#endif
+#पूर्ण_अगर
 
-#if !defined(__KERNEL__)
-#if defined(__BYTE_ORDER)
-#  if __BYTE_ORDER == __BIG_ENDIAN
+#अगर !defined(__KERNEL__)
+#अगर defined(__BYTE_ORDER)
+#  अगर __BYTE_ORDER == __BIG_ENDIAN
 #    define _PATCHKEY(id) (0xfd00|id)
-#  elif __BYTE_ORDER == __LITTLE_ENDIAN
+#  elअगर __BYTE_ORDER == __LITTLE_ENDIAN
 #    define _PATCHKEY(id) ((id<<8)|0x00fd)
-#  else
+#  अन्यथा
 #    error "could not determine byte order"
-#  endif
-#endif
-#endif
+#  endअगर
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-#endif /* _UAPI_LINUX_PATCHKEY_H */
+#पूर्ण_अगर /* _UAPI_LINUX_PATCHKEY_H */

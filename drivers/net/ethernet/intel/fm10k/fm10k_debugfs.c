@@ -1,239 +1,240 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2013 - 2018 Intel Corporation. */
 
-#include "fm10k.h"
+#समावेश "fm10k.h"
 
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
 
-static struct dentry *dbg_root;
+अटल काष्ठा dentry *dbg_root;
 
 /* Descriptor Seq Functions */
 
-static void *fm10k_dbg_desc_seq_start(struct seq_file *s, loff_t *pos)
-{
-	struct fm10k_ring *ring = s->private;
+अटल व्योम *fm10k_dbg_desc_seq_start(काष्ठा seq_file *s, loff_t *pos)
+अणु
+	काष्ठा fm10k_ring *ring = s->निजी;
 
-	return (*pos < ring->count) ? pos : NULL;
-}
+	वापस (*pos < ring->count) ? pos : शून्य;
+पूर्ण
 
-static void *fm10k_dbg_desc_seq_next(struct seq_file *s,
-				     void __always_unused *v,
+अटल व्योम *fm10k_dbg_desc_seq_next(काष्ठा seq_file *s,
+				     व्योम __always_unused *v,
 				     loff_t *pos)
-{
-	struct fm10k_ring *ring = s->private;
+अणु
+	काष्ठा fm10k_ring *ring = s->निजी;
 
-	return (++(*pos) < ring->count) ? pos : NULL;
-}
+	वापस (++(*pos) < ring->count) ? pos : शून्य;
+पूर्ण
 
-static void fm10k_dbg_desc_seq_stop(struct seq_file __always_unused *s,
-				    void __always_unused *v)
-{
+अटल व्योम fm10k_dbg_desc_seq_stop(काष्ठा seq_file __always_unused *s,
+				    व्योम __always_unused *v)
+अणु
 	/* Do nothing. */
-}
+पूर्ण
 
-static void fm10k_dbg_desc_break(struct seq_file *s, int i)
-{
-	while (i--)
-		seq_putc(s, '-');
+अटल व्योम fm10k_dbg_desc_अवरोध(काष्ठा seq_file *s, पूर्णांक i)
+अणु
+	जबतक (i--)
+		seq_अ_दो(s, '-');
 
-	seq_putc(s, '\n');
-}
+	seq_अ_दो(s, '\n');
+पूर्ण
 
-static int fm10k_dbg_tx_desc_seq_show(struct seq_file *s, void *v)
-{
-	struct fm10k_ring *ring = s->private;
-	int i = *(loff_t *)v;
-	static const char tx_desc_hdr[] =
+अटल पूर्णांक fm10k_dbg_tx_desc_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा fm10k_ring *ring = s->निजी;
+	पूर्णांक i = *(loff_t *)v;
+	अटल स्थिर अक्षर tx_desc_hdr[] =
 		"DES BUFFER_ADDRESS     LENGTH VLAN   MSS    HDRLEN FLAGS\n";
 
 	/* Generate header */
-	if (!i) {
-		seq_printf(s, tx_desc_hdr);
-		fm10k_dbg_desc_break(s, sizeof(tx_desc_hdr) - 1);
-	}
+	अगर (!i) अणु
+		seq_म_लिखो(s, tx_desc_hdr);
+		fm10k_dbg_desc_अवरोध(s, माप(tx_desc_hdr) - 1);
+	पूर्ण
 
 	/* Validate descriptor allocation */
-	if (!ring->desc) {
-		seq_printf(s, "%03X Descriptor ring not allocated.\n", i);
-	} else {
-		struct fm10k_tx_desc *txd = FM10K_TX_DESC(ring, i);
+	अगर (!ring->desc) अणु
+		seq_म_लिखो(s, "%03X Descriptor ring not allocated.\n", i);
+	पूर्ण अन्यथा अणु
+		काष्ठा fm10k_tx_desc *txd = FM10K_TX_DESC(ring, i);
 
-		seq_printf(s, "%03X %#018llx %#06x %#06x %#06x %#06x %#04x\n",
+		seq_म_लिखो(s, "%03X %#018llx %#06x %#06x %#06x %#06x %#04x\n",
 			   i, txd->buffer_addr, txd->buflen, txd->vlan,
 			   txd->mss, txd->hdrlen, txd->flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fm10k_dbg_rx_desc_seq_show(struct seq_file *s, void *v)
-{
-	struct fm10k_ring *ring = s->private;
-	int i = *(loff_t *)v;
-	static const char rx_desc_hdr[] =
+अटल पूर्णांक fm10k_dbg_rx_desc_seq_show(काष्ठा seq_file *s, व्योम *v)
+अणु
+	काष्ठा fm10k_ring *ring = s->निजी;
+	पूर्णांक i = *(loff_t *)v;
+	अटल स्थिर अक्षर rx_desc_hdr[] =
 	"DES DATA       RSS        STATERR    LENGTH VLAN   DGLORT SGLORT TIMESTAMP\n";
 
 	/* Generate header */
-	if (!i) {
-		seq_printf(s, rx_desc_hdr);
-		fm10k_dbg_desc_break(s, sizeof(rx_desc_hdr) - 1);
-	}
+	अगर (!i) अणु
+		seq_म_लिखो(s, rx_desc_hdr);
+		fm10k_dbg_desc_अवरोध(s, माप(rx_desc_hdr) - 1);
+	पूर्ण
 
 	/* Validate descriptor allocation */
-	if (!ring->desc) {
-		seq_printf(s, "%03X Descriptor ring not allocated.\n", i);
-	} else {
-		union fm10k_rx_desc *rxd = FM10K_RX_DESC(ring, i);
+	अगर (!ring->desc) अणु
+		seq_म_लिखो(s, "%03X Descriptor ring not allocated.\n", i);
+	पूर्ण अन्यथा अणु
+		जोड़ fm10k_rx_desc *rxd = FM10K_RX_DESC(ring, i);
 
-		seq_printf(s,
+		seq_म_लिखो(s,
 			   "%03X %#010x %#010x %#010x %#06x %#06x %#06x %#06x %#018llx\n",
 			   i, rxd->d.data, rxd->d.rss, rxd->d.staterr,
 			   rxd->w.length, rxd->w.vlan, rxd->w.dglort,
-			   rxd->w.sglort, rxd->q.timestamp);
-	}
+			   rxd->w.sglort, rxd->q.बारtamp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations fm10k_dbg_tx_desc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations fm10k_dbg_tx_desc_seq_ops = अणु
 	.start = fm10k_dbg_desc_seq_start,
 	.next  = fm10k_dbg_desc_seq_next,
 	.stop  = fm10k_dbg_desc_seq_stop,
 	.show  = fm10k_dbg_tx_desc_seq_show,
-};
+पूर्ण;
 
-static const struct seq_operations fm10k_dbg_rx_desc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations fm10k_dbg_rx_desc_seq_ops = अणु
 	.start = fm10k_dbg_desc_seq_start,
 	.next  = fm10k_dbg_desc_seq_next,
 	.stop  = fm10k_dbg_desc_seq_stop,
 	.show  = fm10k_dbg_rx_desc_seq_show,
-};
+पूर्ण;
 
-static int fm10k_dbg_desc_open(struct inode *inode, struct file *filep)
-{
-	struct fm10k_ring *ring = inode->i_private;
-	struct fm10k_q_vector *q_vector = ring->q_vector;
-	const struct seq_operations *desc_seq_ops;
-	int err;
+अटल पूर्णांक fm10k_dbg_desc_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
+अणु
+	काष्ठा fm10k_ring *ring = inode->i_निजी;
+	काष्ठा fm10k_q_vector *q_vector = ring->q_vector;
+	स्थिर काष्ठा seq_operations *desc_seq_ops;
+	पूर्णांक err;
 
-	if (ring < q_vector->rx.ring)
+	अगर (ring < q_vector->rx.ring)
 		desc_seq_ops = &fm10k_dbg_tx_desc_seq_ops;
-	else
+	अन्यथा
 		desc_seq_ops = &fm10k_dbg_rx_desc_seq_ops;
 
-	err = seq_open(filep, desc_seq_ops);
-	if (err)
-		return err;
+	err = seq_खोलो(filep, desc_seq_ops);
+	अगर (err)
+		वापस err;
 
-	((struct seq_file *)filep->private_data)->private = ring;
+	((काष्ठा seq_file *)filep->निजी_data)->निजी = ring;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations fm10k_dbg_desc_fops = {
+अटल स्थिर काष्ठा file_operations fm10k_dbg_desc_fops = अणु
 	.owner   = THIS_MODULE,
-	.open    = fm10k_dbg_desc_open,
-	.read    = seq_read,
+	.खोलो    = fm10k_dbg_desc_खोलो,
+	.पढ़ो    = seq_पढ़ो,
 	.llseek  = seq_lseek,
 	.release = seq_release,
-};
+पूर्ण;
 
 /**
- * fm10k_dbg_q_vector_init - setup debugfs for the q_vectors
- * @q_vector: q_vector to allocate directories for
+ * fm10k_dbg_q_vector_init - setup debugfs क्रम the q_vectors
+ * @q_vector: q_vector to allocate directories क्रम
  *
- * A folder is created for each q_vector found. In each q_vector
- * folder, a debugfs file is created for each tx and rx ring
+ * A folder is created क्रम each q_vector found. In each q_vector
+ * folder, a debugfs file is created क्रम each tx and rx ring
  * allocated to the q_vector.
  **/
-void fm10k_dbg_q_vector_init(struct fm10k_q_vector *q_vector)
-{
-	struct fm10k_intfc *interface = q_vector->interface;
-	char name[16];
-	int i;
+व्योम fm10k_dbg_q_vector_init(काष्ठा fm10k_q_vector *q_vector)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = q_vector->पूर्णांकerface;
+	अक्षर name[16];
+	पूर्णांक i;
 
-	if (!interface->dbg_intfc)
-		return;
+	अगर (!पूर्णांकerface->dbg_पूर्णांकfc)
+		वापस;
 
-	/* Generate a folder for each q_vector */
-	snprintf(name, sizeof(name), "q_vector.%03d", q_vector->v_idx);
+	/* Generate a folder क्रम each q_vector */
+	snम_लिखो(name, माप(name), "q_vector.%03d", q_vector->v_idx);
 
-	q_vector->dbg_q_vector = debugfs_create_dir(name, interface->dbg_intfc);
+	q_vector->dbg_q_vector = debugfs_create_dir(name, पूर्णांकerface->dbg_पूर्णांकfc);
 
-	/* Generate a file for each rx ring in the q_vector */
-	for (i = 0; i < q_vector->tx.count; i++) {
-		struct fm10k_ring *ring = &q_vector->tx.ring[i];
+	/* Generate a file क्रम each rx ring in the q_vector */
+	क्रम (i = 0; i < q_vector->tx.count; i++) अणु
+		काष्ठा fm10k_ring *ring = &q_vector->tx.ring[i];
 
-		snprintf(name, sizeof(name), "tx_ring.%03d", ring->queue_index);
-
-		debugfs_create_file(name, 0600,
-				    q_vector->dbg_q_vector, ring,
-				    &fm10k_dbg_desc_fops);
-	}
-
-	/* Generate a file for each rx ring in the q_vector */
-	for (i = 0; i < q_vector->rx.count; i++) {
-		struct fm10k_ring *ring = &q_vector->rx.ring[i];
-
-		snprintf(name, sizeof(name), "rx_ring.%03d", ring->queue_index);
+		snम_लिखो(name, माप(name), "tx_ring.%03d", ring->queue_index);
 
 		debugfs_create_file(name, 0600,
 				    q_vector->dbg_q_vector, ring,
 				    &fm10k_dbg_desc_fops);
-	}
-}
+	पूर्ण
+
+	/* Generate a file क्रम each rx ring in the q_vector */
+	क्रम (i = 0; i < q_vector->rx.count; i++) अणु
+		काष्ठा fm10k_ring *ring = &q_vector->rx.ring[i];
+
+		snम_लिखो(name, माप(name), "rx_ring.%03d", ring->queue_index);
+
+		debugfs_create_file(name, 0600,
+				    q_vector->dbg_q_vector, ring,
+				    &fm10k_dbg_desc_fops);
+	पूर्ण
+पूर्ण
 
 /**
- * fm10k_dbg_q_vector_exit - setup debugfs for the q_vectors
- * @q_vector: q_vector to allocate directories for
+ * fm10k_dbg_q_vector_निकास - setup debugfs क्रम the q_vectors
+ * @q_vector: q_vector to allocate directories क्रम
  **/
-void fm10k_dbg_q_vector_exit(struct fm10k_q_vector *q_vector)
-{
-	struct fm10k_intfc *interface = q_vector->interface;
+व्योम fm10k_dbg_q_vector_निकास(काष्ठा fm10k_q_vector *q_vector)
+अणु
+	काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface = q_vector->पूर्णांकerface;
 
-	if (interface->dbg_intfc)
-		debugfs_remove_recursive(q_vector->dbg_q_vector);
-	q_vector->dbg_q_vector = NULL;
-}
+	अगर (पूर्णांकerface->dbg_पूर्णांकfc)
+		debugfs_हटाओ_recursive(q_vector->dbg_q_vector);
+	q_vector->dbg_q_vector = शून्य;
+पूर्ण
 
 /**
- * fm10k_dbg_intfc_init - setup the debugfs directory for the intferface
- * @interface: the interface that is starting up
+ * fm10k_dbg_पूर्णांकfc_init - setup the debugfs directory क्रम the पूर्णांकferface
+ * @पूर्णांकerface: the पूर्णांकerface that is starting up
  **/
 
-void fm10k_dbg_intfc_init(struct fm10k_intfc *interface)
-{
-	const char *name = pci_name(interface->pdev);
+व्योम fm10k_dbg_पूर्णांकfc_init(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
+अणु
+	स्थिर अक्षर *name = pci_name(पूर्णांकerface->pdev);
 
-	if (dbg_root)
-		interface->dbg_intfc = debugfs_create_dir(name, dbg_root);
-}
+	अगर (dbg_root)
+		पूर्णांकerface->dbg_पूर्णांकfc = debugfs_create_dir(name, dbg_root);
+पूर्ण
 
 /**
- * fm10k_dbg_intfc_exit - clean out the interface's debugfs entries
- * @interface: the interface that is stopping
+ * fm10k_dbg_पूर्णांकfc_निकास - clean out the पूर्णांकerface's debugfs entries
+ * @पूर्णांकerface: the पूर्णांकerface that is stopping
  **/
-void fm10k_dbg_intfc_exit(struct fm10k_intfc *interface)
-{
-	if (dbg_root)
-		debugfs_remove_recursive(interface->dbg_intfc);
-	interface->dbg_intfc = NULL;
-}
+व्योम fm10k_dbg_पूर्णांकfc_निकास(काष्ठा fm10k_पूर्णांकfc *पूर्णांकerface)
+अणु
+	अगर (dbg_root)
+		debugfs_हटाओ_recursive(पूर्णांकerface->dbg_पूर्णांकfc);
+	पूर्णांकerface->dbg_पूर्णांकfc = शून्य;
+पूर्ण
 
 /**
- * fm10k_dbg_init - start up debugfs for the driver
+ * fm10k_dbg_init - start up debugfs क्रम the driver
  **/
-void fm10k_dbg_init(void)
-{
-	dbg_root = debugfs_create_dir(fm10k_driver_name, NULL);
-}
+व्योम fm10k_dbg_init(व्योम)
+अणु
+	dbg_root = debugfs_create_dir(fm10k_driver_name, शून्य);
+पूर्ण
 
 /**
- * fm10k_dbg_exit - clean out the driver's debugfs entries
+ * fm10k_dbg_निकास - clean out the driver's debugfs entries
  **/
-void fm10k_dbg_exit(void)
-{
-	debugfs_remove_recursive(dbg_root);
-	dbg_root = NULL;
-}
+व्योम fm10k_dbg_निकास(व्योम)
+अणु
+	debugfs_हटाओ_recursive(dbg_root);
+	dbg_root = शून्य;
+पूर्ण

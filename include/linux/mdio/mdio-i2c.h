@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * MDIO I2C bridge
  *
  * Copyright (C) 2015 Russell King
  */
-#ifndef MDIO_I2C_H
-#define MDIO_I2C_H
+#अगर_अघोषित MDIO_I2C_H
+#घोषणा MDIO_I2C_H
 
-struct device;
-struct i2c_adapter;
-struct mii_bus;
+काष्ठा device;
+काष्ठा i2c_adapter;
+काष्ठा mii_bus;
 
-struct mii_bus *mdio_i2c_alloc(struct device *parent, struct i2c_adapter *i2c);
+काष्ठा mii_bus *mdio_i2c_alloc(काष्ठा device *parent, काष्ठा i2c_adapter *i2c);
 
-#endif
+#पूर्ण_अगर

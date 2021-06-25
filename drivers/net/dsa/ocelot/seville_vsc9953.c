@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
 /* Distributed Switch Architecture VSC9953 driver
- * Copyright (C) 2020, Maxim Kochetkov <fido_max@inbox.ru>
+ * Copyright (C) 2020, Maxim Kochetkov <fiकरो_max@inbox.ru>
  */
-#include <linux/types.h>
-#include <soc/mscc/ocelot_vcap.h>
-#include <soc/mscc/ocelot_sys.h>
-#include <soc/mscc/ocelot.h>
-#include <linux/of_platform.h>
-#include <linux/pcs-lynx.h>
-#include <linux/dsa/ocelot.h>
-#include <linux/iopoll.h>
-#include "felix.h"
+#समावेश <linux/types.h>
+#समावेश <soc/mscc/ocelot_vcap.h>
+#समावेश <soc/mscc/ocelot_sys.h>
+#समावेश <soc/mscc/ocelot.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pcs-lynx.h>
+#समावेश <linux/dsa/ocelot.h>
+#समावेश <linux/iopoll.h>
+#समावेश "felix.h"
 
-#define MSCC_MIIM_CMD_OPR_WRITE			BIT(1)
-#define MSCC_MIIM_CMD_OPR_READ			BIT(2)
-#define MSCC_MIIM_CMD_WRDATA_SHIFT		4
-#define MSCC_MIIM_CMD_REGAD_SHIFT		20
-#define MSCC_MIIM_CMD_PHYAD_SHIFT		25
-#define MSCC_MIIM_CMD_VLD			BIT(31)
+#घोषणा MSCC_MIIM_CMD_OPR_WRITE			BIT(1)
+#घोषणा MSCC_MIIM_CMD_OPR_READ			BIT(2)
+#घोषणा MSCC_MIIM_CMD_WRDATA_SHIFT		4
+#घोषणा MSCC_MIIM_CMD_REGAD_SHIFT		20
+#घोषणा MSCC_MIIM_CMD_PHYAD_SHIFT		25
+#घोषणा MSCC_MIIM_CMD_VLD			BIT(31)
 
-static const u32 vsc9953_ana_regmap[] = {
+अटल स्थिर u32 vsc9953_ana_regmap[] = अणु
 	REG(ANA_ADVLEARN,			0x00b500),
 	REG(ANA_VLANMASK,			0x00b504),
 	REG_RESERVED(ANA_PORT_B_DOMAIN),
@@ -119,9 +120,9 @@ static const u32 vsc9953_ana_regmap[] = {
 	REG(ANA_POL_FLOWC,			0x00c280),
 	REG(ANA_POL_HYST,			0x00c2ec),
 	REG_RESERVED(ANA_POL_MISC_CFG),
-};
+पूर्ण;
 
-static const u32 vsc9953_qs_regmap[] = {
+अटल स्थिर u32 vsc9953_qs_regmap[] = अणु
 	REG(QS_XTR_GRP_CFG,			0x000000),
 	REG(QS_XTR_RD,				0x000008),
 	REG(QS_XTR_FRM_PRUNING,			0x000010),
@@ -134,9 +135,9 @@ static const u32 vsc9953_qs_regmap[] = {
 	REG(QS_INJ_STATUS,			0x00003c),
 	REG(QS_INJ_ERR,				0x000040),
 	REG_RESERVED(QS_INH_DBG),
-};
+पूर्ण;
 
-static const u32 vsc9953_vcap_regmap[] = {
+अटल स्थिर u32 vsc9953_vcap_regmap[] = अणु
 	/* VCAP_CORE_CFG */
 	REG(VCAP_CORE_UPDATE_CTRL,		0x000000),
 	REG(VCAP_CORE_MV_CFG,			0x000004),
@@ -157,9 +158,9 @@ static const u32 vsc9953_vcap_regmap[] = {
 	REG(VCAP_CONST_CNT_WIDTH,		0x0003b4),
 	REG_RESERVED(VCAP_CONST_CORE_CNT),
 	REG_RESERVED(VCAP_CONST_IF_CNT),
-};
+पूर्ण;
 
-static const u32 vsc9953_qsys_regmap[] = {
+अटल स्थिर u32 vsc9953_qsys_regmap[] = अणु
 	REG(QSYS_PORT_MODE,			0x003600),
 	REG(QSYS_SWITCH_PORT_MODE,		0x003630),
 	REG(QSYS_STAT_CNT_CFG,			0x00365c),
@@ -184,7 +185,7 @@ static const u32 vsc9953_qsys_regmap[] = {
 	REG_RESERVED(QSYS_TFRM_TIMER_CFG_6),
 	REG_RESERVED(QSYS_TFRM_TIMER_CFG_7),
 	REG_RESERVED(QSYS_TFRM_TIMER_CFG_8),
-	REG(QSYS_RED_PROFILE,			0x003724),
+	REG(QSYS_RED_PROखाता,			0x003724),
 	REG(QSYS_RES_QOS_MODE,			0x003764),
 	REG(QSYS_RES_CFG,			0x004000),
 	REG(QSYS_RES_STAT,			0x004004),
@@ -231,9 +232,9 @@ static const u32 vsc9953_qsys_regmap[] = {
 	REG_RESERVED(QSYS_PARAM_STATUS_REG_9),
 	REG_RESERVED(QSYS_GCL_STATUS_REG_1),
 	REG_RESERVED(QSYS_GCL_STATUS_REG_2),
-};
+पूर्ण;
 
-static const u32 vsc9953_rew_regmap[] = {
+अटल स्थिर u32 vsc9953_rew_regmap[] = अणु
 	REG(REW_PORT_VLAN_CFG,			0x000000),
 	REG(REW_TAG_CFG,			0x000004),
 	REG(REW_PORT_CFG,			0x000008),
@@ -247,9 +248,9 @@ static const u32 vsc9953_rew_regmap[] = {
 	REG_RESERVED(REW_STAT_CFG),
 	REG_RESERVED(REW_REW_STICKY),
 	REG_RESERVED(REW_PPT),
-};
+पूर्ण;
 
-static const u32 vsc9953_sys_regmap[] = {
+अटल स्थिर u32 vsc9953_sys_regmap[] = अणु
 	REG(SYS_COUNT_RX_OCTETS,		0x000000),
 	REG(SYS_COUNT_RX_MULTICAST,		0x000008),
 	REG(SYS_COUNT_RX_SHORTS,		0x000010),
@@ -304,16 +305,16 @@ static const u32 vsc9953_sys_regmap[] = {
 	REG_RESERVED(SYS_CM_DATA_RD),
 	REG_RESERVED(SYS_CM_OP),
 	REG_RESERVED(SYS_CM_DATA),
-};
+पूर्ण;
 
-static const u32 vsc9953_gcb_regmap[] = {
+अटल स्थिर u32 vsc9953_gcb_regmap[] = अणु
 	REG(GCB_SOFT_RST,			0x000008),
 	REG(GCB_MIIM_MII_STATUS,		0x0000ac),
 	REG(GCB_MIIM_MII_CMD,			0x0000b4),
 	REG(GCB_MIIM_MII_DATA,			0x0000b8),
-};
+पूर्ण;
 
-static const u32 vsc9953_dev_gmii_regmap[] = {
+अटल स्थिर u32 vsc9953_dev_gmii_regmap[] = अणु
 	REG(DEV_CLOCK_CFG,			0x0),
 	REG(DEV_PORT_MISC,			0x4),
 	REG_RESERVED(DEV_EVENTS),
@@ -353,9 +354,9 @@ static const u32 vsc9953_dev_gmii_regmap[] = {
 	REG_RESERVED(PCS1G_TSTPAT_STATUS),
 	REG_RESERVED(DEV_PCS_FX100_CFG),
 	REG_RESERVED(DEV_PCS_FX100_STATUS),
-};
+पूर्ण;
 
-static const u32 *vsc9953_regmap[TARGET_MAX] = {
+अटल स्थिर u32 *vsc9953_regmap[TARGET_MAX] = अणु
 	[ANA]		= vsc9953_ana_regmap,
 	[QS]		= vsc9953_qs_regmap,
 	[QSYS]		= vsc9953_qsys_regmap,
@@ -366,116 +367,116 @@ static const u32 *vsc9953_regmap[TARGET_MAX] = {
 	[S2]		= vsc9953_vcap_regmap,
 	[GCB]		= vsc9953_gcb_regmap,
 	[DEV_GMII]	= vsc9953_dev_gmii_regmap,
-};
+पूर्ण;
 
 /* Addresses are relative to the device's base address */
-static const struct resource vsc9953_target_io_res[TARGET_MAX] = {
-	[ANA] = {
+अटल स्थिर काष्ठा resource vsc9953_target_io_res[TARGET_MAX] = अणु
+	[ANA] = अणु
 		.start	= 0x0280000,
 		.end	= 0x028ffff,
 		.name	= "ana",
-	},
-	[QS] = {
+	पूर्ण,
+	[QS] = अणु
 		.start	= 0x0080000,
 		.end	= 0x00800ff,
 		.name	= "qs",
-	},
-	[QSYS] = {
+	पूर्ण,
+	[QSYS] = अणु
 		.start	= 0x0200000,
 		.end	= 0x021ffff,
 		.name	= "qsys",
-	},
-	[REW] = {
+	पूर्ण,
+	[REW] = अणु
 		.start	= 0x0030000,
 		.end	= 0x003ffff,
 		.name	= "rew",
-	},
-	[SYS] = {
+	पूर्ण,
+	[SYS] = अणु
 		.start	= 0x0010000,
 		.end	= 0x001ffff,
 		.name	= "sys",
-	},
-	[S0] = {
+	पूर्ण,
+	[S0] = अणु
 		.start	= 0x0040000,
 		.end	= 0x00403ff,
 		.name	= "s0",
-	},
-	[S1] = {
+	पूर्ण,
+	[S1] = अणु
 		.start	= 0x0050000,
 		.end	= 0x00503ff,
 		.name	= "s1",
-	},
-	[S2] = {
+	पूर्ण,
+	[S2] = अणु
 		.start	= 0x0060000,
 		.end	= 0x00603ff,
 		.name	= "s2",
-	},
-	[PTP] = {
+	पूर्ण,
+	[PTP] = अणु
 		.start	= 0x0090000,
 		.end	= 0x00900cb,
 		.name	= "ptp",
-	},
-	[GCB] = {
+	पूर्ण,
+	[GCB] = अणु
 		.start	= 0x0070000,
 		.end	= 0x00701ff,
 		.name	= "devcpu_gcb",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct resource vsc9953_port_io_res[] = {
-	{
+अटल स्थिर काष्ठा resource vsc9953_port_io_res[] = अणु
+	अणु
 		.start	= 0x0100000,
 		.end	= 0x010ffff,
 		.name	= "port0",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0110000,
 		.end	= 0x011ffff,
 		.name	= "port1",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0120000,
 		.end	= 0x012ffff,
 		.name	= "port2",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0130000,
 		.end	= 0x013ffff,
 		.name	= "port3",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0140000,
 		.end	= 0x014ffff,
 		.name	= "port4",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0150000,
 		.end	= 0x015ffff,
 		.name	= "port5",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0160000,
 		.end	= 0x016ffff,
 		.name	= "port6",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0170000,
 		.end	= 0x017ffff,
 		.name	= "port7",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0180000,
 		.end	= 0x018ffff,
 		.name	= "port8",
-	},
-	{
+	पूर्ण,
+	अणु
 		.start	= 0x0190000,
 		.end	= 0x019ffff,
 		.name	= "port9",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct reg_field vsc9953_regfields[REGFIELD_MAX] = {
+अटल स्थिर काष्ठा reg_field vsc9953_regfields[REGFIELD_MAX] = अणु
 	[ANA_ADVLEARN_VLAN_CHK] = REG_FIELD(ANA_ADVLEARN, 10, 10),
 	[ANA_ADVLEARN_LEARN_MIRROR] = REG_FIELD(ANA_ADVLEARN, 0, 9),
 	[ANA_ANEVENTS_AUTOAGE] = REG_FIELD(ANA_ANEVENTS, 24, 24),
@@ -510,7 +511,7 @@ static const struct reg_field vsc9953_regfields[REGFIELD_MAX] = {
 	[GCB_SOFT_RST_SWC_RST] = REG_FIELD(GCB_SOFT_RST, 0, 0),
 	[GCB_MIIM_MII_STATUS_PENDING] = REG_FIELD(GCB_MIIM_MII_STATUS, 2, 2),
 	[GCB_MIIM_MII_STATUS_BUSY] = REG_FIELD(GCB_MIIM_MII_STATUS, 3, 3),
-	/* Replicated per number of ports (11), register size 4 per port */
+	/* Replicated per number of ports (11), रेजिस्टर size 4 per port */
 	[QSYS_SWITCH_PORT_MODE_PORT_ENA] = REG_FIELD_ID(QSYS_SWITCH_PORT_MODE, 13, 13, 11, 4),
 	[QSYS_SWITCH_PORT_MODE_YEL_RSRVD] = REG_FIELD_ID(QSYS_SWITCH_PORT_MODE, 10, 10, 11, 4),
 	[QSYS_SWITCH_PORT_MODE_INGRESS_DROP_MODE] = REG_FIELD_ID(QSYS_SWITCH_PORT_MODE, 9, 9, 11, 4),
@@ -522,486 +523,486 @@ static const struct reg_field vsc9953_regfields[REGFIELD_MAX] = {
 	[SYS_PAUSE_CFG_PAUSE_START] = REG_FIELD_ID(SYS_PAUSE_CFG, 11, 20, 11, 4),
 	[SYS_PAUSE_CFG_PAUSE_STOP] = REG_FIELD_ID(SYS_PAUSE_CFG, 1, 10, 11, 4),
 	[SYS_PAUSE_CFG_PAUSE_ENA] = REG_FIELD_ID(SYS_PAUSE_CFG, 0, 1, 11, 4),
-};
+पूर्ण;
 
-static const struct ocelot_stat_layout vsc9953_stats_layout[] = {
-	{ .offset = 0x00,	.name = "rx_octets", },
-	{ .offset = 0x01,	.name = "rx_unicast", },
-	{ .offset = 0x02,	.name = "rx_multicast", },
-	{ .offset = 0x03,	.name = "rx_broadcast", },
-	{ .offset = 0x04,	.name = "rx_shorts", },
-	{ .offset = 0x05,	.name = "rx_fragments", },
-	{ .offset = 0x06,	.name = "rx_jabbers", },
-	{ .offset = 0x07,	.name = "rx_crc_align_errs", },
-	{ .offset = 0x08,	.name = "rx_sym_errs", },
-	{ .offset = 0x09,	.name = "rx_frames_below_65_octets", },
-	{ .offset = 0x0A,	.name = "rx_frames_65_to_127_octets", },
-	{ .offset = 0x0B,	.name = "rx_frames_128_to_255_octets", },
-	{ .offset = 0x0C,	.name = "rx_frames_256_to_511_octets", },
-	{ .offset = 0x0D,	.name = "rx_frames_512_to_1023_octets", },
-	{ .offset = 0x0E,	.name = "rx_frames_1024_to_1526_octets", },
-	{ .offset = 0x0F,	.name = "rx_frames_over_1526_octets", },
-	{ .offset = 0x10,	.name = "rx_pause", },
-	{ .offset = 0x11,	.name = "rx_control", },
-	{ .offset = 0x12,	.name = "rx_longs", },
-	{ .offset = 0x13,	.name = "rx_classified_drops", },
-	{ .offset = 0x14,	.name = "rx_red_prio_0", },
-	{ .offset = 0x15,	.name = "rx_red_prio_1", },
-	{ .offset = 0x16,	.name = "rx_red_prio_2", },
-	{ .offset = 0x17,	.name = "rx_red_prio_3", },
-	{ .offset = 0x18,	.name = "rx_red_prio_4", },
-	{ .offset = 0x19,	.name = "rx_red_prio_5", },
-	{ .offset = 0x1A,	.name = "rx_red_prio_6", },
-	{ .offset = 0x1B,	.name = "rx_red_prio_7", },
-	{ .offset = 0x1C,	.name = "rx_yellow_prio_0", },
-	{ .offset = 0x1D,	.name = "rx_yellow_prio_1", },
-	{ .offset = 0x1E,	.name = "rx_yellow_prio_2", },
-	{ .offset = 0x1F,	.name = "rx_yellow_prio_3", },
-	{ .offset = 0x20,	.name = "rx_yellow_prio_4", },
-	{ .offset = 0x21,	.name = "rx_yellow_prio_5", },
-	{ .offset = 0x22,	.name = "rx_yellow_prio_6", },
-	{ .offset = 0x23,	.name = "rx_yellow_prio_7", },
-	{ .offset = 0x24,	.name = "rx_green_prio_0", },
-	{ .offset = 0x25,	.name = "rx_green_prio_1", },
-	{ .offset = 0x26,	.name = "rx_green_prio_2", },
-	{ .offset = 0x27,	.name = "rx_green_prio_3", },
-	{ .offset = 0x28,	.name = "rx_green_prio_4", },
-	{ .offset = 0x29,	.name = "rx_green_prio_5", },
-	{ .offset = 0x2A,	.name = "rx_green_prio_6", },
-	{ .offset = 0x2B,	.name = "rx_green_prio_7", },
-	{ .offset = 0x40,	.name = "tx_octets", },
-	{ .offset = 0x41,	.name = "tx_unicast", },
-	{ .offset = 0x42,	.name = "tx_multicast", },
-	{ .offset = 0x43,	.name = "tx_broadcast", },
-	{ .offset = 0x44,	.name = "tx_collision", },
-	{ .offset = 0x45,	.name = "tx_drops", },
-	{ .offset = 0x46,	.name = "tx_pause", },
-	{ .offset = 0x47,	.name = "tx_frames_below_65_octets", },
-	{ .offset = 0x48,	.name = "tx_frames_65_to_127_octets", },
-	{ .offset = 0x49,	.name = "tx_frames_128_255_octets", },
-	{ .offset = 0x4A,	.name = "tx_frames_256_511_octets", },
-	{ .offset = 0x4B,	.name = "tx_frames_512_1023_octets", },
-	{ .offset = 0x4C,	.name = "tx_frames_1024_1526_octets", },
-	{ .offset = 0x4D,	.name = "tx_frames_over_1526_octets", },
-	{ .offset = 0x4E,	.name = "tx_yellow_prio_0", },
-	{ .offset = 0x4F,	.name = "tx_yellow_prio_1", },
-	{ .offset = 0x50,	.name = "tx_yellow_prio_2", },
-	{ .offset = 0x51,	.name = "tx_yellow_prio_3", },
-	{ .offset = 0x52,	.name = "tx_yellow_prio_4", },
-	{ .offset = 0x53,	.name = "tx_yellow_prio_5", },
-	{ .offset = 0x54,	.name = "tx_yellow_prio_6", },
-	{ .offset = 0x55,	.name = "tx_yellow_prio_7", },
-	{ .offset = 0x56,	.name = "tx_green_prio_0", },
-	{ .offset = 0x57,	.name = "tx_green_prio_1", },
-	{ .offset = 0x58,	.name = "tx_green_prio_2", },
-	{ .offset = 0x59,	.name = "tx_green_prio_3", },
-	{ .offset = 0x5A,	.name = "tx_green_prio_4", },
-	{ .offset = 0x5B,	.name = "tx_green_prio_5", },
-	{ .offset = 0x5C,	.name = "tx_green_prio_6", },
-	{ .offset = 0x5D,	.name = "tx_green_prio_7", },
-	{ .offset = 0x5E,	.name = "tx_aged", },
-	{ .offset = 0x80,	.name = "drop_local", },
-	{ .offset = 0x81,	.name = "drop_tail", },
-	{ .offset = 0x82,	.name = "drop_yellow_prio_0", },
-	{ .offset = 0x83,	.name = "drop_yellow_prio_1", },
-	{ .offset = 0x84,	.name = "drop_yellow_prio_2", },
-	{ .offset = 0x85,	.name = "drop_yellow_prio_3", },
-	{ .offset = 0x86,	.name = "drop_yellow_prio_4", },
-	{ .offset = 0x87,	.name = "drop_yellow_prio_5", },
-	{ .offset = 0x88,	.name = "drop_yellow_prio_6", },
-	{ .offset = 0x89,	.name = "drop_yellow_prio_7", },
-	{ .offset = 0x8A,	.name = "drop_green_prio_0", },
-	{ .offset = 0x8B,	.name = "drop_green_prio_1", },
-	{ .offset = 0x8C,	.name = "drop_green_prio_2", },
-	{ .offset = 0x8D,	.name = "drop_green_prio_3", },
-	{ .offset = 0x8E,	.name = "drop_green_prio_4", },
-	{ .offset = 0x8F,	.name = "drop_green_prio_5", },
-	{ .offset = 0x90,	.name = "drop_green_prio_6", },
-	{ .offset = 0x91,	.name = "drop_green_prio_7", },
-};
+अटल स्थिर काष्ठा ocelot_stat_layout vsc9953_stats_layout[] = अणु
+	अणु .offset = 0x00,	.name = "rx_octets", पूर्ण,
+	अणु .offset = 0x01,	.name = "rx_unicast", पूर्ण,
+	अणु .offset = 0x02,	.name = "rx_multicast", पूर्ण,
+	अणु .offset = 0x03,	.name = "rx_broadcast", पूर्ण,
+	अणु .offset = 0x04,	.name = "rx_shorts", पूर्ण,
+	अणु .offset = 0x05,	.name = "rx_fragments", पूर्ण,
+	अणु .offset = 0x06,	.name = "rx_jabbers", पूर्ण,
+	अणु .offset = 0x07,	.name = "rx_crc_align_errs", पूर्ण,
+	अणु .offset = 0x08,	.name = "rx_sym_errs", पूर्ण,
+	अणु .offset = 0x09,	.name = "rx_frames_below_65_octets", पूर्ण,
+	अणु .offset = 0x0A,	.name = "rx_frames_65_to_127_octets", पूर्ण,
+	अणु .offset = 0x0B,	.name = "rx_frames_128_to_255_octets", पूर्ण,
+	अणु .offset = 0x0C,	.name = "rx_frames_256_to_511_octets", पूर्ण,
+	अणु .offset = 0x0D,	.name = "rx_frames_512_to_1023_octets", पूर्ण,
+	अणु .offset = 0x0E,	.name = "rx_frames_1024_to_1526_octets", पूर्ण,
+	अणु .offset = 0x0F,	.name = "rx_frames_over_1526_octets", पूर्ण,
+	अणु .offset = 0x10,	.name = "rx_pause", पूर्ण,
+	अणु .offset = 0x11,	.name = "rx_control", पूर्ण,
+	अणु .offset = 0x12,	.name = "rx_longs", पूर्ण,
+	अणु .offset = 0x13,	.name = "rx_classified_drops", पूर्ण,
+	अणु .offset = 0x14,	.name = "rx_red_prio_0", पूर्ण,
+	अणु .offset = 0x15,	.name = "rx_red_prio_1", पूर्ण,
+	अणु .offset = 0x16,	.name = "rx_red_prio_2", पूर्ण,
+	अणु .offset = 0x17,	.name = "rx_red_prio_3", पूर्ण,
+	अणु .offset = 0x18,	.name = "rx_red_prio_4", पूर्ण,
+	अणु .offset = 0x19,	.name = "rx_red_prio_5", पूर्ण,
+	अणु .offset = 0x1A,	.name = "rx_red_prio_6", पूर्ण,
+	अणु .offset = 0x1B,	.name = "rx_red_prio_7", पूर्ण,
+	अणु .offset = 0x1C,	.name = "rx_yellow_prio_0", पूर्ण,
+	अणु .offset = 0x1D,	.name = "rx_yellow_prio_1", पूर्ण,
+	अणु .offset = 0x1E,	.name = "rx_yellow_prio_2", पूर्ण,
+	अणु .offset = 0x1F,	.name = "rx_yellow_prio_3", पूर्ण,
+	अणु .offset = 0x20,	.name = "rx_yellow_prio_4", पूर्ण,
+	अणु .offset = 0x21,	.name = "rx_yellow_prio_5", पूर्ण,
+	अणु .offset = 0x22,	.name = "rx_yellow_prio_6", पूर्ण,
+	अणु .offset = 0x23,	.name = "rx_yellow_prio_7", पूर्ण,
+	अणु .offset = 0x24,	.name = "rx_green_prio_0", पूर्ण,
+	अणु .offset = 0x25,	.name = "rx_green_prio_1", पूर्ण,
+	अणु .offset = 0x26,	.name = "rx_green_prio_2", पूर्ण,
+	अणु .offset = 0x27,	.name = "rx_green_prio_3", पूर्ण,
+	अणु .offset = 0x28,	.name = "rx_green_prio_4", पूर्ण,
+	अणु .offset = 0x29,	.name = "rx_green_prio_5", पूर्ण,
+	अणु .offset = 0x2A,	.name = "rx_green_prio_6", पूर्ण,
+	अणु .offset = 0x2B,	.name = "rx_green_prio_7", पूर्ण,
+	अणु .offset = 0x40,	.name = "tx_octets", पूर्ण,
+	अणु .offset = 0x41,	.name = "tx_unicast", पूर्ण,
+	अणु .offset = 0x42,	.name = "tx_multicast", पूर्ण,
+	अणु .offset = 0x43,	.name = "tx_broadcast", पूर्ण,
+	अणु .offset = 0x44,	.name = "tx_collision", पूर्ण,
+	अणु .offset = 0x45,	.name = "tx_drops", पूर्ण,
+	अणु .offset = 0x46,	.name = "tx_pause", पूर्ण,
+	अणु .offset = 0x47,	.name = "tx_frames_below_65_octets", पूर्ण,
+	अणु .offset = 0x48,	.name = "tx_frames_65_to_127_octets", पूर्ण,
+	अणु .offset = 0x49,	.name = "tx_frames_128_255_octets", पूर्ण,
+	अणु .offset = 0x4A,	.name = "tx_frames_256_511_octets", पूर्ण,
+	अणु .offset = 0x4B,	.name = "tx_frames_512_1023_octets", पूर्ण,
+	अणु .offset = 0x4C,	.name = "tx_frames_1024_1526_octets", पूर्ण,
+	अणु .offset = 0x4D,	.name = "tx_frames_over_1526_octets", पूर्ण,
+	अणु .offset = 0x4E,	.name = "tx_yellow_prio_0", पूर्ण,
+	अणु .offset = 0x4F,	.name = "tx_yellow_prio_1", पूर्ण,
+	अणु .offset = 0x50,	.name = "tx_yellow_prio_2", पूर्ण,
+	अणु .offset = 0x51,	.name = "tx_yellow_prio_3", पूर्ण,
+	अणु .offset = 0x52,	.name = "tx_yellow_prio_4", पूर्ण,
+	अणु .offset = 0x53,	.name = "tx_yellow_prio_5", पूर्ण,
+	अणु .offset = 0x54,	.name = "tx_yellow_prio_6", पूर्ण,
+	अणु .offset = 0x55,	.name = "tx_yellow_prio_7", पूर्ण,
+	अणु .offset = 0x56,	.name = "tx_green_prio_0", पूर्ण,
+	अणु .offset = 0x57,	.name = "tx_green_prio_1", पूर्ण,
+	अणु .offset = 0x58,	.name = "tx_green_prio_2", पूर्ण,
+	अणु .offset = 0x59,	.name = "tx_green_prio_3", पूर्ण,
+	अणु .offset = 0x5A,	.name = "tx_green_prio_4", पूर्ण,
+	अणु .offset = 0x5B,	.name = "tx_green_prio_5", पूर्ण,
+	अणु .offset = 0x5C,	.name = "tx_green_prio_6", पूर्ण,
+	अणु .offset = 0x5D,	.name = "tx_green_prio_7", पूर्ण,
+	अणु .offset = 0x5E,	.name = "tx_aged", पूर्ण,
+	अणु .offset = 0x80,	.name = "drop_local", पूर्ण,
+	अणु .offset = 0x81,	.name = "drop_tail", पूर्ण,
+	अणु .offset = 0x82,	.name = "drop_yellow_prio_0", पूर्ण,
+	अणु .offset = 0x83,	.name = "drop_yellow_prio_1", पूर्ण,
+	अणु .offset = 0x84,	.name = "drop_yellow_prio_2", पूर्ण,
+	अणु .offset = 0x85,	.name = "drop_yellow_prio_3", पूर्ण,
+	अणु .offset = 0x86,	.name = "drop_yellow_prio_4", पूर्ण,
+	अणु .offset = 0x87,	.name = "drop_yellow_prio_5", पूर्ण,
+	अणु .offset = 0x88,	.name = "drop_yellow_prio_6", पूर्ण,
+	अणु .offset = 0x89,	.name = "drop_yellow_prio_7", पूर्ण,
+	अणु .offset = 0x8A,	.name = "drop_green_prio_0", पूर्ण,
+	अणु .offset = 0x8B,	.name = "drop_green_prio_1", पूर्ण,
+	अणु .offset = 0x8C,	.name = "drop_green_prio_2", पूर्ण,
+	अणु .offset = 0x8D,	.name = "drop_green_prio_3", पूर्ण,
+	अणु .offset = 0x8E,	.name = "drop_green_prio_4", पूर्ण,
+	अणु .offset = 0x8F,	.name = "drop_green_prio_5", पूर्ण,
+	अणु .offset = 0x90,	.name = "drop_green_prio_6", पूर्ण,
+	अणु .offset = 0x91,	.name = "drop_green_prio_7", पूर्ण,
+पूर्ण;
 
-static const struct vcap_field vsc9953_vcap_es0_keys[] = {
-	[VCAP_ES0_EGR_PORT]			= {  0,  4},
-	[VCAP_ES0_IGR_PORT]			= {  4,  4},
-	[VCAP_ES0_RSV]				= {  8,  2},
-	[VCAP_ES0_L2_MC]			= { 10,  1},
-	[VCAP_ES0_L2_BC]			= { 11,  1},
-	[VCAP_ES0_VID]				= { 12, 12},
-	[VCAP_ES0_DP]				= { 24,  1},
-	[VCAP_ES0_PCP]				= { 25,  3},
-};
+अटल स्थिर काष्ठा vcap_field vsc9953_vcap_es0_keys[] = अणु
+	[VCAP_ES0_EGR_PORT]			= अणु  0,  4पूर्ण,
+	[VCAP_ES0_IGR_PORT]			= अणु  4,  4पूर्ण,
+	[VCAP_ES0_RSV]				= अणु  8,  2पूर्ण,
+	[VCAP_ES0_L2_MC]			= अणु 10,  1पूर्ण,
+	[VCAP_ES0_L2_BC]			= अणु 11,  1पूर्ण,
+	[VCAP_ES0_VID]				= अणु 12, 12पूर्ण,
+	[VCAP_ES0_DP]				= अणु 24,  1पूर्ण,
+	[VCAP_ES0_PCP]				= अणु 25,  3पूर्ण,
+पूर्ण;
 
-static const struct vcap_field vsc9953_vcap_es0_actions[] = {
-	[VCAP_ES0_ACT_PUSH_OUTER_TAG]		= {  0,  2},
-	[VCAP_ES0_ACT_PUSH_INNER_TAG]		= {  2,  1},
-	[VCAP_ES0_ACT_TAG_A_TPID_SEL]		= {  3,  2},
-	[VCAP_ES0_ACT_TAG_A_VID_SEL]		= {  5,  1},
-	[VCAP_ES0_ACT_TAG_A_PCP_SEL]		= {  6,  2},
-	[VCAP_ES0_ACT_TAG_A_DEI_SEL]		= {  8,  2},
-	[VCAP_ES0_ACT_TAG_B_TPID_SEL]		= { 10,  2},
-	[VCAP_ES0_ACT_TAG_B_VID_SEL]		= { 12,  1},
-	[VCAP_ES0_ACT_TAG_B_PCP_SEL]		= { 13,  2},
-	[VCAP_ES0_ACT_TAG_B_DEI_SEL]		= { 15,  2},
-	[VCAP_ES0_ACT_VID_A_VAL]		= { 17, 12},
-	[VCAP_ES0_ACT_PCP_A_VAL]		= { 29,  3},
-	[VCAP_ES0_ACT_DEI_A_VAL]		= { 32,  1},
-	[VCAP_ES0_ACT_VID_B_VAL]		= { 33, 12},
-	[VCAP_ES0_ACT_PCP_B_VAL]		= { 45,  3},
-	[VCAP_ES0_ACT_DEI_B_VAL]		= { 48,  1},
-	[VCAP_ES0_ACT_RSV]			= { 49, 24},
-	[VCAP_ES0_ACT_HIT_STICKY]		= { 73,  1},
-};
+अटल स्थिर काष्ठा vcap_field vsc9953_vcap_es0_actions[] = अणु
+	[VCAP_ES0_ACT_PUSH_OUTER_TAG]		= अणु  0,  2पूर्ण,
+	[VCAP_ES0_ACT_PUSH_INNER_TAG]		= अणु  2,  1पूर्ण,
+	[VCAP_ES0_ACT_TAG_A_TPID_SEL]		= अणु  3,  2पूर्ण,
+	[VCAP_ES0_ACT_TAG_A_VID_SEL]		= अणु  5,  1पूर्ण,
+	[VCAP_ES0_ACT_TAG_A_PCP_SEL]		= अणु  6,  2पूर्ण,
+	[VCAP_ES0_ACT_TAG_A_DEI_SEL]		= अणु  8,  2पूर्ण,
+	[VCAP_ES0_ACT_TAG_B_TPID_SEL]		= अणु 10,  2पूर्ण,
+	[VCAP_ES0_ACT_TAG_B_VID_SEL]		= अणु 12,  1पूर्ण,
+	[VCAP_ES0_ACT_TAG_B_PCP_SEL]		= अणु 13,  2पूर्ण,
+	[VCAP_ES0_ACT_TAG_B_DEI_SEL]		= अणु 15,  2पूर्ण,
+	[VCAP_ES0_ACT_VID_A_VAL]		= अणु 17, 12पूर्ण,
+	[VCAP_ES0_ACT_PCP_A_VAL]		= अणु 29,  3पूर्ण,
+	[VCAP_ES0_ACT_DEI_A_VAL]		= अणु 32,  1पूर्ण,
+	[VCAP_ES0_ACT_VID_B_VAL]		= अणु 33, 12पूर्ण,
+	[VCAP_ES0_ACT_PCP_B_VAL]		= अणु 45,  3पूर्ण,
+	[VCAP_ES0_ACT_DEI_B_VAL]		= अणु 48,  1पूर्ण,
+	[VCAP_ES0_ACT_RSV]			= अणु 49, 24पूर्ण,
+	[VCAP_ES0_ACT_HIT_STICKY]		= अणु 73,  1पूर्ण,
+पूर्ण;
 
-static const struct vcap_field vsc9953_vcap_is1_keys[] = {
-	[VCAP_IS1_HK_TYPE]			= {  0,   1},
-	[VCAP_IS1_HK_LOOKUP]			= {  1,   2},
-	[VCAP_IS1_HK_IGR_PORT_MASK]		= {  3,  11},
-	[VCAP_IS1_HK_RSV]			= { 14,  10},
+अटल स्थिर काष्ठा vcap_field vsc9953_vcap_is1_keys[] = अणु
+	[VCAP_IS1_HK_TYPE]			= अणु  0,   1पूर्ण,
+	[VCAP_IS1_HK_LOOKUP]			= अणु  1,   2पूर्ण,
+	[VCAP_IS1_HK_IGR_PORT_MASK]		= अणु  3,  11पूर्ण,
+	[VCAP_IS1_HK_RSV]			= अणु 14,  10पूर्ण,
 	/* VCAP_IS1_HK_OAM_Y1731 not supported */
-	[VCAP_IS1_HK_L2_MC]			= { 24,   1},
-	[VCAP_IS1_HK_L2_BC]			= { 25,   1},
-	[VCAP_IS1_HK_IP_MC]			= { 26,   1},
-	[VCAP_IS1_HK_VLAN_TAGGED]		= { 27,   1},
-	[VCAP_IS1_HK_VLAN_DBL_TAGGED]		= { 28,   1},
-	[VCAP_IS1_HK_TPID]			= { 29,   1},
-	[VCAP_IS1_HK_VID]			= { 30,  12},
-	[VCAP_IS1_HK_DEI]			= { 42,   1},
-	[VCAP_IS1_HK_PCP]			= { 43,   3},
-	/* Specific Fields for IS1 Half Key S1_NORMAL */
-	[VCAP_IS1_HK_L2_SMAC]			= { 46,  48},
-	[VCAP_IS1_HK_ETYPE_LEN]			= { 94,   1},
-	[VCAP_IS1_HK_ETYPE]			= { 95,  16},
-	[VCAP_IS1_HK_IP_SNAP]			= {111,   1},
-	[VCAP_IS1_HK_IP4]			= {112,   1},
-	/* Layer-3 Information */
-	[VCAP_IS1_HK_L3_FRAGMENT]		= {113,   1},
-	[VCAP_IS1_HK_L3_FRAG_OFS_GT0]		= {114,   1},
-	[VCAP_IS1_HK_L3_OPTIONS]		= {115,   1},
-	[VCAP_IS1_HK_L3_DSCP]			= {116,   6},
-	[VCAP_IS1_HK_L3_IP4_SIP]		= {122,  32},
-	/* Layer-4 Information */
-	[VCAP_IS1_HK_TCP_UDP]			= {154,   1},
-	[VCAP_IS1_HK_TCP]			= {155,   1},
-	[VCAP_IS1_HK_L4_SPORT]			= {156,  16},
-	[VCAP_IS1_HK_L4_RNG]			= {172,   8},
-	/* Specific Fields for IS1 Half Key S1_5TUPLE_IP4 */
-	[VCAP_IS1_HK_IP4_INNER_TPID]            = { 46,   1},
-	[VCAP_IS1_HK_IP4_INNER_VID]		= { 47,  12},
-	[VCAP_IS1_HK_IP4_INNER_DEI]		= { 59,   1},
-	[VCAP_IS1_HK_IP4_INNER_PCP]		= { 60,   3},
-	[VCAP_IS1_HK_IP4_IP4]			= { 63,   1},
-	[VCAP_IS1_HK_IP4_L3_FRAGMENT]		= { 64,   1},
-	[VCAP_IS1_HK_IP4_L3_FRAG_OFS_GT0]	= { 65,   1},
-	[VCAP_IS1_HK_IP4_L3_OPTIONS]		= { 66,   1},
-	[VCAP_IS1_HK_IP4_L3_DSCP]		= { 67,   6},
-	[VCAP_IS1_HK_IP4_L3_IP4_DIP]		= { 73,  32},
-	[VCAP_IS1_HK_IP4_L3_IP4_SIP]		= {105,  32},
-	[VCAP_IS1_HK_IP4_L3_PROTO]		= {137,   8},
-	[VCAP_IS1_HK_IP4_TCP_UDP]		= {145,   1},
-	[VCAP_IS1_HK_IP4_TCP]			= {146,   1},
-	[VCAP_IS1_HK_IP4_L4_RNG]		= {147,   8},
-	[VCAP_IS1_HK_IP4_IP_PAYLOAD_S1_5TUPLE]	= {155,  32},
-};
+	[VCAP_IS1_HK_L2_MC]			= अणु 24,   1पूर्ण,
+	[VCAP_IS1_HK_L2_BC]			= अणु 25,   1पूर्ण,
+	[VCAP_IS1_HK_IP_MC]			= अणु 26,   1पूर्ण,
+	[VCAP_IS1_HK_VLAN_TAGGED]		= अणु 27,   1पूर्ण,
+	[VCAP_IS1_HK_VLAN_DBL_TAGGED]		= अणु 28,   1पूर्ण,
+	[VCAP_IS1_HK_TPID]			= अणु 29,   1पूर्ण,
+	[VCAP_IS1_HK_VID]			= अणु 30,  12पूर्ण,
+	[VCAP_IS1_HK_DEI]			= अणु 42,   1पूर्ण,
+	[VCAP_IS1_HK_PCP]			= अणु 43,   3पूर्ण,
+	/* Specअगरic Fields क्रम IS1 Half Key S1_NORMAL */
+	[VCAP_IS1_HK_L2_SMAC]			= अणु 46,  48पूर्ण,
+	[VCAP_IS1_HK_ETYPE_LEN]			= अणु 94,   1पूर्ण,
+	[VCAP_IS1_HK_ETYPE]			= अणु 95,  16पूर्ण,
+	[VCAP_IS1_HK_IP_SNAP]			= अणु111,   1पूर्ण,
+	[VCAP_IS1_HK_IP4]			= अणु112,   1पूर्ण,
+	/* Layer-3 Inक्रमmation */
+	[VCAP_IS1_HK_L3_FRAGMENT]		= अणु113,   1पूर्ण,
+	[VCAP_IS1_HK_L3_FRAG_OFS_GT0]		= अणु114,   1पूर्ण,
+	[VCAP_IS1_HK_L3_OPTIONS]		= अणु115,   1पूर्ण,
+	[VCAP_IS1_HK_L3_DSCP]			= अणु116,   6पूर्ण,
+	[VCAP_IS1_HK_L3_IP4_SIP]		= अणु122,  32पूर्ण,
+	/* Layer-4 Inक्रमmation */
+	[VCAP_IS1_HK_TCP_UDP]			= अणु154,   1पूर्ण,
+	[VCAP_IS1_HK_TCP]			= अणु155,   1पूर्ण,
+	[VCAP_IS1_HK_L4_SPORT]			= अणु156,  16पूर्ण,
+	[VCAP_IS1_HK_L4_RNG]			= अणु172,   8पूर्ण,
+	/* Specअगरic Fields क्रम IS1 Half Key S1_5TUPLE_IP4 */
+	[VCAP_IS1_HK_IP4_INNER_TPID]            = अणु 46,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_INNER_VID]		= अणु 47,  12पूर्ण,
+	[VCAP_IS1_HK_IP4_INNER_DEI]		= अणु 59,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_INNER_PCP]		= अणु 60,   3पूर्ण,
+	[VCAP_IS1_HK_IP4_IP4]			= अणु 63,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_FRAGMENT]		= अणु 64,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_FRAG_OFS_GT0]	= अणु 65,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_OPTIONS]		= अणु 66,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_DSCP]		= अणु 67,   6पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_IP4_DIP]		= अणु 73,  32पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_IP4_SIP]		= अणु105,  32पूर्ण,
+	[VCAP_IS1_HK_IP4_L3_PROTO]		= अणु137,   8पूर्ण,
+	[VCAP_IS1_HK_IP4_TCP_UDP]		= अणु145,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_TCP]			= अणु146,   1पूर्ण,
+	[VCAP_IS1_HK_IP4_L4_RNG]		= अणु147,   8पूर्ण,
+	[VCAP_IS1_HK_IP4_IP_PAYLOAD_S1_5TUPLE]	= अणु155,  32पूर्ण,
+पूर्ण;
 
-static const struct vcap_field vsc9953_vcap_is1_actions[] = {
-	[VCAP_IS1_ACT_DSCP_ENA]			= {  0,  1},
-	[VCAP_IS1_ACT_DSCP_VAL]			= {  1,  6},
-	[VCAP_IS1_ACT_QOS_ENA]			= {  7,  1},
-	[VCAP_IS1_ACT_QOS_VAL]			= {  8,  3},
-	[VCAP_IS1_ACT_DP_ENA]			= { 11,  1},
-	[VCAP_IS1_ACT_DP_VAL]			= { 12,  1},
-	[VCAP_IS1_ACT_PAG_OVERRIDE_MASK]	= { 13,  8},
-	[VCAP_IS1_ACT_PAG_VAL]			= { 21,  8},
-	[VCAP_IS1_ACT_RSV]			= { 29, 11},
-	[VCAP_IS1_ACT_VID_REPLACE_ENA]		= { 40,  1},
-	[VCAP_IS1_ACT_VID_ADD_VAL]		= { 41, 12},
-	[VCAP_IS1_ACT_FID_SEL]			= { 53,  2},
-	[VCAP_IS1_ACT_FID_VAL]			= { 55, 13},
-	[VCAP_IS1_ACT_PCP_DEI_ENA]		= { 68,  1},
-	[VCAP_IS1_ACT_PCP_VAL]			= { 69,  3},
-	[VCAP_IS1_ACT_DEI_VAL]			= { 72,  1},
-	[VCAP_IS1_ACT_VLAN_POP_CNT_ENA]		= { 73,  1},
-	[VCAP_IS1_ACT_VLAN_POP_CNT]		= { 74,  2},
-	[VCAP_IS1_ACT_CUSTOM_ACE_TYPE_ENA]	= { 76,  4},
-	[VCAP_IS1_ACT_HIT_STICKY]		= { 80,  1},
-};
+अटल स्थिर काष्ठा vcap_field vsc9953_vcap_is1_actions[] = अणु
+	[VCAP_IS1_ACT_DSCP_ENA]			= अणु  0,  1पूर्ण,
+	[VCAP_IS1_ACT_DSCP_VAL]			= अणु  1,  6पूर्ण,
+	[VCAP_IS1_ACT_QOS_ENA]			= अणु  7,  1पूर्ण,
+	[VCAP_IS1_ACT_QOS_VAL]			= अणु  8,  3पूर्ण,
+	[VCAP_IS1_ACT_DP_ENA]			= अणु 11,  1पूर्ण,
+	[VCAP_IS1_ACT_DP_VAL]			= अणु 12,  1पूर्ण,
+	[VCAP_IS1_ACT_PAG_OVERRIDE_MASK]	= अणु 13,  8पूर्ण,
+	[VCAP_IS1_ACT_PAG_VAL]			= अणु 21,  8पूर्ण,
+	[VCAP_IS1_ACT_RSV]			= अणु 29, 11पूर्ण,
+	[VCAP_IS1_ACT_VID_REPLACE_ENA]		= अणु 40,  1पूर्ण,
+	[VCAP_IS1_ACT_VID_ADD_VAL]		= अणु 41, 12पूर्ण,
+	[VCAP_IS1_ACT_FID_SEL]			= अणु 53,  2पूर्ण,
+	[VCAP_IS1_ACT_FID_VAL]			= अणु 55, 13पूर्ण,
+	[VCAP_IS1_ACT_PCP_DEI_ENA]		= अणु 68,  1पूर्ण,
+	[VCAP_IS1_ACT_PCP_VAL]			= अणु 69,  3पूर्ण,
+	[VCAP_IS1_ACT_DEI_VAL]			= अणु 72,  1पूर्ण,
+	[VCAP_IS1_ACT_VLAN_POP_CNT_ENA]		= अणु 73,  1पूर्ण,
+	[VCAP_IS1_ACT_VLAN_POP_CNT]		= अणु 74,  2पूर्ण,
+	[VCAP_IS1_ACT_CUSTOM_ACE_TYPE_ENA]	= अणु 76,  4पूर्ण,
+	[VCAP_IS1_ACT_HIT_STICKY]		= अणु 80,  1पूर्ण,
+पूर्ण;
 
-static struct vcap_field vsc9953_vcap_is2_keys[] = {
+अटल काष्ठा vcap_field vsc9953_vcap_is2_keys[] = अणु
 	/* Common: 41 bits */
-	[VCAP_IS2_TYPE]				= {  0,   4},
-	[VCAP_IS2_HK_FIRST]			= {  4,   1},
-	[VCAP_IS2_HK_PAG]			= {  5,   8},
-	[VCAP_IS2_HK_IGR_PORT_MASK]		= { 13,  11},
-	[VCAP_IS2_HK_RSV2]			= { 24,   1},
-	[VCAP_IS2_HK_HOST_MATCH]		= { 25,   1},
-	[VCAP_IS2_HK_L2_MC]			= { 26,   1},
-	[VCAP_IS2_HK_L2_BC]			= { 27,   1},
-	[VCAP_IS2_HK_VLAN_TAGGED]		= { 28,   1},
-	[VCAP_IS2_HK_VID]			= { 29,  12},
-	[VCAP_IS2_HK_DEI]			= { 41,   1},
-	[VCAP_IS2_HK_PCP]			= { 42,   3},
+	[VCAP_IS2_TYPE]				= अणु  0,   4पूर्ण,
+	[VCAP_IS2_HK_FIRST]			= अणु  4,   1पूर्ण,
+	[VCAP_IS2_HK_PAG]			= अणु  5,   8पूर्ण,
+	[VCAP_IS2_HK_IGR_PORT_MASK]		= अणु 13,  11पूर्ण,
+	[VCAP_IS2_HK_RSV2]			= अणु 24,   1पूर्ण,
+	[VCAP_IS2_HK_HOST_MATCH]		= अणु 25,   1पूर्ण,
+	[VCAP_IS2_HK_L2_MC]			= अणु 26,   1पूर्ण,
+	[VCAP_IS2_HK_L2_BC]			= अणु 27,   1पूर्ण,
+	[VCAP_IS2_HK_VLAN_TAGGED]		= अणु 28,   1पूर्ण,
+	[VCAP_IS2_HK_VID]			= अणु 29,  12पूर्ण,
+	[VCAP_IS2_HK_DEI]			= अणु 41,   1पूर्ण,
+	[VCAP_IS2_HK_PCP]			= अणु 42,   3पूर्ण,
 	/* MAC_ETYPE / MAC_LLC / MAC_SNAP / OAM common */
-	[VCAP_IS2_HK_L2_DMAC]			= { 45,  48},
-	[VCAP_IS2_HK_L2_SMAC]			= { 93,  48},
+	[VCAP_IS2_HK_L2_DMAC]			= अणु 45,  48पूर्ण,
+	[VCAP_IS2_HK_L2_SMAC]			= अणु 93,  48पूर्ण,
 	/* MAC_ETYPE (TYPE=000) */
-	[VCAP_IS2_HK_MAC_ETYPE_ETYPE]		= {141,  16},
-	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD0]	= {157,  16},
-	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD1]	= {173,   8},
-	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD2]	= {181,   3},
+	[VCAP_IS2_HK_MAC_ETYPE_ETYPE]		= अणु141,  16पूर्ण,
+	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD0]	= अणु157,  16पूर्ण,
+	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD1]	= अणु173,   8पूर्ण,
+	[VCAP_IS2_HK_MAC_ETYPE_L2_PAYLOAD2]	= अणु181,   3पूर्ण,
 	/* MAC_LLC (TYPE=001) */
-	[VCAP_IS2_HK_MAC_LLC_L2_LLC]		= {141,  40},
+	[VCAP_IS2_HK_MAC_LLC_L2_LLC]		= अणु141,  40पूर्ण,
 	/* MAC_SNAP (TYPE=010) */
-	[VCAP_IS2_HK_MAC_SNAP_L2_SNAP]		= {141,  40},
+	[VCAP_IS2_HK_MAC_SNAP_L2_SNAP]		= अणु141,  40पूर्ण,
 	/* MAC_ARP (TYPE=011) */
-	[VCAP_IS2_HK_MAC_ARP_SMAC]		= { 45,  48},
-	[VCAP_IS2_HK_MAC_ARP_ADDR_SPACE_OK]	= { 93,   1},
-	[VCAP_IS2_HK_MAC_ARP_PROTO_SPACE_OK]	= { 94,   1},
-	[VCAP_IS2_HK_MAC_ARP_LEN_OK]		= { 95,   1},
-	[VCAP_IS2_HK_MAC_ARP_TARGET_MATCH]	= { 96,   1},
-	[VCAP_IS2_HK_MAC_ARP_SENDER_MATCH]	= { 97,   1},
-	[VCAP_IS2_HK_MAC_ARP_OPCODE_UNKNOWN]	= { 98,   1},
-	[VCAP_IS2_HK_MAC_ARP_OPCODE]		= { 99,   2},
-	[VCAP_IS2_HK_MAC_ARP_L3_IP4_DIP]	= {101,  32},
-	[VCAP_IS2_HK_MAC_ARP_L3_IP4_SIP]	= {133,  32},
-	[VCAP_IS2_HK_MAC_ARP_DIP_EQ_SIP]	= {165,   1},
+	[VCAP_IS2_HK_MAC_ARP_SMAC]		= अणु 45,  48पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_ADDR_SPACE_OK]	= अणु 93,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_PROTO_SPACE_OK]	= अणु 94,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_LEN_OK]		= अणु 95,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_TARGET_MATCH]	= अणु 96,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_SENDER_MATCH]	= अणु 97,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_OPCODE_UNKNOWN]	= अणु 98,   1पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_OPCODE]		= अणु 99,   2पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_L3_IP4_DIP]	= अणु101,  32पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_L3_IP4_SIP]	= अणु133,  32पूर्ण,
+	[VCAP_IS2_HK_MAC_ARP_DIP_EQ_SIP]	= अणु165,   1पूर्ण,
 	/* IP4_TCP_UDP / IP4_OTHER common */
-	[VCAP_IS2_HK_IP4]			= { 45,   1},
-	[VCAP_IS2_HK_L3_FRAGMENT]		= { 46,   1},
-	[VCAP_IS2_HK_L3_FRAG_OFS_GT0]		= { 47,   1},
-	[VCAP_IS2_HK_L3_OPTIONS]		= { 48,   1},
-	[VCAP_IS2_HK_IP4_L3_TTL_GT0]		= { 49,   1},
-	[VCAP_IS2_HK_L3_TOS]			= { 50,   8},
-	[VCAP_IS2_HK_L3_IP4_DIP]		= { 58,  32},
-	[VCAP_IS2_HK_L3_IP4_SIP]		= { 90,  32},
-	[VCAP_IS2_HK_DIP_EQ_SIP]		= {122,   1},
+	[VCAP_IS2_HK_IP4]			= अणु 45,   1पूर्ण,
+	[VCAP_IS2_HK_L3_FRAGMENT]		= अणु 46,   1पूर्ण,
+	[VCAP_IS2_HK_L3_FRAG_OFS_GT0]		= अणु 47,   1पूर्ण,
+	[VCAP_IS2_HK_L3_OPTIONS]		= अणु 48,   1पूर्ण,
+	[VCAP_IS2_HK_IP4_L3_TTL_GT0]		= अणु 49,   1पूर्ण,
+	[VCAP_IS2_HK_L3_TOS]			= अणु 50,   8पूर्ण,
+	[VCAP_IS2_HK_L3_IP4_DIP]		= अणु 58,  32पूर्ण,
+	[VCAP_IS2_HK_L3_IP4_SIP]		= अणु 90,  32पूर्ण,
+	[VCAP_IS2_HK_DIP_EQ_SIP]		= अणु122,   1पूर्ण,
 	/* IP4_TCP_UDP (TYPE=100) */
-	[VCAP_IS2_HK_TCP]			= {123,   1},
-	[VCAP_IS2_HK_L4_DPORT]			= {124,  16},
-	[VCAP_IS2_HK_L4_SPORT]			= {140,  16},
-	[VCAP_IS2_HK_L4_RNG]			= {156,   8},
-	[VCAP_IS2_HK_L4_SPORT_EQ_DPORT]		= {164,   1},
-	[VCAP_IS2_HK_L4_SEQUENCE_EQ0]		= {165,   1},
-	[VCAP_IS2_HK_L4_FIN]			= {166,   1},
-	[VCAP_IS2_HK_L4_SYN]			= {167,   1},
-	[VCAP_IS2_HK_L4_RST]			= {168,   1},
-	[VCAP_IS2_HK_L4_PSH]			= {169,   1},
-	[VCAP_IS2_HK_L4_ACK]			= {170,   1},
-	[VCAP_IS2_HK_L4_URG]			= {171,   1},
+	[VCAP_IS2_HK_TCP]			= अणु123,   1पूर्ण,
+	[VCAP_IS2_HK_L4_DPORT]			= अणु124,  16पूर्ण,
+	[VCAP_IS2_HK_L4_SPORT]			= अणु140,  16पूर्ण,
+	[VCAP_IS2_HK_L4_RNG]			= अणु156,   8पूर्ण,
+	[VCAP_IS2_HK_L4_SPORT_EQ_DPORT]		= अणु164,   1पूर्ण,
+	[VCAP_IS2_HK_L4_SEQUENCE_EQ0]		= अणु165,   1पूर्ण,
+	[VCAP_IS2_HK_L4_FIN]			= अणु166,   1पूर्ण,
+	[VCAP_IS2_HK_L4_SYN]			= अणु167,   1पूर्ण,
+	[VCAP_IS2_HK_L4_RST]			= अणु168,   1पूर्ण,
+	[VCAP_IS2_HK_L4_PSH]			= अणु169,   1पूर्ण,
+	[VCAP_IS2_HK_L4_ACK]			= अणु170,   1पूर्ण,
+	[VCAP_IS2_HK_L4_URG]			= अणु171,   1पूर्ण,
 	/* IP4_OTHER (TYPE=101) */
-	[VCAP_IS2_HK_IP4_L3_PROTO]		= {123,   8},
-	[VCAP_IS2_HK_L3_PAYLOAD]		= {131,  56},
+	[VCAP_IS2_HK_IP4_L3_PROTO]		= अणु123,   8पूर्ण,
+	[VCAP_IS2_HK_L3_PAYLOAD]		= अणु131,  56पूर्ण,
 	/* IP6_STD (TYPE=110) */
-	[VCAP_IS2_HK_IP6_L3_TTL_GT0]		= { 45,   1},
-	[VCAP_IS2_HK_L3_IP6_SIP]		= { 46, 128},
-	[VCAP_IS2_HK_IP6_L3_PROTO]		= {174,   8},
-};
+	[VCAP_IS2_HK_IP6_L3_TTL_GT0]		= अणु 45,   1पूर्ण,
+	[VCAP_IS2_HK_L3_IP6_SIP]		= अणु 46, 128पूर्ण,
+	[VCAP_IS2_HK_IP6_L3_PROTO]		= अणु174,   8पूर्ण,
+पूर्ण;
 
-static struct vcap_field vsc9953_vcap_is2_actions[] = {
-	[VCAP_IS2_ACT_HIT_ME_ONCE]		= {  0,  1},
-	[VCAP_IS2_ACT_CPU_COPY_ENA]		= {  1,  1},
-	[VCAP_IS2_ACT_CPU_QU_NUM]		= {  2,  3},
-	[VCAP_IS2_ACT_MASK_MODE]		= {  5,  2},
-	[VCAP_IS2_ACT_MIRROR_ENA]		= {  7,  1},
-	[VCAP_IS2_ACT_LRN_DIS]			= {  8,  1},
-	[VCAP_IS2_ACT_POLICE_ENA]		= {  9,  1},
-	[VCAP_IS2_ACT_POLICE_IDX]		= { 10,  8},
-	[VCAP_IS2_ACT_POLICE_VCAP_ONLY]		= { 21,  1},
-	[VCAP_IS2_ACT_PORT_MASK]		= { 22, 10},
-	[VCAP_IS2_ACT_ACL_ID]			= { 44,  6},
-	[VCAP_IS2_ACT_HIT_CNT]			= { 50, 32},
-};
+अटल काष्ठा vcap_field vsc9953_vcap_is2_actions[] = अणु
+	[VCAP_IS2_ACT_HIT_ME_ONCE]		= अणु  0,  1पूर्ण,
+	[VCAP_IS2_ACT_CPU_COPY_ENA]		= अणु  1,  1पूर्ण,
+	[VCAP_IS2_ACT_CPU_QU_NUM]		= अणु  2,  3पूर्ण,
+	[VCAP_IS2_ACT_MASK_MODE]		= अणु  5,  2पूर्ण,
+	[VCAP_IS2_ACT_MIRROR_ENA]		= अणु  7,  1पूर्ण,
+	[VCAP_IS2_ACT_LRN_DIS]			= अणु  8,  1पूर्ण,
+	[VCAP_IS2_ACT_POLICE_ENA]		= अणु  9,  1पूर्ण,
+	[VCAP_IS2_ACT_POLICE_IDX]		= अणु 10,  8पूर्ण,
+	[VCAP_IS2_ACT_POLICE_VCAP_ONLY]		= अणु 21,  1पूर्ण,
+	[VCAP_IS2_ACT_PORT_MASK]		= अणु 22, 10पूर्ण,
+	[VCAP_IS2_ACT_ACL_ID]			= अणु 44,  6पूर्ण,
+	[VCAP_IS2_ACT_HIT_CNT]			= अणु 50, 32पूर्ण,
+पूर्ण;
 
-static struct vcap_props vsc9953_vcap_props[] = {
-	[VCAP_ES0] = {
+अटल काष्ठा vcap_props vsc9953_vcap_props[] = अणु
+	[VCAP_ES0] = अणु
 		.action_type_width = 0,
-		.action_table = {
-			[ES0_ACTION_TYPE_NORMAL] = {
+		.action_table = अणु
+			[ES0_ACTION_TYPE_NORMAL] = अणु
 				.width = 73, /* HIT_STICKY not included */
 				.count = 1,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.target = S0,
 		.keys = vsc9953_vcap_es0_keys,
 		.actions = vsc9953_vcap_es0_actions,
-	},
-	[VCAP_IS1] = {
+	पूर्ण,
+	[VCAP_IS1] = अणु
 		.action_type_width = 0,
-		.action_table = {
-			[IS1_ACTION_TYPE_NORMAL] = {
+		.action_table = अणु
+			[IS1_ACTION_TYPE_NORMAL] = अणु
 				.width = 80, /* HIT_STICKY not included */
 				.count = 4,
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.target = S1,
 		.keys = vsc9953_vcap_is1_keys,
 		.actions = vsc9953_vcap_is1_actions,
-	},
-	[VCAP_IS2] = {
+	पूर्ण,
+	[VCAP_IS2] = अणु
 		.action_type_width = 1,
-		.action_table = {
-			[IS2_ACTION_TYPE_NORMAL] = {
+		.action_table = अणु
+			[IS2_ACTION_TYPE_NORMAL] = अणु
 				.width = 50, /* HIT_CNT not included */
 				.count = 2
-			},
-			[IS2_ACTION_TYPE_SMAC_SIP] = {
+			पूर्ण,
+			[IS2_ACTION_TYPE_SMAC_SIP] = अणु
 				.width = 6,
 				.count = 4
-			},
-		},
+			पूर्ण,
+		पूर्ण,
 		.target = S2,
 		.keys = vsc9953_vcap_is2_keys,
 		.actions = vsc9953_vcap_is2_actions,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#define VSC9953_INIT_TIMEOUT			50000
-#define VSC9953_GCB_RST_SLEEP			100
-#define VSC9953_SYS_RAMINIT_SLEEP		80
-#define VCS9953_MII_TIMEOUT			10000
+#घोषणा VSC9953_INIT_TIMEOUT			50000
+#घोषणा VSC9953_GCB_RST_SLEEP			100
+#घोषणा VSC9953_SYS_RAMINIT_SLEEP		80
+#घोषणा VCS9953_MII_TIMEOUT			10000
 
-static int vsc9953_gcb_soft_rst_status(struct ocelot *ocelot)
-{
-	int val;
+अटल पूर्णांक vsc9953_gcb_soft_rst_status(काष्ठा ocelot *ocelot)
+अणु
+	पूर्णांक val;
 
-	ocelot_field_read(ocelot, GCB_SOFT_RST_SWC_RST, &val);
+	ocelot_field_पढ़ो(ocelot, GCB_SOFT_RST_SWC_RST, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int vsc9953_sys_ram_init_status(struct ocelot *ocelot)
-{
-	int val;
+अटल पूर्णांक vsc9953_sys_ram_init_status(काष्ठा ocelot *ocelot)
+अणु
+	पूर्णांक val;
 
-	ocelot_field_read(ocelot, SYS_RESET_CFG_MEM_INIT, &val);
+	ocelot_field_पढ़ो(ocelot, SYS_RESET_CFG_MEM_INIT, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int vsc9953_gcb_miim_pending_status(struct ocelot *ocelot)
-{
-	int val;
+अटल पूर्णांक vsc9953_gcb_miim_pending_status(काष्ठा ocelot *ocelot)
+अणु
+	पूर्णांक val;
 
-	ocelot_field_read(ocelot, GCB_MIIM_MII_STATUS_PENDING, &val);
+	ocelot_field_पढ़ो(ocelot, GCB_MIIM_MII_STATUS_PENDING, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int vsc9953_gcb_miim_busy_status(struct ocelot *ocelot)
-{
-	int val;
+अटल पूर्णांक vsc9953_gcb_miim_busy_status(काष्ठा ocelot *ocelot)
+अणु
+	पूर्णांक val;
 
-	ocelot_field_read(ocelot, GCB_MIIM_MII_STATUS_BUSY, &val);
+	ocelot_field_पढ़ो(ocelot, GCB_MIIM_MII_STATUS_BUSY, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static int vsc9953_mdio_write(struct mii_bus *bus, int phy_id, int regnum,
+अटल पूर्णांक vsc9953_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum,
 			      u16 value)
-{
-	struct ocelot *ocelot = bus->priv;
-	int err, cmd, val;
+अणु
+	काष्ठा ocelot *ocelot = bus->priv;
+	पूर्णांक err, cmd, val;
 
-	/* Wait while MIIM controller becomes idle */
-	err = readx_poll_timeout(vsc9953_gcb_miim_pending_status, ocelot,
+	/* Wait जबतक MIIM controller becomes idle */
+	err = पढ़ोx_poll_समयout(vsc9953_gcb_miim_pending_status, ocelot,
 				 val, !val, 10, VCS9953_MII_TIMEOUT);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "MDIO write: pending timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	cmd = MSCC_MIIM_CMD_VLD | (phy_id << MSCC_MIIM_CMD_PHYAD_SHIFT) |
 	      (regnum << MSCC_MIIM_CMD_REGAD_SHIFT) |
 	      (value << MSCC_MIIM_CMD_WRDATA_SHIFT) |
 	      MSCC_MIIM_CMD_OPR_WRITE;
 
-	ocelot_write(ocelot, cmd, GCB_MIIM_MII_CMD);
+	ocelot_ग_लिखो(ocelot, cmd, GCB_MIIM_MII_CMD);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int vsc9953_mdio_read(struct mii_bus *bus, int phy_id, int regnum)
-{
-	struct ocelot *ocelot = bus->priv;
-	int err, cmd, val;
+अटल पूर्णांक vsc9953_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक phy_id, पूर्णांक regnum)
+अणु
+	काष्ठा ocelot *ocelot = bus->priv;
+	पूर्णांक err, cmd, val;
 
 	/* Wait until MIIM controller becomes idle */
-	err = readx_poll_timeout(vsc9953_gcb_miim_pending_status, ocelot,
+	err = पढ़ोx_poll_समयout(vsc9953_gcb_miim_pending_status, ocelot,
 				 val, !val, 10, VCS9953_MII_TIMEOUT);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "MDIO read: pending timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Write the MIIM COMMAND register */
+	/* Write the MIIM COMMAND रेजिस्टर */
 	cmd = MSCC_MIIM_CMD_VLD | (phy_id << MSCC_MIIM_CMD_PHYAD_SHIFT) |
 	      (regnum << MSCC_MIIM_CMD_REGAD_SHIFT) | MSCC_MIIM_CMD_OPR_READ;
 
-	ocelot_write(ocelot, cmd, GCB_MIIM_MII_CMD);
+	ocelot_ग_लिखो(ocelot, cmd, GCB_MIIM_MII_CMD);
 
-	/* Wait while read operation via the MIIM controller is in progress */
-	err = readx_poll_timeout(vsc9953_gcb_miim_busy_status, ocelot,
+	/* Wait जबतक पढ़ो operation via the MIIM controller is in progress */
+	err = पढ़ोx_poll_समयout(vsc9953_gcb_miim_busy_status, ocelot,
 				 val, !val, 10, VCS9953_MII_TIMEOUT);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "MDIO read: busy timeout\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	val = ocelot_read(ocelot, GCB_MIIM_MII_DATA);
+	val = ocelot_पढ़ो(ocelot, GCB_MIIM_MII_DATA);
 
 	err = val & 0xFFFF;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* CORE_ENA is in SYS:SYSTEM:RESET_CFG
  * MEM_INIT is in SYS:SYSTEM:RESET_CFG
  * MEM_ENA is in SYS:SYSTEM:RESET_CFG
  */
-static int vsc9953_reset(struct ocelot *ocelot)
-{
-	int val, err;
+अटल पूर्णांक vsc9953_reset(काष्ठा ocelot *ocelot)
+अणु
+	पूर्णांक val, err;
 
-	/* soft-reset the switch core */
-	ocelot_field_write(ocelot, GCB_SOFT_RST_SWC_RST, 1);
+	/* soft-reset the चयन core */
+	ocelot_field_ग_लिखो(ocelot, GCB_SOFT_RST_SWC_RST, 1);
 
-	err = readx_poll_timeout(vsc9953_gcb_soft_rst_status, ocelot, val, !val,
+	err = पढ़ोx_poll_समयout(vsc9953_gcb_soft_rst_status, ocelot, val, !val,
 				 VSC9953_GCB_RST_SLEEP, VSC9953_INIT_TIMEOUT);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "timeout: switch core reset\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* initialize switch mem ~40us */
-	ocelot_field_write(ocelot, SYS_RESET_CFG_MEM_ENA, 1);
-	ocelot_field_write(ocelot, SYS_RESET_CFG_MEM_INIT, 1);
+	/* initialize चयन mem ~40us */
+	ocelot_field_ग_लिखो(ocelot, SYS_RESET_CFG_MEM_ENA, 1);
+	ocelot_field_ग_लिखो(ocelot, SYS_RESET_CFG_MEM_INIT, 1);
 
-	err = readx_poll_timeout(vsc9953_sys_ram_init_status, ocelot, val, !val,
+	err = पढ़ोx_poll_समयout(vsc9953_sys_ram_init_status, ocelot, val, !val,
 				 VSC9953_SYS_RAMINIT_SLEEP,
 				 VSC9953_INIT_TIMEOUT);
-	if (err) {
+	अगर (err) अणु
 		dev_err(ocelot->dev, "timeout: switch sram init\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* enable switch core */
-	ocelot_field_write(ocelot, SYS_RESET_CFG_CORE_ENA, 1);
+	/* enable चयन core */
+	ocelot_field_ग_लिखो(ocelot, SYS_RESET_CFG_CORE_ENA, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vsc9953_phylink_validate(struct ocelot *ocelot, int port,
-				     unsigned long *supported,
-				     struct phylink_link_state *state)
-{
-	struct ocelot_port *ocelot_port = ocelot->ports[port];
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+अटल व्योम vsc9953_phylink_validate(काष्ठा ocelot *ocelot, पूर्णांक port,
+				     अचिन्हित दीर्घ *supported,
+				     काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा ocelot_port *ocelot_port = ocelot->ports[port];
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
 
-	if (state->interface != PHY_INTERFACE_MODE_NA &&
-	    state->interface != ocelot_port->phy_mode) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		return;
-	}
+	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_NA &&
+	    state->पूर्णांकerface != ocelot_port->phy_mode) अणु
+		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		वापस;
+	पूर्ण
 
 	phylink_set_port_modes(mask);
 	phylink_set(mask, Autoneg);
@@ -1013,159 +1014,159 @@ static void vsc9953_phylink_validate(struct ocelot *ocelot, int port,
 	phylink_set(mask, 100baseT_Half);
 	phylink_set(mask, 1000baseT_Full);
 
-	if (state->interface == PHY_INTERFACE_MODE_INTERNAL) {
+	अगर (state->पूर्णांकerface == PHY_INTERFACE_MODE_INTERNAL) अणु
 		phylink_set(mask, 2500baseT_Full);
 		phylink_set(mask, 2500baseX_Full);
-	}
+	पूर्ण
 
-	bitmap_and(supported, supported, mask,
+	biपंचांगap_and(supported, supported, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
+	biपंचांगap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
+पूर्ण
 
-static int vsc9953_prevalidate_phy_mode(struct ocelot *ocelot, int port,
-					phy_interface_t phy_mode)
-{
-	switch (phy_mode) {
-	case PHY_INTERFACE_MODE_INTERNAL:
-		if (port != 8 && port != 9)
-			return -ENOTSUPP;
-		return 0;
-	case PHY_INTERFACE_MODE_SGMII:
-	case PHY_INTERFACE_MODE_QSGMII:
-		/* Not supported on internal to-CPU ports */
-		if (port == 8 || port == 9)
-			return -ENOTSUPP;
-		return 0;
-	default:
-		return -ENOTSUPP;
-	}
-}
+अटल पूर्णांक vsc9953_prevalidate_phy_mode(काष्ठा ocelot *ocelot, पूर्णांक port,
+					phy_पूर्णांकerface_t phy_mode)
+अणु
+	चयन (phy_mode) अणु
+	हाल PHY_INTERFACE_MODE_INTERNAL:
+		अगर (port != 8 && port != 9)
+			वापस -ENOTSUPP;
+		वापस 0;
+	हाल PHY_INTERFACE_MODE_SGMII:
+	हाल PHY_INTERFACE_MODE_QSGMII:
+		/* Not supported on पूर्णांकernal to-CPU ports */
+		अगर (port == 8 || port == 9)
+			वापस -ENOTSUPP;
+		वापस 0;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
+पूर्ण
 
 /* Watermark encode
  * Bit 9:   Unit; 0:1, 1:16
  * Bit 8-0: Value to be multiplied with unit
  */
-static u16 vsc9953_wm_enc(u16 value)
-{
+अटल u16 vsc9953_wm_enc(u16 value)
+अणु
 	WARN_ON(value >= 16 * BIT(9));
 
-	if (value >= BIT(9))
-		return BIT(9) | (value / 16);
+	अगर (value >= BIT(9))
+		वापस BIT(9) | (value / 16);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static u16 vsc9953_wm_dec(u16 wm)
-{
+अटल u16 vsc9953_wm_dec(u16 wm)
+अणु
 	WARN_ON(wm & ~GENMASK(9, 0));
 
-	if (wm & BIT(9))
-		return (wm & GENMASK(8, 0)) * 16;
+	अगर (wm & BIT(9))
+		वापस (wm & GENMASK(8, 0)) * 16;
 
-	return wm;
-}
+	वापस wm;
+पूर्ण
 
-static void vsc9953_wm_stat(u32 val, u32 *inuse, u32 *maxuse)
-{
+अटल व्योम vsc9953_wm_stat(u32 val, u32 *inuse, u32 *maxuse)
+अणु
 	*inuse = (val & GENMASK(25, 13)) >> 13;
 	*maxuse = val & GENMASK(12, 0);
-}
+पूर्ण
 
-static const struct ocelot_ops vsc9953_ops = {
+अटल स्थिर काष्ठा ocelot_ops vsc9953_ops = अणु
 	.reset			= vsc9953_reset,
 	.wm_enc			= vsc9953_wm_enc,
 	.wm_dec			= vsc9953_wm_dec,
 	.wm_stat		= vsc9953_wm_stat,
 	.port_to_netdev		= felix_port_to_netdev,
 	.netdev_to_port		= felix_netdev_to_port,
-};
+पूर्ण;
 
-static int vsc9953_mdio_bus_alloc(struct ocelot *ocelot)
-{
-	struct felix *felix = ocelot_to_felix(ocelot);
-	struct device *dev = ocelot->dev;
-	struct mii_bus *bus;
-	int port;
-	int rc;
+अटल पूर्णांक vsc9953_mdio_bus_alloc(काष्ठा ocelot *ocelot)
+अणु
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	काष्ठा device *dev = ocelot->dev;
+	काष्ठा mii_bus *bus;
+	पूर्णांक port;
+	पूर्णांक rc;
 
-	felix->pcs = devm_kcalloc(dev, felix->info->num_ports,
-				  sizeof(struct phy_device *),
+	felix->pcs = devm_kसुस्मृति(dev, felix->info->num_ports,
+				  माप(काष्ठा phy_device *),
 				  GFP_KERNEL);
-	if (!felix->pcs) {
+	अगर (!felix->pcs) अणु
 		dev_err(dev, "failed to allocate array for PCS PHYs\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	bus = devm_mdiobus_alloc(dev);
-	if (!bus)
-		return -ENOMEM;
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	bus->name = "VSC9953 internal MDIO bus";
-	bus->read = vsc9953_mdio_read;
-	bus->write = vsc9953_mdio_write;
+	bus->पढ़ो = vsc9953_mdio_पढ़ो;
+	bus->ग_लिखो = vsc9953_mdio_ग_लिखो;
 	bus->parent = dev;
 	bus->priv = ocelot;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s-imdio", dev_name(dev));
 
 	/* Needed in order to initialize the bus mutex lock */
-	rc = mdiobus_register(bus);
-	if (rc < 0) {
+	rc = mdiobus_रेजिस्टर(bus);
+	अगर (rc < 0) अणु
 		dev_err(dev, "failed to register MDIO bus\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	felix->imdio = bus;
 
-	for (port = 0; port < felix->info->num_ports; port++) {
-		struct ocelot_port *ocelot_port = ocelot->ports[port];
-		int addr = port + 4;
-		struct mdio_device *pcs;
-		struct lynx_pcs *lynx;
+	क्रम (port = 0; port < felix->info->num_ports; port++) अणु
+		काष्ठा ocelot_port *ocelot_port = ocelot->ports[port];
+		पूर्णांक addr = port + 4;
+		काष्ठा mdio_device *pcs;
+		काष्ठा lynx_pcs *lynx;
 
-		if (dsa_is_unused_port(felix->ds, port))
-			continue;
+		अगर (dsa_is_unused_port(felix->ds, port))
+			जारी;
 
-		if (ocelot_port->phy_mode == PHY_INTERFACE_MODE_INTERNAL)
-			continue;
+		अगर (ocelot_port->phy_mode == PHY_INTERFACE_MODE_INTERNAL)
+			जारी;
 
 		pcs = mdio_device_create(felix->imdio, addr);
-		if (IS_ERR(pcs))
-			continue;
+		अगर (IS_ERR(pcs))
+			जारी;
 
 		lynx = lynx_pcs_create(pcs);
-		if (!lynx) {
-			mdio_device_free(pcs);
-			continue;
-		}
+		अगर (!lynx) अणु
+			mdio_device_मुक्त(pcs);
+			जारी;
+		पूर्ण
 
 		felix->pcs[port] = lynx;
 
 		dev_info(dev, "Found PCS at internal MDIO address %d\n", addr);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vsc9953_mdio_bus_free(struct ocelot *ocelot)
-{
-	struct felix *felix = ocelot_to_felix(ocelot);
-	int port;
+अटल व्योम vsc9953_mdio_bus_मुक्त(काष्ठा ocelot *ocelot)
+अणु
+	काष्ठा felix *felix = ocelot_to_felix(ocelot);
+	पूर्णांक port;
 
-	for (port = 0; port < ocelot->num_phys_ports; port++) {
-		struct lynx_pcs *pcs = felix->pcs[port];
+	क्रम (port = 0; port < ocelot->num_phys_ports; port++) अणु
+		काष्ठा lynx_pcs *pcs = felix->pcs[port];
 
-		if (!pcs)
-			continue;
+		अगर (!pcs)
+			जारी;
 
-		mdio_device_free(pcs->mdio);
+		mdio_device_मुक्त(pcs->mdio);
 		lynx_pcs_destroy(pcs);
-	}
-	mdiobus_unregister(felix->imdio);
-}
+	पूर्ण
+	mdiobus_unरेजिस्टर(felix->imdio);
+पूर्ण
 
-static const struct felix_info seville_info_vsc9953 = {
+अटल स्थिर काष्ठा felix_info seville_info_vsc9953 = अणु
 	.target_io_res		= vsc9953_target_io_res,
 	.port_io_res		= vsc9953_port_io_res,
 	.regfields		= vsc9953_regfields,
@@ -1178,95 +1179,95 @@ static const struct felix_info seville_info_vsc9953 = {
 	.num_ports		= 10,
 	.num_tx_queues		= OCELOT_NUM_TC,
 	.mdio_bus_alloc		= vsc9953_mdio_bus_alloc,
-	.mdio_bus_free		= vsc9953_mdio_bus_free,
+	.mdio_bus_मुक्त		= vsc9953_mdio_bus_मुक्त,
 	.phylink_validate	= vsc9953_phylink_validate,
 	.prevalidate_phy_mode	= vsc9953_prevalidate_phy_mode,
-};
+पूर्ण;
 
-static int seville_probe(struct platform_device *pdev)
-{
-	struct dsa_switch *ds;
-	struct ocelot *ocelot;
-	struct resource *res;
-	struct felix *felix;
-	int err;
+अटल पूर्णांक seville_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dsa_चयन *ds;
+	काष्ठा ocelot *ocelot;
+	काष्ठा resource *res;
+	काष्ठा felix *felix;
+	पूर्णांक err;
 
-	felix = kzalloc(sizeof(struct felix), GFP_KERNEL);
-	if (!felix) {
+	felix = kzalloc(माप(काष्ठा felix), GFP_KERNEL);
+	अगर (!felix) अणु
 		err = -ENOMEM;
 		dev_err(&pdev->dev, "Failed to allocate driver memory\n");
-		goto err_alloc_felix;
-	}
+		जाओ err_alloc_felix;
+	पूर्ण
 
-	platform_set_drvdata(pdev, felix);
+	platक्रमm_set_drvdata(pdev, felix);
 
 	ocelot = &felix->ocelot;
 	ocelot->dev = &pdev->dev;
 	ocelot->num_flooding_pgids = 1;
 	felix->info = &seville_info_vsc9953;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	felix->switch_base = res->start;
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	felix->चयन_base = res->start;
 
-	ds = kzalloc(sizeof(struct dsa_switch), GFP_KERNEL);
-	if (!ds) {
+	ds = kzalloc(माप(काष्ठा dsa_चयन), GFP_KERNEL);
+	अगर (!ds) अणु
 		err = -ENOMEM;
 		dev_err(&pdev->dev, "Failed to allocate DSA switch\n");
-		goto err_alloc_ds;
-	}
+		जाओ err_alloc_ds;
+	पूर्ण
 
 	ds->dev = &pdev->dev;
 	ds->num_ports = felix->info->num_ports;
-	ds->ops = &felix_switch_ops;
+	ds->ops = &felix_चयन_ops;
 	ds->priv = ocelot;
 	felix->ds = ds;
 	felix->tag_proto = DSA_TAG_PROTO_SEVILLE;
 
-	err = dsa_register_switch(ds);
-	if (err) {
+	err = dsa_रेजिस्टर_चयन(ds);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to register DSA switch: %d\n", err);
-		goto err_register_ds;
-	}
+		जाओ err_रेजिस्टर_ds;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_register_ds:
-	kfree(ds);
+err_रेजिस्टर_ds:
+	kमुक्त(ds);
 err_alloc_ds:
 err_alloc_felix:
-	kfree(felix);
-	return err;
-}
+	kमुक्त(felix);
+	वापस err;
+पूर्ण
 
-static int seville_remove(struct platform_device *pdev)
-{
-	struct felix *felix;
+अटल पूर्णांक seville_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा felix *felix;
 
-	felix = platform_get_drvdata(pdev);
+	felix = platक्रमm_get_drvdata(pdev);
 
-	dsa_unregister_switch(felix->ds);
+	dsa_unरेजिस्टर_चयन(felix->ds);
 
-	kfree(felix->ds);
-	kfree(felix);
+	kमुक्त(felix->ds);
+	kमुक्त(felix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id seville_of_match[] = {
-	{ .compatible = "mscc,vsc9953-switch" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id seville_of_match[] = अणु
+	अणु .compatible = "mscc,vsc9953-switch" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, seville_of_match);
 
-static struct platform_driver seville_vsc9953_driver = {
+अटल काष्ठा platक्रमm_driver seville_vsc9953_driver = अणु
 	.probe		= seville_probe,
-	.remove		= seville_remove,
-	.driver = {
+	.हटाओ		= seville_हटाओ,
+	.driver = अणु
 		.name		= "mscc_seville",
 		.of_match_table	= of_match_ptr(seville_of_match),
-	},
-};
-module_platform_driver(seville_vsc9953_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(seville_vsc9953_driver);
 
 MODULE_DESCRIPTION("Seville Switch driver");
 MODULE_LICENSE("GPL v2");

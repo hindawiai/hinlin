@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_TC_CTINFO_H
-#define __UAPI_TC_CTINFO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __UAPI_TC_CTINFO_H
+#घोषणा __UAPI_TC_CTINFO_H
 
-#include <linux/types.h>
-#include <linux/pkt_cls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pkt_cls.h>
 
-struct tc_ctinfo {
+काष्ठा tc_ctinfo अणु
 	tc_gen;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_CTINFO_UNSPEC,
 	TCA_CTINFO_PAD,
 	TCA_CTINFO_TM,
@@ -22,8 +23,8 @@ enum {
 	TCA_CTINFO_STATS_DSCP_ERROR,
 	TCA_CTINFO_STATS_CPMARK_SET,
 	__TCA_CTINFO_MAX
-};
+पूर्ण;
 
-#define TCA_CTINFO_MAX (__TCA_CTINFO_MAX - 1)
+#घोषणा TCA_CTINFO_MAX (__TCA_CTINFO_MAX - 1)
 
-#endif
+#पूर्ण_अगर

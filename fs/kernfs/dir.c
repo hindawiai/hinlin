@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * fs/kernfs/dir.c - kernfs directory implementation
  *
@@ -7,94 +8,94 @@
  * Copyright (c) 2007, 2013 Tejun Heo <tj@kernel.org>
  */
 
-#include <linux/sched.h>
-#include <linux/fs.h>
-#include <linux/namei.h>
-#include <linux/idr.h>
-#include <linux/slab.h>
-#include <linux/security.h>
-#include <linux/hash.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/security.h>
+#समावेश <linux/hash.h>
 
-#include "kernfs-internal.h"
+#समावेश "kernfs-internal.h"
 
 DEFINE_MUTEX(kernfs_mutex);
-static DEFINE_SPINLOCK(kernfs_rename_lock);	/* kn->parent and ->name */
-static char kernfs_pr_cont_buf[PATH_MAX];	/* protected by rename_lock */
-static DEFINE_SPINLOCK(kernfs_idr_lock);	/* root->ino_idr */
+अटल DEFINE_SPINLOCK(kernfs_नाम_lock);	/* kn->parent and ->name */
+अटल अक्षर kernfs_pr_cont_buf[PATH_MAX];	/* रक्षित by नाम_lock */
+अटल DEFINE_SPINLOCK(kernfs_idr_lock);	/* root->ino_idr */
 
-#define rb_to_kn(X) rb_entry((X), struct kernfs_node, rb)
+#घोषणा rb_to_kn(X) rb_entry((X), काष्ठा kernfs_node, rb)
 
-static bool kernfs_active(struct kernfs_node *kn)
-{
-	lockdep_assert_held(&kernfs_mutex);
-	return atomic_read(&kn->active) >= 0;
-}
+अटल bool kernfs_active(काष्ठा kernfs_node *kn)
+अणु
+	lockdep_निश्चित_held(&kernfs_mutex);
+	वापस atomic_पढ़ो(&kn->active) >= 0;
+पूर्ण
 
-static bool kernfs_lockdep(struct kernfs_node *kn)
-{
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	return kn->flags & KERNFS_LOCKDEP;
-#else
-	return false;
-#endif
-}
+अटल bool kernfs_lockdep(काष्ठा kernfs_node *kn)
+अणु
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	वापस kn->flags & KERNFS_LOCKDEP;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
-static int kernfs_name_locked(struct kernfs_node *kn, char *buf, size_t buflen)
-{
-	if (!kn)
-		return strlcpy(buf, "(null)", buflen);
+अटल पूर्णांक kernfs_name_locked(काष्ठा kernfs_node *kn, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	अगर (!kn)
+		वापस strlcpy(buf, "(null)", buflen);
 
-	return strlcpy(buf, kn->parent ? kn->name : "/", buflen);
-}
+	वापस strlcpy(buf, kn->parent ? kn->name : "/", buflen);
+पूर्ण
 
 /* kernfs_node_depth - compute depth from @from to @to */
-static size_t kernfs_depth(struct kernfs_node *from, struct kernfs_node *to)
-{
-	size_t depth = 0;
+अटल माप_प्रकार kernfs_depth(काष्ठा kernfs_node *from, काष्ठा kernfs_node *to)
+अणु
+	माप_प्रकार depth = 0;
 
-	while (to->parent && to != from) {
+	जबतक (to->parent && to != from) अणु
 		depth++;
 		to = to->parent;
-	}
-	return depth;
-}
+	पूर्ण
+	वापस depth;
+पूर्ण
 
-static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
-						  struct kernfs_node *b)
-{
-	size_t da, db;
-	struct kernfs_root *ra = kernfs_root(a), *rb = kernfs_root(b);
+अटल काष्ठा kernfs_node *kernfs_common_ancestor(काष्ठा kernfs_node *a,
+						  काष्ठा kernfs_node *b)
+अणु
+	माप_प्रकार da, db;
+	काष्ठा kernfs_root *ra = kernfs_root(a), *rb = kernfs_root(b);
 
-	if (ra != rb)
-		return NULL;
+	अगर (ra != rb)
+		वापस शून्य;
 
 	da = kernfs_depth(ra->kn, a);
 	db = kernfs_depth(rb->kn, b);
 
-	while (da > db) {
+	जबतक (da > db) अणु
 		a = a->parent;
 		da--;
-	}
-	while (db > da) {
+	पूर्ण
+	जबतक (db > da) अणु
 		b = b->parent;
 		db--;
-	}
+	पूर्ण
 
-	/* worst case b and a will be the same at root */
-	while (b != a) {
+	/* worst हाल b and a will be the same at root */
+	जबतक (b != a) अणु
 		b = b->parent;
 		a = a->parent;
-	}
+	पूर्ण
 
-	return a;
-}
+	वापस a;
+पूर्ण
 
 /**
- * kernfs_path_from_node_locked - find a pseudo-absolute path to @kn_to,
+ * kernfs_path_from_node_locked - find a pseuकरो-असलolute path to @kn_to,
  * where kn_from is treated as root of the path.
- * @kn_from: kernfs node which should be treated as root for the path
+ * @kn_from: kernfs node which should be treated as root क्रम the path
  * @kn_to: kernfs node to which path is needed
- * @buf: buffer to copy the path into
+ * @buf: buffer to copy the path पूर्णांकo
  * @buflen: size of @buf
  *
  * We need to handle couple of scenarios here:
@@ -103,7 +104,7 @@ static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
  * kn_to:   /n1/n2/n3/n4/n5
  * result:  /n4/n5
  *
- * [2] when @kn_from is on a different hierarchy and we need to find common
+ * [2] when @kn_from is on a dअगरferent hierarchy and we need to find common
  * ancestor between @kn_from and @kn_to.
  * kn_from: /n1/n2/n3/n4
  * kn_to:   /n1/n2/n5
@@ -113,181 +114,181 @@ static struct kernfs_node *kernfs_common_ancestor(struct kernfs_node *a,
  * kn_to:   /n1/n2/n3         [depth=3]
  * result:  /../..
  *
- * [3] when @kn_to is NULL result will be "(null)"
+ * [3] when @kn_to is शून्य result will be "(null)"
  *
  * Returns the length of the full path.  If the full length is equal to or
  * greater than @buflen, @buf contains the truncated path with the trailing
- * '\0'.  On error, -errno is returned.
+ * '\0'.  On error, -त्रुटि_सं is वापसed.
  */
-static int kernfs_path_from_node_locked(struct kernfs_node *kn_to,
-					struct kernfs_node *kn_from,
-					char *buf, size_t buflen)
-{
-	struct kernfs_node *kn, *common;
-	const char parent_str[] = "/..";
-	size_t depth_from, depth_to, len = 0;
-	int i, j;
+अटल पूर्णांक kernfs_path_from_node_locked(काष्ठा kernfs_node *kn_to,
+					काष्ठा kernfs_node *kn_from,
+					अक्षर *buf, माप_प्रकार buflen)
+अणु
+	काष्ठा kernfs_node *kn, *common;
+	स्थिर अक्षर parent_str[] = "/..";
+	माप_प्रकार depth_from, depth_to, len = 0;
+	पूर्णांक i, j;
 
-	if (!kn_to)
-		return strlcpy(buf, "(null)", buflen);
+	अगर (!kn_to)
+		वापस strlcpy(buf, "(null)", buflen);
 
-	if (!kn_from)
+	अगर (!kn_from)
 		kn_from = kernfs_root(kn_to)->kn;
 
-	if (kn_from == kn_to)
-		return strlcpy(buf, "/", buflen);
+	अगर (kn_from == kn_to)
+		वापस strlcpy(buf, "/", buflen);
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
 	common = kernfs_common_ancestor(kn_from, kn_to);
-	if (WARN_ON(!common))
-		return -EINVAL;
+	अगर (WARN_ON(!common))
+		वापस -EINVAL;
 
 	depth_to = kernfs_depth(common, kn_to);
 	depth_from = kernfs_depth(common, kn_from);
 
 	buf[0] = '\0';
 
-	for (i = 0; i < depth_from; i++)
+	क्रम (i = 0; i < depth_from; i++)
 		len += strlcpy(buf + len, parent_str,
 			       len < buflen ? buflen - len : 0);
 
-	/* Calculate how many bytes we need for the rest */
-	for (i = depth_to - 1; i >= 0; i--) {
-		for (kn = kn_to, j = 0; j < i; j++)
+	/* Calculate how many bytes we need क्रम the rest */
+	क्रम (i = depth_to - 1; i >= 0; i--) अणु
+		क्रम (kn = kn_to, j = 0; j < i; j++)
 			kn = kn->parent;
 		len += strlcpy(buf + len, "/",
 			       len < buflen ? buflen - len : 0);
 		len += strlcpy(buf + len, kn->name,
 			       len < buflen ? buflen - len : 0);
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /**
  * kernfs_name - obtain the name of a given node
- * @kn: kernfs_node of interest
- * @buf: buffer to copy @kn's name into
+ * @kn: kernfs_node of पूर्णांकerest
+ * @buf: buffer to copy @kn's name पूर्णांकo
  * @buflen: size of @buf
  *
- * Copies the name of @kn into @buf of @buflen bytes.  The behavior is
- * similar to strlcpy().  It returns the length of @kn's name and if @buf
+ * Copies the name of @kn पूर्णांकo @buf of @buflen bytes.  The behavior is
+ * similar to strlcpy().  It वापसs the length of @kn's name and अगर @buf
  * isn't long enough, it's filled upto @buflen-1 and nul terminated.
  *
- * Fills buffer with "(null)" if @kn is NULL.
+ * Fills buffer with "(null)" अगर @kn is शून्य.
  *
  * This function can be called from any context.
  */
-int kernfs_name(struct kernfs_node *kn, char *buf, size_t buflen)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक kernfs_name(काष्ठा kernfs_node *kn, अक्षर *buf, माप_प्रकार buflen)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	spin_lock_irqsave(&kernfs_rename_lock, flags);
+	spin_lock_irqsave(&kernfs_नाम_lock, flags);
 	ret = kernfs_name_locked(kn, buf, buflen);
-	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-	return ret;
-}
+	spin_unlock_irqrestore(&kernfs_नाम_lock, flags);
+	वापस ret;
+पूर्ण
 
 /**
  * kernfs_path_from_node - build path of node @to relative to @from.
  * @from: parent kernfs_node relative to which we need to build the path
- * @to: kernfs_node of interest
- * @buf: buffer to copy @to's path into
+ * @to: kernfs_node of पूर्णांकerest
+ * @buf: buffer to copy @to's path पूर्णांकo
  * @buflen: size of @buf
  *
  * Builds @to's path relative to @from in @buf. @from and @to must
  * be on the same kernfs-root. If @from is not parent of @to, then a relative
  * path (which includes '..'s) as needed to reach from @from to @to is
- * returned.
+ * वापसed.
  *
  * Returns the length of the full path.  If the full length is equal to or
  * greater than @buflen, @buf contains the truncated path with the trailing
- * '\0'.  On error, -errno is returned.
+ * '\0'.  On error, -त्रुटि_सं is वापसed.
  */
-int kernfs_path_from_node(struct kernfs_node *to, struct kernfs_node *from,
-			  char *buf, size_t buflen)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक kernfs_path_from_node(काष्ठा kernfs_node *to, काष्ठा kernfs_node *from,
+			  अक्षर *buf, माप_प्रकार buflen)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	spin_lock_irqsave(&kernfs_rename_lock, flags);
+	spin_lock_irqsave(&kernfs_नाम_lock, flags);
 	ret = kernfs_path_from_node_locked(to, from, buf, buflen);
-	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-	return ret;
-}
+	spin_unlock_irqrestore(&kernfs_नाम_lock, flags);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(kernfs_path_from_node);
 
 /**
  * pr_cont_kernfs_name - pr_cont name of a kernfs_node
- * @kn: kernfs_node of interest
+ * @kn: kernfs_node of पूर्णांकerest
  *
  * This function can be called from any context.
  */
-void pr_cont_kernfs_name(struct kernfs_node *kn)
-{
-	unsigned long flags;
+व्योम pr_cont_kernfs_name(काष्ठा kernfs_node *kn)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&kernfs_rename_lock, flags);
+	spin_lock_irqsave(&kernfs_नाम_lock, flags);
 
-	kernfs_name_locked(kn, kernfs_pr_cont_buf, sizeof(kernfs_pr_cont_buf));
+	kernfs_name_locked(kn, kernfs_pr_cont_buf, माप(kernfs_pr_cont_buf));
 	pr_cont("%s", kernfs_pr_cont_buf);
 
-	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-}
+	spin_unlock_irqrestore(&kernfs_नाम_lock, flags);
+पूर्ण
 
 /**
  * pr_cont_kernfs_path - pr_cont path of a kernfs_node
- * @kn: kernfs_node of interest
+ * @kn: kernfs_node of पूर्णांकerest
  *
  * This function can be called from any context.
  */
-void pr_cont_kernfs_path(struct kernfs_node *kn)
-{
-	unsigned long flags;
-	int sz;
+व्योम pr_cont_kernfs_path(काष्ठा kernfs_node *kn)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक sz;
 
-	spin_lock_irqsave(&kernfs_rename_lock, flags);
+	spin_lock_irqsave(&kernfs_नाम_lock, flags);
 
-	sz = kernfs_path_from_node_locked(kn, NULL, kernfs_pr_cont_buf,
-					  sizeof(kernfs_pr_cont_buf));
-	if (sz < 0) {
+	sz = kernfs_path_from_node_locked(kn, शून्य, kernfs_pr_cont_buf,
+					  माप(kernfs_pr_cont_buf));
+	अगर (sz < 0) अणु
 		pr_cont("(error)");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (sz >= sizeof(kernfs_pr_cont_buf)) {
+	अगर (sz >= माप(kernfs_pr_cont_buf)) अणु
 		pr_cont("(name too long)");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pr_cont("%s", kernfs_pr_cont_buf);
 
 out:
-	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
-}
+	spin_unlock_irqrestore(&kernfs_नाम_lock, flags);
+पूर्ण
 
 /**
  * kernfs_get_parent - determine the parent node and pin it
- * @kn: kernfs_node of interest
+ * @kn: kernfs_node of पूर्णांकerest
  *
- * Determines @kn's parent, pins and returns it.  This function can be
+ * Determines @kn's parent, pins and वापसs it.  This function can be
  * called from any context.
  */
-struct kernfs_node *kernfs_get_parent(struct kernfs_node *kn)
-{
-	struct kernfs_node *parent;
-	unsigned long flags;
+काष्ठा kernfs_node *kernfs_get_parent(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा kernfs_node *parent;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&kernfs_rename_lock, flags);
+	spin_lock_irqsave(&kernfs_नाम_lock, flags);
 	parent = kn->parent;
 	kernfs_get(parent);
-	spin_unlock_irqrestore(&kernfs_rename_lock, flags);
+	spin_unlock_irqrestore(&kernfs_नाम_lock, flags);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 
 /**
  *	kernfs_name_hash
@@ -296,47 +297,47 @@ struct kernfs_node *kernfs_get_parent(struct kernfs_node *kn)
  *
  *	Returns 31 bit hash of ns + name (so it fits in an off_t )
  */
-static unsigned int kernfs_name_hash(const char *name, const void *ns)
-{
-	unsigned long hash = init_name_hash(ns);
-	unsigned int len = strlen(name);
-	while (len--)
+अटल अचिन्हित पूर्णांक kernfs_name_hash(स्थिर अक्षर *name, स्थिर व्योम *ns)
+अणु
+	अचिन्हित दीर्घ hash = init_name_hash(ns);
+	अचिन्हित पूर्णांक len = म_माप(name);
+	जबतक (len--)
 		hash = partial_name_hash(*name++, hash);
 	hash = end_name_hash(hash);
 	hash &= 0x7fffffffU;
-	/* Reserve hash numbers 0, 1 and INT_MAX for magic directory entries */
-	if (hash < 2)
+	/* Reserve hash numbers 0, 1 and पूर्णांक_उच्च क्रम magic directory entries */
+	अगर (hash < 2)
 		hash += 2;
-	if (hash >= INT_MAX)
-		hash = INT_MAX - 1;
-	return hash;
-}
+	अगर (hash >= पूर्णांक_उच्च)
+		hash = पूर्णांक_उच्च - 1;
+	वापस hash;
+पूर्ण
 
-static int kernfs_name_compare(unsigned int hash, const char *name,
-			       const void *ns, const struct kernfs_node *kn)
-{
-	if (hash < kn->hash)
-		return -1;
-	if (hash > kn->hash)
-		return 1;
-	if (ns < kn->ns)
-		return -1;
-	if (ns > kn->ns)
-		return 1;
-	return strcmp(name, kn->name);
-}
+अटल पूर्णांक kernfs_name_compare(अचिन्हित पूर्णांक hash, स्थिर अक्षर *name,
+			       स्थिर व्योम *ns, स्थिर काष्ठा kernfs_node *kn)
+अणु
+	अगर (hash < kn->hash)
+		वापस -1;
+	अगर (hash > kn->hash)
+		वापस 1;
+	अगर (ns < kn->ns)
+		वापस -1;
+	अगर (ns > kn->ns)
+		वापस 1;
+	वापस म_भेद(name, kn->name);
+पूर्ण
 
-static int kernfs_sd_compare(const struct kernfs_node *left,
-			     const struct kernfs_node *right)
-{
-	return kernfs_name_compare(left->hash, left->name, left->ns, right);
-}
+अटल पूर्णांक kernfs_sd_compare(स्थिर काष्ठा kernfs_node *left,
+			     स्थिर काष्ठा kernfs_node *right)
+अणु
+	वापस kernfs_name_compare(left->hash, left->name, left->ns, right);
+पूर्ण
 
 /**
- *	kernfs_link_sibling - link kernfs_node into sibling rbtree
- *	@kn: kernfs_node of interest
+ *	kernfs_link_sibling - link kernfs_node पूर्णांकo sibling rbtree
+ *	@kn: kernfs_node of पूर्णांकerest
  *
- *	Link @kn into its sibling rbtree which starts from
+ *	Link @kn पूर्णांकo its sibling rbtree which starts from
  *	@kn->parent->dir.children.
  *
  *	Locking:
@@ -345,299 +346,299 @@ static int kernfs_sd_compare(const struct kernfs_node *left,
  *	RETURNS:
  *	0 on susccess -EEXIST on failure.
  */
-static int kernfs_link_sibling(struct kernfs_node *kn)
-{
-	struct rb_node **node = &kn->parent->dir.children.rb_node;
-	struct rb_node *parent = NULL;
+अटल पूर्णांक kernfs_link_sibling(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा rb_node **node = &kn->parent->dir.children.rb_node;
+	काष्ठा rb_node *parent = शून्य;
 
-	while (*node) {
-		struct kernfs_node *pos;
-		int result;
+	जबतक (*node) अणु
+		काष्ठा kernfs_node *pos;
+		पूर्णांक result;
 
 		pos = rb_to_kn(*node);
 		parent = *node;
 		result = kernfs_sd_compare(kn, pos);
-		if (result < 0)
+		अगर (result < 0)
 			node = &pos->rb.rb_left;
-		else if (result > 0)
+		अन्यथा अगर (result > 0)
 			node = &pos->rb.rb_right;
-		else
-			return -EEXIST;
-	}
+		अन्यथा
+			वापस -EEXIST;
+	पूर्ण
 
 	/* add new node and rebalance the tree */
 	rb_link_node(&kn->rb, parent, node);
 	rb_insert_color(&kn->rb, &kn->parent->dir.children);
 
 	/* successfully added, account subdir number */
-	if (kernfs_type(kn) == KERNFS_DIR)
+	अगर (kernfs_type(kn) == KERNFS_सूची)
 		kn->parent->dir.subdirs++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	kernfs_unlink_sibling - unlink kernfs_node from sibling rbtree
- *	@kn: kernfs_node of interest
+ *	@kn: kernfs_node of पूर्णांकerest
  *
  *	Try to unlink @kn from its sibling rbtree which starts from
- *	kn->parent->dir.children.  Returns %true if @kn was actually
- *	removed, %false if @kn wasn't on the rbtree.
+ *	kn->parent->dir.children.  Returns %true अगर @kn was actually
+ *	हटाओd, %false अगर @kn wasn't on the rbtree.
  *
  *	Locking:
  *	mutex_lock(kernfs_mutex)
  */
-static bool kernfs_unlink_sibling(struct kernfs_node *kn)
-{
-	if (RB_EMPTY_NODE(&kn->rb))
-		return false;
+अटल bool kernfs_unlink_sibling(काष्ठा kernfs_node *kn)
+अणु
+	अगर (RB_EMPTY_NODE(&kn->rb))
+		वापस false;
 
-	if (kernfs_type(kn) == KERNFS_DIR)
+	अगर (kernfs_type(kn) == KERNFS_सूची)
 		kn->parent->dir.subdirs--;
 
 	rb_erase(&kn->rb, &kn->parent->dir.children);
 	RB_CLEAR_NODE(&kn->rb);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  *	kernfs_get_active - get an active reference to kernfs_node
  *	@kn: kernfs_node to get an active reference to
  *
- *	Get an active reference of @kn.  This function is noop if @kn
- *	is NULL.
+ *	Get an active reference of @kn.  This function is noop अगर @kn
+ *	is शून्य.
  *
  *	RETURNS:
- *	Pointer to @kn on success, NULL on failure.
+ *	Poपूर्णांकer to @kn on success, शून्य on failure.
  */
-struct kernfs_node *kernfs_get_active(struct kernfs_node *kn)
-{
-	if (unlikely(!kn))
-		return NULL;
+काष्ठा kernfs_node *kernfs_get_active(काष्ठा kernfs_node *kn)
+अणु
+	अगर (unlikely(!kn))
+		वापस शून्य;
 
-	if (!atomic_inc_unless_negative(&kn->active))
-		return NULL;
+	अगर (!atomic_inc_unless_negative(&kn->active))
+		वापस शून्य;
 
-	if (kernfs_lockdep(kn))
-		rwsem_acquire_read(&kn->dep_map, 0, 1, _RET_IP_);
-	return kn;
-}
+	अगर (kernfs_lockdep(kn))
+		rwsem_acquire_पढ़ो(&kn->dep_map, 0, 1, _RET_IP_);
+	वापस kn;
+पूर्ण
 
 /**
  *	kernfs_put_active - put an active reference to kernfs_node
  *	@kn: kernfs_node to put an active reference to
  *
- *	Put an active reference to @kn.  This function is noop if @kn
- *	is NULL.
+ *	Put an active reference to @kn.  This function is noop अगर @kn
+ *	is शून्य.
  */
-void kernfs_put_active(struct kernfs_node *kn)
-{
-	int v;
+व्योम kernfs_put_active(काष्ठा kernfs_node *kn)
+अणु
+	पूर्णांक v;
 
-	if (unlikely(!kn))
-		return;
+	अगर (unlikely(!kn))
+		वापस;
 
-	if (kernfs_lockdep(kn))
+	अगर (kernfs_lockdep(kn))
 		rwsem_release(&kn->dep_map, _RET_IP_);
-	v = atomic_dec_return(&kn->active);
-	if (likely(v != KN_DEACTIVATED_BIAS))
-		return;
+	v = atomic_dec_वापस(&kn->active);
+	अगर (likely(v != KN_DEACTIVATED_BIAS))
+		वापस;
 
-	wake_up_all(&kernfs_root(kn)->deactivate_waitq);
-}
+	wake_up_all(&kernfs_root(kn)->deactivate_रुकोq);
+पूर्ण
 
 /**
  * kernfs_drain - drain kernfs_node
  * @kn: kernfs_node to drain
  *
  * Drain existing usages and nuke all existing mmaps of @kn.  Mutiple
- * removers may invoke this function concurrently on @kn and all will
- * return after draining is complete.
+ * हटाओrs may invoke this function concurrently on @kn and all will
+ * वापस after draining is complete.
  */
-static void kernfs_drain(struct kernfs_node *kn)
+अटल व्योम kernfs_drain(काष्ठा kernfs_node *kn)
 	__releases(&kernfs_mutex) __acquires(&kernfs_mutex)
-{
-	struct kernfs_root *root = kernfs_root(kn);
+अणु
+	काष्ठा kernfs_root *root = kernfs_root(kn);
 
-	lockdep_assert_held(&kernfs_mutex);
+	lockdep_निश्चित_held(&kernfs_mutex);
 	WARN_ON_ONCE(kernfs_active(kn));
 
 	mutex_unlock(&kernfs_mutex);
 
-	if (kernfs_lockdep(kn)) {
+	अगर (kernfs_lockdep(kn)) अणु
 		rwsem_acquire(&kn->dep_map, 0, 0, _RET_IP_);
-		if (atomic_read(&kn->active) != KN_DEACTIVATED_BIAS)
+		अगर (atomic_पढ़ो(&kn->active) != KN_DEACTIVATED_BIAS)
 			lock_contended(&kn->dep_map, _RET_IP_);
-	}
+	पूर्ण
 
-	/* but everyone should wait for draining */
-	wait_event(root->deactivate_waitq,
-		   atomic_read(&kn->active) == KN_DEACTIVATED_BIAS);
+	/* but everyone should रुको क्रम draining */
+	रुको_event(root->deactivate_रुकोq,
+		   atomic_पढ़ो(&kn->active) == KN_DEACTIVATED_BIAS);
 
-	if (kernfs_lockdep(kn)) {
+	अगर (kernfs_lockdep(kn)) अणु
 		lock_acquired(&kn->dep_map, _RET_IP_);
 		rwsem_release(&kn->dep_map, _RET_IP_);
-	}
+	पूर्ण
 
-	kernfs_drain_open_files(kn);
+	kernfs_drain_खोलो_files(kn);
 
 	mutex_lock(&kernfs_mutex);
-}
+पूर्ण
 
 /**
  * kernfs_get - get a reference count on a kernfs_node
  * @kn: the target kernfs_node
  */
-void kernfs_get(struct kernfs_node *kn)
-{
-	if (kn) {
-		WARN_ON(!atomic_read(&kn->count));
+व्योम kernfs_get(काष्ठा kernfs_node *kn)
+अणु
+	अगर (kn) अणु
+		WARN_ON(!atomic_पढ़ो(&kn->count));
 		atomic_inc(&kn->count);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(kernfs_get);
 
 /**
  * kernfs_put - put a reference count on a kernfs_node
  * @kn: the target kernfs_node
  *
- * Put a reference count of @kn and destroy it if it reached zero.
+ * Put a reference count of @kn and destroy it अगर it reached zero.
  */
-void kernfs_put(struct kernfs_node *kn)
-{
-	struct kernfs_node *parent;
-	struct kernfs_root *root;
+व्योम kernfs_put(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा kernfs_node *parent;
+	काष्ठा kernfs_root *root;
 
-	if (!kn || !atomic_dec_and_test(&kn->count))
-		return;
+	अगर (!kn || !atomic_dec_and_test(&kn->count))
+		वापस;
 	root = kernfs_root(kn);
  repeat:
 	/*
-	 * Moving/renaming is always done while holding reference.
+	 * Moving/renaming is always करोne जबतक holding reference.
 	 * kn->parent won't change beneath us.
 	 */
 	parent = kn->parent;
 
-	WARN_ONCE(atomic_read(&kn->active) != KN_DEACTIVATED_BIAS,
+	WARN_ONCE(atomic_पढ़ो(&kn->active) != KN_DEACTIVATED_BIAS,
 		  "kernfs_put: %s/%s: released with incorrect active_ref %d\n",
-		  parent ? parent->name : "", kn->name, atomic_read(&kn->active));
+		  parent ? parent->name : "", kn->name, atomic_पढ़ो(&kn->active));
 
-	if (kernfs_type(kn) == KERNFS_LINK)
+	अगर (kernfs_type(kn) == KERNFS_LINK)
 		kernfs_put(kn->symlink.target_kn);
 
-	kfree_const(kn->name);
+	kमुक्त_स्थिर(kn->name);
 
-	if (kn->iattr) {
-		simple_xattrs_free(&kn->iattr->xattrs);
-		kmem_cache_free(kernfs_iattrs_cache, kn->iattr);
-	}
+	अगर (kn->iattr) अणु
+		simple_xattrs_मुक्त(&kn->iattr->xattrs);
+		kmem_cache_मुक्त(kernfs_iattrs_cache, kn->iattr);
+	पूर्ण
 	spin_lock(&kernfs_idr_lock);
-	idr_remove(&root->ino_idr, (u32)kernfs_ino(kn));
+	idr_हटाओ(&root->ino_idr, (u32)kernfs_ino(kn));
 	spin_unlock(&kernfs_idr_lock);
-	kmem_cache_free(kernfs_node_cache, kn);
+	kmem_cache_मुक्त(kernfs_node_cache, kn);
 
 	kn = parent;
-	if (kn) {
-		if (atomic_dec_and_test(&kn->count))
-			goto repeat;
-	} else {
-		/* just released the root kn, free @root too */
+	अगर (kn) अणु
+		अगर (atomic_dec_and_test(&kn->count))
+			जाओ repeat;
+	पूर्ण अन्यथा अणु
+		/* just released the root kn, मुक्त @root too */
 		idr_destroy(&root->ino_idr);
-		kfree(root);
-	}
-}
+		kमुक्त(root);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(kernfs_put);
 
-static int kernfs_dop_revalidate(struct dentry *dentry, unsigned int flags)
-{
-	struct kernfs_node *kn;
+अटल पूर्णांक kernfs_करोp_revalidate(काष्ठा dentry *dentry, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा kernfs_node *kn;
 
-	if (flags & LOOKUP_RCU)
-		return -ECHILD;
+	अगर (flags & LOOKUP_RCU)
+		वापस -ECHILD;
 
-	/* Always perform fresh lookup for negatives */
-	if (d_really_is_negative(dentry))
-		goto out_bad_unlocked;
+	/* Always perक्रमm fresh lookup क्रम negatives */
+	अगर (d_really_is_negative(dentry))
+		जाओ out_bad_unlocked;
 
 	kn = kernfs_dentry_node(dentry);
 	mutex_lock(&kernfs_mutex);
 
 	/* The kernfs node has been deactivated */
-	if (!kernfs_active(kn))
-		goto out_bad;
+	अगर (!kernfs_active(kn))
+		जाओ out_bad;
 
 	/* The kernfs node has been moved? */
-	if (kernfs_dentry_node(dentry->d_parent) != kn->parent)
-		goto out_bad;
+	अगर (kernfs_dentry_node(dentry->d_parent) != kn->parent)
+		जाओ out_bad;
 
-	/* The kernfs node has been renamed */
-	if (strcmp(dentry->d_name.name, kn->name) != 0)
-		goto out_bad;
+	/* The kernfs node has been नामd */
+	अगर (म_भेद(dentry->d_name.name, kn->name) != 0)
+		जाओ out_bad;
 
-	/* The kernfs node has been moved to a different namespace */
-	if (kn->parent && kernfs_ns_enabled(kn->parent) &&
+	/* The kernfs node has been moved to a dअगरferent namespace */
+	अगर (kn->parent && kernfs_ns_enabled(kn->parent) &&
 	    kernfs_info(dentry->d_sb)->ns != kn->ns)
-		goto out_bad;
+		जाओ out_bad;
 
 	mutex_unlock(&kernfs_mutex);
-	return 1;
+	वापस 1;
 out_bad:
 	mutex_unlock(&kernfs_mutex);
 out_bad_unlocked:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct dentry_operations kernfs_dops = {
-	.d_revalidate	= kernfs_dop_revalidate,
-};
+स्थिर काष्ठा dentry_operations kernfs_करोps = अणु
+	.d_revalidate	= kernfs_करोp_revalidate,
+पूर्ण;
 
 /**
  * kernfs_node_from_dentry - determine kernfs_node associated with a dentry
  * @dentry: the dentry in question
  *
  * Return the kernfs_node associated with @dentry.  If @dentry is not a
- * kernfs one, %NULL is returned.
+ * kernfs one, %शून्य is वापसed.
  *
- * While the returned kernfs_node will stay accessible as long as @dentry
- * is accessible, the returned node can be in any state and the caller is
- * fully responsible for determining what's accessible.
+ * While the वापसed kernfs_node will stay accessible as दीर्घ as @dentry
+ * is accessible, the वापसed node can be in any state and the caller is
+ * fully responsible क्रम determining what's accessible.
  */
-struct kernfs_node *kernfs_node_from_dentry(struct dentry *dentry)
-{
-	if (dentry->d_sb->s_op == &kernfs_sops)
-		return kernfs_dentry_node(dentry);
-	return NULL;
-}
+काष्ठा kernfs_node *kernfs_node_from_dentry(काष्ठा dentry *dentry)
+अणु
+	अगर (dentry->d_sb->s_op == &kernfs_sops)
+		वापस kernfs_dentry_node(dentry);
+	वापस शून्य;
+पूर्ण
 
-static struct kernfs_node *__kernfs_new_node(struct kernfs_root *root,
-					     struct kernfs_node *parent,
-					     const char *name, umode_t mode,
+अटल काष्ठा kernfs_node *__kernfs_new_node(काष्ठा kernfs_root *root,
+					     काष्ठा kernfs_node *parent,
+					     स्थिर अक्षर *name, umode_t mode,
 					     kuid_t uid, kgid_t gid,
-					     unsigned flags)
-{
-	struct kernfs_node *kn;
+					     अचिन्हित flags)
+अणु
+	काष्ठा kernfs_node *kn;
 	u32 id_highbits;
-	int ret;
+	पूर्णांक ret;
 
-	name = kstrdup_const(name, GFP_KERNEL);
-	if (!name)
-		return NULL;
+	name = kstrdup_स्थिर(name, GFP_KERNEL);
+	अगर (!name)
+		वापस शून्य;
 
 	kn = kmem_cache_zalloc(kernfs_node_cache, GFP_KERNEL);
-	if (!kn)
-		goto err_out1;
+	अगर (!kn)
+		जाओ err_out1;
 
 	idr_preload(GFP_KERNEL);
 	spin_lock(&kernfs_idr_lock);
 	ret = idr_alloc_cyclic(&root->ino_idr, kn, 1, 0, GFP_ATOMIC);
-	if (ret >= 0 && ret < root->last_id_lowbits)
+	अगर (ret >= 0 && ret < root->last_id_lowbits)
 		root->id_highbits++;
 	id_highbits = root->id_highbits;
 	root->last_id_lowbits = ret;
 	spin_unlock(&kernfs_idr_lock);
 	idr_preload_end();
-	if (ret < 0)
-		goto err_out2;
+	अगर (ret < 0)
+		जाओ err_out2;
 
 	kn->id = (u64)id_highbits << 32 | ret;
 
@@ -649,50 +650,50 @@ static struct kernfs_node *__kernfs_new_node(struct kernfs_root *root,
 	kn->mode = mode;
 	kn->flags = flags;
 
-	if (!uid_eq(uid, GLOBAL_ROOT_UID) || !gid_eq(gid, GLOBAL_ROOT_GID)) {
-		struct iattr iattr = {
+	अगर (!uid_eq(uid, GLOBAL_ROOT_UID) || !gid_eq(gid, GLOBAL_ROOT_GID)) अणु
+		काष्ठा iattr iattr = अणु
 			.ia_valid = ATTR_UID | ATTR_GID,
 			.ia_uid = uid,
 			.ia_gid = gid,
-		};
+		पूर्ण;
 
 		ret = __kernfs_setattr(kn, &iattr);
-		if (ret < 0)
-			goto err_out3;
-	}
+		अगर (ret < 0)
+			जाओ err_out3;
+	पूर्ण
 
-	if (parent) {
+	अगर (parent) अणु
 		ret = security_kernfs_init_security(parent, kn);
-		if (ret)
-			goto err_out3;
-	}
+		अगर (ret)
+			जाओ err_out3;
+	पूर्ण
 
-	return kn;
+	वापस kn;
 
  err_out3:
-	idr_remove(&root->ino_idr, (u32)kernfs_ino(kn));
+	idr_हटाओ(&root->ino_idr, (u32)kernfs_ino(kn));
  err_out2:
-	kmem_cache_free(kernfs_node_cache, kn);
+	kmem_cache_मुक्त(kernfs_node_cache, kn);
  err_out1:
-	kfree_const(name);
-	return NULL;
-}
+	kमुक्त_स्थिर(name);
+	वापस शून्य;
+पूर्ण
 
-struct kernfs_node *kernfs_new_node(struct kernfs_node *parent,
-				    const char *name, umode_t mode,
+काष्ठा kernfs_node *kernfs_new_node(काष्ठा kernfs_node *parent,
+				    स्थिर अक्षर *name, umode_t mode,
 				    kuid_t uid, kgid_t gid,
-				    unsigned flags)
-{
-	struct kernfs_node *kn;
+				    अचिन्हित flags)
+अणु
+	काष्ठा kernfs_node *kn;
 
 	kn = __kernfs_new_node(kernfs_root(parent), parent,
 			       name, mode, uid, gid, flags);
-	if (kn) {
+	अगर (kn) अणु
 		kernfs_get(parent);
 		kn->parent = parent;
-	}
-	return kn;
-}
+	पूर्ण
+	वापस kn;
+पूर्ण
 
 /*
  * kernfs_find_and_get_node_by_id - get kernfs_node from node id
@@ -703,277 +704,277 @@ struct kernfs_node *kernfs_new_node(struct kernfs_node *parent,
  * zero, all generations are matched.
  *
  * RETURNS:
- * NULL on failure. Return a kernfs node with reference counter incremented
+ * शून्य on failure. Return a kernfs node with reference counter incremented
  */
-struct kernfs_node *kernfs_find_and_get_node_by_id(struct kernfs_root *root,
+काष्ठा kernfs_node *kernfs_find_and_get_node_by_id(काष्ठा kernfs_root *root,
 						   u64 id)
-{
-	struct kernfs_node *kn;
+अणु
+	काष्ठा kernfs_node *kn;
 	ino_t ino = kernfs_id_ino(id);
 	u32 gen = kernfs_id_gen(id);
 
 	spin_lock(&kernfs_idr_lock);
 
 	kn = idr_find(&root->ino_idr, (u32)ino);
-	if (!kn)
-		goto err_unlock;
+	अगर (!kn)
+		जाओ err_unlock;
 
-	if (sizeof(ino_t) >= sizeof(u64)) {
+	अगर (माप(ino_t) >= माप(u64)) अणु
 		/* we looked up with the low 32bits, compare the whole */
-		if (kernfs_ino(kn) != ino)
-			goto err_unlock;
-	} else {
+		अगर (kernfs_ino(kn) != ino)
+			जाओ err_unlock;
+	पूर्ण अन्यथा अणु
 		/* 0 matches all generations */
-		if (unlikely(gen && kernfs_gen(kn) != gen))
-			goto err_unlock;
-	}
+		अगर (unlikely(gen && kernfs_gen(kn) != gen))
+			जाओ err_unlock;
+	पूर्ण
 
 	/*
-	 * ACTIVATED is protected with kernfs_mutex but it was clear when
+	 * ACTIVATED is रक्षित with kernfs_mutex but it was clear when
 	 * @kn was added to idr and we just wanna see it set.  No need to
 	 * grab kernfs_mutex.
 	 */
-	if (unlikely(!(kn->flags & KERNFS_ACTIVATED) ||
+	अगर (unlikely(!(kn->flags & KERNFS_ACTIVATED) ||
 		     !atomic_inc_not_zero(&kn->count)))
-		goto err_unlock;
+		जाओ err_unlock;
 
 	spin_unlock(&kernfs_idr_lock);
-	return kn;
+	वापस kn;
 err_unlock:
 	spin_unlock(&kernfs_idr_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  *	kernfs_add_one - add kernfs_node to parent without warning
  *	@kn: kernfs_node to be added
  *
- *	The caller must already have initialized @kn->parent.  This
- *	function increments nlink of the parent's inode if @kn is a
- *	directory and link into the children list of the parent.
+ *	The caller must alपढ़ोy have initialized @kn->parent.  This
+ *	function increments nlink of the parent's inode अगर @kn is a
+ *	directory and link पूर्णांकo the children list of the parent.
  *
  *	RETURNS:
- *	0 on success, -EEXIST if entry with the given name already
+ *	0 on success, -EEXIST अगर entry with the given name alपढ़ोy
  *	exists.
  */
-int kernfs_add_one(struct kernfs_node *kn)
-{
-	struct kernfs_node *parent = kn->parent;
-	struct kernfs_iattrs *ps_iattr;
+पूर्णांक kernfs_add_one(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा kernfs_node *parent = kn->parent;
+	काष्ठा kernfs_iattrs *ps_iattr;
 	bool has_ns;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&kernfs_mutex);
 
 	ret = -EINVAL;
 	has_ns = kernfs_ns_enabled(parent);
-	if (WARN(has_ns != (bool)kn->ns, KERN_WARNING "kernfs: ns %s in '%s' for '%s'\n",
+	अगर (WARN(has_ns != (bool)kn->ns, KERN_WARNING "kernfs: ns %s in '%s' for '%s'\n",
 		 has_ns ? "required" : "invalid", parent->name, kn->name))
-		goto out_unlock;
+		जाओ out_unlock;
 
-	if (kernfs_type(parent) != KERNFS_DIR)
-		goto out_unlock;
+	अगर (kernfs_type(parent) != KERNFS_सूची)
+		जाओ out_unlock;
 
 	ret = -ENOENT;
-	if (parent->flags & KERNFS_EMPTY_DIR)
-		goto out_unlock;
+	अगर (parent->flags & KERNFS_EMPTY_सूची)
+		जाओ out_unlock;
 
-	if ((parent->flags & KERNFS_ACTIVATED) && !kernfs_active(parent))
-		goto out_unlock;
+	अगर ((parent->flags & KERNFS_ACTIVATED) && !kernfs_active(parent))
+		जाओ out_unlock;
 
 	kn->hash = kernfs_name_hash(kn->name, kn->ns);
 
 	ret = kernfs_link_sibling(kn);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
-	/* Update timestamps on the parent */
+	/* Update बारtamps on the parent */
 	ps_iattr = parent->iattr;
-	if (ps_iattr) {
-		ktime_get_real_ts64(&ps_iattr->ia_ctime);
-		ps_iattr->ia_mtime = ps_iattr->ia_ctime;
-	}
+	अगर (ps_iattr) अणु
+		kसमय_get_real_ts64(&ps_iattr->ia_स_समय);
+		ps_iattr->ia_mसमय = ps_iattr->ia_स_समय;
+	पूर्ण
 
 	mutex_unlock(&kernfs_mutex);
 
 	/*
 	 * Activate the new node unless CREATE_DEACTIVATED is requested.
-	 * If not activated here, the kernfs user is responsible for
+	 * If not activated here, the kernfs user is responsible क्रम
 	 * activating the node with kernfs_activate().  A node which hasn't
 	 * been activated is not visible to userland and its removal won't
 	 * trigger deactivation.
 	 */
-	if (!(kernfs_root(kn)->flags & KERNFS_ROOT_CREATE_DEACTIVATED))
+	अगर (!(kernfs_root(kn)->flags & KERNFS_ROOT_CREATE_DEACTIVATED))
 		kernfs_activate(kn);
-	return 0;
+	वापस 0;
 
 out_unlock:
 	mutex_unlock(&kernfs_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * kernfs_find_ns - find kernfs_node with the given name
  * @parent: kernfs_node to search under
- * @name: name to look for
+ * @name: name to look क्रम
  * @ns: the namespace tag to use
  *
- * Look for kernfs_node with name @name under @parent.  Returns pointer to
- * the found kernfs_node on success, %NULL on failure.
+ * Look क्रम kernfs_node with name @name under @parent.  Returns poपूर्णांकer to
+ * the found kernfs_node on success, %शून्य on failure.
  */
-static struct kernfs_node *kernfs_find_ns(struct kernfs_node *parent,
-					  const unsigned char *name,
-					  const void *ns)
-{
-	struct rb_node *node = parent->dir.children.rb_node;
+अटल काष्ठा kernfs_node *kernfs_find_ns(काष्ठा kernfs_node *parent,
+					  स्थिर अचिन्हित अक्षर *name,
+					  स्थिर व्योम *ns)
+अणु
+	काष्ठा rb_node *node = parent->dir.children.rb_node;
 	bool has_ns = kernfs_ns_enabled(parent);
-	unsigned int hash;
+	अचिन्हित पूर्णांक hash;
 
-	lockdep_assert_held(&kernfs_mutex);
+	lockdep_निश्चित_held(&kernfs_mutex);
 
-	if (has_ns != (bool)ns) {
+	अगर (has_ns != (bool)ns) अणु
 		WARN(1, KERN_WARNING "kernfs: ns %s in '%s' for '%s'\n",
 		     has_ns ? "required" : "invalid", parent->name, name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	hash = kernfs_name_hash(name, ns);
-	while (node) {
-		struct kernfs_node *kn;
-		int result;
+	जबतक (node) अणु
+		काष्ठा kernfs_node *kn;
+		पूर्णांक result;
 
 		kn = rb_to_kn(node);
 		result = kernfs_name_compare(hash, name, ns, kn);
-		if (result < 0)
+		अगर (result < 0)
 			node = node->rb_left;
-		else if (result > 0)
+		अन्यथा अगर (result > 0)
 			node = node->rb_right;
-		else
-			return kn;
-	}
-	return NULL;
-}
+		अन्यथा
+			वापस kn;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct kernfs_node *kernfs_walk_ns(struct kernfs_node *parent,
-					  const unsigned char *path,
-					  const void *ns)
-{
-	size_t len;
-	char *p, *name;
+अटल काष्ठा kernfs_node *kernfs_walk_ns(काष्ठा kernfs_node *parent,
+					  स्थिर अचिन्हित अक्षर *path,
+					  स्थिर व्योम *ns)
+अणु
+	माप_प्रकार len;
+	अक्षर *p, *name;
 
-	lockdep_assert_held(&kernfs_mutex);
+	lockdep_निश्चित_held(&kernfs_mutex);
 
-	/* grab kernfs_rename_lock to piggy back on kernfs_pr_cont_buf */
-	spin_lock_irq(&kernfs_rename_lock);
+	/* grab kernfs_नाम_lock to piggy back on kernfs_pr_cont_buf */
+	spin_lock_irq(&kernfs_नाम_lock);
 
-	len = strlcpy(kernfs_pr_cont_buf, path, sizeof(kernfs_pr_cont_buf));
+	len = strlcpy(kernfs_pr_cont_buf, path, माप(kernfs_pr_cont_buf));
 
-	if (len >= sizeof(kernfs_pr_cont_buf)) {
-		spin_unlock_irq(&kernfs_rename_lock);
-		return NULL;
-	}
+	अगर (len >= माप(kernfs_pr_cont_buf)) अणु
+		spin_unlock_irq(&kernfs_नाम_lock);
+		वापस शून्य;
+	पूर्ण
 
 	p = kernfs_pr_cont_buf;
 
-	while ((name = strsep(&p, "/")) && parent) {
-		if (*name == '\0')
-			continue;
+	जबतक ((name = strsep(&p, "/")) && parent) अणु
+		अगर (*name == '\0')
+			जारी;
 		parent = kernfs_find_ns(parent, name, ns);
-	}
+	पूर्ण
 
-	spin_unlock_irq(&kernfs_rename_lock);
+	spin_unlock_irq(&kernfs_नाम_lock);
 
-	return parent;
-}
+	वापस parent;
+पूर्ण
 
 /**
  * kernfs_find_and_get_ns - find and get kernfs_node with the given name
  * @parent: kernfs_node to search under
- * @name: name to look for
+ * @name: name to look क्रम
  * @ns: the namespace tag to use
  *
- * Look for kernfs_node with name @name under @parent and get a reference
- * if found.  This function may sleep and returns pointer to the found
- * kernfs_node on success, %NULL on failure.
+ * Look क्रम kernfs_node with name @name under @parent and get a reference
+ * अगर found.  This function may sleep and वापसs poपूर्णांकer to the found
+ * kernfs_node on success, %शून्य on failure.
  */
-struct kernfs_node *kernfs_find_and_get_ns(struct kernfs_node *parent,
-					   const char *name, const void *ns)
-{
-	struct kernfs_node *kn;
+काष्ठा kernfs_node *kernfs_find_and_get_ns(काष्ठा kernfs_node *parent,
+					   स्थिर अक्षर *name, स्थिर व्योम *ns)
+अणु
+	काष्ठा kernfs_node *kn;
 
 	mutex_lock(&kernfs_mutex);
 	kn = kernfs_find_ns(parent, name, ns);
 	kernfs_get(kn);
 	mutex_unlock(&kernfs_mutex);
 
-	return kn;
-}
+	वापस kn;
+पूर्ण
 EXPORT_SYMBOL_GPL(kernfs_find_and_get_ns);
 
 /**
  * kernfs_walk_and_get_ns - find and get kernfs_node with the given path
  * @parent: kernfs_node to search under
- * @path: path to look for
+ * @path: path to look क्रम
  * @ns: the namespace tag to use
  *
- * Look for kernfs_node with path @path under @parent and get a reference
- * if found.  This function may sleep and returns pointer to the found
- * kernfs_node on success, %NULL on failure.
+ * Look क्रम kernfs_node with path @path under @parent and get a reference
+ * अगर found.  This function may sleep and वापसs poपूर्णांकer to the found
+ * kernfs_node on success, %शून्य on failure.
  */
-struct kernfs_node *kernfs_walk_and_get_ns(struct kernfs_node *parent,
-					   const char *path, const void *ns)
-{
-	struct kernfs_node *kn;
+काष्ठा kernfs_node *kernfs_walk_and_get_ns(काष्ठा kernfs_node *parent,
+					   स्थिर अक्षर *path, स्थिर व्योम *ns)
+अणु
+	काष्ठा kernfs_node *kn;
 
 	mutex_lock(&kernfs_mutex);
 	kn = kernfs_walk_ns(parent, path, ns);
 	kernfs_get(kn);
 	mutex_unlock(&kernfs_mutex);
 
-	return kn;
-}
+	वापस kn;
+पूर्ण
 
 /**
  * kernfs_create_root - create a new kernfs hierarchy
- * @scops: optional syscall operations for the hierarchy
+ * @scops: optional syscall operations क्रम the hierarchy
  * @flags: KERNFS_ROOT_* flags
  * @priv: opaque data associated with the new directory
  *
  * Returns the root of the new hierarchy on success, ERR_PTR() value on
  * failure.
  */
-struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
-				       unsigned int flags, void *priv)
-{
-	struct kernfs_root *root;
-	struct kernfs_node *kn;
+काष्ठा kernfs_root *kernfs_create_root(काष्ठा kernfs_syscall_ops *scops,
+				       अचिन्हित पूर्णांक flags, व्योम *priv)
+अणु
+	काष्ठा kernfs_root *root;
+	काष्ठा kernfs_node *kn;
 
-	root = kzalloc(sizeof(*root), GFP_KERNEL);
-	if (!root)
-		return ERR_PTR(-ENOMEM);
+	root = kzalloc(माप(*root), GFP_KERNEL);
+	अगर (!root)
+		वापस ERR_PTR(-ENOMEM);
 
 	idr_init(&root->ino_idr);
 	INIT_LIST_HEAD(&root->supers);
 
 	/*
 	 * On 64bit ino setups, id is ino.  On 32bit, low 32bits are ino.
-	 * High bits generation.  The starting value for both ino and
+	 * High bits generation.  The starting value क्रम both ino and
 	 * genenration is 1.  Initialize upper 32bit allocation
 	 * accordingly.
 	 */
-	if (sizeof(ino_t) >= sizeof(u64))
+	अगर (माप(ino_t) >= माप(u64))
 		root->id_highbits = 0;
-	else
+	अन्यथा
 		root->id_highbits = 1;
 
-	kn = __kernfs_new_node(root, NULL, "", S_IFDIR | S_IRUGO | S_IXUGO,
+	kn = __kernfs_new_node(root, शून्य, "", S_IFसूची | S_IRUGO | S_IXUGO,
 			       GLOBAL_ROOT_UID, GLOBAL_ROOT_GID,
-			       KERNFS_DIR);
-	if (!kn) {
+			       KERNFS_सूची);
+	अगर (!kn) अणु
 		idr_destroy(&root->ino_idr);
-		kfree(root);
-		return ERR_PTR(-ENOMEM);
-	}
+		kमुक्त(root);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	kn->priv = priv;
 	kn->dir.root = root;
@@ -981,13 +982,13 @@ struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
 	root->syscall_ops = scops;
 	root->flags = flags;
 	root->kn = kn;
-	init_waitqueue_head(&root->deactivate_waitq);
+	init_रुकोqueue_head(&root->deactivate_रुकोq);
 
-	if (!(root->flags & KERNFS_ROOT_CREATE_DEACTIVATED))
+	अगर (!(root->flags & KERNFS_ROOT_CREATE_DEACTIVATED))
 		kernfs_activate(kn);
 
-	return root;
-}
+	वापस root;
+पूर्ण
 
 /**
  * kernfs_destroy_root - destroy a kernfs hierarchy
@@ -996,10 +997,10 @@ struct kernfs_root *kernfs_create_root(struct kernfs_syscall_ops *scops,
  * Destroy the hierarchy anchored at @root by removing all existing
  * directories and destroying @root.
  */
-void kernfs_destroy_root(struct kernfs_root *root)
-{
-	kernfs_remove(root->kn);	/* will also free @root */
-}
+व्योम kernfs_destroy_root(काष्ठा kernfs_root *root)
+अणु
+	kernfs_हटाओ(root->kn);	/* will also मुक्त @root */
+पूर्ण
 
 /**
  * kernfs_create_dir_ns - create a directory
@@ -1013,19 +1014,19 @@ void kernfs_destroy_root(struct kernfs_root *root)
  *
  * Returns the created node on success, ERR_PTR() value on failure.
  */
-struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
-					 const char *name, umode_t mode,
+काष्ठा kernfs_node *kernfs_create_dir_ns(काष्ठा kernfs_node *parent,
+					 स्थिर अक्षर *name, umode_t mode,
 					 kuid_t uid, kgid_t gid,
-					 void *priv, const void *ns)
-{
-	struct kernfs_node *kn;
-	int rc;
+					 व्योम *priv, स्थिर व्योम *ns)
+अणु
+	काष्ठा kernfs_node *kn;
+	पूर्णांक rc;
 
 	/* allocate */
-	kn = kernfs_new_node(parent, name, mode | S_IFDIR,
-			     uid, gid, KERNFS_DIR);
-	if (!kn)
-		return ERR_PTR(-ENOMEM);
+	kn = kernfs_new_node(parent, name, mode | S_IFसूची,
+			     uid, gid, KERNFS_सूची);
+	अगर (!kn)
+		वापस ERR_PTR(-ENOMEM);
 
 	kn->dir.root = parent->dir.root;
 	kn->ns = ns;
@@ -1033,12 +1034,12 @@ struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
 
 	/* link in */
 	rc = kernfs_add_one(kn);
-	if (!rc)
-		return kn;
+	अगर (!rc)
+		वापस kn;
 
 	kernfs_put(kn);
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
 /**
  * kernfs_create_empty_dir - create an always empty directory
@@ -1047,204 +1048,204 @@ struct kernfs_node *kernfs_create_dir_ns(struct kernfs_node *parent,
  *
  * Returns the created node on success, ERR_PTR() value on failure.
  */
-struct kernfs_node *kernfs_create_empty_dir(struct kernfs_node *parent,
-					    const char *name)
-{
-	struct kernfs_node *kn;
-	int rc;
+काष्ठा kernfs_node *kernfs_create_empty_dir(काष्ठा kernfs_node *parent,
+					    स्थिर अक्षर *name)
+अणु
+	काष्ठा kernfs_node *kn;
+	पूर्णांक rc;
 
 	/* allocate */
-	kn = kernfs_new_node(parent, name, S_IRUGO|S_IXUGO|S_IFDIR,
-			     GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, KERNFS_DIR);
-	if (!kn)
-		return ERR_PTR(-ENOMEM);
+	kn = kernfs_new_node(parent, name, S_IRUGO|S_IXUGO|S_IFसूची,
+			     GLOBAL_ROOT_UID, GLOBAL_ROOT_GID, KERNFS_सूची);
+	अगर (!kn)
+		वापस ERR_PTR(-ENOMEM);
 
-	kn->flags |= KERNFS_EMPTY_DIR;
+	kn->flags |= KERNFS_EMPTY_सूची;
 	kn->dir.root = parent->dir.root;
-	kn->ns = NULL;
-	kn->priv = NULL;
+	kn->ns = शून्य;
+	kn->priv = शून्य;
 
 	/* link in */
 	rc = kernfs_add_one(kn);
-	if (!rc)
-		return kn;
+	अगर (!rc)
+		वापस kn;
 
 	kernfs_put(kn);
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
-static struct dentry *kernfs_iop_lookup(struct inode *dir,
-					struct dentry *dentry,
-					unsigned int flags)
-{
-	struct dentry *ret;
-	struct kernfs_node *parent = dir->i_private;
-	struct kernfs_node *kn;
-	struct inode *inode;
-	const void *ns = NULL;
+अटल काष्ठा dentry *kernfs_iop_lookup(काष्ठा inode *dir,
+					काष्ठा dentry *dentry,
+					अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा dentry *ret;
+	काष्ठा kernfs_node *parent = dir->i_निजी;
+	काष्ठा kernfs_node *kn;
+	काष्ठा inode *inode;
+	स्थिर व्योम *ns = शून्य;
 
 	mutex_lock(&kernfs_mutex);
 
-	if (kernfs_ns_enabled(parent))
+	अगर (kernfs_ns_enabled(parent))
 		ns = kernfs_info(dir->i_sb)->ns;
 
 	kn = kernfs_find_ns(parent, dentry->d_name.name, ns);
 
 	/* no such entry */
-	if (!kn || !kernfs_active(kn)) {
-		ret = NULL;
-		goto out_unlock;
-	}
+	अगर (!kn || !kernfs_active(kn)) अणु
+		ret = शून्य;
+		जाओ out_unlock;
+	पूर्ण
 
 	/* attach dentry and inode */
 	inode = kernfs_get_inode(dir->i_sb, kn);
-	if (!inode) {
+	अगर (!inode) अणु
 		ret = ERR_PTR(-ENOMEM);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	/* instantiate and hash dentry */
 	ret = d_splice_alias(inode, dentry);
  out_unlock:
 	mutex_unlock(&kernfs_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kernfs_iop_mkdir(struct user_namespace *mnt_userns,
-			    struct inode *dir, struct dentry *dentry,
+अटल पूर्णांक kernfs_iop_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns,
+			    काष्ठा inode *dir, काष्ठा dentry *dentry,
 			    umode_t mode)
-{
-	struct kernfs_node *parent = dir->i_private;
-	struct kernfs_syscall_ops *scops = kernfs_root(parent)->syscall_ops;
-	int ret;
+अणु
+	काष्ठा kernfs_node *parent = dir->i_निजी;
+	काष्ठा kernfs_syscall_ops *scops = kernfs_root(parent)->syscall_ops;
+	पूर्णांक ret;
 
-	if (!scops || !scops->mkdir)
-		return -EPERM;
+	अगर (!scops || !scops->सूची_गढ़ो)
+		वापस -EPERM;
 
-	if (!kernfs_get_active(parent))
-		return -ENODEV;
+	अगर (!kernfs_get_active(parent))
+		वापस -ENODEV;
 
-	ret = scops->mkdir(parent, dentry->d_name.name, mode);
+	ret = scops->सूची_गढ़ो(parent, dentry->d_name.name, mode);
 
 	kernfs_put_active(parent);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kernfs_iop_rmdir(struct inode *dir, struct dentry *dentry)
-{
-	struct kernfs_node *kn  = kernfs_dentry_node(dentry);
-	struct kernfs_syscall_ops *scops = kernfs_root(kn)->syscall_ops;
-	int ret;
+अटल पूर्णांक kernfs_iop_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	काष्ठा kernfs_node *kn  = kernfs_dentry_node(dentry);
+	काष्ठा kernfs_syscall_ops *scops = kernfs_root(kn)->syscall_ops;
+	पूर्णांक ret;
 
-	if (!scops || !scops->rmdir)
-		return -EPERM;
+	अगर (!scops || !scops->सूची_हटाओ)
+		वापस -EPERM;
 
-	if (!kernfs_get_active(kn))
-		return -ENODEV;
+	अगर (!kernfs_get_active(kn))
+		वापस -ENODEV;
 
-	ret = scops->rmdir(kn);
+	ret = scops->सूची_हटाओ(kn);
 
 	kernfs_put_active(kn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kernfs_iop_rename(struct user_namespace *mnt_userns,
-			     struct inode *old_dir, struct dentry *old_dentry,
-			     struct inode *new_dir, struct dentry *new_dentry,
-			     unsigned int flags)
-{
-	struct kernfs_node *kn = kernfs_dentry_node(old_dentry);
-	struct kernfs_node *new_parent = new_dir->i_private;
-	struct kernfs_syscall_ops *scops = kernfs_root(kn)->syscall_ops;
-	int ret;
+अटल पूर्णांक kernfs_iop_नाम(काष्ठा user_namespace *mnt_userns,
+			     काष्ठा inode *old_dir, काष्ठा dentry *old_dentry,
+			     काष्ठा inode *new_dir, काष्ठा dentry *new_dentry,
+			     अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा kernfs_node *kn = kernfs_dentry_node(old_dentry);
+	काष्ठा kernfs_node *new_parent = new_dir->i_निजी;
+	काष्ठा kernfs_syscall_ops *scops = kernfs_root(kn)->syscall_ops;
+	पूर्णांक ret;
 
-	if (flags)
-		return -EINVAL;
+	अगर (flags)
+		वापस -EINVAL;
 
-	if (!scops || !scops->rename)
-		return -EPERM;
+	अगर (!scops || !scops->नाम)
+		वापस -EPERM;
 
-	if (!kernfs_get_active(kn))
-		return -ENODEV;
+	अगर (!kernfs_get_active(kn))
+		वापस -ENODEV;
 
-	if (!kernfs_get_active(new_parent)) {
+	अगर (!kernfs_get_active(new_parent)) अणु
 		kernfs_put_active(kn);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = scops->rename(kn, new_parent, new_dentry->d_name.name);
+	ret = scops->नाम(kn, new_parent, new_dentry->d_name.name);
 
 	kernfs_put_active(new_parent);
 	kernfs_put_active(kn);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct inode_operations kernfs_dir_iops = {
+स्थिर काष्ठा inode_operations kernfs_dir_iops = अणु
 	.lookup		= kernfs_iop_lookup,
 	.permission	= kernfs_iop_permission,
 	.setattr	= kernfs_iop_setattr,
 	.getattr	= kernfs_iop_getattr,
 	.listxattr	= kernfs_iop_listxattr,
 
-	.mkdir		= kernfs_iop_mkdir,
-	.rmdir		= kernfs_iop_rmdir,
-	.rename		= kernfs_iop_rename,
-};
+	.सूची_गढ़ो		= kernfs_iop_सूची_गढ़ो,
+	.सूची_हटाओ		= kernfs_iop_सूची_हटाओ,
+	.नाम		= kernfs_iop_नाम,
+पूर्ण;
 
-static struct kernfs_node *kernfs_leftmost_descendant(struct kernfs_node *pos)
-{
-	struct kernfs_node *last;
+अटल काष्ठा kernfs_node *kernfs_lefपंचांगost_descendant(काष्ठा kernfs_node *pos)
+अणु
+	काष्ठा kernfs_node *last;
 
-	while (true) {
-		struct rb_node *rbn;
+	जबतक (true) अणु
+		काष्ठा rb_node *rbn;
 
 		last = pos;
 
-		if (kernfs_type(pos) != KERNFS_DIR)
-			break;
+		अगर (kernfs_type(pos) != KERNFS_सूची)
+			अवरोध;
 
 		rbn = rb_first(&pos->dir.children);
-		if (!rbn)
-			break;
+		अगर (!rbn)
+			अवरोध;
 
 		pos = rb_to_kn(rbn);
-	}
+	पूर्ण
 
-	return last;
-}
+	वापस last;
+पूर्ण
 
 /**
- * kernfs_next_descendant_post - find the next descendant for post-order walk
- * @pos: the current position (%NULL to initiate traversal)
+ * kernfs_next_descendant_post - find the next descendant क्रम post-order walk
+ * @pos: the current position (%शून्य to initiate traversal)
  * @root: kernfs_node whose descendants to walk
  *
- * Find the next descendant to visit for post-order traversal of @root's
+ * Find the next descendant to visit क्रम post-order traversal of @root's
  * descendants.  @root is included in the iteration and the last node to be
  * visited.
  */
-static struct kernfs_node *kernfs_next_descendant_post(struct kernfs_node *pos,
-						       struct kernfs_node *root)
-{
-	struct rb_node *rbn;
+अटल काष्ठा kernfs_node *kernfs_next_descendant_post(काष्ठा kernfs_node *pos,
+						       काष्ठा kernfs_node *root)
+अणु
+	काष्ठा rb_node *rbn;
 
-	lockdep_assert_held(&kernfs_mutex);
+	lockdep_निश्चित_held(&kernfs_mutex);
 
-	/* if first iteration, visit leftmost descendant which may be root */
-	if (!pos)
-		return kernfs_leftmost_descendant(root);
+	/* अगर first iteration, visit lefपंचांगost descendant which may be root */
+	अगर (!pos)
+		वापस kernfs_lefपंचांगost_descendant(root);
 
-	/* if we visited @root, we're done */
-	if (pos == root)
-		return NULL;
+	/* अगर we visited @root, we're करोne */
+	अगर (pos == root)
+		वापस शून्य;
 
-	/* if there's an unvisited sibling, visit its leftmost descendant */
+	/* अगर there's an unvisited sibling, visit its lefपंचांगost descendant */
 	rbn = rb_next(&pos->rb);
-	if (rbn)
-		return kernfs_leftmost_descendant(rb_to_kn(rbn));
+	अगर (rbn)
+		वापस kernfs_lefपंचांगost_descendant(rb_to_kn(rbn));
 
 	/* no sibling left, visit parent */
-	return pos->parent;
-}
+	वापस pos->parent;
+पूर्ण
 
 /**
  * kernfs_activate - activate a node which started deactivated
@@ -1253,320 +1254,320 @@ static struct kernfs_node *kernfs_next_descendant_post(struct kernfs_node *pos,
  * If the root has KERNFS_ROOT_CREATE_DEACTIVATED set, a newly created node
  * needs to be explicitly activated.  A node which hasn't been activated
  * isn't visible to userland and deactivation is skipped during its
- * removal.  This is useful to construct atomic init sequences where
+ * removal.  This is useful to स्थिरruct atomic init sequences where
  * creation of multiple nodes should either succeed or fail atomically.
  *
- * The caller is responsible for ensuring that this function is not called
- * after kernfs_remove*() is invoked on @kn.
+ * The caller is responsible क्रम ensuring that this function is not called
+ * after kernfs_हटाओ*() is invoked on @kn.
  */
-void kernfs_activate(struct kernfs_node *kn)
-{
-	struct kernfs_node *pos;
+व्योम kernfs_activate(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा kernfs_node *pos;
 
 	mutex_lock(&kernfs_mutex);
 
-	pos = NULL;
-	while ((pos = kernfs_next_descendant_post(pos, kn))) {
-		if (pos->flags & KERNFS_ACTIVATED)
-			continue;
+	pos = शून्य;
+	जबतक ((pos = kernfs_next_descendant_post(pos, kn))) अणु
+		अगर (pos->flags & KERNFS_ACTIVATED)
+			जारी;
 
 		WARN_ON_ONCE(pos->parent && RB_EMPTY_NODE(&pos->rb));
-		WARN_ON_ONCE(atomic_read(&pos->active) != KN_DEACTIVATED_BIAS);
+		WARN_ON_ONCE(atomic_पढ़ो(&pos->active) != KN_DEACTIVATED_BIAS);
 
 		atomic_sub(KN_DEACTIVATED_BIAS, &pos->active);
 		pos->flags |= KERNFS_ACTIVATED;
-	}
+	पूर्ण
 
 	mutex_unlock(&kernfs_mutex);
-}
+पूर्ण
 
-static void __kernfs_remove(struct kernfs_node *kn)
-{
-	struct kernfs_node *pos;
+अटल व्योम __kernfs_हटाओ(काष्ठा kernfs_node *kn)
+अणु
+	काष्ठा kernfs_node *pos;
 
-	lockdep_assert_held(&kernfs_mutex);
+	lockdep_निश्चित_held(&kernfs_mutex);
 
 	/*
-	 * Short-circuit if non-root @kn has already finished removal.
-	 * This is for kernfs_remove_self() which plays with active ref
+	 * Short-circuit अगर non-root @kn has alपढ़ोy finished removal.
+	 * This is क्रम kernfs_हटाओ_self() which plays with active ref
 	 * after removal.
 	 */
-	if (!kn || (kn->parent && RB_EMPTY_NODE(&kn->rb)))
-		return;
+	अगर (!kn || (kn->parent && RB_EMPTY_NODE(&kn->rb)))
+		वापस;
 
 	pr_debug("kernfs %s: removing\n", kn->name);
 
 	/* prevent any new usage under @kn by deactivating all nodes */
-	pos = NULL;
-	while ((pos = kernfs_next_descendant_post(pos, kn)))
-		if (kernfs_active(pos))
+	pos = शून्य;
+	जबतक ((pos = kernfs_next_descendant_post(pos, kn)))
+		अगर (kernfs_active(pos))
 			atomic_add(KN_DEACTIVATED_BIAS, &pos->active);
 
 	/* deactivate and unlink the subtree node-by-node */
-	do {
-		pos = kernfs_leftmost_descendant(kn);
+	करो अणु
+		pos = kernfs_lefपंचांगost_descendant(kn);
 
 		/*
 		 * kernfs_drain() drops kernfs_mutex temporarily and @pos's
-		 * base ref could have been put by someone else by the time
-		 * the function returns.  Make sure it doesn't go away
+		 * base ref could have been put by someone अन्यथा by the समय
+		 * the function वापसs.  Make sure it करोesn't go away
 		 * underneath us.
 		 */
 		kernfs_get(pos);
 
 		/*
-		 * Drain iff @kn was activated.  This avoids draining and
-		 * its lockdep annotations for nodes which have never been
-		 * activated and allows embedding kernfs_remove() in create
+		 * Drain अगरf @kn was activated.  This aव्योमs draining and
+		 * its lockdep annotations क्रम nodes which have never been
+		 * activated and allows embedding kernfs_हटाओ() in create
 		 * error paths without worrying about draining.
 		 */
-		if (kn->flags & KERNFS_ACTIVATED)
+		अगर (kn->flags & KERNFS_ACTIVATED)
 			kernfs_drain(pos);
-		else
-			WARN_ON_ONCE(atomic_read(&kn->active) != KN_DEACTIVATED_BIAS);
+		अन्यथा
+			WARN_ON_ONCE(atomic_पढ़ो(&kn->active) != KN_DEACTIVATED_BIAS);
 
 		/*
 		 * kernfs_unlink_sibling() succeeds once per node.  Use it
-		 * to decide who's responsible for cleanups.
+		 * to decide who's responsible क्रम cleanups.
 		 */
-		if (!pos->parent || kernfs_unlink_sibling(pos)) {
-			struct kernfs_iattrs *ps_iattr =
-				pos->parent ? pos->parent->iattr : NULL;
+		अगर (!pos->parent || kernfs_unlink_sibling(pos)) अणु
+			काष्ठा kernfs_iattrs *ps_iattr =
+				pos->parent ? pos->parent->iattr : शून्य;
 
-			/* update timestamps on the parent */
-			if (ps_iattr) {
-				ktime_get_real_ts64(&ps_iattr->ia_ctime);
-				ps_iattr->ia_mtime = ps_iattr->ia_ctime;
-			}
+			/* update बारtamps on the parent */
+			अगर (ps_iattr) अणु
+				kसमय_get_real_ts64(&ps_iattr->ia_स_समय);
+				ps_iattr->ia_mसमय = ps_iattr->ia_स_समय;
+			पूर्ण
 
 			kernfs_put(pos);
-		}
+		पूर्ण
 
 		kernfs_put(pos);
-	} while (pos != kn);
-}
+	पूर्ण जबतक (pos != kn);
+पूर्ण
 
 /**
- * kernfs_remove - remove a kernfs_node recursively
- * @kn: the kernfs_node to remove
+ * kernfs_हटाओ - हटाओ a kernfs_node recursively
+ * @kn: the kernfs_node to हटाओ
  *
- * Remove @kn along with all its subdirectories and files.
+ * Remove @kn aदीर्घ with all its subdirectories and files.
  */
-void kernfs_remove(struct kernfs_node *kn)
-{
+व्योम kernfs_हटाओ(काष्ठा kernfs_node *kn)
+अणु
 	mutex_lock(&kernfs_mutex);
-	__kernfs_remove(kn);
+	__kernfs_हटाओ(kn);
 	mutex_unlock(&kernfs_mutex);
-}
+पूर्ण
 
 /**
- * kernfs_break_active_protection - break out of active protection
+ * kernfs_अवरोध_active_protection - अवरोध out of active protection
  * @kn: the self kernfs_node
  *
  * The caller must be running off of a kernfs operation which is invoked
  * with an active reference - e.g. one of kernfs_ops.  Each invocation of
  * this function must also be matched with an invocation of
- * kernfs_unbreak_active_protection().
+ * kernfs_unअवरोध_active_protection().
  *
  * This function releases the active reference of @kn the caller is
- * holding.  Once this function is called, @kn may be removed at any point
- * and the caller is solely responsible for ensuring that the objects it
+ * holding.  Once this function is called, @kn may be हटाओd at any poपूर्णांक
+ * and the caller is solely responsible क्रम ensuring that the objects it
  * dereferences are accessible.
  */
-void kernfs_break_active_protection(struct kernfs_node *kn)
-{
+व्योम kernfs_अवरोध_active_protection(काष्ठा kernfs_node *kn)
+अणु
 	/*
 	 * Take out ourself out of the active ref dependency chain.  If
 	 * we're called without an active ref, lockdep will complain.
 	 */
 	kernfs_put_active(kn);
-}
+पूर्ण
 
 /**
- * kernfs_unbreak_active_protection - undo kernfs_break_active_protection()
+ * kernfs_unअवरोध_active_protection - unकरो kernfs_अवरोध_active_protection()
  * @kn: the self kernfs_node
  *
- * If kernfs_break_active_protection() was called, this function must be
- * invoked before finishing the kernfs operation.  Note that while this
- * function restores the active reference, it doesn't and can't actually
- * restore the active protection - @kn may already or be in the process of
- * being removed.  Once kernfs_break_active_protection() is invoked, that
- * protection is irreversibly gone for the kernfs operation instance.
+ * If kernfs_अवरोध_active_protection() was called, this function must be
+ * invoked beक्रमe finishing the kernfs operation.  Note that जबतक this
+ * function restores the active reference, it करोesn't and can't actually
+ * restore the active protection - @kn may alपढ़ोy or be in the process of
+ * being हटाओd.  Once kernfs_अवरोध_active_protection() is invoked, that
+ * protection is irreversibly gone क्रम the kernfs operation instance.
  *
- * While this function may be called at any point after
- * kernfs_break_active_protection() is invoked, its most useful location
- * would be right before the enclosing kernfs operation returns.
+ * While this function may be called at any poपूर्णांक after
+ * kernfs_अवरोध_active_protection() is invoked, its most useful location
+ * would be right beक्रमe the enclosing kernfs operation वापसs.
  */
-void kernfs_unbreak_active_protection(struct kernfs_node *kn)
-{
+व्योम kernfs_unअवरोध_active_protection(काष्ठा kernfs_node *kn)
+अणु
 	/*
-	 * @kn->active could be in any state; however, the increment we do
-	 * here will be undone as soon as the enclosing kernfs operation
-	 * finishes and this temporary bump can't break anything.  If @kn
+	 * @kn->active could be in any state; however, the increment we करो
+	 * here will be unकरोne as soon as the enclosing kernfs operation
+	 * finishes and this temporary bump can't अवरोध anything.  If @kn
 	 * is alive, nothing changes.  If @kn is being deactivated, the
 	 * soon-to-follow put will either finish deactivation or restore
-	 * deactivated state.  If @kn is already removed, the temporary
-	 * bump is guaranteed to be gone before @kn is released.
+	 * deactivated state.  If @kn is alपढ़ोy हटाओd, the temporary
+	 * bump is guaranteed to be gone beक्रमe @kn is released.
 	 */
 	atomic_inc(&kn->active);
-	if (kernfs_lockdep(kn))
+	अगर (kernfs_lockdep(kn))
 		rwsem_acquire(&kn->dep_map, 0, 1, _RET_IP_);
-}
+पूर्ण
 
 /**
- * kernfs_remove_self - remove a kernfs_node from its own method
- * @kn: the self kernfs_node to remove
+ * kernfs_हटाओ_self - हटाओ a kernfs_node from its own method
+ * @kn: the self kernfs_node to हटाओ
  *
  * The caller must be running off of a kernfs operation which is invoked
  * with an active reference - e.g. one of kernfs_ops.  This can be used to
  * implement a file operation which deletes itself.
  *
- * For example, the "delete" file for a sysfs device directory can be
- * implemented by invoking kernfs_remove_self() on the "delete" file
- * itself.  This function breaks the circular dependency of trying to
- * deactivate self while holding an active ref itself.  It isn't necessary
- * to modify the usual removal path to use kernfs_remove_self().  The
- * "delete" implementation can simply invoke kernfs_remove_self() on self
- * before proceeding with the usual removal path.  kernfs will ignore later
- * kernfs_remove() on self.
+ * For example, the "delete" file क्रम a sysfs device directory can be
+ * implemented by invoking kernfs_हटाओ_self() on the "delete" file
+ * itself.  This function अवरोधs the circular dependency of trying to
+ * deactivate self जबतक holding an active ref itself.  It isn't necessary
+ * to modअगरy the usual removal path to use kernfs_हटाओ_self().  The
+ * "delete" implementation can simply invoke kernfs_हटाओ_self() on self
+ * beक्रमe proceeding with the usual removal path.  kernfs will ignore later
+ * kernfs_हटाओ() on self.
  *
- * kernfs_remove_self() can be called multiple times concurrently on the
- * same kernfs_node.  Only the first one actually performs removal and
- * returns %true.  All others will wait until the kernfs operation which
- * won self-removal finishes and return %false.  Note that the losers wait
- * for the completion of not only the winning kernfs_remove_self() but also
+ * kernfs_हटाओ_self() can be called multiple बार concurrently on the
+ * same kernfs_node.  Only the first one actually perक्रमms removal and
+ * वापसs %true.  All others will रुको until the kernfs operation which
+ * won self-removal finishes and वापस %false.  Note that the losers रुको
+ * क्रम the completion of not only the winning kernfs_हटाओ_self() but also
  * the whole kernfs_ops which won the arbitration.  This can be used to
- * guarantee, for example, all concurrent writes to a "delete" file to
+ * guarantee, क्रम example, all concurrent ग_लिखोs to a "delete" file to
  * finish only after the whole operation is complete.
  */
-bool kernfs_remove_self(struct kernfs_node *kn)
-{
+bool kernfs_हटाओ_self(काष्ठा kernfs_node *kn)
+अणु
 	bool ret;
 
 	mutex_lock(&kernfs_mutex);
-	kernfs_break_active_protection(kn);
+	kernfs_अवरोध_active_protection(kn);
 
 	/*
 	 * SUICIDAL is used to arbitrate among competing invocations.  Only
-	 * the first one will actually perform removal.  When the removal
+	 * the first one will actually perक्रमm removal.  When the removal
 	 * is complete, SUICIDED is set and the active ref is restored
-	 * while holding kernfs_mutex.  The ones which lost arbitration
-	 * waits for SUICDED && drained which can happen only after the
+	 * जबतक holding kernfs_mutex.  The ones which lost arbitration
+	 * रुकोs क्रम SUICDED && drained which can happen only after the
 	 * enclosing kernfs operation which executed the winning instance
-	 * of kernfs_remove_self() finished.
+	 * of kernfs_हटाओ_self() finished.
 	 */
-	if (!(kn->flags & KERNFS_SUICIDAL)) {
+	अगर (!(kn->flags & KERNFS_SUICIDAL)) अणु
 		kn->flags |= KERNFS_SUICIDAL;
-		__kernfs_remove(kn);
+		__kernfs_हटाओ(kn);
 		kn->flags |= KERNFS_SUICIDED;
 		ret = true;
-	} else {
-		wait_queue_head_t *waitq = &kernfs_root(kn)->deactivate_waitq;
-		DEFINE_WAIT(wait);
+	पूर्ण अन्यथा अणु
+		रुको_queue_head_t *रुकोq = &kernfs_root(kn)->deactivate_रुकोq;
+		DEFINE_WAIT(रुको);
 
-		while (true) {
-			prepare_to_wait(waitq, &wait, TASK_UNINTERRUPTIBLE);
+		जबतक (true) अणु
+			prepare_to_रुको(रुकोq, &रुको, TASK_UNINTERRUPTIBLE);
 
-			if ((kn->flags & KERNFS_SUICIDED) &&
-			    atomic_read(&kn->active) == KN_DEACTIVATED_BIAS)
-				break;
+			अगर ((kn->flags & KERNFS_SUICIDED) &&
+			    atomic_पढ़ो(&kn->active) == KN_DEACTIVATED_BIAS)
+				अवरोध;
 
 			mutex_unlock(&kernfs_mutex);
 			schedule();
 			mutex_lock(&kernfs_mutex);
-		}
-		finish_wait(waitq, &wait);
+		पूर्ण
+		finish_रुको(रुकोq, &रुको);
 		WARN_ON_ONCE(!RB_EMPTY_NODE(&kn->rb));
 		ret = false;
-	}
+	पूर्ण
 
 	/*
-	 * This must be done while holding kernfs_mutex; otherwise, waiting
-	 * for SUICIDED && deactivated could finish prematurely.
+	 * This must be करोne जबतक holding kernfs_mutex; otherwise, रुकोing
+	 * क्रम SUICIDED && deactivated could finish prematurely.
 	 */
-	kernfs_unbreak_active_protection(kn);
+	kernfs_unअवरोध_active_protection(kn);
 
 	mutex_unlock(&kernfs_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * kernfs_remove_by_name_ns - find a kernfs_node by name and remove it
+ * kernfs_हटाओ_by_name_ns - find a kernfs_node by name and हटाओ it
  * @parent: parent of the target
- * @name: name of the kernfs_node to remove
- * @ns: namespace tag of the kernfs_node to remove
+ * @name: name of the kernfs_node to हटाओ
+ * @ns: namespace tag of the kernfs_node to हटाओ
  *
- * Look for the kernfs_node with @name and @ns under @parent and remove it.
- * Returns 0 on success, -ENOENT if such entry doesn't exist.
+ * Look क्रम the kernfs_node with @name and @ns under @parent and हटाओ it.
+ * Returns 0 on success, -ENOENT अगर such entry करोesn't exist.
  */
-int kernfs_remove_by_name_ns(struct kernfs_node *parent, const char *name,
-			     const void *ns)
-{
-	struct kernfs_node *kn;
+पूर्णांक kernfs_हटाओ_by_name_ns(काष्ठा kernfs_node *parent, स्थिर अक्षर *name,
+			     स्थिर व्योम *ns)
+अणु
+	काष्ठा kernfs_node *kn;
 
-	if (!parent) {
+	अगर (!parent) अणु
 		WARN(1, KERN_WARNING "kernfs: can not remove '%s', no directory\n",
 			name);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
 	mutex_lock(&kernfs_mutex);
 
 	kn = kernfs_find_ns(parent, name, ns);
-	if (kn)
-		__kernfs_remove(kn);
+	अगर (kn)
+		__kernfs_हटाओ(kn);
 
 	mutex_unlock(&kernfs_mutex);
 
-	if (kn)
-		return 0;
-	else
-		return -ENOENT;
-}
+	अगर (kn)
+		वापस 0;
+	अन्यथा
+		वापस -ENOENT;
+पूर्ण
 
 /**
- * kernfs_rename_ns - move and rename a kernfs_node
+ * kernfs_नाम_ns - move and नाम a kernfs_node
  * @kn: target node
  * @new_parent: new parent to put @sd under
  * @new_name: new name
  * @new_ns: new namespace tag
  */
-int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
-		     const char *new_name, const void *new_ns)
-{
-	struct kernfs_node *old_parent;
-	const char *old_name = NULL;
-	int error;
+पूर्णांक kernfs_नाम_ns(काष्ठा kernfs_node *kn, काष्ठा kernfs_node *new_parent,
+		     स्थिर अक्षर *new_name, स्थिर व्योम *new_ns)
+अणु
+	काष्ठा kernfs_node *old_parent;
+	स्थिर अक्षर *old_name = शून्य;
+	पूर्णांक error;
 
-	/* can't move or rename root */
-	if (!kn->parent)
-		return -EINVAL;
+	/* can't move or नाम root */
+	अगर (!kn->parent)
+		वापस -EINVAL;
 
 	mutex_lock(&kernfs_mutex);
 
 	error = -ENOENT;
-	if (!kernfs_active(kn) || !kernfs_active(new_parent) ||
-	    (new_parent->flags & KERNFS_EMPTY_DIR))
-		goto out;
+	अगर (!kernfs_active(kn) || !kernfs_active(new_parent) ||
+	    (new_parent->flags & KERNFS_EMPTY_सूची))
+		जाओ out;
 
 	error = 0;
-	if ((kn->parent == new_parent) && (kn->ns == new_ns) &&
-	    (strcmp(kn->name, new_name) == 0))
-		goto out;	/* nothing to rename */
+	अगर ((kn->parent == new_parent) && (kn->ns == new_ns) &&
+	    (म_भेद(kn->name, new_name) == 0))
+		जाओ out;	/* nothing to नाम */
 
 	error = -EEXIST;
-	if (kernfs_find_ns(new_parent, new_name, new_ns))
-		goto out;
+	अगर (kernfs_find_ns(new_parent, new_name, new_ns))
+		जाओ out;
 
-	/* rename kernfs_node */
-	if (strcmp(kn->name, new_name) != 0) {
+	/* नाम kernfs_node */
+	अगर (म_भेद(kn->name, new_name) != 0) अणु
 		error = -ENOMEM;
-		new_name = kstrdup_const(new_name, GFP_KERNEL);
-		if (!new_name)
-			goto out;
-	} else {
-		new_name = NULL;
-	}
+		new_name = kstrdup_स्थिर(new_name, GFP_KERNEL);
+		अगर (!new_name)
+			जाओ out;
+	पूर्ण अन्यथा अणु
+		new_name = शून्य;
+	पूर्ण
 
 	/*
 	 * Move to the appropriate place in the appropriate directories rbtree.
@@ -1574,134 +1575,134 @@ int kernfs_rename_ns(struct kernfs_node *kn, struct kernfs_node *new_parent,
 	kernfs_unlink_sibling(kn);
 	kernfs_get(new_parent);
 
-	/* rename_lock protects ->parent and ->name accessors */
-	spin_lock_irq(&kernfs_rename_lock);
+	/* नाम_lock protects ->parent and ->name accessors */
+	spin_lock_irq(&kernfs_नाम_lock);
 
 	old_parent = kn->parent;
 	kn->parent = new_parent;
 
 	kn->ns = new_ns;
-	if (new_name) {
+	अगर (new_name) अणु
 		old_name = kn->name;
 		kn->name = new_name;
-	}
+	पूर्ण
 
-	spin_unlock_irq(&kernfs_rename_lock);
+	spin_unlock_irq(&kernfs_नाम_lock);
 
 	kn->hash = kernfs_name_hash(kn->name, kn->ns);
 	kernfs_link_sibling(kn);
 
 	kernfs_put(old_parent);
-	kfree_const(old_name);
+	kमुक्त_स्थिर(old_name);
 
 	error = 0;
  out:
 	mutex_unlock(&kernfs_mutex);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /* Relationship between mode and the DT_xxx types */
-static inline unsigned char dt_type(struct kernfs_node *kn)
-{
-	return (kn->mode >> 12) & 15;
-}
+अटल अंतरभूत अचिन्हित अक्षर dt_type(काष्ठा kernfs_node *kn)
+अणु
+	वापस (kn->mode >> 12) & 15;
+पूर्ण
 
-static int kernfs_dir_fop_release(struct inode *inode, struct file *filp)
-{
-	kernfs_put(filp->private_data);
-	return 0;
-}
+अटल पूर्णांक kernfs_dir_fop_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	kernfs_put(filp->निजी_data);
+	वापस 0;
+पूर्ण
 
-static struct kernfs_node *kernfs_dir_pos(const void *ns,
-	struct kernfs_node *parent, loff_t hash, struct kernfs_node *pos)
-{
-	if (pos) {
-		int valid = kernfs_active(pos) &&
+अटल काष्ठा kernfs_node *kernfs_dir_pos(स्थिर व्योम *ns,
+	काष्ठा kernfs_node *parent, loff_t hash, काष्ठा kernfs_node *pos)
+अणु
+	अगर (pos) अणु
+		पूर्णांक valid = kernfs_active(pos) &&
 			pos->parent == parent && hash == pos->hash;
 		kernfs_put(pos);
-		if (!valid)
-			pos = NULL;
-	}
-	if (!pos && (hash > 1) && (hash < INT_MAX)) {
-		struct rb_node *node = parent->dir.children.rb_node;
-		while (node) {
+		अगर (!valid)
+			pos = शून्य;
+	पूर्ण
+	अगर (!pos && (hash > 1) && (hash < पूर्णांक_उच्च)) अणु
+		काष्ठा rb_node *node = parent->dir.children.rb_node;
+		जबतक (node) अणु
 			pos = rb_to_kn(node);
 
-			if (hash < pos->hash)
+			अगर (hash < pos->hash)
 				node = node->rb_left;
-			else if (hash > pos->hash)
+			अन्यथा अगर (hash > pos->hash)
 				node = node->rb_right;
-			else
-				break;
-		}
-	}
+			अन्यथा
+				अवरोध;
+		पूर्ण
+	पूर्ण
 	/* Skip over entries which are dying/dead or in the wrong namespace */
-	while (pos && (!kernfs_active(pos) || pos->ns != ns)) {
-		struct rb_node *node = rb_next(&pos->rb);
-		if (!node)
-			pos = NULL;
-		else
+	जबतक (pos && (!kernfs_active(pos) || pos->ns != ns)) अणु
+		काष्ठा rb_node *node = rb_next(&pos->rb);
+		अगर (!node)
+			pos = शून्य;
+		अन्यथा
 			pos = rb_to_kn(node);
-	}
-	return pos;
-}
+	पूर्ण
+	वापस pos;
+पूर्ण
 
-static struct kernfs_node *kernfs_dir_next_pos(const void *ns,
-	struct kernfs_node *parent, ino_t ino, struct kernfs_node *pos)
-{
+अटल काष्ठा kernfs_node *kernfs_dir_next_pos(स्थिर व्योम *ns,
+	काष्ठा kernfs_node *parent, ino_t ino, काष्ठा kernfs_node *pos)
+अणु
 	pos = kernfs_dir_pos(ns, parent, ino, pos);
-	if (pos) {
-		do {
-			struct rb_node *node = rb_next(&pos->rb);
-			if (!node)
-				pos = NULL;
-			else
+	अगर (pos) अणु
+		करो अणु
+			काष्ठा rb_node *node = rb_next(&pos->rb);
+			अगर (!node)
+				pos = शून्य;
+			अन्यथा
 				pos = rb_to_kn(node);
-		} while (pos && (!kernfs_active(pos) || pos->ns != ns));
-	}
-	return pos;
-}
+		पूर्ण जबतक (pos && (!kernfs_active(pos) || pos->ns != ns));
+	पूर्ण
+	वापस pos;
+पूर्ण
 
-static int kernfs_fop_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct dentry *dentry = file->f_path.dentry;
-	struct kernfs_node *parent = kernfs_dentry_node(dentry);
-	struct kernfs_node *pos = file->private_data;
-	const void *ns = NULL;
+अटल पूर्णांक kernfs_fop_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा dentry *dentry = file->f_path.dentry;
+	काष्ठा kernfs_node *parent = kernfs_dentry_node(dentry);
+	काष्ठा kernfs_node *pos = file->निजी_data;
+	स्थिर व्योम *ns = शून्य;
 
-	if (!dir_emit_dots(file, ctx))
-		return 0;
+	अगर (!dir_emit_करोts(file, ctx))
+		वापस 0;
 	mutex_lock(&kernfs_mutex);
 
-	if (kernfs_ns_enabled(parent))
+	अगर (kernfs_ns_enabled(parent))
 		ns = kernfs_info(dentry->d_sb)->ns;
 
-	for (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
+	क्रम (pos = kernfs_dir_pos(ns, parent, ctx->pos, pos);
 	     pos;
-	     pos = kernfs_dir_next_pos(ns, parent, ctx->pos, pos)) {
-		const char *name = pos->name;
-		unsigned int type = dt_type(pos);
-		int len = strlen(name);
+	     pos = kernfs_dir_next_pos(ns, parent, ctx->pos, pos)) अणु
+		स्थिर अक्षर *name = pos->name;
+		अचिन्हित पूर्णांक type = dt_type(pos);
+		पूर्णांक len = म_माप(name);
 		ino_t ino = kernfs_ino(pos);
 
 		ctx->pos = pos->hash;
-		file->private_data = pos;
+		file->निजी_data = pos;
 		kernfs_get(pos);
 
 		mutex_unlock(&kernfs_mutex);
-		if (!dir_emit(ctx, name, len, ino, type))
-			return 0;
+		अगर (!dir_emit(ctx, name, len, ino, type))
+			वापस 0;
 		mutex_lock(&kernfs_mutex);
-	}
+	पूर्ण
 	mutex_unlock(&kernfs_mutex);
-	file->private_data = NULL;
-	ctx->pos = INT_MAX;
-	return 0;
-}
+	file->निजी_data = शून्य;
+	ctx->pos = पूर्णांक_उच्च;
+	वापस 0;
+पूर्ण
 
-const struct file_operations kernfs_dir_fops = {
-	.read		= generic_read_dir,
-	.iterate_shared	= kernfs_fop_readdir,
+स्थिर काष्ठा file_operations kernfs_dir_fops = अणु
+	.पढ़ो		= generic_पढ़ो_dir,
+	.iterate_shared	= kernfs_fop_सूची_पढ़ो,
 	.release	= kernfs_dir_fop_release,
 	.llseek		= generic_file_llseek,
-};
+पूर्ण;

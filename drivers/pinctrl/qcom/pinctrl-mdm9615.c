@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014, Sony Mobile Communications AB.
  * Copyright (c) 2016 BayLibre, SAS.
  * Author : Neil Armstrong <narmstrong@baylibre.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
 
-#include "pinctrl-msm.h"
+#समावेश "pinctrl-msm.h"
 
-static const struct pinctrl_pin_desc mdm9615_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc mdm9615_pins[] = अणु
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
 	PINCTRL_PIN(2, "GPIO_2"),
@@ -102,10 +103,10 @@ static const struct pinctrl_pin_desc mdm9615_pins[] = {
 	PINCTRL_PIN(85, "GPIO_85"),
 	PINCTRL_PIN(86, "GPIO_86"),
 	PINCTRL_PIN(87, "GPIO_87"),
-};
+पूर्ण;
 
-#define DECLARE_MSM_GPIO_PINS(pin) \
-	static const unsigned int gpio##pin##_pins[] = { pin }
+#घोषणा DECLARE_MSM_GPIO_PINS(pin) \
+	अटल स्थिर अचिन्हित पूर्णांक gpio##pin##_pins[] = अणु pin पूर्ण
 DECLARE_MSM_GPIO_PINS(0);
 DECLARE_MSM_GPIO_PINS(1);
 DECLARE_MSM_GPIO_PINS(2);
@@ -195,19 +196,19 @@ DECLARE_MSM_GPIO_PINS(85);
 DECLARE_MSM_GPIO_PINS(86);
 DECLARE_MSM_GPIO_PINS(87);
 
-#define FUNCTION(fname)					\
-	[MSM_MUX_##fname] = {				\
+#घोषणा FUNCTION(fname)					\
+	[MSM_MUX_##fname] = अणु				\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
-	}
+	पूर्ण
 
-#define PINGROUP(id, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11) \
-	{						\
+#घोषणा PINGROUP(id, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11) \
+	अणु						\
 		.name = "gpio" #id,			\
 		.pins = gpio##id##_pins,		\
 		.npins = ARRAY_SIZE(gpio##id##_pins),	\
-		.funcs = (int[]){			\
+		.funcs = (पूर्णांक[])अणु			\
 			MSM_MUX_gpio,			\
 			MSM_MUX_##f1,			\
 			MSM_MUX_##f2,			\
@@ -220,31 +221,31 @@ DECLARE_MSM_GPIO_PINS(87);
 			MSM_MUX_##f9,			\
 			MSM_MUX_##f10,			\
 			MSM_MUX_##f11			\
-		},					\
+		पूर्ण,					\
 		.nfuncs = 12,				\
 		.ctl_reg = 0x1000 + 0x10 * id,		\
 		.io_reg = 0x1004 + 0x10 * id,		\
-		.intr_cfg_reg = 0x1008 + 0x10 * id,	\
-		.intr_status_reg = 0x100c + 0x10 * id,	\
-		.intr_target_reg = 0x400 + 0x4 * id,	\
+		.पूर्णांकr_cfg_reg = 0x1008 + 0x10 * id,	\
+		.पूर्णांकr_status_reg = 0x100c + 0x10 * id,	\
+		.पूर्णांकr_target_reg = 0x400 + 0x4 * id,	\
 		.mux_bit = 2,				\
 		.pull_bit = 0,				\
 		.drv_bit = 6,				\
 		.oe_bit = 9,				\
 		.in_bit = 0,				\
 		.out_bit = 1,				\
-		.intr_enable_bit = 0,			\
-		.intr_status_bit = 0,			\
-		.intr_ack_high = 1,			\
-		.intr_target_bit = 0,			\
-		.intr_target_kpss_val = 4,		\
-		.intr_raw_status_bit = 3,		\
-		.intr_polarity_bit = 1,			\
-		.intr_detection_bit = 2,		\
-		.intr_detection_width = 1,		\
-	}
+		.पूर्णांकr_enable_bit = 0,			\
+		.पूर्णांकr_status_bit = 0,			\
+		.पूर्णांकr_ack_high = 1,			\
+		.पूर्णांकr_target_bit = 0,			\
+		.पूर्णांकr_target_kpss_val = 4,		\
+		.पूर्णांकr_raw_status_bit = 3,		\
+		.पूर्णांकr_polarity_bit = 1,			\
+		.पूर्णांकr_detection_bit = 2,		\
+		.पूर्णांकr_detection_width = 1,		\
+	पूर्ण
 
-enum mdm9615_functions {
+क्रमागत mdm9615_functions अणु
 	MSM_MUX_gpio,
 	MSM_MUX_gsbi2_i2c,
 	MSM_MUX_gsbi3,
@@ -258,9 +259,9 @@ enum mdm9615_functions {
 	MSM_MUX_sec_audio,
 	MSM_MUX_cdc_mclk,
 	MSM_MUX_NA,
-};
+पूर्ण;
 
-static const char * const gpio_groups[] = {
+अटल स्थिर अक्षर * स्थिर gpio_groups[] = अणु
 	"gpio0", "gpio1", "gpio2", "gpio3", "gpio4", "gpio5", "gpio6", "gpio7",
 	"gpio8", "gpio9", "gpio10", "gpio11", "gpio12", "gpio13", "gpio14",
 	"gpio15", "gpio16", "gpio17", "gpio18", "gpio19", "gpio20", "gpio21",
@@ -274,53 +275,53 @@ static const char * const gpio_groups[] = {
 	"gpio71", "gpio72", "gpio73", "gpio74", "gpio75", "gpio76", "gpio77",
 	"gpio78", "gpio79", "gpio80", "gpio81", "gpio82", "gpio83", "gpio84",
 	"gpio85", "gpio86", "gpio87"
-};
+पूर्ण;
 
-static const char * const gsbi2_i2c_groups[] = {
+अटल स्थिर अक्षर * स्थिर gsbi2_i2c_groups[] = अणु
 	"gpio4", "gpio5"
-};
+पूर्ण;
 
-static const char * const gsbi3_groups[] = {
+अटल स्थिर अक्षर * स्थिर gsbi3_groups[] = अणु
 	"gpio8", "gpio9", "gpio10", "gpio11"
-};
+पूर्ण;
 
-static const char * const gsbi4_groups[] = {
+अटल स्थिर अक्षर * स्थिर gsbi4_groups[] = अणु
 	"gpio12", "gpio13", "gpio14", "gpio15"
-};
+पूर्ण;
 
-static const char * const gsbi5_i2c_groups[] = {
+अटल स्थिर अक्षर * स्थिर gsbi5_i2c_groups[] = अणु
 	"gpio16", "gpio17"
-};
+पूर्ण;
 
-static const char * const gsbi5_uart_groups[] = {
+अटल स्थिर अक्षर * स्थिर gsbi5_uart_groups[] = अणु
 	"gpio18", "gpio19"
-};
+पूर्ण;
 
-static const char * const sdc2_groups[] = {
+अटल स्थिर अक्षर * स्थिर sdc2_groups[] = अणु
 	"gpio25", "gpio26", "gpio27", "gpio28", "gpio29", "gpio30",
-};
+पूर्ण;
 
-static const char * const ebi2_lcdc_groups[] = {
+अटल स्थिर अक्षर * स्थिर ebi2_lcdc_groups[] = अणु
 	"gpio21", "gpio22", "gpio24",
-};
+पूर्ण;
 
-static const char * const ps_hold_groups[] = {
+अटल स्थिर अक्षर * स्थिर ps_hold_groups[] = अणु
 	"gpio83",
-};
+पूर्ण;
 
-static const char * const prim_audio_groups[] = {
+अटल स्थिर अक्षर * स्थिर prim_audio_groups[] = अणु
 	"gpio20", "gpio21", "gpio22", "gpio23",
-};
+पूर्ण;
 
-static const char * const sec_audio_groups[] = {
+अटल स्थिर अक्षर * स्थिर sec_audio_groups[] = अणु
 	"gpio25", "gpio26", "gpio27", "gpio28",
-};
+पूर्ण;
 
-static const char * const cdc_mclk_groups[] = {
+अटल स्थिर अक्षर * स्थिर cdc_mclk_groups[] = अणु
 	"gpio24",
-};
+पूर्ण;
 
-static const struct msm_function mdm9615_functions[] = {
+अटल स्थिर काष्ठा msm_function mdm9615_functions[] = अणु
 	FUNCTION(gpio),
 	FUNCTION(gsbi2_i2c),
 	FUNCTION(gsbi3),
@@ -333,9 +334,9 @@ static const struct msm_function mdm9615_functions[] = {
 	FUNCTION(prim_audio),
 	FUNCTION(sec_audio),
 	FUNCTION(cdc_mclk),
-};
+पूर्ण;
 
-static const struct msm_pingroup mdm9615_groups[] = {
+अटल स्थिर काष्ठा msm_pingroup mdm9615_groups[] = अणु
 	PINGROUP(0, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(1, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(2, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
@@ -424,11 +425,11 @@ static const struct msm_pingroup mdm9615_groups[] = {
 	PINGROUP(85, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(86, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
 	PINGROUP(87, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA),
-};
+पूर्ण;
 
-#define NUM_GPIO_PINGROUPS 88
+#घोषणा NUM_GPIO_PINGROUPS 88
 
-static const struct msm_pinctrl_soc_data mdm9615_pinctrl = {
+अटल स्थिर काष्ठा msm_pinctrl_soc_data mdm9615_pinctrl = अणु
 	.pins = mdm9615_pins,
 	.npins = ARRAY_SIZE(mdm9615_pins),
 	.functions = mdm9615_functions,
@@ -436,38 +437,38 @@ static const struct msm_pinctrl_soc_data mdm9615_pinctrl = {
 	.groups = mdm9615_groups,
 	.ngroups = ARRAY_SIZE(mdm9615_groups),
 	.ngpios = NUM_GPIO_PINGROUPS,
-};
+पूर्ण;
 
-static int mdm9615_pinctrl_probe(struct platform_device *pdev)
-{
-	return msm_pinctrl_probe(pdev, &mdm9615_pinctrl);
-}
+अटल पूर्णांक mdm9615_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस msm_pinctrl_probe(pdev, &mdm9615_pinctrl);
+पूर्ण
 
-static const struct of_device_id mdm9615_pinctrl_of_match[] = {
-	{ .compatible = "qcom,mdm9615-pinctrl", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id mdm9615_pinctrl_of_match[] = अणु
+	अणु .compatible = "qcom,mdm9615-pinctrl", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver mdm9615_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mdm9615_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "mdm9615-pinctrl",
 		.of_match_table = mdm9615_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = mdm9615_pinctrl_probe,
-	.remove = msm_pinctrl_remove,
-};
+	.हटाओ = msm_pinctrl_हटाओ,
+पूर्ण;
 
-static int __init mdm9615_pinctrl_init(void)
-{
-	return platform_driver_register(&mdm9615_pinctrl_driver);
-}
+अटल पूर्णांक __init mdm9615_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mdm9615_pinctrl_driver);
+पूर्ण
 arch_initcall(mdm9615_pinctrl_init);
 
-static void __exit mdm9615_pinctrl_exit(void)
-{
-	platform_driver_unregister(&mdm9615_pinctrl_driver);
-}
-module_exit(mdm9615_pinctrl_exit);
+अटल व्योम __निकास mdm9615_pinctrl_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mdm9615_pinctrl_driver);
+पूर्ण
+module_निकास(mdm9615_pinctrl_निकास);
 
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");
 MODULE_DESCRIPTION("Qualcomm MDM9615 pinctrl driver");

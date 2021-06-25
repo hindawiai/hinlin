@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _S390_SECTIONS_H
-#define _S390_SECTIONS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _S390_SECTIONS_H
+#घोषणा _S390_SECTIONS_H
 
-#define arch_is_kernel_initmem_freed arch_is_kernel_initmem_freed
+#घोषणा arch_is_kernel_iniपंचांगem_मुक्तd arch_is_kernel_iniपंचांगem_मुक्तd
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-extern bool initmem_freed;
+बाह्य bool iniपंचांगem_मुक्तd;
 
-static inline int arch_is_kernel_initmem_freed(unsigned long addr)
-{
-	if (!initmem_freed)
-		return 0;
-	return addr >= (unsigned long)__init_begin &&
-	       addr < (unsigned long)__init_end;
-}
+अटल अंतरभूत पूर्णांक arch_is_kernel_iniपंचांगem_मुक्तd(अचिन्हित दीर्घ addr)
+अणु
+	अगर (!iniपंचांगem_मुक्तd)
+		वापस 0;
+	वापस addr >= (अचिन्हित दीर्घ)__init_begin &&
+	       addr < (अचिन्हित दीर्घ)__init_end;
+पूर्ण
 
 /*
  * .boot.data section contains variables "shared" between the decompressor and
  * the decompressed kernel. The decompressor will store values in them, and
- * copy over to the decompressed image before starting it.
+ * copy over to the decompressed image beक्रमe starting it.
  *
- * Each variable end up in its own intermediate section .boot.data.<var name>,
- * those sections are later sorted by alignment + name and merged together into
+ * Each variable end up in its own पूर्णांकermediate section .boot.data.<var name>,
+ * those sections are later sorted by alignment + name and merged together पूर्णांकo
  * final .boot.data section, which should be identical in the decompressor and
  * the decompressed kernel (that is checked during the build).
  */
-#define __bootdata(var) __section(".boot.data." #var) var
+#घोषणा __bootdata(var) __section(".boot.data." #var) var
 
 /*
  * .boot.preserved.data is similar to .boot.data, but it is not part of the
- * .init section and thus will be preserved for later use in the decompressed
+ * .init section and thus will be preserved क्रम later use in the decompressed
  * kernel.
  */
-#define __bootdata_preserved(var) __section(".boot.preserved.data." #var) var
+#घोषणा __bootdata_preserved(var) __section(".boot.preserved.data." #var) var
 
-extern unsigned long __sdma, __edma;
-extern unsigned long __stext_dma, __etext_dma;
+बाह्य अचिन्हित दीर्घ __sdma, __edma;
+बाह्य अचिन्हित दीर्घ __stext_dma, __etext_dma;
 
-#endif
+#पूर्ण_अगर

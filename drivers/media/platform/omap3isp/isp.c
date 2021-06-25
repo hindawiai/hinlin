@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * isp.c
  *
@@ -7,11 +8,11 @@
  * Copyright (C) 2006-2010 Nokia Corporation
  * Copyright (C) 2007-2009 Texas Instruments, Inc.
  *
- * Contacts: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ * Contacts: Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	     Sakari Ailus <sakari.ailus@iki.fi>
  *
  * Contributors:
- *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  *	Sakari Ailus <sakari.ailus@iki.fi>
  *	David Cohen <dacohen@gmail.com>
  *	Stanimir Varbanov <svarbanov@mm-sol.com>
@@ -23,7 +24,7 @@
  *	RaniSuneela <r-m@ti.com>
  *	Atanas Filipov <afilipov@mm-sol.com>
  *	Gjorgji Rosikopulos <grosikopulos@mm-sol.com>
- *	Hiroshi DOYU <hiroshi.doyu@nokia.com>
+ *	Hiroshi DOYU <hiroshi.करोyu@nokia.com>
  *	Nayden Kanchev <nkanchev@mm-sol.com>
  *	Phil Carmody <ext-phil.2.carmody@nokia.com>
  *	Artem Bityutskiy <artem.bityutskiy@nokia.com>
@@ -33,60 +34,60 @@
  *	Vaibhav Hiremath <hvaibhav@ti.com>
  *	Mohit Jalori <mjalori@ti.com>
  *	Sameer Venkatraman <sameerv@ti.com>
- *	Senthilvadivu Guruswamy <svadivu@ti.com>
+ *	Senthilvaभागu Guruswamy <svaभागu@ti.com>
  *	Thara Gopinath <thara@ti.com>
  *	Toni Leinonen <toni.leinonen@nokia.com>
  *	Troy Laramy <t-laramy@ti.com>
  */
 
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/omap-iommu.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/sched.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/omap-iommu.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#ifdef CONFIG_ARM_DMA_USE_IOMMU
-#include <asm/dma-iommu.h>
-#endif
+#अगर_घोषित CONFIG_ARM_DMA_USE_IOMMU
+#समावेश <यंत्र/dma-iommu.h>
+#पूर्ण_अगर
 
-#include <media/v4l2-common.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-mc.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-mc.h>
 
-#include "isp.h"
-#include "ispreg.h"
-#include "ispccdc.h"
-#include "isppreview.h"
-#include "ispresizer.h"
-#include "ispcsi2.h"
-#include "ispccp2.h"
-#include "isph3a.h"
-#include "isphist.h"
+#समावेश "isp.h"
+#समावेश "ispreg.h"
+#समावेश "ispccdc.h"
+#समावेश "isppreview.h"
+#समावेश "ispresizer.h"
+#समावेश "ispcsi2.h"
+#समावेश "ispccp2.h"
+#समावेश "isph3a.h"
+#समावेश "isphist.h"
 
-static unsigned int autoidle;
-module_param(autoidle, int, 0444);
-MODULE_PARM_DESC(autoidle, "Enable OMAP3ISP AUTOIDLE support");
+अटल अचिन्हित पूर्णांक स्वतःidle;
+module_param(स्वतःidle, पूर्णांक, 0444);
+MODULE_PARM_DESC(स्वतःidle, "Enable OMAP3ISP AUTOIDLE support");
 
-static void isp_save_ctx(struct isp_device *isp);
+अटल व्योम isp_save_ctx(काष्ठा isp_device *isp);
 
-static void isp_restore_ctx(struct isp_device *isp);
+अटल व्योम isp_restore_ctx(काष्ठा isp_device *isp);
 
-static const struct isp_res_mapping isp_res_maps[] = {
-	{
+अटल स्थिर काष्ठा isp_res_mapping isp_res_maps[] = अणु
+	अणु
 		.isp_rev = ISP_REVISION_2_0,
-		.offset = {
+		.offset = अणु
 			/* first MMIO area */
 			0x0000, /* base, len 0x0070 */
 			0x0400, /* ccp2, len 0x01f0 */
@@ -99,12 +100,12 @@ static const struct isp_res_mapping isp_res_maps[] = {
 			/* second MMIO area */
 			0x0000, /* csi2a, len 0x0170 */
 			0x0170, /* csiphy2, len 0x000c */
-		},
+		पूर्ण,
 		.phy_type = ISP_PHY_TYPE_3430,
-	},
-	{
+	पूर्ण,
+	अणु
 		.isp_rev = ISP_REVISION_15_0,
-		.offset = {
+		.offset = अणु
 			/* first MMIO area */
 			0x0000, /* base, len 0x0070 */
 			0x0400, /* ccp2, len 0x01f0 */
@@ -121,155 +122,155 @@ static const struct isp_res_mapping isp_res_maps[] = {
 			0x0400, /* csi2c, len 0x0170 (1st area) */
 			0x0570, /* csiphy1, len 0x000c */
 			0x05c0, /* csi2c, len 0x0040 (2nd area) */
-		},
+		पूर्ण,
 		.phy_type = ISP_PHY_TYPE_3630,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* Structure for saving/restoring ISP module registers */
-static struct isp_reg isp_reg_list[] = {
-	{OMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG, 0},
-	{OMAP3_ISP_IOMEM_MAIN, ISP_CTRL, 0},
-	{OMAP3_ISP_IOMEM_MAIN, ISP_TCTRL_CTRL, 0},
-	{0, ISP_TOK_TERM, 0}
-};
+/* Structure क्रम saving/restoring ISP module रेजिस्टरs */
+अटल काष्ठा isp_reg isp_reg_list[] = अणु
+	अणुOMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG, 0पूर्ण,
+	अणुOMAP3_ISP_IOMEM_MAIN, ISP_CTRL, 0पूर्ण,
+	अणुOMAP3_ISP_IOMEM_MAIN, ISP_TCTRL_CTRL, 0पूर्ण,
+	अणु0, ISP_TOK_TERM, 0पूर्ण
+पूर्ण;
 
 /*
- * omap3isp_flush - Post pending L3 bus writes by doing a register readback
+ * omap3isp_flush - Post pending L3 bus ग_लिखोs by करोing a रेजिस्टर पढ़ोback
  * @isp: OMAP3 ISP device
  *
- * In order to force posting of pending writes, we need to write and
- * readback the same register, in this case the revision register.
+ * In order to क्रमce posting of pending ग_लिखोs, we need to ग_लिखो and
+ * पढ़ोback the same रेजिस्टर, in this हाल the revision रेजिस्टर.
  *
- * See this link for reference:
- *   https://www.mail-archive.com/linux-omap@vger.kernel.org/msg08149.html
+ * See this link क्रम reference:
+ *   https://www.mail-archive.com/linux-omap@vger.kernel.org/msg08149.hपंचांगl
  */
-void omap3isp_flush(struct isp_device *isp)
-{
-	isp_reg_writel(isp, 0, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
-	isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
-}
+व्योम omap3isp_flush(काष्ठा isp_device *isp)
+अणु
+	isp_reg_ग_लिखोl(isp, 0, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
+	isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * XCLK
  */
 
-#define to_isp_xclk(_hw)	container_of(_hw, struct isp_xclk, hw)
+#घोषणा to_isp_xclk(_hw)	container_of(_hw, काष्ठा isp_xclk, hw)
 
-static void isp_xclk_update(struct isp_xclk *xclk, u32 divider)
-{
-	switch (xclk->id) {
-	case ISP_XCLK_A:
+अटल व्योम isp_xclk_update(काष्ठा isp_xclk *xclk, u32 भागider)
+अणु
+	चयन (xclk->id) अणु
+	हाल ISP_XCLK_A:
 		isp_reg_clr_set(xclk->isp, OMAP3_ISP_IOMEM_MAIN, ISP_TCTRL_CTRL,
 				ISPTCTRL_CTRL_DIVA_MASK,
-				divider << ISPTCTRL_CTRL_DIVA_SHIFT);
-		break;
-	case ISP_XCLK_B:
+				भागider << ISPTCTRL_CTRL_DIVA_SHIFT);
+		अवरोध;
+	हाल ISP_XCLK_B:
 		isp_reg_clr_set(xclk->isp, OMAP3_ISP_IOMEM_MAIN, ISP_TCTRL_CTRL,
 				ISPTCTRL_CTRL_DIVB_MASK,
-				divider << ISPTCTRL_CTRL_DIVB_SHIFT);
-		break;
-	}
-}
+				भागider << ISPTCTRL_CTRL_DIVB_SHIFT);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int isp_xclk_prepare(struct clk_hw *hw)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
+अटल पूर्णांक isp_xclk_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
 
 	omap3isp_get(xclk->isp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isp_xclk_unprepare(struct clk_hw *hw)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
+अटल व्योम isp_xclk_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
 
 	omap3isp_put(xclk->isp);
-}
+पूर्ण
 
-static int isp_xclk_enable(struct clk_hw *hw)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
-	unsigned long flags;
+अटल पूर्णांक isp_xclk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&xclk->lock, flags);
-	isp_xclk_update(xclk, xclk->divider);
+	isp_xclk_update(xclk, xclk->भागider);
 	xclk->enabled = true;
 	spin_unlock_irqrestore(&xclk->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isp_xclk_disable(struct clk_hw *hw)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
-	unsigned long flags;
+अटल व्योम isp_xclk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&xclk->lock, flags);
 	isp_xclk_update(xclk, 0);
 	xclk->enabled = false;
 	spin_unlock_irqrestore(&xclk->lock, flags);
-}
+पूर्ण
 
-static unsigned long isp_xclk_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
+अटल अचिन्हित दीर्घ isp_xclk_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
 
-	return parent_rate / xclk->divider;
-}
+	वापस parent_rate / xclk->भागider;
+पूर्ण
 
-static u32 isp_xclk_calc_divider(unsigned long *rate, unsigned long parent_rate)
-{
-	u32 divider;
+अटल u32 isp_xclk_calc_भागider(अचिन्हित दीर्घ *rate, अचिन्हित दीर्घ parent_rate)
+अणु
+	u32 भागider;
 
-	if (*rate >= parent_rate) {
+	अगर (*rate >= parent_rate) अणु
 		*rate = parent_rate;
-		return ISPTCTRL_CTRL_DIV_BYPASS;
-	}
+		वापस ISPTCTRL_CTRL_DIV_BYPASS;
+	पूर्ण
 
-	if (*rate == 0)
+	अगर (*rate == 0)
 		*rate = 1;
 
-	divider = DIV_ROUND_CLOSEST(parent_rate, *rate);
-	if (divider >= ISPTCTRL_CTRL_DIV_BYPASS)
-		divider = ISPTCTRL_CTRL_DIV_BYPASS - 1;
+	भागider = DIV_ROUND_CLOSEST(parent_rate, *rate);
+	अगर (भागider >= ISPTCTRL_CTRL_DIV_BYPASS)
+		भागider = ISPTCTRL_CTRL_DIV_BYPASS - 1;
 
-	*rate = parent_rate / divider;
-	return divider;
-}
+	*rate = parent_rate / भागider;
+	वापस भागider;
+पूर्ण
 
-static long isp_xclk_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
-	isp_xclk_calc_divider(&rate, *parent_rate);
-	return rate;
-}
+अटल दीर्घ isp_xclk_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	isp_xclk_calc_भागider(&rate, *parent_rate);
+	वापस rate;
+पूर्ण
 
-static int isp_xclk_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	struct isp_xclk *xclk = to_isp_xclk(hw);
-	unsigned long flags;
-	u32 divider;
+अटल पूर्णांक isp_xclk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा isp_xclk *xclk = to_isp_xclk(hw);
+	अचिन्हित दीर्घ flags;
+	u32 भागider;
 
-	divider = isp_xclk_calc_divider(&rate, parent_rate);
+	भागider = isp_xclk_calc_भागider(&rate, parent_rate);
 
 	spin_lock_irqsave(&xclk->lock, flags);
 
-	xclk->divider = divider;
-	if (xclk->enabled)
-		isp_xclk_update(xclk, divider);
+	xclk->भागider = भागider;
+	अगर (xclk->enabled)
+		isp_xclk_update(xclk, भागider);
 
 	spin_unlock_irqrestore(&xclk->lock, flags);
 
 	dev_dbg(xclk->isp->dev, "%s: cam_xclk%c set to %lu Hz (div %u)\n",
-		__func__, xclk->id == ISP_XCLK_A ? 'a' : 'b', rate, divider);
-	return 0;
-}
+		__func__, xclk->id == ISP_XCLK_A ? 'a' : 'b', rate, भागider);
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops isp_xclk_ops = {
+अटल स्थिर काष्ठा clk_ops isp_xclk_ops = अणु
 	.prepare = isp_xclk_prepare,
 	.unprepare = isp_xclk_unprepare,
 	.enable = isp_xclk_enable,
@@ -277,36 +278,36 @@ static const struct clk_ops isp_xclk_ops = {
 	.recalc_rate = isp_xclk_recalc_rate,
 	.round_rate = isp_xclk_round_rate,
 	.set_rate = isp_xclk_set_rate,
-};
+पूर्ण;
 
-static const char *isp_xclk_parent_name = "cam_mclk";
+अटल स्थिर अक्षर *isp_xclk_parent_name = "cam_mclk";
 
-static struct clk *isp_xclk_src_get(struct of_phandle_args *clkspec, void *data)
-{
-	unsigned int idx = clkspec->args[0];
-	struct isp_device *isp = data;
+अटल काष्ठा clk *isp_xclk_src_get(काष्ठा of_phandle_args *clkspec, व्योम *data)
+अणु
+	अचिन्हित पूर्णांक idx = clkspec->args[0];
+	काष्ठा isp_device *isp = data;
 
-	if (idx >= ARRAY_SIZE(isp->xclks))
-		return ERR_PTR(-ENOENT);
+	अगर (idx >= ARRAY_SIZE(isp->xclks))
+		वापस ERR_PTR(-ENOENT);
 
-	return isp->xclks[idx].clk;
-}
+	वापस isp->xclks[idx].clk;
+पूर्ण
 
-static int isp_xclk_init(struct isp_device *isp)
-{
-	struct device_node *np = isp->dev->of_node;
-	struct clk_init_data init = {};
-	unsigned int i;
+अटल पूर्णांक isp_xclk_init(काष्ठा isp_device *isp)
+अणु
+	काष्ठा device_node *np = isp->dev->of_node;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(isp->xclks); ++i)
+	क्रम (i = 0; i < ARRAY_SIZE(isp->xclks); ++i)
 		isp->xclks[i].clk = ERR_PTR(-EINVAL);
 
-	for (i = 0; i < ARRAY_SIZE(isp->xclks); ++i) {
-		struct isp_xclk *xclk = &isp->xclks[i];
+	क्रम (i = 0; i < ARRAY_SIZE(isp->xclks); ++i) अणु
+		काष्ठा isp_xclk *xclk = &isp->xclks[i];
 
 		xclk->isp = isp;
 		xclk->id = i == 0 ? ISP_XCLK_A : ISP_XCLK_B;
-		xclk->divider = 1;
+		xclk->भागider = 1;
 		spin_lock_init(&xclk->lock);
 
 		init.name = i == 0 ? "cam_xclka" : "cam_xclkb";
@@ -316,49 +317,49 @@ static int isp_xclk_init(struct isp_device *isp)
 
 		xclk->hw.init = &init;
 		/*
-		 * The first argument is NULL in order to avoid circular
+		 * The first argument is शून्य in order to aव्योम circular
 		 * reference, as this driver takes reference on the
 		 * sensor subdevice modules and the sensors would take
 		 * reference on this module through clk_get().
 		 */
-		xclk->clk = clk_register(NULL, &xclk->hw);
-		if (IS_ERR(xclk->clk))
-			return PTR_ERR(xclk->clk);
-	}
+		xclk->clk = clk_रेजिस्टर(शून्य, &xclk->hw);
+		अगर (IS_ERR(xclk->clk))
+			वापस PTR_ERR(xclk->clk);
+	पूर्ण
 
-	if (np)
+	अगर (np)
 		of_clk_add_provider(np, isp_xclk_src_get, isp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isp_xclk_cleanup(struct isp_device *isp)
-{
-	struct device_node *np = isp->dev->of_node;
-	unsigned int i;
+अटल व्योम isp_xclk_cleanup(काष्ठा isp_device *isp)
+अणु
+	काष्ठा device_node *np = isp->dev->of_node;
+	अचिन्हित पूर्णांक i;
 
-	if (np)
+	अगर (np)
 		of_clk_del_provider(np);
 
-	for (i = 0; i < ARRAY_SIZE(isp->xclks); ++i) {
-		struct isp_xclk *xclk = &isp->xclks[i];
+	क्रम (i = 0; i < ARRAY_SIZE(isp->xclks); ++i) अणु
+		काष्ठा isp_xclk *xclk = &isp->xclks[i];
 
-		if (!IS_ERR(xclk->clk))
-			clk_unregister(xclk->clk);
-	}
-}
+		अगर (!IS_ERR(xclk->clk))
+			clk_unरेजिस्टर(xclk->clk);
+	पूर्ण
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Interrupts
  */
 
 /*
- * isp_enable_interrupts - Enable ISP interrupts.
+ * isp_enable_पूर्णांकerrupts - Enable ISP पूर्णांकerrupts.
  * @isp: OMAP3 ISP device
  */
-static void isp_enable_interrupts(struct isp_device *isp)
-{
-	static const u32 irq = IRQ0ENABLE_CSIA_IRQ
+अटल व्योम isp_enable_पूर्णांकerrupts(काष्ठा isp_device *isp)
+अणु
+	अटल स्थिर u32 irq = IRQ0ENABLE_CSIA_IRQ
 			     | IRQ0ENABLE_CSIB_IRQ
 			     | IRQ0ENABLE_CCDC_LSC_PREF_ERR_IRQ
 			     | IRQ0ENABLE_CCDC_LSC_DONE_IRQ
@@ -371,34 +372,34 @@ static void isp_enable_interrupts(struct isp_device *isp)
 			     | IRQ0ENABLE_PRV_DONE_IRQ
 			     | IRQ0ENABLE_RSZ_DONE_IRQ;
 
-	isp_reg_writel(isp, irq, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
-	isp_reg_writel(isp, irq, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0ENABLE);
-}
+	isp_reg_ग_लिखोl(isp, irq, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
+	isp_reg_ग_लिखोl(isp, irq, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0ENABLE);
+पूर्ण
 
 /*
- * isp_disable_interrupts - Disable ISP interrupts.
+ * isp_disable_पूर्णांकerrupts - Disable ISP पूर्णांकerrupts.
  * @isp: OMAP3 ISP device
  */
-static void isp_disable_interrupts(struct isp_device *isp)
-{
-	isp_reg_writel(isp, 0, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0ENABLE);
-}
+अटल व्योम isp_disable_पूर्णांकerrupts(काष्ठा isp_device *isp)
+अणु
+	isp_reg_ग_लिखोl(isp, 0, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0ENABLE);
+पूर्ण
 
 /*
  * isp_core_init - ISP core settings
  * @isp: OMAP3 ISP device
  * @idle: Consider idle state.
  *
- * Set the power settings for the ISP and SBL bus and configure the HS/VS
- * interrupt source.
+ * Set the घातer settings क्रम the ISP and SBL bus and configure the HS/VS
+ * पूर्णांकerrupt source.
  *
- * We need to configure the HS/VS interrupt source before interrupts get
- * enabled, as the sensor might be free-running and the ISP default setting
+ * We need to configure the HS/VS पूर्णांकerrupt source beक्रमe पूर्णांकerrupts get
+ * enabled, as the sensor might be मुक्त-running and the ISP शेष setting
  * (HS edge) would put an unnecessary burden on the CPU.
  */
-static void isp_core_init(struct isp_device *isp, int idle)
-{
-	isp_reg_writel(isp,
+अटल व्योम isp_core_init(काष्ठा isp_device *isp, पूर्णांक idle)
+अणु
+	isp_reg_ग_लिखोl(isp,
 		       ((idle ? ISP_SYSCONFIG_MIDLEMODE_SMARTSTANDBY :
 				ISP_SYSCONFIG_MIDLEMODE_FORCESTANDBY) <<
 			ISP_SYSCONFIG_MIDLEMODE_SHIFT) |
@@ -406,79 +407,79 @@ static void isp_core_init(struct isp_device *isp, int idle)
 			  ISP_SYSCONFIG_AUTOIDLE : 0),
 		       OMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG);
 
-	isp_reg_writel(isp,
-		       (isp->autoidle ? ISPCTRL_SBL_AUTOIDLE : 0) |
+	isp_reg_ग_लिखोl(isp,
+		       (isp->स्वतःidle ? ISPCTRL_SBL_AUTOIDLE : 0) |
 		       ISPCTRL_SYNC_DETECT_VSRISE,
 		       OMAP3_ISP_IOMEM_MAIN, ISP_CTRL);
-}
+पूर्ण
 
 /*
- * Configure the bridge and lane shifter. Valid inputs are
+ * Configure the bridge and lane shअगरter. Valid inमाला_दो are
  *
- * CCDC_INPUT_PARALLEL: Parallel interface
+ * CCDC_INPUT_PARALLEL: Parallel पूर्णांकerface
  * CCDC_INPUT_CSI2A: CSI2a receiver
  * CCDC_INPUT_CCP2B: CCP2b receiver
  * CCDC_INPUT_CSI2C: CSI2c receiver
  *
- * The bridge and lane shifter are configured according to the selected input
- * and the ISP platform data.
+ * The bridge and lane shअगरter are configured according to the selected input
+ * and the ISP platक्रमm data.
  */
-void omap3isp_configure_bridge(struct isp_device *isp,
-			       enum ccdc_input_entity input,
-			       const struct isp_parallel_cfg *parcfg,
-			       unsigned int shift, unsigned int bridge)
-{
+व्योम omap3isp_configure_bridge(काष्ठा isp_device *isp,
+			       क्रमागत ccdc_input_entity input,
+			       स्थिर काष्ठा isp_parallel_cfg *parcfg,
+			       अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक bridge)
+अणु
 	u32 ispctrl_val;
 
-	ispctrl_val  = isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL);
+	ispctrl_val  = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL);
 	ispctrl_val &= ~ISPCTRL_SHIFT_MASK;
 	ispctrl_val &= ~ISPCTRL_PAR_CLK_POL_INV;
 	ispctrl_val &= ~ISPCTRL_PAR_SER_CLK_SEL_MASK;
 	ispctrl_val &= ~ISPCTRL_PAR_BRIDGE_MASK;
 	ispctrl_val |= bridge;
 
-	switch (input) {
-	case CCDC_INPUT_PARALLEL:
+	चयन (input) अणु
+	हाल CCDC_INPUT_PARALLEL:
 		ispctrl_val |= ISPCTRL_PAR_SER_CLK_SEL_PARALLEL;
 		ispctrl_val |= parcfg->clk_pol << ISPCTRL_PAR_CLK_POL_SHIFT;
-		shift += parcfg->data_lane_shift;
-		break;
+		shअगरt += parcfg->data_lane_shअगरt;
+		अवरोध;
 
-	case CCDC_INPUT_CSI2A:
+	हाल CCDC_INPUT_CSI2A:
 		ispctrl_val |= ISPCTRL_PAR_SER_CLK_SEL_CSIA;
-		break;
+		अवरोध;
 
-	case CCDC_INPUT_CCP2B:
+	हाल CCDC_INPUT_CCP2B:
 		ispctrl_val |= ISPCTRL_PAR_SER_CLK_SEL_CSIB;
-		break;
+		अवरोध;
 
-	case CCDC_INPUT_CSI2C:
+	हाल CCDC_INPUT_CSI2C:
 		ispctrl_val |= ISPCTRL_PAR_SER_CLK_SEL_CSIC;
-		break;
+		अवरोध;
 
-	default:
-		return;
-	}
+	शेष:
+		वापस;
+	पूर्ण
 
-	ispctrl_val |= ((shift/2) << ISPCTRL_SHIFT_SHIFT) & ISPCTRL_SHIFT_MASK;
+	ispctrl_val |= ((shअगरt/2) << ISPCTRL_SHIFT_SHIFT) & ISPCTRL_SHIFT_MASK;
 
-	isp_reg_writel(isp, ispctrl_val, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL);
-}
+	isp_reg_ग_लिखोl(isp, ispctrl_val, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL);
+पूर्ण
 
-void omap3isp_hist_dma_done(struct isp_device *isp)
-{
-	if (omap3isp_ccdc_busy(&isp->isp_ccdc) ||
-	    omap3isp_stat_pcr_busy(&isp->isp_hist)) {
+व्योम omap3isp_hist_dma_करोne(काष्ठा isp_device *isp)
+अणु
+	अगर (omap3isp_ccdc_busy(&isp->isp_ccdc) ||
+	    omap3isp_stat_pcr_busy(&isp->isp_hist)) अणु
 		/* Histogram cannot be enabled in this frame anymore */
 		atomic_set(&isp->isp_hist.buf_err, 1);
 		dev_dbg(isp->dev,
 			"hist: Out of synchronization with CCDC. Ignoring next buffer.\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void isp_isr_dbg(struct isp_device *isp, u32 irqstatus)
-{
-	static const char *name[] = {
+अटल अंतरभूत व्योम isp_isr_dbg(काष्ठा isp_device *isp, u32 irqstatus)
+अणु
+	अटल स्थिर अक्षर *name[] = अणु
 		"CSIA_IRQ",
 		"res1",
 		"res2",
@@ -511,146 +512,146 @@ static inline void isp_isr_dbg(struct isp_device *isp, u32 irqstatus)
 		"OCP_ERR_IRQ",
 		"SEC_ERR_IRQ",
 		"HS_VS_IRQ",
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
 	dev_dbg(isp->dev, "ISP IRQ: ");
 
-	for (i = 0; i < ARRAY_SIZE(name); i++) {
-		if ((1 << i) & irqstatus)
-			printk(KERN_CONT "%s ", name[i]);
-	}
-	printk(KERN_CONT "\n");
-}
+	क्रम (i = 0; i < ARRAY_SIZE(name); i++) अणु
+		अगर ((1 << i) & irqstatus)
+			prपूर्णांकk(KERN_CONT "%s ", name[i]);
+	पूर्ण
+	prपूर्णांकk(KERN_CONT "\n");
+पूर्ण
 
-static void isp_isr_sbl(struct isp_device *isp)
-{
-	struct device *dev = isp->dev;
-	struct isp_pipeline *pipe;
+अटल व्योम isp_isr_sbl(काष्ठा isp_device *isp)
+अणु
+	काष्ठा device *dev = isp->dev;
+	काष्ठा isp_pipeline *pipe;
 	u32 sbl_pcr;
 
 	/*
-	 * Handle shared buffer logic overflows for video buffers.
+	 * Handle shared buffer logic overflows क्रम video buffers.
 	 * ISPSBL_PCR_CCDCPRV_2_RSZ_OVF can be safely ignored.
 	 */
-	sbl_pcr = isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_PCR);
-	isp_reg_writel(isp, sbl_pcr, OMAP3_ISP_IOMEM_SBL, ISPSBL_PCR);
+	sbl_pcr = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_PCR);
+	isp_reg_ग_लिखोl(isp, sbl_pcr, OMAP3_ISP_IOMEM_SBL, ISPSBL_PCR);
 	sbl_pcr &= ~ISPSBL_PCR_CCDCPRV_2_RSZ_OVF;
 
-	if (sbl_pcr)
+	अगर (sbl_pcr)
 		dev_dbg(dev, "SBL overflow (PCR = 0x%08x)\n", sbl_pcr);
 
-	if (sbl_pcr & ISPSBL_PCR_CSIB_WBL_OVF) {
+	अगर (sbl_pcr & ISPSBL_PCR_CSIB_WBL_OVF) अणु
 		pipe = to_isp_pipeline(&isp->isp_ccp2.subdev.entity);
-		if (pipe != NULL)
+		अगर (pipe != शून्य)
 			pipe->error = true;
-	}
+	पूर्ण
 
-	if (sbl_pcr & ISPSBL_PCR_CSIA_WBL_OVF) {
+	अगर (sbl_pcr & ISPSBL_PCR_CSIA_WBL_OVF) अणु
 		pipe = to_isp_pipeline(&isp->isp_csi2a.subdev.entity);
-		if (pipe != NULL)
+		अगर (pipe != शून्य)
 			pipe->error = true;
-	}
+	पूर्ण
 
-	if (sbl_pcr & ISPSBL_PCR_CCDC_WBL_OVF) {
+	अगर (sbl_pcr & ISPSBL_PCR_CCDC_WBL_OVF) अणु
 		pipe = to_isp_pipeline(&isp->isp_ccdc.subdev.entity);
-		if (pipe != NULL)
+		अगर (pipe != शून्य)
 			pipe->error = true;
-	}
+	पूर्ण
 
-	if (sbl_pcr & ISPSBL_PCR_PRV_WBL_OVF) {
+	अगर (sbl_pcr & ISPSBL_PCR_PRV_WBL_OVF) अणु
 		pipe = to_isp_pipeline(&isp->isp_prev.subdev.entity);
-		if (pipe != NULL)
+		अगर (pipe != शून्य)
 			pipe->error = true;
-	}
+	पूर्ण
 
-	if (sbl_pcr & (ISPSBL_PCR_RSZ1_WBL_OVF
+	अगर (sbl_pcr & (ISPSBL_PCR_RSZ1_WBL_OVF
 		       | ISPSBL_PCR_RSZ2_WBL_OVF
 		       | ISPSBL_PCR_RSZ3_WBL_OVF
-		       | ISPSBL_PCR_RSZ4_WBL_OVF)) {
+		       | ISPSBL_PCR_RSZ4_WBL_OVF)) अणु
 		pipe = to_isp_pipeline(&isp->isp_res.subdev.entity);
-		if (pipe != NULL)
+		अगर (pipe != शून्य)
 			pipe->error = true;
-	}
+	पूर्ण
 
-	if (sbl_pcr & ISPSBL_PCR_H3A_AF_WBL_OVF)
+	अगर (sbl_pcr & ISPSBL_PCR_H3A_AF_WBL_OVF)
 		omap3isp_stat_sbl_overflow(&isp->isp_af);
 
-	if (sbl_pcr & ISPSBL_PCR_H3A_AEAWB_WBL_OVF)
+	अगर (sbl_pcr & ISPSBL_PCR_H3A_AEAWB_WBL_OVF)
 		omap3isp_stat_sbl_overflow(&isp->isp_aewb);
-}
+पूर्ण
 
 /*
- * isp_isr - Interrupt Service Routine for Camera ISP module.
+ * isp_isr - Interrupt Service Routine क्रम Camera ISP module.
  * @irq: Not used currently.
- * @_isp: Pointer to the OMAP3 ISP device
+ * @_isp: Poपूर्णांकer to the OMAP3 ISP device
  *
- * Handles the corresponding callback if plugged in.
+ * Handles the corresponding callback अगर plugged in.
  */
-static irqreturn_t isp_isr(int irq, void *_isp)
-{
-	static const u32 ccdc_events = IRQ0STATUS_CCDC_LSC_PREF_ERR_IRQ |
+अटल irqवापस_t isp_isr(पूर्णांक irq, व्योम *_isp)
+अणु
+	अटल स्थिर u32 ccdc_events = IRQ0STATUS_CCDC_LSC_PREF_ERR_IRQ |
 				       IRQ0STATUS_CCDC_LSC_DONE_IRQ |
 				       IRQ0STATUS_CCDC_VD0_IRQ |
 				       IRQ0STATUS_CCDC_VD1_IRQ |
 				       IRQ0STATUS_HS_VS_IRQ;
-	struct isp_device *isp = _isp;
+	काष्ठा isp_device *isp = _isp;
 	u32 irqstatus;
 
-	irqstatus = isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
-	isp_reg_writel(isp, irqstatus, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
+	irqstatus = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
+	isp_reg_ग_लिखोl(isp, irqstatus, OMAP3_ISP_IOMEM_MAIN, ISP_IRQ0STATUS);
 
 	isp_isr_sbl(isp);
 
-	if (irqstatus & IRQ0STATUS_CSIA_IRQ)
+	अगर (irqstatus & IRQ0STATUS_CSIA_IRQ)
 		omap3isp_csi2_isr(&isp->isp_csi2a);
 
-	if (irqstatus & IRQ0STATUS_CSIB_IRQ)
+	अगर (irqstatus & IRQ0STATUS_CSIB_IRQ)
 		omap3isp_ccp2_isr(&isp->isp_ccp2);
 
-	if (irqstatus & IRQ0STATUS_CCDC_VD0_IRQ) {
-		if (isp->isp_ccdc.output & CCDC_OUTPUT_PREVIEW)
+	अगर (irqstatus & IRQ0STATUS_CCDC_VD0_IRQ) अणु
+		अगर (isp->isp_ccdc.output & CCDC_OUTPUT_PREVIEW)
 			omap3isp_preview_isr_frame_sync(&isp->isp_prev);
-		if (isp->isp_ccdc.output & CCDC_OUTPUT_RESIZER)
+		अगर (isp->isp_ccdc.output & CCDC_OUTPUT_RESIZER)
 			omap3isp_resizer_isr_frame_sync(&isp->isp_res);
 		omap3isp_stat_isr_frame_sync(&isp->isp_aewb);
 		omap3isp_stat_isr_frame_sync(&isp->isp_af);
 		omap3isp_stat_isr_frame_sync(&isp->isp_hist);
-	}
+	पूर्ण
 
-	if (irqstatus & ccdc_events)
+	अगर (irqstatus & ccdc_events)
 		omap3isp_ccdc_isr(&isp->isp_ccdc, irqstatus & ccdc_events);
 
-	if (irqstatus & IRQ0STATUS_PRV_DONE_IRQ) {
-		if (isp->isp_prev.output & PREVIEW_OUTPUT_RESIZER)
+	अगर (irqstatus & IRQ0STATUS_PRV_DONE_IRQ) अणु
+		अगर (isp->isp_prev.output & PREVIEW_OUTPUT_RESIZER)
 			omap3isp_resizer_isr_frame_sync(&isp->isp_res);
 		omap3isp_preview_isr(&isp->isp_prev);
-	}
+	पूर्ण
 
-	if (irqstatus & IRQ0STATUS_RSZ_DONE_IRQ)
+	अगर (irqstatus & IRQ0STATUS_RSZ_DONE_IRQ)
 		omap3isp_resizer_isr(&isp->isp_res);
 
-	if (irqstatus & IRQ0STATUS_H3A_AWB_DONE_IRQ)
+	अगर (irqstatus & IRQ0STATUS_H3A_AWB_DONE_IRQ)
 		omap3isp_stat_isr(&isp->isp_aewb);
 
-	if (irqstatus & IRQ0STATUS_H3A_AF_DONE_IRQ)
+	अगर (irqstatus & IRQ0STATUS_H3A_AF_DONE_IRQ)
 		omap3isp_stat_isr(&isp->isp_af);
 
-	if (irqstatus & IRQ0STATUS_HIST_DONE_IRQ)
+	अगर (irqstatus & IRQ0STATUS_HIST_DONE_IRQ)
 		omap3isp_stat_isr(&isp->isp_hist);
 
 	omap3isp_flush(isp);
 
-#if defined(DEBUG) && defined(ISP_ISR_DEBUG)
+#अगर defined(DEBUG) && defined(ISP_ISR_DEBUG)
 	isp_isr_dbg(isp, irqstatus);
-#endif
+#पूर्ण_अगर
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct media_device_ops isp_media_ops = {
-	.link_notify = v4l2_pipeline_link_notify,
-};
+अटल स्थिर काष्ठा media_device_ops isp_media_ops = अणु
+	.link_notअगरy = v4l2_pipeline_link_notअगरy,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Pipeline stream management
@@ -664,191 +665,191 @@ static const struct media_device_ops isp_media_ops = {
  * Walk the entities chain starting at the pipeline output video node and start
  * all modules in the chain in the given mode.
  *
- * Return 0 if successful, or the return value of the failed video::s_stream
+ * Return 0 अगर successful, or the वापस value of the failed video::s_stream
  * operation otherwise.
  */
-static int isp_pipeline_enable(struct isp_pipeline *pipe,
-			       enum isp_pipeline_stream_state mode)
-{
-	struct isp_device *isp = pipe->output->isp;
-	struct media_entity *entity;
-	struct media_pad *pad;
-	struct v4l2_subdev *subdev;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक isp_pipeline_enable(काष्ठा isp_pipeline *pipe,
+			       क्रमागत isp_pipeline_stream_state mode)
+अणु
+	काष्ठा isp_device *isp = pipe->output->isp;
+	काष्ठा media_entity *entity;
+	काष्ठा media_pad *pad;
+	काष्ठा v4l2_subdev *subdev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	/* Refuse to start streaming if an entity included in the pipeline has
-	 * crashed. This check must be performed before the loop below to avoid
-	 * starting entities if the pipeline won't start anyway (those entities
+	/* Refuse to start streaming अगर an entity included in the pipeline has
+	 * crashed. This check must be perक्रमmed beक्रमe the loop below to aव्योम
+	 * starting entities अगर the pipeline won't start anyway (those entities
 	 * would then likely fail to stop, making the problem worse).
 	 */
-	if (media_entity_enum_intersects(&pipe->ent_enum, &isp->crashed))
-		return -EIO;
+	अगर (media_entity_क्रमागत_पूर्णांकersects(&pipe->ent_क्रमागत, &isp->crashed))
+		वापस -EIO;
 
 	spin_lock_irqsave(&pipe->lock, flags);
 	pipe->state &= ~(ISP_PIPELINE_IDLE_INPUT | ISP_PIPELINE_IDLE_OUTPUT);
 	spin_unlock_irqrestore(&pipe->lock, flags);
 
-	pipe->do_propagation = false;
+	pipe->करो_propagation = false;
 
 	mutex_lock(&isp->media_dev.graph_mutex);
 
 	entity = &pipe->output->video.entity;
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
 		subdev = media_entity_to_v4l2_subdev(entity);
 
 		ret = v4l2_subdev_call(subdev, video, s_stream, mode);
-		if (ret < 0 && ret != -ENOIOCTLCMD) {
+		अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
 			mutex_unlock(&isp->media_dev.graph_mutex);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (subdev == &isp->isp_ccdc.subdev) {
+		अगर (subdev == &isp->isp_ccdc.subdev) अणु
 			v4l2_subdev_call(&isp->isp_aewb.subdev, video,
 					s_stream, mode);
 			v4l2_subdev_call(&isp->isp_af.subdev, video,
 					s_stream, mode);
 			v4l2_subdev_call(&isp->isp_hist.subdev, video,
 					s_stream, mode);
-			pipe->do_propagation = true;
-		}
+			pipe->करो_propagation = true;
+		पूर्ण
 
-		/* Stop at the first external sub-device. */
-		if (subdev->dev != isp->dev)
-			break;
-	}
+		/* Stop at the first बाह्यal sub-device. */
+		अगर (subdev->dev != isp->dev)
+			अवरोध;
+	पूर्ण
 
 	mutex_unlock(&isp->media_dev.graph_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp_pipeline_wait_resizer(struct isp_device *isp)
-{
-	return omap3isp_resizer_busy(&isp->isp_res);
-}
+अटल पूर्णांक isp_pipeline_रुको_resizer(काष्ठा isp_device *isp)
+अणु
+	वापस omap3isp_resizer_busy(&isp->isp_res);
+पूर्ण
 
-static int isp_pipeline_wait_preview(struct isp_device *isp)
-{
-	return omap3isp_preview_busy(&isp->isp_prev);
-}
+अटल पूर्णांक isp_pipeline_रुको_preview(काष्ठा isp_device *isp)
+अणु
+	वापस omap3isp_preview_busy(&isp->isp_prev);
+पूर्ण
 
-static int isp_pipeline_wait_ccdc(struct isp_device *isp)
-{
-	return omap3isp_stat_busy(&isp->isp_af)
+अटल पूर्णांक isp_pipeline_रुको_ccdc(काष्ठा isp_device *isp)
+अणु
+	वापस omap3isp_stat_busy(&isp->isp_af)
 	    || omap3isp_stat_busy(&isp->isp_aewb)
 	    || omap3isp_stat_busy(&isp->isp_hist)
 	    || omap3isp_ccdc_busy(&isp->isp_ccdc);
-}
+पूर्ण
 
-#define ISP_STOP_TIMEOUT	msecs_to_jiffies(1000)
+#घोषणा ISP_STOP_TIMEOUT	msecs_to_jअगरfies(1000)
 
-static int isp_pipeline_wait(struct isp_device *isp,
-			     int(*busy)(struct isp_device *isp))
-{
-	unsigned long timeout = jiffies + ISP_STOP_TIMEOUT;
+अटल पूर्णांक isp_pipeline_रुको(काष्ठा isp_device *isp,
+			     पूर्णांक(*busy)(काष्ठा isp_device *isp))
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + ISP_STOP_TIMEOUT;
 
-	while (!time_after(jiffies, timeout)) {
-		if (!busy(isp))
-			return 0;
-	}
+	जबतक (!समय_after(jअगरfies, समयout)) अणु
+		अगर (!busy(isp))
+			वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * isp_pipeline_disable - Disable streaming on a pipeline
  * @pipe: ISP pipeline
  *
  * Walk the entities chain starting at the pipeline output video node and stop
- * all modules in the chain. Wait synchronously for the modules to be stopped if
+ * all modules in the chain. Wait synchronously क्रम the modules to be stopped अगर
  * necessary.
  *
- * Return 0 if all modules have been properly stopped, or -ETIMEDOUT if a module
- * can't be stopped (in which case a software reset of the ISP is probably
+ * Return 0 अगर all modules have been properly stopped, or -ETIMEDOUT अगर a module
+ * can't be stopped (in which हाल a software reset of the ISP is probably
  * necessary).
  */
-static int isp_pipeline_disable(struct isp_pipeline *pipe)
-{
-	struct isp_device *isp = pipe->output->isp;
-	struct media_entity *entity;
-	struct media_pad *pad;
-	struct v4l2_subdev *subdev;
-	int failure = 0;
-	int ret;
+अटल पूर्णांक isp_pipeline_disable(काष्ठा isp_pipeline *pipe)
+अणु
+	काष्ठा isp_device *isp = pipe->output->isp;
+	काष्ठा media_entity *entity;
+	काष्ठा media_pad *pad;
+	काष्ठा v4l2_subdev *subdev;
+	पूर्णांक failure = 0;
+	पूर्णांक ret;
 
 	/*
 	 * We need to stop all the modules after CCDC first or they'll
 	 * never stop since they may not get a full frame from CCDC.
 	 */
 	entity = &pipe->output->video.entity;
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
 		subdev = media_entity_to_v4l2_subdev(entity);
 
-		if (subdev == &isp->isp_ccdc.subdev) {
+		अगर (subdev == &isp->isp_ccdc.subdev) अणु
 			v4l2_subdev_call(&isp->isp_aewb.subdev,
 					 video, s_stream, 0);
 			v4l2_subdev_call(&isp->isp_af.subdev,
 					 video, s_stream, 0);
 			v4l2_subdev_call(&isp->isp_hist.subdev,
 					 video, s_stream, 0);
-		}
+		पूर्ण
 
 		ret = v4l2_subdev_call(subdev, video, s_stream, 0);
 
-		/* Stop at the first external sub-device. */
-		if (subdev->dev != isp->dev)
-			break;
+		/* Stop at the first बाह्यal sub-device. */
+		अगर (subdev->dev != isp->dev)
+			अवरोध;
 
-		if (subdev == &isp->isp_res.subdev)
-			ret |= isp_pipeline_wait(isp, isp_pipeline_wait_resizer);
-		else if (subdev == &isp->isp_prev.subdev)
-			ret |= isp_pipeline_wait(isp, isp_pipeline_wait_preview);
-		else if (subdev == &isp->isp_ccdc.subdev)
-			ret |= isp_pipeline_wait(isp, isp_pipeline_wait_ccdc);
+		अगर (subdev == &isp->isp_res.subdev)
+			ret |= isp_pipeline_रुको(isp, isp_pipeline_रुको_resizer);
+		अन्यथा अगर (subdev == &isp->isp_prev.subdev)
+			ret |= isp_pipeline_रुको(isp, isp_pipeline_रुको_preview);
+		अन्यथा अगर (subdev == &isp->isp_ccdc.subdev)
+			ret |= isp_pipeline_रुको(isp, isp_pipeline_रुको_ccdc);
 
 		/* Handle stop failures. An entity that fails to stop can
 		 * usually just be restarted. Flag the stop failure nonetheless
-		 * to trigger an ISP reset the next time the device is released,
-		 * just in case.
+		 * to trigger an ISP reset the next समय the device is released,
+		 * just in हाल.
 		 *
-		 * The preview engine is a special case. A failure to stop can
+		 * The preview engine is a special हाल. A failure to stop can
 		 * mean a hardware crash. When that happens the preview engine
-		 * won't respond to read/write operations on the L4 bus anymore,
-		 * resulting in a bus fault and a kernel oops next time it gets
+		 * won't respond to पढ़ो/ग_लिखो operations on the L4 bus anymore,
+		 * resulting in a bus fault and a kernel oops next समय it माला_लो
 		 * accessed. Mark it as crashed to prevent pipelines including
 		 * it from being started.
 		 */
-		if (ret) {
+		अगर (ret) अणु
 			dev_info(isp->dev, "Unable to stop %s\n", subdev->name);
 			isp->stop_failure = true;
-			if (subdev == &isp->isp_prev.subdev)
-				media_entity_enum_set(&isp->crashed,
+			अगर (subdev == &isp->isp_prev.subdev)
+				media_entity_क्रमागत_set(&isp->crashed,
 						      &subdev->entity);
 			failure = -ETIMEDOUT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return failure;
-}
+	वापस failure;
+पूर्ण
 
 /*
  * omap3isp_pipeline_set_stream - Enable/disable streaming on a pipeline
@@ -858,25 +859,25 @@ static int isp_pipeline_disable(struct isp_pipeline *pipe)
  * Set the pipeline to the given stream state. Pipelines can be started in
  * single-shot or continuous mode.
  *
- * Return 0 if successful, or the return value of the failed video::s_stream
+ * Return 0 अगर successful, or the वापस value of the failed video::s_stream
  * operation otherwise. The pipeline state is not updated when the operation
  * fails, except when stopping the pipeline.
  */
-int omap3isp_pipeline_set_stream(struct isp_pipeline *pipe,
-				 enum isp_pipeline_stream_state state)
-{
-	int ret;
+पूर्णांक omap3isp_pipeline_set_stream(काष्ठा isp_pipeline *pipe,
+				 क्रमागत isp_pipeline_stream_state state)
+अणु
+	पूर्णांक ret;
 
-	if (state == ISP_PIPELINE_STREAM_STOPPED)
+	अगर (state == ISP_PIPELINE_STREAM_STOPPED)
 		ret = isp_pipeline_disable(pipe);
-	else
+	अन्यथा
 		ret = isp_pipeline_enable(pipe, state);
 
-	if (ret == 0 || state == ISP_PIPELINE_STREAM_STOPPED)
+	अगर (ret == 0 || state == ISP_PIPELINE_STREAM_STOPPED)
 		pipe->stream_state = state;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * omap3isp_pipeline_cancel_stream - Cancel stream on a pipeline
@@ -887,13 +888,13 @@ int omap3isp_pipeline_set_stream(struct isp_pipeline *pipe,
  * when a fatal error that prevents any further operation on the pipeline
  * occurs.
  */
-void omap3isp_pipeline_cancel_stream(struct isp_pipeline *pipe)
-{
-	if (pipe->input)
+व्योम omap3isp_pipeline_cancel_stream(काष्ठा isp_pipeline *pipe)
+अणु
+	अगर (pipe->input)
 		omap3isp_video_cancel_stream(pipe->input);
-	if (pipe->output)
+	अगर (pipe->output)
 		omap3isp_video_cancel_stream(pipe->output);
-}
+पूर्ण
 
 /*
  * isp_pipeline_resume - Resume streaming on a pipeline
@@ -901,15 +902,15 @@ void omap3isp_pipeline_cancel_stream(struct isp_pipeline *pipe)
  *
  * Resume video output and input and re-enable pipeline.
  */
-static void isp_pipeline_resume(struct isp_pipeline *pipe)
-{
-	int singleshot = pipe->stream_state == ISP_PIPELINE_STREAM_SINGLESHOT;
+अटल व्योम isp_pipeline_resume(काष्ठा isp_pipeline *pipe)
+अणु
+	पूर्णांक singleshot = pipe->stream_state == ISP_PIPELINE_STREAM_SINGLESHOT;
 
 	omap3isp_video_resume(pipe->output, !singleshot);
-	if (singleshot)
+	अगर (singleshot)
 		omap3isp_video_resume(pipe->input, 0);
 	isp_pipeline_enable(pipe, pipe->stream_state);
-}
+पूर्ण
 
 /*
  * isp_pipeline_suspend - Suspend streaming on a pipeline
@@ -917,72 +918,72 @@ static void isp_pipeline_resume(struct isp_pipeline *pipe)
  *
  * Suspend pipeline.
  */
-static void isp_pipeline_suspend(struct isp_pipeline *pipe)
-{
+अटल व्योम isp_pipeline_suspend(काष्ठा isp_pipeline *pipe)
+अणु
 	isp_pipeline_disable(pipe);
-}
+पूर्ण
 
 /*
- * isp_pipeline_is_last - Verify if entity has an enabled link to the output
+ * isp_pipeline_is_last - Verअगरy अगर entity has an enabled link to the output
  *			  video node
  * @me: ISP module's media entity
  *
- * Returns 1 if the entity has an enabled link to the output video node or 0
- * otherwise. It's true only while pipeline can have no more than one output
+ * Returns 1 अगर the entity has an enabled link to the output video node or 0
+ * otherwise. It's true only जबतक pipeline can have no more than one output
  * node.
  */
-static int isp_pipeline_is_last(struct media_entity *me)
-{
-	struct isp_pipeline *pipe;
-	struct media_pad *pad;
+अटल पूर्णांक isp_pipeline_is_last(काष्ठा media_entity *me)
+अणु
+	काष्ठा isp_pipeline *pipe;
+	काष्ठा media_pad *pad;
 
-	if (!me->pipe)
-		return 0;
+	अगर (!me->pipe)
+		वापस 0;
 	pipe = to_isp_pipeline(me);
-	if (pipe->stream_state == ISP_PIPELINE_STREAM_STOPPED)
-		return 0;
+	अगर (pipe->stream_state == ISP_PIPELINE_STREAM_STOPPED)
+		वापस 0;
 	pad = media_entity_remote_pad(&pipe->output->pad);
-	return pad->entity == me;
-}
+	वापस pad->entity == me;
+पूर्ण
 
 /*
- * isp_suspend_module_pipeline - Suspend pipeline to which belongs the module
+ * isp_suspend_module_pipeline - Suspend pipeline to which beदीर्घs the module
  * @me: ISP module's media entity
  *
- * Suspend the whole pipeline if module's entity has an enabled link to the
- * output video node. It works only while pipeline can have no more than one
+ * Suspend the whole pipeline अगर module's entity has an enabled link to the
+ * output video node. It works only जबतक pipeline can have no more than one
  * output node.
  */
-static void isp_suspend_module_pipeline(struct media_entity *me)
-{
-	if (isp_pipeline_is_last(me))
+अटल व्योम isp_suspend_module_pipeline(काष्ठा media_entity *me)
+अणु
+	अगर (isp_pipeline_is_last(me))
 		isp_pipeline_suspend(to_isp_pipeline(me));
-}
+पूर्ण
 
 /*
- * isp_resume_module_pipeline - Resume pipeline to which belongs the module
+ * isp_resume_module_pipeline - Resume pipeline to which beदीर्घs the module
  * @me: ISP module's media entity
  *
- * Resume the whole pipeline if module's entity has an enabled link to the
- * output video node. It works only while pipeline can have no more than one
+ * Resume the whole pipeline अगर module's entity has an enabled link to the
+ * output video node. It works only जबतक pipeline can have no more than one
  * output node.
  */
-static void isp_resume_module_pipeline(struct media_entity *me)
-{
-	if (isp_pipeline_is_last(me))
+अटल व्योम isp_resume_module_pipeline(काष्ठा media_entity *me)
+अणु
+	अगर (isp_pipeline_is_last(me))
 		isp_pipeline_resume(to_isp_pipeline(me));
-}
+पूर्ण
 
 /*
  * isp_suspend_modules - Suspend ISP submodules.
  * @isp: OMAP3 ISP device
  *
- * Returns 0 if suspend left in idle state all the submodules properly,
- * or returns 1 if a general Reset is required to suspend the submodules.
+ * Returns 0 अगर suspend left in idle state all the submodules properly,
+ * or वापसs 1 अगर a general Reset is required to suspend the submodules.
  */
-static int __maybe_unused isp_suspend_modules(struct isp_device *isp)
-{
-	unsigned long timeout;
+अटल पूर्णांक __maybe_unused isp_suspend_modules(काष्ठा isp_device *isp)
+अणु
+	अचिन्हित दीर्घ समयout;
 
 	omap3isp_stat_suspend(&isp->isp_aewb);
 	omap3isp_stat_suspend(&isp->isp_af);
@@ -993,29 +994,29 @@ static int __maybe_unused isp_suspend_modules(struct isp_device *isp)
 	isp_suspend_module_pipeline(&isp->isp_csi2a.subdev.entity);
 	isp_suspend_module_pipeline(&isp->isp_ccp2.subdev.entity);
 
-	timeout = jiffies + ISP_STOP_TIMEOUT;
-	while (omap3isp_stat_busy(&isp->isp_af)
+	समयout = jअगरfies + ISP_STOP_TIMEOUT;
+	जबतक (omap3isp_stat_busy(&isp->isp_af)
 	    || omap3isp_stat_busy(&isp->isp_aewb)
 	    || omap3isp_stat_busy(&isp->isp_hist)
 	    || omap3isp_preview_busy(&isp->isp_prev)
 	    || omap3isp_resizer_busy(&isp->isp_res)
-	    || omap3isp_ccdc_busy(&isp->isp_ccdc)) {
-		if (time_after(jiffies, timeout)) {
+	    || omap3isp_ccdc_busy(&isp->isp_ccdc)) अणु
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_info(isp->dev, "can't stop modules.\n");
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 		msleep(1);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * isp_resume_modules - Resume ISP submodules.
  * @isp: OMAP3 ISP device
  */
-static void __maybe_unused isp_resume_modules(struct isp_device *isp)
-{
+अटल व्योम __maybe_unused isp_resume_modules(काष्ठा isp_device *isp)
+अणु
 	omap3isp_stat_resume(&isp->isp_aewb);
 	omap3isp_stat_resume(&isp->isp_af);
 	omap3isp_stat_resume(&isp->isp_hist);
@@ -1024,471 +1025,471 @@ static void __maybe_unused isp_resume_modules(struct isp_device *isp)
 	isp_resume_module_pipeline(&isp->isp_ccdc.subdev.entity);
 	isp_resume_module_pipeline(&isp->isp_csi2a.subdev.entity);
 	isp_resume_module_pipeline(&isp->isp_ccp2.subdev.entity);
-}
+पूर्ण
 
 /*
- * isp_reset - Reset ISP with a timeout wait for idle.
+ * isp_reset - Reset ISP with a समयout रुको क्रम idle.
  * @isp: OMAP3 ISP device
  */
-static int isp_reset(struct isp_device *isp)
-{
-	unsigned long timeout = 0;
+अटल पूर्णांक isp_reset(काष्ठा isp_device *isp)
+अणु
+	अचिन्हित दीर्घ समयout = 0;
 
-	isp_reg_writel(isp,
-		       isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG)
+	isp_reg_ग_लिखोl(isp,
+		       isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG)
 		       | ISP_SYSCONFIG_SOFTRESET,
 		       OMAP3_ISP_IOMEM_MAIN, ISP_SYSCONFIG);
-	while (!(isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN,
-			       ISP_SYSSTATUS) & 0x1)) {
-		if (timeout++ > 10000) {
+	जबतक (!(isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN,
+			       ISP_SYSSTATUS) & 0x1)) अणु
+		अगर (समयout++ > 10000) अणु
 			dev_alert(isp->dev, "cannot reset ISP\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(1);
-	}
+	पूर्ण
 
 	isp->stop_failure = false;
-	media_entity_enum_zero(&isp->crashed);
-	return 0;
-}
+	media_entity_क्रमागत_zero(&isp->crashed);
+	वापस 0;
+पूर्ण
 
 /*
- * isp_save_context - Saves the values of the ISP module registers.
+ * isp_save_context - Saves the values of the ISP module रेजिस्टरs.
  * @isp: OMAP3 ISP device
- * @reg_list: Structure containing pairs of register address and value to
- *            modify on OMAP.
+ * @reg_list: Structure containing pairs of रेजिस्टर address and value to
+ *            modअगरy on OMAP.
  */
-static void
-isp_save_context(struct isp_device *isp, struct isp_reg *reg_list)
-{
-	struct isp_reg *next = reg_list;
+अटल व्योम
+isp_save_context(काष्ठा isp_device *isp, काष्ठा isp_reg *reg_list)
+अणु
+	काष्ठा isp_reg *next = reg_list;
 
-	for (; next->reg != ISP_TOK_TERM; next++)
-		next->val = isp_reg_readl(isp, next->mmio_range, next->reg);
-}
+	क्रम (; next->reg != ISP_TOK_TERM; next++)
+		next->val = isp_reg_पढ़ोl(isp, next->mmio_range, next->reg);
+पूर्ण
 
 /*
- * isp_restore_context - Restores the values of the ISP module registers.
+ * isp_restore_context - Restores the values of the ISP module रेजिस्टरs.
  * @isp: OMAP3 ISP device
- * @reg_list: Structure containing pairs of register address and value to
- *            modify on OMAP.
+ * @reg_list: Structure containing pairs of रेजिस्टर address and value to
+ *            modअगरy on OMAP.
  */
-static void
-isp_restore_context(struct isp_device *isp, struct isp_reg *reg_list)
-{
-	struct isp_reg *next = reg_list;
+अटल व्योम
+isp_restore_context(काष्ठा isp_device *isp, काष्ठा isp_reg *reg_list)
+अणु
+	काष्ठा isp_reg *next = reg_list;
 
-	for (; next->reg != ISP_TOK_TERM; next++)
-		isp_reg_writel(isp, next->val, next->mmio_range, next->reg);
-}
+	क्रम (; next->reg != ISP_TOK_TERM; next++)
+		isp_reg_ग_लिखोl(isp, next->val, next->mmio_range, next->reg);
+पूर्ण
 
 /*
  * isp_save_ctx - Saves ISP, CCDC, HIST, H3A, PREV, RESZ & MMU context.
  * @isp: OMAP3 ISP device
  *
- * Routine for saving the context of each module in the ISP.
+ * Routine क्रम saving the context of each module in the ISP.
  * CCDC, HIST, H3A, PREV, RESZ and MMU.
  */
-static void isp_save_ctx(struct isp_device *isp)
-{
+अटल व्योम isp_save_ctx(काष्ठा isp_device *isp)
+अणु
 	isp_save_context(isp, isp_reg_list);
 	omap_iommu_save_ctx(isp->dev);
-}
+पूर्ण
 
 /*
  * isp_restore_ctx - Restores ISP, CCDC, HIST, H3A, PREV, RESZ & MMU context.
  * @isp: OMAP3 ISP device
  *
- * Routine for restoring the context of each module in the ISP.
+ * Routine क्रम restoring the context of each module in the ISP.
  * CCDC, HIST, H3A, PREV, RESZ and MMU.
  */
-static void isp_restore_ctx(struct isp_device *isp)
-{
+अटल व्योम isp_restore_ctx(काष्ठा isp_device *isp)
+अणु
 	isp_restore_context(isp, isp_reg_list);
 	omap_iommu_restore_ctx(isp->dev);
 	omap3isp_ccdc_restore_context(isp);
 	omap3isp_preview_restore_context(isp);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * SBL resources management
  */
-#define OMAP3_ISP_SBL_READ	(OMAP3_ISP_SBL_CSI1_READ | \
+#घोषणा OMAP3_ISP_SBL_READ	(OMAP3_ISP_SBL_CSI1_READ | \
 				 OMAP3_ISP_SBL_CCDC_LSC_READ | \
 				 OMAP3_ISP_SBL_PREVIEW_READ | \
 				 OMAP3_ISP_SBL_RESIZER_READ)
-#define OMAP3_ISP_SBL_WRITE	(OMAP3_ISP_SBL_CSI1_WRITE | \
+#घोषणा OMAP3_ISP_SBL_WRITE	(OMAP3_ISP_SBL_CSI1_WRITE | \
 				 OMAP3_ISP_SBL_CSI2A_WRITE | \
 				 OMAP3_ISP_SBL_CSI2C_WRITE | \
 				 OMAP3_ISP_SBL_CCDC_WRITE | \
 				 OMAP3_ISP_SBL_PREVIEW_WRITE)
 
-void omap3isp_sbl_enable(struct isp_device *isp, enum isp_sbl_resource res)
-{
+व्योम omap3isp_sbl_enable(काष्ठा isp_device *isp, क्रमागत isp_sbl_resource res)
+अणु
 	u32 sbl = 0;
 
 	isp->sbl_resources |= res;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_CSI1_READ)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_CSI1_READ)
 		sbl |= ISPCTRL_SBL_SHARED_RPORTA;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_CCDC_LSC_READ)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_CCDC_LSC_READ)
 		sbl |= ISPCTRL_SBL_SHARED_RPORTB;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_CSI2C_WRITE)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_CSI2C_WRITE)
 		sbl |= ISPCTRL_SBL_SHARED_WPORTC;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_RESIZER_WRITE)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_RESIZER_WRITE)
 		sbl |= ISPCTRL_SBL_WR0_RAM_EN;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_WRITE)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_WRITE)
 		sbl |= ISPCTRL_SBL_WR1_RAM_EN;
 
-	if (isp->sbl_resources & OMAP3_ISP_SBL_READ)
+	अगर (isp->sbl_resources & OMAP3_ISP_SBL_READ)
 		sbl |= ISPCTRL_SBL_RD_RAM_EN;
 
 	isp_reg_set(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL, sbl);
-}
+पूर्ण
 
-void omap3isp_sbl_disable(struct isp_device *isp, enum isp_sbl_resource res)
-{
+व्योम omap3isp_sbl_disable(काष्ठा isp_device *isp, क्रमागत isp_sbl_resource res)
+अणु
 	u32 sbl = 0;
 
 	isp->sbl_resources &= ~res;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_CSI1_READ))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_CSI1_READ))
 		sbl |= ISPCTRL_SBL_SHARED_RPORTA;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_CCDC_LSC_READ))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_CCDC_LSC_READ))
 		sbl |= ISPCTRL_SBL_SHARED_RPORTB;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_CSI2C_WRITE))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_CSI2C_WRITE))
 		sbl |= ISPCTRL_SBL_SHARED_WPORTC;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_RESIZER_WRITE))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_RESIZER_WRITE))
 		sbl |= ISPCTRL_SBL_WR0_RAM_EN;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_WRITE))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_WRITE))
 		sbl |= ISPCTRL_SBL_WR1_RAM_EN;
 
-	if (!(isp->sbl_resources & OMAP3_ISP_SBL_READ))
+	अगर (!(isp->sbl_resources & OMAP3_ISP_SBL_READ))
 		sbl |= ISPCTRL_SBL_RD_RAM_EN;
 
 	isp_reg_clr(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL, sbl);
-}
+पूर्ण
 
 /*
  * isp_module_sync_idle - Helper to sync module with its idle state
  * @me: ISP submodule's media entity
- * @wait: ISP submodule's wait queue for streamoff/interrupt synchronization
+ * @रुको: ISP submodule's रुको queue क्रम streamoff/पूर्णांकerrupt synchronization
  * @stopping: flag which tells module wants to stop
  *
- * This function checks if ISP submodule needs to wait for next interrupt. If
- * yes, makes the caller to sleep while waiting for such event.
+ * This function checks अगर ISP submodule needs to रुको क्रम next पूर्णांकerrupt. If
+ * yes, makes the caller to sleep जबतक रुकोing क्रम such event.
  */
-int omap3isp_module_sync_idle(struct media_entity *me, wait_queue_head_t *wait,
+पूर्णांक omap3isp_module_sync_idle(काष्ठा media_entity *me, रुको_queue_head_t *रुको,
 			      atomic_t *stopping)
-{
-	struct isp_pipeline *pipe = to_isp_pipeline(me);
+अणु
+	काष्ठा isp_pipeline *pipe = to_isp_pipeline(me);
 
-	if (pipe->stream_state == ISP_PIPELINE_STREAM_STOPPED ||
+	अगर (pipe->stream_state == ISP_PIPELINE_STREAM_STOPPED ||
 	    (pipe->stream_state == ISP_PIPELINE_STREAM_SINGLESHOT &&
-	     !isp_pipeline_ready(pipe)))
-		return 0;
+	     !isp_pipeline_पढ़ोy(pipe)))
+		वापस 0;
 
 	/*
-	 * atomic_set() doesn't include memory barrier on ARM platform for SMP
-	 * scenario. We'll call it here to avoid race conditions.
+	 * atomic_set() करोesn't include memory barrier on ARM platक्रमm क्रम SMP
+	 * scenario. We'll call it here to aव्योम race conditions.
 	 */
 	atomic_set(stopping, 1);
 	smp_mb();
 
 	/*
-	 * If module is the last one, it's writing to memory. In this case,
-	 * it's necessary to check if the module is already paused due to
-	 * DMA queue underrun or if it has to wait for next interrupt to be
+	 * If module is the last one, it's writing to memory. In this हाल,
+	 * it's necessary to check अगर the module is alपढ़ोy छोड़ोd due to
+	 * DMA queue underrun or अगर it has to रुको क्रम next पूर्णांकerrupt to be
 	 * idle.
 	 * If it isn't the last one, the function won't sleep but *stopping
-	 * will still be set to warn next submodule caller's interrupt the
+	 * will still be set to warn next submodule caller's पूर्णांकerrupt the
 	 * module wants to be idle.
 	 */
-	if (isp_pipeline_is_last(me)) {
-		struct isp_video *video = pipe->output;
-		unsigned long flags;
+	अगर (isp_pipeline_is_last(me)) अणु
+		काष्ठा isp_video *video = pipe->output;
+		अचिन्हित दीर्घ flags;
 		spin_lock_irqsave(&video->irqlock, flags);
-		if (video->dmaqueue_flags & ISP_VIDEO_DMAQUEUE_UNDERRUN) {
+		अगर (video->dmaqueue_flags & ISP_VIDEO_DMAQUEUE_UNDERRUN) अणु
 			spin_unlock_irqrestore(&video->irqlock, flags);
 			atomic_set(stopping, 0);
 			smp_mb();
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		spin_unlock_irqrestore(&video->irqlock, flags);
-		if (!wait_event_timeout(*wait, !atomic_read(stopping),
-					msecs_to_jiffies(1000))) {
+		अगर (!रुको_event_समयout(*रुको, !atomic_पढ़ो(stopping),
+					msecs_to_jअगरfies(1000))) अणु
 			atomic_set(stopping, 0);
 			smp_mb();
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * omap3isp_module_sync_is_stopping - Helper to verify if module was stopping
- * @wait: ISP submodule's wait queue for streamoff/interrupt synchronization
+ * omap3isp_module_sync_is_stopping - Helper to verअगरy अगर module was stopping
+ * @रुको: ISP submodule's रुको queue क्रम streamoff/पूर्णांकerrupt synchronization
  * @stopping: flag which tells module wants to stop
  *
- * This function checks if ISP submodule was stopping. In case of yes, it
- * notices the caller by setting stopping to 0 and waking up the wait queue.
- * Returns 1 if it was stopping or 0 otherwise.
+ * This function checks अगर ISP submodule was stopping. In हाल of yes, it
+ * notices the caller by setting stopping to 0 and waking up the रुको queue.
+ * Returns 1 अगर it was stopping or 0 otherwise.
  */
-int omap3isp_module_sync_is_stopping(wait_queue_head_t *wait,
+पूर्णांक omap3isp_module_sync_is_stopping(रुको_queue_head_t *रुको,
 				     atomic_t *stopping)
-{
-	if (atomic_cmpxchg(stopping, 1, 0)) {
-		wake_up(wait);
-		return 1;
-	}
+अणु
+	अगर (atomic_cmpxchg(stopping, 1, 0)) अणु
+		wake_up(रुको);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* --------------------------------------------------------------------------
  * Clock management
  */
 
-#define ISPCTRL_CLKS_MASK	(ISPCTRL_H3A_CLK_EN | \
+#घोषणा ISPCTRL_CLKS_MASK	(ISPCTRL_H3A_CLK_EN | \
 				 ISPCTRL_HIST_CLK_EN | \
 				 ISPCTRL_RSZ_CLK_EN | \
 				 (ISPCTRL_CCDC_CLK_EN | ISPCTRL_CCDC_RAM_EN) | \
 				 (ISPCTRL_PREV_CLK_EN | ISPCTRL_PREV_RAM_EN))
 
-static void __isp_subclk_update(struct isp_device *isp)
-{
+अटल व्योम __isp_subclk_update(काष्ठा isp_device *isp)
+अणु
 	u32 clk = 0;
 
-	/* AEWB and AF share the same clock. */
-	if (isp->subclk_resources &
+	/* AEWB and AF share the same घड़ी. */
+	अगर (isp->subclk_resources &
 	    (OMAP3_ISP_SUBCLK_AEWB | OMAP3_ISP_SUBCLK_AF))
 		clk |= ISPCTRL_H3A_CLK_EN;
 
-	if (isp->subclk_resources & OMAP3_ISP_SUBCLK_HIST)
+	अगर (isp->subclk_resources & OMAP3_ISP_SUBCLK_HIST)
 		clk |= ISPCTRL_HIST_CLK_EN;
 
-	if (isp->subclk_resources & OMAP3_ISP_SUBCLK_RESIZER)
+	अगर (isp->subclk_resources & OMAP3_ISP_SUBCLK_RESIZER)
 		clk |= ISPCTRL_RSZ_CLK_EN;
 
-	/* NOTE: For CCDC & Preview submodules, we need to affect internal
+	/* NOTE: For CCDC & Preview submodules, we need to affect पूर्णांकernal
 	 *       RAM as well.
 	 */
-	if (isp->subclk_resources & OMAP3_ISP_SUBCLK_CCDC)
+	अगर (isp->subclk_resources & OMAP3_ISP_SUBCLK_CCDC)
 		clk |= ISPCTRL_CCDC_CLK_EN | ISPCTRL_CCDC_RAM_EN;
 
-	if (isp->subclk_resources & OMAP3_ISP_SUBCLK_PREVIEW)
+	अगर (isp->subclk_resources & OMAP3_ISP_SUBCLK_PREVIEW)
 		clk |= ISPCTRL_PREV_CLK_EN | ISPCTRL_PREV_RAM_EN;
 
 	isp_reg_clr_set(isp, OMAP3_ISP_IOMEM_MAIN, ISP_CTRL,
 			ISPCTRL_CLKS_MASK, clk);
-}
+पूर्ण
 
-void omap3isp_subclk_enable(struct isp_device *isp,
-			    enum isp_subclk_resource res)
-{
+व्योम omap3isp_subclk_enable(काष्ठा isp_device *isp,
+			    क्रमागत isp_subclk_resource res)
+अणु
 	isp->subclk_resources |= res;
 
 	__isp_subclk_update(isp);
-}
+पूर्ण
 
-void omap3isp_subclk_disable(struct isp_device *isp,
-			     enum isp_subclk_resource res)
-{
+व्योम omap3isp_subclk_disable(काष्ठा isp_device *isp,
+			     क्रमागत isp_subclk_resource res)
+अणु
 	isp->subclk_resources &= ~res;
 
 	__isp_subclk_update(isp);
-}
+पूर्ण
 
 /*
- * isp_enable_clocks - Enable ISP clocks
+ * isp_enable_घड़ीs - Enable ISP घड़ीs
  * @isp: OMAP3 ISP device
  *
- * Return 0 if successful, or clk_prepare_enable return value if any of them
+ * Return 0 अगर successful, or clk_prepare_enable वापस value अगर any of them
  * fails.
  */
-static int isp_enable_clocks(struct isp_device *isp)
-{
-	int r;
-	unsigned long rate;
+अटल पूर्णांक isp_enable_घड़ीs(काष्ठा isp_device *isp)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ rate;
 
-	r = clk_prepare_enable(isp->clock[ISP_CLK_CAM_ICK]);
-	if (r) {
+	r = clk_prepare_enable(isp->घड़ी[ISP_CLK_CAM_ICK]);
+	अगर (r) अणु
 		dev_err(isp->dev, "failed to enable cam_ick clock\n");
-		goto out_clk_enable_ick;
-	}
-	r = clk_set_rate(isp->clock[ISP_CLK_CAM_MCLK], CM_CAM_MCLK_HZ);
-	if (r) {
+		जाओ out_clk_enable_ick;
+	पूर्ण
+	r = clk_set_rate(isp->घड़ी[ISP_CLK_CAM_MCLK], CM_CAM_MCLK_HZ);
+	अगर (r) अणु
 		dev_err(isp->dev, "clk_set_rate for cam_mclk failed\n");
-		goto out_clk_enable_mclk;
-	}
-	r = clk_prepare_enable(isp->clock[ISP_CLK_CAM_MCLK]);
-	if (r) {
+		जाओ out_clk_enable_mclk;
+	पूर्ण
+	r = clk_prepare_enable(isp->घड़ी[ISP_CLK_CAM_MCLK]);
+	अगर (r) अणु
 		dev_err(isp->dev, "failed to enable cam_mclk clock\n");
-		goto out_clk_enable_mclk;
-	}
-	rate = clk_get_rate(isp->clock[ISP_CLK_CAM_MCLK]);
-	if (rate != CM_CAM_MCLK_HZ)
+		जाओ out_clk_enable_mclk;
+	पूर्ण
+	rate = clk_get_rate(isp->घड़ी[ISP_CLK_CAM_MCLK]);
+	अगर (rate != CM_CAM_MCLK_HZ)
 		dev_warn(isp->dev, "unexpected cam_mclk rate:\n"
 				   " expected : %d\n"
 				   " actual   : %ld\n", CM_CAM_MCLK_HZ, rate);
-	r = clk_prepare_enable(isp->clock[ISP_CLK_CSI2_FCK]);
-	if (r) {
+	r = clk_prepare_enable(isp->घड़ी[ISP_CLK_CSI2_FCK]);
+	अगर (r) अणु
 		dev_err(isp->dev, "failed to enable csi2_fck clock\n");
-		goto out_clk_enable_csi2_fclk;
-	}
-	return 0;
+		जाओ out_clk_enable_csi2_fclk;
+	पूर्ण
+	वापस 0;
 
 out_clk_enable_csi2_fclk:
-	clk_disable_unprepare(isp->clock[ISP_CLK_CAM_MCLK]);
+	clk_disable_unprepare(isp->घड़ी[ISP_CLK_CAM_MCLK]);
 out_clk_enable_mclk:
-	clk_disable_unprepare(isp->clock[ISP_CLK_CAM_ICK]);
+	clk_disable_unprepare(isp->घड़ी[ISP_CLK_CAM_ICK]);
 out_clk_enable_ick:
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * isp_disable_clocks - Disable ISP clocks
+ * isp_disable_घड़ीs - Disable ISP घड़ीs
  * @isp: OMAP3 ISP device
  */
-static void isp_disable_clocks(struct isp_device *isp)
-{
-	clk_disable_unprepare(isp->clock[ISP_CLK_CAM_ICK]);
-	clk_disable_unprepare(isp->clock[ISP_CLK_CAM_MCLK]);
-	clk_disable_unprepare(isp->clock[ISP_CLK_CSI2_FCK]);
-}
+अटल व्योम isp_disable_घड़ीs(काष्ठा isp_device *isp)
+अणु
+	clk_disable_unprepare(isp->घड़ी[ISP_CLK_CAM_ICK]);
+	clk_disable_unprepare(isp->घड़ी[ISP_CLK_CAM_MCLK]);
+	clk_disable_unprepare(isp->घड़ी[ISP_CLK_CSI2_FCK]);
+पूर्ण
 
-static const char *isp_clocks[] = {
+अटल स्थिर अक्षर *isp_घड़ीs[] = अणु
 	"cam_ick",
 	"cam_mclk",
 	"csi2_96m_fck",
 	"l3_ick",
-};
+पूर्ण;
 
-static int isp_get_clocks(struct isp_device *isp)
-{
-	struct clk *clk;
-	unsigned int i;
+अटल पूर्णांक isp_get_घड़ीs(काष्ठा isp_device *isp)
+अणु
+	काष्ठा clk *clk;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(isp_clocks); ++i) {
-		clk = devm_clk_get(isp->dev, isp_clocks[i]);
-		if (IS_ERR(clk)) {
-			dev_err(isp->dev, "clk_get %s failed\n", isp_clocks[i]);
-			return PTR_ERR(clk);
-		}
+	क्रम (i = 0; i < ARRAY_SIZE(isp_घड़ीs); ++i) अणु
+		clk = devm_clk_get(isp->dev, isp_घड़ीs[i]);
+		अगर (IS_ERR(clk)) अणु
+			dev_err(isp->dev, "clk_get %s failed\n", isp_घड़ीs[i]);
+			वापस PTR_ERR(clk);
+		पूर्ण
 
-		isp->clock[i] = clk;
-	}
+		isp->घड़ी[i] = clk;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * omap3isp_get - Acquire the ISP resource.
  *
- * Initializes the clocks for the first acquire.
+ * Initializes the घड़ीs क्रम the first acquire.
  *
  * Increment the reference count on the ISP. If the first reference is taken,
- * enable clocks and power-up all submodules.
+ * enable घड़ीs and घातer-up all submodules.
  *
- * Return a pointer to the ISP device structure, or NULL if an error occurred.
+ * Return a poपूर्णांकer to the ISP device काष्ठाure, or शून्य अगर an error occurred.
  */
-static struct isp_device *__omap3isp_get(struct isp_device *isp, bool irq)
-{
-	struct isp_device *__isp = isp;
+अटल काष्ठा isp_device *__omap3isp_get(काष्ठा isp_device *isp, bool irq)
+अणु
+	काष्ठा isp_device *__isp = isp;
 
-	if (isp == NULL)
-		return NULL;
+	अगर (isp == शून्य)
+		वापस शून्य;
 
 	mutex_lock(&isp->isp_mutex);
-	if (isp->ref_count > 0)
-		goto out;
+	अगर (isp->ref_count > 0)
+		जाओ out;
 
-	if (isp_enable_clocks(isp) < 0) {
-		__isp = NULL;
-		goto out;
-	}
+	अगर (isp_enable_घड़ीs(isp) < 0) अणु
+		__isp = शून्य;
+		जाओ out;
+	पूर्ण
 
-	/* We don't want to restore context before saving it! */
-	if (isp->has_context)
+	/* We करोn't want to restore context beक्रमe saving it! */
+	अगर (isp->has_context)
 		isp_restore_ctx(isp);
 
-	if (irq)
-		isp_enable_interrupts(isp);
+	अगर (irq)
+		isp_enable_पूर्णांकerrupts(isp);
 
 out:
-	if (__isp != NULL)
+	अगर (__isp != शून्य)
 		isp->ref_count++;
 	mutex_unlock(&isp->isp_mutex);
 
-	return __isp;
-}
+	वापस __isp;
+पूर्ण
 
-struct isp_device *omap3isp_get(struct isp_device *isp)
-{
-	return __omap3isp_get(isp, true);
-}
+काष्ठा isp_device *omap3isp_get(काष्ठा isp_device *isp)
+अणु
+	वापस __omap3isp_get(isp, true);
+पूर्ण
 
 /*
  * omap3isp_put - Release the ISP
  *
  * Decrement the reference count on the ISP. If the last reference is released,
- * power-down all submodules, disable clocks and free temporary buffers.
+ * घातer-करोwn all submodules, disable घड़ीs and मुक्त temporary buffers.
  */
-static void __omap3isp_put(struct isp_device *isp, bool save_ctx)
-{
-	if (isp == NULL)
-		return;
+अटल व्योम __omap3isp_put(काष्ठा isp_device *isp, bool save_ctx)
+अणु
+	अगर (isp == शून्य)
+		वापस;
 
 	mutex_lock(&isp->isp_mutex);
 	BUG_ON(isp->ref_count == 0);
-	if (--isp->ref_count == 0) {
-		isp_disable_interrupts(isp);
-		if (save_ctx) {
+	अगर (--isp->ref_count == 0) अणु
+		isp_disable_पूर्णांकerrupts(isp);
+		अगर (save_ctx) अणु
 			isp_save_ctx(isp);
 			isp->has_context = 1;
-		}
-		/* Reset the ISP if an entity has failed to stop. This is the
+		पूर्ण
+		/* Reset the ISP अगर an entity has failed to stop. This is the
 		 * only way to recover from such conditions.
 		 */
-		if (!media_entity_enum_empty(&isp->crashed) ||
+		अगर (!media_entity_क्रमागत_empty(&isp->crashed) ||
 		    isp->stop_failure)
 			isp_reset(isp);
-		isp_disable_clocks(isp);
-	}
+		isp_disable_घड़ीs(isp);
+	पूर्ण
 	mutex_unlock(&isp->isp_mutex);
-}
+पूर्ण
 
-void omap3isp_put(struct isp_device *isp)
-{
+व्योम omap3isp_put(काष्ठा isp_device *isp)
+अणु
 	__omap3isp_put(isp, true);
-}
+पूर्ण
 
 /* --------------------------------------------------------------------------
- * Platform device driver
+ * Platक्रमm device driver
  */
 
 /*
- * omap3isp_print_status - Prints the values of the ISP Control Module registers
+ * omap3isp_prपूर्णांक_status - Prपूर्णांकs the values of the ISP Control Module रेजिस्टरs
  * @isp: OMAP3 ISP device
  */
-#define ISP_PRINT_REGISTER(isp, name)\
+#घोषणा ISP_PRINT_REGISTER(isp, name)\
 	dev_dbg(isp->dev, "###ISP " #name "=0x%08x\n", \
-		isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_##name))
-#define SBL_PRINT_REGISTER(isp, name)\
+		isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_##name))
+#घोषणा SBL_PRINT_REGISTER(isp, name)\
 	dev_dbg(isp->dev, "###SBL " #name "=0x%08x\n", \
-		isp_reg_readl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_##name))
+		isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_SBL, ISPSBL_##name))
 
-void omap3isp_print_status(struct isp_device *isp)
-{
+व्योम omap3isp_prपूर्णांक_status(काष्ठा isp_device *isp)
+अणु
 	dev_dbg(isp->dev, "-------------ISP Register dump--------------\n");
 
 	ISP_PRINT_REGISTER(isp, SYSCONFIG);
@@ -1511,351 +1512,351 @@ void omap3isp_print_status(struct isp_device *isp)
 	SBL_PRINT_REGISTER(isp, SDR_REQ_EXP);
 
 	dev_dbg(isp->dev, "--------------------------------------------\n");
-}
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
 /*
  * Power management support.
  *
- * As the ISP can't properly handle an input video stream interruption on a non
- * frame boundary, the ISP pipelines need to be stopped before sensors get
- * suspended. However, as suspending the sensors can require a running clock,
+ * As the ISP can't properly handle an input video stream पूर्णांकerruption on a non
+ * frame boundary, the ISP pipelines need to be stopped beक्रमe sensors get
+ * suspended. However, as suspending the sensors can require a running घड़ी,
  * which can be provided by the ISP, the ISP can't be completely suspended
- * before the sensor.
+ * beक्रमe the sensor.
  *
- * To solve this problem power management support is split into prepare/complete
+ * To solve this problem घातer management support is split पूर्णांकo prepare/complete
  * and suspend/resume operations. The pipelines are stopped in prepare() and the
- * ISP clocks get disabled in suspend(). Similarly, the clocks are re-enabled in
+ * ISP घड़ीs get disabled in suspend(). Similarly, the घड़ीs are re-enabled in
  * resume(), and the the pipelines are restarted in complete().
  *
  * TODO: PM dependencies between the ISP and sensors are not modelled explicitly
  * yet.
  */
-static int isp_pm_prepare(struct device *dev)
-{
-	struct isp_device *isp = dev_get_drvdata(dev);
-	int reset;
+अटल पूर्णांक isp_pm_prepare(काष्ठा device *dev)
+अणु
+	काष्ठा isp_device *isp = dev_get_drvdata(dev);
+	पूर्णांक reset;
 
 	WARN_ON(mutex_is_locked(&isp->isp_mutex));
 
-	if (isp->ref_count == 0)
-		return 0;
+	अगर (isp->ref_count == 0)
+		वापस 0;
 
 	reset = isp_suspend_modules(isp);
-	isp_disable_interrupts(isp);
+	isp_disable_पूर्णांकerrupts(isp);
 	isp_save_ctx(isp);
-	if (reset)
+	अगर (reset)
 		isp_reset(isp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp_pm_suspend(struct device *dev)
-{
-	struct isp_device *isp = dev_get_drvdata(dev);
+अटल पूर्णांक isp_pm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा isp_device *isp = dev_get_drvdata(dev);
 
 	WARN_ON(mutex_is_locked(&isp->isp_mutex));
 
-	if (isp->ref_count)
-		isp_disable_clocks(isp);
+	अगर (isp->ref_count)
+		isp_disable_घड़ीs(isp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp_pm_resume(struct device *dev)
-{
-	struct isp_device *isp = dev_get_drvdata(dev);
+अटल पूर्णांक isp_pm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा isp_device *isp = dev_get_drvdata(dev);
 
-	if (isp->ref_count == 0)
-		return 0;
+	अगर (isp->ref_count == 0)
+		वापस 0;
 
-	return isp_enable_clocks(isp);
-}
+	वापस isp_enable_घड़ीs(isp);
+पूर्ण
 
-static void isp_pm_complete(struct device *dev)
-{
-	struct isp_device *isp = dev_get_drvdata(dev);
+अटल व्योम isp_pm_complete(काष्ठा device *dev)
+अणु
+	काष्ठा isp_device *isp = dev_get_drvdata(dev);
 
-	if (isp->ref_count == 0)
-		return;
+	अगर (isp->ref_count == 0)
+		वापस;
 
 	isp_restore_ctx(isp);
-	isp_enable_interrupts(isp);
+	isp_enable_पूर्णांकerrupts(isp);
 	isp_resume_modules(isp);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-#define isp_pm_prepare	NULL
-#define isp_pm_suspend	NULL
-#define isp_pm_resume	NULL
-#define isp_pm_complete	NULL
+#घोषणा isp_pm_prepare	शून्य
+#घोषणा isp_pm_suspend	शून्य
+#घोषणा isp_pm_resume	शून्य
+#घोषणा isp_pm_complete	शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-static void isp_unregister_entities(struct isp_device *isp)
-{
-	media_device_unregister(&isp->media_dev);
+अटल व्योम isp_unरेजिस्टर_entities(काष्ठा isp_device *isp)
+अणु
+	media_device_unरेजिस्टर(&isp->media_dev);
 
-	omap3isp_csi2_unregister_entities(&isp->isp_csi2a);
-	omap3isp_ccp2_unregister_entities(&isp->isp_ccp2);
-	omap3isp_ccdc_unregister_entities(&isp->isp_ccdc);
-	omap3isp_preview_unregister_entities(&isp->isp_prev);
-	omap3isp_resizer_unregister_entities(&isp->isp_res);
-	omap3isp_stat_unregister_entities(&isp->isp_aewb);
-	omap3isp_stat_unregister_entities(&isp->isp_af);
-	omap3isp_stat_unregister_entities(&isp->isp_hist);
+	omap3isp_csi2_unरेजिस्टर_entities(&isp->isp_csi2a);
+	omap3isp_ccp2_unरेजिस्टर_entities(&isp->isp_ccp2);
+	omap3isp_ccdc_unरेजिस्टर_entities(&isp->isp_ccdc);
+	omap3isp_preview_unरेजिस्टर_entities(&isp->isp_prev);
+	omap3isp_resizer_unरेजिस्टर_entities(&isp->isp_res);
+	omap3isp_stat_unरेजिस्टर_entities(&isp->isp_aewb);
+	omap3isp_stat_unरेजिस्टर_entities(&isp->isp_af);
+	omap3isp_stat_unरेजिस्टर_entities(&isp->isp_hist);
 
-	v4l2_device_unregister(&isp->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&isp->v4l2_dev);
 	media_device_cleanup(&isp->media_dev);
-}
+पूर्ण
 
-static int isp_link_entity(
-	struct isp_device *isp, struct media_entity *entity,
-	enum isp_interface_type interface)
-{
-	struct media_entity *input;
-	unsigned int flags;
-	unsigned int pad;
-	unsigned int i;
+अटल पूर्णांक isp_link_entity(
+	काष्ठा isp_device *isp, काष्ठा media_entity *entity,
+	क्रमागत isp_पूर्णांकerface_type पूर्णांकerface)
+अणु
+	काष्ठा media_entity *input;
+	अचिन्हित पूर्णांक flags;
+	अचिन्हित पूर्णांक pad;
+	अचिन्हित पूर्णांक i;
 
-	/* Connect the sensor to the correct interface module.
-	 * Parallel sensors are connected directly to the CCDC, while
+	/* Connect the sensor to the correct पूर्णांकerface module.
+	 * Parallel sensors are connected directly to the CCDC, जबतक
 	 * serial sensors are connected to the CSI2a, CCP2b or CSI2c
 	 * receiver through CSIPHY1 or CSIPHY2.
 	 */
-	switch (interface) {
-	case ISP_INTERFACE_PARALLEL:
+	चयन (पूर्णांकerface) अणु
+	हाल ISP_INTERFACE_PARALLEL:
 		input = &isp->isp_ccdc.subdev.entity;
 		pad = CCDC_PAD_SINK;
 		flags = 0;
-		break;
+		अवरोध;
 
-	case ISP_INTERFACE_CSI2A_PHY2:
+	हाल ISP_INTERFACE_CSI2A_PHY2:
 		input = &isp->isp_csi2a.subdev.entity;
 		pad = CSI2_PAD_SINK;
 		flags = MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED;
-		break;
+		अवरोध;
 
-	case ISP_INTERFACE_CCP2B_PHY1:
-	case ISP_INTERFACE_CCP2B_PHY2:
+	हाल ISP_INTERFACE_CCP2B_PHY1:
+	हाल ISP_INTERFACE_CCP2B_PHY2:
 		input = &isp->isp_ccp2.subdev.entity;
 		pad = CCP2_PAD_SINK;
 		flags = 0;
-		break;
+		अवरोध;
 
-	case ISP_INTERFACE_CSI2C_PHY1:
+	हाल ISP_INTERFACE_CSI2C_PHY1:
 		input = &isp->isp_csi2c.subdev.entity;
 		pad = CSI2_PAD_SINK;
 		flags = MEDIA_LNK_FL_IMMUTABLE | MEDIA_LNK_FL_ENABLED;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(isp->dev, "%s: invalid interface type %u\n", __func__,
-			interface);
-		return -EINVAL;
-	}
+			पूर्णांकerface);
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Not all interfaces are available on all revisions of the
-	 * ISP. The sub-devices of those interfaces aren't initialised
-	 * in such a case. Check this by ensuring the num_pads is
+	 * Not all पूर्णांकerfaces are available on all revisions of the
+	 * ISP. The sub-devices of those पूर्णांकerfaces aren't initialised
+	 * in such a हाल. Check this by ensuring the num_pads is
 	 * non-zero.
 	 */
-	if (!input->num_pads) {
+	अगर (!input->num_pads) अणु
 		dev_err(isp->dev, "%s: invalid input %u\n", entity->name,
-			interface);
-		return -EINVAL;
-	}
+			पूर्णांकerface);
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < entity->num_pads; i++) {
-		if (entity->pads[i].flags & MEDIA_PAD_FL_SOURCE)
-			break;
-	}
-	if (i == entity->num_pads) {
+	क्रम (i = 0; i < entity->num_pads; i++) अणु
+		अगर (entity->pads[i].flags & MEDIA_PAD_FL_SOURCE)
+			अवरोध;
+	पूर्ण
+	अगर (i == entity->num_pads) अणु
 		dev_err(isp->dev, "%s: no source pad in external entity %s\n",
 			__func__, entity->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return media_create_pad_link(entity, i, input, pad, flags);
-}
+	वापस media_create_pad_link(entity, i, input, pad, flags);
+पूर्ण
 
-static int isp_register_entities(struct isp_device *isp)
-{
-	int ret;
+अटल पूर्णांक isp_रेजिस्टर_entities(काष्ठा isp_device *isp)
+अणु
+	पूर्णांक ret;
 
 	isp->media_dev.dev = isp->dev;
 	strscpy(isp->media_dev.model, "TI OMAP3 ISP",
-		sizeof(isp->media_dev.model));
+		माप(isp->media_dev.model));
 	isp->media_dev.hw_revision = isp->revision;
 	isp->media_dev.ops = &isp_media_ops;
 	media_device_init(&isp->media_dev);
 
 	isp->v4l2_dev.mdev = &isp->media_dev;
-	ret = v4l2_device_register(isp->dev, &isp->v4l2_dev);
-	if (ret < 0) {
+	ret = v4l2_device_रेजिस्टर(isp->dev, &isp->v4l2_dev);
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "%s: V4L2 device registration failed (%d)\n",
 			__func__, ret);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* Register internal entities */
-	ret = omap3isp_ccp2_register_entities(&isp->isp_ccp2, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	/* Register पूर्णांकernal entities */
+	ret = omap3isp_ccp2_रेजिस्टर_entities(&isp->isp_ccp2, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_csi2_register_entities(&isp->isp_csi2a, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_csi2_रेजिस्टर_entities(&isp->isp_csi2a, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_ccdc_register_entities(&isp->isp_ccdc, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_ccdc_रेजिस्टर_entities(&isp->isp_ccdc, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_preview_register_entities(&isp->isp_prev,
+	ret = omap3isp_preview_रेजिस्टर_entities(&isp->isp_prev,
 						 &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_resizer_register_entities(&isp->isp_res, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_resizer_रेजिस्टर_entities(&isp->isp_res, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_stat_register_entities(&isp->isp_aewb, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_stat_रेजिस्टर_entities(&isp->isp_aewb, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_stat_register_entities(&isp->isp_af, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_stat_रेजिस्टर_entities(&isp->isp_af, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-	ret = omap3isp_stat_register_entities(&isp->isp_hist, &isp->v4l2_dev);
-	if (ret < 0)
-		goto done;
+	ret = omap3isp_stat_रेजिस्टर_entities(&isp->isp_hist, &isp->v4l2_dev);
+	अगर (ret < 0)
+		जाओ करोne;
 
-done:
-	if (ret < 0)
-		isp_unregister_entities(isp);
+करोne:
+	अगर (ret < 0)
+		isp_unरेजिस्टर_entities(isp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * isp_create_links() - Create links for internal and external ISP entities
- * @isp : Pointer to ISP device
+ * isp_create_links() - Create links क्रम पूर्णांकernal and बाह्यal ISP entities
+ * @isp : Poपूर्णांकer to ISP device
  *
- * This function creates all links between ISP internal and external entities.
+ * This function creates all links between ISP पूर्णांकernal and बाह्यal entities.
  *
  * Return: A negative error code on failure or zero on success. Possible error
- * codes are those returned by media_create_pad_link().
+ * codes are those वापसed by media_create_pad_link().
  */
-static int isp_create_links(struct isp_device *isp)
-{
-	int ret;
+अटल पूर्णांक isp_create_links(काष्ठा isp_device *isp)
+अणु
+	पूर्णांक ret;
 
 	/* Create links between entities and video nodes. */
 	ret = media_create_pad_link(
 			&isp->isp_csi2a.subdev.entity, CSI2_PAD_SOURCE,
 			&isp->isp_csi2a.video_out.video.entity, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccp2.video_in.video.entity, 0,
 			&isp->isp_ccp2.subdev.entity, CCP2_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_OF,
 			&isp->isp_ccdc.video_out.video.entity, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_prev.video_in.video.entity, 0,
 			&isp->isp_prev.subdev.entity, PREV_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_prev.subdev.entity, PREV_PAD_SOURCE,
 			&isp->isp_prev.video_out.video.entity, 0, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_res.video_in.video.entity, 0,
 			&isp->isp_res.subdev.entity, RESZ_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_res.subdev.entity, RESZ_PAD_SOURCE,
 			&isp->isp_res.video_out.video.entity, 0, 0);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Create links between entities. */
 	ret = media_create_pad_link(
 			&isp->isp_csi2a.subdev.entity, CSI2_PAD_SOURCE,
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccp2.subdev.entity, CCP2_PAD_SOURCE,
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_VP,
 			&isp->isp_prev.subdev.entity, PREV_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_OF,
 			&isp->isp_res.subdev.entity, RESZ_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_prev.subdev.entity, PREV_PAD_SOURCE,
 			&isp->isp_res.subdev.entity, RESZ_PAD_SINK, 0);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_VP,
 			&isp->isp_aewb.subdev.entity, 0,
 			MEDIA_LNK_FL_ENABLED | MEDIA_LNK_FL_IMMUTABLE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_VP,
 			&isp->isp_af.subdev.entity, 0,
 			MEDIA_LNK_FL_ENABLED | MEDIA_LNK_FL_IMMUTABLE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = media_create_pad_link(
 			&isp->isp_ccdc.subdev.entity, CCDC_PAD_SOURCE_VP,
 			&isp->isp_hist.subdev.entity, 0,
 			MEDIA_LNK_FL_ENABLED | MEDIA_LNK_FL_IMMUTABLE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void isp_cleanup_modules(struct isp_device *isp)
-{
+अटल व्योम isp_cleanup_modules(काष्ठा isp_device *isp)
+अणु
 	omap3isp_h3a_aewb_cleanup(isp);
 	omap3isp_h3a_af_cleanup(isp);
 	omap3isp_hist_cleanup(isp);
@@ -1865,68 +1866,68 @@ static void isp_cleanup_modules(struct isp_device *isp)
 	omap3isp_ccp2_cleanup(isp);
 	omap3isp_csi2_cleanup(isp);
 	omap3isp_csiphy_cleanup(isp);
-}
+पूर्ण
 
-static int isp_initialize_modules(struct isp_device *isp)
-{
-	int ret;
+अटल पूर्णांक isp_initialize_modules(काष्ठा isp_device *isp)
+अणु
+	पूर्णांक ret;
 
 	ret = omap3isp_csiphy_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "CSI PHY initialization failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = omap3isp_csi2_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "CSI2 initialization failed\n");
-		goto error_csi2;
-	}
+		जाओ error_csi2;
+	पूर्ण
 
 	ret = omap3isp_ccp2_init(isp);
-	if (ret < 0) {
-		if (ret != -EPROBE_DEFER)
+	अगर (ret < 0) अणु
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(isp->dev, "CCP2 initialization failed\n");
-		goto error_ccp2;
-	}
+		जाओ error_ccp2;
+	पूर्ण
 
 	ret = omap3isp_ccdc_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "CCDC initialization failed\n");
-		goto error_ccdc;
-	}
+		जाओ error_ccdc;
+	पूर्ण
 
 	ret = omap3isp_preview_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "Preview initialization failed\n");
-		goto error_preview;
-	}
+		जाओ error_preview;
+	पूर्ण
 
 	ret = omap3isp_resizer_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "Resizer initialization failed\n");
-		goto error_resizer;
-	}
+		जाओ error_resizer;
+	पूर्ण
 
 	ret = omap3isp_hist_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "Histogram initialization failed\n");
-		goto error_hist;
-	}
+		जाओ error_hist;
+	पूर्ण
 
 	ret = omap3isp_h3a_aewb_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "H3A AEWB initialization failed\n");
-		goto error_h3a_aewb;
-	}
+		जाओ error_h3a_aewb;
+	पूर्ण
 
 	ret = omap3isp_h3a_af_init(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "H3A AF initialization failed\n");
-		goto error_h3a_af;
-	}
+		जाओ error_h3a_af;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error_h3a_af:
 	omap3isp_h3a_aewb_cleanup(isp);
@@ -1945,66 +1946,66 @@ error_ccp2:
 error_csi2:
 	omap3isp_csiphy_cleanup(isp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void isp_detach_iommu(struct isp_device *isp)
-{
-#ifdef CONFIG_ARM_DMA_USE_IOMMU
+अटल व्योम isp_detach_iommu(काष्ठा isp_device *isp)
+अणु
+#अगर_घोषित CONFIG_ARM_DMA_USE_IOMMU
 	arm_iommu_detach_device(isp->dev);
 	arm_iommu_release_mapping(isp->mapping);
-	isp->mapping = NULL;
-#endif
-}
+	isp->mapping = शून्य;
+#पूर्ण_अगर
+पूर्ण
 
-static int isp_attach_iommu(struct isp_device *isp)
-{
-#ifdef CONFIG_ARM_DMA_USE_IOMMU
-	struct dma_iommu_mapping *mapping;
-	int ret;
+अटल पूर्णांक isp_attach_iommu(काष्ठा isp_device *isp)
+अणु
+#अगर_घोषित CONFIG_ARM_DMA_USE_IOMMU
+	काष्ठा dma_iommu_mapping *mapping;
+	पूर्णांक ret;
 
 	/*
 	 * Create the ARM mapping, used by the ARM DMA mapping core to allocate
-	 * VAs. This will allocate a corresponding IOMMU domain.
+	 * VAs. This will allocate a corresponding IOMMU करोमुख्य.
 	 */
-	mapping = arm_iommu_create_mapping(&platform_bus_type, SZ_1G, SZ_2G);
-	if (IS_ERR(mapping)) {
+	mapping = arm_iommu_create_mapping(&platक्रमm_bus_type, SZ_1G, SZ_2G);
+	अगर (IS_ERR(mapping)) अणु
 		dev_err(isp->dev, "failed to create ARM IOMMU mapping\n");
-		return PTR_ERR(mapping);
-	}
+		वापस PTR_ERR(mapping);
+	पूर्ण
 
 	isp->mapping = mapping;
 
 	/* Attach the ARM VA mapping to the device. */
 	ret = arm_iommu_attach_device(isp->dev, mapping);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(isp->dev, "failed to attach device to VA mapping\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
 	arm_iommu_release_mapping(isp->mapping);
-	isp->mapping = NULL;
-	return ret;
-#else
-	return -ENODEV;
-#endif
-}
+	isp->mapping = शून्य;
+	वापस ret;
+#अन्यथा
+	वापस -ENODEV;
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * isp_remove - Remove ISP platform device
- * @pdev: Pointer to ISP platform device
+ * isp_हटाओ - Remove ISP platक्रमm device
+ * @pdev: Poपूर्णांकer to ISP platक्रमm device
  *
- * Always returns 0.
+ * Always वापसs 0.
  */
-static int isp_remove(struct platform_device *pdev)
-{
-	struct isp_device *isp = platform_get_drvdata(pdev);
+अटल पूर्णांक isp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा isp_device *isp = platक्रमm_get_drvdata(pdev);
 
-	v4l2_async_notifier_unregister(&isp->notifier);
-	isp_unregister_entities(isp);
+	v4l2_async_notअगरier_unरेजिस्टर(&isp->notअगरier);
+	isp_unरेजिस्टर_entities(isp);
 	isp_cleanup_modules(isp);
 	isp_xclk_cleanup(isp);
 
@@ -2012,61 +2013,61 @@ static int isp_remove(struct platform_device *pdev)
 	isp_detach_iommu(isp);
 	__omap3isp_put(isp, false);
 
-	media_entity_enum_cleanup(&isp->crashed);
-	v4l2_async_notifier_cleanup(&isp->notifier);
+	media_entity_क्रमागत_cleanup(&isp->crashed);
+	v4l2_async_notअगरier_cleanup(&isp->notअगरier);
 
-	kfree(isp);
+	kमुक्त(isp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-enum isp_of_phy {
+क्रमागत isp_of_phy अणु
 	ISP_OF_PHY_PARALLEL = 0,
 	ISP_OF_PHY_CSIPHY1,
 	ISP_OF_PHY_CSIPHY2,
-};
+पूर्ण;
 
-static int isp_subdev_notifier_complete(struct v4l2_async_notifier *async)
-{
-	struct isp_device *isp = container_of(async, struct isp_device,
-					      notifier);
-	struct v4l2_device *v4l2_dev = &isp->v4l2_dev;
-	struct v4l2_subdev *sd;
-	int ret;
+अटल पूर्णांक isp_subdev_notअगरier_complete(काष्ठा v4l2_async_notअगरier *async)
+अणु
+	काष्ठा isp_device *isp = container_of(async, काष्ठा isp_device,
+					      notअगरier);
+	काष्ठा v4l2_device *v4l2_dev = &isp->v4l2_dev;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक ret;
 
 	mutex_lock(&isp->media_dev.graph_mutex);
 
-	ret = media_entity_enum_init(&isp->crashed, &isp->media_dev);
-	if (ret)
-		return ret;
+	ret = media_entity_क्रमागत_init(&isp->crashed, &isp->media_dev);
+	अगर (ret)
+		वापस ret;
 
-	list_for_each_entry(sd, &v4l2_dev->subdevs, list) {
-		if (sd->notifier != &isp->notifier)
-			continue;
+	list_क्रम_each_entry(sd, &v4l2_dev->subdevs, list) अणु
+		अगर (sd->notअगरier != &isp->notअगरier)
+			जारी;
 
 		ret = isp_link_entity(isp, &sd->entity,
-				      v4l2_subdev_to_bus_cfg(sd)->interface);
-		if (ret < 0) {
+				      v4l2_subdev_to_bus_cfg(sd)->पूर्णांकerface);
+		अगर (ret < 0) अणु
 			mutex_unlock(&isp->media_dev.graph_mutex);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&isp->media_dev.graph_mutex);
 
-	ret = v4l2_device_register_subdev_nodes(&isp->v4l2_dev);
-	if (ret < 0)
-		return ret;
+	ret = v4l2_device_रेजिस्टर_subdev_nodes(&isp->v4l2_dev);
+	अगर (ret < 0)
+		वापस ret;
 
-	return media_device_register(&isp->media_dev);
-}
+	वापस media_device_रेजिस्टर(&isp->media_dev);
+पूर्ण
 
-static void isp_parse_of_parallel_endpoint(struct device *dev,
-					   struct v4l2_fwnode_endpoint *vep,
-					   struct isp_bus_cfg *buscfg)
-{
-	buscfg->interface = ISP_INTERFACE_PARALLEL;
-	buscfg->bus.parallel.data_lane_shift = vep->bus.parallel.data_shift;
+अटल व्योम isp_parse_of_parallel_endpoपूर्णांक(काष्ठा device *dev,
+					   काष्ठा v4l2_fwnode_endpoपूर्णांक *vep,
+					   काष्ठा isp_bus_cfg *buscfg)
+अणु
+	buscfg->पूर्णांकerface = ISP_INTERFACE_PARALLEL;
+	buscfg->bus.parallel.data_lane_shअगरt = vep->bus.parallel.data_shअगरt;
 	buscfg->bus.parallel.clk_pol =
 		!!(vep->bus.parallel.flags & V4L2_MBUS_PCLK_SAMPLE_FALLING);
 	buscfg->bus.parallel.hs_pol =
@@ -2078,15 +2079,15 @@ static void isp_parse_of_parallel_endpoint(struct device *dev,
 	buscfg->bus.parallel.data_pol =
 		!!(vep->bus.parallel.flags & V4L2_MBUS_DATA_ACTIVE_LOW);
 	buscfg->bus.parallel.bt656 = vep->bus_type == V4L2_MBUS_BT656;
-}
+पूर्ण
 
-static void isp_parse_of_csi2_endpoint(struct device *dev,
-				       struct v4l2_fwnode_endpoint *vep,
-				       struct isp_bus_cfg *buscfg)
-{
-	unsigned int i;
+अटल व्योम isp_parse_of_csi2_endpoपूर्णांक(काष्ठा device *dev,
+				       काष्ठा v4l2_fwnode_endpoपूर्णांक *vep,
+				       काष्ठा isp_bus_cfg *buscfg)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	buscfg->bus.csi2.lanecfg.clk.pos = vep->bus.mipi_csi2.clock_lane;
+	buscfg->bus.csi2.lanecfg.clk.pos = vep->bus.mipi_csi2.घड़ी_lane;
 	buscfg->bus.csi2.lanecfg.clk.pol =
 		vep->bus.mipi_csi2.lane_polarities[0];
 	dev_dbg(dev, "clock lane polarity %u, pos %u\n",
@@ -2095,7 +2096,7 @@ static void isp_parse_of_csi2_endpoint(struct device *dev,
 
 	buscfg->bus.csi2.num_data_lanes = vep->bus.mipi_csi2.num_data_lanes;
 
-	for (i = 0; i < buscfg->bus.csi2.num_data_lanes; i++) {
+	क्रम (i = 0; i < buscfg->bus.csi2.num_data_lanes; i++) अणु
 		buscfg->bus.csi2.lanecfg.data[i].pos =
 			vep->bus.mipi_csi2.data_lanes[i];
 		buscfg->bus.csi2.lanecfg.data[i].pol =
@@ -2104,19 +2105,19 @@ static void isp_parse_of_csi2_endpoint(struct device *dev,
 			"data lane %u polarity %u, pos %u\n", i,
 			buscfg->bus.csi2.lanecfg.data[i].pol,
 			buscfg->bus.csi2.lanecfg.data[i].pos);
-	}
+	पूर्ण
 	/*
 	 * FIXME: now we assume the CRC is always there. Implement a way to
-	 * obtain this information from the sensor. Frame descriptors, perhaps?
+	 * obtain this inक्रमmation from the sensor. Frame descriptors, perhaps?
 	 */
 	buscfg->bus.csi2.crc = 1;
-}
+पूर्ण
 
-static void isp_parse_of_csi1_endpoint(struct device *dev,
-				       struct v4l2_fwnode_endpoint *vep,
-				       struct isp_bus_cfg *buscfg)
-{
-	buscfg->bus.ccp2.lanecfg.clk.pos = vep->bus.mipi_csi1.clock_lane;
+अटल व्योम isp_parse_of_csi1_endpoपूर्णांक(काष्ठा device *dev,
+				       काष्ठा v4l2_fwnode_endpoपूर्णांक *vep,
+				       काष्ठा isp_bus_cfg *buscfg)
+अणु
+	buscfg->bus.ccp2.lanecfg.clk.pos = vep->bus.mipi_csi1.घड़ी_lane;
 	buscfg->bus.ccp2.lanecfg.clk.pol = vep->bus.mipi_csi1.lane_polarity[0];
 	dev_dbg(dev, "clock lane polarity %u, pos %u\n",
 		buscfg->bus.ccp2.lanecfg.clk.pol,
@@ -2130,177 +2131,177 @@ static void isp_parse_of_csi1_endpoint(struct device *dev,
 		buscfg->bus.ccp2.lanecfg.data[0].pol,
 		buscfg->bus.ccp2.lanecfg.data[0].pos);
 
-	buscfg->bus.ccp2.strobe_clk_pol = vep->bus.mipi_csi1.clock_inv;
+	buscfg->bus.ccp2.strobe_clk_pol = vep->bus.mipi_csi1.घड़ी_inv;
 	buscfg->bus.ccp2.phy_layer = vep->bus.mipi_csi1.strobe;
 	buscfg->bus.ccp2.ccp2_mode = vep->bus_type == V4L2_MBUS_CCP2;
 	buscfg->bus.ccp2.vp_clk_pol = 1;
 
 	buscfg->bus.ccp2.crc = 1;
-}
+पूर्ण
 
-static struct {
+अटल काष्ठा अणु
 	u32 phy;
-	u32 csi2_if;
-	u32 csi1_if;
-} isp_bus_interfaces[2] = {
-	{ ISP_OF_PHY_CSIPHY1,
-	  ISP_INTERFACE_CSI2C_PHY1, ISP_INTERFACE_CCP2B_PHY1 },
-	{ ISP_OF_PHY_CSIPHY2,
-	  ISP_INTERFACE_CSI2A_PHY2, ISP_INTERFACE_CCP2B_PHY2 },
-};
+	u32 csi2_अगर;
+	u32 csi1_अगर;
+पूर्ण isp_bus_पूर्णांकerfaces[2] = अणु
+	अणु ISP_OF_PHY_CSIPHY1,
+	  ISP_INTERFACE_CSI2C_PHY1, ISP_INTERFACE_CCP2B_PHY1 पूर्ण,
+	अणु ISP_OF_PHY_CSIPHY2,
+	  ISP_INTERFACE_CSI2A_PHY2, ISP_INTERFACE_CCP2B_PHY2 पूर्ण,
+पूर्ण;
 
-static int isp_parse_of_endpoints(struct isp_device *isp)
-{
-	struct fwnode_handle *ep;
-	struct isp_async_subdev *isd = NULL;
-	unsigned int i;
+अटल पूर्णांक isp_parse_of_endpoपूर्णांकs(काष्ठा isp_device *isp)
+अणु
+	काष्ठा fwnode_handle *ep;
+	काष्ठा isp_async_subdev *isd = शून्य;
+	अचिन्हित पूर्णांक i;
 
-	ep = fwnode_graph_get_endpoint_by_id(
+	ep = fwnode_graph_get_endpoपूर्णांक_by_id(
 		dev_fwnode(isp->dev), ISP_OF_PHY_PARALLEL, 0,
 		FWNODE_GRAPH_ENDPOINT_NEXT);
 
-	if (ep) {
-		struct v4l2_fwnode_endpoint vep = {
+	अगर (ep) अणु
+		काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु
 			.bus_type = V4L2_MBUS_PARALLEL
-		};
-		int ret;
+		पूर्ण;
+		पूर्णांक ret;
 
 		dev_dbg(isp->dev, "parsing parallel interface\n");
 
-		ret = v4l2_fwnode_endpoint_parse(ep, &vep);
+		ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
 
-		if (!ret) {
-			isd = v4l2_async_notifier_add_fwnode_remote_subdev(
-				&isp->notifier, ep, struct isp_async_subdev);
-			if (!IS_ERR(isd))
-				isp_parse_of_parallel_endpoint(isp->dev, &vep, &isd->bus);
-		}
+		अगर (!ret) अणु
+			isd = v4l2_async_notअगरier_add_fwnode_remote_subdev(
+				&isp->notअगरier, ep, काष्ठा isp_async_subdev);
+			अगर (!IS_ERR(isd))
+				isp_parse_of_parallel_endpoपूर्णांक(isp->dev, &vep, &isd->bus);
+		पूर्ण
 
 		fwnode_handle_put(ep);
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(isp_bus_interfaces); i++) {
-		struct v4l2_fwnode_endpoint vep = {
+	क्रम (i = 0; i < ARRAY_SIZE(isp_bus_पूर्णांकerfaces); i++) अणु
+		काष्ठा v4l2_fwnode_endpoपूर्णांक vep = अणु
 			.bus_type = V4L2_MBUS_CSI2_DPHY
-		};
-		int ret;
+		पूर्ण;
+		पूर्णांक ret;
 
-		ep = fwnode_graph_get_endpoint_by_id(
-			dev_fwnode(isp->dev), isp_bus_interfaces[i].phy, 0,
+		ep = fwnode_graph_get_endpoपूर्णांक_by_id(
+			dev_fwnode(isp->dev), isp_bus_पूर्णांकerfaces[i].phy, 0,
 			FWNODE_GRAPH_ENDPOINT_NEXT);
 
-		if (!ep)
-			continue;
+		अगर (!ep)
+			जारी;
 
 		dev_dbg(isp->dev, "parsing serial interface %u, node %pOF\n", i,
 			to_of_node(ep));
 
-		ret = v4l2_fwnode_endpoint_parse(ep, &vep);
-		if (ret == -ENXIO) {
-			vep = (struct v4l2_fwnode_endpoint)
-				{ .bus_type = V4L2_MBUS_CSI1 };
-			ret = v4l2_fwnode_endpoint_parse(ep, &vep);
+		ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
+		अगर (ret == -ENXIO) अणु
+			vep = (काष्ठा v4l2_fwnode_endpoपूर्णांक)
+				अणु .bus_type = V4L2_MBUS_CSI1 पूर्ण;
+			ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
 
-			if (ret == -ENXIO) {
-				vep = (struct v4l2_fwnode_endpoint)
-					{ .bus_type = V4L2_MBUS_CCP2 };
-				ret = v4l2_fwnode_endpoint_parse(ep, &vep);
-			}
-		}
+			अगर (ret == -ENXIO) अणु
+				vep = (काष्ठा v4l2_fwnode_endpoपूर्णांक)
+					अणु .bus_type = V4L2_MBUS_CCP2 पूर्ण;
+				ret = v4l2_fwnode_endpoपूर्णांक_parse(ep, &vep);
+			पूर्ण
+		पूर्ण
 
-		if (!ret) {
-			isd = v4l2_async_notifier_add_fwnode_remote_subdev(
-				&isp->notifier, ep, struct isp_async_subdev);
+		अगर (!ret) अणु
+			isd = v4l2_async_notअगरier_add_fwnode_remote_subdev(
+				&isp->notअगरier, ep, काष्ठा isp_async_subdev);
 
-			if (!IS_ERR(isd)) {
-				switch (vep.bus_type) {
-				case V4L2_MBUS_CSI2_DPHY:
-					isd->bus.interface =
-						isp_bus_interfaces[i].csi2_if;
-					isp_parse_of_csi2_endpoint(isp->dev, &vep, &isd->bus);
-					break;
-				case V4L2_MBUS_CSI1:
-				case V4L2_MBUS_CCP2:
-					isd->bus.interface =
-						isp_bus_interfaces[i].csi1_if;
-					isp_parse_of_csi1_endpoint(isp->dev, &vep,
+			अगर (!IS_ERR(isd)) अणु
+				चयन (vep.bus_type) अणु
+				हाल V4L2_MBUS_CSI2_DPHY:
+					isd->bus.पूर्णांकerface =
+						isp_bus_पूर्णांकerfaces[i].csi2_अगर;
+					isp_parse_of_csi2_endpoपूर्णांक(isp->dev, &vep, &isd->bus);
+					अवरोध;
+				हाल V4L2_MBUS_CSI1:
+				हाल V4L2_MBUS_CCP2:
+					isd->bus.पूर्णांकerface =
+						isp_bus_पूर्णांकerfaces[i].csi1_अगर;
+					isp_parse_of_csi1_endpoपूर्णांक(isp->dev, &vep,
 								   &isd->bus);
-					break;
-				default:
-					break;
-				}
-			}
-		}
+					अवरोध;
+				शेष:
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		fwnode_handle_put(ep);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_async_notifier_operations isp_subdev_notifier_ops = {
-	.complete = isp_subdev_notifier_complete,
-};
+अटल स्थिर काष्ठा v4l2_async_notअगरier_operations isp_subdev_notअगरier_ops = अणु
+	.complete = isp_subdev_notअगरier_complete,
+पूर्ण;
 
 /*
- * isp_probe - Probe ISP platform device
- * @pdev: Pointer to ISP platform device
+ * isp_probe - Probe ISP platक्रमm device
+ * @pdev: Poपूर्णांकer to ISP platक्रमm device
  *
- * Returns 0 if successful,
- *   -ENOMEM if no memory available,
- *   -ENODEV if no platform device resources found
- *     or no space for remapping registers,
- *   -EINVAL if couldn't install ISR,
- *   or clk_get return error value.
+ * Returns 0 अगर successful,
+ *   -ENOMEM अगर no memory available,
+ *   -ENODEV अगर no platक्रमm device resources found
+ *     or no space क्रम remapping रेजिस्टरs,
+ *   -EINVAL अगर couldn't install ISR,
+ *   or clk_get वापस error value.
  */
-static int isp_probe(struct platform_device *pdev)
-{
-	struct isp_device *isp;
-	struct resource *mem;
-	int ret;
-	int i, m;
+अटल पूर्णांक isp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा isp_device *isp;
+	काष्ठा resource *mem;
+	पूर्णांक ret;
+	पूर्णांक i, m;
 
-	isp = kzalloc(sizeof(*isp), GFP_KERNEL);
-	if (!isp) {
+	isp = kzalloc(माप(*isp), GFP_KERNEL);
+	अगर (!isp) अणु
 		dev_err(&pdev->dev, "could not allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = fwnode_property_read_u32(of_fwnode_handle(pdev->dev.of_node),
+	ret = fwnode_property_पढ़ो_u32(of_fwnode_handle(pdev->dev.of_node),
 				       "ti,phy-type", &isp->phy_type);
-	if (ret)
-		goto error_release_isp;
+	अगर (ret)
+		जाओ error_release_isp;
 
 	isp->syscon = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 						      "syscon");
-	if (IS_ERR(isp->syscon)) {
+	अगर (IS_ERR(isp->syscon)) अणु
 		ret = PTR_ERR(isp->syscon);
-		goto error_release_isp;
-	}
+		जाओ error_release_isp;
+	पूर्ण
 
-	ret = of_property_read_u32_index(pdev->dev.of_node,
+	ret = of_property_पढ़ो_u32_index(pdev->dev.of_node,
 					 "syscon", 1, &isp->syscon_offset);
-	if (ret)
-		goto error_release_isp;
+	अगर (ret)
+		जाओ error_release_isp;
 
-	isp->autoidle = autoidle;
+	isp->स्वतःidle = स्वतःidle;
 
 	mutex_init(&isp->isp_mutex);
 	spin_lock_init(&isp->stat_lock);
-	v4l2_async_notifier_init(&isp->notifier);
+	v4l2_async_notअगरier_init(&isp->notअगरier);
 	isp->dev = &pdev->dev;
 
-	ret = isp_parse_of_endpoints(isp);
-	if (ret < 0)
-		goto error;
+	ret = isp_parse_of_endpoपूर्णांकs(isp);
+	अगर (ret < 0)
+		जाओ error;
 
 	isp->ref_count = 0;
 
 	ret = dma_coerce_mask_and_coherent(isp->dev, DMA_BIT_MASK(32));
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	platform_set_drvdata(pdev, isp);
+	platक्रमm_set_drvdata(pdev, isp);
 
 	/* Regulators */
 	isp->isp_csiphy1.vdd = devm_regulator_get(&pdev->dev, "vdd-csiphy1");
@@ -2308,70 +2309,70 @@ static int isp_probe(struct platform_device *pdev)
 
 	/* Clocks
 	 *
-	 * The ISP clock tree is revision-dependent. We thus need to enable ICLK
-	 * manually to read the revision before calling __omap3isp_get().
+	 * The ISP घड़ी tree is revision-dependent. We thus need to enable ICLK
+	 * manually to पढ़ो the revision beक्रमe calling __omap3isp_get().
 	 *
 	 * Start by mapping the ISP MMIO area, which is in two pieces.
 	 * The ISP IOMMU is in between. Map both now, and fill in the
-	 * ISP revision specific portions a little later in the
+	 * ISP revision specअगरic portions a little later in the
 	 * function.
 	 */
-	for (i = 0; i < 2; i++) {
-		unsigned int map_idx = i ? OMAP3_ISP_IOMEM_CSI2A_REGS1 : 0;
+	क्रम (i = 0; i < 2; i++) अणु
+		अचिन्हित पूर्णांक map_idx = i ? OMAP3_ISP_IOMEM_CSI2A_REGS1 : 0;
 
-		mem = platform_get_resource(pdev, IORESOURCE_MEM, i);
+		mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, i);
 		isp->mmio_base[map_idx] =
 			devm_ioremap_resource(isp->dev, mem);
-		if (IS_ERR(isp->mmio_base[map_idx])) {
+		अगर (IS_ERR(isp->mmio_base[map_idx])) अणु
 			ret = PTR_ERR(isp->mmio_base[map_idx]);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	ret = isp_get_clocks(isp);
-	if (ret < 0)
-		goto error;
+	ret = isp_get_घड़ीs(isp);
+	अगर (ret < 0)
+		जाओ error;
 
-	ret = clk_enable(isp->clock[ISP_CLK_CAM_ICK]);
-	if (ret < 0)
-		goto error;
+	ret = clk_enable(isp->घड़ी[ISP_CLK_CAM_ICK]);
+	अगर (ret < 0)
+		जाओ error;
 
-	isp->revision = isp_reg_readl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
+	isp->revision = isp_reg_पढ़ोl(isp, OMAP3_ISP_IOMEM_MAIN, ISP_REVISION);
 	dev_info(isp->dev, "Revision %d.%d found\n",
 		 (isp->revision & 0xf0) >> 4, isp->revision & 0x0f);
 
-	clk_disable(isp->clock[ISP_CLK_CAM_ICK]);
+	clk_disable(isp->घड़ी[ISP_CLK_CAM_ICK]);
 
-	if (__omap3isp_get(isp, false) == NULL) {
+	अगर (__omap3isp_get(isp, false) == शून्य) अणु
 		ret = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = isp_reset(isp);
-	if (ret < 0)
-		goto error_isp;
+	अगर (ret < 0)
+		जाओ error_isp;
 
 	ret = isp_xclk_init(isp);
-	if (ret < 0)
-		goto error_isp;
+	अगर (ret < 0)
+		जाओ error_isp;
 
 	/* Memory resources */
-	for (m = 0; m < ARRAY_SIZE(isp_res_maps); m++)
-		if (isp->revision == isp_res_maps[m].isp_rev)
-			break;
+	क्रम (m = 0; m < ARRAY_SIZE(isp_res_maps); m++)
+		अगर (isp->revision == isp_res_maps[m].isp_rev)
+			अवरोध;
 
-	if (m == ARRAY_SIZE(isp_res_maps)) {
+	अगर (m == ARRAY_SIZE(isp_res_maps)) अणु
 		dev_err(isp->dev, "No resource map found for ISP rev %d.%d\n",
 			(isp->revision & 0xf0) >> 4, isp->revision & 0xf);
 		ret = -ENODEV;
-		goto error_isp;
-	}
+		जाओ error_isp;
+	पूर्ण
 
-	for (i = 1; i < OMAP3_ISP_IOMEM_CSI2A_REGS1; i++)
+	क्रम (i = 1; i < OMAP3_ISP_IOMEM_CSI2A_REGS1; i++)
 		isp->mmio_base[i] =
 			isp->mmio_base[0] + isp_res_maps[m].offset[i];
 
-	for (i = OMAP3_ISP_IOMEM_CSIPHY2; i < OMAP3_ISP_IOMEM_LAST; i++)
+	क्रम (i = OMAP3_ISP_IOMEM_CSIPHY2; i < OMAP3_ISP_IOMEM_LAST; i++)
 		isp->mmio_base[i] =
 			isp->mmio_base[OMAP3_ISP_IOMEM_CSI2A_REGS1]
 			+ isp_res_maps[m].offset[i];
@@ -2381,52 +2382,52 @@ static int isp_probe(struct platform_device *pdev)
 
 	/* IOMMU */
 	ret = isp_attach_iommu(isp);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "unable to attach to IOMMU\n");
-		goto error_isp;
-	}
+		जाओ error_isp;
+	पूर्ण
 
 	/* Interrupt */
-	ret = platform_get_irq(pdev, 0);
-	if (ret <= 0) {
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret <= 0) अणु
 		ret = -ENODEV;
-		goto error_iommu;
-	}
+		जाओ error_iommu;
+	पूर्ण
 	isp->irq_num = ret;
 
-	if (devm_request_irq(isp->dev, isp->irq_num, isp_isr, IRQF_SHARED,
-			     "OMAP3 ISP", isp)) {
+	अगर (devm_request_irq(isp->dev, isp->irq_num, isp_isr, IRQF_SHARED,
+			     "OMAP3 ISP", isp)) अणु
 		dev_err(isp->dev, "Unable to request IRQ\n");
 		ret = -EINVAL;
-		goto error_iommu;
-	}
+		जाओ error_iommu;
+	पूर्ण
 
 	/* Entities */
 	ret = isp_initialize_modules(isp);
-	if (ret < 0)
-		goto error_iommu;
+	अगर (ret < 0)
+		जाओ error_iommu;
 
-	ret = isp_register_entities(isp);
-	if (ret < 0)
-		goto error_modules;
+	ret = isp_रेजिस्टर_entities(isp);
+	अगर (ret < 0)
+		जाओ error_modules;
 
 	ret = isp_create_links(isp);
-	if (ret < 0)
-		goto error_register_entities;
+	अगर (ret < 0)
+		जाओ error_रेजिस्टर_entities;
 
-	isp->notifier.ops = &isp_subdev_notifier_ops;
+	isp->notअगरier.ops = &isp_subdev_notअगरier_ops;
 
-	ret = v4l2_async_notifier_register(&isp->v4l2_dev, &isp->notifier);
-	if (ret)
-		goto error_register_entities;
+	ret = v4l2_async_notअगरier_रेजिस्टर(&isp->v4l2_dev, &isp->notअगरier);
+	अगर (ret)
+		जाओ error_रेजिस्टर_entities;
 
 	isp_core_init(isp, 1);
 	omap3isp_put(isp);
 
-	return 0;
+	वापस 0;
 
-error_register_entities:
-	isp_unregister_entities(isp);
+error_रेजिस्टर_entities:
+	isp_unरेजिस्टर_entities(isp);
 error_modules:
 	isp_cleanup_modules(isp);
 error_iommu:
@@ -2435,45 +2436,45 @@ error_isp:
 	isp_xclk_cleanup(isp);
 	__omap3isp_put(isp, false);
 error:
-	v4l2_async_notifier_cleanup(&isp->notifier);
+	v4l2_async_notअगरier_cleanup(&isp->notअगरier);
 	mutex_destroy(&isp->isp_mutex);
 error_release_isp:
-	kfree(isp);
+	kमुक्त(isp);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct dev_pm_ops omap3isp_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops omap3isp_pm_ops = अणु
 	.prepare = isp_pm_prepare,
 	.suspend = isp_pm_suspend,
 	.resume = isp_pm_resume,
 	.complete = isp_pm_complete,
-};
+पूर्ण;
 
-static const struct platform_device_id omap3isp_id_table[] = {
-	{ "omap3isp", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(platform, omap3isp_id_table);
+अटल स्थिर काष्ठा platक्रमm_device_id omap3isp_id_table[] = अणु
+	अणु "omap3isp", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, omap3isp_id_table);
 
-static const struct of_device_id omap3isp_of_table[] = {
-	{ .compatible = "ti,omap3-isp" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id omap3isp_of_table[] = अणु
+	अणु .compatible = "ti,omap3-isp" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, omap3isp_of_table);
 
-static struct platform_driver omap3isp_driver = {
+अटल काष्ठा platक्रमm_driver omap3isp_driver = अणु
 	.probe = isp_probe,
-	.remove = isp_remove,
+	.हटाओ = isp_हटाओ,
 	.id_table = omap3isp_id_table,
-	.driver = {
+	.driver = अणु
 		.name = "omap3isp",
 		.pm	= &omap3isp_pm_ops,
 		.of_match_table = omap3isp_of_table,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(omap3isp_driver);
+module_platक्रमm_driver(omap3isp_driver);
 
 MODULE_AUTHOR("Nokia Corporation");
 MODULE_DESCRIPTION("TI OMAP3 ISP driver");

@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/*  Paravirtualization interfaces
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/*  Paraभवization पूर्णांकerfaces
     Copyright (C) 2006 Rusty Russell IBM Corporation
 
 
     2007 - x86_64 support added by Glauber de Oliveira Costa, Red Hat Inc
 */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/efi.h>
-#include <linux/bcd.h>
-#include <linux/highmem.h>
-#include <linux/kprobes.h>
-#include <linux/pgtable.h>
-#include <linux/static_call.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/pgtable.h>
+#समावेश <linux/अटल_call.h>
 
-#include <asm/bug.h>
-#include <asm/paravirt.h>
-#include <asm/debugreg.h>
-#include <asm/desc.h>
-#include <asm/setup.h>
-#include <asm/time.h>
-#include <asm/pgalloc.h>
-#include <asm/irq.h>
-#include <asm/delay.h>
-#include <asm/fixmap.h>
-#include <asm/apic.h>
-#include <asm/tlbflush.h>
-#include <asm/timer.h>
-#include <asm/special_insns.h>
-#include <asm/tlb.h>
-#include <asm/io_bitmap.h>
+#समावेश <यंत्र/bug.h>
+#समावेश <यंत्र/paravirt.h>
+#समावेश <यंत्र/debugreg.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/समयr.h>
+#समावेश <यंत्र/special_insns.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/io_biपंचांगap.h>
 
 /*
  * nop stub, which must not clobber anything *including the stack* to
- * avoid confusing the entry prologues.
+ * aव्योम confusing the entry prologues.
  */
-extern void _paravirt_nop(void);
-asm (".pushsection .entry.text, \"ax\"\n"
+बाह्य व्योम _paravirt_nop(व्योम);
+यंत्र (".pushsection .entry.text, \"ax\"\n"
      ".global _paravirt_nop\n"
      "_paravirt_nop:\n\t"
      "ret\n\t"
@@ -46,215 +47,215 @@ asm (".pushsection .entry.text, \"ax\"\n"
      ".type _paravirt_nop, @function\n\t"
      ".popsection");
 
-void __init default_banner(void)
-{
-	printk(KERN_INFO "Booting paravirtualized kernel on %s\n",
+व्योम __init शेष_banner(व्योम)
+अणु
+	prपूर्णांकk(KERN_INFO "Booting paravirtualized kernel on %s\n",
 	       pv_info.name);
-}
+पूर्ण
 
-/* Undefined instruction for dealing with missing ops pointers. */
-static void paravirt_BUG(void)
-{
+/* Undefined inकाष्ठाion क्रम dealing with missing ops poपूर्णांकers. */
+अटल व्योम paravirt_BUG(व्योम)
+अणु
 	BUG();
-}
+पूर्ण
 
-struct branch {
-	unsigned char opcode;
+काष्ठा branch अणु
+	अचिन्हित अक्षर opcode;
 	u32 delta;
-} __attribute__((packed));
+पूर्ण __attribute__((packed));
 
-static unsigned paravirt_patch_call(void *insn_buff, const void *target,
-				    unsigned long addr, unsigned len)
-{
-	const int call_len = 5;
-	struct branch *b = insn_buff;
-	unsigned long delta = (unsigned long)target - (addr+call_len);
+अटल अचिन्हित paravirt_patch_call(व्योम *insn_buff, स्थिर व्योम *target,
+				    अचिन्हित दीर्घ addr, अचिन्हित len)
+अणु
+	स्थिर पूर्णांक call_len = 5;
+	काष्ठा branch *b = insn_buff;
+	अचिन्हित दीर्घ delta = (अचिन्हित दीर्घ)target - (addr+call_len);
 
-	if (len < call_len) {
-		pr_warn("paravirt: Failed to patch indirect CALL at %ps\n", (void *)addr);
-		/* Kernel might not be viable if patching fails, bail out: */
+	अगर (len < call_len) अणु
+		pr_warn("paravirt: Failed to patch indirect CALL at %ps\n", (व्योम *)addr);
+		/* Kernel might not be viable अगर patching fails, bail out: */
 		BUG_ON(1);
-	}
+	पूर्ण
 
 	b->opcode = 0xe8; /* call */
 	b->delta = delta;
-	BUILD_BUG_ON(sizeof(*b) != call_len);
+	BUILD_BUG_ON(माप(*b) != call_len);
 
-	return call_len;
-}
+	वापस call_len;
+पूर्ण
 
-#ifdef CONFIG_PARAVIRT_XXL
-/* identity function, which can be inlined */
+#अगर_घोषित CONFIG_PARAVIRT_XXL
+/* identity function, which can be अंतरभूतd */
 u64 notrace _paravirt_ident_64(u64 x)
-{
-	return x;
-}
-#endif
+अणु
+	वापस x;
+पूर्ण
+#पूर्ण_अगर
 
 DEFINE_STATIC_KEY_TRUE(virt_spin_lock_key);
 
-void __init native_pv_lock_init(void)
-{
-	if (!boot_cpu_has(X86_FEATURE_HYPERVISOR))
-		static_branch_disable(&virt_spin_lock_key);
-}
+व्योम __init native_pv_lock_init(व्योम)
+अणु
+	अगर (!boot_cpu_has(X86_FEATURE_HYPERVISOR))
+		अटल_branch_disable(&virt_spin_lock_key);
+पूर्ण
 
-unsigned int paravirt_patch(u8 type, void *insn_buff, unsigned long addr,
-			    unsigned int len)
-{
+अचिन्हित पूर्णांक paravirt_patch(u8 type, व्योम *insn_buff, अचिन्हित दीर्घ addr,
+			    अचिन्हित पूर्णांक len)
+अणु
 	/*
 	 * Neat trick to map patch type back to the call within the
-	 * corresponding structure.
+	 * corresponding काष्ठाure.
 	 */
-	void *opfunc = *((void **)&pv_ops + type);
-	unsigned ret;
+	व्योम *opfunc = *((व्योम **)&pv_ops + type);
+	अचिन्हित ret;
 
-	if (opfunc == NULL)
+	अगर (opfunc == शून्य)
 		/* If there's no function, patch it with paravirt_BUG() */
 		ret = paravirt_patch_call(insn_buff, paravirt_BUG, addr, len);
-	else if (opfunc == _paravirt_nop)
+	अन्यथा अगर (opfunc == _paravirt_nop)
 		ret = 0;
-	else
+	अन्यथा
 		/* Otherwise call the function. */
 		ret = paravirt_patch_call(insn_buff, opfunc, addr, len);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct static_key paravirt_steal_enabled;
-struct static_key paravirt_steal_rq_enabled;
+काष्ठा अटल_key paravirt_steal_enabled;
+काष्ठा अटल_key paravirt_steal_rq_enabled;
 
-static u64 native_steal_clock(int cpu)
-{
-	return 0;
-}
+अटल u64 native_steal_घड़ी(पूर्णांक cpu)
+अणु
+	वापस 0;
+पूर्ण
 
-DEFINE_STATIC_CALL(pv_steal_clock, native_steal_clock);
-DEFINE_STATIC_CALL(pv_sched_clock, native_sched_clock);
+DEFINE_STATIC_CALL(pv_steal_घड़ी, native_steal_घड़ी);
+DEFINE_STATIC_CALL(pv_sched_घड़ी, native_sched_घड़ी);
 
-void paravirt_set_sched_clock(u64 (*func)(void))
-{
-	static_call_update(pv_sched_clock, func);
-}
+व्योम paravirt_set_sched_घड़ी(u64 (*func)(व्योम))
+अणु
+	अटल_call_update(pv_sched_घड़ी, func);
+पूर्ण
 
 /* These are in entry.S */
-extern void native_iret(void);
+बाह्य व्योम native_iret(व्योम);
 
-static struct resource reserve_ioports = {
+अटल काष्ठा resource reserve_ioports = अणु
 	.start = 0,
 	.end = IO_SPACE_LIMIT,
 	.name = "paravirt-ioport",
 	.flags = IORESOURCE_IO | IORESOURCE_BUSY,
-};
+पूर्ण;
 
 /*
  * Reserve the whole legacy IO space to prevent any legacy drivers
- * from wasting time probing for their hardware.  This is a fairly
- * brute-force approach to disabling all non-virtual drivers.
+ * from wasting समय probing क्रम their hardware.  This is a fairly
+ * brute-क्रमce approach to disabling all non-भव drivers.
  *
  * Note that this must be called very early to have any effect.
  */
-int paravirt_disable_iospace(void)
-{
-	return request_resource(&ioport_resource, &reserve_ioports);
-}
+पूर्णांक paravirt_disable_iospace(व्योम)
+अणु
+	वापस request_resource(&ioport_resource, &reserve_ioports);
+पूर्ण
 
-static DEFINE_PER_CPU(enum paravirt_lazy_mode, paravirt_lazy_mode) = PARAVIRT_LAZY_NONE;
+अटल DEFINE_PER_CPU(क्रमागत paravirt_lazy_mode, paravirt_lazy_mode) = PARAVIRT_LAZY_NONE;
 
-static inline void enter_lazy(enum paravirt_lazy_mode mode)
-{
-	BUG_ON(this_cpu_read(paravirt_lazy_mode) != PARAVIRT_LAZY_NONE);
+अटल अंतरभूत व्योम enter_lazy(क्रमागत paravirt_lazy_mode mode)
+अणु
+	BUG_ON(this_cpu_पढ़ो(paravirt_lazy_mode) != PARAVIRT_LAZY_NONE);
 
-	this_cpu_write(paravirt_lazy_mode, mode);
-}
+	this_cpu_ग_लिखो(paravirt_lazy_mode, mode);
+पूर्ण
 
-static void leave_lazy(enum paravirt_lazy_mode mode)
-{
-	BUG_ON(this_cpu_read(paravirt_lazy_mode) != mode);
+अटल व्योम leave_lazy(क्रमागत paravirt_lazy_mode mode)
+अणु
+	BUG_ON(this_cpu_पढ़ो(paravirt_lazy_mode) != mode);
 
-	this_cpu_write(paravirt_lazy_mode, PARAVIRT_LAZY_NONE);
-}
+	this_cpu_ग_लिखो(paravirt_lazy_mode, PARAVIRT_LAZY_NONE);
+पूर्ण
 
-void paravirt_enter_lazy_mmu(void)
-{
+व्योम paravirt_enter_lazy_mmu(व्योम)
+अणु
 	enter_lazy(PARAVIRT_LAZY_MMU);
-}
+पूर्ण
 
-void paravirt_leave_lazy_mmu(void)
-{
+व्योम paravirt_leave_lazy_mmu(व्योम)
+अणु
 	leave_lazy(PARAVIRT_LAZY_MMU);
-}
+पूर्ण
 
-void paravirt_flush_lazy_mmu(void)
-{
+व्योम paravirt_flush_lazy_mmu(व्योम)
+अणु
 	preempt_disable();
 
-	if (paravirt_get_lazy_mode() == PARAVIRT_LAZY_MMU) {
+	अगर (paravirt_get_lazy_mode() == PARAVIRT_LAZY_MMU) अणु
 		arch_leave_lazy_mmu_mode();
 		arch_enter_lazy_mmu_mode();
-	}
+	पूर्ण
 
 	preempt_enable();
-}
+पूर्ण
 
-#ifdef CONFIG_PARAVIRT_XXL
-void paravirt_start_context_switch(struct task_struct *prev)
-{
+#अगर_घोषित CONFIG_PARAVIRT_XXL
+व्योम paravirt_start_context_चयन(काष्ठा task_काष्ठा *prev)
+अणु
 	BUG_ON(preemptible());
 
-	if (this_cpu_read(paravirt_lazy_mode) == PARAVIRT_LAZY_MMU) {
+	अगर (this_cpu_पढ़ो(paravirt_lazy_mode) == PARAVIRT_LAZY_MMU) अणु
 		arch_leave_lazy_mmu_mode();
-		set_ti_thread_flag(task_thread_info(prev), TIF_LAZY_MMU_UPDATES);
-	}
+		set_ti_thपढ़ो_flag(task_thपढ़ो_info(prev), TIF_LAZY_MMU_UPDATES);
+	पूर्ण
 	enter_lazy(PARAVIRT_LAZY_CPU);
-}
+पूर्ण
 
-void paravirt_end_context_switch(struct task_struct *next)
-{
+व्योम paravirt_end_context_चयन(काष्ठा task_काष्ठा *next)
+अणु
 	BUG_ON(preemptible());
 
 	leave_lazy(PARAVIRT_LAZY_CPU);
 
-	if (test_and_clear_ti_thread_flag(task_thread_info(next), TIF_LAZY_MMU_UPDATES))
+	अगर (test_and_clear_ti_thपढ़ो_flag(task_thपढ़ो_info(next), TIF_LAZY_MMU_UPDATES))
 		arch_enter_lazy_mmu_mode();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-enum paravirt_lazy_mode paravirt_get_lazy_mode(void)
-{
-	if (in_interrupt())
-		return PARAVIRT_LAZY_NONE;
+क्रमागत paravirt_lazy_mode paravirt_get_lazy_mode(व्योम)
+अणु
+	अगर (in_पूर्णांकerrupt())
+		वापस PARAVIRT_LAZY_NONE;
 
-	return this_cpu_read(paravirt_lazy_mode);
-}
+	वापस this_cpu_पढ़ो(paravirt_lazy_mode);
+पूर्ण
 
-struct pv_info pv_info = {
+काष्ठा pv_info pv_info = अणु
 	.name = "bare hardware",
-#ifdef CONFIG_PARAVIRT_XXL
+#अगर_घोषित CONFIG_PARAVIRT_XXL
 	.extra_user_64bit_cs = __USER_CS,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /* 64-bit pagetable entries */
-#define PTE_IDENT	__PV_IS_CALLEE_SAVE(_paravirt_ident_64)
+#घोषणा PTE_IDENT	__PV_IS_CALLEE_SAVE(_paravirt_ident_64)
 
-struct paravirt_patch_template pv_ops = {
+काष्ठा paravirt_patch_ढाँचा pv_ops = अणु
 	/* Cpu ops. */
 	.cpu.io_delay		= native_io_delay,
 
-#ifdef CONFIG_PARAVIRT_XXL
+#अगर_घोषित CONFIG_PARAVIRT_XXL
 	.cpu.cpuid		= native_cpuid,
 	.cpu.get_debugreg	= native_get_debugreg,
 	.cpu.set_debugreg	= native_set_debugreg,
-	.cpu.read_cr0		= native_read_cr0,
-	.cpu.write_cr0		= native_write_cr0,
-	.cpu.write_cr4		= native_write_cr4,
+	.cpu.पढ़ो_cr0		= native_पढ़ो_cr0,
+	.cpu.ग_लिखो_cr0		= native_ग_लिखो_cr0,
+	.cpu.ग_लिखो_cr4		= native_ग_लिखो_cr4,
 	.cpu.wbinvd		= native_wbinvd,
-	.cpu.read_msr		= native_read_msr,
-	.cpu.write_msr		= native_write_msr,
-	.cpu.read_msr_safe	= native_read_msr_safe,
-	.cpu.write_msr_safe	= native_write_msr_safe,
-	.cpu.read_pmc		= native_read_pmc,
+	.cpu.पढ़ो_msr		= native_पढ़ो_msr,
+	.cpu.ग_लिखो_msr		= native_ग_लिखो_msr,
+	.cpu.पढ़ो_msr_safe	= native_पढ़ो_msr_safe,
+	.cpu.ग_लिखो_msr_safe	= native_ग_लिखो_msr_safe,
+	.cpu.पढ़ो_pmc		= native_पढ़ो_pmc,
 	.cpu.load_tr_desc	= native_load_tr_desc,
 	.cpu.set_ldt		= native_set_ldt,
 	.cpu.load_gdt		= native_load_gdt,
@@ -262,22 +263,22 @@ struct paravirt_patch_template pv_ops = {
 	.cpu.store_tr		= native_store_tr,
 	.cpu.load_tls		= native_load_tls,
 	.cpu.load_gs_index	= native_load_gs_index,
-	.cpu.write_ldt_entry	= native_write_ldt_entry,
-	.cpu.write_gdt_entry	= native_write_gdt_entry,
-	.cpu.write_idt_entry	= native_write_idt_entry,
+	.cpu.ग_लिखो_ldt_entry	= native_ग_लिखो_ldt_entry,
+	.cpu.ग_लिखो_gdt_entry	= native_ग_लिखो_gdt_entry,
+	.cpu.ग_लिखो_idt_entry	= native_ग_लिखो_idt_entry,
 
 	.cpu.alloc_ldt		= paravirt_nop,
-	.cpu.free_ldt		= paravirt_nop,
+	.cpu.मुक्त_ldt		= paravirt_nop,
 
 	.cpu.load_sp0		= native_load_sp0,
 
-#ifdef CONFIG_X86_IOPL_IOPERM
-	.cpu.invalidate_io_bitmap	= native_tss_invalidate_io_bitmap,
-	.cpu.update_io_bitmap		= native_tss_update_io_bitmap,
-#endif
+#अगर_घोषित CONFIG_X86_IOPL_IOPERM
+	.cpu.invalidate_io_biपंचांगap	= native_tss_invalidate_io_biपंचांगap,
+	.cpu.update_io_biपंचांगap		= native_tss_update_io_biपंचांगap,
+#पूर्ण_अगर
 
-	.cpu.start_context_switch	= paravirt_nop,
-	.cpu.end_context_switch		= paravirt_nop,
+	.cpu.start_context_चयन	= paravirt_nop,
+	.cpu.end_context_चयन		= paravirt_nop,
 
 	/* Irq ops. */
 	.irq.save_fl		= __PV_IS_CALLEE_SAVE(native_save_fl),
@@ -285,26 +286,26 @@ struct paravirt_patch_template pv_ops = {
 	.irq.irq_enable		= __PV_IS_CALLEE_SAVE(native_irq_enable),
 	.irq.safe_halt		= native_safe_halt,
 	.irq.halt		= native_halt,
-#endif /* CONFIG_PARAVIRT_XXL */
+#पूर्ण_अगर /* CONFIG_PARAVIRT_XXL */
 
 	/* Mmu ops. */
 	.mmu.flush_tlb_user	= native_flush_tlb_local,
 	.mmu.flush_tlb_kernel	= native_flush_tlb_global,
 	.mmu.flush_tlb_one_user	= native_flush_tlb_one_user,
 	.mmu.flush_tlb_multi	= native_flush_tlb_multi,
-	.mmu.tlb_remove_table	=
-			(void (*)(struct mmu_gather *, void *))tlb_remove_page,
+	.mmu.tlb_हटाओ_table	=
+			(व्योम (*)(काष्ठा mmu_gather *, व्योम *))tlb_हटाओ_page,
 
-	.mmu.exit_mmap		= paravirt_nop,
+	.mmu.निकास_mmap		= paravirt_nop,
 
-#ifdef CONFIG_PARAVIRT_XXL
-	.mmu.read_cr2		= __PV_IS_CALLEE_SAVE(native_read_cr2),
-	.mmu.write_cr2		= native_write_cr2,
-	.mmu.read_cr3		= __native_read_cr3,
-	.mmu.write_cr3		= native_write_cr3,
+#अगर_घोषित CONFIG_PARAVIRT_XXL
+	.mmu.पढ़ो_cr2		= __PV_IS_CALLEE_SAVE(native_पढ़ो_cr2),
+	.mmu.ग_लिखो_cr2		= native_ग_लिखो_cr2,
+	.mmu.पढ़ो_cr3		= __native_पढ़ो_cr3,
+	.mmu.ग_लिखो_cr3		= native_ग_लिखो_cr3,
 
 	.mmu.pgd_alloc		= __paravirt_pgd_alloc,
-	.mmu.pgd_free		= paravirt_nop,
+	.mmu.pgd_मुक्त		= paravirt_nop,
 
 	.mmu.alloc_pte		= paravirt_nop,
 	.mmu.alloc_pmd		= paravirt_nop,
@@ -318,8 +319,8 @@ struct paravirt_patch_template pv_ops = {
 	.mmu.set_pte		= native_set_pte,
 	.mmu.set_pmd		= native_set_pmd,
 
-	.mmu.ptep_modify_prot_start	= __ptep_modify_prot_start,
-	.mmu.ptep_modify_prot_commit	= __ptep_modify_prot_commit,
+	.mmu.ptep_modअगरy_prot_start	= __ptep_modअगरy_prot_start,
+	.mmu.ptep_modअगरy_prot_commit	= __ptep_modअगरy_prot_commit,
 
 	.mmu.set_pud		= native_set_pud,
 
@@ -331,12 +332,12 @@ struct paravirt_patch_template pv_ops = {
 
 	.mmu.set_p4d		= native_set_p4d,
 
-#if CONFIG_PGTABLE_LEVELS >= 5
+#अगर CONFIG_PGTABLE_LEVELS >= 5
 	.mmu.p4d_val		= PTE_IDENT,
 	.mmu.make_p4d		= PTE_IDENT,
 
 	.mmu.set_pgd		= native_set_pgd,
-#endif /* CONFIG_PGTABLE_LEVELS >= 5 */
+#पूर्ण_अगर /* CONFIG_PGTABLE_LEVELS >= 5 */
 
 	.mmu.pte_val		= PTE_IDENT,
 	.mmu.pgd_val		= PTE_IDENT,
@@ -347,37 +348,37 @@ struct paravirt_patch_template pv_ops = {
 	.mmu.dup_mmap		= paravirt_nop,
 	.mmu.activate_mm	= paravirt_nop,
 
-	.mmu.lazy_mode = {
+	.mmu.lazy_mode = अणु
 		.enter		= paravirt_nop,
 		.leave		= paravirt_nop,
 		.flush		= paravirt_nop,
-	},
+	पूर्ण,
 
 	.mmu.set_fixmap		= native_set_fixmap,
-#endif /* CONFIG_PARAVIRT_XXL */
+#पूर्ण_अगर /* CONFIG_PARAVIRT_XXL */
 
-#if defined(CONFIG_PARAVIRT_SPINLOCKS)
+#अगर defined(CONFIG_PARAVIRT_SPINLOCKS)
 	/* Lock ops. */
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.lock.queued_spin_lock_slowpath	= native_queued_spin_lock_slowpath,
 	.lock.queued_spin_unlock	=
 				PV_CALLEE_SAVE(__native_queued_spin_unlock),
-	.lock.wait			= paravirt_nop,
+	.lock.रुको			= paravirt_nop,
 	.lock.kick			= paravirt_nop,
 	.lock.vcpu_is_preempted		=
 				PV_CALLEE_SAVE(__native_vcpu_is_preempted),
-#endif /* SMP */
-#endif
-};
+#पूर्ण_अगर /* SMP */
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_PARAVIRT_XXL
-/* At this point, native_get/set_debugreg has real function entries */
+#अगर_घोषित CONFIG_PARAVIRT_XXL
+/* At this poपूर्णांक, native_get/set_debugreg has real function entries */
 NOKPROBE_SYMBOL(native_get_debugreg);
 NOKPROBE_SYMBOL(native_set_debugreg);
 NOKPROBE_SYMBOL(native_load_idt);
 
-void (*paravirt_iret)(void) = native_iret;
-#endif
+व्योम (*paravirt_iret)(व्योम) = native_iret;
+#पूर्ण_अगर
 
 EXPORT_SYMBOL(pv_ops);
 EXPORT_SYMBOL_GPL(pv_info);

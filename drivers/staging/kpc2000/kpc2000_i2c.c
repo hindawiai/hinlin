@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * KPC2000 i2c driver
  *
- * Adapted i2c-i801.c for use with Kadoka hardware.
+ * Adapted i2c-i801.c क्रम use with Kaकरोka hardware.
  *
  * Copyright (C) 1998 - 2002
- *	Frodo Looijaard <frodol@dds.nl>,
+ *	Froकरो Looijaard <froकरोl@dds.nl>,
  *	Philip Edelbrock <phil@netroedge.com>,
  *	Mark D. Studebaker <mdsxyz123@yahoo.com>
  * Copyright (C) 2007 - 2012
@@ -14,154 +15,154 @@
  *	David Woodhouse <dwmw2@infradead.org>
  * Copyright (C) 2014-2018 Daktronics
  *	Matt Sickler <matt.sickler@daktronics.com>,
- *	Jordon Hofer <jordon.hofer@daktronics.com>
+ *	Jorकरोn Hofer <jorकरोn.hofer@daktronics.com>
  */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/io.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/fs.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include "kpc.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश "kpc.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Matt.Sickler@Daktronics.com");
 
-struct kpc_i2c {
-	unsigned long           smba;
-	struct i2c_adapter      adapter;
-	unsigned int            features;
-};
+काष्ठा kpc_i2c अणु
+	अचिन्हित दीर्घ           smba;
+	काष्ठा i2c_adapter      adapter;
+	अचिन्हित पूर्णांक            features;
+पूर्ण;
 
 /*****************************
  *** Part 1 - i2c Handlers ***
  *****************************/
 
-#define REG_SIZE 8
+#घोषणा REG_SIZE 8
 
 /* I801 SMBus address offsets */
-#define SMBHSTSTS(p)    ((0  * REG_SIZE) + (p)->smba)
-#define SMBHSTCNT(p)    ((2  * REG_SIZE) + (p)->smba)
-#define SMBHSTCMD(p)    ((3  * REG_SIZE) + (p)->smba)
-#define SMBHSTADD(p)    ((4  * REG_SIZE) + (p)->smba)
-#define SMBHSTDAT0(p)   ((5  * REG_SIZE) + (p)->smba)
-#define SMBHSTDAT1(p)   ((6  * REG_SIZE) + (p)->smba)
-#define SMBBLKDAT(p)    ((7  * REG_SIZE) + (p)->smba)
-#define SMBPEC(p)       ((8  * REG_SIZE) + (p)->smba)   /* ICH3 and later */
-#define SMBAUXSTS(p)    ((12 * REG_SIZE) + (p)->smba)   /* ICH4 and later */
-#define SMBAUXCTL(p)    ((13 * REG_SIZE) + (p)->smba)   /* ICH4 and later */
+#घोषणा SMBHSTSTS(p)    ((0  * REG_SIZE) + (p)->smba)
+#घोषणा SMBHSTCNT(p)    ((2  * REG_SIZE) + (p)->smba)
+#घोषणा SMBHSTCMD(p)    ((3  * REG_SIZE) + (p)->smba)
+#घोषणा SMBHSTADD(p)    ((4  * REG_SIZE) + (p)->smba)
+#घोषणा SMBHSTDAT0(p)   ((5  * REG_SIZE) + (p)->smba)
+#घोषणा SMBHSTDAT1(p)   ((6  * REG_SIZE) + (p)->smba)
+#घोषणा SMBBLKDAT(p)    ((7  * REG_SIZE) + (p)->smba)
+#घोषणा SMBPEC(p)       ((8  * REG_SIZE) + (p)->smba)   /* ICH3 and later */
+#घोषणा SMBAUXSTS(p)    ((12 * REG_SIZE) + (p)->smba)   /* ICH4 and later */
+#घोषणा SMBAUXCTL(p)    ((13 * REG_SIZE) + (p)->smba)   /* ICH4 and later */
 
 /* PCI Address Constants */
-#define SMBBAR      4
-#define SMBHSTCFG   0x040
+#घोषणा SMBBAR      4
+#घोषणा SMBHSTCFG   0x040
 
-/* Host configuration bits for SMBHSTCFG */
-#define SMBHSTCFG_HST_EN        1
-#define SMBHSTCFG_SMB_SMI_EN    2
-#define SMBHSTCFG_I2C_EN        4
+/* Host configuration bits क्रम SMBHSTCFG */
+#घोषणा SMBHSTCFG_HST_EN        1
+#घोषणा SMBHSTCFG_SMB_SMI_EN    2
+#घोषणा SMBHSTCFG_I2C_EN        4
 
-/* Auxiliary control register bits, ICH4+ only */
-#define SMBAUXCTL_CRC       1
-#define SMBAUXCTL_E32B      2
+/* Auxiliary control रेजिस्टर bits, ICH4+ only */
+#घोषणा SMBAUXCTL_CRC       1
+#घोषणा SMBAUXCTL_E32B      2
 
-/* kill bit for SMBHSTCNT */
-#define SMBHSTCNT_KILL      2
+/* समाप्त bit क्रम SMBHSTCNT */
+#घोषणा SMBHSTCNT_KILL      2
 
 /* Other settings */
-#define MAX_RETRIES         400
-#define ENABLE_INT9         0       /* set to 0x01 to enable - untested */
+#घोषणा MAX_RETRIES         400
+#घोषणा ENABLE_INT9         0       /* set to 0x01 to enable - untested */
 
-/* I801 command constants */
-#define I801_QUICK              0x00
-#define I801_BYTE               0x04
-#define I801_BYTE_DATA          0x08
-#define I801_WORD_DATA          0x0C
-#define I801_PROC_CALL          0x10    /* unimplemented */
-#define I801_BLOCK_DATA         0x14
-#define I801_I2C_BLOCK_DATA     0x18    /* ICH5 and later */
-#define I801_BLOCK_LAST         0x34
-#define I801_I2C_BLOCK_LAST     0x38    /* ICH5 and later */
-#define I801_START              0x40
-#define I801_PEC_EN             0x80    /* ICH3 and later */
+/* I801 command स्थिरants */
+#घोषणा I801_QUICK              0x00
+#घोषणा I801_BYTE               0x04
+#घोषणा I801_BYTE_DATA          0x08
+#घोषणा I801_WORD_DATA          0x0C
+#घोषणा I801_PROC_CALL          0x10    /* unimplemented */
+#घोषणा I801_BLOCK_DATA         0x14
+#घोषणा I801_I2C_BLOCK_DATA     0x18    /* ICH5 and later */
+#घोषणा I801_BLOCK_LAST         0x34
+#घोषणा I801_I2C_BLOCK_LAST     0x38    /* ICH5 and later */
+#घोषणा I801_START              0x40
+#घोषणा I801_PEC_EN             0x80    /* ICH3 and later */
 
-/* I801 Hosts Status register bits */
-#define SMBHSTSTS_BYTE_DONE     0x80
-#define SMBHSTSTS_INUSE_STS     0x40
-#define SMBHSTSTS_SMBALERT_STS  0x20
-#define SMBHSTSTS_FAILED        0x10
-#define SMBHSTSTS_BUS_ERR       0x08
-#define SMBHSTSTS_DEV_ERR       0x04
-#define SMBHSTSTS_INTR          0x02
-#define SMBHSTSTS_HOST_BUSY     0x01
+/* I801 Hosts Status रेजिस्टर bits */
+#घोषणा SMBHSTSTS_BYTE_DONE     0x80
+#घोषणा SMBHSTSTS_INUSE_STS     0x40
+#घोषणा SMBHSTSTS_SMBALERT_STS  0x20
+#घोषणा SMBHSTSTS_FAILED        0x10
+#घोषणा SMBHSTSTS_BUS_ERR       0x08
+#घोषणा SMBHSTSTS_DEV_ERR       0x04
+#घोषणा SMBHSTSTS_INTR          0x02
+#घोषणा SMBHSTSTS_HOST_BUSY     0x01
 
-#define STATUS_FLAGS	(SMBHSTSTS_BYTE_DONE | SMBHSTSTS_FAILED | \
+#घोषणा STATUS_FLAGS	(SMBHSTSTS_BYTE_DONE | SMBHSTSTS_FAILED | \
 			 SMBHSTSTS_BUS_ERR | SMBHSTSTS_DEV_ERR | SMBHSTSTS_INTR)
 
 /* Older devices have their ID defined in <linux/pci_ids.h> */
-#define PCI_DEVICE_ID_INTEL_COUGARPOINT_SMBUS       0x1c22
-#define PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS          0x1d22
+#घोषणा PCI_DEVICE_ID_INTEL_COUGARPOINT_SMBUS       0x1c22
+#घोषणा PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS          0x1d22
 /* Patsburg also has three 'Integrated Device Function' SMBus controllers */
-#define PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF0     0x1d70
-#define PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF1     0x1d71
-#define PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF2     0x1d72
-#define PCI_DEVICE_ID_INTEL_PANTHERPOINT_SMBUS      0x1e22
-#define PCI_DEVICE_ID_INTEL_DH89XXCC_SMBUS          0x2330
-#define PCI_DEVICE_ID_INTEL_5_3400_SERIES_SMBUS     0x3b30
-#define PCI_DEVICE_ID_INTEL_LYNXPOINT_SMBUS         0x8c22
-#define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_SMBUS      0x9c22
+#घोषणा PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF0     0x1d70
+#घोषणा PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF1     0x1d71
+#घोषणा PCI_DEVICE_ID_INTEL_PATSBURG_SMBUS_IDF2     0x1d72
+#घोषणा PCI_DEVICE_ID_INTEL_PANTHERPOINT_SMBUS      0x1e22
+#घोषणा PCI_DEVICE_ID_INTEL_DH89XXCC_SMBUS          0x2330
+#घोषणा PCI_DEVICE_ID_INTEL_5_3400_SERIES_SMBUS     0x3b30
+#घोषणा PCI_DEVICE_ID_INTEL_LYNXPOINT_SMBUS         0x8c22
+#घोषणा PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_SMBUS      0x9c22
 
-#define FEATURE_SMBUS_PEC       BIT(0)
-#define FEATURE_BLOCK_BUFFER    BIT(1)
-#define FEATURE_BLOCK_PROC      BIT(2)
-#define FEATURE_I2C_BLOCK_READ  BIT(3)
+#घोषणा FEATURE_SMBUS_PEC       BIT(0)
+#घोषणा FEATURE_BLOCK_BUFFER    BIT(1)
+#घोषणा FEATURE_BLOCK_PROC      BIT(2)
+#घोषणा FEATURE_I2C_BLOCK_READ  BIT(3)
 /* Not really a feature, but it's convenient to handle it as such */
-#define FEATURE_IDF             BIT(15)
+#घोषणा FEATURE_IDF             BIT(15)
 
 // FIXME!
-#undef inb_p
-#define inb_p(a) readq((void __iomem *)a)
-#undef outb_p
-#define outb_p(d, a) writeq(d, (void __iomem *)a)
+#अघोषित inb_p
+#घोषणा inb_p(a) पढ़ोq((व्योम __iomem *)a)
+#अघोषित outb_p
+#घोषणा outb_p(d, a) ग_लिखोq(d, (व्योम __iomem *)a)
 
-/* Make sure the SMBus host is ready to start transmitting.
- * Return 0 if it is, -EBUSY if it is not.
+/* Make sure the SMBus host is पढ़ोy to start transmitting.
+ * Return 0 अगर it is, -EBUSY अगर it is not.
  */
-static int i801_check_pre(struct kpc_i2c *priv)
-{
-	int status;
+अटल पूर्णांक i801_check_pre(काष्ठा kpc_i2c *priv)
+अणु
+	पूर्णांक status;
 
 	status = inb_p(SMBHSTSTS(priv));
-	if (status & SMBHSTSTS_HOST_BUSY) {
+	अगर (status & SMBHSTSTS_HOST_BUSY) अणु
 		dev_err(&priv->adapter.dev,
 			"SMBus is busy, can't use it! (status=%x)\n", status);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	status &= STATUS_FLAGS;
-	if (status) {
+	अगर (status) अणु
 		outb_p(status, SMBHSTSTS(priv));
 		status = inb_p(SMBHSTSTS(priv)) & STATUS_FLAGS;
-		if (status) {
+		अगर (status) अणु
 			dev_err(&priv->adapter.dev,
 				"Failed clearing status flags (%02x)\n", status);
-			return -EBUSY;
-		}
-	}
-	return 0;
-}
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Convert the status register to an error code, and clear it. */
-static int i801_check_post(struct kpc_i2c *priv, int status, int timeout)
-{
-	int result = 0;
+/* Convert the status रेजिस्टर to an error code, and clear it. */
+अटल पूर्णांक i801_check_post(काष्ठा kpc_i2c *priv, पूर्णांक status, पूर्णांक समयout)
+अणु
+	पूर्णांक result = 0;
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout) {
+	अगर (समयout) अणु
 		dev_err(&priv->adapter.dev, "Transaction timeout\n");
 		/* try to stop the current command */
 		dev_dbg(&priv->adapter.dev,
@@ -172,415 +173,415 @@ static int i801_check_post(struct kpc_i2c *priv, int status, int timeout)
 		outb_p(inb_p(SMBHSTCNT(priv)) & (~SMBHSTCNT_KILL),
 		       SMBHSTCNT(priv));
 
-		/* Check if it worked */
+		/* Check अगर it worked */
 		status = inb_p(SMBHSTSTS(priv));
-		if ((status & SMBHSTSTS_HOST_BUSY) ||
+		अगर ((status & SMBHSTSTS_HOST_BUSY) ||
 		    !(status & SMBHSTSTS_FAILED))
 			dev_err(&priv->adapter.dev,
 				"Failed terminating the transaction\n");
 		outb_p(STATUS_FLAGS, SMBHSTSTS(priv));
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	if (status & SMBHSTSTS_FAILED) {
+	अगर (status & SMBHSTSTS_FAILED) अणु
 		result = -EIO;
 		dev_err(&priv->adapter.dev, "Transaction failed\n");
-	}
-	if (status & SMBHSTSTS_DEV_ERR) {
+	पूर्ण
+	अगर (status & SMBHSTSTS_DEV_ERR) अणु
 		result = -ENXIO;
 		dev_dbg(&priv->adapter.dev, "No response\n");
-	}
-	if (status & SMBHSTSTS_BUS_ERR) {
+	पूर्ण
+	अगर (status & SMBHSTSTS_BUS_ERR) अणु
 		result = -EAGAIN;
 		dev_dbg(&priv->adapter.dev, "Lost arbitration\n");
-	}
+	पूर्ण
 
-	if (result) {
+	अगर (result) अणु
 		/* Clear error flags */
 		outb_p(status & STATUS_FLAGS, SMBHSTSTS(priv));
 		status = inb_p(SMBHSTSTS(priv)) & STATUS_FLAGS;
-		if (status)
+		अगर (status)
 			dev_warn(&priv->adapter.dev,
 				 "Failed clearing status flags at end of transaction (%02x)\n",
 				 status);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int i801_transaction(struct kpc_i2c *priv, int xact)
-{
-	int status;
-	int result;
-	int timeout = 0;
+अटल पूर्णांक i801_transaction(काष्ठा kpc_i2c *priv, पूर्णांक xact)
+अणु
+	पूर्णांक status;
+	पूर्णांक result;
+	पूर्णांक समयout = 0;
 
 	result = i801_check_pre(priv);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 	/* the current contents of SMBHSTCNT can be overwritten, since PEC,
 	 * INTREN, SMBSCMD are passed in xact
 	 */
 	outb_p(xact | I801_START, SMBHSTCNT(priv));
 
-	/* We will always wait for a fraction of a second! */
-	do {
+	/* We will always रुको क्रम a fraction of a second! */
+	करो अणु
 		usleep_range(250, 500);
 		status = inb_p(SMBHSTSTS(priv));
-	} while ((status & SMBHSTSTS_HOST_BUSY) && (timeout++ < MAX_RETRIES));
+	पूर्ण जबतक ((status & SMBHSTSTS_HOST_BUSY) && (समयout++ < MAX_RETRIES));
 
-	result = i801_check_post(priv, status, timeout > MAX_RETRIES);
-	if (result < 0)
-		return result;
+	result = i801_check_post(priv, status, समयout > MAX_RETRIES);
+	अगर (result < 0)
+		वापस result;
 
 	outb_p(SMBHSTSTS_INTR, SMBHSTSTS(priv));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* wait for INTR bit as advised by Intel */
-static void i801_wait_hwpec(struct kpc_i2c *priv)
-{
-	int timeout = 0;
-	int status;
+/* रुको क्रम INTR bit as advised by Intel */
+अटल व्योम i801_रुको_hwpec(काष्ठा kpc_i2c *priv)
+अणु
+	पूर्णांक समयout = 0;
+	पूर्णांक status;
 
-	do {
+	करो अणु
 		usleep_range(250, 500);
 		status = inb_p(SMBHSTSTS(priv));
-	} while ((!(status & SMBHSTSTS_INTR)) && (timeout++ < MAX_RETRIES));
+	पूर्ण जबतक ((!(status & SMBHSTSTS_INTR)) && (समयout++ < MAX_RETRIES));
 
-	if (timeout > MAX_RETRIES)
+	अगर (समयout > MAX_RETRIES)
 		dev_dbg(&priv->adapter.dev, "PEC Timeout!\n");
 
 	outb_p(status, SMBHSTSTS(priv));
-}
+पूर्ण
 
-static int i801_block_transaction_by_block(struct kpc_i2c *priv,
-					   union i2c_smbus_data *data,
-					   char read_write, int hwpec)
-{
-	int i, len;
-	int status;
+अटल पूर्णांक i801_block_transaction_by_block(काष्ठा kpc_i2c *priv,
+					   जोड़ i2c_smbus_data *data,
+					   अक्षर पढ़ो_ग_लिखो, पूर्णांक hwpec)
+अणु
+	पूर्णांक i, len;
+	पूर्णांक status;
 
 	inb_p(SMBHSTCNT(priv)); /* reset the data buffer index */
 
 	/* Use 32-byte buffer to process this transaction */
-	if (read_write == I2C_SMBUS_WRITE) {
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 		len = data->block[0];
 		outb_p(len, SMBHSTDAT0(priv));
-		for (i = 0; i < len; i++)
+		क्रम (i = 0; i < len; i++)
 			outb_p(data->block[i + 1], SMBBLKDAT(priv));
-	}
+	पूर्ण
 
 	status = i801_transaction(priv,
 				  I801_BLOCK_DATA | ENABLE_INT9 | I801_PEC_EN * hwpec);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if (read_write == I2C_SMBUS_READ) {
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
 		len = inb_p(SMBHSTDAT0(priv));
-		if (len < 1 || len > I2C_SMBUS_BLOCK_MAX)
-			return -EPROTO;
+		अगर (len < 1 || len > I2C_SMBUS_BLOCK_MAX)
+			वापस -EPROTO;
 
 		data->block[0] = len;
-		for (i = 0; i < len; i++)
+		क्रम (i = 0; i < len; i++)
 			data->block[i + 1] = inb_p(SMBBLKDAT(priv));
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int i801_block_transaction_byte_by_byte(struct kpc_i2c *priv,
-					       union i2c_smbus_data *data,
-					       char read_write, int command,
-					       int hwpec)
-{
-	int i, len;
-	int smbcmd;
-	int status;
-	int result;
-	int timeout;
+अटल पूर्णांक i801_block_transaction_byte_by_byte(काष्ठा kpc_i2c *priv,
+					       जोड़ i2c_smbus_data *data,
+					       अक्षर पढ़ो_ग_लिखो, पूर्णांक command,
+					       पूर्णांक hwpec)
+अणु
+	पूर्णांक i, len;
+	पूर्णांक smbcmd;
+	पूर्णांक status;
+	पूर्णांक result;
+	पूर्णांक समयout;
 
 	result = i801_check_pre(priv);
-	if (result < 0)
-		return result;
+	अगर (result < 0)
+		वापस result;
 
 	len = data->block[0];
 
-	if (read_write == I2C_SMBUS_WRITE) {
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 		outb_p(len, SMBHSTDAT0(priv));
 		outb_p(data->block[1], SMBBLKDAT(priv));
-	}
+	पूर्ण
 
-	for (i = 1; i <= len; i++) {
-		if (i == len && read_write == I2C_SMBUS_READ) {
-			if (command == I2C_SMBUS_I2C_BLOCK_DATA)
+	क्रम (i = 1; i <= len; i++) अणु
+		अगर (i == len && पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
+			अगर (command == I2C_SMBUS_I2C_BLOCK_DATA)
 				smbcmd = I801_I2C_BLOCK_LAST;
-			else
+			अन्यथा
 				smbcmd = I801_BLOCK_LAST;
-		} else {
-			if (command == I2C_SMBUS_I2C_BLOCK_DATA &&
-			    read_write == I2C_SMBUS_READ)
+		पूर्ण अन्यथा अणु
+			अगर (command == I2C_SMBUS_I2C_BLOCK_DATA &&
+			    पढ़ो_ग_लिखो == I2C_SMBUS_READ)
 				smbcmd = I801_I2C_BLOCK_DATA;
-			else
+			अन्यथा
 				smbcmd = I801_BLOCK_DATA;
-		}
+		पूर्ण
 		outb_p(smbcmd | ENABLE_INT9, SMBHSTCNT(priv));
 
-		if (i == 1)
+		अगर (i == 1)
 			outb_p(inb(SMBHSTCNT(priv)) | I801_START,
 			       SMBHSTCNT(priv));
-		/* We will always wait for a fraction of a second! */
-		timeout = 0;
-		do {
+		/* We will always रुको क्रम a fraction of a second! */
+		समयout = 0;
+		करो अणु
 			usleep_range(250, 500);
 			status = inb_p(SMBHSTSTS(priv));
-		} while (!(status & SMBHSTSTS_BYTE_DONE) &&
-			 (timeout++ < MAX_RETRIES));
+		पूर्ण जबतक (!(status & SMBHSTSTS_BYTE_DONE) &&
+			 (समयout++ < MAX_RETRIES));
 
-		result = i801_check_post(priv, status, timeout > MAX_RETRIES);
-		if (result < 0)
-			return result;
-		if (i == 1 && read_write == I2C_SMBUS_READ &&
-		    command != I2C_SMBUS_I2C_BLOCK_DATA) {
+		result = i801_check_post(priv, status, समयout > MAX_RETRIES);
+		अगर (result < 0)
+			वापस result;
+		अगर (i == 1 && पढ़ो_ग_लिखो == I2C_SMBUS_READ &&
+		    command != I2C_SMBUS_I2C_BLOCK_DATA) अणु
 			len = inb_p(SMBHSTDAT0(priv));
-			if (len < 1 || len > I2C_SMBUS_BLOCK_MAX) {
+			अगर (len < 1 || len > I2C_SMBUS_BLOCK_MAX) अणु
 				dev_err(&priv->adapter.dev,
 					"Illegal SMBus block read size %d\n",
 					len);
 				/* Recover */
-				while (inb_p(SMBHSTSTS(priv)) &
+				जबतक (inb_p(SMBHSTSTS(priv)) &
 						SMBHSTSTS_HOST_BUSY)
 					outb_p(SMBHSTSTS_BYTE_DONE,
 					       SMBHSTSTS(priv));
 				outb_p(SMBHSTSTS_INTR,
 				       SMBHSTSTS(priv));
-				return -EPROTO;
-			}
+				वापस -EPROTO;
+			पूर्ण
 			data->block[0] = len;
-		}
+		पूर्ण
 
 		/* Retrieve/store value in SMBBLKDAT */
-		if (read_write == I2C_SMBUS_READ)
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ)
 			data->block[i] = inb_p(SMBBLKDAT(priv));
-		if (read_write == I2C_SMBUS_WRITE && i + 1 <= len)
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE && i + 1 <= len)
 			outb_p(data->block[i + 1], SMBBLKDAT(priv));
-		/* signals SMBBLKDAT ready */
+		/* संकेतs SMBBLKDAT पढ़ोy */
 		outb_p(SMBHSTSTS_BYTE_DONE | SMBHSTSTS_INTR, SMBHSTSTS(priv));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i801_set_block_buffer_mode(struct kpc_i2c *priv)
-{
+अटल पूर्णांक i801_set_block_buffer_mode(काष्ठा kpc_i2c *priv)
+अणु
 	outb_p(inb_p(SMBAUXCTL(priv)) | SMBAUXCTL_E32B, SMBAUXCTL(priv));
-	if ((inb_p(SMBAUXCTL(priv)) & SMBAUXCTL_E32B) == 0)
-		return -EIO;
-	return 0;
-}
+	अगर ((inb_p(SMBAUXCTL(priv)) & SMBAUXCTL_E32B) == 0)
+		वापस -EIO;
+	वापस 0;
+पूर्ण
 
 /* Block transaction function */
-static int i801_block_transaction(struct kpc_i2c *priv,
-				  union i2c_smbus_data *data, char read_write,
-				  int command, int hwpec)
-{
-	int result = 0;
-	//unsigned char hostc;
+अटल पूर्णांक i801_block_transaction(काष्ठा kpc_i2c *priv,
+				  जोड़ i2c_smbus_data *data, अक्षर पढ़ो_ग_लिखो,
+				  पूर्णांक command, पूर्णांक hwpec)
+अणु
+	पूर्णांक result = 0;
+	//अचिन्हित अक्षर hostc;
 
-	if (command == I2C_SMBUS_I2C_BLOCK_DATA) {
-		if (read_write == I2C_SMBUS_WRITE) {
-			/* set I2C_EN bit in configuration register */
-			//TODO: Figure out the right thing to do here...
-			//pci_read_config_byte(priv->pci_dev, SMBHSTCFG, &hostc);
-			//pci_write_config_byte(priv->pci_dev, SMBHSTCFG, hostc | SMBHSTCFG_I2C_EN);
-		} else if (!(priv->features & FEATURE_I2C_BLOCK_READ)) {
+	अगर (command == I2C_SMBUS_I2C_BLOCK_DATA) अणु
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+			/* set I2C_EN bit in configuration रेजिस्टर */
+			//TODO: Figure out the right thing to करो here...
+			//pci_पढ़ो_config_byte(priv->pci_dev, SMBHSTCFG, &hostc);
+			//pci_ग_लिखो_config_byte(priv->pci_dev, SMBHSTCFG, hostc | SMBHSTCFG_I2C_EN);
+		पूर्ण अन्यथा अगर (!(priv->features & FEATURE_I2C_BLOCK_READ)) अणु
 			dev_err(&priv->adapter.dev,
 				"I2C block read is unsupported!\n");
-			return -EOPNOTSUPP;
-		}
-	}
+			वापस -EOPNOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	if (read_write == I2C_SMBUS_WRITE ||
-	    command == I2C_SMBUS_I2C_BLOCK_DATA) {
-		if (data->block[0] < 1)
+	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE ||
+	    command == I2C_SMBUS_I2C_BLOCK_DATA) अणु
+		अगर (data->block[0] < 1)
 			data->block[0] = 1;
-		if (data->block[0] > I2C_SMBUS_BLOCK_MAX)
+		अगर (data->block[0] > I2C_SMBUS_BLOCK_MAX)
 			data->block[0] = I2C_SMBUS_BLOCK_MAX;
-	} else {
-		data->block[0] = 32;	/* max for SMBus block reads */
-	}
+	पूर्ण अन्यथा अणु
+		data->block[0] = 32;	/* max क्रम SMBus block पढ़ोs */
+	पूर्ण
 
-	/* Experience has shown that the block buffer can only be used for
+	/* Experience has shown that the block buffer can only be used क्रम
 	 * SMBus (not I2C) block transactions, even though the datasheet
-	 * doesn't mention this limitation.
+	 * करोesn't mention this limitation.
 	 */
-	if ((priv->features & FEATURE_BLOCK_BUFFER) &&
+	अगर ((priv->features & FEATURE_BLOCK_BUFFER) &&
 	    command != I2C_SMBUS_I2C_BLOCK_DATA &&
-	    i801_set_block_buffer_mode(priv) == 0) {
+	    i801_set_block_buffer_mode(priv) == 0) अणु
 		result = i801_block_transaction_by_block(priv, data,
-							 read_write, hwpec);
-	} else {
+							 पढ़ो_ग_लिखो, hwpec);
+	पूर्ण अन्यथा अणु
 		result = i801_block_transaction_byte_by_byte(priv, data,
-							     read_write,
+							     पढ़ो_ग_लिखो,
 							     command, hwpec);
-	}
+	पूर्ण
 
-	if (result == 0 && hwpec)
-		i801_wait_hwpec(priv);
-	if (command == I2C_SMBUS_I2C_BLOCK_DATA &&
-	    read_write == I2C_SMBUS_WRITE) {
-		/* restore saved configuration register value */
-		//TODO: Figure out the right thing to do here...
-		//pci_write_config_byte(priv->pci_dev, SMBHSTCFG, hostc);
-	}
-	return result;
-}
+	अगर (result == 0 && hwpec)
+		i801_रुको_hwpec(priv);
+	अगर (command == I2C_SMBUS_I2C_BLOCK_DATA &&
+	    पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+		/* restore saved configuration रेजिस्टर value */
+		//TODO: Figure out the right thing to करो here...
+		//pci_ग_लिखो_config_byte(priv->pci_dev, SMBHSTCFG, hostc);
+	पूर्ण
+	वापस result;
+पूर्ण
 
-/* Return negative errno on error. */
-static s32 i801_access(struct i2c_adapter *adap, u16 addr,
-		       unsigned short flags, char read_write, u8 command,
-		       int size, union i2c_smbus_data *data)
-{
-	int hwpec;
-	int block = 0;
-	int ret, xact = 0;
-	struct kpc_i2c *priv = i2c_get_adapdata(adap);
+/* Return negative त्रुटि_सं on error. */
+अटल s32 i801_access(काष्ठा i2c_adapter *adap, u16 addr,
+		       अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो, u8 command,
+		       पूर्णांक size, जोड़ i2c_smbus_data *data)
+अणु
+	पूर्णांक hwpec;
+	पूर्णांक block = 0;
+	पूर्णांक ret, xact = 0;
+	काष्ठा kpc_i2c *priv = i2c_get_adapdata(adap);
 
 	hwpec = (priv->features & FEATURE_SMBUS_PEC) &&
 		(flags & I2C_CLIENT_PEC) &&
 		size != I2C_SMBUS_QUICK && size != I2C_SMBUS_I2C_BLOCK_DATA;
 
-	switch (size) {
-	case I2C_SMBUS_QUICK:
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_QUICK\n");
-		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
+		outb_p(((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01),
 		       SMBHSTADD(priv));
 
 		xact = I801_QUICK;
-		break;
-	case I2C_SMBUS_BYTE:
+		अवरोध;
+	हाल I2C_SMBUS_BYTE:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_BYTE\n");
 
-		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
+		outb_p(((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01),
 		       SMBHSTADD(priv));
-		if (read_write == I2C_SMBUS_WRITE)
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
 			outb_p(command, SMBHSTCMD(priv));
 		xact = I801_BYTE;
-		break;
-	case I2C_SMBUS_BYTE_DATA:
+		अवरोध;
+	हाल I2C_SMBUS_BYTE_DATA:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_BYTE_DATA\n");
-		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
+		outb_p(((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01),
 		       SMBHSTADD(priv));
 
 		outb_p(command, SMBHSTCMD(priv));
-		if (read_write == I2C_SMBUS_WRITE)
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
 			outb_p(data->byte, SMBHSTDAT0(priv));
 		xact = I801_BYTE_DATA;
-		break;
-	case I2C_SMBUS_WORD_DATA:
+		अवरोध;
+	हाल I2C_SMBUS_WORD_DATA:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_WORD_DATA\n");
-		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
+		outb_p(((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01),
 		       SMBHSTADD(priv));
 
 		outb_p(command, SMBHSTCMD(priv));
-		if (read_write == I2C_SMBUS_WRITE) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
 			outb_p(data->word & 0xff, SMBHSTDAT0(priv));
 			outb_p((data->word & 0xff00) >> 8, SMBHSTDAT1(priv));
-		}
+		पूर्ण
 		xact = I801_WORD_DATA;
-		break;
-	case I2C_SMBUS_BLOCK_DATA:
+		अवरोध;
+	हाल I2C_SMBUS_BLOCK_DATA:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_BLOCK_DATA\n");
-		outb_p(((addr & 0x7f) << 1) | (read_write & 0x01),
+		outb_p(((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01),
 		       SMBHSTADD(priv));
 
 		outb_p(command, SMBHSTCMD(priv));
 		block = 1;
-		break;
-	case I2C_SMBUS_I2C_BLOCK_DATA:
+		अवरोध;
+	हाल I2C_SMBUS_I2C_BLOCK_DATA:
 		dev_dbg(&priv->adapter.dev, "  [acc] SMBUS_I2C_BLOCK_DATA\n");
 		/* NB: page 240 of ICH5 datasheet shows that the R/#W
-		 * bit should be cleared here, even when reading
+		 * bit should be cleared here, even when पढ़ोing
 		 */
 		outb_p((addr & 0x7f) << 1, SMBHSTADD(priv));
-		if (read_write == I2C_SMBUS_READ) {
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ) अणु
 			/* NB: page 240 of ICH5 datasheet also shows
-			 * that DATA1 is the cmd field when reading
+			 * that DATA1 is the cmd field when पढ़ोing
 			 */
 			outb_p(command, SMBHSTDAT1(priv));
-		} else {
+		पूर्ण अन्यथा अणु
 			outb_p(command, SMBHSTCMD(priv));
-		}
+		पूर्ण
 		block = 1;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(&priv->adapter.dev,
 			"  [acc] Unsupported transaction %d\n", size);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (hwpec) { /* enable/disable hardware PEC */
+	अगर (hwpec) अणु /* enable/disable hardware PEC */
 		dev_dbg(&priv->adapter.dev, "  [acc] hwpec: yes\n");
 		outb_p(inb_p(SMBAUXCTL(priv)) | SMBAUXCTL_CRC, SMBAUXCTL(priv));
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] hwpec: no\n");
 		outb_p(inb_p(SMBAUXCTL(priv)) &
 				(~SMBAUXCTL_CRC), SMBAUXCTL(priv));
-	}
+	पूर्ण
 
-	if (block) {
+	अगर (block) अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] block: yes\n");
-		ret = i801_block_transaction(priv, data, read_write, size,
+		ret = i801_block_transaction(priv, data, पढ़ो_ग_लिखो, size,
 					     hwpec);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] block: no\n");
 		ret = i801_transaction(priv, xact | ENABLE_INT9);
-	}
+	पूर्ण
 
-	/* Some BIOSes don't like it when PEC is enabled at reboot or resume
-	 * time, so we forcibly disable it after every transaction. Turn off
-	 * E32B for the same reason.
+	/* Some BIOSes करोn't like it when PEC is enabled at reboot or resume
+	 * समय, so we क्रमcibly disable it after every transaction. Turn off
+	 * E32B क्रम the same reason.
 	 */
-	if (hwpec || block) {
+	अगर (hwpec || block) अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] hwpec || block\n");
 		outb_p(inb_p(SMBAUXCTL(priv)) & ~(SMBAUXCTL_CRC |
 					SMBAUXCTL_E32B), SMBAUXCTL(priv));
-	}
-	if (block) {
+	पूर्ण
+	अगर (block) अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] block\n");
-		return ret;
-	}
-	if (ret) {
+		वापस ret;
+	पूर्ण
+	अगर (ret) अणु
 		dev_dbg(&priv->adapter.dev, "  [acc] ret %d\n", ret);
-		return ret;
-	}
-	if ((read_write == I2C_SMBUS_WRITE) || (xact == I801_QUICK)) {
+		वापस ret;
+	पूर्ण
+	अगर ((पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) || (xact == I801_QUICK)) अणु
 		dev_dbg(&priv->adapter.dev,
 			"  [acc] I2C_SMBUS_WRITE || I801_QUICK  -> ret 0\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (xact & 0x7f) {
-	case I801_BYTE:  /* Result put in SMBHSTDAT0 */
-	case I801_BYTE_DATA:
+	चयन (xact & 0x7f) अणु
+	हाल I801_BYTE:  /* Result put in SMBHSTDAT0 */
+	हाल I801_BYTE_DATA:
 		dev_dbg(&priv->adapter.dev,
 			"  [acc] I801_BYTE or I801_BYTE_DATA\n");
 		data->byte = inb_p(SMBHSTDAT0(priv));
-		break;
-	case I801_WORD_DATA:
+		अवरोध;
+	हाल I801_WORD_DATA:
 		dev_dbg(&priv->adapter.dev, "  [acc] I801_WORD_DATA\n");
 		data->word = inb_p(SMBHSTDAT0(priv)) +
 			     (inb_p(SMBHSTDAT1(priv)) << 8);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#define enable_flag(x) (x)
-#define disable_flag(x) 0
-#define enable_flag_if(x, cond) ((cond) ? (x) : 0)
+#घोषणा enable_flag(x) (x)
+#घोषणा disable_flag(x) 0
+#घोषणा enable_flag_अगर(x, cond) ((cond) ? (x) : 0)
 
-static u32 i801_func(struct i2c_adapter *adapter)
-{
-	struct kpc_i2c *priv = i2c_get_adapdata(adapter);
+अटल u32 i801_func(काष्ठा i2c_adapter *adapter)
+अणु
+	काष्ठा kpc_i2c *priv = i2c_get_adapdata(adapter);
 
 	/* original settings
 	 * u32 f = I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
@@ -591,13 +592,13 @@ static u32 i801_func(struct i2c_adapter *adapter)
 	 * I2C_FUNC_SMBUS_READ_I2C_BLOCK : 0);
 	 */
 
-	// http://lxr.free-electrons.com/source/include/uapi/linux/i2c.h#L85
+	// http://lxr.मुक्त-electrons.com/source/include/uapi/linux/i2c.h#L85
 
 	u32 f =
 		enable_flag(I2C_FUNC_I2C) | /* 0x00000001(I enabled this one) */
 		disable_flag(I2C_FUNC_10BIT_ADDR)             | /* 0x00000002 */
 		disable_flag(I2C_FUNC_PROTOCOL_MANGLING)      | /* 0x00000004 */
-		enable_flag_if(I2C_FUNC_SMBUS_PEC,
+		enable_flag_अगर(I2C_FUNC_SMBUS_PEC,
 			       priv->features & FEATURE_SMBUS_PEC) |
 								/* 0x00000008 */
 		disable_flag(I2C_FUNC_SMBUS_BLOCK_PROC_CALL)  | /* 0x00008000 */
@@ -611,7 +612,7 @@ static u32 i801_func(struct i2c_adapter *adapter)
 		disable_flag(I2C_FUNC_SMBUS_PROC_CALL)        |	/* 0x00800000 */
 		disable_flag(I2C_FUNC_SMBUS_READ_BLOCK_DATA)  |	/* 0x01000000 */
 		disable_flag(I2C_FUNC_SMBUS_WRITE_BLOCK_DATA) |	/* 0x02000000 */
-		enable_flag_if(I2C_FUNC_SMBUS_READ_I2C_BLOCK,
+		enable_flag_अगर(I2C_FUNC_SMBUS_READ_I2C_BLOCK,
 			       priv->features & FEATURE_I2C_BLOCK_READ) |
 								/* 0x04000000 */
 		enable_flag(I2C_FUNC_SMBUS_WRITE_I2C_BLOCK)   |	/* 0x08000000 */
@@ -635,47 +636,47 @@ static u32 i801_func(struct i2c_adapter *adapter)
 						    * _WRITE_BLOCK_DATA
 						    * _I2C_BLOCK _PEC
 						    */
-	return f;
-}
+	वापस f;
+पूर्ण
 
-#undef enable_flag
-#undef disable_flag
-#undef enable_flag_if
+#अघोषित enable_flag
+#अघोषित disable_flag
+#अघोषित enable_flag_अगर
 
-static const struct i2c_algorithm smbus_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm smbus_algorithm = अणु
 	.smbus_xfer     = i801_access,
 	.functionality  = i801_func,
-};
+पूर्ण;
 
 /********************************
  *** Part 2 - Driver Handlers ***
  ********************************/
-static int kpc_i2c_probe(struct platform_device *pldev)
-{
-	int err;
-	struct kpc_i2c *priv;
-	struct resource *res;
+अटल पूर्णांक kpc_i2c_probe(काष्ठा platक्रमm_device *pldev)
+अणु
+	पूर्णांक err;
+	काष्ठा kpc_i2c *priv;
+	काष्ठा resource *res;
 
-	priv = devm_kzalloc(&pldev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pldev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	i2c_set_adapdata(&priv->adapter, priv);
 	priv->adapter.owner = THIS_MODULE;
 	priv->adapter.class = I2C_CLASS_HWMON | I2C_CLASS_SPD;
 	priv->adapter.algo = &smbus_algorithm;
 
-	res = platform_get_resource(pldev, IORESOURCE_MEM, 0);
-	if (!res)
-		return -ENXIO;
+	res = platक्रमm_get_resource(pldev, IORESOURCE_MEM, 0);
+	अगर (!res)
+		वापस -ENXIO;
 
-	priv->smba = (unsigned long)devm_ioremap(&pldev->dev,
+	priv->smba = (अचिन्हित दीर्घ)devm_ioremap(&pldev->dev,
 							 res->start,
 							 resource_size(res));
-	if (!priv->smba)
-		return -ENOMEM;
+	अगर (!priv->smba)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pldev, priv);
+	platक्रमm_set_drvdata(pldev, priv);
 
 	priv->features |= FEATURE_IDF;
 	priv->features |= FEATURE_I2C_BLOCK_READ;
@@ -687,45 +688,45 @@ static int kpc_i2c_probe(struct platform_device *pldev)
 	/* set up the sysfs linkage to our parent device */
 	priv->adapter.dev.parent = &pldev->dev;
 
-	/* Retry up to 3 times on lost arbitration */
+	/* Retry up to 3 बार on lost arbitration */
 	priv->adapter.retries = 3;
 
-	snprintf(priv->adapter.name, sizeof(priv->adapter.name),
+	snम_लिखो(priv->adapter.name, माप(priv->adapter.name),
 		 "Fake SMBus I801 adapter");
 
 	err = i2c_add_adapter(&priv->adapter);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&priv->adapter.dev, "Failed to add SMBus adapter\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kpc_i2c_remove(struct platform_device *pldev)
-{
-	struct kpc_i2c *lddev;
+अटल पूर्णांक kpc_i2c_हटाओ(काष्ठा platक्रमm_device *pldev)
+अणु
+	काष्ठा kpc_i2c *lddev;
 
-	lddev = (struct kpc_i2c *)platform_get_drvdata(pldev);
+	lddev = (काष्ठा kpc_i2c *)platक्रमm_get_drvdata(pldev);
 
 	i2c_del_adapter(&lddev->adapter);
 
-	//TODO: Figure out the right thing to do here...
-	//pci_write_config_byte(dev, SMBHSTCFG, priv->original_hstcfg);
+	//TODO: Figure out the right thing to करो here...
+	//pci_ग_लिखो_config_byte(dev, SMBHSTCFG, priv->original_hstcfg);
 	//pci_release_region(dev, SMBBAR);
-	//pci_set_drvdata(dev, NULL);
+	//pci_set_drvdata(dev, शून्य);
 
 	//cdev_del(&lddev->cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver kpc_i2c_driver = {
+अटल काष्ठा platक्रमm_driver kpc_i2c_driver = अणु
 	.probe      = kpc_i2c_probe,
-	.remove     = kpc_i2c_remove,
-	.driver     = {
+	.हटाओ     = kpc_i2c_हटाओ,
+	.driver     = अणु
 		.name   = KP_DRIVER_NAME_I2C,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(kpc_i2c_driver);
+module_platक्रमm_driver(kpc_i2c_driver);

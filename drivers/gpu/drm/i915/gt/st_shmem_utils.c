@@ -1,63 +1,64 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
 /* Just a quick and causal check of the shmem_utils API */
 
-static int igt_shmem_basic(void *ignored)
-{
+अटल पूर्णांक igt_shmem_basic(व्योम *ignored)
+अणु
 	u32 datum = 0xdeadbeef, result;
-	struct file *file;
+	काष्ठा file *file;
 	u32 *map;
-	int err;
+	पूर्णांक err;
 
-	file = shmem_create_from_data("mock", &datum, sizeof(datum));
-	if (IS_ERR(file))
-		return PTR_ERR(file);
+	file = shmem_create_from_data("mock", &datum, माप(datum));
+	अगर (IS_ERR(file))
+		वापस PTR_ERR(file);
 
 	result = 0;
-	err = shmem_read(file, 0, &result, sizeof(result));
-	if (err)
-		goto out_file;
+	err = shmem_पढ़ो(file, 0, &result, माप(result));
+	अगर (err)
+		जाओ out_file;
 
-	if (result != datum) {
+	अगर (result != datum) अणु
 		pr_err("Incorrect read back from shmemfs: %x != %x\n",
 		       result, datum);
 		err = -EINVAL;
-		goto out_file;
-	}
+		जाओ out_file;
+	पूर्ण
 
 	result = 0xc0ffee;
-	err = shmem_write(file, 0, &result, sizeof(result));
-	if (err)
-		goto out_file;
+	err = shmem_ग_लिखो(file, 0, &result, माप(result));
+	अगर (err)
+		जाओ out_file;
 
 	map = shmem_pin_map(file);
-	if (!map) {
+	अगर (!map) अणु
 		err = -ENOMEM;
-		goto out_file;
-	}
+		जाओ out_file;
+	पूर्ण
 
-	if (*map != result) {
+	अगर (*map != result) अणु
 		pr_err("Incorrect read back via mmap of last write: %x != %x\n",
 		       *map, result);
 		err = -EINVAL;
-		goto out_map;
-	}
+		जाओ out_map;
+	पूर्ण
 
 out_map:
 	shmem_unpin_map(file, map);
 out_file:
 	fput(file);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int shmem_utils_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक shmem_utils_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_shmem_basic),
-	};
+	पूर्ण;
 
-	return i915_subtests(tests, NULL);
-}
+	वापस i915_subtests(tests, शून्य);
+पूर्ण

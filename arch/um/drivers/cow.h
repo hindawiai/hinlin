@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __COW_H__
-#define __COW_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __COW_H__
+#घोषणा __COW_H__
 
-#include <asm/types.h>
+#समावेश <यंत्र/types.h>
 
-extern int init_cow_file(int fd, char *cow_file, char *backing_file,
-			 int sectorsize, int alignment, int *bitmap_offset_out,
-			 unsigned long *bitmap_len_out, int *data_offset_out);
+बाह्य पूर्णांक init_cow_file(पूर्णांक fd, अक्षर *cow_file, अक्षर *backing_file,
+			 पूर्णांक sectorsize, पूर्णांक alignment, पूर्णांक *biपंचांगap_offset_out,
+			 अचिन्हित दीर्घ *biपंचांगap_len_out, पूर्णांक *data_offset_out);
 
-extern int file_reader(__u64 offset, char *buf, int len, void *arg);
-extern int read_cow_header(int (*reader)(__u64, char *, int, void *),
-			   void *arg, __u32 *version_out,
-			   char **backing_file_out, long long *mtime_out,
-			   unsigned long long *size_out, int *sectorsize_out,
-			   __u32 *align_out, int *bitmap_offset_out);
+बाह्य पूर्णांक file_पढ़ोer(__u64 offset, अक्षर *buf, पूर्णांक len, व्योम *arg);
+बाह्य पूर्णांक पढ़ो_cow_header(पूर्णांक (*पढ़ोer)(__u64, अक्षर *, पूर्णांक, व्योम *),
+			   व्योम *arg, __u32 *version_out,
+			   अक्षर **backing_file_out, दीर्घ दीर्घ *mसमय_out,
+			   अचिन्हित दीर्घ दीर्घ *size_out, पूर्णांक *sectorsize_out,
+			   __u32 *align_out, पूर्णांक *biपंचांगap_offset_out);
 
-extern int write_cow_header(char *cow_file, int fd, char *backing_file,
-			    int sectorsize, int alignment,
-			    unsigned long long *size);
+बाह्य पूर्णांक ग_लिखो_cow_header(अक्षर *cow_file, पूर्णांक fd, अक्षर *backing_file,
+			    पूर्णांक sectorsize, पूर्णांक alignment,
+			    अचिन्हित दीर्घ दीर्घ *size);
 
-extern void cow_sizes(int version, __u64 size, int sectorsize, int align,
-		      int bitmap_offset, unsigned long *bitmap_len_out,
-		      int *data_offset_out);
+बाह्य व्योम cow_sizes(पूर्णांक version, __u64 size, पूर्णांक sectorsize, पूर्णांक align,
+		      पूर्णांक biपंचांगap_offset, अचिन्हित दीर्घ *biपंचांगap_len_out,
+		      पूर्णांक *data_offset_out);
 
-#endif
+#पूर्ण_अगर

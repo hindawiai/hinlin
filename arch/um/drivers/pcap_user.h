@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* 
  * Copyright (C) 2002 Jeff Dike (jdike@karaya.com)
  */
 
-#include <net_user.h>
+#समावेश <net_user.h>
 
-struct pcap_data {
-	char *host_if;
-	int promisc;
-	int optimize;
-	char *filter;
-	void *compiled;
-	void *pcap;
-	void *dev;
-};
+काष्ठा pcap_data अणु
+	अक्षर *host_अगर;
+	पूर्णांक promisc;
+	पूर्णांक optimize;
+	अक्षर *filter;
+	व्योम *compiled;
+	व्योम *pcap;
+	व्योम *dev;
+पूर्ण;
 
-extern const struct net_user_info pcap_user_info;
+बाह्य स्थिर काष्ठा net_user_info pcap_user_info;
 
-extern int pcap_user_read(int fd, void *buf, int len, struct pcap_data *pri);
+बाह्य पूर्णांक pcap_user_पढ़ो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा pcap_data *pri);
 

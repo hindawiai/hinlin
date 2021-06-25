@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-static const char *initial_sid_to_string[] =
-{
-	NULL,
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+अटल स्थिर अक्षर *initial_sid_to_string[] =
+अणु
+	शून्य,
 	"kernel",
 	"security",
 	"unlabeled",
-	NULL,
+	शून्य,
 	"file",
-	NULL,
-	NULL,
+	शून्य,
+	शून्य,
 	"any_socket",
 	"port",
 	"netif",
 	"netmsg",
 	"node",
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
+	शून्य,
 	"devnull",
-};
+पूर्ण;
 

@@ -1,175 +1,176 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2013-2015 Fujitsu Semiconductor Ltd.
  * Copyright (C) 2015 Linaro Ltd.
  * Author: Jassi Brar <jaswinder.singh@linaro.org>
  */
 
-#include <linux/amba/bus.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/mailbox_controller.h>
-#include <linux/module.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mailbox_controller.h>
+#समावेश <linux/module.h>
 
-#define INTR_STAT_OFS	0x0
-#define INTR_SET_OFS	0x8
-#define INTR_CLR_OFS	0x10
+#घोषणा INTR_STAT_OFS	0x0
+#घोषणा INTR_SET_OFS	0x8
+#घोषणा INTR_CLR_OFS	0x10
 
-#define MHU_LP_OFFSET	0x0
-#define MHU_HP_OFFSET	0x20
-#define MHU_SEC_OFFSET	0x200
-#define TX_REG_OFFSET	0x100
+#घोषणा MHU_LP_OFFSET	0x0
+#घोषणा MHU_HP_OFFSET	0x20
+#घोषणा MHU_SEC_OFFSET	0x200
+#घोषणा TX_REG_OFFSET	0x100
 
-#define MHU_CHANS	3
+#घोषणा MHU_CHANS	3
 
-struct mhu_link {
-	unsigned irq;
-	void __iomem *tx_reg;
-	void __iomem *rx_reg;
-};
+काष्ठा mhu_link अणु
+	अचिन्हित irq;
+	व्योम __iomem *tx_reg;
+	व्योम __iomem *rx_reg;
+पूर्ण;
 
-struct arm_mhu {
-	void __iomem *base;
-	struct mhu_link mlink[MHU_CHANS];
-	struct mbox_chan chan[MHU_CHANS];
-	struct mbox_controller mbox;
-};
+काष्ठा arm_mhu अणु
+	व्योम __iomem *base;
+	काष्ठा mhu_link mlink[MHU_CHANS];
+	काष्ठा mbox_chan chan[MHU_CHANS];
+	काष्ठा mbox_controller mbox;
+पूर्ण;
 
-static irqreturn_t mhu_rx_interrupt(int irq, void *p)
-{
-	struct mbox_chan *chan = p;
-	struct mhu_link *mlink = chan->con_priv;
+अटल irqवापस_t mhu_rx_पूर्णांकerrupt(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा mbox_chan *chan = p;
+	काष्ठा mhu_link *mlink = chan->con_priv;
 	u32 val;
 
-	val = readl_relaxed(mlink->rx_reg + INTR_STAT_OFS);
-	if (!val)
-		return IRQ_NONE;
+	val = पढ़ोl_relaxed(mlink->rx_reg + INTR_STAT_OFS);
+	अगर (!val)
+		वापस IRQ_NONE;
 
-	mbox_chan_received_data(chan, (void *)&val);
+	mbox_chan_received_data(chan, (व्योम *)&val);
 
-	writel_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
+	ग_लिखोl_relaxed(val, mlink->rx_reg + INTR_CLR_OFS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static bool mhu_last_tx_done(struct mbox_chan *chan)
-{
-	struct mhu_link *mlink = chan->con_priv;
-	u32 val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
+अटल bool mhu_last_tx_करोne(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा mhu_link *mlink = chan->con_priv;
+	u32 val = पढ़ोl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
 
-	return (val == 0);
-}
+	वापस (val == 0);
+पूर्ण
 
-static int mhu_send_data(struct mbox_chan *chan, void *data)
-{
-	struct mhu_link *mlink = chan->con_priv;
+अटल पूर्णांक mhu_send_data(काष्ठा mbox_chan *chan, व्योम *data)
+अणु
+	काष्ठा mhu_link *mlink = chan->con_priv;
 	u32 *arg = data;
 
-	writel_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
+	ग_लिखोl_relaxed(*arg, mlink->tx_reg + INTR_SET_OFS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mhu_startup(struct mbox_chan *chan)
-{
-	struct mhu_link *mlink = chan->con_priv;
+अटल पूर्णांक mhu_startup(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा mhu_link *mlink = chan->con_priv;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	val = readl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
-	writel_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
+	val = पढ़ोl_relaxed(mlink->tx_reg + INTR_STAT_OFS);
+	ग_लिखोl_relaxed(val, mlink->tx_reg + INTR_CLR_OFS);
 
-	ret = request_irq(mlink->irq, mhu_rx_interrupt,
+	ret = request_irq(mlink->irq, mhu_rx_पूर्णांकerrupt,
 			  IRQF_SHARED, "mhu_link", chan);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(chan->mbox->dev,
 			"Unable to acquire IRQ %d\n", mlink->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mhu_shutdown(struct mbox_chan *chan)
-{
-	struct mhu_link *mlink = chan->con_priv;
+अटल व्योम mhu_shutकरोwn(काष्ठा mbox_chan *chan)
+अणु
+	काष्ठा mhu_link *mlink = chan->con_priv;
 
-	free_irq(mlink->irq, chan);
-}
+	मुक्त_irq(mlink->irq, chan);
+पूर्ण
 
-static const struct mbox_chan_ops mhu_ops = {
+अटल स्थिर काष्ठा mbox_chan_ops mhu_ops = अणु
 	.send_data = mhu_send_data,
 	.startup = mhu_startup,
-	.shutdown = mhu_shutdown,
-	.last_tx_done = mhu_last_tx_done,
-};
+	.shutकरोwn = mhu_shutकरोwn,
+	.last_tx_करोne = mhu_last_tx_करोne,
+पूर्ण;
 
-static int mhu_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	int i, err;
-	struct arm_mhu *mhu;
-	struct device *dev = &adev->dev;
-	int mhu_reg[MHU_CHANS] = {MHU_LP_OFFSET, MHU_HP_OFFSET, MHU_SEC_OFFSET};
+अटल पूर्णांक mhu_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	पूर्णांक i, err;
+	काष्ठा arm_mhu *mhu;
+	काष्ठा device *dev = &adev->dev;
+	पूर्णांक mhu_reg[MHU_CHANS] = अणुMHU_LP_OFFSET, MHU_HP_OFFSET, MHU_SEC_OFFSETपूर्ण;
 
-	if (!of_device_is_compatible(dev->of_node, "arm,mhu"))
-		return -ENODEV;
+	अगर (!of_device_is_compatible(dev->of_node, "arm,mhu"))
+		वापस -ENODEV;
 
-	/* Allocate memory for device */
-	mhu = devm_kzalloc(dev, sizeof(*mhu), GFP_KERNEL);
-	if (!mhu)
-		return -ENOMEM;
+	/* Allocate memory क्रम device */
+	mhu = devm_kzalloc(dev, माप(*mhu), GFP_KERNEL);
+	अगर (!mhu)
+		वापस -ENOMEM;
 
 	mhu->base = devm_ioremap_resource(dev, &adev->res);
-	if (IS_ERR(mhu->base)) {
+	अगर (IS_ERR(mhu->base)) अणु
 		dev_err(dev, "ioremap failed\n");
-		return PTR_ERR(mhu->base);
-	}
+		वापस PTR_ERR(mhu->base);
+	पूर्ण
 
-	for (i = 0; i < MHU_CHANS; i++) {
+	क्रम (i = 0; i < MHU_CHANS; i++) अणु
 		mhu->chan[i].con_priv = &mhu->mlink[i];
 		mhu->mlink[i].irq = adev->irq[i];
 		mhu->mlink[i].rx_reg = mhu->base + mhu_reg[i];
 		mhu->mlink[i].tx_reg = mhu->mlink[i].rx_reg + TX_REG_OFFSET;
-	}
+	पूर्ण
 
 	mhu->mbox.dev = dev;
 	mhu->mbox.chans = &mhu->chan[0];
 	mhu->mbox.num_chans = MHU_CHANS;
 	mhu->mbox.ops = &mhu_ops;
-	mhu->mbox.txdone_irq = false;
-	mhu->mbox.txdone_poll = true;
+	mhu->mbox.txकरोne_irq = false;
+	mhu->mbox.txकरोne_poll = true;
 	mhu->mbox.txpoll_period = 1;
 
 	amba_set_drvdata(adev, mhu);
 
-	err = devm_mbox_controller_register(dev, &mhu->mbox);
-	if (err) {
+	err = devm_mbox_controller_रेजिस्टर(dev, &mhu->mbox);
+	अगर (err) अणु
 		dev_err(dev, "Failed to register mailboxes %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_info(dev, "ARM MHU Mailbox registered\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct amba_id mhu_ids[] = {
-	{
+अटल काष्ठा amba_id mhu_ids[] = अणु
+	अणु
 		.id	= 0x1bb098,
 		.mask	= 0xffffff,
-	},
-	{ 0, 0 },
-};
+	पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(amba, mhu_ids);
 
-static struct amba_driver arm_mhu_driver = {
-	.drv = {
+अटल काष्ठा amba_driver arm_mhu_driver = अणु
+	.drv = अणु
 		.name	= "mhu",
-	},
+	पूर्ण,
 	.id_table	= mhu_ids,
 	.probe		= mhu_probe,
-};
+पूर्ण;
 module_amba_driver(arm_mhu_driver);
 
 MODULE_LICENSE("GPL v2");

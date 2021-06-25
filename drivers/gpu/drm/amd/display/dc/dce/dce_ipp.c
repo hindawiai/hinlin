@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,35 +24,35 @@
  *
  */
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-#include "dce_ipp.h"
-#include "reg_helper.h"
-#include "dm_services.h"
+#समावेश "dce_ipp.h"
+#समावेश "reg_helper.h"
+#समावेश "dm_services.h"
 
-#define REG(reg) \
+#घोषणा REG(reg) \
 	(ipp_dce->regs->reg)
 
-#undef FN
-#define FN(reg_name, field_name) \
-	ipp_dce->ipp_shift->field_name, ipp_dce->ipp_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	ipp_dce->ipp_shअगरt->field_name, ipp_dce->ipp_mask->field_name
 
-#define CTX \
+#घोषणा CTX \
 	ipp_dce->base.ctx
 
 
-static void dce_ipp_cursor_set_position(
-	struct input_pixel_processor *ipp,
-	const struct dc_cursor_position *position,
-	const struct dc_cursor_mi_param *param)
-{
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+अटल व्योम dce_ipp_cursor_set_position(
+	काष्ठा input_pixel_processor *ipp,
+	स्थिर काष्ठा dc_cursor_position *position,
+	स्थिर काष्ठा dc_cursor_mi_param *param)
+अणु
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
 
-	/* lock cursor registers */
+	/* lock cursor रेजिस्टरs */
 	REG_UPDATE(CUR_UPDATE, CURSOR_UPDATE_LOCK, true);
 
-	/* Flag passed in structure differentiates cursor enable/disable. */
-	/* Update if it differs from cached state. */
+	/* Flag passed in काष्ठाure dअगरferentiates cursor enable/disable. */
+	/* Update अगर it dअगरfers from cached state. */
 	REG_UPDATE(CUR_CONTROL, CURSOR_EN, position->enable);
 
 	REG_SET_2(CUR_POSITION, 0,
@@ -62,45 +63,45 @@ static void dce_ipp_cursor_set_position(
 		CURSOR_HOT_SPOT_X, position->x_hotspot,
 		CURSOR_HOT_SPOT_Y, position->y_hotspot);
 
-	/* unlock cursor registers */
+	/* unlock cursor रेजिस्टरs */
 	REG_UPDATE(CUR_UPDATE, CURSOR_UPDATE_LOCK, false);
-}
+पूर्ण
 
-static void dce_ipp_cursor_set_attributes(
-	struct input_pixel_processor *ipp,
-	const struct dc_cursor_attributes *attributes)
-{
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
-	int mode;
+अटल व्योम dce_ipp_cursor_set_attributes(
+	काष्ठा input_pixel_processor *ipp,
+	स्थिर काष्ठा dc_cursor_attributes *attributes)
+अणु
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+	पूर्णांक mode;
 
-	/* Lock cursor registers */
+	/* Lock cursor रेजिस्टरs */
 	REG_UPDATE(CUR_UPDATE, CURSOR_UPDATE_LOCK, true);
 
 	/* Program cursor control */
-	switch (attributes->color_format) {
-	case CURSOR_MODE_MONO:
+	चयन (attributes->color_क्रमmat) अणु
+	हाल CURSOR_MODE_MONO:
 		mode = 0;
-		break;
-	case CURSOR_MODE_COLOR_1BIT_AND:
+		अवरोध;
+	हाल CURSOR_MODE_COLOR_1BIT_AND:
 		mode = 1;
-		break;
-	case CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
+		अवरोध;
+	हाल CURSOR_MODE_COLOR_PRE_MULTIPLIED_ALPHA:
 		mode = 2;
-		break;
-	case CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
+		अवरोध;
+	हाल CURSOR_MODE_COLOR_UN_PRE_MULTIPLIED_ALPHA:
 		mode = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BREAK_TO_DEBUGGER(); /* unsupported */
 		mode = 0;
-	}
+	पूर्ण
 
 	REG_UPDATE_3(CUR_CONTROL,
 		CURSOR_MODE, mode,
 		CURSOR_2X_MAGNIFY, attributes->attribute_flags.bits.ENABLE_MAGNIFICATION,
 		CUR_INV_TRANS_CLAMP, attributes->attribute_flags.bits.INVERSE_TRANSPARENT_CLAMPING);
 
-	if (attributes->color_format == CURSOR_MODE_MONO) {
+	अगर (attributes->color_क्रमmat == CURSOR_MODE_MONO) अणु
 		REG_SET_3(CUR_COLOR1, 0,
 			CUR_COLOR1_BLUE, 0,
 			CUR_COLOR1_GREEN, 0,
@@ -110,10 +111,10 @@ static void dce_ipp_cursor_set_attributes(
 			CUR_COLOR2_BLUE, 0xff,
 			CUR_COLOR2_GREEN, 0xff,
 			CUR_COLOR2_RED, 0xff);
-	}
+	पूर्ण
 
 	/*
-	 * Program cursor size -- NOTE: HW spec specifies that HW register
+	 * Program cursor size -- NOTE: HW spec specअगरies that HW रेजिस्टर
 	 * stores size as (height - 1, width - 1)
 	 */
 	REG_SET_2(CUR_SIZE, 0,
@@ -123,8 +124,8 @@ static void dce_ipp_cursor_set_attributes(
 	/* Program cursor surface address */
 	/* SURFACE_ADDRESS_HIGH: Higher order bits (39:32) of hardware cursor
 	 * surface base address in byte. It is 4K byte aligned.
-	 * The correct way to program cursor surface address is to first write
-	 * to CUR_SURFACE_ADDRESS_HIGH, and then write to CUR_SURFACE_ADDRESS
+	 * The correct way to program cursor surface address is to first ग_लिखो
+	 * to CUR_SURFACE_ADDRESS_HIGH, and then ग_लिखो to CUR_SURFACE_ADDRESS
 	 */
 	REG_SET(CUR_SURFACE_ADDRESS_HIGH, 0,
 		CURSOR_SURFACE_ADDRESS_HIGH, attributes->address.high_part);
@@ -132,17 +133,17 @@ static void dce_ipp_cursor_set_attributes(
 	REG_SET(CUR_SURFACE_ADDRESS, 0,
 		CURSOR_SURFACE_ADDRESS, attributes->address.low_part);
 
-	/* Unlock Cursor registers. */
+	/* Unlock Cursor रेजिस्टरs. */
 	REG_UPDATE(CUR_UPDATE, CURSOR_UPDATE_LOCK, false);
-}
+पूर्ण
 
 
-static void dce_ipp_program_prescale(struct input_pixel_processor *ipp,
-				     struct ipp_prescale_params *params)
-{
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+अटल व्योम dce_ipp_program_prescale(काष्ठा input_pixel_processor *ipp,
+				     काष्ठा ipp_prescale_params *params)
+अणु
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
 
-	/* set to bypass mode first before change */
+	/* set to bypass mode first beक्रमe change */
 	REG_UPDATE(PRESCALE_GRPH_CONTROL,
 		   GRPH_PRESCALE_BYPASS, 1);
 
@@ -158,25 +159,25 @@ static void dce_ipp_program_prescale(struct input_pixel_processor *ipp,
 		  GRPH_PRESCALE_SCALE_B, params->scale,
 		  GRPH_PRESCALE_BIAS_B, params->bias);
 
-	if (params->mode != IPP_PRESCALE_MODE_BYPASS) {
+	अगर (params->mode != IPP_PRESCALE_MODE_BYPASS) अणु
 		REG_UPDATE(PRESCALE_GRPH_CONTROL,
 			   GRPH_PRESCALE_BYPASS, 0);
 
 		/* If prescale is in use, then legacy lut should be bypassed */
 		REG_UPDATE(INPUT_GAMMA_CONTROL,
 			   GRPH_INPUT_GAMMA_MODE, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dce_ipp_program_input_lut(
-	struct input_pixel_processor *ipp,
-	const struct dc_gamma *gamma)
-{
-	int i;
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+अटल व्योम dce_ipp_program_input_lut(
+	काष्ठा input_pixel_processor *ipp,
+	स्थिर काष्ठा dc_gamma *gamma)
+अणु
+	पूर्णांक i;
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
 
-	/* power on LUT memory */
-	if (REG(DCFE_MEM_PWR_CTRL))
+	/* घातer on LUT memory */
+	अगर (REG(DCFE_MEM_PWR_CTRL))
 		REG_SET(DCFE_MEM_PWR_CTRL, 0, DCP_LUT_MEM_PWR_DIS, 1);
 
 	/* enable all */
@@ -185,7 +186,7 @@ static void dce_ipp_program_input_lut(
 	/* 256 entry mode */
 	REG_UPDATE(DC_LUT_RW_MODE, DC_LUT_RW_MODE, 0);
 
-	/* LUT-256, unsigned, integer, new u0.12 format */
+	/* LUT-256, अचिन्हित, पूर्णांकeger, new u0.12 क्रमmat */
 	REG_SET_3(DC_LUT_CONTROL, 0,
 		DC_LUT_DATA_R_FORMAT, 3,
 		DC_LUT_DATA_G_FORMAT, 3,
@@ -195,7 +196,7 @@ static void dce_ipp_program_input_lut(
 	REG_SET(DC_LUT_RW_INDEX, 0,
 		DC_LUT_RW_INDEX, 0);
 
-	for (i = 0; i < gamma->num_entries; i++) {
+	क्रम (i = 0; i < gamma->num_entries; i++) अणु
 		REG_SET(DC_LUT_SEQ_COLOR, 0, DC_LUT_SEQ_COLOR,
 				dc_fixpt_round(
 					gamma->entries.red[i]));
@@ -205,23 +206,23 @@ static void dce_ipp_program_input_lut(
 		REG_SET(DC_LUT_SEQ_COLOR, 0, DC_LUT_SEQ_COLOR,
 				dc_fixpt_round(
 					gamma->entries.blue[i]));
-	}
+	पूर्ण
 
-	/* power off LUT memory */
-	if (REG(DCFE_MEM_PWR_CTRL))
+	/* घातer off LUT memory */
+	अगर (REG(DCFE_MEM_PWR_CTRL))
 		REG_SET(DCFE_MEM_PWR_CTRL, 0, DCP_LUT_MEM_PWR_DIS, 0);
 
 	/* bypass prescale, enable legacy LUT */
 	REG_UPDATE(PRESCALE_GRPH_CONTROL, GRPH_PRESCALE_BYPASS, 1);
 	REG_UPDATE(INPUT_GAMMA_CONTROL, GRPH_INPUT_GAMMA_MODE, 0);
-}
+पूर्ण
 
-static void dce_ipp_set_degamma(
-	struct input_pixel_processor *ipp,
-	enum ipp_degamma_mode mode)
-{
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
-	uint32_t degamma_type = (mode == IPP_DEGAMMA_MODE_HW_sRGB) ? 1 : 0;
+अटल व्योम dce_ipp_set_degamma(
+	काष्ठा input_pixel_processor *ipp,
+	क्रमागत ipp_degamma_mode mode)
+अणु
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+	uपूर्णांक32_t degamma_type = (mode == IPP_DEGAMMA_MODE_HW_sRGB) ? 1 : 0;
 
 	ASSERT(mode == IPP_DEGAMMA_MODE_BYPASS || mode == IPP_DEGAMMA_MODE_HW_sRGB);
 
@@ -229,85 +230,85 @@ static void dce_ipp_set_degamma(
 		  GRPH_DEGAMMA_MODE, degamma_type,
 		  CURSOR_DEGAMMA_MODE, degamma_type,
 		  CURSOR2_DEGAMMA_MODE, degamma_type);
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static void dce60_ipp_set_degamma(
-	struct input_pixel_processor *ipp,
-	enum ipp_degamma_mode mode)
-{
-	struct dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
-	uint32_t degamma_type = (mode == IPP_DEGAMMA_MODE_HW_sRGB) ? 1 : 0;
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल व्योम dce60_ipp_set_degamma(
+	काष्ठा input_pixel_processor *ipp,
+	क्रमागत ipp_degamma_mode mode)
+अणु
+	काष्ठा dce_ipp *ipp_dce = TO_DCE_IPP(ipp);
+	uपूर्णांक32_t degamma_type = (mode == IPP_DEGAMMA_MODE_HW_sRGB) ? 1 : 0;
 
 	ASSERT(mode == IPP_DEGAMMA_MODE_BYPASS || mode == IPP_DEGAMMA_MODE_HW_sRGB);
-	/* DCE6 does not have CURSOR2_DEGAMMA_MODE bit in DEGAMMA_CONTROL reg */
+	/* DCE6 करोes not have CURSOR2_DEGAMMA_MODE bit in DEGAMMA_CONTROL reg */
 	REG_SET_2(DEGAMMA_CONTROL, 0,
 		  GRPH_DEGAMMA_MODE, degamma_type,
 		  CURSOR_DEGAMMA_MODE, degamma_type);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static const struct ipp_funcs dce_ipp_funcs = {
+अटल स्थिर काष्ठा ipp_funcs dce_ipp_funcs = अणु
 	.ipp_cursor_set_attributes = dce_ipp_cursor_set_attributes,
 	.ipp_cursor_set_position = dce_ipp_cursor_set_position,
 	.ipp_program_prescale = dce_ipp_program_prescale,
 	.ipp_program_input_lut = dce_ipp_program_input_lut,
 	.ipp_set_degamma = dce_ipp_set_degamma
-};
+पूर्ण;
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-static const struct ipp_funcs dce60_ipp_funcs = {
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+अटल स्थिर काष्ठा ipp_funcs dce60_ipp_funcs = अणु
 	.ipp_cursor_set_attributes = dce_ipp_cursor_set_attributes,
 	.ipp_cursor_set_position = dce_ipp_cursor_set_position,
 	.ipp_program_prescale = dce_ipp_program_prescale,
 	.ipp_program_input_lut = dce_ipp_program_input_lut,
 	.ipp_set_degamma = dce60_ipp_set_degamma
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 
 /*****************************************/
-/* Constructor, Destructor               */
+/* Conकाष्ठाor, Deकाष्ठाor               */
 /*****************************************/
 
-void dce_ipp_construct(
-	struct dce_ipp *ipp_dce,
-	struct dc_context *ctx,
-	int inst,
-	const struct dce_ipp_registers *regs,
-	const struct dce_ipp_shift *ipp_shift,
-	const struct dce_ipp_mask *ipp_mask)
-{
+व्योम dce_ipp_स्थिरruct(
+	काष्ठा dce_ipp *ipp_dce,
+	काष्ठा dc_context *ctx,
+	पूर्णांक inst,
+	स्थिर काष्ठा dce_ipp_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_ipp_shअगरt *ipp_shअगरt,
+	स्थिर काष्ठा dce_ipp_mask *ipp_mask)
+अणु
 	ipp_dce->base.ctx = ctx;
 	ipp_dce->base.inst = inst;
 	ipp_dce->base.funcs = &dce_ipp_funcs;
 
 	ipp_dce->regs = regs;
-	ipp_dce->ipp_shift = ipp_shift;
+	ipp_dce->ipp_shअगरt = ipp_shअगरt;
 	ipp_dce->ipp_mask = ipp_mask;
-}
+पूर्ण
 
-#if defined(CONFIG_DRM_AMD_DC_SI)
-void dce60_ipp_construct(
-	struct dce_ipp *ipp_dce,
-	struct dc_context *ctx,
-	int inst,
-	const struct dce_ipp_registers *regs,
-	const struct dce_ipp_shift *ipp_shift,
-	const struct dce_ipp_mask *ipp_mask)
-{
+#अगर defined(CONFIG_DRM_AMD_DC_SI)
+व्योम dce60_ipp_स्थिरruct(
+	काष्ठा dce_ipp *ipp_dce,
+	काष्ठा dc_context *ctx,
+	पूर्णांक inst,
+	स्थिर काष्ठा dce_ipp_रेजिस्टरs *regs,
+	स्थिर काष्ठा dce_ipp_shअगरt *ipp_shअगरt,
+	स्थिर काष्ठा dce_ipp_mask *ipp_mask)
+अणु
 	ipp_dce->base.ctx = ctx;
 	ipp_dce->base.inst = inst;
 	ipp_dce->base.funcs = &dce60_ipp_funcs;
 
 	ipp_dce->regs = regs;
-	ipp_dce->ipp_shift = ipp_shift;
+	ipp_dce->ipp_shअगरt = ipp_shअगरt;
 	ipp_dce->ipp_mask = ipp_mask;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void dce_ipp_destroy(struct input_pixel_processor **ipp)
-{
-	kfree(TO_DCE_IPP(*ipp));
-	*ipp = NULL;
-}
+व्योम dce_ipp_destroy(काष्ठा input_pixel_processor **ipp)
+अणु
+	kमुक्त(TO_DCE_IPP(*ipp));
+	*ipp = शून्य;
+पूर्ण

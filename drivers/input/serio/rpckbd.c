@@ -1,157 +1,158 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *  Copyright (c) 2002 Russell King
  */
 
 /*
- * Acorn RiscPC PS/2 keyboard controller driver for Linux/ARM
+ * Acorn RiscPC PS/2 keyboard controller driver क्रम Linux/ARM
  */
 
 /*
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/serio.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/serपन.स>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-#include <mach/hardware.h>
-#include <asm/hardware/iomd.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/hardware/iomd.h>
 
 MODULE_AUTHOR("Vojtech Pavlik, Russell King");
 MODULE_DESCRIPTION("Acorn RiscPC PS/2 keyboard controller driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:kart");
 
-struct rpckbd_data {
-	int tx_irq;
-	int rx_irq;
-};
+काष्ठा rpckbd_data अणु
+	पूर्णांक tx_irq;
+	पूर्णांक rx_irq;
+पूर्ण;
 
-static int rpckbd_write(struct serio *port, unsigned char val)
-{
-	while (!(iomd_readb(IOMD_KCTRL) & (1 << 7)))
+अटल पूर्णांक rpckbd_ग_लिखो(काष्ठा serio *port, अचिन्हित अक्षर val)
+अणु
+	जबतक (!(iomd_पढ़ोb(IOMD_KCTRL) & (1 << 7)))
 		cpu_relax();
 
-	iomd_writeb(val, IOMD_KARTTX);
+	iomd_ग_लिखोb(val, IOMD_KARTTX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t rpckbd_rx(int irq, void *dev_id)
-{
-	struct serio *port = dev_id;
-	unsigned int byte;
-	int handled = IRQ_NONE;
+अटल irqवापस_t rpckbd_rx(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा serio *port = dev_id;
+	अचिन्हित पूर्णांक byte;
+	पूर्णांक handled = IRQ_NONE;
 
-	while (iomd_readb(IOMD_KCTRL) & (1 << 5)) {
-		byte = iomd_readb(IOMD_KARTRX);
+	जबतक (iomd_पढ़ोb(IOMD_KCTRL) & (1 << 5)) अणु
+		byte = iomd_पढ़ोb(IOMD_KARTRX);
 
-		serio_interrupt(port, byte, 0);
+		serio_पूर्णांकerrupt(port, byte, 0);
 		handled = IRQ_HANDLED;
-	}
-	return handled;
-}
+	पूर्ण
+	वापस handled;
+पूर्ण
 
-static irqreturn_t rpckbd_tx(int irq, void *dev_id)
-{
-	return IRQ_HANDLED;
-}
+अटल irqवापस_t rpckbd_tx(पूर्णांक irq, व्योम *dev_id)
+अणु
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int rpckbd_open(struct serio *port)
-{
-	struct rpckbd_data *rpckbd = port->port_data;
+अटल पूर्णांक rpckbd_खोलो(काष्ठा serio *port)
+अणु
+	काष्ठा rpckbd_data *rpckbd = port->port_data;
 
 	/* Reset the keyboard state machine. */
-	iomd_writeb(0, IOMD_KCTRL);
-	iomd_writeb(8, IOMD_KCTRL);
-	iomd_readb(IOMD_KARTRX);
+	iomd_ग_लिखोb(0, IOMD_KCTRL);
+	iomd_ग_लिखोb(8, IOMD_KCTRL);
+	iomd_पढ़ोb(IOMD_KARTRX);
 
-	if (request_irq(rpckbd->rx_irq, rpckbd_rx, 0, "rpckbd", port) != 0) {
-		printk(KERN_ERR "rpckbd.c: Could not allocate keyboard receive IRQ\n");
-		return -EBUSY;
-	}
+	अगर (request_irq(rpckbd->rx_irq, rpckbd_rx, 0, "rpckbd", port) != 0) अणु
+		prपूर्णांकk(KERN_ERR "rpckbd.c: Could not allocate keyboard receive IRQ\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (request_irq(rpckbd->tx_irq, rpckbd_tx, 0, "rpckbd", port) != 0) {
-		printk(KERN_ERR "rpckbd.c: Could not allocate keyboard transmit IRQ\n");
-		free_irq(rpckbd->rx_irq, port);
-		return -EBUSY;
-	}
+	अगर (request_irq(rpckbd->tx_irq, rpckbd_tx, 0, "rpckbd", port) != 0) अणु
+		prपूर्णांकk(KERN_ERR "rpckbd.c: Could not allocate keyboard transmit IRQ\n");
+		मुक्त_irq(rpckbd->rx_irq, port);
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rpckbd_close(struct serio *port)
-{
-	struct rpckbd_data *rpckbd = port->port_data;
+अटल व्योम rpckbd_बंद(काष्ठा serio *port)
+अणु
+	काष्ठा rpckbd_data *rpckbd = port->port_data;
 
-	free_irq(rpckbd->rx_irq, port);
-	free_irq(rpckbd->tx_irq, port);
-}
+	मुक्त_irq(rpckbd->rx_irq, port);
+	मुक्त_irq(rpckbd->tx_irq, port);
+पूर्ण
 
 /*
- * Allocate and initialize serio structure for subsequent registration
+ * Allocate and initialize serio काष्ठाure क्रम subsequent registration
  * with serio core.
  */
-static int rpckbd_probe(struct platform_device *dev)
-{
-	struct rpckbd_data *rpckbd;
-	struct serio *serio;
-	int tx_irq, rx_irq;
+अटल पूर्णांक rpckbd_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा rpckbd_data *rpckbd;
+	काष्ठा serio *serio;
+	पूर्णांक tx_irq, rx_irq;
 
-	rx_irq = platform_get_irq(dev, 0);
-	if (rx_irq <= 0)
-		return rx_irq < 0 ? rx_irq : -ENXIO;
+	rx_irq = platक्रमm_get_irq(dev, 0);
+	अगर (rx_irq <= 0)
+		वापस rx_irq < 0 ? rx_irq : -ENXIO;
 
-	tx_irq = platform_get_irq(dev, 1);
-	if (tx_irq <= 0)
-		return tx_irq < 0 ? tx_irq : -ENXIO;
+	tx_irq = platक्रमm_get_irq(dev, 1);
+	अगर (tx_irq <= 0)
+		वापस tx_irq < 0 ? tx_irq : -ENXIO;
 
-	serio = kzalloc(sizeof(struct serio), GFP_KERNEL);
-	rpckbd = kzalloc(sizeof(*rpckbd), GFP_KERNEL);
-	if (!serio || !rpckbd) {
-		kfree(rpckbd);
-		kfree(serio);
-		return -ENOMEM;
-	}
+	serio = kzalloc(माप(काष्ठा serio), GFP_KERNEL);
+	rpckbd = kzalloc(माप(*rpckbd), GFP_KERNEL);
+	अगर (!serio || !rpckbd) अणु
+		kमुक्त(rpckbd);
+		kमुक्त(serio);
+		वापस -ENOMEM;
+	पूर्ण
 
 	rpckbd->rx_irq = rx_irq;
 	rpckbd->tx_irq = tx_irq;
 
 	serio->id.type		= SERIO_8042;
-	serio->write		= rpckbd_write;
-	serio->open		= rpckbd_open;
-	serio->close		= rpckbd_close;
+	serio->ग_लिखो		= rpckbd_ग_लिखो;
+	serio->खोलो		= rpckbd_खोलो;
+	serio->बंद		= rpckbd_बंद;
 	serio->dev.parent	= &dev->dev;
 	serio->port_data	= rpckbd;
-	strlcpy(serio->name, "RiscPC PS/2 kbd port", sizeof(serio->name));
-	strlcpy(serio->phys, "rpckbd/serio0", sizeof(serio->phys));
+	strlcpy(serio->name, "RiscPC PS/2 kbd port", माप(serio->name));
+	strlcpy(serio->phys, "rpckbd/serio0", माप(serio->phys));
 
-	platform_set_drvdata(dev, serio);
-	serio_register_port(serio);
-	return 0;
-}
+	platक्रमm_set_drvdata(dev, serio);
+	serio_रेजिस्टर_port(serio);
+	वापस 0;
+पूर्ण
 
-static int rpckbd_remove(struct platform_device *dev)
-{
-	struct serio *serio = platform_get_drvdata(dev);
-	struct rpckbd_data *rpckbd = serio->port_data;
+अटल पूर्णांक rpckbd_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा serio *serio = platक्रमm_get_drvdata(dev);
+	काष्ठा rpckbd_data *rpckbd = serio->port_data;
 
-	serio_unregister_port(serio);
-	kfree(rpckbd);
+	serio_unरेजिस्टर_port(serio);
+	kमुक्त(rpckbd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rpckbd_driver = {
+अटल काष्ठा platक्रमm_driver rpckbd_driver = अणु
 	.probe		= rpckbd_probe,
-	.remove		= rpckbd_remove,
-	.driver		= {
+	.हटाओ		= rpckbd_हटाओ,
+	.driver		= अणु
 		.name	= "kart",
-	},
-};
-module_platform_driver(rpckbd_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(rpckbd_driver);

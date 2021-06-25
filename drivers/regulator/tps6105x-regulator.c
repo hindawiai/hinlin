@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for TPS61050/61052 boost converters, typically used for white LEDs
- * or audio amplifiers.
+ * Driver क्रम TPS61050/61052 boost converters, typically used क्रम white LEDs
+ * or audio amplअगरiers.
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/regmap.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/tps6105x.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/tps6105x.h>
 
-static const unsigned int tps6105x_voltages[] = {
+अटल स्थिर अचिन्हित पूर्णांक tps6105x_voltages[] = अणु
 	4500000,
 	5000000,
 	5250000,
 	5000000, /* There is an additional 5V */
-};
+पूर्ण;
 
-static const struct regulator_ops tps6105x_regulator_ops = {
+अटल स्थिर काष्ठा regulator_ops tps6105x_regulator_ops = अणु
 	.enable		= regulator_enable_regmap,
 	.disable	= regulator_disable_regmap,
 	.is_enabled	= regulator_is_enabled_regmap,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
 	.list_voltage	= regulator_list_voltage_table,
-};
+पूर्ण;
 
-static const struct regulator_desc tps6105x_regulator_desc = {
+अटल स्थिर काष्ठा regulator_desc tps6105x_regulator_desc = अणु
 	.name		= "tps6105x-boost",
 	.of_match	= of_match_ptr("regulator"),
 	.ops		= &tps6105x_regulator_ops,
@@ -50,24 +51,24 @@ static const struct regulator_desc tps6105x_regulator_desc = {
 	.enable_mask	= TPS6105X_REG0_MODE_MASK,
 	.enable_val	= TPS6105X_REG0_MODE_VOLTAGE <<
 			  TPS6105X_REG0_MODE_SHIFT,
-};
+पूर्ण;
 
 /*
  * Registers the chip as a voltage regulator
  */
-static int tps6105x_regulator_probe(struct platform_device *pdev)
-{
-	struct tps6105x *tps6105x = dev_get_platdata(&pdev->dev);
-	struct tps6105x_platform_data *pdata = tps6105x->pdata;
-	struct regulator_config config = { };
-	int ret;
+अटल पूर्णांक tps6105x_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा tps6105x *tps6105x = dev_get_platdata(&pdev->dev);
+	काष्ठा tps6105x_platक्रमm_data *pdata = tps6105x->pdata;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	पूर्णांक ret;
 
-	/* This instance is not set for regulator mode so bail out */
-	if (pdata->mode != TPS6105X_MODE_VOLTAGE) {
+	/* This instance is not set क्रम regulator mode so bail out */
+	अगर (pdata->mode != TPS6105X_MODE_VOLTAGE) अणु
 		dev_info(&pdev->dev,
 			"chip not in voltage mode mode, exit probe\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	config.dev = &tps6105x->client->dev;
 	config.init_data = pdata->regulator_data;
@@ -76,38 +77,38 @@ static int tps6105x_regulator_probe(struct platform_device *pdev)
 	config.regmap = tps6105x->regmap;
 
 	/* Register regulator with framework */
-	tps6105x->regulator = devm_regulator_register(&pdev->dev,
+	tps6105x->regulator = devm_regulator_रेजिस्टर(&pdev->dev,
 						      &tps6105x_regulator_desc,
 						      &config);
-	if (IS_ERR(tps6105x->regulator)) {
+	अगर (IS_ERR(tps6105x->regulator)) अणु
 		ret = PTR_ERR(tps6105x->regulator);
 		dev_err(&tps6105x->client->dev,
 			"failed to register regulator\n");
-		return ret;
-	}
-	platform_set_drvdata(pdev, tps6105x);
+		वापस ret;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, tps6105x);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver tps6105x_regulator_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver tps6105x_regulator_driver = अणु
+	.driver = अणु
 		.name  = "tps6105x-regulator",
-	},
+	पूर्ण,
 	.probe = tps6105x_regulator_probe,
-};
+पूर्ण;
 
-static __init int tps6105x_regulator_init(void)
-{
-	return platform_driver_register(&tps6105x_regulator_driver);
-}
+अटल __init पूर्णांक tps6105x_regulator_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&tps6105x_regulator_driver);
+पूर्ण
 subsys_initcall(tps6105x_regulator_init);
 
-static __exit void tps6105x_regulator_exit(void)
-{
-	platform_driver_unregister(&tps6105x_regulator_driver);
-}
-module_exit(tps6105x_regulator_exit);
+अटल __निकास व्योम tps6105x_regulator_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&tps6105x_regulator_driver);
+पूर्ण
+module_निकास(tps6105x_regulator_निकास);
 
 MODULE_AUTHOR("Linus Walleij <linus.walleij@linaro.org>");
 MODULE_DESCRIPTION("TPS6105x regulator driver");

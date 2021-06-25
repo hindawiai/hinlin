@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 Christoph Hellwig
  */
-#include <linux/iomap.h>
+#समावेश <linux/iomap.h>
 
 /*
- * We include this last to have the helpers above available for the trace
+ * We include this last to have the helpers above available क्रम the trace
  * event implementations.
  */
-#define CREATE_TRACE_POINTS
-#include "trace.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace.h"

@@ -1,214 +1,215 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for Marvell PPv2 network controller for Armada 375 SoC.
+ * Driver क्रम Marvell PPv2 network controller क्रम Armada 375 SoC.
  *
  * Copyright (C) 2018 Marvell
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/debugfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/debugfs.h>
 
-#include "mvpp2.h"
-#include "mvpp2_prs.h"
-#include "mvpp2_cls.h"
+#समावेश "mvpp2.h"
+#समावेश "mvpp2_prs.h"
+#समावेश "mvpp2_cls.h"
 
-struct mvpp2_dbgfs_prs_entry {
-	int tid;
-	struct mvpp2 *priv;
-};
+काष्ठा mvpp2_dbgfs_prs_entry अणु
+	पूर्णांक tid;
+	काष्ठा mvpp2 *priv;
+पूर्ण;
 
-struct mvpp2_dbgfs_c2_entry {
-	int id;
-	struct mvpp2 *priv;
-};
+काष्ठा mvpp2_dbgfs_c2_entry अणु
+	पूर्णांक id;
+	काष्ठा mvpp2 *priv;
+पूर्ण;
 
-struct mvpp2_dbgfs_flow_entry {
-	int flow;
-	struct mvpp2 *priv;
-};
+काष्ठा mvpp2_dbgfs_flow_entry अणु
+	पूर्णांक flow;
+	काष्ठा mvpp2 *priv;
+पूर्ण;
 
-struct mvpp2_dbgfs_flow_tbl_entry {
-	int id;
-	struct mvpp2 *priv;
-};
+काष्ठा mvpp2_dbgfs_flow_tbl_entry अणु
+	पूर्णांक id;
+	काष्ठा mvpp2 *priv;
+पूर्ण;
 
-struct mvpp2_dbgfs_port_flow_entry {
-	struct mvpp2_port *port;
-	struct mvpp2_dbgfs_flow_entry *dbg_fe;
-};
+काष्ठा mvpp2_dbgfs_port_flow_entry अणु
+	काष्ठा mvpp2_port *port;
+	काष्ठा mvpp2_dbgfs_flow_entry *dbg_fe;
+पूर्ण;
 
-struct mvpp2_dbgfs_entries {
-	/* Entries for Header Parser debug info */
-	struct mvpp2_dbgfs_prs_entry prs_entries[MVPP2_PRS_TCAM_SRAM_SIZE];
+काष्ठा mvpp2_dbgfs_entries अणु
+	/* Entries क्रम Header Parser debug info */
+	काष्ठा mvpp2_dbgfs_prs_entry prs_entries[MVPP2_PRS_TCAM_SRAM_SIZE];
 
-	/* Entries for Classifier C2 engine debug info */
-	struct mvpp2_dbgfs_c2_entry c2_entries[MVPP22_CLS_C2_N_ENTRIES];
+	/* Entries क्रम Classअगरier C2 engine debug info */
+	काष्ठा mvpp2_dbgfs_c2_entry c2_entries[MVPP22_CLS_C2_N_ENTRIES];
 
-	/* Entries for Classifier Flow Table debug info */
-	struct mvpp2_dbgfs_flow_tbl_entry flt_entries[MVPP2_CLS_FLOWS_TBL_SIZE];
+	/* Entries क्रम Classअगरier Flow Table debug info */
+	काष्ठा mvpp2_dbgfs_flow_tbl_entry flt_entries[MVPP2_CLS_FLOWS_TBL_SIZE];
 
-	/* Entries for Classifier flows debug info */
-	struct mvpp2_dbgfs_flow_entry flow_entries[MVPP2_N_PRS_FLOWS];
+	/* Entries क्रम Classअगरier flows debug info */
+	काष्ठा mvpp2_dbgfs_flow_entry flow_entries[MVPP2_N_PRS_FLOWS];
 
-	/* Entries for per-port flows debug info */
-	struct mvpp2_dbgfs_port_flow_entry port_flow_entries[MVPP2_MAX_PORTS];
-};
+	/* Entries क्रम per-port flows debug info */
+	काष्ठा mvpp2_dbgfs_port_flow_entry port_flow_entries[MVPP2_MAX_PORTS];
+पूर्ण;
 
-static int mvpp2_dbgfs_flow_flt_hits_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_flow_tbl_entry *entry = s->private;
+अटल पूर्णांक mvpp2_dbgfs_flow_flt_hits_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_flow_tbl_entry *entry = s->निजी;
 
 	u32 hits = mvpp2_cls_flow_hits(entry->priv, entry->id);
 
-	seq_printf(s, "%u\n", hits);
+	seq_म_लिखो(s, "%u\n", hits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_flt_hits);
 
-static int mvpp2_dbgfs_flow_dec_hits_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_flow_entry *entry = s->private;
+अटल पूर्णांक mvpp2_dbgfs_flow_dec_hits_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_flow_entry *entry = s->निजी;
 
 	u32 hits = mvpp2_cls_lookup_hits(entry->priv, entry->flow);
 
-	seq_printf(s, "%u\n", hits);
+	seq_म_लिखो(s, "%u\n", hits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_dec_hits);
 
-static int mvpp2_dbgfs_flow_type_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_flow_entry *entry = s->private;
-	const struct mvpp2_cls_flow *f;
-	const char *flow_name;
+अटल पूर्णांक mvpp2_dbgfs_flow_type_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_flow_entry *entry = s->निजी;
+	स्थिर काष्ठा mvpp2_cls_flow *f;
+	स्थिर अक्षर *flow_name;
 
 	f = mvpp2_cls_flow_get(entry->flow);
-	if (!f)
-		return -EINVAL;
+	अगर (!f)
+		वापस -EINVAL;
 
-	switch (f->flow_type) {
-	case IPV4_FLOW:
+	चयन (f->flow_type) अणु
+	हाल IPV4_FLOW:
 		flow_name = "ipv4";
-		break;
-	case IPV6_FLOW:
+		अवरोध;
+	हाल IPV6_FLOW:
 		flow_name = "ipv6";
-		break;
-	case TCP_V4_FLOW:
+		अवरोध;
+	हाल TCP_V4_FLOW:
 		flow_name = "tcp4";
-		break;
-	case TCP_V6_FLOW:
+		अवरोध;
+	हाल TCP_V6_FLOW:
 		flow_name = "tcp6";
-		break;
-	case UDP_V4_FLOW:
+		अवरोध;
+	हाल UDP_V4_FLOW:
 		flow_name = "udp4";
-		break;
-	case UDP_V6_FLOW:
+		अवरोध;
+	हाल UDP_V6_FLOW:
 		flow_name = "udp6";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		flow_name = "other";
-	}
+	पूर्ण
 
-	seq_printf(s, "%s\n", flow_name);
+	seq_म_लिखो(s, "%s\n", flow_name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_type);
 
-static int mvpp2_dbgfs_flow_id_show(struct seq_file *s, void *unused)
-{
-	const struct mvpp2_dbgfs_flow_entry *entry = s->private;
-	const struct mvpp2_cls_flow *f;
+अटल पूर्णांक mvpp2_dbgfs_flow_id_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	स्थिर काष्ठा mvpp2_dbgfs_flow_entry *entry = s->निजी;
+	स्थिर काष्ठा mvpp2_cls_flow *f;
 
 	f = mvpp2_cls_flow_get(entry->flow);
-	if (!f)
-		return -EINVAL;
+	अगर (!f)
+		वापस -EINVAL;
 
-	seq_printf(s, "%d\n", f->flow_id);
+	seq_म_लिखो(s, "%d\n", f->flow_id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_id);
 
-static int mvpp2_dbgfs_port_flow_hash_opt_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_port_flow_entry *entry = s->private;
-	struct mvpp2_port *port = entry->port;
-	struct mvpp2_cls_flow_entry fe;
-	const struct mvpp2_cls_flow *f;
-	int flow_index;
+अटल पूर्णांक mvpp2_dbgfs_port_flow_hash_opt_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_port_flow_entry *entry = s->निजी;
+	काष्ठा mvpp2_port *port = entry->port;
+	काष्ठा mvpp2_cls_flow_entry fe;
+	स्थिर काष्ठा mvpp2_cls_flow *f;
+	पूर्णांक flow_index;
 	u16 hash_opts;
 
 	f = mvpp2_cls_flow_get(entry->dbg_fe->flow);
-	if (!f)
-		return -EINVAL;
+	अगर (!f)
+		वापस -EINVAL;
 
 	flow_index = MVPP2_CLS_FLT_HASH_ENTRY(entry->port->id, f->flow_id);
 
-	mvpp2_cls_flow_read(port->priv, flow_index, &fe);
+	mvpp2_cls_flow_पढ़ो(port->priv, flow_index, &fe);
 
 	hash_opts = mvpp2_flow_get_hek_fields(&fe);
 
-	seq_printf(s, "0x%04x\n", hash_opts);
+	seq_म_लिखो(s, "0x%04x\n", hash_opts);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_port_flow_hash_opt);
 
-static int mvpp2_dbgfs_port_flow_engine_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_port_flow_entry *entry = s->private;
-	struct mvpp2_port *port = entry->port;
-	struct mvpp2_cls_flow_entry fe;
-	const struct mvpp2_cls_flow *f;
-	int flow_index, engine;
+अटल पूर्णांक mvpp2_dbgfs_port_flow_engine_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_port_flow_entry *entry = s->निजी;
+	काष्ठा mvpp2_port *port = entry->port;
+	काष्ठा mvpp2_cls_flow_entry fe;
+	स्थिर काष्ठा mvpp2_cls_flow *f;
+	पूर्णांक flow_index, engine;
 
 	f = mvpp2_cls_flow_get(entry->dbg_fe->flow);
-	if (!f)
-		return -EINVAL;
+	अगर (!f)
+		वापस -EINVAL;
 
 	flow_index = MVPP2_CLS_FLT_HASH_ENTRY(entry->port->id, f->flow_id);
 
-	mvpp2_cls_flow_read(port->priv, flow_index, &fe);
+	mvpp2_cls_flow_पढ़ो(port->priv, flow_index, &fe);
 
 	engine = mvpp2_cls_flow_eng_get(&fe);
 
-	seq_printf(s, "%d\n", engine);
+	seq_म_लिखो(s, "%d\n", engine);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_port_flow_engine);
 
-static int mvpp2_dbgfs_flow_c2_hits_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_c2_entry *entry = s->private;
+अटल पूर्णांक mvpp2_dbgfs_flow_c2_hits_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_c2_entry *entry = s->निजी;
 	u32 hits;
 
 	hits = mvpp2_cls_c2_hit_count(entry->priv, entry->id);
 
-	seq_printf(s, "%u\n", hits);
+	seq_म_लिखो(s, "%u\n", hits);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_c2_hits);
 
-static int mvpp2_dbgfs_flow_c2_rxq_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_c2_entry *entry = s->private;
-	struct mvpp2_cls_c2_entry c2;
+अटल पूर्णांक mvpp2_dbgfs_flow_c2_rxq_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_c2_entry *entry = s->निजी;
+	काष्ठा mvpp2_cls_c2_entry c2;
 	u8 qh, ql;
 
-	mvpp2_cls_c2_read(entry->priv, entry->id, &c2);
+	mvpp2_cls_c2_पढ़ो(entry->priv, entry->id, &c2);
 
 	qh = (c2.attr[0] >> MVPP22_CLS_C2_ATTR0_QHIGH_OFFS) &
 	     MVPP22_CLS_C2_ATTR0_QHIGH_MASK;
@@ -216,240 +217,240 @@ static int mvpp2_dbgfs_flow_c2_rxq_show(struct seq_file *s, void *unused)
 	ql = (c2.attr[0] >> MVPP22_CLS_C2_ATTR0_QLOW_OFFS) &
 	     MVPP22_CLS_C2_ATTR0_QLOW_MASK;
 
-	seq_printf(s, "%d\n", (qh << 3 | ql));
+	seq_म_लिखो(s, "%d\n", (qh << 3 | ql));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_c2_rxq);
 
-static int mvpp2_dbgfs_flow_c2_enable_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_c2_entry *entry = s->private;
-	struct mvpp2_cls_c2_entry c2;
-	int enabled;
+अटल पूर्णांक mvpp2_dbgfs_flow_c2_enable_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_c2_entry *entry = s->निजी;
+	काष्ठा mvpp2_cls_c2_entry c2;
+	पूर्णांक enabled;
 
-	mvpp2_cls_c2_read(entry->priv, entry->id, &c2);
+	mvpp2_cls_c2_पढ़ो(entry->priv, entry->id, &c2);
 
 	enabled = !!(c2.attr[2] & MVPP22_CLS_C2_ATTR2_RSS_EN);
 
-	seq_printf(s, "%d\n", enabled);
+	seq_म_लिखो(s, "%d\n", enabled);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_flow_c2_enable);
 
-static int mvpp2_dbgfs_port_vid_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_port *port = s->private;
-	unsigned char byte[2], enable[2];
-	struct mvpp2 *priv = port->priv;
-	struct mvpp2_prs_entry pe;
-	unsigned long pmap;
+अटल पूर्णांक mvpp2_dbgfs_port_vid_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_port *port = s->निजी;
+	अचिन्हित अक्षर byte[2], enable[2];
+	काष्ठा mvpp2 *priv = port->priv;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित दीर्घ pmap;
 	u16 rvid;
-	int tid;
+	पूर्णांक tid;
 
-	for (tid = MVPP2_PRS_VID_PORT_FIRST(port->id);
-	     tid <= MVPP2_PRS_VID_PORT_LAST(port->id); tid++) {
+	क्रम (tid = MVPP2_PRS_VID_PORT_FIRST(port->id);
+	     tid <= MVPP2_PRS_VID_PORT_LAST(port->id); tid++) अणु
 		mvpp2_prs_init_from_hw(priv, &pe, tid);
 
 		pmap = mvpp2_prs_tcam_port_map_get(&pe);
 
-		if (!priv->prs_shadow[tid].valid)
-			continue;
+		अगर (!priv->prs_shaकरोw[tid].valid)
+			जारी;
 
-		if (!test_bit(port->id, &pmap))
-			continue;
+		अगर (!test_bit(port->id, &pmap))
+			जारी;
 
 		mvpp2_prs_tcam_data_byte_get(&pe, 2, &byte[0], &enable[0]);
 		mvpp2_prs_tcam_data_byte_get(&pe, 3, &byte[1], &enable[1]);
 
 		rvid = ((byte[0] & 0xf) << 8) + byte[1];
 
-		seq_printf(s, "%u\n", rvid);
-	}
+		seq_म_लिखो(s, "%u\n", rvid);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_port_vid);
 
-static int mvpp2_dbgfs_port_parser_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_port *port = s->private;
-	struct mvpp2 *priv = port->priv;
-	struct mvpp2_prs_entry pe;
-	unsigned long pmap;
-	int i;
+अटल पूर्णांक mvpp2_dbgfs_port_parser_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_port *port = s->निजी;
+	काष्ठा mvpp2 *priv = port->priv;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित दीर्घ pmap;
+	पूर्णांक i;
 
-	for (i = 0; i < MVPP2_PRS_TCAM_SRAM_SIZE; i++) {
+	क्रम (i = 0; i < MVPP2_PRS_TCAM_SRAM_SIZE; i++) अणु
 		mvpp2_prs_init_from_hw(port->priv, &pe, i);
 
 		pmap = mvpp2_prs_tcam_port_map_get(&pe);
-		if (priv->prs_shadow[i].valid && test_bit(port->id, &pmap))
-			seq_printf(s, "%03d\n", i);
-	}
+		अगर (priv->prs_shaकरोw[i].valid && test_bit(port->id, &pmap))
+			seq_म_लिखो(s, "%03d\n", i);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_port_parser);
 
-static int mvpp2_dbgfs_filter_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_port *port = s->private;
-	struct mvpp2 *priv = port->priv;
-	struct mvpp2_prs_entry pe;
-	unsigned long pmap;
-	int index, tid;
+अटल पूर्णांक mvpp2_dbgfs_filter_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_port *port = s->निजी;
+	काष्ठा mvpp2 *priv = port->priv;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित दीर्घ pmap;
+	पूर्णांक index, tid;
 
-	for (tid = MVPP2_PE_MAC_RANGE_START;
-	     tid <= MVPP2_PE_MAC_RANGE_END; tid++) {
-		unsigned char da[ETH_ALEN], da_mask[ETH_ALEN];
+	क्रम (tid = MVPP2_PE_MAC_RANGE_START;
+	     tid <= MVPP2_PE_MAC_RANGE_END; tid++) अणु
+		अचिन्हित अक्षर da[ETH_ALEN], da_mask[ETH_ALEN];
 
-		if (!priv->prs_shadow[tid].valid ||
-		    priv->prs_shadow[tid].lu != MVPP2_PRS_LU_MAC ||
-		    priv->prs_shadow[tid].udf != MVPP2_PRS_UDF_MAC_DEF)
-			continue;
+		अगर (!priv->prs_shaकरोw[tid].valid ||
+		    priv->prs_shaकरोw[tid].lu != MVPP2_PRS_LU_MAC ||
+		    priv->prs_shaकरोw[tid].udf != MVPP2_PRS_UDF_MAC_DEF)
+			जारी;
 
 		mvpp2_prs_init_from_hw(priv, &pe, tid);
 
 		pmap = mvpp2_prs_tcam_port_map_get(&pe);
 
 		/* We only want entries active on this port */
-		if (!test_bit(port->id, &pmap))
-			continue;
+		अगर (!test_bit(port->id, &pmap))
+			जारी;
 
 		/* Read mac addr from entry */
-		for (index = 0; index < ETH_ALEN; index++)
+		क्रम (index = 0; index < ETH_ALEN; index++)
 			mvpp2_prs_tcam_data_byte_get(&pe, index, &da[index],
 						     &da_mask[index]);
 
-		seq_printf(s, "%pM\n", da);
-	}
+		seq_म_लिखो(s, "%pM\n", da);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_filter);
 
-static int mvpp2_dbgfs_prs_lu_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2 *priv = entry->priv;
+अटल पूर्णांक mvpp2_dbgfs_prs_lu_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2 *priv = entry->priv;
 
-	seq_printf(s, "%x\n", priv->prs_shadow[entry->tid].lu);
+	seq_म_लिखो(s, "%x\n", priv->prs_shaकरोw[entry->tid].lu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_lu);
 
-static int mvpp2_dbgfs_prs_pmap_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2_prs_entry pe;
-	unsigned int pmap;
+अटल पूर्णांक mvpp2_dbgfs_prs_pmap_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित पूर्णांक pmap;
 
 	mvpp2_prs_init_from_hw(entry->priv, &pe, entry->tid);
 
 	pmap = mvpp2_prs_tcam_port_map_get(&pe);
 	pmap &= MVPP2_PRS_PORT_MASK;
 
-	seq_printf(s, "%02x\n", pmap);
+	seq_म_लिखो(s, "%02x\n", pmap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_pmap);
 
-static int mvpp2_dbgfs_prs_ai_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2_prs_entry pe;
-	unsigned char ai, ai_mask;
+अटल पूर्णांक mvpp2_dbgfs_prs_ai_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित अक्षर ai, ai_mask;
 
 	mvpp2_prs_init_from_hw(entry->priv, &pe, entry->tid);
 
 	ai = pe.tcam[MVPP2_PRS_TCAM_AI_WORD] & MVPP2_PRS_AI_MASK;
 	ai_mask = (pe.tcam[MVPP2_PRS_TCAM_AI_WORD] >> 16) & MVPP2_PRS_AI_MASK;
 
-	seq_printf(s, "%02x %02x\n", ai, ai_mask);
+	seq_म_लिखो(s, "%02x %02x\n", ai, ai_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_ai);
 
-static int mvpp2_dbgfs_prs_hdata_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2_prs_entry pe;
-	unsigned char data[8], mask[8];
-	int i;
+अटल पूर्णांक mvpp2_dbgfs_prs_hdata_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2_prs_entry pe;
+	अचिन्हित अक्षर data[8], mask[8];
+	पूर्णांक i;
 
 	mvpp2_prs_init_from_hw(entry->priv, &pe, entry->tid);
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		mvpp2_prs_tcam_data_byte_get(&pe, i, &data[i], &mask[i]);
 
-	seq_printf(s, "%*phN %*phN\n", 8, data, 8, mask);
+	seq_म_लिखो(s, "%*phN %*phN\n", 8, data, 8, mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_hdata);
 
-static int mvpp2_dbgfs_prs_sram_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2_prs_entry pe;
+अटल पूर्णांक mvpp2_dbgfs_prs_sram_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2_prs_entry pe;
 
 	mvpp2_prs_init_from_hw(entry->priv, &pe, entry->tid);
 
-	seq_printf(s, "%*phN\n", 14, pe.sram);
+	seq_म_लिखो(s, "%*phN\n", 14, pe.sram);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_sram);
 
-static int mvpp2_dbgfs_prs_hits_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	int val;
+अटल पूर्णांक mvpp2_dbgfs_prs_hits_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	पूर्णांक val;
 
 	val = mvpp2_prs_hits(entry->priv, entry->tid);
-	if (val < 0)
-		return val;
+	अगर (val < 0)
+		वापस val;
 
-	seq_printf(s, "%d\n", val);
+	seq_म_लिखो(s, "%d\n", val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_hits);
 
-static int mvpp2_dbgfs_prs_valid_show(struct seq_file *s, void *unused)
-{
-	struct mvpp2_dbgfs_prs_entry *entry = s->private;
-	struct mvpp2 *priv = entry->priv;
-	int tid = entry->tid;
+अटल पूर्णांक mvpp2_dbgfs_prs_valid_show(काष्ठा seq_file *s, व्योम *unused)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry = s->निजी;
+	काष्ठा mvpp2 *priv = entry->priv;
+	पूर्णांक tid = entry->tid;
 
-	seq_printf(s, "%d\n", priv->prs_shadow[tid].valid ? 1 : 0);
+	seq_म_लिखो(s, "%d\n", priv->prs_shaकरोw[tid].valid ? 1 : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(mvpp2_dbgfs_prs_valid);
 
-static int mvpp2_dbgfs_flow_port_init(struct dentry *parent,
-				      struct mvpp2_port *port,
-				      struct mvpp2_dbgfs_flow_entry *entry)
-{
-	struct mvpp2_dbgfs_port_flow_entry *port_entry;
-	struct dentry *port_dir;
+अटल पूर्णांक mvpp2_dbgfs_flow_port_init(काष्ठा dentry *parent,
+				      काष्ठा mvpp2_port *port,
+				      काष्ठा mvpp2_dbgfs_flow_entry *entry)
+अणु
+	काष्ठा mvpp2_dbgfs_port_flow_entry *port_entry;
+	काष्ठा dentry *port_dir;
 
 	port_dir = debugfs_create_dir(port->dev->name, parent);
 
@@ -464,18 +465,18 @@ static int mvpp2_dbgfs_flow_port_init(struct dentry *parent,
 	debugfs_create_file("engine", 0444, port_dir, port_entry,
 			    &mvpp2_dbgfs_port_flow_engine_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_flow_entry_init(struct dentry *parent,
-				       struct mvpp2 *priv, int flow)
-{
-	struct mvpp2_dbgfs_flow_entry *entry;
-	struct dentry *flow_entry_dir;
-	char flow_entry_name[10];
-	int i, ret;
+अटल पूर्णांक mvpp2_dbgfs_flow_entry_init(काष्ठा dentry *parent,
+				       काष्ठा mvpp2 *priv, पूर्णांक flow)
+अणु
+	काष्ठा mvpp2_dbgfs_flow_entry *entry;
+	काष्ठा dentry *flow_entry_dir;
+	अक्षर flow_entry_name[10];
+	पूर्णांक i, ret;
 
-	sprintf(flow_entry_name, "%02d", flow);
+	प्र_लिखो(flow_entry_name, "%02d", flow);
 
 	flow_entry_dir = debugfs_create_dir(flow_entry_name, parent);
 
@@ -493,44 +494,44 @@ static int mvpp2_dbgfs_flow_entry_init(struct dentry *parent,
 	debugfs_create_file("id", 0444, flow_entry_dir, entry,
 			    &mvpp2_dbgfs_flow_id_fops);
 
-	/* Create entry for each port */
-	for (i = 0; i < priv->port_count; i++) {
+	/* Create entry क्रम each port */
+	क्रम (i = 0; i < priv->port_count; i++) अणु
 		ret = mvpp2_dbgfs_flow_port_init(flow_entry_dir,
 						 priv->port_list[i], entry);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_flow_init(struct dentry *parent, struct mvpp2 *priv)
-{
-	struct dentry *flow_dir;
-	int i, ret;
+अटल पूर्णांक mvpp2_dbgfs_flow_init(काष्ठा dentry *parent, काष्ठा mvpp2 *priv)
+अणु
+	काष्ठा dentry *flow_dir;
+	पूर्णांक i, ret;
 
 	flow_dir = debugfs_create_dir("flows", parent);
 
-	for (i = 0; i < MVPP2_N_PRS_FLOWS; i++) {
+	क्रम (i = 0; i < MVPP2_N_PRS_FLOWS; i++) अणु
 		ret = mvpp2_dbgfs_flow_entry_init(flow_dir, priv, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_prs_entry_init(struct dentry *parent,
-				      struct mvpp2 *priv, int tid)
-{
-	struct mvpp2_dbgfs_prs_entry *entry;
-	struct dentry *prs_entry_dir;
-	char prs_entry_name[10];
+अटल पूर्णांक mvpp2_dbgfs_prs_entry_init(काष्ठा dentry *parent,
+				      काष्ठा mvpp2 *priv, पूर्णांक tid)
+अणु
+	काष्ठा mvpp2_dbgfs_prs_entry *entry;
+	काष्ठा dentry *prs_entry_dir;
+	अक्षर prs_entry_name[10];
 
-	if (tid >= MVPP2_PRS_TCAM_SRAM_SIZE)
-		return -EINVAL;
+	अगर (tid >= MVPP2_PRS_TCAM_SRAM_SIZE)
+		वापस -EINVAL;
 
-	sprintf(prs_entry_name, "%03d", tid);
+	प्र_लिखो(prs_entry_name, "%03d", tid);
 
 	prs_entry_dir = debugfs_create_dir(prs_entry_name, parent);
 
@@ -561,40 +562,40 @@ static int mvpp2_dbgfs_prs_entry_init(struct dentry *parent,
 	debugfs_create_file("pmap", 0444, prs_entry_dir, entry,
 			     &mvpp2_dbgfs_prs_pmap_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_prs_init(struct dentry *parent, struct mvpp2 *priv)
-{
-	struct dentry *prs_dir;
-	int i, ret;
+अटल पूर्णांक mvpp2_dbgfs_prs_init(काष्ठा dentry *parent, काष्ठा mvpp2 *priv)
+अणु
+	काष्ठा dentry *prs_dir;
+	पूर्णांक i, ret;
 
 	prs_dir = debugfs_create_dir("parser", parent);
 
-	for (i = 0; i < MVPP2_PRS_TCAM_SRAM_SIZE; i++) {
+	क्रम (i = 0; i < MVPP2_PRS_TCAM_SRAM_SIZE; i++) अणु
 		ret = mvpp2_dbgfs_prs_entry_init(prs_dir, priv, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_c2_entry_init(struct dentry *parent,
-				     struct mvpp2 *priv, int id)
-{
-	struct mvpp2_dbgfs_c2_entry *entry;
-	struct dentry *c2_entry_dir;
-	char c2_entry_name[10];
+अटल पूर्णांक mvpp2_dbgfs_c2_entry_init(काष्ठा dentry *parent,
+				     काष्ठा mvpp2 *priv, पूर्णांक id)
+अणु
+	काष्ठा mvpp2_dbgfs_c2_entry *entry;
+	काष्ठा dentry *c2_entry_dir;
+	अक्षर c2_entry_name[10];
 
-	if (id >= MVPP22_CLS_C2_N_ENTRIES)
-		return -EINVAL;
+	अगर (id >= MVPP22_CLS_C2_N_ENTRIES)
+		वापस -EINVAL;
 
-	sprintf(c2_entry_name, "%03d", id);
+	प्र_लिखो(c2_entry_name, "%03d", id);
 
 	c2_entry_dir = debugfs_create_dir(c2_entry_name, parent);
-	if (!c2_entry_dir)
-		return -ENOMEM;
+	अगर (!c2_entry_dir)
+		वापस -ENOMEM;
 
 	entry = &priv->dbgfs_entries->c2_entries[id];
 
@@ -610,24 +611,24 @@ static int mvpp2_dbgfs_c2_entry_init(struct dentry *parent,
 	debugfs_create_file("rss_enable", 0444, c2_entry_dir, entry,
 			    &mvpp2_dbgfs_flow_c2_enable_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_flow_tbl_entry_init(struct dentry *parent,
-					   struct mvpp2 *priv, int id)
-{
-	struct mvpp2_dbgfs_flow_tbl_entry *entry;
-	struct dentry *flow_tbl_entry_dir;
-	char flow_tbl_entry_name[10];
+अटल पूर्णांक mvpp2_dbgfs_flow_tbl_entry_init(काष्ठा dentry *parent,
+					   काष्ठा mvpp2 *priv, पूर्णांक id)
+अणु
+	काष्ठा mvpp2_dbgfs_flow_tbl_entry *entry;
+	काष्ठा dentry *flow_tbl_entry_dir;
+	अक्षर flow_tbl_entry_name[10];
 
-	if (id >= MVPP2_CLS_FLOWS_TBL_SIZE)
-		return -EINVAL;
+	अगर (id >= MVPP2_CLS_FLOWS_TBL_SIZE)
+		वापस -EINVAL;
 
-	sprintf(flow_tbl_entry_name, "%03d", id);
+	प्र_लिखो(flow_tbl_entry_name, "%03d", id);
 
 	flow_tbl_entry_dir = debugfs_create_dir(flow_tbl_entry_name, parent);
-	if (!flow_tbl_entry_dir)
-		return -ENOMEM;
+	अगर (!flow_tbl_entry_dir)
+		वापस -ENOMEM;
 
 	entry = &priv->dbgfs_entries->flt_entries[id];
 
@@ -637,45 +638,45 @@ static int mvpp2_dbgfs_flow_tbl_entry_init(struct dentry *parent,
 	debugfs_create_file("hits", 0444, flow_tbl_entry_dir, entry,
 			    &mvpp2_dbgfs_flow_flt_hits_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_cls_init(struct dentry *parent, struct mvpp2 *priv)
-{
-	struct dentry *cls_dir, *c2_dir, *flow_tbl_dir;
-	int i, ret;
+अटल पूर्णांक mvpp2_dbgfs_cls_init(काष्ठा dentry *parent, काष्ठा mvpp2 *priv)
+अणु
+	काष्ठा dentry *cls_dir, *c2_dir, *flow_tbl_dir;
+	पूर्णांक i, ret;
 
 	cls_dir = debugfs_create_dir("classifier", parent);
-	if (!cls_dir)
-		return -ENOMEM;
+	अगर (!cls_dir)
+		वापस -ENOMEM;
 
 	c2_dir = debugfs_create_dir("c2", cls_dir);
-	if (!c2_dir)
-		return -ENOMEM;
+	अगर (!c2_dir)
+		वापस -ENOMEM;
 
-	for (i = 0; i < MVPP22_CLS_C2_N_ENTRIES; i++) {
+	क्रम (i = 0; i < MVPP22_CLS_C2_N_ENTRIES; i++) अणु
 		ret = mvpp2_dbgfs_c2_entry_init(c2_dir, priv, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	flow_tbl_dir = debugfs_create_dir("flow_table", cls_dir);
-	if (!flow_tbl_dir)
-		return -ENOMEM;
+	अगर (!flow_tbl_dir)
+		वापस -ENOMEM;
 
-	for (i = 0; i < MVPP2_CLS_FLOWS_TBL_SIZE; i++) {
+	क्रम (i = 0; i < MVPP2_CLS_FLOWS_TBL_SIZE; i++) अणु
 		ret = mvpp2_dbgfs_flow_tbl_entry_init(flow_tbl_dir, priv, i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mvpp2_dbgfs_port_init(struct dentry *parent,
-				 struct mvpp2_port *port)
-{
-	struct dentry *port_dir;
+अटल पूर्णांक mvpp2_dbgfs_port_init(काष्ठा dentry *parent,
+				 काष्ठा mvpp2_port *port)
+अणु
+	काष्ठा dentry *port_dir;
 
 	port_dir = debugfs_create_dir(port->dev->name, parent);
 
@@ -688,51 +689,51 @@ static int mvpp2_dbgfs_port_init(struct dentry *parent,
 	debugfs_create_file("vid_filter", 0444, port_dir, port,
 			    &mvpp2_dbgfs_port_vid_fops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mvpp2_dbgfs_cleanup(struct mvpp2 *priv)
-{
-	debugfs_remove_recursive(priv->dbgfs_dir);
+व्योम mvpp2_dbgfs_cleanup(काष्ठा mvpp2 *priv)
+अणु
+	debugfs_हटाओ_recursive(priv->dbgfs_dir);
 
-	kfree(priv->dbgfs_entries);
-}
+	kमुक्त(priv->dbgfs_entries);
+पूर्ण
 
-void mvpp2_dbgfs_init(struct mvpp2 *priv, const char *name)
-{
-	struct dentry *mvpp2_dir, *mvpp2_root;
-	int ret, i;
+व्योम mvpp2_dbgfs_init(काष्ठा mvpp2 *priv, स्थिर अक्षर *name)
+अणु
+	काष्ठा dentry *mvpp2_dir, *mvpp2_root;
+	पूर्णांक ret, i;
 
-	mvpp2_root = debugfs_lookup(MVPP2_DRIVER_NAME, NULL);
-	if (!mvpp2_root)
-		mvpp2_root = debugfs_create_dir(MVPP2_DRIVER_NAME, NULL);
+	mvpp2_root = debugfs_lookup(MVPP2_DRIVER_NAME, शून्य);
+	अगर (!mvpp2_root)
+		mvpp2_root = debugfs_create_dir(MVPP2_DRIVER_NAME, शून्य);
 
 	mvpp2_dir = debugfs_create_dir(name, mvpp2_root);
 
 	priv->dbgfs_dir = mvpp2_dir;
-	priv->dbgfs_entries = kzalloc(sizeof(*priv->dbgfs_entries), GFP_KERNEL);
-	if (!priv->dbgfs_entries)
-		goto err;
+	priv->dbgfs_entries = kzalloc(माप(*priv->dbgfs_entries), GFP_KERNEL);
+	अगर (!priv->dbgfs_entries)
+		जाओ err;
 
 	ret = mvpp2_dbgfs_prs_init(mvpp2_dir, priv);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
 	ret = mvpp2_dbgfs_cls_init(mvpp2_dir, priv);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	for (i = 0; i < priv->port_count; i++) {
+	क्रम (i = 0; i < priv->port_count; i++) अणु
 		ret = mvpp2_dbgfs_port_init(mvpp2_dir, priv->port_list[i]);
-		if (ret)
-			goto err;
-	}
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 
 	ret = mvpp2_dbgfs_flow_init(mvpp2_dir, priv);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 
-	return;
+	वापस;
 err:
 	mvpp2_dbgfs_cleanup(priv);
-}
+पूर्ण

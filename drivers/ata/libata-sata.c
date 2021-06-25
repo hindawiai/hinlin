@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  SATA specific part of ATA helper library
+ *  SATA specअगरic part of ATA helper library
  *
  *  Copyright 2003-2004 Red Hat, Inc.  All rights reserved.
  *  Copyright 2003-2004 Jeff Garzik
  *  Copyright 2006 Tejun Heo <htejun@gmail.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <linux/libata.h>
 
-#include "libata.h"
-#include "libata-transport.h"
+#समावेश "libata.h"
+#समावेश "libata-transport.h"
 
-/* debounce timing parameters in msecs { interval, duration, timeout } */
-const unsigned long sata_deb_timing_normal[]		= {   5,  100, 2000 };
+/* debounce timing parameters in msecs अणु पूर्णांकerval, duration, समयout पूर्ण */
+स्थिर अचिन्हित दीर्घ sata_deb_timing_normal[]		= अणु   5,  100, 2000 पूर्ण;
 EXPORT_SYMBOL_GPL(sata_deb_timing_normal);
-const unsigned long sata_deb_timing_hotplug[]		= {  25,  500, 2000 };
+स्थिर अचिन्हित दीर्घ sata_deb_timing_hotplug[]		= अणु  25,  500, 2000 पूर्ण;
 EXPORT_SYMBOL_GPL(sata_deb_timing_hotplug);
-const unsigned long sata_deb_timing_long[]		= { 100, 2000, 5000 };
-EXPORT_SYMBOL_GPL(sata_deb_timing_long);
+स्थिर अचिन्हित दीर्घ sata_deb_timing_दीर्घ[]		= अणु 100, 2000, 5000 पूर्ण;
+EXPORT_SYMBOL_GPL(sata_deb_timing_दीर्घ);
 
 /**
  *	sata_scr_valid - test whether SCRs are accessible
- *	@link: ATA link to test SCR accessibility for
+ *	@link: ATA link to test SCR accessibility क्रम
  *
- *	Test whether SCRs are accessible for @link.
+ *	Test whether SCRs are accessible क्रम @link.
  *
  *	LOCKING:
  *	None.
  *
  *	RETURNS:
- *	1 if SCRs are accessible, 0 otherwise.
+ *	1 अगर SCRs are accessible, 0 otherwise.
  */
-int sata_scr_valid(struct ata_link *link)
-{
-	struct ata_port *ap = link->ap;
+पूर्णांक sata_scr_valid(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_port *ap = link->ap;
 
-	return (ap->flags & ATA_FLAG_SATA) && ap->ops->scr_read;
-}
+	वापस (ap->flags & ATA_FLAG_SATA) && ap->ops->scr_पढ़ो;
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_scr_valid);
 
 /**
- *	sata_scr_read - read SCR register of the specified port
- *	@link: ATA link to read SCR for
- *	@reg: SCR to read
- *	@val: Place to store read value
+ *	sata_scr_पढ़ो - पढ़ो SCR रेजिस्टर of the specअगरied port
+ *	@link: ATA link to पढ़ो SCR क्रम
+ *	@reg: SCR to पढ़ो
+ *	@val: Place to store पढ़ो value
  *
- *	Read SCR register @reg of @link into *@val.  This function is
- *	guaranteed to succeed if @link is ap->link, the cable type of
- *	the port is SATA and the port implements ->scr_read.
- *
- *	LOCKING:
- *	None if @link is ap->link.  Kernel thread context otherwise.
- *
- *	RETURNS:
- *	0 on success, negative errno on failure.
- */
-int sata_scr_read(struct ata_link *link, int reg, u32 *val)
-{
-	if (ata_is_host_link(link)) {
-		if (sata_scr_valid(link))
-			return link->ap->ops->scr_read(link, reg, val);
-		return -EOPNOTSUPP;
-	}
-
-	return sata_pmp_scr_read(link, reg, val);
-}
-EXPORT_SYMBOL_GPL(sata_scr_read);
-
-/**
- *	sata_scr_write - write SCR register of the specified port
- *	@link: ATA link to write SCR for
- *	@reg: SCR to write
- *	@val: value to write
- *
- *	Write @val to SCR register @reg of @link.  This function is
- *	guaranteed to succeed if @link is ap->link, the cable type of
- *	the port is SATA and the port implements ->scr_read.
+ *	Read SCR रेजिस्टर @reg of @link पूर्णांकo *@val.  This function is
+ *	guaranteed to succeed अगर @link is ap->link, the cable type of
+ *	the port is SATA and the port implements ->scr_पढ़ो.
  *
  *	LOCKING:
- *	None if @link is ap->link.  Kernel thread context otherwise.
+ *	None अगर @link is ap->link.  Kernel thपढ़ो context otherwise.
  *
  *	RETURNS:
- *	0 on success, negative errno on failure.
+ *	0 on success, negative त्रुटि_सं on failure.
  */
-int sata_scr_write(struct ata_link *link, int reg, u32 val)
-{
-	if (ata_is_host_link(link)) {
-		if (sata_scr_valid(link))
-			return link->ap->ops->scr_write(link, reg, val);
-		return -EOPNOTSUPP;
-	}
+पूर्णांक sata_scr_पढ़ो(काष्ठा ata_link *link, पूर्णांक reg, u32 *val)
+अणु
+	अगर (ata_is_host_link(link)) अणु
+		अगर (sata_scr_valid(link))
+			वापस link->ap->ops->scr_पढ़ो(link, reg, val);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	return sata_pmp_scr_write(link, reg, val);
-}
-EXPORT_SYMBOL_GPL(sata_scr_write);
+	वापस sata_pmp_scr_पढ़ो(link, reg, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(sata_scr_पढ़ो);
 
 /**
- *	sata_scr_write_flush - write SCR register of the specified port and flush
- *	@link: ATA link to write SCR for
- *	@reg: SCR to write
- *	@val: value to write
+ *	sata_scr_ग_लिखो - ग_लिखो SCR रेजिस्टर of the specअगरied port
+ *	@link: ATA link to ग_लिखो SCR क्रम
+ *	@reg: SCR to ग_लिखो
+ *	@val: value to ग_लिखो
  *
- *	This function is identical to sata_scr_write() except that this
- *	function performs flush after writing to the register.
+ *	Write @val to SCR रेजिस्टर @reg of @link.  This function is
+ *	guaranteed to succeed अगर @link is ap->link, the cable type of
+ *	the port is SATA and the port implements ->scr_पढ़ो.
  *
  *	LOCKING:
- *	None if @link is ap->link.  Kernel thread context otherwise.
+ *	None अगर @link is ap->link.  Kernel thपढ़ो context otherwise.
  *
  *	RETURNS:
- *	0 on success, negative errno on failure.
+ *	0 on success, negative त्रुटि_सं on failure.
  */
-int sata_scr_write_flush(struct ata_link *link, int reg, u32 val)
-{
-	if (ata_is_host_link(link)) {
-		int rc;
+पूर्णांक sata_scr_ग_लिखो(काष्ठा ata_link *link, पूर्णांक reg, u32 val)
+अणु
+	अगर (ata_is_host_link(link)) अणु
+		अगर (sata_scr_valid(link))
+			वापस link->ap->ops->scr_ग_लिखो(link, reg, val);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-		if (sata_scr_valid(link)) {
-			rc = link->ap->ops->scr_write(link, reg, val);
-			if (rc == 0)
-				rc = link->ap->ops->scr_read(link, reg, &val);
-			return rc;
-		}
-		return -EOPNOTSUPP;
-	}
-
-	return sata_pmp_scr_write(link, reg, val);
-}
-EXPORT_SYMBOL_GPL(sata_scr_write_flush);
+	वापस sata_pmp_scr_ग_लिखो(link, reg, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(sata_scr_ग_लिखो);
 
 /**
- *	ata_tf_to_fis - Convert ATA taskfile to SATA FIS structure
+ *	sata_scr_ग_लिखो_flush - ग_लिखो SCR रेजिस्टर of the specअगरied port and flush
+ *	@link: ATA link to ग_लिखो SCR क्रम
+ *	@reg: SCR to ग_लिखो
+ *	@val: value to ग_लिखो
+ *
+ *	This function is identical to sata_scr_ग_लिखो() except that this
+ *	function perक्रमms flush after writing to the रेजिस्टर.
+ *
+ *	LOCKING:
+ *	None अगर @link is ap->link.  Kernel thपढ़ो context otherwise.
+ *
+ *	RETURNS:
+ *	0 on success, negative त्रुटि_सं on failure.
+ */
+पूर्णांक sata_scr_ग_लिखो_flush(काष्ठा ata_link *link, पूर्णांक reg, u32 val)
+अणु
+	अगर (ata_is_host_link(link)) अणु
+		पूर्णांक rc;
+
+		अगर (sata_scr_valid(link)) अणु
+			rc = link->ap->ops->scr_ग_लिखो(link, reg, val);
+			अगर (rc == 0)
+				rc = link->ap->ops->scr_पढ़ो(link, reg, &val);
+			वापस rc;
+		पूर्ण
+		वापस -EOPNOTSUPP;
+	पूर्ण
+
+	वापस sata_pmp_scr_ग_लिखो(link, reg, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(sata_scr_ग_लिखो_flush);
+
+/**
+ *	ata_tf_to_fis - Convert ATA taskfile to SATA FIS काष्ठाure
  *	@tf: Taskfile to convert
  *	@pmp: Port multiplier port
- *	@is_cmd: This FIS is for command
- *	@fis: Buffer into which data will output
+ *	@is_cmd: This FIS is क्रम command
+ *	@fis: Buffer पूर्णांकo which data will output
  *
  *	Converts a standard ATA taskfile to a Serial ATA
- *	FIS structure (Register - Host to Device).
+ *	FIS काष्ठाure (Register - Host to Device).
  *
  *	LOCKING:
  *	Inherited from caller.
  */
-void ata_tf_to_fis(const struct ata_taskfile *tf, u8 pmp, int is_cmd, u8 *fis)
-{
+व्योम ata_tf_to_fis(स्थिर काष्ठा ata_taskfile *tf, u8 pmp, पूर्णांक is_cmd, u8 *fis)
+अणु
 	fis[0] = 0x27;			/* Register - Host to Device FIS */
 	fis[1] = pmp & 0xf;		/* Port multiplier number*/
-	if (is_cmd)
+	अगर (is_cmd)
 		fis[1] |= (1 << 7);	/* bit 7 indicates Command FIS */
 
 	fis[2] = tf->command;
@@ -175,7 +176,7 @@ void ata_tf_to_fis(const struct ata_taskfile *tf, u8 pmp, int is_cmd, u8 *fis)
 	fis[17] = (tf->auxiliary >> 8) & 0xff;
 	fis[18] = (tf->auxiliary >> 16) & 0xff;
 	fis[19] = (tf->auxiliary >> 24) & 0xff;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_tf_to_fis);
 
 /**
@@ -183,14 +184,14 @@ EXPORT_SYMBOL_GPL(ata_tf_to_fis);
  *	@fis: Buffer from which data will be input
  *	@tf: Taskfile to output
  *
- *	Converts a serial ATA FIS structure to a standard ATA taskfile.
+ *	Converts a serial ATA FIS काष्ठाure to a standard ATA taskfile.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
 
-void ata_tf_from_fis(const u8 *fis, struct ata_taskfile *tf)
-{
+व्योम ata_tf_from_fis(स्थिर u8 *fis, काष्ठा ata_taskfile *tf)
+अणु
 	tf->command	= fis[2];	/* status */
 	tf->feature	= fis[3];	/* error */
 
@@ -205,246 +206,246 @@ void ata_tf_from_fis(const u8 *fis, struct ata_taskfile *tf)
 
 	tf->nsect	= fis[12];
 	tf->hob_nsect	= fis[13];
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_tf_from_fis);
 
 /**
  *	sata_link_debounce - debounce SATA phy status
- *	@link: ATA link to debounce SATA phy status for
- *	@params: timing parameters { interval, duration, timeout } in msec
- *	@deadline: deadline jiffies for the operation
+ *	@link: ATA link to debounce SATA phy status क्रम
+ *	@params: timing parameters अणु पूर्णांकerval, duration, समयout पूर्ण in msec
+ *	@deadline: deadline jअगरfies क्रम the operation
  *
  *	Make sure SStatus of @link reaches stable state, determined by
- *	holding the same value where DET is not 1 for @duration polled
- *	every @interval, before @timeout.  Timeout constraints the
- *	beginning of the stable state.  Because DET gets stuck at 1 on
- *	some controllers after hot unplugging, this functions waits
- *	until timeout then returns 0 if DET is stable at 1.
+ *	holding the same value where DET is not 1 क्रम @duration polled
+ *	every @पूर्णांकerval, beक्रमe @समयout.  Timeout स्थिरraपूर्णांकs the
+ *	beginning of the stable state.  Because DET माला_लो stuck at 1 on
+ *	some controllers after hot unplugging, this functions रुकोs
+ *	until समयout then वापसs 0 अगर DET is stable at 1.
  *
- *	@timeout is further limited by @deadline.  The sooner of the
+ *	@समयout is further limited by @deadline.  The sooner of the
  *	two is used.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep)
+ *	Kernel thपढ़ो context (may sleep)
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-int sata_link_debounce(struct ata_link *link, const unsigned long *params,
-		       unsigned long deadline)
-{
-	unsigned long interval = params[0];
-	unsigned long duration = params[1];
-	unsigned long last_jiffies, t;
+पूर्णांक sata_link_debounce(काष्ठा ata_link *link, स्थिर अचिन्हित दीर्घ *params,
+		       अचिन्हित दीर्घ deadline)
+अणु
+	अचिन्हित दीर्घ पूर्णांकerval = params[0];
+	अचिन्हित दीर्घ duration = params[1];
+	अचिन्हित दीर्घ last_jअगरfies, t;
 	u32 last, cur;
-	int rc;
+	पूर्णांक rc;
 
-	t = ata_deadline(jiffies, params[2]);
-	if (time_before(t, deadline))
+	t = ata_deadline(jअगरfies, params[2]);
+	अगर (समय_beक्रमe(t, deadline))
 		deadline = t;
 
-	if ((rc = sata_scr_read(link, SCR_STATUS, &cur)))
-		return rc;
+	अगर ((rc = sata_scr_पढ़ो(link, SCR_STATUS, &cur)))
+		वापस rc;
 	cur &= 0xf;
 
 	last = cur;
-	last_jiffies = jiffies;
+	last_jअगरfies = jअगरfies;
 
-	while (1) {
-		ata_msleep(link->ap, interval);
-		if ((rc = sata_scr_read(link, SCR_STATUS, &cur)))
-			return rc;
+	जबतक (1) अणु
+		ata_msleep(link->ap, पूर्णांकerval);
+		अगर ((rc = sata_scr_पढ़ो(link, SCR_STATUS, &cur)))
+			वापस rc;
 		cur &= 0xf;
 
 		/* DET stable? */
-		if (cur == last) {
-			if (cur == 1 && time_before(jiffies, deadline))
-				continue;
-			if (time_after(jiffies,
-				       ata_deadline(last_jiffies, duration)))
-				return 0;
-			continue;
-		}
+		अगर (cur == last) अणु
+			अगर (cur == 1 && समय_beक्रमe(jअगरfies, deadline))
+				जारी;
+			अगर (समय_after(jअगरfies,
+				       ata_deadline(last_jअगरfies, duration)))
+				वापस 0;
+			जारी;
+		पूर्ण
 
 		/* unstable, start over */
 		last = cur;
-		last_jiffies = jiffies;
+		last_jअगरfies = jअगरfies;
 
-		/* Check deadline.  If debouncing failed, return
+		/* Check deadline.  If debouncing failed, वापस
 		 * -EPIPE to tell upper layer to lower link speed.
 		 */
-		if (time_after(jiffies, deadline))
-			return -EPIPE;
-	}
-}
+		अगर (समय_after(jअगरfies, deadline))
+			वापस -EPIPE;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_link_debounce);
 
 /**
  *	sata_link_resume - resume SATA link
  *	@link: ATA link to resume SATA
- *	@params: timing parameters { interval, duration, timeout } in msec
- *	@deadline: deadline jiffies for the operation
+ *	@params: timing parameters अणु पूर्णांकerval, duration, समयout पूर्ण in msec
+ *	@deadline: deadline jअगरfies क्रम the operation
  *
  *	Resume SATA phy @link and debounce it.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep)
+ *	Kernel thपढ़ो context (may sleep)
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-int sata_link_resume(struct ata_link *link, const unsigned long *params,
-		     unsigned long deadline)
-{
-	int tries = ATA_LINK_RESUME_TRIES;
+पूर्णांक sata_link_resume(काष्ठा ata_link *link, स्थिर अचिन्हित दीर्घ *params,
+		     अचिन्हित दीर्घ deadline)
+अणु
+	पूर्णांक tries = ATA_LINK_RESUME_TRIES;
 	u32 scontrol, serror;
-	int rc;
+	पूर्णांक rc;
 
-	if ((rc = sata_scr_read(link, SCR_CONTROL, &scontrol)))
-		return rc;
+	अगर ((rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol)))
+		वापस rc;
 
 	/*
-	 * Writes to SControl sometimes get ignored under certain
+	 * Writes to SControl someबार get ignored under certain
 	 * controllers (ata_piix SIDPR).  Make sure DET actually is
 	 * cleared.
 	 */
-	do {
+	करो अणु
 		scontrol = (scontrol & 0x0f0) | 0x300;
-		if ((rc = sata_scr_write(link, SCR_CONTROL, scontrol)))
-			return rc;
+		अगर ((rc = sata_scr_ग_लिखो(link, SCR_CONTROL, scontrol)))
+			वापस rc;
 		/*
-		 * Some PHYs react badly if SStatus is pounded
-		 * immediately after resuming.  Delay 200ms before
+		 * Some PHYs react badly अगर SStatus is pounded
+		 * immediately after resuming.  Delay 200ms beक्रमe
 		 * debouncing.
 		 */
-		if (!(link->flags & ATA_LFLAG_NO_DB_DELAY))
+		अगर (!(link->flags & ATA_LFLAG_NO_DB_DELAY))
 			ata_msleep(link->ap, 200);
 
 		/* is SControl restored correctly? */
-		if ((rc = sata_scr_read(link, SCR_CONTROL, &scontrol)))
-			return rc;
-	} while ((scontrol & 0xf0f) != 0x300 && --tries);
+		अगर ((rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol)))
+			वापस rc;
+	पूर्ण जबतक ((scontrol & 0xf0f) != 0x300 && --tries);
 
-	if ((scontrol & 0xf0f) != 0x300) {
+	अगर ((scontrol & 0xf0f) != 0x300) अणु
 		ata_link_warn(link, "failed to resume link (SControl %X)\n",
 			     scontrol);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tries < ATA_LINK_RESUME_TRIES)
+	अगर (tries < ATA_LINK_RESUME_TRIES)
 		ata_link_warn(link, "link resume succeeded after %d retries\n",
 			      ATA_LINK_RESUME_TRIES - tries);
 
-	if ((rc = sata_link_debounce(link, params, deadline)))
-		return rc;
+	अगर ((rc = sata_link_debounce(link, params, deadline)))
+		वापस rc;
 
-	/* clear SError, some PHYs require this even for SRST to work */
-	if (!(rc = sata_scr_read(link, SCR_ERROR, &serror)))
-		rc = sata_scr_write(link, SCR_ERROR, serror);
+	/* clear SError, some PHYs require this even क्रम SRST to work */
+	अगर (!(rc = sata_scr_पढ़ो(link, SCR_ERROR, &serror)))
+		rc = sata_scr_ग_लिखो(link, SCR_ERROR, serror);
 
-	return rc != -EINVAL ? rc : 0;
-}
+	वापस rc != -EINVAL ? rc : 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_link_resume);
 
 /**
  *	sata_link_scr_lpm - manipulate SControl IPM and SPM fields
- *	@link: ATA link to manipulate SControl for
+ *	@link: ATA link to manipulate SControl क्रम
  *	@policy: LPM policy to configure
  *	@spm_wakeup: initiate LPM transition to active state
  *
- *	Manipulate the IPM field of the SControl register of @link
+ *	Manipulate the IPM field of the SControl रेजिस्टर of @link
  *	according to @policy.  If @policy is ATA_LPM_MAX_POWER and
  *	@spm_wakeup is %true, the SPM field is manipulated to wake up
- *	the link.  This function also clears PHYRDY_CHG before
- *	returning.
+ *	the link.  This function also clears PHYRDY_CHG beक्रमe
+ *	वापसing.
  *
  *	LOCKING:
  *	EH context.
  *
  *	RETURNS:
- *	0 on success, -errno otherwise.
+ *	0 on success, -त्रुटि_सं otherwise.
  */
-int sata_link_scr_lpm(struct ata_link *link, enum ata_lpm_policy policy,
+पूर्णांक sata_link_scr_lpm(काष्ठा ata_link *link, क्रमागत ata_lpm_policy policy,
 		      bool spm_wakeup)
-{
-	struct ata_eh_context *ehc = &link->eh_context;
+अणु
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
 	bool woken_up = false;
 	u32 scontrol;
-	int rc;
+	पूर्णांक rc;
 
-	rc = sata_scr_read(link, SCR_CONTROL, &scontrol);
-	if (rc)
-		return rc;
+	rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol);
+	अगर (rc)
+		वापस rc;
 
-	switch (policy) {
-	case ATA_LPM_MAX_POWER:
+	चयन (policy) अणु
+	हाल ATA_LPM_MAX_POWER:
 		/* disable all LPM transitions */
 		scontrol |= (0x7 << 8);
 		/* initiate transition to active state */
-		if (spm_wakeup) {
+		अगर (spm_wakeup) अणु
 			scontrol |= (0x4 << 12);
 			woken_up = true;
-		}
-		break;
-	case ATA_LPM_MED_POWER:
+		पूर्ण
+		अवरोध;
+	हाल ATA_LPM_MED_POWER:
 		/* allow LPM to PARTIAL */
 		scontrol &= ~(0x1 << 8);
 		scontrol |= (0x6 << 8);
-		break;
-	case ATA_LPM_MED_POWER_WITH_DIPM:
-	case ATA_LPM_MIN_POWER_WITH_PARTIAL:
-	case ATA_LPM_MIN_POWER:
-		if (ata_link_nr_enabled(link) > 0)
+		अवरोध;
+	हाल ATA_LPM_MED_POWER_WITH_DIPM:
+	हाल ATA_LPM_MIN_POWER_WITH_PARTIAL:
+	हाल ATA_LPM_MIN_POWER:
+		अगर (ata_link_nr_enabled(link) > 0)
 			/* no restrictions on LPM transitions */
 			scontrol &= ~(0x7 << 8);
-		else {
-			/* empty port, power off */
+		अन्यथा अणु
+			/* empty port, घातer off */
 			scontrol &= ~0xf;
 			scontrol |= (0x1 << 2);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-	}
+	पूर्ण
 
-	rc = sata_scr_write(link, SCR_CONTROL, scontrol);
-	if (rc)
-		return rc;
+	rc = sata_scr_ग_लिखो(link, SCR_CONTROL, scontrol);
+	अगर (rc)
+		वापस rc;
 
-	/* give the link time to transit out of LPM state */
-	if (woken_up)
+	/* give the link समय to transit out of LPM state */
+	अगर (woken_up)
 		msleep(10);
 
 	/* clear PHYRDY_CHG from SError */
 	ehc->i.serror &= ~SERR_PHYRDY_CHG;
-	return sata_scr_write(link, SCR_ERROR, SERR_PHYRDY_CHG);
-}
+	वापस sata_scr_ग_लिखो(link, SCR_ERROR, SERR_PHYRDY_CHG);
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_link_scr_lpm);
 
-static int __sata_set_spd_needed(struct ata_link *link, u32 *scontrol)
-{
-	struct ata_link *host_link = &link->ap->link;
+अटल पूर्णांक __sata_set_spd_needed(काष्ठा ata_link *link, u32 *scontrol)
+अणु
+	काष्ठा ata_link *host_link = &link->ap->link;
 	u32 limit, target, spd;
 
 	limit = link->sata_spd_limit;
 
-	/* Don't configure downstream link faster than upstream link.
-	 * It doesn't speed up anything and some PMPs choke on such
+	/* Don't configure करोwnstream link faster than upstream link.
+	 * It करोesn't speed up anything and some PMPs choke on such
 	 * configuration.
 	 */
-	if (!ata_is_host_link(link) && host_link->sata_spd)
+	अगर (!ata_is_host_link(link) && host_link->sata_spd)
 		limit &= (1 << host_link->sata_spd) - 1;
 
-	if (limit == UINT_MAX)
+	अगर (limit == अच_पूर्णांक_उच्च)
 		target = 0;
-	else
+	अन्यथा
 		target = fls(limit);
 
 	spd = (*scontrol >> 4) & 0xf;
 	*scontrol = (*scontrol & ~0xf0) | ((target & 0xf) << 4);
 
-	return spd != target;
-}
+	वापस spd != target;
+पूर्ण
 
 /**
  *	sata_set_spd_needed - is SATA spd configuration needed
@@ -459,21 +460,21 @@ static int __sata_set_spd_needed(struct ata_link *link, u32 *scontrol)
  *	Inherited from caller.
  *
  *	RETURNS:
- *	1 if SATA spd configuration is needed, 0 otherwise.
+ *	1 अगर SATA spd configuration is needed, 0 otherwise.
  */
-static int sata_set_spd_needed(struct ata_link *link)
-{
+अटल पूर्णांक sata_set_spd_needed(काष्ठा ata_link *link)
+अणु
 	u32 scontrol;
 
-	if (sata_scr_read(link, SCR_CONTROL, &scontrol))
-		return 1;
+	अगर (sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol))
+		वापस 1;
 
-	return __sata_set_spd_needed(link, &scontrol);
-}
+	वापस __sata_set_spd_needed(link, &scontrol);
+पूर्ण
 
 /**
  *	sata_set_spd - set SATA spd according to spd limit
- *	@link: Link to set SATA spd for
+ *	@link: Link to set SATA spd क्रम
  *
  *	Set SATA spd of @link according to sata_spd_limit.
  *
@@ -481,88 +482,88 @@ static int sata_set_spd_needed(struct ata_link *link)
  *	Inherited from caller.
  *
  *	RETURNS:
- *	0 if spd doesn't need to be changed, 1 if spd has been
- *	changed.  Negative errno if SCR registers are inaccessible.
+ *	0 अगर spd करोesn't need to be changed, 1 अगर spd has been
+ *	changed.  Negative त्रुटि_सं अगर SCR रेजिस्टरs are inaccessible.
  */
-int sata_set_spd(struct ata_link *link)
-{
+पूर्णांक sata_set_spd(काष्ठा ata_link *link)
+अणु
 	u32 scontrol;
-	int rc;
+	पूर्णांक rc;
 
-	if ((rc = sata_scr_read(link, SCR_CONTROL, &scontrol)))
-		return rc;
+	अगर ((rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol)))
+		वापस rc;
 
-	if (!__sata_set_spd_needed(link, &scontrol))
-		return 0;
+	अगर (!__sata_set_spd_needed(link, &scontrol))
+		वापस 0;
 
-	if ((rc = sata_scr_write(link, SCR_CONTROL, scontrol)))
-		return rc;
+	अगर ((rc = sata_scr_ग_लिखो(link, SCR_CONTROL, scontrol)))
+		वापस rc;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_set_spd);
 
 /**
  *	sata_link_hardreset - reset link via SATA phy reset
  *	@link: link to reset
- *	@timing: timing parameters { interval, duration, timeout } in msec
- *	@deadline: deadline jiffies for the operation
+ *	@timing: timing parameters अणु पूर्णांकerval, duration, समयout पूर्ण in msec
+ *	@deadline: deadline jअगरfies क्रम the operation
  *	@online: optional out parameter indicating link onlineness
- *	@check_ready: optional callback to check link readiness
+ *	@check_पढ़ोy: optional callback to check link पढ़ोiness
  *
- *	SATA phy-reset @link using DET bits of SControl register.
- *	After hardreset, link readiness is waited upon using
- *	ata_wait_ready() if @check_ready is specified.  LLDs are
- *	allowed to not specify @check_ready and wait itself after this
- *	function returns.  Device classification is LLD's
+ *	SATA phy-reset @link using DET bits of SControl रेजिस्टर.
+ *	After hardreset, link पढ़ोiness is रुकोed upon using
+ *	ata_रुको_पढ़ोy() अगर @check_पढ़ोy is specअगरied.  LLDs are
+ *	allowed to not specअगरy @check_पढ़ोy and रुको itself after this
+ *	function वापसs.  Device classअगरication is LLD's
  *	responsibility.
  *
- *	*@online is set to one iff reset succeeded and @link is online
+ *	*@online is set to one अगरf reset succeeded and @link is online
  *	after reset.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep)
+ *	Kernel thपढ़ो context (may sleep)
  *
  *	RETURNS:
- *	0 on success, -errno otherwise.
+ *	0 on success, -त्रुटि_सं otherwise.
  */
-int sata_link_hardreset(struct ata_link *link, const unsigned long *timing,
-			unsigned long deadline,
-			bool *online, int (*check_ready)(struct ata_link *))
-{
+पूर्णांक sata_link_hardreset(काष्ठा ata_link *link, स्थिर अचिन्हित दीर्घ *timing,
+			अचिन्हित दीर्घ deadline,
+			bool *online, पूर्णांक (*check_पढ़ोy)(काष्ठा ata_link *))
+अणु
 	u32 scontrol;
-	int rc;
+	पूर्णांक rc;
 
 	DPRINTK("ENTER\n");
 
-	if (online)
+	अगर (online)
 		*online = false;
 
-	if (sata_set_spd_needed(link)) {
+	अगर (sata_set_spd_needed(link)) अणु
 		/* SATA spec says nothing about how to reconfigure
 		 * spd.  To be on the safe side, turn off phy during
-		 * reconfiguration.  This works for at least ICH7 AHCI
+		 * reconfiguration.  This works क्रम at least ICH7 AHCI
 		 * and Sil3124.
 		 */
-		if ((rc = sata_scr_read(link, SCR_CONTROL, &scontrol)))
-			goto out;
+		अगर ((rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol)))
+			जाओ out;
 
 		scontrol = (scontrol & 0x0f0) | 0x304;
 
-		if ((rc = sata_scr_write(link, SCR_CONTROL, scontrol)))
-			goto out;
+		अगर ((rc = sata_scr_ग_लिखो(link, SCR_CONTROL, scontrol)))
+			जाओ out;
 
 		sata_set_spd(link);
-	}
+	पूर्ण
 
 	/* issue phy wake/reset */
-	if ((rc = sata_scr_read(link, SCR_CONTROL, &scontrol)))
-		goto out;
+	अगर ((rc = sata_scr_पढ़ो(link, SCR_CONTROL, &scontrol)))
+		जाओ out;
 
 	scontrol = (scontrol & 0x0f0) | 0x301;
 
-	if ((rc = sata_scr_write_flush(link, SCR_CONTROL, scontrol)))
-		goto out;
+	अगर ((rc = sata_scr_ग_लिखो_flush(link, SCR_CONTROL, scontrol)))
+		जाओ out;
 
 	/* Couldn't find anything in SATA I/II specs, but AHCI-1.1
 	 * 10.4.2 says at least 1 ms.
@@ -571,48 +572,48 @@ int sata_link_hardreset(struct ata_link *link, const unsigned long *timing,
 
 	/* bring link back */
 	rc = sata_link_resume(link, timing, deadline);
-	if (rc)
-		goto out;
-	/* if link is offline nothing more to do */
-	if (ata_phys_link_offline(link))
-		goto out;
+	अगर (rc)
+		जाओ out;
+	/* अगर link is offline nothing more to करो */
+	अगर (ata_phys_link_offline(link))
+		जाओ out;
 
-	/* Link is online.  From this point, -ENODEV too is an error. */
-	if (online)
+	/* Link is online.  From this poपूर्णांक, -ENODEV too is an error. */
+	अगर (online)
 		*online = true;
 
-	if (sata_pmp_supported(link->ap) && ata_is_host_link(link)) {
-		/* If PMP is supported, we have to do follow-up SRST.
-		 * Some PMPs don't send D2H Reg FIS after hardreset if
-		 * the first port is empty.  Wait only for
+	अगर (sata_pmp_supported(link->ap) && ata_is_host_link(link)) अणु
+		/* If PMP is supported, we have to करो follow-up SRST.
+		 * Some PMPs करोn't send D2H Reg FIS after hardreset अगर
+		 * the first port is empty.  Wait only क्रम
 		 * ATA_TMOUT_PMP_SRST_WAIT.
 		 */
-		if (check_ready) {
-			unsigned long pmp_deadline;
+		अगर (check_पढ़ोy) अणु
+			अचिन्हित दीर्घ pmp_deadline;
 
-			pmp_deadline = ata_deadline(jiffies,
+			pmp_deadline = ata_deadline(jअगरfies,
 						    ATA_TMOUT_PMP_SRST_WAIT);
-			if (time_after(pmp_deadline, deadline))
+			अगर (समय_after(pmp_deadline, deadline))
 				pmp_deadline = deadline;
-			ata_wait_ready(link, pmp_deadline, check_ready);
-		}
+			ata_रुको_पढ़ोy(link, pmp_deadline, check_पढ़ोy);
+		पूर्ण
 		rc = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = 0;
-	if (check_ready)
-		rc = ata_wait_ready(link, deadline, check_ready);
+	अगर (check_पढ़ोy)
+		rc = ata_रुको_पढ़ोy(link, deadline, check_पढ़ोy);
  out:
-	if (rc && rc != -EAGAIN) {
-		/* online is set iff link is online && reset succeeded */
-		if (online)
+	अगर (rc && rc != -EAGAIN) अणु
+		/* online is set अगरf link is online && reset succeeded */
+		अगर (online)
 			*online = false;
 		ata_link_err(link, "COMRESET failed (errno=%d)\n", rc);
-	}
+	पूर्ण
 	DPRINTK("EXIT, rc=%d\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_link_hardreset);
 
 /**
@@ -621,124 +622,124 @@ EXPORT_SYMBOL_GPL(sata_link_hardreset);
  *	@qc_active: new qc_active mask
  *
  *	Complete in-flight commands.  This functions is meant to be
- *	called from low-level driver's interrupt routine to complete
+ *	called from low-level driver's पूर्णांकerrupt routine to complete
  *	requests normally.  ap->qc_active and @qc_active is compared
  *	and commands are completed accordingly.
  *
  *	Always use this function when completing multiple NCQ commands
  *	from IRQ handlers instead of calling ata_qc_complete()
- *	multiple times to keep IRQ expect status properly in sync.
+ *	multiple बार to keep IRQ expect status properly in sync.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  *
  *	RETURNS:
- *	Number of completed commands on success, -errno otherwise.
+ *	Number of completed commands on success, -त्रुटि_सं otherwise.
  */
-int ata_qc_complete_multiple(struct ata_port *ap, u64 qc_active)
-{
-	u64 done_mask, ap_qc_active = ap->qc_active;
-	int nr_done = 0;
+पूर्णांक ata_qc_complete_multiple(काष्ठा ata_port *ap, u64 qc_active)
+अणु
+	u64 करोne_mask, ap_qc_active = ap->qc_active;
+	पूर्णांक nr_करोne = 0;
 
 	/*
-	 * If the internal tag is set on ap->qc_active, then we care about
+	 * If the पूर्णांकernal tag is set on ap->qc_active, then we care about
 	 * bit0 on the passed in qc_active mask. Move that bit up to match
-	 * the internal tag.
+	 * the पूर्णांकernal tag.
 	 */
-	if (ap_qc_active & (1ULL << ATA_TAG_INTERNAL)) {
+	अगर (ap_qc_active & (1ULL << ATA_TAG_INTERNAL)) अणु
 		qc_active |= (qc_active & 0x01) << ATA_TAG_INTERNAL;
 		qc_active ^= qc_active & 0x01;
-	}
+	पूर्ण
 
-	done_mask = ap_qc_active ^ qc_active;
+	करोne_mask = ap_qc_active ^ qc_active;
 
-	if (unlikely(done_mask & qc_active)) {
+	अगर (unlikely(करोne_mask & qc_active)) अणु
 		ata_port_err(ap, "illegal qc_active transition (%08llx->%08llx)\n",
 			     ap->qc_active, qc_active);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	while (done_mask) {
-		struct ata_queued_cmd *qc;
-		unsigned int tag = __ffs64(done_mask);
+	जबतक (करोne_mask) अणु
+		काष्ठा ata_queued_cmd *qc;
+		अचिन्हित पूर्णांक tag = __ffs64(करोne_mask);
 
 		qc = ata_qc_from_tag(ap, tag);
-		if (qc) {
+		अगर (qc) अणु
 			ata_qc_complete(qc);
-			nr_done++;
-		}
-		done_mask &= ~(1ULL << tag);
-	}
+			nr_करोne++;
+		पूर्ण
+		करोne_mask &= ~(1ULL << tag);
+	पूर्ण
 
-	return nr_done;
-}
+	वापस nr_करोne;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_qc_complete_multiple);
 
 /**
  *	ata_slave_link_init - initialize slave link
- *	@ap: port to initialize slave link for
+ *	@ap: port to initialize slave link क्रम
  *
- *	Create and initialize slave link for @ap.  This enables slave
+ *	Create and initialize slave link क्रम @ap.  This enables slave
  *	link handling on the port.
  *
  *	In libata, a port contains links and a link contains devices.
- *	There is single host link but if a PMP is attached to it,
+ *	There is single host link but अगर a PMP is attached to it,
  *	there can be multiple fan-out links.  On SATA, there's usually
  *	a single device connected to a link but PATA and SATA
- *	controllers emulating TF based interface can have two - master
+ *	controllers emulating TF based पूर्णांकerface can have two - master
  *	and slave.
  *
- *	However, there are a few controllers which don't fit into this
- *	abstraction too well - SATA controllers which emulate TF
- *	interface with both master and slave devices but also have
- *	separate SCR register sets for each device.  These controllers
- *	need separate links for physical link handling
+ *	However, there are a few controllers which करोn't fit पूर्णांकo this
+ *	असलtraction too well - SATA controllers which emulate TF
+ *	पूर्णांकerface with both master and slave devices but also have
+ *	separate SCR रेजिस्टर sets क्रम each device.  These controllers
+ *	need separate links क्रम physical link handling
  *	(e.g. onlineness, link speed) but should be treated like a
- *	traditional M/S controller for everything else (e.g. command
+ *	traditional M/S controller क्रम everything अन्यथा (e.g. command
  *	issue, softreset).
  *
  *	slave_link is libata's way of handling this class of
  *	controllers without impacting core layer too much.  For
- *	anything other than physical link handling, the default host
- *	link is used for both master and slave.  For physical link
+ *	anything other than physical link handling, the शेष host
+ *	link is used क्रम both master and slave.  For physical link
  *	handling, separate @ap->slave_link is used.  All dirty details
  *	are implemented inside libata core layer.  From LLD's POV, the
- *	only difference is that prereset, hardreset and postreset are
- *	called once more for the slave link, so the reset sequence
+ *	only dअगरference is that prereset, hardreset and postreset are
+ *	called once more क्रम the slave link, so the reset sequence
  *	looks like the following.
  *
  *	prereset(M) -> prereset(S) -> hardreset(M) -> hardreset(S) ->
  *	softreset(M) -> postreset(M) -> postreset(S)
  *
- *	Note that softreset is called only for the master.  Softreset
+ *	Note that softreset is called only क्रम the master.  Softreset
  *	resets both M/S by definition, so SRST on master should handle
  *	both (the standard method will work just fine).
  *
  *	LOCKING:
- *	Should be called before host is registered.
+ *	Should be called beक्रमe host is रेजिस्टरed.
  *
  *	RETURNS:
- *	0 on success, -errno on failure.
+ *	0 on success, -त्रुटि_सं on failure.
  */
-int ata_slave_link_init(struct ata_port *ap)
-{
-	struct ata_link *link;
+पूर्णांक ata_slave_link_init(काष्ठा ata_port *ap)
+अणु
+	काष्ठा ata_link *link;
 
 	WARN_ON(ap->slave_link);
 	WARN_ON(ap->flags & ATA_FLAG_PMP);
 
-	link = kzalloc(sizeof(*link), GFP_KERNEL);
-	if (!link)
-		return -ENOMEM;
+	link = kzalloc(माप(*link), GFP_KERNEL);
+	अगर (!link)
+		वापस -ENOMEM;
 
 	ata_link_init(ap, link, 1);
 	ap->slave_link = link;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_slave_link_init);
 
 /**
- *	sata_lpm_ignore_phy_events - test if PHY event should be ignored
+ *	sata_lpm_ignore_phy_events - test अगर PHY event should be ignored
  *	@link: Link receiving the event
  *
  *	Test whether the received PHY event has to be ignored or not.
@@ -747,145 +748,145 @@ EXPORT_SYMBOL_GPL(ata_slave_link_init);
  *	None:
  *
  *	RETURNS:
- *	True if the event has to be ignored.
+ *	True अगर the event has to be ignored.
  */
-bool sata_lpm_ignore_phy_events(struct ata_link *link)
-{
-	unsigned long lpm_timeout = link->last_lpm_change +
-				    msecs_to_jiffies(ATA_TMOUT_SPURIOUS_PHY);
+bool sata_lpm_ignore_phy_events(काष्ठा ata_link *link)
+अणु
+	अचिन्हित दीर्घ lpm_समयout = link->last_lpm_change +
+				    msecs_to_jअगरfies(ATA_TMOUT_SPURIOUS_PHY);
 
-	/* if LPM is enabled, PHYRDY doesn't mean anything */
-	if (link->lpm_policy > ATA_LPM_MAX_POWER)
-		return true;
+	/* अगर LPM is enabled, PHYRDY करोesn't mean anything */
+	अगर (link->lpm_policy > ATA_LPM_MAX_POWER)
+		वापस true;
 
 	/* ignore the first PHY event after the LPM policy changed
 	 * as it is might be spurious
 	 */
-	if ((link->flags & ATA_LFLAG_CHANGED) &&
-	    time_before(jiffies, lpm_timeout))
-		return true;
+	अगर ((link->flags & ATA_LFLAG_CHANGED) &&
+	    समय_beक्रमe(jअगरfies, lpm_समयout))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(sata_lpm_ignore_phy_events);
 
-static const char *ata_lpm_policy_names[] = {
+अटल स्थिर अक्षर *ata_lpm_policy_names[] = अणु
 	[ATA_LPM_UNKNOWN]		= "max_performance",
 	[ATA_LPM_MAX_POWER]		= "max_performance",
 	[ATA_LPM_MED_POWER]		= "medium_power",
 	[ATA_LPM_MED_POWER_WITH_DIPM]	= "med_power_with_dipm",
 	[ATA_LPM_MIN_POWER_WITH_PARTIAL] = "min_power_with_partial",
 	[ATA_LPM_MIN_POWER]		= "min_power",
-};
+पूर्ण;
 
-static ssize_t ata_scsi_lpm_store(struct device *device,
-				  struct device_attribute *attr,
-				  const char *buf, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(device);
-	struct ata_port *ap = ata_shost_to_port(shost);
-	struct ata_link *link;
-	struct ata_device *dev;
-	enum ata_lpm_policy policy;
-	unsigned long flags;
+अटल sमाप_प्रकार ata_scsi_lpm_store(काष्ठा device *device,
+				  काष्ठा device_attribute *attr,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(device);
+	काष्ठा ata_port *ap = ata_shost_to_port(shost);
+	काष्ठा ata_link *link;
+	काष्ठा ata_device *dev;
+	क्रमागत ata_lpm_policy policy;
+	अचिन्हित दीर्घ flags;
 
-	/* UNKNOWN is internal state, iterate from MAX_POWER */
-	for (policy = ATA_LPM_MAX_POWER;
-	     policy < ARRAY_SIZE(ata_lpm_policy_names); policy++) {
-		const char *name = ata_lpm_policy_names[policy];
+	/* UNKNOWN is पूर्णांकernal state, iterate from MAX_POWER */
+	क्रम (policy = ATA_LPM_MAX_POWER;
+	     policy < ARRAY_SIZE(ata_lpm_policy_names); policy++) अणु
+		स्थिर अक्षर *name = ata_lpm_policy_names[policy];
 
-		if (strncmp(name, buf, strlen(name)) == 0)
-			break;
-	}
-	if (policy == ARRAY_SIZE(ata_lpm_policy_names))
-		return -EINVAL;
+		अगर (म_भेदन(name, buf, म_माप(name)) == 0)
+			अवरोध;
+	पूर्ण
+	अगर (policy == ARRAY_SIZE(ata_lpm_policy_names))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(ap->lock, flags);
 
-	ata_for_each_link(link, ap, EDGE) {
-		ata_for_each_dev(dev, &ap->link, ENABLED) {
-			if (dev->horkage & ATA_HORKAGE_NOLPM) {
+	ata_क्रम_each_link(link, ap, EDGE) अणु
+		ata_क्रम_each_dev(dev, &ap->link, ENABLED) अणु
+			अगर (dev->horkage & ATA_HORKAGE_NOLPM) अणु
 				count = -EOPNOTSUPP;
-				goto out_unlock;
-			}
-		}
-	}
+				जाओ out_unlock;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	ap->target_lpm_policy = policy;
 	ata_port_schedule_eh(ap);
 out_unlock:
 	spin_unlock_irqrestore(ap->lock, flags);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ata_scsi_lpm_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct ata_port *ap = ata_shost_to_port(shost);
+अटल sमाप_प्रकार ata_scsi_lpm_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(shost);
 
-	if (ap->target_lpm_policy >= ARRAY_SIZE(ata_lpm_policy_names))
-		return -EINVAL;
+	अगर (ap->target_lpm_policy >= ARRAY_SIZE(ata_lpm_policy_names))
+		वापस -EINVAL;
 
-	return snprintf(buf, PAGE_SIZE, "%s\n",
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n",
 			ata_lpm_policy_names[ap->target_lpm_policy]);
-}
-DEVICE_ATTR(link_power_management_policy, S_IRUGO | S_IWUSR,
+पूर्ण
+DEVICE_ATTR(link_घातer_management_policy, S_IRUGO | S_IWUSR,
 	    ata_scsi_lpm_show, ata_scsi_lpm_store);
-EXPORT_SYMBOL_GPL(dev_attr_link_power_management_policy);
+EXPORT_SYMBOL_GPL(dev_attr_link_घातer_management_policy);
 
-static ssize_t ata_ncq_prio_enable_show(struct device *device,
-					struct device_attribute *attr,
-					char *buf)
-{
-	struct scsi_device *sdev = to_scsi_device(device);
-	struct ata_port *ap;
-	struct ata_device *dev;
+अटल sमाप_प्रकार ata_ncq_prio_enable_show(काष्ठा device *device,
+					काष्ठा device_attribute *attr,
+					अक्षर *buf)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(device);
+	काष्ठा ata_port *ap;
+	काष्ठा ata_device *dev;
 	bool ncq_prio_enable;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
 	ap = ata_shost_to_port(sdev->host);
 
 	spin_lock_irq(ap->lock);
 	dev = ata_scsi_find_dev(ap, sdev);
-	if (!dev) {
+	अगर (!dev) अणु
 		rc = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	ncq_prio_enable = dev->flags & ATA_DFLAG_NCQ_PRIO_ENABLE;
 
 unlock:
 	spin_unlock_irq(ap->lock);
 
-	return rc ? rc : snprintf(buf, 20, "%u\n", ncq_prio_enable);
-}
+	वापस rc ? rc : snम_लिखो(buf, 20, "%u\n", ncq_prio_enable);
+पूर्ण
 
-static ssize_t ata_ncq_prio_enable_store(struct device *device,
-					 struct device_attribute *attr,
-					 const char *buf, size_t len)
-{
-	struct scsi_device *sdev = to_scsi_device(device);
-	struct ata_port *ap;
-	struct ata_device *dev;
-	long int input;
-	int rc;
+अटल sमाप_प्रकार ata_ncq_prio_enable_store(काष्ठा device *device,
+					 काष्ठा device_attribute *attr,
+					 स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(device);
+	काष्ठा ata_port *ap;
+	काष्ठा ata_device *dev;
+	दीर्घ पूर्णांक input;
+	पूर्णांक rc;
 
-	rc = kstrtol(buf, 10, &input);
-	if (rc)
-		return rc;
-	if ((input < 0) || (input > 1))
-		return -EINVAL;
+	rc = kम_से_दीर्घ(buf, 10, &input);
+	अगर (rc)
+		वापस rc;
+	अगर ((input < 0) || (input > 1))
+		वापस -EINVAL;
 
 	ap = ata_shost_to_port(sdev->host);
 	dev = ata_scsi_find_dev(ap, sdev);
-	if (unlikely(!dev))
-		return  -ENODEV;
+	अगर (unlikely(!dev))
+		वापस  -ENODEV;
 
 	spin_lock_irq(ap->lock);
-	if (input)
+	अगर (input)
 		dev->flags |= ATA_DFLAG_NCQ_PRIO_ENABLE;
-	else
+	अन्यथा
 		dev->flags &= ~ATA_DFLAG_NCQ_PRIO_ENABLE;
 
 	dev->link->eh_info.action |= ATA_EH_REVALIDATE;
@@ -893,142 +894,142 @@ static ssize_t ata_ncq_prio_enable_store(struct device *device,
 	ata_port_schedule_eh(ap);
 	spin_unlock_irq(ap->lock);
 
-	ata_port_wait_eh(ap);
+	ata_port_रुको_eh(ap);
 
-	if (input) {
+	अगर (input) अणु
 		spin_lock_irq(ap->lock);
-		if (!(dev->flags & ATA_DFLAG_NCQ_PRIO)) {
+		अगर (!(dev->flags & ATA_DFLAG_NCQ_PRIO)) अणु
 			dev->flags &= ~ATA_DFLAG_NCQ_PRIO_ENABLE;
 			rc = -EIO;
-		}
+		पूर्ण
 		spin_unlock_irq(ap->lock);
-	}
+	पूर्ण
 
-	return rc ? rc : len;
-}
+	वापस rc ? rc : len;
+पूर्ण
 
 DEVICE_ATTR(ncq_prio_enable, S_IRUGO | S_IWUSR,
 	    ata_ncq_prio_enable_show, ata_ncq_prio_enable_store);
 EXPORT_SYMBOL_GPL(dev_attr_ncq_prio_enable);
 
-struct device_attribute *ata_ncq_sdev_attrs[] = {
+काष्ठा device_attribute *ata_ncq_sdev_attrs[] = अणु
 	&dev_attr_unload_heads,
 	&dev_attr_ncq_prio_enable,
-	NULL
-};
+	शून्य
+पूर्ण;
 EXPORT_SYMBOL_GPL(ata_ncq_sdev_attrs);
 
-static ssize_t
-ata_scsi_em_message_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct ata_port *ap = ata_shost_to_port(shost);
-	if (ap->ops->em_store && (ap->flags & ATA_FLAG_EM))
-		return ap->ops->em_store(ap, buf, count);
-	return -EINVAL;
-}
+अटल sमाप_प्रकार
+ata_scsi_em_message_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(shost);
+	अगर (ap->ops->em_store && (ap->flags & ATA_FLAG_EM))
+		वापस ap->ops->em_store(ap, buf, count);
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t
-ata_scsi_em_message_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct ata_port *ap = ata_shost_to_port(shost);
+अटल sमाप_प्रकार
+ata_scsi_em_message_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(shost);
 
-	if (ap->ops->em_show && (ap->flags & ATA_FLAG_EM))
-		return ap->ops->em_show(ap, buf);
-	return -EINVAL;
-}
+	अगर (ap->ops->em_show && (ap->flags & ATA_FLAG_EM))
+		वापस ap->ops->em_show(ap, buf);
+	वापस -EINVAL;
+पूर्ण
 DEVICE_ATTR(em_message, S_IRUGO | S_IWUSR,
 		ata_scsi_em_message_show, ata_scsi_em_message_store);
 EXPORT_SYMBOL_GPL(dev_attr_em_message);
 
-static ssize_t
-ata_scsi_em_message_type_show(struct device *dev, struct device_attribute *attr,
-			      char *buf)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct ata_port *ap = ata_shost_to_port(shost);
+अटल sमाप_प्रकार
+ata_scsi_em_message_type_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(shost);
 
-	return snprintf(buf, 23, "%d\n", ap->em_message_type);
-}
+	वापस snम_लिखो(buf, 23, "%d\n", ap->em_message_type);
+पूर्ण
 DEVICE_ATTR(em_message_type, S_IRUGO,
-		  ata_scsi_em_message_type_show, NULL);
+		  ata_scsi_em_message_type_show, शून्य);
 EXPORT_SYMBOL_GPL(dev_attr_em_message_type);
 
-static ssize_t
-ata_scsi_activity_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	struct scsi_device *sdev = to_scsi_device(dev);
-	struct ata_port *ap = ata_shost_to_port(sdev->host);
-	struct ata_device *atadev = ata_scsi_find_dev(ap, sdev);
+अटल sमाप_प्रकार
+ata_scsi_activity_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(sdev->host);
+	काष्ठा ata_device *atadev = ata_scsi_find_dev(ap, sdev);
 
-	if (atadev && ap->ops->sw_activity_show &&
+	अगर (atadev && ap->ops->sw_activity_show &&
 	    (ap->flags & ATA_FLAG_SW_ACTIVITY))
-		return ap->ops->sw_activity_show(atadev, buf);
-	return -EINVAL;
-}
+		वापस ap->ops->sw_activity_show(atadev, buf);
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t
-ata_scsi_activity_store(struct device *dev, struct device_attribute *attr,
-	const char *buf, size_t count)
-{
-	struct scsi_device *sdev = to_scsi_device(dev);
-	struct ata_port *ap = ata_shost_to_port(sdev->host);
-	struct ata_device *atadev = ata_scsi_find_dev(ap, sdev);
-	enum sw_activity val;
-	int rc;
+अटल sमाप_प्रकार
+ata_scsi_activity_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+	स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा scsi_device *sdev = to_scsi_device(dev);
+	काष्ठा ata_port *ap = ata_shost_to_port(sdev->host);
+	काष्ठा ata_device *atadev = ata_scsi_find_dev(ap, sdev);
+	क्रमागत sw_activity val;
+	पूर्णांक rc;
 
-	if (atadev && ap->ops->sw_activity_store &&
-	    (ap->flags & ATA_FLAG_SW_ACTIVITY)) {
-		val = simple_strtoul(buf, NULL, 0);
-		switch (val) {
-		case OFF: case BLINK_ON: case BLINK_OFF:
+	अगर (atadev && ap->ops->sw_activity_store &&
+	    (ap->flags & ATA_FLAG_SW_ACTIVITY)) अणु
+		val = simple_म_से_अदीर्घ(buf, शून्य, 0);
+		चयन (val) अणु
+		हाल OFF: हाल BLINK_ON: हाल BLINK_OFF:
 			rc = ap->ops->sw_activity_store(atadev, val);
-			if (!rc)
-				return count;
-			else
-				return rc;
-		}
-	}
-	return -EINVAL;
-}
+			अगर (!rc)
+				वापस count;
+			अन्यथा
+				वापस rc;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 DEVICE_ATTR(sw_activity, S_IWUSR | S_IRUGO, ata_scsi_activity_show,
 			ata_scsi_activity_store);
 EXPORT_SYMBOL_GPL(dev_attr_sw_activity);
 
 /**
- *	__ata_change_queue_depth - helper for ata_scsi_change_queue_depth
+ *	__ata_change_queue_depth - helper क्रम ata_scsi_change_queue_depth
  *	@ap: ATA port to which the device change the queue depth
- *	@sdev: SCSI device to configure queue depth for
+ *	@sdev: SCSI device to configure queue depth क्रम
  *	@queue_depth: new queue depth
  *
- *	libsas and libata have different approaches for associating a sdev to
+ *	libsas and libata have dअगरferent approaches क्रम associating a sdev to
  *	its ata_port.
  *
  */
-int __ata_change_queue_depth(struct ata_port *ap, struct scsi_device *sdev,
-			     int queue_depth)
-{
-	struct ata_device *dev;
-	unsigned long flags;
+पूर्णांक __ata_change_queue_depth(काष्ठा ata_port *ap, काष्ठा scsi_device *sdev,
+			     पूर्णांक queue_depth)
+अणु
+	काष्ठा ata_device *dev;
+	अचिन्हित दीर्घ flags;
 
-	if (queue_depth < 1 || queue_depth == sdev->queue_depth)
-		return sdev->queue_depth;
+	अगर (queue_depth < 1 || queue_depth == sdev->queue_depth)
+		वापस sdev->queue_depth;
 
 	dev = ata_scsi_find_dev(ap, sdev);
-	if (!dev || !ata_dev_enabled(dev))
-		return sdev->queue_depth;
+	अगर (!dev || !ata_dev_enabled(dev))
+		वापस sdev->queue_depth;
 
 	/* NCQ enabled? */
 	spin_lock_irqsave(ap->lock, flags);
 	dev->flags &= ~ATA_DFLAG_NCQ_OFF;
-	if (queue_depth == 1 || !ata_ncq_enabled(dev)) {
+	अगर (queue_depth == 1 || !ata_ncq_enabled(dev)) अणु
 		dev->flags |= ATA_DFLAG_NCQ_OFF;
 		queue_depth = 1;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(ap->lock, flags);
 
 	/* limit and apply queue depth */
@@ -1036,58 +1037,58 @@ int __ata_change_queue_depth(struct ata_port *ap, struct scsi_device *sdev,
 	queue_depth = min(queue_depth, ata_id_queue_depth(dev->id));
 	queue_depth = min(queue_depth, ATA_MAX_QUEUE);
 
-	if (sdev->queue_depth == queue_depth)
-		return -EINVAL;
+	अगर (sdev->queue_depth == queue_depth)
+		वापस -EINVAL;
 
-	return scsi_change_queue_depth(sdev, queue_depth);
-}
+	वापस scsi_change_queue_depth(sdev, queue_depth);
+पूर्ण
 EXPORT_SYMBOL_GPL(__ata_change_queue_depth);
 
 /**
- *	ata_scsi_change_queue_depth - SCSI callback for queue depth config
- *	@sdev: SCSI device to configure queue depth for
+ *	ata_scsi_change_queue_depth - SCSI callback क्रम queue depth config
+ *	@sdev: SCSI device to configure queue depth क्रम
  *	@queue_depth: new queue depth
  *
  *	This is libata standard hostt->change_queue_depth callback.
- *	SCSI will call into this callback when user tries to set queue
+ *	SCSI will call पूर्णांकo this callback when user tries to set queue
  *	depth via sysfs.
  *
  *	LOCKING:
- *	SCSI layer (we don't care)
+ *	SCSI layer (we करोn't care)
  *
  *	RETURNS:
  *	Newly configured queue depth.
  */
-int ata_scsi_change_queue_depth(struct scsi_device *sdev, int queue_depth)
-{
-	struct ata_port *ap = ata_shost_to_port(sdev->host);
+पूर्णांक ata_scsi_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक queue_depth)
+अणु
+	काष्ठा ata_port *ap = ata_shost_to_port(sdev->host);
 
-	return __ata_change_queue_depth(ap, sdev, queue_depth);
-}
+	वापस __ata_change_queue_depth(ap, sdev, queue_depth);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_scsi_change_queue_depth);
 
 /**
- *	ata_sas_port_alloc - Allocate port for a SAS attached SATA device
- *	@host: ATA host container for all SAS ports
- *	@port_info: Information from low-level host driver
+ *	ata_sas_port_alloc - Allocate port क्रम a SAS attached SATA device
+ *	@host: ATA host container क्रम all SAS ports
+ *	@port_info: Inक्रमmation from low-level host driver
  *	@shost: SCSI host that the scsi device is attached to
  *
  *	LOCKING:
  *	PCI/etc. bus probe sem.
  *
  *	RETURNS:
- *	ata_port pointer on success / NULL on failure.
+ *	ata_port poपूर्णांकer on success / शून्य on failure.
  */
 
-struct ata_port *ata_sas_port_alloc(struct ata_host *host,
-				    struct ata_port_info *port_info,
-				    struct Scsi_Host *shost)
-{
-	struct ata_port *ap;
+काष्ठा ata_port *ata_sas_port_alloc(काष्ठा ata_host *host,
+				    काष्ठा ata_port_info *port_info,
+				    काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा ata_port *ap;
 
 	ap = ata_port_alloc(host);
-	if (!ap)
-		return NULL;
+	अगर (!ap)
+		वापस शून्य;
 
 	ap->port_no = 0;
 	ap->lock = &host->lock;
@@ -1098,15 +1099,15 @@ struct ata_port *ata_sas_port_alloc(struct ata_host *host,
 	ap->ops = port_info->port_ops;
 	ap->cbl = ATA_CBL_SATA;
 
-	return ap;
-}
+	वापस ap;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_port_alloc);
 
 /**
- *	ata_sas_port_start - Set port up for dma.
+ *	ata_sas_port_start - Set port up क्रम dma.
  *	@ap: Port to initialize
  *
- *	Called just after data structures for each port are
+ *	Called just after data काष्ठाures क्रम each port are
  *	initialized.
  *
  *	May be used as the port_start() entry in ata_port_operations.
@@ -1114,21 +1115,21 @@ EXPORT_SYMBOL_GPL(ata_sas_port_alloc);
  *	LOCKING:
  *	Inherited from caller.
  */
-int ata_sas_port_start(struct ata_port *ap)
-{
+पूर्णांक ata_sas_port_start(काष्ठा ata_port *ap)
+अणु
 	/*
-	 * the port is marked as frozen at allocation time, but if we don't
+	 * the port is marked as frozen at allocation समय, but अगर we करोn't
 	 * have new eh, we won't thaw it
 	 */
-	if (!ap->ops->error_handler)
+	अगर (!ap->ops->error_handler)
 		ap->pflags &= ~ATA_PFLAG_FROZEN;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_port_start);
 
 /**
- *	ata_sas_port_stop - Undo ata_sas_port_start()
- *	@ap: Port to shut down
+ *	ata_sas_port_stop - Unकरो ata_sas_port_start()
+ *	@ap: Port to shut करोwn
  *
  *	May be used as the port_stop() entry in ata_port_operations.
  *
@@ -1136,28 +1137,28 @@ EXPORT_SYMBOL_GPL(ata_sas_port_start);
  *	Inherited from caller.
  */
 
-void ata_sas_port_stop(struct ata_port *ap)
-{
-}
+व्योम ata_sas_port_stop(काष्ठा ata_port *ap)
+अणु
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_port_stop);
 
 /**
- * ata_sas_async_probe - simply schedule probing and return
+ * ata_sas_async_probe - simply schedule probing and वापस
  * @ap: Port to probe
  *
- * For batch scheduling of probe for sas attached ata devices, assumes
- * the port has already been through ata_sas_port_init()
+ * For batch scheduling of probe क्रम sas attached ata devices, assumes
+ * the port has alपढ़ोy been through ata_sas_port_init()
  */
-void ata_sas_async_probe(struct ata_port *ap)
-{
+व्योम ata_sas_async_probe(काष्ठा ata_port *ap)
+अणु
 	__ata_port_probe(ap);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_async_probe);
 
-int ata_sas_sync_probe(struct ata_port *ap)
-{
-	return ata_port_probe(ap);
-}
+पूर्णांक ata_sas_sync_probe(काष्ठा ata_port *ap)
+अणु
+	वापस ata_port_probe(ap);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_sync_probe);
 
 
@@ -1172,27 +1173,27 @@ EXPORT_SYMBOL_GPL(ata_sas_sync_probe);
  *	Zero on success, non-zero on error.
  */
 
-int ata_sas_port_init(struct ata_port *ap)
-{
-	int rc = ap->ops->port_start(ap);
+पूर्णांक ata_sas_port_init(काष्ठा ata_port *ap)
+अणु
+	पूर्णांक rc = ap->ops->port_start(ap);
 
-	if (rc)
-		return rc;
-	ap->print_id = atomic_inc_return(&ata_print_id);
-	return 0;
-}
+	अगर (rc)
+		वापस rc;
+	ap->prपूर्णांक_id = atomic_inc_वापस(&ata_prपूर्णांक_id);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_port_init);
 
-int ata_sas_tport_add(struct device *parent, struct ata_port *ap)
-{
-	return ata_tport_add(parent, ap);
-}
+पूर्णांक ata_sas_tport_add(काष्ठा device *parent, काष्ठा ata_port *ap)
+अणु
+	वापस ata_tport_add(parent, ap);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_tport_add);
 
-void ata_sas_tport_delete(struct ata_port *ap)
-{
+व्योम ata_sas_tport_delete(काष्ठा ata_port *ap)
+अणु
 	ata_tport_delete(ap);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_tport_delete);
 
 /**
@@ -1201,16 +1202,16 @@ EXPORT_SYMBOL_GPL(ata_sas_tport_delete);
  *
  */
 
-void ata_sas_port_destroy(struct ata_port *ap)
-{
-	if (ap->ops->port_stop)
+व्योम ata_sas_port_destroy(काष्ठा ata_port *ap)
+अणु
+	अगर (ap->ops->port_stop)
 		ap->ops->port_stop(ap);
-	kfree(ap);
-}
+	kमुक्त(ap);
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_port_destroy);
 
 /**
- *	ata_sas_slave_configure - Default slave_config routine for libata devices
+ *	ata_sas_slave_configure - Default slave_config routine क्रम libata devices
  *	@sdev: SCSI device to configure
  *	@ap: ATA port to which SCSI device is attached
  *
@@ -1218,12 +1219,12 @@ EXPORT_SYMBOL_GPL(ata_sas_port_destroy);
  *	Zero.
  */
 
-int ata_sas_slave_configure(struct scsi_device *sdev, struct ata_port *ap)
-{
+पूर्णांक ata_sas_slave_configure(काष्ठा scsi_device *sdev, काष्ठा ata_port *ap)
+अणु
 	ata_scsi_sdev_config(sdev);
 	ata_scsi_dev_config(sdev, ap->link.device);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_slave_configure);
 
 /**
@@ -1232,161 +1233,161 @@ EXPORT_SYMBOL_GPL(ata_sas_slave_configure);
  *	@ap:	ATA port to which the command is being sent
  *
  *	RETURNS:
- *	Return value from __ata_scsi_queuecmd() if @cmd can be queued,
+ *	Return value from __ata_scsi_queuecmd() अगर @cmd can be queued,
  *	0 otherwise.
  */
 
-int ata_sas_queuecmd(struct scsi_cmnd *cmd, struct ata_port *ap)
-{
-	int rc = 0;
+पूर्णांक ata_sas_queuecmd(काष्ठा scsi_cmnd *cmd, काष्ठा ata_port *ap)
+अणु
+	पूर्णांक rc = 0;
 
 	ata_scsi_dump_cdb(ap, cmd);
 
-	if (likely(ata_dev_enabled(ap->link.device)))
+	अगर (likely(ata_dev_enabled(ap->link.device)))
 		rc = __ata_scsi_queuecmd(cmd, ap->link.device);
-	else {
+	अन्यथा अणु
 		cmd->result = (DID_BAD_TARGET << 16);
-		cmd->scsi_done(cmd);
-	}
-	return rc;
-}
+		cmd->scsi_करोne(cmd);
+	पूर्ण
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_sas_queuecmd);
 
-int ata_sas_allocate_tag(struct ata_port *ap)
-{
-	unsigned int max_queue = ap->host->n_tags;
-	unsigned int i, tag;
+पूर्णांक ata_sas_allocate_tag(काष्ठा ata_port *ap)
+अणु
+	अचिन्हित पूर्णांक max_queue = ap->host->n_tags;
+	अचिन्हित पूर्णांक i, tag;
 
-	for (i = 0, tag = ap->sas_last_tag + 1; i < max_queue; i++, tag++) {
+	क्रम (i = 0, tag = ap->sas_last_tag + 1; i < max_queue; i++, tag++) अणु
 		tag = tag < max_queue ? tag : 0;
 
-		/* the last tag is reserved for internal command. */
-		if (ata_tag_internal(tag))
-			continue;
+		/* the last tag is reserved क्रम पूर्णांकernal command. */
+		अगर (ata_tag_पूर्णांकernal(tag))
+			जारी;
 
-		if (!test_and_set_bit(tag, &ap->sas_tag_allocated)) {
+		अगर (!test_and_set_bit(tag, &ap->sas_tag_allocated)) अणु
 			ap->sas_last_tag = tag;
-			return tag;
-		}
-	}
-	return -1;
-}
+			वापस tag;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-void ata_sas_free_tag(unsigned int tag, struct ata_port *ap)
-{
+व्योम ata_sas_मुक्त_tag(अचिन्हित पूर्णांक tag, काष्ठा ata_port *ap)
+अणु
 	clear_bit(tag, &ap->sas_tag_allocated);
-}
+पूर्ण
 
 /**
- *	sata_async_notification - SATA async notification handler
- *	@ap: ATA port where async notification is received
+ *	sata_async_notअगरication - SATA async notअगरication handler
+ *	@ap: ATA port where async notअगरication is received
  *
- *	Handler to be called when async notification via SDB FIS is
- *	received.  This function schedules EH if necessary.
+ *	Handler to be called when async notअगरication via SDB FIS is
+ *	received.  This function schedules EH अगर necessary.
  *
  *	LOCKING:
  *	spin_lock_irqsave(host lock)
  *
  *	RETURNS:
- *	1 if EH is scheduled, 0 otherwise.
+ *	1 अगर EH is scheduled, 0 otherwise.
  */
-int sata_async_notification(struct ata_port *ap)
-{
+पूर्णांक sata_async_notअगरication(काष्ठा ata_port *ap)
+अणु
 	u32 sntf;
-	int rc;
+	पूर्णांक rc;
 
-	if (!(ap->flags & ATA_FLAG_AN))
-		return 0;
+	अगर (!(ap->flags & ATA_FLAG_AN))
+		वापस 0;
 
-	rc = sata_scr_read(&ap->link, SCR_NOTIFICATION, &sntf);
-	if (rc == 0)
-		sata_scr_write(&ap->link, SCR_NOTIFICATION, sntf);
+	rc = sata_scr_पढ़ो(&ap->link, SCR_NOTIFICATION, &sntf);
+	अगर (rc == 0)
+		sata_scr_ग_लिखो(&ap->link, SCR_NOTIFICATION, sntf);
 
-	if (!sata_pmp_attached(ap) || rc) {
+	अगर (!sata_pmp_attached(ap) || rc) अणु
 		/* PMP is not attached or SNTF is not available */
-		if (!sata_pmp_attached(ap)) {
+		अगर (!sata_pmp_attached(ap)) अणु
 			/* PMP is not attached.  Check whether ATAPI
-			 * AN is configured.  If so, notify media
+			 * AN is configured.  If so, notअगरy media
 			 * change.
 			 */
-			struct ata_device *dev = ap->link.device;
+			काष्ठा ata_device *dev = ap->link.device;
 
-			if ((dev->class == ATA_DEV_ATAPI) &&
+			अगर ((dev->class == ATA_DEV_ATAPI) &&
 			    (dev->flags & ATA_DFLAG_AN))
-				ata_scsi_media_change_notify(dev);
-			return 0;
-		} else {
+				ata_scsi_media_change_notअगरy(dev);
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			/* PMP is attached but SNTF is not available.
-			 * ATAPI async media change notification is
+			 * ATAPI async media change notअगरication is
 			 * not used.  The PMP must be reporting PHY
 			 * status change, schedule EH.
 			 */
 			ata_port_schedule_eh(ap);
-			return 1;
-		}
-	} else {
+			वापस 1;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* PMP is attached and SNTF is available */
-		struct ata_link *link;
+		काष्ठा ata_link *link;
 
-		/* check and notify ATAPI AN */
-		ata_for_each_link(link, ap, EDGE) {
-			if (!(sntf & (1 << link->pmp)))
-				continue;
+		/* check and notअगरy ATAPI AN */
+		ata_क्रम_each_link(link, ap, EDGE) अणु
+			अगर (!(sntf & (1 << link->pmp)))
+				जारी;
 
-			if ((link->device->class == ATA_DEV_ATAPI) &&
+			अगर ((link->device->class == ATA_DEV_ATAPI) &&
 			    (link->device->flags & ATA_DFLAG_AN))
-				ata_scsi_media_change_notify(link->device);
-		}
+				ata_scsi_media_change_notअगरy(link->device);
+		पूर्ण
 
 		/* If PMP is reporting that PHY status of some
-		 * downstream ports has changed, schedule EH.
+		 * करोwnstream ports has changed, schedule EH.
 		 */
-		if (sntf & (1 << SATA_PMP_CTRL_PORT)) {
+		अगर (sntf & (1 << SATA_PMP_CTRL_PORT)) अणु
 			ata_port_schedule_eh(ap);
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
-		return 0;
-	}
-}
-EXPORT_SYMBOL_GPL(sata_async_notification);
+		वापस 0;
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL_GPL(sata_async_notअगरication);
 
 /**
- *	ata_eh_read_log_10h - Read log page 10h for NCQ error details
- *	@dev: Device to read log page 10h from
+ *	ata_eh_पढ़ो_log_10h - Read log page 10h क्रम NCQ error details
+ *	@dev: Device to पढ़ो log page 10h from
  *	@tag: Resulting tag of the failed command
- *	@tf: Resulting taskfile registers of the failed command
+ *	@tf: Resulting taskfile रेजिस्टरs of the failed command
  *
  *	Read log page 10h to obtain NCQ error details and clear error
  *	condition.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  *
  *	RETURNS:
- *	0 on success, -errno otherwise.
+ *	0 on success, -त्रुटि_सं otherwise.
  */
-static int ata_eh_read_log_10h(struct ata_device *dev,
-			       int *tag, struct ata_taskfile *tf)
-{
+अटल पूर्णांक ata_eh_पढ़ो_log_10h(काष्ठा ata_device *dev,
+			       पूर्णांक *tag, काष्ठा ata_taskfile *tf)
+अणु
 	u8 *buf = dev->link->ap->sector_buf;
-	unsigned int err_mask;
+	अचिन्हित पूर्णांक err_mask;
 	u8 csum;
-	int i;
+	पूर्णांक i;
 
-	err_mask = ata_read_log_page(dev, ATA_LOG_SATA_NCQ, 0, buf, 1);
-	if (err_mask)
-		return -EIO;
+	err_mask = ata_पढ़ो_log_page(dev, ATA_LOG_SATA_NCQ, 0, buf, 1);
+	अगर (err_mask)
+		वापस -EIO;
 
 	csum = 0;
-	for (i = 0; i < ATA_SECT_SIZE; i++)
+	क्रम (i = 0; i < ATA_SECT_SIZE; i++)
 		csum += buf[i];
-	if (csum)
+	अगर (csum)
 		ata_dev_warn(dev, "invalid checksum 0x%x on log page 10h\n",
 			     csum);
 
-	if (buf[0] & 0x80)
-		return -ENOENT;
+	अगर (buf[0] & 0x80)
+		वापस -ENOENT;
 
 	*tag = buf[0] & 0x1f;
 
@@ -1401,83 +1402,83 @@ static int ata_eh_read_log_10h(struct ata_device *dev,
 	tf->hob_lbah = buf[10];
 	tf->nsect = buf[12];
 	tf->hob_nsect = buf[13];
-	if (dev->class == ATA_DEV_ZAC && ata_id_has_ncq_autosense(dev->id))
+	अगर (dev->class == ATA_DEV_ZAC && ata_id_has_ncq_स्वतःsense(dev->id))
 		tf->auxiliary = buf[14] << 16 | buf[15] << 8 | buf[16];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  *	ata_eh_analyze_ncq_error - analyze NCQ error
- *	@link: ATA link to analyze NCQ error for
+ *	@link: ATA link to analyze NCQ error क्रम
  *
  *	Read log page 10h, determine the offending qc and acquire
- *	error status TF.  For NCQ device errors, all LLDDs have to do
+ *	error status TF.  For NCQ device errors, all LLDDs have to करो
  *	is setting AC_ERR_DEV in ehi->err_mask.  This function takes
  *	care of the rest.
  *
  *	LOCKING:
- *	Kernel thread context (may sleep).
+ *	Kernel thपढ़ो context (may sleep).
  */
-void ata_eh_analyze_ncq_error(struct ata_link *link)
-{
-	struct ata_port *ap = link->ap;
-	struct ata_eh_context *ehc = &link->eh_context;
-	struct ata_device *dev = link->device;
-	struct ata_queued_cmd *qc;
-	struct ata_taskfile tf;
-	int tag, rc;
+व्योम ata_eh_analyze_ncq_error(काष्ठा ata_link *link)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	काष्ठा ata_eh_context *ehc = &link->eh_context;
+	काष्ठा ata_device *dev = link->device;
+	काष्ठा ata_queued_cmd *qc;
+	काष्ठा ata_taskfile tf;
+	पूर्णांक tag, rc;
 
-	/* if frozen, we can't do much */
-	if (ap->pflags & ATA_PFLAG_FROZEN)
-		return;
+	/* अगर frozen, we can't करो much */
+	अगर (ap->pflags & ATA_PFLAG_FROZEN)
+		वापस;
 
 	/* is it NCQ device error? */
-	if (!link->sactive || !(ehc->i.err_mask & AC_ERR_DEV))
-		return;
+	अगर (!link->sactive || !(ehc->i.err_mask & AC_ERR_DEV))
+		वापस;
 
-	/* has LLDD analyzed already? */
-	ata_qc_for_each_raw(ap, qc, tag) {
-		if (!(qc->flags & ATA_QCFLAG_FAILED))
-			continue;
+	/* has LLDD analyzed alपढ़ोy? */
+	ata_qc_क्रम_each_raw(ap, qc, tag) अणु
+		अगर (!(qc->flags & ATA_QCFLAG_FAILED))
+			जारी;
 
-		if (qc->err_mask)
-			return;
-	}
+		अगर (qc->err_mask)
+			वापस;
+	पूर्ण
 
 	/* okay, this error is ours */
-	memset(&tf, 0, sizeof(tf));
-	rc = ata_eh_read_log_10h(dev, &tag, &tf);
-	if (rc) {
+	स_रखो(&tf, 0, माप(tf));
+	rc = ata_eh_पढ़ो_log_10h(dev, &tag, &tf);
+	अगर (rc) अणु
 		ata_link_err(link, "failed to read log page 10h (errno=%d)\n",
 			     rc);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(link->sactive & (1 << tag))) {
+	अगर (!(link->sactive & (1 << tag))) अणु
 		ata_link_err(link, "log page 10h reported inactive tag %d\n",
 			     tag);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* we've got the perpetrator, condemn it */
 	qc = __ata_qc_from_tag(ap, tag);
-	memcpy(&qc->result_tf, &tf, sizeof(tf));
+	स_नकल(&qc->result_tf, &tf, माप(tf));
 	qc->result_tf.flags = ATA_TFLAG_ISADDR | ATA_TFLAG_LBA | ATA_TFLAG_LBA48;
 	qc->err_mask |= AC_ERR_DEV | AC_ERR_NCQ;
-	if (dev->class == ATA_DEV_ZAC &&
-	    ((qc->result_tf.command & ATA_SENSE) || qc->result_tf.auxiliary)) {
-		char sense_key, asc, ascq;
+	अगर (dev->class == ATA_DEV_ZAC &&
+	    ((qc->result_tf.command & ATA_SENSE) || qc->result_tf.auxiliary)) अणु
+		अक्षर sense_key, asc, ascq;
 
 		sense_key = (qc->result_tf.auxiliary >> 16) & 0xff;
 		asc = (qc->result_tf.auxiliary >> 8) & 0xff;
 		ascq = qc->result_tf.auxiliary & 0xff;
 		ata_scsi_set_sense(dev, qc->scsicmd, sense_key, asc, ascq);
-		ata_scsi_set_sense_information(dev, qc->scsicmd,
+		ata_scsi_set_sense_inक्रमmation(dev, qc->scsicmd,
 					       &qc->result_tf);
 		qc->flags |= ATA_QCFLAG_SENSE_VALID;
-	}
+	पूर्ण
 
 	ehc->i.err_mask &= ~AC_ERR_DEV;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ata_eh_analyze_ncq_error);

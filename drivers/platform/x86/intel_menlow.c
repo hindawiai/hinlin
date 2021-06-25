@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Intel menlow Driver for thermal management extension
+ *  Intel menlow Driver क्रम thermal management extension
  *
  *  Copyright (C) 2008 Intel Corp
- *  Copyright (C) 2008 Sujith Thomas <sujith.thomas@intel.com>
- *  Copyright (C) 2008 Zhang Rui <rui.zhang@intel.com>
+ *  Copyright (C) 2008 Sujith Thomas <sujith.thomas@पूर्णांकel.com>
+ *  Copyright (C) 2008 Zhang Rui <rui.zhang@पूर्णांकel.com>
  *
- *  This driver creates the sys I/F for programming the sensors.
- *  It also implements the driver for intel menlow memory controller (hardware
- *  id is INT0002) which makes use of the platform specific ACPI methods
+ *  This driver creates the sys I/F क्रम programming the sensors.
+ *  It also implements the driver क्रम पूर्णांकel menlow memory controller (hardware
+ *  id is INT0002) which makes use of the platक्रमm specअगरic ACPI methods
  *  to get/set bandwidth.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pm.h>
-#include <linux/slab.h>
-#include <linux/thermal.h>
-#include <linux/types.h>
-#include <linux/units.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/types.h>
+#समावेश <linux/units.h>
 
 MODULE_AUTHOR("Thomas Sujith");
 MODULE_AUTHOR("Zhang Rui");
@@ -33,204 +34,204 @@ MODULE_LICENSE("GPL v2");
  * Memory controller device control
  */
 
-#define MEMORY_GET_BANDWIDTH "GTHS"
-#define MEMORY_SET_BANDWIDTH "STHS"
-#define MEMORY_ARG_CUR_BANDWIDTH 1
-#define MEMORY_ARG_MAX_BANDWIDTH 0
+#घोषणा MEMORY_GET_BANDWIDTH "GTHS"
+#घोषणा MEMORY_SET_BANDWIDTH "STHS"
+#घोषणा MEMORY_ARG_CUR_BANDWIDTH 1
+#घोषणा MEMORY_ARG_MAX_BANDWIDTH 0
 
-static void intel_menlow_unregister_sensor(void);
+अटल व्योम पूर्णांकel_menlow_unरेजिस्टर_sensor(व्योम);
 
 /*
- * GTHS returning 'n' would mean that [0,n-1] states are supported
- * In that case max_cstate would be n-1
- * GTHS returning '0' would mean that no bandwidth control states are supported
+ * GTHS वापसing 'n' would mean that [0,n-1] states are supported
+ * In that हाल max_cstate would be n-1
+ * GTHS वापसing '0' would mean that no bandwidth control states are supported
  */
-static int memory_get_max_bandwidth(struct thermal_cooling_device *cdev,
-				    unsigned long *max_state)
-{
-	struct acpi_device *device = cdev->devdata;
+अटल पूर्णांक memory_get_max_bandwidth(काष्ठा thermal_cooling_device *cdev,
+				    अचिन्हित दीर्घ *max_state)
+अणु
+	काष्ठा acpi_device *device = cdev->devdata;
 	acpi_handle handle = device->handle;
-	unsigned long long value;
-	struct acpi_object_list arg_list;
-	union acpi_object arg;
+	अचिन्हित दीर्घ दीर्घ value;
+	काष्ठा acpi_object_list arg_list;
+	जोड़ acpi_object arg;
 	acpi_status status = AE_OK;
 
 	arg_list.count = 1;
-	arg_list.pointer = &arg;
+	arg_list.poपूर्णांकer = &arg;
 	arg.type = ACPI_TYPE_INTEGER;
-	arg.integer.value = MEMORY_ARG_MAX_BANDWIDTH;
-	status = acpi_evaluate_integer(handle, MEMORY_GET_BANDWIDTH,
+	arg.पूर्णांकeger.value = MEMORY_ARG_MAX_BANDWIDTH;
+	status = acpi_evaluate_पूर्णांकeger(handle, MEMORY_GET_BANDWIDTH,
 				       &arg_list, &value);
-	if (ACPI_FAILURE(status))
-		return -EFAULT;
+	अगर (ACPI_FAILURE(status))
+		वापस -EFAULT;
 
-	if (!value)
-		return -EINVAL;
+	अगर (!value)
+		वापस -EINVAL;
 
 	*max_state = value - 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memory_get_cur_bandwidth(struct thermal_cooling_device *cdev,
-				    unsigned long *value)
-{
-	struct acpi_device *device = cdev->devdata;
+अटल पूर्णांक memory_get_cur_bandwidth(काष्ठा thermal_cooling_device *cdev,
+				    अचिन्हित दीर्घ *value)
+अणु
+	काष्ठा acpi_device *device = cdev->devdata;
 	acpi_handle handle = device->handle;
-	unsigned long long result;
-	struct acpi_object_list arg_list;
-	union acpi_object arg;
+	अचिन्हित दीर्घ दीर्घ result;
+	काष्ठा acpi_object_list arg_list;
+	जोड़ acpi_object arg;
 	acpi_status status = AE_OK;
 
 	arg_list.count = 1;
-	arg_list.pointer = &arg;
+	arg_list.poपूर्णांकer = &arg;
 	arg.type = ACPI_TYPE_INTEGER;
-	arg.integer.value = MEMORY_ARG_CUR_BANDWIDTH;
-	status = acpi_evaluate_integer(handle, MEMORY_GET_BANDWIDTH,
+	arg.पूर्णांकeger.value = MEMORY_ARG_CUR_BANDWIDTH;
+	status = acpi_evaluate_पूर्णांकeger(handle, MEMORY_GET_BANDWIDTH,
 				       &arg_list, &result);
-	if (ACPI_FAILURE(status))
-		return -EFAULT;
+	अगर (ACPI_FAILURE(status))
+		वापस -EFAULT;
 
 	*value = result;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int memory_set_cur_bandwidth(struct thermal_cooling_device *cdev,
-				    unsigned long state)
-{
-	struct acpi_device *device = cdev->devdata;
+अटल पूर्णांक memory_set_cur_bandwidth(काष्ठा thermal_cooling_device *cdev,
+				    अचिन्हित दीर्घ state)
+अणु
+	काष्ठा acpi_device *device = cdev->devdata;
 	acpi_handle handle = device->handle;
-	struct acpi_object_list arg_list;
-	union acpi_object arg;
+	काष्ठा acpi_object_list arg_list;
+	जोड़ acpi_object arg;
 	acpi_status status;
-	unsigned long long temp;
-	unsigned long max_state;
+	अचिन्हित दीर्घ दीर्घ temp;
+	अचिन्हित दीर्घ max_state;
 
-	if (memory_get_max_bandwidth(cdev, &max_state))
-		return -EFAULT;
+	अगर (memory_get_max_bandwidth(cdev, &max_state))
+		वापस -EFAULT;
 
-	if (state > max_state)
-		return -EINVAL;
+	अगर (state > max_state)
+		वापस -EINVAL;
 
 	arg_list.count = 1;
-	arg_list.pointer = &arg;
+	arg_list.poपूर्णांकer = &arg;
 	arg.type = ACPI_TYPE_INTEGER;
-	arg.integer.value = state;
+	arg.पूर्णांकeger.value = state;
 
 	status =
-	    acpi_evaluate_integer(handle, MEMORY_SET_BANDWIDTH, &arg_list,
+	    acpi_evaluate_पूर्णांकeger(handle, MEMORY_SET_BANDWIDTH, &arg_list,
 				  &temp);
 
 	pr_info("Bandwidth value was %ld: status is %d\n", state, status);
-	if (ACPI_FAILURE(status))
-		return -EFAULT;
+	अगर (ACPI_FAILURE(status))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct thermal_cooling_device_ops memory_cooling_ops = {
+अटल स्थिर काष्ठा thermal_cooling_device_ops memory_cooling_ops = अणु
 	.get_max_state = memory_get_max_bandwidth,
 	.get_cur_state = memory_get_cur_bandwidth,
 	.set_cur_state = memory_set_cur_bandwidth,
-};
+पूर्ण;
 
 /*
  * Memory Device Management
  */
-static int intel_menlow_memory_add(struct acpi_device *device)
-{
-	int result = -ENODEV;
-	struct thermal_cooling_device *cdev;
+अटल पूर्णांक पूर्णांकel_menlow_memory_add(काष्ठा acpi_device *device)
+अणु
+	पूर्णांक result = -ENODEV;
+	काष्ठा thermal_cooling_device *cdev;
 
-	if (!device)
-		return -EINVAL;
+	अगर (!device)
+		वापस -EINVAL;
 
-	if (!acpi_has_method(device->handle, MEMORY_GET_BANDWIDTH))
-		goto end;
+	अगर (!acpi_has_method(device->handle, MEMORY_GET_BANDWIDTH))
+		जाओ end;
 
-	if (!acpi_has_method(device->handle, MEMORY_SET_BANDWIDTH))
-		goto end;
+	अगर (!acpi_has_method(device->handle, MEMORY_SET_BANDWIDTH))
+		जाओ end;
 
-	cdev = thermal_cooling_device_register("Memory controller", device,
+	cdev = thermal_cooling_device_रेजिस्टर("Memory controller", device,
 					       &memory_cooling_ops);
-	if (IS_ERR(cdev)) {
+	अगर (IS_ERR(cdev)) अणु
 		result = PTR_ERR(cdev);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	device->driver_data = cdev;
 	result = sysfs_create_link(&device->dev.kobj,
 				&cdev->device.kobj, "thermal_cooling");
-	if (result)
-		goto unregister;
+	अगर (result)
+		जाओ unरेजिस्टर;
 
 	result = sysfs_create_link(&cdev->device.kobj,
 				&device->dev.kobj, "device");
-	if (result) {
-		sysfs_remove_link(&device->dev.kobj, "thermal_cooling");
-		goto unregister;
-	}
+	अगर (result) अणु
+		sysfs_हटाओ_link(&device->dev.kobj, "thermal_cooling");
+		जाओ unरेजिस्टर;
+	पूर्ण
 
  end:
-	return result;
+	वापस result;
 
- unregister:
-	thermal_cooling_device_unregister(cdev);
-	return result;
+ unरेजिस्टर:
+	thermal_cooling_device_unरेजिस्टर(cdev);
+	वापस result;
 
-}
+पूर्ण
 
-static int intel_menlow_memory_remove(struct acpi_device *device)
-{
-	struct thermal_cooling_device *cdev;
+अटल पूर्णांक पूर्णांकel_menlow_memory_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा thermal_cooling_device *cdev;
 
-	if (!device)
-		return -EINVAL;
+	अगर (!device)
+		वापस -EINVAL;
 
 	cdev = acpi_driver_data(device);
-	if (!cdev)
-		return -EINVAL;
+	अगर (!cdev)
+		वापस -EINVAL;
 
-	sysfs_remove_link(&device->dev.kobj, "thermal_cooling");
-	sysfs_remove_link(&cdev->device.kobj, "device");
-	thermal_cooling_device_unregister(cdev);
+	sysfs_हटाओ_link(&device->dev.kobj, "thermal_cooling");
+	sysfs_हटाओ_link(&cdev->device.kobj, "device");
+	thermal_cooling_device_unरेजिस्टर(cdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id intel_menlow_memory_ids[] = {
-	{"INT0002", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id पूर्णांकel_menlow_memory_ids[] = अणु
+	अणु"INT0002", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver intel_menlow_memory_driver = {
+अटल काष्ठा acpi_driver पूर्णांकel_menlow_memory_driver = अणु
 	.name = "intel_menlow_thermal_control",
-	.ids = intel_menlow_memory_ids,
-	.ops = {
-		.add = intel_menlow_memory_add,
-		.remove = intel_menlow_memory_remove,
-		},
-};
+	.ids = पूर्णांकel_menlow_memory_ids,
+	.ops = अणु
+		.add = पूर्णांकel_menlow_memory_add,
+		.हटाओ = पूर्णांकel_menlow_memory_हटाओ,
+		पूर्ण,
+पूर्ण;
 
 /*
- * Sensor control on menlow platform
+ * Sensor control on menlow platक्रमm
  */
 
-#define THERMAL_AUX0 0
-#define THERMAL_AUX1 1
-#define GET_AUX0 "GAX0"
-#define GET_AUX1 "GAX1"
-#define SET_AUX0 "SAX0"
-#define SET_AUX1 "SAX1"
+#घोषणा THERMAL_AUX0 0
+#घोषणा THERMAL_AUX1 1
+#घोषणा GET_AUX0 "GAX0"
+#घोषणा GET_AUX1 "GAX1"
+#घोषणा SET_AUX0 "SAX0"
+#घोषणा SET_AUX1 "SAX1"
 
-struct intel_menlow_attribute {
-	struct device_attribute attr;
-	struct device *device;
+काष्ठा पूर्णांकel_menlow_attribute अणु
+	काष्ठा device_attribute attr;
+	काष्ठा device *device;
 	acpi_handle handle;
-	struct list_head node;
-};
+	काष्ठा list_head node;
+पूर्ण;
 
-static LIST_HEAD(intel_menlow_attr_list);
-static DEFINE_MUTEX(intel_menlow_attr_lock);
+अटल LIST_HEAD(पूर्णांकel_menlow_attr_list);
+अटल DEFINE_MUTEX(पूर्णांकel_menlow_attr_lock);
 
 /*
  * sensor_get_auxtrip - get the current auxtrip value from sensor
@@ -238,21 +239,21 @@ static DEFINE_MUTEX(intel_menlow_attr_lock);
  * @auxtype : AUX0/AUX1
  * @buf: syfs buffer
  */
-static int sensor_get_auxtrip(acpi_handle handle, int index,
-							unsigned long long *value)
-{
+अटल पूर्णांक sensor_get_auxtrip(acpi_handle handle, पूर्णांक index,
+							अचिन्हित दीर्घ दीर्घ *value)
+अणु
 	acpi_status status;
 
-	if ((index != 0 && index != 1) || !value)
-		return -EINVAL;
+	अगर ((index != 0 && index != 1) || !value)
+		वापस -EINVAL;
 
-	status = acpi_evaluate_integer(handle, index ? GET_AUX1 : GET_AUX0,
-				       NULL, value);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(handle, index ? GET_AUX1 : GET_AUX0,
+				       शून्य, value);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * sensor_set_auxtrip - set the new auxtrip value to sensor
@@ -260,125 +261,125 @@ static int sensor_get_auxtrip(acpi_handle handle, int index,
  * @auxtype : AUX0/AUX1
  * @buf: syfs buffer
  */
-static int sensor_set_auxtrip(acpi_handle handle, int index, int value)
-{
+अटल पूर्णांक sensor_set_auxtrip(acpi_handle handle, पूर्णांक index, पूर्णांक value)
+अणु
 	acpi_status status;
-	union acpi_object arg = {
+	जोड़ acpi_object arg = अणु
 		ACPI_TYPE_INTEGER
-	};
-	struct acpi_object_list args = {
+	पूर्ण;
+	काष्ठा acpi_object_list args = अणु
 		1, &arg
-	};
-	unsigned long long temp;
+	पूर्ण;
+	अचिन्हित दीर्घ दीर्घ temp;
 
-	if (index != 0 && index != 1)
-		return -EINVAL;
+	अगर (index != 0 && index != 1)
+		वापस -EINVAL;
 
-	status = acpi_evaluate_integer(handle, index ? GET_AUX0 : GET_AUX1,
-				       NULL, &temp);
-	if (ACPI_FAILURE(status))
-		return -EIO;
-	if ((index && value < temp) || (!index && value > temp))
-		return -EINVAL;
+	status = acpi_evaluate_पूर्णांकeger(handle, index ? GET_AUX0 : GET_AUX1,
+				       शून्य, &temp);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
+	अगर ((index && value < temp) || (!index && value > temp))
+		वापस -EINVAL;
 
-	arg.integer.value = value;
-	status = acpi_evaluate_integer(handle, index ? SET_AUX1 : SET_AUX0,
+	arg.पूर्णांकeger.value = value;
+	status = acpi_evaluate_पूर्णांकeger(handle, index ? SET_AUX1 : SET_AUX0,
 				       &args, &temp);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	/* do we need to check the return value of SAX0/SAX1 ? */
+	/* करो we need to check the वापस value of SAX0/SAX1 ? */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define to_intel_menlow_attr(_attr)	\
-	container_of(_attr, struct intel_menlow_attribute, attr)
+#घोषणा to_पूर्णांकel_menlow_attr(_attr)	\
+	container_of(_attr, काष्ठा पूर्णांकel_menlow_attribute, attr)
 
-static ssize_t aux_show(struct device *dev, struct device_attribute *dev_attr,
-			char *buf, int idx)
-{
-	struct intel_menlow_attribute *attr = to_intel_menlow_attr(dev_attr);
-	unsigned long long value;
-	int result;
+अटल sमाप_प्रकार aux_show(काष्ठा device *dev, काष्ठा device_attribute *dev_attr,
+			अक्षर *buf, पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांकel_menlow_attribute *attr = to_पूर्णांकel_menlow_attr(dev_attr);
+	अचिन्हित दीर्घ दीर्घ value;
+	पूर्णांक result;
 
 	result = sensor_get_auxtrip(attr->handle, idx, &value);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	return sprintf(buf, "%lu", deci_kelvin_to_celsius(value));
-}
+	वापस प्र_लिखो(buf, "%lu", deci_kelvin_to_celsius(value));
+पूर्ण
 
-static ssize_t aux0_show(struct device *dev,
-			 struct device_attribute *dev_attr, char *buf)
-{
-	return aux_show(dev, dev_attr, buf, 0);
-}
+अटल sमाप_प्रकार aux0_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	वापस aux_show(dev, dev_attr, buf, 0);
+पूर्ण
 
-static ssize_t aux1_show(struct device *dev,
-			 struct device_attribute *dev_attr, char *buf)
-{
-	return aux_show(dev, dev_attr, buf, 1);
-}
+अटल sमाप_प्रकार aux1_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *dev_attr, अक्षर *buf)
+अणु
+	वापस aux_show(dev, dev_attr, buf, 1);
+पूर्ण
 
-static ssize_t aux_store(struct device *dev, struct device_attribute *dev_attr,
-			 const char *buf, size_t count, int idx)
-{
-	struct intel_menlow_attribute *attr = to_intel_menlow_attr(dev_attr);
-	int value;
-	int result;
+अटल sमाप_प्रकार aux_store(काष्ठा device *dev, काष्ठा device_attribute *dev_attr,
+			 स्थिर अक्षर *buf, माप_प्रकार count, पूर्णांक idx)
+अणु
+	काष्ठा पूर्णांकel_menlow_attribute *attr = to_पूर्णांकel_menlow_attr(dev_attr);
+	पूर्णांक value;
+	पूर्णांक result;
 
-	/*Sanity check; should be a positive integer */
-	if (!sscanf(buf, "%d", &value))
-		return -EINVAL;
+	/*Sanity check; should be a positive पूर्णांकeger */
+	अगर (!माला_पूछो(buf, "%d", &value))
+		वापस -EINVAL;
 
-	if (value < 0)
-		return -EINVAL;
+	अगर (value < 0)
+		वापस -EINVAL;
 
 	result = sensor_set_auxtrip(attr->handle, idx,
 				    celsius_to_deci_kelvin(value));
-	return result ? result : count;
-}
+	वापस result ? result : count;
+पूर्ण
 
-static ssize_t aux0_store(struct device *dev,
-			  struct device_attribute *dev_attr,
-			  const char *buf, size_t count)
-{
-	return aux_store(dev, dev_attr, buf, count, 0);
-}
+अटल sमाप_प्रकार aux0_store(काष्ठा device *dev,
+			  काष्ठा device_attribute *dev_attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस aux_store(dev, dev_attr, buf, count, 0);
+पूर्ण
 
-static ssize_t aux1_store(struct device *dev,
-			  struct device_attribute *dev_attr,
-			  const char *buf, size_t count)
-{
-	return aux_store(dev, dev_attr, buf, count, 1);
-}
+अटल sमाप_प्रकार aux1_store(काष्ठा device *dev,
+			  काष्ठा device_attribute *dev_attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	वापस aux_store(dev, dev_attr, buf, count, 1);
+पूर्ण
 
-/* BIOS can enable/disable the thermal user application in dabney platform */
-#define BIOS_ENABLED "\\_TZ.GSTS"
-static ssize_t bios_enabled_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
+/* BIOS can enable/disable the thermal user application in dabney platक्रमm */
+#घोषणा BIOS_ENABLED "\\_TZ.GSTS"
+अटल sमाप_प्रकार bios_enabled_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	acpi_status status;
-	unsigned long long bios_enabled;
+	अचिन्हित दीर्घ दीर्घ bios_enabled;
 
-	status = acpi_evaluate_integer(NULL, BIOS_ENABLED, NULL, &bios_enabled);
-	if (ACPI_FAILURE(status))
-		return -ENODEV;
+	status = acpi_evaluate_पूर्णांकeger(शून्य, BIOS_ENABLED, शून्य, &bios_enabled);
+	अगर (ACPI_FAILURE(status))
+		वापस -ENODEV;
 
-	return sprintf(buf, "%s\n", bios_enabled ? "enabled" : "disabled");
-}
+	वापस प्र_लिखो(buf, "%s\n", bios_enabled ? "enabled" : "disabled");
+पूर्ण
 
-static int intel_menlow_add_one_attribute(char *name, umode_t mode, void *show,
-					  void *store, struct device *dev,
+अटल पूर्णांक पूर्णांकel_menlow_add_one_attribute(अक्षर *name, umode_t mode, व्योम *show,
+					  व्योम *store, काष्ठा device *dev,
 					  acpi_handle handle)
-{
-	struct intel_menlow_attribute *attr;
-	int result;
+अणु
+	काष्ठा पूर्णांकel_menlow_attribute *attr;
+	पूर्णांक result;
 
-	attr = kzalloc(sizeof(struct intel_menlow_attribute), GFP_KERNEL);
-	if (!attr)
-		return -ENOMEM;
+	attr = kzalloc(माप(काष्ठा पूर्णांकel_menlow_attribute), GFP_KERNEL);
+	अगर (!attr)
+		वापस -ENOMEM;
 
 	sysfs_attr_init(&attr->attr.attr); /* That is consistent naming :D */
 	attr->attr.attr.name = name;
@@ -389,135 +390,135 @@ static int intel_menlow_add_one_attribute(char *name, umode_t mode, void *show,
 	attr->handle = handle;
 
 	result = device_create_file(dev, &attr->attr);
-	if (result) {
-		kfree(attr);
-		return result;
-	}
+	अगर (result) अणु
+		kमुक्त(attr);
+		वापस result;
+	पूर्ण
 
-	mutex_lock(&intel_menlow_attr_lock);
-	list_add_tail(&attr->node, &intel_menlow_attr_list);
-	mutex_unlock(&intel_menlow_attr_lock);
+	mutex_lock(&पूर्णांकel_menlow_attr_lock);
+	list_add_tail(&attr->node, &पूर्णांकel_menlow_attr_list);
+	mutex_unlock(&पूर्णांकel_menlow_attr_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static acpi_status intel_menlow_register_sensor(acpi_handle handle, u32 lvl,
-						void *context, void **rv)
-{
+अटल acpi_status पूर्णांकel_menlow_रेजिस्टर_sensor(acpi_handle handle, u32 lvl,
+						व्योम *context, व्योम **rv)
+अणु
 	acpi_status status;
 	acpi_handle dummy;
-	struct thermal_zone_device *thermal;
-	int result;
+	काष्ठा thermal_zone_device *thermal;
+	पूर्णांक result;
 
-	result = acpi_bus_get_private_data(handle, (void **)&thermal);
-	if (result)
-		return 0;
+	result = acpi_bus_get_निजी_data(handle, (व्योम **)&thermal);
+	अगर (result)
+		वापस 0;
 
 	/* _TZ must have the AUX0/1 methods */
 	status = acpi_get_handle(handle, GET_AUX0, &dummy);
-	if (ACPI_FAILURE(status))
-		return (status == AE_NOT_FOUND) ? AE_OK : status;
+	अगर (ACPI_FAILURE(status))
+		वापस (status == AE_NOT_FOUND) ? AE_OK : status;
 
 	status = acpi_get_handle(handle, SET_AUX0, &dummy);
-	if (ACPI_FAILURE(status))
-		return (status == AE_NOT_FOUND) ? AE_OK : status;
+	अगर (ACPI_FAILURE(status))
+		वापस (status == AE_NOT_FOUND) ? AE_OK : status;
 
-	result = intel_menlow_add_one_attribute("aux0", 0644,
+	result = पूर्णांकel_menlow_add_one_attribute("aux0", 0644,
 						aux0_show, aux0_store,
 						&thermal->device, handle);
-	if (result)
-		return AE_ERROR;
+	अगर (result)
+		वापस AE_ERROR;
 
 	status = acpi_get_handle(handle, GET_AUX1, &dummy);
-	if (ACPI_FAILURE(status))
-		goto aux1_not_found;
+	अगर (ACPI_FAILURE(status))
+		जाओ aux1_not_found;
 
 	status = acpi_get_handle(handle, SET_AUX1, &dummy);
-	if (ACPI_FAILURE(status))
-		goto aux1_not_found;
+	अगर (ACPI_FAILURE(status))
+		जाओ aux1_not_found;
 
-	result = intel_menlow_add_one_attribute("aux1", 0644,
+	result = पूर्णांकel_menlow_add_one_attribute("aux1", 0644,
 						aux1_show, aux1_store,
 						&thermal->device, handle);
-	if (result) {
-		intel_menlow_unregister_sensor();
-		return AE_ERROR;
-	}
+	अगर (result) अणु
+		पूर्णांकel_menlow_unरेजिस्टर_sensor();
+		वापस AE_ERROR;
+	पूर्ण
 
 	/*
 	 * create the "dabney_enabled" attribute which means the user app
 	 * should be loaded or not
 	 */
 
-	result = intel_menlow_add_one_attribute("bios_enabled", 0444,
-						bios_enabled_show, NULL,
+	result = पूर्णांकel_menlow_add_one_attribute("bios_enabled", 0444,
+						bios_enabled_show, शून्य,
 						&thermal->device, handle);
-	if (result) {
-		intel_menlow_unregister_sensor();
-		return AE_ERROR;
-	}
+	अगर (result) अणु
+		पूर्णांकel_menlow_unरेजिस्टर_sensor();
+		वापस AE_ERROR;
+	पूर्ण
 
-	return AE_OK;
+	वापस AE_OK;
 
  aux1_not_found:
-	if (status == AE_NOT_FOUND)
-		return AE_OK;
+	अगर (status == AE_NOT_FOUND)
+		वापस AE_OK;
 
-	intel_menlow_unregister_sensor();
-	return status;
-}
+	पूर्णांकel_menlow_unरेजिस्टर_sensor();
+	वापस status;
+पूर्ण
 
-static void intel_menlow_unregister_sensor(void)
-{
-	struct intel_menlow_attribute *pos, *next;
+अटल व्योम पूर्णांकel_menlow_unरेजिस्टर_sensor(व्योम)
+अणु
+	काष्ठा पूर्णांकel_menlow_attribute *pos, *next;
 
-	mutex_lock(&intel_menlow_attr_lock);
-	list_for_each_entry_safe(pos, next, &intel_menlow_attr_list, node) {
+	mutex_lock(&पूर्णांकel_menlow_attr_lock);
+	list_क्रम_each_entry_safe(pos, next, &पूर्णांकel_menlow_attr_list, node) अणु
 		list_del(&pos->node);
-		device_remove_file(pos->device, &pos->attr);
-		kfree(pos);
-	}
-	mutex_unlock(&intel_menlow_attr_lock);
+		device_हटाओ_file(pos->device, &pos->attr);
+		kमुक्त(pos);
+	पूर्ण
+	mutex_unlock(&पूर्णांकel_menlow_attr_lock);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int __init intel_menlow_module_init(void)
-{
-	int result = -ENODEV;
+अटल पूर्णांक __init पूर्णांकel_menlow_module_init(व्योम)
+अणु
+	पूर्णांक result = -ENODEV;
 	acpi_status status;
-	unsigned long long enable;
+	अचिन्हित दीर्घ दीर्घ enable;
 
-	if (acpi_disabled)
-		return result;
+	अगर (acpi_disabled)
+		वापस result;
 
-	/* Looking for the \_TZ.GSTS method */
-	status = acpi_evaluate_integer(NULL, BIOS_ENABLED, NULL, &enable);
-	if (ACPI_FAILURE(status) || !enable)
-		return -ENODEV;
+	/* Looking क्रम the \_TZ.GSTS method */
+	status = acpi_evaluate_पूर्णांकeger(शून्य, BIOS_ENABLED, शून्य, &enable);
+	अगर (ACPI_FAILURE(status) || !enable)
+		वापस -ENODEV;
 
-	/* Looking for ACPI device MEM0 with hardware id INT0002 */
-	result = acpi_bus_register_driver(&intel_menlow_memory_driver);
-	if (result)
-		return result;
+	/* Looking क्रम ACPI device MEM0 with hardware id INT0002 */
+	result = acpi_bus_रेजिस्टर_driver(&पूर्णांकel_menlow_memory_driver);
+	अगर (result)
+		वापस result;
 
-	/* Looking for sensors in each ACPI thermal zone */
+	/* Looking क्रम sensors in each ACPI thermal zone */
 	status = acpi_walk_namespace(ACPI_TYPE_THERMAL, ACPI_ROOT_OBJECT,
 				     ACPI_UINT32_MAX,
-				     intel_menlow_register_sensor, NULL, NULL, NULL);
-	if (ACPI_FAILURE(status)) {
-		acpi_bus_unregister_driver(&intel_menlow_memory_driver);
-		return -ENODEV;
-	}
+				     पूर्णांकel_menlow_रेजिस्टर_sensor, शून्य, शून्य, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
+		acpi_bus_unरेजिस्टर_driver(&पूर्णांकel_menlow_memory_driver);
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit intel_menlow_module_exit(void)
-{
-	acpi_bus_unregister_driver(&intel_menlow_memory_driver);
-	intel_menlow_unregister_sensor();
-}
+अटल व्योम __निकास पूर्णांकel_menlow_module_निकास(व्योम)
+अणु
+	acpi_bus_unरेजिस्टर_driver(&पूर्णांकel_menlow_memory_driver);
+	पूर्णांकel_menlow_unरेजिस्टर_sensor();
+पूर्ण
 
-module_init(intel_menlow_module_init);
-module_exit(intel_menlow_module_exit);
+module_init(पूर्णांकel_menlow_module_init);
+module_निकास(पूर्णांकel_menlow_module_निकास);

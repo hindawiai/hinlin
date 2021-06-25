@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  * Copyright 2009 Jerome Glisse.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,12 +26,12 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#ifndef __RV200D_H__
-#define __RV200D_H__
+#अगर_अघोषित __RV200D_H__
+#घोषणा __RV200D_H__
 
-#define R_00015C_AGP_BASE_2                          0x00015C
-#define   S_00015C_AGP_BASE_ADDR_2(x)                  (((x) & 0xF) << 0)
-#define   G_00015C_AGP_BASE_ADDR_2(x)                  (((x) >> 0) & 0xF)
-#define   C_00015C_AGP_BASE_ADDR_2                     0xFFFFFFF0
+#घोषणा R_00015C_AGP_BASE_2                          0x00015C
+#घोषणा   S_00015C_AGP_BASE_ADDR_2(x)                  (((x) & 0xF) << 0)
+#घोषणा   G_00015C_AGP_BASE_ADDR_2(x)                  (((x) >> 0) & 0xF)
+#घोषणा   C_00015C_AGP_BASE_ADDR_2                     0xFFFFFFF0
 
-#endif
+#पूर्ण_अगर
